@@ -83,8 +83,8 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
     } 
 
     if (!(opt & OPT_Q)) {
-	pprintf(prn, _("  Of the 8 model selection statistics, %d "), 
-		cmp->score);
+	pprintf(prn, _("  Of the %d model selection statistics, %d "), 
+		C_MAX, cmp->score);
 	if (cmp->score == 1) {
 	    pputs(prn, _("has improved.\n"));
 	} else {
@@ -135,7 +135,7 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
 	cmp.F = ((rmod->ess - umod->ess) / umod->ess) * cmp.dfd / cmp.dfn;
     }
 
-    for (i=0; i<8; i++) { 
+    for (i=0; i<C_MAX; i++) { 
 	if (na(pmodB->criterion[i]) || na(pmodA->criterion[i])) {
 	    continue;
 	}

@@ -563,31 +563,23 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 /* ....................................................... */
 
-static void calculate_criteria (double *criterion, double ess, 
-				int nobs, int ncoeff)
+static int calculate_criteria (double *x, double ess, 
+			       int nobs, int ncoeff)
 {
-    double sig2 = ess / nobs;
-    double nx = nobs;
-    double dfx = nobs - ncoeff;
-    double cobs = (double) ncoeff / nobs;
-    double cobs1 = 1.0 - cobs;
-    double cobs2 = 2.0 * cobs;
+    if (ess < 0.0 || ncoeff < 1 || nobs <= ncoeff) {
+	x[C_AIC] = NADBL;
+	x[C_BIC] = NADBL;
+	return 1;
+    } else {
+	const double ln2pi1 = 2.837877066409345;
+	double ll1 = -.5 * nobs * log(ess);
+	double ll2 = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
 
-    criterion[C_SGMASQ] = ess / dfx;
+	x[C_AIC] = -2.0 * ll2 + 2 * ncoeff;
+	x[C_BIC] = -2.0 * ll2 + ncoeff * log(nobs);
 
-    criterion[C_FPE] = sig2 * (nobs + ncoeff) / dfx;
-
-    criterion[C_AIC] = sig2 * exp(cobs2);
-
-    criterion[C_SHIBATA] = sig2 * (1.0 + cobs2);
-
-    criterion[C_RICE] = (cobs2 < 1.0)? (sig2 / (1.0 - cobs2)) : NADBL;
-
-    criterion[C_HQ] = sig2 * pow(log(nx), cobs2);
-
-    criterion[C_BIC] = sig2 * pow((double) nobs, cobs);
-
-    criterion[C_GCV] = sig2 / (cobs1 * cobs1);
+	return 0;
+    }
 }
 
 /* Compute model selection criteria */
@@ -601,25 +593,18 @@ void gretl_aic_etc (MODEL *pmod)
 void gretl_criteria (const double ess, int nobs, int ncoeff, 
 		     PRN *prn)
 {
-    double criterion[8];
+    double x[2];
+    int err;
 
-    calculate_criteria(criterion, ess, nobs, ncoeff);
-    
-    pprintf(prn, _("Using ess = %f, %d observations, %d coefficients\n"), 
-	    ess, nobs, ncoeff);
-    pputs(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
-    pprintf(prn, "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
-	    "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
-	    "GCV       %13g",
-	    criterion[C_SGMASQ], criterion[C_AIC], 
-	    criterion[C_FPE], criterion[C_HQ], 
-	    criterion[C_BIC], criterion[C_SHIBATA], criterion[C_GCV]);
-    if (!na(criterion[C_RICE])) {
-	pprintf(prn, "     RICE      %13g\n", criterion[C_RICE]);
+    err = calculate_criteria(x, ess, nobs, ncoeff);
+
+    if (err) {
+	pputs(prn, _("Error calculating model selection criteria\n"));
     } else {
-	pputs(prn, "     RICE            undefined\n");
+	pprintf(prn, _("Using ess = %g, %d observations, %d coefficients\n"), 
+		ess, nobs, ncoeff);
+	pprintf(prn, "\nAIC = %g\nBIC = %g\n\n", x[C_AIC], x[C_BIC]);
     }
-    pputc(prn, '\n');
 }
 
 char *real_format_obs (char *obs, int maj, int min, int pd, char sep)

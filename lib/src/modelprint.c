@@ -51,9 +51,6 @@ static void print_rho_terms (const MODEL *pmod, PRN *prn);
 static void print_discrete_statistics (const MODEL *pmod, 
 				       const DATAINFO *pdinfo,
 				       PRN *prn);
-static void print_aicetc (const MODEL *pmod, PRN *prn);
-static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
-static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
@@ -203,6 +200,52 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	    tex_dcolumn_double(pmod->adjrsq, r2);
 	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
 	}
+    }
+}
+
+/* ......................................................... */ 
+
+static void info_stats_lines (const MODEL *pmod, PRN *prn)
+{
+    const double *crit = pmod->criterion;
+    const char *info_str[] = {
+	N_("Akaike information criterion"),
+	N_("Schwarz Bayesian criterion")
+    };
+    const char *info_abbrev[] = {
+	N_("AIC"),
+	N_("BIC")
+    };    
+
+    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
+	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
+	pmod->aux == AUX_AR) {
+	return;
+    }
+
+    if (na(crit[C_AIC]) || na(crit[C_BIC])) {
+	return;
+    }
+
+    if (PLAIN_FORMAT(prn->format)) { 
+	pprintf(prn, "  %s (%s) = %.*g\n", _(info_str[0]), _(info_abbrev[0]),
+		GRETL_DIGITS, crit[C_AIC]);
+	pprintf(prn, "  %s (%s) = %.*g\n", _(info_str[1]), _(info_abbrev[1]),
+		GRETL_DIGITS, crit[C_BIC]);
+    }
+
+    else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, RTFTAB "%s = %g\n", I_(info_str[0]), crit[C_AIC]);
+	pprintf(prn, RTFTAB "%s = %g\n", I_(info_str[1]), crit[C_BIC]);
+    }
+
+    else if (TEX_FORMAT(prn->format)) {  
+	char cval[32];
+
+	tex_dcolumn_double(crit[C_AIC], cval);
+	pprintf(prn, "%s & %s \\\\\n", I_(info_str[0]), cval);
+	tex_dcolumn_double(crit[C_BIC], cval);
+	pprintf(prn, "%s & %s \\\\\n", I_(info_str[1]), cval);
     }
 }
 
@@ -1109,10 +1152,6 @@ static void model_format_start (PRN *prn)
                        "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx8000\n\\intbl"
 
-#define RTF_SELST_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                       "\\cellx1333\\cellx2666\\cellx4000\\cellx5333" \
-                       "\\cellx6666\\cellx8000\n\\intbl"
-
 #define RTF_ROOT_ROW   "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx500\\cellx1500\\cellx2900\\cellx4300" \
                        "\\cellx5700\\cellx7100\n\\intbl"
@@ -1203,7 +1242,7 @@ static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
 static void print_coeff_table_end (PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     } else if (TEX_FORMAT(prn->format)) {
 	pputs(prn, "\\end{tabular*}\n\n");
     } else if (RTF_FORMAT(prn->format)) {
@@ -1290,12 +1329,10 @@ static void print_middle_table_end (PRN *prn)
 {
     if (TEX_FORMAT(prn->format)) {
 	pputs(prn, "\\end{tabular}\n\n");
-    }
-    else if (RTF_FORMAT(prn->format)) {
+    } else if (RTF_FORMAT(prn->format)) {
 	pputs(prn, "\\par\n");
-    }
-    else {
-	pputs(prn, "\n");
+    } else {
+	pputc(prn, '\n');
     }
 }
 
@@ -1455,6 +1492,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_tobit_stats(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }	
@@ -1500,8 +1538,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	goto close_format;
     }
 
-    if (!pmod->ifc && pmod->ci != NLS && PLAIN_FORMAT(prn->format)) 
+    if (!pmod->ifc && pmod->ci != NLS && PLAIN_FORMAT(prn->format)) {
 	noconst(pmod, prn);
+    }
     
     if (pmod->aux == AUX_WHITE) { 
 	rsqline(pmod, prn);
@@ -1549,6 +1588,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	if (pmod->ci == ARMA) {
 	    print_arma_stats(pmod, prn);
+	} else {
+	    info_stats_lines(pmod, prn);
 	}
 
 	print_middle_table_end(prn);
@@ -1567,6 +1608,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	print_ll(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
     }
 
@@ -1587,6 +1629,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	if (dataset_is_time_series(pdinfo)) {
 	    dwline(pmod, prn);
 	}
+
+	info_stats_lines(pmod, prn);
 
 	print_middle_table_end(prn);
 
@@ -1615,17 +1659,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
 	dwline(pmod, prn);
+	info_stats_lines(pmod, prn);
 	print_middle_table_end(prn);
-    }
-
-    if (!(pmod->ci == ARMA && !na(pmod->lnL))) {
-	if (PLAIN_FORMAT(prn->format)) {
-	    print_aicetc(pmod, prn);
-	} else if (TEX_FORMAT(prn->format)) {
-	    tex_print_aicetc(pmod, prn);
-	} else if (RTF_FORMAT(prn->format)) {
-	    rtf_print_aicetc(pmod, prn);
-	}
     }
 
     if (PLAIN_FORMAT(prn->format) && 
@@ -1645,7 +1680,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 #if 0
     if (PLAIN_FORMAT(prn->format) && pmod->aux == AUX_ADF) {
-	print_aicetc(pmod, prn);
+	info_stats_lines(pmod, prn);
     }
 #endif
 
@@ -1658,76 +1693,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     }
 
     return gotnan;
-}
-
-/* ....................................................... */
-
-static void print_aicetc_value (double x, PRN *prn)
-{
-    char *p, dstr[16];
-    size_t len;
-
-    sprintf(dstr, "%#g", x);
-
-    if ((p = strstr(dstr, "+00")) ||
-	(p = strstr(dstr, "-00"))) {
-	memmove(p+1, p+2, strlen(p+1));
-    }    
-
-    len = strlen(dstr) - 1;
-
-    if (dstr[len] == '.' || dstr[len] == ',') {
-	dstr[len] = 0;
-	pprintf(prn, " %10s", dstr);
-    } else {
-	pprintf(prn, "%11s", dstr);
-    }
-}
-
-static void print_aicetc (const MODEL *pmod, PRN *prn)
-{
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
-	pmod->aux == AUX_AR) {
-	return;
-    }
-
-    if (pmod->dfd == 0) {
-	pputs(prn, "\n");
-	return;
-    }
-
-    pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));
-	
-    pputs(prn, "  SGMASQ    ");
-    print_aicetc_value(pmod->criterion[C_SGMASQ], prn);
-
-    pputs(prn, "     AIC       ");
-    print_aicetc_value(pmod->criterion[C_AIC], prn);
-
-    pputs(prn, "     FPE       ");
-    print_aicetc_value(pmod->criterion[C_FPE], prn);
-
-    pputs(prn, "\n  HQ        ");
-    print_aicetc_value(pmod->criterion[C_HQ], prn);
-
-    pputs(prn, "     SCHWARZ   ");
-    print_aicetc_value(pmod->criterion[C_BIC], prn);
-
-    pputs(prn, "     SHIBATA   ");
-    print_aicetc_value(pmod->criterion[C_SHIBATA], prn);
-
-    pputs(prn, "\n  GCV       ");
-    print_aicetc_value(pmod->criterion[C_GCV], prn);
-
-    pputs(prn, "     RICE      ");
-    if (!na(pmod->criterion[C_RICE])) {
-	print_aicetc_value(pmod->criterion[C_RICE], prn);
-    } else {
-	pputs(prn, "  ");
-	pputs(prn, _("undefined"));
-    }
-    pputs(prn, "\n\n");
 }
 
 /* ......................................................... */ 
@@ -1861,7 +1826,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	}
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     return gotnan;
 }
@@ -2295,88 +2260,6 @@ static void print_discrete_statistics (const MODEL *pmod,
     }
 }
 
-static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
-{
-    pprintf(prn, 
-	    "\\vspace{1em}\n\n"
-	    "%s\n\n"
-	    "\\vspace{1em}\n\n"
-	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
-	    I_("Model selection statistics"));
-    pprintf(prn, 
-	    "\\textsc{sgmasq}  & %g & "  
-	    "\\textsc{aic}     & %g & "  
-	    "\\textsc{fpe}     & %g \\\\\n"
-	    "\\textsc{hq}      & %g & "
-	    "\\textsc{schwarz} & %g & "  
-	    "\\textsc{shibata} & %g \\\\\n"
-	    "\\textsc{gcv}     & %g & ",  
-	    pmod->criterion[C_SGMASQ], pmod->criterion[C_AIC], 
-	    pmod->criterion[C_FPE], pmod->criterion[C_HQ], 
-	    pmod->criterion[C_BIC], pmod->criterion[C_SHIBATA],
-	    pmod->criterion[C_GCV]);
-
-    if (!na(pmod->criterion[C_RICE])) {
-	pprintf(prn, "\\textsc{rice}    & %g\n", pmod->criterion[C_RICE]);
-    } else {
-	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
-    }
-    
-    pputs(prn, "\\end{tabular*}\n\n");
-}
-
-/* ....................................................... */
-
-static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
-{
-    char crit_strs[8][32];
-    int i;
-
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
-	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
-	pmod->aux == AUX_AR) return;
-
-    if (pmod->dfd == 0) return;
-
-    for (i=0; i<8; i++) {
-	sprintf(crit_strs[i], "%#g", pmod->criterion[i]);
-	gretl_fix_exponent(crit_strs[i]);
-    }
-
-    pprintf(prn, "\\par \\qc %s\\par\n\n", I_("Model Selection Statistics"));
-    pprintf(prn, "{" RTF_SELST_ROW
-	    " \\ql SGMASQ\\cell"
-	    " \\qc %s\\cell"
-	    " \\ql AIC\\cell"
-	    " \\qc %s\\cell"
-	    " \\ql FPE\\cell"
-	    " \\qc %s\\cell"
-	    " \\intbl \\row\n"
-	    RTF_SELST_ROW
-	    " \\ql HQ\\cell"
-	    " \\qc %s\\cell"
-	    " \\ql SCHWARZ\\cell"
-	    " \\qc %s\\cell"
-	    " \\ql SHIBATA\\cell"
-	    " \\qc %s\\cell"
-	    " \\intbl \\row\n"
-	    RTF_SELST_ROW
-	    " \\ql GCV\\cell"
-	    " \\qc %s\\cell"
-	    " \\ql RICE\\cell",
-	    crit_strs[0], crit_strs[1], 
-	    crit_strs[2], crit_strs[3], 
-	    crit_strs[4], crit_strs[5], crit_strs[6]);
-    if (!na(pmod->criterion[C_RICE])) {
-	pprintf(prn, " \\qc %s\\cell", crit_strs[7]);
-    } else {
-	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
-    }
-    pputs(prn, " \\qr \\cell \\qr \\cell");
-
-    pputs(prn, " \\intbl \\row}\n\n");
-}
-
 /* ....................................................... */
 
 static void mp_other_stats (const mp_results *mpvals, PRN *prn)
@@ -2388,19 +2271,19 @@ static void mp_other_stats (const mp_results *mpvals, PRN *prn)
     
     pprintf(prn, "%-*s", len, _("Standard error"));
     gretl_print_fullwidth_double(mpvals->sigma, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
     gretl_print_fullwidth_double(mpvals->ess, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
     gretl_print_fullwidth_double(mpvals->rsq, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
     gretl_print_fullwidth_double(mpvals->adjrsq, GRETL_MP_DIGITS, prn);
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     sprintf(fstr, "F(%d, %d)", mpvals->dfn, mpvals->dfd);
     pprintf(prn, "%-*s", len, fstr);
@@ -2426,7 +2309,7 @@ static void print_mpvals_coeff (const mp_results *mpvals,
     gretl_print_fullwidth_double(mpvals->sderr[c], 
 				 GRETL_MP_DIGITS, prn); 
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /* ....................................................... */
@@ -2441,7 +2324,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
     ntodate(startdate, mpvals->t1, pdinfo);
     ntodate(enddate, mpvals->t2, pdinfo);
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     if (!PLAIN_FORMAT(prn->format)) {
 	pputs(prn, "FIXME: this is still to be implemented!\n\n");
@@ -2461,7 +2344,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
     for (i=0; i<mpvals->ncoeff; i++) {
 	print_mpvals_coeff(mpvals, i, prn);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     mp_other_stats (mpvals, prn);
 }

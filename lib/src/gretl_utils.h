@@ -23,14 +23,8 @@
 #include "libgretl.h"
 
 enum model_selection_criteria {
-    C_SGMASQ = 0,
     C_AIC,
-    C_FPE,
-    C_HQ,
     C_BIC,
-    C_SHIBATA,
-    C_GCV,
-    C_RICE,
     C_MAX
 };
 

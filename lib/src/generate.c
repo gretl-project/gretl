@@ -3096,7 +3096,7 @@ static int check_modelstat (const MODEL *pmod, int idx)
 	return 1;
     }
 
-    if (pmod != NULL && idx == R_AIC && na(pmod->criterion[1])) {
+    if (pmod != NULL && idx == R_AIC && na(pmod->criterion[C_AIC])) {
 	strcpy(gretl_errmsg, 
 	       _("No $aic (Akaike Information Criterion) value is available"));
 	return 1;
@@ -3237,7 +3237,7 @@ get_model_scalar_stat (const MODEL *pmod, int idx, int *err)
 	x = pmod->lnL;
 	break;
     case R_AIC:
-	x = pmod->criterion[1];
+	x = pmod->criterion[C_AIC];
 	break;
     case R_SIGMA:
 	if (pmod->nwt) x = pmod->sigma_wt;
