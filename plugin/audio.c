@@ -593,6 +593,7 @@ static void min_max (const double *x, double *min, double *max,
 
 #if defined(HAVE_FLITE)
 
+#if 0
 static int save_dataset_comments (const dataset *dset)
 {
     int i, j;
@@ -618,7 +619,10 @@ static int save_dataset_comments (const dataset *dset)
 
     cst_wave_save_riff(fullw, "gretl_flite.wav");
     delete_wave(fullw);
+
+    return 0;
 }
+#endif
 
 static void speak_dataset_comments (const dataset *dset)
 {
