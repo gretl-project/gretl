@@ -1,3 +1,5 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
   <chapter id="modes"><title>Modes of working</title>
 
   <sect1 id="scripts"><title>Command scripts</title>
@@ -12,19 +14,20 @@
 
     <para>
       To view the current state of the script at any point in a
-      <application>gretl</application> session, choose <quote>Command
-	log</quote> under the File menu. This log file is called
-      <filename>session.inp</filename> and it is overwritten whenever
-      you start a new session.  To preserve it, save the script under
-      a different name.  Script files will be found most easily, using
-      the GUI file selector, if you name them with the extension
-      <quote><filename>.inp</filename></quote>.</para>
+      <application>gretl</application> session, choose <quote>View
+	command log</quote> under the File menu. This log file is
+      called <filename>session.inp</filename> and it is overwritten
+      whenever you start a new session.  To preserve it, save the
+      script under a different name.  Script files will be found most
+      easily, using the GUI file selector, if you name them with the
+      extension <quote><filename>.inp</filename></quote>.</para>
 
     <para>To open a script you have written independently, use the
       <quote>File, Open command file</quote> menu item; to create a
       script from scratch use the <quote>File, New command
-      file</quote> item.  In either case a script window will open
-      (see <xref linkend="fig-scriptwin"/>).</para>
+	file</quote> item or the <quote>new script</quote> toolbar
+      button.  In either case a script window will open (see <xref
+	linkend="fig-scriptwin"/>).</para>
 
     <figure id="fig-scriptwin" float="1" pgwide="1">
      <title>Script window, editing a command file</title>
@@ -82,36 +85,87 @@
 	  Then open the Command log, edit out any redundant commands,
 	  and save it under a specific name. Run the script to
 	  generate a single file containing a concise record of your
-	  work.</para></listitem>
+	  work.</para>
+      </listitem>
       <listitem><para>Start by establishing a new script file.  Type
 	  in any commands that may be required to set up
 	  transformations of the data (see the <command>genr</command>
 	  command in <xref linkend="cmdref"/> below). Typically this
-	  sort of
-	  thing can be accomplished more efficiently via commands
-	  assembled with forethought rather than point-and-click. Then
-	  save and run the script: the GUI data window will be updated
-	  accordingly. Now you can carry out further exploration of
-	  the data via the GUI. To revisit the data at a later point,
-	  open and rerun the <quote>preparatory</quote> script
-	  first.</para></listitem>
+	  sort of thing can be accomplished more efficiently via
+	  commands assembled with forethought rather than
+	  point-and-click. Then save and run the script: the GUI data
+	  window will be updated accordingly. Now you can carry out
+	  further exploration of the data via the GUI. To revisit the
+	  data at a later point, open and rerun the
+	  <quote>preparatory</quote> script first.</para>
+      </listitem>
     </itemizedlist>
 
-    <para>Para on saving objects.
+    <para>When you estimate a model using point-and-click, the model
+      results are displayed in a separate window, offering menus which
+      let you perform tests, draw graphs, save data from the model,
+      and so on.  Ordinarily, when you estimate a model using a script
+      you just get a non-interactive printout of the results.  You
+      can, however, arrange for models estimated in a script to be
+      <quote>captured</quote>, so that you can examine them
+      interactively when the script is finished.  Here is an example
+      of the syntax for achieving this effect:
     </para>
+    <programlisting>
+      Model1 &lt;- ols Ct 0 Yt</programlisting>
+
+    <para>That is, you type a name for the model to be saved under,
+    then a back-pointing <quote>assignment arrow</quote>, then
+    the model command.  You may use names that have embedded spaces
+    if you like, but such names must always be wrapped in double
+    quotes:</para>
+    <programlisting>
+      "Model 1" &lt;- ols Ct 0 Yt</programlisting>
+
+    <para>Models saved in this way will appear as icons in the
+      <application>gretl</application> session window (see <xref
+	linkend="session"/>) after the script is executed.  In
+      addition, you can arrange to have a named model displayed (in
+      its own window) automatically as follows:</para>
+    <programlisting>
+      Model1.show</programlisting>
+
+      <para>Again, if the name contains spaces it must be
+      quoted:</para>
+    <programlisting>
+      "Model 1".show</programlisting>
+
+    <para>The same commands can be used for graphs.  For example the
+    following will create a plot of <varname>Ct</varname> against
+    <varname>Yt</varname>, save it under the name
+    <quote>CrossPlot</quote>, and have it displayed:</para>
+    <programlisting>
+      CrossPlot &lt;- gnuplot Ct Yt
+      CrossPlot.show</programlisting>
+
+  </sect1>
+
+  <sect1 id="console"><title>The gretl console</title>
 
     <para>A further option is available for your computing
       convenience. Under <application>gretl</application>'s Utilities
-      menu you will find the item <quote>Gretl console</quote>.  This
-      opens up a window in which you can type commands and execute
-      them one by one (by pressing the Enter key) interactively.  This
-      is essentially the same as <application>gretlcli</application>'s
-      mode of operation, except that (a) the GUI is updated based on
-      commands executed from the console, enabling you to work back
-      and forth as you wish, and (b)
-      <application>gretl</application>'s Monte Carlo loop routine (see
+      menu you will find the item <quote>Gretl console</quote> (there
+      is also an <quote>open gretl console</quote> button on the
+      toolbar in the main window).  This opens up a window in which
+      you can type commands and execute them one by one (by pressing
+      the Enter key) interactively.  This is essentially the same as
+      <application>gretlcli</application>'s mode of operation, except
+      that (a) the GUI is updated based on commands executed from the
+      console, enabling you to work back and forth as you wish, and
+      (b) <application>gretl</application>'s Monte Carlo loop routine
+      (see
       <xref linkend="monte-carlo"/>) is not at present available in
       this mode.</para>
+
+    <para>In the console, you have <quote>command history</quote>;
+      that is, you can use the up and down arrow keys to navigate the
+      list of command you have entered to date.  You can retrieve,
+      edit and then re-enter a previous command.</para>
 
   </sect1>
 
@@ -123,12 +177,9 @@
       <para>
 	<application>gretl</application> offers the idea of a
 	<quote>session</quote> as a way of keeping track of your work
-	and revisiting it later.  This is somewhat experimental; I
-	would be interested in hearing people's reactions.</para>
-
-      <para>
-      The basic idea is to provide an iconic space containing various
-	objects pertaining to your current working session (see
+	and revisiting it later. The basic idea is to provide an
+	iconic space containing various objects pertaining to your
+	current working session (see
       <xref linkend="fig-session"/>).  You can add objects
 	(represented by icons) to this space as you go along.  If you
 	save the session, these added objects should be available
@@ -148,9 +199,9 @@
 	but you can also right-click on the icon for a menu of other
 	actions.</para>
 
-      <tip><para>In many <application>gretl</application> windows, the
-	  right mouse button brings up a menu with common
-	  tasks.</para></tip>
+      <tip><para>In many gretl windows, the right mouse button brings
+	  up a menu with common tasks.</para>
+      </tip>
 
       <para>Two sorts of objects can be added to the Icon View window:
 	models and graphs.</para>  

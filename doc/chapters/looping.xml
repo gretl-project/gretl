@@ -1,3 +1,5 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
   <chapter id="looping"><title>Loop constructs</title>
 
     <sect1 id="monte-carlo"><title>Monte Carlo simulations</title>
