@@ -28,6 +28,8 @@ extern cst_voice *register_cmu_us_kal (void);
 
 const char *track_hdr = "MTrk";
 
+#define N_COMMENTS 3
+
 typedef struct _dataset dataset;
 typedef struct _midi_spec midi_spec;
 typedef struct _midi_track midi_track;
@@ -39,8 +41,7 @@ struct _dataset {
     double *x;
     double *y;
     double *y2;
-    int n_comments;
-    char **comments;
+    gchar *comments[N_COMMENTS];
 };
 
 struct _midi_spec {
@@ -217,8 +218,26 @@ static void four_four_header (midi_spec *spec)
     fseek(spec->fp, pos1, SEEK_SET);
 }
 
+static void dataset_init (dataset *dset)
+{
+    int i;
+
+    dset->x = NULL;
+    dset->y = NULL;
+    dset->y2 = NULL;
+
+    dset->n = 0;
+    dset->pd = 0;
+
+    for (i=0; i<N_COMMENTS; i++) {
+	dset->comments[i] = NULL;
+    }
+}
+
 static void dataset_free (dataset *dset)
 {
+    int i;
+
     free(dset->x);
     free(dset->y);
 
@@ -226,13 +245,10 @@ static void dataset_free (dataset *dset)
 	free(dset->y2);
     }
     
-    if (dset->n_comments > 0 && dset->comments != NULL) {
-	int i;
-
-	for (i=0; i<dset->n_comments; i++) {
-	    free(dset->comments[i]);
+    for (i=0; i<N_COMMENTS; i++) {
+	if (dset->comments[i] != NULL) {
+	    g_free(dset->comments[i]);
 	}
-	free(dset->comments);
     }
 }
 
@@ -250,113 +266,107 @@ const char *cent_str (int cent)
     }
 }
 
-static int xrange_to_string (char *targ, const char *s,
-			     const dataset *dset)
+static int make_xrange_comment (const char *line, dataset *dset)
 {
     double x1, x2;
 
-    if (sscanf(s, "set xrange [%lf:%lf]", &x1, &x2) != 2) {
+    if (sscanf(line, "set xrange [%lf:%lf]", &x1, &x2) != 2) {
 	return 0;
     }
 
     if (dset->pd == 0) {
-	sprintf(targ, "%.4g to %.4g", x1, x2);
-	return 1;
+	dset->comments[2] = g_strdup_printf("%.4g to %.4g", x1, x2);
     } else {
-	char tmp[16];
+	char tmp1[64], tmp2[64];
 	int ix1 = x1;
 	int ix2 = x2;
-	int cent = x1 / 100;
-	int yr = ix1 - 100 * cent;
+	int cent, yr;
 
-	sprintf(targ, "%s %d to ", cent_str(cent), yr);
+	cent = x1 / 100;
+	yr = ix1 - 100 * cent;
+	sprintf(tmp1, "%s %d", cent_str(cent), yr);
     
 	cent = x2 / 100;
 	yr = ix2 - 100 * cent;
-	strcat(targ, cent_str(cent));
-	sprintf(tmp, " %d\n", yr);
-	strcat(targ, tmp);
-    
-	return 1;
-    }
-}
+	sprintf(tmp2, "%s %d", cent_str(cent), yr);
 
-static int ylabel_to_string (char *targ, const char *s)
-{
-    int n;
-
-    if (sscanf(s, "set ylabel '%8s'", targ) != 1) {
-	return 0;
-    }
-
-    n = strlen(targ);
-    if (targ[n-1] == '\'') {
-	targ[n-1] = '\0';
+	dset->comments[2] = g_strdup_printf("%s to %s", tmp1, tmp2);
     }
 
     return 1;
 }
 
-static void make_ts_comment (dataset *dset, char *tmp)
+static int make_ylabel_comment (const char *line, dataset *dset)
 {
+    char tmp[16];
+    int ret = 0;
+
+    if (sscanf(line, "set ylabel '%15[^\']", tmp) == 1) {
+	dset->comments[1] = g_strdup(tmp);
+	ret = 1;
+    }
+
+    return ret;
+}
+
+static void make_ts_comment (const char *line, dataset *dset)
+{
+    const char *pdstr = NULL;
+
+    sscanf(line, "# timeseries %d", &dset->pd);
+
     switch (dset->pd) {
     case 1:
-	strcpy(tmp, "Annual ");
+	pdstr = "Annual";
 	break;
     case 4:
-	strcpy(tmp, "Quarterly ");
+	pdstr = "Quarterly";
 	break;
     case 12:
-	strcpy(tmp, "Monthly ");
+	pdstr = "Monthly";
 	break;
     default:
-	*tmp = '\0';
 	break;
     }
 
-    strcat(tmp, "time series");
+    if (pdstr != NULL) {
+	dset->comments[0] = g_strdup_printf("%s time series", pdstr);
+    } else {
+	dset->comments[0] = g_strdup("time series");
+    }
 }
 
-static int add_comment (const char *line, dataset *dset)
+static int get_comment (const char *line, dataset *dset)
 {
-    int i, nc = dset->n_comments;
-    char tmp[128];
+    int ret = 0;
 
-    if (line == NULL) {
-	make_ts_comment(dset, tmp);
-    } else if (!xrange_to_string(tmp, line, dset) &&
-	       !ylabel_to_string(tmp, line)) {
-	return 0;
+    if (!strncmp(line, "# timeseries", 12)) {
+	make_ts_comment(line, dset);
+	ret = 1;
     }
 
-    dset->comments[nc] = malloc(strlen(tmp) - 1);
-    if (dset->comments[nc] == NULL) {
-	goto bailout;
+    else if (!strncmp(line, "set ylabel", 10)) {
+	make_ylabel_comment(line, dset);
+	ret = 1;
+    }
+    
+    else if (!strncmp(line, "set xrange", 10)) {
+	make_xrange_comment(line, dset);
+	ret = 1;
     }
 
-    strcpy(dset->comments[nc], tmp);
-    dset->n_comments += 1;
-    return 0;
-
- bailout:
-
-    for (i=0; i<nc; i++) {
-	free(dset->comments[i]);
-    }
-    free(dset->comments);
-    dset->comments = NULL;
-    dset->n_comments = 0;
-
-    return 1;
+    return ret;
 }
 
-static void dataset_get_pd (const char *line, dataset *dset)
+static void tail_strip_line (char *line)
 {
-    int pd;
+    int i, n = strlen(line);
 
-    if (sscanf(line, "# timeseries %d", &pd) == 1) {
-	dset->pd = pd;
-	dset->n_comments += 1;
+    for (i=n-1; i>0; i--) {
+	if (line[i] == '\n' || line[i] == ' ') {
+	    line[i] = '\0';
+	}
+	else break;
     }
 }
 
@@ -365,28 +375,22 @@ static int read_datafile (const char *fname, dataset *dset)
     char line[256];
     int i, err = 0;
     int got_e = 0, y2data = 0;
-    FILE *fp;
+    FILE *fdat;
 
-    dset->n = dset->pd = 0;
-    dset->x = dset->y = dset->y2 = NULL;
-    dset->n_comments = 0;
-    dset->comments = NULL;
+    dataset_init(dset);
 
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
+    fdat = fopen(fname, "r");
+    if (fdat == NULL) {
 	fprintf(stderr, "Couldn't open '%s'\n", fname);
 	return 1;
     } else {
 	fprintf(stderr, "Reading %s...\n", fname);
     }
 
-    while (fgets(line, 256, fp)) {
-	if (!strncmp(line, "set ylabel", 10) ||
-	    !strncmp(line, "set xrange", 10)) {
-	    dset->n_comments += 1;
-	} else if (strstr(line, "# timeseries")) {
-	    dataset_get_pd(line, dset);
-	} else if (!strcmp(line, "e\n")) {
+    while (fgets(line, 256, fdat)) {
+	tail_strip_line(line);
+	if (get_comment(line, dset)) continue;
+	else if (!strcmp(line, "e")) {
 	    fprintf(stderr, "Got end of data marker\n");
 	    got_e++;
 	    if (got_e == 2) {
@@ -426,28 +430,12 @@ static int read_datafile (const char *fname, dataset *dset)
 	}	
     }
 
-    if (dset->n_comments > 0) {
-	dset->comments = malloc(dset->n_comments * sizeof *dset->comments);
-	if (dset->comments == NULL) {
-	    err = 1;
-	    fputs("Out of memory\n", stderr);
-	    goto bailout;
-	}	
-	for (i=0; i<dset->n_comments; i++) {
-	    dset->comments[i] = NULL;
-	}
-    }
+    rewind(fdat);
 
-    rewind(fp);
-
-    i = got_e = dset->n_comments = 0;
-    while (!err && fgets(line, 256, fp)) {
-	if (strstr(line, "# timeseries")) {
-	    err = add_comment(NULL, dset);
-	} else if (!strncmp(line, "set ylabel", 10) ||
-	    !strncmp(line, "set xrange", 10)) {	
-	    err = add_comment(line, dset);
-	} else if (!strcmp(line, "e\n")) {
+    i = got_e = 0;
+    while (!err && fgets(line, 256, fdat)) {
+	tail_strip_line(line);
+	if (!strcmp(line, "e")) {
 	    got_e++;
 	    if (got_e == 2) {
 		break;
@@ -475,7 +463,7 @@ static int read_datafile (const char *fname, dataset *dset)
 
  bailout:
 
-    fclose(fp);
+    fclose(fdat);
 
     if (err) {
 	dataset_free(dset);
@@ -507,8 +495,10 @@ static void speak_dataset_comments (const dataset *dset)
 
     v = register_cmu_us_kal();
 
-    for (i=0; i<dset->n_comments; i++) {
-	flite_text_to_speech(dset->comments[i], v, "play");
+    for (i=0; i<N_COMMENTS; i++) {
+	if (dset->comments[i] != NULL) {
+	    flite_text_to_speech(dset->comments[i], v, "play");
+	}
     }
 
 # ifdef DEBUG
@@ -519,13 +509,11 @@ static void speak_dataset_comments (const dataset *dset)
 
 static void print_dataset_comments (const dataset *dset)
 {
-    int i, n;
+    int i;
 
-    for (i=0; i<dset->n_comments; i++) {
-	n = strlen(dset->comments[i]);
-	printf("Comment[%d]: %s", i+1, dset->comments[i]);
-	if (dset->comments[i][n-1] != '\n') {
-	    putchar('\n');
+    for (i=0; i<N_COMMENTS; i++) {
+	if (dset->comments[i] != NULL) {
+	    printf("Comment[%d]: %s\n", i+1, dset->comments[i]);
 	}
     }
 
