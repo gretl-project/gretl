@@ -1925,7 +1925,7 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
     if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
 	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
     } else {
-	t = atoi(obs) - 1; /* convert to zero-based */
+	t = atoi(obs); 
 	if (t < 0 || t >= pdinfo->n) {
 	    t = -1;
 	}
@@ -1947,6 +1947,10 @@ int get_t_from_obs_string (char *s, const double **Z,
 {
     int t;
 
+#if OBS_DEBUG
+    fprintf(stderr, "\nget_t_from_obs_string: s ='%s'\n", s);
+#endif
+
     if (calendar_data(pdinfo)) {
 	fix_calendar_date(s);
     } 
@@ -1956,20 +1960,33 @@ int get_t_from_obs_string (char *s, const double **Z,
     if (t < 0) {
 	if (isdigit((unsigned char) *s)) {
 	    t = plain_obs_number(s, pdinfo);
+#if OBS_DEBUG
+	    fprintf(stderr, " plain_obs_number: t = %d\n", t);
+#endif
 	} else {
 	    int v = varindex(pdinfo, s);
 
 	    if (v < pdinfo->v) {
-		t = (int) Z[v][0];
+		t = (int) Z[v][0] - 1;
+#if OBS_DEBUG
+		fprintf(stderr, " based on var %d: t = %d\n", v, t);
+#endif
 		if (t >= pdinfo->n) {
 		    char try[16];
 
 		    sprintf(try, "%d", t);
 		    t = dateton(try, pdinfo);
+#if OBS_DEBUG
+		    fprintf(stderr, " revised via dateton: t = %d\n", t);
+#endif
 		}
 	    }
 	}
     }
+
+#if OBS_DEBUG
+    fprintf(stderr, " return value: t = %d\n", t);
+#endif
 
     return t;
 }
