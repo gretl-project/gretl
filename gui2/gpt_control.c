@@ -24,6 +24,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+# include "guiprint.h"
 #endif
 
 struct gpt_titles_t {
