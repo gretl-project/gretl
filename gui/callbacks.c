@@ -29,7 +29,6 @@ extern void browser_open_ps (GtkWidget *w, gpointer data);
 extern void display_var (void);
 extern void open_db_clist (GtkWidget *w, gpointer data);
 extern void open_remote_clist (GtkWidget *w, gpointer data);
-extern void remember_model (GtkWidget *widget, dialog_t *ddata);
 extern void gui_get_series (gpointer data, guint bci_code, 
 			    GtkWidget *widget);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
@@ -505,13 +504,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, "Supply full path to file with markers:");
 	strcpy(defstr, paths.userdir);
 	okfunc = do_add_markers; 
-	break;
-    case STORE_MODEL:
-	strcpy(title, "gretl: store model");
-	strcpy(query, "Name for this model:");
-	pmod = (MODEL *) mydata->data;
-	sprintf(defstr, "Model %d", pmod->ID);
-	okfunc = remember_model; 
 	break;
     case CORRGM:
 	strcpy(title, "gretl: correlogram");

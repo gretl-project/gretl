@@ -47,7 +47,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel);
 
 static char *model_items[] = {
     "Display",
-    "Rename",
     "Delete"
 };
 
@@ -55,7 +54,6 @@ static char *graph_items[] = {
     "Display",
     "Edit using GUI",
     "Edit plot commands",
-    "Rename",
     "Delete"
 };
 
@@ -109,8 +107,6 @@ static void session_build_popups (void);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
-static void rename_object (GtkWidget *widget, dialog_t *ddata);
-static gint check_object_name (gchar *name, gui_obj *gobj, gint sort);
 
 gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
 gui_obj *session_new_model (void);
@@ -213,40 +209,7 @@ void add_last_graph (void)
 
 /* ........................................................... */
 
-void remember_model (GtkWidget *widget, dialog_t *ddata)
-     /* called from GUI model window, via edit dialog */
-{
-    windata_t *mydata = ddata->data;
-    MODEL *pmod = (MODEL *) mydata->data;
-    char *edttext;
-    int i = session.nmodels;
-
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (check_object_name(edttext, NULL, 'm')) return;
-
-    if (pmod->name) free(pmod->name);
-    if ((pmod->name = mymalloc(64)) == NULL) return;
-    strncpy(pmod->name, edttext, 63);
-    pmod->name[63] = '\0';
-
-    /* write model into session struct */
-    if (session.nmodels)
-	session.models = myrealloc(session.models, 
-				   (i + 1) * sizeof(MODEL *));
-    else
-	session.models = mymalloc(sizeof(MODEL *));
-    if (session.models == NULL) return;
-
-    session.nmodels += 1;
-    session.models[i] = pmod;
-    /* session_list(); */
-    if (iconview != NULL)
-	session_add_object(session.models[i], 'm');
-}
-
-/* ........................................................... */
-
-void quick_remember_model (gpointer data, guint j, GtkWidget *widget)
+void remember_model (gpointer data, guint close, GtkWidget *widget)
      /* called directly from model window */
 {
     windata_t *mydata = (windata_t *) data;
@@ -254,7 +217,7 @@ void quick_remember_model (gpointer data, guint j, GtkWidget *widget)
     int i = session.nmodels;
 
     if (pmod->name) return;
-    if ((pmod->name = mymalloc(64)) == NULL) return;
+    if ((pmod->name = mymalloc(24)) == NULL) return;
     sprintf(pmod->name, "Model %d", pmod->ID);
 
     if (session.nmodels)
@@ -270,7 +233,8 @@ void quick_remember_model (gpointer data, guint j, GtkWidget *widget)
 	session_add_object(session.models[i], 'm');  
 
     /* close model window */
-    gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+    if (close)
+	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
 }
 
 /* ........................................................... */
@@ -695,6 +659,7 @@ void view_session (void)
 #endif
 
     for (i=0; i<session.nmodels; i++) {
+	
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.models[%d] to view\n", i);
 #endif
@@ -709,98 +674,12 @@ void view_session (void)
 
 /* ........................................................... */
 
-static gint check_object_name (gchar *name, gui_obj *gobj, gint sort)
-{
-    gint i, n, samename = 0;
-    GList *list;
-    gui_obj *other;
-    gchar *msg;
-
-    if (name == NULL || strlen(name) == 0) {
-	errbox("The object must have a name");
-	return 1;
-    }
-
-    for (n=0; n<strlen(name); n++){
-	if(name[n] < 'a' || name[n] > 'z')
-	    if(name[n] < 'A' || name[n] > 'Z')
-		if(name[n] < '0' || name[n] > '9')
-		    if(name[n] != '.' && name[n] != '_' && name[n] != ' '){
-			errbox("The name contains invalid characters");
-			return 1;
-		    }
-    }
-
-    if (!gobjects) {
-	if (sort == 'm') {
-	    for (i=0; i<session.nmodels; i++) 
-		if (strcmp(name, (session.models[i])->name) == 0) {
-		    samename = 1;
-		    break;
-		}
-	}
-	else if (sort == 'g') {
-	    for (i=0; i<session.ngraphs; i++) 
-		if (strcmp(name, (session.graphs[i])->name) == 0) {
-		    samename = 1;
-		    break;
-		}
-	}		    
-    }
-
-    list = gobjects;
-    while (list) {
-	other = (gui_obj *) list->data;
-	if (other != gobj
-	    && strcmp(other->name, name) == 0
-	    && other->sort == sort) {
-	    samename = 1;
-	    break;
-	}
-	list = list->next;
-    }
-
-    if (samename) {
-	msg = g_strdup_printf("Another %s has the same name",
-			      (sort == 'm')? "model" : "graph"); 
-	errbox(msg);
-	g_free(msg);
-    }
-
-    return samename;
-}
-
-/* ........................................................... */
-
-static void rename_object (GtkWidget *w, dialog_t *ddata)
-{
-    gchar *name;
-    gui_obj *gobj;
-
-    name = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    gobj = (gui_obj *) ddata->data;
-
-    if (gobj->sort != 'm' && gobj->sort != 'g') return;
-
-    if (check_object_name(name, gobj, gobj->sort)) return;
-
-    /* OK, do the actual renaming */
-    strcpy(gobj->name, name);
-    gtk_icon_list_set_label(GTK_ICON_LIST(iconlist1), active_icon, name);
-    if (gobj->sort == 'm') 
-	strcpy(((MODEL *) gobj->data)->name, name);
-    if (gobj->sort == 'g') 
-	strcpy(((GRAPHT *) gobj->data)->name, name);
-    
-    return;
-}
-
-/* ........................................................... */
-
 static void set_addgraph_mode (void)
 {
     GtkWidget *gmenu = 
 	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
+
+    if (gmenu == NULL || addgraph == NULL) return;
 
     gtk_widget_set_sensitive(addgraph, GTK_WIDGET_IS_SENSITIVE(gmenu));
 }
@@ -871,7 +750,6 @@ void session_open_object (GtkWidget *widget,
 	object_popup_show(item, (GdkEventButton *) event);
   
 }
-
 
 /* ........................................................... */
 
@@ -1014,12 +892,66 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 		delete_session_model(NULL, myobject);
 	}
     }
-    else if (strcmp(item, "Rename") == 0) {
-	edit_dialog("gretl: rename", "Enter new name for object:", 
-		    myobject->name, 1,
-		    "Apply", rename_object, myobject, 
-		    "Cancel", NULL, NULL, 0, 0);   
+}
+
+/* ........................................................... */
+
+static void store_list (int *list, char *buf)
+{
+    int i;
+    char numstr[5];
+
+    for (i=1; i<=list[0]; i++) {
+        sprintf(numstr, "%d ", list[i]);
+        strcat(buf, numstr);
     }
+}
+
+/* ........................................................... */
+
+static char *model_cmd_str (MODEL *pmod)
+{
+    int i;
+    char *str;
+    
+    str = malloc(MAXLEN);
+    if (str == NULL) return NULL;
+
+    sprintf(str, "%s ", commands[pmod->ci]);
+
+    if (pmod->ci == AR) {
+        store_list(pmod->arlist, str);
+        strcat(str, "; ");
+    }
+    store_list(pmod->list, str);    
+
+    return str;
+}
+
+/* ........................................................... */
+
+static char *graph_str (GRAPHT *graph)
+{
+    FILE *fp;
+    char *str = NULL;
+
+    fp = fopen(graph->fname, "r");
+    if (fp != NULL) {
+	char xlabel[24], ylabel[24], line[48];
+	int gotxy = 0;
+
+	while (fgets(line, 47, fp) && gotxy < 2) {
+	    if (sscanf(line, "set xlabel %23s", xlabel) == 1) 
+		gotxy++;
+	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1)
+		gotxy++;
+	}
+	if (gotxy == 2 && (str = malloc(64))) {
+	    sprintf(str, "%s versus %s\n", ylabel, xlabel);
+	}
+	fclose(fp);
+    }
+    return str;
 }
 
 /* ........................................................... */
@@ -1030,6 +962,7 @@ gui_obj *session_add_object (gpointer data, int sort)
     gchar *name = NULL;
     MODEL *pmod = NULL;
     GRAPHT *graph = NULL;
+    extern GtkTooltips *gretl_tips;
 
     switch (sort) {
     case 'm':
@@ -1060,8 +993,26 @@ gui_obj *session_add_object (gpointer data, int sort)
     }
 
     gobj = gui_object_new(GTK_ICON_LIST(iconlist1), name, sort);
-    if (sort == 'm') gobj->data = pmod;
-    else if (sort == 'g') gobj->data = graph;
+    if (sort == 'm') {
+	char *str = model_cmd_str(pmod);
+
+	gobj->data = pmod;
+	if (str != NULL) {
+	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
+				 str, NULL);
+	    free(str);
+	}
+    }
+    else if (sort == 'g') {
+	char *str = graph_str(graph);
+
+	gobj->data = graph;
+	if (str != NULL) {
+	    gtk_tooltips_set_tip(gretl_tips, GTK_WIDGET(gobj->icon->entry), 
+				 str, NULL);
+	    free(str);
+	}
+    }
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 'i') gobj->data = paths.hdrfile;
     else if (sort == 's') gobj->data = cmdfile;

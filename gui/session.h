@@ -45,9 +45,7 @@ void session_close_state (gboolean s);
 
 void add_last_graph (void);
 
-void remember_model (GtkWidget *widget, dialog_t *ddata);
-
-void quick_remember_model (gpointer data, guint i, GtkWidget *widget);
+void remember_model (gpointer data, guint close, GtkWidget *widget);
 
 void session_init (void);
 

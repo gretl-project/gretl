@@ -128,9 +128,8 @@ RCVARS rc_vars[] = {
 GtkItemFactoryEntry model_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },
     { "/File/_Save as text...", NULL, file_save, SAVE_MODEL, NULL },
-    { "/File/Save to session as icon...", NULL, gretl_callback, 
-      STORE_MODEL, NULL },
-    { "/File/Save as icon and close", NULL, quick_remember_model, 0, NULL },
+    { "/File/Save to session as icon", NULL, remember_model, 0, NULL },
+    { "/File/Save as icon and close", NULL, remember_model, 1, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, NULL, 0, "<Branch>" },
@@ -354,8 +353,8 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
     if (key->keyval == GDK_q) 
         gtk_widget_destroy(w);
     else if (key->keyval == GDK_s) 
-	quick_remember_model 
-	    (gtk_object_get_data(GTK_OBJECT(w), "ddata"), 0, NULL);
+	remember_model 
+	    (gtk_object_get_data(GTK_OBJECT(w), "ddata"), 1, NULL);
 }
 
 /* ........................................................... */
@@ -1101,9 +1100,14 @@ int view_file (char *filename, int editable, int del_file,
 
 void flip (GtkItemFactory *ifac, char *path, gboolean s)
 {
-    if (ifac != NULL)
-	gtk_widget_set_sensitive(gtk_item_factory_get_item
-				 (ifac, path), s);
+    if (ifac != NULL) {
+	GtkWidget *w = gtk_item_factory_get_item(ifac, path);
+
+	if (w != NULL) 
+	    gtk_widget_set_sensitive(w, s);
+	else
+	    fprintf(stderr, "Failed to flip state of \"%s\"\n", path);
+    }
 }
 
 /* ........................................................... */
@@ -1158,7 +1162,7 @@ static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/File/Save to session as icon...", s);
+    flip(ifac, "/File/Save to session as icon", s);
     flip(ifac, "/File/Save as icon and close", s);
 }
 
