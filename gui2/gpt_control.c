@@ -47,7 +47,7 @@ enum {
     PLOT_HAS_CONTROLLER = 1 << 1,
     PLOT_ZOOMED         = 1 << 2,
     PLOT_ZOOMING        = 1 << 3,
-    PLOT_NO_LABELS      = 1 << 4,
+    PLOT_NO_MARKERS     = 1 << 4,
     PLOT_PNG_COORDS     = 1 << 5,
     PLOT_DONT_ZOOM      = 1 << 6,
     PLOT_DONT_EDIT      = 1 << 7,
@@ -61,25 +61,25 @@ enum {
     PLOT_YLABEL         = 1 << 2,
     PLOT_Y2AXIS         = 1 << 3,
     PLOT_Y2LABEL        = 1 << 4,
-    PLOT_LABELS_UP      = 1 << 5,
+    PLOT_MARKERS_UP     = 1 << 5,
 } plot_format_flags;
 
 #define plot_is_saved(p)        (p->status & PLOT_SAVED)
 #define plot_has_controller(p)  (p->status & PLOT_HAS_CONTROLLER)
 #define plot_is_zoomed(p)       (p->status & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->status & PLOT_ZOOMING)
-#define plot_has_no_labels(p)   (p->status & PLOT_NO_LABELS)
+#define plot_has_no_markers(p)  (p->status & PLOT_NO_MARKERS)
 #define plot_has_png_coords(p)  (p->status & PLOT_PNG_COORDS)
 #define plot_not_zoomable(p)    (p->status & PLOT_DONT_ZOOM)
 #define plot_not_editable(p)    (p->status & PLOT_DONT_EDIT)
 #define plot_doing_position(p)  (p->status & PLOT_POSITIONING)
 
-#define plot_has_title(p)       (p->format & PLOT_TITLE)
-#define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
-#define plot_has_ylabel(p)      (p->format & PLOT_YLABEL)
-#define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
-#define plot_has_y2label(p)     (p->format & PLOT_Y2LABEL)
-#define plot_has_data_labels(p) (p->format & PLOT_LABELS_UP)
+#define plot_has_title(p)        (p->format & PLOT_TITLE)
+#define plot_has_xlabel(p)       (p->format & PLOT_XLABEL)
+#define plot_has_ylabel(p)       (p->format & PLOT_YLABEL)
+#define plot_has_y2axis(p)       (p->format & PLOT_Y2AXIS)
+#define plot_has_y2label(p)      (p->format & PLOT_Y2LABEL)
+#define plot_has_data_markers(p) (p->format & PLOT_MARKERS_UP)
 
 #define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 
@@ -357,9 +357,10 @@ static int add_png_term_to_plotfile (const char *fname)
     return add_or_remove_png_term(fname, 1, NULL);
 }
 
+/* public because called from session.c when saving a graph file */
+
 int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
 {
-    /* called from session.c when saving a graph file */
     return add_or_remove_png_term(fname, 0, spec);
 }
 
@@ -373,13 +374,16 @@ void mark_plot_as_saved (GPT_SPEC *spec)
 static int gnuplot_png_init (GPT_SPEC *spec, FILE **fpp)
 {
     *fpp = gretl_fopen(spec->fname, "w");
+
     if (*fpp == NULL) {
 	sprintf(errtext, _("Couldn't write to %s"), spec->fname);
 	errbox(errtext);
 	return 1;
     }
+
     fprintf(*fpp, "%s\n", get_gretl_png_term_line(spec->code));
     fprintf(*fpp, "set output '%sgretltmp.png'\n", paths.userdir);
+
     return 0;
 }
 
@@ -497,9 +501,7 @@ static int chop_comma (char *str)
     return 0;
 }
 
-/* ........................................................... */
-
-static int get_gpt_label (const char *line, char *label)
+static int get_gpt_marker (const char *line, char *label)
 {
     const char *p = strchr(line, '#');
     char format[6];
@@ -512,8 +514,6 @@ static int get_gpt_label (const char *line, char *label)
 
     return 1;
 }
-
-/* ........................................................... */
 
 static void get_gpt_data (char *line, double *x, double *y)
 {
@@ -620,6 +620,14 @@ static int cant_edit (const char *line)
 
 /* ........................................................... */
 
+static void plot_label_init (GPT_LABEL *lbl)
+{
+    lbl->text[0] = '\0';
+    lbl->just = GP_JUST_LEFT;
+    lbl->pos[0] = NADBL;
+    lbl->pos[1] = NADBL;
+}
+
 static GPT_SPEC *plotspec_new (void)
 {
     GPT_SPEC *spec;
@@ -652,10 +660,7 @@ static GPT_SPEC *plotspec_new (void)
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
-	strcpy(spec->text_labels[i].text, "");
-	spec->text_labels[i].just = GP_JUST_LEFT;
-	spec->text_labels[i].pos[0] = NADBL;
-	spec->text_labels[i].pos[1] = NADBL;
+	plot_label_init(&(spec->labels[i]));
     }
 
     spec->xtics[0] = 0;
@@ -672,8 +677,8 @@ static GPT_SPEC *plotspec_new (void)
     spec->flags = 0;
     spec->fp = NULL;
     spec->data = NULL;
-    spec->labels = NULL;
-    spec->nlabels = 0;
+    spec->markers = NULL;
+    spec->nmarkers = 0;
     spec->ptr = NULL;
     spec->nlines = 0;
     spec->n_y_series = 0;
@@ -684,34 +689,32 @@ static GPT_SPEC *plotspec_new (void)
     return spec;
 }
 
-/* ........................................................... */
-
-static void plot_label_init (GPT_LABEL *lbl)
-{
-    lbl->text[0] = '\0';
-    lbl->just = GP_JUST_LEFT;
-    lbl->pos[0] = NADBL;
-    lbl->pos[1] = NADBL;
-}
+/* read a gnuplot source line specifying a text label */
 
 static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 {
     const char *p, *s;
     double x, y;
-    char coord[8];
-    int n;
+    int nc, q2 = 0;
+    int textread = 0;
 
-    /* e.g. set label 'foobar' at [ screen | graph ] 1500,350 left */
+    /* set label "this is a label" at 1998.26,937.557 left front */
+    /* set label 'foobar' at 1500,350 left */
 
     if (i >= MAX_PLOT_LABELS) {
 	return 1;
     }
 
-    plot_label_init(&(spec->text_labels[i]));
+    plot_label_init(&(spec->labels[i]));
 
-    p = strstr(line, "'");
+    /* find first single or double quote */
+    p = strchr(line, '\'');
     if (p == NULL) {
-	return 1;
+	p = strchr(line, '"');
+	if (p == NULL) {
+	    return 1;
+	}
+	q2 = 1;
     }
 
     p++;
@@ -719,78 +722,68 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 
     /* get the label text */
     while (*s) {
-	if (*s == '\'') {
+	if (q2) {
+	    if (*s == '"' && *(s-1) != '\\') {
+		textread = 1;
+	    }
+	} else if (*s == '\'') {
+	    textread = 1;
+	}
+
+	if (textread) {
 	    int len = s - p;
 
 	    if (len > PLOT_LABEL_TEXT_LEN) {
 		len = PLOT_LABEL_TEXT_LEN;
 	    }
-	    strncat(spec->text_labels[i].text, p, len);
+	    strncat(spec->labels[i].text, p, len);
 	    break;
 	}
+
 	s++;
+    }
+
+    if (!textread) {
+	return 1;
     }
 
     /* get the position */
     p = strstr(s, "at");
     if (p == NULL) {
-	spec->text_labels[i].text[0] = '\0';
+	spec->labels[i].text[0] = '\0';
 	return 1;
     }
 
     p += 2;
 
-    /* coordinate system? */
-    *coord = 0;
-    s = strstr(p, "graph");
-    if (s != NULL) {
-	strcpy(coord, "graph ");
-	p = s + 5;
-    } else {
-	s = strstr(p, "screen");
-	if (s != NULL) {
-	    strcpy(coord, "screen ");
-	    p = s + 6;
-	}
-    }
-
-    /* actual coordinates */
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
-    n = sscanf(p, "%lf,%lf", &x, &y);
+    nc = sscanf(p, "%lf,%lf", &x, &y);
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
-    if (n != 2) {
-	spec->text_labels[i].text[0] = '\0';
+    if (nc != 2) {
+	spec->labels[i].text[0] = '\0';
 	return 1;
     }
 
-    spec->text_labels[i].pos[0] = x;
-    spec->text_labels[i].pos[1] = y;
-
-    /* FIXME: handle coord? */
+    spec->labels[i].pos[0] = x;
+    spec->labels[i].pos[1] = y;
 
     /* justification */
-    if (strstr(p, "left")) {
-	spec->text_labels[i].just = GP_JUST_LEFT;
-    } else if (strstr(p, "right")) {
-	spec->text_labels[i].just = GP_JUST_RIGHT;
+    if (strstr(p, "right")) {
+	spec->labels[i].just = GP_JUST_RIGHT;
     } else if (strstr(p, "center")) {
-	spec->text_labels[i].just = GP_JUST_CENTER;
-    } else {
-	spec->text_labels[i].just = GP_JUST_LEFT;
-    }	
+	spec->labels[i].just = GP_JUST_CENTER;
+    } 
 
     return 0;
 }
 
-/* ........................................................... */
-
 static int 
-read_plot_range (const char *obj, const char *s, GPT_SPEC *spec)
+read_plotspec_range (const char *obj, const char *s, GPT_SPEC *spec)
 {
     double r0, r1;
     int i = 0, err = 0;
@@ -804,9 +797,6 @@ read_plot_range (const char *obj, const char *s, GPT_SPEC *spec)
     } else {
 	err = 1;
     }
-
-    /* FIXME: looping error if the following is not set (presumably
-       will get looping on other errors too */
 
     if (!strcmp(s, "[*:*]")) {
 	r0 = r1 = NADBL;
@@ -822,10 +812,7 @@ read_plot_range (const char *obj, const char *s, GPT_SPEC *spec)
 #endif
     }
 
-    if (err) {
-	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "plotfile line: '%s'\n", line);
-    } else {
+    if (!err) {
 	spec->range[i][0] = r0;
 	spec->range[i][1] = r1;
     }
@@ -833,99 +820,99 @@ read_plot_range (const char *obj, const char *s, GPT_SPEC *spec)
     return err;
 }
 
-static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
-			      int *labelno)
+static int parse_gp_set_line (GPT_SPEC *spec, const char *s, int *labelno)
 {
-    char set_thing[16], setting[MAXLEN];
-    size_t n;
+    char variable[16] = {0};
+    char value[MAXLEN] = {0};
 
-    if (strstr(line, "encoding") != NULL) {
+    if (strstr(s, "encoding") != NULL) {
 	return 0;
     }
 
-    if (sscanf(line + 4, "%11s", set_thing) != 1) {
+    if (sscanf(s + 4, "%11s", variable) != 1) {
 	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "plotfile line: '%s'\n", line);
+	fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	return 1;
     }
 
-    if (strcmp(set_thing, "y2tics") == 0) {
+    if (strcmp(variable, "y2tics") == 0) {
 	spec->flags |= GPTSPEC_Y2AXIS;
 	return 0;
-    } else if (strcmp(set_thing, "border 3") == 0) {
+    } else if (strcmp(variable, "border 3") == 0) {
 	spec->flags |= GPTSPEC_BORDER_HIDDEN;
 	return 0;
     }    
 
-    n = strlen(set_thing);
-    strcpy(setting, line + 4 + n);
-    top_n_tail(setting);
+    strcpy(value, s + 4 + strlen(variable));
+    top_n_tail(value);
 
-    if (strstr(set_thing, "range")) {
-	if (read_plot_range(set_thing, setting, spec)) {
+    if (strstr(variable, "range")) {
+	if (read_plotspec_range(variable, value, spec)) {
 	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "plotfile line: '%s'\n", line);
+	    fprintf(stderr, "parse_gp_set_line: bad line '%s'\n", s);
 	    return 1;
 	}
-    } else if (strcmp(set_thing, "title") == 0) {
-	strcpy(spec->titles[0], setting);
-    } else if (strcmp(set_thing, "xlabel") == 0) {
-	strcpy(spec->titles[1], setting);
-    } else if (strcmp(set_thing, "ylabel") == 0) {
-	strcpy(spec->titles[2], setting);
-    } else if (strcmp(set_thing, "y2label") == 0) {
-	strcpy(spec->titles[3], setting);
-    } else if (strcmp(set_thing, "key") == 0) {
-	strcpy(spec->keyspec, setting);
-    } else if (strcmp(set_thing, "nokey") == 0) {
+    } else if (!strcmp(variable, "title")) {
+	strcpy(spec->titles[0], value);
+    } else if (!strcmp(variable, "xlabel")) {
+	strcpy(spec->titles[1], value);
+    } else if (!strcmp(variable, "ylabel")) {
+	strcpy(spec->titles[2], value);
+    } else if (!strcmp(variable, "y2label")) {
+	strcpy(spec->titles[3], value);
+    } else if (!strcmp(variable, "key")) {
+	strcpy(spec->keyspec, value);
+    } else if (!strcmp(variable, "nokey")) {
 	strcpy(spec->keyspec, "none");
-    } else if (strcmp(set_thing, "xtics") == 0) { 
-	safecpy(spec->xtics, setting, 15);
-    } else if (strcmp(set_thing, "mxtics") == 0) { 
-	safecpy(spec->mxtics, setting, 3);
-    } else if (strcmp(set_thing, "label") == 0) {
-	parse_label_line(spec, line, *labelno);
+    } else if (!strcmp(variable, "xtics")) { 
+	safecpy(spec->xtics, value, 15);
+    } else if (!strcmp(variable, "mxtics")) { 
+	safecpy(spec->mxtics, value, 3);
+    } else if (!strcmp(variable, "label")) {
+	parse_label_line(spec, s, *labelno);
 	*labelno += 1;
     }
 
     return 0;
 }
 
-/* ........................................................... */
+/* allocate markers for identifying particular data points */
 
-static int allocate_plotspec_labels (GPT_SPEC *spec, int plot_n)
+static int allocate_plotspec_markers (GPT_SPEC *spec, int plot_n)
 {
     int i;
 
-    spec->labels = mymalloc(plot_n * sizeof *spec->labels);
-    if (spec->labels == NULL) {
+    spec->markers = mymalloc(plot_n * sizeof *spec->markers);
+    if (spec->markers == NULL) {
 	return 1;
     }
 
     for (i=0; i<plot_n; i++) {
-	spec->labels[i] = malloc(OBSLEN);
-	if (spec->labels[i] == NULL) {
-	    free(spec->labels);
-	    spec->nlabels = 0;
+	spec->markers[i] = malloc(OBSLEN);
+	if (spec->markers[i] == NULL) {
+	    free(spec->markers);
+	    spec->nmarkers = 0;
 	    return 1;
 	}
-	spec->labels[i][0] = 0;
+	spec->markers[i][0] = 0;
     }
 
-    spec->nlabels = plot_n;
+    spec->nmarkers = plot_n;
 
     return 0;
 }
 
-/* ........................................................... */
+/* determine the number of data points in a plot, and whether
+   there are any data-point markers along with the data 
+*/
 
-static int get_plot_n (FILE *fp, int *got_labels)
+static int get_plot_n (FILE *fp, int *got_markers)
 {
     int n = 0, started = -1;
     char line[MAXLEN], label[OBSLEN];
     char *p;
 
-    *got_labels = 0;
+    *got_markers = 0;
 
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (!strncmp(line, "plot", 4)) {
@@ -936,12 +923,14 @@ static int get_plot_n (FILE *fp, int *got_labels)
 	    continue;
 	}
 	if (started == 1) {
-	    if (*got_labels == 0 && (p = strchr(line, '#')) != NULL) {
+	    if (*got_markers == 0 && (p = strchr(line, '#')) != NULL) {
 		if (sscanf(p + 1, "%8s", label) == 1) {
-		    *got_labels = 1;
+		    *got_markers = 1;
 		}
 	    }
-	    if (*line == 'e') break;
+	    if (*line == 'e') {
+		break;
+	    }
 	    n++;
 	}
     }
@@ -949,7 +938,7 @@ static int get_plot_n (FILE *fp, int *got_labels)
     return n;
 }
 
-/* Read in plotspec struct from gnuplot command file.  This is _not_ a
+/* Read plotspec struct from gnuplot command file.  This is _not_ a
    general parser for gnuplot files; it is designed specifically for
    files auto-generated by gretl.
 */
@@ -957,8 +946,9 @@ static int get_plot_n (FILE *fp, int *got_labels)
 static int read_plotspec_from_file (GPT_SPEC *spec)
 {
     int i, t, n, plot_n, done, labelno;
-    int got_labels = 0;
-    char line[MAXLEN], *got = NULL, *p = NULL;
+    int got_markers = 0;
+    char gpline[MAXLEN];
+    char *got = NULL, *p = NULL;
     double *tmpy = NULL;
     size_t diff;
     FILE *fp;
@@ -975,8 +965,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	return 1;
     }
 
-    /* get the number of data-points, and check for labels */
-    plot_n = get_plot_n(fp, &got_labels);
+    /* get the number of data-points, and check for markers */
+    plot_n = get_plot_n(fp, &got_markers);
     if (plot_n == 0) {
 	fclose(fp);
 	return 1;
@@ -986,21 +976,21 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
     /* get the preamble and "set" lines */
     labelno = 0;
-    while ((got = fgets(line, MAXLEN - 1, fp))) {
-	if (cant_edit(line)) {
+    while ((got = fgets(gpline, MAXLEN - 1, fp))) {
+	if (cant_edit(gpline)) {
 	    goto plot_bailout;
 	}
-	if (strncmp(line, "# timeseries", 12) == 0) {
+	if (strncmp(gpline, "# timeseries", 12) == 0) {
 	    spec->flags |= GPTSPEC_TS;
 	    continue;
 	}
-	if (strncmp(line, "# freq", 6) == 0 ||
-	    strncmp(line, "# peri", 6) == 0) {
+	if (strncmp(gpline, "# freq", 6) == 0 ||
+	    strncmp(gpline, "# peri", 6) == 0) {
 	    /* special cases */
-	    if (line[2] == 'f') {
-		if (strstr(line, "normal")) {
+	    if (gpline[2] == 'f') {
+		if (strstr(gpline, "normal")) {
 		    spec->code = PLOT_FREQ_NORMAL;
-		} else if (strstr(line, "gamma")) {
+		} else if (strstr(gpline, "gamma")) {
 		    spec->code = PLOT_FREQ_GAMMA;
 		} else {
 		    spec->code = PLOT_FREQ_SIMPLE;
@@ -1026,26 +1016,28 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	    }
 	    continue;
 	}
-	if (strncmp(line, "# forecast", 10) == 0) {
+
+	if (strncmp(gpline, "# forecast", 10) == 0) {
 	    spec->code = PLOT_FORECAST;
 	    continue;
 	}
-	if (strstr(line, "automatic OLS")) {
+
+	if (strstr(gpline, "automatic OLS")) {
 	    spec->flags |= GPTSPEC_AUTO_OLS;
 	    continue;
 	}
 
-	if (strncmp(line, "# ", 2) == 0) {
-	    /* ignore an unknown comment line */
+	if (strncmp(gpline, "# ", 2) == 0) {
+	    /* ignore unknown comment lines */
 	    continue;
 	}
 
-	if (strncmp(line, "set ", 4)) {
+	if (strncmp(gpline, "set ", 4)) {
 	    /* done reading "set" lines */
 	    break;
 	}
 
-	if (parse_gp_set_line(spec, line, &labelno)) {
+	if (parse_gp_set_line(spec, gpline, &labelno)) {
 	    goto plot_bailout;
 	}
     }
@@ -1065,26 +1057,26 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     }
 
     /* then get the "plot" lines */
-    if (strncmp(line, "plot ", 4) ||
-	(strlen(line) < 10 && fgets(line, MAXLEN - 1, fp) == NULL)) {	
+    if (strncmp(gpline, "plot ", 4) ||
+	(strlen(gpline) < 10 && fgets(gpline, MAXLEN - 1, fp) == NULL)) {	
 	errbox(_("Failed to parse gnuplot file"));
-	fprintf(stderr, "plotfile line: '%s'\n", line);
+	fprintf(stderr, "bad plotfile line: '%s'\n", gpline);
 	goto plot_bailout;
     }
 
     i = 0;
     done = 0;
     while (1) {
-	top_n_tail(line);
+	top_n_tail(gpline);
 
-	if (!chop_comma(line)) {
+	if (!chop_comma(gpline)) {
 	    /* line did not end with comma -> no contination of
 	       the plot command */
 	    done = 1;
 	} 
 
 	/* scale, [yaxis,] style */
-	p = strstr(line, "using");
+	p = strstr(gpline, "using");
 	if (p && p[11] == '*') {
             safecpy(spec->lines[i].scale, p + 12, 7);
 	    charsub(spec->lines[i].scale, ')', '\0');
@@ -1093,29 +1085,29 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 		strcpy(spec->lines[i].scale, "1.0");
 	    } else {
 		strcpy(spec->lines[i].scale, "NA");
-		p = strstr(line, "axes");
+		p = strstr(gpline, "axes");
 		if (p == NULL) {
-		    p = strstr(line, "title");
+		    p = strstr(gpline, "title");
 		}
 		if (p != NULL) {
-		    diff = p - line;
-		    strncpy(spec->lines[i].formula, line, diff);
+		    diff = p - gpline;
+		    strncpy(spec->lines[i].formula, gpline, diff);
 		    spec->lines[i].formula[diff - 1] = 0;
 		} 
 	    }
 	}
 
 	spec->lines[i].yaxis = 1;
-	if (strstr(line, "axes x1y2")) {
+	if (strstr(gpline, "axes x1y2")) {
 	    spec->lines[i].yaxis = 2;
 	}
 
-	p = strstr(line, "title");
+	p = strstr(gpline, "title");
 	if (p != NULL) {
 	    sscanf(p + 7, "%79[^']'", spec->lines[i].title);
 	}
 
-	p = strstr(line, " w ");
+	p = strstr(gpline, " w ");
 	if (p != NULL) {
 	    sscanf(p + 3, "%15[^, ]", spec->lines[i].style);
 	} else {
@@ -1128,7 +1120,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 
 	i++;
 
-	if ((got = fgets(line, MAXLEN - 1, fp)) == NULL) {
+	if ((got = fgets(gpline, MAXLEN - 1, fp)) == NULL) {
 	    break;
 	}
     }
@@ -1145,15 +1137,15 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 				spec->nlines * sizeof *spec->lines);
     }
 
-    /* finally, get the plot data, and labels if any */
+    /* finally, get the plot data, and markers if any */
     spec->data = mymalloc(plot_n * (i + 2) * sizeof *spec->data);
     tmpy = mymalloc(plot_n * sizeof *tmpy);
     if (spec->data == NULL || tmpy == NULL) {
 	goto plot_bailout;
     }
 
-    if (got_labels) {
-	if (allocate_plotspec_labels(spec, plot_n)) {
+    if (got_markers) {
+	if (allocate_plotspec_markers(spec, plot_n)) {
 	    free(spec->data);
 	    spec->data = NULL;
 	    free(tmpy);
@@ -1166,25 +1158,25 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     i = 1;
     t = 0;
     n = 0;
-    while (fgets(line, MAXLEN - 1, fp)) {
-	if (line[0] == 'e') {
+    while (fgets(gpline, MAXLEN - 1, fp)) {
+	if (gpline[0] == 'e') {
 	    n = t;
 	    t = 0;
 	    i++;
 	    continue;
 	}
-	if (strncmp(line, "pause", 5) == 0) {
+	if (strncmp(gpline, "pause", 5) == 0) {
 	    break;
 	}
 	if (i == 1) { 
 	    /* first set: read both x and y (and label?) */ 
-	    get_gpt_data(line, &(spec->data[t]), &(tmpy[t]));
-	    if (got_labels) {
-		get_gpt_label(line, spec->labels[t]);
+	    get_gpt_data(gpline, &(spec->data[t]), &(tmpy[t]));
+	    if (got_markers) {
+		get_gpt_marker(gpline, spec->markers[t]);
 	    }
 	} else {      
 	    /* any subsequent sets: read y only */ 
-	    get_gpt_data(line, NULL, &(spec->data[i * n + t]));
+	    get_gpt_data(gpline, NULL, &(spec->data[i * n + t]));
 	}
 	t++;
     }
@@ -1200,19 +1192,19 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     spec->t1 = 0;
     spec->t2 = n - 1;
 
-    /* see if we really have any labels */
-    if (spec->labels != NULL && !got_labels) {
+    /* see if we really have any markers */
+    if (spec->markers != NULL && !got_markers) {
 	for (i=0; i<plot_n; i++) {
-	    free(spec->labels[i]);
+	    free(spec->markers[i]);
 	}
-	free(spec->labels);
-	spec->labels = NULL;
-	spec->nlabels = 0;
+	free(spec->markers);
+	spec->markers = NULL;
+	spec->nmarkers = 0;
     }
 
 #if 0
-    fprintf(stderr, "spec->labels = %p, spec->nlabels = %d\n",
-	    (void *) spec->labels, spec->nlabels);
+    fprintf(stderr, "spec->markers = %p, spec->nmarkers = %d\n",
+	    (void *) spec->markers, spec->nmarkers);
 #endif
 
     fclose(fp);
@@ -1405,14 +1397,14 @@ write_label_to_plot (png_plot *plot, const gchar *label,
     g_object_unref (G_OBJECT(pl));
 
     /* record that a label is shown */
-    plot->format |= PLOT_LABELS_UP;
+    plot->format |= PLOT_MARKERS_UP;
 }
 
 #endif /* GTK versions */
 
 #define TOLDIST 0.01
 
-static void
+static gint
 identify_point (png_plot *plot, int pixel_x, int pixel_y,
 		double x, double y) 
 {
@@ -1424,16 +1416,16 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     const double *data_x, *data_y = NULL;
 
     if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec) && !plot->err) {
-	if (read_plotspec_from_file(plot->spec)) {
-	    plot->err = 1;
-	    return;
+	plot->err = read_plotspec_from_file(plot->spec);
+	if (plot->err) {
+	    return TRUE;
 	}
     }
 
-    /* no labels to show */
-    if (plot->spec->labels == NULL) {
-	plot->status |= PLOT_NO_LABELS;	
-	return;
+    /* no markers to show */
+    if (plot->spec->markers == NULL) {
+	plot->status |= PLOT_NO_MARKERS;	
+	return TRUE;
     }
 
     plot_n = plot->spec->t2 - plot->spec->t1 + 1;
@@ -1442,7 +1434,9 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     /* need array to keep track of which points are labeled */
     if (plot->labeled == NULL) {
 	plot->labeled = mymalloc(plot_n);
-	if (plot->labeled == NULL) return;
+	if (plot->labeled == NULL) {
+	    return TRUE;
+	}
 	memset(plot->labeled, 0, plot_n);
     }
 #endif
@@ -1476,7 +1470,9 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
     /* try to find the best-matching data point */
     for (t=0; t<plot_n; t++) {
-	if (na(data_x[t]) || na(data_y[t])) continue;
+	if (na(data_x[t]) || na(data_y[t])) {
+	    continue;
+	}
 	xdiff = fabs(data_x[t] - x);
 	ydiff = fabs(data_y[t] - y);
 	if (xdiff <= min_xdist && ydiff <= min_ydist) {
@@ -1488,22 +1484,26 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
 
 #ifndef OLD_GTK
     /* if the point is already labeled, skip */
-    if (plot->labeled[best_match]) return;
+    if (plot->labeled[best_match]) {
+	return TRUE;
+    }
 #endif
 
     /* if the match is good enough, show the label */
     if (best_match >= 0 && min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
-	write_label_to_plot(plot, plot->spec->labels[best_match],
+	write_label_to_plot(plot, plot->spec->markers[best_match],
 			    pixel_x, pixel_y);
 #ifndef OLD_GTK
 	/* flag the point as labeled already */
 	plot->labeled[best_match] = 1;
 #endif
     }
+
+    return TRUE;
 }
 
-#define MAX_LABELS_SHOWN 250
+#define MAX_MARKERS_SHOWN 250
 
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
@@ -1534,8 +1534,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	get_data_xy(plot, x, y, &data_x, &data_y);
 	if (na(data_x)) return TRUE;
 
-	if (!(plot_has_no_labels(plot)) && 
-	    datainfo->t2 - datainfo->t1 < MAX_LABELS_SHOWN &&
+	if (!(plot_has_no_markers(plot)) && 
+	    datainfo->t2 - datainfo->t1 < MAX_MARKERS_SHOWN &&
 	    !plot_is_zooming(plot) &&
 	    !na(data_y)) {
 	    identify_point(plot, x, y, data_x, data_y);
@@ -1594,8 +1594,8 @@ static void start_editing_png_plot (png_plot *plot)
 {
     /* the spec struct is not yet filled out by reference
        to the gnuplot source file */
-    if (read_plotspec_from_file(plot->spec)) {
-	plot->err = 1;
+    plot->err = read_plotspec_from_file(plot->spec);
+    if (plot->err) {
 	return;
     }
 
@@ -1646,8 +1646,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 	}
 	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      plot->spec);
-    } 
-    else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
+    } else if (!strcmp(parent_item, _("Save as Windows metafile (EMF)..."))) {
 	strcpy(plot->spec->termtype, "emf");
 	if (color) {
 	    strcat(plot->spec->termtype, " color");
@@ -1658,8 +1657,7 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 #ifdef G_OS_WIN32
     else if (!strcmp(parent_item, _("Copy to clipboard"))) {
 	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
-    } 
-    else if (!strcmp(parent_item, _("Print"))) {
+    } else if (!strcmp(parent_item, _("Print"))) {
 	win32_process_graph(plot->spec, color, WIN32_TO_PRINTER);
     }    
 #endif   
@@ -1680,11 +1678,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
-    }
-    else if (!strcmp(item, _("Save to session as icon"))) { 
+    } else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
-    }
-    else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
+    } else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help(NULL, GINT_TO_POINTER(RMPLOT));
     }
 #ifndef OLD_GTK
@@ -1702,8 +1698,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Drag to define zoom rectangle"));
 	create_selection_gc(plot);
-    }
-    else if (!strcmp(item, _("Restore full view"))) { 
+    } else if (!strcmp(item, _("Restore full view"))) { 
 	zoom_unzoom_png(plot, PNG_UNZOOM);
     }
 #ifdef USE_GNOME 
@@ -1713,12 +1708,13 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 #endif 
     else if (!strcmp(item, _("Edit"))) { 
 	start_editing_png_plot(plot);
-    }
-    else if (!strcmp(item, _("Close"))) { 
+    } else if (!strcmp(item, _("Close"))) { 
         killplot = 1;
     } 
 
-    if (killplot) gtk_widget_destroy(plot->shell);
+    if (killplot) {
+	gtk_widget_destroy(plot->shell);
+    }
 
     return TRUE;
 }
@@ -1817,7 +1813,7 @@ static void build_plot_menu (png_plot *plot)
 	    continue;
 	}
 #ifndef OLD_GTK
-	if (!plot_has_data_labels(plot) &&
+	if (!plot_has_data_markers(plot) &&
 	    !strcmp(plot_items[i], "Clear data labels")) {
 	    i++;
 	    continue;
@@ -1857,7 +1853,9 @@ int redisplay_edited_png (png_plot *plot)
 
     /* open file in which to dump plot specification */
     gnuplot_png_init(plot->spec, &fp);
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	return 1;
+    }
 
     /* dump the edited plot details to file */
     set_png_output(plot->spec);
@@ -1867,11 +1865,13 @@ int redisplay_edited_png (png_plot *plot)
     /* get gnuplot to create a new PNG graph */
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plot->spec->fname);
+
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else    
     err = gretl_spawn(plotcmd);
 #endif
+
     g_free(plotcmd);
 
     if (err) {
@@ -1891,7 +1891,7 @@ int redisplay_edited_png (png_plot *plot)
 static int zoom_unzoom_png (png_plot *plot, int view)
 {
     int err = 0;
-    char fullname[MAXLEN];
+    char zoomname[MAXLEN];
     gchar *plotcmd = NULL;
 
     if (view == PNG_ZOOM) {
@@ -1899,16 +1899,19 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	char line[MAXLEN];
 
 	fpin = gretl_fopen(plot->spec->fname, "r");
-	if (fpin == NULL) return 1;
+	if (fpin == NULL) {
+	    return 1;
+	}
 
-	build_path(paths.userdir, "zoomplot.gp", fullname, NULL);
-	fpout = gretl_fopen(fullname, "w");
+	build_path(paths.userdir, "zoomplot.gp", zoomname, NULL);
+	fpout = gretl_fopen(zoomname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
 	    return 1;
 	}
 
-	/* switch to zoomed data range */
+	/* write zoomed range into auxiliary gnuplot source file */
+
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
@@ -1930,7 +1933,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
 	fclose(fpin);
 
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-				  fullname);
+				  zoomname);
     } else { /* PNG_UNZOOM or PNG_START */
 	plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 				  plot->spec->fname);
@@ -1944,7 +1947,7 @@ static int zoom_unzoom_png (png_plot *plot, int view)
     g_free(plotcmd);  
 
     if (view == PNG_ZOOM) {
-	remove(fullname);
+	remove(zoomname);
     }
 
     if (err) {
@@ -2028,9 +2031,11 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	plot->popup = NULL;
     }
 
-    build_plot_menu(plot);
-    gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
-                   event->button, event->time);
+    if (!plot->err) {
+	build_plot_menu(plot);
+	gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
+		       event->button, event->time);
+    }
 
     return TRUE;
 }
@@ -2161,7 +2166,7 @@ static void render_pngfile (png_plot *plot, int view)
     if (plot->labeled != NULL) {
 	free(plot->labeled);
 	plot->labeled = NULL;
-	plot->format ^= PLOT_LABELS_UP;
+	plot->format ^= PLOT_MARKERS_UP;
     }
 #endif
 
@@ -2424,7 +2429,10 @@ static int get_dumb_plot_yrange (png_plot *plot)
     return err;
 }
 
-/* note: return 0 on failure */
+/* do a partial parse of the gnuplot source file, enough to determine
+   the data ranges so we can read back the mouse pointer coordinates
+   when the user moves the pointer over the graph 
+*/
 
 static int get_plot_ranges (png_plot *plot)
 {
@@ -2432,6 +2440,7 @@ static int get_plot_ranges (png_plot *plot)
     char line[MAXLEN];
     int noedit = 0;
     int got_x = 0, got_y = 0, got_pd = 0;
+    int err = 0;
 #ifdef PNG_COMMENTS
     png_bounds b;
 #endif
@@ -2442,33 +2451,35 @@ static int get_plot_ranges (png_plot *plot)
     plot->pd = 0;
 
     fp = gretl_fopen(plot->spec->fname, "r");
-    if (fp == NULL) return 0;
+    if (fp == NULL) {
+	return 1;
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
 
     while (fgets(line, MAXLEN-1, fp)) {
+
 	if (cant_edit(line)) {
 	    plot->status |= PLOT_DONT_EDIT;
 	    plot->status |= PLOT_DONT_ZOOM;
 	    noedit = 1;
 	    break;
 	}
+
 	if (strstr(line, "# forecasts with 95")) {
 	    /* auto-parse can't handle the error bars */
 	    plot->status |= PLOT_DONT_EDIT;
-	}	
-	else if (strstr(line, "# range-mean")) {
+	} else if (strstr(line, "# range-mean")) {
 	    plot->spec->code = PLOT_RANGE_MEAN;
-	}
-	else if (sscanf(line, "set xrange [%lf:%lf]", 
-			&plot->xmin, &plot->xmax) == 2) { 
+	} else if (sscanf(line, "set xrange [%lf:%lf]", 
+			  &plot->xmin, &plot->xmax) == 2) { 
 	    got_x = 1;
-	} 
-	else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
+	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
 	    got_pd = 1;
 	}
+
 	if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
 	    if (!strncmp(line, "set tit", 7)) {
 		plot->format |= PLOT_TITLE;
@@ -2484,7 +2495,10 @@ static int get_plot_ranges (png_plot *plot)
 		plot->status |= PLOT_DONT_ZOOM;
 	    } 
 	}
-	if (!strncmp(line, "plot ", 5)) break;
+
+	if (!strncmp(line, "plot ", 5)) {
+	    break;
+	}
     }
 
 #ifdef ENABLE_NLS
@@ -2494,7 +2508,7 @@ static int get_plot_ranges (png_plot *plot)
     fclose(fp);
 
     if (noedit) {
-	return 0;
+	return 1;
     }
 
 #ifdef PNG_COMMENTS
@@ -2527,8 +2541,6 @@ static int get_plot_ranges (png_plot *plot)
     */
 
     if (got_x) {
-	int err = 0;
-
 	/* get the "dumb" coordinates only if we haven't got
 	   more accurate ones from the PNG file */
 	if (!plot_has_png_coords(plot)) { 
@@ -2554,9 +2566,10 @@ static int get_plot_ranges (png_plot *plot)
 	fputs("get_plot_ranges: setting PLOT_DONT_ZOOM, PLOT_DONT_MOUSE\n", 
 	      stderr);
 #endif
+	err = 1;
     }
 
-    return (got_x && got_y);
+    return err;
 }
 
 static png_plot *png_plot_new (void)
@@ -2596,7 +2609,8 @@ static png_plot *png_plot_new (void)
 int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 {
     png_plot *plot;
-    int plot_has_xrange;
+    int plot_has_xrange = 0;
+    int err = 0;
 
     GtkWidget *vbox;
     GtkWidget *canvas_hbox;
@@ -2636,7 +2650,16 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     }
 
     /* parse this file for x range */
-    plot_has_xrange = get_plot_ranges(plot);
+    err = get_plot_ranges(plot);
+    if (!err) {
+	/* we'd better check that the full plot info is OK */
+	err = read_plotspec_from_file(plot->spec);
+	if (!err) {
+	    plot_has_xrange = 1;
+	} else {
+	    plot->err = 1;
+	}
+    }
 
 #ifdef OLD_GTK
     gtk_widget_push_visual(gdk_rgb_get_visual());
@@ -2726,8 +2749,11 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 				  GTK_RESIZE_QUEUE);
     plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
 					      "plot_message");
-    gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
-			plot->cid, _(" Click on graph for pop-up menu"));
+
+    if (!plot->err) {
+	gtk_statusbar_push(GTK_STATUSBAR (plot->statusbar),
+			   plot->cid, _(" Click on graph for pop-up menu"));
+    }
     
     if (plot_has_xrange) {
 	g_signal_connect(G_OBJECT(plot->canvas), "motion_notify_event",

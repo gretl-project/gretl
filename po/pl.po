@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-02-22 11:26-0500\n"
-"PO-Revision-Date: 2005-02-24 23:00+0100\n"
+"PO-Revision-Date: 2005-02-27 14:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1557,7 +1557,7 @@ msgstr "Odwrotna macierz kowariancji"
 
 #: lib/src/describe.c:1881
 msgid "Mahalanobis distances from the centroid"
-msgstr "Odleg³oœci Mahalanobisa od œrodka ciê¿koœci"
+msgstr "Odleg³o¶ci Mahalanobisa od ¶rodka ciê¿ko¶ci"
 
 #: lib/src/describe.c:1882
 msgid "using the variables:"
@@ -1566,7 +1566,7 @@ msgstr "wykorzystane zmienne:"
 #: lib/src/describe.c:1917
 #, c-format
 msgid "Distances saved as '%s'"
-msgstr "Odleg³oœci zapisano jako '%s'"
+msgstr "Odleg³o¶ci zapisano jako '%s'"
 
 #: lib/src/discrete.c:285
 #, c-format
@@ -1584,7 +1584,7 @@ msgstr "Liczba obserwacji (%d) jest mniejsza od liczby parametrów (%d)"
 
 #: lib/src/estimate.c:692
 msgid "Omitted due to exact collinearity:"
-msgstr "Ominiêto z powodu œcis³ej wspó³liniowoœci:"
+msgstr "Ominiêto zmienn± z powodu ¶cis³ej wspó³liniowo¶ci:"
 
 #: lib/src/estimate.c:823 lib/src/estimate.c:1920 plugin/arma.c:555
 #: plugin/arma_x12.c:658
@@ -2834,11 +2834,11 @@ msgstr "BIC"
 
 #: lib/src/modelprint.c:275 plugin/sysest.c:516
 msgid "LR over-identification test"
-msgstr "Test ilorazu wiarygodnoœci nadmiernej identyfikacji"
+msgstr "Test ilorazu wiarygodno¶ci nadmiernej identyfikacji"
 
 #: lib/src/modelprint.c:279
 msgid "Equation is just identified"
-msgstr "Równanie jest to¿samoœciowe"
+msgstr "Równanie jest to¿samo¶ciowe"
 
 #: lib/src/modelprint.c:296 lib/src/modelprint.c:303 lib/src/modelprint.c:304
 msgid "Sum of absolute residuals"
@@ -3128,7 +3128,7 @@ msgstr "Estymacja %s z wykorzystaniem %d obserwacji %s%s%s"
 
 #: lib/src/modelprint.c:1042 lib/src/modelprint.c:1043
 msgid "Missing or incomplete observations dropped"
-msgstr ""
+msgstr "Liczba pominiêtych niekompletnych obserwacji"
 
 #: lib/src/modelprint.c:1055 lib/src/modelprint.c:1056
 #, c-format
@@ -3717,7 +3717,7 @@ msgstr ""
 
 #: lib/src/printout.c:235
 msgid "Test for null hypothesis of normal distribution"
-msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny"
+msgstr "Hipoteza zerowa: dystrybuanta empiryczna posiada rozk³ad normalny, test JB"
 
 #: lib/src/printout.c:242
 msgid "Test for null hypothesis of gamma distribution"
@@ -4198,7 +4198,7 @@ msgstr "LIML"
 
 #: lib/src/system.c:78
 msgid "Seemingly Unrelated Regressions"
-msgstr "Pozornie niepowi¹zane równania"
+msgstr "Pozornie niepowi±zane równania"
 
 #: lib/src/system.c:79
 msgid "Three-Stage Least Squares"
@@ -4242,7 +4242,7 @@ msgstr "Test F dla wyspecyfikowanych restrykcji"
 
 #: lib/src/system.c:681
 msgid "LR test for the specified restrictions"
-msgstr "Test ilorazu wiarygodnoœci (LR) dla wyspecyfikowanych restrykcji"
+msgstr "Test ilorazu wiarygodno¶ci (LR) dla wyspecyfikowanych restrykcji"
 
 #: lib/src/system.c:682 plugin/sysest.c:517
 msgid "Restricted log-likelihood"
@@ -5236,7 +5236,7 @@ msgstr "/Dane/_G³ówne sk³adowe"
 
 #: gui/gretl.c:328 gui2/gretl.c:387
 msgid "/Data/_Mahalanobis distances"
-msgstr "/Dane/Odleg³oœæ _Mahalanobisa"
+msgstr "/Dane/Odleg³o¶æ _Mahalanobisa"
 
 #: gui/gretl.c:330 gui2/gretl.c:389
 msgid "/Data/sep4"
@@ -8828,11 +8828,11 @@ msgstr "/Dane modelu/Dodaj dane do bazy/logartym wiarygodno¶ci (skalar)"
 
 #: gui2/gui_utils.c:2554 gui2/gui_utils.c:2604
 msgid "/Model data/Add to data set/Akaike Information Criterion"
-msgstr "/Dane modelu/Dodaj dane do bazy/Kryterium Informacyjne Akaika"
+msgstr "/Dane modelu/Dodaj dane do bazy/Kryterium informacyjne Akaika"
 
 #: gui2/gui_utils.c:2556 gui2/gui_utils.c:2606
 msgid "/Model data/Add to data set/Bayesian Information Criterion"
-msgstr "/Dane modelu/Dodaj dane do bazy/Bayesowskie Kryterium Informacyjne"
+msgstr "/Dane modelu/Dodaj dane do bazy/Bayesowskie kryterium informacyjne"
 
 #: gui2/gui_utils.c:2561 gui2/gui_utils.c:2611
 #, fuzzy
@@ -8891,11 +8891,11 @@ msgstr ""
 
 #: gui2/gui_utils.c:2853
 msgid "/Tests/heteroskedasticity (White's test)"
-msgstr "/Testy/heteroskedastyczno¶ci (White'a)"
+msgstr "/_Testy/heteroskedastyczno¶ci (White'a)"
 
 #: gui2/gui_utils.c:2859
 msgid "/Tests/heteroskedasticity (groupwise)"
-msgstr "/Testy/heteroskedastyczno¶ci(groupwise)"
+msgstr "/_Testy/heteroskedastyczno¶ci(groupwise)"
 
 #: gui2/gui_utils.c:2877
 msgid "x12sep"
@@ -9048,7 +9048,7 @@ msgstr "warto¶ci w³asne"
 
 #: gui2/library.c:591 gui2/menustate.c:297 gui2/menustate.c:322
 msgid "Mahalanobis distances"
-msgstr "Odleg³oœæ Mahalanobisa"
+msgstr "Odleg³o¶æ Mahalanobisa"
 
 #: gui2/library.c:595
 msgid "frequency distribution"
@@ -9092,7 +9092,7 @@ msgstr "Poka¿ detale regresji"
 
 #: gui2/library.c:777
 msgid "test down from maximum lag order"
-msgstr ""
+msgstr "testuje opó¼nienie od wskazanego maksymalnego rzêdu"
 
 #: gui2/library.c:780
 msgid "include a trend"
@@ -9756,7 +9756,7 @@ msgstr "Test serii"
 
 #: gui2/menustate.c:222 gui2/menustate.c:252
 msgid "Hurst exponent"
-msgstr ""
+msgstr "Wyk³adnik Hursta"
 
 #: gui2/menustate.c:224 gui2/menustate.c:253
 msgid "Edit attributes"
@@ -10831,7 +10831,7 @@ msgstr "Suma kwadratów reszt nie jest >= 0"
 
 #: plugin/panel_data.c:642
 msgid "Error estimating fixed effects model\n"
-msgstr "B³±d estymacji sta³ych efektów modelu\n"
+msgstr "Oszacowane reszty modelu ustalonych efektów\n"
 
 #: plugin/panel_data.c:662
 msgid ""
@@ -10839,10 +10839,13 @@ msgid ""
 "allows for differing intercepts by cross-sectional unit\n"
 "slope standard errors in parentheses, p-values in brackets\n"
 msgstr ""
+"Oszacowane ustalone efekty uwzglêdniaj±ce zró¿nicowanie\n"
+"wyrazu wolnego wed³ug jednostek w przekroju,\n"
+"wspó³czynniki, b³êdy stand. w nawiasach, p-value w nawiasach kwadratowych.\n"
 
 #: plugin/panel_data.c:667
 msgid "a_i = intercepts"
-msgstr ""
+msgstr "a_i = wyraz wolny wed³ug jednostek w przekroju"
 
 #: plugin/panel_data.c:712
 #, c-format
@@ -10860,11 +10863,11 @@ msgstr ""
 
 #: plugin/panel_data.c:721
 msgid "Joint significance of unit dummy variables:\n"
-msgstr ""
+msgstr "£±czna istotno¶æ zmiennych 0-1 jednostek przekroju:\n"
 
 #: plugin/panel_data.c:723
 msgid "Joint significance of differing group means:\n"
-msgstr ""
+msgstr "£±czna istotno¶æ nierówno¶ci ¶rednich grupowych:\n"
 
 #: plugin/panel_data.c:730
 msgid ""
@@ -10872,10 +10875,13 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
+"(Niskie p-value oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
+" poprawny, wobec hipotezy H1, ¿e model o ustalonych efektach jest w³a¶ciwszy.)\n"
+"\n"
 
 #: plugin/panel_data.c:825
 msgid "Error estimating random effects model\n"
-msgstr ""
+msgstr "Oszacowane reszty modelu losowych efektów\n"
 
 #: plugin/panel_data.c:829
 msgid ""
@@ -10884,6 +10890,10 @@ msgid ""
 "           (standard errors in parentheses, p-values in brackets)\n"
 "\n"
 msgstr ""
+"                         Oszacowane losowe efekty\n"
+"           allows for a unit-specific component to the error term\n"
+"       (b³êdy standardowe w nawiasach, p-value w nawiasach kwadratowych)\n"
+"\n"
 
 #: plugin/panel_data.c:887
 msgid ""
@@ -10891,11 +10901,14 @@ msgid ""
 "Means of pooled OLS residuals for cross-sectional units:\n"
 "\n"
 msgstr ""
+"\n"
+"Srednie reszt dla jednostek przekroju w estymacji panelu MNK:\n"
+"\n"
 
 #: plugin/panel_data.c:905
 #, c-format
 msgid " unit %2d: %13.5g\n"
-msgstr " unit %2d: %13.5g\n"
+msgstr " jednostka %2d: %13.5g\n"
 
 #: plugin/panel_data.c:914
 #, c-format
@@ -10905,15 +10918,19 @@ msgid ""
 " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"
 msgstr ""
 "\n"
-"Statystyka testu Breusch-Pagan:\n"
+"Statystyka testu Breuscha-Pagana:\n"
 " LM = %g  z  p-value = prob(chi-square(1) > %g) = %g\n"
 
 #: plugin/panel_data.c:918
+#, fuzzy
 msgid ""
 "(A low p-value counts against the null hypothesis that the pooled OLS model\n"
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
+"(Niskie p-value oznacza odrzucenie hipotezy H0, ¿e model panelowy MNK jest\n"
+" poprawny, wobec hipotezy H1, ¿e model o losowych efektach jest w³a¶ciwszy.)\n"
+"\n"
 
 #: plugin/panel_data.c:944
 msgid "Error attempting to invert vcv difference matrix\n"
@@ -10942,6 +10959,9 @@ msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
+"(Niskie p-value oznacza odrzucenie hipotezy zerowej o modelu z losowymi\n"
+" efektami, wobec hipotezy alternatywej o modelu z ustalonymi efektami.)\n"
+"\n"
 
 #: plugin/panel_data.c:1140
 #, c-format
@@ -10950,10 +10970,13 @@ msgid ""
 "                         observed over %d periods\n"
 "\n"
 msgstr ""
+"    Diagnostyka dla zbilansowanego panelu z %d jednostkami w przekroju\n"
+"                                dla %d okresów\n"
+"\n"
 
 #: plugin/panel_data.c:1177
 msgid "Couldn't estimate group means regression\n"
-msgstr ""
+msgstr "Niemo¿liwe oszacowanie ¶rednich grupowych regresji\n"
 
 #: plugin/panel_data.c:1179
 #, c-format
@@ -10961,6 +10984,8 @@ msgid ""
 "Residual variance for group means regression: %g\n"
 "\n"
 msgstr ""
+"Wariancja resztowa dla ¶rednich grupowych regresji: %g\n"
+"\n"
 
 #: plugin/panel_data.c:1260
 msgid "Distribution free Wald test for heteroskedasticity"
@@ -10976,11 +11001,11 @@ msgstr "Test ilorazu wiarygodno¶ci dla 'groupwise heteroskedasticity'"
 
 #: plugin/panel_data.c:1323
 msgid "the units have a common error variance"
-msgstr ""
+msgstr "jednostki maj± wspóln± wariancjê resztow±"
 
 #: plugin/panel_data.c:1432
 msgid "Can't produce ML estimates: some units have only one observation"
-msgstr ""
+msgstr "Niemo¿liwa estymacja ML: przekrój zawiera tylko jedn± obserwacjê"
 
 #: plugin/pca.c:140
 msgid "Components with eigenvalues > 1.0"
@@ -11113,7 +11138,7 @@ msgstr ""
 
 #: plugin/stats_tables.c:343 plugin/stats_tables.c:373
 msgid "Column headings show alpha (significance level) for a one-tailed test.\n"
-msgstr "Nag³ówkek tabeli zawiera poziom istotno¶ci (alpha) dla jednostronnego obszaru krytycznego dla wskazenej liczby stopni swobody.\n"
+msgstr "Nag³ówkek tabeli zawiera poziom istotno¶ci (alpha) dla jednostronnego obszaru krytycznego dla wskazanej liczby stopni swobody.\n"
 
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375
 msgid ""
@@ -11176,7 +11201,7 @@ msgstr ""
 
 #: plugin/sysest.c:81
 msgid "LR test for diagonal covariance matrix"
-msgstr "Test ilorazu wiarygodnoœci dla diagonalnych elementów macierzy kowariancji"
+msgstr "Test ilorazu wiarygodno¶ci dla diagonalnych elementów macierzy kowariancji"
 
 #: plugin/sysest.c:91
 msgid "Breusch-Pagan test for diagonal covariance matrix"

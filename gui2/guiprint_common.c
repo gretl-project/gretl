@@ -113,7 +113,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pputs(prn, "{" VAR_SUMM_ROW "\\intbl ");
     } else {
-	strcpy(tmp, I_("(missing values denoted by -999 will be skipped)"));
+	strcpy(tmp, I_("(missing values will be skipped)"));
 	pprintf(prn, "%s\\par\n\n", tmp);
 	pprintf(prn, "{" SUMM_ROW
 		"\\intbl \\qc %s\\cell", I_("Variable"));

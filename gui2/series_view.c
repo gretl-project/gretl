@@ -89,58 +89,6 @@ GtkItemFactoryEntry *get_series_view_menu_items (int code)
     else return scalar_view_items;
 }
 
-#ifdef G_OS_WIN32
-
-int win_buf_to_clipboard (const char *buf)
-{
-    HGLOBAL winclip;
-    LPTSTR ptr;
-    size_t len;
-
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
-	return 1;
-    }
-
-    EmptyClipboard();
-
-    len = strlen(buf);
-    winclip = GlobalAlloc(GMEM_MOVEABLE, (len + 1) * sizeof(TCHAR));        
-
-    ptr = GlobalLock(winclip);
-    memcpy(ptr, buf, len + 1);
-    GlobalUnlock(winclip); 
-
-    SetClipboardData(CF_TEXT, winclip);
-
-    CloseClipboard();
-
-    return 0;
-}
-
-#else
-
-static int buf_to_clipboard (const char *buf)
-{
-    size_t len;
-
-    if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = NULL;
-
-    len = strlen(buf);
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) return 1;
-
-    memcpy(clipboard_buf, buf, len + 1);
-
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
-			    GDK_CURRENT_TIME);
-    return 0;
-}
-
-#endif /* G_OS_WIN32 */
-
 void free_series_view (gpointer p)
 {
     series_view_t *sview = (series_view_t *) p;
@@ -156,7 +104,10 @@ void free_series_view (gpointer p)
 
 static int series_view_allocate (series_view_t *sview)
 {
-    if (sview->npoints != 0) return 0; /* already allocated */
+    if (sview->npoints != 0) {
+	/* already allocated */
+	return 0;
+    }
 
     else if (!datainfo->vector[sview->varnum]) {
 	sview->npoints = 1;

@@ -28,139 +28,6 @@
 # include <windows.h>
 #endif
 
-char *dosify_buffer (const char *buf, int format)
-{
-    int extra = 0, nlines = 0;
-    char *targ, *q;
-    const char *p;
-    const char *rtf_preamble = "{\\rtf1\n"
-	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\n"
-	"\\f0\\fs18\n";
-    int rtf_add_bytes = strlen(rtf_preamble) + 4;
-
-    if (buf == NULL) return NULL;
-
-    p = buf;
-    while (*p) {
-	if (*p++ == '\n') nlines++;
-    }
-    extra = nlines + 1;
-
-    if (format == COPY_TEXT_AS_RTF) {
-	extra *= 5;
-	extra += rtf_add_bytes;
-    }
-
-    targ = malloc(strlen(buf) + extra);
-    if (targ == NULL) return NULL;
-
-    if (format == COPY_TEXT_AS_RTF) {
-	strcpy(targ, rtf_preamble);
-	q = targ + strlen(targ);
-    } else {
-	q = targ;
-    }
-
-    p = buf;
-    while (*p) {
-	if (*p == '\n') {
-	    if (format == COPY_TEXT_AS_RTF) {
-		*q++ = '\\';
-		*q++ = 'p';
-		*q++ = 'a';
-		*q++ = 'r';
-	    }
-	    *q++ = '\r';
-	    *q++ = '\n';
-	} else {
-	    *q++ = *p;
-	}
-	p++;
-    } 
-    *q = 0;
-
-    if (format == COPY_TEXT_AS_RTF) {
-	strcat(q, "}\n");
-    }
-
-    return targ;
-}
-
-#ifdef G_OS_WIN32
-
-/* win32 only: copy buffer to clipboard */
-int win_copy_buf (char *buf, int format, size_t buflen)
-{
-    HGLOBAL winclip;
-    LPTSTR ptr;
-    char *winbuf;
-    unsigned clip_format;
-    size_t len;
-    gchar *tr = NULL;
-
-    if (buf == NULL) {
-	errbox(_("Copy buffer was empty"));
-	return 0;
-    }
-
-    if (!OpenClipboard(NULL)) {
-	errbox(_("Cannot open the clipboard"));
-	return 1;
-    }
-
-    EmptyClipboard();
-
-    if (doing_nls() && format == COPY_TEXT) { 
-	tr = my_locale_from_utf8(buf);
-	if (tr == NULL) {
-	    CloseClipboard();
-	    return 1;
-	}
-	winbuf = dosify_buffer(tr, format);
-    } else {
-	winbuf = dosify_buffer(buf, format);
-    }
-
-    if (winbuf == NULL) {
-	CloseClipboard();
-	return 1;
-    }
-
-    if (buflen == 0) {
-	len = strlen(winbuf) + 1; 
-    } else {
-	len = buflen;
-    }
-        
-    winclip = GlobalAlloc(GMEM_MOVEABLE, len * sizeof(TCHAR));        
-
-    ptr = GlobalLock(winclip);
-    memcpy(ptr, winbuf, len);
-    GlobalUnlock(winclip); 
-
-    if (format == COPY_RTF || format == COPY_TEXT_AS_RTF) { 
-	clip_format = RegisterClipboardFormat("Rich Text Format");
-    } else if (format == COPY_CSV) {
-	clip_format = RegisterClipboardFormat("CSV");
-    } else {
-	clip_format = CF_TEXT;
-    }
-
-    SetClipboardData(clip_format, winclip);
-
-    CloseClipboard();
-
-    if (tr != NULL) {
-	free(tr);
-    }
-
-    free(winbuf);
-
-    return 0;
-}
-
-#endif /* G_OS_WIN32 */
-
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
 
 gchar *user_string (void)
@@ -183,9 +50,9 @@ gchar *user_string (void)
 static char *header_string (void)
 {
     gchar *hdr, *ustr;
-#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+# if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     gchar *trans;
-#endif
+# endif
     time_t prntime = time(NULL);
 
     ustr = user_string();
@@ -197,13 +64,13 @@ static char *header_string (void)
 	hdr = g_strdup_printf("%s %s", _("gretl output"), print_time(&prntime));
     }
 
-#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+# if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     trans = my_locale_to_utf8(hdr);
     if (trans != NULL) {
 	g_free(hdr);
 	hdr = trans;
     }
-#endif  
+# endif  
 
     return hdr;
 }
@@ -280,19 +147,19 @@ void winprint (char *fullbuf, char *selbuf)
     
     printok = StartDoc(dc, &di);
 
-#ifdef ENABLE_NLS
+# ifdef ENABLE_NLS
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
 	printbuf = my_locale_from_utf8(selbuf);
     } else {
 	printbuf = my_locale_from_utf8(fullbuf);
     }
-#else
+# else
     if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
 	printbuf = selbuf;
     } else {
 	printbuf = fullbuf;
     }
-#endif
+# endif
 
     if (printbuf == NULL) {
 	printok = 0;
@@ -342,9 +209,9 @@ void winprint (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevMode);
     GlobalFree(pdlg.hDevNames);
 
-#ifdef ENABLE_NLS
+# ifdef ENABLE_NLS
     g_free(printbuf);
-#endif
+# endif
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */
     if (selbuf) {
@@ -361,9 +228,9 @@ int winprint_graph (char *emfname)
     PRINTDLG pdlg;
     DOCINFO di;
     int printok;
-#ifdef WGRDEBUG
+# ifdef WGRDEBUG
     FILE *fp = fopen("debug.txt", "w");
-#endif
+# endif
 
     hemf = GetEnhMetaFile(emfname);
     if (hemf == NULL) {
@@ -418,14 +285,14 @@ int winprint_graph (char *emfname)
 	rect.right = (long) (hmarg + hsize);
 	rect.bottom = (long) (vmarg + vsize);
 
-#ifdef WGRDEBUG
+# ifdef WGRDEBUG
 	fprintf(fp, "hpx=%g, vpx=%g\n", hpx, vpx);
 	fprintf(fp, "hsize=%g, vsize=%g\n", hsize, vsize);
 	fprintf(fp, "hfrac=%g, vfrac=%g\n", hfrac, vfrac);
 	fprintf(fp, "rect = %ld, %ld, %ld, %ld\n", 
 		rect.left, rect.top, rect.right, rect.bottom);
 	fclose(fp);
-#endif
+# endif
 
 	PlayEnhMetaFile(dc, hemf, &rect);
 
@@ -669,13 +536,13 @@ void gnome_print_graph (const char *fname)
     case GNOME_PRINT_DIALOG_RESPONSE_PRINT:
 	break;
     case GNOME_PRINT_DIALOG_RESPONSE_PREVIEW:
-#if 0
+# if 0
 	preview = TRUE;
 	break;
-#else
+# else
 	/* preview doesn't work for images */
 	dummy_call();
-#endif
+# endif
     default:
 	g_object_unref(G_OBJECT(config));
 	g_object_unref(G_OBJECT(gpc));

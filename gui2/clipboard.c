@@ -18,8 +18,9 @@
  */
 
 #include "gretl.h"
+#include "textutil.h"
 
-gchar *clipboard_buf; 
+static gchar *clipboard_buf; 
 
 GtkTargetEntry basic_targets[] = {
     { "STRING",          0, TARGET_STRING },
@@ -27,7 +28,7 @@ GtkTargetEntry basic_targets[] = {
     { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT }
 };
 
-GtkTargetEntry extended_targets[] = {
+GtkTargetEntry full_targets[] = {
     { "STRING",          0, TARGET_STRING },
     { "TEXT",            0, TARGET_TEXT }, 
     { "COMPOUND_TEXT",   0, TARGET_COMPOUND_TEXT },
@@ -35,17 +36,50 @@ GtkTargetEntry extended_targets[] = {
     { "application/rtf", 0, TARGET_RTF }
 };
 
-enum {
-    n_basic_targets    = 3,
-    n_extended_targets = 5
-};
+static int n_basic = sizeof basic_targets / sizeof basic_targets[0];
+static int n_full = sizeof full_targets / sizeof full_targets[0];
+
+static void gretl_clipboard_set (int copycode);
 
 #define CLIPDEBUG
 
-void gretl_clipboard_free (void)
+static void gretl_clipboard_free (void)
 {
     free(clipboard_buf);
     clipboard_buf = NULL;
+}
+
+static int copy_to_clipboard_buf (const char *buf)
+{
+    size_t len = strlen(buf);
+
+    clipboard_buf = mymalloc(len + 1);
+    if (clipboard_buf == NULL) {
+	return 1;
+    }
+
+    memcpy(clipboard_buf, buf, len + 1);
+
+    return 0;
+}
+
+int buf_to_clipboard (const char *buf)
+{
+    int err = 0;
+
+    if (buf == NULL || *buf == '\0') {
+	return 0;
+    }
+
+    gretl_clipboard_free();
+
+    err = copy_to_clipboard_buf(buf);
+
+    if (!err) {
+	gretl_clipboard_set(COPY_TEXT);
+    }
+
+    return err;
 }
 
 #ifndef OLD_GTK
@@ -107,40 +141,30 @@ static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
     gretl_clipboard_free();
 }
 
-static void gretl_clip_init (int copycode)
+static void gretl_clipboard_set (int copycode)
 {
     static GtkClipboard *clip;
-    GtkTargetEntry *targets;
-    gint n_targets;
-
-    if (copycode == COPY_RTF || copycode == COPY_TEXT_AS_RTF) {
-	targets = extended_targets;
-	n_targets = n_extended_targets;
-    } else {
-	targets = basic_targets;
-	n_targets = n_basic_targets;
-    }
+    GtkTargetEntry *targs;
+    gint n_targs;
 
     if (clip == NULL) {
 	clip = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
     }
 
-    if (!gtk_clipboard_set_with_owner(clip,
-				      targets, n_targets,
+    if (copycode == COPY_RTF || copycode == COPY_TEXT_AS_RTF) {
+	targs = full_targets;
+	n_targs = n_full;
+    } else {
+	targs = basic_targets;
+	n_targs = n_basic;
+    }
+
+    if (!gtk_clipboard_set_with_owner(clip, targs, n_targs,
 				      gretl_clipboard_get,
 				      gretl_clipboard_clear,
 				      G_OBJECT(mdata->w))) {
 	fprintf(stderr, "Failed to initialize clipboard\n");
     }
-}
-
-void gretl_clipboard_set (int copycode)
-{
-    gretl_clip_init(copycode);
-
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY, 
-			    GDK_CURRENT_TIME);
 }
 
 #else /* gtk-1.2 version */
@@ -200,42 +224,101 @@ gretl_clipboard_get (GtkWidget *widget,
     return TRUE;
 }
 
-static void gretl_clip_init (int copycode)
+static void gretl_clip_init (int copycode, GdkAtom clipatom)
 {
-    GdkAtom clipboard_atom = GDK_NONE;
-    GtkTargetEntry *targets;
-    gint n_targets;
+    GtkTargetEntry *targs;
+    gint n_targs;
 
     if (1 || copycode == COPY_RTF || copycode == COPY_TEXT_AS_RTF) {
-	targets = extended_targets;
-	n_targets = n_extended_targets;
+	targs = full_targets;
+	n_targs = n_full;
     } else {
-	targets = basic_targets;
-	n_targets = n_basic_targets;
+	targs = basic_targets;
+	n_targs = n_basic;
     }
 
-    clipboard_atom = gdk_atom_intern("CLIPBOARD", FALSE);
-
-    gtk_selection_add_targets(mdata->w, GDK_SELECTION_PRIMARY,
-			      targets, n_targets);
-    gtk_selection_add_targets(mdata->w, clipboard_atom,
-			      targets, n_targets);
+    gtk_selection_add_targets(mdata->w, clipatom, targs, n_targs);
     gtk_signal_connect(GTK_OBJECT(mdata->w), "selection_get",
-		       GTK_SIGNAL_FUNC(gretl_clipboard_get), NULL);    
+		       GTK_SIGNAL_FUNC(gretl_clipboard_get), NULL); 
 }
 
-void gretl_clipboard_set (int copycode)
+static void gretl_clipboard_set (int copycode)
 {
-    static int initted;
+    GdkAtom clipatom = GDK_NONE;
 
-    if (!initted) {
-	gretl_clip_init(copycode);
-	initted = 1;
+    if (clipatom == GDK_NONE) {
+	clipatom = gdk_atom_intern("CLIPBOARD", FALSE);
+	gretl_clip_init(copycode, clipatom);
     }
 
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY, 
-			    GDK_CURRENT_TIME);
+    gtk_selection_owner_set(mdata->w, clipatom, GDK_CURRENT_TIME);      
 }
 
 #endif
+
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+
+int prn_to_clipboard (PRN *prn, int copycode)
+{
+    if (prn->buf == NULL || *prn->buf == '\0') {
+	return 0;
+    }
+
+    gretl_clipboard_free();
+
+    if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
+	/* need to convert from utf8 */
+	gchar *trbuf = my_locale_from_utf8(prn->buf);
+	
+	if (trbuf != NULL) {
+	    size_t len = strlen(trbuf);
+
+	    if (copycode == COPY_TEXT_AS_RTF) {
+		clipboard_buf = dosify_buffer(trbuf, copycode);
+	    } else {
+		clipboard_buf = mymalloc(len + 1);
+	    }
+	    if (clipboard_buf == NULL) {
+		g_free(trbuf);
+		return 1;
+	    }
+	    if (copycode != COPY_TEXT_AS_RTF) {
+		memcpy(clipboard_buf, trbuf, len + 1);
+	    }
+	    g_free(trbuf);
+	}
+    } else { /* copying TeX, RTF or CSV */
+	if (copy_to_clipboard_buf(prn->buf)) {
+	    return 1;
+	}
+    }
+
+    gretl_clipboard_set(copycode);
+
+    return 0;
+}
+
+#else /* plain GTK, no NLS */
+
+int prn_to_clipboard (PRN *prn, int copycode)
+{
+    int err = 0;
+
+    if (prn->buf == NULL || *prn->buf == '\0') {
+	return 0;
+    }
+
+    gretl_clipboard_free();
+
+    err = copy_to_clipboard_buf(prn->buf);
+
+    if (!err) {
+	gretl_clipboard_set(copycode);
+    }
+
+    return err;
+}
+
+#endif /* switch for prn_to_clipboard */
+
+

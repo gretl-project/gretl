@@ -1812,11 +1812,11 @@ void free_plotspec (GPT_SPEC *spec)
 	}
     }
 
-    if (spec->labels != NULL) {
-	for (i=0; i<spec->nlabels; i++) {
-	    free(spec->labels[i]);
+    if (spec->markers != NULL) {
+	for (i=0; i<spec->nmarkers; i++) {
+	    free(spec->markers[i]);
 	}
-	free(spec->labels);
+	free(spec->markers);
     }
 
     free(spec);
@@ -1872,7 +1872,9 @@ static char *escape_quotes (const char *s)
 	}
 
 	ret = malloc(strlen(s) + 1 + qcount);
-	if (ret == NULL) return NULL;
+	if (ret == NULL) {
+	    return NULL;
+	}
 
 	r = ret;
 	while (*s) {
@@ -1974,8 +1976,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
-	if (!string_is_blank(spec->text_labels[i].text)) {
-	    print_plot_labelspec(&(spec->text_labels[i]), png, fp);
+	if (!string_is_blank(spec->labels[i].text)) {
+	    print_plot_labelspec(&(spec->labels[i]), png, fp);
 	}
     }
 
@@ -1989,7 +1991,6 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
-
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -2038,16 +2039,13 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 
     if (spec->code == PLOT_FORECAST) {
 	fputs("# forecasts with 95 pc conf. interval\n", fp);
-    }
-    else if (spec->code == PLOT_CORRELOGRAM) {
+    } else if (spec->code == PLOT_CORRELOGRAM) {
 	fputs("# correlogram\n", fp); 
-    }
-    else if (spec->code == PLOT_FREQ_SIMPLE) {
+    } else if (spec->code == PLOT_FREQ_SIMPLE) {
 	fputs("# frequency plot (simple)\n", fp); 
-    }
-    else if (spec->code == PLOT_FREQ_NORMAL || 
-	     spec->code == PLOT_FREQ_GAMMA ||
-	     spec->code == PLOT_PERIODOGRAM) { 
+    } else if (spec->code == PLOT_FREQ_NORMAL || 
+	       spec->code == PLOT_FREQ_GAMMA ||
+	       spec->code == PLOT_PERIODOGRAM) { 
 	if (spec->code == PLOT_FREQ_NORMAL) {
 	    fputs("# frequency plot (against normal)\n", fp); 
 	} else if (spec->code == PLOT_FREQ_GAMMA) {
@@ -2141,8 +2139,8 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    } else {
 		fprintf(fp, "%.8g", xx);
 	    }
-	    if (spec->labels != NULL && i == 1) {
-		fprintf(fp, " # %s", spec->labels[t]);
+	    if (spec->markers != NULL && i == 1) {
+		fprintf(fp, " # %s", spec->markers[t]);
 	    }
 	    fputc('\n', fp);
 	}

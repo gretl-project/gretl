@@ -77,7 +77,7 @@ typedef struct {
     unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
-    double range[2][3];        /* axis range specifiers */
+    double range[3][2];        /* axis range specifiers */
     char keyspec[MAXTITLE];    /* position of key (or none) */
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
@@ -87,9 +87,9 @@ typedef struct {
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */
-    char **labels;             /* data-point labels (not always present) */
-    int nlabels;               /* number of labels */
-    GPT_LABEL text_labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
+    char **markers;            /* data-point markers (not always present) */
+    int nmarkers;              /* number of such markers */
+    GPT_LABEL labels[MAX_PLOT_LABELS];  /* textual labels written onto graph */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 

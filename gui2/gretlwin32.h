@@ -43,4 +43,8 @@ const char *get_network_cfg_filename (void);
 
 void win32_make_user_dirs (void);
 
+int prn_to_clipboard (PRN *prn, int copycode);
+
+int win_buf_to_clipboard (const char *buf);
+
 #endif /* GRETLWIN32_H */

@@ -32,4 +32,6 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget);
 
 void system_print_buf (const gchar *buf, FILE *fp);
 
+char *dosify_buffer (const char *buf, int format);
+
 #endif /* TEXTUTIL_H */

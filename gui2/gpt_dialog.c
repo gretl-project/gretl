@@ -134,6 +134,9 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
     }
 }
 
+/* take a double (which might be NA) and format it for
+   a gtkentry widget */
+
 static void double_to_gp_entry (double x, GtkWidget *w)
 {
     if (w != NULL && GTK_IS_ENTRY(w)) {
@@ -148,6 +151,8 @@ static void double_to_gp_entry (double x, GtkWidget *w)
 	g_free(numstr);
     }
 }
+
+/* read a double from a gtkentry, with error checking */
 
 static double entry_to_gp_double (GtkWidget *w)
 {
@@ -336,12 +341,12 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	int opt;
 #endif
 
-	entry_to_gp_string(labeltext[i], spec->text_labels[i].text, 
-			   sizeof spec->text_labels[0].text);
-	if (string_is_blank(spec->text_labels[i].text)) {
+	entry_to_gp_string(labeltext[i], spec->labels[i].text, 
+			   sizeof spec->labels[0].text);
+	if (string_is_blank(spec->labels[i].text)) {
 	    continue;
 	}
-	err = get_label_pos_from_entry(labelpos[i], spec->text_labels[i].pos);
+	err = get_label_pos_from_entry(labelpos[i], spec->labels[i].pos);
 	if (err) {
 	    break;
 	}
@@ -349,9 +354,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	active_item = GTK_OPTION_MENU(labeljust[i])->menu_item;
 	opt = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(active_item), 
 						  "option"));
-	spec->text_labels[i].just = opt;
+	spec->labels[i].just = opt;
 #else
-	spec->text_labels[i].just = 
+	spec->labels[i].just = 
 	    gtk_option_menu_get_history(GTK_OPTION_MENU(labeljust[i]));
 #endif
     } 
@@ -1078,7 +1083,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
-	gp_string_to_entry(labeltext[i], spec->text_labels[i].text);
+	gp_string_to_entry(labeltext[i], spec->labels[i].text);
 #ifdef OLD_GTK
 	gtk_signal_connect (GTK_OBJECT(labeltext[i]), "activate", 
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
@@ -1108,7 +1113,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	/* entry for coordinates */
 	labelpos[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
-	label_pos_to_entry(spec->text_labels[i].pos, labelpos[i]);
+	label_pos_to_entry(spec->labels[i].pos, labelpos[i]);
 #ifdef OLD_GTK
 	gtk_signal_connect(GTK_OBJECT(labelpos[i]), "activate", 
 			   GTK_SIGNAL_FUNC(apply_gpt_changes), 
@@ -1167,7 +1172,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
 	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),
-				    spec->text_labels[i].just);
+				    spec->labels[i].just);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(labeljust[i]);	

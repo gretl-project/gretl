@@ -414,91 +414,6 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 
 #endif /* !OLD_GTK */
 
-/* clipboard-related materials */
-
-#if defined(G_OS_WIN32)
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    return win_copy_buf(prn->buf, copycode, 0);
-}
-
-#elif defined(ENABLE_NLS) && !defined(OLD_GTK)
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    if (prn->buf == NULL) return 0;
-
-    gretl_clipboard_free();
-
-    if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
-	/* need to convert from utf8 */
-	gchar *trbuf = my_locale_from_utf8(prn->buf);
-	
-	if (trbuf != NULL) {
-	    size_t len = strlen(trbuf);
-
-	    if (copycode == COPY_TEXT_AS_RTF) {
-		clipboard_buf = dosify_buffer(trbuf, copycode);
-	    } else {
-		clipboard_buf = mymalloc(len + 1);
-	    }
-	    if (clipboard_buf == NULL) {
-		g_free(trbuf);
-		return 1;
-	    }
-	    if (copycode != COPY_TEXT_AS_RTF) {
-		memcpy(clipboard_buf, trbuf, len + 1);
-	    }
-	    g_free(trbuf);
-	}
-    } else { /* copying TeX, RTF or CSV */
-	size_t len = strlen(prn->buf);
-
-	fprintf(stderr, "Copying to clipboard, %d bytes\n", (int) len);
-	clipboard_buf = mymalloc(len + 1);
-	if (clipboard_buf == NULL) {
-	    return 1;
-	}
-	memcpy(clipboard_buf, prn->buf, len + 1);
-    }
-
-    gretl_clipboard_set(copycode);
-
-    return 0;
-}
-
-#else /* plain GTK, no NLS */
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    size_t len;
-    
-    if (prn->buf == NULL) {
-	return 0;
-    }
-
-    len = strlen(prn->buf);
-    if (len == 0) {
-	return 0;
-    }
-
-    gretl_clipboard_free();
-
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) {
-	return 1;
-    }
-
-    memcpy(clipboard_buf, prn->buf, len + 1);
-
-    gretl_clipboard_set(copycode);
-
-    return 0;
-}
-
-#endif /* switch for prn_to_clipboard */
-
 /* copying text from gretl windows */
 
 #define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
@@ -800,3 +715,62 @@ void system_print_buf (const gchar *buf, FILE *fp)
 	putc('\n', fp);
     }
 }
+
+char *dosify_buffer (const char *buf, int format)
+{
+    int extra = 0, nlines = 0;
+    char *targ, *q;
+    const char *p;
+    const char *rtf_preamble = "{\\rtf1\n"
+	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\n"
+	"\\f0\\fs18\n";
+    int rtf_add_bytes = strlen(rtf_preamble) + 4;
+
+    if (buf == NULL) return NULL;
+
+    p = buf;
+    while (*p) {
+	if (*p++ == '\n') nlines++;
+    }
+    extra = nlines + 1;
+
+    if (format == COPY_TEXT_AS_RTF) {
+	extra *= 5;
+	extra += rtf_add_bytes;
+    }
+
+    targ = malloc(strlen(buf) + extra);
+    if (targ == NULL) return NULL;
+
+    if (format == COPY_TEXT_AS_RTF) {
+	strcpy(targ, rtf_preamble);
+	q = targ + strlen(targ);
+    } else {
+	q = targ;
+    }
+
+    p = buf;
+    while (*p) {
+	if (*p == '\n') {
+	    if (format == COPY_TEXT_AS_RTF) {
+		*q++ = '\\';
+		*q++ = 'p';
+		*q++ = 'a';
+		*q++ = 'r';
+	    }
+	    *q++ = '\r';
+	    *q++ = '\n';
+	} else {
+	    *q++ = *p;
+	}
+	p++;
+    } 
+    *q = 0;
+
+    if (format == COPY_TEXT_AS_RTF) {
+	strcat(q, "}\n");
+    }
+
+    return targ;
+}
+
