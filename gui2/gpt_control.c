@@ -360,7 +360,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].widget != NULL) {
-	    widget_to_str(gpt_titles[i].widget, spec->titles[i], 
+	    widget_to_str(gpt_titles[i].widget, _(spec->titles[i]), 
 			  sizeof spec->titles[0]);
 	}
     }

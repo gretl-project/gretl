@@ -130,9 +130,6 @@ int plot_count, data_status, orig_vars;
 gchar *clipboard_buf; /* for copying models as LaTeX */
 float gui_scale;
 
-/* Is NLS translation in effect? */
-int nls_on;
-
 /* defaults for some options */
 int expert = FALSE; 
 int updater = FALSE;
@@ -571,7 +568,6 @@ void nls_init (void)
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
-    nls_on = doing_nls();
 }
 #endif /* ENABLE_NLS */
 

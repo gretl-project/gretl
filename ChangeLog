@@ -15,6 +15,9 @@ version 1.1.0
   (rather than 1-100, as it was previously)
 - Small modifications to path-searching
 - Updates to the Spanish help files
+- Activate a few missing translated strings
+- Fix "sim" command so it can be used to modify just one 
+  observation in a given series
 - Allow access to RATS databases via command line and scripts
 - Clean-up: remove all wasted array elements
 - Update to libtool 1.5

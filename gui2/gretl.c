@@ -667,7 +667,7 @@ void nls_init (void)
 	return;
     }
     build_path(gretldir, "locale", LOCALEDIR, NULL);
-#endif /* G_OS_WIN32 */
+# endif /* G_OS_WIN32 */
 
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
