@@ -533,6 +533,7 @@ static gint catch_button_3 (GtkWidget *w, GdkEventButton *event)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
+
 static void win_ctrl_c (windata_t *vwin)
 {
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
@@ -545,6 +546,7 @@ static void win_ctrl_c (windata_t *vwin)
 	text_copy(vwin, COPY_TEXT, NULL);
     }
 }
+
 #endif
 
 /* ........................................................... */
@@ -3157,7 +3159,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
 
 #define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
 
-void text_copy (gpointer data, guint how, GtkWidget *widget) 
+void text_copy (gpointer data, guint how, GtkWidget *w) 
 {
     windata_t *vwin = (windata_t *) data;
     gchar *msg = NULL;
@@ -3360,7 +3362,9 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    gretl_print_attach_buffer(&textprn, selbuf);
 	    prn_to_clipboard(&textprn, myhow);
 	    g_free(selbuf);
-	    infobox(_("Copied selection to clipboard"));
+	    if (w != NULL) {
+		infobox(_("Copied selection to clipboard"));
+	    }
 	    return;
 	} else {
 	    /* no selection: copy everything */
@@ -3385,12 +3389,14 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 #endif
 
-    msg = g_strdup_printf(_("Copied contents of window as %s"),
-			  (how == COPY_LATEX)? "LaTeX" :
-			  (how == COPY_RTF || how == COPY_TEXT_AS_RTF)? 
-			  "RTF" : _("plain text"));
-    infobox(msg);
-    g_free(msg);
+    if (w != NULL) {
+	msg = g_strdup_printf(_("Copied contents of window as %s"),
+			      (how == COPY_LATEX)? "LaTeX" :
+			      (how == COPY_RTF || how == COPY_TEXT_AS_RTF)? 
+			      "RTF" : _("plain text"));
+	infobox(msg);
+	g_free(msg);
+    }
 }
 
 /* .................................................................. */

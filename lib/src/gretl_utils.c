@@ -947,7 +947,11 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
     pdinfo->t2 = pdinfo->n - 1;
     ntodate(endobs, pdinfo->t2, pdinfo);
     strcpy(pdinfo->endobs, endobs);
-    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0;
+
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[0][t] = 1.0;
+    }
+
     return 0;
 }
 
@@ -1654,6 +1658,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	break;
     case CORC:
     case HILU:
+    case PWE:
 	err = hilu_corc(&rho, command.list, pZ, pdinfo, 
 			NULL, 1, command.ci, &prn);
 	if (!err) {
@@ -1670,10 +1675,13 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case PROBIT:
 	*tmpmod = logit_probit(command.list, pZ, pdinfo, command.ci);
 	break;
+    case TOBIT:
+	*tmpmod = tobit_model(command.list, pZ, pdinfo, NULL);
+	break;
     case OLS:
     case WLS:
     case POOLED:
-	*tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, 0.0);
+	*tmpmod = lsq(command.list, pZ, pdinfo, command.ci, command.opt, 0.0);
 	break;
     case TSLS:
 	break;
@@ -1685,6 +1693,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	err = 1;
 	clear_model(tmpmod, pdinfo);
     }
+
     if (command.list) free(command.list);
     if (command.param) free(command.param);
 
