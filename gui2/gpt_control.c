@@ -113,6 +113,7 @@ struct png_plot_t {
     int pixel_ymin, pixel_ymax;
     int xint, yint;
     int pd;
+    int err;
     guint cid;
     struct png_zoom_t *zoom;
     unsigned long status; 
@@ -788,6 +789,50 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 
 /* ........................................................... */
 
+static int 
+read_plot_range (const char *obj, const char *s, GPT_SPEC *spec)
+{
+    double r0, r1;
+    int i = 0, err = 0;
+
+    if (!strcmp(obj, "xrange")) {
+	i = 0;
+    } else if (!strcmp(obj, "yrange")) {
+	i = 1;
+    } else if (!strcmp(obj, "y2range")) {
+	i = 2;
+    } else {
+	err = 1;
+    }
+
+    /* FIXME: looping error if the following is not set (presumably
+       will get looping on other errors too */
+
+    if (!strcmp(s, "[*:*]")) {
+	r0 = r1 = NADBL;
+    } else {
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "C");
+#endif
+	if (!err && sscanf(s, "[%lf:%lf]", &r0, &r1) != 2) {
+	    err = 1;
+	}
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
+    }
+
+    if (err) {
+	errbox(_("Failed to parse gnuplot file"));
+	fprintf(stderr, "plotfile line: '%s'\n", line);
+    } else {
+	spec->range[i][0] = r0;
+	spec->range[i][1] = r1;
+    }
+
+    return err;
+}
+
 static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
 			      int *labelno)
 {
@@ -817,37 +862,11 @@ static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
     top_n_tail(setting);
 
     if (strstr(set_thing, "range")) {
-	double r0, r1;
-	int i = 0, err = 0;
-
-	if (!strcmp(set_thing, "xrange")) {
-	    i = 0;
-	} else if (!strcmp(set_thing, "yrange")) {
-	    i = 1;
-	} else if (!strcmp(set_thing, "y2range")) {
-	    i = 2;
-	} else {
-	    err = 1;
-	}
-
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
-	if (!err && sscanf(setting, "[%lf:%lf]", &r0, &r1) != 2) {
-	    err = 1;
-	}
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
-
-	if (err) {
+	if (read_plot_range(set_thing, setting, spec)) {
 	    errbox(_("Failed to parse gnuplot file"));
 	    fprintf(stderr, "plotfile line: '%s'\n", line);
 	    return 1;
-	} 
-
-	spec->range[i][0] = r0;
-	spec->range[i][1] = r1;
+	}
     } else if (strcmp(set_thing, "title") == 0) {
 	strcpy(spec->titles[0], setting);
     } else if (strcmp(set_thing, "xlabel") == 0) {
@@ -1404,8 +1423,11 @@ identify_point (png_plot *plot, int pixel_x, int pixel_y,
     int t, plot_n;
     const double *data_x, *data_y = NULL;
 
-    if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
-	if (read_plotspec_from_file(plot->spec)) return;
+    if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec) && !plot->err) {
+	if (read_plotspec_from_file(plot->spec)) {
+	    plot->err = 1;
+	    return;
+	}
     }
 
     /* no labels to show */
@@ -1491,6 +1513,10 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     GdkModifierType state;
     gchar label[32], label_y[16];
 
+    if (plot->err) {
+	return TRUE;
+    }
+
     if (event->is_hint) {
         gdk_window_get_pointer(event->window, &x, &y, &state);
     } else {
@@ -1562,13 +1588,14 @@ static void set_plot_format_flags (png_plot *plot)
     }
 }
 
+/* called from png plot popup menu */
+
 static void start_editing_png_plot (png_plot *plot)
-     /* called from png plot popup menu */
 {
     /* the spec struct is not yet filled out by reference
-       to the gnuplot source file 
-    */
+       to the gnuplot source file */
     if (read_plotspec_from_file(plot->spec)) {
+	plot->err = 1;
 	return;
     }
 
@@ -2554,6 +2581,7 @@ static png_plot *png_plot_new (void)
     plot->ymin = plot->ymax = 0.0;
     plot->xint = plot->yint = 0;
     plot->pd = 0;
+    plot->err = 0;
     plot->cid = 0;
     plot->zoom = NULL;
     plot->status = 0;
