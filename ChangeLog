@@ -1,4 +1,5 @@
 10/24/2003 version 1.1.5
+- Updates to manual
 - Gtk2 version: Make selection dialog tall enough for wls,
   tsls and ar model selections
 - Model window, graph menu: if there are two independent vars,

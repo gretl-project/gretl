@@ -118,7 +118,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
-	rm -f *.lo $(LIBGRETL)
+	rm -f *.lo *.o $(LIBGRETL)
 	rm -rf .libs .deps
 
 distclean: clean

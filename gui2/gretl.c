@@ -1885,7 +1885,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
 #ifdef G_OS_WIN32
     sprintf(renv, "R_PROFILE=%s", Rprofile);
-    renv[strlen(renv) + 1] = 0;
+    renv[strlen(renv) + 1] = '\0';
 #else
     if (setenv("R_PROFILE", Rprofile, 1)) {
 	errbox(_("Couldn't set R_PROFILE environment variable"));

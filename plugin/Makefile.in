@@ -147,7 +147,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
-	rm -f *.lo *.la
+	rm -f *.lo *.o *.la
 	rm -rf .libs .deps
 
 distclean: clean
