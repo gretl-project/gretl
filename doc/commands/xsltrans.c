@@ -190,16 +190,16 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
     return err;
 }
 
-char *get_lang_from_fname (char *lang, const char *fname)
+char *get_abbreviated_lang (char *lang, const char *full_lang)
 {
-    char *p = strrchr(fname, '_');
-
-    if (p != NULL && strlen(p) > 3 && !strcmp(p + 3, ".xml")) {
-	char tmp[3];
-
-	if (sscanf(p, "_%2s", tmp)) {
-	    sprintf(lang, "\"%s\"", tmp);
-	}
+    if (!strcmp(full_lang, "italian")) {
+	strcpy(lang, "'it'");
+    }
+    else if (!strcmp(full_lang, "spanish")) {
+	strcpy(lang, "'es'");
+    }
+    else if (!strcmp(full_lang, "french")) {
+	strcpy(lang, "'fr'");
     }
 
     return lang;
@@ -210,6 +210,7 @@ int parse_commands_data (const char *fname, int output,
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
+    char *tmp = NULL;
     char lang[8] = "en";
     int err = 0;
 
@@ -237,7 +238,12 @@ int parse_commands_data (const char *fname, int output,
 	goto bailout;
     }
 
-    get_lang_from_fname(lang, fname);
+    tmp = xmlGetProp(cur, (UTF) "language");
+    if (tmp != NULL) {
+	get_abbreviated_lang(lang, tmp);
+	free(tmp);
+    }
+
     apply_xslt(doc, output, lang, docdir);
 
  bailout:

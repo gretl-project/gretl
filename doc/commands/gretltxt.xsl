@@ -12,8 +12,22 @@
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
-  <xsl:value-of
+  <xsl:variable name="phrase"
     select="$phrases/phrase[@key=$key and @lang=$lang]"/>
+  <xsl:choose>
+    <xsl:when test="$phrase">
+      <xsl:value-of select="$phrase"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        <xsl:text>** Error: no phrase with key = '</xsl:text>
+        <xsl:value-of select="$key"/>
+        <xsl:text>' found for lang '</xsl:text>
+        <xsl:value-of select="$lang"/>
+        <xsl:text>'.</xsl:text>
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>  
 </xsl:template>
 
 <xsl:template match="commandlist">
@@ -293,6 +307,7 @@
 
 <xsl:template match="menu-path">
   <xsl:if test="$hlp='cli'">
+    <xsl:text>&#xa;</xsl:text>
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'menupath'"/>
     </xsl:call-template>
@@ -302,6 +317,7 @@
 
 <xsl:template match="other-access">
   <xsl:if test="$hlp='cli'">
+    <xsl:text>&#xa;</xsl:text>
     <xsl:call-template name="gettext">
       <xsl:with-param name="key" select="'otheraccess'"/>
     </xsl:call-template>

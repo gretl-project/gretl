@@ -20,8 +20,8 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/trouble.xml chapters/biblio.xml 
 
 CMDLIST = chapters/cmdlist.xml
-CMDLIST_STANDALONE = chapters/cmdlist_standalone.xml
-CMDREF_WRAPPER = chapters/cmdref_standalone.xml
+CMDLIST_STANDALONE = chapters/cmdlist_standalone_it.xml
+CMDREF_WRAPPER = chapters/cmdref_standalone_it.xml
 
 CMDREF = commands/gretl_commands.xml
 CMDREF_IT = commands/gretl_commands_it.xml
@@ -60,9 +60,9 @@ manual-a4.xml: manual.xml
 
 # Italian standalone PDF command reference
 
-cmdbook.pdf: cmdbook.tex jadetex.cfg lucidabr.tex
+cmdbook_it.pdf: cmdbook_it.tex jadetex.cfg lucidabr.tex
 
-cmdbook.tex: cmdbook.xml $(CMDREF_WRAPPER) $(DSL) $(MATHSS) $(CMDLIST_STANDALONE)
+cmdbook_it.tex: cmdbook_it.xml $(CMDREF_WRAPPER) $(DSL) $(MATHSS) $(CMDLIST_STANDALONE)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 

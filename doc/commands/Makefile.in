@@ -20,6 +20,9 @@ CMDSDIR = $(topsrc)/doc/commands
 CHAPDIR = $(topsrc)/doc/chapters
 SHAREDIR = $(topsrc)/share
 
+CMDSRC = $(CMDSDIR)/gretl_commands.xml \
+	$(CMDSDIR)/gretl_commands_it.xml
+
 progs: xsltrans skeleton reflow validate
 
 xsltrans: xsltrans.c 
@@ -61,11 +64,11 @@ docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretlman.xsl
 # Generate docbook XML for a standalone command-reference
 docbook-standalone: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(CMDSDIR)/gretlman.xsl
 	./xsltrans --docbook-standalone $(CMDSDIR)/gretl_commands_it.xml && \
-	cp cmdlist_standalone.xml $(CHAPDIR)/cmdlist_standalone.xml && \
+	cp cmdlist_standalone.xml $(CHAPDIR)/cmdlist_standalone_it.xml && \
 	rm cmdlist_standalone.xml
 
 # Generate "online" help file, gretlcli.hlp and gretl.hlp
-hlp: xsltrans reflow $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretltxt.xsl
+hlp: xsltrans reflow $(CMDSRC) $(CMDSDIR)/gretltxt.xsl
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp

@@ -1447,10 +1447,6 @@
 	      <cell>log-likelihood (where applicable)</cell> 
 	    </row> 
 	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>standard error of residuals</cell> 
-	    </row> 
-	    <row>
 	      <cell>coeff(<repl>var</repl>)</cell> 
 	      <cell>estimated coefficient for variable
 		<repl>var</repl></cell> 
