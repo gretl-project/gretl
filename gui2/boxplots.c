@@ -866,7 +866,10 @@ five_numbers (gpointer data)
 	pprintf(prn, "%s\n\n%18s%10s%10s%17s%10s%10s\n",
 		_("Five-number summary with bootstrapped confidence "
 		  "interval for median"),
-		"min", "Q1", _("median"), _("(90% interval)"), "Q3", "max");
+		"min", "Q1", _("median"), 
+		/* xgettext:no-c-format */
+		_("(90% interval)"), 
+		"Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 

@@ -630,11 +630,11 @@ void set_miss (LIST list, const char *param, double **Z,
 
     if (list[0] == 0) {
 	count = real_setmiss(missval, 0, Z, pdinfo);
-	if (count) 
-	    pprintf(prn, _("Set %d value%s to \"missing\"\n"), count,
-		    (count > 1)? "s" : "");
-	else
+	if (count) { 
+	    pprintf(prn, _("Set %d values to \"missing\"\n"), count);
+	} else {
 	    pputs(prn, _("Didn't find any matching observations\n"));
+	}
 	return;
     }
 

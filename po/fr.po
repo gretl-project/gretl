@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.0.6\n"
-"POT-Creation-Date: 2003-03-15 14:56-0500\n"
-"PO-Revision-Date: 2003-03-15 15:02-0500\n"
+"POT-Creation-Date: 2003-03-16 10:59-0500\n"
+"PO-Revision-Date: 2003-03-16 10:58-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -780,7 +780,7 @@ msgstr "AVERTISSEMENT: %d variable(s) non numérique(s) écartée(s)\n"
 msgid "box file seems to be malformed\n"
 msgstr "fichier BOX semble être mal structuré\n"
 
-#: lib/src/dataio.c:2796 gui/database.c:1608 gui2/boxplots.c:1256
+#: lib/src/dataio.c:2796 gui/database.c:1608 gui2/boxplots.c:1259
 #: gui2/database.c:1656
 #, c-format
 msgid "Couldn't open %s for writing"
@@ -2033,10 +2033,10 @@ msgstr ""
 
 #: lib/src/gretl_utils.c:634
 #, c-format
-msgid "Set %d value%s to \"missing\"\n"
-msgstr "Initialisé %d valeurs%s à \"manquantes\"\n"
+msgid "Set %d values to \"missing\"\n"
+msgstr "Initialisé %d valeurs à \"manquantes\"\n"
 
-#: lib/src/gretl_utils.c:637
+#: lib/src/gretl_utils.c:636
 msgid "Didn't find any matching observations\n"
 msgstr "N'a pu repérer des observations concordantes\n"
 
@@ -4199,48 +4199,48 @@ msgstr ""
 "Sommaire de 5 nombres %s amorcé avec un intervalle de confiance sur la "
 "médiane"
 
-#: gui/boxplots.c:858 gui2/boxplots.c:869
-#, c-format
+#: gui/boxplots.c:860 gui2/boxplots.c:871
+#, no-c-format
 msgid "(90% interval)"
 msgstr "(90% intervalle)"
 
-#: gui/boxplots.c:871 gui2/boxplots.c:882
+#: gui/boxplots.c:874 gui2/boxplots.c:885
 msgid "gretl: 5 numbers"
 msgstr "gretl 5 nombres"
 
-#: gui/boxplots.c:911 gui2/boxplots.c:922
+#: gui/boxplots.c:914 gui2/boxplots.c:925
 #, c-format
 msgid "Dropping %s: insufficient observations"
 msgstr "ABandon de %s: observations insuffisantes"
 
-#: gui/boxplots.c:935 gui2/boxplots.c:946
+#: gui/boxplots.c:938 gui2/boxplots.c:949
 msgid "Couldn't obtain confidence interval"
 msgstr "Ne peut obtenir l'intervalle de confiance"
 
-#: gui/boxplots.c:1000 gui2/boxplots.c:1151
+#: gui/boxplots.c:1003 gui2/boxplots.c:1154
 msgid "Couldn't open XPM file for writing"
 msgstr "Ne peut ouvrir le fichier XPM en écriture"
 
-#: gui/boxplots.c:1254 gui2/boxplots.c:1443
+#: gui/boxplots.c:1257 gui2/boxplots.c:1446
 msgid "boxplot file is corrupt"
 msgstr "fichier BoxPlot est corrompu"
 
-#: gui/boxplots.c:1316 gui2/boxplots.c:1542
+#: gui/boxplots.c:1319 gui2/boxplots.c:1545
 #, c-format
 msgid "got invalid variable number %d"
 msgstr "numéro de variable %d invalide obtenu"
 
-#: gui/boxplots.c:1324 gui2/boxplots.c:1550
+#: gui/boxplots.c:1327 gui2/boxplots.c:1553
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr "nom de variable « %s » invalide obtenu"
 
-#: gui/boxplots.c:1329 gui2/boxplots.c:1555
+#: gui/boxplots.c:1332 gui2/boxplots.c:1558
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "champ « %s » invalide obtenu"
 
-#: gui/boxplots.c:1355 gui2/boxplots.c:1582
+#: gui/boxplots.c:1358 gui2/boxplots.c:1585
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
@@ -5727,7 +5727,7 @@ msgstr "Titre du traçé"
 msgid "Title for axis"
 msgstr "Titre de l'axe"
 
-#: gui/gpt_control.c:238 gui/library.c:3428 gui2/boxplots.c:1322
+#: gui/gpt_control.c:238 gui/library.c:3428 gui2/boxplots.c:1325
 #: gui2/gpt_control.c:264 gui2/gui_utils.c:179 gui2/library.c:3201
 #: plugin/tramo-x12a.c:356
 #, c-format
@@ -9195,35 +9195,35 @@ msgstr ""
 msgid "HTTP proxy: first field must be an IP number"
 msgstr "HTTP proxy: premier champ doit être un numéro IP"
 
-#: gui2/boxplots.c:1029
+#: gui2/boxplots.c:1032
 msgid "Failed to allocate DIB"
 msgstr "Échec d'allocation DIB"
 
-#: gui2/boxplots.c:1052
+#: gui2/boxplots.c:1055
 msgid "Failed to lock DIB Header"
 msgstr "Échec de verrouillage de l'en-tête DIB"
 
-#: gui2/boxplots.c:1073
+#: gui2/boxplots.c:1076
 msgid "Failed to lock DIB Palette"
 msgstr "Échec de verrouillage de la Palette DIB"
 
-#: gui2/boxplots.c:1106
+#: gui2/boxplots.c:1109
 msgid "Failed to lock DIB Data"
 msgstr "Échec de verrouillage des données DIB"
 
-#: gui2/boxplots.c:1113
+#: gui2/boxplots.c:1116
 msgid "Cannot open the Clipboard!"
 msgstr "Ne peut ouvrir le Clipboard!"
 
-#: gui2/boxplots.c:1117
+#: gui2/boxplots.c:1120
 msgid "Cannot empty the Clipboard"
 msgstr "Ne peut vider le Clipboard"
 
-#: gui2/boxplots.c:1124
+#: gui2/boxplots.c:1127
 msgid "Failed to set clipboard data"
 msgstr "Échec d'initialisation des données du Clipboard"
 
-#: gui2/boxplots.c:1127
+#: gui2/boxplots.c:1130
 msgid "Failed to close Clipboard"
 msgstr "Échec de fermeture du Clipboard"
 
@@ -9703,7 +9703,10 @@ msgid ""
 "\n"
 "Alternative hypothesis: one cointegrating relation\n"
 "\n"
-msgstr "\nHypothèse alternative: une relation co-intégrée\n\n"
+msgstr ""
+"\n"
+"Hypothèse alternative: une relation co-intégrée\n"
+"\n"
 
 #: plugin/johansen.c:199
 msgid "Failed to find eigenvalues\n"
