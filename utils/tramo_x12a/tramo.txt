@@ -1,0 +1,13 @@
+To get series saved in specific files, you need a directory structure
+in place under the tramo working directory (e.g. $HOME/gretl/tramo).
+This should look like:
+
+output
+graph/acf
+graph/filters
+graph/forecast
+graph/series
+graph/spectra
+
+
+
