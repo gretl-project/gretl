@@ -55,7 +55,11 @@ static void set_extra_var (gint i, selector *sr)
 
 static void select_extra_var_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(sr->varlist)->selection;
+    GList *mylist;
+
+    if (!GTK_IS_CLIST(sr->varlist)) return;
+
+    mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
 	mylist = g_list_first(mylist);
@@ -99,7 +103,11 @@ static void set_dependent_var (gint i, selector *sr)
 
 static void select_dependent_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(sr->varlist)->selection;
+    GList *mylist;
+
+    if (!GTK_IS_CLIST(sr->varlist)) return;
+
+    mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
 	mylist = g_list_first(mylist);
@@ -140,8 +148,12 @@ static void add_instrument_callback (GtkWidget *w, selector *sr)
 static void add_var_on_right (gint i, selector *sr)
 {
     gchar *row[2];
-    gint j, rows = GTK_CLIST(sr->rightvars)->rows;
+    gint j, rows;
     gint already_there = 0;
+
+    if (!GTK_IS_CLIST(sr->rightvars)) return;
+
+    rows = GTK_CLIST(sr->rightvars)->rows;
 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &row[0]);
     for (j=0; j<rows; j++) {
@@ -161,7 +173,12 @@ static void add_var_on_right (gint i, selector *sr)
 
 static void add_to_right_callback (GtkWidget *w, selector *sr)
 {
-    GList *mylist = GTK_CLIST(sr->varlist)->selection;
+    GList *mylist;
+
+    if (!GTK_IS_CLIST(sr->varlist) ||
+	!GTK_IS_CLIST(sr->rightvars)) return;
+
+    mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) 
 	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
@@ -472,7 +489,7 @@ dialog_right_click (GtkWidget *widget, GdkEventButton *event,
 
     topwin = gtk_widget_get_parent_window(sr->varlist);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
-    if (mods & GDK_BUTTON3_MASK) 
+    if (mods & GDK_BUTTON3_MASK)  
 	add_to_right_callback (NULL, sr);
     return TRUE;
 }
@@ -1112,6 +1129,7 @@ void simple_selection (const char *title, const char *oktxt,
 	    gtk_clist_append(GTK_CLIST(sr->varlist), row);
 	}
     }
+
     gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80 * gui_scale);
     gtk_widget_set_usize (sr->varlist, 80 * gui_scale, 120 * gui_scale);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),

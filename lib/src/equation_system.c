@@ -39,6 +39,7 @@ const char *gretl_system_long_strings[] = {
 
 const char *nosystem = N_("No system of equations has been defined");
 const char *badsystem = N_("Unrecognized equation system type");
+const char *toofew = N_("An equation system must have at least two equations");
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -156,6 +157,12 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     if (sys->type != SUR) {
 	err = 1;
 	strcpy(gretl_errmsg, _(badsystem));
+	goto system_bailout;
+    }
+
+    if (sys->n_equations < 2) {
+	err = 1;
+	strcpy(gretl_errmsg, _(toofew));
 	goto system_bailout;
     }
 
