@@ -30,6 +30,7 @@ typedef enum {
     BXPLOT,
     CHOW,
     COINT,
+    COINT2,
     CORC,     
     CORR,     
     CORRGM,   

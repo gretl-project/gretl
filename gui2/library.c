@@ -3865,7 +3865,7 @@ int gui_exec_line (char *line,
 
      switch (command.ci) {
 
-    case ADF: case COINT:
+     case ADF: case COINT: case COINT2:
     case CORR:
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:

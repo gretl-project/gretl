@@ -865,7 +865,7 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 
     if (dated_daily_data(pdinfo)) {
 	daily_date_string(datestr, t, pdinfo);
-	return;
+	return datestr;
     }
 
     x = date(t, pdinfo->pd, pdinfo->sd0);

@@ -32,6 +32,7 @@ char *commands[] = {
     "boxplot",
     "chow", 
     "coint",
+    "coint2",
     "corc", 
     "corr",     
     "corrgm",   

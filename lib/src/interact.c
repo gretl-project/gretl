@@ -420,6 +420,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == ADF ||
 	command->ci == ARCH ||
 	command->ci == COINT ||
+	command->ci == COINT2 ||
 	command->ci == ADDTO ||
 	command->ci == OMITFROM ||
 	command->ci == MULTIPLY ||
@@ -1091,6 +1092,11 @@ int simple_commands (CMD *cmd, const char *line,
     case COINT:
 	order = atoi(cmd->param);
 	err = coint(order, cmd->list, pZ, datainfo, prn);
+	break;
+
+    case COINT2:
+	order = atoi(cmd->param);
+	err = johansen_test(order, cmd->list, pZ, datainfo, prn);
 	break;
 
     case CORR:

@@ -340,15 +340,6 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (resids->uhat == NULL) return E_ALLOC;
     }
 
-#if 0
-    if (resids != NULL) {
-	var_model = lsq(varlist, pZ, pdinfo, VAR, 0, 0.0);
-	resids->t1 = var_model.t1 + 1;
-	clear_model(&var_model, pdinfo);
-	pdinfo->t1 = resids->t1;
-    }
-#endif
-    
     for (i=0; i<neqns; i++) {
 	varlist[1] = depvars[i];
 	/* run an OLS regression for the current dep var */
@@ -977,8 +968,14 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 #else
     flags = 0;
 #endif
-    pdinfo->t1 += 1;
-    err = real_var(order - 1, list, pZ, pdinfo, prn, &resids, flags); /* or use varprn */
+
+#if 0
+    pdinfo->t1 += (order + 1);
+    err = real_var(order - 1, list, pZ, pdinfo, prn, &resids, flags); 
+    /* or use varprn */
+#else
+    err = real_var(order, list, pZ, pdinfo, prn, &resids, flags); 
+#endif
     gretl_print_destroy(varprn);
 
     if (!err) {
