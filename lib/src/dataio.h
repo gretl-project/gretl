@@ -49,6 +49,13 @@ typedef enum {
     CLEAR_SUBSAMPLE
 } clear_codes;
 
+typedef enum {
+    DATA_NONE,
+    DATA_CLEAR,
+    DATA_APPEND
+} data_open_codes;
+
+
 #define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
                             } while (0);
 
@@ -96,9 +103,9 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 		double **addZ, DATAINFO *addinfo,
 		PRN *prn);
 
-int get_data (double ***pZ, DATAINFO *pdinfo, 
-	      char *datfile, PATHS *ppaths, 
-	      int data_status, PRN *prn);
+int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, 
+		    char *datfile, PATHS *ppaths, 
+		    int data_status, PRN *prn);
 
 int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   int data_status, int length,
@@ -116,7 +123,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
 int check_varname (const char *varname);
 
-int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
+int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn, int gui); 
 
 char *get_xml_description (const char *fname);

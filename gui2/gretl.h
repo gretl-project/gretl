@@ -160,6 +160,7 @@ enum extra_cmds {
     CLI_HELP_ENGLISH,
     GUI_HELP_ENGLISH,
     MODELTABLE,
+    GRAPHPAGE,
     CREATE_USERDIR,
     GUI_CMD_MAX
 };
@@ -170,6 +171,7 @@ enum file_ops {
     OPEN_RATSDB,
     OPEN_SCRIPT,
     OPEN_CSV,
+    APPEND_DATA,
     APPEND_CSV,
     OPEN_ASCII,
     APPEND_ASCII,

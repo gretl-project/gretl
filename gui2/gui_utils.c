@@ -753,7 +753,8 @@ void register_data (char *fname, const char *user_fname,
     } 
 }
 
-#define APPENDING(action) (action == APPEND_CSV || \
+#define APPENDING(action) (action == APPEND_DATA || \
+                           action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
                            action == APPEND_EXCEL || \
                            action == APPEND_ASCII)
@@ -870,7 +871,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
     else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
-    } else {
+    } 
+    else {
 	/* no filetype specified: have to guess */
 	PRN *prn;	
 
@@ -896,13 +898,18 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
     else { /* native data */
 	PRN prn;
+	int clear_code = DATA_NONE;
+
+	if (append) clear_code = DATA_APPEND;
+	else if (data_status) clear_code = DATA_CLEAR;
 
 	gretl_print_attach_file(&prn, stderr);
 	if (datatype == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, 
-			      data_status, &prn, 1);
+	    err = get_xmldata(&Z, &datainfo, trydatfile, &paths, 
+			      clear_code, &prn, 1);
 	} else {
-	    err = get_data(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+	    err = gretl_get_data(&Z, &datainfo, trydatfile, &paths, 
+				 clear_code, &prn);
 	}
     }
 

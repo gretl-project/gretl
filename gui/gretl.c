@@ -196,6 +196,7 @@ GtkItemFactoryEntry data_items[] = {
       OPEN_EXCEL, NULL },
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Append data/standard format..."), NULL, open_data, APPEND_DATA, NULL },
     { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
     { N_("/File/Append data/from ASCII..."), NULL, open_data, APPEND_ASCII, NULL },
     { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
@@ -672,11 +673,11 @@ int main (int argc, char *argv[])
 
 	switch (ftype) {
 	case GRETL_NATIVE_DATA:
-	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
-			   prn);
+	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, data_status, 
+				 prn);
 	    break;
 	case GRETL_XML_DATA:
-	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, data_status, 
+	    err = get_xmldata(&Z, &datainfo, paths.datfile, &paths, data_status, 
 			      prn, 0);
 	    break;
 	case GRETL_CSV_DATA:

@@ -950,19 +950,38 @@ static void show_varinfo_changes (int v)
     g_free(idstr);
 }
 
+static char *trim_text (const char *s)
+{
+    char *ret = NULL;
+    int i;
+
+    while (isspace(*s)) s++;
+    if (*s == '\0') return NULL;
+
+    ret = g_strdup(s);
+    for (i=strlen(ret)-1; i>0; i--) {
+	if (!isspace(ret[i])) break;
+	ret[i] = '\0';
+    }
+
+    return ret;
+}
+
 static void really_set_variable_info (GtkWidget *w, 
 				      struct varinfo_settings *vset)
 {
     const char *edttext;
+    char *newstr = NULL;
     int v = vset->varnum;
     int changed = 0, gui_changed = 0, comp_changed = 0;
     int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
-    if (strcmp(datainfo->varname[v], edttext)) {
+    newstr = trim_text(edttext);
+    if (newstr != NULL && strcmp(datainfo->varname[v], newstr)) {
 	int err;
 
-	sprintf(line, "rename %d %s", v, edttext);
+	sprintf(line, "rename %d %s", v, newstr);
 	if (vset->full) {
 	    err = verify_and_record_command(line);
 	} else {
@@ -971,26 +990,31 @@ static void really_set_variable_info (GtkWidget *w,
 	if (err) {
 	    return;
 	} else {
-	    strcpy(datainfo->varname[v], edttext);
+	    strcpy(datainfo->varname[v], newstr);
 	    gui_changed = 1;
 	}
     }
+    free(newstr);
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->label_entry));
-    if (strcmp(VARLABEL(datainfo, v), edttext)) {
+    newstr = trim_text(edttext);
+    if (newstr != NULL && strcmp(VARLABEL(datainfo, v), newstr)) {
 	*VARLABEL(datainfo, v) = 0;
-	strncat(VARLABEL(datainfo, v), edttext, MAXLABEL - 1);
+	strncat(VARLABEL(datainfo, v), newstr, MAXLABEL - 1);
 	changed = 1;
 	gui_changed = 1;
     }
+    free(newstr);
 
     if (vset->display_name_entry != NULL) {
 	edttext = gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry));
-	if (strcmp(DISPLAYNAME(datainfo, v), edttext)) {
+	newstr = trim_text(edttext);
+	if (newstr != NULL && strcmp(DISPLAYNAME(datainfo, v), newstr)) {
 	    *DISPLAYNAME(datainfo, v) = 0;
-	    strncat(DISPLAYNAME(datainfo, v), edttext, MAXDISP - 1);
+	    strncat(DISPLAYNAME(datainfo, v), newstr, MAXDISP - 1);
 	    changed = 1;
 	}
+	free(newstr);
     }
 
     if (vset->compaction_menu != NULL) {

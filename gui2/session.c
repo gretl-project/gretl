@@ -2148,11 +2148,13 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    clear_graph_page();
 	}
     }
-    else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
-	context_help(NULL, GINT_TO_POINTER(MODELTABLE));
-    }
-    else if (obj->sort == 'q' && strcmp(item, _("Help")) == 0) {
-	dummy_call();
+    else if (strcmp(item, _("Help")) == 0) {
+	if (obj->sort == 't') {
+	    context_help(NULL, GINT_TO_POINTER(MODELTABLE));
+	}
+	else if (obj->sort == 'q') {
+	    context_help(NULL, GINT_TO_POINTER(GRAPHPAGE));
+	}
     }    
 }
 

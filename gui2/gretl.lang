@@ -19,7 +19,7 @@
 	</string>
 
 	<keyword-list _name = "Commands" style = "Keyword" case-sensitive="TRUE"
-           beginning-regex="\b" ending-regex="\b">
+           beginning-regex="\b" end-regex="\b">
 	     <keyword>add</keyword>
 	     <keyword>addto</keyword>
 	     <keyword>adf</keyword>      

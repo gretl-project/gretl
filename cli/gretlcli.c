@@ -348,12 +348,12 @@ int main (int argc, char *argv[])
 	}
 
 	if (err == GRETL_NATIVE_DATA) {
-	    err = get_data(&Z, datainfo, paths.datfile, &paths, 
-			   data_status, prn);
+	    err = gretl_get_data(&Z, &datainfo, paths.datfile, &paths, 
+				 DATA_NONE, prn);
 	} 
 	else if (err == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, 
-			      data_status, prn, 0);
+	    err = get_xmldata(&Z, &datainfo, paths.datfile, &paths, 
+			      DATA_NONE, prn, 0);
 	} 
 	else if (err == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
@@ -1130,13 +1130,13 @@ void exec_line (char *line, PRN *prn)
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
+	    err = get_xmldata(&Z, &datainfo, datfile, &paths, 
 			      data_status, prn, 0);
 	} else if (dbdata) {
 	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {
-	    err = get_data(&Z, datainfo, datfile, &paths, 
-			   data_status, prn);
+	    err = gretl_get_data(&Z, &datainfo, datfile, &paths, 
+				 data_status, prn);
 	}
 
 	if (err) {

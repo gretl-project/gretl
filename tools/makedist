@@ -16,26 +16,8 @@ cd ${topdir} && date > share/gretl.stamp
 # make the archive and remove the dist dir
 cd $parent 
 echo "making archive..."
-for f in \
-  gretltypes.h \
-  boxplots.c boxplots.h \
-  calculator.c guiprint_common.c \
-  callbacks.c callbacks.h \
-  console.c console.h \
-  database.c database.h \
-  datafiles.c datafiles.h \
-  fileselect.c \
-  gpt_control.c gpt_control.h \
-  gui_utils.c gui_utils.h \
-  helpfiles.c helpfiles.h \
-  model_table.c model_table.h \
-  objectsave.c objectsave.h \
-  series_view.c series_view.h \
-  session.c session.h \
-  settings.c settings.h \
-  webget.c webget.h \
-  library.c library.h ; do
-    rm -f gretl/gui/$f
+for f in `find gretl/gui -type l` ; do
+   rm $f
 done
 mv gretl gretl-${version}
 rm -f $tarfile 

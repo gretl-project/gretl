@@ -507,8 +507,7 @@ static int real_display_gpage (void)
     }
 
 #ifdef G_OS_WIN32
-    sprintf(tmp, "\"%s\" \"%s\"", viewer, fname);
-    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
+    if (ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) <= 32) {
 	DWORD dw = GetLastError();
 	win_show_error(dw);
 	err = 1;

@@ -5531,11 +5531,11 @@ int gui_exec_line (char *line,
 	} else if (chk == GRETL_BOX_DATA) {
 	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
-	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 1);
+	    err = get_xmldata(&Z, &datainfo, datfile, &paths, data_status, prn, 1);
 	} else if (dbdata) {
 	    err = set_db_name(datfile, chk, &paths, prn);
 	} else {
-	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
+	    err = gretl_get_data(&Z, &datainfo, datfile, &paths, data_status, prn);
 	}
 	if (err) {
 	    gui_errmsg(err);

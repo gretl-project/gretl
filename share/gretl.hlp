@@ -430,6 +430,24 @@ create these, use the formulas d1 = (x=1), d2 = (x=2), and d3 = (x=3).
 * To get z = max(x,y) generate d=x>y and then z=(x*d)+(y*(1-d))
 
 #
+graphpag
+@Graphs
+
+The session "graph page" will work only if you have the LaTeX typsetting
+system installed, and are able to generate and view postscript output.
+
+In the session icon window, you can drag up to eight graphs onto the graph
+page icon.  When you double-click on the graph page (or right-click and select
+"Display"), a page containing the selected graphs will be composed and opened
+in your postscript viewer.   From there you should be able to print the page.
+
+To clear the graph page, right-click on its icon and select "Clear". 
+
+On systems other than MS Windows, you may have to adjust the setting for the
+program used to view postscript.  Find that under the Programs tab in the
+gretl Preferences dialog box (under the File menu in the main window).
+
+#
 graphing
 @Graphs
 generating plots of various kinds

@@ -3,6 +3,7 @@ version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack
   Lucchetti)
 - Add color selector for the histogram in frequency plots
+- Allow appending of gretl-format data in GUI program
 - Fix bug: genr was broken for some special cases of
   repeated function calls
 - Fix bug: normal pvalues were being shown as zero for

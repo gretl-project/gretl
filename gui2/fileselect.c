@@ -40,7 +40,8 @@
                               i == OPEN_GNUMERIC || \
 	                      i == OPEN_EXCEL)
 
-#define APPEND_DATA_ACTION(i) (i == APPEND_CSV || \
+#define APPEND_DATA_ACTION(i) (i == APPEND_DATA || \
+                               i == APPEND_CSV || \
                                i == APPEND_GNUMERIC || \
                                i == APPEND_EXCEL || \
                                i == APPEND_ASCII)
@@ -92,6 +93,7 @@ static struct extmap action_map[] = {
     { SAVE_TEX_TAB_FRAG, ".tex" },
     { SAVE_TEX_EQ_FRAG,  ".tex" },
     { OPEN_DATA,         ".gdt" },
+    { APPEND_DATA,       ".gdt" },    
     { OPEN_SCRIPT,       ".inp" },
     { OPEN_SESSION,      ".gretl" },
     { OPEN_CSV,          ".csv" },
@@ -436,6 +438,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_TEX_TAB_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_EQ_FRAG,  { N_("TeX files (*.tex)"), "*.tex" }},
 	{OPEN_DATA,    { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{APPEND_DATA,  { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{OPEN_SCRIPT,  { N_("gretl script files (*.inp)"), "*.inp" }},
 	{OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
 	{OPEN_CSV,     { N_("CSV files (*.csv)"), "*.csv" }},

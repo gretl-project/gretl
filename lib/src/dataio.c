@@ -74,7 +74,7 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 {
     int i;
 
-    if (Z == NULL) return;
+    if (Z == NULL || pdinfo == NULL) return;
 
     for (i=0; i<pdinfo->v; i++) free(Z[i]);
     free(Z);
@@ -92,6 +92,8 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 void clear_datainfo (DATAINFO *pdinfo, int code)
 {
     int i;
+
+    if (pdinfo == NULL) return;
 
     if (pdinfo->S != NULL) {
 	for (i=0; i<pdinfo->n; i++) 
@@ -1692,14 +1694,23 @@ static void try_gdt (char *fname)
     }
 }
 
+static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
+{
+    pprintf(prn, M_("\nRead datafile %s\n"), fname);
+    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
+		    "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
+	    pdinfo->stobs, pdinfo->endobs);
+    pputc(prn, '\n');
+}
+
 /**
- * get_data:
+ * gretl_get_data:
  * @pZ: pointer to data set.
- * @pdinfo: data information struct.
+ * @ppdinfo: pointer to data information struct.
  * @datfile: name of file to try.
  * @ppaths: path information struct.
- * @data_status: indicator for whether a data file is currently open
- * in gretl's work space (not-0) or not (0).
+ * @data_status: DATA_NONE: no datafile currently open; DATA_CLEAR: datafile
+ * is open, should be cleared; DATA_APPEND: add to current dataset.
  * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as
@@ -1709,13 +1720,14 @@ static void try_gdt (char *fname)
  *
  */
 
-int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
-	      int data_status, PRN *prn) 
+int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppaths, 
+		    int data_status, PRN *prn) 
 {
-
+    DATAINFO *tmpdinfo = NULL;
+    double **tmpZ = NULL;
     FILE *dat = NULL;
     gzFile fz = NULL;
-    int err, gzsuff = 0, add_gdt = 0;
+    int err = 0, gzsuff = 0, add_gdt = 0;
     int binary = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
@@ -1750,8 +1762,13 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     /* catch XML files that have strayed in here? */
     if (add_gdt && xmlfile(datfile)) {
-	return get_xmldata(pZ, pdinfo, datfile, ppaths, 
+	return get_xmldata(pZ, ppdinfo, datfile, ppaths, 
 			   data_status, prn, 0);
+    }
+
+    tmpdinfo = datainfo_new();
+    if (tmpdinfo == NULL) {
+	return E_ALLOC;
     }
 	
     if (!gzsuff) {
@@ -1762,11 +1779,8 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	gz_switch_ext(lblfile, datfile, "lbl");
     }
 
-    /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
-
     /* read data header file */
-    err = readhdr(hdrfile, pdinfo, &binary);
+    err = readhdr(hdrfile, tmpdinfo, &binary);
     if (err) {
 	return err;
     } else { 
@@ -1775,59 +1789,88 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     /* deal with case where first col. of data file contains
        "marker" strings */
-    pdinfo->S = NULL;
-    if (pdinfo->markers && dataset_allocate_markers(pdinfo)) {
+    tmpdinfo->S = NULL;
+    if (tmpdinfo->markers && dataset_allocate_markers(tmpdinfo)) {
 	return E_ALLOC; 
     }
     
     /* allocate dataset */
-    if (prepZ(pZ, pdinfo)) return E_ALLOC;
+    if (prepZ(&tmpZ, tmpdinfo)) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     /* Invoke data (Z) reading function */
     if (gzsuff) {
 	fz = gzopen(datfile, "rb");
-	if (fz == NULL) return E_FOPEN;
+	if (fz == NULL) {
+	    err = E_FOPEN;
+	    goto bailout;
+	}
     } else {
 	if (binary) {
 	    dat = fopen(datfile, "rb");
 	} else {
 	    dat = fopen(datfile, "r");
 	}
-	if (dat == NULL) return E_FOPEN;
+	if (dat == NULL) {
+	    err = E_FOPEN;
+	    goto bailout;
+	}
     }
 
     /* print out basic info from the files read */
     pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
-	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
-	   pdinfo->stobs, pdinfo->endobs);
+	   "observations range: %s-%s\n"), tmpdinfo->pd, tmpdinfo->n,
+	   tmpdinfo->stobs, tmpdinfo->endobs);
 
     pputs(prn, I_("\nReading "));
-    pputs(prn, (pdinfo->time_series == TIME_SERIES) ? 
+    pputs(prn, (tmpdinfo->time_series == TIME_SERIES) ? 
 	    I_("time-series") : _("cross-sectional"));
     pputs(prn, I_(" datafile"));
     if (strlen(datfile) > 40) pputs(prn, "\n");
     pprintf(prn, " %s\n\n", datfile);
 
     if (gzsuff) {
-	err = gz_readdata(fz, pdinfo, *pZ, binary); 
+	err = gz_readdata(fz, tmpdinfo, tmpZ, binary); 
 	gzclose(fz);
     } else {
-	err = readdata(dat, pdinfo, *pZ, binary); 
+	err = readdata(dat, tmpdinfo, tmpZ, binary); 
 	fclose(dat);
     }
 
-    if (err) return err;
+    if (err) goto bailout;
 
     /* Set sample range to entire length of dataset by default */
-    pdinfo->t1 = 0; 
-    pdinfo->t2 = pdinfo->n - 1;
+    tmpdinfo->t1 = 0; 
+    tmpdinfo->t2 = tmpdinfo->n - 1;
 
     strcpy(ppaths->datfile, datfile);
 
-    err = readlbl(lblfile, pdinfo);
-    if (err) return err;    
+    err = readlbl(lblfile, tmpdinfo);
+    if (err) goto bailout;
 
-    return 0;
+    if (data_status == DATA_APPEND) {
+	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
+    } else {
+	free_Z(*pZ, *ppdinfo);
+	if (data_status == DATA_CLEAR) {
+	    clear_datainfo(*ppdinfo, CLEAR_FULL);
+	}
+	free(*ppdinfo);
+	*ppdinfo = tmpdinfo;
+	*pZ = tmpZ;
+    }
+
+ bailout:
+
+    if (err) {
+	free_Z(tmpZ, tmpdinfo);
+	clear_datainfo(tmpdinfo, CLEAR_FULL);
+	free(tmpdinfo);
+    }
+
+    return err;
 }
 
 /**
@@ -2233,6 +2276,12 @@ static int new_data_offset_ok (const DATAINFO *pdinfo,
     return ok;
 }
 
+static void merge_error (char *msg, PRN *prn)
+{
+    pputs(prn, msg);
+    strcpy(gretl_errmsg, msg);
+}
+
 /**
  * merge_data:
  * @pZ: pointer to data set.
@@ -2259,7 +2308,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     /* first check for conformability */
 
     if (pdinfo->pd != addinfo->pd) {
-	pprintf(prn, _("Data frequency does not match\n"));
+	merge_error(_("Data frequency does not match\n"), prn);
 	err = 1;
     }
 
@@ -2269,7 +2318,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err && !match_obs && !match_vars) {
-	pputs(prn, _("New data not conformable for appending\n"));
+	merge_error(_("New data not conformable for appending\n"), prn);
 	err = 1;
     }
 
@@ -2283,14 +2332,14 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	addrows = 1;
     }
 
-    if (addrows && !addcols) {
+    if (!err && addrows && !addcols) {
 	if (pdinfo->time_series && 
 	    dateton(addinfo->stobs, pdinfo) != pdinfo->n) {
-	    pputs(prn, _("Starting point of new data does not fit\n"));
+	    merge_error(_("Starting point of new data does not fit\n"), prn);
 	    err = 1;
 	}
 	else if (pdinfo->markers != addinfo->markers) {
-	    pputs(prn, _("Inconsistency in observation markers\n"));
+	    merge_error(_("Inconsistency in observation markers\n"), prn);
 	    err = 1;
 	}
 	if (err) addrows = 0;
@@ -2303,7 +2352,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        int i, t, nvars = pdinfo->v + addinfo->v - 1;
 
        if (dataset_add_vars(addinfo->v - 1, pZ, pdinfo)) {
-	   pputs(prn, _("Out of memory adding data\n"));
+	   merge_error(_("Out of memory adding data\n"), prn);
 	   err = 1;
        }
 
@@ -2365,7 +2414,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        }
 
        if (err) { 
-	   pputs(prn, _("Out of memory adding data\n"));
+	   merge_error(_("Out of memory adding data\n"), prn);
        } else {
 	   pdinfo->n = tnew;
 	   ntodate_full(pdinfo->endobs, tnew - 1, pdinfo);
@@ -3879,11 +3928,11 @@ static void colon_to_point (char *str)
 /**
  * get_xmldata:
  * @pZ: pointer to data set.
- * @pdinfo: data information struct.
+ * @ppdinfo: pointer to data information struct.
  * @fname: name of file to try.
  * @ppaths: path information struct.
- * @data_status: indicator for whether a data file is currently open
- * in gretl's work space (not-0) or not (0).
+ * @data_status: DATA_NONE: no datafile currently open; DATA_CLEAR: datafile
+ * is open, should be cleared; DATA_APPEND: add to current dataset.
  * @prn: where messages should be written.
  * @gui: should = 1 if the function is launched from the GUI, else 0.
  * 
@@ -3894,9 +3943,11 @@ static void colon_to_point (char *str)
  *
  */
 
-int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
+int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn, int gui) 
 {
+    DATAINFO *tmpdinfo;
+    double **tmpZ = NULL;
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp;
@@ -3906,6 +3957,12 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     *gretl_errmsg = '\0';
 
     check_for_console(prn);
+
+    tmpdinfo = datainfo_new();
+    if (tmpdinfo == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
 
     /* COMPAT: Do not generate nodes for formatting spaces */
     LIBXML_TEST_VERSION
@@ -3923,25 +3980,22 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     if (doc == NULL) {
 	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     }
-
-    /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
         sprintf(gretl_errmsg, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
         sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     }
 
     /* set some datainfo parameters */
@@ -3950,37 +4004,37 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	sprintf(gretl_errmsg, 
 		_("Required attribute 'type' is missing from data file"));
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     } else {
 	if (!strcmp(tmp, "cross-section")) 
-	    pdinfo->time_series = 0;
+	    tmpdinfo->time_series = 0;
 	else if (!strcmp(tmp, "time-series"))
-	    pdinfo->time_series = TIME_SERIES;
+	    tmpdinfo->time_series = TIME_SERIES;
 	else if (!strcmp(tmp, "stacked-time-series"))
-	    pdinfo->time_series = STACKED_TIME_SERIES;
+	    tmpdinfo->time_series = STACKED_TIME_SERIES;
 	else if (!strcmp(tmp, "stacked-cross-section"))
-	    pdinfo->time_series = STACKED_CROSS_SECTION;
+	    tmpdinfo->time_series = STACKED_CROSS_SECTION;
 	else {
 	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
 	    free(tmp);
 	    err = 1;
-	    goto xmldata_bailout;
+	    goto bailout;
 	}
 	free(tmp);
     }
 
-    pdinfo->pd = 1;
+    tmpdinfo->pd = 1;
     tmp = xmlGetProp(cur, (UTF) "frequency");
     if (tmp) {
 	int pd = 0;
 
 	if (sscanf(tmp, "%d", &pd) == 1) {
-	    pdinfo->pd = pd;
+	    tmpdinfo->pd = pd;
 	} else {
 	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
 	    free(tmp);
 	    err = 1;
-	    goto xmldata_bailout;
+	    goto bailout;
 	}
 	free(tmp);
     }
@@ -3989,7 +4043,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    strcpy(pdinfo->stobs, "1");
+    strcpy(tmpdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
     if (tmp) {
 	char obstr[16];
@@ -3997,33 +4051,33 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	strcpy(obstr, tmp);
 	colon_to_point(obstr);
 	
-	if (dataset_is_daily(pdinfo)) {
+	if (dataset_is_daily(tmpdinfo)) {
 	    long ed = get_epoch_day(tmp);
 
 	    if (ed < 0) err = 1;
-	    else pdinfo->sd0 = ed;
+	    else tmpdinfo->sd0 = ed;
 	} else {
 	    double x;
 
 	    if (sscanf(obstr, "%lf", &x) != 1) err = 1;
-	    else pdinfo->sd0 = x;
+	    else tmpdinfo->sd0 = x;
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
 	    free(tmp);
 	    err = 1;
-	    goto xmldata_bailout;
+	    goto bailout;
 	}
-	pdinfo->stobs[0] = '\0';
-	strncat(pdinfo->stobs, tmp, OBSLEN - 1);
-	colonize_obs(pdinfo->stobs);
+	tmpdinfo->stobs[0] = '\0';
+	strncat(tmpdinfo->stobs, tmp, OBSLEN - 1);
+	colonize_obs(tmpdinfo->stobs);
 	free(tmp);
     }
 
-    *pdinfo->endobs = '\0';
+    *tmpdinfo->endobs = '\0';
     tmp = xmlGetProp(cur, (UTF) "endobs");
     if (tmp) {
-	if (dataset_is_daily(pdinfo)) {
+	if (dataset_is_daily(tmpdinfo)) {
 	    long ed = get_epoch_day(tmp);
 
 	    if (ed < 0) err = 1;
@@ -4036,11 +4090,11 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
 	    free(tmp);
 	    err = 1;
-	    goto xmldata_bailout;
+	    goto bailout;
 	}
-	pdinfo->endobs[0] = '\0';
-	strncat(pdinfo->endobs, tmp, OBSLEN - 1);
-	colonize_obs(pdinfo->endobs);
+	tmpdinfo->endobs[0] = '\0';
+	strncat(tmpdinfo->endobs, tmp, OBSLEN - 1);
+	colonize_obs(tmpdinfo->endobs);
 	free(tmp);
     }
 
@@ -4048,10 +4102,10 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "description")) {
-	    pdinfo->descrip = 
+	    tmpdinfo->descrip = 
 		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
-	    if (process_varlist(cur, pdinfo, pZ)) {
+	    if (process_varlist(cur, tmpdinfo, &tmpZ)) {
 		err = 1;
 	    } else {
 		gotvars = 1;
@@ -4062,7 +4116,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		sprintf(gretl_errmsg, _("Variables information is missing"));
 		err = 1;
 	    }
-	    if (process_observations(doc, cur, pZ, pdinfo, progress)) {
+	    if (process_observations(doc, cur, &tmpZ, tmpdinfo, progress)) {
 		err = 1;
 	    } else {
 		gotobs = 1;
@@ -4078,30 +4132,49 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    if (err) goto xmldata_bailout;
+    if (err) goto bailout;
 
     if (!gotvars) {
 	sprintf(gretl_errmsg, _("Variables information is missing"));
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     }
     if (!gotobs) {
 	sprintf(gretl_errmsg, _("No observations were found"));
 	err = 1;
-	goto xmldata_bailout;
+	goto bailout;
     }
 
     if (fname != ppaths->datfile) {
 	strcpy(ppaths->datfile, fname);
     }
 
-    pprintf(prn, M_("\nRead datafile %s\n"), fname);
-    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
-		    "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
-	    pdinfo->stobs, pdinfo->endobs);
-    pputc(prn, '\n');
+    data_read_message(fname, tmpdinfo, prn);
 
- xmldata_bailout:
+    if (data_status == DATA_APPEND) {
+	err = merge_data(pZ, *ppdinfo, tmpZ, tmpdinfo, prn);
+	if (err) {
+	    tmpZ = NULL;
+	    free(tmpdinfo);
+	    tmpdinfo = NULL;
+	}
+    } else {
+	free_Z(*pZ, *ppdinfo);
+	if (data_status == DATA_CLEAR) {
+	    clear_datainfo(*ppdinfo, CLEAR_FULL);
+	}
+	free(*ppdinfo);
+	*ppdinfo = tmpdinfo;
+	*pZ = tmpZ;
+    }
+
+ bailout:
+
+    if (err) {
+	free_Z(tmpZ, tmpdinfo);
+	clear_datainfo(tmpdinfo, CLEAR_FULL);
+	free(tmpdinfo);
+    }
 
     console_off();
 
