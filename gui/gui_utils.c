@@ -1375,6 +1375,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
 
+    if (role == EDIT_SCRIPT) {
+	gtk_widget_grab_focus(vwin->w);
+    }
+
     return vwin;
 }
 
@@ -1406,13 +1410,12 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     make_viewbar(vwin);    
 
     /* insert the buffer text */
-    if (*pbuf)
+    if (*pbuf) {
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			NULL, NULL, *pbuf, strlen(*pbuf));
-    else {
-	printf("doing the start edit thing\n");
+    } else {
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			NULL, NULL, "A", strlen("A"));
+			NULL, NULL, "A", 1);
 	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
     }
 
@@ -1425,6 +1428,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
+
+    gtk_widget_grab_focus(GTK_WIDGET(vwin->w));
 
     return vwin;
 }
