@@ -545,6 +545,10 @@ static int parse_as_count_loop (LOOPSET *loop,
     }
 
     if (!err) {
+	if (nt == LOOP_VAL_UNDEF) {
+	    loop->right.vnum = LOOP_VAL_UNDEF;
+	    strncat(loop->right.vname, lvar, VNAMELEN - 1);
+	}
 	loop->type = COUNT_LOOP;
 	loop->init.val = 0;
 	loop->right.val = nt;
