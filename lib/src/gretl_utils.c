@@ -2644,7 +2644,7 @@ void libgretl_cleanup (CMD *cmd)
     }
 }
 
-/* record hypothesis test results */
+/* record and retrieve hypothesis test results */
 
 enum {
     SET_TEST_STAT,
@@ -2670,17 +2670,12 @@ record_or_get_test_result (double teststat, double pval, char *blurb,
 	} else {
 	    *info = '\0';
 	}
-    } else if (code == GET_TEST_STAT) {
+    } else if (code == GET_TEST_STAT || code == GET_TEST_PVAL) {
 	if (blurb != NULL) {
 	    strcpy(blurb, info);
 	}
-	ret = val;
-    } else if (code == GET_TEST_PVAL) {
-	if (blurb != NULL) {
-	    strcpy(blurb, info);
-	}
-	ret = pv;
-    }
+	ret = (code == GET_TEST_STAT)? val : pv;
+    } 
 	
     return ret;
 }

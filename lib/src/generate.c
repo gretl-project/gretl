@@ -99,19 +99,19 @@ static int real_varindex (const DATAINFO *pdinfo,
 
 
 enum retrieve {
-    R_ESS = 1,
-    R_T,
-    R_RSQ,
-    R_SIGMA,
-    R_DF,
-    R_LNL,
-    R_AIC,
-    R_BIC,
-    R_TRSQ,
-    R_NOBS,
-    R_PD,
-    R_TEST_STAT,
-    R_TEST_PVAL
+    R_ESS = 1,   /* error sum of squares, last model */
+    R_T,         /* observations used, last model */
+    R_RSQ,       /* R-squared, last model */
+    R_SIGMA,     /* standard error of residuals, last model */
+    R_DF,        /* degrees of freedom, last model */
+    R_LNL,       /* log-likelihood, last model */
+    R_AIC,       /* Akaike info criterion, last model */
+    R_BIC,       /* Bayesian info criterion, last model */
+    R_TRSQ,      /* T * R-squared, last model */
+    R_NOBS,      /* number of observations in current sample range */
+    R_PD,        /* periodicity of dataset */
+    R_TEST_STAT, /* test statistic from last explicit test performed */
+    R_TEST_PVAL  /* p-value from last explicit test performed */
 };
 
 enum special_ops {
@@ -168,9 +168,9 @@ struct genr_func funcs[] = {
     { T_DNORM,    "dnorm" },
     { T_CNORM,    "cnorm" },
     { T_RESAMPLE, "resample" },
-    { T_HPFILT,   "hpfilt" },    
-    { T_BKFILT,   "bkfilt" },  
-    { T_VARNUM,   "varnum" },
+    { T_HPFILT,   "hpfilt" },    /* Hodrick-Prescott filter */
+    { T_BKFILT,   "bkfilt" },    /* Baxter-King filter */
+    { T_VARNUM,   "varnum" },    /* variable's ID number from its name */
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -2135,6 +2135,10 @@ make_genr_varname (GENERATE *genr, const char *vname)
 	strcpy(genr->varname, vname);
     }
 }
+
+/* substitute something more informative in the genr label
+   when the user has called for "$pvalue" or "$test"
+*/
 
 static void substitute_in_genrs (char *genrs, char *src)
 {
