@@ -532,43 +532,47 @@ lib/src/generate.h,198
 } genr_numbers;genr_numbers32,1113
 } LAGVAR;LAGVAR38,1197
 
-lib/src/graphing.c,781
+lib/src/getplotdata.c,34
+int get_plot_data_and_labels 1,0
+
+lib/src/graphing.c,813
 static int printvars 36,1104
-static void prntdate 62,1563
-static int get_timevar 81,2034
-int _ztoxy 100,2425
-static void initpx 118,2809
-static void drawline 129,3005
-int plot 157,3695
-int graph 348,9152
-static int factorized_vars 410,10675
-static int gp_png_wants_color 444,11315
-int gnuplot_init 468,11922
-int gnuplot_display 502,12835
-    GTITLE_VLS,529,13620
-    GTITLE_RESID,530,13636
-    GTITLE_AF,531,13654
-    GTITLE_AFV532,13669
-} graph_titles;533,13684
-static void make_gtitle 535,13701
-int gnuplot 582,15063
-int multi_scatters 890,23125
-int plot_freq 997,26159
-int plot_fcast_errs 1110,29640
-void free_plotspec 1157,30875
-int termtype_to_termstr 1172,31162
-int print_plotspec_details 1200,31900
-int go_gnuplot 1310,34451
-int rmplot 1384,36150
+static void prntdate 66,1639
+static int get_timevar 85,2110
+int _ztoxy 104,2501
+static void initpx 122,2885
+static void drawline 133,3081
+int plot 161,3771
+int graph 352,9228
+static int factorized_vars 414,10751
+static int gp_png_wants_color 448,11391
+int gnuplot_init 472,11998
+int gnuplot_display 506,12911
+    GTITLE_VLS,533,13693
+    GTITLE_RESID,534,13709
+    GTITLE_AF,535,13727
+    GTITLE_AFV536,13742
+} graph_titles;537,13757
+static void make_gtitle 539,13774
+int gnuplot 586,15136
+int multi_scatters 902,23370
+int plot_freq 1009,26358
+int plot_fcast_errs 1123,29833
+void free_plotspec 1170,31060
+int termtype_to_termstr 1191,31496
+static int isblank 1219,32234
+int print_plotspec_details 1230,32429
+int go_gnuplot 1350,35225
+int rmplot 1426,36960
 
 lib/src/graphing.h,191
 #define MAXTITLE 24,908
 } GPT_LINE;GPT_LINE33,1307
-} GPT_SPEC;GPT_SPEC54,2341
-    NORMAL 57,2369
-    GAMMA58,2385
-} dist_codes;dist_codes59,2395
-#define GRETL_GUI(GRETL_GUI61,2410
+} GPT_SPEC;GPT_SPEC56,2471
+    NORMAL 59,2499
+    GAMMA60,2515
+} dist_codes;dist_codes61,2525
+#define GRETL_GUI(GRETL_GUI63,2540
 
 lib/src/gretl_utils.c,2461
 static DIR *dir;28,915
@@ -680,6 +684,16 @@ enum flagvals flagvals27,938
 #define floatlt(floatlt99,3082
 #define na(na100,3130
 #define NADBL 101,3178
+
+lib/src/gretl_win32.c,137
+int read_reg_val 27,932
+int write_reg_val 66,1892
+void cli_read_registry 106,2871
+void win_show_error 132,3682
+int winfork 153,4126
+
+lib/src/gretl_win32.h,29
+#define GRETL_WIN32_H21,882
 
 lib/src/interact.c,549
 static int trydatafile 48,1443
@@ -1073,14 +1087,6 @@ lib/src/version.h,162
 #define LIBGRETL_AGE 25,967
 const char *version_string 27,997
 
-lib/src/win32.c,85
-int read_reg_val 27,926
-int write_reg_val 66,1886
-void cli_read_registry 106,2865
-
-lib/src/win32.h,23
-#define WIN32_H21,876
-
 cli/common.c,60
 int loop_exec_line 23,927
 static int data_option 227,6367
@@ -1461,7 +1467,7 @@ static gboolean weird_font 69,1823
 #define SHOW_PROGRESS 83,2307
 static gboolean validate_font_family 85,2332
 
-gui2/gpt_control.c,3994
+gui2/gpt_control.c,4558
 # define PNG_COMMENTS 33,1020
 struct gpt_titles_t gpt_titles_t40,1098
 } GPT_RANGE;GPT_RANGE51,1392
@@ -1481,95 +1487,107 @@ struct gpt_titles_t gpt_titles[66,1669
     PLOT_HAS_CONTROLLER 76,1949
     PLOT_ZOOMED 77,1983
     PLOT_ZOOMING 78,2017
-} plot_flags;plot_flags79,2050
-#define plot_is_saved(plot_is_saved81,2065
-#define plot_is_range_mean(plot_is_range_mean82,2121
-#define plot_has_controller(plot_has_controller83,2182
-#define plot_is_zoomed(plot_is_zoomed84,2247
-#define plot_is_zooming(plot_is_zooming85,2304
-    PNG_START,89,2397
-    PNG_ZOOM,90,2412
-    PNG_UNZOOM,91,2426
-    PNG_REDISPLAY92,2442
-} png_zoom;png_zoom93,2460
-typedef struct zoom_t zoom_t95,2473
-} zoom_t;zoom_t99,2577
-typedef struct png_plot_t png_plot_t101,2588
-} png_plot_t;png_plot_t119,2989
-    GRETL_PNG_NO_OPEN 128,3223
-    GRETL_PNG_NOT_PNG,129,3250
-    GRETL_PNG_NO_COMMENTS,130,3273
-    GRETL_PNG_BAD_COMMENTS,131,3300
-    GRETL_PNG_NO_COORDS132,3328
-} png_bounds_t;png_bounds_t144,3500
-static void close_plot_controller 151,3666
-static void flip_manual_range 174,4165
-static void widget_to_str 189,4694
-static int add_or_remove_png_term 214,5165
-static int add_png_term_to_plotfile 259,6097
-int remove_png_term_from_plotfile 264,6203
-void mark_plot_as_saved 269,6307
-static int gnuplot_png_init 276,6434
-void display_session_graph_png 289,6759
-static void apply_gpt_changes 317,7403
-static void save_session_graph_plotspec 398,9667
-static void gpt_tab_main 420,10110
-static void gpt_tab_output 497,12443
-static void gpt_tab_lines 557,14329
-static void gpt_tab_XY 685,18567
-static int show_gnuplot_dialog 822,23332
-void save_this_graph 911,26377
-void do_save_graph 976,27844
-static void plot_save_filesel 1037,29242
-static void kill_gpt_save_dialog 1050,29670
-void gpt_save_dialog 1060,29905
-static int chop_comma 1140,32479
-static void get_gpt_data 1156,32772
-static int cant_edit 1178,33315
-static GPT_SPEC *plotspec_new 1201,33885
-static int parse_set_line 1244,34691
-static int open_gnuplot_pipe 1304,36299
-static int read_plotspec_from_file 1320,36689
-void start_editing_session_graph 1503,41106
-#define PLOT_PIXEL_WIDTH 1529,41559
-#define PLOT_PIXEL_HEIGHT 1530,41611
-#define PLOTXMIN 1537,41817
-#define PLOTXMAX 1538,41856
-#define PLOTYMIN 1539,41896
-#define PLOTYMAX 1540,41935
-#define NOTITLE_YMAX 1541,41975
-#define NOTITLE_YMIN 1542,42012
-static int png_got_coords;1544,42052
-static int pixel_xmin;1545,42079
-static int pixel_xmax;1546,42102
-static int pixel_ymin;1547,42125
-static int pixel_ymax;1548,42148
-static void get_data_xy 1550,42172
-static void x_to_date 1599,43223
-static void create_selection_gc 1613,43592
-static void draw_selection_rectangle 1621,43793
-motion_notify_event 1653,44714
-static void start_editing_png_plot 1698,45819
-static gint color_popup_activated 1711,46175
-static gint plot_popup_activated 1740,47114
-static GtkWidget *build_plot_menu 1787,48549
-static int redisplay_edited_png 1884,50900
-static int zoom_unzoom_png 1915,51509
-static gint plot_button_release 1984,52922
-static gint plot_button_press 2013,53694
-plot_key_handler 2032,54245
-void plot_expose 2041,54409
-static void render_pngfile 2057,54929
-static void destroy_png_plot 2109,56199
-static int get_dumb_plot_yrange 2130,56630
-static int get_plot_ranges 2212,58373
-int gnuplot_show_png 2314,60655
-#define PNG_CHECK_BYTES 2478,65798
-static int get_png_plot_bounds 2480,65825
-static int get_png_data_bounds 2494,66248
-static int get_png_bounds_info 2508,66674
-static int emf_to_clip 2615,69542
-static void gnuplot_graph_to_clipboard 2636,69929
+    PLOT_NO_LABELS 79,2051
+    PLOT_PNG_COORDS 80,2085
+} plot_flags;plot_flags81,2118
+    PLOT_TITLE 84,2148
+    PLOT_XLABEL 85,2182
+    PLOT_YLABEL 86,2216
+    PLOT_Y2AXIS 87,2250
+} plot_format_flags;plot_format_flags88,2283
+#define plot_is_saved(plot_is_saved90,2305
+#define plot_is_range_mean(plot_is_range_mean91,2361
+#define plot_has_controller(plot_has_controller92,2422
+#define plot_is_zoomed(plot_is_zoomed93,2487
+#define plot_is_zooming(plot_is_zooming94,2544
+#define plot_has_no_labels(plot_has_no_labels95,2602
+#define plot_png_coords(plot_png_coords96,2662
+#define plot_has_title(plot_has_title98,2724
+#define plot_has_xlabel(plot_has_xlabel99,2781
+#define plot_has_ylabel(plot_has_ylabel100,2839
+#define plot_has_y2axis(plot_has_y2axis101,2897
+    PNG_START,105,2990
+    PNG_ZOOM,106,3005
+    PNG_UNZOOM,107,3019
+    PNG_REDISPLAY108,3035
+} png_zoom;png_zoom109,3053
+typedef struct zoom_t zoom_t111,3066
+} zoom_t;zoom_t115,3170
+typedef struct png_plot_t png_plot_t117,3181
+} png_plot_t;png_plot_t139,3701
+    GRETL_PNG_NO_OPEN 150,4034
+    GRETL_PNG_NOT_PNG,151,4061
+    GRETL_PNG_NO_COMMENTS,152,4084
+    GRETL_PNG_BAD_COMMENTS,153,4111
+    GRETL_PNG_NO_COORDS154,4139
+} png_bounds_t;png_bounds_t166,4311
+#define PLOTSPEC_DETAILS_IN_MEMORY(PLOTSPEC_DETAILS_IN_MEMORY171,4410
+static void close_plot_controller 175,4535
+static void flip_manual_range 198,5034
+static void widget_to_str 213,5563
+static int add_or_remove_png_term 238,6034
+static int add_png_term_to_plotfile 283,6966
+int remove_png_term_from_plotfile 288,7072
+void mark_plot_as_saved 293,7176
+static int gnuplot_png_init 300,7303
+void display_session_graph_png 313,7628
+static void apply_gpt_changes 341,8272
+static void save_session_graph_plotspec 422,10536
+static void gpt_tab_main 444,10979
+static void gpt_tab_output 521,13312
+static void gpt_tab_lines 581,15198
+static void gpt_tab_XY 709,19436
+static int show_gnuplot_dialog 846,24201
+void save_this_graph 935,27246
+void do_save_graph 1000,28713
+static void plot_save_filesel 1061,30111
+static void kill_gpt_save_dialog 1074,30539
+void gpt_save_dialog 1084,30774
+static int chop_comma 1164,33348
+static void get_gpt_label 1180,33641
+static void get_gpt_data 1191,33868
+static int cant_edit 1213,34411
+static GPT_SPEC *plotspec_new 1236,34981
+static int parse_set_line 1282,35864
+static int open_gnuplot_pipe 1342,37472
+static int allocate_plotspec_labels 1358,37862
+static int read_plotspec_from_file 1381,38356
+void start_editing_session_graph 1593,43445
+#define PLOT_PIXEL_WIDTH 1619,43898
+#define PLOT_PIXEL_HEIGHT 1620,43950
+static void get_data_xy 1626,44079
+static void x_to_date 1655,44784
+static void create_selection_gc 1669,45153
+static void draw_selection_rectangle 1677,45354
+write_label_to_plot 1709,46275
+#define TOLDIST 1747,47060
+identify_point 1750,47094
+motion_notify_event 1816,48870
+static int isblank 1861,50030
+static void set_plot_format_flags 1870,50158
+static void start_editing_png_plot 1888,50541
+static gint color_popup_activated 1903,50906
+static gint plot_popup_activated 1931,51801
+static void build_plot_menu 1984,53348
+static int redisplay_edited_png 2083,55833
+static int zoom_unzoom_png 2127,56873
+static gint plot_button_release 2196,58286
+static gint plot_button_press 2225,59058
+plot_key_handler 2252,59756
+void plot_expose 2261,59920
+static void render_pngfile 2277,60440
+static void destroy_png_plot 2329,61710
+static void set_approx_pixel_bounds 2352,62294
+static int get_dumb_plot_yrange 2377,62878
+static int get_plot_ranges 2478,64997
+static png_plot_t *png_plot_new 2551,66756
+int gnuplot_show_png 2581,67415
+static int get_png_plot_bounds 2738,72348
+static int get_png_data_bounds 2752,72771
+#define PNG_CHECK_BYTES 2766,73197
+static int get_png_bounds_info 2768,73224
+static int emf_to_clip 2877,76204
+static void gnuplot_graph_to_clipboard 2898,76591
 
 gui2/gpt_control.h,29
 #define GPT_CONTROL_H21,791
@@ -1649,50 +1667,50 @@ void panel_menu_state 974,33978
 void session_menu_state 984,34237
 void restore_sample_state 995,34515
 static void check_varmenu_state 1005,34774
-void populate_varlist 1016,35056
-static void sort_varlist 1070,36600
-void clear_varlist 1081,36929
-void clear_sample_label 1091,37175
-void set_sample_label 1099,37403
-#define NAME_BUFFER_LEN 1169,39318
-static void try_to_get_windows_font 1171,39346
-static float get_gui_scale 1233,40791
-static GtkWidget *make_main_window 1258,41285
-static void set_up_main_menu 1364,44145
-static void mdata_edit 1379,44655
-static gint var_popup_click 1416,45686
-static void build_var_popup 1454,47019
-static gint selection_popup_click 1491,47900
-static void build_selection_popup 1508,48479
-static void check_for_extra_data 1535,49136
-void restore_sample 1588,50705
-static int create_child_process 1612,51210
-void gretl_fork 1643,52066
-static char *slash_convert 1670,52531
-static void startR 1683,52675
-static void Rcleanup 1783,54890
-static void show_calc 1804,55383
-static void show_edit 1815,55588
-static void open_textbook_data 1826,55785
-void show_toolbar 1839,56049
-static void netscape_open 1849,56248
-static void gretl_website 1864,56576
-static void gretl_pdf 1874,56779
-static void xy_graph 1884,57001
-static void go_session 1892,57148
-static GtkWidget *image_button_new 1902,57342
-static void make_toolbar 1919,57841
-void set_wm_icon 2022,60209
-drag_data_received 2033,60453
-static void gretl_clipboard_get 2084,61701
-static void gretl_clipboard_clear 2133,62792
-static void clip_init 2144,63007
-static void auto_store 2170,63655
-static int old_windows 2190,64134
-static int unmangle 2214,64754
-static void count_selections 2236,65297
-static int tree_view_selection_count 2242,65435
-static gboolean main_popup_handler 2255,65718
+void populate_varlist 1018,35146
+static void sort_varlist 1072,36690
+void clear_varlist 1083,37019
+void clear_sample_label 1093,37265
+void set_sample_label 1101,37493
+#define NAME_BUFFER_LEN 1171,39408
+static void try_to_get_windows_font 1173,39436
+static float get_gui_scale 1235,40881
+static GtkWidget *make_main_window 1260,41375
+static void set_up_main_menu 1366,44235
+static void mdata_edit 1381,44745
+static gint var_popup_click 1418,45776
+static void build_var_popup 1456,47109
+static gint selection_popup_click 1493,47990
+static void build_selection_popup 1510,48569
+static void check_for_extra_data 1537,49226
+void restore_sample 1590,50795
+static int create_child_process 1614,51300
+void gretl_fork 1645,52156
+static char *slash_convert 1672,52621
+static void startR 1685,52765
+static void Rcleanup 1785,54980
+static void show_calc 1806,55473
+static void show_edit 1817,55678
+static void open_textbook_data 1828,55875
+void show_toolbar 1841,56139
+static void netscape_open 1851,56338
+static void gretl_website 1866,56666
+static void gretl_pdf 1876,56869
+static void xy_graph 1886,57091
+static void go_session 1894,57238
+static GtkWidget *image_button_new 1904,57432
+static void make_toolbar 1921,57931
+void set_wm_icon 2024,60299
+drag_data_received 2035,60543
+static void gretl_clipboard_get 2086,61791
+static void gretl_clipboard_clear 2124,62690
+static void clip_init 2132,62880
+static void auto_store 2158,63528
+static int old_windows 2178,64007
+static int unmangle 2202,64627
+static void count_selections 2224,65170
+static int tree_view_selection_count 2230,65308
+static gboolean main_popup_handler 2243,65591
 
 gui2/gretl.h,3853
 #define GRETL_H23,833
@@ -2154,7 +2172,7 @@ void text_find_callback 708,19686
 gui2/helpfiles.h,25
 #define HELPFILES_H2,20
 
-gui2/library.c,4286
+gui2/library.c,4230
 int echo_off;61,1683
 int replay;62,1737
 GtkItemFactoryEntry log_items[64,1818
@@ -2271,22 +2289,20 @@ void do_new_script 3195,80331
 void do_open_csv_box 3210,80754
 static int dat_suffix 3240,81404
 int do_store 3257,81692
-void win_show_error 3348,83795
-static int get_latex_path 3367,84171
-int winfork 3377,84343
-void view_latex 3419,85149
-void do_save_tex 3492,86927
-static char *bufgets 3518,87620
-int execute_script 3554,88383
-static int ready_for_command 3702,92330
-static int script_model_test 3722,92777
-int gui_exec_line 3767,94141
-void view_script_default 4607,117135
-struct search_replace search_replace4617,117375
-static void replace_string_callback 4627,117581
-static void trash_replace 4639,117932
-static void replace_string_dialog 4649,118164
-void text_replace 4719,120683
+static int get_latex_path 3347,83794
+void view_latex 3360,84040
+void do_save_tex 3433,85818
+static char *bufgets 3459,86511
+int execute_script 3495,87274
+static int ready_for_command 3643,91221
+static int script_model_test 3663,91668
+int gui_exec_line 3708,93032
+void view_script_default 4548,116026
+struct search_replace search_replace4558,116266
+static void replace_string_callback 4568,116472
+static void trash_replace 4580,116823
+static void replace_string_dialog 4590,117055
+void text_replace 4660,119574
 
 gui2/library.h,25
 #define LIBRARY_H23,814

@@ -2352,7 +2352,7 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
 static void set_approx_pixel_bounds (png_plot_t *plot, 
 				     int max_num_width)
 {
-    set_plot_format_flags(plot);
+    /* set_plot_format_flags(plot); */
 
     if (plot_has_xlabel(plot)) {
 	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 446;
@@ -2507,7 +2507,12 @@ static int get_plot_ranges (png_plot_t *plot)
 	    got_pd = 1;
 	} else if (!strncmp(line, "set title", 9)) {
 	    plot->format |= PLOT_TITLE;
-	}	
+	} else if (!strncmp(line, "set xlabel", 10)) {
+	    plot->format |= PLOT_XLABEL;
+	} else if (!strncmp(line, "set ylabel", 10)) {
+	    plot->format |= PLOT_YLABEL;
+	}
+	
 	if (!strncmp(line, "plot ", 5)) break;
     }
 #ifdef ENABLE_NLS

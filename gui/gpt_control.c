@@ -137,6 +137,7 @@ typedef struct png_plot_t {
 static void render_pngfile (png_plot_t *plot, int view);
 static int zoom_unzoom_png (png_plot_t *plot, int view);
 static int redisplay_edited_png (png_plot_t *plot);
+static int get_plot_ranges (png_plot_t *plot);
 #endif /* GNUPLOT_PNG */
 
 #ifdef PNG_COMMENTS
@@ -2221,12 +2222,14 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
     set_plot_format_flags(plot);
 
     if (plot_has_xlabel(plot)) {
+	fprintf(stderr, "got xlabel\n");
 	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 446;
     } else {
 	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 456;
     }
 
     if (plot_has_title(plot)) {
+	fprintf(stderr, "got title\n");
 	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 32;
     } else {
 	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 12;
@@ -2234,10 +2237,16 @@ static void set_approx_pixel_bounds (png_plot_t *plot,
 
     plot->pixel_xmin = 25 + 7 * max_num_width;
     if (plot_has_ylabel(plot)) {
+	fprintf(stderr, "got ylabel\n");
 	plot->pixel_xmin += 11;
     }
 
     plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; /* FIXME Y2-axis */
+
+    fprintf(stderr, "set_approx_pixel_bounds:\n"
+	    "pixel_ymin=%d, ymax=%d; pixel_xmin=%d, xmax=%d\n",
+	    plot->pixel_ymin, plot->pixel_ymax,
+	    plot->pixel_xmin, plot->pixel_xmax);
 }
 
 static int get_dumb_plot_yrange (png_plot_t *plot)
@@ -2369,7 +2378,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
 	    got_pd = 1;
 	} else if (!strncmp(line, "set title", 9)) {
-	    plot->title = 1;
+	    plot->format |= PLOT_TITLE;
 	}	
 	if (!strncmp(line, "plot ", 5)) break;
     }
