@@ -20,6 +20,7 @@
 /* datafiles.c : for gretl */
 
 #include "gretl.h"
+#include "datafiles.h"
 #include "database.h"
 #include "webget.h"
 
@@ -50,8 +51,6 @@ static GtkWidget *files_notebook (windata_t *fdata, int code);
 static int populate_notebook_filelists (windata_t *fdata, 
 					GtkWidget *notebook,
 					int code);
-void browser_open_data (GtkWidget *w, gpointer data);
-void browser_open_ps (GtkWidget *w, gpointer data);
 
 extern int jwdata;  /* settings.c */
 
@@ -87,7 +86,6 @@ enum {
 };
 
 static char *full_path (const char *s1, const char *s2);
-gint populate_filelist (windata_t *fdata, gpointer p);
 
 #ifdef _WIN32
 static char *unslash (const char *s)
@@ -432,11 +430,13 @@ static int build_file_collections (void)
 
 /* ........................................................... */
 
-static char *strip_extension (char *s)
+char *strip_extension (char *s)
 {
     char *p = strrchr(s, '.');
     
-    if (p != NULL && (!strcmp(p, ".gdt") || !strcmp(p, ".inp"))) {
+    if (p != NULL && 
+	(!strcmp(p, ".gdt") || !strcmp(p, ".inp") ||
+	 !strcmp(p, ".bin"))) {
 	*p = '\0';
     }
 
@@ -730,15 +730,6 @@ static int parse_db_list_line (char *line, char *fname, time_t *date)
 
 /* ........................................................... */
 
-void trim_ext (char *fname)
-{
-    char *p = strrchr(fname, '.');
-    
-    if (p != NULL) *p = 0;
-}
-
-/* ........................................................... */
-
 static gint populate_remote_db_list (windata_t *win)
 {
 #ifndef OLD_GTK
@@ -784,12 +775,12 @@ static gint populate_remote_db_list (windata_t *win)
 	if (parse_db_list_line(line, fname, &remtime))
 	    continue;
 	get_local_status(fname, status, remtime);
-	trim_ext(fname);
-	row[0] = fname;
-	if (!getbufline(getbuf, line, 0)) 
+	row[0] = strip_extension(fname);
+	if (!getbufline(getbuf, line, 0)) {
 	    row[1] = NULL;
-	else
+	} else {
 	    row[1] = line + 2;
+	}
 	row[2] = status;
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);

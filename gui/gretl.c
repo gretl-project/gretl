@@ -25,6 +25,7 @@
 #include "session.h"
 #include "ssheet.h"
 #include "webget.h"
+#include "database.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -50,11 +51,8 @@
 /* functions from other gretl GUI files */
 extern void free_modelspec (void);    /* lib.c */
 extern void allocate_fileptrs (void); /* settings.c */
-extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
 extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 extern void free_command_stack (void);
-extern void open_named_db_clist (char *dbname);
-extern void open_named_remote_clist (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
@@ -764,9 +762,9 @@ int main (int argc, char *argv[])
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN)
-	open_named_db_clist(dbname);
+	open_named_db_list(dbname);
     else if (gui_get_data == OPT_WEBDB)
-	open_named_remote_clist(dbname);
+	open_named_remote_db_list(dbname);
 
     /* Enter the event loop */
     gtk_main();

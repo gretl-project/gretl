@@ -23,11 +23,9 @@
 #include "treeutils.h"
 #include "selector.h"
 #include "session.h"
+#include "database.h"
+#include "datafiles.h"
 
-extern void browser_open_data (GtkWidget *w, gpointer data);
-extern void browser_open_ps (GtkWidget *w, gpointer data);
-extern void open_db_list (GtkWidget *w, gpointer data);
-extern void open_remote_db_list (GtkWidget *w, gpointer data);
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
 /* ......................................................... */

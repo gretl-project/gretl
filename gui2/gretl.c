@@ -27,6 +27,8 @@
 #include "console.h"
 #include "session.h"
 #include "webget.h"
+#include "database.h"
+#include "datafiles.h"
 
 #include <dirent.h>
 
@@ -63,15 +65,11 @@ FILE *dbg;
 /* functions from other gretl GUI files */
 
 extern void free_modelspec (void);    /* library.c */
-extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
 extern void free_command_stack (void);
-extern void open_named_db_list (char *dbname);
-extern void open_named_remote_db_list (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
-extern void destroy_file_collections (void);
 
 /* functions private to gretl.c */
 

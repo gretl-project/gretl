@@ -311,6 +311,7 @@ void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 void compact_data_set (void);
+void stats_calculator (gpointer data, guint code, GtkWidget *widget);
 
 void set_wm_icon (GtkWidget *w, gpointer data);
 
