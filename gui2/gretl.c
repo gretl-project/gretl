@@ -384,11 +384,11 @@ GtkItemFactoryEntry data_items[] = {
       GRETL_GNUPLOT_GRAPH, NULL, GNULL },
 #endif
     { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, "<StockItem>", GTK_STOCK_OPEN },
+    { N_("/Session/_Open..."), "", open_script, OPEN_SESSION, "<StockItem>", GTK_STOCK_OPEN },
     { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>", NULL },
-    { N_("/Session/_Save"), NULL, save_session_callback, SAVE_AS_IS, 
+    { N_("/Session/_Save"), "", save_session_callback, SAVE_AS_IS, 
       "<StockItem>", GTK_STOCK_SAVE },
-    { N_("/Session/Save _as..."), NULL, save_session_callback, SAVE_RENAME, 
+    { N_("/Session/Save _as..."), "", save_session_callback, SAVE_RENAME, 
       "<StockItem>", GTK_STOCK_SAVE_AS },
 #ifdef not_yet
     { N_("/Session/_Delete"), NULL, delete_session_callback, 0, NULL, NULL },

@@ -1785,7 +1785,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolxpm = mini_model_xpm;
 	    toolfunc = ols_model;
 	    break;
-	case 8:
+	case 9:
 #ifndef GNUPLOT_PNG
 	    toolxpm = mini_camera_xpm;
 	    toolfunc = add_graph_to_session;
