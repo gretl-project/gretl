@@ -1239,14 +1239,30 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     return err;
 }
 
+/**
+ * gnuplot_3d:
+ * @list: list of variables to plot, by ID number: Y, X, Z
+ * @literal: literal command(s) to pass to gnuplot (or NULL)
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @ppaths: path information struct.
+ * @plot_count: pointer to counter variable for plots (unused)
+ * @flags: unused at present.
+ *
+ * Writes a gnuplot plot file to display a 3D plot (Z on
+ * the vertical axis, X and Y on base plane).
+ *
+ * Returns: 0 on successful completion, error code on error.
+ */
+
 int gnuplot_3d (LIST list, const char *literal,
 		double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
 		int *plot_count, unsigned char flags)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
-    int miss = 0;
-    int npoints, tmplist[4];
+    int tmplist[5];
+    char surface[64];
 
     if (lo != 3) {
 	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
@@ -1262,7 +1278,33 @@ int gnuplot_3d (LIST list, const char *literal,
     _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
-    npoints = t2 - t1 + 1;
+
+    *surface = 0;
+
+    if (1) {
+	MODEL plotmod;
+	double umin, umax, vmin, vmax;
+
+	tmplist[0] = 4;
+	tmplist[1] = list[3];
+	tmplist[2] = 0;
+	tmplist[3] = list[2];
+	tmplist[4] = list[1];
+
+	_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
+	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
+	
+	_init_model(&plotmod, pdinfo);
+	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
+	if (!plotmod.errcode) {
+	    sprintf(surface, "[u=%g:%g] [v=%g:%g] "
+		    "%g+(%g)*u+(%g)*v title '', ", 
+		    umin, umax, vmin, vmax,
+		    plotmod.coeff[0], plotmod.coeff[1],
+		    plotmod.coeff[2]);
+	} 
+	clear_model(&plotmod, pdinfo);
+    }
 
     fprintf(fq, "set xlabel '%s'\n", get_series_name(pdinfo, list[2]));
     fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[1]));
@@ -1277,7 +1319,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
-    fputs("splot '-' title ''\n", fq);
+    fprintf(fq, "splot %s'-' title ''\n", surface);
 
     /* supply the data to gnuplot inline */
     tmplist[0] = 3;
@@ -1285,14 +1327,10 @@ int gnuplot_3d (LIST list, const char *literal,
     tmplist[2] = list[1];
     tmplist[3] = list[3];
     for (t=t1; t<=t2; t++) {
-	int t_miss;
 	const char *label = NULL;
 
 	if (pdinfo->markers) label = pdinfo->S[t];
-	t_miss = printvars(fq, t, tmplist, *pZ, label, 0.0);
-	if ((flags & GP_GUI) && miss == 0) {
-	    miss = t_miss;
-	}
+	printvars(fq, t, tmplist, *pZ, label, 0.0);
     }	
     fputs("e\n", fq);
 
@@ -1302,7 +1340,7 @@ int gnuplot_3d (LIST list, const char *literal,
 
     fclose(fq);
 
-    return miss;
+    return 0;
 }
 
 /**
