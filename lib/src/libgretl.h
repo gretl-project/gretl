@@ -316,6 +316,12 @@ typedef struct {
     int ifc;
 } CONFINT;
 
+typedef struct {
+    int ci;
+    int *list;
+    double *vec;
+} VCV;
+
 #include "commands.h"
 #include "errors.h"
 #include "estimate.h"

@@ -955,7 +955,7 @@ static void print_middle_table_start (PRN *prn)
 	pprintf(prn, 
 		"\\vspace{1em}\n\n"
 		"\\begin{tabular}{lD{%c}{%c}{-1}}\n",
-		pt, pt, pt, pt);
+		pt, pt);
     }
 }
 

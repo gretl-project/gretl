@@ -883,6 +883,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_fit_resid(vwin->data);
 	else if (vwin->role == COEFFINT)
 	    free_confint(vwin->data);
+	else if (vwin->role == COVAR)
+	    free_vcv(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
 	if (vwin->dialog)
@@ -1689,7 +1691,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
 	|| vwin->role == CORR || vwin->role == FCASTERR
-	|| vwin->role == FCAST || vwin->role == COEFFINT) {
+	|| vwin->role == FCAST || vwin->role == COEFFINT
+	|| vwin->role == COVAR) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -2122,7 +2125,25 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);
 	return;
-    }  
+    } 
+
+    /* coefficient covariance matrix */
+    if (vwin->role == COVAR && SPECIAL_COPY(how)) {
+	VCV *vcv = (VCV *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_vcv(vcv, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    rtfprint_vcv(vcv, datainfo, prn);
+	}
+
+	prn_to_clipboard(prn);
+	gretl_print_destroy(prn);
+	return;
+    }     
   
     /* or it's a model window we're copying from? */
     if (vwin->role == VIEW_MODEL &&

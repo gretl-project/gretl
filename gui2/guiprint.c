@@ -1133,6 +1133,24 @@ void rtfprint_confints (const CONFINT *cf,
 
 /* .................................................................. */
 
+void texprint_vcv (const VCV *vcv, 
+		   const DATAINFO *pdinfo, 
+		   PRN *prn)
+{
+    dummy_call();
+}
+
+/* .................................................................. */
+
+void rtfprint_vcv (const VCV *vcv,
+		   const DATAINFO *pdinfo, 
+		   PRN *prn)
+{
+    dummy_call();
+}
+
+/* .................................................................. */
+
 void augment_copy_menu (windata_t *vwin)
 {
     GtkItemFactoryEntry item;

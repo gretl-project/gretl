@@ -70,6 +70,10 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 				double ***pZ, DATAINFO *pdinfo, PRN *prn,
 				PATHS *ppaths, int plot);
 
+void text_print_matrix (const double *rr, const int *list, 
+			int ci, const DATAINFO *pdinfo, 
+			int pause, PRN *prn);
+
 void printxx (double xx, char *str, int ci);
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);

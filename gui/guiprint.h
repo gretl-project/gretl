@@ -68,6 +68,14 @@ void rtfprint_confints (const CONFINT *cf,
 			const DATAINFO *pdinfo, 
 			PRN *prn);
 
+void texprint_vcv (const VCV *vcv, 
+		   const DATAINFO *pdinfo, 
+		   PRN *prn);
+
+void rtfprint_vcv (const VCV *vcv, 
+		   const DATAINFO *pdinfo, 
+		   PRN *prn);
+
 void augment_copy_menu (windata_t *vwin);
 
 #endif /* GUIPRINT_H */

@@ -2646,7 +2646,9 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
     windata_t *mydata = (windata_t *) data;
+    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
+    VCV *vcv = NULL;
 
     if (Z == NULL || datainfo == NULL) {
 	errbox(_("Data set is gone"));
@@ -2654,12 +2656,18 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     }
 
     if (bufopen(&prn)) return;
+    
+    vcv = get_vcv(pmod);
 
-    if (pmod->ci == HCCM) print_white_vcv(pmod, prn);
-    else outcovmx(pmod, datainfo, 0, prn); 
-
-    view_buffer(prn, 77, 300, _("gretl: coefficient covariances"), 
-		COVAR, view_items);
+    if (vcv == NULL) {
+	errbox(_("Error generating covariance matrix"));
+    } else {
+	text_print_matrix (vcv->vec, vcv->list, 
+			   vcv->ci, datainfo, 0, prn);
+	vwin = view_buffer(prn, 77, 300, _("gretl: coefficient covariances"), 
+			   COVAR, view_items);
+	vwin->data = vcv;
+    }
 }
 
 /* ......................................................... */

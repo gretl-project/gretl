@@ -59,3 +59,7 @@ int cholbeta (double *xpx, double *xpy, double *coeff,
 	      double *rss, int nv);
 
 int makevcv (MODEL *pmod);
+
+VCV *get_vcv (MODEL *pmod);
+
+void free_vcv (VCV *vcv);

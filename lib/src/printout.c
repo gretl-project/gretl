@@ -28,10 +28,6 @@ static void
 print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
 		      int c, PRN *prn);
 
-void _mxout (const double *rr, const int *list, int ci,
-	     const DATAINFO *pdinfo, int pause, PRN *prn);
-
-
 /* ........................................................ */
   
 void _bufspace (int n, PRN *prn)
@@ -514,7 +510,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     tmplist[0] = nbetas;
 
     if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
-    _mxout(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
+    text_print_matrix(pmod->vcv, tmplist, pmod->ci, pdinfo, pause, prn);  
 
     free(tmplist);
     return 0;
@@ -552,7 +548,8 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 static void outxx (const double xx, int ci, PRN *prn)
 {
     if (ci == CORR) {
-	if (na(xx)) pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), _("undefined"));
+	if (na(xx)) pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), 
+			    _("undefined"));
 	else pprintf(prn, " %13.4f", xx);
     } else {
 	if (xx > -0.001 && xx < 0.001)
@@ -597,8 +594,9 @@ int page_break (int n, int *lineno, int quit_option)
 
 /* ........................................................ */
 
-void _mxout (const double *rr, const int *list, int ci,
-	     const DATAINFO *pdinfo, int pause, PRN *prn)
+void text_print_matrix (const double *rr, const int *list, 
+			int ci, const DATAINFO *pdinfo, 
+			int pause, PRN *prn)
      /*  Given a single dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 

@@ -954,6 +954,70 @@ int makevcv (MODEL *pmod)
 
 /* ............................................................... */
 
+/**
+ * get_vcv:
+ * @pmod: pointer to model.
+ * 
+ * Save the variance-covariance matrix for the parameter
+ * estimates in @pmod.
+ *
+ * Returns: VCV struct or NULL on error.
+ */
+
+VCV *get_vcv (MODEL *pmod)
+{
+    int i, m = pmod->list[0];
+    int nv;
+    VCV *vcv;
+
+    vcv = malloc(sizeof *vcv);
+    if (vcv == NULL) return NULL;
+
+    vcv->list = malloc(m * sizeof *vcv->list);
+    if (vcv->list == NULL) {
+	free(vcv);
+	return NULL;
+    }
+
+    vcv->list[0] = m - 1;
+    for (i=1; i<m; i++) {
+	vcv->list[i] = pmod->list[i+1];
+    }
+
+    if (pmod->vcv == NULL && makevcv(pmod)) {
+	free(vcv->list);
+	free(vcv);
+	return NULL;
+    }
+
+    /* calculate number of elements in vcv */
+    nv = pmod->ncoeff;
+    nv = (nv * nv + nv)/2;
+
+    /* copy vcv */
+    vcv->vec = copyvec(pmod->vcv, nv + 1);
+    if (vcv->vec == NULL) {
+	free(vcv->list);
+	free(vcv);
+	return NULL;
+    }
+
+    vcv->ci = pmod->ci;
+    
+    return vcv;
+}
+
+/* ............................................................... */
+
+void free_vcv (VCV *vcv)
+{
+    free(vcv->vec);
+    free(vcv->list);
+    free(vcv);
+}
+
+/* ............................................................... */
+
 static double dwstat (int order, MODEL *pmod, double **Z)
 /*  computes durbin-watson statistic
     opt is the order of autoregression, 0 for OLS and WLS
