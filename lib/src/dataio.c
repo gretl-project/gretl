@@ -531,6 +531,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
+
 	for (t=0; t<n; t++) {
 	    offset = 0L;
 	    if (!gzgets(fz, line, llen - 1)) {
@@ -571,9 +572,11 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	    if (err) break;
 	}
 	free(line);
+
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
+
     }
     return err;
 }
@@ -1824,7 +1827,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		return 1;
 	    }
 	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q') {
-		strcpy(subper, lbl1+5);
+		strcpy(subper, lbl1 + 5);
 		if (n1 == 6) {
 		    pprintf(prn, _("quarter %s?\n"), subper);
 		    sprintf(pdinfo->stobs, "%s:%s", year, subper);
@@ -3256,6 +3259,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	Z[i][t] = x;
 	s = strpbrk(s, " \t\n\r");
     }
+
     return 0;
 }
 
@@ -3521,7 +3525,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    double x;
 
 	    if (sscanf(obstr, "%lf", &x) != 1) err = 1;
-	    else pdinfo->sd0 = dot_atof(obstr);
+	    else pdinfo->sd0 = x;
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));

@@ -27,6 +27,8 @@ extern GtkWidget *open_dialog; /* dialogs.c */
 static int default_var;
 static int *xlist;
 static int *instlist;
+static GtkWidget *scatters_label;
+static GtkWidget *scatters_menu;
 
 void clear_selector (void)
 {
@@ -243,6 +245,28 @@ static void topslot_empty (int code)
     }
 }
 
+static void reverse_list (char *list)
+{
+    char *tmp, *p;
+    char istr[8];
+
+    p = strchr(list, ';');
+    if (p == NULL) return;
+
+    tmp = malloc(strlen(list) + 4);
+    if (tmp == NULL) return;
+
+    sscanf(list, "%7s", istr);
+
+    strcpy(tmp, p + 2);
+    strcat(tmp, " ; ");
+    strcat(tmp, istr);
+
+    strcpy(list, tmp);
+    
+    free(tmp);
+}
+
 static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
@@ -386,6 +410,11 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->code == GR_XY || sr->code == GR_IMP)
 	strcat(sr->cmdlist, grvar);
 
+    if (sr->code == SCATTERS && 
+	gtk_option_menu_get_history(GTK_OPTION_MENU(scatters_menu))) {
+	reverse_list(sr->cmdlist);
+    }
+
     if (err) 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 }
@@ -495,12 +524,54 @@ dialog_right_click (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
+static gint flip_scatters_axis (GtkMenuItem *m, GtkOptionMenu *popdown)
+{
+    gint state = gtk_option_menu_get_history(popdown);
+
+    if (state == 0) {
+	gtk_label_set_text(GTK_LABEL(scatters_label), _("X-axis variables"));
+    } else {
+	gtk_label_set_text(GTK_LABEL(scatters_label), _("Y-axis variables"));
+    }
+
+    return FALSE;
+}
+
+static GtkWidget *
+scatters_popdown (void)
+{
+    GtkWidget *popdown;
+    GtkWidget *menu;
+    GtkWidget *child;
+    const char *popstrings[] = {
+        N_("Y-axis variable"),
+        N_("X-axis variable")
+    };
+    int i;
+
+    popdown = gtk_option_menu_new();
+    menu = gtk_menu_new();
+
+    for (i=0; i<2; i++) {
+        child = gtk_menu_item_new_with_label(_(popstrings[i]));
+	gtk_signal_connect(GTK_OBJECT(child), "activate",
+			   G_SIGNAL_FUNC(flip_scatters_axis), popdown);
+        gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+    }
+
+    gtk_option_menu_set_menu(GTK_OPTION_MENU(popdown), menu);
+
+    scatters_menu = popdown;
+
+    return popdown;
+}
+
 static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *x_hbox;
 
     if (sr->code == SCATTERS) {
-	tmp = gtk_label_new(_("Y-axis variable"));
+	tmp = scatters_popdown();
     } else {
 	tmp = gtk_label_new(_("X-axis variable"));
     }
@@ -902,7 +973,7 @@ void selection_dialog (const char *title, const char *oktxt,
     } else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
 	tmp = gtk_label_new(_("Y-axis variables"));
     } else if (cmdcode == SCATTERS) {
-	tmp = gtk_label_new(_("X-axis variables"));
+	scatters_label = tmp = gtk_label_new(_("X-axis variables"));
     } else if (cmdcode == GR_DUMMY) {
 	tmp = gtk_label_new(_("Factor (dummy)"));
     }
