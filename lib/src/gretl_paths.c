@@ -419,6 +419,29 @@ static int get_quoted_filename (const char *line, char *fname)
     return ret;
 }
 
+static int substitute_homedir (char *fname)
+{
+    int err = 0;
+    char *homedir = getenv("HOME");
+
+    if (homedir != NULL) {
+	int len = strlen(fname);
+	int homelen = strlen(homedir);
+
+	if (len + homelen > MAXLEN) {
+	    err = 1;
+	} else {
+	    char tmp[MAXLEN];
+
+	    strcpy(tmp, homedir);
+	    strcat(tmp, fname + 1);
+	    strcpy(fname, tmp);
+	}
+    }
+
+    return err;
+}
+
 /**
  * getopenfile:
  * @line: command line (e.g. "open foo").
@@ -443,6 +466,11 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     if (get_quoted_filename(line, fname)) return 0; 
 
     if (sscanf(line, "%*s %s", fname) != 1) return 1;
+
+    /* handle tilde == HOME */
+    if (*fname == '~') {
+	substitute_homedir(fname);
+    }
 
     /* try a basic path search on this filename */
     fullname = addpath(fname, ppaths, script);
