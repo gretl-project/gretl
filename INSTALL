@@ -5,31 +5,59 @@ Gretl uses GNU autoconf.  Here's the quick way to get going:
   make install
 
 * You may want to do "./configure --help" first to see what options are
-available.  
+  available.  
 
-* By default the installation goes under /usr/local.  To install elsewhere
-use "./configure --prefix=/your/prefix".  See also the notes on gnome
-below.
+* By default the installation goes under /usr/local.  To install
+  elsewhere use "./configure --prefix=/your/prefix".  See also the
+  notes on gnome below.
 
 * On systems where GNU make is not the default you may need to use the
-"--with-gmake" option to ./configure.
+  "--with-gmake" option to ./configure.
 
-* To build the gui client you'll need a working installation of GTK+ 1.2.3 
-or higher.  See http://www.gtk.org.
+Dependencies: gretl relies on various libraries and auxiliary
+programs, as follows:
 
-* The gretl configure script looks for the gnome desktop, and arranges for
-gretl to be built with gnome support if gnome is found on your system.
-If you want to disable this, add the option "--without-gnome" when
-running ./configure.  
+Package     gretl status   functionality
+===============================================================
 
-By default, gnome-specific gretl files (e.g. pixmaps, help files, the
-gretl.desktop file) are installed under the prefix that is returned by the
-command "gnome-config --prefix".  This will generally be correct, but if
-you want to override this behavior you may use the option
-"--with-gnome-install=DIR" when running configure. Substitute for "DIR"
-the prefix you want to use.
+gtk          required       provides the gretl GUI
 
-* The programs here call on gnuplot to generate graphs.  As of this
-writing the latest gnuplot can be obtained from http://www.gnuplot.info/
+gtkextra     required       file selection dialogs, session icon
+                            view, data editing spreadsheet
 
-Allin Cottrell, March, 2002.
+xml          required       open and save data files in the
+                            default format
+
+gnuplot      required       generate graphs
+
+gdk-pixbuf   recommended    handle graphs in PNG format; make
+                            gnuplot graphs interactive
+
+readline     optional       provides a nice editable command line
+                            in gretlcli, the command-line program
+
+gnome        optional       gretl is integrated into the gnome
+                            desktop (file icons and associations,
+                            HTML help system and so on)
+
+=================================================================
+
+Notes:
+
+* It is possible to turn off the dependency on gdk-pixbuf by using the
+  option "--disable-png-graphics" with configure.  You will still be
+  able to generate graphs, they just won't be interactive.
+
+* The gretl configure script looks for the gnome desktop, and arranges
+  for gretl to be built with gnome support if gnome is found on your
+  system.  If you want to disable this, add the option
+  "--without-gnome" when running ./configure.
+
+* By default, gnome-specific gretl files (e.g. pixmaps, help files,
+  the gretl.desktop file) are installed under the prefix that is
+  returned by the command "gnome-config --prefix".  This will
+  generally be correct, but if you want to override this behavior you
+  may use the option "--with-gnome-install=DIR" when running
+  configure. Substitute for "DIR" the prefix you want to use.
+
+Allin Cottrell, April 2002.

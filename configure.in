@@ -161,7 +161,9 @@ if test x"${PIXBUFCONF}" != x ; then
    AC_SUBST(PIXBUF_LIBS)
 else
    echo
-   echo "* gretl needs the gdk-pixbuf library for PNG graphs."
+   echo "* gretl wants the gdk-pixbuf library for PNG graphs."
+   echo "* You can turn off this dependency by configuring with the "
+   echo "* option --disable-png-graphics"
    exit     
 fi
 fi
