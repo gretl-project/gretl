@@ -448,12 +448,16 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 
 	switch (q->ls_op) {
 	case BIFF_BOF:
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_BOF\n");
+#endif
 	    ms_excel_read_bof(q, &ver);
 	    break;
 
 	case BIFF_EOF: 
+#ifdef EDEBUG
 	    fprintf(stderr, "Got BIFF_EOF\n");
+#endif
 	    break;
 
 	case BIFF_BOUNDSHEET: {
