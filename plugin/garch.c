@@ -60,8 +60,8 @@ int do_fcp (const int *list, const double **Z,
     p = list[1];
     q = list[2];
     ynum = list[4];
-    /* maxlag = (p > q)? p : q; */
-    maxlag = 0;
+    maxlag = (p > q)? p : q; 
+    /* maxlag = 0; */
 
     t1 = 0; 
     t2 = pdinfo->t2;
@@ -107,8 +107,11 @@ int do_fcp (const int *list, const double **Z,
 	X = NULL;
     }
 
+    for (i=0; i<maxlag; i++) {
+	ystoc[i] = ydet[i] = yobs[i] = 0.0;
+    }    
     for (i=maxlag; i<nobsmod; i++) {
-	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i];
+	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i-maxlag];
     }
 
     /* initialize at unconditional mean of y */
@@ -128,10 +131,16 @@ int do_fcp (const int *list, const double **Z,
 
     /* Need to set t1 high enough to allow for lags? */
 
-    vsanal_(t1, t2, yobs + maxlag, nobs, (const double **) X, nx, 
+    vsanal_(t1, t2, 
+	    yobs + maxlag, nobs, 
+	    (const double **) X, nx, 
 	    ydet + maxlag, &yy, 
 	    coeff, ncoeff, 
-	    &oldc, vc, res2 + maxlag, res + maxlag, &sigma, ystoc + maxlag, 
+	    &oldc, vc, 
+	    res2 + maxlag, 
+	    res + maxlag, 
+	    &sigma, 
+	    ystoc + maxlag, 
 	    amax, b, &iters, &info, prn);
 
     if (info != 0) {
