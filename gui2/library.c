@@ -2238,6 +2238,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case CORC:
     case HILU:
+    case PWE:
 	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
 			&paths, 0, action, prn);
 	if (err) {

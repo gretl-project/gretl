@@ -510,6 +510,10 @@ const char *estimator_string (int ci, int format)
 	if (TEX_FORMAT(format)) return N_("Hildreth--Lu");
 	else return N_("Hildreth-Lu");
     }
+    else if (ci == PWE) {
+	if (TEX_FORMAT(format)) return N_("Prais--Winsten");
+	else return N_("Prais-Winsten");
+    }
 
     else return "";
 }
@@ -993,7 +997,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     /* rhohat for CORC and HILU (TeX) */
-    else if (pmod->ci == CORC || pmod->ci == HILU) {
+    else if (pmod->ci == CORC || pmod->ci == HILU || pmod->ci == PWE) {
 	if (tex) {
 	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", 
 		    gretl_model_get_double(pmod, "rho_in"));
@@ -1484,7 +1488,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	print_middle_table_end(prn);
     }
 
-    else if (pmod->ci == AR || pmod->ci == CORC || pmod->ci == HILU) {
+    else if (pmod->ci == AR || pmod->ci == CORC || 
+	     pmod->ci == HILU || pmod->ci == PWE) {
 
 	rho_differenced_stats_message(prn);
 

@@ -104,6 +104,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { PRINTF,   "printf" },
     { PROBIT,   "probit" },
     { PVALUE,   "pvalue" },  
+    { PWE,      "pwe" },
     { QUIT,     "quit" }, 
     { RENAME,   "rename" },
     { RESET,    "reset" },

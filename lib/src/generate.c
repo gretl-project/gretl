@@ -702,7 +702,7 @@ static double *eval_compound_arg (GENERATE *genr,
 	    double y = eval_atom(atom, genr, t, x);
 
 	    if (genr->err) break;
-	    if (y == NADBL) {
+	    if (0 && y == NADBL) { /* watch out? */
 		x = NADBL;
 	    } else {
 		if (atom->level < level) {
@@ -843,7 +843,8 @@ static int evaluate_genr (GENERATE *genr)
 	    double y = eval_atom(atom, genr, t, x);
 
 	    if (genr->err) break;
-	    if (y == NADBL) {
+
+	    if (0 && y == NADBL) { /* watch out? */
 		x = NADBL;
 	    } else {
 		if (atom->level < level) { 
@@ -1781,6 +1782,11 @@ static double calc_xy (double x, double y, char op, int t)
     else fprintf(stderr, "op=%d\n", op);
 #endif
 
+    /* special case: 0.0 * anything (including even NA) = 0.0 */
+    if (op == '*' && (x == 0.0 || y == 0.0))
+	return 0.0;
+
+    /* otherwise, NA propagates to the result */
     if (op && (na(x) || na(y))) return NADBL;
 
     switch (op) {

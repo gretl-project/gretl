@@ -832,6 +832,7 @@ int is_model_cmd (const char *s)
 	!strncmp(s, "corc", 4) ||
 	!strncmp(s, "hilu", 4) ||
 	!strncmp(s, "wls", 3)  ||
+	!strncmp(s, "pwe", 3)  ||
 	!strncmp(s, "pooled", 6)  ||
 	!strncmp(s, "hccm", 4) ||
 	!strncmp(s, "hsk", 3)  ||

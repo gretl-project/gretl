@@ -20,7 +20,7 @@
 #ifndef GENSTACK_H
 #define GENSTACK_H
 
-/* #define GENR_DEBUG */
+#undef GENR_DEBUG
 
 #ifdef GENR_DEBUG
 void dprintf (const char *format, ...);

@@ -94,7 +94,8 @@ typedef enum {
     PRINT, 
     PRINTF,
     PROBIT,
-    PVALUE,  
+    PVALUE, 
+    PWE,
     QUIT, 
     RENAME,
     RESET,
@@ -129,7 +130,7 @@ typedef enum {
                            (c) == CORC || (c) == HCCM || (c) == HILU || \
                            (c) == HSK || (c) == LOGIT || (c) == SPEARMAN || \
                            (c) == OLS || (c) == POOLED || (c) == PROBIT || \
-                           (c) == TSLS || (c) == VAR || (c) == WLS)
+                           (c) == TSLS || (c) == VAR || (c) == WLS || (c) == PWE)
 
 #define TEXTSAVE_OK(c) (c == ADD || \
                         c == ADDTO || \

@@ -44,7 +44,7 @@ extern void _print_rho (int *arlist, const MODEL *pmod,
 
 /* private function prototypes */
 static int form_xpxxpy (const int *list, int t1, int t2, 
-			double **Z, int nwt, double rho,
+			double **Z, int nwt, double rho, int pwe,
 			double *xpx, double *xpy);
 static void regress (MODEL *pmod, double *xpy, double **Z, 
 		     int n, double rho);
@@ -186,11 +186,15 @@ static int get_model_df (MODEL *pmod, double rho)
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 {
     int i, t, yno = pmod->list[1];
-    double x;
+    double x, pw1 = 0.0;
 
     if (ar_info_init(pmod, 2)) {
 	pmod->errcode = E_ALLOC;
 	return 1;
+    }
+
+    if (pmod->ci == PWE) {
+	pw1 = sqrt(1.0 - rho * rho);
     }
 
     pmod->arinfo->arlist[0] = pmod->arinfo->arlist[1] = 1;
@@ -202,8 +206,21 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	pmod->sderr[0] /= (1.0 - rho);
     }
 
-    pmod->uhat[pmod->t1] = NADBL;
-    pmod->yhat[pmod->t1] = NADBL;
+    t = pmod->t1;
+    if (pmod->ci == PWE) {
+	x = pw1 * Z[yno][t];
+	for (i=pmod->ifc; i<pmod->ncoeff; i++) {
+	    x -= pmod->coeff[i] * pw1 * Z[pmod->list[i+2]][t];
+	}
+	if (pmod->ifc) {
+	    x -= pw1 * pmod->coeff[0];
+	}
+	pmod->uhat[t] = x;
+	pmod->yhat[t] = Z[yno][t] - x;
+    } else {
+	pmod->uhat[t] = NADBL;
+	pmod->yhat[t] = NADBL;
+    }
 
     for (t=pmod->t1+1; t<=pmod->t2; t++) {
 	x = Z[yno][t] - rho * Z[yno][t-1];
@@ -219,11 +236,21 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 	pmod->yhat[t] = Z[yno][t] - x;
     }
 
-    pmod->rsq = 
-	corrrsq(pmod->t2 - pmod->t1, &Z[yno][pmod->t1+1], 
-		pmod->yhat + pmod->t1 + 1);
-    pmod->adjrsq = 
-	1 - ((1 - pmod->rsq) * (pmod->t2 - pmod->t1 - 1) / pmod->dfd);
+    if (pmod->ci == PWE) {
+	pmod->rsq = 
+	    corrrsq(pmod->t2 - pmod->t1 + 1, &Z[yno][pmod->t1], 
+		    pmod->yhat + pmod->t1);
+	pmod->adjrsq = 
+	    1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1) / 
+		   (double) pmod->dfd);
+    } else {	
+	pmod->rsq = 
+	    corrrsq(pmod->t2 - pmod->t1, &Z[yno][pmod->t1+1], 
+		    pmod->yhat + pmod->t1 + 1);
+	pmod->adjrsq = 
+	    1.0 - ((1.0 - pmod->rsq) * (pmod->t2 - pmod->t1 - 1) / 
+		   (double) pmod->dfd);
+    }
 
     return 0;
 }
@@ -463,7 +490,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<nxpx; i++) mdl.xpx[i] = 0.0;
 
 	/* calculate regression results, Cholesky style */
-	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho,
+	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho, (ci == PWE),
 		    mdl.xpx, xpy);
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
@@ -485,7 +512,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Doing an autoregressive procedure? */
-    if (ci == CORC || ci == HILU) {
+    if (ci == CORC || ci == HILU || ci == PWE) {
 	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) 
 	    goto lsq_abort;
     }
@@ -532,13 +559,15 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 /* .......................................................... */
 
 static int form_xpxxpy (const int *list, int t1, int t2, 
-			double **Z, int nwt, double rho,
+			double **Z, int nwt, double rho, int pwe,
 			double *xpx, double *xpy)
 /*
         This function forms the X'X matrix and X'y vector
 
-        - if rho is non-zero transforms data first
-        - if nwt is non-zero, uses that variable as weight
+        - if rho is non-zero, quasi-difference the data first
+        - if nwt is non-zero, use that variable as weight
+	- if pwe is non-zero (as well as rho) construct the
+	  first observation as per Prais-Winsten
 
         Z[v][t] = observation t on variable v
         n = number of obs in data set
@@ -556,14 +585,28 @@ static int form_xpxxpy (const int *list, int t1, int t2,
     int i, j, t;
     int li, lj, m;
     int l0 = list[0], yno = list[1];
-    double x, z1, z2;
+    double x, z1, z2, pw1;
     int qdiff = (rho != 0.0);
+
+    /* Prais-Winsten term */
+    if (qdiff && pwe) {
+	pw1 = sqrt(1.0 - rho * rho);
+    } else {
+	pwe = 0;
+	pw1 = 0.0;
+    }
 
     xpy[0] = xpy[l0] = 0.0;
 
+    if (pwe) {
+	x = pw1 * Z[yno][t1];
+        xpy[0] += x;
+        xpy[l0] += x * x;
+    }	
+
     for (t=t1; t<=t2; t++) {
 	if (t == t1 && qdiff) continue;
-        x = Z[yno][t]; 
+	x = Z[yno][t]; 
 	if (qdiff) x -= rho * Z[yno][t-1];
 	else if (nwt) x *= Z[nwt][t];
         xpy[0] += x;
@@ -576,15 +619,18 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 
     m = 0;
 
-    if (rho) {
+    if (qdiff) {
 	/* quasi-difference the data */
 	for (i=2; i<=l0; i++) {
 	    li = list[i];
-	    z1 = li? rho: 0.0;
+	    z1 = (li == 0)? 0.0 : rho;
 	    for (j=i; j<=l0; j++) {
 		lj = list[j];
-		z2 = (lj)? rho: 0.0;
+		z2 = (lj == 0)? 0.0 : rho;
 		x = 0.0;
+		if (pwe) {
+		    x += pw1 * Z[li][t1] * pw1 * Z[lj][t1];
+		}
 		for (t=t1+1; t<=t2; t++) {
 		    x += (Z[li][t] - z1 * Z[li][t-1]) * 
 			(Z[lj][t] - z2 * Z[lj][t-1]);
@@ -595,6 +641,9 @@ static int form_xpxxpy (const int *list, int t1, int t2,
 		xpx[m++] = x;
 	    }
 	    x = 0.0;
+	    if (pwe) {
+		x += pw1 * Z[yno][t1] * pw1 * Z[li][t1];
+	    }
 	    for (t=t1+1; t<=t2; t++) {
 		x += (Z[yno][t] - rho * Z[yno][t-1]) *
 		    (Z[li][t] - z1 * Z[li][t-1]);
@@ -1321,7 +1370,8 @@ static int hilu_plot (double *ssr, double *rho, int n,
  * @pdinfo: information on the data set.
  * @ppaths: pointer to gretl paths info struct
  * @batch: = 1 if in batch mode
- * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu.
+ * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu,
+ *                    PWE for Prais-Winsten estimator
  * @prn: gretl printing struct
  *
  * Estimate the model given in @list using either the Cochrane-Orcutt
@@ -1333,12 +1383,12 @@ static int hilu_plot (double *ssr, double *rho, int n,
  */
 
 int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
-	       PATHS *ppaths, int batch,
-	       int opt, PRN *prn)
+	       PATHS *ppaths, int batch, int opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
     double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
+    int lsq_ci = OLS;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1347,6 +1397,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return E_ALLOC;
+
+    /* if (opt == PWE) lsq_ci = PWE; */
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
 	step = 1;
@@ -1399,8 +1451,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    hilu_plot(ssr, rh, nn, ppaths);
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
-    } else { /* Go straight to Cochrane-Orcutt */
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
+    } else { /* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
+	corc_model = lsq(list, pZ, pdinfo, lsq_ci, OPT_D, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1420,7 +1472,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, rho);
+	corc_model = lsq(list, pZ, pdinfo, lsq_ci, OPT_D, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
@@ -1738,7 +1790,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	    goto tsls_bailout;
 	}
 
-	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
+	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0, 0,
 		    xpx, xpy);
 	cholbeta(xpx, xpy, NULL, NULL, nv);    
 	diaginv(xpx, xpy, diag, nv);
