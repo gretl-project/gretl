@@ -24,8 +24,7 @@
 #include "session.h"
 #include "../pixmaps/mouse.xpm"
 
-/* #define POINTS_DEBUG 1 */
-/* #define PLOT_FONT_SELECTOR */
+#undef POINTS_DEBUG
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -2497,8 +2496,8 @@ void start_editing_session_graph (const char *fname)
 extern void gnome_print_graph (const char *fname);
 #endif
 
-static void get_data_xy (png_plot_t *plot, int x, int y, 
-			 double *data_x, double *data_y)
+static int get_data_xy (png_plot_t *plot, int x, int y, 
+			double *data_x, double *data_y)
 {
     double xmin, xmax;
     double ymin, ymax;
@@ -2530,12 +2529,16 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
 	    (plot->pixel_xmax - plot->pixel_xmin) * (xmax - xmin);
     }
 
-    if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
-	*data_y = NADBL;
-    } else {
-	*data_y = ymax - ((double) y - plot->pixel_ymin) / 
-	    (plot->pixel_ymax - plot->pixel_ymin) * (ymax - ymin);
+    if (!na(*data_x)) {
+	if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
+	    *data_y = NADBL;
+	} else {
+	    *data_y = ymax - ((double) y - plot->pixel_ymin) / 
+		(plot->pixel_ymax - plot->pixel_ymin) * (ymax - ymin);
+	}
     }
+
+    return (!na(*data_x) && !na(*data_y));
 }
 
 static void x_to_date (double x, int pd, char *str)
@@ -2767,20 +2770,23 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     GdkModifierType state;
     gchar label[32], label_y[16];
 
-    if (event->is_hint)
-        gdk_window_get_pointer (event->window, &x, &y, &state);
-    else {
+    if (event->is_hint) {
+        gdk_window_get_pointer(event->window, &x, &y, &state);
+    } else {
         x = event->x;
         y = event->y;
         state = event->state;
     }
 
     *label = 0;
+
     if (x > plot->pixel_xmin && x < plot->pixel_xmax && 
 	y > plot->pixel_ymin && y < plot->pixel_ymax) {
 	double data_x, data_y;
 
-	get_data_xy(plot, x, y, &data_x, &data_y);
+	if (!get_data_xy(plot, x, y, &data_x, &data_y)) {
+	    return TRUE;
+	}
 
 	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250 &&
 	    !(plot_has_no_labels(plot)) && !plot_is_zooming(plot)) {
@@ -3214,8 +3220,10 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
     if (plot_is_zooming(plot)) {
 	double z;
 
-	get_data_xy(plot, event->x, event->y, 
-		    &plot->zoom->xmax, &plot->zoom->ymax);
+	if (!get_data_xy(plot, event->x, event->y, 
+			 &plot->zoom->xmax, &plot->zoom->ymax)) {
+	    return TRUE;
+	}
 
 	/* flip the selected rectangle if required */
 	if (plot->zoom->xmin > plot->zoom->xmax) {
@@ -3223,6 +3231,7 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	    plot->zoom->xmax = plot->zoom->xmin;
 	    plot->zoom->xmin = z;
 	}
+
 	if (plot->zoom->ymin > plot->zoom->ymax) {
 	    z = plot->zoom->ymax;
 	    plot->zoom->ymax = plot->zoom->ymin;
@@ -3233,10 +3242,12 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	    plot->zoom->ymin != plot->zoom->ymax) {
 	    zoom_unzoom_png(plot, PNG_ZOOM);
 	}
+
 	plot->status_flags ^= PLOT_ZOOMING;
 	gdk_window_set_cursor(plot->canvas->window, NULL);
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
     }
+
     return TRUE;
 }
 
@@ -3244,31 +3255,31 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 			       png_plot_t *plot)
 {
     if (plot_is_zooming(plot)) {
-	get_data_xy(plot, event->x, event->y, 
-		    &plot->zoom->xmin, &plot->zoom->ymin);
-	plot->zoom->screen_xmin = event->x;
-	plot->zoom->screen_ymin = event->y;
+	if (get_data_xy(plot, event->x, event->y, 
+			&plot->zoom->xmin, &plot->zoom->ymin)) {
+	    plot->zoom->screen_xmin = event->x;
+	    plot->zoom->screen_ymin = event->y;
+	}
 	return TRUE;
     }
 
     if (plot_doing_position(plot)) {
 	if (plot->labelpos_entry != NULL) {
 	    double dx, dy;
-	    char posstr[32];
+	    gchar *posstr = NULL;
 	    
-	    get_data_xy(plot, event->x, event->y, &dx, &dy);
-
-	    if (na(dx) || na(dy)) {
+	    if (!get_data_xy(plot, event->x, event->y, &dx, &dy)) {
 		fprintf(stderr, "Couldn't get coordinates\n");
 	    } else {
 #ifdef ENABLE_NLS
 		setlocale(LC_NUMERIC, "C");
 #endif
-		sprintf(posstr, "%g,%g", dx, dy);
+		posstr = g_strdup_printf("%g,%g", dx, dy);
 #ifdef ENABLE_NLS
 		setlocale(LC_NUMERIC, "");
 #endif
 		gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
+		g_free(posstr);
 	    }
 	} 
 	terminate_plot_positioning(plot);
@@ -3287,6 +3298,7 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     build_plot_menu(plot);
     gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
                    event->button, event->time);
+
     return TRUE;
 }
 
@@ -3611,7 +3623,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	    }
 	}
 
-#ifdef PNG_DEBUG
+#ifdef POINTS_DEBUG
 	fprintf(stderr, "Reading y range from text plot: plot->ymin=%g, "
 		"plot->ymax=%g\n", plot->ymin, plot->ymax);
 #endif
