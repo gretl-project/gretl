@@ -166,15 +166,15 @@ void win_help (void)
 
 #ifdef HUSH_RUNTIME_WARNINGS
 
-void dummy_output_handler (const gchar *log_domain,
-                           GLogLevelFlags log_level,
-                           const gchar *message,
-                           gpointer user_data)
+static void dummy_output_handler (const gchar *log_domain,
+				  GLogLevelFlags log_level,
+				  const gchar *message,
+				  gpointer user_data)
 {
     return;
 }
 
-void hush_warnings (void)
+static void hush_warnings (void)
 {
     g_log_set_handler ("Gtk",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
@@ -194,16 +194,23 @@ void hush_warnings (void)
 
 #define NAME_BUFFER_LEN 32
 
+#undef WFDEBUG
+
 static void try_to_get_windows_font (void)
 {
     HDC h_dc;
     HGDIOBJ h_font;
     TEXTMETRIC tm;
     char name[NAME_BUFFER_LEN], regfont[MAXLEN];
+#ifdef WFDEBUG
+    gchar *fontmsg;
+#endif
 
     /* don't override user's choice of font */
-    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0)
+#ifndef WFDEBUG
+    if (read_reg_val(HKEY_CURRENT_USER, "gretl", "App_font", regfont) == 0) 
 	return;
+#endif
 
     h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
     if (h_dc == NULL) return;
@@ -243,6 +250,13 @@ static void try_to_get_windows_font (void)
 	pc = gtk_widget_get_pango_context(w);
 	pfont = pango_context_load_font(pc, pfd);
 	match = (pfont != NULL);
+
+#ifdef WFDEBUG
+	fontmsg = g_strdup_printf("Got default font '%s'; pango match %s", 
+				  fontname, (match)? "succeeded" : "failed");
+	infobox(fontmsg);
+	g_free(fontmsg);
+#endif
 
 	pango_font_description_free(pfd);
 	g_object_unref(G_OBJECT(pc));

@@ -3391,7 +3391,13 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     plot_list[0] = 3;
     plot_list[1] = ginfo->v - 1;    /* last var added (fitted vals) */
-    plot_list[2] = pmod->list[1];   /* depvar from regression */
+
+    /* depvar from regression */
+    if (pmod->ci == ARMA) {
+	plot_list[2] = pmod->list[4];   
+    } else {
+	plot_list[2] = pmod->list[1];
+    }
 
     if (xvar) { 
 	/* plot against specified xvar */
