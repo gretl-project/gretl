@@ -25,7 +25,7 @@
 	     <keyword>adf</keyword>      
 	     <keyword>ar</keyword>       
 	     <keyword>arch</keyword>
-             <keyword>arma</keyword>
+         <keyword>arma</keyword>
 	     <keyword>boxplot</keyword>
 	     <keyword>chow</keyword>     
 	     <keyword>coeffsum</keyword>
@@ -39,20 +39,20 @@
 	     <keyword>cusum</keyword>
 	     <keyword>data</keyword>
 	     <keyword>delete</keyword>
-             <keyword>deriv</keyword>
+         <keyword>deriv</keyword>
 	     <keyword>diff</keyword>
 	     <keyword>else</keyword>
 	     <keyword>end</keyword>
 	     <keyword>endif</keyword>
 	     <keyword>endloop</keyword>
-             <keyword>endog</keyword>
+         <keyword>endog</keyword>
 	     <keyword>eqnprint</keyword>
 	     <keyword>equation</keyword>
 	     <keyword>fcast</keyword> 
 	     <keyword>fcasterr</keyword>
 	     <keyword>fit</keyword> 
 	     <keyword>freq</keyword>
-             <keyword>garch</keyword>    
+         <keyword>garch</keyword>    
 	     <keyword>genr</keyword>     
 	     <keyword>gnuplot</keyword>  
 	     <keyword>graph</keyword> 
@@ -61,11 +61,11 @@
 	     <keyword>help</keyword>    
 	     <keyword>hilu</keyword>    
 	     <keyword>hsk</keyword>
-             <keyword>identity</keyword> 
+         <keyword>identity</keyword> 
 	     <keyword>if</keyword>
 	     <keyword>import</keyword>
 	     <keyword>info</keyword>
-             <keyword>instr</keyword> 
+         <keyword>instr</keyword> 
 	     <keyword>label</keyword>
 	     <keyword>labels</keyword>
 	     <keyword>lad</keyword>
@@ -73,7 +73,7 @@
 	     <keyword>ldiff</keyword>
 	     <keyword>leverage</keyword>
 	     <keyword>lmtest</keyword> 
-             <keyword>logistic</keyword>
+         <keyword>logistic</keyword>
 	     <keyword>logit</keyword>
 	     <keyword>logs</keyword>
 	     <keyword>loop</keyword>
@@ -94,21 +94,21 @@
 	     <keyword>plot</keyword>    
 	     <keyword>pooled</keyword>
 	     <keyword>print</keyword>
-             <keyword>printf</keyword>  
+         <keyword>printf</keyword>  
 	     <keyword>probit</keyword>
 	     <keyword>pvalue</keyword>
 	     <keyword>pwe</keyword>
 	     <keyword>quit</keyword>
-             <keyword>rename</keyword> 
+         <keyword>rename</keyword> 
 	     <keyword>reset</keyword>
-             <keyword>restrict</keyword>
+         <keyword>restrict</keyword>
 	     <keyword>rhodiff</keyword> 
 	     <keyword>rmplot</keyword>
 	     <keyword>run</keyword>
 	     <keyword>runs</keyword>
 	     <keyword>scatters</keyword>
 	     <keyword>seed</keyword>
-             <keyword>set</keyword>
+         <keyword>set</keyword>
 	     <keyword>setobs</keyword>
 	     <keyword>setmiss</keyword>
 	     <keyword>shell</keyword>   
@@ -121,7 +121,7 @@
 	     <keyword>system</keyword>
 	     <keyword>tabprint</keyword>
 	     <keyword>testuhat</keyword>
-             <keyword>tobit</keyword>
+         <keyword>tobit</keyword>
 	     <keyword>tsls</keyword>    
 	     <keyword>var</keyword>
 	     <keyword>varlist</keyword>
