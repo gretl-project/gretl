@@ -399,7 +399,9 @@ static int block_retained (const char *s)
 {
     int nrows = 0;
 
-    printf("block_retained: s = '%s'\n", s);
+#if 0
+    fprintf(stderr, "block_retained: s = '%s'\n", s);
+#endif
 
     while (*s) {
 	if (*s == '1') nrows++;

@@ -77,19 +77,22 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-static int make_packed_vcv (MODEL *pmod, double *vcv, int np)
+static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
+			    double scale)
 {
     const int nterms = np * (np + 1) / 2;
     int i, j, k;
 
     free(pmod->vcv);
     pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) return 1;  
+    if (pmod->vcv == NULL) {
+	return 1;  
+    }
 
     for (i=0; i<np; i++) {
 	for (j=0; j<=i; j++) {
 	    k = ijton(i, j, np);
-	    pmod->vcv[k] = vcv[i + np * j];
+	    pmod->vcv[k] = vcv[i + np * j] * scale * scale;
 	}
     }
 
@@ -97,7 +100,7 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np)
 }
 
 static int write_garch_stats (MODEL *pmod, const double **Z,
-			      const DATAINFO *pdinfo,
+			      double scale, const DATAINFO *pdinfo,
 			      const int *list, const double *theta, 
 			      int nparam, int pad, const double *res,
 			      const double *h)
@@ -123,7 +126,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
 
     pmod->ess = 0.0;
     for (i=pmod->t1; i<=pmod->t2; i++) {
-	pmod->uhat[i] = res[i+pad];
+	pmod->uhat[i] = res[i + pad] * scale;
 	pmod->ess += pmod->uhat[i] * pmod->uhat[i];
 	pmod->yhat[i] =  Z[ynum][i] - pmod->uhat[i];
     }
@@ -249,7 +252,7 @@ static int get_vopt (int robust)
     return vopt;
 }
 
-int do_fcp (const int *list, double **Z, 
+int do_fcp (const int *list, double **Z, double scale,
 	    const DATAINFO *pdinfo, MODEL *pmod,
 	    PRN *prn, gretlopt opt)
 {
@@ -345,15 +348,21 @@ int do_fcp (const int *list, double **Z,
 	int nparam = ncoeff + p + q + 1;
 
 	for (i=1; i<=nparam; i++) {
+	    amax[i] *= scale;
+	    amax[i + nparam] *= scale;
+	    if (i > ncoeff) {
+		amax[i] *= scale;
+		amax[i + nparam] *= scale;
+	    }
 	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i-1, amax[i], 
-		    amax[i+nparam]);
+		    amax[i + nparam]);
 	}
 	pputc(prn, '\n');
 
 	pmod->lnL = amax[0];
-	write_garch_stats(pmod, (const double **) Z, pdinfo, list, 
-			  amax, nparam, pad, res, h);
-	make_packed_vcv(pmod, vcv, nparam);
+	write_garch_stats(pmod, (const double **) Z, scale, pdinfo, 
+			  list, amax, nparam, pad, res, h);
+	make_packed_vcv(pmod, vcv, nparam, scale);
 	gretl_model_set_int(pmod, "iters", iters);
 	gretl_model_set_int(pmod, "garch_vcv", vopt);
     }
@@ -460,35 +469,60 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn, gretlopt opt) 
 {
     MODEL model;
-    int *list, *ols_list;
-    int err;
+    int *list = NULL, *ols_list = NULL;
+    double sdy = 0.0;
+    int yno = 0, scaled = 0;
+    int t, err;
 
     gretl_model_init(&model);
 
     list = get_garch_list(cmdlist, &err);
     if (err) {
 	model.errcode = err;
-	return model;
     }
 
-    ols_list = make_ols_list(list);
-    if (ols_list == NULL) {
-	free(list);
-	model.errcode = E_ALLOC;
-	return model;
+    if (!err) {
+	ols_list = make_ols_list(list);
+	if (ols_list == NULL) {
+	    err = model.errcode = E_ALLOC;
+	}
     }
 
     /* run initial OLS */
-    model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (model.errcode) {
-	free(ols_list);
-        return model;
+    if (!err) {
+	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (model.errcode) {
+	    err = model.errcode;
+	}
+    }
+
+#if 0
+    if (!err) {
+	yno = ols_list[1];
+	sdy = gretl_stddev(pdinfo->t1, pdinfo->t2, (*pZ)[yno]);
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[yno][t] /= sdy;
+	}
+	for (t=0; t<model.ncoeff; t++) {
+	    model.coeff[t] *= sdy;
+	}
+	scaled = 1;
     } 
+#else
+    sdy = 1.0;
+#endif
+
+    if (!err) {
+	do_fcp(list, *pZ, sdy, pdinfo, &model, prn, opt); 
+    }
+
+    if (scaled) {
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[yno][t] *= sdy;
+	}
+    }
 
     free(ols_list);
-
-    do_fcp(list, *pZ, pdinfo, &model, prn, opt); 
-
     free(list);
 
     return model;

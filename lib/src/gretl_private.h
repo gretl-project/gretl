@@ -77,12 +77,6 @@ int gretl_hasconst (const int *list);
 
 int gretl_compare_doubles (const void *a, const void *b);
 
-double gretl_stddev (int t1, int t2, const double *x);
-
-double gretl_variance (int t1, int t2, const double *x);
-
-double gretl_sst (int t1, int t2, const double *x);
-
 void gretl_aic_etc (MODEL *pmod);
 
 void gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);

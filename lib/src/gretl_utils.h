@@ -202,6 +202,12 @@ CONFINT *get_model_confints (const MODEL *pmod);
 
 void free_confint (CONFINT *cf);
 
+double gretl_stddev (int t1, int t2, const double *x);
+
+double gretl_variance (int t1, int t2, const double *x);
+
+double gretl_sst (int t1, int t2, const double *x);
+
 #ifndef WIN32
 int gretl_spawn (const char *cmdline);
 int gretl_spawn_quiet (const char *cmdline);
