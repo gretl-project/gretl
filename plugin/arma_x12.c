@@ -226,13 +226,11 @@ static int add_unique_output_file (MODEL *pmod, const char *path)
 {
     char fname[FILENAME_MAX];
     char unique[FILENAME_MAX];
-    time_t t;
     int err;
 
-    t = time(NULL);
-
     sprintf(fname, "%s.out", path);
-    sprintf(unique, "%s.%ld", fname, (long) t);
+    sprintf(unique, "%s.XXXXXX", fname);
+    if (mktemp(unique) == NULL) return 1;
 
     free(pmod->params[0]);
     pmod->params[0] = NULL;
