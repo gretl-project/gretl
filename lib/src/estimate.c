@@ -194,6 +194,166 @@ static int get_model_df (MODEL *pmod)
     return 0;
 }
 
+#define LDDEBUG 0
+
+static int
+transcribe_ld_vcv (MODEL *targ, MODEL *src)
+{
+    int nv = targ->ncoeff;
+    int nxpx = (nv * nv + nv) / 2;
+    int i, j;
+
+    if (makevcv(src)) {
+	return 1;
+    }
+
+    if (targ->vcv == NULL) {
+	targ->vcv = malloc(nxpx * sizeof *targ->vcv);
+	if (targ->vcv == NULL) {
+	    return 1;
+	}
+    }
+
+    for (i=0; i<nv; i++) {
+	for (j=i; j<nv; j++) {
+	    targ->vcv[ijton(i, j, nv)] = 
+		src->vcv[ijton(i, j, src->ncoeff)];
+	}
+    }
+
+    return 0;
+}
+
+/* Calculate consistent standard errors (and VCV matrix) when doing
+   AR(1) estimation of a model with lagged dependent variable.  See
+   Ramanathan, Introductory Econometrics, 5e, p. 450.
+*/
+
+static int 
+ldepvar_std_errors (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL emod;
+    const double *x;
+
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
+
+    double rho = gretl_model_get_double(pmod, "rho_in");
+    int origv = pdinfo->v;
+    int vnew = pmod->list[0] + 1 - pmod->ifc;
+
+    int *list;
+    int vi, vm;
+    int i, t;
+    int err = 0;
+
+#if LDDEBUG
+    PRN *prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
+    printlist(pmod->list, "pmod->list");
+    printf("vnew = %d\n", vnew);
+    printf("rho = %g\n", rho);
+#endif
+
+    list = malloc((vnew + 1 + pmod->ifc) * sizeof *list);
+    if (list == NULL) {
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    err = dataset_add_vars(vnew, pZ, pdinfo);
+    if (err) {
+	free(list);
+	pmod->errcode = E_ALLOC;
+	return 1;
+    }
+
+    list[0] = vnew + pmod->ifc;
+
+    vi = origv;
+
+    /* dependent var is residual from original model */
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[vi][t] = pmod->uhat[t];
+    }    
+    strcpy(pdinfo->varname[vi], "eps");
+    list[1] = vi++;
+
+    /* indep vars are rho-differenced vars from original model */
+    for (i=2; i<=pmod->list[0]; i++) {
+	vm = pmod->list[i];
+	if (vm == 0) {
+	    list[i] = 0;
+	    continue;
+	}
+	sprintf(pdinfo->varname[vi], "%.6s_r", pdinfo->varname[vm]);
+	x = (*pZ)[vm];
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t == 0 || na(x[t]) || na(x[t-1])) {
+		(*pZ)[vi][t] = NADBL;
+	    } else {
+		(*pZ)[vi][t] = x[t] - rho * x[t-1];
+	    }
+	}
+	list[i] = vi++;
+    }
+
+    /* last indep var is lagged u-hat */
+    for (t=0; t<pdinfo->n; t++) {
+	if (t == 0) {
+	    (*pZ)[vi][t] = NADBL;
+	} else { 
+	    (*pZ)[vi][t] = (*pZ)[pmod->list[1]][t-1];
+	}
+	if (na((*pZ)[vi][t])) {
+	    continue;
+	}
+	for (i=0; i<pmod->ncoeff; i++) {
+	    x = (*pZ)[pmod->list[i+2]];
+	    if (na(x[t-1])) {
+		(*pZ)[vi][t] = NADBL;
+		break;
+	    } else {
+		(*pZ)[vi][t] -= pmod->coeff[i] * x[t-1];
+	    }
+	}
+    }
+
+    list[list[0]] = vi;
+    strcpy(pdinfo->varname[vi], "uhat_1");
+
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
+
+    emod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (emod.errcode) {
+	err = emod.errcode;
+    } else {
+#if LDDEBUG
+	printmodel(&emod, pdinfo, OPT_NONE, prn);
+	gretl_print_destroy(prn);
+#endif
+	for (i=0; i<pmod->ncoeff; i++) {
+	    pmod->sderr[i] = emod.sderr[i];
+	}
+
+	err = transcribe_ld_vcv(pmod, &emod);
+    }
+    
+    clear_model(&emod);
+    
+    free(list);
+    dataset_drop_vars(vnew, pZ, pdinfo);
+
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
+
+    if (err) {
+	pmod->errcode = err;
+    }
+
+    return err;
+}
+
 /* special computation of statistics for autoregressive models */
 
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
@@ -815,6 +975,11 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     if (ci == CORC || ci == HILU || ci == PWE) {
 	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) { 
 	    goto lsq_abort;
+	}
+	if (gretl_model_get_int(&mdl, "ldepvar")) {
+	    if (ldepvar_std_errors(&mdl, pZ, pdinfo)) {
+		goto lsq_abort;
+	    }
 	}
     }
 
