@@ -111,6 +111,23 @@ void register_graph (void)
 #endif    
 }
 
+static void gui_graph_handler (int err)
+{
+    if (err == -999) {
+	errbox(_("No data were available to graph"));
+    } else if (err < 0) {
+	const char *msg = get_gretl_errmsg();
+
+	if (*msg) {
+	    errbox(msg);
+	} else {
+	    errbox(_("gnuplot command failed"));
+	}
+    } else {
+	register_graph();
+    }
+}
+
 static void launch_gnuplot_interactive (void)
 {
 #ifdef G_OS_WIN32
@@ -1043,7 +1060,9 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 
 	close_dialog(ddata);
 	view_buffer(prn, hsize, vsize, title, code, NULL);
-	if (code == CORRGM) register_graph();
+	if (code == CORRGM) {
+	    register_graph();
+	}
     }
 }
 
@@ -3352,11 +3371,8 @@ void do_graph_var (int varnum)
     lines[0] = 1;
     err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, GP_GUI);
-    if (err == -999)
-	errbox(_("No data were available to graph"));
-    else if (err < 0) 
-	errbox(_("gnuplot command failed"));
-    else register_graph();
+
+    gui_graph_handler(err);
 }
 
 /* ........................................................... */
@@ -3393,10 +3409,15 @@ void do_scatters (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "scatters %s", buf);
     if (verify_and_record_command(line)) return;
+
     err = multi_scatters(command.list, atoi(command.param), &Z, 
 			 datainfo, &paths, NULL, 0);
-    if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+
+    if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
 }
 
 /* ........................................................... */
@@ -3453,8 +3474,11 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, GP_GUI | GP_DUMMY);
 
-    if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+    if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
 }
 
 /* ........................................................... */
@@ -3494,13 +3518,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
                       &paths, &plot_count, GP_GUI);
     }
 
-    if (err == -999) {
-        errbox(_("No data were available to graph"));
-    } else if (err < 0) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph();
-    }
+    gui_graph_handler(err);
 
     free(lines);
 }
@@ -3634,13 +3652,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, GP_GUI);
 
-    if (err == -999) {
-	errbox(_("No data were available to graph"));
-    } else if (err < 0) {
-	errbox(_("gnuplot command failed"));
-    } else {
-	register_graph();
-    }
+    gui_graph_handler(err);
 
     free(lines);
 }
@@ -4887,8 +4899,11 @@ int gui_exec_line (char *line,
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 			  &paths, &plot_count, 0); 
-	    if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
-	    else register_graph();
+	    if (err < 0) {
+		pprintf(prn, _("gnuplot command failed\n"));
+	    } else {
+		register_graph();
+	    }
 	}
 	break;
 		
@@ -4899,8 +4914,9 @@ int gui_exec_line (char *line,
 	}
 	printfreq(freq, prn);
 	if (exec_code == CONSOLE_EXEC) {
-	    if (plot_freq(freq, &paths, NORMAL))
+	    if (plot_freq(freq, &paths, NORMAL)) {
 		pprintf(prn, _("gnuplot command failed\n"));
+	    }
 	}
 	free_freq(freq);
 	break;

@@ -26,6 +26,8 @@ int logit;
 int debug;
 
 #define MAXLEN 512
+
+/* #define PBAR */
 #define PARENT_UPDATE
 
 static void getout (int err)
@@ -42,8 +44,12 @@ static void getout (int err)
 
 #ifdef WIN32 /* Windows-specific code */
 
+# ifdef PBAR
+static char infobuf[256];
 static HWND hwnd; /* main window handle */
 static HWND hpb; /* handle for progress bar */
+static void put_text_on_window (HWND hwnd);
+# endif
 
 static int win_error (void)
 {
@@ -98,6 +104,8 @@ static int create_child_process (char *prog)
     return ret;
 }
 
+#ifdef PBAR
+
 static HWND main_window (HINSTANCE hinst)
 {
     HWND hwnd;
@@ -117,9 +125,7 @@ static HWND main_window (HINSTANCE hinst)
 
     if (hwnd != NULL) {
 	ShowWindow(hwnd, SW_SHOWNORMAL); 
-#ifdef PARENT_UPDATE
 	UpdateWindow(hwnd);
-#endif
     } else {
 	win_error();
     }
@@ -127,7 +133,7 @@ static HWND main_window (HINSTANCE hinst)
     return hwnd;
 }
 
-static void put_text_on_window (const char *s, HWND hwnd)
+static void put_text_on_window (HWND hwnd)
 {
     static HFONT hfnt = NULL;
     HDC hdc;
@@ -142,12 +148,14 @@ static void put_text_on_window (const char *s, HWND hwnd)
     FillRect(hdc, &rect, GetStockObject(WHITE_BRUSH)); 
     SelectObject(hdc, hfnt);
     rect.top = 40;
-    DrawText(hdc, s, lstrlen(s), &rect, DT_CENTER | DT_TOP);
+    DrawText(hdc, infobuf, lstrlen(infobuf), &rect, DT_CENTER | DT_TOP);
 
-#ifdef PARENT_UPDATE
+# ifdef PARENT_UPDATE
     UpdateWindow(hwnd);
-#endif
+# endif
 }
+
+#endif /* MAINWIN */
 
 static char *get_size_string (size_t fsize)
 {
@@ -213,6 +221,8 @@ static int ws_startup (void)
     return 0;
 }
 
+#ifdef PBAR
+
 static int start_progress_bar (HWND parent, HINSTANCE hinst, size_t sz) 
 {
     RECT rect;  
@@ -220,7 +230,7 @@ static int start_progress_bar (HWND parent, HINSTANCE hinst, size_t sz)
     HWND hpb;
     int ispace;
 
-#ifdef NEWICC
+# ifdef NEWICC
     INITCOMMONCONTROLSEX icc;
 
     icc.dwSize = sizeof icc;
@@ -229,9 +239,9 @@ static int start_progress_bar (HWND parent, HINSTANCE hinst, size_t sz)
 	win_error();
 	return 1;
     }
-#else
+# else
     InitCommonControls();
-#endif /* NEWICC */
+# endif /* NEWICC */
 
     GetClientRect(parent, &rect); 
     hscroll = GetSystemMetrics(SM_CYVSCROLL); 
@@ -256,12 +266,13 @@ static int start_progress_bar (HWND parent, HINSTANCE hinst, size_t sz)
 	return 1;
     }
 
-#ifdef PARENT_UPDATE
+# ifdef PARENT_UPDATE
     UpdateWindow(parent);
-#endif
-    UpdateWindow(hpb); /* ??? */
+# endif
+    /* UpdateWindow(hpb); */
 
     SendMessage(hpb, PBM_SETRANGE32, (WPARAM) 0, (LPARAM) sz); 
+    SendMessage(hpb, PBM_SETPOS, (WPARAM) 0, 0);
 
     return 0; 
 } 
@@ -270,7 +281,7 @@ void update_windows_progress_bar (int gotbytes)
 {
     if (gotbytes > 0) {
 	SendMessage(hpb, PBM_DELTAPOS, (WPARAM) gotbytes, 0);
-	UpdateWindow(hwnd);
+        UpdateWindow(hwnd);
     }
 }
 
@@ -280,6 +291,8 @@ static void destroy_progress_bar (void)
 	DestroyWindow(hpb);
     }
 }
+
+#endif /* PBAR */
 
 #else /* ! WIN32 */
 
@@ -300,6 +313,13 @@ void update_windows_progress_bar (int gotbytes)
 }
 
 #endif /* WIN32 */
+
+#if defined(WIN32) && !defined(PBAR)
+void update_windows_progress_bar (int gotbytes)
+{
+    return;
+}
+#endif
 
 int errbox (const char *msg) 
 {
@@ -413,9 +433,10 @@ int main (int argc, char *argv[])
     size_t fsize;
     const char *testfile = "gretl.stamp";
 #ifdef WIN32
-    char infobuf[128];
     char gretldir[MAXLEN];
+# ifdef PBAR
     HINSTANCE hinst;
+# endif
 #endif
     time_t filedate;
 
@@ -432,7 +453,9 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
+# ifdef PBAR
     hinst = (HINSTANCE) GetModuleHandle(NULL);
+# endif
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
@@ -445,10 +468,12 @@ int main (int argc, char *argv[])
 	exit(EXIT_FAILURE);
     }
 
+# ifdef PBAR
     hwnd = main_window(hinst);
     if (hwnd == NULL) {
 	exit(EXIT_FAILURE);
     }
+# endif
 
     if (ws_startup()) exit(EXIT_FAILURE);
 #endif
@@ -480,7 +505,10 @@ int main (int argc, char *argv[])
 	/* no arguments: a default update */
 
 #ifdef WIN32
-	put_text_on_window("Looking for gretl updates...", hwnd);
+# ifdef PBAR
+	strcpy(infobuf, "Looking for gretl updates...");
+	put_text_on_window(hwnd);
+# endif
 #endif
 
 	if (logit) {
@@ -528,16 +556,20 @@ int main (int argc, char *argv[])
 #ifdef WIN32
 	    else if (ask_before_download) {
 		int resp;
+		char query[128];
 
-		sprintf(infobuf, "An update file is available%s.\n"
+		sprintf(query, "An update file is available%s.\n"
 			"Get it now?", get_size_string(fsize));
-		resp = yes_no_dialog(infobuf);
+		resp = yes_no_dialog(query);
 		if (resp != IDYES) break;
 	    }
+# ifdef PBAR
+            hwnd = main_window(hinst);
 	    sprintf(infobuf, "Downloading %s", fname);
-	    put_text_on_window(infobuf, hwnd);
+	    put_text_on_window(hwnd);
 	    start_progress_bar(hwnd, hinst, fsize);
-#endif
+# endif /* PBAR */
+#endif /* WIN32 */
 
 	    if (logit) {
 		fprintf(flg, "trying to get '%s'\n", fname);
@@ -600,9 +632,11 @@ int main (int argc, char *argv[])
     }
 
 #ifdef WIN32
+# ifdef PBAR
     destroy_progress_bar();
 
     DestroyWindow(hwnd); 
+# endif /* PBAR */
 
     if (unpack_ok) {
 	if (yes_no_dialog("gretl update succeeded.\r\nStart gretl now?") == IDYES) {
@@ -619,5 +653,3 @@ int main (int argc, char *argv[])
 
     return err; /* not reached */
 }
-
-

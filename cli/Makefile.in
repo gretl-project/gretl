@@ -46,7 +46,7 @@ LIBTOOL = ../libtool
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
-	$(CC) -MM -MG -I$(libsrc) $(DEFS) $< >$*.d 2>/dev/null
+	$(CC) -MM -MG -I$(libsrc) $(DEFS) $< >$*.d 
 
 $(CLI): $(OBJS)
 	../libtool --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(READLINE_LIBS) 

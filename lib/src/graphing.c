@@ -30,7 +30,7 @@
 #else
 # include <glib.h>
 #if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB_SPAWN
+#  define GLIB2
 #  include <signal.h>
 #  include <wait.h>
 # endif /* GLIB_CHECK_VERSION */
@@ -47,17 +47,21 @@ static const char *get_gnuplot_pallette (int i, int plottype);
 
 /* ........................................................ */
 
-#ifdef GLIB_SPAWN
+#ifdef GLIB2
+
+/* #define SPAWN_DEBUG */
 
 static int gnuplot_test_command (const char *cmd)
 {
     int ok, ret = 1;
-    int child_pid, sinp;
+    int child_pid = 0, sinp = 0;
     GError *error = NULL;
     gchar *argv[] = {
 	(*gnuplot_path == 0)? "gnuplot" : gnuplot_path,
 	NULL
     };
+
+    signal(SIGCHLD, SIG_DFL);
 
     ok = g_spawn_async_with_pipes (NULL,
 				   argv,
@@ -75,8 +79,9 @@ static int gnuplot_test_command (const char *cmd)
 				   &error);
 
 #ifdef SPAWN_DEBUG
-    fprintf(stderr, "child_pid = %d, sinp = %d\n",
-	    child_pid, sinp);
+    fprintf(stderr, "Testing gnuplot command '%s'\n", cmd);
+    fprintf(stderr, "ok=%d, child_pid=%d, sinp=%d\n",
+	    ok, child_pid, sinp);
 #endif
 
     if (ok) {
@@ -86,6 +91,11 @@ static int gnuplot_test_command (const char *cmd)
 	write(sinp, "\n", 1);
 	close(sinp);
 	test = waitpid(child_pid, &status, 0);
+#ifdef SPAWN_DEBUG
+	fprintf(stderr, "waitpid returned %d, WIFEXITED %d, "
+		"WEXITSTATUS %d\n", test, WIFEXITED(status),
+		WEXITSTATUS(status));
+#endif
 	if (test == child_pid && WIFEXITED(status)) {
 	    ret = WEXITSTATUS(status);
 	}
@@ -108,7 +118,7 @@ static int gnuplot_test_command (const char *cmd)
     return system(fullcmd);
 }
 
-#endif /* ! GLIB_SPAWN, ! WIN32 */
+#endif /* ! GLIB2, ! WIN32 */
 
 /* ........................................................ */
 
@@ -856,7 +866,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
 #ifdef WIN32
-    /* gnuplot 3.7.3 won't accept "height" here */
+    /* only gnuplot 3.8 or higher will accept "height" here */
     const char *keystring = 
 	"set key left top height 1 width 1 box\n";
 #else

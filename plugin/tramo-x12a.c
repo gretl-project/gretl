@@ -25,6 +25,11 @@
 
 #ifdef WIN32
 # include <windows.h>
+#else
+# if GLIB_CHECK_VERSION(2,0,0)
+#  define GLIB2
+#  include <signal.h>
+# endif /* GLIB_CHECK_VERSION */
 #endif
 
 enum opt_codes {
@@ -57,6 +62,87 @@ const char *default_mdl = {
     "(0 2 2)(0 1 1) X\n"
     "(2 1 2)(0 1 1)\n"
 };  
+
+#ifdef GLIB2
+
+/* #define SP_DEBUG */
+
+static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
+{
+    va_list ap;
+    int i, nargs;
+    int ok;
+    int status = 0, ret = 0;
+    GError *error = NULL;
+    gchar **argv = NULL;
+    gchar *sout = NULL, *serr = NULL;
+    char *s;
+
+    argv = malloc(2 * sizeof *argv);
+    if (argv == NULL) return 1;
+    argv[0] = g_strdup(fmt);
+    argv[1] = NULL;
+    i = nargs = 1;
+
+    va_start(ap, fmt);
+    while ((s = va_arg(ap, char *))) {
+	i++;
+	argv = realloc(argv, (i+1) * sizeof *argv);
+	if (argv == NULL) {
+	    status = 1;
+	    break;
+	}
+	argv[i-1] = g_strdup(s);
+	argv[i] = NULL;
+    }
+    va_end(ap);
+
+    if (status == 1) return 1;
+
+    nargs = i;
+
+#ifdef SP_DEBUG
+    fputs("spawning the following:\n", stderr);
+    for (i=0; i<nargs; i++) {
+	fprintf(stderr, " argv[%d] = '%s'\n", i, argv[i]);
+    }
+#endif
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_sync (workdir,
+		       argv,
+		       NULL,
+		       0,
+		       NULL,
+		       NULL,
+		       &sout,
+		       &serr,
+		       &status,
+		       &error);
+
+    if (!ok) {
+	fprintf(stderr, "spawn: '%s'\n", error->message);
+	g_error_free(error);
+	ret = 1;
+    } else if (serr && *serr) {
+	fprintf(stderr, "stderr: '%s'\n", serr);
+	ret = 1;
+    } else if (status != 0) {
+	fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	ret = 1;
+    }
+
+    if (serr != NULL) g_free(serr);
+    if (sout != NULL) g_free(sout);
+
+    for (i=0; i<nargs; i++) free(argv[i]);
+    free(argv);
+    
+    return ret;
+}
+
+#endif
 
 #if GTK_MAJOR_VERSION == 1
 static void tx_dialog_ok (GtkWidget *w, tx_request *request)
@@ -656,12 +742,15 @@ int write_tx_data (char *fname, int varnum,
 		   char *errmsg)
 {
     int i, doit, err = 0;
-    char varname[9], cmd[MAXLEN];
+    char varname[9];
     int varlist[4];
     FILE *fp = NULL;
     tx_request request;
     double **tmpZ;
     DATAINFO *tmpinfo;
+#ifndef GLIB2
+    char cmd[MAXLEN];
+#endif
 
     /* sanity check */
     *errmsg = 0;
@@ -736,22 +825,24 @@ int write_tx_data (char *fname, int varnum,
 
     /* run the program */
     if (request.code == X12A) {
-#ifdef WIN32
+#if defined(WIN32)
 	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+#elif defined(GLIB2)
+       err = tramo_x12a_spawn(workdir, prog, varname, "-r", "-p", "-q", NULL);
 #else
-	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
-		workdir, prog, varname);
-	err = gretl_spawn(cmd);
+       sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
+	       workdir, prog, varname);
+       err = gretl_spawn(cmd);
 #endif
-    } else { /* TRAMO_SEATS */
+       } else { /* TRAMO_SEATS */
 	char seats[MAXLEN];
 
 	/* ensure any stale files get deleted first, just in case */
 	clear_tramo_files(workdir, varname);
 
-#ifdef WIN32 
+#if defined(WIN32)
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
@@ -760,6 +851,12 @@ int write_tx_data (char *fname, int varnum,
 	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
 	    err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
 			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
+	}
+#elif defined(GLIB2)
+	err = tramo_x12a_spawn(workdir, prog, "-i", varname, "-k", "serie", NULL);
+	if (!err && request.code == TRAMO_SEATS) {
+	    get_seats_command(seats, prog);
+	    err = tramo_x12a_spawn(workdir, seats, varname, "-OF", NULL);
 	}
 #else
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 

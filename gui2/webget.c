@@ -867,7 +867,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef UPDATER
+#if defined(UPDATER) || defined (WIN32)
     /* the linux test updater program pretends to be Windows */
     strcat(useragent, "w");
 #endif
@@ -1551,6 +1551,28 @@ static time_t get_time_from_stamp_file (const char *fname)
     return mktime(&stime);
 }
 
+#ifdef WIN32
+static void maybe_fork_updater (char *msg)
+{
+    int resp;
+
+    resp = yes_no_dialog("gretl", msg, 0);
+
+    if (resp == GRETL_YES) {
+	gchar *ud;
+	size_t n = strlen(paths.gretldir);
+
+	if (paths.gretldir[n-1] != SLASH) {
+	    ud = g_strdup_printf("%s\\gretl_updater.exe -g", paths.gretldir);
+	} else {
+	    ud = g_strdup_printf("%sgretl_updater.exe -g", paths.gretldir);
+	}
+	WinExec(ud, SW_SHOWNORMAL);
+	exit(EXIT_SUCCESS);
+    }
+}
+#endif
+
 static int real_update_query (int queryopt)
 {
     int err = 0;
@@ -1603,16 +1625,16 @@ static int real_update_query (int queryopt)
 
     if (strncmp(getbuf, "message:", 8) == 0) {
 	infobox(getbuf + 9);
-    } else if (strncmp(getbuf, "No new files", 12)) {
+    } else if (strncmp(getbuf, "No new", 6)) {
 	char infotxt[512];
 
 # ifdef WIN32 
 	sprintf(infotxt, _("New files are available from the gretl web site.\n"
-		"These files have a combined size of %u bytes.\n\nIf you "
-		"would like to update your installation, please quit gretl\n"
-		"and run the program titled \"gretl updater\".\n\nOnce the "
-		"updater has completed you may restart gretl."),
+			   "These files have a combined size of %u bytes.\n\nWould "
+			   "you like to exit from gretl and update your installation now?\n"
+			   "(You can run gretl_updater.exe later if you prefer.)"),
 		get_size(getbuf));
+	maybe_fork_updater(infotxt);
 # else
 	if (admin) {
 	    strcpy(infotxt, _("New files are available from the gretl web site\n"
@@ -1629,8 +1651,8 @@ static int real_update_query (int queryopt)
 		    "system\n"));
 	    fclose(fp);
 	}
-# endif /* WIN32 */
 	infobox(infotxt);
+# endif /* WIN32 */
     } else if (queryopt == QUERY_VERBOSE) {
 	infobox(_("No new files"));
     }

@@ -32,9 +32,6 @@ endif
 
 VPATH = $(topsrc)/plugin
 
-# Installation directory
-plugindir = $(prefix)/lib/gretl
-
 override CFLAGS += -I.. -DHAVE_CONFIG_H
 
 LIBTOOL = ../libtool
@@ -45,9 +42,11 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
 
 ifeq ($(have_gtk),2.0)
+  plugindir = $(prefix)/lib/gretl-gtk2
   GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
   GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
 else
+  plugindir = $(prefix)/lib/gretl-gtk1
   GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell glib-config --cflags)
 endif  
 
@@ -78,10 +77,12 @@ ifeq ($(LIBOLE2_LIBS),)
   LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
+override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
+	$(LIBOLE2_CFLAGS) -I.
+
 %.lo: %.c
-	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
-	$(LIBOLE2_CFLAGS) -I. $< 
-	$(CC) -MM -MG $(GRETLINC) $< >$*.d 2>/dev/null
+	$(COMPILE) $< 
+	$(CC) $(CFLAGS) -M -MT $*.lo $< >$*.d 
 
 all: $(PLUGINS)
 

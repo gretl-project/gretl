@@ -28,7 +28,7 @@
 #ifndef WIN32
 # include <glib.h>
 # if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB_SPAWN
+#  define GLIB2
 #  include <signal.h>
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
@@ -1278,15 +1278,22 @@ static char *internal_path_stuff (int code, const char *path)
 #ifdef WIN32
 	strcpy(gretl_lib_path, path);
 #else
+# ifdef GLIB2 
+	const char *sfx = "-gtk2/";
+# else
+	const char *sfx = "-gtk1/";
+# endif
 	char *p = strstr(path, "/share");
+
 	if (p) {
 	    size_t len = p - path;
 
 	    *gretl_lib_path = 0;
 	    strncat(gretl_lib_path, path, len);
-	    strcat(gretl_lib_path, "/lib/gretl/");
+	    strcat(gretl_lib_path, "/lib/gretl");
+	    strcat(gretl_lib_path, sfx);
 	} else {
-	    sprintf(gretl_lib_path, "%s/lib/gretl/", path);
+	    sprintf(gretl_lib_path, "%s/lib/gretl%s", path, sfx);
 	}
 #endif
 	return NULL;
@@ -2634,7 +2641,7 @@ void free_confint (CONFINT *cf)
 
 /* ........................................................... */
 
-#ifdef GLIB_SPAWN
+#ifdef GLIB2
 
 int gretl_spawn (const char *cmdline)
 {

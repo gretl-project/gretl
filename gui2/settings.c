@@ -333,7 +333,7 @@ static int check_for_prog (const char *prog)
     if (prog == NULL || *prog == 0) return 0;
 
     sprintf(tmp, "%s > /dev/null 2>&1", prog);
-    return (system(tmp) == 0);
+    return (gretl_spawn(tmp) == 0);
 }
 
 static void set_tramo_x12a_dirs (void)

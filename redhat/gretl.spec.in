@@ -47,7 +47,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %doc COPYING README INSTALL 
 %{prefix}/lib/lib*
-%{prefix}/lib/gretl/*
+%{prefix}/lib/gretl*/*
 %{prefix}/bin/gretlcli
 %{prefix}/bin/gretl_x11
 %{prefix}/bin/gretl

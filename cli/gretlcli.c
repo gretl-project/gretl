@@ -1237,23 +1237,28 @@ void exec_line (char *line, PRN *prn)
 	}
 	printf(_("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmdprn);
+
 	if (command.param[0] == 'x') break;
+
 	printf(_("type a filename to store output (enter to quit): "));
 	*outfile = '\0';
 	fgets(outfile, MAXLEN-1, stdin); 
 	top_n_tail(outfile);
+
 	if (*outfile != '\n' && *outfile != '\r' && strcmp(outfile, "q")) {
 	    printf(_("writing session output to %s%s\n"), 
 		   paths.userdir, outfile);
 #ifdef WIN32
 	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
 		    paths.gretldir, cmdfile, paths.userdir, outfile);
+	    /* WinExec(syscmd, SW_SHOWMINIMIZED); */
+	    system(syscmd);
 #else
 	    sprintf(syscmd, "gretlcli -b \"%s\" > \"%s%s\"", 
 		    cmdfile, paths.userdir, outfile);
+	    gretl_spawn(syscmd);
 #endif
 	    printf("%s\n", syscmd);
-	    gretl_spawn(syscmd);
 	} 
 	break;
 
