@@ -2522,7 +2522,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     free(prn->buf);
     prn->buf = databuf;
 
-    view_buffer(prn, (opt == TRAMO)? 120 : 84, 500, 
+    view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
 		(opt == TRAMO)? _("gretl: TRAMO analysis") :
 		_("gretl: X-12-ARIMA analysis"),
 		opt, view_items);
