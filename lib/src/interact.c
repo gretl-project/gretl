@@ -1237,6 +1237,24 @@ int simple_commands (CMD *cmd, const char *line,
     return err;
 }
 
+int ready_for_command (const char *line)
+{
+    const char *ok_cmds[] = {
+	"open", "run", "nulldata", "import", "pvalue", "!",
+	"(*", "man ", "help", "noecho", "critical", "seed", NULL };
+    const char **p = ok_cmds;
+
+    if (*line == 'q' || *line == 'x' || 
+	*line == '\0' || *line == '#') return 1;
+
+    while (*p) {
+	if (strncmp(line, *p, strlen(*p)) == 0)
+	    return 1;
+	p++;
+    }
+
+    return 0;
+}
 
 
 

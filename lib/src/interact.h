@@ -66,6 +66,8 @@ int simple_commands (CMD *cmd, const char *line,
 		     int batch, int oflag, 
 		     PRN *prn);
 
+int ready_for_command (const char *line);
+
 #endif /* INTERACT_H */
 
 

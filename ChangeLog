@@ -15,6 +15,7 @@ version 1.0.6
   (Johansen trace test for cointegration)
 - add robust LM test for use with add/omit variables in relation
   to a model estimated using hccm
+- permit comments starting with '#' on first line of script
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm

@@ -3893,28 +3893,6 @@ int execute_script (const char *runfile, const char *buf,
 
 /* ........................................................... */
 
-static int ready_for_command (char *line)
-{
-    if (*line == 'q' || *line == 'x' ||
-        *line == '\0' ||
-        strncmp(line, "open", 4) == 0 ||
-        strncmp(line, "run", 3) == 0 ||
-        strncmp(line, "nulldata", 6) == 0 ||
-        strncmp(line, "import", 4) == 0 ||
-        strncmp(line, "pvalue", 6) == 0 ||
-        strncmp(line, "!", 1) == 0 ||
-        strncmp(line, "(*", 2) == 0 ||
-        strncmp(line, "man ", 4) == 0 ||
-        strncmp(line, "help", 4) == 0 ||
-        strncmp(line, "seed", 4) == 0 ||
-	strncmp(line, "noecho", 6) == 0 ||
-        strncmp(line, "critical", 8) == 0)
-        return 1;
-    return 0;
-}
-
-/* ........................................................... */
-
 static int script_model_test (const int id, PRN *prn, const int ols_only)
 {
     /* need to work in terms of modelspec here, _not_ model_count */

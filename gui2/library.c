@@ -3722,26 +3722,6 @@ int execute_script (const char *runfile, const char *buf,
 
 /* ........................................................... */
 
-static int ready_for_command (char *line)
-{
-    const char *ok_cmds[] = {
-	"open", "run", "nulldata", "import", "pvalue", "!",
-	"(*", "man ", "help", "noecho", "critical", "seed", NULL };
-    const char **p = ok_cmds;
-
-    if (*line == 'q' || *line == 'x' || *line == '\0') return 1;
-
-    while (*p) {
-	if (strncmp(line, *p, strlen(*p)) == 0)
-	    return 1;
-	p++;
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
 static int script_model_test (const int id, PRN *prn, const int ols_only)
 {
     /* need to work in terms of modelspec here, _not_ model_count */

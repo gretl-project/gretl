@@ -102,27 +102,6 @@ void usage(void)
     exit(EXIT_SUCCESS);
 }
 
-int ready_for_command (char *line)
-{
-    if (*line == 'q' || *line == 'x' ||
-	*line == '\0' ||
-	strncmp(line, "open", 4) == 0 ||
-	strncmp(line, "run", 3) == 0 ||
-	strncmp(line, "nulldata", 8) == 0 ||
-	strncmp(line, "import", 4) == 0 ||
-	strncmp(line, "pvalue", 6) == 0 ||
-	strncmp(line, "critical", 6) == 0 ||
-	strncmp(line, "!", 1) == 0 ||
-	strncmp(line, "(*", 2) == 0 ||
-	strncmp(line, "man", 3) == 0 ||
-	strncmp(line, "exit", 4) == 0 ||
-	strncmp(line, "seed", 4) == 0 ||
-	strncmp(line, "noecho", 6) == 0 ||
-	strncmp(line, "help", 4) == 0)
-	return 1;
-    return 0;
-}
-
 int make_userdir (PATHS *ppaths) 
 {
     char buf[MAXLEN];
