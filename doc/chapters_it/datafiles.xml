@@ -121,19 +121,43 @@
 
   <sect1 id="scratch"><title>Creare un file di dati da zero</title>
 
-    <para>Ci sono cinque modi per creare un file di dati da zero. 1: acquisire,
-    o creare con un editor di testo, un file di testo semplice ed aprirlo con
-    il comando <quote>Importa ASCII</quote> di
-    <application>gretl</application>. 2: usare il proprio foglio di lavoro per
-    inserire i dati, salvarlo in formato con valori separati da virgole (Comma
-    Separated Values) se necessario (non dovrebbe essere necessario se il
-    programma di foglio elettronico è MS Excel o Gnumeric) e infine usare uno
-    dei comandi <quote>Importa</quote> di <application>gretl</application>
-    (CSV, Excel o Gnumeric). 3: usare il foglio elettronico contenuto in
-    <application>gretl</application>. 4: selezionare le serie di
-    dati da un database. 5: usare un editor di testo o altri programmi
-    per creare un file di dati nel formato interno di
-    <application>gretl</application>.</para>
+    <para>Ci sono cinque modi per compiere questa operazione.</para>
+    
+    <orderedlist>
+      <listitem>
+       <para>
+         Acquisire, o creare con un editor di testo, un file di testo semplice
+         ed aprirlo con il comando <quote>Importa ASCII</quote> di
+         <application>gretl</application>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         Usare il proprio foglio di lavoro per inserire i dati, salvarlo in
+         formato con valori separati da virgole (Comma Separated Values) se
+         necessario (non dovrebbe essere necessario se il programma di foglio
+         elettronico è MS Excel o Gnumeric) e infine usare uno dei comandi
+         <quote>Importa</quote> di <application>gretl</application> (CSV, Excel
+         o Gnumeric).
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         Usare il foglio elettronico contenuto in <application>gretl</application>.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         Selezionare le serie di dati da un database.
+       </para>
+      </listitem>
+      <listitem>
+       <para>
+         Usare un editor di testo o altri programmi per creare un file di dati
+         nel formato interno di <application>gretl</application>.
+       </para>
+      </listitem>
+    </orderedlist>
 
     <para>Seguono alcune note a proposito dei vari metodi presentati.</para>
 
