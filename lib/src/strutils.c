@@ -645,11 +645,17 @@ char *real_get_obs_string (char *obs, int t, const DATAINFO *pdinfo, int full)
     }
 
     if (!full) {
-	if (strlen(obs) > 8 && isdigit(*obs) && isdigit(*(obs + 1))) {
+	if (strlen(obs) > 8) { 
 	    char tmp[9];
 
-	    strcpy(tmp, obs + 2);
-	    strcpy(obs, tmp);
+	    if (isdigit(*obs) && isdigit(*(obs + 1))) {
+		strcpy(tmp, obs + 2);
+		strcpy(obs, tmp);
+	    } else {
+		*tmp = '\0';
+		strncat(tmp, obs, 8);
+		strcpy(obs, tmp);
+	    }
 	} 
     }
 
