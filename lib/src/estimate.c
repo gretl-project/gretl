@@ -321,6 +321,8 @@ static void model_stats_init (MODEL *pmod)
  *   if & OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
  *   if & OPT_P use Prais-Winsten for first obs.
+ *   if & OPT_N don't use degrees of freedom correction for standard
+ *      error of regression
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -464,6 +466,11 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* check degrees of freedom */
     if (get_model_df(&mdl)) {
         goto lsq_abort; 
+    }
+
+    /* if df correction is not wanted, record this fact */
+    if (opts & OPT_N) {
+	gretl_model_set_int(&mdl, "no-df-corr", 1);
     }
 
     if (dataset_is_time_series(pdinfo)) {
@@ -825,7 +832,11 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->sigma = 0.0;
 	pmod->adjrsq = NADBL;
     } else {
-	sgmasq = pmod->ess / pmod->dfd;
+	if (gretl_model_get_int(pmod, "no-df-corr")) {
+	    sgmasq = pmod->ess / pmod->nobs;
+	} else {
+	    sgmasq = pmod->ess / pmod->dfd;
+	}
 	pmod->sigma = sqrt(sgmasq);
     }
 

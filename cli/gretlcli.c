@@ -773,7 +773,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case INFO: case LABELS: case VARLIST:
     case PRINT: 
     case SUMMARY:
-    case MEANTEST: case VARTEST:
+    case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
 			      prn);
@@ -1563,28 +1563,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} else {
 	    pputs(prn, _("Squares generated OK\n"));
 	    varlist(datainfo, prn);
-	}
-	break;
-
-    case STORE:
-	if ((err = cmd.errcode)) {
-	    errmsg(err, prn);
-	    break;
-	}
-	if (strlen(cmd.param)) {
-	    pprintf(prn, _("store: using filename %s\n"), cmd.param);
-	} else {
-	    pputs(prn, _("store: no filename given\n"));
-	    break;
-	}
-	if (write_data(cmd.param, cmd.list, Z, datainfo, 
-		       cmd.opt, NULL)) {
-	    fprintf(stderr, _("write of data file failed\n"));
-	    break;
-	}
-	pputs(prn, _("Data written OK\n"));
-	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) { 
-	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
 	}
 	break;
 

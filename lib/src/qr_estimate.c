@@ -728,7 +728,11 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 
     /* standard error of regression */
     if (m - n > 0) {
-	pmod->sigma = sqrt(pmod->ess / (m - n));
+	if (gretl_model_get_int(pmod, "no-df-corr")) {
+	    pmod->sigma = sqrt(pmod->ess / m);
+	} else {
+	    pmod->sigma = sqrt(pmod->ess / (m - n));
+	}
     } else {
 	pmod->sigma = 0.0;
     }

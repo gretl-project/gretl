@@ -4932,7 +4932,7 @@ int gui_exec_line (char *line,
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT: case SUMMARY:
-    case MEANTEST: case VARTEST:
+    case MEANTEST: case VARTEST: case STORE:
     case RUNS: case SPEARMAN: case PCA:
     case OUTFILE:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
@@ -5712,35 +5712,6 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("Squares generated OK\n"));
 	    varlist(datainfo, prn);
 	}
-	break;
-
-    case STORE:
-	if ((err = cmd.errcode)) {
-	    errmsg(cmd.errcode, prn);
-	    break;
-	}
-
-	if (strlen(cmd.param)) {
-	    if ((cmd.opt & OPT_Z) && !has_gz_suffix(cmd.param)) {
-		pprintf(prn, _("store: using filename %s.gz\n"), cmd.param);
-	    } else {
-		pprintf(prn, _("store: using filename %s\n"), cmd.param);
-	    }
-	} else {
-	    pprintf(prn, _("store: no filename given\n"));
-	    break;
-	}
-
-	if (write_data(cmd.param, cmd.list, 
-		       Z, datainfo, cmd.opt, NULL)) {
-	    pprintf(prn, _("write of data file failed\n"));
-	    err = 1;
-	    break;
-	}
-	pprintf(prn, _("Data written OK.\n"));
-	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) 
-	    pprintf(prn, _("Warning: case markers not saved in "
-			   "binary datafile\n"));
 	break;
 
     case RESTRICT:

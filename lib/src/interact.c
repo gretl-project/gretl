@@ -577,7 +577,9 @@ static void check_end_command (CMD *cmd)
     if (*cmd->param) {
 	int cmdcode = gretl_command_number(cmd->param);
 
-	if (!COMMAND_CAN_END(cmdcode)) {
+	if (cmdcode == LOOP) {
+	    cmd->ci = ENDLOOP;
+	} else if (!COMMAND_CAN_END(cmdcode)) {
 	    cmd->errcode = 1;
 	    sprintf(gretl_errmsg, _("command 'end %s' not recognized"), 
 		    cmd->param);
@@ -2057,6 +2059,29 @@ int simple_commands (CMD *cmd, const char *line,
 
     case OUTFILE:
 	err = do_outfile_command(cmd->opt, cmd->param, prn);
+	break;
+
+    case STORE:
+	if (*cmd->param != '\0') {
+	    if ((cmd->opt & OPT_Z) && !has_gz_suffix(cmd->param)) {
+		pprintf(prn, _("store: using filename %s.gz\n"), cmd->param);
+	    } else {
+		pprintf(prn, _("store: using filename %s\n"), cmd->param);
+	    }
+	} else {
+	    pprintf(prn, _("store: no filename given\n"));
+	    break;
+	}
+	if (write_data(cmd->param, cmd->list, *pZ,
+		       datainfo, cmd->opt, NULL)) {
+	    pprintf(prn, _("write of data file failed\n"));
+	    err = 1;
+	    break;
+	}
+	pprintf(prn, _("Data written OK.\n"));
+	if (((cmd->opt & OPT_O) || (cmd->opt & OPT_S)) && datainfo->markers) 
+	    pprintf(prn, _("Warning: case markers not saved in "
+			   "binary datafile\n"));
 	break;
 
     default:
