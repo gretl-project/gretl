@@ -192,7 +192,7 @@ RCVARS rc_vars[] = {
 #ifndef USE_GNOME
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
 #endif
-    {"DataPage", "Default data page", NULL, NULL, datapage, 'I', 24, 0, NULL},
+    {"DataPage", "Default data page", NULL, datapage, 'I', 24, 0, NULL},
     {"ScriptPage", "Default script page", NULL, scriptpage, 'I', 24, 0, NULL},    
     {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, 'I', 16, 0, NULL},
     {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, 'I', 24, 0, NULL},
