@@ -154,7 +154,7 @@ topclean:
 	rm -f *.o *.exe
 
 clean:
-	rm -f *.o *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/libgretl.dll
+	rm -f *.o *.def $(CLIPROG) $(GUIPROG) $(CHECKER) conspawn.exe dlls/libgretl.dll
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h

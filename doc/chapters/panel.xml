@@ -50,8 +50,11 @@
     <para>You may use whichever arrangement is more convenient.  The
       first is perhaps easier to keep straight.  If you use the second
       then of course you must ensure that the cross-sectional units
-      appear in the same order in each of the period data
-      blocks.</para>
+      appear in the same order in each of the period data blocks.
+      Under <application>gretl</application>'s
+      <guimenu>Sample</guimenu> menu you will find an item
+      <quote>Restructure panel</quote> which allows you to convert
+      from stacked cross-section form to stacked time series.</para>
 
     <para>In either case you can use the frequency field in the
       <emphasis>observations</emphasis> line of the data header file

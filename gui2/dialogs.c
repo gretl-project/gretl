@@ -106,15 +106,6 @@ static void fix_obsstr (char *str)
     }
 }
 
-static void dot_obs (char *str)
-{
-    char *p;
-
-    if ((p = strchr(str, ',')) != NULL) {
-	*p = '.';
-    }
-}
-
 /* ........................................................... */
 
 static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
@@ -157,13 +148,13 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	fix_obsstr(endobs);
 
 	sd0 = strtod(stobs, &test);
-	if (strcmp(stobs, test) == 0 || test[0] != '\0' || sd0 < 0) {
+	if (!strcmp(stobs, test) || *test != 0 || sd0 < 0) {
 	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
 	    errbox(errtext);
 	    return;
 	}
 	ed0 = strtod(endobs, &test);
-	if (strcmp(endobs, test) == 0 || test[0] != '\0' || ed0 < 0) {
+	if (!strcmp(endobs, test) || *test != 0 || ed0 < 0) {
 	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
 	    errbox(errtext);
 	    return;
@@ -176,14 +167,14 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	return;
     }
 
-    dot_obs(stobs);
-    dot_obs(endobs);
+    colonize_obs(stobs);
+    colonize_obs(endobs);
 
     if (datainfo->pd == 999) { /* panel */
 	char unit[8], period[8];
 
 	/* try to infer structure from ending obs */
-	if (sscanf(endobs, "%[^.].%s", unit, period) == 2) { 
+	if (sscanf(endobs, "%[^:]:%s", unit, period) == 2) { 
 	    datainfo->pd = atoi(period);
 	    fprintf(stderr, _("Setting data frequency = %d\n"), datainfo->pd);
 	} else {
@@ -218,7 +209,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     else if (datainfo->pd != 5 && datainfo->pd != 7) { 
 	char year[8], subper[8];
 
-	if (sscanf(stobs, "%[^.].%s", year, subper) != 2 ||
+	if (sscanf(stobs, "%[^:]:%s", year, subper) != 2 ||
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
@@ -227,7 +218,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    errbox(errtext);
 	    return;
 	}
-	if (sscanf(endobs, "%[^.].%s", year, subper) != 2 ||
+	if (sscanf(endobs, "%[^:]:%s", year, subper) != 2 ||
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
@@ -324,7 +315,7 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 		   "the name of the first variable to add.\n"
 		   "The example below is suitable for 20 units\n"
 		   "observed over 10 periods"), 
-		 "1.01 10.20 newvar", 
+		 "1:01 10:20 newvar", 
 		 prep_spreadsheet, wdata, 
 		 0, 0);
 }
@@ -716,30 +707,22 @@ static void save_data_callback (void)
 gint yes_no_dialog (char *title, char *msg, int cancel)
 {
     GtkWidget *dialog, *label, *hbox;
-    int ret;
+    int ret = GTK_RESPONSE_HELP;
 
+    dialog = gtk_dialog_new_with_buttons (title,
+					  NULL,
+					  GTK_DIALOG_MODAL | 
+					  GTK_DIALOG_DESTROY_WITH_PARENT,
+					  GTK_STOCK_YES,
+					  GTK_RESPONSE_ACCEPT,
+					  GTK_STOCK_NO,
+					  GTK_RESPONSE_NO,
+					  NULL);
+    
     if (cancel) {
-	dialog = gtk_dialog_new_with_buttons (title,
-					      NULL,
-					      GTK_DIALOG_MODAL | 
-					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      GTK_STOCK_YES,
-					      GTK_RESPONSE_ACCEPT,
-					      GTK_STOCK_NO,
-					      GTK_RESPONSE_NO,
-					      GTK_STOCK_CANCEL,
-					      GTK_RESPONSE_REJECT,
-					      NULL);
-    } else {
-	dialog = gtk_dialog_new_with_buttons (title,
-					      NULL,
-					      GTK_DIALOG_MODAL | 
-					      GTK_DIALOG_DESTROY_WITH_PARENT,
-					      GTK_STOCK_YES,
-					      GTK_RESPONSE_ACCEPT,
-					      GTK_STOCK_NO,
-					      GTK_RESPONSE_NO,
-					      NULL);
+	gtk_dialog_add_button (GTK_DIALOG(dialog),
+			       GTK_STOCK_CANCEL,
+			       GTK_RESPONSE_REJECT);
     }
 
     label = gtk_label_new (msg);
@@ -749,13 +732,14 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
     gtk_widget_show(hbox);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox),
 		       hbox, FALSE, FALSE, 10);
-					  
+
     ret = gtk_dialog_run (GTK_DIALOG(dialog));
+					  
     gtk_widget_destroy (dialog);
 
     switch (ret) {
-    case GTK_RESPONSE_ACCEPT: return YES_BUTTON;
-    case GTK_RESPONSE_NO: return NO_BUTTON;	
+    case GTK_RESPONSE_ACCEPT: return YES_BUTTON; 
+    case GTK_RESPONSE_NO: return NO_BUTTON; 
     default: return -1;
     }
 }

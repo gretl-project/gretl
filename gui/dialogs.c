@@ -129,15 +129,6 @@ static void fix_obsstr (char *str)
     }
 }
 
-static void dot_obs (char *str)
-{
-    char *p;
-
-    if ((p = strchr(str, ',')) != NULL) {
-	*p = '.';
-    }
-}
-
 /* ........................................................... */
 
 static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
@@ -199,14 +190,14 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	return;
     }
 
-    dot_obs(stobs);
-    dot_obs(endobs);
+    colonize_obs(stobs);
+    colonize_obs(endobs);
 
     if (datainfo->pd == 999) { /* panel */
 	char unit[8], period[8];
 
 	/* try to infer structure from ending obs */
-	if (sscanf(endobs, "%[^.].%s", unit, period) == 2) { 
+	if (sscanf(endobs, "%[^:]:%s", unit, period) == 2) { 
 	    datainfo->pd = atoi(period);
 	    fprintf(stderr, _("Setting data frequency = %d\n"), datainfo->pd);
 	} else {
@@ -241,7 +232,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     else if (datainfo->pd != 5 && datainfo->pd != 7) { 
 	char year[8], subper[8];
 
-	if (sscanf(stobs, "%[^.].%s", year, subper) != 2 ||
+	if (sscanf(stobs, "%[^:]:%s", year, subper) != 2 ||
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
@@ -250,7 +241,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    errbox(errtext);
 	    return;
 	}
-	if (sscanf(endobs, "%[^.].%s", year, subper) != 2 ||
+	if (sscanf(endobs, "%[^:]:%s", year, subper) != 2 ||
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {

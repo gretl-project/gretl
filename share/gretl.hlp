@@ -660,7 +660,7 @@ which chunks of gretl code are borrowed.)
 #
 panel
 @Dataset
-Set panel data structure
+Register panel data structure
 
 The two options here are "stacked time series" and "stacked cross sections".
 Gretl must know which way your data are organized if you want to make use of
@@ -680,6 +680,11 @@ to F for the year 1970, the next 6 rows the values for the same countries in
 
 If you save your data file after setting this attribute, the information will
 be recorded in the data file and you won't have to set it again.  
+
+Note that this menu item does not change the structure of your panel data set,
+it simply fixes the interpretation of that structure on gretl's part.  If you
+want to convert a panel data set currently in stacked cross section form to
+stacked time series, use the menu item "Restructure panel".
 
 #
 pooled

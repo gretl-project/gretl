@@ -6,7 +6,8 @@
 enum {
     YES_BUTTON,
     NO_BUTTON,
-    CANCEL_BUTTON
+    CANCEL_BUTTON,
+    HELP_BUTTON
 } buttons;
 
 /* functions follow */

@@ -454,18 +454,28 @@
 	      observations where data values are missing. May be
 	      useful in examining a panel data set, where it's quite
 	      common to encounter missing values.</para></listitem>
-	  <listitem><para><guimenuitem>Add case markers</guimenuitem>
+	  <listitem><para><guimenuitem>Add case markers</guimenuitem>:
 	      Prompts for the name of a text file containing
 	      <quote>case markers</quote> (short strings identifying
 	      the individual observations) and adds this information
 	      to the data set. See
 	      <xref linkend="datafiles"/>.</para></listitem>
-	  <listitem><para><guimenuitem>Panel
-		structure</guimenuitem>Opens a dialog box which
+	  <listitem><para><guimenuitem>Interpret as time 
+		series</guimenuitem>: Opens a dialog box which
+	      enables you to set a time-series interpretation for data
+	      that were read in as undated.</para></listitem>
+	  <listitem><para><guimenuitem>Interpret as 
+		panel</guimenuitem>: Opens a dialog box which
 	      enables you to fix the interpretation of a panel data
 	      set as either stacked time series or stacked cross
 	      sections (see <xref
 		linkend="panel"/>).</para></listitem>
+	  <listitem><para><guimenuitem>Restructure 
+		panel</guimenuitem>: Allows the conversion of a panel
+		data set in stacked cross-section form into stacked
+		time series.  (Unlike the previous item, this one
+		changes the organization of the data.)
+	    </para></listitem>
 	</itemizedlist>
       </listitem>
 
