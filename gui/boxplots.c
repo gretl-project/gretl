@@ -251,7 +251,7 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 	else if (just == GTK_JUSTIFY_RIGHT) {
 	    int ch = gdk_char_height(fixed_font, '1');
 
-	    y += ch / 2.0;
+	    y += (double) ch / 2.0;
 	    x -= len * cw;
 	}
 	rect.x = x;
