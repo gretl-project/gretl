@@ -755,6 +755,12 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
     }
 
+    if (pmod->ci == CORC || pmod->ci == HILU) {
+	if (tex) {
+	    pprintf(prn, "\\\\ \n$\\hat{\\rho}$ = %g\n", pmod->rho_in);
+	}
+    }
+
     if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0') {
 	pprintf(prn, "%s\n", gretl_msg);
     }

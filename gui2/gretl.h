@@ -192,6 +192,7 @@ enum browser_codes {
     RAMU_PS,
     GREENE_DATA,
     GREENE_PS,
+    JW_DATA,
     PWT_DATA,
     PWT_PS,
     NATIVE_DB,

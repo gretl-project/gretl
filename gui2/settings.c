@@ -80,6 +80,7 @@ PangoFontDescription *fixed_font;
 
 static int usecwd;
 int olddat;
+int jwdata;
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
 #endif
@@ -144,6 +145,9 @@ RCVARS rc_vars[] = {
      N_("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
     {"olddat", N_("Use \".dat\" as default datafile suffix"), 
      N_("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
+    {"jwdata", N_("Toolbar folder icon opens Wooldridge data"), 
+     N_("Toolbar folder icon opens Ramanathan data"), 
+     &jwdata, 'B', 0, 5, NULL},
     {"Fixed_font", N_("Fixed font"), NULL, fixedfontname, 'U', MAXLEN, 0, NULL},
 #ifndef USE_GNOME
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
@@ -362,12 +366,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num, tbl_num + 1);
-		if (*(int *)(rc->var))
+		if (*(int *)(rc->var)) {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
-		else
+		} else {
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), FALSE);
+		}
 		/* special case: link between toggle and preceding entry */
 		if (rc->len) {
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
@@ -390,14 +395,14 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		int val = *(int *)(rc->var);
 		GSList *group;
 
-		tbl_num += 2;
+		tbl_num += 3;
 		gtk_table_resize (GTK_TABLE(inttbl), tbl_num + 1, 2);
 
 		tempwid = gtk_radio_button_new_with_label(NULL, 
 							  _(rc->description));
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num - 2, tbl_num - 1);    
+		     tbl_num - 3, tbl_num - 2);    
 		if (val) 
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
@@ -407,10 +412,16 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		tempwid = gtk_radio_button_new_with_label(group, _(rc->link));
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
-		     tbl_num - 1, tbl_num);  
-		if (!val)
+		     tbl_num - 2, tbl_num - 1);  
+		if (!val) {
 		    gtk_toggle_button_set_active
 			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		}
+		gtk_widget_show (tempwid);
+		tempwid =gtk_hseparator_new ();
+		gtk_table_attach_defaults 
+		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
+		     tbl_num - 1, tbl_num);  
 		gtk_widget_show (tempwid);
 	    } else { /* string variable */
 		tbl_len++;

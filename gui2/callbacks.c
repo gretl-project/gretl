@@ -61,6 +61,7 @@ gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 	    break;
 	case RAMU_DATA:
 	case GREENE_DATA:
+	case JW_DATA:
 	case PWT_DATA:
 	    browser_open_data(NULL, win);
 	    break;

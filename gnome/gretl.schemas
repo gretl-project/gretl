@@ -200,6 +200,19 @@
       </locale>
     </schema>
 
+    <schema>
+      <key>/schemas/apps/gretl/jwdata</key>
+      <applyto>/apps/gretl/jwdata</applyto>
+      <owner>gretl</owner>
+      <type>bool</type>
+      <default>FALSE</default>
+      <locale name="C">
+        <short>Make toolbar directory icon open Wooldridge data</short>
+        <long>The default (false) means that Ramanathan data will be used</long>
+      </locale>
+    </schema>
+
+
     <!-- Section: internet -->
 
     <schema>

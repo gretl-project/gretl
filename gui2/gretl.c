@@ -218,8 +218,13 @@ GtkItemFactoryEntry data_items[] = {
       display_files, RAMU_DATA, NULL },
     { N_("/File/Open data/sample file/Greene..."), NULL, 
       display_files, GREENE_DATA, NULL },
+#ifdef OLD_JW
     { N_("/File/Open data/sample file/Wooldridge..."), NULL,
       open_data, OPEN_DES, NULL },
+#else
+    { N_("/File/Open data/sample file/Wooldridge..."), NULL,
+      display_files, JW_DATA, NULL },
+#endif
     { N_("/File/Open data/sample file/Penn World Table..."), NULL, 
       display_files, PWT_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
@@ -1746,9 +1751,15 @@ static void show_edit (void)
 
 /* ........................................................... */
 
-static void open_ramudata (void)
+static void open_textbook_data (void)
 {
-    display_files(NULL, RAMU_DATA, NULL);
+    extern int jwdata; /* settings.c */
+
+    if (jwdata) {
+	display_files(NULL, JW_DATA, NULL);
+    } else {
+	display_files(NULL, RAMU_DATA, NULL);
+    }
 }
 
 /* ........................................................... */
@@ -1913,7 +1924,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;
 	case 9:
 	    toolxpm = mini_ofolder_xpm;
-	    toolfunc = open_ramudata;
+	    toolfunc = open_textbook_data;
 	    break;
 	default:
 	    break;

@@ -28,7 +28,7 @@
 extern GtkItemFactoryEntry script_items[];
 extern GtkItemFactoryEntry sample_script_items[];
 
-extern int olddat; /* gui_utils.c */
+extern int olddat; /* settings.c */
 
 char woolpath[MAXLEN];
 static char remember_dir[MAXLEN];
