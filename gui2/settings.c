@@ -1188,13 +1188,15 @@ void write_rc (void)
 
 static int get_network_cfg_filename (char *inifile)
 {
+    LPTSTR blank;
     LPWSTR *args;
     int nargs;
     gchar *msg;
 
     *inifile = '\0';
+    *blank = 0;
 
-    args = CommandLineToArgvW("", &nargs);
+    args = CommandLineToArgvW(blank, &nargs);
     if (args == NULL) {
 	errbox("get_network_settings: args = NULL");
     } else {
@@ -1203,7 +1205,7 @@ static int get_network_cfg_filename (char *inifile)
 	int n;
     
 	msg = g_strdup_printf("get_network_settings: args[0] = '%s',"
-			      "nargs = %d", args[0], nargs);
+			      "nargs = %d", (char *) args[0], nargs);
 	infobox(msg);
 	g_free(msg);
 
@@ -1240,7 +1242,7 @@ static int get_network_settings (void)
 	int j;
 	char line[MAXLEN], key[32], linevar[MAXLEN];
 
-	while (fgets(line, MAXLEN, rc)) {
+	while (fgets(line, MAXLEN, fp)) {
 	    if (line[0] == '#') continue;
 	    if (sscanf(line, "%s", key) == 1) {
 		strcpy(linevar, line + strlen(key) + 3); 
