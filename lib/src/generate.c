@@ -3155,18 +3155,18 @@ static void varerror (const char *ss)
 /* .......................................................... */
 
 int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
-     /* for "sim" command */
+     /* implements "sim" command */
 {
-    int f, i, t, t1, t2, m, nv, pv;
+    int f, i, t, t1, t2, m, nv = 0, pv;
     char varname[VNAMELEN], parm[16], tmpstr[MAXLEN];
     char *isconst = NULL, **toks = NULL;
     double xx, yy, *a = NULL;
-    int vtok = 2, err = 0;
+    int vtok = 0, err = 0;
 
     *gretl_errmsg = '\0';
 
     f = _count_fields(cmd);
-    m = f - 3;
+    m = f - 2; /* default: allow for command word varname */
 
     a = malloc(m * sizeof *a);
     isconst = malloc(m * sizeof *isconst);
@@ -3182,18 +3182,18 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     *tmpstr = 0;
     strncat(tmpstr, cmd, MAXLEN - 1);
     
-    strtok(tmpstr, " "); /* discard the "sim" */
+    strtok(tmpstr, " "); /* discard the "sim" command word */
     for (i=0; i<f-1; i++) {
 	toks[i] = strtok(NULL, " ");
     }
 
-    /* allow for "full" in place of starting and ending dates */
-    if (!strcmp(toks[0], "full")) {
+    /* allow for implicit starting and ending dates */
+    if (isalpha(*toks[0])) {
 	t1 = pdinfo->t1;
 	t2 = pdinfo->t2;
-	vtok = 1;
     } else {
-	m--;
+	m -= 2;
+	vtok = 2;
 	/* try getting valid obs from stobs and endobs */
 	t1 = dateton(toks[0], pdinfo);
 	t2 = dateton(toks[1], pdinfo);
@@ -3294,6 +3294,11 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     free(a);
     free(isconst);
     free(toks);
+
+    if (!err && nv > 0) {
+	sprintf(gretl_msg, "%s %s %s (ID %d)", 
+		_("Replaced"), _("vector"), pdinfo->varname[nv], nv);
+    }
 
     return err;
 }

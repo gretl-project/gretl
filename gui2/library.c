@@ -5478,7 +5478,11 @@ int gui_exec_line (char *line,
 
     case SIM:
 	err = simulate(line, &Z, datainfo);
-	if (err) errmsg(err, prn);
+	if (err) { 
+	    errmsg(err, prn);
+	} else {
+	    pprintf(prn, "%s\n", get_gretl_msg()); 
+	}
 	break;
 
     case SMPL:
