@@ -168,25 +168,25 @@ int main (int argc, char *argv[])
     time_t filedate;
 
 #ifdef OS_WIN32
-    if (ws_startup()) exit(EXIT_FAILURE);
+    if (ws_startup()) return 1;
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
 	       "from the Windows registry");
-	exit(EXIT_FAILURE);
+	return 1;
     }
 
     if (chdir(gretldir)) {
 	errbox("Couldn't move to the gretl folder");
-	exit(EXIT_FAILURE);
+	return 1;
     }
 #endif
 
     filedate = get_time_from_stamp_file(testfile);
-    if (filedate == 0) {
+    if (filedate == (time_t) 0) {
 	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
 	errbox(errbuf);
-	exit(EXIT_FAILURE);
+	return 1;
     } 
 
     if (argc > 1 && strcmp(argv[1], "-f") == 0 && argc != 3) 
@@ -195,7 +195,7 @@ int main (int argc, char *argv[])
     if (argc == 1) {
 	/* no arguments: a default update */
 	getbuf = mymalloc(8192);
-	if (getbuf == NULL) exit(EXIT_FAILURE);
+	if (getbuf == NULL) return 1;
 
 	clear(getbuf, 8192);
 
