@@ -13,6 +13,7 @@ have_readline = @have_readline@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
 gnome_prefix = @gnome_prefix@
+have_gtksourceview = @have_gtksourceview@
 
 GNOME_CFLAGS = @GNOME_CFLAGS@
 GNOME_LIBS = @GNOME_LIBS@
@@ -55,6 +56,11 @@ ifeq ($(USE_NLS),yes)
   datadir = @datadir@
   localedir = $(datadir)/locale
   NLSDEF = -DLOCALEDIR=\"$(localedir)\"
+endif
+ifeq ($(have_gtksourceview),yes)
+  langbase := $(shell pkg-config --variable=prefix gtksourceview-1.0)
+  langdir = $(langbase)/share/gtksourceview-1.0/language-specs
+  query_install_lang = install-lang
 endif
 
 DEFS = $(NLSDEF) $(GNOMEDEF)
@@ -110,7 +116,7 @@ $(GTKEXTRA_LITE):
 
 .PHONY:
 
-install: install-exec install-data $(query_install_gnome)
+install: install-exec install-data $(query_install_gnome) $(query_install_lang)
 
 install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
@@ -125,6 +131,10 @@ install-exec: $(PROG) installdirs
 
 install-gnome: $(PROG) installdirs 
 	$(MAKE) -C ../gnome install 
+
+install-lang: 
+	$(tooldir)/mkinstalldirs $(langdir)
+	$(INSTALL_DATA) $(topsrc)/gui2/gretl.lang $(langdir)
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(bindir) 

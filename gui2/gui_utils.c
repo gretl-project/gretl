@@ -65,7 +65,10 @@ static void add_dummies_to_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
+
+#ifndef USE_GTKSOURCEVIEW
 static void correct_line_color (windata_t *vwin);
+#endif
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -482,16 +485,10 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	edit_script_help(NULL, NULL, vwin);
     }
 
+#ifndef USE_GTKSOURCEVIEW
     else if (key->keyval == GDK_Return) {
 	/* newline: correct line color */
 	correct_line_color(vwin);
-    }
-
-#if 0
-    else if (key->keyval == GDK_numbersign) {
-	/* comment: colorize text */
-	text_view_flip_blue(vwin, TRUE);
-	return TRUE;
     }
 #endif
 
@@ -1246,8 +1243,6 @@ enum {
     RED_TEXT
 };
 
-/* ........................................................... */
-
 static GtkTextTagTable *gretl_tags_new (void)
 {
     GtkTextTagTable *table;
@@ -1266,7 +1261,7 @@ static GtkTextTagTable *gretl_tags_new (void)
     return table;
 }
 
-/* ........................................................... */
+#ifndef USE_GTKSOURCEVIEW
 
 static void correct_line_color (windata_t *vwin)
 {
@@ -1290,6 +1285,8 @@ static void correct_line_color (windata_t *vwin)
     }
     g_free(txt);
 }
+
+#endif /* not USE_GTKSOURCEVIEW */
 
 /* ........................................................... */
 
