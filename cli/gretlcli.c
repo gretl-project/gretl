@@ -269,7 +269,7 @@ static void force_english (void)
 
 #endif /* ENABLE_NLS */
 
-int clear_data (void)
+static int clear_data (void)
 {
     int err = 0;
 
@@ -296,9 +296,75 @@ int clear_data (void)
     return err;
 }
 
+static void get_an_input_line (void)
+{
+    if (gretl_executing_function()) {
+	/* reading from compiled function */
+	fn_get_line();
+    } else if (runit || batch) {
+	/* reading from script file */
+	file_get_line();
+    } else {
+	/* normal interactive use */
+#ifdef HAVE_READLINE
+	rl_gets(&line_read, (loopstack || gretl_compiling_function())? 
+		"> " : "? ");
+	if (line_read == NULL) {
+	    strcpy(line, "quit");
+	} else {
+	    strcpy(line, line_read);
+	}
+#else
+	printf("%s", (loopstack || gretl_compiling_function())? 
+	       "> " : "? ");
+	fflush(stdout);
+	file_get_line(); /* "file" = stdin here */
+#endif
+    }
+}
+
+static int maybe_get_input_line_continuation (char *tmp)
+{
+    int err = 0;
+
+    if (!strncmp(line, "quit", 4)) {
+	return 0;
+    }
+
+    /* allow for backslash continuation of lines */
+    while (top_n_tail(line)) {
+	tmp[0] = '\0';
+
+	if (gretl_executing_function()) {
+	    gretl_function_get_line(tmp, MAXLEN - 1, &Z, datainfo);
+	} else if (batch || runit) {
+	    fgets(tmp, MAXLEN - 1, fb);
+	} else {
+#ifdef HAVE_READLINE
+	    rl_gets(&line_read, "> ");
+	    strcpy(tmp, line_read);
+#else
+	    fgets(tmp, MAXLEN - 1, stdin); 
+#endif /* HAVE_READLINE */
+	}
+
+	if (*tmp != '\0') {
+	    if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+		err = 1;
+		break;
+	    } else {
+		strcat(line, tmp);
+		compress_spaces(line);
+	    }
+	}
+    }
+
+    return err;
+}
+
 int main (int argc, char *argv[])
 {
-    int cont = 0, cli_get_data = 0;
+    int cli_get_data = 0;
     int cmd_overflow = 0;
     char filearg[MAXLEN];
     char tmp[MAXLINE];
@@ -314,8 +380,9 @@ int main (int argc, char *argv[])
 #endif
 
     datainfo = datainfo_new();
-    if (datainfo == NULL)
+    if (datainfo == NULL) {
 	noalloc(_("data information"));
+    }
     
     if (argc > 1) {
 	int english = 0;
@@ -359,7 +426,9 @@ int main (int argc, char *argv[])
 	    }
 	}
 #endif
-    } else cli_get_data = 1;
+    } else {
+	cli_get_data = 1;
+    }
 
 #ifdef WIN32
     if (!batch) {
@@ -374,7 +443,9 @@ int main (int argc, char *argv[])
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
 
     line = malloc(MAXLINE);
-    if (line == NULL) noalloc(_("command line")); 
+    if (line == NULL) {
+	noalloc(_("command line"));
+    } 
 
     set_paths(&paths, 1, 0); /* 1 = defaults, 0 = not gui */
 #ifdef WIN32
@@ -494,7 +565,9 @@ int main (int argc, char *argv[])
     while (strcmp(cmd.cmd, "quit")) {
 	char linecopy[MAXLEN];
 
-	if (err && batch && errfatal) gretl_abort(linecopy);
+	if (err && batch && errfatal) {
+	    gretl_abort(linecopy);
+	}
 
 	if (looprun) { 
 	    if (loop_exec(loop, line, &Z, &datainfo,
@@ -505,57 +578,11 @@ int main (int argc, char *argv[])
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = errfatal = 0;
-	} else if (gretl_executing_function()) {
-	    fn_get_line();
-	} else { 
-#ifdef HAVE_READLINE
-	    if (!runit && !batch) { /* normal interactive use */
-		rl_gets(&line_read, (loopstack || gretl_compiling_function())? 
-			"> " : "? ");
-		if (line_read == NULL) {
-		    strcpy(line, "quit");
-		} else {
-		    strcpy(line, line_read);
-		}
-	    } else { 
-		file_get_line();
-	    }
-#else
-	    if (!runit && !batch) { 
-		/* normal interactive use */
-		printf("%s", (loopstack || gretl_compiling_function())? 
-		       "> " : "? ");
-		fflush(stdout);
-	    }
-	    file_get_line();
-#endif /* HAVE_READLINE */
-	} 
-
-	if (strncmp(line, "quit", 4)) {
-	    /* allow for backslash continuation of lines: FIXME func exec */
-	    while ((cont = top_n_tail(line))) {
-		*tmp = '\0';
-#ifdef HAVE_READLINE
-		if (batch || runit) {
-		    fgets(tmp, MAXLEN-1, fb);
-		} else {
-		    rl_gets(&line_read, 
-			    (loopstack || cont || gretl_compiling_function)? 
-			    "> " : "? ");
-		    strcpy(tmp, line_read);
-		}
-#else
-		fgets(tmp, MAXLEN-1, fb);
-#endif /* HAVE_READLINE */
-		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
-		    cmd_overflow = 1;
-		    break;
-		} else {
-		    strcat(line, tmp);
-		    compress_spaces(line);
-		}
-	    }
+	} else {
+	    get_an_input_line();
 	}
+
+	cmd_overflow = maybe_get_input_line_continuation(tmp);
 	if (cmd_overflow) {
 	    fprintf(stderr, _("Maximum length of command line "
 			      "(%d bytes) exceeded\n"), MAXLEN);
@@ -567,23 +594,31 @@ int main (int argc, char *argv[])
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
+
     free_Z(Z, datainfo);
-    /* FIXME: conditionally free libZ */
 
     free_model(models[0]);
     free_model(models[1]);
     free(models);
 
-    if (data_status) free_datainfo(datainfo);
+    if (data_status) {
+	free_datainfo(datainfo);
+    }
 
-    if (runfile_open && fb != NULL) fclose(fb);
+    if (runfile_open && fb != NULL) {
+	fclose(fb);
+    }
+
     free(line);
 
     if (modelspec != NULL) {
 	free_modelspec(modelspec);
     }
 
-    if (!batch) remove(paths.plotfile);
+    if (!batch) {
+	remove(paths.plotfile);
+    }
+
     gretl_print_destroy(prn);
 
     libgretl_cleanup(&cmd);
@@ -1387,7 +1422,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	if (runit) {
 	    runit = 0;
-	    if (fb != NULL) fclose(fb);
+	    if (fb != NULL) {
+		fclose(fb);
+	    }
 	    fb = stdin;
 	    runfile_open = 0;
 	    strcpy(cmd.cmd, "endrun"); /* overwrite "quit" */

@@ -4610,8 +4610,7 @@ int execute_script (const char *runfile, const char *buf,
 	    loop = NULL;
 	    looprun = 0;
 	} else { 
-	    int bslash;
-	    char *gotline;
+	    char *gotline = NULL;
 
 	    *line = '\0';
 
@@ -4629,22 +4628,29 @@ int execute_script (const char *runfile, const char *buf,
 		goto endwhile;
 	    }
 		
-	    while ((bslash = top_n_tail(line))) {
+	    while (top_n_tail(line)) {
 		/* handle backslash-continued lines */
 		*tmp = '\0';
-		if (fb != NULL) {
+
+		if (gretl_executing_function()) {
+		    gretl_function_get_line(tmp, MAXLEN - 1, 
+					    &Z, datainfo);
+		} else if (fb != NULL) {
 		    fgets(tmp, MAXLEN - 1, fb);
 		} else {
 		    bufgets(tmp, MAXLEN - 1, buf); 
 		}
-		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
-		    pprintf(prn, _("Maximum length of command line "
-			  "(%d bytes) exceeded\n"), MAXLEN);
-		    exec_err = 1;
-		    break;
-		} else {
-		    strcat(line, tmp);
-		    compress_spaces(line);
+
+		if (*tmp != '\0') {
+		    if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
+			pprintf(prn, _("Maximum length of command line "
+				       "(%d bytes) exceeded\n"), MAXLEN);
+			exec_err = 1;
+			break;
+		    } else {
+			strcat(line, tmp);
+			compress_spaces(line);
+		    }
 		}		
 	    }
 

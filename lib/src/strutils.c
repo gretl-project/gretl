@@ -539,33 +539,42 @@ int get_base (char *targ, const char *src, char c)
 
 int top_n_tail (char *str)
 {
-    int i, len;
+    int i, len, bs = 0;
 
-    if (str == NULL || *str == 0 || 
-	*str == '\n' || *str == '\r') return 0;
+    if (str == NULL || *str == 0 || *str == '\n' || *str == '\r') {
+	return 0;
+    }
 
     len = strlen(str);
 
     /* chop any trailing space */
     for (i=len-1; i>=0; i--) {
-	if (isspace((unsigned char) str[i])) str[i] = 0;
-	else break;
+	if (isspace((unsigned char) str[i])) {
+	    str[i] = 0;
+	} else {
+	    break;
+	}
     }
 
-    if (*str == 0) return 0;
-	
-    /* drop any leading spaces, also possible questionmark */
-    i = 0;
-    while (isspace((unsigned char) str[i]) || str[i] == '?') i++;
-    if (i) shift_left(str, i);
+    if (*str != 0) {
+	/* drop any leading spaces, also possible questionmark */
+	i = 0;
+	while (isspace((unsigned char) str[i]) || str[i] == '?') {
+	    i++;
+	}
+	if (i) {
+	    shift_left(str, i);
+	}
 
-    /* then replace backslash, if present */
-    len = strlen(str);
-    if (str[len - 1] == '\\') {
-	str[len - 1] = ' ';
-	return 1;
+	/* then replace backslash, if present */
+	len = strlen(str);
+	if (str[len - 1] == '\\') {
+	    str[len - 1] = ' ';
+	    bs = 1;
+	}
     }
-    return 0;
+
+    return bs;
 }  
 
 /**
