@@ -24,7 +24,7 @@
 #include <ctype.h>
 #include <float.h>
 
-/* #define SSDEBUG */
+#undef SSDEBUG
 
 typedef struct {
     GtkWidget *view;
@@ -600,10 +600,16 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 
     gtk_tree_view_get_cursor(view, &path, &column);
 
-    if (path && column) {
+    if (path != NULL && column != NULL) {
 	gint newrow = gtk_tree_path_get_indices(path)[0];
 	gint newcol = 
 	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+
+	if (newcol == 0) {
+	    /* not a data column */
+	    gtk_tree_path_free(path);
+	    return TRUE;
+	}
 
 	if (newrow != oldrow || newcol != oldcol) {
 #ifdef SSDEBUG
@@ -938,11 +944,15 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
 	    gint colnum = GPOINTER_TO_INT(p);
 
+#ifdef SSDEBUG
+	    fprintf(stderr, "Clicked column: colnum = %d\n", colnum);
+#endif
+
 	    if (colnum == 0) {
 		/* don't respond to a click in a non-data column */
 		ret = TRUE;
 	    } else {
-		/* otherwise start editing on clicking cell */
+		/* otherwise start editing on clicked cell */
 		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
 					 path, column, TRUE);
 		ret = TRUE;

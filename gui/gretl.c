@@ -284,9 +284,9 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Utilities menu */
     { N_("/_Utilities"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
-    { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
-    { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
+    { N_("/Utilities/Statistical tables"), NULL, stats_calculator, CALC_DIST, NULL },
+    { N_("/Utilities/p-value finder"), NULL, stats_calculator, CALC_PVAL, NULL },
+    { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, CALC_TEST, NULL },
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },

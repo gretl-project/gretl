@@ -201,4 +201,10 @@ enum latex_views {
     LATEX_VIEW_MODELTABLE
 };
 
+enum calc_functions {
+    CALC_PVAL,
+    CALC_DIST,
+    CALC_TEST
+};
+
 #endif /* GRETL_ENUMS_H */
