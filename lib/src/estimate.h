@@ -21,6 +21,15 @@
 
 #include <stdio.h>
 
+/**
+ * Z:
+ * @i: series index.
+ * @j: observation index.
+ *
+ * Simulate a two-dimensional array based on a one-dimensional
+ * data "matrix", for ease of reference.
+ */
+ 
 #define Z(i, j) Z[n*(i) + (j)]
 
 /* functions follow */

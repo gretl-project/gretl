@@ -166,7 +166,6 @@ double fdist (const double x, const int dfn, const int dfd)
  * 
  * Returns: the probability that a random variable distributed as
  * Chi-squared(@df) is greater than @x.
- *
  */
 
 double chisq (const double x, const int df)
