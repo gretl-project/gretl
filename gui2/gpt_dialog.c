@@ -17,7 +17,7 @@
  *
  */
 
-/* gpt_control.c for gretl -- GUI gnuplot controller */
+/* gpt_dialog.c for gretl -- GUI gnuplot controller dialog */
 
 #include "gretl.h"
 #include "gpt_control.h"
@@ -39,10 +39,11 @@ struct gpt_range_t {
     GtkWidget *max;
 };
 
-GtkWidget *linetitle[6];
-GtkWidget *stylecombo[6];
-GtkWidget *yaxiscombo[6];
-GtkWidget *linescale[6];
+GtkWidget *linetitle[MAX_PLOT_LINES];
+GtkWidget *stylecombo[MAX_PLOT_LINES];
+GtkWidget *yaxiscombo[MAX_PLOT_LINES];
+GtkWidget *linescale[MAX_PLOT_LINES];
+
 GtkWidget *labeltext[MAX_PLOT_LABELS];
 GtkWidget *labeljust[MAX_PLOT_LABELS];
 GtkWidget *labelpos[MAX_PLOT_LABELS];
@@ -57,7 +58,9 @@ static GtkWidget *ttfspin;
 
 GtkWidget *filesavebutton;
 
-struct gpt_range_t axis_range[3];
+#define MAX_AXES 3
+
+struct gpt_range_t axis_range[MAX_AXES];
 
 #define NTITLES 4
 
@@ -211,7 +214,6 @@ static const char *just_int_to_string (int j)
     else return "left";
 }
 
-
 static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec) 
 {
     const gchar *yaxis;
@@ -296,8 +298,8 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 				 sizeof spec->text_labels[0].pos);
 #ifdef OLD_GTK
 	active_item = GTK_OPTION_MENU(labeljust[i])->menu_item;
-	opt = GPOINTER_TO_INT(gtk_object_get_data
-			      (GTK_OBJECT(active_item), "option"));
+	opt = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(active_item), 
+						  "option"));
 	strcpy(spec->text_labels[i].just, just_int_to_string(opt));
 #else
 	strcpy(spec->text_labels[i].just, 
@@ -471,75 +473,79 @@ static int get_point_size (const char *font)
 
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl;
+    GtkWidget *label, *vbox, *tbl;
     int i, tbl_len;
-    GList *keypos = NULL;
+    GList *keypos_list = NULL;
 
-    gchar *key_positions[] = {
+    gchar *keypos[] = {
 	"left top",
 	"right top",
 	"left bottom",
 	"right bottom",
 	"outside",
-	"none"
+	"none",
+	NULL
     };
 
-    for (i=0; i<6; i++) {
-	keypos = g_list_append(keypos, key_positions[i]);
+    for (i=0; keypos[i] != NULL; i++) {
+	keypos_list = g_list_append(keypos_list, keypos[i]);
     }
    
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show(box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
     
-    tempwid = gtk_label_new (_("Main"));
-    gtk_widget_show (tempwid);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
+    label = gtk_label_new(_("Main"));
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, TAB_MAIN_COLS, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show (tbl);
+    tbl = gtk_table_new(tbl_len, TAB_MAIN_COLS, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 0) {
+	    GtkWidget *entry;
+
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, TAB_MAIN_COLS);
-	    tempwid = gtk_label_new(_(gpt_titles[i].description));
+	    label = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
-				      tempwid, 0, 1, tbl_len-1, tbl_len);
-	    gtk_widget_show(tempwid);
-	    tempwid = gtk_entry_new();
+				      label, 0, 1, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
+
+	    entry = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      tempwid, 1, TAB_MAIN_COLS, 
+				      entry, 1, TAB_MAIN_COLS, 
 				      tbl_len-1, tbl_len);
 				      
             if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
-		gp_string_to_entry(tempwid, spec->titles[i]);
+		gp_string_to_entry(entry, spec->titles[i]);
             }		
 
-	    g_signal_connect(G_OBJECT(tempwid), "activate", 
+	    g_signal_connect(G_OBJECT(entry), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
 
-	    gtk_widget_show (tempwid);
-	    gpt_titles[i].widget = tempwid;
+	    gtk_widget_show(entry);
+	    gpt_titles[i].widget = entry;
 	}
     }
 
     /* specify position of plot key or legend */
     tbl_len++;
-    tempwid = gtk_label_new(_("key position"));
+    label = gtk_label_new(_("key position"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tempwid, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(tempwid);
+			      label, 0, 1, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
 
     keycombo = gtk_combo_new();
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      keycombo, 1, TAB_MAIN_COLS, tbl_len-1, tbl_len);
-    gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos); 
+    gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos_list); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show (keycombo);	
 
@@ -577,7 +583,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
     /* set TT font (if gnuplot uses libgd and freetype) */
     if (gnuplot_has_ttf()) {
-	GtkWidget *ebox;
+	GtkWidget *ebox, *hsep;
 #ifdef OLD_GTK
 	GtkObject *adj;
 #endif
@@ -587,35 +593,39 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	int nfonts;
 
 	ttflist = get_gnuplot_ttf_list(&nfonts);
+
 	for (i=0; i<nfonts; i++) {
 	    fontnames = g_list_append(fontnames, (gpointer) ttflist[i].showname);
 	    if (font_match(ttflist[i].fname, gretl_png_font())) {
 		default_font = ttflist[i].showname;
 	    }
 	}
+
 	fontnames = g_list_append(fontnames, _("None"));
-	if (default_font == NULL) default_font = _("None");
+	if (default_font == NULL) {
+	    default_font = _("None");
+	}
 
 	/* first a separator */
 	tbl_len++;
-	tempwid = gtk_hseparator_new ();
-	gtk_table_attach_defaults 
-	    (GTK_TABLE (tbl), tempwid, 0, TAB_MAIN_COLS, tbl_len-1, tbl_len);  
-	gtk_widget_show (tempwid);
+	hsep = gtk_hseparator_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
+				  tbl_len-1, tbl_len);  
+	gtk_widget_show(hsep);
 
 	tbl_len++;
 	ebox = gtk_event_box_new();
-	tempwid = gtk_label_new (_("TrueType font"));
-	gtk_container_add(GTK_CONTAINER(ebox), tempwid);
-	gtk_table_attach_defaults(GTK_TABLE (tbl), 
-				  ebox, 0, 1, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+	label = gtk_label_new(_("TrueType font"));
+	gtk_container_add(GTK_CONTAINER(ebox), label);
+	gtk_table_attach_defaults(GTK_TABLE (tbl), ebox, 0, 1, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 	gtk_widget_show(ebox);
 
 	ttfcombo = gtk_combo_new();
 	gtk_entry_set_max_length(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), 15);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ttfcombo, 1, 2, tbl_len-1, tbl_len);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfcombo, 1, 2, 
+				  tbl_len-1, tbl_len);
 	gtk_combo_set_popdown_strings(GTK_COMBO(ttfcombo), fontnames); 
 	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(ttfcombo)->entry), default_font);
 #ifdef OLD_GTK
@@ -638,55 +648,64 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 #endif
 	gtk_spin_button_set_value(GTK_SPIN_BUTTON(ttfspin), 
 				  get_point_size(gretl_png_font()));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  ttfspin, 2, 3, tbl_len-1, tbl_len);
-	gtk_widget_show (ttfspin);
+	gtk_table_attach_defaults(GTK_TABLE(tbl), ttfspin, 2, 3, 
+				  tbl_len-1, tbl_len);
+	gtk_widget_show(ttfspin);
     } else {
 	ttfcombo = NULL;
 	ttfspin = NULL;
     }
 
     if (gnuplot_has_specified_colors()) { 
+	GtkWidget *hsep;
 	int colmax;
 
 	tbl_len++;
-	tempwid = gtk_hseparator_new();
-	gtk_table_attach_defaults 
-	    (GTK_TABLE (tbl), tempwid, 0, TAB_MAIN_COLS, tbl_len-1, tbl_len);  
-	gtk_widget_show (tempwid);
+	hsep = gtk_hseparator_new();
+	gtk_table_attach_defaults(GTK_TABLE(tbl), hsep, 0, TAB_MAIN_COLS, 
+				  tbl_len-1, tbl_len);  
+	gtk_widget_show(hsep);
 
-	if (frequency_plot(spec)) colmax = 1;
-	else colmax = COLOR_MAX;
+	if (frequency_plot(spec)) {
+	    colmax = 1;
+	} else {
+	    colmax = COLOR_MAX;
+	}
 
 	for (i=0; i<colmax; i++) {
+	    GtkWidget *button, *hbox;
 	    char labstr[16];
 
-	    if (frequency_plot(spec)) i = COLOR_MAX;
+	    if (frequency_plot(spec)) {
+		i = COLOR_MAX;
+	    }
 
 	    tbl_len++;
-	    box = gtk_hbox_new(FALSE, 2);
+	    hbox = gtk_hbox_new(FALSE, 2);
+
 	    if (i == COLOR_MAX) {
 		sprintf(labstr, _("Fill color"));
 	    } else {
 		sprintf(labstr, _("Color %d"), i + 1);
 	    }
-	    tempwid = gtk_label_new (labstr);
-	    gtk_container_add(GTK_CONTAINER(box), tempwid);
-	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
-				      box, 0, 1, tbl_len-1, tbl_len);
-	    gtk_widget_show(tempwid);
-	    gtk_widget_show(box);
 
-	    box = gtk_hbox_new(FALSE, 2);
-	    tempwid = color_patch_button(i);
-	    gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
-	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      box, 1, 2, tbl_len-1, tbl_len);
-	    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+	    label = gtk_label_new(labstr);
+	    gtk_container_add(GTK_CONTAINER(hbox), label);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 0, 1, 
+				      tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
+	    gtk_widget_show(hbox);
+
+	    hbox = gtk_hbox_new(FALSE, 2);
+	    button = color_patch_button(i);
+	    gtk_box_pack_start(GTK_BOX(hbox), button, FALSE, FALSE, 0);
+	    gtk_table_attach_defaults(GTK_TABLE(tbl), hbox, 1, 2, 
+				      tbl_len-1, tbl_len);
+	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(gnuplot_color_selector), 
 			     GINT_TO_POINTER(i));
-	    gtk_widget_show_all(tempwid);
-	    gtk_widget_show(box);
+	    gtk_widget_show_all(button);
+	    gtk_widget_show(hbox);
 	}
     }
 }
@@ -695,47 +714,49 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl;
+    GtkWidget *label, *vbox, *tbl;
     int i, tbl_len;
-    GList *termtype = NULL;
-    gchar *terminal_types[] = {
+    GList *termlist = NULL;
+
+    gchar *termtypes[] = {
 	"postscript",
 	"postscript color",
 	"fig",
 	"latex",
 	"png",
-	"plot commands"
+	"plot commands",
+	NULL
     };  
 
-    for (i=0; i<6; i++) {
-	termtype = g_list_append(termtype, terminal_types[i]);
+    for (i=0; termtypes[i] != NULL; i++) {
+	termlist = g_list_append(termlist, termtypes[i]);
     }
    
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_set_border_width (GTK_CONTAINER (box), 10);
-    gtk_widget_show(box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
     
-    tempwid = gtk_label_new (_("Output to file"));
-    gtk_widget_show (tempwid);
-    gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
+    label = gtk_label_new (_("Output to file"));
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
 
     tbl_len = 1;
-    tbl = gtk_table_new (tbl_len, 2, FALSE);
-    gtk_table_set_row_spacings (GTK_TABLE (tbl), 5);
-    gtk_table_set_col_spacings (GTK_TABLE (tbl), 5);
-    gtk_box_pack_start (GTK_BOX (box), tbl, FALSE, FALSE, 0);
-    gtk_widget_show (tbl);
+    tbl = gtk_table_new(tbl_len, 2, FALSE);
+    gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
+    gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
+    gtk_widget_show(tbl);
    
     tbl_len++;
-    tempwid = gtk_label_new(_("output format"));
+    label = gtk_label_new(_("output format"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tempwid, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(tempwid);
+			      label, 0, 1, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
 
     termcombo = gtk_combo_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      termcombo, 1, 2, tbl_len-1, tbl_len);
-    gtk_combo_set_popdown_strings(GTK_COMBO(termcombo), termtype);   
+    gtk_table_attach_defaults(GTK_TABLE(tbl), termcombo, 1, 2, 
+			      tbl_len-1, tbl_len);
+    gtk_combo_set_popdown_strings(GTK_COMBO(termcombo), termlist);   
     gtk_widget_show(termcombo);
 
     /* button to generate output to file */
@@ -751,18 +772,14 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_widget_show(filesavebutton);    
 }
 
-/* ........................................................... */
-
 static void linetitle_callback (GtkWidget *w, GPT_SPEC *spec)
 {
     set_keyspec_sensitivity(spec);
 }
 
-/* ........................................................... */
-
 static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl;
+    GtkWidget *label, *vbox, *tbl;
     int i, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     GList *plot_types = NULL;
@@ -783,20 +800,34 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
     yaxis_loc = g_list_append(yaxis_loc, "left");
     yaxis_loc = g_list_append(yaxis_loc, "right");
 
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER (box), 10);
-    gtk_widget_show(box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
 
-    tempwid = gtk_label_new(_("Lines"));
+    label = gtk_label_new(_("Lines"));
+    gtk_widget_show(label);
 
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
+    if (spec->nlines > 4) {
+	GtkWidget *scroller;
+	
+	scroller = gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),
+				       GTK_POLICY_AUTOMATIC, 
+				       GTK_POLICY_AUTOMATIC);
+	gtk_widget_show(scroller);
+	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller), 
+					      vbox);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), scroller, label); 
+    } else {
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label); 
+    }  
 
     tbl_len = 1;
     tbl = gtk_table_new(tbl_len, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
    
     tbl_num = tbl_col = 0;
@@ -806,16 +837,16 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	sprintf(label_text, _("line %d: "), i + 1);
-	tempwid = gtk_label_new(label_text);
-	gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
+	label = gtk_label_new(label_text);
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 0, 1, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 0, 1, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
-	tempwid = gtk_label_new(_("legend"));
+	label = gtk_label_new(_("legend"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -828,16 +859,15 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	g_signal_connect(G_OBJECT(linetitle[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
-
 	gtk_widget_show(linetitle[i]);
 
 	/* line type or style */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("type"));
+	label = gtk_label_new(_("type"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	stylecombo[i] = gtk_combo_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -850,10 +880,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	/* scale factor for data */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("scale"));
+	label = gtk_label_new(_("scale"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show (tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	linescale[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(linescale[i]), 6);
@@ -875,10 +905,10 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	/* use left or right y axis? */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("y axis"));
+	label = gtk_label_new(_("y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	yaxiscombo[i] = gtk_combo_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -886,7 +916,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
 	gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
 			    (spec->lines[i].yaxis == 1)? "left" : "right");  
-	gtk_widget_show (yaxiscombo[i]);	
+	gtk_widget_show(yaxiscombo[i]);	
     }
 }
 
@@ -894,25 +924,25 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl, *menu;
+    GtkWidget *label, *vbox, *tbl, *menu;
     int i, j, tbl_len, tbl_num, tbl_col;
     char label_text[32];
     png_plot *plot = (png_plot *) spec->ptr;
 
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER (box), 10);
-    gtk_widget_show(box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
 
-    tempwid = gtk_label_new(_("Labels"));
+    label = gtk_label_new(_("Labels"));
 
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
 
     tbl_len = 1;
     tbl = gtk_table_new(tbl_len, 3, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
    
     tbl_num = tbl_col = 0;
@@ -930,16 +960,16 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	sprintf(label_text, _("label %d: "), i + 1);
-	tempwid = gtk_label_new(label_text);
-	gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
+	label = gtk_label_new(label_text);
+	gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 0, 1, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 0, 1, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
-	tempwid = gtk_label_new(_("text"));
+	label = gtk_label_new(_("text"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
@@ -962,10 +992,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	tbl_len++;
 
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("position (X,Y)"));
+	label = gtk_label_new(_("position (X,Y)"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	/* holder for entry and button */
 	hbox = gtk_hbox_new(FALSE, 5);
@@ -1015,18 +1045,20 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	/* label justification */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("justification"));
+	label = gtk_label_new(_("justification"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
+				  label, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(label);
 
 	labeljust[i] = gtk_option_menu_new();
 	menu = gtk_menu_new();
 	for (j=0; j<3; j++) {
-	    tempwid = gtk_menu_item_new_with_label(just_int_to_string(j));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	    GtkWidget *item;
+
+	    item = gtk_menu_item_new_with_label(just_int_to_string(j));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 #ifdef OLD_GTK
-	    gtk_object_set_data(GTK_OBJECT(tempwid), "option", 
+	    gtk_object_set_data(GTK_OBJECT(item), "option", 
 				GINT_TO_POINTER(j));
 #endif
 	}
@@ -1036,7 +1068,6 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_widget_show_all(labeljust[i]);	
-
     }
 }
 
@@ -1044,53 +1075,59 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis) 
 {
-    GtkWidget *box, *manual, *tbl, *tempwid = NULL;
+    GtkWidget *vbox, *manual, *tbl;
+    GtkWidget *label = NULL;
     int i, tbl_len;
    
-    box = gtk_vbox_new(FALSE, 0);
-    gtk_container_set_border_width(GTK_CONTAINER(box), 10);
-    gtk_widget_show (box);
+    vbox = gtk_vbox_new(FALSE, 0);
+    gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
+    gtk_widget_show(vbox);
 
     if (axis == 0) {
-	tempwid = gtk_label_new(_("X-axis"));
+	label = gtk_label_new(_("X-axis"));
     } else if (axis == 1) {
-	tempwid = gtk_label_new(_("Y-axis"));
+	label = gtk_label_new(_("Y-axis"));
     } else if (axis == 2) {
-	tempwid = gtk_label_new(_("Y2-axis"));
+	label = gtk_label_new(_("Y2-axis"));
+    } else {
+	return;
     }
 
-    gtk_widget_show(tempwid);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), vbox, label);   
 
     tbl_len = 1;
     tbl = gtk_table_new(tbl_len, 2, FALSE);
     gtk_table_set_row_spacings(GTK_TABLE(tbl), 5);
     gtk_table_set_col_spacings(GTK_TABLE(tbl), 5);
-    gtk_box_pack_start(GTK_BOX(box), tbl, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].tab == 1 + axis) {
+	    GtkWidget *title_entry;
+
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
-	    tempwid = gtk_label_new(_(gpt_titles[i].description));
-	    gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
+	    label = gtk_label_new(_(gpt_titles[i].description));
+	    gtk_misc_set_alignment(GTK_MISC(label), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      tempwid, 0, 1, tbl_len-1, tbl_len);
-	    gtk_widget_show(tempwid);
+				      label, 0, 1, tbl_len-1, tbl_len);
+	    gtk_widget_show(label);
 
-	    tempwid = gtk_entry_new();
+	    title_entry = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				      tempwid, 1, 2, tbl_len-1, tbl_len);
-	    gp_string_to_entry(tempwid, spec->titles[i]);
+				      title_entry, 1, 2, 
+				      tbl_len-1, tbl_len);
+	    gp_string_to_entry(title_entry, spec->titles[i]);
 
-	    g_signal_connect(G_OBJECT (tempwid), "activate", 
+	    g_signal_connect(G_OBJECT(title_entry), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
 
-	    gtk_widget_show(tempwid);
-	    gpt_titles[i].widget = tempwid;
+	    gtk_widget_show(title_entry);
+	    gpt_titles[i].widget = title_entry;
 	}
     } 
 
@@ -1098,12 +1135,14 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     /* axis range: auto versus manual buttons */
     axis_range[axis].ID = axis;
-    tbl_len +=3;
+    tbl_len += 3;
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
-    tempwid = gtk_label_new("");
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tempwid, 0, 1, tbl_len-3, tbl_len-2);
-    gtk_widget_show(tempwid);
+
+    label = gtk_label_new("");
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
+			      tbl_len-3, tbl_len-2);
+    gtk_widget_show(label);
+
     axis_range[axis].isauto = 
 	gtk_radio_button_new_with_label(NULL, _("auto axis range"));
 
@@ -1113,8 +1152,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON
 				 (axis_range[axis].isauto), TRUE);
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      axis_range[axis].isauto, 
+    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].isauto, 
 			      0, 1, tbl_len-2, tbl_len-1);
     gtk_widget_show(axis_range[axis].isauto);
 
@@ -1127,20 +1165,20 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 		     G_CALLBACK(flip_manual_range), 
 		     GINT_TO_POINTER(axis_range[axis].ID));
 
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      manual, 0, 1, tbl_len-1, tbl_len);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), manual, 0, 1, 
+			      tbl_len-1, tbl_len);
     gtk_widget_show(manual);
 
     /* axis range min. entry */
     tbl_len++;
-    tempwid = gtk_label_new(_("minimum"));
+    label = gtk_label_new(_("minimum"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tempwid, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(tempwid);
+			      label, 0, 1, tbl_len-1, tbl_len);
+    gtk_widget_show(label);
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
     axis_range[axis].min = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      axis_range[axis].min, 1, 2, tbl_len-1, tbl_len);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].min, 
+			      1, 2, tbl_len-1, tbl_len);
     gtk_entry_set_text(GTK_ENTRY(axis_range[axis].min), "");
 
     g_signal_connect(G_OBJECT(axis_range[axis].min), "activate", 
@@ -1151,14 +1189,14 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     /* axis range max. entry */
     tbl_len++;
-    tempwid = gtk_label_new(_("maximum"));
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      tempwid, 0, 1, tbl_len-1, tbl_len);
-    gtk_widget_show(tempwid);
+    label = gtk_label_new(_("maximum"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), label, 0, 1, 
+			      tbl_len-1, tbl_len);
+    gtk_widget_show(label);
     gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
     axis_range[axis].max = gtk_entry_new();
-    gtk_table_attach_defaults(GTK_TABLE(tbl), 
-			      axis_range[axis].max, 1, 2, tbl_len-1, tbl_len);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), axis_range[axis].max, 
+			      1, 2, tbl_len-1, tbl_len);
     gtk_entry_set_text(GTK_ENTRY(axis_range[axis].max), "");
 
     g_signal_connect(G_OBJECT(axis_range[axis].max), "activate", 
@@ -1167,9 +1205,9 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
     gtk_widget_show(axis_range[axis].max);
    
-    if (strcmp(spec->range[axis][0], "*") == 0)
+    if (strcmp(spec->range[axis][0], "*") == 0) {
 	flip_manual_range(NULL, GINT_TO_POINTER(axis_range[axis].ID));
-    else {
+    } else {
 	gtk_entry_set_text(GTK_ENTRY(axis_range[axis].min),
 			   spec->range[axis][0]);
 	gtk_entry_set_text(GTK_ENTRY(axis_range[axis].max),
@@ -1185,7 +1223,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 
 int show_gnuplot_dialog (GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *notebook;
+    GtkWidget *button, *notebook;
     int i;
 
     if (gpt_control != NULL) {
@@ -1194,7 +1232,7 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
 	return 1;
     }
 
-    for (i=0; i<3; i++) {
+    for (i=0; i<MAX_AXES; i++) {
 	axis_range[i].isauto = NULL;
     }
 
@@ -1225,56 +1263,59 @@ int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_main(notebook, spec);
     gpt_tab_XY(notebook, spec, 0);
     gpt_tab_XY(notebook, spec, 1);
+
     if (spec->flags & GPTSPEC_Y2AXIS) {
 	gpt_tab_XY(notebook, spec, 2);
     }
+
     if (!frequency_plot(spec)) {
 	gpt_tab_lines(notebook, spec);
     }    
+
     gpt_tab_labels(notebook, spec); 
     gpt_tab_output(notebook, spec);
 
     /* "Apply" button */
-    tempwid = standard_button(GTK_STOCK_APPLY);
-    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    button = standard_button(GTK_STOCK_APPLY);
+    GTK_WIDGET_SET_FLAGS (button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect (G_OBJECT(tempwid), "clicked", 
-		      G_CALLBACK(apply_gpt_changes), spec);
-    gtk_widget_grab_default (tempwid);
-    gtk_widget_show (tempwid);
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
+		     G_CALLBACK(apply_gpt_changes), spec);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
 
     /* "OK" button (apply and close) */
-    tempwid = standard_button(GTK_STOCK_OK);
+    button = standard_button(GTK_STOCK_OK);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(apply_gpt_changes), spec);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget), gpt_control);
-    gtk_widget_show (tempwid);
+    gtk_widget_show(button);
 
     /* Close button (do not apply changes */
-    tempwid = standard_button(GTK_STOCK_CLOSE);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    button = standard_button(GTK_STOCK_CLOSE);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(delete_widget), gpt_control);
-    gtk_widget_show(tempwid);
+    gtk_widget_show(button);
 
-    tempwid = standard_button(GTK_STOCK_HELP);
-    GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+    button = standard_button(GTK_STOCK_HELP);
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
-		       tempwid, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		       button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(context_help), 
 		     GINT_TO_POINTER(GR_PLOT));
-    gtk_widget_show (tempwid);
+    gtk_widget_show(button);
 
-    set_keyspec_sensitivity (spec);
+    set_keyspec_sensitivity(spec);
 
-    gtk_widget_show (gpt_control);
+    gtk_widget_show(gpt_control);
 
     return 0;
 }

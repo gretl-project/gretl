@@ -1886,7 +1886,7 @@ static int
 substitute_dollar_lvar (char *str, const LOOPSET *loop,
 			const double **Z, const DATAINFO *pdinfo)
 {
-    char targ[VNAMELEN + 1];
+    char targ[VNAMELEN + 3];
     int targlen;
     char *p;
     int err = 0;
@@ -1907,8 +1907,21 @@ substitute_dollar_lvar (char *str, const LOOPSET *loop,
 	    err = 1;
 	    break;
 	}
+
 	strcpy(q, p + targlen);
+	
 	sprintf(ins, "%g", Z[loop->lvar][0]); /* scalar */
+
+	if (p - str > 0 && *(p - 1) == '[' && *(p + targlen) == ']') {
+	    /* got an obs-type string, on the pattern [$lvar] */
+	    int t = dateton(ins, pdinfo);
+
+	    if (t < 0) {
+		t = atoi(ins) - 1;
+	    }
+	    sprintf(ins, "%d", t);
+	} 
+
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
 	free(q);	
@@ -1976,6 +1989,7 @@ static void top_of_loop (LOOPSET *loop, double **Z)
 	loop->index = 0;
     } else if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
+	loop->ntimes = 0;
     }
 }
 
@@ -1995,15 +2009,43 @@ print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
     }
 }
 
+static const LOOPSET *indexed_loop_in_play (const LOOPSET *loop)
+{
+    const LOOPSET *iloop = loop;
+
+    while (1) {
+	if (iloop == NULL || indexed_loop(iloop)) {
+	    return iloop;
+	} else {
+	    iloop = iloop->parent;
+	}
+    }
+}
+
+static const LOOPSET *for_loop_in_play (const LOOPSET *loop)
+{
+    const LOOPSET *floop = loop;
+
+    while (1) {
+	if (floop == NULL || floop->type == FOR_LOOP) {
+	    return floop;
+	} else {
+	    floop = floop->parent;
+	}
+    }
+}
+
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, int *echo_off, 
 	       PRN *prn)
 {
     CMD cmd;
+    const LOOPSET *refloop = NULL;
     MODEL *lastmod = models[0];
     char linecpy[MAXLINE];
     int m = 0, lround = 0, ignore = 0;
+    int modnum = 0;
     int err = 0;
 
     if (loop == NULL) {
@@ -2032,7 +2074,6 @@ int loop_exec (LOOPSET *loop, char *line,
     while (!err && loop_condition(lround, loop, *pZ, *ppdinfo)) {
 	DATAINFO *pdinfo = *ppdinfo;
 	int childnum = 0;
-	int modnum = 0;
 	int j;
 
 #ifdef LOOP_DEBUG
@@ -2054,10 +2095,12 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (indexed_loop(loop)) {
-		err = substitute_dollar_i(linecpy, loop, *ppdinfo);
-	    } else if (loop->type == FOR_LOOP) {
-		err = substitute_dollar_lvar(linecpy, loop,
+	    if ((refloop = indexed_loop_in_play(loop)) != NULL) {
+		err = substitute_dollar_i(linecpy, refloop, *ppdinfo);
+	    }
+
+	    if ((refloop = for_loop_in_play(loop)) != NULL) {
+		err = substitute_dollar_lvar(linecpy, refloop,
 					     (const double **) *pZ,
 					     *ppdinfo);
 	    }

@@ -17,7 +17,7 @@
  *
  */
 
-/* gpt_control.c for gretl -- GUI gnuplot controller */
+/* gpt_control.c for gretl -- gnuplot controller */
 
 #include "gretl.h"
 #include "gpt_control.h"
