@@ -69,6 +69,7 @@ print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 	    jmax++;
 	}
     }
+    pputc(prn, '\n');
 }
 
 static void kronecker_place (gretl_matrix *X, 
@@ -286,27 +287,28 @@ static int *
 system_model_list (gretl_equation_system *sys, int i, int *freeit)
 {
     int systype = system_get_type(sys);
+    int *list = NULL;
 
-    if (systype == SUR) {
-	*freeit = 0;
-	return system_get_list(sys, i);
-    } 
+    *freeit = 0;
+
+    if (systype == SUR || systype == THREESLS) {
+	list = system_get_list(sys, i);
+    }
 
     if (systype == THREESLS) {
-	int *list = system_get_list(sys, i);
-	
-	if (in_list(list, LISTSEP)) {
-	    *freeit = 0;
-	    return list;
+	/* is list already in tsls form? */
+	if (list != NULL && !in_list(list, LISTSEP)) {
+	    list = NULL;
 	}
     }
 
-    if (systype == THREESLS || systype == FIML || systype == LIML) {
+    if (systype == FIML || systype == LIML ||
+	(systype == THREESLS && list == NULL)) {
+	list = compose_tsls_list(sys, i);
 	*freeit = 1;
-	return compose_tsls_list(sys, i);
     }
 
-    return NULL;
+    return list;
 }
 
 static void
@@ -326,7 +328,7 @@ print_overidentification_test (const gretl_equation_system *sys, PRN *prn)
 
 	X2 = 2.0 * (llu - ll);
 
-	pprintf(prn, "\n%s:\n", _("Over-identification test"));
+	pprintf(prn, "\n%s:\n", _("LR over-identification test"));
 	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), ll);
 	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
@@ -426,7 +428,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	    *models[i] = tsls_func(list, 0, pZ, pdinfo, OPT_N);
 	}
 
-	if (freeit) free(list);
+	if (freeit) {
+	    free(list);
+	}
 
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
@@ -453,6 +457,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (systype == LIML) {
 	system_attach_models(sys, models);
 	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
+	system_unattach_models(sys);
 	if (err) {
 	    goto bailout;
 	} else {
@@ -546,10 +551,16 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gls_sigma_from_uhat(sigma, uhat, m, T);
 
     if (systype == FIML) {
+	/* set up convenience pointers */
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
-	uhat = NULL;
+
 	err = fiml_driver(sys, pZ, sigma, pdinfo, prn);
+
+	/* discard convenience pointers */
+	system_unattach_uhat(sys);
+	system_unattach_models(sys);
+
 	if (err) {
 	    goto bailout;
 	}

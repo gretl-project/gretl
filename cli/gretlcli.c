@@ -771,7 +771,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     switch (cmd.ci) {
 
     case ADF: case COINT: case COINT2: case KPSS:
-    case CORR:
+    case CORR: case ESTIMATE:
     case CRITERIA: case CRITICAL: case DATA:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY: case SQUARE: case RHODIFF:

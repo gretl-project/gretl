@@ -55,6 +55,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
+static void print_ll (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
@@ -244,6 +245,27 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n", I_(aic_str), cval);
 	tex_dcolumn_double(crit[C_BIC], cval);
 	pprintf(prn, "%s & %s \\\\\n", I_(bic_str), cval);
+    }
+}
+
+/* ......................................................... */ 
+
+static void print_liml_equation_data (const MODEL *pmod, PRN *prn)
+{
+    double lmin = gretl_model_get_double(pmod, "lmin");
+    int idf = gretl_model_get_int(pmod, "idf");
+
+    print_ll(pmod, prn);
+    info_stats_lines(pmod, prn);
+
+    if (idf > 0 && !na(lmin)) {
+	double X2 = pmod->nobs * log(lmin);
+
+	X2 = pmod->nobs * log(lmin);
+	pprintf(prn, "  Smallest eigenvalue = %g\n", lmin);
+	pprintf(prn, "  %s:\n", _("LR over-identification test"));
+	pprintf(prn, "    %s(%d) = %g %s %g\n", _("Chi-square"),
+		idf, X2, _("with p-value"), chisq(X2, idf));
     }
 }
 
@@ -1519,6 +1541,9 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	essline(pmod, prn, 0);
+	if (gretl_model_get_int(pmod, "systype") == LIML) {
+	    print_liml_equation_data(pmod, prn);
+	}
 	print_middle_table_end(prn);
 	goto close_format;
     }    

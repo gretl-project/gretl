@@ -225,6 +225,7 @@ static int aliased (char *cmd)
 	               c == CHOW || \
 	               c == CUSUM || \
 	               c == CRITICAL || \
+                       c == ESTIMATE || \
 	               c == HAUSMAN || \
 	               c == PANEL || \
 	               c == OPEN || \
@@ -2037,6 +2038,10 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	else printcorr(corrmat, datainfo, prn);
 	free_corrmat(corrmat);
+	break;
+
+    case ESTIMATE:
+	err = estimate_named_system(line, pZ, datainfo, cmd->opt, prn);
 	break;
 
     case PCA:

@@ -132,6 +132,8 @@ void gretl_cmd_free (CMD *cmd);
 
 void gretl_functions_cleanup (void);
 
+void gretl_equation_systems_cleanup (void);
+
 void gretl_rand_init (void);
 
 void gretl_rand_free (void);

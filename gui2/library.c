@@ -5215,7 +5215,7 @@ int gui_exec_line (char *line,
 
     case ADF: 
     case COINT: case COINT2:
-    case CORR:
+    case CORR: case ESTIMATE:
     case CRITERIA: case CRITICAL: 
     case DATA:
     case DIFF: case LDIFF: 

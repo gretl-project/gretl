@@ -58,6 +58,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { ENDLOOP,  "endloop" },
     { EQNPRINT, "eqnprint" },
     { EQUATION, "equation" },
+    { ESTIMATE, "estimate" },
     { FCAST,    "fcast" }, 
     { FCASTERR, "fcasterr" },
     { FIT,      "fit" }, 

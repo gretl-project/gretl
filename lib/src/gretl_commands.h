@@ -49,6 +49,7 @@ enum gretl_cmd_codes {
     ENDLOOP,
     EQNPRINT, 
     EQUATION,
+    ESTIMATE,
     FCAST,   
     FCASTERR, 
     FIT,     

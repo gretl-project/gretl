@@ -94,9 +94,10 @@ static double lambda_min (const double *lambda, int k)
 }
 
 static int *
-liml_make_reglist (const int *exlist, const int *list,
+liml_make_reglist (const gretl_equation_system *sys, const int *list, 
 		   int *k)
 {
+    const int *exlist = system_get_instr_vars(sys);
     int nexo = exlist[0];
     int *reglist;
     int i, j;
@@ -121,6 +122,7 @@ liml_make_reglist (const int *exlist, const int *list,
 	    reglist[0] += 1;
 	    reglist[j++] = list[i];
 	} else {
+	    /* an endogenous var */
 	    *k += 1;
 	}
     }
@@ -287,7 +289,7 @@ liml_set_residuals_etc (MODEL *pmod, const int *list,
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
 
-    pmod->sigma = sqrt(pmod->ess / pmod->nobs);
+    pmod->sigma = sqrt(pmod->ess / pmod->nobs); /* or pmod->dfd (TSP) */
 
     for (i=0; i<pmod->ncoeff; i++) {
 	double xii = gretl_matrix_get(XTX, i, i);
@@ -369,29 +371,40 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     MODEL *olsmod;
     MODEL lmod;
     int *reglist;
+    int idf;
     int T = system_n_obs(sys);
     int i, k;
     int err = 0;
 
 #if LDEBUG
     fprintf(stderr, "\nWorking on equation for %s\n", pdinfo->varname[list[1]]);
+    printlist(list, "original equation list");
 #endif
 
     olsmod = system_get_model(sys, eq);
 
-#if LDEBUG
-    printlist(list, "original model list");
-#endif
-
-    /* make regression list using included exogenous vars */
-    reglist = liml_make_reglist(exlist, list, &k);
+    /* make regression list using only included exogenous vars */
+    reglist = liml_make_reglist(sys, list, &k);
     if (reglist == NULL) {
 	return E_ALLOC;
     }
 
+    /* degrees of freedom for over-identification test */
+#if 0
+    idf = exlist[0] - total_included_exog_vars(sys, eq) - k;
+    fprintf(stderr, "K_star_j = %d, M_j = %d, idf = %d\n",
+	    idf + k, k, idf);
+#else
+    /* Davidson and MacKinnon: df = total exog vars - params in equation */
+    idf = exlist[0] - (list[0] - 1);
+#endif
+
 #if LDEBUG
     printf("number of endogenous vars in equation: k = %d\n", k);
+    printf("over-identification df = %d\n", idf);
 #endif
+
+    /* FIXME: handle case of idf = 0 */
 
     /* allocate matrices */
     E = gretl_matrix_alloc(T, k);
@@ -452,11 +465,13 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     }
 
     lmin = lambda_min(lambda, k);
-    printf("smallest eigenvalue: %g\n\n", lmin);
     free(lambda);
+    gretl_model_set_double(olsmod, "lmin", lmin);
+    gretl_model_set_int(olsmod, "idf", idf);
 
-    ll = -(T / 2.0) * LN_2_PI * system_n_equations(sys);
-    ll -= -(T / 2.0) * log(lmin);
+#if LDEBUG
+    printf("smallest eigenvalue: %g\n\n", lmin);
+#endif
 
     /* estimates of coeffs on included endogenous vars */
     g = liml_get_gamma_hat(W0, W1, lmin);
@@ -483,17 +498,18 @@ static int liml_do_equation (gretl_equation_system *sys, int eq, double ***pZ,
     /* correct yhat, uhat, ESS, sigma, standard errors */
     liml_set_residuals_etc(olsmod, list, XTX, (const double **) *pZ);
 
+    /* compute and set log-likelihood, etc */
     ll = system_n_equations(sys) * LN_2_PI;
     ll += log(lmin);
     ll += gretl_matrix_log_determinant(W1);
     ll *= -(T / 2.0);
+    olsmod->lnL = ll;
 
+#if LDEBUG
     printf("log-likelihood = %g\n", ll);
-    printf("LR test stat = %g\n", T * log(lmin));
+#endif
 
-    /* FIXME: need to compute AIC, BIC, and 
-       LR test for overidentification 
-    */
+    mle_aic_bic(olsmod, 0); /* check the "0" (additional params) here */
 
  bailout:
 
@@ -521,7 +537,7 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
     pputs(prn, "\n*** LIML: experimental, work in progress ***\n\n");
 
     for (i=0; i<g; i++) {
-#if LDEBUG
+#if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif
 	liml_do_equation(sys, i, pZ, pdinfo, prn);

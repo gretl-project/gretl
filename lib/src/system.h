@@ -26,7 +26,8 @@ enum gretl_system_types {
     SUR = 0,
     THREESLS,
     FIML,
-    LIML
+    LIML,
+    SYSMAX
 };
 
 enum system_save_flags {
@@ -47,6 +48,9 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn);
 
+int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
+			   gretlopt opt, PRN *prn);
+
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);
@@ -66,7 +70,7 @@ int system_adjust_t1t2 (const gretl_equation_system *sys,
 
 int *system_get_list (const gretl_equation_system *sys, int i);
 
-int *compose_tsls_list (const gretl_equation_system *sys, int i);
+int *compose_tsls_list (gretl_equation_system *sys, int i);
 
 int system_get_depvar (const gretl_equation_system *sys, int i);
 
@@ -78,10 +82,12 @@ int *system_get_endog_vars (const gretl_equation_system *sys);
 int *system_get_instr_vars (const gretl_equation_system *sys);
 
 void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u);
+void system_unattach_uhat (gretl_equation_system *sys);
 
 const gretl_matrix *system_get_uhat (const gretl_equation_system *sys);
 
 void system_attach_models (gretl_equation_system *sys, MODEL **models);
+void system_unattach_models (gretl_equation_system *sys);
 
 MODEL *system_get_model (const gretl_equation_system *sys, int i);
 
@@ -94,6 +100,8 @@ int system_get_df (const gretl_equation_system *sys);
 
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar);
+
+int total_included_exog_vars (const gretl_equation_system *sys, int eq);
 
 void 
 print_equation_system_info (const gretl_equation_system *sys, 

@@ -37,30 +37,35 @@ enum {
 } aux_list_types;
 
 struct id_atom_ {
-    int op;
-    int varnum;
+    int op;         /* operator (plus or miinus) */
+    int varnum;     /* ID number of variable to right of operator */
 };
 
 struct identity_ {
-    int n_atoms;
-    int depvar;
-    id_atom *atoms;
+    int n_atoms;    /* number of "atomic" elements in identity */
+    int depvar;     /* LHS variable in indentity */
+    id_atom *atoms; /* pointer to RHS "atoms" */
 };
 
 struct _gretl_equation_system {
-    int type;
-    int n_equations;
-    int n_identities;
-    int n_obs;
-    char flags;
-    double ll;
-    double llu;
-    int **lists;
-    int *endog_vars;
-    int *instr_vars;
-    identity **idents;
-    gretl_matrix *uhat;
-    MODEL **models;
+    char *name;                 /* user-specified name for system, or NULL */
+    int type;                   /* estimation method, really */
+    int n_equations;            /* number of stochastic equations */
+    int n_identities;           /* number of identities */
+    int n_obs;                  /* number of observations per equation */
+    char flags;                 /* to record options (e.g. save residuals) */
+    double ll;                  /* log-likelihood (restricted) */
+    double llu;                 /* unrestricted log-likelihood */
+    int **lists;                /* regression lists for stochastic equations */
+    int *endog_vars;            /* list of endogenous variables */
+    int *instr_vars;            /* list of instruments (exogenous vars) */
+    identity **idents;          /* set of identities */
+    const gretl_matrix *uhat;   /* residuals, all equations: convenience pointer,
+                                   not to be freed */
+    MODEL **models;             /* set of pointers to per-equation models: just
+				   convenience pointers -- these should NOT be
+				   freed as part of sys cleanup
+				*/
 };
 
 const char *gretl_system_type_strings[] = {
@@ -94,10 +99,66 @@ const char *toofew = N_("An equation system must have at least two equations");
 static void destroy_ident (identity *pident);
 static int make_instrument_list (gretl_equation_system *sys);
 
-/* ML system stuff */
+
+/* ------------------------------------------------------------ */
+
+static gretl_equation_system **system_stack;
+static int n_systems;
+
+static int stack_system (gretl_equation_system *sys, PRN *prn)
+{
+    gretl_equation_system **sstack;
+
+    /* only feasible for named systems */
+    if (sys == NULL || sys->name == NULL) {
+	return 1;
+    }
+
+    sstack = realloc(system_stack, (n_systems + 1) * sizeof *sstack);
+    if (sstack == NULL) {
+	return E_ALLOC;
+    }
+
+    system_stack = sstack;
+    system_stack[n_systems++] = sys;
+
+    pprintf(prn, "Added equation system '%s'\n", sys->name);
+
+    return 0;
+}
+
+static gretl_equation_system *
+get_equation_system_by_name (const char *sysname)
+{
+    int i;
+
+    for (i=0; i<n_systems; i++) {
+	if (!strcmp(sysname, system_stack[i]->name)) {
+	    return system_stack[i];
+	}
+    }
+
+    return NULL;
+}
+
+void gretl_equation_systems_cleanup (void)
+{
+    int i;
+
+    for (i=0; i<n_systems; i++) {
+	gretl_equation_system_destroy(system_stack[i]);
+    }
+
+    free(system_stack);
+    system_stack = NULL;
+    n_systems = 0;
+}
+
+/* ------------------------------------------------------------ */
 
 static void 
-print_ident (const identity *pident, const DATAINFO *pdinfo, PRN *prn)
+print_system_identity (const identity *pident, const DATAINFO *pdinfo, 
+		       PRN *prn)
 {
     int i;
 
@@ -119,8 +180,12 @@ print_equation_system_info (const gretl_equation_system *sys,
 {
     int i;
 
+    if (sys->name != NULL) {
+	pprintf(prn, "Equation system %s\n", sys->name);
+    }
+
     for (i=0; i<sys->n_identities; i++) {
-	print_ident(sys->idents[i], pdinfo, prn);
+	print_system_identity(sys->idents[i], pdinfo, prn);
     }
 
     if (sys->endog_vars != NULL) {
@@ -141,8 +206,6 @@ print_equation_system_info (const gretl_equation_system *sys,
 
 }
 
-/* end ML checking stuff */
-
 static int gretl_system_type_from_string (const char *str)
 {
     int i = 0;
@@ -154,19 +217,33 @@ static int gretl_system_type_from_string (const char *str)
 	i++;
     }
 
-    return -1;
+    return i;
 }
 
-static gretl_equation_system *gretl_equation_system_new (int type)
+static gretl_equation_system *
+gretl_equation_system_new (int type, const char *name)
 {
     gretl_equation_system *sys;
 
-    if (type < 0) return NULL;
+    if (type < 0 && name == NULL) {
+	return NULL;
+    }
 
     sys = malloc(sizeof *sys);
     if (sys == NULL) return NULL;
 
+    if (name != NULL) {
+	sys->name = gretl_strdup(name);
+	if (sys->name == NULL) {
+	    free(sys);
+	    return NULL;
+	}
+    } else {
+	sys->name = NULL;
+    }
+
     sys->type = type;
+
     sys->n_equations = 0;
     sys->n_identities = 0;
     sys->n_obs = 0;
@@ -182,6 +259,14 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->models = NULL;
 
     return sys;
+}
+
+static void gretl_equation_system_clear (gretl_equation_system *sys)
+{
+    if (sys == NULL || sys->lists == NULL) return;
+
+    sys->ll = sys->llu = 0.0;
+    sys->type = -1;
 }
 
 void gretl_equation_system_destroy (gretl_equation_system *sys)
@@ -204,9 +289,20 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     free(sys->endog_vars);
     free(sys->instr_vars);
 
-    gretl_matrix_free(sys->uhat);
+    free(sys->name);
 
     free(sys);
+}
+
+static void sur_rearrange_lists (gretl_equation_system *sys)
+{
+    if (sys->type == SUR) {
+	int i;
+
+	for (i=0; i<sys->n_equations; i++) {
+	    rearrange_list(sys->lists[i]);
+	}
+    }
 }
 
 int gretl_equation_system_append (gretl_equation_system *sys, 
@@ -238,30 +334,136 @@ int gretl_equation_system_append (gretl_equation_system *sys,
 	sys->lists[neq][i] = list[i];
     }
 
-    if (sys->type == SUR) {
-	rearrange_list(sys->lists[neq]);
-    }
-
     sys->n_equations += 1;
 
     return 0;
 }
 
+/* retrieve the name -- possible quoted with embedded spaces -- for
+   an equation system */
+
+static char *get_maybe_quoted_name (const char *s)
+{
+    char *name = NULL;
+    const char *p;
+    int pchars = 0;
+
+    while (isspace((unsigned char) *s)) s++;
+
+    if (*s == '"') {
+	if (*(s + 1) != '\0') s++;
+	p = s;
+	while (*p && *p != '"') {
+	    if (!isspace((unsigned char) *p)) pchars++;
+	    p++;
+	}
+	if (*p != '"') {
+	    /* no closing quote */
+	    pchars = 0;
+	}
+    } else {
+	p = s;
+	while (*p && !isspace((unsigned char) *p)) {
+	    pchars++;
+	    p++;
+	}
+    }
+
+    if (pchars > 0) {
+	name = gretl_strndup(s, p - s);
+    }
+
+    return name;
+}
+
+/* parse a system estimation method out of a command line */
+
+static int get_estimation_method (const char *s)
+{
+    char mstr[9];
+    int method = -1;
+
+    while (isspace((unsigned char) *s)) s++;
+
+    if (sscanf(s, "%8s", mstr) == 1) {
+	lower(mstr);
+	method = gretl_system_type_from_string(mstr);
+    }
+
+    return method;
+}
+
+static char *system_start_get_name (const char *s)
+{
+    char *sysname = NULL;
+    const char *p = strstr(s, "system name=");
+
+    if (p != NULL) {
+	sysname = get_maybe_quoted_name(p + 12);
+    }
+
+    return sysname;
+}
+
+static int system_start_get_type (const char *s)
+{
+    int systype = -1;
+    const char *p = strstr(s, "system type=");
+
+    if (p != NULL) {
+	systype = get_estimation_method(p + 12);
+    }
+
+    return systype;
+}
+
+static int named_system_get_method (const char *s)
+{
+    int systype = -1;
+    const char *p = strstr(s, "method=");
+
+    if (p != NULL) {
+	systype = get_estimation_method(p + 7);
+    }
+
+    return systype;
+}
+
+/* Start compiling an equation system in response to gretl's "system"
+   command: the command must specify either a "type" (estimation
+   method) or a name for the system.  In the former case (type given,
+   but no name), the system will be estimated as soon as its
+   definition is complete, then it will be destroyed.  In the latter
+   case the system definition is saved on a stack, and it can be
+   estimated via various methods (the "estimate" command).
+*/
+
 gretl_equation_system *system_start (const char *line)
 {
-    char sysstr[9];
     gretl_equation_system *sys = NULL;
-    int systype = -1;
+    char *sysname = NULL;
+    int systype;
 
-    if (sscanf(line, "system type=%8s\n", sysstr) == 1) {
-	lower(sysstr);
-	systype = gretl_system_type_from_string(sysstr);
-    } 
+    systype = system_start_get_type(line);
 
-    if (systype >= 0) {
-	sys = gretl_equation_system_new(systype);
-    } else {
+    if (systype == SYSMAX) {
+	/* invalid type was given */
 	strcpy(gretl_errmsg, _(badsystem));
+	return NULL;
+    }
+
+    if (systype < 0) {
+	/* no type was specified: look for a name */
+	sysname = system_start_get_name(line);
+	if (sysname == NULL) {
+	    strcpy(gretl_errmsg, _(badsystem));
+	    return NULL;
+	}
+    }
+
+    sys = gretl_equation_system_new(systype, sysname);
+    if (sys == NULL) {
+	return NULL;
     }
 
     if (strstr(line, "save=")) {
@@ -273,12 +475,19 @@ gretl_equation_system *system_start (const char *line)
 	}
     }
 
+    if (sysname != NULL) {
+	free(sysname);
+    }
+
     return sys;
 }
 
-int gretl_equation_system_finalize (gretl_equation_system *sys, 
-				    double ***pZ, DATAINFO *pdinfo,
-				    PRN *prn)
+/* driver function for the routines in the "sysest" plugin */
+
+static int 
+gretl_equation_system_estimate (gretl_equation_system *sys, 
+				double ***pZ, DATAINFO *pdinfo, 
+				PRN *prn)
 {
     int err = 0;
     void *handle = NULL;
@@ -287,29 +496,11 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 
     *gretl_errmsg = 0;
 
-    if (sys == NULL) {
-	strcpy(gretl_errmsg, _(nosystem));
-	return 1;
-    }
-
-    if (sys->type != SUR && 
-	sys->type != THREESLS && 
-	sys->type != FIML &&
-	sys->type != LIML) {
-	err = 1;
-	strcpy(gretl_errmsg, _(badsystem));
-	goto system_bailout;
-    }
-
-    if (sys->n_equations < 2) {
-	err = 1;
-	strcpy(gretl_errmsg, _(toofew));
-	goto system_bailout;
-    }
-
     if (sys->type == FIML || sys->type == LIML) {
 	err = make_instrument_list(sys);
 	if (err) goto system_bailout;
+    } else if (sys->type == SUR) {
+	sur_rearrange_lists(sys);
     }
 
     system_est = get_plugin_function("system_estimate", &handle);
@@ -326,14 +517,104 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     err = (* system_est) (sys, pZ, pdinfo, prn);
     
  system_bailout:
+
     if (handle != NULL) {
 	close_plugin(handle);
     }
 
-    /* for now, we'll free the system after printing */
-    gretl_equation_system_destroy(sys);
+    if (sys->name == NULL) {
+	/* discard the system */
+	gretl_equation_system_destroy(sys);
+    } else {
+	/* retain the system for possible re-estimation */
+	gretl_equation_system_clear(sys);
+    }
 
     return err;
+}
+
+/* Finalize an equation system in response to "end system".  If the
+   system has no name but has a "type" (estimation method) specified,
+   we go ahead and estimate it; otherwise we save it on a stack of
+   defined systems.
+*/
+
+int gretl_equation_system_finalize (gretl_equation_system *sys, 
+				    double ***pZ, DATAINFO *pdinfo,
+				    PRN *prn)
+{
+    *gretl_errmsg = 0;
+
+    if (sys == NULL) {
+	strcpy(gretl_errmsg, _(nosystem));
+	return 1;
+    }
+
+    if (sys->n_equations < 2) {
+	strcpy(gretl_errmsg, _(toofew));
+	gretl_equation_system_destroy(sys);
+	return 1;
+    }
+
+    if (sys->name != NULL) {
+	/* save the system for subsequent estimation */
+	return stack_system(sys, prn);
+    }
+
+    if (sys->type != SUR && 
+	sys->type != THREESLS && 
+	sys->type != FIML &&
+	sys->type != LIML) {
+	strcpy(gretl_errmsg, _(badsystem));
+	gretl_equation_system_destroy(sys);
+	return 1;
+    }
+
+    return gretl_equation_system_estimate(sys, pZ, pdinfo, prn);
+}
+
+/* Implement the "estimate" command, which must give the name of a pre-defined
+   equation system and an estimation method, as in:
+
+             estimate "Klein Model 1" method=FIML 
+*/
+
+int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo, 
+			   gretlopt opt, PRN *prn)
+{
+    gretl_equation_system *sys;
+    char *sysname;
+    int method;
+
+    if (strlen(line) < 12) {
+	strcpy(gretl_errmsg, "estimate: no system name was provided");
+	return 1;
+    }
+
+    sysname = get_maybe_quoted_name(line + 9);
+    if (sysname == NULL) {
+	strcpy(gretl_errmsg, "estimate: no system name was provided");
+	return 1;
+    }
+
+    sys = get_equation_system_by_name(sysname);
+    if (sys == NULL) {
+	sprintf(gretl_errmsg, "'%s': unrecognized name", sysname);
+	free(sysname);
+	return 1;
+    }
+
+    free(sysname);
+
+    method = named_system_get_method(line);
+    if (method < 0 || method >= SYSMAX) {
+	strcpy(gretl_errmsg, "estimate: no valid method was specified");
+	return 1;
+    }
+
+    sys->type = method;
+
+    return gretl_equation_system_estimate(sys, pZ, pdinfo, prn);
 }
 
 static int get_real_list_length (const int *list)
@@ -393,12 +674,16 @@ int system_adjust_t1t2 (const gretl_equation_system *sys,
     return err;
 }
 
-int *compose_tsls_list (const gretl_equation_system *sys, int i)
+int *compose_tsls_list (gretl_equation_system *sys, int i)
 {
     int *list;
     int j, k1, k2;
 
-    if (i >= sys->n_equations || sys->instr_vars == NULL) {
+    if (i >= sys->n_equations) {
+	return NULL;
+    }
+
+    if (sys->instr_vars == NULL && make_instrument_list(sys)) {
 	return NULL;
     }
 
@@ -406,9 +691,12 @@ int *compose_tsls_list (const gretl_equation_system *sys, int i)
     k2 = sys->instr_vars[0];
 
     list = malloc((k1 + k2 + 2) * sizeof *list);
-    if (list == NULL) return NULL;
+    if (list == NULL) {
+	return NULL;
+    }
 
     list[0] = k1 + k2 + 1;
+
     for (j=1; j<=list[0]; j++) {
 	if (j <= k1) {
 	    list[j] = sys->lists[i][j];
@@ -485,10 +773,12 @@ int *system_get_instr_vars (const gretl_equation_system *sys)
 
 void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u)
 {
-    if (sys->uhat != NULL) {
-	gretl_matrix_free(sys->uhat);
-    }
     sys->uhat = u;
+}
+
+void system_unattach_uhat (gretl_equation_system *sys)
+{
+    sys->uhat = NULL;
 }
 
 const gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
@@ -499,6 +789,11 @@ const gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
 void system_attach_models (gretl_equation_system *sys, MODEL **models)
 {
     sys->models = models;
+}
+
+void system_unattach_models (gretl_equation_system *sys)
+{
+    sys->models = NULL;
 }
 
 MODEL *system_get_model (const gretl_equation_system *sys, int i)
@@ -530,7 +825,7 @@ void system_set_llu (gretl_equation_system *sys, double llu)
     sys->llu = llu;
 }
 
-/* for FIML over-identification test */
+/* for FIML system over-identification test */
 
 int system_get_df (const gretl_equation_system *sys)
 {
@@ -545,7 +840,7 @@ int system_get_df (const gretl_equation_system *sys)
     return gl - k;
 }
 
-/* dealing with identities (FIML) */
+/* dealing with identities (FIML, LIML) */
 
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar)
@@ -565,6 +860,74 @@ int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
     }
 
     return 0;
+}
+
+int test_in_list (const int *list, int v)
+{
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == v) return 1;
+    }
+
+    return 0;
+}
+
+/* total number of exog vars included in a given equation,
+   either directly or via identities!
+*/
+
+int total_included_exog_vars (const gretl_equation_system *sys, int eq)
+{
+    const int *exlist = system_get_instr_vars(sys);
+    const int *list = system_get_list(sys, eq);
+    int *testlist;
+    int nex = 0;
+    int i, j, k;
+
+    testlist = malloc((exlist[0] + 1) * sizeof *testlist);
+    if (testlist == NULL) {
+	return -1;
+    }
+
+    testlist[0] = 0;
+
+    /* direct inclusion */
+    for (i=2; i<=list[0]; i++) {
+	if (test_in_list(exlist, list[i])) {
+	    testlist[0] += 1;
+	    testlist[testlist[0]] = list[i];
+	}
+    }
+
+    /* indirect inclusion */
+    for (i=2; i<=list[0]; i++) {
+	if (test_in_list(testlist, list[i])) {
+	    continue;
+	}
+	for (j=0; j<sys->n_identities; j++) {
+	    if (sys->idents[j]->depvar == list[i]) {
+		for (k=0; k<sys->idents[j]->n_atoms; k++) {
+		    int av = sys->idents[j]->atoms[k].varnum;
+
+		    if (test_in_list(exlist, av) &&
+			!test_in_list(testlist, av)) {
+			testlist[0] += 1;
+			testlist[testlist[0]] = av;
+		    }
+		}
+	    }
+	}
+    }
+
+    printlist(exlist, "full exog vars list");
+    printlist(list, "this model list");
+    printlist(testlist, "exog vars, this model");
+
+    nex = testlist[0];
+    free(testlist);
+
+    return nex;
 }
 
 static void destroy_ident (identity *pident)
@@ -801,7 +1164,15 @@ static int make_instrument_list (gretl_equation_system *sys)
     int *ilist, *elist = sys->endog_vars;
     int i, j, k, nexo, maxnexo = 0;
 
-    if (elist == NULL) return 1;
+    if (sys->instr_vars != NULL) {
+	/* job is already done */
+	return 0;
+    }
+
+    if (elist == NULL) {
+	/* can't proceed */
+	return 1;
+    }
 
     /* First pass: get a count of the max possible number of
        exogenous variables (probably an over-estimate due to
