@@ -105,10 +105,30 @@ static void kronecker_place (gretl_matrix *X,
     }
 }
 
-static int make_sys_X_block (gretl_matrix *X,
-			     const MODEL *pmod,
-			     const double **Z, 
-			     int t1, int method)
+static int make_liml_X_block (gretl_matrix *X, const MODEL *pmod,
+			      const double **Z, int t1)
+{
+    int i, t;
+    const double *Xi;
+
+    X->cols = pmod->ncoeff;
+
+    for (i=0; i<X->cols; i++) {
+	Xi = tsls_get_Xi(pmod, Z, i);
+	if (Xi == NULL) {
+	    return 1;
+	}
+	for (t=0; t<X->rows; t++) {
+	    gretl_matrix_set(X, t, i, Xi[t+t1]);
+	}
+    }
+
+    return 0;
+}
+
+static int 
+make_sys_X_block (gretl_matrix *X, const MODEL *pmod,
+		  const double **Z, int t1, int method)
 {
     int i, t;
     const double *Xi;
@@ -182,7 +202,7 @@ gls_sigma_from_uhat (gretl_equation_system *sys,
     return 0;
 }
 
-/* compute SUR or 3SLS (or OLS or TSLS) residuals */
+/* compute SUR, 3SLS or LIML (or OLS or TSLS) residuals */
 
 static void 
 sys_resids (const gretl_equation_system *sys, MODEL *pmod, 
@@ -284,8 +304,10 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 	j0 += models[i]->ncoeff;
     }
 
-    /* single-equation methods: need to multiply by an
-       estimate of sigma */
+    /* single-equation methods: need to multiply by an estimate of
+       sigma.  FIXME: should this really be the system sigma, and not
+       equation-specific?
+    */
 
     if (method == SYS_OLS || method == SYS_TSLS) {
 	double s = system_sigma(sys, models, m);
@@ -297,7 +319,13 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 		models[i]->sderr[j] *= s;
 	    }
 	}
-    }
+    } else if (method == SYS_LIML) {
+	for (i=0; i<m; i++) {
+	    for (j=0; j<models[i]->ncoeff; j++) {
+		models[i]->sderr[j] *= models[i]->sigma;
+	    }
+	}
+    }	
 
     if (system_save_vcv(sys)) {
 	gretl_matrix *b = gretl_matrix_copy(y);
@@ -597,25 +625,24 @@ static int basic_system_allocate (int method, int m, int T,
 	return E_ALLOC;
     }
 
-    /* single-equation estimators don't need the stacked X and y
-       matrices, unless we're testing a set of restrictions or
+    /* simple single-equation estimators don't need the stacked X and
+       y matrices, unless we're testing a set of restrictions or
        planning to save the system covariance matrix
     */
 
-    if ((method == SYS_OLS || method == SYS_TSLS) &&
-	nr == 0 && !save_vcv) {
+    if ((method == SYS_OLS || method == SYS_TSLS) 
+	&& nr == 0 && !save_vcv) {
 	return 0;
     }
 
-    if (method != SYS_LIML) {
-	*X = gretl_matrix_alloc(ldx, ldx);
-	if (*X == NULL) {
-	    return E_ALLOC;
-	}
-	*y = gretl_column_vector_alloc(ldx);
-	if (*y == NULL) {
-	    return E_ALLOC;
-	}
+    *X = gretl_matrix_alloc(ldx, ldx);
+    if (*X == NULL) {
+	return E_ALLOC;
+    }
+
+    *y = gretl_column_vector_alloc(ldx);
+    if (*y == NULL) {
+	return E_ALLOC;
     }
 
     return 0;
@@ -805,7 +832,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     
     nr = system_n_restrictions(sys);
 
-    if (method == SYS_OLS || method == SYS_TSLS) {
+    if (method == SYS_OLS || method == SYS_TSLS || method == SYS_LIML) {
 	single_equation = 1;
     }
 
@@ -863,11 +890,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	if (method == SYS_SUR || method == SYS_OLS) {
 	    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-	} else if (method == SYS_3SLS || method == SYS_FIML ||
+	} else if (method == SYS_3SLS || method == SYS_FIML || 
 		   method == SYS_TSLS) {
 	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_S);
 	} else if (method == SYS_LIML) {
-	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_N);
+	    *pmod = tsls_func(list, 0, pZ, pdinfo, OPT_N | OPT_S);
 	}
 
 	if (freeit) {
@@ -895,11 +922,6 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	system_attach_models(sys, models);
 	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
 	system_unattach_models(sys);
-	if (!err) {
-	    err = save_and_print_results(sys, sigma, models,
-					 pZ, pdinfo, opt, prn);
-	}
-	goto cleanup;
     }
 
     /* for iterated SUR, 3SLS */
@@ -907,9 +929,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     gls_sigma_from_uhat(sys, sigma, uhat, m, T);
 
-    /* single equation method, no restrictions to test and 
+    /* simple single-equation method, no restrictions to test and 
        system vcv not required: skip ahead */
-    if (single_equation && nr == 0 && !system_save_vcv(sys)) {
+    if ((method == SYS_OLS || method == SYS_TSLS) 
+	&& nr == 0 && !system_save_vcv(sys)) {
 	goto print_save;
     }
 
@@ -960,6 +983,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		}
 		err = make_sys_X_block(Xj, models[j], (const double **) *pZ, 
 				       pdinfo->t1, method);
+		Xk = Xj;
+	    } else if (method == SYS_LIML) {
+		err = make_liml_X_block(Xj, models[i], (const double **) *pZ,
+					pdinfo->t1);
 		Xk = Xj;
 	    } else {
 		Xk = Xi;
@@ -1018,8 +1045,14 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
 	    for (l=lmin; l<lmax; l++) { /* loop over the components that
 					   must be added to form each element */
-		const double *yl = (*pZ)[system_get_depvar(sys, l)];
+		const double *yl = NULL;
 		double sil, xx = 0.0;
+
+		if (method == SYS_LIML) {
+		    yl = gretl_model_get_data(models[l], "liml_y");
+		} else {
+		    yl = (*pZ)[system_get_depvar(sys, l)];
+		}
 
 		/* multiply X'[l] into y */
 		for (t=0; t<T; t++) {
@@ -1046,9 +1079,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_print(y, "sys y", NULL);
 #endif    
 
-    /* depending on whether we used OLS or TSLS at the first stage above,
-       these estimates will be either SUR or 3SLS -- unless we're just
-       doing restricted single-equation estimates
+    /* these estimates will be SUR, 3SLS or LIML, depending on how the
+       data matrices above were constructed -- unless we're just doing
+       restricted OLS or TSLS estimates
     */
     calculate_sys_coefficients(sys, models, (const double **) *pZ, X, 
 			       uhat, y, m, mk);
@@ -1123,7 +1156,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	for (i=0; i<m; i++) {
 	    ess += models[i]->ess;
 	    if (method == SYS_3SLS || method == SYS_FIML || 
-		method == SYS_TSLS) {
+		method == SYS_TSLS || method == SYS_LIML) {
 		tsls_free_data(models[i]);
 	    }
 	    free_model(models[i]);

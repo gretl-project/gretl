@@ -1872,7 +1872,7 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     return err;
 }
 
-const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i)
+double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i)
 {
     const char *endog;
     double **X;
@@ -1948,7 +1948,7 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
  * @pdinfo: information on the data set.
  * @opt: may contain OPT_R for robust VCV, OPT_S to save second-
  * stage regressors (OPT_S is used in context of three-stage least 
- * squares).
+ * squares), OPT_N (no df correction).
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.

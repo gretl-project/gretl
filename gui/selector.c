@@ -979,6 +979,15 @@ static void robust_callback (GtkWidget *w,  selector *sr)
     }
 }
 
+static void robust_config_button (GtkWidget *w,  GtkWidget *b)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	gtk_widget_set_sensitive(b, TRUE);
+    } else {
+	gtk_widget_set_sensitive(b, FALSE);
+    }
+}
+
 static void verbose_callback (GtkWidget *w,  selector *sr)
 {
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
@@ -1036,29 +1045,35 @@ build_selector_switches (selector *sr)
 
     if (sr->code == OLS || sr->code == GARCH || 
 	sr->code == TSLS || sr->code == VAR) {
+	GtkWidget *b1, *b2;
+
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
 			   tmp, FALSE, FALSE, 0);
 	gtk_widget_show(tmp);
 
-	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
-	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
+	b1 = gtk_check_button_new_with_label(_("Robust standard errors"));
+	gtk_signal_connect(GTK_OBJECT(b1), "toggled",
 			   GTK_SIGNAL_FUNC(robust_callback), sr);
 	if (using_hc_by_default()) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(b1), TRUE);
 	}
 
 	hbox = gtk_hbox_new(FALSE, 5);
 
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	gtk_box_pack_start(GTK_BOX(hbox), b1, FALSE, FALSE, 0);
+	gtk_widget_show(b1);
 
-	tmp = gtk_button_new_with_label(_("configure"));
-	g_signal_connect(G_OBJECT(tmp), "clicked",
-			 G_CALLBACK(hc_config), sr);
+	b2 = gtk_button_new_with_label(_("configure"));
+	gtk_signal_connect(GTK_OBJECT(b2), "clicked",
+			   GTK_SIGNAL_FUNC(hc_config), sr);
+	gtk_widget_set_sensitive(b2, using_hc_by_default());
 
-	gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 0);
-	gtk_widget_show(tmp);
+	gtk_signal_connect(GTK_OBJECT(b1), "toggled",
+			   GTK_SIGNAL_FUNC(robust_config_button), b2);	
+
+	gtk_box_pack_start(GTK_BOX(hbox), b2, FALSE, FALSE, 0);
+	gtk_widget_show(b2);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
 			   hbox, FALSE, FALSE, 0);

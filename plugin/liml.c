@@ -127,290 +127,67 @@ liml_make_reglist (const gretl_equation_system *sys, const int *list,
     return reglist;
 }
 
-/* Implements Greene's equation (16-28), 4e, p. 686. */
-
-static gretl_matrix * 
-liml_get_gamma_hat (const gretl_matrix *W0, const gretl_matrix *W1, 
-		    double lmin)
-{
-    gretl_matrix *Wdiff = NULL;
-    gretl_matrix *g = NULL;
-    int k = W0->rows;
-    double w0, w1;
-    int i, j;
-    int err = 0;
-
-    Wdiff = gretl_matrix_alloc(k - 1, k - 1);
-    if (Wdiff == NULL) {
-	return NULL;
-    }
-
-    g = gretl_matrix_alloc(k - 1, 1);
-    if (g == NULL) {
-	gretl_matrix_free(Wdiff);
-	return NULL;
-    }
-
-    for (i=0; i<Wdiff->rows; i++) {
-	for (j=0; j<Wdiff->cols; j++) {
-	    w0 = gretl_matrix_get(W0, i+1, j+1);
-	    w1 = gretl_matrix_get(W1, i+1, j+1);
-	    gretl_matrix_set(Wdiff, i, j, w0 - lmin * w1);
-	}
-    }
-
-#if LDEBUG
-    gretl_matrix_print(Wdiff, "W0 - lmin * W1", NULL);
-#endif
-
-    for (i=0; i<g->rows; i++) {
-	w0 = gretl_matrix_get(W0, i+1, 0);
-	w1 = gretl_matrix_get(W1, i+1, 0);
-	gretl_vector_set(g, i, w0 - lmin * w1);
-    }
-
-#if LDEBUG
-    gretl_matrix_print(g, "w0 - lmin * w1", NULL);
-#endif
-
-    err = gretl_LU_solve(Wdiff, g);
-    if (err) {
-	gretl_matrix_free(g);
-	g = NULL;
-    }
-
-    gretl_matrix_free(Wdiff);
-
-    return g;
-}
-
-/* Implements the regression on p. 687 of Greene, 4e,
-   following equation (16-28).
+/* set the special LIML k-class data on the model: these data will be
+   retrieved when calculating the LIML coefficients and their
+   covariance matrix
 */
 
 static int 
-liml_get_betahat (MODEL *olsmod, int *reglist, const int *list,
-		  const int *exlist, const gretl_matrix *g, 
-		  double ***pZ, DATAINFO *pdinfo)
+liml_set_model_data (MODEL *pmod, const gretl_matrix *E, 
+		     const int *exlist, const int *list, 
+		     int T, int t1, int n, double lmin,
+		     const double **Z)
 {
-    MODEL bmod;
-    double *y;
-    double gj;
-    int depvar = list[1];
-    int oldv = pdinfo->v;
+    double *Xi = NULL;
+    double *ymod = NULL;
+    int ysize = n * sizeof *ymod;
+    double yt, xit, eit;
+    int m = list[0] - 1;
     int i, j, t;
     int err = 0;
 
-    /* create special dependent variable: the original y minus fitted
-       y based on the RHS endogenous variables
-    */
-
-    y = malloc(pdinfo->n * sizeof *y);
-    if (y == NULL) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<pdinfo->n; t++) {
-	if (t < olsmod->t1 || t > olsmod->t2) {
-	    y[t] = NADBL;
-	} else {
-	    y[t] = (*pZ)[depvar][t];
-	    j = 0;
-	    for (i=2; i<=list[0]; i++) {
-		if (!on_exo_list(exlist, list[i])) {
-		    gj = gretl_vector_get(g, j++);
-		    y[t] -= (*pZ)[list[i]][t] * gj;
-		}
-	    }
-	}
-    }
-
-    if (dataset_add_allocated_var(y, pZ, pdinfo)) {
-	free(y);
-	return E_ALLOC;
-    }
-    
-    reglist[0] = 1;
-    reglist[1] = oldv; /* dep var is the newly added var */
-    j = 2;
-    /* put all included exog vars on the RHS */
-    for (i=2; i<=list[0]; i++) {
-	if (on_exo_list(exlist, list[i])) {
-	    reglist[0] += 1;
-	    reglist[j++] = list[i];
-	} 
-    }
-
-    bmod = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    err = bmod.errcode;
-
-    if (!err) {
-	double bi;
-	int k;
-
-	k = j = 0;
-	for (i=0; i<olsmod->ncoeff; i++) {
-	    if (on_exo_list(exlist, list[i+2])) {
-		bi = bmod.coeff[j++];
-	    } else {
-		bi = gretl_vector_get(g, k++);
-	    }
-	    olsmod->coeff[i] = bi;
-	}
-    }
-
-    clear_model(&bmod);
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
-
-    return err;
-}
-
-static void 
-liml_set_residuals_etc (MODEL *pmod, const int *list, 
-			const gretl_matrix *XTX, 
-			const double **Z, gretl_matrix *vcv,
-			gretl_matrix *b, int *b0)
-{
-    double yhat;
-    int depvar = list[1];
-    int i, t;
-
-    pmod->ess = 0.0;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	yhat = 0.0;
-	for (i=0; i<pmod->ncoeff; i++) {
-	    yhat += pmod->coeff[i] * Z[list[i+2]][t];
-	}
-	pmod->yhat[t] = yhat;
-	pmod->uhat[t] = Z[depvar][t] - yhat;
-	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-    }
-
-    /* could apply a df correction here (TSP seems to) */
-    pmod->sigma = sqrt(pmod->ess / pmod->nobs); 
-
-    for (i=0; i<pmod->ncoeff; i++) {
-	double xii = gretl_matrix_get(XTX, i, i);
-
-	pmod->sderr[i] = pmod->sigma * sqrt(xii);
-    }
-
-    /* save the whole covariance matrix? */
-    if (vcv != NULL && b != NULL && b0 != NULL) {
-	double s2 = pmod->sigma * pmod->sigma;
-	int j;
-
-	for (i=0; i<pmod->ncoeff; i++) {
-	    gretl_vector_set(b, *b0 + i, pmod->coeff[i]);
-	    for (j=i; j<pmod->ncoeff; j++) {
-		double xij = gretl_matrix_get(XTX, i, j);
-
-		gretl_matrix_set(vcv, *b0 + i, *b0 + j, s2 * xij);
-		gretl_matrix_set(vcv, *b0 + j, *b0 + i, s2 * xij);
-	    }
-	}
-	*b0 += pmod->ncoeff;
-    }
-}
-
-#if 0
-
-/* Compute the special counterpart of "X-transpose y" used in
-   computing betahat for LIML.  See Davidson and MacKinnon,
-   Econometric Theory and Methods, equation (12.96).
-*/
-
-static gretl_matrix *
-liml_get_ymod (const gretl_matrix *E, const int *exlist, 
-	       const int *list, int T, int t1, double lmin, 
-	       const double **Z)
-{
-    gretl_matrix *ymod = NULL;
-    double eit, yt;
-    int m = list[0] - 1;
-    int t;
-
-    ymod = gretl_column_vector_alloc(T);
-
+    ymod = malloc(ysize);
     if (ymod == NULL) {
-	return NULL;
+	return 1;
+    }
+
+    for (t=0; t<n; t++) {
+	ymod[t] = NADBL;
     }
 
     for (t=0; t<T; t++) {
 	yt = Z[list[1]][t + t1];
 	eit = gretl_matrix_get(E, t, 0);
-	gretl_vector_set(ymod, t, yt - lmin * eit);
-    }
-
-    return ymod;
-}
-
-#endif
-
-/* Compute and invert the special counterpart of "X-transpose X"
-   that forms the basis for var(betahat) in LIML.  See Davidson
-   and MacKinnon, Econometric Theory and Methods, equation (12.96).
-*/
-
-static gretl_matrix *
-liml_get_XTX_inverse (const gretl_matrix *E, const int *exlist, 
-		      const int *list, int T, int t1, double lmin, 
-		      const double **Z)
-{
-    gretl_matrix *X = NULL;
-    gretl_matrix *Xmod = NULL;
-    gretl_matrix *XTX = NULL;
-    double xit, eit;
-    int m = list[0] - 1;
-    int i, j, t;
-    int err = 0;
-
-    X = gretl_matrix_alloc(T, m);
-    Xmod = gretl_matrix_alloc(T, m);
-    XTX = gretl_matrix_alloc(m, m);
-
-    if (X == NULL || Xmod == NULL || XTX == NULL) {
-	err = 1;
-	goto bailout;
-    }
-
-    for (t=0; t<T; t++) {
+	ymod[t + t1] = yt - lmin * eit;
 	j = 1;
 	for (i=0; i<m; i++) {
-	    xit = Z[list[i+2]][t + t1];
-	    gretl_matrix_set(X, t, i, xit);
 	    if (on_exo_list(exlist, list[i+2])) {
-		gretl_matrix_set(Xmod, t, i, xit);
-	    } else {
-		eit = gretl_matrix_get(E, t, j++);
-		gretl_matrix_set(Xmod, t, i, xit - lmin * eit);
-	    } 
+		continue;
+	    }
+	    Xi = tsls_get_Xi(pmod, Z, i);
+	    if (Xi == NULL) {
+		err = 1;
+		break;
+	    }
+	    xit = Z[list[i+2]][t + t1];
+	    eit = gretl_matrix_get(E, t, j++);
+	    Xi[t + t1] = xit - lmin * eit;
 	}
+	if (err) break;
     }
-
-    gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
-			      Xmod, GRETL_MOD_NONE,
-			      XTX);
-    err = gretl_invert_general_matrix(XTX);
-
- bailout:
-
-    gretl_matrix_free(X);
-    gretl_matrix_free(Xmod);
 
     if (err) {
-	gretl_matrix_free(XTX);
-	XTX = NULL;
+	free(ymod);
+    } else {
+	gretl_model_set_data(pmod, "liml_y", ymod, ysize);
     }
 
-    return XTX;
+    return err;
 }
 
 static int liml_do_equation (gretl_equation_system *sys, int eq, 
 			     double ***pZ, DATAINFO *pdinfo, 
-			     gretl_matrix *vcv, gretl_matrix *b, 
-			     int *b0, PRN *prn)
+			     PRN *prn)
 {
     const int *exlist = system_get_instr_vars(sys);
     const int *list = system_get_list(sys, eq);
@@ -421,7 +198,7 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     gretl_matrix *W2 = NULL;
     gretl_matrix *Inv = NULL;
     gretl_matrix *g = NULL;
-    gretl_matrix *XTX = NULL;
+    gretl_matrix *V = NULL;
 
     double *lambda, lmin = 1.0;
     double ll = 0.0;
@@ -524,31 +301,12 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     printf("smallest eigenvalue: %g\n\n", lmin);
 #endif
 
-    /* estimates of coeffs on included endogenous vars */
-    g = liml_get_gamma_hat(W0, W1, lmin);
-    if (g == NULL) {
-	err = 1;
-	goto bailout;
-    }
-
-    /* estimates of coeffs on included exogenous vars */
-    err = liml_get_betahat(pmod, reglist, list, exlist, g, 
-			   pZ, pdinfo);
+    err = liml_set_model_data(pmod, E, exlist, list, T,
+			      pdinfo->t1, pdinfo->n, lmin,
+			      (const double **) *pZ);
     if (err) {
-	goto bailout;
+	fprintf(stderr, "error in liml_set_model_data\n");
     }
-
-    /* for covariance matrix of coefficient estimates */
-    XTX = liml_get_XTX_inverse(E, exlist, list, T, pdinfo->t1, lmin,
-			       (const double **) *pZ);
-    if (XTX == NULL) {
-	err = 1;
-	goto bailout;
-    }
-
-    /* correct yhat, uhat, ESS, sigma, standard errors */
-    liml_set_residuals_etc(pmod, list, XTX, (const double **) *pZ, 
-			   vcv, b, b0);
 
     /* compute and set log-likelihood, etc */
     ll = system_n_equations(sys) * LN_2_PI;
@@ -572,38 +330,9 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
     gretl_matrix_free(W2);
     gretl_matrix_free(Inv);
     gretl_matrix_free(g);
-    gretl_matrix_free(XTX);
+    gretl_matrix_free(V);
 
     return err;
-}
-
-/* re-write the cross-equation VCV using the LIML residuals */
-
-static void 
-liml_rewrite_sigma (gretl_matrix *sigma, gretl_equation_system *sys,
-		    int t1)
-{
-    const MODEL *imod, *jmod;
-    int g = system_n_equations(sys);
-    int T = system_n_obs(sys);
-    int i, j, t;
-    double xx;
-
-    for (i=0; i<g; i++) {
-	imod = system_get_model(sys, i);
-	for (j=i; j<g; j++) {
-	    jmod = system_get_model(sys, j);
-	    xx = 0.0;
-	    for (t=0; t<T; t++) {
-		xx += imod->uhat[t + t1] * jmod->uhat[t + t1];
-	    }
-	    xx /= T;
-	    gretl_matrix_set(sigma, i, j, xx);
-	    if (j != i) {
-		gretl_matrix_set(sigma, j, i, xx);
-	    }
-	}
-    }
 }
 
 /* Driver function for LIML */
@@ -612,36 +341,17 @@ int liml_driver (gretl_equation_system *sys, double ***pZ,
 		 gretl_matrix *sigma, DATAINFO *pdinfo, 
 		 PRN *prn)
 {
-    gretl_matrix *vcv = NULL;
-    gretl_matrix *b = NULL;
-    int b0 = 0;
     int g = system_n_equations(sys);
     int i, err = 0;
 
     pputs(prn, "\n*** LIML: experimental, work in progress ***\n\n");
 
-#if 0 /* not ready yet */
-    if (system_save_vcv(sys)) {
-	int mk = system_n_indep_vars(sys);
-
-	vcv = gretl_matrix_alloc(mk, mk);
-	system_attach_vcv(sys, vcv);
-	b = gretl_column_vector_alloc(mk);
-	system_attach_coeffs(sys, b);
-	if (vcv != NULL) {
-	    gretl_matrix_zero(vcv);
-	}
-    }
-#endif
-
     for (i=0; i<g; i++) {
 #if LDEBUG > 1
 	printmodel(system_get_model(sys, i), pdinfo, OPT_NONE, prn);
 #endif
-	liml_do_equation(sys, i, pZ, pdinfo, vcv, b, &b0, prn);
+	liml_do_equation(sys, i, pZ, pdinfo, prn);
     }
-
-    liml_rewrite_sigma(sigma, sys, pdinfo->t1);
 
     return err;
 }
