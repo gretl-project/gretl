@@ -584,10 +584,6 @@ test_forloop_element (const char *s, LOOPSET *loop,
 
     if (s == NULL) return 1;
 
-#if LOOP_DEBUG
-    fprintf(stderr, "testing forloop element '%s'\n", s);
-#endif
-
     if (i == 0) {
 	ngot = sscanf(s, "%8[^=]=%8s", lhs, rhs) + 1;
 	strcpy(opstr, "=");
@@ -595,6 +591,12 @@ test_forloop_element (const char *s, LOOPSET *loop,
 	ngot = sscanf(s, "%8[^+-*/=<>]%2[+-*/=<>]%8[^+-*/=<>]", 
 		      lhs, opstr, rhs);
     }
+
+#if LOOP_DEBUG
+    fprintf(stderr, "read forloop element %d = '%s'\n", i, s);
+    fprintf(stderr, " got lhs='%s', opstr='%s', rhs='%s'\n",
+	    lhs, opstr, rhs);
+#endif
 
     if (ngot != 3) {
 	err = E_PARSE;
@@ -619,6 +621,7 @@ test_forloop_element (const char *s, LOOPSET *loop,
 		} 
 	    }
 	} else if (v != loop->left.vnum) {
+	    /* the LHS var must be the same in all three "for" fields */
 	    strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	    err = 1;
 	}
@@ -738,8 +741,6 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, char *s)
     char ivar[8] = {0};
     char ichar = 0;
     int i, nf, err = 0;
-
-    s += strlen("loop foreach");
 
     if (*s == '\0') {
 	return 1;
@@ -874,10 +875,21 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     char ichar;
     int err = 0;
 
+    *gretl_errmsg = '\0';
+
 #if LOOP_DEBUG
     fprintf(stderr, "parse_loopline: ploop = %p, loopstack = %d\n",
 	    (void *) ploop, loopstack);
 #endif
+
+    /* skip over the common stuff */
+    while (isspace((unsigned char) *line)) line++;
+    if (strncmp(line, "loop", 4)) {
+	strcpy(gretl_errmsg, _("No valid loop condition was given."));
+	return NULL;
+    }
+    line += 4;
+    while (isspace((unsigned char) *line)) line++;
 
     if (ploop == NULL) {
 	/* starting from scratch */
@@ -904,31 +916,29 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	loop = ploop;
     }
 
-    *gretl_errmsg = '\0';
-    
-    if (sscanf(line, "loop while %8[^ <>=]%8[ <>=] %8s", lvar, op, rvar) == 3) {
+    if (sscanf(line, "while %8[^ <>=]%8[ <>=] %8s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
-    else if (sscanf(line, "loop %c = %8[^.]..%8s", &ichar, op, rvar) == 3) {
+    else if (sscanf(line, "%c = %8[^.]..%8s", &ichar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    ichar, NULL, op, rvar);
     }	
 
-    else if (sscanf(line, "loop for %8[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
+    else if (sscanf(line, "for %8[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    0, lvar, op, rvar);
     }
 
-    else if (strstr(line, "loop foreach") != NULL) {
-	err = parse_as_each_loop(loop, pdinfo, line);
+    else if (!strncmp(line, "foreach", 7)) {
+	err = parse_as_each_loop(loop, pdinfo, line + 7);
     }    
 
-    else if (strstr(line, "loop for") != NULL) {
-	err = parse_as_for_loop(loop, pdinfo, pZ, line);
+    else if (!strncmp(line, "for", 3)) {
+	err = parse_as_for_loop(loop, pdinfo, pZ, line + 3);
     }
 
-    else if (sscanf(line, "loop %8s", lvar) == 1) {
+    else if (sscanf(line, "%8s", lvar) == 1) {
 	err = parse_as_count_loop(loop, pdinfo, (const double **) *pZ, 
 				  lvar);
     }
