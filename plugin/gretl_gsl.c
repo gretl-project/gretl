@@ -394,14 +394,29 @@ make_gsl_matrix_from_array (const double **X, int k)
     return M;
 }
 
+static void print_M (gsl_matrix *M, int k)
+{
+    int i, j;
+    double x;
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	   x = gsl_matrix_get(M, i, j);
+	   printf("%#13.7g ", x);
+	}
+	putchar('\n');
+    } 
+    putchar('\n');
+}
+
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
 			int k, double *evals)
 {
     int i;
     gsl_matrix *Suu, *Svv, *Suv;
-    gsl_matrix *Inv, *Tmp1, *Tmp2, *M;
+    gsl_matrix *Inv, *TmpL, *TmpR, *M;
     gsl_eigen_symm_workspace *wspace;
-    gsl_vector *evec;
+    gsl_vector *eigvals;
     int err = 0;
 
     Suu = make_gsl_matrix_from_array(X, k);
@@ -409,30 +424,34 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     Suv = make_gsl_matrix_from_array(Z, k);
 
     Inv = gsl_matrix_alloc(k, k);
-    Tmp1 = gsl_matrix_alloc(k, k);
-    Tmp2 = gsl_matrix_alloc(k, k);
+    TmpL = gsl_matrix_alloc(k, k);
+    TmpR = gsl_matrix_alloc(k, k);
     M = gsl_matrix_alloc(k, k);
 
-    gretl_gsl_inverse(Inv, Svv, k);
-    gsl_linalg_matmult_mod(Inv, GSL_LINALG_MOD_NONE,
-			   Suv, GSL_LINALG_MOD_TRANSPOSE,
-			   Tmp1);
+    /* calculate Suu^{-1} Suv */
+    Inv = gretl_gsl_inverse(Inv, Suu, k);
+    err = gsl_linalg_matmult(Inv, Suv, TmpR);
 
-    gretl_gsl_inverse(Inv, Suu, k);
-    err = gsl_linalg_matmult(Inv, Suv, Tmp2);
+    /* calculate Svv^{-1} Suv' */
+    Inv = gretl_gsl_inverse(Inv, Svv, k);
+    gsl_matrix_transpose(Suv);
+    gsl_linalg_matmult(Inv, Suv, TmpL);
 
-    err = gsl_linalg_matmult(Tmp1, Tmp2, M);
-    
-    /* find and sort eigenvalues of M */
+    err = gsl_linalg_matmult(TmpL, TmpR, M);
+
+    print_M(M, k);
+
+    /* find the eigenvalues of M:
+       actually this is rubbish since the matrix is non-symmetric */
     wspace = gsl_eigen_symm_alloc(k);
-    evec = gsl_vector_alloc(k);
-    gsl_eigen_symm(M, evec, wspace);
+    eigvals = gsl_vector_alloc(k);
+    gsl_eigen_symm(M, eigvals, wspace);
     gsl_eigen_symm_free(wspace);
 
     for (i=0; i<k; i++) {
-	evals[i] = gsl_vector_get(evec, i);
+	evals[i] = gsl_vector_get(eigvals, i);
     }
-    gsl_vector_free(evec);
+    gsl_vector_free(eigvals);
 
     /* free stuff */
     gsl_matrix_free(Svv);
@@ -440,8 +459,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     gsl_matrix_free(Suv);
 
     gsl_matrix_free(Inv);
-    gsl_matrix_free(Tmp1);
-    gsl_matrix_free(Tmp2);
+    gsl_matrix_free(TmpL);
+    gsl_matrix_free(TmpR);
     gsl_matrix_free(M);
 
     return err;

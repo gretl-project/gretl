@@ -21,7 +21,10 @@
 
 #include "libgretl.h"
 #include <gmp.h>
+
+#ifdef HAVE_MPFR
 #include <mpfr.h>
+#endif
 
 /* #define MP_DEBUG 1 */
 
@@ -71,7 +74,9 @@ typedef struct {
 } MPCHOLBETA;
 
 static void set_gretl_mp_bits (void);
+#ifdef HAVE_MPFR
 static void set_gretl_mpfr_bits (void);
+#endif
 static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ);
 static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
 			char *errbuf);
@@ -461,6 +466,7 @@ int mp_vector_raise_to_power (const double *srcvec, double *targvec,
     return 0;
 }
 
+#ifdef HAVE_MPFR
 /**
  * mp_vector_ln:
  * @srcvec: source vector (doubles)
@@ -495,6 +501,7 @@ int mp_vector_ln (const double *srcvec, double *targvec, int n)
 
     return 0;
 }
+#endif
 
 static int poly_check (MPMODEL *pmod, const int *list)
 {
@@ -552,6 +559,7 @@ static void set_gretl_mp_bits (void)
     }
 }
 
+#ifdef HAVE_MPFR
 static void set_gretl_mpfr_bits (void)
 {
     char *user_bits = getenv("GRETL_MP_BITS");
@@ -562,6 +570,8 @@ static void set_gretl_mpfr_bits (void)
 	mpfr_set_default_prec ((unsigned long) DEFAULT_GRETL_MP_BITS);
     }
 } 
+#endif
+
 static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 			    mp_results *results)
 {

@@ -882,7 +882,7 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 	else P = Z;
 	for (i=0; i<k; i++) {
 	    for (j=0; j<k; j++) {
-		pprintf(prn, "%#12.6g ", P[i][j]);
+		pprintf(prn, "%#12.6g", P[i][j]);
 	    }
 	    pputs(prn, "\n");
 	}
@@ -939,26 +939,39 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
     int i, j;
     int orig_t1 = pdinfo->t1;
+    int *varlist;
+    int hasconst = 0;
 
     /* we're assuming that the list we are fed is in levels */
-    resids.levels_list = malloc(list[0] * sizeof *list);
+    resids.levels_list = malloc((1 + list[0]) * sizeof *list);
     if (resids.levels_list == NULL) return E_ALLOC;
-
     resids.levels_list[0] = list[0];
+
+    varlist = malloc((2 + list[0]) * sizeof *list);
+    if (varlist == NULL) return E_ALLOC;
+    varlist[0] = list[0];
+
     j = 1;
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) {
 	    resids.levels_list[0] -= 1;
+	    hasconst = 1;
 	    continue;
 	}
-	resids.levels_list[j++] = list[i];
+	_laggenr(list[i], 1, 1, pZ, pdinfo);
+	resids.levels_list[j++] = _lagvarnum(list[i], 1, pdinfo);
     }
 
     /* now get differences and put them into list */
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) continue;
 	diffgenr(list[i], pZ, pdinfo);
-	list[i] = diffvarnum(list[i], pdinfo);
+	varlist[i] = diffvarnum(list[i], pdinfo);
+    }
+
+    if (!hasconst) {
+	varlist[0] += 1;
+	varlist[varlist[0]] = 0;
     }
 
     /* estimate VAR and other equations */
@@ -971,10 +984,11 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
 #if 0
     pdinfo->t1 += (order + 1);
-    err = real_var(order - 1, list, pZ, pdinfo, prn, &resids, flags); 
+    err = real_var(order - 1, varlist, pZ, pdinfo, prn, &resids, flags); 
     /* or use varprn */
 #else
-    err = real_var(order, list, pZ, pdinfo, prn, &resids, flags); 
+    pdinfo->t1 += (order + 1);
+    err = real_var(order - 1, varlist, pZ, pdinfo, prn, &resids, flags); 
 #endif
     gretl_print_destroy(varprn);
 
@@ -1070,6 +1084,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     } 
 
     free(resids.levels_list);
+    free(varlist);
 
     pdinfo->t1 = orig_t1;
 

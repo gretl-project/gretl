@@ -35,6 +35,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Multiple precision arithmetic? */
 #undef ENABLE_GMP
 
+/* Extra floating-point GMP routines? */
+#undef HAVE_MPFR
+
 /* X-12-ARIMA support? */
 #undef HAVE_X12A
 

@@ -223,7 +223,7 @@ plugins/longname.dll: longname.o
 
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
 
 plugins/gretl_gsl.dll: gretl_gsl.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
