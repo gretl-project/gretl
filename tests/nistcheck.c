@@ -566,6 +566,7 @@ int open_mpols_plugin (void **handle)
 }
 
 int mp_vals_differ (double x, double y, double *diff)
+     /* x is certified value, y is gretl MP value */
 {
     char xstr[32], ystr[32];
     int ret;
@@ -581,7 +582,9 @@ int mp_vals_differ (double x, double y, double *diff)
 
     ret = (atof(xstr) != atof(ystr));
 
-    if (strcmp(xstr, "inf")) *diff = fabs (y - x);
+    if (strcmp(xstr, "inf") && strncmp(xstr, "-999", 4)) { 
+	*diff = fabs (y - x);
+    }
 
     if (ret && verbose && strcmp(xstr, "inf")) {
 	printf(" ** using gretl GMP plugin: results differ by "
