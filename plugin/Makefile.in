@@ -34,7 +34,7 @@ override CFLAGS += -I.. -DHAVE_CONFIG_H -fPIC -DPIC
 
 LIBTOOL = $(topsrc)/libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
-LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared -rpath $(plugindir)
+LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared #-rpath $(plugindir)
 
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la

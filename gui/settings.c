@@ -712,7 +712,7 @@ void write_rc (void)
 	errbox(_("Couldn't open config file for writing"));
 	return;
     }
-    fprintf(rc, "# config file written by gretl: do not edit\n");
+    fprintf(rc, "# old-style gretl config file (not used by gnome version)\n");
     i = 0;
     while (rc_vars[i].var != NULL) {
 	fprintf(rc, "# %s\n", rc_vars[i].description);

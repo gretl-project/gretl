@@ -1,5 +1,5 @@
-version 1.0.5
-- add facility to handle Gujarati data (gtk-2.0 only so far)
+02/20/03 version 1.0.5
+- fix missing translations; fix build of rpm
 
 02/19/03 version 1.0.4
 - add sst() function in genr for Total Sum of Squares of a 

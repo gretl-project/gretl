@@ -66,6 +66,7 @@ enum {
 } page_file_codes;
 
 #define N_PS_FILES 3
+#define BUFSIZE 8192
 
 /* ........................................................... */
 

@@ -46,10 +46,6 @@ ifeq ($(GTK_EXTRA_LIBS),)
   query_gtkextra_lib = gtkextra-lib
 endif
 
-ifeq ($(PNG_LIBS),)
-  PNG_LIBS = -lz -lpng
-endif
-
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif

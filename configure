@@ -13356,7 +13356,7 @@ else
 fi
 
    PNG_CFLAGS=
-   PNG_LIBS=
+   PNG_LIBS="-lz -lpng"
 
 
 fi

@@ -406,7 +406,7 @@ fi
 if test ${png_comments} = yes && test ${have_gtk} = "1.2" ; then
    AC_CHECK_LIB(png, png_init_io,png_failed="no",png_failed="yes",-lz)
    PNG_CFLAGS=
-   PNG_LIBS=
+   PNG_LIBS="-lz -lpng"
    AC_SUBST(PNG_CFLAGS)
    AC_SUBST(PNG_LIBS)
 fi
