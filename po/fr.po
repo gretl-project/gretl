@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.0\n"
 "POT-Creation-Date: 2003-07-14 10:39-0400\n"
-"PO-Revision-Date: 2003-07-23 08:00-0500\n"
+"PO-Revision-Date: 2003-07-24 08:00-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -54,7 +54,7 @@ msgstr "Réinitialisation du test pour la spécification"
 
 #: lib/src/compare.c:779
 msgid "specification is adequate"
-msgstr "spécification adéquate"
+msgstr "la spécification est adéquate"
 
 #: lib/src/compare.c:950 lib/src/compare.c:1422
 msgid "Couldn't access panel plugin\n"
@@ -73,11 +73,11 @@ msgstr "Ne peut charger la fonction du plugin\n"
 #: gui2/guiprint.c:1222 gui2/library.c:2921 plugin/leverage.c:189
 #: plugin/panel_data.c:553
 msgid "residual"
-msgstr "résiduel"
+msgstr "résidu"
 
 #: lib/src/compare.c:1001
 msgid "lagging uhat failed"
-msgstr "échec du délai 'uhat'"
+msgstr "échec du délai de uhat"
 
 #: lib/src/compare.c:1033 plugin/panel_data.c:698
 msgid "Alternative statistic"
@@ -102,7 +102,7 @@ msgstr "pas d'autocorrélation"
 
 #: lib/src/compare.c:1136
 msgid "dummy variable for Chow test"
-msgstr "variable bidon pour le test Chow"
+msgstr "variable auxiliaire pour le test Chow"
 
 #: lib/src/compare.c:1165
 #, c-format
@@ -113,18 +113,18 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test de Chow pour bris structurel à l'observation %s:\n"
+"Test de Chow pour rupture structurel à l'observation %s:\n"
 "  F(%d, %d) = %f avec valeur de P %f\n"
 "\n"
 
 #: lib/src/compare.c:1172
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr "Test de Chow pour bris structurel à l'observation %s"
+msgstr "Test de Chow pour rupture structurel à l'observation %s"
 
 #: lib/src/compare.c:1175
 msgid "no structural break"
-msgstr "pas de bris structurel"
+msgstr "pas de rupture structurel"
 
 #: lib/src/compare.c:1303
 msgid "CUSUM test for stability of parameters"
@@ -133,7 +133,7 @@ msgstr "Test de CUSUM pour la stabilité des paramètres"
 #: lib/src/compare.c:1304
 #, c-format
 msgid "mean of scaled residuals = %g\n"
-msgstr "moyenne des résiduels échelonnés = %g\n"
+msgstr "moyenne des résidus échelonnés = %g\n"
 
 #: lib/src/compare.c:1312
 #, c-format
@@ -151,8 +151,8 @@ msgid ""
 "('*' indicates a value outside of 95%% confidence band):\n"
 "\n"
 msgstr ""
-"Somme cumulée des résiduels échelonnés\n"
-"('*' indique une valeur en dehors du 95%% de l'intervalle de confiance):\n"
+"Somme cumulée des résidues échelonnés\n"
+"('*' indique une valeur en dehors de 95%% de l'intervalle de confiance):\n"
 "\n"
 
 #: lib/src/compare.c:1331
@@ -185,7 +185,7 @@ msgstr "Traçé CUSUM avec un intervalle de confiance de 95%"
 
 #: lib/src/compare.c:1403
 msgid "This test is only relevant for pooled models\n"
-msgstr "Ce test est significatif que pour les modèles 'pooled'\n"
+msgstr "Ce test est significatif que pour les modèles en commun\n"
 
 #: lib/src/compare.c:1408
 msgid "This test requires that the model contains a constant\n"
@@ -197,13 +197,13 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
-"Désolé, on ne peut faire ce test sur un panneau non balancé.\n"
+"Désolé, on ne peut faire ce test sur un panel non équilibré.\n"
 "Vous avez besoin d'avoir le même nombre d'observations\n"
 "pour chaque unité de coupe transversale"
 
 #: lib/src/compare.c:1528 lib/src/generate.c:2795 lib/src/generate.c:2835
 msgid "Couldn't access GMP plugin\n"
-msgstr "Ne peut accéder le plugin GMP\n"
+msgstr "Ne peut accéder au plugin GMP\n"
 
 #: lib/src/compare.c:1541
 msgid "Failed to parse mp_ols command\n"
@@ -268,7 +268,7 @@ msgid ""
 "First char of varname ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
-"Premier caractère du nom de la variable (« %c ») est erroné\n"
+"Le premier caractère du nom de la variable (« %c ») est erroné\n"
 "(doit être alphabétique)"
 
 #: lib/src/dataio.c:613
@@ -277,8 +277,8 @@ msgid ""
 "Varname contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Nom de variable contient un caractère illégale « %c »\n"
-"Utiliser seulement des lettres, des chiffres ou des soulignés"
+"Le nom de variable contient un caractère illégale « %c »\n"
+"Utilisez seulement des lettres, des chiffres ou des soulignés"
 
 #: lib/src/dataio.c:617
 #, c-format
@@ -286,8 +286,8 @@ msgid ""
 "Varname contains illegal character 0x%x\n"
 "Use only letters, digits and underscore"
 msgstr ""
-"Nom de variable contient un caractère illégale 0x%x\n"
-"Utiliser seulement des lettres, des chiffres ou des soulignés"
+"Le nom de variable contient un caractère illégale 0x%x\n"
+"Utilisez seulement des lettres, des chiffres ou des soulignés"
 
 #: lib/src/dataio.c:639
 #, c-format
@@ -301,7 +301,7 @@ msgid ""
 "Couldn't find list of variables (must be terminated with a semicolon)"
 msgstr ""
 "Fichier d'en-tête ouvert %s\n"
-"Ne peut repérer la liste des variables (doit être terminé par un point-virgule)"
+"Ne peut repérer la liste des variables (elle doit être terminée par un point-virgule)"
 
 #: lib/src/dataio.c:759
 msgid "Failed to store data comments\n"
@@ -319,11 +319,11 @@ msgstr "Caractère erroné %d dans la chaîne de la date"
 
 #: lib/src/dataio.c:846
 msgid "Date strings inconsistent"
-msgstr "Chaînes de data inconsistentes"
+msgstr "Chaînes de dates inconsistentes"
 
 #: lib/src/dataio.c:853 lib/src/subsample.c:335 lib/src/subsample.c:360
 msgid "Observation number out of bounds"
-msgstr "Nombre d'observations hors gamme"
+msgstr "Nombre d'observations hors limite"
 
 #: lib/src/dataio.c:917
 msgid "space for comments"
@@ -371,7 +371,7 @@ msgstr "série temporelle"
 
 #: lib/src/dataio.c:1314
 msgid "panel"
-msgstr "panneau"
+msgstr "panel"
 
 #: lib/src/dataio.c:1316
 msgid "undated"
@@ -455,7 +455,7 @@ msgid ""
 "Reading header file %s\n"
 msgstr ""
 "\n"
-"Lecture du fichier d'en-tète %s\n"
+"Lecture du fichier d'en-tête %s\n"
 
 #: lib/src/dataio.c:1675 lib/src/dataio.c:1755
 #, c-format
@@ -497,7 +497,7 @@ msgstr "   chaînes des étiquettes trop longues pour les dates?\n"
 
 #: lib/src/dataio.c:1798
 msgid "   label strings can't be consistent dates\n"
-msgstr "   chaînes des étiquettes ne peuvent être des dates consistentes\n"
+msgstr "   les chaînes des étiquettes ne peuvent être des dates consistentes\n"
 
 #: lib/src/dataio.c:1803
 msgid "trying to parse row labels as dates...\n"
@@ -511,7 +511,7 @@ msgstr "   %s: probablement une année... "
 #: lib/src/dataio.c:1814
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
-msgstr "   %s: hors gamme pour une année?\n"
+msgstr "   %s: hors limite pour une année?\n"
 
 #: lib/src/dataio.c:1817
 msgid "   but I can't make sense of the extra bit\n"
@@ -537,23 +537,23 @@ msgstr "   définitivement pas une année à 4 chiffres\n"
 
 #: lib/src/dataio.c:1893
 msgid "Data frequency does not match"
-msgstr "Fréquence des données ne concorde pas"
+msgstr "La fréquence des données ne concorde pas"
 
 #: lib/src/dataio.c:1898
 msgid "New data not conformable for appending"
-msgstr "Nouvelle donnée non compatible pour un ajout"
+msgstr "Nouvelles données non compatibles pour un ajout"
 
 #: lib/src/dataio.c:1920
 msgid "Starting observation does not match"
-msgstr "Début des observations ne concorde pas"
+msgstr "Le début des observations ne concorde pas"
 
 #: lib/src/dataio.c:1924
 msgid "Ending observation does not match"
-msgstr "Fin des observations ne concorde pas"
+msgstr "La fin des observations ne concorde pas"
 
 #: lib/src/dataio.c:1933
 msgid "Starting point of new data does not fit"
-msgstr "Point de départ des nouvelles données ne correspond pas"
+msgstr "Le point de départ des nouvelles données ne correspond pas"
 
 #: lib/src/dataio.c:1937
 msgid "Inconsistency in observation markers"
@@ -565,12 +565,12 @@ msgstr "Mémoire épuisée pour l'ajout de données"
 
 #: lib/src/dataio.c:1998 gui/gui_utils.c:567 gui2/gui_utils.c:630
 msgid "Data appended OK"
-msgstr "Ajout de données complétée"
+msgstr "Ajout de données complété"
 
 #: lib/src/dataio.c:2031
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr "Donnée binaire (%d) rencontrée: cela n'est pas un fichier texte vallide\n"
+msgstr "Données binaires (%d) rencontrées: cela n'est pas un fichier texte vallide\n"
 
 #: lib/src/dataio.c:2044
 msgid "Data file is empty\n"
@@ -897,7 +897,7 @@ msgstr "Type de fichier erroné, noeud de la racine n'est pas de type gretldata"
 
 #: lib/src/dataio.c:3475
 msgid "Required attribute 'type' is missing from data file"
-msgstr "Attribut requi 'type' est manquant dans le fichier de données"
+msgstr "L'attribut requis 'type' est manquant dans le fichier de données"
 
 #: lib/src/dataio.c:3487
 msgid "Unrecognized type attribute for data file"
@@ -1296,7 +1296,7 @@ msgstr "Erreur de la somme des carré (%g) n'est pas > 0"
 
 #: lib/src/estimate.c:874
 msgid "Warning: data matrix close to singularity!"
-msgstr "AVERTISSEMENT: matrice des données est proche d'une matrice singuliaire!"
+msgstr "AVERTISSEMENT: la matrice des données est proche d'une matrice singuliaire!"
 
 #: lib/src/estimate.c:1271 lib/src/estimate.c:1340 lib/src/estimate.c:1392
 msgid "ESS"
