@@ -53,7 +53,7 @@ static GdkPixmap *pixmap = NULL;
 extern void file_selector (char *msg, char *startdir, int action, 
                            gpointer data);
 
-int ps_print_plots (const char *fname, gpointer data);
+int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
  
 /* ............................................................. */
@@ -106,7 +106,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     }
     else if (key->keyval == GDK_s) {
         file_selector("Save boxplot file", paths.userdir, 
-                      SAVE_BOXPLOT, data);
+                      SAVE_BOXPLOT_EPS, data);
     }
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
@@ -126,7 +126,14 @@ static gint popup_activated (GtkWidget *w, gpointer data)
         five_numbers(grp);
     else if (!strcmp(item, "Save as EPS...")) 
         file_selector("Save boxplot file", paths.userdir, 
-                      SAVE_BOXPLOT, ptr);
+                      SAVE_BOXPLOT_EPS, ptr);
+    else if (!strcmp(item, "Save as PS...")) 
+        file_selector("Save boxplot file", paths.userdir, 
+                      SAVE_BOXPLOT_PS, ptr);
+#ifdef G_OS_WIN32
+    else if (!strcmp(item, "Copy to clipboard"))
+	dummy_call();
+#endif
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);
 	grp->popup = NULL;
@@ -147,6 +154,10 @@ static GtkWidget *build_menu (gpointer data)
     static char *items[] = {
         "Five-number summary",
         "Save as EPS...",
+        "Save as PS...",
+#ifdef G_OS_WIN32
+	"Copy to clipboard",
+#endif	
         "Close",
 	NULL
     };
@@ -200,7 +211,7 @@ setup_text (GtkWidget *area, GdkGC *gc, GtkPlotPC *pc, char *text,
 				 &black, &white,  /* fore, back */
 				 FALSE,           /* transparent? */
 				 GTK_PLOT_BORDER_NONE, 0, 1, 0,
-				 "Helvetica", 11,
+				 "Helvetica", 12,
 				 just,
 				 text);
     } else {
@@ -498,24 +509,32 @@ compare_doubles (const void *a, const void *b)
 
 /* ............................................................. */
 
-int ps_print_plots (const char *fname, gpointer data) 
+int ps_print_plots (const char *fname, int flag, gpointer data) 
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
     GtkPlotPS *ps;
-    int i;
+    int i, eps = 1, orient = GTK_PLOT_PORTRAIT;
     gdouble pscale = 0.8;
 
+    if (flag == SAVE_BOXPLOT_PS) {
+	pscale = 1.2;
+	eps = 0;
+	orient = GTK_PLOT_LANDSCAPE;
+    }
+
     ps = GTK_PLOT_PS(gtk_plot_ps_new (fname, 
-				      GTK_PLOT_PORTRAIT, 
-				      TRUE, /* epsflag */
+				      orient, 
+				      eps, 
 				      GTK_PLOT_LETTER, 
 				      pscale, pscale)
 		     );
 
     if (ps == NULL) return 1;
 
-    ps->page_width = ps->pc.width = pscale * grp->winwidth;
-    ps->page_height = ps->pc.height = pscale * grp->winheight;
+    if (eps) {
+	ps->page_width = ps->pc.width = pscale * grp->winwidth;
+	ps->page_height = ps->pc.height = pscale * grp->winheight;
+    }
 
     if (!psinit (ps)) return 1;
     gtk_psfont_init();
@@ -621,6 +640,32 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     return 0;
 }
 
+#ifdef G_OS_WIN32
 
+static void
+CopyWndToClipboard (CWnd *pWnd)
+{
+    CBitmap bitmap, *pOldBitmap;
+    CClientDC dc(pWnd);
+    CDC memDC;
+    CRect rect;
 
+    memDC.CreateCompatibleDC(&dc); 
 
+    pWnd->GetWindowRect(rect);
+
+    bitmap.CreateCompatibleBitmap(&dc, rect.Width(), rect.Height());
+        
+    pOldBitmap = memDC.SelectObject(&bitmap);
+    memDC.BitBlt(0, 0, rect.Width(), rect.Height(), &dc, 0, 0, SRCCOPY); 
+
+    pWnd->OpenClipboard();
+    EmptyClipboard();
+    SetClipboardData(CF_BITMAP, bitmap.GetSafeHandle());
+    CloseClipboard();
+
+    memDC.SelectObject(pOldBitmap);
+    bitmap.Detach();
+}
+
+#endif
