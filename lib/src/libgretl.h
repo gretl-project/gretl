@@ -246,6 +246,16 @@ typedef struct {
     size_t bufsize;
 } PRN;
 
+typedef struct {
+    int ncoeff;
+    double *coeff;
+    double *sderr;
+    double sigma;
+    double ess;
+    double rsq;
+    double fstt;
+} mp_results;
+
 
 #include "commands.h"
 #include "errors.h"

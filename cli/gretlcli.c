@@ -20,12 +20,6 @@
 /* interactive client program for libgretl - 
    uses the GNU readline library if available */
 
-#ifndef OS_WIN32
-# include "../config.h"
-#else
-# include <windows.h>
-# include "winconfig.h"
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -33,8 +27,12 @@
 
 #include "libgretl.h"
 
+#ifdef OS_WIN32
+# include <windows.h>
+#endif
+
 #ifdef HAVE_READLINE
-#include <readline/readline.h>
+# include <readline/readline.h>
 /* readline functions from complete.c */
 extern char *rl_gets (char **line_read, int loop);
 extern void initialize_readline (void);
@@ -214,26 +212,24 @@ void file_get_line (void)
 }
 
 #ifdef ENABLE_NLS
-# ifdef OS_WIN32
 void nls_init (void)
 {
+# ifdef OS_WIN32
     char gretldir[MAXLEN], localedir[MAXLEN];
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
         return;
     sprintf(localedir, "%s\\locale", gretldir);
-    setlocale (LC_ALL, "");
-    bindtextdomain ("gretl", localedir);
-    textdomain ("gretl");    
-}
-# else
-void nls_init (void)
-{
-    setlocale (LC_ALL, "");
-    bindtextdomain (PACKAGE, LOCALEDIR);
-    textdomain (PACKAGE);
-}
 # endif /* OS_WIN32 */
+
+    setlocale (LC_ALL, "");
+# ifdef OS_WIN32
+    bindtextdomain (PACKAGE, localedir);
+# else
+    bindtextdomain (PACKAGE, LOCALEDIR);
+# endif
+    textdomain (PACKAGE);    
+}
 #endif /* ENABLE_NLS */
 
 
@@ -301,7 +297,7 @@ int main (int argc, char *argv[])
     set_paths(&paths, 0, 0); /* not defaults; use registry info */
 #else
     make_userdir(&paths);
-#endif
+#endif /* OS_WIN32 */
 
     if (!batch) {
 	strcpy(cmdfile, paths.userdir);
@@ -329,7 +325,7 @@ int main (int argc, char *argv[])
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
 	else if (err == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, paths.datfile, &prn);
-	else if (err == GRETL_SCRIPT) { /* actually it's a script file? */
+	else if (err == GRETL_SCRIPT) { /* maybe it's a script file? */
 	    runit = 1;
 	    strcpy(runfile, paths.datfile); 
 	    clear(paths.datfile, MAXLEN);
@@ -433,23 +429,24 @@ int main (int argc, char *argv[])
 	    monte_carlo_free(&loop);
 	    clear(line, MAXLINE);
 	    if (j == MAXLOOP) return 1;
-#ifdef HAVE_READLINE
-	} else if (!runit && !batch) { /* normal interactive use */
-	    rl_gets(&line_read, (loopstack)? 1 : 0);
-	    if (line_read == NULL) strcpy(line, "quit");
-	    else strcpy(line, line_read);
-	} else { 
-	    file_get_line();
 	}
+	else { /* not looprun */
+#ifdef HAVE_READLINE
+	    if (!runit && !batch) { /* normal interactive use */
+		rl_gets(&line_read, (loopstack)? 1 : 0);
+		if (line_read == NULL) strcpy(line, "quit");
+		else strcpy(line, line_read);
+	    } else { 
+		file_get_line();
+	    }
 #else
-        } else { 
 	    if (!runit && !batch) { /* normal interactive use */
 		printf("%s", (loopstack)? "> " : "? ");
 		fflush(stdout);
 	    }
 	    file_get_line();
-	}
-#endif
+#endif /* HAVE_READLINE */
+	} /* end of not looprun branch */
 
 	if (strncmp(line, "quit", 4)) {
 	    /* allow for backslash continuation of lines */
@@ -464,7 +461,7 @@ int main (int argc, char *argv[])
 		}
 #else
 		fgets(tmp, MAXLEN-1, fb);
-#endif
+#endif /* HAVE_READLINE */
 		strcat(line, tmp);
 		compress_spaces(line);
 	    }
@@ -1024,6 +1021,10 @@ void exec_line (char *line, PRN *prn)
 #ifdef ENABLE_GMP
     case MPOLS:
 	err = mp_ols(command.list, command.param, &Z, datainfo, prn);
+	if (err) {
+	    pprintf(prn, _("mpols command failed\n"));
+	    errmsg(err, prn);
+	}
 	break;
 #endif
 

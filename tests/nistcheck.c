@@ -29,53 +29,16 @@
 
 #define MAX_DIGITS 9
 #define MIN_DIGITS 4
+#define MP_CHECK_DIGITS 12
+
+#ifdef USE_GMP
+# define LIBGRETLSTR "Standard libgretl:"
+#else
+# define LIBGRETLSTR "libgretl"
+#endif
 
 int verbose;
 int noint;
-
-typedef struct {
-    double *coeff;
-    double *sderr;
-    double sigma;
-    double ess;
-    double rsq;
-    double fstt;
-} nist_results;
-
-void free_nist_results (nist_results *certvals)
-{
-    if (certvals != NULL) {
-	free(certvals->coeff);
-	free(certvals->sderr);
-	free(certvals);
-    }
-}
-
-nist_results *nist_results_new (int nvar, int polyterms)
-{
-    nist_results *certvals;
-    int i, totvar = nvar + polyterms;
-
-    certvals = malloc(sizeof *certvals);
-    if (certvals == NULL) return NULL;
-
-    certvals->coeff = malloc(totvar * sizeof(double));
-    certvals->sderr = malloc(totvar * sizeof(double));
-
-    if (certvals->coeff == NULL || 
-	certvals->sderr == NULL) {
-	free_nist_results(certvals);
-	return NULL;
-    }
-
-    for (i=0; i<totvar; i++) certvals->coeff[i] = NADBL;
-    for (i=0; i<totvar; i++) certvals->sderr[i] = NADBL;
-
-    certvals->sigma = certvals->ess = NADBL;
-    certvals->rsq = certvals->fstt = NADBL;
-
-    return certvals;
-}
 
 /* special stuff:
 
@@ -120,8 +83,8 @@ int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
     return 0;
 } 
 
-int grab_nist_results (FILE *fp, nist_results *certvals, 
-		       int nlines)
+int grab_mp_results (FILE *fp, mp_results *certvals, 
+		     int nlines)
 {
     int i = 0, lcount = 0, check;
     char line[MAXLEN];
@@ -197,7 +160,8 @@ void get_level (const char *line, char *s)
 int read_nist_file (const char *fname, 
 		    double ***pZ,
 		    DATAINFO **pdinfo,
-		    nist_results **pcertvals)
+		    mp_results **pcertvals,
+		    int *polyterms)
 {
     FILE *fp;    
     char *p, line[MAXLEN], difficulty[48];
@@ -206,8 +170,8 @@ int read_nist_file (const char *fname,
     int lcount = 0, nvar = 0, nobs = 0;
     double **Z = NULL;
     DATAINFO *dinfo = NULL;
-    nist_results *certvals = NULL;
-    int i, t, polyterms = 0;
+    mp_results *certvals = NULL;
+    int i, t, npoly = 0;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -219,9 +183,9 @@ int read_nist_file (const char *fname,
     if (verbose) printf("\n");
 
     /* allow for generated data: powers of x */
-    if (strstr(fname, "Pontius")) polyterms = 1;
-    if (strstr(fname, "Filip")) polyterms = 9;
-    if (strstr(fname, "Wampler")) polyterms = 4;
+    if (strstr(fname, "Pontius")) npoly = 1;
+    if (strstr(fname, "Filip")) npoly = 9;
+    if (strstr(fname, "Wampler")) npoly = 4;
     if (strstr(fname, "NoInt")) noint = 1;
     else noint = 0;
 
@@ -273,7 +237,7 @@ int read_nist_file (const char *fname,
 	/* allocate results struct once we know its size */
 	if (nvar > 0 && nobs > 0 && certvals == NULL) {	
 	    
-	    certvals = nist_results_new(nvar, polyterms);
+	    certvals = gretl_mp_results_new(nvar + npoly);
 	    if (certvals == NULL) {
 		fclose(fp);
 		return 1;
@@ -283,10 +247,10 @@ int read_nist_file (const char *fname,
 	/* allocate data matrix once we know its size */
 	if (nvar > 0 && nobs > 0 && Z == NULL) {
 
-	    dinfo = create_new_dataset(&Z, nvar + 1 + polyterms, 
+	    dinfo = create_new_dataset(&Z, nvar + 1 + npoly, 
 				       nobs, 0);
 	    if (dinfo == NULL) {
-		free_nist_results(certvals);
+		free_gretl_mp_results(certvals);
 		fclose(fp);
 		return 1;
 	    }
@@ -302,7 +266,7 @@ int read_nist_file (const char *fname,
 	    } else {
 		int nlines = cstop - cstart + 1;
 
-		if (grab_nist_results(fp, certvals, nlines)) {
+		if (grab_mp_results(fp, certvals, nlines)) {
 		    fclose(fp);
 		    return 1;
 		}
@@ -318,7 +282,7 @@ int read_nist_file (const char *fname,
 		fclose(fp);
 		return 1;
 	    } else {
-		if (grab_nist_data(fp, Z, dinfo, polyterms)) {
+		if (grab_nist_data(fp, Z, dinfo, npoly)) {
 		    fclose(fp);
 		    return 1;
 		}
@@ -340,9 +304,9 @@ int read_nist_file (const char *fname,
 	}
     }
 
-    if (polyterms && verbose) printf("\n");
+    if (npoly && verbose) printf("\n");
 
-    for (i=2; i<=polyterms+1; i++) {
+    for (i=2; i<=npoly+1; i++) {
 	if (verbose) {
 	    printf("Generating var %d, 'x^%d' = x ** %d\n", i+1, i, i);
 	}
@@ -356,6 +320,7 @@ int read_nist_file (const char *fname,
     *pZ = Z;
     *pdinfo = dinfo;
     *pcertvals = certvals;
+    *polyterms = npoly;
     return 0;
 }
 
@@ -378,7 +343,7 @@ int doubles_differ (const char *v1, const char *v2)
     return (atof(v1) - atof(v2) != 0.0);
 }
 
-int results_agree (MODEL *pmod, nist_results *certvals, DATAINFO *dinfo,
+int results_agree (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo,
 		   int digits)
 {
     int i;
@@ -436,7 +401,7 @@ int results_agree (MODEL *pmod, nist_results *certvals, DATAINFO *dinfo,
     return 1;
 }
 
-int get_accuracy (MODEL *pmod, nist_results *certvals, DATAINFO *dinfo)
+int get_accuracy (MODEL *pmod, mp_results *certvals, DATAINFO *dinfo)
 {
     int digits;
 
@@ -448,28 +413,331 @@ int get_accuracy (MODEL *pmod, nist_results *certvals, DATAINFO *dinfo)
     return 0;
 }
 
-void print_nist_summary (int missing, int modelerrs, int poorvals,
+void print_nist_summary (int ntests, int missing, int modelerrs, 
+			 int poorvals, int mpfails,
 			 const char *prog)
 {
+#ifdef USE_GMP
     printf("\nSummary of NIST test results:\n"
+	   " * number of tests carried out: %d\n"
+	   " * reference data files missing or corrupted: %d\n"
+	   " * unexpected errors in estimation of models: %d\n"
+	   " * poor or unacceptable results with libgretl: %d\n"
+	   " * cases where results from the gretl GMP plugin, printed using %d\n"
+	   "   significant figures, disagreed with the NIST"
+	   " certified values: %d\n",
+	   ntests - missing, missing, modelerrs, poorvals,
+	   MP_CHECK_DIGITS, mpfails);
+#else
+    printf("\nSummary of NIST test results:\n"
+	   "  number of tests carried out: %d\n"
 	   "  reference data files missing or corrupted: %d\n"
 	   "  unexpected errors in estimation of models: %d\n"
-	   "  models showing poor or unacceptable results: %d\n\n",
-	   missing, modelerrs, poorvals);
+	   "  models showing poor or unacceptable results: %d\n",
+	   ntests - missing, missing, modelerrs, poorvals);
+#endif /* USE_GMP */
 
-    printf("You may run '%s -v' or '%s -vv' for details\n\n",
+    printf("\nYou may run '%s -v' or '%s -vv' for details\n\n",
 	   prog, prog);
+}
+
+#ifdef USE_GMP
+
+#ifdef OS_WIN32
+# include <windows.h>
+#else
+# include <dlfcn.h>
+#endif
+
+int open_mpols_plugin (void **handle)
+{
+#ifdef OS_WIN32
+    *handle = LoadLibrary("..\\plugins\\mp_ols.dll");
+    if (*handle == NULL) return 1;
+#else 
+    *handle = dlopen("../plugin/.libs/mp_ols.so", RTLD_LAZY);
+    if (*handle == NULL) {
+	fprintf(stderr, "%s\n", dlerror());
+	return 1;
+    }
+#endif /* OS_WIN32 */
+    return 0;
+}
+
+int mp_vals_differ (double x, double y, double *diff)
+{
+    char xstr[32], ystr[32];
+    int ret;
+
+    sprintf(xstr, "%#.*g", MP_CHECK_DIGITS, x);
+    sprintf(ystr, "%#.*g", MP_CHECK_DIGITS, y);
+
+    if (strcmp(xstr, "inf") == 0 && strncmp(ystr, "-999", 4) == 0) {
+	return 0;
+    }
+
+    if (x == 0.0 && y < DBL_EPSILON) return 0;
+
+    ret = (atof(xstr) != atof(ystr));
+
+    if (strcmp(xstr, "inf")) *diff = fabs (y - x);
+
+    if (ret && verbose && strcmp(xstr, "inf")) {
+	printf(" ** using gretl GMP plugin: results differ by "
+	       "%#.*g\n", MP_CHECK_DIGITS, *diff);
+    }
+
+    return ret;
+}
+
+int run_gretl_mp_comparison (const char *datname,
+			     double ***pZ, DATAINFO *dinfo, 
+			     mp_results *certvals, int npoly,
+			     int *mpfails, PRN *prn)
+{
+    void *handle;
+    int (*mplsq)(const int *, const int *, double ***, 
+                 DATAINFO *, PRN *, char *, mp_results *);
+    int *list = NULL, *polylist = NULL;
+    char errbuf[MAXLEN];
+    int i, err = 0;
+    int getvals = 1, realv = dinfo->v - npoly;
+    mp_results *gretlvals = NULL;
+    double diffmax = 0.0, diff = 0.0;
+
+    /* create regression list */
+    list = malloc((realv + 1) * sizeof *list);
+    if (list == NULL) return 1;
+
+    list[0] = realv - noint;
+    if (!noint) list[realv] = 0;
+    for (i=1; i<realv; i++) {
+	list[i] = i;
+    }
+
+    /* set up list of polynomial terms, if needed */
+    if (npoly) {
+	polylist = malloc((npoly + 1) * sizeof *polylist);
+	if (polylist == NULL) {
+	    free(list);
+	    return 1;
+	}
+	polylist[0] = npoly;
+	for (i=1; i<=npoly; i++) {
+	    polylist[i] = i + 1;
+	}
+    }
+
+    if (getvals) gretlvals = gretl_mp_results_new (certvals->ncoeff);
+
+    if (open_mpols_plugin(&handle)) {
+        fprintf(stderr, "Couldn't access GMP plugin\n");
+	free(list);
+        return 1;
+    }
+
+    mplsq = get_plugin_function("mplsq", handle);
+    if (mplsq == NULL) {
+        fprintf(stderr, "Couldn't load mplsq function\n");
+        err = 1;
+    }
+
+    if (!err) {
+        err = (*mplsq)(list, polylist, pZ, dinfo, prn, 
+                       errbuf, gretlvals); 
+    }
+
+    close_plugin(handle);
+    free(list);
+    if (polylist) free(polylist);
+
+    if (gretlvals != NULL) {
+
+	if (verbose) {
+	    printf("\nChecking gretl multiple-precision results:\n\n"
+		   "%44s%24s\n\n", "certified", "libgretl");
+	}
+
+	for (i=0; i<certvals->ncoeff; i++) {
+	    char label[16];
+
+	    if (verbose && !na(certvals->coeff[i])) {
+		sprintf(label, "B[%d] estimate", i);
+		printf(" %-20s %#24.*g %#24.*g\n",
+		       label,
+		       MP_CHECK_DIGITS, certvals->coeff[i],
+		       MP_CHECK_DIGITS, gretlvals->coeff[i]);
+	    }
+
+	    if (mp_vals_differ(certvals->coeff[i], gretlvals->coeff[i],
+			       &diff)) {
+		if (diff > diffmax) diffmax = diff;
+	    }
+		
+
+	    if (verbose && !na(certvals->sderr[i])) {
+		printf(" %-20s %#24.*g %#24.*g\n",
+		       "(std. error)",
+		       MP_CHECK_DIGITS, certvals->sderr[i],
+		       MP_CHECK_DIGITS, gretlvals->sderr[i]);
+	    }
+
+	    if (mp_vals_differ(certvals->sderr[i], gretlvals->sderr[i],
+			       &diff)) {
+		if (diff > diffmax) diffmax = diff;
+	    }
+
+	}
+
+	if (verbose) {
+	    putchar('\n');
+
+	    printf(" %-20s %#24.*g %#24.*g\n"
+		   " %-20s %#24.*g %#24.*g\n"
+		   " %-20s %#24.*g %#24.*g\n"
+		   " %-20s %#24.*g %#24.*g\n", 
+		   "standard error", 
+		   MP_CHECK_DIGITS, certvals->sigma, 
+		   MP_CHECK_DIGITS, gretlvals->sigma,
+		   "error sum of squares", 
+		   MP_CHECK_DIGITS, certvals->ess, 
+		   MP_CHECK_DIGITS, gretlvals->ess,
+		   "R-squared", 
+		   MP_CHECK_DIGITS, certvals->rsq, 
+		   MP_CHECK_DIGITS, gretlvals->rsq,
+		   "F", 
+		   MP_CHECK_DIGITS, certvals->fstt, 
+		   MP_CHECK_DIGITS, gretlvals->fstt);
+	}
+
+	if (mp_vals_differ(certvals->sigma, gretlvals->sigma, &diff)) {
+	    if (diff > diffmax) diffmax = diff;
+	}
+	if (mp_vals_differ(certvals->ess, gretlvals->ess, &diff)) {
+	    if (diff > diffmax) diffmax = diff;
+	}
+	if (mp_vals_differ(certvals->rsq, gretlvals->rsq, &diff)) {
+	    if (diff > diffmax) diffmax = diff;
+	}
+	if (mp_vals_differ(certvals->fstt, gretlvals->fstt, &diff)) {
+	    if (diff > diffmax) diffmax = diff;
+	}
+
+	if (verbose) putchar('\n');
+
+	if (diffmax > 0.0) {
+	    *mpfails += 1;
+	    printf("* Using gretl GMP plugin: errors found when using"
+		   " %d significant figures\n  (largest error = %g)\n",
+		   MP_CHECK_DIGITS, diffmax);
+	} else {
+	    printf("* Using gretl GMP plugin: results correct to"
+		   " at least %d digits\n",
+		   MP_CHECK_DIGITS);
+	}
+
+	free_gretl_mp_results (gretlvals);
+    }
+
+    return err;
+}
+
+#endif /* USE_GMP */
+
+int run_gretl_comparison (const char *datname,
+			  double ***pZ, DATAINFO *dinfo, 
+			  mp_results *certvals,
+			  int *errs, int *poor,
+			  PRN *prn)
+{
+    int *list = NULL;
+    MODEL *model = NULL;
+    int i, acc;
+    static int modelnum;
+
+    list = malloc((dinfo->v + 1) * sizeof *list);
+    if (list == NULL) return 1;
+
+    list[0] = dinfo->v - noint;
+    if (!noint) list[dinfo->v] = 0;
+    for (i=1; i<dinfo->v; i++) {
+	list[i] = i;
+    }
+
+    model = gretl_model_new(dinfo);
+    *model = lsq(list, pZ, dinfo, OLS, 1, 0.0);
+
+    if (model->errcode) {
+	if (verbose) printf("\n");
+	printf("gretl error code: %d\n", model->errcode);
+	errmsg(model->errcode, prn);
+
+	if (strcmp(datname, "Filip.dat") == 0 &&
+	    model->errcode == E_SINGULAR) {
+	    printf("(This error was expected%s)\n",
+#ifdef USE_GMP
+		   " with standard libgretl"
+#else
+		   ""
+#endif
+		   );
+	} else *errs += 1;
+
+	goto free_stuff;
+    }
+
+    if (verbose) {
+	model->ID = ++modelnum;
+	printmodel(model, dinfo, prn);
+    }
+
+    /* special treatment when there's no intercept */
+    if (noint) {
+	double xx = 0.0;
+	int t;
+
+	for (t=0; t<dinfo->n; t++) xx += (*pZ)[1][t] *  (*pZ)[1][t];
+	model->rsq = 1.0 - model->ess / xx;
+    } else {
+	model->coeff[0] = model->coeff[model->ncoeff];
+	model->sderr[0] = model->sderr[model->ncoeff];
+    }
+
+    acc = get_accuracy(model, certvals, dinfo);
+
+    if (verbose) printf("\n ***");
+
+    if (acc >= 6) {
+	printf("* %s results correct to at least %d digits\n", 
+	       LIBGRETLSTR, acc);
+    }
+    else if (acc == 4 || acc == 5) {
+	printf("* %s results correct to only %d digits: "
+	       "POOR\n", LIBGRETLSTR, acc);
+	*poor += 1;
+    }
+    else {
+	printf("* %s results correct to less than "
+	       "%d digits: UNACCEPTABLE\n", LIBGRETLSTR, MIN_DIGITS);
+	*poor += 1;
+    }
+
+ free_stuff:
+    free(list);
+    free_model(model);
+
+    return 0;
 }
 
 int main (int argc, char *argv[])
 {
-    int i, j, acc;
+    int j;
     PRN *prn;
     double **Z = NULL;
     DATAINFO *datainfo;
-    nist_results *certvals = NULL;
-    int modelnum = 0;
-    int missing = 0, modelerrs = 0, poorvals = 0;
+    mp_results *certvals = NULL;
+    int ntests, missing = 0, modelerrs = 0, poorvals = 0;
+    int polyterms = 0, mpfails = 0;
     const char *prog;
 
     const char *nist_files[] = { 
@@ -486,90 +754,43 @@ int main (int argc, char *argv[])
 	"Wampler5.dat"
     };
 
+    ntests = sizeof nist_files / sizeof *nist_files;
+
     prog = argv[0];
     if (argc == 2 && strcmp(argv[1], "-v") == 0) verbose = 1;
     if (argc == 2 && strcmp(argv[1], "-vv") == 0) verbose = 2;
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
 
-    for (j=0; j<sizeof nist_files / sizeof *nist_files; j++) {
-	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals)) {
+    for (j=0; j<ntests; j++) {
+	if (read_nist_file(nist_files[j], &Z, &datainfo, &certvals,
+			   &polyterms)) {
+
 	    fprintf(stderr, "Error processing %s\n", nist_files[j]);
 	    missing++;
+
 	} else {
-	    int *list = malloc((datainfo->v + 1) * sizeof *list);
-	    MODEL *model = NULL;
 
-	    list[0] = datainfo->v - noint;
-	    if (!noint) list[datainfo->v] = 0;
-	    for (i=1; i<datainfo->v; i++) {
-		list[i] = i;
-	    }
+	    run_gretl_comparison (nist_files[j], &Z, datainfo, certvals,
+				  &modelerrs, &poorvals, prn);
 
-	    model = gretl_model_new(datainfo);
-	    *model = lsq(list, &Z, datainfo, OLS, 1, 0.0);
+#ifdef USE_GMP
+	    run_gretl_mp_comparison (nist_files[j], &Z, datainfo, certvals,
+				     polyterms, &mpfails, prn);
+#endif
 
-	    if (model->errcode) {
-		if (verbose) printf("\n");
-		printf("gretl error code: %d\n", model->errcode);
-		errmsg(model->errcode, prn);
-
-		if (strcmp(nist_files[j], "Filip.dat") == 0 &&
-		    model->errcode == E_SINGULAR) {
-		    printf("(This error was expected)\n");
-		} else modelerrs++;
-
-		goto free_stuff;
-	    }
-
-	    if (verbose) {
-		model->ID = ++modelnum;
-		printmodel(model, datainfo, prn);
-	    }
-
-	    /* special treatment when there's no intercept */
-	    if (noint) {
-		double xx = 0.0;
-		int t;
-
-		for (t=0; t<datainfo->n; t++) xx += Z[1][t] *  Z[1][t];
-		model->rsq = 1.0 - model->ess / xx;
-	    } else {
-		model->coeff[0] = model->coeff[model->ncoeff];
-		model->sderr[0] = model->sderr[model->ncoeff];
-	    }
-
-	    acc = get_accuracy(model, certvals, datainfo);
-
-	    if (verbose) printf("\n *** ");
-
-	    if (acc >= 6) {
-		printf("Libgretl results correct to %d digits: OK\n", acc);
-	    }
-	    else if (acc == 4 || acc == 5) {
-		printf("Libgretl results correct to only %d digits: "
-		       "POOR\n", acc);
-		poorvals++;
-	    }
-	    else {
-		printf("Libgretl results correct to less than "
-		       "%d digits: UNACCEPTABLE\n", MIN_DIGITS);
-		poorvals++;
-	    }
-
-	free_stuff:
-	    free(list);
-	    free_model(model);
-	    free_nist_results(certvals);
+	    free_gretl_mp_results(certvals);
 	    certvals = NULL;
 	    free_Z(Z, datainfo);
 	    Z = NULL;
 	    free_datainfo(datainfo);
 	    datainfo = NULL;
+	    
 	}
     }
 
-    print_nist_summary(missing, modelerrs, poorvals, prog);
+    print_nist_summary(ntests, missing, modelerrs, poorvals, mpfails,
+		       prog);
 
     gretl_print_destroy(prn);
 

@@ -1,16 +1,25 @@
 CC = @CC@
 CFLAGS = @CFLAGS@
+have_gtk = @have_gtk@
+GMP_LIBS = @GMP_LIBS@
 
 ifeq ($(CC),)
   CC = gcc
 endif
 
-LIBGRETL = ../lib/libgretl.la
+ifeq ($(have_gtk),2.0)
+  LIBGRETL = ../lib/libgretl-2.la
+else
+  LIBGRETL = ../lib/libgretl.la
+endif
 
-override CFLAGS += -I../lib/src
+ifeq ($(GMP_LIBS),)
+  DEFINES = -DNO_GMP
+else
+  DEFINES = -DUSE_GMP
+endif
 
-STANDALONE_CFLAGS = `gretl-config --cflags`
-STANDALONE_LIBS = `gretl-config --libs`
+override CFLAGS += -I../lib/src $(DEFINES)
 
 SRC = nistcheck.c
 OBJ = nistcheck.o
@@ -26,9 +35,6 @@ $(PROG): $(OBJ)
 
 check: $(PROG)
 	./$(PROG)
-
-standalone: $(SRC)
-	$(CC) $(STANDALONE_CFLAGS) $< -o $@ $(STANDALONE_LIBS)
 
 clean:
 	rm -f $(PROG) $(OBJ)

@@ -1092,7 +1092,7 @@ int mp_ols (const LIST list, const char *pos,
 {
     void *handle;
     int (*mplsq)(const int *, const int *, double ***, 
-		 DATAINFO *, PRN *, char *);
+		 DATAINFO *, PRN *, char *, mp_results *);
     const int *reglist = NULL;
     int *polylist = NULL, *tmplist = NULL;
     int err = 0;
@@ -1121,7 +1121,8 @@ int mp_ols (const LIST list, const char *pos,
     }
 
     if (!err) {
-	err = (*mplsq)(reglist, polylist, pZ, pdinfo, prn, gretl_errmsg);
+	err = (*mplsq)(reglist, polylist, pZ, pdinfo, prn, 
+		       gretl_errmsg, NULL); 
     }
 
     close_plugin(handle);

@@ -27,7 +27,7 @@ endif
 ifeq ($(USE_NLS),yes)
   datadir = @datadir@
   localedir = $(datadir)/locale
-  DEFS = -DLOCALEDIR=\"$(localedir)\"
+  DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 endif
 ifeq ($(have_gtk),2.0)
   GRETLLIB = ../lib/libgretl-2.la
@@ -44,7 +44,7 @@ libsrc = $(topsrc)/lib/src
 
 #### End of system configuration section. ####
 
-override CFLAGS += -I. -I$(libsrc) $(DEFS)
+override CFLAGS += -I. -I.. -I$(libsrc) $(DEFS)
 
 CLI = gretlcli
 LIBTOOL = $(topsrc)/libtool

@@ -2214,6 +2214,47 @@ double get_xvalue (int i, double **Z, const DATAINFO *pdinfo)
 	return Z[i][0];	
 }
 
+/* ........................................................... */
+
+void free_gretl_mp_results (mp_results *mpvals)
+{
+    if (mpvals != NULL) {
+	free(mpvals->coeff);
+	free(mpvals->sderr);
+	free(mpvals);
+    }
+}
+
+/* ........................................................... */
+
+mp_results *gretl_mp_results_new (int totvar)
+{
+    mp_results *mpvals;
+    int i;
+
+    mpvals = malloc(sizeof *mpvals);
+    if (mpvals == NULL) return NULL;
+
+    mpvals->ncoeff = totvar;
+
+    mpvals->coeff = malloc(totvar * sizeof(double));
+    mpvals->sderr = malloc(totvar * sizeof(double));
+
+    if (mpvals->coeff == NULL || 
+	mpvals->sderr == NULL) {
+	free_gretl_mp_results(mpvals);
+	return NULL;
+    }
+
+    for (i=0; i<totvar; i++) mpvals->coeff[i] = NADBL;
+    for (i=0; i<totvar; i++) mpvals->sderr[i] = NADBL;
+
+    mpvals->sigma = mpvals->ess = NADBL;
+    mpvals->rsq = mpvals->fstt = NADBL;
+
+    return mpvals;
+}
+
 
 
 

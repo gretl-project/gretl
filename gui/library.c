@@ -1751,7 +1751,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     char *edttext, estimator[9];
     void *handle;
     int (*mplsq)(const int *, const int *,
-		 double ***, DATAINFO *, PRN *, char *);
+		 double ***, DATAINFO *, PRN *, char *, mp_results *);
     int err, action;
     selector *sr = (selector *) p;
     PRN *prn;
@@ -1776,7 +1776,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = (*mplsq)(command.list, NULL, &Z, datainfo, prn, errtext);
+    err = (*mplsq)(command.list, NULL, &Z, datainfo, prn, errtext, NULL);
 
     close_plugin(handle);
 

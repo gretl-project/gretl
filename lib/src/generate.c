@@ -2502,12 +2502,13 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 static int genr_mpow (const char *str, double *xvec, double **Z, 
 		      DATAINFO *pdinfo)
 {
-    int err, v, pwr;
+    int err, v;
+    unsigned pwr;
     char vname[9];
     void *handle = NULL;
-    int (*mp_raise) (const double *, double *, int, int);
+    int (*mp_raise) (const double *, double *, int, unsigned);
     
-    if (sscanf(str, "%[^,],%d", vname, &pwr) != 2) {
+    if (sscanf(str, "%[^,],%u", vname, &pwr) != 2) {
 	return 1;
     }
 
