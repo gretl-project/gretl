@@ -2786,13 +2786,12 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	y > plot->pixel_ymin && y < plot->pixel_ymax) {
 	double data_x, data_y;
 
-	if (!get_data_xy(plot, x, y, &data_x, &data_y)) {
-	    /* FIXME: x may be available even if y is not */
-	    return TRUE;
-	}
+	get_data_xy(plot, x, y, &data_x, &data_y);
+	if (na(data_x)) return TRUE;
 
 	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250 &&
-	    !(plot_has_no_labels(plot)) && !plot_is_zooming(plot)) {
+	    !(plot_has_no_labels(plot)) && !plot_is_zooming(plot) &&
+	    !na(data_y)) {
 	    identify_point(plot, x, y, data_x, data_y);
 	}
 
@@ -2806,6 +2805,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	    sprintf(label_y, (plot->yint)? " %-7.0f" : " %-7.4g", data_y);
 	    strcat(label, label_y);
 	}
+
 	if (plot_is_zooming(plot) && (state & GDK_BUTTON1_MASK)) {
 	    draw_selection_rectangle(plot, x, y);
 	}
@@ -3225,7 +3225,6 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 
 	if (!get_data_xy(plot, event->x, event->y, 
 			 &plot->zoom->xmax, &plot->zoom->ymax)) {
-	    /* FIXME: think about this */
 	    return TRUE;
 	}
 
@@ -3643,6 +3642,8 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	    }
 	}
     }
+
+    /* FIXME: need to react to failure above */
 
     set_approx_pixel_bounds(plot, max_ywidth, max_y2width);
     
