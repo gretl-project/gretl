@@ -26,9 +26,8 @@
 # include <windows.h>
 #endif
 
-static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  PRN *prn);
-
+static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
+                         PRN *prn);
 
 #ifdef G_OS_WIN32
 

@@ -1142,7 +1142,7 @@ static char *model_cmd_str (MODEL *pmod)
     sprintf(str, "%s ", commands[pmod->ci]);
 
     if (pmod->ci == AR) {
-        store_list(pmod->arlist, str);
+        store_list(pmod->arinfo->arlist, str);
         strcat(str, "; ");
     }
     store_list(pmod->list, str);    
@@ -1169,7 +1169,7 @@ static char *graph_str (GRAPHT *graph)
 		gotxy++;
 	}
 	if (gotxy == 2 && (str = malloc(64))) {
-	    sprintf(str, "%s versus %s\n", ylabel, xlabel);
+	    sprintf(str, "%s versus %s", ylabel, xlabel);
 	}
 	fclose(fp);
     }

@@ -145,10 +145,10 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), SAVE_OUTPUT, mydata->w);
+	file_selector(_("Save output file"), SAVE_OUTPUT, mydata);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), SAVE_CONSOLE, mydata->w);
+	file_selector(_("Save console output"), SAVE_CONSOLE, mydata);
 	break;
     case SAVE_CMDS: 
 	file_selector(_("Save command log"), SAVE_CMDS, mydata);
@@ -189,7 +189,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	file_selector(_("Save LaTeX file"), file_code, mydata->data);
 	break;
     case SAVE_MODEL:
-	file_selector(_("Save model output"), file_code, mydata->w);
+	file_selector(_("Save model output"), file_code, mydata);
 	break;
     case SAVE_GP_CMDS:
 	file_selector(_("Save gnuplot commands"), file_code, mydata->w);

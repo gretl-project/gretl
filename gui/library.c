@@ -1368,20 +1368,25 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 {
     int i, nt = pmod->ntests;
 
-    if (nt == 0) 
-	pmod->tests = malloc(sizeof(GRETLTEST));
-    else {
-	for (i=0; i<nt; i++) 
-	    if (strcmp(test->type, pmod->tests[i].type) == 0)
-		return -1;
-	pmod->tests = myrealloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
+    if (nt == 0) {
+        pmod->tests = malloc(sizeof(GRETLTEST));
+    } else {
+        for (i=0; i<nt; i++) {
+            if (strcmp(test->type, pmod->tests[i].type) == 0) {
+                return -1;
+	    }
+	}
+        pmod->tests = myrealloc(pmod->tests, (nt + 1) * sizeof(GRETLTEST));
     }
     if (pmod->tests == NULL) return 1;
 
     strcpy(pmod->tests[nt].type, test->type);
     strcpy(pmod->tests[nt].h_0, test->h_0);
-    strcpy(pmod->tests[nt].teststat, test->teststat);
-    strcpy(pmod->tests[nt].pvalue, test->pvalue);
+    pmod->tests[nt].teststat = test->teststat;
+    pmod->tests[nt].value = test->value;
+    pmod->tests[nt].dfn = test->dfn;
+    pmod->tests[nt].dfd = test->dfd;
+    pmod->tests[nt].pvalue = test->pvalue;
 
     pmod->ntests += 1;
 
@@ -1392,22 +1397,30 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
-    gchar *tempstr;
+    if (w == NULL) {
+        return;
+    } else {
+        char test_str[64], pval_str[64];
+        gchar *tempstr;
 
-    if (w == NULL) return;
+        get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
+        get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
 
-    tempstr = g_strdup_printf(_("%s -\n"
-			      "  Null hypothesis: %s\n"
-			      "  Test statistic: %s\n"
-			      "  with p-value = %s\n\n"),
-			      test->type, test->h_0, 
-			      test->teststat, test->pvalue);
+        tempstr = g_strdup_printf("%s -\n"
+                                  "  %s: %s\n"
+                                  "  %s: %s\n"
+                                  "  %s = %s\n\n",
+                                  _(test->type), 
+                                  _("Null hypothesis"), _(test->h_0), 
+                                  _("Test statistic"), test_str, 
+                                  _("with p-value"), pval_str);
 
-    gtk_text_freeze(GTK_TEXT (w));
-    gtk_text_insert(GTK_TEXT (w), fixed_font, NULL, NULL, tempstr, 
-		    strlen(tempstr));
-    gtk_text_thaw(GTK_TEXT (w));
-    g_free(tempstr);
+	gtk_text_freeze(GTK_TEXT (w));
+	gtk_text_insert(GTK_TEXT (w), fixed_font, NULL, NULL, tempstr, 
+			strlen(tempstr));
+	gtk_text_thaw(GTK_TEXT (w));
+	g_free(tempstr);
+    }
 }
 
 /* ........................................................... */
@@ -2243,8 +2256,10 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
     strcpy(test->type, _("Test for normality of residual"));
     strcpy(test->h_0, _("error is normally distributed"));
-    sprintf(test->teststat, _("Chi-squared(2) = %.3f"), freq->chisqu);
-    sprintf(test->pvalue, "%f", chisq(freq->chisqu, 2));
+    test->teststat = GRETL_TEST_CHISQ;
+    test->value = freq->chisqu;
+    test->dfn = 2;
+    test->pvalue = chisq(freq->chisqu, 2);
 }
 
 /* ........................................................... */
