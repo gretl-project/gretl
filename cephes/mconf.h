@@ -60,6 +60,10 @@
 Cephes Math Library Release 2.3:  June, 1995
 Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 */
+
+#ifndef CEPHES_MCONF_H
+#define CEPHES_MCONF_H
+
 
 
 #ifdef WIN32
@@ -77,15 +81,18 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 /* Constant definitions for math error conditions
  */
 
+#ifndef _WIN32
 #define DOMAIN		1	/* argument domain error */
 #define SING		2	/* argument singularity */
 #define OVERFLOW	3	/* overflow range error */
 #define UNDERFLOW	4	/* underflow range error */
 #define TLOSS		5	/* total loss of precision */
 #define PLOSS		6	/* partial loss of precision */
+#endif
 
 #define EDOM		33
 #define ERANGE		34
+
 /* Complex numeral.  */
 typedef struct
 	{
@@ -129,9 +136,10 @@ typedef struct
 /* If you define UNK, then be sure to set BIGENDIAN properly. */
 #ifdef FLOAT_WORDS_BIGENDIAN
 #define BIGENDIAN 1
-#else
-#define BIGENDIAN 0
+/* #else */
+/* #define BIGENDIAN 0 */
 #endif
+
 /* Define this `volatile' if your compiler thinks
  * that floating point arithmetic obeys the associative
  * and distributive laws.  It will defeat some optimizations
@@ -171,3 +179,5 @@ int mtherr();
 
 /* Variable for error reporting.  See mtherr.c.  */
 extern int merror;
+
+#endif /* CEPHES_MCONF_H */
