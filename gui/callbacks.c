@@ -23,6 +23,9 @@
 #ifndef G_OS_WIN32
 # include <gtkextra/gtkiconfilesel.h>
 #endif
+#ifdef DIALOG_TEST
+# include "fancy_dialog.h"
+#endif
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
 extern void browser_open_ps (GtkWidget *w, gpointer data);
@@ -247,21 +250,16 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 #ifdef DIALOG_TEST
 
-extern void 
-new_edit_dialog (const char *title, const char *oktxt, 
-		 void (*okfunc)(), guint cmdcode);
-
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
-    int l0, *oldlist = NULL;
+    int *oldlist = NULL;
 
     if (default_list != NULL) {
 	copylist(&oldlist, default_list);
-	l0 = oldlist[0];
     }
 
-    new_edit_dialog (_("gretl:specify model"), _("Estimate"), 
-		     do_model, model_code);
+    new_edit_dialog (_("gretl: specify model"), _("Estimate"), 
+		     do_model, model_code, oldlist);
     if (oldlist != NULL) free(oldlist);
 }
 

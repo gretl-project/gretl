@@ -80,7 +80,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata);
 
 void set_storelist (GtkWidget *widget, dialog_t *ddata);
 
-void do_model (GtkWidget *widget, dialog_t *ddata);
+void do_model (GtkWidget *widget, gpointer p);
 
 /* variable-related functions */
 

@@ -28,6 +28,9 @@
 #endif
 
 #include "htmlprint.h"
+#ifdef DIALOG_TEST
+# include "fancy_dialog.h"
+#endif
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -1704,18 +1707,29 @@ static gint check_model_cmd (char *line, char *modelgenr)
 
 /* ........................................................... */
 
-void do_model (GtkWidget *widget, dialog_t *ddata) 
+void do_model (GtkWidget *widget, gpointer p) 
 {
     char *edttext;
     PRN *prn;
     char title[26], estimator[9], modelgenr[80];
-    int order, err = 0, action = ddata->code;
+    int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
+#ifdef DIALOG_TEST
+    new_dialog *ddata = (new_dialog *) p;  
+#else
+    dialog_t *ddata = (dialog_t *) p;
+#endif
+
+    action = ddata->code;
 
     strcpy(estimator, commands[action]);
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+#ifdef DIALOG_TEST
+    edttext = ddata->cmdlist;
+#else
+    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
+#endif
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);
