@@ -14,13 +14,13 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
   fi
 
   if test x"${LAPACK_LIBS}" = x ; then 
-     AC_MSG_CHECKING(for libf2c)
-     AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
+     AC_MSG_CHECKING(for libg2c or libf2c)
+     AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
      if test $FLIB = "none" ; then
-        AC_CHECK_LIB(g2c,c_sqrt,FLIB="-lg2c",FLIB="none")
+        AC_CHECK_LIB(f2c,c_sqrt,FLIB="-lf2c",FLIB="none")
      fi
      if test $FLIB = "none" ; then
-        echo "*** Couldn't find either libf2c or libg2c"
+        echo "*** Couldn't find either libg2c or libf2c"
      fi
   fi
 
