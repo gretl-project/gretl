@@ -678,7 +678,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
  * @fname: name of RATS 4.0 database to read from
  * @series_number: number of the series within the database
  * @sinfo: holds info on the given series (input)
- * @pZ: pointer to data matrix
+ * @Z: data matrix
  *
  * Read the actual data values for a series from a RATS database.
  * 

@@ -204,7 +204,7 @@ int haschar (char c, const char *s)
 /**
  * lastchar:
  * @c: the character to look for.
- * @str: the string to examine.
+ * @s: the string to examine.
  *
  * Returns: 1 if @c is the last character in @s, 0 otherwise
  *

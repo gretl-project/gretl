@@ -40,7 +40,7 @@ struct _selector {
     GtkWidget *extra2;
     int code;
     int error;
-    unsigned long opts;
+    gretlopt opts;
     char *cmdlist;
     gpointer data;
 };
@@ -1633,7 +1633,7 @@ gpointer selector_get_data (const selector *sr)
     return sr->data;
 }
 
-unsigned long selector_get_opts (const selector *sr)
+gretlopt selector_get_opts (const selector *sr)
 {
     return sr->opts;
 }

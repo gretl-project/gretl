@@ -757,7 +757,7 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
  * gretl_matrix_from_2d_array:
  * @X: two-dimensional array of doubles.
  * @rows: number of rows in target matrix.
- * @columns: number of columns in target matrix.
+ * @cols: number of columns in target matrix.
  *
  * Returns: allocated gretl_matrix, the elements of which are set to
  * the values in @X, or NULL on allocation failure.

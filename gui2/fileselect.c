@@ -122,7 +122,7 @@ static struct extmap action_map[] = {
 
 /* ........................................................... */
 
-static unsigned long action_to_opt (const int action)
+static gretlopt action_to_opt (const int action)
 {
     switch (action) {
     case SAVE_GZDATA:   return OPT_Z;

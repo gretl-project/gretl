@@ -1445,7 +1445,7 @@ int gretl_is_reserved (const char *str)
 
 /* .........................................................    */
 
-static int getword (char *word, char *str, char c, unsigned long oflag)
+static int getword (char *word, char *str, char c, gretlopt oflag)
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
 	Returns number of chars deleted, or -1 if no occurrence of c, 
@@ -1508,9 +1508,10 @@ static void get_genr_formula (char *formula, const char *line,
  * @opt: If opt = 1, set the value of the (static) index, using
  * the value of @put.  If opt = 2, increment the static index by
  * the value of @put.
+ * @put: value for set or increment.
  *
  * Reads the value of a static index variable (after setting or
- * incrementing the index if @opt is non-zero).
+ * incrementing the index using @put if @opt is non-zero).
  * 
  * Returns: the new value of the index.
  */
@@ -1581,7 +1582,7 @@ static void make_genr_label (int replmsg, char *genrs,
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
-	      MODEL *pmod, unsigned long oflag)
+	      MODEL *pmod, gretlopt oflag)
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
@@ -3003,7 +3004,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned long opt)
+int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
      /* creates panel data dummies (unit and period) 
 	opt = 0 for stacked time-series, 
 	non-zero for stacked cross-section

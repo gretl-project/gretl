@@ -327,7 +327,7 @@ static void model_stats_init (MODEL *pmod)
  */
 
 MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
-	   int ci, unsigned long opts, double rho)
+	   int ci, gretlopt opts, double rho)
 {
     int l0, yno, i;
     int effobs = 0;
@@ -1434,7 +1434,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     double rho = 0.0, rho0 = 0.0, diff = 1.0;
     double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
-    unsigned long lsqopt = OPT_D;
+    gretlopt lsqopt = OPT_D;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1658,7 +1658,7 @@ void tsls_free_data (const MODEL *pmod)
  */
 
 MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
-		 unsigned long opt)
+		 gretlopt opt)
 {
     int i, j, t, v, ncoeff;
     int *list1 = NULL, *list2 = NULL, *newlist = NULL;
@@ -3189,7 +3189,7 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
 /**
  * arma:
  * @list: dependent variable plus AR and MA orders
- * @pZ: pointer to data matrix.
+ * @Z: data array.
  * @pdinfo: information on the data set.
  * @PRN: for printing details of iterations (or NULL) 
  *
@@ -3269,7 +3269,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @aram: 
+ * @param: 
  *
  * Estimate the model given in @list using the logistic transformation
  * of the dependent variable.
@@ -3349,12 +3349,12 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  */
 
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
-	     unsigned long opt)
+	     gretlopt opt)
 {
     MODEL gmod;
     void *handle;
     MODEL (*garch_model) (int *, double ***, DATAINFO *, PRN *,
-			  unsigned long);
+			  gretlopt);
 
     *gretl_errmsg = '\0';
 

@@ -71,7 +71,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
-    unsigned long lsqopt = 0L;
+    gretlopt lsqopt = 0L;
     int err = 0;
 
     strcpy(linecpy, plp->lines[cmdnum]);
@@ -306,7 +306,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     return err;
 }
 
-static int data_option (unsigned long flag)
+static int data_option (gretlopt flag)
 {
     switch (flag) {
     case OPT_S:

@@ -61,7 +61,7 @@ const char *selector_list (const selector *sr);
 
 gpointer selector_get_data (const selector *sr);
 
-unsigned long selector_get_opts (const selector *sr);
+gretlopt selector_get_opts (const selector *sr);
 
 int selector_error (const selector *sr);
 

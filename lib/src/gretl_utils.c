@@ -705,7 +705,7 @@ void set_miss (LIST list, const char *param, double **Z,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int set_obs (const char *line, DATAINFO *pdinfo, unsigned long opt)
+int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 {
     int pd, i, len, bad = 0;
     char stobs[OBSLEN], endobs[OBSLEN], endbit[7], *p;

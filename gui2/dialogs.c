@@ -1541,7 +1541,7 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
     int ar, ma;
-    unsigned long aopt = 0L;
+    gretlopt aopt = OPT_NONE;
 
     ar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->arspin));
     ma = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->maspin));

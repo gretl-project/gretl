@@ -2733,8 +2733,9 @@ static int process_csv_obs (const char *str, int i, int t,
 /**
  * import_csv:
  * @pZ: pointer to data set.
- * @pdinfo: data information struct.
+ * @ppdinfo: pointer to data information struct.
  * @fname: name of CSV file.
+ * @ppaths: pointer to paths struct.
  * @prn: gretl printing struct.
  * 
  * Open a Comma-Separated Values data file and read the data into
@@ -3151,7 +3152,7 @@ static char *unspace (char *s)
 /**
  * import_box:
  * @pZ: pointer to data set.
- * @pdinfo: data information struct.
+ * @ppdinfo: pointer to data information struct.
  * @fname: name of CSV file.
  * @prn: gretl printing struct.
  * 

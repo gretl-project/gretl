@@ -18,14 +18,14 @@
  */
 
 typedef struct {
-    char varname[VNAMELEN];       /* for ID purposes */
-    int numbins;                  /* number of bins or intervals */
-    double xbar, sdx;             /* mean and std dev of variable */
-    double *midpt, *endpt;        /* arrays of midpoints and endpoints
-                                     of the intervals */
-    int *f;                       /* frequencies in the intervals */
-    double chisqu;                /* Chi-squared statistic for testing
-                                     for a Gaussian distribution */
+    char varname[VNAMELEN];  /* for ID purposes */
+    int numbins;             /* number of bins or intervals */
+    double xbar, sdx;        /* mean and std dev of variable */
+    double *midpt;           /* array of midpoints of intervals */
+    double *endpt;           /* array of endpoints of intervals */
+    int *f;                  /* frequencies in the intervals */
+    double chisqu;           /* Chi-squared statistic for testing
+                                for a Gaussian distribution */
     int n;
     int t1, t2;
 } FREQDIST;
@@ -68,7 +68,7 @@ int esl_corrmx (LIST list,
 
 int means_test (LIST list, 
 		double **Z, const DATAINFO *pdinfo, 
-		unsigned long vardiff, PRN *prn);
+		gretlopt vardiff, PRN *prn);
 
 int vars_test (LIST list, 
 	       double **Z, const DATAINFO *pdinfo, 

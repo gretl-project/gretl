@@ -45,7 +45,7 @@ static int inverse_compare_doubles (const void *a, const void *b)
  */
 
 int spearman (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	      unsigned long opt, PRN *prn)
+	      gretlopt opt, PRN *prn)
 {
     double xx, yy, *sx, *sy, *rx, *ry, *tmp;
     double rsum, avg, z = 0;

@@ -50,7 +50,7 @@ extern char tramodir[];
 #endif
 
 /* ../cli/common.c */
-static int data_option (unsigned long flag);
+static int data_option (gretlopt flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
 
@@ -1199,7 +1199,7 @@ void gui_errmsg (const int errcode)
 
 /* ........................................................... */
 
-int bool_subsample (unsigned long opt)
+int bool_subsample (gretlopt opt)
      /* opt = OPT_M  drop all obs with missing data values 
 	opt = OPT_O  sample using dummy variable
 	opt = OPT_R  sample using boolean expression
@@ -2375,7 +2375,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_arma (int v, int ar, int ma, unsigned long opts)
+void do_arma (int v, int ar, int ma, gretlopt opts)
 {
     char title[26];
     int err = 0;
@@ -4304,7 +4304,7 @@ int maybe_restore_full_data (int action)
 #define DATA_EXPORT(o) (o == OPT_M || o == OPT_R || \
                         o == OPT_A || o == OPT_C)
 
-int do_store (char *savename, unsigned long oflag, int overwrite)
+int do_store (char *savename, gretlopt oflag, int overwrite)
 {
     gchar *msg, *tmp = NULL;
     FILE *fp;
@@ -4907,7 +4907,7 @@ static int script_model_test (int id, PRN *prn, int ols_only)
 
 /* ........................................................... */
 
-static unsigned char gp_flags (int batch, unsigned long opt)
+static unsigned char gp_flags (int batch, gretlopt opt)
 {
     unsigned char flags = 0;
 
@@ -4934,7 +4934,7 @@ int gui_exec_line (char *line,
     char linecopy[1024];
     char texfile[MAXLEN];
     unsigned char plotflags = 0;
-    unsigned long lsqopt = 0L;
+    gretlopt lsqopt = 0L;
     MODEL tmpmod;
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */

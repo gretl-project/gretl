@@ -49,7 +49,7 @@ int slashpos (const char *str);
 
 void delchar (int c, char *str);
 
-int haschar (char c, const char *str);
+int haschar (char c, const char *s);
 
 int lastchar (char c, const char *s);
 

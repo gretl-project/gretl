@@ -67,14 +67,14 @@ int auxreg (LIST addvars,
 	    MODEL *orig, MODEL *new, int *model_count, 
 	    double ***pZ, DATAINFO *pdinfo, 
 	    int aux_code, 
-	    PRN *prn, GRETLTEST *test, unsigned long opt);
+	    PRN *prn, GRETLTEST *test, gretlopt opt);
 
 double robust_omit_F (const int *list, MODEL *pmod);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn, unsigned long opt);
+	       PRN *prn, gretlopt opt);
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, GRETLTEST *test);
@@ -100,7 +100,7 @@ int hausman_test (MODEL *pmod,
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, PATHS *ppaths, 
-		   unsigned long oflag);
+		   gretlopt oflag);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				    gretl_matrix *m, unsigned char opt);

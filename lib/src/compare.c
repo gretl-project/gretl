@@ -280,7 +280,7 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
-				  int *model_count, unsigned long lsqopt, 
+				  int *model_count, gretlopt lsqopt, 
 				  PRN *prn)
 {
     MODEL rep;
@@ -361,7 +361,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
  * @aux_code: code indicating what sort of aux regression to run.
  * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
- * @opt: can contain options flags (--quiet)
+ * @opt: can contain options flags (--quiet).
  *
  * Run an auxiliary regression, in order to test a given set of added
  * variables, or to test for non-linearity (squares, logs).
@@ -371,7 +371,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
 int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
 	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
-	    PRN *prn, GRETLTEST *test, unsigned long opt)
+	    PRN *prn, GRETLTEST *test, gretlopt opt)
 {
     COMPARE add;  
     MODEL aux;
@@ -682,7 +682,7 @@ double robust_omit_F (const int *list, MODEL *pmod)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
- * @opt: can contain option flags (--quiet)
+ * @opt: can contain option flags (--quiet).
  *
  * Re-estimate a given model after removing a list of 
  * specified variables.
@@ -692,7 +692,7 @@ double robust_omit_F (const int *list, MODEL *pmod)
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       int *model_count, double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn, unsigned long opt)
+	       PRN *prn, gretlopt opt)
 {
     COMPARE omit;             /* Comparison struct for two models */
     int *tmplist, m = *model_count;
@@ -1554,7 +1554,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /**
  * add_leverage_values_to_dataset:
  * @pZ: pointer to data array.
- * @pdnfo: dataset information.
+ * @pdinfo: dataset information.
  * @m: matrix containing leverage values.
  * @opt: option flag: combination of SAVE_LEVERAGE, SAVE_INFLUENCE,
  * and SAVE_DFFITS.
@@ -1645,15 +1645,17 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @prn: gretl printing struct.
  * @ppaths: path information struct (should be NULL if a graph
  * is not wanted).
+ * @oflag: if non-zero, add calculated series to data set.
  *
  * Tests the data used in the given model for points with
  * high leverage and influence on the estimates
  * 
  * Returns: 0 on successful completion, error code on error.
+ *
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths, unsigned long oflag)
+		   PRN *prn, PATHS *ppaths, gretlopt oflag)
 {
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 

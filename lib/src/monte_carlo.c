@@ -82,6 +82,7 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
  * @line: command line.
  * @ploop: loop commands struct.
  * @pdinfo: data information struct.
+ * @Z: data array.
  *
  * Parse a line specifying a loop condition.
  *
@@ -642,7 +643,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 			 char *loopstorefile)
 {
     int i, j;
-    unsigned long opt;
+    gretlopt opt;
     MODEL *pmod = NULL;
 
     if (ploop->lvar && ploop->lvar != INDEXNUM) {
@@ -755,7 +756,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  * @ploop: pointer to loop struct.
  * @line: command line.
  * @ci: command index number.
- * @oflag: option flag(s) associated with the command.
+ * @oflags: option flag(s) associated with the command.
  *
  * Add line and command index to accumulated loop buffer.
  *
@@ -763,7 +764,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
  */
 
 int add_to_loop (LOOPSET *ploop, char *line, int ci,
-		 unsigned long oflags)
+		 gretlopt oflags)
 {
     int i = ploop->ncmds;
 

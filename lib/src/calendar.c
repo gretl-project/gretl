@@ -78,6 +78,14 @@ static int day_in_year (int day, int month, int year)
     return day;
 }
 
+/**
+ * get_epoch_day:
+ * @date: string representation of calendar date, in form
+ * YY[YY]/MM/DD.
+ * 
+ * Returns: the epoch day number, or -1 on failure.
+ */
+
 long get_epoch_day (const char *date)
 {
     long temp;
@@ -98,6 +106,16 @@ long get_epoch_day (const char *date)
 
     return temp;
 }
+
+/**
+ * daily_obs_number:
+ * @date: string representation of calendar date, in form
+ * YY[YY]/MM/DD.
+ * @pdinfo: pointer to dataset information.
+ * 
+ * Returns: The zero-based observation number for the given
+ * date within the current data set.
+ */
 
 int daily_obs_number (const char *date, const DATAINFO *pdinfo)
 {
@@ -126,6 +144,17 @@ static int t_to_epoch_day (int t, long start)
 
     return start + t + (2 * wkends);
 }
+
+/**
+ * daily_date_string:
+ * @str: string to be filled out.
+ * @t: zero-based index of observation.
+ * @pdinfo: pointer to dataset information.
+ * 
+ * Writes to @str the calendar representation of the date of
+ * observation @t, in the form YY[YY]/MM/DD.
+ * 
+ */
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 {
@@ -166,18 +195,25 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     }
 }
 
-double get_dec_date (const char *s)
+/**
+ * get_dec_date:
+ * @date: calendar representation of date.
+ * 
+ * Returns: representation of date as year plus fraction of year.
+ */
+
+double get_dec_date (const char *date)
 {
     char tmp[OBSLEN];
     int yr, mo, day;
     long ed0, edn, edt;
     double dyr, frac;
 
-    if (sscanf(s, "%d/%d/%d", &yr, &mo, &day) != 3) {
+    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
 	return NADBL;
     }
 
-    edt = get_epoch_day(s);
+    edt = get_epoch_day(date);
     sprintf(tmp, "%04d/01/01", yr);
     ed0 = get_epoch_day(tmp);
     sprintf(tmp, "%04d/12/31", yr);

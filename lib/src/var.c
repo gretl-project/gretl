@@ -1787,7 +1787,7 @@ johansen_complete (const double **X, const double **Y, const double **Z,
 }
 
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		   unsigned long opt, PRN *prn)
+		   gretlopt opt, PRN *prn)
 {
     PRN *varprn = NULL;
     struct var_resids resids;

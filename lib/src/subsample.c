@@ -214,7 +214,7 @@ enum {
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,
-		     const int *list, unsigned long oflag)
+		     const int *list, gretlopt oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
 	mask a specified dummy variable; or masking with a specified

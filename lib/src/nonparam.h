@@ -23,7 +23,7 @@
  
 int spearman (const LIST list, 
 	      double **Z, const DATAINFO *pdinfo,
-	      unsigned long opt, PRN *prn);
+	      gretlopt opt, PRN *prn);
 
 int runs_test (int varno, double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);

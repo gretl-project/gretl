@@ -48,7 +48,7 @@ static double get_tss (const double *y, int n, int ifc)
     return tss;
 }
 
-static void qr_compute_f_stat (MODEL *pmod, unsigned long opts)
+static void qr_compute_f_stat (MODEL *pmod, gretlopt opts)
 {
     if (pmod->dfd > 0 && pmod->dfn > 1) {
 	if (opts & OPT_R) {
@@ -563,7 +563,7 @@ static void save_coefficients (MODEL *pmod, gretl_matrix *b,
 }
 
 int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
-		      unsigned long opts)
+		      gretlopt opts)
 {
     integer info, lwork;
     integer m, n, lda;
@@ -754,7 +754,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     return err;    
 }
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, unsigned long opts)
+int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 {
     integer info, lwork;
     integer m, n, lda;

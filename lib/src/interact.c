@@ -1615,7 +1615,7 @@ static void do_print_string (char *str, PRN *prn)
     pprintf(prn, "%s\n", str);
 }
 
-static int do_outfile_command (unsigned long flag, char *fname,
+static int do_outfile_command (gretlopt flag, char *fname,
 			       PRN *prn)
 {
     static char outname[MAXLEN];
@@ -1687,12 +1687,12 @@ static int do_outfile_command (unsigned long flag, char *fname,
 /* ........................................................ */
 
 int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
-		     DATAINFO *pdinfo, unsigned long *pflag,
+		     DATAINFO *pdinfo, gretlopt *pflag,
 		     PRN *prn)
 {
     void *handle = NULL;
     int (*pca_from_corrmat) (CORRMAT *, double ***, DATAINFO *,
-			     unsigned long *, PRN *);
+			     gretlopt *, PRN *);
     int err = 0;
 
     *gretl_errmsg = 0;

@@ -90,7 +90,7 @@ static gboolean pca_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
     return FALSE;
 }
 
-static unsigned long pca_flag_dialog (void)
+static gretlopt pca_flag_dialog (void)
 {
     struct flag_info *finfo;
     GtkWidget *dialog, *tempwid, *button, *hbox;
@@ -276,14 +276,14 @@ static void pca_print (CORRMAT *corrmat, gretl_matrix *m,
 }
 
 int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
-		      DATAINFO *pdinfo, unsigned long *pflag,
+		      DATAINFO *pdinfo, gretlopt *pflag,
 		      PRN *prn)
 {
     gretl_matrix *m;
     double x;
     int i, j, idx, n = corrmat->list[0];
     double *evals;
-    unsigned long oflag = 0L;
+    gretlopt oflag = 0L;
 
     if (pflag != NULL) oflag = *pflag;
 

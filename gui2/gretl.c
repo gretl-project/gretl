@@ -2294,7 +2294,7 @@ static int native_datafile (void)
 
 static void auto_store (void)
 {
-    unsigned long oflag = 0L;
+    gretlopt oflag = OPT_NONE;
 
     /* if there's already a datafile, and it's gzipped, then
        arrange for the new store to be gzipped too */

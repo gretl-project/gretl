@@ -105,9 +105,9 @@ double gretl_LU_determinant (gretl_matrix *a);
 
 int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 
-int gretl_invert_general_matrix (gretl_matrix *m);
+int gretl_invert_general_matrix (gretl_matrix *a);
 
-int gretl_invert_symmetric_matrix (gretl_matrix *m);
+int gretl_invert_symmetric_matrix (gretl_matrix *a);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev);
 

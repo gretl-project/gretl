@@ -493,7 +493,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, unsigned long oflag)
+	      int model_count, gretlopt oflag)
 {
     PRN prn;
 
@@ -523,7 +523,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, unsigned long oflag)
+	      int model_count, gretlopt oflag)
 {
     PRN prn;
 

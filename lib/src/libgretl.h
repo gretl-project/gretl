@@ -78,6 +78,7 @@
 
 #define LISTSEP            999
 #define PMAX_NOT_AVAILABLE 666
+#define OPT_NONE           0L
 
 /* numbers smaller than the given limit will print as zero */
 #define screen_zero(x)  ((fabs(x) > 1.0e-13)? x : 0.0)
@@ -158,6 +159,7 @@ enum gretl_opt_flags {
 };
 
 typedef int *LIST; 
+typedef unsigned long gretlopt;
 
 typedef struct _VARINFO VARINFO;
 typedef struct _DATAINFO DATAINFO;

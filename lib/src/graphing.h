@@ -114,11 +114,11 @@ enum plot_type_codes {
  
 int plot (const LIST list, 
 	  double **Z, const DATAINFO *pdinfo, 
-	  unsigned long oflag, int pause, PRN *prn);
+	  gretlopt oflag, int pause, PRN *prn);
 
 int graph (const LIST list, 
 	   double **Z, const DATAINFO *pdinfo, 
-	   unsigned long oflag, PRN *prn);
+	   gretlopt oflag, PRN *prn);
 
 const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
 

@@ -274,7 +274,7 @@ static void drawline (int nn, PRN *prn)
  */
 
 int plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	  unsigned long oflag, int pause, PRN *prn)
+	  gretlopt oflag, int pause, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
 	plot var1 var2 ;	plots var1 and var2 values
@@ -466,7 +466,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
  */
 
 int graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
-	   unsigned long oflag, PRN *prn)
+	   gretlopt oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
 			in 20 rows and 60 columns
@@ -649,6 +649,8 @@ static char *label_front (void)
 
 /**
  * get_gretl_png_term_line:
+ * @ppaths: paths information.
+ * @plottype: 
  *
  * Constructs a suitable line for sending to gnuplot to invoke
  * the PNG "terminal".  Checks the environment for setting of 
@@ -1262,6 +1264,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @ppaths: path information struct.
+ * @plot_count: count of graphs shown to date.
+ * @flags: option flags.
  *
  * Writes a gnuplot plot file to display up to 6 small X-Y graphs.
  * variables in @list and calls gnuplot to make the graph.

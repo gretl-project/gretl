@@ -21,8 +21,8 @@
 #define QR_ESTIMATE_H
 
 int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
-		      unsigned long opts);
+		      gretlopt opts);
 
-int qr_tsls_vcv (MODEL *pmod, const double **Z, unsigned long opts);
+int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts);
 
 #endif  /* QR_ESTIMATE_H */

@@ -198,7 +198,7 @@ void file_get_line (void)
     }
 }
 
-unsigned char gp_flags (int batch, unsigned long opt)
+unsigned char gp_flags (int batch, gretlopt opt)
 {
     unsigned char flags = 0;
 
@@ -611,13 +611,13 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static int data_option (unsigned long flag);
+static int data_option (gretlopt flag);
 
 void exec_line (char *line, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
     int dbdata = 0, arch_model = 0;
-    unsigned long lsqopt = 0L;
+    gretlopt lsqopt = 0L;
     char s1[12], s2[12];
     double rho;
 

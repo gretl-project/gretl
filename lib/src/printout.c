@@ -146,7 +146,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
 		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
-		      unsigned long opt)
+		      gretlopt opt)
 {
     int i;
     char spc[3];
@@ -205,7 +205,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 
 void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
 		       const DATAINFO *pdinfo, PRN *prn,
-		       unsigned long opt)
+		       gretlopt opt)
 {
     int i;
 
@@ -425,6 +425,8 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
  * Some C libraries (e.g. MS) print an "extra" zero in the exponent
  * when using scientific notation, e.g. "1.45E-002".  This function
  * checks for this and cuts it out if need be.
+ *
+ * Returns: the fixed numeric string.
  */
 
 char *gretl_fix_exponent (char *s)
@@ -751,7 +753,7 @@ static void printgx (const double xx, PRN *prn)
 void graphyzx (const int *list, const double *zy1, const double *zy2, 
 	       const double *zx, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
-	       unsigned long oflag, PRN *prn)
+	       gretlopt oflag, PRN *prn)
 /*
   if n > 0 graphs zy1 against zx, otherwise
   graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
@@ -1001,7 +1003,7 @@ static void printstr (PRN *prn, double xx, int *ls)
 /* ........................................................... */
 
 static void printz (const double *z, const DATAINFO *pdinfo, 
-		    PRN *prn, unsigned long opt)
+		    PRN *prn, gretlopt opt)
 /* prints series z from current sample t1 to t2 */
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
@@ -1227,7 +1229,7 @@ void print_obs_marker (int t, const DATAINFO *pdinfo, PRN *prn)
  */
 
 int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
-	       int pause, unsigned long oflag, PRN *prn)
+	       int pause, gretlopt oflag, PRN *prn)
 {
     int l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;

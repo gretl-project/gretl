@@ -30,16 +30,16 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
 		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
-		      unsigned long opt);
+		      gretlopt opt);
 
 void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
 		       const DATAINFO *pdinfo, PRN *prn,
-		       unsigned long opt);
+		       gretlopt opt);
 
 void graphyzx (const int *list, const double *zy1, const double *zy2, 
 	       const double *zx, int n, const char *yname, 
 	       const char *xname, const DATAINFO *pdinfo, 
-	       unsigned long oflag, PRN *prn);
+	       gretlopt oflag, PRN *prn);
 
 void gretl_printxs (double xx, int n, int ci, PRN *prn);
 

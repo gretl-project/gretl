@@ -81,7 +81,7 @@ void clear_data (void);
 
 /* sample-related functions */
 
-int bool_subsample (unsigned long opt);
+int bool_subsample (gretlopt opt);
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata);
 
@@ -121,7 +121,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata);
 
 void do_model (GtkWidget *widget, gpointer p);
 
-void do_arma (int v, int ar, int ma, unsigned long opts);
+void do_arma (int v, int ar, int ma, gretlopt opts);
 
 void do_leverage (gpointer data, guint u, GtkWidget *w);
 
@@ -223,7 +223,7 @@ void do_new_script (gpointer data, guint action, GtkWidget *widget);
 
 void do_open_csv_box (char *fname, int code, int append);
 
-int do_store (char *mydatfile, unsigned long oflag, int overwrite);
+int do_store (char *mydatfile, gretlopt oflag, int overwrite);
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget);
 

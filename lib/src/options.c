@@ -28,14 +28,14 @@
                         c == AR || c == LOGISTIC || c == NLS || \
                         c == GARCH)
 
-struct gretl_opt {
+struct gretl_option {
     int ci;
-    unsigned long o;
+    gretlopt o;
     const char *longopt;
 };
 
 struct flag_match {
-    unsigned long o;
+    gretlopt o;
     unsigned char c;
 };
 
@@ -43,7 +43,7 @@ struct flag_match {
    to the char, so a given char can have more than one long-form
    counterpart. */
 
-struct gretl_opt gretl_opts[] = {
+struct gretl_option gretl_opts[] = {
     { ADD,      OPT_Q, "quiet" },
     { ADDTO,    OPT_Q, "quiet" },
     { ARMA,     OPT_N, "native" },
@@ -167,7 +167,7 @@ struct flag_match flag_matches[] = {
                    c == 's' || c == 't' || c == 'v' || c == 'w' || \
                    c == 'x' || c == 'z')
 
-static unsigned long opt_from_flag (unsigned char c)
+static gretlopt opt_from_flag (unsigned char c)
 {
     int i;
 
@@ -178,7 +178,7 @@ static unsigned long opt_from_flag (unsigned char c)
     return 0L;
 }
 
-static int opt_is_valid (unsigned long opt, int ci, char c)
+static int opt_is_valid (gretlopt opt, int ci, char c)
 {
     int i;
 
@@ -199,10 +199,10 @@ static int opt_is_valid (unsigned long opt, int ci, char c)
     return 0;
 }
 
-static unsigned long get_short_opts (char *line, int ci, int *err)
+static gretlopt get_short_opts (char *line, int ci, int *err)
 {
     char *p = strchr(line, '-');
-    unsigned long opt, ret = 0L;
+    gretlopt opt, ret = 0L;
 
     while (p != NULL) {
 	unsigned char c, prev;
@@ -262,10 +262,10 @@ static int valid_long_opt (int ci, const char *lopt)
     return opt;
 }
   
-static unsigned long get_long_opts (char *line, int ci, int *err)
+static gretlopt get_long_opts (char *line, int ci, int *err)
 {
     char *p = strstr(line, "--");
-    unsigned long match, ret = 0L;
+    gretlopt match, ret = 0L;
 
     while (p != NULL) {
 	char longopt[32];
@@ -296,15 +296,22 @@ static void get_cmdword (const char *line, char *word)
     }
 }
 
-int catchflags (char *line, unsigned long *oflags)
-     /* check for option flags in line: if found, chop them out 
-	and set oflags value accordingly.  
-	Strip trailing semicolon while we're at it.
-	Return 0 if all is OK, 1 if there's an invalid option.
-     */
+/**
+ * catchflags:
+ * @line: command line to parse.
+ * @oflags: pointer to options.
+ * 
+ * Check for option flags in @line: if found, chop them out
+ * and set @oflags value accordingly. Strip any trailing semicolon 
+ * from @line while we're at it.
+ *
+ * Returns: 0 on success, 1 if an invalid option is found.
+ */
+
+int catchflags (char *line, gretlopt *oflags)
 {
     int n = strlen(line);
-    unsigned long opt;
+    gretlopt opt;
     char cmdword[9] = {0};
     int ci, err = 0;
 
@@ -352,7 +359,17 @@ int catchflags (char *line, unsigned long *oflags)
     return err;
 }
 
-const char *print_flags (unsigned long flags, int ci)
+/**
+ * print_flags:
+ * @oflags: options.
+ * @ci: command index, for context.
+ * 
+ * Constructs a string representation of the options in @oflags.
+ *
+ * Returns: pointer to static string (do not free!).
+ */
+
+const char *print_flags (gretlopt oflags, int ci)
 {
     static char flagstr[64];
     char fbit[20];
@@ -360,17 +377,17 @@ const char *print_flags (unsigned long flags, int ci)
 
     flagstr[0] = '\0';
 
-    if (flags == 0L) return flagstr;
+    if (oflags == 0L) return flagstr;
 
     /* special: -o (--vcv) can be used with several model
        commands */
-    if ((flags & OPT_O) && is_model_ci(ci)) {
+    if ((oflags & OPT_O) && is_model_ci(ci)) {
 	strcat(flagstr, " --vcv");
-	flags &= ~OPT_O;
+	oflags &= ~OPT_O;
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (ci == gretl_opts[i].ci && (flags & gretl_opts[i].o)) {
+	if (ci == gretl_opts[i].ci && (oflags & gretl_opts[i].o)) {
 	    sprintf(fbit, " --%s", gretl_opts[i].longopt);
 	    strcat(flagstr, fbit);
 	}

@@ -1416,7 +1416,7 @@ int esl_corrmx (LIST list, double ***pZ, const DATAINFO *pdinfo,
  */
 
 int means_test (LIST list, double **Z, const DATAINFO *pdinfo, 
-		unsigned long vardiff, PRN *prn)
+		gretlopt vardiff, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
     double *x = NULL, *y = NULL;

@@ -1296,7 +1296,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 static void add_pca_data (windata_t *vwin)
 {
     int err, oldv = datainfo->v;
-    unsigned long oflag = OPT_D;
+    gretlopt oflag = OPT_D;
     CORRMAT *corrmat = (CORRMAT *) vwin->data;
 
     err = call_pca_plugin(corrmat, &Z, datainfo, &oflag, NULL);

@@ -20,9 +20,9 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-int catchflags (char *line, unsigned long *oflag);
+int catchflags (char *line, gretlopt *oflags);
 
-const char *print_flags (unsigned long flags, int ci);
+const char *print_flags (gretlopt oflags, int ci);
 
 const char **get_opts_for_command (int ci);
 

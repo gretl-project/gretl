@@ -251,7 +251,7 @@ static int get_vopt (int robust)
 
 int do_fcp (const int *list, double **Z, 
 	    const DATAINFO *pdinfo, MODEL *pmod,
-	    PRN *prn, unsigned long opt)
+	    PRN *prn, gretlopt opt)
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int ncoeff = pmod->ncoeff;
@@ -451,7 +451,7 @@ static int *make_ols_list (const int *list)
 /* the driver function for the plugin */
 
 MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
-		   PRN *prn, unsigned long opt) 
+		   PRN *prn, gretlopt opt) 
 {
     MODEL model;
     int *list, *ols_list;

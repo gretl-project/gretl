@@ -25,7 +25,7 @@
  
 MODEL lsq (LIST list, 
 	   double ***pZ, DATAINFO *pdinfo, 
-	   int ci, unsigned long opts, double rho);
+	   int ci, gretlopt opts, double rho);
 
 int hilu_corc (double *toprho, LIST list, 
 	       double ***pZ, DATAINFO *pdinfo,
@@ -47,15 +47,15 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn);
 
 MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
-	     unsigned long opt);
+	     gretlopt opt);
 
 const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);
 
-MODEL tsls_func (LIST list, const int pos, 
+MODEL tsls_func (LIST list, int pos_in, 
 		 double ***pZ, DATAINFO *pdinfo,
-		 unsigned long opt);
+		 gretlopt opt);
 
 MODEL hsk_func (LIST list, 
 		double ***pZ, DATAINFO *pdinfo);
