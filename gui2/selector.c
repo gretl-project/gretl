@@ -1134,20 +1134,29 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 static int screen_scalar (int i, int c)
 {
     if ((MODEL_CODE(c) || GRAPH_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
-	&& datainfo->vector[i] == 0)
+	&& datainfo->vector[i] == 0) {
 	return 1;
-    return 0;
+    } else {
+	return 0;
+    }
 }
 
 static void selector_init (selector *sr, guint code, const char *title)
 {
     GtkWidget *base, *hsep;
     int dlgheight = 320;
+    
+    if (MODEL_CODE(code) && datainfo->v > 10) {
+	dlgheight = 400;
+    } else if (code == WLS || code == AR) {
+	dlgheight = 350;
+    } else if (code == TSLS) {
+	dlgheight = 400;
+    }
 
-    if (MODEL_CODE(code) && datainfo->v > 10) dlgheight = 400;
-    else if (code == WLS || code == AR) dlgheight = 350;
-    else if (code == TSLS) dlgheight = 400;
-    else if (code == VAR) dlgheight = 420;
+    if (code == VAR) {
+	dlgheight = 450;
+    }
 
     /* FIXME dialog height with multiple toggles */
 

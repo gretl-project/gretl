@@ -1,9 +1,24 @@
-/* dialogs.h */
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
 
 #ifndef DIALOGS_H
 #define DIALOGS_H
-
-typedef struct dialog_t_ dialog_t;
 
 enum {
     GRETL_YES,
@@ -12,11 +27,9 @@ enum {
     HELP_BUTTON
 } buttons;
 
+typedef struct dialog_t_ dialog_t;
+
 /* functions follow */
-
-GtkWidget *get_open_dialog (void);
-
-void set_open_dialog (GtkWidget *w);
 
 void errbox (const char *msg);
 
@@ -25,22 +38,6 @@ void infobox (const char *msg);
 gint yes_no_dialog (char *title, char *msg, int cancel);
 
 int make_default_storelist (void);
-
-void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
-		  void (*okfunc)(), void *okptr,
-		  guint hlpcode, guint varclick);
-
-const gchar *dialog_data_get_text (dialog_t *ddata);
-
-gchar *dialog_data_special_get_text (dialog_t *ddata);
-
-int dialog_data_get_action (const dialog_t *ddata);
-
-gretlopt dialog_data_get_opt (const dialog_t *ddata);
-
-gpointer dialog_data_get_data (dialog_t *ddata);
-
-void close_dialog (dialog_t *ddata);
 
 gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data);
 

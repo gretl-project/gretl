@@ -28,6 +28,7 @@
 #include "modelspec.h"
 #include "menustate.h"
 #include "system.h"
+#include "dlgutils.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

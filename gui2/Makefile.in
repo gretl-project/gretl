@@ -109,6 +109,7 @@ SRCS = about.c \
 	database.c \
 	datafiles.c \
 	dialogs.c \
+	dlgutils.c \
 	filelists.c \
 	fileselect.c \
 	graph_page.c \
