@@ -17,7 +17,7 @@
   <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="toptable">
+<xsl:template match="usage">
  <xsl:text>&#xa;</xsl:text>
  <informaltable role="cmd" frame="none">
  <tgroup cols="2"><colspec colnum="1" colwidth="82pt"/>
@@ -54,6 +54,7 @@
 </xsl:template>
 
 <xsl:template match="argument">
+<xsl:if test="(@separated)">; </xsl:if>
   <xsl:apply-templates/><xsl:text> </xsl:text>
 </xsl:template>
 
@@ -148,6 +149,16 @@
 <xsl:template match="code">
 <programlisting>
 <xsl:apply-templates/></programlisting>
+</xsl:template>
+
+<xsl:template match="cmdref">
+<xref linkend="@targ"/>
+</xsl:template>
+
+<xsl:template match="manref">
+<xsl:value-of select="@before"/>
+<xsl:text> </xsl:text><xref linkend="{@targ}"/>
+<xsl:text> </xsl:text><xsl:value-of select="@after"/>
 </xsl:template>
 
 <xsl:template match="menu-path">

@@ -1,7 +1,16 @@
-/* grab command info from libgretl, and write skeleton for
-   the command reference */
+/* Grab command info from libgretl, and write skeleton for
+   the command reference.  Query libgretl for the options
+   associated with each command (may not be working quite
+   right at this point).  Output a (mostly blank) reference
+   entry for each command.  These entries are supposed to
+   validate as "command" elements against gretl_commands.dtd.
+
+   Allin Cottrell, Feb 2004.
+*/
 
 #include <gretl/libgretl.h>
+
+/* output XML preamble at start */
 
 void print_top (void)
 {
@@ -15,14 +24,22 @@ void print_foot (void)
     puts("</commandlist>\n"); 
 }
 
+/* print a 'skeleton' reference entry for the given command */
+
 void print_skel_for_command (int ci)
 {
     const char *cmdword;
     const char **opts, *opt;   
     char section[32];
 
+    /* Get the string associated with each command index
+       number, from libgretl */
     cmdword = gretl_command_word(ci);
+
+    /* (Try to) get a list of the options recognized as
+       valid for the given command */
     opts = get_opts_for_command(ci);
+
     if (is_model_cmd(cmdword)) {
 	strcpy(section, "Estimation");
     } else if (is_model_ref_cmd(ci)) {
@@ -31,10 +48,10 @@ void print_skel_for_command (int ci)
 	strcpy(section, "Unknown");
     }
 
-    printf("  <command name=\"%s\" xref=\"cmd-%s\" section=\"%s\">\n",
-	   cmdword, cmdword, section);
+    printf("  <command name=\"%s\" section=\"%s\">\n",
+	   cmdword, section);
 
-    puts("\n    <toptable>");
+    puts("\n    <usage>");
     puts("      <arguments>");
     puts("        <argument>.</argument>");
     puts("        <argument>.</argument>");
@@ -55,7 +72,7 @@ void print_skel_for_command (int ci)
     puts("      <examples>");
     puts("        <example>.</example>");
     puts("      </examples>");
-    puts("    </toptable>");
+    puts("    </usage>");
     puts("\n    <description><para>Description goes here.</para>");
     puts("    </description>");
     puts("\n    <gui-access>");
@@ -71,6 +88,7 @@ int main (void)
 
     print_top();
 
+    /* NC is the sentinel value for the maximum gretl command index */
     for (i=1; i<NC; i++) {
 	print_skel_for_command(i);
     }

@@ -1,36 +1,61 @@
 What's here?
 
+----------
+
 skeleton.c makes a program called "skeleton", which goes through
 the full list of gretl commands (from libgretl) and outputs a
 skeleton XML command reference.  Mostly this is blank, but it
-does contain a correct listing of the options available in
+contain a mostly correct listing of the options available in
 connection with each command (if any), again taken from libgretl.
 
 The output of skeleton is directed to skeleton.xml, an xml file
 that should validate in relation to the gretl command reference
 DTD, gretl_commands.dtd.  This could provide a basis for a
-translation.  
+translation.  It is designed as a purely content-oriented
+"database" for the gretl command reference.
+
+The DTD itself is, I'd, say more than half-done.  It could do with
+some more work in places, and as we go through the entire command
+listing I'm sure we'll find that more elements or attributes
+need to be added (e.g., for tables, which appear in the manual
+entries for some commands).
+
+------------
 
 formatter.c makes a program called "formatter", which parses an
-XML command listing such as skeleton.xml.  The idea is that this
-program will be developed to the point where it can output:
+XML command listing such as skeleton.xml and uses XSL to transform
+the information.  The program is very short and uses libxml and 
+libxsl to do most of the work. The idea is that this approach
+will be developed to the point where it can output:
 
 * a replacement for cmdref.xml, the command reference chapter of
   the manual
 
 * the "online" help files gretl.hlp and gretlcli.hlp
 
-Right now it outputs a sort of "proof of concept" simple
-(incomplete) text printout, and also sends very incomplete XML
-output to trial.xml, in something like the format this is wanted
-for cmdref.xml.
+This is only partly implemented at present.  It uses the two XSL
+stylesheets, gretlman.xsl and gretltxt.xsl.  These need more work.
+Right now the text stylesheet leaves a certain amount of work
+undone, and it is supplemented by a C post-processor (see doline.c,
+which is used to make the "reflow" program.)  
 
 You will probably have to edit the Makefile before doing anything
 else.  Once that's ready, try:
 
-make testprint.txt
+make test
 
-and take a look at the output: skeleton.xml, testprint.txt and
-trial.xml
+and take a look at the output: skeleton.xml.
+
+You may also try
+
+make sample
+
+which processes inprogress.xml.  This file is based on skeleton.xml,
+but I have made a start on filling out some of the fields with
+the content from the existing manual and helpfiles. "make sample"
+should generate command.xml and commands.hlp.  The first of these
+is supposed to be part-way towards the chapters/cmdref.xml
+replacement, while the second is part-way to a replacement for the
+online help file(s).
 
 Allin Cottrell, February 2004

@@ -1,7 +1,9 @@
 <!--
   DTD for gretl command reference. Allin Cottrell 2004
  -->
+
 <!ENTITY ndash "&#8211;">
+<!ENTITY lgr   "&#0955;">
 
 <!ELEMENT commandlist (command)+>
 <!ATTLIST commandlist
@@ -11,12 +13,11 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (toptable?, description, option-notes?, addendum?, 
+<!ELEMENT command (usage?, description, option-notes?, addendum?, 
                    gui-access?, numinfo?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
-   xref         CDATA #REQUIRED
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
                  Transformations | Utilities | Unknown) "Unknown"
@@ -30,18 +31,22 @@
    examples   CDATA #REQUIRED
 >
 
-<!ELEMENT toptable (arguments?, optargs?, options?, examples?)>
+<!ELEMENT usage (arguments?, optargs?, options?, examples?)>
 
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT optargs      (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para, code)+>
+<!ELEMENT description  (para | code)*>
 <!ELEMENT option-notes (para)+>
 <!ELEMENT addendum     (para)+>
 <!ELEMENT gui-access   (menu-path, other-access?)>
 
 <!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument 
+    separated (true | false) "false"
+>
+
 <!ELEMENT option   (flag, effect)>
 <!ELEMENT example  (#PCDATA)>
 
@@ -53,7 +58,7 @@
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
                 literal | emphasis | book | quote | filename |
-                function | cmd)*>
+                function | manref | cmdref| cmd)*>
 
 <!ELEMENT code (#PCDATA)>
 
@@ -65,6 +70,18 @@
    tex     CDATA #REQUIRED
    ascii   CDATA #REQUIRED
    graphic CDATA #REQUIRED
+>
+
+<!ELEMENT manref EMPTY>
+<!ATTLIST manref
+   targ    CDATA #REQUIRED
+   before  CDATA #IMPLIED
+   after   CDATA #IMPLIED
+>
+
+<!ELEMENT cmdref EMPTY>
+<!ATTLIST cmdref
+   targ    CDATA #REQUIRED
 >
 
 <!ELEMENT repl     (#PCDATA)>

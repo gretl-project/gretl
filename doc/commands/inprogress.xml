@@ -1,0 +1,2671 @@
+<?xml version="1.0"?>
+<!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+<commandlist language="english">
+
+  <command name="add" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>Print covariance matrix</effect>
+	</option>
+      </options>
+      <examples>
+        <example>add 5 7 9</example>
+        <example>xx yy zz</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Must be invoked after an estimation command.  The variables in
+	<repl>varlist</repl> are added to the previous model and the
+	new model estimated.  If more than one variable is added, the
+	<emphasis>F</emphasis> statistic for the added variables will
+	be printed (for the OLS procedure only) along with its
+	p-value.  A p-value below 0.05 means that the coefficients are
+	jointly significant at the 5 percent level. A number of
+	internal variables may be retrieved using the <cmd>genr</cmd>
+	command, provided <cmd>genr</cmd> is invoked directly after
+	this command.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/add variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="addto" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>modelID</argument>
+	<argument>varlist</argument>
+      </arguments>
+      <examples>
+        <example>addto 2 5 7 9</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Works like the <cmd>add</cmd> command, except that you
+	specify a previous model (using its ID number, which is
+	printed at the start of the model output) to take as the base
+	for adding variables.  The example above adds variables number
+	5, 7 and 9 to Model 2.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/add variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="adf" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>varname</argument>
+      </arguments>
+      <examples>
+        <example>adf 2 x1</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	  Computes statistics for two Dickey&ndash;Fuller tests.  In
+	each case the null hypothesis is that the variable in question
+	exhibits a unit root. The first is a
+	<emphasis>t</emphasis>-test based on the model 
+	  <equation status="display"
+	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
+	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
+	  graphic="adf1"/>
+	  The null hypothesis is that
+	<emphasis>g</emphasis> = 0. The second (augmented) test
+	proceeds by estimating an unrestricted regression (with
+	regressors a constant, a time trend, the first lag of the
+	variable, and <repl>order</repl> lags of the
+	first difference) and a restricted version (dropping the time
+	trend and the first lag).  The test statistic is
+	  <equation status="display"
+	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
+	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
+	  graphic="adf2"/>
+	  where <emphasis>T</emphasis> is the
+	sample size, <emphasis>k</emphasis> the number of parameters
+	in the unrestricted model, and the subscripts
+	<mathvar>u</mathvar> and <mathvar>r</mathvar> denote the
+	unrestricted and restricted models respectively. Note that the
+	critical values for these statistics are not the usual ones; a
+	p-value range is printed, when it can be determined.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Augmented Dickey-Fuller test</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ar" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>lags</argument>
+        <argument separated="true">indepvars</argument>
+      </arguments>
+      <examples>
+        <example>ar 1 3 4 ; y 0 x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes parameter estimates using the generalized
+	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
+	Ramanathan). Iteration is terminated when successive error
+	sums of squares do not differ by more than 0.005 percent or
+	after 20 iterations. <repl>lags</repl> is a list
+	of lags in the residuals, terminated by a semicolon. In the
+	above example, the error term is specified as 
+	<equation status="display" 
+	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
+	    \rho_4 u_{t-4} + e_t\]"
+	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
+	  graphic="corc"/>
+	<repl>depvar</repl> is the
+	dependent variable and <repl>indepvars</repl> is
+	the list of independent variables.  Residuals of the
+	transformed regression are stored under the name
+	<literal>uhat</literal>, which can be retrieved by
+	<cmd>genr</cmd>.  A number of other internal variables
+	may be retrieved using the <cmd>genr</cmd> command,
+	provided <cmd>genr</cmd> is invoked after this
+	command.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Autoregressive estimation</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="arch" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>depvar</argument>
+	<argument>indepvars</argument>
+      </arguments>
+      <examples>
+        <example>arch 4 y 0 x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Tests the model for ARCH (Autoregressive Conditional
+	Heteroskedasticity) of the lag order specified in
+	<repl>order</repl>, which must be an integer. If
+	the LM test statistic has p-value below 0.10, then ARCH
+	estimation is also carried out.  If the predicted variance of
+	any observation in the auxiliary regression is not positive,
+	then the corresponding squared residual is used instead.
+	Weighted least square estimation is then performed on the
+	original model.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window: /Tests/ARCH</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="arma" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>p</argument>
+	<argument>q</argument>
+	<argument separated="true">depvar</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--native</flag>
+        <effect>Use native plugin (default)</effect>
+        </option>
+        <option>
+        <flag>--verbose</flag>
+        <effect>Print details of iterations</effect>
+        </option>
+        <option>
+        <flag>--x-12-arima</flag>
+        <effect>Use X-12-ARIMA for estimation</effect>
+        </option>
+       </options>
+      <examples>
+        <example>arma 1 2 ; y</example>
+	<example>arma 2 2 ; y --verbose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Estimates a univariate ARMA (Autoregressive, Moving Average)
+	model.  The integer values <repl>p</repl> and
+	<repl>q</repl> represent the AR and MA orders
+	respectively. 
+      </para>
+
+      <para>The default is to use the <quote>native</quote> gretl ARMA
+	function; the <literal>--x-12-arima</literal> flag calls for
+	use of the <program>X-12-ARIMA</program> program
+	instead (this will work only if the
+	<program>X-12-ARIMA</program> package for gretl is
+	installed).  
+      </para>
+
+      <para>The options given above may be combined, except that the
+	covariance matrix is not available when estimation is by
+	<program>X-12-ARIMA</program>.</para>
+
+      <para>The native gretl ARMA algorithm is largely due to Riccardo
+	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
+	likelihood procedure, implemented via iterated least squares
+	estimation of the outer product of the gradient (OPG)
+	regression.  <manref targ="jack-arma" before="See" after="for
+	  the logic of the procedure"/>.  The AR coefficients are
+	initialized using an OLS auto-regression, and the MA
+	coefficients are initialized at zero.</para>
+
+      <para>The AIC value given in connection with ARMA models is
+	calculated according to the definition used in
+	<program>X-12-ARIMA</program>, namely
+	  <equation status="display" 
+	  tex="\[\mbox{AIC}=-2L+2k\]"
+	  ascii="AIC = -2L + 2k"
+	  graphic="aic"/>
+	  where <mathvar>L</mathvar> is the
+	log-likelihood and <mathvar>k</mathvar> is the total number
+	of parameters estimated. The <quote>frequency</quote> figure
+	  printed in connection with AR and MA roots is the &lgr;
+	  value that solves
+	  <equation status="display" 
+	  tex="\[z=re^{i2\pi\lambda}\]"
+	  ascii="z = r * exp(i*2*pi*lambda)"
+	  graphic="lambda"/>
+	  where <mathvar>z</mathvar> is the root
+	  in question and <mathvar>r</mathvar> is its modulus.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="boxplot" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="chow" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>obs</argument>
+      </arguments>
+      <examples>
+        <example>chow 25</example>
+        <example>chow 1988:1</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Must follow an OLS regression.  Creates a dummy variable which
+	equals 1 from the split point specified by
+	<repl>obs</repl> to the end of the sample, 0
+	otherwise, and also creates interaction terms between this
+	dummy and the original independent variables.  An augmented
+	regression is run including these terms and an
+	<mathvar>F</mathvar> statistic is calculated, taking the
+	augmented regression as the unrestricted and the original as
+	restricted.  This statistic is appropriate for testing the
+	null hypothesis of no structural break at the given split
+	point.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window: /Tests/Chow test</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coeffsum" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>indepvars</argument>
+      </arguments>
+      <examples>
+        <example>coeffsum xt xt_1 xr_2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Must follow an regression.  Calculates the sum of the
+	coefficients on the variables in the
+	<repl>indepvars</repl> list.  Prints this sum
+	along with its standard error and the p-value for the null
+	hypothesis that the sum is zero.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window: /Tests/sum of coefficients</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coint" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>depvar</argument>
+	<argument>indepvars</argument>
+      </arguments>
+      <examples>
+        <example>coint 2 y x</example>
+	<example>coint 4 y x1 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	The Engle&ndash;Granger cointegration test.  Carries out
+	Augmented Dickey&ndash;Fuller tests on the null hypothesis
+	that each of the variables listed has a unit root, using the
+	given lag order.  The cointegrating regression is estimated,
+	and an ADF test is run on the residuals from this regression.
+	The Durbin&ndash;Watson statistic for the cointegrating
+	regression is also given.  Note that none of these test
+	statistics can be referred to the usual statistical tables.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Cointegration test/Engle-Granger</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coint2" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>depvar</argument>
+	<argument>indepvars</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--verbose</flag>
+        <effect>print details of auxiliary regressions</effect>
+        </option>
+       </options>
+      <examples>
+        <example>coint2 2 y x</example>
+	<example>coint2 4 y x1 x2 --verbose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Carries out the Johansen trace test for cointegration among
+	the listed variables for the given order. Critical values are
+	computed via J. Doornik's gamma approximation (Doornik, 1998).
+	For details of this test see Hamilton (1994, Chapter 20).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Cointegration test/Johansen</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="corc" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>Print covariance matrix</effect>
+	</option>
+      </options>
+      <examples>
+        <example>corc 1 0 2 4 6 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes parameter estimates using the Cochrane&ndash;Orcutt
+	iterative procedure (see Section 9.4 of Ramanathan) with
+	<repl>depvar</repl> as the dependent variable
+	and <repl>indepvars</repl> as the list of
+	independent variables.  Iteration is terminated when
+	successive estimates of the autocorrelation coefficient do not
+	differ by more than 0.001 or after 20 iterations.  Residuals
+	of this transformed regression are stored under the name
+	<literal>uhat</literal>.  Various internal variables may be
+	retrieved using the <cmd>genr</cmd> command, provided
+	<cmd>genr</cmd> is invoked immediately after this
+	command.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Model/Cochrane-Orcutt</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="corr" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="corrgm" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="criteria" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="critical" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="cusum" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="data" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>varlist</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>Reads the variables in <repl>varlist</repl>
+	from a database (gretl or RATS 4.0), which must have been
+	opened previously using the <cmd>open</cmd> command.
+	In addition, a data frequency and sample range must be
+	established using the the <cmd>setobs</cmd> and
+	<cmd>smpl</cmd> commands prior to using this command.
+	Here is a full example:</para>
+
+      <code>
+	open macrodat.rat
+	setobs 4 1959:1
+	smpl ; 1999:4
+	data GDP_JP GDP_UK</code>
+
+      <para>These commands open a database named
+	<filename>macrodat.rat</filename>, establish a quarterly data
+	set starting in the first quarter of 1959 and ending in the
+	fourth quarter of 1999, and then import the series named
+	<literal>GDP_JP</literal> and
+	<literal>GDP_UK</literal>.</para>
+
+      <para>If the series to be read are of higher frequency than the
+	working data set, you must specify a compaction method as
+	below:</para>
+
+      <code>
+	data (compact=average) LHUR PUNEW</code>
+
+      <para>The four available compaction methods are
+	<quote>average</quote> (takes the mean of the high frequency
+	observations), <quote>last</quote> (uses the last
+	observation), <quote>first</quote> and <quote>sum</quote>.
+      </para> 
+
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Browse databases</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="delete" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="diff" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="else" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="end" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="endif" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="endloop" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="eqnprint" section="Printing">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--complete</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="equation" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="fcast" section="Prediction">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="fcasterr" section="Prediction">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--plot</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="fit" section="Prediction">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="freq" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="genr" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="gnuplot" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--with-lines</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--with-impulses</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--suppress-fitted</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--dummy</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="graph" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--wide</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="hausman" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="hccm" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="help" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="hilu" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="hsk" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="if" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="import" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--box1</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="info" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="label" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="labels" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="lad" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="lags" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="ldiff" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="leverage" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--save</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="lmtest" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--logs</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--autocorr</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--squares</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--white</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="logistic" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="logit" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="logs" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="loop" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="meantest" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--unequal-vars</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="modeltab" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="mpols" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="multiply" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="mvavg" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="nls" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="nulldata" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="ols" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--vcv</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--robust</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--quiet</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="omit" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="omitfrom" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="open" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="outfile" section="Printing">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--append</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--close</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--write</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="panel" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--cross-section</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--time-series</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="pca" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--save-all</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--save</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="pergm" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--bartlett</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="plot" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--one-scale</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="pooled" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="print" section="Printing">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--byobs</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--ten</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="printf" section="Printing">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="probit" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="pvalue" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="quit" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="rename" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="reset" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="rhodiff" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="rmplot" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="run" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="runs" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="scatters" section="Graphs">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="seed" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="set" section="Programming">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="setobs" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="setmiss" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="shell" section="Utilities">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="sim" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="smpl" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--dummy</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--no-missing</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--restrict</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="spearman" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--verbose</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="square" section="Transformations">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--cross</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="store" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--csv</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--gnu-octave</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--gnu-R</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--traditional</flag>
+        <effect>.</effect>
+        </option>
+        <option>
+        <flag>--gzipped</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="summary" section="Statistics">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="system" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="tabprint" section="Printing">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--complete</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="testuhat" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="tobit" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--verbose</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="tsls" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="var" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <options>
+        <option>
+        <flag>--quiet</flag>
+        <effect>.</effect>
+        </option>
+       </options>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="varlist" section="Dataset">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="vartest" section="Tests">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="wls" section="Estimation">
+
+    <usage>
+      <arguments>
+        <argument>.</argument>
+        <argument>.</argument>
+      </arguments>
+      <examples>
+        <example>.</example>
+      </examples>
+    </usage>
+
+    <description><para>Description goes here.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>.</menu-path>
+      <other-access>.</other-access>
+    </gui-access>
+
+  </command>
+
+</commandlist>
+

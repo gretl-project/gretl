@@ -16,7 +16,7 @@
 <xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="toptable">
+<xsl:template match="usage">
 <xsl:apply-templates/>
 <xsl:text>&#xa;</xsl:text>
 </xsl:template>
@@ -43,6 +43,7 @@ Arguments:  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="argument">
+<xsl:if test="(@separated)">; </xsl:if> 
 <xsl:apply-templates/><xsl:text> </xsl:text>
 </xsl:template>
 
@@ -124,6 +125,18 @@ Examples:   </xsl:when>
   <xsl:text>&#xa;&#xa;</xsl:text>
   <xsl:apply-templates/>
   <xsl:text>&#xa;&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="cmdref">
+<xsl:text>"</xsl:text>
+  <xsl:value-of select="@targ"/>
+<xsl:text>"</xsl:text>
+</xsl:template>
+
+<xsl:template match="manref">
+<xsl:value-of select="@before"/>
+<xsl:text> the gretl manual </xsl:text>
+<xsl:value-of select="@after"/>
 </xsl:template>
 
 <xsl:template match="menu-path">

@@ -17,7 +17,16 @@
  *
  */
 
-/* formatter for gretl commands info stored as "generic" XML */
+/* Formatter for gretl commands info stored as "generic" XML: takes
+   a purely content-based XML representation of the info relating to
+   the gretl commands (conforming to gretl_commands.dtd) and uses
+   XSL transformation to turn this into output suitable for:
+
+   * the "cmdref" chapter of the gretl manual (docbook XML); and 
+   * the "online" help files.
+   
+   Uses the XSL stylesheets gretlman.xsl and gretltxt.xsl.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>

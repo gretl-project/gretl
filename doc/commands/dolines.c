@@ -1,5 +1,10 @@
 /* dolines.c -- in text file, reflow paragraphs that have been 
    tagged with "[PARA]" and "[/PARA]".  Implemented as a filter.
+   Designed for post-processing of text help files generated via
+   xsl.  Some of what's here can probably be done more efficiently
+   within xsl -- if we can figure out how to use it properly!
+
+   Allin Cottrell, Feb 2004.
 */
 	
 #include <stdio.h>
@@ -7,27 +12,45 @@
 #include <string.h>
 #include <ctype.h>
 
-#define MAXLEN 78
+#define MAXLEN 78 /* length at which lines will wrap */
 
-void utf_replace (char *s)
+static void utf_replace (char *s)
 {
     char *p;
+    
+    /* ugh, there has to be a better way of doing this: learn
+       properly about entities in context of xslt? 
+    */
 
     while (1) {
-	p = strstr(s, "&#x2013;");
+	p = strstr(s, "&#x2013;"); /* &ndash; */
+	if (p != NULL) {
+	    *p = '-';
+	    memmove(p+1, p+8, strlen(p+8) + 1);
+	}
+	
+	p = strstr(s, "&#x3BB;"); /* &lgr; */
+	if (p != NULL) {
+	    *p++ = 'l';
+	    *p++ = 'a';
+	    *p++ = 'm';
+	    *p++ = 'b';
+	    *p++ = 'd';
+	    *p++ = 'a';
+	    memmove(p, p+1, strlen(p+1) + 1);
+	}
+
 	if (p == NULL) break;
-	*p = '-';
-	memmove(p+1, p+8, strlen(p+8) + 1);
     }
 }
 
-void compress_spaces (char *s)
+static void compress_spaces (char *s)
 {
     char *p;
 
     if (s == NULL || *s == 0) return;
 
-    /* replace endashes */
+    /* replace endashes (and other entities?) */
     utf_replace(s);
 
     p = s;
@@ -39,7 +62,7 @@ void compress_spaces (char *s)
 
     s = p;
     while (*s) {
-	/* replace multiple spaces with single */
+	/* replace multiple consecutive spaces with single */
         if (*s == ' ') {
             p = s + 1;
             if (*p == 0) break;
@@ -62,7 +85,7 @@ static int blank_string (const char *s)
 }
 
 /* remove white space from the end of a string */
-void trim (char *s)
+static void trim (char *s)
 {
     int i, n = strlen(s);
 
@@ -74,7 +97,10 @@ void trim (char *s)
     }
 }
 
-/* reflow a paragraph buffer, with max line length MAXLEN */
+/* Reflow a paragraph buffer, with max line length MAXLEN.
+   This function needs some work.
+*/
+
 static int format_buf (char *buf)
 {
     char *p, *q, line[80];
@@ -100,6 +126,10 @@ static int format_buf (char *buf)
     return 0;
 }
 
+/* remove special marker put into the text by xsl to identify
+   paragraphs that should be re-flowed to the given line length.
+*/
+
 void strip_marker (char *s, const char *targ)
 {
     int i, n = strlen(targ);
@@ -111,7 +141,7 @@ void strip_marker (char *s, const char *targ)
 
 int main (void)
 { 
-    char buf[8096]; 
+    char buf[8096]; /* can't handle paragraphs > 8Kb */
     char line[128];
     int blank = 0, inpara = 0, last = 0;
     char *p;
@@ -121,12 +151,14 @@ int main (void)
 	/* strip out xml declaration */
 	if (!strncmp(line, "<?xml", 5)) continue;
 
+	/* look for start-of-para marker inserted by xsl */
 	if ((p = strstr(line, "[PARA]"))) {
 	    strip_marker(p, "[PARA]");
 	    *buf = 0;
 	    inpara = 1;
 	}
 
+	/* also end-of-para markers */
 	if ((p = strstr(line, "[/PARA]"))) {
 	    strip_marker(p, "[/PARA]");
 	    strcat(buf, line);
@@ -136,6 +168,12 @@ int main (void)
 	} else {
 	    last = 0;
 	}
+
+	/* If inside a para to be reflowed, add the line to the 
+	   para buffer for reformatting; otherwise just send out
+	   the line as is -- but try to prevent multiple blank
+	   lines in succession.
+	*/
 	
 	if (inpara) {
 	    strcat(buf, line);

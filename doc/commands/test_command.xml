@@ -8,7 +8,7 @@
 
   <command name="ols" xref="ols" section="Estimation">
 
-    <toptable>
+    <usage>
 
       <arguments>
 	<argument>depvar</argument>
@@ -35,7 +35,7 @@
 	<example>ols y 0 x1 x3 --vcv</example>
       </examples>
 
-    </toptable>
+    </usage>
 
     <description>
       <para>
