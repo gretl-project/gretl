@@ -23,7 +23,7 @@
 #include "var.h"  
 #include "gretl_private.h"
 
-#undef VAR_DEBUG 
+#undef VAR_DEBUG
 
 struct GRETL_VAR_ {
     int neqns;         /* number of equations in system */
@@ -786,60 +786,77 @@ static int organize_var_lists (const int *list, const double **Z,
 			       int **varlist)
 {
     int ndet = 0, nstoch = 0;
-    int gotsep = 0, ifc = 0;
+    int gotsep = 0;
+    char *d;
     int i, j, k;
+    
+    d = calloc(list[0] + 1, 1);
+    if (d == NULL) return 1;
+
+    /* figure out the lengths of the lists */
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == LISTSEP) {
 	    gotsep = 1;
-	} else if (!strcmp(pdinfo->varname[list[i]], "const")) {
-	    ifc = 1;
-	    ndet++;
-	} else if (gotsep || 
+	    continue;
+	}
+	if (gotsep || 
+	    !strcmp(pdinfo->varname[list[i]], "const") ||	   
 	    !strcmp(pdinfo->varname[list[i]], "time") ||
 	    isdummy(Z[list[i]], pdinfo->t1, pdinfo->t2)) {
+	    d[i] = 1;
 	    ndet++;
 	} else {
 	    nstoch++;
 	}
     }
 
+    /* allocate the lists */
+
     *detvars = malloc((ndet + 1) * sizeof **detvars);
     if (*detvars == NULL) {
+	free(d);
 	return 1;
     }
 
     *stochvars = malloc((nstoch + 1) * sizeof **stochvars);
     if (*stochvars == NULL) {
+	free(d);
 	free(*detvars);
 	return 1;
     }
 
     *varlist = malloc((2 + ndet + nstoch * order) * sizeof **varlist);
     if (*varlist == NULL) {
+	free(d);
 	free(*detvars);
 	free(*stochvars);
 	return 1;
     } 
 
+    /* fill out the detvars and stochvars lists */
+
     (*detvars)[0] = ndet;
     (*stochvars)[0] = nstoch;
     (*varlist)[0] = 1 + ndet + nstoch * order;
 
-    gotsep = 0;
     j = k = 1;
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == LISTSEP) {
-	    gotsep = 1;
-	} else if (gotsep || 
-	    strcmp(pdinfo->varname[list[i]], "time") == 0 ||
-	    strcmp(pdinfo->varname[list[i]], "const") == 0 ||
-	    isdummy(Z[list[i]], pdinfo->t1, pdinfo->t2)) {
-	    (*detvars)[j++] = list[i];
-	} else {
-	    (*stochvars)[k++] = list[i];
+	if (list[i] != LISTSEP) {
+	    if (d[i]) {
+		(*detvars)[j++] = list[i];
+	    } else {
+		(*stochvars)[k++] = list[i];
+	    }
 	}
     }
+
+    free(d);
+
+#if VAR_DEBUG
+    printlist(*detvars, "deterministic vars");
+    printlist(*stochvars, "stochastic vars");
+#endif
 
     return 0;
 }
@@ -847,17 +864,25 @@ static int organize_var_lists (const int *list, const double **Z,
 /* given the ID number of a variable, fill out list, starting at the
    specified pos, with order lags of that variable, looking up the ID
    numbers of the lag vars (which are presumed to be already
-   generated).
+   generated -- flag an error if they're not).
 */
 
-static void stoch_laglist (int *list, int pos, int svar, int order,
-			   const DATAINFO *pdinfo)
+static int stoch_laglist (int *list, int pos, int svar, int order,
+			  const DATAINFO *pdinfo)
 {
-    int i;
+    int lag, lv;
+    int err = 0;
 
-    for (i=0; i<order; i++) {
-	list[pos + i] = lagvarnum(svar, i + 1, pdinfo);
+    for (lag=1; lag<=order; lag++) {
+	lv = lagvarnum(svar, lag, pdinfo);
+	if (lv < 0) {
+	    lv = 0;
+	    err = 1;
+	}
+	list[pos + lag - 1] = lv;
     }
+
+    return err;
 }
 
 /* compose a VAR regression list: it may be complete, or one variable
@@ -865,13 +890,14 @@ static void stoch_laglist (int *list, int pos, int svar, int order,
    than the full VAR order (again, for an F-test)
 */
 
-static void 
+static int
 compose_varlist (int *list, int depvar, const int *stochvars, 
 		 const int *detvars, int order, int omit, 
 		 const DATAINFO *pdinfo)
 {
     int l0 = 1 + detvars[0] + order * stochvars[0];
     int i, pos;
+    int err = 0;
 
     if (omit) {
 	l0 -= order;
@@ -883,7 +909,7 @@ compose_varlist (int *list, int depvar, const int *stochvars,
     pos = 2;
     for (i=1; i<=stochvars[0]; i++) {
 	if (i != omit) {
-	    stoch_laglist(list, pos, stochvars[i], order, pdinfo);
+	    err = stoch_laglist(list, pos, stochvars[i], order, pdinfo);
 	    pos += order;
 	}
     }
@@ -891,6 +917,12 @@ compose_varlist (int *list, int depvar, const int *stochvars,
     for (i=1; i<=detvars[0]; i++) {
 	list[pos++] = detvars[i];
     }
+
+#if VAR_DEBUG
+    printlist(list, "composed VAR list");
+#endif
+
+    return err;
 }
 
 /* ...................................................................  */
@@ -1093,8 +1125,12 @@ static int real_var (int order, const int *inlist,
     neqns = stochvars[0];    
 
     /* compose base VAR list (entry 1 will vary across equations) */
-    compose_varlist(varlist, stochvars[1], stochvars, detvars, 
-		    order, 0, pdinfo);
+    err = compose_varlist(varlist, stochvars[1], stochvars, detvars, 
+			  order, 0, pdinfo);
+    if (err) {
+	err = E_DATA;
+	goto var_bailout;
+    }
 
     /* sort out sample range */
     t1 = pdinfo->t1;

@@ -20,6 +20,8 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 
+#undef TRDEBUG
+
 /* newlag is a library global, used when auto-generating a lag in the
    context of reading a regression list (interact.c)
 */
@@ -67,10 +69,12 @@ make_transform_varname (char *vname, const char *orig, int cmd,
     return 0;
 }
 
-static void
+static int
 make_transform_label (char *label, const char *parent,
 		      int cmd, int lag)
 {
+    int err = 0;
+
     if (cmd == DIFF) {
 	sprintf(label, _("= first difference of %s"), parent);
     } else if (cmd == LDIFF) {
@@ -81,7 +85,11 @@ make_transform_label (char *label, const char *parent,
 	sprintf(label, _("= %s squared"), parent);
     } else if (cmd == LAGS) {
 	sprintf(label, "= %s(t - %d)", parent, lag);
-    } 
+    } else {
+	err = 1;
+    }
+
+    return err;
 }
 
 static void make_xp_varname (char *vname, const char *v1, 
@@ -564,8 +572,7 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
     int lagnum, l, i, v;
     int startlen;
 
-    startlen = get_starting_length(list, pdinfo, 
-				   (maxlag > 9)? 3 : 2);
+    startlen = get_starting_length(list, pdinfo, (maxlag > 9)? 3 : 2);
     
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -574,9 +581,17 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 	for (l=1; l<=maxlag; l++) {
 	    lagnum = get_transform(LAGS, v, l, pZ, pdinfo, startlen);
+#if TRDEBUG
+	    fprintf(stderr, "base var '%s', lag %d: lagnum = %d\n",
+		    pdinfo->varname[v], l, lagnum);
+#endif
 	    if (lagnum < 0) {
 		return 1;
 	    }
+#if TRDEBUG
+	    fprintf(stderr, "lag var name '%s', label '%s'\n",
+		    pdinfo->varname[lagnum], VARLABEL(pdinfo, lagnum));
+#endif
 	}
     }
 
@@ -724,11 +739,27 @@ int lagvarnum (int v, int l, const DATAINFO *pdinfo)
 
     make_transform_label(label, pdinfo->varname[v], LAGS, l);
 
+#if TRDEBUG
+    fprintf(stderr, "Looking for lag var with label '%s'...\n", label);
+#endif
+
     for (i=1; i<pdinfo->v; i++) {
 	if (!strcmp(label, VARLABEL(pdinfo, i))) {
 	    return i;
 	}
     }
+
+    /* second attempt? */
+    sprintf(label, "= %s(-%d)", pdinfo->varname[v], l);
+    for (i=1; i<pdinfo->v; i++) {
+	if (strstr(VARLABEL(pdinfo, i), label)) {
+	    return i;
+	}
+    }
+
+#if TRDEBUG
+    fputs("*** not found\n", stderr);
+#endif
 
     return -1;
 }
