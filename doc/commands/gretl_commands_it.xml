@@ -1337,12 +1337,12 @@
 	    si usi <cmd>x(+N)</cmd>.</para>
 	</li>
 	<li><para>Funzioni dataset: <func>misszero</func> (sostituisce con 
-            zero il codice delle osservazioni mancanti in una serie),
+            zero il codice delle osservazioni mancanti in una serie);
 	    <func>zeromiss</func> (l'operazione inversa di
-	    <func>misszero</func>), <func>nobs</func> (riporta il numero di
-	    osservazioni valide in una data serie), <func>missing</func>
+	    <func>misszero</func>); <func>nobs</func> (riporta il numero di
+	    osservazioni valide in una data serie); <func>missing</func>
             (per ogni osservazione, vale 1 se l'argomento ha un valore mancante,
-            0 altrimenti).</para>
+            0 altrimenti); <func>ok</func> (l'opposto di <func>missing</func>).</para>
 	</li>
 	<li><para>Numeri pseudo-casuali: <func>uniform</func>,
 	    <func>normal</func>.</para>
@@ -1951,7 +1951,7 @@
         procedura OLS standard, ma gli errori standard delle stime dei
 	coefficienti sono calcolati in modo da essere robusti rispetto
         all'eteroschedasticità, ossia usando la procedura <quote>jackknife</quote>
-        di MacKinnon-White.
+        di MacKinnon&ndash;White.
       </para>
     </description>
 
@@ -2878,7 +2878,7 @@
 
       <para>Esegue una stima con minimi quadrati non-lineari (NLS:
       Nonlinear Least Squares) usando una versione modificata
-      dell'algoritmo di Levenberg-Marquandt. Occorre fornire una
+      dell'algoritmo di Levenberg&ndash;Marquandt. Occorre fornire una
       specificazione di funzione e si raccomanda di specificare anche le
       espressioni per le derivate di questa funzione rispetto a ognuno
       dei parametri, se possibile.</para>
@@ -3764,8 +3764,7 @@
 
   </command>
 
-  <command name="reset" section="Tests"
-    label="Test RESET di Ramsey">
+  <command name="reset" section="Tests" label="Test RESET di Ramsey">
 
     <description>
       <para>
@@ -3780,6 +3779,53 @@
 
     <gui-access>
       <menu-path>Finestra del modello, /Test/RESET - Ramsey</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="restrict" section="Tests" label="Vincoli lineari">
+
+    <description>
+      <para>
+	Valuta un insieme di vincoli lineari sui parametri dell'ultimo modello
+        stimato. In modalità batch, l'insieme di vincoli deve essere
+        racchiuso tra i comandi <quote>restrict</quote> e
+	<quote>end restrict</quote>, mentre in modalità grafica, queste righe
+        possono essere omesse dalla finestra di dialogo che definisce i vincoli.
+      </para>
+
+      <para>Ogni vincolo nell'insieme va indicato sotto forma di equazione
+	con una combinazione lineare dei parametri al primo membro e un
+        valore numerico al secondo. I parametri sono indicati con la
+        sintassi b<repl>N</repl>, dove <repl>N</repl> rappresenta la posizione
+        nella lista dei regressori, a partire da zero. Ad esempio, <lit>b1</lit>
+	indica il secondo parametro della regressione.
+      </para>
+
+      <para>I termini <lit>bN</lit> a partire dal secondo possono essere
+        prefissati da un moltiplicatore numerico, usando il segno
+	<lit>*</lit> per indicare la moltiplicazione, ad esempio
+	<lit>3.5*b4</lit>.
+      </para>
+
+      <para>Ecco un esempio di un insieme di vincoli:</para>
+
+      <code>
+	restrict
+	 b1 = 0
+	 b2 - b3 = 0
+	 b4 + 2*b5 = 1
+	end restrict</code>
+
+      <para>I vincoli sono valutati attraverso un test F di Wald,
+	usando la matrice di covarianza dei coefficienti del modello
+        in questione.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>Modello, /Test/Vincoli lineari</menu-path>
     </gui-access>
 
   </command>
@@ -4097,6 +4143,15 @@
           quelli che di solito vengono chiamati <quote>errori standard di
           White</quote>.</cell> </row>
 	<row>
+	  <cell><lit>force_hc</lit></cell> <cell>valori: off (predefinito)
+	    o on. Lo stimatore HAC viene usato in modo predefinito con dati
+            serie storiche e quando si usa l'opzione <lit>--robust</lit> di
+            <cmd>ols</cmd>. Impostando invece <lit>force_hc</lit> a
+            <quote>on</quote>, si forza l'uso della matrice di covarianza
+	    coerente con l'eteroschedasticità (che non tiene conto dell'autocorrelazione).
+	  </cell>
+	</row>
+	<row>
 	  <cell><lit>garch_vcv</lit></cell>
 	  <cell>valori: <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (matrice di informazione) , <lit>op</lit>
@@ -4312,7 +4367,8 @@
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>variabile-dummy</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condizione</repl> <lit>--restrict</lit></altform>
-	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>lista-variabili</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>lista-variabili</repl> <lit>]</lit></altform>
+ 	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <examples>
@@ -4320,6 +4376,8 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
+	<example>smpl y > 3000 --restrict --cumulate</example>
+	<example>smpl 100 --random</example>
       </examples>
     </usage>
 
@@ -4344,15 +4402,29 @@
         targ="genr"/>.</para>
 
       <para>Con la forma <lit>--no-missing</lit>, se viene specificata
-      una <repl>lista-variabili</repl>, vengono scartate le osservazioni
-      per cui almeno una delle variabili nella <repl>lista-variabili</repl>
-      ha un valore mancante, altrimenti vengono scartate le osservazioni
-      per cui <emphasis>una qualsiasi</emphasis> variabile ha un valore
-      mancante.</para>
+      una <repl>lista-variabili</repl>, vengono selezionate le osservazioni
+      per cui tutte le variabili nella <repl>lista-variabili</repl>
+      hanno valori validi in corrispondenza dell'osservazione; altrimenti, se
+      non viene indicata alcuna <repl>lista-variabili</repl>, vengono
+      selezionate le osservazioni per cui <emphasis>tutte</emphasis> le
+      variabili hanno valori validi (non mancanti).</para>
 
+      <para>Con la forma <lit>--random</lit>, viene estratto casualmente dal
+      dataset il numero indicato di osservazioni. Per essere in grado di
+      replicare questa selezione, occorre per prima cosa impostare il seme
+      del generatore di numeri casuali (si veda il comando
+	<cmdref targ="set"/>).</para>
+ 
       <para>La forma finale, <lit>smpl full</lit>, ripristina
       l'intervallo completo del campione.
       </para>
+ 
+      <para>Si noti che i vincoli sul campione di solito non sono cumulativi:
+      ad eccezione della forma <quote>+i -j</quote>, il valore di riferimento
+      di ogni comando <lit>smpl</lit> è l'intero dataset. Se si vuole che il
+      comando funzioni in modo cumulativo, così che ogni vincolo si aggiunga
+      a quelli già impostati, occorre usare l'opzione <lit>--cumulate</lit>
+      alla fine del comando.</para>
 
       <para>La variabile interna <lit>obs</lit> può essere usata con la
       forma <lit>--restrict</lit> di <lit>smpl</lit> per escludere
