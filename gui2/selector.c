@@ -495,7 +495,8 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     gchar numstr[6], grvar[6];
     GtkTreeModel *model;
     GtkTreeIter iter;
-    int err = 0;
+
+    sr->error = 0;
 
     sr->cmdlist = mymalloc(MAXLEN);
     if (sr->cmdlist == NULL) return FALSE;
@@ -512,7 +513,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a weight variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
 	    sprintf(numstr, "%d ", i);
@@ -525,7 +526,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 	if (!strlen(lags)) {
 	    errbox(_("You must specify a list of lags"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    strcat(sr->cmdlist, lags);
 	    strcat(sr->cmdlist, " ; ");
@@ -544,7 +545,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a Y-axis variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
 	    sprintf(numstr, "%d ", i);
@@ -553,12 +554,12 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* next deal with the "depvar" widget */
-    if (!err && sr->depvar != NULL) {
+    if (!sr->error && sr->depvar != NULL) {
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
 
 	if (str == NULL || !strlen(str)) {
 	    topslot_empty(sr->code);
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
 	    if (sr->code == GR_XY || sr->code == GR_IMP) {
@@ -571,7 +572,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* bail out if things have gone wrong already */
-    if (err) return TRUE;
+    if (sr->error) return TRUE;
 
     if (sr->default_check != NULL && 
 	GTK_TOGGLE_BUTTON(sr->default_check)->active) {
@@ -587,7 +588,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a factor variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rightvars), 
 						  "data"));
@@ -644,7 +645,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	    }
 	} else {
 	    errbox(_("You must specify a set of instrumental variables"));
-	    err = 1;
+	    sr->error = 1;
 	}
     }
 
@@ -657,9 +658,16 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	reverse_list(sr->cmdlist);
     }
 
-    if (err) return TRUE;
+    if (sr->error) return TRUE;
 
     return FALSE;
+}
+
+static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
+{
+    if (!sr->error) {
+	gtk_widget_destroy(sr->dlg);
+    }
 }
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
@@ -1013,6 +1021,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->cmdlist = NULL;
     sr->data = NULL;
     sr->active_var = 0;
+    sr->error = 0;
 
     sr->code = code;
     sr->dlg = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1068,8 +1077,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     g_signal_connect(G_OBJECT(tmp), "clicked", 
 		     G_CALLBACK(okfunc), sr);
     g_signal_connect(G_OBJECT (tmp), "clicked", 
-		     G_CALLBACK(delete_widget), 
-		     G_OBJECT(sr->dlg));
+		     G_CALLBACK(maybe_delete_dialog), sr);
 
     gtk_widget_show(tmp);
     gtk_widget_grab_default(tmp);
@@ -1085,7 +1093,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(delete_widget), sr->dlg);
+		     G_CALLBACK(maybe_delete_dialog), sr);
     gtk_widget_show(tmp);
 
     if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
@@ -1465,6 +1473,10 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     build_selector_buttons(sr, okfunc);
 
     gtk_widget_show(sr->dlg);
+    
+    if (SAVE_DATA_ACTION(sr->code)) {
+	gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
+    }
 }
 
 struct list_maker {

@@ -47,6 +47,7 @@ typedef struct {
     GtkWidget *extra;
     int code;
     int active_var;
+    int error;
     char *cmdlist;
     gpointer data;
 } selector;

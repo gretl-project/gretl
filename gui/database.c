@@ -1643,9 +1643,6 @@ static void data_compact_dialog (int spd, int *target_pd,
     gtk_widget_show (tempwid);
 
     gtk_widget_show(d->dialog);
-#if 0 /* can't scroll help */
-    gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
-#endif
     gtk_main();
 }
 

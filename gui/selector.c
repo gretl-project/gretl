@@ -272,7 +272,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
     gchar numstr[6], grvar[6];
-    int err = 0;
+
+    sr->error = 0;
 
     sr->cmdlist = mymalloc(MAXLEN);
     if (sr->cmdlist == NULL) return;
@@ -287,7 +288,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a weight variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
 	    sprintf(numstr, "%d ", i);
@@ -300,7 +301,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 	if (!strlen(lags)) {
 	    errbox(_("You must specify a list of lags"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    strcat(sr->cmdlist, lags);
 	    strcat(sr->cmdlist, " ; ");
@@ -319,7 +320,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a Y-axis variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
 	    sprintf(numstr, "%d ", i);
@@ -328,12 +329,12 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* next deal with the "depvar" widget */
-    if (!err && sr->depvar != NULL) {
+    if (!sr->error && sr->depvar != NULL) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
 
 	if (str == NULL || !strlen(str)) {
 	    topslot_empty(sr->code);
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
 	    if (sr->code == GR_XY || sr->code == GR_IMP)
@@ -346,7 +347,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     }
 
     /* bail out if things have gone wrong already */
-    if (err) {
+    if (sr->error) {
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 	return;
     }
@@ -362,13 +363,13 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
 	if (str == NULL || !strlen(str)) {
 	    errbox(_("You must select a factor variable"));
-	    err = 1;
+	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rightvars)));
 	    sprintf(numstr, " %d", i);
 	    strcat(sr->cmdlist, numstr);
 	}
-	if (err) gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
+	if (sr->error) gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 	return;
     }
 
@@ -404,7 +405,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    }
 	} else {
 	    errbox(_("You must specify a set of instrumental variables"));
-	    err = 1;
+	    sr->error = 1;
 	}
     }
 
@@ -419,13 +420,15 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (err) 
+    if (sr->error) 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 }
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-    gtk_main_quit();
+    if (SAVE_DATA_ACTION(sr->code)) {
+	gtk_main_quit();
+    }
     free(sr->cmdlist);
     free(sr);
     open_dialog = NULL;
@@ -813,6 +816,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     sr->data = NULL;
 
     sr->code = code;
+    sr->error = 0;
     sr->dlg = gtk_dialog_new();
     open_dialog = sr->dlg;
     gtk_window_set_title(GTK_WINDOW(sr->dlg), title);
@@ -1068,8 +1072,7 @@ void selection_dialog (const char *title, const char *oktxt,
     build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
-    gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
-    gtk_main();
+    /* gtk_main(); */
 }
 
 static char *get_topstr (int cmdnum)
@@ -1292,8 +1295,11 @@ void simple_selection (const char *title, const char *oktxt,
     build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
-    gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
-    gtk_main();
+
+    if (SAVE_DATA_ACTION(sr->code)) {
+	gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
+    }
+    /* gtk_main(); */
 }
 
 static const char *data_save_title (int code)
@@ -1338,6 +1344,7 @@ void data_save_selection_wrapper (int file_code)
                      _("Copy data") : _("Save data"), _("Apply"),
                      data_save_selection_callback, file_code, 
                      NULL);
+    gtk_main();
 }
 
 struct list_maker {

@@ -816,9 +816,6 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_widget_show (tempwid);
 
     gtk_widget_show(d->dialog);
-#if 0
-    gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
-#endif
     gtk_main();
 }
 

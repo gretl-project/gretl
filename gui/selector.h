@@ -44,6 +44,7 @@ typedef struct {
     GtkWidget *default_check;
     GtkWidget *extra;
     int code;
+    int error;
     char *cmdlist;
     gpointer data;
 } selector;

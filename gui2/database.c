@@ -1669,10 +1669,6 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     gtk_widget_show (d->dialog);
     gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(w));
-#if 0
-    /* FIXME: this makes it impossible to scroll the help item */
-    gtk_window_set_modal (GTK_WINDOW(d->dialog), TRUE);
-#endif
     gtk_main();
 }
 
