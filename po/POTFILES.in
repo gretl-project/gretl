@@ -55,6 +55,7 @@ gui2/about.c
 gui2/boxplots.c
 gui2/calculator.c
 gui2/callbacks.c
+gui2/clipboard.c
 gui2/cmdstack.c
 gui2/console.c
 gui2/database.c

@@ -244,6 +244,57 @@ void gretl_matrix_zero (gretl_matrix *m)
     for (i=0; i<n; i++) m->val[i] = 0.0;
 }
 
+/**
+ * gretl_matrix_log:
+ * @m: input matrix.
+ *
+ * Sets all elements of @m to logs of original values.
+ * 
+ */
+
+void gretl_matrix_log (gretl_matrix *m)
+{
+    int i, n;
+
+    if (m == NULL || m->val == NULL) return;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
+    
+    for (i=0; i<n; i++) m->val[i] = log(m->val[i]);
+}
+
+double gretl_vector_mean (const gretl_vector *v)
+{
+    double ret = 0.0;
+    int i, n;
+
+    if (v == NULL || v->val == NULL) {
+	return NADBL;
+    }
+
+    if (v->rows > 1 && v->cols > 1) {
+	return NADBL;
+    }
+    
+    if (v->rows > 1) {
+	n = v->rows;
+    } else {
+	n = v->cols;
+    }
+
+    for (i=0; i<n; i++) {
+	ret += v->val[i];
+    }
+
+    ret /= n;
+
+    return ret;
+}
+
 static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
 {
     int i, j;
@@ -347,6 +398,32 @@ void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
     }
     
     for (i=0; i<n; i++) m->val[i] /= x;
+}
+
+/**
+ * gretl_matrix_dot_pow:
+ * @m: matrix to operate on.
+ * @x: scalar to use for exponentiation.
+ *
+ * Raises all elements of @m to the power @x.
+ * 
+ */
+
+void gretl_matrix_dot_pow (gretl_matrix *m, double x)
+{
+    int i, n;
+
+    if (m == NULL || m->val == NULL) return;
+
+    if (m->packed) {
+	n = (m->rows * m->rows + m->rows) / 2;
+    } else {
+	n = m->rows * m->cols;
+    }
+    
+    for (i=0; i<n; i++) {
+	m->val[i] = pow(m->val[i], x);
+    }
 }
 
 /**
