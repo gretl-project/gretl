@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+
+<commandlist> 
+
+  <command name="ols" xref="ols" section="Estimation">
+    <arglist>
+      <argument>depvar</argument>
+      <argument>indepvars</argument>
+    </arglist>
+    <options>
+      <option>
+	<flag>--vcv</flag>
+	<effect>Print covariance matrix</effect>
+      </option>
+      <option>
+	<flag>--quiet</flag>
+	<effect>Suppress printing of results</effect>
+      </option>
+    </options>
+    <examples>
+      <example>ols 1 0 2 3 4</example>
+      <example>ols y 0 x1 x3 --vcv</example>
+    </examples>
+    <description><para>The description goes here.</para>
+    </description>
+    <gui-access>
+      <menu-path>/Model/Ordinary Least Squares</menu-path>
+      <other-access>Beta-hat button on toolbar</other-access>
+    </gui-access>
+  </command>
+
+</commandlist>

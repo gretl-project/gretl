@@ -1,0 +1,36 @@
+<!--
+  DTD for gretl command reference. Allin Cottrell 2004
+ -->
+
+<!ELEMENT commandlist ( command )+>
+
+<!ELEMENT command (arglist?, optargs?, options?, examples?,
+                   description, gui-access?)>
+<!ATTLIST command
+   name         NMTOKEN #REQUIRED
+   xref         CDATA #REQUIRED
+   section      CDATA #REQUIRED
+>
+
+<!ELEMENT arglist     ( argument )+>
+<!ELEMENT optargs     ( argument )+>
+<!ELEMENT options     ( option )+>
+<!ELEMENT examples    ( example )+>
+<!ELEMENT description ( para )+>
+<!ELEMENT gui-access  ( menu-path?, other-access? )>
+
+<!ELEMENT argument ( #PCDATA )>
+<!ELEMENT option   ( flag, effect )>
+<!ELEMENT example  ( #PCDATA )>
+
+<!ELEMENT flag    ( #PCDATA )>
+<!ELEMENT effect  ( #PCDATA )>
+
+<!ELEMENT menu-path    ( #PCDATA )>
+<!ELEMENT other-access ( #PCDATA )>
+
+<!ELEMENT para      ( #PCDATA )>
+
+
+
+
