@@ -153,11 +153,6 @@ char tramo[MAXSTR] = "tramo";
 char tramodir[MAXSTR] = "";
 #endif
 
-#ifdef HAVE_X12A
-char x12a[MAXSTR] = "x12a";
-char x12adir[MAXSTR] = "";
-#endif
-
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
 {
     show_spreadsheet(NULL);

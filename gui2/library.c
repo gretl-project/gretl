@@ -50,11 +50,6 @@ extern char tramo[];
 extern char tramodir[];
 #endif
 
-#ifdef HAVE_X12A
-extern char x12a[];
-extern char x12adir[];
-#endif
-
 /* ../cli/common.c */
 static int data_option (unsigned char flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
@@ -2349,13 +2344,18 @@ void do_arma (int v, int ar, int ma, int verbose, int use_x12)
 	return;
     }
 
+#ifdef HAVE_X12A
     if (use_x12) {
 	*pmod = arma_x12(cmd.list, (const double **) Z, datainfo,
-			 (verbose ? prn : NULL), x12a, x12adir); 
+			 (verbose ? prn : NULL), &paths); 
     } else {
 	*pmod = arma(cmd.list, (const double **) Z, datainfo,
 		     (verbose)? prn : NULL); 
     }
+#else
+    *pmod = arma(cmd.list, (const double **) Z, datainfo,
+		 (verbose)? prn : NULL); 
+#endif
     err = model_output(pmod, prn);
 
     if (err) {
@@ -2814,8 +2814,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 #endif
     } else {
 #ifdef HAVE_X12A
-	prog = x12a;
-	workdir = x12adir;
+	prog = paths.x12a;
+	workdir = paths.x12adir;
 #else
 	return;
 #endif
@@ -4989,8 +4989,14 @@ int gui_exec_line (char *line,
 
     case ARMA:
 	clear_model(models[0], NULL);
+#ifdef HAVE_X12A
+	*models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
+			      (cmd.opt ? prn : NULL), &paths); 
+#else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
 			  (cmd.opt)? prn : NULL);
+#endif
+
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;

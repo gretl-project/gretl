@@ -62,11 +62,6 @@ extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
 #endif
 
-#ifdef HAVE_X12A
-extern char x12a[MAXSTR];
-extern char x12adir[MAXSTR];
-#endif
-
 int use_proxy;
 
 /* filelist stuff */
@@ -176,7 +171,7 @@ RCVARS rc_vars[] = {
      'U', MAXSTR, 3, NULL},
 #endif
 #ifdef HAVE_X12A
-    {"x12a", N_("path to x12arima"), NULL, x12a, 
+    {"x12a", N_("path to x12arima"), NULL, paths.x12a, 
      'R', MAXSTR, 3, NULL},
 #endif
 #ifdef HAVE_TRAMO
@@ -184,7 +179,7 @@ RCVARS rc_vars[] = {
      'R', MAXSTR, 3, NULL},
 #endif
 #ifdef G_OS_WIN32
-    {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
+    {"x12adir", N_("X-12-ARIMA working directory"), NULL, paths.x12adir, 
      'R', MAXSTR, 3, NULL},
 #endif
 #ifdef G_OS_WIN32
@@ -383,7 +378,7 @@ static int check_for_prog (const char *prog)
 static void set_tramo_x12a_dirs (void)
 {
     set_tramo_ok(check_for_prog(tramo));
-    set_x12a_ok(check_for_prog(x12a));
+    set_x12a_ok(check_for_prog(paths.x12a));
 }
 
 # else /* not G_OS_WIN32 */
@@ -426,9 +421,9 @@ static void set_tramo_x12a_dirs (void)
     }
 #  endif
 #  ifdef HAVE_X12A
-    set_x12a_ok(check_for_prog(x12a));
-    if (*x12adir == 0) {
-	build_path(paths.userdir, "x12arima", x12adir, NULL);
+    set_x12a_ok(check_for_prog(paths.x12a));
+    if (*paths.x12adir == '\0') {
+	build_path(paths.userdir, "x12arima", paths.x12adir, NULL);
     }
 #  endif
 
@@ -440,7 +435,7 @@ static void set_tramo_x12a_dirs (void)
 	closedir(test);
     }
 #  ifdef HAVE_X12A
-    my_mkdir(x12adir);
+    my_mkdir(paths.x12adir);
 #  endif
 #  ifdef HAVE_TRAMO
     if (my_mkdir(tramodir)) return;

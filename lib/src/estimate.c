@@ -3057,7 +3057,7 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 } 
 
 MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
-		const char *prog, const char *workdir)
+		const PATHS *ppaths)
 {
     MODEL armod;
     void *handle;
@@ -3072,7 +3072,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 	return armod;
     }
 
-    armod = (*arma_x12_model) (list, Z, pdinfo, prn, prog, workdir);
+    armod = (*arma_x12_model) (list, Z, pdinfo, prn, ppaths->x12a, 
+			       ppaths->x12adir);
 
     close_plugin(handle);
 

@@ -740,15 +740,20 @@ void exec_line (char *line, PRN *prn)
 
     case ARMA:
 	clear_model(models[0], NULL);
+#ifdef HAVE_X12A
+	*models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
+			      (cmd.opt ? prn : NULL), &paths); 
+#else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
 			  (cmd.opt)? prn : NULL);
+#endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
-	    break;
+	} else {	
+	    ++model_count;
+	    (models[0])->ID = model_count;
+	    printmodel(models[0], datainfo, prn);
 	}	
-	++model_count;
-	(models[0])->ID = model_count;
-	printmodel(models[0], datainfo, prn);	
 	break;
 
     case CHOW:

@@ -1439,7 +1439,9 @@ struct arma_options {
     GtkWidget *arspin;
     GtkWidget *maspin;
     GtkWidget *verbcheck;
+#ifdef HAVE_X12A
     GtkWidget *x12check;
+#endif
 };
 
 static void free_arma_opts (GtkWidget *w, struct arma_options *opts)
@@ -1459,7 +1461,11 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
     ar = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->arspin));
     ma = gtk_spin_button_get_value(GTK_SPIN_BUTTON(opts->maspin));
     verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
+#ifdef HAVE_X12A
     x12 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->x12check));
+#else
+    x12 = 0;
+#endif
 
     do_arma(opts->v, ar, ma, verb, x12);
 
@@ -1517,11 +1523,12 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 
+#ifdef HAVE_X12A    
     /* separator */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       tmp, FALSE, FALSE, 5);
-    
+
     /* X12 vs native radio buttons */
     hbox = gtk_hbox_new(FALSE, 5);
     opts->x12check = gtk_radio_button_new_with_label(NULL, _("Use X12-ARIMA"));
@@ -1535,6 +1542,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
+#endif /* HAVE_X12A */
     
     /* Create the "OK" button */
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);

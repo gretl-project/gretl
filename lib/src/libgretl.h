@@ -207,6 +207,10 @@ struct _PATHS {
     char binbase[MAXLEN];
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];
+#ifdef HAVE_X12A
+    char x12a[MAXLEN];
+    char x12adir[MAXLEN];
+#endif
     char dbhost_ip[16];
     char pngfont[16];
 };

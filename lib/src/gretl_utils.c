@@ -1428,7 +1428,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     return 0;
 }
 
-#else
+#else /* not Windows */
 
 int set_paths (PATHS *ppaths, int defaults, int gui)
 {
@@ -1463,8 +1463,11 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    strcpy(ppaths->userdir, home);
 	    strcat(ppaths->userdir, "/gretl/");
 	} else {
-	    strcpy(ppaths->userdir, "");
+	    *ppaths->userdir = '\0';
 	}
+
+	strcpy(ppaths->x12a, "x12a");
+	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
     } 
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);

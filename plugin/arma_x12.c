@@ -709,6 +709,9 @@ MODEL arma_x12_model (int *list, const double **Z,
 	if (!armod.errcode) {
 	    add_unique_output_file(&armod, path);
 	}	
+    } else {
+	armod.errcode = E_UNSPEC;
+	gretl_errmsg_set(_("Failed to execute x12arima"));
     }
 
     return armod;
