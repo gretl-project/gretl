@@ -489,7 +489,7 @@ static XPXXPY xpxxpy_func (const int *list, int t1, int t2,
             xpxxpy.xpx[++m] = xx;
         }
         xx = 0;
-        for(t=t1; t<=t2; t++) {
+        for (t=t1; t<=t2; t++) {
             z1 = Z[nwt][t];
             xx += z1 * z1 * Z[yno][t] * Z[li][t];
         }
@@ -2285,4 +2285,135 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_vars(order + 1, pZ, pdinfo); 
     return archmod;
 }
+
+/**
+ * lad:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct
+ *
+ * Estimate the model given in @list using the method of Least
+ * Absolute Deviation (LAD).
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    double x, cdiff = 1.0, *last_coeff = NULL;
+    double residsum;
+    int i, t, index, iter = 0, err = 0;
+    int wtnum, *wlist = NULL;
+    MODEL lad_model;
+    XPXXPY xpxxpy;
+    CHOLBETA cb;
+
+    _init_model(&lad_model, pdinfo);
+
+    rearrange(list);
+
+    wlist = malloc((list[0] + 1) * sizeof *wlist);
+    if (wlist == NULL) {
+	lad_model.errcode = E_ALLOC;
+	return lad_model;
+    }
+
+    last_coeff = malloc(list[0] * sizeof *last_coeff);
+    if (last_coeff == NULL) {
+	free(wlist);
+	lad_model.errcode = E_ALLOC;
+	return lad_model;
+    }
+
+    /* make room for special weight var in data set */
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	lad_model.errcode = E_ALLOC;
+	return lad_model;
+    }
+
+    wtnum = pdinfo->v - 1;
+    strcpy(pdinfo->varname[wtnum], "abswt");
+
+    wlist[0] = list[0] + 1;
+    wlist[1] = wtnum;
+    for (i=1; i<=list[0]; i++) {
+	wlist[i+1] = list[i];
+    }
+
+    lad_model = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
+
+    if ((err = lad_model.errcode)) {
+	free(wlist);
+	free(last_coeff);
+	return lad_model;
+    }
+
+    while (cdiff > 0.001 && iter++ < 10) {
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (na(lad_model.uhat[t])) {
+		(*pZ)[wtnum][t] = NADBL;
+	    } else {
+		(*pZ)[wtnum][t] = 1.0 / (fabs(lad_model.uhat[t]));
+	    }
+	}
+
+	for (i=1; i<=lad_model.ncoeff; i++) {
+	    last_coeff[i] = lad_model.coeff[i];
+	}
+
+	clear_model(&lad_model, pdinfo);
+	lad_model = lsq(wlist, pZ, pdinfo, WLS, 0, 0.0);
+
+	if ((err = lad_model.errcode)) {
+	    free(wlist);
+	    free(last_coeff);
+	    return lad_model;
+	}
+
+	/* printmodel(&lad_model, pdinfo, prn); */
+
+	cdiff = 0.0;
+	for (i=1; i<=lad_model.ncoeff; i++) {
+	    x = fabs(lad_model.coeff[i] - last_coeff[i]);
+	    x /= fabs(last_coeff[i]);
+	    if (x > cdiff) cdiff = x;
+	}
+	
+	/* pprintf(prn, "*** cdiff=%g\n", cdiff); */
+    }
+
+    /* prepare the model for printing */
+    lad_model.ci = LAD;
+
+    residsum = 0.0;
+    for (t=lad_model.t1; t<=lad_model.t2; t++) {
+	residsum += fabs(lad_model.uhat[t]);
+    }
+
+    lad_model.ess = residsum;                    /* not really "ess" */
+    lad_model.sigma = residsum / lad_model.nobs; /* not really sigma */
+
+    xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
+    cb = cholbeta(xpxxpy);    
+    lad_model.xpx = cb.xpxxpy.xpx;
+    free(cb.xpxxpy.xpy);
+
+    makevcv(&lad_model);
+
+    for (i=1; i<=lad_model.ncoeff; i++) {
+	index = ijton(i, i, list[0] - 1);
+	lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
+    }
+
+    /* trash the special weight variable */
+    dataset_drop_vars(1, pZ, pdinfo);
+
+    free(wlist);
+    free(last_coeff);
+
+    return lad_model;
+}
+
 

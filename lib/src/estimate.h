@@ -31,6 +31,9 @@ int hilu_corc (double *toprho, LIST list,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       int opt, PRN *prn);
 
+MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, 
+	   PRN *prn);
+
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);
 

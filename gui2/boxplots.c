@@ -155,25 +155,32 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = g_object_get_data(G_OBJECT(w), "group");
     PLOTGROUP *grp = (PLOTGROUP *) ptr;
 
-    if (!strcmp(item, _("Five-number summary"))) 
+    if (!strcmp(item, _("Five-number summary"))) {
         five_numbers(grp);
-    else if (!strcmp(item, _("Save to session as icon"))) {
-        if (dump_boxplot(grp) == 0)
-	    add_last_graph(NULL, GRETL_BOXPLOT, NULL);
     }
-    else if (!strcmp(item, _("Save as EPS..."))) 
+    else if (!strcmp(item, _("Save to session as icon"))) {
+        if (dump_boxplot(grp) == 0) {
+	    add_last_graph(NULL, GRETL_BOXPLOT, NULL);
+	}
+    }
+    else if (!strcmp(item, _("Save as EPS..."))) {
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, ptr);
-    else if (!strcmp(item, _("Save as PS..."))) 
+    }
+    else if (!strcmp(item, _("Save as PS..."))) {
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, ptr);
+    }
 #ifdef G_OS_WIN32
-    else if (!strcmp(item, _("Copy to clipboard")))
+    else if (!strcmp(item, _("Copy to clipboard"))) {
 	cb_copy_image(ptr);
+    }
 #else
-    else if (!strcmp(item, _("Save as XPM...")))
+    else if (!strcmp(item, _("Save as XPM..."))) {
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, ptr);
+    }
 #endif
-    else if (!strcmp(item, _("Help")))
+    else if (!strcmp(item, _("Help"))) {
 	context_help (NULL, GINT_TO_POINTER(GR_BOX));
+    }
     else if (!strcmp(item, _("Close"))) { 
 	gtk_widget_destroy(grp->popup);
 	grp->popup = NULL;
@@ -1275,6 +1282,7 @@ static int dump_boxplot (PLOTGROUP *grp)
 	    fprintf(fp, "%d n_outliers = 0\n", i);
 	
     }
+
     fclose(fp);
     return 0;
 }

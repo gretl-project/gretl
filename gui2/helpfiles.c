@@ -615,12 +615,15 @@ static void cancel_find (GtkWidget *widget, gpointer data)
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
-    if (caller->dialog != NULL) 
+    if (caller == mdata) {
+	return;
+    } else if (caller->dialog != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(finder),
 				     GTK_WINDOW(caller->dialog));
-    else if (caller->w != NULL)
+    } else if (caller->w != NULL) {
 	gtk_window_set_transient_for(GTK_WINDOW(finder),
 				     GTK_WINDOW(caller->w));
+    }
 }
 
 /* .................................................................. */

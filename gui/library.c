@@ -2336,7 +2336,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifndef G_OS_WIN32
+#ifdef USE_TRAMO
 
 extern char tramodir[];
 

@@ -227,7 +227,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	if (gpt_titles[i].tab == 0) {
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
-	    tempwid = gtk_label_new(gpt_titles[i].description);
+	    tempwid = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);
@@ -370,7 +370,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 				  tempwid, 0, 1, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
 
-	tempwid = gtk_label_new("legend");
+	tempwid = gtk_label_new(_("legend"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
@@ -386,7 +386,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 	/* line type or style */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new("type");
+	tempwid = gtk_label_new(_("type"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
@@ -401,7 +401,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 	/* scale factor for data */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new("scale");
+	tempwid = gtk_label_new(_("scale"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show (tempwid);
@@ -419,7 +419,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 	/* use left or right y axis? */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new("y axis");
+	tempwid = gtk_label_new(_("y axis"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
@@ -445,12 +445,13 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show (box);
 
-    if (axis == 0)
-	tempwid = gtk_label_new("X-axis");
-    else if (axis == 1)
-	tempwid = gtk_label_new("Y-axis");
-    else if (axis == 2)
-	tempwid = gtk_label_new("Y2-axis");
+    if (axis == 0) {
+	tempwid = gtk_label_new(_("X-axis"));
+    } else if (axis == 1) {
+	tempwid = gtk_label_new(_("Y-axis"));
+    } else if (axis == 2) {
+	tempwid = gtk_label_new(_("Y2-axis"));
+    }
 
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
@@ -467,7 +468,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
-	    tempwid = gtk_label_new(gpt_titles[i].description);
+	    tempwid = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);

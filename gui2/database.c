@@ -1040,6 +1040,7 @@ static int read_RATSDirect (GtkListStore *store, FILE *fp,
 
     char pd = 0, pdstr[3], endobs[9], datestuff[48];    
     gchar *row[3];
+    gsize bytes;
     int startfrac = 0;
 
     fread(&rdir.back_point, sizeof(RECNUM), 1, fp);
@@ -1101,7 +1102,8 @@ static int read_RATSDirect (GtkListStore *store, FILE *fp,
     }
 
     row[0] = rdir.series_name;
-    row[1] = rdir.comments[0];
+    row[1] = g_locale_to_utf8(rdir.comments[0], -1, NULL, &bytes, NULL);
+
     sprintf(datestuff, "%c  %d%s - %s  n = %d", pd, (int) dinfo.year, 
 	   pdstr, endobs, (int) rdir.datapoints);
     row[2] = datestuff;
@@ -1109,6 +1111,8 @@ static int read_RATSDirect (GtkListStore *store, FILE *fp,
     gtk_list_store_append(store, iter);
     gtk_list_store_set(store, iter, 0, row[0], 1, row[1],
 		       2, row[2], -1);
+
+    g_free(row[1]);
     
     /* recursive call to follow the chain of pointers and find
        all the series in the file */

@@ -282,16 +282,19 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     }
 
     /* write graph into session struct */
-    if (session.ngraphs)
+    if (session.ngraphs) {
 	session.graphs = myrealloc(session.graphs, 
 				   (i + 1) * sizeof(GRAPHT *));
-    else
+    } else {
 	session.graphs = mymalloc(sizeof(GRAPHT *));
+    }
 
     if (session.graphs == NULL) goto getout;
 
     session.graphs[i] = mymalloc(sizeof(GRAPHT));
     if (session.graphs[i] == NULL) goto getout;
+
+    (session.graphs[i])->sort = code;
 
     strcpy((session.graphs[i])->fname, pltname);
     strcpy((session.graphs[i])->name, grname);
@@ -847,28 +850,41 @@ static char *model_cmd_str (MODEL *pmod)
 
 /* ........................................................... */
 
-static char *graph_str (GRAPHT *graph)
+static gchar *graph_str (GRAPHT *graph)
 {
     FILE *fp;
-    char *str = NULL;
+    gchar *buf = NULL;
 
     fp = fopen(graph->fname, "r");
+
     if (fp != NULL) {
 	char xlabel[24], ylabel[24], line[48];
 	int gotxy = 0;
 
 	while (fgets(line, 47, fp) && gotxy < 2) {
-	    if (sscanf(line, "set xlabel %23s", xlabel) == 1) 
+	    if (strstr(line, "# timeseries")) {
+		break;
+	    }
+	    else if (sscanf(line, "set xlabel %23s", xlabel) == 1) {
 		gotxy++;
-	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1)
+	    }
+	    else if (sscanf(line, "set ylabel %23s", ylabel) == 1) {
 		gotxy++;
+	    }
 	}
-	if (gotxy == 2 && (str = malloc(64))) {
-	    sprintf(str, "%s versus %s", ylabel, xlabel);
+	if (gotxy == 2) {
+	    char *str = malloc(64);
+	    gsize bytes;
+
+	    if (str != NULL) {
+		sprintf(str, "%s %s %s", ylabel, _("versus"), xlabel);
+		buf = g_locale_to_utf8(str, -1, NULL, &bytes, NULL);
+		free(str);
+	    }
 	}
 	fclose(fp);
     }
-    return str;
+    return buf;
 }
 
 /* ........................................................... */
@@ -1267,7 +1283,7 @@ static void add_all_icons (void)
 #endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_icon(session.graphs[i], 
-			 ((session.graphs[i])->name[0] == 'G')? 'g' : 'b',
+			 ((session.graphs[i])->sort == 1)? 'b' : 'g',
 			 ICON_ADD_BATCH);
     }
 

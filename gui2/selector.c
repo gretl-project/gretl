@@ -1228,7 +1228,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		       gpointer p) 
 {
     GtkWidget *left_vbox, *mid_vbox, *right_vbox, *tmp;
-    GtkWidget *top_hbox, *big_hbox;
+    GtkWidget *top_hbox, *big_hbox, *remove_button;
     GtkListStore *store;
     GtkTreeIter iter;
     selector *sr;
@@ -1307,11 +1307,9 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 		      G_CALLBACK(add_to_right_callback), sr);
     gtk_widget_show(tmp);
     
-    tmp = gtk_button_new_with_label (_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
-    g_signal_connect (G_OBJECT(tmp), "clicked", 
-		      G_CALLBACK(remove_from_right_callback), sr);
-    gtk_widget_show(tmp);
+    remove_button = gtk_button_new_with_label (_("<- Remove"));
+    gtk_box_pack_start(GTK_BOX(mid_vbox), remove_button, TRUE, FALSE, 0);
+    gtk_widget_show(remove_button);
 
     gtk_box_pack_start(GTK_BOX(big_hbox), mid_vbox, TRUE, TRUE, 0);
     gtk_widget_show(mid_vbox);
@@ -1323,6 +1321,11 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
 
     gtk_box_pack_start(GTK_BOX(big_hbox), right_vbox, TRUE, TRUE, 0);
     gtk_widget_show(right_vbox);
+
+    /* connect var removal signal */
+    g_signal_connect (G_OBJECT(remove_button), "clicked", 
+		      G_CALLBACK(remove_from_right_callback), 
+		      sr->rightvars);
 
     /* pack the whole central section into the dialog's vbox */
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);

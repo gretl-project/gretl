@@ -2050,6 +2050,7 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "hccm", 4) ||
 	!strncmp(line, "hsk", 3)  ||
 	!strncmp(line, "add", 3)  ||
+	!strncmp(line, "lad", 3)  ||
 	!strncmp(line, "omit", 4) ||
 	!strncmp(line, "tsls", 4) ||
 	!strncmp(line, "logit", 5)    ||

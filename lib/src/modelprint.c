@@ -176,6 +176,28 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
+static void ladstats (const MODEL *pmod, PRN *prn)
+{
+    int utf = PLAIN_FORMAT(prn->format);
+
+    if (TEX_FORMAT(prn->format)) {  
+	char x1str[32];
+
+	tex_dcolumn_double(pmod->ess, x1str);
+	pprintf(prn, "%s & %s \\\\\n",
+		I_("Sum of absolute residuals"), x1str); 
+    }
+    
+    else {
+	pprintf(prn, "  %s = %g\n", 
+		(utf)? _("Sum of absolute residuals") :
+		I_("Sum of absolute residuals"),
+		pmod->ess);
+    }
+}
+
+/* ......................................................... */ 
+
 static void print_f_pval_str (double pval, PRN *prn)
 {
     int utf = PLAIN_FORMAT(prn->format);
@@ -400,6 +422,7 @@ static const char *estimator_string (int ci, int format)
     else if (ci == TSLS) return N_("TSLS");
     else if (ci == HSK) return N_("Heteroskedasticity");
     else if (ci == AR) return N_("AR");
+    else if (ci == LAD) return N_("LAD");
     else if (ci == HCCM) return N_("HCCM");
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
@@ -868,6 +891,9 @@ static void print_middle_table_end (PRN *prn)
     else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, "\\par\n");
     }
+    else {
+	pprintf(prn, "\n");
+    }
 }
 
 static void r_squared_message (PRN *prn)
@@ -993,6 +1019,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }
 
+    if (pmod->ci == LAD) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	ladstats(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }
+
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || pmod->aux == AUX_AR) {
 	print_middle_table_start(prn);
 	rsqline(pmod, prn);
@@ -1009,8 +1043,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
-	|| pmod->ci == HCCM || pmod->ci == POOLED ||
-	(pmod->ci == WLS && pmod->wt_dummy)) {
+	|| pmod->ci == HCCM || pmod->ci == POOLED  
+	|| (pmod->ci == WLS && pmod->wt_dummy)) {
 
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
@@ -1101,7 +1135,7 @@ static void print_aicetc (const MODEL *pmod, PRN *prn)
 	return;
     }
 
-    pprintf(prn, "\n  %s\n\n", _("MODEL SELECTION STATISTICS"));	
+    pprintf(prn, "  %s\n\n", _("MODEL SELECTION STATISTICS"));	
     pprintf(prn, "  SGMASQ    %#11g     AIC       %#11g     FPE       %#11g\n"
 	    "  HQ        %#11g     SCHWARZ   %#11g     SHIBATA   %#11g\n"
 	    "  GCV       %#11g",
@@ -1182,9 +1216,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     /* get out if std error is undefined */
     if (isnan(pmod->sderr[c-1])) {
-	pprintf(prn, "%16s", _("undefined"));
-	pprintf(prn, "%7s", _("undefined"));
-	pprintf(prn, "%11s\n", _("undefined"));
+	pprintf(prn, "%16s\n", _("undefined"));
 	return 1;
     }
 

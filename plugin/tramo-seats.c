@@ -2,6 +2,10 @@
 
 #include "libgretl.h"
 
+#ifdef OS_WIN32
+# include <windows.h>
+#endif
+
 int write_tramo_data (char *fname, int varnum, 
 		      double **Z, const DATAINFO *pdinfo, 
 		      const char *tramodir)
@@ -23,7 +27,7 @@ int write_tramo_data (char *fname, int varnum,
 
     sprintf(varname, pdinfo->varname[varnum]);
     lower(varname);
-    sprintf(fname, "%s/%s", tramodir, varname);
+    sprintf(fname, "%s%c%s", tramodir, SLASH, varname);
 
     fp = fopen(fname, "w");
     if (fp == NULL) return 1;
@@ -67,13 +71,23 @@ int write_tramo_data (char *fname, int varnum,
     }
 
     /* testing */
+#ifdef notdef
     sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null && mv seats.itr serie && ./seats -OF %s", 
 	    tramodir, varname, varname);
+#endif
+#ifdef OS_WIN32 /* FIXME */
+    sprintf(cmd, "tramo -i %s", 
+	    tramodir, varname);
+    WinExec(cmd, SW_SHOWMINIMIZED);
+#else
+    sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null", 
+	    tramodir, varname);
     system(cmd);
+#endif
 
     strcpy(tmp, pdinfo->varname[varnum]);
     lower(tmp);
-    sprintf(fname, "%s/output/%s.OUT", tramodir, varname);
+    sprintf(fname, "%s%coutput%c%s.out", tramodir, SLASH, SLASH, varname); /* .OUT for seats */
 
     return 0;
 }

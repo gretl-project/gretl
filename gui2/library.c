@@ -2169,7 +2169,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifndef G_OS_WIN32
+#ifdef USE_TRAMO
 
 extern char tramodir[];
 
@@ -2207,8 +2207,6 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 	close_plugin(handle);
 	return; 
     }
-
-    fprintf(stderr, "passing tramodir='%s'\n", tramodir);
 
     err = write_tramo_data (fname, mdata->active_var, Z, datainfo, tramodir);
 

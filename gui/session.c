@@ -261,6 +261,8 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     session.graphs[i] = mymalloc(sizeof(GRAPHT));
     if (session.graphs[i] == NULL) return;
 
+    (session.graphs[i])->sort = code;
+
     strcpy((session.graphs[i])->fname, pltname);
     strcpy((session.graphs[i])->name, grname);
     (session.graphs[i])->ID = plot_count++;
@@ -842,7 +844,7 @@ void view_session (void)
 #endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_object(session.graphs[i], 
-			   ((session.graphs[i])->name[0] == 'G')? 'g' : 'b');
+			   ((session.graphs[i])->sort == GRETL_BOXPLOT)? 'b' : 'g');
     }
 
     gtk_widget_show(slist);

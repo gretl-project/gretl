@@ -685,6 +685,19 @@ void exec_line (char *line, PRN *prn)
 	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	break;
 
+    case LAD:
+	clear_model(models[0], NULL);
+	*models[0] = lad(command.list, &Z, datainfo, prn);
+	if ((err = (models[0])->errcode)) {
+	    errmsg(err, prn);
+	    break;
+	}
+	++model_count;
+	(models[0])->ID = model_count;
+	printmodel(models[0], datainfo, prn); 
+	if (oflag) outcovmx(models[0], datainfo, !batch, prn);
+	break;
+
     case CORRGM:
 	order = atoi(command.param);
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,

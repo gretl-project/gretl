@@ -245,6 +245,7 @@ typedef struct {
 
 typedef struct {
     int ID;
+    int sort;
     char name[24];
     char fname[MAXLEN];
 } GRAPHT; 

@@ -148,13 +148,16 @@ char viewdvi[MAXSTR] = "windvi.exe";
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
-char tramodir[MAXSTR] = "";
 # ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;
 # else
 char Rcommand[MAXSTR] = "xterm -e R";
 # endif
+#endif
+
+#ifdef USE_TRAMO
+char tramodir[MAXSTR] = "";
 #endif
 
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
@@ -442,7 +445,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
-#ifndef G_OS_WIN32
+#ifdef USE_TRAMO
     { N_("/Variable/TRAMO analysis"), NULL, do_tramo, 0, NULL }, 
 #endif
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
