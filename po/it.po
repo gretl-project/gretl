@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-12-25 14:25-0500\n"
-"PO-Revision-Date: 2004-12-24 00:42+0100\n"
+"PO-Revision-Date: 2004-12-26 15:36+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -529,7 +529,7 @@ msgstr "Pila di serie storiche"
 
 #: lib/src/dataio.c:1707 gui2/dialogs.c:2673
 msgid "Stacked cross sections"
-msgstr "Pila di serie cross section"
+msgstr "Pila di dati cross section"
 
 #: lib/src/dataio.c:1710
 msgid "undated"
@@ -1871,10 +1871,9 @@ msgstr ""
 "Non è disponibile alcun valore $aic (Criterio di Informazione di Akaike)"
 
 #: lib/src/generate.c:3113 lib/src/generate.c:3135
-#, fuzzy
 msgid "No $bic (Bayesian Information Criterion) value is available"
 msgstr ""
-"Non è disponibile alcun valore $aic (Criterio di Informazione di Akaike)"
+"Non è disponibile alcun valore $bic (Criterio di Informazione Bayesiano)"
 
 #: lib/src/generate.c:3123
 msgid "$lnl (log-likelihood) is not available for the last model"
@@ -2464,7 +2463,7 @@ msgstr "Struttura panel impostata come %s\n"
 #: lib/src/gretl_utils.c:2208 gui2/datafiles.c:1247 gui2/datafiles.c:1265
 #: gui2/dialogs.c:2822
 msgid "stacked cross sections"
-msgstr "pila di serie cross section"
+msgstr "pila di dati cross section"
 
 #: lib/src/gretl_utils.c:2208 gui2/datafiles.c:1248 gui2/datafiles.c:1266
 #: gui2/dialogs.c:2822
@@ -9110,7 +9109,7 @@ msgstr "con costante, trend e trend quadratico"
 
 #: gui2/library.c:707 gui2/library.c:711
 msgid "show regression results"
-msgstr "Mostra i risultati delle regressioni"
+msgstr "Mostra i risultati della regressione"
 
 #: gui2/library.c:710
 msgid "include a trend"
