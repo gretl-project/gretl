@@ -414,14 +414,18 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     }
 
     for (i=0; i<MAX_PLOT_LABELS; i++) {
+	GtkWidget *active_item;
+	int opt;
+	
 	widget_to_str(labeltext[i], 
 		      spec->text_labels[i].text, 
 		      sizeof spec->text_labels[0].text);
 	widget_to_str(labelpos[i], spec->text_labels[i].pos, 
 		      sizeof spec->text_labels[0].pos);
-	strcpy(spec->text_labels[i].just, 
-	       just_int_to_string(gtk_option_menu_get_history
-				  (GTK_OPTION_MENU(labeljust[i]))));
+	active_item = GTK_OPTION_MENU(labeljust[i])->menu_item;
+	opt = GPOINTER_TO_INT(gtk_object_get_data
+			      (GTK_OBJECT(active_item), "option"));
+	strcpy(spec->text_labels[i].just, just_int_to_string(opt));
     }    
 
 #ifndef GNUPLOT_PNG
@@ -725,7 +729,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl;
+    GtkWidget *tempwid, *box, *tbl, *menu;
     int i, j, tbl_len, tbl_num, tbl_col;
     char label_text[32];
 
@@ -770,8 +774,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 				  labeltext[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_entry_set_text (GTK_ENTRY(labeltext[i]),
 			    spec->text_labels[i].text );
-
-	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "activate", 
+	gtk_signal_connect (GTK_OBJECT(labeltext[i]), "activate", 
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
 			    spec);
 	gtk_widget_show(labeltext[i]);
@@ -807,6 +810,8 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	for (j=0; j<3; j++) {
 	    tempwid = gtk_menu_item_new_with_label(just_int_to_string(j));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	    gtk_object_set_data(GTK_OBJECT(tempwid), "option", 
+				GINT_TO_POINTER(j));
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
 	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),

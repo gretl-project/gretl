@@ -1103,7 +1103,7 @@ static void really_set_variable_info (GtkWidget *w,
 {
     const char *edttext;
     int v = vset->varnum;
-    int changed = 0, gui_changed = 0, comp_changed;
+    int changed = 0, gui_changed = 0, comp_changed = 0;
     int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
@@ -1131,9 +1131,12 @@ static void really_set_variable_info (GtkWidget *w,
 	changed = 1;
     }
 
-    if (dataset_is_time_series(datainfo)) {    
-	comp_method = 
-	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
+    if (dataset_is_time_series(datainfo)) { 
+	GtkWidget *active_item;
+
+	active_item = GTK_OPTION_MENU(vset->compaction_menu)->menu_item;
+	comp_method = GPOINTER_TO_INT(gtk_object_get_data
+				      (GTK_OBJECT(active_item), "option"));
 	if (comp_method != COMPACT_METHOD(datainfo, v)) {
 	    COMPACT_METHOD(datainfo, v) = comp_method;
 	    comp_changed = 1;
@@ -1175,7 +1178,7 @@ static const char *comp_int_to_string (int i)
 
 void varinfo_dialog (int varnum)
 {
-    GtkWidget *tempwid, *hbox, *menu;
+    GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
     int i;
 
@@ -1251,6 +1254,8 @@ void varinfo_dialog (int varnum)
 
     /* read/set compaction method? */
     if (dataset_is_time_series(datainfo)) {
+	GtkWidget *menu;
+
 	hbox = gtk_hbox_new(FALSE, 0);
 	tempwid = gtk_label_new (_("compaction method (for reducing frequency):"));
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
@@ -1264,15 +1269,18 @@ void varinfo_dialog (int varnum)
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
 	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	    gtk_object_set_data(GTK_OBJECT(tempwid), "option",
+				GINT_TO_POINTER(i));
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
 	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
-				    COMPACT_METHOD(datainfo, varnum));    
+				    COMPACT_METHOD(datainfo, varnum));  
+	fprintf(stderr, "set_history: %d\n", COMPACT_METHOD(datainfo, varnum));
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->compaction_menu, FALSE, FALSE, 0);
-	gtk_widget_show_all(vset->compaction_menu); 
+	gtk_widget_show_all(vset->compaction_menu);
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 0);

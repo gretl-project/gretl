@@ -814,7 +814,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_entry_set_text (GTK_ENTRY(labeltext[i]), titlestr);
 	g_free(titlestr);
 
-	g_signal_connect (G_OBJECT(linetitle[i]), "activate", 
+	g_signal_connect (G_OBJECT(labeltext[i]), "activate", 
 			  G_CALLBACK(apply_gpt_changes), 
 			  spec);
 	gtk_widget_show(labeltext[i]);

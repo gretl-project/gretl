@@ -251,7 +251,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 
-	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, &compact_method);
+	    data_compact_dialog(sinfo->pd, &datainfo->pd, &compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
 		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
@@ -1760,7 +1760,7 @@ void compact_data_set (void)
     if (maybe_restore_full_data(COMPACT)) return;
 
     newpd = 0;
-    data_compact_dialog(mdata->w, oldpd, &newpd, &default_method);
+    data_compact_dialog(oldpd, &newpd, &default_method);
     if (default_method == COMPACT_NONE) return;
 
     cfac = oldpd / newpd;
