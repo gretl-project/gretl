@@ -46,12 +46,16 @@ mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/locale/it/LC_MESSAGES
-mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
 mkdir -p windist/gretl/locale/ja/LC_MESSAGES
+mkdir -p windist/gretl/locale/pl/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/it/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/ja/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/pl/LC_MESSAGES
+
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
 # put binaries in place
@@ -141,7 +145,7 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 
 # translations (make sure they're up to date first)
 make -C mo
-for lang in es fr it ja ; do
+for lang in es fr it ja pl ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 
