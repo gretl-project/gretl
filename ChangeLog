@@ -1,4 +1,5 @@
 version 0.998 (not released yet) 
+- switch to more accurate (cephes) algorithms for p-values
 - add materials for building gretl on win32
 - try to support LC_NUMERIC conversion automagically
 - add option to Preferences to enable/disable localized
