@@ -203,10 +203,12 @@
  </xsl:choose>
 </xsl:template>
 
-<xsl:template match="ilist">
+<xsl:template match="ilist[not(@context) or @context=$hlp]">
   <itemizedlist><xsl:apply-templates/></itemizedlist>
   <xsl:call-template name="nl"/>
 </xsl:template>
+
+<xsl:template match="ilist[@context and @context!=$hlp]"/>
 
 <xsl:template match="li">
   <listitem><xsl:apply-templates/></listitem>

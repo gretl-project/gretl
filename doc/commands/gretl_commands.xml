@@ -3752,10 +3752,10 @@
 	<quote>missing</quote>, in the case of imported data.  If this
 	value is the only parameter, as in the first example above,
 	the interpretation will be applied to all series in the data
-	set.  If <repl>value</repl> is followed by a list of
-	variables, by name or number, the interpretation is confined
-	to the specified variable(s). Thus in the second example the
-	data value 100 is interpreted as a code for
+	set.  If <repl quote="true">value</repl> is followed by a list
+	of variables, by name or number, the interpretation is
+	confined to the specified variable(s). Thus in the second
+	example the data value 100 is interpreted as a code for
 	<quote>missing</quote>, but only for the variable
 	<lit>x2</lit>.
       </para>
@@ -4281,7 +4281,40 @@
     </usage>
 
     <description>
-      <para>
+
+      <para context="gui">
+	This command requires specification of:</para>
+
+      <ilist context="gui">
+	<li><para context="gui">- the dependent variable for the first
+	    equation in the VAR system;</para>
+	</li>
+
+	<li><para context="gui">- the lag order, that is, the number of
+	    lags of each variable that should be included in the
+	    system;</para>
+	</li>
+
+	<li><para context="gui">- any "deterministic" terms (e.g. the
+	    constant, a time trend, seasonal dummy variables and so
+	    on); and</para>
+	</li>
+
+	<li><para context="gui">- a list of independent variables, lags
+	    of which will be included on the right-hand side of the
+	    equations (note: do not include lagged variables in this
+	    list -- they will be added automatically).</para>
+	</li>
+      </ilist>
+
+      <para context="gui">A separate regression will be run for
+	variable in the system.  Output for each equation includes
+	F-tests for zero restrictions on all lags of each of the
+	variables and an F-test for the maximum lag, along with
+	forecast variance decompositions and impulse response
+	functions.</para>  
+
+      <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression
 	(VAR).  The first argument specifies the lag order, then
 	follows the setup for the first equation.  Don't include lags
@@ -4292,7 +4325,7 @@
 	such as the constant, a time trend, and dummy
 	variables.</para>
 
-      <para>
+      <para context="cli">
 	In fact, gretl is able to recognize the more common
 	deterministic variables (constant, time trend, dummy variables
 	with no values other than 0 and 1) as such, so these do not
@@ -4300,13 +4333,13 @@
 	deterministic variables (e.g. a time trend interacted with a
 	dummy variable) must be put after the semi-colon.</para>
 
-      <para>
-	A separate regression is run for each variable in varlist.
-	Output for each equation includes <mathvar>F</mathvar>-tests
-	for zero restrictions on all lags of each of the variables; an
-	<mathvar>F</mathvar>-test for the significance of the maximum
-	lag; forecast variance decompositions; and impulse response
-	functions.</para>
+      <para context="cli">
+	A separate regression is run for each variable in
+	<repl>varlist</repl>. Output for each equation includes
+	<mathvar>F</mathvar>-tests for zero restrictions on all lags
+	of each of the variables; an <mathvar>F</mathvar>-test for the
+	significance of the maximum lag; forecast variance
+	decompositions; and impulse response functions.</para>
 
       <para>
 	The variance decompositions and impulse responses are based on
@@ -4315,6 +4348,7 @@
 	(stochastic) variables are given matters.  The first variable
 	in the list is assumed to be <quote>most exogenous</quote>
 	within-period.</para> 
+
     </description>
 
     <gui-access>
@@ -4346,11 +4380,16 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Calculates the <mathvar>F</mathvar> statistic for the null
 	hypothesis that the population variances for the variables
 	<repl>var1</repl> and <repl>var2</repl> are equal, and shows
 	its p-value.
+      </para>
+      <para context="gui">
+	Calculates the <mathvar>F</mathvar> statistic for the null
+	hypothesis that the population variances are equal for the
+	two selected variables, and shows its p-value.
       </para>
     </description>
 

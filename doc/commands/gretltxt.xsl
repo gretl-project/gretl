@@ -198,9 +198,11 @@
   <xsl:call-template name="dnl"/>
 </xsl:template>
 
-<xsl:template match="ilist">
+<xsl:template match="ilist[not(@context) or @context=$hlp]">
   <xsl:apply-templates/>
 </xsl:template>
+
+<xsl:template match="ilist[@context and @context!=$hlp]"/>
 
 <xsl:template match="li">
   <xsl:apply-templates/>

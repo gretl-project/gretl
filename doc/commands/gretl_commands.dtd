@@ -70,6 +70,10 @@
 <!ELEMENT code (#PCDATA)>
 
 <!ELEMENT ilist (li)+>
+<!ATTLIST ilist 
+   context (cli | gui | both) "both"
+>
+
 <!ELEMENT li (para | code | table)*>
 
 <!-- stuff that can go into paras -->
