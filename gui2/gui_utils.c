@@ -914,17 +914,13 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
 	code == APPEND_ASCII) {
 	datatype = GRETL_CSV_DATA;
-    }
-    else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
+    } else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	datatype = GRETL_GNUMERIC;
-    }
-    else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
+    } else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
 	datatype = GRETL_EXCEL;
-    }
-    else if (code == OPEN_BOX) {
+    } else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
-    } 
-    else {
+    } else {
 	/* no filetype specified: have to guess */
 	PRN *prn;	
 
@@ -934,28 +930,31 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
 
     /* destroy the current data set, etc., unless we're explicitly appending */
-    if (!append) close_session();
+    if (!append) {
+	close_session();
+    }
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL) {
 	get_worksheet_data(trydatfile, datatype, append, NULL);
 	return;
-    }
-    else if (datatype == GRETL_CSV_DATA) {
+    } else if (datatype == GRETL_CSV_DATA) {
 	do_open_csv_box(trydatfile, OPEN_CSV, append);
 	return;
-    }
-    else if (datatype == GRETL_BOX_DATA) {
+    } else if (datatype == GRETL_BOX_DATA) {
 	do_open_csv_box(trydatfile, OPEN_BOX, 0);
 	return;
-    }
-    else { /* native data */
+    } else { /* native data */
 	PRN prn;
 	int clear_code = DATA_NONE;
 
-	if (append) clear_code = DATA_APPEND;
-	else if (data_status) clear_code = DATA_CLEAR;
+	if (append) {
+	    clear_code = DATA_APPEND;
+	} else if (data_status) {
+	    clear_code = DATA_CLEAR;
+	}
 
 	gretl_print_attach_file(&prn, stderr);
+
 	if (datatype == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, &datainfo, trydatfile, &paths, 
 			      clear_code, &prn, 1);
@@ -972,7 +971,9 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }	
 
     /* trash the practice files window that launched the query? */
-    if (fwin != NULL) gtk_widget_destroy(fwin->w);
+    if (fwin != NULL) {
+	gtk_widget_destroy(fwin->w);
+    }
 
     if (append) {
 	register_data(NULL, NULL, 0);

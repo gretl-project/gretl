@@ -25,6 +25,7 @@ enum gretl_cmd_codes {
     ADD,
     ADDTO,
     ADF,
+    APPEND,
     AR,      
     ARCH,
     ARMA,

@@ -1,6 +1,8 @@
 version 1.3.0
-- fix bug in running scripts from the gretl console:
-  file was not closed when an error was encountered
+- add "append" command, to append data to the current dataset,
+  as in the gui File/Append data
+- fix bug in running scripts from the gretl console: file was 
+  not closed when an error was encountered
 - fix bug in Prais-Winsten estimator
 - fix bug in influential observations printout, for non-
   English locales

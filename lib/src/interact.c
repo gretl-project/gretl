@@ -214,6 +214,7 @@ static int aliased (char *cmd)
 	               c == PANEL || \
 	               c == OPEN || \
 	               c == IMPORT || \
+                       c == APPEND || \
 	               c == ENDLOOP || \
 	               c == SIM || \
                        c == RENAME || \

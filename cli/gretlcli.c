@@ -1221,6 +1221,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case OPEN:
+    case APPEND:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
 	    pputs(prn, _("'open' command is malformed\n"));
@@ -1230,7 +1231,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	chk = detect_filetype(datfile, &paths, prn);
 	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
 
-	if (data_status && !batch && !dbdata &&
+	if (data_status && !batch && !dbdata && cmd.ci != APPEND &&
 	    strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, _("Opening a new data file closes the "
 			      "present one.  Proceed? (y/n) "));
@@ -1242,7 +1243,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    }
 	}
 
-	if (data_status && !dbdata) {
+	if (data_status && !dbdata && cmd.ci != APPEND) {
 	    clear_data();
 	}
 
@@ -1264,7 +1265,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	strncpy(paths.datfile, datfile, MAXLEN-1);
+	if (!dbdata && cmd.ci != APPEND) {
+	    strncpy(paths.datfile, datfile, MAXLEN-1);
+	}
 	data_status = 1;
 	if (datainfo->v > 0 && !dbdata) {
 	    varlist(datainfo, prn);

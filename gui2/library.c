@@ -5528,6 +5528,7 @@ int gui_exec_line (char *line,
         break;
 
     case OPEN:
+    case APPEND:
 	if (exec_code == SAVE_SESSION_EXEC) break;
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
@@ -5540,7 +5541,7 @@ int gui_exec_line (char *line,
 	chk = detect_filetype(datfile, &paths, prn);
 	dbdata = (chk == GRETL_NATIVE_DB || chk == GRETL_RATS_DB);
 
-	if ((data_status & HAVE_DATA) && !dbdata) {
+	if (cmd.ci == OPEN && (data_status & HAVE_DATA) && !dbdata) {
 	    close_session();
 	}
 
@@ -5559,7 +5560,7 @@ int gui_exec_line (char *line,
 	    gui_errmsg(err);
 	    break;
 	}
-	if (!dbdata) {
+	if (!dbdata && cmd.ci != APPEND) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
 	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
@@ -5567,8 +5568,11 @@ int gui_exec_line (char *line,
 	    maybe_display_string_table();
 	}
 	if (datainfo->v > 0 && !dbdata) {
-	    /* below: was (exec_code != REBUILD_EXEC), not 0 */
-	    register_data(paths.datfile, NULL, 0);
+	    if (cmd.ci == APPEND) {
+		register_data(NULL, NULL, 0);
+	    } else {
+		register_data(paths.datfile, NULL, 0);
+	    }
 	    varlist(datainfo, prn);
 	}
 	*paths.currdir = '\0'; 
