@@ -22,8 +22,8 @@
 
 #include <time.h>
 
-#define HIGHVALU 87
-#define VSMALL 1.0e-14
+#define HIGHVALU 87     /* maximum value for exponent in genr formula */
+#define VSMALL 1.0e-14  /* adjustment for (int) conversion */
 
 typedef enum {
     UHATNUM = 999,

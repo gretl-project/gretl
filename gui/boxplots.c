@@ -47,6 +47,7 @@ typedef struct {
 
 typedef struct {
     int nplots;
+    int show_outliers;
     char *numbers;
     BOXPLOT *plots;
     int width, height;
@@ -945,7 +946,6 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
-	add_outliers(x, n, &plotgrp->plots[i]);
 	/* notched boxplots wanted? */
 	if (notches) {
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
@@ -958,13 +958,22 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
     }
-    free(x);
 
     plotgrp->height = height;
     plotgrp->width = width;
     plotgrp->numbers = NULL;
 
+    plotgrp->show_outliers = 0;
     read_boxrc(plotgrp);
+    /* should outliers be shown separately? */
+    if (plotgrp->show_outliers) {
+	for (i=0; i<plotgrp->nplots; i++) {
+	    n = ztox(list[i+1], x, *pZ, pdinfo);
+	    qsort(x, n, sizeof *x, compare_doubles);
+	    add_outliers(x, n, &plotgrp->plots[i]);
+	}
+    }
+    free(x);
 
     plotgrp->popup = NULL;
     plotgrp->pixmap = NULL;
@@ -1217,6 +1226,9 @@ static void read_boxrc (PLOTGROUP *grp)
 		    strncpy(grp->numbers, val, 7);
 		    grp->numbers[7] = '\0';
 		}
+		else if (!strcmp(key, "outliers") &&
+			 !strcmp(val, "true"))
+		    grp->show_outliers = 1;
 	    }
 	}
 	fclose (fp);

@@ -725,7 +725,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	    return;
 	}
 	if (ddata->code == ADF)
-	    err = adf_test(order, command.list, &Z, datainfo, prn);
+	    err = adf_test(order, command.list[1], &Z, datainfo, prn);
 	else
 	    err = coint(order, command.list, &Z, datainfo, prn);
 	break;

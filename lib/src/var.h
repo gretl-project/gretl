@@ -33,7 +33,7 @@ int coint (const int order, const int *list,
 	   double **pZ, DATAINFO *pdinfo, 
 	   print_t *prn);
 
-int adf_test (const int order, const int *list, 
+int adf_test (const int order, const int varno, 
 	      double **pZ, DATAINFO *pdinfo, 
 	      print_t *prn);
 

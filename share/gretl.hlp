@@ -102,8 +102,10 @@ in this way are the font to use when producing postscript output (must be a
 valid generic postscript font name; the default is Helvetica), the size of the
 font in points (also for postscript output; default is 12), the minimum and
 maximum for the y-axis range, the width and height of the plot in pixels
-(default, 560 x 448), and whether numerical values should be printed for the
-quartiles and median (default, don't print them).  Here is an example:
+(default, 560 x 448), whether numerical values should be printed for the
+quartiles and median (default, don't print them), and whether outliers (points
+lying beyond 1.5 times the interquartile range from the central box) should be
+indicated separately (default, no).  Here is an example:
 
 font = Times-Roman
 fontsize = 16
@@ -112,13 +114,14 @@ min = 0
 width = 400
 height = 448
 numbers = %3.2f
+outliers = true
 
-On the last line, the value associated with "numbers" is a "printf" format
-string as in the C programming language; if specified, this controls the
-printing of the median and quartiles next to the boxplot, if no "numbers"
-entry is given these values are not printed.  In the example, the values
-will be printed to a width of 3 digits, with 2 digits of precision following
-the decimal point.
+On the second to last line, the value associated with "numbers" is a "printf"
+format string as in the C programming language; if specified, this controls
+the printing of the median and quartiles next to the boxplot, if no "numbers"
+entry is given these values are not printed.  In the example, the values will
+be printed to a width of 3 digits, with 2 digits of precision following the
+decimal point.
 
 Not all of the options need be specified, and the order doesn't matter.  Lines
 not matching the pattern "key = value" are ignored, as are lines that begin

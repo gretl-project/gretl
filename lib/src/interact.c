@@ -891,7 +891,7 @@ int simple_commands (CMD *cmd, const char *line,
 	    break;
 	}
 	order = atoi(cmd->param);
-	err = adf_test(order, cmd->list, pZ, datainfo, prn);
+	err = adf_test(order, cmd->list[1], pZ, datainfo, prn);
 	if (err) errmsg(err, prn);
 	break;
 

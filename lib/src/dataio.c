@@ -2047,12 +2047,12 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 
 /**
  * detect_filetype:
- * @fname: name of CSV file.
+ * @fname: name of file to examine.
  * @ppaths: path information struct.
  * @prn: gretl printing struct.
  * 
  * Attempt to determine the type of a file to be opened in gretl:
- * data file (native, CSV or BOX) or command script.
+ * data file (native, CSV or BOX), or command script.
  * 
  * Returns: integer code indicating the type of file (see #gretl_filetypes).
  *
@@ -2061,7 +2061,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 int detect_filetype (char *fname, PATHS *ppaths, print_t *prn)
 {
     size_t n = strlen(fname);
-    int i, c, comma, ftype = 1;
+    int i, c, comma, ftype = GRETL_NATIVE_DATA;
     char teststr[5];
     FILE *fp;
 

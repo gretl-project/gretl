@@ -50,8 +50,7 @@ DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
 
 void clear_datainfo (DATAINFO *pdinfo, int subsample);
 
-int start_new_Z (double **pZ, DATAINFO *pdinfo, 
-		 int resample);
+int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const int pd, const char *startdate);
 
@@ -79,10 +78,10 @@ int open_nulldata (double **pZ, DATAINFO *pdinfo,
 int import_csv (double **pZ, DATAINFO *pdinfo, 
                 const char *fname, print_t *prn);
 
-int add_case_markers (DATAINFO *pdinfo, const char *fname);
-
 int import_box (double **pZ, DATAINFO *pdinfo, 
 		const char *fname, print_t *prn);
+
+int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
 int detect_filetype (char *fname, PATHS *ppaths, print_t *prn);
 

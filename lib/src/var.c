@@ -132,7 +132,18 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ...................................................................  */
+/**
+ * list_diffgenr:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generate first-differences of the variables in @list, and add them
+ * to the data set.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ *
+ */
 
 int list_diffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
 {
@@ -143,7 +154,18 @@ int list_diffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-/* ...................................................................  */
+/**
+ * list_ldiffgenr:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Generate log-differences of the variables in @list, and add them
+ * to the data set.
+ *
+ * Returns: 0 on successful completion, 1 on error.
+ *
+ */
 
 int list_ldiffgenr (const int *list, double **pZ, DATAINFO *pdinfo)
 {
@@ -218,7 +240,7 @@ static int get_listlen (const int *varlist, const int order, double *Z,
  *
  * Estimate a vector auto-regression (VAR) and print the results.
  *
- * Returns: 
+ * Returns: 0 on successful completion, 1 on error.
  *
  */
 
@@ -404,16 +426,14 @@ int coint (const int order, const int *list, double **pZ,
 {
     int i, t, n, nv, l0 = list[0];
     MODEL coint_model;
-    int *cointlist, adflist[2];
+    int *cointlist;
 
     init_model(&coint_model);
 
     /* step 1: test all the vars for unit root */
-    adflist[0] = 1;
     for (i=1; i<=l0; i++) {
-	adflist[1] = list[i];
 	pprintf(prn, "\n");
-	adf_test(order, adflist, pZ, pdinfo, prn);
+	adf_test(order, list[i], pZ, pdinfo, prn);
     }
 
     /* step 2: carry out the cointegrating regression */
@@ -442,9 +462,8 @@ int coint (const int order, const int *list, double **pZ,
     strcpy(pdinfo->varname[nv], "uhat");
 
     /* Run ADF test on these residuals */
-    adflist[1] = pdinfo->v - 1;
     pprintf(prn, "\n");
-    adf_test(order, adflist, pZ, pdinfo, prn);
+    adf_test(order, pdinfo->v - 1, pZ, pdinfo, prn);
 
     pprintf(prn, "\nThere is evidence for a cointegrating relationship if:\n"
 	    "(a) The unit-root hypothesis is not rejected for the individual"
@@ -460,12 +479,24 @@ int coint (const int order, const int *list, double **pZ,
     return 0;
 }
 
-/* ...................................................................  */
+/**
+ * adf_test:
+ * @order: lag order for the test.
+ * @varno: ID number of the variable to test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @prn: gretl printing struct.
+ *
+ * Carries out and prints the results of the Augmented Dickey-Fuller test for a unit root.
+ *
+ * Returns: 0 on successful completion.
+ *
+ */
 
-int adf_test (const int order, const int *list, double **pZ,
+int adf_test (const int order, const int varno, double **pZ,
 	      DATAINFO *pdinfo, print_t *prn)
 {
-    int var, i, l, T, k, row, orig_nvars = pdinfo->v;
+    int i, l, T, k, row, orig_nvars = pdinfo->v;
     int *adflist;
     int *shortlist;
     MODEL adf_model;
@@ -490,7 +521,6 @@ int adf_test (const int order, const int *list, double **pZ,
     
 
     init_model(&adf_model);
-    var = list[1];
     k = 3 + order;
     adflist = malloc((5 + order) * sizeof(int));
     shortlist = malloc(k * sizeof(int));
@@ -498,15 +528,15 @@ int adf_test (const int order, const int *list, double **pZ,
 
     i = pdinfo->t1;
     pdinfo->t1 = 0;
-    diffgenr(var, pZ, pdinfo);
-    laggenr(var, 1, 1, pZ, pdinfo);
+    diffgenr(varno, pZ, pdinfo);
+    laggenr(varno, 1, 1, pZ, pdinfo);
     pdinfo->t1 = i;
 
-    adflist[1] = diffvarnum(var, pdinfo);
+    adflist[1] = diffvarnum(varno, pdinfo);
 
     /* do the more familiar Dickey-Fuller t-test first */
     adflist[0] = 3;
-    adflist[2] = lagvarnum(var, 1, pdinfo);
+    adflist[2] = lagvarnum(varno, 1, pdinfo);
     adflist[3] = 0;
     adf_model = lsq(adflist, pZ, pdinfo, OLS, 0, 0.0);
     DFt = adf_model.coeff[1] / adf_model.sderr[1];
@@ -534,13 +564,13 @@ int adf_test (const int order, const int *list, double **pZ,
 	    "   estimated value of g: %f\n"
 	    "   test statistic: t = %f, with sample size %d\n"
 	    "   %s\n",
-	    pdinfo->varname[var], pdinfo->varname[var],
+	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
     clear_model(&adf_model, NULL, NULL);
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
-    adflist[3] = lagvarnum(var, 1, pdinfo);
+    adflist[3] = lagvarnum(varno, 1, pdinfo);
 
     for (l=1; l<=order; l++) {
 	laggenr(adflist[1], l, 1, pZ, pdinfo);
@@ -589,10 +619,10 @@ int adf_test (const int order, const int *list, double **pZ,
     }
 
     pprintf(prn, "Augmented Dickey-Fuller test on %s:\n   F(2, %d) = %f, "
-	   "with %s\n", pdinfo->varname[var], T - k, F, pval);
+	   "with %s\n", pdinfo->varname[varno], T - k, F, pval);
     pprintf(prn, "The null hypothesis is that %s has a unit root, i.e. "
 	    "the parameters on\nthe time trend and %s are both zero.\n",
-	    pdinfo->varname[var], pdinfo->varname[adflist[3]]);
+	    pdinfo->varname[varno], pdinfo->varname[adflist[3]]);
 
     free(adflist);
     free(shortlist);
