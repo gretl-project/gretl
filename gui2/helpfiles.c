@@ -20,9 +20,10 @@
 /* helpfiles.c for gretl */
 
 #include "gretl.h"
+#include "textbuf.h"
+
 #ifndef OLD_GTK
 #include "treeutils.h"
-#include "textbuf.h"
 #endif
 
 #undef HDEBUG
@@ -1018,6 +1019,21 @@ static gint close_find_dialog (GtkWidget *widget, gpointer data)
 
 #ifdef OLD_GTK
 
+static int is_all_lower (const char *s)
+{
+    int ret = 1;
+
+    while (*s) {
+	if (!islower(*s)) {
+	    ret = 0;
+	    break;
+	}
+	s++;
+    }
+
+    return ret;
+}
+
 static void find_in_help (GtkWidget *widget, gpointer data)
 {
     int found = 0, i, linecount = 0;
@@ -1048,6 +1064,10 @@ static void find_in_help (GtkWidget *widget, gpointer data)
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
     found = GTK_EDITABLE(vwin->w)->selection_end_pos;
 
+    if (is_all_lower(needle)) {
+	lower(haystack);
+    }
+
     found = look_for_string(haystack, needle, found);
 
     if (found >= 0) {
@@ -1064,7 +1084,9 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
 				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
-    } else infobox(_("String was not found."));
+    } else {
+	infobox(_("String was not found."));
+    }
 
     g_free(haystack);
 }
@@ -1077,12 +1099,16 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
 
     haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
-	gtk_text_get_length(GTK_TEXT(vwin->w)));
+				      gtk_text_get_length(GTK_TEXT(vwin->w)));
 
     if (needle) g_free(needle);
 
     needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
     found = GTK_EDITABLE(vwin->w)->selection_end_pos;
+
+    if (is_all_lower(needle)) {
+	lower(haystack);
+    }
 
     found = look_for_string(haystack, needle, found);
 
@@ -1151,7 +1177,9 @@ static gboolean real_find_in_text (GtkTextView *view, const gchar* str,
 	}
     }
 
-    if (found && wrapped) infobox(_("Search wrapped"));
+    if (found && wrapped) {
+	infobox(_("Search wrapped"));
+    }
 
     return found;
 }
@@ -1166,7 +1194,9 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 
     found = real_find_in_text(GTK_TEXT_VIEW(vwin->w), needle, TRUE);
 
-    if (!found) infobox(_("String was not found."));
+    if (!found) {
+	infobox(_("String was not found."));
+    }
 }
 
 
@@ -1457,7 +1487,17 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 
 void text_find_callback (GtkWidget *w, gpointer data)
 {
+#ifdef OLD_GTK
+    windata_t *vwin = (windata_t *) data;
+
+    if (help_role(vwin->role)) {
+	find_string_dialog(find_in_help, data);
+    } else {
+	find_string_dialog(find_in_text, data);
+    }
+#else
     find_string_dialog(find_in_text, data);
+#endif
 }
 
 /* ........................................................... */

@@ -1053,13 +1053,9 @@ gint populate_filelist (windata_t *fdata, gpointer p)
 {
     if (fdata->role == NATIVE_DB || fdata->role == RATS_DB) {
 	return populate_dbfilelist(fdata);
-    }
-
-    else if (fdata->role == REMOTE_DB) {
+    } else if (fdata->role == REMOTE_DB) {
 	return populate_remote_db_list(fdata);
-    }
-
-    else {
+    } else {
 	return read_file_descriptions(fdata, p);
     }
 }

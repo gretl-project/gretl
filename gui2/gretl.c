@@ -449,7 +449,7 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Variable menu */
     { N_("/_Variable"), NULL, NULL, 0, "<Branch>", NULL },
-    { N_("/Variable/Find..."), NULL, find_var, 0, NULL, GNULL },
+    { N_("/Variable/Find..."), NULL, find_var, 0, "<StockItem>", GTK_STOCK_FIND },
     { N_("/Variable/_Display values"), NULL, display_var, 0, NULL, GNULL },
     { N_("/Variable/_Summary statistics"), NULL, do_menu_op, 
       VAR_SUMMARY, NULL, GNULL },

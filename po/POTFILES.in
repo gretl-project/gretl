@@ -46,10 +46,10 @@ cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
 gui/guiprint.c
+gui/obsbutton.c
 gui/plotps.c
 gui/selector.c
 gui/ssheet.c
-gui/obsbutton.c
 gui/textbuf.c
 gui2/about.c
 gui2/boxplots.c
@@ -65,6 +65,7 @@ gui2/filelists.c
 gui2/fileselect.c
 gui2/font_filter.c
 gui2/gpt_control.c
+gui2/gpt_dialog.c
 gui2/graph_page.c
 gui2/gretl.c
 gui2/gretlwin32.c

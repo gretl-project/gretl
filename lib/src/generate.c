@@ -1851,7 +1851,33 @@ static int split_genr_formula (char *lhs, char *s, int obs)
     return err;
 }
 
-/* ........................................................... */
+/* for daily dates in brackets: replace '/' with ':', and
+   while we're at it, check for unbalanced '['
+*/
+
+static int fix_obs_in_brackets (char *s)
+{
+    if (s == NULL || *s == 0) {
+	return 0;
+    }
+
+    while ((s = strchr(s, '['))) {
+	s++;
+	if (strchr(s, ']') == NULL) {
+	    return E_SYNTAX;
+	}
+	while (*s != ']') {
+	    if (*s == '/') *s = ':';
+	    s++;
+	}
+    }
+
+    return 0;
+}
+
+/* standardize on '.' for decimal point character with a
+   genr formula
+*/
 
 static void fix_decimal_commas (char *str)
 {
@@ -1910,7 +1936,7 @@ static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
-    char vname[USER_VLEN], obs[USER_VLEN];
+    char vname[USER_VLEN], obs[OBSLEN];
 
     if (line == NULL || *line == '\0') return;
 
@@ -1927,7 +1953,7 @@ static void get_genr_formula (char *formula, const char *line,
     }
 
     /* allow for generating a single value in a series */
-    if (sscanf(line, "%8[^[][%8[^]]", vname, obs) == 2) {
+    if (sscanf(line, "%8[^[][%10[^]]", vname, obs) == 2) {
 	genr->obs = dateton(obs, genr->pdinfo);
 
 	if (genr->obs < 0 || genr->obs >= genr->pdinfo->n) {
@@ -2087,22 +2113,19 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
 	}
 	return genr.err;
-    }
-    else if (strcmp(s, "paneldum") == 0) {
+    } else if (strcmp(s, "paneldum") == 0) {
 	genr.err = paneldum(pZ, pdinfo);
 	if (!genr.err) {
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
 	}
 	return genr.err;
-    }
-    else if (strcmp(s, "unitdum") == 0) {
+    } else if (strcmp(s, "unitdum") == 0) {
 	genr.err = panel_unit_dummies(pZ, pdinfo);
 	if (!genr.err) {
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
 	}
 	return genr.err;
-    }
-    else if (!strcmp(s, "time") || !strcmp(s, "index")) {
+    } else if (!strcmp(s, "time") || !strcmp(s, "index")) {
 	int tm = !strcmp(s, "time");
 
 	genr.err = genrtime(pZ, pdinfo, tm);
@@ -2113,8 +2136,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr_msg(&genr, oldv);
 	}
 	return genr.err;
-    }
-    else if (strncmp(s, "toler=", 6) == 0) {
+    } else if (strncmp(s, "toler=", 6) == 0) {
 	genr.err = gentoler(s + 6);
 	return genr.err;
     }
@@ -2142,6 +2164,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
+    }
+
+    /* process any daily dates in brackets */
+    if ((genr.err = fix_obs_in_brackets(s))) {
+	return genr.err;
     }
 
     /* special case of generating a single observation */

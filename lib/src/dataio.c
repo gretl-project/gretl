@@ -1003,6 +1003,16 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 		    return i;
 		}
 	    }
+	    /* try allowing for 2- versus 4-digit years */
+	    if (strlen(pdinfo->S[0]) == 10 &&
+		(!strncmp(pdinfo->S[0], "19", 2) || 
+		 !strncmp(pdinfo->S[0], "20", 2))) {
+		for (i=0; i<pdinfo->n; i++) {
+		    if (!strcmp(date, pdinfo->S[i] + 2)) {
+			return i;
+		    }
+		}		
+	    }
 	    return -1;
 	} else {
 	    return calendar_obs_number(date, pdinfo);
