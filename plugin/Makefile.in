@@ -9,7 +9,6 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 
 have_gtk = @have_gtk@
-darwin_build = @darwin_build@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
@@ -32,19 +31,11 @@ endif
 # Installation directory
 plugindir = $(prefix)/lib/gretl
 
-ifeq ($(darwin_build),yes)
-  PIC_FLAGS = -fno-common -DPIC
-  SHARED_FLAG = -bundle
-else
-  PIC_FLAGS = -fPIC -DPIC
-  SHARED_FLAG = -shared
-endif
-
-override CFLAGS += -I.. -DHAVE_CONFIG_H $(PIC_FLAGS)
+override CFLAGS += -I.. -DHAVE_CONFIG_H
 
 LIBTOOL = $(topsrc)/libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
-LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(SHARED_FLAG)
+LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
 
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la
@@ -56,13 +47,13 @@ else
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
-PLUGINS = lad.so stats_tables.so panel_data.so range-mean.so \
-	progress_bar.so gnumeric_import.so excel_import.so $(TXPLUGIN)
+PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
+	progress_bar.la gnumeric_import.la excel_import.la $(TXPLUGIN)
 
-LAPACK_PLUGINS = johansen.so sur.so 
+LAPACK_PLUGINS = johansen.la sur.la 
 
 ifdef GMP_LIBS
-  PLUGINS += mp_ols.so
+  PLUGINS += mp_ols.la
 endif
 
 ifdef LAPACK_LIBS
@@ -71,10 +62,10 @@ ifdef LAPACK_LIBS
 endif
 
 ifeq ($(HAVE_TRAMO),1)
-  TXPLUGIN = tramo-x12a.so
+  TXPLUGIN = tramo-x12a.la
 endif
 ifeq ($(HAVE_X12A),1)
-  TXPLUGIN = tramo-x12a.so
+  TXPLUGIN = tramo-x12a.la
 endif
 
 ifeq ($(LIBOLE2_LIBS),)
@@ -86,37 +77,37 @@ endif
 
 all: $(PLUGINS)
 
-stats_tables.so: stats_tables.lo
+stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-panel_data.so: panel_data.lo
+panel_data.la: panel_data.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-range-mean.so: range-mean.lo
+range-mean.la: range-mean.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-lad.so: lad.lo
+lad.la: lad.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-tramo-x12a.so: tramo-x12a.lo tramo_options.lo
+tramo-x12a.la: tramo-x12a.lo tramo_options.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
-progress_bar.so: progress_bar.lo
+progress_bar.la: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
 
-gnumeric_import.so: gnumeric_import.lo
+gnumeric_import.la: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTK_LIBS) $(GRETLLIB) $(XML_LIBS)
 
-excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
+excel_import.la: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
-mp_ols.so: mp_ols.lo
+mp_ols.la: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
-johansen.so: johansen.lo gretl_matrix.lo
+johansen.la: johansen.lo gretl_matrix.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
-sur.so: sur.lo gretl_matrix.lo
+sur.la: sur.lo gretl_matrix.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 stats_tables.lo: stats_tables.c
@@ -185,7 +176,7 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
-	rm -f *.o *.lo *.so core 
+	rm -f *.o *.lo *.la core 
 	rm -rf .libs
 
 depend:
