@@ -1766,7 +1766,9 @@ int plot_fcast_errs (int n, const double *obs,
     double xmin, xmax, xrange;
     int t;
 
-    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) return E_FOPEN;
+    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) {
+	return E_FOPEN;
+    }
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 

@@ -600,7 +600,6 @@ void
 texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
     int t, anyast = 0;
-    int n = pdinfo->n;
     double xx;
     char vname[16];
 
@@ -616,11 +615,8 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
 	    vname, I_("fitted"), I_("residuals"));
 
-    for (t=0; t<n; t++) {
-	if (t == fr->t1 && t) pputs(prn, "\\\\\n");
-	if (t == fr->t2 + 1) pputs(prn, "\\\\\n");
-
-	print_obs_marker(t, pdinfo, prn);
+    for (t=0; t<fr->nobs; t++) {
+	print_obs_marker(t + fr->t1, pdinfo, prn);
 	pputs(prn, " & ");
 
 	if (na(fr->actual[t])) {
@@ -666,7 +662,7 @@ void rtfprint_fit_resid (const FITRESID *fr,
 {
     double xx;
     int anyast = 0;
-    int t, n = pdinfo->n;
+    int t;
 
     rtf_fit_resid_head(fr, pdinfo, prn);
 
@@ -680,9 +676,9 @@ void rtfprint_fit_resid (const FITRESID *fr,
 	    " \\intbl \\row\n",
 	    fr->depvar, I_("fitted"), I_("residual"));
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<fr->nobs; t++) {
 	pputs(prn, "\\qr ");
-	print_obs_marker(t, pdinfo, prn);
+	print_obs_marker(t + fr->t1, pdinfo, prn);
 	pputs(prn, "\\cell"); 
 
 	if (na(fr->actual[t])) {

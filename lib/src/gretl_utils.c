@@ -1666,7 +1666,7 @@ int gretl_forecast (int t1, int t2, int nv,
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo)
 {
-    int depvar, t;
+    int depvar, t, ft;
     FITRESID *fr;
 
     if (pmod->ci == ARMA) {
@@ -1675,30 +1675,29 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 	depvar = pmod->list[1];
     }
 
-    fr = fit_resid_new(pdinfo->n, 0);
+    fr = fit_resid_new(pmod->t2 - pmod->t1 + 1, 0);
     if (fr == NULL) {
 	return NULL;
     }
 
     fr->sigma = pmod->sigma;
+    fr->t1 = pmod->t1;
+    fr->t2 = pmod->t2;
 
-    for (t=0; t<pdinfo->n; t++) {
-	fr->actual[t] = (*pZ)[depvar][t];
-	fr->fitted[t] = pmod->yhat[t];
+    for (t=fr->t1; t<=fr->t2; t++) {
+	ft = t - fr->t1;
+	fr->actual[ft] = (*pZ)[depvar][t];
+	fr->fitted[ft] = pmod->yhat[t];
     }
 
-    if (isdummy(fr->actual, 0, pdinfo->n) > 0) {
-	fr->pmax = get_precision(fr->fitted, pdinfo->n, 8);
+    if (isdummy(fr->actual, 0, fr->nobs) > 0) {
+	fr->pmax = get_precision(fr->fitted, fr->nobs, 8);
     } else {
-	fr->pmax = get_precision(fr->actual, pdinfo->n, 8);
+	fr->pmax = get_precision(fr->actual, fr->nobs, 8);
     }
     
     strcpy(fr->depvar, pdinfo->varname[depvar]);
     
-    fr->t1 = pmod->t1;
-    fr->t2 = pmod->t2;
-    fr->nobs = pmod->t2 - pmod->t1 + 1;
-
     return fr;
 }
 
@@ -1762,7 +1761,9 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     char t1str[OBSLEN], t2str[OBSLEN];
 
     fr = fit_resid_new(0, 1); 
-    if (fr == NULL) return NULL;
+    if (fr == NULL) {
+	return NULL;
+    }
 
     if (pmod->ci != OLS) {
 	fr->err = E_OLSONLY;
@@ -1913,8 +1914,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	return err;
     }
 
-    err = text_print_fcast_with_errs (fr, pZ, pdinfo, prn,
-				      ppaths, plot);
+    err = text_print_fcast_with_errs(fr, pZ, pdinfo, prn,
+				     ppaths, plot);
 
     free_fit_resid(fr);
     
@@ -2230,7 +2231,9 @@ FITRESID *fit_resid_new (int n, int errs)
     FITRESID *fr;
 
     fr = malloc(sizeof *fr);
-    if (fr == NULL) return NULL;
+    if (fr == NULL) {
+	return NULL;
+    }
 
     fr->err = 0;
     fr->t1 = 0;
@@ -2248,6 +2251,8 @@ FITRESID *fit_resid_new (int n, int errs)
 	free(fr);
 	return NULL;
     }
+
+    fr->nobs = n;
     
     return fr;
 }

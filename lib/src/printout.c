@@ -1412,8 +1412,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
     fit_resid_head(fr, pdinfo, prn); 
 
-    for (t=fr->t1; t<=fr->t2; t++) {
-	print_obs_marker(t, pdinfo, prn);
+    for (t=0; t<fr->nobs; t++) {
+	print_obs_marker(t + fr->t1, pdinfo, prn);
 
 	if (na(fr->actual[t])) {
 	    pputc(prn, '\n');
@@ -1463,7 +1463,9 @@ int text_print_fcast_with_errs (const FITRESID *fr,
     int time_series = (pdinfo->time_series == TIME_SERIES);
 
     maxerr = malloc(fr->nobs * sizeof *maxerr);
-    if (maxerr == NULL) return E_ALLOC;
+    if (maxerr == NULL) {
+	return E_ALLOC;
+    }
 
     pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 	    fr->df, fr->tval);
