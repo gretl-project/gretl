@@ -5,9 +5,9 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.2.5\n"
+"Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-05-22 13:29-0400\n"
-"PO-Revision-Date: 2004-05-01 17:22+0200\n"
+"PO-Revision-Date: 2004-05-26 00:25+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -8078,7 +8078,7 @@ msgstr "Modifica"
 
 #: gui2/gpt_control.c:2926 gui2/gpt_control.c:2961
 msgid "Audio"
-msgstr ""
+msgstr "Audio"
 
 #: gui2/gpt_control.c:2973
 msgid "color"
@@ -10280,13 +10280,13 @@ msgid "One or more variable names are missing.\n"
 msgstr "Mancano i nomi di una o più variabili.\n"
 
 #: plugin/excel_import.c:1039
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Expected numeric data, found string:\n"
 "%s\" at row %d, column %d\n"
 msgstr ""
 "Trovata una stringa invece di dati numerici:\n"
-"%s alla riga %d, colonna %d\n"
+"%s\" alla riga %d, colonna %d\n"
 
 #: plugin/excel_import.c:1046
 msgid "Warning: there were missing values\n"
@@ -10986,24 +10986,3 @@ msgstr ""
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
 
-#~ msgid "/File/Save data as/_alternative formats/_single precision binary..."
-#~ msgstr ""
-#~ "/File/Salva dati come/formati _alternativi/binario in precisione "
-#~ "_singola..."
-
-#~ msgid "/File/Save data as/_alternative formats/_double precision binary..."
-#~ msgstr ""
-#~ "/File/Salva dati come/formati _alternativi/binario in precisione "
-#~ "_doppia..."
-
-#~ msgid "/File/Create data set/panel"
-#~ msgstr "/File/Crea dataset/_Panel"
-
-#~ msgid "/Session/_Delete"
-#~ msgstr "/Sessione/Eli_mina"
-
-#~ msgid "%s: Invalid BOF record"
-#~ msgstr "%s: record BOF non valido"
-
-#~ msgid "Unexpected error reading the file"
-#~ msgstr "Errore inatteso durante la lettura del file"
