@@ -5145,7 +5145,7 @@
 	for regressor <mathvar>j</mathvar> is defined as
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
-	  ascii="1/(1 - Rj^2"
+	  ascii="1/(1 - Rj^2)"
 	  graphic="vif"/> where <mathvar>R<sub>j</sub></mathvar> is
 	the coefficient of multiple correlation between regressor
 	<mathvar>j</mathvar> and the other regressors. The factor has
