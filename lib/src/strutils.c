@@ -727,6 +727,8 @@ char *maybe_iso_gettext (const char *msgid)
 
 void check_for_console (PRN *prn)
 {
+    if (prn == NULL) return;
+
     if (prn->fp == stdout || prn->fp == stderr) {
 	printing_to_console = 1;
     } else {

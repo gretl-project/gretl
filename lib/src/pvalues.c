@@ -24,14 +24,14 @@
 #include "libgretl.h" 
 #include "../../cephes/libprob.h"
  
-static void _putxx (double xx);
-static void _pnormal (void);
-static void _ptvalue (void);
-static void _pchisq (void);
-static void _pfvalue (void);
-static void _pgamma (void);
-static double _getvalue (void);
-static void _enterdf (const char *str);
+static void putxx (double xx);
+static void pnormal (void);
+static void ptvalue (void);
+static void pchisq (void);
+static void pfvalue (void);
+static void pgamma (void);
+static double getx (void);
+static void getdf (const char *str);
 
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
@@ -128,9 +128,14 @@ double normal (double x)
     return 1.0 - ndtr(x);
 }
 
-static double pval_normal (double x)
+double normal_cdf (double x)
 {
     return ndtr(x);
+}
+
+double normal_pdf (double x)
+{
+    return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
 }
 
 /**
@@ -228,7 +233,7 @@ double batch_pvalue (const char *str,
     case 'n':
 	tmp = xval;
 	if (xval > 0.0) tmp = -tmp;
-	xx = pval_normal(tmp);
+	xx = normal_cdf(tmp);
 	if (xx < 0) {
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
@@ -312,7 +317,7 @@ double batch_pvalue (const char *str,
     }
 }
 
-static void _putxx (double xx)
+static void putxx (double xx)
 {
     if (xx < 0.0001) puts("< 0.0001");
     else printf("%g\n", xx);
@@ -350,19 +355,19 @@ void interact_pvalue (void)
 	    putchar('\n');
 	    return;
 	case 1:		
-	    _pnormal();
+	    pnormal();
 	    break;
 	case 2:		
-	    _ptvalue();
+	    ptvalue();
 	    break;
 	case 3:		
-	    _pchisq();
+	    pchisq();
 	    break;
 	case 4:		
-	    _pfvalue();
+	    pfvalue();
 	    break;
 	case 5:
-	    _pgamma();
+	    pgamma();
 	    break;
 	default:	
 	    puts(_("\ninvalid choice"));
@@ -378,105 +383,105 @@ void interact_pvalue (void)
 
 /* ........................................................ */
 
-static void _pnormal (void)
+static void pnormal (void)
 {
     double xx, zx; 
 
     printf("%s", _(negval));
-    zx = _getvalue();
-    if(zx < 0.0) return;
+    zx = getx();
+    if (zx < 0.0) return;
     xx = normal(zx);
     printf(_("\nFor the standard normal, area (one-tail) to the "
 	   "right of %g is "), zx);
-    _putxx(xx);
+    putxx(xx);
 }
 
 /* ........................................................ */
 
-static void _ptvalue (void)
+static void ptvalue (void)
 {
     int n;
     double xx, zx, xsq; 
 
-    _enterdf(" ");
-    n = (int) _getvalue();
+    getdf(" ");
+    n = (int) getx();
     if (n <= 0) return;
     printf("%s", _(negval));
-    zx = _getvalue();
+    zx = getx();
     if(zx < 0.0) return;
     xsq = zx * zx;
     xx = fdist(xsq, 1, n)/2.0;
     printf(_("\nFor Student's t(%d), area (one-tail) to the "
 	   "right of %g is "), n, zx);
-    _putxx(xx);
+    putxx(xx);
 }
 
 /* ........................................................ */
 
-static void _pchisq (void)
+static void pchisq (void)
 {
     int n;
     double xx, zx; 
 
-    _enterdf(" ");
-    n = (int) _getvalue();
+    getdf(" ");
+    n = (int) getx();
     if (n <= 0) return;
     printf("%s", _(negval));
-    zx = _getvalue();
+    zx = getx();
     if(zx < 0.0) return;
     xx = chisq(zx, n);
     printf(_("\nFor Chi-square(%d), area to the right of %g is "), 
 	   n, zx);
-    _putxx(xx);
+    putxx(xx);
 }
 
 /* ........................................................ */
 
-static void _pfvalue (void)
+static void pfvalue (void)
 {
     int m, n;
     double xx, zx; 
 
-    _enterdf(_(" for the numerator "));
-    m = (int) _getvalue();
+    getdf(_(" for the numerator "));
+    m = (int) getx();
     if (m <= 0) return;
-    _enterdf(_(" for the denominator "));
-    n = (int) _getvalue();
+    getdf(_(" for the denominator "));
+    n = (int) getx();
     if (n <= 0) return;
     printf("%s", _(negval));
-    zx = _getvalue();
+    zx = getx();
     if (zx < 0.0) return;
     xx = fdist(zx, m, n);
     printf(_("\nFor F(%d, %d), area to the right of %g is "),
 	   m, n, zx);
-    _putxx(xx);
+    putxx(xx);
 }
 
 /* ........................................................ */
 
-static void _pgamma (void) 
+static void pgamma (void) 
 {
     double mean, variance;
     double xx, zx; 
 
     printf(_("\nEnter the mean: "));
-    mean = _getvalue();
+    mean = getx();
     if (mean <= 0) return;
     printf(_("\nEnter the variance: "));
-    variance = _getvalue();
+    variance = getx();
     if (variance <= 0) return;
     printf("%s", _(negval));
-    zx = _getvalue();
+    zx = getx();
     if (zx < 0.0) return;
     xx = 1.0 - gamma_dist(mean, variance, zx, 2);
     printf(_("\nFor Gamma (mean %g, variance %g), area to the right of %g is "),
 	   mean, variance, zx);
-    _putxx(xx);
+    putxx(xx);
 }
 
 /* ........................................................ */
 
-static double _getvalue (void)
+static double getx (void)
 {
     double aa;
 
@@ -488,7 +493,7 @@ static double _getvalue (void)
 
 /* ........................................................ */
 
-static void _enterdf (const char *str)
+static void getdf (const char *str)
 {
     printf(_("\nEnter d.f.%s(value <= 0 will exit menu): "), str);
 }

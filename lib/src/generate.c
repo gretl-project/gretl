@@ -1911,10 +1911,10 @@ static double evaluate_math_function (double arg, int fn, int *err)
 	}
 	break;
     case T_CNORM:
-	x = 1.0 - normal(arg);
+	x = normal_cdf(arg);
 	break;
     case T_DNORM:
-	x = (1.0/sqrt(2.0 * M_PI)) * exp(-0.5 * arg * arg);
+	x = normal_pdf(arg);
 	break;
     default:
 	break;
