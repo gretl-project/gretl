@@ -497,7 +497,9 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	sheetnum = 0;
     }
 
-    if (sheetnum >= 0) {
+    if (book.selected == -1) err = -1;
+
+    if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
 	if (wsheet_setup(&sheet, &book, sheetnum)) {
 	    sprintf(errbuf, "error in wsheet_setup()");
@@ -507,7 +509,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    if (!err) 
 		wsheet_print_info(&sheet);
 	}
-    } /* else?? */
+    } /* else ??? */
 
     wbook_free(&book);
 

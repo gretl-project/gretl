@@ -627,7 +627,7 @@ static void get_worksheet_data (const char *fname, int datatype,
     err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
-    if (strlen(errtext) && !strcmp(errtext, "Import canceled"))
+    if (err == -1) /* the user canceled the import */
 	return;
 
     if (err) {
