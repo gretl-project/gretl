@@ -486,7 +486,7 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
 				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
-	find_window = NULL;
+	/* find_window = NULL; */
     } else infobox(_("String was not found."));
 
     g_free(haystack);
@@ -523,7 +523,7 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 	gtk_editable_set_position(GTK_EDITABLE(vwin->w), found);
         gtk_editable_select_region(GTK_EDITABLE(vwin->w), 
 				   found, found + strlen(needle));
-	find_window = NULL;
+	/* find_window = NULL; */
     } else infobox(_("String was not found."));
 
     g_free(haystack);
@@ -559,13 +559,15 @@ static void find_in_clist (GtkWidget *w, gpointer data)
 	    strcpy(haystack, tmp);
 	    lower(haystack);
 	    found = look_for_string(haystack, needle, 0);
+	    if (found >= 0) break;
 	}
     }
+
     if (found >= 0) {
 	gtk_clist_moveto(GTK_CLIST(dbdat->listbox), i, 0, 0, .1);
 	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), i, 0);
 	dbdat->active_var = i;
-	find_window = NULL;    
+	/* find_window = NULL; */
     } else {
 	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), 0, 0);
 	dbdat->active_var = 0;
@@ -592,8 +594,12 @@ static int look_for_string (char *haystack, char *needle, int start)
  
 static void cancel_find (GtkWidget *widget, gpointer data)
 {
-    gtk_widget_destroy(GTK_WIDGET(data));
-    find_window = NULL;
+    fprintf(stderr, "cancal_find: data=%p, find_window=%p\n",
+	    data, find_window);
+    if (find_window != NULL) {
+	gtk_widget_destroy(GTK_WIDGET(data));
+	find_window = NULL;
+    }
 }
 
 /* .................................................................. */
