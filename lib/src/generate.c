@@ -324,6 +324,7 @@ static int parenthesize (char *str)
 	    }
 	}
 	if (oppos == 0) {
+	    k = 0;
 	    priority++;
 	    continue;
 	}
@@ -338,7 +339,7 @@ static int parenthesize (char *str)
 	    if (inparens) continue;
 	    level2 = op_level(str[i]);
 	    if (level2 > level1) {
-		if (!pbak) {
+		if (!pbak && (str[i-1] != '(')) {
 		    if (insert_paren(str, i, 'L')) return 1;
 		    n++;
 		    lpins = 1;

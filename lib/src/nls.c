@@ -374,6 +374,7 @@ static MODEL GNR (double *fvec, double *fjac)
     int i, j, t;
     int t1 = nlspec.t1, t2 = nlspec.t2;
     int T = t2 - t1 + 1;
+    int iters = nlspec.iters;
     int err = 0;
 
     nlspec.t1 = 0;
@@ -427,7 +428,12 @@ static MODEL GNR (double *fvec, double *fjac)
 	err = 1;
     } 
 
-    if (gnr.errcode || gnr.list[1] != nlist[1]) {
+    if (gnr.list[0] != nlist[0]) {
+	strcpy(gretl_errmsg, _("Failed to calculate Jacobian"));
+	gnr.errcode = E_DATA;
+    }
+
+    if (gnr.errcode) {
 	for (i=1; i<=gnr.ncoeff; i++) 
 	    gnr.sderr[i] = NADBL;
     }
@@ -436,6 +442,8 @@ static MODEL GNR (double *fvec, double *fjac)
     add_param_names_to_model(&gnr);
     add_fit_resid_to_model(&gnr, fvec);
     gnr.list[1] = nlspec.depvar;
+    gnr.correct = iters; /* this is being "borrowed" */
+    gnr.chisq = nlspec.tol; /* ditto */
 
     nlspec.t1 = t1;
     nlspec.t2 = t2;
@@ -642,6 +650,7 @@ static int check_derivs (integer m, integer n, double *x,
     if (zerocount > 0) {
 	strcpy(gretl_errmsg, 
 	       _("NLS: The supplied derivatives seem to be incorrect"));
+	fprintf(stderr, "%d out of %d tests gave zero\n", zerocount, (int) m);
     }    
     else if (badcount > 0) {
 	pputs(prn, _("Warning: The supplied derivatives may be incorrect, or perhaps\n"
@@ -655,7 +664,7 @@ static int check_derivs (integer m, integer n, double *x,
     free(err);
     free(fvecp);
 
-    return zerocount;
+    return (zerocount > m/4);
 }
 
 /* Below: version of levenberg-marquandt code for use when analytical
@@ -735,7 +744,6 @@ static int lm_approximate (double *fvec, double *fjac)
     doublereal epsfcn = 0.0, factor = 100.;
     doublereal *diag, *qtf;
     doublereal *wa1, *wa2, *wa3, *wa4;
-    double ess;
     int err = 0;
     
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
@@ -795,10 +803,13 @@ static int lm_approximate (double *fvec, double *fjac)
     }
 
     if (!err) {
-	ess = nlspec.ess;
+	double ess = nlspec.ess;
+	int iters = nlspec.iters;
+
 	fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, fjac, 
 		&ldfjac, &iflag, &epsfcn, wa4);
 	nlspec.ess = ess;
+	nlspec.iters = iters;
     }
 
  nls_cleanup:
@@ -864,7 +875,11 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 
     if (!err) {
 	if (toler > 0) nlspec.tol = toler;
+#if 0
 	else nlspec.tol = sqrt(dpmpar_(&one));
+#else
+	else nlspec.tol = pow(dpmpar_(&one), .75);
+#endif
 	if (nlspec.mode == NUMERIC_DERIVS) {
 	    pputs(prn, _("Using numerical derivatives\n"));
 	    err = lm_approximate(fvec, fjac);
