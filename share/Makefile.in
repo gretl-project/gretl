@@ -23,6 +23,8 @@ AUTO_HELP_SRCS = $(topsrc)/doc/commands/gretl_commands.xml \
 
 AUTO_HELP_STY = $(topsrc)/doc/commands/gretltxt.xsl
 
+AUTO_HELP_STRS = $(topsrc)/doc/commands/hlpstrings.txt
+
 ifeq ($(have_gtk),2.0)
    ES_GUI_HLP = $(sharesrc)/gretl.hlp.es.utf8
    ES_CLI_HLP = $(sharesrc)/gretlcli.hlp.es.utf8
@@ -88,7 +90,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
 
-$(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY)
+$(AUTO_HELPFILES): $(AUTO_HELP_SRCS) $(AUTO_HELP_STY) $(AUTO_HELP_STRS)
 	make -C ../doc/commands hlp
 
 $(RECODE_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es \

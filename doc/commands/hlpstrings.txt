@@ -5,17 +5,17 @@
 key            en                    es                         it
 
 args           "Arguments:  "        "Argumentos: "             "Argomenti:  "
-arg            "Argument:   "        "Argumento:  "             "Argomento:  "
+arg            "Argument:   "        "Argumento:  "             "Argumento:  "
 altforms       "Alternate forms:  "  "Formas alternativas: "    "Forme alternative: " 
 opts           "Options:    "        "Opciones:   "             "Opzioni:    "
 opt            "Option:     "        "Opción:     "             "Opzione:    "
 examples       "Examples:   "        "Ejemplos:   "             "Esempi:     "
 example        "Example:    "        "Ejemplo:    "             "Esempio:    "
-fullman        "the gretl manual"    "el manual del gretl"      "il manuale di gretl"
+fullman        "the gretl manual"    "el manual de gretl"       "il manuale di gretl"
 menupath       "Menu path:    "      "Menú gráfico: "           "Percorso menù: "
 otheraccess    "Other access: "      "Otro acceso:  "           "Accesso alternativo: "
-tablebelow     "The table below "    "La tabla abajo "          "La tabella seguente "
-scriptcommand  "Script command: "    "Instrucción guión: "      "Comando script: "
+tablebelow     "The table below "    "La tabla de abajo "       "La tabella seguente "
+scriptcommand  "Script command: "    "Instrucción de guión: "   "Comando script: "
 or             " or "                " o "                      " o "
 
 

@@ -27,6 +27,8 @@ void set_fixed_font (void);
 
 void set_app_font (const char *fontname);
 
+const char *get_app_fontname (void);
+
 void gnuplot_color_selector (GtkWidget *w, gpointer p);
 
 GtkWidget *color_patch_button (int colnum);
@@ -38,8 +40,11 @@ void get_default_dir (char *s);
 void filesel_set_path_callback (const char *setting, char *strvar);
 
 void set_datapage (const char *str);
+
 void set_scriptpage (const char *str);
+
 const char *get_datapage (void);
+
 const char *get_scriptpage (void);
 
 #ifdef HAVE_TRAMO

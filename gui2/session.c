@@ -2762,11 +2762,15 @@ static void gtk_entry_set_has_frame (GtkEntry *entry, gboolean b)
 static void size_name_entry (GtkWidget *w, const char *name)
 {
     PangoLayout *layout;
-    PangoRectangle rect;
+    PangoFontDescription *pfd;
+    PangoRectangle logrect;
 
     layout = gtk_entry_get_layout(GTK_ENTRY(w));
-    pango_layout_get_extents(layout, NULL, &rect);
-    gtk_widget_set_size_request(w, 2 + rect.width / PANGO_SCALE, -1); 
+    pfd = pango_font_description_from_string(get_app_fontname());
+    pango_layout_set_font_description(layout, pfd);
+
+    pango_layout_get_pixel_extents(layout, NULL, &logrect);
+    gtk_widget_set_size_request(w, 1.1 * logrect.width, -1); 
 }
 
 static gboolean object_name_return (GtkWidget *w,
@@ -2894,14 +2898,12 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	gobj->sort == 'v' || gobj->sort == 'b') { 
 	gobj->label = gtk_entry_new();
-	gtk_widget_show(gobj->label);
 	/* on gtk 2.0.N, the text is/was not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
 	gtk_entry_set_max_length(GTK_ENTRY(gobj->label), OBJNAMLEN);
 	size_name_entry(gobj->label, gobj->name);
-	gtk_widget_hide(gobj->label);
 	g_signal_connect(G_OBJECT(gobj->label), "button-press-event",
 			 G_CALLBACK(start_rename_object), gobj);
 	g_signal_connect(G_OBJECT(gobj->label), "key-press-event",

@@ -261,6 +261,11 @@ const char *get_scriptpage (void)
     return scriptpage;
 }
 
+const char *get_app_fontname (void)
+{
+    return appfontname;
+}
+
 /* ........................................................... */
 
 void set_fixed_font (void)
