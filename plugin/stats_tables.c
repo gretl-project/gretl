@@ -377,7 +377,7 @@ void t_lookup (int df, PRN *prn, int gui)
     pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NTSTAT; i++) {
 	if (t_vals[i].df >= dflo && t_vals[i].df <= dfhi) {
-	    pprintf(prn, "df = ");
+	    pprintf(prn, "%s = ", _("df"));
 	    if (t_vals[i].df == 999)
 		pprintf(prn, _("inf."));
 	    else
@@ -404,7 +404,7 @@ void chisq_lookup (int df, PRN *prn, int gui)
     pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NCHI; i++) {
 	if (chi_vals[i].df == df) {
-	    pprintf(prn, "df = %3d ", df);
+	    pprintf(prn, "%s = %3d ", _("df"), df);
 	    for (j=0; j<5; j++)
 		pprintf(prn, "%8.3f ", chi_vals[i].crit[j]);
 	    pprintf(prn, "\n");

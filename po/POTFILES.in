@@ -12,6 +12,7 @@ lib/src/interact.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
 lib/src/nonparam.c
+lib/src/printmpols.c
 lib/src/printout.c
 lib/src/pvalues.c
 lib/src/strutils.c
