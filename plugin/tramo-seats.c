@@ -2,12 +2,9 @@
 
 #include "libgretl.h"
 
-const char *tramodir = "/home/cottrell/stats/tramo-seats";
-
-
 int write_tramo_data (char *fname, int varnum, 
 		      double **Z, const DATAINFO *pdinfo, 
-		      PATHS *ppaths)
+		      const char *tramodir)
 {
     int i, t;
     int tsamp = pdinfo->t2 - pdinfo->t1 + 1;

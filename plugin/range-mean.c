@@ -31,12 +31,11 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
 
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
-    /* FIXME title and axis labels */
-
     fprintf(fp, "# range-mean plot for %s\n", varname);
     fprintf(fp, "set nokey\n");
-    fprintf(fp, "set title '%s %s'\n", I_("range-mean plot for"),
-	    varname);
+    fprintf(fp, "set title '%s %s %s'\n", 
+	    I_("range-mean plot for"), varname, 
+	    (yhat == NULL)? "" : I_("with least squares fit"));
     fprintf(fp, "set xlabel '%s'\nset ylabel '%s\n",
 	    I_("mean"), I_("range"));
     fprintf(fp, "plot \\\n'-' using 1:2 w points");
@@ -58,8 +57,8 @@ static int do_range_mean_plot (int n, double **Z, double *yhat,
 	for (t=0; t<n; t++) {
 	    fprintf(fp, "%g %g\n", Z[2][t], yhat[t]);
 	}
+	fprintf(fp, "e\n");
     }
-    fprintf(fp, "e\n");
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
@@ -80,7 +79,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     int rmlist[4] = { 3, 1, 2, 0};
     int k, t, m, nsamp, err = 0;
     int start, end, extra, len;
-    double mean, range, tpval, *yhat;
+    double mean, range, tpval, *yhat = NULL;
     char startdate[9], enddate[9];
 
     nsamp = pdinfo->t2 - pdinfo->t1 + 1;
@@ -119,13 +118,12 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     /* find group means and ranges */
     for (t=0; t<m; t++) {
 	start = pdinfo->t1 + t * k;
-	end = start + k;
+	end = start + k - 1;
 	if (end > pdinfo->t2) {
 	    end = pdinfo->t2;
 	} else if (pdinfo->t2 - end <= extra && extra < 3) {
 	    end += extra;
 	}
-	end = (start + k > pdinfo->t2)? pdinfo->t2 : start + k;
 
 	get_range_and_mean(start, end, Z[varnum], &range, &mean);
 	rmZ[1][t] = range;
@@ -143,23 +141,24 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     strcpy(rminfo->varname[2], "mean");
 
     rmmod = lsq(rmlist, &rmZ, rminfo, OLS, 0, 0.0);
+
     if ((err = rmmod.errcode)) {
 	pprintf(prn, _("Error estimating range-mean model\n"));
 	errmsg(err, prn);
-    } else { /* just testing */
-	/* printmodel(&rmmod, rminfo, prn); */
-    }
-
-    pprintf(prn, "\n");
-    pprintf(prn, _("slope of range against mean = %g\n"),
-	    rmmod.coeff[1]);
-    tpval = tprob(rmmod.coeff[1] / rmmod.sderr[1], rmmod.dfd);
-    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), tpval);
-
-    if (tpval < .10) {
-	yhat = rmmod.yhat;
     } else {
-	yhat = NULL;
+	pprintf(prn, "\n");
+	pprintf(prn, _("slope of range against mean = %g\n"),
+		rmmod.coeff[1]);
+	if (rmmod.sderr[1] > 0) {
+	    tpval = tprob(rmmod.coeff[1] / rmmod.sderr[1], rmmod.dfd);
+	    pprintf(prn, _("p-value for H0: slope = 0 is %g\n"), tpval);
+	} else {
+	    tpval = 1.0;
+	}
+
+	if (tpval < .10) {
+	    yhat = rmmod.yhat;
+	} 
     }
 
     err = do_range_mean_plot(m, rmZ, yhat, pdinfo->varname[varnum], 
