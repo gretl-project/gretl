@@ -19,6 +19,14 @@
   </bibliomixed>
 
   <bibliomixed>
+    <bibliomset relation='article'>Baxter, M. and King, R. G. (1995)
+      <title>Measuring Business Cycles: Approximate Band-Pass Filters
+       for Economic Time Series</title>, </bibliomset> <bibliomset
+       relation='organization'><orgname>National Bureau of Economic
+       Research</orgname>, Working Paper No. 5022.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
     Belsley, D., Kuh, E. and Welsch, R. (1980) <title>Regression
       Diagnostics</title>, New York: Wiley.
   </bibliomixed>
