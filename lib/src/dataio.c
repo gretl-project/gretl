@@ -3182,7 +3182,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		goto csv_bailout;
 	    } else {
 		csvinfo->varname[nv][0] = 0;
-		strncat(csvinfo->varname[nv], csvstr, VNAMELEN - 1);
+		/* was VNAMELEN below */
+		strncat(csvinfo->varname[nv], csvstr, USER_VLEN - 1);
 		if (isdigit(*csvstr)) {
 		    numcount++;
 		} else {
