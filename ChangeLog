@@ -1,13 +1,16 @@
 version 0.97
+- add various formats to copy of models to clipboard (HTML,
+  RTF, LaTeX)
+- Fixes to BOX1 datafile reading function
 - small fixes to display of databases
 - revert behavior in case of taking logs of series with non-
   positive values (i.e. fail gracefully)
 - add initial gnome support
 - add display of models in html, using gtkhtml (depends on
   gnome)
-- convert manual to SGML (DocBook)
-- model windows: can copy content to clipboard as plain text,
-  html or LaTeX.
+- convert manual to SGML (DocBook) and update
+- attempt to support directory names with spaces (yuck!) under
+  win32
 
 07/26/2001 version 0.96
 - update to gtkextra version 0.99.16
