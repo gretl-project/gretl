@@ -1,5 +1,7 @@
 version 1.0.6
 - fix a couple of minor gretlcli bugs
+- minor adjustment to model print output formatting
+- fix for correlogram graph (was incompatible with older gnuplot)
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm
