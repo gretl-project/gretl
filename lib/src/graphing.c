@@ -1109,6 +1109,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fclose(fp);
 	sprintf(plotcmd, "%s < %s", ppaths->pgnuplot, ppaths->plotfile); 
 	if (system(plotcmd)) err = 1;
+	/* FIXME -- can't we use winexec() here? */
     }
 #endif
     if (miss) err = 2;

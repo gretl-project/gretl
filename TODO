@@ -1,3 +1,10 @@
+Check out the system(pgnuplot) stuff in graphing.c  Should
+use winexec?
+
+Check out ability to have spaces in filenames under win32
+
+Updating to 0.97 -- need to create the right registry entries
+
 Complete the TeX, HTML and RTF printing functions.
 
 Summary stats: don't bomb out when one variable is all missing,
