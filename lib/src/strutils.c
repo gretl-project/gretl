@@ -893,13 +893,13 @@ const char *get_gretl_charset (void)
     static char cset[12];
 
     if (gretl_cset_maj > 0 && gretl_cset_min > 0) {
-	sprintf(cset, "ISO-%d-%d\n", gretl_cset_maj, gretl_cset_min);
+	sprintf(cset, "ISO-%d-%d", gretl_cset_maj, gretl_cset_min);
 	return cset;
     } 
 
 # ifdef WIN32
     if (gretl_cpage > 0) {
-	sprintf(cset, "CP%d\n", gretl_cpage);
+	sprintf(cset, "CP%d", gretl_cpage);
 	return cset;
     }
 # endif
