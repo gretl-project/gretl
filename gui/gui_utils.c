@@ -76,6 +76,7 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
+static void edit_script_help (GtkWidget *widget, gpointer data);
 static void file_viewer_save (GtkWidget *widget, windata_t *mydata);
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
@@ -422,17 +423,22 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
 void catch_ctrl_key (GtkWidget *w, GdkEventKey *key)
 {
     GdkModifierType mods;
+    windata_t *vwin;
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-    if (mods & GDK_CONTROL_MASK) {
-        if (gdk_keyval_to_upper(key->keyval) == GDK_S) {
-	    windata_t *mydata =
-		gtk_object_get_data(GTK_OBJECT(w), "vwin");
+    if (key->keyval == GDK_F1) {
+	vwin = gtk_object_get_data(GTK_OBJECT(w), "vwin");
+	if (vwin != NULL)
+	    edit_script_help(NULL, vwin);
+    }
 
-	    if (mydata != NULL)
-		file_viewer_save(NULL, mydata);
+    else if (mods & GDK_CONTROL_MASK) {
+	if (gdk_keyval_to_upper(key->keyval) == GDK_S) {
+	    vwin = gtk_object_get_data(GTK_OBJECT(w), "vwin");
+	    if (vwin != NULL)
+		file_viewer_save(NULL, vwin);
 	}
-        else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) 
+	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) 
 	    gtk_widget_destroy(w);
     }
 }
