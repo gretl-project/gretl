@@ -1482,7 +1482,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);
     } else if (pmod->ci == ARMA || pmod->ci == GARCH || 
-	       pmod->ci == TOBIT || pmod->ci == WLS) {
+	       pmod->ci == TOBIT || pmod->ci == WLS ||
+	       pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {
@@ -2238,6 +2239,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "  %s (%s) = %g\n", _(bic_str), _(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "  %s = %g\n", _("McFadden's pseudo-R-squared"), pmod->rsq);
 	pputc(prn, '\n');
     }
 
@@ -2261,6 +2263,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(bic_str), I_(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "\\par %s = %g\\par\n", I_("McFadden's pseudo-R{\\super 2}"), 
+		pmod->rsq);
 	pputc(prn, '\n');
     }
 
@@ -2290,6 +2294,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 		crit[C_AIC]);
 	pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), I_(bic_abbrev),
 		crit[C_BIC]);
+	pprintf(prn, "%s = %g\\\\\n", I_("McFadden's pseudo-$R^2$"), pmod->rsq);
 	pputs(prn, "\\end{raggedright}\n");
     }
 }

@@ -826,12 +826,10 @@ int get_worksheet_data (char *fname, int datatype, int append,
     if (datatype == GRETL_GNUMERIC) {
 	sheet_get_data = gui_get_plugin_function("wbook_get_data",
 						 &handle);
-    }
-    else if (datatype == GRETL_EXCEL) {
+    } else if (datatype == GRETL_EXCEL) {
 	sheet_get_data = gui_get_plugin_function("excel_get_data",
 						 &handle);
-    }
-    else {
+    } else {
 	errbox(_("Unrecognized data type"));
 	return 1;
     }
@@ -872,7 +870,9 @@ int get_worksheet_data (char *fname, int datatype, int append,
     } else {
 	data_status |= IMPORT_DATA;
 	strcpy(paths.datfile, fname);
-	if (mdata != NULL) register_data(fname, NULL, 1);
+	if (mdata != NULL) {
+	    register_data(fname, NULL, 1);
+	}
     }
 
     return 0;

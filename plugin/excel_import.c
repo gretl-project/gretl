@@ -805,7 +805,7 @@ static int allocate_row_col (int row, int col, wbook *book)
 	    row, col, lastrow);
 #endif
     if (row >= lastrow) {
-	newlastrow = (row/16 + 1) * 16;
+	newlastrow = (row / 16 + 1) * 16;
 	rowptr = realloc(rowptr, newlastrow * sizeof *rowptr);
 	if (rowptr == NULL) {
 	    return 1;
@@ -828,12 +828,13 @@ static int allocate_row_col (int row, int col, wbook *book)
 #endif
 
     if (col >= rowptr[row].end) {
-	newcol = (col/16 + 1) * 16;
+	newcol = (col / 16 + 1) * 16;
 #ifdef MEMDEBUG
 	fprintf(stderr, "allocate: allocating %d cells on row %d\n", 
-		newcol-rowptr[row].end, row);
+		newcol - rowptr[row].end, row);
 #endif
-	rowptr[row].cells = realloc(rowptr[row].cells, newcol * sizeof(char *));
+	rowptr[row].cells = realloc(rowptr[row].cells, 
+				    newcol * sizeof *rowptr[row].cells);
 	if (rowptr[row].cells == NULL) {
 	    return 1;
 	}
@@ -884,6 +885,10 @@ static void free_sheet (void)
 		    free(rowptr[i].cells[j]); 
 		}
 	    }
+#ifdef MEMDEBUG
+	    fprintf(stderr, "Freeing rowptr[%d].cells at %p\n",
+		    i, (void *) rowptr[i].cells);
+#endif
 	    free(rowptr[i].cells);
 	}
 	free(rowptr);
@@ -945,13 +950,17 @@ static int first_col_strings (wbook *book)
     for (t=1+book->row_offset; t<=lastrow; t++) {
 #ifdef EDEBUG
 	fprintf(stderr, "book->row_offset=%d, t=%d\n", book->row_offset, t);
-	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
-		rowptr[t].cells[i]);
+	fprintf(stderr, "rowptr = %p\n", (void *) rowptr);
 #endif
-	if (rowptr == NULL || rowptr[t].cells[i] == NULL ||
+	if (rowptr == NULL || rowptr[t].cells == NULL || 
+	    rowptr[t].cells[i] == NULL ||
 	    !IS_STRING(rowptr[t].cells[i])) {
 	    return 0;
 	}
+#ifdef EDEBUG
+	fprintf(stderr, "first_col_strings: rowptr[%d].cells[%d]: '%s'\n", t, i,
+		rowptr[t].cells[i]);
+#endif
     }
 
     return 1;
@@ -976,12 +985,16 @@ static int fix_varname (char *vname)
     return (bad == n);
 }   
 
-static int check_all_varnames (wbook *book, int ncols, int skip)
+static int 
+check_all_varnames (wbook *book, int ncols, const char *blank_col, int skip)
 {
     int i, t = book->row_offset;
     char *test;
 
     for (i=skip+book->col_offset; i<ncols; i++) { 
+	if (blank_col[i]) {
+	    continue;
+	}
 	if (rowptr[t].cells[i] == NULL) {
 #ifdef EDEBUG
 	    fprintf(stderr, "got_varnames: rowptr[%d].cells[%d] is NULL\n",
@@ -1044,12 +1057,16 @@ struct string_err {
     char *str;
 };
 
-static int check_data_block (wbook *book, int ncols, int skip, 
-			     struct string_err *err)
+static int 
+check_data_block (wbook *book, int ncols, const char *blank_col,
+		  int skip, struct string_err *err)
 {
     int i, t, ret = 0;
 
     for (i=book->col_offset+skip; i<ncols; i++) {
+	if (blank_col[i]) {
+	    continue;
+	}
 	for (t=1+book->row_offset; t<=lastrow; t++) {
 	    if (rowptr[t].cells  == NULL) {
 #ifdef EDEBUG
@@ -1081,12 +1098,32 @@ static int check_data_block (wbook *book, int ncols, int skip,
     return ret;
 }
 
+static int 
+n_vars_from_col (int totcols, char *blank_col, int offset, int first_special)
+{
+    int i, nv = 1;
+
+    if (offset == 0 && first_special) {
+	offset = 1;
+    }
+
+    for (i=offset; i<totcols; i++) {
+	if (!blank_col[i]) nv++;
+    }
+
+    printf("n_vars_from_col: totcols=%d, offset=%d, spec=%d, nv=%d\n",
+	   totcols, offset, first_special, nv);
+
+    return nv;
+}
+
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    PRN *prn)
 {
     wbook book;
     int err = 0;
     double **newZ = NULL;
+    char *blank_col = NULL;
     DATAINFO *newinfo;
     const char *adjust_rc = N_("Perhaps you need to adjust the "
 			       "starting column or row?");
@@ -1140,37 +1177,65 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "%s\n", prn->buf);
 	lastrow--;
     } else {
-	int i, j, t, i_sheet, t_sheet;
+	int i, j, t, startcol;
 	int label_strings, time_series = 0;
-	int skip, ncols, maxcols = 0;
+	int datacols = 0, totcols = 0;
 	struct string_err strerr;
 
 	strerr.row = strerr.column = 0;
 	strerr.str = NULL;
 
 	lastrow--;
-	while (lastrow > 0 && !rowptr[lastrow].cells) {
+	while (lastrow > 0 && rowptr[lastrow].cells == NULL) {
 	    lastrow--;
 	}
 
 	for (i=0; i<=lastrow; i++) {
 	    if (rowptr[i].cells != NULL) {
-		ncols = 0;
-		for (j=0; j<=rowptr[i].last; j++) {
-		    if (rowptr[i].cells[j] != NULL) {
-			ncols++;
-		    }
-		}
-		if (ncols > maxcols) {
-		    maxcols = ncols;
+		if (rowptr[i].last + 1 > totcols) {
+		    totcols = rowptr[i].last + 1;
 		}
 	    }
 	}
 
-	ncols = maxcols;
-	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
+	if (totcols <= 0 || lastrow < 1) {
+	    pputs(prn, _("No data found.\n"));
+	    pputs(prn, _(adjust_rc));
+	    err = 1;
+	    goto getout; 
+	}
 
-	if (ncols <= 0 || lastrow < 1) {
+	blank_col = malloc(totcols);
+	if (blank_col == NULL) {
+	    err = E_ALLOC;
+	    goto getout; 
+	}
+
+	memset(blank_col, 1, totcols);
+
+	for (i=0; i<=lastrow; i++) {
+	    if (rowptr[i].cells == NULL) {
+		continue;
+	    }
+	    for (j=0; j<=rowptr[i].last; j++) {
+		if (rowptr[i].cells[j] != NULL) {
+		    if (blank_col[j]) {
+			blank_col[j] = 0;
+		    }
+		}
+	    }
+	}
+
+	for (i=0; i<totcols; i++) {
+	    if (!blank_col[i]) {
+		datacols++;
+	    }
+	}
+
+	printf("rows=%d, data cols=%d total cols=%d\n", lastrow + 1, 
+	       datacols, totcols);
+
+	if (datacols < 1) {
 	    pputs(prn, _("No data found.\n"));
 	    pputs(prn, _(adjust_rc));
 	    err = 1;
@@ -1184,16 +1249,17 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    puts("check for label strings in first column: not found");
 	}
 
-	err = check_all_varnames(&book, ncols, label_strings);
+	err = check_all_varnames(&book, totcols, blank_col, label_strings);
 	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	    pputs(prn, _("One or more variable names are missing.\n"));
 	    pputs(prn, _(adjust_rc));
 	} else if (err == VARNAMES_INVALID) {
 	    invalid_varname(prn);
 	}
+
 	if (err) goto getout; 
 
-	err = check_data_block(&book, ncols, label_strings, &strerr);
+	err = check_data_block(&book, totcols, blank_col, label_strings, &strerr);
 	if (err == 1) {
 	    pprintf(prn, _("Expected numeric data, found string:\n"
 			   "%s\" at row %d, column %d\n"),
@@ -1217,10 +1283,10 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	skip = book.col_offset + (time_series || label_strings);
-
-	newinfo->v = ncols + 1 - skip;
+	newinfo->v = n_vars_from_col(totcols, blank_col, book.col_offset,
+				     time_series || label_strings);
 	newinfo->n = lastrow - book.row_offset;
+
 	fprintf(stderr, "newinfo->v = %d, newinfo->n = %d\n",
 		newinfo->v, newinfo->n);
 
@@ -1237,36 +1303,48 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
 	}
 
-	for (i=1; i<newinfo->v; i++) {
-	    i_sheet = i - 1 + skip;
-	    if (rowptr[book.row_offset].cells == NULL) {
-		err = 1;
-		break;
+	if (book.col_offset > 0) {
+	    startcol = book.col_offset;
+	} else if (time_series || label_strings) {
+	    startcol = 1;
+	} else {
+	    startcol = 0;
+	}
+
+	j = 1;
+	for (i=startcol; i<totcols; i++) {
+
+	    if (blank_col[i]) {
+		continue;
 	    }
-	    if (rowptr[book.row_offset].cells[i_sheet] == NULL) {
-		err = 1;
-		break;
-	    }
-	    newinfo->varname[i][0] = 0;
-	    strncat(newinfo->varname[i], 
-		    rowptr[book.row_offset].cells[i_sheet] + 1, USER_VLEN - 1);
-	    for (t=0; t<newinfo->n; t++) {
-		t_sheet = t + 1 + book.row_offset;
-		if (rowptr[t_sheet].cells == NULL ||
-		    rowptr[t_sheet].cells[i_sheet] == NULL) continue;
+
+	    newinfo->varname[j][0] = 0;
+	    strncat(newinfo->varname[j], 
+		    rowptr[book.row_offset].cells[i] + 1, USER_VLEN - 1);
 #ifdef EDEBUG
-		fprintf(stderr, "accessing rowptr[%d].cells[%d] at %p\n",
-			t_sheet, i_sheet,
-			(void *) rowptr[t_sheet].cells[i_sheet]);
-		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
-			"= '%s'\n", i, t, i_sheet, t_sheet, 
-			rowptr[t_sheet].cells[i_sheet]);
+	    fprintf(stderr, "accessing rowptr[%d].cells[%d] at %p\n",
+		    book.row_offset, i, (void *) rowptr[book.row_offset].cells[i]);
+	    fprintf(stderr, "set varname[%d] = '%s'\n", j, newinfo->varname[j]);
 #endif
-		newZ[i][t] = atof(rowptr[t_sheet].cells[i_sheet]);
-		if (newZ[i][t] == -999.0) {
-		    newZ[i][t] = NADBL;
+
+	    for (t=0; t<newinfo->n; t++) {
+		int ts = t + 1 + book.row_offset;
+
+		if (rowptr[ts].cells == NULL || rowptr[ts].cells[i] == NULL) {
+		    continue;
+		}
+#ifdef EDEBUG
+		fprintf(stderr, "accessing rowptr[%d].cells[%d] at %p\n", ts, i,
+			(void *) rowptr[ts].cells[i]);
+		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
+			"= '%s'\n", j, t, i, ts, rowptr[ts].cells[i]);
+#endif
+		newZ[j][t] = atof(rowptr[ts].cells[i]);
+		if (newZ[j][t] == -999.0) {
+		    newZ[j][t] = NADBL;
 		}
 	    }
+	    j++;
 	}
 	
 	if (!err) {
@@ -1284,8 +1362,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		newinfo->markers = 1;
 		i = book.col_offset;
 		for (t=0; t<newinfo->n; t++) {
-		    t_sheet = t + 1 + book.row_offset;
-		    strncat(S[t], rowptr[t_sheet].cells[i] + 1, OBSLEN - 1);
+		    int ts = t + 1 + book.row_offset;
+
+		    strncat(S[t], rowptr[ts].cells[i] + 1, OBSLEN - 1);
 		}
 		newinfo->S = S;
 	    }
@@ -1300,7 +1379,8 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
  getout:
-
+    
+    free(blank_col);
     wbook_free(&book);
     free_sheet();
 
