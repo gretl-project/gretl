@@ -188,7 +188,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     char stobs[11], endobs[11];
     char *p, pdc;
     int offset = 0;
-    int gotit = 0, err = 0;
+    int gotit = 0, err = DB_OK;
     int n;
 
     strcpy(dbidx, db_name);
@@ -202,7 +202,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
     fp = fopen(dbidx, "r");
     if (fp == NULL) {
 	strcpy(gretl_errmsg, _("Couldn't open database index file"));
-	return 1;
+	return DB_NOT_FOUND;
     }
 
     while (!gotit) {
@@ -229,7 +229,7 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 		       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
 		strcpy(gretl_errmsg,
 		       _("Failed to parse series information"));
-		err = 1;
+		err = DB_PARSE_ERROR;
 	    } else {
 		get_native_series_pd(sinfo, pdc);
 		get_native_series_obs(sinfo, stobs, endobs);
@@ -237,7 +237,9 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 	    }
 	} else {
 	    if (sscanf(line2, "%*c %*s %*s %*s %*s %*s %d", &n) != 1) {
-		err = 1;
+		strcpy(gretl_errmsg,
+		       _("Failed to parse series information"));
+		err = DB_PARSE_ERROR;
 	    } else {
 		offset += n * sizeof(dbnumber);
 	    }
@@ -246,7 +248,10 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
     fclose(fp);
 
-    if (!gotit) err = 1;
+    if (!gotit) {
+	sprintf(gretl_errmsg, _("Series not found, '%s'"), series);
+	err = DB_NO_SUCH_SERIES;
+    }
 
     return err;
 }

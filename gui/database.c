@@ -365,7 +365,6 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
     if (dbcode == NATIVE_SERIES) {
 	err = get_native_db_data(dbwin->fname, sinfo, dbZ);
-	fprintf(stderr, "get_native_db_data returned %d\n", err);
     } else if (dbcode == REMOTE_SERIES) { 
 	err = get_remote_db_data(dbwin, sinfo, dbZ);
     } else if (dbcode == RATS_SERIES) {

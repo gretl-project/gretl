@@ -23,6 +23,8 @@
 enum {
     DB_OK = 0,
     DB_MISSING_DATA,
+    DB_NO_SUCH_SERIES,
+    DB_PARSE_ERROR,
     DB_NOT_FOUND
 };
 
