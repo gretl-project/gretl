@@ -1440,9 +1440,10 @@ static double autores (MODEL *pmod, double rho, const double **Z,
 int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	       PATHS *ppaths, int batch, int opt, PRN *prn)
 {
-    double rho = 0.0, rho0 = 0.0, diff = 1.0;
-    double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
-    int step, iter = 0, nn = 0, err = 0;
+    double rho = 0.0, rho0 = 0.0, diff;
+    double finalrho = 0.0, essmin = 1.0e8;
+    double ess, ssr[199], rh[199]; 
+    int iter, nn = 0, err = 0;
     gretlopt lsqopt = OPT_NONE;
     MODEL corc_model;
 
@@ -1453,8 +1454,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     if (opt == PWE) lsqopt |= OPT_P;
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
-	step = 1;
-	for (rho = -0.990; rho < 1.0; rho += .01) {
+	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
 	    clear_model(&corc_model);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 	    if ((err = corc_model.errcode)) {
@@ -1462,39 +1462,70 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		return err;
 	    }
 	    ess = corc_model.ess;
-	    if (batch && step == 1) {
-		pprintf(prn, "\n RHO       %s      RHO       %s      "
-			"RHO       %s      RHO       %s     \n",
-			_("ESS"), _("ESS"), _("ESS"), _("ESS"));
-	    }
 	    if (batch) {
 		char num[16];
 		int chk;
-
+		
+		if (iter == 0) {
+		    pprintf(prn, "\n RHO       %s      RHO       %s      "
+			    "RHO       %s      RHO       %s     \n",
+			    _("ESS"), _("ESS"), _("ESS"), _("ESS"));
+		}
 		sprintf(num, "%f", 100 * fabs(rho));
 		chk = atoi(num);
 		if (chk == 99 || chk % 10 == 0) {
 		    ssr[nn] = ess;
 		    rh[nn++] = rho;
 		    pprintf(prn, "%5.2f %10.4g", rho, ess);
-		    if (nn % 4 == 0) pputs(prn, "\n");
+		    if (nn % 4 == 0) pputc(prn, '\n');
 		    else bufspace(3, prn);
 		} 
 	    } else {
 		ssr[nn] = ess;
 		rh[nn++] = rho;
 	    }
-	    if (step == 1) {
+	    if (iter == 0 || ess < essmin) {
 		essmin = ess;
-	    } else {
-		essmin = (ess < essmin)? ess : essmin;
-	    }
-	    if (ess-essmin > -SMALL && ess-essmin < SMALL)
 		finalrho = rho;
-	    step++;
-	}					
+	    }
+	} /* end of basic iteration */
+	
+	if (finalrho > 0.989) {
+	    /* try exploring this funny region? */
+	    for (rho = 0.99; rho <= 0.999; rho += .001) {
+		clear_model(&corc_model);
+		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		if ((err = corc_model.errcode)) {
+		    clear_model(&corc_model);
+		    break;
+		}
+		ess = corc_model.ess;
+		if (ess < essmin) {
+		    essmin = ess;
+		    finalrho = rho;
+		}
+	    }
+	}
+
+	if (finalrho > 0.9989) {
+	    /* this even funnier one? */
+	    for (rho = 0.9991; rho <= 0.9999; rho += .0001) {
+		clear_model(&corc_model);
+		corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+		if ((err = corc_model.errcode)) {
+		    clear_model(&corc_model);
+		    break;
+		}
+		ess = corc_model.ess;
+		if (ess < essmin) {
+		    essmin = ess;
+		    finalrho = rho;
+		}
+	    }
+	}
+
 	rho0 = rho = finalrho;
-	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
+	pprintf(prn, _("\n\nESS is minimum for rho = %g\n\n"), rho);
 	if (batch) {
 	    graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	    pputs(prn, "\n");
@@ -1519,12 +1550,13 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     pprintf(prn, "                 %s       RHO        %s\n",
 	    _("ITER"), _("ESS"));
 
+    iter = 0;
+    diff = 1.0;
     while (diff > 0.001) {
-	iter++;
-	pprintf(prn, "          %10d %12.5f", iter, rho);
+	pprintf(prn, "          %10d %12.5f", ++iter, rho);
 	clear_model(&corc_model);
 	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
-#if 0
+#ifdef AR_DEBUG
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
 		corc_model.t1, 
 		corc_model.uhat[corc_model.t1],
@@ -1535,7 +1567,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
-#if 0
+#ifdef AR_DEBUG
 	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
 #endif
 	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
