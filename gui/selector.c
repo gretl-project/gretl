@@ -745,11 +745,20 @@ static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
     GtkObject *adj;
-    gfloat order = datainfo->pd;
+    gfloat order; 
+    gfloat ordermax;
+
+    if (datainfo->n < 72) {
+	ordermax = datainfo->n / 2;
+    } else {
+	ordermax = 36;
+    }
+
+    order = (datainfo->pd > 12)? 12 : datainfo->pd;
 
     midhbox = gtk_hbox_new(FALSE, 5);
     tmp = gtk_label_new(_("lag order:"));
-    adj = gtk_adjustment_new(order, 1, 24, 1, 1, 1);
+    adj = gtk_adjustment_new(order, 1, ordermax, 1, 1, 1);
     sr->extra = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
     gtk_box_pack_start (GTK_BOX (midhbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);

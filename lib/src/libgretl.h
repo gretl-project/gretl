@@ -109,7 +109,8 @@ enum ts_codes {
     CROSS_SECTION,
     TIME_SERIES,
     STACKED_TIME_SERIES,
-    STACKED_CROSS_SECTION
+    STACKED_CROSS_SECTION,
+    STRUCTURE_UNKNOWN
 };
 
 enum auto_genr {

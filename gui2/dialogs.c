@@ -3094,9 +3094,9 @@ static int test_for_unbalanced (const DATAINFO *dwinfo)
 
     if (datainfo->n % dwinfo->t1 != 0) {
 	sprintf(errtext, _("Panel datasets must be balanced.\n"
-		"The number of observations (%d) is not a multiple\n"
-		"of the number of units (%d)."), datainfo->n,
-		dwinfo->t1);
+			   "The number of observations (%d) is not a multiple\n"
+			   "of the number of %s (%d)."), datainfo->n,
+		_("units"), dwinfo->t1);
 	errbox(errtext);
 	err = 1;
     }
@@ -3133,6 +3133,7 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
 
+	/* we don't offer a choice of "starting obs" */
 	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? 
 	    nperiods : nunits;
 	strcpy(dwinfo->stobs, "1.1");
@@ -3142,12 +3143,6 @@ datawiz_make_changes (DATAINFO *dwinfo)
     if (dwinfo->structure == CROSS_SECTION) {
 	strcpy(dwinfo->stobs, "1");
     }
-
-    /* weekly: what should be done? */
-    if (dwinfo->structure == TIME_SERIES && dwinfo->pd == 52) {
-	strcpy(dwinfo->stobs, "1");
-    }
-    
 
     sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
 
@@ -3206,7 +3201,14 @@ static int radio_default (DATAINFO *dwinfo, int code)
     if (code == DW_SET_TYPE) {
 	return dwinfo->structure;
     } else if (code == DW_TS_FREQUENCY) {
-	return (dwinfo->pd == 6 || dwinfo->pd == 7)? 5 : dwinfo->pd;
+	if (dwinfo->pd == 6 || dwinfo->pd == 7) {
+	    return 5;
+	} else if (dwinfo->pd == 5 || dwinfo->pd == 4 ||
+		   dwinfo->pd == 12 || dwinfo->pd == 52) {
+	    return dwinfo->pd;
+	} else {
+	    return 1;
+	}
     } else if (code == DW_WEEK_DAYS) {
 	return dwinfo->pd; 
     } else if (code == DW_PANEL_MODE) { 
@@ -3268,6 +3270,10 @@ static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
+#if DWDEBUG
+    fprintf(stderr, "radio opt set to %d\n", val);
+#endif
+
     *setvar = val;
 }
 
@@ -3310,19 +3316,16 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 		break;
 	    }
 	} 
+
 	if (tslabel == NULL) {
 	    tslabel = N_("time-series data");
 	}
 
-	if (dwinfo->pd != 52 && dwinfo->pd != PD_SPECIAL) {
+	if (dwinfo->pd != PD_SPECIAL) {
 	    int lastobs = dwinfo->t1 + datainfo->n - 1;
 
 	    if (lastobs > dwinfo->n - 1) {
 		dwinfo->n = lastobs + 1;
-	    }
-
-	    if (dwinfo->pd == 24) {
-		dwinfo->sd0 = 1.01;
 	    }
 
 	    ntodate_full(stobs, dwinfo->t1, dwinfo);
@@ -3330,27 +3333,33 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	    sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
 	} else {
 	    sprintf(ctxt, _("%s, observations 1 to %d"), tslabel,
-		datainfo->n);
+		    datainfo->n);
 	}
     } else if (dataset_is_panel(dwinfo)) {
 	int nunits = dwinfo->t1;
 	int nperiods = datainfo->n / nunits;
 
 	sprintf(ctxt, _("panel data (%s)\n"
-		"%d cross-sectional units observed over %d periods"),
+			"%d cross-sectional units observed over %d periods"),
 		(dwinfo->structure == STACKED_TIME_SERIES)? 
 		_("stacked time series") : _("stacked cross sections"),
 		nunits, nperiods);
     } 
 }
 
-/* we do this only in case of time series */
-
-static void dw_compute_datainfo (DATAINFO *dwinfo)
+static void dw_compute_ts_info (DATAINFO *dwinfo)
 {
 #if DWDEBUG
     char obsstr[OBSLEN];
+
+    fprintf(stderr, "dw_compute_ts_info() called\n");
 #endif
+
+    /* we do this only in case of time series */
+    if (dwinfo->structure != TIME_SERIES) {
+	return;
+    }
+
     dwinfo->t1 = 0;
 
     if (dwinfo->pd == 1) {
@@ -3370,10 +3379,9 @@ static void dw_compute_datainfo (DATAINFO *dwinfo)
 	dwinfo->n = 1500;
 	dwinfo->t1 = 0;
     } else if (dwinfo->pd == 52) {
-	/* FIXME */
-	strcpy(dwinfo->stobs, "1:01");
-	dwinfo->n = 150000;
-	dwinfo->t1 = 0;
+	strcpy(dwinfo->stobs, "1950/01/02");
+	dwinfo->n = 12000;
+	dwinfo->t1 = 2087;
     } else if (dwinfo->pd == 5 ||
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
@@ -3382,8 +3390,7 @@ static void dw_compute_datainfo (DATAINFO *dwinfo)
 	dwinfo->t1 = 12000;
     }
 
-    if (datainfo->structure == TIME_SERIES &&
-	datainfo->pd == dwinfo->pd) {
+    if (datainfo->structure == TIME_SERIES && datainfo->pd == dwinfo->pd) {
 	/* make the current start the default */
 	dwinfo->t1 = dateton(datainfo->stobs, dwinfo);
     }
@@ -3425,7 +3432,7 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
 
     if (step == DW_STARTING_OBS) {
-	dw_compute_datainfo(dwinfo);
+	dw_compute_ts_info(dwinfo);
 	spinmin = 0;
 	spinmax = dwinfo->n - 1;
 	spinstart = dwinfo->t1;
@@ -3437,7 +3444,7 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
 
     /* FIXME step size? */
     adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
-			     1, 1, 1);
+			     1, 10, 1);
     g_signal_connect(G_OBJECT(adj), "value-changed", 
 		     G_CALLBACK(dw_set_t1), dwinfo);
 
@@ -3467,6 +3474,11 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     int setval = 0;
     int *setint = NULL;
     int i, ret = DW_FORWARD;
+
+#if DWDEBUG
+    fprintf(stderr, "datawiz_dialog: radio_default = %d\n",
+	    deflt);
+#endif
 
     if (step == DW_CONFIRM && dataset_is_panel(dwinfo) &&
 	test_for_unbalanced(dwinfo)) {
@@ -3528,6 +3540,9 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
 	if (deflt == setval) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
+	    if (setint != NULL) {
+		*setint = setval;
+	    }
 	} 
 
 	gtk_widget_show(button);
@@ -3640,7 +3655,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_TS_FREQUENCY) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
-		} else if (dwinfo->pd == PD_SPECIAL || dwinfo->pd == 52) {
+		} else if (dwinfo->pd == PD_SPECIAL) {
 		    /* no 'dates' for special frequencies */
 		    step = DW_CONFIRM;
 		} else {
@@ -3670,7 +3685,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
 		if (dwinfo->structure == TIME_SERIES) {
-		    if (dwinfo->pd != PD_SPECIAL && dwinfo->pd != 52) {
+		    if (dwinfo->pd != PD_SPECIAL) {
 			step = DW_STARTING_OBS;
 		    } else {
 			step = DW_TS_FREQUENCY;

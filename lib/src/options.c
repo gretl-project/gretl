@@ -272,16 +272,22 @@ static int is_long_opt (const char *lopt)
 
 static int valid_long_opt (int ci, const char *lopt)
 {
-    int i;
+    int len, len1, len2;
     int opt = 0L;
+    int i;
 
     if (is_model_ci(ci) && ci != LAD && !strcmp(lopt, "vcv")) {
 	/* VCV is available for all but LAD models */
 	return OPT_O;
     }
 
+    len1 = strlen(lopt);
+
     for (i=0; gretl_opts[i].o != 0; i++) {
-	if (ci == gretl_opts[i].ci && !strcmp(lopt, gretl_opts[i].longopt)) {
+	len2 = strlen(gretl_opts[i].longopt);
+	len = (len2 > len1)? len1 : len2;
+	if (ci == gretl_opts[i].ci && 
+	    !strncmp(lopt, gretl_opts[i].longopt, len)) {
 	    opt = gretl_opts[i].o;
 	    break;
 	}

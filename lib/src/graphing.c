@@ -202,7 +202,7 @@ const char *get_timevar_name (DATAINFO *pdinfo)
 	return "months";
     } else if (pdinfo->pd == 24) {
 	return "hrs";
-    } else if (dated_daily_data(pdinfo)) {
+    } else if (calendar_data(pdinfo)) {
 	return "decdate";
     } else {
 	return "time";

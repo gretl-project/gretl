@@ -2187,9 +2187,16 @@ void do_model (GtkWidget *widget, gpointer p)
 	/* Note: requires special treatment: doesn't return model */
 	/* FIXME: allow "robust" option via GUI? */
 	sscanf(buf, "%d", &order);
+	if (order > var_max_order(cmd.list, datainfo)) {
+	    errbox(_("Insufficient degrees of freedom for regression"));
+	    gretl_print_destroy(prn);
+	    return;
+	}
 	var = full_var(order, cmd.list, &Z, datainfo, OPT_NONE, prn);
 	if (var == NULL) {
-	    errbox(_("Command failed"));
+	    const char *msg = get_gretl_errmsg();
+
+	    errbox((*msg)? msg : _("Command failed"));
 	    gretl_print_destroy(prn);
 	} else {
 	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 

@@ -180,8 +180,9 @@ double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
-    if ((pd >= 5 &&pd <= 7) && strlen(obs) > 4) { 
-	/* daily data */
+    if ((pd == 5 || pd == 6 || pd == 7 || pd == 52) 
+	&& strlen(obs) > 4) { 
+	/* calendar data */
 	long ed = get_epoch_day(obs);
 
 	if (ed >= 0) x = ed;
@@ -995,11 +996,9 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
     char majstr[5], minstr[3];
     char startmajstr[5], startminstr[3];
-    int hasmaj, startmaj, startmin;
+    int startmaj, startmin;
 
-    hasmaj = (strchr(pdinfo->stobs, ':') != NULL);
-
-    if (dated_daily_data(pdinfo)) {
+    if (calendar_data(pdinfo)) {
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    for (i=0; i<pdinfo->n; i++) {
 		if (!strcmp(date, pdinfo->S[i])) {
@@ -1008,10 +1007,10 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	    }
 	    return -1;
 	} else {
-	    return daily_obs_number(date, pdinfo);
-	}
+	    return calendar_obs_number(date, pdinfo);
+	} 
     } else if (dataset_is_daily(pdinfo) ||
-	       (dataset_is_weekly(pdinfo) && !hasmaj) ||
+	       dataset_is_weekly(pdinfo) ||
 	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
@@ -1053,7 +1052,8 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 
     if (!dotpos1 && !dotpos2) {
 	n = atoi(date) - atoi(pdinfo->stobs);
-	if (pdinfo->n != -1 && n > pdinfo->n) { /* ?? */
+	if (pdinfo->n != -1 && n > pdinfo->n) { 
+	    /* n = -1 in case of establishing a new dataset */
 	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	    return -1; 
 	} else {
@@ -1075,17 +1075,21 @@ static char *
 real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 {
     static int decpoint;
-
-    int hasmaj = (strchr(pdinfo->stobs, ':') != NULL);
     double x;
+
+#if 0
+    fprintf(stderr, "real_ntodate: t=%d, pd=%d, sd0=%g\n",
+	    t, pdinfo->pd, pdinfo->sd0);
+#endif
 
     decpoint = get_local_decpoint();
 
-    if (dated_daily_data(pdinfo)) {
+    if (calendar_data(pdinfo)) {
+	/* handles both daily and dated weekly data */
 	if (pdinfo->markers && pdinfo->S != NULL) {
 	    strcpy(datestr, pdinfo->S[t]);
 	} else {
-	    daily_date_string(datestr, t, pdinfo);
+	    calendar_date_string(datestr, t, pdinfo);
 	}
 	if (!full && strlen(datestr) > 8) {
 	    char tmp[12];
@@ -1095,7 +1099,7 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	}
 	return datestr;
     } else if (dataset_is_daily(pdinfo) || 
-	       (dataset_is_weekly(pdinfo) && !hasmaj) ||
+	       dataset_is_weekly(pdinfo) ||
 	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	x = date(t, 1, pdinfo->sd0);
@@ -2256,8 +2260,8 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
     }
 
     if (!err) {
-	int n1 = daily_obs_number(pdinfo->S[0], pdinfo);
-	int n2 = daily_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+	int n1 = calendar_obs_number(pdinfo->S[0], pdinfo);
+	int n2 = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
 
 	fulln = n2 - n1 + 1;
 	if (pdinfo->n > fulln) {
@@ -2285,7 +2289,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
     }
 
     for (t=0; t<pdinfo->n && !err; t++) {
-	n = daily_obs_number(pdinfo->S[t], pdinfo);
+	n = calendar_obs_number(pdinfo->S[t], pdinfo);
 	if (n < t) {
 	    fprintf(stderr, "Error: n = %d < t = %d\n", n, t);
 	    err = 1;

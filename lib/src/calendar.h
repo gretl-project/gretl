@@ -36,9 +36,9 @@ int days_in_month_before (int yr, int mon, int day, int wkdays);
 
 int days_in_month_after (int yr, int mon, int day, int wkdays);
 
-int daily_obs_number (const char *date, const DATAINFO *pdinfo);
+int calendar_obs_number (const char *date, const DATAINFO *pdinfo);
 
-void daily_date_string (char *str, int t, const DATAINFO *pdinfo);
+void calendar_date_string (char *str, int t, const DATAINFO *pdinfo);
 
 double get_dec_date (const char *date);
 

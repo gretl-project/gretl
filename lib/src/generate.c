@@ -649,13 +649,13 @@ static double get_lag_at_obs (int v, int tmp, int lag,
 	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    x = Z[v][lt];
 	}
-    }
-    else if (dated_daily_data(genr->pdinfo)) {
+    } else if (dated_daily_data(genr->pdinfo)) {
 	lt = t - lag;
-	while (lt >= 0 && na(Z[v][lt])) lt--;
+	while (lt >= 0 && na(Z[v][lt])) {
+	    lt--;
+	}
 	x = Z[v][lt];
-    } 
-    else { /* the "standard" time-series case */
+    } else { /* the "standard" time-series case */
 	lt = t - lag;
 	if (lt >= 0 && lt < genr->pdinfo->n) {
 	    x = Z[v][lt];
@@ -3281,7 +3281,7 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 
 /* ...........................................................*/
 
-static void fix_daily_date (char *s)
+static void fix_calendar_date (char *s)
 {
     while (*s) {
 	if (*s == ':') *s = '/';
@@ -3302,8 +3302,8 @@ static double get_obs_value (const char *s, double **Z,
 	if (i < pdinfo->v && pdinfo->vector[i]) {
 	    int t;
 
-	    if (dated_daily_data(pdinfo)) {
-		fix_daily_date(obs);
+	    if (calendar_data(pdinfo)) {
+		fix_calendar_date(obs);
 	    }
 
 	    t = dateton(obs, pdinfo);
@@ -3405,7 +3405,7 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
 	}
-	if (dated_daily_data(pdinfo)) {
+	if (calendar_data(pdinfo)) {
 	    charsub(test, ':', '/');
 	    for (t=0; t<pdinfo->n; t++) {
 		if (!strcmp(test, pdinfo->S[t]) ||
@@ -3421,12 +3421,12 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	if (t >= 0) return t + 1;
     }
 
-    if (dated_daily_data(pdinfo)) {
+    if (calendar_data(pdinfo)) {
 	char datestr[OBSLEN];
 
 	charsub(test, ':', '/');
 	for (t=0; t<pdinfo->n; t++) {
-	    daily_date_string(datestr, t, pdinfo);
+	    calendar_date_string(datestr, t, pdinfo);
 	    if (!strcmp(test, datestr) ||
 		!strcmp(test, datestr + 2)) {
 		return t + 1;
@@ -3651,7 +3651,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 	} else {
 	    for (t=0; t<pdinfo->n; t++) {
 		xx = date(t, pdinfo->pd, pdinfo->sd0);
-		if (dataset_is_daily(pdinfo)) {
+		if (dataset_is_daily(pdinfo)) { /* FIXME weekly? */
 		    xx += .1;
 		}
 		yy = (int) xx;
@@ -3897,7 +3897,7 @@ static int plotvar_is_full_size (int v, int n, const double *x)
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @period: string to identify periodicity: "annual", "qtrs",
- * "months", "decdate" (daily data), "time" or "index".
+ * "months", "decdate" (calendar data), "time" or "index".
  *
  * Adds to the data set a special dummy variable for use in plotting.
  *
@@ -3953,7 +3953,8 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 	}
 	break;
     case 'd':
-	if (dated_daily_data(pdinfo) && pdinfo->n > 365) {
+	if ((dated_daily_data(pdinfo) && pdinfo->n > 365) ||
+	    (dated_weekly_data(pdinfo) && pdinfo->n > 52)) {
 	    strcpy(VARLABEL(pdinfo, vi), _("daily plotting variable"));
 	    for (t=0; t<n; t++) {
 		if (pdinfo->S != NULL) {
@@ -3961,7 +3962,7 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 		} else {
 		    char datestr[OBSLEN];
 		    
-		    daily_date_string(datestr, t, pdinfo);
+		    calendar_date_string(datestr, t, pdinfo);
 		    (*pZ)[vi][t] = get_dec_date(datestr);
 		}
 	    } 

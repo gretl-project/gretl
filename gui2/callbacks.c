@@ -733,16 +733,19 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
     strncpy(dataspec, buf, 31);
 
     /* check validity of dataspec */
-    if (sscanf(dataspec, "%8s %8s %8s", stobs, endobs, firstvar) != 3) {
+    if (sscanf(dataspec, "%10s %10s %8s", stobs, endobs, firstvar) != 3) {
 	errbox(_("Insufficient dataset information supplied"));
 	return;
     }
 
-    /* daily data: special */
-    if (datainfo->pd == 5 || datainfo->pd == 6 || datainfo->pd == 7) {
+    if (datainfo->pd == 5 || datainfo->pd == 6 || datainfo->pd == 7 ||
+	datainfo->pd == 52) {
+	/* calendar data: special */
 	int err = 0;
 	sd0 = (double) get_epoch_day(stobs); 
 	ed0 = (double) get_epoch_day(endobs);
+
+	/* FIXME weekly: check that we have Mondays */
 
 	if (sd0 < 0) {
 	    err = 1;
@@ -756,7 +759,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
 	    errbox(errtext);
 	    return;
 	}
-    } else { /* not daily data */
+    } else { 
 	fix_obsstr(stobs);
 	fix_obsstr(endobs);
 
@@ -821,7 +824,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
 	}	
     } else if (datainfo->pd != 5 && 
 	       datainfo->pd != 6 && 
-	       datainfo->pd != 7) { 
+	       datainfo->pd != 7 &&
+	       datainfo->pd != 52) { 
 	char year[8], subper[8];
 
 	if (sscanf(stobs, "%[^:]:%s", year, subper) != 2 ||
@@ -849,7 +853,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
     datainfo->sd0 = sd0;
-    datainfo->n = -1;
+    
+    /* prevent dateton() from giving an error due to endobs > n */
+    datainfo->n = -1; 
     datainfo->n = dateton(datainfo->endobs, datainfo) + 1; 
 
     if (datainfo->n <= 0) {
@@ -904,7 +910,7 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	obsstr = g_strdup_printf("0:01 0:24 %s", _("newvar"));
 	break;
     case 52:
-	obsstr = g_strdup_printf("1990:01 2001:52 %s", _("newvar"));
+	obsstr = g_strdup_printf("99/01/01 01/12/24 %s", _("newvar"));
 	break;
     }
 

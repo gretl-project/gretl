@@ -163,7 +163,7 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 				  const char *stobs,
 				  const char *endobs)
 {
-    if (strchr(stobs, '/')) { /* daily data */
+    if (strchr(stobs, '/')) { /* calendar data */
 	const char *q = stobs;
 	const char *p = strchr(stobs, '/');
 
@@ -1789,8 +1789,8 @@ static int dataset_to_monthly (double ***pZ, DATAINFO *pdinfo,
 
 static int get_daily_skip (const DATAINFO *pdinfo, int t)
 {
-    int dd = daily_obs_number(pdinfo->S[t], pdinfo) -
-	daily_obs_number(pdinfo->S[t-1], pdinfo);
+    int dd = calendar_obs_number(pdinfo->S[t], pdinfo) -
+	calendar_obs_number(pdinfo->S[t-1], pdinfo);
 
     return dd - 1;
 }

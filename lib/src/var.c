@@ -861,6 +861,42 @@ static int var_lists_init (struct var_lists *vl,
     return E_ALLOC;
 }
 
+int var_max_order (const int *list, const DATAINFO *pdinfo)
+{
+    int T = pdinfo->t2 - pdinfo->t1 + 1;
+    int nstoch = 0, ndet = 0;
+    int gotsep = 0;
+    int order = 1;
+    int i;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    gotsep = 1;
+	    continue;
+	}
+	if (!gotsep) {
+	    nstoch++;
+	} else {
+	    ndet++;
+	}
+    }
+
+    order = (T - ndet) / nstoch;
+
+    while (order > 0) {
+	int t1 = (order > pdinfo->t1)? order : pdinfo->t1;
+
+	T = pdinfo->t2 - t1 + 1;
+	if (nstoch * order + ndet > T) {
+	    order--;
+	} else {
+	    break;
+	}
+    }
+
+    return order - 1;
+}
+
 /* Given an incoming regression list, separate it into deterministic
    components (constant, trend, dummy variables) and stochastic
    components, and construct a list for each sort of variable.  Also
@@ -878,7 +914,7 @@ static int organize_var_lists (const int *list, const double **Z,
     int i, j, k, li;
     
     d = calloc(list[0] + 1, 1);
-    if (d == NULL) return 1;
+    if (d == NULL) return E_ALLOC;
 
     /* figure out the lengths of the lists */
     for (i=1; i<=list[0]; i++) {
@@ -898,10 +934,16 @@ static int organize_var_lists (const int *list, const double **Z,
 	}
     }
 
+    /* check for degrees of freedom */
+    if (nstoch * order + ndet > pdinfo->t2 - pdinfo->t1 + 1) {
+	free(d);
+	return E_DF;
+    }
+
     /* allocate the lists */
     if (var_lists_init(vlists, ndet, nstoch, order)) {
 	free(d);
-	return 1;
+	return E_ALLOC;
     }
 
     /* fill out the detvars and stochvars lists */
@@ -1133,6 +1175,10 @@ static int real_var (int order, const int *inlist,
     int pause = (flags & VAR_PRINT_PAUSE);
     int err = 0;
 
+    if (pvar != NULL) {
+	*pvar = NULL;
+    }
+
     oldt1 = pdinfo->t1;
     oldt2 = pdinfo->t2;
 
@@ -1144,7 +1190,7 @@ static int real_var (int order, const int *inlist,
     err = organize_var_lists(inlist, (const double **) *pZ, pdinfo, 
 			     order, &vlists);
     if (err) {
-	return E_ALLOC;
+	return err;
     }
 
     /* generate the required lags */
@@ -1217,9 +1263,17 @@ static int real_var (int order, const int *inlist,
 	}
 
 	/* run an OLS regression for the current dependent var */
+
 	compose_varlist(&vlists, vlists.stochvars[i + 1], 
 			order, 0, pdinfo);
+
 	*pmod = lsq(vlists.reglist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
+
+	if (pmod->errcode) {
+	    err = pmod->errcode;
+	    goto var_bailout;
+	}
+
 	pmod->aux = AUX_VAR;
 	pmod->ID = i + 1;
 
@@ -1283,6 +1337,7 @@ static int real_var (int order, const int *inlist,
 	    gretl_matrix_print(var->A, "var->A", prn);
 #endif
 	    err = gretl_var_do_error_decomp(var);
+
 	    if (!err) {
 #if VAR_DEBUG
 		gretl_matrix_print(var->C, "var->C", prn);
@@ -1297,9 +1352,12 @@ static int real_var (int order, const int *inlist,
 	    } else {
 		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
 	    }
-	}
-	if ((flags & VAR_SAVE) && pvar != NULL) {
-	    *pvar = var;
+
+	    if ((flags & VAR_SAVE) && pvar != NULL) {
+		*pvar = var;
+	    } else {
+		gretl_var_free(var);
+	    }
 	} else {
 	    gretl_var_free(var);
 	}
@@ -1337,8 +1395,11 @@ int simple_var (int order, const int *list, double ***pZ, DATAINFO *pdinfo,
 	flags |= VAR_PRINT_PAUSE;
     }
 
-    if (opts & OPT_Q) myprn = NULL;
-    else myprn = prn;
+    if (opts & OPT_Q) {
+	myprn = NULL;
+    } else {
+	myprn = prn;
+    }
 
     return real_var(order, list, pZ, pdinfo, NULL, NULL, myprn, opts, flags);
 }

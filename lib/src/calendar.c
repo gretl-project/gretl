@@ -113,7 +113,7 @@ long get_epoch_day (const char *date)
 }
 
 /**
- * daily_obs_number:
+ * calendar_obs_number:
  * @date: string representation of calendar date, in form
  * YY[YY]/MM/DD.
  * @pdinfo: pointer to dataset information.
@@ -122,7 +122,7 @@ long get_epoch_day (const char *date)
  * date within the current data set.
  */
 
-int daily_obs_number (const char *date, const DATAINFO *pdinfo)
+int calendar_obs_number (const char *date, const DATAINFO *pdinfo)
 {
     long ed0 = (long) pdinfo->sd0;
     long t = get_epoch_day(date);
@@ -132,13 +132,16 @@ int daily_obs_number (const char *date, const DATAINFO *pdinfo)
     /* subtract starting day for dataset */
     t -= ed0;
 
-    /* handle 5- or 6-day weeks: subtract number of irrelevant days */
-    if (pdinfo->pd == 5 || pdinfo->pd == 6) { 
+    if (pdinfo->pd == 52) {
+	/* weekly data */
+	t /= 7;
+    } else if (pdinfo->pd == 5 || pdinfo->pd == 6) { 
+	/* daily, 5- or 6-day week: subtract number of irrelevant days */
 	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
 	int wkends = (t + startday - 1) / 7;
 
 #ifdef CAL_DEBUG
-	printf("daily_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n", 
+	printf("calendar_obs_number: ed0=%d, date=%s, t=%d, startday=%d, wkends=%d\n", 
 	       (int) ed0, date, (int) t, startday, wkends);
 #endif
 
@@ -163,7 +166,7 @@ static int t_to_epoch_day (int t, long start, int wkdays)
 }
 
 /**
- * daily_date_string:
+ * calendar_date_string:
  * @str: string to be filled out.
  * @t: zero-based index of observation.
  * @pdinfo: pointer to dataset information.
@@ -173,13 +176,15 @@ static int t_to_epoch_day (int t, long start, int wkdays)
  * 
  */
 
-void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
+void calendar_date_string (char *str, int t, const DATAINFO *pdinfo)
 {
     int rem, yr;
     int add, day, mo = 0, modays = 0;
     long yrstart, dfind;
 
-    if (pdinfo->pd == 7) {
+    if (pdinfo->pd == 52) {
+	dfind = (long) pdinfo->sd0 + 7 * t;
+    } else if (pdinfo->pd == 7) {
 	dfind = (long) pdinfo->sd0 + t;
     } else {
 	dfind = t_to_epoch_day(t, (long) pdinfo->sd0, pdinfo->pd);
@@ -454,8 +459,8 @@ int n_hidden_missing_obs (const DATAINFO *pdinfo)
 	return 0;
     }
     
-    t1 = daily_obs_number(pdinfo->S[0], pdinfo);
-    t2 = daily_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+    t1 = calendar_obs_number(pdinfo->S[0], pdinfo);
+    t2 = calendar_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
 
     cal_n = t2 - t1 + 1;
 

@@ -1583,6 +1583,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, !batch, 
 			 cmd.opt, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case VARDUP:

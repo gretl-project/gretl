@@ -29,6 +29,8 @@ enum ur_codes {
     UR_TREND_SQUARED
 };
 
+int var_max_order (const int *list, const DATAINFO *pdinfo);
+
 int simple_var (int order, const int *list, 
 		double ***pZ, DATAINFO *pdinfo,
 		int pause, gretlopt opts, PRN *prn);

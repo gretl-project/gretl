@@ -631,23 +631,68 @@ char *format_obs (char *obs, int maj, int min, int pd)
     return real_format_obs(obs, maj, min, pd, ':');
 }
 
+static int get_stobs_maj_min (char *stobs, int *maj, int *min)
+{
+    int dotc = 0;
+    char *p = stobs;
+    int err = 0;
+
+    while (*p) {
+	if (*p == ':') {
+	    *p = '.';
+	    dotc++;
+	} else if (*p == '.') {
+	    dotc++;
+	} else if (!isdigit((unsigned char) *p)) {
+	    err = 1;
+	    break;
+	}
+	p++;
+    }
+
+    if (!err) {
+	if (dotc > 1 || *stobs == '.' || 
+	    stobs[strlen(stobs) - 1] == '.') {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	if (dotc > 0) {
+	    sscanf(stobs, "%d.%d", maj, min);
+	    if (*maj <= 0 || *min <= 0) {
+		err = 1;
+	    }
+	} else {
+	    sscanf(stobs, "%d", maj);
+	    if (*maj <= 0) {
+		err = 1;
+	    }
+	}
+    }
+
+    return err;
+}
+
+#define recognized_ts_frequency(f) (f == 4 || f == 12 || f == 24)
+
 /**
  * set_obs:
  * @line: command line.
  * @pdinfo: data information struct.
  * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section,
- * OPT_T for time series.
+ * OPT_T for time series, OPT_X for cross section.
  * 
- * Impose a time-series or panel interpretation on a data set.
+ * Set the frequency and initial observation for a dataset.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 {
-    int pd, i, len, bad = 0;
-    char stobs[OBSLEN], endbit[7], *p;
-    long ed0 = 0L;
+    char stobs[OBSLEN];
+    int structure = STRUCTURE_UNKNOWN;
+    int pd, dated = 0;
 
     *gretl_errmsg = '\0';
 
@@ -657,7 +702,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* truncate stobs if not a date */
-    if (strchr(stobs, '/') == NULL) {
+    if (strchr(stobs, '/') != NULL) {
+	dated = 1;
+    } else {
 	stobs[8] = '\0';
     }
 
@@ -668,103 +715,128 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	return 1;
     }
 
-    p = stobs;
-    while (*p) {
-	if (*p == ':') *p = '.';
-	p++;
-    }
+    /* if an explicit structure option was passed in, respect it */
+    if (opt == OPT_X) {
+	structure = CROSS_SECTION;
+    } else if (opt == OPT_T) {
+	structure = TIME_SERIES;
+    } else if (opt == OPT_S) {
+	structure = STACKED_TIME_SERIES;
+    } else if (opt == OPT_C) {
+	structure = STACKED_CROSS_SECTION;
+    } 
 
-    /* special case: daily data (dated or undated) */
-    if ((pd >= 5 && pd <= 7) && (strchr(stobs, '/') || !strcmp(stobs, "1")) &&
-	opt != OPT_S && opt != OPT_C) {
-	if (strcmp(stobs, "1")) {
-	    /* dated */
-	    ed0 = get_epoch_day(stobs);
+    if (dated) {
+	if (opt == OPT_X || opt == OPT_S || opt == OPT_C) {
+	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+	    return 1;
+	}
+
+	if (pd == 5 || pd == 6 || pd == 7 || pd == 52) {
+	    /* calendar-dated data, daily or weekly */
+	    double ed0 = get_epoch_day(stobs);
+
 	    if (ed0 < 0) {
 		sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 		return 1;
 	    }
-	    pdinfo->sd0 = (double) ed0;
+
+	    pdinfo->sd0 = ed0;
+	    structure = TIME_SERIES;
+
 	    /* replace any existing markers with date strings */
 	    destroy_dataset_markers(pdinfo);
 	} else {
-	    /* undated */
-	    pdinfo->sd0 = 1.0;
-	}
-	pdinfo->structure = TIME_SERIES;
-    } else {
-	int maj = 0, min = 0, dc = 0, pos;
-
-	len = pos = strlen(stobs);
-	for (i=0; i<len; i++) {
-	    if (stobs[i] != '.' && !isdigit((unsigned char) stobs[i])) {
-		bad = 1;
-		break;
-	    }
-	    if (stobs[i] == '.') {
-		if (dc == 0) pos = i;
-		dc++;
-	    }
-	}
-
-	if (bad || dc > 1) {
 	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
-	if (pd > 1 && pos == len) {
-	    if (pd != 52 && pd != PD_SPECIAL) {
-		strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
-				       "frequency > 1"));
-		return 1;
-	    }
-	}
-	if (pd == 1 && pos < len) {
-	    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
-		   "frequency 1"));
-	    return 1;
-	}  
-
-	if (pd > 1) {
-	    maj = atoi(stobs);
-	    strcpy(endbit, stobs + pos + 1);
-	    min = atoi(endbit);
-	    if (min < 0 || min > pd) {
-		sprintf(gretl_errmsg, 
-			_("starting obs '%s' is incompatible with frequency"), 
-			stobs);
-		return 1;
-	    }
-	    real_format_obs(stobs, maj, min, pd, '.');
-	}
-    }
-
-    /* adjust data info struct */
-    pdinfo->pd = pd;
-
-    if (ed0 == 0L) {
-	pdinfo->sd0 = dot_atof(stobs);
-    } 
-
-    if (opt == OPT_S) {
-	pdinfo->structure = STACKED_TIME_SERIES;
-    } else if (opt == OPT_C) {
-	pdinfo->structure = STACKED_CROSS_SECTION;
-    } else if (opt == OPT_T) {
-	pdinfo->structure = TIME_SERIES;
-    } else if (opt == OPT_X) {
-	pdinfo->structure = CROSS_SECTION;
-    } else if (pdinfo->sd0 >= 1.0) {
-        pdinfo->structure = TIME_SERIES; /* guessing; might be panel? */
     } else {
-	pdinfo->structure = CROSS_SECTION;
+	int maj = 0, min = 0;
+
+	if (get_stobs_maj_min(stobs, &maj, &min)) {
+	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+	    return 1;
+	}
+
+	/* catch undated daily or weekly data */
+	if ((pd == 5 || pd == 6 || pd == 7 || pd == 52)  
+	    && min == 0 && opt != OPT_X && opt != OPT_S && opt != OPT_C) {
+	    pdinfo->structure = TIME_SERIES;
+	} else {
+	    int balanced = 1;
+	    int err = 0;
+
+	    /* various pathologies */
+
+	    if (pd == 1) {
+		if (min > 0) {
+		    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
+					   "frequency 1"));
+		    err = 1;
+		} else if (opt == OPT_S || opt == OPT_C) {
+		    strcpy(gretl_errmsg, _("panel data must have frequency > 1"));
+		    err = 1;
+		}
+	    } else {
+		if (min == 0) {
+		    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
+					   "frequency > 1"));
+		    err = 1;
+		} else if (min > pd) {
+		    sprintf(gretl_errmsg, 
+			    _("starting obs '%s' is incompatible with frequency"), 
+			    stobs);
+		    err = 1;
+		} else if (opt == OPT_X) {
+		    strcpy(gretl_errmsg, _("cross-sectional data: frequency must be 1"));
+		    err = 1;
+		} else if (pdinfo->n % pd != 0) {
+		    balanced = 0;
+		    if (opt == OPT_S || opt == OPT_C) {
+			sprintf(gretl_errmsg, _("Panel datasets must be balanced.\n"
+						"The number of observations (%d) is not a multiple\n"
+						"of the number of %s (%d)."), 
+				pdinfo->n, ((opt == OPT_S)? _("periods") : _("units")), pd);
+			err = 1;
+		    }
+		}
+	    }
+
+	    if (err) {
+		return 1;
+	    }
+
+	    /* OK? */
+		
+	    if (pd == 1) {
+		sprintf(stobs, "%d", maj);
+		if (structure == STRUCTURE_UNKNOWN) {
+		    if (maj > 1) {
+			structure = TIME_SERIES; /* annual? */
+		    } else {
+			structure = CROSS_SECTION;
+		    }
+		}
+	    } else {
+		real_format_obs(stobs, maj, min, pd, '.');
+		if (structure == STRUCTURE_UNKNOWN) {
+		    if (maj > 1500 && recognized_ts_frequency(pd)) {
+			structure = TIME_SERIES;
+		    } else if (balanced) {
+			structure = STACKED_TIME_SERIES; /* panel? */
+		    } else {
+			structure = TIME_SERIES; /* ?? */
+		    }
+		}
+	    }
+	}
+
+	/* for non-calendar data */
+	pdinfo->sd0 = dot_atof(stobs);
     }
 
-    /* try to catch panels with frequency 5, 6 or 7 */
-    if ((pdinfo->pd >= 5 && pdinfo->pd <= 7) &&
-	pdinfo->sd0 > 1.0 && pdinfo->sd0 < 2.0 &&
-	opt != OPT_S && opt != OPT_C) {
-	pdinfo->structure = CROSS_SECTION;
-    }
+    pdinfo->pd = pd;
+    pdinfo->structure = structure;
 
     ntodate_full(pdinfo->stobs, 0, pdinfo); 
     ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
