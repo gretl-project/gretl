@@ -276,6 +276,8 @@ int clear_data (void)
     free_modelspec(modelspec);
     modelspec = NULL;
 
+    reset_model_count();
+
     return err;
 }
 
@@ -1075,7 +1077,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, models[0], cmd.opt);
+	err = generate(&Z, datainfo, line, models[0]);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {

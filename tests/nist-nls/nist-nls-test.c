@@ -597,7 +597,7 @@ static int set_tolerance (char *line)
     if (toler == 0.0) return 0;
 
     sprintf(line, "genr toler = %g", toler);
-    return generate(&Z, datainfo, line, 0, NULL, 0);
+    return generate(&Z, datainfo, line, NULL);
 }
 
 static int generate_params (char *line, int round, PRN *prn)
@@ -611,7 +611,7 @@ static int generate_params (char *line, int round, PRN *prn)
 	x = (round == 1)? tester.coeffs[i].s1 : tester.coeffs[i].s2;
 	sprintf(line, "genr %s = %g", tester.coeffs[i].name, x);
 	if (verbose) printf("%s\n", line);
-	err = generate(&Z, datainfo, line, 0, NULL, 0);
+	err = generate(&Z, datainfo, line, NULL);
 	if (err) {
 	    fprintf(stderr, "%s: ERROR: genr failed in round %d\n '%s'\n", 
 		    tester.datname, round, line);

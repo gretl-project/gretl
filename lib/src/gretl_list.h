@@ -30,6 +30,7 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err);
 
 void rearrange_list (int *list);
 
-int list_members_replaced (const int *list, const DATAINFO *pdinfo);
+int list_members_replaced (const int *list, const DATAINFO *pdinfo,
+			   int ref_id);
 
 #endif /* GRETL_LIST_H */

@@ -664,14 +664,15 @@ int check_varname (const char *varname)
         if (!(isalpha((unsigned char) varname[i]))  
             && !(isdigit((unsigned char) varname[i]))
             && varname[i] != '_') {
-	    if (0 && isprint((unsigned char) varname[i]))
+	    if (0 && isprint((unsigned char) varname[i])) {
 		sprintf(gretl_errmsg, _("Varname contains illegal character '%c'\n"
 			"Use only letters, digits and underscore"), 
 			varname[i]);
-	    else
+	    } else {
 		sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
 			"Use only letters, digits and underscore"), 
 			(unsigned) varname[i]);
+	    }
             return 1;
         }
     }

@@ -1898,7 +1898,7 @@ static int get_generated_value (const char *argv, double *val,
 #ifdef PRINTF_DEBUG
 	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
 #endif
-	err = generate(pZ, pdinfo, genline, pmod, 0);
+	err = generate(pZ, pdinfo, genline, pmod);
 	free(genline);
 	if (!err) {
 	    *val = (*pZ)[pdinfo->v - 1][0];

@@ -1448,11 +1448,11 @@ int gretl_is_reserved (const char *str)
 
 /* .........................................................    */
 
-static int getword (char *word, char *str, char c, gretlopt oflag)
+static int getword (char *word, char *str, char c)
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
 	Returns number of chars deleted, or -1 if no occurrence of c, 
-	or 0 if reserved word is used 
+	or 0 if reserved word is used. 
      */
 {
     int i;
@@ -1464,8 +1464,10 @@ static int getword (char *word, char *str, char c, gretlopt oflag)
     strncat(word, str, i);
     gretl_delete(str, 0, ++i);
 
-    if (oflag && !strcmp(word, "subdum")) ;
-    else if (gretl_is_reserved(word)) i = 0;
+    if (!strcmp(word, "__subdum") || strcmp(word, "__iftest")) ;
+    else if (gretl_is_reserved(word)) {
+	i = 0;
+    }
 
     return i;
 }
@@ -1551,10 +1553,20 @@ static int gentoler (const char *s)
     return ret;
 }
 
-static void make_genr_label (int replmsg, char *genrs, 
-			     GENERATE *genr)
+static void 
+make_genr_varname (GENERATE *genr, const char *vname)
 {
-    if (replmsg) {
+    if (!strncmp(vname, "__", 2)) {
+	strcpy(genr->varname, vname + 2);
+    } else {
+	strcpy(genr->varname, vname);
+    }
+}
+
+static void 
+make_genr_label (GENERATE *genr, char *genrs, const char *vname)
+{
+    if (vname != NULL && strncmp(vname, "__", 2)) {
 	sprintf(genr->label, _("Replaced after model %d: "), 
 		get_model_count());
     }	
@@ -1571,8 +1583,7 @@ static void make_genr_label (int replmsg, char *genrs,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @line: command line for parsing.
- * @pmod: pointer to a model, or NULL.
- * @oflag: option flag (relates to generation of dummy variables).
+ * @pmod: pointer to a model, or NULL if not needed.
  *
  * Generates a new variable, usually via some transformation of
  * existing variables, or by retrieving an internal variable associated
@@ -1582,8 +1593,7 @@ static void make_genr_label (int replmsg, char *genrs,
  */
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, MODEL *pmod, 
-	      gretlopt oflag)
+	      const char *line, MODEL *pmod)
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
@@ -1619,7 +1629,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	return genr.err;
     }
     else if (strcmp(s, "paneldum") == 0) {
-	genr.err = paneldum(pZ, pdinfo, oflag);
+	genr.err = paneldum(pZ, pdinfo);
 	if (!genr.err)
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
 	return genr.err;
@@ -1642,7 +1652,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     *newvar = '\0';
     
     /* get equation newvar = s, where s is expression */
-    i = getword(newvar, s, '=', oflag);
+    i = getword(newvar, s, '=');
 
     if (i > 0) {
 	if (*newvar == '\0') {
@@ -1652,7 +1662,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 	gretl_trunc(newvar, VNAMELEN - 1);
 
-	if (strncmp(newvar, "$nls", 4) && !oflag && 
+	if (strncmp(newvar, "$nls", 4) && 
+	    strncmp(newvar, "__", 2) && 
 	    check_varname(newvar)) {
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
@@ -1717,11 +1728,14 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     if (genr.err) {
 	genrfree(&genr);
     } else {
-	strcpy(genr.varname, newvar);
+	make_genr_varname(&genr, newvar);
 	genr_msg(&genr, oldv);
 	if (genr.save) {
-	    make_genr_label(genr.varnum < oldv && !oflag,
-			    genrs, &genr);
+	    const char *vname;
+
+	    if (genr.varnum < oldv) vname = newvar;
+	    else vname = NULL;
+	    make_genr_label(&genr, genrs, vname);
 	    genr.err = add_new_var(pZ, pdinfo, &genr);
 	} else {
 	    genrfree(&genr);
@@ -3001,7 +3015,6 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
  * paneldum:
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
- * @opt: 0 for stacked time-series, 1 for stacked cross-sections.
  *
  * Adds to the data set a set of panel data dummy variables (for
  * both unit and period).
@@ -3009,15 +3022,11 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
-     /* creates panel data dummies (unit and period) 
-	opt = 0 for stacked time-series, 
-	non-zero for stacked cross-section
-     */
+int paneldum (double ***pZ, DATAINFO *pdinfo)
 {
     char vname[16];
     int vi, t, yy, pp, mm;
-    int nvar = pdinfo->v;
+    int xsect, nvar = pdinfo->v;
     int ndum, nudum, ntdum;
     double xx;
 
@@ -3030,13 +3039,15 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     ndum = ntdum + nudum;
     if (dataset_add_vars(ndum, pZ, pdinfo)) return E_ALLOC;
 
+    xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
+
     /* first generate the frequency-based dummies */
     mm = (pdinfo->pd < 10)? 10 : 100;
 
     for (vi=1; vi<=ntdum; vi++) {
 	int dnum = nvar + vi - 1;
 	
-	if (opt) {
+	if (xsect) {
 	    sprintf(vname, "du_%d", vi);
 	} else {
 	    sprintf(vname, "dt_%d", vi);
@@ -3045,7 +3056,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	strcpy(pdinfo->varname[dnum], vname);
 	sprintf(VARLABEL(pdinfo, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
-		(opt)? _("unit"): _("period"), vi);
+		(xsect)? _("unit"): _("period"), vi);
 
 	for (t=0; t<pdinfo->n; t++) {
 	    xx = date(t, pdinfo->pd, pdinfo->sd0);
@@ -3059,7 +3070,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
     for (vi=1; vi<=nudum; vi++) {
 	int dnum = nvar +ntdum + vi - 1;
 
-	if (opt) {
+	if (xsect) {
 	    sprintf(vname, "dt_%d", vi);
 	} else {
 	    sprintf(vname, "du_%d", vi);
@@ -3068,7 +3079,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, gretlopt opt)
 	strcpy(pdinfo->varname[dnum], vname);
 	sprintf(VARLABEL(pdinfo, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
-		(opt)? _("period"): _("unit"), vi);
+		(xsect)? _("period"): _("unit"), vi);
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[dnum][t] = 0.0;
 	}

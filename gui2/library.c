@@ -303,6 +303,8 @@ void clear_data (void)
     free_command_stack(); 
     free_modelspec(modelspec);
     modelspec = NULL;
+
+    reset_model_count();
 }
 
 /* ........................................................... */
@@ -2406,11 +2408,11 @@ static int finish_genr (MODEL *pmod, dialog_t *ddata)
     int err = 0;
 
     if (pmod != NULL) {
-	err = generate(&Z, datainfo, line, pmod, 0); 
+	err = generate(&Z, datainfo, line, pmod); 
     } else {
 	err = generate(&Z, datainfo, line, 
 		       (last_model == 's')? 
-		       models[0] : models[2], 0); 
+		       models[0] : models[2]); 
     }
 
     if (err) {
@@ -2874,11 +2876,10 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
     clear(line, MAXLEN);
 
     if (panel) {
-	if (datainfo->time_series == STACKED_TIME_SERIES)
+	if (datainfo->time_series == STACKED_TIME_SERIES ||
+	    datainfo->time_series == STACKED_CROSS_SECTION) {
 	    sprintf(line, "genr paneldum");
-	else if (datainfo->time_series == STACKED_CROSS_SECTION)
-	    sprintf(line, "genr paneldum -o");
-	else {
+	} else {
 	    errbox(_("Data set is not recognized as a panel.\n"
 		   "Please use \"Sample/Set frequency, startobs\"."));
 	    return;
@@ -2890,8 +2891,7 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
     if (verify_and_record_command(line)) return;
 
     if (panel) {
-	err = paneldum(&Z, datainfo, 
-		       (datainfo->time_series == STACKED_TIME_SERIES)? 0 : 1);
+	err = paneldum(&Z, datainfo);
     } else {
 	err = dummy(&Z, datainfo);
     }
@@ -4513,6 +4513,11 @@ int execute_script (const char *runfile, const char *buf,
     if (runfile != NULL) fb = fopen(runfile, "r");
     else bufgets(NULL, 0, buf);
 
+    /* reset model count to 0 if starting/saving session */
+    if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
+	exec_code == SAVE_SESSION_EXEC) 
+	reset_model_count();
+
     /* monte carlo struct */
     loop.lines = NULL;
     loop.models = NULL;
@@ -5235,11 +5240,10 @@ int gui_exec_line (char *line,
 
     case GENR:
 	err = generate(&Z, datainfo, line, 
-		       (last_model == 's')? models[0] : models[2], 
-		       cmd.opt);
-	if (err) 
+		       (last_model == 's')? models[0] : models[2]); 
+	if (err) {
 	    errmsg(err, prn);
-	else {
+	} else {
 	    pprintf(prn, "%s\n", get_gretl_msg()); 
 	}
 	break;

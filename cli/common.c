@@ -107,7 +107,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     switch (cmd.ci) {
 
     case GENR:
-	err = generate(&Z, datainfo, linecpy, tmpmodel, cmd.opt);
+	err = generate(&Z, datainfo, linecpy, tmpmodel);
 	break;
 
     case SIM:

@@ -2263,7 +2263,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
 	return E_NOTIMP;
 
-    if ((err = list_members_replaced(pmod->list, pdinfo)))
+    if ((err = list_members_replaced(pmod->list, pdinfo, pmod->ID)))
 	return err;
 
     gretl_model_init(&white, pdinfo);

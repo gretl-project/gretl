@@ -1098,8 +1098,8 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     int err, ret = -1;
 
     /* + 2 below to omit "if" */
-    sprintf(formula, "iftest=%s", line + 2);
-    err = generate(pZ, pdinfo, formula, 0, 1);
+    sprintf(formula, "__iftest=%s", line + 2);
+    err = generate(pZ, pdinfo, formula, NULL);
     if (!err) {
 	int v = varindex(pdinfo, "iftest");
 	

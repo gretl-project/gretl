@@ -81,7 +81,7 @@ static int nls_auto_gen (int i)
 	sprintf(formula, "$nls_x%d = %s", i, nlspec.terms[i-1].deriv);
     }
 
-    err = generate(pZ, pdinfo, formula, 0, 0);
+    err = generate(pZ, pdinfo, formula, NULL);
 
     if (err) {
 	errmsg(err, prn);

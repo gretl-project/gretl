@@ -144,16 +144,11 @@
 	  otherwise.</para></listitem>
       <listitem><para><quote>panel dummies</quote> (script command
 	  <command>genr paneldum</command>).  This creates all the
-	  dummies, unit and period, at a stroke.  The default
-	  presumption is that the data rows are grouped by unit. The
+	  dummies, unit and period, at a stroke.  The
 	  unit dummies are named <varname>du_1</varname>,
 	  <varname>du_2</varname> and so on, while the period dummies
 	  are named <varname>dt_1</varname>, <varname>dt_2</varname>,
-	  etc. The <varname>u</varname> (for unit) and
-	  <varname>t</varname> (for time) in these names will be wrong
-	  if the data rows are grouped by period: to get them right in
-	  that setting use <command>genr paneldum -o</command> (script
-	  mode only).</para>
+	  etc.</para>
       </listitem>
     </orderedlist>
 

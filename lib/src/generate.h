@@ -23,13 +23,11 @@
 #define INDEXNUM 996
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, MODEL *pmod, 
-	      gretlopt oflag);
+	      const char *line, MODEL *pmod); 
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 
-int paneldum (double ***pZ, DATAINFO *pdinfo, 
-	      gretlopt opt);
+int paneldum (double ***pZ, DATAINFO *pdinfo); 
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo);
 

@@ -200,17 +200,22 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
 }
 
 /* Check if any var in list has been replaced via genr since a
-   previous model (model_count mc) was estimated.  Expects the "label"
+   previous model (ref_id) was estimated.  Expects the "label"
    in datainfo to be of the form "Replaced after model <count>".
 */
 
-int list_members_replaced (const int *list, const DATAINFO *pdinfo)
+int list_members_replaced (const int *list, const DATAINFO *pdinfo,
+			   int ref_id)
 {
     const char *label;
     char rword[16];
     int j, mc, repl, err = 0;
 
-    mc = get_model_count();
+    if (ref_id == 0) {
+	mc = get_model_count();
+    } else {
+	mc = ref_id;
+    }
 
     for (j=1; j<=list[0]; j++) {
 	label = VARLABEL(pdinfo, list[j]);

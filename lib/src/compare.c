@@ -264,7 +264,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	return E_NOTIMP;
 
     /* check for changes in original list members */
-    err = list_members_replaced(orig->list, pdinfo);
+    err = list_members_replaced(orig->list, pdinfo, orig->ID);
     if (err) return err;
 
     /* if adding specified vars, build the list */
@@ -566,7 +566,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	return E_NOTIMP;
 
     /* check that vars to omit have not been redefined */
-    if ((err = list_members_replaced(orig->list, pdinfo)))
+    if ((err = list_members_replaced(orig->list, pdinfo, orig->ID)))
 	return err;
 
     /* create list for test model */

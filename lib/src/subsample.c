@@ -181,9 +181,9 @@ static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, const char *line,
     }
 
     /* + 4 to skip the command word "smpl" */
-    sprintf(formula, "subdum=%s", line + 4);
+    sprintf(formula, "__subdum=%s", line + 4);
 
-    if (generate(pZ, pdinfo, formula, 0, 1))
+    if (generate(pZ, pdinfo, formula, NULL))
 	return -1;
 
     if (subv == 0) {
