@@ -114,6 +114,12 @@ typedef enum {
 } progress_flags;
 
 typedef enum {
+    SP_RETURN_OK,
+    SP_RETURN_DONE,
+    SP_RETURN_CANCELED
+} progress_return_flags;
+
+typedef enum {
     GRETL_TEST_NORMAL_CHISQ,
     GRETL_TEST_TR2,
     GRETL_TEST_F,

@@ -337,7 +337,7 @@ void listerr (char *buf, char *fname)
 
     *errbuf = '\0';
 
-    if (fname != NULL) {
+    if (fname != NULL && *fname) {
 	sprintf(errbuf, "Error retrieving '%s'", fname);
 	if (logit) {
 	    fprintf(flg, "Error retrieving '%s'\n", fname);
@@ -439,6 +439,8 @@ int main (int argc, char *argv[])
 # endif
 #endif
     time_t filedate;
+
+    *fname = '\0';
 
     if (argc == 2 && !strcmp(argv[1], "-d")) {
 	argc--;

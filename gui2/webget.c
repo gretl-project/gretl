@@ -71,13 +71,6 @@ extern int use_proxy; /* gui_utils.c */
 const char *dbhost_ip = "152.17.150.2";
 static char dbproxy[21];
 static int use_proxy;
-enum {
-    SP_NONE, 
-    SP_LOAD_INIT,
-    SP_SAVE_INIT,
-    SP_FONT_INIT,
-    SP_FINISH 
-} progress_flags;
 #endif /* UPDATER */
 
 enum {
@@ -153,7 +146,8 @@ typedef enum {
     FTPINVPASV, FTPNOPASV,
     RETRFINISHED, READERR, TRYLIMEXC, URLBADPATTERN,
     FILEBADFILE, RANGEERR, RETRBADPATTERN, RETNOTSUP,
-    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC, WRITEFAILED
+    ROBOTSOK, NOROBOTS, PROXERR, AUTHFAILED, QUOTEXC, WRITEFAILED,
+    RETRCANCELED
 } uerr_t;
 
 /* Read a character from RBUF.  If there is anything in the buffer,
@@ -1085,7 +1079,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     close(sock);
 
     if (hs->res == -2) {
-	return FWRITEERR;
+	return RETRCANCELED;
     }
 
     return RETRFINISHED;
@@ -1133,7 +1127,7 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	    FREEHSTAT(hstat);
 	    return err;
 	    break;
-	case FWRITEERR: case FOPENERR:
+	case FWRITEERR: case FOPENERR: case RETRCANCELED:
 	    FREEHSTAT(hstat);
 	    return err;
 	    break;
@@ -1234,10 +1228,13 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 			 long expected, struct rbuf *rbuf)
 {
     int res = 0;
+    int sp_ret = SP_RETURN_OK;
     static char cbuf[GRETL_BUFSIZE];
     size_t allocated;
     int nchunks;
-#ifndef UPDATER
+#ifdef UPDATER
+    int show = 1;
+#else
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
@@ -1248,9 +1245,10 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 	    show = 1;
 	}
     }
-
-    if (show) (*show_progress)(res, expected, SP_LOAD_INIT);
-#endif /* UPDATER */
+#endif
+    if (show) {
+	sp_ret = show_progress(res, expected, SP_LOAD_INIT);
+    }
 
     *len = 0L;
 
@@ -1264,15 +1262,13 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		}
 	    }
 	    *len += res;
-#ifndef UPDATER
 	    if (show) {
-		(*show_progress)(res, expected, SP_NONE);
+		sp_ret = show_progress(res, expected, SP_NONE);
 	    }
-#else
-	    update_windows_progress_bar(res);
-#endif
 	}
     }
+
+    if (sp_ret == SP_RETURN_CANCELED) goto canceled;
 
     /* Read from fd while there is available data. */
     nchunks = 1;
@@ -1297,24 +1293,30 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 	    }
 	    *len += res;
 
-#ifndef UPDATER	    
-	    if (show && (*show_progress)(res, expected, SP_NONE) < 0) {
-		break;
+	    if (show) {
+		sp_ret = show_progress(res, expected, SP_NONE);
+		if (sp_ret == SP_RETURN_DONE || sp_ret == SP_RETURN_CANCELED) {
+		    break;
+		}
 	    }
-#else
-	    update_windows_progress_bar(res);
-#endif
 	}
     } while (res > 0);
 
     if (res < -1) res = -1;
 
-#ifndef UPDATER
     if (show) {
-	(*show_progress)(0, expected, SP_FINISH);
+	show_progress(0, expected, SP_FINISH);
+#ifndef UPDATER
 	close_plugin(handle);
-    }
 #endif
+    }
+
+ canceled:
+
+    if (sp_ret == SP_RETURN_CANCELED) {
+	fprintf(stderr, "Got SP_RETURN_CANCELED\n");
+	res = -2;
+    }
 
     return res;
 }

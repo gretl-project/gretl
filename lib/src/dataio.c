@@ -3545,8 +3545,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	}	    
 	cur = cur->next;
-	if (progress && t > 0 && t % 50 == 0) 
+	if (progress && t > 0 && t % 50 == 0) {
 	    (*show_progress) (50L, (long) pdinfo->n, SP_NONE);
+	}
     }
 
     if (progress) {
@@ -3558,6 +3559,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	sprintf(gretl_errmsg, _("Number of observations does not match declaration"));
 	return 1;
     }
+
     else return 0;
 }
 
