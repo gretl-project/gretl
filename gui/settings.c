@@ -42,6 +42,7 @@ extern char dbproxy[21];
 #ifdef HAVE_TRAMO
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
+#endif
 
 #ifdef HAVE_X12A
 extern char x12a[MAXSTR];
@@ -181,23 +182,63 @@ void get_default_dir (char *s)
 
 #if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 
+# ifdef HAVE_TRAMO
+void set_tramo_ok (int set)
+{
+    static int ok;
+
+    if (set >= 0) ok = set;
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/TRAMO analysis", ok);
+    }
+}
+# endif
+
+# ifdef HAVE_X12A
+void set_x12a_ok (int set)
+{
+    static int ok;
+
+    if (set >= 0) ok = set;
+    if (mdata != NULL) {
+	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", ok);
+    }
+}
+# endif
+
+static int check_for_prog (const char *prog)
+{
+    char tmp[MAXLEN];
+
+    if (prog == NULL || *prog == 0) return 0;
+
+    sprintf(tmp, "%s > /dev/null 2>&1", prog);
+    return (system(tmp) == 0);
+}
+
 static void set_tramo_x12a_dirs (void)
 {
     char cmd[MAXLEN];
 
-# ifdef HAVE_TRAMO
+# ifdef HAVE_TRAMO 
+    set_tramo_ok(check_for_prog(tramo));
     if (*tramodir == 0) {
-	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
+	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
 # endif
 # ifdef HAVE_X12A
+    set_x12a_ok(check_for_prog(x12a));
     if (*x12adir == 0) {
-	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
+	build_path(paths.userdir, "x12a", x12adir, NULL);
     }
 # endif
 
-# ifdef HAVE_TRAMO    
-    /* make tramo directory structure */
+    /* make directory structure */
+# ifdef HAVE_X12A
+    sprintf(cmd, "mkdir -p %s", x12adir);
+# endif
+# ifdef HAVE_TRAMO
+    system(cmd);
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);
@@ -210,13 +251,18 @@ static void set_tramo_x12a_dirs (void)
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
-# endif /* tramo */
+# endif /* HAVE_TRAMO */
 }
 #endif /* tramo or x12a */
 
 /* ........................................................... */
 
-#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
+#ifdef USE_GNOME
+void set_rcfile (void)
+{
+    read_rc();
+}
+#else
 void set_rcfile (void) 
 {
     char *tmp;
@@ -225,13 +271,6 @@ void set_rcfile (void)
     strcpy(rcfile, tmp);
     strcat(rcfile, "/.gretlrc");
     read_rc(); 
-}
-#endif
-
-#ifdef USE_GNOME
-void set_rcfile (void)
-{
-    read_rc();
 }
 #endif
 
@@ -494,11 +533,17 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+
 #ifdef ENABLE_NLS
     set_lcnumeric();
     if (lcnumeric != lcnum_bak) 
 	infobox(_("Please restart gretl to ensure consistent results"));
 #endif
+
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+    set_tramo_x12a_dirs();
+#endif
+
     proxy_init(dbproxy);
 }
 

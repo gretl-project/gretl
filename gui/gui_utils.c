@@ -1104,7 +1104,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl: script output")); break;
     case VIEW_DATA:
 	title = g_strdup(_("gretl: display data")); break;
-    case TRAMO_X12A: /* FIXME */
+    case TRAMO: 
+	title = g_strdup(_("gretl: TRAMO analysis")); break;
+    case X12A: 
 	title = g_strdup(_("gretl: X-12-ARIMA analysis")); break;
     default:
 	break;

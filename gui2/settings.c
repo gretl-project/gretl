@@ -657,7 +657,6 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     set_lcnumeric();
     if (lcnumeric != lcnum_bak) 
 	infobox(_("Please restart gretl to ensure consistent results"));
-
 #endif
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)

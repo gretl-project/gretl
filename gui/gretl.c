@@ -738,6 +738,12 @@ int main (int argc, char *argv[])
     menubar_state(FALSE);
 			  
     check_for_extra_data();
+#ifdef HAVE_TRAMO
+    set_tramo_ok(-1);
+#endif
+#ifdef HAVE_X12A
+    set_x12a_ok(-1);
+#endif
 
     if (!gui_get_data)
 	register_data(paths.datfile, 1);

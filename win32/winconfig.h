@@ -31,11 +31,14 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* try to use Windows GUI font? */
 #define USE_WINFONT 1
 
-/* GMP library support -- broken on win32 at present */
+/* GMP library support */
 #define ENABLE_GMP 1
 
-/* TRAMO and/or X-12-ARIMA support? */
-#define TRAMO_X12 1
+/* X-12-ARIMA support? */
+#define HAVE_X12A 1
+
+/* TRAMO/SEATS support? (broken on win32 at present) */
+/* #undef HAVE_TRAMO */
 
 /* Define if you want GNU readline support */
 #define HAVE_READLINE 1

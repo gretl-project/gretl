@@ -25,4 +25,12 @@ char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);
 
+#ifdef HAVE_TRAMO
+void set_tramo_ok (int set);
+#endif
+
+#ifdef HAVE_X12A
+void set_x12a_ok (int set);
+#endif
+
 #endif /* SETTINGS_H */
