@@ -112,6 +112,7 @@ struct gretl_option gretl_opts[] = {
     { SETOBS,   OPT_S, "stacked-time-series" },
     { SETOBS,   OPT_T, "time-series" },
     { SETOBS,   OPT_X, "cross-section" },
+    { SETOBS,   OPT_N, "special-time-series" },
     { SMPL,     OPT_C, "replace" },    
     { SMPL,     OPT_O, "dummy" },
     { SMPL,     OPT_M, "no-missing" },
@@ -279,8 +280,7 @@ static int is_long_opt (const char *lopt)
 
 static int valid_long_opt (int ci, const char *lopt)
 {
-    int len, len1, len2;
-    int opt = 0L;
+    int opt = OPT_NONE;
     int i;
 
     if (is_model_ci(ci) && ci != LAD && !strcmp(lopt, "vcv")) {
@@ -288,17 +288,30 @@ static int valid_long_opt (int ci, const char *lopt)
 	return OPT_O;
     }
 
-    len1 = strlen(lopt);
-
+    /* start by looking for an exact match */
     for (i=0; gretl_opts[i].o != 0; i++) {
-	len2 = strlen(gretl_opts[i].longopt);
-	len = (len2 > len1)? len1 : len2;
 	if (ci == gretl_opts[i].ci && 
-	    !strncmp(lopt, gretl_opts[i].longopt, len)) {
+	    !strcmp(lopt, gretl_opts[i].longopt)) {
 	    opt = gretl_opts[i].o;
 	    break;
 	}
     }
+
+    /* if this failed, try for an abbreviation or extension */
+    if (opt == OPT_NONE) {
+	int len, len1, len2;
+
+	len1 = strlen(lopt);
+	for (i=0; gretl_opts[i].o != 0; i++) {
+	    len2 = strlen(gretl_opts[i].longopt);
+	    len = (len2 > len1)? len1 : len2;
+	    if (ci == gretl_opts[i].ci && 
+		!strncmp(lopt, gretl_opts[i].longopt, len)) {
+		opt = gretl_opts[i].o;
+		break;
+	    }
+	} 
+    }   
 
     return opt;
 }
@@ -313,6 +326,7 @@ static gretlopt get_long_opts (char *line, int ci, int *err)
 
 	sscanf(p + 2, "%31s", longopt);
 	match = valid_long_opt(ci, longopt);
+
 	if (match > 0) {
 	    ret |= match;
 	    gretl_delete(p, 0, 2 + strlen(longopt));

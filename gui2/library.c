@@ -776,16 +776,16 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
     sprintf(line, "%s %d %s", (action == ADF)? "adf" : "kpss", order, 
 	    datainfo->varname[mdata->active_var]);
 
-    if (action == KPSS) {
-	if (active[0]) strcat(line, " --trend");
-	if (active[1]) strcat(line, " --verbose");
-    } else {
+    if (action == ADF) {
 	if (active[0]) strcat(line, " --nc");
 	if (active[1]) strcat(line, " --c");
 	if (active[2]) strcat(line, " --ct");
 	if (active[3]) strcat(line, " --ctt");
 	if (active[4]) strcat(line, " --verbose");
-    }
+    } else {
+	if (active[0]) strcat(line, " --trend");
+	if (active[1]) strcat(line, " --verbose");
+    } 
 
     if (verify_and_record_command(line) || bufopen(&prn)) {
 	return;

@@ -367,7 +367,9 @@ void set_sample_label (DATAINFO *pdinfo)
     ntodate(stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
 
-    if (dataset_is_time_series(pdinfo)) {
+    if (custom_time_series(pdinfo)) {
+	strcpy(pdstr, _("Time series"));
+    } else if (dataset_is_time_series(pdinfo)) {
 	switch (pdinfo->pd) {
 	case 1:
 	    strcpy(pdstr, _("Annual")); break;
@@ -383,8 +385,6 @@ void set_sample_label (DATAINFO *pdinfo)
 	case 6:
 	case 7:
 	    strcpy(pdstr, _("Daily")); break;
-	case PD_SPECIAL:
-	    strcpy(pdstr, _("Time series")); break;
 	default:
 	    strcpy(pdstr, _("Unknown")); break;
 	}

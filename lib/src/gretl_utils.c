@@ -724,7 +724,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	structure = STACKED_TIME_SERIES;
     } else if (opt == OPT_C) {
 	structure = STACKED_CROSS_SECTION;
-    } 
+    } else if (opt == OPT_N) {
+	structure = SPECIAL_TIME_SERIES;
+    }
 
     if (dated) {
 	if (opt == OPT_X || opt == OPT_S || opt == OPT_C) {

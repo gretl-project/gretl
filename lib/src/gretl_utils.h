@@ -35,7 +35,8 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains time series
  * data (1) or not (0).
  */
-#define dataset_is_time_series(p) ((p)->structure == TIME_SERIES)
+#define dataset_is_time_series(p) ((p)->structure == TIME_SERIES || \
+				   (p)->structure == SPECIAL_TIME_SERIES)
 
 /**
  * custom_time_series:
@@ -44,7 +45,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains time series
  * data with custom (non-standard) frequency (1) or not (0).
  */
-#define custom_time_series(p) ((p)->pd == PD_SPECIAL)
+#define custom_time_series(p) ((p)->structure == SPECIAL_TIME_SERIES)
 
 /**
  * dataset_is_daily:

@@ -3435,7 +3435,9 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
     strncat(test, (*s == '"')? s + 1 : s, OBSLEN - 1);
 
     n = strlen(test);
-    if (test[n-1] == '"') test[n-1] = '\0';
+    if (test[n-1] == '"') {
+	test[n-1] = '\0';
+    }
 
     if (pdinfo->markers && pdinfo->S != NULL) {
 	for (t=0; t<pdinfo->n; t++) {

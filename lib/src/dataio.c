@@ -1744,25 +1744,27 @@ static void dataset_type_string (char *str, const DATAINFO *pdinfo)
 
 static void pd_string (char *str, const DATAINFO *pdinfo)
 {
-    switch (pdinfo->pd) {
-    case 1:
-	strcpy(str, _("annual")); break;
-    case 4:
-	strcpy(str, _("quarterly")); break;
-    case 12:
-	strcpy(str, _("monthly")); break;
-    case 24:
-	strcpy(str, _("hourly")); break;
-    case 52:
-	strcpy(str, _("weekly")); break;
-    case 5:
-	strcpy(str, _("daily")); break;
-    case 7:
-	strcpy(str, _("daily")); break;
-    case PD_SPECIAL:
-	strcpy(str, _("special")); break;
-    default:
-	strcpy(str, _("unknown")); break;
+    if (custom_time_series(pdinfo)) {
+	strcpy(str, _("special"));
+    } else {
+	switch (pdinfo->pd) {
+	case 1:
+	    strcpy(str, _("annual")); break;
+	case 4:
+	    strcpy(str, _("quarterly")); break;
+	case 12:
+	    strcpy(str, _("monthly")); break;
+	case 24:
+	    strcpy(str, _("hourly")); break;
+	case 52:
+	    strcpy(str, _("weekly")); break;
+	case 5:
+	    strcpy(str, _("daily")); break;
+	case 7:
+	    strcpy(str, _("daily")); break;
+	default:
+	    strcpy(str, _("unknown")); break;
+	}
     }
 }
 
@@ -2029,8 +2031,9 @@ static void data_read_message (const char *fname, DATAINFO *pdinfo, PRN *prn)
 {
     pprintf(prn, M_("\nRead datafile %s\n"), fname);
     pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
-		    "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
-	    pdinfo->stobs, pdinfo->endobs);
+		    "observations range: %s-%s\n"), 
+	    (custom_time_series(pdinfo))? 1 : pdinfo->pd, 
+	    pdinfo->n, pdinfo->stobs, pdinfo->endobs);
     pputc(prn, '\n');
 }
 
@@ -4168,7 +4171,7 @@ static int write_xmldata (const char *fname, const int *list,
 	goto cleanup;
     }
 
-    if (pdinfo->pd == PD_SPECIAL) {
+    if (custom_time_series(pdinfo)) {
 	strcpy(freqstr, "special");
     } else {
 	sprintf(freqstr, "%d", pdinfo->pd);
@@ -4194,6 +4197,7 @@ static int write_xmldata (const char *fname, const int *list,
     case 0:
 	strcpy(type, "cross-section"); break;
     case TIME_SERIES:
+    case SPECIAL_TIME_SERIES:
 	strcpy(type, "time-series"); break;
     case STACKED_TIME_SERIES:
 	strcpy(type, "stacked-time-series"); break;
@@ -4800,7 +4804,8 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	int pd = 0;
 
 	if (!strcmp(tmp, "special")) {
-	    tmpdinfo->pd = PD_SPECIAL;
+	    tmpdinfo->structure = SPECIAL_TIME_SERIES;
+	    tmpdinfo->pd = 1;
 	} else if (sscanf(tmp, "%d", &pd) == 1) {
 	    tmpdinfo->pd = pd;
 	} else {

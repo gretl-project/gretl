@@ -2480,6 +2480,8 @@ void infobox (const char *msg)
 
 #define DWDEBUG 0
 
+#define PD_SPECIAL 666
+
 enum {
     DW_SET_TYPE,
     DW_TS_FREQUENCY,
@@ -2590,7 +2592,13 @@ datawiz_make_changes (DATAINFO *dwinfo)
 
     /* preliminaries */
     if (dwinfo->structure == TIME_SERIES) {
-	ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+	if (dwinfo->pd == PD_SPECIAL) {
+	    dwinfo->structure = SPECIAL_TIME_SERIES;
+	    dwinfo->pd = 1;
+	    strcpy(dwinfo->stobs, "1");
+	} else {
+	    ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+	}
     } else if (dataset_is_panel(dwinfo)) {
 	if (test_for_unbalanced(dwinfo)) {
 	    return 1;
@@ -2631,6 +2639,8 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	opt = OPT_C;
     } else if (dwinfo->structure == CROSS_SECTION) {
 	opt = OPT_X;
+    } else if (dwinfo->structure == SPECIAL_TIME_SERIES) {
+	opt = OPT_N;
     }
 
 #if DWDEBUG
