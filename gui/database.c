@@ -431,6 +431,11 @@ static void gui_import_series (GtkWidget *w, windata_t *dbwin)
     gui_get_series(dbwin, DB_IMPORT, NULL);
 }
 
+void import_db_series (windata_t *dbwin)
+{
+    gui_get_series(dbwin, DB_IMPORT, NULL);
+}
+
 /* ........................................................... */
 
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
@@ -697,6 +702,16 @@ static char *start_trim (char *s)
     return p;
 }
 
+static void db_drag_series (GtkWidget *w, GdkDragContext *context,
+			    GtkSelectionData *sel, guint info, guint t,
+			    windata_t *dbwin)
+{
+    fprintf(stderr, "drag_series: dbwin at %p\n", (void *) dbwin);
+
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_STRING, 8, 
+			   (void *) &dbwin, sizeof dbwin);
+}
+
 /* ........................................................... */
 
 static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
@@ -707,6 +722,7 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
     size_t n;
     int err = 0;
     gint i;
+    extern GtkTargetEntry gretl_drag_targets[]; /* gretl.c */
 
     strcpy(dbidx, dbwin->fname);
     strcat(dbidx, ".idx");
@@ -747,7 +763,16 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
     fclose(fp);
     dbwin->active_var = 0;
     gtk_clist_select_row 
-	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
+	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1); 
+
+    fprintf(stderr, "dbwin is at %p\n", (void *) dbwin);
+
+    gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
+			gretl_drag_targets, 2, GDK_ACTION_COPY);
+    gtk_signal_connect(GTK_OBJECT(dbwin->listbox), "drag_data_get",
+		       GTK_SIGNAL_FUNC(db_drag_series),
+		       dbwin);
+			
     return 0;
 }
 

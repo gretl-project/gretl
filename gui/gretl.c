@@ -81,8 +81,9 @@ GdkColor red, blue, gray;
 static int popup_connected;
 int *default_list = NULL;
 
-static GtkTargetEntry target_table[] = {
-    {"text/uri-list", 0, 1},
+GtkTargetEntry gretl_drag_targets[] = {
+    { "text/uri-list", 0, 1 },
+    { "STRING", 0, GDK_TARGET_STRING }    
 };
 
 static void  
@@ -1219,7 +1220,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
-		       target_table, 1,
+		       gretl_drag_targets, 2,
 		       GDK_ACTION_COPY);
 
     gtk_signal_connect (GTK_OBJECT(mdata->listbox), "drag_data_received",
@@ -1817,9 +1818,15 @@ drag_data_received  (GtkWidget *widget,
 		     guint time,
 		     gpointer p)
 {
-    gchar *dfname;
+    gchar *dfname = NULL;
     char *suff = NULL, tmp[MAXLEN];
     int pos, skip = 5;
+
+    fprintf(stderr, "drag data received\n");
+
+    if (data != NULL && data->type == GDK_SELECTION_TYPE_STRING) {
+	import_db_series(*(void **) data->data);
+    }
 
     /* ignore the wrong sort of data */
     if (data == NULL || (dfname = data->data) == NULL || 

@@ -282,6 +282,7 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, 
 		     GtkWidget *widget);
+void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 
