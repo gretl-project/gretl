@@ -32,30 +32,23 @@
 # include <windows.h>
 #endif
 
-extern void _printstr (PRN *prn, const double xx, int *ls);
 extern double _gamma_func (double x);
 extern double _gammadist (double s1, double s2, double x, int control);
 
 /* ........................................................ */
 
-static int printv (FILE *fp, const int nt, const int v1, 
-		   const int *list, double ***pZ)
+static int printvars (FILE *fp, int t, const int *list, double **Z)
 {
-    register int i;
-    int v2 = list[0], ls = 0, miss = 0;
+    int i, miss = 0;
     double xx;
-    PRN prn;
-
-    prn.fp = fp;
-    prn.buf = NULL;
     
-    for (i=v1; i<=v2; i++)  {
-	xx = (*pZ)[list[i]][nt];
+    for (i=1; i<=list[0]; i++)  {
+	xx = Z[list[i]][t];
 	if (na(xx)) {
 	    fprintf(fp, "? ");
 	    miss = 1;
 	} else 
-	    _printstr(&prn, xx, &ls);
+	    fprintf(fp, "%g ", xx);
     }
     fprintf(fp, "\n");
     return miss;
@@ -779,9 +772,9 @@ int gnuplot (LIST list, const int *lines,
 	    tmplist[2] = list[i];
 	    for (t=t1; t<=t2; t++) {
 		if (gui && miss == 0) 
-		    miss = printv(fq, t, 1, tmplist, pZ); 
+		    miss = printvars(fq, t, tmplist, *pZ); 
 		else
-		    printv(fq, t, 1, tmplist, pZ);
+		    printvars(fq, t, tmplist, *pZ);
 	    }
 	    fprintf(fq, "e\n");
 	}

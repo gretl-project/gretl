@@ -1402,13 +1402,13 @@ void _printxs (double xx, int n, int ci, PRN *prn)
 
 /* ........................................................ */
 
-void _printstr (PRN *prn, const double xx, int *ls)
+static void printstr (PRN *prn, const double xx, int *ls)
 {
     int lwrd;
     char str[32];
 
     printxx(xx, str, 0);
-    strcat(str,"  ");
+    strcat(str, "  ");
     lwrd = strlen(str);
     if (*ls+lwrd > 78) {
 	*ls = 0;
@@ -1427,10 +1427,10 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
     double xx;
 
-    if (_isconst(t1, t2, z)) _printstr(prn, z[t1], &ls);
+    if (_isconst(t1, t2, z)) printstr(prn, z[t1], &ls);
     else for (t=t1; t<=t2; t++) {
 	xx = z[t];
-	_printstr(prn, xx, &ls);
+	printstr(prn, xx, &ls);
     }
     pprintf(prn, "\n");
 }
