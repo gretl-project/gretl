@@ -1,0 +1,28 @@
+What's here?
+
+skeleton.c makes a program called "skeleton", which goes through
+the full list of gretl commands (from libgretl) and outputs a
+skeleton XML command reference.  Mostly this is blank, but it
+does contain a correct listing of the options available in
+connection with each command (if any), again taken from libgretl.
+
+The output of skeleton is directed to skeleton.xml, an xml file
+that should validate in relation to the gretl command reference
+DTD, gretl_commands.dtd.
+
+formatter.c makes a program called "formatter.c", which parses an
+XML command listing such as skeleton.xml.  The idea is that this
+program will be developed to the point where it can output:
+
+* a replacement for cmdref.xml, the command reference chapter of
+  the manual
+
+* the "online" help files gretl.hlp and gretlcli.hlp
+
+Right now it does neither of these things: it just sends to stdout
+a sort of "proof of concept" simple (incomplete) text printout.
+
+To see the whole thing in action, do "make testprint.txt".  You
+will probably have to edit the Makefile first though.
+
+Allin Cottrell, February 2004

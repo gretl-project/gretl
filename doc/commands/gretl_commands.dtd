@@ -19,7 +19,7 @@
    xref         CDATA #REQUIRED
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
-                 Transformations | Utilities) "Estimation"
+                 Transformations | Utilities | Unknown) "Unknown"
 >
 
 <!ELEMENT arglist      (argument)+>
