@@ -21,13 +21,14 @@
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || \
                        c == TSLS || c == LOGIT || c == PROBIT || \
-                       c == AR || c == VAR || c == COINT || c == MPOLS || \
-                       c == LAD)
+                       c == AR || c == VAR || c == COINT || c == COINT2 || \
+                       c == MPOLS || c == LAD)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || \
                        c == TSLS || c == LOGIT || c == PROBIT || \
-                       c == AR || c == VAR || c == COINT || c == LAD)
+                       c == AR || c == VAR || c == COINT || c == COINT2 || \
+                       c == LAD)
 #endif
 
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \

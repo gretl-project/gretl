@@ -281,7 +281,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    strcat(sr->cmdlist, " ; ");
 	}
     }
-    else if (sr->code == VAR || sr->code == COINT) {
+    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
 	GtkAdjustment *adj = 
 	    gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 
@@ -428,6 +428,7 @@ static char *est_str (int cmdnum)
     case LAD:
 	return N_("LAD");
     case COINT:
+    case COINT2:
 	return N_("Cointegration");
 #ifdef ENABLE_GMP
     case MPOLS:
@@ -698,7 +699,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
     if (sr->code == WLS || sr->code == GR_DUMMY) 
 	extra_var_box (sr, right_vbox);
-    else if (sr->code == VAR || sr->code == COINT)
+    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2)
 	lag_order_spin (sr, right_vbox);
     else if (sr->code == TSLS)
 	tsls_box (sr, right_vbox);
@@ -889,7 +890,8 @@ void selection_dialog (const char *title, const char *oktxt,
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
-	cmdcode == VAR || cmdcode == COINT || cmdcode == GR_DUMMY) 
+	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
+	cmdcode == GR_DUMMY) 
 	build_mid_section(sr, right_vbox);
     
     /* lower right: selected (independent) variables */
@@ -947,7 +949,8 @@ void selection_dialog (const char *title, const char *oktxt,
 		row[1] = datainfo->varname[xlist[i]];
 		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
 	    }
-	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT) {
+	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT &&
+		   cmdcode != COINT2) {
 	    gchar *row[2];
 
 	    row[0] = "0";

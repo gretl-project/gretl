@@ -686,16 +686,36 @@
 
       </sect2>
 
-      <sect2 id="eqnprint"><title>eqnprint</title>
+    <sect2 id="eqnprint"><title>eqnprint</title>
 
-	<para>
-	  Must follow the estimation of a model via OLS.  Prints the
-	  estimates in the form of a &latex; equation, to a file with
-	  a name of the form <filename>equation_N.tex</filename>,
-	  where <varname>N</varname> is the number of models estimated
-	  to date in the current session.  This can be incorporated in
-	  a &latex; document.  See also <command>tabprint</command>.
-	</para>
+	<informaltable role="cmd" frame="none">
+	  <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	    <tbody>
+	      <row>
+		<entry>Options:</entry>
+		<entry>&opto <literal>[ -f</literal>
+		<replaceable>filename</replaceable> <literal>]</literal>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+      <para>
+	Must follow the estimation of a model via OLS.  Prints the
+	estimated model in the form of a &latex; equation.  If a
+	filename is specified using the <literal>-f</literal> flag
+	output goes to that file, otherwise it goes to a file with a
+	name of the form <filename>equation_N.tex</filename>, where
+	<literal>N</literal> is the number of models estimated to date
+	in the current session.  See also the
+	<command>tabprint</command> command.</para>
+
+      <para>
+	If the <literal>-o</literal> flag is given the &latex; file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
+      </para>
 
       </sect2>
 
@@ -1219,65 +1239,78 @@
 
       </sect2>
 
-      <sect2 id="gnuplot"><title>gnuplot</title>
+    <sect2 id="gnuplot"><title>gnuplot</title>
 
-	<informaltable role="cmd" frame="none">
-	  <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
-	    <tbody>
-	      <row>
-		<entry>Arguments:</entry>
-		<entry><replaceable>yvars xvar</replaceable>
-		  <literal>[ -o | -m ]</literal>
-		</entry>
-	      </row>
-	      <row>
-		<entry></entry>
-		<entry><command>gnuplot -z</command> <replaceable>yvar
-		    xvar dummy</replaceable>
-		</entry>
-	      </row>
-	    </tbody>
-	  </tgroup>
-	</informaltable>
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>yvars xvar</replaceable> <literal>[
+		  -o | -m ]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Alternate:</entry>
+	      <entry><literal>-z</literal> <replaceable>yvar xvar
+		  dummy</replaceable>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
 
-	<para>
-	  In the first case the <replaceable>yvars</replaceable> are
-	  graphed against <replaceable>xvar</replaceable>.  If the
-	  flag <literal>-o</literal> is supplied the plot will use
-	  lines; if the flag <literal>-m</literal> is given the plot
-	  uses impulses (vertical lines); otherwise points will be
-	  used.
-	</para>
+      <para>
+	In the first case the <replaceable>yvars</replaceable> are
+	graphed against <replaceable>xvar</replaceable>.  If the flag
+	<literal>-o</literal> is supplied the plot will use lines; if
+	the flag <literal>-m</literal> is given the plot uses impulses
+	(vertical lines); otherwise points will be used.
+      </para>
 
-	<para>
-	  In the second case <replaceable>yvar</replaceable> is
-	  graphed against <replaceable>xvar</replaceable> with the
-	  points shown in different colors depending on whether the
-	  value of <replaceable>dummy</replaceable> is 1 or 0.
-	</para>
+      <para>
+	In the second case (with <literal>-z</literal>)
+	<replaceable>yvar</replaceable> is graphed against
+	<replaceable>xvar</replaceable> with the points shown in
+	different colors depending on whether the value of
+	<replaceable>dummy</replaceable> is 1 or 0.
+      </para>
 
-	<para>
-	  To make a time-series graph, do <command>gnuplot</command>
-	  <replaceable>yvars</replaceable> <varname>time</varname>.
-	  If no variable named <varname>time</varname> already exists,
-	  then it will be generated automatically.  Special dummy
-	  variables will be created for plotting quarterly and monthly
-	  data.
-	</para>
+      <para>
+	To make a time-series graph, do <command>gnuplot</command>
+	<replaceable>yvars</replaceable> <varname>time</varname>. If
+	no variable named <varname>time</varname> already exists, then
+	it will be generated automatically.  Special dummy variables
+	will be created for plotting quarterly and monthly data.
+      </para>
 
-	<para>
-	  In interactive mode the result is piped to gnuplot for
-	  display.  In batch mode a plot file named
-	  <filename>gpttmp01.plt</filename> is written.  (With
-	  subsequent uses of <command>gnuplot</command> similar files
-	  are created, with the number in the file name incremented.)
-	  The plots can be generated later using the command
-	  <command>gnuplot gpttmp.plt</command>.  (Under MS Windows,
-	  start <application>wgnuplot</application> and open the file
-	  <filename>gpttmp01.plt</filename>.)  To gain control over
-	  the details of the plot, edit the <filename>.plt</filename>
-	  file.
-	</para>
+      <para>
+	In interactive mode the result is piped to gnuplot for
+	display.  In batch mode a plot file named
+	<filename>gpttmp01.plt</filename> is written.  (With
+	subsequent uses of <command>gnuplot</command> similar files
+	are created, with the number in the file name incremented.)
+	The plots can be generated later using the command
+	<command>gnuplot gpttmp.plt</command>.  (Under MS Windows,
+	start <application>wgnuplot</application> and open the file
+	<filename>gpttmp01.plt</filename>.)
+      </para>
+
+      <para>A further option to this command is available: following
+	the specification of the variables to be plotted and the
+	option flag (if any), you may add literal gnuplot commands to
+	control the appearance of the plot (for example, setting the
+	plot title and/or the axis ranges).  These commands should be
+	enclosed in braces, and each gnuplot command must be
+	terminated with a semi-colon.  A backslash may be used to
+	continue a set of gnuplot commands over more than one line.
+	Here is an example of the syntax:
+      </para>
+
+      <para>
+	<literal>{ set title 'My Title'; set yrange [0:1000];
+	  }</literal>
+      </para>
 
       </sect2>
 
@@ -1288,13 +1321,7 @@
 	    <tbody>
 	      <row>
 		<entry>Arguments:</entry>
-		<entry><replaceable>var1 var2</replaceable> &opto;
-		</entry>
-	      </row>
-	      <row>
-		<entry></entry>
-		<entry><command>graph</command> <replaceable>var1 var2
-		    var3</replaceable>
+		<entry><replaceable>yvars xvar</replaceable> &opto;
 		</entry>
 	      </row>
 	    </tbody>
@@ -1302,18 +1329,12 @@
 	</informaltable>
 
 	<para>
-	  ASCII graphics.  In the first example, variable
-	  <replaceable>var1</replaceable> (which may be a name or a
-	  number) is graphed (y-axis) against
-	  <replaceable>var2</replaceable> (x-axis) using ASCII
-	  symbols. <literal>-o</literal> flag will graph with 40 rows
-	  and 60 columns. Without it, the graph will be 20 by 60 (for
-	  screen output). In the second example, both
-	  <replaceable>var1</replaceable> and
-	  <replaceable>var2</replaceable> will be graphed (on y-axis)
-	  against <replaceable>var3</replaceable>. This is useful to
-	  graph observed and predicted values against time. See also
-	  the <command>gnuplot</command> command.
+	ASCII graphics.  The <replaceable>yvars</replaceable> (which
+	may be given by name or number) are  graphed against
+	<replaceable>xvar</replaceable> using ASCII symbols. The
+	<literal>-o</literal> flag will graph with 40 rows and 60
+	columns. Without it, the graph will be 20 by 60 (for screen
+	output). See also the <command>gnuplot</command> command.
 	</para>
 
       </sect2>
@@ -1546,6 +1567,32 @@
 	</para>
 
       </sect2>
+
+    <sect2 id="label"><title>label</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>varname</replaceable> <literal>-d
+		  "</literal><replaceable>Descriptive
+		  string</replaceable><literal>" -n
+		  "</literal><replaceable>display
+		  name</replaceable><literal>"</literal>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>Sets the descriptive label for the given variable (if the
+	<literal>-d</literal> flag is given, followed by a string in
+	double quotes) and/or the <quote>display name</quote> for the
+	variable (if the <literal>-n</literal> flag is given, followed
+	by a quoted string).  If a variable has a display name, this
+	is used when generating graphs.</para>
+    </sect2>
 
       <sect2 id="labels"><title>labels</title>
 
@@ -3170,15 +3217,34 @@
 
       <sect2 id="tabprint"><title>tabprint</title>
 
-	<para>
-	  Must follow the estimation of a model via OLS.  Prints the
-	  estimated model in the form of a &latex; tabular
-	  environment, to a file with a name of the form
-	  <filename>model_N.tex</filename>, where <varname>N</varname>
-	  is the number of models estimated to date in the current
-	  session.  This can be incorporated in a &latex; document.
-	  See also <command>eqnprint</command>.
-	</para>
+	<informaltable role="cmd" frame="none">
+	  <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	    <tbody>
+	      <row>
+		<entry>Options:</entry>
+		<entry>&opto <literal>[ -f</literal>
+		<replaceable>filename</replaceable> <literal>]</literal>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+
+      <para>
+	Must follow the estimation of a model via OLS.  Prints the
+	estimated model in the form of a &latex; tabular environment.
+	If a filename is specified using the <literal>-f</literal>
+	flag output goes to that file, otherwise it goes to a file
+	with a name of the form <filename>model_N.tex</filename>,
+	where <literal>N</literal> is the number of models estimated
+	to date in the current session.  See also the
+	<command>eqnprint</command> command.</para>
+
+      <para>
+	If the <literal>-o</literal> flag is given the &latex; file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
+      </para>
 
       </sect2>
 

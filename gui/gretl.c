@@ -458,7 +458,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Hildreth-Lu..."), NULL, model_callback, HILU, NULL },
     { N_("/Model/_Autoregressive estimation..."), NULL, model_callback, AR, NULL },
     { N_("/Model/_Vector Autoregression..."), NULL, model_callback, VAR, NULL },
-    { N_("/Model/Cointe_gration test..."), NULL, selector_callback, COINT, NULL },
+    { N_("/Model/Cointegration test"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Model/Cointegration test/Engle-Granger..."), NULL, 
+      selector_callback, COINT, NULL },
+    { N_("/Model/Cointegration test/Johansen..."), NULL, 
+      selector_callback, COINT2, NULL },
     { N_("/Model/sep3"),  NULL, NULL, 0, "<Separator>" },
     { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL },
     { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL },
@@ -865,7 +869,7 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Model/Hildreth-Lu...", s);
 	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
 	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
-	flip(mdata->ifac, "/Model/Cointegration test...", s);
+	flip(mdata->ifac, "/Model/Cointegration test", s);
 	flip(mdata->ifac, "/Sample/Compact data...", 
 	     s && (datainfo->pd == 4 || datainfo->pd == 12));
     }

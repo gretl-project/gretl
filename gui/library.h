@@ -70,6 +70,8 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
 void do_coint (GtkWidget *widget, gpointer p);
 
+void do_coint2 (GtkWidget *widget, gpointer p);
+
 void do_forecast (GtkWidget *widget, dialog_t *ddata);
 
 void do_coeff_sum (GtkWidget *widget, gpointer p);

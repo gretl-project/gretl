@@ -1048,6 +1048,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* FIXME? */
     pdinfo->t1 += (order + 1);
+    /* Check Hamilton: what if order for test = 1? */
     err = real_var(order - 1, varlist, pZ, pdinfo, varprn, &resids, flags); 
     
     if (!verbose) {

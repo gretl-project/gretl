@@ -3,6 +3,8 @@ version 1.1.0
   names" for variables (these are shown in graphs)
 - Provide "label" command for setting the description and/or
   display name for a variable
+- Add script commands for saving and displaying models and
+  graphs 
 - Add option to use QR decomposition instead of Cholesky for
   calculating regression results
 - Fix bug: periodogram command failed in batch mode

@@ -172,9 +172,9 @@
       <para>To add a graph, first create it (under the Data menu,
 	<quote>Graph specified vars</quote>, or via one of
 	<application>gretl</application>'s other graph-generating
-	commands), then choose <quote>Add last graph</quote> from the
-	Session menu or click the little camera button on the toolbar
-	(see <xref linkend="toolbar"/>).</para>
+	commands).  Click on the graph window to bring up the graph
+	menu, and select <quote>Save to session as
+	  icon</quote>.</para>
 
       <para>Once a model or graph is added its icon should appear in
 	the Icon View window.  Double-clicking on the icon redisplays

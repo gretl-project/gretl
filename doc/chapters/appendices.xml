@@ -297,12 +297,13 @@
       OLS</quote> which represents floating-point values using a
     number of bits given by the environment variable
     <varname>GRETL_MP_BITS</varname> (default value 256).  The normal
-    equations of Least Squares are solved via Choleski decomposition,
-    which is accurate enough for most purposes.  The program has been
-    tested rather thoroughly on the statistical reference datasets
-    provided by NIST (the U.S. National Institute of Standards and
-    Technology) and a full account of the results may be found on the
-    gretl website (follow the link <quote>Numerical
+    equations of Least Squares are by default solved via Cholesky
+    decomposition, which is accurate enough for most purposes (with
+    the option of using QR decomposition instead).  The program has
+    been tested rather thoroughly on the statistical reference
+    datasets provided by NIST (the U.S. National Institute of
+    Standards and Technology) and a full account of the results may be
+    found on the gretl website (follow the link <quote>Numerical
       accuracy</quote>).</para>
 
   <para>In October 2002 I had a useful exchange with Giovanni Baoicchi

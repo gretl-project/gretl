@@ -758,7 +758,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-void do_coint (GtkWidget *widget, gpointer p)
+static void real_do_coint (gpointer p, int action)
 {
     selector *sr = (selector *) p;
     char *buf;
@@ -769,7 +769,12 @@ void do_coint (GtkWidget *widget, gpointer p)
     if (*buf == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "coint %s", buf);
+
+    if (action == COINT) {
+	sprintf(line, "coint %s", buf);
+    } else {
+	sprintf(line, "coint2 %s", buf);
+    }	
 
     /* check the command and initialize output buffer */
     if (verify_and_record_command(line) || bufopen(&prn)) return;
@@ -781,7 +786,12 @@ void do_coint (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = coint(order, command.list, &Z, datainfo, prn);
+    if (action == COINT) {
+	err = coint(order, command.list, &Z, datainfo, prn);
+    } else {
+	johansen_test(order, command.list, &Z, datainfo, 0, prn);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
@@ -790,6 +800,16 @@ void do_coint (GtkWidget *widget, gpointer p)
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
 		COINT, view_items);
+}
+
+void do_coint (GtkWidget *widget, gpointer p)
+{
+    real_do_coint(p, COINT);
+}
+
+void do_coint2 (GtkWidget *widget, gpointer p)
+{
+    real_do_coint(p, COINT2);
 }
 
 /* ........................................................... */

@@ -363,6 +363,12 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
+    if (action == COINT2) {
+	selection_dialog (_("gretl: cointegration test"), _("Estimate"), 
+			  do_coint2, action);
+	return;
+    }
+
     if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
 	|| action == SCATTERS) {
 	switch (action) {
