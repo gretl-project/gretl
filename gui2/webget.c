@@ -890,6 +890,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    "%s\r\n",
 	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
 	    pragma_h); 
+
     if (proxy) free(path);
 
 #ifdef WDEBUG
@@ -970,10 +971,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		free(hdr);
 		break;
 	    }
-	    else if (!*error)
+	    else if (!*error) {
 		hs->error = g_strdup(_("(no description)"));
-	    else
+	    } else {
 		hs->error = g_strdup(error);
+	    }
 	    goto done_header;
 	}
 
@@ -1156,14 +1158,16 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	    return RETROK;
 	} else if (hstat.res == 0) { 
 	    /* No read error */
-	    if (hstat.contlen == -1)  
+	    if (hstat.contlen == -1) { 
 		return RETROK;
-	    else	
+	    } else {
 		continue;
+	    }
 	} else {		          
 	    /* now hstat.res can only be -1 */
-	    if (hstat.contlen == -1)
+	    if (hstat.contlen == -1) {
 		continue;
+	    }
 	}
 	break;
     } while (count < MAXTRY);
@@ -1220,6 +1224,9 @@ static void freeurl (struct urlinfo *u, int complete)
     free(u->url);
     free(u->host);
     free(u->path);
+    if (u->localfile) {
+	free(u->localfile);
+    }
     if (complete) {
 	free(u);
 	u = NULL;

@@ -100,6 +100,8 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     netfloat nf;
 #endif
+
+    *errbuf = '\0';
     
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return 1;
     memset(getbuf, 0, GRETL_BUFSIZE);
@@ -114,7 +116,7 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 #endif
 
     if (err) {
-        if (strlen(errbuf)) {
+        if (*errbuf != '\0') {
 	    if (errbuf[strlen(errbuf) - 1] == '\n') {
 		errbuf[strlen(errbuf) - 1] = 0;
 	    }
@@ -1050,12 +1052,14 @@ void open_named_remote_db_list (char *dbname)
     char *getbuf, errbuf[80];
     int err;
 
+    *errbuf = '\0';
+
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
     err = retrieve_remote_db_list(dbname, &getbuf, errbuf);
 
     if (err) {
-        if (strlen(errbuf)) {
+        if (*errbuf != '\0') {
 	    if (errbuf[strlen(errbuf) - 1] == '\n') {
 		errbuf[strlen(errbuf) - 1] = 0;
 	    }
@@ -1083,17 +1087,18 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
     char *getbuf, errbuf[80];
     int err;
 
+    *errbuf = '\0';
+
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
 			 win->active_var, 0, &fname);
     
     if ((getbuf = mymalloc(GRETL_BUFSIZE)) == NULL) return;
     memset(getbuf, 0, GRETL_BUFSIZE);
     update_statusline(win, _("Retrieving data..."));
-    *errbuf = '\0';
     err = retrieve_remote_db_list(fname, &getbuf, errbuf);
 
     if (err) {
-        if (strlen(errbuf)) {
+        if (*errbuf != '\0') {
 	    if (errbuf[strlen(errbuf) - 1] == '\n') {
 		errbuf[strlen(errbuf) - 1] = 0;
 	    }
@@ -1295,6 +1300,8 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	fclose(fp);
     }
 
+    *errbuf = '\0';
+
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_remote_db(dbname, ggzname, errbuf, GRAB_NBO_DATA);
 #else
@@ -1302,7 +1309,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 #endif
 
     if (err) {
-        if (strlen(errbuf)) errbox(errbuf);
+        if (*errbuf != '\0') errbox(errbuf);
 	else {
 	    fprintf(stderr, "grab_remote_db: retrieve_url() returned %d\n", err);
 	    errbox(_("Error retrieving data from server"));
