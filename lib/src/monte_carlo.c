@@ -547,7 +547,7 @@ static int parse_as_count_loop (LOOPSET *loop,
     if (!err) {
 	loop->type = COUNT_LOOP;
 	loop->init.val = 0;
-	loop->right.val = nf;
+	loop->right.val = nt;
 	loop->itermax = nt;
     }
 
