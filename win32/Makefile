@@ -53,7 +53,7 @@ CHECKER = nisttest.exe
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
 	plugins/excel_import-2.dll plugins/mp_ols.dll \
-	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x11a.dll
+	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
