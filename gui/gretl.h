@@ -291,7 +291,7 @@ void main_menubar_state (gboolean s);
 void graphmenu_state (gboolean s);
 #endif
 
-gint populate_varlist (void);
+void populate_varlist (void);
 
 void clear_sample_label (void);
 

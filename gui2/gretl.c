@@ -37,7 +37,7 @@
 # include "../pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
-# define HUSH_RUNTIME_WARNINGS
+# include "gretlwin32.h"
 #endif
 
 /* pixmaps for gretl toolbar */
@@ -635,10 +635,6 @@ static void destroy (GtkWidget *widget, gpointer data)
     gtk_main_quit();
 }
 
-#ifdef G_OS_WIN32
-extern int ws_startup (void);
-#endif
-
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
@@ -704,12 +700,7 @@ int main (int argc, char *argv[])
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
 
 #ifdef G_OS_WIN32
-    read_rc(); /* get config info from registry */
-# ifdef HUSH_RUNTIME_WARNINGS
-    hush_warnings();
-# endif /* HUSH_RUNTIME_WARNINGS */ 
-    ws_startup(); 
-    atexit(write_rc);
+    gretl_win32_init()
 #else 
     set_rcfile(); /* also calls read_rc() */
 #endif/* G_OS_WIN32 */
@@ -912,7 +903,6 @@ int main (int argc, char *argv[])
     gtk_main();
 
     /* clean up before exiting */
-    /* if (mdata) free_windata(NULL, mdata); */
     free_session();
 
     if (Z) free_Z(Z, datainfo);

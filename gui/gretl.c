@@ -80,7 +80,7 @@ static GtkWidget *selection_popup;
 
 GdkColor red, blue, gray;
 
-static int popup_connected;
+static int click_connected;
 int *default_list = NULL;
 
 GtkTargetEntry gretl_drag_targets[] = {
@@ -787,7 +787,6 @@ int main (int argc, char *argv[])
     gtk_main();
 
     /* clean up before exiting */
-    /* if (mdata) free_windata(NULL, mdata); */
     free_session();
 
     if (Z) free_Z(Z, datainfo);
@@ -934,8 +933,8 @@ static gint get_mdata_selection (void)
 
 /* ........................................................... */
 
-gint main_popup (GtkWidget *widget, GdkEventButton *event, 
-		 gpointer data)
+gint main_varclick (GtkWidget *widget, GdkEventButton *event, 
+		    gpointer data)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
@@ -983,7 +982,7 @@ static void check_varmenu_state (GtkCList *list, gint i, gint j,
 
 /* ........................................................... */
 
-gint populate_varlist (void)
+void populate_varlist (void)
 {
     char id[4];
     char *row[3];
@@ -1026,14 +1025,12 @@ gint populate_varlist (void)
     }
 
 
-    if (!popup_connected) {
+    if (!click_connected) {
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),
 			   "button_press_event",
-			   GTK_SIGNAL_FUNC(main_popup), NULL);
-	popup_connected = 1;
+			   GTK_SIGNAL_FUNC(main_varclick), NULL);
+	click_connected = 1;
     }
-
-    return 0;
 }
 
 /* ........................................................... */
@@ -1041,11 +1038,11 @@ gint populate_varlist (void)
 void clear_varlist (GtkWidget *widget)
 {
     gtk_clist_clear(GTK_CLIST(widget));
-    if (popup_connected) {
+    if (click_connected) {
 	gtk_signal_disconnect_by_func(GTK_OBJECT(mdata->listbox),
-				      (GtkSignalFunc) main_popup, 
+				      (GtkSignalFunc) main_varclick, 
 				      NULL);
-	popup_connected = 0;
+	click_connected = 0;
     }
 }
 

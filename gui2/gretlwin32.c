@@ -21,7 +21,10 @@
 
 #include "gretlwin32.h"
 
+#define HUSH_RUNTIME_WARNINGS
+
 extern int wimp; /* settings.c */
+extern int ws_startup (void);
 
 int create_child_process (char *prog, char *env) 
 { 
@@ -263,4 +266,16 @@ void set_up_windows_look (void)
     } else {
 	try_to_get_windows_font();
     }
+}
+
+void gretl_win32_init (void)
+{
+    read_rc(); /* get config info from registry */
+
+# ifdef HUSH_RUNTIME_WARNINGS
+    hush_warnings();
+# endif 
+
+    ws_startup(); 
+    atexit(write_rc);
 }
