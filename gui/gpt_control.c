@@ -1111,6 +1111,19 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 
 #include <gdk-pixbuf/gdk-pixbuf.h>
 
+typedef enum {
+    PNG_START,
+    PNG_ZOOM,
+    PNG_UNZOOM
+} png_zoom;
+
+typedef struct zoom_t {
+    int active, zoomed;
+    double xmin, xmax;
+    double ymin, ymax;
+    int screen_xmin, screen_ymin;
+} zoom_t;
+
 typedef struct png_plot_t {
     GtkWidget *shell;
     GtkWidget *canvas;
@@ -1118,13 +1131,20 @@ typedef struct png_plot_t {
     GtkWidget *statusarea;    
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
+    GdkPixmap *pixmap;
+    GdkGC *invert_gc;
     GPT_SPEC *spec;
     double xmin, xmax;
     double ymin, ymax;
     int xint, yint;
     int pd;
     int title;
+    guint cid;
+    zoom_t *zoom;
 } png_plot_t;
+
+static void render_pngfile (const char *fname, png_plot_t *plot, int view);
+static int make_new_png (png_plot_t *plot, int view);
 
 /* Size of drawing area */
 #define WIDTH 640    /* try 576? */
@@ -1144,15 +1164,30 @@ extern void gnome_print_graph (const char *fname);
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
 {
-    *data_x = plot->xmin + ((double) x - PLOTXMIN) / (PLOTXMAX - PLOTXMIN) *
-	(plot->xmax - plot->xmin);
-    if (plot->ymin == 0.0 && plot->ymax == 0.0) { /* unknown y range */
+    double xmin, xmax;
+    double ymin, ymax;
+
+    if (plot->zoom->zoomed) {
+	xmin = plot->zoom->xmin;
+	xmax = plot->zoom->xmax;
+	ymin = plot->zoom->ymin;
+	ymax = plot->zoom->ymax;
+    } else {
+	xmin = plot->xmin;
+	xmax = plot->xmax;
+	ymin = plot->ymin;
+	ymax = plot->ymax;
+    }
+
+    *data_x = xmin + ((double) x - PLOTXMIN) / (PLOTXMAX - PLOTXMIN) *
+	(xmax - xmin);
+    if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
-	int ymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
+	int plotymin = (plot->title)? PLOTYMIN : NOTITLE_YMIN;
 
-	*data_y = plot->ymax - ((double) y - ymin) / (PLOTYMAX - ymin) *
-	    (plot->ymax - plot->ymin);
+	*data_y = ymax - ((double) y - plotymin) / (PLOTYMAX - plotymin) *
+	    (ymax - ymin);
     }
 }
 
@@ -1162,6 +1197,45 @@ static double x_to_date (double x)
     int qtr = (int) ((x - yr + .25) * 4);
 
     return yr + qtr / 10.0;
+}
+
+static void create_selection_gc (png_plot_t *plot)
+{
+    if (plot->invert_gc == NULL) {
+	plot->invert_gc = gdk_gc_new(plot->canvas->window);
+	gdk_gc_set_function(plot->invert_gc, GDK_INVERT);
+    }
+}
+
+static void draw_selection_rectangle (png_plot_t *plot,
+				      int x, int y)
+{
+    int rx, ry, rw, rh;
+
+    rx = (plot->zoom->screen_xmin < x)? plot->zoom->screen_xmin : x;
+    ry = (plot->zoom->screen_ymin < y)? plot->zoom->screen_ymin : y;
+    rw = x - plot->zoom->screen_xmin;
+    rh = y - plot->zoom->screen_ymin;
+    if (rw < 0) rw = -rw;
+    if (rh < 0) rh = -rh;    
+
+    /* draw one time to make the rectangle appear */
+    gdk_draw_rectangle(plot->pixmap,
+		       plot->invert_gc,
+		       FALSE,
+		       rx, ry, rw, rh);
+    /* show the modified pixmap */
+    gdk_window_copy_area(plot->canvas->window,
+			 plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+			 0, 0,
+			 plot->pixmap,
+			 0, 0,
+			 WIDTH, HEIGHT);
+    /* draw (invert) again to erase the rectangle */
+    gdk_draw_rectangle(plot->pixmap,
+		       plot->invert_gc,
+		       FALSE,
+		       rx, ry, rw, rh);
 }
 
 static gint
@@ -1181,11 +1255,6 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
         state = event->state;
     }
 
-#ifdef notdef    
-    if (state & GDK_BUTTON1_MASK && pixmap != NULL)
-        draw_brush (widget, x, y, pixmap);
-#endif
-
     if (x > PLOTXMIN && x < PLOTXMAX && y > ymin && y < PLOTYMAX) {
 	double data_x, data_y;
 
@@ -1197,6 +1266,9 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	if (!na(data_y)) {
 	    sprintf(label_y, (plot->yint)? ", %.0f" : ", %.4g", data_y);
 	    strcat(label, label_y);
+	}
+	if (plot->zoom->active && (state & GDK_BUTTON1_MASK)) {
+	    draw_selection_rectangle(plot, x, y);
 	}
     } else
 	*label = 0;
@@ -1223,6 +1295,21 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, "Save to session as icon")) { 
 	add_last_graph(plot->spec, 0, NULL);
     }
+    else if (!strcmp(item, "Zoom...")) { 
+	 GdkCursor* cursor;
+
+	 cursor = gdk_cursor_new(GDK_CROSSHAIR);
+	 gdk_window_set_cursor(plot->canvas->window, cursor);
+	 gdk_cursor_destroy(cursor);
+	 plot->zoom->active = 1;
+	 gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
+			    " Drag to define zoom rectangle");
+	 create_selection_gc(plot);
+    }
+    else if (!strcmp(item, "Restore full view")) { 
+	make_new_png(plot, PNG_UNZOOM);
+	plot->zoom->zoomed = 0;
+    }
 #ifdef USE_GNOME 
     else if (!strcmp(item, "Print...")) { 
 	gnome_print_graph(plot->spec->fname);
@@ -1240,19 +1327,31 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 static GtkWidget *build_plot_menu (png_plot_t *plot)
 {
     GtkWidget *menu, *item;    
-    static char *plot_items[] = {
+    static char *regular_items[] = {
         "Save as postscript (EPS)...",
 	"Save as PNG...",
 	"Save to session as icon",
+	"Zoom...", /* disable if need be */
 #ifdef USE_GNOME
 	"Print...",
 #endif
         "Close",
         NULL
     };
+    static char *zoomed_items[] = {
+	"Restore full view",
+	"Close",
+	NULL
+    };
+    char **plot_items;
     int i = 0;
 
     menu = gtk_menu_new();
+
+    if (plot->zoom->zoomed)
+	plot_items = zoomed_items;
+    else
+	plot_items = regular_items;
 
     while (plot_items[i]) {
         item = gtk_menu_item_new_with_label(plot_items[i]);
@@ -1269,9 +1368,96 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
     return menu;
 }
 
-static gint plot_popup (GtkWidget *widget, GdkEventButton *event, 
-			png_plot_t *plot)
+static int make_new_png (png_plot_t *plot, int view)
 {
+    int err = 0;
+
+    if (view == PNG_ZOOM) {
+	FILE *fpin, *fpout;
+	char line[MAXLEN];
+
+	fpin = fopen(plot->spec->fname, "r");
+	if (fpin == NULL) return 1;
+	
+	fpout = fopen("zoomplot.gp", "w");
+	if (fpout == NULL) {
+	    fclose(fpin);
+	    return 1;
+	}
+
+	/* switch to zoomed data range */
+	fprintf(fpout, "set xrange [%g:%g]\n", plot->zoom->xmin,
+		plot->zoom->xmax);
+	fprintf(fpout, "set yrange [%g:%g]\n", plot->zoom->ymin,
+		plot->zoom->ymax);
+	while (fgets(line, MAXLEN-1, fpin)) {
+	    if (strncmp(line, "set xrange", 10) &&
+		strncmp(line, "set yrange", 10))
+		fputs(line, fpout);
+	}
+
+	fclose(fpout);
+	fclose(fpin);
+
+	err = system("gnuplot zoomplot.gp");
+	remove("zoomplot.gp");
+    } else { /* PNG_UNZOOM */
+	char syscmd[36];
+
+	sprintf(syscmd, "gnuplot %s", plot->spec->fname);
+	err = system(syscmd);
+    }
+
+    if (err) {
+	errbox("Failed to generate PNG file");
+	return 1;
+    }
+
+    render_pngfile("gretltmp.png", plot, view);
+
+    return 0;
+}
+
+static gint plot_button_release (GtkWidget *widget, GdkEventButton *event, 
+				 png_plot_t *plot)
+{
+    if (plot->zoom->active) {
+	double z;
+
+	get_data_xy(plot, event->x, event->y, 
+		    &plot->zoom->xmax, &plot->zoom->ymax);
+
+	/* flip the selected rectangle if required */
+	if (plot->zoom->xmin > plot->zoom->xmax) {
+	    z = plot->zoom->xmax;
+	    plot->zoom->xmax = plot->zoom->xmin;
+	    plot->zoom->xmin = z;
+	}
+	if (plot->zoom->ymin > plot->zoom->ymax) {
+	    z = plot->zoom->ymax;
+	    plot->zoom->ymax = plot->zoom->ymin;
+	    plot->zoom->ymin = z;
+	}
+	
+	make_new_png(plot, PNG_ZOOM);
+	plot->zoom->active = 0;
+	gdk_window_set_cursor(plot->canvas->window, NULL);
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
+    }
+    return TRUE;
+}
+
+static gint plot_button_press (GtkWidget *widget, GdkEventButton *event, 
+			       png_plot_t *plot)
+{
+    if (plot->zoom->active) {
+	get_data_xy(plot, event->x, event->y, 
+		    &plot->zoom->xmin, &plot->zoom->ymin);
+	plot->zoom->screen_xmin = event->x;
+	plot->zoom->screen_ymin = event->y;
+	return TRUE;
+    }
+
     if (plot->popup) g_free(plot->popup);
     plot->popup = build_plot_menu(plot);
     gtk_menu_popup(GTK_MENU(plot->popup), NULL, NULL, NULL, NULL,
@@ -1288,24 +1474,6 @@ plot_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
         gtk_widget_destroy(w);
     }
     return TRUE;
-}
-
-static void render_pngfile (const char *fname, GdkPixmap *dbuf_pixmap)
-{
-    gint width;
-    gint height;
-    GdkPixbuf *pbuf;
-
-    pbuf = gdk_pixbuf_new_from_file(fname);
-    width = gdk_pixbuf_get_width(pbuf);
-    height = gdk_pixbuf_get_height(pbuf);
-
-    gdk_pixbuf_render_to_drawable_alpha(pbuf, dbuf_pixmap,
-					0, 0, 0, 0, width, height,
-					GDK_PIXBUF_ALPHA_BILEVEL, 128,
-					GDK_RGB_DITHER_NORMAL, 0, 0);
-    gdk_pixbuf_unref(pbuf);
-    /* remove(fname); */
 }
 
 static 
@@ -1325,10 +1493,43 @@ void plot_expose (GtkWidget *widget, GdkEventExpose *event,
 			 event->area.width, event->area.height);
 }
 
+static void render_pngfile (const char *fname, png_plot_t *plot,
+			    int view)
+{
+    gint width;
+    gint height;
+    GdkPixbuf *pbuf;
+
+    pbuf = gdk_pixbuf_new_from_file(fname);
+    width = gdk_pixbuf_get_width(pbuf);
+    height = gdk_pixbuf_get_height(pbuf);
+
+    gdk_pixbuf_render_to_drawable_alpha(pbuf, plot->pixmap,
+					0, 0, 0, 0, width, height,
+					GDK_PIXBUF_ALPHA_BILEVEL, 128,
+					GDK_RGB_DITHER_NORMAL, 0, 0);
+    gdk_pixbuf_unref(pbuf);
+    remove(fname);
+    
+    if (view == PNG_ZOOM || view == PNG_UNZOOM) { 
+	/* refresh the whole canvas */
+	gdk_window_copy_area(plot->canvas->window,
+			     plot->canvas->style->fg_gc[GTK_STATE_NORMAL],
+			     0, 0,
+			     plot->pixmap,
+			     0, 0,
+			     WIDTH, HEIGHT);
+	plot->zoom->zoomed = 1;
+    }
+}
+
 static void plot_quit (GtkWidget *w, png_plot_t *plot)
 {
     remove(plot->spec->fname);
     free(plot->spec);
+    if (plot->zoom) free(plot->zoom);
+    if (plot->invert_gc)
+	gdk_gc_destroy(plot->invert_gc);
     free(plot);
 }
 
@@ -1428,7 +1629,6 @@ static int get_plot_ranges (png_plot_t *plot)
 
 int gnuplot_show_png (char *plotfile)
 {
-    GdkPixmap *dbuf_pixmap = NULL; 
     png_plot_t *plot;
     int plot_has_xrange;
 
@@ -1443,6 +1643,11 @@ int gnuplot_show_png (char *plotfile)
     if (plot->spec == NULL) return 1;
 
     plot->popup = NULL;
+
+    plot->zoom = malloc(sizeof *(plot->zoom));
+    plot->zoom->active = 0;
+    plot->zoom->zoomed = 0;
+    plot->invert_gc = NULL;
 
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);
@@ -1485,6 +1690,7 @@ int gnuplot_show_png (char *plotfile)
     gtk_widget_set_events (plot->canvas, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK
+                           | GDK_BUTTON_RELEASE_MASK
                            | GDK_POINTER_MOTION_MASK
                            | GDK_POINTER_MOTION_HINT_MASK);
 
@@ -1493,12 +1699,14 @@ int gnuplot_show_png (char *plotfile)
     gtk_object_set_user_data (GTK_OBJECT (plot->canvas), (gpointer) plot);
     */
     gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_press_event", 
-                       GTK_SIGNAL_FUNC(plot_popup), plot);
+                       GTK_SIGNAL_FUNC(plot_button_press), plot);
+
+    gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_release_event", 
+                       GTK_SIGNAL_FUNC(plot_button_release), plot);
 
     /* create the contents of the status area */
     plot->statusbar = NULL;
     if (plot_has_xrange) {
-	gint contextid;
 
 	/*  the cursor label (position indicator) */
 	label_frame = gtk_frame_new(NULL);
@@ -1513,10 +1721,10 @@ int gnuplot_show_png (char *plotfile)
 	gtk_widget_set_usize(plot->statusbar, 1, -1);
 	gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
 				      GTK_RESIZE_QUEUE);
-	contextid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
-						  "popup_message");
+	plot->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR (plot->statusbar),
+					    "plot_message");
 	gtk_statusbar_push (GTK_STATUSBAR (plot->statusbar),
-			    contextid, " Click on graph for pop-up menu");
+			    plot->cid, " Click on graph for pop-up menu");
 	gtk_signal_connect (GTK_OBJECT (plot->canvas), "motion_notify_event",
 			    (GtkSignalFunc) motion_notify_event, plot);
     }
@@ -1535,28 +1743,31 @@ int gnuplot_show_png (char *plotfile)
 
     gtk_widget_show(plot->canvas);
 
-    gtk_widget_show(label_frame);
-    gtk_widget_show(plot->statusbar);
-    gtk_widget_show(plot->statusarea);
+    if (plot_has_xrange) {
+	gtk_widget_show(label_frame);
+	gtk_widget_show(plot->statusbar);
+	gtk_widget_show(plot->statusarea);
+    }
 
     gtk_widget_realize (plot->canvas);
     gdk_window_set_back_pixmap (plot->canvas->window, NULL, FALSE);
 
-    gtk_widget_realize (plot->cursor_label);
-    gtk_widget_set_usize (plot->cursor_label, 140, -1);
+    if (plot_has_xrange) {
+	gtk_widget_realize (plot->cursor_label);
+	gtk_widget_set_usize (plot->cursor_label, 140, -1);
+    }
 
     gtk_widget_show(vbox);
     gtk_widget_show(plot->shell);       
 
     /*  set the focus to the canvas area  */
-    gtk_widget_grab_focus (plot->canvas);    
+    gtk_widget_grab_focus (plot->canvas);  
 
-    dbuf_pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
-
+    plot->pixmap = gdk_pixmap_new(plot->shell->window, WIDTH, HEIGHT, -1);
     gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
-		       GTK_SIGNAL_FUNC(plot_expose), dbuf_pixmap);
+		       GTK_SIGNAL_FUNC(plot_expose), plot->pixmap);
 
-    render_pngfile("gretltmp.png", dbuf_pixmap);
+    render_pngfile("gretltmp.png", plot, PNG_START);
 
     return 0;
 }

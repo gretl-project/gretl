@@ -55,6 +55,7 @@ static gint stack_model (int gui);
 
 int replay;                 /* shared, to indicate whether we're just
 			       replaying old session commands or not */
+int echo_off;               /* don't echo commands */
 
 GtkItemFactoryEntry log_items[] = {
     { _("/_File"), NULL, NULL, 0, "<Branch>" },    
@@ -3008,13 +3009,20 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 #ifdef G_OS_WIN32
     chdir(paths.userdir);
     sprintf(tmp, "latex %s", texbase);
-    WinExec(tmp, SW_SHOWMINIMIZED);
-    sprintf(tmp, "%s %s", viewdvi, texbase);
-    WinExec(tmp, SW_SHOWNORMAL);
+    err = system(tmp);
+    if (err) 
+	errbox("Failed to run latex");
+    else {
+	sprintf(tmp, "\"%s\" %s", viewdvi, texbase);
+	err = system(tmp);
+    }
+    if (err)
+	errbox("Failed to run DVI viewer");
 #else
     sprintf(tmp, "cd %s && latex %s && %s %s", paths.userdir,
 	    texbase, viewdvi, texbase);
     err = system(tmp);
+    if (err) errbox("Failed to run latex");
 #endif
 
     remove(texfile);

@@ -223,6 +223,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     /* commands that never take a list of variables */
     if (command->ci == VARLIST ||
+	command->ci == ECHO ||
+	command->ci == NOECHO ||
 	command->ci == QUIT || 
 	command->ci == SMPL ||
 	command->ci == EQNPRINT ||
