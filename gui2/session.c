@@ -173,7 +173,6 @@ static GtkWidget *graph_popup;
 static GtkWidget *boxplot_popup;
 static GtkWidget *data_popup;
 static GtkWidget *info_popup;
-static GtkWidget *addgraph;
 
 static GList *icon_list;
 static gui_obj *active_object;
@@ -1013,18 +1012,6 @@ int recreate_session (char *fname)
 
 /* ........................................................... */
 
-static void set_addgraph_mode (void)
-{
-    GtkWidget *gmenu = 
-	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
-
-    if (gmenu == NULL || addgraph == NULL) return;
-
-    gtk_widget_set_sensitive(addgraph, GTK_WIDGET_IS_SENSITIVE(gmenu));
-}
-
-/* ........................................................... */
-
 void save_session_callback (GtkWidget *w, guint code, gpointer data)
 {
     if (code == SAVE_AS_IS && session_file_open && scriptfile[0]) {
@@ -1652,12 +1639,12 @@ static void add_all_icons (void)
 	session_add_icon(NULL, 'i', ICON_ADD_BATCH);     /* data info */
 	session_add_icon(NULL, 'd', ICON_ADD_BATCH);     /* data file */
 	session_add_icon(NULL, 'n', ICON_ADD_BATCH);     /* session notes */
-	session_add_icon(NULL, 'x', ICON_ADD_BATCH);     /* summary stats */
+	session_add_icon(NULL, 's', ICON_ADD_BATCH);     /* summary stats */
 	session_add_icon(NULL, 'r', ICON_ADD_BATCH);     /* correlation matrix */
 	session_add_icon(NULL, 't', ICON_ADD_BATCH);     /* model table */
     }
 
-    session_add_icon(NULL, 's', ICON_ADD_BATCH);         /* script file */
+    session_add_icon(NULL, 'p', ICON_ADD_BATCH);         /* script file */
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
@@ -1746,8 +1733,7 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
     case 'i': 
 	w = info_popup; 
 	break;
-    case 's': 
-	set_addgraph_mode(); 
+    case 'p': 
 	w = session_popup; 
 	break;
     default: 
@@ -1795,7 +1781,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	    show_spreadsheet(NULL); break;
 	case 'i':
 	    open_info(NULL, 0, NULL); break;
-	case 's':
+	case 'p':
 	    view_script_default(); break;
 	case 'n':
 	    edit_session_notes(); break;
@@ -1803,7 +1789,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	    display_model_table(); break;
 	case 'r':
 	    do_menu_op(NULL, CORR, NULL); break;
-	case 'x':
+	case 's':
 	    do_menu_op(NULL, SUMMARY, NULL); break;
 	}
 	return TRUE;
@@ -1812,7 +1798,7 @@ static gboolean session_icon_click (GtkWidget *widget,
     if (mods & GDK_BUTTON3_MASK) {
 	if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	    gobj->sort == 'd' || gobj->sort == 'i' ||
-	    gobj->sort == 's' || gobj->sort == 'b' ||
+	    gobj->sort == 'p' || gobj->sort == 'b' ||
 	    gobj->sort == 't' || gobj->sort == 'v') {
 	    object_popup_show(gobj, (GdkEventButton *) event);
 	}
@@ -2036,7 +2022,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case 'i':
 	name = g_strdup(_("Data info"));
 	break;
-    case 's':
+    case 'p':
 	name = g_strdup(_("Session"));
 	break;
     case 'n':
@@ -2045,7 +2031,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
     case 'r':
 	name = g_strdup(_("Correlations"));
 	break;
-    case 'x':
+    case 's':
 	name = g_strdup(_("Summary"));
 	break;
     case 't':
@@ -2089,7 +2075,7 @@ static gui_obj *session_add_icon (gpointer data, int sort, int mode)
 
     else if (sort == 'v') gobj->data = var;
     else if (sort == 'd') gobj->data = paths.datfile;
-    else if (sort == 's') gobj->data = cmdfile;
+    else if (sort == 'p') gobj->data = cmdfile;
     else if (sort == 't') gobj->data = NULL;
 
     if (mode == ICON_ADD_SINGLE) {
@@ -2294,20 +2280,11 @@ static void session_build_popups (void)
     }
 
     if (session_popup == NULL) {
-	size_t n = sizeof session_items / sizeof session_items[0];
-
 	session_popup = gtk_menu_new();
-	for (i=0; i<n; i++) {
-	    if (i < n-1) {
-		create_popup_item(session_popup, 
-				  _(session_items[i]), 
-				  session_popup_activated);
-	    } else {
-		addgraph = 
-		    create_popup_item(session_popup, 
-				      _(session_items[i]), 
-				      session_popup_activated);
-	    }
+	for (i=0; i<sizeof session_items / sizeof session_items[0]; i++) {
+	    create_popup_item(session_popup, 
+			      _(session_items[i]), 
+			      session_popup_activated);
 	}
     }
 
@@ -2658,11 +2635,12 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     case 'g': xpm = gnuplot_xpm; break;
     case 'd': xpm = dot_sc_xpm; break;
     case 'i': xpm = xfm_info_xpm; break;
-    case 's': xpm = xfm_make_xpm; break;
+    case 'p': xpm = xfm_make_xpm; break;
     case 'n': xpm = text_xpm; break;
     case 'r': xpm = rhohat_xpm; break;
-    case 'x': xpm = summary_xpm; break;
+    case 's': xpm = summary_xpm; break;
     case 't': xpm = model_table_xpm; break;
+    case 'x': xpm = text_xpm; break;
     default: break;
     }
 

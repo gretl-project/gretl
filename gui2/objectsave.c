@@ -34,7 +34,9 @@ enum {
     OBJ_VAR_SHOW,
     OBJ_VAR_FREE,
     OBJ_GRAPH_SHOW,
-    OBJ_GRAPH_FREE
+    OBJ_GRAPH_FREE,
+    OBJ_TEXT_SHOW,
+    OBJ_TEXT_FREE
 };
 
 static int match_object_command (const char *s, char sort)
@@ -56,6 +58,12 @@ static int match_object_command (const char *s, char sort)
 	if (*s == 0) return OBJ_GRAPH_SHOW; /* default */
 	if (strcmp(s, "show") == 0) return OBJ_GRAPH_SHOW;
 	if (strcmp(s, "free") == 0) return OBJ_GRAPH_FREE; 
+    } 
+
+    if (sort == 'x') {
+	if (*s == 0) return OBJ_TEXT_SHOW; /* default */
+	if (strcmp(s, "show") == 0) return OBJ_TEXT_SHOW;
+	if (strcmp(s, "free") == 0) return OBJ_TEXT_FREE; 
     }    
 
     return OBJ_NONE;
@@ -104,6 +112,13 @@ static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
     gretl_var_print(var, pdinfo, prn);
     view_buffer(prn, 78, 450, gretl_var_get_name(var), VAR, var);
 }
+
+#if 0
+static void show_saved_text (GRETL_VAR *var, const DATAINFO *pdinfo)
+{
+    view_buffer(prn, 78, 450, XXX, XXX, NULL);
+}
+#endif
 
 static void get_word_and_command (const char *s, char *word, 
 				  char *cmd)
