@@ -178,12 +178,28 @@ void get_default_dir (char *s)
 #ifdef TRAMO_X12
 static void set_tramo_x12a_dirs (void)
 {
+    char cmd[MAXLEN];
+
     if (*tramodir == 0) {
 	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
     }
     if (*x12adir == 0) {
 	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
     }
+    
+    /* make tramo directory structure */
+    sprintf(cmd, "mkdir -p %s/output", tramodir);
+    system(cmd);
+    sprintf(cmd, "mkdir -p %s/graph/acf", tramodir);
+    system(cmd);
+    sprintf(cmd, "mkdir -p %s/graph/filters", tramodir);
+    system(cmd);
+    sprintf(cmd, "mkdir -p %s/graph/forecast", tramodir);
+    system(cmd);
+    sprintf(cmd, "mkdir -p %s/graph/series", tramodir);
+    system(cmd);
+    sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
+    system(cmd);
 }
 #endif
 
