@@ -1694,7 +1694,11 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
 
     if (dataset_is_time_series(datainfo)) {
+#ifdef G_OS_WIN32
+	fprintf(fp, "source(\"%s\")\n", slash_convert(Rdata));
+#else
 	fprintf(fp, "source(\"%s\")\n", Rdata);
+#endif
 	fprintf(fp, "ls()\n");
     } else {
 #ifdef G_OS_WIN32

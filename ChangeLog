@@ -1,3 +1,6 @@
+version 1.0.3
+- further fix to pathnames with .Rprofile for win32
+
 12/09/02 version 1.0.2
 - generalize support for X-12-ARIMA to gtk-1.2 version, and 
   win32 version (TRAMO/SEATS proving is more difficult)
