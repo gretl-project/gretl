@@ -401,7 +401,7 @@ void register_data (const char *fname, int record)
     char datacmd[MAXLEN];
 
     /* basic accounting */
-    data_file_open = 1;
+    data_status = DATA_OPEN;
     orig_vars = datainfo->v;
 
     /* sync main window with datafile */
@@ -418,7 +418,7 @@ void register_data (const char *fname, int record)
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
     } else { /* created using spreadsheet */
-	data_file_open = 2;
+	data_status = DATA_MODIFIED;
     }
 }
 
@@ -463,8 +463,7 @@ void do_open_data (GtkWidget *w, gpointer data)
 	return;
     }
     else 	
-	err = get_data(&Z, datainfo, &paths,
-		       data_file_open, stderr);
+	err = get_data(&Z, datainfo, &paths, data_status, stderr);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -482,7 +481,7 @@ void verify_open_data (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_file_open && expert[0] == 'f' && 
+    if (data_status && expert[0] == 'f' && 
 	yes_no_dialog ("gretl: open data", 
 		       "Opening a new data file will automatically\n"
 		       "close the current one.  Any unsaved work\n"
@@ -499,7 +498,7 @@ void verify_open_session (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_file_open && expert[0] == 'f' &&
+    if (data_status && expert[0] == 'f' &&
 	yes_no_dialog ("gretl: open session", 
 		       "Opening a new session file will automatically\n"
 		       "close the current session.  Any unsaved work\n"

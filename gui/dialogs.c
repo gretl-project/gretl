@@ -661,16 +661,6 @@ void menu_exit_check (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static int data_work_done (void)
-     /* See whether the data set has been substantively modified,
-	so as to prompt for a save */
-{
-    if (data_file_open == 2) return 1;
-    else return 0;
-}
-
-/* ........................................................... */
-
 int work_done (void)
      /* See whether user has done any work, to determine whether or
 	not to offer the option of saving commands/output.  Merely
@@ -706,7 +696,7 @@ int work_done (void)
 static void save_data_callback (void)
 {
     file_save(NULL, SAVE_DATA, NULL);
-    if (data_file_open == 2) data_file_open = 1;
+    if (data_status == DATA_MODIFIED) data_status = DATA_OPEN;
 }
 
 #ifdef USE_GNOME
@@ -876,7 +866,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	/* else button = 1, NO: so fall through */
     }
 
-    if (data_work_done()) {
+    if (data_status == DATA_MODIFIED) {
 	button = yes_no_dialog ("gretl", 
 				"Do you want to save changes you have\n"
 				"made to the current data set?", 1);

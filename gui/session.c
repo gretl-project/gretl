@@ -703,7 +703,7 @@ void view_session (void)
     active_icon = NULL;
     gobjects = NULL;
 
-    if (data_file_open) {
+    if (data_status) {
 	session_add_object(NULL, 'i');     /* data info */
 	session_add_object(NULL, 'd');     /* data file */
 	session_add_object(NULL, 'n');     /* session notes */

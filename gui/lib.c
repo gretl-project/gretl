@@ -227,7 +227,7 @@ void clear_data (int full)
     fullZ = NULL;
     clear_clist(mdata->listbox);
     clear_sample_label();
-    data_file_open = 0;
+    data_status = DATA_NONE;
     orig_vars = 0;
     menubar_state(FALSE);
 
@@ -1102,7 +1102,7 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 	errbox("Failed to add case markers");
     else {
 	infobox("Case markers added");
-	data_file_open = 2; /* indicator for changes made */
+	data_status = DATA_MODIFIED; 
     }
 }
 
@@ -1717,8 +1717,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     
     prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     if (prn == NULL) return;
-    err = open_nulldata(&Z, datainfo, data_file_open, 
-			nulldata_n, prn);
+    err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
     if (err) { 
 	errbox("Failed to create empty data set");
 	return;
@@ -1727,7 +1726,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     gretl_print_destroy(prn);
     populate_clist(mdata->listbox, datainfo);
     set_sample_label(datainfo);
-    data_file_open = 1;
+    data_status = DATA_OPEN;
     orig_vars = datainfo->v;
     menubar_state(TRUE);
 }
@@ -1857,7 +1856,7 @@ static void finish_genr (MODEL *pmod)
 	    errbox("Failed to add new variable");
 	else {
 	    populate_clist(mdata->listbox, datainfo);
-	    data_file_open = 2;
+	    data_status = DATA_MODIFIED;
 	}
     }
 }
@@ -1874,7 +1873,7 @@ void do_rename_var (GtkWidget *widget, dialog_t *ddata)
     if (validate_varname(edttext)) return;
     strcpy(datainfo->varname[mdata->active_var], edttext);
     populate_clist(mdata->listbox, datainfo);
-    data_file_open = 2; /* marker for changes made */
+    data_status = DATA_MODIFIED; 
 }
 
 /* ........................................................... */
@@ -1890,7 +1889,7 @@ void delete_var (void)
 	return;
     }
     populate_clist(mdata->listbox, datainfo);
-    data_file_open = 2; /* marker for changes made */ 
+    data_status = DATA_MODIFIED; 
 }
 
 /* ........................................................... */
@@ -1905,7 +1904,7 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
     strncpy(datainfo->label[mdata->active_var], edttext, MAXLABEL-1);
     datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
     populate_clist(mdata->listbox, datainfo);
-    data_file_open = 2; /* marker for changes made */
+    data_status = DATA_MODIFIED; 
 }
 
 /* ........................................................... */
@@ -2707,8 +2706,11 @@ void do_store (char *mydatfile, const int opt)
 
     if (f) 
 	sprintf(line, "store -%c '%s' %s", f, mydatfile, storelist);
-    else
+    else {
 	sprintf(line, "store '%s' %s", mydatfile, storelist);   
+	strcpy(paths.datfile, mydatfile);
+	set_sample_label(datainfo);
+    }
 
     if (check_cmd(line) || cmd_init(line)) return; 
 
@@ -2744,7 +2746,7 @@ void do_store (char *mydatfile, const int opt)
     g_free(msg);
 
     /* record that data have been saved */
-    if (data_file_open == 2) data_file_open = 1;
+    if (data_status == DATA_MODIFIED) data_status = DATA_OPEN;
 
     return;
 }
@@ -2998,7 +3000,7 @@ static int gui_exec_line (char *line,
     GRETLTEST *ptest;
     void *ptr;
 
-    if (!data_file_open && !ready_for_command(line)) {
+    if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, "You must open a data file first\n");
 	return 1;
     }
@@ -3408,8 +3410,7 @@ static int gui_exec_line (char *line,
 	else if (check == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	else 	
-	    err = get_data(&Z, datainfo, &paths,
-			   data_file_open, stderr);
+	    err = get_data(&Z, datainfo, &paths, data_status, stderr);
 	if (err) {
 	    gui_errmsg(err);
 	    break;
@@ -3497,15 +3498,14 @@ static int gui_exec_line (char *line,
 	    err = 1;
 	    break;
 	}
-	err = open_nulldata(&Z, datainfo, data_file_open, 
-			    nulldata_n, prn);
+	err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
 	if (err) { 
 	    pprintf(prn, "Failed to create empty data set.\n");
 	    break;
 	}
 	populate_clist(mdata->listbox, datainfo);
 	set_sample_label(datainfo);
-	data_file_open = 1;
+	data_status = DATA_OPEN;
 	orig_vars = datainfo->v;
 	menubar_state(TRUE);
 	break;

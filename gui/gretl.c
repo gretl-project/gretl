@@ -118,7 +118,7 @@ MODEL **models;             /* gretl models structs */
 SESSION session;            /* hold models, graphs */
 SESSIONBUILD rebuild;          /* rebuild session later */
 
-int plot_count, data_file_open, orig_vars;
+int plot_count, data_status, orig_vars;
 PRN *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
@@ -603,7 +603,7 @@ int main (int argc, char *argv[])
 	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
-	    err = get_data(&Z, datainfo, &paths, data_file_open, 
+	    err = get_data(&Z, datainfo, &paths, data_status, 
 			   stderr);
 	    break;
 	case GRETL_CSV_DATA:
@@ -622,7 +622,7 @@ int main (int argc, char *argv[])
 		errmsg(err, &prn);
 		return EXIT_FAILURE;
 	    }
-	    data_file_open = 1;
+	    data_status = DATA_OPEN;
 	    orig_vars = datainfo->v;
 	    /* record the data file in command log */
 	    sprintf(line, "open %s", paths.datfile);
@@ -695,7 +695,7 @@ int main (int argc, char *argv[])
     free(models);
     if (command.list != NULL) free(command.list);
     if (command.param != NULL) free(command.param);
-    if (data_file_open) free_datainfo(datainfo);
+    if (data_status) free_datainfo(datainfo);
     if (fullinfo) {
 	clear_datainfo(fullinfo, 1);
 	free(fullinfo);
@@ -714,7 +714,7 @@ int main (int argc, char *argv[])
 
 void refresh_data (void)
 {
-    if (data_file_open)
+    if (data_status)
 	populate_clist(mdata->listbox, datainfo);
 }
 
@@ -1237,7 +1237,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     pid_t pid;
 #endif
 
-    if (!data_file_open) {
+    if (!data_status) {
 	errbox("Please open a data file first");
 	return;
     }
@@ -1459,7 +1459,7 @@ static void gretl_pdf (void)
 
 static void xy_graph (void)
 {
-    if (data_file_open)
+    if (data_status)
 	graph_dialog(NULL, GR_XY, NULL);
     else
 	errbox("Please open a data file first");
@@ -1467,7 +1467,7 @@ static void xy_graph (void)
 
 static void go_session (void)
 {
-    if (data_file_open)
+    if (data_status)
 	view_session();
     else
 	errbox("Please open a data file first");

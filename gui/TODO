@@ -1,0 +1,10 @@
+when create data set by selection from database, or via the
+built-in spreadsheet:
+
+prior to saving the data, the dataframe label should not
+just read "No datafile loaded" but something more informative,
+such as "Data modified" (?)
+
+once the data are _saved_, the name of the datafile should
+appear in the main gretl window, and the Session menu
+should be activated.

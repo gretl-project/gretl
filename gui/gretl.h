@@ -62,7 +62,7 @@ extern int plot_count;
 extern int orig_vars;
 
 /* global state variables */
-extern int data_file_open;
+extern int data_status;
 extern char line[MAXLEN];
 extern int *default_list;
 extern char *storelist;
@@ -180,6 +180,12 @@ enum copy_variants {
     COPY_LATEX,
     COPY_LATEX_EQUATION,
     COPY_RTF
+};
+
+enum data_status_codes {
+    DATA_NONE,
+    DATA_OPEN,
+    DATA_MODIFIED
 };
 
 /* functions follow */

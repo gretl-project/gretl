@@ -281,7 +281,7 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
     int n, v, t, start, stop, pad1 = 0, pad2 = 0;
     guint compact_method = 1;
 
-    if (data_file_open) {
+    if (data_status) {
 	err = check_import(sinfo, datainfo);
 	if (err) return;
 	if (dataset_add_vars(1, &Z, datainfo)) {
@@ -359,7 +359,7 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 	    strcpy(datainfo->varname[1], sinfo->varname);
 	    strcpy(datainfo->label[1], sinfo->descrip);	
 	    set_sample_label(datainfo);
-	    data_file_open = 2;
+	    data_status = DATA_MODIFIED;
 	    menubar_state(TRUE);
 	}
     }

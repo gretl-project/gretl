@@ -59,7 +59,7 @@ static int printnum (char *dest, const char *s, int d)
 	int v; 
 	double xx;
 
-	if (data_file_open && (v = varindex(datainfo, s)) < datainfo->v) {
+	if (data_status && (v = varindex(datainfo, s)) < datainfo->v) {
 	    xx = Z[datainfo->n * v];
 	    if (na(xx)) {
 		sprintf(errtext, "Data missing for variable '%s'", s);
