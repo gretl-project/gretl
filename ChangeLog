@@ -27,6 +27,8 @@ version 1.2.2
   lead to a crash (thanks to Steve Walesch for spotting this)
 - Fix bug: set panel structure dialog very messed up in the
   gtk-1.2 version of the GUI program
+- Fix bug: Sorting variables by ID in the main window did not
+  work correctly for more than 9 variables
 
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation

@@ -1061,7 +1061,7 @@ void populate_varlist (void)
 			    2, VARLABEL(datainfo, i),
 			    3, FALSE, /* (i > 0)? TRUE : FALSE */
 			    -1);
-    }    
+    } 
 
     mdata->active_var = 1;
 
@@ -1069,6 +1069,7 @@ void populate_varlist (void)
     gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_select_iter(select, &iter);
+    
 
     if (!check_connected) {
 	g_signal_connect (G_OBJECT(select), "changed",
@@ -1089,11 +1090,55 @@ void populate_varlist (void)
 
 /* ......................................................... */
 
+static gint 
+compare_var_ids (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
+		 gpointer p)
+{
+    gchar *t1, *t2;
+    int i1, i2;
+
+    gtk_tree_model_get(model, a, 0, &t1, -1);
+    gtk_tree_model_get(model, b, 0, &t2, -1);
+
+    i1 = atoi(t1);
+    i2 = atoi(t2);
+
+    g_free(t1);
+    g_free(t2);
+
+    return ((i1 < i2) ? -1 : (i1 > i2) ? 1 : 0);    
+}
+
+static gint 
+compare_varnames (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b,
+		  gpointer p)
+{
+    gchar *t1, *t2;
+    gint ret;
+
+    gtk_tree_model_get(model, a, 1, &t1, -1);
+    gtk_tree_model_get(model, b, 1, &t2, -1);
+
+    if (!strcmp(t1, "const")) return 0;
+    if (!strcmp(t2, "const")) return 1;
+
+    ret = strcmp(t1, t2);
+    g_free(t1);
+    g_free(t2);
+
+    return ret;    
+}
+
 static void sort_varlist (gpointer p, guint col, GtkWidget *w)
 {
     GtkTreeModel *model;
 
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
+
+    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(model), 0,
+				     compare_var_ids, NULL, NULL);
+    gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE(model), 1,
+				     compare_varnames, NULL, NULL);
     gtk_tree_sortable_set_sort_column_id (GTK_TREE_SORTABLE(model), 
 					  col, GTK_SORT_ASCENDING);
 }
@@ -1104,8 +1149,8 @@ void clear_varlist (GtkWidget *widget)
 {
     GtkListStore *store;
 
-    store = GTK_LIST_STORE(gtk_tree_view_get_model (GTK_TREE_VIEW(widget)));
-    gtk_list_store_clear (store);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
+    gtk_list_store_clear(store);
 }
 
 /* ......................................................... */

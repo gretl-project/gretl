@@ -1948,9 +1948,46 @@ static void auto_store (void)
 
 /* ........................................................... */
 
+static gint 
+compare_var_ids (GtkCList *cl, gconstpointer p1, gconstpointer p2)
+{
+    const GtkCListRow *row1 = (const GtkCListRow *) p1;
+    const GtkCListRow *row2 = (const GtkCListRow *) p2;
+    gchar *t1, *t2;
+    int i1, i2;
+
+    t1 = GTK_CELL_TEXT(row1->cell[cl->sort_column])->text;
+    t2 = GTK_CELL_TEXT(row2->cell[cl->sort_column])->text;    
+
+    i1 = atoi(t1);
+    i2 = atoi(t2);
+
+    return ((i1 < i2) ? -1 : (i1 > i2) ? 1 : 0);
+}
+
+static gint 
+compare_varnames (GtkCList *cl, gconstpointer p1, gconstpointer p2)
+{
+    const GtkCListRow *row1 = (const GtkCListRow *) p1;
+    const GtkCListRow *row2 = (const GtkCListRow *) p2;
+    gchar *t1, *t2;
+
+    t1 = GTK_CELL_TEXT(row1->cell[cl->sort_column])->text;
+    t2 = GTK_CELL_TEXT(row2->cell[cl->sort_column])->text;    
+
+    if (!strcmp(t1, "const")) return 0;
+    if (!strcmp(t2, "const")) return 1;
+
+    return strcmp(t1, t2);
+}
+
 static void sort_varlist (gpointer p, guint col, GtkWidget *w)
 {
-    gtk_clist_set_compare_func(GTK_CLIST(mdata->listbox), NULL);
+    if (col == 0) {
+	gtk_clist_set_compare_func(GTK_CLIST(mdata->listbox), compare_var_ids);
+    } else {
+	gtk_clist_set_compare_func(GTK_CLIST(mdata->listbox), compare_varnames);
+    }
     gtk_clist_set_sort_column(GTK_CLIST(mdata->listbox), col);
     gtk_clist_sort(GTK_CLIST(mdata->listbox));
 }

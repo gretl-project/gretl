@@ -921,6 +921,35 @@ struct varinfo_settings {
     int full;
 };
 
+static void show_varinfo_changes (int v) 
+{
+    GtkTreeModel *model;
+    GtkTreeIter iter;
+    gchar *idstr = NULL;
+    int i;
+
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(mdata->listbox));
+
+    gtk_tree_model_get_iter_first(model, &iter);
+    for (i=1; i<datainfo->v; i++) {
+	gtk_tree_model_iter_next(model, &iter);
+	gtk_tree_model_get(model, &iter, 0, &idstr, -1);
+	if (v == atoi(idstr)) break;
+	g_free(idstr); 
+	idstr = NULL;
+    }
+
+    if (idstr == NULL) return;
+
+    gtk_list_store_set (GTK_LIST_STORE(model), &iter, 
+			0, idstr, 
+			1, datainfo->varname[v],
+			2, VARLABEL(datainfo, v),
+			3, FALSE, 
+			-1);
+    g_free(idstr);
+}
+
 static void really_set_variable_info (GtkWidget *w, 
 				      struct varinfo_settings *vset)
 {
@@ -980,8 +1009,9 @@ static void really_set_variable_info (GtkWidget *w,
 	    verify_and_record_command(line);
 	}
 
-	if (gui_changed)
-	    populate_varlist();
+	if (gui_changed) {
+	    show_varinfo_changes(v);
+	}
 
 	if (changed || comp_changed || gui_changed) {
 	    data_status |= MODIFIED_DATA;

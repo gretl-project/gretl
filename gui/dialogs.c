@@ -911,6 +911,27 @@ struct varinfo_settings {
     int full;
 };
 
+static void show_varinfo_changes (int v) 
+{
+    gchar *idstr;
+    int i, row = 0;
+
+    for (i=1; i<datainfo->v; i++) {
+	gtk_clist_get_text(GTK_CLIST(mdata->listbox), i, 0, &idstr);
+	if (atoi(idstr) == v) {
+	    row = i;
+	    break;
+	}
+    }
+
+    if (row == 0) return;
+
+    gtk_clist_set_text (GTK_CLIST(mdata->listbox), row,
+			1, datainfo->varname[v]);
+    gtk_clist_set_text (GTK_CLIST(mdata->listbox), row,
+			2, VARLABEL(datainfo, v));
+}
+
 static void really_set_variable_info (GtkWidget *w, 
 				      struct varinfo_settings *vset)
 {
@@ -973,8 +994,9 @@ static void really_set_variable_info (GtkWidget *w,
 	    verify_and_record_command(line);
 	}
 
-	if (gui_changed)
-	    populate_varlist();
+	if (gui_changed) { 
+	    show_varinfo_changes(v);
+	}
 
 	if (changed || comp_changed || gui_changed) {
 	    data_status |= MODIFIED_DATA;
