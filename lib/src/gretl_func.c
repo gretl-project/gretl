@@ -228,6 +228,20 @@ static int unstack_fncall (double ***pZ, DATAINFO *pdinfo)
     return err;
 }
 
+static int function_is_on_stack (ufunc *func)
+{
+    int i;
+
+    for (i=0; i<CALLSTACK_DEPTH; i++) {
+	if (callstack[i] == NULL) break;
+	if ((callstack[i])->fun == func) {
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
 static fncall *current_call (void)
 {
     if (callstack == NULL) {
@@ -513,6 +527,23 @@ static char **parse_args (const char *s, int *argc, int *err)
     return argv;
 }
 
+static int maybe_delete_function (const char *fname)
+{
+    ufunc *fun = get_ufunc_by_name(fname);
+    int err = 0;
+
+    if (fun == NULL) {
+	err = 1;
+    } else if (function_is_on_stack(fun)) {
+	sprintf(gretl_errmsg, "%s: function is in use", fname);
+	err = 1;
+    } else {
+	delete_ufunc_from_list(fun);
+    } 
+
+    return err;
+}
+
 int gretl_start_compiling_function (const char *line)
 {
     char fname[32];
@@ -531,11 +562,7 @@ int gretl_start_compiling_function (const char *line)
 
     if (name_status == FN_NAME_TAKEN) {
 	if (strstr(line, "delete")) {
-	    fun = get_ufunc_by_name(fname);
-	    if (fun != NULL) {
-		delete_ufunc_from_list(fun);
-	    }
-	    return 0;
+	    return maybe_delete_function(fname);
 	} else {
 	    return 1;
 	}
