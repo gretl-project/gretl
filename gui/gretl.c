@@ -192,6 +192,8 @@ static int unmangle (const char *dosname, char *longname);
 
 #endif /* G_OS_WIN32 */
 
+extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
+
 GtkItemFactoryEntry data_items[] = {
     { _("/_File"), NULL, NULL, 0, "<Branch>" },
     { _("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
@@ -380,6 +382,7 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL },
     { _("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
     { _("/_Variable"), NULL, NULL, 0, "<Branch>" },
+    { _("/Variable/Find..."), NULL, find_var, 0, NULL },
     { _("/Variable/_Display values"), NULL, display_var, 0, NULL },
     { _("/Variable/_Summary statistics"), NULL, do_menu_op, 
       VAR_SUMMARY, NULL },

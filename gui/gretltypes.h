@@ -79,7 +79,7 @@ typedef struct {
     gpointer data;
     int active_var; 
     int role;
-    int id;
+    int help_active;
     char fname[MAXLEN];
 } windata_t; 
 

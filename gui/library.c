@@ -2850,12 +2850,14 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
 	cursor = gdk_cursor_new(GDK_WATCH);
 	gdk_window_set_cursor(mydata->dialog->window, cursor);
-	gdk_flush();
+	gdk_window_set_cursor(GTK_TEXT(mydata->w)->text_area, cursor);
 	gdk_cursor_destroy(cursor);	
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
+
 	gdk_window_set_cursor(mydata->dialog->window, NULL);
+	gdk_window_set_cursor(mydata->w->window, NULL);
     } else
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
 
@@ -2865,7 +2867,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     refresh_data();
 
-    view_file(fname, 0, 1, 77, 450, SCRIPT_OUT, script_out_items);
+    view_file(fname, 1, 1, 77, 450, SCRIPT_OUT, script_out_items);
 }
 
 /* ........................................................... */

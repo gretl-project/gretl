@@ -87,8 +87,9 @@ static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
 
-static void edit_script_help (GtkWidget *widget, gpointer data);
-static void file_viewer_save (GtkWidget *widget, windata_t *mydata);
+static void edit_script_help (GtkWidget *widget, GdkEventButton *b,
+			      windata_t *vwin);
+static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
@@ -484,10 +485,10 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
         gtk_widget_destroy(w);
     }
     else if (key->keyval == GDK_s) {
-	windata_t *mydata = gtk_object_get_data(GTK_OBJECT(w), "ddata");
+	windata_t *vwin = gtk_object_get_data(GTK_OBJECT(w), "ddata");
 
-	if (Z != NULL && mydata != NULL && mydata->role == VIEW_MODEL)
-	    remember_model(mydata, 1, NULL);
+	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL)
+	    remember_model(vwin, 1, NULL);
     }
 }
 
@@ -499,8 +500,10 @@ void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
 
-    if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) 
-	edit_script_help(NULL, vwin);
+    if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) { 
+	vwin->help_active = 1;
+	edit_script_help(NULL, NULL, vwin);
+    }
 
     else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) 
@@ -1158,6 +1161,13 @@ void datafile_find (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
+void find_var (gpointer p, guint u, GtkWidget *w)
+{
+    find_string_dialog(find_in_clist, cancel_find, mdata);
+}
+
+/* ........................................................... */
+
 void context_help (GtkWidget *widget, gpointer data)
 {
     int i, j, help_code = GPOINTER_TO_INT(data);
@@ -1245,45 +1255,61 @@ static int pos_from_cmd (int cmd)
 
 /* ........................................................... */
 
-static void edit_script_help (GtkWidget *widget, gpointer data)
+static void activate_script_help (GtkWidget *widget, windata_t *vwin)
 {
-    windata_t *mydata = (windata_t *) data;
-    gchar *text;
-    guint pt = GTK_EDITABLE(mydata->w)->current_pos;
-    int len = gtk_text_get_length(GTK_TEXT(mydata->w));
-    int pos = 0;
+    GdkCursor *cursor = gdk_cursor_new(GDK_QUESTION_ARROW);
 
-    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 
-				  0, (pt + 9 > len)? -1 : pt + 8);
+    gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, cursor);
+    gdk_cursor_destroy(cursor);
+    vwin->help_active = 1;
+}
 
-    if (text != NULL && strlen(text) > 0) {
-	char *p, *q;
-	char word[9];
+/* ........................................................... */
 
-	p = q = text + pt;
-	if (pt > 0)
-	    while (p - text && !isspace(*(p-1))) p--;
-	if (pt < strlen(text))
-	    while (*q && !isspace(*q)) q++;
-	*word = '\0';
-	strncat(word, p, (q - p > 8)? 8 : q - p);
-	pos = pos_from_cmd(command_number(word));
-    } 
+static void edit_script_help (GtkWidget *widget, GdkEventButton *b,
+			      windata_t *vwin)
+{
+    if (!vwin->help_active) { /* command help not activated */
+	return;
+    } else {
+	gchar *text;
+	guint pt = GTK_EDITABLE(vwin->w)->current_pos;
+	int len = gtk_text_get_length(GTK_TEXT(vwin->w));
+	int pos = 0;
+
+	text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
+				      0, (pt + 9 > len)? -1 : pt + 8);
+
+	if (text != NULL && strlen(text) > 0) {
+	    char *p, *q;
+	    char word[9];
+
+	    p = q = text + pt;
+	    if (pt > 0)
+		while (p - text && !isspace(*(p-1))) p--;
+	    if (pt < strlen(text))
+		while (*q && !isspace(*q)) q++;
+	    *word = '\0';
+	    strncat(word, p, (q - p > 8)? 8 : q - p);
+	    pos = pos_from_cmd(command_number(word));
+	} 
 	
-    real_do_help(pos, 1);
-
-    g_free(text);
+	real_do_help(pos, 1);
+	g_free(text);
+	gdk_window_set_cursor(GTK_TEXT(vwin->w)->text_area, NULL);
+	vwin->help_active = 0;
+    }
 }
 
 /* ........................................................... */
 
 static void buf_edit_save (GtkWidget *widget, gpointer data)
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     gchar *text;
-    char **pbuf = (char **) mydata->data;
+    char **pbuf = (char **) vwin->data;
 
-    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
     if (text == NULL || !strlen(text)) {
 	errbox(_("Buffer is empty"));
 	g_free(text);
@@ -1294,11 +1320,11 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     free(*pbuf); 
     *pbuf = text;
 
-    if (mydata->role == EDIT_HEADER) {
+    if (vwin->role == EDIT_HEADER) {
 	infobox(_("Data info saved"));
 	data_status |= MODIFIED_DATA;
     } 
-    else if (mydata->role == EDIT_NOTES) {
+    else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
 	session_changed(1);
     }
@@ -1306,89 +1332,90 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
+static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
     /* special case: a newly created script */
-    if (strstr(mydata->fname, "script_tmp") || !strlen(mydata->fname)) {
-	file_save(mydata, SAVE_SCRIPT, NULL);
-	strcpy(mydata->fname, scriptfile);
+    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+	file_save(vwin, SAVE_SCRIPT, NULL);
+	strcpy(vwin->fname, scriptfile);
     } else {
 	char buf[MAXLEN];
 	FILE *fp;
 	gchar *text;
 
-	if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	if ((fp = fopen(vwin->fname, "w")) == NULL) {
 	    errbox(_("Can't open file for writing"));
 	    return;
 	} else {
-	    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+	    text = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
 	    fprintf(fp, "%s", text);
 	    fclose(fp);
 	    g_free(text);
-	    sprintf(buf, _("Saved %s\n"), mydata->fname);
+	    sprintf(buf, _("Saved %s\n"), vwin->fname);
 	    infobox(buf);
-	    if (mydata->role == EDIT_SCRIPT) 
-		SCRIPT_SAVED(mydata);
+	    if (vwin->role == EDIT_SCRIPT) 
+		SCRIPT_SAVED(vwin);
 	}
     }
 } 
 
 /* .................................................................. */
 
-void windata_init (windata_t *mydata)
+void windata_init (windata_t *vwin)
 {
-    mydata->dialog = NULL;
-    mydata->listbox = NULL;
-    mydata->mbar = NULL;
-    mydata->w = NULL;
-    mydata->status = NULL;
-    mydata->popup = NULL;
-    mydata->ifac = NULL;
-    mydata->data = NULL;
-    mydata->fname[0] = '\0';
-    mydata->role = -1;
-    mydata->active_var = 0;
+    vwin->dialog = NULL;
+    vwin->listbox = NULL;
+    vwin->mbar = NULL;
+    vwin->w = NULL;
+    vwin->status = NULL;
+    vwin->popup = NULL;
+    vwin->ifac = NULL;
+    vwin->data = NULL;
+    vwin->fname[0] = '\0';
+    vwin->role = -1;
+    vwin->active_var = 0;
+    vwin->help_active = 0;
 }
 
 /* .................................................................. */
 
 void free_windata (GtkWidget *w, gpointer data)
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
-    if (mydata) {
-	if (mydata->w) {
+    if (vwin) {
+	if (vwin->w) {
 	    gchar *undo = 
-		gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+		gtk_object_get_data(GTK_OBJECT(vwin->w), "undo");
 	    
 	    if (undo) g_free(undo);
 	}
-	if (mydata->listbox) 
-	    gtk_widget_destroy(GTK_WIDGET(mydata->listbox));
-	if (mydata->mbar) 
-	    gtk_widget_destroy(GTK_WIDGET(mydata->mbar));
-	if (mydata->status) 
-	    gtk_widget_destroy(GTK_WIDGET(mydata->status));
-	if (mydata->ifac) 
-	    gtk_object_unref(GTK_OBJECT(mydata->ifac));  
-	if (mydata->popup) 
-	    gtk_object_unref(GTK_OBJECT(mydata->popup));
-	if (mydata->role == SUMMARY || mydata->role == VAR_SUMMARY)
-	    free_summary(mydata->data); 
-	if (mydata->role == CORR)
-	    free_corrmat(mydata->data);
-	if (mydata->dialog)
-	    winstack_remove(mydata->dialog);
-	free(mydata);
-	mydata = NULL;
+	if (vwin->listbox) 
+	    gtk_widget_destroy(GTK_WIDGET(vwin->listbox));
+	if (vwin->mbar) 
+	    gtk_widget_destroy(GTK_WIDGET(vwin->mbar));
+	if (vwin->status) 
+	    gtk_widget_destroy(GTK_WIDGET(vwin->status));
+	if (vwin->ifac) 
+	    gtk_object_unref(GTK_OBJECT(vwin->ifac));  
+	if (vwin->popup) 
+	    gtk_object_unref(GTK_OBJECT(vwin->popup));
+	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
+	    free_summary(vwin->data); 
+	if (vwin->role == CORR)
+	    free_corrmat(vwin->data);
+	if (vwin->dialog)
+	    winstack_remove(vwin->dialog);
+	free(vwin);
+	vwin = NULL;
     }
 }
 
 /* ........................................................... */
 
-static void window_print_callback (GtkWidget *w, windata_t *mydata)
+static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
-    window_print(mydata, 0, w);
+    window_print(vwin, 0, w);
 }
 
 /* ........................................................... */
@@ -1420,7 +1447,6 @@ static void make_viewbar (windata_t *vwin)
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *colormap;
-    gpointer ptr = vwin;
     int i;
     static char *viewstrings[] = {_("Save"),
 				  _("Save as..."),
@@ -1443,7 +1469,8 @@ static void make_viewbar (windata_t *vwin)
 
     int edit_ok = (vwin->role == EDIT_SCRIPT ||
 		   vwin->role == EDIT_HEADER ||
-		   vwin->role == EDIT_NOTES);
+		   vwin->role == EDIT_NOTES ||
+		   vwin->role == SCRIPT_OUT);
 
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
@@ -1464,7 +1491,7 @@ static void make_viewbar (windata_t *vwin)
     for (i=0; viewstrings[i] != NULL; i++) {
 	switch (i) {
 	case 0:
-	    if (edit_ok) {
+	    if (edit_ok && vwin->role != SCRIPT_OUT) {
 		toolxpm = save_xpm;	    
 		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
 		    toolfunc = buf_edit_save;
@@ -1528,7 +1555,7 @@ static void make_viewbar (windata_t *vwin)
 	case 9:
 	    if (run_ok) {
 		toolxpm = question_xpm;
-		toolfunc = edit_script_help;
+		toolfunc = activate_script_help;
 	    } else
 		toolfunc = NULL;
 	    break;
@@ -1548,7 +1575,7 @@ static void make_viewbar (windata_t *vwin)
 	button = gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
 					 NULL, viewstrings[i], NULL,
 					 iconw,
-					 toolfunc, ptr);
+					 toolfunc, vwin);
     }
     gtk_widget_show(viewbar);
 }
@@ -1814,6 +1841,11 @@ windata_t *view_file (char *filename, int editable, int del_file,
 			   (GtkSignalFunc) console_handler, NULL);
     } 
 
+    if (doing_script) {
+	gtk_signal_connect_after(GTK_OBJECT(vwin->w), "button_press_event",
+				 (GtkSignalFunc) edit_script_help, vwin);
+    } 
+
     gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
     gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
 		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
@@ -2006,11 +2038,17 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s)
 
 /* ........................................................... */
 
-static void model_copy_menu_state (GtkItemFactory *ifac, gboolean s)
+static void model_rtf_copy_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/Edit/Copy all/as RTF", s);
+}
+
+/* ........................................................... */
+
+static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Edit/Copy all/as HTML", s);
     flip(ifac, "/Edit/Copy all/as LaTeX", s);
-    flip(ifac, "/Edit/Copy all/as RTF", s);
 }
 
 /* ........................................................... */
@@ -2104,10 +2142,14 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	/* FIXME: allow some more latitude here */
-	model_copy_menu_state(vwin->ifac, 
-			      pmod->ci == OLS || pmod->ci == CORC ||
-			      pmod->ci == HILU);
+	model_rtf_copy_state(vwin->ifac, pmod->ci == OLS || 
+			     pmod->ci == CORC || pmod->ci == HILU ||
+			     pmod->ci == WLS || pmod->ci == HSK ||
+			     pmod->ci == HCCM);
+			     
+	model_latex_copy_state(vwin->ifac, 
+			       pmod->ci == OLS || pmod->ci == CORC ||
+			       pmod->ci == HILU);
 
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
 
@@ -2180,9 +2222,9 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
 {
     GtkCheckMenuItem *item = GTK_CHECK_MENU_ITEM(widget);
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
 
-    if (item->active) mydata->active_var = v; 
+    if (item->active) vwin->active_var = v; 
 }
 
 /* .................................................................. */
@@ -3304,13 +3346,13 @@ void prn_to_clipboard (PRN *prn)
 
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
-    windata_t *mydata = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     PRN *prn;
 
     /* descriptive statistics */
-    if ((mydata->role == SUMMARY || mydata->role == VAR_SUMMARY)
+    if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
-	GRETLSUMMARY *summ = (GRETLSUMMARY *) mydata->data;
+	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
 	
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
@@ -3329,9 +3371,9 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 
     /* correlation matrix */
-    if (mydata->role == CORR 
+    if (vwin->role == CORR 
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
-	CORRMAT *corr = (CORRMAT *) mydata->data;
+	CORRMAT *corr = (CORRMAT *) vwin->data;
 
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
@@ -3351,7 +3393,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     /* or it's a model window we're copying from? */
     if (how == COPY_RTF) {
-	MODEL *pmod = (MODEL *) mydata->data;
+	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->errcode) 
 	    errbox("Couldn't format model");
@@ -3360,7 +3402,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
     else if (how == COPY_LATEX || how == COPY_HTML) {
-	MODEL *pmod = (MODEL *) mydata->data;
+	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX)
@@ -3372,7 +3414,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
     else if (how == COPY_LATEX_EQUATION) {
-	MODEL *pmod = (MODEL *) mydata->data;
+	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (bufopen(&prn)) return;
 	tex_print_equation(pmod, datainfo, 0, prn);
@@ -3383,11 +3425,11 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
     /* otherwise just copying plain text from plain text window */
     else if (how == COPY_TEXT) {
-	gtk_editable_select_region(GTK_EDITABLE(mydata->w), 0, -1);
-	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
+	gtk_editable_select_region(GTK_EDITABLE(vwin->w), 0, -1);
+	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
     else if (how == COPY_SELECTION) {
-	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
+	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
 }
 
@@ -3395,10 +3437,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
 
-void window_print (windata_t *mydata, guint u, GtkWidget *widget) 
+void window_print (windata_t *vwin, guint u, GtkWidget *widget) 
 {
     char *buf, *selbuf = NULL;
-    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
+    GtkEditable *gedit = GTK_EDITABLE(vwin->w);
 
     buf = gtk_editable_get_chars(gedit, 0, -1);
     if (gedit->has_selection)
@@ -3412,45 +3454,45 @@ void window_print (windata_t *mydata, guint u, GtkWidget *widget)
 
 /* .................................................................. */
 
-void text_undo (windata_t *mydata, guint u, GtkWidget *widget)
+void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 {
     gchar *old =
-	gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+	gtk_object_get_data(GTK_OBJECT(vwin->w), "undo");
     
     if (old == NULL) {
 	errbox(_("No undo information available"));
     } else {
 	guint len = 
-	    gtk_text_get_length(GTK_TEXT(mydata->w));
-	guint pt = gtk_text_get_point(GTK_TEXT(mydata->w));
+	    gtk_text_get_length(GTK_TEXT(vwin->w));
+	guint pt = gtk_text_get_point(GTK_TEXT(vwin->w));
 
-	gtk_text_freeze(GTK_TEXT(mydata->w));
-	gtk_editable_delete_text(GTK_EDITABLE(mydata->w), 0, len);
+	gtk_text_freeze(GTK_TEXT(vwin->w));
+	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, len);
 	len = 0;
-	gtk_editable_insert_text(GTK_EDITABLE(mydata->w), 
+	gtk_editable_insert_text(GTK_EDITABLE(vwin->w), 
 				 old, strlen(old), &len);
-	gtk_text_set_point(GTK_TEXT(mydata->w), 
+	gtk_text_set_point(GTK_TEXT(vwin->w), 
 			   (pt > len - 1)? len - 1 : pt);
-	gtk_text_thaw(GTK_TEXT(mydata->w));
+	gtk_text_thaw(GTK_TEXT(vwin->w));
 	g_free(old);
-	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
+	gtk_object_remove_data(GTK_OBJECT(vwin->w), "undo");
     }
 }
 
 /* .................................................................. */
 
-void text_paste (windata_t *mydata, guint u, GtkWidget *widget)
+void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 {
     gchar *old;
     gchar *undo_buf =
-	gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+	gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
 
-    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+    old = gtk_object_get_data(GTK_OBJECT(vwin->w), "undo");
     g_free(old);
 
-    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", undo_buf);
+    gtk_object_set_data(GTK_OBJECT(vwin->w), "undo", undo_buf);
 
-    gtk_editable_paste_clipboard(GTK_EDITABLE(mydata->w));
+    gtk_editable_paste_clipboard(GTK_EDITABLE(vwin->w));
 }
 
 /* .................................................................. */
