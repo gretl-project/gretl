@@ -24,7 +24,11 @@
 
 #include <unistd.h>
 
-#ifdef USE_GNOME
+#if defined(USE_GNOME) && !defined(OLD_GTK)
+#define GNOME2
+#endif
+
+#ifdef GNOME2
 # include <gconf/gconf-client.h>
 #endif
 
@@ -36,7 +40,9 @@
 # include <sys/types.h>
 # include <fcntl.h>
 # include <errno.h>
-# include "gtkfontselhack.h"
+# ifndef OLD_GTK
+#  include "gtkfontselhack.h"
+# endif
 #endif
 
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
@@ -82,16 +88,25 @@ static void read_rc (void);
 #ifdef G_OS_WIN32
 static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
+# ifndef OLD_GTK
 static char fixedfontname[MAXLEN] = "Monospace 10";
+# else
+static char fixedfontname[MAXLEN] = 
+"-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
+# endif
 #endif
 
 #if defined(G_OS_WIN32)
 static char appfontname[MAXLEN] = "tahoma 8";
-#elif !defined(USE_GNOME)
+#elif !defined(USE_GNOME) && !defined(OLD_GTK)
 static char appfontname[MAXLEN] = "Sans 10";
 #endif
 
+#ifndef OLD_GTK
 PangoFontDescription *fixed_font;
+#else
+GdkFont *fixed_font;
+#endif
 
 static int usecwd;
 int olddat;
@@ -189,7 +204,7 @@ RCVARS rc_vars[] = {
     {"useqr", N_("Use QR decomposition"), 
      N_("Use Cholesky decomposition"), &useqr, 'B', 0, 1, NULL},
     {"Fixed_font", N_("Fixed font"), NULL, fixedfontname, 'U', MAXLEN, 0, NULL},
-#ifndef USE_GNOME
+#if !defined(USE_GNOME) && !defined(OLD_GTK)
     {"App_font", N_("Menu font"), NULL, appfontname, 'U', MAXLEN, 0, NULL},
 #endif
     {"DataPage", "Default data page", NULL, datapage, 'I', 24, 0, NULL},
@@ -225,16 +240,19 @@ const char *get_scriptpage (void)
 
 void set_fixed_font (void)
 {
+#ifndef OLD_GTK
     if (fixed_font != NULL) 
 	pango_font_description_free(fixed_font);
 
-    /* set a monospaced font for various windows */
     fixed_font = pango_font_description_from_string(fixedfontname);
+#else
+    fixed_font = gdk_font_load(fixedfontname);
+#endif
 }
 
 /* ........................................................... */
 
-#ifndef USE_GNOME
+#if !defined(USE_GNOME) && !defined(OLD_GTK)
 void set_app_font (const char *fontname)
 {
     GtkSettings *settings;
@@ -297,7 +315,7 @@ void get_default_dir (char *s)
 
 /* ........................................................... */
 
-#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
 
 # ifdef HAVE_TRAMO
 void set_tramo_ok (int set)
@@ -452,7 +470,11 @@ void set_rcfile (void)
 
     tmp = getenv("HOME");
     strcpy(rcfile, tmp);
+# ifndef OLD_GTK
     strcat(rcfile, "/.gretl2rc");
+# else
+    strcat(rcfile, "/.gretlrc");
+# endif
     read_rc(); 
 }
 #endif
@@ -480,9 +502,16 @@ void options_dialog (gpointer data)
     gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->action_area), 15);
     gtk_box_set_homogeneous (GTK_BOX (GTK_DIALOG (dialog)->action_area), TRUE);
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (dialog), "delete_event", 
 		      G_CALLBACK (delete_widget), 
 		      dialog);
+#else
+    gtk_signal_connect_object (GTK_OBJECT (dialog), "delete_event", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (dialog));
+#endif
+
    
     notebook = gtk_notebook_new ();
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
@@ -495,35 +524,54 @@ void options_dialog (gpointer data)
     make_prefs_tab (notebook, 4);
     make_prefs_tab (notebook, 5);
    
-    tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
+    tempwid = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (apply_changes), NULL);
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), 
 		      dialog);
+#else
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC (apply_changes), NULL);
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (dialog));
+#endif
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+    tempwid = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (delete_widget), 
 		      dialog);
+#else
+    gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+			       GTK_OBJECT (dialog));
+#endif
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_from_stock (GTK_STOCK_APPLY);
+    tempwid = standard_button(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
 			tempwid, TRUE, TRUE, 0);
+#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (apply_changes), NULL);
+#else
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC (apply_changes), NULL);
+#endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
@@ -570,9 +618,15 @@ static GtkWidget *make_path_browse_button (RCVARS *rc)
     GtkWidget *b;
 
     b = gtk_button_new_with_label(_("Browse..."));
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(b), "clicked",
 		     G_CALLBACK(browse_button_callback), 
 		     rc);
+#else
+    gtk_signal_connect(GTK_OBJECT(b), "clicked",
+                       GTK_SIGNAL_FUNC(browse_button_callback), 
+		       rc);
+#endif
     return b;
 }
 
@@ -646,17 +700,29 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		}
 		/* special case: warning */
 		if (!strcmp(rc->key, "wimp") || !strcmp(rc->key, "lcnumeric")) {
+#ifndef OLD_GTK
 		    g_signal_connect(G_OBJECT(tempwid), "toggled",
 				     G_CALLBACK(takes_effect_on_restart), 
 				     NULL);
+#else
+		    gtk_signal_connect(GTK_OBJECT(tempwid), "toggled",
+				       GTK_SIGNAL_FUNC(takes_effect_on_restart), 
+				       NULL);
+#endif
 		}
 		/* special case: link between toggle and preceding entry */
 		if (rc->len) {
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
 					     GTK_TOGGLE_BUTTON(tempwid)->active);
+#ifndef OLD_GTK
 		    g_signal_connect(G_OBJECT(tempwid), "clicked",
 				     G_CALLBACK(flip_sensitive),
 				     rc_vars[i-1].widget);
+#else
+		    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+				       GTK_SIGNAL_FUNC(flip_sensitive),
+				       rc_vars[i-1].widget);
+#endif
 		}
 		/* end link to entry */
 		gtk_widget_show (tempwid);
@@ -843,7 +909,8 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 /* .................................................................. */
 
-#ifndef USE_GNOME
+#ifndef GNOME2
+
 static void str_to_boolvar (char *s, void *b)
 {
     if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) {
@@ -858,11 +925,12 @@ static void boolvar_to_str (void *b, char *s)
     if (*(int *)b) strcpy(s, "true");
     else strcpy(s, "false");
 }
+
 #endif
 
 /* .................................................................. */
 
-#if defined(USE_GNOME)
+#ifdef GNOME2
 
 void write_rc (void) 
 {
@@ -969,12 +1037,105 @@ static void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
-#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+# if defined(HAVE_TRAMO) || defined (HAVE_X12A)
     set_tramo_x12a_dirs();
-#endif
-#ifdef ENABLE_NLS
+# endif
+# ifdef ENABLE_NLS
     set_lcnumeric();
-#endif
+# endif
+}
+
+#elif defined(USE_GNOME)
+
+void write_rc (void) 
+{
+    char key[MAXSTR];
+    char val[6];
+    int i = 0;
+
+    while (rc_vars[i].key != NULL) {
+	sprintf(key, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
+	if (rc_vars[i].type == 'B') {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    gnome_config_set_string(key, val);
+	} else {
+	    gnome_config_set_string(key, rc_vars[i].var);
+	}
+	i++;
+    }
+    printfilelist(FILE_LIST_DATA, NULL);
+    printfilelist(FILE_LIST_SESSION, NULL);
+    printfilelist(FILE_LIST_SCRIPT, NULL);
+
+    gnome_config_sync();
+
+    set_paths(&paths, 0, 1);
+}
+
+static void read_rc (void) 
+{
+    int i = 0;
+    gchar *value = NULL;
+    char gpath[MAXSTR];
+
+    while (rc_vars[i].key != NULL) {
+	sprintf(gpath, "/gretl/%s/%s", 
+		rc_vars[i].description, 
+		rc_vars[i].key);
+	if ((value = gnome_config_get_string(gpath)) != NULL) {
+	    if (rc_vars[i].type == 'B')
+		str_to_boolvar(value, rc_vars[i].var);
+	    else
+		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+	    g_free(value);
+	}
+	i++;
+    }
+
+    /* initialize lists of recently opened files */
+    for (i=0; i<MAXRECENT; i++) { 
+	datalist[i][0] = 0;
+	sessionlist[i][0] = 0;
+	scriptlist[i][0] = 0;
+    }
+    /* get recent file lists */
+    for (i=0; i<MAXRECENT; i++) {
+	sprintf(gpath, "/gretl/recent data files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
+	    strcpy(datalist[i], value);
+	    g_free(value);
+	}
+	else break;
+    }    
+    for (i=0; i<MAXRECENT; i++) {
+	sprintf(gpath, "/gretl/recent session files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
+	    strcpy(sessionlist[i], value);
+	    g_free(value);
+	}
+	else break;
+    } 
+    for (i=0; i<MAXRECENT; i++) {
+	sprintf(gpath, "/gretl/recent script files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
+	    strcpy(scriptlist[i], value);
+	    g_free(value);
+	}
+	else break;
+    }
+
+    set_use_qr(useqr);
+    set_gp_colors();
+
+    set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+
+# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+    set_tramo_x12a_dirs();
+# endif
+
+# ifdef ENABLE_NLS
+    set_lcnumeric();
+# endif
 }
 
 /* end of gnome versions, now win32 */
@@ -1061,18 +1222,18 @@ void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1);
-#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+# if defined(HAVE_TRAMO) || defined (HAVE_X12A)
     set_tramo_x12a_dirs();
-#endif
+# endif
     set_fixed_font();
     set_app_font(NULL);
 
-#ifdef ENABLE_NLS
+# ifdef ENABLE_NLS
     set_lcnumeric();
-#endif
+# endif
 }
 
-#else /* end of win32 versions, now plain GTK */
+#else /* end of gnome and win32 versions, now plain GTK */
 
 void write_rc (void) 
 {
@@ -1188,18 +1349,20 @@ static void read_rc (void)
     set_gp_colors();
 
     set_paths(&paths, 0, 1);
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
+# if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
-#endif
-#ifdef ENABLE_NLS
+# endif
+# ifdef ENABLE_NLS
     set_lcnumeric();
-#endif
+# endif
 }
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */
 
-/* font selection: non-Windows version first */
+/* font selection: non-Windows, gtk-2.0 version first */
+
 #ifndef G_OS_WIN32
+# ifndef OLD_GTK
 
 static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 {
@@ -1220,20 +1383,20 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionHackDialog *fs)
 	write_rc();
     } 
 
-# ifdef PLOT_FONT_SELECTOR
+#  ifdef PLOT_FONT_SELECTOR
     else if (which == GRAPH_FONT_SELECTION) {
 	GtkWidget *fentry = g_object_get_data(G_OBJECT(fs), "font_entry");
 
 	gtk_entry_set_text(GTK_ENTRY(fentry), fontname);
     }
-# endif
+#  endif
 
-# ifndef USE_GNOME /* gnome handles the app font */
+#  ifndef USE_GNOME /* gnome handles the app font */
     else if (which == APP_FONT_SELECTION) {
 	set_app_font(fontname);
 	write_rc();
     }
-# endif
+#  endif
 
     g_free(fontname);
     gtk_widget_destroy(GTK_WIDGET(fs));
@@ -1251,9 +1414,9 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
     char *title = NULL;
     const char *fontname = NULL;
 
-# ifdef USE_GNOME
+#  ifdef USE_GNOME
     if (which == APP_FONT_SELECTION) return; /* shouldn't happen */
-# endif
+#  endif
 
     if (fontsel != NULL) {
 	if (!GTK_WIDGET_VISIBLE(fontsel)) gtk_widget_show (fontsel);
@@ -1266,17 +1429,17 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	filter = GTK_FONT_HACK_LATIN_MONO;
 	fontname = fixedfontname;
     }
-# ifndef USE_GNOME
+#  ifndef USE_GNOME
     else if (which == APP_FONT_SELECTION) {
 	title = _("Font for menus and labels");
 	fontname = appfontname;
     }
-# endif
-# ifdef PLOT_FONT_SELECTOR
+#  endif
+#  ifdef PLOT_FONT_SELECTOR
     else if (which == GRAPH_FONT_SELECTION) {
 	fontname = paths.pngfont;
     }
-# endif
+#  endif
 
     fontsel = gtk_font_selection_hack_dialog_new(title);
     gtk_font_selection_hack_dialog_set_filter
@@ -1285,11 +1448,11 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 	(GTK_FONT_SELECTION_HACK_DIALOG (fontsel), fontname); 
     g_object_set_data(G_OBJECT(fontsel), "which", GINT_TO_POINTER(which));
 
-# ifdef PLOT_FONT_SELECTOR
+#  ifdef PLOT_FONT_SELECTOR
     if (which == GRAPH_FONT_SELECTION) {
 	 g_object_set_data(G_OBJECT(fontsel), "font_entry", widget);
     }
-# endif
+#  endif
 
     gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 
@@ -1312,6 +1475,66 @@ void font_selector (gpointer data, guint which, GtkWidget *widget)
 
     gtk_main();
 }
+
+# else /* done gtk 2, now gtk 1.2 */
+
+static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
+{
+    gchar *fstring = gtk_font_selection_dialog_get_font_name(fs);
+
+    if (strlen(fstring)) {
+        strcpy(fixedfontname, fstring);
+        gdk_font_unref(fixed_font);
+        fixed_font = gdk_font_load(fixedfontname);
+        write_rc();
+    }
+    g_free(fstring);
+    gtk_widget_destroy(GTK_WIDGET (fs));
+}
+
+/* .................................................................. */
+
+void font_selector (gpointer data, guint u, GtkWidget *w)
+{
+    static GtkWidget *fontsel = NULL;
+    gchar *spacings[] = { "c", "m", NULL };
+
+    if (!fontsel) {
+	fontsel = gtk_font_selection_dialog_new 
+	    (_("Font for gretl output windows"));
+
+	gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
+
+	gtk_font_selection_dialog_set_filter(GTK_FONT_SELECTION_DIALOG (fontsel),
+					     GTK_FONT_FILTER_BASE, GTK_FONT_ALL,
+					     NULL, NULL, NULL, NULL, 
+					     spacings, NULL);
+
+	gtk_font_selection_dialog_set_font_name 
+	    (GTK_FONT_SELECTION_DIALOG (fontsel), fixedfontname);
+
+	gtk_signal_connect (GTK_OBJECT(fontsel), "destroy",
+			    GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+			    &fontsel);
+
+	gtk_signal_connect (GTK_OBJECT 
+			    (GTK_FONT_SELECTION_DIALOG 
+			     (fontsel)->ok_button),
+			    "clicked", GTK_SIGNAL_FUNC(font_selection_ok),
+			    GTK_FONT_SELECTION_DIALOG (fontsel));
+
+	gtk_signal_connect_object (GTK_OBJECT 
+				   (GTK_FONT_SELECTION_DIALOG 
+				    (fontsel)->cancel_button),
+				   "clicked", 
+				   GTK_SIGNAL_FUNC(gtk_widget_destroy),
+				   GTK_OBJECT (fontsel));
+    }
+    if (!GTK_WIDGET_VISIBLE (fontsel)) gtk_widget_show (fontsel);
+    else gtk_widget_destroy (fontsel);
+}
+
+# endif /* non-Windows, gtk version branches */
 
 #else /* end non-win32 font selection, start win32 */
 
@@ -1439,7 +1662,8 @@ static void clear_files_list (int filetype, char **filep)
 
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(itempath, "%s/%d. %s", fpath[pindex],
-		i+1, endbit(tmpname, filep[i], 0));
+		i+1, endbit(tmpname, filep[i], 0)); 
+	/* FIXME? gtk-1.2 had -1 above here */
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);
@@ -1570,7 +1794,7 @@ char *endbit (char *dest, char *src, int addscore)
 
 /* .................................................................. */
 
-#if defined(USE_GNOME)
+#ifdef GNOME2
 
 static void printfilelist (int filetype, FILE *fp)
      /* param fp is ignored */
@@ -1607,6 +1831,33 @@ static void printfilelist (int filetype, FILE *fp)
     g_free(key);
     g_slist_free(flist);
     g_object_unref(G_OBJECT(client));
+}
+
+#elif defined(USE_GNOME)
+
+static void printfilelist (int filetype, FILE *fp)
+     /* fp is ignored */
+{
+    int i;
+    char **filep;
+    char gpath[MAXLEN];
+    static char *section[] = {
+	"recent data files",
+	"recent session files",
+	"recent script files"
+    };
+
+    switch (filetype) {
+    case FILE_LIST_DATA: filep = datap; break;
+    case FILE_LIST_SESSION: filep = sessionp; break;
+    case FILE_LIST_SCRIPT: filep = scriptp; break;
+    default: return;
+    }
+
+    for (i=0; i<MAXRECENT; i++) {
+	sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
+	gnome_config_set_string(gpath, filep[i]);
+    }
 }
 
 #elif defined(G_OS_WIN32)
@@ -1769,7 +2020,11 @@ void add_files_to_menu (int filetype)
 
 static double scale_round (double val)
 {
+#ifndef OLD_GTK
     return val * 255.0 / 65535.0;
+#else
+    return val * 255.0;
+#endif
 }
 
 #define XPMROWS 19
@@ -1777,7 +2032,13 @@ static double scale_round (double val)
 
 static GtkWidget *get_image_for_color (const char *colstr)
 {
+#ifndef OLD_GTK
     GdkPixbuf *icon;
+#else
+    GdkPixmap *pixmap;
+    GdkBitmap *mask;
+    GtkStyle *style;
+#endif
     GtkWidget *image;
     static char **xpm = NULL;
     int i;
@@ -1815,8 +2076,17 @@ static GtkWidget *get_image_for_color (const char *colstr)
 	xpm[1][10+i] = colstr[1+i];
     }    
 
+#ifndef OLD_GTK
     icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
     image = gtk_image_new_from_pixbuf(icon);
+#else
+    style = gtk_widget_get_style(mdata->w);
+    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
+					  &mask, 
+					  &style->bg[GTK_STATE_NORMAL], 
+					  xpm);
+    image = gtk_pixmap_new(pixmap, mask);
+#endif
     
     return image;
 }
@@ -1825,21 +2095,39 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 {
     GtkWidget *csel;
     GtkWidget *color_button, *image;
+#ifndef OLD_GTK
     GdkColor color;
+#else
+    gdouble color[4];
+#endif
     char color_string[12];
     gint i;
 
+#ifndef OLD_GTK
     color_button = g_object_get_data(G_OBJECT(w), "color_button");
+#else
+    color_button = gtk_object_get_data(GTK_OBJECT(w), "color_button");
+#endif
 
     csel = GTK_COLOR_SELECTION_DIALOG(w)->colorsel;
-    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
 
+#ifndef OLD_GTK
+    gtk_color_selection_get_current_color(GTK_COLOR_SELECTION(csel), &color);
     sprintf(color_string, "x%02x%02x%02x",
 	    (guint) (scale_round (color.red)),
 	    (guint) (scale_round (color.green)),
 	    (guint) (scale_round (color.blue)));
 
     i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "colnum"));
+#else
+    gtk_color_selection_get_color(GTK_COLOR_SELECTION(csel), color);
+    sprintf(color_string, "x%02x%02x%02x",
+	    (guint) (scale_round (color[0])),
+	    (guint) (scale_round (color[1])),
+	    (guint) (scale_round (color[2])));
+
+    i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "colnum"));
+#endif
 
     set_gnuplot_pallette(i, color_string);
 
@@ -1848,7 +2136,11 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 	    get_gnuplot_pallette(1, 0),
 	    get_gnuplot_pallette(2, 0));
 
+#ifndef OLD_GTK
     image = g_object_get_data(G_OBJECT(color_button), "image");
+#else
+    image = gtk_object_get_data(GTK_OBJECT(color_button), "image");
+#endif
     gtk_widget_destroy(image);
     image = get_image_for_color(color_string);
     gtk_widget_show(image);
@@ -1875,11 +2167,66 @@ GtkWidget *color_patch_button (int colnum)
     } else {
 	button = gtk_button_new();
 	gtk_container_add(GTK_CONTAINER(button), image);
+#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(button), "image", image);
+#else
+	gtk_object_set_data(GTK_OBJECT(button), "image", image);
+#endif
     }	
 
     return button;
 }
+
+#ifdef OLD_GTK
+
+static int colstr_to_color (const char *colstr, gdouble *color)
+{
+    char s[3];
+    int ci, i;
+
+    for (i=0; i<3; i++) {
+	*s = '\0';
+	strncat(s, colstr + 2*i + 1, 2);
+	if (sscanf(s, "%x", &ci) == 1) {
+	    color[i] = ci / 255.0;
+	} else {
+	    color[i] = 0.0;
+	}
+    }
+
+    return 0;
+}
+
+void gnuplot_color_selector (GtkWidget *w, gpointer p)
+{
+    GtkWidget *cdlg;
+    GtkWidget *button;
+    gint i = GPOINTER_TO_INT(p);
+    gdouble color[4];
+
+    colstr_to_color(get_gnuplot_pallette(i, 0), color);
+
+    cdlg = gtk_color_selection_dialog_new("gretl color selection");
+
+    gtk_object_set_data(GTK_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+    gtk_object_set_data(GTK_OBJECT(cdlg), "color_button", w);
+
+    gtk_color_selection_set_color(GTK_COLOR_SELECTION
+				  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
+				  color);
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
+    gtk_signal_connect(GTK_OBJECT(button), "clicked", 
+		       GTK_SIGNAL_FUNC(color_select_callback), cdlg);
+
+    button = GTK_COLOR_SELECTION_DIALOG(cdlg)->cancel_button;
+    gtk_signal_connect(GTK_OBJECT(button), "clicked", 
+		       GTK_SIGNAL_FUNC(color_cancel), cdlg);
+    
+    gtk_widget_show(cdlg);
+}
+
+#else  /* !OLD_GTK */
 
 void gnuplot_color_selector (GtkWidget *w, gpointer p)
 {
@@ -1912,6 +2259,8 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     
     gtk_widget_show(cdlg);
 }
+
+#endif /* gtk versions */
 
 /* end graph color selection apparatus */
 

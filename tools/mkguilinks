@@ -16,6 +16,7 @@ for f in \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   session.c session.h \
+  settings.c settings.h \
   webget.c webget.h \
   library.c library.h ; do
     rm -f $f

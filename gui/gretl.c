@@ -26,6 +26,7 @@
 #include "ssheet.h"
 #include "webget.h"
 #include "database.h"
+#include "settings.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -50,7 +51,7 @@
 
 /* functions from other gretl GUI files */
 extern void free_modelspec (void);    /* lib.c */
-extern void allocate_fileptrs (void); /* settings.c */
+extern void init_fileptrs (void); /* settings.c */
 extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 extern void free_command_stack (void);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
@@ -744,7 +745,7 @@ int main (int argc, char *argv[])
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 
-    allocate_fileptrs();
+    init_fileptrs();
     add_files_to_menu(FILE_LIST_DATA);
     add_files_to_menu(FILE_LIST_SESSION);
     add_files_to_menu(FILE_LIST_SCRIPT);
@@ -1278,7 +1279,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     if (want_toolbar) make_toolbar(mdata->w, main_vbox);
 
     /* get a monospaced font for various windows */
-    load_fixed_font();
+    set_fixed_font();
 
     /* build popup menu for multiple selections */
     build_selection_popup();
