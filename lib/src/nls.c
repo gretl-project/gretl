@@ -717,13 +717,14 @@ c         the first n elements of the vector (q transpose)*fvec.
 static int lm_approximate (double *fvec, double *fjac)
 {
     integer info, m, n, ldfjac, one = 1;
-    integer maxfev = 100, mode = 1, nprint = 0, nfev = 0;
+    integer maxfev = 200, mode = 1, nprint = 0, nfev = 0;
     integer iflag = 0;
     integer *ipvt;
     doublereal ftol, xtol, gtol = 0.0;
     doublereal epsfcn = 0.0001, factor = 100.;
     doublereal *diag, *qtf;
     doublereal *wa1, *wa2, *wa3, *wa4;
+    double ess;
     int err = 0;
 
     xtol = ftol = sqrt(dpmpar_(&one));
@@ -776,15 +777,20 @@ static int lm_approximate (double *fvec, double *fjac)
     case 6:
     case 7:
     case 8:
-	pputs(prn, _("NLS failed to converge\n"));
+	pprintf(prn, _("NLS failed to converge after %d iterations\n"),
+		nlspec.iters);
 	err = 1;
 	break;
     default:
 	break;
     }
 
-    fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, fjac, 
-	    &ldfjac, &iflag, &epsfcn, wa4);
+    if (!err) {
+	ess = nlspec.ess;
+	fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, fjac, 
+		&ldfjac, &iflag, &epsfcn, wa4);
+	nlspec.ess = ess;
+    }
 
  nls_cleanup:
     free(diag);
