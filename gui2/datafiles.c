@@ -332,7 +332,7 @@ static int parse_db_list_line (char *line, char *fname, time_t *date)
     int i;
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
-	       mon, &day, hrs, &yr, fname) == 5) {
+	       mon, &day, hrs, &yr, fname) != 5) {
 	return 1;
     }
 
