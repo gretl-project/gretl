@@ -321,7 +321,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int ldepvar = 0;
-    int xrobust = 0;
     double *xpy;
     MODEL mdl;
 
@@ -340,8 +339,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
     }
-
-    xrobust = (opts & OPT_R) && !(pdinfo->time_series);
 
     gretl_model_init(&mdl, pdinfo);
 
@@ -445,7 +442,11 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (*s && *s != '0') set_use_qr(1);
     }
 
-    if (xrobust || (use_qr && !(opts & OPT_C))) { 
+    if (dataset_is_time_series(pdinfo)) {
+	opts |= OPT_T;
+    }
+
+    if ((opts & OPT_R) || (use_qr && !(opts & OPT_C))) { 
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
     } else {

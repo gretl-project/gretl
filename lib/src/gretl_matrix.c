@@ -26,6 +26,8 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 #define mdx(a,i,j)   ((j)*(a)->rows+(i))
 #define mdxtr(a,i,j) ((i)*(a)->rows+(j))
 
+static int packed_idx (int nrows, int i, int j);
+
 /* ....................................................... */
 
 static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
@@ -101,10 +103,10 @@ gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
 
 /* ....................................................... */
 
-gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
+static gretl_matrix *gretl_matrix_copy_mod (gretl_matrix *m, int mod)
 {
     gretl_matrix *c;
-    int i, n;
+    int i, j, n;
 
     if (m->packed) {
 	n = (m->rows * m->rows + m->rows) / 2;
@@ -127,11 +129,30 @@ gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
 
     c->packed = m->packed;
 
-    for (i=0; i<n; i++) {
-	c->val[i] = m->val[i];
+    if (mod == GRETL_MOD_TRANSPOSE) {
+	for (i=0; i<m->rows; i++) {
+	    for (j=0; j<m->cols; j++) {
+		if (m->packed) { 
+		    c->val[packed_idx(m->rows, i, j)] = 
+			m->val[packed_idx(m->rows, j, i)];
+		} else {
+		    c->val[mdx(m, i, j)] = 
+			m->val[mdx(m, j, i)];
+		}
+	    }
+	}
+    } else { /* not transposing */
+	for (i=0; i<n; i++) {
+	    c->val[i] = m->val[i];
+	}
     }
 
     return c;
+}
+
+gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
+{
+    return gretl_matrix_copy_mod(m, GRETL_MOD_NONE);
 }
 
 /* ....................................................... */
@@ -163,8 +184,7 @@ void gretl_matrix_zero (gretl_matrix *m)
 
 /* ....................................................... */
 
-void 
-gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
+void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 {
     int i, n;
 
@@ -181,8 +201,7 @@ gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x)
 
 /* ....................................................... */
 
-void 
-gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
+void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x)
 {
     int i, n;
 
@@ -246,6 +265,29 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     
     for (i=0; i<n; i++) targ->val[i] += src->val[i];
 
+    return GRETL_MATRIX_OK;
+}
+
+/* ....................................................... */
+
+int gretl_matrix_add_self_transpose (gretl_matrix *m)
+{
+    gretl_matrix *tmp;
+
+    if (m->rows != m->cols) {
+	fputs("gretl_matrix_add_self_transpose: matrix must be square\n", 
+	      stderr);
+	return GRETL_MATRIX_ERR;
+    }
+
+    tmp = gretl_matrix_copy_mod(m, GRETL_MOD_TRANSPOSE);
+    if (tmp == NULL) {
+	return GRETL_MATRIX_ERR;
+    }
+    
+    gretl_matrix_add_to(m, tmp);
+    gretl_matrix_free(tmp);
+    
     return GRETL_MATRIX_OK;
 }
 
