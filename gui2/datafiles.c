@@ -318,18 +318,23 @@ static void get_local_status (char *fname, char *status, time_t remtime)
 
 /* ........................................................... */
 
-static int process_line (char *line, char *fname, time_t *date)
+static int parse_db_list_line (char *line, char *fname, time_t *date)
 {
     char mon[4], hrs[9];
     int day, yr;
     struct tm mytime;
-    const char *months[] = {"Jan","Feb","Mar","Apr","May","Jun",
-			    "Jul","Aug","Sep","Oct","Nov","Dec"};
+    const char *months[] = {
+	"Jan", "Feb", "Mar", "Apr",
+	"May", "Jun", "Jul", "Aug",
+	"Sep", "Oct", "Nov", "Dec"
+    };
     int i;
 
     if (sscanf(line, "%*s%*s%3s%2d%8s%4d%16s", 
-	       mon, &day, hrs, &yr, fname) != 5)
+	       mon, &day, hrs, &yr, fname) == 5) {
 	return 1;
+    }
+
     hrs[2] = 0;
 
     mytime.tm_sec = 0;
@@ -341,9 +346,11 @@ static int process_line (char *line, char *fname, time_t *date)
     mytime.tm_year = yr - 1900;
     mytime.tm_mday = day;
     mytime.tm_mon = 0;
-    for (i=0; i<12; i++)
-	if (strcmp(mon, months[i]) == 0)
+    for (i=0; i<12; i++) {
+	if (strcmp(mon, months[i]) == 0) {
 	    mytime.tm_mon = i;
+	}
+    }
 
     *date = mktime(&mytime);
     return 0;
@@ -371,11 +378,11 @@ static gint populate_remote_db_list (windata_t *win)
     gint i;
     time_t remtime;
 
-    if ((getbuf = mymalloc(8192)) == NULL)
+    if ((getbuf = mymalloc(BUFSIZE)) == NULL)
 	return 1;
-    clear(getbuf, 8192);
+    memset(getbuf, 0, BUFSIZE);
 
-    errbuf[0] = '\0';
+    *errbuf = 0;
     err = retrieve_url(LIST_DBS, NULL, NULL, 0, &getbuf, errbuf);
 
     if (err) {
@@ -383,8 +390,9 @@ static gint populate_remote_db_list (windata_t *win)
 	    if (errbuf[strlen(errbuf)-1] == '\n')
 		errbuf[strlen(errbuf)-1] = '\0';
 	    errbox(errbuf);
-	} else 
+	} else {
 	    errbox(_("Error retrieving data from server"));
+	}
 	free(getbuf);
 	return err;
     }
@@ -398,7 +406,7 @@ static gint populate_remote_db_list (windata_t *win)
     getbufline(NULL, NULL, 1);
     while (getbufline(getbuf, line, 0)) {
 	if (strstr(line, "idx")) continue;
-	if (process_line(line, fname, &remtime))
+	if (parse_db_list_line(line, fname, &remtime))
 	    continue;
 	get_local_status(fname, status, remtime);
 	trim_ext(fname);

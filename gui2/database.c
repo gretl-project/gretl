@@ -1631,7 +1631,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     
     fprintf(stderr, "grab_remote_db(): dbname = '%s'\n", dbname);
 
-    ggzname = malloc(MAXLEN);
+    ggzname = mymalloc(MAXLEN);
     if (ggzname == NULL) return;
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
