@@ -971,14 +971,16 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    test->pvalue = tprob(hct, T-K-1);
 	}
 
+#ifdef ENABLE_NLS
+        setlocale(LC_NUMERIC, "C");
+#endif
 	/* plot with 95% confidence bands, if not batch mode */
-
 	if (prn->fp == NULL && gnuplot_init(ppaths, &fq) == 0) {
 	    fprintf(fq, "# CUSUM test\n");
 	    fprintf(fq, "set xlabel \"%s\"\n", I_("Observation"));
 	    fprintf(fq, "set xzeroaxis\n");
 	    fprintf(fq, "set title \"%s\"\n",
-		    I_("CUSUM plot with 95%% confidence band"));
+		    I_("CUSUM plot with 95% confidence band"));
 	    fprintf(fq, "set nokey\n");
 	    fprintf(fq, "plot %f+%f*x w l 1, \\\n", xx - K*yy, yy);
 	    fprintf(fq, "%f-%f*x w l 1, \\\n", -xx + K*yy, yy);
@@ -995,6 +997,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    fclose(fq);
 	    err = gnuplot_display(ppaths);
 	}
+#ifdef ENABLE_NLS
+        setlocale(LC_NUMERIC, "");
+#endif
     }
 
     /* restore sample */

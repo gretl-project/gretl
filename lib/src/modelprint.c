@@ -481,6 +481,12 @@ void get_test_stat_string (GRETLTEST *test, char *str, int format)
 	else
 	    sprintf(str, "Harvey-Collier t(%d) = %g", test->dfn, test->value);
 	break;
+    case GRETL_TEST_NORMAL_CHISQ:
+	if (tex)
+	    sprintf(str, "$\chi^2_2$ = %g", test->value); 
+	else
+	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
+	break;
     default:
 	*str = 0;
     }
@@ -520,6 +526,9 @@ void get_test_pval_string (GRETLTEST *test, char *str, int format)
 	else
 	    sprintf(str, "P(t(%d) > %g) = %g", 
 		    test->dfn, test->value, test->pvalue);
+	break;
+    case GRETL_TEST_NORMAL_CHISQ:
+	sprintf(str, "%g", test->pvalue);
 	break;
     default:
 	*str = 0;

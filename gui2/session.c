@@ -336,19 +336,22 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
     pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
 
-    if (session.nmodels)
+    if (session.nmodels) {
 	session.models = myrealloc(session.models, 
 				   (i + 1) * sizeof(MODEL *));
-    else
+    } else {
 	session.models = mymalloc(sizeof(MODEL *));
+    }
+
     if (session.models == NULL) return;
 
     session.nmodels += 1;
     session.models[i] = pmod;
 
     /* add model icon to session display */
-    if (icon_list != NULL)
-	session_add_icon(session.models[i], 'm', ICON_ADD_SINGLE); 
+    if (icon_list != NULL) {
+	session_add_icon(session.models[i], 'm', ICON_ADD_SINGLE);
+    }
 
     buf = g_strdup_printf(_("%s saved"), pmod->name);
     infobox(buf);
@@ -357,8 +360,9 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     session_changed(1);
 
     /* close model window */
-    if (close)
+    if (close) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+    }
 }
 
 /* ........................................................... */

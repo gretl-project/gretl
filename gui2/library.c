@@ -1401,8 +1401,9 @@ static void do_chow_cusum (gpointer data, int code)
     if (code == CHOW) {
 	ddata = (dialog_t *) data;
 	mydata = ddata->data;
-    } else
+    } else {
 	mydata = (windata_t *) data;
+    }
 
     pmod = mydata->data;
     if (pmod->ci != OLS) {
@@ -1415,26 +1416,33 @@ static void do_chow_cusum (gpointer data, int code)
 	if (*edttext == '\0') return;
 	clear(line, MAXLEN);
 	sprintf(line, "chow %s", edttext);
-    } else 
+    } else {
 	strcpy(line, "cusum");
+    }
 
     if (bufopen(&prn)) return;
 
-    if (code == CHOW)
+    if (code == CHOW) {
 	err = chow_test(line, pmod, &Z, datainfo, prn, &test);
-    else
+    } else {
 	err = cusum_test(pmod, &Z, datainfo, prn, &paths, &test);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } 
+    } else if (code == CUSUM) {
+	register_graph();
+    }
 
-    if (add_test_to_model(&test, pmod) == 0)
+    if (add_test_to_model(&test, pmod) == 0) {
 	print_test_to_window(&test, mydata->w);
+    }
 
-    if (check_cmd(line) || model_cmd_init(line, pmod->ID))
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) {
 	return;
+    }
 
     view_buffer(prn, 78, 400, (code == CHOW)?
 		_("gretl: Chow test output"): _("gretl: CUSUM test output"),
@@ -2096,7 +2104,7 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
     strcpy(test->type, _("Test for normality of residual"));
     strcpy(test->h_0, _("error is normally distributed"));
-    test->teststat = GRETL_TEST_CHISQ;
+    test->teststat = GRETL_TEST_NORMAL_CHISQ;
     test->value = freq->chisqu;
     test->dfn = 2;
     test->pvalue = chisq(freq->chisqu, 2);
@@ -2128,8 +2136,9 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     
     normal_test(&test, freq);
 
-    if (add_test_to_model(&test, pmod) == 0)
+    if (add_test_to_model(&test, pmod) == 0) {
 	print_test_to_window(&test, mydata->w);
+    }
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
@@ -3208,10 +3217,11 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	return;
     }
 
-    if (prn_code)
+    if (prn_code) {
 	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
-    else 
+    } else {
 	err = tabprint(pmod, datainfo, &paths, texfile, model_count, 1);
+    }
 	
     if (err) {
 	errbox(_("Couldn't open tex file for writing"));

@@ -286,21 +286,30 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     int i = session.nmodels;
     char buf[24];
 
-    if (pmod->name) return;
-    if ((pmod->name = mymalloc(24)) == NULL) return;
-    sprintf(pmod->name, "%s %d", _("Model"), pmod->ID);
+    for (i=0; i<session.nmodels; i++) {
+	if (session.models[i] == pmod) {
+	    infobox(_("Model is already saved"));
+	    return;
+	}
+    }
 
-    if (session.nmodels)
+    pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
+
+    if (session.nmodels) {
 	session.models = myrealloc(session.models, 
 				   (i + 1) * sizeof(MODEL *));
-    else
+    } else {
 	session.models = mymalloc(sizeof(MODEL *));
+    }
+
     if (session.models == NULL) return;
 
     session.nmodels += 1;
     session.models[i] = pmod;
-    if (iconview != NULL)
+
+    if (iconview != NULL) {
 	session_add_object(session.models[i], 'm'); 
+    }
 
     sprintf(buf, _("%s saved"), pmod->name);
     infobox(buf);
@@ -308,8 +317,9 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     session_changed(1);
 
     /* close model window */
-    if (close)
+    if (close) {
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+    }
 }
 
 /* ........................................................... */

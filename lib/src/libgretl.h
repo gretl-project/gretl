@@ -106,7 +106,7 @@ typedef enum {
 } progress_flags;
 
 typedef enum {
-    GRETL_TEST_CHISQ,
+    GRETL_TEST_NORMAL_CHISQ,
     GRETL_TEST_TR2,
     GRETL_TEST_F,
     GRETL_TEST_LMF,
