@@ -1302,7 +1302,11 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((cmd.opt & OPT_W) || !cmd.opt) {
 	    err = whites_test(models[0], &Z, datainfo, prn, NULL);
 	    if (err) errmsg(err, prn);
-	    /* need to take more action in case of err? */
+	}
+	/* groupwise heteroskedasticity */
+	if (cmd.opt & OPT_P) {
+	    err = groupwise_hetero_test(models[0], &Z, datainfo, prn);
+	    if (err) errmsg(err, prn);
 	}
 	break;
 

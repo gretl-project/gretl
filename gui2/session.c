@@ -60,7 +60,7 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 #include "../pixmaps/model_table.xpm"
 #include "../pixmaps/graph_page.xpm"
 
-/* #define SESSION_DEBUG */
+#define SESSION_DEBUG
 
 #define OBJNAMLEN   32
 #define SHOWNAMELEN 12
@@ -229,20 +229,12 @@ void set_session_saved (int val)
 
 /* ........................................................... */
 
-static int rebuild_init (void)
+static void rebuild_init (void)
 {
     rebuild.nmodels = 0;
 
-    rebuild.model_ID = malloc(sizeof *rebuild.model_ID);
-    if (rebuild.model_ID == NULL) return 1;
-
-    rebuild.model_name = malloc(sizeof *rebuild.model_name);
-    if (rebuild.model_name == NULL) return 1;
-
-    rebuild.model_name[0] = malloc(OBJNAMLEN);
-    if (rebuild.model_name[0] == NULL) return 1;
-
-    return 0;
+    rebuild.model_ID = NULL;
+    rebuild.model_name = NULL;
 }
 
 /* ........................................................... */
@@ -251,14 +243,17 @@ static void free_rebuild (void)
 {
     int i;
 
-    if (rebuild.model_ID) free(rebuild.model_ID);
+    if (rebuild.model_ID != NULL) {
+	free(rebuild.model_ID);
+	rebuild.model_ID = NULL;
+    }
 
-    if (rebuild.model_name) {
+    if (rebuild.model_name != NULL) {
 	for (i=0; i<rebuild.nmodels; i++) {
-	    if (rebuild.model_name[i])
-		free(rebuild.model_name[i]);
+	    free(rebuild.model_name[i]);
 	}
 	free(rebuild.model_name);
+	rebuild.model_name = NULL;
     }
 }
 
@@ -726,8 +721,10 @@ void do_open_session (GtkWidget *w, gpointer data)
     fprintf(stderr, I_("\nReading session file %s\n"), scriptfile);
 
     status = parse_savefile(scriptfile);
-    if (status == SAVEFILE_ERROR) return;
-    if (status == SAVEFILE_SCRIPT) {
+
+    if (status == SAVEFILE_ERROR) {
+	return;
+    } else if (status == SAVEFILE_SCRIPT) {
 	do_open_script();
 	return;
     }
@@ -764,11 +761,14 @@ void do_open_session (GtkWidget *w, gpointer data)
     }
 
     /* trash the practice files window that launched the query? */
-    if (fwin) gtk_widget_destroy(fwin->w);    
+    if (fwin != NULL) {
+	gtk_widget_destroy(fwin->w);   
+    } 
 
     /* sync gui with session */
     session_file_open = 1;
     session_menu_state(TRUE);
+
     view_session();
 }
 
@@ -967,9 +967,12 @@ static int check_session_graph (const char *line,
 	errbox(_("Warning: session file is corrupted"));
 	return 1;
     }
+
     len = strcspn(p, "\"");
 
-    if (len + 1 < lenmin) lenmin = len + 1;
+    if (len + 1 < lenmin) {
+	lenmin = len + 1;
+    }
 
     *name = malloc(lenmin);
     **name = 0;
@@ -983,6 +986,7 @@ static int check_session_graph (const char *line,
     }
 
     *fname = g_strdup(p);
+
     top_n_tail(*fname);
 
     fp = fopen(*fname, "r");
@@ -1008,6 +1012,52 @@ static int check_session_graph (const char *line,
 
 /* ........................................................... */
 
+static int allocate_model_rebuilder (int nmodels)
+{
+    int *IDs;
+    char **names;
+
+    IDs = realloc(rebuild.model_ID, nmodels * sizeof *IDs);
+    if (IDs == NULL) {
+	return E_ALLOC;
+    }
+
+    rebuild.model_ID = IDs;
+
+    names = realloc(rebuild.model_name, nmodels * sizeof *names);
+    if (names == NULL) {
+	return E_ALLOC;
+    }
+
+    rebuild.model_name = names;
+
+    names[nmodels - 1] = malloc(OBJNAMLEN);
+    if (names[nmodels - 1] == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
+static int allocate_session_graph (int ngraphs)
+{
+    GRAPHT **graphs;
+
+    graphs = realloc(session.graphs, ngraphs * sizeof *graphs);
+    if (graphs == NULL) {
+	return E_ALLOC;
+    }
+
+    session.graphs = graphs;
+
+    graphs[ngraphs - 1] = malloc(sizeof **graphs);
+    if (graphs[ngraphs - 1] == NULL) {
+	return E_ALLOC;
+    }
+
+    return 0;
+}
+
 int parse_savefile (char *fname)
 {
     FILE *fp;
@@ -1015,9 +1065,11 @@ int parse_savefile (char *fname)
     int id, i, j, k, n;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return SAVEFILE_ERROR;
+    if (fp == NULL) {
+	return SAVEFILE_ERROR;
+    }
 
-    /* find saved objects */
+    /* find any saved objects */
     k = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "(* saved objects:", 17) == 0) {
@@ -1025,24 +1077,26 @@ int parse_savefile (char *fname)
 	    break;
 	}
     }
-    if (!k) { /* no saved objects: just a regular script */
+
+    if (k == 0) { 
+	/* no saved objects: just a regular script */
 	fclose(fp);
 	return SAVEFILE_SCRIPT;
     }
 
-    if (rebuild_init()) {
-	errbox(_("Out of memory!"));
-	return SAVEFILE_ERROR;
-    }
+    rebuild_init();
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "parse_savefile (%s): got saved objects\n", fname);
 #endif
 
-    i = 0; /* models */
-    k = 0; /* graphs */
+    i = 0; /* number of models */
+    k = 0; /* number of graphs */
+
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "*)", 2) == 0) break;
+	if (strncmp(line, "*)", 2) == 0) {
+	    break;
+	}
 
 	chopstr(line);
 
@@ -1058,26 +1112,14 @@ int parse_savefile (char *fname)
 	    fprintf(stderr, "got a model to rebuild (%d)\n"
 		    "rebuild.nmodels now = %d\n", id, rebuild.nmodels);
 #endif
-	    if (i > 0) {
-		rebuild.model_ID = myrealloc(rebuild.model_ID,
-					     rebuild.nmodels * 
-					     sizeof *rebuild.model_ID);
-		rebuild.model_name = 
-		    myrealloc(rebuild.model_name,
-			      rebuild.nmodels * 
-			      sizeof *rebuild.model_name);
-		rebuild.model_name[i] = mymalloc(OBJNAMLEN);
-		if (rebuild.model_ID == NULL ||
-		    rebuild.model_name == NULL ||
-		    rebuild.model_name[i] == NULL) {
-		    fclose(fp);
-		    return SAVEFILE_ERROR;
-		}
+	    if (allocate_model_rebuilder(rebuild.nmodels)) {
+		fclose(fp);
+		return SAVEFILE_ERROR;
 	    }
 	    rebuild.model_ID[i] = id;
 	    tmp = strchr(line, '"') + 1;
 	    *rebuild.model_name[i] = '\0';
-	    strncat(rebuild.model_name[i], tmp, 31);
+	    strncat(rebuild.model_name[i], tmp, OBJNAMLEN - 1);
 	    n = strlen(rebuild.model_name[i]);
 	    for (j=n; j>0; j--) {
 		if (rebuild.model_name[i][j] == '"') {
@@ -1099,26 +1141,16 @@ int parse_savefile (char *fname)
 	    if (check_session_graph(line, &grname, &grfilename)) {
 		continue;
 	    }
+
 	    session.ngraphs += 1;
-	    if (k > 0) {
-		session.graphs = myrealloc(session.graphs,
-					   session.ngraphs * 
-					   sizeof *session.graphs);
-	    } else {
-		session.graphs = mymalloc(sizeof *session.graphs);
-	    }
-	    if (session.graphs == NULL) {
-		fclose(fp);
-		return SAVEFILE_ERROR;
-	    }
-	    session.graphs[k] = mymalloc(sizeof(GRAPHT));
-	    if (session.graphs[k] == NULL) {
+	    if (allocate_session_graph(session.ngraphs)) {
 		fclose(fp);
 		return SAVEFILE_ERROR;
 	    }
 
 	    strcpy((session.graphs[k])->name, grname);
 	    strcpy((session.graphs[k])->fname, grfilename);
+
 	    free(grname);
 	    free(grfilename);
 
@@ -1142,6 +1174,7 @@ int parse_savefile (char *fname)
 	    return SAVEFILE_ERROR;
 	}
     }
+
 #ifdef SESSION_DEBUG
     fprintf(stderr, "session.ngraphs = %d\n", session.ngraphs);
 #endif
@@ -1150,10 +1183,9 @@ int parse_savefile (char *fname)
     return SAVEFILE_SESSION;
 }
 
-/* ........................................................... */
+/* called on start-up when a "session" file is loaded */
 
 int recreate_session (char *fname)
-     /* called on start-up when a "session" file is loaded */
 {
     PRN *prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
@@ -1162,12 +1194,15 @@ int recreate_session (char *fname)
     print_session();
 #endif
 
-    if (execute_script(fname, NULL, prn, REBUILD_EXEC)) 
+    if (execute_script(fname, NULL, prn, REBUILD_EXEC)) {
 	errbox(_("Error recreating session"));
+    }
+
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: after execute_script()\n");
     print_session();
 #endif
+
     free_rebuild();
     gretl_print_destroy(prn);
 
@@ -1890,8 +1925,11 @@ static void batch_pack_icons (void)
 	    row += 2;
 	    gtk_table_resize(GTK_TABLE(icon_table), 2 * row, SESSION_VIEW_COLS);
 	}
-	if (icon_list->next == NULL) break;
-	else icon_list = icon_list->next;
+	if (icon_list->next == NULL) {
+	    break;
+	} else {
+	    icon_list = icon_list->next;
+	}
     }
 }
 

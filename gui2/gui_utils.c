@@ -90,6 +90,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
+static void panel_heteroskedasticity_menu (windata_t *vwin);
 
 #ifndef OLD_GTK
 static int maybe_recode_file (const char *fname);
@@ -2428,6 +2429,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
 
     if (dataset_is_panel(datainfo)) {
 	arch_menu_off(vwin->ifac);
+	panel_heteroskedasticity_menu(vwin);
     }
 }
 
@@ -2773,6 +2775,28 @@ static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
 	}
 	view_file(fname, 0, 0, 78, 350, VIEW_FILE);
     }
+}
+
+static void panel_heteroskedasticity_menu (windata_t *vwin)
+{
+    GtkItemFactoryEntry hitem;
+
+    gtk_item_factory_delete_item(vwin->ifac, "/Tests/heteroskedasticity");
+
+    hitem.accelerator = NULL;
+    hitem.item_type = NULL;
+
+    hitem.callback = do_lmtest;
+    hitem.callback_action = LMTEST_WHITE;
+    hitem.path = g_strdup(_("/Tests/heteroskedasticity (White's test)"));
+    gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
+    g_free(hitem.path);
+
+    hitem.callback = do_lmtest;
+    hitem.callback_action =  LMTEST_GROUPWISE;
+    hitem.path = g_strdup(_("/Tests/heteroskedasticity (groupwise)"));
+    gtk_item_factory_create_item(vwin->ifac, &hitem, vwin, 1);
+    g_free(hitem.path);
 }
 
 /* ........................................................... */

@@ -3486,3 +3486,28 @@ MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
 
     return wmod;
 }
+
+int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			   PRN *prn)
+{
+    MODEL wmod;
+    int err;
+
+    if (!dataset_is_panel(pdinfo)) {
+	strcpy(gretl_errmsg, _("This test is only available for panel data"));
+	return 1;
+    }
+
+    wmod = pooled(pmod->list, pZ, pdinfo, OPT_W | OPT_T | OPT_A, prn);
+    err = wmod.errcode;
+
+    if (!err) {
+	gretl_model_set_auxiliary(&wmod, AUX_GROUPWISE);
+	printmodel(&wmod, pdinfo, OPT_NONE, prn);
+    }
+
+    clear_model(&wmod);
+
+    return err;
+}
+

@@ -1306,7 +1306,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     PRN *prn;
-    char title[40];
+    char title[64];
     GRETLTEST test;
 
     if (bufopen(&prn)) return;
@@ -1325,6 +1325,16 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    if (add_test_to_model(pmod, &test) == 0) {
 		print_test_to_window(&test, mydata->w);
 	    }
+	}
+    } else if (action == LMTEST_GROUPWISE) {
+	strcpy(line, "lmtest --panel");
+	err = groupwise_hetero_test(pmod, &Z, datainfo, prn);
+	if (err) {
+	    gui_errmsg(err);
+	    gretl_print_destroy(prn);
+	    return;
+	} else {
+	    strcpy(title, _("gretl: groupwise heteroskedasticity"));
 	}
     } else {
 	int aux = (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
@@ -5714,8 +5724,14 @@ int gui_exec_line (char *line,
 	    err = whites_test(models[0], &Z, datainfo, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	}
-	if (rebuild)
+	/* groupwise heteroskedasticity */
+	if (cmd.opt & OPT_P) {
+	    err = groupwise_hetero_test(models[0], &Z, datainfo, outprn);
+	    if (err) errmsg(err, prn);
+	}
+	if (rebuild) {
 	    add_test_to_model(models[0], ptest);
+	}
 	break;
 
     case LOGISTIC:

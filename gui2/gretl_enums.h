@@ -60,6 +60,7 @@ enum extra_cmds {
     LMTEST_SQUARES,
     LMTEST_WHITE,
     LMTEST_BG,
+    LMTEST_GROUPWISE,
     GUI_CMD_MAX
 };
 

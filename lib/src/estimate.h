@@ -55,6 +55,9 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 MODEL pooled (int *list, double ***pZ, DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
+int groupwise_hetero_test (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			   PRN *prn);
+
 const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
 
 void tsls_free_data (const MODEL *pmod);

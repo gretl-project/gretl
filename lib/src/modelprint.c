@@ -451,35 +451,30 @@ static const char *aux_string (int aux, int format)
     if (aux == AUX_SQ) {
 	return N_("Auxiliary regression for non-linearity test "
 		 "(squared terms)");
-    }
-    else if (aux == AUX_LOG) {
+    } else if (aux == AUX_LOG) {
 	return N_("Auxiliary regression for non-linearity test "
 		 "(log terms)");
-    }
-    else if (aux == AUX_WHITE) {
+    } else if (aux == AUX_WHITE) {
 	return N_("White's test for heteroskedasticity");
-    }
-    else if (aux == AUX_CHOW) {
+    } else if (aux == AUX_CHOW) {
 	return N_("Augmented regression for Chow test");
-    }
-    else if (aux == AUX_COINT) {
+    } else if (aux == AUX_COINT) {
 	if (TEX_FORMAT(format)) return N_("Cointegrating regression -- ");
 	else return N_("Cointegrating regression - ");
-    }
-    else if (aux == AUX_ADF) {
+    } else if (aux == AUX_ADF) {
 	if (TEX_FORMAT(format)) return N_("Augmented Dickey--Fuller regression");
 	else return N_("Augmented Dickey-Fuller regression");
-    }
-    else if (aux == AUX_DF) {
+    } else if (aux == AUX_DF) {
 	if (TEX_FORMAT(format)) return N_("Dickey--Fuller regression");
 	else return N_("Dickey-Fuller regression");
-    }
-    else if (aux == AUX_KPSS) {
+    } else if (aux == AUX_KPSS) {
 	return N_("KPSS regression");
-    }
-    else if (aux == AUX_RESET) {
+    } else if (aux == AUX_RESET) {
 	return N_("Auxiliary regression for RESET specification test");
+    } else if (aux == AUX_GROUPWISE) {
+	return N_("Groupwise heteroskedasticity");
     }
+
     else return "";
 }
 
@@ -890,6 +885,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_DF:
     case AUX_KPSS:
     case AUX_RESET:
+    case AUX_GROUPWISE:
 	if (utf) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn->format)));
 	} else if (tex) {
@@ -1035,7 +1031,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     /* WLS on panel data */
-    else if (gretl_model_get_int(pmod, "unit_weights")) {
+    else if (gretl_model_get_int(pmod, "unit_weights") && !pmod->aux) {
 	if (tex) {
 	    pputs(prn, "\\\\\n");
 	}
@@ -1050,7 +1046,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     /* weight variable for WLS and ARCH */
-    else if (pmod->ci == WLS || pmod->ci == ARCH) {
+    else if ((pmod->ci == WLS && !pmod->aux) || pmod->ci == ARCH) {
 	if (tex) {
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	    pputs(prn, "\\\\\n");

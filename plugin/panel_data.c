@@ -74,16 +74,20 @@ static int haus_alloc (hausman_t *haus, int ns)
 
 /* .................................................................. */
 
-static void print_panel_coeff (MODEL *pmod, MODEL *panelmod,
-			       DATAINFO *pdinfo, int i, 
-			       PRN *prn)
+static void print_panel_coeff (const MODEL *pmod, 
+			       const MODEL *panelmod,
+			       const DATAINFO *pdinfo, 
+			       int i, PRN *prn)
 {
-    char numstr[18];
+    double tstat = panelmod->coeff[i] / panelmod->sderr[i];
+    char errstr[18];
+    char pvstr[18];
 
-    sprintf(numstr, "(%.5g)", panelmod->sderr[i]);
-    pprintf(prn, "%*s: %14.5g %15s\n", VNAMELEN,
+    sprintf(errstr, "(%.5g)", panelmod->sderr[i]);
+    sprintf(pvstr, "[%.5g]", tprob(tstat, panelmod->dfd));
+    pprintf(prn, "%*s: %14.5g %15s %15s\n", VNAMELEN,
 	    pdinfo->varname[pmod->list[i+2]],
-	    panelmod->coeff[i], numstr);
+	    panelmod->coeff[i], errstr, pvstr);
 }
 
 /* .................................................................. */
@@ -157,7 +161,7 @@ static double group_means_variance (MODEL *pmod,
 		}
 		start++;
 	    }
-	    (*groupZ)[k][s] = xx / (double) effT;
+	    (*groupZ)[k][s] = xx / (double) unit_obs[i];
 #ifdef PDEBUG
 	    fprintf(stderr, "Set groupZ[%d][%d] = %g\n", k, i, (*groupZ)[k][i]);
 #endif
@@ -269,6 +273,8 @@ static int bXb (hausman_t *haus)
 
 /* .................................................................. */
 
+#define MINOBS 1
+
 static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int nunits, int *unit_obs, int T,
 		    hausman_t *haus, PRN *prn) 
@@ -280,7 +286,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL lsdv;
 
     for (i=0; i<nunits; i++) {
-	if (unit_obs[i] > 1) {
+	if (unit_obs[i] >= MINOBS) {
 	    ndum++;
 	}
     }
@@ -310,7 +316,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (i=0; i<nunits; i++) {
 	int dv = oldv + j;
 
-	if (unit_obs[i] < 2) {
+	if (unit_obs[i] < MINOBS) {
 	    if (pdinfo->time_series == STACKED_TIME_SERIES) {
 		start += T;
 	    } else {
@@ -365,11 +371,10 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     } else {
 	var = lsdv.sigma * lsdv.sigma;
 	pputs(prn, 
-	      _("                          Fixed effects estimator\n"
-		"          allows for differing intercepts by cross-sectional "
-		"unit\n"
-		"         (slope standard errors in parentheses, a_i = "
-		"intercepts)\n\n"));
+	      _("Fixed effects estimator\n"
+		"allows for differing intercepts by cross-sectional unit\n"
+		"slope standard errors in parentheses, p-values in brackets\n"
+		"a_i = intercepts\n\n"));
 
 	/* skip the constant in this printing */
 	for (i=1; i<pmod->list[0] - 1; i++) {
@@ -379,23 +384,25 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
+	pputc(prn, '\n');
+
 	j = 0;
 	for (i=0; i<nunits; i++) {
 	    /* print per-unit intercept estimates */
 	    char dumstr[VNAMELEN];
-	    double x;
+	    double b;
 
-	    if (unit_obs[i] < 2) {
+	    if (unit_obs[i] < MINOBS) {
 		continue;
 	    }
 
 	    if (j == ndum) {
-		x = lsdv.coeff[0];
+		b = lsdv.coeff[0];
 	    } else {
-		x = lsdv.coeff[j + pmod->list[0] - 1] + lsdv.coeff[0];
+		b = lsdv.coeff[j + pmod->list[0] - 1] + lsdv.coeff[0];
 	    }
 	    sprintf(dumstr, "a_%d", i + 1);
-	    pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, x);
+	    pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, b);
 	    j++;
 	}
 
@@ -458,7 +465,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     relist[0] = pmod->list[0];
 
     /* create transformed variables: original data minus theta
-       times the appropriate group or unit mean 
+       times the appropriate group mean 
     */
 
     k = 1;
@@ -954,8 +961,8 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
 }
 
 static int
-groupwise_hetero_test (MODEL *pmod, double s2, const double *uvar, 
-		       int nunits, const int *unit_obs)
+ml_hetero_test (MODEL *pmod, double s2, const double *uvar, 
+		int nunits, const int *unit_obs)
 {
     GRETLTEST test;
     double x2, s2h = 0.0;
@@ -1049,6 +1056,10 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	wlsopt |= OPT_N; 
     } 
 
+    if (opt & OPT_A) {
+	wlsopt |= OPT_A;
+    }
+
     gretl_model_init(&mdl);
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
@@ -1079,10 +1090,10 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 
     if (opt & OPT_T) {
 	if (singleton_check(unit_obs, nunits)) {
-	    gretl_errmsg_set(_("Can't produce ML estimates: "
-			       "some units have only one observation"));
-	    mdl.errcode = E_DF;
-	    goto bailout;
+	    pprintf(prn, _("Can't produce ML estimates: "
+			   "some units have only one observation"));
+	    pputc(prn, '\n');
+	    opt ^= OPT_T;
 	}
     }
 
@@ -1174,13 +1185,15 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!mdl.errcode) {
-	set_model_id(&mdl);
+	if (!(opt & OPT_A)) {
+	    set_model_id(&mdl);
+	}
 	gretl_model_set_int(&mdl, "n_included_units", effn);
 	gretl_model_set_int(&mdl, "unit_weights", 1);
 	mdl.nwt = 0;
 	if (opt & OPT_T) {
 	    gretl_model_set_int(&mdl, "iters", iter);
-	    groupwise_hetero_test(&mdl, s2, uvar, nunits, unit_obs);
+	    ml_hetero_test(&mdl, s2, uvar, nunits, unit_obs);
 	    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
 	    mdl.lnL = real_ll(&mdl, uvar, nunits, unit_obs);
 	    if (opt & OPT_V) {
