@@ -164,19 +164,20 @@
 	<quote>Variable, define new variable</quote>.</para>
 
       <para>You may wish to establish a
-	<application>gretl</application> data set piece by piece, via
+	<application>gretl</application> data set piece by piece, by
 	incremental importation of data from other sources.  This is
-	supported as follows. When you have a datafile open already,
-	and then select the menu item <quote>File, Open data, import
-	  CSV&hellip;</quote> the program checks for conformability
-	between the existing data set and the new import.  If the data
-	frequency, starting observation and ending observation all
-	seem to match, the new data are merged into the data set.  If
-	not, an error message is printed and the import is refused. If
-	you want to import the new data <emphasis>in place
-	  of</emphasis> the existing data set, you can achieve this by
-	first selecting <quote>File, Clear data set</quote>.
-      </para>
+	supported via the <quote>File, Append data</quote> menu items.
+	<application>gretl</application> will check the new data for
+	conformability with the existing data set and, if everything
+	seems OK, will merge the data.  You can add new variables in
+	this way, provided the data frequency, starting observation
+	and series length all match the existing data set.  Or you can
+	append new observations for data series that are already
+	present; in this case the variable names must match up
+	correctly.  Note that by default (that is, if you choose
+	<quote>Open data</quote> rather than <quote>Append
+	  data</quote>), opening a new data file closes the current
+	one.</para>
 
     </sect2>
 

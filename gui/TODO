@@ -1,10 +1,5 @@
-when create data set by selection from database, or via the
-built-in spreadsheet:
+Why do we get "open <datafile>" twice in the command log
+when we start gretl with a datafile on the command line?
 
-prior to saving the data, the dataframe label should not
-just read "No datafile loaded" but something more informative,
-such as "Data modified" (?)
-
-once the data are _saved_, the name of the datafile should
-appear in the main gretl window, and the Session menu
-should be activated.
+Somehow the command line, "open <file>" is being run through
+cmd_init() twice (register_data() is invoked only once).

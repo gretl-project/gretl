@@ -707,10 +707,13 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     char startmajstr[5], startminstr[3];
     int startmaj, startmin;
 
-    if (dated_daily_data(pdinfo)) 
+    if (dated_daily_data(pdinfo)) {
 	return daily_obs_number(date, pdinfo);
+    }
 
-    if (check_date(date)) return -1;
+    if (check_date(date)) {
+	return -1;
+    }
 
     n = strlen(date);
     for (i=1; i<n; i++) {
@@ -738,7 +741,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     }
     if (!dotpos1 && !dotpos2) {
 	n = atoi(date) - atoi(pdinfo->stobs);
-	if (n < 0 || n > pdinfo->n) {
+	if (n < 0 || (pdinfo->n != -1 && n > pdinfo->n)) {
 	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	    return -1; 
 	}

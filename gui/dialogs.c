@@ -236,7 +236,14 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
     datainfo->sd0 = sd0;
+    datainfo->n = -1;
     datainfo->n = dateton(datainfo->endobs, datainfo) + 1; 
+
+    if (datainfo->n <= 0) {
+	errbox("Got zero-length data series");
+	return;
+    }
+
     datainfo->v = 2;
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;

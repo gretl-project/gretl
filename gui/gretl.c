@@ -714,18 +714,9 @@ int main (int argc, char *argv[])
 	    paths.datfile[0] = '\0';
 	    break;
 	}
-	if (ftype != GRETL_SCRIPT) {
-	    if (err) {
-		errmsg(err, prn);
-		exit(EXIT_FAILURE);
-	    }
-	    data_status = HAVE_DATA;
-	    /* FIXME need more here? */
-	    orig_vars = datainfo->v;
-	    /* record the data file in command log */
-	    sprintf(line, "open %s", paths.datfile);
-	    check_cmd(line);
-	    cmd_init(line);
+	if (ftype != GRETL_SCRIPT && err) {
+	    errmsg(err, prn);
+	    exit(EXIT_FAILURE);
 	}
 	gretl_print_destroy(prn);
     }

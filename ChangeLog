@@ -1,9 +1,10 @@
-version 0.992
+04/01/2002 version 0.992
 - bounds checking for critical values look-up; also add this
   as a regular gretlcli command, "critical"
 - add sanity checks for regression commands and ADF test
 - add importer plugins for Gnumeric and Excel workbooks
 - add "Append data" menu item
+- fix bug in "Create data set" functions
 
 03/20/2002 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr
