@@ -47,6 +47,24 @@ int numeric_check_model (MODEL *pmod,
 }
 #endif
 
+static void substitute_dollar_i (char *str)
+{
+    extern int genr_scalar_index (int opt, int put);
+    char *p = strstr(str, "$i");
+
+    if (p != NULL) {
+	char ins[8];
+	char *q;
+
+	q = malloc(strlen(p));
+	strcpy(q, p + 2);
+	sprintf(ins, "%d", genr_scalar_index(0, 0));
+	strcpy(p, ins);
+	strcpy(p + strlen(ins), q);
+	free(q);
+    }
+}
+
 static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
 			   PRN *cmdprn) 
      /* special version of command executor for loop construct */
@@ -58,6 +76,9 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
+
+    substitute_dollar_i(linecpy);
+
     getcmd(linecpy, datainfo, &command, &ignore, &Z, cmdprn);
 
     if (command.ci < 0) return 0;

@@ -207,7 +207,7 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 	}
     }
     else if (ploop->lvar) {
-    /* case of inequality between a var and a number */
+	/* case of inequality between a var and a number */
 	ploop->ntimes += 1;
 	if (ploop->ineq == GT) {
 	    if (Z[ploop->lvar][0] > ploop->rval) return 1;
@@ -218,7 +218,7 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 	}
     }
     else {
-    /* case of a simple count */
+	/* case of a simple count */
 	if (k < ploop->ntimes) return 1;
 	else return 0;
     }
