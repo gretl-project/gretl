@@ -739,7 +739,7 @@ int write_tx_data (char *fname, int varnum,
 		   char *errmsg)
 {
     int i, doit, err = 0;
-    char varname[9];
+    char varname[VNAMELEN];
     int varlist[4];
     FILE *fp = NULL;
     tx_request request;

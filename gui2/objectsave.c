@@ -28,6 +28,8 @@
 
 enum {
     OBJ_NONE,
+    OBJ_INVALID,
+    OBJ_NULL,
     OBJ_MODEL_SHOW,
     OBJ_MODEL_FREE,
     OBJ_MODEL_STAT,
@@ -66,7 +68,7 @@ static int match_object_command (const char *s, char sort)
 	if (strcmp(s, "free") == 0) return OBJ_TEXT_FREE; 
     }    
 
-    return OBJ_NONE;
+    return OBJ_INVALID;
 }
 
 static void print_model_stat (MODEL *pmod, const char *param, PRN *prn)
@@ -195,12 +197,15 @@ static int parse_object_request (const char *line,
 	if (*param) {
 	    pprintf(prn, _("%s: no such object\n"), word);
 	}
-	return OBJ_NONE;
+	return OBJ_NULL;
     }
 
     action = match_object_command(param, sort);
 
-    if (action != OBJ_NONE) {
+    if (action == OBJ_INVALID) {
+	pprintf(prn, _("command '%s' not recognized"), param);
+	pputc(prn, '\n');
+    } else {
 	strcpy(objname, word);
     } 
 
@@ -324,7 +329,7 @@ int saved_object_action (const char *line,
 			 const DATAINFO *pdinfo,
 			 PRN *prn)
 {
-    int action;
+    int code;
     char savename[MAXSAVENAME], param[9];
     void *ptr;
 
@@ -332,48 +337,49 @@ int saved_object_action (const char *line,
 	return 0;
     }
 
-    action = parse_object_request(line, savename, param, &ptr, prn);
+    code = parse_object_request(line, savename, param, &ptr, prn);
 
-    if (action == OBJ_NONE || ptr == NULL) return 0;
+    if (code == OBJ_NONE) return 0;
+    if (code == OBJ_NULL || code == OBJ_INVALID) return -1;
 
-    if (action == OBJ_MODEL_SHOW) {
+    if (code == OBJ_MODEL_SHOW) {
 	show_saved_model((MODEL *) ptr, pdinfo);
     } 
 
-    else if (action == OBJ_MODEL_FREE) {
+    else if (code == OBJ_MODEL_FREE) {
 	delete_model_from_session((MODEL *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
     }
 
-    else if (action == OBJ_MODEL_STAT) {
+    else if (code == OBJ_MODEL_STAT) {
 	print_model_stat((MODEL *) ptr, param, prn);
     }
 
-    if (action == OBJ_VAR_SHOW) {
+    if (code == OBJ_VAR_SHOW) {
 	show_saved_var((GRETL_VAR *) ptr, pdinfo);
     } 
 
-    else if (action == OBJ_VAR_FREE) {
+    else if (code == OBJ_VAR_FREE) {
 	delete_var_from_session((GRETL_VAR *) ptr);
 	pprintf(prn, _("Freed %s\n"), savename);
     }
 
-    else if (action == OBJ_GRAPH_SHOW) {
+    else if (code == OBJ_GRAPH_SHOW) {
 	GRAPHT *graph = (GRAPHT *) ptr;
 	display_session_graph_png(graph->fname);
     } 
 
-    else if (action == OBJ_GRAPH_FREE) {
+    else if (code == OBJ_GRAPH_FREE) {
 	/* FIXME */
 	dummy_call();
 	fprintf(stderr, "Got request to delete graph\n");
     }
 
-    else if (action == OBJ_TEXT_SHOW) {
+    else if (code == OBJ_TEXT_SHOW) {
 	display_text_by_name(savename);
     }
 
-    else if (action == OBJ_TEXT_FREE) {
+    else if (code == OBJ_TEXT_FREE) {
 	delete_text_from_session(savename);
 	pprintf(prn, _("Freed %s\n"), savename);
     }    

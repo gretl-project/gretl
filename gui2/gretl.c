@@ -1165,8 +1165,9 @@ void clear_sample_label (void)
 
 void set_sample_label (DATAINFO *pdinfo)
 {
-    char startdate[9], enddate[9], pdstr[10];
+    char startdate[OBSLEN], enddate[OBSLEN], pdstr[16];
     char labeltxt[80];
+    int offset = 0;
 
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
@@ -1208,9 +1209,14 @@ void set_sample_label (DATAINFO *pdinfo)
     flip(mdata->ifac, "/Sample/Restructure panel...", 
 	 pdinfo->time_series == STACKED_CROSS_SECTION);
 
+    if (strcmp(pdinfo->stobs, get_obs_string(0, pdinfo))) {
+	offset = 2;
+    }
+
     sprintf(labeltxt, _("%s: Full range %s - %s; current sample"
-			" %s - %s"), pdstr, pdinfo->stobs, pdinfo->endobs,
-	    startdate, enddate);
+			" %s - %s"), pdstr, 
+	    pdinfo->stobs + offset, pdinfo->endobs + offset,
+	    startdate + offset, enddate + offset);
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
     if (strlen(paths.datfile) > 2) {

@@ -1,6 +1,20 @@
 version 1.2.3
 - Fix bug: genr was broken for some special cases of
   repeated function calls
+- Fix bug: normal pvalues were being shown as zero for
+  large |z-scores| > 9.0
+- Daily data: construct a special plotting variable so
+  daily time-series can be graphed better; also allow
+  for 4-digit years in daily dates (YYYY/MM/DD) on input;
+  also fix "genr" so that dummies can be constructed
+  as in "genr dum = t < 1987:10:19" (note that the
+  slashes must be replaced by colons in this context)
+- Text objects: in scripts and the gui console, many
+  commands can now have their output diverted to a saved
+  object (e.g. "ADF <- adf 1 Ct").  As with models and
+  graphs, these objects appear in the Session icon
+  window, and they can be displayed and freed using
+  objectname.show, objectname.free
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

@@ -60,8 +60,8 @@ struct _SERIESINFO {
     char varname[16];
     char descrip[MAXLABEL];
     int nobs;
-    char stobs[9];
-    char endobs[9];
+    char stobs[OBSLEN];
+    char endobs[OBSLEN];
     int pd;
     int offset;
     int err;

@@ -4895,9 +4895,9 @@ int gui_exec_line (char *line,
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
-    if (saved_object_action(line, datainfo, prn)) {
-	return 0;
-    }
+    chk = saved_object_action(line, datainfo, prn);
+    if (chk == 1) return 0;   /* action was OK */
+    if (chk == -1) return 1;  /* action was faulty */
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));

@@ -47,7 +47,7 @@ typedef struct {
     double max, min;
     int n;
     double xbase;
-    char varname[9];
+    char varname[VNAMELEN];
     char *bool;
     OUTLIERS *outliers;
 } BOXPLOT;

@@ -1753,6 +1753,7 @@ int ready_for_command (const char *line)
 	"noecho", 
 	"critical", 
 	"seed", 
+	"genr",
 	NULL 
     };
     const char **p = ok_cmds;

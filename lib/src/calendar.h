@@ -31,6 +31,8 @@ int daily_obs_number (const char *date, const DATAINFO *pdinfo);
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);
 
+double get_dec_date (const char *s);
+
 char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
 
 int undo_repack_missing (double **Z, const DATAINFO *pdinfo, 

@@ -1282,15 +1282,8 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	    varheading(v1, v2, pdinfo, list, prn);
 	    if (pause && page_break(1, &lineno, 1)) return 0;
 	    lineno++;
-	    for (t=t1; t<=t2; t++)   {
-		if (pdinfo->markers) { /* data marker strings present */
-		    sprintf(line, "%8s ", pdinfo->S[t]);
-		} else {
-		    char tmp[OBSLEN];
-
-		    ntodate(tmp, t, pdinfo);
-		    sprintf(line, "%8s ", tmp);
-		} /* end print obs marker */
+	    for (t=t1; t<=t2; t++) {
+		sprintf(line, "%8s ", get_obs_string(t, pdinfo));
 		for (v=v1; v<=v2; v++) {
 		    xx = (*pZ)[list[v]][t];
 		    if (na(xx)) {

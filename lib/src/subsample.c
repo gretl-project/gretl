@@ -396,7 +396,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 		new_t1 = dateton(newstart, pdinfo);
 	    }
 	    if (*gretl_errmsg) return 1;
-	    if (new_t1 > pdinfo->n) {
+	    if (new_t1 < 0 || new_t1 > pdinfo->n) {
 		strcpy(gretl_errmsg, _("error in new starting obs"));
 		return 1;
 	    }
@@ -433,13 +433,13 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	    new_t2 = dateton(newstop, pdinfo);
 	}
 	if (*gretl_errmsg) return 1;
-	if (new_t2 >= pdinfo->n) {
+	if (new_t2 < 0 || new_t2 >= pdinfo->n) {
 	    strcpy(gretl_errmsg, _("error in new ending obs"));
 	    return 1;
 	}
     }
 
-    if (new_t1 > new_t2) {
+    if (new_t1 < 0 || new_t1 > new_t2) {
 	strcpy(gretl_errmsg, _("Invalid null sample"));
 	return 1;
     }

@@ -85,11 +85,17 @@ long get_epoch_day (const char *date)
 
     if (sscanf(date, "%d/%d/%d", &year, &month, &day) != 3)
 	return -1;
+
     if (year < 0 || month < 0 || day < 0) return -1;
     if (year > 9999 || month > 12 || day > 31) return -1;
-    year += (year < 50)? 2000 : 1900;
+
+    if (year < 100) {
+	year += (year < 50)? 2000 : 1900;
+    }
+
     temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
 	+ day_in_year(day, month, year);
+
     return temp;
 }
 
@@ -101,15 +107,16 @@ int daily_obs_number (const char *date, const DATAINFO *pdinfo)
     if (tmp == -1) return -1;
 
     tmp -= ed0;
-    if (pdinfo->pd == 7) {
-	return (int) tmp;
-    } else { /* 5-day week */
+
+    if (pdinfo->pd == 5) { /* 5-day week */
 	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
 	int wkends = (tmp + startday - 1) / 7;
 
 	tmp -= (2 * wkends);
 	return (int) tmp;
     }
+
+    return (int) tmp;
 }
 
 static int t_to_epoch_day (int t, long start)
@@ -126,10 +133,11 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     int add, day, mo = 0, modays = 0;
     long yrstart, dfind;
 
-    if (pdinfo->pd == 7) 
+    if (pdinfo->pd == 7) {
 	dfind = (long) pdinfo->sd0 + t;
-    else
+    } else {
 	dfind = t_to_epoch_day(t, (long) pdinfo->sd0);
+    }
 
     yr = 1 + (double) dfind / 365.248; 
     
@@ -148,9 +156,37 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 	if (modays + add < rem) modays += add;
 	else break;
     }
+
     day = rem - modays;
 
-    sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day);    
+    sprintf(str, "%04d/%02d/%02d", yr, mo, day);    
+}
+
+double get_dec_date (const char *s)
+{
+    char tmp[OBSLEN];
+    int yr, mo, day;
+    long ed0, edn, edt;
+    double dyr, frac;
+
+    if (sscanf(s, "%d/%d/%d", &yr, &mo, &day) != 3) {
+	return NADBL;
+    }
+
+    edt = get_epoch_day(s);
+    sprintf(tmp, "%04d/01/01", yr);
+    ed0 = get_epoch_day(tmp);
+    sprintf(tmp, "%04d/12/31", yr);
+    edn = get_epoch_day(tmp);
+
+    if (yr < 100) {
+	yr += (yr < 50)? 2000 : 1900;
+    }
+
+    dyr = yr;
+    frac = ((double) edt - ed0) / ((double) edn - ed0 + 1.0);
+
+    return dyr + frac;
 }
 
 /* The following functions have nothing to do with the "cal" program,

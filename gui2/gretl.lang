@@ -13,7 +13,6 @@
         	<end-regex>\*\)</end-regex>
 	</block-comment>
 
-
 	<string _name = "String" style = "String" end-at-line-end = "TRUE">
 		<start-regex>&quot;</start-regex>
 		<end-regex>&quot;</end-regex>

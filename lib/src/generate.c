@@ -1331,7 +1331,7 @@ static const char *get_func_word (int fnum)
 
 int get_function (const char *s)
 {
-    char word[9];
+    char word[VNAMELEN];
     const char *p;
     int i;
 
@@ -2510,6 +2510,11 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++) {
 	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
 	}
+	/* for daily date strings */
+	charsub(test, ':', '/');
+	for (t=0; t<pdinfo->n; t++) {
+	    if (!strcmp(test, pdinfo->S[t])) return t + 1;
+	}
     }
 
     if (pdinfo->time_series == TIME_SERIES) {
@@ -2524,10 +2529,10 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 
 static int dataset_var_index (const char *s)
 {
-    char test[9];
+    char test[VNAMELEN];
 
     *test = '\0';
-    strncat(test, s, 8);
+    strncat(test, s, VNAMELEN - 1);
     lower(test);
 
     if (!strcmp(test, "$nobs")) 
@@ -2540,10 +2545,10 @@ static int dataset_var_index (const char *s)
 
 static int model_variable_index (const char *s)
 {
-    char test[9];
+    char test[VNAMELEN];
 
     *test = '\0';
-    strncat(test, s, 8);
+    strncat(test, s, VNAMELEN - 1);
     lower(test);
 
     if (!strcmp(test, "$ess"))  
@@ -2741,7 +2746,7 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @period: string to identify periodicity: "annual", "qtrs",
- * "months", "time" or "index".
+ * "months", "decdate" (daily data), "time" or "index".
  *
  * Adds to the data set a special dummy variable for use in plotting.
  *
@@ -2786,6 +2791,18 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/24.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/24.0);
+	break;
+    case 'd':
+	strcpy(VARLABEL(pdinfo, vi), _("daily plotting variable"));
+	if (pdinfo->S != NULL) {
+	    for (t=0; t<n; t++) {
+		(*pZ)[vi][t] = get_dec_date(pdinfo->S[t]);
+	    }
+	} else {
+	    strcpy(pdinfo->varname[vi], "time");
+	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
+	    for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
+	}
 	break; 
     case 'i':
 	strcpy(VARLABEL(pdinfo, vi), _("index variable"));

@@ -605,6 +605,34 @@ int get_local_decpoint (void)
 }
 
 /**
+ * get_obs_string:
+ * @t: zero-based observation number.
+ * @pdinfo: pointer to dataset information.
+ *
+ * Returns: the observation string corresponding to @t.
+ */
+
+const char *get_obs_string (int t, const DATAINFO *pdinfo)
+{
+    static char ret[OBSLEN];
+
+    if (pdinfo->markers) { /* data marker strings present */
+	strcpy(ret, pdinfo->S[t]);
+    } else {
+	ntodate(ret, t, pdinfo);
+    }
+
+    if (strlen(ret) > 8 && isdigit(*ret) && isdigit(*(ret + 1))) {
+	char tmp[9];
+
+	strcpy(tmp, ret + 2);
+	strcpy(ret, tmp);
+    } 
+
+    return ret;
+}
+
+/**
  * obs_str_to_double:
  * @obs: string representation of observation number.
  *

@@ -1034,7 +1034,7 @@ void clear_sample_label (void)
 
 void set_sample_label (DATAINFO *pdinfo)
 {
-    char startdate[9], enddate[9], pdstr[10];
+    char startdate[OBSLEN], enddate[OBSLEN], pdstr[16];
     char labeltxt[80];
 
     ntodate(startdate, pdinfo->t1, pdinfo);

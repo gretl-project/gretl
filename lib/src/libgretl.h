@@ -70,7 +70,7 @@
 #define ERRLEN   256  /* max length of libgretl error messages */
 #define MAXDISP   20  /* max length of "display names" for variables */
 #define VNAMELEN   9  /* space allocated for var names (including termination) */
-#define OBSLEN     9  /* space allocated for obs strings (including termination) */
+#define OBSLEN    11  /* space allocated for obs strings (including termination) */
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -192,8 +192,8 @@ struct _DATAINFO {
     int pd;             /* periodicity or frequency of data */
     double sd0;         /* float representation of stobs */
     int t1, t2;         /* start and end of current sample */
-    char stobs[9];      /* string representation of starting obs (date) */
-    char endobs[9];     /* string representation of ending obs */
+    char stobs[OBSLEN];  /* string representation of starting obs (date) */
+    char endobs[OBSLEN]; /* string representation of ending obs */
     char **varname;     /* array of names of variables */
     VARINFO **varinfo;  /* array of specific info on vars */
     char markers;       /* whether (1) or not (0) the data file has
@@ -238,7 +238,7 @@ struct _PATHS {
 struct _GRETLTEST {
     char type[72];
     char h_0[64];
-    char param[9];
+    char param[VNAMELEN];
     unsigned char teststat;
     int dfn, dfd;
     double value;
@@ -370,7 +370,7 @@ struct _FITRESID {
     int t1, t2;
     int nobs;
     int err;
-    char depvar[9];
+    char depvar[VNAMELEN];
 };
 
 struct _CONFINT {

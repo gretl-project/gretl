@@ -195,21 +195,28 @@ static void prntdate (int nt, int n,
 
 /* ........................................................... */
 
-static int get_timevar (DATAINFO *pdinfo, char *timevar)
+static void get_timevar (DATAINFO *pdinfo, char *timevar)
 {
+    if (!dataset_is_time_series(pdinfo)) {
+	strcpy(timevar, "index");
+	return;
+    }
+
     switch (pdinfo->pd) {
     case 1: 
-	strcpy(timevar, "annual"); return 0;
+	strcpy(timevar, "annual"); break;
     case 4: 
 	strcpy(timevar, "qtrs"); break;
     case 12: 
 	strcpy(timevar, "months"); break;
     case 24: 
 	strcpy(timevar, "hrs"); break;
+    case 5:
+    case 7:
+	strcpy(timevar, "decdate"); break;
     default:
-	return -1;
+	break;
     }
-    return 1;
 }
 
 /* ........................................................ */
@@ -884,7 +891,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
     char s1[MAXDISP], s2[MAXDISP], xlabel[MAXDISP], withstring[8];
-    char depvar[9];
+    char depvar[VNAMELEN];
     int yscale = 0;   /* two y axis scales needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
     int pdist = 0;    /* plotting probability dist. */
@@ -941,15 +948,17 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	yscale = 1;
     }
 
-    if (strcmp(pdinfo->varname[list[lo]], "time") == 0) {
-	if (get_timevar(pdinfo, s2) >= 0) {
-	    int pv = plotvar(pZ, pdinfo, s2);
+    if (!strcmp(pdinfo->varname[list[lo]], "time")) {
+	int pv;
 
-	    if (pv > 0) list[lo] = pv;
-	    else {
-		if (fq != NULL) fclose(fq);
-		return E_ALLOC;
-	    }
+	get_timevar(pdinfo, s2);
+	pv = plotvar(pZ, pdinfo, s2);
+
+	if (pv > 0) {
+	    list[lo] = pv;
+	} else {
+	    if (fq != NULL) fclose(fq);
+	    return E_ALLOC;
 	}
 	*xlabel = 0;
     } else {
@@ -961,8 +970,9 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	ts_plot = 0;
     }
 
-    if (strcmp(pdinfo->varname[list[lo]], "qtrs") == 0 ||
-	strcmp(pdinfo->varname[list[lo]], "months") == 0) {
+    if (!strcmp(pdinfo->varname[list[lo]], "qtrs") ||
+	!strcmp(pdinfo->varname[list[lo]], "months") ||
+	!strcmp(pdinfo->varname[list[lo]], "decdate")) {
 	ts_plot = 1;
 	*xlabel = 0;
     }

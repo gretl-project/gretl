@@ -78,6 +78,8 @@ int reset_local_decpoint (void);
 
 int get_local_decpoint (void);
 
+const char *get_obs_string (int t, const DATAINFO *pdinfo);
+
 double obs_str_to_double (const char *obs);
 
 char *colonize_obs (char *obs);

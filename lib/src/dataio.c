@@ -490,6 +490,10 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	    }
 	}
     } else { /* ascii data file */
+	char sformat[8];
+
+	sprintf(sformat, "%%%ds", OBSLEN - 1);
+
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
 #endif
@@ -502,7 +506,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		ungetc(c, fp);
 	    }
 	    if (pdinfo->markers) {
-		fscanf(fp, "%8s", marker);
+		*marker = '\0';
+		fscanf(fp, sformat, marker);
 		strcpy(pdinfo->S[t], marker);
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
@@ -556,12 +561,14 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 	    }
 	}
     } else { /* ascii data file */
-	char *line, numstr[24];
+	char *line, numstr[24], sformat[8];
 	int llen = pdinfo->v * 32;
 	size_t offset;
 
 	line = malloc(llen);
 	if (line == NULL) return E_ALLOC;
+
+	sprintf(sformat, "%%%ds", OBSLEN - 1);
 
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
@@ -582,14 +589,14 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
 		continue;
 	    }
 	    if (pdinfo->markers) {
-		if (sscanf(line, "%8s", pdinfo->S[t]) != 1) {
+		if (sscanf(line, sformat, pdinfo->S[t]) != 1) {
 		   sprintf(gretl_errmsg, 
 			   _("WARNING: failed to read case marker for "
 			   "obs %d"), t + 1);
 		   err = 1;
 		   break;
 		}
-		pdinfo->S[t][8] = 0;
+		pdinfo->S[t][OBSLEN-1] = 0;
 		offset += strlen(pdinfo->S[t]) + 1;
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
@@ -701,7 +708,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     str[0] = 0;
     fscanf(fp, "%s", str);
     if (skipcomments(fp, str)) {
-        safecpy(pdinfo->varname[i], str, 8);
+        safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
 	if (check_varname(pdinfo->varname[i++])) 
 	    goto varname_error;
     } else {
@@ -712,7 +719,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
         fscanf(fp, "%s", str);
 	n = strlen(str);
 	if (str[n-1] != ';') {
-            safecpy(pdinfo->varname[i], str, 8);
+            safecpy(pdinfo->varname[i], str, VNAMELEN - 1);
 	    if (check_varname(pdinfo->varname[i++])) 
 		goto varname_error;
         } else {
@@ -1770,7 +1777,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     }
 
     /* print out basic info from the files read */
-    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
+    pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
@@ -1850,7 +1857,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     for (t=0; t<pdinfo->n; t++) (*pZ)[1][t] = (double) (t + 1);
 
     /* print out basic info */
-    pprintf(prn, I_("periodicity: %d, maxobs: %d, "
+    pprintf(prn, I_("periodicity: %d, maxobs: %d,\n"
 	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
@@ -2048,8 +2055,8 @@ static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
     char lbl1[OBSLEN], lbl2[OBSLEN];
 
     *lbl1 = *lbl2 = 0;
-    strncat(lbl1, pdinfo->S[0], 8);
-    strncat(lbl2, pdinfo->S[pdinfo->n - 1], 8);
+    strncat(lbl1, pdinfo->S[0], OBSLEN - 1);
+    strncat(lbl2, pdinfo->S[pdinfo->n - 1], OBSLEN - 1);
     n1 = strlen(lbl1);
     n2 = strlen(lbl2);
 
@@ -2069,7 +2076,7 @@ static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
     pputs(prn, M_("trying to parse row labels as dates...\n"));
 
     /* daily data? */
-    if (n1 == 8) {
+    if (n1 == 8 || n1 == 10) {
 	int yr1, mon1, day1;
 	int yr2, mon2, day2;
 
@@ -2692,7 +2699,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		goto csv_bailout;
 	    } else {
 		csvinfo->varname[nv][0] = 0;
-		strncat(csvinfo->varname[nv], csvstr, 8);
+		strncat(csvinfo->varname[nv], csvstr, VNAMELEN - 1);
 		if (isdigit(*csvstr)) {
 		    numcount++;
 		} else {
@@ -2758,7 +2765,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    csvstr[i] = 0;
 	    if (k == 0 && (blank_1 || obs_1)) {
 		csvinfo->S[t][0] = 0;
-		strncat(csvinfo->S[t], csvstr, 8);
+		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
 		if (csv_missval(csvstr, k, t+1, prn)) {
@@ -2856,7 +2863,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
  * @pdinfo: data information struct.
  * @fname: name of file containing case markers.
  * 
- * Read case markers (strings of 8 characters or less that identify
+ * Read case markers (strings of OBSLEN - 1 characters or less that identify
  * the observations) from a file, and associate tham with the 
  * current data set.
  * 
@@ -2867,7 +2874,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 int add_case_markers (DATAINFO *pdinfo, const char *fname)
 {
     FILE *fp;
-    char **S, marker[OBSLEN];
+    char **S, marker[OBSLEN], sformat[8];
     int i, t;
 
     fp = fopen(fname, "r");
@@ -2880,15 +2887,17 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	if (S[i] == NULL) return E_ALLOC; 
     }
 
+    sprintf(sformat, "%%%ds", OBSLEN - 1);
+
     for (t=0; t<pdinfo->n; t++) {
 	eatspace(fp);
-	if (fscanf(fp, "%8s", marker) != 1) {
+	if (fscanf(fp, sformat, marker) != 1) {
 	    for (i=0; i<pdinfo->n; i++) free (S[i]);
 	    free(S);
 	    fclose(fp);
 	    return 1;
 	}
-	marker[8] = '\0';
+	marker[OBSLEN-1] = '\0';
 	strcpy(S[t], marker);
     }
     fclose(fp);
@@ -3050,8 +3059,8 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 	case 2: /* raw data records types (ignored for now) */
 	    break;
 	case 3: /* variable info */
-	    strncpy(boxinfo->varname[realv], line+11, 8);
-	    boxinfo->varname[realv][8] = '\0';
+	    boxinfo->varname[realv][0] = '\0';
+	    strncat(boxinfo->varname[realv], line+11, VNAMELEN - 1);
 	    unspace(boxinfo->varname[realv]);
 	    lower(boxinfo->varname[realv]);
 	    pprintf(prn, M_(" variable %d: '%s'\n"), v+1, boxinfo->varname[realv]);
@@ -3624,7 +3633,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    tmp = xmlGetProp(cur, (UTF) "name");
 	    if (tmp) {
 		pdinfo->varname[i][0] = 0;
-		strncat(pdinfo->varname[i], tmp, 8);
+		strncat(pdinfo->varname[i], tmp, VNAMELEN - 1);
 		free(tmp);
 	    } else {
 		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
@@ -3771,8 +3780,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (pdinfo->markers) {
 		tmp = xmlGetProp(cur, (UTF) "label");
 		if (tmp) {
-		    strncpy(pdinfo->S[t], tmp, 8);
-		    pdinfo->S[t][8] = '\0';
+		    pdinfo->S[t][0] = '\0';
+		    strncat(pdinfo->S[t], tmp, OBSLEN - 1);
 		    free(tmp);
 		} else {
 		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
@@ -3971,8 +3980,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    err = 1;
 	    goto xmldata_bailout;
 	}
-	strncpy(pdinfo->stobs, tmp, 8);
-	pdinfo->stobs[8] = '\0';
+	pdinfo->stobs[0] = '\0';
+	strncat(pdinfo->stobs, tmp, OBSLEN - 1);
 	colonize_obs(pdinfo->stobs);
 	free(tmp);
     }
@@ -3995,8 +4004,8 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    err = 1;
 	    goto xmldata_bailout;
 	}
-	strncpy(pdinfo->endobs, tmp, 8);
-	pdinfo->endobs[8] = '\0';
+	pdinfo->endobs[0] = '\0';
+	strncat(pdinfo->endobs, tmp, OBSLEN - 1);
 	colonize_obs(pdinfo->endobs);
 	free(tmp);
     }
@@ -4053,9 +4062,10 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     }
 
     pprintf(prn, M_("\nRead datafile %s\n"), fname);
-    pprintf(prn, M_("periodicity: %d, maxobs: %d, "
-		    "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
+    pprintf(prn, M_("periodicity: %d, maxobs: %d,\n"
+		    "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	    pdinfo->stobs, pdinfo->endobs);
+    pputc(prn, '\n');
 
  xmldata_bailout:
 

@@ -18,7 +18,7 @@
  */
 
 typedef struct {
-    char varname[9];              /* for ID purposes */
+    char varname[VNAMELEN];       /* for ID purposes */
     int numbins;                  /* number of bins or intervals */
     double xbar, sdx;             /* mean and std dev of variable */
     double *midpt, *endpt;        /* arrays of midpoints and endpoints

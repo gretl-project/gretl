@@ -94,7 +94,7 @@ static void set_locator_label (spreadsheet *sheet, GtkTreePath *path,
     GtkTreeIter iter;
     gchar *row_label;
     const gchar *col_label;
-    char tmp[9];
+    char tmp[VNAMELEN];
 
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, 0, &row_label, -1);
@@ -375,7 +375,7 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
 {
     spreadsheet *sheet = (spreadsheet *) ddata->data;
     const gchar *buf;
-    char varname[9];
+    char varname[VNAMELEN];
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
 
@@ -383,7 +383,7 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
     if (validate_varname(buf)) return;
 
     *varname = 0;
-    strncat(varname, buf, 8);
+    strncat(varname, buf, VNAMELEN - 1);
 
     close_dialog(ddata);
 
@@ -398,13 +398,13 @@ static void name_new_obs (GtkWidget *widget, dialog_t *ddata)
 {
     spreadsheet *sheet = (spreadsheet *) ddata->data;
     const gchar *buf;
-    char obsmarker[9];
+    char obsmarker[OBSLEN];
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
 
     *obsmarker = 0;
-    strncat(obsmarker, buf, 8);
+    strncat(obsmarker, buf, OBSLEN - 1);
 
     close_dialog(ddata);
     real_add_new_obs(sheet, obsmarker);
