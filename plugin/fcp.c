@@ -24,12 +24,12 @@
 #include "libset.h"
 #include "fcp.h"
 
-/* #define FDEBUG  */
+#undef FDEBUG
 
 #define NLL    50   /* number of iterative results to store */
 #define ABNUM   4   /* max number of GARCH lags */
 
-#define LOG_SQRT_2_PI 0.9189385332056725
+#define LN_SQRT_2_PI  0.9189385332056725
 #define SMALL_HT      1.0e-7 
 
 int global_np;
@@ -191,7 +191,7 @@ static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
 
 static void vs_free (double **dhdp, int np, double **g, int nrc, 
 		     double *h, double *param, double *aux3, double *svc5,
-		     double *c, double *aux, double *vc5,
+		     double *c, double *aux, double *vcv,
 		     double *parpre, double **partrc)
 {
     free_2d_array(dhdp, np);
@@ -203,7 +203,7 @@ static void vs_free (double **dhdp, int np, double **g, int nrc,
     free(svc5);
     free(c);
     free(aux);
-    free(vc5);
+    free(vcv);
     free(parpre);
 }
 
@@ -722,6 +722,7 @@ int garch_estimate (int t1, int t2, int nobs,
     if (!err) {
 	double sderr;
 
+	/* build the desired VCV variant */
 	err = make_garch_vcv(t1, t2, X, nx,
 			     yhat, y, c, nc, 
 			     res2, res, 
@@ -733,6 +734,7 @@ int garch_estimate (int t1, int t2, int nobs,
 			     robust);
 
 	if (!err) {
+	    /* transcribe coefficients and standard errors */
 	    for (i = 0; i < nparam; ++i) {
 		if (vcv[vix(i,i)] > 0.0) {
 		    sderr = sqrt(vcv[vix(i,i)]);
@@ -752,10 +754,10 @@ int garch_estimate (int t1, int t2, int nobs,
     return err;
 }
 
-/* compute the log-likelihood function.
+/* Compute the log-likelihood function.
    parameters are passed in the param(nparam) vector
    a0, alfa and beta get extracted from param in garch_ll.
-   res, res2 and ht must be computed inside valunc.
+   res, res2 and ht must be computed inside garch_ll;
    res2 holds squared residuals.
 */
 
@@ -794,35 +796,28 @@ garch_ll (double *c, int nc, double *res2,
 #endif	
     }
 
-    /* computes residuals etc. in the real estimation period */
-
+    /* Computes residuals etc. over the real estimation period */
     copy_coeff(c, nc, b);
-
-    for (t = t1; t <= t2; ++t) {
-	yhat[t] = get_yhat(X, nx, t, b);
-    }
-
     uncvar = 0.0;
     for (t = t1; t <= t2; ++t) {
+	yhat[t] = get_yhat(X, nx, t, b);
 	res[t] = y[t] - yhat[t];
 	res2[t] = res[t] * res[t];
 	uncvar += res2[t];
     }
-
-#ifdef FDEBUG
-    fprintf(stderr, "uncvar = %.9g/%d = %.9g\n", uncvar, n,
-	    uncvar / n);
-#endif
     uncvar /= n;
 
+#ifdef FDEBUG
+    fprintf(stderr, "uncvar = %.9g (T=%d)\n", uncvar, n);
+#endif
+
     /* 
-       We use sample unconditional variance as starting value 
-       (at time 0, -1, -2, etc.) for squared residuals and ht;
-       We use 0 as starting value for residuals.
+       We use sample unconditional variance as the starting value 
+       (at time 0, -1, -2, etc.) for the squared residuals and ht;
+       we use 0 as the starting value for residuals.
     */
 
     lag = (p > q)? p : q;
-
     for (t = t1-lag; t < t1; ++t) { 
 	res[t] = 0.0;
 	res2[t] = h[t] = uncvar;
@@ -830,46 +825,43 @@ garch_ll (double *c, int nc, double *res2,
 
     for (t = t1; t <= t2; ++t) {
 	h[t] = *a0;
-
 	for (i = 1; i <= q; ++i) {
 	    h[t] += res2[t-i] * alfa[i-1];
 	}
-
 	for (i = 1; i <= p; ++i) {
 	    h[t] += h[t-i] * beta[i-1];
 	}
-
-	/* arbitrario */
+	/* arbitrary */
 	if (h[t] <= 0.0) h[t] = SMALL_HT;
     }
 
     ll = 0.0;
     for (t = t1; t <= t2; ++t) {
-	ll = ll - .5 * log(h[t]) - .5 * res2[t] / h[t] - LOG_SQRT_2_PI;
+	ll -= 0.5 * log(h[t]) + 0.5 * res2[t] / h[t] + LN_SQRT_2_PI;
     }
 
     return ll;
 } 
 
-static void check_ht (double *param, int nparam)
+static void check_ht (double *param, int np)
 {
     /*
-     This routine checks that the values of the parameters of the
-     conditional variance ht are in the set of the admissible values.
-     If a0 is less or equal than zero it is set to 0.0000001.  If
-     alfa and beta are less than zero they are set to zero; also if
-     the sum of alfa and beta is greater than 1.0 alfa and beta are
-     normalized (divided by sum).
+     Check that the values of the parameters of the conditional
+     variance, ht, are in the set of the admissible values.  If a0 is
+     less or equal than zero it is set to SMALL_HT.  If alfa and beta
+     are less than zero they are set to zero; also if the sum of alfa
+     and beta is > 1.0, then alfa and beta are normalized (divided by
+     sum).
     */
 
     int i;
     double sum = 0.;
 
     if (param[0] <= 0.) {
-	param[0] = 1.0e-7;
+	param[0] = SMALL_HT;
     }
 
-    for (i = 1; i < nparam; ++i) {
+    for (i = 1; i < np; i++) {
 	if (param[i] < 0.) {
 	    param[i] = 0.0;
 	}
@@ -877,7 +869,7 @@ static void check_ht (double *param, int nparam)
     }
 
     if (sum > 1.0) {
-	for (i = 1; i < nparam; ++i) {
+	for (i = 1; i < np; ++i) {
 	    param[i] /= sum;
 	}
     }
@@ -930,13 +922,15 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 #endif
     }
 
-    /* begin computation of dhtdp wrt the parameters alfa and
-       beta; we start computing derivatives of starting values;
-       for ht starting values are obtained from unconditional 
-       variance of residuals
+    lag = (p > q)? p : q;
+
+    /* Begin computation of dhtdp wrt the parameters alfa and beta; we
+       start computing derivatives of starting values; for ht starting
+       values are obtained from the unconditional variance of the
+       residuals.
      */
 
-    for (k = 1; k <= p; k++) { /* FIXME index?? */
+    for (k = 1; k <= p; k++) { /* ? */
 	for (i = 0; i < nvparm; ++i) {
 	    dhdp[nc+i][t1-k] = 0.0;
 	    if (H != NULL) { /* hessian only */
@@ -947,33 +941,28 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* building matrix dhtdp, block relative to alfa and beta (eq. 21) */
+    /* Building matrix dhtdp, block relative to alfa and beta (eq. 21) */
 
     for (t = t1; t <= t2; ++t) {
 
-	/* filling in zt at time t (p. 315) */
-
+	/* filling in zt at time t */
 	zt[0] = 1.0;
-
 	for (i = 1; i <= q; ++i) {
 	    zt[i] = res2[t-i];
 	}
-
 	for (i = 1; i <= p; ++i) {
 	    zt[q+i] = h[t-i];
 	}
 
-	/* filling in dhtdp at time t (part relative to
-	   alfa and beta) (eq. 21 p. 316) */
+	/* Filling in dhtdp at time t (part relative to alfa and beta)
+	   (eq. 21) */
 
 	for (i = 0; i < nvparm; ++i) {
 	    dhdp[nc+i][t] = 0.0;
 	}	
-
 	for (i = 0; i < nvparm; ++i) {
 	    dhdp[nc+i][t] += zt[i];
 	}
-
 	for (i = 0; i < nvparm; ++i) {
 	    for (j = 1; j <= p; ++j) {
 		dhdp[nc+i][t] += dhdp[nc+i][t-j] * beta[j-1];
@@ -981,14 +970,18 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* building matrix dhtdp, block for coefficients (eq. 24); we use 
-       0 as starting value (time 0, -1, etc.) for the
-       derivatives of ht wrt the coefficients. We also use 0 as
-       starting values for the residuals (already done within valunc)
+    /* Building matrix dhtdp, block for coefficients (eq. 24); we use
+       0 as starting value (time 0, -1, etc.) for the derivatives of
+       ht wrt the coefficients. We also use 0 as starting values for
+       the residuals (already done within garch_ll).
     */
 
-    lag = (p > q)? p : q;
     n = t2 - t1 + 1;
+
+#ifdef FDEBUG
+    fprintf(stderr, "make vcv: lag=%d, nc=%d, nparam=%d\n",
+	    lag, nc, nparam);
+#endif
 
     for (t = t1-lag; t < t1; ++t) {
 	int s;
@@ -1007,27 +1000,37 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* initial values in dhdpdp are 2/t x'x and zero for off-diagonal 
-       blocks */
+    /* Initial values in dhdpdp (H) are 2/t x'x and zero for off-diagonal
+       blocks. */
 
     if (H != NULL) {
+#if 1
+	/* zero the whole matrix -- should not be needed? */
+	for (i=0; i<nparam; i++) {
+	    for (j=0; j<nparam; j++) {
+		for (k=0; k<=lag; k++) {
+		    H[i][j][k] = 0.0;
+		}
+	    }
+	}
+#endif
+
 	for (k = 0; k < lag; ++k) {
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nc; ++j) {
-		    H[i][j][k+1] = 0.; /* FIXME k or k+1? */
+		    H[i][j][k+1] = 0.; 
 		}
 	    }
 	    for (t = t1; t <= t2; ++t) {
 		for (i = 0; i < nc; ++i) {
 		    for (j = 0; j < nc; ++j) {
-			H[i][j][k+1] += 2.0 *  /* k or k+1? */
-			    g[i][t] * g[j][t] / n;
+			H[i][j][k+1] += 2.0 * g[i][t] * g[j][t] / n;
 		    }
 		}
 	    }
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nvparm; ++j) {
-		    H[i][nc+j][k+1] = 0.0; /* k or k+1? */
+		    H[i][nc+j][k+1] = 0.0; 
 		}
 	    }
 	}
@@ -1054,11 +1057,10 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* starting computation of gradient aux3 */
-
-    for (i = 0; i < nparam; ++i) {
+    /* Start computation of gradient aux3 */
+    for (i = 0; i < nparam; i++) {
 	aux3[i] = 0.0;
-	for (j=0; j<nparam; j++) {
+	for (j = 0; j < nparam; j++) {
 	    vcv[vix(i,j)] = 0.0;
 	}
     }
@@ -1068,10 +1070,9 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	double r2_h = res[t] * r_h;
 	double aa, bb;
 
-	/* first part relative to coefficients (eq. 22 p. 316) 
-	   typo: in the second term there's *ht instead of /ht 
+	/* 
+	   First part, relative to coefficients (eq. 22) 
  	*/
-
 	for (i = 0; i < nc; ++i) {
 	    aa = r_h * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2_h - 1.0);
 	    aux3[i] += aa;
@@ -1090,7 +1091,9 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    }
 	}
 
-	/* second part relative to alfa and beta (eq. 19 pag. 315) */
+	/* 
+	   Second part, relative to alfa and beta (eq. 19) 
+	*/
 	for (i = 0; i < nvparm; ++i) {
 	    int nci = nc + i;
 
@@ -1109,26 +1112,27 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 
     if (code == VCV_IM) {
 	for (t = t1; t <= t2; ++t) {
-	    /* part relative to the coefficients (eq. 23 p. 316)
-	       since we take the expected value, only the first two terms
-	       remain
+	    double ht2 = h[t] * h[t];
+
+	    /* Part relative to the coefficients (eq. 23).
+	       Since we take the expected value, only the first two terms
+	       remain.
 	    */
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nc; ++j) {
 		    vcv[vix(i,j)] = vcv[vix(i,j)] 
 			- g[i][t] * g[j][t] / h[t] 
-			- dhdp[i][t] * .5 * dhdp[j][t] / (h[t] * h[t]);
+			- .5 * dhdp[i][t] * dhdp[j][t] / ht2;
 		}
 	    }
 
-	    /* part relative to alfa and beta (eq. 20 p. 315) 
-	       since we take the expected value, only the second term
-	       remains
+	    /* Part relative to alfa and beta (eq. 20). 
+	       Since we take the expected value, only the second term
+	       remains.
 	    */
 	    for (i = nc; i < nparam; ++i) {
 		for (j = nc; j < nparam; ++j) {
-		    vcv[vix(i,j)] -= .5 * dhdp[i][t] * 
-			dhdp[j][t] / (h[t] * h[t]);
+		    vcv[vix(i,j)] -= .5 * dhdp[i][t] * dhdp[j][t] / ht2;
 		}
 	    }
 	}
@@ -1201,9 +1205,9 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     L90:
 
-	/* part relative to the coefficients (eq. 23 p. 316) 
-	   since we take the expected value, only the first two terms
-	   remain
+	/* Part relative to the coefficients (eq. 23). 
+	   Since we take the expected value, only the first two terms
+	   remain.
  	*/
 	for (i = 0; i < nc; ++i) {
 	    for (j = 0; j < nc; ++j) {
@@ -1218,13 +1222,13 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    }
 	}
 
-	/* part relative to alfa and beta (eq. 20 pag. 315) 
-	   since we take the expected value, only the second term
-	   remains
+	/* Part relative to alfa and beta (eq. 20). 
+	   Since we take the expected value, only the second term
+	   remains.
  	*/
 
-	/*  computation of dhdpdp at time t; goes to place #1 in the 
-	    third index
+	/*  Computation of dhdpdp at time t: goes to place #1 in the 
+	    third index.
 	*/
 	if (p > 0) {
 	    for (i = 0; i < nvparm; ++i) {
@@ -1240,7 +1244,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    for (k = 1; k <= p; ++k) {
 		for (i = 0; i < nvparm; ++i) {
 		    for (j = 0; j < nvparm; ++j) { 
-			/* FIXME uninitialized data */
+			/* FIXME uninitialized data? */
 			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
 #ifdef FDEBUG
 			if ((t==t1 || t==t2)) {
@@ -1286,9 +1290,21 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	for (k = 0; k < lag; ++k) { /* index, "lag", FIXME? */
 	    for (i = 0; i < nparam; ++i) {
 		for (j = 0; j < nparam; ++j) {
+		    /* FIXME: uninitialized data for some p,q combinations */
+#ifdef FDEBUG
+		    if (t<10) fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
+				      t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
+#endif
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
 		}
 	    }
+	}
+    }
+
+    /*  fill the bottom left mixed part */
+    for (i = 0; i < nc; ++i) {
+	for (j = 0; j < nvparm; ++j) {
+	    vcv[vix(nc+j, i)] = vcv[vix(i, nc+j)];
 	}
     }
 
@@ -1317,16 +1333,13 @@ garch_info_matrix (int t1, int t2,
     int i, j;
     double d, d0, d1, d2, ll2, d3;
     double ll3, d12, d31, d23, dd;
-    double di, ff, dm;
-    double ds;
+    double di, ff, dm, ds;
     int iv, nexp;
     double a1s, a2s, a3s;
     int it1, it2, it3, it4, it5;
-    double dac;
-    double d12s, dub, d23s, d31s;
-    int ier5;
-    double bigd, s_2;
-    double stre, s_1;
+    double d12s, dac, dub, d23s, d31s;
+    int err;
+    double s_1, s_2, stre, bigd;
     double cappa;
     int ncall;
     int nvparm;
@@ -1358,8 +1371,8 @@ garch_info_matrix (int t1, int t2,
 	      VCV_IM);
 
     /* invert the information matrix */
-    ier5 = invert(vcv, nparam);
-    if (ier5 != 0) {
+    err = invert(vcv, nparam);
+    if (err) {
 	fprintf(stderr, "matrix inversion failed\n");
     }
 
@@ -1712,17 +1725,17 @@ static void free_dhdpdp (double ***H, int np)
     free(H);
 }
 
-static double ***allocate_dhdpdp (int np, int nvp)
+static double ***allocate_dhdpdp (int np, int p, int q)
 {
     double ***H;
-    int i, j;
+    int i, j, lag = (p > q)? p : q;
 
     H = malloc(np * sizeof *H);
     
     for (i=0; i<np; i++) {
 	H[i] = malloc(np * sizeof **H);
 	for (j=0; j<np; j++) {
-	    H[i][j] = malloc(nvp * sizeof ***H);
+	    H[i][j] = malloc((lag + 1) * sizeof ***H);
 	}
     }
 
@@ -1748,9 +1761,8 @@ garch_full_hessian (int t1, int t2,
     double a1s, a2s, a3s;
     int it1, it2, it3, it4, it5;
     double dac, d12s, dub, d23s, d31s;
-    int ier5;
-    double bigd, s_2;
-    double stre, s_1;
+    int err;
+    double s_1, s_2, stre, bigd;
     double cappa;
     int lag;
     static double ll1 = 0.0, fs = 0.0;
@@ -1770,7 +1782,10 @@ garch_full_hessian (int t1, int t2,
 	return 1;
     } 
 
-    H = allocate_dhdpdp(nparam, q + p); /* is this right? */
+    /* Unsure about 3rd dimension of dhdpdp.  I think it must 
+       be: max(p,q) + 1 
+    */
+    H = allocate_dhdpdp(nparam, p, q); 
     if (H == NULL) {
 	free(gg);
 	free(step);
@@ -1789,16 +1804,9 @@ garch_full_hessian (int t1, int t2,
 	      dhdp, zt, H, vcv, 
 	      VCV_HESSIAN);
 
-    /*  fill the bottom left mixed part */
-    for (i = 0; i < nc; ++i) {
-	for (j = 0; j < nvparm; ++j) {
-	    vcv[vix(nc+j, i)] = vcv[vix(i, nc+j)];
-	}
-    }
-
     /* invert the Hessian */
-    ier5 = invert(vcv, nparam);
-    if (ier5 != 0) {
+    err = invert(vcv, nparam);
+    if (err) {
 	fprintf(stderr, "matrix inversion failed\n");
     }
 

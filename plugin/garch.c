@@ -29,8 +29,8 @@
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
 {
-    int q = list[1];
-    int p = list[2];
+    int p = list[1];
+    int q = list[2];
     int r = list[0] - 4;
     int i, j, np = 3 + p + q + r;
 
@@ -155,8 +155,6 @@ static int make_garch_dataset (const int *list, double **Z,
        up of pointers into the original dataset, Z. 
     */
 
-    printlist(list, "for make_garch_dataset");
-
     if (pad > 0) {
 	y = malloc(bign * sizeof *y);
 	if (y == NULL) return 1;
@@ -226,8 +224,8 @@ int do_fcp (const int *list, double **Z,
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int ncoeff = pmod->ncoeff;
-    int q = list[1];
-    int p = list[2];
+    int p = list[1];
+    int q = list[2];
     double *y = NULL;
     double **X = NULL;
     double *yhat = NULL, *amax = NULL; 
