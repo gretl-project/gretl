@@ -1003,7 +1003,7 @@ void change_sample (GtkWidget *widget, dialog_t *ddata)
 }
 /* ........................................................... */
 
-void bool_subsample (gpointer data, guint opt, GtkWidget *w)
+static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
      /* opt = 0     -- drop all obs with missing data values 
 	opt = 'o'   -- sample using dummy variable
 	opt = 'r'   -- sample using boolean expression
@@ -1013,7 +1013,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
     restore_sample();
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
-	return;
+	return 1;
 
     if (opt == 0)
 	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, 'o');
@@ -1021,7 +1021,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 	err = set_sample_dummy(line, &Z, &subZ, datainfo, subinfo, opt);
     if (err) {
 	gui_errmsg(err);
-	return;
+	return 1;
     }
 
     /* save the full data set for later use */
@@ -1036,6 +1036,15 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 	infobox(_("Sample now includes only complete observations"));
     else
 	infobox(_("Sub-sampling done"));
+
+    return 0;
+}
+
+/* ........................................................... */
+
+void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
+{
+    bool_subsample(data, opt, w);
 }
 
 /* ........................................................... */
@@ -1043,6 +1052,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf = NULL;
+    int err;
 
     buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
@@ -1051,8 +1061,10 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "smpl %s -r", buf); 
     if (verify_and_record_command(line)) return;
 
-    close_dialog(ddata);
-    bool_subsample(NULL, 'r', NULL);
+    err = bool_subsample(NULL, 'r', NULL);
+    if (!err) {
+	close_dialog(ddata);
+    }
 }
 
 /* ........................................................... */
@@ -1061,6 +1073,7 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf = NULL;
     char dumv[9];
+    int err;
 
     buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
@@ -1072,8 +1085,10 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "smpl %s -o", dumv);
     if (verify_and_record_command(line)) return;
 
-    close_dialog(ddata);    
-    bool_subsample(NULL, 'o', NULL);
+    err = bool_subsample(NULL, 'o', NULL);
+    if (!err) {
+	close_dialog(ddata); 
+    }   
 }
 
 /* ........................................................... */
@@ -3284,25 +3299,70 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 #ifndef G_OS_WIN32
 
 #include <signal.h>
+#include <errno.h>
+
+static int executable_exists (const char *fname)
+{
+    struct stat sbuf;
+    int ok = 0;
+
+    if (stat(fname, &sbuf) == 0) {
+	if (sbuf.st_mode & S_IXOTH) 
+	    ok = 1;
+	else if (getuid() == sbuf.st_uid &&
+		 (sbuf.st_mode & S_IXUSR)) 
+	    ok = 1;
+	else if (getgid() == sbuf.st_gid &&
+		 (sbuf.st_mode & S_IXGRP)) 
+	    ok = 1;
+    }
+
+    return ok;
+}
+
+static int mywhich (const char *prog)
+{
+    char test[FILENAME_MAX];
+    char *path, *p;
+    gchar *mypath;
+    int i, ret = 0;
+
+    path = getenv("PATH");
+    if (path == NULL) return 0;
+
+    mypath = g_strdup(path);
+    if (mypath == NULL) return 0;
+
+    for (i=0; ; i++) {
+	p = strtok((i)? NULL : mypath, ":");
+	if (p == NULL) break;
+	sprintf(test, "%s/%s", p, prog);
+	if (executable_exists(test)) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    g_free(mypath);
+
+    return ret;
+}
+
+/* ........................................................... */
 
 static int get_terminal (char *s)
 {
-    if (system("which xterm >/dev/null") == 0) {
+    if (mywhich("xterm")) {
 	strcpy(s, "xterm");
 	return 0;
     }
 
-    if (system("which rxvt >/dev/null") == 0) {
+    if (mywhich("rxvt")) {
 	strcpy(s, "rxvt");
 	return 0;
     }
 
-    if (system("which gnome-terminal >/dev/null") == 0) {
-	strcpy(s, "gnome-terminal");
-	return 0;
-    }    
-    
-    errbox(_("Couldn't find a usable terminal program"));
+    errbox(_("Couldn't find xterm or rxvt"));
     return 1;
 }
 
@@ -3340,38 +3400,32 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	create_child_process(cmdline, NULL);
 	g_free(cmdline);
 #else
-	pid_t pid;
-	char term[16];
+	char term[8];
 
 	if (get_terminal(term)) return;
+	else {
+	    GError *error = NULL;
+	    gchar *argv[] = { 
+		term, "+sb", "+ls", 
+		"-geometry", "40x4",
+		"-title", "gnuplot: type q to quit",
+		"-e", paths.gnuplot, paths.plotfile, "-",
+		NULL 
+	    };
+	    int ok;
 
-	signal(SIGCHLD, SIG_IGN);
-	pid = fork();
-	if (pid == -1) {
-	    errbox(_("Couldn't fork"));
-	    perror("fork");
-	    return;
-	} else if (pid == 0) {
-	    if (!strcmp(term, "xterm") || !strcmp(term, "rxvt")) {
-		execlp(term, term, "+sb", "+ls",
-		       "-geometry", "40x4", "-title",
-		       "gnuplot: type q to quit",
-		       "-e", paths.gnuplot, paths.plotfile, "-", 
-		       NULL);
+	    ok = g_spawn_async(NULL, /* working dir */
+			       argv,
+			       NULL, /* env */
+			       G_SPAWN_SEARCH_PATH,
+			       NULL, /* child_setup */
+			       NULL, /* user_data */
+			       NULL, /* child_pid ptr */
+			       &error);
+	    if (!ok) {
+		errbox(error->message);
+		g_error_free(error);
 	    }
-	    else if (!strcmp(term, "gnome-terminal")) {
-		gchar *gpt = g_strdup_printf("%s %s -", 
-					     paths.gnuplot,
-					     paths.plotfile);
-		execlp(term, term, "--nologin", 
-		       "--geometry", "40x4", "--title",
-		       "gnuplot: type q to quit",
-		       "--command", gpt, 
-		       NULL);
-		g_free(gpt);
-	    }
-	    perror("execlp");
-	    _exit(EXIT_FAILURE);
 	}
 #endif
     }
@@ -3750,6 +3804,7 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
 }
 
 #ifdef G_OS_WIN32
+
 static int get_latex_path (char *latex_path)
 {
     int ret;
@@ -3759,6 +3814,82 @@ static int get_latex_path (char *latex_path)
 
     return (ret == 0);
 }
+
+#else
+
+# if 1
+
+static int spawn_latex (char *texbase)
+{
+    GError *error = NULL;
+    gchar *errout = NULL, *sout = NULL;
+    gchar *argv[] = {
+	"latex",
+	"\\batchmode",
+	"\\input",
+	texbase,
+	NULL
+    };
+    int ok, status;
+
+    signal(SIGCHLD, SIG_DFL);
+
+    ok = g_spawn_sync (paths.userdir, /* working dir */
+		       argv,
+		       NULL,    /* envp */
+		       G_SPAWN_SEARCH_PATH,
+		       NULL,    /* child_setup */
+		       NULL,    /* user_data */
+		       &sout,   /* standard output */
+		       &errout, /* standard error */
+		       &status, /* exit status */
+		       &error);
+
+    if (!ok) {
+	errbox(error->message);
+	g_error_free(error);
+    } else if (errout && *errout) {
+	errbox(errout);
+	ok = 0;
+    } else if (status != 0) {
+	gchar *errmsg;
+
+	errmsg = g_strdup_printf("%s\n%s", 
+				 _("Failed to process TeX file"),
+				 sout);
+	errbox(errmsg);
+	g_free(errmsg);
+	ok = 0;
+    }
+
+    if (errout != NULL) g_free(errout);
+    if (sout != NULL) g_free(sout);
+
+    return ok;
+}
+
+# else /* old "spawn_latex" code */
+
+static int spawn_latex (const char *texbase)
+{
+    gchar *tmp;
+    struct stat sbuf;
+    int err, ok = 1;
+
+    tmp = g_strdup_printf("cd %s && "
+			  "latex \\\\batchmode \\\input %s",
+			  paths.userdir, texbase);
+
+    system(tmp);
+    sprintf(tmp, "%s.dvi", texbase);
+    if (stat(tmp, &sbuf)) ok = 0;
+    g_free(tmp);
+
+    return ok;
+}
+
+# endif /* GSPAWN */
+
 #endif
 
 /* ........................................................... */
@@ -3772,8 +3903,6 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 #ifdef G_OS_WIN32
     static char latex_path[MAXLEN];
     char *texshort = NULL;
-#else
-    struct stat sbuf;
 #endif
 
     if (pmod->errcode == E_NAN) {
@@ -3822,13 +3951,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	}	
     }
 #else
-    sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
-	    paths.userdir, texbase);
-    system(tmp);
-    sprintf(tmp, "%s.dvi", texbase);
-    if (stat(tmp, &sbuf)) {
-	errbox(_("Failed to process TeX file"));
-    } else {
+    if (spawn_latex(texbase)) {
 	gretl_fork(viewdvi, texbase);
     }
 #endif /* G_OS_WIN32 */

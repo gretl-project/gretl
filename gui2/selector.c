@@ -1054,6 +1054,9 @@ static void selector_init (selector *sr, guint code, const char *title)
     GtkWidget *base, *hsep;
     int dlgheight = 300;
 
+    if (code == WLS || code == TSLS || code == AR) 
+	dlgheight = 350;
+
     sr->varlist = NULL;
     sr->depvar = NULL;
     sr->rightvars = NULL;

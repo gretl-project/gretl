@@ -48,25 +48,9 @@ void _bufspace (int n, PRN *prn)
  * to the buffer @str, in a format that depends on @ci.
  */
 
-void printxx (const double xx, char *str, int ci)
+static void printxx (const double xx, char *str, int ci)
 {
-    int d = 6;
-
-    if (na(xx)) {
-	*str = '\0';
-	return;
-    }
-
-    switch (ci) {
-    case PRINT:
-	d = 8;  
-	break;
-    case SUMMARY:
-	d = 6;
-	break;
-    default:
-	break;
-    }
+    int d = (ci == PRINT)? 8 : 6;
 
     sprintf(str, "%#*.*g", d, GRETL_DIGITS, xx);
 }
@@ -903,10 +887,14 @@ static void printstr_ten (PRN *prn, double xx, int *ls)
     int lwrd;    
     char str[32];
 
-    sprintf(str, "%.10g", xx);
+    if (na(xx)) {
+	strcpy(str, "NA");
+    } else {
+	sprintf(str, "%.10g", xx);
+    }
     strcat(str, "  ");
     lwrd = strlen(str);
-    if (*ls+lwrd > 78) {
+    if (*ls + lwrd > 78) {
 	*ls = 0;
 	pputs(prn, "\n");
     }
@@ -921,10 +909,14 @@ static void printstr (PRN *prn, double xx, int *ls)
     int lwrd;
     char str[32];
 
-    printxx(xx, str, 0);
+    if (na(xx)) {
+	strcpy(str, "NA");
+    } else {
+	printxx(xx, str, 0);
+    }
     strcat(str, "  ");
     lwrd = strlen(str);
-    if (*ls+lwrd > 78) {
+    if (*ls + lwrd > 78) {
 	*ls = 0;
 	pputs(prn, "\n");
     }
@@ -953,7 +945,8 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     pputs(prn, "\n");
 }
 
-#define SMAX 7  /* stipulated max. significant digits */
+#define SMAX 7            /* stipulated max. significant digits */
+#define TEST_PLACES 12    /* # of decimal places to use in test string */
 
 static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
@@ -977,15 +970,13 @@ static int get_signif (double *x, int n)
 	if (na(x[i])) continue;
 
 	xx = fabs(x[i]);
-
 	if (xx >= 1.0) allfrac = 0;
-	sprintf(numstr, "%.12f", xx);
-#ifdef PRN_DEBUG
-	fprintf(stderr, "get_signif: numstr = '%s'\n", numstr);
-#endif
+
+	sprintf(numstr, "%.*f", TEST_PLACES, xx);
 	s = strlen(numstr) - 1;
-	trail = 12;
+	trail = TEST_PLACES;
 	gotdec = 0;
+
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') {
 		s--;
@@ -1014,20 +1005,8 @@ static int get_signif (double *x, int n)
 	    else break;
 	}
 
-	if (lead > leadmax) {
-#ifdef PRN_DEBUG
-	    fprintf(stderr, "lead=%d, leadmax=%d: setting leadmax=%d\n",
-		    lead, leadmax, lead);
-#endif
-	    leadmax = lead;
-	}
-	if (lead < leadmin) {
-#ifdef PRN_DEBUG
-	    fprintf(stderr, "lead=%d, leadmin=%d: setting leadmin=%d\n",
-		    lead, leadmax, lead);
-#endif
-	    leadmin = lead;
-	}
+	if (lead > leadmax) leadmax = lead;
+	if (lead < leadmin) leadmin = lead;
     } 
 
     if (smax > SMAX) smax = SMAX;
@@ -1048,10 +1027,6 @@ static int get_signif (double *x, int n)
 #endif
 	smax = -1 * (smax - 1);
     } 
-
-#ifdef PRN_DEBUG
-    fprintf(stderr, "get_signif: returning smax = %d\n", smax);
-#endif
 
     return smax;
 }

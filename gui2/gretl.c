@@ -61,15 +61,15 @@ FILE *dbg;
 
 /* functions from other gretl GUI files */
 
-extern void free_modelspec (void);    /* lib.c */
+extern void free_modelspec (void);    /* library.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
-extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
 extern void open_named_db_list (char *dbname);
 extern void open_named_remote_db_list (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
+extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 /* functions private to gretl.c */
 
@@ -499,7 +499,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL, GNULL },
     { N_("/Sample/sep3"), NULL, NULL, 0, "<Separator>", NULL },  
-    { N_("/Sample/Drop all obs with _missing values"), NULL, bool_subsample, 
+    { N_("/Sample/Drop all obs with _missing values"), NULL, drop_all_missing, 
       0, NULL, GNULL },
     { N_("/Sample/_Count missing values"), NULL, count_missing, 0, NULL, GNULL },
     { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 

@@ -88,19 +88,17 @@ static double getval (const char *s, PRN *prn, int pos)
      /* if pos != 0, value must be positive or it is invalid */ 
 {
     double x = NADBL;
-    char *test;
 
-    if (s == NULL || strlen(s) == 0) {
+    if (s == NULL || *s == '\0') {
 	errbox(_("Incomplete entry"));
     } else {
-	x = strtod(s, &test);
-
-	if (strcmp(s, test) == 0 || *test != '\0') {
-	    errbox(_("Invalid entry"));
-	    x = NADBL;
+	if (check_atof(s)) {
+	    errbox(get_gretl_errmsg());
+	} else {
+	    x = atof(s);
 	}
 
-	if (pos && x <= 0.0) {
+	if (pos && !na(x) && x <= 0.0) {
 	    errbox(_("Invalid entry"));
 	    x = NADBL;
 	} 
@@ -119,7 +117,7 @@ static int getint (const char *s, PRN *prn)
 {
     int n;
 
-    if (s == NULL || strlen(s) == 0) {
+    if (s == NULL || *s == '\0') {
 	errbox(_("Incomplete entry for hypothesis test"));
 	gretl_print_destroy(prn);
 	return -1;

@@ -49,7 +49,7 @@
 extern void free_modelspec (void);    /* lib.c */
 extern void allocate_fileptrs (void); /* settings.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
-extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
+extern void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 extern void free_command_stack (void);
 extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
@@ -398,7 +398,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL },
     { N_("/Sample/sep3"), NULL, NULL, 0, "<Separator>" },  
-    { N_("/Sample/Drop all obs with _missing values"), NULL, bool_subsample, 
+    { N_("/Sample/Drop all obs with _missing values"), NULL, drop_all_missing, 
       0, NULL },
     { N_("/Sample/_Count missing values"), NULL, count_missing, 0, NULL },
     { N_("/Sample/Set missing _value code..."), NULL, gretl_callback, 

@@ -1,5 +1,4 @@
 lib/src/calendar.c
-lib/src/choltest.c
 lib/src/compare.c
 lib/src/dataio.c
 lib/src/dbread.c
@@ -62,6 +61,7 @@ gui2/datafiles.c
 gui2/dialogs.c
 gui2/fileselect.c
 gui2/font_filter.c
+gui2/foo.c
 gui2/gpt_control.c
 gui2/gretl.c
 gui2/gtkfontselhack.c

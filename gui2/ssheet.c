@@ -59,6 +59,8 @@ static GtkItemFactoryEntry sheet_items[] = {
     { N_("/Add _Variable"), NULL, sheet_add_var_callback, 0, NULL, GNULL }
 };
 
+static int sheet_modified;
+
 /* .................................................................. */
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
@@ -84,6 +86,7 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 	gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
 			   GPOINTER_TO_INT(column), new_text, -1);
 	gtk_tree_path_free(path);
+	sheet_modified = 1;
     }
 
     return FALSE;
@@ -147,6 +150,8 @@ static void real_add_new_var (spreadsheet *sheet, const char *varname)
 	collist = collist->next;
     }
     if (collist) g_list_free(collist);
+
+    sheet_modified = 1;
 }
 
 /* .................................................................. */
@@ -226,6 +231,8 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 	gtk_tree_path_free(path);
 	g_free(pathstr);
     }
+
+    sheet_modified = 1;
 }
 
 /* ........................................................... */
@@ -527,6 +534,8 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	infobox(_("Warning: there were missing observations"));
     else
 	infobox(_("Data updated OK"));
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -591,6 +600,8 @@ static void add_data_to_sheet (spreadsheet *sheet)
 			   sheet->totcols - 1, TRUE, -1);
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -641,6 +652,8 @@ static void add_skel_to_sheet (spreadsheet *sheet)
 			   sheet->totcols - 1, TRUE, -1);
 	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -847,6 +860,27 @@ static spreadsheet *sheet_new (void)
 
 /* ........................................................... */
 
+static gint maybe_exit_sheet (GtkWidget *w, spreadsheet *sheet)
+{
+    int resp;
+
+    if (sheet_modified) {
+	resp = yes_no_dialog ("gretl", 
+			      _("Do you want to save changes you have\n"
+				"made to the current data set?"), 1);
+	if (resp == GRETL_YES) {
+	    get_data_from_sheet(NULL, sheet);
+	}
+	else if (resp == GRETL_CANCEL || resp == -1) return FALSE;
+    }
+  
+    gtk_widget_destroy(sheet->win);
+
+    return FALSE;
+}
+
+/* ........................................................... */
+
 void show_spreadsheet (DATAINFO *pdinfo) 
 {
     static spreadsheet *sheet;    
@@ -939,7 +973,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_box_pack_start (GTK_BOX (button_box), tmp, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(delete_widget), sheet->win);
+		     G_CALLBACK(maybe_exit_sheet), sheet);
     gtk_widget_show(tmp);
 
     g_signal_connect (G_OBJECT(sheet->view), "button_press_event",

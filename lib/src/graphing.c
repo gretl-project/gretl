@@ -1316,6 +1316,10 @@ int gnuplot_3d (LIST list, const char *literal,
 
     *surface = 0;
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
     if (1) {
 	MODEL pmod;
 	double umin, umax, vmin, vmax;
@@ -1350,10 +1354,6 @@ int gnuplot_3d (LIST list, const char *literal,
     fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[1]));
     fprintf(fq, "set zlabel '%s'\n", get_series_name(pdinfo, list[3]));
     fputs("set missing \"?\"\n", fq);
-
-#ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
-#endif
 
     if (literal != NULL && *literal != 0) {
 	print_gnuplot_literal_lines(literal, fq);

@@ -3861,22 +3861,22 @@ int check_atof (const char *numstr)
 
     (void) strtod(numstr, &test);
 
-    if (strcmp(numstr, test) == 0) {
-	sprintf(gretl_errmsg, _("'%s' -- no numeric conversion performed!"), numstr);
+    if (!strcmp(numstr, test)) {
+	sprintf(gretl_errmsg, M_("'%s' -- no numeric conversion performed!"), numstr);
 	return 1;
     }
 
     if (*test != '\0') {
-	if (isprint(test[0])) {
-	    sprintf(gretl_errmsg, _("Extraneous character '%c' in data"), test[0]);
+	if (isprint(*test)) {
+	    sprintf(gretl_errmsg, M_("Extraneous character '%c' in data"), *test);
 	} else {
-	    sprintf(gretl_errmsg, _("Extraneous character (0x%x) in data"), test[0]);
+	    sprintf(gretl_errmsg, M_("Extraneous character (0x%x) in data"), *test);
 	}
 	return 1;
     }
 
     if (errno == ERANGE) {
-	sprintf(gretl_errmsg, _("'%s' -- number out of range!"), numstr);
+	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
 	return 1;
     }
 

@@ -1,4 +1,8 @@
-version 1.1.4
+version 1.1.5
+- Gtk2 version: Make selection dialog tall enough for wls,
+  tsls and ar model selections
+
+10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter
 - Fixes for display of data values with huge datasets
 - Fix to handle "weird" cases in plotting frequency distributions
@@ -7,7 +11,6 @@ version 1.1.4
 - Graph labels: make 3 labels configurable rather than just 2
 - Editing gnuplot commands: fix for accented characters
 - Reading CSV files: fix bug in parser for date strings
-- 3-D plots under X11: if xterm is not found, try rxvt
 - NLS: ensure messages printed to the console are not in utf8
 - Loosen up a little on "Appending" data: allow for the situation
   where the sample range for the added data is not identical
@@ -16,6 +19,14 @@ version 1.1.4
   forecasts with standard errors, in the case of missing data
 - Fix to gtk2 data spreadsheet (quell warning on appending an
   observation)
+- Data spreadsheet: give a warning on close if there are unsaved
+  changes
+- Improvements to printing of data values in certain numerical
+  ranges
+- Import of CSV or plain text data: if no variable names are
+  given, construct them automatically ("v1", "v2", etc.)
+- 3-D plot command: fix for localized decimal point, and use
+  rxvt to control gnuplot if xterm is not available
 
 10/01/2003 version 1.1.3
 - Fix crashing bug in viewing dataset info

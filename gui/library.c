@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include <unistd.h>
 #include <sys/stat.h>
+#include <errno.h>
 
 #include "session.h"
 #include "selector.h"
@@ -1042,7 +1043,7 @@ void change_sample (GtkWidget *widget, dialog_t *ddata)
 }
 /* ........................................................... */
 
-void bool_subsample (gpointer data, guint opt, GtkWidget *w)
+static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
      /* opt = 0     -- drop all obs with missing data values 
 	opt = 'o'   -- sample using dummy variable
 	opt = 'r'   -- sample using boolean expression
@@ -1052,7 +1053,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
     restore_sample();
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
-	return;
+	return 1;
 
     if (opt == 0) {
 	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, 'o');
@@ -1062,7 +1063,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
     if (err) {
 	gui_errmsg(err);
-	return;
+	return 1;
     }
 
     /* save the full data set for later use */
@@ -1079,6 +1080,15 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
     } else {
 	infobox(_("Sub-sampling done"));
     }
+
+    return 0;
+}
+
+/* ........................................................... */
+
+void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
+{
+    bool_subsample(data, opt, w);
 }
 
 /* ........................................................... */
@@ -1086,6 +1096,7 @@ void bool_subsample (gpointer data, guint opt, GtkWidget *w)
 void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 {
     char *buf = NULL;
+    int err;
 
     buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
@@ -1094,8 +1105,10 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "smpl %s -r", buf); 
     if (verify_and_record_command(line)) return;
 
-    close_dialog(ddata);
-    bool_subsample(NULL, 'r', NULL);
+    err = bool_subsample(NULL, 'r', NULL);
+    if (!err) {
+	close_dialog(ddata);
+    }
 }
 
 /* ........................................................... */
@@ -1103,6 +1116,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 {
     char *buf = NULL, dumv[9];
+    int err;
 
     buf = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
@@ -1114,8 +1128,10 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "smpl %s -o", dumv);
     if (verify_and_record_command(line)) return;
 
-    close_dialog(ddata);
-    bool_subsample(NULL, OPT_O, NULL);
+    err = bool_subsample(NULL, OPT_O, NULL);
+    if (!err) {
+	close_dialog(ddata);
+    }
 }
 
 /* ........................................................... */
@@ -3393,24 +3409,68 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+static int executable_exists (const char *fname)
+{
+    struct stat sbuf;
+    int ok = 0;
+
+    if (stat(fname, &sbuf) == 0) {
+	if (sbuf.st_mode & S_IXOTH) 
+	    ok = 1;
+	else if (getuid() == sbuf.st_uid &&
+		 (sbuf.st_mode & S_IXUSR)) 
+	    ok = 1;
+	else if (getgid() == sbuf.st_gid &&
+		 (sbuf.st_mode & S_IXGRP)) 
+	    ok = 1;
+    }
+
+    return ok;
+}
+
+static int mywhich (const char *prog)
+{
+    char test[FILENAME_MAX];
+    char *path, *p;
+    gchar *mypath;
+    int i, ret = 0;
+
+    path = getenv("PATH");
+    if (path == NULL) return 0;
+
+    mypath = g_strdup(path);
+    if (mypath == NULL) return 0;
+
+    for (i=0; ; i++) {
+	p = strtok((i)? NULL : mypath, ":");
+	if (p == NULL) break;
+	sprintf(test, "%s/%s", p, prog);
+	if (executable_exists(test)) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    g_free(mypath);
+
+    return ret;
+}
+
+/* ........................................................... */
+
 static int get_terminal (char *s)
 {
-    if (system("which xterm >/dev/null") == 0) {
+    if (mywhich("xterm")) {
 	strcpy(s, "xterm");
 	return 0;
     }
 
-    if (system("which rxvt >/dev/null") == 0) {
+    if (mywhich("rxvt")) {
 	strcpy(s, "rxvt");
 	return 0;
     }
 
-    if (system("which gnome-terminal >/dev/null") == 0) {
-	strcpy(s, "gnome-terminal");
-	return 0;
-    }    
-    
-    errbox(_("Couldn't find a usable terminal program"));
+    errbox(_("Couldn't find xterm or rxvt"));
     return 1;
 }
 
@@ -3428,9 +3488,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s", buf);
 
-    if (check_cmd(line)) return;
-
-    if (command.list[0] != 3) return;
+    if (check_cmd(line) || command.list[0] != 3) return;
 
     err = gnuplot_3d(command.list, NULL, &Z, datainfo,
 		     &paths, &plot_count, GP_GUI);
@@ -3441,7 +3499,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	errbox(_("gnuplot command failed"));
     } else {
 	pid_t pid;
-	char term[16];
+	char term[8];
 
 	if (get_terminal(term)) return;
 
@@ -3452,25 +3510,17 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	    perror("fork");
 	    return;
 	} else if (pid == 0) {
-	    if (!strcmp(term, "xterm") || !strcmp(term, "rxvt")) {
-		execlp(term, term, "+sb", "+ls",
-		       "-geometry", "40x4", "-title",
-		       "gnuplot: type q to quit",
-		       "-e", paths.gnuplot, paths.plotfile, "-", 
-		       NULL);
-	    }
-	    else if (!strcmp(term, "gnome-terminal")) {
-		gchar *gpt = g_strdup_printf("%s %s -", 
-					     paths.gnuplot,
-					     paths.plotfile);
-		execlp(term, term, "--nologin", 
-		       "--geometry", "40x4", "--title",
-		       "gnuplot: type q to quit",
-		       "--command", gpt, 
-		       NULL);
-		g_free(gpt);
-	    }
-	    perror("execlp");
+	    extern int errno;
+
+	    errno = 0;
+
+	    execlp(term, term, 
+		   "+sb", "+ls",
+		   "-geometry", "40x4", 
+		   "-title", "gnuplot: type q to quit",
+		   "-e", paths.gnuplot, paths.plotfile, "-", 
+		   NULL);
+	    fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
 	    _exit(EXIT_FAILURE);
 	}
     }

@@ -72,8 +72,6 @@ void text_print_matrix (const double *rr, const int *list,
 			MODEL *pmod, const DATAINFO *pdinfo, 
 			int pause, PRN *prn);
 
-void printxx (double xx, char *str, int ci);
-
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn);
 
 void gretl_print_value (double x, PRN *prn);

@@ -34,6 +34,7 @@ static GtkWidget *sheet_popup;
 
 static char newvarname[9], newobsmarker[9];
 static int numcolumns, numrows;
+static int sheet_modified;
 
 static void sheet_add_var (void);
 static void sheet_add_obs (void);
@@ -135,8 +136,10 @@ static void sheet_add_var (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet); 
 
-    newvarname[0] = '\0';
+    *newvarname = '\0';
+
     name_var_dialog();
+
     if (*newvarname != '\0') {
 	gtk_sheet_add_column(sheet, 1);
 	numcolumns++;
@@ -144,6 +147,7 @@ static void sheet_add_var (void)
 	gtk_sheet_set_column_title(sheet, numcolumns-1, newvarname);
 	gtk_sheet_set_active_cell(sheet, 0, numcolumns-1);
 	gtk_sheet_moveto(sheet, 0, numcolumns-1, 0.0, 0.8);
+	sheet_modified = 1;
     }
 }
 
@@ -154,8 +158,10 @@ static void sheet_add_obs (void)
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
     char rowlabel[10];
 
-    newobsmarker[0] = '\0';
+    *newobsmarker = '\0';
+
     if (datainfo->markers) new_case_dialog();
+
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_add_row(sheet, 1);
 	numrows++;
@@ -167,6 +173,7 @@ static void sheet_add_obs (void)
 	gtk_sheet_set_row_title(sheet, numrows-1, rowlabel);
 	gtk_sheet_set_active_cell(sheet, numrows-1, 0);
 	gtk_sheet_moveto(sheet, numrows-1, 0, 0.8, 0.0);
+	sheet_modified = 1;
     }
 }
 
@@ -179,7 +186,9 @@ static void sheet_insert_obs (void)
     int i;
 
     newobsmarker[0] = '\0';
+
     if (datainfo->markers) new_case_dialog();
+
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_insert_rows(sheet, sheet->active_cell.row, 1);
 	numrows++;
@@ -196,6 +205,7 @@ static void sheet_insert_obs (void)
 		gtk_sheet_set_row_title(sheet, i, rowlabel);
 	    }
 	}
+	sheet_modified = 1;
     }
 }
 
@@ -300,6 +310,7 @@ static void parse_numbers (GtkWidget *widget, gpointer data)
     }
     gtk_sheet_set_cell(sheet, sheet->active_cell.row,
                        sheet->active_cell.col, GTK_JUSTIFY_RIGHT, label); 
+    sheet_modified = 1;
 }
 
 /* ........................................................... */
@@ -459,6 +470,8 @@ static void get_data_from_sheet (void)
 	infobox(_("Warning: there were missing observations"));
     else
 	infobox(_("Data updated OK"));
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -499,6 +512,8 @@ static void add_data_to_sheet (GtkWidget *w)
     }
     gtk_signal_connect(GTK_OBJECT(sheet), "key_press_event",
 		       (GtkSignalFunc) clipboard_handler, NULL);
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -523,6 +538,8 @@ static void add_skel_to_sheet (GtkWidget *w)
     for (i=0; i<datainfo->v-1; i++) 
 	for (t=0; t<n; t++) 
 	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, ""); 
+
+    sheet_modified = 0;
 }
 
 /* ........................................................... */
@@ -530,6 +547,25 @@ static void add_skel_to_sheet (GtkWidget *w)
 static void free_spreadsheet (GtkWidget *widget, gpointer data) 
 {
     gretlsheet = NULL;
+}
+
+/* ........................................................... */
+
+static void maybe_exit_sheet (GtkWidget *w, GtkWidget *swin)
+{
+    int resp;
+
+    if (sheet_modified) {
+	resp = yes_no_dialog ("gretl", 
+			      _("Do you want to save changes you have\n"
+				"made to the current data set?"), 1);
+	if (resp == GRETL_YES) {
+	    get_data_from_sheet();
+	}
+	else if (resp == GRETL_CANCEL || resp == -1) return;
+    }
+  
+    gtk_widget_destroy(swin);
 }
 
 /* ........................................................... */
@@ -616,7 +652,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     tmp = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (button_box), tmp, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
-		       GTK_SIGNAL_FUNC(delete_widget), sheetwin);
+		       GTK_SIGNAL_FUNC(maybe_exit_sheet), sheetwin);
     gtk_widget_show(tmp);
 
     gtk_signal_connect(GTK_OBJECT(gtk_sheet_get_entry(GTK_SHEET(gretlsheet))),
