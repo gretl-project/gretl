@@ -1,13 +1,10 @@
-<?xml version="1.0" encoding="ISO-8859-1" ?>
+<?xml version="1.0"?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
 <commandlist language="spanish">
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-<!-- June 11, 2004: Based on English gretl_commands.xml,
-  CVS version 1.25 -->
-
-  <command name="add" section="Tests" label="Añadir variables">
+  <command name="add" section="Contrastes" label="Añadir variables">
 
     <usage>
       <arguments>
@@ -62,7 +59,7 @@
 
   </command>
 
-  <command name="addto" section="Tests" context="cli">
+  <command name="addto" section="Contrastes" context="cli">
 
     <usage>
       <arguments>
@@ -96,7 +93,7 @@
 
   </command>
 
-  <command name="adf" section="Tests" label="Contraste aumentado de Dickey-Fuller">
+  <command name="adf" section="Contrastes" label="Contraste aumentado de Dickey-Fuller">
 
     <usage>
       <arguments>
@@ -144,7 +141,7 @@
 
   </command>
 
-  <command name="ar" section="Estimation" label="Estimación autorregresiva">
+  <command name="ar" section="Estimación" label="Estimación autorregresiva">
 
     <usage>
       <arguments>
@@ -178,7 +175,7 @@
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
-	  ascii="u(t) = rho1*u(t-1) + rho3+u(t-3) + rho4*u(t-4)"
+	  ascii="u(t) = rho1*u(t-1) + rho3*u(t-3) + rho4*u(t-4)"
 	  graphic="arlags"/>
       </para>
 
@@ -189,7 +186,7 @@
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
-	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
+	  ascii="u(t) = rho(1)*u(t-1) + rho(3)*u(t-3) + rho(4)*u(t-4)"
 	  graphic="arlags"/>
       </para>
 
@@ -201,7 +198,7 @@
 
   </command>
 
-  <command name="arch" section="Tests" label="Contraste ARCH">
+  <command name="arch" section="Contrastes" label="Contraste ARCH">
 
     <usage>
       <arguments>
@@ -241,7 +238,7 @@
 
   </command>
 
-  <command name="arma" section="Estimation" label="Modelo ARMA">
+  <command name="arma" section="Estimación" label="Modelo ARMA">
 
     <usage>
       <arguments>
@@ -337,7 +334,7 @@
 
   </command>
 
-  <command name="boxplot" section="Graphs" label="Gráficos de caja">
+  <command name="boxplot" section="Gráficos" label="Gráficos de caja">
 
     <usage>
       <arguments>
@@ -404,7 +401,7 @@
 
   </command>
 
-  <command name="chow" section="Tests" label="Contraste de Chow">
+  <command name="chow" section="Contrastes" label="Contraste de Chow">
 
     <usage>
       <arguments>
@@ -438,7 +435,7 @@
 
   </command>
 
-  <command name="coeffsum" section="Tests" label="Suma de coeficientes">
+  <command name="coeffsum" section="Contrastes" label="Suma de coeficientes">
 
     <usage>
       <arguments>
@@ -476,7 +473,7 @@
 
   </command>
 
-  <command name="coint" section="Tests" 
+  <command name="coint" section="Contrastes" 
     label="Contraste de cointegración de Engle-Granger">
 
     <usage>
@@ -510,7 +507,7 @@
 
   </command>
 
-  <command name="coint2" section="Tests" label="Contraste de cointegración de Johansen">
+  <command name="coint2" section="Contrastes" label="Contraste de cointegración de Johansen">
 
     <usage>
       <arguments>
@@ -534,7 +531,7 @@
       <para>
       	Realiza el contraste de la traza de Johansen para contrastar
 	cointegración entre las variables de la lista para el orden dado.
-	Los valores cvríticos se computan por medio de la aproximación
+	Los valores críticos se computan por medio de la aproximación
 	gamma de J. Doornik (Doornik, 1998). Para detalles sobre este
 	contraste ver el libro de Hamilton, <book>Time Series
 	Analysis</book> (1994), Capítulo 20.
@@ -565,7 +562,7 @@
 
   </command>
 
-  <command name="compact" section="Dataset" context="gui"
+  <command name="compact" section="Conjunto de datos" context="gui"
     label="Compactar datos">
 
     <description>
@@ -580,7 +577,7 @@
       frecuencia más baja (por ejemplo, antes de añadir al conjunto de datos
       una variable de  frecuencia inferior).</para>
 
-      <para>Se le ofrecen cuatro opciones de compactado:</para>
+      <para>Gretl ofrece cuatro opciones de compactado:</para>
 
       <ilist>
 	<li><para>Promediar: el valor que se escribe en el conjunto de datos
@@ -612,12 +609,14 @@
       efectúa en esta caja de diálogo establece el método por defecto. Pero
       si usted ha establecido un método de compactado para una variable individual
       (elemento de menú <quote>Variable/Editar atributos</quote>) se usa ese método 
-      en lugar del método por defecto.</para>
+      en lugar del método por defecto. Si ya está establecido el método de compactado 
+      para todas las variables, no se presenta aquí la elección de un método de 
+      compactado por defecto.</para>
 
     </description>
   </command>
 
-  <command name="corc" section="Estimation" label="Procedimiento de Cochrane-Orcutt">
+  <command name="corc" section="Estimación" label="Procedimiento de Cochrane-Orcutt">
 
     <usage>
       <arguments>
@@ -651,7 +650,7 @@
 
   </command>
 
-  <command name="corr" section="Statistics" context="cli">
+  <command name="corr" section="Estadística" context="cli">
 
     <usage>
       <arguments>
@@ -678,7 +677,7 @@
 
   </command>
 
-  <command name="corrgm" section="Statistics" label="Correlograma">
+  <command name="corrgm" section="Estadística" label="Correlograma">
 
     <usage>
       <arguments>
@@ -730,7 +729,7 @@
 
   </command>
 
-  <command name="criteria" section="Utilities" context="cli">
+  <command name="criteria" section="Utilidades" context="cli">
 
     <usage>
       <arguments>
@@ -757,7 +756,7 @@
 
   </command>
 
-  <command name="critical" section="Utilities" context="cli">
+  <command name="critical" section="Utilidades" context="cli">
 
     <usage>
       <arguments>
@@ -793,7 +792,7 @@
 
   </command>
 
-  <command name="cusum" section="Tests" label="Contraste CUSUM">
+  <command name="cusum" section="Contrastes" label="Contraste CUSUM">
 
     <description>
       <para>
@@ -829,7 +828,7 @@
 
   </command>
 
-  <command name="data" section="Dataset" context="cli">
+  <command name="data" section="Conjunto de datos" context="cli">
 
     <usage>
       <arguments>
@@ -879,7 +878,7 @@
 
   </command>
 
-  <command name="delete" section="Dataset" context="cli">
+  <command name="delete" section="Conjunto de datost" context="cli">
 
     <usage>
       <arguments>
@@ -903,7 +902,7 @@
 
   </command>
 
-  <command name="dialog" section="Estimation" context="gui"
+  <command name="dialog" section="Estimación" context="gui"
     label="Caja de diálogo de Modelo">
 
     <description>
@@ -929,7 +928,7 @@
 
   </command>
 
-  <command name="diff" section="Transformations" context="cli">
+  <command name="diff" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -953,14 +952,14 @@
 
   </command>
 
-  <command name="else" section="Programming" context="cli">
+  <command name="else" section="Programación" context="cli">
 
     <description><para>Ver <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="end" section="Programming" context="cli">
+  <command name="end" section="Programación" context="cli">
 
     <description>
       <para>
@@ -971,7 +970,7 @@
 
   </command>
 
-  <command name="endif" section="Programming" context="cli">
+  <command name="endif" section="Programación" context="cli">
 
     <description><para>Ver <cmdref targ="if"/>.</para>
     </description>
@@ -988,7 +987,7 @@
 
   </command>
 
-  <command name="eqnprint" section="Printing" context="cli">
+  <command name="eqnprint" section="Presentación" context="cli">
 
     <usage>
       <arguments>
@@ -1026,7 +1025,7 @@
 
   </command>
 
-  <command name="equation" section="Estimation" context="cli">
+  <command name="equation" section="Estimación" context="cli">
 
     <usage>
       <arguments>
@@ -1042,16 +1041,14 @@
       <para>
       Sirve pare especificar una ecuación dentro de un sistema de 
       ecuaciones (ver <cmdref targ="system"/>).  La sintaxis para
-      especificar una ecuación es la misma que, por ejemplo, la de 
-      MCO (ver <cmdref targ="ols"/>) (excepto para un sistema de Mínimos
-      Cuadrados en Tres Etapas, en el que la sintaxis es como en MC2E
-      --ver <cmdref targ="tsls"/>--).
+      especificar una ecuación dentro de un sistema SUR (Ecuaciones de regresión aparentemente no relacinadas) es la misma que, por ejemplo, la de 
+      MCO (ver <cmdref targ="ols"/>). Para una ecuación dentro de un sistema de Mínimos Cuadrados en Tres Etapas se puede (a) dar la especificación de una ecuación de tipo MCO y proporcionar una lista común de instrumentos usando la opción <cmd>instr</cmd> (ver de nuevo <cmdref targ="system"/>), o (b) usar la misma sintaxis de definición de ecuaciones que para <cmdref targ="tsls"/>.
       </para>
     </description>
 
   </command>
 
-  <command name="export" section="Dataset" context="gui"
+  <command name="export" section="Conjunto de datos" context="gui"
     label="Exportar datos">
 
     <description>
@@ -1067,7 +1064,7 @@
     </description>
   </command>
 
-  <command name="factorized" section="Graphs" context="gui"
+  <command name="factorized" section="Gráficos" context="gui"
     label="Gráfico con factor de separación">
 
     <description>
@@ -1093,7 +1090,7 @@
   </command>
   
 
-  <command name="fcast" section="Prediction" context="cli">
+  <command name="fcast" section="Predicción" context="cli">
 
     <usage>
       <arguments>
@@ -1127,7 +1124,7 @@
 
   </command>
 
-  <command name="fcasterr" section="Prediction"
+  <command name="fcasterr" section="Predicción"
     label="Predicciones con intervalos de confianza">
 
     <usage>
@@ -1166,7 +1163,7 @@
 
   </command>
 
-  <command name="fit" section="Prediction" context="cli">
+  <command name="fit" section="Predicción" context="cli">
 
     <description>
       <para>
@@ -1181,7 +1178,7 @@
 
   </command>
 
-  <command name="freq" section="Statistics" context="cli">
+  <command name="freq" section="Estadística" context="cli">
 
     <usage>
       <arguments>
@@ -1203,8 +1200,18 @@
     </gui-access>
 
   </command>
+  
+  <command name="function" section="Programación" context="cli">
 
-  <command name="garch" section="Estimation" label="Modelo GARCH">
+    <description>
+      <para>
+	Define una función.  
+      </para>
+    </description>
+
+  </command> 
+
+  <command name="garch" section="Estimación" label="Modelo GARCH">
 
     <usage>
       <arguments>
@@ -1289,7 +1296,7 @@
 
   </command>
 
-  <command name="genr" section="Dataset"
+  <command name="genr" section="Conjunto de datos"
     label="Generar una variable nueva">
 
     <usage>
@@ -1359,11 +1366,13 @@
 	</li>
 	<li><para>Funciones de conjunto de datos: <func>misszero</func> 
 	    (reemplaza los códigos de observación ausente de una serie dada
-	    con ceros), <func>zeromiss</func> (la operación inversa a
-	    <func>misszero</func>), <func>nobs</func> (devuelve el número de 
+	    con ceros); <func>zeromiss</func> (la operación inversa a
+	    <func>misszero</func>); <func>nobs</func> (devuelve el número de 
 	    observaciones válidas de una serie de datos determinada),
 	    <func>missing</func> (para cada observación, devuelve 1 si el
-	    argumento tiene una observación ausente, y 0 en caso contrario).</para>
+	    argumento tiene una observación ausente, y 0 en caso contrario); 
+	    <func>ok</func> (el opuesto de <func>missing</func>).
+	    </para>
 	</li>
 	<li><para>Números pseudo-aleatorios: <func>uniform</func>,
 	    <func>normal</func>.</para>
@@ -1381,7 +1390,14 @@
 	respectivamente la covarianza y el coeficiente de correlación entre sus
 	argumentos. La función <func>pvalue</func> toma los mismos argumentos
 	que la instrucción <cmdref targ="pvalue"/>, pero en este contexto deben
-	introducirse comas entre los argumentos.
+	introducirse comas entre los argumentos. Esta función devuelve un valor p 
+	a una cola y, en el caso de las distribuciones normal y <emphasis>t</emphasis>, 
+	es para la <quote>cola corta</quote>.  Con la normal, por ejemplo, tanto 1,96 
+	como -1,96 darán un resultado de aproximadamente 0,025.
+	</para>
+
+      <para>
+	
 	<func>uniform()</func> y <func>normal()</func>, que no toman arguamentos,
 	devuelven series de números pseudo-aleatorios extraídos de la distribución
 	uniforme (0&ndash;1) y normal estándar respectivamente (ver también la instrucción
@@ -1451,10 +1467,6 @@
 	    <row>
 	      <cell><lit>$lnl</lit></cell> 
 	      <cell>logaritmo de la verosimilitud (donde es aplicable)</cell> 
-	    </row> 
-	    <row>
-	      <cell><lit>$sigma</lit></cell> 
-	      <cell>desviación típica de los residuos</cell> 
 	    </row> 
 	    <row>
 	      <cell>coeff(<repl>var</repl>)</cell> 
@@ -1527,6 +1539,14 @@
 	data, se debe de usar la forma <repl>YYYY:MM:DD</repl>, p.ej.
 	<lit>ibm[1970:01:23]</lit>.
       </para>
+      
+      <para>Se puede modificar una observación individual de una serie por medio
+        de <lit>genr</lit>.  Para hacerlo, hay que adjuntar al nombre de la variable 
+	en el lado izquierdo de la fórmula, entre corchetes, un número de observación 
+	válido o una fecha.  Por ejemplo,
+	<lit>genr x[3] = 30</lit> o <lit>genr x[1950:04] =
+	  303.7</lit>.
+      </para>
 
       <para>
 	<tabref targ="tab-genr"/> da varios ejemplos de utilizaciones de 
@@ -1560,7 +1580,7 @@
 	lhead="Fórmula" rhead="Comentario">
 	<row>
 	  <cell><lit>y = x1^3</lit></cell>
-	  <cell><lit>x1</lit> cubed</cell>
+	  <cell><lit>x1</lit> al cubo</cell>
 	</row>          
 	<row>
 	  <cell><lit>y = ln((x1+x2)/x3)</lit></cell>
@@ -1666,7 +1686,7 @@
 
   </command>
 
-  <command name="gnuplot" section="Graphs" context="cli">
+  <command name="gnuplot" section="Gráficos" context="cli">
 
     <usage>
       <arguments>
@@ -1746,7 +1766,7 @@
 
   </command>
 
-  <command name="graph" section="Graphs" context="cli">
+  <command name="graph" section="Gráficos" context="cli">
 
     <usage>
       <arguments>
@@ -1773,7 +1793,7 @@
 
   </command>
 
-  <command name="graphing" section="Graphs" context="gui"
+  <command name="graphing" section="Gráficos" context="gui"
     label="Graphing">
 
     <description>
@@ -1852,7 +1872,7 @@
 
   </command>
 
-  <command name="graphpag" section="Graphs" context="gui"
+  <command name="graphpag" section="Gráficos" context="gui"
     label="Página de gráficos de Gretl">
 
     <description>
@@ -1881,7 +1901,7 @@
 
   </command>
 
-  <command name="3-D" section="Graphs" context="gui"
+  <command name="3-D" section="Gráficos" context="gui"
     label="Gráficos tridimensionales">
 
     <description>
@@ -1904,8 +1924,8 @@
     </description>
   </command>
     
-  <command name="hausman" section="Tests"
-    label="Contraste de Hausman test (diagnósticos de panel)">
+  <command name="hausman" section="Contrastes"
+    label="Contraste de Hausman (diagnósticos de panel)">
 
     <description>
       <para>
@@ -1952,7 +1972,7 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" label="Estimación HCCM">
+  <command name="hccm" section="Estimación" label="Estimación HCCM">
 
     <usage>
       <arguments>
@@ -1974,7 +1994,7 @@
 	estiman mediante un procedimiento MCO estándar, pero las desviaciones 
 	típicas de los coeficientes estimados se calculan de una manera que es
 	robusta ante heterocedasticidad, en concreto usando el procedimiento
-	<quote>jackknife</quote> de MacKinnon-White.
+	<quote>jackknife</quote> de MacKinnon&ndash;White.
       </para>
     </description>
 
@@ -1984,7 +2004,7 @@
 
   </command>
 
-  <command name="help" section="Utilities" context="cli">
+  <command name="help" section="Utilidades" context="cli">
 
     <description>
       <para>
@@ -2002,7 +2022,7 @@
 
   </command>
 
-  <command name="hilu" section="Estimation" label="Estimación de Hildreth-Lu">
+  <command name="hilu" section="Estimación" label="Estimación de Hildreth-Lu">
 
     <usage>
       <arguments>
@@ -2034,7 +2054,7 @@
 
   </command>
 
-  <command name="hsk" section="Estimation"
+  <command name="hsk" section="Estimación"
     label="Estimaciones corregidas de heterocedasticidad">
 
     <usage>
@@ -2077,7 +2097,7 @@
 
   </command>
 
-  <command name="if" section="Programming" context="cli">
+  <command name="if" section="Programación" context="cli">
 
     <description>
       <para>Control de flujo para la ejecución de instrucciones.  La sintaxis es:</para>
@@ -2103,7 +2123,7 @@
 
   </command>
 
-  <command name="import" section="Dataset" context="cli">
+  <command name="import" section="Conjunto de datos" context="cli">
 
     <usage>
       <arguments>
@@ -2142,7 +2162,7 @@
 
   </command>
 
-  <command name="info" section="Dataset" context="cli">
+  <command name="info" section="Conjunto de datos" context="cli">
 
     <description>
       <para>
@@ -2158,7 +2178,7 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Editar los atributos de una variable">
+  <command name="label" section="Conjunto de datos" label="Editar los atributos de una variable">
 
     <usage>
       <arguments>
@@ -2214,7 +2234,7 @@
 
   </command>
 
-  <command name="labels" section="Dataset" context="cli">
+  <command name="labels" section="Conjunto de datos" context="cli">
 
     <description>
       <para>
@@ -2226,7 +2246,7 @@
 
   </command>
 
-  <command name="lad" section="Estimation"
+  <command name="lad" section="Estimación"
     label="Estimación de mínima desviación absoluta">
 
     <usage>
@@ -2254,7 +2274,7 @@
 
   </command>
 
-  <command name="lags" section="Transformations" context="cli">
+  <command name="lags" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -2282,7 +2302,7 @@
 
   </command>
 
-  <command name="ldiff" section="Transformations" context="cli">
+  <command name="ldiff" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -2313,7 +2333,7 @@
 
   </command>
 
-  <command name="leverage" section="Tests"
+  <command name="leverage" section="Contrastes"
     label="Observations influyentes">
 
     <usage>
@@ -2332,7 +2352,7 @@
 	que debe estar entre 0 y 1) para cada punto de datos de la muestra 
 	sobre la que se estimó el último modelo.  Presenta el residuo
 	(<mathvar>u</mathvar>) de cada observación junto a su apalancamiento
-	y una medida de su influencia sibre las estimaciones, 
+	y una medida de su influencia sobre las estimaciones, 
 	  <equation status="inline" 
 	  tex="$uh/(1 - h)$"
 	  ascii="u*h/(1-h)"
@@ -2382,7 +2402,7 @@
 
   </command>
 
-  <command name="lmtest" section="Tests" label="Contrastes LM">
+  <command name="lmtest" section="Contrastes" label="Contrastes LM">
 
     <usage>
       <options>
@@ -2448,7 +2468,7 @@
 
   </command>
 
-  <command name="logistic" section="Estimation"
+  <command name="logistic" section="Estimación"
     label="Regresión logística">
 
     <usage>
@@ -2519,7 +2539,7 @@
 
   </command>
 
-  <command name="logit" section="Estimation"
+  <command name="logit" section="Estimación"
     label="Regresión Logit">
 
     <usage>
@@ -2568,7 +2588,7 @@
 
   </command>
 
-  <command name="logs" section="Transformations" context="cli">
+  <command name="logs" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -2592,47 +2612,66 @@
 
   </command>
 
-  <command name="loop" section="Programming" context="cli">
+  <command name="loop" section="Programación" context="cli">
 
     <usage>
       <arguments>
         <argument>control</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--progressive</flag>
+	  <effect>permite formas especiales de ciertas instrucciones</effect>
+	</option>
+      </options>
       <examples>
         <example>loop 1000</example>
+	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
         <example>loop for i=1991..2000</example>
+	<example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
       </examples>
     </usage>
 
     <description>
       <para>El parámetro <repl quote="true">control</repl> debe tomar una 
-        de las tres formas posibles, tal y como se muestra en los ejemplos:
+        de las cuatro formas posibles, tal y como se muestra en los ejemplos:
 	un número de veces entero a repetir las instrucciones del bucle;
 	<quote><lit>while</lit></quote> más una condición numérica; o
 	<quote><lit>for</lit></quote> más un rango de valores para la variable
-	índice interna <lit>i</lit>.
+	índice interna <lit>i</lit>; o
+	<quote><lit>for</lit></quote> más tres expresiones entre
+	paréntesis, separadas por puntos y comas.  En la última forma,
+	la expresión del lado izquierdo inicializa una variable, la 
+	del medio establece una condición para que continúen las iteraciones,
+	y la de la derecha determina un incremento o decremento a aplicar
+	al comienzo de la segunda y siguientes iteraciones. (Esta es una forma
+	restringida de la instrucción <lit>for</lit> del lenguaje de 
+	programación C.)
+	
       </para>
 
       <para>Esta instrucción abre un modo de ejecución especial
         en el cual el programa acepta instrucciones a ejecutar
 	repetidamente. Dentro de un bucle sólo se pueden
 	utilizar ciertas instrucciones: <cmd>genr</cmd>,
-	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
-	<cmd>smpl</cmd>, <cmd>store</cmd> y <cmd>summary</cmd>
-	(store no puede utilizarse dentro de un bucle <quote>while</quote>).  
-	Se sale del modo de introducción de instrucciones de bucle con
-	<cmd>endloop</cmd>: en este punto se ejecutan todas las instrucciones 
-	que están en la cola del bucle.  Los bucles no pueden estar anidados.
-      </para>
+	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>,
+	<cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>, 
+	<cmd>store</cmd>, <cmd>summary</cmd>, <cmd>if</cmd>,
+	<cmd>else</cmd> y <cmd>endif</cmd>. Se sale del modo de introducción 
+	de instrucciones de bucle con <cmd>endloop</cmd>: en este punto se 
+	ejecutan todas las instrucciones que están en la cola del bucle.  
+	</para>
 
       <para>Ver <manref targ="looping"/> para más detalles y ejemplos.
+      El efecto de la opción <lit>--progressive</lit> (que está diseñada
+      para su uso en simulaciones de Monte Carlo) se explica allí.
       </para>
     </description>
 
   </command>
 
-  <command name="markers" section="Dataset" context="gui"
+  <command name="markers" section="Conjunto de datos" context="gui"
     label="Añadir marcadores de caja">
 
     <description>
@@ -2649,7 +2688,7 @@
     </description>
   </command>
 
-  <command name="meantest" section="Tests"
+  <command name="meantest" section="Contrastes"
     label="Diferencia de medias">
 
     <usage>
@@ -2692,7 +2731,7 @@
 
   </command>
 
-  <command name="missing" section="Dataset" context="gui"
+  <command name="missing" section="Conjunto de datos" context="gui"
     label="valores ausentes">
 
     <description>
@@ -2712,7 +2751,7 @@
     </description>
   </command>
 
-  <command name="modeltab" section="Utilities"
+  <command name="modeltab" section="Utilidades"
     label="La tabla de modelos">
 
     <usage>
@@ -2798,7 +2837,7 @@
 
   </command>
 
-  <command name="mpols" section="Estimation"
+  <command name="mpols" section="Estimación"
     label="MCO de precisión Múltiple">
 
     <usage>
@@ -2837,7 +2876,7 @@
 
   </command>
 
-  <command name="multiply" section="Transformations" context="cli">
+  <command name="multiply" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -2868,7 +2907,7 @@
 	multiply invpob pc income</code>
 
       <para>que creará <lit>incomepc</lit> como el producto de 
-      	<lit>income</lit> y <lit>invpob</lit>, y
+      	<lit>income</lit> e <lit>invpob</lit>, y
 	<lit>expendpc</lit> como <lit>expend</lit> por
 	<lit>invpob</lit>.
       </para>
@@ -2876,7 +2915,7 @@
 
   </command>
 
-  <command name="nls" section="Estimation"
+  <command name="nls" section="Estimación"
     label="Mínimos cuadrados no lineales">
 
     <usage>
@@ -2895,7 +2934,7 @@
     <description context="gui">
 
       <para>Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
-        utilizando una vesrión modificada del algoritmo de Levenberg-Marquandt.
+        utilizando una versión modificada del algoritmo de Levenberg&ndash;Marquandt.
 	Usted debe suministrar la especificación de una función; también se 
 	recomienda que, si es posible,  suministre las expresiones de las 
 	derivadas de la función con respecto a cada uno de los parámetros.
@@ -2951,7 +2990,7 @@
 
       <para>
         Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
-        utilizando una vesrión modificada del algoritmo de Levenberg-Marquandt.
+        utilizando una versión modificada del algoritmo de Levenberg-Marquandt.
 	El usuario debe suministrar la especificación de una función. Los parámetros 
 	de esta función deben ser declarados antes y hay que asignarles unos valores 
 	iniciales (usando la instrucción <cmd>genr</cmd>) antes de la estimación.
@@ -3019,14 +3058,14 @@
 
   </command>
 
-  <command name="noecho" section="Obsolete" context="cli">
+  <command name="noecho" section="Obsoleta" context="cli">
     <description>
       <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
       </para>
     </description>
   </command>
 
-  <command name="nulldata" section="Dataset"
+  <command name="nulldata" section="Conjunto de datos"
     label="Crear un conjunto de datos vacío">
 
     <usage>
@@ -3059,7 +3098,7 @@
 
   </command>
 
-  <command name="ols" section="Estimation"
+  <command name="ols" section="Estimación"
     label="Mínimos Cuadrados Ordinarios">
 
     <usage>
@@ -3079,6 +3118,14 @@
         <option>
 	  <flag>--quiet</flag>
 	  <effect>suprime la presentación de los resusltados</effect>
+        </option>
+	<option>
+	  <flag>--no-df-corr</flag>
+	  <effect>suprime la corrección de grados de libertad</effect>
+        </option>
+        <option>
+	  <flag>--print-final</flag>
+	  <effect>ver más abajo</effect>
         </option>
       </options>
       <examples>
@@ -3113,6 +3160,18 @@
 	de selección de modelos (se describen en Ramanathan, Sección 4.3).
 	</para>
 
+	<para>Si se da la opción <lit>--no-df-corr</lit>, no se aplica la
+	corrección habitual de grados de libertad al calcular la estimación 
+	de la varianza de las perturbaciones (y así tampoco en la estimación
+	de las desviaciones típicas de los estimadores de los parámetros).</para>
+
+      <para>La opción <lit>--print-final</lit> es aplicable sólo en el 
+        contexto de un bucle (ver <cmdref targ="loop"/>).  Se encarga de que
+	las regresiones se ejecuten "silenciosamente" en todas las iteraciones
+	excepto la iteración final del bucle. Ver <manref targ="loop-examples"/> 
+	para más detalles.
+      </para>
+	
       <para context="cli">Algunas variables que se definen internamente al ejecutar
       la instrucción <cmd>ols</cmd>, pueden recuperarse mediante la instrucción 
       <cmdref targ="genr"/>, teniendo en cuenta que <cmd>genr</cmd> debe invocarse 
@@ -3132,7 +3191,7 @@
 
   </command>
 
-  <command name="omit" section="Tests" label="Omisión de variables">
+  <command name="omit" section="Contrastes" label="Omisión de variables">
 
     <usage>
       <arguments>
@@ -3178,7 +3237,7 @@
 
   </command>
 
-  <command name="omitfrom" section="Tests" context="cli">
+  <command name="omitfrom" section="Contrastes" context="cli">
 
     <usage>
       <arguments>
@@ -3211,7 +3270,7 @@
 
   </command>
 
-  <command name="online" section="Dataset" context="gui"
+  <command name="online" section="Conjunto de datos" context="gui"
     label="Bases de datos de acceso en línea">
 
     <description>
@@ -3258,7 +3317,7 @@
     </description>
   </command>
 
-  <command name="open" section="Dataset" context="cli">
+  <command name="open" section="Conjunto de datos" context="cli">
 
     <usage>
       <arguments>
@@ -3270,7 +3329,7 @@
       <para>
         Abre un fichero de datos. Si ya hay un fichero de datos abierto, 
 	se reemplaza por el que ahora se abre. El programa tratará de detectar
-	el formato del fichero de datos (fromato nativo de gretl, texto plano,
+	el formato del fichero de datos (formato nativo de gretl, texto plano,
 	CSV o BOX1).
       </para>
 
@@ -3288,7 +3347,7 @@
 
   </command>
 
-  <command name="outfile" section="Printing" context="cli">
+  <command name="outfile" section="Impresión" context="cli">
 
     <usage>
       <arguments>
@@ -3337,7 +3396,7 @@
 
   </command>
 
-  <command name="panel" section="Dataset"
+  <command name="panel" section="Conjunto de datos"
     label="Datos de panel">
 
     <usage>
@@ -3410,7 +3469,7 @@
 
   </command>
 
-  <command name="pca" section="Statistics"
+  <command name="pca" section="Estadística"
     label="Análisis de componentes principales">
 
     <usage>
@@ -3456,7 +3515,8 @@
 
   </command>
 
-  <command name="pergm" section="Statistics" label="Periodograma">
+  <command name="pergm" section="Estadísticas"
+    label="Periodograma">
 
     <usage>
       <arguments>
@@ -3497,7 +3557,7 @@
 
   </command>
 
-  <command name="plot" section="Graphs" context="cli">
+  <command name="plot" section="Gráficos" context="cli">
 
     <usage>
       <arguments>
@@ -3523,7 +3583,7 @@
 
   </command>
 
-  <command name="pooled" section="Estimation"
+  <command name="pooled" section="Estimación"
     label="MCO combinados">
 
     <usage>
@@ -3552,7 +3612,7 @@
 
   </command>
 
-  <command name="print" section="Printing" context="cli">
+  <command name="print" section="Impresión" context="cli">
 
     <usage>
       <arguments>
@@ -3599,7 +3659,7 @@
 
   </command>
 
-  <command name="printf" section="Printing" context="cli">
+  <command name="printf" section="Impresión" context="cli">
 
     <usage>
       <arguments>
@@ -3646,7 +3706,7 @@
 
   </command>
 
-  <command name="probit" section="Estimation"
+  <command name="probit" section="Estimación"
     label="Modelo Probit">
 
     <usage>
@@ -3687,7 +3747,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilities" context="cli">
+  <command name="pvalue" section="Utilidades" context="cli">
 
     <usage>
       <arguments>
@@ -3724,7 +3784,7 @@
 
   </command>
 
-  <command name="pwe" section="Estimation" label="Estimador de Prais-Winsten">
+  <command name="pwe" section="Estimación" label="Estimador de Prais-Winsten">
 
     <usage>
       <arguments>
@@ -3762,7 +3822,7 @@
 
   </command>
 
-  <command name="quit" section="Utilities" context="cli">
+  <command name="quit" section="Utilidades" context="cli">
 
     <description>
       <para>
@@ -3777,7 +3837,7 @@
 
   </command>
 
-  <command name="rename" section="Dataset" context="cli">
+  <command name="rename" section="Conjunto de datos" context="cli">
 
     <usage>
       <arguments>
@@ -3804,7 +3864,7 @@
 
   </command>
 
-  <command name="reset" section="Tests"
+  <command name="reset" section="Contrastes"
     label="Ramsey's RESET">
 
     <description>
@@ -3823,8 +3883,55 @@
     </gui-access>
 
   </command>
+  
+ <command name="restrict" section="Contrastes" label="Restricciones lineales">
 
-  <command name="rhodiff" section="Transformations" context="cli">
+    <description>
+      <para>
+	Evalúa un conjunto de restricciones sobre los parámetros del último 
+	modelo estimado. En modo "guión de instrucciones", el conjunto de
+	restricciones debe incluirse entre <quote>restrict</quote> y
+	<quote>end restrict</quote>, pero en la caja de diálogo sobre 
+	restricciones (en el entorno gráfico) pueden omitirse esas líneas.</para>
+
+      <para>Cada restricción del conjunto debe expresarse como una ecuación,
+        con una combinación lineal de los parámetros a la izquierda y un 
+	valor numérico a la derecha del signo igual. Los parámetros se
+	referencian en la forma b<repl>N</repl>, donde
+	<repl>N</repl> representa la posición en la lista de regresores,
+	comenzando en cero. Por ejemplo, <lit>b1</lit>
+	denota al segundo parámetro de la regresión.
+      </para>
+
+      <para>El segundo y siguientes términos <lit>bN</lit> de una ecuación 
+	pueden ir premultiplicados por un número, utilizando <lit>*</lit> 
+	para representar la multiplicación, por ejemplo
+	<lit>3.5*b4</lit>.
+      </para>
+
+      <para>He aquí un ejemplo de un conjunto de restricciones:</para>
+
+      <code>
+	restrict
+	 b1 = 0
+	 b2 - b3 = 0
+	 b4 + 2*b5 = 1
+	end restrict</code>
+
+      <para>Las restricciones se evalúan mediante un contraste F de Wald,
+        usando la matriz de covarianzas de los coeficientes del modelo en 
+	cuestión.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Restricciones lineales</menu-path>
+    </gui-access>
+
+  </command> 
+
+  <command name="rhodiff" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -3853,7 +3960,7 @@
 
   </command>
 
-  <command name="rmplot" section="Graphs"
+  <command name="rmplot" section="Gráficos"
     label="Gráfico Rango-Media">
 
     <usage>
@@ -3899,7 +4006,7 @@
 
   </command>
 
-  <command name="run" section="Programming" context="cli">
+  <command name="run" section="Programación" context="cli">
 
     <usage>
       <arguments>
@@ -3920,7 +4027,7 @@
 
   </command>
 
-  <command name="runs" section="Tests" label="Contraste de rachas">
+  <command name="runs" section="Contrastes" label="Contraste de rachas">
 
     <usage>
       <arguments>
@@ -3948,7 +4055,7 @@
 
   </command>
 
-  <command name="sampling" section="Dataset" context="gui"
+  <command name="sampling" section="Conjunto de datos" context="gui"
     label="Establecer el rango muestral">
 
     <description>
@@ -4000,11 +4107,12 @@
         se pierde. Vd. puede reimponerla de nuevo usando el menú	
       <quote>Muestra/Establecer frecuencia, observación inicial...</quote>.</para>
 
+      <para>Véase <manref targ="sampling"/> para más detalles.</para>
     </description>
   </command>
 
 
-  <command name="scatters" section="Graphs"
+  <command name="scatters" section="Gráficos"
     label="Gráficos bivariantes múltiples">
 
     <usage>
@@ -4050,14 +4158,14 @@
 
   </command>
 
-  <command name="seed" section="Obsolete" context="cli">
+  <command name="seed" section="Obsoleta" context="cli">
     <description>
       <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
       </para>
     </description>
   </command>
 
-  <command name="seed" section="Programming" context="gui"
+  <command name="seed" section="Programación" context="gui"
     label="Semilla aleatoria">
 
     <description>
@@ -4072,7 +4180,7 @@
     </description>
   </command>
 
-  <command name="set" section="Programming" context="cli">
+  <command name="set" section="Programación" context="cli">
 
     <usage>
       <arguments>
@@ -4137,6 +4245,17 @@
 	    <quote>desviaciones típicas de White</quote>.</cell>
 	</row>
 	<row>
+	 <cell><lit>force_hc</lit></cell> <cell>valores: off (por 
+	    defecto) u on.  Por defecto, con datos de series temporales
+	    y cuando se da la opción <lit>--robust</lit> en 
+	    <cmd>ols</cmd>, se usa el estimador HAC. Si se establece
+	    <lit>force_hc</lit> en <quote>on</quote>, esto fuerza al 
+	    cálculo de la Matriz de Covarianzas Consistente ante 
+	    Heterocedasticidad regular (que no tiene en cuenta la
+	    autocorrelación).
+	  </cell>
+	</row>
+	<row>
 	  <cell><lit>garch_vcv</lit></cell>
 	  <cell>valores: <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (matriz de información) , <lit>op</lit> (matriz de 
@@ -4162,7 +4281,7 @@
     </description>
   </command>
 
-  <command name="setobs" section="Dataset"
+  <command name="setobs" section="Conjunto de datos"
     label="Frequencia y observación inicial">
 
     <usage>
@@ -4228,7 +4347,7 @@
 
   </command>
 
-  <command name="setmiss" section="Dataset"
+  <command name="setmiss" section="Conjunto de datos"
     label="Código de valor ausente">
 
     <usage>
@@ -4279,7 +4398,7 @@
 
   </command>
 
-  <command name="shell" section="Utilities" context="cli">
+  <command name="shell" section="Utilidades" context="cli">
 
     <usage>
       <arguments>
@@ -4301,7 +4420,7 @@
 
   </command>
 
-  <command name="sim" section="Dataset"
+  <command name="sim" section="Conjunto de datos"
     label="Simulación">
 
     <usage>
@@ -4338,7 +4457,7 @@
 
   </command>
 
-  <command name="smpl" section="Dataset" context="cli">
+  <command name="smpl" section="Conjunto de datos" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
     up -->
@@ -4349,7 +4468,8 @@
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
-	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>listavar</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [ </lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <examples>
@@ -4357,6 +4477,8 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
+	<example>smpl y > 3000 --restrict --replace</example>
+	<example>smpl 100 --random</example>
       </examples>
     </usage>
 
@@ -4377,22 +4499,44 @@
 	de acuerdo a la sintaxis de la instrucción <cmdref targ="genr"/>).
       </para>
 
-      <para>Con la opción <lit>--no-missing</lit>, si se especifica
-	<repl>listavar</repl> una observación se quita si y sólo si al menos
-	una de las variables de <repl>listavar</repl> tiene un valor ausente en 
-	esa observación; en los demás casos las observaciones se quitan si
-	<emphasis>cualquier</emphasis> variable tiene un valor ausente.</para>
+      <para>Con la opción <lit>--no-missing</lit>, si se especifica 
+        <repl>listavar</repl>, las observaciones se seleccionan con la 
+	condición de que todas las variables de <repl>listavar</repl> 
+	tengan valores válidos en esa observación; cuando no se
+	especifica <repl>listavar</repl>, las observaciones se seleccionan
+	con la condición de que <emphasis>todas</emphasis> las variables 
+	tengan valores validos (no ausentes).</para>
+
+      <para>Con la opción <lit>--random</lit>, se extrae del conjunto de datos
+        el número de observaciones especificado, de manera aleatoria. 
+	Si se desea poder replicar esta selección más adelante, se debe 
+	establecer primero una semilla para el generador de números aleatorios
+	(Véase la instrucción <cmdref targ="set"/>).</para>
 
       <para>La forma final, <lit>smpl full</lit>, restablece el rango muestral completo.
       </para>
+      
+      <para>Nótese que las restricciones sobre la muestra son, por defecto,
+        acumulativas: la base para cualquier orden <lit>smpl</lit> es la muestra 
+	actual. Si Vd. desea que la instrucción actúe reemplazando cualquier 
+	restricción previa, puede añadir la opción <lit>--replace</lit> al final de
+	la instrucción.</para>
 
       <para>Puede usarse la variable interna <lit>obs</lit> junto con
         la opción <lit>--restrict</lit> de <lit>smpl</lit> para excluir
-	observaciones particulares de la muestra. Por ejemplo,
-	<lit>smpl obs!=4 --restrict</lit> quitará sólo la cuarta observación.
-	Si los puntos de datos están identificados con etiquetas,
-	<lit>smpl obs!="USA" --restrict</lit> quitará la observación que tiene
-	la etiqueta <quote>USA</quote>.</para>
+	observaciones particulares de la muestra. Por ejemplo,</para>
+
+      <code>
+	smpl obs!=4 --restrict</code> 
+
+      <para>quitará sólo la cuarta observación. Si los datos se identifican
+	mediante etiquetas,</para>
+
+      <code>
+	smpl obs!="USA" --restrict</code>
+	  
+      <para>quitará la observación con etiqueta <quote>USA</quote>.
+      </para>
 
       <para>
         Con respecto a las formas <lit>--dummy</lit>,
@@ -4403,6 +4547,8 @@
 	orden.  Es posible reimponer la estructura inicial con la instrucción
 	<cmdref targ="setobs"/>.
       </para>
+      
+      <para>Véase <manref targ="sampling"/> para más detalles.</para>
     </description>
 
     <gui-access>
@@ -4411,7 +4557,7 @@
 
   </command>
 
-  <command name="spearman" section="Statistics"
+  <command name="spearman" section="Estadística"
     label="Correlación por rangos de Spearmans">
 
     <usage>
@@ -4459,7 +4605,7 @@
 
   </command>
 
-  <command name="square" section="Transformations" context="cli">
+  <command name="square" section="Transformaciones" context="cli">
 
     <usage>
       <arguments>
@@ -4492,7 +4638,7 @@
 
   </command>
 
-  <command name="store" section="Dataset"
+  <command name="store" section="Conjunto de datos"
     label="Guardar datos">
 
     <usage>
@@ -4521,6 +4667,10 @@
 	  <flag>--gzipped</flag>
 	  <effect>aplicar la compresión mediante gzip</effect>
         </option>
+	<option>
+	  <flag>--dat</flag>
+	  <effect>usar el formato ASCII de PcGive</effect>
+        </option>
       </options>
     </usage>
 
@@ -4537,8 +4687,8 @@
 	formatos alternativos. Los datos CSV (Comma-Separated Values)
 	pueden ser leídos por programas de hoja de cálculos y también pueden 
 	manipularse mediante un editor de textos. Los formatos de 
-	<program>Octave</program> y <program>R</program> están diseñados
-	para el uso con estos respectivos programas.  La compresión mediante
+	<program>Octave</program>, <program>R</program> y <program>PcGive</program>
+	están diseñados para el uso con estos respectivos programas.  La compresión mediante
 	Gzip puede ser útil para grandes conjuntos de datos. Ver 
 	<manref targ="datafiles"/> para detalles sobre los distintos formatos.
 	</para>
@@ -4557,7 +4707,7 @@
 
   </command>
 
-  <command name="summary" section="Statistics" context="cli">
+  <command name="summary" section="Estadística" context="cli">
 
     <usage>
       <arguments>
@@ -4583,7 +4733,7 @@
 
   </command>
 
-  <command name="system" section="Estimation" context="cli">
+  <command name="system" section="Estimación" context="cli">
 
     <usage>
       <arguments>
@@ -4609,11 +4759,17 @@
 	que se especifican por medio de la instrucción <cmd>equation</cmd>, 
 	y debe terminarse con la línea <cmd>end system</cmd>.
       </para>
+      
+      <para>En el contexto de un sistema de Mínimos Cuadrados en Tres Etapas,
+        Vd. puede proporcionar una lista de instrumentos (mediante nombre 
+	o número). Esta debería ir en una linea por separado dentro del
+	bloque <cmd>system</cmd>, precedido de la palabra <cmd>instr</cmd>.
+      </para>
     </description>
 
   </command>
 
-  <command name="tabprint" section="Printing" context="cli">
+  <command name="tabprint" section="Impresión" context="cli">
 
     <usage>
       <arguments>
@@ -4651,7 +4807,7 @@
 
   </command>
 
-  <command name="testuhat" section="Tests" context="cli"
+  <command name="testuhat" section="Contrastes" context="cli"
     label="Normalidad de los residuos">
 
     <description>
@@ -4669,7 +4825,7 @@
 
   </command>
 
-  <command name="tobit" section="Estimation" label="Modelo Tobit">
+  <command name="tobit" section="Estimación" label="Modelo Tobit">
 
     <usage>
       <arguments>
@@ -4705,7 +4861,7 @@
 
   </command>
 
-  <command name="tsls" section="Estimation"
+  <command name="tsls" section="Estimación"
     label="Mínimos cuadrados en dos etapas">
 
     <usage>
@@ -4766,7 +4922,7 @@
 
   </command>
 
-  <command name="var" section="Estimation"
+  <command name="var" section="Estimación"
     label="Autorregresión vectorial">
 
     <usage>
@@ -4864,7 +5020,7 @@
 
   </command>
 
-  <command name="listavar" section="Dataset" context="cli">
+  <command name="listavar" section="Conjunto de datos" context="cli">
 
     <description>
       <para>
@@ -4875,7 +5031,7 @@
 
   </command>
 
-  <command name="vartest" section="Tests"
+  <command name="vartest" section="Contrastes"
     label="Diferencia de varianzas">
 
     <usage>
@@ -4905,7 +5061,39 @@
 
   </command>
 
-  <command name="wls" section="Estimation"
+  <command name="vif" section="Contrastes" context="cli"
+    label="Factores de inflación de varianza">
+
+    <description>
+      <para>
+	Debe ejecutarse inmediatamente después de la estimación de un modelo
+	que incluya al menos dos variables independientes. Calcula y muestra
+	los factores de inflación de varianza (VIFs) de los regresores.  El 
+	factor de inflación de varianza (VIF) del regresor 
+	<mathvar>j</mathvar> se define como
+	<equation status="display" 
+	  tex="\[\frac{1}{1-R_j^2}\]"
+	  ascii="1/(1 - Rj^2"
+	  graphic="vif"/> donde <mathvar>R<sub>j</sub></mathvar> es
+	el coeficiente de correlación múltiple entre el regresor
+	<mathvar>j</mathvar> y los demás regresores. El factor tiene un 
+	valor mínimo de 1,0 cuando la variable en cuestión es
+	ortogonal a las demás variables independientes.  Neter,
+	Wasserman, y Kutner (1990) sugieren inspeccionar el mayor
+	VIF como una medida de diagnóstico para la multicolinealidad;
+	un valor mayor que 10 se suele considerar que indica un grado
+	de multicolinealidad problemático.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Model window, /Tests/collinearity</menu-path>
+    </gui-access>
+
+  </command>
+
+  
+  <command name="wls" section="Estimación"
     label="Mínimos cuadrados ponderados">
 
     <usage>
