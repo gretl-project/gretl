@@ -844,7 +844,7 @@ void view_session (void)
 #endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_object(session.graphs[i], 
-			   ((session.graphs[i])->sort == GRETL_BOXPLOT)? 'b' : 'g');
+			   ((session.graphs[i])->sort == 1)? 'b' : 'g');
     }
 
     gtk_widget_show(slist);
