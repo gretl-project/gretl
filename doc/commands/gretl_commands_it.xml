@@ -1745,77 +1745,78 @@
   </command>
 
   <command name="graphing" section="Grafici" context="gui"
-    label="Graphing">
+    label="Grafici">
 
     <description>
 
-      <para>Gretl calls a separate program, namely gnuplot, to
-	generate graphs.  Gnuplot is a very full-featured graphing
-	program with myriad options.  Gretl gives you direct access,
-	via a graphical interface, to a subset of these options and it
-	tries to choose sensible values for you; it also allows you to
-	take complete control over graph details if you wish.</para>
+      <para>Gretl richiama un programma separato, gnuplot, per generare
+	i grafici. Gnuplot è un programma di grafica molto completo, con
+        una miriade di opzioni; gretl fornisce l'accesso, attraverso
+        un'interfaccia grafica, a una parte di queste opzioni, cercando
+        di scegliere dei valori, ma è possibile anche controllare
+        l'aspetto di un grafico in tutti i suoi dettagli, se si vuole.
+	</para>
 
-      <para>With a graph displayed, you can click on the graph window
-	for a pop-up menu with the following options:</para>
+      <para>Mentre un grafico viene visualizzato, facendo clic sulla
+      finestra del grafico si aprirà un menù pop-up con le seguenti
+      opzioni:</para>
 
       <ilist>
-	<li><para>Save as postscript: save the graph in encapsulated
-	    postscript (EPS) format</para>
+	<li><para>Salva come postscript: salva il grafico in formato encapsulated
+	    postscript (EPS)</para>
 	</li>
-	<li><para>Save as PNG: save in Portable Network Graphics
-	    format</para>
+	<li><para>Salva come PNG: salva in formato Portable Network Graphics</para>
 	</li>
-	<li><para>Save to session as icon: the graph will appear in
-	    iconic form when you select <quote>Icon view</quote> from
-	    the Session menu</para>
+	<li><para>Salva alla sessione come icona: il grafico apparirà
+        sotto forma di icona quando si seleziona <quote>Visualizza
+        Icone</quote> dal menù Sessione</para>
 	</li>
-	<li><para>Zoom: lets you select an area within the graph for
-	    closer inspection</para>
+	<li><para>Ingrandisci: permette di selezionare un'area
+        all'interno del grafico per visualizzarla da vicino</para>
 	</li>
-	<li><para>Print: (on the Gnome desktop and MS Windows only)
-	    lets you print the graph directly</para>
+        <li><para>Stampa: permette di stampare il grafico direttamente
+        (disponibile solo in Gnome e MS Windows)</para>
 	</li>
-	<li><para>Copy to clipboard: (MS Windows only) lets you paste
-	    the graph into Windows applications such as MS
-	    Word</para>
+	<li><para>Copia negli appunti: permette di copiare il grafico
+        per poi incollarlo in altri programmi Windows, come ad esempio
+        MS Word (disponibile solo in MS Windows only)</para>
 	</li>
-	<li><para>Edit: opens a controller for the plot which lets you
-	    adjust various aspects of its appearance</para>
+	<li><para>Modifica: apre una finestra che permette di modificare
+        vari dettagli dell'aspetto del grafico</para>
 	</li>
-	<li><para>Close: closes the graph window</para>
+	<li><para>Chiudi: chiude la finestra del grafico</para>
 	</li>
       </ilist>
 
       <para>
-	If you know something about gnuplot and wish to get finer
-	control over the appearance of a graph than is available via
-	the graphical controller (<quote>Edit</quote> option), you
-	have two further options:</para>
+	Se si conosce gnuplot e si desidera un controllo sull'aspetto
+        del grafico più preciso di quello fornito dalla finestra di
+        modifica del grafico (opzione <quote>Modifica</quote>), ci sono
+        due possibilità:</para>
 
       <ilist>
-	<li><para>Once the graph is saved as a session icon, you can
-	    right-click on its icon for a further pop-up menu.  One of
-	    the options here is <quote>Edit plot commands</quote>,
-	    which opens an editing window with the actual gnuplot
-	    commands displayed. You can edit these commands and either
-	    save them for future processing o send them to gnuplot
-	    (with the <quote>File/Send to gnuplot</quote> menu item in
-	    the plot commands editing window).</para>
+	<li><para>Una volta salvato il grafico come icona di sessione,
+        facendo clic col tasto destro sull'icona si apre un altro menù
+        pop-up. Una delle opzioni disponibili è <quote>Comandi per
+        modificare il grafico</quote>, che apre una finestra di modifica
+        con i comandi di gnuplot. È possibile modificare questi comandi
+        e salvarli per il futuro, oppure inviarli direttamente a
+        gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
+        menù della finestra di modifica dei comandi).</para>
 	</li>
-	<li><para>Another way to save the plot commands (or to save
-	    the displayed plot in formats other than EPS o PNG) is to
-	    use <quote>Edit</quote> item on a graph's pop-up menu to
-	    invoke the graphical controller, then click on the
-	    <quote>Output to file</quote> tab in the controller.  You
-	    are then presented with a drop-down menu of formats in
-	    which to save the graph.</para>
+	<li><para>Un altro modo per salvare i comandi del grafico (o per
+        salvare il grafico in formati diversi da EPS o PNG) è quello di
+        usare il comando <quote>Modifica</quote> nel menù pop-up del
+        grafico per aprire la finestra di modifica del grafico, quindi
+        fare clic su <quote>File</quote>: verrà visualizzato un menù a
+        discesa con i formati in cui è possibile salvare il grafico.
+	</para>
 	</li>
       </ilist>
 
       <para>
-	To find out more about gnuplot, see
-	http://ricardo.ecn.wfu.edu/gnuplot.html or
+	Per saperne di più su gnuplot, si veda
+	http://ricardo.ecn.wfu.edu/gnuplot.html oppure
 	http://www.gnuplot.info</para>
 
     </description>
@@ -1823,7 +1824,7 @@
   </command>
 
   <command name="graphpag" section="Grafici" context="gui"
-    label="Gretl graph page">
+    label="Pagina dei grafici">
 
     <description>
 
@@ -1854,7 +1855,7 @@
   </command>
 
   <command name="3-D" section="Grafici" context="gui"
-    label="3-dimensional plots">
+    label="Grafici tridimensionali">
 
     <description>
       <para>Questa funzionalità migliora se avete installata una
@@ -1878,7 +1879,7 @@
   </command>
     
   <command name="hausman" section="Test"
-    label="Hausman test (panel diagnostics)">
+    label="Test di Hausman (diagnosi panel)">
 
     <description>
       <para>
@@ -1924,7 +1925,7 @@
 
   </command>
 
-  <command name="hccm" section="Stima" label="HCCM estimation">
+  <command name="hccm" section="Stima" label="Stima HCCM">
 
     <usage>
       <arguments>
@@ -1974,7 +1975,7 @@
 
   </command>
 
-  <command name="hilu" section="Stima" label="Hildreth-Lu estimation">
+  <command name="hilu" section="Stima" label="Stima Hildreth-Lu">
 
     <usage>
       <arguments>
@@ -2006,7 +2007,7 @@
   </command>
 
   <command name="hsk" section="Stima"
-    label="Heteroskedasticity-corrected estimates">
+    label="Stime corrette per l'eteroschedasticità">
 
     <usage>
       <arguments>
@@ -2128,7 +2129,7 @@
 
   </command>
 
-  <command name="label" section="Dataset" label="Edit attributes of variable">
+  <command name="label" section="Dataset" label="Modifica gli attributi di una variabile">
 
     <usage>
       <arguments>
@@ -2197,7 +2198,7 @@
   </command>
 
   <command name="lad" section="Stima"
-    label="Least Absolute Deviation estimation">
+    label="Stima con minime deviazioni assolute">
 
     <usage>
       <arguments>
@@ -2284,7 +2285,7 @@
   </command>
 
   <command name="leverage" section="Test"
-    label="Influential observations">
+    label="Osservazioni influenti">
 
     <usage>
       <options>
@@ -2352,7 +2353,7 @@
 
   </command>
 
-  <command name="lmtest" section="Test" label="LM tests">
+  <command name="lmtest" section="Test" label="Test LM">
 
     <usage>
       <options>
@@ -2419,7 +2420,7 @@
   </command>
 
   <command name="logistic" section="Stima"
-    label="Logistic regression">
+    label="Regressione logistica">
 
     <usage>
       <arguments>
@@ -2493,7 +2494,7 @@
   </command>
 
   <command name="logit" section="Stima"
-    label="Logit regression">
+    label="Regressione logit">
 
     <usage>
       <arguments>
@@ -2606,7 +2607,7 @@
   </command>
 
   <command name="markers" section="Dataset" context="gui"
-    label="Add case markers">
+    label="Aggiunta di marcatori">
 
     <description>
       <para>
@@ -2624,7 +2625,7 @@
   </command>
 
   <command name="meantest" section="Test"
-    label="Difference of means">
+    label="Differenza delle medie">
 
     <usage>
       <arguments>
@@ -2668,7 +2669,7 @@
   </command>
 
   <command name="missing" section="Dataset" context="gui"
-    label="Missing data values">
+    label="Valori dati mancanti">
 
     <description>
       <para>Imposta un valore numerico che sarà interpretato come
@@ -2688,7 +2689,7 @@
   </command>
 
   <command name="modeltab" section="Utilità"
-    label="The model table">
+    label="La tabella modelli">
 
     <usage>
       <arguments>
@@ -2778,7 +2779,7 @@
   </command>
 
   <command name="mpols" section="Stima"
-    label="Multiple-precision OLS">
+    label="OLS a precisione multipla">
 
     <usage>
       <arguments>
@@ -2856,7 +2857,7 @@
   </command>
 
   <command name="nls" section="Stima"
-    label="Nonlinear Least Squares">
+    label="Minimi quadrati non-lineari">
 
     <usage>
       <arguments>
@@ -3003,7 +3004,7 @@
   </command>
 
   <command name="nulldata" section="Dataset"
-    label="Creating a blank dataset">
+    label="Creazione di un dataset vuoto">
 
     <usage>
       <arguments>
@@ -3034,7 +3035,7 @@
   </command>
 
   <command name="ols" section="Stima"
-    label="Ordinary Least Squares">
+    label="Minimi quadrati ordinari">
 
     <usage>
       <arguments>
@@ -3104,7 +3105,7 @@
 
   </command>
 
-  <command name="omit" section="Test" label="Omit variables">
+  <command name="omit" section="Test" label="Variabili omesse">
 
     <usage>
       <arguments>
@@ -3185,7 +3186,7 @@
   </command>
 
   <command name="online" section="Dataset" context="gui"
-    label="Access online databases">
+    label="Accesso ai database online">
 
     <description>
       <para>
@@ -3306,7 +3307,7 @@
   </command>
 
   <command name="panel" section="Dataset"
-    label="Panel data structure">
+    label="Struttura dei dati panel">
 
     <usage>
       <options>
@@ -3375,7 +3376,7 @@
   </command>
 
   <command name="pca" section="Statistiche"
-    label="Principal Components Analysis">
+    label="Analisi delle componenti principali">
 
     <usage>
       <arguments>
@@ -3419,7 +3420,7 @@
   </command>
 
   <command name="pergm" section="Statistiche"
-    label="Periodogram">
+    label="Periodogramma">
 
     <usage>
       <arguments>
@@ -3606,7 +3607,7 @@
   </command>
 
   <command name="probit" section="Stima"
-    label="Probit model">
+    label="Modello probit">
 
     <usage>
       <arguments>
@@ -3683,7 +3684,7 @@
 
   </command>
 
-  <command name="pwe" section="Stima" label="Prais-Winsten estimator">
+  <command name="pwe" section="Stima" label="Stimatore di Prais-Winsten">
 
     <usage>
       <arguments>
@@ -3762,7 +3763,7 @@
   </command>
 
   <command name="reset" section="Test"
-    label="Ramsey's RESET">
+    label="Test RESET di Ramsey">
 
     <description>
       <para>
@@ -3811,7 +3812,7 @@
   </command>
 
   <command name="rmplot" section="Grafici"
-    label="Range-mean plot">
+    label="Grafico range-mean">
 
     <usage>
       <arguments>
@@ -3878,7 +3879,7 @@
 
   </command>
 
-  <command name="runs" section="Test" label="Runs test">
+  <command name="runs" section="Test" label="Test delle successioni">
 
     <usage>
       <arguments>
@@ -3907,7 +3908,7 @@
   </command>
 
   <command name="sampling" section="Dataset" context="gui"
-    label="Setting the sample">
+    label="Impostazione del campione">
 
     <description>
       <para>Il menù Campione offre vari modi di selezionare un
@@ -3960,7 +3961,7 @@
 
 
   <command name="scatters" section="Grafici"
-    label="Multiple scatterplots">
+    label="Grafici a dispersione multipli">
 
     <usage>
       <arguments>
@@ -4015,7 +4016,7 @@
   </command>
 
   <command name="seed" section="Programmazione" context="gui"
-    label="Random seed">
+    label="Seme dei numeri casuali">
 
     <description>
       <para>Richiede un argomento intero. Imposta il seme del generatore
@@ -4121,7 +4122,7 @@
   </command>
 
   <command name="setobs" section="Dataset"
-    label="Frequency and starting observation">
+    label="Frequenza e osservazione iniziale">
 
     <usage>
       <arguments>
@@ -4186,7 +4187,7 @@
   </command>
 
   <command name="setmiss" section="Dataset"
-    label="Missing value code">
+    label="Codice dei valori mancanti">
 
     <usage>
       <arguments>
@@ -4261,7 +4262,7 @@
   </command>
 
   <command name="sim" section="Dataset"
-    label="Simulation">
+    label="Simulazione">
 
     <usage>
       <arguments>
@@ -4375,7 +4376,7 @@
   </command>
 
   <command name="spearman" section="Statistiche"
-    label="Spearmans's rank correlation">
+    label="Correlazione di rango di Spearman">
 
     <usage>
       <arguments>
@@ -4456,7 +4457,7 @@
   </command>
 
   <command name="store" section="Dataset"
-    label="Saving data">
+    label="Salvataggio dei dati">
 
     <usage>
       <arguments>
@@ -4615,7 +4616,7 @@
   </command>
 
   <command name="testuhat" section="Test" context="cli"
-    label="Normality of residual">
+    label="Normalità dei residui">
 
     <description>
       <para>
@@ -4632,7 +4633,7 @@
 
   </command>
 
-  <command name="tobit" section="Stima" label="Tobit model">
+  <command name="tobit" section="Stima" label="Modello tobit">
 
     <usage>
       <arguments>
@@ -4669,7 +4670,7 @@
   </command>
 
   <command name="tsls" section="Stima"
-    label="Two-Stage Least Squares">
+    label="Minimi quadrati a due stadi">
 
     <usage>
       <arguments>
@@ -4729,7 +4730,7 @@
   </command>
 
   <command name="var" section="Stima"
-    label="Vector Autoregression">
+    label="Autoregressione vettoriale">
 
     <usage>
       <arguments>
@@ -4837,7 +4838,7 @@
   </command>
 
   <command name="vartest" section="Test"
-    label="Difference of variances">
+    label="Differenza delle varianze">
 
     <usage>
       <arguments>
@@ -4867,7 +4868,7 @@
   </command>
 
   <command name="wls" section="Stima"
-    label="Weighted Least Squares">
+    label="Minimi quadrati ponderati">
 
     <usage>
       <arguments>
