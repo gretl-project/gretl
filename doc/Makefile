@@ -57,6 +57,7 @@ htmlhelp:
 	mkdir -p gretlhlp/figures
 	cp figures/*.png gretlhlp/figures
 	cd gretlhlp/figures && ./mkgif
+	zip -r gretlhlp.zip gretlhlp/*
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex

@@ -38,7 +38,7 @@ int main (void)
     double *Z;                  /* the data set */
     int *list;                  /* list of regressors etc. */
     MODEL *model;               /* pointer to model struct */
-    print_t *prn;               /* pointer to struct for printing */
+    PRN *prn;                   /* pointer to struct for printing */
     int model_count = 0;        /* keep a tally of models estimated */
 
     logo(); /* print version info and session time */
@@ -106,12 +106,12 @@ int main (void)
        estimates and associated statistics. */
     model = gretl_model_new();
     if (model == NULL) noalloc();
-    *model = lsq(list, Z, datainfo, OLS, 1, 0.0);
+    *model = lsq(list, &Z, datainfo, OLS, 1, 0.0);
 
     /* Handle case where lsq bombed */
     if (model->errcode) {
         printf("model->errcode: %d\n", model->errcode);
-        printf("model->errmsg: %s\n", model->errmsg);
+        printf("error message: %s\n", get_gretl_errmsg());
         return 1;
     }
 

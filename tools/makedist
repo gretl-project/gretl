@@ -14,13 +14,17 @@ fi
 cd ${topdir}/..
 mkdir ${topdir}/../gretl-$version
 date > gretl/share/gretl.stamp
-rm -f gretl/doc/manual.aux gretl/doc/manual.log gretl/doc/manual.toc
-rm -f gretl/doc/manual.out
 cp -ap gretl/* gretl-$version
 find gretl-$version -name "*CVS" | xargs rm -rf
 find gretl-$version -name ".xvpics" | xargs rm -rf
+rm -f gretl-$version/doc/*.aux gretl-$version/doc/*.log \
+    gretl-$version/doc/*.toc gretl-$version/doc/*.tpt \
+    gretl-$version/doc/*.out gretl-$version/doc/*.ced 
+rm -rf gretl-$version/doc/gretlhlp gretl-$version/doc/reference \
+    gretl-$version/doc/nist
 tar cvfz $tarfile gretl-$version
 rm -rf gretl-$version
 
 scp gretl/doc/manual.pdf $WWW
+scp gretl/doc/manual-a4.pdf $WWW
 scp gretl/ChangeLog $WWW

@@ -34,6 +34,16 @@
   </articleinfo>
 
   <section>
+    <title>About gretl</title>
+
+    <para>Gretl is an open-source, cross-platform econometrics
+    program.  Its development is hosted by <ulink
+    url="http://gretl.sourceforge.net">sourceforge</ulink>.</para>
+
+  </section>
+
+
+  <section>
     <title>The NIST reference datasets</title>
   
     <para>

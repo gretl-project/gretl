@@ -1,4 +1,4 @@
-version 0.98
+02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for
   normality of residuals
 - improve functionality relating to saving of data files
@@ -27,7 +27,7 @@ version 0.98
   register the .gdt suffix for gretl datafiles, and add an icon
   for these files
 
-version 0.97
+12/14/2001 version 0.97
 - fix breakage of var command in GUI
 - add facility to draw boxplots
 - add various formats to copy of models to clipboard (HTML,
