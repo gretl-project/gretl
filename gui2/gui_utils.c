@@ -74,9 +74,14 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+#ifdef G_OS_WIN32
+    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+#else
     { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
     { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+#endif    
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
