@@ -1348,7 +1348,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
-		       target_table, 1,
+		       gretl_drag_targets, 2,
 		       GDK_ACTION_COPY);
 
     g_signal_connect (G_OBJECT(mdata->listbox), "drag_data_received",

@@ -825,7 +825,7 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
 
 /* ........................................................... */
 
-static int populate_remote_series_list (windata_t *win, char *buf)
+static int populate_remote_series_list (windata_t *dbwin, char *buf)
 {
     GtkListStore *store;
     GtkTreeIter iter;    
@@ -836,7 +836,7 @@ static int populate_remote_series_list (windata_t *win, char *buf)
     getbufline(NULL, NULL, 1);
 
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
-			   (GTK_TREE_VIEW(win->listbox)));
+			   (GTK_TREE_VIEW(dbwin->listbox)));
     gtk_list_store_clear (store);
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 
@@ -870,20 +870,20 @@ static int populate_remote_series_list (windata_t *win, char *buf)
 
 /* ......................................................... */
 
-static int rats_populate_series_list (windata_t *win)
+static int rats_populate_series_list (windata_t *dbwin)
 {
     FILE *fp;
 
-    fp = fopen(win->fname, "rb");
+    fp = fopen(dbwin->fname, "rb");
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
     }
 
     /* extract catalog from RATS file */
-    read_RATSBase(win->listbox, fp);
+    read_RATSBase(dbwin->listbox, fp);
     fclose(fp);
-    win->active_var = 0;
+    dbwin->active_var = 0;
 
     db_drag_connect(dbwin);
 
@@ -892,7 +892,7 @@ static int rats_populate_series_list (windata_t *win)
 
 /* ......................................................... */
 
-static GtkWidget *database_window (windata_t *ddata) 
+static GtkWidget *database_window (windata_t *dbwin) 
 {
     const char *titles[] = {
 	_("Name"), 
@@ -904,11 +904,11 @@ static GtkWidget *database_window (windata_t *ddata)
 
     box = gtk_vbox_new (FALSE, 0);
 
-    ddata->listbox = list_box_create (ddata, GTK_BOX(box), cols, 0, titles);
+    dbwin->listbox = list_box_create (dbwin, GTK_BOX(box), cols, 0, titles);
 
-    g_signal_connect (G_OBJECT(ddata->listbox), "button_press_event",
+    g_signal_connect (G_OBJECT(dbwin->listbox), "button_press_event",
 		      G_CALLBACK(popup_menu_handler), 
-		      (gpointer) ddata->popup);
+		      (gpointer) dbwin->popup);
 
     gtk_widget_show (box);
 
