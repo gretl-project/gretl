@@ -1336,19 +1336,21 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretl_hlp.txt"));
 	sprintf(ppaths->cmd_helpfile, "%s\\%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
-    } else 
+    } else { 
 	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
+    }
 
     if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
 	strcat(ppaths->userdir, "\\");
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
 
-    if (get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH))
+    if (get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH)) {
 	strcat(ppaths->pgnuplot, "pgnuplot.exe");
-    else
+    } else {
 	strcpy(ppaths->pgnuplot, "pgnuplot.exe");
+    }
 
     internal_path_stuff (1, ppaths->gretldir);
 

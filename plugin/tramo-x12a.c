@@ -77,7 +77,7 @@ typedef struct {
 } tx_request;
 
 #ifdef G_OS_WIN32
-static void win_show_error (void)
+static void win_show_error (DWORD dw)
 {
     LPVOID buf;
 
@@ -86,7 +86,7 @@ static void win_show_error (void)
                   FORMAT_MESSAGE_FROM_SYSTEM | 
                   FORMAT_MESSAGE_IGNORE_INSERTS,
                   NULL,
-                  GetLastError(),
+                  dw,
                   MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                   (LPTSTR) &buf,
                   0,
@@ -116,7 +116,8 @@ static int win_fork_prog (char *cmdline, const char *dir)
                           NULL, dir,
                           &si, &pi);
     if (!child) {
-        win_show_error();
+	DWORD dw = GetLastError();
+        win_show_error(dw);
         return 1;
     }
 

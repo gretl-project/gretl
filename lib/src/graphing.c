@@ -1220,7 +1220,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fp = fopen(fname, "w");
 	if (fp == NULL) return 1;
     } else {     /* output to gnuplot, for screen or other "term" */
-#ifdef OS_WIN32
+#ifdef OLD_OS_WIN32
 	if (plot->fp == NULL) fp = fopen(ppaths->plotfile, "w");
 	if (fp == NULL) return 1;
 #else
@@ -1324,7 +1324,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
     fflush(fp);
     if (dump) fclose(fp);
     
-#ifdef OS_WIN32
+#ifdef OLD_OS_WIN32
     if (!dump) {
 	char plotcmd[MAXLEN];
 	int winshow;
