@@ -18,7 +18,6 @@
  */
 
 #include "libgretl.h"
-#include "calendar.h"
 #include "internal.h"
 #include <zlib.h>
 #include <ctype.h>
@@ -933,6 +932,7 @@ int get_precision (double *x, int n)
     char *s, numstr[48];
 
     for (i=0; i<n; i++) {
+	if (na(x[i])) continue;
 	sprintf(numstr, "%f", x[i]);
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') p--;

@@ -260,6 +260,12 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
 
+    if (pmod->data) {
+	MISSOBS *mobs = (MISSOBS *) pmod->data;
+
+	t2 += mobs->misscount;
+    }
+
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
@@ -317,7 +323,7 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     else if (pmod->ci == LOGIT) pprintf(htm, "Logit ");
     else if (pmod->ci == POOLED) pprintf(htm, "Pooled OLS ");
     pprintf(htm, "estimates using the %d observations %s-%s</b><br/>\n",
-	   t2-t1+1, startdate, enddate);
+	   pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(htm, "Dependent variable: uhat</p>");
     else pprintf(htm, "Dependent variable: %s</p>\n", 

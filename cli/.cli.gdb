@@ -1,2 +1,2 @@
-set args -b ps10-5b.inp
+set args -b ./foo.inp
 run

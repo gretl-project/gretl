@@ -232,7 +232,13 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     int i, ncoeff = pmod->list[0];
     int t1 = pmod->t1, t2 = pmod->t2;
     char tmp[16];
-    char startdate[7], enddate[7];
+    char startdate[9], enddate[9];
+
+    if (pmod->data) {
+	MISSOBS *mobs = (MISSOBS *) pmod->data;
+
+	t2 += mobs->misscount;
+    }
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
@@ -248,7 +254,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     pprintf(prn, "\\textsc{Model %d: OLS estimates using the %d "
 	    "observations %s--%s}\\\\\n"
 	    "Dependent variable: %s\n\n", 
-	    pmod->ID, t2-t1+1, startdate, enddate, tmp);
+	    pmod->ID, pmod->nobs, startdate, enddate, tmp);
 
     pprintf(prn, "\\vspace{1em}\n\n"
 	  "\\begin{tabular*}{\\textwidth}"

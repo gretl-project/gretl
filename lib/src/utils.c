@@ -25,7 +25,6 @@
 # include "../../config.h"
 #endif
 #include "libgretl.h"
-#include "calendar.h"
 #include "internal.h"
 #include <dirent.h>
 #include <unistd.h>
@@ -991,6 +990,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->name = NULL;
     pmod->ntests = 0;
     pmod->tests = NULL;
+    pmod->data = NULL;
     pmod->errcode = 0;
     pmod->aux = 0;
     gretl_errmsg[0] = '\0';
@@ -1111,6 +1111,7 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 	    if (pmod->slope) free(pmod->slope);
 	}
 	if (pmod->ntests) free(pmod->tests);
+	if (pmod->data) free(pmod->data);
     }
     _init_model(pmod, pdinfo);
 
@@ -1535,10 +1536,12 @@ int _forecast (int t1, const int t2, const int nv,
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
 	       pmod->ci == HILU)? 1 : 0;
+
     if (ARMODEL) {
 	maxlag = pmod->arlist[pmod->arlist[0]];
 	if (t1 < maxlag) t1 = maxlag; 
     }
+
     for (t=t1; t<=t2; t++) {
 	zz = 0.0;
 	if (ARMODEL) for (k=1; k<=pmod->arlist[0]; k++) {
@@ -1553,7 +1556,7 @@ int _forecast (int t1, const int t2, const int nv,
 		}
 	    }
 	    zz = zz + xx * zr;
-	}
+	} /* end if ARMODEL */
 	for (v=1; v<=pmod->ncoeff; v++) {
 	    k = pmod->list[v+1];
 	    xx = (*pZ)[k][t];

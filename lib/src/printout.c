@@ -356,11 +356,16 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, ncoeff;
-    char startdate[9];
-    char enddate[9];
+    char startdate[9], enddate[9];
     int t1 = pmod->t1, t2 = pmod->t2;
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
+
+    if (pmod->data != NULL) {
+	MISSOBS *mobs = (MISSOBS *) pmod->data;
+	
+	t2 += mobs->misscount;
+    }    
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
@@ -417,7 +422,7 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     else if (pmod->ci == LOGIT) pprintf(prn, "Logit ");
     else if (pmod->ci == POOLED) pprintf(prn, "Pooled OLS ");
     pprintf(prn, "estimates using the %d observations %s-%s\n",
-	   t2-t1+1, startdate, enddate);
+	    pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, "Dependent variable: uhat");
     else pprintf(prn, "Dependent variable: %s\n", 
@@ -1249,17 +1254,22 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
-    int i;
+    int i, t2 = pmod->t2;
     char label[9], date1[9], date2[9]; 
 
+    if (pmod->data != NULL) {
+        MISSOBS *mobs = (MISSOBS *) pmod->data;
+        
+        t2 += mobs->misscount;
+    }     
+
     ntodate(date1, pmod->t1, pdinfo);
-    ntodate(date2, pmod->t2, pdinfo);
+    ntodate(date2, t2, pdinfo);
     pprintf(prn, "\nFull data range: %s - %s (n = %d)\n",
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, "Model estimation range:  %s - %s", date1, date2);
-    if (pmod->t1 == 0 && pmod->t2 == pdinfo->n - 1) 
-	pprintf(prn, "\n");
-    else pprintf(prn, " (n = %d)\n", pmod->t2 - pmod->t1 + 1); 
+    if (pmod->nobs == pdinfo->n) pprintf(prn, "\n");
+    else pprintf(prn, " (n = %d)\n", pmod->nobs); 
 
     pprintf(prn, "Standard error of residuals = %f\n", pmod->sigma);
     
@@ -1641,10 +1651,16 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 
     depvar = pmod->list[1];
 
+    if (pmod->data != NULL) {
+        MISSOBS *mobs = (MISSOBS *) pmod->data;
+	
+	t2 += mobs->misscount;
+    }
+
     sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
 	    pdinfo->endobs);
-    nfit = fcast(fcastline, pmod, pdinfo, pZ);
-    if (nfit < 0) return 1;
+    nfit = fcast(fcastline, pmod, pdinfo, pZ); 
+    if (nfit < 0) return 1; 
 
     if (isdummy(depvar, t1, t2, *pZ, n) > 0)
 	pmax = get_precision((*pZ)[nfit], n);
@@ -1652,40 +1668,38 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 	pmax = get_precision((*pZ)[depvar], n);
 
     fit_resid_head(pmod, pdinfo, prn);
+
     for (t=0; t<n; t++) {
 	if (t == t1 && t) pprintf(prn, "\n");
 	if (t == t2 + 1) pprintf(prn, "\n");
 	if (pdinfo->markers) { /* data marker strings present */
 	    pprintf(prn, "%8s ", pdinfo->S[t]); 
 	} else {
-	    xdate = date(t, pd, sd0);
 	    if (dataset_is_daily(pdinfo)) {
 		char datestr[9];
 
 		ntodate(datestr, t, pdinfo);
 		pprintf(prn, "%8s ", datestr);
+	    } else {
+		xdate = date(t, pd, sd0);
+		if (pd == 1) 
+		    pprintf(prn, "%4d ", (int) xdate);
+		else if (pd < 10) 
+		    pprintf(prn, "%8.1f ", xdate);
+		else 
+		    pprintf(prn, "%8.2f ", xdate);
 	    }
-	    else if (pd == 1) 
-		pprintf(prn, "%4d ", (int) xdate);
-	    else if (pd < 10) 
-		pprintf(prn, "%8.1f ", xdate);
-	    else 
-		pprintf(prn, "%8.2f ", xdate);
 	}
-#ifdef notdef
- 	for (i=1; i<4; i++) {
- 	    if (i == 1) xx = (*pZ)[depvar][t];
- 	    if (i == 2) xx = (*pZ)[nfit][t];
- 	    if (i == 3) xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
- 	    printxs(xx, 15, PRINT, prn);
- 	}
-#endif
-	xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
-	if (fabs(xx) > 2.5 * pmod->sigma) ast = 1;
-	pprintf(prn, "%12.*f%12.*f%12.*f", 
-		pmax, (*pZ)[depvar][t],
-		pmax, (*pZ)[nfit][t], pmax, xx);
-	pprintf(prn, "%s\n", (fabs(xx) > 2.5 * pmod->sigma)? " *" : "");
+	if (na((*pZ)[depvar][t]) || na((*pZ)[nfit][t])) { 
+	    pprintf(prn, "\n");
+	} else {
+	    xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
+	    if (fabs(xx) > 2.5 * pmod->sigma) ast = 1;
+	    pprintf(prn, "%12.*f%12.*f%12.*f%s\n", 
+		    pmax, (*pZ)[depvar][t],
+		    pmax, (*pZ)[nfit][t], pmax, xx,
+		    (ast)? " *" : "");
+	}
     }
     pprintf(prn, "\n");
     if (ast) pprintf(prn, "Note: * denotes a residual in excess of "

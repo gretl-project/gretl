@@ -20,8 +20,21 @@
 #ifndef _CALENDAR_H
 #define _CALENDAR_H
 
+typedef struct {
+    int misscount;
+    char *missvec;
+} MISSOBS;
+
 long get_epoch_day (const char *date);
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);
+
+char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
+
+int undo_repack_missing (double **Z, const DATAINFO *pdinfo, 
+			 const char *missvec, int misscount);
+
+int repack_missing (double **Z, const DATAINFO *pdinfo, 
+		    const char *missvec, int misscount);
 
 #endif /* _CALENDAR_H */ 

@@ -153,3 +153,100 @@ void get_date_from_x (double x)
     printf("%02d/%02d/%02d\n", yr, mo, day);
 }
 
+/* The following functions have nothing to do with the "cal" program,
+   but are specific to the handling of daily data so I put them in
+   here */
+
+char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount)
+{
+    int i, t;
+    char *missvec = malloc(pdinfo->t2 - pdinfo->t1 + 1);
+    
+    if (missvec == NULL) return NULL;
+
+    *misscount = 0;
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	missvec[t] = 0;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!pdinfo->vector[i]) continue;
+	    if (na(Z[i][t])) {
+		missvec[t] = 1;
+		*misscount += 1;
+		break;
+	    }
+	}
+    }
+    return missvec;
+}
+
+int undo_repack_missing (double **Z, const DATAINFO *pdinfo, 
+			 const char *missvec, int misscount)
+{
+    int i, t, m, g;
+    double *tmpmiss, *tmpgood;
+
+    tmpmiss = malloc(misscount * sizeof *tmpmiss);
+    if (tmpmiss == NULL) return 1;
+    tmpgood = malloc((pdinfo->t2 - pdinfo->t1 + 1 - misscount) 
+		     * sizeof *tmpgood);
+    if (tmpgood == NULL) {
+	free(tmpmiss);
+	return 1;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) continue;
+	g = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++)
+	     tmpgood[g++] = Z[i][t];
+	m = 0;
+	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++)
+	    tmpmiss[m++] = Z[i][t];
+	m = 0;
+	g = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (missvec[t]) Z[i][t] = tmpmiss[m++];
+	    else Z[i][t] = tmpgood[g++];
+	}
+    }
+    free(tmpmiss);
+    free(tmpgood);
+    return 0;
+}
+
+int repack_missing (double **Z, const DATAINFO *pdinfo, 
+		    const char *missvec, int misscount)
+{
+    int i, t, m, g;
+    double *tmpmiss, *tmpgood;
+
+    tmpmiss = malloc(misscount * sizeof *tmpmiss);
+    if (tmpmiss == NULL) return 1;
+    tmpgood = malloc((pdinfo->t2 - pdinfo->t1 + 1 - misscount) 
+		     * sizeof *tmpgood);
+    if (tmpgood == NULL) {
+	free(tmpmiss);
+	return 1;
+    }
+
+    for (i=1; i<pdinfo->v; i++) {
+	if (!pdinfo->vector[i]) continue;
+	m = 0;
+	g = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	    if (missvec[t]) tmpmiss[m++] = Z[i][t];
+	    else tmpgood[g++] = Z[i][t];
+	}
+	g = 0;
+	for (t=pdinfo->t1; t<=pdinfo->t2 - misscount; t++)
+	     Z[i][t] = tmpgood[g++];
+	m = 0;
+	for (t=pdinfo->t2 + 1 - misscount; t<=pdinfo->t2; t++)
+	    Z[i][t] = tmpmiss[m++];
+    }
+    free(tmpmiss);
+    free(tmpgood);
+    return 0;
+}
+
+

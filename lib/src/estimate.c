@@ -84,6 +84,27 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 		       int **pnewlist, const DATAINFO *pdinfo, 
 		       const int model_count);
 
+static int reorganize_uhat (MODEL *pmod) 
+{
+    int t, g;
+    MISSOBS *mobs = (MISSOBS *) pmod->data;
+    double *tmp;
+
+    tmp = malloc(pmod->nobs * sizeof *tmp);
+    if (tmp == NULL) return 1;
+
+    for (t=0; t<pmod->nobs; t++)
+	tmp[t] = pmod->uhat[t];
+
+    g = 0;
+    for (t=pmod->t1; t<=pmod->t2 + mobs->misscount; t++) {
+	if (mobs->missvec[t - pmod->t1]) pmod->uhat[t] = NADBL;
+	else pmod->uhat[t] = tmp[g++];
+    }
+    free(tmp);
+    return 0;
+}
+
 /**
  * lsq:
  * @list: dependent variable plus list of regressors.
@@ -149,10 +170,27 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* check for missing obs in sample */
     if ((missv = _adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
 			      *pZ, n, &misst))) {
-	sprintf(gretl_errmsg, "Missing value encountered for "
-		"variable %d, obs %d", missv, misst);
-	model.errcode = E_DATA;
-	return model;
+	if (!dated_daily_data(pdinfo)) {
+	    sprintf(gretl_errmsg, "Missing value encountered for "
+		    "variable %d, obs %d", missv, misst);
+	    model.errcode = E_DATA;
+	    return model;
+	} else {
+	    /* with daily data, try eliminating the missing obs? */
+	    int misscount;
+	    char *missvec = missobs_vector(*pZ, pdinfo, &misscount);
+	    MISSOBS *mobs = NULL;
+
+	    if (missvec == NULL) ; /* handle error */
+	    else {
+		mobs = malloc(sizeof *mobs); /* check me!! */
+		repack_missing(*pZ, pdinfo, missvec, misscount);
+		model.t2 -= misscount;
+		mobs->misscount = misscount;
+		mobs->missvec = missvec;
+		model.data = mobs;
+	    }
+	}
     }    
     t1 = model.t1; 
     t2 = model.t2; 
@@ -279,6 +317,16 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* Generate model selection statistics */
     _aicetc(&model);
+
+    /* If we eliminated any missing observations, restore
+       them now */
+    if (model.data != NULL) {
+	MISSOBS *mobs = (MISSOBS *) model.data;
+
+	undo_repack_missing(*pZ, pdinfo, mobs->missvec,
+			    mobs->misscount);
+	reorganize_uhat(&model);
+    }
 
     return model;
 }

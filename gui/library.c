@@ -1143,6 +1143,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 		datainfo->pd, datainfo->stobs);
 	infobox(msg);
 	set_sample_label(datainfo);
+	data_status |= MODIFIED_DATA;
     }
 }
 

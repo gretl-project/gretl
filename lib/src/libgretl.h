@@ -179,6 +179,7 @@ typedef struct {
     char *name;
     int ntests;
     GRETLTEST *tests;
+    void *data;                   /* all purpose pointer */
 } MODEL;
 
 typedef struct {
@@ -233,6 +234,7 @@ typedef struct {
 #include "nonparam.h"
 #include "discrete.h"
 #include "subsample.h"
+#include "calendar.h"
 #ifdef OS_WIN32
 # include "win32.h"
 #endif

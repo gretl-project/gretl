@@ -1373,8 +1373,16 @@ static int _getxvec (char *ss, double *xxvec,
 		return 1;
 	    }	    
 	    for (i=0; i<pmod->t1; i++) xxvec[i] = NADBL;
-	    for (i=pmod->t1; i<=pmod->t2; i++) xxvec[i] = pmod->uhat[i]; 
-	    for (i=pmod->t2 + 1; i<n; i++) xxvec[i] = NADBL;
+	    if (pmod->data != NULL) {
+		MISSOBS *mobs = (MISSOBS *) pmod->data;
+		int t2 = pmod->t2 + mobs->misscount;
+
+		for (i=pmod->t1; i<=t2; i++) xxvec[i] = pmod->uhat[i]; 
+		for (i=t2+1; i<n; i++) xxvec[i] = NADBL;
+	    } else {
+		for (i=pmod->t1; i<=pmod->t2; i++) xxvec[i] = pmod->uhat[i]; 
+		for (i=pmod->t2 + 1; i<n; i++) xxvec[i] = NADBL;
+	    }
 	}
 	else if (v1 == INDEXNUM) {
 	    int k = genr_scalar_index(0, 0);

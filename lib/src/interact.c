@@ -698,7 +698,8 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     varname[8] = 0;
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) return -1 * E_ALLOC;
+    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) 
+	return -1 * E_ALLOC;
 
     strcpy(pdinfo->varname[vi], varname);
     strcpy(pdinfo->label[vi], "predicted values");

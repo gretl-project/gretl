@@ -500,6 +500,12 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
 
+    if (pmod->data) {
+        MISSOBS *mobs = (MISSOBS *) pmod->data;
+
+        t2 += mobs->misscount;
+    }
+
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
@@ -557,7 +563,7 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
     else if (pmod->ci == LOGIT) pprintf(prn, "Logit ");
     else if (pmod->ci == POOLED) pprintf(prn, "Pooled OLS ");
     pprintf(prn, "estimates using the %d observations %s-%s\\par\n",
-	   t2-t1+1, startdate, enddate);
+	   pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, "Dependent variable: uhat\\par\n");
     else pprintf(prn, "Dependent variable: %s\\par\n", 

@@ -1,2 +1,2 @@
-set args  
+set args foo.gdt 
 run
