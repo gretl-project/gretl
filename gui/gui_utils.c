@@ -2178,19 +2178,26 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 
 /* ......................................................... */
 
-gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
-			 gpointer data)
+gint popup_menu_handler (GtkWidget *widget, GdkEvent *event)
 {
-    GdkModifierType mods;
+    GtkMenu *menu;
+    GdkEventButton *event_button;
 
-    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
+    g_return_val_if_fail (widget != NULL, FALSE);
+    g_return_val_if_fail (GTK_IS_MENU (widget), FALSE);
+    g_return_val_if_fail (event != NULL, FALSE);
 
-    if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
-	GdkEventButton *bevent = (GdkEventButton *) event; 
-	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
-			bevent->button, bevent->time);
-	return TRUE;
+    menu = GTK_MENU (widget);
+
+    if (event->type == GDK_BUTTON_PRESS) {
+	event_button = (GdkEventButton *) event;
+	if (event_button->button == 3) {
+	    gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 
+			    event_button->button, event_button->time);
+	    return TRUE;
+	}
     }
+
     return FALSE;
 }
 
