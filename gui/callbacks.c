@@ -567,7 +567,7 @@ void delete_var_by_id (int id)
 	errbox(_("Out of memory reorganizing data set"));
     } else {
 	refresh_data();
-	if (id < datainfo->v - 1) {
+	if (id < datainfo->v) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
     }

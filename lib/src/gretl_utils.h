@@ -132,8 +132,7 @@ int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
-int 
-dataset_drop_var_wrapper (const char *str, double ***pZ, DATAINFO *pdinfo);
+int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);
 

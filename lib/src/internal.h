@@ -108,7 +108,7 @@ void rearrange_list (int *list);
 
 int vars_identical (const double *x, const double *y, int n);
 
-int math_word (const char *s);
+int math_word_index (const char *s);
 
 void gretl_varinfo_init (VARINFO *vinfo);
 

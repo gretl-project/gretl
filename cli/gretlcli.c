@@ -571,7 +571,7 @@ static int data_option (unsigned char flag);
 
 void exec_line (char *line, PRN *prn) 
 {
-    int chk, nulldata_n;
+    int chk, nulldata_n, dropv;
     int dbdata = 0;
     char s1[12], s2[12];
     double rho;
@@ -811,16 +811,19 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}	
 	if (*command.param != '\0') {
-	    /* delete a specified variable */
-	    err = dataset_drop_var_wrapper(command.param, &Z, datainfo);
+	    dropv = varnum_from_string(command.param, datainfo);
+	    err = dataset_drop_var(dropv, &Z, datainfo);
 	} else {
+	    dropv = datainfo->v - 1;
 	    err = dataset_drop_vars(1, &Z, datainfo);
 	}
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
-	    pputs(prn, _("Take note: variables have been renumbered"));
-	    pputc(prn, '\n');
+	    if (dropv < datainfo->v) {
+		pputs(prn, _("Take note: variables have been renumbered"));
+		pputc(prn, '\n');
+	    }
 	    varlist(datainfo, prn);
 	}
 	break;

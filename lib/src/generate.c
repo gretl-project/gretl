@@ -432,7 +432,7 @@ static void otheruse (const char *str1, const char *str2)
 
 /* .......................................................... */
 
-int math_word (const char *s)
+int math_word_index (const char *s)
 {
     int i;
 
@@ -499,7 +499,7 @@ int _reserved (const char *str)
 	i++; 
     } 
 
-    if (math_word(str)) {
+    if (math_word_index(str)) {
 	otheruse(str, _("math function"));
 	return 1;
     }
@@ -2172,7 +2172,7 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
 
     if (strcmp(ss, "pi") == 0) return R_NUMERIC;
 
-    if (math_word(ss)) return R_MATH;
+    if (math_word_index(ss)) return R_MATH;
 
     i = varindex(pdinfo, ss);
     if (i < pdinfo->v || i == UHATNUM || i == YHATNUM ||

@@ -1645,7 +1645,7 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int varnum_from_string (const char *str, DATAINFO *pdinfo)
+int varnum_from_string (const char *str, DATAINFO *pdinfo)
 {
     int varno;
     char *test;
@@ -1665,17 +1665,6 @@ static int varnum_from_string (const char *str, DATAINFO *pdinfo)
     } 
     
     return varno;
-}
-
-/* ......................................................  */
-
-int 
-dataset_drop_var_wrapper (const char *str, double ***pZ, DATAINFO *pdinfo)
-{
-    int varno = varnum_from_string(str, pdinfo);
-
-    if (varno < 0) return E_DATA;
-    else return dataset_drop_var(varno, pZ, pdinfo);
 }
 
 /* ......................................................  */

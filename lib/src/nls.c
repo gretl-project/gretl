@@ -97,7 +97,7 @@ static int add_term_from_nlfunc (const char *vname)
     int i, v, nt = nlspec.nparam + 1; 
 
     /* if term is math function or constant, skip */
-    if (math_word(vname) || !strcmp(vname, "pi")) return 0;
+    if (math_word_index(vname) || !strcmp(vname, "pi")) return 0;
 
     v = varindex(pdinfo, vname);
     if (v >= pdinfo->v) {
