@@ -163,7 +163,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget);
 
 void add_dummies (gpointer data, guint action, GtkWidget *widget);
 
-void add_time (gpointer data, guint index, GtkWidget *widget);
+void add_index (gpointer data, guint tm, GtkWidget *widget);
 
 void add_logs_etc (gpointer data, guint action, GtkWidget *widget);
 

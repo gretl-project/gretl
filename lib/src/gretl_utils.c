@@ -693,6 +693,27 @@ void set_miss (LIST list, const char *param, double **Z,
     }
 }
 
+char *real_format_obs (char *obs, int maj, int min, int pd, char sep)
+{
+    if (pd > 10) {
+	int pdp = pd / 10, minlen = 2;
+	char fmt[16];
+
+	while ((pdp = pdp / 10)) minlen++;
+	sprintf(fmt, "%%d%c%%0%dd", sep, minlen);
+	sprintf(obs, fmt, maj, min);
+    } else {
+	sprintf(obs, "%d%c%d", maj, sep, min);
+    }
+
+    return obs;
+}
+
+char *format_obs (char *obs, int maj, int min, int pd)
+{
+    return real_format_obs(obs, maj, min, pd, ':');
+}
+
 /**
  * set_obs:
  * @line: command line.
@@ -786,18 +807,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 			_("starting obs '%s' is incompatible with frequency"), 
 			stobs);
 		return 1;
-	    }	 
-
-	    if (pd > 10) {
-		int pdp = pd / 10, minlen = 2;
-		char fmt[16];
-
-		while ((pdp = pdp / 10)) minlen++;
-		sprintf(fmt, "%%d.%%0%dd", minlen);
-		sprintf(stobs, fmt, maj, min);
-	    } else {
-		sprintf(stobs, "%d.%d", maj, min);
 	    }
+
+	    real_format_obs(stobs, maj, min, pd, '.');
 	}
     }
 

@@ -27,6 +27,8 @@ typedef struct {
 
 long get_epoch_day (const char *date);
 
+int get_day_of_week (const char *date);
+
 int daily_obs_number (const char *date, const DATAINFO *pdinfo);
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);

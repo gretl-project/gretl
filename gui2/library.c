@@ -2913,23 +2913,16 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 
 /* ......................................................... */
 
-void add_time (gpointer data, guint index, GtkWidget *widget)
+void add_index (gpointer data, guint tm, GtkWidget *widget)
 {
-    int pv;
-
     clear(line, MAXLEN);
-    if (index) {
-	sprintf(line, "genr index");
-    } else {
-	sprintf(line, "genr time");
-    }
+    strcpy(line, (tm)? "genr time" : "genr index");
 
     if (verify_and_record_command(line)) return;
 
-    pv = plotvar(&Z, datainfo, (index)? "index" : "time");
-    if (pv < 0) {
-	errbox((index)? _("Error generating index variable") : 
-	       _("Error generating time trend"));
+    if (genrtime(&Z, datainfo, tm)) {
+	errbox((tm)? _("Error generating time trend") :
+	       _("Error generating index variable"));
     } else {
 	populate_varlist();
     }

@@ -25,6 +25,8 @@
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, MODEL *pmod); 
 
+int genrtime (double ***pZ, DATAINFO *pdinfo, int tm);
+
 int dummy (double ***pZ, DATAINFO *pdinfo);
 
 int paneldum (double ***pZ, DATAINFO *pdinfo); 

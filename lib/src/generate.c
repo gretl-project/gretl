@@ -76,7 +76,6 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 static void genr_msg (GENERATE *genr, int oldv);
 static void varerror (const char *s);
 static int listpos (int v, const int *list);
-static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr, int time);
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
 
 static int math_tokenize (char *s, GENERATE *genr, int level);
@@ -1829,14 +1828,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
 	return genr.err;
     }
-    else if (strcmp(s, "index") == 0) { 
-	genr.err = genrtime(pZ, pdinfo, &genr, 0);
-	if (!genr.err) genr_msg(&genr, oldv);
-	return genr.err;
-    }
-    else if (strcmp(s, "time") == 0) {
-	genr.err = genrtime(pZ, pdinfo, &genr, 1);
-	if (!genr.err) genr_msg(&genr, oldv);
+    else if (!strcmp(s, "time") || !strcmp(s, "index")) {
+	int tm = !strcmp(s, "time");
+
+	genr.err = genrtime(pZ, pdinfo, tm);
+	if (!genr.err) {
+	    strcpy(genr.varname, s);
+	    genr.varnum = varindex(pdinfo, s);
+	    genr.scalar = 0;
+	    genr_msg(&genr, oldv);
+	}
 	return genr.err;
     }
     else if (strncmp(s, "toler=", 6) == 0) {
@@ -3161,6 +3162,48 @@ static void get_month_name (char *mname, int m)
     *mname = tolower(*mname);
 }
 
+static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
+{
+    char *p = strchr(pdinfo->stobs, ':');
+    int offset = 0;
+
+    if (p == NULL) {
+	p = strchr(pdinfo->stobs, '.');
+    }
+
+    if (p == NULL) {
+	*bad = 1;
+    } else {
+	offset = atoi(p + 1) - 1;
+    }
+
+    return offset;
+}
+
+static void 
+make_x_panel_dummy (double *x, const DATAINFO *pdinfo, int i)
+{
+    int t, offset, bad = 0;
+    int dmin, dmax;
+
+    offset = panel_x_offset(pdinfo, &bad);
+
+    dmin = (i - 1) * pdinfo->pd;
+    dmax = i * pdinfo->pd - offset;
+
+    if (i > 1) dmin -= offset;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (bad) {
+	    x[t] = NADBL;
+	} else if (t >= dmin && t < dmax) {
+	    x[t] = 1.0;
+	} else {
+	    x[t] = 0.0;
+	}
+    }
+}
+
 /**
  * dummy:
  * @pZ: pointer to data matrix.
@@ -3174,23 +3217,38 @@ static void get_month_name (char *mname, int m)
 
 int dummy (double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[16];
+    char vname[VNAMELEN];
     int vi, t, yy, pp, mm;
-    int nvar = pdinfo->v;
-    int ndummies = pdinfo->pd;
+    int ndums, nvar = pdinfo->v;
     double xx;
 
-    if (ndummies == 1) return E_PDWRONG;
-    if (dataset_add_vars(ndummies, pZ, pdinfo)) return E_ALLOC;
+    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	ndums = pdinfo->n / pdinfo->pd;
+	if (pdinfo->n % pdinfo->pd) ndums++;
+    } else {
+	ndums = pdinfo->pd;
+    }
 
-    mm = (pdinfo->pd < 10)? 10 : 100;
+    if (ndums == 1 || ndums > 999999) {
+	return E_PDWRONG;
+    }
 
-    for (vi=1; vi<=ndummies; vi++) {
-	int dnum = nvar + vi - 1;
+    if (dataset_add_vars(ndums, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    pp = pdinfo->pd;
+    mm = 10;
+    while ((pp = pp / 10)) {
+	mm *= 10;
+    }
+
+    for (vi=1; vi<=ndums; vi++) {
+	int di = nvar + vi - 1;
 
 	if (pdinfo->pd == 4 && pdinfo->time_series == TIME_SERIES) {
 	    sprintf(vname, "dq%d", vi);
-	    sprintf(VARLABEL(pdinfo, dnum), 
+	    sprintf(VARLABEL(pdinfo, di), 
 		    _("= 1 if quarter = %d, 0 otherwise"), vi);
 	} 
 	else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
@@ -3198,24 +3256,35 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
 
 	    get_month_name(mname, vi);
 	    sprintf(vname, "d%s", mname);
-	    sprintf(VARLABEL(pdinfo, dnum), 
+	    sprintf(VARLABEL(pdinfo, di), 
 		    _("= 1 if month is %s, 0 otherwise"), mname);
 	} else {
-	    sprintf(vname, "dummy_%d", vi);
-	    sprintf(VARLABEL(pdinfo, dnum), 
+	    char dumstr[8] = "dummy_";
+	    char numstr[8];
+	    int len;
+
+	    sprintf(numstr, "%d", vi);
+	    len = strlen(numstr);
+	    dumstr[8 - len] = '\0';
+	    sprintf(vname, "%s%d", dumstr, vi);
+	    sprintf(VARLABEL(pdinfo, di), 
 		    _("%s = 1 if period is %d, 0 otherwise"), vname, vi);
 	}
 
-	strcpy(pdinfo->varname[dnum], vname);
+	strcpy(pdinfo->varname[di], vname);
 
-	for (t=0; t<pdinfo->n; t++) {
-	    xx = date(t, pdinfo->pd, pdinfo->sd0);
-	    if (dataset_is_daily(pdinfo)) {
-		xx += .1;
+	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	    make_x_panel_dummy((*pZ)[di], pdinfo, vi);
+	} else {
+	    for (t=0; t<pdinfo->n; t++) {
+		xx = date(t, pdinfo->pd, pdinfo->sd0);
+		if (dataset_is_daily(pdinfo)) {
+		    xx += .1;
+		}
+		yy = (int) xx;
+		pp = (int) (mm * (xx - yy) + 0.5);
+		(*pZ)[di][t] = (pp == vi)? 1.0 : 0.0;
 	    }
-	    yy = (int) xx;
-	    pp = (int) (mm * (xx - yy) + 0.5);
-	    (*pZ)[dnum][t] = (pp == vi)? 1.0 : 0.0;
 	}
     }
 
@@ -3239,22 +3308,34 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
     int vi, t, yy, pp, mm;
     int xsect, nvar = pdinfo->v;
     int ndum, nudum, ntdum;
+    int offset, bad = 0;
     double xx;
 
     ntdum = pdinfo->pd;
-    if (ntdum == 1) return E_PDWRONG;
+    if (ntdum == 1) {
+	return E_PDWRONG;
+    }
 
     nudum = pdinfo->n / pdinfo->pd;
-    if (nudum == 1) return E_PDWRONG;
+    if (pdinfo->n % pdinfo->pd) nudum++;
+    if (nudum == 1) {
+	return E_PDWRONG;
+    }
 
     ndum = ntdum + nudum;
-    if (dataset_add_vars(ndum, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(ndum, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
 
     xsect = (pdinfo->time_series == STACKED_CROSS_SECTION);
 
-    /* first generate the frequency-based dummies */
-    mm = (pdinfo->pd < 10)? 10 : 100;
+    pp = pdinfo->pd;
+    mm = 10;
+    while ((pp = pp / 10)) {
+	mm *= 10;
+    }
 
+    /* first generate the frequency-based dummies */
     for (vi=1; vi<=ntdum; vi++) {
 	int dnum = nvar + vi - 1;
 	
@@ -3272,14 +3353,20 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
 	for (t=0; t<pdinfo->n; t++) {
 	    xx = date(t, pdinfo->pd, pdinfo->sd0);
 	    yy = (int) xx;
-	    pp = (int) (mm*(xx - yy) + 0.5);
+	    pp = (int) (mm * (xx - yy) + 0.5);
 	    (*pZ)[dnum][t] = (pp == vi)? 1.0 : 0.0;
 	}
     }
 
+    offset = panel_x_offset(pdinfo, &bad);
+
     /* and then the block-based ones */
     for (vi=1; vi<=nudum; vi++) {
-	int dnum = nvar +ntdum + vi - 1;
+	int dnum = nvar + ntdum + vi - 1;
+	int dmin = (vi-1) * pdinfo->pd;
+	int dmax = vi * pdinfo->pd - offset;
+
+	if (vi > 1) dmin -= offset;
 
 	if (xsect) {
 	    sprintf(vname, "dt_%d", vi);
@@ -3291,11 +3378,15 @@ int paneldum (double ***pZ, DATAINFO *pdinfo)
 	sprintf(VARLABEL(pdinfo, dnum), 
 		_("%s = 1 if %s is %d, 0 otherwise"), vname, 
 		(xsect)? _("period"): _("unit"), vi);
+
 	for (t=0; t<pdinfo->n; t++) {
-	    (*pZ)[dnum][t] = 0.0;
-	}
-	for (t=(vi-1)*pdinfo->pd; t<vi*pdinfo->pd; t++) {
-	    (*pZ)[dnum][t] = 1.0;
+	    if (bad) {
+		(*pZ)[dnum][t] = NADBL;
+	    } else if (t >= dmin && t < dmax) {
+		(*pZ)[dnum][t] = 1.0;
+	    } else {
+		(*pZ)[dnum][t] = 0.0;
+	    }
 	}
     }
 
@@ -3327,33 +3418,27 @@ make_panel_time_var (double *x, const DATAINFO *pdinfo)
     }
 }
 
-static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
-		     int time)
-     /* create time trend variable */
+/* create obs index or time trend variable */
+
+int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
 {
     int i, t;
 
-    if (time) {
-	i = varindex(pdinfo, "time");
-    } else {
-	i = varindex(pdinfo, "index");
-    }
+    i = varindex(pdinfo, (tm)? "time" : "index");
 
     if (i == pdinfo->v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     }
 
-    if (time) {
-	strcpy(genr->varname, "time");
+    if (tm) {
 	strcpy(pdinfo->varname[i], "time");
 	strcpy(VARLABEL(pdinfo, i), _("time trend variable"));
     } else {
-	strcpy(genr->varname, "index");
 	strcpy(pdinfo->varname[i], "index");
 	strcpy(VARLABEL(pdinfo, i), _("data index variable"));
     }
     
-    if (time && 
+    if (tm && 
 	(pdinfo->time_series == STACKED_TIME_SERIES ||
 	 pdinfo->time_series == STACKED_CROSS_SECTION)) {
 	make_panel_time_var((*pZ)[i], pdinfo);
@@ -3362,9 +3447,6 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 	    (*pZ)[i][t] = (double) (t + 1);
 	}
     }
-
-    genr->varnum = i;
-    genr->scalar = 0;
 
     return 0;
 }

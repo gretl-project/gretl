@@ -166,10 +166,14 @@ static int get_native_series_obs (SERIESINFO *sinfo,
 	const char *q = stobs;
 	const char *p = strchr(stobs, '/');
 
-	if (p - q == 4) strcpy(sinfo->stobs, q + 2);
+	if (p - q == 4) {
+	    strcpy(sinfo->stobs, q + 2);
+	}
 	q = endobs;
 	p = strchr(endobs, '/');
-	if (p && p - q == 4) strcpy(sinfo->endobs, q + 2);
+	if (p && p - q == 4) {
+	    strcpy(sinfo->endobs, q + 2);
+	}
     } else {
 	*sinfo->stobs = 0;
 	*sinfo->endobs = 0;
@@ -260,9 +264,10 @@ get_native_series_info (const char *series, SERIESINFO *sinfo)
 
 /* ........................................................... */
 
+/* Figure the ending observation date of a series */
+
 static int get_endobs (char *datestr, int startyr, int startfrac, 
 		       int pd, int n)
-/* Figure the ending observation date of a series */
 {
     int endyr, endfrac;  
 
@@ -322,10 +327,15 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 
     if (dinfo->info == 4) {
 	sprintf(pdstr, ".%d", dinfo->month);
-	if (dinfo->month == 1) startfrac = 1;
-	else if (dinfo->month > 1 && dinfo->month <= 4) startfrac = 2;
-	else if (dinfo->month > 4 && dinfo->month <= 7) startfrac = 3;
-	else startfrac = 4;
+	if (dinfo->month == 1) {
+	    startfrac = 1;
+	} else if (dinfo->month > 1 && dinfo->month <= 4) {
+	    startfrac = 2;
+	} else if (dinfo->month > 4 && dinfo->month <= 7) {
+	    startfrac = 3;
+	} else {
+	    startfrac = 4;
+	}
     }
     else if (dinfo->info == 12) {
 	sprintf(pdstr, ".%02d", dinfo->month);
@@ -342,7 +352,9 @@ static int dinfo_to_sinfo (const DATEINFO *dinfo, SERIESINFO *sinfo,
 	err = 1;
     }   
 
-    if (*pdstr) strcat(sinfo->stobs, pdstr);
+    if (*pdstr) {
+	strcat(sinfo->stobs, pdstr);
+    }
     get_endobs(sinfo->endobs, dinfo->year, startfrac, dinfo->info, n);
 
     sinfo->pd = dinfo->info;
@@ -665,8 +677,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 		val = NADBL;
 		miss = 1;
 	    }
-	    Z[1][t] = val;
-	    t++;
+	    Z[1][t++] = val;
 	}
     }
 
@@ -837,7 +848,7 @@ int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
     /* figure the quarterly dates */
     y0 = atoi(sinfo->stobs);
     m0 = atoi(sinfo->stobs + 5);
-    q = 1.0 + m0/3.;
+    q = 1.0 + m0 / 3.;
     q0 = q + .5;
     skip = ((q0 - 1) * 3) + 1 - m0;
     if (q0 == 5) {
@@ -862,14 +873,15 @@ int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * 3;
-	if (method == COMPACT_AVG) 
+	if (method == COMPACT_AVG) { 
 	    val = (mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip]) / 3.0;
-	else if (method == COMPACT_SUM)
+	} else if (method == COMPACT_SUM) {
 	    val = mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip];
-	else if (method == COMPACT_EOP)
+	} else if (method == COMPACT_EOP) {
 	    val = mvec[p-1+skip];
-	else if (method == COMPACT_SOP)
+	} else if (method == COMPACT_SOP) {
 	    val = mvec[p-3+skip];
+	}
 	/* do we want to limit the precision of the compacted
 	   data to that of the original data? */
 #ifdef LIMIT_DIGITS
@@ -929,15 +941,15 @@ int to_annual (double **pq, double *mvec, SERIESINFO *sinfo,
 	val = 0.;
 
 	if (method == COMPACT_AVG || method == COMPACT_SUM) { 
-	    for (i=1; i<=pd; i++) val += mvec[p-i+skip];
+	    for (i=1; i<=pd; i++) {
+		val += mvec[p-i+skip];
+	    }
 	    if (method == COMPACT_AVG) {
 		val /= (double) pd;
 	    }
-	}
-	else if (method == COMPACT_EOP) {
+	} else if (method == COMPACT_EOP) {
 	    val = mvec[p-1+skip];
-	}
-	else if (method == COMPACT_SOP) {
+	} else if (method == COMPACT_SOP) {
 	    val = mvec[p-pd+skip];
 	}
 
@@ -1070,18 +1082,25 @@ get_compact_method_and_advance (const char *s, int *method)
 	    }
 	    p++;
 	}
-	comp[i] = 0;
+	comp[i] = '\0';
 
-	if (!strcmp(comp, "average")) *method = COMPACT_AVG;
-	else if (!strcmp(comp, "sum")) *method = COMPACT_SUM;
-	else if (!strcmp(comp, "first")) *method = COMPACT_SOP;
-	else if (!strcmp(comp, "last")) *method = COMPACT_EOP;
+	if (!strcmp(comp, "average")) {
+	    *method = COMPACT_AVG;
+	} else if (!strcmp(comp, "sum")) {
+	    *method = COMPACT_SUM;
+	} else if (!strcmp(comp, "first")) {
+	    *method = COMPACT_SOP;
+	} else if (!strcmp(comp, "last")) {
+	    *method = COMPACT_EOP;
+	}
 
 	p = strchr(p, ')');
 	if (p != NULL) p++;
     } else {
 	/* no compaction method given */
-	if ((p = strstr(s, "data "))) p += 5;
+	if ((p = strstr(s, "data "))) {
+	    p += 5;
+	}
     }
 
     return p;
@@ -1187,7 +1206,6 @@ void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo,
     *pad2 = pdinfo->n - sinfo->nobs - *pad1;
 } 
 
-
 int check_db_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 {
     double sd0, sdn_new, sdn_old;
@@ -1258,7 +1276,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	if (compact_method == COMPACT_NONE) {
 	    sprintf(gretl_errmsg, _("%s: you must specify a compaction method"), 
 		    sinfo->varname);
-	    if (new) dataset_drop_vars(1, pZ, pdinfo);
+	    if (new) {
+		dataset_drop_vars(1, pZ, pdinfo);
+	    }
 	    return 1;
 	}
 	if (sinfo->pd == 12 && pdinfo->pd == 4) {
@@ -1270,8 +1290,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
     } else {  
 	/* series does not need compacting */
 	xvec = malloc(sinfo->nobs * sizeof *xvec);
-	if (xvec == NULL) err = 1;
-	else {
+	if (xvec == NULL) {
+	    err = 1;
+	} else {
 	    for (t=0; t<sinfo->nobs; t++) {
 		xvec[t] = dbZ[1][t];
 	    }
@@ -1280,7 +1301,9 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 
     if (err) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
-	if (new) dataset_drop_vars(1, pZ, pdinfo);
+	if (new) {
+	    dataset_drop_vars(1, pZ, pdinfo);
+	}
 	return 1;
     }
 

@@ -288,7 +288,9 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, &compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
-		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
+		if (!overwrite) {
+		    dataset_drop_vars(1, &Z, datainfo);
+		}
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) {
@@ -1744,12 +1746,14 @@ static gchar *get_descrip (char *fname, const char *dbdir)
 
     fgets(tmp, 63, fp);
     fclose(fp);
+
     if (tmp[0] == '#') {
 	strcpy(line, tmp + 2);
 	/* the following line was ifdef'd with G_OS_WIN32 */
 	line[strlen(line) - 1] = 0;
 	return line;
     }
+
     return NULL;
 }
 
@@ -1901,11 +1905,10 @@ gint populate_dbfilelist (windata_t *win)
 /* .................................................................. */
 
 static int compact_series (double **Z, int i, int n, int oldn,
-			   int startskip, int min_startskip, int cfac,
+			   int startskip, int min_startskip, int compfac,
 			   int method)
 {
-    int t, j;
-    int idx = startskip;
+    int t, j, idx;
     int lead = startskip - min_startskip;
     double *x;
 
@@ -1913,57 +1916,63 @@ static int compact_series (double **Z, int i, int n, int oldn,
     if (x == NULL) return 1;
 
     if (i == 0) {
-	for (t=0; t<n; t++) x[t] = 1.0;
+	for (t=0; t<n; t++) {
+	    x[t] = 1.0;
+	}
     } else {
-	for (t=0; t<n; t++) x[t] = NADBL;
-	for (t=lead; t<n; t++) {
-	    if (idx > oldn - 1) break;
+	for (t=0; t<n; t++) {
+	    x[t] = NADBL;
+	}
+	idx = startskip;
+	for (t=lead; t<n && idx<oldn; t++) {
 	    if (method == COMPACT_SOP || method == COMPACT_EOP) {
 		x[t] = Z[i][idx];
-	    }
-	    else {
-		if (idx + cfac - 1 > oldn - 1) break;
+	    } else {
+		if (idx + compfac - 1 > oldn - 1) break;
 		x[t] = 0.0;
-		for (j=0; j<cfac; j++) {
+		for (j=0; j<compfac; j++) {
 		    x[t] += Z[i][idx + j];
 		}
 		if (method == COMPACT_AVG) {
-		    x[t] /= (double) cfac;	
+		    x[t] /= (double) compfac;	
 		}
 	    }
-	    idx += cfac;
+	    idx += compfac;
 	}
     }
 
     free(Z[i]);
+
     Z[i] = x;
 
     return 0;
 }
 
 static void 
-get_startskip_etc (int cfac, int startper, int endper, 
+get_startskip_etc (int compfac, int startmin, int endmin, 
 		   int oldn, int method, 
 		   int *startskip, int *newn) 
 {
-    int ss = cfac - (startper % cfac) + 1;
+    int ss = compfac - (startmin % compfac) + 1;
     int es, n;
 
-    ss = ss % cfac;
+    ss = ss % compfac;
 
     if (method == COMPACT_EOP) {
 	if (ss > 0) {
 	    ss--;
 	} else {
 	    /* move to end of initial period */
-	    ss = cfac - 1;
+	    ss = compfac - 1;
 	}
     }
 
-    es = endper % cfac;
-    if (method == COMPACT_SOP && es > 1) es--;
+    es = endmin % compfac;
+    if (method == COMPACT_SOP && es > 1) {
+	es--;
+    }
 
-    n = (oldn - ss - es) / cfac;
+    n = (oldn - ss - es) / compfac;
     if (ss && method == COMPACT_EOP) n++;
     if (es && method == COMPACT_SOP) n++;
 
@@ -1972,99 +1981,125 @@ get_startskip_etc (int cfac, int startper, int endper,
 }
 
 static void 
-get_global_compact_params (int cfac, int startper, int endper,
+get_global_compact_params (int compfac, int startmin, int endmin,
 			   int oldn, int default_method, 
 			   int *min_startskip, int *max_n,
 			   int *any_eop, int *all_same)
 {
-    int i, startskip, n, cm;
+    int i, startskip, n, method;
     int n_not_eop = 0;
 
     for (i=0; i<datainfo->v; i++) {
 	if (i == 0) {
-	    get_startskip_etc(cfac, startper, endper, oldn, 
+	    get_startskip_etc(compfac, startmin, endmin, oldn, 
 			      default_method, &startskip, &n);
-	    if (default_method == COMPACT_EOP) *any_eop = 1;
+	    if (default_method == COMPACT_EOP) {
+		*any_eop = 1;
+	    }
 	} else {
-	    cm = COMPACT_METHOD(datainfo, i);
-	    if (cm != default_method && cm != COMPACT_NONE) {
-		get_startskip_etc(cfac, startper, endper, oldn, 
-				  cm, &startskip, &n);
+	    method = COMPACT_METHOD(datainfo, i);
+	    if (method != default_method && method != COMPACT_NONE) {
+		get_startskip_etc(compfac, startmin, endmin, oldn, 
+				  method, &startskip, &n);
 		*all_same = 0;
-		if (cm == COMPACT_EOP) *any_eop = 1;
-		else n_not_eop++;
+		if (method == COMPACT_EOP) {
+		    *any_eop = 1;
+		} else {
+		    n_not_eop++;
+		}
 	    }
 	}
-	if (startskip < *min_startskip) *min_startskip = startskip;
-	if (n > *max_n) *max_n = n;
+	if (startskip < *min_startskip) {
+	    *min_startskip = startskip;
+	}
+	if (n > *max_n) {
+	    *max_n = n;
+	}
     }
 
-    if (n_not_eop == datainfo->v - 1) *any_eop = 0;
+    if (n_not_eop == datainfo->v - 1) {
+	*any_eop = 0;
+    }
+}
 
+static int get_obs_maj_min (const char *obs, int *maj, int *min)
+{
+    int np = sscanf(obs, "%d:%d", maj, min);
+
+    if (np < 2) {
+	np = sscanf(obs, "%d.%d", maj, min);
+    }
+
+    return (np == 2);
 }
 
 void compact_data_set (void)
 {
     int newpd, oldpd = datainfo->pd;
     int newn, oldn = datainfo->n;
-    int cfac;
-    int startper, endper;
-    int startyr;
+    int compfac;
+    int startmaj, startmin;
+    int endmaj, endmin;
     int any_eop, all_same;
     int min_startskip = 0;
     int i, err = 0;
     int default_method = COMPACT_AVG;
-    char stobs[OBSLEN], *p;
+    char stobs[OBSLEN];
 
     if (maybe_restore_full_data(COMPACT)) return;
 
     newpd = 0;
+
     data_compact_dialog(mdata->w, oldpd, &newpd, &default_method);
     if (default_method == COMPACT_NONE) return;
 
-    cfac = oldpd / newpd;
-
-    /* figure starting year and sub-period */
-    startyr = atoi(datainfo->stobs);
-    p = strchr(datainfo->stobs, ':');
-    if (p == NULL) p = strchr(datainfo->stobs, '.');
-    if (p == NULL) return;
-    p++;
-    if (*p == '0') p++;
-    startper = atoi(p);
-
-    /* figure ending sub-period */
-    p = strchr(datainfo->endobs, ':');
-    if (p == NULL) p = strchr(datainfo->endobs, '.');
-    if (p == NULL) return;
-    p++;
-    if (*p == '0') p++;
-    endper = atoi(p);   
+    if (oldpd == 5 || oldpd == 7) {
+	/* daily to weekly */
+	compfac = oldpd;
+	if (dated_daily_data(datainfo)) {
+	    startmin = get_day_of_week(datainfo->stobs) + 1;
+	} else {
+	    startmin = 1;
+	}
+    } else {
+	compfac = oldpd / newpd;
+	/* get starting obs major and minor components */
+	if (!get_obs_maj_min(datainfo->stobs, &startmaj, &startmin)) {
+	    return;
+	}
+	/* get ending obs major and minor components */
+	if (!get_obs_maj_min(datainfo->endobs, &endmaj, &endmin)) {
+	    return;
+	} 
+    }
 
     min_startskip = oldpd;
     newn = 0;
     any_eop = 0;
     all_same = 1;
-    get_global_compact_params(cfac, startper, endper, oldn, default_method,
+    get_global_compact_params(compfac, startmin, endmin, oldn, default_method,
 			      &min_startskip, &newn, &any_eop, &all_same);
     if (newn == 0) {
 	errbox(_("Compacted dataset would be empty"));
 	return;
     }    
-    
-    if (newpd == 1) {
-	if (min_startskip > 0 && !any_eop) 
-	    startyr++;
-	sprintf(stobs, "%d", startyr);
-    } else if (newpd == 4) {
-	int mo = startper + min_startskip;
-	int qtr = mo / 3 + (mo % 3 > 0);
 
-	if (qtr > 4) {
-	    startyr++;
-	    qtr -= 4;
+    if (newpd == 1) {
+	if (min_startskip > 0 && !any_eop) { 
+	    startmaj++;
 	}
-	sprintf(stobs, "%d:%d", startyr, qtr);
+	sprintf(stobs, "%d", startmaj);
+    } else if (newpd == 52) {
+	strcpy(stobs, "1");
+    } else {
+	int m0 = startmin + min_startskip;
+	int minor = m0 / compfac + (m0 % compfac > 0);
+
+	if (minor > newpd) {
+	    startmaj++;
+	    minor -= newpd;
+	}
+	format_obs(stobs, startmaj, minor, newpd);
     }
 
     /* revise datainfo members */
@@ -2087,19 +2122,19 @@ void compact_data_set (void)
 		    this_method = COMPACT_METHOD(datainfo, i);
 		}
 
-		startskip = cfac - (startper % cfac) + 1;
-		startskip = startskip % cfac;
+		startskip = compfac - (startmin % compfac) + 1;
+		startskip = startskip % compfac;
 		if (this_method == COMPACT_EOP) {
 		    if (startskip > 0) {
 			startskip--;
 		    } else {
-			startskip = cfac - 1;
+			startskip = compfac - 1;
 		    }
 		}
 	    }
 
 	    if (compact_series(Z, i, datainfo->n, oldn, startskip, min_startskip,
-			       cfac, this_method)) {
+			       compfac, this_method)) {
 		errbox(_("Out of memory!"));
 		err = 1;
 	    }

@@ -2404,11 +2404,15 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	if (spd == 4) {
 	    *target_pd = 1;
 	    labelstr = g_strdup(_("Compact quarterly data to annual"));
-	} else {
+	} else if (spd == 12) {
 	    /* source data are monthly */
 	    labelstr = g_strdup(_("Compact monthly data to:"));
 	    show_pd_buttons = 1;
 	    *target_pd = 4;
+	} else if (spd == 5 || spd == 7) {
+	    /* source data are daily */
+	    labelstr = g_strdup(_("Compact daily data to weekly"));
+	    *target_pd = 52;
 	}
     }
 

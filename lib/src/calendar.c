@@ -229,6 +229,42 @@ double get_dec_date (const char *date)
     return dyr + frac;
 }
 
+#define CCODE(c) ((c == 14 || c == 18)? 2 : \
+		  (c == 15 || c == 19)? 0 : \
+		  (c == 16 || c == 20)? 5 : 4)
+
+#define MCODE(m) ((m == 1 || m == 10)? 0 : \
+		  (m == 2 || m == 3 || m == 11)? 3 : \
+		  (m == 4 || m == 7)? 6 : \
+		  (m == 5)? 1 : \
+		  (m == 6)? 4 : \
+		  (m == 8)? 2 : 5)
+
+#define LEAPDAYS(y,m) ((y % 100) / 4 + (y % 400 == 0) - (m < 3))
+
+/**
+ * get_day_of_week:
+ * @date: calendar representation of date, [YY]YY/MM/DD
+ * 
+ * Returns: day of week as integer, Sunday = 0.
+ */
+
+int get_day_of_week (const char *date)
+{
+    int yr, mo, day;
+
+    if (sscanf(date, "%d/%d/%d", &yr, &mo, &day) != 3) {
+	return -1;
+    }
+
+    if (yr < 100) {
+	yr += (yr < 50)? 2000 : 1900;
+    }
+
+    return (CCODE(yr / 100) + (yr % 100) 
+	    + LEAPDAYS(yr, mo) + MCODE(mo) + day) % 7;
+}
+
 /* The following functions have nothing to do with the "cal" program,
    but are specific to the handling of daily data so I put them in
    here.  AC. */
