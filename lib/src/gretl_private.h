@@ -31,7 +31,7 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 		    DATAINFO *pdinfo);
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
+		      const DATAINFO *pdinfo, PRN *prn,
 		      gretlopt opt);
 
 void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
@@ -94,6 +94,9 @@ int model_mask_leaves_balanced_panel (const MODEL *pmod,
 
 int list_dups (const int *list, int ci);
 
+int *augment_regression_list (const int *orig, int aux, 
+			      double ***pZ, DATAINFO *pdinfo);
+
 int gretl_forecast (int t1, int t2, int nv, 
 		    const MODEL *pmod, double ***pZ);
 
@@ -126,7 +129,7 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
 int path_append (char *file, const char *path);
 
-void difflist (int *biglist, int *smalist, int *targ);
+void gretl_list_diff (int *targ, const int *biglist, const int *sublist);
 
 int takenotes (int quit_opt);
 
@@ -145,5 +148,7 @@ void gretl_functions_cleanup (void);
 void gretl_rand_init (void);
 
 void gretl_rand_free (void);
+
+double *testvec (int n);
 
 #endif /* GRETL_PRIVATE_H */

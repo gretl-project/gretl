@@ -903,7 +903,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 		pdinfo->varname[depvars[j]]);
 
 	if (robust) {
-	    difflist(varmod->list, shortlist, outlist);
+	    gretl_list_diff(outlist, varmod->list, shortlist);
 	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) err = 1;
 	} else {
@@ -942,7 +942,7 @@ static int var_F_tests (MODEL *varmod, GRETL_VAR *var,
 	}
 
 	if (robust) {
-	    difflist(varmod->list, shortlist, outlist);
+	    gretl_list_diff(outlist, varmod->list, shortlist);
 	    F = robust_omit_F(outlist, varmod);
 	    if (na(F)) err = 1;
 	} else {
@@ -1664,13 +1664,13 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
 	int vi = varlist[i];
 	double tstat;
 
-	if (varlist[vi] == 0) {
+	if (vi == 0) {
 	    continue;
 	}
 
 	tlist[1] = vi;
 
-	tlist[3] = laggenr(vi, 1, pZ, pdinfo); /* diffgenr?? */
+	tlist[3] = laggenr(vi, 1, pZ, pdinfo);
 	if (tlist[3] < 0) {
 	    trends = -1;
 	    break;

@@ -81,14 +81,28 @@ PLUGINSRC = \
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
-PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll \
-	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/mp_ols.dll plugins/sysest.dll \
-	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
-	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
-	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
-	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll \
-        plugins/audio.dll plugins/vif.dll plugins/urcdist.dll
+PLUGINS = plugins/stats_tables.dll \
+	plugins/panel_data.dll \
+	plugins/progress_bar.dll \
+	plugins/gnumeric_import.dll \
+	plugins/excel_import.dll \
+	plugins/mp_ols.dll \
+	plugins/sysest.dll \
+	plugins/johansen.dll \
+	plugins/arma.dll \
+	plugins/arma_x12.dll \
+	plugins/range-mean.dll \
+	plugins/lad.dll \
+	plugins/tramo-x12a.dll \
+	plugins/leverage.dll \
+	plugins/pca.dll \
+	plugins/nistcheck.dll \
+	plugins/logistic.dll \
+	plugins/tobit.dll \
+	plugins/garch.dll \
+        plugins/audio.dll \
+	plugins/vif.dll \
+	plugins/urcdist.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -137,6 +151,7 @@ LIBSRC = bhhh_max.c \
 	subsample.c \
 	system.c \
 	texprint.c \
+	transforms.c \
 	var.c
 
 LIBOBJ = $(LIBSRC:.c=.o)

@@ -395,19 +395,25 @@ static void delete_ufunc_from_list (ufunc *fun)
     }
 }
 
+enum function_name_returns {
+    FN_NAME_OK,
+    FN_NAME_BAD,
+    FN_NAME_TAKEN
+};
+
 static int check_func_name (const char *fname)
 {
     int i;
 
     if (!isalpha((unsigned char) *fname)) {
 	strcpy(gretl_errmsg, "function names must start with a letter");
-	return 1;
+	return FN_NAME_BAD;
     }
 
     if (gretl_command_number(fname)) {
 	sprintf(gretl_errmsg, "'%s' is the name of a gretl command",
 		fname);
-	return 1;
+	return FN_NAME_BAD;
     }
 
     /* or should we overwrite? */
@@ -416,11 +422,11 @@ static int check_func_name (const char *fname)
 	if (!strcmp(fname, (ufuns[i])->name)) {
 	    sprintf(gretl_errmsg, "'%s': function is already defined",
 		    fname);
-	    return 1;
+	    return FN_NAME_TAKEN;
 	}
     }
 
-    return 0;
+    return FN_NAME_OK;
 }
 
 static int comma_count (const char *s)
@@ -510,14 +516,29 @@ static char **parse_args (const char *s, int *argc, int *err)
 int gretl_start_compiling_function (const char *line)
 {
     char fname[32];
+    int name_status;
     ufunc *fun = NULL;
 
     if (!sscanf(line, "function %31s", fname)) {
 	return E_PARSE;
     }
 
-    if (check_func_name(fname)) {
+    name_status = check_func_name(fname);
+
+    if (name_status == FN_NAME_BAD) {
 	return 1;
+    } 
+
+    if (name_status == FN_NAME_TAKEN) {
+	if (strstr(line, "delete")) {
+	    fun = get_ufunc_by_name(fname);
+	    if (fun != NULL) {
+		delete_ufunc_from_list(fun);
+	    }
+	    return 0;
+	} else {
+	    return 1;
+	}
     }
 
     fun = add_ufunc();

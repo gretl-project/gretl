@@ -143,7 +143,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     for (i=pmod->t1; i<=pmod->t2; i++) {
 	pmod->uhat[i] = res[i + pad] * scale;
 	pmod->ess += pmod->uhat[i] * pmod->uhat[i];
-	pmod->yhat[i] =  Z[ynum][i] - pmod->uhat[i];
+	pmod->yhat[i] =  Z[ynum][i] * scale - pmod->uhat[i];
     }
 
     pmod->sigma = NADBL;

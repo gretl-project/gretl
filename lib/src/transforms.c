@@ -20,7 +20,10 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 
-int newlag; /* library global */
+/* newlag is a library global, used when auto-generating a lag in the
+   context of reading a regression list (interact.c)
+*/
+int newlag;
 
 int vars_identical (const double *x, const double *y, int n)
 {
@@ -86,15 +89,37 @@ make_transform_label (char *label, const char *parent,
     }
 }
 
-/* array into which to write a generated variable, prior
-   to testing whether or not the same var already exists
+static void make_xp_varname (char *vname, const char *v1, 
+			     const char *v2, int len)
+{
+    int v2len = len / 2;
+    int v1len = (len % 2)? v2len : v2len - 1;
+
+    *vname = '\0';
+    strncat(vname, v1, v1len);
+    strcat(vname, "_");
+    strncat(vname, v2, v2len);
+}
+
+/* Array into which to write a generated variable, prior to testing
+   whether or not the same var already exists.  Declared as non-static
+   so that it can be called in context of library cleanup (with n =
+   0).
 */
 
-static double *testvec (int n)
+double *testvec (int n)
 {
     static double *x;
     static int nx;
     int t;
+
+    if (n == 0) {
+	/* clean up */
+	free(x);
+	x = NULL;
+	nx = 0;
+	return NULL;
+    }	
 
     if (n > nx) {
 	double *y = realloc(x, n * sizeof *x);
@@ -119,8 +144,8 @@ static double *testvec (int n)
 
 /* write lagged values of variable v into lagvec */
 
-static void get_lag (int v, int lag, double *lagvec, 
-		     const double **Z, const DATAINFO *pdinfo)
+static int get_lag (int v, int lag, double *lagvec, 
+		    const double **Z, const DATAINFO *pdinfo)
 {
     int t, t1, lt;
 
@@ -172,6 +197,8 @@ static void get_lag (int v, int lag, double *lagvec,
 	    }
 	}
     }
+
+    return 0;
 }
 
 /* write log of variable v into logvec */
@@ -202,7 +229,7 @@ static int get_log (int v, double *logvec, const double **Z,
 
 /* write first diff of variable v into diffvec */
 
-static int get_diff (int v, double *diffvec, int ldiff,
+static int get_diff (int v, double *diffvec, int ci,
 		     const double **Z, const DATAINFO *pdinfo)
 {
     double x0, x1;
@@ -221,7 +248,7 @@ static int get_diff (int v, double *diffvec, int ldiff,
 	} else {
 	    x1 = Z[v][t-1];
 	}
-	if (ldiff) {
+	if (ci == LDIFF) {
 	    if (!na(x0) && !na(x1) && x0 > 0 && x1 > 0) {
 		diffvec[t] = log(x0) - log(x1);
 	    }
@@ -302,6 +329,75 @@ check_add_transform (int vnum, const double *x,
     return ret;
 }
 
+/* get_transform: create specified transformation of variable v if
+   this variable does not already exist.
+
+   Return the ID number of the transformed var, or -1 on error.
+*/
+
+static int get_transform (int ci, int v, int aux, 
+			  double ***pZ, DATAINFO *pdinfo)
+{
+    char vname[VNAMELEN];
+    char label[MAXLABEL];
+    int vno, len, err = 0;
+    double *vx;
+
+    vx = testvec(pdinfo->n);
+    if (vx == NULL) {
+	return -1;
+    }
+
+    if (ci == LAGS) {
+	/* "aux" = lag */
+	err = get_lag(v, aux, vx, (const double **) *pZ, pdinfo);
+    } else if (ci == LOGS) {
+	err = get_log(v, vx, (const double **) *pZ, pdinfo);
+    } else if (ci == DIFF || ci == LDIFF) {
+	err = get_diff(v, vx, ci, (const double **) *pZ, pdinfo);
+    } else if (ci == SQUARE) {
+	/* "aux" = second variable number */
+	err = get_xpx(v, aux, vx, (const double **) *pZ, pdinfo);
+    }
+
+    if (err) {
+	return -1;
+    }
+
+    if (ci == SQUARE && v != aux) {
+	sprintf(label, _("= %s times %s"), pdinfo->varname[v], 
+		pdinfo->varname[aux]);
+    } else {
+	make_transform_label(label, pdinfo->varname[v], ci, aux);
+    }
+    
+    for (len=8; len<=VNAMELEN; len++) {
+
+	if (len == VNAMELEN) {
+	    /* last resort: hack the name */
+	    make_varname_unique(vname, 0, pdinfo);
+	} else if (ci == SQUARE && v != aux) {
+	    make_xp_varname(vname, pdinfo->varname[v],
+			    pdinfo->varname[aux], len);
+	} else {
+	    make_transform_varname(vname, pdinfo->varname[v], ci, 
+				   aux, len);
+	}
+	vno = varindex(pdinfo, vname);
+
+	err = check_add_transform(vno, vx, vname, label, pdinfo, pZ);
+	if (err != VAR_EXISTS_OK && err != VAR_ADDED_OK) {
+	    vno = -1;
+	}
+	if (err != VARNAME_DUPLICATE) {
+	    /* either we're OK, or there was a fatal error */
+	    break;
+	}
+    }
+
+    return vno;
+}
+
 /* laggenr: create specified lag of variable v if this variable does
    not already exist.
 
@@ -310,10 +406,7 @@ check_add_transform (int vnum, const double *x,
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN];
-    char label[MAXLABEL];
-    int lno, len;
-    double *lx;
+    int lno, oldv = pdinfo->v;
 
     if (!pdinfo->vector[v]) {
 	return -1;
@@ -324,34 +417,12 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 	return -1;
     }
 
-    lx = testvec(pdinfo->n);
-    if (lx == NULL) {
-	return -1;
-    }
-
     newlag = 1;
 
-    /* put the lagged values into lx */
-    get_lag(v, lag, lx, (const double **) *pZ, pdinfo);
+    lno = get_transform(LOGS, v, lag, pZ, pdinfo);
 
-    make_transform_label(label, pdinfo->varname[v], LAGS, lag);
-
-    for (len=8; len<VNAMELEN; len++) {
-	int check;
-
-	make_transform_varname(vname, pdinfo->varname[v], LAGS, 
-			       lag, len);
-	lno = varindex(pdinfo, vname);
-
-	check = check_add_transform(lno, lx, vname, label, pdinfo, pZ);
-	if (check == VAR_EXISTS_OK) {
-	    newlag = 0;
-	} else if (check != VAR_ADDED_OK) {
-	    lno = -1;
-	}
-	if (check != VARNAME_DUPLICATE) {
-	    break;
-	}
+    if (lno < oldv) {
+	newlag = 0;
     }
 
     return lno;
@@ -365,40 +436,7 @@ int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo)
 
 int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN];
-    char label[MAXLABEL];
-    int lno, len;
-    double *lx;
-
-    lx = testvec(pdinfo->n);
-    if (lx == NULL) {
-	return -1;
-    }
-
-    /* put the logs into lx */
-    if (get_log(v, lx, (const double **) *pZ, pdinfo)) {
-	return -1;
-    }
-
-    make_transform_label(label, pdinfo->varname[v], LOGS, 0);
-
-    for (len=8; len<VNAMELEN; len++) {
-	int check;
-
-	make_transform_varname(vname, pdinfo->varname[v], LOGS, 
-			       0, len);
-	lno = varindex(pdinfo, vname);
-
-	check = check_add_transform(lno, lx, vname, label, pdinfo, pZ);
-	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
-	    lno = -1;
-	}
-	if (check != VARNAME_DUPLICATE) {
-	    break;
-	}
-    }
-
-    return lno;
+    return get_transform(LOGS, v, 0, pZ, pdinfo);
 }
 
 /* diffgenr: create first difference (or log difference) of variable v,
@@ -409,56 +447,11 @@ int loggenr (int v, double ***pZ, DATAINFO *pdinfo)
 
 int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff)
 {
-    char vname[VNAMELEN];
-    char label[MAXLABEL];
-    int dno, len;
-    double *dx;
-
     if (!pdinfo->vector[v]) {
 	return -1;
     }
 
-    dx = testvec(pdinfo->n);
-    if (dx == NULL) {
-	return -1;
-    }
-
-    /* put the differences into dx */
-    if (get_diff(v, dx, ldiff, (const double **) *pZ, pdinfo)) {
-	return -1;
-    }
-
-    make_transform_label(label, pdinfo->varname[v], DIFF, 0);
-
-    for (len=8; len<VNAMELEN; len++) {
-	int check;
-
-	make_transform_varname(vname, pdinfo->varname[v], DIFF, 
-			       0, len);
-	dno = varindex(pdinfo, vname);
-
-	check = check_add_transform(dno, dx, vname, label, pdinfo, pZ);
-	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
-	    dno = -1;
-	}
-	if (check != VARNAME_DUPLICATE) {
-	    break;
-	}	
-    }
-
-    return dno;    
-}
-
-static void make_xp_varname (char *vname, const char *v1, 
-			     const char *v2, int len)
-{
-    int v2len = len / 2;
-    int v1len = (len % 2)? v2len : v2len - 1;
-
-    *vname = '\0';
-    strncat(vname, v1, v1len);
-    strcat(vname, "_");
-    strncat(vname, v2, v2len);
+    return get_transform((ldiff)? LDIFF : DIFF, v, 0, pZ, pdinfo);
 }
 
 /* xpxgenr: create square or cross-product, if the target variable
@@ -469,56 +462,13 @@ static void make_xp_varname (char *vname, const char *v1,
 
 int xpxgenr (int vi, int vj, double ***pZ, DATAINFO *pdinfo)
 {
-    char vname[VNAMELEN];
-    char label[MAXLABEL];
-    int xno, len;
-    double *xx;
-
     if (vi == vj) {
 	if (isdummy((*pZ)[vi], pdinfo->t1, pdinfo->t2)) {
 	    return -1;
 	}
     }
 
-    xx = testvec(pdinfo->n);
-    if (xx == NULL) {
-	return -1;
-    }
-
-    /* put the calculated values into xx */
-    if (get_xpx(vi, vj, xx, (const double **) *pZ, pdinfo)) {
-	return -1;
-    }
-
-    if (vi == vj) {
-	make_transform_label(label, pdinfo->varname[vi], SQUARE, 0);
-    } else {
-	sprintf(label, _("= %s times %s"), pdinfo->varname[vi], 
-		pdinfo->varname[vj]);
-    }
-
-    for (len=8; len<VNAMELEN; len++) {
-	int check;
-
-	if (vi == vj) {
-	    make_transform_varname(vname, pdinfo->varname[vi], SQUARE, 
-				   0, len);
-	} else {
-	    make_xp_varname(vname, pdinfo->varname[vi],
-			    pdinfo->varname[vj], len);
-	}
-	xno = varindex(pdinfo, vname);
-
-	check = check_add_transform(xno, xx, vname, label, pdinfo, pZ);
-	if (check != VAR_EXISTS_OK && check != VAR_ADDED_OK) {
-	    xno = -1;
-	}
-	if (check != VARNAME_DUPLICATE) {
-	    break;
-	}
-    }	
-
-    return xno;    
+    return get_transform(SQUARE, vi, vj, pZ, pdinfo);
 }
 
 /**
@@ -554,11 +504,7 @@ int list_loggenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (n_ok > 0) {
-	return 0;
-    } else {
-	return E_LOGS;
-    }
+    return (n_ok > 0)? 0 : E_LOGS;
 }
 
 /**
@@ -693,13 +639,9 @@ int list_xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 		}
 	    }
 	}
-    }		
-
-    if (n_ok > 0) {
-	return 0;
-    } else {
-	return E_SQUARES;
     }
+
+    return (n_ok > 0)? 0 : E_SQUARES;
 }
 
 #undef RHODEBUG

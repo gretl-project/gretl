@@ -160,24 +160,27 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 /* ........................................................... */
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
+		      const DATAINFO *pdinfo, PRN *prn,
 		      gretlopt opt)
 {
     int i;
     char spc[3];
 
-    if (add->ci == LAD) return;
+    if (add->ci == LAD) {
+	return;
+    }
 
-    if (!(opt & OPT_Q) && aux_code != AUX_SQ && aux_code != AUX_LOG) {
+    if (!(opt & OPT_Q)) {
 	strcpy(spc, "  ");
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
 		add->m1, add->m2);
-    } else spc[0] = '\0';
+    } else {
+	spc[0] = '\0';
+    }
 
-    if (aux_code == AUX_ADD && addvars[0] > 1 && 
-	(add->ci == OLS || add->ci == HCCM)) {
+    if (addvars[0] > 1 && (add->ci == OLS || add->ci == HCCM)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		"zero for the added variables\n\n"), spc);
+		       "zero for the added variables\n\n"), spc);
 	for (i=1; i<=addvars[0]; i++) {
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
 	}
@@ -186,10 +189,9 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		add->dfn, add->dfd, add->F);
 	pprintf(prn, _("with p-value = %g\n"), 
 		fdist(add->F, add->dfn, add->dfd));
-    }
-    else if (aux_code == AUX_ADD && addvars[0] > 1 && LIMDEP(add->ci)) {
+    } else if (addvars[0] > 1 && LIMDEP(add->ci)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		"zero for the added variables\n\n"), spc);
+		       "zero for the added variables\n\n"), spc);
 	for (i=1; i<=addvars[0]; i++) { 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
 	}
@@ -198,13 +200,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 	pprintf(prn, _("with p-value = %g\n\n"), 
 		chisq(add->chisq, add->dfn));
 	return;
-    }
-    else if (aux_code == AUX_SQ || aux_code == AUX_LOG) {
-	pprintf(prn, "\n%s: TR^2 = %g,\n", _("Test statistic"), add->trsq);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
-		add->dfn, add->trsq, chisq(add->trsq, add->dfn));
-	return;
-    }
+    } 
 
     if (!(opt & OPT_Q)) {
 	pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 

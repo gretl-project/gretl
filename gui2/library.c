@@ -1323,13 +1323,12 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	}
     } 
     else {
-	int aux = 
-	    (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
+	int aux = (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
 
 	if (action == LMTEST_SQUARES) { 
-	    strcpy(line, "lmtest -s");
+	    strcpy(line, "lmtest --squares");
 	} else {
-	    strcpy(line, "lmtest -l");
+	    strcpy(line, "lmtest --logs");
 	}
 	clear_model(models[0]);
 	err = auxreg(NULL, pmod, models[0],

@@ -226,6 +226,39 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
     return smal;
 }
 
+/**
+ * gretl_list_diff:
+ * @targ: target list (must be pre-allocated).
+ * @biglist: inclusive list.
+ * @sublist: subset of biglist.
+ *
+ * fills out list @targ with the elements of biglist that are not
+ * present in sublist.
+ * 
+ */
+
+void gretl_list_diff (int *targ, const int *biglist, const int *sublist)
+{
+    int i, j, k = 0;
+    int match;
+
+    targ[0] = biglist[0] - sublist[0];
+
+    for (i=2; i<=biglist[0]; i++) {
+	match = 0;
+	for (j=2; j<=sublist[0]; j++) {
+	    if (sublist[j] == biglist[i]) {
+		match = 1;
+		break;
+	    }
+	}
+	if (!match) {
+	    targ[++k] = biglist[i];
+	}
+    }
+}
+
+
 /* Check if any var in list has been replaced via genr since a
    previous model (ref_id) was estimated.  Expects the "label"
    in datainfo to be of the form "Replaced after model <count>".

@@ -2476,6 +2476,7 @@ void libgretl_cleanup (CMD *cmd)
 
     gretl_rand_free();
     gretl_functions_cleanup();
+    testvec(0);
 
     p = strstr(gretl_plotfile(), "gpttmp");
     if (p != NULL) {

@@ -1995,7 +1995,6 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	    (*pZ)[newv][t] = tsls.yhat[t];
 	}
 
-	/* free model resources */
 	clear_model(&tsls);
 
 	/* give the fitted series the same name as the original */
@@ -2143,6 +2142,50 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     return tsls;
 }
 
+/* Given an original regression list, augment it by adding the squares
+   or logs of the original independent variables.  Generate these
+   variables if need be.  Return the augmented list, or NULL on
+   failure.
+*/
+
+int *augment_regression_list (const int *orig, int aux, 
+			      double ***pZ, DATAINFO *pdinfo)
+{
+    int *list;
+    int i, k;
+
+    list = malloc((2 * orig[0]) * sizeof *list);
+    if (list == NULL) {
+	return NULL;
+    }
+
+    /* transcribe original list */
+    for (i=0; i<=orig[0]; i++) {
+	list[i] = orig[i];
+    }
+
+    /* add squares or logs of independent vars */
+    k = list[0];
+    for (i=2; i<=orig[0]; i++) {
+	int vnew, vi = orig[i];
+
+	if (vi == 0) {
+	    continue;
+	}
+	if (aux == AUX_SQ) {
+	    vnew = xpxgenr(vi, vi, pZ, pdinfo);
+	} else {
+	    vnew = loggenr(vi, pZ, pdinfo);
+	}
+	if (vnew > 0) {
+	    list[++k] = vnew;
+	}
+    }
+    list[0] = k;
+
+    return list;
+}
+
 /* get_hsk_weights: take the residuals from the model pmod, square them
    and take logs; find the fitted values for this series using an
    auxiliary regression including the original independent variables
@@ -2153,9 +2196,8 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
 static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, k, t;
     int oldv = pdinfo->v;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *list = NULL;
     int err = 0, shrink = 0;
     double xx;
@@ -2174,36 +2216,16 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	    xx = pmod->uhat[t];
 	    (*pZ)[oldv][t] = log(xx * xx);
 	}
-    }	    
+    }
 
-    /* allocate the aux regression list to the max size that
-       might be needed */
-    list = malloc((2 * pmod->list[0]) * sizeof *list);
+    /* build regression list, adding the squares of the original
+       independent vars */
+    list = augment_regression_list(pmod->list, AUX_SQ, pZ, pdinfo);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
-    list[0] = pmod->list[0];
-    list[1] = oldv; /* the newly added uhat squared */
-    for (i=2; i<=pmod->list[0]; i++) {
-	/* transcribe original independent vars */
-	list[i] = pmod->list[i];
-    }
-
-    k = list[0];
-    /* now add squares of original independent variables */
-    for (i=2; i<=pmod->list[0]; i++) {
-	int sqnum, vi = pmod->list[i];
-
-	if (vi == 0) {
-	    continue;
-	}
-	sqnum = xpxgenr(vi, vi, pZ, pdinfo);
-	if (sqnum > 0) {
-	    list[++k] = sqnum;
-	}
-    }
-    list[0] = k;
+    list[1] = oldv; /* the newly added uhat-squared */
 
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
@@ -2497,7 +2519,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int lo, ncoeff, yno, i, k, t;
+    int lo, ncoeff, yno, t;
     int shrink, v = pdinfo->v;
     int *list = NULL;
     double zz;
@@ -2534,35 +2556,17 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 	strcpy(pdinfo->varname[v], "uhatsq");
-
-	list = malloc(2 * pmod->ncoeff + 3);
-	if (list == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    list[0] = pmod->list[0];
-	    list[1] = v; /* the newly added uhat squared */
-	    for (i=2; i<=pmod->list[0]; i++) {
-		/* transcribe original independent vars */
-		list[i] = pmod->list[i];
-	    }
-	}
     }
 
     if (!err) {
-	k = list[0];
-	/* now add squares of original independent variables */
-	for (i=2; i<=pmod->list[0]; i++) {
-	    int sqnum, vi = pmod->list[i];
-
-	    if (vi == 0) {
-		continue;
-	    }
-	    sqnum = xpxgenr(vi, vi, pZ, pdinfo);
-	    if (sqnum > 0) {
-		list[++k] = sqnum;
-	    }
+	/* build aux regression list, adding the squares of the original
+	   independent vars */
+	list = augment_regression_list(pmod->list, AUX_SQ, pZ, pdinfo);
+	if (list == NULL) {
+	    err = E_ALLOC;
+	} else {
+	    list[1] = v; /* the newly added uhat-squared */
 	}
-	list[0] = k;
     }
 
     if (!err) {
