@@ -2006,7 +2006,10 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
     return panel;
 }
 
-/* ........................................................... */
+/* 
+   nunits = number of cross-sectional units
+   T = number pf time-periods per cross-sectional unit
+*/
 
 int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 {
@@ -2015,17 +2018,12 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
     if (pdinfo->time_series == STACKED_TIME_SERIES) {
         *nunits = pdinfo->n / pdinfo->pd;
         *T = pdinfo->pd;
-    } 
-    else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-        char Tstr[8];
-
-        if (sscanf(pdinfo->endobs, "%[^:]:%d", Tstr, nunits) != 2) {
-            err = 1;
-        } else { 
-            *T = atoi(Tstr);
-	}
-    } 
-    else err = 1;
+    } else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	*nunits = pdinfo->pd;
+	*T = pdinfo->n / pdinfo->pd;
+    } else {
+	err = 1;
+    }
 
     return err;
 }
@@ -2071,8 +2069,9 @@ int balanced_panel (const DATAINFO *pdinfo)
 {
     char unit[OBSLEN], period[OBSLEN];
 
-    if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd)
+    if ((pdinfo->t2 - pdinfo->t1 + 1) % pdinfo->pd) {
         return 0;
+    }
 
     if (sscanf(pdinfo->endobs, "%[^:]:%s", unit, period) == 2) {
         if (atoi(period) != pdinfo->pd) return 0;

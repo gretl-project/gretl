@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_private.h"
+#include "libset.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
    for test that libgretl will accept before rejecting a
@@ -322,12 +323,28 @@ static void model_stats_init (MODEL *pmod)
 }
 
 static int 
-lsq_check_for_missing_obs (MODEL *pmod, DATAINFO *pdinfo,
-			   const double **Z, int *misst)
+lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
+			   DATAINFO *pdinfo, const double **Z, 
+			   int *misst)
 {
     int missv = 0;
+    int reject_missing = 0;
 
-    if (dataset_is_panel(pdinfo)) {
+    /* can't do HAC VCV with missing obs in middle */
+    if ((opts & OPT_R) && dataset_is_time_series(pdinfo) &&
+	!get_force_hc()) {
+	reject_missing = 1;
+    } 
+
+    if (opts & OPT_M) {
+	reject_missing = 1;
+    }
+
+    if (reject_missing) {
+	/* reject missing obs within adjusted sample */
+	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
+			    Z, misst);
+    } else if (dataset_is_panel(pdinfo)) {
 	/* compensate for missing obs if they preserve a
 	   balanced panel */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
@@ -341,12 +358,8 @@ lsq_check_for_missing_obs (MODEL *pmod, DATAINFO *pdinfo,
 				    Z, misst);
 	    }
 	}
-    } else if (dataset_is_time_series(pdinfo)) {
-	/* we'll reject missing obs within adjusted sample */
-	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
-			    Z, misst);
     } else {
-	/* cross-section: we'll compensate for missing obs */
+	/* we'll try to compensate for missing obs */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, NULL);
     }
@@ -368,6 +381,7 @@ lsq_check_for_missing_obs (MODEL *pmod, DATAINFO *pdinfo,
  *   if & OPT_P use Prais-Winsten for first obs.
  *   if & OPT_N don't use degrees of freedom correction for standard
  *      error of regression
+ *   if & OPT_M reject missing observations within sample range
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *
@@ -451,10 +465,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if (mdl.t1 < 0 || mdl.t2 > pdinfo->n - 1) {
         mdl.errcode = E_NODATA;
         goto lsq_abort;
-    }  
+    }
 
     /* adjust sample range and check for missing obs */
-    missv = lsq_check_for_missing_obs(&mdl, pdinfo,
+    missv = lsq_check_for_missing_obs(&mdl, opts, pdinfo,
 				      (const double **) *pZ,
 				      &misst);
 
@@ -599,7 +613,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    if (opts & OPT_T) {
+    if ((opts & OPT_T) && mdl.missmask == NULL) {
 	mdl.rho = rhohat(0, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(0, &mdl, *pZ);
     } else {
@@ -2048,7 +2062,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     free(s2list);
     free(yhat); 
 
-    if (opt & OPT_S) {
+    if ((opt & OPT_S) && tsls.errcode == 0) {
 	tsls_save_data(&tsls, newlist, *pZ, pdinfo);
     } 
 	
@@ -2590,6 +2604,19 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+static int ar_list_max (const int *list) 
+{
+    int i, lmax = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] > lmax) {
+	    lmax = list[i];
+	}
+    }
+
+    return lmax;
+}
+
 /**
  * ar_func:
  * @list: list of lags plus dependent variable and list of regressors.
@@ -2609,10 +2636,11 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 MODEL ar_func (LIST list, int pos, double ***pZ, 
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    double diff = 100.0, ess = 0, tss = 0, xx;
-    int i, j, t, t1, t2, p, vc, yno, ryno = 0, iter = 0;
-    int err, lag, n = pdinfo->n, v = pdinfo->v;
-    int *arlist = NULL, *reglist = NULL, *reglist2 = NULL, *rholist = NULL;
+    double diff, ess = 0, tss = 0, xx;
+    int i, j, t, t1, t2, vc, yno, ryno, iter;
+    int err, lag, maxlag, v = pdinfo->v;
+    int *arlist = NULL, *rholist = NULL;
+    int *reglist = NULL, *reglist2 = NULL;
     MODEL ar, rhomod;
 
     *gretl_errmsg = '\0';
@@ -2627,28 +2655,26 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     if (arlist == NULL || reglist == NULL || reglist2 == NULL ||
 	rholist == NULL) {
-	free(arlist);
-	free(reglist);
-	free(reglist2);
-	free(rholist);
 	ar.errcode = E_ALLOC;
-	return ar;
+	goto bailout;
     }
     
     arlist[0] = pos - 1;
-    for (i=1; i<pos; i++) arlist[i] = list[i];
+    for (i=1; i<pos; i++) {
+	arlist[i] = list[i];
+    }
 
     reglist2[0] = reglist[0] = list[0] - pos;
-    for (i=1; i<=reglist[0]; i++) reglist[i] = list[i + pos];
+    for (i=1; i<=reglist[0]; i++) {
+	reglist[i] = list[i + pos];
+    }
 
     rholist[0] = arlist[0] + 1;
-    p = arlist[arlist[0]];
-#if 0
-    printf("arlist:\n"); printlist(arlist); 
-    printf("reglist:\n"); printlist(reglist); 
-#endif
+    maxlag = ar_list_max(arlist);
 
-    if (gretl_hasconst(reglist)) rearrange_list(reglist);
+    if (gretl_hasconst(reglist)) {
+	rearrange_list(reglist);
+    }
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -2657,32 +2683,24 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	    ar.errcode = err;
 	} else {
 	    ar = lsq(reglist, pZ, pdinfo, CORC, OPT_NONE, xx);
+	    printmodel(&ar, pdinfo, opt, prn); 
 	}
-	printmodel(&ar, pdinfo, opt, prn); 
-	free(arlist);
-	free(reglist);
-	free(reglist2);
-	free(rholist);
-	return ar; 
+	goto bailout;
+    }
+
+    /* first pass: estimate model via OLS */
+    ar = lsq(reglist, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+    if (ar.errcode) {
+	goto bailout;
     }
 
     /* make room for the uhat terms and transformed data */
     if (dataset_add_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
-	free(reglist);
 	ar.errcode = E_ALLOC;
-	return ar;
+	goto bailout;
     }
 
-    /*  rearrange_list(reglist); */ 
     yno = reglist[1];
-
-    /* first pass: estimate model via OLS */
-    ar = lsq(reglist, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (ar.errcode) {
-	free(reglist);	
-	return ar;
-    }
-
     t1 = ar.t1; t2 = ar.t2;
     rholist[1] = v;
 
@@ -2693,43 +2711,54 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     pputs(prn, "\n\n");
 
     /* now loop while ess is changing */
-    while (diff > 0.005) {
-	iter++;
-	for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-	/* special computation of uhat */
-	for (t=t1; t<=t2; t++) {
-	    xx = (*pZ)[yno][t];
-	    for (j=0; j<reglist[0]-1; j++) {
-		xx -= ar.coeff[j] * (*pZ)[reglist[j+2]][t];
+    diff = 1.0e6;
+    for (iter = 1; iter <= 20 && diff > 0.005; iter++) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < t1 || t > t2) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		/* special computation of uhat */
+		xx = (*pZ)[yno][t];
+		for (j=0; j<reglist[0]-1; j++) {
+		    xx -= ar.coeff[j] * (*pZ)[reglist[j+2]][t];
+		}
+		(*pZ)[v][t] = xx;
 	    }
-	    (*pZ)[v][t] = xx;
-	}
+	}		
 	for (i=1; i<=arlist[0]; i++) {
 	    lag = arlist[i];
 	    rholist[1+i] = v + i;
-	    for (t=0; t<t1+lag; t++) (*pZ)[v+i][t] = NADBL;
-	    for (t=t1+lag; t<=t2; t++)
-		(*pZ)[v+i][t] = (*pZ)[v][t-lag];
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t < t1 + lag || t > t2) {
+		    (*pZ)[v+i][t] = NADBL;
+		} else {
+		    (*pZ)[v+i][t] = (*pZ)[v][t-lag];
+		}
+	    }
 	}
-	ryno = vc = v + i;
 
 	/* now estimate the rho terms */
-	if (iter > 1) clear_model(&rhomod);
+	if (iter > 1) {
+	    clear_model(&rhomod);
+	}
 	rhomod = lsq(rholist, pZ, pdinfo, OLS, OPT_A, 0.0);
 
 	/* and rho-transform the data */
+	ryno = vc = v + i;
 	for (i=1; i<=reglist[0]; i++) {
-	    for (t=0; t<n; t++) (*pZ)[vc][t] = NADBL;
-	    for (t=t1+p; t<=t2; t++) {
-		xx = (*pZ)[reglist[i]][t];
-		for (j=1; j<=arlist[0]; j++) {
-		    lag = arlist[j];
-		    xx -= rhomod.coeff[j-1] * (*pZ)[reglist[i]][t-lag];
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t < t1 + maxlag || t > t2) {
+		    (*pZ)[vc][t] = NADBL;
+		} else {
+		    xx = (*pZ)[reglist[i]][t];
+		    for (j=1; j<=arlist[0]; j++) {
+			lag = arlist[j];
+			xx -= rhomod.coeff[j-1] * (*pZ)[reglist[i]][t-lag];
+		    }
+		    (*pZ)[vc][t] = xx;
 		}
-		(*pZ)[vc][t] = xx;
 	    }
-	    reglist2[i] = vc;
-	    vc++;
+	    reglist2[i] = vc++;
 	}
 
 	/* estimate the transformed model */
@@ -2752,16 +2781,18 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	    pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 15), 
 		     _("undefined")); 
 	}
-
-	if (iter == 20) break;
     } /* end "ess changing" loop */
 
     for (i=0; i<=reglist[0]; i++) {
 	ar.list[i] = reglist[i];
     }
     i = gretl_hasconst(reglist);
-    if (i > 1) ar.ifc = 1;
-    if (ar.ifc) ar.dfn -= 1;
+    if (i > 1) {
+	ar.ifc = 1;
+    }
+    if (ar.ifc) {
+	ar.dfn -= 1;
+    }
     ar.ci = AR;
 
     /* special computation of fitted values */
@@ -2793,15 +2824,12 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     }
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     gretl_aic_etc(&ar);
-    ar.dw = dwstat(p, &ar, *pZ);
-    ar.rho = rhohat(p, ar.t1, ar.t2, ar.uhat);
+    ar.dw = dwstat(maxlag, &ar, *pZ);
+    ar.rho = rhohat(maxlag, ar.t1, ar.t2, ar.uhat);
 
     dataset_drop_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo);
-    free(reglist);
-    free(reglist2);
-    free(rholist);
 
-    if (ar_info_init (&ar, 1 + p)) {
+    if (ar_info_init(&ar, 1 + maxlag)) {
 	ar.errcode = E_ALLOC;
     } else {
 	for (i=0; i<=arlist[0]; i++) { 
@@ -2812,12 +2840,19 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	    }
 	}
     }
-
-    set_model_id(&ar);
-    printmodel(&ar, pdinfo, opt, prn);    
-
-    free(arlist);
     clear_model(&rhomod);
+
+    if (!ar.errcode) {
+	set_model_id(&ar);
+	printmodel(&ar, pdinfo, opt, prn);  
+    }  
+
+ bailout:
+
+    free(reglist);
+    free(reglist2);
+    free(rholist);
+    free(arlist);
 
     return ar;
 }

@@ -505,7 +505,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 
     /* run initial OLS */
     if (!err) {
-	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
 	if (model.errcode) {
 	    err = model.errcode;
 	}
@@ -542,48 +542,3 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     return model;
 }
 
-#ifdef STANDALONE
-
-int main (void) 
-{
-    char *fname;
-    MODEL model;
-    double **Z = NULL;
-    DATAINFO *datainfo;
-    PRN *prn;
-    int *list;
-    int err;
-
-    datainfo = datainfo_new();
-    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL);
-
-    /* 4 1 1 999 1 */
-
-    list = malloc(5 * sizeof *list);
-    list[0] = 4;
-    list[1] = list[2] = list[4] = 1;
-    list[3] = 999;
-
-    fname = malloc(128 * sizeof *fname);
-    strcpy(fname, "/opt/esl/share/gretl/data/misc/b-g.gdt");
-
-    err = get_xmldata(&Z, &datainfo, fname, 
-		      NULL, DATA_NONE, prn, 0);
-
-    if (!err) {
-	model = garch_model(list, &Z, datainfo,
-			    prn, OPT_NONE);
-    } 
-
-    free_Z(Z, datainfo);
-    clear_model(&model, NULL);
-    free_datainfo(datainfo);
-    gretl_print_destroy(prn);
-    free(list);
-    free(fname);
-
-    return 0;
-}
-
-
-#endif

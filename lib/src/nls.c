@@ -186,7 +186,9 @@ static int check_for_missing_vals (void)
 	else break;
     }
 
-    if (t2 - t1 + 1 < nlspec.nparam) return E_DF;
+    if (t2 - t1 + 1 < nlspec.nparam) {
+	return E_DF;
+    }
 
     for (t=t1; t<=t2; t++) {
 	if (na((*pZ)[v][t])) {
@@ -579,12 +581,13 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
 static int parse_deriv_line (const char *line, int i, nls_term *term,
 			     const double **Z, const DATAINFO *dinfo)
 {
-    int v;
-    int err = 0;
     const char *p;
+    int v, err = 0;
 
     term->deriv = malloc(strlen(line) - 10);
-    if (term->deriv == NULL) return E_ALLOC;
+    if (term->deriv == NULL) {
+	return E_ALLOC;
+    }
 
     if (sscanf(line, "deriv %8s = %s", term->name, term->deriv) != 2) {
 	free(term->deriv);
@@ -650,8 +653,7 @@ int nls_parse_line (const char *line, const double **Z,
 {
     if (strncmp(line, "deriv", 5) == 0) {
 	return nls_spec_add_term(line, Z, dinfo);
-    }
-    else {
+    } else {
 	return nls_spec_start(line, dinfo);
     }
 }
@@ -662,15 +664,15 @@ static int check_derivs (integer m, integer n, double *x,
 {
     integer mode = 1;
     integer iflag;
-    doublereal *xp;
-    doublereal *err;
-    doublereal *fvecp;
-    int i;
-    int badcount = 0, zerocount = 0;
+    doublereal *xp = NULL;
+    doublereal *err = NULL;
+    doublereal *fvecp = NULL;
+    int i, badcount = 0, zerocount = 0;
 
     xp = malloc(m * sizeof *xp);
     err = malloc(m * sizeof *err);
     fvecp = malloc(m * sizeof *fvecp);
+
     if (xp == NULL || err == NULL || fvecp == NULL) {
 	free(err);
 	free(xp);
@@ -681,21 +683,27 @@ static int check_derivs (integer m, integer n, double *x,
     iflag = 1;
     nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
+
     chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
 
     iflag = 2;
     nls_calc(&m, &n, x, fvec, fjac, &ldfjac, &iflag);
     if (iflag == -1) goto chkderiv_abort;
+
     iflag = 1;
     nls_calc(&m, &n, xp, fvecp, fjac, &ldfjac, &iflag);
     if (iflag == -1) goto chkderiv_abort; 
+
     mode = 2;
     chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
 
     /* examine "err" vector */
     for (i=0; i<m; i++) {
-	if (err[i] == 0.0) zerocount++;
-	else if (err[i] < 0.35) badcount++;
+	if (err[i] == 0.0) {
+	    zerocount++;
+	} else if (err[i] < 0.35) {
+	    badcount++;
+	}
     }
 
     if (zerocount > 0) {

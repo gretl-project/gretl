@@ -4058,7 +4058,9 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     *gretl_errmsg = '\0';
 
     for (i=1; i<pdinfo->v && !err; i++) {
-	if (!pdinfo->vector[i]) continue;
+	if (!pdinfo->vector[i]) {
+	    continue;
+	}
 	s = strpbrk(s, "01234567890+-NA");
 	if (s == NULL) {
 	    fprintf(stderr, "i = %d: s == NULL in process_values()\n", i);
@@ -4078,7 +4080,9 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	    }
 	}
 	if (!err) {
-	    Z[i][t] = x;
+	    if (t < pdinfo->n) {
+		Z[i][t] = x;
+	    }
 	    s = strpbrk(s, " \t\n\r");
 	}
     }
@@ -4095,28 +4099,31 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 				 long progress, int to_iso_latin)
 {
     xmlNodePtr cur;
-    char *tmp = xmlGetProp(node, (UTF) "count");
-    int i, t;
+    char *tmp;
+    int n, i, t;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
 
-    if (progress > 0) {
-	show_progress = get_plugin_function("show_progress", &handle);
-	if (show_progress == NULL) progress = 0L;
+    tmp = xmlGetProp(node, (UTF) "count");
+    if (tmp == NULL) {
+	return 1;
+    } 
+
+    if (sscanf(tmp, "%d", &n) == 1) {
+	pdinfo->n = n;
+	free(tmp);
+    } else {
+	sprintf(gretl_errmsg, _("Failed to parse number of observations"));
+	free(tmp);
+	return 1;
     }
 
-    if (tmp) {
-	int n;
-
-	if (sscanf(tmp, "%d", &n) == 1) 
-	    pdinfo->n = n;
-	else {
-	    sprintf(gretl_errmsg, _("Failed to parse number of observations"));
-	    return 1;
+    if (progress > 0) {
+	show_progress = get_plugin_function("show_progress", &handle);
+	if (show_progress == NULL) {
+	    progress = 0L;
 	}
-	free(tmp);
-    } else 
-	return 1;
+    }
 
     tmp = xmlGetProp(node, (UTF) "labels");
     if (tmp) {
@@ -4132,21 +4139,29 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    return 1;
 	}
 	free(tmp);
-    } else
+    } else {
 	return 1;
+    }
 
-    if (pdinfo->endobs[0] == '\0') 
+    if (pdinfo->endobs[0] == '\0') {
 	sprintf(pdinfo->endobs, "%d", pdinfo->n);
+    }
 
     pdinfo->t2 = pdinfo->n - 1;
 
     for (i=0; i<pdinfo->v; i++) {
-	if (!pdinfo->vector[i]) continue;
+	if (!pdinfo->vector[i]) {
+	    continue;
+	}
 	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
-	if ((*pZ)[i] == NULL) return 1;
+	if ((*pZ)[i] == NULL) {
+	    return 1;
+	}
     }
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0;
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[0][t] = 1.0;
+    }
 
     /* now get individual obs info: labels and values */
     cur = node->xmlChildrenNode;
@@ -4158,7 +4173,9 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     }
 
-    if (progress) (*show_progress)(0L, progress, SP_LOAD_INIT);
+    if (progress) {
+	(*show_progress)(0L, progress, SP_LOAD_INIT);
+    }
 
     t = 0;
     while (cur != NULL) {
@@ -4448,7 +4465,9 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     xmlFreeDoc(doc);
     xmlCleanupParser();
 
-    if (err) goto bailout;
+    if (err) {
+	goto bailout;
+    }
 
     if (!gotvars) {
 	sprintf(gretl_errmsg, _("Variables information is missing"));
