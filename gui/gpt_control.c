@@ -52,10 +52,10 @@ GPT_RANGE axis_range[3];
 #define NTITLES 4
 
 struct gpt_titles_t gpt_titles[] = {
-    {N_("Title of plot"), 0, NULL},
-    {N_("Title for axis"), 1, NULL},
-    {N_("Title for axis"), 2, NULL},
-    {N_("Title for axis"), 3, NULL},
+    { N_("Title of plot"),  0, NULL },
+    { N_("Title for axis"), 1, NULL },
+    { N_("Title for axis"), 2, NULL },
+    { N_("Title for axis"), 3, NULL },
 };
 
 /* ........................................................... */
@@ -66,7 +66,7 @@ static void close_plot (GtkWidget *widget, gpointer data)
 
     gpt_control = NULL;
 #ifdef G_OS_WIN32
-    fclose(plot->fp);
+    if (plot->fp != NULL) fclose(plot->fp);
 #else
     pclose(plot->fp);
 #endif
@@ -890,8 +890,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* initialize the struct */
     if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL)
 	return 1;
-    for (i=0; i<4; i++)
-	plot->titles[i][0] = 0;
+    for (i=0; i<4; i++) plot->titles[i][0] = 0;
     strcpy(plot->keyspec, "left top");
     strcpy(plot->xtics, "");
     strcpy(plot->mxtics, "");
@@ -914,18 +913,18 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "# mult", 6) == 0) {
 	    errbox(_("Sorry, can't edit multiple scatterplots"));
-	    free(plot->lines);
-	    return 1;
+	    goto plot_bailout;
 	}
 	if (strncmp(line, "# CUSUM", 7) == 0) {
 	    errbox(_("Sorry, can't edit CUSUM plots"));
-	    free(plot->lines);
-	    return 1;
+	    goto plot_bailout;
 	}
 	if (strncmp(line, "# sampl", 7) == 0) {
 	    errbox(_("Sorry, can't edit sampling distribution plots"));
-	    free(plot->lines);
-	    return 1;
+	    goto plot_bailout;
+	}
+	if (strncmp(line, "# timeseries", 12) == 0) {
+	    continue;
 	}
 	if (strncmp(line, "# freq", 6) == 0 ||
 	    strncmp(line, "# peri", 6) == 0) {
@@ -935,7 +934,11 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    for (j=0; j<4; j++) {
 		plot->literal[j] = mymalloc(MAXLEN);
 		if (plot->literal[j] == NULL) return 1;
-		fgets(plot->literal[j], MAXLEN - 1, fp);
+		if (!fgets(plot->literal[j], MAXLEN - 1, fp)) {
+		    errbox(_("Plot file is corrupted"));
+		    free(plot->literal[j]);
+		    goto plot_bailout;
+		}
 		top_n_tail(plot->literal[j]);
 	    }
 	    continue;
@@ -944,12 +947,14 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    plot->code = FCASTERR;
 	    continue;
 	}
-	if (strncmp(line, "# timeseries", 12) == 0) {
-	    continue;
-	}
 	if (strncmp(line, "set ", 4)) 
 	    break;
-	sscanf(line + 4, "%s", set_thing);
+	/* we've got a "set" line */
+	if (sscanf(line + 4, "%11s", set_thing) != 1) {
+	    errbox(_("Failed to parse gnuplot file"));
+	    fprintf(stderr, "plotfile line: '%s'\n", line);
+	    goto plot_bailout;
+	}
 	if (strcmp(set_thing, "y2tics") == 0) {
 	    plot->y2axis = 1;
 	    continue;
@@ -990,9 +995,11 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    safecpy(plot->mxtics, setting, 3);
     } /* end of "set" lines */
 
-    for (i=0; i<4; i++)
-	delchar('\'', plot->titles[i]);
-    if (strlen(plot->keyspec) == 0)
+    for (i=0; i<4; i++) {
+	if (plot->titles[i][0] != 0)
+	    delchar('\'', plot->titles[i]);
+    }
+    if (plot->keyspec[0] == 0)
 	strcpy(plot->keyspec, "none");
 
     /* then get the "plot" lines */
@@ -1000,14 +1007,14 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	(strlen(line) < 10 && fgets(line, MAXLEN - 1, fp) == NULL)) {	
 	errbox(_("Failed to parse gnuplot file"));
 	fprintf(stderr, "plotfile line: '%s'\n", line);
-	fclose(fp);
-	return 1;
+	goto plot_bailout;
     }
     i = 0;
     done = 0;
     while (1) {
 	top_n_tail(line);
 	if (!chop_comma(line)) done++;
+
 	/* scale, [yaxis,] style */
 	tmp = strstr(line, "using");
 	if (tmp && tmp[11] == '*') {
@@ -1021,47 +1028,50 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 		tmp = strstr(line, "axes");
 		if (tmp == NULL)
 		    tmp = strstr(line, "title");
-		diff = tmp - line;
-		strncpy(plot->lines[i].formula, line, diff);
-		plot->lines[i].formula[diff - 1] = 0;
-		/*  printf("formula: '%s'\n", plot->lines[i].formula); */
+		if (tmp != NULL) {
+		    diff = tmp - line;
+		    strncpy(plot->lines[i].formula, line, diff);
+		    plot->lines[i].formula[diff - 1] = 0;
+		}
 	    }
 	}
+
 	tmp = strstr(line, "axes");
-	if (tmp) {
+	if (tmp != NULL) {
 	    if (tmp[8] == '2') plot->lines[i].yaxis = 2;
 	    else plot->lines[i].yaxis = 1;
 	} else plot->lines[i].yaxis = 1;
+
 	tmp = strstr(line, "title"); 
-	if (tmp) {
+	if (tmp != NULL) {
 	    tmp += 7;
 	    plot->lines[i].title[0] = '\'';
 	    j = 0;
-	    while (tmp[j] != '\'') {
-		plot->lines[i].title[j] = tmp[j];
-		j++;
-	    }
+	    while (tmp[j] != '\'') 
+		plot->lines[i].title[j] = tmp[j++];
 	    plot->lines[i].title[j] = 0; 
 	}
+
 	tmp = strstr(line, " w ");
-	if (tmp) {
+	if (tmp != NULL) {
 	    strcpy(plot->lines[i].style, tmp + 3);
 	    delchar(',', plot->lines[i].style);
 	} else 
 	    strcpy(plot->lines[i].style, "points");
+
 	if (done) break;
 	i++;
-	fgets(line, MAXLEN - 1, fp);
-	if (line == NULL) break;
+	if (fgets(line, MAXLEN - 1, fp) == NULL) break;
     }
 
     /* free any unused lines */
-    plot->lines = myrealloc(plot->lines, (i + 1) * sizeof(GPT_LINE));
+    if (i < 5)
+	plot->lines = myrealloc(plot->lines, (i + 1) * sizeof(GPT_LINE));
 
     /* finally, get the plot data */
     plot->data = mymalloc(datainfo->n * (i + 2) * sizeof(double));
     tmpy = mymalloc(datainfo->n * sizeof *tmpy);
-    if (plot->data == NULL || tmpy == NULL) return 1;
+    if (plot->data == NULL || tmpy == NULL) goto plot_bailout;
     j = 1;
     t = 0;
     n = 0;
@@ -1089,7 +1099,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 
     if (open_gnuplot_pipe(&paths, plot)) {
 	errbox(_("gnuplot command failed"));
-	return 1;
+	goto plot_bailout;
     }
     else {
 	strcpy(plot->fname, fname); 
@@ -1097,6 +1107,11 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     } 
     
     return 0;
+
+ plot_bailout:
+    free(plot->lines);
+    fclose(fp);
+    return 1;
 }
 
 /* gnuplot PNG material */

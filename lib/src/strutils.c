@@ -477,7 +477,7 @@ int pprintf (PRN *prn, const char *template, ...)
 
 char *safecpy (char *targ, const char *src, int n)
 {
-    targ[n] = 0;
     strncpy(targ, src, n);
+    targ[n] = 0;
     return targ;
 }

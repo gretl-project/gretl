@@ -1,4 +1,5 @@
 version 0.995
+- numerous small updates to facilitate internationalization
 - fix bug in Create Dataset: undated data appeared as "annual"
 - add descriptive report on dataset to Data menu
 - fix bug in writing Utilities/R session: R data set was being
