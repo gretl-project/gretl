@@ -573,7 +573,7 @@ static int data_option (unsigned long flag);
 void exec_line (char *line, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
-    int dbdata = 0;
+    int dbdata = 0, arch_model = 0;
     char s1[12], s2[12];
     double rho;
 
@@ -741,6 +741,7 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
+	    arch_model = 1;
 	    swap_models(&models[0], &models[1]); 
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
@@ -1545,7 +1546,8 @@ void exec_line (char *line, PRN *prn)
 	break;
     }
 
-    if ((is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)) && !err) { 
+    if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
+		 || arch_model)) { 
 	int m = model_count;
 
 	if (modelspec == NULL) {

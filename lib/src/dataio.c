@@ -317,7 +317,6 @@ DATAINFO *datainfo_new (void)
     dinfo->v = 0;
     dinfo->n = 0;
     dinfo->pd = 1;
-    dinfo->bin = 0;
     dinfo->sd0 = 1.0;
     dinfo->t1 = 0;
     dinfo->t2 = 0;
@@ -460,7 +459,8 @@ static void eatspace (FILE *fp)
 
 /* ................................................. */
 
-static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
+static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
+		     int binary)
 {
     int i, t, n = pdinfo->n;
     char c, marker[OBSLEN];
@@ -469,7 +469,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 
     gretl_errmsg[0] = '\0';
 
-    if (pdinfo->bin == 1) { /* single-precision binary data */
+    if (binary == 1) { /* single-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof x, 1, fp)) {
@@ -481,7 +481,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	    }
 	}
     }
-    else if (pdinfo->bin == 2) { /* double-precision binary data */
+    else if (binary == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!fread(Z[i], sizeof(double), n, fp)) {
 		sprintf(gretl_errmsg, 
@@ -525,14 +525,15 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 
 /* ................................................. */
 
-static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
+static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z,
+			int binary)
 {
     int i, t, n = pdinfo->n;
     int err = 0;
     
     gretl_errmsg[0] = '\0';
 
-    if (pdinfo->bin == 1) { /* single-precision binary data */
+    if (binary == 1) { /* single-precision binary data */
 	float xx;
 
 	for (i=1; i<pdinfo->v; i++) {
@@ -546,7 +547,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	    }
 	}
     }
-    else if (pdinfo->bin == 2) { /* double-precision binary data */
+    else if (binary == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
 		sprintf(gretl_errmsg, 
@@ -660,7 +661,7 @@ int check_varname (const char *varname)
 
 /* ................................................ */
 
-static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
+static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 {
     FILE *fp;
     int n, i = 0, panel = 0, descrip = 0;
@@ -744,14 +745,14 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
 
-    pdinfo->bin = 0;
+    *binary = 0;
     pdinfo->markers = NO_MARKERS;
 
     if (fscanf(fp, "%5s %7s", byobs, option) == 2) {
 	if (strcmp(option, "SINGLE") == 0)
-	    pdinfo->bin = 1;
+	    *binary = 1;
 	else if (strcmp(option, "BINARY") == 0)
-	    pdinfo->bin = 2;
+	    *binary = 2;
 	else if (strcmp(option, "MARKERS") == 0) 
 	    pdinfo->markers = 1;
 	else if (strcmp(option, "PANEL2") == 0) {
@@ -1032,11 +1033,11 @@ static int writehdr (const char *hdrfile, const int *list,
 		     const DATAINFO *pdinfo, int opt)
 {
     FILE *fp;
-    int bin = 0, i;
+    int binary = 0, i;
     char startdate[OBSLEN], enddate[OBSLEN];
 
-    if (opt == GRETL_DATA_FLOAT) bin = 1;
-    else if (opt == GRETL_DATA_DOUBLE) bin = 2;
+    if (opt == GRETL_DATA_FLOAT) binary = 1;
+    else if (opt == GRETL_DATA_DOUBLE) binary = 2;
 
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
@@ -1066,8 +1067,8 @@ static int writehdr (const char *hdrfile, const int *list,
     fprintf(fp, "%d %s %s\n", pdinfo->pd, startdate, enddate);
     
     /* and flags as required */
-    if (bin == 1) fputs("BYVAR\nSINGLE\n", fp);
-    else if (bin == 2) fputs("BYVAR\nBINARY\n", fp);
+    if (binary == 1) fputs("BYVAR\nSINGLE\n", fp);
+    else if (binary == 2) fputs("BYVAR\nBINARY\n", fp);
     else { 
 	fputs("BYOBS\n", fp);
 	if (pdinfo->markers) fputs("MARKERS\n", fp);
@@ -1688,6 +1689,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     FILE *dat = NULL;
     gzFile fz = NULL;
     int err, gzsuff = 0, add_gdt = 0;
+    int binary = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
     *gretl_errmsg = '\0';
@@ -1737,7 +1739,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     /* read data header file */
-    err = readhdr(hdrfile, pdinfo);
+    err = readhdr(hdrfile, pdinfo, &binary);
     if (err) {
 	return err;
     } else { 
@@ -1759,7 +1761,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	fz = gzopen(datfile, "rb");
 	if (fz == NULL) return E_FOPEN;
     } else {
-	if (pdinfo->bin) {
+	if (binary) {
 	    dat = fopen(datfile, "rb");
 	} else {
 	    dat = fopen(datfile, "r");
@@ -1780,10 +1782,10 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     pprintf(prn, " %s\n\n", datfile);
 
     if (gzsuff) {
-	err = gz_readdata(fz, pdinfo, *pZ); 
+	err = gz_readdata(fz, pdinfo, *pZ, binary); 
 	gzclose(fz);
     } else {
-	err = readdata(dat, pdinfo, *pZ); 
+	err = readdata(dat, pdinfo, *pZ, binary); 
 	fclose(dat);
     }
 
