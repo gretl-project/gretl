@@ -2239,7 +2239,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     gchar *databuf;
     GError *error = NULL;
     void *handle;
-    int (*write_ts_data) (char *, int, double **, const DATAINFO *, 
+    int (*write_ts_data) (char *, int, const int *,
+			  double ***, DATAINFO *, 
 			  const char *);
     PRN *prn;
     char fname[MAXLEN];
@@ -2273,8 +2274,15 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = write_ts_data (fname, mdata->active_var, Z, datainfo, 
-			 opt? tramodir : x12adir);
+    if (opt) {
+	err = write_ts_data (fname, mdata->active_var, NULL, &Z, datainfo, 
+			     tramodir);
+    } else {
+	int list[] = {1, 0};
+
+	err = write_ts_data (fname, mdata->active_var, list, &Z, datainfo, 
+			     x12adir);
+    }
 
     close_plugin(handle);
 
@@ -2299,6 +2307,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     view_buffer(prn, opt? 120 : 84, 500, 
 		opt? _("gretl: TRAMO analysis") :_("gretl: X-12-ARIMA analysis"),
 		TRAMO_X12A, view_items);
+
 }
 #endif
 
