@@ -40,6 +40,9 @@ const char *gretl_system_long_strings[] = {
 const char *nosystem = N_("No system of equations has been defined");
 const char *badsystem = N_("Unrecognized equation system type");
 const char *toofew = N_("An equation system must have at least two equations");
+const char *sursquare = N_("All equations in the SUR system must have "
+			   "the same number of regressors");
+
 
 static int gretl_system_type_from_string (const char *str)
 {
@@ -153,7 +156,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 				    double ***pZ, DATAINFO *pdinfo,
 				    PRN *prn)
 {
-    int err = 0;
+    int i, err = 0;
     void *handle;
     int (*system_est) (gretl_equation_system *, 
 		       double ***, DATAINFO *, PRN *);
@@ -174,6 +177,14 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	err = 1;
 	strcpy(gretl_errmsg, _(toofew));
 	goto system_bailout;
+    }
+
+    for (i=1; i<sys->n_equations; i++) {
+	err = 1;
+	if (sys->lists[i][0] != sys->lists[0][0]) {
+	    strcpy(gretl_errmsg, _(sursquare));
+	}
+        goto system_bailout;
     }
 
     if (open_plugin("sur", &handle)) {
