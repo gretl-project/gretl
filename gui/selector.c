@@ -592,18 +592,35 @@ dblclick_dialog_row (GtkCList *clist, gint row, gint column,
     }
 }
 
+static void 
+listvar_special_undo (GtkCList *clist, gint arg1, gint arg2, gpointer p)
+{
+    gtk_clist_set_selection_mode(clist, GTK_SELECTION_EXTENDED);
+    gtk_clist_set_reorderable(clist, FALSE);
+}
+
 static gint
-remove_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    selector *sr)
+listvar_special_click (GtkWidget *widget, GdkEventButton *event, 
+		       selector *sr)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
 
     topwin = gtk_widget_get_parent_window(sr->rightvars);
     gdk_window_get_pointer(topwin, NULL, NULL, &mods); 
-    if (mods & GDK_BUTTON3_MASK) 
+
+    if (mods & GDK_BUTTON2_MASK) {
+	gtk_clist_set_selection_mode(GTK_CLIST(sr->rightvars), 
+				     GTK_SELECTION_SINGLE);
+	gtk_clist_set_reorderable(GTK_CLIST(sr->rightvars), TRUE);
+    } 
+
+    if (mods & GDK_BUTTON3_MASK) {
 	remove_from_right_callback (NULL, sr);
-    return TRUE;
+	return TRUE;
+    }
+
+    return FALSE;
 }
 
 static gint
@@ -1266,8 +1283,10 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gtk_widget_set_usize (sr->rightvars, 80 * gui_scale, 120 * gui_scale);
 	gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
 				      GTK_SELECTION_EXTENDED);
+	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "row-move",
+			   (GtkSignalFunc) listvar_special_undo, sr);
 	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
-			   (GtkSignalFunc) remove_right_click, sr);
+			   (GtkSignalFunc) listvar_special_click, sr);
 	gtk_widget_show(sr->rightvars); 
 	gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
 
