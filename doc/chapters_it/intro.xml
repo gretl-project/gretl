@@ -31,7 +31,7 @@
         <application>gretl</application> è Linux, ma il programma è
         disponibile anche per MS Windows. È possibile compilarlo per
         Mac OS X e AIX, e dovrebbe funzionare su qualsiasi sistema
-        operativo simile a UNIX, fornito delle librerie di base
+        operativo simile a UNIX che comprenda le librerie di base
         richieste (si veda l'<xref linkend="app-technote"/>).</para>
 	</listitem>
       </varlistentry>  
@@ -52,8 +52,8 @@
         iterativa dei modelli non lineari. Anche se non include tutti
         gli stimatori e i test che potrebbero servire a un econometrico
         di professione, supporta l'esportazione dei dati nei formati
-        usati da (<ulink url="http://www.r-project.org/">GNU R</ulink>)
-        e (<ulink url="http://www.octave.org/">GNU Octave</ulink>)
+        usati da <ulink url="http://www.r-project.org/">GNU R</ulink>
+        e <ulink url="http://www.octave.org/">GNU Octave</ulink>
         consentendo così analisi più sofisticate (si veda l'<xref
 	      linkend="app-advanced"/>).</para></listitem>
       </varlistentry>
@@ -69,14 +69,14 @@
 	<listitem><para><application>gretl</application> può scaricare i
         database da un server alla Wake Forest University. La versione
         MS Windows comprende un'utilità di aggiornamento che controlla
-        se è disponibile una nuova versione del programma e offre la
+        se è disponibile una nuova versione del programma offrendo la
         possibilità di aggiornarlo automaticamente.</para>
 	</listitem>
       </varlistentry>
       <varlistentry><term>Internazionale</term>
 	<listitem><para><application>gretl</application> supporta le
         lingue inglese, francese, italiano e spagnolo, a seconda
-        dell'impostazione linguistica del computer su cui è eseguito.
+        della lingua impostata sul computer.
 	</para>
 	</listitem>
       </varlistentry>
@@ -94,7 +94,7 @@
       Library</quote>), che ho portato su Linux, collaborando con lui
       alla manutenzione e allo sviluppo del programma. Per il progetto
       <application>gretl</application> ho modificato il codice originale
-      di <application>ESL</application> in modo profondo. Sono state
+      di <application>ESL</application> in modo profondo: sono state
       aggiunte nuove funzionalità econometriche e una nuova interfaccia
       grafica. Ovviamente il Professor Ramanathan non è responsabile di
       eventuali bug presenti in <application>gretl</application>.
@@ -142,8 +142,8 @@
 
       <para>
 	Sulla piattaforma Linux<footnote><para>Nota terminologica: in
-        questo manuale userò <quote>Linux</quote> come abbreviazione per
-        riferirmi al sistema operativo GNU/Linux. Ciò che viene detto a
+        questo manuale verrà usata l'abbreviazione <quote>Linux</quote>
+        per riferirsi al sistema operativo GNU/Linux. Ciò che viene detto a
         proposito di Linux vale anche per altri sistemi simili a UNIX,
         anche se potrebbero essere necessari alcuni
         adattamenti.</para></footnote>, è possibile compilare da sé il
@@ -154,7 +154,7 @@
         <application>deb</application> (per Debian GNU/Linux),
         quest'ultimo grazie a Dirk Eddelb&uuml;ttel. Se si preferisce
         compilare da sé (o si usa un sistema UNIX per cui non sono
-        disponibili pacchetti pre-compilati), ecco cosa occorre fare.
+        disponibili pacchetti pre-compilati), ecco come procedere:
       </para>
 
       <orderedlist>
@@ -163,8 +163,8 @@
        url="http://gretl.sourceforge.net/">gretl.sourceforge.net</ulink>.
         </para></listitem>
 	
-	<listitem><para>Decomprimere il pacchetto. Se sono disponibili
-        le utilità GNU, usare il comando 
+	<listitem><para>Decomprimere il pacchetto. Se si dispone delle
+        utilità GNU, usare il comando 
 	    <command>tar -xvfz gretl-N.tar.gz</command> (sostituire
 	    <command>N</command> con il numero di versione specifico del
             file scaricato).</para></listitem>
@@ -208,7 +208,7 @@
     <sect2 id="windows-install"><title>MS Windows</title>
 
       <para>
-	La versione MS Windows è sotto forma di file eseguibile
+	La versione MS Windows è disponibile sotto forma di file eseguibile
         auto-estraente. Per installarlo, occorre scaricare
 	<filename>gretl_install.exe</filename> ed eseguire questo
         programma. Verrà chiesta una posizione in cui installare il
