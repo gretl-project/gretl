@@ -232,6 +232,20 @@ static void save_editable_content (int action, const char *fname,
 
 /* ........................................................... */
 
+static void set_startdir (int action, char *startdir)
+{
+    if (action == OPEN_DES) {
+	sprintf(startdir, "%swooldridge/", paths.datadir);
+    } else {
+	if (*remember_dir != '\0')
+	    strcpy(startdir, remember_dir);
+	else
+	    get_default_dir(startdir);
+    }
+}
+
+/* ........................................................... */
+
           /* MS Windows version of file selection code */
 
 /* ........................................................... */
@@ -380,10 +394,8 @@ void file_selector (char *msg, int action, gpointer data)
 
     fname[0] = '\0';
     endname[0] = '\0';
-    if (remember_dir[0] != '\0')
-	strcpy(startd, remember_dir);
-    else
-	get_default_dir(startd);
+
+    set_startdir(action, startdir);
 
     /* special case: default save of data */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]
@@ -708,10 +720,7 @@ void file_selector (char *msg, int action, gpointer data)
     int gotdir = 0;
     char suffix[8], startdir[MAXLEN];
 
-    if (remember_dir[0] != '\0')
-	strcpy(startdir, remember_dir);
-    else
-	get_default_dir(startdir);
+    set_startdir(action, startdir);
 
     filesel = gtk_icon_file_selection_new(msg);
 
