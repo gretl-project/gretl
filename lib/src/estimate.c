@@ -57,7 +57,6 @@ static double rhohat (int order, int t1, int t2, const double *uhat);
 static double altrho (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, double **Z);
 static void dropwt (int *list);
-static void autores (int i, double **Z, const MODEL *pmod, double *uhat);
 static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
 			 DATAINFO *pdinfo);
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
@@ -168,6 +167,7 @@ static int ar_info_init (MODEL *pmod, int nterms)
 static int get_model_df (MODEL *pmod, double rho, int pwe)
 {
     if (rho != 0.0 && !pwe) {
+	/* corc and hilu */
 	pmod->nobs -= 1;
     }
 
@@ -355,6 +355,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     int missv = 0, misst = 0;
     int ldepvar = 0;
     int use_qr = get_use_qr();
+    int pwe = (ci == PWE || (opts & OPT_P));
     double *xpy;
     MODEL mdl;
 
@@ -376,6 +377,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&mdl, pdinfo);
     model_stats_init(&mdl);
+
+    if (pwe) {
+	gretl_model_set_int(&mdl, "pwe", 1);
+    }
 
     if (list[0] == 1 || pdinfo->v == 1) {
 	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",
@@ -467,7 +472,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     else mdl.nobs = mdl.t2 - mdl.t1 + 1;
 
     /* check degrees of freedom */
-    if (get_model_df(&mdl, rho, ((opts & OPT_P) || ci == PWE))) {
+    if (get_model_df(&mdl, rho, pwe)) {
         goto lsq_abort; 
     }
 
@@ -495,7 +500,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 	/* calculate regression results, Cholesky style */
 	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho, 
-		    (ci == PWE || (opts & OPT_P)), mdl.xpx, xpy);
+		    pwe, mdl.xpx, xpy);
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);
@@ -529,7 +534,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (opts & OPT_D) {
 	int order = (ci == CORC || ci == HILU)? 1 : 0;
-	
+
 	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(order, &mdl, *pZ);
     } else {
@@ -1232,6 +1237,7 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
 
     if (order) order--;
 
+#if 1 /* the original */
     for (t=t1+order+1; t<=t2; t++) { 
         ut = uhat[t];
         ut1 = uhat[t-1];
@@ -1239,6 +1245,19 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
         uu += ut * ut1;
         xx += ut1 * ut1;
     }
+#else
+    for (t=t1; t<=t2; t++) { 
+        ut = uhat[t];
+	if (na(ut)) continue;
+	if (t > t1) {
+	    ut1 = uhat[t-1];
+	    if (!na(ut1)) {
+		uu += ut * ut1;
+	    }
+	}
+        xx += ut * ut;
+    }
+#endif
 
     if (floateq(xx, 0.0)) return NADBL;
 
@@ -1371,6 +1390,29 @@ static int hilu_plot (double *ssr, double *rho, int n,
     return 0;
 }
 
+static double autores (MODEL *pmod, double rho, const double **Z)
+{
+    int t, v;
+    double x, num = 0.0, den = 0.0;
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	x = Z[pmod->list[1]][t];
+	if (pmod->ifc) {
+	    x -= pmod->coeff[0] / (1.0 - rho);
+	}
+	for (v=pmod->ifc; v<pmod->ncoeff; v++) {
+	    x -= pmod->coeff[v] * Z[pmod->list[v+2]][t];
+	}
+	pmod->uhat[t] = x;
+	if (t > pmod->t1) {
+	    num += pmod->uhat[t] * pmod->uhat[t-1];
+	    den += pmod->uhat[t-1] * pmod->uhat[t-1];
+	}
+    }
+
+    return num / den;
+}
+
 /**
  * hilu_corc:
  * @toprho: pointer to receive final rho value.
@@ -1394,7 +1436,7 @@ static int hilu_plot (double *ssr, double *rho, int n,
 int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	       PATHS *ppaths, int batch, int opt, PRN *prn)
 {
-    double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
+    double rho = 0.0, rho0 = 0.0, diff = 1.0;
     double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
     unsigned long lsqopt = OPT_D;
@@ -1404,9 +1446,6 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&corc_model, pdinfo);
 
-    uhat = malloc(pdinfo->n * sizeof *uhat);
-    if (uhat == NULL) return E_ALLOC;
-
     if (opt == PWE) lsqopt |= OPT_P;
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
@@ -1415,7 +1454,6 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    clear_model(&corc_model, pdinfo);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, rho);
 	    if ((err = corc_model.errcode)) {
-		free(uhat);
 		clear_model(&corc_model, pdinfo);
 		return err;
 	    }
@@ -1460,13 +1498,13 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    hilu_plot(ssr, rh, nn, ppaths);
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
-    } else { /* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
+    } else { 
+	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
 	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
 	if ((err = corc_model.errcode)) {
-	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
 	    return err;
 	}
@@ -1482,50 +1520,29 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
 	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+#if 0
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
 		corc_model.t1, 
 		corc_model.uhat[corc_model.t1],
 		corc_model.uhat[corc_model.t1+1]);
+#endif
 	if ((err = corc_model.errcode)) {
-	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
-	corc_model.dw = 1 - rho;
-	autores(corc_model.list[1], *pZ, &corc_model, uhat);
-	rho = rhohat((opt != PWE), corc_model.t1, corc_model.t2, uhat);
+	rho = autores(&corc_model, rho, (const double **) *pZ);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 20) break;
     }
 
     pprintf(prn, _("                final %11.5f\n\n"), rho);
-    free(uhat);
     clear_model(&corc_model, pdinfo);
 
     *toprho = rho;
 
     return 0;
-}
-
-/* .......................................................... */
-
-static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
-{
-    int t, v;
-    double x;
-
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	x = Z[i][t];
-	if (pmod->ifc) {
-	    x -= pmod->coeff[0] / pmod->dw;
-	}
-	for (v=pmod->ifc; v<pmod->ncoeff; v++) {
-	    x -= pmod->coeff[v] * Z[pmod->list[v+2]][t];
-	}
-	uhat[t] = x;
-    }
 }
 
 /* .......................................................... */

@@ -51,15 +51,17 @@ static double get_tss (const double *y, int n, int ifc)
 static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 {
     int t1 = pmod->t1;
+    int qdiff = (pmod->rho != 0.0);
+    int pwe = gretl_model_get_int(pmod, "pwe");
 
-    if (pmod->rho) t1++;
+    if (qdiff && !pwe) t1++;
 
     if (pmod->dfd > 0) {
 	if (pmod->ifc) {
 	    double den = pmod->tss * pmod->dfd;
 
 	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
-	    pmod->adjrsq = 1 - (pmod->ess * (n - 1) / den);
+	    pmod->adjrsq = 1.0 - (pmod->ess * (n - 1) / den);
 	} else {
 	    double alt = corrrsq(n, y + t1, pmod->yhat + t1);
 
@@ -67,7 +69,7 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 		pmod->rsq = pmod->adjrsq = NADBL;
 	    } else {
 		pmod->rsq = alt;
-		pmod->adjrsq = 1 - ((1 - alt) * (n - 1) / pmod->dfd);
+		pmod->adjrsq = 1.0 - ((1 - alt) * (n - 1.0) / pmod->dfd);
 	    }
 	}
 	pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
@@ -125,19 +127,28 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 {
     int t, i = 0;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
+    int qdiff = (pmod->rho != 0.0);
+    int pwe = gretl_model_get_int(pmod, "pwe");
+    int yvar = pmod->list[1];
+    int t1 = pmod->t1;
 
     if (dwt) dwt = pmod->nwt;
+    if (qdiff && !pwe) t1++;
 
     pmod->ess = 0.0;
 
-    if (pmod->rho) {
+    if (qdiff) {
 	for (t=0; t<fulln; t++) {
-	    if (t <= pmod->t1 || t > pmod->t2) {
+	    if (t < t1 || t > pmod->t2) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
-		double x = Z[pmod->list[1]][t];
+		double x = Z[yvar][t];
 
-		x -= pmod->rho * Z[pmod->list[1]][t-1];
+		if (t == t1 && pwe) {
+		    x *= sqrt(1.0 - pmod->rho * pmod->rho);
+		} else {
+		    x -= pmod->rho * Z[yvar][t-1];
+		}
 		x -= y->val[i];
 		pmod->uhat[t] = x;
 		pmod->ess += x * x;
@@ -149,7 +160,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    if (t < pmod->t1 || t > pmod->t2) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
-		double x = Z[pmod->list[1]][t];
+		double x = Z[yvar][t];
 
 		if (dwt && Z[dwt][t] == 0.0) {
 		    pmod->yhat[t] = NADBL;
@@ -168,7 +179,7 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
 	    } else {
 		pmod->yhat[t] = y->val[i];
-		pmod->uhat[t] = Z[pmod->list[1]][t] - y->val[i];
+		pmod->uhat[t] = Z[yvar][t] - y->val[i];
 		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
 		i++;
 	    }
@@ -426,8 +437,15 @@ static double get_model_data (MODEL *pmod, const double **Z,
     double x, ypy = 0.0;
     int t1 = pmod->t1;
     int dwt = gretl_model_get_int(pmod, "wt_dummy");
+    int qdiff = (pmod->rho != 0.0);
+    int pwe = gretl_model_get_int(pmod, "pwe");
+    double pw1 = 0.0;
 
-    if (pmod->rho) t1++;
+    if (pwe) {
+	pw1 = sqrt(1.0 - pmod->rho * pmod->rho);
+    } else if (qdiff) {
+	t1++;
+    }
 
     start = (pmod->ifc)? 3 : 2;
 
@@ -442,8 +460,12 @@ static double get_model_data (MODEL *pmod, const double **Z,
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {
 		x *= Z[pmod->nwt][t];
-	    } else if (pmod->rho && pmod->list[i] != 0) {
-		x -= pmod->rho * Z[pmod->list[i]][t-1];
+	    } else if (qdiff && pmod->list[i] != 0) {
+		if (pwe && t == t1) {
+		    x *= pw1;
+		} else {
+		    x -= pmod->rho * Z[pmod->list[i]][t-1];
+		}
 	    }
 	    Q->val[j++] = x;
 	}
@@ -470,8 +492,12 @@ static double get_model_data (MODEL *pmod, const double **Z,
 	    if (Z[dwt][t] == 0.0) continue;
 	} else if (pmod->nwt) {
 	    x *= Z[pmod->nwt][t];
-	} else if (pmod->rho) {
-	    x -= pmod->rho * Z[pmod->list[1]][t-1];
+	} else if (qdiff) {
+	    if (pwe && t == t1) {
+		x *= pw1;
+	    } else {
+		x -= pmod->rho * Z[pmod->list[1]][t-1];
+	    }
 	}
 	y->val[j++] = x;
 	ypy += x * x;
