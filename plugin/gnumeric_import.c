@@ -482,7 +482,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     wbook book;
     wsheet sheet;
     int err = 0, sheetnum = -1;
-    double **newZ;
+    double **newZ = NULL;
     DATAINFO *newinfo;
 
     errbuf = errtext;

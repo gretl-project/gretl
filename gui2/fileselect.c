@@ -751,7 +751,7 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
 void file_selector (char *msg, int action, gpointer data) 
 {
     GtkWidget *filesel;
-    char suffix[8], startdir[MAXLEN];
+    char suffix[16], startdir[MAXLEN];
     int do_glob = 1;
 
     set_startdir(action, startdir);
