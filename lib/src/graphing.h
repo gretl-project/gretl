@@ -145,6 +145,9 @@ int gnuplot_3d (LIST list, const char *literal,
 
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 
+int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		      PATHS *ppaths);
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);
 
 int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths);

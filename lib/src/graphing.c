@@ -1729,6 +1729,66 @@ int plot_fcast_errs (int n, const double *obs,
     return gnuplot_display(ppaths);
 }
 
+int garch_resid_plot (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		      PATHS *ppaths)
+{
+    FILE *fp = NULL;
+    double *h, *obs;
+    double sd2;
+    int t, pv;
+
+    h = gretl_model_get_data(pmod, "garch_h");
+    if (h == NULL) {
+	return E_DATA;
+    }
+
+    if (gnuplot_init(ppaths, PLOT_FORECAST, &fp)) {
+	return E_FOPEN;
+    }
+
+    pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
+    if (pv > 0) {
+	obs = (*pZ)[pv];
+    } else {
+	fclose(fp);
+	return E_ALLOC;
+    }
+
+    fputs("# GARCH residual plot\n", fp);
+
+    fprintf(fp, "set key left top\n"
+	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
+	    "'-' using 1:2 title '%s' w lines lt 2, \\\n" 
+	    "'-' using 1:2 notitle w lines lt 2\n", 
+	    I_("residual"), I_("+- sqrt(h(t))"));
+
+    /* send data inline */
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	fprintf(fp, "%.8g %.8g\n", obs[t], pmod->uhat[t]);
+    }
+    fputs("e\n", fp);
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	sd2 = -sqrt(h[t]);
+	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
+    }
+    fputs("e\n", fp);
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	sd2 = sqrt(h[t]);
+	fprintf(fp, "%.8g %.8g\n", obs[t], sd2);
+    }
+    fputs("e\n", fp);
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+
+    return gnuplot_display(ppaths);
+}
+
 /* ........................................................... */
 
 void free_plotspec (GPT_SPEC *spec)

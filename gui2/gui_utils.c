@@ -79,6 +79,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_text (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void auto_save_script (windata_t *vwin);
+static void add_model_dataset_items (windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
@@ -151,27 +152,6 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL, GNULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Model data/Add to data set/fitted values"), NULL, 
-      fit_resid_callback, GENR_FITTED, NULL, GNULL },
-    { N_("/Model data/Add to data set/residuals"), NULL, 
-      fit_resid_callback, GENR_RESID, NULL, GNULL },
-    { N_("/Model data/Add to data set/squared residuals"), NULL, 
-      fit_resid_callback, GENR_RESID2, NULL, GNULL },
-    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
-      model_stat_callback, ESS, NULL, GNULL },
-    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
-      model_stat_callback, SIGMA, NULL, GNULL },
-    { N_("/Model data/Add to data set/R-squared"), NULL, 
-      model_stat_callback, R2, NULL, GNULL },
-    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
-      model_stat_callback, TR2, NULL, GNULL },
-    { N_("/Model data/Add to data set/log likelihood"), NULL, 
-      model_stat_callback, LNL, NULL, GNULL },
-    { N_("/Model data/Add to data set/degrees of freedom"), NULL, 
-      model_stat_callback, DF, NULL, GNULL },
-    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
-    { N_("/Model data/Define new variable..."), NULL, model_test_callback, 
-      MODEL_GENR, NULL, GNULL },
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>", GNULL },
     { N_("/LaTeX/View/_Tabular"), NULL, view_latex, 
@@ -239,27 +219,6 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Model data/Add to data set/fitted values"), NULL, 
-      fit_resid_callback, GENR_FITTED, NULL },
-    { N_("/Model data/Add to data set/residuals"), NULL, 
-      fit_resid_callback, GENR_RESID, NULL },
-    { N_("/Model data/Add to data set/squared residuals"), NULL, 
-      fit_resid_callback, GENR_RESID2, NULL },
-    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
-      model_stat_callback, ESS, NULL },
-    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
-      model_stat_callback, SIGMA, NULL },
-    { N_("/Model data/Add to data set/R-squared"), NULL, 
-      model_stat_callback, R2, NULL },
-    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
-      model_stat_callback, TR2, NULL },
-    { N_("/Model data/Add to data set/log likelihood"), NULL, 
-      model_stat_callback, LNL, NULL },
-    { N_("/Model data/Add to data set/degrees of freedom"), NULL, 
-      model_stat_callback, DF, NULL },
-    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Model data/Define new variable..."), NULL, model_test_callback, 
-      MODEL_GENR, NULL },
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/View/_Tabular"), NULL, view_latex, LATEX_VIEW_TABULAR, NULL },
@@ -2168,6 +2127,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
+    add_model_dataset_items(vwin);
     if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
 	add_dummies_to_plot_menu(vwin);
     }
@@ -2331,13 +2291,6 @@ static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-static void model_ml_menu_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Model data/Add to data set/log likelihood", s);
-}
-
-/* ........................................................... */
-
 static void model_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Tests/non-linearity (squares)", s);
@@ -2351,6 +2304,7 @@ static void model_menu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/Graphs", s);
     flip(ifac, "/Model data/Display actual, fitted, residual", s);
     flip(ifac, "/Model data/Forecasts with standard errors", s);
+    /* FIXME below ... */
     flip(ifac, "/Model data/Add to data set/residuals", s);
     flip(ifac, "/Model data/Add to data set/squared residuals", s);
     flip(ifac, "/Model data/Add to data set/error sum of squares", s);
@@ -2381,8 +2335,6 @@ static void tobit_menu_mod (GtkItemFactory *ifac)
     flip(ifac, "/Tests/sum of coefficients", FALSE);
     flip(ifac, "/Tests/normality of residual", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
-    flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
-    flip(ifac, "/Model data/Add to data set/T*R-squared", FALSE);
 }
 
 /* ........................................................... */
@@ -2392,8 +2344,6 @@ static void lad_menu_mod (GtkItemFactory *ifac)
     flip(ifac, "/Tests/sum of coefficients", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
-    flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
-    flip(ifac, "/Model data/Add to data set/T*R-squared", FALSE);
 }
 
 /* ........................................................... */
@@ -2438,7 +2388,6 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
 
 static void arma_x12_menu_mod (windata_t *vwin)
 {
-    model_ml_menu_state(vwin->ifac, TRUE);
     flip(vwin->ifac, "/Model data/coefficient covariance matrix", FALSE);
     add_x12_output_menu_item(vwin);
 }
@@ -2483,15 +2432,12 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
 
 	if (LIMDEP(pmod->ci)) {
-	    model_ml_menu_state(vwin->ifac, TRUE);
 	    if (pmod->ci == TOBIT) {
 		tobit_menu_mod(vwin->ifac);
 	    } else {
 		model_menu_state(vwin->ifac, FALSE);
 	    }
-	} else {
-	    model_ml_menu_state(vwin->ifac, FALSE);
-	}
+	} 
 
 	if (pmod->name) model_save_state(vwin->ifac, FALSE);
 
@@ -2506,7 +2452,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	else if (pmod->ci == GARCH) {
 	    arma_menu_mod(vwin->ifac);
 	    normality_test_state(vwin->ifac, FALSE);
-	    model_ml_menu_state(vwin->ifac, TRUE);
 	}
 
 	if (dataset_is_panel(datainfo)) {
@@ -2519,6 +2464,135 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (name != NULL && *name != '\0') {
 	    model_save_state(vwin->ifac, FALSE);
 	}	
+    }
+}
+
+#ifndef OLD_GTK
+
+static GtkItemFactoryEntry model_dataset_basic_items[] = {
+    { N_("/Model data/Add to data set/fitted values"), NULL, 
+      fit_resid_callback, GENR_FITTED, NULL, GNULL },
+    { N_("/Model data/Add to data set/residuals"), NULL, 
+      fit_resid_callback, GENR_RESID, NULL, GNULL },
+    { N_("/Model data/Add to data set/squared residuals"), NULL, 
+      fit_resid_callback, GENR_RESID2, NULL, GNULL }
+};
+
+static GtkItemFactoryEntry ess_items[] = {
+    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
+      model_stat_callback, ESS, NULL, GNULL },
+    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
+      model_stat_callback, SIGMA, NULL, GNULL }
+}; 
+
+static GtkItemFactoryEntry r_squared_items[] = {
+    { N_("/Model data/Add to data set/R-squared"), NULL, 
+      model_stat_callback, R2, NULL, GNULL },
+    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
+      model_stat_callback, TR2, NULL, GNULL }
+};   
+
+static GtkItemFactoryEntry lnl_data_item = {
+    N_("/Model data/Add to data set/log likelihood"), NULL, 
+    model_stat_callback, LNL, NULL, GNULL 
+};
+
+static GtkItemFactoryEntry garch_data_item = {
+    N_("/Model data/Add to data set/predicted error variance"), NULL, 
+    fit_resid_callback, GENR_H, NULL, GNULL 
+};
+
+static GtkItemFactoryEntry define_var_items[] = {
+    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Model data/Define new variable..."), NULL, model_test_callback,
+      MODEL_GENR, NULL, GNULL }
+};
+
+#else /* old GTK versions */
+
+static GtkItemFactoryEntry model_dataset_basic_items[] = {
+    { N_("/Model data/Add to data set/fitted values"), NULL, 
+      fit_resid_callback, GENR_FITTED, NULL },
+    { N_("/Model data/Add to data set/residuals"), NULL, 
+      fit_resid_callback, GENR_RESID, NULL },
+    { N_("/Model data/Add to data set/squared residuals"), NULL, 
+      fit_resid_callback, GENR_RESID2, NULL },
+    { N_("/Model data/Add to data set/degrees of freedom"), NULL, 
+      model_stat_callback, DF, NULL }
+};
+
+static GtkItemFactoryEntry ess_items[] = {
+    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
+      model_stat_callback, ESS, NULL },
+    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
+      model_stat_callback, SIGMA, NULL }
+}; 
+
+static GtkItemFactoryEntry r_squared_items[] = {
+    { N_("/Model data/Add to data set/R-squared"), NULL, 
+      model_stat_callback, R2, NULL },
+    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
+      model_stat_callback, TR2, NULL }
+};  
+
+static GtkItemFactoryEntry lnl_data_item = {
+    N_("/Model data/Add to data set/log likelihood"), NULL, 
+    model_stat_callback, LNL, NULL
+};
+
+static GtkItemFactoryEntry garch_data_item = {
+    N_("/Model data/Add to data set/predicted error variance"), NULL, 
+    fit_resid_callback, GENR_H, NULL
+};
+
+static GtkItemFactoryEntry define_var_items[] = {
+    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Model data/Define new variable..."), NULL, model_test_callback,
+      MODEL_GENR, NULL }
+};
+
+#endif /* GTK versions alternates */
+
+static void add_model_dataset_items (windata_t *vwin)
+{
+    int i, n;
+    MODEL *pmod = vwin->data;
+
+    n = sizeof model_dataset_basic_items / 
+	sizeof model_dataset_basic_items[0];
+
+    for (i=0; i<n; i++) {
+	gtk_item_factory_create_item(vwin->ifac, &model_dataset_basic_items[i], 
+				     vwin, 1);
+    }
+
+    if (pmod->ci != GARCH) {
+	n = sizeof ess_items / sizeof ess_items[0];
+	for (i=0; i<n; i++) {
+	    gtk_item_factory_create_item(vwin->ifac, &ess_items[i], vwin, 1);
+	}
+    }
+
+    if (pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != GARCH &&
+	!(LIMDEP(pmod->ci))) {
+	n = sizeof r_squared_items / sizeof r_squared_items[0];
+	for (i=0; i<n; i++) {
+	    gtk_item_factory_create_item(vwin->ifac, &r_squared_items[i], 
+					 vwin, 1);
+	}
+    }
+
+    if (LIMDEP(pmod->ci) || pmod->ci == ARMA || pmod->ci == GARCH) {
+	gtk_item_factory_create_item(vwin->ifac, &lnl_data_item, vwin, 1);
+    }
+
+    if (pmod->ci == GARCH) {
+	gtk_item_factory_create_item(vwin->ifac, &garch_data_item, vwin, 1);
+    }
+
+    for (i=0; i<2; i++) {
+	gtk_item_factory_create_item(vwin->ifac, &define_var_items[i], 
+				     vwin, 1);
     }
 }
 

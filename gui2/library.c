@@ -3379,6 +3379,17 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     double ***gZ;
     DATAINFO *ginfo;
 
+    /* special case: GARCH model (show fitted variance) */
+    if (pmod->ci == GARCH) {
+	err = garch_resid_plot(pmod, &Z, datainfo, &paths);
+	if (err) {
+	    errbox(_("gnuplot command failed"));
+	} else {
+	    register_graph();
+	}
+	return;
+    }
+
     origv = (pmod->dataset != NULL)? 
 	pmod->dataset->dinfo->v : datainfo->v;
 
