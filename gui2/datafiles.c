@@ -27,6 +27,10 @@
 #include <errno.h>
 #include <time.h>
 
+#define N_BROWSER_TYPES 5
+#define BROWSER_BUSY    1
+#define BROWSER_OK      0
+
 extern void open_db_list (GtkWidget *w, gpointer data);
 extern void open_remote_db_list (GtkWidget *w, gpointer data);
 extern void grab_remote_db (GtkWidget *w, gpointer data);
@@ -37,7 +41,8 @@ extern GtkItemFactoryEntry sample_script_items[];
 char pwtpath[MAXLEN];
 char jwpath[MAXLEN];
 char dgpath[MAXLEN];
-static int file_sel_open = 0;
+
+static GtkWidget *browsers[N_BROWSER_TYPES];
 
 static GtkWidget *files_window (windata_t *fdata);
 static GtkWidget *files_notebook (windata_t *fdata, GtkWidget **datapages, 
@@ -285,9 +290,22 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static void file_sel_ok (GtkWidget *w, gpointer data)
+static void set_browser_status (windata_t *fdata, int status)
 {
-    file_sel_open = 0;
+    if (status == BROWSER_BUSY) {
+	browsers[fdata->role - TEXTBOOK_DATA] = fdata->w;
+    } else {
+	browsers[fdata->role - TEXTBOOK_DATA] = NULL;
+    }
+} 
+
+/* ........................................................... */
+
+static void browser_ok (GtkWidget *w, gpointer data)
+{
+    windata_t *vwin = (windata_t *) data;
+
+    set_browser_status(vwin, BROWSER_OK);
     free_windata(NULL, data);
 }
 
@@ -457,6 +475,22 @@ static void build_datafiles_popup (windata_t *win)
 
 /* ........................................................... */
 
+int browser_busy (guint code)
+{
+    if (code >= TEXTBOOK_DATA && code <= REMOTE_DB) {
+	GtkWidget *w;
+
+	w = browsers[code - TEXTBOOK_DATA];
+	if (w != NULL) {
+	    gdk_window_raise(w->window);
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
     GtkWidget *filebox, *openbutton, *midbutton, *closebutton;
@@ -467,17 +501,18 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     int err = 0;
     void (*browse_func)() = NULL;
 
-    if (file_sel_open) return;
+    if (browser_busy(code)) return;
+
     if ((fdata = mymalloc(sizeof *fdata)) == NULL)
 	return;
     windata_init(fdata);
 
-    file_sel_open = 1;
+    fdata->role = code;
     fdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-
     g_signal_connect (G_OBJECT (fdata->w), "destroy",
-		      G_CALLBACK (file_sel_ok),
+		      G_CALLBACK (browser_ok),
 		      fdata);
+    set_browser_status(fdata, BROWSER_BUSY);
 
     switch (code) {
     case PS_FILES:
@@ -507,8 +542,6 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
-
-    fdata->role = code;
 
     if (code == TEXTBOOK_DATA) {
 	filebox = files_notebook(fdata, datapages, code);
@@ -908,7 +941,9 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 {
     char winnum[3];
 
+#if 0 /* FIXME */
     if (!file_sel_open) return;
+#endif
 
     sprintf(winnum, "%d", (int) page_num);
     fdata->listbox = g_object_get_data(G_OBJECT(notebook), winnum);
