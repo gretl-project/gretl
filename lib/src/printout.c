@@ -138,6 +138,8 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
     int i;
     char spc[3];
 
+    if (add->ci == LAD) return;
+
     if (aux_code != AUX_SQ && aux_code != AUX_LOG) {
 	strcpy(spc, "  ");
 	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
@@ -195,6 +197,8 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		       const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
+
+    if (omit->ci == LAD) return;
 
     pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
 	    omit->m1, omit->m2);

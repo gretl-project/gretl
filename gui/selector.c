@@ -931,6 +931,11 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     }
 }
 
+void delete_selection_dialog (selector *sr)
+{
+    gtk_widget_destroy(sr->dlg);
+}
+
 void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode) 
 {
     GtkWidget *right_vbox, *tmp;

@@ -1278,7 +1278,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	if (err) {
 	    printf(_("\nvar number %d duplicated in the command list.\n"),
 		   err);
-	    cmd->ci = 999;
+	    cmd->ci = VARDUP;
 	}
     } /* end if !cmd->nolist */
 

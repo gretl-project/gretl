@@ -23,6 +23,7 @@
 #define INTERACT_H
 
 #define MAXSAVENAME 32
+#define VARDUP     999
 
 typedef struct _CMD CMD;
 

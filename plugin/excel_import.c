@@ -254,7 +254,7 @@ static double biff_get_rk (const unsigned char *ptr)
 	else
 	    return (double) (number/100.0);
     }
-    return -999.0;
+    return NADBL;
 }
 
 static int process_item (int rectype, int reclen, char *rec, wbook *book,

@@ -21,6 +21,8 @@
 
 #include <stdio.h>
 
+#define GRAPH_NO_DATA -999
+
 enum gnuplot_flags {
     GP_IMPULSES = 1 << 0,  /* use impulses for plotting */
     GP_RESIDS   = 1 << 1,  /* doing residual plot */

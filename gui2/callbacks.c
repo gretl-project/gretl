@@ -371,23 +371,6 @@ void mp_ols_callback (gpointer data, guint model_code, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifdef notdef
-static int model_dates_check (windata_t *mydata)
-{
-    MODEL *pmod = (MODEL *) mydata->data;
-
-    if (pmod->smpl.t1 != datainfo->t1 ||
-	pmod->smpl.t2 != datainfo->t2) {
-	errbox(_("Sorry, can't do: the sample has been reset\nsince this model "
-	       "was estimated"));
-	return 1;
-    }
-    return 0;
-}
-#endif
-
-/* ........................................................... */
-
 void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
@@ -440,8 +423,7 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 	break;
     }
 
-    edit_dialog(title, query, defstr, 
-		okfunc, mydata, 
+    edit_dialog(title, query, defstr, okfunc, mydata, 
 		action, varclick);   
 }
 
@@ -632,8 +614,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    edit_dialog(title, query, defstr, 
-		okfunc, mydata, 
+    edit_dialog(title, query, defstr, okfunc, mydata, 
 		action, varclick);   
 }
 
@@ -837,6 +818,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    errbox(errtext);
 	    return;
 	}
+
 	ed0 = strtod(endobs, &test);
 	if (!strcmp(endobs, test) || *test != 0 || ed0 < 0) {
 	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);

@@ -2315,6 +2315,7 @@ static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Tests/non-linearity (squares)", s);
     flip(ifac, "/Tests/non-linearity (logs)", s);
+    flip(ifac, "/Tests/Ramsey's RESET", s);
     flip(ifac, "/Tests/autocorrelation", s);
     flip(ifac, "/Tests/heteroskedasticity", s);
     flip(ifac, "/Tests/Chow test", s);
@@ -2327,7 +2328,7 @@ static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
 
 static void lad_menu_mod (GtkItemFactory *ifac)
 {
-    flip(ifac, "/Tests", FALSE);
+    flip(ifac, "/Tests/sum of coefficients", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
     flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
@@ -2341,7 +2342,6 @@ static void nls_menu_mod (GtkItemFactory *ifac)
     flip(ifac, "/Tests/omit variables", FALSE);
     flip(ifac, "/Tests/add variables", FALSE);
     flip(ifac, "/Tests/sum of coefficients", FALSE);
-    flip(ifac, "/Tests/Ramsey's RESET", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
 }
@@ -2353,7 +2353,6 @@ static void arma_menu_mod (GtkItemFactory *ifac)
     flip(ifac, "/Tests/omit variables", FALSE);
     flip(ifac, "/Tests/add variables", FALSE);
     flip(ifac, "/Tests/sum of coefficients", FALSE);
-    flip(ifac, "/Tests/Ramsey's RESET", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
 }
@@ -2363,11 +2362,6 @@ static void arma_menu_mod (GtkItemFactory *ifac)
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX", s);
-}
-
-static void RESET_menu_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Tests/Ramsey's RESET", s);
 }
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
@@ -2433,8 +2427,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
 	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
-	else if (pmod->ci == LOGISTIC) 
-	    RESET_menu_state(vwin->ifac, FALSE);
 	else if (pmod->ci == ARMA) {
 	    arma_menu_mod(vwin->ifac);
 	    if (arma_by_x12a(pmod)) {

@@ -66,7 +66,7 @@ double _corr (int n, const double *zx, const double *zy)
 /*
         returns the simple correlation coefficient between the the
         arrays zx and zy, for the n observations 0 to n-1.  returns
-        -999 if square root argument is invalid or no of observations
+        NADBL if square root argument is invalid or no of observations
         is zero 
 */
 {
@@ -423,7 +423,7 @@ int _compare_doubles (const void *a, const void *b)
 
 double _esl_stddev (int t1, int t2, const double *x)
 /*  returns standard deviation of array x from t1 through t2
-    return -999 if square root argument is invalid
+    return NADBL if square root argument is invalid
     or there are no observations
 */
 {
@@ -1153,7 +1153,7 @@ int _list_dups (const int *list, int ci)
     if (ci == TSLS || ci == AR || ci == ARMA || 
 	ci == SCATTERS || ci == MPOLS) {
 	for (i=2; i<list[0]; i++) {
-	    if (list[i] == 999) {
+	    if (list[i] == LISTSEP) {
 		start = i+1;
 		break;
 	    }
@@ -2256,7 +2256,7 @@ int _full_model_list (MODEL *pmod, int **plist)
 	if (mylist == NULL) return -1;
 	mylist[0] = len - 2;
 	for (i=1; i<pos; i++) mylist[i] = pmod->arinfo->arlist[i];
-	mylist[pos] = 999;
+	mylist[pos] = LISTSEP;
 	for (i=1; i<=(*plist)[0]; i++) {
 	    mylist[pos+i] = (*plist)[i];
 	}

@@ -124,7 +124,7 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 	sheet->Z[i] = malloc(rows * sizeof **(sheet->Z));
 	if (sheet->Z[i] == NULL) return 1;
 	for (t=0; t<rows; t++)
-	    sheet->Z[i][t] = -999.0;
+	    sheet->Z[i][t] = NADBL;
     }
 
     sheet->varname = malloc(cols * sizeof *(sheet->varname));
@@ -210,7 +210,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 	if (!xmlStrcmp(p->name, (UTF) "Cell")) {
 	    int i_real = 0, t_real = 0;
 
-	    x = -999.0;
+	    x = NADBL;
 	    i = 0; t = 0;
 
 	    tmp = xmlGetProp(p, (UTF) "Col");

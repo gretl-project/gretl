@@ -354,7 +354,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
 	return E_NOTIMP;
 
-    if (orig->ci == LOGISTIC && aux_code != AUX_ADD)
+    if ((orig->ci == LOGISTIC || orig->ci == LAD) && aux_code != AUX_ADD)
 	return E_NOTIMP;
 
     /* temporarily re-impose the sample that was in force when the
@@ -443,6 +443,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    } 
 	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
+	    }
+	    else if (orig->ci == LAD) {
+		*new = lad(newlist, pZ, pdinfo);
 	    }
 	    else if (orig->ci == LOGISTIC) {
 		char lmaxstr[32];
@@ -639,6 +642,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
 	    new->aux = AUX_OMIT;
+	}
+	else if (orig->ci == LAD) {
+	    *new = lad(tmplist, pZ, pdinfo);
 	}
 	else if (orig->ci == LOGISTIC) {
 	    char lmaxstr[32];

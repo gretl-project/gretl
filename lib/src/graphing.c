@@ -1017,7 +1017,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
     _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
-    if (t2 == t1) return -999;
+    if (t2 == t1) return GRAPH_NO_DATA;
     npoints = t2 - t1 + 1;
 
     if (flags & GP_DUMMY) { /* separation by dummy variable */
@@ -1442,7 +1442,7 @@ int gnuplot_3d (LIST list, const char *literal,
 
     _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
-    if (t2 == t1) return -999;
+    if (t2 == t1) return GRAPH_NO_DATA;
 
     *surface = 0;
 

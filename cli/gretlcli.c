@@ -439,8 +439,9 @@ int main (int argc, char *argv[])
 
     /* main command loop */
     while (strcmp(cmd.cmd, "quit")) {
+	char linecopy[MAXLEN];
 
-	if (err && batch && errfatal) gretl_abort(line);
+	if (err && batch && errfatal) gretl_abort(linecopy);
 
 	if (looprun) { 
 	    if (!loop.ncmds) {
@@ -522,6 +523,7 @@ int main (int argc, char *argv[])
 			      "(%d bytes) exceeded\n"), MAXLEN);
 	    break;
 	} else {
+	    strcpy(linecopy, line);
 	    exec_line(line, prn);
 	}
     } /* end of get commands loop */
@@ -1516,7 +1518,7 @@ void exec_line (char *line, PRN *prn)
 	err = simple_var(order, cmd.list, &Z, datainfo, !batch, prn);
 	break;
 
-    case 999:
+    case VARDUP:
 	err = 1;
 	break;
 

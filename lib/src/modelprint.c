@@ -1476,7 +1476,7 @@ static void print_pval_str (double pval, char *str)
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int c, PRN *prn)
 {
-    double t, pvalue = 999;
+    double t, pvalue = 999.0;
     int gotnan = 0;
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[12];
@@ -1579,7 +1579,7 @@ static void rtf_print_double (double xx, PRN *prn)
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int c, PRN *prn)
 {
-    double t, pvalue = 999;
+    double t, pvalue = 999.0;
     int gotnan = 0;
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[12];

@@ -157,7 +157,7 @@ void register_graph (void)
 
 static void gui_graph_handler (int err)
 {
-    if (err == -999) {
+    if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err < 0) {
 	const char *msg = get_gretl_errmsg();
@@ -2205,7 +2205,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     cmd.opt = 0;
     echo_cmd(&cmd, datainfo, line, 0, 1, NULL);
-    if (cmd.ci == 999) {
+    if (cmd.ci == VARDUP) {
 	errbox(_("A variable was duplicated in the list of regressors"));
 	return;
     }
@@ -2283,6 +2283,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case LOGISTIC:
+	delete_selection_dialog(sr);
 	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
 	err = model_output(pmod, prn);
 	break;	
@@ -3466,7 +3467,7 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
     err = gnuplot_3d(list, NULL, gZ, ginfo,
 		     &paths, &plot_count, GP_GUI | GP_FA);
 
-    if (err == -999) {
+    if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -3895,7 +3896,7 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     err = gnuplot_3d(cmd.list, NULL, &Z, datainfo,
 		     &paths, &plot_count, GP_GUI);
 
-    if (err == -999) {
+    if (err == GRAPH_NO_DATA) {
 	errbox(_("No data were available to graph"));
     } else if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -5778,7 +5779,7 @@ int gui_exec_line (char *line,
 	}
 	break;
 
-    case 999:
+    case VARDUP:
 	err = 1;
 	break;
 
