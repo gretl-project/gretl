@@ -110,7 +110,8 @@ typedef enum {
     GRETL_TEST_TR2,
     GRETL_TEST_F,
     GRETL_TEST_LMF,
-    GRETL_TEST_HARVEY_COLLIER
+    GRETL_TEST_HARVEY_COLLIER,
+    GRETL_TEST_RESET
 } test_stats;
 
 typedef int *LIST;  

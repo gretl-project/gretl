@@ -1618,6 +1618,38 @@ void do_cusum (gpointer data, guint u, GtkWidget *widget)
 
 /* ........................................................... */
 
+void do_reset (gpointer data, guint u, GtkWidget *widget)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = mydata->data;
+    GRETLTEST test;
+    PRN *prn;
+    char title[40];
+    int err;
+
+    if (bufopen(&prn)) return;
+    strcpy(title, _("gretl: RESET test"));
+
+    clear(line, MAXLEN);
+    strcpy(line, "reset");
+
+    err = reset_test(pmod, &Z, datainfo, prn, &test);
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+	return;
+    } else {
+	if (add_test_to_model(&test, pmod) == 0)
+	    print_test_to_window(&test, mydata->w);
+    }
+
+    if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
+
+    view_buffer(prn, 78, 400, title, RESET, view_items); 
+}
+
+/* ........................................................... */
+
 void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 {
     windata_t *mydata = ddata->data;
@@ -3931,6 +3963,14 @@ static int gui_exec_line (char *line,
 	if ((err = script_model_test(0, prn, 1))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, 
 			 &paths, ptest);
+	if (err) errmsg(err, prn);
+	else if (rebuild) 
+	    add_test_to_model(ptest, models[0]);
+	break;
+
+    case RESET:
+	if ((err = script_model_test(0, prn, 1))) break;
+	err = reset_test(models[0], &Z, datainfo, prn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);

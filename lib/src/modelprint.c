@@ -420,6 +420,9 @@ static const char *aux_string (int aux, int format)
 	if (TEX_FORMAT(format)) return N_("Augmented Dickey--Fuller regression");
 	return N_("Augmented Dickey-Fuller regression");
     }
+    else if (aux == AUX_RESET) {
+	return N_("Auxiliary regression for RESET specification test");
+    }
     else return "";
 }
 
@@ -467,6 +470,7 @@ void get_test_stat_string (GRETLTEST *test, char *str, int format)
 	}
 	break;
     case GRETL_TEST_F:
+    case GRETL_TEST_RESET:
 	if (tex) 
 	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
 	else 
@@ -504,6 +508,7 @@ void get_test_pval_string (GRETLTEST *test, char *str, int format)
 		     test->dfn, test->value, test->pvalue);
 	break;
     case GRETL_TEST_F:
+    case GRETL_TEST_RESET:
 	if (tex) 
 	    sprintf(str, "$P$($F(%d, %d) >$ %g)$ = %g", 
 		    test->dfn, test->dfd, test->value, test->pvalue);
@@ -631,6 +636,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_CHOW:
     case AUX_COINT:
     case AUX_ADF:
+    case AUX_RESET:
 	if (utf) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn->format)));
 	} else if (tex) {
@@ -1067,7 +1073,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	goto close_format;
     }    
 
-    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || pmod->aux == AUX_AR) {
+    if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG || 
+	pmod->aux == AUX_AR || pmod->aux == AUX_RESET) {
 	print_middle_table_start(prn);
 	rsqline(pmod, prn);
 	print_middle_table_end(prn);

@@ -157,7 +157,7 @@ void nosub (PRN *prn)
 	    "the one on which\nthe reference model was estimated\n"));
 }
 
-int model_test_start (const int id, PRN *prn, const int ols_only)
+int model_test_start (const int id, PRN *prn, int ols_only)
 {
     int m = (id)? id - 1 : 0;
 
@@ -684,6 +684,12 @@ void exec_line (char *line, PRN *prn)
 	if (err) errmsg(err, prn);
 	break;
 
+    case RESET:
+        if ((err = model_test_start(0, prn, 1))) break;
+	err = reset_test(models[0], &Z, datainfo, prn, NULL);
+	if (err) errmsg(err, prn);
+	break;
+	
     case CORC:
     case HILU:
 	err = hilu_corc(&rho, command.list, &Z, datainfo, command.ci, prn);

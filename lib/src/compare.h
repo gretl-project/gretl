@@ -33,6 +33,7 @@ typedef enum {
     AUX_ARCH,  /* aux. regression for ARCH test */
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
     AUX_OMIT,  /* aux. regression for omitting variables */
+    AUX_RESET, /* aux. regression for Ramsey's RESET */
     AUX_SUR    /* single equation from SUR system */
 } aux_codes;
 
@@ -61,6 +62,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	       int *model_count, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn);
+
+int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		PRN *prn, GRETLTEST *test);
 
 int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 

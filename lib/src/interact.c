@@ -197,6 +197,7 @@ static int aliased (char *cmd)
 	               c == SIM || \
 	               c == DELEET || \
 	               c == TESTUHAT || \
+                       c == RESET || \
 	               c == GENR)
 
 /* ........................................................... */

@@ -586,6 +586,93 @@ static int box_pierce (int varno, int order, double **Z,
 }
 
 /**
+ * reset_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Ramsey's RESET test for model specification.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
+		PRN *prn, GRETLTEST *test)
+{
+    int *newlist;
+    MODEL aux;
+    int i, t, v = pdinfo->v; 
+    double RF;
+    int err = 0;
+
+    _init_model(&aux, pdinfo);
+
+    if (pmod->ncoeff + 2 >= pdinfo->t2 - pdinfo->t1)
+	return E_DF;
+
+    newlist = malloc((pmod->list[0] + 3) * sizeof *newlist);
+    if (newlist == NULL) {
+	err = E_ALLOC;
+    } else {
+	newlist[0] = pmod->list[0] + 2;
+	for (i=1; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
+	if (dataset_add_vars(2, pZ, pdinfo)) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* add yhat^2, yhat^3 to data set */
+	for (t = pmod->t1; t<=pmod->t2; t++) {
+	    double xx = pmod->yhat[t];
+
+	    (*pZ)[v][t] = xx * xx;
+	    (*pZ)[v+1][t] = xx * xx * xx;
+	}
+	strcpy(pdinfo->varname[v], "yhat^2");
+	strcpy(pdinfo->varname[v+1], "yhat^3");
+	newlist[pmod->list[0] + 1] = v;
+	newlist[pmod->list[0] + 2] = v + 1;
+    }
+
+    if (!err) {
+	aux = lsq(newlist, pZ, pdinfo, OLS, 1, 0.0);
+	err = aux.errcode;
+	if (err) {
+	    errmsg(aux.errcode, prn);
+	}
+    } 
+
+    if (!err) {
+	aux.aux = AUX_RESET;
+	printmodel(&aux, pdinfo, prn);
+	RF = ((pmod->ess - aux.ess) / 2) / (aux.ess / aux.dfd);
+
+	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
+	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		2, aux.dfd, RF, fdist(RF, 2, aux.dfd));
+
+	if (test != NULL) {
+	    strcpy(test->type, _("RESET test for specification"));
+	    strcpy(test->h_0, _("specification is adequate"));
+	    test->teststat = GRETL_TEST_RESET;
+	    test->dfn = 2;
+	    test->dfd = aux.dfd;
+	    test->value = RF;
+	    test->pvalue = fdist(RF, test->dfn, test->dfd);
+	}
+    }
+
+    free(newlist);
+    dataset_drop_vars(2, pZ, pdinfo); 
+    clear_model(&aux, pdinfo); 
+
+    return err;
+}
+
+/**
  * autocorr_test:
  * @pmod: pointer to model to be tested.
  * @order: lag order for test.
@@ -621,6 +708,7 @@ int autocorr_test (MODEL *pmod, int order,
 
     k = order + 1;
     newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
+
     if (newlist == NULL) {
 	err = E_ALLOC;
     } else {
@@ -645,8 +733,9 @@ int autocorr_test (MODEL *pmod, int order,
 	    if (_laggenr(v, i, 1, pZ, pdinfo)) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
-	    } else 
+	    } else {
 		newlist[pmod->list[0] + i] = v+i;
+	    }
 	}
     }
 

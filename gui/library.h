@@ -78,6 +78,8 @@ void do_chow (GtkWidget *widget, dialog_t *ddata);
 
 void do_cusum (gpointer data, guint u, GtkWidget *widget);
 
+void do_reset (gpointer data, guint u, GtkWidget *widget);
+
 void do_arch (GtkWidget *widget, dialog_t *ddata);
 
 void set_storelist (GtkWidget *widget, dialog_t *ddata);

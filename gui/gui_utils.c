@@ -73,6 +73,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
+    { N_("/Tests/Ramsey's RESET"), NULL, do_reset, 0, NULL },
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },

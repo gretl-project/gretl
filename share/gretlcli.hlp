@@ -942,6 +942,16 @@ Exit from gretl. ('q' is a shortcut; 'x' exits without a prompt to save
 output.)
 
 #
+reset
+@Tests
+Usage:          reset
+
+Must immediately follow an ols command.  Carries out Ramsey's RESET test for
+model specification (non-linearity) by adding the square and the cube of the
+fitted values to the regression and calculating the F-statistic for the null
+hypothesis that the parameters on the two added terms are zero.
+
+#
 rhodiff
 @Transformations
 Usage:         rhodiff rholist ; varlist

@@ -1,6 +1,7 @@
 version 1.0pre4
 - fix smpl -r bug in gretlcli
-
+- add Ramsey's RESET test (command "reset")
+- improve consistency of editing commands
 
 10/10/02 version 1.0pre3
 - improve accuracy of calculation of standard errors, and
