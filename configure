@@ -7485,17 +7485,10 @@ echo $ECHO_N "checking for GTKEXTRA - version >= $min_gtkextra_version... $ECHO_
     no_gtkextra=yes
     echo "$as_me:7486: result: no" >&5
 echo "${ECHO_T}no" >&6
-    if test -d gui/gtkextra ; then
-       echo "* Will try using the gretl gtkextra addon package instead"
-    else
-       echo
-       echo "* You need the gtkextra library to compile gretl."
-       echo "* You can get this from gtkextra.sourceforge.net, or if you prefer"
-       echo "* you can grab a smaller package with only those parts of gtkextra"
-       echo "* that are essential for gretl, at "
-       echo "* http://ricardo.ecn.wfu.edu/gretl-gtkextra/"
-       exit
-    fi
+    echo
+    echo "* You need the gtkextra library to compile gretl."
+    echo "* You can get this from gtkextra.sourceforge.net.
+    exit
   else
     have_gtkextra=yes
     # AC_MSG_RESULT(yes)
@@ -7518,7 +7511,7 @@ echo "${ECHO_T}no" >&6
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat >conftest.$ac_ext <<_ACEOF
-#line 7521 "configure"
+#line 7514 "configure"
 #include "confdefs.h"
 
 #include <gtkextra/gtkextra.h>
@@ -7576,17 +7569,17 @@ main ()
 
 _ACEOF
 rm -f conftest$ac_exeext
-if { (eval echo "$as_me:7579: \"$ac_link\"") >&5
+if { (eval echo "$as_me:7572: \"$ac_link\"") >&5
   (eval $ac_link) 2>&5
   ac_status=$?
-  echo "$as_me:7582: \$? = $ac_status" >&5
+  echo "$as_me:7575: \$? = $ac_status" >&5
   (exit $ac_status); } && { ac_try='./conftest$ac_exeext'
-  { (eval echo "$as_me:7584: \"$ac_try\"") >&5
+  { (eval echo "$as_me:7577: \"$ac_try\"") >&5
   (eval $ac_try) 2>&5
   ac_status=$?
-  echo "$as_me:7587: \$? = $ac_status" >&5
+  echo "$as_me:7580: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  echo "$as_me:7589: result: yes" >&5
+  echo "$as_me:7582: result: yes" >&5
 echo "${ECHO_T}yes" >&6
 else
   echo "$as_me: program exited with status $ac_status" >&5
@@ -7690,7 +7683,7 @@ DEFS=-DHAVE_CONFIG_H
 : ${CONFIG_STATUS=./config.status}
 ac_clean_files_save=$ac_clean_files
 ac_clean_files="$ac_clean_files $CONFIG_STATUS"
-{ echo "$as_me:7693: creating $CONFIG_STATUS" >&5
+{ echo "$as_me:7686: creating $CONFIG_STATUS" >&5
 echo "$as_me: creating $CONFIG_STATUS" >&6;}
 cat >$CONFIG_STATUS <<_ACEOF
 #! $SHELL
@@ -7863,7 +7856,7 @@ cat >>$CONFIG_STATUS <<\EOF
     echo "$ac_cs_version"; exit 0 ;;
   --he | --h)
     # Conflict between --help and --header
-    { { echo "$as_me:7866: error: ambiguous option: $1
+    { { echo "$as_me:7859: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: ambiguous option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -7882,7 +7875,7 @@ Try \`$0 --help' for more information." >&2;}
     ac_need_defaults=false;;
 
   # This is an error.
-  -*) { { echo "$as_me:7885: error: unrecognized option: $1
+  -*) { { echo "$as_me:7878: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&5
 echo "$as_me: error: unrecognized option: $1
 Try \`$0 --help' for more information." >&2;}
@@ -7921,7 +7914,7 @@ do
   "gretl_sh" ) CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
   "gretl-config" ) CONFIG_FILES="$CONFIG_FILES gretl-config" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
-  *) { { echo "$as_me:7924: error: invalid argument: $ac_config_target" >&5
+  *) { { echo "$as_me:7917: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
    { (exit 1); exit 1; }; };;
   esac
@@ -8163,7 +8156,7 @@ done; }
   esac
 
   if test x"$ac_file" != x-; then
-    { echo "$as_me:8166: creating $ac_file" >&5
+    { echo "$as_me:8159: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
     rm -f "$ac_file"
   fi
@@ -8181,7 +8174,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8184: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8177: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8194,7 +8187,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8197: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8190: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8255,7 +8248,7 @@ for ac_file in : $CONFIG_HEADERS; do test "x$ac_file" = x: && continue
   * )   ac_file_in=$ac_file.in ;;
   esac
 
-  test x"$ac_file" != x- && { echo "$as_me:8258: creating $ac_file" >&5
+  test x"$ac_file" != x- && { echo "$as_me:8251: creating $ac_file" >&5
 echo "$as_me: creating $ac_file" >&6;}
 
   # First look for the input files in the build tree, otherwise in the
@@ -8266,7 +8259,7 @@ echo "$as_me: creating $ac_file" >&6;}
       -) echo $tmp/stdin ;;
       [\\/$]*)
          # Absolute (can't be DOS-style, as IFS=:)
-         test -f "$f" || { { echo "$as_me:8269: error: cannot find input file: $f" >&5
+         test -f "$f" || { { echo "$as_me:8262: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          echo $f;;
@@ -8279,7 +8272,7 @@ echo "$as_me: error: cannot find input file: $f" >&2;}
            echo $srcdir/$f
          else
            # /dev/null tree
-           { { echo "$as_me:8282: error: cannot find input file: $f" >&5
+           { { echo "$as_me:8275: error: cannot find input file: $f" >&5
 echo "$as_me: error: cannot find input file: $f" >&2;}
    { (exit 1); exit 1; }; }
          fi;;
@@ -8396,7 +8389,7 @@ cat >>$CONFIG_STATUS <<\EOF
   rm -f $tmp/in
   if test x"$ac_file" != x-; then
     if cmp -s $ac_file $tmp/config.h 2>/dev/null; then
-      { echo "$as_me:8399: $ac_file is unchanged" >&5
+      { echo "$as_me:8392: $ac_file is unchanged" >&5
 echo "$as_me: $ac_file is unchanged" >&6;}
     else
       ac_dir=`$as_expr X"$ac_file" : 'X\(.*[^/]\)//*[^/][^/]*/*$' \| \
