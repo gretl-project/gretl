@@ -530,6 +530,12 @@
         <argument>variabile-dipendente</argument>
 	<argument>variabili-indipendenti</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>non include la costante</effect>
+	</option>
+      </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
       </examples>
@@ -543,9 +549,16 @@
         ritardi specificato. Viene stimata la regressione di cointegrazione
 	e viene eseguito un test ADF sui residui di questa regressione, mostrando
         anche la statistica di Durbin&ndash;Watson per la regressione
-        di cointegrazione. Si noti che i valori di tutte queste statistiche test
-        non possono essere confrontati con quelli delle solite tavole statistiche.
+        di cointegrazione.
       </para>
+      <para>I <emphasis>pvalue</emphasis> per questo test si basano su
+	MacKinnon (1996). Il codice relativo è stato incluso per gentile
+        concessione dell'autore.
+      </para>
+      <para context="cli">
+	La regressione di cointegrazione di solito contiene una costante;
+        se si vuole escluderla, basta usare l'opzione <lit>--nc</lit>. 
+       </para>
     </description>
 
     <gui-access>
@@ -785,8 +798,8 @@
 
     <description>
       <para>
-	Calcola le statistiche di selezione del modello (si veda
-        Ramanathan, Capitolo 4.3), dati <repl>ess</repl> (somma
+	Calcola il criterio di informazione di Akaike (AIC) e il criterio
+        di informazione bayesiana di Schwarz (BIC), dati <repl>ess</repl> (somma
         dei quadrati degli errori), il numero delle osservazioni
 	(<mathvar>T</mathvar>) e quello dei coefficienti (<mathvar>k</mathvar>).
 	<mathvar>T</mathvar>, <mathvar>k</mathvar> e
@@ -942,6 +955,55 @@
 
   </command>
 
+  <command name="density" section="Statistics" context="gui"
+    label="Stima kernel di densità">
+
+    <description>
+
+      <para>La stima kernel di densità avviene definendo un insieme di punti di
+      riferimento distanziati in modo uniforme su un appropriato intervallo dei
+      dati, e attribuendo ad ognuno di essi un valore di densità
+      basato sui valori delle osservazioni circostanti.</para>
+      
+      <para>La formula usata per calcolare la densità stimata in ognuno dei
+      punti di riferimento x è
+      </para>
+
+      <code>
+	f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)
+      </code>
+
+      <para>dove n denota il numero delle osservazioni, h è un parametro
+        di "larghezza di banda" e k() è la funzione kernel. All'aumentare
+        del parametro di banda, aumenta il livellamento della densità stimata.
+      </para>
+
+      <para>È possibile usare un kernel Gaussiano (la densità normale
+        standard) o il kernel di Epanechnikov, mentre la larghezza di banda
+        predefinita è quella suggerita da Silverman (1986), ossia
+      </para>
+
+      <code>
+	h = 0.9 min(s, IQR/1.349) n^{1/5}
+      </code>
+
+      <para>dove s denota la deviazione standard dei dati e IQR denota
+        il range interquartile. È possibile allargare o restringere
+        la banda usando il <quote>fattore di aggiustamento della banda</quote>:
+        la banda effettivamente utilizzata si ottiene moltiplicando il valore di
+	Silverman per il fattore di aggiustamento.
+      </para>
+
+      <para>Per una buona discussione introduttiva della stima kernel, si veda
+        il capitolo 15 di Econometric Theory and Methods di Davidson e MacKinnon.
+      </para>
+
+    </description>
+
+  </command>  
+
+  
+
   <command name="dialog" section="Estimation" context="gui"
     label="Finestra di dialogo Modello">
 
@@ -1085,6 +1147,32 @@
         usata per OLS e indicare una lista di strumenti comuni usando l'istruzione
         <cmd>instr</cmd> (si veda ancora <cmdref targ="system"/>), oppure si può
         usare la stessa sintassi di <cmdref targ="tsls"/>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="estimate" section="Estimation" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>nome_sistema</argument>
+        <argument>stimatore</argument>
+      </arguments>
+      <examples>
+        <example>estimate "Klein Model 1" method=fiml</example>
+	<example>estimate Sys1 method=sur</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Esegue la stima di un sistema di equazioni, che deve essere stato
+        definito in precedenza usando il comando <cmdref targ="system"/>.
+        Per prima cosa va indicato il nome del sistema, racchiuso tra
+        virgolette se contiene spazi, quindi il tipo di stimatore, preceduto
+        dalla stringa <lit>method=</lit>. Gli stimatori disponibili sono:
+	<cmd>sur</cmd>, <cmd>3sls</cmd>, <cmd>fiml</cmd> o <cmd>liml</cmd>.
       </para>
     </description>
 
@@ -1292,6 +1380,10 @@
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
         </option>
+        <option>
+	  <flag>--arma-init</flag>
+	  <effect>parametri di varianza iniziale da ARMA</effect>
+        </option>
       </options>
       <examples>
         <example>garch 1 1 ; y</example>
@@ -1307,9 +1399,9 @@
 	I valori interi <repl>p</repl> e <repl>q</repl> rappresentano gli ordini
         di ritardo nell'equazione della varianza condizionale.
 	<equation status="display"
-	  tex="\[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
+	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
-	  ascii="h(t) = somma(per i da 1 a q) a(i)*u(t-i) + somma( per j da 1 a p) b(j)*h(t-j)"
+	  ascii="h(t) = a(0) + somma(per i da 1 a q) a(i)*u(t-i) + somma( per j da 1 a p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
       </para>
 
@@ -1318,9 +1410,9 @@
         Heteroskedasticity) univariato, o, se sono specificate delle
         variabili-indipendenti, includendo delle variabili esogene.
 	L'equazione della varianza condizionale è la seguente:
-	<equation status="display" tex="\[h_t =
+	<equation status="display" tex="\[h_t = \alpha_0 + 
 	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
-	\beta_i h_{t-j}\]" ascii="h(t) = somma (i da 1 a q) a(i)*u(t-i) +
+	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + somma (i da 1 a q) a(i)*u(t-i) +
 	somma(j da 1 a p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
 
@@ -1345,6 +1437,19 @@
         informazione, o lo stimatore di Bollerslev&ndash;Wooldridge) possono
         essere specificate con il comando <cmdref targ="set"/>.
       </para>
+      
+      <para context="cli">
+	In modalità predefinita, le stime dei parametri di varianza sono
+	inizializzate usando la varianza dell'errore non condizionale, ottenuta
+        dalla stima OLS iniziale, per la costante, e piccoli valori positivi
+        per i coefficienti dei valori passati dell'errore al quadrato e
+        per la varianza dell'errore. L'opzione <lit>--arma-init</lit>
+	fa in modo che i valori iniziali per questi parametri siano ricavati da
+        un modello ARMA iniziale, sfruttando la relazione tra GARCH
+        e ARMA mostrata nel capitolo 21 di Time Series Analysis di Hamilton.
+        In alcuni casi, questo metodo può aumentare le probabilità di convergenza.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1519,6 +1624,10 @@
 	      <cell><lit>$aic</lit></cell> 
 	      <cell>criterio di informazione di Akaike</cell> 
 	    </row> 
+ 	    <row>
+	      <cell><lit>$bic</lit></cell> 
+	      <cell>criterio di informazione bayesiana di Schwarz</cell> 
+	    </row> 
 	    <row>
 	      <cell><lit>$lnl</lit></cell> 
 	      <cell>log-verosimiglianza (dove è applicabile)</cell> 
@@ -1591,8 +1700,8 @@
 	Il valore di <repl>osservazione</repl> può essere specificato con
         un numero o una data.
 	Esempi: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Per i dati
-        giornalieri occorre usare la forma <repl>AAAA:MM:GG</repl>, ad esempio
-	<lit>ibm[1970:01:23]</lit>.
+        giornalieri occorre usare la forma <repl>AAAA/MM/GG</repl>, ad esempio
+	<lit>ibm[1970/01/23]</lit>.
       </para>
 
       <para>È possibile modificare una singola osservazione in una serie
@@ -2028,7 +2137,7 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" label="Stima HCCM">
+  <command name="hccm" section="Estimation" context="cli" label="Stima HCCM">
 
     <usage>
       <arguments>
@@ -2058,6 +2167,40 @@
     <gui-access>
       <menu-path>/Modello/HCCM</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="hccme" section="Estimation" context="gui"
+    label="Errori standard robusti">
+
+    <description>
+      <para>
+	Sono disponibili vari modi di calcolare gli errori standard
+        robusti in presenza di eteroschedasticità (e, nel caso dello
+        stimatore HAC, di autocorrelazione).
+      </para>
+
+      <para>HC0 produce gli <quote>errori standard originali di White</quote>;
+        HC1, HC2, HC3 e HC3a sono varianti che si ritiene producano risultati
+        migliori (più affidabili). Per i dettagli sugli stimatori, si veda
+	MacKinnon e White (Journal of Econometrics, 1985) o
+	Davidson e MacKinnon, Econometric Theory and Methods
+	(Oxford, 2004). Le sigle usate sono quelle proposte da
+	Davidson e MacKinnon. La variante <quote>HC3a</quote> è il
+	<quote>jackknife</quote> descritto da MacKinnon e White (1985); HC3 è
+        una sua vicina approssimazione.
+      </para>
+
+      <para>Se si usa lo stimatore HAC per serie storiche, è possibile calibrare
+        la lunghezza dei ritardi usando il comando <cmd>set</cmd>. Si veda il
+        manuale di gretl o i file di aiuto per i dettagli.</para>
+
+      <para>Per i modelli GARCH sono disponibili due stimatori robusti della
+        matrice di covarianza: QML è lo stimatore di quasi massima verosimiglianza,
+        e BW è lo stimatore di Bollerslev-Wooldridge.
+      </para>
+
+    </description>
 
   </command>
 
@@ -2312,15 +2455,28 @@
     </usage>
 
     <description>
-      <para>
+      <para context="gui">
+	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
+	Shin, 1992) per la stazionarietà di una variabile. L'ipotesi
+        nulla è che la variabile in questione sia stazionaria, attorno
+        a un valore fisso o, se è stata selezionata l'opzione <lit>includi un trend</lit>,
+        attorno a un trend deterministico lineare.
+      </para>
+      <para context="cli">
 	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
 	Shin, 1992) per la stazionarietà di una variabile. L'ipotesi
         nulla è che la variabile in questione sia stazionaria, attorno
         a un valore fisso o, se è stata usata l'opzione <lit>--trend</lit>,
         attorno a un trend deterministico lineare.
       </para>
-
-      <para>
+      <para context="gui">
+	L'argomento ordine determina la dimensione della finestra usata per
+        il livellamento di Bartlett.  Se si usa l'opzione <lit>Mostra i risultati
+        della regressione</lit>, vengono mostrati anche i risultati della
+        regressione ausiliaria, insieme alla varianza stimata della componente
+        random walk della variabile.
+      </para>
+      <para context="cli">
 	L'argomento ordine determina la dimensione della finestra usata per
         il livellamento di Bartlett.  Se si usa l'opzione <lit>--verbose</lit>,
         vengono mostrati anche i risultati della regressione ausiliaria, insieme
@@ -3258,14 +3414,17 @@
         significatività tra l'1 e il 5 per cento, mentre <lit>*</lit>
 	indica un livello di significatività tra il 5 e il 10 per cento.
 	Vengono mostrate anche le statistiche di selezione del modello
-        (descritte in Ramanathan, capitolo 4.3).</para>
+        (il criterio di informazione di Akaike, AIC, e il criterio di
+        informazione bayesiana di Schwarz, BIC). La formula usata per AIC
+        è descritta in Akaike (1974), ossia meno due volte la log-verosimiglianza
+        massimizzata più il doppio del numero di parametri stimati.</para>
 
-      <para>Usando l'opzione <lit>--no-df-corr</lit> la correzione per i
+      <para context="cli">Usando l'opzione <lit>--no-df-corr</lit> la correzione per i
 	gradi di libertà non viene applicata nel calcolo della varianza
         stimata dell'errore (e quindi anche dell'errore standard delle
         stime dei parametri).</para>
 
-      <para>L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
+      <para context="cli">L'opzione <lit>--print-final</lit> è utilizzabile solo nel contesto
 	di un <cmdref targ="loop"/>. L'effetto è quello di eseguire la
         regressione in modo silenzioso per tutte le iterazioni del loop
         tranne l'ultima. Si veda <manref targ="loop-examples"/> per i dettagli.
@@ -3490,7 +3649,7 @@
 
   </command>
 
-  <command name="panel" section="Dataset"
+  <command name="panel" section="Dataset" context="cli"
     label="Struttura dei dati panel">
 
     <usage>
@@ -3507,39 +3666,7 @@
     </usage>
 
     <description>
-      <para context="gui">
-        Le due opzioni <quote>--time-series</quote> e
-        <quote>--cross-section</quote> indicano a gretl come sono
-        organizzati i dati, in modo da poter usare il comando 
-	"Pooled OLS" e i relativi comandi di diagnosi panel.</para>
-
-      <para context="gui"><quote>Pila di dati serie storiche</quote>
-      significa che i dati nel file sono organizzati in blocchi di serie
-      storiche per ognuna delle unità cross section. Ad esempio, le
-      prime 10 righe dei dati rappresentano i valori di alcune variabili
-      per il paese A lungo 10 periodi, le 10 righe seguenti i valori per
-      il paese B lungo 10 periodi, e così via.</para>
-
-      <para context="gui"><quote>Pila di dati cross section</quote>
-      significa che i dati nel file sono organizzati in blocchi di dati
-      cross section per ognuno dei periodi temporali. Ad esempio, le
-      prime 6 righe dei dati rappresentano i valori di alcune variabili
-      per i paesi da A a F nell'anno 1970, le 6 righe seguenti i valori
-      per gli stessi paesi nel 1971, e così via.</para>
-
-      <para context="gui">Se si salva il file di dati dopo aver impostato
-      questo attributo, l'informazione verrà mantenuta nel file e non
-      sarà necessario impostare di nuovo l'attributo in futuro.</para>  
-
-      <para context="gui">Si noti che questo comando non modifica la
-      struttura del dataset panel, ma imposta solo il modo in cui gretl
-      interpreta il dataset. Per convertire un dataset dal formato
-      <quote>pila di cross section</quote> a quello <quote>pila di serie
-      storiche</quote> o viceversa, occorre usare il comando
-      <quote>Ristruttura panel</quote>.
-      </para>
-
-      <para context="cli">Richiede che il dataset in uso sia
+      <para>Richiede che il dataset in uso sia
         interpretato come un panel (unione di dati cross section e serie
         storiche). L'impostazione predefinita corrisponde all'opzione
 	<lit>--time-series</lit> e prevede di interpretare il dataset
@@ -3550,12 +3677,7 @@
         dati contengono dati cross section per ognuno dei periodi
         temporali). Si veda anche <cmdref targ="setobs"/>.
       </para>
-
     </description>
-
-    <gui-access>
-      <menu-path>/Campione/Interpreta come panel</menu-path>
-    </gui-access>
 
   </command>
 
@@ -3680,6 +3802,14 @@
         <argument>variabili-indipendenti</argument>
       </arguments>
       <options>
+ 	<option>
+	  <flag>--unit-weights</flag>
+	  <effect>stimatore feasible GLS</effect>
+	</option>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>itera fino alla soluzione di massima verosimiglianza</effect>
+	</option>
 	<option>
 	  <flag>--vcv</flag>
 	  <effect>mostra la matrice di covarianza</effect>
@@ -3688,9 +3818,21 @@
     </usage>
 
     <description>
-      <para>Stima un modello con OLS (si veda <cmdref targ="ols"/> per i
-      dettagli sulla sintassi) e lo marca come modello pooled o panel,
-      rendendo disponibile il comando <cmdref targ="hausman"/>.</para>
+      <para>In modalità predefinita, stima un modello con OLS (si veda <cmdref
+      targ="ols"/> per i dettagli sulla sintassi) e lo marca come modello
+      pooled o panel, rendendo disponibile il comando <cmdref
+      targ="hausman"/>.
+      </para>
+      <para>Con l'opzione <lit>--unit-weights</lit>, viene usato lo stimatore
+	feasible GLS, con i pesi costruiti a partire dalle varianze specifiche
+        degli errori per ogni unità cross section. Questa modalità offre un
+        guadagno di efficienza rispetto alla stima OLS nel caso in cui la
+        varianza differisca tra le diverse unità.
+      </para>
+      <para>Se viene usata anche l'opzione <lit>--iterate</lit>, lo stimatore
+	GLS viene iterato: se la procedura converge, verranno prodotte stime di
+        massima verosimiglianza.
+      </para>
     </description>
 
     <gui-access>
@@ -4362,7 +4504,7 @@
     </description>
   </command>
 
-  <command name="setobs" section="Dataset"
+  <command name="setobs" section="Dataset" context="cli"
     label="Frequenza e osservazione iniziale">
 
     <usage>
@@ -4370,59 +4512,67 @@
         <argument>periodicità</argument>
         <argument>oss-iniziale</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--cross-section</flag>
+	  <effect>interpreta come cross section</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>interpreta come serie storiche</effect>
+        </option>
+        <option>
+	  <flag>--stacked-cross-section</flag>
+	  <effect>interpreta come panel</effect>
+        </option>
+        <option>
+	  <flag>--stacked-time-series</flag>
+	  <effect>interpreta come panel</effect>
+        </option>
+      </options>
       <examples>
-        <example>setobs 4 1990:1</example>
+        <example>setobs 4 1990:1 --time-series</example>
         <example>setobs 12 1978:03</example>
-        <example>setobs 20 1:01</example>
+	<example>setobs 1 1 --cross-section</example>
+        <example>setobs 20 1:1 --stacked-time-series</example>
       </examples>
     </usage>
 
     <description>
-      <para context="cli">
-	Forza il programma a interpretare il dataset in uso come serie
-        storiche o panel, invece che come serie semplici non datate.
-	La <repl>periodicità</repl> deve essere un valore intero, mentre
-	<repl>oss-iniziale</repl> è una stringa che rappresenta la data
-        o il numero identificativo panel della prima osservazione. Si
-        veda anche <cmdref targ="panel"/>.
+      <para>
+	Forza il programma a interpretare il dataset in uso secondo la
+        struttura specificata.
       </para>
-      <para context="gui">
-	Questo comando forza il programma a interpretare il
-        dataset in uso come serie storiche o panel, invece che come
-        serie semplici non datate. Servono due parametri: una frequenza
-        intera e una stringa che indica l'osservazione iniziale (di
-        solito una data). Ecco alcuni esempi:</para>
-
-      <table context="gui">
-	<row>
-	  <cell>4 1990:1</cell>
-	  <cell>Interpreta i dati come trimestrali a partire dal 1990,
-	    primo trimestre</cell>
-	</row>
-	<row>
-	  <cell>12 1978:03</cell>
-	  <cell>Interpreta i dati come mensili a partire da Marzo 1978</cell>
-	</row>
-	<row>
-	  <cell>20 1:01</cell>
-	  <cell>Frequenza 20, inizio all'osservazione 1.01 (dati panel)</cell>
-	</row>
-	<row>
-	  <cell>5 1972/01/20</cell>
-	  <cell>Dati giornalieri (settimane di 5 giorni), a partire dal
-          20 Gennaio 1972</cell>
-	</row>
-	<row>
-	  <cell>7 2002/01/20</cell>
-          <cell>Dati giornalieri (settimane di 7 giorni), a partire dal
-          20 Gennaio 2002</cell>
-	</row>
-      </table>
-
+      <para>
+	La <repl>periodicità</repl>, che deve essere un valore intero,
+        nel caso delle serie storiche rappresenta la frequenza delle osservazioni
+        (1 = annuale; 4 = trimestrale; 12 = mensile; 52 = settimanale; 5, 6, o 7 =
+	giornaliera; 24 = oraria). Nel caso di dati panel, la periodicità
+	è il numero di righe per ogni blocco di dati, ossia il numero di
+        unità cross section se i dati sono organizzati come pila di dati
+        cross section, o il numero di periodi se i dati sono organizzati come
+        pila di serie storiche. Nel caso di semplici dati cross section,
+        la periodicità dev'essere impostata a 1.
+      </para>
+      <para>
+	L'osservazione iniziale rappresenta la data iniziale nel caso
+        delle serie storiche. Gli anni possono essere indicati con due
+        o quattro cifre, mentre i sotto-periodi (ad esempio i trimestri
+        o i mesi) devono essere separati dagli anni con un carattere "due punti".
+	Nel caso di dati panel, l'osservazione iniziale va indicata come
+	1:1, mentre nel caso di dati cross section come 1. L'osservazione
+        iniziale per i dati giornalieri o settimanali va indicata nella forma
+	AA/MM/GG o AAAA/MM/GG (oppure semplicemente 1 per i dati non datati).
+      </para>
+      <para>
+	Se non viene usata nessuna opzione per indicare esplicitamente
+        la struttura dei dati, il programma cercherà di riconoscerla automaticamente
+        a partire dalle informazioni indicate.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>Campione/Imposta frequenza e inizio</menu-path>
+      <menu-path>Campione/Struttura dataset</menu-path>
     </gui-access>
 
   </command>
@@ -4819,14 +4969,19 @@
 
   </command>
 
-  <command name="system" section="Estimation" context="cli">
+  <command name="system" section="Estimation" label="Sistemi di equazioni">
 
     <usage>
+      <altforms>
+	<altform><lit>system type=</lit><repl>stimatore</repl></altform>
+	<altform><lit>system name=</lit><repl>nome_sistema</repl></altform>
+      </altforms>
       <arguments>
         <argument>tipo</argument>
         <argument>salva-variabili</argument>
       </arguments>
       <examples>
+	<example>system name="Klein Model 1"</example>
         <example>system type=sur</example>
 	<example>system type=sur save=resids</example>
 	<example>system type=3sls save=resids,fitted</example>
@@ -4834,24 +4989,78 @@
     </usage>
 
     <description>
-      <para>
-	Crea un sistema di equazioni. Al momento sono supportati due tipi di
-        sistemi: <cmd>sur</cmd> (Seemingly Unrelated Regressions:
-        regressioni apparentemente non collegate) e <cmd>3sls</cmd>
-        (Three-Stage Least Squares: minimi quadrati a tre stadi). Nel
-        campo opzionale <cmd>save=</cmd> del comando è possibile
-        specificare se salvare i residui (<cmd>resids</cmd>) e/o
-	i valori stimati (<cmd>fitted</cmd>). Il sistema deve contenere
-        almeno due equazioni specificate con il comando
-        <cmd>equation</cmd> e deve essere chiuso con la riga <cmd>end
-        system</cmd>.</para>
 
-      <para>
-        Nel caso di un sistema minimi quadrati a tre stadi, è possibile fornire
-        un elenco di variabili strumentali, aggiungendo all'interno del blocco
-        <cmd>system</cmd> una riga a sé stante che si apre con la parola chiave
-        <cmd>instr</cmd> e contiene le variabili, indicate per nome o per numero.
+      <para context="gui">Gretl offre la possibilità di stimare sistemi di
+        equazioni, ma al momento solo tramite l'interfaccia a riga di comando.
+        Si veda l'aiuto online per i comandi testuali o il manuale di gretl.
       </para>
+
+      <para context="cli">
+	Inizia un sistema di equazioni. Esistono due versioni del comando,
+        a seconda che si voglia salvare il sistema per poterlo stimare in
+        più modi diversi, oppure stimare il sistema una volta sola.
+      </para>
+
+      <para context="cli">
+	Per salvare il sistema occorre dargli un nome, come nel primo esempio
+        proposto (se il nome contiene spazi, occorre racchiuderlo tra virgolette).
+        In questo caso, è possibile stimare il sistema con il comando
+	<cmdref targ="estimate"/>.</para>
+
+      <para context="cli">
+	In alternativa, è possibile indicare uno stimatore per il sistema
+	usando <lit>type=</lit> seguito da una stringa che identifica uno
+        dei quattro stimatori supportati: <cmd>sur</cmd> (Seemingly
+	Unrelated Regressions - Regressioni apparentemente non collegate),
+        <cmd>3sls</cmd> (Three-Stage Least Squares - Minimi quadrati a tre
+        stadi), <cmd>fiml</cmd> (Full Information Maximum Likelihood - Massima
+        verosimiglianza con informazione completa) o <cmd>liml</cmd> (Limited
+        Information Maximum Likelihood - Massima verosimiglianza con
+        informazione limitata). In questo caso, il sistema viene stimato appena
+        completata la sua definizione.
+      </para>
+
+      <para context="cli">Un sistema di equazioni termina con la riga
+	<cmd>end system</cmd>.  All'interno del sistema possono essere
+        definiti i quattro tipi di istruzioni seguenti.</para>
+
+      <ilist context="cli">
+	<li><para><cmdref targ="equation"/>: specifca un'equazione del sistema.
+	    Occorre indicarne almeno due.</para>
+	</li>
+	<li><para><cmd>instr</cmd>: per i sistemi da stimare con i minimi
+            quadrati a tre stadi, indica la lista degli strumenti (indicati
+            dal nome o dal numero della variabile). In alternativa, è possibile
+	    fornire questa informazione nella riga <cmd>equation</cmd> usando la
+            stessa sintassi accettata dal comando <cmdref targ="tsls"/>.</para>
+	</li>
+	<li><para><cmd>endog</cmd>: per i sistemi di equazioni simultanee, indica
+            la lista delle variabili endogene. È indicato principalmente per
+            la stima FIML, ma può essere usato anche nella stima minimi quadrati
+            a tre stadi al posto dell'istruzione <cmd>instr</cmd>: in questo modo
+            tutte le variabili non identificate come endogene verranno usate come
+            strumenti.</para>
+	</li>
+	<li><para><cmd>identity</cmd>: per la stima FIML, un'identità che collega
+            due o più variabili del sistema. Questo tipo di istruzione è ignorata
+            se viene usato uno stimatore diverso da FIML.
+	  </para>
+	</li>
+      </ilist>
+        
+      <para context="cli">
+        Nel campo opzionale <cmd>save=</cmd> del comando è possibile
+        specificare se salvare i residui (<cmd>resids</cmd>) e/o
+	i valori stimati (<cmd>fitted</cmd>).
+      </para>
+      
+      <para context="cli">Per esempi completi di specificazione e stima
+      di un sistema di equazioni, si vedano gli script
+	<filename>klein.inp</filename> e
+	<filename>greene14_2.inp</filename> forniti con la distribuzione
+        di gretl.
+       </para>
+
     </description>
 
   </command>
@@ -5019,8 +5228,17 @@
       </arguments>
       <options>
         <option>
+	  <flag>--robust</flag>
+	  <effect>errori standard robusti</effect>
+        </option>
+        <option>
+	  <flag>--impulse-responses</flag>
+	  <effect>mostra impulso-risposta</effect>
+        </option>
+        <option>
+        <option>
 	  <flag>--quiet</flag>
-	  <effect>non mostra impulso-risposta ecc.</effect>
+	  <effect>non mostra i risultati</effect>
         </option>
       </options>
       <examples>
@@ -5057,8 +5275,8 @@
       <para context="gui">Viene calcolata una regressione separata per
       ogni variabile del sistema; i risultati comprendono i test F per i
       vincoli di uguaglianza a zero su tutti i ritardi della variabili e
-      un test F per il ritardo massimo, oltre alla scomposizione della
-      varianza della previsione e alle funzioni di
+      un test F per il ritardo massimo, oltre (opzionalmente) alla
+      scomposizione della varianza della previsione e alle funzioni di
       impulso-risposta.</para>  
 
       <para context="cli">
@@ -5084,18 +5302,25 @@
 	Viene calcolata una regressione separata per ognuna delle
         variabili nella <repl>lista-variabili</repl>. Il risultato di
         ogni equazione include i test <mathvar>F</mathvar> per i vincoli
-        di uguaglianza a zero su tutti i ritardi delle variabili; un
-        test <mathvar>F</mathvar> per la significatività del
-        ritardo massimo; la scomposizione della varianza della
-        previsione e le funzioni di impulso-risposta.</para>
+        di uguaglianza a zero su tutti i ritardi delle variabili, un
+        test <mathvar>F</mathvar> per la significatività del ritardo massimo e,
+        se è stata usata l'opzione <lit>--impulse-responses</lit>, la
+        scomposizione della varianza della previsione e le funzioni di
+        impulso-risposta.</para>
 
       <para>
-	Le decomposizioni della varianza e le funzioni di
+	Le decomposizioni della varianza della previsione e le funzioni di
         impulso-risposta sono basate sulla decomposizione di Cholesky
         della matrice di covarianza contemporanea, e in questo contesto
         l'ordine in cui vengono date le variabili stocastiche conta.
 	La prima variabile nella lista viene considerata come la
 	<quote>più esogena</quote> all'interno del periodo.</para> 
+
+      <para context="cli">
+	L'opzione <lit>--quiet</lit> disabilita la visualizzazione dei
+        risultati; può essere utile se usata in uno script che salva
+        il VAR per esaminarlo in seguito.
+      </para>
 
     </description>
 
