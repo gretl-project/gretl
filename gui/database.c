@@ -1598,7 +1598,7 @@ gint populate_dbfilelist (windata_t *ddata)
 	    if (strcmp(fname + n - 4, filter) == 0) {
 		row[0] = fname;
 		row[1] = NULL;
-		if (win->role == NATIVE_DB) {
+		if (ddata->role == NATIVE_DB) {
 		    row[1] = get_descrip(fname, dbdir);
 		}
 		gtk_clist_append(GTK_CLIST (ddata->listbox), row);

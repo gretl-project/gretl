@@ -253,6 +253,8 @@ AC_PROG_LATEX
 test x"${LATEX}" = xyes && AC_DEFINE(HAVE_LATEX)
 if test x"${LATEX}" = xyes ; then
   have_latex=yes
+else
+  have_latex=no
 fi
 
 dnl

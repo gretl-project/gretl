@@ -483,7 +483,7 @@ void get_test_stat_string (GRETLTEST *test, char *str, int format)
 	break;
     case GRETL_TEST_NORMAL_CHISQ:
 	if (tex)
-	    sprintf(str, "$\chi^2_2$ = %g", test->value); 
+	    sprintf(str, "$\\chi^2_2$ = %g", test->value); 
 	else
 	    sprintf(str, "%s(2) = %g", _("Chi-square"), test->value);
 	break;

@@ -137,12 +137,11 @@ char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
 
-# ifdef USE_GNOME
+#ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;
-# else
+#else
 char Rcommand[MAXSTR] = "xterm -e R";
-# endif
 #endif
 
 #ifdef USE_TRAMO

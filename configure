@@ -11272,6 +11272,8 @@ _ACEOF
 
 if test x"${LATEX}" = xyes ; then
   have_latex=yes
+else
+  have_latex=no
 fi
 
 if test "$try_gtk2" = "yes" ; then

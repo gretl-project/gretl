@@ -3249,7 +3249,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
     if (f) { /* not a standard native save */
 	sprintf(line, "store '%s' %s -%c", mydatfile, 
 		(showlist)? storelist : "", f);
-    } else if ((dat_suffix(mydatfile)) { /* saving as ".dat" */
+    } else if (dat_suffix(mydatfile)) { /* saving as ".dat" */
 	sprintf(line, "store '%s' %s -t", mydatfile, 
 		(showlist)? storelist : "");
 	opt = OPT_T;
