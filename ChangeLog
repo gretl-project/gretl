@@ -1,4 +1,4 @@
-version 1.0.7
+04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
   rather than Breusch-Pagan)
 - Fix bug in display of remote database info line (Gtk-2.0 version)
