@@ -95,4 +95,6 @@ int build_path (const char *dir, const char *fname, char *path, const char *ext)
 
 int get_worksheet_data (const char *fname, int datatype, int append);
 
+char *double_underscores (char *targ, const char *src);
+
 #endif /* GUI_UTILS_H */

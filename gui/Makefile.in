@@ -85,13 +85,17 @@ SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
 	dialogs.c fileselect.c gpt_control.c gretl.c guiprint.c \
 	gui_utils.c helpfiles.c library.c model_table.c objectsave.c \
 	selector.c series_view.c session.c settings.c ssheet.c webget.c 
+
+COMMONSRC = objectsave.c objectsave.h model_table.c model_table.h \
+	session.c session.h webget.c webget.h
+
 OBJS = $(SRCS:.c=.o)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(query_gtkextra_lib) $(OBJS) 
+$(PROG): .deps $(query_gtkextra_lib) linksrc $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
 .deps:
@@ -100,6 +104,10 @@ $(PROG): .deps $(query_gtkextra_lib) $(OBJS)
 -include .deps/*.d
 
 .PHONY:
+
+linksrc:
+	cd $(topsrc)/gui && for f in $(COMMONSRC) ; do \
+	  rm -f $$f && $(LN_S) ../gui2/$$f . ; done
 
 gtkextra-lib: 
 	rm -f ./gtkextra && $(LN_S) ./gtkextra-lite ./gtkextra

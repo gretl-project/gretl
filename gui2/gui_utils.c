@@ -2188,7 +2188,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	N_("/Graphs/fitted, actual plot")
     };
     MODEL *pmod = vwin->data;
-    char *vname;
+    char tmp[16];
 
     for (i=0; i<2; i++) {
 	varitem.accelerator = NULL;
@@ -2215,12 +2215,9 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
 	    varitem.item_type = NULL;
-	    vname = menu_escape_varname(datainfo->varname[pmod->list[j]]);
+	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
-		g_strdup_printf(_("%s/against %s"), mpath[i], vname);
-	    if (vname != datainfo->varname[pmod->list[j]]) {
-		free(vname);
-	    }
+		g_strdup_printf(_("%s/against %s"), mpath[i], tmp);
 	    varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
@@ -2229,22 +2226,16 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	/* if the model has two independent vars, offer a 3-D fitted
 	   versus actual plot */
 	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
-	    char *vname2;
+	    char tmp2[16];
 
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = 0;
 	    varitem.item_type = NULL;
-	    vname = menu_escape_varname(datainfo->varname[pmod->list[3]]);
-	    vname2 = menu_escape_varname(datainfo->varname[pmod->list[4]]);
+	    double_underscores(tmp, datainfo->varname[pmod->list[3]]);
+	    double_underscores(tmp2, datainfo->varname[pmod->list[4]]);
 	    varitem.path =
 		g_strdup_printf(_("%s/against %s and %s"),
-				mpath[i], vname, vname2);
-	    if (vname != datainfo->varname[pmod->list[3]]) {
-		free(vname);
-	    }
-	    if (vname2 != datainfo->varname[pmod->list[4]]) {
-		free(vname2);
-	    }
+				mpath[i], tmp, tmp2);
 	    varitem.callback = fit_actual_splot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
@@ -2274,6 +2265,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	N_("/Graphs/Separation")
     };
     gchar *radiopath = NULL;
+    char tmp[16];
 
     dumitem.path = NULL;
 
@@ -2314,8 +2306,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	} 
 
 	dumitem.callback_action = pmod->list[i]; 
-	sprintf(dumitem.path, _("%s/by %s"), mpath[1],  
-		datainfo->varname[pmod->list[i]]);
+	double_underscores(tmp, datainfo->varname[pmod->list[i]]);
+	sprintf(dumitem.path, _("%s/by %s"), mpath[1], tmp);
 	dumitem.callback = plot_dummy_call;	    
 	dumitem.accelerator = NULL;
 	dumitem.item_type = radiopath;
@@ -2989,40 +2981,23 @@ int build_path (const char *dir, const char *fname, char *path,
     return 0;
 }
 
-char *menu_escape_varname (char *vname)
+char *double_underscores (char *targ, const char *src)
 {
-    int n = 0;
-    char *ret, *p;
+    char *p = targ;
 
-    ret = p = vname;
-
-    while (*p) {
-	if (*p == '_') n++;
-	p++;
-    }
-
-    if (n > 0) {
-	ret = malloc(strlen(vname) + 1 + n);
-	if (ret == NULL) {
-	    ret = vname;
+    while (*src) {
+	if (*src == '_') {
+	    *p++ = '_';
+	    *p++ = '_';
 	} else {
-	    char *q = ret;
-
-	    p = vname;
-	    while (*p) {
-		if (*p == '_') {
-		    *q++ = '_';
-		    *q++ = '_';
-		} else {
-		    *q++ = *p;
-		}
-		p++;
-	    }
-	    *q = '\0';
+	    *p++ = *src;
 	}
+	src++;
     }
+    *p = '\0';
 
-    return ret;
+    return targ;
 }
+
 
 

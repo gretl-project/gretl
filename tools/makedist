@@ -18,10 +18,8 @@ cd $parent
 echo "making archive..."
 rm -f gretl/gui/model_table.c gretl/gui/model_table.h
 rm -f gretl/gui/objectsave.c gretl/gui/objectsave.h
+rm -f gretl/gui/session.c gretl/gui/session.h
 rm -f gretl/gui/webget.c gretl/gui/webget.h
-cp gretl/gui2/model_table.c gretl/gui2/model_table.h gretl/gui
-cp gretl/gui2/objectsave.c gretl/gui2/objectsave.h gretl/gui
-cp gretl/gui2/webget.c gretl/gui2/webget.h gretl/gui 
 mv gretl gretl-${version}
 rm -f $tarfile 
 tar cvyfX $tarfile tar_exclude gretl-${version}

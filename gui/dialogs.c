@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "session.h"
 #include "selector.h"
+#include "ssheet.h"
 
 extern const char *version_string;
 
@@ -30,7 +31,6 @@ extern GtkWidget *active_edit_name;
 extern GtkWidget *active_edit_text;
 
 extern int work_done (void); /* library.c */
-extern void show_spreadsheet (DATAINFO *pdinfo);
 
 GtkWidget *open_dialog;
 int session_saved;

@@ -23,6 +23,7 @@
 #include "guiprint.h"
 #include "console.h"
 #include "session.h"
+#include "ssheet.h"
 #include "webget.h"
 
 #include <dirent.h>
@@ -161,8 +162,6 @@ char x12adir[MAXSTR] = "";
 
 static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w) 
 {
-    extern void show_spreadsheet (DATAINFO *pdinfo);  
-  
     show_spreadsheet(NULL);
 }
 

@@ -61,6 +61,7 @@ GtkItemFactoryEntry scalar_view_items[] = {
 
 
 #ifdef G_OS_WIN32
+
 int win_buf_to_clipboard (const char *buf)
 {
     HGLOBAL winclip;
@@ -87,7 +88,9 @@ int win_buf_to_clipboard (const char *buf)
 
     return 0;
 }
+
 #else
+
 static int buf_to_clipboard (const char *buf)
 {
     size_t len;
@@ -106,7 +109,8 @@ static int buf_to_clipboard (const char *buf)
 			    GDK_CURRENT_TIME);
     return 0;
 }
-#endif
+
+#endif /* G_OS_WIN32 */
 
 void free_series_view (gpointer p)
 {
