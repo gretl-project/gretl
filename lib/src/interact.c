@@ -584,7 +584,8 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 		fclose(fq);
 		return 0;
 	    }
-	    pprintf(prn, "%s\n", tmp);
+	    if (*tmp != '@')
+		pprintf(prn, "%s\n", tmp);
 	} while (i);
 	if (ok) {
 	    fclose(fq);

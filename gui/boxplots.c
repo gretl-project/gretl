@@ -145,7 +145,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 
 /* ........................................................... */
 
-static gint popup_activated (GtkWidget *w, gpointer data)
+static gint box_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "group");
@@ -208,7 +208,7 @@ static GtkWidget *build_menu (gpointer data)
     while (items[i]) {
         item = gtk_menu_item_new_with_label(items[i]);
         gtk_signal_connect(GTK_OBJECT(item), "activate",
-                           (GtkSignalFunc) popup_activated,
+                           (GtkSignalFunc) box_popup_activated,
                            items[i]);
 	gtk_object_set_data(GTK_OBJECT(item), "group", data);
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);

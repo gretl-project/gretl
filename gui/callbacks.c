@@ -508,6 +508,19 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+void delete_var_by_id (int id)
+{
+    if (dataset_drop_var(id, &Z, datainfo))
+	errbox("Out of memory reorganizing data set");
+    else {
+	refresh_data();
+	if (id < datainfo->v - 1)
+	    infobox("Take note: variables have been renumbered");
+    }
+}
+
+/* ........................................................... */
+
 void text_copy_callback (GtkWidget *w, gpointer data)
 {
     text_copy(data, COPY_SELECTION, w);

@@ -1146,35 +1146,39 @@ static void set_up_main_menu (void)
 
 /* ........................................................... */
 
+extern void delete_var_by_id (int id); /* callbacks.c */
+
 static gint popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item;
 
     item = (gchar *) data;
-    if (strcmp(item,"Display values") == 0) display_var();
-    if (strcmp(item,"Descriptive statistics") == 0) 
+    if (!strcmp(item, "Display values")) display_var();
+    if (!strcmp(item, "Descriptive statistics")) 
 	do_menu_op(NULL, VAR_SUMMARY, NULL);
-    else if (strcmp(item,"Time series plot") == 0) do_graph_var();
-    else if (strcmp(item,"Frequency distribution") == 0) 
+    else if (!strcmp(item, "Time series plot")) do_graph_var();
+    else if (!strcmp(item, "Frequency distribution")) 
 	do_menu_op(NULL, FREQ, NULL);
-    else if (!strcmp(item,"Frequency plot")) do_freqplot(NULL, 0, NULL);
-    else if (!strcmp(item,"Boxplot"))
+    else if (!strcmp(item, "Frequency plot")) do_freqplot(NULL, 0, NULL);
+    else if (!strcmp(item, "Boxplot"))
 	do_boxplot_var();
-    else if (strcmp(item,"Correlogram") == 0) 
+    else if (!strcmp(item, "Correlogram")) 
 	gretl_callback(NULL, CORRGM, NULL);
-    else if (strcmp(item,"Spectrum") == 0) 
+    else if (!strcmp(item, "Spectrum")) 
 	do_pergm(NULL, 0, NULL);
-    else if (strcmp(item,"Dickey-Fuller test") == 0) 
+    else if (!strcmp(item, "Dickey-Fuller test")) 
 	gretl_callback(NULL, ADF, NULL);
-    else if (strcmp(item,"Runs test") == 0) 
+    else if (!strcmp(item, "Runs test")) 
 	do_menu_op(NULL, RUNS, NULL);
-    else if (strcmp(item,"Rename") == 0) 
+    else if (!strcmp(item, "Rename")) 
 	gretl_callback(NULL, RENAME, NULL);
-    else if (strcmp(item,"Edit label") == 0) 
+    else if (!strcmp(item, "Edit label")) 
 	gretl_callback(NULL, RELABEL, NULL);
-    else if (strcmp(item,"Simulate...") == 0) 
+    else if (!strcmp(item, "Delete")) 
+	delete_var_by_id(mdata->active_var);
+    else if (!strcmp(item, "Simulate...")) 
 	gretl_callback(NULL, SIM, NULL);
-    else if (strcmp(item,"Define new variable...") == 0) 
+    else if (!strcmp(item, "Define new variable...")) 
 	gretl_callback(NULL, GENR, NULL);
     gtk_widget_destroy(mdata->popup);
     return TRUE;
@@ -1197,6 +1201,7 @@ static GtkWidget *build_var_menu (void)
 	"Runs test",
 	"Rename",
 	"Edit label",
+	"Delete",
 	"Simulate...",
 	"Define new variable..."
     };

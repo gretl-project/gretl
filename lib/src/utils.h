@@ -115,6 +115,8 @@ int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo);
 
 int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo);
 
+int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo);
+
 int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo);
 
 int hidden_var (const int i, const DATAINFO *pdinfo);

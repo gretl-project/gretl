@@ -1292,6 +1292,43 @@ int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
+int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo)
+{
+    double *newZ;
+    char **varname;
+    char **label;
+    int i, t, n = pdinfo->n, v = pdinfo->v; 
+
+    free(pdinfo->varname[varno]);
+    if (pdinfo->label[varno] != NULL) 
+	free(pdinfo->label[varno]);
+
+    for (i=varno; i<v-1; i++) {
+	pdinfo->varname[i] = pdinfo->varname[i+1];
+	pdinfo->label[i] = pdinfo->label[i+1];
+	for (t=0; t<n; t++)
+	    (*pZ)[n*i + t] = (*pZ)[n*(i+1) + t];
+    }
+
+    varname = realloc(pdinfo->varname, (v-1) * sizeof(char *));
+    if (varname == NULL) return E_ALLOC;
+    else pdinfo->varname = varname;
+
+    label = realloc(pdinfo->label, (v-1) * sizeof(char *));
+    if (label == NULL) return E_ALLOC;
+    else pdinfo->label = label;
+
+    newZ = realloc(*pZ, (v-1) * n * sizeof *newZ); 
+    if (newZ == NULL) return E_ALLOC;
+    else *pZ = newZ;
+
+    pdinfo->v -= 1;
+
+    return 0;
+}
+
+/* ......................................................  */
+
 int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo)
 {
     double *newZ;

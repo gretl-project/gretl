@@ -724,7 +724,6 @@ struct gui_help_item {
 static struct gui_help_item gui_help_items[] = {
     { GR_PLOT,    "graphing" },
     { GR_XY,      "graphing" },
-    { GR_GNUPLOT, "graphing" },
     { GR_DUMMY,   "factorized" },
     { GR_BOX,     "boxplots" },
     { GR_NBOX,    "boxplots" },
