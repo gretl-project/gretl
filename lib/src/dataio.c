@@ -1106,15 +1106,12 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 static char *
 real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 {
-    static int decpoint;
     double x;
 
 #if 0
     fprintf(stderr, "real_ntodate: t=%d, pd=%d, sd0=%g\n",
 	    t, pdinfo->pd, pdinfo->sd0);
 #endif
-
-    decpoint = get_local_decpoint();
 
     if (calendar_data(pdinfo)) {
 	/* handles both daily and dated weekly data */
@@ -1150,7 +1147,7 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	while ((pdp = pdp / 10)) len++;
 	sprintf(fmt, "%%.%df", len);
 	sprintf(datestr, fmt, x);
-	charsub(datestr, decpoint, ':');
+	colonize_obs(datestr);
     }
     
     return datestr;
