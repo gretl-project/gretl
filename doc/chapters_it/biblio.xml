@@ -91,7 +91,17 @@
       relation='journal'><title>Review of Economic Studies</title>,
       53, pp. 241&ndash;261.</bibliomset>
   </bibliomixed>
-
+  
+  <bibliomixed>
+    <bibliomset relation='article'>Kwiatkowski, D., Phillips, P.C.B.,
+      Schmidt, P. and Shin, Y. (1992) <title>Testing the Null of
+       Stationarity Against the Alternative of a Unit Root: How Sure
+       Are We That Economic Time Series Have a Unit Root?</title>,
+    </bibliomset> <bibliomset relation='journal'><title> Journal of
+       Econometrics</title>, 54, pp. 159&ndash;178.
+    </bibliomset>
+  </bibliomixed>
+   
   <bibliomixed>
     <bibliomset relation='article'>Locke, C. (1976) <title>A Test for
       the Composite Hypothesis that a Population has a Gamma
