@@ -4080,8 +4080,18 @@ int gui_exec_line (char *line,
     if (*plstack) { 
 	get_cmd_ci(line, &command);
     } else {
-	/* FIXME: record model-command "genr"s in case of CONSOLE_EXEC? */
-	getcmd(line, datainfo, &command, &ignore, &Z, NULL);
+	if (exec_code == CONSOLE_EXEC) {
+	    /* catch any model-related genr commands */
+	    PRN *genprn;
+
+	    bufopen(&genprn);
+	    getcmd(line, datainfo, &command, &ignore, &Z, genprn);
+	    if (strlen(genprn->buf)) 
+		add_command_to_stack(genprn->buf);
+	    gretl_print_destroy(genprn);
+	} else {
+	    getcmd(line, datainfo, &command, &ignore, &Z, NULL);
+	}
     }
 
     if (command.ci < 0) return 0; /* nothing there, or comment */

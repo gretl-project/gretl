@@ -4051,15 +4051,26 @@ int gui_exec_line (char *line,
 #endif
 
     /* parse the command line */
-    strncpy(linecopy, line, 1023);
-    linecopy[1023] = '\0';
+    *linecopy = 0;
+    strncat(linecopy, line, sizeof linecopy - 1);
     catchflag(line, &oflag);
 
     /* but if we're stacking commands for a loop, parse "lightly" */
     if (*plstack) { 
 	get_cmd_ci(line, &command);
     } else {
-	getcmd(line, datainfo, &command, &ignore, &Z, cmdprn);
+	if (exec_code == CONSOLE_EXEC) {
+	    /* catch any model-related genr commands */
+	    PRN *genprn;
+
+	    bufopen(&genprn);
+	    getcmd(line, datainfo, &command, &ignore, &Z, genprn);
+	    if (strlen(genprn->buf)) 
+		add_command_to_stack(genprn->buf);
+	    gretl_print_destroy(genprn);
+	} else {
+	    getcmd(line, datainfo, &command, &ignore, &Z, NULL);
+	}
     }
 
     if (command.ci < 0) return 0; /* nothing there, or comment */
