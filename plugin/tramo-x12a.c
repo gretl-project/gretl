@@ -25,6 +25,7 @@ const char *x12a_descrip_formats[] = {
 };
 
 const char *default_mdl = {
+    "# ARIMA specifications that will be tried\n"
     "(0 1 1)(0 1 1) X\n"
     "(0 1 2)(0 1 1) X\n"
     "(2 1 0)(0 1 1) X\n"
