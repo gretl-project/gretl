@@ -716,15 +716,16 @@ int redundant_var (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, int trim)
  * @pdinfo: information on the data set.
  * @ci: command index (see gretl_commands.h)
  * @opts: option flags: 
- *   if & OPT_R compute robust standard errors;
- *   if & OPT_C force use of Cholesky decomp;
- *   if & OPT_A treat as auxiliary regression (don't bother checking
+ *   OPT_R compute robust standard errors;
+ *   OPT_C force use of Cholesky decomp;
+ *   OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
- *   if & OPT_P use Prais-Winsten for first obs.
- *   if & OPT_N don't use degrees of freedom correction for standard
+ *   OPT_P use Prais-Winsten for first obs.
+ *   OPT_N don't use degrees of freedom correction for standard
  *      error of regression
- *   if & OPT_M reject missing observations within sample range
- *   if & OPT_Z (internal use) suppress elimination of collinear vars
+ *   OPT_M reject missing observations within sample range
+ *   OPT_Z (internal use) suppress the automatic elimination of 
+ *      perfectly collinear variables
  * @rho: coefficient for rho-differencing the data (0.0 for no
  * differencing)
  *

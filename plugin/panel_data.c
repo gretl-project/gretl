@@ -98,8 +98,6 @@ static int haus_alloc (hausman_t *haus, int ns)
     return 0;
 }   
 
-/* .................................................................. */
-
 static void print_panel_coeff (const MODEL *pmod, 
 			       const char *vname,
 			       int i, PRN *prn)
@@ -114,7 +112,8 @@ static void print_panel_coeff (const MODEL *pmod,
 	    pmod->coeff[i], errstr, pvstr);
 }
 
-/* .................................................................. */
+/* construct a version of the dataset from which the group means
+   are subtracted */
 
 static DATAINFO *
 within_groups_dataset (const MODEL *pmod, const double **Z, 
@@ -126,9 +125,8 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
     int t, bigt;
 
 #if PDEBUG
-    fprintf(stderr, "creating within-groups dataset: \n"
-	    "nvar=%d, nobs=%d, *wZ=%p\n", pmod->list[0],
-	    pmod->nobs, (void *) *wZ);
+    fprintf(stderr, "within_groups_dataset: nvar=%d, nobs=%d, *wZ=%p\n", 
+	    pmod->list[0], pmod->nobs, (void *) *wZ);
 #endif
 
     winfo = create_new_dataset(wZ, pmod->list[0], pmod->nobs, 0);
@@ -170,7 +168,6 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 	    fprintf(stderr, "xbar for var %d, unit %d = %g\n", 
 		    pmod->list[j], i, xbar);
 #endif
-
 	    for (t=0; t<T; t++) {
 		bigt = panel_index(i, t);
 		if (!na(pmod->uhat[bigt])) {
@@ -183,19 +180,10 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 	}
     }
 
-#if PDEBUG
-    double min5 = 0.0;
-    double max5 = 0.0;
-    for (t=0; t<winfo->n; t++) {
-	if ((*wZ)[5][t] > max5) max5 = (*wZ)[5][t];
-	if ((*wZ)[5][t] < min5) min5 = (*wZ)[5][t];
-    }
-    fprintf(stderr, "min5 = %g, max5 = %g\n", min5, max5);
-#endif
-	
-
     return winfo;
 }
+
+/* construct a mini-dataset containing thee group means */
 
 static DATAINFO *
 group_means_dataset (const MODEL *pmod, 
@@ -208,9 +196,8 @@ group_means_dataset (const MODEL *pmod,
     int t, bigt;
 
 #if PDEBUG
-    fprintf(stderr, "group_means_variance: creating dataset\n"
-	    " nvar=%d, nobs=%d, *gZ=%p\n", pmod->list[0],
-	    effn, (void *) *gZ);
+    fprintf(stderr, "group_means_dataset: nvar=%d, nobs=%d, *gZ=%p\n", 
+	    pmod->list[0], effn, (void *) *gZ);
 #endif
 
     ginfo = create_new_dataset(gZ, pmod->list[0], effn, 0);
@@ -278,11 +265,6 @@ group_means_variance (const int *list, double ***gZ, DATAINFO *ginfo)
 
     gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A, 0.0);
 
-#if PDEBUG
-    fprintf(stderr, "gmv: lsq errcode was %d\n", gmmod.errcode);
-    fprintf(stderr, "meanmod.sigma = %g\n", gmmod.sigma);
-#endif
-
     if (gmmod.errcode == 0) {
 	gmvar = gmmod.sigma * gmmod.sigma;
     }
@@ -293,20 +275,23 @@ group_means_variance (const int *list, double ***gZ, DATAINFO *ginfo)
     return gmvar;
 }
 
-/* .................................................................. */
+/* skip_const: skip over the intercept, if the regression has one -- but
+   it will not have one when the fixed effects model is estimated using
+   a dataset from which the group means have been subtracted */
 
 static void 
-vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits, int subt)
+vcv_slopes (hausman_t *haus, MODEL *pmod, int nunits, int subt,
+	    int skip_const)
 {
     int i, j, k = 0;
 
     for (i=0; i<haus->ns; i++) {
 	for (j=i; j<haus->ns; j++) {
-	    int idx = ijton(i + 1, j + 1, pmod->ncoeff);
+	    int idx = ijton(i + skip_const, j + skip_const, pmod->ncoeff);
 
 #if PDEBUG
-	    fprintf(stderr, "setting sigma[%d] using vcv[%d] (%d, %d) = %g\n",
-		    k, idx, i+2, j+2, pmod->vcv[idx]);
+	    fprintf(stderr, "setting sigma[%d] using vcv[%d] = %g\n",
+		    k, idx, pmod->vcv[idx]);
 #endif
 	    if (subt) {
 		haus->sigma[k++] -= pmod->vcv[idx];
@@ -400,7 +385,7 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     /* should we use a set of unit dummy variables, or subtract
        the group means? */
 
-    if (ndum <= 100 || ndum < pmod->list[0]) {
+    if (ndum <= 20 || ndum < pmod->list[0]) {
 	*usedum = 1;
     } else {
 	*usedum = 0;
@@ -429,15 +414,21 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    felist[i] = i;
 	}
 
-	printlist(felist, "felist");
-	
-	lsdv = lsq(felist, &wZ, winfo, OLS, OPT_A, 0.0);
+	/* OPT_Z: do not automatically eliminate perfectly
+	   collinear variables */
+	lsdv = lsq(felist, &wZ, winfo, OLS, OPT_A | OPT_Z, 0.0);
 
-	printlist(lsdv.list, "lsdv.list");
-
-	if (lsdv.errcode == 0) {
+	if (lsdv.errcode) {
+	    ; /* pass on */
+	} else if (lsdv.list[0] < felist[0]) {
+	    /* one or more variables were dropped, because they were
+	       all zero -- this is a symptom of collinearity */
+	    lsdv.errcode = E_SINGULAR;
+	} else {
 	    double sdcorr = sqrt((double) lsdv.dfd / (lsdv.dfd - nunits));
 
+	    /* we estimated a bunch of group means, and have to
+	       subtract that many degrees of freedom */
 	    lsdv.dfd -= nunits;
 	    lsdv.dfn += nunits; 
 
@@ -446,7 +437,6 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    for (i=0; i<lsdv.ncoeff; i++) {
 		lsdv.sderr[i] *= sdcorr;
 	    }
-
 #if PDEBUG
 	    printmodel(&lsdv, winfo, OPT_NONE, prn);
 #endif
@@ -514,11 +504,7 @@ fixed_effects_model (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    felist[pmod->list[0] + i + 1] = oldv + i;
 	}
 
-#if PDEBUG
-	printlist(felist, "felist");
-#endif
-
-	lsdv = lsq(felist, pZ, pdinfo, OLS, OPT_A, 0.0);
+	lsdv = lsq(felist, pZ, pdinfo, OLS, OPT_A | OPT_Z, 0.0);
 
 #if PDEBUG
 	if (lsdv.errcode == 0) {
@@ -585,7 +571,6 @@ fixed_effects_variance (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (i=1; i<pmod->list[0] - 1; i++) {
 	    int vi = pmod->list[i+2];
 
-	    /* FIXME indexing here!!! */
 	    j = (usedum)? i : i - 1;
 	    print_panel_coeff(&lsdv, pdinfo->varname[vi], j, prn);
 	    if (haus != NULL && haus->bdiff != NULL) {
@@ -617,11 +602,11 @@ fixed_effects_variance (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	} else {
 	    pprintf(prn, "%s\n", _("Group means were subtracted from the data"));
-	    ndum = nunits - 1; /* ?? */
+	    ndum = nunits - 1;
 	}
 
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
-		lsdv.ess, lsdv.nobs, lsdv.ncoeff, var);
+		lsdv.ess, lsdv.nobs, pmod->ncoeff + ndum, var);
 	F = (pmod->ess - lsdv.ess) * lsdv.dfd / (lsdv.ess * ndum);
 	pprintf(prn, _("Joint significance of unit dummy variables:\n"
 		       " F(%d, %d) = %g with p-value %g\n"), ndum,
@@ -633,7 +618,7 @@ fixed_effects_variance (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (haus != NULL) {
 	    makevcv(&lsdv);
 	    haus->sigma_e = lsdv.sigma;
-	    vcv_slopes(haus, &lsdv, nunits, 0);
+	    vcv_slopes(haus, &lsdv, nunits, 0, usedum);
 	}
     }
 
@@ -720,10 +705,6 @@ static int random_effects (const MODEL *pmod,
 	reZ[0][t] -= theta;
     }
 
-#if PDEBUG
-    fprintf(stderr, "random_effects: about to run OLS\n");
-#endif
-
     remod = lsq(relist, &reZ, reinfo, OLS, OPT_A, 0.0);
 
     if ((err = remod.errcode)) {
@@ -742,7 +723,7 @@ static int random_effects (const MODEL *pmod,
 	    }
 	}
 	makevcv(&remod);
-	vcv_slopes(haus, &remod, nunits, 1);
+	vcv_slopes(haus, &remod, nunits, 1, 1);
     }
 
     clear_model(&remod);
@@ -1012,10 +993,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     breusch_pagan_LM(pmod, pdinfo, nunits, unit_obs, T, effT, prn);
-
-#if PDEBUG
-    fprintf(stderr, "panel_diagnostics: done breusch_pagan_LM()\n");
-#endif
 
     if (xdf <= 0) {
 	pprintf(prn, "Omitting group means regression: "

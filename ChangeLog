@@ -7,6 +7,9 @@ version 1.3.3
   ("press a key to continue" mechanism was invoked erroneously)
 - Fix bug: wrong variable shown when you select "Display actual,
   fitted, residual" for a GARCH model
+- Fix bug: hausman test for pooled model would crash if there
+  were not sufficient degrees of freedom to estimate the group
+  means model
 - Fixes for appending data (make more flexible: allow appending of
   observations and/or variables)
 - Fixes for cointegration tests: improve dialogs and prevent crash
