@@ -61,6 +61,8 @@ static double genr_corr (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod);
+static int genr_mpow (const char *str, double *xvec, double **pZ, 
+		      DATAINFO *pdinfo);
 static void genr_msg (GENERATE *pgenr, int nv);
 static int ismatch (int lv, const int *list);
 static void varerror (const char *ss);
@@ -98,7 +100,8 @@ enum transformations {
     T_COV,
     T_MEDIAN,
     T_ZEROMISS,
-    T_PVALUE
+    T_PVALUE,
+    T_MPOW
 };
 
 enum retrieve {
@@ -152,6 +155,7 @@ static char *math[] = {
     "median",
     "zeromiss",
     "pvalue",
+    "mpow",
     NULL
 };
 
@@ -882,6 +886,15 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
+			break;
+		    }
+		    if (nt == T_MPOW) {
+			genr.scalar = 0;
+			err = genr_mpow(sexpr, genr.xvec, *pZ, pdinfo);
+			if (err) {
+			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
+			    return E_INVARG;
+			}
 			break;
 		    }
 		    if (nt == T_COEFF || nt == T_STDERR) {
@@ -2482,6 +2495,56 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
     }
     free(rhot);
     return 0;
+}
+
+/* ...................................................... */
+
+# include <dlfcn.h>
+
+static int genr_mpow (const char *str, double *xvec, double **Z, 
+		      DATAINFO *pdinfo)
+{
+    int err, v, pwr;
+    char vname[9];
+    void *handle = NULL;
+    int (*mp_raise) (const double *, double *, int, int);
+    
+    if (sscanf(str, "%[^,],%d", vname, &pwr) != 2) {
+	return 1;
+    }
+
+    v = varindex(pdinfo, vname);
+    if (v >= pdinfo->v) {
+	return 1;
+    } 
+
+#ifdef FIXME
+    if (open_plugin(ppaths, "mp_ols", &handle)) {
+        pprintf(prn, _("Couldn't access GMP plugin\n"));
+        return 1;
+    }
+#else
+    handle = dlopen("/opt/esl/share/gretl/plugins/mp_ols.so", RTLD_LAZY);
+    if (handle == NULL) {
+        fprintf(stderr, _("Couldn't access GMP plugin\n"));
+        return 1;
+    }
+#endif
+
+    mp_raise = 
+	get_plugin_function("mp_vector_raise_to_power", handle);
+
+    if (mp_raise == NULL) {
+        fprintf(stderr, _("Couldn't load plugin function\n"));
+        close_plugin(handle);
+        return 1;
+    }
+
+    err = mp_raise (Z[v], xvec, pdinfo->n, pwr);
+
+    close_plugin(handle);
+    
+    return err;
 }
 
 /* ...................................................... */

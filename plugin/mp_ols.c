@@ -299,6 +299,42 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 }
 
 /**
+ * mp_vector_raise_to_power:
+ * @srcvec: source vector (doubles)
+ * @targvec: vector to be filled in with results
+ * @n: length of vector
+ * @power: integer power to which elements of @srcvec should
+ * be raised, using multiple precision arithmetic.
+ *
+ * Returns: 0 on success, error code on failure.
+ */
+
+int mp_vector_raise_to_power (const double *srcvec, double *targvec,
+			      int n, int pwr)
+{
+    int t;
+    mpf_t src, targ;
+
+    mpf_init (src);
+    mpf_init (targ);
+
+    for (t=0; t<n; t++) {
+	if (na(srcvec[t])) {
+	    targvec[t] = NADBL;
+	    continue;
+	}
+	mpf_set_d (src, srcvec[t]);
+	mpf_pow_ui(targ, src, (unsigned long) pwr);
+	targvec[t] = mpf_get_d (targ);
+    }
+
+    mpf_clear (src);
+    mpf_clear (targ);
+
+    return 0;
+}
+
+/**
  * mplsq:
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
@@ -777,6 +813,3 @@ static int mp_rearrange (int *list)
     }
     return 0;
 }
-
-
-
