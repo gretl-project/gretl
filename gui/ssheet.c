@@ -444,7 +444,6 @@ static void get_data_from_sheet (void)
 	n = datainfo->n;
     }
     if (newvars > 0) {
-	/*  g_print("%d vars added\n", newvars); */
 	if (dataset_add_vars(newvars, &Z, datainfo)) {
 	    errbox(_("Failed to allocate memory for new data"));
 	    return;
@@ -457,6 +456,7 @@ static void get_data_from_sheet (void)
     }
     for (i=0; i<datainfo->v-1; i++) {
 	for (t=0; t<n; t++) {
+	    if (datainfo->vector[i+1] == 0 && t > 0) continue;
 	    celltext = gtk_sheet_cell_get_text(sheet, t, i);
 	    if (celltext != NULL)
 		Z[i+1][t] = atof(celltext);
@@ -505,6 +505,7 @@ static void add_data_to_sheet (GtkWidget *w)
     /* enter the data values */
     for (t=0; t<n; t++) {
 	for (i=0; i<datainfo->v-1; i++) {
+	    if (datainfo->vector[i+1] == 0 && t > 0) continue;
 	    xx = Z[i+1][t];
 	    if (!na(xx)) 
 		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[i+1][t]);
