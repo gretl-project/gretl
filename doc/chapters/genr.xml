@@ -71,7 +71,7 @@
 	  </inlinemediaobject>
 	</inlineequation> for
         <inlineequation>
-	  <alt role="tex">$\underline{\omega} < |\omega| < \overline{\omega}$</alt>
+	  <alt role="tex">$\underline{\omega} &lt; |\omega| &lt; \overline{\omega}$</alt>
 	  <inlinemediaobject>
 	    <imageobject>
 	      <imagedata align="center" fileref="figures/bk2b"/>

@@ -9,6 +9,10 @@ version 1.3.2
   a valid latex executable was available
 - Fix bug: gretl console would not respond in case of an error when
   executing a command loop
+- Fix bug: the "restrict" command failed in the GUI program when
+  not applied to a named equation system
+- Fix bug: printing "-inf" for AIC and BIC in case of a perfect
+  linear fit
 - Fix various issues in relaton to nested loops (for example, where 
   the control variable for a given loop is not yet defined at compile
   time, but will be defined in an embedding loop)  
