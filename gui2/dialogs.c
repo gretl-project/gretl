@@ -3150,7 +3150,13 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	opt = OPT_S;
     } else if (dwinfo->structure == STACKED_CROSS_SECTION) {
 	opt = OPT_C;
+    } else if (dwinfo->structure == CROSS_SECTION) {
+	opt = OPT_X;
     }
+
+#if DWDEBUG
+    fprintf(stderr, "setline = '%s', opt = %ld\n", setline, opt);
+#endif
 
     err = set_obs(setline, datainfo, opt);
 
@@ -3612,6 +3618,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 			step = DW_PANEL_MODE;
 		    }
 		} else {
+		    dwinfo->pd = 1;
 		    step = DW_CONFIRM;
 		}		
 	    } else if (step == DW_TS_FREQUENCY) {

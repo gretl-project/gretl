@@ -751,6 +751,8 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	pdinfo->structure = STACKED_CROSS_SECTION;
     } else if (opt == OPT_T) {
 	pdinfo->structure = TIME_SERIES;
+    } else if (opt == OPT_X) {
+	pdinfo->structure = CROSS_SECTION;
     } else if (pdinfo->sd0 >= 1.0) {
         pdinfo->structure = TIME_SERIES; /* guessing; might be panel? */
     } else {
