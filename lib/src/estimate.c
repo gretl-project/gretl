@@ -1554,12 +1554,12 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 		fprintf(stderr, "didn't add to list\n");
 	    else {
 		err = 0;
-		list[1] = v;
 	    }
 	}
     }
 
     if (!err) {
+	list[1] = v; 
 	/* run auxiliary regression and print results */
 	white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
 	err = white.errcode;
