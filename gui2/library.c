@@ -1407,6 +1407,41 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     }
 }
 
+void do_vif (gpointer data, guint u, GtkWidget *w)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
+    void *handle;
+    int err;
+    PRN *prn;
+
+    print_vifs = gui_get_plugin_function("print_vifs", &handle);
+    if (print_vifs == NULL) {
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }	
+	
+    err = (*print_vifs)(pmod, &Z, datainfo, prn);
+    close_plugin(handle);
+
+    if (!err) {
+	windata_t *vwin;
+
+	vwin = view_buffer(prn, 78, 400, _("gretl: variance inflation factors"), 
+			   PRINT, NULL); 
+
+	strcpy(line, "vif");
+	model_command_init(line, &cmd, pmod->ID);
+    } else {
+	errbox(_("Command failed"));
+    }
+}
+
 /* ........................................................... */
 
 static void do_chow_cusum (gpointer data, int code)
@@ -5318,6 +5353,14 @@ int gui_exec_line (char *line,
 	err = leverage_test(models[0], &Z, datainfo, outprn, NULL, cmd.opt);
 	if (err > 1) errmsg(err, prn);
 	else if (cmd.opt) varlist(datainfo, prn);
+	break;
+
+    case VIF:
+	if ((err = script_model_test(cmd.ci, 0, prn))) break;
+	err = vif_test(models[0], &Z, datainfo, outprn);
+	if (err) {
+	    errmsg(err, prn);
+	}
 	break;
 
     case LMTEST:

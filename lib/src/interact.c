@@ -221,6 +221,7 @@ static int aliased (char *cmd)
                        c == RESTRICT || \
                        c == SYSTEM || \
                        c == LEVERAGE || \
+                       c == VIF || \
                        c == MODELTAB || \
                        c == NLS || \
                        c == DATA || \

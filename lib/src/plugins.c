@@ -30,6 +30,7 @@ enum {
     P_GNUMERIC_IMPORT,
     P_JOHANSEN,
     P_LAD,
+    P_VIF,
     P_LEVERAGE,
 #ifdef WIN32
     P_LONGNAME,
@@ -67,6 +68,7 @@ struct plugin_info plugins[] = {
     { P_GNUMERIC_IMPORT, "gnumeric_import" },
     { P_JOHANSEN,        "johansen" },
     { P_LAD,             "lad" },
+    { P_VIF,             "vif" },
     { P_LEVERAGE,        "leverage" },
 #ifdef WIN32
     { P_LONGNAME,        "longname" },
@@ -102,6 +104,9 @@ struct plugin_function plugin_functions[] = {
     /* influential observations */
     { "model_leverage",       P_LEVERAGE },
     { "leverage_data_dialog", P_LEVERAGE },
+
+    /* variance inflation factors (collinearity) */
+    { "print_vifs", P_VIF },
 
     /* GMP (multiple precision) */
     { "mplsq",                    P_MP_OLS },

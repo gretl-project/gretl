@@ -1171,6 +1171,14 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	}
 	break;
 
+    case VIF:
+	if ((err = model_test_start(cmd.ci, 0, prn))) break;
+	err = vif_test(models[0], &Z, datainfo, prn);
+	if (err) {
+	    errmsg(err, prn);
+	}
+	break;
+
     case LMTEST:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */

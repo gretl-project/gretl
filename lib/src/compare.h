@@ -96,6 +96,10 @@ int hausman_test (MODEL *pmod,
 		  double ***pZ, DATAINFO *pdinfo, 
 		  PRN *prn);
 
+int vif_test (MODEL *pmod, 
+	      double ***pZ, DATAINFO *pdinfo, 
+	      PRN *prn);
+
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, PATHS *ppaths, 

@@ -278,7 +278,7 @@ static int parse_as_while_loop (LOOPSET *loop,
 
     if (!err) {
 	if (numeric_string(rvar)) {
-	   loop->rval = atof(rvar);
+	   loop->rval = dot_atof(rvar);
 	} else { 
 	    /* try a varname */
 	    loop->rvar = ok_loop_var(pdinfo, rvar);

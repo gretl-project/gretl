@@ -418,9 +418,11 @@ static int least_signif_coeff (const MODEL *pmod)
 	    k = i;
 	}
     }
+
     if (tprob(tmin, pmod->dfd) > .10) {
 	return pmod->list[k+2];
     }
+
     return 0;
 }
 
@@ -429,25 +431,16 @@ static int least_signif_coeff (const MODEL *pmod)
 static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo, 
 			   PRN *prn)
 {
-    if (!TEX_FORMAT(prn->format)) {
-	int k = pmod->ncoeff - pmod->ifc;
+    int k = pmod->ncoeff - pmod->ifc;
 
-	if (k < 2) return;
+    if (k < 2) return;
 
-	if ((k = least_signif_coeff(pmod))) {
-	    char tmp[128];
+    if ((k = least_signif_coeff(pmod))) {
+	char tmp[128];
 
-	    if (PLAIN_FORMAT(prn->format)) {
-		sprintf(tmp, _("Excluding the constant, p-value was highest "
-			"for variable %d (%s)"), k, pdinfo->varname[k]);
-		pprintf(prn, "%s\n\n", tmp);
-	    }
-	    else if (RTF_FORMAT(prn->format)) {
-		sprintf(tmp, I_("Excluding the constant, p-value was highest "
-			"for variable %d (%s)"), k, pdinfo->varname[k]);
-		pprintf(prn, "\\par %s\\par\n", tmp);
-	    }
-	}
+	sprintf(tmp, _("Excluding the constant, p-value was highest "
+		       "for variable %d (%s)"), k, pdinfo->varname[k]);
+	pprintf(prn, "%s\n\n", tmp);
     }
 }
 
@@ -1521,7 +1514,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
     }
 
-    if (pmod->ci != ARMA && pmod->ci != NLS) {
+    if (PLAIN_FORMAT(prn->format) && 
+	pmod->ci != ARMA && pmod->ci != NLS) {
 	pval_max_line(pmod, pdinfo, prn);
     }
 

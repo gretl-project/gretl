@@ -1551,6 +1551,44 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+/**
+ * vif_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Calculates and displays the Variance Inflation Factors for
+ * the independent variables in the given model.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ *
+ */
+
+int vif_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    void *handle;
+    int (*print_vifs) (MODEL *, double ***, DATAINFO *, PRN *);
+    int err;
+
+    *gretl_errmsg = '\0';
+
+    print_vifs = get_plugin_function("print_vifs", &handle);
+    if (print_vifs == NULL) {
+	return 1;
+    }
+
+    err = (*print_vifs)(pmod, pZ, pdinfo, prn);
+
+    close_plugin(handle);
+
+    if (err && *gretl_errmsg == '\0') {
+	gretl_errmsg_set(_("Command failed"));
+    }
+
+    return err;
+}
+
 int make_mp_lists (const LIST list, const char *str,
 		   int **reglist, int **polylist)
 {

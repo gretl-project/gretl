@@ -57,6 +57,7 @@ PLUGINSRC = \
 	gnumeric_import.c \
 	johansen.c \
 	lad.c \
+	vif.c \
 	leverage.c \
 	mp_ols.c \
 	panel_data.c \
@@ -86,7 +87,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
 	plugins/logistic.dll plugins/tobit.dll plugins/garch.dll \
-        plugins/audio.dll
+        plugins/audio.dll plugins/vif.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -243,6 +244,10 @@ plugins/range-mean.dll: range-mean.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 plugins/lad.dll: lad.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
+
+plugins/vif.dll: vif.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
 

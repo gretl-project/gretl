@@ -123,6 +123,7 @@ enum gretl_cmd_codes {
     VAR,
     VARLIST,
     VARTEST,
+    VIF,
     WLS,
     NC
 };
@@ -169,6 +170,7 @@ enum gretl_cmd_codes {
                         c == RUNS || \
                         c == SPEARMAN || \
                         c == TESTUHAT || \
+                        c == VIF || \
                         c == VARTEST)
 
 #define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)

@@ -14,6 +14,8 @@ version 1.3.0
 - add a genr "special": genr markers = ... can be used to
   manipulate the observation marker strings -- details in
   panel.pdf
+- add "vif" command to calculate Variance Inflation Factors
+  for independent variables in a regression
 - switch to St Louis Fed database as gretl "sample" database
   (the BCIH database is getting too out-of-date)
 - add the Anscombe Quartet to the gretl data files

@@ -121,6 +121,8 @@ void do_model (GtkWidget *widget, gpointer p);
 
 void do_arma (int v, int ar, int ma, gretlopt opts);
 
+void do_vif (gpointer data, guint u, GtkWidget *w);
+
 void do_leverage (gpointer data, guint u, GtkWidget *w);
 
 void add_leverage_data (windata_t *vwin);
