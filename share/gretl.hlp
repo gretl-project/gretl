@@ -1014,11 +1014,16 @@ If you choose "Sample/Restrict based on criterion..." you need to supply a
 Boolean (logical) expression, of the same sort that you would use to define a
 dummy variable.  For example the expression "sqft > 1400" will select only
 cases for which the variable sqft has a value greater than 1400.  Conditions
-may be concatenated using the logical operators "&" (AND) and "|" (OR).
+may be concatenated using the logical operators "&" (AND) and "|" (OR), and
+may be negated using "!" (NOT).
 
 The menu item "Sample/Drop all obs with missing values" redefines the sample
 to exclude all observations for which values of one or more variables are
-missing (leaving only complete cases).
+missing (leaving only complete cases).  
+
+To select observations for which a particular variable has no missing values,
+use "Sample/Restrict based on criterion..." and supply the Boolean condition
+"!missing(varname)".
 
 One point should be noted about defining a sample based on a dummy variable, a
 Boolean expression, or on the missing values criterion: Any "structural"
