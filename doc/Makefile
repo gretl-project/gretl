@@ -62,7 +62,7 @@ manual-a4.xml: manual.xml
 
 cmdbook_it.pdf: cmdbook_it.tex jadetex.cfg lucidabr.tex
 
-cmdbook_it.tex: cmdbook_it.xml $(CMDREF_WRAPPER) $(DSL) $(MATHSS) $(CMDLIST_STANDALONE)
+cmdbook_it.tex: cmdbook_it.xml $(CMDREF_WRAPPER) $(ALTDSL) $(MATHSS) $(CMDLIST_STANDALONE)
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 

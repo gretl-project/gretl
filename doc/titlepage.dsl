@@ -1,3 +1,4 @@
+;; BOOK titlepage
 
 (mode book-titlepage-recto-mode
   (element abbrev
@@ -358,6 +359,173 @@
       use: book-titlepage-recto-style
       quadding: %division-title-quadding%
       (process-children)))
+)
+
+;; ARTICLE titlepage
+
+(mode article-titlepage-recto-mode
+
+  (element affiliation
+    (make display-group
+      use: book-titlepage-recto-style
+      (process-children)))
+
+  (element author
+    (let ((author-name  (author-string))
+	  (author-affil (select-elements (children (current-node)) 
+					 (normalize "affiliation"))))
+      (make sequence      
+	(make paragraph
+	  use: book-titlepage-recto-style
+	  font-size: (HSIZE 3)
+	  line-spacing: (* (HSIZE 3) %line-spacing-factor%)
+	  space-before: (* (HSIZE 6) %head-before-factor%)
+	  quadding: %division-title-quadding%
+	  keep-with-next?: #t
+	  (literal author-name))
+	(process-node-list author-affil))))
+
+  (element othercredit
+    (let ((othercredit-name  (author-string))
+	  (othercredit-contrib (select-elements (children (current-node)) 
+					 (normalize "contrib"))))
+      (make sequence      
+	(make paragraph
+	  use: book-titlepage-recto-style
+	  font-size: (HSIZE 3)
+	  line-spacing: (* (HSIZE 3) %line-spacing-factor%)
+	  space-before: (* (HSIZE 6) %head-before-factor%)
+	  quadding: %division-title-quadding%
+	  keep-with-next?: #t
+	  (literal othercredit-name))
+	(process-node-list othercredit-contrib))))
+
+  (element copyright
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (literal (gentext-element-name (current-node)))
+      (literal "\no-break-space;")
+      (literal (dingbat "copyright"))
+      (literal "\no-break-space;")
+      (process-children)))
+
+  (element (copyright year)
+    (make sequence
+      (process-children)
+      (if (not (last-sibling? (current-node)))
+	  (literal ", ")
+	  (literal (string-append " " (gentext-by) " ")))))
+  
+  (element (copyright holder) ($charseq$))
+
+  (element date
+    (make paragraph
+      use: book-titlepage-recto-style
+      space-before: (* (HSIZE 8) %head-before-factor%)
+      quadding: %division-title-quadding%
+      (process-children)))
+
+  (element edition
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)
+      (literal "\no-break-space;")
+      (literal (gentext-element-name-space (gi (current-node))))))
+
+;;  (element firstname
+;;    (make paragraph
+;;      use: book-titlepage-recto-style
+;;      quadding: %division-title-quadding%
+;;      (process-children)))
+
+  (element legalnotice
+    (make display-group
+      use: book-titlepage-recto-style
+      ($semiformal-object$)))
+
+  (element (legalnotice title) (empty-sosofo))
+
+  (element (legalnotice para)
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: 'justify
+      line-spacing: (* 0.8 (inherited-line-spacing))
+      font-size: (* 0.8 (inherited-font-size))
+      space-before: (* 4 (inherited-line-spacing))
+      (process-children)))
+
+  (element modespec (empty-sosofo))
+
+  (element orgdiv
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)))
+
+  (element orgname
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)))
+
+;;  (element othercredit
+;;    (make paragraph
+;;      use: book-titlepage-recto-style
+;;      font-size: (HSIZE 3)
+;;      line-spacing: (* (HSIZE 3) %line-spacing-factor%)
+;;      space-before: (* (HSIZE 6) %head-before-factor%)
+;;      quadding: %division-title-quadding%
+;;      (process-children)))
+
+  (element othername
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)))
+
+  (element pubdate
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)))
+
+  (element releaseinfo
+    (make paragraph
+      use: book-titlepage-recto-style
+      quadding: %division-title-quadding%
+      (process-children)))
+
+  (element subtitle 
+    (make paragraph
+      use: book-titlepage-recto-style
+      font-size: (HSIZE 4)
+      line-spacing: (* (HSIZE 4) %line-spacing-factor%)
+      space-before: (* (HSIZE 4) %head-before-factor%)
+      quadding: %division-subtitle-quadding%
+      keep-with-next?: #t
+      (process-children-trim)))
+
+;;  (element surname
+;;    (make paragraph
+;;      use: book-titlepage-recto-style
+;;      quadding: %division-title-quadding%
+;;      (process-children)))
+
+  (element title 
+    (make paragraph
+      use: book-titlepage-recto-style
+      font-size: (HSIZE 8)
+      line-spacing: (* (HSIZE 8) %line-spacing-factor%)
+      space-before: (* (HSIZE 8) %head-before-factor%)
+      space-after: (* (HSIZE 2) %line-spacing-factor%)
+      quadding: %division-title-quadding%
+      keep-with-next?: #t
+      heading-level: (if %generate-heading-level% 1 0)
+      (with-mode title-mode
+	(process-children-trim))))
+
 )
 
 

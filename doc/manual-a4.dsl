@@ -128,6 +128,17 @@
         (normalize "subtitle")
         (normalize "author")
         (normalize "date")))
+
+;; These elements appear in this order on the title page of an article.
+(define (article-titlepage-recto-elements)
+  (list
+        (normalize "title")
+        ;; (normalize "graphic")
+        (normalize "subtitle")
+        (normalize "author")
+        (normalize "othercredit")
+        (normalize "date")
+        (normalize "legalnotice")))
         
 (define %footnote-size-factor% 
   ;; When printing footnotes, the current font size is multiplied by the
