@@ -730,6 +730,9 @@
 	  graph of the distribution is displayed.  
       </para>
 
+      <para role="bodge">&nbsp;</para>
+      <!-- BODGE to make genr section title not an orphan -->
+
       </sect2>
 
     <sect2 id="genr"><title>genr</title>

@@ -1,6 +1,6 @@
   <chapter id="graphs-plots"><title>Graphs and plots</title>
 
-  <sect1 id="gnuplot_graphs"><title>Gnuplot graphs</title>
+  <sect1 id="gnuplot-graphs"><title>Gnuplot graphs</title>
 
     <para>A separate program, namely gnuplot, is called to generate
       graphs. Gnuplot is a very full-featured graphing program with

@@ -313,6 +313,31 @@
 (element application ($mono-seq$))
 (element command ($mono-seq$))
 
+;; chop out "bodge" empty paras inserted to correct JadeTeX's
+;; bad page-breaking
+(define ($paragraph$ #!optional (para-wrapper "P"))
+  (if (and (attribute-string (normalize "role"))
+           (equal? (attribute-string (normalize "role")) "bodge"))
+      (empty-sosofo)
+      (let ((footnotes (select-elements (descendants (current-node)) 
+                                    (normalize "footnote")))
+        (tgroup (have-ancestor? (normalize "tgroup"))))
+    (make sequence
+      (make element gi: para-wrapper
+            attributes: (append
+                         (if %default-quadding%
+                             (list (list "ALIGN" %default-quadding%))
+                             '()))
+            (process-children))
+      (if (or %footnotes-at-end% tgroup (node-list-empty? footnotes))
+          (empty-sosofo)
+          (make element gi: "BLOCKQUOTE"
+                attributes: (list
+                             (list "CLASS" "FOOTNOTES"))
+                (with-mode footnote-mode
+                  (process-node-list footnotes))))))
+        ))
+
 &htmlmath.dsl;
 
 ;; end of html stylesheet customization

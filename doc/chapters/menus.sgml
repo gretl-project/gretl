@@ -18,17 +18,19 @@
 	      native <application>gretl</application> data file or
 	      import from other formats.  See <xref
 		linkend="datafiles"/>.</para></listitem>
-	  <listitem><para><guimenuitem>Save data</guimenuitem>: Save the
-	      currently open native <application>gretl</application> 
-	      data file.</para></listitem>
-	  <listitem><para><guimenuitem>Save data as</guimenuitem>: Write out the
-	      current data set in native format, with the option of
-	      using gzip data compression or storing the data in
-	      binary format. See <xref linkend="datafiles"/>. </para></listitem>
-	  <listitem><para><guimenuitem>Export data</guimenuitem>: Write out the
-	      current data set in Comma Separated Values (CSV) format, or
-	      the formats of GNU R or GNU
-	      Octave.  See <xref linkend="datafiles"/> and also <xref
+	  <listitem><para><guimenuitem>Save data</guimenuitem>: Save
+	      the currently open native
+	      <application>gretl</application> data
+	      file.</para></listitem>
+	  <listitem><para><guimenuitem>Save data as</guimenuitem>:
+	      Write out the current data set in native format, with
+	      the option of using gzip data compression or storing the
+	      data in binary format. See <xref linkend="datafiles"/>.
+	    </para></listitem>
+	  <listitem><para><guimenuitem>Export data</guimenuitem>:
+	      Write out the current data set in Comma Separated Values
+	      (CSV) format, or the formats of GNU R or GNU Octave. See
+	      <xref linkend="datafiles"/> and also <xref
 		linkend="app-c"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Clear data set</guimenuitem>:
 	      Clear the current data set out of memory.  Generally you
@@ -66,9 +68,9 @@
 	      messaging about the availability of program updates.
 	      Configure or turn on/off the main-window
 	      toolbar.</para></listitem>
-  <listitem><para><guimenuitem>Exit</guimenuitem>: Quit the program.
-      If expert mode is not selected you'll be prompted to save any
-      unsaved work.</para></listitem>
+          <listitem><para><guimenuitem>Exit</guimenuitem>: Quit the program.
+             If expert mode is not selected you'll be prompted to save any
+             unsaved work.</para></listitem>
 	</itemizedlist>
       </listitem>
 
@@ -109,7 +111,6 @@
 	</para></listitem>
     </itemizedlist>
   </listitem>
-
 
   <listitem><para><guimenu>Session menu</guimenu> This is discussed
       separately below. Please see <xref linkend="session"/>.
