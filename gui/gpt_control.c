@@ -2221,6 +2221,10 @@ static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
     if (plot_has_controller(plot)) {
 	plot->spec->ptr = NULL;
 	gtk_widget_destroy(gpt_control);
+    } else {
+        /* no controller: take responsibility for freeing the
+           plot specification */
+        free_plotspec(plot->spec);
     }
 
     if (plot->zoom) free(plot->zoom);

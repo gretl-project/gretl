@@ -849,7 +849,7 @@ void graphmenu_state (gboolean s)
 static void time_series_menu_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/Data/Graph specified vars/Time-series plot...", s);
+	flip(mdata->ifac, "/Data/Graph specified vars/Time series plot...", s);
 	flip(mdata->ifac, "/Variable/Time series plot", s);
 	flip(mdata->ifac, "/Variable/Correlogram", s);
 	flip(mdata->ifac, "/Variable/Spectrum", s);
@@ -860,6 +860,7 @@ static void time_series_menu_state (gboolean s)
 #ifdef HAVE_TRAMO
 	flip(mdata->ifac, "/Variable/TRAMO analysis", s);
 #endif
+	flip(mdata->ifac, "/Variable/Runs test", s);
 	flip(mdata->ifac, "/Model/Cochrane-Orcutt...", s);
 	flip(mdata->ifac, "/Model/Hildreth-Lu...", s);
 	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
@@ -937,11 +938,17 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 	gint selcount = get_mdata_selection();
 
 	if (selcount == 1) {
-	    if (mdata->popup) g_free(mdata->popup);
+	    if (mdata->popup) {
+		gtk_widget_destroy(mdata->popup);
+	    }
 	    mdata->popup = build_var_popup();
 	    gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	} else if (selcount > 1) {
+	    if (selection_popup) {
+		gtk_widget_destroy(selection_popup);
+	    }
+	    build_selection_popup();
 	    gtk_menu_popup(GTK_MENU(selection_popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	}
@@ -1349,7 +1356,7 @@ static GtkWidget *build_var_popup (void)
 
     for (i=0; i<n_items; i++) {
 	if (!dataset_is_time_series(datainfo) && (i == 2 ||
-	    i == 6 || i == 7 || i == 8)) {
+	    i == 6 || i == 7 || i == 8 || i == 9)) {
 	    continue;
 	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));

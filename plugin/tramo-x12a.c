@@ -32,10 +32,11 @@ typedef enum {
 } opt_codes;
 
 typedef enum {
-    D11,     /* seasonally adjusted series */
-    D12,     /* trend/cycle */
-    D13,     /* irregular component */
-    TRIGRAPH /* graph showing all of the above */
+    D11,      /* seasonally adjusted series */
+    D12,      /* trend/cycle */
+    D13,      /* irregular component */
+    TRIGRAPH, /* graph showing all of the above */
+    XAXIS     /* x-axis (time) variable for graphing */
 } tx_objects;
 
 const char *x12a_series_strings[] = {
@@ -270,60 +271,75 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    /* FIXME tics? */
-
     if (opt == TRAMO) {
 	fputs("# TRAMO/SEATS tri-graph (no auto-parse)\n", fp);
     } else {
 	fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
     }
 
+    if (pdinfo->pd == 4) {
+	if ((pdinfo->t2 - pdinfo->t1) / 4 < 8) {
+	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set mxtics 4\n", fp);
+	}
+    }
+    if (pdinfo->pd == 12) {
+	if ((pdinfo->t2 - pdinfo->t1) / 12 < 8) {
+	    fputs("set xtics nomirror 0,1\n", fp); 
+	    fputs("set mxtics 12\n", fp);
+	}
+    }
+
     fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.32\n", fp);
 
     /* irregular component */    
     if (opt == TRAMO) {
-	fprintf(fp, "plot '-' using 1 title '%s' w impulses\n", I_("irregular"));
+	fprintf(fp, "plot '-' using 1:2 title '%s' w impulses\n", I_("irregular"));
     } else {
 	char title[32];
 
 	sprintf(title, "%s - 1", I_("irregular"));
 	fprintf(fp, "set bars 0\n"
 		"set origin 0.0,0.0\n"
-		"plot '-' using ($1-1.0) title '%s' w impulses\n",
+		"plot '-' using 1:($2-1.0) title '%s' w impulses\n",
 		title);
     }
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "%g\n", Z[D13 + 1][t]);
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D13 + 1][t]);
     }
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
 
     /* actual vs trend/cycle */
     fprintf(fp, "set origin 0.0,0.33\n"
-	    "plot '-' using 1 title '%s' w l, \\\n"
-	    " '-' using 1 title '%s' w l\n",
+	    "plot '-' using 1:2 title '%s' w l, \\\n"
+	    " '-' using 1:2 title '%s' w l\n",
 	    pdinfo->varname[0], I_("trend/cycle"));
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[0][t]);
-    fprintf(fp, "e , \\\n");
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[D12 + 1][t]);
-    fprintf(fp, "e\n");
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
+    }
+    fputs("e , \\\n", fp);
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D12 + 1][t]);
+    }
+    fputs("e\n", fp);
 
     /* actual vs seasonally adjusted */
     fprintf(fp, "set origin 0.0,0.66\n"
-	    "plot '-' using 1 title '%s' w l, \\\n"
-	    " '-' using 1 title '%s' w l\n",
+	    "plot '-' using 1:2 title '%s' w l, \\\n"
+	    " '-' using 1:2 title '%s' w l\n",
 	    pdinfo->varname[0], I_("adjusted"));
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[0][t]);
-    fprintf(fp, "e\n");
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	fprintf(fp, "%g\n", Z[D11 + 1][t]);
-    fprintf(fp, "e\n");
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[0][t]);
+    }
+    fputs("e\n", fp);
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	fprintf(fp, "%g %g\n", Z[XAXIS][t], Z[D11 + 1][t]);
+    }
+    fputs("e\n", fp);
 
-    fprintf(fp, "set nomultiplot\n");
+    fputs("set nomultiplot\n", fp);
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "pause -1\n");
+    fputs("pause -1\n", fp);
 #endif
 
 #ifdef ENABLE_NLS
@@ -492,17 +508,17 @@ static int write_tramo_file (const char *fname,
 		i += startper - 1;
 	    }
 	    if (na(Z[varnum][t])) {
-		fprintf(fp, "-99999 ");
+		fputs("-99999 ", fp);
 	    } else {
 		fprintf(fp, "%g ", Z[varnum][t]);
 	    }
 	    t++;
 	}
-	fputs("\n", fp);
+	fputc('\n', fp);
     }
 
     /* FIXME: make these values configurable */
-    fprintf(fp, "$INPUT lam=-1,iatip=1,aio=2,va=3.3,noadmiss=1,seats=2,$\n");
+    fputs("$INPUT lam=-1,iatip=1,aio=2,va=3.3,noadmiss=1,seats=2,$\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -540,12 +556,12 @@ static int write_spc_file (const char *fname,
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[varnum]);
     fprintf(fp, " start=%d.%d\n", startyr, startper);
-    fprintf(fp, " data=(\n");
+    fputs(" data=(\n", fp);
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(Z[varnum][t])) {
-	    fprintf(fp, "-99999 "); /* FIXME? */
+	    fputs("-99999 ", fp); /* FIXME? */
 	} else {
 	    fprintf(fp, "%g ", Z[varnum][t]);
 	}
@@ -637,6 +653,18 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     }
 
     return 0;
+}
+
+static int make_x_axis_var (double ***pZ, DATAINFO *pdinfo)
+{
+    switch (pdinfo->pd) {
+    case 4:
+	return plotvar(pZ, pdinfo, "qtrs");
+    case 12:
+	return plotvar(pZ, pdinfo, "months");
+    default:
+	return plotvar(pZ, pdinfo, "time");
+    }
 }
 
 int write_tx_data (char *fname, int varnum, 
@@ -755,7 +783,10 @@ int write_tx_data (char *fname, int varnum,
 					   errmsg);
 	    }
 	    if (request.opt[TRIGRAPH].save) {
-		err = graph_series(tmpZ, tmpinfo, paths, opt);
+		err = make_x_axis_var(&tmpZ, tmpinfo);
+		if (!err) {
+		    err = graph_series(tmpZ, tmpinfo, paths, opt);
+		}
 		if (!err) *graph = 1;
 	    }
 	}

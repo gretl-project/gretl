@@ -649,9 +649,11 @@ int gnuplot (LIST list, const int *lines,
 	_init_model(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
-	    /* is the fit significant? */
+	    /* is the fit significant? or is it a fitted-actual
+	       graph from a simple regression? */
 	    b = plotmod.coeff[1];
-	    if (tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
+	    if (opt == OPT_FA ||
+		tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
 		ols_ok = 1;
 		a = plotmod.coeff[2];
 	    }
@@ -688,15 +690,21 @@ int gnuplot (LIST list, const int *lines,
 	}
     }
 
-    /* titling and so on */
-
     fprintf(fq, "set xlabel '%s'\n", xlabel);
     fputs("set xzeroaxis\n", fq); 
     fputs("set missing \"?\"\n", fq);
 
     if (lo == 2) {
-	if (ols_ok) 
-	    make_gtitle(fq, GTITLE_VLS, pdinfo->varname[list[1]], xlabel);
+	/* only two variables */
+	if (ols_ok) {
+	    if (opt == OPT_FA) {
+		make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[1]], 
+			    pdinfo->varname[list[2]]);
+	    } else {
+		make_gtitle(fq, GTITLE_VLS, pdinfo->varname[list[1]], 
+			    xlabel);
+	    }
+	}
 	if (opt == OPT_RESID) {
 	    make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
 	    fprintf(fq, "set ylabel '%s'\n", I_("residual"));
@@ -710,11 +718,13 @@ int gnuplot (LIST list, const int *lines,
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	fputs("set key left top\n", fq);
     } else if (opt == OPT_FA) {
-	if (list[3] == pdinfo->v - 1) /* x var is just time or index */
+	if (list[3] == pdinfo->v - 1) {
+	    /* x var is just time or index */
 	    make_gtitle(fq, GTITLE_AF, pdinfo->varname[list[2]], NULL);
-	else
+	} else {
 	    make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[2]], 
 			pdinfo->varname[list[3]]);
+	}
 	fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[2]]);
 	fputs("set key left top\n", fq);	
     } else {
@@ -725,7 +735,8 @@ int gnuplot (LIST list, const int *lines,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? list[lo - 1] : list[lo];
+    xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? 
+	list[lo - 1] : list[lo];
 
     if (isdummy((*pZ)[xvar], t1, t2)) {
 	fputs("set xrange[-1:2]\n", fq);	
@@ -742,7 +753,8 @@ int gnuplot (LIST list, const int *lines,
 	xrange = xmax - xmin;
     }
 
-    if (tscale) { /* two or more vars plotted against time */
+    if (tscale) { 
+	/* two or more vars plotted against time */
 	double ymin[6], ymax[6];
 	int oddcount;
 
@@ -806,7 +818,9 @@ int gnuplot (LIST list, const int *lines,
 	    }
 	    if (!pdist) { 
 		withstring[0] = '\0';
-		if ((gui)? lines[i-1] : lines[0]) strcpy(withstring, "w lines");
+		if ((gui)? lines[i-1] : lines[0]) {
+		    strcpy(withstring, "w lines");
+		}
 	    }
 	    fprintf(fq, " '-' using 1:($2) title '%s' %s", 
 		    s1, withstring);
@@ -1159,7 +1173,7 @@ int plot_fcast_errs (int n, const double *obs,
 #endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "pause -1\n");
+    fputs("pause -1\n", fp);
 #endif
     fclose(fp);
 

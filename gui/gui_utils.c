@@ -1746,14 +1746,17 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	varitem.accelerator = NULL;
 	varitem.callback_action = 0; 
 	varitem.item_type = NULL;
-	if (dataset_is_time_series(datainfo))
+	if (dataset_is_time_series(datainfo)) {
 	    sprintf(varitem.path, _("%s/against time"), mpath[i]);
-	else
+	} else {
 	    sprintf(varitem.path, _("%s/by observation number"), mpath[i]);
-	if (i == 0)
+	}
+	if (i == 0) {
 	    varitem.callback = resid_plot; 
-	else
+	} else {
 	    varitem.callback = fit_actual_plot;
+	}
+
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 
 	varstart = (i == 0)? 1 : 2;
@@ -1768,10 +1771,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.item_type = NULL;
 	    sprintf(varitem.path, _("%s/against %s"), mpath[i], 
 		    datainfo->varname[pmod->list[j]]);
-	    if (i == 0)
+	    if (i == 0) {
 		varitem.callback = resid_plot; 
-	    else
+	    } else {
 		varitem.callback = fit_actual_plot;
+	    }
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	}
     }

@@ -2729,35 +2729,52 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     int ts = dataset_is_time_series(datainfo);
+    int add_fitted = 1;
 
-    /* add fitted values to data set temporarily */
-    if (add_fit_resid(pmod, 1, 1)) return;
+    /* special case: simple regression */
+    if (xvar && pmod->list[0] == 3) {
+	add_fitted = 0;
+	plot_list[0] = 2;
+	plot_list[1] = pmod->list[1];
+	plot_list[2] = xvar;
+	lines[0] = lines[1] = 0;
+    }
 
-    /* common part of list setup */
-    plot_list[0] = 3;
-    plot_list[1] = datainfo->v - 1; /* last var added */
-    plot_list[2] = pmod->list[1];   /* depvar from regression */
+    if (add_fitted) {
+	/* add fitted values to data set temporarily */
+	if (add_fit_resid(pmod, 1, 1)) return;
+	plot_list[0] = 3;
+	plot_list[1] = datainfo->v - 1; /* last var added */
+	plot_list[2] = pmod->list[1];   /* depvar from regression */
 
-    if (xvar) {  /* plot against specified xvar */
-	plot_list[3] = xvar;
-	lines[0] = (pmod->list[0] == 3)? 1 : 0;
-	lines[1] = 0;
-    } else { /* plot against obs */
-	err = plotvar(&Z, datainfo, (ts)? "time" : "index");
-	if (err) {
-	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_vars(1, &Z, datainfo);
-	    return;
-	}
-	plot_list[3] = varindex(datainfo, (ts)? "time" : "index");
-	lines[0] = (ts)? 1 : 0; 
-	lines[1] = (ts)? 1 : 0;
-    } 
+	if (xvar) {  
+	    /* plot against specified xvar */
+	    plot_list[3] = xvar;
+	    /* is it a simple regression? */
+	    lines[0] = (pmod->list[0] == 3)? 1 : 0;
+	    lines[1] = 0;
+	} else { 
+	    /* plot against obs */
+	    err = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	    if (err) {
+		errbox(_("Failed to add plotting index variable"));
+		dataset_drop_vars(1, &Z, datainfo);
+		return;
+	    }
+	    plot_list[3] = varindex(datainfo, (ts)? "time" : "index");
+	    lines[0] = (ts)? 1 : 0; 
+	    lines[1] = (ts)? 1 : 0;
+	} 
+    }
 
     err = gnuplot(plot_list, lines, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, OPT_FA);
-    if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+
+    if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
 
     dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
 }

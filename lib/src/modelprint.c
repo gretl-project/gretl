@@ -1137,14 +1137,24 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
+
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
-	if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
-	    if (pmod->ldepvar) dhline(pmod, prn);
-	    else dwline(pmod, prn);
+
+	if (dataset_is_time_series(pdinfo)) {
+	    if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
+		if (pmod->ldepvar) {
+		    dhline(pmod, prn);
+		} else {
+		    dwline(pmod, prn);
+		}
+	    }
+	    /* FIXME -- check output below */
+	    if (pmod->ci == HCCM || pmod->ci == TSLS) {
+		dwline(pmod, prn);
+	    }
 	}
-	/* FIXME -- check output below */
-	if (pmod->ci == HCCM || pmod->ci == TSLS) dwline(pmod, prn);
+
 	print_middle_table_end(prn);
 
 	if (pmod->ci == TSLS && PLAIN_FORMAT(prn->format)) {
@@ -1163,7 +1173,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	}
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
-	dwline(pmod, prn);
+	if (dataset_is_time_series(pdinfo)) {
+	    dwline(pmod, prn);
+	}
 	print_middle_table_end(prn);
 
 	original_stats_message(prn);
