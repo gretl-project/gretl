@@ -21,6 +21,8 @@
 
 #include "gretl.h"
 #include "gretlwin32.h"
+#include "textutil.h"
+
 #include <dirent.h>
 
 #define HUSH_RUNTIME_WARNINGS
@@ -462,7 +464,7 @@ static int win_copy_buf (char *buf, int format, size_t buflen)
 
     EmptyClipboard();
 
-    if (doing_nls() && format == COPY_TEXT || format == COPY_TEXT_AS_RTF) { 
+    if (doing_nls() && (format == COPY_TEXT || format == COPY_TEXT_AS_RTF)) { 
 	tr = my_locale_from_utf8(buf);
 	if (tr == NULL) {
 	    CloseClipboard();

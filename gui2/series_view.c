@@ -22,7 +22,12 @@
 #include "gretl.h"
 #include "textutil.h"
 #include "dlgutils.h"
+
+#ifdef G_OS_WIN32
+#include "gretlwin32.h"
+#else
 #include "clipboard.h"
+#endif
 
 typedef struct {
     char label[OBSLEN];
