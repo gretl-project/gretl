@@ -2395,13 +2395,6 @@ static void model_menu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/Graphs", s);
     flip(ifac, "/Model data/Display actual, fitted, residual", s);
     flip(ifac, "/Model data/Forecasts with standard errors", s);
-    /* FIXME below ... */
-    flip(ifac, "/Model data/Add to data set/residuals", s);
-    flip(ifac, "/Model data/Add to data set/squared residuals", s);
-    flip(ifac, "/Model data/Add to data set/error sum of squares", s);
-    flip(ifac, "/Model data/Add to data set/standard error of residuals", s);
-    flip(ifac, "/Model data/Add to data set/R-squared", s);
-    flip(ifac, "/Model data/Add to data set/T*R-squared", s);    
 }
 
 /* ........................................................... */
