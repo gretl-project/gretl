@@ -145,6 +145,7 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat,
     const double *Xi;
     double fit;
 
+    pmod->ess = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	fit = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
@@ -159,13 +160,13 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat,
 	pmod->uhat[t] = Z[pmod->list[1]][t] - fit;
 	/* for cross-equation vcv */
 	gretl_matrix_set(uhat, pmod->ID, t - pmod->t1, pmod->uhat[t]);
-    }
-
-    pmod->ess = 0.0;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
     }
+
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+
+    fprintf(stderr, "model %d: SSR = %g, sigma = %g\n", pmod->ID, 
+	    pmod->ess, pmod->sigma);
 }
 
 static int 
