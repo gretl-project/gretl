@@ -112,11 +112,10 @@ print "Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"; Workin
 
 print "\n[Registry]\n";
 print "; Start \"gretl\" keys under HKEY_CURRENT_USER and HKEY_CLASSES_ROOT.\n"; 
-print "Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
-print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
-print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"userdir\"; ValueData: \"{app}\\user\\\"\n";   
@@ -146,40 +145,40 @@ print "\"Png_font\"; ValueData: \"verdana 8\"\n";
 # Establish file associations
 
 # first for data files...
-print "Root: HKCR; Subkey: \".gdt\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \".gdt\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"GretlDataFile\"; Flags: uninsdeletevalue\n"; 
-print "Root: HKCR; Subkey: \".gdt\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \".gdt\"; ValueType: string; ";
 print "ValueName: \"Content Type\"; ValueData: \"application/x-gretldata\"\n";
-print "Root: HKCR; Subkey: \"GretlDataFile\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \"GretlDataFile\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"Gretl data file\"; Flags: uninsdeletekey\n";
-print "Root: HKCR; Subkey: \"GretlDataFile\\DefaultIcon\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \"GretlDataFile\\DefaultIcon\"; ValueType: string; ";
 print "ValueName: \"\"; ValueData: \"{app}\\gretlw32.exe,1\"\n"; 
-print "Root: HKCR; Subkey: \"GretlDataFile\\shell\\open\\command\"; ";
+print "Root: HKCU; Subkey: \"GretlDataFile\\shell\\open\\command\"; ";
 print "ValueType: string; ValueName: \"\"; ValueData: ";
 print "\"\"\"{app}\\gretlw32.exe\"\" \"\"%1\"\"\"\n";
 
 # then for session files
-print "Root: HKCR; Subkey: \".gretl\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \".gretl\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"GretlSessionFile\"; Flags: uninsdeletevalue\n"; 
-print "Root: HKCR; Subkey: \".gretl\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \".gretl\"; ValueType: string; ";
 print "ValueName: \"Content Type\"; ValueData: \"application/x-gretlsession\"\n"; 
-print "Root: HKCR; Subkey: \"GretlSessionFile\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \"GretlSessionFile\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"Gretl session file\"; Flags: uninsdeletekey\n";
-print "Root: HKCR; Subkey: \"GretlSessionFile\\DefaultIcon\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \"GretlSessionFile\\DefaultIcon\"; ValueType: string; ";
 print "ValueName: \"\"; ValueData: \"{app}\\gretlw32.exe,2\"\n"; 
-print "Root: HKCR; Subkey: \"GretlSessionFile\\shell\\open\\command\"; ";
+print "Root: HKCU; Subkey: \"GretlSessionFile\\shell\\open\\command\"; ";
 print "ValueType: string; ValueName: \"\"; ValueData: ";
 print "\"\"\"{app}\\gretlw32.exe\"\" -r \"\"%1\"\"\"\n";
 
 # and for simple script files
-print "Root: HKCR; Subkey: \".inp\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \".inp\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"GretlScriptFile\"; Flags: uninsdeletevalue\n"; 
-print "Root: HKCR; Subkey: \".inp\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \".inp\"; ValueType: string; ";
 print "ValueName: \"Content Type\"; ValueData: \"application/x-gretlscript\"\n"; 
-print "Root: HKCR; Subkey: \"GretlScriptFile\"; ValueType: string; ValueName: ";
+print "Root: HKCU; Subkey: \"GretlScriptFile\"; ValueType: string; ValueName: ";
 print "\"\"; ValueData: \"Gretl script file\"; Flags: uninsdeletekey\n";
-print "Root: HKCR; Subkey: \"GretlScriptFile\\DefaultIcon\"; ValueType: string; ";
+print "Root: HKCU; Subkey: \"GretlScriptFile\\DefaultIcon\"; ValueType: string; ";
 print "ValueName: \"\"; ValueData: \"{app}\\gretlw32.exe,2\"\n"; 
-print "Root: HKCR; Subkey: \"GretlScriptFile\\shell\\open\\command\"; ";
+print "Root: HKCU; Subkey: \"GretlScriptFile\\shell\\open\\command\"; ";
 print "ValueType: string; ValueName: \"\"; ValueData: ";
 print "\"\"\"{app}\\gretlw32.exe\"\" -r \"\"%1\"\"\"\n";
