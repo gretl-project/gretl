@@ -86,28 +86,74 @@ void tex_dcolumn_double (double xx, char *numstr)
     }
 }
 
+static void tex_make_cname (const char *orig, char *cname)
+{
+    char *p;
+    unsigned char c;
+
+    if (orig == NULL || strlen(orig) == 0) return;
+
+    p = strrchr(orig, '_');
+    if (p == NULL) {
+	tex_escape(cname, orig);
+	return;
+    }
+
+    c = (unsigned char) *(p + 1);
+
+    if (isdigit(c)) {
+	int lag = atoi(++p);
+
+	sprintf(cname, "$u_{t-%d}^2$", lag);
+    } else {
+	tex_escape(cname, orig);
+    }
+}
+
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-		      int c, PRN *prn)
+		     int c, PRN *prn)
 {
     char tmp[16], coeff[32], sderr[32];
     double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
-    
-    tmp[0] = '\0';
-    tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
 
+    *tmp = 0;
+    if (pmod->aux == AUX_ARCH) {
+	tex_make_cname(pdinfo->varname[pmod->list[c]], tmp);
+    } else {
+	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
+    }
+	
     tex_dcolumn_double(pmod->coeff[c-1], coeff);
     tex_dcolumn_double(pmod->sderr[c-1], sderr);
 
-    pprintf(prn, "%s &\n"
-	    "  %s &\n"
-	    "    %s &\n"
-	    "      %.4f &\n"
-	    "        %.4f \\\\\n",  
-	    tmp,
-	    coeff,
-	    sderr,
-	    t_ratio,
-	    tprob(t_ratio, pmod->dfd));	
+    if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
+	pprintf(prn, "%s &\n"
+		"  %s &\n"
+		"    %s &\n"
+		"      %.4f &\n"
+		"        %.4f \\\\\n",  
+		tmp,
+		coeff,
+		sderr,
+		t_ratio,
+		tprob(t_ratio, pmod->dfd));	
+    } else { /* LOGIT, PROBIT */
+	char slope[32];
+
+	if (pmod->list[c]) {
+	    tex_dcolumn_double(pmod->slope[c-1], slope);
+	}
+	pprintf(prn, "%s &\n"
+		"  %s &\n"
+		"    %s &\n"
+		"      %.4f &\n"
+		"        %s \\\\\n",  
+		tmp,
+		coeff,
+		sderr,
+		t_ratio,
+		(pmod->list[c])? slope : "");
+    }
 
     return 0;
 }

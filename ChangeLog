@@ -6,6 +6,7 @@ version 1.0rc1
   (not "gretl2", "gretl2_x11")
 - revamp and internationalize TeX and RTF printing functions
   including those for summary stats and correlation matrix
+- make TeX format available for all model windows
 - remove HTML print/copy options: can't maintain four formats
   with internationalization!
 

@@ -1646,21 +1646,11 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	model_rtf_copy_state(vwin->ifac, pmod->ci == OLS || 
-			     pmod->ci == CORC || pmod->ci == HILU ||
-			     pmod->ci == WLS || pmod->ci == HSK ||
-			     pmod->ci == HCCM);
-			     
-	model_latex_copy_state(vwin->ifac, 
-			       pmod->ci == OLS || pmod->ci == CORC ||
-			       pmod->ci == HILU);
+	model_rtf_copy_state(vwin->ifac, !pmod->errcode);
+	model_latex_copy_state(vwin->ifac, !pmod->errcode);
+	latex_menu_state(vwin->ifac, !pmod->errcode);
 
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
-
-	latex_menu_state(vwin->ifac, !pmod->errcode && (pmod->ci == OLS || 
-					    pmod->ci == POOLED ||
-					    pmod->ci == CORC || 
-					    pmod->ci == HILU));
 
 	lmmenu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
 

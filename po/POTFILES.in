@@ -1,6 +1,5 @@
 lib/src/calendar.c
 lib/src/compare.c
-lib/src/daily.c
 lib/src/dataio.c
 lib/src/describe.c
 lib/src/discrete.c
@@ -67,7 +66,6 @@ gui2/webget.c
 plugin/des_import.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
-plugin/ignore.c
 plugin/import_common-2.c
 plugin/import_common.c
 plugin/longname.c
