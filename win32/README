@@ -26,7 +26,8 @@ to libxml, libreadline, zlib and gtkextra. See
   See http://www.jrsoftware.org/
 
 * The gnuplot for win32 distribution.  
-  See ftp://ftp.gnuplot.info/pub/gnuplot/
+  See ftp://ricardo.ecn.wfu.edu/pub/gretl/winbuild/ or
+  ftp://ftp.gnuplot.info/pub/gnuplot/
 
 
 2. Modifications to scripts:

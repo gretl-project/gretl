@@ -2,7 +2,7 @@
 
 # Shell script to make gretl win32 distribution
 
-GNUPLOT_ZIPFILE=/home/ftp/pub/gp372w32.zip
+GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp372w32.zip
 INNO_EXE="c:/Userdata/Inno Setup 2/ISCC.exe"
 TOPDIR=..
 
