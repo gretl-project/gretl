@@ -377,6 +377,7 @@ int pca_from_corrmat (CORRMAT *corrmat, double ***pZ,
 		int t;
 
 		sprintf(pdinfo->varname[newv], "PC%d", i);
+		make_varname_unique(pdinfo->varname[newv], newv, pdinfo);
 		sprintf(VARLABEL(pdinfo, newv), "Component with "
 			"eigenvalue = %.4f", evals[pcnum]);
 		for (t=0; t<pdinfo->n; t++) {
