@@ -219,7 +219,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
     }
 
     if ((omit->ci == OLS || omit->ci == HCCM) && 
-	omit->dfn > 0 && omitvars[0] > 1) {
+	omit->dfn > 0 && omitvars[0] > 0) {
 	pprintf(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i=1; i<=omitvars[0]; i++) {
@@ -233,7 +233,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		    fdist(omit->F, omit->dfn, omit->dfd));	    
 	} 
     }
-    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 1) {
+    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 0) {
 	pputs(prn, _("  Null hypothesis: the regression parameters "
 		"are zero for the variables\n\n"));
 	for (i=1; i<=omitvars[0]; i++) {
