@@ -23,8 +23,8 @@
 #define INDEXNUM 996
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, int model_count, 
-	      MODEL *pmod, gretlopt oflag);
+	      const char *line, MODEL *pmod, 
+	      gretlopt oflag);
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 

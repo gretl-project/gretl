@@ -76,7 +76,6 @@ int i, j, dot, opt, err, errfatal, batch;
 int runit, loopstack, looprun;
 int data_status, runfile_open;
 int echo_off;               /* suppress command echoing */
-int model_count;            /* keep a tally of models estimated */
 int plot_count;             /* graphs via gnuplot */
 int ignore;                 /* trap for comments */
 int order;                  /* VAR lag order */
@@ -276,8 +275,6 @@ int clear_data (void)
 
     free_modelspec(modelspec);
     modelspec = NULL;
-
-    model_count = 0;
 
     return err;
 }
@@ -514,7 +511,7 @@ int main (int argc, char *argv[])
 	    if (!aborted && i > 0) {
 		if (loop.type != FOR_LOOP) {
 		    print_loop_results(&loop, datainfo, prn, &paths, 
-				       &model_count, loopstorefile);
+				       loopstorefile);
 		}
 		errfatal = 0;
 	    } 
@@ -720,11 +717,11 @@ void exec_line (char *line, PRN *prn)
     plain_add_omit:
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, models[0], models[1], &model_count, 
+	    err = auxreg(cmd.list, models[0], models[1], 
 			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
 	} else {
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &model_count, &Z, datainfo, prn, cmd.opt);
+			    &Z, datainfo, prn, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -756,11 +753,11 @@ void exec_line (char *line, PRN *prn)
 	clear_model(models[1], NULL);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, &tmpmod, models[1], &model_count, 
+	    err = auxreg(cmd.list, &tmpmod, models[1], 
 			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &model_count, &Z, datainfo, prn, cmd.opt);
+			    &Z, datainfo, prn, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -781,7 +778,7 @@ void exec_line (char *line, PRN *prn)
     case AR:
 	clear_model(models[0], NULL);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, &model_count, prn);
+			     datainfo, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
@@ -795,7 +792,7 @@ void exec_line (char *line, PRN *prn)
 	order = atoi(cmd.param);
 	clear_model(models[1], NULL);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  &model_count, prn, NULL);
+			  prn, NULL);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
@@ -825,7 +822,6 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
-	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
@@ -840,7 +836,6 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
-	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
@@ -887,7 +882,6 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn); 
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, !batch, prn);
@@ -901,7 +895,6 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	/* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
 	break;
@@ -959,7 +952,6 @@ void exec_line (char *line, PRN *prn)
 		errmsg(err, prn);
 		break;
 	    }
-	    (models[0])->ID = ++model_count;
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, prn);
 	    if (want_vcv(cmd.opt)) {
@@ -1002,10 +994,10 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	if (cmd.ci == EQNPRINT) {
 	    err = eqnprint(models[0], datainfo, &paths, 
-			   texfile, model_count, cmd.opt);
+			   texfile, cmd.opt);
 	} else {
 	    err = tabprint(models[0], datainfo, &paths, 
-			   texfile, model_count, cmd.opt);
+			   texfile, cmd.opt);
 	}
 	if (err) {
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
@@ -1083,8 +1075,7 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, model_count, 
-		       models[0], cmd.opt);
+	err = generate(&Z, datainfo, line, models[0], cmd.opt);
 	if (err) { 
 	    errmsg(err, prn);
 	} else {
@@ -1135,15 +1126,15 @@ void exec_line (char *line, PRN *prn)
     case HCCM:
     case HSK:
 	clear_model(models[0], NULL);
-	if (cmd.ci == HCCM)
+	if (cmd.ci == HCCM) {
 	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
-	else
+	} else {
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, !batch, prn);
@@ -1248,7 +1239,7 @@ void exec_line (char *line, PRN *prn)
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1], NULL);
-	    err = auxreg(NULL, models[0], models[1], &model_count, 
+	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_SQ, prn, NULL, 0);
 	    clear_model(models[1], NULL);
 	    if (err) errmsg(err, prn);
@@ -1257,7 +1248,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], &model_count, 
+	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_LOG, prn, NULL, 0);
 	    clear_model(models[1], NULL); 
 	    if (err) errmsg(err, prn);
@@ -1296,7 +1287,6 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, !batch, prn); 
@@ -1360,7 +1350,6 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[0], NULL);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (!(cmd.opt & OPT_Q)) {
 	    printmodel(models[0], datainfo, prn);
 	}
@@ -1642,7 +1631,6 @@ void exec_line (char *line, PRN *prn)
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
 	if (want_vcv(cmd.opt)) {
@@ -1678,7 +1666,7 @@ void exec_line (char *line, PRN *prn)
 	
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
-		(models[0])->ID, model_count);
+		(models[0])->ID, get_model_count());
 #endif
 
 	err = modelspec_save(models[0], &modelspec, fullinfo);

@@ -117,7 +117,7 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
 
 void print_loop_results (LOOPSET *ploop, 
 			 const DATAINFO *pdinfo, 
-			 PRN *prn, PATHS *ppaths, int *model_count,
+			 PRN *prn, PATHS *ppaths,
 			 char *loopstorefile);
 
 int add_to_loop (LOOPSET *ploop, char *line, int ci, 

@@ -1552,12 +1552,11 @@ static int gentoler (const char *s)
 }
 
 static void make_genr_label (int replmsg, char *genrs, 
-			     int model_count,
 			     GENERATE *genr)
 {
     if (replmsg) {
 	sprintf(genr->label, _("Replaced after model %d: "), 
-		model_count);
+		get_model_count());
     }	
     if (strlen(genrs) > MAXLABEL - 1) {
 	strncat(genr->label, genrs, MAXLABEL - 4);
@@ -1572,7 +1571,6 @@ static void make_genr_label (int replmsg, char *genrs,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @line: command line for parsing.
- * @model_count: count of models estimated so far.
  * @pmod: pointer to a model, or NULL.
  * @oflag: option flag (relates to generation of dummy variables).
  *
@@ -1584,8 +1582,8 @@ static void make_genr_label (int replmsg, char *genrs,
  */
 
 int generate (double ***pZ, DATAINFO *pdinfo, 
-	      const char *line, int model_count, 
-	      MODEL *pmod, gretlopt oflag)
+	      const char *line, MODEL *pmod, 
+	      gretlopt oflag)
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
@@ -1722,8 +1720,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	strcpy(genr.varname, newvar);
 	genr_msg(&genr, oldv);
 	if (genr.save) {
-	    make_genr_label(genr.varnum < oldv && !oflag && model_count > 0,
-			    genrs, model_count, &genr);
+	    make_genr_label(genr.varnum < oldv && !oflag,
+			    genrs, &genr);
 	    genr.err = add_new_var(pZ, pdinfo, &genr);
 	} else {
 	    genrfree(&genr);

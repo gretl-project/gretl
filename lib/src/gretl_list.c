@@ -204,13 +204,13 @@ int *gretl_list_omit (const int *orig, const int *omit, int *err)
    in datainfo to be of the form "Replaced after model <count>".
 */
 
-int list_members_replaced (const int *list, const DATAINFO *pdinfo, int mc)
+int list_members_replaced (const int *list, const DATAINFO *pdinfo)
 {
     const char *label;
     char rword[16];
-    int j, repl, err = 0;
+    int j, mc, repl, err = 0;
 
-    if (mc < 0) return 0;
+    mc = get_model_count();
 
     for (j=1; j<=list[0]; j++) {
 	label = VARLABEL(pdinfo, list[j]);

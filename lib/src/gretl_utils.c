@@ -1605,7 +1605,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 		 double ***pZ, DATAINFO *pdinfo) 
 {
     CMD command;
-    int err = 0, ignore = 0, model_count = 0;
+    int err = 0, ignore = 0;
     double rho = 0;
     PRN prn;
 
@@ -1624,7 +1624,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     switch(command.ci) {
     case AR:
 	*tmpmod = ar_func(command.list, atoi(command.param), pZ, 
-			  pdinfo, &model_count, &prn);
+			  pdinfo, &prn);
 	break;
     case CORC:
     case HILU:

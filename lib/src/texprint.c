@@ -286,14 +286,14 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */
 
-static int make_texfile (const PATHS *ppaths, int model_count,
-			 int equation, char *texfile, PRN *prn)
+static int make_texfile (const PATHS *ppaths, int ID, int equation, 
+			 char *texfile, PRN *prn)
 {
     FILE *fp;
 
     if (*texfile == 0) {
 	sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
-		(equation)? "equation" : "model", model_count);
+		(equation)? "equation" : "model", ID);
     }
 
     fp = fopen(texfile, "w");
@@ -481,7 +481,6 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
  * @pdinfo: information regarding the data set.
  * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
- * @model_count: count of models estimated so far.
  * @oflag: option: complete doc or fragment
  *
  * Prints to file a gretl model in the form of a LaTeX table, either as
@@ -493,11 +492,11 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, gretlopt oflag)
+	      gretlopt oflag)
 {
     PRN prn;
 
-    if (make_texfile(ppaths, model_count, 0, texfile, &prn))
+    if (make_texfile(ppaths, pmod->ID, 0, texfile, &prn))
 	return 1;
 
     tex_print_model(pmod, pdinfo, (oflag & OPT_O), &prn);
@@ -511,7 +510,6 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
  * @pdinfo: information regarding the data set.
  * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
- * @model_count: count of models estimated so far.
  * @oflag: if oflag & OPT_O, complete doc, else fragment
  *
  * Prints to file a gretl model in the form of a LaTeX equation, either as
@@ -523,11 +521,11 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      int model_count, gretlopt oflag)
+	      gretlopt oflag)
 {
     PRN prn;
 
-    if (make_texfile(ppaths, model_count, 1, texfile, &prn))
+    if (make_texfile(ppaths, pmod->ID, 1, texfile, &prn))
 	return 1;
 
     tex_print_equation(pmod, pdinfo, (oflag & OPT_O), &prn);

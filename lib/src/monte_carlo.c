@@ -631,7 +631,6 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  * @ppaths: path information struct.
- * @model_count: pointer to count of models estimated so far.
  * @loopstorefile: name of file into which to save data (or NULL).
  *
  * Print out the results after completion of the loop @ploop.
@@ -639,8 +638,7 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
  */
 
 void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo, 
-			 PRN *prn, PATHS *ppaths, int *model_count,
-			 char *loopstorefile)
+			 PRN *prn, PATHS *ppaths, char *loopstorefile)
 {
     int i, j;
     gretlopt opt;
@@ -661,8 +659,10 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 
 	    pmod = ploop->models[ploop->next_model];
 
+#if 0
 	    *model_count += 1;
 	    pmod->ID = *model_count;
+#endif
 
 	    /* std. errors are asymptotic; degrees of freedom
 	       correction is not wanted */
@@ -1099,7 +1099,7 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
 
     /* + 2 below to omit "if" */
     sprintf(formula, "iftest=%s", line + 2);
-    err = generate(pZ, pdinfo, formula, 0, NULL, 1);
+    err = generate(pZ, pdinfo, formula, 0, 1);
     if (!err) {
 	int v = varindex(pdinfo, "iftest");
 	

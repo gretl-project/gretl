@@ -318,6 +318,8 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod.sdy = fbx;
     gretl_model_set_int(&dmod, "correct", n_correct);
 
+    dmod.ID = model_count_plus();
+
     return dmod;
 }
 

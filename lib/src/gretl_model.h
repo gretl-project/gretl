@@ -65,4 +65,14 @@ int swap_models (MODEL **targ, MODEL **src);
 
 int command_ok_for_model (int test_ci, int model_ci);
 
+int get_model_count (void);
+
+void reset_model_count (void);
+
+int model_count_plus (void);
+
+void model_count_minus (void);
+
+void set_model_id (MODEL *pmod);
+
 #endif /* GRETL_MODEL_H */

@@ -153,13 +153,12 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 
 static MODEL replicate_estimator (const MODEL *orig, int **plist,
 				  double ***pZ, DATAINFO *pdinfo,
-				  int *model_count, gretlopt lsqopt, 
-				  PRN *prn)
+				  gretlopt lsqopt, PRN *prn)
 {
     MODEL rep;
     double rho = 0.0;
     int *list = *plist;
-    int pos;
+    int pos, mc = get_model_count();
 
     gretl_model_init(&rep, NULL);
 
@@ -182,11 +181,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pos, pZ, pdinfo, model_count, prn);
+	rep = ar_func(list, pos, pZ, pdinfo, prn);
 	break;
     case ARCH:
-	rep = arch(orig->order, list, pZ, pdinfo, model_count, 
-		   prn, NULL);
+	rep = arch(orig->order, list, pZ, pdinfo, prn, NULL);
 	break;
     case LOGIT:
     case PROBIT:
@@ -220,6 +218,12 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	rep.errcode = E_MISS;
     }
 
+    /* if the model count went up for an aux regression,
+       bring it back down */
+    if ((lsqopt & OPT_A) && get_model_count() > mc) {
+	model_count_minus();
+    }
+
     return rep;
 }
 
@@ -228,7 +232,6 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
  * @addvars: list of variables to add to original model (or NULL)
  * @orig: pointer to original model.
  * @new: pointer to new (modified) model.
- * @model_count: count of models estimated so far.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @aux_code: code indicating what sort of aux regression to run.
@@ -242,14 +245,14 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
+int auxreg (LIST addvars, MODEL *orig, MODEL *new, 
 	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
 	    PRN *prn, GRETLTEST *test, gretlopt opt)
 {
     COMPARE add;  
     MODEL aux;
     int *newlist = NULL, *tmplist = NULL;
-    int i, j, t, listlen, m = *model_count;
+    int i, j, t, listlen;
     const int n = pdinfo->n, orig_nvar = pdinfo->v; 
     double trsq = 0.0;
     int newvars = 0, err = 0;
@@ -261,7 +264,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	return E_NOTIMP;
 
     /* check for changes in original list members */
-    err = list_members_replaced(orig->list, pdinfo, m);
+    err = list_members_replaced(orig->list, pdinfo);
     if (err) return err;
 
     /* if adding specified vars, build the list */
@@ -325,8 +328,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     /* ADD: run an augmented regression, matching the original
        estimation method */
     if (!err && aux_code == AUX_ADD) {
-	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, model_count, 
-				   OPT_D, prn);
+	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, OPT_D, prn);
 
 	if (new->errcode) {
 	    err = new->errcode;
@@ -335,9 +337,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		free(tmplist); 
 	    }
 	    clear_model(new, pdinfo);
-	} else {
-	    ++m;
-	    new->ID = m;
 	}
     } /* end if AUX_ADD */
 
@@ -399,7 +398,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	if (aux_code == AUX_ADD && !(opt & OPT_Q) && 
 	    new->ci != AR && new->ci != ARCH) {
 	    printmodel(new, pdinfo, prn);
-	    *model_count += 1;
 	}
 
 	if (addvars != NULL) {
@@ -544,7 +542,6 @@ double robust_omit_F (const int *list, MODEL *pmod)
  * @omitvars: list of variables to omit from original model.
  * @orig: pointer to original model.
  * @new: pointer to new (modified) model.
- * @model_count: count of models estimated so far.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @prn: gretl printing struct.
@@ -557,11 +554,11 @@ double robust_omit_F (const int *list, MODEL *pmod)
  */
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
-	       int *model_count, double ***pZ, DATAINFO *pdinfo, 
+	       double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn, gretlopt opt)
 {
     COMPARE omit;
-    int *tmplist, m = *model_count;
+    int *tmplist;
     int maxlag = 0, t1 = pdinfo->t1;
     int err = 0;
 
@@ -569,7 +566,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	return E_NOTIMP;
 
     /* check that vars to omit have not been redefined */
-    if ((err = list_members_replaced(orig->list, pdinfo, m)))
+    if ((err = list_members_replaced(orig->list, pdinfo)))
 	return err;
 
     /* create list for test model */
@@ -593,8 +590,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, model_count, 
-			       OPT_D, prn);
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, OPT_D, prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
@@ -603,9 +599,6 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	++m;
-	new->ID = m;
-
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_OMIT;
 	}
@@ -614,7 +607,6 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
-	    *model_count += 1;
 	}
 
 	difflist(orig->list, new->list, omitvars);
@@ -1760,9 +1752,8 @@ int sum_test (LIST sumvars, MODEL *pmod,
     gretl_model_init(&summod, pdinfo);
 
     if (!err) {
-	summod = replicate_estimator(pmod, &tmplist, pZ, pdinfo, NULL, 
-				     OPT_A, nullprn);
-
+	summod = replicate_estimator(pmod, &tmplist, pZ, pdinfo, OPT_A, 
+				     nullprn);
 	if (summod.errcode) {
 	    pprintf(prn, "%s\n", gretl_errmsg);
 	    err = summod.errcode; 

@@ -386,7 +386,7 @@ MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo,
     }    
 
     /* do the actual Tobit analysis */
-    do_tobit((const double **) *pZ, pdinfo, &model, prn); 
+    do_tobit((const double **) *pZ, pdinfo, &model, prn);
 
     return model;
 }

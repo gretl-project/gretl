@@ -546,6 +546,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	reorganize_uhat_yhat(&mdl);
     }
 
+    if (!(opts & OPT_A)) {
+	set_model_id(&mdl);
+    }
+
     return mdl;
 }
 
@@ -1448,7 +1452,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	step = 1;
 	for (rho = -0.990; rho < 1.0; rho += .01) {
 	    clear_model(&corc_model, pdinfo);
-	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, rho);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
 	    if ((err = corc_model.errcode)) {
 		clear_model(&corc_model, pdinfo);
 		return err;
@@ -1496,7 +1500,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1515,7 +1519,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
-	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
 #if 0
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
 		corc_model.t1, 
@@ -1747,7 +1751,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
 	/* run first-stage regression */
 	clear_model(&tsls, pdinfo);
-	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
+	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
 	}
@@ -1877,6 +1881,10 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     dataset_drop_vars(addvars, pZ, pdinfo);
     free(newlist);
 
+    if (tsls.errcode) {
+	model_count_minus();
+    }
+
     return tsls;
 }
 
@@ -1985,7 +1993,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     ncoeff = list[0] - 1;
     rearrange_list(list);
 
-    hsk = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
+    hsk = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
     if (hsk.errcode) return hsk;
 
     uhat1 = malloc(n * sizeof *uhat1);
@@ -2048,6 +2056,27 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     return hsk;
 }
 
+static double **allocate_hccm_p (int lo, int n)
+{
+    int i;
+    double **p = malloc(lo * sizeof *p);
+
+    if (p == NULL) return NULL;
+
+    for (i=0; i<lo; i++) {
+	p[i] = malloc(n * sizeof **p);
+	if (p[i] == NULL) {
+	    int j;
+
+	    for (j=0; j<i; j++) free(p[j]);
+	    free(p);
+	    p = NULL;
+	}
+    }
+
+    return p;
+}
+
 /**
  * hccm_func:
  * @list: dependent variable plus list of regressors.
@@ -2064,7 +2093,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
-    double xx, *st, *uhat1, **p;
+    double xx, *st = NULL, *uhat1 = NULL, **p = NULL;
     MODEL hccm;
 
     *gretl_errmsg = '\0';
@@ -2077,37 +2106,22 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     m3 = 1 + (lo - 1) * (lo - 1);
 
     /* first try allocating memory */
-    if ((st = malloc(list[0] * sizeof *st)) == NULL ||
-	(p = malloc(lo * sizeof *p)) == NULL) {
-	hccm.errcode = E_ALLOC;
-	return hccm;
-    }
-    for (i=0; i<lo; i++) {
-	p[i] = malloc ((t2 - t1 + 1) * sizeof **p);
-	if (p[i] == NULL) {
-	    free(st);
-	    hccm.errcode = E_ALLOC;
-	    return hccm;
-	}
-    }
+    st = malloc(lo * sizeof *st);
     uhat1 = malloc(pdinfo->n * sizeof *uhat1);
-    if (uhat1 == NULL) {
-	free(st);
+    p = allocate_hccm_p(lo, t2 - t1 + 1);
+
+    if (st == NULL || p == NULL || uhat1 == NULL) {
 	hccm.errcode = E_ALLOC;
-	return hccm;
+	goto bailout;
     }
 
     ncoeff = list[0] - 1;
     rearrange_list(list);
 
     /* run a regular OLS */
-    hccm = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
+    hccm = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
     if (hccm.errcode) {
-	free(uhat1);
-	free(st);
-	for (i=0; i<lo; i++) free(p[i]);
-	free(p);
-	return hccm;
+	goto bailout;
     }
 
     hccm.ci = HCCM;
@@ -2123,13 +2137,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	}
     } else if (makevcv(&hccm)) {
 	hccm.errcode = E_ALLOC;
-	free(uhat1);
-	free(st);
-	for (i=0; i<lo; i++) {
-	    free(p[i]);
-	}
-	free(p);
-	return hccm;
+	goto bailout;
     } 
 
     for (i=1; i<=ncoeff; i++) {
@@ -2191,11 +2199,22 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	hccm.fstt = robust_omit_F(NULL, &hccm);
     }
 
+ bailout:
+
     free(st);
     free(uhat1);
 
-    for (i=0; i<lo; i++) free(p[i]);
-    free(p);
+    if (p != NULL) {
+	for (i=0; i<lo; i++) {
+	    free(p[i]);
+	}
+	free(p);
+    }
+
+    /* FIXME: don't do this if it's a replication for
+       a hypothesis test */
+
+    set_model_id(&hccm);
 
     return hccm;
 }
@@ -2243,6 +2262,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
 	return E_NOTIMP;
+
+    if ((err = list_members_replaced(pmod->list, pdinfo)))
+	return err;
 
     gretl_model_init(&white, pdinfo);
 
@@ -2345,7 +2367,6 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * and specification of dependent and independent variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @model_count: count of models estimated so far.
  * @prn: gretl printing struct.
  *
  * Estimate the model given in @list using the generalized 
@@ -2355,7 +2376,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  */
 
 MODEL ar_func (LIST list, int pos, double ***pZ, 
-	       DATAINFO *pdinfo, int *model_count, PRN *prn)
+	       DATAINFO *pdinfo, PRN *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
     int i, j, t, t1, t2, p, vc, yno, ryno = 0, iter = 0;
@@ -2401,12 +2422,6 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
 	if (err) ar.errcode = err;
 	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_D, xx);
-	if (model_count != NULL) {
-	    *model_count += 1;
-	    ar.ID = *model_count;
-	} else {
-	    ar.ID = 0;
-	}
 	printmodel(&ar, pdinfo, prn); 
 	free(arlist);
 	free(reglist);
@@ -2501,13 +2516,6 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     if (ar.ifc) ar.dfn -= 1;
     ar.ci = AR;
 
-    if (model_count != NULL) {
-	*model_count += 1;
-	ar.ID = *model_count;
-    } else {
-	ar.ID = 0;
-    }
-
     /* special computation of fitted values */
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
@@ -2557,6 +2565,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	}
     }
 
+    set_model_id(&ar);
     printmodel(&ar, pdinfo, prn);    
 
     free(arlist);
@@ -2782,7 +2791,6 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @model_count: count of models estimated so far.
  * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
  *
@@ -2795,7 +2803,7 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
  */
 
 MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo, 
-	    int *model_count, PRN *prn, GRETLTEST *test)
+	    PRN *prn, GRETLTEST *test)
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL;
@@ -2907,13 +2915,6 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&archmod, pdinfo);
 		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_D, 0.0);
 
-		if (model_count != NULL) {
-		    *model_count += 1;
-		    archmod.ID = *model_count;
-		} else {
-		    archmod.ID = -1;
-		}
-
 		archmod.ci = ARCH;
 		archmod.order = order;
 		printmodel(&archmod, pdinfo, prn);
@@ -2967,6 +2968,8 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
     (*lad_driver) (&lad_model, *pZ, pdinfo);
     close_plugin(handle);
 
+    set_model_id(&lad_model);
+
     return lad_model;
 }
 
@@ -3001,6 +3004,8 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     armod = (*arma_model) (list, Z, pdinfo, prn);
 
     close_plugin(handle);
+
+    set_model_id(&armod);
 
     return armod;
 } 
@@ -3043,6 +3048,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     close_plugin(handle);
 
+    set_model_id(&armod);
+
     return armod;
 }  
 
@@ -3081,6 +3088,8 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 
     close_plugin(handle);
 
+    set_model_id(&lmod);
+
     return lmod;
 }
 
@@ -3115,6 +3124,8 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     tmod = (*tobit_estimate) (list, pZ, pdinfo, prn);
 
     close_plugin(handle);
+
+    set_model_id(&tmod);
 
     return tmod;
 }
@@ -3153,6 +3164,8 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     gmod = (*garch_model) (list, pZ, pdinfo, prn, opt);
 
     close_plugin(handle);
+
+    set_model_id(&gmod);
 
     return gmod;
 } 

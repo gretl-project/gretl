@@ -81,7 +81,7 @@ static int nls_auto_gen (int i)
 	sprintf(formula, "$nls_x%d = %s", i, nlspec.terms[i-1].deriv);
     }
 
-    err = generate(pZ, pdinfo, formula, 0, NULL, 0);
+    err = generate(pZ, pdinfo, formula, 0, 0);
 
     if (err) {
 	errmsg(err, prn);
@@ -952,7 +952,9 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
     *mainZ = *pZ;
-  
+
+    set_model_id(&nlsmod);
+
     return nlsmod;
 }
 

@@ -775,3 +775,31 @@ int command_ok_for_model (int test_ci, int model_ci)
     return ok;
 }
 
+static int gretl_model_count;
+
+int get_model_count (void)
+{
+    return gretl_model_count;
+}
+
+void reset_model_count (void)
+{
+    gretl_model_count = 0;
+}
+
+int model_count_plus (void)
+{
+    return ++gretl_model_count;
+}
+
+void model_count_minus (void)
+{
+    --gretl_model_count;
+}
+
+void set_model_id (MODEL *pmod)
+{
+    if (pmod->errcode == 0) {
+	pmod->ID = ++gretl_model_count;
+    }
+}

@@ -107,9 +107,6 @@ void gretl_varinfo_init (VARINFO *vinfo);
 
 double corrrsq (int nobs, const double *y, const double *yhat);
 
-int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo, 
-	       int model_count, int *err);
-
 int get_hac_lag (int m);
 
 int get_hc_version (void);

@@ -69,12 +69,11 @@ int whites_test (MODEL *pmod,
 
 MODEL ar_func (LIST list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       int *model_count, PRN *prn);
+	       PRN *prn);
 
 MODEL arch (int order, LIST list, 
 	    double ***pZ, DATAINFO *pdinfo, 
-	    int *model_count, PRN *prn, 
-	    GRETLTEST *test);
+	    PRN *prn, GRETLTEST *test);
 
 int makevcv (MODEL *pmod);
 

@@ -77,7 +77,6 @@ static int ignore;
 static int echo_off;
 static int replay;
 static char loopstorefile[MAXLEN];
-static int model_count;
 static MODELSPEC *modelspec;
 static char last_model = 's';
 static gretl_equation_system *sys;
@@ -304,8 +303,6 @@ void clear_data (void)
     free_command_stack(); 
     free_modelspec(modelspec);
     modelspec = NULL;
-
-    model_count = 0;
 }
 
 /* ........................................................... */
@@ -1094,10 +1091,10 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     if (selector_code(sr) == ADD) { 
-        err = auxreg(cmd.list, orig, pmod, &model_count, 
+        err = auxreg(cmd.list, orig, pmod, 
                      &Z, datainfo, AUX_ADD, prn, NULL, 0);
     } else {
-        err = omit_test(cmd.list, orig, pmod, &model_count, 
+        err = omit_test(cmd.list, orig, pmod,
 			&Z, datainfo, prn, 0);
     }
 
@@ -1124,7 +1121,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
 
-    sprintf(title, _("gretl: model %d"), model_count);
+    sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);
 }
 
@@ -1263,7 +1260,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    strcpy(line, "lmtest -l");
 	}
 	clear_model(models[0], NULL);
-	err = auxreg(NULL, pmod, models[0], &model_count, 
+	err = auxreg(NULL, pmod, models[0],
 		     &Z, datainfo, aux, prn, &test, 0);
 	if (err) {
 	    gui_errmsg(err);
@@ -1642,7 +1639,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     clear_model(models[1], NULL);
     exchange_smpl(pmod, datainfo);
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
-		     NULL, prn, &test);
+		      prn, &test);
     if ((err = (models[1])->errcode)) 
 	errmsg(err, prn);
     else {
@@ -1682,8 +1679,6 @@ static int model_error (MODEL *pmod)
 static int model_output (MODEL *pmod, PRN *prn)
 {
     if (model_error(pmod)) return 1;
-
-    pmod->ID = ++model_count;
 
     if (printmodel(pmod, datainfo, prn)) {
 	pmod->errcode = E_NAN; /* some statistics were NAN */
@@ -2055,7 +2050,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case AR:
 	*pmod = ar_func(cmd.list, atoi(cmd.param), 
-			&Z, datainfo, &model_count, prn);
+			&Z, datainfo, prn);
 	err = model_error(pmod);
 	break;
 
@@ -2411,11 +2406,11 @@ static int finish_genr (MODEL *pmod, dialog_t *ddata)
     int err = 0;
 
     if (pmod != NULL) {
-	err = generate(&Z, datainfo, line, model_count, 
-		       pmod, 0); 
+	err = generate(&Z, datainfo, line, pmod, 0); 
     } else {
-	err = generate(&Z, datainfo, line, model_count, 
-		       (last_model == 's')? models[0] : models[2], 0); 
+	err = generate(&Z, datainfo, line, 
+		       (last_model == 's')? 
+		       models[0] : models[2], 0); 
     }
 
     if (err) {
@@ -4350,10 +4345,10 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     *texfile = 0;
 
     if (code == LATEX_VIEW_EQUATION) {
-	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, OPT_O);
+	err = eqnprint(pmod, datainfo, &paths, texfile, OPT_O);
     } 
     else if (code == LATEX_VIEW_TABULAR) {
-	err = tabprint(pmod, datainfo, &paths, texfile, model_count, OPT_O);
+	err = tabprint(pmod, datainfo, &paths, texfile, OPT_O);
     }
     else if (code == LATEX_VIEW_MODELTABLE) {
 	PRN *prn;
@@ -4518,11 +4513,6 @@ int execute_script (const char *runfile, const char *buf,
     if (runfile != NULL) fb = fopen(runfile, "r");
     else bufgets(NULL, 0, buf);
 
-    /* reset model count to 0 if starting/saving session */
-    if (exec_code == SESSION_EXEC || exec_code == REBUILD_EXEC ||
-	exec_code == SAVE_SESSION_EXEC) 
-	model_count = 0;
-
     /* monte carlo struct */
     loop.lines = NULL;
     loop.models = NULL;
@@ -4571,7 +4561,7 @@ int execute_script (const char *runfile, const char *buf,
 	    }	    
 	    if (!aborted && i > 0 && loop.type != FOR_LOOP) {
 		print_loop_results(&loop, datainfo, prn, &paths, 
-				   &model_count, loopstorefile);
+				   loopstorefile);
 	    }
 	    looprun = 0;
 	    monte_carlo_free(&loop);
@@ -4649,7 +4639,7 @@ int execute_script (const char *runfile, const char *buf,
 
 static int script_model_test (int test_ci, int model_id, PRN *prn)
 {
-    int m;
+    int m, mc;
     const char *no_gui_test = 
 	N_("Sorry, can't do this.\nTo operate on a model estimated "
 	   "via the graphical interface, please use the\nmenu items in "
@@ -4666,14 +4656,16 @@ static int script_model_test (int test_ci, int model_id, PRN *prn)
 	    test_ci, model_id, m);
 #endif
 
+    mc = get_model_count();
+
     if (m < 0) { 
 	/* reference model not found */
-	if (model_count == 0) {
+	if (mc == 0) {
 	    pputs(prn, _("Can't do this: no model has been estimated yet\n"));
 	} else if (model_id == 0) {
 	    /* requested "the last model" */
 	    pputs(prn, _(no_gui_test));
-	} else if (model_id > model_count) {
+	} else if (model_id > mc) {
 	    /* requested specific, out-of-range model */
 	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
 	} else {
@@ -4858,11 +4850,11 @@ int gui_exec_line (char *line,
     plain_add_omit:
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
-	    err = auxreg(cmd.list, models[0], models[1], &model_count, 
+	    err = auxreg(cmd.list, models[0], models[1], 
 			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
 	else
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &model_count, &Z, datainfo, outprn, cmd.opt);
+			    &Z, datainfo, outprn, cmd.opt);
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -4893,11 +4885,11 @@ int gui_exec_line (char *line,
 	clear_model(models[1], NULL);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, &tmpmod, models[1], &model_count, 
+	    err = auxreg(cmd.list, &tmpmod, models[1], 
 			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &model_count, &Z, datainfo, outprn, cmd.opt);
+			    &Z, datainfo, outprn, cmd.opt);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -4918,7 +4910,7 @@ int gui_exec_line (char *line,
     case AR:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, &model_count, outprn);
+			     datainfo, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
@@ -4932,7 +4924,7 @@ int gui_exec_line (char *line,
 	order = atoi(cmd.param);
 	clear_model(models[1], NULL);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  &model_count, outprn, ptest);
+			  outprn, ptest);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
@@ -4965,7 +4957,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}	
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, outprn);
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, 0, outprn);
@@ -4980,7 +4971,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, outprn);
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, 0, outprn);
@@ -5042,7 +5032,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
@@ -5057,7 +5046,6 @@ int gui_exec_line (char *line,
             errmsg(err, prn);
             break;
         }
-        (models[0])->ID = ++model_count;
         printmodel(models[0], datainfo, outprn);
         /* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
         break;
@@ -5117,7 +5105,6 @@ int gui_exec_line (char *line,
 		errmsg(err, prn);
 		break;
 	    }
-	    (models[0])->ID = ++model_count;
 	    do_nls = 1;
 	    printmodel(models[0], datainfo, outprn);
 	    if (want_vcv(cmd.opt)) {
@@ -5165,10 +5152,10 @@ int gui_exec_line (char *line,
 	strcpy(texfile, cmd.param);
 	if (cmd.ci == EQNPRINT) {
 	    err = eqnprint(models[0], datainfo, &paths, 
-			   texfile, model_count, cmd.opt);
+			   texfile, cmd.opt);
 	} else {
 	    err = tabprint(models[0], datainfo, &paths, 
-			   texfile, model_count, cmd.opt);
+			   texfile, cmd.opt);
 	}
 	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));
@@ -5247,7 +5234,7 @@ int gui_exec_line (char *line,
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, model_count,
+	err = generate(&Z, datainfo, line, 
 		       (last_model == 's')? models[0] : models[2], 
 		       cmd.opt);
 	if (err) 
@@ -5308,7 +5295,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
@@ -5408,14 +5394,14 @@ int gui_exec_line (char *line,
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], &model_count, 
+	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_SQ, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], &model_count, 
+	    err = auxreg(NULL, models[0], models[1], 
 			 &Z, datainfo, AUX_LOG, outprn, ptest, 0);
 	    clear_model(models[1], NULL);
 	    if (err) errmsg(err, prn);
@@ -5453,7 +5439,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
@@ -5522,7 +5507,6 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (!(cmd.opt & OPT_Q)) {
 	    if (printmodel(models[0], datainfo, outprn)) {
 		(models[0])->errcode = E_NAN;
@@ -5768,7 +5752,6 @@ int gui_exec_line (char *line,
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	/* is this OK? */

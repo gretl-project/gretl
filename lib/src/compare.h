@@ -64,7 +64,7 @@ typedef struct {
 /* functions follow */
  
 int auxreg (LIST addvars, 
-	    MODEL *orig, MODEL *new, int *model_count, 
+	    MODEL *orig, MODEL *new,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    int aux_code, 
 	    PRN *prn, GRETLTEST *test, gretlopt opt);
@@ -72,7 +72,6 @@ int auxreg (LIST addvars,
 double robust_omit_F (const int *list, MODEL *pmod);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
-	       int *model_count, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn, gretlopt opt);
 
