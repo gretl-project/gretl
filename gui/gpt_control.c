@@ -243,14 +243,15 @@ static int gnuplot_png_init (const char *fname, FILE **fpp)
 
 void display_session_graph_png (const char *fname) 
 {
-    FILE *fp = NULL;
     gchar *plotcmd;
     int err = 0;
 
     /* take saved plot source file and make PNG from it, then display
        the PNG */
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      paths.plotfile);
+    if (add_png_term_to_plotfile(fname)) return;
+
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fname);
+
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
@@ -326,7 +327,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		      sizeof spec->lines[0].scale);
     }
 
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
     if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
 	spec->edit -= 2;
 	return;
@@ -350,7 +351,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
 /* ........................................................... */
 
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
 static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
 {
     int err = 0;
@@ -1588,7 +1589,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
         file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
     }
     else if (!strcmp(item, _("Save to session as icon"))) { 
-	add_last_graph(plot->spec, 0, NULL);
+	add_graph_to_session(plot->spec, 0, NULL);
     }
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));

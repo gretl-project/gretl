@@ -33,7 +33,7 @@ typedef struct {
 
 void session_state (gboolean s);
 
-void add_last_graph (gpointer data, guint code, GtkWidget *w);
+void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);
 

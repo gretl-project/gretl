@@ -358,7 +358,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/_Session"), NULL, NULL, 0, "<Branch>" },
     { N_("/Session/_Icon view"), NULL, view_session, 0, NULL },
 #ifndef GNUPLOT_PNG
-    { N_("/Session/_Add last graph"), NULL, add_last_graph, 0, NULL },
+    { N_("/Session/_Add last graph"), NULL, add_graph_to_session, 0, NULL },
 #endif
     { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>" },
     { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL },
@@ -1968,7 +1968,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	case 8:
 #ifndef GNUPLOT_PNG
 	    toolxpm = mini_camera_xpm;
-	    toolfunc = add_last_graph;
+	    toolfunc = add_graph_to_session;
 #endif
 	    break;
 	case 9:

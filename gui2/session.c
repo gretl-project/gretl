@@ -74,7 +74,7 @@ static char *model_items[] = {
 
 static char *graph_items[] = {
     N_("Display"),
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
     N_("Edit using GUI"),
 #endif
     N_("Edit plot commands"),
@@ -209,7 +209,7 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
-void add_last_graph (gpointer data, guint code, GtkWidget *w)
+void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
     char pltname[MAXLEN], savedir[MAXLEN];
     gchar *grname;
@@ -231,6 +231,8 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
+	remove(plot->fname);
+	strcpy(plot->fname, pltname);
 	mark_plot_as_saved(plot);
 #else
 	if (copyfile(paths.plotfile, pltname)) {
@@ -251,7 +253,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	remove(boxplottmp);
     }
     else {
-	errbox("bad code in add_last_graph");
+	errbox("bad code in add_graph_to_session");
 	return;
     }
 
@@ -1573,7 +1575,7 @@ static void global_popup_activated (GtkWidget *widget, gpointer data)
 	gtk_widget_destroy(iconview);
 #ifndef GNUPLOT_PNG
     else if (strcmp(item, _("Add last graph")) == 0)
-	add_last_graph(NULL, GRETL_GNUPLOT_GRAPH, NULL);
+	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
 #endif
 }
 
@@ -1589,7 +1591,7 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
 	save_session_callback(NULL, SAVE_RENAME, NULL);
 #ifndef GNUPLOT_PNG
     else if (strcmp(item, _("Add last graph")) == 0)
-	add_last_graph(NULL, GRETL_GNUPLOT_GRAPH, NULL);
+	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
 #endif
 }
 
@@ -1633,7 +1635,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	else if (obj->sort == 'g') open_gui_graph(obj);
 	else if (obj->sort == 'b') open_boxplot(obj);
     } 
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
     else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (obj->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) obj->data;

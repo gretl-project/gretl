@@ -140,7 +140,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
         five_numbers(grp);
     else if (!strcmp(item, _("Save to session as icon"))) {
         dump_boxplot(grp, "boxdump.tmp");
-	add_last_graph(NULL, 1, NULL);
+	add_graph_to_session(NULL, 1, NULL);
 	grp->saved = 1;
     }
     else if (!strcmp(item, _("Save as EPS..."))) 

@@ -262,8 +262,7 @@ void display_session_graph_png (const char *fname)
        the PNG */
     if (add_png_term_to_plotfile(fname)) return;
 
-    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
-			      fname);
+    plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, fname);
 #ifdef G_OS_WIN32
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
@@ -1662,7 +1661,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif
     else if (!strcmp(item, _("Save to session as icon"))) { 
-	add_last_graph(plot->spec, 0, NULL);
+	add_graph_to_session(plot->spec, 0, NULL);
     }
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));

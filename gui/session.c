@@ -55,7 +55,7 @@ static char *model_items[] = {
 
 static char *graph_items[] = {
     N_("Display"),
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
     N_("Edit using GUI"),
 #endif
     N_("Edit plot commands"),
@@ -176,7 +176,7 @@ static void edit_session_notes (void)
 
 /* ........................................................... */
 
-void add_last_graph (gpointer data, guint code, GtkWidget *w)
+void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
     char grname[12], pltname[MAXLEN], savedir[MAXLEN];
     int i = session.ngraphs;
@@ -197,6 +197,8 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
+	remove(plot->fname);
+	strcpy(plot->fname, pltname);
 	mark_plot_as_saved(plot);
 #else
 	if (copyfile(paths.plotfile, pltname)) {
@@ -1026,7 +1028,7 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Save As...")) == 0) 
 	save_session_callback(NULL, 1, NULL);
     else if (strcmp(item, _("Add last graph")) == 0)
-	add_last_graph(NULL, 0, NULL);
+	add_graph_to_session(NULL, 0, NULL);
 }
 
 /* ........................................................... */
@@ -1072,7 +1074,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (myobject->sort == 'm') open_gui_model(myobject);
 	else if (myobject->sort == 'g') open_gui_graph(myobject);
     } 
-#ifdef GNUPLOT_PIPE
+#ifndef GNUPLOT_PNG
     else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
@@ -1286,35 +1288,14 @@ static void open_gui_model (gui_obj *gobj)
 static void open_gui_graph (gui_obj *gobj)
 {
     GRAPHT *graph = (GRAPHT *) gobj->data;
-#ifdef GNUPLOT_PNG
-    FILE *fp, *fq;
-#else
+#ifndef GNUPLOT_PNG
     gchar *buf = NULL;
 #endif
 
 #ifdef GNUPLOT_PNG
-    if (gnuplot_init(&paths, &fp)) {
-	errbox(_("gnuplot command failed"));
-	return;
-    }
-    
-    fq = fopen(graph->fname, "r");
-    if (fq == NULL) {
-	fclose(fp);
-	errbox(_("gnuplot command failed"));
-    } else {
-	int c;
-
-	while ((c = fgetc(fq)) != EOF) {
-	    fputc(c, fp);
-	}
-	fclose(fp);
-	fclose(fq);
-	gnuplot_display(&paths);
-	gnuplot_show_png(paths.plotfile, NULL, 1);
-    }
+    display_session_graph_png(graph->fname);
 #else
-    buf = g_strdup_printf("gnuplot -persist \"%s\"", graph->fname);
+    buf = g_strdup_printf("\"%s\" -persist \"%s\"", paths.gnuplot, graph->fname);
     if (system(buf)) {
 	errbox(_("gnuplot command failed"));
     }
