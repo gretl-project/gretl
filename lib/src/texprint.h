@@ -20,12 +20,13 @@
 /* texprint.h for gretl */
 
 /* functions follow */
- 
-char *tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  const PATHS *ppaths, const int model_count, 
-			  const int standalone, const char * fname);
 
-char *tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		       PATHS *ppaths, const int model_count, 
-		       const int standalone, const char *fname);
+char *make_texfile (const PATHS *ppaths, const int model_count,
+		    int equation, print_t *prn);
+ 
+int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+			const int standalone, print_t *prn);
+
+int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
+		     const int standalone, print_t *prn);
 

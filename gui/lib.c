@@ -1136,7 +1136,7 @@ void do_add_omit (GtkWidget *widget, dialog_t *ddata)
     }
 
     sprintf(title, "gretl: model %d", model_count);
-    view_model((void *) &prn, pmod, 78, 400, title);
+    view_model(&prn, pmod, 78, 400, title);
 }
 
 /* ........................................................... */
@@ -1452,27 +1452,14 @@ static int model_error (const MODEL *pmod)
 
 /* ........................................................... */
 
-static int model_output (MODEL *pmod, void *ptr)
+static int model_output (MODEL *pmod, print_t *prn)
 {
     if (model_error(pmod)) return 1;
 
     ++model_count;
     pmod->ID = model_count;
+    printmodel(pmod, datainfo, prn);
 
-#ifdef USE_GTKHTML
-    if (1) { 
-	html_t *htm = (html_t *) ptr;
-
-	h_printmodel(pmod, datainfo, htm);
-	h_bufclose(htm);
-    } 
-#else
-    if (1) {
-	print_t *prn = (print_t *) ptr;
-
-	printmodel(pmod, datainfo, prn);
-    }
-#endif
     return 0;
 }
 
@@ -1506,10 +1493,6 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
     int order, err, action = ddata->code;
     double rho;
     MODEL *pmod;
-    void *ptr;
-#ifdef USE_GTKHTML
-    html_t htm;
-#endif
 
     strcpy(estimator, commands[action]);
 
@@ -1526,14 +1509,7 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-/*      fprintf(stderr, "do_model: opening buffer\n"); */
-#ifdef USE_GTKHTML
-    if (h_bufopen(&htm)) return;
-    ptr = (void *) &htm;
-#else
     if (bufopen(&prn)) return;
-    ptr = (void *) &prn;
-#endif
 
     pmod = gretl_model_new();
     if (pmod == NULL) {
@@ -1551,33 +1527,33 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 	    break;
 	}
 	*pmod = lsq(command.list, Z, datainfo, action, 1, rho);
-	err = model_output(pmod, (void *) &prn);
+	err = model_output(pmod, &prn);
 	break;
 
     case OLS:
     case WLS:
     case POOLED:
 	*pmod = lsq(command.list, Z, datainfo, action, 1, 0.0);
-	if ((err = model_output(pmod, ptr))) break;
+	if ((err = model_output(pmod, &prn))) break;
 	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
 	break;
 
     case HSK:
 	*pmod = hsk_func(command.list, &Z, datainfo);
-	if ((err = model_output(pmod, ptr))) break;
+	if ((err = model_output(pmod, &prn))) break;
 	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
 	break;
 
     case HCCM:
 	*pmod = hccm_func(command.list, &Z, datainfo);
-	if ((err = model_output(pmod, ptr))) break;
+	if ((err = model_output(pmod, &prn))) break;
 	if (oflag) print_white_vcv(pmod, &prn);
 	break;
 
     case TSLS:
 	*pmod = tsls_func(command.list, atoi(command.param), 
 				&Z, datainfo);
-	if ((err = model_output(pmod, ptr))) break;
+	if ((err = model_output(pmod, &prn))) break;
 	if (oflag) outcovmx(pmod, datainfo, batch, &prn);
 	break;
 
@@ -1597,7 +1573,7 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
     case LOGIT:
     case PROBIT:
 	*pmod = logit_probit(command.list, &Z, datainfo, action);
-	err = model_output(pmod, ptr);
+	err = model_output(pmod, &prn);
 	break;	
 
     default:
@@ -1605,12 +1581,10 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
 	break;
     }
 
-#ifndef USE_GTKHTML
     if (err) {
 	prnclose(&prn);
 	return;
     }
-#endif
 
     if (modelgenr[0] && record_model_genr(modelgenr)) {
 	errbox("Error saving model information");
@@ -1635,11 +1609,7 @@ void do_model (GtkWidget *widget, dialog_t *ddata)
     sprintf(title, "gretl: model %d", pmod->ID);
 
     /* fprintf(stderr, "do_model: calling view_model\n"); */
-#ifdef USE_GTKHTML
-    view_model((void *) htm.w, pmod, 78, 400, title);
-#else
-    view_model((void *) &prn, pmod, 78, 400, title); 
-#endif
+    view_model(&prn, pmod, 78, 400, title); 
 }
 
 /* ........................................................... */
@@ -2706,17 +2676,22 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     int dot, err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+    print_t texprn;
 
-    if (prn_code) 
-	texfile = tex_print_equation(pmod, datainfo, 
-				     &paths, model_count, 1, NULL);
-    else texfile = tex_print_model(pmod, datainfo, 
-				   &paths, model_count, 1, NULL);
+    if (prn_code)  
+	texfile = make_texfile(&paths, model_count, 1, &texprn);
+    else 
+	texfile = make_texfile(&paths, model_count, 0, &texprn);
 
     if (texfile == NULL) {
 	errbox("Couldn't open tex file for writing");
 	return;
     }
+
+    if (prn_code)
+	tex_print_equation(pmod, datainfo, 1, &texprn);
+    else
+	tex_print_model(pmod, datainfo, 1, &texprn);
 
     dot = dotpos(texfile);
     clear(texbase, MAXLEN);
@@ -2740,51 +2715,26 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 void do_save_tex (char *fname, const int code, MODEL *pmod)
 {
     char *texfile;
+    print_t texprn;
 
     if (code == SAVE_TEX_EQ)
-	texfile = tex_print_equation(pmod, datainfo, 
-				     &paths, model_count, 0, fname);
-    else 
-	texfile = tex_print_model(pmod, datainfo, 
-				  &paths, model_count, 0, fname);
+	texfile = make_texfile(&paths, model_count, 1, &texprn);
+    else
+	texfile = make_texfile(&paths, model_count, 0, &texprn);
+
     if (texfile == NULL) {
 	errbox("Couldn't open tex file for writing");
 	return;
-    }
+    }   
+
+    if (code == SAVE_TEX_EQ)
+	tex_print_equation(pmod, datainfo, 1, &texprn);
+    else 
+	tex_print_model(pmod, datainfo, 1, &texprn);
+
     free(texfile);
     if (code != COPY_LATEX)
 	infobox("LaTeX file saved");
-}
-
-/* ........................................................... */
-
-void do_save_html (char *fname, const int filesave, MODEL *pmod)
-{
-    html_t htm;
-
-    if (h_fopen(&htm, fname)) {
-	errbox("Couldn't open html file for writing");
-	return;
-    }	
-    h_printmodel(pmod, datainfo, &htm);
-    h_bufclose(&htm);
-    if (filesave) 
-	infobox("HTML file saved");
-}
-/* ........................................................... */
-
-void do_save_text (char *fname, MODEL *pmod)
-{
-    print_t prn;
-
-    prn.buf = NULL;
-    prn.fp = fopen(fname, "w");
-    if (prn.fp == NULL) {
-	errbox("Couldn't open text file for writing");
-	return;
-    }	
-    printmodel(pmod, datainfo, &prn);
-    prnclose(&prn);
 }
 
 /* ........................................................... */
@@ -2975,6 +2925,7 @@ static int gui_exec_line (char *line,
     FREQDIST freq;              /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+    print_t texprn;
     void *ptr;
 
     if (!data_file_open && !ready_for_command(line)) {
@@ -3201,18 +3152,21 @@ static int gui_exec_line (char *line,
     case TABPRINT:
 	if ((err = script_model_test(0, prn, 1))) break;
 	if (command.ci == EQNPRINT)
-	    texfile = tex_print_equation(models[0], datainfo, 
-					 &paths, model_count, oflag, NULL);
+	    texfile = make_texfile(&paths, model_count, 1, &texprn);
 	else
-	    texfile = tex_print_model(models[0], datainfo,
-				      &paths, model_count, oflag, NULL);
+	    texfile = make_texfile(&paths, model_count, 0, &texprn);
 	if (texfile == NULL) {
 	    pprintf(prn, "Couldn't open tex file for writing.\n");
 	    err = 1;
 	} else {
+	    if (command.ci == EQNPRINT) {
+		tex_print_equation(models[0], datainfo, oflag, &texprn);
+	    } else {
+		tex_print_model(models[0], datainfo, oflag, &texprn);
+	    }
 	    pprintf(prn, "Model printed to %s\n", texfile); 
 	    free(texfile);
-	}
+	}	    
 	break;
 
     case FCAST:

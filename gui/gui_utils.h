@@ -69,7 +69,7 @@ int view_file (char *filename, int editable, int del_file,
 	       int hsize, int vsize, char *title, 
 	       GtkItemFactoryEntry menu_items[], int menusize);
 
-int view_model (void *ptr, MODEL *pmod, int hsize, int vsize, 
+int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
 
 void setup_column (GtkWidget *listbox, int column, int width);

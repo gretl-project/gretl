@@ -28,10 +28,6 @@
 # include <windows.h>
 #endif
 
-#ifdef USE_GTKHTML
-# include "htmlprint.h"
-#endif
-
 #include "pixmaps/model.xpm"
 #include "pixmaps/gnuplot.xpm"
 #include "pixmaps/xfm_sc.xpm"
@@ -979,24 +975,12 @@ gui_obj *session_add_object (gpointer data, int sort)
 
 void open_gui_model (gui_obj *gobj)
 { 
-#ifdef USE_GTKHTML
-    html_t htm;
-#else
     print_t prn;
-#endif
-
     MODEL *pmod = (MODEL *) gobj->data;
 
-#ifdef USE_GTKHTML
-    if (h_bufopen(&htm)) return;
-    h_printmodel(pmod, datainfo, &htm);
-    h_bufclose(&htm);
-    view_model((void *) htm.w, pmod, 78, 400, gobj->name);
-#else
     if (bufopen(&prn)) return;
     printmodel(pmod, datainfo, &prn);
     view_model((void *) &prn, pmod, 78, 400, gobj->name);
-#endif
 }
 
 /* ........................................................... */

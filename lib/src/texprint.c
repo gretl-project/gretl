@@ -23,7 +23,7 @@
 
 /* ......................................................... */
 
-static void tex_print_float (const double x, const int tab, FILE *fp)
+static void tex_print_float (const double x, const int tab, print_t *prn)
      /* prints a floating point number as a TeX math string.
 	if tab != 0, print the sign in front, separated by a
 	tab symbol (for equation-style regression printout).
@@ -42,9 +42,9 @@ static void tex_print_float (const double x, const int tab, FILE *fp)
 	}
     }
     if (tab) {
-	if (x < 0.) fprintf(fp, "& $-$ & $%s$", number + 1);
-	else fprintf(fp, "& $+$ & $%s$", number);
-    } else fprintf(fp, "$%s$", number);
+	if (x < 0.) pprintf(prn, "& $-$ & $%s$", number + 1);
+	else pprintf(prn, "& $+$ & $%s$", number);
+    } else pprintf(prn, "$%s$", number);
 }
 
 /* ......................................................... */ 
@@ -63,7 +63,7 @@ static void tex_escape (char *targ, const char *src)
 /* ......................................................... */ 
 
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     const int c, FILE *fp)
+			     const int c, print_t *prn)
 {
     int n;
     double decbit;
@@ -81,7 +81,7 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     tmp[0] = '\0';
     tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
-    fprintf(fp, "%s &\n"
+    pprintf(prn, "%s &\n"
 	    "  $%s$&%s &\n"
 	    "    $%f$ &\n"
 	    "      $%.4f$ &\n"
@@ -96,37 +96,46 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */
 
-char *tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  const PATHS * ppaths, const int model_count, 
-			  const int standalone, const char *fname)
-     /* returns name of file created, or NULL on failure */ 
+char *make_texfile (const PATHS *ppaths, const int model_count,
+		    int equation, print_t *prn)
 {
+    char texname[14], *texfile;
 
-    int i, start, constneg = 0, ncoeff = pmod->list[0];
-    double tstat, const_tstat = 0, const_coeff = 0;
-    char tmp[16], texname[18], *texfile;
-    FILE *fp;
+    prn->buf = NULL;
 
     texfile = malloc(MAXLEN);
     if (texfile == NULL) return NULL;
 
-    if (fname != NULL) strcpy(texfile, fname);
-    else {
-	strcpy(texfile, ppaths->userdir);
+    strcpy(texfile, ppaths->userdir);
+    if (equation)
 	sprintf(texname, "equation_%d.tex", model_count);
-	strcat(texfile, texname);
-    }
+    else
+	sprintf(texname, "model_%d.tex", model_count);
+    strcat(texfile, texname);
 
-    fp = fopen(texfile, "w");
-    if (fp == NULL) {
+    prn->fp = fopen(texfile, "w");
+    if (prn->fp == NULL) {
 	free(texfile);
 	return NULL;
     }
+    return texfile;
+}
+
+/* ......................................................... */
+
+int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
+			const int standalone, print_t *prn)
+{
+
+    int i, start, constneg = 0, ncoeff = pmod->list[0];
+    double tstat, const_tstat = 0, const_coeff = 0;
+    char tmp[16];
+
     if (standalone) {
-	fputs("\\documentclass{article}\n\\begin{document}\n", fp);
-	fputs("\\setlength{\\tabcolsep}{4pt}\n\n", fp);
+	pprintf(prn, "\\documentclass{article}\n\\begin{document}\n"
+		"\\setlength{\\tabcolsep}{4pt}\n\n");
     }
-    fputs("\\begin{center}\n", fp);
+    pprintf(prn, "\\begin{center}\n");
 
     if (pmod->ifc) {
 	const_coeff = pmod->coeff[pmod->list[0]-1];
@@ -137,108 +146,89 @@ char *tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     }
 
     /* tabular header */
-    fprintf(fp, "\\begin{tabular}{rc");
-    fprintf(fp, (pmod->ifc)? "c" : "c@{\\,}l");
+    pprintf(prn, "\\begin{tabular}{rc"
+	    "%s", (pmod->ifc)? "c" : "c@{\\,}l");
     start = (pmod->ifc)? 1 : 2;
-    for (i=start; i<ncoeff; i++) fprintf(fp, "cc@{\\,}l");
-    fputs("}\n", fp);
+    for (i=start; i<ncoeff; i++) pprintf(prn, "cc@{\\,}l");
+    pprintf(prn, "}\n");
 
     /* dependent variable */
     tmp[0] = '\0';
     tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
-    fprintf(fp, "$\\widehat{\\rm %s}$", tmp);
-    /* equals */
-    fputs(" & = &\n", fp);
+    pprintf(prn, "$\\widehat{\\rm %s}$ & = &\n", tmp);
 
     start++;
     /* coefficients times indep vars */
-    if (pmod->ifc) tex_print_float(const_coeff, 0, fp);
+    if (pmod->ifc) tex_print_float(const_coeff, 0, prn);
     else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[2]]);
-	tex_print_float(pmod->coeff[1], 0, fp);
-	fprintf(fp, " & %s ", tmp);
+	tex_print_float(pmod->coeff[1], 0, prn);
+	pprintf(prn, " & %s ", tmp);
     }
     for (i=start; i<=ncoeff; i++) {
-	tex_print_float(pmod->coeff[i-1], 1, fp);
+	tex_print_float(pmod->coeff[i-1], 1, prn);
 	tex_escape(tmp, pdinfo->varname[pmod->list[i]]);
-	fprintf(fp, " & %s ", tmp);
+	pprintf(prn, " & %s ", tmp);
     }
-    fputs("\\\\\n", fp);
+    pprintf(prn, "\\\\\n");
 
     /* t-stats in row beneath */
     if (pmod->ifc) {
-	fprintf(fp, "& ");
-	fprintf(fp, "& $(%.3f)$ ", const_tstat);
+	pprintf(prn, "& ");
+	pprintf(prn, "& $(%.3f)$ ", const_tstat);
     } 
     for (i=2; i<=ncoeff; i++) {
         tstat = pmod->coeff[i-1]/pmod->sderr[i-1];
-	if (i == 2) fprintf(fp, "& & $(%.3f)$ ", tstat);
-	else fprintf(fp, "& & & $(%.3f)$ ", tstat);
+	if (i == 2) pprintf(prn, "& & $(%.3f)$ ", tstat);
+	else pprintf(prn, "& & & $(%.3f)$ ", tstat);
     }
-    fputs("\n\\end{tabular}\n\n", fp);
+    pprintf(prn, "\n\\end{tabular}\n\n");
 
     /* additional info (R^2 etc) */
-    fprintf(fp, "\\vspace{8pt}\n");
-    fprintf(fp, "$T = %d,\\, R^2 = %.3f,\\, F(%d,%d) = %.3f,\\, "
+    pprintf(prn, "\\vspace{8pt}\n");
+    pprintf(prn, "$T = %d,\\, R^2 = %.3f,\\, F(%d,%d) = %.3f,\\, "
 	    "\\hat{\\sigma} = %f$\n",
 	   pmod->nobs, pmod->rsq, pmod->dfn, 
 	   pmod->dfd, pmod->fstt, pmod->sigma);
 
-    fputs("\n($t$-statistics in parentheses)\n", fp);
+    pprintf(prn, "\n($t$-statistics in parentheses)\n"
+	    "\n\\end{center}\n");
 
-    fputs("\n\\end{center}\n", fp);
     if (standalone) 
-	fputs("\n\\end{document}\n", fp);
-    fclose(fp);
-    return texfile;
+	pprintf(prn, "\n\\end{document}\n");
+
+    if (prn->fp) fclose(prn->fp);
+
+    return 0;
 }
 
 /* ......................................................... */
 
-char *tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		       PATHS * ppaths, const int model_count, 
-		       const int standalone, const char *fname)
-/* This is not yet general; it is set up for OLS only right now */
+int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
+		     const int standalone, print_t *prn)
 {
     int i, ncoeff = pmod->list[0];
     int t1 = pmod->t1, t2 = pmod->t2;
-    FILE *fp;
-    char tmp[16], texname[14], *texfile;    
+    char tmp[16];
     char startdate[7], enddate[7];
-
-    texfile = malloc(MAXLEN);
-    if (texfile == NULL) return NULL;
-
-    if (fname != NULL) strcpy(texfile, fname);
-    else {
-	strcpy(texfile, ppaths->userdir);
-	sprintf(texname, "model_%d.tex", model_count);
-	strcat(texfile, texname);
-    }
-
-    fp = fopen(texfile, "w");
-    if (fp == NULL) {
-	free(texfile);
-	return NULL;
-    }
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
     if (standalone) {
-	fputs("\\documentclass{article}\n\\begin{document}\n\n", fp);
-	fputs("\\thispagestyle{empty}\n", fp);
+	pprintf(prn, "\\documentclass{article}\n\\begin{document}\n\n"
+		"\\thispagestyle{empty}\n");
     }
 
-    fputs("\\begin{center}\n", fp);
+    pprintf(prn, "\\begin{center}\n");
     tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
-    fprintf(fp, "\\textsc{Model %d: OLS estimates using the %d "
+    pprintf(prn, "\\textsc{Model %d: OLS estimates using the %d "
 	    "observations %s--%s}\\\\\n"
 	    "Dependent variable: %s\n\n", 
 	    pmod->ID, t2-t1+1, startdate, enddate, tmp);
 
-    fputs("\\vspace{1em}\n\n"
+    pprintf(prn, "\\vspace{1em}\n\n"
 	  "\\begin{tabular*}{\\textwidth}"
 	  "{@{\\extracolsep{\\fill}}\n"
 	  "l%%  col 1: varname\n"
@@ -249,42 +239,41 @@ char *tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	  "  \\multicolumn{2}{c}{Coefficient} &\n"
 	  "    \\multicolumn{1}{c}{Std.\\ Error} &\n"
 	  "      \\multicolumn{1}{c}{$t$-statistic} &\n"
-	  "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n", fp);
+	  "        \\multicolumn{1}{c}{p-value} \\\\[1ex]\n");
 
     if (pmod->ifc) {
-	tex_print_coeff(pdinfo, pmod, ncoeff, fp);
+	tex_print_coeff(pdinfo, pmod, ncoeff, prn);
 	ncoeff--;
     }
-    for (i=2; i<=ncoeff; i++) tex_print_coeff(pdinfo, pmod, i, fp);
+    for (i=2; i<=ncoeff; i++) tex_print_coeff(pdinfo, pmod, i, prn);
 
-    fputs("\\end{tabular*}\n\n"
+    pprintf(prn, "\\end{tabular*}\n\n"
 	  "\\vspace{1em}\n\n"
-	  "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlr}\n", fp);
+	  "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlr}\n");
 
-    fprintf(fp, "Mean of dep.\\ var. & $%f$ &"
+    pprintf(prn, "Mean of dep.\\ var. & $%f$ &"
 	    "S.D. of dep. variable & %f\\\\\n", 
 	    pmod->ybar, pmod->sdy);
-    fprintf(fp, "ESS & %f &"
+    pprintf(prn, "ESS & %f &"
 	    "Std Err of Resid. ($\\hat{\\sigma}$) & %f\\\\\n",
 	    pmod->ess, pmod->sigma);
-    fprintf(fp, "$R^2$  & %f &"
+    pprintf(prn, "$R^2$  & %f &"
 	    "$\\bar{R}^2$        & $%f$ \\\\\n",
 	    pmod->rsq, pmod->adjrsq);
-    fprintf(fp, "F-statistic (%d, %d) & %f &"
+    pprintf(prn, "F-statistic (%d, %d) & %f &"
 	    "p-value for F()          & %f\\\\\n",
 	    pmod->dfn, pmod->dfd, pmod->fstt,
 	    fdist(pmod->fstt, pmod->dfn, pmod->dfd));
-    fprintf(fp, "Durbin--Watson stat. & $%f$ &"
+    pprintf(prn, "Durbin--Watson stat. & $%f$ &"
 	    "$\\hat{\\rho}$ & $%f$ \n",
 	    pmod->dw, pmod->rho);
 
-    fputs("\\end{tabular*}\n\n"
-	  "\\vspace{1em}\n\n"
-	  "\\textsc{model selection statistics}\n\n"
-	  "\\vspace{1em}\n\n"
-	  "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n", 
-	  fp);
-    fprintf(fp, "\\textsc{sgmasq}  &  %g   &"  
+    pprintf(prn, "\\end{tabular*}\n\n"
+	    "\\vspace{1em}\n\n"
+	    "\\textsc{model selection statistics}\n\n"
+	    "\\vspace{1em}\n\n"
+	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n");
+    pprintf(prn, "\\textsc{sgmasq}  &  %g   &"  
 	    "\\textsc{aic}     &  %g  &"  
 	    "\\textsc{fpe}     &  %g  \\\\\n"
 	    "\\textsc{hq}      &  %g  &"
@@ -295,13 +284,14 @@ char *tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
 	    pmod->criterion[6], pmod->criterion[7]);
-    fputs("\\end{tabular*}\n\n", fp);
-    fputs("\n\\end{center}\n", fp);
+    pprintf(prn, "\\end{tabular*}\n\n"
+	    "\n\\end{center}\n");
     
     if (standalone) 
-	fputs("\n\\end{document}\n", fp);
+	pprintf(prn, "\n\\end{document}\n");
 
-    fclose(fp);
-    return texfile;
+    if (prn->fp) fclose(prn->fp);
+
+    return 0;
 }
 

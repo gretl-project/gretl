@@ -38,7 +38,6 @@ char *storelist = NULL;
 static GtkWidget *help_view = NULL;
 int db_is_native = 0;
 
-extern GtkItemFactoryEntry view_items[6]; /* was 3 */
 extern GtkTooltips *gretl_tips;
 extern int session_saved;
 extern GtkWidget *console_view;
@@ -129,7 +128,6 @@ RCVARS rc_vars[] = {
 GtkItemFactoryEntry model_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },
     { "/File/_Save as text...", NULL, file_save, SAVE_MODEL, NULL },
-    { "/File/Save as html...", NULL, file_save, SAVE_HTML, NULL },
     { "/File/Save to session as icon...", NULL, gretl_callback, 
       STORE_MODEL, NULL },
     { "/File/Save as icon and close", NULL, quick_remember_model, 0, NULL },
@@ -1338,22 +1336,15 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
 /* ........................................................... */
 
-int view_model (void *ptr, MODEL *pmod, int hsize, int vsize, 
+int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title) 
 {
     windata_t *vwin;
     GtkWidget *dialog, *close, *table, *scroller;
     GdkFont *fixed_font;
-    int html = 0;
-    print_t *prn = NULL;
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL) return 1;
     windata_init(vwin);
-
-    if (GTK_IS_HTML(ptr)) 
-	html = 1;
-    else
-	prn = (print_t *) ptr;
 
     fixed_font = gdk_font_load(fontspec);
     hsize *= gdk_char_width (fixed_font, 'W');
@@ -1392,32 +1383,18 @@ int view_model (void *ptr, MODEL *pmod, int hsize, int vsize,
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 		       table, TRUE, TRUE, FALSE);
 
-    if (html) {
-	vwin->w = GTK_WIDGET(ptr);
-	scroller = gtk_scrolled_window_new (NULL, NULL);
-	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scroller),
-					GTK_POLICY_AUTOMATIC,
-					GTK_POLICY_ALWAYS);
-	gtk_table_attach(GTK_TABLE(table), scroller, 0, 1, 0, 1,
-			 GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-			 GTK_SHRINK, 0, 0);
-	gtk_widget_show (scroller);
-	gtk_container_add(GTK_CONTAINER(scroller), vwin->w);
-	gtk_widget_realize(vwin->w);
-    } else {
-	vwin->w = gtk_text_new(NULL, NULL);
-	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
-	gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
-	gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
-			 GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
-			 GTK_SHRINK, 0, 0);
-	gtk_widget_show(vwin->w);
-	scroller = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
-	gtk_table_attach (GTK_TABLE(table), 
-			  scroller, 1, 2, 0, 1,
-			  GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
-	gtk_widget_show(scroller);
-    }
+    vwin->w = gtk_text_new(NULL, NULL);
+    gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
+    gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
+    gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
+		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
+		     GTK_SHRINK, 0, 0);
+    gtk_widget_show(vwin->w);
+    scroller = gtk_vscrollbar_new(GTK_TEXT(vwin->w)->vadj);
+    gtk_table_attach (GTK_TABLE(table), 
+		      scroller, 1, 2, 0, 1,
+		      GTK_FILL, GTK_EXPAND | GTK_SHRINK | GTK_FILL, 0, 0);
+    gtk_widget_show(scroller);
 
     gtk_widget_show(table);
 
@@ -1430,14 +1407,12 @@ int view_model (void *ptr, MODEL *pmod, int hsize, int vsize,
 		       (gpointer) dialog);
     gtk_widget_show(close);
 
-    if (!html) {
-	/* insert and then free the model buffer */
-	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-			NULL, NULL, prn->buf, 
-			strlen(prn->buf));
-	/*      fprintf(stderr, "view_model: freeing model buffer\n"); */
-	prnclose(prn);
-    }
+    /* insert and then free the model buffer */
+    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+		    NULL, NULL, prn->buf, 
+		    strlen(prn->buf));
+    /*      fprintf(stderr, "view_model: freeing model buffer\n"); */
+    prnclose(prn);
 
     copylist(&default_list, pmod->list);
 
@@ -2225,38 +2200,6 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 
 /* .................................................................. */
 
-#define CHUNK 1000
-
-static int file_to_clipboard (char *fname)
-{
-    FILE *fp;
-    int count = 0, num_chunks = 1;
-    int ch;
-
-    if (clipboard_buf) g_free(clipboard_buf);
-
-    clipboard_buf = mymalloc(CHUNK);
-    *clipboard_buf = '\0';    
-
-    fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
-
-    ch = fgetc(fp);
-    while (ch != EOF) {
-	if (count % CHUNK == (CHUNK-3))
-	    clipboard_buf = myrealloc(clipboard_buf, 
-				      (++num_chunks * CHUNK));
-	clipboard_buf[count++] = ch;
-	ch = fgetc(fp);
-    }
-    clipboard_buf[count] = '\0';
-
-    fclose(fp);
-    return 0;
-}
-
-/* .................................................................. */
-
 void buf_to_clipboard (char *buf)
 {
     size_t len;
@@ -2310,30 +2253,25 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-    /* other cases where we want to copy special stuff, or where we're
-       copying from a GtkHTML window */
-    if (how == COPY_HTML || how == COPY_LATEX || GTK_IS_HTML(mydata->w)) {    
+    else if (how == COPY_LATEX || how == COPY_HTML) {
 	MODEL *pmod = (MODEL *) mydata->data;
-	char *fname = tmpnam(NULL);
+	print_t modprn;
 
-	if (how == COPY_HTML) 
-	    do_save_html(fname, 0, pmod);
-	else if (how == COPY_LATEX)
-	    do_save_tex(fname, COPY_LATEX, pmod);
-	else /* COPY_TEXT */
-	    do_save_text(fname, pmod);
-	file_to_clipboard(fname);
-	remove(fname);
-	gtk_selection_owner_set(mdata->w,
-				GDK_SELECTION_PRIMARY,
-				GDK_CURRENT_TIME);
+	if (bufopen(&modprn)) return;
+	if (how == COPY_LATEX)
+	    tex_print_model(pmod, datainfo, 0, &modprn);
+	else
+	    h_printmodel(pmod, datainfo, &modprn);
+	buf_to_clipboard(modprn.buf);
+	prnclose(&modprn);
 	return;
     }
 
     /* otherwise just copying plain text from plain text window */
-    if (how == COPY_TEXT) 
+    else if (how == COPY_TEXT) {
 	gtk_editable_select_region(GTK_EDITABLE(mydata->w), 0, -1);
-    gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
+	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
+    }
 }
 
 /* .................................................................. */

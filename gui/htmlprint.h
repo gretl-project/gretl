@@ -22,28 +22,9 @@
 #ifndef HTMLPRINT_H
 #define HTMLPRINT_H
 
-#ifdef USE_GTKHTML
-# include <gtkhtml/gtkhtml.h>
-#else
- typedef void GtkHTML;
- typedef void GtkHTMLStream;
-#define GTK_IS_HTML(w)  FALSE
-#endif
-
-typedef struct { 
-    GtkHTML *w;              /* widget */
-    GtkHTMLStream *strm;     /* stream */
-    FILE *fp;                /* for printing html to file */
-} html_t;
-
-#ifdef USE_GTKHTML
-int h_bufopen (html_t *htm);
-#endif
-int h_fopen (html_t *htm, char *fname);
-void h_bufclose (html_t *htm);
 void h_printmodel (const MODEL *pmod, 
 		   const DATAINFO *pdinfo, 
-		   html_t *htm);
+		   print_t *htm);
 
 #endif /* HTMLPRINT_H */
 

@@ -618,16 +618,22 @@ static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* ............................................................. */
 
-static void printftex (const double zz, print_t *prn, int endrow)
+static void printfrtf (const double zz, print_t *prn, int endrow)
 {
-    char s[32];
+    if (na(zz)) {
+	if (endrow)
+	    pprintf(prn, "undefined\\\\");
+	else
+	    pprintf(prn, "undefined & ");
+    } else {
+	char s[32];
 
-    if (na(zz)) pprintf(prn, "undefined");
-    else printxx(zz, s, SUMMARY);
-    if (endrow) 
-	pprintf(prn, "$%s$\\\\");
-    else
-	pprintf(prn, "$%s$ & ");	
+	printxx(zz, s, SUMMARY);
+	if (endrow) 
+	    pprintf(prn, "$%s$\\\\");
+	else
+	    pprintf(prn, "$%s$ & ");
+    }	
 }
 
 /* FIXME */
@@ -680,10 +686,10 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	printftex(xbar, prn, 0);
-	printftex(summ->xmedian[v], prn, 0);
-	printftex(summ->xpx[v], prn, 0);
-	printftex(summ->xpy[v], prn, 1);
+	printfrtf(xbar, prn, 0);
+	printfrtf(summ->xmedian[v], prn, 0);
+	printfrtf(summ->xpx[v], prn, 0);
+	printfrtf(summ->xpy[v], prn, 1);
 	if (v == lo) pprintf(prn, "[10pt]\n\n");
 	else pprintf(prn, "\n");
     }
@@ -705,14 +711,34 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = -999;
-	printftex(std, prn, 0);
-	printftex(xcv, prn, 0);
-	printftex(summ->xskew[v], prn, 0);
-	printftex(summ->xkurt[v], prn, 1);
+	printfrtf(std, prn, 0);
+	printfrtf(xcv, prn, 0);
+	printfrtf(summ->xskew[v], prn, 0);
+	printfrtf(summ->xkurt[v], prn, 1);
 	pprintf(prn, "\n");
     }
 
     pprintf(prn, "}\n\n\\par\n");
+}
+
+/* ............................................................. */
+
+static void printftex (const double zz, print_t *prn, int endrow)
+{
+    if (na(zz)) {
+	if (endrow)
+	    pprintf(prn, "undefined\\\\");
+	else
+	    pprintf(prn, "undefined & ");
+    } else {
+	char s[32];
+
+	printxx(zz, s, SUMMARY);
+	if (endrow) 
+	    pprintf(prn, "$%s$\\\\");
+	else
+	    pprintf(prn, "$%s$ & ");
+    }	
 }
 
 /* ............................................................. */

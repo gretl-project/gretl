@@ -711,6 +711,7 @@ void free_summary (GRETLSUMMARY *summ)
     free(summ->xpx);
     free(summ->xpy); 
     free(summ->list);
+    free(summ);
 }
 
 /* ............................................................. */
@@ -720,7 +721,7 @@ GRETLSUMMARY *summary (const int *list,
 		       print_t *prn) 
 {
     int mm, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
-    int v, lv, *tmp;
+    int v, lv, *tmp = NULL;
     GRETLSUMMARY *summ;
     double xbar, std, low, high, skew, kurt, *x;
 

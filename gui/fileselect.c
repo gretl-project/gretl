@@ -51,11 +51,6 @@ static struct extmap action_map[] = {
     {SAVE_OUTPUT, "*.txt"},
     {SAVE_TEX_TAB, "*.tex"},
     {SAVE_TEX_EQ, "*.tex"},
-#ifdef G_OS_WIN32
-    {SAVE_HTML, "*.htm"},
-#else
-    {SAVE_HTML, "*.html"},
-#endif
     {OPEN_DATA, "*.dat*"},
     {OPEN_SCRIPT, "*.inp"},
     {OPEN_SESSION, "*.gretl"},
@@ -193,7 +188,6 @@ static char *get_filter (int action, gpointer data)
 	{SAVE_OUTPUT, "text files (*.txt)\0*.txt\0all files\0*\0"},
 	{SAVE_TEX_TAB, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
 	{SAVE_TEX_EQ, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
-	{SAVE_HTML, "HTML files (*.htm)\0*.htm\0all files\0*\0"},
 	{OPEN_DATA, "gretl data files (*.dat)\0*.dat*\0all files\0*\0"},
 	{OPEN_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
 	{OPEN_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
@@ -343,10 +337,6 @@ void file_selector (char *msg, char *startdir, int action,
 	MODEL *pmod = (MODEL *) data;
 	do_save_tex(fname, action, pmod); 
     }
-    else if (action == SAVE_HTML) {
-	MODEL *pmod = (MODEL *) data;
-	do_save_html(fname, 1, pmod); 
-    }
     else { /* save contents of an editable text window */
 	GtkWidget *editwin;
 	FILE *fp;
@@ -476,11 +466,6 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
     }
-    else if (action == SAVE_HTML) {
-	MODEL *pmod;
-	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
-	do_save_html(fname, 1, pmod); 
-    }
     else { /* save contents of an editable text window */
 	GtkWidget *editwin;
 	FILE *fp;
@@ -527,8 +512,6 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
     if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
     else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
-    else if (action == SAVE_HTML) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
     else if (action == SAVE_DATA && paths.datfile[0] &&
 	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {

@@ -473,6 +473,7 @@ void exec_line (char *line, print_t *prn)
     int check, nulldata_n;
     char s1[12], s2[12];
     double rho;
+    print_t texprn;
 
     /* are we ready for this? */
     if (!data_file_open && !ignore && !ready_for_command(line)) {
@@ -679,15 +680,18 @@ void exec_line (char *line, print_t *prn)
     case TABPRINT:
 	if ((err = model_test_start(0, prn, 1))) break;
 	if (command.ci == EQNPRINT)
-	    texfile = tex_print_equation(models[0], datainfo, 
-					 &paths, model_count, oflag, NULL);
+	    texfile = make_texfile(&paths, model_count, 1, &texprn);
 	else
-	    texfile = tex_print_model(models[0], datainfo,
-				      &paths, model_count, oflag, NULL);
+	    texfile = make_texfile(&paths, model_count, 0, &texprn);
 	if (texfile == NULL) {
 	    pprintf(prn, "Couldn't open tex file for writing.\n");
 	    err = 1;
 	} else {
+	    if (command.ci == EQNPRINT) {
+		tex_print_equation(models[0], datainfo, oflag, &texprn);
+	    } else {
+		tex_print_model(models[0], datainfo, oflag, &texprn);
+	    }
 	    pprintf(prn, "Model printed to %s\n", texfile); 
 	    free(texfile);
 	}
