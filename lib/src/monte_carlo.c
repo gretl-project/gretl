@@ -49,6 +49,7 @@ enum loop_types {
     COUNT_LOOP,
     WHILE_LOOP,
     INDEX_LOOP,
+    DATED_LOOP,
     FOR_LOOP
 };
 
@@ -313,6 +314,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 				  const char *end)
 {
     int nstart = -1, nend = -1;
+    int dated = 0;
     int err = 0;
 
     if (lvar != NULL && strcmp(lvar, "i")) {
@@ -324,6 +326,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 
     if (!err) {
 	if (maybe_date(start)) {
+	    dated = 1;
 	    nstart = dateton(start, pdinfo);
 	}
 	if (nstart < 0) {
@@ -333,6 +336,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 
     if (!err) {
 	if (maybe_date(end)) {
+	    dated = 1;
 	    nend = dateton(end, pdinfo);
 	}
 	if (nend < 0) {
@@ -352,7 +356,11 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	loop->lvar = 0;
 	loop->rvar = 0;
 	loop->ntimes = nend;
-	loop->type = INDEX_LOOP;
+	if (dated) {
+	    loop->type = DATED_LOOP;
+	} else {
+	    loop->type = INDEX_LOOP;
+	}
     }
 
     return err;
@@ -724,7 +732,8 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
     }
 
     /* a loop indexed by 'i' */
-    else if (loop->type == INDEX_LOOP) {  
+    else if (loop->type == INDEX_LOOP || 
+	     loop->type == DATED_LOOP) {  
 	if (k > 0) {
 	    loop->index += 1;
 	}
@@ -1774,13 +1783,14 @@ void get_cmd_ci (const char *line, CMD *command)
     }
 } 
 
-static int substitute_dollar_i (char *str, int index)
+static int substitute_dollar_i (char *str, const LOOPSET *loop,
+				const DATAINFO *pdinfo)
 {
     char *p;
     int err = 0;
 
     while ((p = strstr(str, "$i")) != NULL) {
-	char ins[8];
+	char ins[OBSLEN];
 	char *q;
 
 	q = malloc(strlen(p));
@@ -1789,7 +1799,11 @@ static int substitute_dollar_i (char *str, int index)
 	    break;
 	}
 	strcpy(q, p + 2);
-	sprintf(ins, "%d", index);
+	if (loop->type == INDEX_LOOP) {
+	    sprintf(ins, "%d", loop->index);
+	} else {
+	    ntodate(ins, loop->index, pdinfo);
+	}
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
 	free(q);	
@@ -1816,7 +1830,7 @@ loop_add_storevals (const int *list, LOOPSET *loop, int lround,
 
 static void top_of_loop (LOOPSET *loop, double **Z)
 {
-    if (loop->type == INDEX_LOOP) {
+    if (loop->type == INDEX_LOOP || loop->type == DATED_LOOP) {
 	loop->index = loop->initval;
     } else if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
@@ -1866,8 +1880,15 @@ int loop_exec (LOOPSET *loop, char *line,
 	fprintf(stderr, "top of loop: lround = %d\n", lround);
 #endif
 
-	if (loop->type == INDEX_LOOP && !(*echo_off)) {
-	    pprintf(prn, "loop: i = %d\n\n", loop->index);
+	if (!(*echo_off)) {
+	    if (loop->type == INDEX_LOOP) {
+		pprintf(prn, "loop: i = %d\n\n", loop->index);
+	    } else if (loop->type == DATED_LOOP) {
+		char obs[OBSLEN];
+
+		ntodate(obs, loop->index, *ppdinfo);
+		pprintf(prn, "loop: i = %s\n\n", obs);
+	    }
 	}
 
 	for (j=0; !err && j<loop->ncmds; j++) {
@@ -1883,9 +1904,11 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    err = substitute_dollar_i(linecpy, loop->index);
-	    if (err) {
-		break;
+	    if (loop->type == INDEX_LOOP || loop->type == DATED_LOOP) {
+		err = substitute_dollar_i(linecpy, loop, *ppdinfo);
+		if (err) {
+		    break;
+		}
 	    }
 
 	    /* We already have the "ci" index recorded, but this line
@@ -1901,7 +1924,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (!(*echo_off) && loop->type == INDEX_LOOP) {
+	    if (!(*echo_off) && 
+		(loop->type == INDEX_LOOP || loop->type == DATED_LOOP)) {
 		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, 0, prn);
 	    }
 
