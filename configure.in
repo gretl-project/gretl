@@ -184,7 +184,7 @@ if test "$have_readline" = yes; then
 fi
 AC_SUBST(RL_OBJ)
 AC_CHECK_LIB(readline, rl_completion_matches,new_readline="yes" ; \
-  CLI_LIBS="-lreadline -ltermcap" ; AC_DEFINE(NEW_READLINE),,-ltermcap)
+  CLI_LIBS="-lreadline -lncurses" ; AC_DEFINE(NEW_READLINE),,-lncurses)
 AC_SUBST(new_readline)
 
 dnl
