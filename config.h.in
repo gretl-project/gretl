@@ -30,7 +30,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #undef ENABLE_NLS
 
 /* Location of shared gretl files */
-#define GRETL "/usr/local/share/gretl"
+#define GRETL_PREFIX "/usr/local"
 
 /* Multiple precision arithmetic? */
 #undef ENABLE_GMP

@@ -137,7 +137,7 @@ void show_paths (PATHS *ppaths);
 
 int set_paths (PATHS *ppaths, int defaults, int gui);
 
-const char *fetch_gretl_path (void);
+const char *fetch_gretl_lib_path (void);
 
 int copylist (int **target, const int *src);
 

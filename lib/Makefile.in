@@ -84,13 +84,13 @@ install-strip: $(LIBGRETL) install-data
 
 install-data: installdirs $(INSTALL_CFG)
 	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
-	$(INSTALL_DATA) ../gretl.m4 $(aclocaldir)
 
 install-cfg-old: ../gretl-config
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
+	$(INSTALL_DATA) ../gretl.m4 $(aclocaldir)
 
-install-cfg-new: ../gretl2.pc
-	$(INSTALL_DATA) ../gretl2.pc $(pkgconfigdir)
+install-cfg-new: ../gretl.pc
+	$(INSTALL_DATA) ../gretl.pc $(pkgconfigdir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)

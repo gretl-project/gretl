@@ -1022,6 +1022,8 @@ Optional Packages:
   --with-libole2-exec-prefix=PFX Exec prefix where libole2 is installed (optional)
   --with-gdk-pixbuf-prefix=PFX   Prefix where GDK_PIXBUF is installed (optional)
   --with-gdk-pixbuf-exec-prefix=PFX Exec prefix where GDK_PIXBUF is installed (optional)
+  --with-gconf-source=sourceaddress      Config database for installing schema files.
+  --with-gconf-schema-file-dir=dir        Directory for installing schema files.
 
 Some influential environment variables:
   CC          C compiler command
@@ -6065,7 +6067,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6068 "configure"' > conftest.$ac_ext
+  echo '#line 6070 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -6601,7 +6603,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:6604: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:6606: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -8394,7 +8396,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8397 "configure"
+#line 8399 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -8492,7 +8494,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8495 "configure"
+#line 8497 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11417,7 +11419,6 @@ echo "${ECHO_T}$GTK_LIBS" >&6
      CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0"
-      gretlbin="gretl2"
       cat >>confdefs.h <<\_ACEOF
 #define USE_GTK2 1
 _ACEOF
@@ -12039,9 +12040,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
   rm -f conf.gtkextratest
 
    fi
-   gretlbin="gretl"
 fi
-
 
 
 
@@ -12936,7 +12935,8 @@ echo "${ECHO_T}$GNOME_LIBS" >&6
   fi
 
   if test $succeeded = yes; then
-     cat >>confdefs.h <<\_ACEOF
+     gconf-2.0
+           cat >>confdefs.h <<\_ACEOF
 #define USE_GNOME 1
 _ACEOF
 
@@ -13047,6 +13047,86 @@ echo "${ECHO_T}$XML_LIBS" >&6
 echo "$as_me: error: Library requirements (libxml-2.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&2;}
    { (exit 1); exit 1; }; }
   fi
+
+	    # Extract the first word of "gconftool-2", so it can be a program name with args.
+set dummy gconftool-2; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_path_GCONFTOOL+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $GCONFTOOL in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_GCONFTOOL="$GCONFTOOL" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_GCONFTOOL="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+
+  test -z "$ac_cv_path_GCONFTOOL" && ac_cv_path_GCONFTOOL="no"
+  ;;
+esac
+fi
+GCONFTOOL=$ac_cv_path_GCONFTOOL
+
+if test -n "$GCONFTOOL"; then
+  echo "$as_me:$LINENO: result: $GCONFTOOL" >&5
+echo "${ECHO_T}$GCONFTOOL" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+	    if test x"$GCONFTOOL" = xno; then
+              { { echo "$as_me:$LINENO: error: gconftool-2 executable not found in your path" >&5
+echo "$as_me: error: gconftool-2 executable not found in your path" >&2;}
+   { (exit 1); exit 1; }; }
+            fi
+
+  if test "x$GCONF_SCHEMA_INSTALL_SOURCE" = "x"; then
+    GCONF_SCHEMA_CONFIG_SOURCE=`gconftool-2 --get-default-source`
+  else
+    GCONF_SCHEMA_CONFIG_SOURCE=$GCONF_SCHEMA_INSTALL_SOURCE
+  fi
+
+
+# Check whether --with-gconf-source or --without-gconf-source was given.
+if test "${with_gconf_source+set}" = set; then
+  withval="$with_gconf_source"
+  GCONF_SCHEMA_CONFIG_SOURCE="$withval"
+fi;
+
+
+  echo "$as_me:$LINENO: result: Using config source $GCONF_SCHEMA_CONFIG_SOURCE for schema installation" >&5
+echo "${ECHO_T}Using config source $GCONF_SCHEMA_CONFIG_SOURCE for schema installation" >&6
+
+  if test "x$GCONF_SCHEMA_FILE_DIR" = "x"; then
+    GCONF_SCHEMA_FILE_DIR='$(sysconfdir)/gconf/schemas/'
+  else
+    GCONF_SCHEMA_FILE_DIR=$GCONF_SCHEMA_FILE_DIR
+  fi
+
+
+# Check whether --with-gconf-schema-file-dir or --without-gconf-schema-file-dir was given.
+if test "${with_gconf_schema_file_dir+set}" = set; then
+  withval="$with_gconf_schema_file_dir"
+  GCONF_SCHEMA_FILE_DIR="$withval"
+fi;
+
+
+  echo "$as_me:$LINENO: result: Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&5
+echo "${ECHO_T}Using $GCONF_SCHEMA_FILE_DIR as install directory for schema files" >&6
 
         fi
     else
@@ -13167,12 +13247,12 @@ if test "${prefix}" = "NONE" ; then
    prefix="/usr/local"
 fi
 cat >>confdefs.h <<_ACEOF
-#define GRETL "${prefix}/share/gretl/"
+#define GRETL_PREFIX "${prefix}"
 _ACEOF
 
 
 CFLAGS="$orig_CFLAGS"
-ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl2_sh gretl2.pc gui/Makefile gui/gtkextra-lite/Makefile gui2/Makefile gui2/gtkextra-lite/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile lib/Makefile cephes/Makefile plugin/Makefile po/Makefile.in share/Makefile tests/Makefile extra/Makefile"
+ac_config_files="$ac_config_files Makefile gretl_sh gretl-config gretl.pc gui/Makefile gui/gtkextra-lite/Makefile gui2/Makefile gui2/gtkextra-lite/Makefile gui2/omf-install/Makefile gnome/Makefile gnome/gretl.keys cli/Makefile lib/Makefile cephes/Makefile plugin/Makefile po/Makefile.in share/Makefile tests/Makefile extra/Makefile"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -13663,8 +13743,7 @@ do
   "Makefile" ) CONFIG_FILES="$CONFIG_FILES Makefile" ;;
   "gretl_sh" ) CONFIG_FILES="$CONFIG_FILES gretl_sh" ;;
   "gretl-config" ) CONFIG_FILES="$CONFIG_FILES gretl-config" ;;
-  "gretl2_sh" ) CONFIG_FILES="$CONFIG_FILES gretl2_sh" ;;
-  "gretl2.pc" ) CONFIG_FILES="$CONFIG_FILES gretl2.pc" ;;
+  "gretl.pc" ) CONFIG_FILES="$CONFIG_FILES gretl.pc" ;;
   "gui/Makefile" ) CONFIG_FILES="$CONFIG_FILES gui/Makefile" ;;
   "gui/gtkextra-lite/Makefile" ) CONFIG_FILES="$CONFIG_FILES gui/gtkextra-lite/Makefile" ;;
   "gui2/Makefile" ) CONFIG_FILES="$CONFIG_FILES gui2/Makefile" ;;
@@ -13825,7 +13904,6 @@ s,@GTK_EXTRA_CONFIG@,$GTK_EXTRA_CONFIG,;t t
 s,@GTK_EXTRA_CFLAGS@,$GTK_EXTRA_CFLAGS,;t t
 s,@GTK_EXTRA_LIBS@,$GTK_EXTRA_LIBS,;t t
 s,@have_gtk@,$have_gtk,;t t
-s,@gretlbin@,$gretlbin,;t t
 s,@LIBOLE_CFLAGS@,$LIBOLE_CFLAGS,;t t
 s,@LIBOLE_LIBS@,$LIBOLE_LIBS,;t t
 s,@LIBOLE2_CFLAGS@,$LIBOLE2_CFLAGS,;t t
@@ -13838,6 +13916,9 @@ s,@GNOME_CFLAGS@,$GNOME_CFLAGS,;t t
 s,@GNOME_LIBS@,$GNOME_LIBS,;t t
 s,@XML_CFLAGS@,$XML_CFLAGS,;t t
 s,@XML_LIBS@,$XML_LIBS,;t t
+s,@GCONFTOOL@,$GCONFTOOL,;t t
+s,@GCONF_SCHEMA_CONFIG_SOURCE@,$GCONF_SCHEMA_CONFIG_SOURCE,;t t
+s,@GCONF_SCHEMA_FILE_DIR@,$GCONF_SCHEMA_FILE_DIR,;t t
 s,@GNOME@,$GNOME,;t t
 s,@have_gnome@,$have_gnome,;t t
 s,@gnome_prefix@,$gnome_prefix,;t t

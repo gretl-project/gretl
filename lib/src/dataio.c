@@ -2562,11 +2562,11 @@ int open_plugin (const char *plugin, void **handle)
     char pluginpath[MAXLEN];
 
 #ifdef OS_WIN32
-    sprintf(pluginpath, "%s\\plugins\\%s.dll", fetch_gretl_path(), plugin);
+    sprintf(pluginpath, "%s\\plugins\\%s.dll", fetch_gretl_lib_path(), plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) return 1;
 #else
-    sprintf(pluginpath, "%splugins/%s.so", fetch_gretl_path(), plugin);
+    sprintf(pluginpath, "%s%s.so", fetch_gretl_lib_path(), plugin);
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
 	fprintf(stderr, "%s\n", dlerror());

@@ -23,6 +23,10 @@
 #include <unistd.h>
 #include "gtkfontselhack.h"
 
+#ifdef USE_GNOME
+# include <gconf/gconf-client.h>
+#endif
+
 #ifdef G_OS_WIN32
 # include <windows.h>
 #endif
@@ -482,6 +486,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 /* .................................................................. */
 
+#ifndef USE_GNOME
 static void str_to_boolvar (char *s, void *b)
 {
     if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0)
@@ -490,13 +495,12 @@ static void str_to_boolvar (char *s, void *b)
 	*(int *)b = FALSE;	
 }
 
-/* .................................................................. */
-
 static void boolvar_to_str (void *b, char *s)
 {
     if (*(int *)b) strcpy(s, "true");
     else strcpy(s, "false");
 }
+#endif
 
 /* .................................................................. */
 
@@ -504,42 +508,72 @@ static void boolvar_to_str (void *b, char *s)
 
 void write_rc (void) 
 {
-    char gpath[MAXSTR];
-    char val[6];
+    GConfClient *client;   
+    char key[MAXSTR];
     int i = 0;
 
+    client = gconf_client_get_default();
+
     while (rc_vars[i].key != NULL) {
-	sprintf(gpath, "/gretl2/%s/%s", rc_vars[i].description, rc_vars[i].key);
+	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
 	if (rc_vars[i].type == 'B') {
-	    boolvar_to_str(rc_vars[i].var, val);
-	    gnome_config_set_string(gpath, val);
-	} else
-	    gnome_config_set_string(gpath, rc_vars[i].var);
+	    gboolean val = *(gboolean *) rc_vars[i].var;
+
+	    gconf_client_set_bool (client, key, val, NULL);
+	} else {
+	    gconf_client_set_string (client, key, rc_vars[i].var, NULL);
+	}
 	i++;
     }
+
+    g_object_unref(G_OBJECT(client));
+
     printfilelist(1, NULL); /* data files */
     printfilelist(2, NULL); /* session files */
     printfilelist(3, NULL); /* script files */    
-    gnome_config_sync();
+
     set_paths(&paths, 0, 1);
 }
 
 static void read_rc (void) 
 {
+    GConfClient* client;
+    GError* error = NULL;
+    GSList *flist = NULL;
+    gchar *value;
+    char key[MAXSTR];
     int i = 0;
-    gchar *value = NULL;
-    char gpath[MAXSTR];
+    static char *sections[] = {
+	"recent_data_files",
+	"recent_session_files",
+	"recent_script_files"
+    };	
+
+    client = gconf_client_get_default();
 
     while (rc_vars[i].key != NULL) {
-	sprintf(gpath, "/gretl2/%s/%s", 
-		rc_vars[i].description, 
-		rc_vars[i].key);
-	if ((value = gnome_config_get_string(gpath)) != NULL) {
-	    if (rc_vars[i].type == 'B')
-		str_to_boolvar(value, rc_vars[i].var);
-	    else
-		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
-	    g_free(value);
+	sprintf(key, "/apps/gretl/%s", rc_vars[i].key);
+	if (rc_vars[i].type == 'B') {
+	    gboolean val;
+
+	    val = gconf_client_get_bool (client, key, &error);
+	    if (error) {
+		g_clear_error(&error);
+	    } else {
+		*(int *) rc_vars[i].var = val;
+	    }
+	} else {
+	    value = gconf_client_get_string (client, key, &error);
+
+	    if (error) {
+		g_clear_error(&error);
+	    } else if (value != NULL) {
+		char *s = (char *) rc_vars[i].var;
+
+		*s = 0;
+		strncat(s, value, rc_vars[i].len - 1);
+		g_free(value);
+	    }
 	}
 	i++;
     }
@@ -550,31 +584,27 @@ static void read_rc (void)
 	sessionlist[i][0] = 0;
 	scriptlist[i][0] = 0;
     }
-    /* get recent file lists */
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl2/recent data files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(datalist[i], value);
-	    g_free(value);
+
+    for (i=0; i<3; i++) {
+	int j;
+
+	sprintf(key, "/apps/gretl/%s", sections[i]);
+	flist = gconf_client_get_list (client, key,
+				       GCONF_VALUE_STRING, NULL);
+	if (flist != NULL) {
+	    for (j=0; j<MAXRECENT; j++) {
+		if (i == 0) strcpy(datalist[j], flist->data);
+		else if (i == 1) strcpy(sessionlist[j], flist->data);
+		else if (i == 2) strcpy(scriptlist[j], flist->data);
+		flist = flist->next;
+	    }
+	    g_slist_free(flist);
+	    flist = NULL;
 	}
-	else break;
-    }    
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl2/recent session files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(sessionlist[i], value);
-	    g_free(value);
-	}
-	else break;
-    } 
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl2/recent script files/%d", i);
-	if ((value = gnome_config_get_string(gpath)) != NULL) { 
-	    strcpy(scriptlist[i], value);
-	    g_free(value);
-	}
-	else break;
     }
+
+    g_object_unref(G_OBJECT(client));
+
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 #ifdef ENABLE_NLS
     set_lcnumeric();
@@ -1005,14 +1035,18 @@ char *endbit (char *dest, char *src, int addscore)
 #if defined(USE_GNOME)
 
 static void printfilelist (int filetype, FILE *fp)
-     /* fp is ignored */
+     /* param fp is ignored */
 {
+    GConfClient *client;
+    GSList *flist = NULL;
+    gchar *key;
     int i;
     char **filep;
-    char gpath[MAXLEN];
-    static char *section[] = {"recent data files",
-			      "recent session files",
-			      "recent script files"};
+    static char *sections[] = {
+	"recent_data_files",
+	"recent_session_files",
+	"recent_script_files"
+    };
 
     switch (filetype) {
     case 1: filep = datap; break;
@@ -1021,23 +1055,35 @@ static void printfilelist (int filetype, FILE *fp)
     default: return;
     }
 
+    client = gconf_client_get_default();
+
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl2/%s/%d", section[filetype - 1], i);
-	gnome_config_set_string(gpath, filep[i]);
+	flist = g_slist_append (flist, g_strdup(filep[i]));
     }
+
+    key = g_strdup_printf("/apps/gretl/%s", sections[filetype - 1]);
+
+    gconf_client_set_list (client, key, GCONF_VALUE_STRING, 
+			   flist, NULL);
+
+    g_free(key);
+    g_slist_free(flist);
+    g_object_unref(G_OBJECT(client));
 }
 
 #elif defined(G_OS_WIN32)
 
 static void printfilelist (int filetype, FILE *fp)
-     /* fp is ignored */
+     /* param fp is ignored */
 {
     int i;
     char **filep;
     char rpath[MAXLEN];
-    static char *section[] = {"recent data files",
-			      "recent session files",
-			      "recent script files"};
+    static char *sections[] = {
+	"recent data files",
+	"recent session files",
+	"recent script files"
+    };
 
     switch (filetype) {
     case 1: filep = datap; break;
@@ -1047,7 +1093,7 @@ static void printfilelist (int filetype, FILE *fp)
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "%s\\%d", section[filetype - 1], i);
+	sprintf(rpath, "%s\\%d", sections[filetype - 1], i);
 	write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
     }
 }

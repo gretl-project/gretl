@@ -26,7 +26,7 @@ ifeq ($(INSTALL_PROGRAM),)
 endif
 
 # Installation directory
-share = $(prefix)/share/gretl
+plugindir = $(prefix)/lib/gretl
 
 override CFLAGS += -I.. -DHAVE_CONFIG_H
 
@@ -140,14 +140,14 @@ $(GRETLLIB):
 
 install: $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
-	$(PLUGINS) $(share)/plugins
+	$(PLUGINS) $(plugindir)
 
 install-strip: $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
-	$(PLUGINS) $(share)/plugins
+	$(PLUGINS) $(plugindir)
 
 installdirs:
-	$(topsrc)/tools/mkinstalldirs $(share)/plugins
+	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
 	rm -f *.o *.lo *.so core 

@@ -106,7 +106,7 @@ drag_data_received  (GtkWidget          *widget,
 		     gpointer            p);
 
 #ifdef USE_GNOME
-char *optrun = NULL, *optdb = NULL;
+static char *optrun, *optdb;
 
 static const struct poptOption options[] = {
     {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -673,6 +673,7 @@ int main (int argc, char *argv[])
 #endif
 
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
+
 #ifdef G_OS_WIN32
     read_rc(); /* get config info from registry */
     g_log_set_handler ("Gtk",
@@ -1874,9 +1875,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	gtk_toolbar_append_widget(GTK_TOOLBAR(gretl_toolbar), button,
 				  toolstr, NULL);
     }
-    gtk_widget_show(gretl_toolbar);
-    gtk_widget_show(toolbar_box);
-    gtk_widget_show(hbox);
+
+    gtk_widget_show_all (hbox);
 }
 
 /* Icon handling for X */

@@ -30,7 +30,7 @@ AC_ARG_ENABLE(gretltest, [  --disable-gretltest       Do not try to compile and 
   fi
 
   AC_PATH_PROG(GRETL_CONFIG, gretl-config, no)
-  min_gretl_version=ifelse([$1], ,14.0.0,$1)
+  min_gretl_version=ifelse([$1], ,16.0.0,$1)
   AC_MSG_CHECKING(for libgretl - version >= $min_gretl_version)
   no_gretl=""
   if test "$GRETL_CONFIG" = "no" ; then

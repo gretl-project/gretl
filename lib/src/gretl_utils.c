@@ -1233,19 +1233,32 @@ int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
 
 static char *internal_path_stuff (int code, const char *path)
 {
-    static char gretldir[MAXLEN];
+    static char gretl_lib_path[MAXLEN];
 
     if (code == 1) {
-	strcpy(gretldir, path);
+#ifdef OS_WIN32
+	strcpy(gretl_lib_path, path);
+#else
+	char *p = strstr(path, "/share");
+	if (p) {
+	    size_t len = p - path;
+
+	    *gretl_lib_path = 0;
+	    strncat(gretl_lib_path, path, len);
+	    strcat(gretl_lib_path, "/lib/gretl/");
+	} else {
+	    sprintf(gretl_lib_path, "%s/lib/gretl/", path);
+	}
+#endif
 	return NULL;
     } 
     else if (code == 0) {
-	return gretldir;
+	return gretl_lib_path;
     }
     return NULL;
 }
 
-const char *fetch_gretl_path (void)
+const char *fetch_gretl_lib_path (void)
 {
     return internal_path_stuff (0, NULL);
 }
@@ -1324,10 +1337,12 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	DIR *try = NULL;
 
 	home = getenv("GRETL_HOME");
-	if (home != NULL)
+	if (home != NULL) {
 	    strcpy(ppaths->gretldir, home);
-	else
-	    strcpy(ppaths->gretldir, GRETL); 
+	} else {
+	    strcpy(ppaths->gretldir, GRETL_PREFIX);
+	    strcat(ppaths->gretldir, "/share/gretl/");
+	} 
 	if (gui) {
 	    sprintf(ppaths->binbase, "%sdb/", ppaths->gretldir);
 	    strcpy(ppaths->ratsbase, "/mnt/dosc/userdata/rats/oecd/");

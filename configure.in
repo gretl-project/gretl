@@ -277,7 +277,6 @@ if test "$try_gtk2" = "yes" ; then
       CFLAGS="$CFLAGS $GTK_CFLAGS"
       LIBS="$LIBS $GTK_LIBS"
       have_gtk="2.0"
-      gretlbin="gretl2"
       AC_DEFINE(USE_GTK2),
       have_gtk="no"      
     )
@@ -294,12 +293,10 @@ if test "$have_gtk" = "no" ; then
    if test ${try_gtkextra} = yes ; then
       AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
    fi
-   gretlbin="gretl"
 fi
 
 dnl record the results of the above tests
 AC_SUBST(have_gtk)
-AC_SUBST(gretlbin)
 
 dnl
 dnl Should we try to use an installed version of libole2?
@@ -350,7 +347,7 @@ dnl
 if test "$try_gnome" = "yes" ; then
 dnl If we have gtk 2.0, test for gnome 2.0
     if test "$have_gtk" = "2.0" ; then
-        PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0, 
+        PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0, gconf-2.0
            AC_DEFINE(USE_GNOME)
            have_gnome="2.0"
            if test "${gnome_prefix}" = "NA" ; then
@@ -360,6 +357,11 @@ dnl If we have gtk 2.0, test for gnome 2.0
         )
         if test "$have_gnome" = "2.0" ; then
             PKG_CHECK_MODULES(XML, libxml-2.0)
+	    AC_PATH_PROG(GCONFTOOL, gconftool-2, no)
+	    if test x"$GCONFTOOL" = xno; then
+              AC_MSG_ERROR([gconftool-2 executable not found in your path])
+            fi
+	    AM_GCONF_SOURCE_2
         fi 
     else
 dnl Still trying for gnome, but we don't have gtk 2.0 so test for gnome 1.4  
@@ -409,7 +411,7 @@ dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
    prefix="/usr/local"
 fi
-AC_DEFINE_UNQUOTED(GRETL, "${prefix}/share/gretl/")
+AC_DEFINE_UNQUOTED(GRETL_PREFIX, "${prefix}")
 
 dnl Create output
 CFLAGS="$orig_CFLAGS"
@@ -417,8 +419,7 @@ AC_OUTPUT([
 Makefile 
 gretl_sh
 gretl-config
-gretl2_sh 
-gretl2.pc 
+gretl.pc 
 gui/Makefile
 gui/gtkextra-lite/Makefile
 gui2/Makefile

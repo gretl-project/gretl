@@ -70,7 +70,7 @@ docdir = $(topsrc)/doc
 
 SHELL = /bin/sh
 LIBTOOL = $(topsrc)/libtool
-PROG  = gretl2_x11
+PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
 
@@ -103,7 +103,7 @@ install-strip: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
 
 install-data: installdirs
-	$(INSTALL_PROGRAM) $(topsrc)/gretl2_sh $(bindir)/gretl2
+	$(INSTALL_PROGRAM) $(topsrc)/gretl_sh $(bindir)/gretl
 	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 

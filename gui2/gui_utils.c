@@ -2154,11 +2154,11 @@ int gui_open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
-    strcpy(pluginpath, paths.gretldir);
-    append_dir(pluginpath, "plugins");
-    strcat(pluginpath, plugin);
+    strcpy(pluginpath, fetch_gretl_lib_path());
 
 #ifdef G_OS_WIN32
+    append_dir(pluginpath, "plugins");
+    strcat(pluginpath, plugin);
     strcat(pluginpath, ".dll");
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) {
@@ -2167,6 +2167,7 @@ int gui_open_plugin (const char *plugin, void **handle)
 	return 1;
     }
 #else
+    strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {

@@ -3,7 +3,7 @@ exec_prefix=${prefix}
 libdir=${exec_prefix}/lib
 includedir=${prefix}/include
 
-Name: gretl2
+Name: gretl
 Description: Econometrics library (and program)
 Version: @LIBVERSION@
 Requires: libxml-2.0
