@@ -626,7 +626,9 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-    /* gtk_main_quit(); */
+    if (DATA_SAVE_CODE(sr->code)) {
+	gtk_main_quit();
+    }
     free(sr->cmdlist);
     free(sr);
     open_dialog = NULL;
@@ -1006,7 +1008,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
 		     G_CALLBACK(delete_widget), sr->dlg);
     gtk_widget_show(tmp);
 
-    if (sr->code != PRINT) {
+    if (sr->code != PRINT && !DATA_SAVE_CODE(sr->code)) {
 	tmp = standard_button (GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
@@ -1200,6 +1202,13 @@ static char *get_topstr (int cmdnum)
     case GR_BOX: 
     case GR_NBOX:
 	return N_("Select variables to plot");
+    case SAVE_DATA:
+    case SAVE_DATA_AS:
+    case SAVE_GZDATA:
+    case EXPORT_CSV:
+    case EXPORT_R:
+    case EXPORT_OCTAVE:
+	return N_("Select variables to save");
     default:
 	return "";
     }
@@ -1422,4 +1431,51 @@ char *mdata_selection_to_string (int n_required)
     }
 
     return lmkr.liststr;
+}
+
+static const char *data_save_title (int code)
+{
+    switch (code) {
+    case EXPORT_CSV:
+	return _("Save CSV data file");
+    case EXPORT_R:
+    case EXPORT_R_ALT:
+	return _("Save R data file");
+    case EXPORT_OCTAVE:
+	return _("Save octave data file");
+    default:
+	return _("Save data file");
+    }
+    return "";
+}
+
+static void data_save_selection_callback (GtkWidget *w, gpointer p)
+{
+    selector *sr = (selector *) p;
+    gchar *selvars;
+    size_t len;
+
+    selvars = sr->cmdlist;  
+
+    if (selvars == NULL) return;
+
+    len = strlen(selvars);
+    if (len == 0) return;
+
+    if (len >= MAXLEN || (storelist && !strcmp(storelist, selvars))) {
+	free(storelist);
+	storelist = NULL; /* default list -- don't need to be explicit */
+    } else {
+	if (storelist != NULL) free(storelist);
+	storelist = g_strdup(selvars);
+    }
+
+    file_selector(data_save_title(sr->code), sr->code, NULL);
+}
+
+void data_save_selection_wrapper (int file_code)
+{
+    simple_selection(_("Save data"), data_save_selection_callback, file_code, 
+		     NULL);
+    gtk_main();
 }

@@ -425,7 +425,7 @@ static char *make_winfilter (int action, gpointer data)
 
 /* ........................................................... */
 
-void file_selector (char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
     int retval;
@@ -741,7 +741,7 @@ gtk_file_selection_glob_populate (GtkFileSelection *fs,
     g_free(pattern);
 }
 
-void file_selector (char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, gpointer data) 
 {
     GtkWidget *filesel;
     char suffix[16], startdir[MAXLEN];

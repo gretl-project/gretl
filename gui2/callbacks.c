@@ -211,18 +211,14 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_GZDATA:
     case SAVE_BIN1:
     case SAVE_BIN2:
-	file_selector(_("Save data file"), file_code, NULL);
+	data_save_selection_wrapper(file_code);
 	break;
     case EXPORT_CSV:
 	delimiter_dialog();
-	file_selector(_("Save CSV data file"), file_code, NULL);
-	break;
     case EXPORT_R:
     case EXPORT_R_ALT:
-	file_selector(_("Save R data file"), file_code, NULL);
-	break;
     case EXPORT_OCTAVE:
-	file_selector(_("Save octave data file"), file_code, NULL);
+	data_save_selection_wrapper(file_code);
 	break;
     case SAVE_TEX_TAB:
     case SAVE_TEX_EQ:

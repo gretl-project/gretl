@@ -1304,6 +1304,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     
     dialog_table_setup (vwin);
 
+    /* arrange for clean-up when dialog is destroyed */
+    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
+		     G_CALLBACK(free_windata), vwin);
+
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
@@ -1326,13 +1330,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 			  G_CALLBACK(popup_menu_handler), 
 			  (gpointer) vwin->popup);
     } else {
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
-			 G_CALLBACK(catch_button), vwin->w);
+	g_signal_connect (G_OBJECT(vwin->w), "button_press_event", 
+			  G_CALLBACK(catch_button), vwin->w);
     }
-
-    /* clean up when dialog is destroyed */
-    g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
-		     G_CALLBACK(free_windata), vwin);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
