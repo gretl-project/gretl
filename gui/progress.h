@@ -27,11 +27,5 @@ enum spflags {
     SP_FINISH 
 };
 
-typedef struct _ProgressData {
-    GtkWidget *window;
-    GtkWidget *label;
-    GtkWidget *pbar;
-} ProgressData;
-
 int show_progress (long res, long expected, enum spflags flags);
 

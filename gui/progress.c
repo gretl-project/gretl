@@ -22,6 +22,12 @@
 #include "gretl.h"
 #include "progress.h"
 
+typedef struct _ProgressData {
+    GtkWidget *window;
+    GtkWidget *label;
+    GtkWidget *pbar;
+} ProgressData;
+
 /* ........................................................... */
 
 static void destroy_progress (GtkWidget *widget, ProgressData *pdata)
