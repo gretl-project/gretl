@@ -970,12 +970,33 @@ int db_set_sample (const char *line, DATAINFO *pdinfo)
     return 0;
 }
 
-static int get_compact_method (char *line)
+static const char *
+get_word_and_advance (const char *s, char *word, size_t maxlen)
 {
-    int method = COMPACT_NONE;
-    char *p = strstr(line, "(compact");
-    
-    if (p != NULL) {
+    size_t i = 0;
+
+    while (isspace(*s)) s++;
+
+    *word = 0;
+    while (*s && !isspace(*s)) {
+	if (i < maxlen) word[i++] = *s;
+	s++;
+    }
+
+    word[i] = 0;
+
+    if (*word) return s;
+    else return NULL;
+}
+
+static const char *
+get_compact_method_and_advance (const char *s, int *method)
+{
+    const char *p;
+
+    *method = COMPACT_NONE;
+
+    if ((p = strstr(s, "(compact"))) {
 	char comp[8];
 	int i;
 
@@ -989,18 +1010,19 @@ static int get_compact_method (char *line)
 	}
 	comp[i] = 0;
 
-	if (!strcmp(comp, "average")) method = COMPACT_AVG;
-	else if (!strcmp(comp, "sum")) method = COMPACT_SUM;
-	else if (!strcmp(comp, "first")) method = COMPACT_SOP;
-	else if (!strcmp(comp, "last")) method = COMPACT_EOP;
+	if (!strcmp(comp, "average")) *method = COMPACT_AVG;
+	else if (!strcmp(comp, "sum")) *method = COMPACT_SUM;
+	else if (!strcmp(comp, "first")) *method = COMPACT_SOP;
+	else if (!strcmp(comp, "last")) *method = COMPACT_EOP;
 
 	p = strchr(p, ')');
-	if (p != NULL) {
-	    memmove(line, p + 1, strlen(p));
-	}
+	if (p != NULL) p++;
+    } else {
+	/* no compaction method given */
+	if ((p = strstr(s, "data "))) p += 5;
     }
 
-    return method;
+    return p;
 }
 
 static double **new_dbZ (int n)
@@ -1028,8 +1050,7 @@ static double **new_dbZ (int n)
 int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn)
 {
-    char linecpy[MAXLEN];
-    char cmd[5], series[16];
+    char series[16];
     int comp_method;
     SERIESINFO sinfo;
     double **dbZ;
@@ -1043,52 +1064,44 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
     if (strstr(db_name, ".rat")) rats = 1;
 
-    *linecpy = 0;
-    strncat(linecpy, line, MAXLEN - 1);
+    line = get_compact_method_and_advance(line, &comp_method);
 
-    comp_method = get_compact_method(linecpy);
+    /* now loop over variable names given on the line */
 
-    if (comp_method == COMPACT_NONE) {
-	if (sscanf(linecpy, "%4s %15s", cmd, series) != 2) 
-	    return E_PARSE;
-    } else {
-	if (sscanf(linecpy, "%15s", series) != 1)
-	    return E_PARSE;
+    while ((line = get_word_and_advance(line, series, 8))) {
+
+	/* find the series information in the database */
+	if (rats) {
+	    err = get_rats_series_info_by_name (series, &sinfo);
+	} else {	
+	    err = get_native_series_info (series, &sinfo);
+	} 
+
+	if (err) {
+	    return 1;
+	}
+
+	/* temporary dataset */
+	dbZ = new_dbZ(sinfo.nobs);
+	if (dbZ == NULL) {
+	    strcpy(gretl_errmsg, _("Out of memory!"));
+	    return 1;
+	}
+
+	if (rats) {
+	    err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
+	} else {
+	    get_native_db_data (db_name, &sinfo, dbZ);
+	}
+
+	if (!err) {
+	    err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, comp_method);
+	}
+
+	/* free up temp stuff */
+	free(dbZ[1]);
+	free(dbZ);
     }
-    
-    /* FIXME: allow for multiple series on one command line */
-
-    /* find the series information in the database */
-    if (rats) {
-	err = get_rats_series_info_by_name (series, &sinfo);
-    } else {	
-	err = get_native_series_info (series, &sinfo);
-    } 
-
-    if (err) {
-	return 1;
-    }
-
-    /* temporary dataset */
-    dbZ = new_dbZ(sinfo.nobs);
-    if (dbZ == NULL) {
-	strcpy(gretl_errmsg, _("Out of memory!"));
-	return 1;
-    }
-
-    if (rats) {
-	err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
-    } else {
-	get_native_db_data (db_name, &sinfo, dbZ);
-    }
-
-    if (!err) {
-	err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, comp_method);
-    }
-
-    /* free up temp stuff */
-    free(dbZ[1]);
-    free(dbZ);
     
     return err;
 }
