@@ -86,7 +86,8 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
+int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
+		    const double **Z)
 {
     char lvar[VNAMELEN], rvar[VNAMELEN], op[8];
     int start, end;
@@ -154,7 +155,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	return err;
     }
 
-    /* or just as a simple count loop */
+    /* or as a simple count loop */
     else if (sscanf(line, "loop %d", &n) == 1) {
 	if (n <= 0) {
 	    strcpy(gretl_errmsg, _("Loop count must be positive."));
@@ -164,6 +165,22 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	    ploop->type = COUNT_LOOP;
 	}
 	return err;
+    }
+
+    /* or as a count loop with named scalar max */
+    else if (sscanf(line, "loop %8s", lvar) == 1) {
+	v = varindex(pdinfo, lvar);
+	if (v > 0 && v < pdinfo->v && pdinfo->vector[v] == 0) {
+	    n = Z[v][0];
+	    if (n <= 0) {
+		strcpy(gretl_errmsg, _("Loop count must be positive."));
+		err = 1;
+	    } else {
+		ploop->ntimes = n;
+		ploop->type = COUNT_LOOP;
+	    }
+	    return err;	    
+	}
     }
 
     /* out of options, complain */
@@ -537,7 +554,7 @@ int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
     for (j=0; j<pmod->ncoeff; j++) {
 #ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
-	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m);
+	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m); /* FIXME */
 	mpf_mul(m, m, m);
 	mpf_add(plmod->ssq_coeff[j], plmod->ssq_coeff[j], m);
 

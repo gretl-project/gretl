@@ -4,6 +4,8 @@ version 1.2.4
   (Journal of Applied Econometrics, 1996)
 - Add "resample" function to genr, for bootstrapping test
   statistics
+- Loops: allow use of a variable name rather than a number to
+  control a "number of times" loop
 - Fix genr bug: problem with an undefined varname in a lag
   context 
 - Fix bug: when saved via the objectname mechanism, arma models
@@ -12,6 +14,7 @@ version 1.2.4
   was broken by new options mechanism
 - Fix curious Windows bug: line-endings in scripts were not
   recognized in some cases
+- Improve path-searching for data files
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack

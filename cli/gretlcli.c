@@ -1238,7 +1238,8 @@ void exec_line (char *line, PRN *prn)
 
     case LOOP:
 	errfatal = 1;
-	if ((err = parse_loopline(line, &loop, datainfo))) {
+	err = parse_loopline(line, &loop, datainfo, (const double **) Z);
+	if (err) {
 	    pprintf(prn, "%s\n", get_gretl_errmsg());
 	    break;
 	}

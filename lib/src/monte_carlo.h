@@ -94,7 +94,7 @@ typedef struct {
 int ok_in_loop (int ci, const LOOPSET *ploop);
 
 int parse_loopline (char *line, LOOPSET *ploop, 
-		    DATAINFO *pdinfo);
+		    DATAINFO *pdinfo, const double **Z);
 
 int loop_condition (int k, LOOPSET *ploop, 
 		    double **Z, DATAINFO *pdinfo); 

@@ -1858,6 +1858,9 @@ static int get_generated_value (const char *argv, double *val,
 	err = E_ALLOC;
     } else {
 	sprintf(genline, "genr argv=%s", argv);
+#ifdef PRINTF_DEBUG
+	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
+#endif
 	err = generate(pZ, pdinfo, genline, 0, pmod, 0);
 	free(genline);
 	if (!err) {
@@ -1869,6 +1872,30 @@ static int get_generated_value (const char *argv, double *val,
     return err;
 }
 
+static char *get_arg (char *line)
+{
+    int inparen = 0;
+    static char *p = NULL;
+    char *q, *ret = NULL;
+
+    if (line != NULL) p = line;
+
+    q = p;
+    while (*p && ret == NULL) {
+	if (*p == '(') inparen++;
+	else if (*p == ')') inparen--;
+	if (!inparen && *p == ',') {
+	    *p = '\0';
+	    ret = q;
+	}
+	p++;
+    }
+
+    if (*p == '\0') ret = q;
+
+    return ret;
+}
+
 int do_printf (const char *line, double ***pZ, 
 	       DATAINFO *pdinfo, MODEL *pmod,
 	       PRN *prn)
@@ -1877,7 +1904,7 @@ int do_printf (const char *line, double ***pZ,
     char format[128];
     char *argv, *str = NULL;
     double *vals = NULL;
-    int i, argc = 0, cnvc = 0;
+    int i, argc = 0, cnvc = 0, inparen = 0;
     int err = 0;
 
 #ifdef PRINTF_DEBUG
@@ -1913,16 +1940,16 @@ int do_printf (const char *line, double ***pZ,
     line++;
     p = line;
     while (*p) {
-	if (*p == ',') argc++;
+	if (*p == '(') inparen++;
+	else if (*p == ')') inparen--;
+	if (!inparen && *p == ',') argc++;
 	p++;
     }
 
     argc++;
     if (argc != cnvc) {
-#ifdef PRINTF_DEBUG
 	fprintf(stderr, "do_printf: argc = %d but conversions = %d\n",
 		argc, cnvc);
-#endif
 	err = 1;
 	goto printf_bailout;
     }
@@ -1938,7 +1965,7 @@ int do_printf (const char *line, double ***pZ,
     for (i=0; i<argc; i++) {
 	int v;
 
-	argv = strtok((i > 0)? NULL : str, ",");
+	argv = get_arg((i > 0)? NULL : str);
 	chopstr(argv);
 	v = varindex(pdinfo, argv);
 	if (v < pdinfo->v) {

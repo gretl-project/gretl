@@ -4784,7 +4784,6 @@ int execute_script (const char *runfile, const char *buf,
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
 			aborted = 1;
-			i = loop.ntimes;
 		    }
 		}
 		i++;
@@ -5701,7 +5700,8 @@ int gui_exec_line (char *line,
 			   "in this mode\n"));
 	    break;
 	}
-	if ((err = parse_loopline(line, plp, datainfo))) {
+	err = parse_loopline(line, plp, datainfo, (const double **) Z);
+	if (err) {
 	    pprintf(prn, "%s\n", get_gretl_errmsg());
 	    break;
 	}
