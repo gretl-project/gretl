@@ -1954,7 +1954,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     pprintf(prn, "%s\n\n", _("Generalized Cochrane-Orcutt estimation"));
     _bufspace(17, prn);
-    pputs(prn, "ITER             ESS           %% CHANGE\n\n");
+    pputs(prn, "ITER             ESS           % CHANGE\n\n");
 
     /* now loop while ess is changing */
     while (diff > 0.005) {
