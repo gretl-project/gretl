@@ -29,22 +29,31 @@ static void tex_print_float (const double x, const int tab, PRN *prn)
 	tab symbol (for equation-style regression printout).
      */
 {
-    char number[16];
+    char number[16], final[16], exp[4];
+    char *p;
 
-    if (fabs(x) < 100. && fabs(x) > 1.) 
-	sprintf(number, "%6.4f", x);
-    else {
-	if (fabs(x) < 10000. && fabs(x) > 99.999) 
-	    sprintf(number, "%6.3f", x);
-	else {
-	    if (fabs(x) < .0000001) sprintf(number, "%.4g", x);
-	    else sprintf(number, "%f", x);
-	}
+    sprintf(number, "%#.6G", x);
+
+    if (!tab) {
+	if (x < 0.) sprintf(final, "$-$%s", number + 1);
+	else sprintf(final, "%s", number);
+    } else {
+	if (x < 0.) sprintf(final, "& $-$ & %s", number + 1);
+	else sprintf(final, "& $+$ & %s", number);
     }
-    if (tab) {
-	if (x < 0.) pprintf(prn, "& $-$ & $%s$", number + 1);
-	else pprintf(prn, "& $+$ & $%s$", number);
-    } else pprintf(prn, "$%s$", number);
+
+    if ((p = strstr(final, "E-"))) {
+	strcpy(exp, p + 2);
+	strcpy (p, "E$-$");
+	strcat(p + 4, exp);
+    }
+    else if ((p = strstr(final, "E+"))) {
+	strcpy(exp, p + 2);
+	strcpy (p, "E$+$");
+	strcat(p + 4, exp);
+    }
+
+    pprintf(prn, "%s", final);
 }
 
 /**
