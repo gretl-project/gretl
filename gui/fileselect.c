@@ -84,7 +84,7 @@ static int action_to_flag (const int action)
 
 /* ........................................................... */
 
-static char *get_gp_ext (const char *termtype)
+static const char *get_gp_ext (const char *termtype)
 {
     if (!strcmp(termtype, "postscript")) return ".eps";
     else if (!strcmp(termtype, "fig")) return ".fig";
@@ -125,9 +125,9 @@ static int dat_ext (char *str, int err)
 
 /* ........................................................... */
 
-static char *get_ext (int action, gpointer data)
+static const char *get_ext (int action, gpointer data)
 {
-    char *s = NULL;
+    const char *s = NULL;
 
     if (olddat && is_data_action(action)) 
 	return ".dat";
@@ -156,7 +156,7 @@ static char *get_ext (int action, gpointer data)
 static void maybe_add_ext (char *fname, int action, gpointer data)
 {
     FILE *fp;
-    char *ext = NULL;
+    const char *ext = NULL;
 
     /* don't mess with the name of a previously existing file */
     if ((fp = fopen(fname, "r")) && fgetc(fp) != EOF) {
@@ -183,7 +183,7 @@ static void maybe_add_ext (char *fname, int action, gpointer data)
 
 #include <windows.h>
 
-static char *get_gp_filter (const char *termtype)
+static const char *get_gp_filter (const char *termtype)
 {
     if (!strcmp(termtype, "postscript")) 
 	return "postscript files\0*.eps\0";
@@ -203,7 +203,7 @@ struct win32_filtermap {
     char *filter;
 };
 
-static char *get_filter (int action, gpointer data)
+static const char *get_filter (int action, gpointer data)
 {
     int i;
     char *filter;
@@ -547,7 +547,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 static void extra_get_filter (int action, gpointer data, char *suffix)
 {
     
-    char *ext = get_ext(action, data);
+    const char *ext = get_ext(action, data);
 
     if (ext == NULL) 
 	strcpy(suffix, "*");

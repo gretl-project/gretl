@@ -129,7 +129,6 @@ static int read_data_descriptions (windata_t *fdata)
 static void browse_header (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN], line[MAXLEN];
-    FILE *fp;
     windata_t *mydata = (windata_t *) data;
     PRN *prn;
     gchar *fname;
@@ -140,34 +139,23 @@ static void browse_header (GtkWidget *w, gpointer data)
     if (mydata->action == PWT_DATA) 
 	sprintf(hdrname, "%s%s", pwtpath, fname);
     else if (mydata->action == RAMU_DATA)
-	sprintf(hdrname, "%s%s", paths.datadir, fname);
+	sprintf(hdrname, "%s%s.gdt", paths.datadir, fname);
     else if (mydata->action == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
     }
 
-    switch_ext(hdrname, hdrname, "hdr");
-    fp = fopen(hdrname, "r");
-    if (fp == NULL) {
-	errbox("Couldn't open data header file");
-	return;
-    }
+    prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
-    if (bufopen(&prn)) {
-	fclose(fp);
-	return;
-    }
+    prn->buf = get_xml_description(hdrname);
 
-    /* reprint the header to quell any DOS <cr>s, which mess up
-       the appearance in the gtk text box */
-    while (fgets(line, MAXLEN-1, fp)) {
-	delchar('\r', line);
-	pprintf(prn, "%s", line);
+    if (prn->buf != NULL)
+	view_buffer(prn, 80, 300, "gretl: data header", INFO, NULL);
+    else {
+	errbox("Failed to retrieve description of data");
+	fprintf(stderr, "didn't get description from %s\n", hdrname);
     }
-    fclose(fp);
-
-    view_buffer(prn, 80, 300, "gretl: data header", INFO, NULL);
 }
 
 /* ........................................................... */

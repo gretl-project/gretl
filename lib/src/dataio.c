@@ -2438,14 +2438,6 @@ static int write_xmldata (const char *fname, const int *list,
     return 0;
 }
 
-static int 
-process_description (xmlDocPtr doc, xmlNodePtr node, DATAINFO *pdinfo)
-{
-    pdinfo->descrip =
-	xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-    return 0;
-}
-
 static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
 {
     xmlNodePtr cur;
@@ -2742,8 +2734,8 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
     cur = cur->xmlChildrenNode;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (UTF) "description")) {
-	    if (process_description(doc, cur, pdinfo)) 
-		return 1;
+	    pdinfo->descrip = 
+		xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
         } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
 	    if (process_varlist(cur, pdinfo)) 
 		return 1;
@@ -2785,5 +2777,60 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	    pdinfo->stobs, pdinfo->endobs);
 
     return 0;
+}
+
+/**
+ * get_xml_description:
+ * @fname: name of file to try.
+ * 
+ * Read data description for gretl xml data file.
+ * 
+ * Returns: buffer containing description, or NULL on failure.
+ *
+ */
+
+char *get_xml_description (const char *fname)
+{
+    xmlDocPtr doc;
+    xmlNodePtr cur;
+    char *buf = NULL;
+
+    gretl_errmsg[0] = '\0';
+
+    LIBXML_TEST_VERSION
+	xmlKeepBlanksDefault(0);
+
+    doc = xmlParseFile(fname);
+    if (doc == NULL) {
+	sprintf(gretl_errmsg, "xmlParseFile failed on %s", fname);
+	return NULL;
+    }
+
+    cur = xmlDocGetRootElement(doc);
+    if (cur == NULL) {
+        sprintf(gretl_errmsg, "%s: empty document", fname);
+	xmlFreeDoc(doc);
+	return NULL;
+    }
+
+    if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
+        sprintf(gretl_errmsg, "file of the wrong type, root node not gretldata");
+	xmlFreeDoc(doc);
+	return NULL;
+    }
+
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (UTF) "description")) {
+	    buf = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    break;
+        }
+	cur = cur->next;
+    }
+
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
+
+    return buf;
 }
 

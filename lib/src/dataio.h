@@ -93,5 +93,5 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn); 
 
-
+char *get_xml_description (const char *fname);
 
