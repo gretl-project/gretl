@@ -24,7 +24,6 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "gretl_matrix.h"
-#include "gretl_list.h"
 
 #ifdef WIN32
 # include <windows.h>

@@ -88,12 +88,10 @@ int main (void)
        number of the dependent variable (i.e. its place in the data
        set Z) counting from one (zero being reserved for the
        constant).  The third entry (and there can be more) is the ID
-       number of the first independent variable.  "list" should be
-       malloc'ed: it will be realloc'ed by libgretl.  
+       number of the first independent variable.
     */
-    list = malloc(4 * sizeof *list);
-    if (list == NULL) noalloc(); 
-    list[0] = 3;   /* three variables follow */
+
+    list = gretl_list_new(3); /* number of tems will be 3 */
     list[1] = 1;   /* the dependent variable is the one with ID# 1 */
     list[2] = 0;   /* we include a constant (ID# 0) */
     list[3] = 2;   /* the independent variable has ID# 2 */
@@ -102,7 +100,13 @@ int main (void)
        estimates and associated statistics. */
     model = gretl_model_new();
     if (model == NULL) noalloc();
-    *model = lsq(list, &Z, datainfo, OLS, OPT_D, 0.0);
+    *model = lsq(list,     /* regressand and regressors */
+		 &Z,       /* data matrix */
+		 datainfo, /* data information */
+		 OLS,      /* use Ordinary Least Squares */
+		 OPT_NONE, /* no special options */
+		 0.0       /* no rho-differencing of data */
+		 );
 
     /* Handle case where lsq bombed */
     if (model->errcode) {

@@ -24,7 +24,6 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
-#include "gretl_list.h"
 #include "bhhh_max.h"
 
 #include "../cephes/polrt.c"

@@ -24,6 +24,7 @@ struct _gretl_matrix {
     int packed;
     int rows;
     int cols;
+    int missrows;
     int t;
     double *val;
 };

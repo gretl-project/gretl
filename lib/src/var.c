@@ -21,7 +21,6 @@
 
 #include "libgretl.h" 
 #include "var.h"  
-#include "gretl_list.h"
 #include "gretl_private.h"
 
 /* #define VAR_DEBUG */

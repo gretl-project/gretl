@@ -27,6 +27,8 @@ static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
 static int packed_idx (int nrows, int i, int j);
 
+#define gretl_is_vector(v) (v->rows == 1 || v->cols == 1)
+
 /* ....................................................... */
 
 static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
@@ -1436,7 +1438,7 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
     for (i=0; i<n; i++) {
 	u = y->val[i];
 	for (j=0; j<k; j++) {
-	    u -= X->val[mdx(X, i,j)] * b->val[j];
+	    u -= X->val[mdx(X, i, j)] * b->val[j];
 	}
 	sigma2 += u * u;
     }
@@ -1448,6 +1450,24 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
     return 0;
 }
 
+static void
+get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
+	      const gretl_vector *b, gretl_vector *uhat)
+{
+    int ncoeff = gretl_vector_get_length(b);
+    int n = gretl_vector_get_length(uhat);
+    int i, j;
+    double uh;
+
+    for (i=0; i<n; i++) {
+	uh = y->val[i];
+	for (j=0; j<ncoeff; j++) {
+	    uh -= b->val[j] * X->val[mdx(X, i, j)];
+	}
+	uhat->val[i] = uh;
+    }
+}
+
 /**
  * gretl_matrix_ols:
  * @y: dependent variable vector.
@@ -1455,17 +1475,20 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
  * @b: vector to hold coefficient estimates.
  * @vcv: matrix to hold the covariance matrix of the coefficients,
  * or %NULL if this is not needed.
+ * @uhat: vector to hold the regression residuals, or %NULL if 
+ * these are not needed.
  *
  * Computes OLS estimates using LU factorization, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
- * covariance matrix in @vcv.
+ * covariance matrix in @vcv and the residuals in @uhat.
  * 
  * Returns: 0 on success, non-zero error code on failure.
  * 
  */
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b, gretl_matrix *vcv)
+		      gretl_vector *b, gretl_matrix *vcv,
+		      gretl_vector *uhat)
 {
     gretl_vector *XTy = NULL;
     gretl_matrix *XTX = NULL;
@@ -1514,6 +1537,9 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 	}
 	if (vcv != NULL) {
 	    err = get_ols_vcv(y, X, b, vcv);
+	}
+	if (uhat != NULL) {
+	    get_ols_uhat(y, X, b, uhat);
 	}
     }
 
@@ -1788,4 +1814,106 @@ int gretl_is_zero_vector (const gretl_vector *v)
 
     return 1;
 }
+
+#if 0
+
+/* Some of the following may be useful later. */
+
+int gretl_vector_normal_fill (gretl_vector *v, double *sigma)
+{
+    int i, n = gretl_vector_get_length(v);
+
+    if (opt & OPT_N) {
+	gretl_normal_dist(v->val, 0, n - 1);
+    } else {
+	gretl_uniform_dist(v->val, 0, n - 1);
+    }
+
+    if (sigma != 1.0) {
+	for (i=0; i<n; i++) {
+	    v->val *= sigma;
+	}
+    }
+
+    return 0;
+}
+
+int gretl_matrix_set_column_value (gretl_matrix *m,
+				   int column,
+				   double val)
+{
+    for (i=0; i<m->rows; i++) {
+	gretl_matrix_set(m, i, column, val);
+    }
+
+    return 0;
+}
+
+int gretl_matrix_set_column_values (gretl_matrix *m,
+				    int column,
+				    const gretl_vector *v)
+{
+    int i, n = gretl_vector_get_length(v);
+
+    if (n != m->rows) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<m->rows; i++) {
+	gretl_matrix_set(m, i, column, v->val[i]);
+    }
+
+    return 0;
+}
+
+int gretl_matrix_drop_initial_rows (gretl_matrix *targ,
+				    const gretl_matrix *src,
+				    int rows)
+{
+    int i, j;
+    double srcv;
+
+    if (rows >= src->rows) {
+	return 1;
+    }
+
+    if (targ->rows != src->rows - rows ||
+	targ->cols != src->cols) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<targ->rows; i++) {
+	for (j=0; j<targ->cols; j++) {
+	    srcv = gretl_matrix_get(src, i + rows, j);
+	    gretk_matrix_set(targ, i, j, srcv);
+	}
+    }
+
+    return 0;
+}
+
+int gretl_vector_drop_initial_vals (gretl_vector *targ,
+				    const gretl_vector *src,
+				    int drop)
+{
+    int i;
+    int lsrc = gretl_vector_get_length(src);
+    int ltarg = gretl_vector_get_length(targ);
+
+    if (drop >= lsrc) {
+	return 1;
+    }
+
+    if (ltarg != lsrc - drop) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<ltarg; i++) {
+	targ->val[i] = src->val[i + drop];
+    }    
+
+    return 0;
+}
+
+#endif
 

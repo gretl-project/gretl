@@ -122,7 +122,8 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
-		      gretl_vector *b, gretl_matrix *vcv);
+		      gretl_vector *b, gretl_matrix *vcv,
+		      gretl_vector *uhat);
 
 double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 				 int *err);

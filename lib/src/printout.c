@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "gretl_private.h" 
 #include "version.h"
-#include "gretl_list.h"
 #include "libset.h"
 
 #include <stdarg.h>

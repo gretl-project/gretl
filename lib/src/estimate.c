@@ -22,7 +22,6 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_private.h"
-#include "gretl_list.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
    for test that libgretl will accept before rejecting a

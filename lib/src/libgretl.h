@@ -402,6 +402,7 @@ struct _VCV {
 #include "interact.h"
 #include "estimate.h"
 #include "generate.h"
+#include "gretl_list.h"
 #include "gretl_paths.h"
 #include "gretl_utils.h"
 #include "gretl_model.h"
