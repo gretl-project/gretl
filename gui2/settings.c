@@ -80,7 +80,7 @@ static char fixedfontname[MAXLEN] = "Courier New 10";
 #else
 # ifndef OLD_GTK
 #  ifdef OSX_BUILD
-static char fixedfontname[MAXLEN] = "Monospace 12";
+static char fixedfontname[MAXLEN] = "Luxi Mono 12";
 #  else
 static char fixedfontname[MAXLEN] = "Monospace 10";
 #  endif
