@@ -386,7 +386,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double ybase = height * headroom / 2.0;
     double xcenter = plot->xbase + boxwidth / 2.0;
     double scale = (1.0 - headroom) * height / (gmax - gmin);
-    double median, uq, lq, maxval, minval;
+    double median, uq, lq, maxval, minval, iqr;
     double conflo = 0., confhi = 0.;
     GdkRectangle rect;
     GdkGC *gc = NULL;
@@ -397,6 +397,12 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	/* gc = style->bg_gc[GTK_STATE_SELECTED]; */
 	/* whitegc = style->fg_gc[GTK_STATE_SELECTED]; */
     }
+
+    iqr = plot->uq - plot->lq;
+    if (plot->max > plot->uq + 1.5 * iqr)
+	fprintf(stderr, "plot has high outliers\n");
+    if (plot->min > plot->lq - 1.5 * iqr)
+	fprintf(stderr, "plot has low outliers\n");
 
     median = ybase + (gmax - plot->median) * scale;
     uq = ybase + (gmax - plot->uq) * scale;
@@ -826,6 +832,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 	plotgrp->plots[i].min = x[0];
 	plotgrp->plots[i].max = x[n-1];
 	quartiles(x, n, &plotgrp->plots[i]);
+	add_outliers(x, n, &plotgrp->plots[i]);
 	/* notched boxplots wanted? */
 	if (notches) {
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
