@@ -490,15 +490,18 @@ int corrgram (int varno, int order, double ***pZ,
 	err = E_ALLOC;
 	goto getout;
     }
+
     maxlag = m;
     err = get_pacf(pacf, &maxlag, varno, pZ, pdinfo);
-    pacf[0] = acf[1];
+
     if (!err) {
+	pacf[0] = acf[1];
 	pprintf(prn, "\n%s", _("Partial autocorrelations"));
-	if (maxlag < m) 
+	if (maxlag < m) {
 	    pprintf(prn, " (%s %d):\n\n", _("to lag"), maxlag);
-	else
+	} else {
 	    pputs(prn, ":\n\n");
+	}
 	for (l=1; l<=maxlag; l++) {
 	    pprintf(prn, "%5d)%7.3f", l, pacf[l-1]);
 	    if (l%5 == 0) pputs(prn, "\n");
@@ -518,15 +521,19 @@ int corrgram (int varno, int order, double ***pZ,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    /* create two separate plots */
-    fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fq);
+    /* create two separate plots, if both are OK */
+    if (!err) {
+	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fq);
+    }
     fputs("set xzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
     fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
     fputs("set yrange [-1.0:1.0]\n", fq);
 
     /* upper plot: Autocorrelation Function or ACF) */
-    fputs("set origin 0.0,0.50\n", fq);
+    if (!err) {
+	fputs("set origin 0.0,0.50\n", fq);
+    }
     fprintf(fq, "set title \"%s %s\"\n", I_("ACF for"), 
 	    pdinfo->varname[varno]);
     fprintf(fq, "set xrange [0:%d]\n", m + 1);
@@ -541,27 +548,29 @@ int corrgram (int varno, int order, double ***pZ,
     }
     fputs("e\n", fq);
 
-    /* lower plot: Partial Autocorrelation Function or PACF) */
-    fputs("set origin 0.0,0.0\n", fq);
-    fprintf(fq, "set title \"%s %s\"\n", I_("PACF for"), 
-	    pdinfo->varname[varno]);
-    fprintf(fq, "set xrange [0:%d]\n", maxlag + 1);
-    fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 notitle w impulses, \\\n"
-	    "%g title '%s' lt 2, \\\n"
-	    "%g notitle lt 2\n", pm,
-	    "+- 1.96/T^0.5",
-	    -pm);
-    for (l=1; l<=maxlag; l++) {
-	fprintf(fq, "%g %g\n", l + .1, pacf[l-1]);
+    if (!err) {
+	/* lower plot: Partial Autocorrelation Function or PACF) */
+	fputs("set origin 0.0,0.0\n", fq);
+	fprintf(fq, "set title \"%s %s\"\n", I_("PACF for"), 
+		pdinfo->varname[varno]);
+	fprintf(fq, "set xrange [0:%d]\n", maxlag + 1);
+	fprintf(fq, "plot \\\n"
+		"'-' using 1:2 notitle w impulses, \\\n"
+		"%g title '%s' lt 2, \\\n"
+		"%g notitle lt 2\n", pm,
+		"+- 1.96/T^0.5",
+		-pm);
+	for (l=1; l<=maxlag; l++) {
+	    fprintf(fq, "%g %g\n", l + .1, pacf[l-1]);
+	}
+	fputs("e\n", fq);
     }
-    fputs("e\n", fq);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
-    fputs("set nomultiplot\n", fq);
+    if (!err) fputs("set nomultiplot\n", fq);
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fq);
