@@ -109,7 +109,7 @@ to file \002,a15)";
     do_lio(&c__9, &c__1, " Enter filename (<=25 characters):", 34L);
     e_wsle();
     s_rsfe(&io___8);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_rsfe();
 #else
     o__1.ofnmlen = 15;
@@ -237,49 +237,49 @@ umns:", 55L);
     }
 #endif
     if (which[0] == 1) {
-	cdbday_(filename, 25L);
+	cdbday_(filename, 15L);
     }
     if (which[1] == 1) {
-	cdoperm5_(filename, 25L);
+	cdoperm5_(filename, 15L);
     }
     if (which[2] == 1) {
-	rank3132_(filename, 25L);
+	rank3132_(filename, 15L);
     }
     if (which[3] == 1) {
-	cdbinrnk_(filename, 25L);
+	cdbinrnk_(filename, 15L);
     }
     if (which[4] == 1) {
-	cdbitst_(filename, 25L);
+	cdbitst_(filename, 15L);
     }
     if (which[5] == 1) {
-	cdomso_(filename, 25L);
+	cdomso_(filename, 15L);
     }
     if (which[6] == 1) {
-	sknt1s_(filename, 25L);
+	sknt1s_(filename, 15L);
     }
     if (which[7] == 1) {
-	wknt1s_(filename, 25L);
+	wknt1s_(filename, 15L);
     }
     if (which[8] == 1) {
-	cdpark_(filename, 25L);
+	cdpark_(filename, 15L);
     }
     if (which[9] == 1) {
-	mindist_(filename, 25L);
+	mindist_(filename, 15L);
     }
     if (which[10] == 1) {
-	d3sphere_(filename, 25L);
+	d3sphere_(filename, 15L);
     }
     if (which[11] == 1) {
-	sqeez_(filename, 25L);
+	sqeez_(filename, 15L);
     }
     if (which[12] == 1) {
-	cdosum_(filename, 25L);
+	cdosum_(filename, 15L);
     }
     if (which[13] == 1) {
-	runtest_(filename, 25L);
+	runtest_(filename, 15L);
     }
     if (which[14] == 1) {
-	craptest_(filename, 25L);
+	craptest_(filename, 15L);
     }
     s_wsfe(&io___40);
     do_fio(&c__1, fileout, 25L);
@@ -446,7 +446,7 @@ $$$$$$$$$$$$\002,/)";
     ss = (float)0.;
     nint = 1024;
     s_wsfe(&io___68);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     i__1 = ntries;
     for (nt = 1; nt <= i__1; ++nt) {
@@ -604,10 +604,10 @@ $$$$$$$$$$$$$\002,/)";
     f_clos(&cl__1);
     jkk = jkreset_();
     s_wsfe(&io___91);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___92);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     for (ij = 1; ij <= 20; ++ij) {
 	dmin__ = (float)1e7;
@@ -669,11 +669,11 @@ L4:
     e_wsfe();
     kstest_(p, &c__20, &pv);
     s_wsfe(&io___110);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     do_fio(&c__1, (char *)&pv, (ftnlen)sizeof(real));
     e_wsfe();
     s_wsfe(&io___111);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     do_fio(&c__1, (char *)&pv, (ftnlen)sizeof(real));
     e_wsfe();
     jkk = jkreset_();
@@ -864,10 +864,10 @@ L11:
     }
     sig = sqrt((float)84.);
     s_wsfe(&io___132);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___133);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___134);
     e_wsfe();
@@ -1012,10 +1012,10 @@ $$$$$$$$$$$$\002,/)";
     cl__1.csta = 0;
     f_clos(&cl__1);
     s_wsfe(&io___154);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___155);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     for (ij = 1; ij <= 10; ++ij) {
 	x[0] = (jtbl_() * (float)2.3283064365386963e-10 + (float).5) * (float)
@@ -1200,10 +1200,10 @@ $$$$$$$$$$$$$$$ \002,/)";
     ns = 100;
     jkk = jkreset_();
     s_wsfe(&io___189);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___190);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     i__1 = ns;
     for (ij = 1; ij <= i__1; ++ij) {
@@ -1257,10 +1257,10 @@ L4:
 /* L345: */
     }
     s_wsfe(&io___201);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___202);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___203);
     e_wsfe();
@@ -1439,10 +1439,10 @@ $$$$$$$$$$$$\002,/)";
     nxs = 10000;
     jkk = jkreset_();
     s_wsfe(&io___224);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___225);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     for (ijkn = 1; ijkn <= 2; ++ijkn) {
 /* L1: */
@@ -1466,10 +1466,10 @@ $$$$$$$$$$$$\002,/)";
 	}
 	kstest_(up, &ns, &p);
 	s_wsfe(&io___236);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___237);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___238);
 	do_fio(&c__1, (char *)&p, (ftnlen)sizeof(real));
@@ -1800,10 +1800,10 @@ L444:
     sd = sqrt(av * (float)251. / (float)495.);
     t = (nwins - av) / sd;
     s_wsfe(&io___278);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___279);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___280);
     do_fio(&c__1, (char *)&nwins, (ftnlen)sizeof(integer));
@@ -1870,10 +1870,10 @@ L444:
 	e_wsfe();
     }
     s_wsfe(&io___291);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___292);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___293);
     do_fio(&c__1, (char *)&pwins, (ftnlen)sizeof(real));
@@ -2012,7 +2012,7 @@ $$$$$$$$$$$$\002,/)";
 	s_wsle(&io___312);
 	do_lio(&c__9, &c__1, ctest + (index - 1 << 2), 4L);
 	do_lio(&c__9, &c__1, " test for generator ", 20L);
-	do_lio(&c__9, &c__1, filename, 25L);
+	do_lio(&c__9, &c__1, filename, 15L);
 	e_wsle();
 	s_wsle(&io___313);
 	do_lio(&c__9, &c__1, " Output: No. missing words (mw), equiv normal \
@@ -2025,7 +2025,7 @@ variate (z), p-value (p)", 70L);
 	s_wsle(&io___315);
 	do_lio(&c__9, &c__1, ctest + (index - 1 << 2), 4L);
 	do_lio(&c__9, &c__1, " test for generator ", 20L);
-	do_lio(&c__9, &c__1, filename, 25L);
+	do_lio(&c__9, &c__1, filename, 15L);
 	e_wsle();
 	s_wsle(&io___316);
 	do_lio(&c__9, &c__1, " Output: No. missing words (mw), equiv normal \
@@ -2104,7 +2104,7 @@ LS ******* */
 		    x = (kount - true) / sigs[jk - 1];
 		    s_wsfe(&io___336);
 		    do_fio(&c__1, ctest + (index - 1 << 2), 4L);
-		    do_fio(&c__1, filename, 25L);
+		    do_fio(&c__1, filename, 15L);
 		    i__4 = 33 - 20 / k - kr;
 		    do_fio(&c__1, (char *)&i__4, (ftnlen)sizeof(integer));
 		    i__3 = 32 - kr;
@@ -2117,7 +2117,7 @@ LS ******* */
 /* L2: */
 		    s_wsfe(&io___337);
 		    do_fio(&c__1, ctest + (index - 1 << 2), 4L);
-		    do_fio(&c__1, filename, 25L);
+		    do_fio(&c__1, filename, 15L);
 		    i__4 = 33 - 20 / k - kr;
 		    do_fio(&c__1, (char *)&i__4, (ftnlen)sizeof(integer));
 		    i__3 = 32 - kr;
@@ -2264,10 +2264,10 @@ s*/
     n = 100;
     jkk = jkreset_();
     s_wsfe(&io___354);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___355);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     for (jk = 1; jk <= 2; ++jk) {
 	for (i = 0; i <= 624; ++i) {
@@ -2347,14 +2347,14 @@ tes:", 46L);
 	    e_wsle();
 	}
 	s_wsfe(&io___372);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	do_fio(&c__1, (char *)&chsq, (ftnlen)sizeof(real));
 	do_fio(&c__1, (char *)&z, (ftnlen)sizeof(real));
 	r__1 = phi_(&z);
 	do_fio(&c__1, (char *)&r__1, (ftnlen)sizeof(real));
 	e_wsfe();
 	s_wsfe(&io___373);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	do_fio(&c__1, (char *)&chsq, (ftnlen)sizeof(real));
 	do_fio(&c__1, (char *)&z, (ftnlen)sizeof(real));
 	r__1 = phi_(&z);
@@ -2509,7 +2509,7 @@ $$$$$$$$$$$$\002,/)";
     cl__1.csta = 0;
     f_clos(&cl__1);
     s_wsfe(&io___390);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     for (jk = 1; jk <= 25; ++jk) {
 	jkk = jkreset_();
@@ -2744,19 +2744,19 @@ $$$$$$$$$$$\002,/)";
     f_clos(&cl__1);
 /*       open(3,file='testout') */
     s_wsfe(&io___422);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___423);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
 /* L371: */
     for (ij = 25; ij >= 1; --ij) {
 	jkk = jkreset_();
 	s_wsfe(&io___426);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___427);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	kr = ij - 1;
 	for (kk = 2; kk <= 6; ++kk) {
@@ -2849,10 +2849,10 @@ $$$$$$$$$$$\002,/)";
     e_wsfe();
     asort_(pp, &c__25);
     s_wsfe(&io___451);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___452);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     kstest_(pp, &c__25, &pks);
     s_wsfe(&io___454);
@@ -3066,10 +3066,10 @@ $$$$$$$$$$$$$$$$\002,/)";
 	}
 	n = m;
 	s_wsfe(&io___477);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___478);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___479);
 	do_fio(&c__1, (char *)&m, (ftnlen)sizeof(integer));
@@ -3382,10 +3382,10 @@ f7.3,\002; p-value=\002,f8.6)";
 	}
 	chsq /= n * (float)2e8;
 	s_wsfe(&io___529);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___530);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	e_wsfe();
 	s_wsfe(&io___531);
 	do_fio(&c__1, (char *)&chsq, (ftnlen)sizeof(real));
@@ -3580,10 +3580,10 @@ $$$$$$$$$$\002,/)";
     do_fio(&c__1, (char *)&alam, (ftnlen)sizeof(real));
     e_wsfe();
     s_wsfe(&io___552);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___553);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
 /*      is=lw-nbits */
     is = 8;
@@ -3633,7 +3633,7 @@ L4:
 	do_fio(&c__1, (char *)&nsampl, (ftnlen)sizeof(integer));
 	e_wsfe();
 	s_wsfe(&io___568);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	i__1 = 33 - nbits - kr;
 	do_fio(&c__1, (char *)&i__1, (ftnlen)sizeof(integer));
 	i__2 = 32 - kr;
@@ -3642,7 +3642,7 @@ L4:
 	do_fio(&c__1, (char *)&r__1, (ftnlen)sizeof(real));
 	e_wsfe();
 	s_wsfe(&io___569);
-	do_fio(&c__1, filename, 25L);
+	do_fio(&c__1, filename, 15L);
 	i__1 = 33 - nbits - kr;
 	do_fio(&c__1, (char *)&i__1, (ftnlen)sizeof(integer));
 	i__2 = 32 - kr;
@@ -4086,10 +4086,10 @@ e */
 	e_wsfe();
     }
     s_wsfe(&io___633);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
     s_wsfe(&io___634);
-    do_fio(&c__1, filename, 25L);
+    do_fio(&c__1, filename, 15L);
     e_wsfe();
 /*     &'  Q p-value ',f8.6) */
     kstest_(w, &c__10, &p);
