@@ -248,6 +248,10 @@ int saved_object_action (const char *line,
     char savename[MAXSAVENAME], param[9];
     void *ptr;
 
+    if (*line == '!') { /* shell command */
+	return 0;
+    }
+
     action = parse_object_request(line, savename, param, &ptr, prn);
 
     if (action == OBJ_NONE || ptr == NULL) return 0;
