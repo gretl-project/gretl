@@ -615,6 +615,13 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 	}
     }
 
+    /* copy any scalars, which may have been modified */
+    for (i=1; i<(*subinfo)->v; i++) {
+	if (!(*subinfo)->vector[i]) {
+	    (*fullZ)[i][0] = (*Z)[i][0];
+	}
+    }
+
     /* reorganize pointers for data set */
     *subZ = *Z;
     *Z = *fullZ;
