@@ -3016,15 +3016,16 @@ void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
     edttext = gtk_entry_get_text (GTK_ENTRY(ddata->edit));
     if (edttext == NULL || *edttext == 0) return;
 
-    if (strchr(edttext, '('))
+    if (strchr(edttext, '(')) {
 	err = boolean_boxplots(edttext, &Z, datainfo, (code == GR_NBOX));
-    else {
+    } else {
 	clear(line, MAXLEN);
 	sprintf(line, "boxplot %s%s", (code == GR_NBOX)? "-o " : "", edttext);
 
 	if (check_cmd(line) || cmd_init(line)) return;
 	err = boxplots(command.list, NULL, &Z, datainfo, (code == GR_NBOX));
     }
+
     if (err) errbox(_("boxplot command failed"));
 }
 

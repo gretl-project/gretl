@@ -616,6 +616,7 @@ make_area (PLOTGROUP *grp)
 {
     grp->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(grp->window), _("gretl: boxplots"));
+    gtk_window_set_resizable(GTK_WINDOW(grp->window), FALSE);
 
     /* Create the drawing area */
     grp->area = gtk_drawing_area_new ();
@@ -966,8 +967,9 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
     plotgrp->show_outliers = 0;
     read_boxrc(plotgrp);
-    /* should outliers be shown separately? */
+
     if (plotgrp->show_outliers) {
+	/* should outliers be shown separately? */
 	for (i=0; i<plotgrp->nplots; i++) {
 	    n = ztox(list[i+1], x, *pZ, pdinfo);
 	    qsort(x, n, sizeof *x, compare_doubles);
@@ -1461,33 +1463,34 @@ static int special_varcount (const char *s)
     return n;
 }
 
-static int prepare_boxplots_line (char *line)
+/* remove extra spaces around operators in boxplots line */
+
+static char *delete_spaces_in_parens (const char *line)
 {
-    char *p, *q, *tmp;
-    size_t len;
+    char *s, *p;
+    int inparen = 0;
 
-    while (1) {
-	p = strchr(line, '(');
-	if (p == NULL) break;
+    s = malloc(strlen(line) + 1);
+    if (s == NULL) return NULL;
 
-	q = strchr(p, ')');
-	if (q == NULL) return 1;
+    p = s;
 
-	len = q - p + 1;
-	tmp = malloc(len + 1);
-	if (tmp == NULL) return 1;
-
-	*tmp = 0;
-	strncat(tmp, p, len + 1);
-	delchar(' ', tmp);
-	*p = 0;
-	strcat(p, tmp);
-	strcat(p, q + 1);
-	free(tmp);
-	line = q + 1;
+    while (*line) {
+	if (*line == '(') inparen = 1;
+	if (*line == ')') {
+	    if (inparen == 1) inparen = 0;
+	    else {
+		free(s);
+		return NULL;
+	    }
+	}
+	if (inparen && *line == ' ') ;
+	else *p++ = *line;
+	line++;
     }
 
-    return 0;
+    *p = 0;
+    return s;
 }
 
 int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
@@ -1501,14 +1504,8 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     if (!strncmp(str, "boxplots ", 9)) str += 9;
     else if (!strncmp(str, "boxplot ", 8)) str += 8;
 
-    s = malloc(strlen(str) + 1);
+    s = delete_spaces_in_parens(str);
     if (s == NULL) return 1;
-    strcpy(s, str);  
-
-    if (prepare_boxplots_line(s)) {
-	free(s);
-	return 1;
-    }
 
     nvars = special_varcount(s);
     if (nvars == 0) {
@@ -1535,8 +1532,9 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		bools[i-1] = malloc(strlen(tok) + 1);
 		strcpy(bools[i-1], tok);
 		nbool++;
-	    } else
+	    } else {
 		err = 1;
+	    }
 	} else {
 	    if (isdigit(tok[0])) { 
 		v = atoi(tok);

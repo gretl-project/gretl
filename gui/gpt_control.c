@@ -2690,6 +2690,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     gtk_widget_ref(plot->shell);
     gtk_window_set_title(GTK_WINDOW(plot->shell), _("gretl: gnuplot graph")); 
+    gtk_window_set_policy(GTK_WINDOW(plot->shell), FALSE, FALSE, FALSE);
 
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);

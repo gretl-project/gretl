@@ -1,7 +1,11 @@
 version 1.0.8
 - Avoid duplication of "against time" in model graph menus, when 
   time is included as a regressor
-
+- Fix bugs in Find dialog
+- Correct function that detects whether or not series should be
+  scaled for time series graphing (case of negative values)
+- Fix bug in boxplots with boolean conditions attached
+- Ensure all plot windows are not resizable
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
