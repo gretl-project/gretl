@@ -47,6 +47,8 @@ enum option_codes {
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
 	     int *ignore, double **pZ, PRN *cmds);
 
+int command_number (const char *cmd);
+
 int help (const char *cmd, const char *helpfile, PRN *prn);
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 

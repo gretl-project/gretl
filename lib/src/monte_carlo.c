@@ -29,7 +29,6 @@ enum inequalities {
     LT
 };
 
-extern int _command_number (const char *cmd);
 extern int genr_scalar_index (int opt, int put);
 
 static int monte_carlo_init (LOOPSET *ploop);
@@ -750,7 +749,7 @@ void get_cmd_ci (const char *line, CMD *command)
 	command->ci = -1;
 	return;
     }
-    if ((command->ci = _command_number(command->cmd)) == 0) {
+    if ((command->ci = command_number(command->cmd)) == 0) {
 	command->errcode = 1;
 	sprintf(gretl_errmsg, "command \"%s\" not recognized", 
 		command->cmd);

@@ -120,7 +120,7 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 
 /* ........................................................... */
 
-int _command_number (const char *cmd)
+int command_number (const char *cmd)
 {    
     int i;
 
@@ -217,7 +217,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     /* trap bogus commands */    
-    if ((command->ci = _command_number(command->cmd)) == 0) {
+    if ((command->ci = command_number(command->cmd)) == 0) {
 	command->errcode = 1;
 	sprintf(gretl_errmsg, "command '%s' not recognized", 
 		command->cmd);

@@ -672,9 +672,13 @@ be used only if the variables have approximately the same range of values
 print
 Prints the values of the specified variables for the current stobs-endobs 
 range.
+
 print              prints the entire data set in tabular form
 print 3 6          prints values of variable numbers 3 and 6
 print x y z        prints values of variables named x, y and z
+
+If the -o flag is given, the variables are printed in columns, otherwise they
+are printed in consecutive blocks.
 
 #
 probit

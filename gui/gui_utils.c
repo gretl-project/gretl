@@ -775,20 +775,25 @@ static windata_t *helpwin (int script)
 
 /* ........................................................... */
 
-static int help_index (const char *str)
+static int help_index (const char *str, int cli)
 {
     gchar helpline[84];
     gchar word[32];
     int found = 0, pos = 0;
     FILE *fp;
 
-    fp = fopen(paths.helpfile, "r");
-    while (!found) {
-	if (fgets(helpline, 83, fp) == NULL) break;
-	if (helpline[0] == '#') {
-	    fgets(helpline, 83, fp);
-	    sscanf(helpline, "%s", word);
-	    if (strcmp(word, str) == 0) {
+    if (cli)
+	fp = fopen(paths.cmd_helpfile, "r");
+    else
+	fp = fopen(paths.helpfile, "r");
+
+    if (fp == NULL) return -1;
+
+    while (!found && fgets(helpline, 83, fp)) {
+	if (*helpline == '#') {
+	    fgets(helpline, 12, fp);
+	    if (sscanf(helpline, "%s", word) == 1 && 
+		!strcmp(word, str)) {
 		found = 1;
 	    } else pos++;
 	}
@@ -840,8 +845,15 @@ void help_show (gpointer data, guint cli, GtkWidget *widget)
     } else {
 	gdk_window_show(help_view->parent->window);
 	gdk_window_raise(help_view->parent->window);
-	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 0.0);
     }
+
+    if (cli > 1) 
+	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
+				 (gfloat) cli * 
+				 GTK_TEXT(help_view)->vadj->upper / 
+				 script_help_length);
+    else
+	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 0.0);
 } 
 
 /* ........................................................... */
@@ -877,7 +889,7 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
     else
 	pos = -1;
 
-    if (!pos) pos = help_index(cmdstr);
+    if (!pos) pos = help_index(cmdstr, 0);
     if (pos == -1) {
 	errbox("Sorry, no help is available on this topic");
 	return;
@@ -897,6 +909,38 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
     gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
 			     (gfloat) pos * 
 			     GTK_TEXT(help_view)->vadj->upper / help_length);
+}
+
+/* ........................................................... */
+
+static void edit_script_help (GtkWidget *widget, gpointer data)
+{
+    windata_t *mydata = (windata_t *) data;
+    guint pt = GTK_EDITABLE(mydata->w)->current_pos;
+    gchar *text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 
+					 0, pt + 8);
+    int pos = 0;
+
+    if (text != NULL && strlen(text) > 0) {
+	char *p, *q;
+	char word[9];
+
+	p = q = text + pt;
+	if (pt > 0)
+	    while (!isspace(*(p-1))) p--;
+	if (pt < strlen(text))
+	    while (!isspace(*q)) q++;
+	*word = '\0';
+	strncat(word, p, (q - p > 8)? 8 : q - p);
+	pos = help_index(word, 1);
+	if (pos > 0) 
+	    help_show(NULL, pos, NULL);
+	else
+	    help_show(NULL, 1, NULL);
+    } else
+	help_show(NULL, 1, NULL);
+
+    g_free(text);
 }
 
 /* ........................................................... */
@@ -1001,6 +1045,7 @@ void free_windata (GtkWidget *w, gpointer data)
 #include "pixmaps/paste.xpm"
 #include "pixmaps/replace.xpm"
 #include "pixmaps/undo.xpm"
+#include "pixmaps/question.xpm"
 #include "pixmaps/close.xpm"
 
 static void make_editbar (windata_t *vwin, GtkWidget *dialog)
@@ -1018,6 +1063,7 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 				  "Paste", 
 				  "Replace...",
 				  "Undo",
+				  "Help on command",
 				  "Close",
 				  NULL};
     gchar **toolxpm = NULL;
@@ -1069,6 +1115,13 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 	    toolfunc = text_undo_callback;
 	    break;
 	case 7:
+	    if (vwin->action == EDIT_SCRIPT) {
+		toolxpm = question_xpm;
+		toolfunc = edit_script_help;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 8:
 	    toolxpm = close_xpm;
 	    toolfunc = delete_file_viewer;
 	    ptr = dialog;
