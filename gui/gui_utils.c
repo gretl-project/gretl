@@ -1191,18 +1191,6 @@ static void dialog_table_setup (windata_t *vwin)
 
 /* ........................................................... */
 
-static gint text_popup_hack (GtkWidget *w, GdkEvent *event, gpointer p)
-{
-    /* weird hack is apparently required! */
-    gint retval;
-
-    gtk_signal_emit_by_name(GTK_OBJECT(w), "activate_current", TRUE,
-			    &retval);
-    return TRUE;
-}
-
-/* ........................................................... */
-
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			char *title, int role,
 			GtkItemFactoryEntry menu_items[]) 
@@ -1251,9 +1239,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     /* want popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
-	gtk_signal_connect (GTK_OBJECT(vwin->popup), "button_press_event",
-			    GTK_SIGNAL_FUNC(text_popup_hack), 
-			    NULL);
 	/* vwin->w is the gtktext widget */
 	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
 			    GTK_SIGNAL_FUNC(popup_menu_handler), 
