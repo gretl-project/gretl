@@ -1,10 +1,17 @@
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
 
 #include "libgretl.h"
+#include "x12arima.h"
 
 #ifdef OS_WIN32
 # include <windows.h>
 #endif
+
+const char *x12a_descrip_formats[] = {
+    N_("seasonally adjusted %s"),
+    N_("trend/cycle for %s"),
+    N_("irregular component of %s")
+};
 
 int write_tramo_data (char *fname, int varnum, const int *list,
 		      double ***pZ, DATAINFO *pdinfo, 
@@ -99,19 +106,60 @@ static void truncate (char *str, int n)
     if (len > n) str[n] = 0;
 }
 
-static int add_x12a_series (const char *fname, const char *code,
+static int graph_x12a_series (double **Z, DATAINFO *pdinfo, int varno)
+{
+    FILE *fp;
+    int i, t;
+
+    fp = fopen("x12a_gp.dat", "w");
+    if (fp == NULL) return 1;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	fprintf(fp, "%g ", Z[varno][t]);
+	for (i=1; i<4; i++) {
+	    fprintf(fp, "%g ", Z[pdinfo->v - i][t]);
+	}
+	fprintf(fp, "\n");
+    }
+    fclose(fp);
+
+    fp = fopen("x12a.gp", "w");
+    if (fp == NULL) return 1;
+
+    /* fixme tics */
+    fprintf(fp, "set multiplot\n"
+	    "set size 1.0,0.32\n"
+	    "set origin 0.0,0.0\n"
+	    "plot 'x12a_gp.dat' using 2 w l t 'irregular'\n"
+	    "set origin 0.0,0.33\n"
+	    "plot 'x12a_gp.dat' using 1 w l t '%s', \\\n"
+	    " 'x12a_gp.dat' using 3 w l t 'trend/cycle'\n"
+	    "set origin 0.0,0.66\n"
+	    "plot 'x12a_gp.dat' using 1 w l t '%s', \\\n"
+	    " 'x12a_gp.dat' using 4 w l t 'adjusted'\n"
+	    "unset multiplot\n", 
+	    pdinfo->varname[varno], pdinfo->varname[varno]);
+
+    fclose(fp);
+    
+    system("gnuplot -persist x12a.gp");
+
+    return 0;
+}
+
+static int add_x12a_series (const char *fname, int code,
 			    double ***pZ, DATAINFO *pdinfo,
 			    int varno)
 {
     FILE *fp;
-    char *p, line[128], varname[16], sfname[MAXLEN];
+    char *p, line[128], varname[16], sfname[MAXLEN], date[8];
     double x;
     int d, yr, per, err = 0;
     int t, v = pdinfo->v;
 
     strcpy(sfname, fname);
     p = strrchr(sfname, '.');
-    if (p != NULL) strcpy(p + 1, code);
+    if (p != NULL) strcpy(p + 1, x12a_series_strings[code]);
 
     fp = fopen(sfname, "r");
     if (fp == NULL) {
@@ -123,7 +171,7 @@ static int add_x12a_series (const char *fname, const char *code,
     strcpy(varname, pdinfo->varname[varno]);
     truncate(varname, 4);
     strcat(varname, "_");
-    strcat(varname, code);
+    strcat(varname, x12a_series_strings[code]);
 
     /* expand the dataset */
     if (dataset_add_vars(1, pZ, pdinfo)) {
@@ -132,12 +180,14 @@ static int add_x12a_series (const char *fname, const char *code,
 	return 1;
     }
 
+    /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
+    sprintf(pdinfo->label[v], _(x12a_descrip_formats[code]), pdinfo->varname[varno]);
 
-    /* grab the data from the x12arima file: FIXME dates */
-    t = pdinfo->t1;
+    for (t=0; t<pdinfo->n; t++) (*pZ)[v][t] = NADBL;
+
+    /* grab the data from the x12arima file */
     while (fgets(line, 127, fp)) {
-	if (t > pdinfo->t2) break;
 	if (*line == 'd' || *line == '-') continue;
 	if (sscanf(line, "%d %lf", &d, &x) != 2) {
 	    err = 1; 
@@ -145,22 +195,18 @@ static int add_x12a_series (const char *fname, const char *code,
 	}
 	yr = d / 100;
 	per = d % 100;
-	/* fprintf(stderr, "%d:%02d %g\n", yr, per, x); */
-	(*pZ)[v][t++] = x;
+	sprintf(date, "%d.%d", yr, per);
+	t = dateton(date, pdinfo);
+	if (t < 0 || t >= pdinfo->n) {
+	    err = 1;
+	    break;
+	}
+	(*pZ)[v][t] = x;
     }
 
     fclose(fp);
 
     return err;
-}
-
-static const char *save_code (int i)
-{
-    static const char *codes[] = {
-	"d11", "d12", "d13"
-    };
-
-    return codes[i];
 }
 
 int write_x12a_data (char *fname, int varnum, const int *list,
@@ -228,19 +274,22 @@ int write_x12a_data (char *fname, int varnum, const int *list,
     }
     fputs(" )\n}\n", fp);
 
+    /* FIXME: make these values configurable */
+    fputs("automdl{}\nx11{", fp);
+    
     if (list != NULL) {
 	if (list[0] == 1) {
-	    fprintf(fp, "save=%s\n", save_code(list[1])); 
+	    fprintf(fp, " save=%s ", x12a_series_strings[list[1]]); 
 	} else {
-	    fputs("save=( ", fp);
-	    for (i=0; i<=list[0]; i++) {
-		fprintf(fp, "%s ", save_code(list[i]));
+	    fputs(" save=( ", fp);
+	    for (i=1; i<=list[0]; i++) {
+		fprintf(fp, "%s ", x12a_series_strings[list[i]]);
 	    }
-	    fputs(")\n", fp);
+	    fputs(") ", fp);
 	}
     }
-    /* FIXME: make these values configurable */
-    fputs("automdl{}\nx11{}\n", fp);
+
+    fputs("}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -258,9 +307,10 @@ int write_x12a_data (char *fname, int varnum, const int *list,
 
     if (list != NULL) {
 	for (i=1; i<=list[0]; i++) {
-	    err = add_x12a_series (fname, save_code(list[i]), 
-				   pZ, pdinfo, varnum);
+	    err = add_x12a_series (fname, list[i], pZ, pdinfo, varnum);
 	}
+	/* testing */
+	graph_x12a_series(*pZ, pdinfo, varnum);
     }
 
     return err;

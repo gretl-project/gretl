@@ -28,6 +28,12 @@
 
 char gretl_tmp_str[MAXLEN];
 
+#ifdef TRAMO_X12
+const char *x12a_series_strings[] = {
+    "d11", "d12", "d13"
+};
+#endif
+
 /**
  * dotpos:
  * @str: the string to examine.

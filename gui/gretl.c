@@ -21,6 +21,10 @@
 
 #include "gretl.h"
 
+#ifdef TRAMO_X12
+# include "x12arima.h"
+#endif
+
 #include <dirent.h>
 #include <unistd.h>
 #include <signal.h>
@@ -420,8 +424,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
 #ifdef TRAMO_X12
-    { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, 0, NULL }, 
-    { N_("/Variable/TRAMO analysis"), NULL, do_tramo_x12a, 1, NULL }, 
+    { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL }, 
+    { N_("/Variable/TRAMO analysis"), NULL, do_tramo_x12a, TRAMO, NULL }, 
 #endif
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 

@@ -25,6 +25,10 @@
 # include "gpt_control.h"
 #endif
 
+#ifdef TRAMO_X12
+# include "../lib/src/x12arima.h"
+#endif
+
 #ifdef G_OS_WIN32 
 # include "../lib/src/cmdlist.h"
 # include <io.h>
@@ -2234,7 +2238,6 @@ extern char x12adir[];
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
-    /* opt == 1 for TRAMO, 0 for X-12-ARIMA */
     gint err;
     gchar *databuf;
     GError *error = NULL;
@@ -2257,9 +2260,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
-    if (opt == 1) {
+    if (opt == TRAMO) {
 	write_ts_data = get_plugin_function("write_tramo_data", handle);
-    } else {
+    } else { /* X12A */
 	write_ts_data = get_plugin_function("write_x12a_data", handle);
     }
 
@@ -2274,11 +2277,11 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    if (opt) {
+    if (opt == TRAMO) {
 	err = write_ts_data (fname, mdata->active_var, NULL, &Z, datainfo, 
 			     tramodir);
-    } else {
-	int list[] = {1, 0};
+    } else { /* X12A */
+	int list[] = {3, D11, D12, D13};
 
 	err = write_ts_data (fname, mdata->active_var, list, &Z, datainfo, 
 			     x12adir);
@@ -2287,7 +2290,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     close_plugin(handle);
 
     if (err) {
-	errbox(opt? _("TRAMO command failed") : _("X-12-ARIMA command failed"));
+	errbox((opt == TRAMO)? _("TRAMO command failed") : 
+	       _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2295,7 +2299,8 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     g_file_get_contents (fname, &databuf, NULL, &error);
 
     if (databuf == NULL) {
-	errbox(opt? _("TRAMO command failed") : _("X-12-ARIMA command failed"));
+	errbox((opt == TRAMO)? _("TRAMO command failed") : 
+	       _("X-12-ARIMA command failed"));
 	g_clear_error(&error);
 	gretl_print_destroy(prn);
 	return;
@@ -2304,8 +2309,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     free(prn->buf);
     prn->buf = databuf;
 
-    view_buffer(prn, opt? 120 : 84, 500, 
-		opt? _("gretl: TRAMO analysis") :_("gretl: X-12-ARIMA analysis"),
+    view_buffer(prn, (opt == TRAMO)? 120 : 84, 500, 
+		(opt == TRAMO)? _("gretl: TRAMO analysis") :
+		_("gretl: X-12-ARIMA analysis"),
 		TRAMO_X12A, view_items);
 
 }

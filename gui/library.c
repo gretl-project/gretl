@@ -29,6 +29,10 @@
 
 #include "selector.h"
 
+#ifdef TRAMO_X12
+# include "x12arima.h"
+#endif
+
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
 extern double **subZ;
@@ -2399,7 +2403,6 @@ extern char x12adir[];
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
-    /* opt == 1 for TRAMO, 0 for X-12-ARIMA */
     gint err;
     void *handle;
     int (*write_ts_data) (char *, int, double **, const DATAINFO *, 
@@ -2418,9 +2421,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
-    if (opt == 1) {
+    if (opt == TRAMO) {
 	write_ts_data = get_plugin_function("write_tramo_data", handle);
-    } else {
+    } else { /* X12A */
 	write_ts_data = get_plugin_function("write_x12a_data", handle);
     }
 
@@ -2436,18 +2439,20 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     err = write_ts_data (fname, mdata->active_var, Z, datainfo, 
-			 opt? tramodir : x12adir);
+			 (opt == TRAMO)? tramodir : x12adir);
 
     close_plugin(handle);
 
     if (err) {
-	errbox(opt? _("TRAMO command failed") : _("X-12-ARIMA command failed"));
+	errbox((opt == TRAMO)? _("TRAMO command failed") : 
+	       _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
 	return;
     }
 
     view_file (fname, 0, 0, opt? 120 : 84, 500, 
-	       opt? _("gretl: TRAMO analysis") :_("gretl: X-12-ARIMA analysis"),
+	       (opt == TRAMO)? _("gretl: TRAMO analysis") :
+	       _("gretl: X-12-ARIMA analysis"),
 	       TRAMO_X12A, view_items);
 }
 #endif
