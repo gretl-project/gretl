@@ -937,6 +937,8 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
     int i, err, got999 = 1;
     char flagc;
 
+    if (line == NULL) return;
+
 #if 0
     fprintf(stderr, "echo_cmd: line='%s', gui=%d, oflag=%d, batch=%d "
 	    "param='%s', nolist=%d\n", line, gui, oflag, batch, pcmd->param,
