@@ -651,7 +651,7 @@ static void real_nls_init (void)
 
 static void real_nls_init (void)
 {
-    char prefix = getenv("GTK_EXE_PREFIX");
+    char *prefix = getenv("GTK_EXE_PREFIX");
     char *localedir;
 
     if (prefix == NULL) return;
