@@ -3050,10 +3050,11 @@ void do_open_csv_box (char *fname, int code, int append)
 
     if (bufopen(&prn)) return;
 
-    if (code == OPEN_BOX)
+    if (code == OPEN_BOX) {
 	err = import_box(&Z, datainfo, fname, prn);
-    else
+    } else {
 	err = import_csv(&Z, datainfo, fname, prn); 
+    }
 
     sprintf(buf, _("gretl: import %s data"), 
 	    (code == OPEN_BOX)? "BOX" : "CSV");
@@ -3062,6 +3063,7 @@ void do_open_csv_box (char *fname, int code, int append)
     if (err) return;
 
     data_status |= IMPORT_DATA;
+    data_status |= MODIFIED_DATA;
     strcpy(paths.datfile, fname);
 
     register_data(fname, !append);
