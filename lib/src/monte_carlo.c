@@ -1805,8 +1805,8 @@ int loop_exec (LOOPSET *loop, char *line,
 	       int *echo_off, PRN *prn)
 {
     CMD cmd;
-    int lround = 0;
-    int ignore = 0;
+    MODEL *lastmod = NULL;
+    int m = 0, lround = 0, ignore = 0;
     int err = 0;
 
     if (loop == NULL) {
@@ -1848,7 +1848,6 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	for (j=0; !err && j<loop->ncmds; j++) {
 	    char linecpy[MAXLINE];
-	    static MODEL *tmpmodel;
 
 #ifdef LOOP_DEBUG
 	    fprintf(stderr, "loop->lines[%d] = '%s'\n", j, loop->lines[j]);
@@ -1904,7 +1903,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(pZ, pdinfo, linecpy, tmpmodel);
+		err = generate(pZ, pdinfo, linecpy, lastmod);
 		break;
 
 	    case SIM:
@@ -1957,19 +1956,18 @@ int loop_exec (LOOPSET *loop, char *line,
 			err = 1;
 			break;
 		    }
-		    tmpmodel = models[0];
+		    lastmod = models[0];
 		} else if (cmd.opt & OPT_P) {
 		    /* deferred printing of model results */
-		    int m = get_modnum_by_cmdnum(loop, j);
-
+		    m = get_modnum_by_cmdnum(loop, j);
 		    swap_models(&models[0], &loop->models[m]);
 		    (loop->models[m])->ID = j;
-		    tmpmodel = loop->models[m];
+		    lastmod = loop->models[m];
 		    model_count_minus();
 		} else {
 		    (models[0])->ID = ++modnum; /* FIXME */
 		    printmodel(models[0], pdinfo, cmd.opt, prn);
-		    tmpmodel = models[0];
+		    lastmod = models[0];
 		}
 		break;
 
@@ -2065,11 +2063,15 @@ int loop_exec (LOOPSET *loop, char *line,
 	print_loop_results(loop, *ppdinfo, prn, paths); 
     }
 
-    if (line != NULL) {
-	*line = '\0';
+    if (lastmod != models[0]) {
+	swap_models(&models[0], &loop->models[m]);
     }
 
     gretl_cmd_free(&cmd);
+
+    if (line != NULL) {
+	*line = '\0';
+    }    
 
     return err;
 }
