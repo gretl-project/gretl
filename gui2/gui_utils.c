@@ -600,7 +600,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 static void audio_render_window (windata_t *vwin)
 {
     void *handle;
-    int (*read_window_text) (GtkTextView *);
+    int (*read_window_text) (GtkWidget *);
 
     read_window_text = gui_get_plugin_function("read_window_text", 
 					       &handle);
@@ -608,7 +608,7 @@ static void audio_render_window (windata_t *vwin)
         return;
     }
 
-    (*read_window_text) ((GtkTextView *) vwin->w);
+    (*read_window_text) (vwin->w);
 
     close_plugin(handle);
 }

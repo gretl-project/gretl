@@ -182,6 +182,7 @@ static void varinfo_callback (gpointer p, guint u, GtkWidget *w)
 GtkItemFactoryEntry data_items[] = {
     /* File menu */
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
+
     /* File, Open data */
     { N_("/File/_Open data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
@@ -194,6 +195,7 @@ GtkItemFactoryEntry data_items[] = {
       OPEN_GNUMERIC, NULL },
     { N_("/File/Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL },
+
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Append data/standard format..."), NULL, open_data, APPEND_DATA, NULL },
@@ -203,6 +205,7 @@ GtkItemFactoryEntry data_items[] = {
       APPEND_GNUMERIC, NULL },
     { N_("/File/Append data/from Excel..."), NULL, open_data, 
       APPEND_EXCEL, NULL },
+
     /* File, Save data */
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
     { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>" },
@@ -210,12 +213,7 @@ GtkItemFactoryEntry data_items[] = {
       SAVE_DATA_AS, NULL },
     { N_("/File/Save data as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
-#ifdef notdef
-    { N_("/File/Save data as/_alternative formats/_single precision binary..."), 
-      NULL, file_save, SAVE_BIN1, NULL },
-    { N_("/File/Save data as/_alternative formats/_double precision binary..."),
-      NULL, file_save, SAVE_BIN2, NULL },
-#endif 
+
     /* File, Export data */
     { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Export data/_CSV..."), NULL, file_save, EXPORT_CSV, NULL },
@@ -224,6 +222,7 @@ GtkItemFactoryEntry data_items[] = {
       EXPORT_OCTAVE, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
+
     /* File, Browse databases */
     { N_("/File/_Browse databases"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Browse databases/_gretl native"), NULL, display_files, 
@@ -232,6 +231,7 @@ GtkItemFactoryEntry data_items[] = {
       RATS_DB, NULL },
     { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/File/Browse databases/on database _server"), NULL, display_files, 
+
       REMOTE_DB, NULL },
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>" },
@@ -254,15 +254,12 @@ GtkItemFactoryEntry data_items[] = {
       NULL, newdata_callback, 24, NULL }, 
     { N_("/File/Create data set/cross-sectional"), 
       NULL, newdata_callback, 0, NULL }, 
-#ifdef notdef  
-    { N_("/File/Create data set/panel"), 
-      NULL, start_panel_callback, 0, NULL }, 
-#endif 
     { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL },
     { N_("/File/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/File/_View command log"), NULL, view_log, 0, NULL },
     { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
+
     /* File, command files */
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/user file..."), NULL, open_script, 
@@ -274,6 +271,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/New command file/Monte Carlo loop"), NULL, 
       do_new_script, 1, NULL },
     { N_("/File/sep3"), NULL, NULL, 0, "<Separator>" },
+
     /* File, preferences */
     { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, NULL },
@@ -583,6 +581,7 @@ int main (int argc, char *argv[])
 
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
     set_rcfile();
+    init_fileptrs();
 
     if (argc > 1) {
 	int opt = parseopt(argv[1]);
@@ -733,7 +732,6 @@ int main (int argc, char *argv[])
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 
-    init_fileptrs();
     add_files_to_menu(FILE_LIST_DATA);
     add_files_to_menu(FILE_LIST_SESSION);
     add_files_to_menu(FILE_LIST_SCRIPT);
@@ -1165,9 +1163,6 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
     GtkWidget *view, *scroller;
     int listbox_id_width = 30;
     int listbox_varname_width = 90;
-#if 0
-    int listbox_label_width = 370; 
-#endif
 
     if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
 
@@ -1181,11 +1176,7 @@ static GtkWidget *list_box_create (GtkBox *box, char *titles[])
 					GTK_JUSTIFY_LEFT);
 
     setup_column(view, 1, listbox_varname_width * gui_scale);
-#if 0
-    setup_column(view, 2, listbox_label_width * gui_scale); 
-#else
     setup_column(view, 2, 0); 
-#endif
 
     gtk_signal_connect_after (GTK_OBJECT (view), "select_row",
 			      GTK_SIGNAL_FUNC (selectrow), (gpointer) mdata);
@@ -1612,21 +1603,12 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	perror("fork");
 	return;
     } else if (pid == 0) {  
-#if 1
 	if (i == 1)
 	    execlp(s0, s0, suppress, NULL);
 	else if (i == 2)
 	    execlp(s0, s0, s1, suppress, NULL);
 	else if (i == 3)
 	    execlp(s0, s0, s1, s2, suppress, NULL);
-#else
-	if (i == 1)
-	    execlp(s0, s0, NULL);
-	else if (i == 2)
-	    execlp(s0, s0, s1, NULL);
-	else if (i == 3)
-	    execlp(s0, s0, s1, s2, NULL);
-#endif
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
@@ -1857,15 +1839,6 @@ drag_data_received  (GtkWidget *widget,
     char *suff = NULL, tmp[MAXLEN];
     int pos, skip = 5;
 
-#if 0
-    if (info == GRETL_POINTER) {
-	fprintf(stderr, "drag data: info = GRETL_POINTER\n");
-    }
-    if (info == GRETL_FILENAME) {
-	fprintf(stderr, "drag data: info = GRETL_FILENAME\n");
-    }
-#endif
-
     if (info == GRETL_POINTER && data != NULL && 
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) data->data);
@@ -1941,10 +1914,12 @@ special_selection_get (GtkWidget *widget,
 	gdk_free_compound_text(text);
 	str[length] = c;
     }
+
 #if 0
     g_free(str);
     clipboard_buf = NULL;
 #endif
+
     return TRUE;
 }
 

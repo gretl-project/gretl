@@ -25,7 +25,7 @@
 #include <unistd.h>
 
 #if defined(USE_GNOME) && !defined(OLD_GTK)
-#define GNOME2
+# define GNOME2
 #endif
 
 #ifdef GNOME2
@@ -439,6 +439,7 @@ static void set_tramo_x12a_dirs (void)
 #endif /* tramo || x12a */
 
 #ifdef G_OS_WIN32
+
 int check_for_prog (const char *prog)
 {
     int ret = 1;
@@ -460,7 +461,9 @@ int check_for_prog (const char *prog)
 
     return ret;
 }
+
 #else
+
 int check_for_prog (const char *prog)
 {
     char tmp[MAXLEN];
@@ -480,6 +483,7 @@ int check_for_prog (const char *prog)
 
     return ret;
 }
+
 #endif
 
 /* ........................................................... */
@@ -1033,8 +1037,6 @@ static void read_rc (void)
 	"recent_script_files"
     };	
 
-    initialize_file_lists();
-
     client = gconf_client_get_default();
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1064,6 +1066,8 @@ static void read_rc (void)
 	    }
 	}
     }
+
+    initialize_file_lists();
 
     for (i=0; i<3; i++) {
 	int j;
@@ -1132,8 +1136,6 @@ static void read_rc (void)
     char gpath[MAXSTR];
     int i;
 
-    initialize_file_lists();
-
     for (i=0; rc_vars[i].key != NULL; i++) {
 	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, 
 		rc_vars[i].key);
@@ -1147,6 +1149,8 @@ static void read_rc (void)
 	    g_free(value);
 	}
     }
+
+    initialize_file_lists();
 
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
@@ -1286,8 +1290,6 @@ void read_rc (void)
     int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
 
-    initialize_file_lists();
-
     if (get_network_settings() && *paths.userdir != '\0') {
 	win32_make_user_dirs();
 	for (i=0; rc_vars[i].key != NULL; i++) {
@@ -1326,6 +1328,8 @@ void read_rc (void)
 	    }
 	}
     }
+
+    initialize_file_lists();
 
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
@@ -1408,8 +1412,6 @@ static void read_rc (void)
     fp = fopen(rcfile, "r");
     if (fp == NULL) return;
 
-    initialize_file_lists();
-
     i = 0;
     while (rc_vars[i].var != NULL) {
 	if (fgets(line, MAXLEN, fp) == NULL) break;
@@ -1434,6 +1436,8 @@ static void read_rc (void)
 	}
 	i++;
     }
+
+    initialize_file_lists();
 
     if (gotrecent || (fgets(line, MAXLEN, fp) != NULL && 
 		      strncmp(line, "recent data files:", 18) == 0)) {

@@ -26,9 +26,9 @@
 
 #ifndef WIN32
 # include <glib.h>
+# include <signal.h>
 # if GLIB_CHECK_VERSION(2,0,0)
-#  define GLIB2
-#  include <signal.h>
+#  define GRETL_GLIB 2
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
@@ -2097,7 +2097,7 @@ void free_confint (CONFINT *cf)
 
 /* ........................................................... */
 
-#ifdef GLIB2
+#if GRETL_GLIB
 
 static int font_not_found (const char *s)
 {
@@ -2156,9 +2156,9 @@ int gretl_spawn (const char *cmdline)
     return ret;
 }
 
-#elif !defined(WIN32)
+#endif
 
-#include <signal.h>
+#if !defined(WIN32) && !defined(GRETL_GLIB)
 
 int gretl_spawn (const char *cmdline)
 {

@@ -4163,7 +4163,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     }
 
 #ifndef USE_GTK2
-    if (strstr(doc->encoding, "UTF")) {
+    if (doc->encoding != NULL && strstr(doc->encoding, "UTF")) {
 	to_iso_latin = 1;
     }
 #endif

@@ -1010,13 +1010,15 @@ static int speak_buffer (const char *buf)
 
 #endif
 
-int read_window_text (GtkTextView *view)
+#ifdef GLIB2
+
+int read_window_text (GtkWidget *w)
 {
     GtkTextBuffer *tbuf;
     GtkTextIter start, end;
     gchar *window_text;
 
-    tbuf = gtk_text_view_get_buffer(view);
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
     gtk_text_buffer_get_start_iter(tbuf, &start);
     gtk_text_buffer_get_end_iter(tbuf, &end);
     window_text = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
@@ -1028,4 +1030,21 @@ int read_window_text (GtkTextView *view)
     return 0;
 }
 
-#endif
+#else
+
+int read_window_text (GtkWidget *w)
+{
+    gchar *window_text;
+
+    window_text = gtk_editable_get_chars(GTK_EDITABLE(w), 0, -1);
+
+    speak_buffer(window_text);
+
+    g_free(window_text);
+
+    return 0;
+}
+
+#endif /* GTK versions */
+
+#endif /* FLITE || WIN32 */
