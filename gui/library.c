@@ -4026,20 +4026,22 @@ static int gui_exec_line (char *line,
 	return 1;
     }
 
-    if (*plstack) {  /* accumulating loop commands */
-	if (!ok_in_loop(command.ci)) {
+    if (*plstack) {  
+	/* accumulating loop commands */
+	if (!ok_in_loop(command.ci, plp)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
-        } else {
-            if (!echo_off) echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
-            if (command.ci != ENDLOOP) {
-                if (add_to_loop(plp, line, command.ci, oflag)) {
-                    pprintf(prn, _("Failed to add command to loop stack\n"));
-		    return 1;
-                }
-                return 0;
-            } 
-        }
+        } 
+	if (!echo_off) {
+	    echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
+	}
+	if (command.ci != ENDLOOP) {
+	    if (add_to_loop(plp, line, command.ci, oflag)) {
+		pprintf(prn, _("Failed to add command to loop stack\n"));
+		return 1;
+	    }
+	    return 0;
+	} 
     } 
 
     /* if rebuilding a session, add tests back to models */

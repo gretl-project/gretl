@@ -583,7 +583,7 @@ void exec_line (char *line, PRN *prn)
    
     if (loopstack) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(command.ci)) {
+	if (!ok_in_loop(command.ci, &loop)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	    return;
 	} else {

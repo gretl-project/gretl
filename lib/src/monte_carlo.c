@@ -35,29 +35,27 @@ static int monte_carlo_init (LOOPSET *ploop);
 static void free_loop_model (LOOP_MODEL *plmod);
 static void free_loop_print (LOOP_PRINT *pprn);
 static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
-			       const DATAINFO *pdinfo, PRN *prn);
+			      const DATAINFO *pdinfo, PRN *prn);
 static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
-			       int c, int n, PRN *prn);
+			      int c, int n, PRN *prn);
 static void print_loop_prn (LOOP_PRINT *pprn, int n,
-			     const DATAINFO *pdinfo, PRN *prn);
+			    const DATAINFO *pdinfo, PRN *prn);
 static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
-			      char *loopstorefile);
+			     char *loopstorefile);
 static int get_prnnum_by_id (LOOPSET *ploop, int id);
 
 /**
  * ok_in_loop:
  * @ci: command index.
+ * @ploop: pointer to loop structure
  *
- * Returns: 1 if the given command is acceptable inside a loop construct,
+ * Returns: 1 if the given command is acceptable inside the loop construct,
  * 0 otherwise.
  */
 
-int ok_in_loop (int ci)
+int ok_in_loop (int ci, const LOOPSET *ploop)
 {
     if (ci == OLS || 
-	ci == LAD ||
-	ci == HSK ||
-	ci == HCCM ||
 	ci == GENR ||
 	ci == STORE ||
 	ci == PRINT ||
@@ -70,6 +68,11 @@ int ok_in_loop (int ci)
 	ci == ENDIF ||
 	ci == ENDLOOP) 
 	return 1;
+
+    if (ploop->type == COUNT_LOOP && 
+	(ci == LAD || ci == HSK || ci == HCCM)) 
+	return 1;
+
     return 0;
 }
 
@@ -178,9 +181,8 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
     int t;
-    const int LOOPMAX = 80000; /* bodge: safety measure */
 
-    if (ploop->lvar && ploop->ntimes > LOOPMAX) 
+    if (ploop->lvar && ploop->ntimes > MAXLOOP) 
 	return 0;
 
     /* case of an inequality between variables */
@@ -609,7 +611,8 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		continue;
 	    }
 	}
-	if (ploop->ci[i] == OLS) {
+	if (ploop->ci[i] == OLS || ploop->ci[i] == LAD ||
+	    ploop->ci[i] == HSK || ploop->ci[i] == HCCM) {
 	    print_loop_model(&ploop->lmodels[ploop->next_model], 
 			     ploop->ntimes, pdinfo, prn);
 	    ploop->next_model += 1;

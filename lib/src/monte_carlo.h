@@ -19,7 +19,7 @@
 
 /* monte_carlo.h for gretl */
 
-#define MAXLOOP 10000 /* bodge to prevent runaways */
+#define MAXLOOP 20000 /* bodge to prevent runaways */
 
 #if defined(ENABLE_GMP)
 #include <gmp.h>
@@ -92,7 +92,7 @@ typedef struct {
 
 /* functions follow */
 
-int ok_in_loop (int ci);
+int ok_in_loop (int ci, const LOOPSET *ploop);
 
 int parse_loopline (char *line, LOOPSET *ploop, 
 		    DATAINFO *pdinfo);

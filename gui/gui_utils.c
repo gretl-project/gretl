@@ -1872,7 +1872,7 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     int s, ok = 1;
 
     if (Z == NULL) {
-	flip(mwin->ifac, "/File/Save to sesssion as icon", FALSE);
+	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
 	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
 	flip(mwin->ifac, "/Edit/Copy all", FALSE);
 	flip(mwin->ifac, "/Model data", FALSE);

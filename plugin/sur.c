@@ -185,8 +185,34 @@ calculate_sur_coefficients (MODEL **models, double **Z,
     return 0;
 }
 
+static void add_results_to_dataset (gretl_equation_system *sys, 
+				    MODEL *pmod, int i, int *pj,
+				    double **Z, DATAINFO *pdinfo)
+{
+    int t;
+
+    if (sys->flags & GRETL_SYSTEM_SAVE_UHAT) {
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[*pj][t] = pmod->uhat[t];
+	}
+	sprintf(pdinfo->varname[*pj], "uhat_s%02d", i + 1);
+	sprintf(pdinfo->label[*pj], _("SUR residual, equation %d"), 
+		i + 1);
+	*pj += 1;
+    }
+    if (sys->flags & GRETL_SYSTEM_SAVE_YHAT) {
+	for (t=0; t<pdinfo->n; t++) {
+	    Z[*pj][t] = pmod->yhat[t];
+	}	
+	sprintf(pdinfo->varname[*pj], "yhat_s%02d", i + 1);
+	sprintf(pdinfo->label[*pj], _("SUR fitted value, equation %d"), 
+		i + 1);
+	*pj += 1;
+    }
+}
+
 int sur (gretl_equation_system *sys, 
-	 double ***pZ,  DATAINFO *pdinfo, 
+	 double ***pZ, DATAINFO *pdinfo, 
 	 PRN *prn)
 {
     int i, j, k, m, T, t, l;
@@ -195,6 +221,7 @@ int sur (gretl_equation_system *sys,
     double *tmp_y, *y;
     int v, bigrows;
     MODEL **models;
+    int err = 0;
 
     /* number of equations */
     m = sys->n_equations;
@@ -328,8 +355,19 @@ int sur (gretl_equation_system *sys,
     calculate_sur_coefficients (models, *pZ, X, uhat, tmp_y, m, k);
     gls_sigma_from_uhat (sigma, uhat, m, T);
 
+    j = 0;
+    if (sys->flags & GRETL_SYSTEM_SAVE_UHAT) {
+	j = pdinfo->v;
+	err = dataset_add_vars(m, pZ, pdinfo);
+    }
+    if (sys->flags & GRETL_SYSTEM_SAVE_YHAT) {
+	if (j == 0) j = pdinfo->v;
+	err = dataset_add_vars(m, pZ, pdinfo);
+    }
+
     for (i=0; i<m; i++) {
 	printmodel(models[i], pdinfo, prn);
+	add_results_to_dataset(sys, models[i], i, &j, *pZ, pdinfo);
 	free_model(models[i]);
     }
 
@@ -348,5 +386,5 @@ int sur (gretl_equation_system *sys,
     free(tmp_y);
     free(models);
 
-    return 0;
+    return err;
 }

@@ -3848,31 +3848,24 @@ int gui_exec_line (char *line,
 	return 1;
     }
 
-    if (*plstack) {  /* accumulating loop commands */
-	if (!ok_in_loop(command.ci)) {
+    if (*plstack) {  
+	/* accumulating loop commands */
+	if (!ok_in_loop(command.ci, plp)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
-        } else {
-            if (!echo_off) {
-#if 0
-		fprintf(stderr, "Before echo, line='%s'\n", line);
-		debug_print_model_info(models[0], "models[0]");
-#endif
-		echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
-#if 0
-		fprintf(stderr, "After echo, line='%s'\n", line);
-		debug_print_model_info(models[0], "models[0]");
-#endif
-
+        } 
+	if (!echo_off) {
+	    /* FIXME? the echo here was causing horrible havoc with
+	       the store command in a loop */
+	    echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
+	}
+	if (command.ci != ENDLOOP) {
+	    if (add_to_loop(plp, line, command.ci, oflag)) {
+		pprintf(prn, _("Failed to add command to loop stack\n"));
+		return 1;
 	    }
-            if (command.ci != ENDLOOP) {
-                if (add_to_loop(plp, line, command.ci, oflag)) {
-                    pprintf(prn, _("Failed to add command to loop stack\n"));
-		    return 1;
-                }
-                return 0;
-            } 
-        }
+	    return 0;
+	} 
     } 
 
     /* if rebuilding a session, add tests back to models */

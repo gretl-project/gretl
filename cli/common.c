@@ -47,7 +47,6 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 #if 0
     fprintf(stderr, "loop_exec_line: linecpy='%s'\n", linecpy);
     debug_print_model_info(models[0], "models[0]");
-    if ((models[0])->xpx != NULL) exit(EXIT_FAILURE);
 #endif
 
     switch (command.ci) {

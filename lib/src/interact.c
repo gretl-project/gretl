@@ -948,7 +948,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
        gui "store" in the command script; we'll record it, but
        commented out.
     */
-    if (0 && gui && pcmd->ci == STORE) {  /* FIXME monte carlo loop */
+    if (gui && !batch && pcmd->ci == STORE) {  /* FIXME monte carlo loop */
 	pprintf(prn, "# store '%s'", pcmd->param);
 	if (oflag) { 
 	    pprintf(prn, " -%c", getflag(oflag));
