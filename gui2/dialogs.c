@@ -2827,7 +2827,7 @@ static void msgbox (const char *msg, int err)
     gchar *trmsg = NULL;
     int nls_on = doing_nls();
 
-    if (nls_on && !g_utf8_validate(msg, -1, NULL)) {
+    if (nls_on) {
 	trmsg = my_locale_from_utf8(msg);
 	if (trmsg == NULL) {
 	    return;

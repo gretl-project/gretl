@@ -261,24 +261,24 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static void widget_to_str (GtkWidget *w, char *str, size_t n)
+static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 {
-    const gchar *p;
+    const gchar *wstr;
     
-    *str = '\0';
+    *targ = '\0';
     g_return_if_fail(GTK_IS_ENTRY(w));
-    p = gtk_entry_get_text(GTK_ENTRY(w));
+    wstr = gtk_entry_get_text(GTK_ENTRY(w));
 
-    if (p != NULL && *p != '\0') {
-#if defined(ENABLE_NLS) && !defined(OLD_GTK)
-	gchar *trstr = my_locale_from_utf8(str);
+    if (wstr != NULL && *wstr != '\0') {
+#ifndef OLD_GTK
+	gchar *trstr = my_locale_from_utf8(wstr);
 
 	if (trstr != NULL) {
-	    strncat(str, trstr, n-1);
+	    strncat(targ, trstr, n-1);
 	    g_free(trstr);
 	}
 #else
-	strncat(str, p, n-1);
+	strncat(targ, wstr, n-1);
 #endif
     }
 }
@@ -531,24 +531,24 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     const gchar *yaxis;
     int i, k, save = 0;
 
-    /* widget_to_str translates from utf-8 to the locale, if
+    /* entry_to_gp_string translates from utf-8 to the locale, if
        using NLS */
 
     if (widget == filesavebutton) {
-	widget_to_str(GTK_COMBO(termcombo)->entry, spec->termtype, 
-		      sizeof spec->termtype);
+	entry_to_gp_string(GTK_COMBO(termcombo)->entry, spec->termtype, 
+			   sizeof spec->termtype);
 	if (strcmp(spec->termtype, "screen")) save = 1;
     }
    
     for (i=0; i<NTITLES; i++) {
 	if (gpt_titles[i].widget != NULL) {
-	    widget_to_str(gpt_titles[i].widget, spec->titles[i], 
-			  sizeof spec->titles[0]);
+	    entry_to_gp_string(gpt_titles[i].widget, spec->titles[i], 
+			       sizeof spec->titles[0]);
 	}
     }
 
-    widget_to_str(GTK_COMBO(keycombo)->entry, spec->keyspec, 
-		  sizeof spec->keyspec);
+    entry_to_gp_string(GTK_COMBO(keycombo)->entry, spec->keyspec, 
+		       sizeof spec->keyspec);
 
     spec->flags &= ~GPTSPEC_Y2AXIS;
 
@@ -573,10 +573,10 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 		    strcpy(spec->range[i][0], "*");
 		    strcpy(spec->range[i][1], "*");
 		} else {
-		    widget_to_str(axis_range[i].min, spec->range[i][0], 
-				  sizeof spec->range[0][0]);
-		    widget_to_str(axis_range[i].max, spec->range[i][1], 
-				  sizeof spec->range[0][1]);
+		    entry_to_gp_string(axis_range[i].min, spec->range[i][0], 
+				       sizeof spec->range[0][0]);
+		    entry_to_gp_string(axis_range[i].max, spec->range[i][1], 
+				       sizeof spec->range[0][1]);
 		}
 	    }
 	}
@@ -584,15 +584,15 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 
     if (!frequency_plot(spec)) {   
 	for (i=0; i<spec->nlines; i++) {
-	    widget_to_str(GTK_COMBO(stylecombo[i])->entry, 
-			  spec->lines[i].style, 
-			  sizeof spec->lines[0].style);
-	    widget_to_str(linetitle[i], 
-			  spec->lines[i].title, 
-			  sizeof spec->lines[0].title);
-	    widget_to_str(linescale[i], 
-			  spec->lines[i].scale, 
-			  sizeof spec->lines[0].scale);
+	    entry_to_gp_string(GTK_COMBO(stylecombo[i])->entry, 
+			       spec->lines[i].style, 
+			       sizeof spec->lines[0].style);
+	    entry_to_gp_string(linetitle[i], 
+			       spec->lines[i].title, 
+			       sizeof spec->lines[0].title);
+	    entry_to_gp_string(linescale[i], 
+			       spec->lines[i].scale, 
+			       sizeof spec->lines[0].scale);
 	}
     }
 
@@ -602,9 +602,9 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	int opt;
 #endif
 
-	widget_to_str(labeltext[i], 
-		      spec->text_labels[i].text, 
-		      sizeof spec->text_labels[0].text);
+	entry_to_gp_string(labeltext[i], 
+			   spec->text_labels[i].text, 
+			   sizeof spec->text_labels[0].text);
 	get_label_pos_from_entry(labelpos[i], 
 				 spec->text_labels[i].pos,
 				 sizeof spec->text_labels[0].pos);
@@ -2311,9 +2311,9 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
             safecpy(spec->lines[i].scale, p + 12, 7);
 	    charsub(spec->lines[i].scale, ')', '\0');
 	} else {
-	    if (p) 
+	    if (p) { 
 		strcpy(spec->lines[i].scale, "1.0");
-	    else {
+	    } else {
 		strcpy(spec->lines[i].scale, "NA");
 		p = strstr(line, "axes");
 		if (p == NULL)

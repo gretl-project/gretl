@@ -1971,7 +1971,7 @@ static char *escape_quotes (const char *s)
 static void 
 gp_string (FILE *fp, const char *fmt, const char *s, int png)
 {
-#ifdef ENABLE_NLS    
+#ifdef ENABLE_NLS  
     if (png && doing_iso_latin_2()) {
 	char htmlstr[128];
 
