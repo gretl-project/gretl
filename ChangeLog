@@ -1,4 +1,4 @@
-version 1.2.2
+2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")
 - Fix brokenness in RTF printing/copying of ARMA models
 - Add calculation of modulus and frequency for ARMA roots,

@@ -36,6 +36,7 @@
 #include "boxplots.h"
 #include "series_view.h"
 #include "objectsave.h"
+#include "datafiles.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
