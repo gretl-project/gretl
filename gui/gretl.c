@@ -1838,17 +1838,24 @@ static int old_windows (void) {
 
 static int unmangle (const char *dosname, char *longname)
 {
-    int err = 0;
-
     if (old_windows()) {
 	/* sorry but I really can't be bothered */
 	strcpy(longname, dosname);
+	return 0;
     } else {
-	err = GetLongPathName(dosname, longname, MAXLEN);
+	int err;
+	void *handle;
+	int (*real_unmangle)(const char*, char *, int); 
+	
+	if (open_plugin("longname", &handle)) return 1;
+	real_unmangle = get_plugin_function("real_unmangle", handle);
+	if (real_unmangle == NULL) return 1;
+	err = (*real_unmangle)(dosname, longname, MAXLEN);
 	if (err > 0 && err <= MAXLEN) err = 0;
 	else err = 1;
+	close_plugin(handle);
+	return err;
     }
-    return err;
 }
 
 #endif
