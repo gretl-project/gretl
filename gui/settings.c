@@ -175,6 +175,20 @@ void get_default_dir (char *s)
 
 /* ........................................................... */
 
+#ifdef TRAMO_X12
+static void set_tramo_x12a_dirs (void)
+{
+    if (*tramodir == 0) {
+	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
+    }
+    if (*x12adir == 0) {
+	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
+    }
+}
+#endif
+
+/* ........................................................... */
+
 #if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 void set_rcfile (void) 
 {
@@ -556,7 +570,11 @@ static void read_rc (void)
 	}
 	else break;
     }
+
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+#ifdef TRAMO_X12
+    set_tramo_x12a_dirs();
+#endif
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif
@@ -628,7 +646,11 @@ void read_rc (void)
 	    strcpy(scriptlist[i], value);
 	else break;
     }
+
     set_paths(&paths, 0, 1);
+#ifdef TRAMO_X12
+    set_tramo_x12a_dirs();
+#endif
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif

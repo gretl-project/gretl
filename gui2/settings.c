@@ -216,20 +216,34 @@ void set_app_font (const char *fontname)
 
 void get_default_dir (char *s)
 {
-    char *test = NULL;
-
     *s = 0;
 
     if (usecwd) {
-	test = getcwd(s, MAXLEN);
-	if (test == NULL) 
+	char *test = getcwd(s, MAXLEN);
+
+	if (test == NULL) {
 	    strcpy(s, paths.userdir);
-	else
+	} else {
 	    strcat(s, SLASHSTR);
-    }
-    else
-	strcpy(s, paths.userdir);    
+	}
+    } else {
+	strcpy(s, paths.userdir);   
+    } 
 }
+
+/* ........................................................... */
+
+#ifdef TRAMO_X12
+static void set_tramo_x12a_dirs (void)
+{
+    if (*tramodir == 0) {
+	sprintf(tramodir, "%s%ctramo", paths.userdir, SLASH);
+    }
+    if (*x12adir == 0) {
+	sprintf(x12adir, "%s%cx12a", paths.userdir, SLASH);
+    }
+}
+#endif
 
 /* ........................................................... */
 
@@ -527,10 +541,11 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 #ifndef USE_GNOME
 static void str_to_boolvar (char *s, void *b)
 {
-    if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0)
+    if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0) {
 	*(int *)b = TRUE;
-    else
-	*(int *)b = FALSE;	
+    } else {
+	*(int *)b = FALSE;
+    }	
 }
 
 static void boolvar_to_str (void *b, char *s)
@@ -575,8 +590,8 @@ void write_rc (void)
 
 static void read_rc (void) 
 {
-    GConfClient* client;
-    GError* error = NULL;
+    GConfClient *client;
+    GError *error = NULL;
     GSList *flist = NULL;
     gchar *value;
     char key[MAXSTR];
@@ -644,6 +659,9 @@ static void read_rc (void)
     g_object_unref(G_OBJECT(client));
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
+#ifdef TRAMO_X12
+    set_tramo_x12a_dirs();
+#endif
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif
@@ -718,6 +736,9 @@ void read_rc (void)
     }
 
     set_paths(&paths, 0, 1);
+#ifdef TRAMO_X12
+    set_tramo_x12a_dirs();
+#endif
     set_fixed_font();
     set_app_font(NULL);
 
@@ -826,8 +847,12 @@ static void read_rc (void)
 		strcpy(scriptlist[i++], line);
 	}
     }
+
     fclose(rc);
     set_paths(&paths, 0, 1);
+#ifdef TRAMO_X12
+    set_tramo_x12a_dirs();
+#endif
 #ifdef ENABLE_NLS
     set_lcnumeric();
 #endif

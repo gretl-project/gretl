@@ -98,7 +98,7 @@ static void x12a_dialog_cancel (GtkWidget *w, x12a_request *request)
 
 static int x12a_dialog (x12a_request *request)
 {
-    GtkWidget *vbox, *tmp;
+    GtkWidget *hbox, *vbox, *tmp;
 #if GTK_MAJOR_VERSION >= 2
     gint ret = 0;
 
@@ -150,8 +150,11 @@ static int x12a_dialog (x12a_request *request)
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
 
     gtk_widget_show(vbox);
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), vbox, FALSE, FALSE, 5);
+    gtk_widget_show(hbox);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
-		       vbox, FALSE, FALSE, 5);
+		       hbox, FALSE, FALSE, 5);
 
 #if GTK_MAJOR_VERSION >= 2
     ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
