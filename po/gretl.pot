@@ -1,13 +1,13 @@
-# Message translation (po) template for gretl
-# Copyright (C) 2002 Allin Cottrell
-# This file is distributed under the same license as the gretl package.
-# Allin Cottrell <cottrell@wfu.edu>, 2002.
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 0.999\n"
-"POT-Creation-Date: 2002-07-22 13:32-0400\n"
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2002-07-23 08:47-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3702,20 +3702,15 @@ msgstr ""
 #: gui/database.c:567 gui/datafiles.c:444 gui/gpt_control.c:618
 #: gui/gpt_control.c:1372 gui/gpt_control.c:1392 gui/gpt_control.c:1397
 #: gui/gui_utils.c:935 gui/gui_utils.c:1200 gui/gui_utils.c:1303
-#: gui/gui_utils.c:1448 gui/gui_utils.c:1902 gui/ssheet.c:633
+#: gui/gui_utils.c:1448 gui/gui_utils.c:1904 gui/ssheet.c:633
 msgid "Close"
 msgstr ""
 
-#: gui/boxplots.c:410
-#, c-format
-msgid "notches show bootstrapped 90% confidence intervals for medians"
-msgstr ""
-
-#: gui/boxplots.c:631 gui/callbacks.c:401 gui/callbacks.c:553
+#: gui/boxplots.c:619 gui/callbacks.c:401 gui/callbacks.c:553
 msgid "gretl: boxplots"
 msgstr ""
 
-#: gui/boxplots.c:872
+#: gui/boxplots.c:860
 #, c-format
 msgid ""
 "Five-number summar%s\n"
@@ -3723,15 +3718,15 @@ msgid ""
 "%20s%10s%10s%10s%10s\n"
 msgstr ""
 
-#: gui/boxplots.c:874 gui/boxplots.c:889
+#: gui/boxplots.c:862 gui/boxplots.c:877
 msgid "ies"
 msgstr ""
 
-#: gui/boxplots.c:875 gui/boxplots.c:890
+#: gui/boxplots.c:863 gui/boxplots.c:878
 msgid "median"
 msgstr ""
 
-#: gui/boxplots.c:886
+#: gui/boxplots.c:874
 #, c-format
 msgid ""
 "Five-number summar%s with bootstrapped confidence interval for median\n"
@@ -3739,80 +3734,80 @@ msgid ""
 "%18s%10s%10s%17s%10s%10s\n"
 msgstr ""
 
-#: gui/boxplots.c:890
+#: gui/boxplots.c:878
 #, c-format
 msgid "(90% interval)"
 msgstr ""
 
-#: gui/boxplots.c:903
+#: gui/boxplots.c:891
 msgid "gretl: 5 numbers"
 msgstr ""
 
-#: gui/boxplots.c:941
+#: gui/boxplots.c:929
 #, c-format
 msgid "Dropping %s: insufficient observations"
 msgstr ""
 
-#: gui/boxplots.c:965
+#: gui/boxplots.c:953
 msgid "Couldn't obtain confidence interval"
 msgstr ""
 
-#: gui/boxplots.c:1046
+#: gui/boxplots.c:1034
 msgid "Failed to allocate DIB"
 msgstr ""
 
-#: gui/boxplots.c:1069
+#: gui/boxplots.c:1057
 msgid "Failed to lock DIB Header"
 msgstr ""
 
-#: gui/boxplots.c:1089
+#: gui/boxplots.c:1077
 msgid "Failed to lock DIB Palette"
 msgstr ""
 
-#: gui/boxplots.c:1121
+#: gui/boxplots.c:1109
 msgid "Failed to lock DIB Data"
 msgstr ""
 
-#: gui/boxplots.c:1127
+#: gui/boxplots.c:1115
 msgid "Cannot open the Clipboard!"
 msgstr ""
 
-#: gui/boxplots.c:1131
+#: gui/boxplots.c:1119
 msgid "Cannot empty the Clipboard"
 msgstr ""
 
-#: gui/boxplots.c:1138
+#: gui/boxplots.c:1126
 msgid "Failed to set clipboard data"
 msgstr ""
 
-#: gui/boxplots.c:1141
+#: gui/boxplots.c:1129
 msgid "Failed to close Clipboard"
 msgstr ""
 
-#: gui/boxplots.c:1164
+#: gui/boxplots.c:1152
 msgid "Couldn't open XPM file for writing"
 msgstr ""
 
-#: gui/boxplots.c:1418
+#: gui/boxplots.c:1406
 msgid "boxplot file is corrupt\n"
 msgstr ""
 
-#: gui/boxplots.c:1480
+#: gui/boxplots.c:1468
 #, c-format
 msgid "got invalid variable number %d"
 msgstr ""
 
-#: gui/boxplots.c:1488
+#: gui/boxplots.c:1476
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr ""
 
-#: gui/boxplots.c:1493
+#: gui/boxplots.c:1481
 #, c-format
 msgid "got invalid field '%s'"
 msgstr ""
 
-#: gui/boxplots.c:1519
+#: gui/boxplots.c:1507
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
@@ -5100,7 +5095,7 @@ msgstr ""
 msgid "period (.)"
 msgstr ""
 
-#: gui/dialogs.c:1062 gui/gui_utils.c:1904
+#: gui/dialogs.c:1062 gui/gui_utils.c:1906
 msgid "OK"
 msgstr ""
 
@@ -6957,59 +6952,59 @@ msgstr ""
 msgid "/Graphs/Separation/by %s"
 msgstr ""
 
-#: gui/gui_utils.c:1886
+#: gui/gui_utils.c:1888
 #, c-format
 msgid ""
 "Error:\n"
 "%s\n"
 msgstr ""
 
-#: gui/gui_utils.c:1888
+#: gui/gui_utils.c:1890
 #, c-format
 msgid ""
 "Info:\n"
 "%s\n"
 msgstr ""
 
-#: gui/gui_utils.c:1892
+#: gui/gui_utils.c:1894
 msgid "gretl error"
 msgstr ""
 
-#: gui/gui_utils.c:1893
+#: gui/gui_utils.c:1895
 msgid "gretl info"
 msgstr ""
 
-#: gui/gui_utils.c:1943
+#: gui/gui_utils.c:1945
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
 "(the max is 8 characters)"
 msgstr ""
 
-#: gui/gui_utils.c:1949
+#: gui/gui_utils.c:1951
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
 
-#: gui/gui_utils.c:1958
+#: gui/gui_utils.c:1960
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 
-#: gui/gui_utils.c:2110
+#: gui/gui_utils.c:2112
 msgid "No undo information available"
 msgstr ""
 
-#: gui/gui_utils.c:2173
+#: gui/gui_utils.c:2175
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr ""
 
-#: gui/gui_utils.c:2181
+#: gui/gui_utils.c:2183
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr ""

@@ -691,22 +691,22 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 
 struct ts_pd {
     int pd;
-    char *label;
+    const char *label;
 };
 
 void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 {
-    char msg[80];
-    char *label = NULL;
+    gchar *msg = NULL;
+    const char *label = NULL;
     int i;
     struct ts_pd ok_pd[] = {
-	{  1, "annual" },
-	{  4, "quarterly" },
-	{ 12, "monthly" },
-	{ 52, "weekly" },
-	{  5, "daily" },
-	{  7, "daily" },
-	{ 24, "hourly" },
+	{  1, N_("annual data") },
+	{  4, N_("quarterly data") },
+	{ 12, N_("monthly data") },
+	{ 52, N_("weekly data") },
+	{  5, N_("daily data") },
+	{  7, N_("daily data") },
+	{ 24, N_("hourly data") },
 	{  0, NULL }
     };
 	
@@ -720,8 +720,8 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
     if (label != NULL) {
 	int resp;
 
-	sprintf(msg, _("Do you want to register the current data set\n"
-		"as %s data?"), label);
+	msg = g_strdup_printf(_("Do you want to register the current data set\n"
+		"as %s?"), _(label));
 	resp = yes_no_dialog(_("gretl: time series data"), msg, 0);
 	if (resp == YES_BUTTON) {
 	    if (!(datainfo->time_series == TIME_SERIES))
@@ -730,11 +730,13 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 	    set_sample_label(datainfo);
 	}
     } else {
-	sprintf(msg, _("The current data frequency, %d, is not recognized\n"
-		"as a valid time-series frequency"), datainfo->pd);
+	msg = g_strdup_printf(_("The current data frequency, %d, is not "
+				"recognized\nas a valid time-series frequency"), 
+			      datainfo->pd);
 	errbox(msg);
     }
 }
+
 
 
 

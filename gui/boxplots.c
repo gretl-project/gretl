@@ -402,18 +402,6 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     fix_exponent(numstr);
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
-
-#ifdef notdef
-    /* special on-screen string for notched plots */
-    if (pc == NULL && grp->plots[0].conf[0] != -999.0 && grp->width >=460) {
-	setup_text (grp->area, grp->pixmap, gc, pc, 
-		    _("notches show bootstrapped 90% confidence intervals "
-		    "for medians"), 
-		    grp->width / 2.0,
-		    grp->height * headroom / 3.0,
-		    GTK_JUSTIFY_CENTER);
-    }
-#endif
 }
 
 /* ............................................................. */

@@ -1,15 +1,13 @@
-# Mensajes en español para GNU gretl.
-# Copyright (C) 2002 Free Software Foundation, Inc.
-# Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>, 2002.
-#
+# Message translation (po) template for gretl
+# Copyright (C) 2002 Allin Cottrell
 # This file is distributed under the same license as the gretl package.
-#
+# Allin Cottrell <cottrell@wfu.edu>, 2002.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 0.996\n"
-"POT-Creation-Date: 2002-07-22 13:32-0400\n"
-"PO-Revision-Date: 2002-07-17 18:17+0200\n"
+"Project-Id-Version: gretl 0.999\n"
+"POT-Creation-Date: 2002-07-23 08:47-0400\n"
+"PO-Revision-Date: 2002-07-23 10:28+0200\n"
 "Last-Translator: \n"
 "Language-Team:  <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -340,24 +338,20 @@ msgid "Write of labels file failed"
 msgstr "Falló la escritura del fichero de etiquetas"
 
 #: lib/src/dataio.c:1243
-#, fuzzy
 msgid "time series"
 msgstr "serie temporal"
 
 #: lib/src/dataio.c:1245
-#, fuzzy
 msgid "panel"
-msgstr "Panel"
+msgstr "panel"
 
 #: lib/src/dataio.c:1247
-#, fuzzy
 msgid "undated"
-msgstr "Sin fecha"
+msgstr "sin fecha"
 
 #: lib/src/dataio.c:1254
-#, fuzzy
 msgid "annual"
-msgstr "Anual"
+msgstr "anual"
 
 #: lib/src/dataio.c:1256 gui/database.c:1627
 msgid "quarterly"
@@ -368,19 +362,16 @@ msgid "monthly"
 msgstr "mensualmente"
 
 #: lib/src/dataio.c:1260
-#, fuzzy
 msgid "hourly"
-msgstr "Horario"
+msgstr "horaria"
 
 #: lib/src/dataio.c:1262
-#, fuzzy
 msgid "weekly"
-msgstr "Semanal"
+msgstr "semanal"
 
 #: lib/src/dataio.c:1264 lib/src/dataio.c:1266
-#, fuzzy
 msgid "daily"
-msgstr "Diario"
+msgstr "diaria"
 
 #: lib/src/dataio.c:1268 lib/src/printout.c:1015
 msgid "unknown"
@@ -408,28 +399,25 @@ msgstr ""
 "\n"
 
 #: lib/src/dataio.c:1303
-#, fuzzy
 msgid "Type of data"
-msgstr "Actualizado"
+msgstr "Tipo de datos"
 
 #: lib/src/dataio.c:1307
-#, fuzzy
 msgid "Frequency"
-msgstr "Gráfico de frecuencias"
+msgstr "Frecuencia"
 
 #: lib/src/dataio.c:1310
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "%s: %s - %s (n = %d)\n"
 "\n"
 msgstr ""
-"%s datos, %s - %s (n = %d)\n"
+"%s: %s - %s (n = %d)\n"
 "\n"
 
 #: lib/src/dataio.c:1310
-#, fuzzy
 msgid "Range"
-msgstr "Leyendo"
+msgstr "Rango"
 
 #: lib/src/dataio.c:1313
 msgid ""
@@ -1200,9 +1188,9 @@ msgid "Correlation Coefficients"
 msgstr "Coeficientes de correlación"
 
 #: lib/src/describe.c:1032
-#, fuzzy, c-format
+#, c-format
 msgid "5%% critical value (two-tailed) = %.4f for n = %d"
-msgstr "valor crítico al 5%% (dos colas) = %.3f para n = %d"
+msgstr "valor crítico al 5%% (dos colas) = %.4f para n = %d"
 
 #: lib/src/describe.c:1093 lib/src/describe.c:1164
 msgid "Sample range has no valid observations."
@@ -2613,6 +2601,8 @@ msgid ""
 "\n"
 "Breusch-Pagan test for "
 msgstr ""
+"\n"
+"Contraste de Breusch-Pagan para  "
 
 #: lib/src/printout.c:471 gui/guiprint.c:574
 #, c-format
@@ -2633,9 +2623,8 @@ msgstr ""
 "Contraste para un ARCH de orden %d\n"
 
 #: lib/src/printout.c:484
-#, fuzzy
 msgid "MODEL"
-msgstr "MODELO %d: "
+msgstr "MODELO"
 
 #: lib/src/printout.c:488
 #, c-format
@@ -3527,14 +3516,12 @@ msgid "gretl: using these basic search paths:\n"
 msgstr "gretl: usando los siguientes caminos de búsqueda básicos:\n"
 
 #: lib/src/utils.c:1278 lib/src/utils.c:1281
-#, fuzzy
 msgid "gretlcli_hlp.txt"
-msgstr "gretl: guión"
+msgstr "gretlcli_hlp.txt"
 
 #: lib/src/utils.c:1346 lib/src/utils.c:1349
-#, fuzzy
 msgid "gretlcli.hlp"
-msgstr "gretl: ayuda"
+msgstr "gretlcli.hlp"
 
 #: lib/src/utils.c:1851
 msgid "forecasting model failed in fcast_with_errs()\n"
@@ -4164,22 +4151,15 @@ msgstr "Ayuda"
 #: gui/database.c:567 gui/datafiles.c:444 gui/gpt_control.c:618
 #: gui/gpt_control.c:1372 gui/gpt_control.c:1392 gui/gpt_control.c:1397
 #: gui/gui_utils.c:935 gui/gui_utils.c:1200 gui/gui_utils.c:1303
-#: gui/gui_utils.c:1448 gui/gui_utils.c:1902 gui/ssheet.c:633
+#: gui/gui_utils.c:1448 gui/gui_utils.c:1904 gui/ssheet.c:633
 msgid "Close"
 msgstr "Cerrar"
 
-#: gui/boxplots.c:410
-#, fuzzy, c-format
-msgid "notches show bootstrapped 90% confidence intervals for medians"
-msgstr ""
-"los puntos muestran los intervalos de confianza 90% obtenidos mediante "
-"bootstrap para las medianas"
-
-#: gui/boxplots.c:631 gui/callbacks.c:401 gui/callbacks.c:553
+#: gui/boxplots.c:619 gui/callbacks.c:401 gui/callbacks.c:553
 msgid "gretl: boxplots"
 msgstr "gretl: gráficos de caja (boxplots)"
 
-#: gui/boxplots.c:872
+#: gui/boxplots.c:860
 #, c-format
 msgid ""
 "Five-number summar%s\n"
@@ -4190,15 +4170,15 @@ msgstr ""
 "\n"
 "%20s%10s%10s%10s%10s\n"
 
-#: gui/boxplots.c:874 gui/boxplots.c:889
+#: gui/boxplots.c:862 gui/boxplots.c:877
 msgid "ies"
 msgstr "es"
 
-#: gui/boxplots.c:875 gui/boxplots.c:890
+#: gui/boxplots.c:863 gui/boxplots.c:878
 msgid "median"
 msgstr "mediana"
 
-#: gui/boxplots.c:886
+#: gui/boxplots.c:874
 #, c-format
 msgid ""
 "Five-number summar%s with bootstrapped confidence interval for median\n"
@@ -4210,80 +4190,80 @@ msgstr ""
 "\n"
 "%18s%10s%10s%17s%10s%10s\n"
 
-#: gui/boxplots.c:890
+#: gui/boxplots.c:878
 #, c-format
 msgid "(90% interval)"
 msgstr "(intervalo 90% i)"
 
-#: gui/boxplots.c:903
+#: gui/boxplots.c:891
 msgid "gretl: 5 numbers"
 msgstr "gretl: 5 números"
 
-#: gui/boxplots.c:941
+#: gui/boxplots.c:929
 #, c-format
 msgid "Dropping %s: insufficient observations"
 msgstr "Quitando %s: pocas observaciones"
 
-#: gui/boxplots.c:965
+#: gui/boxplots.c:953
 msgid "Couldn't obtain confidence interval"
 msgstr "No se pudo obtener intervalo de confianza"
 
-#: gui/boxplots.c:1046
+#: gui/boxplots.c:1034
 msgid "Failed to allocate DIB"
 msgstr "Fallo al asignar DIB"
 
-#: gui/boxplots.c:1069
+#: gui/boxplots.c:1057
 msgid "Failed to lock DIB Header"
 msgstr "Fallo al bloquear la cabecera DIB"
 
-#: gui/boxplots.c:1089
+#: gui/boxplots.c:1077
 msgid "Failed to lock DIB Palette"
 msgstr "Fallo al bloquear la paleta DIB"
 
-#: gui/boxplots.c:1121
+#: gui/boxplots.c:1109
 msgid "Failed to lock DIB Data"
 msgstr "Fallo al bloquear los datos DIB"
 
-#: gui/boxplots.c:1127
+#: gui/boxplots.c:1115
 msgid "Cannot open the Clipboard!"
 msgstr "¡No se puede abrir el portapapeles!"
 
-#: gui/boxplots.c:1131
+#: gui/boxplots.c:1119
 msgid "Cannot empty the Clipboard"
 msgstr "No se puede vaciar el portapapeles"
 
-#: gui/boxplots.c:1138
+#: gui/boxplots.c:1126
 msgid "Failed to set clipboard data"
 msgstr "Fallo al asignar datos al portapapeles"
 
-#: gui/boxplots.c:1141
+#: gui/boxplots.c:1129
 msgid "Failed to close Clipboard"
 msgstr "Fallo al cerrar el portapapeles"
 
-#: gui/boxplots.c:1164
+#: gui/boxplots.c:1152
 msgid "Couldn't open XPM file for writing"
 msgstr "No se pudo abrir el fichero XPM para escritura"
 
-#: gui/boxplots.c:1418
+#: gui/boxplots.c:1406
 msgid "boxplot file is corrupt\n"
 msgstr "el fichero boxplot está corrupto\n"
 
-#: gui/boxplots.c:1480
+#: gui/boxplots.c:1468
 #, c-format
 msgid "got invalid variable number %d"
 msgstr "se obtuvo un número de variable %d no válido"
 
-#: gui/boxplots.c:1488
+#: gui/boxplots.c:1476
 #, c-format
 msgid "got invalid varname '%s'"
 msgstr "se obtuvo un nombre de variable no válido '%s'"
 
-#: gui/boxplots.c:1493
+#: gui/boxplots.c:1481
 #, c-format
 msgid "got invalid field '%s'"
 msgstr "se obtuvo un campo '%s' no válido"
 
-#: gui/boxplots.c:1519
+#: gui/boxplots.c:1507
 #, c-format
 msgid ""
 "boxplots: generation of dummy variable failed\n"
@@ -4536,196 +4516,174 @@ msgid "gretl: hypothesis test"
 msgstr "gretl: contraste de hipótesis"
 
 #: gui/calculator.c:677 gui/calculator.c:726
-#, fuzzy
 msgid "normal"
-msgstr "General"
+msgstr "normal"
 
 #: gui/calculator.c:678 gui/calculator.c:727
-#, fuzzy
 msgid " t "
-msgstr " a"
+msgstr " t "
 
 #: gui/calculator.c:679 gui/calculator.c:728
-#, fuzzy
 msgid "chi-square"
-msgstr "cuadrados"
+msgstr "chi-cuadrado"
 
 #: gui/calculator.c:680 gui/calculator.c:729
 msgid " F "
-msgstr ""
+msgstr " F "
 
 #: gui/calculator.c:681
 msgid " DW "
-msgstr ""
+msgstr " DW "
 
 #: gui/calculator.c:703 gui/calculator.c:706 gui/calculator.c:757
 #: gui/calculator.c:765
 msgid "df"
-msgstr ""
+msgstr "gl"
 
 #: gui/calculator.c:709 gui/calculator.c:769
 msgid "dfn"
-msgstr ""
+msgstr "gln"
 
 #: gui/calculator.c:710 gui/calculator.c:770
 msgid "dfd"
-msgstr ""
+msgstr "gld"
 
 #: gui/calculator.c:713
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: gui/calculator.c:730
 msgid "gamma"
-msgstr ""
+msgstr "gamma"
 
 #: gui/calculator.c:750 gui/calculator.c:758
-#, fuzzy
 msgid "value"
-msgstr "valor p"
+msgstr "valor"
 
 #: gui/calculator.c:751 gui/calculator.c:759 gui/calculator.c:774
 #: gui/calculator.c:868
-#, fuzzy
 msgid "mean"
-msgstr "mediana"
+msgstr "media"
 
 #: gui/calculator.c:753 gui/calculator.c:761 gui/calculator.c:894
-#, fuzzy
 msgid "std. deviation"
-msgstr "Estimación"
+msgstr "desv. típica"
 
 #: gui/calculator.c:766 gui/calculator.c:776
-#, fuzzy
 msgid "x-value"
-msgstr "valor p"
+msgstr "valor x"
 
 #: gui/calculator.c:771
-#, fuzzy
 msgid "F-value"
-msgstr "valor p"
+msgstr "valor F"
 
 #: gui/calculator.c:775 gui/calculator.c:869
-#, fuzzy
 msgid "variance"
-msgstr "contraste de varianzas"
+msgstr "varianza"
 
 #: gui/calculator.c:870
-#, fuzzy
 msgid "proportion"
-msgstr "Proporción muestral = %g\n"
+msgstr "proporción"
 
 #: gui/calculator.c:871
-#, fuzzy
 msgid "2 means"
-msgstr "mediana"
+msgstr "2 medias"
 
 #: gui/calculator.c:872
-#, fuzzy
 msgid "2 variances"
-msgstr "contraste de varianzas"
+msgstr "2 varianzas"
 
 #: gui/calculator.c:873
-#, fuzzy
 msgid "2 proportions"
-msgstr "Proporción muestral = %g\n"
+msgstr "2 proporciones"
 
 #: gui/calculator.c:893
 msgid "sample mean"
-msgstr ""
+msgstr "media muestral"
 
 #: gui/calculator.c:895 gui/calculator.c:902 gui/calculator.c:907
-#, fuzzy
 msgid "sample size"
-msgstr "Tamaño muestral no válido"
+msgstr "tamaño muestral"
 
 #: gui/calculator.c:896
 msgid "H0: mean ="
-msgstr ""
+msgstr "H0: media ="
 
 #: gui/calculator.c:897
-#, fuzzy
 msgid "Assume standard deviation is population value"
-msgstr "D.T. de la var. dependiente"
+msgstr "Suponer que la desviación típica es un valor poblacional"
 
 #: gui/calculator.c:901
-#, fuzzy
 msgid "sample variance"
-msgstr "Varianza muestral = %g\n"
+msgstr "varianza muestral"
 
 #: gui/calculator.c:903
-#, fuzzy
 msgid "H0: variance ="
-msgstr "contraste de varianzas"
+msgstr "H0: varianza ="
 
 #: gui/calculator.c:906
-#, fuzzy
 msgid "sample proportion"
-msgstr "Proporción muestral = %g\n"
+msgstr "proporción muestral"
 
 #: gui/calculator.c:908
-#, fuzzy
 msgid "H0: proportion ="
-msgstr "Proporción muestral = %g\n"
+msgstr "H0: proporción ="
 
 #: gui/calculator.c:911
 msgid "mean of sample 1"
-msgstr ""
+msgstr "media de la muestra 1"
 
 #: gui/calculator.c:912
 msgid "std. deviation, sample 1"
-msgstr ""
+msgstr "desv. típica de la muestra 1"
 
 #: gui/calculator.c:913 gui/calculator.c:924 gui/calculator.c:931
 msgid "size of sample 1"
-msgstr ""
+msgstr "tamaño de la muestra 1"
 
 #: gui/calculator.c:914
 msgid "mean of sample 2"
-msgstr ""
+msgstr "media de la muestra 2"
 
 #: gui/calculator.c:915
 msgid "std. deviation, sample 2"
-msgstr ""
+msgstr "desv. típica de la muestra 2"
 
 #: gui/calculator.c:916 gui/calculator.c:926 gui/calculator.c:933
 msgid "size of sample 2"
-msgstr ""
+msgstr "tamaño de la muestra 2"
 
 #: gui/calculator.c:917
-#, fuzzy
 msgid "H0: Difference of means ="
-msgstr "/Datos/Diferencia de medias"
+msgstr "H0: Diferencia de medias ="
 
 #: gui/calculator.c:919
-#, fuzzy
 msgid "Assume common population standard deviation"
-msgstr "Introduzca el nombre, media y desviación típica:"
+msgstr "Suponer desviación típica poblacional común"
 
 #: gui/calculator.c:923
 msgid "variance of sample 1"
-msgstr ""
+msgstr "varianza de la muestra 1"
 
 #: gui/calculator.c:925
 msgid "variance of sample 2"
-msgstr ""
+msgstr "varianza de la muestra 2"
 
 #: gui/calculator.c:927
-#, fuzzy
 msgid "H0: Ratio of variances = 1"
-msgstr "   Cociente entre varianzas muestrales = %g\n"
+msgstr "H0: Cociente de varianzas = 1"
 
 #: gui/calculator.c:930
 msgid "proportion, sample 1"
-msgstr ""
+msgstr "proporción, muestra 1"
 
 #: gui/calculator.c:932
 msgid "proportion, sample 2"
-msgstr ""
+msgstr "proporción, muestra 2"
 
 #: gui/calculator.c:934
 msgid "H0: Difference of proportions = 0"
-msgstr ""
+msgstr "H0: Diferencia de proporciones = 0"
 
 #: gui/calculator.c:942
 msgid "Show graph of sampling distribution"
@@ -4772,9 +4730,8 @@ msgid "Open Excel file"
 msgstr "Abrir fichero Excel"
 
 #: gui/callbacks.c:122
-#, fuzzy
 msgid "Open Wooldridge file"
-msgstr "Abrir fichero de guión"
+msgstr "Abrir"
 
 #: gui/callbacks.c:135
 msgid "Open script file"
@@ -5080,9 +5037,8 @@ msgid "Edit label for variable number %d (%s):"
 msgstr "Editar etiqueta para la variable número %d (%s):"
 
 #: gui/callbacks.c:530 gui/callbacks.c:535
-#, fuzzy
 msgid "gretl: missing code"
-msgstr "gretl: código de 'valor perdido' para conjunto de datos"
+msgstr "gretl: código perdido"
 
 #: gui/callbacks.c:531 gui/callbacks.c:536
 msgid "Enter value to be read as \"missing\":"
@@ -5287,7 +5243,6 @@ msgstr "Vd está añadiendo una serie %s a un conjunto de datos %s"
 msgid "a quarterly"
 msgstr "una trimestral"
 
-# FALTA
 #: gui/database.c:1628
 msgid "an annual"
 msgstr "una anual"
@@ -5320,11 +5275,13 @@ msgid "Couldn't open descriptions file"
 msgstr "No se pudo abrir fichero de descripciones"
 
 #: gui/datafiles.c:103
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Couldn't open data descriptions file\n"
 "%s"
-msgstr "No se pudo abrir fichero de descripciones de los datos"
+msgstr ""
+"No se pudo abrir el fichero de descripción de los datos\n"
+"%s"
 
 #: gui/datafiles.c:156
 msgid "gretl: data header"
@@ -5552,7 +5509,7 @@ msgstr ""
 #: gui/dialogs.c:272 gui/dialogs.c:275 gui/dialogs.c:278 gui/dialogs.c:281
 #: gui/dialogs.c:284 gui/dialogs.c:287 gui/dialogs.c:290 gui/dialogs.c:293
 msgid "newvar"
-msgstr ""
+msgstr "var_nueva"
 
 #: gui/dialogs.c:296
 msgid "gretl: create data set"
@@ -5670,7 +5627,7 @@ msgstr "carácter de punto decimal"
 msgid "period (.)"
 msgstr "punto (.)"
 
-#: gui/dialogs.c:1062 gui/gui_utils.c:1904
+#: gui/dialogs.c:1062 gui/gui_utils.c:1906
 msgid "OK"
 msgstr "De acuerdo"
 
@@ -5769,9 +5726,8 @@ msgid "Excel files (*.xls)"
 msgstr "ficheros Excel (*.xls)"
 
 #: gui/fileselect.c:329
-#, fuzzy
 msgid "DES files (*.des)"
-msgstr "ficheros CSV (*.csv)"
+msgstr "Archivos DES (*.des)"
 
 #: gui/fileselect.c:332
 msgid "gretl data files (*.dat)"
@@ -6012,9 +5968,8 @@ msgid "/File/Open data/sample file/Greene..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
 
 #: gui/gretl.c:209
-#, fuzzy
 msgid "/File/Open data/sample file/Wooldridge..."
-msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
+msgstr "Fichero Abrir."
 
 #: gui/gretl.c:211
 msgid "/File/Open data/sample file/Penn World Table..."
@@ -7575,7 +7530,7 @@ msgstr "/Gráficos/Separación/ninguna"
 msgid "/Graphs/Separation/by %s"
 msgstr "/Gráficos/Separación/por %s"
 
-#: gui/gui_utils.c:1886
+#: gui/gui_utils.c:1888
 #, c-format
 msgid ""
 "Error:\n"
@@ -7584,7 +7539,7 @@ msgstr ""
 "Error:\n"
 "%s\n"
 
-#: gui/gui_utils.c:1888
+#: gui/gui_utils.c:1890
 #, c-format
 msgid ""
 "Info:\n"
@@ -7593,15 +7548,15 @@ msgstr ""
 "Información:\n"
 "%s\n"
 
-#: gui/gui_utils.c:1892
+#: gui/gui_utils.c:1894
 msgid "gretl error"
 msgstr "error de gretl"
 
-#: gui/gui_utils.c:1893
+#: gui/gui_utils.c:1895
 msgid "gretl info"
 msgstr "información de gretl"
 
-#: gui/gui_utils.c:1943
+#: gui/gui_utils.c:1945
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -7610,7 +7565,7 @@ msgstr ""
 "El nombre de variable %s... es demasiado largo\n"
 "(el máximo es 8 caracteres)"
 
-#: gui/gui_utils.c:1949
+#: gui/gui_utils.c:1951
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -7619,25 +7574,25 @@ msgstr ""
 "El primer carácter del nombre ('%c') es no válido\n"
 "(el primero tiene que ser alfabético)"
 
-#: gui/gui_utils.c:1958
-#, fuzzy, c-format
+#: gui/gui_utils.c:1960
+#, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
 "El nombre contiene un carácter ilegal (en el lugar %d)\n"
-"Use sólo letras, dígitos carácter de subrayado (_)"
+"Utilice sólo letras no acentuadas, dígitos y carácter de subrayado "
 
-#: gui/gui_utils.c:2110
+#: gui/gui_utils.c:2112
 msgid "No undo information available"
 msgstr "No hay disponible información de 'deshacer'"
 
-#: gui/gui_utils.c:2173
+#: gui/gui_utils.c:2175
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr "No se pudo cargar enchufe (plugin) %s"
 
-#: gui/gui_utils.c:2181
+#: gui/gui_utils.c:2183
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr "Fallo al cargar enchufe (plugin): %s"
@@ -8504,9 +8459,8 @@ msgid "Failed to copy boxplot file"
 msgstr "Fallo al copiar fichero de gráfico de caja (Boxplot)"
 
 #: gui/session.c:289
-#, fuzzy
 msgid "Model"
-msgstr "/_Modelo"
+msgstr "Modelo"
 
 #: gui/session.c:303
 #, c-format
@@ -8921,12 +8875,12 @@ msgstr "Proxy HTTP: el primer campo ha de ser un número de IP"
 #: plugin/des_import.c:398
 #, c-format
 msgid "%s: contains non-numeric entries"
-msgstr ""
+msgstr "%s contiene entradas no numéricas"
 
 #: plugin/des_import.c:401
 #, c-format
 msgid "%s: found non-numeric data in column %d"
-msgstr ""
+msgstr "%s: se han encontrado datos no numéricos en la columna %d"
 
 #: plugin/excel_import.c:115
 #, c-format
@@ -9334,53 +9288,9 @@ msgstr "Error inesperado al leer el fichero\n"
 msgid "Unexpected error reading the file"
 msgstr "Error inesperado al leer el fichero"
 
-#~ msgid " time-series"
-#~ msgstr "serie temporal"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test for "
-#~ msgstr ""
-#~ "\n"
-#~ "Contraste de "
-
-#~ msgid ""
-#~ "\n"
-#~ "MODEL %d: "
-#~ msgstr ""
-#~ "\n"
-#~ "MODELO %d: "
-
-#~ msgid "Dependent variable: uhat"
-#~ msgstr "Variable dependiente: uhat"
-
-#~ msgid "Dependent variable: %s\n"
-#~ msgstr "Variable dependiente: %s\n"
-
-#~ msgid " (unequal var)"
-#~ msgstr " (varianzas desiguales)"
-
-#~ msgid "gretl: missing code for variable"
-#~ msgstr "gretl: código de 'valor perdido' para la variable "
-
+#
 #, fuzzy
-#~ msgid "%f + %f*x title '%s' w lines\n"
-#~ msgstr "%f + %f*x title 'ajuste mínimo cuadrático' w lines\n"
-
-#~ msgid "set label 'Test statistic for normality:' at graph .05, graph .9\n"
+#~ msgid "notches show bootstrapped 90% confidence intervals for medians"
 #~ msgstr ""
-#~ "set label 'Estadístico de contraste de normalidad:' at graph .05, "
-#~ "graph .9\n"
-
-#~ msgid ""
-#~ "set label 'Chi-squared(2) = %.3f, pvalue %.5f' at graph .05, graph .85\n"
-#~ msgstr ""
-#~ "set label 'Chi-cuadrado(2) = %.3f, valor p %.5f' en gráfico .05, "
-#~ "gráfico .85\n"
-
-#~ msgid ""
-#~ " (to lag %d):\n"
-#~ "\n"
-#~ msgstr ""
-#~ " (hasta retardo %d):\n"
-#~ "\n"
+#~ "los puntos muestran los intervalos de confianza 90% obtenidos mediante "
+#~ "bootstrap para las medianas"

@@ -1849,8 +1849,10 @@ void setup_column (GtkWidget *listbox, int column, int width)
 
 static void msgbox (const char *msg, int err)
 {
-    if (err) gnome_app_error(GNOME_APP(mdata->w), msg);
-    else gnome_app_message(GNOME_APP(mdata->w), msg);
+    if (err) gnome_app_warning(GNOME_APP(mdata->w),
+	msg);
+    else gnome_app_message(GNOME_APP(mdata->w),
+	msg);
 }
 
 #elif defined(G_OS_WIN32)
