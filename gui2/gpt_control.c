@@ -2699,7 +2699,13 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 	    gchar *posstr;
 	    
 	    get_data_xy(plot, event->x, event->y, &dx, &dy);
+#ifdef ENABLE_NLS
+	    setlocale(LC_NUMERIC, "C");
+#endif
 	    posstr = g_strdup_printf("%g,%g", dx, dy);
+#ifdef ENABLE_NLS
+	    setlocale(LC_NUMERIC, "");
+#endif
 	    gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
 	    g_free(posstr);
 	}
@@ -3566,6 +3572,7 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
     } else {
 	/* copy from emf on disk onto clipboard */
 	emf_to_clip(emfname);
+	infobox(_("To paste, use Edit/Paste special.../Enhanced metafile"));
     }
 
     remove(emfname); 

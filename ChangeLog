@@ -2,7 +2,7 @@ version 1.1.1
 - Graph editing: add facility to write labels onto the graph
 - Graph editing: allow removal of auto-fitted OLS line
 - Add compaction method (e.g. average, sum) as an attribute of 
-  variables; settable under Variable/Edit attributes
+  variables -- settable under Variable/Edit attributes
 - In importing data from a database, recognize if a variable
   of the same name is already in the working dataset
 - Fix "pmax" bug in printing of actual, fitted and residuals

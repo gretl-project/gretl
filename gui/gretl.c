@@ -1016,8 +1016,12 @@ gint populate_main_varlist (void)
 	gtk_signal_connect(GTK_OBJECT(GTK_CLIST(mdata->listbox)),
 			   "select-row",
 			   check_varmenu_state, NULL);
+	gtk_signal_connect(GTK_OBJECT(GTK_CLIST(mdata->listbox)),
+			   "unselect-row",
+			   check_varmenu_state, NULL);
 	check_connected = 1;
     }
+
 
     if (!popup_connected) {
 	gtk_signal_connect(GTK_OBJECT(mdata->listbox),

@@ -154,7 +154,7 @@ static void display_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     if (bufopen(&prn)) return;
 
-    printdata(NULL, dbZ, dbdinfo, 0, 1, prn);
+    printdata(NULL, dbZ, dbdinfo, 0, 'o', prn);
 
     view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
 		NULL); 

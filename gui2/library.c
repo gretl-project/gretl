@@ -128,6 +128,8 @@ GtkItemFactoryEntry view_items[] = {
 
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
+#define OPT_O 'o'
+
 typedef struct {
     int ID, cmdnum;
     int n;
@@ -3025,13 +3027,13 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, 0, 1, prn);
+	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 78, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
-	err = printdata(NULL, &Z, datainfo, 0, 1, prn);
+	err = printdata(NULL, &Z, datainfo, 0, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3090,14 +3092,14 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
 
-	printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
+	printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, width, 350, VIEW_DATA, view_items);
     } else { /* use buffer */
 	int err;
 
 	if (bufopen(&prn)) return;
-	err = printdata(prcmd.list, &Z, datainfo, 0, 1, prn);
+	err = printdata(prcmd.list, &Z, datainfo, 0, OPT_O, prn);
 	if (err) {
 	    errbox(_("Out of memory in display buffer"));
 	    gretl_print_destroy(prn);
@@ -3343,7 +3345,7 @@ void display_var (void)
 
     if (bufopen(&prn)) return;
 
-    printdata(list, &Z, datainfo, 0, 1, prn);
+    printdata(list, &Z, datainfo, 0, OPT_O, prn);
 
     if (!datainfo->vector[list[1]]) {
 	vec = 0;
