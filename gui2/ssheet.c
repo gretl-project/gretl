@@ -828,7 +828,9 @@ set_up_sheet_column (GtkTreeViewColumn *column, gint width, gboolean expand)
     gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
     gtk_tree_view_column_set_resizable(column, TRUE);
     gtk_tree_view_column_set_min_width(column, width);
+#if (GTK_MINOR_VERSION >= 4)
     gtk_tree_view_column_set_expand(column, expand);
+#endif
 }
 
 /* ........................................................... */
