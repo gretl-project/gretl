@@ -1005,9 +1005,9 @@ void write_rc (void)
 	}
     }
 
-    g_object_unref(G_OBJECT(client));
+    save_file_lists(client);
 
-    save_file_lists(NULL);
+    g_object_unref(G_OBJECT(client));
 
     set_paths(&paths, 0, 1);
 }
@@ -1033,7 +1033,7 @@ static void read_rc (void)
 	if (rc_vars[i].type == BOOLSET) {
 	    gboolean val;
 
-	    val = gconf_client_get_bool (client, key, &error);
+	    val = gconf_client_get_bool(client, key, &error);
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
@@ -1041,7 +1041,7 @@ static void read_rc (void)
 		*(int *) rc_vars[i].var = val;
 	    }
 	} else {
-	    value = gconf_client_get_string (client, key, &error);
+	    value = gconf_client_get_string(client, key, &error);
 
 	    if (error) {
 		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
@@ -1062,8 +1062,8 @@ static void read_rc (void)
 	int j;
 
 	sprintf(key, "/apps/gretl/%s", file_sections[i]);
-	flist = gconf_client_get_list (client, key,
-				       GCONF_VALUE_STRING, NULL);
+	flist = gconf_client_get_list(client, key,
+				      GCONF_VALUE_STRING, NULL);
 	if (flist != NULL) {
 	    for (j=0; j<MAXRECENT; j++) {
 		write_filename_to_list(i, j, flist->data);
@@ -1109,7 +1109,7 @@ void write_rc (void)
 	}
     }
 
-    save_file_lists(NULL);
+    save_file_lists();
 
     gnome_config_sync();
 
@@ -1203,7 +1203,7 @@ void write_rc (void)
 	}
     }
 
-    save_file_lists(NULL);
+    save_file_lists();
 
     set_paths(&paths, 0, 1);
 }

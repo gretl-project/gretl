@@ -482,9 +482,16 @@ void printlist (const int *list, const char *msg)
 {
     int i;
 
-    if (msg) fprintf(stderr, "%s:\n", msg);
-    else fprintf(stderr, "list: ");
-    for (i=0; i<=list[0]; i++) fprintf(stderr, "%d ", list[i]);
+    if (msg) {
+	fprintf(stderr, "%s:\n", msg);
+    } else {
+	fprintf(stderr, "list: ");
+    }
+
+    for (i=0; i<=list[0]; i++) {
+	fprintf(stderr, "%d ", list[i]);
+    }
+
     fputc('\n', stderr);
 }
 
@@ -1158,9 +1165,15 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
     if (pdinfo->v <= 1) return E_DATA;
 
     for (i=v-delvars; i<v; i++) {
-	if (pdinfo->varname[i] != NULL) free(pdinfo->varname[i]);
-	if (pdinfo->varinfo[i] != NULL) free(pdinfo->varinfo[i]);
-	if ((*pZ)[i] != NULL) free((*pZ)[i]);
+	if (pdinfo->varname[i] != NULL) {
+	    free(pdinfo->varname[i]);
+	}
+	if (pdinfo->varinfo[i] != NULL) {
+	    free(pdinfo->varinfo[i]);
+	}
+	if ((*pZ)[i] != NULL) {
+	    free((*pZ)[i]);
+	}
     }
 
     newZ = realloc(*pZ, (v - delvars) * sizeof *newZ); 

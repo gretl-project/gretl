@@ -338,6 +338,42 @@ int isdir (const char *path)
 
 /* ........................................................... */
 
+static int max_var_in_stacked_models (GtkWidget **wstack, int nwin)
+{
+    int i, role, mvm, vmax = 0;
+
+    for (i=0; i<nwin; i++) {
+	if (wstack[i] != NULL) {
+	    role = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(wstack[i]), "role"));
+	    if (role == VIEW_MODEL) {
+		const MODEL *pmod;
+
+		pmod = g_object_get_data(G_OBJECT(wstack[i]), "object");
+		if (pmod != NULL) {
+		    mvm = highest_numbered_var_in_model(pmod, datainfo);
+		    if (mvm > vmax) {
+			vmax = mvm;
+		    }
+		}
+	    } else if (role == VAR) {
+		const GRETL_VAR *var;
+
+		var = g_object_get_data(G_OBJECT(wstack[i]), "object");
+		if (var != NULL) {
+		    mvm = gretl_var_get_highest_variable(var, datainfo);
+		    if (mvm > vmax) {
+			vmax = mvm;
+		    }		    
+		}
+	    }
+	}
+    }    
+
+    return vmax;
+}
+
+/* ........................................................... */
+
 /* Below: Keep a record of (most) windows that are open, so they 
    can be destroyed en masse when a new data file is opened, to
    prevent weirdness that could arise if (e.g.) a model window
@@ -352,22 +388,24 @@ enum winstack_codes {
     STACK_ADD,
     STACK_REMOVE,
     STACK_DESTROY,
-    STACK_QUERY
+    STACK_QUERY,
+    STACK_MAXVAR
 };
 
 static int winstack (int code, GtkWidget *w, gpointer ptest)
 {
     static int n_windows;
     static GtkWidget **wstack;
-    int found = 0;
-    int i;
+    int i, ret = 0;
 
     switch (code) {
 
     case STACK_DESTROY:	
-	for (i=0; i<n_windows; i++) 
-	    if (wstack[i] != NULL) 
+	for (i=0; i<n_windows; i++) {
+	    if (wstack[i] != NULL) {
 		gtk_widget_destroy(wstack[i]);
+	    }
+	}
 	free(wstack);
 	/* fall-through intended */
 
@@ -386,8 +424,9 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	if (i == n_windows) {
 	    n_windows++;
 	    wstack = myrealloc(wstack, n_windows * sizeof *wstack);
-	    if (wstack != NULL) 
+	    if (wstack != NULL) { 
 		wstack[n_windows-1] = w;
+	    }
 	}
 	break;
 
@@ -403,26 +442,24 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
     case STACK_QUERY:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
-#ifndef OLD_GTK
 		gpointer p = g_object_get_data(G_OBJECT(wstack[i]), "object");
-#else
-		gpointer p = gtk_object_get_data(GTK_OBJECT(wstack[i]), 
-						 "object");
-#endif
-
 		if (p == ptest) {
-		    found = 1;
+		    ret = 1;
 		    break;
 		}
 	    }
 	}
 	break;
 
+    case STACK_MAXVAR:
+	ret = max_var_in_stacked_models(wstack, n_windows);
+	break;	
+
     default:
 	break;
     }
 
-    return found;
+    return ret;
 }
 
 void winstack_init (void)
@@ -438,6 +475,11 @@ void winstack_destroy (void)
 int winstack_match_data (gpointer p)
 {
     return winstack(STACK_QUERY, NULL, p);
+}
+
+int highest_numbered_variable_in_winstack (void)
+{
+    return winstack(STACK_MAXVAR, NULL, NULL);
 }
 
 static void winstack_add (GtkWidget *w)
@@ -1644,11 +1686,9 @@ static windata_t *common_viewer_new (int role, const char *title,
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
 
     if (record) {
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(vwin->dialog), "object", data);
-#else
-	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "object", data);
-#endif
+	g_object_set_data(G_OBJECT(vwin->dialog), "role", 
+			  GINT_TO_POINTER(vwin->role));
 	winstack_add(vwin->dialog);
     }
 
@@ -2121,7 +2161,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 #endif
 
     vwin = common_viewer_new(VIEW_MODEL, title, pmod, 1);
-    if (vwin == NULL) return 1;
+    if (vwin == NULL) {
+	return 1;
+    }
 
 #ifdef OLD_GTK
     create_text(vwin, hsize, vsize, FALSE);

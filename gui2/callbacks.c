@@ -624,43 +624,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-void delete_var_by_id (int id)
-{
-    int list[2];
-    int renumber, resp;
-    gchar *msg;
-
-    if (complex_subsampled()) {
-	errbox(_("Can't delete a variable when in sub-sample"
-		 " mode\n"));
-	return;
-    }    
-
-    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
-    resp = yes_no_dialog(_("gretl: delete"), msg, 0);
-    g_free(msg);
-
-    if (resp != GRETL_YES) return;
-
-    sprintf(line, "delete %d", id);
-    if (verify_and_record_command(line)) return;
-
-    list[0] = 1;
-    list[1] = id;
-
-    if (dataset_drop_listed_vars(list, &Z, datainfo, & renumber)) {
-	errbox(_("Out of memory reorganizing data set"));
-    } else {
-	refresh_data();
-	if (renumber) {
-	    infobox(_("Take note: variables have been renumbered"));
-	}
-	mark_dataset_as_modified();
-    }
-}
-
-/* ........................................................... */
-
 void text_copy_callback (GtkWidget *w, gpointer data)
 {
     text_copy(data, COPY_SELECTION, w);

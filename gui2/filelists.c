@@ -70,15 +70,15 @@ static char **get_file_list (int filetype)
 
 /* .................................................................. */
 
-#ifdef GNOME2
+#if defined(USE_GNOME) && !defined(OLD_GTK)
 
-static void printfilelist (int filetype, /* ignored */ FILE *fp)
+static void printfilelist (int filetype, GConfClient *client)
 {
-    GConfClient *client;
     GSList *flist = NULL;
     gchar *key;
     int i;
     char **filep;
+    GError *err = NULL;
     const char *file_sections[] = {
 	"recent_data_files",
 	"recent_session_files",
@@ -90,25 +90,33 @@ static void printfilelist (int filetype, /* ignored */ FILE *fp)
 	return;
     }
 
-    client = gconf_client_get_default();
-
     for (i=0; i<MAXRECENT; i++) {
 	flist = g_slist_append(flist, g_strdup(filep[i]));
     }
 
     key = g_strdup_printf("/apps/gretl/%s", file_sections[filetype]);
 
-    gconf_client_set_list (client, key, GCONF_VALUE_STRING, 
-			   flist, NULL);
+    gconf_client_set_list(client, key, GCONF_VALUE_STRING, 
+			  flist, &err);
+    if (err != NULL) {
+	fprintf(stderr, "Error saving filenames: %s\n", err->message);
+	g_error_free (err);
+    }
 
     g_free(key);
     g_slist_free(flist);
-    g_object_unref(G_OBJECT(client));
+}
+
+void save_file_lists (GConfClient *client)
+{
+    printfilelist(FILE_LIST_DATA, client);
+    printfilelist(FILE_LIST_SESSION, client);
+    printfilelist(FILE_LIST_SCRIPT, client);
 }
 
 #elif defined(USE_GNOME)
 
-static void printfilelist (int filetype, /* ignored */ FILE *fp)
+static void printfilelist (int filetype)
 {
     int i;
     char **filep;
@@ -130,9 +138,16 @@ static void printfilelist (int filetype, /* ignored */ FILE *fp)
     }
 }
 
+void save_file_lists (void)
+{
+    printfilelist(FILE_LIST_DATA);
+    printfilelist(FILE_LIST_SESSION);
+    printfilelist(FILE_LIST_SCRIPT);
+}
+
 #elif defined(G_OS_WIN32)
 
-static void printfilelist (int filetype, /* ignored */ FILE *fp)
+static void printfilelist (int filetype)
 {
     int i;
     char **filep;
@@ -154,6 +169,13 @@ static void printfilelist (int filetype, /* ignored */ FILE *fp)
 	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
 	}
     }
+}
+
+void save_file_lists (void)
+{
+    printfilelist(FILE_LIST_DATA);
+    printfilelist(FILE_LIST_SESSION);
+    printfilelist(FILE_LIST_SCRIPT);
 }
 
 #else /* "plain" version follows */
@@ -184,14 +206,14 @@ static void printfilelist (int filetype, FILE *fp)
     }
 }
 
-#endif 
-
 void save_file_lists (FILE *fp)
 {
     printfilelist(FILE_LIST_DATA, fp);
     printfilelist(FILE_LIST_SESSION, fp);
     printfilelist(FILE_LIST_SCRIPT, fp);
-}
+}    
+
+#endif 
 
 /* .................................................................. */
 

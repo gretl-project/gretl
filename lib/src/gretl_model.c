@@ -783,7 +783,7 @@ int command_ok_for_model (int test_ci, int model_ci)
 	if (model_ci != POOLED) ok = 0;
 	break;
     case RESTRICT:
-	if (model_ci == LAD) ok = 0;
+	if (model_ci == LAD || model_ci == NLS) ok = 0;
 	break;
     case TESTUHAT:
 	/* need to exclude garch? */
@@ -839,6 +839,41 @@ void model_list_to_string (int *list, char *buf)
 	    strcat(buf, numstr);
 	}
     }
+}
+
+int highest_numbered_var_in_model (const MODEL *pmod, 
+				   const DATAINFO *pdinfo)
+{
+    int i, v, vmax = 0;
+    int gotsep = 0;
+
+    for (i=1; i<=pmod->list[0]; i++) {
+	v = pmod->list[i];
+	if (v == LISTSEP) {
+	    gotsep = 1;
+	    continue;
+	}
+	if (v >= pdinfo->v) {
+	    /* temporary variables, already gone? */
+	    continue;
+	}
+	if ((pmod->ci == ARMA || pmod->ci == GARCH) && !gotsep) {
+	    /* real vars start after LISTSEP */
+	    continue;
+	}
+#if 0
+	fprintf(stderr, "highest numbered... checking var %d\n", v);
+#endif
+	if (v > vmax) {
+	    vmax = v;
+	}
+	if (pmod->ci == NLS) {
+	    /* only the dependent var can be tested */
+	    break;
+	}
+    }
+
+    return vmax;
 }
 
 

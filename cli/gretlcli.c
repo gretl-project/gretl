@@ -968,13 +968,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 			 " mode\n"));
 	    break;
 	}	
-	if (cmd.list[0]) {
-	    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, 
-					   &renumber);
-	} else {
-	    err = dataset_drop_vars(1, &Z, datainfo);
-	    renumber = 0;
-	}
+	err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, 
+				       &renumber);
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {

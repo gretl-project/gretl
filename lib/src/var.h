@@ -83,5 +83,8 @@ int gretl_var_get_n_equations (const GRETL_VAR *var);
 int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 				     double ***pZ, DATAINFO *pdinfo);
 
+int gretl_var_get_highest_variable (const GRETL_VAR *var,
+				    const DATAINFO *pdinfo);
+
 #endif /* VAR_H_ */
 

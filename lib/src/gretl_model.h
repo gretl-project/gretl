@@ -79,4 +79,7 @@ void set_model_id (MODEL *pmod);
 
 void model_list_to_string (int *list, char *buf);
 
+int highest_numbered_var_in_model (const MODEL *pmod, 
+				   const DATAINFO *pdinfo);
+
 #endif /* GRETL_MODEL_H */

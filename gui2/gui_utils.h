@@ -96,6 +96,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);
 
+int highest_numbered_variable_in_winstack (void);
+
 void file_view_set_editable (windata_t *vwin);
 
 int validate_varname (const char *varname);

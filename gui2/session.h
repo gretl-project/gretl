@@ -80,6 +80,8 @@ void close_session (void);
 
 void free_session (void);
 
+int highest_numbered_variable_in_session (void);
+
 int saved_objects (char *fname);
 
 int parse_savefile (char *fname);

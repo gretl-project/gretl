@@ -3537,13 +3537,45 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void delete_selected_vars (void)
-{
-    int err, renumber;
-    char *liststr = mdata_selection_to_string(0);
-    char *msg;
+/* Before deleting specified variables, check that they are not
+   required by any saved models; also, don't delete variables 
+   whose deletion would result in the renumbering of variables
+   used in saved models.
+*/
 
-    if (liststr == NULL) return;
+static int maybe_prune_delete_list (int *list)
+{
+    int vsave = 0, pruned = 0;
+    int i, vmax;
+
+    /* check open model windows */
+    vmax = highest_numbered_variable_in_winstack();
+    if (vmax > vsave) {
+	vsave = vmax;
+    }
+
+    /* check models saved as icons */
+    vmax = highest_numbered_variable_in_session();
+    if (vmax > vsave) {
+	vsave = vmax;
+    }
+    
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] <= vsave) {
+	    gretl_list_delete_at_pos(list, i);
+	    i--;
+	    pruned = 1;
+	}
+    }
+
+    return pruned;
+}
+
+void delete_selected_vars (int id)
+{
+    int err, renumber, pruned = 0;
+    char *liststr = NULL;
+    char *msg;
 
     if (complex_subsampled()) {
 	errbox(_("Can't delete a variable when in sub-sample"
@@ -3551,22 +3583,63 @@ void delete_selected_vars (void)
 	return;
     }
 
-    msg = g_strdup_printf(_("Really delete %s?"), liststr);
+    if (id > 0) {
+	/* delete single specified var */
+	int testlist[2];
+
+	testlist[0] = 1;
+	testlist[1] = id;
+
+	if (maybe_prune_delete_list(testlist)) {
+	    sprintf(errtext, _("Cannot delete %s; variable is in use"), 
+		    datainfo->varname[id]);
+	    errbox(errtext);
+	    return;
+	} else {
+	    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
+	}
+    } else {
+	/* delete list of vars */
+	liststr = mdata_selection_to_string(0);
+	if (liststr == NULL) {
+	    return;
+	}
+	msg = g_strdup_printf(_("Really delete %s?"), liststr);
+    }
+
     if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
 	g_free(msg);
-	free(liststr);
+	if (liststr != NULL) {
+	    free(liststr);
+	}
 	return;
     }
 
     g_free(msg);
     clear(line, MAXLEN);
-    sprintf(line, "delete%s", liststr);
-    free(liststr);    
+
+    if (id > 0) {
+	sprintf(line, "delete %d", id);
+    } else {
+	sprintf(line, "delete%s", liststr);
+	free(liststr);  
+    } 
 
     if (verify_and_record_command(line)) return;
 
-    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, 
-				   &renumber);
+    if (id == 0) {
+	pruned = maybe_prune_delete_list(cmd.list);
+    }
+
+    if (cmd.list[0] == 0) {
+	errbox(_("Cannot delete the specified variables"));
+	return;
+    } else if (pruned) {
+	errbox(_("Cannot delete all of the specified variables"));
+    }
+
+    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo, &renumber);
+
     if (err) {
 	errbox(_("Out of memory reorganizing data set"));
     } else {
@@ -5186,13 +5259,13 @@ int gui_exec_line (char *line,
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
 		    " mode\n"));
 	    break;
-	}	
-	if (cmd.list[0]) {
+	}
+	maybe_prune_delete_list(cmd.list);
+	if (cmd.list[0] == 0) {
+	    err = 1;
+	} else {
 	    err = dataset_drop_listed_vars(cmd.list, &Z, datainfo,
 					   &renumber);
-	} else {
-	    renumber = 0;
-	    err = dataset_drop_vars(1, &Z, datainfo);
 	}
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));

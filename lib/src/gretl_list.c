@@ -73,6 +73,33 @@ void rearrange_list (int *list)
     }
 }
 
+/* gretl_list_delete_at_pos:
+ * @list: original list.
+ * @pos: position at which to delete list element.
+ *
+ * deletes the element at position @pos from @list and moves any
+ * remaining elements forward.
+ *
+ * Returns: 0 on success, 1 on error.
+ * 
+ */
+
+int gretl_list_delete_at_pos (int *list, int pos)
+{
+    int i;
+
+    if (pos < 1) return 1;
+
+    for (i=pos; i<list[0]; i++) {
+	list[i] = list[i + 1];
+    }
+
+    list[list[0]] = 0;
+    list[0] -= 1;
+
+    return 0;
+}
+
 /* gretl_list_add:
  * @orig: original list.
  * @add: list of variables to add.

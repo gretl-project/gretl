@@ -213,7 +213,7 @@ void do_box_graph (GtkWidget *widget, dialog_t *ddata);
 
 void do_dummy_graph (GtkWidget *widget, gpointer p);
 
-void delete_selected_vars (void);
+void delete_selected_vars (int id);
 
 void display_selected (gpointer data, guint action, GtkWidget *widget);
 

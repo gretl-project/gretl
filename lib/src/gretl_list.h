@@ -24,6 +24,8 @@ int *gretl_list_new (int nterms);
 
 int in_gretl_list (const int *list, int k);
 
+int gretl_list_delete_at_pos (int *list, int pos);
+
 int *gretl_list_add (const int *orig, const int *add, int *err);
 
 int *gretl_list_omit (const int *orig, const int *omit, int *err);

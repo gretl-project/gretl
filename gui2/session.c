@@ -811,6 +811,36 @@ void free_session (void)
 
     *session.name = '\0';
 }
+
+/* ........................................................... */
+
+int highest_numbered_variable_in_session (void)
+{
+    int i, mvm, vmax = 0;
+
+    if (session.models) {
+	for (i=0; i<session.nmodels; i++) {
+	    mvm = highest_numbered_var_in_model(session.models[i],
+						datainfo);
+	    if (mvm > vmax) {
+		vmax = mvm;
+	    }
+	}
+    }
+
+    if (session.vars) {
+	for (i=0; i<session.nvars; i++) {
+	    mvm = gretl_var_get_highest_variable(session.vars[i],
+						 datainfo);
+	    if (mvm > vmax) {
+		vmax = mvm;
+	    }
+	}
+    }	
+
+    return vmax;
+}
+
 /* ........................................................... */
 
 int session_file_is_open (void)

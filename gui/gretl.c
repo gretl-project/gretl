@@ -1404,8 +1404,6 @@ static void set_up_main_menu (void)
 
 /* ........................................................... */
 
-extern void delete_var_by_id (int id); /* callbacks.c */
-
 static gint popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -1437,7 +1435,7 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Edit attributes"))) 
 	varinfo_dialog(mdata->active_var, 1);
     else if (!strcmp(item, _("Delete"))) 
-	delete_var_by_id(mdata->active_var);
+	delete_selected_vars(mdata->active_var);
     else if (!strcmp(item, _("Simulate..."))) 
 	gretl_callback(NULL, SIM, NULL);
     else if (!strcmp(item, _("Define new variable..."))) 
@@ -1514,7 +1512,7 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
     else if (!strcmp(item, _("Delete"))) 
-	delete_selected_vars();
+	delete_selected_vars(0);
 
     gtk_widget_destroy(mdata->popup);
 

@@ -2268,3 +2268,16 @@ int gretl_var_add_resids_to_dataset (GRETL_VAR *var, int eqnum,
 
     return 0;
 }
+
+int gretl_var_get_highest_variable (const GRETL_VAR *var,
+				    const DATAINFO *pdinfo)
+{
+    int vmax = 0;
+
+    if (var->models != NULL && var->neqns >= 1) {
+	vmax = highest_numbered_var_in_model(var->models[0], pdinfo);
+    }
+
+    return vmax;
+}
+
