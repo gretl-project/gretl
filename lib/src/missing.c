@@ -232,6 +232,8 @@ repack_missing (const MODEL *pmod, double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+#define MASKDEBUG 0
+
 /* construct a mask to code for missing observations
    within sample range for a model */
 
@@ -241,9 +243,14 @@ static char *model_missmask (const int *list, int t1, int t2,
 {
     char *mask;
     double xx;
-    int i, j, t;
+    int i, li, t;
 
     mask = calloc(t2 - t1 + 1, sizeof *mask);
+
+#if MASKDEBUG
+    fprintf(stderr, "model_missmask: using t1=%d, t2=%d\n",
+	    t1, t2);
+#endif
 
     if (mask == NULL) {
 	return NULL;
@@ -254,16 +261,20 @@ static char *model_missmask (const int *list, int t1, int t2,
     }
 
     for (t=t1; t<=t2; t++) {
-	for (j=1; j<=list[0]; j++) {
-	    i = list[j];
-	    if (i == 0 || i == LISTSEP) {
+	for (i=1; i<=list[0]; i++) {
+	    li = list[i];
+	    if (li == 0 || li == LISTSEP) {
 		continue;
 	    }
-	    xx = Z[i][t];
+	    xx = Z[li][t];
 	    if (dwt > 0) {
 		xx *= Z[dwt][t];
 	    }
 	    if (na(xx)) {
+#if MASKDEBUG
+		fprintf(stderr, "model_missmask: NA at list[%d], obs %d (mask %d)\n",
+			i, t, t-t1);
+#endif
 		/* FIXME dwt case and nobs?? */
 		mask[t - t1] = 1;
 		if (misscount != NULL) {

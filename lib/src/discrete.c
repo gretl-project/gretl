@@ -31,14 +31,26 @@ static int cholesky_decomp (double *xpx, int nv);
 
 static double logit (double x)
 {
-    return 1.0 / (1.0 + exp(-x));
+    double l = 1.0 / (1.0 + exp(-x));
+
+    if (x > 40 || x < -40) {
+	fprintf(stderr, "x = %g, logit = %g\n", x, l);
+    }
+
+    return l;
 }
 
 static double logit_pdf (double x)
 {
-    double z = exp(-x);
+    double l, z = exp(-x);
 
-    return z / ((1.0 + z) * (1.0 + z));
+    l = z / ((1.0 + z) * (1.0 + z));
+
+    if (x > 40 || x < -40) {
+	fprintf(stderr, "x = %g, logit_pdf = %g\n", x, l);
+    }
+
+    return l;
 }
 
 /* .......................................................... */
@@ -53,6 +65,7 @@ static void Lr_chisq (MODEL *pmod, double **Z)
 	    ones++;
 	} 
     }
+
     zeros = m - ones;
 
     Lr = (double) ones * log((double) ones/ (double) m);
@@ -144,7 +157,7 @@ int dmod_isdummy (const double *x, int t1, int t2)
 
 /* .......................................................... */
 
-static double *hess_wts (MODEL *pmod, double **Z, int opt) 
+static double *hess_wts (MODEL *pmod, const double **Z, int opt) 
 {
     int i, t, tm, n = pmod->t2 - pmod->t1 + 1;
     double q, bx, xx, *w;
@@ -160,11 +173,14 @@ static double *hess_wts (MODEL *pmod, double **Z, int opt)
 	    w[tm] = NADBL;
 	    continue;
 	}
-	bx = 0.0;
+
 	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
+
+	bx = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
 	    bx += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
+
 	if (opt == LOGIT) {
 	    w[tm] = -1.0 * logit(bx) * (1.0 - logit(bx));
 	} else {
@@ -178,7 +194,7 @@ static double *hess_wts (MODEL *pmod, double **Z, int opt)
 
 /* .......................................................... */
 
-static double *hessian (MODEL *pmod, double **Z, int opt) 
+static double *hessian (MODEL *pmod, const double **Z, int opt) 
 {
     int i, j, li, lj, m, t;
     const int l0 = pmod->list[0];
@@ -238,15 +254,26 @@ static double *hessian (MODEL *pmod, double **Z, int opt)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
+#define USE_BRMR 1
+
 MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 {
-    int i, t, v, depvar = list[1];
-    int itermax = 200;
+    int i, t, v, misst, depvar = list[1];
+    int oldt1 = pdinfo->t1;
+    int oldt2 = pdinfo->t2;
+    int oldv = pdinfo->v;
+    int itermax = 250;
+    double tol = 1.0e-9; /* ? */
     int *dmodlist = NULL;
+    MODEL dmod;
     int dummy, n_correct;
     double xx, zz, fx, Fx, fbx, Lbak;
-    double *xbar, *diag, *xpx = NULL;
-    MODEL dmod;
+    double *xbar = NULL;
+    double *diag = NULL;
+    double *xpx = NULL;
+#ifdef USE_BRMR
+    double *beta = NULL;
+#endif
 
     gretl_model_init(&dmod);
     
@@ -268,38 +295,56 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     /* allocate space for means of indep vars */
     xbar = malloc(list[0] * sizeof *xbar);
     if (xbar == NULL) {
-	free(dmodlist);
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
 
+#ifdef USE_BRMR
+    beta = malloc((list[0] - 1) * sizeof *beta);
+    if (beta == NULL) {
+	dmod.errcode = E_ALLOC;
+	goto bailout;
+    }
+    /* make room for full set of transformed vars */
+    if (dataset_add_vars(list[0], pZ, pdinfo)) {
+	dmod.errcode = E_ALLOC;
+	return dmod;
+    }
+#else
     /* make room for special expected value */
     if (dataset_add_vars(1, pZ, pdinfo)) {
-	free(xbar);
-	free(dmodlist);
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
+#endif
 
-    v = pdinfo->v - 1; /* the last created variable */
+    v = oldv; /* the first newly created variable */
+
+    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
+		(const double **) *pZ, &misst);
 
     dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
     if (dmod.ifc == 0) {
 	dmod.errcode = E_NOCONST;
+    } else if (dmod.list[0] != list[0]) {
+	dmod.errcode = E_DATA;
     }
+
     if (dmod.errcode) {
-	dataset_drop_vars(1, pZ, pdinfo);
-	free(xbar);
-	free(dmodlist);
-	return dmod;
+	goto bailout;
     }
 
     for (i=2; i<=list[0]; i++) {
+#ifdef USE_BRMR
+	dmodlist[i] = v + i - 1;
+	beta[i-2] = dmod.coeff[i-2];
+#else
 	dmodlist[i] = list[i];
+#endif
 	xbar[i-2] = 0.0;
 	for (t=dmod.t1; t<=dmod.t2; t++) {
 	    if (!model_missing(&dmod, t)) {
-		xbar[i-2] += (*pZ)[dmod.list[i]][t];
+		xbar[i-2] += (*pZ)[list[i]][t];
 	    }
 	}
 	xbar[i-2] /= dmod.nobs;
@@ -308,13 +353,100 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmodlist[0] = list[0];
     dmodlist[1] = v; /* dep var is the newly created one */
 
-    /* Iterated least squares: see Ruud, "An Introduction to Classical 
-       Econometric Theory", chapter 27 */
-    Lbak = -1.0e8;
+    Lbak = -1.0e9;
+    
+#ifdef USE_BRMR 
+
+    /* BRMR, Davidson and MacKinnon, ETM, p. 461 */
+
     for (i=0; i<itermax; i++) {
+	double vt, yt;
+	int j;
+
+	/* construct BRMR dataset */
 	for (t=dmod.t1; t<=dmod.t2; t++) {
 	    xx = dmod.yhat[t];
-	    if (!na(dmod.yhat[t])) {
+	    if (na(xx)) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		if (opt == LOGIT) {
+		    fx = logit_pdf(xx);
+		    Fx = logit(xx);
+		} else {
+		    fx = normal_pdf(xx);
+		    Fx = normal_cdf(xx);
+		}
+
+		if (Fx < 1.0) {
+		    vt = 1.0 / sqrt(Fx * (1.0 - Fx));
+		} else {
+		    vt = 0.0;
+		}
+
+		yt = vt * ((*pZ)[depvar][t] - Fx);
+		vt *= fx;
+
+		(*pZ)[v][t] = yt;
+
+		for (j=2; j<=dmodlist[0]; j++) {
+		    (*pZ)[dmodlist[j]][t] = vt * (*pZ)[list[j]][t];
+		}
+	    }
+	}
+
+	dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
+
+	if (fabs(dmod.lnL - Lbak) < tol) {
+	    break; 
+	}
+
+#if 0
+	fprintf(stderr, "\n*** iteration %d: log-likelihood = %g\n", i, dmod.lnL);
+#endif
+
+	Lbak = dmod.lnL;
+	clear_model(&dmod);
+	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
+	if (dmod.errcode) {
+	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
+	    goto bailout;
+	}
+
+	/* update coefficient estimates: FIXME stepsize */
+	for (j=0; j<dmod.ncoeff; j++) {
+	    if (isnan(dmod.coeff[j])) {
+		fprintf(stderr, "BRMR produced NaN coeff\n");
+		dmod.errcode = E_DATA;
+		goto bailout;
+	    }
+	    beta[j] += dmod.coeff[j];
+	}
+
+	/* calculate yhat */
+	for (t=dmod.t1; t<=dmod.t2; t++) {
+	    if (na(dmod.yhat[t])) {
+		continue;
+	    }
+	    dmod.yhat[t] = 0.0;
+	    for (j=0; j<dmod.ncoeff; j++) {
+		dmod.yhat[t] += beta[j] * (*pZ)[list[j+2]][t];
+	    }
+	}
+    }
+
+#else
+
+    /* EM method: see Ruud, "An Introduction to Classical 
+       Econometric Theory", chapter 27 */
+
+    for (i=0; i<itermax; i++) {
+
+	/* construct special dependent var */
+	for (t=dmod.t1; t<=dmod.t2; t++) {
+	    xx = dmod.yhat[t];
+	    if (na(xx)) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
 		if (opt == LOGIT) {
 		    fx = logit_pdf(xx);
 		    Fx = logit(xx);
@@ -327,78 +459,103 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 		} else {
 		    xx += fx / Fx;
 		}
+		(*pZ)[v][t] = xx;
 	    }
-	    (*pZ)[v][t] = xx;
 	}
 
-	dmod.lnL = logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
-	if (fabs(dmod.lnL - Lbak) < .000005) {
+	/* FIXME: very slow convergence in some cases */
+
+	dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
+
+	if (fabs(dmod.lnL - Lbak) < tol) {
 	    break; 
 	}
 
-	/*  printf("Log likelihood = %g\n", dmod.lnL); */
+	printf("iteration %d: log-likelihood = %g\n", i, dmod.lnL);
+
 	Lbak = dmod.lnL;
 	clear_model(&dmod);
 	dmod = lsq(dmodlist, pZ, pdinfo, OLS, OPT_A, 0);
 	if (dmod.errcode) {
 	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
-	    dataset_drop_vars(1, pZ, pdinfo);
-	    free(xbar);
-	    free(dmodlist);
-	    return dmod;
+	    goto bailout;
 	}
     }
+#endif
 
-    dataset_drop_vars(1, pZ, pdinfo);
+#ifdef USE_BRMR
+    /* re-establish original list in model */
+    for (i=1; i<=list[0]; i++) {
+	dmod.list[i] = list[i];
+    }
+    /* transcribe coefficients */
+    for (i=0; i<dmod.ncoeff; i++) {
+	dmod.coeff[i] = beta[i];
+    }
+#else
     dmod.list[1] = depvar;
+#endif
+
     dmod.lnL = logit_probit_llhood((*pZ)[depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ);
     dmod.ci = opt;
-    free(dmodlist);
 
-    /* in case using QR, where vcv is precalculated */
+#if 0
+    fprintf(stderr, "dmod.sigma = %g\n", dmod.sigma);
+    for (i=0; i<dmod.ncoeff; i++) {
+	dmod.sderr[i] /= dmod.sigma;
+    }    
+#endif
+
+#if 1 /* calculate standard errors etc using the Hessian */
+
     if (dmod.vcv != NULL) {
 	free(dmod.vcv);
 	dmod.vcv = NULL;
     }
 
-    /* form the Hessian */
     if (dmod.xpx != NULL) {
 	free(dmod.xpx);
     }
-    dmod.xpx = hessian(&dmod, *pZ, opt);
+
+    dmod.xpx = hessian(&dmod, (const double **) *pZ, opt);
     if (dmod.xpx == NULL) {
-	free(xbar);
 	dmod.errcode = E_ALLOC;
 	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
-	return dmod;
+	goto bailout;
     } 
 
     /* obtain negative inverse of Hessian */
+
     cholesky_decomp(dmod.xpx, dmod.ncoeff); 
     diag = malloc(dmod.ncoeff * sizeof *diag); 
     if (diag == NULL) {
-	free(xbar);
 	dmod.errcode = E_ALLOC;
-	return dmod;
+	goto bailout;
     }
 
     xpx = copyvec(dmod.xpx, dmod.ncoeff * (dmod.ncoeff + 1) / 2);
+    if (xpx == NULL) {
+	dmod.errcode = E_ALLOC;
+	goto bailout;
+    }
+
     neginv(xpx, diag, dmod.ncoeff);
 
     /* std errors: square roots of diagonal elements */
     for (i=0; i<dmod.ncoeff; i++) {
 	dmod.sderr[i] = sqrt(diag[i]);
     }
+
     free(diag);
     free(xpx);
+#endif
 
     /* apparatus for calculating slopes at means */
     xx = 0.0;
     for (i=0; i<dmod.ncoeff; i++) {
 	xx += dmod.coeff[i] * xbar[i];
     }
-    free(xbar);
 
     if (opt == LOGIT) {
 	fbx = logit_pdf(xx);
@@ -408,7 +565,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     if (add_slopes_to_model(&dmod, fbx)) {
 	dmod.errcode = E_ALLOC;
-	return dmod;
+	goto bailout;
     }
 
     /* calculate additional statistics */
@@ -432,6 +589,19 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     mle_aic_bic(&dmod, 0);
 
     dmod.ID = model_count_plus();
+
+ bailout:
+
+    free(xbar);
+    free(dmodlist);
+#ifdef USE_BRMR
+    free(beta);
+#endif
+
+    pdinfo->t1 = oldt1;
+    pdinfo->t2 = oldt2;
+
+    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
 
     return dmod;
 }
