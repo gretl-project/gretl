@@ -40,6 +40,9 @@ gnome        optional       gretl is integrated into the gnome
                             desktop (file icons and associations,
                             HTML help system and so on)
 
+GMP          optional       supports gretl's Multiple Precision OLS
+                            plugin
+
 =================================================================
 
 Notes:
@@ -60,4 +63,4 @@ Notes:
   may use the option "--with-gnome-install=DIR" when running
   configure. Substitute for "DIR" the prefix you want to use.
 
-Allin Cottrell, April 2002.
+Allin Cottrell, May 2002.

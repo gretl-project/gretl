@@ -436,6 +436,13 @@
  </listitem>
 </varlistentry>
 
+<varlistentry><term>GNU Multiple Precision library</term>
+ <listitem><para><ulink url="http://swox.com/gmp/">
+  <literal>http://swox.com/gmp/</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+
 <varlistentry><term>InfoZip homepage</term>
  <listitem><para><ulink url="http://www.info-zip.org/pub/infozip/zlib/">
   <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>

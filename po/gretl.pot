@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2002-05-20 11:36-0400\n"
+"POT-Creation-Date: 2002-05-22 08:05-0400\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1310,7 +1310,7 @@ msgstr ""
 msgid "Missing value encountered for variable %d, obs %d"
 msgstr ""
 
-#: lib/src/estimate.c:246 plugin/mp_ols.c:341
+#: lib/src/estimate.c:246 plugin/mp_ols.c:350
 #, c-format
 msgid "No. of obs (%d) is less than no. of parameters (%d)"
 msgstr ""
@@ -1948,7 +1948,7 @@ msgstr ""
 msgid "Statistics for %d repetitions\n"
 msgstr ""
 
-#: lib/src/monte_carlo.c:609 plugin/mp_ols.c:265
+#: lib/src/monte_carlo.c:609 plugin/mp_ols.c:274
 #, c-format
 msgid ""
 "Dependent variable: %s\n"
@@ -2073,19 +2073,19 @@ msgid ""
 "\n"
 msgstr ""
 
-#: lib/src/printout.c:168 plugin/mp_ols.c:243
+#: lib/src/printout.c:168 plugin/mp_ols.c:252
 msgid "Error Sum of Squares"
 msgstr ""
 
-#: lib/src/printout.c:170 plugin/mp_ols.c:241
+#: lib/src/printout.c:170 plugin/mp_ols.c:250
 msgid "Standard error"
 msgstr ""
 
-#: lib/src/printout.c:195 plugin/mp_ols.c:245
+#: lib/src/printout.c:195 plugin/mp_ols.c:254
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/printout.c:198 plugin/mp_ols.c:247
+#: lib/src/printout.c:198 plugin/mp_ols.c:256
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -3262,7 +3262,7 @@ msgid ""
 "This is not available in a loop.\n"
 msgstr ""
 
-#: cli/gretlcli.c:90
+#: cli/gretlcli.c:91
 msgid ""
 "\n"
 "You may supply the name of a data file on the command line.\n"
@@ -3278,292 +3278,292 @@ msgid ""
 " gretlcli -r myfile.inp\n"
 msgstr ""
 
-#: cli/gretlcli.c:132
+#: cli/gretlcli.c:133
 #, c-format
 msgid "Couldn't create user directory %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:136
+#: cli/gretlcli.c:137
 #, c-format
 msgid "Created user directory %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:144
+#: cli/gretlcli.c:145
 msgid ""
 "\n"
 "gretlcli: error executing script: halting\n"
 msgstr ""
 
-#: cli/gretlcli.c:151 gui/gretl.c:513
+#: cli/gretlcli.c:152 gui/gretl.c:513
 #, c-format
 msgid "Couldn't allocate memory for %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:157 gui/library.c:3564 gui/library.c:3652
+#: cli/gretlcli.c:158 gui/library.c:3564 gui/library.c:3652
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
 msgstr ""
 
-#: cli/gretlcli.c:166 gui/library.c:137 gui/library.c:3535
+#: cli/gretlcli.c:167 gui/library.c:137 gui/library.c:3535
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr ""
 
-#: cli/gretlcli.c:170 gui/library.c:3539
+#: cli/gretlcli.c:171 gui/library.c:3539
 #, c-format
 msgid "Can't do this: there is no model %d\n"
 msgstr ""
 
-#: cli/gretlcli.c:174
+#: cli/gretlcli.c:175
 msgid "This command only available for OLS models at present\n"
 msgstr ""
 
-#: cli/gretlcli.c:231 gui/gretl.c:689
+#: cli/gretlcli.c:254 gui/gretl.c:689
 msgid "data information"
 msgstr ""
 
-#: cli/gretlcli.c:271
+#: cli/gretlcli.c:294
 msgid "command line"
 msgstr ""
 
-#: cli/gretlcli.c:286 gui/gretl.c:681
+#: cli/gretlcli.c:309 gui/gretl.c:681
 msgid "Can't open file to save commands\n"
 msgstr ""
 
-#: cli/gretlcli.c:337 gui/gretl.c:703
+#: cli/gretlcli.c:360 gui/gretl.c:703
 msgid "command list"
 msgstr ""
 
-#: cli/gretlcli.c:356
+#: cli/gretlcli.c:379
 msgid ""
 "\n"
 "\"help\" gives a list of commands\n"
 msgstr ""
 
-#: cli/gretlcli.c:359 gui/gui_utils.c:1003
+#: cli/gretlcli.c:382 gui/gui_utils.c:1003
 #, c-format
 msgid "help file %s is not accessible\n"
 msgstr ""
 
-#: cli/gretlcli.c:365
+#: cli/gretlcli.c:388
 msgid "Type \"open filename\" to open a data set\n"
 msgstr ""
 
-#: cli/gretlcli.c:386 gui/library.c:3434
+#: cli/gretlcli.c:409 gui/library.c:3434
 msgid "No commands in loop\n"
 msgstr ""
 
-#: cli/gretlcli.c:396 gui/library.c:3444
+#: cli/gretlcli.c:419 gui/library.c:3444
 msgid "Error in command loop: aborting\n"
 msgstr ""
 
-#: cli/gretlcli.c:433
+#: cli/gretlcli.c:456
 msgid "Out of memory loading command line\n"
 msgstr ""
 
-#: cli/gretlcli.c:497 gui/library.c:3591
+#: cli/gretlcli.c:520 gui/library.c:3591
 msgid "You must open a data file first\n"
 msgstr ""
 
-#: cli/gretlcli.c:519
+#: cli/gretlcli.c:542
 #, c-format
 msgid "Command '%s' ignored; not available in loop mode\n"
 msgstr ""
 
-#: cli/gretlcli.c:527 gui/library.c:3634
+#: cli/gretlcli.c:550 gui/library.c:3634
 msgid "Failed to add command to loop stack\n"
 msgstr ""
 
-#: cli/gretlcli.c:591 gui/library.c:3706
+#: cli/gretlcli.c:614 gui/library.c:3706
 #, c-format
 msgid "Failed to reconstruct model %d\n"
 msgstr ""
 
-#: cli/gretlcli.c:674 gui/library.c:3809
+#: cli/gretlcli.c:697 gui/library.c:3809
 msgid "Failed to generate correlogram\n"
 msgstr ""
 
-#: cli/gretlcli.c:679 gui/library.c:3814
+#: cli/gretlcli.c:702 gui/library.c:3814
 msgid "Can't delete last variable when in sub-sample mode\n"
 msgstr ""
 
-#: cli/gretlcli.c:684 gui/library.c:2218 gui/library.c:3819
+#: cli/gretlcli.c:707 gui/library.c:2218 gui/library.c:3819
 msgid "Failed to shrink the data set"
 msgstr ""
 
-#: cli/gretlcli.c:690 gui/library.c:3825
+#: cli/gretlcli.c:713 gui/library.c:3825
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr ""
 
-#: cli/gretlcli.c:708 gui/library.c:3847
+#: cli/gretlcli.c:731 gui/library.c:3847
 msgid "Couldn't open tex file for writing\n"
 msgstr ""
 
-#: cli/gretlcli.c:710 gui/library.c:3849
+#: cli/gretlcli.c:733 gui/library.c:3849
 #, c-format
 msgid "Model printed to %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:718 cli/gretlcli.c:738 gui/library.c:3857
+#: cli/gretlcli.c:741 cli/gretlcli.c:761 gui/library.c:3857
 msgid "Error retrieving fitted values\n"
 msgstr ""
 
-#: cli/gretlcli.c:743 gui/library.c:3881
+#: cli/gretlcli.c:766 gui/library.c:3881
 msgid "Retrieved fitted values as \"autofit\"\n"
 msgstr ""
 
-#: cli/gretlcli.c:755 cli/gretlcli.c:771 cli/gretlcli.c:802 gui/library.c:3893
+#: cli/gretlcli.c:778 cli/gretlcli.c:794 cli/gretlcli.c:825 gui/library.c:3893
 #: gui/library.c:3906 gui/library.c:3939
 msgid "gnuplot command failed\n"
 msgstr ""
 
-#: cli/gretlcli.c:790
+#: cli/gretlcli.c:813
 msgid ""
 "You must supply three variables, the last of which is a dummy variable\n"
 "(with values 1 or 0)\n"
 msgstr ""
 
-#: cli/gretlcli.c:840 gui/library.c:3982
+#: cli/gretlcli.c:863 gui/library.c:3982
 msgid "import command is malformed\n"
 msgstr ""
 
-#: cli/gretlcli.c:851 gui/library.c:3996
+#: cli/gretlcli.c:874 gui/library.c:3996
 msgid "You should now use the \"print\" command to verify the data\n"
 msgstr ""
 
-#: cli/gretlcli.c:853 gui/library.c:3998
+#: cli/gretlcli.c:876 gui/library.c:3998
 msgid ""
 "If they are OK, use the  \"store\" command to save them in gretl format\n"
 msgstr ""
 
-#: cli/gretlcli.c:861
+#: cli/gretlcli.c:884
 msgid "'open' command is malformed\n"
 msgstr ""
 
-#: cli/gretlcli.c:866
+#: cli/gretlcli.c:889
 msgid "Opening a new data file closes the present one.  Proceed? (y/n) "
 msgstr ""
 
-#: cli/gretlcli.c:871
+#: cli/gretlcli.c:894
 msgid "OK, staying with current data set\n"
 msgstr ""
 
-#: cli/gretlcli.c:954 gui/library.c:4098
+#: cli/gretlcli.c:977 gui/library.c:4098
 msgid "Loop count missing or invalid\n"
 msgstr ""
 
-#: cli/gretlcli.c:959
+#: cli/gretlcli.c:982
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr ""
 
-#: cli/gretlcli.c:971 gui/library.c:4112
+#: cli/gretlcli.c:994 gui/library.c:4112
 msgid "Data series length count missing or invalid\n"
 msgstr ""
 
-#: cli/gretlcli.c:976 gui/library.c:4117
+#: cli/gretlcli.c:999 gui/library.c:4117
 msgid "Data series too long\n"
 msgstr ""
 
-#: cli/gretlcli.c:983 gui/library.c:4123
+#: cli/gretlcli.c:1006 gui/library.c:4123
 msgid "Failed to create empty data set\n"
 msgstr ""
 
-#: cli/gretlcli.c:1016 gui/library.c:4165
+#: cli/gretlcli.c:1039 gui/library.c:4165
 msgid "Failed to generate periodogram\n"
 msgstr ""
 
-#: cli/gretlcli.c:1027
+#: cli/gretlcli.c:1050
 msgid "Done\n"
 msgstr ""
 
-#: cli/gretlcli.c:1038
+#: cli/gretlcli.c:1061
 #, c-format
 msgid "commands saved as %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:1041
+#: cli/gretlcli.c:1064
 msgid "type a filename to store output (enter to quit): "
 msgstr ""
 
-#: cli/gretlcli.c:1045
+#: cli/gretlcli.c:1068
 #, c-format
 msgid "writing session output to %s%s\n"
 msgstr ""
 
-#: cli/gretlcli.c:1061 gui/library.c:4182
+#: cli/gretlcli.c:1084 gui/library.c:4182
 msgid "This command requires a list of variables\n"
 msgstr ""
 
-#: cli/gretlcli.c:1072
+#: cli/gretlcli.c:1095
 msgid "Command is malformed\n"
 msgstr ""
 
-#: cli/gretlcli.c:1076
+#: cli/gretlcli.c:1099
 #, c-format
 msgid "Couldn't open script \"%s\"\n"
 msgstr ""
 
-#: cli/gretlcli.c:1084
+#: cli/gretlcli.c:1107
 #, c-format
 msgid "%s opened OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1092 gui/library.c:4207
+#: cli/gretlcli.c:1115 gui/library.c:4207
 msgid "scatters command not available in batch mode\n"
 msgstr ""
 
-#: cli/gretlcli.c:1096 gui/library.c:4211
+#: cli/gretlcli.c:1119 gui/library.c:4211
 msgid "scatters command failed\n"
 msgstr ""
 
-#: cli/gretlcli.c:1102 gui/library.c:4217
+#: cli/gretlcli.c:1125 gui/library.c:4217
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr ""
 
-#: cli/gretlcli.c:1119
+#: cli/gretlcli.c:1142
 msgid "shell command not implemented in win32\n"
 msgstr ""
 
-#: cli/gretlcli.c:1158 gui/library.c:4280
+#: cli/gretlcli.c:1181 gui/library.c:4280
 msgid "Failed to generate squares\n"
 msgstr ""
 
-#: cli/gretlcli.c:1161 gui/library.c:4283
+#: cli/gretlcli.c:1184 gui/library.c:4283
 msgid "Squares generated OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1172 gui/library.c:4297
+#: cli/gretlcli.c:1195 gui/library.c:4297
 #, c-format
 msgid "store: using filename %s\n"
 msgstr ""
 
-#: cli/gretlcli.c:1174 gui/library.c:4299
+#: cli/gretlcli.c:1197 gui/library.c:4299
 msgid "store: no filename given\n"
 msgstr ""
 
-#: cli/gretlcli.c:1179 gui/library.c:4304
+#: cli/gretlcli.c:1202 gui/library.c:4304
 msgid "write of data file failed\n"
 msgstr ""
 
-#: cli/gretlcli.c:1182
+#: cli/gretlcli.c:1205
 msgid "Data written OK\n"
 msgstr ""
 
-#: cli/gretlcli.c:1184 gui/library.c:4310
+#: cli/gretlcli.c:1207 gui/library.c:4310
 msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
 
-#: cli/gretlcli.c:1190 gui/library.c:4317
+#: cli/gretlcli.c:1213 gui/library.c:4317
 msgid "Out of memory attempting to add variable\n"
 msgstr ""
 
-#: cli/gretlcli.c:1237
+#: cli/gretlcli.c:1260
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in gretlcli\n"
 msgstr ""
 
-#: cli/gretlcli.c:1250
+#: cli/gretlcli.c:1273
 msgid "model command"
 msgstr ""
 
@@ -3865,7 +3865,7 @@ msgstr ""
 msgid "Save command script"
 msgstr ""
 
-#: gui/callbacks.c:157 gui/callbacks.c:164 gui/gretl.c:1880
+#: gui/callbacks.c:157 gui/callbacks.c:164 gui/gretl.c:1886
 msgid "Save data file"
 msgstr ""
 
@@ -4982,7 +4982,7 @@ msgstr ""
 msgid "/File/Open data/sample file/Greene..."
 msgstr ""
 
-#: gui/gretl.c:206 gui/gretl.c:1338
+#: gui/gretl.c:206 gui/gretl.c:1344
 msgid "/File/Open data/sample file/Penn World Table..."
 msgstr ""
 
@@ -5182,7 +5182,7 @@ msgstr ""
 msgid "/File/Open command file/practice file/Greene..."
 msgstr ""
 
-#: gui/gretl.c:295 gui/gretl.c:1342
+#: gui/gretl.c:295 gui/gretl.c:1348
 msgid "/File/Open command file/practice file/Penn World Table..."
 msgstr ""
 
@@ -5781,7 +5781,7 @@ msgstr ""
 msgid "main window"
 msgstr ""
 
-#: gui/gretl.c:979 gui/gretl.c:1156
+#: gui/gretl.c:979 gui/gretl.c:1162
 msgid " No datafile loaded "
 msgstr ""
 
@@ -5794,158 +5794,158 @@ msgstr ""
 msgid " Unsaved data "
 msgstr ""
 
-#: gui/gretl.c:1091
+#: gui/gretl.c:1097
 msgid "ID #"
 msgstr ""
 
-#: gui/gretl.c:1092
+#: gui/gretl.c:1098
 msgid "Variable name"
 msgstr ""
 
-#: gui/gretl.c:1093
+#: gui/gretl.c:1099
 msgid "Descriptive label"
 msgstr ""
 
-#: gui/gretl.c:1114
+#: gui/gretl.c:1120
 msgid "Econometrics program"
 msgstr ""
 
-#: gui/gretl.c:1246 gui/gretl.c:1282
+#: gui/gretl.c:1252 gui/gretl.c:1288
 msgid "Display values"
 msgstr ""
 
-#: gui/gretl.c:1247 gui/gretl.c:1283
+#: gui/gretl.c:1253 gui/gretl.c:1289
 msgid "Descriptive statistics"
 msgstr ""
 
-#: gui/gretl.c:1249 gui/gretl.c:1284
+#: gui/gretl.c:1255 gui/gretl.c:1290
 msgid "Time series plot"
 msgstr ""
 
-#: gui/gretl.c:1250 gui/gretl.c:1285
+#: gui/gretl.c:1256 gui/gretl.c:1291
 msgid "Frequency distribution"
 msgstr ""
 
-#: gui/gretl.c:1252 gui/gretl.c:1286
+#: gui/gretl.c:1258 gui/gretl.c:1292
 msgid "Frequency plot"
 msgstr ""
 
-#: gui/gretl.c:1253 gui/gretl.c:1287
+#: gui/gretl.c:1259 gui/gretl.c:1293
 msgid "Boxplot"
 msgstr ""
 
-#: gui/gretl.c:1255 gui/gretl.c:1288
+#: gui/gretl.c:1261 gui/gretl.c:1294
 msgid "Correlogram"
 msgstr ""
 
-#: gui/gretl.c:1257 gui/gretl.c:1289
+#: gui/gretl.c:1263 gui/gretl.c:1295
 msgid "Spectrum"
 msgstr ""
 
-#: gui/gretl.c:1259 gui/gretl.c:1290
+#: gui/gretl.c:1265 gui/gretl.c:1296
 msgid "Dickey-Fuller test"
 msgstr ""
 
-#: gui/gretl.c:1261 gui/gretl.c:1291
+#: gui/gretl.c:1267 gui/gretl.c:1297
 msgid "Runs test"
 msgstr ""
 
-#: gui/gretl.c:1263 gui/gretl.c:1292
+#: gui/gretl.c:1269 gui/gretl.c:1298
 msgid "Rename"
 msgstr ""
 
-#: gui/gretl.c:1265 gui/gretl.c:1293
+#: gui/gretl.c:1271 gui/gretl.c:1299
 msgid "Edit label"
 msgstr ""
 
-#: gui/gretl.c:1267 gui/gretl.c:1294 gui/session.c:57 gui/session.c:64
+#: gui/gretl.c:1273 gui/gretl.c:1300 gui/session.c:57 gui/session.c:64
 #: gui/session.c:1110
 msgid "Delete"
 msgstr ""
 
-#: gui/gretl.c:1269 gui/gretl.c:1295
+#: gui/gretl.c:1275 gui/gretl.c:1301
 msgid "Simulate..."
 msgstr ""
 
-#: gui/gretl.c:1271 gui/gretl.c:1296
+#: gui/gretl.c:1277 gui/gretl.c:1302
 msgid "Define new variable..."
 msgstr ""
 
-#: gui/gretl.c:1360
+#: gui/gretl.c:1366
 msgid "Full sample range restored"
 msgstr ""
 
-#: gui/gretl.c:1405 gui/gretl.c:1488
+#: gui/gretl.c:1411 gui/gretl.c:1494
 msgid "Couldn't fork"
 msgstr ""
 
-#: gui/gretl.c:1433 gui/gretl.c:1626 gui/gretl.c:1634
+#: gui/gretl.c:1439 gui/gretl.c:1632 gui/gretl.c:1640
 msgid "Please open a data file first"
 msgstr ""
 
-#: gui/gretl.c:1441
+#: gui/gretl.c:1447
 msgid "Couldn't move existing .Rprofile out of the way"
 msgstr ""
 
-#: gui/gretl.c:1447
+#: gui/gretl.c:1453
 msgid "Couldn't write R startup file"
 msgstr ""
 
-#: gui/gretl.c:1454
+#: gui/gretl.c:1460
 msgid "Write of R data file failed"
 msgstr ""
 
-#: gui/gretl.c:1479
+#: gui/gretl.c:1485
 msgid "No command was supplied to start R"
 msgstr ""
 
-#: gui/gretl.c:1521
+#: gui/gretl.c:1527
 msgid ""
 "Error restoring .Rprofile from\n"
 "the temporary copy, .Rprofile.gretltmp"
 msgstr ""
 
-#: gui/gretl.c:1615
+#: gui/gretl.c:1621
 msgid "Failed to open URL"
 msgstr ""
 
-#: gui/gretl.c:1647
+#: gui/gretl.c:1653
 msgid "launch calculator"
 msgstr ""
 
-#: gui/gretl.c:1648
+#: gui/gretl.c:1654
 msgid "launch editor"
 msgstr ""
 
-#: gui/gretl.c:1649
+#: gui/gretl.c:1655
 msgid "open gretl console"
 msgstr ""
 
-#: gui/gretl.c:1650
+#: gui/gretl.c:1656
 msgid "session icon view"
 msgstr ""
 
-#: gui/gretl.c:1651
+#: gui/gretl.c:1657
 msgid "gretl website"
 msgstr ""
 
-#: gui/gretl.c:1652
+#: gui/gretl.c:1658
 msgid "gretl manual (PDF)"
 msgstr ""
 
-#: gui/gretl.c:1653
+#: gui/gretl.c:1659
 msgid "show help"
 msgstr ""
 
-#: gui/gretl.c:1654
+#: gui/gretl.c:1660
 msgid "X-Y graph"
 msgstr ""
 
-#: gui/gretl.c:1655
+#: gui/gretl.c:1661
 msgid "Capture last graph for editing"
 msgstr ""
 
-#: gui/gretl.c:1656
+#: gui/gretl.c:1662
 msgid "open dataset"
 msgstr ""
 
@@ -8139,25 +8139,25 @@ msgstr ""
 msgid "Unexpected error reading the file"
 msgstr ""
 
-#: plugin/mp_ols.c:101
+#: plugin/mp_ols.c:107
 #, c-format
 msgid "Missing observations for variable '%s'"
 msgstr ""
 
-#: plugin/mp_ols.c:108
+#: plugin/mp_ols.c:114
 #, c-format
 msgid "Variable '%s' is all zeros"
 msgstr ""
 
-#: plugin/mp_ols.c:263
+#: plugin/mp_ols.c:272
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 
-#: plugin/mp_ols.c:268
+#: plugin/mp_ols.c:277
 msgid "      VARIABLE         COEFFICIENT          STD. ERROR\n"
 msgstr ""
 
-#: plugin/mp_ols.c:515
+#: plugin/mp_ols.c:524
 msgid "Error sum of squares is not > 0"
 msgstr ""

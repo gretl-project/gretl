@@ -24,6 +24,7 @@ endif
 # Installation directories
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
+aclocaldir = $(prefix)/share/aclocal
 
 # General compile options and libs:
 LIBGRETL = libgretl.la
@@ -70,10 +71,11 @@ install-strip: $(LIBGRETL) install-data
 
 install-data: installdirs
 	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
+	$(INSTALL_DATA) ../gretl.m4 $(aclocaldir)
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
 
 installdirs:
-	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir)
+	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir) $(aclocaldir)
 
 clean:
 	rm -f *.o *.lo $(LIBGRETL) core 

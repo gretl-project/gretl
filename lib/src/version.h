@@ -17,8 +17,12 @@
  * Boston, MA 02111-1307, USA.
  */
 
-#ifndef VERSION_H
-#define VERSION_H
+#ifndef GRETL_VERSION_H
+#define GRETL_VERSION_H
+
+#define LIBGRETL_CURRENT  14
+#define LIBGRETL_REVISION  0
+#define LIBGRETL_AGE       0
 
 const char *version_string = "0.996";
 

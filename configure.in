@@ -8,13 +8,21 @@ AC_CONFIG_HEADER(config.h)
 AC_CONFIG_AUX_DIR(./tools)
 
 PACKAGE=gretl
+
 VERSION=`grep const ./lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
+LIBGRETL_CURRENT=`grep LIBGRETL_CURRENT ./lib/src/version.h | awk '{ print $NF }'`
+LIBGRETL_REVISION=`grep LIBGRETL_REVISION ./lib/src/version.h | awk '{ print $NF }'`
+LIBGRETL_AGE=`grep LIBGRETL_AGE ./lib/src/version.h | awk '{ print $NF }'`
+LIBVERSION="$LIBGRETL_CURRENT.$LIBGRETL_REVISION.$LIBGRETL_AGE"
+
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
+AC_DEFINE_UNQUOTED(LIBVERSION, "$LIBVERSION")
 AC_SUBST(PACKAGE)
 AC_SUBST(VERSION)
+AC_SUBST(LIBVERSION)
 
-echo "configuring for $PACKAGE $VERSION"
+echo "configuring for $PACKAGE $VERSION (library version $LIBVERSION)"
 
 dnl Variables controlling the gretl build
 build_gui="yes"
@@ -302,7 +310,7 @@ Configuration:
   Use gnuplot for graphs:               ${have_gnuplot}
   Use PNG for gnuplot graphs:           ${gnuplot_png}
   Use LaTeX for typesetting output:     ${have_latex}
-  Gnu Multiple precision support:       ${have_gmp}
+  Gnu Multiple Precision support:       ${have_gmp}
   Build with gnome support:             ${have_gnome}
   Gnome installation prefix:            ${gnome_prefix}
 

@@ -35,7 +35,8 @@
 
 #ifndef __GNOME_I18N_H__
 # ifdef ENABLE_NLS
-#  include "gettext.h"
+#  include "libintl.h"
+#  define gettext_noop(String) String
 #  define _(String) gettext (String)
 #  define N_(String) gettext_noop (String)
 # else

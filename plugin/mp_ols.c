@@ -71,7 +71,8 @@ typedef struct {
 } CHOLBETA;
 
 static XPXXPY xpxxpy_func (const int *list, int n, mpf_t **mpZ);
-static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n);
+static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
+		     char *errbuf);
 static CHOLBETA cholbeta (XPXXPY xpxxpy);
 static void diaginv (XPXXPY xpxxpy, mpf_t *diag);
 static int rearrange (int *list);
@@ -356,7 +357,7 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     xpxxpy = xpxxpy_func(model.list, model.nobs, mpZ);
     mpf_set (model.tss, xpxxpy.xpy[l0]);
 
-    regress(&model, xpxxpy, mpZ, model.nobs);
+    regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
     for (i=0; i<=l0; i++) mpf_clear (xpxxpy.xpy[i]);
     free(xpxxpy.xpy);
     if (model.errcode) return model.errcode;
@@ -446,7 +447,8 @@ static XPXXPY xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 
 /* .......................................................... */
 
-static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n)
+static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
+		     char *errbuf)
 {
     int i, v, nobs, nv, yno;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
@@ -521,7 +523,7 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n)
 
     mpf_sub (pmod->ess, ypy, rss);
     if (mpf_sgn(pmod->ess) < 0) { 
-	sprintf(gretl_errmsg, _("Error sum of squares is not > 0"));
+	sprintf(errbuf, _("Error sum of squares is not > 0"));
         return; 
     }
 

@@ -850,12 +850,12 @@
 		</row>
 		<row>
 		  <entry><varname>$rsq</varname></entry>
-		  <entry>unadjusted &rsqu;
+		  <entry>unadjusted <emphasis>R</emphasis>-squared
 		  </entry>
 		</row>
 		<row>
 		  <entry><varname>$T</varname></entry>
-		  <entry>number of observations
+		  <entry>number of observations used
 		  </entry>
 		</row>
 		<row>
@@ -865,8 +865,8 @@
 		</row>
 		<row>
 		  <entry><varname>$trsq</varname></entry>
-		  <entry><emphasis>T</emphasis>&rsqu; (sample size
-		    times &rsqu;)
+		  <entry><emphasis>TR</emphasis>-squared (sample size
+		    times <emphasis>R</emphasis>-squared)
 		  </entry>
 		</row>
 		<row>
@@ -1680,6 +1680,48 @@
 
     </sect2>
 
+    <sect2 id="mpols"><title>mpols</title>
+
+      <informaltable role="cmd" frame="none">
+        <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+          <tbody>
+            <row>
+              <entry>Arguments:</entry>
+              <entry><replaceable>depvar indepvars</replaceable>
+              </entry>
+            </row>
+            <row>
+              <entry>Examples: </entry>
+              <entry><command>mpols 1 0 2 4 6 7</command>  
+              </entry>
+            </row>
+            <row>
+              <entry></entry>
+              <entry><command>mpols y 0 x1 x2 x3</command>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </informaltable>           
+
+      <para>
+        Computes OLS estimates with <replaceable>depvar</replaceable>
+	as the dependent variable and
+	<replaceable>indepvars</replaceable> as the list of
+	independent variables, using multiple precision floating-point
+	arithmetic. The variables may be specified by name or number;
+	use the number zero for a constant term.  This command is
+	available only if <application>gretl</application> is compiled
+	with support for the Gnu Multiple Precision library (GMP).
+	Note that since <application>gretl</application> reads data
+	from file in ordinary double-precision format, and any data
+	transformations (logs and so on) are also done using double
+	precision, the OLS arithmetic itself may not be the limiting
+	factor in the accuracy of regression results.
+      </para>
+
+    </sect2>
+
     <sect2 id="multiply"><title>multiply</title>
 
       <informaltable role="cmd" frame="none">
@@ -1733,7 +1775,7 @@
 	executing a command script.
       </para>
 
-      <para role="bodgea4">&nbsp;</para>
+      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -1934,8 +1976,6 @@
 	series (<quote>long memory</quote>) is also given: the null
 	hypothesis is that the integration order is zero.
       </para>
-
-      <para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -2782,8 +2822,6 @@
 	chi-square test for normality.
       </para>
 
-      <para role="bodge">&nbsp;</para>
-
     </sect2>
 
     <sect2 id="tsls"><title>tsls</title>
@@ -2903,6 +2941,8 @@
 	<replaceable>var2</replaceable> are equal, and shows its
 	p-value.
       </para>
+
+	<para role="bodge">&nbsp;</para>
 
     </sect2>
 
@@ -3032,13 +3072,20 @@
 	    <entry>Correlation with ordinal data</entry>
 	  </row>
 	  <row>
-	    <entry>Pooled OLS ((<command>pooled</command>)</entry>
+	    <entry>Pooled OLS (<command>pooled</command>)</entry>
 	    <entry>OLS estimation for pooled cross-section, time
 	      series data</entry>
+	  </row>
+	  <row>
+	    <entry>Multiple precision OLS (<command>mpols</command>)</entry>
+	    <entry>OLS estimation using multiple precision
+	      arithmetic</entry>
 	  </row>
 	</tbody>
       </tgroup>
     </table>
+
+    <para role="bodge">&nbsp;</para>
 
     <para><xref linkend="tab-tests"/> shows the tests that are available
       under the Tests menu in a model window, after estimation.</para>

@@ -25,6 +25,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define ENABLE_NLS 1
 #define PACKAGE gretl
 
+/* GMP library support -- broken on win32 at present */
+/* #define ENABLE_GMP 1 */
+
 /* Define if you want GNU readline support */
 #define HAVE_READLINE 1
 

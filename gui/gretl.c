@@ -582,7 +582,8 @@ void nls_init (void)
     sprintf(localedir, "%s\\locale", gretldir);
     setlocale (LC_ALL, "");
     bindtextdomain ("gretl", localedir);
-    textdomain ("gretl");    
+    /* bind_textdomain_codeset ("gretl", "UTF-8"); */
+    textdomain ("gretl");  
 }
 # else
 void nls_init (void)

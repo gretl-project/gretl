@@ -3,7 +3,7 @@
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 exec_prefix_set=no
-version=@VERSION@
+version=@LIBVERSION@
 
 usage()
 {
