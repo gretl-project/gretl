@@ -105,6 +105,7 @@ enum file_ops {
     SAVE_SESSION,
     SAVE_MODEL,
     SAVE_GNUPLOT,
+    SAVE_BOXPLOT,
     SAVE_LAST_GRAPH,
     SAVE_GP_CMDS,
     SAVE_CONSOLE,

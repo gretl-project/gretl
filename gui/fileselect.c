@@ -27,6 +27,7 @@ extern GtkItemFactoryEntry script_items[7];
 extern GtkItemFactoryEntry sample_script_items[6];
 extern char remember_dir[MAXLEN];
 extern void do_save_graph (const char *fname, const char *savestr);
+extern int ps_print_plots (const char *fname, gpointer data);
 
 struct extmap {
     int action;
@@ -44,6 +45,7 @@ static struct extmap action_map[] = {
     {SAVE_MODEL, "*.txt"},
     {SAVE_SESSION, "*.gretl"},
     {SAVE_GP_CMDS, "*.gp"},
+    {SAVE_BOXPLOT, "*.eps"},
     {EXPORT_CSV, "*.csv"},
     {EXPORT_R, "*.R"},
     {EXPORT_R_ALT, "*.R"},
@@ -179,6 +181,7 @@ static char *get_filter (int action, gpointer data)
 	{SAVE_CONSOLE, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
 	{SAVE_MODEL, "text files (*.txt)\0*.txt\0all files\0*\0"},
 	{SAVE_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
+	{SAVE_BOXPLOT, "postscript files (*.eps)\0*.eps\0all files\0*\0"},
 	{SAVE_LAST_GRAPH, "all files\0*\0"},
 	{SAVE_GP_CMDS, "gnuplot files (*.gp)\0*.gp\0all files\0*\0"},
 	{EXPORT_CSV, "CSV files (*.csv)\0*.csv\0all files\0*\0"},
@@ -325,6 +328,13 @@ void file_selector (char *msg, char *startdir, int action,
 	else if (err == 1) errbox("gnuplot command failed");
 	else if (err == 2) infobox("There were missing observations");
     }
+    else if (action == SAVE_BOXPLOT) {
+	int err;
+
+	err = ps_print_plots(fname, data);
+	if (!err) infobox("boxplots saved");
+	else errbox("boxplot save failed");
+    }
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = (char *) data;
 	
@@ -353,11 +363,7 @@ void file_selector (char *msg, char *startdir, int action,
     }
 }
 
-#endif 
-
-/* End of MS Windows file selection code */
-
-#ifndef G_OS_WIN32
+#else /* End of MS Windows file selection code */
 
 /* ........................................................... */
 
@@ -431,9 +437,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     /* now for the save options */
     if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
 	extdata = gtk_object_get_data(GTK_OBJECT(fs), "graph");
-    maybe_add_ext(fname, action, extdata); 
 
+    maybe_add_ext(fname, action, extdata); 
     suff = strrchr(fname, '.');
+
     if (action > SAVE_BIN2 && suff != NULL && !strcmp(suff, ".dat")) {
 	errbox("The .dat suffix should be used only\n"
 	       "for gretl datafiles");
@@ -452,6 +459,13 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	if (err == 0) infobox("graph saved");
 	else if (err == 1) errbox("gnuplot command failed");
 	else if (err == 2) infobox("There were missing observations");
+    }
+    else if (action == SAVE_BOXPLOT) {
+	int err;
+
+	err = ps_print_plots(fname, gtk_object_get_data(GTK_OBJECT(fs), "graph"));
+	if (!err) infobox("boxplots saved");
+	else errbox("boxplot save failed");
     }
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
@@ -509,7 +523,8 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
 
     /* special cases */
-    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
+    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH
+	|| action == SAVE_BOXPLOT) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
     else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
