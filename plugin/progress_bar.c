@@ -19,8 +19,8 @@
 
 /* progress.c for gretl */
 
-#include "gretl.h"
-#include "progress.h"
+#include "libgretl.h"
+#include <gtk/gtk.h>
 
 typedef struct _ProgressData {
     GtkWidget *window;
@@ -39,7 +39,7 @@ static void destroy_progress (GtkWidget *widget, ProgressData *pdata)
 
 /* ........................................................... */
 
-static ProgressData *progress_window (void)
+static ProgressData *progress_window (int flag)
 {
     ProgressData *pdata;
     GtkWidget *align;
@@ -47,16 +47,17 @@ static ProgressData *progress_window (void)
     GtkWidget *button;
     GtkWidget *vbox;
 
-    pdata = mymalloc(sizeof *pdata);
+    pdata = malloc(sizeof *pdata);
     if (pdata == NULL) return NULL;
 
     pdata->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_policy(GTK_WINDOW(pdata->window), FALSE, FALSE, TRUE);
 
     gtk_signal_connect(GTK_OBJECT(pdata->window), "destroy",
-			GTK_SIGNAL_FUNC(destroy_progress),
-			pdata);
-    gtk_window_set_title(GTK_WINDOW(pdata->window), "gretl download");
+		       GTK_SIGNAL_FUNC(destroy_progress),
+		       pdata);
+    gtk_window_set_title(GTK_WINDOW(pdata->window), (flag == SP_LOAD_INIT)?
+			 "gretl: loading data" : "gretl: storing data");
     gtk_container_set_border_width(GTK_CONTAINER(pdata->window), 0);
 
     vbox = gtk_vbox_new(FALSE, 5);
@@ -74,7 +75,7 @@ static ProgressData *progress_window (void)
     gtk_box_pack_start(GTK_BOX(vbox), align, FALSE, FALSE, 5);
     gtk_widget_show(align);
 
-     /* Create the GtkProgressBar */
+    /* Create the GtkProgressBar */
     pdata->pbar = gtk_progress_bar_new();
 
     gtk_progress_set_format_string(GTK_PROGRESS(pdata->pbar), "%p%%");
@@ -90,7 +91,7 @@ static ProgressData *progress_window (void)
     button = gtk_button_new_with_label("Cancel");
     gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
 			      (GtkSignalFunc) gtk_widget_destroy,
-			       GTK_OBJECT(pdata->window));
+			      GTK_OBJECT(pdata->window));
     gtk_box_pack_start(GTK_BOX(vbox), button, FALSE, FALSE, 0);
 
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
@@ -104,35 +105,43 @@ static ProgressData *progress_window (void)
 
 /* ........................................................... */
 
-int show_progress (long res, long expected, enum spflags flags)
+int show_progress (long res, long expected, int flag)
 {
     static long offs;
     static ProgressData *pdata;
 
     if (expected == 0) return 0;
-    if (flags == SP_FINISH) {
+
+    if (flag == SP_FINISH) {
 	if (pdata != NULL)
 	    gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
 	return 0;
     }
-    if (flags == SP_INIT) {
+
+    if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT) {
 	char bytestr[48];
 
 	offs = 0L;
-	if ((pdata = progress_window()) == NULL)
-	    return 0;
+	if ((pdata = progress_window(flag)) == NULL) return 0;
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), (gfloat) 0);
-	sprintf(bytestr, "Grabbing %ld bytes", expected);
+	sprintf(bytestr, "%s %ld Kbytes", 
+		(flag == SP_LOAD_INIT)? "Retrieving" : "Storing",
+		expected / 1024);
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
-	while (gtk_events_pending())
-	    gtk_main_iteration();
+	while (gtk_events_pending()) gtk_main_iteration();
     }
+
     offs += res;
+
+    if (offs > expected && pdata != NULL) {
+	gtk_widget_destroy(GTK_WIDGET(pdata->window)); 
+	return 0;
+    }
+
     if (pdata != NULL) {
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), 
 				(gfloat) ((double) offs / expected));
-	while (gtk_events_pending())
-	    gtk_main_iteration();
+	while (gtk_events_pending()) gtk_main_iteration();
     } else
 	return -1;
 	

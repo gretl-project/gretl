@@ -37,7 +37,8 @@ static int writehdr (const char *hdrfile, const int *list,
 		     const DATAINFO *pdinfo, const int opt);
 static double obs_float (const DATAINFO *pdinfo, const int end);
 static int write_xmldata (const char *fname, const int *list, 
-			  double **Z, const DATAINFO *pdinfo, int opt);
+			  double **Z, const DATAINFO *pdinfo, 
+			  int opt, PATHS *ppaths);
 static int xmlfile (const char *fname);
 
 static char STARTCOMMENT[3] = "(*";
@@ -914,6 +915,7 @@ static int writehdr (const char *hdrfile, const int *list,
  *
  */
 
+#ifdef notdef
 int get_precision (double *x, int n)
 {
     int i, j, p, dot, len, pmax = 0;
@@ -935,6 +937,21 @@ int get_precision (double *x, int n)
     }
     return pmax;
 }
+#endif
+
+int get_precision (double *x, int n)
+{
+    int i, p = 6, pmax = 0;
+    char *s, numstr[48];
+
+    for (i=0; i<n; i++) {
+	sprintf(numstr, "%f", x[i]);
+	s = numstr + strlen(numstr) - 1;
+	while (*s-- == '0') p--;
+	if (p > pmax) pmax = p;
+    }
+    return pmax;
+}
 
 /**
  * write_data:
@@ -943,6 +960,8 @@ int get_precision (double *x, int n)
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: code for format in which to write the data (see #data_options).
+ * @ppaths: pointer to paths information (should be NULL when not
+ * called from gui).
  * 
  * Write out a data file containing the values of the given set
  * of variables.
@@ -952,7 +971,8 @@ int get_precision (double *x, int n)
  */
 
 int write_data (const char *fname, const int *list, 
-		double **Z, const DATAINFO *pdinfo, int opt)
+		double **Z, const DATAINFO *pdinfo, 
+		int opt, PATHS *ppaths)
 {
     int i = 0, t, l0, n = pdinfo->n;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
@@ -964,7 +984,7 @@ int write_data (const char *fname, const int *list,
     if (l0 == 0) return 1;
 
     if (opt == 0 || opt == GRETL_DATA_GZIPPED) 
-	return write_xmldata(fname, list, Z, pdinfo, opt);
+	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
 
     strcpy(datfile, fname);
 
@@ -1373,7 +1393,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     /* catch XML files that have strayed in here? */
     if (add_gdt && xmlfile(datfile)) {
 	return get_xmldata(pZ, pdinfo, datfile, ppaths, 
-			   data_status, prn);
+			   data_status, prn, 0);
     }
 	
     if (!gzsuff) {
@@ -2237,6 +2257,50 @@ static int xmlfile (const char *fname)
     return ret;
 } 
 
+#ifdef OS_WIN32
+# include <windows.h>
+#else
+# include <dlfcn.h>
+#endif
+
+static 
+int lib_open_plugin (PATHS *ppaths, const char *plugin, void **handle)
+{
+    char pluginpath[MAXLEN];
+
+#ifdef OS_WIN32
+    sprintf(pluginpath, "%s\\%s.dll", ppaths->gretldir, plugin);
+    *handle = LoadLibrary(pluginpath);
+    if (*handle == NULL) return 1;
+#else
+    sprintf(pluginpath, "%splugins/%s.so", ppaths->gretldir, plugin);
+    *handle = dlopen(pluginpath, RTLD_LAZY);
+    if (*handle == NULL) return 1;
+#endif 
+    return 0;
+}
+
+void *get_plugin_function (const char *funcname, void *handle)
+{
+    void *funp;
+
+#ifdef OS_WIN32
+    funp = GetProcAddress(handle, funcname);
+#else
+    funp = dlsym(handle, funcname);
+#endif   
+    return funp;
+}
+
+void close_plugin (void *handle)
+{
+#ifdef OS_WIN32
+    FreeLibrary(handle);
+#else
+    dlclose(handle);
+#endif
+}
+
 /**
  * detect_filetype:
  * @fname: name of file to examine.
@@ -2395,6 +2459,7 @@ static char *xml_encode (char *buf)
  * @Z: data matrix.
  * @pdinfo: data information struct.
  * @opt: if non-zero, write gzipped data, else plain.
+ * @ppaths: pointer to paths information (or NULL).
  * 
  * Write out in xml a data file containing the values of the given set
  * of variables.
@@ -2404,7 +2469,8 @@ static char *xml_encode (char *buf)
  */
 
 static int write_xmldata (const char *fname, const int *list, 
-			  double **Z, const DATAINFO *pdinfo, int opt)
+			  double **Z, const DATAINFO *pdinfo, 
+			  int opt, PATHS *ppaths)
 {
     int err, i, t;
     FILE *fp = NULL;
@@ -2412,6 +2478,10 @@ static int write_xmldata (const char *fname, const int *list,
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     char startdate[8], enddate[8], datname[MAXLEN], type[32];
     char *xmlbuf = NULL;
+    long sz = 0L;
+    void *handle;
+    int (*show_progress) (long, long, int) = NULL;
+    
 
     err = 0;
     if (opt) {
@@ -2431,11 +2501,31 @@ static int write_xmldata (const char *fname, const int *list,
 	sprintf(gretl_errmsg, "Out of memory\n");
 	return 1;
     } 
+
+    sz = (tsamp * pdinfo->v * sizeof(double));
+    if (sz > 100000) {
+	fprintf(stderr, "Writing %ld Kbytes of data\n", sz / 1024);
+	if (ppaths == NULL) sz = 0L;
+    } else sz = 0L;
+
+    if (sz) {
+	if (lib_open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	    show_progress = 
+		get_plugin_function("show_progress", handle);
+	    if (show_progress == NULL) {
+		close_plugin(&handle);
+		sz = 0;
+	    }
+	} else sz = 0;
+    }
+
+    if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
+
     for (i=1; i<=list[0]; i++) {
 	if (pdinfo->vector[list[i]])
 	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
 	else
-	    pmax[i-1] = get_precision(&Z[list[i]][0], 1);
+	    pmax[i-1] = get_precision(Z[list[i]], 1);
     }
 
     ntodate(startdate, pdinfo->t1, pdinfo);
@@ -2535,6 +2625,7 @@ static int write_xmldata (const char *fname, const int *list,
     else
 	fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
 		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (opt) gzputs(fz, "<obs");
 	else fputs("<obs", fp);
@@ -2557,14 +2648,22 @@ static int write_xmldata (const char *fname, const int *list,
 	}
 	if (opt) gzputs(fz, "</obs>\n");
 	else fputs("</obs>\n", fp);
+	if (sz && t && ((t - pdinfo->t1) % 50 == 0)) 
+	    (*show_progress) (50, tsamp, SP_NONE);
     }
 
     if (opt) gzprintf(fz, "</observations>\n</gretldata>\n");
     else fprintf(fp, "</observations>\n</gretldata>\n");
 
+    if (sz) {
+	(*show_progress)(0, pdinfo->t2 - pdinfo->t1 + 1, SP_FINISH);
+	close_plugin(&handle);
+    }  
+
     if (pmax) free(pmax);
     if (fp != NULL) fclose(fp);
     if (fz != Z_NULL) gzclose(fz);
+
     return 0;
 }
 
@@ -2679,11 +2778,24 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
 				 double ***pZ, DATAINFO *pdinfo,
-				 int progress)
+				 PATHS *ppaths, long progress)
 {
     xmlNodePtr cur;
     char *tmp = xmlGetProp(node, (UTF) "count");
     int i, t;
+    void *handle;
+    int (*show_progress) (long, long, int) = NULL;
+
+    if (progress) {
+	if (lib_open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	    show_progress = 
+		get_plugin_function("show_progress", handle);
+	    if (show_progress == NULL) {
+		close_plugin(&handle);
+		progress = 0;
+	    }
+	} else progress = 0;
+    }
 
     if (tmp) {
 	int n;
@@ -2739,6 +2851,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	return 1;
     }
 
+    if (progress) (*show_progress)(0, progress, SP_LOAD_INIT);
+
     t = 0;
     while (cur != NULL) {
         if (!xmlStrcmp(cur->name, (UTF) "obs")) {
@@ -2765,8 +2879,13 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    }
 	}	    
 	cur = cur->next;
-	if (progress && t % 60 == 0) 
-	    fprintf(stderr, "%d%%\n", 100 * t / pdinfo->n);
+	if (progress && t % 50 == 0) 
+	    (*show_progress) (50, pdinfo->n, SP_NONE);
+    }
+
+    if (progress) {
+	(*show_progress)(0, pdinfo->n, SP_FINISH);
+	close_plugin(&handle);
     }
 
     if (t != pdinfo->n) {
@@ -2795,6 +2914,7 @@ static long get_filesize (const char *fname)
  * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (not-0) or not (0).
  * @prn: where messages should be written.
+ * @gui: should = 1 if the function is launched from the GUI, else 0.
  * 
  * Read data from file into gretl's work space, allocating space as
  * required.
@@ -2804,13 +2924,13 @@ static long get_filesize (const char *fname)
  */
 
 int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
-		 PATHS *ppaths, int data_status, PRN *prn) 
+		 PATHS *ppaths, int data_status, PRN *prn, int gui) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
     char *tmp;
-    int gotvars = 0, gotobs = 0, progress = 0;
-    long fsz;
+    int gotvars = 0, gotobs = 0;
+    long fsz, progress = 0L;
 
     gretl_errmsg[0] = '\0';
 
@@ -2819,11 +2939,11 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	xmlKeepBlanksDefault(0);
 
     fsz = get_filesize(fname);
-    if (fsz > 30000) {
+    if (fsz > 100000) {
 	    fprintf(stderr, "%s %ld bytes of data...\n", 
 		    (is_gzipped(fname))? "Uncompressing" : "Reading",
 		    fsz);
-	    progress = 1;
+	    progress = fsz;
     }
 
     doc = xmlParseFile(fname);
@@ -2929,7 +3049,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		sprintf(gretl_errmsg, "variables information is missing");
 		return 1;
 	    }
-	    if (process_observations(doc, cur, pZ, pdinfo, progress)) 
+	    if (process_observations(doc, cur, pZ, pdinfo, ppaths, progress)) 
 		return 1;
 	    else
 		gotobs = 1;

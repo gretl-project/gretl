@@ -22,7 +22,6 @@
 /* #define WDEBUG */
 
 #include "gretl.h"
-#include "progress.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -922,18 +921,28 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 {
     int i, res = 0;
     static char c[8192];
+    void *handle;
+    int (*show_progress) (long, long, int) = NULL;
+    int show = 0;
+
+    if (open_plugin("progress_bar", &handle) == 0) {
+	show_progress = 
+	    get_plugin_function("show_progress", handle);
+	if (show_progress != NULL)
+	    show = 1;
+    }
 
     *len = 0L;
-    show_progress(res, expected, SP_INIT);
+    if (show) (*show_progress)(res, expected, SP_LOAD_INIT);
     if (rbuf && RBUF_FD(rbuf) == fd) {
 	while ((res = rbuf_flush(rbuf, c, sizeof c)) != 0) {
 	    if (fp == NULL) {
 		memcpy(*getbuf, c, res);
 	    } else 
-		if (fwrite(c, 1, res, fp) < (unsigned)res)
+		if (fwrite(c, 1, res, fp) < (unsigned) res)
 		    return -2;
 	    *len += res;
-	    show_progress(res, expected, SP_NONE);
+	    if (show) (*show_progress)(res, expected, SP_NONE);
 	}
     }
     /* Read from fd while there is available data. */
@@ -952,14 +961,14 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 		if (fwrite(c, 1, res, fp) < (unsigned) res)
 		    return -2;
 	    *len += res;
-	    if (show_progress(res, expected, SP_NONE) < 0)
+	    if (show && (*show_progress)(res, expected, SP_NONE) < 0)
 		break;
 	}
 	i++;
     } while (res > 0);
     if (res < -1)
 	res = -1;
-    show_progress(0, expected, SP_FINISH);
+    if (show) (*show_progress)(0, expected, SP_FINISH);
     return res;
 }
 

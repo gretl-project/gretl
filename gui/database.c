@@ -319,18 +319,21 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	strcpy(datainfo->varname[v-1], sinfo->varname);
 	strcpy(datainfo->label[v-1], sinfo->descrip);
 	get_padding(sinfo, datainfo, &pad1, &pad2);
+
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
 	    for (t=0; t<pad1; t++) 
 		Z[v-1][t] = NADBL;
 	    start = pad1;
 	} else start = 0;
+
 	if (pad2 > 0) {
 	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
 	    for (t=n-1; t>=n-1-pad2; t--) 
 		Z[v-1][t] = NADBL;
 	    stop = n - pad2;
 	} else stop = n;
+
 	/* fill in actual data values */
 	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 	for (t=start; t<stop; t++) 
@@ -1351,6 +1354,8 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     return 0;
 }
 
+extern gint populate_filelist (windata_t *fdata); /* datafiles.c */
+
 /* ........................................................... */
 
 void grab_remote_db (GtkWidget *w, gpointer data)
@@ -1385,8 +1390,10 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	if (strlen(errbuf)) errbox(errbuf);
 	else 
 	    errbox("Error unzipping compressed data");
-    } else 
+    } else {
 	infobox("database installed");
+	populate_filelist(mydata);
+    }
 
     free(ggzname);
 }

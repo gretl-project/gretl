@@ -188,6 +188,7 @@ void get_critical (GtkWidget *w, gpointer data)
     }
 
     if (i != 3 && funp == NULL)  {
+	errbox("Couldn't load plugin function");
 	close_plugin(handle);
 	if (w != NULL) gretl_print_destroy(prn);
 	return;

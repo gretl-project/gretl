@@ -662,7 +662,7 @@ int main (int argc, char *argv[])
 	    break;
 	case GRETL_XML_DATA:
 	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, data_status, 
-			      prn);
+			      prn, 0);
 	    break;
 	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, datainfo, paths.datfile, prn);
@@ -1338,7 +1338,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     sprintf(Rdata, "%sRdata.tmp", paths.userdir);
     sprintf(line, "store -r %s", Rdata); 
     if (check_cmd(line) || cmd_init(line) ||
-	write_data(Rdata, command.list, Z, datainfo, OPT_R)) {
+	write_data(Rdata, command.list, Z, datainfo, OPT_R, NULL)) {
 	errbox("Write of R data file failed");
 	fclose(fp);
 	return; 

@@ -1959,3 +1959,6 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
     return panel;
 }
 
+
+
+

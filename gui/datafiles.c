@@ -36,7 +36,7 @@ char pwtpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
-static gint populate_filelist (windata_t *fdata);
+gint populate_filelist (windata_t *fdata);
 void browser_open_data (GtkWidget *w, gpointer data);
 void browser_open_ps (GtkWidget *w, gpointer data);
 
@@ -309,6 +309,9 @@ static gint populate_remote_dblist (windata_t *ddata)
 	free(getbuf);
 	return err;
     }
+    
+    gtk_clist_clear(GTK_CLIST(ddata->listbox));
+    gtk_clist_freeze(GTK_CLIST(ddata->listbox));
 
     i = 0;
     getbufline(NULL, NULL, 1);
@@ -324,13 +327,15 @@ static gint populate_remote_dblist (windata_t *ddata)
 	else
 	    row[1] = line + 2;
 	row[2] = status;
-	gtk_clist_append(GTK_CLIST (ddata->listbox), row);
+	gtk_clist_append(GTK_CLIST(ddata->listbox), row);
 	i++;
     }
 
+    gtk_clist_thaw(GTK_CLIST(ddata->listbox));
+
     free(getbuf);
     if (i > 0) 
-	gtk_clist_select_row (GTK_CLIST (ddata->listbox), 0, 0);
+	gtk_clist_select_row(GTK_CLIST(ddata->listbox), 0, 0);
     else 
 	errbox("No database files found");
     return 0;
@@ -451,7 +456,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-static gint populate_filelist (windata_t *fdata)
+gint populate_filelist (windata_t *fdata)
 {
     gint a = fdata->role;
 

@@ -1405,7 +1405,10 @@ void set_panel_structure (gpointer data, guint u, GtkWidget *w)
     if (open_plugin("panel_data", &handle)) return;
     panel_structure_dialog = 
 	get_plugin_function("panel_structure_dialog", handle);
-    if (panel_structure_dialog == NULL) return;
+    if (panel_structure_dialog == NULL) {
+	errbox("Couldn't load plugin function");
+	return;
+    }
     
     (*panel_structure_dialog)(datainfo, open_dialog, 
 			      destroy_dialog_data, context_help);
@@ -1449,10 +1452,16 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     if (open_plugin("panel_data", &handle)) return;
     panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 
-    if (panel_diagnostics == NULL || bufopen(&prn)) {
+    if (panel_diagnostics == NULL) {
+	errbox("Couldn't load plugin function");
 	close_plugin(handle);
 	return;
     }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }	
 	
     (*panel_diagnostics)(pmod, &Z, datainfo, prn);
 
@@ -2949,7 +2958,8 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 	}
     }
 
-    if (write_data(mydatfile, command.list, Z, datainfo, data_option(opt))) {
+    if (write_data(mydatfile, command.list, Z, datainfo, 
+		   data_option(opt), &paths)) {
 	errbox("Write of data file failed");
 	return 1;
     }
@@ -3687,7 +3697,7 @@ static int gui_exec_line (char *line,
 	else if (check == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_XML_DATA)
-	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn);
+	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
 	else
 	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
 	if (err) {
@@ -3946,7 +3956,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	if (write_data(command.param, command.list, 
-		       Z, datainfo, data_option(oflag))) {
+		       Z, datainfo, data_option(oflag), NULL)) {
 	    pprintf(prn, "write of data file failed.\n");
 	    err = 1;
 	    break;

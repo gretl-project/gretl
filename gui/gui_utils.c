@@ -587,7 +587,8 @@ void do_open_data (GtkWidget *w, gpointer data)
 	PRN prn;
 	prn.buf = NULL; prn.fp = stderr;
 	if (datatype == GRETL_XML_DATA)
-	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, 
+			      data_status, &prn, 1);
 	else
 	    err = get_data(&Z, datainfo, trydatfile, &paths, data_status, &prn);
     }
@@ -3484,40 +3485,6 @@ int open_plugin (const char *plugin, void **handle)
     } 
 #endif 
     return 0;
-}
-
-/* .................................................................. */
-
-void *get_plugin_function (const char *funcname, void *handle)
-{
-    void *funp;
-    char *error;
-
-#ifdef G_OS_WIN32
-    funp = GetProcAddress(handle, funcname);
-    if (funp == NULL)  {
-	errbox("Couldn't access plugin function");
-	return NULL;
-    }
-#else
-    funp = dlsym(handle, funcname);
-    if ((error = dlerror()) != NULL)  {
-	errbox(error);
-	return NULL;
-    }
-#endif   
-    return funp;
-}
-
-/* .................................................................. */
-
-void close_plugin (void *handle)
-{
-#ifdef G_OS_WIN32
-    FreeLibrary(handle);
-#else
-    dlclose(handle);
-#endif
 }
 
 /* .................................................................. */

@@ -6,9 +6,12 @@ version 0.991
   command is used
 - add menu items to set missing value codes for a particular
   series or the entire data set
-- changing or clearing the data set closes all model and
-  stats windows
+- changing or clearing the data set now closes all model and
+  stats windows (prevents crashes and garbage)
 - add scalar datatype
+- add progress indicator for reading/writing large data files
+- add a refresh to the remote databases window after down-
+  loading and installing a database
 
 02/27/2002 version 0.99
 - add option for HTTP proxy when contacting gretl data server

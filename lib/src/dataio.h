@@ -68,7 +68,7 @@ int get_precision (double *x, int n);
 
 int write_data (const char *fname, const int *list, 
 		double **Z, const DATAINFO *pdinfo, 
-	        int opt);
+	        int opt, PATHS *ppaths);
 
 int is_gzipped (const char *fname);
 
@@ -95,7 +95,11 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname);
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
 int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
-		 PATHS *ppaths, int data_status, PRN *prn); 
+		 PATHS *ppaths, int data_status, PRN *prn, int gui); 
 
 char *get_xml_description (const char *fname);
+
+void *get_plugin_function (const char *funcname, void *handle);
+
+void close_plugin (void *handle);
 

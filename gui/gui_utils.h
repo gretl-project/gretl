@@ -113,10 +113,6 @@ void get_stats_table (void);
 
 int open_plugin (const char *plugin, void **handle);
 
-void *get_plugin_function (const char *funcname, void *handle);
-
-void close_plugin (void *handle);
-
 void get_default_dir (char *s);
 
 #endif /* GUI_UTILS_H */

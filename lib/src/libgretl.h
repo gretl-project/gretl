@@ -53,6 +53,13 @@ typedef enum {
     GENR_RESID2
 } auto_genr;
 
+typedef enum {
+    SP_NONE, 
+    SP_LOAD_INIT,
+    SP_SAVE_INIT,
+    SP_FINISH 
+} progress_flags;
+
 typedef int *LIST;  
 
 /* information on data set */

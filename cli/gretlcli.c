@@ -285,7 +285,7 @@ int main (int argc, char *argv[])
 			   data_status, &prn);
 	if (err == GRETL_XML_DATA)
 	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, 
-			      data_status, &prn);
+			      data_status, &prn, 0);
 	else if (err == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
 	else if (err == GRETL_BOX_DATA)
@@ -864,7 +864,7 @@ void exec_line (char *line, PRN *prn)
 	    err = import_box(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_XML_DATA)
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
-			      data_status, prn);
+			      data_status, prn, 0);
 	else 
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);
@@ -1138,7 +1138,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (write_data(command.param, command.list, Z, datainfo, 
-		       data_option(oflag))) {
+		       data_option(oflag), NULL)) {
 	    fprintf(stderr, "write of data file failed.\n");
 	    break;
 	}
