@@ -54,7 +54,6 @@ void gretl_rand_init (void)
 
 /**
  * gretl_rand_set_seed:
- *
  * @seed: the chosen seed value
  *
  * Set a specific (and hence reproducible) seed for gretl's PRNG.
@@ -72,7 +71,6 @@ void gretl_rand_set_seed (unsigned seed)
 
 /**
  * gretl_uniform_dist:
- *
  * @a: target array
  * @t1: start of the fill range
  * @t2: end of the fill range
@@ -98,7 +96,6 @@ void gretl_uniform_dist (double *a, int t1, int t2)
 
 /**
  * gretl_normal_dist:
- *
  * @a: target array
  * @t1: start of the fill range
  * @t2: end of the fill range
@@ -141,7 +138,6 @@ unsigned gretl_rand_int (void)
 
 /**
  * gretl_rand_int_max:
- *
  * @max: the maximum value (open)
  *
  * Returns: a pseudo-random unsigned int in the interval [0, @max)

@@ -1,6 +1,6 @@
 #
 add
-@Tests
+@Contrastes
 Uso:            add listavar
 Ejemplos:       add 5 7 9	          add xx yy zz
 
@@ -12,7 +12,7 @@ conjuntamente significativos al nivel del 5 por ciento.
 
 #
 addto
-@Tests
+@Contrastes
 Uso:            addto model_ID listavar
 Ejemplo:        addto 2 5 7 9
 
@@ -24,7 +24,7 @@ y 9 al modelo 2.
 
 #
 adf
-@Tests
+@Contrastes
 Uso:	        adf orden nombrevar
 Ejemplo:        adf 2 x1
 
@@ -49,9 +49,9 @@ estos estadísticos no son los usuales.
 
 #
 ar
-@Estimation
-Uso:            ar retardos ; vardep varindep      o
-                ar retardos ; -o vardep varindep
+@Estimación
+Uso:            ar retardos ; vardep varindeps     o
+                ar retardos ; -o vardep varindeps
 Ejemplo:        ar 1 3 4 ; y 0 x1 x2 x3
 
 Calcula las estimaciones de un modelo utilizando el procedimiento iterativo
@@ -63,17 +63,17 @@ ejemplo de arriba el término de error se especifica como
 
 u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
 
-'vardep' es la variable dependiente y 'varindep' es la lista de variables
+'vardep' es la variable dependiente y 'varindeps' es la lista de variables
 independientes que van separadas con espacios. Utilice el número 0 para un
 término constante. Si se usa la opción -o se presentará la matriz de varianzas
 y covarianzas de los coeficientes de regresión. Los residuos de la regresión
-transformada se guardan bajo el nombre 'uhat' y pueden recuperarse
-usando la instrucción 'genr'.
+transformada se guardan bajo el nombre 'uhat' y los valores ajustados, bajo 
+el nombre 'yhat', ambos pueden recuperarse usando la instrucción 'genr'.
 
 #
 arch
-@Tests
-Uso:            arch retardo vardep varindep
+@Contrastes
+Uso:            arch retardo vardep varindeps
 Ejemplos:       arch 4 1 0 2 4 6 7      o  arch 4 y 0 x1 x2 x3 x4
 
 Esta instrucción contrasta la posibilidad de un ARCH en el modelo, del orden
@@ -87,7 +87,7 @@ original.
 
 #
 chow
-@Tests
+@Contrastes
 Uso:           chow obs
 Ejemplos:      chow 25
                chow 1988.1
@@ -103,9 +103,22 @@ que no hay cambio estructural en el punto de ruptura indicado.
 
 
 #
+coeffsum
+@Contrastes
+(Suma de coeficientes)
+
+Uso:           coeffsum varindeps
+Ejemplo:      coeffsum xt xt_1 xt_2
+
+Debe ejecutarse después de una regresión. Calcula la suma de los coeficientes 
+de las variables de la lista "varindeps". Muestra la suma, su desviación típica 
+y el valor p para la hipótesis nula de que la suma es cero.
+
+
+#
 coint
-@Tests
-Uso:	        coint orden vardep varindep
+@Contrastes
+Uso:	        coint orden vardep varindeps
 Ejemplos:       coint 2 y x
                 coint 4 y x1 x2
 
@@ -119,33 +132,46 @@ Durbin-Watson para la regresión cointegrante.
 	Hay que señalar que para ninguno de estos estadísticos de contraste
 se pueden aplicar las tablas estadísticas usuales.
 
+
+#
+coint2
+@Contrastes
+(Contraste de cointegración de Johansen)
+
+Uso:	        coint2 orden vardep varindeps
+Ejemplos:       coint2 2 y x
+                coint2 12 y x1 x2 -o
+
+Realiza el contraste de cointegración de la traza, de Johansen, entre las 
+variables determinadas y para el orden de retardos dado. Para detalles sobre 
+este contraste, ver por ejemplo James D. Hamilton, Time Series Analysis, 
+capítulo 19.  Si se aplica la opción '-o' se muestran los resultados de
+varias regresiones auxiliares.
+
 #
 corc
-@Estimation
-Uso:          corc vardep varindep       o    corc -o vardep varindep
+@Estimación
+Uso:          corc vardep varindeps       o    corc -o vardep varindeps
 Ejemplos:       corc 1 0 2 4 6 7                corc -o 1 0 2 4 6 7
                 corc y 0 x1 x2 x3               corc -o y 0 x1 x2 x3
 
 Calcula las estimaciones de un modelo utilizando el procedimiento iterativo de
 Cochrane-Orcutt (ver Ramanathan, Sección 9.4) siendo 'vardep' la variable
-dependiente y siendo 'varindep' una lista de variables independientes separadas
+dependiente y siendo 'varindeps' una lista de variables independientes separadas
 por espacios y acabando con un ;. Utilice el número 0 para un término constante. 
 
-
-
-
-El proceso iterativo se detiene cuando valores sucesivos de rho no difieren en 
-más
-de 0.001 o cuando han transcurrido 20 iteraciones. Si se utiliza la opción -o, 
-se muestra la matriz de covarianzas de los coeficientes de regresión. La 
+El proceso iterativo se detiene cuando valores sucesivos de rho no difieren en
+más de 0.001 o cuando han transcurrido 20 iteraciones. Si se utiliza la opción -o,
+se muestra la matriz de covarianzas de los coeficientes de regresión. La
 regresión transformada final se calcula para el rango de observación
 primobs+1 ultobs que esté actualmente en efecto. Los residuos de esta regresión
-transformada se guardan con el nombre 'uhat'.
+transformada se guardan con el nombre 'uhat' y los valores ajustados, con el
+nombre 'yhat'.
 
 
 #
 corr
-@Statistics
+@Estadísticos
 Uso:         corr
              corr listavar
 
@@ -157,7 +183,7 @@ para las variables listadas.
 
 #
 corrgm
-@Statistics
+@Estadísticos
 Uso:          corrgm nombrevar o numerovar
               corrgm nombrevar o numerovar maxretardo
 
@@ -166,10 +192,11 @@ especificada (ver Ramanathan, sección 11.7). Es, por tanto, corr[u(t), u(t-s)],
 donde u(t) es la observación t-ésima de la variable u y s es el número
 de retardos. También se muestran las correlaciones parciales: estas tienen
 descontado el efecto de los retardos que intervienen. La instrucción también
-representa el correlograma y calcula el estadístico Q de Box-Pierce para
+representa el correlograma y calcula el estadístico Q de Ljung-Box para
 contrastar la hipótesis nula de que la serie es 'ruido blanco'. Este se
 distribuye asintóticamente como una chi-cuadrado con un número de grados
-de libertad igual al número de retardos utilizados.
+de libertad igual al número de retardos utilizados menos el número de 
+coeficientes estimados.
 
 Si se suministra un número entero 'maxretardo' la largura del correlograma
 se limita a, como máximo, ese número de retardos, en caso contrario la largura
@@ -178,7 +205,7 @@ se determina automáticamente.
 
 #
 criteria
-@Utilities
+@Utilidades
 Uso:          criteria scr T k        p.ej. criteria 23.45 45 8
 
 Dados scr (suma de cuadrados de los residuos), el número de observaciones (T) 
@@ -188,7 +215,7 @@ o los nombres de variables definidas previamente.
 
 #
 critical
-@Utilities
+@Utilidades
 Uso:            critical t gl           p.ej. critical t 20
                 critical X gl           p.ej. critical X 5
                 critical F gln gld      p.ej. critical F 3 37
@@ -205,7 +232,7 @@ explicativas.
 
 #
 cusum
-@Tests
+@Contrastes
 Uso:          cusum
 
 Debe ejecutarse después de una estimación MCO. Desarrolla el contraste 
@@ -227,7 +254,7 @@ de Greene 'Econometric Analysis' para más detalles.
 
 #
 delete
-@Dataset
+@Conjunto de datos
 Uso:          delete
 
 Elimina la última (la de número más alto) variable del conjunto de datos actual.
@@ -236,28 +263,50 @@ variables ficticias temporales. Sólo se puede eliminar la última variable.
 
 #
 diff
-@Transformations
+@Transformaciones
 Uso:          diff listavar
 
 Se toma la primera diferencia de cada variable en 'listavar' y el resultado se 
 guarda en una nueva variable con el prefijo "d_". Así, "diff x y" crea las 
 nuevas variables d_x=x(t)-x(t-1) y d_y = y(t) - y(t-1).
 
+
+#
+end
+@Programación
+
+Finaliza algún tipo de bloque de instrucciones. Por ejemplo, "end system" 
+marca el fin de un sistema de ecuaciones.
+
 #
 endloop
-@Programming
+@Programación
 
 Termina un bucle de simulación. Ver "loop".
 
+
+#
+equation
+@Estimación
+Uso:            equation vardep varindeps
+Ejemplo:        equation y x1 x2 x3 const
+
+Especifica una ecuación dentro de un sistema de ecuaciones (ver la instrucción
+"system"). La sintaxis para especificar una ecuación es la misma que para, por 
+ejemplo, la instrucción "ols".
+
+
 #
 eqnprint
-@Printing
+@Imprimir
 Uso:            eqnprint
                 eqnprint -o
+		eqnprint -f nombre_fichero
 
 Debe ejecutarse después de una estimación por MCO. Imprime el modelo estimado,
-en forma de ecuación LaTeX, a un fichero cuyo nombre tiene la estructura
-"equation_N.tex", donde N es el número de modelos estimados hasta el momento
+en forma de ecuación LaTeX. Si se especifica un nombre de fichero utilizando 
+la opción -f, la salida va a ese fichero, en otro caso va a un fichero cuyo 
+nombre tiene la estructura "equation_N.tex", donde N es el número de modelos estimados hasta el momento
 en la sesión actual. Este puede incorporarse en un documento LaTeX. Ver
 también la instrucción 'tabprint'.
 
@@ -268,7 +317,7 @@ en un documento (que ya tenga el preámbulo).
 
 #
 fcast
-@Prediction
+@Predicción
 Uso:            fcast primobs ultobs nuevonombrevar
                 fcast nuevonombrevar
 Ejemplo:        fcast ajustados
@@ -285,7 +334,7 @@ adelante e incorpora el proceso del error.
 
 #
 fcasterr
-@Prediction
+@Predicción
 Uso:            fcasterr primobs ultobs
                 fcasterr primobs ultobs -o
 
@@ -299,7 +348,7 @@ utiliza la opción -o también se mostrarán los resultados en gráficos gnuplot.
 
 #
 fit
-@Prediction
+@Predicción
 Uso:		fit
 
 Esta orden (que debe seguir a una instrucción de estimación) es una atajo para
@@ -311,7 +360,7 @@ actual y estimado de la variable dependiente contra el tiempo.
 
 #
 freq
-@Statistics
+@Estadísticos
 Uso:          freq nombrevar (o numerovar)
 
 Muestra la distribución de frecuencias de 'nombrevar' o 'numerovar';
@@ -328,7 +377,7 @@ En modo interactivo se genera un gráfico gnuplot de la distribución.
 
 #
 genr
-@Dataset
+@Conjunto de datos
 Uso:          genr nuevonombrevar = formula
 
 Crea nuevas variables, normalmente por medio de transformaciones de
@@ -352,7 +401,8 @@ Las funciones permitidas pertenecen a estos grupos:
 
 -Funciones estadísticas: mean (media aritmética), median (mediana),
 var (varianza), sd(desviación típica o standard), sum, cov (covarianza),
-corr (coeficiente de correlación), min (mínimo) y max (máximo).
+corr (coeficiente de correlación), min (mínimo), max (máximo) y sst (suma 
+de desviaciones con respecto a la media, al cuadrado).
 
 -Funciones de series temporales: lag (retardo), lead (adelanto),
 diff (primera diferencia), ldiff (log-diferencia, o primera diferencia del
@@ -405,6 +455,9 @@ de 'genr':
   rho(i)       coeficiente de autorregresión de orden i-ésimo de los residuos
   vcv(xi,xj)   covarianza entre los coeficientes de las variables xi y xj
 
+Las series definidas internamente 'uhat' e 'yhat' contienen, respectivamente, 
+los residuos y valores ajustados de la última regresión.
+
 La variable interna $nobs contiene el número de observaciones en el rango
 muestral actual, que puede ser o puede no ser igual al $T del último modelo.
 
@@ -430,30 +483,17 @@ Ejemplos de instrucciones 'genr':
   genr y = - sort(-x)    [ordena x en orden decreciente]
   genr y = int(x)        [trunca x y guarda su valor entero como y]
   genr y = abs(x)        [guarda los valores absolutos de x]
-  genr y = sum(x)        [suma los valores de x excluyendo los valores perdidos 
--999]
+  genr y = sum(x)        [suma los valores de x excluyendo los valores perdidos -999]
   genr y = cum(x)        [acumula x: y(t) es la suma de x hasta t]
-  genr aa = $ess         [aa = suma de cuadrados de los residuos de la última 
-regresión]
-  genr x = coeff(sqft)   [guarda en x el coeficiente de la variable sqft 
-obtenido 
+  genr aa = $ess         [aa = suma de cuadrados de los residuos de la última regresión]
+  genr x = coeff(sqft)   [guarda en x el coeficiente de la variable sqft obtenido
                           en el último modelo]
-  genr rho4 = rho(4)     [guarda en rho4 el coeficiente autorregresivo de cuarto 
-
-
-
-orden
+  genr rho4 = rho(4)     [guarda en rho4 el coeficiente autorregresivo de cuarto orden
                           obtenido del último modelo (supone un modelo ar)]
-  genr cv=vcv(x1, x2)    [covarianza entre los coeficientes de x1 y x2 en el 
-último modelo]
+  genr cv=vcv(x1, x2)    [covarianza entre los coeficientes de x1 y x2 en el último modelo]
   genr x=uniform()       [variable pseudo-aleatoria uniforme, de rango 0 a 1]
-  genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y desv. 
-típica 3]
-  genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 grados 
-
-
-
-de libertad]
+  genr x=3*normal()      [variable pseudo-aleatoria normal, de media 0 y desv. típica 3]
+  genr x=pvalue(t,20,1.4)[valor p para 1.4, bajo la distribución t con 20 grados de libertad]
 
 Sugerencias sobre variables ficticias:
 
@@ -466,7 +506,7 @@ genr d1 = (x=1), genr d2 = (x=2), y genr d3 = (x=3).
 
 #
 gnuplot
-@Graphs
+@Gráficos
 Uso:            gnuplot yvar1 xvar [ opción ]
                 gnuplot yvar1 yvar2 xvar [ opción ]
 		gnuplot yvar xvar ficticia -z
@@ -490,7 +530,7 @@ usando la instrucción de consola "gnuplot gpttmp<n>.plt".
 
 #
 graph
-@Graphs
+@Gráficos
 Uso:            graph var1 var2
                 graph -o var1 var2
                 graph var1 var2 var3
@@ -504,7 +544,7 @@ observados y predichos contra el tiempo.
 
 #
 hausman
-@Tests
+@Contrastes
 Uso:          hausman
 
 Este contraste sólo está disponible después de haber estimado un modelo 
@@ -538,9 +578,9 @@ efectos fijos.
 
 #
 hccm
-@Estimation
-Uso:           hccm vardep varindep
-            o  hccm -o vardep varindep
+@Estimación
+Uso:           hccm vardep varindeps
+            o  hccm -o vardep varindeps
 
 (Heteroskedasticity Consistent Covariance Matrix)
 Presenta las estimaciones de MCO con las desviaciones típicas de los
@@ -551,20 +591,20 @@ método "jacknife" de MacKinnon-White.
 
 #
 help
-@Utilities
+@Utilidades
 help              proporciona una lista de instrucciones gretl
 help nombreinst   describe la instrucción 'nombreinst' (p.ej. help smpl)
 
 #
 hilu
-@Estimation
-Uso:            hilu vardep varindep       o    hilu -o vardep varindep
+@Estimación
+Uso:            hilu vardep varindeps      o    hilu -o vardep varindeps
 Ejemplos:       hilu 1 0 2 4 6 7                hilu -o 1 0 2 4 6 7
                 hilu y 0 x1 x2 x3               hilu -o y 0 x1 x2 x3
 
 Calcula las estimaciones de un modelo utilizando el procedimiento de
 búsqueda de Hildreth-Lu (se hace el ajuste fino usando el método de
-Cochrane-Orcutt) siendo 'vardep' la variable dependiente y 'varindep'
+Cochrane-Orcutt) siendo 'vardep' la variable dependiente y 'varindeps'
 una lista de variables independientes separadas por espacios. Utilice el
 número 0 para incluir un término constante. Se representa gráficamente la
 suma de cuadrados de los residuos del modelo transformado contra los
@@ -572,19 +612,20 @@ valores de rho desde -0.99 hasta 0.99. Si se usa la opción -o se mostrará
 también la matriz de varianzas y covarianzas de los coeficientes. Finalmente,
 la última regresión transformada se estima para el rango de observación
 primobs+1 ultobs que esté en efecto. Los residuos de esta regresión
-transformada se guardan bajo el nombre 'uhat'.
+transformada se guardan bajo el nombre 'uhat' y los valores ajustados, 
+bajo el nombre 'yhat'.
 
 
 #
 hsk
-@Estimation
-Uso:            hsk vardep varindep
-            o   hsk -o vardep varindep
+@Estimación
+Uso:            hsk vardep varindeps
+            o   hsk -o vardep varindeps
 
-Calcula estimaciones corregidas de heterocedasticidad y sus estadísticos 
-asociados. Se ajusta una regresión auxiliar para el logaritmo de los 
-cuadrados de los residuos (utilizando los cuadrados de las variables 
-independientes, pero no sus productos cruzados) y a partir de esta 
+Calcula estimaciones corregidas de heterocedasticidad y sus estadísticos
+asociados. Se ajusta una regresión auxiliar para el logaritmo de los
+cuadrados de los residuos (utilizando los cuadrados de las variables
+independientes, pero no sus productos cruzados) y a partir de esta
 estimación se obtienen los estimadores de mínimos cuadrados ponderados del
 modelo inicial. Si se usa la opción -o, se mostrará también la matriz de
 varianzas y covarianzas estimada de los coeficientes de la regresión.
@@ -592,7 +633,7 @@ varianzas y covarianzas estimada de los coeficientes de la regresión.
 
 #
 if
-@Programming
+@Programación
 Uso:            if condición_boolena
                   instrucción1
                   instrucción2 ...
@@ -612,7 +653,7 @@ estar emparejada con una orden "endif".
 
 #
 import
-@Dataset
+@Conjunto de datos
 Uso:            import archivo_csv
                 import -o archivo_box
 
@@ -630,20 +671,32 @@ of the Census'.
 
 #
 info
-@Dataset
+@Conjunto de datos
 Uso:          info
 
 Muestra la información contenida en el archivo de cabecera correspondiente
 al fichero de datos actual. Esta información debe estar limitada entre los 
 caracteres "(*" y "*)", estando situados estos marcadores en líneas separadas.
 
+
+#
+label
+@Conjunto de datos
+Uso:          label nombre_var -d "Etiqueta descriptiva" -n "nombre a mostrar"
+
+Establece la etiqueta descriptiva (si se da la opción -d seguida de una cadena 
+entre dobles comillas) y/o el 'nombre a mostrar' (si se da la opción -n seguida 
+por una cadena entre comillas) para la variable. Si una variable tiene un "nombre 
+a mostrar" será este el utilizado en los títulos de sus gráficos.
+
 #
 labels
-@Dataset
+@Conjunto de datos
 Uso:          labels
 
 Muestra las etiquetas informativas de las variables que se hayan definido
-utilizando la instrucción 'genr'.
+utilizando la instrucción 'genr' o se le hayan aplicado mediante la 
+instrucción "label".
 
 #
 lad
@@ -660,7 +713,7 @@ extracciones.
 
 #
 lags
-@Transformations
+@Transformaciones
 Uso:          lags listavar
 
 Crea variables nuevas que son valores retardados de cada una de
@@ -674,7 +727,7 @@ subrayado.
 
 #
 ldiff
-@Transformations
+@Transformaciones
 Uso:          ldiff listavar
 
 Se calcula la primera diferencia del logaritmo natural de cada 
@@ -683,11 +736,28 @@ que lleva el prefijo "ld_". Así por ejemplo, "ldiff x y" crea las
 nuevas variables
 
                ld_x = ln[x(t)] - ln[x(t-1)]
-               ld_y = ln[y(t)] - ln[y(t-1)].
+               ld_y = ln[y(t)] - ln[y(t-1)]
+
+
+#
+leverage
+@Contrastes
+(Predominio)
+Uso:          leverage
+
+Debe ejecutarse inmediatamente después de una instrucción "ols". Calcula el
+predominio (leverage) (h) para cada punto de la muestra sobre la cual se estimó el modelo
+previo. Muestra el residuo de cada observación (u) junto con su predominio y una
+medida de su influencia sobre las estimaciones, u * h / (1 - h). Los "puntos
+influyentes" para los cuales el valor de h excede de 2k/n (donde k es el número
+de parámetros que se estiman y n es el tamaño de la muestra) se marcan con un
+asterisco. Para detalles sobre los conceptos de predominio (leverage) e influencia
+ver Davidson y MacKinnon, Estimation and Inference in Econometrics, chapter 2.
+
 
 #
 lmtest
-@Tests
+@Contrastes
 Uso:            lmtest
                 lmtest -o
 
@@ -707,7 +777,7 @@ multicolinealidad exacta.
 
 #
 logit
-@Estimation
+@Estimación
 Uso:          logit vardep varindeps
 
 Regresión Logit: la variable dependiente debería ser una variable binaria.
@@ -722,7 +792,7 @@ constante, son cero.
 
 #
 logs
-@Transformations
+@Transformaciones
 Uso:          logs listavar
 
 Se obtiene el logaritmo natural de cada variable en 'listavar' y el
@@ -732,7 +802,7 @@ resultado se guarda en una nueva variable con prefijo "l_". Así por ejemplo,
 
 #
 loop
-@Programming
+@Programación
 Uso:            loop número_de_veces
                 loop while condición
 		loop for i=principio..final
@@ -743,9 +813,14 @@ Ejemplos:       loop 1000
 Esta instrucción (de guión) da acceso a un modo especial, en el cual el
 programa acepta órdenes para repetirlas o un número de veces especificado,
 o mientras se satisfaga una condición, o para valores sucesivos de la
-variable índice i (interna). Dentro de un bucle, sólo se pueden utilizar
-7 instrucciones: genr, ols, print, sim, smpl, store y summary (store no puede
-usarse en un bucle de 'while'). Con genr y ols se pueden hacer muchas cosas.
+variable índice i (interna). 
+
+Dentro de un bucle, sólo se puede utilizar un subconjunto de instrucciones de
+gretl: genr, ols, print, sim, smpl, store y summary (store no puede
+usarse en un bucle de 'while'). Dentro de un bucle que se ejecute un
+"número_de_veces" están disponibles algunas instrucciones adicionales de
+estimación, concretamente 'hccm', 'hsk' y 'lad'.
+
 Se sale del modo de introducción de órdenes de bucle con la instrucción
 "endloop": en este punto se ejecutarán las órdenes de todo el bloque. Los
 bucles construidos mediante "loop" no pueden estar anidados.
@@ -794,7 +869,7 @@ Ejemplo de programa de bucle (Monte Carlo):
 
 #
 meantest
-@Tests
+@Contrastes
 Uso:            meantest x1 x2
                 meantest x1 x2 -o
 
@@ -808,14 +883,14 @@ diferentes números de observaciones no perdidas para las dos variables)
 
 #
 mpols
-@Estimation
+@Estimación
 (Mínimos cuadrados ordinarios de alta precisión)
-Uso:            mpols vardep varindep
+Uso:            mpols vardep varindeps
 Ejemplos:       ols 1 0 2 4 6 7
                 ols y 0 x1 x2 x3
 
 Calcula los estimadores de mínimos cuadrados ordinarios con 'vardep' como
-variable dependiente y 'varindep' como lista de variables independientes,
+variable dependiente y 'varindeps' como lista de variables independientes,
 utilizando para ello operaciones aritméticas con precisión múltiple. Las 
 variables pueden especificarse por su nombre o por su número; utilice el número 
 cero para el término constante. Esta instrucción sólo está disponible si gretl 
@@ -835,7 +910,7 @@ la que será elevada a las potencias que se indican.
 
 #
 multiply
-@Transformations
+@Transformaciones
 Uso:            multiply x sufijo vars
 Ejemplos:       multiply invpop pc 3 4 5 6
                 multiply 1000 big x1 x2 x3
@@ -855,9 +930,63 @@ que crearán las variables
 
 rentapc = renta * invpob, gastopc = gasto * invpop.
 
+
+#
+nls
+@Estimación
+(Mínimos cuadrados no lineales)
+
+Realiza una estimación mediante mínimos cuadrados no lineales (MCNL)
+usando una versión modificada del algoritmo de Levenberg-Marquandt. El 
+usuario debe proporcionar la especificación de una función. Los parámetros de
+esta función deben ser declarados y se les deben asignar valores iniciales 
+antes de la estimación (usando la instrucción genr). Opcionalmente, el 
+usuario puede proporcionar las derivadas de la función de regresión con 
+respecto a cada uno de los parámetros; si no se proporcionan las derivadas 
+analíticas, se calcula una aproximación numérica del Jacobiano.
+
+Con un ejemplo es más fácil entender lo que se requiere. A continuación 
+figura un lote de instrucciones completo para estimar la función de consumo 
+no lineal mencionada en el libro de William Greene, Econometric Analysis, en el
+capítulo 11 de la cuarta edición, o capítulo 9 de la quinta.  
+(Los números a la izquierda de las líneas están como referencia y no son parte 
+de las instrucciones.)
+
+ 1  open greene11_3.gdt
+ 2  ols C 0 Y
+ 3  genr alfa = coeff(0)
+ 4  genr beta = coeff(Y)
+ 5  genr gamma = 1.0
+ 6  nls C = alfa + beta * Y^gamma
+ 7  deriv alfa = 1
+ 8  deriv beta = Y^gamma
+ 9  deriv gamma = beta * Y^gamma * log(Y)
+10  end nls
+
+Muchas veces es conveniente inicializar los parámetros como referencia a un
+modelo lineal relacionado; esto se hace aquí en las líneas 2 a 5. Los parámetros
+alfa, beta y gamma podrían hacerse iguales a cualquier valor inicial (no
+necesariamente deben basarse en un modelo estimado mediante MCO), pero no está
+garantizada la convergencia del procedimiento MCNL para valores iniciales
+arbitrarios.
+
+Las instrucciones de MCNL presentes, ocupan las líneas 6 a 10. En la línea 6,
+se utiliza la instrucción "nls" (nonlinear least squares): se especifica una 
+variable dependiente, seguida por un signo igual y a su derecha la especificación
+de una función. La sintaxis para la expresión de la derecha es la misma que para
+la instrucción "genr". Las tres líneas siguientes determinan las derivadas de la 
+función de regresión con respecto a cada uno de los parámetros. Cada línea comienza 
+con la palabra clave "deriv", proporciona el nombre de un parámetro, el signo 
+igual y una expresión mediante la cual se calcula la derivada (de nuevo, la sintaxis 
+aquí es la misma que para la instrucción "genr"). Estas líneas "deriv" son opcionales, 
+pero, si es posible, se recomienda proporcionarlas. La línea 10 "end nls" completa la 
+instrucción y pide su ejecución.
+
+Para más detalles sobre la estimación MCNL véase el manual de gretl.
+
 #
 noecho
-@Programming
+@Programación
 Uso:          noecho
 
 Suprime el eco normal al introducir las instrucciones, cuando se ejecuta
@@ -866,7 +995,7 @@ un guión gretl. Ver también la orden "print" (variante de cadena literal).
 
 #
 nulldata
-@Dataset
+@Conjunto de datos
 Uso:            nulldata tamaño_serie
 Ejemplo:        nulldata 100
 
@@ -880,27 +1009,29 @@ conjuntamente con "loop".
 
 #
 ols
-@Estimation
-Uso:            ols vardep varindep       o      ols -o vardep varindep
+@Estimación
+Uso:            ols vardep varindeps      o      ols -o vardep varindeps
 Ejemplos:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7
                 ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3
 
 Calcula las estimaciones de mínimos cuadrados ordinarios con 'vardep'
-como variable dependiente y siendo 'varindep' una lista de variables 
-independientes. Con la opción -o se mostrará la matriz de covarianzas 
-de los coeficientes de regresión. Las variables pueden introducirse 
-mediante nombres o números. Utilice el número cero para incluir un 
-término constante. El programa muestra también los valores p para los 
-estadísticos t (a dos colas) y F. Un valor p inferior a 0.01 indica 
+como variable dependiente y siendo 'varindeps' una lista de variables
+independientes. Con la opción -o se mostrará la matriz de covarianzas
+de los coeficientes de regresión. Las variables pueden introducirse
+mediante nombres o números. Utilice el número cero para incluir un
+término constante. El programa muestra los valores p para los
+estadísticos t a dos colas. Un valor p inferior a 0.01 indica
 significatividad al nivel del 1 por ciento y se denota mediante tres *.
 Dos * indican significatividad a niveles entre el 1 y el 5 por ciento.
+Si laregresión tiene más de una variable independiente, se muestra también 
+el estadístico F para comprobar el ajuste total, junto a su valor p.
 También se muestran los estadísticos de selección de modelos descritos
 en el libro de Ramanathan, sección 4.4.
 
  
 #
 omit
-@Tests
+@Contrastes
 Uso:            omit varlist
 Ejemplos:       omit 5 7 9
 		omit xx yy zz
@@ -915,7 +1046,7 @@ implica que los coeficientes son conjuntamente significativos al nivel del
 
 #
 omitfrom
-@Tests
+@Contrastes
 Uso:            omitfrom ID_de_modelo varlist
 Ejemplo:        omitfrom 2 5 7 9
 
@@ -927,7 +1058,7 @@ arriba se omiten las variables con números 5, 7 y 9 del modelo 2.
 
 #
 open
-@Dataset
+@Conjunto de datos
 Uso:          open datafile
 
 Abre un fichero de datos. Si ya hay un fichero de datos abierto, se reemplaza 
@@ -937,7 +1068,7 @@ por el nuevo. El programa intentará detectar el formato del fichero de datos
 
 #
 panel
-@Dataset
+@Conjunto de datos
 Uso:            panel
                 panel -s
 	        panel -c
@@ -953,7 +1084,7 @@ periodo temporal). Ver también la instrucción "setobs".
 
 #
 pergm
-@Statistics
+@Estadísticos
 Uso:            pergm varname
                 pergm varname -o
 
@@ -968,7 +1099,7 @@ hipótesis nula es que el orden de integración de la serie es cero.
 
 #
 plot
-@Graphs
+@Gráficos
 Uso:            plot x1       plot x1 x2
                 plot 3 7      plot -o x1 x2
 
@@ -984,7 +1115,7 @@ observada y su predicción)
 
 #
 pooled
-@Estimation
+@Estimación
 Uso:         pooled vardep varindeps
 
 Estima un modelo mediante MCO (ver la instrucción "ols" para detalles sobre 
@@ -994,7 +1125,7 @@ sobre dichos diagnósticos ver la orden "hausman".
 
 #
 print
-@Printing
+@Imprimir
 
 Imprime (=muestra en pantalla) los valores de las variables especificadas para
 el rango primobs-ultobs actual, o muestra una cadena literal.
@@ -1012,7 +1143,7 @@ son necesarias, pero se necesitan las iniciales para obtener este resultado.
 
 #
 probit
-@Estimation
+@Estimación
 Uso:          probit vardep varindeps
 
 Regresión probit: la variable dependiente debe ser una variable binaria. Se
@@ -1027,7 +1158,7 @@ el término constante, son cero.
 
 #
 pvalue
-@Utilities
+@Utilidades
 Uso en modo interactivo:      pvalue
 Uso en modo batch (o en modo consola gretl):
      Distribución normal:     pvalue 1 valor_x
@@ -1042,14 +1173,14 @@ gld son los grados de libertad del denominador.
 
 #
 quit
-@Utilities
+@Utilidades
 
 Salir de gretl. ('q' es un atajo; 'x' sale sin preguntar si se deben guardar
 los resultados.)
 
 #
 reset
-@Tests
+@Contrastes
 Uso:          reset
 
 Debe utilizarse inmediatamente después de una instrucción ols. Realiza el
@@ -1060,7 +1191,7 @@ añadidos son cero.
 
 #
 rhodiff
-@Transformations
+@Transformaciones
 Uso:           rhodiff listarho ; listavar
 Ejemplos:      rhodiff .65 ; 2 3 4
                rhodiff r1 r2 ; x1 x2 x3
@@ -1077,7 +1208,7 @@ los nombres de variables previamente definidas.
 
 #
 rmplot
-@Graphs
+@Gráficos
 (Gráfico Rango-Media)
 Uso:           rmplot nombrevar
 
@@ -1104,7 +1235,7 @@ ajustada en la regresión de los rangos sobre las medias.
 
 #
 run
-@Programming
+@Programación
 Uso:          run fichero
 
 Si el fichero "fichero" contiene instrucciones gretl, esta orden (que se
@@ -1113,7 +1244,7 @@ muy útil de ejecutar instrucciones 'batch' desde una sesión interactiva.
 
 #
 runs
-@Tests
+@Contrastes
 Uso:            runs nombre_var
 
 Realiza el contraste de rachas no paramétrico sobre aleatoriedad de la
@@ -1126,7 +1257,7 @@ runs signx1
 
 #
 scatters
-@Graphs
+@Gráficos
 Uso:            scatters vary ; listavarx    o
 		scatters listavary ; varx
 Ejemplos:       scatters 1 ; 2 3 4 5
@@ -1144,7 +1275,7 @@ de gráficos es seis; cualquier variable extra en la lista será ignorada.
 
 #
 seed
-@Programming
+@Programación
 Uso:            seed entero
 
 Establece la semilla para el generador de números pseudo-aleatorios para
@@ -1156,7 +1287,7 @@ repetibles será necesario establecer la semilla de forma manual.
 
 #
 setobs
-@Dataset
+@Conjunto de datos
 Uso:            setobs periodicidad primobs
 Ejemplos:       setobs 4 1990.1
                 setobs 12 1978.03
@@ -1180,7 +1311,7 @@ las dos periodicidades, 5 y 7)
 
 #
 setmiss
-@Dataset
+@Conjunto de datos
 Uso:           setmiss -1
                setmiss 100 varx
 
@@ -1196,7 +1327,7 @@ variables especificadas. Así, en el segundo ejemplo se interpreta "100" como
 
 #
 shell
-@Utilities
+@Utilidades
 Uso:		! [shell command]
 
 Un "!" al comienzo de la línea de instrucciones gretl se interpreta como 
@@ -1205,7 +1336,7 @@ del shell desde dentro de gretl.
 
 #
 sim
-@Dataset
+@Conjunto de datos
 Uso:            sim primobs ultobs y a0 a1 a2 ...
 
 Simula valores para y para los periodos desde "primobs" hasta "ultobs". La 
@@ -1224,7 +1355,7 @@ Ejemplos:
 
 #
 smpl
-@Dataset
+@Conjunto de datos
 Uso:           smpl primobs ultobs
                smpl -o var_ficticia
                smpl -o
@@ -1263,7 +1394,7 @@ utilizando la instrucción "setobs".
 
 #
 spearman
-@Statistics
+@Estadísticos
 Uso:            spearman x y
                 spearman x y -o
 
@@ -1283,7 +1414,7 @@ Por ejemplo:
 
 #
 square
-@Transformations
+@Transformaciones
 Uso:          square x y       o     square -o x y
 
 Genera nuevas variables que son los cuadrados y productos cruzados de las 
@@ -1295,7 +1426,7 @@ ya que se obtendría la misma variable.
 
 #
 store
-@Dataset
+@Conjunto de datos
 Usos:            store nombre_fichero opción
                  store nombre_fichero opción lista_var
 Ejemplos:        store misdatos.gdt
@@ -1331,7 +1462,7 @@ ninguno: los datos se guardan en formato xml
 
 #
 summary
-@Statistics
+@Estadísticos
 summary          muestra los estadísticos principales para todas las variables
 summary 3 7 9    muestra los estadísticos principales para las variables 
                  número 3, 7, y 9
@@ -1344,25 +1475,44 @@ máximo, coeficiente de asimetría y exceso de curtosis.
 
 
 #
+system
+@Estimación
+(Sistema)
+
+Uso:            system type=tipo_de_sistema save=vars_a_guardar
+Ejemplos:       system type=sur
+                system type=sur save=resids
+                system type=sur save=resids,fitted
+
+Inicia un sistema de ecuaciones. Actualmente sólo es posible utilizar el tipo de sistema
+"sur" (Seemingly Unrelated Regressions, regresiones aparentemente no relacionadas). En el
+campo "save=" de la instrucción Vd puede elegir si guardar los residuos ("resids") y/o los
+valores ajustados ("fitted"). El sistema debe de contener al menos dos ecuaciones, que se
+especifican mediante la instrucción "equation" y debe terminar con una línea "end system".
+
+
+#
 tabprint
-@Printing
+@Imprimir
 Uso:            tabprint
                 tabprint -o
+		tabprint -f nombre_de_fichero
 
 Debe ejecutarse después de la estimación de una modelo por medio de 'ols'. 
-Copia el modelo estimado en forma de entorno tabular de LaTeX, a un fichero
-con nombre "model_N.tex", donde N es el número de modelos estimados hasta el
-momento en la sesión actual. Esto puede incorporarse en un documento LaTeX.
-Ver también la orden 'eqnprint'.
+Copia el modelo estimado en forma de entorno tabular de LaTeX. Si se especifica 
+un nombre de un fichero mediante la opción -f, el resultado va a ese fichero, en 
+otro caso va a un fichero con nombre "model_N.tex", donde N es el número de modelos 
+estimados hasta el momento en la sesión actual. Esto puede incorporarse en un 
+documento LaTeX. Ver también la orden 'eqnprint'.
 
-Si se proporciona la opción -o el fichero que se guarda es un documento 
-completo LaTeX listo para ser procesado; en caso contrario debe incluirse 
+Si se proporciona la opción -o el fichero que se guarda es un documento
+completo LaTeX listo para ser procesado; en caso contrario debe incluirse
 dentro de un documento.
 
 
 #
 testuhat
-@Tests
+@Contrastes
 Uso:          testuhat
 
 Debe seguir a una orden de estimación de modelos. Da la distribución de 
@@ -1371,7 +1521,7 @@ normalidad.
 
 #
 tsls
-@Estimation
+@Estimación
 Uso:            tsls vardep listavar1 ; listavar2       [-o es opcional]
 Ejemplo:        tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6
 
@@ -1389,8 +1539,8 @@ predeterminadas.
 
 #
 var
-@Estimation
-Uso:            var orden vardep varindep
+@Estimación
+Uso:            var orden vardep varindeps
 Ejemplos:       var 4 x1 const time x2 x3
                 var 3 1 0 2 3 4
 
@@ -1398,7 +1548,7 @@ Organiza y estima (vía MCO) una autorregresión vectorial. El primer
 argumento especifica el orden del retardo, después se proporciona la 
 estructura para la primera ecuación, de igual forma que en la instrucción 
 'ols'. No hay que incluir retardos entre los elementos de la lista 
-"varindep" -- se añadirán automáticamente. Se ejecutará una regresión 
+"varindeps" -- se añadirán automáticamente. Se ejecutará una regresión
 para cada variable de la lista, excluyendo la constante, la tendencia 
 temporal y las posibles variables ficticias. Los resultados de cada 
 ecuación incluyen los contrastes F para restricciones cero de todos
@@ -1407,7 +1557,7 @@ los retardos de cada variable y un contraste F para el máximo retardo.
 
 #
 varlist
-@Dataset
+@Conjunto de datos
 Uso:          varlist
 
 Muestra una lista de las variables definidas actualmente. "list" y "ls"
@@ -1416,7 +1566,7 @@ son sinónimos.
 
 #
 vartest
-@Tests
+@Contrastes
 Uso:          vartest x1 x2
 
 Calcula el estadístico F para la hipótesis nula de que las varianzas 
@@ -1425,14 +1575,14 @@ poblacionales de las variables x1 y x2 son iguales y muestra su valor p.
 
 #
 wls
-@Estimation
-Uso:          wls varpesos vardep varindep            [-o opcional]
+@Estimación
+Uso:          wls varpesos vardep varindeps            [-o opcional]
 
 Se calculan los estimadores de mínimos cuadrados ponderados siendo
 "varpesos" la variable de ponderaciones, "vardep" la variable
-dependiente y "varindep" la lista de variables independientes. Más
+dependiente y "varindeps" la lista de variables independientes. Más
 concretamente, se ejecuta una regresión MCO de varpesos*vardep
-con respecto a varpesos*varindep. 
+con respecto a varpesos*varindeps.
 
 Si la variable de ponderaciones es una variable ficticia, esto es 
 equivalente a eliminar todas las observaciones que tengan valor cero 

@@ -2368,7 +2368,7 @@ int allocate_mp_varnames (mp_results *mpvals)
 {
     int i, n = mpvals->ncoeff + 1;
 
-    mpvals->varnames = malloc(n * sizeof(char *));
+    mpvals->varnames = malloc(n * sizeof *mpvals->varnames);
     if (mpvals->varnames == NULL) return 1;
 
     for (i=0; i<n; i++) {

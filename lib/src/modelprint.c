@@ -1820,7 +1820,6 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 {
     int i;
     char startdate[9], enddate[9];
-    int ncoeff = mpvals->ncoeff;
     int nobs = mpvals->t2 - mpvals->t1 + 1;
 
     ntodate(startdate, mpvals->t1, pdinfo);
@@ -1843,7 +1842,7 @@ void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 		       "        STD. ERROR\n"));
     }
 
-    for (i=0; i<ncoeff; i++) {
+    for (i=0; i<mpvals->ncoeff; i++) {
 	print_mpvals_coeff(mpvals, i, prn);
     }
     pputs(prn, "\n");

@@ -85,7 +85,8 @@ Estos gráficos (debidos a Tukey y Chambers) presentan la distribución de
 una variable. La caja central incluye el 50 por ciento de los datos que
 están en el medio de la distribución, es decir, está delimitada por el
 primer y el tercer cuartiles. Las "patillas" se extienden desde esta
-caja hasta los valores mínimo y máximo. Se dibuja una línea a lo largo de
+caja hasta los valores mínimo y máximo. Se dibuja una línea a lo largo 
+de
 la caja en la situación de la mediana.
 
 En el caso de cajas recortadas, el recorte muestra los límites de un
@@ -174,6 +175,21 @@ restringida' y la original como 'restringida'. Este estadístico es
 adecuado para contrastar la hipótesis nula de que no hay cambio
 estructural en el citado punto de ruptura.
 
+#
+coeffsum
+@Contrastes
+(Suma de coeficientes)
+Realiza el contraste de la suma de determinados coeficientes.
+
+Esta instrucción necesita una lista de variables, que se elige a partir
+del conjunto de variables independientes de un modelo dado.
+
+Calcula la suma de los coeficientes de las variables elegidas y muestra
+este valor junto con su desviación típica y el valor p para la hipótesis 
+
+
+
+nula de que la suma es cero.
 
 #
 coint
@@ -204,19 +220,26 @@ Escribiendo datos a una frecuencia inferior.
 Cuando se añade a un conjunto de datos una serie que es de una
 frecuencia superior, es necesario "compactar" esa nueva serie. Por
 ejemplo, una serie mensual tendrá que ser "compactada" para introducirla
+en un conjunto de datos trimestral. Además, a veces es posible que 
+deseemos compactar a una frecuencia menor un conjunto de datos completo 
+(por ejemplo, antes de añadir al conjunto de datos una variable de 
+frecuencia inferior).
 
 
-en un conjunto de datos trimestral. Se ofrecen tres opciones para el
+Se ofrecen cuatro opciones para el
 "compactado":
 
 1. Promediado: el valor escrito en el conjunto de datos será la media
 aritmética de los valores de la serie en cuestión. Por ejemplo, el valor
-
-
 introducido para el primer trimestre de 1990 será la media de los
 valores de enero, febrero y marzo de 1990.
 
-2. Valores de 'final de periodo': el valor escrito en el conjunto de
+2. Suma: el valor escrito en el conjunto de datos será la suma de las
+correspondientes observaciones de la serie de más alta frecuencia. Por 
+ejemplo, el valor del primer trimestre será la suma de los valores de 
+enero, febrero y marzo.
+
+3. Valores de 'final de periodo': el valor escrito en el conjunto de
 datos es el último valor del periodo correspondiente en los datos
 de más alta frecuencia. Por ejemplo, en el primer trimestre de 1990 se
 introduciría el valor de marzo de 1990.
@@ -296,12 +319,12 @@ factorized plot
 @Gráficos
 (Gráfico con factor de separación)
 
-Esta orden necesita que Vd elija tres variables y la última de ellas
+Esta orden necesita que Vd. elija tres variables y la última de ellas
 ha de ser una variable ficticia (con valor 1 ó 0). La variable Y se
 representa con respecto a la variable X, con los puntos coloreados de
 forma diferente dependiendo del valor de la tercera variable.
 
-Por ejemplo: si vd tiene datos de salarios y nivel de educación para una
+Por ejemplo: si Vd. tiene datos de salarios y nivel de educación para una
 muestra de varias personas; y Vd también tiene una variable ficticia con
 valor 1 para los hombres y 0 para las mujeres (como en el fichero que se
 suministra con gretl, data7-2). Un "gráfico factorizado" de SALARIOS
@@ -330,13 +353,17 @@ ejemplo (x>10) devuelve 1 si x(t)>10 y en caso contrario 0.
 
 Las funciones que se soportan pertenecen a estos grupos:
 
-- Funciones matemáticas standard: abs, cos, exp, int (parte entera), ln
+- Funciones matemáticas estándard: abs, cos, exp, int (parte entera), ln
 (logaritmo natural: log es un sinónimo), sin (seno), sqrt (raíz
 cuadrada).
 
 - Funciones estadísticas: mean (media aritmética), median (mediana), var
-(varianza), sd (desviación típica o estandard), sum, cov (covarianza),
-corr (coeficiente de correlación, min (mínimo), max (máximo).
+(varianza), sd (desviación típica o estándard), sum, cov (covarianza),
+corr (coeficiente de correlación, min (mínimo), max (máximo) y sst (suma 
+
+
+
+de desviaciones desde la media al cuadrado).
 
 - Funciones de series temporales: lag (retardo), lead (adelanto), diff
 (primera diferencia), ldiff (log-diferencia, o primera diferencia del
@@ -381,7 +408,8 @@ La variable interna $nobs contiene el número de observaciones del
 dominio muestral actual, que puede ser o puede no ser igual al $T del
 último modelo.
 
-La variable interna $pd contiene la periodicidad o frecuencia de los datos (por 
+La variable interna $pd contiene la periodicidad o frecuencia de los 
+datos (por 
 ejemplo, 4 para datos trimestrales, 12 para mensuales).
 
 La variable interna t hace referencia a las observaciones, comenzando en
@@ -439,31 +467,64 @@ generando gráficos de varios tipos
 Gretl llama a un programa aparte, gnuplot, para generar los gráficos.
 Gnuplot es un programa gráfico de múltiples características con
 miles de opciones. Gretl le proporciona a Vd acceso directo, vía una
-interface gráfica, a sólo un pequeño subconjunto de esas opciones e
+interface gráfica, a un subconjunto de esas opciones e
 intenta elegir para vd los valores adecuados; también permite que vd
 tome completamente el control sobre los detalles del gráfico si así lo
 desea.
 
-Bajo MS Windows vd puede hacer click en la esquina de arriba a la
-izquierda de la ventana del gráfico, obteniendo así un menú porta-papeles
-le permite elegir varias cosas (incluyendo copiar el gráfico al
-porta-papeles de Windows y enviarlo a la impresora).
+Cuando se muestra un gráfico, Vd. puede pulsar en la ventana del gráfico
+para obtener un menú emergente con las siguientes opciones:
 
-Para tener un control completo sobre el gráfico, siga este
-procedimiento:
+- Guardar como postscript (guarda el gráfico en formato postscript 
+  encapsulado [EPS]).
+- Guardar como PNG (guarda el gráfico en formato PNG [Portable Network 
+  Graphics]).
+- Guardar a sesión como icono (el gráfico aparecerá como un icono cuando
+  Vd. elija "vista de iconos" desde el menú de sesión).
+- Zoom (le permite seleccionar un área dentro del gráfico para una 
+  inspección con más detalle).
+- Imprimir (sólo si utiliza el manejador de escritorio Gnome [en Linux]:
+  le permite imprimir directamente el gráfico).
+- Copiar al portapapeles (sólo en la versión MS Windows: le permite 
+pegar
+  el gráfico en otras aplicaciones Windows, como por ejemplo MS Word).
+- Editar (abre un menú de control para el gráfico que le permite ajustar
+  varios parámetros de su apariencia visual).
+- Cerrar (cierra la ventana del gráfico).
 
-- Cierre la ventana del gráfico.
-- Desde el menú de sesión, seleccione "Añadir el último gráfico".
-- En la ventana de iconos de sesión, haga click con el botón
-derecho del ratón sobre el icono del nuevo gráfico y seleccione o
-"Editar usando GUI" o "Editar las órdenes de gráfico". La entrada de
-" Editar usando GUI" abre un controlador gráfico para gnuplot que le
-permite refinar varios aspectos del gráfico. La entrada de "Editar las
-órdenes de gráfico" abre una ventana de editor que contiene el fichero
-actual de instrucciones de Gnuplot para generar el gráfico: esto le
-proporciona a vd un control completo sobre los detalles del gráfico --si
-vd conoce algo sobre gnuplot. Para más detalles,ver
-http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.org.
+Si Vd. conoce Gnuplot y desea tener un control más preciso sobre la 
+apariencia del gráfico que la que tiene a su disposición por medio del 
+menú 
+de control (opción "editar"), tiene dos alternativas más:
+
+- Una vez que el gráfico ha sido guardado como un icono de sesión, Vd. 
+puede 
+pulsar con el botón derecho del ratón sobre su icono, para abrir otro 
+menú 
+emergente. Una de las opciones aquí es "Editar las instrucciones del 
+gráfico",
+esto abre una ventana de edición que contiene las instrucciones actuales 
+
+
+de
+Gnuplot. Vd. ahora puede editar esas instrucciones y guardarlas para 
+procesarlas más tarde o enviarlas a Gnuplot (usando la opción 
+"Archivo/Enviar a gnuplot" del menú de la ventana de edición).
+
+- Otra manera de guardar las instrucciones del gráfico (o de guardar el 
+gráfico 
+en otros formatos diferentes de EPS o PNG) es usar la opción "Editar" en 
+
+
+el 
+menú emergente de un gráfico, para invocar el controlador de gráfico, 
+después 
+pulsar sobre la solapa "Salida a fichero". Entonces se le presenta un 
+menú con
+diferentes formatos en los que guardar el gráfico.
+
+Para conocer más detalles sobre Gnuplot, ver
+http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.info.
 
 #
 hccm
@@ -510,16 +571,44 @@ La serie de ponderaciones se forma como 1/sqrt(exp(fit)), donde "fit"
 representa a los valores ajustados obtenidos de la regresión auxiliar.
 
 #
+label
+@Conjunto de datos
+(etiqueta)
+
+En esta caja de diálogo Vd. puede:
+
+* Renombrar una variable.
+
+* Añadir o editar la descripción de una variable: esto aparece al lado
+  del nombre de la variable en la ventana principal de gretl.
+
+* Añadir o editar el "nombre mostrado" de la variable. Esta cadena (de 
+máximo 19 caracteres) se muestra en el lugar del nombre de la variable
+cuando la variable se representa en un gráfico. Así por ejemplo Vd. 
+puede asociar una cadena de caracteres más comprensible como por ejemplo 
+
+
+
+"Tasa de inflación" a una variable de nombre más críptico, como "ti3".
+
+
+#
 lad
 @Estimación
 (Estimador de mínima desviación absoluta)
 Uso:          lad vardep varindeps
 
 Calcula una regresión que minimiza la suma de las desviaciones absolutas
-entre los valores observados y los valores ajustados de la variable dependiente. 
-Las estimaciones de los coeficientes se obtienen utilizando el algoritmo simplex 
-de Barrodale-Roberts; se muestra un aviso si la solución no es única. Las 
-desviaciones típicas se obtienen utilizando un método 'bootstrap' con 500
+entre los valores observados y los valores ajustados de la variable 
+dependiente.
+Las estimaciones de los coeficientes se obtienen utilizando el algoritmo 
+
+
+simplex 
+de Barrodale-Roberts; se muestra un aviso si la solución no es única. 
+Las 
+desviaciones típicas se obtienen utilizando un método 'bootstrap' con 
+500
 iteraciones.
 
 #
@@ -629,7 +718,7 @@ de datos puede después ser leído y analizado mediante gretl.
 
 Ejemplo de código de bucle (Monte Carlo):
 
-   genr x = 100 * uniform()
+   genr x = 100*uniform()
    loop 100
    genr u = normal()
    genr y = (10*x) + (20*u)
@@ -686,6 +775,9 @@ meantest
 Calcula el estadístico t para el contraste de la hipótesis nula de que
 las medias poblacionales, de las dos variables elegidas, son iguales. 
 También muestra su valor p. La instrucción puede ejecutarse con o sin el 
+
+
+
 supuesto de que las varianzas de las dos variables son iguales (aunque 
 esto supondrá una diferencia en el estadístico de contraste sólo si hay 
 un número diferente de valores no-perdidos para las dos variables).
@@ -709,6 +801,87 @@ ejemplo, si una serie determinada está codificada de forma que el valor
 (sin las comillas). Gretl entonces leerá los -1 como observaciones
 perdidas.
 
+#
+model table
+@Imprimir
+(Tabla de modelos)
+
+En la investigación econométrica es muy común estimar varios modelos con 
+
+
+
+una misma variable dependiente -- los modelos difieren con respecto a 
+las 
+variables independientes que se incluyen en ellos, o quizás con respecto
+a el estimador utilizado. En esta situación es conveniente presentar los 
+
+
+
+resultados de las regresiones en forma de una tabla, donde cada columna 
+contiene los resultados (coeficientes estimados y desviaciones típicas) 
+para un modelo dado y cada fila contiene las estimaciones para una 
+variable 
+dada a través de cada modelo.
+
+Gretl proporciona un medio para construir esa tabla (y copiarla en texto 
+
+
+
+plano, LaTeX o RTF). Aquí se indica cómo hacerlo:
+
+
+1. Estimar el modelo que Vd. desee incluir en la tabla, y en la ventana 
+del 
+   modelo, en el menú "Archivo", seleccionar "Guardar a sesión como 
+icono" o
+   "Guardar a sesión como icono y cerrar".
+
+2. Repetir el paso 1 para cada uno de los modelos a incluir en la tabla 
+   (hasta un total de seis modelos).
+
+3. Cuando haya finalizado de estimar los modelos, abra la "vista de 
+iconos" de 
+   su sesión gretl (seleccionando "Vista de iconos" bajo el menú de 
+"Sesión" en
+   la ventana principal de gretl, o pulsando sobre el icono "vista de 
+iconos 
+   de sesión" en la barra de herramientas de gretl).
+
+4. En la vista de iconos de sesión hay un icono con título "Tabla de 
+modelos". 
+   Decida qué modelo desea que aparezca en columna más a la izquierda de 
+
+
+la tabla 
+   de modelos y añádalo a la tabla, o arrastrando su icono sobre el 
+icono de la 
+   tabla de modelos o pulsando con el botón derecho del ratón en el 
+icono del
+   modelo y seleccionando "Añadir a la tabla de modelos" desde el menú 
+emergente.
+
+5. Repetir el paso 4 para cada uno de los modelos que desee incluir en 
+la tabla. 
+   El segundo modelo que seleccione aparecerá en la segunda columna de 
+la 
+   izquierda y así sucesivamente.
+
+6. Cuando acabe de construir la tabla de modelos, puede verla pulsando 
+dos 
+   veces sobre su icono. En la ventana que aparece, bajo el menú "Editar" 
+
+
+
+   tiene Vd. la opción de copiar la tabla al portapapeles en varios 
+formatos.
+
+7. Si el orden de los modelos en la tabla no es el que Vd. quería, pulse 
+
+
+con
+   el botón derecho del ratón sobre el icono de la tabla de modelos y 
+seleccione
+   "Vaciar la tabla". Después vuelva al paso 4 e inténtelo de nuevo.
 
 #
 mpols
@@ -718,21 +891,75 @@ mpols
 Calcula las estimaciones de mínimos cuadrados ordinarios utilizando 
 operaciones aritméticas con precisión múltiple. Esta orden sólo está 
 disponible si gretl está configurado con soporte para GMP, la biblioteca 
+
+
+
 de precisión múltiple GNU. Hay que señalar que la precisión de los 
 resultados de la regresión puede verse limitada por (a) la precisión de 
 los datos que se leen del fichero y (b) cualquier transformación 
 realizada usando la instrucción genr, que trabaja utilizando operaciones 
+
+
+
 aritméticas ordinarias de punto flotante y doble precisión.
+
+
+#
+nls
+@Estimación
+(Mínimos cuadrados no lineales)
+
+Realiza la estimación por el método de mínimos cuadrados no lineales (MCNL),
+usando una versión modificada del algoritmo de Levenberg-Marquandt. Vd.
+debe de proporcionar la especificación de una función; se recomienda que
+Vd, si es posible, proporcione también las expresiones de las derivadas
+de esa función con respecto a cada uno de los parámetros.
+
+Ejemplo: supongamos que tenemos un conjunto de datos con las variables
+C e Y (p.ej: greene11_3.gdt) y deseamos estimar una función de consumo
+no lineal de la forma
+                         C = alfa + beta * Y^gamma
+
+Los parámetros alfa, beta y gamma deben añadirse primero al conjunto de
+datos y se les debe asignar unos valores iniciales. Esto puede hacerse
+utilizando la instrucción 'genr' o por medio de las opciones de los menús.
+Las instrucciones 'genr' aropiadas se pueden escribir en la ventana de
+especificación  de mínimos cuadrados no lineales antes de la
+especificación de la función.
+
+En la ventana de MCNL escribiríamos las siguientes líneas:
+
+C = alfa + beta * Y^gamma
+deriv alfa = 1
+deriv beta = Y^gamma
+deriv gamma = beta * Y^gamma * log(Y)
+
+La primera línea especifica la función de regresión y las siguientes 
+tres líneas proporcionan las derivadas de esa función con respecto a
+cada uno de los parámetros.
+ 
+Si no se proporcionan las derivadas usando "deriv", se calcula una 
+aproximación numérica al Jacobiano.
+
+Si los parámetros alfa, beta y gamma no hubieran sido declarados 
+previamente las líneas anteriores podrían ir precedidas de las 
+siguientes:
+
+genr alfa = 1
+genr beta = 1
+genr gamma = 1
+
+Para más detalles sobre la estimación MCNL véase el manual de gretl.
 
 #
 nulldata
 @Conjunto de datos
 
 Establece un conjunto de datos "vacío", que contiene sólo una constante, 
-con periodicidad 1 y el número de observaciones que se especifique. Esto 
+con periodicidad 1 y el número de observaciones que se especifique. Esto
 puede utilizarse por motivo de simulación: algunas instrucciones genr
-(p.ej. genr uniform(), genr normal(), genr time) generarán datos 
-artificiales desde cero para rellenar el conjunto de datos. La 
+(p.ej. genr uniform(), genr normal(), genr time) generarán datos
+artificiales desde cero para rellenar el conjunto de datos. La
 instrucción "nulldata" también puede ser útil combinada con "loop".
 
 #
@@ -741,12 +968,12 @@ ols
 Método de mínimos cuadrados ordinarios
 
 Calcula las estimaciones de mínimos cuadrados ordinarios de los
-coeficientes del modelo especificado. Muestra los valores p para los 
-estadísticos t (a dos colas) y F. Un valor p inferior a 0.01 indica 
-significatividad al nivel del 1 por ciento. También se muestran una 
+coeficientes del modelo especificado. Muestra los valores p para los
+estadísticos t (a dos colas) y F. Un valor p inferior a 0.01 indica
+significatividad al nivel del 1 por ciento. También se muestran una
 serie de estadísticos de selección de modelos.
 
-Ver "/Temas/Estimación/Cuadro de diálogo" para ayuda sobre el uso del 
+Ver "/Temas/Estimación/Cuadro de diálogo" para ayuda sobre el uso del
 cuadro de diálogo.
 
 #
@@ -754,10 +981,10 @@ omit
 @Contrastes
 Omite variables de un modelo y contrasta su significatividad conjunta
 
-Las variables elegidas se sustraen del modelo anterior y se estima el 
-nuevo modelo. Si se omite más de una variable, se mostrará el 
-estadístico F de Wald para las variables omitidas junto con su valor p 
-(sólo para el método MCO). Un valor p inferior a 0.05 indica que los 
+Las variables elegidas se sustraen del modelo anterior y se estima el
+nuevo modelo. Si se omite más de una variable, se mostrará el
+estadístico F de Wald para las variables omitidas junto con su valor p
+(sólo para el método MCO). Un valor p inferior a 0.05 indica que los
 coeficientes son conjuntamente significativos al nivel del 5 por ciento.
 
 
@@ -768,39 +995,39 @@ online databases
 Acceso a bases de datos vía internet
 
 Gretl puede acceder a las bases de datos del sitio web de gretl, en
-Wake Forest University (su ordenador debe de estar conectado a 
+Wake Forest University (su ordenador debe de estar conectado a
 internet para que esto funcione).
 
 Bajo el menú "Archivo, Revisar bases de datos" seleccione la entrada
-"sobre servidor". Ahora debería aparecer una ventana mostrando las bases 
+"sobre servidor". Ahora debería aparecer una ventana mostrando las bases
 de datos gretl disponibles en Wake Forest (dependiendo del lugar en que
 Vd se encuentre y de su conexión a internet, esto puede tardar
-unos segundos). Junto al nombre de la base de datos y a una pequeña 
-descripción aparecerá una entrada de "Estado local": esto indica si Vd 
-ha instalado la base de datos de forma local (sobre el disco duro de su 
+unos segundos). Junto al nombre de la base de datos y a una pequeña
+descripción aparecerá una entrada de "Estado local": esto indica si Vd
+ha instalado la base de datos de forma local (sobre el disco duro de su
 ordenador) y si es así, si se encuentra actualizada con la versión
 que actualmente hay en el servidor. Si Vd ha instalado localmente una
-determinada base de datos y ésta se encuentra actualizada, no hay 
-ninguna ventaja por acceder a ella mediante el servidor. Pero para una 
-base de datos que no esté instalada y/o actualizada, Vd puede desear un 
+determinada base de datos y ésta se encuentra actualizada, no hay
+ninguna ventaja por acceder a ella mediante el servidor. Pero para una
+base de datos que no esté instalada y/o actualizada, Vd puede desear un
 listado de las series de datos: haga "click" sobre "Obtener listado de
-series". Esto hace aparecer una nueva ventana desde la cual se pueden 
-visualizar los valores de la serie de datos que se elija, representar 
-esos valores o importarlos al espacio de trabajo de gretl. Estas tareas 
-pueden realizarse usando el menú "Series" o por medio del menú 
-contextual que aparece el hacer "click" con el botón derecho del ratón 
-sobre una serie dada. También es posible buscar entre el listado una 
+series". Esto hace aparecer una nueva ventana desde la cual se pueden
+visualizar los valores de la serie de datos que se elija, representar
+esos valores o importarlos al espacio de trabajo de gretl. Estas tareas
+pueden realizarse usando el menú "Series" o por medio del menú
+contextual que aparece el hacer "click" con el botón derecho del ratón
+sobre una serie dada. También es posible buscar entre el listado una
 variable determinada (con el menú "Buscar").
 
-Si se desea un acceso a los datos más rápido, o un acceso a los datos 
-"off line", es posible seleccionar la línea que muestra la base de datos 
-que interese, en la ventana inicial de bases de datos, y presionar el 
-botón "Instalar". Esto hará que la base de datos se descargue en formato 
+Si se desea un acceso a los datos más rápido, o un acceso a los datos
+"off line", es posible seleccionar la línea que muestra la base de datos
+que interese, en la ventana inicial de bases de datos, y presionar el
+botón "Instalar". Esto hará que la base de datos se descargue en formato
 comprimido, después se puede descomprimir e instalar en el disco
-duro. Más adelante podremos encontrarla bajo el menú "Archivo, Revisar 
+duro. Más adelante podremos encontrarla bajo el menú "Archivo, Revisar
 bases de datos, Nativa gretl". (Esta característica de gretl depende de
-otros proyectos de software de 'fuente abierta': la biblioteca de 
-compresión de datos zlib y el programa descargador GNU "wget", de los 
+otros proyectos de software de 'fuente abierta': la biblioteca de
+compresión de datos zlib y el programa descargador GNU "wget", de los
 cuales gretl ha tomado prestados algunos trozos de código).
 
 #
@@ -808,18 +1035,18 @@ panel
 @Conjunto de datos
 Establece estructura de datos de panel
 
-Las dos opciones disponibles aquí son "series temporales apiladas" y 
+Las dos opciones disponibles aquí son "series temporales apiladas" y
 "secciones cruzadas apiladas". Si se quiere hacer uso de la
-instrucción "MCO combinados" y sus diagnósticos de panel asociados, 
-gretl debe saber en qué forma están organizados los datos. "Series 
-temporales apiladas" significa que los bloques del fichero de datos son 
-series temporales para cada una de las unidades de sección cruzada. Por 
-ejemplo, las primeras 10 filas de datos podrían representar los valores 
-de ciertas variables para el país A durante 10 periodos, las siguientes 
-10 filas los valores para el país B durante los mismos 10 periodos, y 
-así sucesivamente. "Secciones cruzadas apiladas" significa que los 
-bloques del fichero de datos son secciones cruzadas para cada uno de los 
-periodos. Por ejemplo, las primeras 6 filas de datos podrían representar 
+instrucción "MCO combinados" y sus diagnósticos de panel asociados,
+gretl debe saber en qué forma están organizados los datos. "Series
+temporales apiladas" significa que los bloques del fichero de datos son
+series temporales para cada una de las unidades de sección cruzada. Por
+ejemplo, las primeras 10 filas de datos podrían representar los valores
+de ciertas variables para el país A durante 10 periodos, las siguientes
+10 filas los valores para el país B durante los mismos 10 periodos, y
+así sucesivamente. "Secciones cruzadas apiladas" significa que los
+bloques del fichero de datos son secciones cruzadas para cada uno de los
+periodos. Por ejemplo, las primeras 6 filas de datos podrían representar
 los valores de ciertas variables para los países A a F para el año 1970,
 las siguientes 6 filas los valores para los mismos países en 1971, y así
 sucesivamente.
@@ -827,6 +1054,13 @@ sucesivamente.
 Si se guarda el fichero de datos después de establecer este atributo, la
 información se grabará en el fichero de datos y no será necesario
 establecerlo de nuevo la próxima vez que se usen estos datos.
+
+
+Nótese que esta opción no cambia la estructura de sus datos de panel,
+simplemente fija la interpretación de esa estructura por parte de gretl. Si Vd.
+desea convertir un conjunto de datos de panel que ahora están en forma de
+secciones cruzadas apiladas a series temporales apiladas, use la opción de menú
+"Reestructurar panel".
 
 
 #
@@ -902,26 +1136,51 @@ range-mean
 @Gráficos
 Gráfico Rango-Media
 
-Este es un gráfico simple para ayudar a decidir si una serie temporal, y(t), 
-tiene o no varianza constante. Se toma la muestra completa t=1,...,T y se divide 
-en pequeñas submuestras de tamaño arbitrario k [gretl elige k=sqrt(T)]. La 
-primera submuestra se forma con y(1),...,y(k), la segunda con y(k+1),...,y(2k), 
-y así sucesivamente. Para cada submuestra se calcula la media muestral y el 
-rango (=máximo-mínimo) y se construye un gráfico con las medias en el eje 
-horizontal y los rangos en el vertical. De esta forma, cada submuestra está 
-representada por un punto en este plano. Si la varianza de la serie fuera 
-constante los rangos de las submuestras no debería depender de sus medias; si se 
-observa que los puntos se aproximan a una recta con pendiente creciente, esto 
-sugiere que la varianza de la serie aumenta cuando la media aumenta; si los 
-puntos se aproximan a una recta con pendiente decreciente, esto sugiere que la 
+Este es un gráfico simple para ayudar a decidir si una serie temporal, 
+y(t), 
+tiene o no varianza constante. Se toma la muestra completa t=1,...,T y 
+se divide 
+en pequeñas submuestras de tamaño arbitrario k [gretl elige k=sqrt(T)]. 
+La 
+primera submuestra se forma con y(1),...,y(k), la segunda con 
+y(k+1),...,y(2k), 
+y así sucesivamente. Para cada submuestra se calcula la media muestral y 
+
+
+el 
+rango (=máximo-mínimo) y se construye un gráfico con las medias en el 
+eje 
+horizontal y los rangos en el vertical. De esta forma, cada submuestra 
+está 
+representada por un punto en este plano. Si la varianza de la serie 
+fuera 
+constante los rangos de las submuestras no debería depender de sus 
+medias; si se 
+observa que los puntos se aproximan a una recta con pendiente creciente, 
+
+
+esto 
+sugiere que la varianza de la serie aumenta cuando la media aumenta; si 
+los 
+puntos se aproximan a una recta con pendiente decreciente, esto sugiere 
+que la 
 varianza está disminuyendo cuando la media aumenta.
 
-Además del gráfico, gretl presenta una ventana de resultados que muestra las 
-medias y los rangos para cada submuestra, el coeficiente estimado para la
-pendiente en una regresión MCO de los rangos sobre las medias y el valor p para 
+Además del gráfico, gretl presenta una ventana de resultados que muestra 
+
+
+las 
+medias y los rangos para cada submuestra, el coeficiente estimado para 
+la
+pendiente en una regresión MCO de los rangos sobre las medias y el valor 
+
+
+p para 
 el contraste de la hipótesis nula de que esta pendiente es cero. Si el 
-coeficiente de pendiente es significativo al nivel de significación del 10 por 
-ciento, en el gráfico se muestra también la recta ajustada en la regresión de 
+coeficiente de pendiente es significativo al nivel de significación del 
+10 por 
+ciento, en el gráfico se muestra también la recta ajustada en la 
+regresión de 
 los rangos sobre las medias.
 
 #
@@ -944,6 +1203,9 @@ Representa un conjunto de gráficos cruzados de la "variable del eje Y"
 elegida con respecto a las "variables del eje X" elegidas
 consecutivamente. Puede ser útil echar un vistazo a estos gráficos al 
 hacer un análisis exploratorio de datos. El número máximo de gráficos es 
+
+
+
 seis; cualquier variable extra en el eje X será ignorada.
 
 #
@@ -955,6 +1217,9 @@ Requiere como entrada un entero. Establece la semilla para el generador
 de números pseudoaleatorios utilizado por las opciones "Aleatoria 
 uniforme" y "Aleatoria normal" bajo el menú de "Datos, Añadir 
 variables". Por defecto, la semilla se establece, utilizando la hora del 
+
+
+
 sistema, cuando se inicia el programa. Si se desea obtener secuencias de
 números pseudoaleatorios repetibles es necesario establecer la semilla
 de forma manual.
@@ -1022,6 +1287,9 @@ debería tener los valores 0 o 1 en cada observación. La muestra se
 restringirá a aquellas observaciones para las cuales la variable 
 ficticia tome valor 1. (Haciendo "click" en la línea de una variable en 
 la ventana principal de los datos se insertará el nombre de esa variable 
+
+
+
 en la caja de diálogo).
 
 Si se elige "Muestra/Restringir a partir de criterio..." es necesario 
@@ -1034,6 +1302,9 @@ estar concatenadas utilizando los operadores lógicos "&" (Y lógico) y
 
 La entrada de menú "Muestra/Quitar todas las obs. con valores 
 perdidos..." redefine la muestra excluyendo todas las observaciones para 
+
+
+
 las que los valores de una o más variables están "perdidos" (dejando 
 sólo las observaciones completas, en las que hay un valor numérico para 
 todas las variables).
@@ -1046,6 +1317,9 @@ de los datos) se perderá. Es posible reimponer de nuevo la estructura
 mediante "Muestra/Establecer frecuencia, observación inicial..."
 
 Para sólo reorganizar la muestra especificando una observación inicial y 
+
+
+
 una final ver "smpl".
 
 
@@ -1066,12 +1340,21 @@ spearman
 @Estadísticos
 
 Calcula el coeficiente de correlación por rangos de Spearman para un par 
+
+
+
 de variables especificado. No es necesario antes ordenar y hacer el
 ranking de las variables, la función se encarga de ello.
 
 El ranking automático es de mayor a menor (es decir, al dato mayor se le 
+
+
+
 asigna rango 1). Si se necesita invertir este ranking, esto se puede 
 hacer creando una nueva variable que sea el negativo de la original. Por 
+
+
+
 ejemplo:
 
   genr altx = -x
@@ -1100,7 +1383,8 @@ los datos guardados.
      de datos grandes.
      
 Nótese que si Vd. desea guardar el valor de cualquier escalar generado 
-en una sesión de gretl (en lugar de una serie de datos), Vd. debería usar
+en una sesión de gretl (en lugar de una serie de datos), Vd. debería 
+usar
 la instrucción "store" en la ventana de consola de gretl o en un guión
 de gretl y especificar la lista de variables a guardar.
 

@@ -1,0 +1,19 @@
+# Reproduce some of the time-series material in Stock and Watson,
+# Introduction to Econometrics, chapter 12
+# Note that S and W seem to use "robust" standard errors throughout
+open sw_ch12.gdt
+genr infl = 400 * log(PUNEW/PUNEW(-1))
+diff infl 
+lags d_infl LHUR
+smpl 1962:1 1999:4
+ols d_infl 0 d_infl_1
+ols d_infl 0 d_infl_1 d_infl_2 d_infl_3 d_infl_4
+omit d_infl_2 d_infl_3 d_infl_4
+ols d_infl 0 d_infl_1 d_infl_2 d_infl_3 d_infl_4 LHUR_1
+ols d_infl 0 d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
+  LHUR_1 LHUR_2 LHUR_3 LHUR_4
+# ADF regression
+genr infl_1 = infl(-1)
+ols d_infl 0 infl_1 d_infl_1 d_infl_2 d_infl_3 d_infl_4
+genr adft = coeff(infl_1) / stderr(infl_1)
+print adft

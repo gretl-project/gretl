@@ -199,7 +199,13 @@ struct _GRETLTEST {
 struct _GRETLSUMMARY {
     int n;
     int *list;
-    double *xskew, *xkurt, *xmedian, *coeff, *sderr, *xpx, *xpy;
+    double *xskew; 
+    double *xkurt;
+    double *xmedian;
+    double *coeff;
+    double *sderr;
+    double *xpx;
+    double *xpy;
 };
 
 struct _CORRMAT {

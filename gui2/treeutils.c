@@ -186,6 +186,25 @@ static void cell_edited (GtkCellRendererText *cell,
 
 /* .................................................................. */
 
+static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (key->keyval == GDK_q) { 
+	gtk_widget_destroy(vwin->w);
+    }
+    else if (key->keyval == GDK_f) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    menu_find(vwin, 1, NULL);
+	    return TRUE;
+	}	
+    }
+    return FALSE;
+}
+
+/* .................................................................. */
+
 GtkWidget *list_box_create (windata_t *win, GtkBox *box, 
 			    gint ncols, int hidden_col, 
 			    const char *titles[]) 
@@ -274,6 +293,10 @@ GtkWidget *list_box_create (windata_t *win, GtkBox *box,
 			  G_CALLBACK(listbox_select_row),
 			  win);
     }
+
+    g_signal_connect (G_OBJECT(view), "key_press_event",
+		      G_CALLBACK(catch_listbox_key),
+		      win);
 
     g_signal_connect (G_OBJECT(view), "button_press_event",
 		      G_CALLBACK(listbox_double_click),

@@ -7,6 +7,7 @@ lib/src/estimate.c
 lib/src/generate.c
 lib/src/graphing.c
 lib/src/gretl_errors.c
+lib/src/gretl_matrix.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c
@@ -17,6 +18,7 @@ lib/src/nls.c
 lib/src/nonparam.c
 lib/src/printout.c
 lib/src/pvalues.c
+lib/src/qr_estimate.c
 lib/src/random.c
 lib/src/strutils.c
 lib/src/subsample.c
@@ -29,6 +31,7 @@ cli/gretlcli.c
 gui/boxplots.c
 gui/calculator.c
 gui/callbacks.c
+gui/console.c
 gui/database.c
 gui/datafiles.c
 gui/dialogs.c
@@ -39,6 +42,8 @@ gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
 gui/library.c
+gui/model_table.c
+gui/objectsave.c
 gui/plotps.c
 gui/selector.c
 gui/series_view.c
@@ -63,6 +68,7 @@ gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/library.c
 gui2/model_table.c
+gui2/objectsave.c
 gui2/selector.c
 gui2/series_view.c
 gui2/session.c
@@ -72,7 +78,6 @@ gui2/treeutils.c
 gui2/webget.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
-plugin/gretl_matrix.c
 plugin/import_common.c
 plugin/johansen.c
 plugin/lad.c

@@ -59,6 +59,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
+static void correct_line_color (windata_t *vwin);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -470,6 +471,19 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	edit_script_help(NULL, NULL, vwin);
     }
 
+    else if (key->keyval == GDK_Return) {
+	/* newline: correct line color */
+	correct_line_color(vwin);
+    }
+
+#if 0
+    else if (key->keyval == GDK_numbersign) {
+	/* comment: colorize text */
+	text_view_flip_blue(vwin, TRUE);
+	return TRUE;
+    }
+#endif
+
     else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
 	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
@@ -495,6 +509,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	}
 #endif
     }
+
     return FALSE;
 }
 
@@ -1233,6 +1248,31 @@ static GtkTextTagTable *gretl_tags_new (void)
 
 /* ........................................................... */
 
+static void correct_line_color (windata_t *vwin)
+{
+    GtkTextBuffer *buf;
+    GtkTextIter start, end;
+    gint linelen;
+    gchar *txt;
+
+    buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    gtk_text_buffer_get_iter_at_mark(buf, &end, 
+				     gtk_text_buffer_get_insert(buf));
+    linelen = gtk_text_iter_get_chars_in_line(&end);
+    start = end;
+    gtk_text_iter_backward_chars(&start, linelen);
+
+    txt = gtk_text_buffer_get_text(buf, &start, &end, FALSE);
+
+    if (*txt == '#') {
+	gtk_text_buffer_apply_tag_by_name (buf, "bluetext",
+					   &start, &end);
+    }
+    g_free(txt);
+}
+
+/* ........................................................... */
+
 static windata_t *common_viewer_new (int role, const char *title, 
 				     gpointer data, int record)
 {
@@ -1418,6 +1458,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     title = make_viewer_title(role, filename);
     vwin = common_viewer_new(role, (title != NULL)? title : filename, 
 			     NULL, !doing_script && role != CONSOLE);
+
     if (title != NULL) g_free(title);
     if (vwin == NULL) return NULL;
 
