@@ -96,6 +96,9 @@ static int add_term_from_nlfunc (const char *vname)
     double *coeff;
     int i, v, nt = nlspec.nparam + 1; 
 
+    /* if term is a math function, skip */
+    if (math_word(vname)) return 0;
+
     v = varindex(pdinfo, vname);
     if (v >= pdinfo->v) {
 	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
@@ -128,7 +131,7 @@ static int add_term_from_nlfunc (const char *vname)
     terms[nt-1].deriv = NULL;
     nlspec.coeff[nt-1] = (*pZ)[v][0];
     nlspec.nparam += 1;
-	
+
     return 0;
 }
 

@@ -220,6 +220,13 @@ static void catch_double_symbols (char *str)
 		str[i] = ' ';
 	    }	    
 	}
+	/* recognize "**" as well as "^" for power */
+	else if (str[i] == '*') {
+	    if (str[i-1] == '*') {
+		str[i-1] = '^';
+		str[i] = ' ';
+	    }
+	}
     }
 }
 
@@ -386,6 +393,19 @@ static void otheruse (const char *str1, const char *str2)
 {
     sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
 			    "variable name"), str1, str2); 
+}
+
+/* .......................................................... */
+
+int math_word (const char *s)
+{
+    int i;
+
+    for (i=0; ; i++) {
+	if (math[i] == NULL) break;
+        if (strcmp(s, math[i]) == 0) return 1;
+    }
+    return 0;
 }
 
 /* .......................................................... */
@@ -1929,10 +1949,7 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
         else return R_NUMERIC;
     }
 
-    for (i=0; ; i++) {
-	if (math[i] == NULL) break;
-        if (strcmp(ss, math[i]) == 0) return R_MATH;
-    }
+    if (math_word(ss)) return R_MATH;
 
     i = varindex(pdinfo, ss);
     if (i < pdinfo->v || i == UHATNUM || i == YHATNUM ||

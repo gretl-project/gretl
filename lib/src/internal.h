@@ -108,4 +108,6 @@ void rearrange_list (int *list);
 
 int vars_identical (const double *x, const double *y, int n);
 
+int math_word (const char *s);
+
 #endif /* GRETL_INTERNAL_H */
