@@ -1263,7 +1263,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     return 0;
 }
 
-extern gint populate_filelist (windata_t *fdata); /* datafiles.c */
+extern gint populate_filelist (windata_t *fdata, gpointer p); /* datafiles.c */
 
 /* ........................................................... */
 
@@ -1337,7 +1337,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 	    strcpy(strrchr(dbpath, '.'), ".bin");
 	    open_named_db_list(dbpath);
         }
-	populate_filelist(win);
+	populate_filelist(win, NULL);
     }
 
     free(dbname);

@@ -2855,8 +2855,10 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	for (i=0; i<pdinfo->n; i++) free (pdinfo->S[i]);
 	free(pdinfo->S);
     }
+
     pdinfo->S = S;
     pdinfo->markers = REGULAR_MARKERS;
+
     return 0;
 }
 

@@ -66,7 +66,7 @@ static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_popup (void);
 static void build_selection_popup (void);
 static gint popup_activated (GtkWidget *widget, gpointer data);
-static void check_for_extra_data (void);
+
 static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void auto_store (void);
@@ -741,7 +741,6 @@ int main (int argc, char *argv[])
     restore_sample_state(FALSE);
     main_menubar_state(FALSE);
 			  
-    check_for_extra_data();
 #ifdef HAVE_TRAMO
     set_tramo_ok(-1);
 #endif
@@ -1435,82 +1434,6 @@ static void build_selection_popup (void)
 	gtk_widget_show(item);
 	gtk_menu_append(GTK_MENU(selection_popup), item);
     }
-}
-
-/* ........................................................... */
-
-static void check_for_extra_data (void)
-{
-    DIR *dir;
-    extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char jwpath[MAXLEN];  /* datafiles.c */
-    extern char dgpath[MAXLEN];  /* datafiles.c */
-    extern char etmpath[MAXLEN]; /* datafiles.c */    
-    int gotpwt = 0, gotwool = 0, gotguj = 0, gotetm = 0;
-
-    /* first check for Penn World Table */
-    build_path(paths.datadir, "pwt56", pwtpath, NULL); 
-    /* try at system level */
-    if ((dir = opendir(pwtpath)) != NULL) {
-	closedir(dir);
-	gotpwt = 1;
-    } else {
-	build_path(paths.userdir, "pwt56", pwtpath, NULL); 
-	/* and at user level */
-	if ((dir = opendir(pwtpath)) != NULL) {
-	    closedir(dir);
-	    gotpwt = 1; 
-	}
-    }
-    if (!gotpwt) *pwtpath = 0;
-
-    /* then check for Wooldridge data */
-    build_path(paths.datadir, "wooldridge", jwpath, NULL); 
-    /* try at system level */
-    if ((dir = opendir(jwpath)) != NULL) {
-	closedir(dir);
-	gotwool = 1;
-    } else {
-	build_path(paths.userdir, "wooldridge", jwpath, NULL); 
-	/* and at user level */
-	if ((dir = opendir(jwpath)) != NULL) {
-	    closedir(dir);
-	    gotwool = 1;
-	}
-    }
-    if (!gotwool) *jwpath = 0;
-
-    /* and Gujarati data */
-    build_path(paths.datadir, "gujarati", dgpath, NULL); 
-    /* try at system level */
-    if ((dir = opendir(dgpath)) != NULL) {
-	closedir(dir);
-	gotguj = 1;
-    } else {
-	build_path(paths.userdir, "gujarati", dgpath, NULL); 
-	/* and at user level */
-	if ((dir = opendir(dgpath)) != NULL) {
-	    closedir(dir);
-	    gotguj = 1;
-	}
-    }
-    if (!gotguj) *dgpath = 0;
-
-    /* Davidson-MacKinnon data data */
-    build_path(paths.datadir, "ETM", etmpath, NULL); 
-    /* try at system level */
-    if ((dir = opendir(etmpath)) != NULL) {
-        closedir(dir);
-        gotetm = 1;
-    } else {
-        build_path(paths.userdir, "ETM", etmpath, NULL); 
-	/* and at user level */
-        if ((dir = opendir(etmpath)) != NULL) {
-            closedir(dir);
-            gotetm = 1;
-        }
-    }
-    if (!gotetm) *etmpath = 0;
 }
 
 /* ........................................................... */

@@ -47,6 +47,7 @@ static int path_append (char *file, const char *path)
     int n, pathlen = strlen(file) + strlen(path) + 1;
 
     if (pathlen > MAXLEN) return 1;
+
     strcpy(temp, path);
     n = strlen(temp);
     if (temp[n - 1] != SLASH && n < MAXLEN - 1) {
@@ -55,6 +56,7 @@ static int path_append (char *file, const char *path)
     }
     strcat(temp, file);
     strcpy(file, temp);
+
     return 0;
 }
 
@@ -832,7 +834,7 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned char opt)
 }
 
 #ifdef WIN32
-char *unslash (const char *src)
+static char *unslash (const char *src)
 {
     size_t n = strlen(src);
     char *dest = malloc(n);
@@ -1034,7 +1036,6 @@ static int get_quoted_filename (const char *line, char *fname)
     }
     return 1;
 }
-
 
 /**
  * getopenfile:

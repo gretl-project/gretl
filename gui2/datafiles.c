@@ -31,6 +31,7 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <errno.h>
 #include <time.h>
 
@@ -42,152 +43,396 @@
 extern GdkColor gray;
 #endif
 
-char pwtpath[MAXLEN];
-char jwpath[MAXLEN];
-char dgpath[MAXLEN];
-char etmpath[MAXLEN];
-
 static GtkWidget *browsers[N_BROWSER_TYPES];
 
 static GtkWidget *files_window (windata_t *fdata);
-static GtkWidget *files_notebook (windata_t *fdata, GtkWidget **datapages, 
-				  int code);
+static GtkWidget *files_notebook (windata_t *fdata, int code);
 static int populate_notebook_filelists (windata_t *fdata, 
-					GtkWidget **datapages,
 					GtkWidget *notebook,
 					int code);
-gint populate_filelist (windata_t *fdata);
 void browser_open_data (GtkWidget *w, gpointer data);
 void browser_open_ps (GtkWidget *w, gpointer data);
 
 extern int jwdata;  /* settings.c */
 
+typedef struct _file_collection file_collection;
+
+struct _file_collection {
+    char *path;
+    char *descfile;
+    char *title;
+    int which;
+    GtkWidget *page;
+};
+
 enum {
-    RAMU_DATA = 0,
-    GREENE_DATA,
-    JW_DATA,
-    DG_DATA,
-    ETM_DATA,
-    PWT_DATA,
-    MAX_DATA,
-    RAMU_PS,
-    GREENE_PS,
-    PWT_PS,
-    MAX_PS
-} page_file_codes;
+    STACK_PUSH,
+    STACK_POP_DATA,
+    STACK_POP_PS,
+    STACK_RESET_DATA,
+    STACK_RESET_PS,
+    STACK_DESTROY
+};
 
-#define N_PS_FILES 3
+enum {
+    RECOG_OK,
+    RECOG_ERROR,
+    RECOG_NOT
+};
 
-/* ........................................................... */
+enum {
+    COLL_NONE,
+    COLL_DATA,
+    COLL_PS
+};
 
-static int read_ps_descriptions (windata_t *fdata)
+static char *full_path (const char *s1, const char *s2);
+gint populate_filelist (windata_t *fdata, gpointer p);
+
+#ifdef _WIN32
+static char *unslash (const char *s)
+{
+    size_t n = strlen(s);
+    char *dest = malloc(n + 1);
+
+    if (dest != NULL) strcpy(dest, s);
+
+    if (dest[n-1] == '\\' || dest[n-1] == '/') {
+	dest[n-1] = '\0';
+    }
+
+    return dest;
+}
+#endif
+
+static int recognized_collection (file_collection *coll)
+{
+    const file_collection recognized_data[] = {
+	{ "BASE", "descriptions", "Ramanathan", COLL_DATA, NULL },
+	{ "greene", "wg_descriptions", "Greene", COLL_DATA, NULL },
+	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
+	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
+	{ "pwt56", "descriptions", "Penn World Table", COLL_DATA, NULL },
+	{ NULL, NULL, NULL, COLL_DATA, NULL }
+    }; 
+    const file_collection recognized_ps[] = {
+	{ "BASE", "ps_descriptions", "Ramanathan", COLL_PS, NULL },
+	{ "BASE", "wg_ps_descriptions", "Greene",  COLL_PS, NULL },
+	{ "pwt56", "ps_descriptions", "Penn World Table", COLL_PS, NULL },
+	{ NULL, NULL, NULL, COLL_PS, NULL }
+    }; 
+    char test[MAXLEN];
+    int i, n = strlen(coll->path);
+
+    strcpy(test, coll->path);
+    if (strstr(test, paths.gretldir) && test[n-1] == '.') {
+	/* FIXME: see if this works on Windows */
+	strcpy(test, "BASE");
+    }
+
+    for (i=0; recognized_data[i].path != NULL; i++) {
+	if (strstr(test, recognized_data[i].path) &&
+	    !strcmp(coll->descfile, recognized_data[i].descfile)) {
+	    coll->title = malloc(strlen(recognized_data[i].title) + 1);
+	    if (coll->title == NULL) return RECOG_ERROR;
+	    strcpy(coll->title, recognized_data[i].title);
+	    coll->which = COLL_DATA;
+	    return RECOG_OK;
+	}
+    }
+
+    for (i=0; recognized_ps[i].path != NULL; i++) {
+	if (strstr(test, recognized_ps[i].path) &&
+	    !strcmp(coll->descfile, recognized_ps[i].descfile)) {
+	    coll->title = malloc(strlen(recognized_ps[i].title) + 1);
+	    if (coll->title == NULL) return RECOG_ERROR;
+	    strcpy(coll->title, recognized_ps[i].title);
+	    coll->which = COLL_PS;
+	    return RECOG_OK;
+	}
+    }
+
+    return RECOG_NOT;
+} 
+
+static int get_title_from_descfile (file_collection *coll)
 {
     FILE *fp;
-#ifndef OLD_GTK
-    GtkListStore *store;
-    GtkTreeSelection *selection;
-    GtkTreeIter iter;
-#else
-    gint i;
-#endif
-    char line[MAXLEN], fname[MAXLEN];
-    gchar *row[3];
+    char *test;
+    char line[64], title[24];
+    int err = 0;
 
-    if (fdata->role == PWT_PS) {
-	build_path(pwtpath, "ps_descriptions", fname, NULL);
+    test = full_path(coll->path, coll->descfile);
+
+    fp = fopen(test, "r");
+    if (fp == NULL) return 1;
+
+    fgets(line, sizeof line, fp);
+    if (sscanf(line, "# %23[^:]", title)) {
+	coll->title = malloc(strlen(title) + 1);
+	if (coll->title == NULL) err = 1;
+	else strcpy(coll->title, title);
     } else {
-       build_path(paths.scriptdir, 
-                  (fdata->role == GREENE_PS)? "wg_ps_descriptions" :
-                  "ps_descriptions",
-                  fname, NULL);
-    }
-
-    fp = fopen(fname, "r");
-    if (fp == NULL) {
-	errbox(_("Couldn't open descriptions file"));
-	return 1;
-    }
-
-#ifndef OLD_GTK
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdata->listbox)));
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
-#else
-    i = 0;
-#endif
-    
-    while (fgets(line, MAXLEN - 1, fp)) {
-	if (line[0] == '#') continue;
-	line[MAXLEN-1] = 0;
-	row[0] = strtok(line, "\"");
-	(void) strtok(NULL, "\"");
-	row[1] = strtok(NULL, "\"");
-	(void) strtok(NULL, "\"");
-	row[2] = strtok(NULL, "\"");
-#ifndef OLD_GTK
-	gtk_list_store_append(store, &iter);
-	gtk_list_store_set (store, &iter, 0, row[0], 
-			    1, row[1], 2, row[2], -1);
-#else
-	gtk_clist_append(GTK_CLIST(fdata->listbox), row);
-	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(fdata->listbox), i, &gray);
-	}
-	i++;
-#endif
+	err = 1;
     }
 
     fclose(fp);
 
-    /* select the first row */
-#ifndef OLD_GTK
-    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(fdata->listbox));
-    gtk_tree_selection_select_iter(selection, &iter);
-#else
-    gtk_clist_select_row(GTK_CLIST (fdata->listbox), 0, 0);
-#endif
-
-    return 0;
+    return err;
 }
 
-/* ........................................................... */
-
-static int check_for_data_descriptions (int role)
+static void free_file_collection (file_collection *coll)
 {
-    FILE *fp;
-    char fname[MAXLEN];
-    int err = 0;
+    free(coll->path);
+    free(coll->descfile);
+    if (coll->title != NULL) {
+	free(coll->title);
+    }
+    free(coll);
+}  
 
-    if (role == RAMU_DATA) 
-	build_path(paths.datadir, "descriptions", fname, NULL);
-    else if (role == PWT_DATA)
-	build_path(pwtpath, "descriptions", fname, NULL);
-    else if (role == JW_DATA)
-	build_path(jwpath, "jw_descriptions", fname, NULL);
-    else if (role == DG_DATA)
-	build_path(dgpath, "dg_descriptions", fname, NULL);
-    else if (role == ETM_DATA)
-	build_path(etmpath, "etm_descriptions", fname, NULL);
-    else if (role == GREENE_DATA) {
-	strcpy(fname, paths.datadir);
-	append_dir(fname, "greene");
-	strcat(fname, "wg_descriptions"); 
+static file_collection *file_collection_new (const char *path,
+					     const char *descfile,
+					     int *err)
+{
+    file_collection *coll;
+    int chk;
+
+    *err = 0;
+
+    coll = malloc(sizeof *coll);
+    if (coll == NULL) {
+	*err = 1;
+	return NULL;
+    }
+
+    coll->path = malloc(strlen(path) + 1);
+    if (coll->path == NULL) {
+	free(coll);
+	*err = 1;
+	return NULL;
+    }
+
+    coll->descfile = malloc(strlen(descfile) + 1);
+    if (coll->descfile == NULL) {
+	free(coll->path);
+	free(coll);
+	*err = 1;
+	return NULL;
+    }  
+
+    strcpy(coll->path, path);
+    strcpy(coll->descfile, descfile);
+
+    coll->title = NULL;
+
+    if (strstr(coll->descfile, "ps_")) {
+	coll->which = COLL_PS;
+    } else {
+	coll->which = COLL_DATA;
+    }
+
+    chk = recognized_collection(coll);
+
+    if (chk == RECOG_ERROR) {
+	free_file_collection(coll);
+	*err = 1;
+	coll = NULL;
+    } else if (chk == RECOG_NOT) {
+	chk = get_title_from_descfile(coll);
+	if (chk) {
+	    free_file_collection(coll);
+	    coll = NULL;
+	}
+    }
+    
+    return coll;
+}
+
+static file_collection *collection_stack (file_collection *coll, int op)
+{
+    static file_collection **datacoll;
+    static file_collection **pscoll;
+    static int n_data;
+    static int n_data_popped;
+    static int n_ps;
+    static int n_ps_popped;
+    file_collection *ret = NULL;
+    int j;
+
+    if (op == STACK_PUSH && coll != NULL) {
+	if (coll->which == COLL_DATA) {
+	    datacoll = realloc(datacoll, (n_data + 1) * sizeof *datacoll);
+	    if (datacoll != NULL) {
+		datacoll[n_data++] = coll;
+		ret = coll;
+	    }
+	} else if (coll->which == COLL_PS) {
+	    pscoll = realloc(pscoll, (n_ps + 1) * sizeof *pscoll);
+	    if (pscoll != NULL) {
+		pscoll[n_ps++] = coll;
+		ret = coll;
+	    }
+	}
+    } else if (op == STACK_POP_DATA) {
+        if (n_data_popped < n_data) {
+            ret = datacoll[n_data_popped++];
+        }
+    } else if (op == STACK_POP_PS) {
+        if (n_ps_popped < n_ps) {
+            ret = pscoll[n_ps_popped++];
+        }
+    } else if (op == STACK_RESET_DATA) {
+	n_data_popped = 0;
+    } else if (op == STACK_RESET_PS) {
+	n_ps_popped = 0;
+    } else if (op == STACK_DESTROY) {
+
+        for (j=0; j<n_data; j++) {
+	    free_file_collection(datacoll[j]);
+	}
+        free(datacoll);
+        datacoll = NULL;
+        n_data = 0;
+        n_data_popped = 0;
+
+        for (j=0; j<n_ps; j++) {
+	    free_file_collection(pscoll[j]);
+	}
+        free(pscoll);
+        pscoll = NULL;
+        n_ps = 0;
+        n_ps_popped = 0;
     } 
 
-    fp = fopen(fname, "r");
+    return ret;
+}
 
-    if (fp == NULL) {
-	sprintf(errtext, _("Couldn't open data descriptions file\n%s"), fname);
-	errbox(errtext);
-	err = 1;
-    } else {
-	fclose(fp);
+static int push_collection (file_collection *collection)
+{
+    return (collection_stack(collection, STACK_PUSH) == NULL);
+}
+
+static file_collection *pop_data_collection (void)
+{
+    return collection_stack(NULL, STACK_POP_DATA);
+}
+
+static file_collection *pop_ps_collection (void)
+{
+    return collection_stack(NULL, STACK_POP_PS);
+}
+
+void destroy_file_collections (void)
+{
+    collection_stack(NULL, STACK_DESTROY);
+}
+
+static void reset_data_stack (void)
+{
+    collection_stack(NULL, STACK_RESET_DATA);
+}
+
+static void reset_ps_stack (void)
+{
+    collection_stack(NULL, STACK_RESET_PS);
+}
+
+
+static char *full_path (const char *s1, const char *s2)
+{
+    static char fpath[FILENAME_MAX];
+
+    sprintf(fpath, "%s/%s", s1, s2);
+    return fpath;
+}
+
+static int test_dir_for_file_collections (const char *dname, DIR *dir)
+{
+    file_collection *coll;
+    struct dirent *dirent;
+    size_t n;
+    int err = 0;
+
+    while (!err && (dirent = readdir(dir))) { 
+	if (strstr(dirent->d_name, "descriptions")) {
+	    n = strlen(dirent->d_name);
+	    if (!strcmp(dirent->d_name + n - 12, "descriptions")) {
+		coll = file_collection_new(dname, dirent->d_name, &err);
+		if (coll != NULL && !err) {
+		    err = push_collection(coll);
+		}
+	    }
+	}
     }
 
     return err;
 }
 
-static int read_data_descriptions (windata_t *fdata)
+static int seek_file_collections (const char *topdir)
+{
+    DIR *dir, *try;  
+    struct dirent *dirent;
+    char *subdir;
+    int err = 0;
+#ifdef _WIN32
+    char *tmp = unslash(topdir);
+#else
+    const char *tmp = topdir;
+#endif
+
+    dir = opendir(tmp);
+    if (dir == NULL) return 1;
+
+    while (!err && (dirent = readdir(dir))) {
+	if (strcmp(dirent->d_name, "..")) {
+	    subdir = full_path(tmp, dirent->d_name);
+	    try = opendir(subdir);
+	    if (try != NULL) {
+		err = test_dir_for_file_collections(subdir, try);
+		closedir(try);
+	    }
+	}
+    }
+
+    closedir(dir);
+
+#ifdef _WIN32
+    free(tmp);
+#endif
+
+    return err;
+}
+
+#if 0
+static void print_collection (const file_collection *coll)
+{
+    printf("path = '%s'\n", coll->path);
+    printf("descfile = '%s'\n", coll->descfile);
+    if (coll->title != NULL && *coll->title != '\0') {
+	printf("title = '%s'\n", coll->title);
+    }
+}
+#endif
+
+static int build_file_collections (void)
+{
+    static int built;
+    static int err;
+
+    if (!built) {
+	err = seek_file_collections(paths.datadir);
+	if (!err) err = seek_file_collections(paths.scriptdir);
+	if (!err) err = seek_file_collections(paths.userdir);
+	built = 1;
+    }
+
+    return err;
+}
+
+/* ........................................................... */
+
+static int read_file_descriptions (windata_t *win, gpointer p)
 {
     FILE *fp;
 #ifndef OLD_GTK
@@ -195,59 +440,68 @@ static int read_data_descriptions (windata_t *fdata)
     GtkTreeSelection *selection;
     GtkTreeIter iter;
 #else
-    gchar *row[2];
     gint i;    
 #endif
-    char line[MAXLEN], fname[MAXLEN];
+    char line[MAXLEN], *fname;
     char descrip[80];
+    file_collection *coll = (file_collection *) p;
 
-    if (fdata->role == RAMU_DATA) 
-	build_path(paths.datadir, "descriptions", fname, NULL);
-    else if (fdata->role == PWT_DATA)
-	build_path(pwtpath, "descriptions", fname, NULL);
-    else if (fdata->role == JW_DATA)
-	build_path(jwpath, "jw_descriptions", fname, NULL);
-    else if (fdata->role == DG_DATA)
-	build_path(dgpath, "dg_descriptions", fname, NULL);
-    else if (fdata->role == ETM_DATA)
-	build_path(etmpath, "etm_descriptions", fname, NULL);
-    else if (fdata->role == GREENE_DATA) {
-	strcpy(fname, paths.datadir);
-	append_dir(fname, "greene");
-	strcat(fname, "wg_descriptions"); 
-    } 
+    fname = full_path(coll->path, coll->descfile);
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
 
 #ifndef OLD_GTK
-    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(fdata->listbox)));
-    gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 #else
     i = 0;
 #endif
     
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (line[0] == '#') continue;
+
+	if (*line == '#') continue;
 	line[MAXLEN-1] = 0;
-	*fname = 0;
-	*descrip = 0;
-	if (sscanf(line, " \"%15[^\"]\",\"%79[^\"]\"", 
-		   fname, descrip) == 2) {
+
+	if (win->role == TEXTBOOK_DATA) {
+	    *fname = 0;
+	    *descrip = 0;
+	    if (sscanf(line, " \"%15[^\"]\",\"%79[^\"]\"", 
+		       fname, descrip) == 2) {
+#ifdef OLD_GTK
+		gchar *row[2];	
+
+		row[0] = fname;
+		row[1] = descrip;
+		gtk_clist_append(GTK_CLIST(win->listbox), row);
+#else
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 0, fname, 1, descrip, -1);
+#endif
+	    }
+	} else {
+	    /* script files */
+	    gchar *row[3];
+
+	    row[0] = strtok(line, "\"");
+	    (void) strtok(NULL, "\"");
+	    row[1] = strtok(NULL, "\"");
+	    (void) strtok(NULL, "\"");
+	    row[2] = strtok(NULL, "\"");
 #ifndef OLD_GTK
 	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, fname, 1, descrip, -1);
+	    gtk_list_store_set(store, &iter, 0, row[0], 
+			       1, row[1], 2, row[2], -1);
 #else
-	    row[0] = fname;
-	    row[1] = descrip;
-	    gtk_clist_append(GTK_CLIST(fdata->listbox), row);
-	    if (i % 2) {
-		gtk_clist_set_background(GTK_CLIST(fdata->listbox), 
-					 i, &gray);
-	    }
-	    i++;
+	    gtk_clist_append(GTK_CLIST(win->listbox), row);
 #endif
 	}
+#ifdef OLD_GTK
+	if (i % 2) {
+	    gtk_clist_set_background(GTK_CLIST(win->listbox), i, &gray);
+	}
+	i++;
+#endif	
     }
 
     fclose(fp);
@@ -255,10 +509,10 @@ static int read_data_descriptions (windata_t *fdata)
     /* select the first row */
 #ifndef OLD_GTK
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
-    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(fdata->listbox));
+    selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(win->listbox));
     gtk_tree_selection_select_iter(selection, &iter);
 #else
-    gtk_clist_select_row(GTK_CLIST (fdata->listbox), 0, 0);
+    gtk_clist_select_row(GTK_CLIST(win->listbox), 0, 0);
 #endif
     
     return 0;
@@ -266,42 +520,25 @@ static int read_data_descriptions (windata_t *fdata)
 
 /* ........................................................... */
 
-static void browse_header (GtkWidget *w, gpointer data)
+static void display_datafile_info (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
     windata_t *vwin = (windata_t *) data;
     PRN *prn;
     gchar *fname;
-    gint file_code;
+    file_collection *coll;
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &fname);
-    file_code = GPOINTER_TO_INT
-	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+    coll = g_object_get_data(G_OBJECT(vwin->listbox), "coll");
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &fname);
-    file_code = GPOINTER_TO_INT
-	(gtk_object_get_data(GTK_OBJECT(vwin->listbox), "file_code"));
+    coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    if (file_code == PWT_DATA)  
-	build_path(pwtpath, fname, hdrname, ".gdt");
-    else if (file_code == RAMU_DATA) 
-	build_path(paths.datadir, fname, hdrname, ".gdt");
-    else if (file_code == JW_DATA) 
-	build_path(jwpath, fname, hdrname, ".gdt");
-    else if (file_code == DG_DATA) 
-	build_path(dgpath, fname, hdrname, ".gdt");
-    else if (file_code == ETM_DATA) 
-	build_path(etmpath, fname, hdrname, ".gdt");
-    else if (file_code == GREENE_DATA) {
-	strcpy(hdrname, paths.datadir);
-	append_dir(hdrname, "greene");
-	strcat(hdrname, fname);
-	strcat(hdrname, ".gdt");
-    }
+    build_path(coll->path, fname, hdrname, ".gdt");
 
 #ifndef OLD_GTK
     g_free(fname);
@@ -325,36 +562,19 @@ void browser_open_data (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     gchar *datname;
-    gint file_code;
+    file_collection *coll;
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &datname);
-    file_code = GPOINTER_TO_INT
-	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+    coll = g_object_get_data(G_OBJECT(vwin->listbox), "coll");
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &datname);
-    file_code = GPOINTER_TO_INT
-	(gtk_object_get_data(GTK_OBJECT(vwin->listbox), "file_code"));
+    coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    if (file_code == PWT_DATA) 
-	build_path(pwtpath, datname, trydatfile, ".gdt");
-    else if (file_code == RAMU_DATA) 
-	build_path(paths.datadir, datname, trydatfile, ".gdt");
-    else if (file_code == JW_DATA) 
-	build_path(jwpath, datname, trydatfile, ".gdt");
-    else if (file_code == DG_DATA) 
-	build_path(dgpath, datname, trydatfile, ".gdt");
-    else if (file_code == ETM_DATA) 
-	build_path(etmpath, datname, trydatfile, ".gdt");
-    else if (file_code == GREENE_DATA) {
-	strcpy(trydatfile, paths.datadir);
-	append_dir(trydatfile, "greene");
-	strcat(trydatfile, datname);
-	strcat(trydatfile, ".gdt");
-    }
+    build_path(coll->path, datname, trydatfile, ".gdt");
 
 #ifndef OLD_GTK
     g_free(datname);
@@ -369,25 +589,19 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
     gchar *fname;
-    gint file_code;
+    file_collection *coll;
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
-    file_code = GPOINTER_TO_INT
-	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+    coll = g_object_get_data(G_OBJECT(vwin->listbox), "coll");
 #else
     gtk_clist_get_text(GTK_CLIST(vwin->listbox), vwin->active_var, 
 		       0, &fname);
-    file_code = GPOINTER_TO_INT
-	(gtk_object_get_data(GTK_OBJECT(vwin->listbox), "file_code"));
+    coll = gtk_object_get_data(GTK_OBJECT(vwin->listbox), "coll");
 #endif
 
-    if (file_code == PWT_PS) {
-	build_path(pwtpath, fname, scriptfile, ".inp");
-    } else {
-	build_path(paths.scriptdir, fname, scriptfile, ".inp");
-    }
+    build_path(coll->path, fname, scriptfile, ".inp");
 
 #ifndef OLD_GTK
     g_free(fname);
@@ -604,14 +818,14 @@ static void build_datafiles_popup (windata_t *win)
 
 #ifndef OLD_GTK
     add_popup_item(_("Info"), win->popup, 
-		   G_CALLBACK(browse_header), 
+		   G_CALLBACK(display_datafile_info), 
 		   win);
     add_popup_item(_("Open"), win->popup, 
 		   G_CALLBACK(browser_open_data), 
 		   win);
 #else
     add_popup_item(_("Info"), win->popup, 
-		   GTK_SIGNAL_FUNC(browse_header), 
+		   GTK_SIGNAL_FUNC(display_datafile_info), 
 		   win);
     add_popup_item(_("Open"), win->popup, 
 		   GTK_SIGNAL_FUNC(browser_open_data), 
@@ -640,8 +854,6 @@ int browser_busy (guint code)
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
     GtkWidget *filebox, *openbutton, *midbutton, *closebutton;
-    GtkWidget *datapages[MAX_DATA];
-    GtkWidget *pspages[N_PS_FILES];
     GtkWidget *main_vbox, *button_box;
     windata_t *fdata;
     int err = 0;
@@ -696,10 +908,8 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
 
-    if (code == TEXTBOOK_DATA) {
-	filebox = files_notebook(fdata, datapages, code);
-    } else if (code == PS_FILES) {
-	filebox = files_notebook(fdata, pspages, code);
+    if (code == TEXTBOOK_DATA || code == PS_FILES) {
+	filebox = files_notebook(fdata, code);
     } else {
 	filebox = files_window(fdata);
     }
@@ -708,24 +918,23 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     /* popup menu? */
     if (code == TEXTBOOK_DATA) { 
-	int i;
+	file_collection *coll;
 
 	build_datafiles_popup(fdata);
 
-	for (i=RAMU_DATA; i<MAX_DATA; i++) {
-	    if (datapages[i] != NULL) {
+	while ((coll = pop_data_collection())) {
 #ifndef OLD_GTK
-		g_signal_connect (G_OBJECT(datapages[i]), "button_press_event",
-				  G_CALLBACK(popup_menu_handler), 
-				  (gpointer) fdata->popup);
+	    g_signal_connect (G_OBJECT(coll->page), "button_press_event",
+			      G_CALLBACK(popup_menu_handler), 
+			      (gpointer) fdata->popup);
 #else
-		gtk_signal_connect (GTK_OBJECT(datapages[i]), "button_press_event",
-				    GTK_SIGNAL_FUNC(popup_menu_handler), 
-				    (gpointer) fdata->popup);
+	    gtk_signal_connect (GTK_OBJECT(coll->page), "button_press_event",
+				GTK_SIGNAL_FUNC(popup_menu_handler), 
+				(gpointer) fdata->popup);
 #endif
-	    }
 	}
-    } 
+	reset_data_stack();
+    }
 
     if (code == REMOTE_DB) {
 	GtkWidget *hbox;
@@ -767,12 +976,12 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	g_signal_connect(G_OBJECT(midbutton), "clicked",
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
-			 G_CALLBACK(browse_header), fdata);
+			 G_CALLBACK(display_datafile_info), fdata);
 #else
 	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
 			   (code == REMOTE_DB)?
 			   GTK_SIGNAL_FUNC(grab_remote_db) :
-			   GTK_SIGNAL_FUNC(browse_header), fdata);
+			   GTK_SIGNAL_FUNC(display_datafile_info), fdata);
 #endif
     }
 
@@ -799,12 +1008,10 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 #endif
 
     /* put stuff into list box(es) */
-    if (code == TEXTBOOK_DATA) {
-	err = populate_notebook_filelists(fdata, datapages, filebox, code);
-    } else if (code == PS_FILES) {
-	err = populate_notebook_filelists(fdata, pspages, filebox, code);
+    if (code == TEXTBOOK_DATA || code == PS_FILES) {
+	err = populate_notebook_filelists(fdata, filebox, code);
     } else {
-	err = populate_filelist(fdata);
+	err = populate_filelist(fdata, NULL);
     }
 
     if (err) {
@@ -816,23 +1023,19 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-gint populate_filelist (windata_t *fdata)
+gint populate_filelist (windata_t *fdata, gpointer p)
 {
-    gint a = fdata->role;
-
-    if (a == NATIVE_DB || a == RATS_DB) {
+    if (fdata->role == NATIVE_DB || fdata->role == RATS_DB) {
 	return populate_dbfilelist(fdata);
     }
 
-    if (a == REMOTE_DB) {
+    else if (fdata->role == REMOTE_DB) {
 	return populate_remote_db_list(fdata);
     }
 
-    if (a == RAMU_PS || a == GREENE_PS || a == PWT_PS) {
-	return read_ps_descriptions(fdata);
+    else {
+	return read_file_descriptions(fdata, p);
     }
-
-    return read_data_descriptions(fdata);
 }
 
 /* ......................................................... */
@@ -883,9 +1086,7 @@ static GtkWidget *files_window (windata_t *fdata)
 	full_width = 240;
 	hidden_col = 1;
 	break;
-    case RAMU_PS:
-    case GREENE_PS:
-    case PWT_PS:
+    case PS_FILES:
 	titles = ps_titles;
 	cols = 3;
 	full_width = 480;
@@ -961,23 +1162,13 @@ static GtkWidget *files_window (windata_t *fdata)
 	col_width[0] = 200;
 	full_width = 240;
 	break;
-    case RAMU_PS:
-    case GREENE_PS:
-    case PWT_PS:
+    case PS_FILES:
 	titles = ps_titles;
 	cols = 3;
 	col_width = ps_col_width;
 	full_width = 480;
 	break;
-    case GREENE_DATA:
-    case PWT_DATA:
-    case JW_DATA:
-    case DG_DATA:
-    case ETM_DATA:
-	break;
-    case RAMU_DATA:
-	col_width[0] = 64;
-	col_width[1] = 320;
+    default:
 	break;
     }
 
@@ -1356,126 +1547,65 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 #endif
 }
 
-static int page_missing (int i)
-{
-    if (i == PWT_PS && *pwtpath == '\0') {
-	return 1;
-    } else {
-	char *datapath = NULL;
-
-	if (i == RAMU_DATA) datapath = paths.datadir;
-	else if (i == JW_DATA) datapath = jwpath;
-	else if (i == DG_DATA) datapath = dgpath;
-	else if (i == ETM_DATA) datapath = etmpath;
-	else if (i == PWT_DATA) datapath = pwtpath;
-
-	if (datapath == NULL || *datapath == '\0') return 1;
-	else if (check_for_data_descriptions(i)) {
-	    if (datapath != paths.datadir) {
-		*datapath = '\0';
-	    }
-	    return 1;
-	}
-    }
-
-    return 0;
-}
-
-/* below: construct a set of notebook pages for either
-   data files (Ramanathan, Wooldridge, etc) or practice
-   scripts.  creates the pages but does not fill them out.
+/* below: Construct a set of notebook pages for either
+   data files (Ramanathan, Wooldridge, etc.) or practice
+   scripts.  Creates the pages but does not yet fill them out.
 */
 
-static GtkWidget *files_notebook (windata_t *fdata, 
-				  GtkWidget **pages,
-				  int code)
+static GtkWidget *files_notebook (windata_t *fdata, int code)
 {
     GtkWidget *notebook;
     GtkWidget *listpage;
     GtkWidget *label;
-    int i, j, role = fdata->role;
+    int j;
     char winnum[3];
-    const gchar *data_tab_labels[] = {
-	"Ramanathan",
-	"Greene",
-	"Wooldridge",
-	"Gujarati",
-	"ETM",
-	"Penn World Table"
-    };
-    const gchar *ps_tab_labels[] = {
-	"Ramanathan",
-	"Greene",
-	"Penn World Table"
-    };
+    file_collection *coll;
+
+    if (code != TEXTBOOK_DATA && code != PS_FILES) {
+	return NULL;
+    }
+
+    build_file_collections(); /* FIXME check for errors */
 
     notebook = gtk_notebook_new();
 
-    if (code == TEXTBOOK_DATA) {
-	j = 0;
-	for (i=RAMU_DATA; i<MAX_DATA; i++) {
-	    if (page_missing(i)) {
-		pages[i] = NULL;
-		continue;
-	    }
-	    fdata->role = i;
-	    listpage = files_window(fdata);
-	    label = gtk_label_new(data_tab_labels[i]);
-	    gtk_widget_show(label);
-	    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
-	    pages[i] = fdata->listbox;
-	    sprintf(winnum, "%d", j++);
-#ifndef OLD_GTK
-	    g_object_set_data(G_OBJECT(notebook), winnum, pages[i]);
-	    g_object_set_data(G_OBJECT(pages[i]), "file_code", 
-			      GINT_TO_POINTER(i));
-#else
-	    gtk_object_set_data(GTK_OBJECT(notebook), winnum, pages[i]);
-	    gtk_object_set_data(GTK_OBJECT(pages[i]), "file_code", 
-				GINT_TO_POINTER(i));
-#endif
+    j = 0;
+    while (1) {
+	if (code == TEXTBOOK_DATA) {
+	    coll = pop_data_collection();
+	} else {
+	    coll = pop_ps_collection();
 	}
-    }
-    else if (code == PS_FILES) {
-	int k;
-	
-	j = 0;
-	for (i=RAMU_PS; i<MAX_PS; i++) {
-	    k = i - RAMU_PS; 
-	    if (page_missing(i)) {
-		pages[k] = NULL;
-		continue;
-	    }
-	    fdata->role = i;
-	    listpage = files_window(fdata);
-	    label = gtk_label_new(ps_tab_labels[k]);
-	    gtk_widget_show(label);
-	    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
-	    pages[k] = fdata->listbox;
-	    sprintf(winnum, "%d", j++);
-#ifndef OLD_GTK
-	    g_object_set_data(G_OBJECT(notebook), winnum, pages[k]);
-	    g_object_set_data(G_OBJECT(pages[k]), "file_code", 
-			      GINT_TO_POINTER(i));
-#else
-	    gtk_object_set_data(GTK_OBJECT(notebook), winnum, pages[k]);
-	    gtk_object_set_data(GTK_OBJECT(pages[k]), "file_code", 
-				GINT_TO_POINTER(i));
-#endif
-	}
-    }
+	if (coll == NULL) break;
 
-    fdata->role = role;
+	listpage = files_window(fdata);
+	label = gtk_label_new(coll->title);
+	gtk_widget_show(label);
+	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
+	coll->page = fdata->listbox;
+	sprintf(winnum, "%d", j);
+#ifndef OLD_GTK
+	g_object_set_data(G_OBJECT(notebook), winnum, coll->page);
+	g_object_set_data(G_OBJECT(coll->page), "coll", coll);
+#else
+	gtk_object_set_data(GTK_OBJECT(notebook), winnum, coll->page);
+	gtk_object_set_data(GTK_OBJECT(coll->page), "coll", coll);
+#endif
+	j++;
+    }
+    
+    if (code == TEXTBOOK_DATA) reset_data_stack();
+    else reset_ps_stack();
 
 #ifndef OLD_GTK
     g_object_set_data(G_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
-		      get_browser_ptr(role));
+		      get_browser_ptr(fdata->role));
     g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		     G_CALLBACK(switch_file_page_callback),
 		     fdata);
 #else
     gtk_object_set_data(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
-			get_browser_ptr(role));
+			get_browser_ptr(fdata->role));
     gtk_signal_connect(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		       GTK_SIGNAL_FUNC(switch_file_page_callback),
 		       fdata);
@@ -1490,54 +1620,58 @@ static GtkWidget *files_notebook (windata_t *fdata,
    or scripts files), entering the details into the page.
 */
 
-static int populate_notebook_filelists (windata_t *fdata, 
-					GtkWidget **pages,
+static int populate_notebook_filelists (windata_t *win, 
 					GtkWidget *notebook,
 					int code)
 {
-    int i, role = fdata->role;
+    file_collection *coll;
+    int j;
 
-    if (code == TEXTBOOK_DATA) {
-	for (i=RAMU_DATA; i<MAX_DATA; i++) {
-	    if (!page_missing(i)) {
-		fdata->role = i;
-		fdata->listbox = pages[i];
-		populate_filelist(fdata);
-	    }
-	}
-    }
-    else if (code == PS_FILES) {
-	for (i=RAMU_PS; i<MAX_PS; i++) {
-	    if (!page_missing(i)) {
-		fdata->role = i;
-		fdata->listbox = pages[i - RAMU_PS];
-		populate_filelist(fdata);
-	    }
-	}
-    }
-
-    if (code == TEXTBOOK_DATA) {
-	if (jwdata && *jwpath != '\0') {
-	    fdata->listbox = pages[JW_DATA];
-#ifndef OLD_GTK
-	    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), JW_DATA);
-#else
-	    gtk_notebook_set_page(GTK_NOTEBOOK(notebook), JW_DATA);
-#endif
+    while (1) {
+	if (code == TEXTBOOK_DATA) {
+	    coll = pop_data_collection();
 	} else {
-	    fdata->listbox = pages[RAMU_DATA];
-#ifndef OLD_GTK
-	    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), RAMU_DATA);
-#else
-	    gtk_notebook_set_page(GTK_NOTEBOOK(notebook), RAMU_DATA);
-#endif
+	    coll = pop_ps_collection();
 	}
-    }
-    else if (code == PS_FILES) {
-	fdata->listbox = pages[0];
+
+	if (coll == NULL) break;
+
+	win->listbox = coll->page;
+	populate_filelist(win, coll);
     }
 
-    fdata->role = role;
+    if (code == TEXTBOOK_DATA) {
+	reset_data_stack();
+    } else {
+	reset_ps_stack();
+    }
+
+    j = 0;
+
+    if (code == TEXTBOOK_DATA) {
+	if (jwdata) {
+	    while ((coll = pop_data_collection())) {
+		if (!strncmp(coll->title, "Wool", 4)) {
+		    break;
+		}
+		j++;
+	    }
+	} else {
+	    coll = pop_data_collection();
+	}
+	win->listbox = coll->page;
+	reset_data_stack();
+    } else {
+	coll = pop_data_collection();
+	win->listbox = coll->page;
+	reset_ps_stack();
+    }
+
+#ifndef OLD_GTK
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), j);
+#else
+    gtk_notebook_set_page(GTK_NOTEBOOK(notebook), j);
+#endif
 
     return 0;
 } 
