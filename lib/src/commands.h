@@ -29,6 +29,7 @@ typedef enum {
     ARCH,
     BXPLOT,
     CHOW,
+    COEFFSUM,
     COINT,
     COINT2,
     CORC,     

@@ -369,7 +369,7 @@ static int parenthesize (char *str)
 
 /* ...................................................... */
 
-int _identical (const double *x, const double *y, int n)
+int vars_identical (const double *x, const double *y, int n)
      /* check whether two vars are identical or not */
 {
     register int t;
@@ -2348,7 +2348,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    check = varindex(pdinfo, pdinfo->varname[j]);
 	    if (check < nvar) {
 		if (pdinfo->vector[check]) {
-		    if (_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
+		    if (vars_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
 			j--;
 		    }
 		}
@@ -2465,8 +2465,6 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* maximum number of terms if none are "bad" */
     if (opt) maxterms = (l0*l0 + l0)/2;
     else maxterms = l0;
-    /*      fprintf(stderr, "xpxgenr: maxterms = %d\n", maxterms);   */
-    /*      printlist(list);   */
 
     if (dataset_add_vars(maxterms, pZ, pdinfo)) return -1;
 
@@ -2489,11 +2487,11 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    strcat(s, pdinfo->varname[li]);
 	    _esl_trunc(s, 8);
 	    strcpy(pdinfo->varname[v+terms], s);
-	    /* check if an _identical variable exists? */
+	    /* check if an identical variable exists? */
 	    if (nodup) {
 		check = varindex(pdinfo, pdinfo->varname[(v+terms)]);
 		if (check < v) {
-		    if (_identical((*pZ)[check], (*pZ)[v+terms], n)) 
+		    if (vars_identical((*pZ)[check], (*pZ)[v+terms], n)) 
 			continue;
 		}
 	    }

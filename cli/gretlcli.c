@@ -697,6 +697,12 @@ void exec_line (char *line, PRN *prn)
 	if (err) errmsg(err, prn);
 	break;
 
+    case COEFFSUM:
+        if ((err = model_test_start(0, prn, 1))) break;
+	err = sum_test(command.list, models[0], &Z, datainfo, prn);
+	if (err) errmsg(err, prn);
+	break;
+
     case CUSUM:
 	if ((err = model_test_start(0, prn, 1))) break;
 	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);

@@ -146,6 +146,18 @@ and the original as restricted.  This statistic is appropriate for testing the
 null hypothesis of no structural break at the given split point.
 
 #
+coeffsum
+@Tests
+Test for the sum of certain coefficients
+
+This command needs a list of variables, selected from the set of independent
+variables in a given model.
+
+Calculates the sum of the coefficients on the selected variables, and prints
+this value along with its standard error and the p-value for the null
+hypothesis that the sum is zero.
+
+#
 coint
 @Tests
 Cointegration test

@@ -1200,6 +1200,8 @@ static char *get_topstr (int cmdnum)
 	return N_("Select variables to add");
     case OMIT:
 	return N_("Select variables to omit");
+    case COEFFSUM:
+	return N_("Select coefficients to sum");
     case PRINT:
 	return N_("Select variables to display");
     case GR_PLOT: 
@@ -1232,7 +1234,7 @@ static void add_omit_list (gpointer p, selector *sr)
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     
-    if (sr->code == OMIT) {
+    if (sr->code == OMIT || sr->code == COEFFSUM) {
 	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == 0) continue;
 	    gtk_list_store_append(store, &iter);
@@ -1332,7 +1334,7 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     gtk_list_store_clear(store);
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
 
-    if (cmdcode == OMIT || cmdcode == ADD) {
+    if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
     } else {
 	for (i=1; i<datainfo->v; i++) {

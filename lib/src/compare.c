@@ -555,7 +555,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	maxlag = orig->order;
     pdinfo->t1 = orig->t1 - maxlag;
 
-    tmplist = malloc((orig->ncoeff + 2) * sizeof(int));
+    tmplist = malloc((orig->ncoeff + 2) * sizeof *tmplist);
     if (tmplist == NULL) { 
 	pdinfo->t1 = t1;
 	err = E_ALLOC; 
@@ -1359,4 +1359,176 @@ int mp_ols (const LIST list, const char *pos,
     return err;
 }
 
+static int varmatch (int *sumvars, int test)
+{
+    int j;
 
+    for (j=1; j<=sumvars[0]; j++) {
+	if (sumvars[j] == test) return 1;
+    }
+
+    return 0;
+}
+
+static 
+void fill_sum_var (double **Z, int n, int v, int vrepl, int vfirst)
+{
+    int t;
+
+    for (t=0; t<n; t++) {
+	Z[v][t] = Z[vrepl][t] - Z[vfirst][t];
+    }
+}
+
+static 
+int make_sum_test_list (MODEL *pmod, double **Z, DATAINFO *pdinfo,
+			int *tmplist, int *sumvars, int vstart)
+{
+    int repl = 0;
+    int newv = vstart;
+    int testcoeff = 0;
+    int nnew = sumvars[0] - 1;
+    int i;
+
+    tmplist[0] = pmod->list[0];
+    tmplist[1] = pmod->list[1];
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	if (nnew > 0 && varmatch(sumvars, pmod->list[i])) {
+	    if (repl) {
+		fill_sum_var(Z, pdinfo->n, newv, pmod->list[i], sumvars[1]);
+		tmplist[i] = newv++;
+		nnew--;
+	    } else {
+		tmplist[i] = pmod->list[i];
+		testcoeff = i;
+		repl = 1;
+	    }
+	} else {
+	    tmplist[i] = pmod->list[i];
+	}
+    }
+
+    if (nnew == 0) return testcoeff;
+    else return -1;
+}
+
+/**
+ * sum_test:
+ * @sumvars: specification of variables to use.
+ * @pmod: pointer to model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * 
+ * Calculates the sum of the coefficients, relative to the given model, 
+ * for the variables given in @sumvars.  Prints this estimate along 
+ * with its standard error.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int sum_test (LIST sumvars, MODEL *pmod, 
+	      double ***pZ, DATAINFO *pdinfo, 
+	      PRN *prn)
+{
+    int *tmplist;
+    int add = sumvars[0] - 1;
+    int v = pdinfo->v;
+    double rho = 0.0;
+    int pos = 0, err = 0;
+    int testcoeff;
+    MODEL summod;
+    PRN *nullprn;
+
+    if (sumvars[0] < 2) {
+	pprintf(prn, _("Invalid input\n"));
+	return E_DATA;
+    }
+
+    if (pmod->ci == TSLS) return E_NOTIMP;
+
+    /* try the necessary allocation first */
+    tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);
+    if (tmplist == NULL) return E_ALLOC;
+    if (dataset_add_vars(add, pZ, pdinfo)) return E_ALLOC;
+
+    nullprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+
+    testcoeff = make_sum_test_list(pmod, *pZ, pdinfo, tmplist, sumvars, v);
+
+    if (testcoeff < 0) {
+	pprintf(prn, _("Invalid input\n"));
+	free(tmplist);
+	dataset_drop_vars(add, pZ, pdinfo);
+	return E_DATA;
+    }
+
+    /* temporarily impose the sample that was in force when the
+       original model was estimated */
+    exchange_smpl(pmod, pdinfo);
+
+    _init_model(&summod, pdinfo);
+
+    if (pmod->ci == CORC || pmod->ci == HILU) {
+	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
+			NULL, 1, pmod->ci, prn);
+    } else if (pmod->ci == WLS || pmod->ci == AR) {
+	pos = _full_model_list(pmod, &tmplist);
+	if (pos < 0) err = E_ALLOC;
+    }
+
+    if (!err) {
+	if (pmod->ci == AR) {
+	    summod = ar_func(tmplist, pos, pZ, pdinfo, NULL, nullprn);
+	}
+	else if (pmod->ci == ARCH) {
+	    summod = arch(pmod->order, tmplist, pZ, pdinfo, NULL, 
+			  nullprn, NULL);
+	} 
+	else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    summod = logit_probit(tmplist, pZ, pdinfo, pmod->ci);
+	}
+	else {
+	    summod = lsq(tmplist, pZ, pdinfo, pmod->ci, 1, rho);
+	}
+
+	if (summod.errcode) {
+	    pprintf(prn, "%s\n", gretl_errmsg);
+	    err = summod.errcode; 
+	} else {
+	    int i;
+
+#if 0
+	    pprintf(prn, "testcoeff = %d\n", testcoeff);
+#endif
+	    pprintf(prn, "\n%s: ", _("Variables"));
+	    for (i=1; i<=sumvars[0]; i++) {
+		pprintf(prn, "%s ", pdinfo->varname[sumvars[i]]);
+	    }
+	    pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), 
+		    summod.coeff[testcoeff - 1]);
+	    if (!na(summod.sderr[testcoeff - 1])) {
+		double tval;
+
+		pprintf(prn, "   %s = %g\n", _("Standard error"),
+			summod.sderr[testcoeff - 1]);
+		tval = summod.coeff[testcoeff - 1] / 
+		    summod.sderr[testcoeff - 1];
+		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
+		pprintf(prn, _("with p-value = %f\n"), 
+			tprob(tval, summod.dfd));
+	    }
+	}
+    }
+
+    free(tmplist);
+    clear_model(&summod, pdinfo);
+    dataset_drop_vars(add, pZ, pdinfo);
+    gretl_print_destroy(nullprn);
+
+    /* put back into pdinfo what was there on input */
+    exchange_smpl(pmod, pdinfo);
+
+    return err;
+}

@@ -1977,6 +1977,23 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     return hccm;
 }
 
+static int var_already_there (MODEL *pmod, double **Z, int testv)
+{
+    int i;
+    int n = pmod->t2 - pmod->t1 + 1;
+    int ret = 0;
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	if (pmod->list[i] == 0) continue;
+	if (vars_identical(Z[pmod->list[i]], Z[testv], n)) {
+	    ret = 1;
+	    break;
+	}
+    }
+
+    return ret;
+}
+
 /**
  * whites_test:
  * @pmod: #MODEL struct.
@@ -2043,9 +2060,16 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
 	if (tmplist == NULL) err = E_ALLOC;
 	else {
+	    int k = 1;
+
 	    tmplist[0] = pdinfo->v - v - 1; 
-	    for (i=1; i<=tmplist[0]; i++) 
-		tmplist[i] = i + v;
+	    for (i=1; i<=tmplist[0]; i++) {
+		/* check here for identical vars? */
+		if (!var_already_there(pmod, *pZ, i + v)) { 
+		    tmplist[k++] = i + v;
+		}
+	    }
+	    tmplist[0] = k - 1;
 	}
     }
 

@@ -71,6 +71,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
+    { N_("/Tests/sum of coefficients"), NULL, selector_callback, COEFFSUM, NULL },
     { N_("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
     { N_("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },

@@ -1327,13 +1327,47 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
+void do_coeff_sum (GtkWidget *widget, gpointer p)
+{
+    selector *sr = (selector *) p;
+    windata_t *vwin = sr->data;
+    char *edttext;
+    PRN *prn;
+    char title[48];
+    MODEL *pmod;
+    gint err;
+
+    pmod = vwin->data;
+    edttext = sr->cmdlist;
+    if (*edttext == '\0') return;
+    
+    clear(line, MAXLEN);
+    sprintf(line, "coeffsum %s", edttext);
+
+    if (check_cmd(line) || bufopen(&prn)) return;
+
+    err = sum_test(command.list, pmod, &Z, datainfo, prn);
+
+    if (err) {
+        gui_errmsg(err);
+        gretl_print_destroy(prn);
+        return;
+    }
+
+    strcpy(title, "gretl: ");
+    strcat(title, _("Sum of coefficients"));
+    view_buffer(prn, 78, 200, title, COEFFSUM, view_items); 
+}
+
+/* ........................................................... */
+
 void do_add_omit (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     windata_t *vwin = sr->data;
     char *edttext;
     PRN *prn;
-    char title[26];
+    char title[48];
     MODEL *orig, *pmod;
     gint err;
 
@@ -4160,6 +4194,12 @@ static int gui_exec_line (char *line,
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);
+	break;
+
+    case COEFFSUM:
+        if ((err = script_model_test(0, prn, 1))) break;
+	err = sum_test(command.list, models[0], &Z, datainfo, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case CUSUM:

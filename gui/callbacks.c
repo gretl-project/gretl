@@ -382,6 +382,10 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: model tests"));
 	okfunc = do_add_omit;
 	break;
+    case COEFFSUM:
+	strcpy(title, _("gretl: model tests"));
+	okfunc = do_coeff_sum;
+	break;
     case GR_BOX: case GR_NBOX:
 	strcpy(title, _("gretl: boxplots"));
 	okfunc = do_box_graph;

@@ -1895,8 +1895,10 @@ int _full_model_list (MODEL *pmod, int **plist)
 	    mylist[pos+i] = (*plist)[i];
 	}
     }
+
     copylist(plist, mylist);
     free(mylist);
+
     return pos;
 }
 

@@ -8,6 +8,11 @@ version 1.0.7
 - Fix bug in title of residual graph
 - When the user installs a local copy of a remote database,
   give the option of opening it right away
+- Add "coeffsum" command: gives the sum of coefficients, and 
+  standard error of the sum, for selected independent variables
+  in a given model
+- Modify the White's test function, so that it doesn't fall over 
+  when a variable and its square are among the original regressors
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting

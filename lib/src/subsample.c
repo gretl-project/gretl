@@ -73,7 +73,6 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 {
     int i, n = pdinfo->n;
     double *subdum;
-    extern int _identical (const double *x, const double *y, const int n);
 
     if (pmod == NULL && spec == NULL) return 0;
 
@@ -100,7 +99,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	fprintf(stderr, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { /* do the subsamples (model and current data set) agree? */
-	if (_identical(Z[i], subdum, n))
+	if (vars_identical(Z[i], subdum, n))
 	    return 0;
 	else {
 	    fprintf(stderr, _("model and dataset subsamples not the same\n"));

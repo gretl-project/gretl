@@ -1170,8 +1170,11 @@ static time_t get_time_from_stamp_file (const char *fname)
     if (fp == NULL) return (time_t) 0;
     if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
                wday, mon, &stime.tm_mday, &stime.tm_hour,
-               &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) 
+               &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) {
+	fclose(fp);
         return (time_t) 0;
+    }
+
     fclose(fp);
 
     stime.tm_mon = 20;

@@ -47,8 +47,8 @@ ones.
 #
 ar
 @Estimation
-Usage:          ar lags ; depvar indepvar      or
-                ar lags ; -o depvar indepvar     
+Usage:          ar lags ; depvar indepvars      or
+                ar lags ; -o depvar indepvars     
 Example:        ar 1 3 4 ; y 0 x1 x2 x3 
 
 Computes the estimates of a model using the generalized Cochrane-Orcutt
@@ -60,7 +60,7 @@ as
 
      u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
 
-depvar is the dependent variable and indepvar is the list of independent
+depvar is the dependent variable and indepvars is the list of independent
 variables separated by spaces.  Use the number zero for a constant term.  If
 the -o flag is present, the covariance matrix of regression coefficients will
 be printed.  Residuals of the transformed regression are stored under the name
@@ -69,7 +69,7 @@ uhat, which can be retrieved by genr.
 #
 arch
 @Tests
-Usage:          arch lag depvar indepvar    
+Usage:          arch lag depvar indepvars    
 Examples:       arch 4 1 0 2 4 6 7      or  arch 4 y 0 x1 x2 x3 x4 
 
 This command tests the model for ARCH of the order specified in "lag", which
@@ -95,9 +95,19 @@ and the original as restricted.  This statistic is appropriate for testing the
 null hypothesis of no structural break at the given split point.
 
 #
+coeffsum
+@Tests
+Usage:         coeffsum indepvars
+Examples:      coeffsum xt xt_1 xt_2
+
+Must follow an regression.  Calculates the sum of the coefficients on the
+variables in the "indepvars" list.  Prints this sum along with its standard
+error and the p-value for the null hypothesis that the sum is zero.
+
+#
 coint
 @Tests
-Usage:	        coint order depvar indepvar
+Usage:	        coint order depvar indepvars
 Examples:       coint 2 y x
                 coint 4 y x1 x2
 
@@ -111,7 +121,7 @@ referred to the usual statistical tables.
 #
 coint2
 @Tests
-Usage:	        coint2 order depvar indepvar
+Usage:	        coint2 order depvar indepvars
 Examples:       coint2 2 y x
                 coint2 12 y x1 x2 -o
 
@@ -123,13 +133,13 @@ given the results of the various auxiliary regressions are printed.
 #
 corc
 @Estimation
-Usage:          corc depvar indepvar       or   corc -o depvar indepvar 
+Usage:          corc depvar indepvars      or   corc -o depvar indepvars 
 Examples:       corc 1 0 2 4 6 7                corc -o 1 0 2 4 6 7 
                 corc y 0 x1 x2 x3               corc -o y 0 x1 x2 x3 
 
 Computes the estimates of a model using the Cochrane-Orcutt iterative
 procedure (see Ramanathan, Section 9.4) with depvar as the dependent variable
-and indepvar as the list of independent variables separated by spaces and
+and indepvars as the list of independent variables separated by spaces and
 terminated by a ;.  Use the number zero for a constant term.  Iteration is
 terminated when successive rho values do not differ by more than 0.001 or when
 20 iterations have been done.  If the -o flag is present, the covariance
@@ -248,7 +258,7 @@ Terminates a simulation loop.  See "loop".
 #
 equation
 @Estimation
-Usage:          equation depvar indepvar
+Usage:          equation depvar indepvars
 Example:        equation y x1 x2 x3 const
 
 Specifies an equation within a system of equations (see the "system" command).
@@ -517,8 +527,8 @@ favor of fixed effects.
 #
 hccm
 @Estimation
-Usage:          hccm depvar indepvar      
-            or  hccm -o depvar indepvar
+Usage:          hccm depvar indepvars      
+            or  hccm -o depvar indepvars
  
 Presents OLS estimates with the heteroskedasticity consistent covariance
 matrix estimates for the standard errors of regression coefficients using the
@@ -533,13 +543,13 @@ help commandname     describes commandname (e.g. help smpl)
 #
 hilu
 @Estimation
-Usage:          hilu depvar indepvar       or   hilu -o depvar indepvar 
+Usage:          hilu depvar indepvars      or   hilu -o depvar indepvars 
 Examples:       hilu 1 0 2 4 6 7                hilu -o 1 0 2 4 6 7 
                 hilu y 0 x1 x2 x3               hilu -o y 0 x1 x2 x3 
 
 Computes the estimates of a model using the Hildreth-Lu search procedure (fine
 tuned by the CORC procedure) with depvar as the dependent variable and
-indepvar as the list of independent variables separated by spaces.  Use the
+indepvars as the list of independent variables separated by spaces.  Use the
 number zero for a constant term.  The error sum of squares of the transformed
 model is graphed against the value of rho from -0.99 to 0.99.  If the -o flag
 is present, the covariance matrix of regression coefficients will be printed.
@@ -550,8 +560,8 @@ are stored under the name uhat.
 #
 hsk
 @Estimation
-Usage:          hsk depvar indepvar 	   
-            or  hsk -o depvar indepvar
+Usage:          hsk depvar indepvars 	   
+            or  hsk -o depvar indepvars
  
 Prints heteroskedasticity corrected estimates and associated statistics.  The
 auxiliary regression predicts the log of the square of residuals (using
@@ -758,12 +768,12 @@ of non-missing observations for the two variables.)
 #
 mpols
 @Estimation
-Usage:          mpols depvar indepvar
+Usage:          mpols depvar indepvars
 Examples:       ols 1 0 2 4 6 7
                 ols y 0 x1 x2 x3
   
 Computes ordinary least squares estimates with depvar as the dependent
-variable and indepvar as the list of independent variables, using
+variable and indepvars as the list of independent variables, using
 multiple-precision arithmetic.  The variables can be specified either by names
 or by their number; use the number zero for a constant term.  This command is
 available only if gretl is configured with support for GMP, the GNU Multiple
@@ -823,12 +833,12 @@ nulldata command may be useful in conjunction with "loop".
 #
 ols
 @Estimation
-Usage:          ols depvar indepvar       or     ols -o depvar indepvar 
+Usage:          ols depvar indepvars      or     ols -o depvar indepvars 
 Examples:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7  
                 ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3
   
 Computes ordinary least squares estimates with depvar as the dependent
-variable and indepvar as the list of independent variables.  The -o flag will
+variable and indepvars as the list of independent variables.  The -o flag will
 print the covariance matrix of regression coefficients.  The variables can be
 specified either by names or by their number.  Use the number zero for a
 constant term.  The program also prints the p-values for t (two-tailed) and
@@ -1300,14 +1310,14 @@ predetermined variables.
 #
 var
 @Estimation
-Usage:          var order depvar indepvar
+Usage:          var order depvar indepvars
 Examples:       var 4 x1 const time x2 x3
                 var 3 1 0 2 3 4
 
 Sets up and estimates (via OLS) a vector autoregression.  The first argument
 specifies the lag order, then follows the setup for the first equation, much
 as in the "ols" command.  Don't include lags among the elements of the
-"indepvar" list -- they will be added automatically. A regression will be run
+"indepvars" list -- they will be added automatically. A regression will be run
 for each variable in the list, excluding the constant, the time trend and any
 dummy variables.  Output for each equation includes F-tests for zero
 restrictions on all lags of each of the variables, and an F-test for the
@@ -1332,13 +1342,13 @@ variances for the variables x1 and x2 are equal, and shows its p-value.
 #
 wls
 @Estimation
-Usage:          wls weightvar depvar indepvar            [-o optional]
+Usage:          wls weightvar depvar indepvars           [-o optional]
 
 Weighted least squares estimates are obtained using weightvar as the weight,
-depvar as the dependent variable and indepvar as the list of independent
+depvar as the dependent variable and indepvars as the list of independent
 variables.  More specifically, ols regression is run on weightvar*depvar
-against weight*indepvar.  If the weightvar is a dummy variable, this is equi-
-valent to eliminating all observations with the number zero for weightvar.
+against weight*indepvars.  If the weightvar is a dummy variable, this is
+equivalent to eliminating all observations with the number zero for weightvar.
 The flag -o will print the covariance matrix of coefficients.  A number of
 internal variables may be retrieved using the genr command, provided genr is
 invoked immediately after this command.  Type help genr for more details on

@@ -86,3 +86,8 @@ int hausman_test (MODEL *pmod,
 int mp_ols (const LIST list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn); 
+
+int sum_test (LIST sumvars, MODEL *pmod, 
+	      double ***pZ, DATAINFO *pdinfo, 
+	      PRN *prn);
+

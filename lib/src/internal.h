@@ -106,4 +106,6 @@ void gretl_test_init (GRETLTEST *test);
 
 void rearrange_list (int *list);
 
+int vars_identical (const double *x, const double *y, int n);
+
 #endif /* GRETL_INTERNAL_H */

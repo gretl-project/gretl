@@ -446,6 +446,12 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
+    if (action == COEFFSUM) {
+	strcpy(title, _("gretl: model tests"));
+	simple_selection (title, do_coeff_sum, action, vwin);
+	return;
+    }
+
     if (action == GR_PLOT) {
 	strcpy(title, _("gretl: model tests"));
 	simple_selection (title, do_graph_from_selector, action, vwin);
