@@ -16,7 +16,7 @@ version 1.1.5
 - Model table: make a LaTeX preview available
 - Windows installation: fix typo in name of uninstaller program 
   in the Programs menu
-- Windows version: bug fixes and enhancements for gretl_updater.exe,
+- Windows version: bug fixes and enhancements for gretl_updater,
   and add a simple logging mechanism to aid in trouble-shooting
 - Windows: add the ability to print a gnuplot graph directly
 - ols command: add '-q' (quiet) option to suppress printing of 
@@ -24,6 +24,10 @@ version 1.1.5
 - Consolidate "webget" code -- one version for all uses
 - gtk2 version: replace "system()" calls with g_spawn()
 - Add model selection statistics to output of adf command
+- Improve recognition of dated data when importing from Excel
+  or Gnumeric
+- Add an error message for an attempt to run TRAMO when the
+  sample size is > 600
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter

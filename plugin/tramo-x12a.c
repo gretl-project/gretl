@@ -768,10 +768,9 @@ int write_tx_data (char *fname, int varnum,
 	request.code = X12A;
     }
 
-    /* if TRAMO, can't handle > 600 observations (!) */
     if (request.code == TRAMO_SEATS && (pdinfo->t2 - pdinfo->t1) > 599) {
-	strcpy(errmsg, "TRAMO can't handle more than 600 observations.\n"
-	       "Please select a smaller sample.");
+	strcpy(errmsg, _("TRAMO can't handle more than 600 observations.\n"
+			 "Please select a smaller sample."));
 	return 1;
     }
 

@@ -692,19 +692,39 @@ static int consistent_date_labels (void)
     double x, xbak = 0.0;
     char *test;
 
+    fputs("testing for consistent date labels\n", stderr);
+
     for (t=1; t<=lastrow; t++) {
 	test = rowptr[t].cells[0];
-	if (test[0] == '\0') return 0;
+	if (*test == '\0') {
+	    fprintf(stderr, " no: blank cell at row %d\n", t);
+	    return 0;
+	}
+	if (*test == '"' || *test == '\'') test++;
 	pd = label_is_date(test);
-	if (pd == 0) return 0;
+	if (pd == 0) {
+	    fprintf(stderr, " no: label '%s' at row %d is not a date\n", 
+		    test, t);
+	    return 0;
+	}
 	x = atof(test);
 	if (t == 1) pdbak = pd;
 	else { /* t > 1 */
-	    if (pd != pdbak) return 0;
-	    if (x <= xbak) return 0;
+	    if (pd != pdbak) {
+		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
+			pdbak, pd);
+		return 0;
+	    }
+	    if (x <= xbak) {
+		fprintf(stderr, " no: got %g <= %g\n", x, xbak);
+		return 0;
+	    }
 	}
 	xbak = x;
     }
+
+    fprintf(stderr, " yes: data frequency = %d\n", pd);
+
     return pd;
 }
 
@@ -901,6 +921,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}
 
 	label_strings = first_col_strings(&book);
+	puts("found label strings in first column"); 
 
 	err = got_valid_varnames(&book, ncols, label_strings);
 	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
@@ -926,20 +947,20 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}	    
 
 	i = book.col_offset;
-	if (!label_strings && 
-	    obs_column(rowptr[book.row_offset].cells[i] + 1)) {
+	if (obs_column(rowptr[book.row_offset].cells[i] + 1)) {
 	    int pd = consistent_date_labels();
 
-	    fprintf(stderr, "obs_column: pd = %d\n", pd);
-	    
-	    t = 1 + book.row_offset;
 	    if (pd) {
+		char *s = rowptr[1 + book.row_offset].cells[i];
+
+		if (*s == '"' || *s == '\'') s++;
 		newinfo->pd = pd;
-		newinfo->sd0 = atof(rowptr[t].cells[i]);
-		strcpy(newinfo->stobs, rowptr[t].cells[i]);
+		newinfo->sd0 = atof(s);
+		strcpy(newinfo->stobs, s);
 		colonize_obs(newinfo->stobs);
 		newinfo->time_series = TIME_SERIES;
 		time_series = 1;
+		label_strings = 0;
 	    }
 	}
 

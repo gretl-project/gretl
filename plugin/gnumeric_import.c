@@ -492,12 +492,15 @@ static int consistent_date_labels (wsheet *sheet)
     int t, rows = sheet->maxrow + 1 - sheet->row_offset;
     int pd = 0, pdbak = 0;
     double x, xbak = 0.0;
+    char *test;
 
     for (t=1; t<rows; t++) {
-	if (sheet->label[t][0] == '\0') return 0;
-	pd = label_is_date(sheet->label[t]);
+	test = sheet->label[t];
+	if (*test == '\0') return 0;
+	if (*test == '"' || *test == '\'') test++;
+	pd = label_is_date(test);
 	if (pd == 0) return 0;
-	x = atof(sheet->label[t]);
+	x = atof(test);
 	if (t == 1) pdbak = pd;
 	else { /* t > 1 */
 	    if (pd != pdbak) return 0;
@@ -505,6 +508,7 @@ static int consistent_date_labels (wsheet *sheet)
 	}
 	xbak = x;
     }
+
     return pd;
 }
 
@@ -569,17 +573,21 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	int time_series = 0;
 	int blank_cols = 0;
 
-	if (sheet.text_cols == 0 && obs_column(sheet.label[0])) {
+	if (obs_column(sheet.label[0])) {
 	    int pd = consistent_date_labels(&sheet);
 
 	    if (pd) {
+		char *s = sheet.label[1];
+
+		if (*s == '"' || *s == '\'') s++;
 		newinfo->pd = pd;
-		newinfo->sd0 = atof(sheet.label[1]);
-		strcpy(newinfo->stobs, sheet.label[1]);
+		newinfo->sd0 = atof(s);
+		strcpy(newinfo->stobs, s);
 		colonize_obs(newinfo->stobs);
 		newinfo->time_series = TIME_SERIES;
 		sheet.text_cols = 1;
 		time_series = 1;
+		label_strings = 0;
 	    }
 	}
 

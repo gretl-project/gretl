@@ -44,9 +44,18 @@ static int label_is_date (char *str)
     int i, d, pd = 0;
     double dd, sub;
 
-    for (i=0; i<len; i++) 
-	if (str[i] == ':') str[i] = '.';
-     
+    if (*str == '"' || *str == '\'') {
+	str++;
+	len--;
+    }
+
+    for (i=0; i<len; i++) {
+	if (str[i] == ':' || str[i] == 'Q') {
+	    str[i] = '.';
+	    break;
+	}
+    }
+
     if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
 	d > 0 && d < 3000) {
 	pd = 1;
@@ -61,6 +70,7 @@ static int label_is_date (char *str)
 	sub = 100.0 * (dd - (int) dd);
 	if (sub >= .9999 && sub <= 12.0001) pd = 12;
     }
+
     return pd;
 }
 
