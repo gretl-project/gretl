@@ -157,116 +157,6 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
-/* ........................................................... */
-
-void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, PRN *prn,
-		      gretlopt opt)
-{
-    int i;
-    char spc[3];
-
-    if (add->ci == LAD) {
-	return;
-    }
-
-    if (!(opt & OPT_Q)) {
-	strcpy(spc, "  ");
-	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
-		add->m1, add->m2);
-    } else {
-	spc[0] = '\0';
-    }
-
-    if (addvars[0] > 1 && (add->ci == OLS || add->ci == HCCM)) {
-	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		       "zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) {
-	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	}
-	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		(add->robust)? _("Robust F"): "F",
-		add->dfn, add->dfd, add->F);
-	pprintf(prn, _("with p-value = %g\n"), 
-		fdist(add->F, add->dfn, add->dfd));
-    } else if (addvars[0] > 1 && LIMDEP(add->ci)) {
-	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
-		       "zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) { 
-	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	}
-	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
-		_("Chi-square"), add->dfn, add->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(add->chisq, add->dfn));
-	return;
-    } 
-
-    if (!(opt & OPT_Q)) {
-	pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
-		spc, add->score);
-	if (add->score == 1) {
-	    pputs(prn, _("has improved.\n"));
-	} else {
-	    pputs(prn, _("have improved.\n\n"));
-	}
-    }
-}
-
-/* ........................................................... */
-
-void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
-		       const DATAINFO *pdinfo, PRN *prn,
-		       gretlopt opt)
-{
-    int i;
-
-    if (omit->ci == LAD) return;
-
-    if (!(opt & OPT_Q)) {
-	pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
-		omit->m1, omit->m2);
-    } else {
-	pputc(prn, '\n');
-    }
-
-    if ((omit->ci == OLS || omit->ci == HCCM) && 
-	omit->dfn > 0 && omitvars[0] > 0) {
-	pprintf(prn, _("  Null hypothesis: the regression parameters "
-		"are zero for the variables\n\n"));
-	for (i=1; i<=omitvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
-	}
-	if (!na(omit->F)) {
-	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
-		    (omit->robust)? _("Robust F") : "F",
-		    omit->dfn, omit->dfd, omit->F);
-	    pprintf(prn, _("with p-value = %g\n"), 
-		    fdist(omit->F, omit->dfn, omit->dfd));	    
-	} 
-    }
-    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 0) {
-	pputs(prn, _("  Null hypothesis: the regression parameters "
-		"are zero for the variables\n\n"));
-	for (i=1; i<=omitvars[0]; i++) {
-	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
-	} 
-	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
-		_("Chi-square"), omit->dfn, omit->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(omit->chisq, omit->dfn));
-	return;
-    } 
-
-    if (opt & OPT_Q) {
-	pputc(prn, '\n');
-    } else {
-	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
-		omit->score, (omit->score == 1)? 
-		_("has improved") : _("have improved"));
-    }
-}
-
 /* ........................................................ */
 
 static int make_list (int **plist, const DATAINFO *pdinfo)
@@ -682,23 +572,21 @@ int page_pause (void)
     return takenotes(1);
 }
 
-/* ........................................................ */
+/*  Given a one dimensional array which represents a symmetric
+    matrix, prints out an upper triangular matrix of any size.
+
+    Due to screen and printer column limitations the program breaks up
+    a large upper triangular matrix into 5 variables at a time. For
+    example, if there were 10 variables the program would first print
+    an upper triangular matrix of the first 5 rows and columns, then
+    it would print a rectangular matrix of the first 5 rows but now
+    columns 6 - 10, and finally an upper triangular matrix of rows 6 -
+    10 and columns 6 - 10
+*/
 
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 
 			PRN *prn)
-     /*  Given a one dimensional array, which represents a
-	 symmetric matrix, prints out an upper triangular matrix
-	 of any size. 
-
-	 Due to screen and printer column limitations the program breaks up
-	 a large upper triangular matrix into 5 variables at a time. For
-	 example, if there were 10 variables the program would first print
-	 an upper triangular matrix of the first 5 rows and columns, then
-	 it would print a rectangular matrix of the first 5 rows but now
-	 columns 6 - 10, and finally an upper triangular matrix of rows 6
-	 - 10 and columns 6 - 10
-     */
 {
     register int i, j;
     int lo, ljnf, nf, li2, p, k, m, index, ij2, lineno = 0;
@@ -774,166 +662,6 @@ void text_print_matrix (const double *rr, const int *list,
 	}
 	pputc(prn, '\n');
     }
-}
-
-/* ........................................................ */
-
-static void printgx (const double xx, PRN *prn)
-{
-    static char word[32];
-    int lw;
-
-    sprintf(word, "%11g", xx);
-    lw = strlen(word);
-    pputs(prn, word);
-    bufspace(13 - lw, prn);
-} 
-
-/* ........................................................ */
-
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn)
-/*
-  if n > 0 graphs zy1 against zx, otherwise
-  graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
-  no of rows = 40 if oflag = OPT_O, else it is = 18 or 16
-*/
-{
-    register int i, j;
-    int ix, iy1, iy2, lx, ly, xzero, yzero, nrows, nr2, ncols, nc2,
-	ls, lw, t1, t2, option = 0;
-    double xmin, xmax, xrange, ymin, ymax, yrange, y1min, y1max; 
-    double xx, y2min, y2max;
-    char p[41][132];
-    static char word[32];
-
-    if (pdinfo != NULL) {
-	t1 = pdinfo->t1;
-	t2 = pdinfo->t2;
-    } else {
-	t1 = 0;
-	t2 = (n < 0)? -n - 1 : n - 1;
-    }
-
-    if (n < 0) {
-	n = -n;
-	option = 1;
-	gretl_minmax(t1, t2, zy1, &y1min, &y1max);
-	gretl_minmax(t1, t2, zy2, &y2min, &y2max);
-	ymin = (y1min < y2min)? y1min : y2min;
-	ymax = (y1max > y2max)? y1max : y2max;
-    } else {
-	gretl_minmax(t1, t2, zy1, &ymin, &ymax);
-    }
-
-    yrange = ymax - ymin;
-    xzero = yzero = 0;
-
-    /* set the number of columns and rows to be used */
-    ncols = 60;
-    if (oflag & OPT_O) nrows = 40;
-    else nrows = option ? 16 : 18 ;
-    nr2 = nrows/2;
-    nc2 = ncols/2;
-
-    gretl_minmax(t1, t2, zx, &xmin, &xmax);
-    xrange = xmax - xmin;
-
-    /* Initialize picture matrix */
-    for (i=0; i<=nrows; ++i) {
-	p[i][0] = (i%5 == 0)? '+' : '|'; 
-	for (j=1; j<=ncols+1; j++) p[i][j] = ' ';
-    }
-
-    if (xmin < 0 && xmax > 0) {
-	xzero = 0.5 - xmin * ncols / xrange;
-	for (i=0; i<=nrows; i++) p[i][xzero+1] = '|';
-    }
-    if (ymin < 0 && ymax > 0) {
-	yzero = 0.5 - ymin * nrows / yrange;
-	for (j=0; j<=ncols; j++) p[yzero][j+1] = '-';
-    }
-
-    /*  loop replaces blanks in PICTURE with o's that correspond to the
-	scaled values of the specified variables */
-    if (option) {
-	for (i=0; i<n; ++i) {
-	    ix = (floatneq(xrange, 0.0))? 
-		((zx[i] - xmin)/xrange)*ncols : nc2;
-	    iy1 = (floatneq(yrange, 0.0))? 
-		((zy1[i] - ymin)/yrange)*nrows : nr2;
-	    iy2 = (floatneq(yrange, 0.0))? 
-		((zy2[i] - ymin)/yrange)*nrows : nr2;
-	    if (iy1 != iy2) {
-		p[iy1][ix+1] = 'o';
-		p[iy2][ix+1] = 'x';
-	    }
-	    else p[iy1][ix+1] = '+';
-	}
-    } else for (i=0; i<n; ++i) {
-	ix = (floatneq(xrange, 0.0))? 
-	    ((zx[i] - xmin)/xrange)*ncols : nc2;
-	iy1 = (floatneq(yrange, 0.0))? 
-	    ((zy1[i] - ymin)/yrange)*nrows : nr2;
-	p[iy1][ix+1] = 'o';
-    }
-
-    /* loop prints out the matrix PICTURE that is stored in the
-       2-dimensional p matrix. */
-    if (!option) {
-	pprintf(prn, "%14s\n", yname);
-    } else if (list) {
-	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
-		"are equal)\n\n%9s, %s\n"), ' ', 
-		yname, pdinfo->varname[list[2]], yname, 
-		pdinfo->varname[list[2]]);
-    }
-
-    for (i=nrows; i>=0; --i) {
-	if (i && i == yzero) {
-	    pputs(prn, "        0.0  ");
-	} else if (i == nrows || i%5 == 0) {
-	    xx = ymin + ((ymax-ymin) * i/nrows);
-	    printgx(xx, prn);
-	} else {
-	    bufspace(13, prn);
-	}
-	for (j=0; j<=ncols+1; ++j) {
-	    pprintf(prn, "%c", p[i][j]);
-	}
-	pputc(prn, '\n');
-    }
-
-    bufspace(13, prn);
-    pputc(prn, '|');
-    for (j=0; j<=ncols; j++) {
-	if (j%10 == 0) pputc(prn, '+');
-	else pputc(prn, '-');
-    }
-    pputc(prn, '\n');
-
-    bufspace(14, prn);
-    sprintf(word, "%g", xmin);
-    lx = strlen(word);
-    lw = 13 + lx;
-    pputs(prn, word);
-    sprintf(word, "%s", xname);
-    ly = strlen(word);
-    ls = 30 - lx - ly/2;
-    bufspace(ls, prn);
-    pputs(prn, word);
-    lw = lw + ls + ly; 
-    sprintf(word, "%g", xmax);
-
-    ls = strlen(word);
-    if (ls < 7) bufspace(73 - lw, prn);
-    else { 
-	lw = lw + ls;
-	bufspace(79 - lw, prn);
-    }
-    pprintf(prn, "%s\n\n", word);
 }
 
 /* ........................................................... */

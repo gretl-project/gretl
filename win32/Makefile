@@ -114,6 +114,7 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = bhhh_max.c \
 	calendar.c \
 	compare.c \
+	compat.c \
 	dataio.c \
 	dbread.c \
 	describe.c \

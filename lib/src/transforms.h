@@ -20,9 +20,6 @@
 #ifndef TRANSFORMS_H
 #define TRANSFORMS_H
 
-int rhodiff (char *param, const LIST list, 
-	     double ***pZ, DATAINFO *pdinfo);
-
 int diffgenr (int v, double ***pZ, DATAINFO *pdinfo, int ldiff);
 
 int laggenr (int v, int lag, double ***pZ, DATAINFO *pdinfo);

@@ -27,22 +27,6 @@ extern int newlag; /* transforms. c */
 int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo, 
 			char *newvar, char *s);
 
-int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
-		    DATAINFO *pdinfo);
-
-void gretl_print_add (const COMPARE *add, const int *addvars, 
-		      const DATAINFO *pdinfo, PRN *prn,
-		      gretlopt opt);
-
-void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
-		       const DATAINFO *pdinfo, PRN *prn,
-		       gretlopt opt);
-
-void graphyzx (const int *list, const double *zy1, const double *zy2, 
-	       const double *zx, int n, const char *yname, 
-	       const char *xname, const DATAINFO *pdinfo, 
-	       gretlopt oflag, PRN *prn);
-
 void gretl_printxs (double xx, int n, int ci, PRN *prn);
 
 void bufspace (int n, PRN *prn);

@@ -1161,8 +1161,8 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     if (selector_code(sr) == ADD) { 
-        err = auxreg(cmd.list, orig, pmod, 
-                     &Z, datainfo, AUX_ADD, NULL, OPT_NONE, prn);
+        err = add_test(cmd.list, orig, pmod, 
+		       &Z, datainfo, OPT_NONE, prn);
     } else {
         err = omit_test(cmd.list, orig, pmod,
 			&Z, datainfo, OPT_NONE, prn);
@@ -1318,11 +1318,11 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} else {
 	    strcat(title, _("(heteroskedasticity)"));
-	    if (add_test_to_model(&test, pmod) == 0)
+	    if (add_test_to_model(&test, pmod) == 0) {
 		print_test_to_window(&test, mydata->w);
+	    }
 	}
-    } 
-    else {
+    } else {
 	int aux = (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
 
 	if (action == LMTEST_SQUARES) { 
@@ -1331,22 +1331,23 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	    strcpy(line, "lmtest --logs");
 	}
 	clear_model(models[0]);
-	err = auxreg(NULL, pmod, models[0],
-		     &Z, datainfo, aux, &test, OPT_NONE, prn);
+	err = nonlinearity_test(pmod, &Z, datainfo, aux, 
+				OPT_NONE, prn, &test);
 	if (err) {
 	    gui_errmsg(err);
-	    clear_model(models[0]);
 	    gretl_print_destroy(prn);
 	    return;
 	} else {
-	    clear_model(models[0]); 
 	    strcat(title, _("(non-linearity)"));
-	    if (add_test_to_model(&test, pmod) == 0)
+	    if (add_test_to_model(&test, pmod) == 0) {
 		print_test_to_window(&test, mydata->w);
+	    }
 	} 
     }
 
-    if (model_command_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(line, &cmd, pmod->ID)) {
+	return;
+    }
 
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
@@ -5067,12 +5068,13 @@ int gui_exec_line (char *line,
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
     plain_add_omit:
 	clear_model(models[1]);
-	if (cmd.ci == ADD || cmd.ci == ADDTO)
-	    err = auxreg(cmd.list, models[0], models[1], 
-			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, outprn);
-	else
+	if (cmd.ci == ADD || cmd.ci == ADDTO) {
+	    err = add_test(cmd.list, models[0], models[1], 
+			   &Z, datainfo, cmd.opt, outprn);
+	} else {
 	    err = omit_test(cmd.list, models[0], models[1],
 			    &Z, datainfo, cmd.opt, outprn);
+	}
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1]);
@@ -5100,8 +5102,8 @@ int gui_exec_line (char *line,
 	clear_model(models[1]);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, &tmpmod, models[1], 
-			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, outprn);
+	    err = add_test(cmd.list, &tmpmod, models[1], 
+			   &Z, datainfo, cmd.opt, outprn);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
 			    &Z, datainfo, cmd.opt, outprn);
@@ -5593,16 +5595,14 @@ int gui_exec_line (char *line,
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_SQ, ptest, OPT_NONE, outprn);
-	    clear_model(models[1]);
+	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_SQ, 
+				    OPT_NONE, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_LOG, ptest, OPT_NONE, outprn);
-	    clear_model(models[1]);
+	    err = nonlinearity_test(models[0], &Z, datainfo, AUX_LOG, 
+				    OPT_NONE, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	}
 	/* autocorrelation or heteroskedasticity */

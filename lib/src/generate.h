@@ -42,9 +42,6 @@ void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
-int simulate (char *cmd, 
-	      double ***pZ, DATAINFO *pdinfo); 
-
 int genr_fit_resid (MODEL *pmod, 
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);

@@ -23,6 +23,7 @@
 #include "var.h"
 #include "gretl_func.h"
 #include "gretl_private.h"
+#include "compat.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -2057,11 +2058,11 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case GRAPH:
-	graph(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	ascii_graph(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;
 
     case PLOT:
-	plot(cmd->list, *pZ, datainfo, cmd->opt, prn);
+	ascii_plot(cmd->list, *pZ, datainfo, cmd->opt, prn);
 	break;
 
     case RMPLOT:

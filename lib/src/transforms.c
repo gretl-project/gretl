@@ -62,9 +62,6 @@ make_transform_varname (char *vname, const char *orig, int cmd,
 	sprintf(ext, "_%d", lag);
 	strncat(vname, orig, len - strlen(ext));
 	strcat(vname, ext);
-    } else if (cmd == RHODIFF) {
-	strncat(vname, orig, len - 1);
-	strcat(vname, "#");
     }
 
     return 0;
@@ -84,9 +81,7 @@ make_transform_label (char *label, const char *parent,
 	sprintf(label, _("= %s squared"), parent);
     } else if (cmd == LAGS) {
 	sprintf(label, "= %s(t - %d)", parent, lag);
-    } else if (cmd == RHODIFF) {
-	sprintf(label, _("= rho-differenced %s"), parent);
-    }
+    } 
 }
 
 static void make_xp_varname (char *vname, const char *v1, 
@@ -737,114 +732,3 @@ int lagvarnum (int v, int l, const DATAINFO *pdinfo)
 
     return -1;
 }
-
-#undef RHODEBUG
-
-/* rhodiff: a "legacy" function */
-
-/**
- * rhodiff:
- * @param: please see the gretl help on rhodiff() for syntax.
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set rho-differenced versions
- * of the variables given in @list.
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i, j, maxlag, p, t, t1, nv;
-    int v = pdinfo->v, n = pdinfo->n;
-    char parmbit[VNAMELEN];
-    double *rhot;
-
-#ifdef RHODEBUG
-    fprintf(stderr, "rhodiff: param = '%s'\n", param);
-#endif
-
-    maxlag = count_fields(param);
-    rhot = malloc(maxlag * sizeof *rhot);
-    if (rhot == NULL) {
-	return E_ALLOC;
-    }
-
-    if (maxlag > pdinfo->t1) {
-	t1 = maxlag;
-    } else {
-	t1 = pdinfo->t1;
-    }
-
-#ifdef RHODEBUG
-    fprintf(stderr, "rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1);
-#endif
-
-    /* parse "param" string */
-    j = strlen(param);
-    p = 0;
-    for (i=0; i<j; i++) {
-	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
-	    sscanf(param + i + (i? 1 : 0), "%8s", parmbit); 
-#ifdef RHODEBUG
-	    fprintf(stderr, "rhodiff: parmbit = '%s'\n", parmbit);
-#endif
-	    if (isalpha((unsigned char) parmbit[0])) {
-		nv = varindex(pdinfo, parmbit);
-		if (nv == v) {
-		    free(rhot);
-		    return E_UNKVAR;
-		}
-		rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
-	    } else {
-		rhot[p] = dot_atof(parmbit);
-	    }
-	    p++;
-	}
-    }
-
-    if (dataset_add_vars(list[0], pZ, pdinfo)) {
-	return E_ALLOC;
-    }
-
-    for (i=1; i<=list[0]; i++) {
-	int vr = v + i - 1;
-	double xx;
-
-	j = list[i];
-
-	make_transform_varname(pdinfo->varname[vr], 
-			       pdinfo->varname[j], 
-			       RHODIFF, 0, 8);
-	make_transform_label(VARLABEL(pdinfo, vr), pdinfo->varname[j],
-			     RHODIFF, 0);
-
-	for (t=0; t<n; t++) {
-	    if (t < t1 || t > pdinfo->t2) {
-		(*pZ)[vr][t] = NADBL;
-		continue;
-	    }
-	    xx = (*pZ)[j][t];
-	    if (na(xx)) {
-		(*pZ)[vr][t] = NADBL;
-		continue;
-	    }
-	    for (p=0; p<maxlag; p++) {
-		if (na((*pZ)[j][t-p-1])) {
-		    xx = NADBL;
-		    break;
-		} else {
-		    xx -= rhot[p] * (*pZ)[j][t-p-1];
-		}
-	    }
-	    (*pZ)[vr][t] = xx;
-	}
-    }
-
-    free(rhot);
-
-    return 0;
-}
-

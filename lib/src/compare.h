@@ -49,32 +49,21 @@ enum aux_codes {
     AUX_AUX    /* auxiliary regression not otherwise specified */
 };
 
-typedef struct {
-    int m1;        /* ID for first model */
-    int m2;        /* ID for second model */
-    int ci;        /* estimator code for the first */
-    int dfn;       /* numerator degrees of freedom */
-    int dfd;       /* denominator degrees of freedom */ 
-    double F;      /* F test statistic */
-    double chisq;  /* Chi-square test statistic */
-    double trsq;   /* T*R^2 test statistic */
-    int score;     /* "cases correct" for discrete models */
-    int robust;    /* = 1 when robust vcv is in use, else 0 */
-} COMPARE;
-
 /* functions follow */
  
-int auxreg (LIST addvars, 
-	    MODEL *orig, MODEL *new,
-	    double ***pZ, DATAINFO *pdinfo, 
-	    int aux_code, GRETLTEST *test, 
-	    gretlopt opt, PRN *prn);
-
 double robust_omit_F (const int *list, MODEL *pmod);
+
+int add_test (LIST addvars,  MODEL *orig, MODEL *new,
+	      double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn);
+
+int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		       int aux_code, gretlopt opt, PRN *prn, 
+		       GRETLTEST *test);
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, GRETLTEST *test);
@@ -89,8 +78,7 @@ int chow_test (const char *line, MODEL *pmod,
 
 int cusum_test (MODEL *pmod, 
 		double ***pZ, DATAINFO *pdinfo, 
-		PRN *prn, 
-		GRETLTEST *test);
+		PRN *prn, GRETLTEST *test);
 
 int hausman_test (MODEL *pmod, 
 		  double ***pZ, DATAINFO *pdinfo, 

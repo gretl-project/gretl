@@ -61,6 +61,7 @@ VPATH = $(libsrc):$(cephessrc):$(minpacksrc)
 SRCS = bhhh_max.c \
 	calendar.c \
 	compare.c \
+	compat.c \
 	dataio.c \
 	dbread.c \
 	describe.c \

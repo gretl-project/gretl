@@ -25,7 +25,126 @@
 #include "gretl_private.h"
 #include "gretl_matrix.h"
 
-/* ........................................................... */
+typedef struct {
+    int m1;        /* ID for first model */
+    int m2;        /* ID for second model */
+    int ci;        /* estimator code for the first */
+    int dfn;       /* numerator degrees of freedom */
+    int dfd;       /* denominator degrees of freedom */ 
+    double F;      /* F test statistic */
+    double chisq;  /* Chi-square test statistic */
+    double trsq;   /* T*R^2 test statistic */
+    int score;     /* "cases correct" for discrete models */
+    int robust;    /* = 1 when robust vcv is in use, else 0 */
+} COMPARE;
+
+static void
+gretl_print_add (const COMPARE *add, const int *addvars, 
+		 const DATAINFO *pdinfo, PRN *prn,
+		 gretlopt opt)
+{
+    int i;
+    char spc[3];
+
+    if (add->ci == LAD) {
+	return;
+    }
+
+    if (!(opt & OPT_Q)) {
+	strcpy(spc, "  ");
+	pprintf(prn, _("Comparison of Model %d and Model %d:\n"), 
+		add->m1, add->m2);
+    } else {
+	spc[0] = '\0';
+    }
+
+    if (addvars[0] > 1 && (add->ci == OLS || add->ci == HCCM)) {
+	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
+		       "zero for the added variables\n\n"), spc);
+	for (i=1; i<=addvars[0]; i++) {
+	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+	}
+	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		(add->robust)? _("Robust F"): "F",
+		add->dfn, add->dfd, add->F);
+	pprintf(prn, _("with p-value = %g\n"), 
+		fdist(add->F, add->dfn, add->dfd));
+    } else if (addvars[0] > 1 && LIMDEP(add->ci)) {
+	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
+		       "zero for the added variables\n\n"), spc);
+	for (i=1; i<=addvars[0]; i++) { 
+	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+	}
+	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
+		_("Chi-square"), add->dfn, add->chisq);
+	pprintf(prn, _("with p-value = %g\n\n"), 
+		chisq(add->chisq, add->dfn));
+	return;
+    } 
+
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
+		spc, add->score);
+	if (add->score == 1) {
+	    pputs(prn, _("has improved.\n"));
+	} else {
+	    pputs(prn, _("have improved.\n\n"));
+	}
+    }
+}
+
+static void 
+gretl_print_omit (const COMPARE *omit, const int *omitvars, 
+		  const DATAINFO *pdinfo, PRN *prn,
+		  gretlopt opt)
+{
+    int i;
+
+    if (omit->ci == LAD) return;
+
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("Comparison of Model %d and Model %d:\n\n"),
+		omit->m1, omit->m2);
+    } else {
+	pputc(prn, '\n');
+    }
+
+    if ((omit->ci == OLS || omit->ci == HCCM) && 
+	omit->dfn > 0 && omitvars[0] > 0) {
+	pprintf(prn, _("  Null hypothesis: the regression parameters "
+		"are zero for the variables\n\n"));
+	for (i=1; i<=omitvars[0]; i++) {
+	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
+	}
+	if (!na(omit->F)) {
+	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
+		    (omit->robust)? _("Robust F") : "F",
+		    omit->dfn, omit->dfd, omit->F);
+	    pprintf(prn, _("with p-value = %g\n"), 
+		    fdist(omit->F, omit->dfn, omit->dfd));	    
+	} 
+    }
+    else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 0) {
+	pputs(prn, _("  Null hypothesis: the regression parameters "
+		"are zero for the variables\n\n"));
+	for (i=1; i<=omitvars[0]; i++) {
+	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
+	} 
+	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
+		_("Chi-square"), omit->dfn, omit->chisq);
+	pprintf(prn, _("with p-value = %g\n\n"), 
+		chisq(omit->chisq, omit->dfn));
+	return;
+    } 
+
+    if (opt & OPT_Q) {
+	pputc(prn, '\n');
+    } else {
+	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
+		omit->score, (omit->score == 1)? 
+		_("has improved") : _("have improved"));
+    }
+}
 
 static COMPARE 
 add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
@@ -210,10 +329,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 }
 
 static int
-non_linearity_test (const MODEL *orig, int *newlist,
-		    double ***pZ, DATAINFO *pdinfo,
-		    int aux_code, GRETLTEST *test,
-		    gretlopt opt, PRN *prn)
+real_nonlinearity_test (const MODEL *pmod, int *list,
+			double ***pZ, DATAINFO *pdinfo,
+			int aux_code, GRETLTEST *test,
+			gretlopt opt, PRN *prn)
 {
     MODEL aux;
     int t, err = 0;
@@ -224,19 +343,19 @@ non_linearity_test (const MODEL *orig, int *newlist,
     }
 
     for (t=0; t<pdinfo->n; t++) {
-	(*pZ)[pdinfo->v - 1][t] = orig->uhat[t];
+	(*pZ)[pdinfo->v - 1][t] = pmod->uhat[t];
     }
 
     /* replace the dependent var */
-    newlist[1] = pdinfo->v - 1;
+    list[1] = pdinfo->v - 1;
 
-    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
+    aux = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (aux.errcode) {
 	err = aux.errcode;
 	fprintf(stderr, "auxiliary regression failed\n");
     } else {
 	double trsq = aux.rsq * aux.nobs;
-	int df = newlist[0] - orig->list[0];
+	int df = list[0] - pmod->list[0];
 
 	aux.aux = aux_code;
 	printmodel(&aux, pdinfo, opt, prn);
@@ -264,36 +383,103 @@ non_linearity_test (const MODEL *orig, int *newlist,
 }
 
 /**
- * auxreg:
- * @addvars: list of variables to add to original model (or NULL)
- * @orig: pointer to original model.
- * @new: pointer to new (modified) model.
+ * nonlinearity_test:
+ * @pmod: pointer to original model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @aux_code: code indicating what sort of aux regression to run.
- * @test: hypothesis test results struct.
+ * @aux_code: AUX_SQ for squares or AUX_LOG for logs
  * @opt: can contain options flags (--quiet, --vcv).
+ * @test: hypothesis test results struct.
  * @prn: gretl printing struct.
  *
- * Run an auxiliary regression, in order to test a given set of added
- * variables, or to test for non-linearity (squares, logs).
+ * Run an auxiliary regression to test the specified model
+ * for non-linearity (squares or logs).
  * 
  * Returns: 0 on successful completion, error code on error.
  */
 
-int auxreg (LIST addvars, MODEL *orig, MODEL *new, 
-	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
-	    GRETLTEST *test, gretlopt opt, PRN *prn)
+int nonlinearity_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+		       int aux_code, gretlopt opt, PRN *prn, 
+		       GRETLTEST *test)
 {
-    int *newlist = NULL;
+    int *tmplist = NULL;
+    const int orig_nvar = pdinfo->v; 
+    int err = 0;
+
+    if (!command_ok_for_model(ADD, pmod->ci)) {
+	return E_NOTIMP;
+    }
+    if (pmod->ci == LOGISTIC || pmod->ci == LAD) {
+	return E_NOTIMP;
+    }
+
+    /* check for changes in original list members */
+    err = list_members_replaced(pmod->list, pdinfo, pmod->ID);
+    if (err) {
+	return err;
+    }
+
+    /* re-impose the sample that was in force when the original model
+       was estimated */
+    exchange_smpl(pmod, pdinfo);
+
+    /* add squares or logs */
+    tmplist = augment_regression_list(pmod->list, aux_code, 
+				      pZ, pdinfo);
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    } else if (tmplist[0] == pmod->list[0]) {
+	/* no vars were added */
+	if (aux_code == AUX_SQ) {
+	    fprintf(stderr, "gretl: generation of squares failed\n");
+	    err = E_SQUARES;
+	} else if (aux_code == AUX_LOG) {
+	    fprintf(stderr, "gretl: generation of logs failed\n");
+	    err = E_LOGS;
+	}
+    }
+
+    if (!err) {
+	err = real_nonlinearity_test(pmod, tmplist, pZ, pdinfo, aux_code, 
+				     test, opt, prn);
+    }
+	
+    /* trash any extra variables generated (squares, logs) */
+    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
+
+    /* put back into pdinfo what was there on input */
+    exchange_smpl(pmod, pdinfo);
+
+    free(tmplist);
+
+    return err;
+}
+
+/**
+ * add_test:
+ * @addvars: list of variables to add to original model.
+ * @orig: pointer to original model.
+ * @new: pointer to new (modified) model.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: can contain option flags (--quiet, --vcv).
+ * @prn: gretl printing struct.
+ *
+ * Re-estimate a given model after adding the specified
+ * variables.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
+
+int add_test (LIST addvars, MODEL *orig, MODEL *new, 
+	      double ***pZ, DATAINFO *pdinfo, 
+	      gretlopt opt, PRN *prn)
+{
+    int *tmplist = NULL;
     const int orig_nvar = pdinfo->v; 
     int err = 0;
 
     if (!command_ok_for_model(ADD, orig->ci)) {
-	return E_NOTIMP;
-    }
-
-    if (aux_code != AUX_ADD && (orig->ci == LOGISTIC || orig->ci == LAD)) {
 	return E_NOTIMP;
     }
 
@@ -303,51 +489,36 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	return err;
     }
 
+    /* create augmented regression list */
+    tmplist = gretl_list_add(orig->list, addvars, &err);
+    if (err) {
+	return err;
+    }
+
     /* re-impose the sample that was in force when the original model
        was estimated */
     exchange_smpl(orig, pdinfo);
 
-    if (aux_code == AUX_ADD) {
-	/* run an augmented regression, matching the original
-	   estimation method */
-	newlist = gretl_list_add(orig->list, addvars, &err);
-	if (!err) {
-	    *new = replicate_estimator(orig, &newlist, pZ, pdinfo, opt, prn);
-	    if (new->errcode) {
-		err = new->errcode;
-		clear_model(new);
-	    } else {
-		new->aux = AUX_ADD;
-	    }
-	}
-    } else if (aux_code == AUX_SQ || aux_code == AUX_LOG) {
-	/* no specific list: trying squares or logs */
-	newlist = augment_regression_list(orig->list, aux_code, 
-					  pZ, pdinfo);
-	if (newlist == NULL) {
-	    err = E_ALLOC;
-	} else if (newlist[0] == orig->list[0]) {
-	    /* no vars were added */
-	    if (aux_code == AUX_SQ) {
-		fprintf(stderr, "gretl: generation of squares failed\n");
-		err = E_SQUARES;
-	    } else if (aux_code == AUX_LOG) {
-		fprintf(stderr, "gretl: generation of logs failed\n");
-		err = E_LOGS;
-	    }
-	} else {
-	    err = non_linearity_test(orig, newlist, pZ, pdinfo, aux_code, 
-				     test, opt, prn);
-	}
-    } 
+    /* run augmented regression, matching the original
+       estimation method */
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, opt, prn);
 
-    if (aux_code == AUX_ADD && !err) {
-	COMPARE add;  
+    if (new->errcode) {
+	pprintf(prn, "%s\n", gretl_errmsg);
+	err = new->errcode; 
+    }
+
+    if (!err) {
+	COMPARE add;
+
+	new->aux = AUX_ADD;
 
 	if (!(opt & OPT_Q) && new->ci != AR && new->ci != ARCH) {
 	    printmodel(new, pdinfo, opt, prn);
 	}
+
 	add = add_or_omit_compare(orig, new, 1);
+
 	gretl_list_diff(addvars, new->list, orig->list);
 	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
 	    add.F = robust_omit_F(addvars, new);
@@ -361,7 +532,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
 
-    free(newlist);
+    free(tmplist);
 
     return err;
 }
@@ -497,8 +668,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	       double ***pZ, DATAINFO *pdinfo, 
 	       gretlopt opt, PRN *prn)
 {
-    COMPARE omit;
-    int *tmplist;
+    int *tmplist = NULL;
     int maxlag = 0, t1 = pdinfo->t1;
     int err = 0;
 
@@ -535,11 +705,12 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
-	free(tmplist);
 	err = new->errcode; 
     }
 
     if (!err) {
+	COMPARE omit;
+
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_OMIT;
 	}
@@ -558,8 +729,6 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 
 	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
-	free(tmplist);
-
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_NONE;
 	}
@@ -569,6 +738,8 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
+
+    free(tmplist);
 
     return err;
 }

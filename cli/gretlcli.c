@@ -791,8 +791,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     plain_add_omit:
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, models[0], models[1], 
-			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, prn);
+	    err = add_test(cmd.list, models[0], models[1], 
+			   &Z, datainfo, cmd.opt, prn);
 	} else {
 	    err = omit_test(cmd.list, models[0], models[1],
 			    &Z, datainfo, cmd.opt, prn);
@@ -824,8 +824,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	clear_model(models[1]);
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
-	    err = auxreg(cmd.list, &tmpmod, models[1], 
-			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, prn);
+	    err = add_test(cmd.list, &tmpmod, models[1], 
+			   &Z, datainfo, cmd.opt, prn);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
 			    &Z, datainfo, cmd.opt, prn);
@@ -1292,18 +1292,16 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1]);
-	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_SQ, NULL, OPT_NONE, prn);
-	    clear_model(models[1]);
+	    err = nonlinearity_test(models[0], &Z, datainfo, 
+				    AUX_SQ, OPT_NONE, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
 	    if (!err && !batch && page_pause()) break; 
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
-	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_LOG, NULL, OPT_NONE, prn);
-	    clear_model(models[1]); 
+	    err = nonlinearity_test(models[0], &Z, datainfo, 
+				    AUX_LOG, OPT_NONE, prn, NULL);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
 	    if (!err && !batch && page_pause()) break;

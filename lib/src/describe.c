@@ -23,6 +23,7 @@
 #include "gretl_private.h"
 #include "gretl_matrix.h"
 #include "libset.h"
+#include "compat.h"
 
 #include <unistd.h>
 
