@@ -598,16 +598,8 @@ static int db_has_codebook (const char *fname)
     strcpy(cbname, fname);
     strcat(cbname, ".cb");
     
-    fprintf(stderr, "checking for codebook '%s'\n", cbname);
     fp = fopen(cbname, "r");
-    
-    if (fp == NULL) {
-	fprintf(stderr, "couldn't open codebook\n");
-	return 0;
-    } else {
-	fprintf(stderr, "codebook found OK\n");
-    }
-    
+    if (fp == NULL) return 0;
     fclose(fp);
     return 1;
 }
