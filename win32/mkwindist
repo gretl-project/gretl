@@ -175,6 +175,8 @@ process_gnuplot
 cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss 
 
 # make Inno installer
-inno_compile
+echo "Building gretl installer executable..."
+wine "c:/Program Files/Inno Setup 4/ISCC.exe" ./gretl.iss 2>errlog && \
+mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 
