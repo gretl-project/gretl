@@ -1337,7 +1337,9 @@
 	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
 	    (cumulate, or running sum), <func>resample</func>
 	    (resample a series with replacement, for bootstrap
-	    purposes).</para>
+	    purposes), <func>hpfilt</func> (Hodrick&ndash;Prescott
+	    filter: this function returns the <quote>cycle</quote>
+	    component of the series).</para>
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first
@@ -4122,12 +4124,22 @@
 	  <cell>values: <lit>unset</lit>, <lit>hessian</lit>,
 	    <lit>im</lit> (information matrix) , <lit>op</lit> (outer
 	    product matrix), <lit>qml</lit> (QML estimator),
-	    <lit>bw</lit> (Bollerlev&ndash;Wooldridge). Specifies the
+	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Specifies the
 	    variant that will be used for estimating the coefficient
 	    covariance matrix, for GARCH models.  If <lit>unset</lit>
 	    is given (the default) then the Hessian is used unless the
 	    <quote>robust</quote> option is given for the garch
 	    command, in which case QML is used.</cell>
+	</row>
+	<row>
+	  <cell><lit>hp_lambda</lit></cell>
+	  <cell>values: <lit>auto</lit> (the default), or a numerical
+	  value.  Sets the smoothing parameter for the
+	  Hodrick&ndash;Prescott filter (see the <lit>hpfilt</lit>
+	  function under the <cmd>genr</cmd> command).  The default is
+	  to use 100 times the square of the periodicity, which gives
+	  100 for annual data, 1600 for quarterly data, and so
+	  on).</cell>
 	</row>
       </table>
 

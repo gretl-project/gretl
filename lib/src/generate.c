@@ -1984,6 +1984,10 @@ int series_adjust_t1t2 (const double *x, int *t1, int *t2)
 	else break;
     }
 
+    for (t=t1min; t<=t2max; t++) {
+	if (na(x[t])) return t;
+    }
+
     *t1 = t1min; *t2 = t2max;
 
     return 0;
@@ -1999,7 +2003,8 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
       x: vector of original data
       hp: pointer to a T-vector, returns Hodrick-Prescott "cycle"
     */
-    int i, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int i, t, T, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int err = 0;
     double v00 = 1.0, v11 = 1.0, v01 = 0.0;
     double det, tmp0, tmp1;
     double lambda;
@@ -2007,14 +2012,32 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
     double **V = NULL;
     double m[2], tmp[2];
 
-    int tp, tb;
+    int tb;
     double e0, e1, b00, b01, b11;
 
+    for (t=t1; t<=t2; t++) {
+	hp[t] = NADBL;
+    }
+
+    err = series_adjust_t1t2(x, &t1, &t2);
+    if (err) {
+	err = E_DATA;
+	goto bailout;
+    }
+
+    T = t2 - t1 + 1;
+    if (T < 4) {
+	err = E_DATA;
+	goto bailout;
+    }
+
+    lambda = hp_lambda(pdinfo);
+
     V = malloc(4 * sizeof *V);
-    if (V == NULL) return 1;
+    if (V == NULL) return E_ALLOC;
 
     for (i=0; i<4; i++) {
-	V[i] = malloc(pdinfo->n * sizeof **V);
+	V[i] = malloc(T * sizeof **V);
 	if (V[i] == NULL) {
 	    int j;
 	    
@@ -2022,25 +2045,17 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 		free(V[j]);
 	    }
 	    free(V);
-	    return 1;
-	}
-	for (t=0; t<pdinfo->n; t++) {
-	    V[i][t] = 0.0;
+	    return E_ALLOC;
 	}
     }
 
-    for (t=t1; t<=t2; t++) {
-	hp[t] = NADBL;
-    }
-
-    series_adjust_t1t2(x, &t1, &t2);
-    fprintf(stderr, "after adjustment: t1=%d, t2=%d\n", t1, t2);
-
-    lambda = hp_lambda(pdinfo);
+    /* adjust starting points */
+    x += t1;
+    hp += t1;
 
     /* covariance matrices for each obs */
 
-    for (t=t1+2; t<=t2; t++) {
+    for (t=2; t<T; t++) {
 	tmp0 = v00;
 	tmp1 = v01;
 	v00 = 1.0 / lambda + 4.0 * (tmp0 - tmp1) + v11;
@@ -2062,19 +2077,17 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 
     }
 
-    m[0] = x[t1];
-    m[1] = x[t1+1];
-    fprintf(stderr, "(1) m[0]=%g, m[1]=%g\n", m[0], m[1]);
+    m[0] = x[0];
+    m[1] = x[1];
 
     /* forward pass */
-
-    for (t=t1+2; t<=t2; t++) {
+    for (t=2; t<T; t++) {
 	tmp[0] = m[1];
 	m[1] = 2.0 * m[1] - m[0];
 	m[0] = tmp[0];
 
 	V[3][t-1] = V[0][t] * m[1] + V[1][t] * m[0];
-	hp[t-1] = V[1][t] * m[1] + V[2][t] * m[0];
+	hp[t-1]   = V[1][t] * m[1] + V[2][t] * m[0];
 	  
 	det = V[0][t] * V[2][t] - V[1][t] * V[1][t];
 	  
@@ -2086,33 +2099,27 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 	m[0] += v01 * tmp[1];
     }
 
-    fprintf(stderr, "(2) m[0]=%g, m[1]=%g\n", m[0], m[1]);
-
-    V[3][t2-1] = m[0];
-    V[3][t2] = m[1];
-    m[0] = x[t2-1];
-    m[1] = x[t2];
-
-    fprintf(stderr, "(3) m[0]=%g, m[1]=%g\n", m[0], m[1]);
-    fprintf(stderr, "det=%g\n", det);
+    V[3][T-2] = m[0];
+    V[3][T-1] = m[1];
+    m[0] = x[T-2];
+    m[1] = x[T-1];
 
     /* backward pass */
-      
-    for (t=t2-2; t>=t1; t--) {
-	tp = t+1;
-	tb = t2 - t; /* FIXME?? */
+    for (t=T-3; t>=0; t--) {
+	t1 = t+1;
+	tb = T - t - 1;
       
 	tmp[0] = m[0];
 	m[0] = 2.0 * m[0] - m[1];
 	m[1] = tmp[0];
 
-	if (t > t1 + 1) {
-	    /* combine info for y(.lt.i) with info for y(.ge.i) */
+	if (t > 1) {
+	    /* combine info for y < i with info for y > i */
 	    e0 = V[2][tb] * m[1] + V[1][tb] * m[0] + V[3][t];
 	    e1 = V[1][tb] * m[1] + V[0][tb] * m[0] + hp[t];
-	    b00 = V[2][tb] + V[0][tp];
-	    b01 = V[1][tb] + V[1][tp];
-	    b11 = V[0][tb] + V[2][tp];
+	    b00 = V[2][tb] + V[0][t1];
+	    b01 = V[1][tb] + V[1][t1];
+	    b11 = V[0][tb] + V[2][t1];
 	      
 	    det = b00 * b11 - b01 * b01;
 	      
@@ -2120,8 +2127,6 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 	}
 	  
 	det = V[0][tb] * V[2][tb] - V[1][tb] * V[1][tb];
-	fprintf(stderr, "det=%g*%g - %g*%g = %g\n", 
-		V[0][tb],V[2][tb],V[1][tb],V[1][tb],det);
 	v00 =  V[2][tb] / det;
 	v01 = -V[1][tb] / det;
 
@@ -2130,21 +2135,21 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 	m[0] += v00 * tmp[1];
     }
 
-    fprintf(stderr, "(4) m[0]=%g, m[1]=%g\n", m[0], m[1]);    
+    V[3][0] = m[0];
+    V[3][1] = m[1];
 
-    V[3][t1] = m[0];
-    V[3][t1+1] = m[1];
-
-    for (t=t1; t<=t2; t++) {
+    for (t=0; t<T; t++) {
 	hp[t] = x[t] - V[3][t];
     }
+
+ bailout:
 
     for (i=0; i<4; i++) {
 	free(V[i]);
     }
     free(V);
 
-    return 0;
+    return err;
 }
 
 static double *get_mp_series (const char *s, GENERATE *genr,
@@ -2414,8 +2419,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     }
 
     else if (fn == T_HPFILT) { 
-	/* FIXME: check for error condition */
-	hp_filter(mvec, x, pdinfo);	
+	*err = hp_filter(mvec, x, pdinfo);	
     }
 
     return x;

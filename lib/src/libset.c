@@ -179,8 +179,13 @@ int parse_set_line (const char *line, int *echo_off, PRN *prn)
 	}
 	else if (!strcmp(setobj, "hp_lambda")) {
 	    /* Hodrick-Prescott filter parameter */
-	    hp_lambda = atof(setarg);
-	    err = 0;
+	    if (!strcmp(setarg, "auto")) {
+		hp_lambda = 0.0;
+		err = 0;
+	    } else if (check_atof(setarg) == 0) {
+		hp_lambda = atof(setarg);
+		err = 0;
+	    }
 	}	
     }
 		    
