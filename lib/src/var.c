@@ -1696,7 +1696,7 @@ int kpss_test (int order, int varno, double ***pZ,
     int t1, t2, T;
 
     /* sanity check */
-    if (order <= 0 || varno <= 0 || varno >= pdinfo->v) {
+    if (order < 0 || varno <= 0 || varno >= pdinfo->v) {
 	return 1;
     }
 
@@ -1711,8 +1711,10 @@ int kpss_test (int order, int varno, double ***pZ,
 	list[3] = gettrend(pZ, pdinfo, 0);
     }
 
-    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    /* OPT_M: reject missing values within sample range */
+    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
     if (KPSSmod.errcode) {
+	clear_model(&KPSSmod);
 	return KPSSmod.errcode;
     }
 
@@ -1721,6 +1723,7 @@ int kpss_test (int order, int varno, double ***pZ,
     T = KPSSmod.nobs;
 
     if (opt & OPT_V) {
+	KPSSmod.aux = AUX_KPSS;
 	printmodel(&KPSSmod, pdinfo, OPT_NONE, prn);
     }
   
@@ -1742,8 +1745,10 @@ int kpss_test (int order, int varno, double ***pZ,
 	cumsum2 += cumsum * cumsum;
 	s2 += et * et;
 	for (i=0; i<order; i++) {
-	    if (t - i - 1 >= t1) {
-		autocov[i] += et * KPSSmod.uhat[t-i-1];
+	    int s = i + 1;
+
+	    if (t - s >= t1) {
+		autocov[i] += et * KPSSmod.uhat[t - s];
 	    }
 	}
 #ifdef KPSS_DEBUG
@@ -1753,19 +1758,24 @@ int kpss_test (int order, int varno, double ***pZ,
     }
 
     for (i=0; i<order; i++) {
-	double wt = 2.0 * (1.0 - ((double) (i + 1)) / (order + 1));
+	double wt = 1.0 - ((double) (i + 1)) / (order + 1);
 
-	s2 += wt * autocov[i];
+	s2 += 2.0 * wt * autocov[i];
     }
 
+    s2 /= T;
 
     if (opt & OPT_V) {
-	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2 / T);
+	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
 	pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
 		cumsum2);
     }
-  
-    pprintf(prn, "\n%s: %g \n\n", _("  KPSS test"), cumsum2 / (s2 * T));
+
+    pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
+	    (hastrend)? _("(including trend)") : _("(without trend)"));
+
+    pprintf(prn, _("Lag truncation parameter = %d\n"), order);
+    pprintf(prn, "%s = %g\n\n", _("Test statistic"), cumsum2 / (s2 * T * T));
 
     pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
 

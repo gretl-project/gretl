@@ -1,6 +1,12 @@
 version 1.3.0
 - add "append" command, to append data to the current dataset,
   as in the gui File/Append data
+- fix bug: data importers were accepting duplicate names for
+  variables
+- XLS importer: handle string formulas; fix handling of large
+  string tables (SST and CONTINUE records)
+- fix bug: error in printing of model selection statistics for
+  very large or small values on Windows
 - fix bug in running scripts from the gretl console: file was 
   not closed when an error was encountered
 - fix bug in Prais-Winsten estimator
@@ -13,6 +19,9 @@ version 1.3.0
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
   the report)
+- frequency plot, against gamma distribution: add Locke's
+  nonparametric test for the null hypothesis that the variable
+  in question is gamma
 - add facility to generate cross-sectional unit dummies with
   panel data ("genr unitdum")
 - add facility for nesting loops and fix some loop bugs
@@ -23,6 +32,7 @@ version 1.3.0
 - add support for daily data with a 6-day week
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)
+- improve convergence of GARCH function (Jack Lucchetti)
 - add stack() function to genr command: creates a stacked
   series from a comma-separated list of series, or a
   range of series as in stack(x1..xn)
@@ -31,17 +41,21 @@ version 1.3.0
   panel.pdf
 - support "genr varname[obs] = ..." for setting individual
   observations in a series
+- Text/CSV data importer: handle calendar dates for non-daily
+  data; handle description appended after the data
 - add "vif" command to calculate Variance Inflation Factors
   for independent variables in a regression; also available
   in the model window under Tests/collinearity
 - switch to St Louis Fed database as gretl "sample" database
   (the BCIH database is getting too out-of-date)
 - add the Anscombe Quartet to the gretl data files
+- add Mankiw, Romer, Weill (QJE, 1992) dataset and replication 
+  script
 - on Windows, make EMF graphs respect the user's choice of
   plotting colors (required a modification to gnuplot)
 - add option to save graphs in EMF format
 - various minor gui fixes and enhancements
-- update Windows version to gtk 2.4.10
+- update Windows version to glib 2.4.7 and gtk 2.4.13
 - start adding user-defined functions
 - add mechanism for customizing gretl's tex preamble
 

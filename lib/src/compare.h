@@ -43,6 +43,7 @@ enum aux_codes {
     AUX_ARCH,  /* aux. regression for ARCH test */
     AUX_DF,    /* aux. regression for Dickey-Fuller test */
     AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
+    AUX_KPSS,  /* aux. regression for KPSS test */
     AUX_OMIT,  /* aux. regression for omitting variables */
     AUX_RESET, /* aux. regression for Ramsey's RESET */
     AUX_SYS,   /* single equation from multivariate system */

@@ -474,6 +474,9 @@ static const char *aux_string (int aux, int format)
 	if (TEX_FORMAT(format)) return N_("Dickey--Fuller regression");
 	else return N_("Dickey-Fuller regression");
     }
+    else if (aux == AUX_KPSS) {
+	return N_("KPSS regression");
+    }
     else if (aux == AUX_RESET) {
 	return N_("Auxiliary regression for RESET specification test");
     }
@@ -870,6 +873,7 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_COINT:
     case AUX_ADF:
     case AUX_DF:
+    case AUX_KPSS:
     case AUX_RESET:
 	if (utf) {
 	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn->format)));
@@ -1390,7 +1394,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
 	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR ||
-	pmod->aux == AUX_DF) {
+	pmod->aux == AUX_DF || pmod->aux == AUX_KPSS) {
 	goto close_format;
     }
 

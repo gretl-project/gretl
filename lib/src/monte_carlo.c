@@ -177,6 +177,10 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
+    if (ci == ADF || ci == KPSS) {
+	return 1;
+    }
+
     return 0;
 }
 
@@ -2049,6 +2053,8 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case SUMMARY:
 	    case SIM:
+	    case ADF:
+	    case KPSS:
 		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
 		break;
 

@@ -218,13 +218,26 @@ static int bXb (hausman_t *haus)
 /* .................................................................. */
 
 static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		    int nunits, int T, hausman_t *haus, PRN *prn) 
+		    int nunits, int *unit_obs, int T,
+		    hausman_t *haus, PRN *prn) 
 {
     int i, t, start, oldv = pdinfo->v;
+    int ndum = nunits - 1;
     int dvlen = pmod->list[0] + nunits;
     int *dvlist;
     double var, F;
     MODEL lsdv;
+
+    if (unit_obs != NULL) {
+	ndum = 0;
+	for (i=0; i<nunits; i++) {
+	    if (unit_obs[i] > 1) {
+		ndum++;
+	    }
+	}
+	dvlen = pmod->list[0] + ndum;
+	ndum--; /* ? */
+    }
 
     /* We can be assured there's an intercept in the original
        regression */
@@ -234,13 +247,16 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return NADBL;
     }
 
-    if (dataset_add_vars(nunits - 1, pZ, pdinfo)) {
+    if (dataset_add_vars(ndum, pZ, pdinfo)) {
 	free(dvlist);
 	return NADBL;
     }
 
     start = 0;
-    for (i=0; i<nunits-1; i++) {
+    for (i=0; i<ndum; i++) {
+	if (unit_obs != NULL && unit_obs[i] < 2) {
+	    continue;
+	}
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[oldv+i][t] = 0.0;
 	}
@@ -262,7 +278,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     for (i=1; i<=pmod->list[0]; i++) {
 	dvlist[i] = pmod->list[i];
     }
-    for (i=1; i<nunits; i++) {
+    for (i=1; i<=ndum; i++) {
 	dvlist[pmod->list[0] + i] = oldv + i - 1;
     }
 
@@ -569,6 +585,56 @@ static void effective_panel_structure (const MODEL *pmod,
     }	
 }
 
+int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
+		      int *unit_obs)
+{
+    int nmaj, nmin;
+    int k, ninc = 0;
+    
+    if (sscanf(pdinfo->endobs, "%d:%d", &nmaj, &nmin) != 2) {
+	return -1;
+    }
+
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	int nunits = nmaj;
+	int nperiods = nmin;
+	int i, j;
+
+	for (i=0; i<nunits; i++) {
+	    unit_obs[i] = 0;
+	    for (j=0; j<nperiods; j++) {
+		k = i * nperiods + j;
+		if (!na(pmod->uhat[k])) {
+		    unit_obs[i] += 1;
+		}
+	    }
+	    if (unit_obs[i] > 0) {
+		ninc++;
+	    }
+	}
+    } else {
+	/* stacked cross sections */
+	int nunits = nmin;
+	int nperiods = nmaj;
+	int i, j;
+
+	for (i=0; i<nunits; i++) {
+	    unit_obs[i] = 0;
+	    for (j=0; j<nperiods; j++) {
+		k = j * nunits + i;
+		if (!na(pmod->uhat[k])) {
+		    unit_obs[i] += 1;
+		}
+	    }
+	    if (unit_obs[i] > 0) {
+		ninc++;
+	    }	    
+	}
+    }
+
+    return ninc;
+}
+
 /* .................................................................. */
 
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -576,6 +642,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 {
     int nunits, ns, T;
     int effn, effT;
+    int *unit_obs = NULL;
     double var1, var2, theta;
     double **groupZ = NULL;
     DATAINFO *ginfo = NULL;
@@ -593,8 +660,26 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
+#if 0
+    if (pmod->missmask != NULL) {
+	int i;
+
+	unit_obs = malloc(nunits * sizeof *unit_obs);
+	if (unit_obs == NULL) {
+	    return E_ALLOC;
+	}
+	effn = n_included_units(pmod, pdinfo, unit_obs);
+	fprintf(stderr, "number of units included = %d\n", effn);
+	for (i=0; i<nunits; i++) {
+	    fprintf(stderr, " unit[%d]: n = %d\n", i+1, unit_obs[i]);
+	}
+    }
+#endif
+
+#if 1
     effective_panel_structure(pmod, pdinfo, nunits, T,
 			      &effn, &effT);
+#endif
 
 #ifdef PDEBUG
     fprintf(stderr, "nunits=%d, T=%d, effn=%d, effT=%d\n",
@@ -619,11 +704,15 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		   "                        observed over %d periods\n\n"), 
 	    nunits, T);
 
-    var2 = LSDV(pmod, pZ, pdinfo, nunits, T, &haus, prn);
+    var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, &haus, prn);
 
 #ifdef PDEBUG
     fprintf(stderr, "panel_diagnostics: LSDV gave %g\n", var2);
 #endif
+
+    if (unit_obs != NULL) {
+	return 1;
+    }
 
     breusch_pagan_LM(pmod, pdinfo, nunits, T, effT, prn);
 
@@ -649,6 +738,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	free(ginfo);
 	free(haus.bdiff);
 	free(haus.sigma);
+    }
+
+    if (unit_obs != NULL) {
+	free(unit_obs);
     }
 
     return 0;

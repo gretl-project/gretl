@@ -113,6 +113,7 @@ void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Variable/Spectrum", s);
 	flip(mdata->ifac, "/Variable/Runs test", s);
 	flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
+	flip(mdata->ifac, "/Variable/KPSS test", s);
 	flip(mdata->ifac, "/Variable/ARMA model", s);
 #ifdef HAVE_X12A
 	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
@@ -213,7 +214,9 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("ARMA model"))) 
 	arma_options_dialog(NULL, 0, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
-	do_adf(NULL, ADF, NULL);
+	unit_root_test(NULL, ADF, NULL);
+    else if (!strcmp(item, _("KPSS test"))) 
+	unit_root_test(NULL, KPSS, NULL);
     else if (!strcmp(item, _("Runs test"))) 
 	do_menu_op(NULL, RUNS, NULL);
     else if (!strcmp(item, _("Edit attributes")))  
@@ -242,6 +245,7 @@ GtkWidget *build_var_popup (void)
 	N_("Spectrum (Bartlett)"),
 	N_("ARMA model"),
 	N_("Dickey-Fuller test"),
+	N_("KPSS test"),
 	N_("Runs test"),
 	N_("Edit attributes"),
 	N_("Delete"),
@@ -260,8 +264,7 @@ GtkWidget *build_var_popup (void)
 	    datainfo->time_series != STACKED_TIME_SERIES) {
 	    continue;
 	}
-	if (!dataset_is_time_series(datainfo) && 
-	    (i == 6 || i == 7 || i == 8 || i == 9 || i == 10)) {
+	if (!dataset_is_time_series(datainfo) && i >= 6 && i <= 11) {
 	    continue;
 	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));

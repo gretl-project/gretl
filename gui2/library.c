@@ -688,7 +688,26 @@ void do_coint2 (GtkWidget *widget, gpointer p)
     real_do_coint(p, COINT2);
 }
 
-void do_adf (gpointer data, guint u, GtkWidget *widget)
+static int ok_obs_in_series (int varno)
+{
+    int t, t1, t2;
+
+    for (t=datainfo->t1; t<datainfo->t2; t++) {
+	if (!na(Z[varno][t])) break;
+    }
+
+    t1 = t;
+
+    for (t=datainfo->t2; t>=datainfo->t1; t--) {
+	if (!na(Z[varno][t])) break;
+    }
+
+    t2 = t;
+
+    return t2 - t1 + 1;
+}
+
+void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
     const char *adf_opts[] = {
@@ -698,58 +717,100 @@ void do_adf (gpointer data, guint u, GtkWidget *widget)
 	N_("with constant, trend and trend squared"),
 	N_("show regression results")
     };
-    const char *title = N_("gretl: ADF test");
-    const char *spintext = N_("Lag order for ADF test:");
+    const char *kpss_opts[] = {
+	N_("include a trend"),
+	N_("show regression results")
+    };
+
+    const char *adf_title = N_("gretl: ADF test");
+    const char *kpss_title = N_("gretl: KPSS test");
+    const char *adf_spintext = N_("Lag order for ADF test:");
+    const char *kpss_spintext = N_("Lag order for KPSS test:");
+    const char *title, *spintext, **opts;
+
     int active[] = { 0, 1, 1, 1, 0 };
+    int actmax = (action == ADF)? 5 : 2;
     int order = 1;
     int omax, err;
 
-    if (datainfo->pd == 1) {
-	omax = 4;
+    if (action == ADF) {
+	title = adf_title;
+	spintext = adf_spintext;
+	opts = adf_opts;
+	if (datainfo->pd == 1) {
+	    omax = 4;
+	} else {
+	    omax = 2 * datainfo->pd;
+	}
+	if (omax > datainfo->n - 6) {
+	    omax = datainfo->n - 6;
+	    if (omax < 0) {
+		return;
+	    }
+	}
     } else {
-	omax = 2 * datainfo->pd;
-    }
+	int okT;
 
-    if (omax > datainfo->n - 6) {
-	omax = datainfo->n - 6;
-	if (omax < 0) {
-	    return;
+	title = kpss_title;
+	spintext = kpss_spintext;
+	opts = kpss_opts;
+	active[0] = 1;
+	active[1] = 0;
+
+	okT = ok_obs_in_series(mdata->active_var);	
+	omax = okT / 2;
+	order = 4.0 * pow(okT / 100.0, 0.25);
+	if (order > omax) {
+	    order = omax;
 	}
     }
-    
+
     err = checks_dialog(_(title), 
-			adf_opts, 5,
+			opts, actmax,
 			active,
 			&order, spintext,
-			omax, ADF);
+			omax, action);
 
     if (err < 0) return;
 
-    if (active[0] == 0 &&
-	active[1] == 0 &&
-	active[2] == 0 &&
-	active[3] == 0) {
-	return;
+    if (action == ADF) {
+	if (active[0] == 0 &&
+	    active[1] == 0 &&
+	    active[2] == 0 &&
+	    active[3] == 0) {
+	    return;
+	}
     }
 
-    sprintf(line, "adf %d %s", order, datainfo->varname[mdata->active_var]);
-    if (active[0]) strcat(line, " --nc");
-    if (active[1]) strcat(line, " --c");
-    if (active[2]) strcat(line, " --ct");
-    if (active[3]) strcat(line, " --ctt");
-    if (active[4]) strcat(line, " --verbose");
+    sprintf(line, "%s %d %s", (action == ADF)? "adf" : "kpss", order, 
+	    datainfo->varname[mdata->active_var]);
+
+    if (action == KPSS) {
+	if (active[0]) strcat(line, " --trend");
+	if (active[1]) strcat(line, " --verbose");
+    } else {
+	if (active[0]) strcat(line, " --nc");
+	if (active[1]) strcat(line, " --c");
+	if (active[2]) strcat(line, " --ct");
+	if (active[3]) strcat(line, " --ctt");
+	if (active[4]) strcat(line, " --verbose");
+    }
 
     if (verify_and_record_command(line) || bufopen(&prn)) {
 	return;
     }
 
-    err = adf_test(order, cmd.list[1], &Z, datainfo, cmd.opt, prn);
+    if (action == ADF) {
+	err = adf_test(order, cmd.list[1], &Z, datainfo, cmd.opt, prn);
+    } else {
+	err = kpss_test(order, cmd.list[1], &Z, datainfo, cmd.opt, prn);
+    }
 
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
     } else {
-	view_buffer(prn, 78, 350, title, ADF, NULL);
+	view_buffer(prn, 78, 350, title, action, NULL);
     }    
 }
 

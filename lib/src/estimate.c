@@ -357,7 +357,7 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	/* reject missing obs within adjusted sample */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
 			    Z, misst);
-    } else if (dataset_is_panel(pdinfo)) {
+    } else if (0 && dataset_is_panel(pdinfo)) {
 	/* compensate for missing obs if they preserve a
 	   balanced panel */
 	missv = adjust_t1t2(pmod, pmod->list, &pmod->t1, &pmod->t2,
