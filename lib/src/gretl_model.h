@@ -77,4 +77,6 @@ void model_count_minus (void);
 
 void set_model_id (MODEL *pmod);
 
+void model_list_to_string (int *list, char *buf);
+
 #endif /* GRETL_MODEL_H */

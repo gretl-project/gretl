@@ -1128,19 +1128,6 @@ void delete_session_callback (GtkWidget *w, guint i, gpointer data)
 
 /* ........................................................... */
 
-static void store_list (int *list, char *buf)
-{
-    int i;
-    char numstr[5];
-
-    for (i=1; i<=list[0]; i++) {
-        sprintf(numstr, "%d ", list[i]);
-        strcat(buf, numstr);
-    }
-}
-
-/* ........................................................... */
-
 static char *model_cmd_str (MODEL *pmod)
 {
     char *str;
@@ -1151,10 +1138,10 @@ static char *model_cmd_str (MODEL *pmod)
     sprintf(str, "%s ", gretl_command_word(pmod->ci));
 
     if (pmod->ci == AR) {
-        store_list(pmod->arinfo->arlist, str);
+        model_list_to_string(pmod->arinfo->arlist, str);
         strcat(str, "; ");
     }
-    store_list(pmod->list, str);    
+    model_list_to_string(pmod->list, str); 
 
     return str;
 }

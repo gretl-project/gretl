@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-09 18:00+0100\n"
+"PO-Revision-Date: 2004-09-14 19:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -67,7 +67,7 @@ msgstr "reszty"
 #: lib/src/compare.c:986
 #, c-format
 msgid "lagging uhat failed"
-msgstr "b³êdne opo¼nienie uhat (reszt)"
+msgstr "b³êdne opó¼nienie uhat (reszt)"
 
 #: lib/src/compare.c:1018 plugin/panel_data.c:700
 msgid "Alternative statistic"
@@ -3688,7 +3688,7 @@ msgstr ""
 
 #: lib/src/pvalues.c:608
 msgid "Invalid degrees of freedom\n"
-msgstr ""
+msgstr "B³êdna liczba stopni swobody\n"
 
 #: lib/src/pvalues.c:612
 msgid "Invalid sample size\n"
@@ -6121,42 +6121,42 @@ msgstr ""
 
 #: gui2/calculator.c:82
 msgid "Incomplete entry for p-value"
-msgstr ""
+msgstr "Brak danych dla p-value"
 
 #: gui2/calculator.c:93
 #, c-format
 msgid "Data missing for variable '%s'"
-msgstr ""
+msgstr "Brak danych dla zmiennej '%s'"
 
 #: gui2/calculator.c:101
 #, c-format
 msgid "Unrecognized variable '%s' in p-value command"
-msgstr ""
+msgstr "Nierozpoznana zmienna '%s' w poleceniu p-value"
 
 #: gui2/calculator.c:124
 msgid "Incomplete entry"
-msgstr ""
+msgstr "Niekompletne dane"
 
 #: gui2/calculator.c:133
 msgid "Invalid entry"
-msgstr ""
+msgstr "B³êdne dane"
 
 #: gui2/calculator.c:152
 msgid "Incomplete entry for hypothesis test"
-msgstr ""
+msgstr "Niekompletne dane dla hipotezy testowej"
 
 #: gui2/calculator.c:160
 msgid "Invalid entry for hypothesis test"
-msgstr ""
+msgstr "B³êdne dane dla hipotezy testowej"
 
 #: gui2/calculator.c:220 gui2/calculator.c:318 gui2/calculator.c:343
 #: gui2/calculator.c:356
 msgid "Invalid degrees of freedom"
-msgstr ""
+msgstr "B³êdna liczba stopni swobody"
 
 #: gui2/calculator.c:224
 msgid "Invalid sample size"
-msgstr ""
+msgstr "B³êdna wielko¶æ próbki"
 
 #: gui2/calculator.c:272
 msgid "gretl: statistical table"
@@ -6164,11 +6164,11 @@ msgstr ""
 
 #: gui2/calculator.c:307 gui2/calculator.c:332
 msgid "Invalid standard deviation"
-msgstr ""
+msgstr "B³êdne odchylenie standardowe"
 
 #: gui2/calculator.c:379
 msgid "gretl: p-value"
-msgstr ""
+msgstr "gretl: p-value"
 
 #: gui2/calculator.c:388
 #, c-format
@@ -6176,29 +6176,31 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
+"Dwustronny obszar krytyczny p-value = %.4g\n"
+"(jednostronny obszar krytyczny = %.4g)\n"
 
 #: gui2/calculator.c:439
 msgid "Standard errors"
-msgstr ""
+msgstr "B³êdy standardowe"
 
 #: gui2/calculator.c:474
 msgid "Gaussian sampling distribution"
-msgstr ""
+msgstr "rozk³ad standardowy z próby"
 
 #: gui2/calculator.c:479
 #, c-format
 msgid "t(%d) sampling distribution"
-msgstr ""
+msgstr "rozk³ad t(%d) z próby"
 
 #: gui2/calculator.c:487
 #, c-format
 msgid "Chi-square(%d) sampling distribution"
-msgstr ""
+msgstr "rozk³ad Chi-kwadrat(%d) z próby"
 
 #: gui2/calculator.c:493
 #, c-format
 msgid "F(%d, %d) sampling distribution"
-msgstr ""
+msgstr "rozk³ad F(%d, %d) z próby"
 
 #: gui2/calculator.c:512 gui2/database.c:210 gui2/fileselect.c:482
 #: gui2/gpt_control.c:2483 gui2/library.c:162 gui2/library.c:2623
@@ -6206,68 +6208,70 @@ msgstr ""
 #: gui2/library.c:3349 gui2/library.c:3584 gui2/library.c:3645
 #: gui2/library.c:3790 gui2/session.c:3098 gui2/session.c:3131
 msgid "gnuplot command failed"
-msgstr ""
+msgstr "Nieudane wykonanie polecenia gnuplot"
 
 #: gui2/calculator.c:552
 #, c-format
 msgid "Null hypothesis: population mean = %g\n"
-msgstr ""
+msgstr "Hipoteza zerowa: ¶rednia z populacji = %g\n"
 
 #: gui2/calculator.c:553 gui2/calculator.c:583 gui2/calculator.c:613
 #, c-format
 msgid "Sample size: n = %d\n"
-msgstr ""
+msgstr "Wielko¶æ próby: n = %d\n"
 
 #: gui2/calculator.c:554
 #, c-format
 msgid "Sample mean = %g, std. deviation = %g\n"
-msgstr ""
+msgstr "¶rednia z próby = %g, odchylenie std. = %g\n"
 
 #: gui2/calculator.c:557 gui2/calculator.c:615 gui2/calculator.c:682
 #, c-format
 msgid "Test statistic: z = (%g - %g)/%g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: z = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:564 gui2/calculator.c:665
 #, c-format
 msgid "Test statistic: t(%d) = (%g - %g)/%g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: t(%d) = (%g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:582
 #, c-format
 msgid "Null hypothesis: population variance = %g\n"
-msgstr ""
+msgstr "Hipoteza zerowa: wariancja z populacji = %g\n"
 
 #: gui2/calculator.c:584
 #, c-format
 msgid "Sample variance = %g\n"
-msgstr ""
+msgstr "Wariancja z próby = %g\n"
 
 #: gui2/calculator.c:585
 #, c-format
 msgid "Test statistic: chi-square(%d) = %d * %g/%g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa chi-kwadrat(%d) = %d * %g/%g = %g\n"
 
 #: gui2/calculator.c:605
 msgid ""
 "The assumption of a normal sampling distribution\n"
 "is not justified here.  Abandoning the test."
 msgstr ""
+"Zbyt ma³a liczebno¶æ próby, aby przyj±æ rozk³ad\n"
+"normalny.  Wykonanie testu przerwano."
 
 #: gui2/calculator.c:612
 #, c-format
 msgid "Null hypothesis: population proportion = %g\n"
-msgstr ""
+msgstr "Hipoteza zerowa: wska¼nik struktury w populacji = %g\n"
 
 #: gui2/calculator.c:614
 #, c-format
 msgid "Sample proportion = %g\n"
-msgstr ""
+msgstr "Wska¼nik struktury w próbie = %g\n"
 
 #: gui2/calculator.c:645
 #, c-format
 msgid "Null hypothesis: Difference of means = %g\n"
-msgstr ""
+msgstr "Hipoteza zerowa: Ró¿nica dwóch ¶rednich = %g\n"
 
 #: gui2/calculator.c:646
 #, c-format
@@ -6275,6 +6279,8 @@ msgid ""
 "Sample 1:\n"
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
+"Próba 1:\n"
+" n = %d, ¶rednia = %g, odch. std. = %g\n"
 
 #: gui2/calculator.c:648
 #, c-format
@@ -6282,24 +6288,26 @@ msgid ""
 "Sample 2:\n"
 " n = %d, mean = %g, s.d. = %g\n"
 msgstr ""
+"Próba 2:\n"
+" n = %d, ¶rednia = %g, odch. std. = %g\n"
 
 #: gui2/calculator.c:663
 msgid "Small samples: assuming normality and common variance\n"
-msgstr ""
+msgstr "Ma³a próba: za³o¿enie normalno¶ci rozk³adu oraz sta³ej wariancji\n"
 
 #: gui2/calculator.c:676
 #, c-format
 msgid "Test statistic: z = (%g - %g - %g)/%g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: z = (%g - %g - %g)/%g = %g\n"
 
 #: gui2/calculator.c:679
 #, c-format
 msgid "Test statistic: z = [(%g - %g) - (%g)]/%g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: z = [(%g - %g) - (%g)]/%g = %g\n"
 
 #: gui2/calculator.c:706
 msgid "Null hypothesis: The population variances are equal\n"
-msgstr ""
+msgstr "Hipoteza zerowa: Wariancje w populacjach s± równe\n"
 
 #: gui2/calculator.c:708
 #, c-format
@@ -6307,6 +6315,8 @@ msgid ""
 "Sample 1:\n"
 " n = %d, variance = %g\n"
 msgstr ""
+"Próba 1:\n"
+" n = %d, wariancja = %g\n"
 
 #: gui2/calculator.c:709
 #, c-format
@@ -6314,15 +6324,17 @@ msgid ""
 "Sample 2:\n"
 " n = %d, variance = %g\n"
 msgstr ""
+"Próba 2:\n"
+" n = %d, wariancja = %g\n"
 
 #: gui2/calculator.c:712 gui2/calculator.c:717
 #, c-format
 msgid "Test statistic: F(%d, %d) = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: F(%d, %d) = %g\n"
 
 #: gui2/calculator.c:739
 msgid "Null hypothesis: the population proportions are equal\n"
-msgstr ""
+msgstr "Hipoteza zerowa: Wska¼niki struktury dla dwóch populacji s± równe\n"
 
 #: gui2/calculator.c:741
 #, c-format
@@ -6330,6 +6342,8 @@ msgid ""
 "Sample 1:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
+"Próba 1:\n"
+" n = %d, wska¼nik struktury z próby = %g\n"
 
 #: gui2/calculator.c:742
 #, c-format
@@ -6337,11 +6351,13 @@ msgid ""
 "Sample 2:\n"
 " n = %d, proportion = %g\n"
 msgstr ""
+"Próba 2:\n"
+" n = %d, wska¼nik struktury z próby = %g\n"
 
 #: gui2/calculator.c:746
 #, c-format
 msgid "Test statistic: z = (%g - %g) / %g = %g\n"
-msgstr ""
+msgstr "Statystyka testowa: z = (%g - %g) / %g = %g\n"
 
 #: gui2/calculator.c:760
 msgid "gretl: hypothesis test"
@@ -6349,184 +6365,186 @@ msgstr ""
 
 #: gui2/calculator.c:809 gui2/calculator.c:871
 msgid "normal"
-msgstr ""
+msgstr "normalny"
 
 #: gui2/calculator.c:810 gui2/calculator.c:872
 msgid " t "
-msgstr ""
+msgstr "t"
 
 #: gui2/calculator.c:811 gui2/calculator.c:873
 msgid "chi-square"
-msgstr ""
+msgstr "chi-kwadrat"
 
 #: gui2/calculator.c:812 gui2/calculator.c:874
 msgid " F "
-msgstr ""
+msgstr " F "
 
 #: gui2/calculator.c:813
 msgid " DW "
-msgstr ""
+msgstr " DW "
 
 #: gui2/calculator.c:835
 msgid ""
 "Critical values for\n"
 "standard normal distribution"
 msgstr ""
+"Warto¶ci krytyczne dla\n"
+"standardowego rozk³adu normalnego"
 
 #: gui2/calculator.c:843 gui2/calculator.c:847 gui2/calculator.c:904
 #: gui2/calculator.c:913 plugin/stats_tables.c:383 plugin/stats_tables.c:410
 msgid "df"
-msgstr ""
+msgstr "df"
 
 #: gui2/calculator.c:851 gui2/calculator.c:918
 msgid "dfn"
-msgstr ""
+msgstr "df - licznik"
 
 #: gui2/calculator.c:852 gui2/calculator.c:919
 msgid "dfd"
-msgstr ""
+msgstr "df - mianownik"
 
 #: gui2/calculator.c:856 gui2/model_table.c:521 gui2/model_table.c:522
 #: gui2/model_table.c:523
 msgid "n"
-msgstr ""
+msgstr "n"
 
 #: gui2/calculator.c:875
 msgid "gamma"
-msgstr ""
+msgstr "gamma"
 
 #: gui2/calculator.c:896 gui2/calculator.c:905
 msgid "value"
-msgstr ""
+msgstr "warto¶æ"
 
 #: gui2/calculator.c:897 gui2/calculator.c:906 gui2/calculator.c:924
 #: gui2/calculator.c:1024 plugin/range-mean.c:59 plugin/range-mean.c:158
 msgid "mean"
-msgstr ""
+msgstr "¶rednia"
 
 #: gui2/calculator.c:899 gui2/calculator.c:908 gui2/calculator.c:1051
 msgid "std. deviation"
-msgstr ""
+msgstr "odchylenie std."
 
 #: gui2/calculator.c:914 gui2/calculator.c:926
 msgid "x-value"
-msgstr ""
+msgstr "x-warto¶æ"
 
 #: gui2/calculator.c:920
 msgid "F-value"
-msgstr ""
+msgstr "F-warto¶æ"
 
 #: gui2/calculator.c:925 gui2/calculator.c:1025
 msgid "variance"
-msgstr ""
+msgstr "wariancja"
 
 #: gui2/calculator.c:1026
 msgid "proportion"
-msgstr ""
+msgstr "proporcja"
 
 #: gui2/calculator.c:1027
 msgid "2 means"
-msgstr ""
+msgstr "2 ¶rednie"
 
 #: gui2/calculator.c:1028
 msgid "2 variances"
-msgstr ""
+msgstr "2 wariancje"
 
 #: gui2/calculator.c:1029
 msgid "2 proportions"
-msgstr ""
+msgstr "2 proporcje"
 
 #: gui2/calculator.c:1050
 msgid "sample mean"
-msgstr ""
+msgstr "¶rednia z próby"
 
 #: gui2/calculator.c:1052 gui2/calculator.c:1060 gui2/calculator.c:1066
 msgid "sample size"
-msgstr ""
+msgstr "wielko¶æ próby"
 
 #: gui2/calculator.c:1053
 msgid "H0: mean ="
-msgstr ""
+msgstr "H0: ¶rednia ="
 
 #: gui2/calculator.c:1054
 msgid "Assume standard deviation is population value"
-msgstr ""
+msgstr "Odchylenie standardowe jest warto¶cia z populacji"
 
 #: gui2/calculator.c:1059
 msgid "sample variance"
-msgstr ""
+msgstr "Wariancja z próby"
 
 #: gui2/calculator.c:1061
 msgid "H0: variance ="
-msgstr ""
+msgstr "H0: wariancja ="
 
 #: gui2/calculator.c:1065
 msgid "sample proportion"
-msgstr ""
+msgstr "proporcja z próby"
 
 #: gui2/calculator.c:1067
 msgid "H0: proportion ="
-msgstr ""
+msgstr "H0: proporcja ="
 
 #: gui2/calculator.c:1071
 msgid "mean of sample 1"
-msgstr ""
+msgstr "¶rednia z próby 1"
 
 #: gui2/calculator.c:1072
 msgid "std. deviation, sample 1"
-msgstr ""
+msgstr "Odchylenie std. z próby 1"
 
 #: gui2/calculator.c:1073 gui2/calculator.c:1085 gui2/calculator.c:1093
 msgid "size of sample 1"
-msgstr ""
+msgstr "wielko¶æ próby 1"
 
 #: gui2/calculator.c:1074
 msgid "mean of sample 2"
-msgstr ""
+msgstr "¶rednia z próby 2"
 
 #: gui2/calculator.c:1075
 msgid "std. deviation, sample 2"
-msgstr ""
+msgstr "Odchylenie std. z próby 2"
 
 #: gui2/calculator.c:1076 gui2/calculator.c:1087 gui2/calculator.c:1095
 msgid "size of sample 2"
-msgstr ""
+msgstr "wielko¶æ próby 2"
 
 #: gui2/calculator.c:1077
 msgid "H0: Difference of means ="
-msgstr ""
+msgstr "H0: Ró¿nica ¶rednich ="
 
 #: gui2/calculator.c:1079
 msgid "Assume common population standard deviation"
-msgstr ""
+msgstr "Odchylenie standardowe pochodzi ze wspólnej populacji"
 
 #: gui2/calculator.c:1084
 msgid "variance of sample 1"
-msgstr ""
+msgstr "wariancja z próby 1"
 
 #: gui2/calculator.c:1086
 msgid "variance of sample 2"
-msgstr ""
+msgstr "wariancja z próby 2"
 
 #: gui2/calculator.c:1088
 msgid "H0: Ratio of variances = 1"
-msgstr ""
+msgstr "H0: Iloraz wariancji = 1"
 
 #: gui2/calculator.c:1092
 msgid "proportion, sample 1"
-msgstr ""
+msgstr "proporcja z próby 1"
 
 #: gui2/calculator.c:1094
 msgid "proportion, sample 2"
-msgstr ""
+msgstr "proporcja z próby 2"
 
 #: gui2/calculator.c:1096
 msgid "H0: Difference of proportions = 0"
-msgstr ""
+msgstr "H0: Ró¿nica proporcji = 0"
 
 #: gui2/calculator.c:1106
 msgid "Show graph of sampling distribution"
-msgstr ""
+msgstr "Poka¿ wykres rozk³adu z próby"
 
 #: gui2/calculator.c:1181
 msgid "gretl: p-value finder"
@@ -6534,11 +6552,11 @@ msgstr ""
 
 #: gui2/calculator.c:1182
 msgid "gretl: statistical tables"
-msgstr ""
+msgstr "gretl: tablice statystyczne"
 
 #: gui2/calculator.c:1183
 msgid "gretl: test calculator"
-msgstr ""
+msgstr "gretl: kalkulator testów"
 
 #: gui2/callbacks.c:212
 msgid "Open data file"
@@ -10334,6 +10352,9 @@ msgid ""
 "For more comprehensive statistical tables, please consult a statistics or\n"
 "econometrics text, e.g. Ramanathan's Introductory Econometrics.\n"
 msgstr ""
+"\n"
+"Bardziej rozbudowane talice statystyczne, proszê sprawdzaæ w podrêcznikach\n"
+"ze statystyki i ekonometrii.\n"
 
 #: plugin/stats_tables.c:320
 #, no-c-format
@@ -10341,28 +10362,36 @@ msgid ""
 "5% critical values for Durbin-Watson statistic\n"
 "\n"
 msgstr ""
+"Statystyka Durbina-Watsona dla 5% poziomu istotno¶ci\n"
+"\n"
 
 #: plugin/stats_tables.c:321
 msgid ""
 "              Number of explanatory variables (excluding the constant):\n"
 "\n"
 msgstr ""
+"              Liczba zmiennych modelu (wy³±czaj±c wyraz wolny):\n"
+"\n"
 
 #: plugin/stats_tables.c:342
 msgid ""
 "Critical values for standard normal distribution\n"
 "\n"
 msgstr ""
+"Warto¶ci krytyczne dla standaryzowanego rozk³adu normalnego\n"
+"\n"
 
 #: plugin/stats_tables.c:343 plugin/stats_tables.c:373
 msgid "Column headings show alpha (significance level) for a one-tailed test.\n"
-msgstr ""
+msgstr "Nag³ówkek tabeli zawiera alpha (poziom istotno¶ci) dla jednostronnego obszaru krytycznego.\n"
 
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375
 msgid ""
 "For a two-tailed test, select the column heading showing half the desired\n"
 "alpha level.  "
 msgstr ""
+"Dla dwustronnego obszaru krytycznego, nale¿y wybraæ nag³ówek zawieraj±cy\n"
+"po³owê szukanej warto¶ci alpha.  "
 
 #: plugin/stats_tables.c:348 plugin/stats_tables.c:378
 #, no-c-format
@@ -10371,28 +10400,37 @@ msgid ""
 "level, use the 0.05 column.)\n"
 "\n"
 msgstr ""
+"(Przyk³ad: dla dwustronnego obszaru krytycznego z 5% poziomem istotno¶ci,\n"
+"wybierz kolumnê z warto¶ci± 0.025.)\n"
+"\n"
 
 #: plugin/stats_tables.c:372
 msgid ""
 "Critical values for Student's t distribution\n"
 "\n"
 msgstr ""
+"Warto¶ci krytyczne dla rozk³adu t-Studenta\n"
+"\n"
 
 #: plugin/stats_tables.c:385
 msgid "inf."
-msgstr ""
+msgstr "inf."
 
 #: plugin/stats_tables.c:404
 msgid ""
 "Critical values for Chi-square distribution\n"
 "\n"
 msgstr ""
+"Warto¶ci krytyczne dla rozk³adu Chi-kwadrat\n"
+"\n"
 
 #: plugin/stats_tables.c:405
 msgid ""
 "Column headings show alpha (significance level) for a one-tailed test.\n"
 "\n"
 msgstr ""
+"Nag³ówkek tabeli zawiera alpha (poziom istotno¶ci) dla jednostronnego obszaru krytycznego.\n"
+"\n"
 
 #: plugin/sysest.c:223
 #, c-format

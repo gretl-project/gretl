@@ -503,10 +503,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
     setlocale(LC_NUMERIC, "");
 #endif
 
-#ifdef G_OS_WIN32
-    fprintf(fp, "pause -1\n");
-#endif
-    if (fp) fclose(fp);
+    fclose(fp);
 
     if (gnuplot_display(&paths)) {
 	errbox(_("gnuplot command failed"));

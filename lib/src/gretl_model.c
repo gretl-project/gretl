@@ -801,3 +801,19 @@ void set_model_id (MODEL *pmod)
 	pmod->ID = ++gretl_model_count;
     }
 }
+
+void model_list_to_string (int *list, char *buf)
+{
+    int i;
+    char numstr[5];
+
+    for (i=1; i<=list[0]; i++) {
+	if (list[i] == LISTSEP) {
+	    strcat(buf, "; ");
+	} else {
+	    sprintf(numstr, "%d ", list[i]);
+	    strcat(buf, numstr);
+	}
+    }
+}
+

@@ -171,14 +171,20 @@ static void tex_garch_coeff_name (char *targ, const char *src,
        math mode, not mboxed */
 
     if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
+	/* e.g. "alpha(0)" */
 	if (!inmath) {
 	    sprintf(targ, "$\\%s_%d$", vname, lag);
 	} else {
 	    sprintf(targ, "\\%s_%d", vname, lag);
 	}
     } else {
+	/* regular variable name */
 	tex_escape(vnesc, src);
-	strcpy(targ, vnesc);
+	if (inmath) {
+	    sprintf(targ, "\\mbox{%s}", vnesc);
+	} else {
+	    strcpy(targ, vnesc);
+	}
     }
 }
 
@@ -306,6 +312,8 @@ static int make_texfile (const PATHS *ppaths, int ID, int equation,
     return 0;
 }
 
+#define MAXCOEFF 4
+
 /**
  * tex_print_equation:
  * @pmod:  pointer to gretl MODEL struct.
@@ -326,6 +334,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     double tstat;
     char tmp[48];
     int i, nc = pmod->ncoeff;
+    int split = (nc > MAXCOEFF);
+    int cchars = 0, ccount = 0;
 
     if (standalone) {
 	pputs(prn, "\\documentclass[11pt]{article}\n");
@@ -343,6 +353,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* initial setup */
     pputs(prn, "\\begin{gather}\n");
+    if (split) {
+	pputs(prn, "\\begin{split}\n");
+    }
 
     /* dependent variable */
     *tmp = '\0';
@@ -351,7 +364,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     }
-    pprintf(prn, "\\widehat{\\rm %s} = \n", tmp);
+    pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
 
     if (pmod->ci == GARCH) 
 	nc -= (1 + pmod->list[1] + pmod->list[2]);
@@ -367,17 +380,30 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	if (i > 0 || pmod->ifc == 0) {
 	    pputs(prn, "\\,");
 	    if (pmod->ci == ARMA) {
+		cchars += strlen(pmod->params[i+1]);
 		tex_arma_coeff_name(tmp, pmod->params[i+1], 1);
-		pprintf(prn, "%s", tmp);
+		pputs(prn, tmp);
 	    } else if (pmod->ci == GARCH) {
-		tex_garch_coeff_name(tmp, pmod->params[i+2], 1);
-		pprintf(prn, "%s", tmp);
+		cchars += strlen(pmod->params[i+1]);
+		tex_garch_coeff_name(tmp, pmod->params[i+1], 1);
+		pputs(prn, tmp);
 	    } else {
+		cchars += strlen(pdinfo->varname[pmod->list[i+2]]);
 		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
 		pprintf(prn, "\\mbox{%s}", tmp);
 	    }
 	}
-	pputc(prn, '\n');
+	ccount++;
+	if (split && (cchars > 30 || ccount > 3)) {
+	    pputs(prn, "\\\\\n& ");
+	    cchars = ccount = 0;
+	} else {
+	    pputc(prn, '\n');
+	}
+    }
+
+    if (split) {
+	pputs(prn, "\\end{split}\n");
     }
     pputs(prn, " \\notag \\\\\n");
 

@@ -151,17 +151,6 @@ static int modelspec_expand (MODELSPEC **pmspec, int *idx)
     return 0;
 }
 
-static void store_list (int *list, char *buf)
-{
-    int i;
-    char numstr[5];
-
-    for (i=1; i<=list[0]; i++) {
-	sprintf(numstr, "%d ", list[i]);
-	strcat(buf, numstr);
-    }
-}
-
 int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
 {
     MODELSPEC *spec;
@@ -176,11 +165,11 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
     sprintf(spec[i].cmd, "%s ", gretl_command_word(pmod->ci));
     
     if (pmod->ci == AR) {
-	store_list(pmod->arinfo->arlist, spec[i].cmd);
+	model_list_to_string(pmod->arinfo->arlist, spec[i].cmd);
 	strcat(spec[i].cmd, "; ");
     }
 
-    store_list(pmod->list, spec[i].cmd);
+    model_list_to_string(pmod->list, spec[i].cmd);
 
     if (pmod->subdum != NULL) {
 	int n = get_full_length_n();

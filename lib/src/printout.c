@@ -1387,7 +1387,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 			bufprintnum(line, xx, pmax[v-1], 13);
 		    }
 		}
-		if (pprintf(prn, "%s\n", line))
+		if (pprintf(prn, "%s\n", line) < 0)
 		    return 1;
 		if (pause && (lineno % PAGELINES == 0)) {
 		    if (takenotes(1)) return 0;
@@ -1653,7 +1653,7 @@ PRN *gretl_print_new (int prncode, const char *fname)
 
     else if (prncode == GRETL_PRINT_BUFFER) {
 	prn->fp = NULL;
-	if (pprintf(prn, "@init")) {
+	if (pprintf(prn, "@init") < 0) {
 	    fprintf(stderr, _("gretl_prn_new: out of memory\n"));
 	    free(prn);
 	    return NULL;
@@ -1729,14 +1729,15 @@ int pprintf (PRN *prn, const char *template, ...)
 {
     va_list args;
     size_t blen;
+    int plen = 0;
 
     if (prn == NULL) return 0;
 
     if (prn->fp != NULL) {
 	va_start(args, template);
-	vfprintf(prn->fp, template, args);
+	plen = vfprintf(prn->fp, template, args);
 	va_end(args);
-	return 0;
+	return plen;
     }
 
     if (strncmp(template, "@init", 5) == 0) {
@@ -1746,20 +1747,20 @@ int pprintf (PRN *prn, const char *template, ...)
   	fprintf(stderr, "pprintf: malloc'd %d bytes at %p\n", prn->bufsize,  
 		(void *) prn->buf); 
 #endif
-	if (prn->buf == NULL) return 1;
+	if (prn->buf == NULL) return -1;
 	memset(prn->buf, 0, 1);
 	return 0;
     }
 
-    if (prn->buf == NULL) return 1;
+    if (prn->buf == NULL) return 0;
 
     blen = strlen(prn->buf);
 
     if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen > MAXLEN - 32) return 1;
+	if (blen > MAXLEN - 32) return -1;
     } else if (prn->bufsize - blen < 1024) {
 	if (realloc_prn_buffer(prn, blen)) {
-	    return 1;
+	    return -1;
 	}
     }
 
@@ -1767,13 +1768,13 @@ int pprintf (PRN *prn, const char *template, ...)
 #ifdef PRN_DEBUG
     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
 #endif
-    vsprintf(prn->buf + blen, template, args);
+    plen = vsprintf(prn->buf + blen, template, args);
     va_end(args);
 #ifdef PRN_DEBUG
     fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
 #endif
 
-    return 0;
+    return plen;
 }
 
 /**
@@ -1788,29 +1789,30 @@ int pprintf (PRN *prn, const char *template, ...)
 int pputs (PRN *prn, const char *s)
 {
     size_t blen;
+    int slen = strlen(s);
 
     if (prn == NULL) return 0;
 
     if (prn->fp != NULL) {
 	fputs(s, prn->fp);
-	return 0;
+	return slen;
     }
 
-    if (prn->buf == NULL) return 1;
+    if (prn->buf == NULL) return 0;
 
     blen = strlen(prn->buf);
 
     if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen + strlen(s) > MAXLEN - 1) return 1;
+	if (blen + slen > MAXLEN - 1) return -1;
     } else if (prn->bufsize - blen < 1024) {
 	if (realloc_prn_buffer(prn, blen)) {
-	    return 1;
+	    return -1;
 	}
     }
 
     strcpy(prn->buf + blen, s);
 
-    return 0;
+    return slen;
 }
 
 /**
@@ -1830,25 +1832,25 @@ int pputc (PRN *prn, int c)
 
     if (prn->fp != NULL) {
 	fputc(c, prn->fp);
-	return 0;
+	return 1;
     }
 
-    if (prn->buf == NULL) return 1;
+    if (prn->buf == NULL) return 0;
 
     blen = strlen(prn->buf);
 
     if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
-	if (blen > MAXLEN - 2) return 1;
+	if (blen > MAXLEN - 2) return -1;
     } else if (prn->bufsize - blen < 1024) {
 	if (realloc_prn_buffer(prn, blen)) {
-	    return 1;
+	    return -1;
 	}
     }
 
     prn->buf[blen] = c;
     prn->buf[blen + 1] = '\0';
 
-    return 0;
+    return 1;
 }
 
 /* apparatus for user-defined printf statements */

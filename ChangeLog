@@ -3,6 +3,8 @@ version 1.3.0
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
   the report)
+- add facility for nesting loops and fix some loop bugs
+- fix some bugs in LaTeX equation display
 - add support for compacting daily data to weekly or monthly
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)

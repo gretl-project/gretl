@@ -256,17 +256,18 @@ augment_restriction_set (gretl_restriction_set *rset, int n_terms)
 static const char *
 get_varname (const gretl_restriction_set *rset, int cnum)
 {
-    int vnum;
+    const char *vname;
 
-    /* FIXME: garch -- vnum is wrong (probably ARMA too) 
-       and TSLS?? */
-    if (rset->pmod->ci == GARCH) {
-	vnum = rset->pmod->list[cnum + 2];
+    /* FIXME: test for AR, TSLS?? */
+    if (rset->pmod->ci == ARMA || rset->pmod->ci == GARCH) {
+	vname = rset->pmod->params[cnum + 1];
     } else {
-	vnum = rset->pmod->list[cnum + 2];
+	int vnum = rset->pmod->list[cnum + 2];
+
+	vname = rset->pdinfo->varname[vnum];
     }
 
-    return rset->pdinfo->varname[vnum];
+    return vname;
 }
 
 static void print_mult (double mult, int first, PRN *prn)
@@ -294,16 +295,9 @@ static void print_restriction (const gretl_restriction_set *rset,
     const restriction *r = rset->restrictions[j];
     int i;
 
-    /* FIXME: reinstate get_varname when it's corrected */
-
     for (i=0; i<r->nterms; i++) {
 	print_mult(r->mult[i], i == 0, prn);
-	if (rset->pmod->ci == ARMA ||
-	    rset->pmod->ci == GARCH) {
-	    pprintf(prn, "b%d", r->coeff[i]);
-	} else {
-	    pprintf(prn, "b(%s)", get_varname(rset, r->coeff[i]));
-	}
+	pprintf(prn, "b(%s)", get_varname(rset, r->coeff[i]));
     }
     pprintf(prn, " = %g\n", r->rhs);
 }
