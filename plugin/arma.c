@@ -33,46 +33,12 @@
 #define SUBITERMAX         40
 #define MINSTEPLEN    1.0e-08     
 
-static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
-			     const MODEL *pmod, int i)
-{
-    int j, p = pmod->list[1], q = pmod->list[2];
-
-    if (i == 0) {
-	strcpy(s, pdinfo->varname[pmod->list[4]]);
-	return;
-    }
-
-    if (i == 1 && pmod->ifc) {
-	strcpy(s, pdinfo->varname[0]);
-	return;
-    }
-
-    if (pmod->ifc) j = i - 1;
-    else j = i;
-
-    if (j < p + 1) {
-	const char *depvar = pmod->params[0];
-	size_t n = strlen(depvar);
-	
-	if (n < VNAMELEN - 4) {
-	    sprintf(s, "%s(-%d)", depvar, j);
-	} else {
-	    sprintf(s, "y(-%d)", j);
-	}
-    } else if (j < p + q + 1) {
-	sprintf(s, "e(-%d)", j - p);
-    } else {
-	strcpy(s, pdinfo->varname[pmod->list[j+3]]);
-    }
-}
-
 static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int p = pmod->list[1];
     int q = pmod->list[2];
     int r = pmod->list[0] - 4;
-    int i, np = 2 + p + q + r;
+    int i, j, np = 2 + p + q + r;
 
     pmod->params = malloc(np * sizeof pmod->params);
     if (pmod->params == NULL) {
@@ -85,8 +51,6 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
     for (i=0; i<np; i++) {
 	pmod->params[i] = malloc(VNAMELEN);
 	if (pmod->params[i] == NULL) {
-	    int j;
-
 	    for (j=0; j<i; j++) free(pmod->params[j]);
 	    free(pmod->params);
 	    pmod->params = NULL;
@@ -96,9 +60,26 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 	}
     }
 
-    for (i=0; i<np; i++) { 
-	arma_coeff_name(pmod->params[i], pdinfo, pmod, i);
+    strcpy(pmod->params[0], pdinfo->varname[pmod->list[4]]);
+    strcpy(pmod->params[1], pdinfo->varname[0]);
+
+    j = 2;
+    for (i=0; i<p; i++) {
+	const char *depvar = pmod->params[0];
+	size_t n = strlen(depvar);
+	
+	if (n < VNAMELEN - 4) {
+	    sprintf(pmod->params[j++], "%s(-%d)", depvar, i + 1);
+	} else {
+	    sprintf(pmod->params[j++], "y(-%d)", i + 1);
+	}
     }
+    for (i=0; i<q; i++) {
+	sprintf(pmod->params[j++], "e(-%d)", i + 1);
+    }
+    for (i=0; i<r; i++) {
+	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
+    }    
 }
 
 static int get_maxiter (void)
