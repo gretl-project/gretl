@@ -124,12 +124,22 @@ static int get_rhodiff_param (char *str, CMD *cmd)
 
 /* ........................................................... */
 
-int subsetted_command (const char *cmd)
+static int restrict_bnum (const char *s)
+{
+    if (*s == 'b' && isdigit((unsigned char) *(s+1))) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+static int subsetted_command (const char *cmd)
 {    
     if (strcmp(cmd, "deriv") == 0) return NLS;
     if (strcmp(cmd, "identity") == 0) return SYSTEM;
     if (strcmp(cmd, "endog") == 0) return SYSTEM;
     if (strcmp(cmd, "instr") == 0) return SYSTEM;
+    if (restrict_bnum(cmd)) return RESTRICT;
     return 0;
 }
 
@@ -207,6 +217,7 @@ static int aliased (char *cmd)
                        c == RENAME || \
 	               c == TESTUHAT || \
                        c == RESET || \
+                       c == RESTRICT || \
                        c == SYSTEM || \
                        c == LEVERAGE || \
                        c == MODELTAB || \

@@ -23,6 +23,7 @@
 #include "var.h"
 #include "textbuf.h"
 #include "gpt_control.h"
+#include "gretl_restrict.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -89,6 +90,7 @@ static MODELSPEC *modelspec;
 static char *model_origin;
 static char last_model = 's';
 static gretl_equation_system *sys;
+static gretl_restriction_set *rset;
 
 /* ........................................................... */
 
@@ -5327,7 +5329,12 @@ int gui_exec_line (char *line,
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, outprn);
 	    }
-	} 
+	}
+	else if (!strcmp(cmd.param, "restrict")) {
+	    err = gretl_restriction_set_finalize(rset, prn);
+	    if (err) errmsg(err, prn);
+	    rset = NULL;
+	}   
 	else {
 	    err = 1;
 	}
@@ -5903,6 +5910,23 @@ int gui_exec_line (char *line,
 	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
 			   "binary datafile\n"));
+	break;
+
+    case RESTRICT:
+	/* joint hypothesis test on model */
+	if ((err = script_model_test(0, prn, 1))) break;
+	if (rset == NULL) {
+	    rset = restriction_set_start(line, models[0], datainfo);
+	    if (rset == NULL) {
+		err = 1;
+		errmsg(err, prn);
+	    }
+	} else {
+	    err = restriction_set_parse_line(rset, line);
+	    if (err) {
+		errmsg(err, prn);
+	    }	
+	}
 	break;
 
     case SYSTEM:

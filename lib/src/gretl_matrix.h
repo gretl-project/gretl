@@ -84,6 +84,9 @@ int gretl_vector_set (gretl_vector *v, int i, double x);
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
 
+int 
+gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src);
+
 int gretl_square_matrix_transpose (gretl_matrix *m);
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m);
@@ -123,7 +126,14 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
 				 int *err);
 
 gretl_matrix *
-gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select);
+gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
+			  int *err);
+
+gretl_matrix *
+gretl_vcv_matrix_from_model (MODEL *pmod, const char *select);
+
+gretl_vector *
+gretl_coeff_vector_from_model (const MODEL *pmod, const char *select);
 
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
 
@@ -136,5 +146,9 @@ int gretl_vector_get_length (const gretl_vector *v);
 int gretl_matrix_cols (const gretl_matrix *m);
 
 int gretl_matrix_rows (const gretl_matrix *m);
+
+int gretl_is_identity_matrix (const gretl_matrix *m);
+
+int gretl_is_zero_vector (const gretl_vector *v);
 
 #endif /* GRETL_MATRIX_H */

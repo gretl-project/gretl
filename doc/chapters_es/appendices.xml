@@ -1,0 +1,647 @@
+  <appendix id="app-datafile">
+    <title>Comentarios sobre los archivos de datos</title>
+
+    <sect1 id="native">
+      <title>Formato nativo básico</title>
+
+      <para>En el formato nativo básico de <application>gretl</application>,
+      un conjunto de datos se guarda en formato XML (extensible mark-up language).
+      Los archivos de datos corresponden a la simple DTD (document type
+      definition) contenida en <filename>gretldata.dtd</filename>, que
+      viene con la distribución de <application>gretl</application> y se
+      instala en el directorio de datos del sistema (por ejemplo
+      <filename>/usr/share/gretl/data</filename> en Linux.) Los archivos de
+      datos pueden ser de texto simple o comprimidos con gzip. Contienen
+      los valores de los datos, además de información adicional tal como el nombre
+      y la descripción de las variables, la frecuencia de los datos,etc.</para>
+
+      <para>La mayoría de los usuarios no tendrán necesidad de leer o escribir
+      archivos de este tipo, excepto mediante el propio <application>gretl</application>, pero sí Vd.
+      tiene la necesidad de manipularlos utilizando otras herramientas de
+      software, tendrá que examinar el DTD y también mirar
+      algunos de los archivos de datos de prácticas que
+      acompañan al programa: <filename>data4-1.gdt</filename> expone un
+      ejemplo sencillo; <filename>data4-10.gdt</filename> es un ejemplo en el que
+      se incluyen etiquetas para las observaciones.</para>
+    </sect1>
+
+    <sect1 id="traddata">
+      <title>Formato tradicional ESL</title>
+
+      <para>Por compatibilidad hacía atrás, <application>gretl</application>
+      también puede manejar archivos de datos en el formato <quote>tradicional</quote>
+      heredado del programa ESL de Ramanathan. En este formato (que
+      era el formato por defecto de <application>gretl</application> en
+      versiones previas a la 0.98) un conjunto de datos se representa mediante
+      dos archivos. Uno contiene los datos en sí, y el otro contiene
+      información sobre cómo leerlos. En otras palabras:</para>
+
+      <orderedlist>
+        <listitem>
+          <para><emphasis>Los datos en sí</emphasis>: Una matriz rectangular
+          de números separados por espacios en blanco. Cada columna representa
+          una variable, cada fila una observación sobre cada una de las
+          variables (estilo hoja de cálculo). Las columnas de datos pueden
+          estar separadas por espacios o tabuladores. El nombre del archivo debe de
+          llevar el sufijo <filename>.gdt</filename>. Por defecto, el archivo
+          de datos es de tipo ASCII (texto simple). Opcionalmente, puede estar
+          comprimido con gzip para ahorrar espacio en el disco. Se pueden
+          insertar comentarios en un archivo de datos: si una línea empieza
+          por la marca de almohadilla (<literal>#</literal>), se ignora la
+          línea entera. Esto es consistente con los archivos de datos de
+          gnuplot y octave.</para>
+        </listitem>
+
+        <listitem>
+          <para><emphasis>Cabecera</emphasis>: El archivo de datos tiene que
+          venir acompañado por un archivo de cabecera que tiene el mismo
+          nombre raíz que el archivo de datos más el sufijo
+          <filename>.hdr</filename>. Este archivo contiene lo siguiente (en
+          orden):</para>
+
+          <itemizedlist mark="dash">
+            <listitem>
+              <para>(Opcional) <emphasis>comentarios</emphasis> sobre los
+              datos, iniciados con la cadena de texto <literal>(*</literal> y
+              finalizados con la cadena de cierre <literal>*)</literal>, cada
+              uno de estos marcadores tiene que tener su propia línea
+              separada.</para>
+            </listitem>
+
+            <listitem>
+              <para>(Obligatoria) lista de <emphasis>nombres de las variables</emphasis>
+              del archivo de datos, separadas por espacios en blanco. Los
+              nombres tienen un limite de 8 caracteres, tienen que
+              empezar por una letra, y estan restringidos a los caracteres
+              alfanuméricos más el carácter de subrayado (_). La lista puede ser
+              de más de una línea; se termina con un punto y coma,
+              <literal>;</literal>.</para>
+            </listitem>
+
+            <listitem>
+              <para>(Obligatoria) línea de <emphasis>observaciones</emphasis>
+              con la forma <literal>1 1 85</literal>. El primer elemento
+              nos da la frecuencia de los datos (1 para los datos sin fechas o
+              anuales, 4 para los trimestrales, 12 para los mensuales). Los
+              elementos segundo y tercero dan las observaciones de inicio y
+              final. Generalmente, estas serán el 1 y el número de
+              observaciones respectivamente, para los datos sin fecha. Para
+              las series temporales, se pueden utilizar fechas en la forma
+              <command>1959.1</command> (trimestral, 1 dígito después del
+              punto) o <command>1967.03</command> (mensual, dos dígitos
+              después del punto). Véase el <xref linkend="c-panel" /> para el uso
+              especial de esta línea en el caso de datos panel.</para>
+            </listitem>
+
+            <listitem>
+              <para>La palabra clave <literal>BYOBS</literal>.</para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      </orderedlist>
+
+      <para>Aquí hay un ejemplo de un archivo de cabecera de datos escrito
+      correctamente.     
+       <programlisting> 
+      (* 
+      DATA9-6: 
+      Datos sobre log(dinero), log(renta) y tipo de interés de los EEUU.
+      Fuente: Stock and Watson (1993) Econometrica
+      (datos sin alisar) El periodo es 1900-1989 (datos anuales).
+      Datos recogidos por Graham Elliott.
+      *)
+      ldinero lrenta tipoint ;
+      1 1900 1989 BYOBS</programlisting>
+      El archivo de datos correspondiente contiene tres
+      columnas de datos, cada una con 90 entradas.</para>
+
+      <para>Hay tres características del formato <quote>tradicional</quote> de
+      datos que hay que tener en cuenta.</para>
+
+      <orderedlist>
+        <listitem>
+          <para>Si la palabra clave <literal>BYOBS</literal> se reemplaza
+          por <literal>BYVAR</literal> y va seguida por la palabra clave
+          <literal>BINARY</literal>, esto indica que el archivo de datos
+          correspondiente está en formato binario. Se puede escribir este tipo
+          de archivos desde <application>gretlcli</application> utilizando la
+          instrucción <command>store</command> con la marca <command>-s</command>
+          (precisión sencilla) o la marca <command>-o</command> (precisión
+          doble).</para>
+        </listitem>
+
+        <listitem>
+          <para>Si <literal>BYOBS</literal> es seguido por la palabra clave
+          <literal>MARKERS</literal>, <application>gretl</application> espera
+          un archivo de datos en el cual la <emphasis>primera columna</emphasis>
+          contiene cadenas (de 8 caracteres como máximo) que se utilizan para la
+          identificación de las observaciones. Esto puede resultar útil en
+          datos de sección cruzada donde las unidades de las
+          observaciones son identificables: países, provincias, ciudades, etc.
+          También puede ser de utilidad para datos de series temporales
+          irregulares, como por ejemplo, los precios diarios de los valores en
+          la bolsa, donde hay unos días de cierre - en este caso las
+          observaciones pueden señalarse con una fecha tipo
+          <command>10/01/98</command>. (Recuérdese el límite de 8 caracteres.)
+          Nótese que las opciones <command>BINARY</command> y
+          <command>MARKERS</command> son mutuamente exclusivas. Otra
+          consideración a tener en cuenta es que los <quote>marcadores</quote>
+          no son una variable: la columna de marcadores no tiene una entrada
+          correspondiente en la lista de los nombres de las variables en el
+          archivo de cabecera.</para>
+        </listitem>
+
+        <listitem>
+          <para>Si se encuentra otro archivo con el mismo
+          nombre raíz que el archivo de datos y de cabecera, pero con el
+          sufijo <filename>.lbl</filename>, este se lee para rellenar las
+          etiquetas descriptivas para las series de datos. El formato de un
+          archivo de etiquetas es sencillo: cada línea contiene el nombre de
+          una variable (como en el archivo de cabecera), seguido por uno o más
+          espacios, seguido por la etiqueta descriptiva. Un ejemplo sería:
+          <literal>precio Índice de precios de automóviles nuevos, año base 1982</literal></para>
+        </listitem>
+      </orderedlist>
+
+      <para>Para guardar los datos en formato tradicional, se utiliza 
+      la instrucción <command>store</command>, con la opción
+      <command>-t</command> bien en
+      el programa de línea de instrucciones, o bien en la ventana de consola del
+      cliente GUI.</para>
+    </sect1>
+
+    <sect1 id="dbdetails">
+      <title>Bases de datos binarias: detalles</title>
+
+      <para>Una base de datos <application>gretl</application> contiene dos
+      partes: un archivo índice ASCII (el nombre de archivo lleva el sufijo
+      <filename>.idx</filename>), donde se guarda la información sobre la
+      serie y un archivo binario (sufijo <filename>.bin</filename>) que
+      contiene los datos en sí. Dos ejemplos de posibles formatos de
+      entradas en el archivo <filename>idx</filename> son:</para>
+
+      <programlisting>
+      G0M910  ïndice compuesto por 11 indicadores adelantados (1987=100)
+      M 1948.01 - 1995.11  n = 575
+      currbal Balanza de pagos: Balanza por cuenta corriente; SA
+      Q 1960.1 - 1999.4 n = 160</programlisting>
+
+      <para>El primer campo contiene el nombre de la serie. El segundo es una
+      descripción de la serie (máximo de 128 caracteres). En la segunda línea
+      el primer campo es un código de frecuencias:
+      <literal>M</literal> para mensual, <literal>Q</literal> para trimestral,
+      <literal>A</literal> para anual, <literal>B</literal> diario laborable
+      (diario con cinco días a la semana) y <literal>D</literal> para diario
+      (siete días a las semana). No se admite ninguna otra frecuencia de
+      momento. Luego viene la fecha de inicio (N.B. con dos dígitos después
+      del punto para datos mensuales, uno para datos trimestrales,
+      ninguno para datos anuales), un espacio, un guión, otro espacio, la fecha
+      de finalización, la cadena <quote><literal>n = </literal></quote> y el
+      número de observaciones en números enteros. En el caso de datos diarios,
+      las fechas de inicio y finalización deben de venir en la forma
+      <literal>YYYY/MM/DD (año/mes/día/)</literal>. Este formato tiene que
+      respetarse de manera estricta.</para>
+
+      <para>Opcionalmente, la primera línea del archivo de índice puede
+      contener un comentario corto (hasta 64 caracteres) sobre el origen y
+      naturaleza de los datos, iniciado por una marca de almohadilla. Por
+      ejemplo:</para>
+
+      <programlisting>
+       # Federal Reserve Board (interest rates)</programlisting>
+
+      <para>El archivo de base de datos binarios correspondiente contiene los
+      valores de los datos, representados como <quote>flotantes</quote>, es
+      decir, números de punto flotante de precisión simple, que ocupan,
+      típicamente, cuatro bytes cada uno. Los números se empaquetan
+      <quote>por variable</quote>, así que los primeros
+      <emphasis>n</emphasis> números son las observaciones de la variable 1,
+      los siguientes <emphasis>m</emphasis> son las observaciones de la variable
+      2, y así sucesivamente.</para>
+    </sect1>
+  </appendix>
+
+  <appendix id="app-technote">
+    <title>Comentarios técnicos</title>
+
+    <para><application>Gretl</application> está escrito en el lenguaje de
+    programación C. Se ha intentado, en la medida de lo posible, cumplir con el
+    estándar ISO/ANSI C (C89), aunque el interfaz gráfico para el
+    usuario y algunos otros componentes hacen uso de
+    extensiones específicas de ciertas plataformas.</para>
+
+    <para><application>Gretl</application> sigue desarrollándose en
+    Linux. Es posible recompilar y ejecutar la librería compartida y el cliente
+    de línea de instrucciones en cualquier plataforma que, (a) apoye ISO/ANSI C y
+    (b) tenga instalada las librerías zlib (compresión) y libxml
+    (manipulación XML). La página web de zlib se encuentra en <ulink
+    url="http://www.info-zip.org/pub/infozip/zlib/">info-zip.org</ulink>. La
+    dirección de Internet de Libxmls es <ulink url="http:/xmlsoft.org/">xmlsoft.org</ulink>.
+    Si se encuentra la biblioteca <application>readline</application> de GNU en el sistema
+    anfitrión, ésta será utilizada por <application>gretcli</application>,
+    aportando así una línea de instrucciones editable muy mejorada. Consultar la
+    <ulink url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">
+    página web de <application>readline</application></ulink>.</para>
+
+    <para>El programa de cliente gráfico debería de poder recompilarse y ejecutarse en
+    cualquier sistema que, además de los requisitos detallados arriba, ofrezca la
+    versión de GTK 1.2.3 o superior (véase <ulink url="http://www.gtk.org/">gtk.org</ulink>).
+    En el momento de escribir este manual, hay dos variantes de las librerías
+    GTK: la serie 1.2 y la serie 2.0, distribuida en el verano de 2002. Estas
+    dos variantes son incompatibles entre sí. <application>Gretl</application>
+    puede compilarse con cualquiera de las dos - el paquete de código fuente
+    incluye dos subdirectorios, <filename>gui</filename> para GTK 1.2 y
+    <filename>gui2</filename> para GTK 2.0. Si está disponible, recomendamos
+    el uso de GTK 2.0, ya que ofrece muchas mejoras sobre GTK 1.2.</para>
+
+    <para><application>Gretl</application> llama a gnuplot para hacer los
+    gráficos. Se puede encontrar gnuplot en <ulink
+    url="http://www.gnuplot.info/">gnuplot.info</ulink>. En el momento de
+    escribir esto, la versión oficial más reciente es la 3.7.1 (es de
+    Noviembre de 1999). Si acceder a repositorios de CVS y recompilar códigos
+    fuente no les supone ningún problema, recomendamos la instalación de
+    gnuplot desde el CVS actual. El autor de este manual actualmente esta utilizando
+    gnuplot versión 3.8i obtenida desde el CVS.</para>
+
+    <para>Algunas opciones de <application>gretl</application> utilizan la
+    librería gtkextra de Adrian Feguin. gtkextra se encuentra en <ulink
+    url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>.</para>
+
+    <para>Se encuentra disponible una versión binaria de <application>gretl</application>
+    para el sistema operativo Windows de Microsoft (versión de 32 bits, es decir,
+    Windows 95 o superior). Esta versión fue compilada en Linux a través de
+    mingw (el compilador C de GNU, <application>gcc</application>, trasvasado
+    para su uso con win32) y vinculada con la librería C de Microsoft,
+    <filename>msvcrt.dll</filename>. Emplea el <quote>port</quote> de GTK 2.0 de Tor
+    Lillqvist para win32. El programa instalador de Windows (gratis, de código
+    abierto) es cortesía de Jordan Russell (<ulink
+    url="http://www.jrsoftware.org/">jrsoftware.org</ulink>).</para>
+
+    <para>Tengo la esperanza de que <application>gretl</application> interese
+    lo suficiente a algunos usuarios con habilidades en códigos y
+    programación, como para mejorarlo y extenderlo. La documentación del
+    libgretl API está lejos de ser completa, pero Vd. puede encontrar algunos detalles si
+    sigue la conexión <quote>Libgretl API docs</quote> en la página web de
+    <application>gretl</application>.</para>
+  </appendix>
+
+  <appendix id="app-accuracy">
+    <title>Precisión numérica</title>
+
+    <para><application>Gretl</application> siempre utiliza aritmética de doble
+    precisión - excepto en el plugin de precisión múltiple invocado con la
+    opción del menu <quote>Modelo/MCO de alta precisión</quote> que representa los valores de punto flotante empleando un número
+    de bits determinados por la variable de entorno <varname>GRETL_MP_BITS</varname>
+    (valor por defecto 256). Las ecuaciones normales de Mínimos Cuadrados se
+    resuelven mediante la descomposición de Choleski, lo cual es
+    suficientemente preciso para la mayoría de los propósitos. El programa ha
+    sido probado de manera bastante exhaustiva con los conjuntos de datos de
+    referencia estadística aportados por el NIST (el Instituto Nacional de
+    Estándares y Tecnología de los Estados Unidos) y puede encontrarse un
+    informe completo de los resultados en la página web de
+    <application>gretl</application> (pinchar en <quote>Numerical accuracy
+    (Precisión numérica</quote> y seguir la conexión).</para>
+
+    <para>En Octubre de 2002, tuve un útil intercambio de ideas con Giovanni
+    Baoicchi y Walter Disasto, quienes estaban escribiendo una reseña de
+    <application>gretl</application> para el <citetitle>Journal of Applied
+    Econometrics</citetitle>, y con James McKinnon, el editor de evaluaciones
+    de software de dicha revista. Quiero expresar mis agradecimientos a
+    Baoicchi y Disasto por sus exhaustivas comprobaciones del programa, las
+    cuales dieron lugar a las siguientes modificaciones.</para>
+
+    <orderedlist>
+      <listitem>
+        <para>Los evaluadores indicaron que existía un error en el
+        <quote>buscador de valores p</quote> de
+        <application>gretl</application>, por el cual el programa mostraba el
+        complemento de la probabilidad correcta para valores negativos de
+        <emphasis>z</emphasis>. Esto fue solucionado en la versión 0.998 del
+        programa (2002, Julio 9).</para>
+      </listitem>
+
+      <listitem>
+        <para>También señalaron que el buscador de valores p producía
+        resultados incorrectos para valores extremos de
+        <emphasis>x</emphasis> (por ejemplo, valores alrededor de 8 a 10 en la
+        distribución <emphasis>t</emphasis> con 100 grados de libertad). Esto
+        fue también corregido en <application>gretl</application> versión
+        0.998, por medio de un cambio a un código de distribución de
+        probabilidad más preciso.</para>
+      </listitem>
+
+      <listitem>
+        <para>Los evaluadores notaron un defecto en la presentación de los
+        coeficientes de regresión en <application>gretl</application>, por el
+        cual algunos coeficientes podían ser impresos con un número de cifras
+        significativas inaceptablemente pequeño. Esto fue corregido en la
+        versión 0.999 (2002, Agosto 25): ahora todos los estadísticos
+        asociados con una regresión se imprimen con 6 cifras significativas.</para>
+      </listitem>
+
+      <listitem>
+        <para>Por medio de las comprobaciones realizadas por los evaluadores
+        se supo además que la precisión numérica de
+        <application>gretl</application> en MS Windows era menor que en Linux,
+        en la cual había realizado yo mis pruebas. Por ejemplo, en los datos
+        Longley - un bien conocido conjunto de datos <quote>mal comportados</quote>
+        frecuentemente utilizados en la comprobación de programas
+        econométricos - la versión Windows de <application>gretl</application>
+        recogía coeficientes erróneos a partir del 7º dígito mientras que los
+        mismos coeficientes eran correctos en Linux. Esta anomalía fue
+        corregida en la versión 1.0pre3 de <application>gretl</application>
+        (2002, Octubre 10).</para>
+      </listitem>
+    </orderedlist>
+
+    <para>La versión actual del código fuente de <application>gretl</application>
+    contiene un subdirectorio <filename>tests</filename>, con una batería de
+    pruebas basadas en los conjuntos de datos del NIST. Esto se invoca
+    mediante <command>make check</command> en el directorio raíz. Se recibe un
+    aviso si la precisión numérica cae por debajo de lo estándar. Por favor,
+    consúltese el archivo <filename>README</filename> en el directorio
+    <filename>tests</filename> para más detalles.</para>
+
+    <para>La batería de contrastes del NIST se distribuye asimismo con la
+    versión MS Windows de <application>gretl</application>. Pueden ejecutarse
+    los contrastes invocando el programa
+    <filename>nisttest.exe</filename>.</para>
+
+    <para>Como ya se ha mencionado, todos los estadísticos de regresión se
+    imprimen con 6 cifras significativas en la actual versión de
+    <application>gretl</application> (excepto cuando se usa el plugin de
+    precisión múltiple, en cuyo caso los resultados se ofrecen con 12 cifras).
+    Si se desea examinar un valor con más precisión, se puede guardar primero (véase
+    <xref linkend="genr" />) y a continuación pedir su presentación mediante la orden
+    <command>print -t</command> (véase el <xref linkend="c-cmdref" />). De esta
+    manera se mostrará el valor con hasta 10 dígitos.</para>
+  </appendix>
+
+  <appendix id="app-advanced">
+    <title>Análisis econométrico avanzado con software libre</title>
+
+    <para>Como se ha mencionado en el texto principal, <application>gretl</application>
+    ofrece una selección bastante amplia de estimadores de Mínimos Cuadrados,
+    así como algunos estimadores adicionales como logit y probit (binomial) y de
+    Mínima Desviación Absoluta. Sin embargo, para los usuarios avanzados, las
+    rutinas estadísticas de <application>gretl</application> pueden ser algo
+    limitadas.</para>
+
+    <para>Sin duda, algunos de estos usuarios preferirán escribir sus propios
+    programas de rutinas estadísticas en algún lenguaje básico de programación
+    como C, C++ o Fortran. Otra opción será utilizar otro lenguaje de alto
+    nivel que ofrezca la posibilidad de manipular matrices y que tenga algunas
+    rutinas estadísticas propias, o también paquetes adicionales
+    que puedan acoplarse al programa. Si esta última opción les resulta
+    atractiva y están interesados en software de código abierto gratuito,
+    les recomiendo estos dos programas: GNU R (<ulink
+    url="http://www.r-project.org/">r-project.org</ulink>) o <ulink
+    url="http://www.octave.org/">GNU Octave</ulink>. Estos dos programas son
+    muy similares a los programas comerciales S y Matlab respectivamente.</para>
+
+    <para>Otra opción, ya mencionada, es que <application>gretl</application>
+    ofrece la posibilidad de exportar datos tanto en formato Octave como en R.
+    En el caso de Octave, el conjunto de datos <application>gretl</application>
+    se guarda del siguiente modo: la primera variable dispuesta para exportar se
+    trata como la variable dependiente y se guarda como un vector,
+    <varname>y</varname>, mientras que las restantes variables se guardan como
+    una matriz, <varname>X</varname>. Una vez cargado en Octave, podemos
+    desagregar esta matriz <varname>X</varname> si lo deseamos. Consúltese el
+    manual de Octave para los detalles. En cuanto a R, el archivo de datos
+    exportado conserva la estructura de series temporales que tenga
+    en <application>gretl</application>. Las series se guardan como
+    estructuras individuales. Los datos deben importarse mediante la
+    instrucción <command>source()</command> en R.</para>
+
+    <para>Entre estos dos programas, R es quizá de más interés inmediato para
+    los económetras ya que ofrece más en términos de rutinas estadísticas (por
+    ejemplo, modelos lineales generalizados, estimación máximo-verosímil,
+    métodos de series temporales). Por eso, <application>gretl</application>
+    tiene una opción que transfiere los datos de manera rápida y cómoda a R. En el
+    menú <quote>Sesión</quote> de <application>gretl</application> se
+    encuentra la opción <quote>Iniciar GNU R</quote>. Esta
+    opción escribe una versión R del conjunto de datos de
+    <application>gretl</application> (<filename>Rdata.tmp</filename>, en el
+    directorio del usuario de <application>gretl</application>) y lo envía a una sesión nueva de R. A
+    continuación, se describen algunos detalles a tener en cuenta.</para>
+
+    <para>En primer lugar, los datos se pasan a R escribiendo una versión
+    provisional de <filename>.Rprofile</filename> en el directorio de trabajo
+    actual. (Si existe un archivo de este tipo, R lo indica al iniciar.) En el
+    caso de que ya exista un archivo <filename>.Rprofile</filename> personal,
+    el archivo original se copiará provisionalmente en <filename>.Rprofile.gretltmp</filename>,
+    y será devuelto a su sitio al salir de <application>gretl</application>.
+    (Si alguien encuentra una manera mejor de hacer esto, por favor que me lo
+    comunique.)</para>
+
+    <para>En segundo lugar, el modo particular de invocar a R depende de la
+    variable interna de <application>gretl</application> <varname>Rcommand</varname>,
+    cuyo valor puede establecerse en el menú <quote>Archivo,
+    Preferencias</quote>. En MS Windows, la instrucción por defecto es
+    <command>RGui.exe</command>. En X, es <command>R --gui=gnome</command> si
+    a la hora de compilar se detecta una instalación del escritorio Gnome (<ulink
+    url="http://www.gnome.org/">gnome.org</ulink>), o <command>xterm -e R</command>
+    si no se encuentra Gnome. Nótese, por favor, que en esta instrucción se
+    procesarán, como máximo, tres elementos separados por espacios; cualquier
+    elemento adicional será ignorado.</para>
+  </appendix>
+
+  <appendix id="app-urls">
+    <title>Lista de URLs</title>
+
+    <para>A continuación, hay una lista de las direcciones completas (URL) de
+    los sitios web citados en el manual, según orden de apariencia.</para>
+
+    <variablelist>
+      <varlistentry>
+        <term>Página web de GNU R</term>
+
+        <listitem>
+          <para><ulink url="http://www.r-project.org/"> <literal>http://www.r-project.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de GNU Octave</term>
+
+        <listitem>
+          <para><ulink url="http://www.octave.org/"> <literal>http://www.octave.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de <application>Gretl</application></term>
+
+        <listitem>
+          <para><ulink url="http://gretl.sourceforge.net/">
+          <literal>http://gretl.sourceforge.net/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Oficina del Censo, Servicio de Obtención de Datos (Census
+        Bureau, Data Extraction Service)</term>
+
+        <listitem>
+          <para><ulink
+          url="http://www.census.gov/ftp/pub/DES/www/welcome.html">
+          <literal>http://www.census.gov/ftp/pub/DES/www/welcome.html</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página de datos de Gretl</term>
+
+        <listitem>
+          <para><ulink url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">
+          <literal>http://ricardo.ecn.wfu.edu/gretl/gretl_data.html</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Estima (RATS)</term>
+
+        <listitem>
+          <para><ulink url="http://www.estima.com/"> <literal>http://www.estima.com/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Tabla Mundial de Penn (Penn World Table)</term>
+
+        <listitem>
+          <para><ulink url="http://pwt.econ.upenn.edu/"> <literal>http://pwt.econ.upenn.edu/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de Gnuplot</term>
+
+        <listitem>
+          <para><ulink url="http://www.gnuplot.info/"> <literal>http://www.gnuplot.info/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Manual <emphasis>en línea</emphasis> de Gnuplot</term>
+
+        <listitem>
+          <para><ulink url="http://ricardo.ecn.wfu.edu/gnuplot.html">
+          <literal>http://ricardo.ecn.wfu.edu/gnuplot.html</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Manual de GNU Readline</term>
+
+        <listitem>
+          <para><ulink
+          url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">
+          <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Biblioteca de Precisión Múltiple de GNU</term>
+
+        <listitem>
+          <para><ulink url="http://swox.com/gmp/"> <literal>http://swox.com/gmp/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de InfoZip</term>
+
+        <listitem>
+          <para><ulink url="http://www.info-zip.org/pub/infozip/zlib/">
+          <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de Xmlsoft</term>
+
+        <listitem>
+          <para><ulink url="http://xmlsoft.org/"> <literal>http://xmlsoft.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de GNU Readline</term>
+
+        <listitem>
+          <para><ulink
+          url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">
+          <literal>http://cnswww.cns.cwru.edu/~chet/readline/rltop.html</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de GTK+</term>
+
+        <listitem>
+          <para><ulink url="http://www.gtk.org/"> <literal>http://www.gtk.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de Gtkextra</term>
+
+        <listitem>
+          <para><ulink url="http://gtkextra.sourceforge.net/">
+          <literal>http://gtkextra.sourceforge.net/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web de Mingw (gcc para win32)</term>
+
+        <listitem>
+          <para><ulink url="http://www.mingw.org/"> <literal>http://www.mingw.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Port GTK+ para win32</term>
+
+        <listitem>
+          <para><ulink url="http://user.sgic.fi/~tml/gimp/win32/">
+          <literal>http://user.sgic.fi/~tml/gimp/win32/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>JRSoftware</term>
+
+        <listitem>
+          <para><ulink url="http://www.jrsoftware.org/"> <literal>http://www.jrsoftware.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Página web del escritorio Gnome</term>
+
+        <listitem>
+          <para><ulink url="http://www.gnome.org/"> <literal>http://www.gnome.org/</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>Manual de GNU R</term>
+
+        <listitem>
+          <para><ulink url="http://cran.r-project.org/doc/manuals/R-intro.pdf">
+          <literal>http://cran.r-project.org/doc/manuals/R-intro.pdf</literal></ulink></para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </appendix>
+
+  <!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

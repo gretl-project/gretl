@@ -27,6 +27,7 @@
 
 #include "libgretl.h"
 #include "var.h"
+#include "gretl_restrict.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -86,6 +87,7 @@ char linebak[MAXLEN];      /* for storing comments */
 char *line_read;
 
 gretl_equation_system *sys;
+gretl_restriction_set *rset;
 
 void exec_line (char *line, PRN *prn); 
 static int loop_exec_line (LOOPSET *plp, const int round, 
@@ -963,7 +965,12 @@ void exec_line (char *line, PRN *prn)
 	    if (want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
 	    }
-	} 
+	}
+	else if (!strcmp(cmd.param, "restrict")) {
+	    err = gretl_restriction_set_finalize(rset, prn);
+	    if (err) errmsg(err, prn);
+	    rset = NULL;
+	}  
 	else {
 	    err = 1;
 	}
@@ -1561,6 +1568,23 @@ void exec_line (char *line, PRN *prn)
 	pputs(prn, _("Data written OK\n"));
 	if (((cmd.opt & OPT_O) || (cmd.opt & OPT_S)) && datainfo->markers) { 
 	    pputs(prn, _("Warning: case markers not saved in binary datafile\n"));
+	}
+	break;
+
+    case RESTRICT:
+	/* joint hypothesis test on model */
+	if ((err = model_test_start(0, prn, 1))) break;
+	if (rset == NULL) {
+	    rset = restriction_set_start(line, models[0], datainfo);
+	    if (rset == NULL) {
+		err = 1;
+		errmsg(err, prn);
+	    }
+	} else {
+	    err = restriction_set_parse_line(rset, line);
+	    if (err) {
+		errmsg(err, prn);
+	    }	
 	}
 	break;
 

@@ -1,0 +1,26 @@
+open data4-10
+ols 1 0 2 3 4 5
+
+# Evaluate two zero restrictions
+restrict 
+b3 = 0
+b4 = 0
+end restrict
+# Equivalent: use the "omit" command
+omit 4 5
+
+# Now try a test for equality of coefficients
+ols 1 0 2 3 4 5
+restrict
+b3 - b4 = 0
+end restrict
+# Manual equivalent to the above...
+genr essu = $ess
+genr dfu = $df
+genr vsum = WHITE + ADMEXP
+ols 1 0 2 3 vsum
+genr essr = $ess
+genr Fval = (essr - essu)/(essu/dfu)
+pvalue F 1 dfu Fval 
+
+

@@ -1,0 +1,364 @@
+  <?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="c-datafiles">
+    <title>Fichero de datos</title>
+
+    <sect1 id="native-format">
+      <title>Formato propio</title>
+
+      <para><application>Gretl</application> tiene su propio formato para
+      los archivos de datos. La mayoría de los usuarios probablemente no querrán
+      escribir o leer estos archivos desde fuera de
+      <application>gretl</application>, pero ocasionalmente esto puede ser
+      útil. Los detalles completos sobre los formatos de los archivos están en el
+      <xref linkend="app-datafile" />.</para>
+    </sect1>
+
+    <sect1 id="other-formats">
+      <title>Otros formatos de archivos de datos</title>
+
+      <para><application>Gretl</application> puede leer varios otros formatos
+      de datos.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Ficheros CSV (comma-separated values --- valores
+          separados por comas). Estos archivos pueden importarse mediante la
+          opción del menú <quote>Archivo, Abrir datos, Importar CSV...</quote> de <application>gretl</application>,
+          o mediante la instrucción de consola <command>import</command>. Para conocer lo que
+          <application>gretl</application> espera encontrar en un archivo CSV,
+          véase <xref linkend="scratch" />.</para>
+        </listitem>
+
+        <listitem>
+          <para>Libros de trabajo en formatos MS <application>Excel</application>
+          o <application>Gnumeric</application>. Estos archivos también pueden
+          importarse utilizando la opción <quote>Archivo, Abrir datos, Importar</quote>
+          del menú. Los requisitos para este tipo de archivos se detallan en
+          <xref linkend="scratch" />.</para>
+        </listitem>
+
+        <listitem>
+          <para>Datos en formato BOX1. Hay una gran cantidad de datos micro
+          disponibles (gratis) en este formato mediante el <ulink
+          url="http://www.census.gov/ftp/pub/DES/www/welcome.html">servicio de
+          extracción de datos</ulink> del Censo de los Estados Unidos. Los
+          datos BOX1 pueden importarse con la opción del menú <quote>Archivo, Abrir datos,
+          importar BOX</quote> o la orden de consola
+          <command>import -o</command>.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Al importar datos desde los formatos CSV o BOX,
+      <application>gretl</application> abre una ventana <quote>de diagnóstico</quote>,
+      informando sobre su progreso al leer los datos. Si hay algún problema
+      con datos mal formateados, los mensajes de esta ventana
+      ayudarán a resolver el problema.</para>
+
+      <para>Para comodidad de quienes desean llevar a cabo análisis de datos
+      más complejos, <application>gretl</application> cuenta con la opción de
+      escribir los datos en los formatos nativos de GNU R y GNU Octave (véase
+      el <xref linkend="app-advanced" />). En el cliente del GUI se accede a esta opción
+      a través del menú <quote>Archivo</quote>; en el cliente de
+      línea de instrucciones se utiliza la instrucción <command>store</command> con la
+      marca <command>-r</command> (R) o <command>-m</command> (Octave).</para>
+    </sect1>
+
+    <sect1 id="dbase">
+      <title>Bases de datos binarias</title>
+
+      <para>Para trabajar con grandes cantidades de datos se ha dotado a
+      <application>gretl</application> de una rutina para
+      manejar bases de datos. Una <emphasis>base de datos</emphasis>, al
+      contrario que un <emphasis>archivo de datos</emphasis>, no puede ser leída
+      directamente al espacio de trabajo del programa. Una base de datos
+      puede contener series con una gran variedad de frecuencias y rangos en
+      los datos. Normalmente, se abre la base de datos y se selecciona la
+      serie a importar al conjunto de datos con el que estamos trabajando.
+      Luego, pueden guardarse estas series en el formato propio de archivos de
+      datos. Es posible acceder a las bases de datos mediante la
+      opción  <quote>Archivo,
+      Revisar bases de datos)</quote> en el menú de <application>gretl</application>.</para>
+
+      <para>Para más detalles sobre el formato de las bases de datos de <application>gretl</application>,
+      véase el <xref linkend="app-datafile" />.</para>
+
+      <sect2 id="online-data">
+        <title>Acceso en línea a bases de datos</title>
+
+        <para>Desde la versión 0.40, <application>gretl</application> puede
+        acceder a bases de datos a través de internet. Hay varias bases de
+        datos disponibles desde la Wake Forest University. El ordenador debe
+        estar conectado a internet para que funcione esta opción. Por favor,
+        consúltese el apartado sobre <quote>Bases de datos en linea</quote> en el
+        menú de Ayuda de <application>gretl</application>.</para>
+      </sect2>
+
+      <sect2 id="RATS">
+        <title>Bases de datos RATS 4</title>
+
+        <para>Gracias a Thomas Doan de <citetitle>Estima</citetitle>, quien me
+        facilitó las especificaciones del formato utilizado por las bases de
+        datos en RATS 4 (Regression Analysis of Time Series),
+        <application>gretl</application> puede trabajar con este tipo de bases
+        de datos. Bien, en realidad con una parte de ellos: sólo se trabaja
+        con bases de datos de series temporales que contengan series mensuales
+        y trimestrales. Mi universidad tiene la base de datos de RATS G7 que
+        contiene los datos de las siete economías más grandes de la OCDE y
+        <application>gretl</application> puede leerlos sin problemas.</para>
+
+        <tip>
+          <para>Visite la  <ulink
+          url="http://gretl.sourceforge.net/gretl_data.html"> página de datos de
+	  <application>gretl</application> </ulink> para más detalles y
+          actualizaciones de los datos disponibles.</para>
+        </tip>
+      </sect2>
+    </sect1>
+
+    <sect1 id="scratch">
+      <title>Crear un archivo de datos desde cero</title>
+
+      <para>Hay cuatro maneras de hacer esto: (1) Usando nuestra hoja de
+      cálculo favorita para crear el archivo de datos, guardándola en formato
+      CSV (comma-separated values &ndash; valores separados por comas)
+      si es necesario, y usando finalmente la opción <quote>Importar</quote>
+      de <application>gretl</application>. (2) Usando la hoja de cálculo
+      incorporada en el propio <application>gretl</application>. (3)
+      Seleccionando las series de datos en una base de datos adecuada. (4)
+      Usando nuestro editor de textos habitual u otras herramientas de
+      software para crear el archivo de datos de manera independiente.</para>
+
+      <para>A continuación, hay algunos comentarios y detalles sobre estos
+      métodos.</para>
+
+      <sect2>
+        <title>Utilización de una hoja de cálculo diferente</title>
+
+        <para>Esta opción puede ser buena si se siente más cómodo con alguna
+        hoja de cálculo en particular. Si se elige esta opción, hay que tener
+        cuidado en especificar la apariencia final de la hoja de cálculo.
+        <application>gretl</application> espera un archivo que tenga (a)
+        nombres válidos de las variables en la primera fila y (b) un bloque
+        rectangular de datos debajo de ésta. Un nombre válido para una
+        variable contiene 8 caracteres como máximo; empieza con una letra; y
+        no esta compuesto por nada excepto letras, números y el carácter de
+        subrayado, <literal>_</literal>. Opcionalmente, la primera columna
+        puede contener etiquetas de fechas (máximo 8 caracteres). Una columna
+        de este tipo debe estar encabezada por <quote><command>obs</command></quote>
+        o <quote><command>date</command></quote>, o en su defecto, tener vacía
+        la primera celda de la primera fila. Debe de haber
+        <emphasis>exactamente una</emphasis> fila sin datos encabezando el
+        archivo.</para>
+
+        <para>El formato descrito arriba debe de ser respetado de manera
+        exacta en el caso de importaciones desde CSV. En el caso de
+        importaciones desde <application>Excel</application> o
+        <application>Gnumeric</application>, hay un poco más de libertad: se
+        puede seleccionar la fila y columna, desde donde hay que empezar la
+        importación y así evitar cualquier fila o columna <quote>extra</quote>.
+        Se aplican las normas descritas anteriormente dentro del área
+        seleccionada para importar.</para>
+
+        <para>Si se utiliza una hoja de cálculo para preparar los datos, es
+        fácil hacer varias transformaciones de los datos <quote>originales</quote>
+        (hacer sumas, porcentajes, o lo que sea): sin embargo, nótese que
+        pueden hacerse estas cosas fácilmente - quizá con mayor facilidad - en
+        <application>gretl</application>, utilizando las herramientas
+        disponibles en el menú <quote>Datos, Añadir
+        variables</quote> y/o <quote>Variable,
+        definir nueva variable</quote>.</para>
+
+        <para>Si así se desea, es posible establecer un conjunto de datos en
+        <application>gretl</application> pieza a pieza, incrementando los
+        datos mediante importaciones desde otras fuentes. Se puede llevar a
+        cabo esto mediante las opciones del menú <quote>Fichero, Añadir datos</quote>.
+         <application>gretl</application>
+        comprobará que los datos nuevos son compatibles con el conjunto de
+        datos ya existente, y, si todo le parece bien, fusionará los datos. De
+        esta manera es posible añadir nuevas variables, con tal de que la
+        frecuencia de datos, la primera observación y la longitud de la serie
+        sean iguales al conjunto de datos ya existente. O también se pueden
+        añadir nuevas observaciones a las series de datos que ya tenemos; en
+        este caso los nombres de las variables tienen que ser iguales. Nótese
+        que por defecto, (es decir, si se elige <quote>Abrir datos</quote>
+        en vez de <quote>Añadir datos)</quote>, abrir un nuevo
+        archivo de datos significa el cierre del que esté abierto
+        actualmente.</para>
+      </sect2>
+
+      <sect2>
+        <title>Utilizar la hoja de cálculo incorporada</title>
+
+        <para>En el menú <quote>Archivo, Crear
+        conjunto de datos</quote> de <application>gretl</application>, puede elegirse
+        el tipo de conjunto de datos que se desea establecer (por ejemplo,
+        series temporales trimestrales, mensuales). Entonces el programa
+        pregunta por las fechas de inicio y fin (o el número de observaciones)
+        y el nombre de la primera variable a añadir al conjunto de datos.
+        Después de dar esta información, se abre una sencilla hoja de cálculo
+        donde pueden introducirse los valores de los datos. Dentro de la ventana
+        de la hoja de cálculo, pulsando el botón derecho del ratón se invoca
+        un menú desplegable que brinda la opción de añadir una nueva variable
+        (columna), añadir una observación (añadir una fila al final de la
+        hoja), o introducir una observación en el punto deseado (mover e
+        insertar una nueva fila en blanco).</para>
+
+        <para>Una vez que se hayan introducido los datos en la hoja de
+        cálculo, pueden ser importados al espacio de trabajo de
+        <application>gretl</application>, utilizando el botón <quote>Aplicar los cambios
+         </quote> de la hoja de cálculo.</para>
+
+        <para>Nótese que la hoja de cálculo de <application>gretl</application> es bastante
+        básica y no tiene soporte para funciones o fórmulas. Las
+        transformaciones de los datos se hacen a través de los menús de
+        <quote>Datos</quote> o de <quote>Variable</quote> en la ventana principal
+        de<application> gretl</application>.</para>
+      </sect2>
+
+      <sect2>
+        <title>Seleccionar desde un base de datos</title>
+
+        <para>Otra alternativa consiste en organizar el archivo de datos
+        seleccionando variables desde una base de datos.
+        <application>Gretl</application> viene con una base de datos de series
+        temporales macroeconómicas de EEUU, y como se ha dicho anteriormente, el
+        programa puede leer bases de datos de RATS 4.</para>
+
+        <para>Se comienza con la opción de menú <quote>Archivo, Revisar bases de datos
+        </quote> de
+        <application>gretl</application>. Esta contiene tres posibilidades:
+        <quote>nativa gretl</quote>, <quote>RATS 4</quote> y <quote>en servidor</quote>
+         (en servidor de bases de datos). El archivo
+        <filename>bcih.bin</filename> se encuentra en el selector de
+        archivos que se abre al elegir la opción <quote>nativa gretl</quote> -
+        este archivo viene con el paquete del programa.</para>
+
+        <para> Si no se han comprado o generado
+        datos en formato RATS<footnote><para>Ver <ulink url="http://www.estima.com/">www.estima.com
+        </ulink></para></footnote>, no hay nada en <quote>RATS 4</quote>
+        Si tiene datos en formato RATS, vaya al cuadro de dialogo <quote>Archivo, Preferencias, General
+        </quote> de <application>gretl</application>, seleccione la
+        ficha Bases de Datos, y rellene el camino correcto hacia los archivos
+        RATS.</para>
+
+        <para>Si el ordenador esta conectado a Internet, es posible encontrar
+        varias bases de datos (en la Wake Forest University) en la opción
+        <quote>en servidor</quote>. Pueden consultarse en modo remoto,
+        y también existe la opción de instalarlos en el ordenador. La ventana
+        inicial de las bases de datos remotos tiene una opción para cada
+        archivo que muestra si está ya instalado localmente (y si es así,
+        también muestra si esta versión está actualizada con la versión en
+        Wake Forest).</para>
+
+        <para>Suponiendo que se ha podido abrir una base de datos, es posible
+        importar las series seleccionadas al espacio de trabajo de
+        <application>gretl</application>, mediante la opción de menú
+        <quote>Importar</quote> en la ventana de bases de datos (o vía el menú
+        desplegable que aparece al pulsar el botón derecho del ratón).</para>
+      </sect2>
+
+      <sect2>
+        <title>Crear un archivo de datos independiente</title>
+
+        <para>Es posible crear un archivo de datos usando un editor de textos
+        o herramienta de software como<application> awk</application>,
+        <application>sed</application> o <application>perl</application>. Esto
+        puede ser una buena elección si se dispone de una gran cantidad de
+        datos en formato legible para ordenadores. Por supuesto hay que
+        familiarizarse con los formatos de datos de <application>gretl</application>
+        (formato XML o <quote>tradicional</quote>) tal como se describe en el
+        <xref linkend="c-datafiles" />.</para>
+      </sect2>
+
+      <sect2>
+        <title>Nota adicional</title>
+
+        <para><application>Gretl</application> no tiene ningún problema al
+        compactar series de datos de unas frecuencias relativamente altas
+        (por ejemplo mensuales) a una frecuencia más baja (por ejemplo
+        trimestrales): esto se hace sacando las medias correspondientes. Pero
+        no tiene ningún método para convertir datos de frecuencias más bajas a
+        las más altas. Por lo tanto, si se quieren importar series de
+        diferentes frecuencias a una base de datos de
+        <application>gretl</application>, <emphasis>tenemos que empezar
+        importando la serie de más baja frecuencia que queramos usar.</emphasis>
+        Esto iniciará el archivo de datos en <application>gretl</application>
+        a la frecuencia más baja, pudiéndose importar los datos de frecuencias
+        más altas después (se compactarán automáticamente). Si se empieza con
+        series de frecuencias altas no es posible importar ninguna serie de
+        frecuencia más baja que la original.</para>
+      </sect2>
+    </sect1>
+
+    <sect1 id="missing-data">
+      <title>Datos ausentes</title>
+
+      <para>Los datos ausentes se representan como -999. En un
+      archivo de datos en formato nativo deberían de estar representados del
+      mismo modo. Al importar datos CSV, <application>gretl</application>
+      acepta cualquiera de estas tres representaciones para valores ausentes:
+       -999, la cadena <literal>NA</literal>, o una celda vacía.
+      Por supuesto, las celdas vacías tienen que estar delimitadas
+      correctamente, por ejemplo <literal>120.6, ,5.38</literal>: donde se
+      supone que no existe el segundo valor.</para>
+
+      <para><application>Gretl</application> hace lo siguiente en cuanto al
+      manejo de valores ausentes a la hora de hacer análisis estadísticos:</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Al calcular estadísticos descriptivos (medias, desviaciones
+          estándar, etc.) con la instrucción <command>summary</command>,
+          simplemente se omiten los valores ausentes, y se ajusta el tamaño de
+          la muestra.</para>
+        </listitem>
+
+        <listitem>
+          <para>Al ejecutar regresiones, <application>gretl</application>
+          ajusta primero el principio y el final del rango de la muestra,
+          truncando la muestra si es necesario. Es corriente que falten datos
+          al principio de una serie temporal por la inclusión de retardos,
+          primeras diferencias, etc; y no es inusual que falten valores al
+          final de una serie debido a diferentes actualizaciones de las mismas
+          y quizá también, debido a la inclusión de avances.</para>
+        </listitem>
+
+        <listitem>
+          <para>En caso de que <application>gretl</application> detecte que
+          haya datos ausentes <quote>dentro</quote> de una muestra
+          (posiblemente truncada), da un mensaje de error y se niega a hacer
+          estimaciones.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Los valores ausentes dentro de un conjunto de datos representan un
+      problema. En un conjunto de datos transversales, puede que sea posible
+      mover estas observaciones hacia el principio o hacia el final del
+      archivo, pero esto es obviamente imposible con datos de series
+      temporales. Para quienes sepan lo que están haciendo (¡!), existe la
+      opción <command>misszero</command> en la instrucción <command>genr</command>.
+      Haciendo</para>
+
+      <para><command>genr foo = misszero(bar)</command></para>
+
+      <para>se crea una serie <command>foo</command> que es idéntica a
+      <command>bar</command> , con la excepción de que cualquier valor
+      -999 aparece como cero. Entonces es posible utilizar variables
+      ficticias (construidas de forma adecuada) para, de hecho, dejar fuera de
+      la regresión los valores ausentes y retener la muestra que los rodea.<footnote><para><command>genr</command>
+      también ofrece la opción inversa a <command>misszero</command>, a saber
+      <command>zeromiss</command>, la cual reemplaza los ceros en una serie
+      dada con el código de observación ausente.</para></footnote></para>
+    </sect1>
+  </chapter>
+
+  <!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
+

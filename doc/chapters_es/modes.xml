@@ -1,0 +1,221 @@
+
+  <chapter id="c-modes">
+    <title>Modos de trabajo</title>
+
+    <sect1 id="scripts">
+      <title>Lotes de instrucciones</title>
+
+      <para>A medida que vayamos ejecutando instrucciones en
+      <application>gretl</application>, utilizando el GUI y rellenando cuadros
+      de diálogo, estas instrucciones quedan registradas en forma de un
+      <quote>lote</quote>. Podemos modificar o reejecutar estos lotes de
+      instrucciones mediante <application>gretl</application> o el cliente de
+      línea de instrucciones, <application>gretlcli</application>.</para>
+
+      <para>Para visualizar el estado actual del lote durante una sesión
+      <application>gretl</application>, se selecciona <quote>Ver historial de instrucciones
+      </quote> dentro del menú Archivo. Este
+      archivo contiene el historial, llamado <filename>session.inp</filename>,
+      y se sobreescribe cada vez que empezamos una nueva sesión. Para
+      conservarlo, hay que guardarlo con otro nombre. Será más fácil encontrar
+      los archivos de lotes utilizando el selector de archivos GUI, si se
+      nombran con la extensión <quote><filename>.inp</filename></quote>.</para>
+
+      <para>Para abrir un lote instrucciones escrito de manera independiente, úsese
+      la opción <quote>Archivo, Abrir archivo de instrucciones, archivo de usuario</quote> en el menú; 
+      para crear un lote desde cero, se utiliza
+      la opción <quote>Archivo, Nuevo archivo de instrucciones</quote>. En ambos casos se
+      abrirá una ventana para escribir las instrucciones (véase la <xref
+      linkend="fig-scriptwin" />).</para>
+
+      <figure id="fig-scriptwin" float="1" pgwide="1">
+        <title>Ventana de lotes de instrucciones, editando un archivo de instrucciones</title>
+
+        <screenshot>
+          <screeninfo>Ventana de lotes de instrucciones</screeninfo>
+
+          <graphic align="center" fileref="figures/scriptwin" />
+        </screenshot>
+      </figure>
+
+      <para>La barra de herramientas en la esquina inferior-izquierda de la
+      ventana principal ofrece las siguientes opciones (de izquierda a
+      derecha): (1) Guardar el archivo; (2) Guardar como; (3) Ejecutar las instrucciones en el
+      archivo; (4) Copiar el texto seleccionado; (5) Pegar el texto seleccionado; 
+      (6) Buscar y reemplazar; (7) Deshacer la última acción de Pegar o Reemplazar;
+      (8) Ayuda (si colocamos el cursor
+      sobre una palabra de la instrucción y pulsamos el signo de interrogación, se
+      muestra la ayuda sobre esta instrucción); (9) Cerrar la ventana.</para>
+
+      <para>Estas funciones (y además la opción de Imprimir) se encuentran
+      también en los menús <quote>Archivo</quote> y <quote>Editar</quote>
+      en la parte superior de la ventana de instrucciones.</para>
+
+      <para>Al pulsar el icono Ejecutar o al elegir la opción del
+      menú <quote>Archivo, Ejecutar</quote> los resultados se
+      dirigen a una sola ventana, desde donde es posible editarlos, guardarlos
+      o copiarlos al portapapeles.</para>
+
+      <para>Para conocer más a fondo las posibilidades de los lotes de
+      instrucciones, consúltese la Ayuda sobre <quote>Sintaxis de guión de instrucciones</quote>
+      de <application>gretl</application>,
+      o alternativamente, iniciar el programa de línea de instrucciones
+      <application>gretlcli</application> y consultar su ayuda. Una tercera
+      posibilidad es leer el <xref linkend="c-cmdref" /> de este manual. Además,
+      el paquete <application>gretl</application> incluye más de 70 lotes de
+      <quote>ejercicios</quote>. La mayoría de ellos corresponden al libro de Ramanathan
+      (2002), pero independientemente de ello también pueden utilizarse como una introducción al
+      modo de escribir lotes de instrucciones en <application>gretl</application>
+      así como a varios temas de teoría econométrica. Se puede acceder a los
+      ejercicios desde <quote>Archivo, Abrir archivo de instrucciones, Archivo de prácticas
+      </quote>. Allí hay un listado de los ficheros junto con una
+      breve descripción de los puntos que estos ilustran y los datos que
+      utilizan. Abra cualquier archivo y ejecútelo (<quote>Archivo, Ejecutar</quote>
+      en la ventana de lotes de instrucciones resultante) para ver los resultados.</para>
+
+      <para>Nótese que es posible separar las instrucciones largas en un lote de
+      instrucciones en dos o más líneas utilizando la barra inversa como carácter
+      de continuidad.</para>
+
+      <para>Es posible, si así lo desea el usuario, usar los controles GUI y
+      los lotes de modo simultaneo, según cual sea el método más apropiado en cada
+      momento. Hay dos sugerencias a continuación.</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Abrir un archivo de datos en el GUI. Explorar los datos,
+          generar los gráficos, ejecutar las regresiones, hacer los
+          contrastes. Luego abrir el historial de instrucciones, quitar cualquier instrucción
+          redundante y guardarlo con un nombre diferente. Ejecutar el lote de
+          instrucciones para generar un único archivo que contendrá un historial
+          conciso de nuestro trabajo.</para>
+        </listitem>
+
+        <listitem>
+          <para>Empezar creando un nuevo archivo de lotes. Teclear cualquier
+          instrucción que sea necesaria para poner en marcha las transformaciones
+          de los datos (véase la instrucción <command>genr</command> en el <xref
+          linkend="c-cmdref" /> más adelante). Normalmente, este tipo de tareas
+          son más fáciles de realizar si se han pensado las instrucciones con
+          antelación y no pulsando sobre la marcha. Luego guardar y ejecutar
+          el lote: la ventana de datos del GUI se actualizará en consecuencia.
+          Ahora podemos manipular los datos mediante el GUI. Para revisitar los
+          datos más tarde, abrir y ejecutar en primer lugar el lote
+          <quote>preliminar</quote>.</para>
+        </listitem>
+      </itemizedlist>
+
+      <para>Hay otra opción para hacer más cómoda la tarea. En el menú Archivo de
+      <application>gretl</application> se encuentra la opción <quote>Consola <application>gretl</application></quote>. 
+      Esta abre una ventana donde se pueden teclear las
+      instrucciones y ejecutarlas una por una (con la tecla Retorno) de manera
+      interactiva. Esencialmente, es el mismo modo de operación que
+      <application>gretlcli</application>, excepto que (a) el GUI es
+      actualizado basándose en las instrucciones ejecutadas desde la consola,
+      haciendo posible el trabajo en cualquier entorno, y que (b) por ahora,
+      la tarea de simulaciones de Monte Carlo de <application>gretl</application>
+      (véase <xref linkend="monte-carlo" />) no está disponible en este modo.</para>
+    </sect1>
+
+    <sect1 id="session">
+      <title>El concepto de <quote>sesión</quote></title>
+
+      <para><application>Gretl</application> ofrece la idea de una
+      <quote>sesión</quote> como un modo de seguimiento de los trabajos
+      realizados y la posibilidad de volver a ellos más tarde. Se encuentra en
+      un estado experimental (y en la actualidad hay más posibilidades de
+      encontrar errores aquí que en el resto del programa); el autor está
+      interesado en conocer las opiniones de los usuarios a este respecto.</para>
+
+      <para>La idea inicial es ofrecer un pequeño espacio con iconos, que
+      contenga varios objetos pertenecientes a la sesión de trabajo actual
+      (véase la <xref linkend="fig-session" />). Después, se pueden añadir
+      objetos (representados por iconos) a este espacio. Si se guarda la
+      sesión, estos objetos añadidos estarán disponibles cuando se vuelva a
+      abrir la sesión.</para>
+
+      <figure id="fig-session" float="1" pgwide="1">
+        <title>Vista de iconos: a los iconos por defecto, se ha añadido un modelo y un gráfico
+        </title>
+
+        <screenshot>
+          <screeninfo>Ventana de sesión</screeninfo>
+
+          <graphic align="center" fileref="figures/session" />
+        </screenshot>
+      </figure>
+
+      <para>Al iniciar <application>gretl,</application> abriendo un conjunto
+      de datos, y seleccionando <quote>Vista de iconos</quote> del menú Session, se
+      visualizan los iconos básicos que aparecen por defecto: estos son una
+      manera rápida de acceder al lote de instrucciones (<quote>Sesión</quote>),
+      información sobre los datos (si la hay), la matriz de correlación 
+      y estadísticos pricipales. Todos
+      estos se activan mediante un doble clic sobre el icono deseado. El icono
+      de <quote>Conjunto de datos</quote> es un poco más complejo:
+      al hacer doble clic se abre una hoja de cálculo con los datos
+      incorporados, pero también se despliega un menú con otras opciones si se
+      pulsa el botón derecho del ratón.</para>
+
+      <tip>
+        <para>En muchas ventanas de <application>gretl</application>, al hacer
+        clic con el botón derecho del ratón se despliega un menú con una lista
+        de tareas habituales.</para>
+      </tip>
+
+      <para>Es posible añadir dos tipos de objetos a la ventana de vista de
+      iconos: modelos y gráficos.</para>
+
+      <para>Para añadir un modelo, primero hay que estimarlo utilizando el
+      menú de Modelo. Luego se pulsa la opción Archivo en la
+      ventana de modelo y se selecciona <quote>Guardar a sesión como icono...</quote> o <quote>
+      Guardar como icono y cerrar</quote>. Se puede atajar a la
+      segunda opción pulsando la tecla <literal>S</literal> sobre la ventana
+      de modelo.</para>
+
+      <para>Para añadir un gráfico, primero hay que crearlo (en el menú Datos,
+      <quote>Gráficos</quote>, o mediante una de las otras
+      instrucciones de <application>gretl</application> para generar gráficos),
+      luego se selecciona <quote>Añadir último gráfico</quote> desde
+      el menú Sesión o se pulsa el ratón sobre el botón con el
+      dibujo de una pequeña cámara fotográfica en la barra de herramientas
+      (véase <xref linkend="toolbar" />).</para>
+
+      <para>Una vez añadido el modelo o gráfico, su icono aparecerá en la
+      ventana de vista de iconos. Haciendo doble clic sobre el icono
+      se vuelve a mostrar el objeto, mientras que pulsando el botón derecho
+      del ratón se despliega un menú que permite mostrar o eliminar el objeto.
+      Este menú desplegable también ofrece la posibilidad de editar los
+      gráficos.</para>
+
+      <para>Si se crean modelos o gráficos y tenemos la intención de volver a
+      utilizarlos más adelante, entonces conviene seleccionar <quote>Guardar como</quote>
+      del menú Sesión antes de salir de
+      <application>gretl</application>, dando un nombre a la sesión. Para
+      volver a abrir la sesión,</para>
+
+      <itemizedlist>
+        <listitem>
+          <para>Iniciar <application>gretl</application> y volver a abrir el
+          archivo de la sesión desde la opción <quote>Abrir</quote> en el menú
+          Sesión, o</para>
+        </listitem>
+
+        <listitem>
+          <para>Desde una línea de instrucciones, teclear <command><application>gretl</application> -r</command>
+          <replaceable>archivo de sesión</replaceable>, donde
+          <replaceable>archivo de sesión</replaceable> es el nombre bajo el cual se
+          había guardado la sesión.</para>
+        </listitem>
+      </itemizedlist>
+    </sect1>
+  </chapter>
+
+  <!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

@@ -99,6 +99,7 @@ enum gretl_cmd_codes {
     QUIT, 
     RENAME,
     RESET,
+    RESTRICT,
     RHODIFF, 
     RMPLOT,
     RUN,

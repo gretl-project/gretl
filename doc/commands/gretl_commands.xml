@@ -3808,6 +3808,47 @@
 
   </command>
 
+  <command name="restrict" section="Tests" context="cli">
+
+    <usage>
+      <examples>
+        <example>restrict</example>
+	<example>b1 = 0</example>
+	<example>b2 - b3 = 0</example>
+	<example>b4 + 2*b5 = 1</example>
+	<example>end restrict</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Evaluates a set of linear restrictions on the parameters of the
+	model last estimated.  The set of restrictions must be
+	terminated with <quote>end restrict</quote>.
+      </para>
+
+      <para>Each restriction in the set should be expressed as an
+	equation, with a linear combination of parameters on the left
+	and a numeric value to the right of the equals sign.
+	Parameters are referenced in the form b<repl>N</repl>, where
+	<repl>N</repl> represents the position in the list of
+	regressors, starting at zero.  For example, <lit>b1</lit>
+	denotes the second regression parameter.
+      </para>
+
+      <para>The <lit>bN</lit> terms may be prefixed with a numeric
+      multiplier, using <lit>*</lit> to represent multiplication, for
+      example <lit>3.5*b4</lit>.</para>
+
+      <para>The set of restrictions is evaluated via an F-test,
+	using the coefficient covariance matrix of the model
+	in question.
+      </para>
+
+    </description>
+
+  </command>
+
   <command name="rhodiff" section="Transformations" context="cli">
 
     <usage>

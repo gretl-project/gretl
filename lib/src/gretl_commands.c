@@ -108,6 +108,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { QUIT,     "quit" }, 
     { RENAME,   "rename" },
     { RESET,    "reset" },
+    { RESTRICT, "restrict" },
     { RHODIFF,  "rhodiff" }, 
     { RMPLOT,   "rmplot" },
     { RUN,      "run" },

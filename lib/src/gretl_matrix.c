@@ -411,6 +411,44 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
 }
 
 /**
+ * gretl_matrix_subtract_from:
+ * @targ: target matrix.
+ * @src: source matrix.
+ *
+ * Subtracts the elements of @src from the corresponding elements
+ * of @targ.
+ * 
+ * Returns: GRETL_MATRIX_OK on successful completion, or
+ * GRETL_MATRIX_NON_CONFORM if the two matrices are not
+ * conformable for the operation.
+ * 
+ */
+
+int 
+gretl_matrix_subtract_from (gretl_matrix *targ, const gretl_matrix *src)
+{
+    int i, n;
+
+    if (targ->rows != src->rows || targ->cols != src->cols) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (targ->packed != src->packed) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (src->packed) {
+	n = (src->rows * src->rows + src->rows) / 2;
+    } else {
+	n = src->rows * src->cols;
+    }
+    
+    for (i=0; i<n; i++) targ->val[i] -= src->val[i];
+
+    return GRETL_MATRIX_OK;
+}
+
+/**
  * gretl_square_matrix_transpose:
  * @m: square matrix to operate on.
  *
@@ -1558,6 +1596,65 @@ double gretl_scalar_b_prime_X_b (const gretl_vector *b, const gretl_matrix *X,
     return ret;
 }
 
+/**
+ * gretl_matrix_A_X_A_prime:
+ * @A: m * k matrix.
+ * @X: k * k matrix.
+ * @err: pointer to error code variable.
+ *
+ * Computes A * X * A'.
+ * 
+ * Returns: m * m matrix product, or NULL on error (in which case
+ * @err will point to a non-zero error code).
+ * 
+ */
+
+gretl_matrix *
+gretl_matrix_A_X_A_prime (const gretl_matrix *A, const gretl_matrix *X,
+			  int *err)
+{
+    gretl_matrix *tmp = NULL;
+    gretl_matrix *ret = NULL;
+    int m = A->rows;
+    int k = A->cols;
+
+    *err = 0;
+
+    if (X->rows != k || X->cols != k) {
+	*err = GRETL_MATRIX_NON_CONFORM;
+	return NULL;
+    }
+
+    tmp = gretl_matrix_alloc(m, k);
+    ret = gretl_matrix_alloc(m, m);
+
+    if (tmp == NULL || ret == NULL) {
+	gretl_matrix_free(tmp);
+	gretl_matrix_free(ret);
+	*err = GRETL_MATRIX_NOMEM;
+	return NULL;
+    }
+
+    *err = gretl_matrix_multiply_mod(A, GRETL_MOD_NONE,
+				     X, GRETL_MOD_NONE,
+				     tmp);
+
+    if (!*err) {
+	*err = gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
+					 A, GRETL_MOD_TRANSPOSE,
+					 ret);
+    }
+
+    gretl_matrix_free(tmp);
+
+    if (*err) {
+	gretl_matrix_free(ret);
+	ret = NULL;
+    }
+
+    return ret;
+}
+
 static int count_selection (const char *s, int n)
 {
     int i, c = 0;
@@ -1577,21 +1674,24 @@ static int count_selection (const char *s, int n)
  *
  * Produces all or part of the covariance matrix for a gretl #MODEL, 
  * in the form of a gretl_matrix.  Storage is allocated, to be freed
- * by the caller.  If @select is non-NULL, it should be an array
+ * by the caller.  If @select is not %NULL, it should be an array
  * with non-zero elements in positions corresponding to the
  * desired rows (and columns), and zero elements otherwise.
  * 
- * Returns: the covariance matrix, or NULL on error.
+ * Returns: the covariance matrix, or %NULL on error.
  * 
  */
 
 gretl_matrix *
-gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select)
+gretl_vcv_matrix_from_model (MODEL *pmod, const char *select)
 {
     gretl_matrix *vcv;
     int i, j, idx, nc;
     int ii, jj;
     int k = pmod->ncoeff;
+
+    /* first ensure the model _has_ a vcv */
+    if (makevcv(pmod)) return NULL;
 
     if (select == NULL) {
 	nc = k;
@@ -1610,7 +1710,7 @@ gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select)
 	jj = 0;
 	for (j=0; j<=i; j++) {
 	    if (select != NULL && !select[j]) continue;
-	    idx = ijton(i, j, nc);
+	    idx = ijton(i, j, pmod->ncoeff);
 	    gretl_matrix_set(vcv, ii, jj, pmod->vcv[idx]);
 	    if (jj != ii) {
 		gretl_matrix_set(vcv, jj, ii, pmod->vcv[idx]);
@@ -1622,3 +1722,92 @@ gretl_vcv_matrix_from_model (const MODEL *pmod, const char *select)
 
     return vcv;
 }
+
+/**
+ * gretl_coeff_vector_from_model:
+ * @pmod: pointer to model
+ * @select: char array indicating which rows to select
+ * (or %NULL for the full vector).
+ *
+ * Produces all or part of the coefficient vector for a gretl #MODEL, 
+ * in the form of a gretl_vector.  Storage is allocated, to be freed
+ * by the caller.  If @select is non-NULL, it should be an array
+ * with non-zero elements in positions corresponding to the
+ * desired rows, and zero elements otherwise.
+ * 
+ * Returns: the coefficient vector, or NULL on error.
+ * 
+ */
+
+gretl_vector *
+gretl_coeff_vector_from_model (const MODEL *pmod, const char *select)
+{
+    gretl_vector *b;
+    int i, ii, nc;
+    int k = pmod->ncoeff;
+
+    if (select == NULL) {
+	nc = k;
+    } else {
+	nc = count_selection(select, k);
+    }
+    
+    if (nc == 0) return NULL;
+
+    b = gretl_column_vector_alloc(nc);
+    if (b == NULL) return NULL;
+
+    ii = 0;
+    for (i=0; i<k; i++) {
+	if (select != NULL && !select[i]) continue;
+	gretl_vector_set(b, ii++, pmod->coeff[i]);
+    }
+
+    return b;
+}
+
+/**
+ * gretl_is_identity_matrix:
+ * @m: matrix to examine.
+ *
+ * Returns: 1 if @m is an identity matrix, 0 otherwise.
+ */
+
+int gretl_is_identity_matrix (const gretl_matrix *m)
+{
+    int i, j, idx;
+
+    for (i=0; i<m->rows; i++) {
+	for (j=0; j<m->cols; j++) {
+	    if (m->packed) {
+		if (i > j) continue;
+		idx = packed_idx(m->rows, i, j);
+	    } else {
+		idx = mdx(m, i, j);
+	    }
+	    if (i == j && m->val[idx] != 1.0) return 0;
+	    if (i != j && m->val[idx] != 0.0) return 0;
+	}
+    }
+
+    return 1;
+}
+
+/**
+ * gretl_is_zero_vector:
+ * @v: vector to examine.
+ *
+ * Returns: 1 if @v is a zero vector, 0 otherwise.
+ */
+
+int gretl_is_zero_vector (const gretl_vector *v)
+{
+    int i, n = gretl_vector_get_length(v);
+
+    for (i=0; i<n; i++) {
+	if (v->val[i] != 0.0) return 0;
+    }
+
+    return 1;
+}
+

@@ -10,7 +10,7 @@ msgstr ""
 "Project-Id-Version: gretl-1.2.7\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-07-03 17:15-0400\n"
-"PO-Revision-Date: 2004-06-12 00:08-0400\n"
+"PO-Revision-Date: 2004-07-05 09:54-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3229,7 +3229,7 @@ msgstr "Hubo valores de datos perdidos"
 
 #: lib/src/nls.c:412
 msgid "Perfect fit achieved\n"
-msgstr ""
+msgstr "Ajuste perfecto alcanzado\n"
 
 #: lib/src/nls.c:462
 msgid "In Gauss-Newton Regression:\n"
@@ -4979,9 +4979,8 @@ msgid "force use of English"
 msgstr "Forzar el uso del Inglés"
 
 #: gui/gretl.c:114 gui2/gretl.c:125
-#, fuzzy
 msgid "dump gretl configuration to file"
-msgstr "gretl: contraste de cointegración"
+msgstr "escribir configuración de gretl en fichero"
 
 #: gui/gretl.c:189 gui2/gretl.c:230 gui2/gui_utils.c:114 gui2/gui_utils.c:181
 #: gui2/gui_utils.c:247 gui2/gui_utils.c:265
@@ -5077,9 +5076,8 @@ msgid "/File/Export data/GNU _octave..."
 msgstr "/Archivo/Exportar datos/GNU _Octave..."
 
 #: gui/gretl.c:228 gui2/gretl.c:278
-#, fuzzy
 msgid "/File/Export data/_PcGive..."
-msgstr "/Archivo/Exportar datos/GNU _Octave..."
+msgstr "/Archivo/Exportar datos/_PcGive..."
 
 #: gui/gretl.c:229 gui2/gretl.c:279
 msgid "/File/C_lear data set"
@@ -7921,9 +7919,8 @@ msgid "GNU Octave files (*.m)"
 msgstr "ficheros GNU Octave (*.m)"
 
 #: gui2/fileselect.c:583
-#, fuzzy
 msgid "PcGive files (*.dat)"
-msgstr "ficheros PNG (*.png)"
+msgstr "ficheros PcGive (*.dat)"
 
 #: gui2/fileselect.c:585 gui2/fileselect.c:586 gui2/fileselect.c:587
 #: gui2/fileselect.c:588
@@ -10128,9 +10125,8 @@ msgid "RATS data directory"
 msgstr "Directorio de datos RATS"
 
 #: gui2/settings.c:219
-#, fuzzy
 msgid "Database server name"
-msgstr "IP del servidor de bases de datos"
+msgstr "Nombre del servidor de bases de datos"
 
 #: gui2/settings.c:221
 msgid "HTTP proxy (ipnumber:port)"
