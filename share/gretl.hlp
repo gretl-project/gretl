@@ -101,15 +101,17 @@ changed under the File, Preferences, General menu).  Options that can be set
 in this way are the font to use when producing postscript output (must be a
 valid generic postscript font name; the default is Helvetica), the size of the
 font in points (also for postscript output; default is 12), the minimum and
-maximum for the y-axis range, and the width and height of the plot in pixels
-(default, 560 x 448).  Here is an example:
+maximum for the y-axis range, the width and height of the plot in pixels
+(default, 560 x 448), and whether numerical values should be printed for the
+quartiles and median (default, don't print them).  Here is an example:
 
-max = 4.0
-min = 0
 font = Times-Roman
 fontsize = 16
+max = 4.0
+min = 0
 width = 400
 height = 448
+numbers = true
 
 Not all of the options need be specified, and the order doesn't matter.  Lines
 not matching the pattern "key = value" are ignored, as are lines that begin

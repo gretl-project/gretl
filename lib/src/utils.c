@@ -900,6 +900,8 @@ MODEL *gretl_model_new (void)
     return pmod;
 }
 
+#define SESSION_DEBUG
+
 /* ........................................................... */
 
 int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
@@ -908,14 +910,16 @@ int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
     MODEL *pmod = *ppmod;
     MODEL *tmp;
 
-    /*  printf("  session nmodels = %d\n", psession->nmodels); */
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "psession->nmodels = %d\n", psession->nmodels);
+#endif
 
     if ((pmod->name = malloc(64)) == NULL) return 1;
     strncpy(pmod->name, rebuild->model_name[i], 63);
 
     if (psession->nmodels)
 	psession->models = realloc(psession->models, 
-				 (i + 1) * sizeof(MODEL *));
+				   (i + 1) * sizeof(MODEL *));
     else
 	psession->models = malloc(sizeof(MODEL *));
     if (psession->models == NULL) return 1;
@@ -925,8 +929,11 @@ int silent_remember (MODEL **ppmod, SESSION *psession, session_t *rebuild)
     if (tmp == NULL) return 1;
     *ppmod = tmp;
     init_model(tmp);
-/*      printf("  copied '%s' to psession->models[%d]\n" */
-/*  	   "  nmodels = %d\n", rebuild->model_name[i], i, psession->nmodels); */
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "copied '%s' to psession->models[%d]\n" 
+	    " nmodels = %d\n", rebuild->model_name[i], i, psession->nmodels); 
+#endif
     return 0;
 }
     
@@ -942,11 +949,22 @@ int clear_model (void *ptr, SESSION *psession, session_t *rebuild)
     if (rebuild && psession) {
 	ppmod = (MODEL **) ptr;
 	pmod = *ppmod;
+
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "clear_model: rebuild & psession non-NULL, save = %d\n", 
+		save);
+#endif
 	if (save) {
 	    for (i=0; i<rebuild->nmodels; i++) {
+#ifdef SESSION_DEBUG
+		fprintf(stderr, "i=%d, pmod->ID=%d, rebuild->model_ID[%d] = %d\n",
+			i, pmod->ID, i, rebuild->model_ID[i]);
+#endif		
 		if (pmod->ID == rebuild->model_ID[i]) {
-/*  		    printf("Rebuilding saved model %d (%s)\n",  */
-/*  			   pmod->ID, rebuild->model_name[i]); */
+#ifdef SESSION_DEBUG
+  		    fprintf(stderr, "Rebuilding saved model %d (%s)\n",  
+  			   pmod->ID, rebuild->model_name[i]);
+#endif	 
 		    return silent_remember(ppmod, psession, rebuild);
 		}
 	    }

@@ -29,16 +29,25 @@
 #endif
 
 typedef struct {
+    int n;
+    double *vals;
+    double rmax;
+    double rmin;
+} OUTLIERS;
+
+typedef struct {
     double median;
     double conf[2];
     double uq, lq;
     double max, min;
     double xbase;
     char varname[9];
+    OUTLIERS *outliers;
 } BOXPLOT;
 
 typedef struct {
     int nplots;
+    int numbers;
     BOXPLOT *plots;
     int width, height;
     double boxwidth;
@@ -297,6 +306,27 @@ draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
 
 /* ............................................................. */
 
+static void
+draw_outlier (double x, double y,
+	      GtkWidget *area, GdkPixmap *pixmap, 
+	      GdkGC *gc, GtkPlotPC *pc)
+{
+    if (pc != NULL) {
+	gtk_plot_pc_draw_circle (pc, FALSE, x, y, 8);
+    } else {
+	GdkRectangle rect;
+
+	rect.x = x - 4;
+	rect.y = y - 4;
+	rect.width = rect.height = 8;
+	gdk_draw_line (pixmap, gc, rect.x, rect.y, x + 4, y + 4);
+	gdk_draw_line (pixmap, gc, rect.x, y + 4, x + 4, rect.y);
+	gtk_widget_draw (area, &rect);	
+    }
+}
+
+/* ............................................................. */
+
 static void 
 place_plots (PLOTGROUP *plotgrp)
      /* calculate placement of plots based on the number of them
@@ -380,13 +410,13 @@ static void
 gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 		  GtkStyle *style, GtkPlotPC *pc,
 		  int height, double boxwidth, 
-		  double gmax, double gmin)
+		  double gmax, double gmin, int numbers)
 {
     double points[4];
     double ybase = height * headroom / 2.0;
     double xcenter = plot->xbase + boxwidth / 2.0;
     double scale = (1.0 - headroom) * height / (gmax - gmin);
-    double median, uq, lq, maxval, minval, iqr;
+    double median, uq, lq, maxval, minval;
     double conflo = 0., confhi = 0.;
     GdkRectangle rect;
     GdkGC *gc = NULL;
@@ -398,18 +428,18 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	/* whitegc = style->fg_gc[GTK_STATE_SELECTED]; */
     }
 
-    iqr = plot->uq - plot->lq;
-    if (plot->max > plot->uq + 1.5 * iqr)
-	fprintf(stderr, "plot has high outliers\n");
-    if (plot->min > plot->lq - 1.5 * iqr)
-	fprintf(stderr, "plot has low outliers\n");
-
     median = ybase + (gmax - plot->median) * scale;
     uq = ybase + (gmax - plot->uq) * scale;
     lq = ybase + (gmax - plot->lq) * scale;
-    maxval = ybase + (gmax - plot->max) * scale;
-    minval = ybase + (gmax - plot->min) * scale;
 
+    if (plot->outliers == NULL) {
+	maxval = ybase + (gmax - plot->max) * scale;
+	minval = ybase + (gmax - plot->min) * scale;
+    } else {
+	maxval = ybase + (gmax - plot->outliers->rmax) * scale;
+	minval = ybase + (gmax - plot->outliers->rmin) * scale;
+    }
+	
     if (plot->conf[0] != -999.0) { /* confidence intervals defined */
 	if (plot->conf[1] > plot->uq) 
 	    confhi = uq;
@@ -498,6 +528,23 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     points[2] = plot->xbase + ((confhi > 0.)? (0.9 * boxwidth) : boxwidth);
     draw_line(points, area, pixmap, gc, pc); /* was whitegc */
 
+
+    /* insert numerical values for median and quartiles? */
+    if (numbers) {
+	char numstr[9];
+	double x = xcenter + .55 * boxwidth;
+
+	sprintf(numstr, "%4.3g", plot->uq);
+	setup_text (area, pixmap, gc, pc, numstr, 
+		    x, uq, GTK_JUSTIFY_LEFT);
+	sprintf(numstr, "%4.3g", plot->median);
+	setup_text (area, pixmap, gc, pc, numstr, 
+		    x, median, GTK_JUSTIFY_LEFT);
+	sprintf(numstr, "%4.3g", plot->lq);
+	setup_text (area, pixmap, gc, pc, numstr, 
+		    x, lq, GTK_JUSTIFY_LEFT);	
+    }
+
     /* draw line to maximum value */
     points[0] = points[2] = xcenter;
     points[1] = maxval;
@@ -522,6 +569,21 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     points[1] = points[3] = minval;
     draw_line(points, area, pixmap, gc, pc);
 
+    /* draw outliers, if any */
+    if (plot->outliers != NULL) {
+	int i;
+	double y, ybak = -999.0;
+
+	for (i=0; i<plot->outliers->n; i++) {
+	    /* fprintf(stderr, "outlier: %g\n", plot->outliers->vals[i]); */
+	    y = ybase + (gmax - plot->outliers->vals[i]) * scale;
+	    if (y == ybak) y += 1.0;
+	    draw_outlier(xcenter, y,
+			 area, pixmap, gc, pc);
+	    ybak = y;
+	}
+    }
+
     /* write name of variable beneath */
     setup_text (area, pixmap, gc, pc, plot->varname, xcenter, 
 		height * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
@@ -533,7 +595,10 @@ static void
 destroy_boxplots (GtkWidget *w, gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
+    int i;
 
+    for (i=0; i<grp->nplots; i++)  
+	free(grp->plots[i].outliers);
     free(grp->plots);
     gdk_pixmap_unref(grp->pixmap);
     free(grp);
@@ -632,6 +697,49 @@ quartiles (const double *x, const int n, BOXPLOT *box)
 
 /* ............................................................. */
 
+static int 
+add_outliers (const double *x, const int n, BOXPLOT *box)
+{
+    int i, nout = 0;
+    double iqr = 1.5 * (box->uq - box->lq);
+    
+    box->outliers = NULL;
+
+    for (i=0; i<n; i++) 
+	if (x[i] < (box->lq - iqr) || x[i] > (box->uq + iqr)) 
+	    nout++;
+ 
+    if (nout > 0) {
+	int nlo = 0, nhi = 0;
+
+	box->outliers = malloc(sizeof *box->outliers);
+	if (box->outliers == NULL) return 1;
+	box->outliers->n = nout;
+	box->outliers->vals = malloc (nout * sizeof(double));
+	if (box->outliers->vals == NULL) {
+	    free(box->outliers);
+	    box->outliers = NULL;
+	    return 1;
+	}
+	nout = 0;
+	for (i=0; i<n; i++) {
+	    if (x[i] < (box->lq - iqr)) {
+		box->outliers->vals[nout++] = x[i];
+		nlo++;
+	    }
+	    else if (x[i] > (box->uq + iqr)) {
+		box->outliers->vals[nout++] = x[i];
+		nhi++;
+	    }
+	}
+	box->outliers->rmin = (nlo)? x[nlo] : box->min;
+	box->outliers->rmax = (nhi)? x[n-nhi-1] : box->max;
+    }
+    return 0;
+}
+
+/* ............................................................. */
+
 #define ITERS 560
 #define CONFIDENCE 90
 
@@ -719,7 +827,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	gtk_area_boxplot (&grp->plots[i], 
 			  NULL, NULL, NULL, &ps->pc, 
 			  grp->height, grp->boxwidth, 
-			  grp->gmax, grp->gmin);
+			  grp->gmax, grp->gmin, grp->numbers);
     
     gtk_boxplot_yscale (grp, &ps->pc);
 
@@ -849,6 +957,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 
     plotgrp->height = height;
     plotgrp->width = width;
+    plotgrp->numbers = 0;
 
     read_boxrc(plotgrp);
 
@@ -868,7 +977,8 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 			  plotgrp->area, plotgrp->pixmap,
 			  plotgrp->window->style, NULL, 
 			  height, plotgrp->boxwidth, 
-			  plotgrp->gmax, plotgrp->gmin);
+			  plotgrp->gmax, plotgrp->gmin,
+			  plotgrp->numbers);
     
     gtk_boxplot_yscale(plotgrp, NULL);
     
@@ -1097,6 +1207,9 @@ static void read_boxrc (PLOTGROUP *grp)
 		    grp->width = atoi(val);
 		else if (!strcmp(key, "height") && atoi(val) > 0) 
 		    grp->height = atoi(val);
+		else if (!strcmp(key, "numbers") && 
+			 !strcmp(val, "true")) 
+		    grp->numbers = 1;
 	    }
 	}
 	fclose (fp);

@@ -36,7 +36,7 @@
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
-/* #define SESSION_DEBUG */
+#define SESSION_DEBUG
 
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
@@ -496,6 +496,11 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 	}
 	if (strcmp(object, "model") == 0) {
 	    rebuild->nmodels += 1;
+#ifdef SESSION_DEBUG
+	    fprintf(stderr, "got a model to rebuild (%d)\n"
+		    "rebuild->nmodels now = %d\n", id, rebuild->nmodels);
+	    
+#endif
 	    if (i > 0) {
 		rebuild->model_ID = myrealloc(rebuild->model_ID,
 					      rebuild->nmodels * sizeof(int));
@@ -673,8 +678,16 @@ void view_session (void)
 
     session_add_object(NULL, 's');         /* script file */
 
-    for (i=0; i<session.nmodels; i++)
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
+#endif
+
+    for (i=0; i<session.nmodels; i++) {
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "adding session.models[%d] to view\n", i);
+#endif
 	session_add_object(session.models[i], 'm');
+    }
     for (i=0; i<session.ngraphs; i++)
 	session_add_object(session.graphs[i], 'g');
 

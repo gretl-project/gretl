@@ -487,61 +487,17 @@ gint dump_cmd_stack (char *fname)
 {
     FILE *fp;
     int i, m = 0;
-    extern int session_file_open;
-    static int original_dumped;
-    char *dumpname, tmp[MAXLEN];
 
-    if (fname == NULL) {
-	/* special use: reset "original_dumped" to zero */
-	original_dumped = 0;
-	return 0;
-    }
+    if (fname == NULL) return 0;
 
-#ifdef CMD_DEBUG
-    fprintf(stderr, "dump_cmd_stack: got filename %s\n", fname);
-#endif
-
-    if (session_file_open && scriptfile[0] &&
-	strcmp(scriptfile, fname) == 0) {
-	/* saving to same name as opened session file */
-	tmpnam(tmp);
-	dumpname = tmp;
-    } else
-	dumpname = fname;
-
-    fp = fopen(dumpname, "w"); 
+    fp = fopen(fname, "w"); 
     if (fp == NULL) {
 	errbox("Couldn't open command file for writing");
 	return 1;
     }
 
-    if (session_file_open) { 
-	/* first print content of opened file */
-	FILE *fq;
-	char line[MAXLEN];
-
-	fq = fopen(scriptfile, "r");
-	if (fq != NULL) {
-	    while (fgets(line, MAXLEN - 1, fq)) {
-		if (strncmp(line, "(* saved objects:", 17) == 0) 
-		    break;
-		else {
-#ifdef CMD_DEBUG
-		    fprintf(stderr, "reading old line: %s", line);
-#endif
-		    fprintf(fp, "%s", line);
-		}
-	    }
-	    fclose(fq);
-	}
-	original_dumped = 1;
-    }
-
     for (i=0; i<n_cmds; i++) {
 	fprintf(fp, "%s", cmd_stack[i]);
-#ifdef CMD_DEBUG
-	fprintf(stderr, "added cmd_stack[%d]: %s", i, cmd_stack[i]);
-#endif
 	if (is_model_cmd(cmd_stack[i]) && n_model_cmds != NULL
 	    && n_model_cmds[m]) {
 	    dump_model_cmds(fp, m);
@@ -550,10 +506,7 @@ gint dump_cmd_stack (char *fname)
     }
 
     fclose(fp);
-    if (strcmp(dumpname, fname)) {
-	copyfile(tmp, fname);
-	remove(tmp);
-    }
+
     return 0;
 }
 
@@ -3046,6 +2999,9 @@ static int gui_exec_line (char *line,
     /* if rebuilding a session, add tests back to models */
     if (rebuild) ptest = &test;
     else ptest = NULL;
+
+    /* if rebuilding a session, put the commands onto the stack */
+    if (rebuild) cmd_init(line);
 
     /* FIXME ?? */
 /*      if (is_model_ref_cmd(command.ci)) { */
