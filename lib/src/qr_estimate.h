@@ -20,6 +20,7 @@
 #ifndef QR_ESTIMATE_H
 #define QR_ESTIMATE_H
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln);
+int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
+		      unsigned long opts);
 
 #endif  /* QR_ESTIMATE_H */

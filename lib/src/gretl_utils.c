@@ -1116,6 +1116,7 @@ struct gretl_opt gretl_opts[] = {
     { OPT_Q, "quiet" },
     { OPT_R, "gnu-R" },            /* data export context */
     { OPT_R, "restrict" },         /* smpl context */
+    { OPT_R, "robust" },           /* model context */
     { OPT_S, "suppress-fitted" },  /* graphing context */
     { OPT_S, "squares" },          /* lmtest context */    
     { OPT_T, "traditional" },
@@ -2648,7 +2649,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	    }
 	}
 	clear_model(&fmod, finfo);
-	fmod = lsq(list, &fZ, finfo, OLS, OPT_R | OPT_A, 0.0);
+	fmod = lsq(list, &fZ, finfo, OLS, OPT_A, 0.0);
 	if (fmod.errcode) {
 	    fr->err = fmod.errcode;
 	    clear_model(&fmod, finfo);

@@ -575,6 +575,7 @@ void exec_line (char *line, PRN *prn)
 {
     int chk, nulldata_n, renumber;
     int dbdata = 0, arch_model = 0;
+    unsigned long lsqopt = 0L;
     char s1[12], s2[12];
     double rho;
 
@@ -638,12 +639,14 @@ void exec_line (char *line, PRN *prn)
 		 cmdprn);
 
 #ifdef notdef
-     if (is_model_ref_cmd(cmd.ci) &&
+    if (is_model_ref_cmd(cmd.ci) &&
  	model_sample_issue(NULL, &modelspec[0], &Z, datainfo)) {
  	nosub(prn);
  	return;
-     }
+    }
 #endif
+
+    lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
 
@@ -724,7 +727,7 @@ void exec_line (char *line, PRN *prn)
     case AR:
 	clear_model(models[0], NULL);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			    datainfo, &model_count, prn);
+			     datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
@@ -738,7 +741,7 @@ void exec_line (char *line, PRN *prn)
 	order = atoi(cmd.param);
 	clear_model(models[1], NULL);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			 &model_count, prn, NULL);
+			  &model_count, prn, NULL);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
@@ -806,7 +809,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	clear_model(models[0], NULL);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, rho);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -840,7 +843,7 @@ void exec_line (char *line, PRN *prn)
     case DELEET:
 	if (fullZ != NULL) {
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
-		    " mode\n"));
+			 " mode\n"));
 	    break;
 	}	
 	if (cmd.list[0]) {
@@ -897,7 +900,7 @@ void exec_line (char *line, PRN *prn)
     case ENDLOOP:
 	if (!loopstack) {
 	    pputs(prn, _("You can't end a loop here, "
-		    "you haven't started one\n"));
+			 "you haven't started one\n"));
 	    break;
 	}
 	loopstack = 0;
@@ -927,7 +930,7 @@ void exec_line (char *line, PRN *prn)
 	if (err) 
 	    pputs(prn, _("Couldn't open tex file for writing\n"));
 	else 
-	   pprintf(prn, _("Model printed to %s\n"), texfile);
+	    pprintf(prn, _("Model printed to %s\n"), texfile);
 	break;
 
     case FCAST:
@@ -1105,7 +1108,7 @@ void exec_line (char *line, PRN *prn)
 	if (data_status && !batch && !dbdata &&
 	    strcmp(datfile, paths.datfile)) {
 	    fprintf(stderr, _("Opening a new data file closes the "
-		    "present one.  Proceed? (y/n) "));
+			      "present one.  Proceed? (y/n) "));
 	    fgets(response, 2, stdin);
 	    if (*response != 'y' && *response != 'Y') {
 		fprintf(stderr, 
@@ -1219,7 +1222,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	if (!batch && !runit) 
 	    pputs(prn, _("Enter commands for loop.  "
-		   "Type 'endloop' to get out\n"));
+			 "Type 'endloop' to get out\n"));
 	loopstack = 1; 
 	break;
 
@@ -1255,7 +1258,7 @@ void exec_line (char *line, PRN *prn)
     case WLS:
     case POOLED:
 	clear_model(models[0], NULL);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, 0.0);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    clear_model(models[0], NULL);
@@ -1375,7 +1378,7 @@ void exec_line (char *line, PRN *prn)
     case SEED:
 	gretl_rand_set_seed(atoi(cmd.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
-	       atoi(cmd.param));
+		atoi(cmd.param));
 	break;
 
     case SETOBS:
@@ -1511,7 +1514,7 @@ void exec_line (char *line, PRN *prn)
     case TSLS:
 	clear_model(models[0], NULL);
 	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-			      &Z, datainfo);
+			       &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
 	    break;
@@ -1542,7 +1545,7 @@ void exec_line (char *line, PRN *prn)
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-	       "in gretlcli\n"), cmd.cmd);
+		       "in gretlcli\n"), cmd.cmd);
 	err = 1;
 	break;
     }

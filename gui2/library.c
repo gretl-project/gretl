@@ -2266,7 +2266,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	    errmsg(err, prn);
 	    break;
 	}
-	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_R, rho);
+	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_D, rho);
 	err = model_output(pmod, prn);
 	if (action == HILU) register_graph();
 	break;
@@ -2274,7 +2274,7 @@ void do_model (GtkWidget *widget, gpointer p)
     case OLS:
     case WLS:
     case POOLED:
-	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_R, 0.0);
+	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_D, 0.0);
 	err = model_output(pmod, prn);
 	break;
 
@@ -4883,6 +4883,7 @@ int gui_exec_line (char *line,
     char linecopy[1024];
     char texfile[MAXLEN];
     unsigned char plotflags = 0;
+    unsigned long lsqopt = 0L;
     MODEL tmpmod;
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
@@ -4987,6 +4988,8 @@ int gui_exec_line (char *line,
     } else {
 	outprn = prn;
     }
+
+    lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
 
@@ -5170,7 +5173,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, rho);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -5639,7 +5642,7 @@ int gui_exec_line (char *line,
     case WLS:
     case POOLED:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, OPT_R, 0.0);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
 	    break;

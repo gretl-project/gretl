@@ -3,6 +3,8 @@ version 1.2.3
   repeated function calls
 - Fix bug: normal pvalues were being shown as zero for
   large |z-scores| > 9.0
+- Fix bug: the NIST checker plugin was broken for locales
+  that use ',' as decimal point  
 - Daily data: construct a special plotting variable so
   daily time-series can be graphed better; also allow
   for 4-digit years in daily dates (YYYY/MM/DD) on input;
@@ -17,6 +19,9 @@ version 1.2.3
   objectname.show, objectname.free
 - Make the model table available via script and gui
   console (new command "modeltab")
+- Add an OLS option, "-r" or "--robust", which calls for
+  the use of White's robust standard errors (HC0) in the
+  case of cross-sectional data
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

@@ -302,8 +302,9 @@ static void fix_wls_values (MODEL *pmod, double **Z)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see commands.h)
- * @opts: option flags: if & OPT_R calculate dw stat and rhohat;
+ * @opts: option flags: if & OPT_R compute robust standard errors;
  *                      if & OPT_C force use of Cholesky decomp;
+ *                      if & OPT_D calculate dw stat and rhohat;
  *                      if & OPT_A treat as auxiliary regression
  * @rho: coefficient for rho-differencing the data.
  *
@@ -320,6 +321,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int ldepvar = 0;
+    int xrobust = 0;
     double *xpy;
     MODEL mdl;
 
@@ -338,6 +340,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
     }
+
+    xrobust = (opts & OPT_R) && !(pdinfo->time_series);
 
     gretl_model_init(&mdl, pdinfo);
 
@@ -441,9 +445,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (*s && *s != '0') set_use_qr(1);
     }
 
-    if (use_qr && !(opts & OPT_C)) { 
+    if (xrobust || (use_qr && !(opts & OPT_C))) { 
 	mdl.rho = rho;
-	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
+	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n, opts);
     } else {
 	int l = l0 - 1;
 	int nxpx = l * (l + 1) / 2;
@@ -493,7 +497,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    if (opts & OPT_R) {
+    if (opts & OPT_D) {
 	int order = (ci == CORC || ci == HILU)? 1 : 0;
 	
 	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
@@ -1347,7 +1351,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	step = 1;
 	for (rho = -0.990; rho < 1.0; rho += .01) {
 	    clear_model(&corc_model, pdinfo);
-	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, rho);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, rho);
 	    if ((err = corc_model.errcode)) {
 		free(uhat);
 		clear_model(&corc_model, pdinfo);
@@ -1395,7 +1399,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1415,7 +1419,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model, pdinfo);
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_R, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
 	    clear_model(&corc_model, pdinfo);
@@ -1601,7 +1605,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     /* second-stage regression */
     clear_model(&tsls, pdinfo);
-    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_R, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_D, 0.0);
 
     if (tsls.errcode) {
 	free(list1); 
@@ -1821,7 +1825,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     ncoeff = list[0] - 1;
     rearrange_list(list);
 
-    hsk = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
+    hsk = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
     if (hsk.errcode) return hsk;
 
     uhat1 = malloc(n * sizeof *uhat1);
@@ -1872,7 +1876,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
 
     clear_model(&hsk, pdinfo);
-    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_R, 0.0);
+    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_D, 0.0);
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
@@ -1997,7 +2001,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     rearrange_list(list);
 
     /* run a regular OLS */
-    hccm = lsq(list, pZ, pdinfo, OLS, OPT_R, 0.0);
+    hccm = lsq(list, pZ, pdinfo, OLS, OPT_D, 0.0);
     if (hccm.errcode) {
 	free(uhat1);
 	free(st);
@@ -2478,7 +2482,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     if (arlist[0] == 1 && arlist[1] == 1) {
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
 	if (err) ar.errcode = err;
-	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_R, xx);
+	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_D, xx);
 	if (model_count != NULL) {
 	    *model_count += 1;
 	    ar.ID = *model_count;
@@ -2997,7 +3001,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		}
 		strcpy(pdinfo->varname[nwt], "1/sigma");
 		clear_model(&archmod, pdinfo);
-		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_R, 0.0);
+		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_D, 0.0);
 		if (model_count != NULL) {
 		    *model_count += 1;
 		    archmod.ID = *model_count;

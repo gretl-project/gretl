@@ -456,7 +456,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		*new = logistic_model(newlist, pZ, pdinfo, lmaxstr);
 	    }
 	    else {
-		*new = lsq(newlist, pZ, pdinfo, orig->ci, OPT_R, rho);
+		*new = lsq(newlist, pZ, pdinfo, orig->ci, OPT_D, rho);
 	    }
 
 	    if (new->nobs < orig->nobs) 
@@ -490,7 +490,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    }
 	    newlist[1] = pdinfo->v - 1;
 
-	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_R | OPT_A, rho);
+	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
 	    if (aux.errcode) {
 		err = aux.errcode;
 		fprintf(stderr, "auxiliary regression failed\n");
@@ -653,7 +653,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *new = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
 	}
 	else {
-	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, OPT_R, rho);
+	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, OPT_D, rho);
 	}
 
 	if (new->errcode) {
@@ -797,7 +797,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_R, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1046,7 +1046,7 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	newlist[1] = v;
 	/*  printlist(newlist); */
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_R, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1190,7 +1190,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    chowlist[pmod->list[0]+1+i] = v+i;
 	}
 
-	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A | OPT_R, 0.0);
+	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);

@@ -73,6 +73,34 @@ gretl_matrix *gretl_packed_matrix_alloc (int rows)
 
 /* ....................................................... */
 
+gretl_matrix *gretl_diagonal_matrix (const double *d, int n, int mod)
+{
+    gretl_matrix *m;
+    double x;
+    int i, j;
+
+    m = real_gretl_matrix_alloc(n, n, 0);
+    if (m == NULL) return NULL;
+
+    for (i=0; i<n; i++) {
+	for (j=0; j<n; j++) {
+	    if (i == j) {
+		x = *d++;
+		if (mod == GRETL_MOD_SQUARE) {
+		    gretl_matrix_set(m, i, j, x * x);
+		} else {
+		    gretl_matrix_set(m, i, j, x);
+		}
+	    }
+	    else gretl_matrix_set(m, i, j, 0.0);
+	}
+    }
+
+    return m;
+}
+
+/* ....................................................... */
+
 gretl_matrix *gretl_matrix_copy (gretl_matrix *m)
 {
     gretl_matrix *c;
