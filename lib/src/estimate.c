@@ -810,33 +810,6 @@ static int lapack_cholbeta (MODEL *pmod, double *xpy,
     return INFO;
 }
 
-
-static int lapack_cholbeta_orig (MODEL *pmod, double *xpy, 
-				 double **Z, int nv)
-{
-    char UPLO = 'L';
-    integer INFO, NRHS = 1, K = nv;
-    double *AP, *B;
-    int i;
-
-    AP = pmod->xpx + 1;
-    B = xpy + 1;
-
-    /* FIXME: need to bail out if too close to singularity */
-
-    dppsv_(&UPLO, &K, &NRHS, AP, B, &K, &INFO);
-
-    if (INFO != 0) return (int) INFO;
-
-    for (i=1; i<=nv; i++) {
-	pmod->coeff[i] = xpy[i];
-    }
-
-    make_ess(pmod, Z);
-
-    return 0;
-}
-
 static void lapack_std_errs (double *xpx, double *sderr, 
 			     double sigma, int nv)
 {
