@@ -31,6 +31,8 @@ xml          required       open and save data files in the
 
 gnuplot      required       generate graphs
 
+lapack	     required	    linear algebra operations
+
 gdk-pixbuf   recommended    handle graphs in PNG format; make
                             gnuplot graphs interactive
 
@@ -39,10 +41,12 @@ readline     optional       provides a nice editable command line
 
 gnome        optional       gretl is integrated into the gnome
                             desktop (file icons and associations,
-                            HTML help system and so on)
+                            help system and so on)
 
 GMP          optional       supports gretl's Multiple Precision OLS
                             plugin
+
+gtksourceview optional      syntax highlighting for gretl scripts
 
 =================================================================
 
@@ -53,23 +57,23 @@ Notes:
   able to generate graphs, they just won't be interactive.  This
   reduces gretl's functionality and is not recommended.
 
-* By default gretl attempts to build against the new gtk 2.0
+* By default gretl attempts to build against the gtk 2.0
   libraries.  If you want to prevent this (i.e., if you have gtk 2.0
   installed but would prefer to build gretl using the traditional gtk
   1.2) specify the option "--without-gtk2".  This slightly reduces
   gretl's functionality.
 
-* By default gretl looks for an installed version of libole2 to link
-  against; if you want to prevent this, specify the option
-  "--without-libole2".  Then gretl will use the subset of libole2 code
-  supplied in the source package.  This does not reduce gretl's
-  functionality.  
+* When gretl is built against gtk 1.2, it looks for an installed
+  version of libole2 to link against; if you want to prevent this,
+  specify the option "--without-libole2".  Then gretl will use the
+  subset of libole2 code supplied in the source package.  This does
+  not reduce gretl's functionality.
 
-* When gretl is built against gtk 1.2, by default it looks for an
-  installed version of libgtkextra to link against; if you want to
-  prevent this, specify the option "--without-gtkextra".  Then gretl
-  will use the subset of gtkextra code supplied in the source package.
-  Again, this does not reduce gretl's functionality.
+* When gretl is built against gtk 1.2, it looks for an installed
+  version of libgtkextra to link against; if you want to prevent this,
+  specify the option "--without-gtkextra".  Then gretl will use the
+  subset of gtkextra code supplied in the source package.  Again, this
+  does not reduce gretl's functionality.
 
 * The gretl configure script looks for the gnome desktop, and arranges
   for gretl to be built with gnome support if gnome is found on your
@@ -88,4 +92,4 @@ Notes:
   libgmp is on your system, specify the option "--without-gmp".  This
   reduces gretl's functionality and is not recommended.
 
-Allin Cottrell, August 2002.
+Allin Cottrell, September 2003.
