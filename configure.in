@@ -269,7 +269,7 @@ fi
 
 dnl
 dnl Check for LAPACK 
-dnl Apple will be different
+dnl Apple _will_ be different
 dnl
 LAPACK_CFLAGS="-I${srcdir}/lib/src"
 case $host_os in
@@ -350,10 +350,11 @@ fi
 dnl if the above succeeds, check separately for glib 2.0 flags,
 dnl and gtksourceview flags
 if test "$have_gtk" = "2.0" ; then
-    PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
-    PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
-    have_gtksourceview="yes"
-    AC_DEFINE(USE_GTKSOURCEVIEW),
+     PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
+     PKG_CHECK_MODULES(GTKSOURCEVIEW, gtksourceview-1.0,
+     have_gtksourceview="yes"
+     AC_DEFINE(USE_GTKSOURCEVIEW),
+     have_gtksourceview="no"
     )
 fi
 

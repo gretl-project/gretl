@@ -437,12 +437,11 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
 {
     char cbname[MAXLEN];
-    extern GtkItemFactoryEntry view_items[];
 
     strcpy(cbname, dbwin->fname);
     strcat(cbname, ".cb");
     
-    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, view_items);
+    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, NULL);
 }
 
 /* ........................................................... */

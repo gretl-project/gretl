@@ -38,6 +38,8 @@ void menu_exit_check (GtkWidget *w, gpointer data);
 
 void delimiter_dialog (void);
 
+void copy_format_dialog (windata_t *vwin);
+
 void varinfo_dialog (int varnum);
 
 #endif /* DIALOGS_H */

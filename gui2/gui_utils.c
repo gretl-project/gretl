@@ -169,22 +169,6 @@ GtkItemFactoryEntry model_items[] = {
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 
-GtkItemFactoryEntry edit_items[] = {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
-#endif    
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, 
-      "<StockItem>", GTK_STOCK_COPY },
-    { N_("/Edit/Copy _all"), "", text_copy, COPY_TEXT, 
-      "<StockItem>", GTK_STOCK_COPY},
-    { N_("/Edit/_Paste"), NULL, text_paste, 0, "<StockItem>", GTK_STOCK_PASTE },
-    { N_("/Edit/_Replace..."), NULL, text_replace, 0, 
-      "<StockItem>", GTK_STOCK_FIND_AND_REPLACE },
-    { N_("/Edit/_Undo"), NULL, text_undo, 0, "<StockItem>", GTK_STOCK_UNDO },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p)
 {
@@ -938,6 +922,9 @@ void windata_init (windata_t *vwin)
     vwin->role = 0;
     vwin->active_var = 0;
     vwin->help_active = 0;
+#ifdef USE_GTKSOURCEVIEW
+    vwin->sbuf = NULL;
+#endif
 }
 
 /* .................................................................. */
@@ -988,9 +975,14 @@ static void window_print_callback (GtkWidget *w, windata_t *vwin)
 }
 #endif
 
+static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
+{
+    copy_format_dialog(vwin);
+}
+
 /* ........................................................... */
 
-static void make_viewbar (windata_t *vwin)
+static void make_viewbar (windata_t *vwin, int text_out)
 {
     GtkWidget *button, *viewbar, *hbox;
     int i;
@@ -1000,7 +992,7 @@ static void make_viewbar (windata_t *vwin)
 	N_("Send to gnuplot"),
 	N_("Print..."),
 	N_("Run"),
-	N_("Copy selection"), 
+	N_("Copy"), 
 	N_("Paste"),
 	N_("Find..."),
 	N_("Replace..."),
@@ -1030,6 +1022,10 @@ static void make_viewbar (windata_t *vwin)
 #else
     int print_ok = 0;
 #endif
+
+    if (text_out) {
+	g_object_set_data(G_OBJECT(vwin->dialog), "text_out", GINT_TO_POINTER(1));
+    }
 
     hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vwin->vbox), hbox, FALSE, FALSE, 0);
@@ -1082,7 +1078,11 @@ static void make_viewbar (windata_t *vwin)
 	    break;
 	case 5:
 	    stockicon = GTK_STOCK_COPY;
-	    toolfunc = text_copy_callback;
+	    if (MULTI_COPY_ENABLED(vwin->role)) {
+		toolfunc = choose_copy_format_callback;
+	    } else {
+		toolfunc = text_copy_callback;
+	    }
 	    break;
 	case 6:
 	    if (edit_ok) {
@@ -1130,7 +1130,7 @@ static void make_viewbar (windata_t *vwin)
 
 	button = gtk_image_new();
 	gtk_image_set_from_stock(GTK_IMAGE(button), stockicon, 
-				 GTK_ICON_SIZE_LARGE_TOOLBAR);
+				 GTK_ICON_SIZE_MENU);
         gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
 				NULL, toolstr, NULL,
 				button, toolfunc, vwin);
@@ -1424,7 +1424,7 @@ static void cursor_to_top (windata_t *vwin)
 /* ........................................................... */
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
-			char *title, int role,
+			char *title, int role, 
 			GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *close;
@@ -1441,6 +1441,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
+    } else {
+	make_viewbar(vwin, 1);
     }
 
     create_text (vwin, &tbuf, hsize, vsize, FALSE);
@@ -1591,7 +1593,6 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
 	gtk_source_buffer_set_language (sbuf, language);
     }
 
-    /* remove_all_markers (buffer); */
     gtk_source_buffer_load_with_encoding (sbuf, filename, "utf-8", &err);
 
     if (err != NULL) {
@@ -1711,12 +1712,16 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
+    } else if (show_viewbar) { 
+	make_viewbar(vwin, 0);
+	show_viewbar = 0;
     }
 
 #ifdef USE_GTKSOURCEVIEW
     if (doing_script) {
 	create_source(vwin, &sbuf, hsize, vsize, editable);
 	tbuf = GTK_TEXT_BUFFER(sbuf);
+	vwin->sbuf = sbuf;
     } else {
 	create_text(vwin, &tbuf, hsize, vsize, editable);
     }
@@ -1747,9 +1752,9 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	strcpy(fle, filename);
     }
 
-    /* should we show a toolbar? */
+    /* should we show a toolbar at the foot of the window? */
     if (show_viewbar) { 
-	make_viewbar(vwin);
+	make_viewbar(vwin, 0);
     } else { 
 	/* make a simple Close button instead */
 	GtkWidget *close = gtk_button_new_with_label(_("Close"));
@@ -1768,7 +1773,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	text_buffer_insert_file(tbuf, filename, role);
     }
 #else
-    text_buffer_insert_file(tbuf, filename);
+    text_buffer_insert_file(tbuf, filename, role);
 #endif
 
     /* grab the "changed" signal when editing a script */
@@ -1815,6 +1820,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
 			char *title, int role) 
 {
+    GtkWidget *close;
     GtkTextBuffer *tbuf;
     windata_t *vwin;
 
@@ -1824,17 +1830,12 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     viewer_box_config(vwin); 
 
     /* add a menu bar */
-    set_up_viewer_menu(vwin->dialog, vwin, edit_items);
-    gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(vwin->mbar);
+    make_viewbar(vwin, 0);
 
     create_text(vwin, &tbuf, hsize, vsize, TRUE);
 
     dialog_table_setup (vwin);
     
-    /* add an editing bar */
-    make_viewbar(vwin);    
-
     /* insert the buffer text */
     if (*pbuf) gtk_text_buffer_set_text(tbuf, *pbuf, -1);
 
@@ -1847,6 +1848,14 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
+
+    /* close button */
+    close = gtk_button_new_with_label(_("Close"));
+    gtk_box_pack_start(GTK_BOX(vwin->vbox), 
+		       close, FALSE, TRUE, 0);
+    g_signal_connect(G_OBJECT(close), "clicked", 
+		     G_CALLBACK(delete_file_viewer), vwin);
+    gtk_widget_show(close);
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
@@ -2067,12 +2076,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 #endif
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
-
-    /* give MPOLS this status when ready */
-    if (MULTI_COPY_ENABLED(vwin->role) && vwin->role != VIEW_MODEL) {
-	augment_copy_menu(vwin);
-	return;
-    }
 
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2602,24 +2605,26 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     }
 
     /* copying plain text from window */
-    if (how == COPY_TEXT) {
+    if (how == COPY_TEXT || how == COPY_SELECTION) {
+	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	PRN textprn;
 
-	gretl_print_attach_buffer(&textprn,
-				  textview_get_text(GTK_TEXT_VIEW(vwin->w))); 
-	prn_to_clipboard(&textprn, COPY_TEXT);
-	g_free(textprn.buf);
-    } else if (how == COPY_SELECTION) { 
-	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-	GtkTextIter selstart, selend;
-	gchar *selbuf;
-	PRN selprn;
+	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
+	    /* there is a selection in place */
+	    GtkTextIter selstart, selend;
+	    gchar *selbuf;
 
-	if (gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend)) {
+	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
 	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
-	    gretl_print_attach_buffer(&selprn, selbuf);
-	    prn_to_clipboard(&selprn, COPY_TEXT);
+	    gretl_print_attach_buffer(&textprn, selbuf);
+	    prn_to_clipboard(&textprn, COPY_TEXT);
 	    g_free(selbuf);
+	} else {
+	    /* no selection: copy everything */
+	    gretl_print_attach_buffer(&textprn,
+				      textview_get_text(GTK_TEXT_VIEW(vwin->w))); 
+	    prn_to_clipboard(&textprn, COPY_TEXT);
+	    g_free(textprn.buf);
 	}
     }
 }
@@ -2650,7 +2655,20 @@ void window_print (windata_t *vwin, guint u, GtkWidget *widget)
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget)
 {
-    gchar *old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
+    gchar *old = NULL;
+
+#ifdef USE_GTKSOURCEVIEW
+    if (vwin->sbuf != NULL) {
+	if (gtk_source_buffer_can_undo(vwin->sbuf)) {
+	    gtk_source_buffer_undo(vwin->sbuf);
+	} else {
+	    errbox(_("No undo information available"));
+	}
+	return;
+    }
+#endif
+    
+    old = g_object_steal_data(G_OBJECT(vwin->w), "undo");
 
     if (old == NULL) {
 	errbox(_("No undo information available"));

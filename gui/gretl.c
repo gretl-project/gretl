@@ -39,6 +39,7 @@
 #include "../pixmaps/mini.netscape.xpm"
 #include "../pixmaps/mini.pdf.xpm"
 #include "../pixmaps/mini.plot.xpm"
+#include "../pixmaps/mini.model.xpm"
 #include "../pixmaps/mini.ofolder.xpm"
 #ifndef GNUPLOT_PNG
 # include "../pixmaps/mini.camera.xpm"
@@ -1689,6 +1690,14 @@ static void xy_graph (void)
 	errbox(_("Please open a data file first"));
 }
 
+static void ols_model (void)
+{
+    if (data_status) {
+	model_callback(NULL, OLS, NULL);
+    } else 
+	errbox(_("Please open a data file first"));
+}
+
 static void go_session (void)
 {
     if (data_status)
@@ -1715,6 +1724,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	N_("gretl manual (PDF)"),
 	N_("show help"), 
 	N_("X-Y graph"), 
+	N_("OLS model"),
 	N_("Capture last graph for editing"),
 	N_("open dataset"),
 	NULL
@@ -1772,12 +1782,16 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    toolfunc = xy_graph;
 	    break;
 	case 8:
+	    toolxpm = mini_model_xpm;
+	    toolfunc = ols_model;
+	    break;
+	case 8:
 #ifndef GNUPLOT_PNG
 	    toolxpm = mini_camera_xpm;
 	    toolfunc = add_graph_to_session;
 #endif
 	    break;
-	case 9:
+	case 10:
 	    toolxpm = mini_ofolder_xpm;
 	    toolfunc = open_textbook_data;
 	    break;
@@ -1786,7 +1800,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	}
 
 #ifdef GNUPLOT_PNG
-	if (i == 8) continue;
+	if (i == 9) continue;
 #endif
 
 	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, 

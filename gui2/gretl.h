@@ -33,6 +33,7 @@
 #   include <gnome.h>
 # endif
 #endif
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include "libgretl.h"
@@ -40,6 +41,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <time.h>
+
+#ifdef USE_GTKSOURCEVIEW
+# include <gtksourceview/gtksourceview.h>
+#endif
+
 #include "gretltypes.h"
 #include "gui_utils.h"
 #include "callbacks.h"

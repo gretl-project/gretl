@@ -1038,6 +1038,161 @@ void delimiter_dialog (void)
     gtk_main();
 }
 
+struct format_info {
+    GtkWidget *dialog;
+    windata_t *vwin;
+    int format;
+};
+
+static void destroy_format_dialog (GtkWidget *w, struct format_info *finfo)
+{
+    free(finfo);
+    gtk_main_quit();
+}
+
+static void copy_with_format_callback (GtkWidget *w, struct format_info *finfo)
+{
+    text_copy(finfo->vwin, finfo->format, NULL);
+    gtk_widget_destroy(finfo->dialog);
+}
+
+static void set_copy_format (GtkWidget *w, struct format_info *finfo)
+{
+    gpointer p = g_object_get_data(G_OBJECT(w), "format");
+
+    if (p != NULL) {
+	finfo->format = GPOINTER_TO_INT(p);
+    }
+}
+
+void copy_format_dialog (windata_t *vwin)
+{
+    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *internal_vbox;
+    GSList *group;
+    struct format_info *finfo;
+
+    finfo = mymalloc(sizeof *finfo);
+    if (finfo == NULL) return;
+
+    dialog = gtk_dialog_new();
+    
+    finfo->vwin = vwin;
+    finfo->dialog = dialog;
+#ifdef G_OS_WIN32
+    finfo->format = COPY_RTF;
+#else
+    finfo->format = COPY_LATEX;
+#endif
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: copy formats"));
+    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+    g_signal_connect (G_OBJECT(dialog), "destroy", 
+		      G_CALLBACK(destroy_format_dialog), finfo);
+
+    internal_vbox = gtk_vbox_new (FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("Copy as:"));
+    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+    gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+#ifdef G_OS_WIN32
+
+    /* RTF option */
+    button = gtk_radio_button_new_with_label(NULL, _("RTF (MS Word)"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    gtk_widget_show (button);
+
+    /* LaTeX option */
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(NULL, _("LaTeX"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
+    gtk_widget_show (button);
+
+#else /* not Windows: reverse the first two options */
+
+    /* LaTeX option */
+    button = gtk_radio_button_new_with_label(NULL, _("LaTeX"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
+    gtk_widget_show (button);   
+
+    /* RTF option */
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("RTF"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    gtk_widget_show (button);
+
+#endif /* G_OS_WIN32 */
+
+    /* plain text option */
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("plain text"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
+    gtk_widget_show (button);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    gtk_widget_show (internal_vbox);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    /* Create the "OK" button */
+    tempwid = standard_button (GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(copy_with_format_callback), finfo);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* "Cancel" button */
+    tempwid = standard_button (GTK_STOCK_CANCEL);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(delete_widget), dialog);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+}
+
 struct varinfo_settings {
     GtkWidget *dlg;
     GtkWidget *name_entry;
@@ -1275,5 +1430,4 @@ void varinfo_dialog (int varnum)
 
     gtk_widget_show (vset->dlg);
 }
-
 

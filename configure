@@ -23212,7 +23212,7 @@ echo "${ECHO_T}$GTKSOURCEVIEW_LIBS" >&6
             ## If we have a custom action on failure, don't print errors, but
             ## do set a variable so people can do so.
             GTKSOURCEVIEW_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "gtksourceview-1.0"`
-            echo $GTKSOURCEVIEW_PKG_ERRORS
+
         fi
 
 
@@ -23225,14 +23225,13 @@ echo "${ECHO_T}$GTKSOURCEVIEW_LIBS" >&6
 
   if test $succeeded = yes; then
      have_gtksourceview="yes"
-    cat >>confdefs.h <<\_ACEOF
+     cat >>confdefs.h <<\_ACEOF
 #define USE_GTKSOURCEVIEW 1
 _ACEOF
 
   else
-     { { echo "$as_me:$LINENO: error: Library requirements (gtksourceview-1.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&5
-echo "$as_me: error: Library requirements (gtksourceview-1.0) not met; consider adjusting the PKG_CONFIG_PATH environment variable if your libraries are in a nonstandard prefix so pkg-config can find them." >&2;}
-   { (exit 1); exit 1; }; }
+     have_gtksourceview="no"
+
   fi
 
 fi

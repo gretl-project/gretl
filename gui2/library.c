@@ -728,7 +728,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
     if (err) gui_errmsg(err);
 
-    vwin = view_buffer(prn, hsize, vsize, title, action, view_items);
+    vwin = view_buffer(prn, hsize, vsize, title, action, NULL);
 
     if (vwin && 
 	(action == SUMMARY || action == VAR_SUMMARY || action == CORR)) 
@@ -778,7 +778,7 @@ static void real_do_coint (gpointer p, int action)
     } 
 
     view_buffer(prn, 78, 400, _("gretl: cointegration test"), 
-		COINT, view_items);
+		COINT, NULL);
 }
 
 void do_coint (GtkWidget *widget, gpointer p)
@@ -917,7 +917,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	int code = ddata->code;
 
 	close_dialog(ddata);
-	view_buffer(prn, hsize, vsize, title, code, view_items);
+	view_buffer(prn, hsize, vsize, title, code, NULL);
 	if (code == CORRGM) register_graph();
     }
 }
@@ -940,7 +940,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	prn = bufopen_with_size(sz + 1);
 	if (prn != NULL) { 
 	    strcpy(prn->buf, datainfo->descrip);
-	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, view_items);
+	    view_buffer(prn, 80, 400, _("gretl: data info"), INFO, NULL);
 	}
     }
 }
@@ -1117,7 +1117,7 @@ void count_missing (void)
     if (bufopen(&prn)) return;
     if (count_missing_values(&Z, datainfo, prn)) {
 	view_buffer(prn, 78, 300, _("gretl: missing values info"), 
-		    SMPL, view_items);
+		    SMPL, NULL);
     } else {
 	infobox(_("No missing data values"));
 	gretl_print_destroy(prn);
@@ -1178,7 +1178,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	    register_graph();
 	}
 	vwin = view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, 
-			   view_items);  
+			   NULL);  
 	vwin->data = fr;
     }
 }
@@ -1214,7 +1214,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 
     strcpy(title, "gretl: ");
     strcat(title, _("Sum of coefficients"));
-    view_buffer(prn, 78, 200, title, COEFFSUM, view_items); 
+    view_buffer(prn, 78, 200, title, COEFFSUM, NULL); 
 }
 
 /* ........................................................... */
@@ -1396,7 +1396,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
-    view_buffer(prn, 78, 400, title, LMTEST, view_items); 
+    view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
 /* ........................................................... */
@@ -1450,7 +1450,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     view_buffer(prn, 78, 400, _("gretl: panel model diagnostics"), 
-		PANEL, view_items);
+		PANEL, NULL);
 }
 
 /* ........................................................... */
@@ -1484,7 +1484,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 
     if (!err) {
 	view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
-		    VIEW_DATA, view_items); 
+		    VIEW_DATA, NULL); 
 	gnuplot_display(&paths);
 	register_graph();
     }
@@ -1540,6 +1540,10 @@ static void do_chow_cusum (gpointer data, int code)
 	register_graph();
     }
 
+    if (ddata != NULL) {
+	close_dialog(ddata);
+    }
+
     if (add_test_to_model(&test, pmod) == 0) {
 	print_test_to_window(&test, mydata->w);
     }
@@ -1550,7 +1554,7 @@ static void do_chow_cusum (gpointer data, int code)
 
     view_buffer(prn, 78, 400, (code == CHOW)?
 		_("gretl: Chow test output"): _("gretl: CUSUM test output"),
-		code, view_items);
+		code, NULL);
 }
 
 /* ........................................................... */
@@ -1596,7 +1600,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
-    view_buffer(prn, 78, 400, title, RESET, view_items); 
+    view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
 
 /* ........................................................... */
@@ -1659,7 +1663,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
     close_dialog(ddata);
-    view_buffer(prn, 78, 400, title, LMTEST, view_items); 
+    view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
 /* ........................................................... */
@@ -1709,7 +1713,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     clear_model(models[1], NULL);
     exchange_smpl(pmod, datainfo);
 
-    view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, view_items);
+    view_buffer(prn, 78, 400, _("gretl: ARCH test"), ARCH, NULL);
 }
 
 /* ........................................................... */
@@ -1815,7 +1819,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     print_mpols_results (mpvals, datainfo, prn);
 
     vwin = view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
-		       MPOLS, view_items);
+		       MPOLS, NULL);
 
     vwin->data = mpvals;
 }
@@ -2004,7 +2008,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = var(order, command.list, &Z, datainfo, 0, prn);
 	if (err) errmsg(err, prn);
 	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
-		    VAR, view_items);
+		    VAR, NULL);
 	return;
 
     case LOGIT:
@@ -2389,7 +2393,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     printfreq(freq, prn);
 
     view_buffer(prn, 78, 300, _("gretl: residual dist."), TESTUHAT,
-		view_items);
+		NULL);
 
     /* show the graph too */
     if (plot_freq(freq, &paths, NORMAL) == 0) {
@@ -2532,7 +2536,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     view_buffer(prn, (opt == TRAMO)? 106 : 84, 500, 
 		(opt == TRAMO)? _("gretl: TRAMO analysis") :
 		_("gretl: X-12-ARIMA analysis"),
-		opt, view_items);
+		opt, NULL);
 
     if (graph) {
 	gnuplot_display(&paths);
@@ -2582,7 +2586,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     }
 
     view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, 
-		view_items);
+		NULL);
 }
 
 /* ........................................................... */
@@ -2615,7 +2619,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     register_graph();
 
     view_buffer(prn, 60, 400, _("gretl: periodogram"), PERGM, 
-		view_items);
+		NULL);
 }
 
 /* ........................................................... */
@@ -2635,7 +2639,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 	text_print_model_confints(cf, datainfo, prn);
 	vwin = view_buffer(prn, 78, 300, 
 			   _("gretl: coefficient confidence intervals"), 
-			   COEFFINT, view_items);
+			   COEFFINT, NULL);
 	vwin->data = cf;
     }
 }
@@ -2665,7 +2669,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 	text_print_matrix (vcv->vec, vcv->list, 
 			   pmod, datainfo, 0, prn);
 	vwin = view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
-			   COVAR, view_items);
+			   COVAR, NULL);
 	vwin->data = vcv;
     }
 }
@@ -3005,7 +3009,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    return;
 	}
 	view_buffer(prn, 78, 350, _("gretl: display data"), PRINT, 
-		    view_items);
+		    NULL);
     }
 }
 
@@ -3071,7 +3075,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	}
 	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, 
-		    view_items);
+		    NULL);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -3096,7 +3100,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
     } else {
 	text_print_fit_resid(fr, datainfo, prn);
 	vwin = view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
-			   view_items);  
+			   NULL);  
 	vwin->data = fr;
     }  
 }

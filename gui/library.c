@@ -1585,6 +1585,10 @@ static void do_chow_cusum (gpointer data, int code)
 	register_graph();
     }
 
+    if (ddata != NULL) {
+	close_dialog(ddata);
+    }
+
     if (add_test_to_model(&test, pmod) == 0) {
 	print_test_to_window(&test, mydata->w);
     }

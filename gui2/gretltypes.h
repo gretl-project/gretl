@@ -45,6 +45,9 @@ struct _windata_t {
     int role;
     int help_active;
     char fname[MAXLEN];
+#ifdef USE_GTKSOURCEVIEW
+    GtkSourceBuffer *sbuf;
+#endif
 };
 
 struct _GretlChild {

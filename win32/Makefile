@@ -185,7 +185,7 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) $(MINOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lf2c -lm -L$(imports) -lxml -lz.dll -lintl -lprob -lgmp \
+	-o $@ $^ -lf2c -lm -L$(imports) -lxml2 -lz.dll -lintl -lprob -lgmp \
 	-lmingwex $(GLIBLIB) $(LAPACK_LIBS)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
@@ -224,7 +224,7 @@ plugins/progress_bar.dll: progress_bar.o dllinit.o
 
 plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml \
+	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml2 \
 	$(GRETLLIB) $(GTKLIBS)
 
 plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
