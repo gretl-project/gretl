@@ -86,6 +86,14 @@ void winprint (char *fullbuf, char *selbuf)
     int x, y, line, page;
     size_t len;
 
+    char paper[12];
+
+    if (doing_nls()) {
+	strcpy(paper, "A4");
+    } else {
+	strcpy(paper, "US-Letter");
+    }
+
     printer = gnome_printer_dialog_new_modal();
 
     if (!printer) {
@@ -94,7 +102,7 @@ void winprint (char *fullbuf, char *selbuf)
 	return;
     }
 
-    pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
+    pc = gnome_print_context_new_with_paper_size(printer, paper);
 
     gnome_print_beginpage (pc, _("gretl output"));
 
