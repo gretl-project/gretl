@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-#define GENR_DEBUG
+/* #define GENR_DEBUG */
 
 #include "libgretl.h"
 #include "internal.h"
@@ -27,7 +27,7 @@
 static int _cstack (double *xstack, const double *xxvec, const char op, 
 		    const DATAINFO *pdinfo, GENERATE *genr);
 static int _domath (double *xxvec, const double *xmvec, const int nt, 
-		    const DATAINFO *pdinfo);
+		    const DATAINFO *pdinfo, int *scalar);
 static int _evalexp (char *ss, double *xmvec, double *xxvec, 
 		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod, GENERATE *genr);
@@ -868,7 +868,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    return genr;
 			}
 			for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i];
-			er = _domath(genr.xvec, mvec, nt, pdinfo);
+			er = _domath(genr.xvec, mvec, nt, pdinfo, &genr.scalar);
 			if (er != 0) {
 			    genr.errcode = er;
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -1017,232 +1017,181 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 /* ........................................................  */
 
 static int _domath (double *xxvec, const double *xmvec, const int nt,
-		    const DATAINFO *pdinfo)
+		    const DATAINFO *pdinfo, int *scalar)
 /* do math transformations and return result in xxvec */
 {
-    register int k, i;
+    register int i, t;
     long int xint; 
-    double xx, yy, *x;
+    double xx = 0.0, yy = 0.0, *x = NULL;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
     /* xmvec contains vector of data to be transformed, result
        returned in xxvec */
-    x = calloc(t2-t1+1, sizeof(double)); /* FIXME? */
 
     switch (nt) {
 
     case T_LOG:
     case T_LN:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
 	    if (na(xx)) {
-		xxvec[k] = NADBL;
+		xxvec[t] = NADBL;
 		continue;
 	    }
-	    else if (xx <= 0.0) {
-		free(x);
-		return E_LOGS;
-	    }
-	    xxvec[k] = log(xx);
+	    else if (xx <= 0.0) return E_LOGS;
+	    xxvec[t] = log(xx);
 	}
 	break;
 
     case T_EXP:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
 	    if (na(xx)) {
-                xxvec[k] = NADBL;
+                xxvec[t] = NADBL;
                 continue;
 	    }
-	    else if (xx > _HIGHVALU) {
-		free(x);
-		return E_HIGH;
-	    }
-	    xxvec[k] = exp(xx);
+	    else if (xx > _HIGHVALU) return E_HIGH;
+	    xxvec[t] = exp(xx);
 	}
 	break;
 
     case T_SIN:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    xxvec[k] = (na(xx))? NADBL: sin(xx);
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
+	    xxvec[t] = (na(xx))? NADBL: sin(xx);
 	}
 	break;
 
     case T_COS:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    xxvec[k] = (na(xx))? NADBL: cos(xx);
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
+	    xxvec[t] = (na(xx))? NADBL: cos(xx);
 	}
 	break;
 
     case T_DIFF:
-	for (k=t1+1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    yy = xmvec[k-1];
-	    xxvec[k] = (na(xx) || na(yy))? NADBL : xx - yy;
+	for (t=t1+1; t<=t2; t++) {
+	    xx = xmvec[t];
+	    yy = xmvec[t-1];
+	    xxvec[t] = (na(xx) || na(yy))? NADBL : xx - yy;
 	}
 	xxvec[t1] = NADBL;
 	break;
 
     case T_LDIFF:
-	for (k=t1+1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    yy = xmvec[k-1];
+	for (t=t1+1; t<=t2; t++) {
+	    xx = xmvec[t];
+	    yy = xmvec[t-1];
 	    if (na(xx) || na(yy)) {
-		xxvec[k] = NADBL;
+		xxvec[t] = NADBL;
 		continue;
 	    }   
-	    else if (xx <= 0.0 || yy <= 0.0) {
-		free(x);
-		return E_LOGS;
-	    }
-	    xxvec[k] = log(xx) - log(yy);
+	    else if (xx <= 0.0 || yy <= 0.0) return E_LOGS;
+	    xxvec[t] = log(xx) - log(yy);
 	}
 	xxvec[t1] = NADBL;
 	break;
 
     case T_MEAN: 
-	i = -1;
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    if (na(xx)) continue;
-	    i++; 
-	    x[i] = xx;
-	}
-	xx = _esl_mean(0, i, x); 
-	for (k=t1; k<=t2; k++) xxvec[k] = xx;
-	break;
-
-    case T_MEDIAN:
-	i = -1;
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    if (na(xx)) continue;
-	    i++;
-	    x[i] = xx;
-	}
-	qsort(x, i+1, sizeof(double), _compare_doubles);
-	xx = esl_median(x, i+1);
-	for (k=t1; k<=t2; k++) xxvec[k] = xx;
-	break;
-
+    case T_SUM:
     case T_SD:
-	i = -1;
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    if (na(xx)) continue;
-	    i++;
-	    x[i] = xx;
-	}
-	xx = _esl_stddev(0, i, x); 
-	for (k=t1; k<=t2; k++) xxvec[k] = xx;
-	break;
-
     case T_VAR:
-	i = -1;
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    if (na(xx)) continue;
-	    i++;
-	    x[i] = xx;
-	}
-	xx = _esl_variance(0, i, x); 
-	for (k=t1; k<=t2; k++) xxvec[k] = xx;
-	break;
-
+    case T_MEDIAN:
     case T_SORT:
+	x = malloc((t2 - t1 + 1) * sizeof *x);
+	if (x == NULL) return E_ALLOC;
+
 	i = -1;
-	/*  x[0] = -999999.0; */
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
 	    if (na(xx)) continue;
-	    i++;
-	    x[i] = xx;
+	    x[++i] = xx;
 	}
-	/*  sort(i+1, x); */
-	qsort(x, i+1, sizeof(double), _compare_doubles);
-	for (k=t1; k<=t2; k++) xxvec[k] = x[k-t1];
+
+	if (nt == T_MEAN)
+	    xx = _esl_mean(0, i, x);
+	else if (nt == T_SUM) {
+	    xx = _esl_mean(0, i, x);
+	    xx *= (i + 1);
+	}
+	else if (nt == T_SD)
+	    xx = _esl_stddev(0, i, x);
+	else if (nt == T_VAR)
+	    xx = _esl_variance(0, i, x);
+	else if (nt == T_MEDIAN) {
+	    qsort(x, i+1, sizeof(double), _compare_doubles);
+	    xx = esl_median(x, i+1);
+	}
+
+	if (nt == T_SORT) {
+	    qsort(x, i+1, sizeof(double), _compare_doubles);
+	    for (t=t1; t<=t2; t++) xxvec[t] = x[t-t1];
+	} else {
+	    for (t=0; t<pdinfo->n; t++) xxvec[t] = xx;
+	    *scalar = 1; 
+	}
+
+	free(x);
 	break;
 
     case T_INT:
-	for (k=t1; k<=t2; k++) {
-	    xint = (int) (xmvec[k] + _VSMALL);
+	for (t=t1; t<=t2; t++) {
+	    xint = (int) (xmvec[t] + _VSMALL);
 	    if (xint == -999) {
-		xxvec[k] = NADBL;
+		xxvec[t] = NADBL;
 		continue;
 	    }
-	    xxvec[k] = (double) xint;
+	    xxvec[t] = (double) xint;
 	}
 	break;
 
     case T_ABS:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
 	    if (na(xx)) {
-		xxvec[k] = NADBL;
+		xxvec[t] = NADBL;
 		continue;
 	    }
-	    xxvec[k] = (xx<0.0)? -xx : xx;
+	    xxvec[t] = (xx < 0.0)? -xx : xx;
 	}
 	break;
 
     case T_SQRT:
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
+	for (t=t1; t<=t2; t++) {
+	    xx = xmvec[t];
 	    if (na(xx)) {
-		xxvec[k] = NADBL;
+		xxvec[t] = NADBL;
 		continue;
 	    }
-	    else if (xx < 0.0) {
-		free(x);
-		return E_SQRT;
-	    }
-	    xxvec[k] = sqrt(xx);
+	    else if (xx < 0.0) return E_SQRT;
+	    xxvec[t] = sqrt(xx);
 	}
-	break;
-
-    case T_SUM:
-	i = -1;
-	for (k=t1; k<=t2; k++) {
-	    xx = xmvec[k];
-	    if (na(xx)) continue;
-	    i++;
-	    x[i] = xx;
-	}
-	xx = _esl_mean(0, i, x); 
-	i++;
-	for (k=t1; k<=t2; k++) xxvec[k] = xx*i;
 	break;
 
     case T_CUM:  /* cumulate, with "cum" function */
 	xxvec[t1] = (na(xmvec[t1])) ? 0.0 : xmvec[t1];
-	for (k=t1+1; k<=t2; k++) {
-	    if (na(xmvec[k])) xxvec[k] = xxvec[k-1];
-	    else xxvec[k] = xxvec[k-1] + xmvec[k];
+	for (t=t1+1; t<=t2; t++) {
+	    if (na(xmvec[t])) xxvec[t] = xxvec[t-1];
+	    else xxvec[t] = xxvec[t-1] + xmvec[t];
 	}
 	break;
 
     case T_MISSING:  /* check whether obs is missing or not */
-	for (k=t1; k<=t2; k++) {
-	    xxvec[k] = (na(xmvec[k])) ? 1.0 : 0.0;
-	}
+	for (t=t1; t<=t2; t++) 
+	    xxvec[t] = (na(xmvec[t])) ? 1.0 : 0.0;
 	break;
 
     case T_MISSZERO:  /* change missing obs to zero */
-	for (k=t1; k<=t2; k++) {
-	    xxvec[k] = (na(xmvec[k])) ? 0.0 : xmvec[k];
-	}
+	for (t=t1; t<=t2; t++) 
+	    xxvec[t] = (na(xmvec[t])) ? 0.0 : xmvec[t];
 	break;
 
     case T_ZEROMISS:  /* change zero to missing obs */
-	for (k=t1; k<=t2; k++) {
-	    xxvec[k] = (floateq(xmvec[k], 0.0)) ? NADBL : xmvec[k];
-	}
+	for (t=t1; t<=t2; t++) 
+	    xxvec[t] = (floateq(xmvec[t], 0.0)) ? NADBL : xmvec[t];
 	break;
 
     }
-    free(x);
     return 0;
 }
 
@@ -1273,10 +1222,10 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
 
 static void _getvar (char *str, char *word, char *c)
      /*   scans string str for first occurrence of {}()+-*^/
-     copies the character into c
-     copies string to the left into word. deletes word from s
-     if no occurrence, and sets word = str, str = '\0', and c = '\0'.
-*/
+	  copies the character into c
+	  copies string to the left into word. deletes word from s
+	  if no occurrence, and sets word = str, str = '\0', and c = '\0'.
+     */
 {
     register int i;
 
@@ -1857,7 +1806,7 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
 	if ((i+1) % 5 == 0) 
 	    pprintf(prn, "\n");
     }
-    if (n%5) pprintf(prn, "\n");
+    if (n % 5) pprintf(prn, "\n");
 }
 
 /**
@@ -1875,14 +1824,14 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 {
     int i;
 
-    if (strcmp(varname, "uhat") == 0) return UHATNUM; 
-    if (strcmp(varname, "t") == 0) return TNUM;
-    if (strcmp(varname, "i") == 0) return INDEXNUM;
-    if (strcmp(varname, "const") == 0 || strcmp(varname, "CONST") == 0)
+    if (!strcmp(varname, "uhat")) return UHATNUM; 
+    if (!strcmp(varname, "t"))    return TNUM;
+    if (!strcmp(varname, "i"))    return INDEXNUM;
+    if (!strcmp(varname, "const") || !strcmp(varname, "CONST"))
         return 0;
 
     for (i=0; i<pdinfo->v; i++) 
-        if (strcmp(pdinfo->varname[i], varname) == 0)  
+        if (!strcmp(pdinfo->varname[i], varname))  
 	    return i;
 
     return pdinfo->v;
@@ -1929,7 +1878,6 @@ static void _genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
     if (mystack != NULL) free(mystack);
     if (mvec != NULL) free(mvec);
     if (genr != NULL) free(genr->xvec);
-    
 }
 
 /**
@@ -2176,8 +2124,8 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (terms < maxterms) _shrink_Z(maxterms - terms, pZ, pdinfo);
-    /*  fprintf(stderr, "xpxgenr: returning %d\n", terms); */
+    if (terms < maxterms) 
+	_shrink_Z(maxterms - terms, pZ, pdinfo);
     return terms;
 }
 
@@ -2223,10 +2171,8 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 		    return E_UNKVAR;
 		}
 		rhot[p] = (*pZ)[nv][pdinfo->t1];
-		/*  printf("rhodiff: rhot[%d] = %f\n", p, rhot[p]); */
 	    } else {
 		rhot[p] = atof(parmbit);
-		/*  printf("rhodiff: rhot[%d] = %f\n", p, rhot[p]); */
 	    }
 	    p++;
 	}

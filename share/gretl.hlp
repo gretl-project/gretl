@@ -558,6 +558,20 @@ if there are different numbers of non-missing observations for the two
 variables.)
 
 #
+missing values
+@Dataset
+
+Set a numerical value that will be interpreted as "missing" or "not
+applicable", either for a particular data series (under the Variable menu) or
+globally for the entire data set (under the Sample menu).  
+
+Gretl has its own internal coding for missing values, but sometimes imported
+data may employ a different code.  For example, if a particular series is
+coded such that a value of -1 indicates "not applicable", you can select "Set
+missing value code" under the Variable menu and type in the value "-1"
+(without the quotes).  Gretl will then read the -1s as missing observations.
+
+#
 nulldata
 @Dataset
 

@@ -341,8 +341,9 @@ GtkItemFactoryEntry data_items[] = {
       SMPLBOOL, NULL },
     { "/Sample/Drop all obs with _missing values", NULL, bool_subsample, 
       0, NULL },
-    { "/Sample/_Count missing values", NULL, count_missing, 
-      0, NULL },
+    { "/Sample/_Count missing values", NULL, count_missing, 0, NULL },
+    { "/Sample/Set missing _value code...", NULL, gretl_callback, 
+      GSETMISS, NULL },
     { "/Sample/_Add case markers...", NULL, gretl_callback, MARKERS, NULL },
     { "/Sample/_Panel structure...", NULL, set_panel_structure, 0, NULL },
     { "/_Variable", NULL, NULL, 0, "<Branch>" },
@@ -367,6 +368,8 @@ GtkItemFactoryEntry data_items[] = {
     { "/Variable/sep2", NULL, NULL, 0, "<Separator>" },
     { "/Variable/_Rename", NULL, gretl_callback, RENAME, NULL },
     { "/Variable/_Edit label", NULL, gretl_callback, RELABEL, NULL },
+    { "/Variable/Set missing value code...", NULL, gretl_callback, 
+      VSETMISS, NULL },
     { "/Variable/sep3", NULL, NULL, 0, "<Separator>" },
     { "/Variable/Simulate...", NULL, gretl_callback, SIM, NULL },
     { "/Variable/Define _new variable...", NULL, gretl_callback, GENR, NULL },
@@ -1773,10 +1776,17 @@ static void clip_init (GtkWidget *w)
 
 static void auto_store (void)
 {
+    int opt = 0;
+
     if (make_default_storelist()) return;
 
+    /* if there's already a datafile, and it's gzipped, then
+       arrange for the new store to be gzipped too */
+    if (strlen(paths.datfile) && is_gzipped(paths.datfile))
+	opt = OPT_Z;
+
     if (data_status & USER_DATA)
-	do_store(paths.datfile, 0, 1);
+	do_store(paths.datfile, opt, 1);
     else
 	file_selector("Save data file", SAVE_DATA, NULL);	
 }

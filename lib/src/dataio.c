@@ -1229,6 +1229,30 @@ static int writelbl (const char *lblfile, const int *list,
 }
 
 /**
+ * is_gzipped:
+ * @fname: filename to examine.
+ * 
+ * Determine if the given file is gzipped.
+ * 
+ * Returns: 1 in case of a gzipped file, 0 if not gzipped or
+ * inaccessible.
+ * 
+ */
+
+int is_gzipped (const char *fname)
+{
+    FILE *fp;
+    int gz = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 0;
+    if (fgetc(fp) == 037 && fgetc(fp) == 0213) 
+	gz = 1;
+    fclose(fp);
+    return gz;
+}
+
+/**
  * has_gz_suffix:
  * @fname: filename to examine.
  * 

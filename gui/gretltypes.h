@@ -23,6 +23,8 @@
 enum extra_cmds {
     RENAME = NC,
     RELABEL,
+    VSETMISS,
+    GSETMISS,
     SMPLDUM,
     SMPLBOOL,
     MARKERS,

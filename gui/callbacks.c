@@ -487,6 +487,16 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	    strcpy(defstr, datainfo->label[v]);
 	okfunc = do_edit_label;
 	break;
+    case VSETMISS:
+	strcpy(title, "gretl: missing code for variable");
+	strcpy(query, "Enter value to be read as \"missing\":");
+	okfunc = do_variable_setmiss;
+	break;
+    case GSETMISS:
+	strcpy(title, "gretl: missing code for dataset");
+	strcpy(query, "Enter value to be read as \"missing\":");
+	okfunc = do_global_setmiss;
+	break;
     case MARKERS:
 	strcpy(title, "gretl: add markers");
 	strcpy(query, "Supply full path to file with markers:");

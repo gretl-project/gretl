@@ -1986,6 +1986,70 @@ void do_rename_var (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
+static int real_do_setmiss (double missval, int varno) 
+{
+    int i, t, count = 0;
+    int start = 1, end = datainfo->v;
+
+    if (varno) {
+	start = varno;
+	end = varno + 1;
+    }
+
+    for (i=start; i<end; i++) {
+	for (t=0; t<datainfo->n; t++) {
+	    if (Z[i][t] == missval) {
+		Z[i][t] = NADBL;
+		count++;
+	    }
+	}	
+    }
+    return count;
+}
+
+void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    double missval;
+    int count;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    missval = atof(edttext);
+    count = real_do_setmiss(missval, 0);
+    if (count == 0)
+	errbox("Didn't find any matching observations");	
+}
+
+void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    double missval;
+    int count;
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    if (!datainfo->vector[mdata->active_var]) {
+	errbox("This variable is a scalar");
+	return;
+    }
+
+    missval = atof(edttext);
+    count = real_do_setmiss(missval, mdata->active_var);
+
+    if (count) {
+	sprintf(errtext, "Set %d observations to \"missing\"", count);
+	infobox(errtext);
+	data_status |= MODIFIED_DATA;
+    } else 
+	errbox("Didn't find any matching observations");
+
+}
+
+/* ........................................................... */
+
 void delete_var (void)
 {
     if (datainfo->v <= 1) {

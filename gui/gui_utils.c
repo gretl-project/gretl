@@ -368,10 +368,18 @@ static void winstack (int code, GtkWidget *w)
 	n_windows = 0;
 	break;
     case STACK_ADD:
-	n_windows++;
-	wstack = myrealloc(wstack, n_windows * sizeof *wstack);
-	if (wstack != NULL) 
-	    wstack[n_windows-1] = w;
+	for (i=0; i<n_windows; i++) {
+	    if (wstack[i] == NULL) {
+		wstack[i] = w;
+		break;
+	    }
+	}
+	if (i == n_windows) {
+	    n_windows++;
+	    wstack = myrealloc(wstack, n_windows * sizeof *wstack);
+	    if (wstack != NULL) 
+		wstack[n_windows-1] = w;
+	}
 	break;
     case STACK_REMOVE:
 	for (i=0; i<n_windows; i++) {
@@ -789,6 +797,8 @@ static struct gui_help_item gui_help_items[] = {
     { SMPLDUM,    "sampling" },
     { PANEL,      "panel" },
     { COMPACT,    "compact" },
+    { VSETMISS,   "missing" },
+    { GSETMISS,   "missing" },
     { 0,          NULL },
 };
 
@@ -1032,12 +1042,15 @@ void context_help (GtkWidget *widget, gpointer data)
     /* fallback */
     if (!pos) {
 	char *helpstr = help_string_from_cmd(help_code);
-	int altcode = extra_command_number(helpstr);
+	int altcode;
 
-	for (i=0; gui_heads[i] != NULL; i++)
-	    for (j=0; j<(gui_heads[i])->ntopics; j++)
-		if (altcode == (gui_heads[i])->topics[j])
-		    pos = (gui_heads[i])->pos[j];
+	if (helpstr != NULL) {
+	    altcode = extra_command_number(helpstr);
+	    for (i=0; gui_heads[i] != NULL; i++)
+		for (j=0; j<(gui_heads[i])->ntopics; j++)
+		    if (altcode == (gui_heads[i])->topics[j])
+			pos = (gui_heads[i])->pos[j];
+	}
     }
     do_gui_help(NULL, pos, NULL);
 }

@@ -70,6 +70,8 @@ int write_data (const char *fname, const int *list,
 		double **Z, const DATAINFO *pdinfo, 
 	        int opt);
 
+int is_gzipped (const char *fname);
+
 int has_gz_suffix (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);

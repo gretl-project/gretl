@@ -94,6 +94,10 @@ void do_seed (GtkWidget *widget, dialog_t *ddata);
 
 void do_rename_var (GtkWidget *widget, dialog_t *ddata);
 
+void do_global_setmiss (GtkWidget *widget, dialog_t *ddata);
+
+void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata);
+
 void delete_var (void);
 
 void do_edit_label (GtkWidget *widget, dialog_t *ddata);

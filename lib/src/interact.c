@@ -701,6 +701,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     double xx;
 
     if (genr->special) return 0;
+
     /* is the new variable an addition to data set? */
     if (v >= pdinfo->v) {
 	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
@@ -713,6 +714,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     xx = genr->xvec[pdinfo->t1];
 
     if (genr->scalar) {
+	strcat(pdinfo->label[v], " (scalar)");
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = genr->xvec[0];
     } else {
