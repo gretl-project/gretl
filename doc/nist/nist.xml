@@ -103,72 +103,95 @@
   <section>
     <title>Gretl's performance</title>
 
-    <para>In <xref linkend="tab-linreg"/> below, <quote>OK</quote>
-      means that <application>gretl</application>'s output
-      agrees &mdash; to the precision given by the program, which is
-      less than the 15 significant digits given by NIST &mdash; with the
-      certified values for all the NIST statistics, which include
-      regression coefficients and standard errors, sum of squared
-      residuals or error sum of squares (ESS), standard error of
-      residuals, <emphasis>F</emphasis> statistic and &rsqu;.</para>
+    <para><xref linkend="tab-linreg"/> below shows the performance of
+    both gretl's standard regression facility and the gretl plugin
+    based on the Gnu Multiple Precision (GMP) library.  In the Gretl
+    column the <quote>min. correct significant digits</quote> figure
+    shows, for each model, the least number of correct significant
+    digits in the gretl results when the various statistics associated
+    with the model (regression coefficients and standard errors, sum
+    of squared residuals, standard error of residuals,
+    <emphasis>F</emphasis> statistic and &rsqu;) are compared with the
+    NIST certified values.  The GMP plugin column simply records
+    whether the gretl results were correct to at least 12 sigificant
+    figures for all the statistics.</para>
 
     <table id="tab-linreg" frame="none">
       <title>NIST linear regression tests</title>
-      <tgroup cols="3"><colspec colnum="1" colwidth="&cmdcol;"/>
+      <tgroup cols="4"><colspec colnum="1" colwidth="&cmdcol;"/>
 	<thead>
 	  <row>
 	    <entry>Dataset</entry>
 	    <entry>Model</entry>
-	    <entry>Performance</entry>
+	    <entry>Gretl (min. correct significant digits)</entry>
+	    <entry>GMP plugin (correct to at least 12 digits?)</entry>
 	  </row>
 	</thead>
 	<tbody>
 	  <row>
 	    <entry>Norris</entry>
 	    <entry>Simple linear regression</entry>
-	    <entry>OK</entry></row>
+	    <entry>9</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row><entry>Pontius</entry>
 	    <entry>Quadratic</entry>
-	    <entry>OK</entry>
+	    <entry>8</entry>
+	    <entry>Yes</entry>
 	  </row>
 	  <row><entry>NoInt1</entry>
-	    <entry>Simple regression, no intercept </entry>
-	    <entry>OK (but see text)</entry>
+	    <entry>Simple regression, no intercept</entry>
+	    <entry>9 (but see text)</entry>
+	    <entry>Yes</entry>
 	  </row>
 	  <row><entry>NoInt2</entry>
 	    <entry>Simple regression,
 	      no intercept </entry>
-	    <entry>OK (but see text)</entry>
+	    <entry>9 (but see text)</entry>
+	    <entry>Yes</entry>
 	  </row>
 	  <row><entry>Filip</entry>
 	    <entry>10th degree polynomial </entry>
-	    <entry>Complains of excessive multicollinearity, no
-	      estimates produced</entry></row>
+	    <entry>0 (see text)</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Longley</entry>
 	    <entry>Multiple regression,
-	      six independent variables 
-	    </entry><entry>OK</entry></row>
+	      six independent variables</entry>
+	    <entry>8</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Wampler1</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
+	    <entry>5th degree polynomial</entry>
+	    <entry>7</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Wampler2</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
+	    <entry>5th degree polynomial</entry>
+	    <entry>9</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Wampler3</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
+	    <entry>5th degree polynomial</entry>
+	    <entry>7</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Wampler4</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
+	    <entry>5th degree polynomial</entry>
+	    <entry>7</entry>
+	    <entry>Yes</entry>
+	  </row>
 	  <row>
 	    <entry>Wampler5</entry>
-	    <entry>5th degree polynomial
-	     </entry><entry>OK</entry></row>
+	    <entry>5th degree polynomial</entry>
+	    <entry>7</entry>
+	    <entry>Yes</entry>
+	  </row>
 	</tbody>
       </tgroup>
     </table>
@@ -176,9 +199,8 @@
 
     <para>As can be seen from the table,
       <application>gretl</application> does a good job of tracking the
-      certified results. (Total run time for the tests was 0.195
-      seconds on a 333MHz i686 machine running GNU/Linux.)  With the
-      <filename>Filip</filename> data set, where the model is 
+      certified results. With the <filename>Filip</filename> data set,
+      where the model is
       <informalequation>
 	<alt role="tex">
 	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
