@@ -5,8 +5,8 @@ version 1.0.4
   allocated for variable labels
 - fix bugs in graphing: "non-standard" graphs could cause problems
   including crashes
-- fix small bug in coefficient printing: sometimes a trailing
-  zero could get omitted
+- fix bug in coefficient printing: sometimes values were being
+  truncated at 5 figures
 
 02/04/03 version 1.0.3
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
