@@ -3281,9 +3281,12 @@ static void maybe_restore_full_data (void)
 				   "Would you like to restore the full range?"), 0);
 	    if (resp == 0) {
 		restore_sample(NULL, 0, NULL);
+	    } else of (resp == -1 || resp > 1) {
+		return 1;
 	    }
 	} 
     }
+    return 0;
 }
 
 /* ........................................................... */
@@ -3298,7 +3301,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
-    maybe_restore_full_data();
+    if (maybe_restore_full_data()) goto store_get_out;
 
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;

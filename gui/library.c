@@ -3505,7 +3505,7 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-static void maybe_restore_full_data (void)
+static int maybe_restore_full_data (void)
 {
     if (mdata->ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
@@ -3515,12 +3515,15 @@ static void maybe_restore_full_data (void)
 	if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
 	    resp = yes_no_dialog(_("gretl: save data"), 
 				 _("The data set is currently sub-sampled.\n"
-				   "Would you like to restore the full range?"), 0);
+				   "Would you like to restore the full range?"), 1);
 	    if (resp == 0) {
 		restore_sample(NULL, 0, NULL);
+	    } else if (resp == -1 || resp == 2) { /* cancel */
+		return 1;
 	    }
 	} 
     }
+    return 0;
 }
 
 /* ........................................................... */
@@ -3535,7 +3538,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
 
     /* if the data set is sub-sampled, give a chance to rebuild
        the full data range before saving */
-    maybe_restore_full_data();
+    if (maybe_restore_full_data()) goto store_get_out;
 
     /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
