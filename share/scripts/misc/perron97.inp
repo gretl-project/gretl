@@ -11,20 +11,24 @@ genr y = log(rgnp)
 # Maximum lag to try for the first difference of y
 genr maxlag = 10
 
+# Max significance level for retaining the last lag
+genr testsig = 0.10
+
 # generate trend, first lag, first difference
 genr time
 genr yr = time + 1860 - 1
 genr y_1 = y(-1)
 genr dyt = y - y_1
 
-# generate lagged differences
+# reduce verbosity below
 set echo off
-loop for j=1..maxlag
+
+# generate lagged differences
+loop for j=1..maxlag --quiet
     genr dyt_$j = dyt(-$j)
 endloop 
 
-# starting year for the series (the first non-missing
-# observation)
+# starting year for the series (the first non-missing obs)
 genr startyr = min(zeromiss(yr * ok(y)))
 
 genr t_a_min = 10000
@@ -36,7 +40,7 @@ genr Tbk = 0
 genr Tbmin = startyr + maxlag + 2;
 genr Tbmax = 1970 - 3;
 
-loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
+loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1) --quiet
 
     printf "\n*** Trying break in %d\n", Tb
 
@@ -44,46 +48,30 @@ loop for (Tb=Tbmin; Tb<=Tbmax; Tb+=1)
     genr DT = (yr = (Tb + 1))
     genr kstar = 0
 
-    # Now try trimming the list of lags
+    # Try trimming the list of lags
+    loop for (k=maxlag; k>0; k-=1) --quiet
+	ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
 
-    loop for (k=maxlag; k>0; k-=1)
-	if k > 1
-	    ols y 0 DU time DT y_1 dyt(-1 to -k) --quiet
-	else
-	    ols y 0 DU time DT y_1 dyt_1 --quiet
-	endif
-
-	# test for significance of the last lag
+	# test significance of the last lag
 	genr tstat = coeff(dyt_$k) / stderr(dyt_$k)
 	genr pval = 2 * pvalue(z, tstat)
-	genr sig = pval < .10
 
 	# printf "last lag (%d): t=%g, asy.
 	# p-value = %g\n", \ k, tstat, pval
 
-	if (sig)
+	if (pval < testsig)
 	    genr kstar = k
 	    break
 	endif
     endloop
 
-    printf "*** optimal k = %d ***\n", kstar
-
-    # Re-run the regression with kstar lags: we can
-    # use variables in the lags field for dyt
-
-    if kstar > 1
-	ols y 0 DU time DT y_1 dyt(-1 to -kstar) --quiet
-    else
-	if kstar > 0
-	    ols y 0 DU time DT y_1 dyt_1 --quiet
-	else
-	    ols y 0 DU time DT y_1 --quiet
-	endif
+    # Re-run the regression with zero lags if need be
+    if kstar = 0
+	ols y 0 DU time DT y_1 --quiet
     endif
    
     genr t_alpha = (coeff(y_1) - 1.0) / stderr(y_1)
-    printf "%d: t_alpha = %g\n", Tb, t_alpha
+    printf "%d: t_alpha = %8g (k=%d)\n", Tb, t_alpha, kstar
    
     if t_alpha < t_a_min
 	genr t_a_min = t_alpha
@@ -97,19 +85,20 @@ genr DU = (yr > Tbstar)
 genr DT = (yr = (Tbstar + 1))
 # print -o time yr DU DT
 
-printf "\n\n**** min(t_alpha) = %g in %d ****\n", t_a_min, Tbstar
+printf "\n\n*** min(t_alpha) = %g in %d (k=%d) ***\n", t_a_min, Tbstar, Tbk
 
 # print the regression ("Model 1") with the selected break year
 
-if Tbk > 1
+if Tbk > 0
     ols y 0 DU time DT y_1 dyt(-1 to -Tbk)
 else
-    if Tbk > 0
-	ols y 0 DU time DT y_1 dyt_1
-    else
-	ols y 0 DU time DT y_1 
-    endif 
+    ols y 0 DU time DT y_1 
 endif
+
+# just checking
+genr t_alpha = (coeff(y_1) - 1.0) / stderr(y_1)
+printf "check: t_alpha = %g\n", t_alpha
+
 
   
 
