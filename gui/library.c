@@ -3078,6 +3078,36 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
+int winfork (const char *cmdline)
+{
+    int child;
+    STARTUPINFO startup;
+    
+
+    GetStartupInfo(&startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWMINIMIZED;
+
+    /* zero return means failure */
+    child = CreateProcess(NULL, cmdline, 
+			  NULL,NULL, FALSE,
+			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+			  NULL, lpCurrentDirectory,
+			  &startup, NULL);
+
+    if (!child) return 1;
+    else return 0;
+}
+
+/* just in case
+typedef struct _PROCESS_INFORMATION { 
+    HANDLE hProcess; 
+    HANDLE hThread; 
+    DWORD dwProcessId; 
+    DWORD dwThreadId; 
+} PROCESS_INFORMATION; 
+*/
+
 #endif
 
 /* ........................................................... */
