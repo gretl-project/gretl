@@ -223,15 +223,6 @@ enum exec_codes {
     SAVE_SESSION_EXEC
 };
 
-enum cgi_options {
-    LIST_DBS = 1,
-    GRAB_IDX,
-    GRAB_DATA,
-    SHOW_IDX,
-    SHOW_DBS,
-    GRAB_NBO_DATA
-};
-    
 enum clipstuff {
     TARGET_STRING,
     TARGET_TEXT,
@@ -319,10 +310,6 @@ void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 void compact_data_set (void);
-
-/* webget.c */
-int update_query (int verbose); 
-int proxy_init (const char *dbproxy);
 
 void set_wm_icon (GtkWidget *w, gpointer data);
 

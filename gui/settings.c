@@ -20,6 +20,8 @@
 /* settings.c for gretl */
 
 #include "gretl.h"
+#include "webget.h"
+
 #include <unistd.h>
 #include <dirent.h>
 

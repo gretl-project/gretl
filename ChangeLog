@@ -20,7 +20,8 @@ version 1.1.5
   simple logging mechanism to aid in trouble-shooting
 - Windows: add the ability to print a gnuplot graph directly
 - ols command: add '-q' (quiet) option to suppress printing of 
-  results
+  results (and add notice of this to gretlcli.hlp)
+- Consolidate "webget" code -- one version for all uses
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter

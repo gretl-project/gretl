@@ -26,6 +26,7 @@
 #include "guiprint.h"
 #include "console.h"
 #include "session.h"
+#include "webget.h"
 
 #include <dirent.h>
 
@@ -192,7 +193,7 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
 
 static void manual_update_query (gpointer p, guint u, GtkWidget *w)
 {
-    update_query(1);
+    update_query();
 }
 
 #if defined(USE_GNOME)
@@ -949,7 +950,7 @@ int main (int argc, char *argv[])
 
     /* check for program updates? */
     proxy_init(dbproxy);
-    if (updater) update_query(0); 
+    if (updater) silent_update_query(); 
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN) {
@@ -2016,29 +2017,30 @@ void show_toolbar (void)
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32
-extern int goto_url (const char *url);
-#else
+#ifndef G_OS_WIN32
+
 static void netscape_open (const char *url)
 {
-#ifdef USE_GNOME
+# ifdef USE_GNOME
     gnome_url_show(url, NULL);   
-#else
+# else
     int err;
     char ns_cmd[128];
 
     sprintf(ns_cmd, "netscape -remote \"openURLNewWindow(%s)\"", url);
     err = system(ns_cmd);
     if (err) gretl_fork("netscape", url);
-#endif /* USE_GNOME */
+# endif /* USE_GNOME */
 }
-#endif /* G_OS_WIN32 */
+
+#endif /* ! G_OS_WIN32 */
 
 static void gretl_website (void)
 {
 #ifdef G_OS_WIN32
-    if (goto_url("http://gretl.sourceforge.net/"))
+    if (goto_url("http://gretl.sourceforge.net/")) {
 	errbox("Failed to open URL");
+    }
 #else
     netscape_open("http://gretl.sourceforge.net/");
 #endif
@@ -2051,8 +2053,9 @@ static void gretl_pdf (void)
     sprintf(manurl, "http://gretl.sourceforge.net/%s", _("manual.pdf"));
 
 #ifdef G_OS_WIN32
-    if (goto_url(manurl))
+    if (goto_url(manurl)) {
 	errbox(_("Failed to open URL"));
+    }
 #else
     netscape_open(manurl);
 #endif
@@ -2060,26 +2063,29 @@ static void gretl_pdf (void)
 
 static void xy_graph (void)
 {
-    if (data_status)
+    if (data_status) {
 	selector_callback(NULL, GR_XY, NULL);
-    else
+    } else {
 	errbox(_("Please open a data file first"));
+    }
 }
 
 static void ols_model (void)
 {
     if (data_status) {
 	model_callback(NULL, OLS, NULL);
-    } else 
+    } else {
 	errbox(_("Please open a data file first"));
+    }
 }
 
 static void go_session (void)
 {
-    if (data_status)
+    if (data_status) {
 	view_session();
-    else
+    } else {
 	errbox(_("Please open a data file first"));
+    }
 }
 
 /* ........................................................... */
@@ -2379,6 +2385,7 @@ static void auto_store (void)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
+
 static int old_windows (void) {
     OSVERSIONINFO *winver;
     static int old = 1;
@@ -2387,8 +2394,10 @@ static int old_windows (void) {
 
     winver = mymalloc(sizeof *winver);
     if (winver == NULL) return old;
+
     winver->dwOSVersionInfoSize = sizeof *winver;
     GetVersionEx(winver);
+
     switch (winver->dwPlatformId) {
     case VER_PLATFORM_WIN32_WINDOWS:
         if (winver->dwMinorVersion >= 10) /* win98 or higher */
@@ -2399,6 +2408,7 @@ static int old_windows (void) {
 	    old = 0;
         break;
     }
+
     free(winver);
     return old;
 }
@@ -2424,16 +2434,17 @@ static int unmangle (const char *dosname, char *longname)
 	real_unmangle = get_plugin_function("real_unmangle", handle);
 	if (real_unmangle == NULL) return 1;
 
-#ifdef WINDEBUG
+# ifdef WINDEBUG
 	fprintf(dbg, "calling real_unmangle with dosname='%s'\n", dosname);
 	fflush(dbg);
-#endif
+# endif
 	(*real_unmangle)(dosname, longname, MAXLEN, &err);
 	close_plugin(handle);
 
 	return err;
     }
 }
+
 #endif /* G_OS_WIN32 */
 
 static void count_selections (GtkTreeModel *model, GtkTreePath *path,

@@ -12,7 +12,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <sys/utime.h>
 #else
 # include <utime.h>
@@ -24,7 +24,7 @@ extern char *strdup(const char *s);
 
 #include "zlib.h"
 
-#ifdef OS_WIN32
+#ifdef WIN32
 #  ifndef F_OK
 #    define F_OK (0)
 #  endif

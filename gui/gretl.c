@@ -23,6 +23,7 @@
 #include "guiprint.h"
 #include "console.h"
 #include "session.h"
+#include "webget.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -167,7 +168,7 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
 
 static void manual_update_query (gpointer p, guint u, GtkWidget *w)
 {
-    update_query(1);
+    update_query();
 }
 
 #ifdef USE_GNOME
@@ -765,7 +766,7 @@ int main (int argc, char *argv[])
 
     /* check for program updates? */
     proxy_init(dbproxy);
-    if (updater) update_query(0); 
+    if (updater) silent_update_query(); 
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN)

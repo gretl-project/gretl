@@ -9,25 +9,20 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef OS_WIN32
+#ifdef WIN32
 # include <windows.h>
 # include <winsock.h>
 #endif
 
 #include "updater.h"
+#include "webget.h"
 
 FILE *flg;
 int logit;
 
 #define MAXLEN 512
 
-enum cgi_options {
-    QUERY = 1,
-    GRAB_FILE
-};
-
-
-#ifdef OS_WIN32
+#ifdef WIN32
 static void switch_cursor (int cursor)
 {
     HANDLE h;
@@ -56,7 +51,7 @@ static void getout (int err)
     } 
 }
 
-#ifdef OS_WIN32
+#ifdef WIN32
 static int msgbox (const char *msg, int err)
 {
     int ret;
@@ -92,7 +87,7 @@ int infobox (const char *msg)
     return msgbox(msg, 0);
 }
 
-#ifdef OS_WIN32
+#ifdef WIN32
 static void ws_cleanup (void)
 {
     WSACleanup();
@@ -225,7 +220,7 @@ int main (int argc, char *argv[])
     char *getbuf = NULL;
     char *line, fname[48], errbuf[256], infobuf[80];
     const char *testfile = "gretl.stamp";
-#ifdef OS_WIN32
+#ifdef WIN32
     char gretldir[MAXLEN];
 #endif
     time_t filedate;
@@ -235,7 +230,7 @@ int main (int argc, char *argv[])
 	debug = 1;
     }
 
-#ifdef OS_WIN32
+#ifdef WIN32
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
 	       "from the Windows registry");
@@ -289,13 +284,13 @@ int main (int argc, char *argv[])
 	    fputs("getbuf allocated OK\n", flg);
 	}
 
-	err = grab_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
+	err = files_query(&getbuf, errbuf, filedate);
 	if (err) {
 	   listerr(errbuf, fname);
 	   getout(1);
 	}
 
-	if (logit) fputs("first call to grab_url: success\n", flg);
+	if (logit) fputs("call to files_query: success\n", flg);
 
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
@@ -322,16 +317,16 @@ int main (int argc, char *argv[])
 		fprintf(flg, "trying to get '%s'\n", fname);
 	    }
 
-#ifdef OS_WIN32
+#ifdef WIN32
 	    switch_cursor(OCR_WAIT);
 #endif
-	    err = grab_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
-#ifdef OS_WIN32
+	    err = get_remote_file(fname, errbuf);
+#ifdef WIN32
 	    switch_cursor(OCR_NORMAL);
 #endif
 
 	    if (logit) {
-		fprintf(flg, "grab_url() returned %d\n", err);
+		fprintf(flg, "get_remote_file() returned %d\n", err);
 	    }	    
 	    if (err) {
 		listerr(errbuf, fname);
@@ -360,7 +355,7 @@ int main (int argc, char *argv[])
     else if (strcmp(argv[1], "-l") == 0) { /* get listing */
 	getbuf = malloc(8192); 
 	clear(getbuf, 8192);
-	err = grab_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
+	err = files_query(&getbuf, errbuf, filedate);
 	if (err) {
 	    listerr(errbuf, NULL);
 	    free(getbuf);
@@ -374,7 +369,7 @@ int main (int argc, char *argv[])
     
     else if (strcmp(argv[1], "-f") == 0) { /* get a specified file */
 	strncpy(fname, argv[2], 47);
-	err = grab_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
+	err = get_remote_file(fname, errbuf);
 	if (err) {
 	    listerr(errbuf, fname);
 	    getout(1);

@@ -28,7 +28,6 @@
 # include "version.h"
 # define I_(String) String
 # define _(String) String
-# define GRETL_BUFSIZE 8192
 # define MAXLEN         512
 #else
 # include "gretl.h"
@@ -80,6 +79,16 @@ enum {
     SP_FINISH 
 } progress_flags;
 #endif /* UPDATER */
+
+enum {
+    SAVE_TO_BUFFER,
+    SAVE_TO_FILE
+} save_opts;
+
+enum {
+    QUERY_SILENT,
+    QUERY_VERBOSE
+} query_opts;
 
 /* header-type info, private to webget.c */
 
@@ -201,7 +210,7 @@ struct urlinfo
     uerr_t proto;                 /* URL protocol */
     char *host;                   /* hostname */
     unsigned short port;
-    unsigned short filesave;      /* 1 for file, 0 for buffer */
+    unsigned short saveopt;       /* save to buffer or file? */   
     char *path; 
     char *localfile;
     char **savebuf;
@@ -379,25 +388,25 @@ static int rbuf_peek (struct rbuf *rbuf, char *store)
 	rbuf->buffer_pos = rbuf->buffer;
 	rbuf->buffer_left = 0;
 	res = iread (rbuf->fd, rbuf->buffer, sizeof rbuf->buffer);
-	if (res <= 0)
+	if (res <= 0) {
 	    return res;
+	}
 	rbuf->buffer_left = res;
     }
+
     *store = *rbuf->buffer_pos;
+
     return 1;
 }
+
+/* ........................................................... */
 
 #ifdef UPDATER
 
 extern void errbox (const char *msg);
 extern void infobox (const char *msg);
 
-enum cgi_options {
-    QUERY = 1,
-    GRAB_FILE
-};
-
-static void clear (char *str, const int len)
+void clear (char *str, int len)
 {
     memset(str, 0, len);
 }
@@ -431,18 +440,6 @@ static char *g_strdup (const char *s)
     }
 
     return ret;
-}
-
-static int haschar (char c, const char *str)
-{
-    int i = 0;
-
-    while (*str) {
-        if (*str++ == c) return i;
-        i++;
-    }
-
-    return -1;
 }
 
 #endif /* UPDATER */
@@ -731,7 +728,7 @@ static int http_process_none (const char *hdr, void *arg)
 /* ........................................................... */
 
 static int http_process_type (const char *hdr, void *arg)
-/* Place the malloc-ed copy of HDR hdr, to the first `;' to ARG.  */
+/* Place the malloc-ed copy of HDR hdr, to the first `;' to ARG */
 {
     char **result = (char **) arg;
     char *p;
@@ -841,7 +838,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    conn->host, conn->port, sock);
 #endif   
 
-    if (u->filesave) { /* save output to file */
+    if (u->saveopt == SAVE_TO_FILE) { 
 	fp = fopen(u->localfile, "wb");
 	if (fp == NULL) {
 	    close(sock);
@@ -873,7 +870,8 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef WIN32
+#ifdef UPDATER
+    /* the linux test updater program pretends to be Windows */
     strcat(useragent, "w");
 #endif
 
@@ -1014,6 +1012,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	   `none', disable the ranges */
 	if (*dt & ACCEPTRANGES) {
 	    int nonep;
+
 	    if (header_process (hdr, "Accept-Ranges", 
 				http_process_none, &nonep)) {
 		if (nonep) {
@@ -1229,7 +1228,6 @@ static void freeurl (struct urlinfo *u, int complete)
     }
     if (complete) {
 	free(u);
-	u = NULL;
     }
 }
 
@@ -1401,8 +1399,9 @@ static int iwrite (int fd, char *buf, int len)
 	    res = WRITE(fd, buf, len);
 	} while (res == -1 && errno == EINTR);
 
-	if (res <= 0)
+	if (res <= 0) {
 	    break;
+	}
 	buf += res;
 	len -= res;
     }
@@ -1411,8 +1410,6 @@ static int iwrite (int fd, char *buf, int len)
 }
 
 /* ........................................................... */
-
-#ifndef UPDATER
 
 static char *print_option (int opt)
 {
@@ -1425,34 +1422,20 @@ static char *print_option (int opt)
 	return "GRAB_DATA";
     case GRAB_NBO_DATA:
 	return "GRAB_NBO_DATA";
+    case GRAB_FILE:
+	return "GRAB_FILE";
+    case QUERY:
+	return "QUERY";
     default:
 	break;
     }
     return NULL;
 } 
 
-#else
-
-static char *print_option (int opt)
-{
-    switch (opt) {
-    case QUERY:
-        return "QUERY";
-    case GRAB_FILE:
-        return "GRAB_FILE";
-    default:
-        return NULL;
-    }
-    return NULL;
-} 
-
-#endif /* UPDATER */
-
-
 /* ........................................................... */
 
 static int get_update_info (char **saver, char *errbuf, time_t filedate,
-			    int manual)
+			    int queryopt)
 {
     uerr_t result;
     struct urlinfo *u;
@@ -1476,7 +1459,7 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 #endif
     u->path = mymalloc(strlen(cgi) + 64);
 
-    if (manual) {
+    if (queryopt == QUERY_VERBOSE) {
 	sprintf(u->path, "%s?opt=MANUAL_QUERY", cgi);
     } else {
 	sprintf(u->path, "%s?opt=QUERY", cgi);
@@ -1486,14 +1469,13 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     sprintf(datestr, "%lu", filedate);
     strcat(u->path, datestr);
 
-    /* hook u->local to buffer */
-    u->filesave = 0;
+    u->saveopt = SAVE_TO_BUFFER;
     u->savebuf = saver;
 
     result = http_loop(u, &dt, proxy); 
 
     if (result == RETROK) {
-        errbuf[0] = '\0';
+        *errbuf = '\0';
     } else {
 	strcpy(errbuf, u->errbuf);
 	err = 1;
@@ -1504,9 +1486,9 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
     return err;
 }
 
-/* ........................................................... */
+#ifndef UPDATER
 
-#ifdef WIN32
+# ifdef WIN32
 static size_t get_size (char *buf)
 {
     size_t i, newsize = 0L;
@@ -1523,9 +1505,7 @@ static size_t get_size (char *buf)
 
     return newsize;
 }
-#endif /* WIN32 */
-
-/* ........................................................... */
+# endif /* WIN32 */
 
 static time_t get_time_from_stamp_file (const char *fname)
      /* E.g. Sun Mar 16 13:50:52 EST 2003 */
@@ -1544,6 +1524,7 @@ static time_t get_time_from_stamp_file (const char *fname)
 
     fp = fopen(fname, "r");
     if (fp == NULL) return (time_t) 0;
+
     if (fscanf(fp, "%3s %3s %d %d:%d:%d %*s %d", 
                wday, mon, &stime.tm_mday, &stime.tm_hour,
                &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) {
@@ -1568,11 +1549,7 @@ static time_t get_time_from_stamp_file (const char *fname)
     return mktime(&stime);
 }
 
-/* ........................................................... */
-
-#ifndef UPDATER
-
-int update_query (int verbose)
+static int real_update_query (int queryopt)
 {
     int err = 0;
     char *getbuf = NULL;
@@ -1616,7 +1593,7 @@ int update_query (int verbose)
     getbuf = malloc(2048); 
     if (getbuf == NULL) return E_ALLOC;
     clear(getbuf, 2048);
-    err = get_update_info(&getbuf, errbuf, filedate, verbose);
+    err = get_update_info(&getbuf, errbuf, filedate, queryopt);
 
     if (err || getbuf == NULL) return 1;
 
@@ -1650,7 +1627,7 @@ int update_query (int verbose)
 	}
 # endif /* WIN32 */
 	infobox(infotxt);
-    } else if (verbose) {
+    } else if (queryopt == QUERY_VERBOSE) {
 	infobox(_("No new files"));
     }
 
@@ -1658,7 +1635,17 @@ int update_query (int verbose)
     return err;
 }
 
-#endif /* UPDATER */
+int silent_update_query (void)
+{
+    return real_update_query (QUERY_SILENT);
+}
+
+int update_query (void)
+{
+    return real_update_query (QUERY_VERBOSE);
+}
+
+#endif /* ! UPDATER */
 
 /* ........................................................... */
 
@@ -1670,7 +1657,7 @@ int proxy_init (const char *dbproxy)
     gretlproxy.url = NULL;
     gretlproxy.proto = URLHTTP;
     gretlproxy.port = 0;
-    gretlproxy.filesave = 0;
+    gretlproxy.saveopt = SAVE_TO_BUFFER;
     gretlproxy.path = NULL; 
     gretlproxy.localfile = NULL;
     gretlproxy.savebuf = NULL;
@@ -1687,19 +1674,26 @@ int proxy_init (const char *dbproxy)
 	       "format must be ipnumber:port"));
 	return 1;
     }
+
     gretlproxy.port = atoi(p + 1);
     gretlproxy.host = mymalloc(16);
+
     if (gretlproxy.host == NULL) return 1;
+
     iplen = p - dbproxy;
     if (iplen > 15) {
 	errbox(_("HTTP proxy: first field must be an IP number"));
 	return 1;	
     }
+
     gretlproxy.host[0] = '\0';
     strncat(gretlproxy.host, dbproxy, iplen);
-#ifdef WDEBUG
-    fprintf(stderr, "dbproxy: host='%s', port=%d\n", 
-	    gretlproxy.host, gretlproxy.port);
+
+#ifdef UPDATER
+    if (logit) {
+	fputs("Done proxy init ", flg);
+	fprintf(flg, "host %s, port %d", gretlproxy.host, gretlproxy.port);
+    }
 #endif
 
     return 0;
@@ -1708,11 +1702,11 @@ int proxy_init (const char *dbproxy)
 /* ........................................................... */
 
 static int 
-retrieve_url (int opt, const char *dbase, const char *series, 
-	      int filesave, const char *savefile, char **savebuf,
+retrieve_url (int opt, const char *fname, const char *dbseries, 
+	      int saveopt, const char *savefile, char **savebuf,
 	      char *errbuf)
-/* grab data from URL.  If filesave = 1 then data is stored to
-   a local file whose name is given by "savefile".  If filesave = 0
+/* grab data from URL.  If saveopt = SAVE_TO_FILE then data is stored to
+   a local file whose name is given by "savefile".  If saveopt = SAVE_TO_BUFFER
    then "savebuf" is presumed to point to a char buffer to which the data
    should be written.
 */
@@ -1722,42 +1716,47 @@ retrieve_url (int opt, const char *dbase, const char *series,
     struct urlinfo *proxy = NULL; 
     int dt;
     const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
-    size_t dblen = 0L;
+    size_t fnlen = 0L;
 
     if (use_proxy && gretlproxy.host != NULL) {
 	proxy = &gretlproxy;
     }
 
-    if (dbase != NULL) {
-	dblen = strlen(dbase);
+    if (fname != NULL) {
+	fnlen = strlen(fname);
     }
 
     u = newurl();
     u->proto = URLHTTP;
     u->port = DEFAULT_HTTP_PORT;
     u->host = mymalloc(16);
-    u->path = mymalloc(strlen(cgi) + dblen + 64);
+    u->path = mymalloc(strlen(cgi) + fnlen + 64);
 #ifdef UPDATER
     strcpy(u->host, dbhost_ip);
 #else
     strcpy(u->host, paths.dbhost_ip);
 #endif
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
+    u->saveopt = saveopt;
 
-    if (dblen) {
-	strcat(u->path, "&dbase=");
-	strcat(u->path, dbase);
+    if (fnlen) {
+	if (opt == GRAB_FILE) {
+	    strcat(u->path, "&fname=");
+	} else {
+	    strcat(u->path, "&dbase=");
+	}
+	strcat(u->path, fname);
     }
-    if (series != NULL) {
+
+    if (dbseries != NULL) {
 	strcat(u->path, "&series=");
-	strcat(u->path, series);
+	strcat(u->path, dbseries);
     }
 
-    if (filesave) {
-	u->filesave = 1;
+    if (saveopt == SAVE_TO_FILE) {
 	u->localfile = g_strdup(savefile);
+	u->savebuf = NULL;
     } else {
-	u->filesave = 0;
 	u->localfile = NULL;
 	u->savebuf = savebuf;
     }
@@ -1801,17 +1800,7 @@ static long GetRegKey (HKEY key, char *subkey, char *retdata)
 
 # ifdef UPDATER
 
-static void read_proxy_info (void);
-
-int grab_url (int opt, char *fname, char **savebuf, char *localfile,
-	      char *errbuf, time_t filedate)
-{
-    read_proxy_info();
-
-    return retrieve_url(opt, NULL, NULL, 1, savebuf, errbuf); /* FIXMEE!!! */
-}
-
-static int read_reg_val (HKEY tree, char *keyname, char *keyval)
+int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
     int error = 0;
@@ -1861,6 +1850,7 @@ static void read_proxy_info (void)
         strncat(dbproxy, val, 20);
     }
 }
+
 # endif /* UPDATER */
 
 int goto_url (const char *url)
@@ -1908,14 +1898,16 @@ int goto_url (const char *url)
 
 int list_remote_dbs (char **getbuf, char *errbuf)
 {
-    return retrieve_url (LIST_DBS, NULL, NULL, 0, NULL, getbuf, errbuf);
+    return retrieve_url (LIST_DBS, NULL, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf, errbuf);
 }
 
 int retrieve_remote_db_list (const char *dbname, 
 			     char **getbuf, 
 			     char *errbuf)
 {
-    return retrieve_url (GRAB_IDX, dbname, NULL, 0, NULL, getbuf, errbuf);
+    return retrieve_url (GRAB_IDX, dbname, NULL, SAVE_TO_BUFFER, 
+			 NULL, getbuf, errbuf);
 }
 
 int retrieve_remote_db (const char *dbname, 
@@ -1923,7 +1915,8 @@ int retrieve_remote_db (const char *dbname,
 			char *errbuf, 
 			int opt)
 {
-    return retrieve_url (opt, dbname, NULL, 1, localname, NULL, errbuf);
+    return retrieve_url (opt, dbname, NULL, SAVE_TO_FILE, 
+			 localname, NULL, errbuf);
 }
 
 int retrieve_remote_db_data (const char *dbname,
@@ -1932,7 +1925,33 @@ int retrieve_remote_db_data (const char *dbname,
 			     char *errbuf,
 			     int opt)
 {
-    return retrieve_url (opt, dbname, varname, 0, NULL, getbuf, errbuf);
+    return retrieve_url (opt, dbname, varname, SAVE_TO_BUFFER, 
+			 NULL, getbuf, errbuf);
 }
 
+#else /* standalone updater */
+
+int files_query (char **getbuf, char *errbuf, time_t filedate)
+{
+    use_proxy = 0;
+    *dbproxy = '\0';
+#ifdef WIN32
+    read_proxy_info();
 #endif
+    proxy_init(dbproxy);
+    return get_update_info (getbuf, errbuf, filedate, QUERY_SILENT); 
+}
+
+int get_remote_file (const char *fname, char *errbuf)
+{
+    use_proxy = 0;
+    *dbproxy = '\0';
+#ifdef WIN32
+    read_proxy_info();
+#endif
+    proxy_init(dbproxy);
+    return retrieve_url (GRAB_FILE, fname, NULL, SAVE_TO_FILE, 
+			 fname, NULL, errbuf);
+}
+
+#endif /* UPDATER */
