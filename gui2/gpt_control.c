@@ -3098,6 +3098,35 @@ static int get_png_bounds_info (png_bounds_t *bounds)
    it on the clipboard.
 */
 
+#if 0
+METAFILEPICT *make_dummy_pict (void)
+{
+    HMETAFILE hmf;
+    METAFILEPICT *mfpict;
+    LPTSTR handle;
+    HDC hdc;
+    const char *msg = "Please use \"Paste special\" to insert the graph";
+    
+    hdc = CreateMetaFile(NULL);
+    TextOut(hdc, 10, 50, msg, strlen(msg));
+    hmf = CloseMetaFile(hdc);
+
+    mfpict = GlobalAlloc(GMEM_MOVEABLE, sizeof *mfpict);
+    if (mfpict == NULL) return NULL;
+
+    handle = GlobalLock(mfpict);
+    mfpict->mm = MM_ANISOTROPIC;
+    mfpict->xExt = 0;
+    mfpict->yExt = 0;
+    mfpict->hMF = hmf;
+    GlobalUnlock(handle);
+
+    PlayMetaFile(GetDC(0), hmf);
+
+    return mfpict;
+}
+#endif
+
 /* Weirdness: when an emf is put on the clipboard as below (it doesn't
    matter whether the short method is used, or the long one that is
    invoked when CLIPTEST is defined), Word 2000 behaves thus: a
@@ -3111,6 +3140,9 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 static int emf_to_clip (char *emfname)
 {
     HENHMETAFILE hemf, hemfclip;
+#if 0
+    METAFILEPICT *mfdummy;  
+#endif  
 
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
@@ -3121,10 +3153,20 @@ static int emf_to_clip (char *emfname)
 
     hemf = GetEnhMetaFile(emfname);
     hemfclip = CopyEnhMetaFile(hemf, NULL);
+
+#if 0
+    mfdummy = make_dummy_pict();
+#endif
+
     SetClipboardData(CF_ENHMETAFILE, hemfclip);
+#if 0
+    SetClipboardData(CF_METAFILEPICT, mfdummy);
+#endif
 
     CloseClipboard();
+
     DeleteEnhMetaFile(hemf);
+    /* DeleteMetaFile(mfdummy->hMF); */
 
     return 0;
 }

@@ -439,6 +439,8 @@ GtkItemFactoryEntry data_items[] = {
       random_dialog, GENR_UNIFORM, NULL },
     { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
       SEED, NULL },
+    { N_("/Data/Add variables/sep2"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Add variables/Define _new variable..."), NULL, gretl_callback, GENR, NULL },
     { N_("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
 
     /* Sample menu */
@@ -1180,6 +1182,7 @@ void set_sample_label (DATAINFO *pdinfo)
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
     if (strlen(paths.datfile) > 2) {
+	/* data file open already */
 	if (strrchr(paths.datfile, SLASH) == NULL)
 	    sprintf(labeltxt, " %s ", paths.datfile);
 	else
@@ -1193,8 +1196,10 @@ void set_sample_label (DATAINFO *pdinfo)
     else if (data_status & MODIFIED_DATA) {
 	strcpy(labeltxt, _(" Unsaved data "));
 	gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
-	build_main_popups();
     }
+    
+    if (data_status & MODIFIED_DATA)
+	build_main_popups();
 }
 
 /* ......................................................... */
@@ -1602,7 +1607,6 @@ static void build_main_popups (void)
 	    gtk_widget_destroy(mdata->popup);
 	    g_signal_handler_disconnect(G_OBJECT(mdata->listbox), sig_id);
 	}
-
 	build_var_popup(mdata);
 	sig_id = g_signal_connect(G_OBJECT(mdata->listbox), "button_press_event",
 				  G_CALLBACK(main_popup_handler), 

@@ -33,14 +33,13 @@ static int gui_help_length, script_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
 
 /* searching stuff */
-static int look_for_string (char *haystack, char *needle, int nStart);
+static int look_for_string (const char *haystack, const char *needle, 
+			    int start);
 static void close_find_dialog (GtkWidget *widget, gpointer data);
 static void find_in_help (GtkWidget *widget, gpointer data);
 static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_clist (GtkWidget *widget, gpointer data);
-static void cancel_find (GtkWidget *widget, gpointer data);
-static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
-				gpointer data);
+static void find_string_dialog (void (*findfunc)(), gpointer data);
 
 static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
@@ -431,23 +430,23 @@ void edit_script_help (GtkWidget *widget, GdkEventButton *b,
 void menu_find (gpointer data, guint db, GtkWidget *widget)
 {
     if (db) 
-	find_string_dialog(find_in_clist, cancel_find, data);
+	find_string_dialog(find_in_clist, data);
     else 
-	find_string_dialog(find_in_help, cancel_find, data);
+	find_string_dialog(find_in_help, data);
 }
 
 /* ........................................................... */
 
 void datafile_find (GtkWidget *widget, gpointer data)
 {
-    find_string_dialog(find_in_clist, cancel_find, data);
+    find_string_dialog(find_in_clist, data);
 }
 
 /* ........................................................... */
 
 void find_var (gpointer p, guint u, GtkWidget *w)
 {
-    find_string_dialog(find_in_clist, cancel_find, mdata);
+    find_string_dialog(find_in_clist, mdata);
 }
 
 /* .................................................................. */
@@ -486,7 +485,6 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
 				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
-	/* find_window = NULL; */
     } else infobox(_("String was not found."));
 
     g_free(haystack);
@@ -523,7 +521,6 @@ static void find_in_text (GtkWidget *widget, gpointer data)
 	gtk_editable_set_position(GTK_EDITABLE(vwin->w), found);
         gtk_editable_select_region(GTK_EDITABLE(vwin->w), 
 				   found, found + strlen(needle));
-	/* find_window = NULL; */
     } else infobox(_("String was not found."));
 
     g_free(haystack);
@@ -567,7 +564,6 @@ static void find_in_clist (GtkWidget *w, gpointer data)
 	gtk_clist_moveto(GTK_CLIST(dbdat->listbox), i, 0, 0, .1);
 	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), i, 0);
 	dbdat->active_var = i;
-	/* find_window = NULL; */
     } else {
 	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), 0, 0);
 	dbdat->active_var = 0;
@@ -577,14 +573,15 @@ static void find_in_clist (GtkWidget *w, gpointer data)
 
 /* .................................................................. */
 
-static int look_for_string (char *haystack, char *needle, int start)
+static int look_for_string (const char *haystack, const char *needle, 
+			    int start)
 {
     int pos;
-    int HaystackLength = strlen(haystack);
-    int NeedleLength = strlen(needle);
+    int hlen = strlen(haystack);
+    int nlen = strlen(needle);
 
-    for (pos = start; pos < HaystackLength; pos++) {
-        if (strncmp(&haystack[pos], needle, NeedleLength) == 0) 
+    for (pos = start; pos < hlen; pos++) {
+        if (strncmp(&haystack[pos], needle, nlen) == 0) 
              return pos;
     }
     return -1;
@@ -594,8 +591,6 @@ static int look_for_string (char *haystack, char *needle, int start)
  
 static void cancel_find (GtkWidget *widget, gpointer data)
 {
-    fprintf(stderr, "cancal_find: data=%p, find_window=%p\n",
-	    data, find_window);
     if (find_window != NULL) {
 	gtk_widget_destroy(GTK_WIDGET(data));
 	find_window = NULL;
@@ -627,8 +622,7 @@ static void parent_find (GtkWidget *finder, windata_t *caller)
 
 /* .................................................................. */
 
-static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
-				gpointer data)
+static void find_string_dialog (void (*findfunc)(), gpointer data)
 {
     GtkWidget *label;
     GtkWidget *button;
@@ -664,7 +658,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     }
     gtk_signal_connect(GTK_OBJECT (find_entry), 
 			"activate", 
-			GTK_SIGNAL_FUNC (YesFunc),
+			GTK_SIGNAL_FUNC(findfunc),
 	                find_window);
     gtk_widget_show (find_entry);
 
@@ -686,7 +680,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (YesFunc), find_window);
+		       GTK_SIGNAL_FUNC (findfunc), find_window);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -696,7 +690,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT (button), "clicked",
-		       GTK_SIGNAL_FUNC (NoFunc), find_window);
+		       GTK_SIGNAL_FUNC (cancel_find), find_window);
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);

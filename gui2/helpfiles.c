@@ -34,13 +34,11 @@ static int gui_help_length, script_help_length;
 static struct help_head_t **cli_heads, **gui_heads;
 
 /* searching stuff */
-static int look_for_string (char *haystack, char *needle, int nStart);
-static void close_find_dialog (GtkWidget *widget, gpointer data);
+static int look_for_string (const char *haystack, const char *needle, 
+			    int start);
 static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_listbox (GtkWidget *widget, gpointer data);
-static void cancel_find (GtkWidget *widget, gpointer data);
-static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
-				gpointer data);
+static void find_string_dialog (void (*findfunc)(), gpointer data);
 
 static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
@@ -443,31 +441,31 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 void menu_find (gpointer data, guint db, GtkWidget *widget)
 {
     if (db) 
-	find_string_dialog(find_in_listbox, cancel_find, data);
+	find_string_dialog(find_in_listbox, data);
     else 
-	find_string_dialog(find_in_text, cancel_find, data);
+	find_string_dialog(find_in_text, data);
 }
 
 /* ........................................................... */
 
 void datafile_find (GtkWidget *widget, gpointer data)
 {
-    find_string_dialog(find_in_listbox, cancel_find, data);
+    find_string_dialog(find_in_listbox, data);
 }
 
 /* ........................................................... */
 
 void find_var (gpointer p, guint u, GtkWidget *w)
 {
-    find_string_dialog(find_in_listbox, cancel_find, mdata);
+    find_string_dialog(find_in_listbox, mdata);
 }
 
 /* .................................................................. */
 
-static void close_find_dialog (GtkWidget *widget, gpointer data)
+static gint close_find_dialog (GtkWidget *widget, gpointer data)
 {
-    gtk_widget_destroy (widget);
     find_window = NULL;
+    return FALSE;
 }
 
 /* .................................................................. */
@@ -582,7 +580,6 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 				 path, NULL, FALSE);
 	win->active_var = tree_path_get_row_number(path);
 	gtk_tree_path_free(path);
-	find_window = NULL;    
     } else {
 	infobox(_("String was not found."));
     }
@@ -590,14 +587,15 @@ static void find_in_listbox (GtkWidget *w, gpointer data)
 
 /* .................................................................. */
 
-static int look_for_string (char *haystack, char *needle, int start)
+static int look_for_string (const char *haystack, const char *needle, 
+			    int start)
 {
     int pos;
-    int HaystackLength = strlen(haystack);
-    int NeedleLength = strlen(needle);
+    int hlen = strlen(haystack);
+    int nlen = strlen(needle);
 
-    for (pos = start; pos < HaystackLength; pos++) {
-        if (strncmp(&haystack[pos], needle, NeedleLength) == 0) 
+    for (pos = start; pos < hlen; pos++) {
+        if (strncmp(&haystack[pos], needle, nlen) == 0) 
              return pos;
     }
     return -1;
@@ -607,30 +605,34 @@ static int look_for_string (char *haystack, char *needle, int start)
  
 static void cancel_find (GtkWidget *widget, gpointer data)
 {
-    gtk_widget_destroy(GTK_WIDGET(data));
-    find_window = NULL;
+    if (find_window != NULL) {
+	gtk_widget_destroy(GTK_WIDGET(data));
+	find_window = NULL;
+    }
 }
 
 /* .................................................................. */
 
 static void parent_find (GtkWidget *finder, windata_t *caller)
 {
-    if (caller == mdata) {
-	return;
-    } else if (caller->dialog != NULL) {
-	gtk_window_set_transient_for(GTK_WINDOW(finder),
-				     GTK_WINDOW(caller->dialog));
+    GtkWidget *w = NULL;
+
+    if (caller->dialog != NULL) {
+	w = caller->dialog;
     } else if (caller->w != NULL) {
-	gtk_window_set_transient_for(GTK_WINDOW(finder),
-				     GTK_WINDOW(caller->w));
+	w = caller->w;
     }
-    gtk_window_set_destroy_with_parent(GTK_WINDOW(finder), TRUE);
+
+    if (w != NULL) {
+	gtk_window_set_transient_for(GTK_WINDOW(finder),
+				     GTK_WINDOW(w));
+	gtk_window_set_destroy_with_parent(GTK_WINDOW(finder), TRUE);
+    }
 }
 
 /* .................................................................. */
 
-static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
-				gpointer data)
+static void find_string_dialog (void (*findfunc)(), gpointer data)
 {
     GtkWidget *label;
     GtkWidget *button;
@@ -650,6 +652,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     g_signal_connect (G_OBJECT (find_window), "destroy",
 		      G_CALLBACK (close_find_dialog),
 		      find_window);
+
     gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
     gtk_container_set_border_width (GTK_CONTAINER (find_window), 5);
 
@@ -665,7 +668,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     }
     g_signal_connect(G_OBJECT (find_entry), 
 		     "activate", 
-		     G_CALLBACK (YesFunc),
+		     G_CALLBACK (findfunc),
 		     find_window);
     gtk_widget_show (find_entry);
 
@@ -687,7 +690,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (YesFunc), find_window);
+		     G_CALLBACK (findfunc), find_window);
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -697,7 +700,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
     g_signal_connect(G_OBJECT (button), "clicked",
-		     G_CALLBACK (NoFunc), find_window);
+		     G_CALLBACK (cancel_find), find_window);
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(find_entry);
@@ -708,7 +711,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 
 void text_find_callback (GtkWidget *w, gpointer data)
 {
-    find_string_dialog(find_in_text, cancel_find, data);
+    find_string_dialog(find_in_text, data);
 }
 
 /* ........................................................... */
