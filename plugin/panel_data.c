@@ -618,7 +618,164 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+/* .................................................................. */
 
+#ifdef notyet
+
+static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
+                           double **srcZ, DATAINFO *srcinfo, int srcv,
+			   char *mask)
+{
+    int t;
+
+    /* use mask to mask out missing vals */
+
+    for (t=0; t<targinfo->n; t++) {
+        targZ[targv][t] = srcZ[srcv][t];
+    }
+
+    strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
+    strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+}
+
+static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
+{
+    targ->sd0 = src->sd0;
+    strcpy(targ->stobs, src->stobs); 
+    targ->t1 = src->t1;
+    targ->t2 = src->t2;
+    targ->pd = src->pd; /* FIXME */
+    targ->time_series = src->time_series;
+}
+
+/* - do some sanity checks
+   - create a local copy of the required portion of the data set,
+     skipping the obs that will be missing
+   - copy in the lags of uhat
+   - estimate the aux model
+   - destroy the temporary data set
+*/
+
+int panel_autocorr_test (MODEL *pmod, int order, 
+			 double **Z, DATAINFO *pdinfo, 
+			 PRN *prn, GRETLTEST *test)
+{
+    int *aclist;
+    double **tmpZ;
+    DATAINFO *tmpinfo;
+    MODEL aux;
+    int i, k, t, n = pdinfo->n, v = pdinfo->v; 
+    char *mask;
+    double trsq, LMF, bp, lb;
+    int nobs, err = 0;
+
+    /* basic checks: need to set "nobs" first */
+    if (order <= 0) order = 1;
+    if (order > nobs - 1) return E_DF;
+    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1)
+	return E_DF;
+
+    if (!balanced_panel(pdinfo)) {
+        pprintf(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
+                "You need to have the same number of observations\n"
+                "for each cross-sectional unit"));
+        return 1;
+    }
+
+    /* create little temporary dataset */
+    /* FIXME values to use here */
+    tmpinfo = create_new_dataset(&tmpZ, 4, pdinfo->n, 0);
+    if (tmpinfo == NULL) return E_ALLOC;
+    copy_basic_data_info(tmpinfo, pdinfo);
+
+    _init_model(&aux, pdinfo);
+
+    k = order + 1;
+    aclist = malloc((pmod->list[0] + k) * sizeof *aclist);
+
+    if (aclist == NULL) {
+	err = E_ALLOC;
+    } else {
+	aclist[0] = pmod->list[0] + order;
+	/* FIXME */
+	for (i=2; i<=pmod->list[0]; i++) aclist[i] = pmod->list[i];
+	if (dataset_add_vars(1, &tmpZ, tmpinfo)) {
+	    k = 0;
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	/* add uhat to data set */
+	for (t=0; t<n; t++)
+	    tmpZ[v][t] = NADBL;
+	for (t = pmod->t1; t<= pmod->t2; t++)
+	    tmpZ[v][t] = pmod->uhat[t];
+	strcpy(tmpinfo->varname[v], "uhat");
+	strcpy(tmpinfo->label[v], _("residual"));
+	/* then lags of same */
+	for (i=1; i<=order; i++) {
+	    if (_laggenr(v, i, 1, &tmpZ, tmpinfo)) {
+		/* FIXME */
+		sprintf(gretl_errmsg, _("lagging uhat failed"));
+		err = E_LAGS;
+	    } else {
+		aclist[pmod->list[0] + i] = v+i;
+	    }
+	}
+    }
+
+    if (!err) {
+	aclist[1] = v;
+	aux = lsq(aclist, tmpZ, tmpinfo, OLS, 1, 0.0);
+	err = aux.errcode;
+	if (err) {
+	    errmsg(aux.errcode, prn);
+	}
+    } 
+
+    if (!err) {
+	aux.aux = AUX_AR;
+	aux.order = order;
+	printmodel(&aux, tmpinfo, prn);
+	trsq = aux.rsq * aux.nobs;
+	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
+	    (aux.nobs - pmod->ncoeff - order)/order; 
+
+	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
+	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
+		order, aux.nobs - pmod->ncoeff - order, LMF,
+		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
+
+	pprintf(prn, "\n%s: TR^2 = %f,\n", 
+		_("Alternative statistic"), trsq);
+	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
+		_("Chi-square"), order, trsq, chisq(trsq, order));
+
+	if (test != NULL) {
+	    gretl_test_init(test);
+	    strcpy(test->type, N_("LM test for autocorrelation up to order %s"));
+	    strcpy(test->h_0, N_("no autocorrelation"));
+	    sprintf(test->param, "%d", order);
+	    test->teststat = GRETL_TEST_LMF;
+	    test->dfn = order;
+	    test->dfd = aux.nobs - pmod->ncoeff - order;
+	    test->value = LMF;
+	    test->pvalue = fdist(LMF, test->dfn, test->dfd);
+	}
+    }
+
+    free(aclist);
+    clear_model(&aux, tmpinfo); 
+
+    free_Z(tmpZ, tmpinfo);
+    clear_datainfo(tmpinfo, CLEAR_FULL);
+    free(tmpinfo);
+
+    return err;
+}
+
+#endif
 
 
 
