@@ -30,7 +30,7 @@ export
 tooldir = $(topsrc)/tools
 
 SUBDIRS = lib cli $(GUIDIR) plugin po
-ALLSUBDIRS = lib cli gui gui2 plugin po tests
+ALLSUBDIRS = lib cli gui gui2 plugin po share tests
 
 .PHONY :
 

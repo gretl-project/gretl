@@ -57,5 +57,8 @@ installdirs:
 $(UTF8_FILES): gretl.hlp.es gretlcli.hlp.es
 	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done
 
-clean: 
+clean:
+	make -C bcih clean
+
+textclean: 
 	rm -f *.txt *.utf8

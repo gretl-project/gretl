@@ -272,10 +272,8 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
 static void file_sel_ok (GtkWidget *w, gpointer data)
 {
-    windata_t *mydata = (windata_t *) data;
-
     file_sel_open = 0;
-    free_windata(NULL, mydata);
+    free_windata(NULL, data);
 }
 
 /* ........................................................... */
@@ -912,6 +910,8 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
 			   guint page_num, windata_t *fdata)
 {
     char winnum[3];
+
+    if (!file_sel_open) return;
 
     sprintf(winnum, "%d", (int) page_num);
     fdata->listbox = gtk_object_get_data(GTK_OBJECT(notebook), winnum);

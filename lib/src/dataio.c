@@ -294,6 +294,7 @@ DATAINFO *datainfo_new (void)
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
     dinfo->data = NULL;
+    dinfo->time_series = 0;
 
     return dinfo;
 }

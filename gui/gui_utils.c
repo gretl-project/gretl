@@ -860,7 +860,7 @@ void free_windata (GtkWidget *w, gpointer data)
 {
     windata_t *vwin = (windata_t *) data;
 
-    if (vwin) {
+    if (vwin != NULL) {
 	if (vwin->w) {
 	    gchar *undo = 
 		gtk_object_get_data(GTK_OBJECT(vwin->w), "undo");
@@ -886,7 +886,6 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
-	vwin = NULL;
     }
 }
 
