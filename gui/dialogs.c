@@ -256,7 +256,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget) 
 {
     windata_t *wdata = NULL;
-    gchar *obsstr;
+    gchar *obsstr = NULL;
 
     if (pd_code == 0) {
 	datainfo->time_series = 0;
@@ -269,28 +269,28 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
     switch (pd_code) {
     case 0:
 	datainfo->pd = 1;
-	obsstr = g_strdup_printf("1 50 ", _("newvar"));
+	obsstr = g_strdup_printf("1 50 %s", _("newvar"));
 	break;
     case 1:
-	obsstr = g_strdup_printf("1950 2001 ", _("newvar"));
+	obsstr = g_strdup_printf("1950 2001 %s", _("newvar"));
 	break;
     case 4:
-	obsstr = g_strdup_printf("1950.1 2001.4 ", _("newvar"));
+	obsstr = g_strdup_printf("1950.1 2001.4 %s", _("newvar"));
 	break;
     case 5:
-	obsstr = g_strdup_printf("99/01/18 01/03/31 ", _("newvar"));
+	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
 	break;
     case 7:
-	obsstr = g_strdup_printf("99/01/18 01/03/31 ", _("newvar"));
+	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
 	break;
     case 12:
-	obsstr = g_strdup_printf("1950.01 2001.12 ", _("newvar"));
+	obsstr = g_strdup_printf("1950.01 2001.12 %s", _("newvar"));
 	break;
     case 24:
-	obsstr = g_strdup_printf("0.01 0.24 ", _("newvar"));
+	obsstr = g_strdup_printf("0.01 0.24 %s", _("newvar"));
 	break;
     case 52:
-	obsstr = g_strdup_printf("1950.01 2001.52 ", _("newvar"));
+	obsstr = g_strdup_printf("1950.01 2001.52 %s", _("newvar"));
 	break;
     }
     edit_dialog (_("gretl: create data set"), 
