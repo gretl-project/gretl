@@ -1164,6 +1164,14 @@
          <flag>--iterate</flag>
          <effect>itera fino alla convergenza</effect>
        </option>
+       <option>
+         <flag>--no-df-corr</flag>
+         <effect>nessuna correzione per i gradi di libertà</effect>
+       </option>
+       <option>
+         <flag>--geomean</flag>
+         <effect>si veda oltre</effect>
+       </option>
       </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
@@ -1179,7 +1187,12 @@
         Per prima cosa va indicato il nome del sistema, racchiuso tra
         virgolette se contiene spazi, quindi il tipo di stimatore, preceduto
         dalla stringa <lit>method=</lit>. Gli stimatori disponibili sono:
-	<cmd>sur</cmd>, <cmd>3sls</cmd>, <cmd>fiml</cmd> o <cmd>liml</cmd>.
+        <cmd>ols</cmd>, <cmd>tsls</cmd>, <cmd>sur</cmd>, <cmd>3sls</cmd>,
+        <cmd>fiml</cmd> o <cmd>liml</cmd>.
+      </para>
+      <para>Se al sistema in questione sono stati imposti dei vincoli (si veda
+       il comando <cmdref targ="restrict"/>), la stima sarà soggetta a tali
+       vincoli.
       </para>
       <para>
        Se il metodo di stima è <cmd>sur</cmd> o <cmd>3sls</cmd>
@@ -1188,6 +1201,30 @@
        saranno stime di massima verosimiglianza. Invece l'iterazione della
        procedura dei minimi quadrati a tre stadi non produce in genere
        risultati di massima verosimiglianza a informazione completa.
+       L'opzione <lit>--iterate</lit> viene ignorata con gli altri metodi di
+       stima.
+      </para>
+      <para>Se vengono scelti gli stimatori "equazione per equazione"
+      <cmd>ols</cmd> o <cmd>tsls</cmd> are chosen, nel calcolo degli errori
+       standard viene applicata in modo predefinito una correzione per i gradi
+       di libertà, che può essere disabilitata usando l'opzione
+       <lit>--no-df-corr</lit>. Questa opzione non ha effetti nel caso vengano
+       usati altri stimatori, che non prevedono correzioni per i gradi di libertà.
+      </para>
+      <para>La formula usata in modo predefinito per calcolare gli elementi della matrice
+       di covarianza tra equazioni è
+       <equation status="display"
+       tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{T}\]"
+       ascii="sigma(i,j) = u(i)' * u(j) / T"
+       graphic="syssigma1"/>
+       Se viene usata l'opzione <lit>--geomean</lit>, viene applicata una correzione
+       per i gradi di libertà secondo la formula
+       <equation status="display"
+       tex="\[\hat{\sigma}_{i,j}=\frac{\hat{u}_i' \hat{u}_j}{\sqrt{(T-k_i)(T-k_j)}}\]"
+       ascii="sigma(i,j) = u(i)' * u(j) / sqrt((T - ki) * (T - kj))"
+       graphic="syssigma2"/>
+       dove i <mathvar>k</mathvar> indicano il numero di parametri indipendenti in
+       ogni equazione.
       </para>
     </description>
 
@@ -4126,28 +4163,46 @@
 
     <description>
       <para>
-	Valuta un insieme di vincoli lineari sui parametri dell'ultimo modello
-        stimato. In modalità batch, l'insieme di vincoli deve essere
-        racchiuso tra i comandi <quote>restrict</quote> e
-	<quote>end restrict</quote>, mentre in modalità grafica queste righe
-        possono essere omesse dalla finestra di dialogo che definisce i vincoli.
+	Impone un insieme di vincoli lineari sull'ultimo modello
+        stimato o su un sistema di equazioni definito in precedenza.
+        La sintassi del comando è leggermente diversa in ognuno dei due casi.
+      </para>
+        
+      <para>
+        In entrambi i casi, l'insieme di vincoli deve essere racchiuso tra i
+        comandi <quote>restrict</quote> e <quote>end restrict</quote>. Nel caso
+        della singola equazione, i vincoli sono applicati implicitamente
+        all'ultimo modello e vengono valutati appena viene terminato il comando
+        <quote>restrict</quote>. Nel caso del sistema, il comando iniziale
+        <quote>restrict</quote> deve essere seguito immediatamente dal nome di
+        un sistema di equazioni definito in precedenza (si veda <cmdref targ="system"/>).
+        I vincoli vengono valutati nella successiva stima del sistema effettuata
+        con il comando <cmdref targ="estimate"/>.
       </para>
 
       <para>Ogni vincolo nell'insieme va indicato sotto forma di equazione
 	con una combinazione lineare dei parametri al primo membro e un
-        valore numerico al secondo. I parametri sono indicati con la
-        sintassi b<repl>N</repl>, dove <repl>N</repl> rappresenta la posizione
-        nella lista dei regressori, a partire da zero. Ad esempio, <lit>b1</lit>
-	indica il secondo parametro della regressione.
+        valore numerico al secondo. Nel caso della singola equazione, i
+        parametri sono indicati con la sintassi b<repl>N</repl>, dove
+        <repl>N</repl> rappresenta la posizione nella lista dei regressori, a
+        partire da zero. Ad esempio, <lit>b1</lit> indica il secondo parametro
+        della regressione. Nel caso del sistema, i parametri vengono indicati
+        con la sintassi <lit>b</lit> seguita da due numeri tra parentesi quadre.
+        Il primo numero rappresenta la posizione dell'equazione all'interno del
+        sistema a partire da 1, mentre il secondo indica la posizione nella
+        lista dei regressori, a partire da zero. Ad esempio <lit>b[2,0]</lit>
+        indica il primo parametro della seconda equazione, mentre
+	<lit>b[3,1]</lit> il secondo parametro della terza equazione.
       </para>
 
-      <para>I termini <lit>bN</lit> a partire dal secondo possono essere
-        prefissati da un moltiplicatore numerico, usando il segno
-	<lit>*</lit> per indicare la moltiplicazione, ad esempio
-	<lit>3.5*b4</lit>.
+      <para>I termini <lit>b</lit> nell'equazione che rappresenta un vincolo
+      possono essere prefissati da un moltiplicatore numerico, usando il segno
+      <lit>*</lit> per indicare la moltiplicazione, ad esempio
+      <lit>3.5*b4</lit>.
       </para>
 
-      <para>Ecco un esempio di un insieme di vincoli:</para>
+      <para>Ecco un esempio di un insieme di vincoli per un modello stimato in
+      precedenza:</para>
 
       <code>
 	restrict
@@ -4156,10 +4211,26 @@
 	 b4 + 2*b5 = 1
 	end restrict</code>
 
-      <para>I vincoli sono valutati attraverso un test F di Wald,
-	usando la matrice di covarianza dei coefficienti del modello
-        in questione.
+      <para>Ed ecco un esempio di un insieme di vincoli da applicare a un
+      sistema (se il nome del sistema non contiene spazi, è possibile
+      tralasciare le virgolette).
       </para>
+
+      <code>
+	restrict "Sistema 1"
+	 b[1,1] = 0
+	 b[1,2] - b[2,2] = 0
+	 b[3,4] + 2*b[3,5] = 1
+	end restrict</code>
+
+      <para>Nel casdo dell'equazione singola, i vincoli sono valutati attraverso
+      un test F di Wald, usando la matrice di covarianza dei coefficienti del
+      modello in questione. Nel caso del sistema, vengono presentati i risultati
+      completi della stima del sistema soggetto ai vincoli; la statistica test
+      dipende dallo stimatore scelto (un test del rapporto di verosimiglianza
+      nel caso di un sistema stimato con un metodo di massima verosimiglianza, o
+      altrimenti un test F asintotico).
+       </para>
 
     </description>
 
@@ -4988,7 +5059,7 @@
 
     <usage>
       <altforms>
-	<altform><lit>system type=</lit><repl>stimatore</repl></altform>
+	<altform><lit>system method=</lit><repl>stimatore</repl></altform>
 	<altform><lit>system name=</lit><repl>nome_sistema</repl></altform>
       </altforms>
       <arguments>
@@ -4997,9 +5068,9 @@
       </arguments>
       <examples>
 	<example>system name="Klein Model 1"</example>
-        <example>system type=sur</example>
-	<example>system type=sur save=resids</example>
-	<example>system type=3sls save=resids,fitted</example>
+        <example>system method=sur</example>
+	<example>system method=sur save=resids</example>
+	<example>system method=3sls save=resids,fitted</example>
       </examples>
     </usage>
 
@@ -5020,17 +5091,22 @@
 	Per salvare il sistema occorre dargli un nome, come nel primo esempio
         proposto (se il nome contiene spazi, occorre racchiuderlo tra virgolette).
         In questo caso, è possibile stimare il sistema con il comando
-	<cmdref targ="estimate"/>.</para>
+	<cmdref targ="estimate"/>. Una volta che il sistema è stato salvato, è
+        possibile imporre dei vincoli su di esso (compresi vincoli incrociati
+        tra equazioni) usando il comando <cmdref targ="restrict"/>.
+      </para>
 
       <para context="cli">
 	In alternativa, è possibile indicare uno stimatore per il sistema
-	usando <lit>type=</lit> seguito da una stringa che identifica uno
-        dei quattro stimatori supportati: <cmd>sur</cmd> (Seemingly
-	Unrelated Regressions - Regressioni apparentemente non collegate),
-        <cmd>3sls</cmd> (Three-Stage Least Squares - Minimi quadrati a tre
-        stadi), <cmd>fiml</cmd> (Full Information Maximum Likelihood - Massima
-        verosimiglianza con informazione completa) o <cmd>liml</cmd> (Limited
-        Information Maximum Likelihood - Massima verosimiglianza con
+	usando <lit>method=</lit> seguito da una stringa che identifica uno
+        degli stimatori supportati: <cmd>ols</cmd> (ordinary least squares -
+        minimi quadrati ordinari), <cmd>tsls</cmd> (two-stage least squares -
+        minimi quadrati a due stadi), <cmd>sur</cmd> (seemingly unrelated
+        regressions - regressioni apparentemente non collegate), <cmd>3sls</cmd>
+        (three-stage least squares - minimi quadrati a tre stadi),
+        <cmd>fiml</cmd> (full information maximum likelihood - massima
+        verosimiglianza con informazione completa) o <cmd>liml</cmd> (limited
+        information maximum likelihood - massima verosimiglianza con
         informazione limitata). In questo caso, il sistema viene stimato appena
         completata la sua definizione.
       </para>
