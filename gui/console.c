@@ -63,7 +63,8 @@ static int gretl_console_init (void)
     for (i=0; i<hlines; i++) 
 	cmd_history[i] = NULL;
 
-    hlmax = hl = 0;
+    hlmax = 0;
+    hl = -1;
 
     return 0;
 }
@@ -78,7 +79,8 @@ static void gretl_console_free (GtkWidget *w, gpointer p)
 	cmd_history = NULL;
     }
 
-    hlines = hlmax = hl = 0;
+    hlines = hlmax = 0;
+    hl = -1;
 }
 
 static int push_history_line (const char *line)
@@ -98,7 +100,7 @@ static int push_history_line (const char *line)
     
     if (hlmax < hlines) hlmax++;
 
-    hl = 0;
+    hl = -1;
 
     return 0;
 }
@@ -111,39 +113,29 @@ static void beep (void)
 
 static char *pop_history_line (int keyval)
 {
-    static int blank;
     static int beeptime;
-    static int lastkey;
     char *ret = NULL;
 
     if (keyval == GDK_Up) {
-	if (lastkey == GDK_Down) hl += 2;
-	if (hl < 0) hl = (hlmax > 1 && !blank)? 1 : 0;
+	if (hl < hlmax) hl++;
 	if (hl == hlmax) {
+	    hl--;
 	    beep();
 	} else {
-	    blank = 0;
 	    ret = cmd_history[hl];
-	    hl++;
 	}
     }
 
     else if (keyval == GDK_Down) {
-	if (lastkey == GDK_Up) hl -= 2;
-	if (hl == hlmax) hl = hlmax - 2;
+	if (hl >= 0) hl--;
 	if (hl < 0) {
-	    blank = 1;
 	    if (beeptime) beep();
 	    beeptime = 1;
 	} else {
-	    blank = 0;
 	    beeptime = 0;
 	    ret = cmd_history[hl];
-	    hl--;
 	}
     }
-
-    lastkey = keyval;
 
     return ret;
 }
