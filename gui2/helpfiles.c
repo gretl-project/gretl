@@ -136,19 +136,23 @@ static char *help_string_from_cmd (int cmd)
 #ifdef ENABLE_NLS
 static void set_english_help_file (int script)
 {
-    char *helpfile, *tmp;
-    int len;
+    char *helpfile, *tmp, *p;
     FILE *fp;
 
     if (script) helpfile = paths.cmd_helpfile;
     else helpfile = paths.helpfile;
 
-    len = strlen(helpfile) + 1 - 3;
-    tmp = malloc(len);
+    tmp = malloc(strlen(helpfile) + 1);
 
     if (tmp != NULL) {
-	*tmp = 0;
-	strncat(tmp, helpfile, len - 1);
+	strcpy(tmp, helpfile);
+#ifdef G_OS_WIN32
+	p = strrchr(tmp, '_');
+	if (p) strcpy(p, ".txt");
+#else
+	p = strrchr(tmp, '.');
+	if (p) *p = 0;
+#endif
 	if (script) {
 	    english_script_helpfile = tmp;
 	} else {
@@ -157,6 +161,7 @@ static void set_english_help_file (int script)
 	fp = fopen(tmp, "r");
 	if (fp != NULL) {
 	    char testline[MAXLEN];
+	    int len;
 
 	    len = 0;
 	    while (fgets(testline, MAXLEN-1, fp)) {
@@ -171,13 +176,23 @@ static void set_english_help_file (int script)
 
 static void set_translated_helpfile (void)
 {
-    char *p = strrchr(paths.helpfile, '.');
+    char *p;
 
-    if (p && strcmp(p, ".hlp") && strcmp(p, ".txt")) { 
+#ifdef G_OS_WIN32
+    p = strrchr(paths.helpfile, '_');
+    if (p && strncmp(p, "_hlp", 4)) { 
 	translated_helpfile = 1;
     } else {
 	translated_helpfile = 0;
     }
+#else
+    p = strrchr(paths.helpfile, '.');
+    if (p && strcmp(p, ".hlp")) { 
+	translated_helpfile = 1;
+    } else {
+	translated_helpfile = 0;
+    }
+#endif
 
     if (translated_helpfile == 1) {
 	set_english_help_file(0);

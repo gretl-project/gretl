@@ -638,8 +638,21 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 static void set_lcnumeric (void)
 {
     if (lcnumeric) {
+#ifdef G_OS_WIN32
+	char *lang = getenv("LANG");
+
+	if (lang != NULL && !strcmp(lang, "es")) {
+	    setlocale(LC_NUMERIC, "Spanish");
+	}
+	else if (lang != NULL && !strcmp(lang, "fr")) {
+	    setlocale(LC_NUMERIC, "French");
+	}
+	else setlocale(LC_NUMERIC, "");
+	putenv("LC_NUMERIC=");
+#else
 	putenv("LC_NUMERIC=");
 	setlocale(LC_NUMERIC, "");
+#endif
     } else {
 	putenv("LC_NUMERIC=C");
 	setlocale(LC_NUMERIC, "C");
