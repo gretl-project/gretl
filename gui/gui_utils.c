@@ -393,7 +393,7 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
     else if (key->keyval == GDK_s) {
 	windata_t *mydata = gtk_object_get_data(GTK_OBJECT(w), "ddata");
 
-	if (mydata != NULL && mydata->role == VIEW_MODEL)
+	if (Z != NULL && mydata != NULL && mydata->role == VIEW_MODEL)
 	    remember_model(mydata, 1, NULL);
     }
 }
@@ -1887,6 +1887,18 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     extern int quiet_sample_check (MODEL *pmod);
     int s, ok = 1;
 
+    if (Z == NULL) {
+	flip(mwin->ifac, "/File/Save to sesssion as icon", FALSE);
+	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
+	flip(mwin->ifac, "/Edit/Copy all", FALSE);
+	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/Tests", FALSE);
+	flip(mwin->ifac, "/Graphs", FALSE);
+	flip(mwin->ifac, "/Model data", FALSE);
+	flip(mwin->ifac, "/LaTeX", FALSE);
+	return;
+    }
+
     if (quiet_sample_check(pmod)) ok = 0;
     s = GTK_WIDGET_IS_SENSITIVE
 	(gtk_item_factory_get_item(mwin->ifac, "/Tests/omit variables"));
@@ -1995,9 +2007,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* attach shortcuts */
     gtk_object_set_data(GTK_OBJECT(dialog), "ddata", vwin);
-    gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-		       GTK_SIGNAL_FUNC(catch_key), 
-		       dialog);
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_key), 
 		       dialog);

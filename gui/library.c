@@ -171,6 +171,8 @@ int quiet_sample_check (MODEL *pmod)
 	pdinfo = fullinfo;
     }
 
+    if (checkZ == NULL || pdinfo == NULL) return 1;
+
     if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
     else return 0;
 }
@@ -2149,6 +2151,11 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
 
+    if (Z == NULL || datainfo == NULL) {
+	errbox("Data set is gone");
+	return;
+    }
+
     if (bufopen(&prn)) return;
 
     if (pmod->ci == HCCM) print_white_vcv(pmod, prn);
@@ -3711,9 +3718,10 @@ static int gui_exec_line (char *line,
 	    pprintf(prn, "Failed to create empty data set.\n");
 	    break;
 	}
+	paths.datfile[0] = '\0';
 	populate_clist(mdata->listbox, datainfo);
+	data_status = HAVE_DATA | GUI_DATA | MODIFIED_DATA;
 	set_sample_label(datainfo);
-	data_status = HAVE_DATA | GUI_DATA;
 	orig_vars = datainfo->v;
 	menubar_state(TRUE);
 	break;
