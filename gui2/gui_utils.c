@@ -359,7 +359,6 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 gint catch_key (GtkWidget *w, GdkEventKey *key)
 {
-    
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
     }
@@ -368,6 +367,19 @@ gint catch_key (GtkWidget *w, GdkEventKey *key)
 
 	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL)
 	    remember_model(vwin, 1, NULL);
+    }
+    return FALSE;
+}
+
+/* ........................................................... */
+
+gint catch_button (GtkWidget *w, GdkEventButton *event)
+{
+    GdkModifierType mods;
+
+    gdk_window_get_pointer (w->window, NULL, NULL, &mods); 
+    if (mods & GDK_BUTTON3_MASK) {
+	return TRUE;
     }
     return FALSE;
 }
@@ -1277,6 +1289,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_key), vwin->dialog);
 
+    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+		     G_CALLBACK(catch_button), vwin->w);
+
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
@@ -1416,7 +1431,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
 	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 			 G_CALLBACK(catch_edit_key), vwin);	
-    }  
+    } 
+
+    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+		     G_CALLBACK(catch_button), vwin->w);
 
     /* offer chance to save script on exit */
     if (role == EDIT_SCRIPT)
@@ -1465,6 +1483,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
     /* insert the buffer text */
     if (*pbuf) gtk_text_buffer_set_text(tbuf, *pbuf, -1);
+
+    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+		     G_CALLBACK(catch_button), vwin->w);
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
@@ -1521,6 +1542,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     g_object_set_data(G_OBJECT(vwin->dialog), "ddata", vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_key), vwin->dialog);
+
+    g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
+		     G_CALLBACK(catch_button), vwin->w);
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
