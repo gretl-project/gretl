@@ -1,7 +1,9 @@
 DOC = manual
 SRC = $(DOC).xml
 DSL = $(DOC)-both.dsl
-ALTDSL = gretl-a4.dsl
+ALTDOC = $(DOC)-a4
+ALTSRC = $(ALTDOC).xml
+ALTDSL = manual-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 XSLDIR = /usr/share/sgml/docbook-xsl-1.48
@@ -18,22 +20,31 @@ pdf: $(DOC).tex jadetex.cfg lucidabr.tex
 	-pdfjadetex $(DOC)
 	-pdfjadetex $(DOC)
 
-altpdf: $(DOC)_a4.tex jadetex.cfg lucidabr.tex
-	-pdfjadetex $(DOC)_a4
-	-pdfjadetex $(DOC)_a4
-	-pdfjadetex $(DOC)_a4
+altpdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
+	echo "Running pdfjadetex on $(ALTDOC)"
+	-pdfjadetex $(ALTDOC)
+	-pdfjadetex $(ALTDOC)
+	-pdfjadetex $(ALTDOC)
 
 thumbs: $(SRC) $(CHAPTERS)
 	thumbpdf $(DOC)
+        
+altthumbs: $(ALTSRC) $(CHAPTERS)
+	thumbpdf $(ALTDOC)
 
 $(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
 	jade -t tex -d $(DSL)\#print /opt/jade/share/xml.dcl $(SRC)
 	./unescape_math.pl $(DOC).tex
 
-$(DOC)_a4.tex: $(SRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
-	jade -t tex -d $(ALTDSL)\#print /opt/jade/share/xml.dcl $(SRC)
-	mv $(DOC).tex $(DOC)_a4.tex
-	./unescape_math.pl $(DOC)_a4.tex
+$(ALTDOC).tex: $(ALTSRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
+	echo "Running jade on $(ALTSRC)"
+	jade -t tex -d $(ALTDSL)\#print /opt/jade/share/xml.dcl $(ALTSRC)
+	echo "Unescaping math in $(ALTDOC).tex"
+	./unescape_math.pl $(ALTDOC).tex
+
+$(ALTSRC): $(SRC)
+	echo "Copying $(SRC) to $(ALTSRC)"
+	cp $(SRC) $(ALTSRC)       
 
 html: $(SRC) db2html $(DSL) $(HMATHSS) 
 	./db2html $(SRC)
@@ -47,5 +58,5 @@ htmlhelp:
 	cd gretlhlp/figures && ./mkgif
 
 clean:
-	rm -f *.aux *.log *.out *.pdf $(DOC).tex
+	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex
 	rm -rf $(DOC)-html 

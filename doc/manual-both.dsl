@@ -186,6 +186,31 @@
   ;; block elements (figures, tables, etc.)
   ;; Default (* %para-sep% 2.0)
   (* %para-sep% 1.5))
+  
+(define ($informal-object$ #!optional (rule-before? #f) (rule-after? #f))
+  (make display-group
+    start-indent: (+ %block-start-indent% (inherited-start-indent))
+    space-before: (if (equal? (attribute-string (normalize "role")) "cmd")
+                   0pt %block-sep%)
+    space-after: %block-sep%
+    (if rule-before?
+        (make rule
+          orientation: 'horizontal
+          line-thickness: %object-rule-thickness%
+          display-alignment: 'center
+          space-after: (/ %block-sep% 2)
+          keep-with-next?: #t)
+        (empty-sosofo))
+    (process-children)
+    (if rule-after?
+        (make rule
+          orientation: 'horizontal
+          line-thickness: %object-rule-thickness%
+          display-alignment: 'center
+          space-before: (/ %block-sep% 2)
+          keep-with-previous?: #t)
+        (empty-sosofo))))
+  
 
 (define formal-object-float
   ;; If '#t', formal objects will float if floating is supported by the
@@ -294,6 +319,21 @@
 (define %bottom-margin% 5pi) ;; default is 8pi
 (define %body-start-indent% 3pi) ;; default is 4pi  
 
+(define ($paragraph$)
+  (if (and (attribute-string (normalize "role"))
+           (equal? (attribute-string (normalize "role")) "bodgea4"))
+      (empty-sosofo)
+      (make paragraph
+        first-line-start-indent: (if (is-first-para)
+                                     %para-indent-firstpara%
+                                     %para-indent%)
+        space-before: %para-sep%
+        space-after: %para-sep%
+        quadding: %default-quadding%
+        hyphenate?: %hyphenation%
+        language: (dsssl-language-code)
+        (process-children))))
+
 ;;======================================
 ;;Inlines
 ;;======================================
@@ -335,7 +375,8 @@
 ;; bad page-breaking
 (define ($paragraph$ #!optional (para-wrapper "P"))
   (if (and (attribute-string (normalize "role"))
-           (equal? (attribute-string (normalize "role")) "bodge"))
+           (or (equal? (attribute-string (normalize "role")) "bodge")
+               (equal? (attribute-string (normalize "role")) "bodgea4")))
       (empty-sosofo)
       (let ((footnotes (select-elements (descendants (current-node)) 
                                     (normalize "footnote")))

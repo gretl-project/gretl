@@ -1,7 +1,7 @@
   <chapter id="optarg"><title>Options, arguments and path-searching</title>
   
 
-  <sect1 id="optarg1"><title><application>gretl</application></title>
+  <sect1 id="optarg1"><title>gretl</title>
 
     <para>
       <command>gretl</command> (under MS Windows,
@@ -141,7 +141,7 @@
 
   </sect1>
 
-  <sect1 id="optarg2"><title><application>gretlcli</application></title>
+  <sect1 id="optarg2"><title>gretlcli</title>
 
     <para><command>gretlcli</command></para>
 

@@ -64,7 +64,7 @@
 
     <sect2 id="add"><title>add</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -105,7 +105,7 @@
 
     <sect2 id="addto"><title>addto</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -134,7 +134,7 @@
 
     <sect2 id="adf"><title>adf</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -182,7 +182,7 @@
 
     <sect2 id="ar"><title>ar</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -230,7 +230,7 @@
 
     <sect2 id="arch"><title>arch</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -255,14 +255,10 @@
 	the LM test statistic has p-value below 0.10, then ARCH
 	estimation is also carried out.  If the predicted variance of
 	any observation in the auxiliary regression is not positive,
-	then the corresponding 
-	<inlineequation>
-	  <alt role="tex">$\hat{u}^2$</alt>
-	  <graphic align="center" fileref="figures/uhatsq"/>
-        </inlineequation> is used instead. Weighted least square
-	estimation is then performed on the original model. The flag
-	<literal>-o</literal> calls for the coefficient covariance
-	matrix.
+	then the corresponding squared residual is used instead.
+	Weighted least square estimation is then performed on the
+	original model. The flag <literal>-o</literal> calls for the
+	coefficient covariance matrix.
 	
       </para>
 
@@ -270,7 +266,7 @@
 
     <sect2 id="chow"><title>chow</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -310,7 +306,7 @@
 
     <sect2 id="coint"><title>coint</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -346,7 +342,7 @@
 
     <sect2 id="corc"><title>corc</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -397,7 +393,7 @@
 
     <sect2 id="corr"><title>corr</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -431,7 +427,7 @@
 
     <sect2 id="corrgm"><title>corrgm</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -450,7 +446,11 @@
 	or number).  See Ramanathan, Section 11.7.  It is thus
 	<inlineequation>
 	  <alt role="tex">$\rho(u_t, u_{t-s})$</alt>
-	  <graphic align="center" fileref="figures/autocorr"/>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/autocorr"/>
+	    </imageobject>
+	  </inlinemediaobject>
 	</inlineequation> where
 	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> 
 	is the <emphasis>t</emphasis>th observation of the variable
@@ -479,7 +479,7 @@
 
     <sect2 id="criteria"><title>criteria</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -551,7 +551,7 @@
 
     <sect2 id="diff"><title>diff</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -597,7 +597,7 @@
 
     <sect2 id="fcast"><title>fcast</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -639,7 +639,7 @@
 
     <sect2 id="fcasterr"><title>fcasterr</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -682,7 +682,7 @@
 
     <sect2 id="freq"><title>freq</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -702,19 +702,20 @@
       </para>
 
       <para role="bodge">&nbsp;</para>
+      <para role="bodge">&nbsp;</para>
       <!-- BODGE to make genr section title not an orphan -->
 
       </sect2>
 
     <sect2 id="genr"><title>genr</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
 	      <entry>Argument:</entry>
-	      <entry><replaceable>newvar</replaceable>
-		  = <replaceable>formula</replaceable>
+	      <entry><replaceable>newvar</replaceable> =
+		<replaceable>formula</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -722,32 +723,32 @@
       </informaltable>
 
       <para>
-	  Creates new variables, usually through transformations of
-	  existing variables. See also <command>diff</command>,
-	  <command>logs</command>, <command>lags</command>,
-	  <command>ldiff</command>, <command>multiply</command> and
-	  <command>square</command> for shortcuts.
+	Creates new variables, usually through transformations of
+	existing variables. See also <command>diff</command>,
+	<command>logs</command>, <command>lags</command>,
+	<command>ldiff</command>, <command>multiply</command> and
+	<command>square</command> for shortcuts.
       </para>
 
       <para>
-	  Supported <emphasis>arithmetical operators</emphasis> are,
-	  in order of precedence: <literal>^</literal>
-	  (exponentiation); <literal>*</literal>, <literal>/</literal>
-	  and <literal>%</literal> (modulus or remainder);
-	  <literal>+</literal> and <literal>-</literal>. 
+	Supported <emphasis>arithmetical operators</emphasis> are, in
+	order of precedence: <literal>^</literal> (exponentiation);
+	<literal>*</literal>, <literal>/</literal> and
+	<literal>%</literal> (modulus or remainder);
+	<literal>+</literal> and <literal>-</literal>. 
       </para>
 
       <para>
-	  The available <emphasis>Boolean operators</emphasis> are
-	  (again, in order of precedence): <literal>!</literal>
-	  (negation), <literal>&amp;</literal> (logical AND),
-	  <literal>|</literal> (logical OR), <literal>&gt;</literal>,
-	  <literal>&lt;</literal>, <literal>=</literal> and
-	  <literal>!=</literal> (not equal to).  The Boolean operators
-	  can be used in constructing dummy variables: for instance
-	  <literal>(x > 10)</literal> returns 1 if
-	  <literal>x</literal> &gt; 10, 0 otherwise. Supported
-	  <emphasis>functions</emphasis> fall into these groups:
+	The available <emphasis>Boolean operators</emphasis> are
+	(again, in order of precedence): <literal>!</literal>
+	(negation), <literal>&amp;</literal> (logical AND),
+	<literal>|</literal> (logical OR), <literal>&gt;</literal>,
+	<literal>&lt;</literal>, <literal>=</literal> and
+	<literal>!=</literal> (not equal to).  The Boolean operators
+	can be used in constructing dummy variables: for instance
+	<literal>(x > 10)</literal> returns 1 if <literal>x</literal>
+	&gt; 10, 0 otherwise. Supported <emphasis>functions</emphasis>
+	fall into these groups:
       </para>
 
       <itemizedlist>
@@ -809,32 +810,32 @@
       </para>
 
       <itemizedlist>
-	<listitem><para><command>genr time</command> creates a time trend
-	    variable (1,2,3,&hellip;) called <command>time</command>.
-	    <command>genr index</command> does the same thing except that the
-	    variable is called <varname>index</varname>.</para>
-	  </listitem>
+	<listitem><para><command>genr time</command> creates a time
+	    trend variable (1,2,3,&hellip;) called
+	    <command>time</command>. <command>genr index</command>
+	    does the same thing except that the variable is called
+	    <varname>index</varname>.</para>
+	</listitem>
 	<listitem><para><command>genr dummy</command> creates dummy
-	      variables up to the periodicity of the data.  E.g. in
-	      the case of quarterly data (periodicity 4), the program
-	      creates <varname>dummy_1</varname> = 1 for first quarter
-	      and 0 in other quarters, <varname>dummy_2</varname> = 1
-	      for the second quarter and 0 in other quarters, and so
-	      on.</para>
-	  </listitem>
+	    variables up to the periodicity of the data.  E.g. in the
+	    case of quarterly data (periodicity 4), the program
+	    creates <varname>dummy_1</varname> = 1 for first quarter
+	    and 0 in other quarters, <varname>dummy_2</varname> = 1
+	    for the second quarter and 0 in other quarters, and so
+	    on.</para>
+	</listitem>
 	<listitem><para><command>genr paneldum</command> creates a set
-	    of special dummy variables for use with a panel data
-	    set &mdash; see <xref linkend="panel"/>
-	    above.</para>
-	  </listitem>
+	    of special dummy variables for use with a panel data set
+	    &mdash; see <xref linkend="panel"/> above.</para>
+	</listitem>
 	<listitem><para>Various internal variables defined in the
 	    course of running a regression can be retrieved using
 	    <command>genr</command>, as follows:</para>
 
-	  <informaltable frame="none">
+	  <informaltable role="cmd" frame="none">
 	    <tgroup cols="2">
 	      <colspec colwidth="100pt"/>
-		<colspec colwidth="300pt"/>
+	      <colspec colwidth="300pt"/>
 	      <tbody>
 		<row>
 		  <entry><varname>$ess</varname></entry>
@@ -858,7 +859,8 @@
 		</row>
 		<row>
 		  <entry><varname>$trsq</varname></entry>
-		  <entry><emphasis>T</emphasis>&rsqu; (sample size times &rsqu;)
+		  <entry><emphasis>T</emphasis>&rsqu; (sample size
+		    times &rsqu;)
 		  </entry>
 		</row>
 		<row>
@@ -884,7 +886,7 @@
 		</row>
 		<row>
 		  <entry>stderr(<replaceable>var</replaceable>)</entry>
-		  <entry>estimated standard error for variable 
+		  <entry>estimated standard error for variable
 		    <replaceable>var</replaceable>
 		  </entry>
 		</row>
@@ -920,18 +922,19 @@
 	most recent model).  You do this under the <quote>Model
 	  data</quote> menu in the model's window.</para>
 	
-       <para>
+      <para>
 	<xref linkend="tab-genr"/> gives several examples of uses of
 	<command>genr</command> with explanatory notes; here are a
 	couple of tips on dummy variables:
       </para>
 
       <itemizedlist>
-	<listitem><para>Suppose <varname>x</varname> is coded with values 1, 2,
-	    or 3 and you want three dummy variables, <varname>d1</varname> = 1
-	    if <varname>x</varname> = 1, 0 otherwise, <varname>d2</varname> = 1 if
-	    <varname>x</varname> = 2, and so on.  To create these, use the
-	    commands: 
+	<listitem><para>Suppose <varname>x</varname> is coded with
+	    values 1, 2, or 3 and you want three dummy variables,
+	    <varname>d1</varname> = 1 if <varname>x</varname> = 1, 0
+	    otherwise, <varname>d2</varname> = 1 if
+	    <varname>x</varname> = 2, and so on.  To create these, use
+	    the commands: 
 
 	    <programlisting>
 	      genr d1 = (x=1)
@@ -950,123 +953,138 @@
 	</listitem>
       </itemizedlist>
 
-<table id="tab-genr" frame="none">
-  <title>Examples of use of genr command</title>
-  <tgroup cols="2">
-    <thead>
-      <row>
-	<entry>Command</entry>
-	<entry>Comment</entry>
-      </row>
-    </thead>
-    <tbody>
-      <row>
-	<entry><command>genr y = x1^3</command></entry>
-	<entry><command>x1</command> cubed</entry>
-      </row>          
-      <row>
-	<entry><command>genr y = ln((x1+x2)/x3)</command></entry>
-	<entry></entry>
-      </row>
-      <row>
-	<entry><command>genr z = x&gt;y</command></entry>
-	<entry>sets <command>z(t)</command> to 1 if <command>x(t) &gt;
-	    y(t)</command> else to 0</entry>
-      </row> 
-      <row>
-	<entry><command>genr y = x(-2)</command></entry>
-	<entry><command><varname>x</varname> lagged 2
-	periods</command></entry>
-      </row>     
-      <row>
-	<entry><command>genr y = x(2)</command></entry>
-	<entry><command><varname>x</varname> led 2 periods</command></entry>
-      </row>
-      <row>
-	<entry><command>genr y = diff(x)</command></entry>
-	<entry><command>y(t) = x(t) - x(t-1)</command></entry>
-      </row>
-      <row>
-	<entry><command>genr y = ldiff(x)</command></entry>
-	<entry><command>y(t) = log x(t) - log x(t-1)</command>, the
-	  instantaneous rate of growth of <varname>x</varname></entry>
-      </row>
-      <row>
-	<entry><command>genr y = sort(x)</command></entry>
-	<entry>sorts <varname>x</varname> in
-	    increasing order and stores in <varname>y</varname></entry>
-      </row>
-      <row>
-	<entry><command>genr y = -sort(-x)</command></entry>
-	<entry>sort <varname>x</varname> in decreasing order</entry>
-      </row>
-      <row>
-	<entry><command>genr y = int(x)</command></entry>
-	<entry>truncate <varname>x</varname> and
-	    store its integer value as <varname>y</varname></entry>
-      </row>
-      <row>
-	<entry><command>genr y = abs(x)</command></entry>
-	<entry>store the absolute values of <command>x</command></entry>
-      </row>
-      <row>
-	<entry><command>genr y = sum(x)</command></entry>
-	<entry>sum <varname>x</varname> values excluding missing 
-	  &minus;999 entries</entry>
-      </row>
-      <row>
-	<entry><command>genr y = cum(x)</command></entry>
-	<entry>cumulation: 
-	  <inlineequation>
-	   <alt role="tex">$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
-	   <graphic align="center" fileref="figures/cumulate"/>
-	  </inlineequation>
-	</entry>
-      </row>
-      <row>
-	<entry><command>genr aa = $ess</command></entry>
-	<entry>set <varname>aa</varname> equal to the Error Sum of
-	  Squares from last regression</entry>
-      </row>
-      <row>
-	<entry><command>genr x = coeff(sqft)</command></entry>
-	<entry>grab the estimated coefficient on the variable
-	  <varname>sqft</varname> from the last regression</entry>
-      </row>
-      <row>
-	<entry><command>genr rho4 = rho(4)</command></entry>
-	<entry>grab the 4th-order autoregressive coefficient from the
-	  last model (presumes an <command>ar</command> model)</entry>
-      </row>
-      <row>
-	<entry><command>genr cvx1x2 = vcv(x1, x2)</command></entry>
-	<entry>grab the estimated coefficient covariance of vars
-	  <varname>x1</varname> and <varname>x2</varname> from the
-	  last model</entry>
-      </row>
-      <row>
-	<entry><command>genr foo = uniform()/100</command></entry>
-	<entry>uniform pseudo-random variable in range
-	0&ndash;1</entry>
-      </row>
-      <row>
-	<entry><command>genr bar = 3 * normal()</command></entry>
-	<entry>normal pseudo-random variable, &mu; = 0, &sigma; =
-	3</entry>
-      </row>
-    </tbody>
-  </tgroup>
-</table>
+      <table id="tab-genr" frame="none">
+	<title>Examples of use of genr command</title>
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Command</entry>
+	      <entry>Comment</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry><command>genr y = x1^3</command></entry>
+	      <entry><command>x1</command> cubed</entry>
+	    </row>          
+	    <row>
+	      <entry><command>genr y =
+		  ln((x1+x2)/x3)</command></entry>
+	      <entry></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr z = x&gt;y</command></entry>
+	      <entry>sets <command>z(t)</command> to 1 if
+		<command>x(t) &gt; y(t)</command> else to 0</entry>
+	    </row> 
+	    <row>
+	      <entry><command>genr y = x(-2)</command></entry>
+	      <entry><command><varname>x</varname> lagged 2
+		  periods</command></entry>
+	    </row>     
+	    <row>
+	      <entry><command>genr y = x(2)</command></entry>
+	      <entry><command><varname>x</varname> led 2
+		  periods</command></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = diff(x)</command></entry>
+	      <entry><command>y(t) = x(t) - x(t-1)</command></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = ldiff(x)</command></entry>
+	      <entry><command>y(t) = log x(t) - log x(t-1)</command>,
+		the instantaneous rate of growth of
+		<varname>x</varname></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = sort(x)</command></entry>
+	      <entry>sorts <varname>x</varname> in increasing order
+		and stores in <varname>y</varname></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = -sort(-x)</command></entry>
+	      <entry>sort <varname>x</varname> in decreasing
+		order</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = int(x)</command></entry>
+	      <entry>truncate <varname>x</varname> and store its
+		integer value as <varname>y</varname></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = abs(x)</command></entry>
+	      <entry>store the absolute values of
+		<command>x</command></entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = sum(x)</command></entry>
+	      <entry>sum <varname>x</varname> values excluding missing
+		&minus;999 entries</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr y = cum(x)</command></entry>
+	      <entry>cumulation: 
+		<inlineequation>
+		  <alt role="tex">$y_t = \sum_{\tau=1}^t x_{\tau}$</alt>
+		  <inlinemediaobject>
+		    <imageobject>
+		      <imagedata align="center"
+		      fileref="figures/cumulate"/>
+		    </imageobject>
+		  </inlinemediaobject>
+		</inlineequation>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry><command>genr aa = $ess</command></entry>
+	      <entry>set <varname>aa</varname> equal to the Error Sum
+		of Squares from last regression</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr x = coeff(sqft)</command></entry>
+	      <entry>grab the estimated coefficient on the variable
+		<varname>sqft</varname> from the last
+		regression</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr rho4 = rho(4)</command></entry>
+	      <entry>grab the 4th-order autoregressive coefficient
+		from the last model (presumes an <command>ar</command>
+		model)</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr cvx1x2 = vcv(x1,
+		  x2)</command></entry>
+	      <entry>grab the estimated coefficient covariance of vars
+		<varname>x1</varname> and <varname>x2</varname> from
+		the last model</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr foo =
+		  uniform()/100</command></entry>
+	      <entry>uniform pseudo-random variable in range
+		0&ndash;1</entry>
+	    </row>
+	    <row>
+	      <entry><command>genr bar = 3 *
+		  normal()</command></entry>
+	      <entry>normal pseudo-random variable, &mu; = 0, &sigma;
+		= 3</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
 
-<para>
-&nbsp;
-</para>
+      <para>
+	&nbsp;
+      </para>
 
     </sect2>
 
     <sect2 id="gnuplot"><title>gnuplot</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1125,7 +1143,7 @@
 
     <sect2 id="graph"><title>graph</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1163,7 +1181,7 @@
 
     <sect2 id="hccm"><title>hccm</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1202,7 +1220,7 @@
 
     <sect2 id="hilu"><title>hilu</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1241,7 +1259,7 @@
 
     <sect2 id="hsk"><title>hsk</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1271,7 +1289,7 @@
 
     <sect2 id="import"><title>import</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1327,7 +1345,7 @@
 
     <sect2 id="lags"><title>lags</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1356,7 +1374,7 @@
 
     <sect2 id="ldiff"><title>ldiff</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1375,13 +1393,20 @@
 	  y</command> creates the new variables
 	<varname>ld_x</varname> =
 	  <inlineequation>
-	    <alt role="tex">$\ln(x_t) - \ln(x_{t-1})$</alt>
-		<graphic align="center" fileref="figures/ldx"/>
-	  </inlineequation> and
-	<varname>ld_y</varname> =
+	  <alt role="tex">$\ln(x_t) - \ln(x_{t-1})$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/ldx"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	  </inlineequation> and <varname>ld_y</varname> =
 	  <inlineequation>
-	    <alt role="tex">$\ln(y_t) - \ln(y_{t-1})$</alt>
-		<graphic align="center" fileref="figures/ldy"/>
+	  <alt role="tex">$\ln(y_t) - \ln(y_{t-1})$</alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/ldy"/>
+	    </imageobject>
+	  </inlinemediaobject>
 	  </inlineequation>.
       </para>
 
@@ -1409,7 +1434,7 @@
 
     <sect2 id="logit"><title>logit</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1449,7 +1474,7 @@
 
     <sect2 id="logs"><title>logs</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1474,7 +1499,7 @@
 
     <sect2 id="loop"><title>loop</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1534,7 +1559,7 @@
 
     <sect2 id="meantest"><title>meantest</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1564,7 +1589,7 @@
 
     <sect2 id="multiply"><title>multiply</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1609,7 +1634,7 @@
 
     <sect2 id="nulldata"><title>nulldata</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1642,7 +1667,7 @@
 
     <sect2 id="ols"><title>ols</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1654,16 +1679,6 @@
 	    <row>
 	      <entry>Examples: </entry>
 	      <entry><command>ols 1 0 2 4 6 7</command>  
-	      </entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>ols -o 1 0 2 4 6 7</command>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>ols y 0 x1 x2 x3</command>
 	      </entry>
 	    </row>
 	    <row>
@@ -1700,7 +1715,7 @@
 
     <sect2 id="omit"><title>omit</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1710,13 +1725,8 @@
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>Examples:</entry>
+	      <entry>Example:</entry>
 	      <entry><command>omit 5 7 9</command> 
-	      </entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>omit xx yy zz</command>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1743,7 +1753,7 @@
 
     <sect2 id="omitfrom"><title>omitfrom</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1767,11 +1777,13 @@
 	variables number 5, 7 and 9 from Model 2.
       </para>
 
+      <para role="bodgea4">&nbsp;</para>
+
     </sect2>
 
     <sect2 id="open"><title>open</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1786,15 +1798,14 @@
       <para>
 	Opens a data file.  If a data file is already open, it is
 	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, CSV or BOX1) and
-	treat it accordingly.
+	detect the format of the data file (native, CSV or BOX1).
       </para>
 
     </sect2>
 
     <sect2 id="pergm"><title>pergm</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1808,28 +1819,24 @@
       </informaltable>
 
       <para>
-	  Computes and displays (and if not in batch mode, graphs) the
-	  spectrum of the specified variable.  Without the
-	  <literal>-o</literal> flag the sample periodogram is given;
-	  with the flag a Bartlett lag window of length 
-	  <inlineequation>
-	  <alt role="tex">$2\sqrt{T}$</alt>
-	  <graphic align="center" fileref="figures/bartlett"/>
-	  </inlineequation>
-	  (where <emphasis>T</emphasis> is the sample size).  is used
-	  in estimating the spectrum (see Chapter 18 of Greene's
-	  <citetitle>Econometric Analysis</citetitle>). When the
-	  sample periodogram is printed, a <emphasis>t</emphasis>-test
-	  for fractional integration of the series (<quote>long
-	    memory</quote>) is also given: the null hypothesis is that
-	  the integration order is zero.
+	Computes and displays (and if not in batch mode, graphs) the
+	spectrum of the specified variable.  Without the
+	<literal>-o</literal> flag the sample periodogram is given;
+	with the flag a Bartlett lag window of length 2 root
+	<emphasis>T</emphasis> (where <emphasis>T</emphasis> is the
+	sample size).  is used in estimating the spectrum (see Chapter
+	18 of Greene's <citetitle>Econometric Analysis</citetitle>).
+	When the sample periodogram is printed, a
+	<emphasis>t</emphasis>-test for fractional integration of the
+	series (<quote>long memory</quote>) is also given: the null
+	hypothesis is that the integration order is zero.
       </para>
 
     </sect2>
 
     <sect2 id="plot"><title>plot</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1839,10 +1846,6 @@
 	    <row>
 	      <entry></entry>
 	      <entry><command>plot x1 x2</command></entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>plot 3 7</command>  </entry>
 	    </row>
 	    <row>
 	      <entry></entry>
@@ -1870,7 +1873,7 @@
 
     <sect2 id="print"><title>print</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1906,7 +1909,7 @@
 
     <sect2 id="probit"><title>probit</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -1939,7 +1942,7 @@
 
     <sect2 id="pvalue"><title>pvalue</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2013,7 +2016,7 @@
 
     <sect2 id="rhodiff"><title>rhodiff</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2056,7 +2059,7 @@
 
     <sect2 id="run"><title>run</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2077,7 +2080,7 @@
 
     <sect2 id="runs"><title>runs</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2103,7 +2106,7 @@
 
     <sect2 id="scatters"><title>scatters</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2155,7 +2158,7 @@
 
     <sect2 id="seed"><title>seed</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2181,7 +2184,7 @@
 
     <sect2 id="setobs"><title>setobs</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2221,7 +2224,7 @@
 
     <sect2 id="shell"><title>shell</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2245,7 +2248,7 @@
 
     <sect2 id="sim"><title>sim</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2293,7 +2296,7 @@
 
     <sect2 id="smpl"><title>smpl</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2404,7 +2407,7 @@
 
     <sect2 id="spearman"><title>spearman</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2441,7 +2444,7 @@
 
     <sect2 id="square"><title>square</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2471,7 +2474,7 @@
 
     <sect2 id="store"><title>store</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2560,7 +2563,7 @@
 
     <sect2 id="summary"><title>summary</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2609,7 +2612,7 @@
 
     <sect2 id="tsls"><title>tsls</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2651,11 +2654,13 @@
 	command.
       </para>
 
+      <para role="bodge">&nbsp;</para>
+
     </sect2>
 
     <sect2 id="var"><title>var</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2704,7 +2709,7 @@
 
     <sect2 id="vartest"><title>vartest</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
@@ -2728,7 +2733,7 @@
 
     <sect2 id="wls"><title>wls</title>
 
-      <informaltable frame="none">
+      <informaltable role="cmd" frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>

@@ -178,7 +178,8 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
     }
     else {
 	go_gnuplot(plot, NULL, &paths);
-    } 
+    }
+    session_changed(1);
 }
 
 /* ........................................................... */

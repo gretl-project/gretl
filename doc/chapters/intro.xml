@@ -1,3 +1,5 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
   <chapter id="intro"><title>Introduction</title>
 
   <para>
@@ -61,7 +63,7 @@
 	<listitem><para><application>gretl</application> does well on
 	    the NIST reference datasets.  For documentation of this
 	    point, see <ulink url="http://gretl.sourceforge.net/">the
-	      <application>gretl</application>website</ulink>.</para>
+	      <application>gretl</application> website</ulink>.</para>
 	</listitem>
       </varlistentry>
       <varlistentry><term>Internet ready</term>
@@ -102,13 +104,11 @@
 
     <para>I have benefitted greatly from the work of numerous
       developers of open-source software: for specifics please see
-      <xref linkend="app-technote"/> to this manual.</para>
-
-    <para>My thanks are due to Richard Stallman of the Free Software
-      Foundation, for his support of free software in general and for
-      agreeing to <quote>adopt</quote>
-      <application>gretl</application> as a GNU program in
-      particular.</para>
+      <xref linkend="app-technote"/> to this manual. My thanks are due
+      to Richard Stallman of the Free Software Foundation, for his
+      support of free software in general and for agreeing to
+      <quote>adopt</quote> <application>gretl</application> as a GNU
+      program in particular.</para>
 
   </sect1>
 
@@ -143,13 +143,17 @@
 	    <command>N</command> with the specific version number of
 	    the file you downloaded at step 1).</para></listitem>
 	<listitem><para>Change directory to the gretl source directory
-	    created at step 2 (e.g. <filename>gretl-0.97</filename>).
+	    created at step 2 (e.g. <filename>gretl-0.98</filename>).
 	  </para></listitem>  
-	<listitem><para>The basic routine is then <programlisting>
-	      ./configure make make install</programlisting> However,
-	    you should probably do <command>./configure
-	      --help</command> first to see what options are
-	    available. One option you way wish to tweak is
+	<listitem><para>The basic routine is then 
+	    <programlisting>
+	      ./configure 
+	      make 
+	      make install
+	    </programlisting>
+	    However, you should probably do
+	    <command>./configure --help</command> first to see what
+	    options are available. One option you way wish to tweak is
 	    <command>--prefix</command>.  By default the installation
 	    goes under <filename>/usr/local</filename> but you can
 	    change this.  For example <command>./configure

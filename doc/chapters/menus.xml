@@ -112,10 +112,30 @@
     </itemizedlist>
   </listitem>
 
-  <listitem><para><guimenu>Session menu</guimenu> This is discussed
-      separately below. Please see <xref linkend="session"/>.
-    </para></listitem>
-
+  <listitem><para><guimenu>Session menu</guimenu></para>
+    <itemizedlist mark="dash">
+	<listitem><para><guimenuitem>Icon view</guimenuitem>: Open a
+	    window showing the current
+	    <application>gretl</application> session as a set of
+	    icons.  For details see <xref
+	      linkend="session"/>.
+	  </para></listitem>
+	<listitem><para><guimenuitem>Add last graph</guimenuitem>:
+	    Capture the last graph shown in the form of a session
+	    icon, so that it can be revisited and manipulated.
+	  </para></listitem>
+	<listitem><para><guimenuitem>Open</guimenuitem>: Open a
+	    previously saved session file.
+	  </para></listitem>
+	<listitem><para><guimenuitem>Save</guimenuitem>: Save the
+	    current session to file.
+	  </para></listitem>
+	<listitem><para><guimenuitem>Save as</guimenuitem>: Save the
+	    current session to file under a chosen name.
+	  </para></listitem>
+    </itemizedlist>
+  </listitem>
+ 
   <listitem><para><guimenu>Data menu</guimenu></para>
     <itemizedlist mark="dash">
       <listitem><para><guimenuitem>Display values</guimenuitem>: pops
@@ -272,7 +292,7 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
-mode: sgml
+mode: xml
 sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->

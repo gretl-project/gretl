@@ -41,6 +41,8 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);
 
+int session_changed (int set);
+
 void session_init (void);
 
 void do_open_session (GtkWidget *w, gpointer data);

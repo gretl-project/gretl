@@ -38,7 +38,7 @@
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
-/* #define SESSION_DEBUG */
+#define SESSION_DEBUG
 
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
@@ -232,6 +232,9 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
     strcpy((session.graphs[i])->name, grname);
     (session.graphs[i])->ID = plot_count++;
     session.ngraphs += 1;
+    
+    session_changed(1);
+
     if (iconview == NULL) 
 	view_session();
     else 
@@ -246,6 +249,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     int i = session.nmodels;
+    char buf[24];
 
     if (pmod->name) return;
     if ((pmod->name = mymalloc(24)) == NULL) return;
@@ -261,11 +265,27 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     session.nmodels += 1;
     session.models[i] = pmod;
     if (iconview != NULL)
-	session_add_object(session.models[i], 'm');  
+	session_add_object(session.models[i], 'm'); 
+
+    sprintf(buf, "%s saved", pmod->name);
+    infobox(buf);
+
+    session_changed(1);
 
     /* close model window */
     if (close)
 	gtk_widget_destroy(gtk_widget_get_toplevel(GTK_WIDGET(mydata->w)));
+}
+
+/* ........................................................... */
+
+int session_changed (int set)
+{
+    static int has_changed;
+
+    if (set == -1) has_changed = 0;
+    else if (set == 1) has_changed = 1;
+    return has_changed;
 }
 
 /* ........................................................... */
@@ -277,6 +297,7 @@ void session_init (void)
     session.nmodels = 0;
     session.ngraphs = 0;
     session.name[0] = '\0';
+    session_changed(-1);
 }
 
 /* ........................................................... */
@@ -323,7 +344,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 
     mkfilelist(2, scriptfile);
 
-    endbit (session.name, scriptfile, 0);
+    endbit(session.name, scriptfile, 0);
 
     /* trash the practice files window that launched the query? */
     if (fwin) gtk_widget_destroy(fwin->w);    
@@ -344,6 +365,7 @@ void close_session (void)
     session_file_open = 0;
     if (iconview != NULL) 
 	gtk_widget_destroy(iconview);
+    session_changed(-1);
 }
 
 /* ........................................................... */
@@ -468,6 +490,8 @@ static int delete_session_object (gui_obj *obj)
 	session.ngraphs -= 1;
     }
 
+    session_changed(1);
+
     gtk_icon_list_remove(GTK_ICON_LIST(slist), active_icon);
     return 0;
 }
@@ -591,6 +615,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    }
 	    tmp = strchr(line, '"') + 1;
 	    strncpy((psession->graphs[k])->name, tmp, 23);
+	    (psession->graphs[k])->name[23] = '\0';
 	    n = strlen((psession->graphs[k])->name);
 	    for (j=n-1; j>0; j--) {
 		if ((psession->graphs[k])->name[j] == '"') {
@@ -601,6 +626,9 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    n = haschar('"', tmp);
 	    strcpy((psession->graphs[k])->fname, tmp + n + 1);
 	    top_n_tail((psession->graphs[k])->fname);
+#ifdef SESSION_DEBUG
+	    fprintf(stderr, "got graph: '%s'\n", (psession->graphs[k])->fname);
+#endif
 	    (psession->graphs[k])->ID = plot_count++;
 	    k++;
 	    continue;
@@ -611,6 +639,9 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    return 1;
 	}
     }
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "psession->ngraphs = %d\n", psession->ngraphs);
+#endif
     fclose(fp);
     return 0;
 }
@@ -622,16 +653,25 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 {
     PRN *prn;
     extern int replay; /* lib.c */
+    int ngraphs = psession->ngraphs;
 
     /* no printed output wanted */
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: fname = %s\n", fname);
+    fprintf(stderr, "recreate_session: ngraphs = %d\n", psession->ngraphs);
 #endif
 
     if (execute_script(fname, psession, rebuild, prn, REBUILD_EXEC)) 
 	errbox("Error recreating session");
+    psession->ngraphs = ngraphs;
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "recreate_session: after execute_script() nmodels = %d\n", 
+	    psession->nmodels);
+    fprintf(stderr, "recreate_session: after execute_script() ngraphs = %d\n", 
+	    psession->ngraphs);
+#endif
     free_rebuild(rebuild);
     gretl_print_destroy(prn);
     replay = 1; /* no fresh commands have been entered yet */
@@ -732,6 +772,7 @@ void view_session (void)
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "view_session: session.nmodels = %d\n", session.nmodels);
+    fprintf(stderr, "view_session: session.ngraphs = %d\n", session.ngraphs);
 #endif
 
     for (i=0; i<session.nmodels; i++) {
@@ -742,6 +783,9 @@ void view_session (void)
 	session_add_object(session.models[i], 'm');
     }
     for (i=0; i<session.ngraphs; i++) {
+#ifdef SESSION_DEBUG
+	fprintf(stderr, "adding session.graphs[%d] to view\n", i);
+#endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_object(session.graphs[i], 
 			   ((session.graphs[i])->name[0] == 'G')? 'g' : 'b');
@@ -928,10 +972,12 @@ static void session_build_popups (void)
 
 void save_session_callback (GtkWidget *w, guint i, gpointer data)
 {
-    if (i == 0 && session_file_open && scriptfile[0]) 
+    if (i == 0 && session_file_open && scriptfile[0]) {
 	save_session(scriptfile);
-    else
+	session_changed(-1);
+    } else {
 	file_selector("Save session", SAVE_SESSION, NULL);
+    }
 }
 
 /* ........................................................... */

@@ -49,13 +49,18 @@
 ;; How to write out an equation into the equation listing file
 (define (write-eqn nd)
   (let ((texmath (select-elements (children (current-node)) 
-				  (normalize "alt")))
+				   (normalize "alt")))
 	(graphic (select-elements (children (current-node)) 
-				  (normalize "graphic"))))
+  				   (normalize "graphic"))) 
+	(imgdata (select-elements (descendants (current-node))
+                                  (normalize "imagedata")))) 
     (make element gi: "texequation"
 	  attributes: 
 	  (list 
-	   (list "fileref" (attribute-string (normalize "fileref") graphic)))
+	   (list "fileref" 
+             (if (node-list-empty? graphic) 
+              (attribute-string (normalize "fileref") imgdata) 
+              (attribute-string (normalize "fileref") graphic))))
 	  (literal (trim-leading (data texmath))))))
 
 ;; Special processing mode to extract equations
