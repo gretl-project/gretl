@@ -81,6 +81,8 @@ void count_missing (void);
 
 void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
+void do_remove_markers (gpointer data, guint u, GtkWidget *w);
+
 int dataset_is_restricted (void);
 
 int maybe_restore_full_data (int action);

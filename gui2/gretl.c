@@ -476,6 +476,7 @@ GtkItemFactoryEntry data_items[] = {
       GSETMISS, NULL, GNULL },
     { N_("/Sample/sep4"), NULL, NULL, 0, "<Separator>", NULL },  
     { N_("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL, GNULL },
+    { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL, GNULL },
     { N_("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL, GNULL },
@@ -1011,6 +1012,11 @@ void edit_info_state (gboolean s)
     flip(mdata->ifac, "/Data/Edit info", s);
 }
 
+void remove_markers_state (gboolean s)
+{
+    flip(mdata->ifac, "/Sample/Remove case markers", s);
+}
+
 void main_menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
@@ -1028,6 +1034,7 @@ void main_menubar_state (gboolean s)
 
     if (s) {
 	edit_info_state(!(data_status & BOOK_DATA));
+	remove_markers_state(datainfo->S != NULL);
     }
 }
 

@@ -129,6 +129,8 @@ void panel_menu_state (gboolean s);
 
 void edit_info_state (gboolean s);
 
+void remove_markers_state (gboolean s);
+
 void populate_varlist (void);
 
 void clear_varlist (GtkWidget *widget);
