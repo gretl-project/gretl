@@ -4521,9 +4521,11 @@ int execute_script (const char *runfile, const char *buf,
 	    if (loop_exec(loop, line, 
 			  &Z, &datainfo,
 			  models, &paths, 
-			  echo_off, prn)) {
+			  &echo_off, prn)) {
 		return 1;
 	    }
+	    gretl_loop_destroy(loop);
+	    loop = NULL;
 	    looprun = 0;
 	} else { 
 	    int bslash;
@@ -4679,20 +4681,13 @@ int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
-    LOOPSET *loop;
+    LOOPSET *loop = *plp;
     PRN *outprn = NULL;
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
 #endif
-
-    /* hook up loop pointer */
-    if (plp == NULL) {
-	loop = NULL;
-    } else {
-	loop = *plp;
-    }
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -4754,19 +4749,26 @@ int gui_exec_line (char *line,
 	return 1;
     }
 
-    if (loopstack) {  
+    if (cmd.ci == LOOP && exec_code == CONSOLE_EXEC) {
+	pputs(prn, _("Enter commands for loop.  "
+		     "Type 'endloop' to get out\n"));
+    }
+
+    if (loopstack || cmd.ci == LOOP) {  
 	/* accumulating loop commands */
 	if (!ok_in_loop(cmd.ci, loop)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
-        } 
-	if (cmd.ci != ENDLOOP) {
-	    if (add_to_loop(loop, line, cmd.ci, cmd.opt)) {
-		pprintf(prn, _("Failed to add command to loop stack\n"));
-		return 1;
-	    }
-	    return 0;
+        }
+	loop = add_to_loop(line, cmd.ci, cmd.opt,
+			   datainfo, (const double **) Z,
+			   loop, plstack, plrun);
+	if (loop == NULL) {
+	    print_gretl_errmsg(prn);
+	    return 1;
 	} 
+	*plp = loop;
+	return 0;
     } 
 
     /* if rebuilding a session, add tests back to models */
@@ -5058,15 +5060,9 @@ int gui_exec_line (char *line,
 	break;
 
     case ENDLOOP:
-	if (loopstack == 0) {
-	    pprintf(prn, _("You can't end a loop here, "
-			   "you haven't started one\n"));
-	    break;
-	}
-	loopstack--;
-	if (loopstack == 0) {
-	    looprun = 1;
-	}
+	pprintf(prn, _("You can't end a loop here, "
+		       "you haven't started one\n"));
+	err = 1;
 	break;
 
     case EQUATION:
@@ -5374,21 +5370,6 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	printmodel(models[0], datainfo, cmd.opt, outprn);
-	break;
-
-    case LOOP:
-	if (plp == NULL) { 
-	    pprintf(prn, _("Sorry, Monte Carlo loops not available "
-			   "in this mode\n"));
-	    break;
-	}
-	loop = parse_loopline(line, loop, loopstack,
-			      datainfo, (const double **) Z);
-	if (loop == NULL) {
-	    print_gretl_errmsg(prn);
-	    break;
-	}
-	loopstack++;
 	break;
 
     case MODELTAB:

@@ -37,20 +37,20 @@ typedef struct LOOPSET_ LOOPSET;
 
 int ok_in_loop (int ci, const LOOPSET *loop);
 
-LOOPSET *parse_loopline (char *line, LOOPSET *ploop, int loopstack,
-			 DATAINFO *pdinfo, const double **Z);
+LOOPSET *add_to_loop (char *line, int ci, gretlopt oflags,
+		      DATAINFO *pdinfo, const double **Z,
+		      LOOPSET *loop, int *loopstack, int *looprun);
 
-LOOPSET *gretl_loop_terminate (LOOPSET *loop);
+LOOPSET *loop_get_parent (LOOPSET *loop);
 
-int add_to_loop (LOOPSET *loop, char *line, int ci, 
-		 gretlopt oflags);
+void gretl_loop_destroy (LOOPSET *loop);
 
 void get_cmd_ci (const char *line, CMD *command);
 
 int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, PATHS *paths, 
-	       int echo_off, PRN *prn);
+	       int *echo_off, PRN *prn);
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
 

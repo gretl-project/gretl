@@ -481,9 +481,11 @@ int main (int argc, char *argv[])
 	if (looprun) { 
 	    if (loop_exec(loop, line, &Z, &datainfo,
 			  models, &paths, 
-			  echo_off, prn)) {
+			  &echo_off, prn)) {
 		return 1;
 	    }
+	    gretl_loop_destroy(loop);
+	    loop = NULL;
 	    looprun = errfatal = 0;
 	} else { 
 #ifdef HAVE_READLINE
@@ -606,10 +608,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	       (runit)? NULL : cmdprn);
     }
 
-    /* tell the lib if we should pause between screens */
+    /* tell libgretl if we should pause between screens */
     gretl_set_text_pause(!batch);
 
-    /* if in batch mode, echo comments in input */
+    /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {
 	printf_strip(linebak);
     }
@@ -629,27 +631,34 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	sys = NULL;
 	return;
     }
+
+    if (cmd.ci == LOOP && !batch && !runit) {
+	pputs(prn, _("Enter commands for loop.  "
+		     "Type 'endloop' to get out\n"));
+    }
    
-    if (loopstack) {  
+    if (loopstack || cmd.ci == LOOP) {  
 	/* accumulating loop commands */
 	if (!ok_in_loop(cmd.ci, loop)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
-	    return;
 	} else {
 	    if (!echo_off) {
 		echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 
 			 0, cmdprn);
 	    }
-	    if (cmd.ci != ENDLOOP) {
-		if (add_to_loop(loop, line, cmd.ci, cmd.opt)) { 
-		    printf(_("Failed to add command to loop stack\n"));
-		}
-		return;
-	    }
+	    loop = add_to_loop(line, cmd.ci, cmd.opt,
+			       datainfo, (const double **) Z,
+			       loop, &loopstack, &looprun);
+	    if (loop == NULL) {
+		print_gretl_errmsg(prn);
+		err = 1;
+	    } 
+	    *ploop = loop;
 	}
+	return;
     }
 
-    if (!echo_off && cmd.ci != ENDLOOP) {
+    if (!echo_off) {
 	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 
 		 cmdprn);
     }
@@ -904,16 +913,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 
     case ENDLOOP:
-	if (loopstack == 0) {
-	    pputs(prn, _("You can't end a loop here, "
-			 "you haven't started one\n"));
-	    break;
-	}
-	loopstack--;
-	if (loopstack == 0) {
-	    looprun = 1;
-	}
-	/* FIXME need to do more ?? */
+	pputs(prn, _("You can't end a loop here, "
+		     "you haven't started one\n"));
+	err = 1;
 	break;
 
     case EQUATION:
@@ -1223,22 +1225,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    break;
 	}
 	printmodel(models[0], datainfo, cmd.opt, prn);
-	break;
-
-    case LOOP:
-	errfatal = 1;
-	loop = parse_loopline(line, loop, loopstack,
-			      datainfo, (const double **) Z);
-	if (loop == NULL) {
-	    print_gretl_errmsg(prn);
-	    break;
-	}
-	*ploop = loop;
-	if (!batch && !runit) {
-	    pputs(prn, _("Enter commands for loop.  "
-			 "Type 'endloop' to get out\n"));
-	}
-	loopstack++; 
 	break;
 
     case NLS:

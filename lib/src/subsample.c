@@ -26,12 +26,30 @@
 
 /* private to libgretl */
 
-/* Let the library handle the ugliness of multiple dataset
-   pointers in a "hidden" manner */
+/*
+  The purpose of these static pointers: When the user subsamples
+  the current dataset in a non-trivial way -- i.e., by selecting
+  cases rather than just moving the starting or ending points of
+  the data range -- we create a new sub-dataset, and we need to
+  keep the full dataset around so that it can be restored later.
+  The pointers fullZ and fullinfo are used to record the addresses
+  of the full data matrix and DATAINFO struct respectively.
+
+  Another issue arises: if the user replaces or clears a dataset
+  while it is subsampled, we want to free the associated full
+  dataset also.  The peerinfo pointer is used to facilitate
+  this.  On subsampling, when fullZ and fullinfo are assigned
+  to, peerinfo is pointed at the associated subsampled
+  DATAINFO struct.  Then, on freeing the subsampled dataset,
+  we check whether its DATAINFO address matches peerinfo: if
+  so, we free up fullZ and fullinfo.
+*/
 
 static double **fullZ;
 static DATAINFO *fullinfo;
 static DATAINFO *peerinfo;
+
+/* .......................................................... */
 
 char *copy_subdum (const char *src, int n)
 {
@@ -61,6 +79,7 @@ void maybe_free_full_dataset (const DATAINFO *pdinfo)
 	    free(fullinfo);
 	    fullinfo = NULL;
 	}
+	peerinfo = NULL;
     }
 }
 

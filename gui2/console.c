@@ -31,6 +31,10 @@ static gchar *cbuf;
 static char **cmd_history;
 static int hl, hlmax, hlines;
 
+static LOOPSET *loop;
+static int loopstack, looprun;
+static int echo_off;
+
 static int gretl_console_init (void)
 {
     int i;
@@ -54,6 +58,10 @@ static int gretl_console_init (void)
     hl = -1;
 
     cbuf = NULL;
+
+    loop = NULL;
+    loopstack = looprun = 0;
+    echo_off = 0;
 
     return 0;
 }
@@ -222,7 +230,6 @@ static int sample_changed (const DATAINFO *pdinfo)
 static void console_exec (void)
 {
     static int redirected;
-    int loopstack = 0, looprun = 0;
     int oldv = datainfo->v;
     char execline[MAXLEN];
 #ifndef OLD_GTK
@@ -264,9 +271,22 @@ static void console_exec (void)
 
     console_record_sample(datainfo);
 
-    push_history_line(execline);    
-    gui_exec_line(execline, NULL, &loopstack, &looprun, console_prn, 
+    push_history_line(execline); 
+
+    gui_exec_line(execline, &loop, &loopstack, &looprun, console_prn, 
 		  CONSOLE_EXEC, NULL);
+
+    if (looprun) { 
+	if (loop_exec(loop, execline, 
+		      &Z, &datainfo,
+		      models, &paths, 
+		      &echo_off, console_prn)) {
+	    return;
+	}
+	gretl_loop_destroy(loop);
+	loop = NULL;
+	looprun = 0;
+    }    
 
     if (console_prn->fp == NULL) redirected = 0;
 
@@ -307,11 +327,11 @@ static void console_exec (void)
 
 #ifndef OLD_GTK
     gtk_text_buffer_insert_with_tags_by_name(buf, &start, 
-					     "\n? ", 3,
+					     (loopstack)? "\n> " : "\n? ", 3,
 					     "redtext", NULL);
 #else
     gtk_text_insert(GTK_TEXT(console_view), fixed_font,
-		    &red, NULL, "\n? ", 3);
+		    &red, NULL, (loopstack)? "\n> " : "\n? ", 3);
     gtk_text_thaw(GTK_TEXT(console_view));
 #endif
 
