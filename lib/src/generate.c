@@ -104,6 +104,7 @@ enum retrieve {
     R_DF,
     R_LNL,
     R_AIC,
+    R_BIC,
     R_TRSQ,
     R_NOBS,
     R_PD
@@ -3080,6 +3081,10 @@ static int check_modelstat (const MODEL *pmod, int idx)
 	    strcpy(gretl_errmsg, 
 		   _("No $aic (Akaike Information Criterion) value is available"));
 	    return 1;
+	case R_BIC:
+	    strcpy(gretl_errmsg, 
+		   _("No $bic (Bayesian Information Criterion) value is available"));
+	    return 1;
 	default:
 	    return 0;
 	}
@@ -3095,6 +3100,12 @@ static int check_modelstat (const MODEL *pmod, int idx)
     if (pmod != NULL && idx == R_AIC && na(pmod->criterion[C_AIC])) {
 	strcpy(gretl_errmsg, 
 	       _("No $aic (Akaike Information Criterion) value is available"));
+	return 1;
+    }
+
+    if (pmod != NULL && idx == R_BIC && na(pmod->criterion[C_BIC])) {
+	strcpy(gretl_errmsg, 
+	       _("No $bic (Bayesian Information Criterion) value is available"));
 	return 1;
     }	
 
@@ -3234,6 +3245,9 @@ get_model_scalar_stat (const MODEL *pmod, int idx, int *err)
 	break;
     case R_AIC:
 	x = pmod->criterion[C_AIC];
+	break;
+    case R_BIC:
+	x = pmod->criterion[C_BIC];
 	break;
     case R_SIGMA:
 	if (pmod->nwt) x = pmod->sigma_wt;
@@ -3475,6 +3489,8 @@ static int model_scalar_stat_index (const char *s)
 	return R_LNL;
     if (!strcmp(test, "$aic"))   
 	return R_AIC;
+    if (!strcmp(test, "$bic"))   
+	return R_BIC;
     if (!strcmp(test, "$nrsq") || 
 	!strcmp(test, "$trsq")) 
 	return R_TRSQ;
