@@ -1227,7 +1227,7 @@ int csv_to_clipboard (void)
             err = data_to_buf_as_csv(command.list, prn);
         }
         if (!err) {
-            err = prn_to_clipboard(prn);
+            prn_to_clipboard(prn);
         }
 
         gretl_print_destroy(prn);
