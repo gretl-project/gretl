@@ -294,6 +294,8 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	do_menu_op(NULL, CORR_SELECTED, NULL);
     else if (!strcmp(item, _("Principal components"))) 
 	do_menu_op(NULL, PCA, NULL);
+    else if (!strcmp(item, _("Mahalanobis distances"))) 
+	do_menu_op(NULL, MAHAL, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("XY scatterplot"))) 
@@ -314,9 +316,10 @@ GtkWidget *build_selection_popup (void)
 	N_("Display values"),
 	N_("Descriptive statistics"),
 	N_("Correlation matrix"),
-	N_("Principal components"),
 	N_("Time series plot"),
 	N_("XY scatterplot"),
+	N_("Principal components"),
+	N_("Mahalanobis distances"),
 	N_("Copy to clipboard"),
 	N_("Delete"),
     };
@@ -328,7 +331,7 @@ GtkWidget *build_selection_popup (void)
     sel_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
-	if (!dataset_is_time_series(datainfo) && i == 4) {
+	if (!dataset_is_time_series(datainfo) && i == 3) {
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));

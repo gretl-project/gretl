@@ -506,6 +506,35 @@ static gint stack_model (MODEL *pmod)
 
 /* ........................................................... */
 
+void add_mahalanobis_data (windata_t *vwin)
+{
+    char *liststr = (char *) vwin->data;
+    int err;
+
+    if (liststr == NULL || *liststr == '\0') {
+	return;
+    }
+
+    clear(line, MAXLEN);
+    strcpy(line, "mahal");
+    strcat(line, liststr);
+    strcat(line, " --save");
+
+    if (verify_and_record_command(line)) {
+	return;
+    }    
+
+    err = mahalanobis_distance(cmd.list, &Z, datainfo, OPT_S, NULL);
+
+    if (err) {
+	gui_errmsg(err);
+	return;
+    }
+}
+
+/* ........................................................... */
+
+
 void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
@@ -513,13 +542,14 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char *liststr = NULL;
     int err = 0;
     gpointer obj = NULL;
+    gretlopt opt = OPT_NONE;
     gint hsize = 78, vsize = 380;
 
     clear(line, MAXLEN);
     strcpy(title, "gretl: ");
 
     if (action == CORR_SELECTED || action == SUMMARY_SELECTED ||
-	action == PCA) {
+	action == PCA || action == MAHAL) {
 	liststr = mdata_selection_to_string(0);
 	if (liststr == NULL) return;
     }
@@ -532,15 +562,21 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case CORR_SELECTED:
 	strcpy(line, "corr");
 	strcat(line, liststr);
-	free(liststr);
 	strcat(title, _("correlation matrix"));
 	action = CORR;
 	break;
     case PCA:
 	strcpy(line, "pca");
 	strcat(line, liststr);
-	free(liststr);
 	strcat(title, _("principal components"));
+	break;
+    case MAHAL:
+	strcpy(line, "mahal");
+	strcat(line, liststr);
+	obj = liststr;
+	liststr = NULL;
+	hsize = 60;
+	strcat(title, _("Mahalanobis distances"));
 	break;
     case FREQ:
 	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
@@ -559,7 +595,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     case SUMMARY_SELECTED:
 	strcpy(line, "summary");
 	strcat(line, liststr);
-	free(liststr);
 	strcat(title, _("summary statistics"));
 	action = SUMMARY;
 	break;
@@ -573,11 +608,18 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     }
 
+    if (liststr != NULL) {
+	free(liststr);
+    }
+
     /* check the command and initialize output buffer */
-    if (verify_and_record_command(line) || bufopen(&prn)) return;
+    if (verify_and_record_command(line) || bufopen(&prn)) {
+	return;
+    }
 
     /* execute the command */
     switch (action) {
+
     case CORR:
 	obj = corrlist(cmd.list, (const double **) Z, datainfo);
 	if (obj == NULL) {
@@ -587,13 +629,16 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	} 
 	matrix_print_corr(obj, datainfo, prn);
 	break;
+
     case FREQ:
 	err = freqdist(cmd.list[1], (const double **) Z, datainfo,
 		       0, prn, OPT_NONE);
 	break;
+
     case RUNS:
 	err = runs_test(cmd.list[1], (const double **) Z, datainfo, prn);
 	break;
+
     case PCA:
 	obj = corrlist(cmd.list, (const double **) Z, datainfo);
 	if (obj == NULL) {
@@ -604,6 +649,14 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    err = call_pca_plugin((CORRMAT *) obj, &Z, datainfo, NULL, prn);
 	}
 	break;
+
+    case MAHAL:
+	if (cmd.list[0] <= 4) {
+	    opt = OPT_V;
+	}
+	err = mahalanobis_distance(cmd.list, &Z, datainfo, opt, prn);
+	break;
+
     case SUMMARY:
     case VAR_SUMMARY:	
 	obj = summary(cmd.list, (const double **) Z, datainfo, prn);
@@ -616,7 +669,9 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	break;
     }
 
-    if (err) gui_errmsg(err);
+    if (err) {
+	gui_errmsg(err);
+    }
 
     view_buffer(prn, hsize, vsize, title, action, obj);
 }
@@ -1356,8 +1411,10 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    int (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
+    int (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, 
+			     gretlopt, PRN *);
     PRN *prn;
+    gretlopt opt = OPT_NONE;
     int err;
 
     if (!balanced_panel(datainfo)) {
@@ -1378,7 +1435,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    err = (*panel_diagnostics)(pmod, &Z, datainfo, prn);
+    err = (*panel_diagnostics)(pmod, &Z, datainfo, opt, prn);
 
     close_plugin(handle);
 
@@ -1445,7 +1502,7 @@ void add_leverage_data (windata_t *vwin)
     } else {
 	int ID = get_model_id_from_window(vwin->dialog);
 
-	strcpy(line, "leverage -o");
+	strcpy(line, "leverage --save");
 	model_command_init(line, &cmd, ID);
     }
 }
@@ -5719,7 +5776,7 @@ int gui_exec_line (char *line,
     case HAUSMAN:
 	err = script_model_test(cmd.ci, 0, prn);
 	if (!err) {
-	    err = hausman_test(models[0], &Z, datainfo, outprn);
+	    err = hausman_test(models[0], &Z, datainfo, cmd.opt, outprn);
 	}
 	break;
 
@@ -5818,9 +5875,12 @@ int gui_exec_line (char *line,
 
     case LEVERAGE:
 	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = leverage_test(models[0], &Z, datainfo, outprn, cmd.opt);
-	if (err > 1) errmsg(err, prn);
-	else if (cmd.opt) varlist(datainfo, prn);
+	err = leverage_test(models[0], &Z, datainfo, cmd.opt, outprn);
+	if (err > 1) {
+	    errmsg(err, prn);
+	} else if (cmd.opt & OPT_S) {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case VIF:

@@ -384,6 +384,7 @@ GtkItemFactoryEntry data_items[] = {
       CORR_SELECTED, NULL, GNULL },
 
     { N_("/Data/_Principal components"), NULL, do_menu_op, PCA, NULL, GNULL },
+    { N_("/Data/_Mahalanobis distances"), NULL, do_menu_op, MAHAL, NULL, GNULL },
 
     { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>", NULL },
@@ -988,6 +989,8 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
 	     (selcount > 1));
 	flip(mdata->ifac, "/Data/Principal components", 
+	     (selcount > 1));
+	flip(mdata->ifac, "/Data/Mahalanobis distances", 
 	     (selcount > 1));
     }
 }

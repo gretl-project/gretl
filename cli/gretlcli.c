@@ -1153,7 +1153,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case HAUSMAN:
 	err = model_test_start(cmd.ci, 0, prn);
 	if (!err) {
-	    err = hausman_test(models[0], &Z, datainfo, prn);
+	    err = hausman_test(models[0], &Z, datainfo, cmd.opt, prn);
 	}
 	break;
 
@@ -1253,10 +1253,10 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case LEVERAGE:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;	
-	err = leverage_test(models[0], &Z, datainfo, prn, cmd.opt);
+	err = leverage_test(models[0], &Z, datainfo, cmd.opt, prn);
 	if (err > 1) {
 	    errmsg(err, prn);
-	} else if (cmd.opt) {
+	} else if (cmd.opt & OPT_S) {
 	    varlist(datainfo, prn);
 	}
 	break;

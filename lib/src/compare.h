@@ -86,7 +86,7 @@ int cusum_test (MODEL *pmod,
 
 int hausman_test (MODEL *pmod, 
 		  double ***pZ, DATAINFO *pdinfo, 
-		  PRN *prn);
+		  gretlopt opt, PRN *prn);
 
 int vif_test (MODEL *pmod, 
 	      double ***pZ, DATAINFO *pdinfo, 
@@ -94,10 +94,10 @@ int vif_test (MODEL *pmod,
 
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, gretlopt oflag);
+		   gretlopt opt, PRN *prn);
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, unsigned char opt);
+				    gretl_matrix *m, unsigned char flags);
 
 int mp_ols (const int *list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 

@@ -1297,6 +1297,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    gretl_var_free_unnamed(vwin->data);
 	else if (vwin->role == LEVERAGE) 
 	    gretl_matrix_free(vwin->data);
+	else if (vwin->role == MAHAL)
+	    free(vwin->data); /* string */
 
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
@@ -1382,9 +1384,10 @@ static void add_data_callback (GtkWidget *w, windata_t *vwin)
 
     if (vwin->role == PCA) {
 	add_pca_data(vwin);
-    }
-    else if (vwin->role == LEVERAGE) {
+    } else if (vwin->role == LEVERAGE) {
 	add_leverage_data(vwin);
+    } else if (vwin->role == MAHAL) {
+	add_mahalanobis_data(vwin);
     }
 
     if (datainfo->v > oldv) {
@@ -1553,8 +1556,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (vwin->role != PCA && vwin->role != LEVERAGE &&
-	    viewbar_items[i].flag == ADD_ITEM) {
+	if (vwin->role != PCA && vwin->role != LEVERAGE && 
+	    vwin->role != MAHAL && viewbar_items[i].flag == ADD_ITEM) {
 	    continue;
 	}
 

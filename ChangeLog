@@ -28,7 +28,9 @@ version 1.3.3
 - add "simple-print" option for ols command (just print the
   coefficient table, with no auxiliary statistics)
 - add "mahal" command: calculate Mahalanobis distances given
-  a set of variables
+  a set of variables; also available in GUI via right-click
+  popup menu when more than one variable is selected in the
+  main window
 
 01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking

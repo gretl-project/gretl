@@ -1856,7 +1856,12 @@ int mahalanobis_distance (const int *list, double ***pZ,
 	    savevar = mdist_saver(pZ, pdinfo);
 	}
 
-	pprintf(prn, "%s\n\n", _("Mahalanobis distances from the centroid"));
+	pprintf(prn, "%s\n", _("Mahalanobis distances from the centroid"));
+	pprintf(prn, "%s\n", _("using the variables:"));
+	for (i=1; i<=list[0]; i++) {
+	    pprintf(prn, " %s\n", pdinfo->varname[list[i]]);
+	}
+	pputc(prn, '\n');
 
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 

@@ -255,5 +255,7 @@ int verify_and_record_command (char *line);
 
 int latex_compile (char *texshort);
 
+void add_mahalanobis_data (windata_t *vwin);
+
 #endif /* LIBRARY_H */
 

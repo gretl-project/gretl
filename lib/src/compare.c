@@ -1500,6 +1500,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: option flags.
  * @prn: gretl printing struct.
  *
  * Tests the given pooled model for fixed and random effects.
@@ -1509,7 +1510,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  */
 
 int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		  PRN *prn) 
+		  gretlopt opt, PRN *prn) 
 {
     if (pmod->ci != POOLED) {
 	pputs(prn, _("This test is only relevant for pooled models\n"));
@@ -1528,13 +1529,14 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     } else {
 	void *handle;
-	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
+	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, 
+				  gretlopt, PRN *);
 
 	panel_diagnostics = get_plugin_function("panel_diagnostics", &handle);
 	if (panel_diagnostics == NULL) {
 	    return 1;
 	}
-	(*panel_diagnostics) (pmod, pZ, pdinfo, prn);
+	(*panel_diagnostics) (pmod, pZ, pdinfo, opt, prn);
 	close_plugin(handle);
     }
     return 0;
@@ -1545,7 +1547,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * @pZ: pointer to data array.
  * @pdinfo: dataset information.
  * @m: matrix containing leverage values.
- * @opt: option flag: combination of SAVE_LEVERAGE, SAVE_INFLUENCE,
+ * @flags: option flags: combination of SAVE_LEVERAGE, SAVE_INFLUENCE,
  * and SAVE_DFFITS.
  *
  * Adds to the working dataset one or more series calculated by
@@ -1556,14 +1558,14 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  */
 
 int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
-				    gretl_matrix *m, unsigned char opt)
+				    gretl_matrix *m, unsigned char flags)
 {
     int t1, t2;
     int addvars = 0;
 
-    if (opt & SAVE_LEVERAGE) addvars++;
-    if (opt & SAVE_INFLUENCE) addvars++;
-    if (opt & SAVE_DFFITS) addvars++;
+    if (flags & SAVE_LEVERAGE) addvars++;
+    if (flags & SAVE_INFLUENCE) addvars++;
+    if (flags & SAVE_DFFITS) addvars++;
 
     if (dataset_add_vars(addvars, pZ, pdinfo)) {
 	strcpy(gretl_errmsg, _("Out of memory adding series"));
@@ -1574,7 +1576,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     t2 = t1 + gretl_matrix_rows(m);
 
     /* add leverage? */
-    if (opt & SAVE_LEVERAGE) {
+    if (flags & SAVE_LEVERAGE) {
 	int t, v = pdinfo->v - addvars;
 	int j = 0;
 
@@ -1591,7 +1593,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* add influence? */
-    if (opt & SAVE_INFLUENCE) {
+    if (flags & SAVE_INFLUENCE) {
 	int t, v = pdinfo->v - (addvars - 1);
 	int j = 0;
 
@@ -1608,7 +1610,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* add DFFITS? */
-    if (opt & SAVE_DFFITS) {
+    if (flags & SAVE_DFFITS) {
 	int t, v = pdinfo->v - (addvars - 2);
 	int j = 0;
 
@@ -1642,8 +1644,8 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: if OPT_S, add calculated series to data set.
  * @prn: gretl printing struct.
- * @oflag: if non-zero, add calculated series to data set.
  *
  * Tests the data used in the given model for points with
  * high leverage and influence on the estimates
@@ -1653,7 +1655,7 @@ int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, gretlopt oflag)
+		   gretlopt opt, PRN *prn)
 {
     void *handle;
     gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
@@ -1672,7 +1674,7 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     if (m == NULL) {
 	err = 1;
     } else {
-	if (oflag) {
+	if (opt & OPT_S) {
 	    err = add_leverage_values_to_dataset(pZ, pdinfo, m, 
 						 SAVE_LEVERAGE |
 						 SAVE_INFLUENCE| 
