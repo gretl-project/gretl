@@ -237,20 +237,19 @@ if test "$trygnome" = "yes" ; then
     have_gnome=yes
     if test "${gnome_prefix}" = "NA" ; then
       gnome_prefix="`gnome-config --prefix`"
-      GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
-      GNOME_LIBS=`gnome-config --libs gnomeui print`
-      XML_CFLAGS=`gnome-config --cflags xml`
-      XML_LIBS=`gnome-config --libs xml`
     fi
+    GNOME_CFLAGS=`gnome-config --cflags gnomeui print`
+    GNOME_LIBS=`gnome-config --libs gnomeui print`
+    XML_CFLAGS=`gnome-config --cflags xml`
+    XML_LIBS=`gnome-config --libs xml`
   fi
   AC_SUBST(have_gnome)
+  AC_SUBST(gnome_prefix)
   AC_SUBST(GNOME_CFLAGS)
   AC_SUBST(GNOME_LIBS)
   AC_SUBST(XML_CFLAGS)
   AC_SUBST(XML_LIBS)
 fi
-
-AC_SUBST(gnome_prefix)
 
 dnl If libxml is not already provided by gnome, test for it separately
 if test x"${XML_LIBS}" = x ; then
@@ -267,6 +266,8 @@ if test x"${XML_LIBS}" = x ; then
   fi
 fi
 
+ac_save_CFLAGS=$CFLAGS
+ac_save_LIBS=$LIBS
 AM_PATH_GTK(1.2.3,have_gtk="yes",have_gtk="no")
 if test "${have_gtk}" = "no" ; then
    exit
