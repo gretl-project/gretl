@@ -75,6 +75,7 @@ struct gretl_option gretl_opts[] = {
     { LMTEST,   OPT_S, "squares" },    
     { LMTEST,   OPT_W, "white" },
     { LOOP,     OPT_P, "progressive" },
+    { LOOP,     OPT_V, "verbose" },
     { MEANTEST, OPT_O, "unequal-vars" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 

@@ -292,13 +292,13 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */
 
-static int make_texfile (const PATHS *ppaths, int ID, int equation, 
+static int make_texfile (int ID, int equation, 
 			 char *texfile, PRN *prn)
 {
     FILE *fp;
 
     if (*texfile == 0) {
-	sprintf(texfile, "%s%s_%d.tex", ppaths->userdir,
+	sprintf(texfile, "%s%s_%d.tex", fetch_gretl_user_dir(),
 		(equation)? "equation" : "model", ID);
     }
 
@@ -330,7 +330,7 @@ static const char *get_gretltex_local (void)
 }
 #endif
 
-void set_gretl_tex_preamble (const PATHS *ppaths)
+void set_gretl_tex_preamble (void)
 {
     FILE *fp;
     const char *gretltex = "gretlpre.tex";
@@ -338,7 +338,7 @@ void set_gretl_tex_preamble (const PATHS *ppaths)
     const char *localtex = get_gretltex_local();
 
     /* first choice: localized preamble file */
-    sprintf(tex_preamble_file, "%s%s", ppaths->userdir, localtex);
+    sprintf(tex_preamble_file, "%s%s", fetch_gretl_user_dir(), localtex);
     fp = fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
@@ -349,7 +349,7 @@ void set_gretl_tex_preamble (const PATHS *ppaths)
 #endif
 
     /* preamble file on disk */
-    sprintf(tex_preamble_file, "%s%s", ppaths->userdir, gretltex);
+    sprintf(tex_preamble_file, "%s%s", fetch_gretl_user_dir(), gretltex);
     fp = fopen(tex_preamble_file, "r");
     if (fp == NULL) {
 	tex_preamble_file[0] = '\0';
@@ -584,7 +584,6 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  * tabprint:
  * @pmod: pointer to gretl MODEL struct.
  * @pdinfo: information regarding the data set.
- * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
  * @oflag: option: complete doc or fragment
  *
@@ -596,12 +595,11 @@ int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo,
  */
 
 int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      gretlopt oflag)
+	      char *texfile, gretlopt oflag)
 {
     PRN prn;
 
-    if (make_texfile(ppaths, pmod->ID, 0, texfile, &prn)) {
+    if (make_texfile(pmod->ID, 0, texfile, &prn)) {
 	return 1;
     }
 
@@ -618,7 +616,6 @@ int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
  * eqnprint:
  * @pmod: pointer to gretl MODEL struct.
  * @pdinfo: information regarding the data set.
- * @ppaths: struct containing information on paths.
  * @texfile: name of file to save.
  * @oflag: if oflag & OPT_O, complete doc, else fragment
  *
@@ -630,12 +627,11 @@ int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
  */
 
 int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      gretlopt oflag)
+	      char *texfile, gretlopt oflag)
 {
     PRN prn;
 
-    if (make_texfile(ppaths, pmod->ID, 1, texfile, &prn)) {
+    if (make_texfile(pmod->ID, 1, texfile, &prn)) {
 	return 1;
     }
 

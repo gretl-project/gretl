@@ -42,4 +42,6 @@ int set_paths (PATHS *ppaths, int defaults, int gui);
 
 const char *fetch_gretl_lib_path (void);
 
+const char *fetch_gretl_user_dir (void);
+
 #endif /* GRETL_PATHS_H */

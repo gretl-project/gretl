@@ -2652,6 +2652,10 @@
 	  <flag>--progressive</flag>
 	  <effect>enable special forms of certain commands</effect>
 	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>report details of genr commands</effect>
+	</option>
       </options>
       <examples>
         <example>loop 1000</example>

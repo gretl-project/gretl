@@ -31,18 +31,16 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		      int c, PRN *prn);
 
 int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      gretlopt oflag);
+	      char *texfile, gretlopt oflag);
 
 int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
-	      const PATHS *ppaths, char *texfile,
-	      gretlopt oflag);
+	      char *texfile, gretlopt oflag);
 
 char *tex_escape (char *targ, const char *src);
 
 void tex_dcolumn_double (double xx, char *numstr);
 
-void set_gretl_tex_preamble (const PATHS *ppaths);
+void set_gretl_tex_preamble (void);
 
 void gretl_tex_preamble (PRN *prn, int ams);
 

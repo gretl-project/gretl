@@ -65,7 +65,6 @@ typedef struct {
     bigval *ssq;
 } LOOP_PRINT;  
 
-
 /* below: used for special "progressive" loop */ 
 
 typedef struct {
@@ -84,9 +83,14 @@ typedef struct {
     bigval *ssq_sderr;      /* sums of squares of estd std. errs */
 } LOOP_MODEL;
 
+enum loop_flags {
+    LOOP_PROGRESSIVE = 1 << 0,
+    LOOP_VERBOSE     = 1 << 1
+};
+
 struct LOOPSET_ {
     char type;
-    char progressive;
+    char flags;
     int level;
     int err;
     int ntimes;
@@ -117,6 +121,11 @@ struct LOOPSET_ {
     LOOPSET **children;
     int n_children;
 };
+
+#define loop_is_progressive(l) (l->flags & LOOP_PROGRESSIVE)
+#define loop_set_progressive(l) (l->flags |= LOOP_PROGRESSIVE)
+#define loop_is_verbose(l) (l->flags & LOOP_VERBOSE)
+#define loop_set_verbose(l) (l->flags |= LOOP_VERBOSE)
 
 static void gretl_loop_init (LOOPSET *loop);
 static int prepare_loop_for_action (LOOPSET *loop);
@@ -864,7 +873,7 @@ static void gretl_loop_init (LOOPSET *loop)
     fprintf(stderr, "gretl_loop_init: initing loop at %p\n", (void *) loop);
 #endif
 
-    loop->progressive = 0;
+    loop->flags = 0;
     loop->level = 0;
 
     loop->ntimes = 0;
@@ -1344,7 +1353,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
 		i+1, i, loop->lines[i]);
 #endif
-	if (!loop->progressive && loop->ci[i] == OLS) {
+	if (!loop_is_progressive(loop) && loop->ci[i] == OLS) {
 	    gretlopt opt;
 
 	    strcpy(linecpy, loop->lines[i]);
@@ -1360,7 +1369,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	    }	    
 	}
 
-	if (loop->progressive) {
+	if (loop_is_progressive(loop)) {
 	    if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
 		loop->ci[i] == HSK || loop->ci[i] == HCCM || 
 		loop->ci[i] == WLS) {
@@ -1474,7 +1483,10 @@ LOOPSET *add_to_loop (char *line, int ci, gretlopt opt,
 	    }
 	} else {
 	    if (opt & OPT_P) {
-		lret->progressive = 1;
+		loop_set_progressive(lret);
+	    }
+	    if (opt & OPT_V) {
+		loop_set_verbose(lret);
 	    }
 	    *loopstack += 1;
 	}
@@ -1809,7 +1821,7 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 {
     int i;
 
-    if (loop->progressive) {
+    if (loop_is_progressive(loop)) {
 	for (i=0; i<loop->nmod; i++) {
 	    if (loop->lmodels[i].ID == cmdnum) {
 		return i;
@@ -2051,7 +2063,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case GENR:
 		err = generate(pZ, pdinfo, linecpy, lastmod);
-		if (!(*echo_off) && !err) { 
+		if (loop_is_verbose(loop) && !err) { 
 		    print_gretl_msg(prn);
 		}
 		break;
@@ -2068,7 +2080,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (lround == 0) {
-		    if (loop->progressive) {
+		    if (loop_is_progressive(loop)) {
 			err = add_loop_model(loop);
 		    } else if (cmd.opt & OPT_P) {
 			err = add_loop_model_record(loop, j);
@@ -2095,7 +2107,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		    break;
 		}
 
-		if (loop->progressive) {
+		if (loop_is_progressive(loop)) {
 		    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
 						       models[0], j)) { 
 			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
@@ -2124,7 +2136,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
 		    err = simple_commands(&cmd, linecpy, pZ, pdinfo, paths, prn);
-		} else if (loop->progressive) {
+		} else if (loop_is_progressive(loop)) {
 		    if (lround == 0) {
 			if ((err = add_loop_print(loop, cmd.list, j))) {
 			    break;
@@ -2168,7 +2180,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case STORE:
-		if (loop->progressive) {
+		if (loop_is_progressive(loop)) {
 		    if (lround == 0) {
 			loop->nstore = cmd.list[0];
 			if (loop_store_init(loop, cmd.param, cmd.list, pdinfo)) {

@@ -80,7 +80,7 @@ void exit_free_modelspec (void)
 
 void library_command_init (void)
 {
-    libgretl_init(&cmd, &paths);
+    libgretl_init(&cmd);
 }
 
 void library_command_free (void)
@@ -4498,10 +4498,10 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
     *texfile = 0;
 
     if (code == LATEX_VIEW_EQUATION) {
-	err = eqnprint(pmod, datainfo, &paths, texfile, OPT_O);
+	err = eqnprint(pmod, datainfo, texfile, OPT_O);
     } 
     else if (code == LATEX_VIEW_TABULAR) {
-	err = tabprint(pmod, datainfo, &paths, texfile, OPT_O);
+	err = tabprint(pmod, datainfo, texfile, OPT_O);
     }
     else if (code == LATEX_VIEW_MODELTABLE) {
 	PRN *prn;
@@ -4718,15 +4718,14 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(cmd.cmd, "quit")) {
 	if (looprun) { 
-	    if (loop_exec(loop, line, 
-			  &Z, &datainfo,
-			  models, &paths, 
-			  &echo_off, prn)) {
-		return 1;
-	    }
+	    exec_err = loop_exec(loop, line, &Z, &datainfo,
+				 models, &paths, &echo_off, prn);
 	    gretl_loop_destroy(loop);
 	    loop = NULL;
 	    looprun = 0;
+	    if (exec_err) {
+		goto endwhile;
+	    }
 	} else { 
 	    char *gotline = NULL;
 
@@ -4788,14 +4787,16 @@ int execute_script (const char *runfile, const char *buf,
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
 		pprintf(prn, "> %s\n", tmp);
-		return 1;
+		goto endwhile;
 	    }
 	} /* end non-loop command processor */
     } /* end while command != quit */
 
  endwhile:
 
-    if (fb) fclose(fb);
+    if (fb != NULL) {
+	fclose(fb);
+    }
 
     if (exec_code == REBUILD_EXEC) {
 	/* recreating a gretl session */
@@ -4804,7 +4805,7 @@ int execute_script (const char *runfile, const char *buf,
 
     refresh_data();
 
-    return 0;
+    return exec_err;
 }
 
 /* ........................................................... */
@@ -5341,11 +5342,9 @@ int gui_exec_line (char *line,
 	    break;
 	strcpy(texfile, cmd.param);
 	if (cmd.ci == EQNPRINT) {
-	    err = eqnprint(models[0], datainfo, &paths, 
-			   texfile, cmd.opt);
+	    err = eqnprint(models[0], datainfo, texfile, cmd.opt);
 	} else {
-	    err = tabprint(models[0], datainfo, &paths, 
-			   texfile, cmd.opt);
+	    err = tabprint(models[0], datainfo, texfile, cmd.opt);
 	}
 	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));
@@ -5718,11 +5717,11 @@ int gui_exec_line (char *line,
 	break;
 
     case QUIT:
-	if (plp != NULL) {
-	    pprintf(prn, _("Script done\n"));
+	if (exec_code == CONSOLE_EXEC) {
+	   pprintf(prn, _("Please use the Close button to exit\n")); 
 	} else {
-	    pprintf(prn, _("Please use the Close button to exit\n"));
-	}
+	    pprintf(prn, _("Script done\n"));
+	} 
 	break;
 
     case RHODIFF:

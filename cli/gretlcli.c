@@ -523,7 +523,7 @@ int main (int argc, char *argv[])
 	noalloc("models"); 
     }
 
-    libgretl_init(&cmd, &paths);
+    libgretl_init(&cmd);
 
     /* print list of variables */
     if (data_status) {
@@ -1037,11 +1037,9 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	if ((err = model_test_start(cmd.ci, 0, prn))) 
 	    break;
 	if (cmd.ci == EQNPRINT) {
-	    err = eqnprint(models[0], datainfo, &paths, 
-			   texfile, cmd.opt);
+	    err = eqnprint(models[0], datainfo, texfile, cmd.opt);
 	} else {
-	    err = tabprint(models[0], datainfo, &paths, 
-			   texfile, cmd.opt);
+	    err = tabprint(models[0], datainfo, texfile, cmd.opt);
 	}
 	if (err) {
 	    pputs(prn, _("Couldn't open tex file for writing\n"));

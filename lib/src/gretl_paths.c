@@ -495,11 +495,20 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 
 /* .......................................................... */
 
-static char *internal_path_stuff (int code, const char *path)
+enum path_ops {
+    SET_GRETL_LIB_PATH,
+    SET_GRETL_USER_DIR,
+    GET_GRETL_LIB_PATH,
+    GET_GRETL_USER_DIR
+};
+
+static const char *internal_path_stuff (int code, const char *path)
 {
     static char gretl_lib_path[MAXLEN];
+    static char gretl_user_dir[MAXLEN];
+    const char *ret = NULL;
 
-    if (code == 1) {
+    if (code == SET_GRETL_LIB_PATH) {
 #ifdef WIN32
 	strcpy(gretl_lib_path, path);
 #else
@@ -521,19 +530,27 @@ static char *internal_path_stuff (int code, const char *path)
 	    sprintf(gretl_lib_path, "%s/lib/gretl%s", path, sfx);
 	}
 #endif /* WIN32 */
-	return NULL;
-    } 
-    else if (code == 0) {
-	return gretl_lib_path;
+    } else if (code == SET_GRETL_USER_DIR) {
+	strcpy(gretl_user_dir, path);
+    } else if (code == GET_GRETL_LIB_PATH) {
+	ret = gretl_lib_path;
+    } else if (code == GET_GRETL_USER_DIR) {
+	ret = gretl_user_dir;
     }
-    return NULL;
+
+    return ret;
 }
 
 /* .......................................................... */
 
 const char *fetch_gretl_lib_path (void)
 {
-    return internal_path_stuff (0, NULL);
+    return internal_path_stuff(GET_GRETL_LIB_PATH, NULL);
+}
+
+const char *fetch_gretl_user_dir (void)
+{
+    return internal_path_stuff(GET_GRETL_USER_DIR, NULL);
 }
 
 void set_string_table_written (PATHS *ppaths)
@@ -636,7 +653,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    "\\language-specs", ppaths->gretldir);
     putenv(envstr);
 
-    internal_path_stuff (1, ppaths->gretldir);
+    internal_path_stuff(SET_GRETL_LIB_PATH, ppaths->gretldir);
+    internal_path_stuff(SET_GRETL_USER_DIR, ppaths->userdir);
 
     return 0;
 }
@@ -707,7 +725,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 
     *ppaths->plotfile = '\0';
 
-    internal_path_stuff (1, ppaths->gretldir);
+    internal_path_stuff(SET_GRETL_LIB_PATH, ppaths->gretldir);
+    internal_path_stuff(SET_GRETL_USER_DIR, ppaths->userdir);
 
     return 0;
 }

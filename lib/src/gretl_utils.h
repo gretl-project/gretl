@@ -114,7 +114,7 @@ enum model_selection_criteria {
 
 /* functions follow */
 
-void libgretl_init (CMD *cmd, const PATHS *paths);
+void libgretl_init (CMD *cmd);
 
 void libgretl_cleanup (CMD *cmd);
  

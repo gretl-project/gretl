@@ -2449,7 +2449,7 @@ int gretl_spawn_quiet (const char *cmdline)
 
 /* library init and cleanup functions */
 
-void libgretl_init (CMD *cmd, const PATHS *paths)
+void libgretl_init (CMD *cmd)
 {
     if (cmd != NULL && gretl_cmd_init(cmd)) {
 	exit(EXIT_FAILURE);
@@ -2457,9 +2457,7 @@ void libgretl_init (CMD *cmd, const PATHS *paths)
 
     gretl_rand_init();
 
-    if (paths != NULL) {
-	set_gretl_tex_preamble(paths);
-    }
+    set_gretl_tex_preamble(); 
 }
 
 void libgretl_cleanup (CMD *cmd)
