@@ -1,5 +1,6 @@
 #!/bin/sh
 
+WWW='allin@gretl.sourceforge.net:~/www/'
 topdir=/home/cottrell/stats/esl/gretl
 version=$(cat lib/src/version.h | grep version_ | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
@@ -20,9 +21,5 @@ find gretl-$version -name "*CVS" | xargs rm -rf
 tar cvfz $tarfile gretl-$version
 rm -rf gretl-$version
 
-scp gretl/doc/manual.pdf cottrell@ricardo:/home/cottrell/www-home/gretl
-scp gretl/ChangeLog cottrell@ricardo:/home/cottrell/www-home/gretl
-
-
-
-
+scp gretl/doc/manual.pdf $WWW
+scp gretl/ChangeLog $WWW
