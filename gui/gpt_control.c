@@ -1954,6 +1954,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     gchar *item = (gchar *) data;
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
+    int killplot = 0;
 
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
@@ -1988,7 +1989,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	start_editing_png_plot(plot);
     }
     else if (!strcmp(item, _("Close"))) { 
-        gtk_widget_destroy(plot->shell);
+	killplot = 1;
     } 
 
     gtk_widget_destroy(plot->popup);
@@ -1998,6 +1999,8 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	gtk_widget_destroy(plot->color_popup);
 	plot->color_popup = NULL;
     }
+
+    if (killplot) gtk_widget_destroy(plot->shell);
 
     return TRUE;
 }

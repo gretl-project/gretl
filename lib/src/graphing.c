@@ -1260,19 +1260,25 @@ void free_plotspec (GPT_SPEC *spec)
 {
     int i;
 
+    if (spec == NULL) return;
+
     if (spec->lines != NULL) free(spec->lines);
     if (spec->data != NULL) free(spec->data);
+
     for (i=0; i<4; i++) {
 	if (spec->literal[i] != NULL) {
 	    free(spec->literal[i]);
 	}
     }
+
     if (spec->labels != NULL) {
 	for (i=0; i<spec->nlabels; i++) {
 	    free(spec->labels[i]);
 	}
 	free(spec->labels);
     }
+
+    free(spec);
 }
 
 /* ........................................................... */

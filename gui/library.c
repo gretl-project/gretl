@@ -3305,7 +3305,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 
     if (check_cmd(line) || cmd_init(line)) return;
 
-    lines = mymalloc(command.list[0] - 1);
+    lines = mymalloc((command.list[0] - 1) * sizeof *lines);
     if (lines == NULL) return;
 
     for (i=0; i<command.list[0]-1 ; i++) {
