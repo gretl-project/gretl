@@ -3344,7 +3344,7 @@ void prn_to_clipboard (PRN *prn)
 
 /* .................................................................. */
 
-#define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
+#define SPECIAL_COPY(h) ((h == COPY_LATEX || h == COPY_RTF))
 
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
@@ -3399,9 +3399,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	 how == COPY_LATEX_EQUATION || how == COPY_HTML)) {
 	MODEL *pmod = (MODEL *) vwin->data;
 
-	if (pmod->errcode) 
+	if (pmod->errcode) { 
 	    errbox("Couldn't format model");
-	return;
+	    return;
+	}
 
 	if (how == COPY_RTF) {
 	    model_to_rtf(pmod);
@@ -3422,14 +3423,8 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
-    /* #define SELECT_FIRST */
-
     /* otherwise copying plain text from window */
     if (how == COPY_TEXT) {
-#ifdef SELECT_FIRST
-	gtk_editable_select_region(GTK_EDITABLE(vwin->w), 0, -1);
-	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
-#else
 	PRN textprn;
 
 	textprn.fp = NULL;
@@ -3440,7 +3435,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	prn_to_clipboard(&textprn);
 # endif /* G_OS_WIN32 */
 	g_free(textprn.buf);
-#endif /* SELECT_FIRST */
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
     }
