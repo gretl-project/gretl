@@ -4,6 +4,7 @@
 
 <!ENTITY ndash "&#8211;">
 <!ENTITY lgr   "&#0955;">
+<!ENTITY latex "LaTeX">
 
 <!ELEMENT commandlist (command)+>
 <!ATTLIST commandlist
@@ -23,10 +24,9 @@
                  Transformations | Utilities | Unknown) "Unknown"
 >
 
-<!ELEMENT usage (arguments?, optargs?, options?, examples?)>
+<!ELEMENT usage (arguments?, options?, examples?)>
 
 <!ELEMENT arguments    (argument)+>
-<!ELEMENT optargs      (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
 <!ELEMENT description  (para | code)*>
@@ -37,6 +37,7 @@
 <!ELEMENT argument (#PCDATA)>
 <!ATTLIST argument 
     separated (true | false) "false"
+    optional (true | false) "false"
 >
 
 <!ELEMENT option   (flag, effect)>

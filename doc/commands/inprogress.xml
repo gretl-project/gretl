@@ -190,7 +190,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window: /Tests/ARCH</menu-path>
+      <menu-path>Model window, /Tests/ARCH</menu-path>
     </gui-access>
 
   </command>
@@ -209,12 +209,16 @@
         <effect>Use native plugin (default)</effect>
         </option>
         <option>
+        <flag>--x-12-arima</flag>
+        <effect>Use X-12-ARIMA for estimation</effect>
+        </option>
+	<option>
         <flag>--verbose</flag>
         <effect>Print details of iterations</effect>
         </option>
         <option>
-        <flag>--x-12-arima</flag>
-        <effect>Use X-12-ARIMA for estimation</effect>
+        <flag>--vcv</flag>
+        <effect>Print covariance matrix</effect>
         </option>
        </options>
       <examples>
@@ -274,8 +278,8 @@
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/ARMA model</menu-path>
+      <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
   </command>
@@ -331,7 +335,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window: /Tests/Chow test</menu-path>
+      <menu-path>Model window, /Tests/Chow test</menu-path>
     </gui-access>
 
   </command>
@@ -358,7 +362,7 @@
     </description>
 
     <gui-access>
-      <menu-path>Model window: /Tests/sum of coefficients</menu-path>
+      <menu-path>Model window, /Tests/sum of coefficients</menu-path>
     </gui-access>
 
   </command>
@@ -476,20 +480,25 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>corr y x1 x2 x3</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Prints the pairwise correlation coefficients for the variables
+	in <repl>varlist</repl>, or for all variables in
+	the data set if <repl>varlist</repl> is not
+	given.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Correlation matrix</menu-path>
+      <other-access>Main window pop-up menu (multiple selection)</other-access>
     </gui-access>
 
   </command>
@@ -498,20 +507,51 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>variable</argument>
+        <argument>maxlag</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>corrgm x 12</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Prints the values of the autocorrelation function for the
+	<repl>variable</repl> specified (either by name
+	or number).  See Ramanathan, Section 11.7.  It is thus
+	<equation status="inline" 
+	  tex="$\rho(u_t, u_{t-s})$"
+	  ascii="rho(u(t), u(t-s))"
+	  graphic="autocorr"/>
+	where
+	<mathvar>u<sub>t</sub></mathvar> 
+	is the <mathvar>t</mathvar>th observation of the variable
+	<mathvar>u</mathvar> and <mathvar>s</mathvar> is the
+	number of lags.
+      </para>
+
+      <para>
+	The partial autocorrelations are also shown: these are net of
+	the effects of intervening lags.  The command also graphs the
+	correlogram and prints the Box&ndash;Pierce
+	<mathvar>Q</mathvar> statistic for testing the null hypothesis
+	that the series is <quote>white noise</quote>. This is
+	asymptotically distributed as chi-square with degrees of
+	freedom equal to the number of lags used.
+      </para>
+
+      <para>
+	If an (optional) integer <repl>maxlag</repl>
+	value is supplied the length of the correlogram is limited to
+	at most that number of lags, otherwise the length is
+	determined automatically.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Variable/Correlogram</menu-path>
+      <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
   </command>
@@ -520,20 +560,29 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>ess</argument>
+        <argument>T</argument>
+        <argument>k</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>criteria 23.45 45 8</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Computes the model selection statistics (see Ramanathan,
+	Section 4.3), given <repl>ess</repl> (error sum
+	of squares), the number of observations
+	(<mathvar>T</mathvar>), and the number of coefficients
+	(<mathvar>k</mathvar>). <mathvar>T</mathvar>,
+	<mathvar>k</mathvar>, and <repl>ess</repl> may
+	be numerical values or names of previously defined variables.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>None</menu-path>
     </gui-access>
 
   </command>
@@ -542,42 +591,72 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>dist</argument>
+        <argument>param1</argument>
+	<argument optional="true">param2</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>critical t 20</example>
+        <example>critical X 5</example>
+        <example>critical F 3 37</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>If <repl>dist</repl> is
+	<literal>t</literal>, <literal>X</literal> or
+	<literal>F</literal>, prints out the critical values for the
+	student's <mathvar>t</mathvar>, chi-square or
+	<mathvar>F</mathvar> distribution respectively, for the
+	common significance levels and using the specified degrees of
+	freedom, given as <repl>param1</repl> for t and
+	chi-square, or <repl>param1</repl> and
+	<repl>param2</repl> for <mathvar>F</mathvar>.
+	If <repl>dist</repl> is <literal>d</literal>,
+	prints the upper and lower values of the Durbin-Watson
+	statistic at 5 percent significance, for the given number of
+	observations, <repl>param1</repl>, and for the
+	range of 1 to 5 explanatory variables.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Utilities/Statistical tables</menu-path>
     </gui-access>
 
   </command>
 
   <command name="cusum" section="Tests">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
+    <description>
+      <para>
+	Must follow the estimation of a model via OLS.  Performs the
+	CUSUM test for parameter stability.  A series of (scaled)
+	one-step ahead forecast errors is obtained by running a series
+	of regressions: the first regression uses the first
+	<mathvar>k</mathvar> observations and is used to generate a
+	prediction of the dependent variable at observation at
+	observation <mathvar>k</mathvar> + 1; the second uses the
+	first <mathvar>k</mathvar> + 1 observations and generates a
+	prediction for observation <mathvar>k</mathvar> + 2, and so
+	on (where <mathvar>k</mathvar> is the number of parameters
+	in the original model).  The cumulated sum of the scaled
+	forecast errors is printed and graphed.  The null hypothesis
+	of parameter stability is rejected at the 5 percent
+	significance level if the cumulated sum strays outside of the
+	95 percent confidence band.
+      </para>
 
-    <description><para>Description goes here.</para>
+      <para>
+	The Harvey&ndash;Collier <mathvar>t</mathvar>-statistic for
+	testing the null hypothesis of parameter stability is also
+	printed.  See Chapter 7 of Greene's <book>Econometric
+	  Analysis</book> for details.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Tests/CUSUM</menu-path>
     </gui-access>
 
   </command>
@@ -637,20 +716,23 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>Removes the listed variables (given by name or number)
+	from the dataset. <emphasis>Use with caution</emphasis>: no
+	confirmation is asked, and any variables with higher ID
+	numbers will be re-numbered.</para>
+
+      <para>If no <repl>varlist</repl> is given with
+	this command, it deletes the last (highest numbered) variable
+	from the dataset.</para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Main window pop-up (single selection)</menu-path>
     </gui-access>
 
   </command>
@@ -659,109 +741,59 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	The first difference of each variable in
+	<repl>varlist</repl> is obtained and the result
+	stored in a new variable with the prefix
+	<literal>d_</literal>.  Thus <cmd>diff x y</cmd>
+	creates the new variables <literal>d_x = x(t) -
+	  x(t-1)</literal> and <literal>d_y = y(t) - y(t-1)</literal>.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Add variables/first differences</menu-path>
     </gui-access>
 
   </command>
 
   <command name="else" section="Programming">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description><para>See <cmdref targ="if"/>.</para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
   <command name="end" section="Programming">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Ends a block of commands of some sort.  For example,
+	<cmd>end system</cmd> terminates an equation system.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
   <command name="endif" section="Programming">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description><para>See <cmdref targ="if"/>.</para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
   <command name="endloop" section="Programming">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Terminates a simulation loop.  See <cmdref targ="loop"/>.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -769,26 +801,36 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument optional="true">-f filename</argument>
       </arguments>
       <options>
         <option>
         <flag>--complete</flag>
-        <effect>.</effect>
+        <effect>Create a complete document</effect>
         </option>
        </options>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+     <para>
+	Must follow the estimation of a model.  Prints the estimated
+	model in the form of a &latex; equation.  If a filename is
+	specified using the <literal>-f</literal> flag output goes to
+	that file, otherwise it goes to a file with a name of the form
+	<filename>equation_N.tex</filename>, where
+	<literal>N</literal> is the number of models estimated to date
+	in the current session.  See also <cmdref targ="tabprint"/>.
+      </para>
+
+      <para>
+	If the <literal>--complete</literal> flag is given the &latex;
+	file is a complete document, ready for processing; otherwise
+	it must be included in a document.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /LaTeX</menu-path>
     </gui-access>
 
   </command>
@@ -797,21 +839,22 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>equation y x1 x2 x3 const</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Specifies an equation within a system of equations (see 
+	<cmdref targ="system"/>).  The sytax for specifying
+	an equation is the same as that for, e.g., 
+	<cmdref targ="ols"/> command.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -819,20 +862,34 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument optional="true" >startobs endobs</argument>
+	<argument>newvarname</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>fcast 1997:1 2001:4 f1</example>
+	<example>fcast fit2</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Must follow an estimation command.  Forecasts are generated
+	for the specified range (or the largest possible range if no
+	<repl>startobs</repl> and
+	<repl>endobs</repl> are given) and the values
+	saved as <repl>newvarname</repl>, which can be
+	printed, graphed, or plotted. The right-hand side variables
+	are those in the original model.  There is no provision to
+	substitute other variables.  If an autoregressive error
+	process is specified (for <cmd>hilu</cmd>,
+	<cmd>corc</cmd>, and <cmd>ar</cmd>) the
+	forecast is conditional one step ahead and incorporates the
+	error process.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Model data/Forecasts</menu-path>
     </gui-access>
 
   </command>

@@ -30,7 +30,7 @@ test: skeleton.xml formatter gretlman.xsl gretltxt.xsl
 	xmllint --valid --noout $< && ./formatter skeleton.xml
 
 # work in progress: format and reflow the English command reference
-sample: formatter reflow test_command.xml gretlman.xsl gretltxt.xsl
+sample: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
 	./formatter inprogress.xml
 	./reflow < commands.txt > commands.hlp
 
