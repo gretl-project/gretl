@@ -1,0 +1,23 @@
+/* XPM */
+static char * mini_camera_xpm[] = {
+"17 16 4 1",
+" 	c None s None",
+".	c #000000",
+"X	c #ffffff",
+"o	c #808080",
+"                 ",
+"                 ",
+"      ......     ",
+"     .XXXXXX.    ",
+" ....Xo...oX...  ",
+".XXXX.......XXX. ",
+".......ooo...... ",
+".Xoo..oXXoo..oo. ",
+".Xoo..oXooo..oo. ",
+".Xoo..ooooo..oo. ",
+".Xooo..ooo..ooo. ",
+".Xooo.......ooo. ",
+".Xooooo...ooooo. ",
+" ..............  ",
+"                 ",
+"                 "};

@@ -1,0 +1,29 @@
+/* XPM */
+static char *mini_ofolder_xpm[] = {
+/* width height num_colors chars_per_pixel */
+"    17    16       6            1",
+/* colors */
+"  c None s None",
+". c #000000",
+"# c #808080",
+"g c #ffffff",
+"h c #c0c0c0",
+"j c #ffff00",
+/* pixels */
+"                 ",
+"   #####         ",
+"  #ggggg#        ",
+" #ghjhjhg######  ",
+" #gjhjhjhggggg#. ",
+" #ghjhjhjhjhjh#. ",
+"#############j#. ",
+"#gggggggggg#.h#. ",
+"#ghjhjhjhjhj.##. ",
+" #ghjhjhjhjh#.#. ",
+" #gjhjhjhjhjh.#. ",
+"  #gjhjhjhjhj#.. ",
+"  ############.. ",
+"   ............. ",
+"                 ",
+"                 ",
+};
