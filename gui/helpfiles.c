@@ -701,5 +701,5 @@ static void find_string_dialog (void (*findfunc)(), gpointer data)
 
 void text_find_callback (GtkWidget *w, gpointer data)
 {
-    find_string_dialog(find_in_text, cancel_find, data);
+    find_string_dialog(find_in_text, data);
 }
