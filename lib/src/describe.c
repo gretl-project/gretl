@@ -276,7 +276,6 @@ int corrgram (const int *list, const int order, double **pZ,
     int err = 0, k, l, m, v = list[1], nobs, n = pdinfo->n; 
     int maxlag = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     FILE *fq;
-    char plotcmd[MAXLEN];
 
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
@@ -405,13 +404,7 @@ int corrgram (const int *list, const int order, double **pZ,
     fprintf(fq, "pause -1\n");
 #endif
     fclose(fq);
-#ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-    sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
-#endif
+    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
     /*  pclose(fq); */
 
  getout:
@@ -494,7 +487,6 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
     int err = 0, k, xmax, L, v = list[1], n = pdinfo->n, nT; 
     int nobs, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     FILE *fq;
-    char plotcmd[MAXLEN];
     
     adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
     nobs = t2 - t1 + 1;
@@ -599,13 +591,7 @@ int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo,
 	fprintf(fq, "pause -1\n");
 #endif
 	fclose(fq);
-#ifdef OS_WIN32
-	sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-	if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-	sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
-	if (system(plotcmd)) err = 1;
-#endif
+	err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {

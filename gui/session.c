@@ -1004,11 +1004,11 @@ void open_gui_graph (gui_obj *gobj)
     GRAPHT *graph = (GRAPHT *) gobj->data;
 
 #ifdef G_OS_WIN32
-    sprintf(buf, "%s %s", paths.gnuplot, graph->fname);
+    sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, graph->fname);
     if (WinExec(buf, SW_SHOWNORMAL) < 32)
 	errbox("gnuplot command failed");
 #else
-    sprintf(buf, "gnuplot -persist %s", graph->fname);
+    sprintf(buf, "gnuplot -persist \"%s\"", graph->fname);
     if (system(buf))
 	errbox("gnuplot command failed");
 #endif
@@ -1078,11 +1078,11 @@ void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
     auto_save_gp(data, 1, NULL);
 
 #ifdef G_OS_WIN32
-    sprintf(buf, "%s %s", paths.gnuplot, mydata->fname);
+    sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, mydata->fname);
     if (WinExec(buf, SW_SHOWNORMAL) < 32)
         errbox("gnuplot command failed");
 #else
-    sprintf(buf, "gnuplot -persist %s", mydata->fname);
+    sprintf(buf, "gnuplot -persist \"%s\"", mydata->fname);
     if (system(buf))
         errbox("gnuplot command failed");
 #endif

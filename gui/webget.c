@@ -1369,9 +1369,9 @@ long GetRegKey (HKEY key, char *subkey, char *retdata)
 	long datasize = MAX_PATH;
 	char data[MAX_PATH];
 
-	RegQueryValue(hkey,NULL,(LPSTR)data,&datasize);
+	RegQueryValue(hkey, NULL, (LPSTR)data, &datasize);
 
-	lstrcpy(retdata,data);
+	lstrcpy(retdata, data);
 	RegCloseKey(hkey);
     }
 
@@ -1393,9 +1393,9 @@ int goto_url (const char *url)
 		pos = strstr(key,"\"%1\"");
 		if (pos == NULL) {    /* if no quotes */
 		    /* now check for %1, without the quotes */
-		    pos = strstr(key,"%1");
+		    pos = strstr(key, "%1");
 		    if(pos == NULL) /* if no parameter */
-			pos = key+lstrlen(key)-1;
+			pos = key + lstrlen(key) - 1;
 		    else
 			*pos = '\0';    /* remove the parameter */
 		}

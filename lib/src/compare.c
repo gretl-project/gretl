@@ -689,7 +689,6 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn,
     double wbar, xx, yy, sigma, *cresid, *W;
     double hct, *xvec;
     FILE *fq;
-    char plotcmd[MAXLEN];
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
@@ -805,13 +804,7 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn,
     fprintf(fq, "pause -1\n");
 #endif
     fclose(fq);
-#ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-    sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
-#endif
+    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile); 
 
  getout:
     /* restore sample */

@@ -67,6 +67,8 @@ int graph (const int *list,
 	   double *Z, const DATAINFO *pdinfo, 
 	   const int oflag, print_t *prn);
 
+int gnuplot_display (const char *gpt, const char *fname);
+
 int gnuplot (int *list, const int *lines, 
 	     double **pZ, DATAINFO *pdinfo, 
 	     const PATHS *ppaths, int *plot_count, 

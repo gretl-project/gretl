@@ -20,9 +20,11 @@
 #ifndef WIN32_H
 #define WIN32_H
 
-int read_reg_val (unsigned long tree, char *keyname, char *keyval);
+#include <windows.h>
 
-int write_reg_val (unsigned long tree, char *keyname, char *keyval);
+int read_reg_val (HKEY tree, char *keyname, char *keyval);
+
+int write_reg_val (HKEY tree, char *keyname, char *keyval);
 
 void cli_read_registry (char *callname, PATHS *ppaths);
 

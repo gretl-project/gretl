@@ -434,6 +434,23 @@ static int factorized_vars (double **pZ,
 
 /* ........................................................ */
 
+int gnuplot_display (const char *gpt, const char *fname)
+{
+    int err = 0;
+    char plotcmd[MAXLEN];
+
+#ifdef OS_WIN32
+    sprintf(plotcmd, "\"%s\" \"%s\"", gpt, fname);
+    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
+#else
+    sprintf(plotcmd, "%s -persist \"%s\"", gpt, fname);
+    if (system(plotcmd)) err = 1;
+#endif
+    return err;
+}
+
+/* ........................................................ */
+
 int gnuplot (int *list, const int *lines, 
 	     double **pZ, DATAINFO *pdinfo,
 	     const PATHS *ppaths, int *plot_count, 
@@ -446,7 +463,7 @@ int gnuplot (int *list, const int *lines,
     FILE *fq;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
-    char plotfile[MAXLEN], plotcmd[MAXLEN];
+    char plotfile[MAXLEN];
     char s1[9], s2[9], xlabel[12], withstring[8];
     int tscale = 0;   /* time series scaling needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
@@ -691,13 +708,7 @@ int gnuplot (int *list, const int *lines,
     fclose(fq);
 
     if (!batch) {
-#ifdef OS_WIN32
-	sprintf(plotcmd, "%s %s", ppaths->gnuplot, plotfile);
-	if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) miss = -1;
-#else
-	sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, plotfile);
-	if (system(plotcmd)) miss = -1;
-#endif
+	if (gnuplot_display(ppaths->gnuplot, plotfile)) miss = -1;
     }
     return miss;
 }
@@ -709,7 +720,6 @@ int multi_scatters (const int *list, const int pos, double **pZ,
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
     int nplots, m, n = pdinfo->n;
-    char plotcmd[MAXLEN];
     FILE *fp;
     double xx;
 
@@ -788,13 +798,7 @@ int multi_scatters (const int *list, const int pos, double **pZ,
     fprintf(fp, "\npause -1\n");
 #endif
     fclose(fp);
-#ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-    sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
-#endif
+    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
     free(plotlist);
     return err;
 }
@@ -809,7 +813,6 @@ int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
     double alpha, beta;
     FILE *fp;
     int err = 0, k, K = freq->numbins - 1;
-    char plotcmd[MAXLEN];
 
     fp = fopen(ppaths->plotfile, "w");
     if (fp == NULL) return E_FOPEN;
@@ -887,13 +890,7 @@ int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
-#ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-    sprintf(plotcmd, "%s -persist %s", ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
-#endif
+    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
     return err;
 }
 
@@ -905,7 +902,6 @@ int plot_fcast_errs (const int n, const double *obs,
 		     const PATHS *ppaths)
 {
     FILE *fp;
-    char plotcmd[MAXLEN];
     int t, err = 0;
 
     fp = fopen(ppaths->plotfile, "w");
@@ -931,14 +927,7 @@ int plot_fcast_errs (const int n, const double *obs,
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);
-#ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-    sprintf(plotcmd, "%s -persist %s", 
-	    ppaths->gnuplot, ppaths->plotfile);
-    if (system(plotcmd)) err = 1;
-#endif
+    err = gnuplot_display(ppaths->gnuplot, ppaths->plotfile);
     return err;
 }
 
@@ -1001,7 +990,8 @@ int termtype_to_termstr (char *termtype, char *termstr)
 /* ........................................................... */
 
 int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
-     /* ship out a plot struct, to gnuplot or file */
+     /* ship out a plot struct, to gnuplot or file.  
+	N.B. under unix plot->fp will be a pipe */
 {
     FILE *fp;
     int i, k, t, dump = 0, plotn, lo = plot->list[0];
@@ -1053,6 +1043,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fprintf(fp, "set ytics nomirror\n");
 	fprintf(fp, "set y2tics\n");
     }
+
     if (plot->code == FREQ || plot->code == PERGM) { 
 	if (plot->code == FREQ)
 	    fprintf(fp, "# frequency plot\n");
@@ -1062,6 +1053,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	    fprintf(fp, "%s\n", plot->literal[i]);
     } 
     fputs("plot \\\n", fp);
+
     datlines = lo - 1;
     for (i=1; i<lo; i++) {
 	if (strcmp(plot->lines[i-1].scale, "NA")) {
@@ -1078,6 +1070,7 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	if (i == lo - 1) fprintf(fp, "\n");
 	else fprintf(fp, ", \\\n");
     } 
+
     /* supply the data to gnuplot inline */
     miss = 0;
     plotn = plot->t2 - plot->t1 + 1;
@@ -1097,7 +1090,6 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fprintf(fp, "e\n");
     }
 
-    fflush(fp);
     if (dump) fclose(fp);
     
 #ifdef OS_WIN32
@@ -1105,11 +1097,9 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	char plotcmd[MAXLEN];
 
 	fprintf(fp, "pause -1\n");
-	fflush(fp);
 	fclose(fp);
-	sprintf(plotcmd, "%s < %s", ppaths->pgnuplot, ppaths->plotfile); 
+	sprintf(plotcmd, "\"%s\" < \"%s\"", ppaths->pgnuplot, ppaths->plotfile); 
 	if (system(plotcmd)) err = 1;
-	/* FIXME -- can't we use winexec() here? */
     }
 #endif
     if (miss) err = 2;

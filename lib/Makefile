@@ -142,7 +142,7 @@ src/graphing.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
 src/graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
 src/graphing.o: src/texprint.h src/var.h src/interact.h src/graphing.h
 src/graphing.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-src/graphing.o: src/subsample.h src/internal.h
+src/graphing.o: src/subsample.h src/internal.h src/graphing.h
 src/interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
 src/interact.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
 src/interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h

@@ -84,7 +84,9 @@ static char *needle;
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
+#ifndef G_OS_WIN32
 static void read_rc (void);
+#endif
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -1535,7 +1537,7 @@ static void msgbox (const char *msg, int err)
 	MessageBox(NULL, (LPCTSTR)msg, "Info", MB_OK | MB_ICONINFORMATION);
 }
 
-#endif /* win32 */
+#else /* win32 */
 
 static void msgbox (const char *msg, int err) 
 {
@@ -1572,6 +1574,7 @@ static void msgbox (const char *msg, int err)
     gtk_widget_show(w);  
 }
 
+#endif
 #endif
 
 /* ........................................................... */
@@ -1927,7 +1930,7 @@ void read_rc (void)
     set_paths(&paths, 0, 1);
 }
 
-#endif /* end of win32 versions */
+#else /* end of win32 versions */
 
 void write_rc (void) 
 {
@@ -2028,6 +2031,7 @@ static void read_rc (void)
 }
 
 #endif /* end of "plain gtk" versions of read_rc, write_rc */
+#endif /* end of 3-way fork */
 
 /* .................................................................. */
 
@@ -2515,7 +2519,7 @@ static void win_printfilelist (int filetype)
     }
 }
 
-#else /* "plain" version follows */
+#endif /* "plain" version follows */
 
 static void printfilelist (int filetype, FILE *fp)
 {

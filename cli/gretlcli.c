@@ -126,7 +126,7 @@ int make_userdir (PATHS *ppaths)
     DIR *dir = NULL;
     
     if ((dir = opendir(ppaths->userdir)) == NULL) {
-        sprintf(buf, "mkdir -p %s", ppaths->userdir);
+        sprintf(buf, "mkdir -p \"%s\"", ppaths->userdir);
         if (system(buf)) {
 	    printf("Couldn't create user directory %s\n", ppaths->userdir);
 	    return 1;
@@ -1003,10 +1003,10 @@ void exec_line (char *line, print_t *prn)
 	    printf("writing session output to %s%s\n", 
 		   paths.userdir, outfile);
 #ifdef OS_WIN32
-	    sprintf(syscmd, "%s\\gretlcli -b %s > %s%s", 
+	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
 		    paths.gretldir, cmdfile, paths.userdir, outfile);
 #else
-	    sprintf(syscmd, "gretlcli -b %s > %s%s", 
+	    sprintf(syscmd, "gretlcli -b \"%s\" > \"%s%s\"", 
 		    cmdfile, paths.userdir, outfile);
 #endif
 	    printf("%s\n", syscmd);

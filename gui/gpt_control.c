@@ -681,7 +681,7 @@ void do_save_graph (const char *fname, char *savestr)
     }
     prnclose(&prn);
     fclose(fq);
-    sprintf(plotcmd, "%s %s", paths.gnuplot, plottmp);
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
 #ifdef OS_WIN32
     if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
 	errbox("Gnuplot error creating graph");

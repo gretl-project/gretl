@@ -10,9 +10,10 @@ version 0.97
   gnome)
 - convert manual to SGML (DocBook) and update
 - attempt to support directory names with spaces (yuck!) under
-  win32 (?)
+  win32 
 - under win32, use registry instead of system-wide config file
-  libgretl.cfg
+  libgretl.cfg and per-user gretl.rc
+- add check for GRETL_HOME environment variable
 
 07/26/2001 version 0.96
 - update to gtkextra version 0.99.16

@@ -113,7 +113,7 @@ static void printxx (const double xx, char *str, const int ci)
 
 static int _essline (const MODEL *pmod, print_t *prn, int wt)
 {
-    if ((wt && pmod->ess_wt < 0) || !(wt) && pmod->ess < 0) {
+    if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
 	pprintf(prn, "Error sum of squares (%g) is not > 0\n\n", 
 		(wt)? pmod->ess_wt : pmod->ess);
 	return 1;

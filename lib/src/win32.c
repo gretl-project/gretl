@@ -24,7 +24,7 @@
 
 /* ............................................................ */
 
-int read_reg_val (unsigned long tree, char *keyname, char *keyval)
+int read_reg_val (HKEY tree, char *keyname, char *keyval)
 {
     unsigned long datalen = MAXLEN;
     int error = 0;
@@ -59,7 +59,7 @@ int read_reg_val (unsigned long tree, char *keyname, char *keyval)
 
 /* ............................................................ */
 
-int write_reg_val (unsigned long tree, char *keyname, char *keyval)
+int write_reg_val (HKEY tree, char *keyname, char *keyval)
 {
     int error = 0;
     HKEY regkey;

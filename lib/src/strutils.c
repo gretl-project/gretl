@@ -183,7 +183,7 @@ void shiftleft (char *str, size_t move)
 void chopstr (char *str)
 /* remove leading and trailing space from a string */
 {
-    size_t i = strspn(str, " ");
+    int i = (int) strspn(str, " ");
 
     shiftleft(str, i);
     for (i = strlen(str) - 1; i >= 0; i--)

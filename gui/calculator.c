@@ -386,7 +386,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 #endif
     if (fp) fclose(fp);
 #ifdef OS_WIN32
-    sprintf(plotcmd, "%s %s", paths.gnuplot, paths.plotfile);
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, paths.plotfile);
     WinExec(plotcmd, SW_SHOWNORMAL);
 #else
     sprintf(plotcmd, "%s -persist %s", 
