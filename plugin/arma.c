@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "internal.h"
 
-#define DEFAULT_MAX_ITER 250
+#define DEFAULT_MAX_ITER 1000
 
 static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
 			     const MODEL *pmod, int i)
@@ -102,10 +102,15 @@ static double update_fcast_errs (double *e, const double *y,
 {
     int i, k, t;
     double s2 = 0.0;
+    int SampleSize = 0;
+    int maxlag = (p>q) ? p : q;
 
     for (t=0; t<n; t++) {
 
-	if (na(y[t])) continue;
+	if (na(y[t])){
+	  e[t] = NADBL;
+	  continue;
+	}
 
 	e[t] = y[t] - coeff[0];
 
@@ -121,20 +126,16 @@ static double update_fcast_errs (double *e, const double *y,
 	    e[t] -= coeff[i+p+1] * e[k];
 	}
 
-	s2 += e[t] * e[t];
+	if(t>=maxlag){
+	  s2 += e[t] * e[t];
+	  SampleSize++;
+	}
     }
 
-    s2 /= (double) t;
+    s2 /= (double) SampleSize;
 
     return s2;
 }
-
-/* ARMA (1,1) example:
-   # partials of e wrt c, a, and m
-   genr de_c = -1 - m * de_c(-1) 
-   genr de_a = -y(-1) -m * de_a(-1)
-   genr de_m = -e(-1) -m * de_m(-1)
-*/
 
 /* FIXME: the general case below needs more checking */
 
@@ -142,88 +143,80 @@ static void update_error_partials (double *e, const double *y,
 				   double **Z, const double *coeff,
 				   int n, int p, int q)
 {
-    int i, j, k, t;
+    int t, col, i, t2;
 
-    /* the constant term */
     for (t=0; t<n; t++) {
-	Z[2][t] = -1.0;
-	for (i=q-1; i>=0; i--) {
-	    k = t - (i + 1);
-	    if (k < 0) continue;
-	    Z[2][t] -= coeff[i+p+1] * Z[2][k];
+	if (na(y[t])) continue;
+
+	/* the constant term */
+	col = 2;
+	Z[col][t] = -1.0;
+	for (i=0; i<q; i++) {
+	    if (t > i) Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
+	}
+
+	/* AR terms */
+	if (p > 0) {
+	    for (col=3; col <= p+3; col++) {
+		if (t>=col-2) {
+		    Z[col][t] = -y[t-col+2];
+		    for (i=0; i<q; i++) {
+			if (t > i) Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
+		    }
+		}
+	    }
+	}
+
+	/* MA terms */
+	if (q > 0){
+	    for (col=p+3; col <= p+q+3; col++) {
+		t2 = col - p - 2;
+		if (t>=t2) {
+		    Z[col][t] = -e[t-t2];
+		    for (i=0; i<q; i++) {
+			if (t > i) Z[col][t] -= coeff[i+p+1] * Z[col][t-i-1];
+		    }
+		}
+	    }
 	}
     }
-
-    /* AR terms */
-    for (j=0; j<p; j++) {
-	int a = 3 + j;
-
-	for (t=0; t<n; t++) {
-	    k = t - (j + 1);
-	    if (k < 0 || na(y[k])) continue;
-	    Z[a][t] = -y[k];
-#if 0
-	    /* hmm... do we want this? */
-	    for (i=j-1; i>=0; i--) {
-		Z[a][t] -= coeff[i+1] * y[k];
-	    }
-#endif
-	    for (i=q-1; i>=0; i--) {
-		k = t - (i + 1);
-		if (k < 0) continue;
-		Z[a][t] -= coeff[i+p+1] * Z[a][k];
-	    }
-	}
-    }	    
-
-    /* MA terms */
-    for (j=q-1; j>=0; j--) {
-	int m = 3 + p + j;
-
-	for (t=0; t<n; t++) {
-	    k = t - (j + 1);
-	    if (k < 0) continue;
-	    Z[m][t] = -e[k];
-	    for (i=j; i>=0; i--) {
-		k = t - (i + 1);
-		if (k < 0) continue;
-		Z[m][t] -= coeff[i+p+1] * Z[m][k];
-	    }
-	}
-    }    
 }
-
-/* ARMA (1,1) example:
-   # partials of l wrt c, a and m
-   genr sc_c = -de_c * e
-   genr sc_a = -de_a * e
-   genr sc_m = -de_m * e
-*/
 
 static void update_ll_partials (double *e, double **Z, double s2,
 				int n, int p, int q)
 {
     int i, j, t;
+    int maxlag = (p>q) ? p : q;
     int nc = p + q + 1;
 
     for (i=0; i<nc; i++) {
 	j = 3 + p + q + i;
-	for (t=0; t<n; t++) {
+	for (t=0; t<maxlag; t++) {
+	    Z[j][t] = NADBL;
+	}
+	for (t=maxlag; t<n; t++) {
+	    if (na(e[t])) continue;
 	    Z[j][t] = -Z[j-nc][t] * e[t] / s2;
 	}
     }
 }
 
-static double get_ll (const double *e, int n)
+static double get_ll (const double *e, int n, int maxlag)
 {
     int t;
-    double ll = 0.0;
+    double ll = 0.0, s2;
+    double SampleSize = n - maxlag;
+    const double K = 1.41893853320467274178;
+    /* that's ln(sqrt(2*pi)) + 0.5 */
 
-    for (t=0; t<n; t++) {
+    for (t=maxlag; t<n; t++) {
+	if (na(e[t])) continue;
 	ll += e[t] * e[t];
     }
 
-    ll *= -0.5;
+    s2 = ll / SampleSize;
+    ll = -0.5 * SampleSize * log(s2);
+    ll -= SampleSize * K;
 
     return ll;
 }
@@ -410,7 +403,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 		  PRN *prn)
 {
     int an = pdinfo->t2 - pdinfo->t1 + 1;
-    int nc, v, p, q;
+    int nc, v, p, q, maxlag;
     int iters, itermax;
     int subiters, subitermax;
     int i, t;
@@ -433,6 +426,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     v = list[4]; /* the dependent variable */
     p = list[1]; /* AR order */
     q = list[2]; /* MA order */
+    maxlag = (p>q) ? p : q; /* maximum lag in the model */
 
     /* number of coefficients */
     nc = 1 + p + q;
@@ -478,13 +472,9 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     ainfo->extra = 1; /* ? can't remember what this does */
 
     /* initialize the coefficients (FIXME) */
-    if (p > 0 && q == 0) {
-	ar_init_by_ols(v, p, coeff, Z, pdinfo);
-    } else {
-	coeff[0] = 0.0;
-	for (i=0; i<p; i++) coeff[i+1] = 0.1;
-	for (i=0; i<q; i++) coeff[i+p+1] = 0.1;
-    }
+    /* AR part by OLS, MA at 0's */
+    ar_init_by_ols(v, p, coeff, Z, pdinfo);
+    for (i=0; i<q; i++) coeff[i+p+1] = 0.0; 
 
     /* initialize forecast errors and derivatives */
     for (t=0; t<an; t++) {
@@ -499,17 +489,17 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     y = &Z[v][pdinfo->t1];
 
     crit = 1.0;
-    tol = 1.0e-9;
+    tol = 1.0e-6;
     iters = 0;
     itermax = get_maxiter();
     subitermax = 20;
-    steplength = 1.0;
+    steplength = 0.125;
 
     /* generate one-step forecast errors */
     s2 = update_fcast_errs(e, y, coeff, an, p, q);
 
     /* calculate log-likelihood */
-    ll = get_ll(e, an);
+    ll = get_ll(e, an, maxlag);
 
     while (crit > tol && iters++ < itermax && !isnan(ll)) {
 
@@ -541,7 +531,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
 	/* compute log-likelihood at new point */
 	s2 = update_fcast_errs(e, y, coeff, an, p, q);
-	ll = get_ll(e, an);
+	ll = get_ll(e, an, maxlag);
 
 	/* subiterations for best steplength */
 	subiters = 0;
@@ -555,7 +545,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
 	    /* compute loglikelihood again */
 	    s2 = update_fcast_errs(e, y, coeff, an, p, q);
-	    ll = get_ll(e, an);
+	    ll = get_ll(e, an, maxlag);
 	}
 
 	if (subiters > subitermax) {
@@ -578,11 +568,11 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 		steplength, subiters);
 
 	/* update criterion */
-	crit = armod.nobs - armod.ess;
+	crit = ll - ll_prev;
 	pprintf(prn, _("  criterion = %g\n\n"), crit);
 
 	/* try and re-double the steplength for next iteration */
-	if (subiters == 1 && steplength < 1.0){
+	if (subiters == 1 && steplength < 4.0){
 	    steplength *= 2.0;
 	} else if (subiters == 0) {
 	    /* time to quit */

@@ -1223,6 +1223,21 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
 
 /* ........................................................... */
 
+static int has_rats_suffix (const char *dbname)
+{
+    const char *p = strrchr(dbname, '.');
+
+    if (p == NULL) return 0;
+
+    if (!strcmp(p, ".rat")) return 1;
+    if (!strcmp(p, ".Rat")) return 1;
+    if (!strcmp(p, ".RAT")) return 1;
+
+    return 0;
+}
+
+/* ........................................................... */
+
 void open_named_db_list (char *dbname)
 {
     int n, action = NATIVE_SERIES;
@@ -1230,8 +1245,7 @@ void open_named_db_list (char *dbname)
 
     n = strlen(dbname);
 
-    if (strcmp(dbname + n - 4, ".rat") == 0) 
-	action = RATS_SERIES;
+    if (has_rats_suffix(dbname)) action = RATS_SERIES;
 
     fp = fopen(dbname, "rb");
 
@@ -1267,9 +1281,7 @@ void open_db_list (GtkWidget *w, gpointer data)
 
     n = strlen(fname);
 
-    if (strcmp(fname + n - 4, ".rat") == 0) {
-	action = RATS_SERIES;
-    }
+    if (has_rats_suffix(fname)) action = RATS_SERIES;
 
 #ifndef OLD_GTK
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
@@ -1699,7 +1711,7 @@ gint populate_dbfilelist (windata_t *win)
 	fname = dirent->d_name;
 	n = strlen(fname);
 #ifndef OLD_GTK
-	if (strcmp(fname + n - 4, filter) == 0) {
+	if (g_ascii_strcasecmp(fname + n - 4, filter) == 0) {
 	    row[0] = fname;
 	    gtk_list_store_append(store, &iter);
 	    if (win->role == NATIVE_DB) {
@@ -1713,7 +1725,7 @@ gint populate_dbfilelist (windata_t *win)
 	    i++;
 	}
 #else
-	if (strcmp(fname + n - 4, filter) == 0) {
+	if (g_strcasecmp(fname + n - 4, filter) == 0) {
 	    row[0] = fname;
 	    row[1] = NULL;
 	    if (win->role == NATIVE_DB) { 
