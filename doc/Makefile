@@ -43,11 +43,11 @@ MANXSL = commands/gretlman.xsl
 
 all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 
-manual.pdf: manual.tex jadetex.cfg.en lucidabr.tex
+manual.pdf: manual.tex
 
-manual-a4.pdf: manual-a4.tex jadetex.cfg.en lucidabr.tex
+manual-a4.pdf: manual-a4.tex
 
-manual_it.pdf: manual_it.tex jadetex.cfg.it lucidabr.tex
+manual_it.pdf: manual_it.tex
 
 thumbs: manual.pdf
 	thumbpdf manual
@@ -61,15 +61,21 @@ thumbs_it: manual_it.pdf
 	thumbpdf manual_it
 	pdfjadetex manual_it
 
-manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(TITLESS) $(CMDLIST)
+manual.tex: manual.xml $(CHAPTERS) $(DSL) $(MATHSS) $(TITLESS) \
+	$(CMDLIST) jadetex.cfg.en lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) $(TITLESS) $(CMDLIST)
+manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) \
+	$(TITLESS) $(CMDLIST) jadetex.cfg.en lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.en jadetex.cfg
 	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
-manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) $(TITLESS) $(CMDLIST_IT)
+manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) \
+	$(TITLESS) $(CMDLIST_IT) jadetex.cfg.it lucidabr.tex
+	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
