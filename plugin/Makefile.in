@@ -57,7 +57,7 @@ SRCS = excel_import.c gnumeric_import.c gretl_matrix.c import_common.c \
 PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
 	progress_bar.la gnumeric_import.la excel_import.la $(TXPLUGIN)
 
-LAPACK_PLUGINS = johansen.la sur.la 
+LAPACK_PLUGINS = johansen.la sur.la leverage.la
 
 ifdef GMP_LIBS
   PLUGINS += mp_ols.la
@@ -122,6 +122,9 @@ johansen.la: johansen.lo gretl_matrix.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 sur.la: sur.lo gretl_matrix.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+leverage.la: leverage.lo gretl_matrix.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):

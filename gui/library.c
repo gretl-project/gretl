@@ -1598,7 +1598,43 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 		PANEL, view_items);
 }
 
+/* ........................................................... */
 
+void do_leverage (gpointer data, guint u, GtkWidget *w)
+{
+    windata_t *mydata = (windata_t *) data;
+    MODEL *pmod = (MODEL *) mydata->data;
+    void *handle;
+    int (*model_leverage) (const MODEL *, const double **, 
+			   const DATAINFO *, PRN *, PATHS *);
+    PRN *prn;
+    int err;
+
+    if (gui_open_plugin("leverage", &handle)) return;
+
+    model_leverage = get_plugin_function("model_leverage", handle);
+    if (model_leverage == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return;
+    }	
+	
+    err = (*model_leverage)(pmod, (const double **) Z, datainfo, 
+		      prn, &paths);
+    close_plugin(handle);
+
+    if (!err) {
+	view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
+		    VIEW_DATA, view_items); 
+	gnuplot_display(&paths);
+	register_graph();
+    }
+}
 
 /* ........................................................... */
 

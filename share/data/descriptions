@@ -97,3 +97,4 @@
 "data13-1","Annual U.S. macroeconomic data"
 "longley","Annual U.S. labor-market data"
 "hamilton","Prices and exchange rate, U.S. and Italy"
+"leverage","Illustrates detection of incorrect data"

@@ -52,6 +52,7 @@ extern void save_plot (char *fname, GPT_SPEC *plot);
 extern gboolean console_handler (GtkWidget *w, GdkEventKey *key, 
 				 gpointer user_data);
 extern void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w);
+extern void do_leverage (gpointer data, guint u, GtkWidget *w);
 extern char *space_to_score (char *str); /* session.c */
 
 GtkItemFactoryEntry model_items[] = {
@@ -79,6 +80,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Tests/autocorrelation"), NULL, model_test_callback, LMTEST, NULL },
     { N_("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
+    { N_("/Tests/influential observations"), NULL, do_leverage, 0, NULL },
     { N_("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
     { N_("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },
     { N_("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },

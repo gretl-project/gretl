@@ -1257,6 +1257,10 @@ static int cant_zoom (const char *line)
 	/* range-mean plot */
 	return 1;
     }
+    if (strncmp(line, "# lever", 7) == 0) {
+	/* leverage plot */
+	return 1;
+    }
     if (strstr(line, "no auto-parse")) {
 	/* general prohibition on gui plot editing */
 	return 1;
