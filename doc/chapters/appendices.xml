@@ -468,13 +468,32 @@
   <appendix id="app-urls"><title>Listing of URLs</title>
 
   <para>Below is a listing of the full URLs of websites mentioned in
-    the text, in their order of appearance.</para>
+    the text.</para>
 
   <variablelist>
 
-    <varlistentry><term>GNU R homepage</term>
-      <listitem><para><ulink url="http://www.r-project.org/">
-	    <literal>http://www.r-project.org/</literal></ulink></para>
+    <varlistentry><term>Census Bureau, Data Extraction Service</term>
+      <listitem><para><ulink
+	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">
+	    <literal>http://www.census.gov/ftp/pub/DES/www/welcome.html</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Estima (RATS)</term>
+      <listitem><para><ulink url="http://www.estima.com/">
+	    <literal>http://www.estima.com/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Gnome desktop homepage</term>
+      <listitem><para><ulink url="http://www.gnome.org/">
+	    <literal>http://www.gnome.org/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>GNU Multiple Precision (GMP) library</term>
+      <listitem><para><ulink url="http://swox.com/gmp/">
+	    <literal>http://swox.com/gmp/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
@@ -484,16 +503,29 @@
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>Gretl homepage</term>
-      <listitem><para><ulink url="http://gretl.sourceforge.net/">
-	    <literal>http://gretl.sourceforge.net/</literal></ulink></para>
+    <varlistentry><term>GNU R homepage</term>
+      <listitem><para><ulink url="http://www.r-project.org/">
+	    <literal>http://www.r-project.org/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>Census Bureau, Data Extraction Service</term>
+    <varlistentry><term>GNU R manual</term>
       <listitem><para><ulink
-	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">
-	    <literal>http://www.census.gov/ftp/pub/DES/www/welcome.html</literal></ulink></para>
+	    url="http://cran.r-project.org/doc/manuals/R-intro.pdf">
+	    <literal>http://cran.r-project.org/doc/manuals/R-intro.pdf</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Gnuplot homepage</term>
+      <listitem><para><ulink url="http://www.gnuplot.info/">
+	    <literal>http://www.gnuplot.info/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Gnuplot manual</term>
+      <listitem><para><ulink
+	    url="http://ricardo.ecn.wfu.edu/gnuplot.html">
+	    <literal>http://ricardo.ecn.wfu.edu/gnuplot.html</literal></ulink></para>
       </listitem>
     </varlistentry>
 
@@ -504,62 +536,9 @@
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>Estima (RATS)</term>
-      <listitem><para><ulink url="http://www.estima.com/">
-	    <literal>http://www.estima.com/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>Penn World Table</term>
-      <listitem><para><ulink url="http://pwt.econ.upenn.edu/">
-	    <literal>http://pwt.econ.upenn.edu/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>Gnuplot homepage</term>
-      <listitem><para><ulink url="http://www.gnuplot.info/">
-	    <literal>http://www.gnuplot.info/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>Gnuplot online manual</term>
-      <listitem><para><ulink
-	    url="http://ricardo.ecn.wfu.edu/gnuplot.html">
-	    <literal>http://ricardo.ecn.wfu.edu/gnuplot.html</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>GNU Readline manual</term>
-      <listitem><para><ulink
-	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html"> 
-	    <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>GNU Multiple Precision library</term>
-      <listitem><para><ulink url="http://swox.com/gmp/">
-	    <literal>http://swox.com/gmp/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-
-    <varlistentry><term>InfoZip homepage</term>
-      <listitem><para><ulink
-	    url="http://www.info-zip.org/pub/infozip/zlib/">
-	    <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>Xmlsoft  homepage</term>
-      <listitem><para><ulink url="http://xmlsoft.org/">
-	    <literal>http://xmlsoft.org/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>GNU Readline homepage</term>
-      <listitem><para><ulink
-	    url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html"> 
-	    <literal>http://cnswww.cns.cwru.edu/~chet/readline/rltop.html</literal></ulink></para>
+    <varlistentry><term>Gretl homepage</term>
+      <listitem><para><ulink url="http://gretl.sourceforge.net/">
+	    <literal>http://gretl.sourceforge.net/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
@@ -569,22 +548,23 @@
       </listitem>
     </varlistentry>
 
+    <varlistentry><term>GTK+ port for win32</term>
+      <listitem><para><ulink
+	    url="http://user.sgic.fi/~tml/gimp/win32/">
+	    <literal>http://www.gimp.org/~tml/gimp/win32/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
     <varlistentry><term>Gtkextra homepage</term>
       <listitem><para><ulink url="http://gtkextra.sourceforge.net/">
 	    <literal>http://gtkextra.sourceforge.net/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>Mingw (gcc for win32) homepage</term>
-      <listitem><para><ulink url="http://www.mingw.org/">
-	    <literal>http://www.mingw.org/</literal></ulink></para>
-      </listitem>
-    </varlistentry>
-
-    <varlistentry><term>GTK+ port for win32</term>
+    <varlistentry><term>InfoZip homepage</term>
       <listitem><para><ulink
-	    url="http://user.sgic.fi/~tml/gimp/win32/">
-	    <literal>http://user.sgic.fi/~tml/gimp/win32/</literal></ulink></para>
+	    url="http://www.info-zip.org/pub/infozip/zlib/">
+	    <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
@@ -594,16 +574,41 @@
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>Gnome desktop homepage</term>
-      <listitem><para><ulink url="http://www.gnome.org/">
-	    <literal>http://www.gnome.org/</literal></ulink></para>
+    <varlistentry><term>Mingw (gcc for win32) homepage</term>
+      <listitem><para><ulink url="http://www.mingw.org/">
+	    <literal>http://www.mingw.org/</literal></ulink></para>
       </listitem>
     </varlistentry>
 
-    <varlistentry><term>GNU R manual</term>
+    <varlistentry><term>Minpack</term>
+      <listitem><para><ulink url="http://www.netlib.org/minpack/">
+	    <literal>http://www.netlib.org/minpack/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Penn World Table</term>
+      <listitem><para><ulink url="http://pwt.econ.upenn.edu/">
+	    <literal>http://pwt.econ.upenn.edu/</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Readline homepage</term>
       <listitem><para><ulink
-	    url="http://cran.r-project.org/doc/manuals/R-intro.pdf">
-	    <literal>http://cran.r-project.org/doc/manuals/R-intro.pdf</literal></ulink></para>
+	    url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html"> 
+	    <literal>http://cnswww.cns.cwru.edu/~chet/readline/rltop.html</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Readline manual</term>
+      <listitem><para><ulink
+	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html"> 
+	    <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry><term>Xmlsoft  homepage</term>
+      <listitem><para><ulink url="http://xmlsoft.org/">
+	    <literal>http://xmlsoft.org/</literal></ulink></para>
       </listitem>
     </varlistentry>
 

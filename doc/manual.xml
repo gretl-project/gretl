@@ -14,6 +14,7 @@
 <!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
 <!ENTITY panel SYSTEM "chapters/panel.xml">
 <!ENTITY graphs SYSTEM "chapters/graphs.xml">
+<!ENTITY nls SYSTEM "chapters/nls.xml">
 <!ENTITY looping SYSTEM "chapters/looping.xml">
 <!ENTITY optarg SYSTEM "chapters/optarg.xml">
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
@@ -74,6 +75,7 @@
   &datafiles;
   &panel;
   &graphs;
+  &nls;
   &looping;
   &optarg;
   &cmdref;

@@ -23,7 +23,7 @@ HTMLDIR = $(DOC)-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
-	chapters/looping.xml chapters/starting.xml \
+	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
 	chapters/trouble.xml chapters/biblio.xml
 

@@ -705,7 +705,7 @@ static int lm_calculate (double *fvec, double *fjac)
 static int lm_approximate (double *fvec, double *fjac)
 {
     integer info, m, n, ldfjac;
-    integer maxfev = 200, mode = 1, nprint = 0, nfev = 0;
+    integer maxfev, mode = 1, nprint = 0, nfev = 0;
     integer iflag = 0;
     integer *ipvt;
     doublereal gtol = 0.0;
@@ -718,6 +718,8 @@ static int lm_approximate (double *fvec, double *fjac)
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
     n = nlspec.nparam;             /* number of parameters */
     ldfjac = m;                    /* leading dimension of fjac array */
+
+    maxfev = 200 * (n + 1);
 
     diag = malloc(n * sizeof *diag);
     qtf = malloc(n * sizeof *qtf);
