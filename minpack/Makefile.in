@@ -1,0 +1,64 @@
+topsrc = @top_srcdir@
+
+prefix = @prefix@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+INSTALL = @INSTALL@
+
+ifeq ($(INSTALL_PROGRAM),)
+  INSTALL_PROGRAM = $(INSTALL) -m 755
+endif
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
+# Installation directories
+libdir = $(prefix)/lib
+includedir = $(prefix)/include/gretl
+
+INSTALLDIRS = $(libdir) $(includedir)
+
+LIBTOOL = ../libtool
+
+VPATH = $(topsrc)/minpack
+
+SRCS = dpmpar.c enorm.c lmder1.c lmder.c lmpar.c qrfac.c qrsolv.c
+OBJS = $(SRCS:.c=.o)
+LOBJS = $(SRCS:.c=.lo)
+HDRS = $(topsrc)/minpack/minpack.h
+
+MINPACKLIB = libminpack.la
+
+COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
+
+%.o: %.c
+	$(COMPILE) $<
+	$(CC) -MM -MG -I. $< > $*.d 2>/dev/null
+
+$(MINPACKLIB): $(OBJS) $(LOBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) \
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:0:0
+
+-include $(OBJS:.o=.d)
+
+.PHONY: 
+
+install: $(MINPACKLIB) install-data
+	$(LIBTOOL) $(INSTALL_PROGRAM) $< $(libdir)/$<
+
+install-strip: $(MINPACKLIB) install-data
+	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
+
+install-data: installdirs 
+	$(INSTALL_DATA) $(HDRS) $(includedir)
+
+installdirs:
+	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
+
+clean:
+	rm -f *.o *.d *.lo $(MINPACKLIB) core 
+	rm -rf ./.libs
+
+distclean: clean
+	rm -f Makefile *.d

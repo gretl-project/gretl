@@ -649,7 +649,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    return E_NOVAR;
 	}
 	_esl_trunc(newvar, 8);
-	if (!isalpha((unsigned char) newvar[0])) {
+	if (!isalpha((unsigned char) newvar[0]) &&
+	    strncmp(newvar, "$nls", 4)) {
 	    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 	    return E_NOTALPH;
 	}

@@ -52,9 +52,6 @@ libsrc  = $(topsrc)/lib/src
 cephessrc = $(topsrc)/cephes
 VPATH = $(libsrc):$(cephessrc)
 
-libdir = $(prefix)/lib
-includedir = $(prefix)/include/gretl
-
 SRCS = calendar.c compare.c dataio.c describe.c discrete.c \
 	estimate.c generate.c graphing.c gretl_errors.c \
 	gretl_utils.c interact.c modelprint.c monte_carlo.c nonparam.c \

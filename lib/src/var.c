@@ -962,7 +962,7 @@ static int
 johansen_complete (const double **X, const double **Y, const double **Z,
 		   int k, int T, int trends, PRN *prn)
 {
-    void *handle;
+    void *handle = NULL;
     int (*johansen) (const double **, const double **, const double **,
 		     int, int, int, PRN *);
     int err = 0;

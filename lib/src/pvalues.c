@@ -546,7 +546,7 @@ static int parse_critical_input (const char *str, int *i,
 
 int print_critical (const char *line, PRN *prn)
 {
-    void *handle;
+    void *handle = NULL;
     void *funp = NULL;
     void (*norm_table)(PRN *, int) = NULL;
     void (*dw)(int, PRN *) = NULL;
