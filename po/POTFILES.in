@@ -1,3 +1,4 @@
+lib/src/bhhh_max.c
 lib/src/calendar.c
 lib/src/compare.c
 lib/src/dataio.c
@@ -76,6 +77,8 @@ gui2/webget.c
 plugin/arma.c
 plugin/arma_x12.c
 plugin/excel_import.c
+plugin/fcp.c
+plugin/garch.c
 plugin/gnumeric_import.c
 plugin/import_common.c
 plugin/johansen.c
