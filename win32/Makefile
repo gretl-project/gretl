@@ -9,13 +9,13 @@ CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 
 # libraries
-LIBS = -lm -L./libgretl -lgretl -ladvapi32
 GTKLIBS = -L./a_libs -lglib-2.0.dll -lgtk.dll -lgdk.dll
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L./a_libs -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
-GRETLLIB = -L./libgretl -lgretl
+GRETLLIB = -L./libgretl -lgretl -L./a_libs -lintl.dll
 PIXBUFLIB = -L./a_libs -lgdk-pixbuf -lpng -lz.dll
+LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
@@ -110,7 +110,8 @@ clean:
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
 plugin: dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
-	dlls/progress_bar.dll dlls/gnumeric_import.dll dlls/excel_import.dll
+	dlls/progress_bar.dll dlls/gnumeric_import.dll \
+	dlls/excel_import.dll # dlls/mp_ols.dll
 
 DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 
@@ -118,7 +119,7 @@ dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl/libgretl.def \
 	--implib libgretl/libgretl.a \
-	-o $@ $^ -lm -L./a_libs -lxml -lz.dll
+	-o $@ $^ -lm -L./a_libs -lxml -lz.dll -lintl.dll
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
@@ -136,7 +137,7 @@ dlls/panel_data.dll: panel_data.o dllinit.o
 
 dlls/progress_bar.dll: progress_bar.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS)
+	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L./a_libs -lintl.dll
 
 dlls/gnumeric_import.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
@@ -151,6 +152,10 @@ dlls/longname.dll: longname.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -lkernel32
 
+dlls/mp_ols.dll: mp_ols.o dllinit.o 
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
+
 panel_data.o: panel_data.c 
 	$(CC) -c $(CFLAGS) $(GLIBINC) $<
 
@@ -161,3 +166,5 @@ ms-ole.o: ms-ole.c $(gretldir)/plugin/libole2/ms-ole.h
 
 workbook.o: workbook.c $(gretldir)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(OLEFLAGS) $(GLIBINC) $<
+
+
