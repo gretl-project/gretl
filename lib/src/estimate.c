@@ -142,8 +142,9 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     XPXXPY xpxxpy;
     MODEL model;
 
-    if (list == NULL || pZ == NULL || pdinfo == NULL) {
-	model.errcode = 1;
+    if (list == NULL || pZ == NULL || pdinfo == NULL ||
+	list[0] == 1 || pdinfo->v == 1) {
+	model.errcode = E_DATA;
         return model;
     }
 

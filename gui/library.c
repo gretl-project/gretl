@@ -1019,8 +1019,13 @@ void gui_errmsg (const int errcode)
 
     if (msg[0] != '\0') 
 	errbox(msg);
-    else 
-	errbox(get_errmsg(errcode, errtext, NULL));
+    else {
+	msg = get_errmsg(errcode, errtext, NULL);
+	if (msg != NULL)
+	    errbox(msg);
+	else
+	    errbox(_("Unspecified error"));
+    }
 }
 
 /* ........................................................... */
