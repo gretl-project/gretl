@@ -786,7 +786,7 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
     ntodate(enddate, plmod->t2, pdinfo);
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(plmod, prn->format)), plmod->t2 - plmod->t1 + 1, 
+	    _(estimator_string(plmod->ci, prn->format)), plmod->t2 - plmod->t1 + 1, 
 	    startdate, enddate);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 

@@ -70,7 +70,7 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
 	$(tooldir)/mkinstalldirs $(gretldir)/db
 
-$(ENGLISH_HELPFILES):
+$(ENGLISH_HELPFILES): $(topsrc)/doc/commands/gretl_commands.xml
 	make -C ../doc/commands hlp
 
 $(UTF8_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es

@@ -439,6 +439,9 @@ static int ar_init_by_ols (const int *list, double *coeff,
     int *alist = NULL;
     MODEL armod;
     int i, j, t, err = 0;
+#ifdef ARMA_DEBUG
+    PRN *myprn;
+#endif
 
     gretl_model_init(&armod, NULL);  
 
@@ -465,11 +468,21 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	int j, s;
 
 	for (i=0; i<=p; i++) {
+#ifdef ARMA_DEBUG
+	    if (t == 0) {
+		strcpy(ainfo->varname[i+1], pdinfo->varname[ynum]);
+	    }
+#endif
 	    s = t + arma_t1 - i;
 	    aZ[i+1][t] = Z[ynum][s];
 	}
 	for (i=0; i<r; i++) {
 	    j = list[i+5];
+#ifdef ARMA_DEBUG
+	    if (t == 0) {
+		strcpy(ainfo->varname[i+p+2], pdinfo->varname[j]);
+	    }
+#endif
 	    s = t + arma_t1;
 	    aZ[i+p+2][t] = Z[j][s];
 	}
@@ -488,19 +501,22 @@ static int ar_init_by_ols (const int *list, double *coeff,
 	    coeff[i+p+1] = 0.0;
 	} 
     }
-    
-    free(alist);
-    free_Z(aZ, ainfo);
-    clear_datainfo(ainfo, CLEAR_FULL);
-    free(ainfo);
 
 #ifdef ARMA_DEBUG
+    myprn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+    printmodel(&armod, ainfo, myprn);
+    gretl_print_destroy(myprn);
     fprintf(stderr, "\n");
     for (i=0; i<=p + q + r; i++) {
 	fprintf(stderr, "ar_init_by_ols: coeff[%d] = %g\n", 
 		i, coeff[i]);
     }
 #endif
+    
+    free(alist);
+    free_Z(aZ, ainfo);
+    clear_datainfo(ainfo, CLEAR_FULL);
+    free(ainfo);
 
     clear_model(&armod, NULL);
 

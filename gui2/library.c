@@ -4086,11 +4086,13 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	}
 
 	plswait = gdk_cursor_new(GDK_WATCH);
+#ifdef PGRAB
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
 			 GDK_BUTTON_RELEASE_MASK,
 			 NULL, plswait,
 			 GDK_CURRENT_TIME); 
+#endif
 	gdk_cursor_destroy(plswait);
 
 	err = execute_script(NULL, buf, prn, code);

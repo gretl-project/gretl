@@ -297,15 +297,19 @@ static int print_atom (genatom *atom)
 
 static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 {
+    static char format[16] = {0};
     char vname[VNAMELEN];
-    char format[16];
-    int m, v = 0;
+    int m = 0, v = 0;
 
-    sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
+    if (*format == 0) {
+	sprintf(format, "%%%d[^(](%%d)", VNAMELEN - 1);
+    }
 
     if (sscanf(s, format, vname, &m) == 2) {
 	v = varindex(genr->pdinfo, vname);
 	if (v >= genr->pdinfo->v) {
+	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	    genr->err = E_UNKVAR;
 	    v = m = 0;
 	} else if (genr->pdinfo->vector[v] == 0) {
 	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
@@ -378,7 +382,7 @@ static genatom *parse_token (const char *s, char op,
 	else if (strchr(s, '(')) {
 	    /* try for lag variable first */
 	    v = get_lagvar(s, &lag, genr);
-	    if (v != 0) {
+	    if (v > 0) {
 		DPRINTF(("recognized var #%d lag %d\n", v, lag));
 	    } else {
 		/* try for a function */
@@ -942,11 +946,12 @@ static int token_is_atomic (const char *s, GENERATE *genr)
     /* treat lag variable as atom */
     if (get_lagvar(s, NULL, genr)) return 1;
 
-    while (*p++) {
+    while (*p) {
 	/* token is non-atomic if it contains an operator,
 	   or parentheses */
 	if (op_level(*p) || *p == '(') count++;
 	if (count > 0) break;
+	p++;
     }
 
     return (count == 0);
