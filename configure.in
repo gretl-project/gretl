@@ -102,14 +102,6 @@ else
 fi,
 trygmp=yes)
 
-gmp_prefix=""
-AC_ARG_WITH(gmp-prefix,
-[  --with-gmp-prefix=DIR   path to find GMP lib and header [default=/usr]],
-if test -n "${withval}"
-then
-  gmp_prefix=${withval}
-fi,)
-
 AC_PROG_CC
 dnl AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -201,21 +193,7 @@ fi
 
 dnl See if GMP lib is available?
 if test x"${trygmp}" != xno ; then
-  SAVE_LIBS=$LIBS
-  if test x"${gmp_prefix}" != "x" ; then
-    GMP_LIBS="-L${gmp_prefix}/lib -lgmp"
-    GMP_CFLAGS="-I${gmp_prefix}/include"
-    LIBS=$GMP_LIBS
-  else
-    GMP_LIBS="-lgmp"
-    GMP_CFLAGS=""
-  fi
-  AC_CHECK_LIB(gmp, __gmpf_init,have_gmp="yes" ; \
-    AC_DEFINE(ENABLE_GMP),GMP_LIBS=,)
-  AC_SUBST(ENABLE_GMP)
-  AC_SUBST(GMP_CFLAGS)
-  AC_SUBST(GMP_LIBS)
-  LIBS=$SAVE_LIBS
+  AM_PATH_GMP(, have_gmp="yes" ; AC_DEFINE(ENABLE_GMP))
 fi
 
 dnl Checks for header files.

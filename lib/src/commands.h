@@ -65,9 +65,7 @@ typedef enum {
     LOGS,
     LOOP,
     MEANTEST,
-#ifdef ENABLE_GMP
     MPOLS,
-#endif
     MULTIPLY,
     MVAVG,
     NOECHO,

@@ -1020,7 +1020,7 @@ static int real_helpfile_init (int cli)
 		if (heads != NULL) { 
 		    heads[nheads] = malloc(sizeof **heads);
 		    if (heads[nheads] != NULL) {
-			headstr = _(testline + 1);
+			headstr = testline + 1;
 			(heads[nheads])->name = malloc(strlen(headstr) + 1);
 			if ((heads[nheads])->name != NULL) {
 			    strcpy((heads[nheads])->name, headstr);
@@ -1059,7 +1059,7 @@ static int real_helpfile_init (int cli)
 	    chopstr(testline);
 	    match = -1;
 	    for (i=0; i<nheads; i++) {
-		if (!strcmp(_(testline + 1), (heads[i])->name)) {
+		if (!strcmp(testline + 1, (heads[i])->name)) {
 		    match = i;
 		    break;
 		}
@@ -1128,7 +1128,7 @@ static void add_help_topics (windata_t *hwin, int script)
 	helpitem.accelerator = NULL;
 	helpitem.callback_action = 0; 
 	helpitem.item_type = "<Branch>";
-	sprintf(helpitem.path, "%s/%s", mpath, (heads[i])->name);
+	sprintf(helpitem.path, "%s/%s", mpath, _((heads[i])->name));
 	helpitem.callback = NULL; 
 	gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
 	for (j=0; j<(heads[i])->ntopics; j++) {
