@@ -493,8 +493,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL, GNULL }, 
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL, GNULL }, 
-    { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
-      ADF, NULL, GNULL },
+    { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, do_adf, ADF, NULL, GNULL },
     { N_("/Variable/ARMA model"), NULL, arma_options_dialog, 0, NULL, GNULL },
 #ifdef HAVE_X12A
     { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL, GNULL },
@@ -723,10 +722,12 @@ int main (int argc, char *argv[])
 
 #ifdef G_OS_WIN32
     putenv("PANGO_WIN32_NO_UNISCRIBE=a");
+    putenv("G_FILENAME_ENCODING=@locale");
 #endif     
 
-    if ((errtext = malloc(MAXLEN)) == NULL) 
+    if ((errtext = malloc(MAXLEN)) == NULL) {
 	noalloc(_("startup"));
+    }
 
     *tryscript = '\0';
     *scriptfile = '\0';
@@ -803,16 +804,18 @@ int main (int argc, char *argv[])
 	    }	
 	}
 #endif
-    } else 
+    } else {
 	gui_get_data = 1;
+    }
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
 
     /* allocate data information struct */
     datainfo = datainfo_new();
-    if (datainfo == NULL)
+    if (datainfo == NULL) {
 	noalloc(_("data information"));
+    }
 
     /* allocate memory for models */
     models = malloc(3 * sizeof *models);
@@ -890,6 +893,12 @@ int main (int argc, char *argv[])
 	    break;
 	}
 
+#ifdef notdef
+	if (paths.datfile[0] != 0) {
+	    my_filename_to_utf8(paths.datfile);
+	}
+#endif
+
 	if (ftype != GRETL_SCRIPT && err) {
 	    errmsg(err, prn);
 	    exit(EXIT_FAILURE);
@@ -910,7 +919,9 @@ int main (int argc, char *argv[])
 	noalloc(_("GUI"));
     if ((datalabel = make_main_window(gui_get_data)) == NULL) 
 	noalloc(_("main window"));
-    if (!gui_get_data) set_sample_label(datainfo);
+    if (!gui_get_data) {
+	set_sample_label(datainfo);
+    }
 
 #ifndef G_OS_WIN32
     /* Let a first-time user set the working dir */
@@ -946,7 +957,9 @@ int main (int argc, char *argv[])
 
     /* check for program updates? */
     proxy_init(dbproxy);
-    if (updater) silent_update_query(); 
+    if (updater) {
+	silent_update_query(); 
+    }
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN) {
@@ -962,7 +975,9 @@ int main (int argc, char *argv[])
     /* clean up before exiting */
     free_session();
 
-    if (Z) free_Z(Z, datainfo);
+    if (Z != NULL) {
+	free_Z(Z, datainfo);
+    }
 
     free_model(models[0]);
     free_model(models[1]);
@@ -971,7 +986,9 @@ int main (int argc, char *argv[])
 
     library_command_free();
 
-    if (data_status) free_datainfo(datainfo);
+    if (data_status) {
+	free_datainfo(datainfo);
+    }
 
     free_command_stack();
     exit_free_modelspec();
@@ -1539,7 +1556,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start (GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
-    if (!gui_get_data) populate_varlist();
+    if (!gui_get_data) {
+	populate_varlist();
+    }
 
     /* get a monospaced font for various windows */
     set_fixed_font();
@@ -1552,7 +1571,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_widget_show_all(mdata->w); 
 
     /* create gretl toolbar */
-    if (want_toolbar) make_toolbar(mdata->w, main_vbox);
+    if (want_toolbar) {
+	make_toolbar(mdata->w, main_vbox);
+    }
 
     return dlabel;
 }

@@ -33,13 +33,17 @@ enum {
 # define G_OBJECT(o)                    GTK_OBJECT(o)
 # define g_object_set_data(o,s,d)       gtk_object_set_data(o,s,d)
 # define g_object_get_data(o,s)         gtk_object_get_data(o,s)
+# define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
+# define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
 # define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
 
 #else
 
 # define standard_button(s) gtk_button_new_from_stock(s)
 
+gchar *my_filename_from_utf8 (char *fname);
 gchar *my_locale_from_utf8 (const gchar *src);
+gchar *my_filename_to_utf8 (char *fname);
 gchar *my_locale_to_utf8 (const gchar *src);
 
 #endif /* OLD_GTK */

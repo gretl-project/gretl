@@ -45,6 +45,7 @@ mkdir -p windist/gretl/scripts/misc
 mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
+mkdir -p windist/gretl/plugins/data
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/locale/it/LC_MESSAGES
@@ -150,6 +151,7 @@ for lang in es fr it ja pl ; do
 done
 
 # misc files
+add_file ${TOPDIR}/plugins/data/urcdata.gz gretl/plugins/data/urcdata.gz
 add_file gretl_website.url gretl/gretl_website.url
 add_file updater/gretl_updater.exe gretl/gretl_updater.exe
 date > gretl.stamp

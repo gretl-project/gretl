@@ -1543,9 +1543,12 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_model_tests(pmod, prn);
     }
 
+#if 0
     if (PLAIN_FORMAT(prn->format) && pmod->aux == AUX_ADF) {
 	print_aicetc(pmod, prn);
     }
+#endif
+
     if (!PLAIN_FORMAT(prn->format)) {
 	model_format_end(prn);
     }
@@ -1710,8 +1713,14 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    pprintf(prn, " %7.3f", t);
 	}
 	if (pmod->aux == AUX_ADF) {
+	    if (c == gretl_model_get_int(pmod, "dfnum")) {
+		char pvalstr[16];
+
+		pvalue = gretl_model_get_double(pmod, "dfpval");
+		print_pval_str(pvalue, pvalstr);
+		pprintf(prn, "%*s", UTF_WIDTH(pvalstr, 12), pvalstr);
+	    } 
 	    do_pval = 0;
-	    pprintf(prn, "%*s", UTF_WIDTH(_("unknown"), 12), _("unknown"));
 	}
 	if (do_pval) {
 	    char pvalstr[16];

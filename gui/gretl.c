@@ -417,8 +417,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
-    { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
-      ADF, NULL },
+    { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, do_adf, ADF, NULL },
     { N_("/Variable/ARMA model"), NULL, arma_options_dialog, 0, NULL },
 #ifdef HAVE_X12A
     { N_("/Variable/X-12-ARIMA analysis"), NULL, do_tramo_x12a, X12A, NULL },

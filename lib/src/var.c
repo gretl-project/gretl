@@ -970,7 +970,10 @@ static int get_listlen (int *varlist, char *detlist, int order,
 	varlist[j++] = varlist[i];
     }
 
-    if (gotsep) varlist[0] -= 1;
+    if (gotsep) {
+	varlist[0] -= 1;
+    }
+
     detlist[0] = varlist[0];
 
     return v;
@@ -1437,8 +1440,6 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
     static int nodata;
     
     if (nodata) {
-	/* don't waste time on this if the MacKinnon datafiles
-	   are not available */
 	return pval;
     }
 
@@ -1655,24 +1656,24 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    if (opt == 0L) {
+    if (opt == 0L || opt == OPT_V) {
 	/* default display */
 	mask[1] = mask[2] = mask[3] = 1;
     } else {
 	if (opt & OPT_N) {
-	    /* without constant */
+	    /* nc model */
 	    mask[0] = 1;
 	}
 	if (opt & OPT_C) {
-	    /* constant */
+	    /* c */
 	    mask[1] = 1;
 	}
 	if (opt & OPT_T) {
-	    /* trend */
+	    /* ct */
 	    mask[2] = 1;
 	}
 	if (opt & OPT_R) {
-	    /* quadratic trend */
+	    /* ctt */
 	    mask[3] = 1;
 	}
     }
@@ -1753,10 +1754,22 @@ static int real_adf_test (int varno, int order, int niv,
 	}
 	pprintf(prn, "   %s: %g\n"
 		"   %s: t = %g\n"
-		"   %s\n\n",
+		"   %s\n",
 		_("estimated value of (a - 1)"), dfmod.coeff[dfnum],
 		_("test statistic"), DFt,
 		pvstr);	
+
+	if (opt & OPT_V) {
+	    /* verbose */
+	    dfmod.aux = AUX_ADF;
+	    if (!na(pv)) {
+		gretl_model_set_int(&dfmod, "dfnum", dfnum + 2);
+		gretl_model_set_double(&dfmod, "dfpval", pv);
+	    }
+	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
+	} else {
+	    pputc(prn, '\n');
+	}
 
 	clear_model(&dfmod);
     }
@@ -2206,7 +2219,9 @@ void gretl_var_assign_name (GRETL_VAR *var)
 {
     static int n = 0;
 
-    if (var->name != NULL) free(var->name);
+    if (var->name != NULL) {
+	free(var->name);
+    }
     var->name = malloc(8);
     if (var->name != NULL) {
 	sprintf(var->name, "%s %d", _("VAR"), ++n);
@@ -2215,7 +2230,9 @@ void gretl_var_assign_name (GRETL_VAR *var)
 
 void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name)
 {
-    if (var->name != NULL) free(var->name);
+    if (var->name != NULL) {
+	free(var->name);
+    }
     var->name = malloc(strlen(name) + 1);
     if (var->name != NULL) {
 	strcpy(var->name, name);

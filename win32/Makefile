@@ -254,7 +254,7 @@ plugins/vif.dll: vif.o dllinit.o
 
 plugins/urcdist.dll: urcdist.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -lf2c -lm -lintl 
+	--implib plugins/$(<:.o=.a) $^ -lz -lm -lintl 
 
 plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

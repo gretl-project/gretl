@@ -835,6 +835,14 @@ int get_worksheet_data (char *fname, int datatype, int append,
     return 0;
 }
 
+static void copy_utf8_filename (char *targ, const char *src)
+{
+    strcpy(targ, src);
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    my_filename_to_utf8(targ);
+#endif
+}
+
 /* ........................................................... */
 
 void do_open_data (GtkWidget *w, gpointer data, int code)
@@ -926,7 +934,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     if (append) {
 	register_data(NULL, NULL, 0);
     } else {
-	strcpy(paths.datfile, trydatfile);
+	copy_utf8_filename(paths.datfile, trydatfile);
 	register_data(paths.datfile, NULL, 1);
     } 
 }
@@ -1589,6 +1597,9 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 	    title = g_strdup_printf("gretl: %s", 
 				    (p != NULL)? p + 1 : fname);
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+	    my_filename_to_utf8(title);
+#endif	    
 	} 
 	break;
     case EDIT_NOTES:
@@ -1745,25 +1756,15 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     text_table_setup(vwin);
 
     /* arrange for clean-up when dialog is destroyed */
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), vwin);
-#endif
 
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       close, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(close), "clicked", 
 		     G_CALLBACK(delete_file_viewer), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-#endif
     gtk_widget_show(close);
 
     /* insert and then free the text buffer */
@@ -1882,44 +1883,23 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(console_mouse_handler), NULL);
-# if 0
-	g_signal_connect(G_OBJECT(vwin->w), "button_press_event",
-			 G_CALLBACK(console_click_handler), NULL);
-# endif
 	g_signal_connect(G_OBJECT(vwin->w), "key_press_event",
 			 G_CALLBACK(console_key_handler), NULL);
-#else
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "button_release_event",
-			   GTK_SIGNAL_FUNC(console_mouse_handler), NULL);
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
-			   GTK_SIGNAL_FUNC(console_key_handler), NULL);
-#endif
     } 
 
     if (doing_script) {
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->w), "button_release_event",
 			 G_CALLBACK(edit_script_help), vwin);
-#else
-	gtk_signal_connect_after(GTK_OBJECT(vwin->w), "button_press_event",
-				 (GtkSignalFunc) edit_script_help, vwin);
-#endif
     } 
 
     /* make a Close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       close, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(close), "clicked", 
 		     G_CALLBACK(delete_file_viewer), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-#endif
     gtk_widget_show(close);
 
 #ifndef OLD_GTK
@@ -1943,29 +1923,20 @@ windata_t *view_file (const char *filename, int editable, int del_file,
     /* grab the "changed" signal when editing a script */
     if (role == EDIT_SCRIPT) {
 #ifndef OLD_GTK
-	g_signal_connect(G_OBJECT(tbuf), "changed", 
-			 G_CALLBACK(content_changed), vwin);
+        g_signal_connect(G_OBJECT(tbuf), "changed", 
+                         G_CALLBACK(content_changed), vwin);
 #else
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
-			   GTK_SIGNAL_FUNC(content_changed), vwin);
+        gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
+                           GTK_SIGNAL_FUNC(content_changed), vwin);
 #endif
     }
 
     /* catch some keystrokes */
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
 		     G_CALLBACK(catch_viewer_key), vwin);
-#else
-	gtk_signal_connect(GTK_OBJECT(vwin->dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_viewer_key), vwin);
-#endif
 
     if (editable) {
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
-#else
-	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "vwin", vwin);
-#endif
     }
 
 #ifndef OLD_GTK
@@ -1975,35 +1946,20 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 
     /* offer chance to save script on exit */
     if (role == EDIT_SCRIPT) {
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->dialog), "delete_event", 
 			 G_CALLBACK(query_save_text), vwin);
-#else
-	gtk_signal_connect(GTK_OBJECT(vwin->dialog), "delete_event", 
-			   GTK_SIGNAL_FUNC(query_save_text), vwin);
-#endif
     }
 
     /* clean up when dialog is destroyed */
     if (del_file) {
 	gchar *fname = g_strdup(filename);
 
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 			 G_CALLBACK(delete_file), (gpointer) fname);
-#else
-	gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-			   GTK_SIGNAL_FUNC(delete_file), (gpointer) fname);
-#endif
     }
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), vwin);
-#endif
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(vwin->dialog);
@@ -2097,7 +2053,9 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     
     /* insert the buffer text */
 #ifndef OLD_GTK
-    if (*pbuf) gtk_text_buffer_set_text(tbuf, *pbuf, -1);
+    if (*pbuf) {
+	gtk_text_buffer_set_text(tbuf, *pbuf, -1);
+    }
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button_3), vwin->w);
@@ -2120,36 +2078,24 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     /* check on delete event? */
 #ifndef OLD_GTK
     g_signal_connect(G_OBJECT(tbuf), "changed", 
-		     G_CALLBACK(content_changed), vwin);
-    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event",
-		     G_CALLBACK(query_save_text), vwin);
+                     G_CALLBACK(content_changed), vwin);
 #else
     gtk_signal_connect(GTK_OBJECT(vwin->w), "changed", 
-		       GTK_SIGNAL_FUNC(content_changed), vwin);
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "delete_event",
-		       GTK_SIGNAL_FUNC(query_save_text), vwin);
+                       GTK_SIGNAL_FUNC(content_changed), vwin);
 #endif   
+    g_signal_connect(G_OBJECT(vwin->dialog), "delete_event",
+		     G_CALLBACK(query_save_text), vwin);
 
     /* clean up when dialog is destroyed */
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), vwin);
-#endif
 
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 		       close, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(close), "clicked", 
 		     G_CALLBACK(delete_file_viewer), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-#endif
     gtk_widget_show(close);
 
     gtk_widget_show(vwin->vbox);
@@ -2188,13 +2134,9 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
 	add_dummies_to_plot_menu(vwin);
     }
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
 		     G_CALLBACK(check_model_menu), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
-		       GTK_SIGNAL_FUNC(check_model_menu), vwin);
-#endif
 
     gtk_box_pack_start(GTK_BOX(vwin->vbox), vwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(vwin->mbar);
@@ -2208,13 +2150,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     /* close button */
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), close, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(close), "clicked", 
 		     G_CALLBACK(delete_file_viewer), vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(close), "clicked", 
-		       GTK_SIGNAL_FUNC(delete_file_viewer), vwin);
-#endif
     gtk_widget_show(close);
 
     /* insert and then free the model buffer */
@@ -2246,21 +2183,12 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 #endif
 
     /* clean up when dialog is destroyed */
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(delete_unnamed_model), 
 		     vwin->data);
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), 
 		     vwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(delete_unnamed_model), 
-		       vwin->data);
-    gtk_signal_connect(GTK_OBJECT(vwin->dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(free_windata), 
-		       vwin);
-#endif
 
     gtk_widget_show(vwin->vbox);
     gtk_widget_show_all(vwin->dialog);
@@ -3056,13 +2984,11 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
     item = gtk_menu_item_new_with_label(label);
 #ifndef OLD_GTK
     gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
-    g_signal_connect (G_OBJECT(item), "activate",
-		      G_CALLBACK(callback), data);
 #else
     gtk_menu_append(GTK_MENU(menu), item);
-    gtk_signal_connect(GTK_OBJECT(item), "activate",
-		       GTK_SIGNAL_FUNC(callback), data);
 #endif
+    g_signal_connect (G_OBJECT(item), "activate",
+		      G_CALLBACK(callback), data);
     gtk_widget_show(item);
 }
 
@@ -3101,6 +3027,39 @@ char *double_underscores (char *targ, const char *src)
 
 #ifndef OLD_GTK
 
+static int seven_bit_string (const unsigned char *s)
+{
+    while (*s) {
+	if (*s > 127) return 0;
+	s++;
+    }
+    return 1;
+}
+
+gchar *my_filename_from_utf8 (char *fname)
+{
+    gchar *trfname;
+    gsize bytes;
+    GError *err = NULL;
+
+    if (seven_bit_string(fname)) {
+	return fname;
+    }
+
+    trfname = g_filename_from_utf8(fname, -1, NULL, &bytes, &err);
+
+    if (err != NULL) {
+	errbox("g_filename_from_utf8 failed");
+	g_error_free(err);
+    } else {
+	strcpy(fname, trfname);
+    }
+
+    g_free(trfname);
+
+    return fname;
+}
+
 gchar *my_locale_from_utf8 (const gchar *src)
 {
     gchar *trstr;
@@ -3125,6 +3084,30 @@ gchar *my_locale_from_utf8 (const gchar *src)
     }
 
     return trstr;
+}
+
+gchar *my_filename_to_utf8 (char *fname)
+{
+    gchar *trfname;
+    gsize bytes;
+    GError *err = NULL;
+
+    if (g_utf8_validate(fname, -1, NULL)) {
+	return fname;
+    }
+
+    trfname = g_filename_to_utf8(fname, -1, NULL, &bytes, &err);
+
+    if (err != NULL) {
+	errbox("g_filename_to_utf8 failed");
+	g_error_free(err);
+    } else {
+	strcpy(fname, trfname);
+    }
+
+    g_free(trfname);
+
+    return fname;
 }
 
 gchar *my_locale_to_utf8 (const gchar *src)

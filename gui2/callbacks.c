@@ -547,12 +547,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "100");
 	okfunc = do_simdata;
 	break;         
-    case ADF:
-	strcpy(title, _("gretl: ADF test"));
-	strcpy(query, _("Lag order for ADF test:"));
-	strcpy(defstr, "1");
-	okfunc = do_dialog_cmd;
-	break;
     case SPEARMAN:
 	strcpy(title, _("gretl: rank correlation"));
 	strcpy(query, _("Enter two variables by name or number:"));

@@ -554,15 +554,9 @@ void options_dialog (gpointer data)
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(dialog)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(dialog), GTK_WIN_POS_MOUSE);
 
-#ifndef OLD_GTK
-    g_signal_connect (G_OBJECT(dialog), "delete_event", 
-		      G_CALLBACK(delete_widget), 
-		      dialog);
-#else
-    gtk_signal_connect_object(GTK_OBJECT(dialog), "delete_event", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(dialog));
-#endif
+    g_signal_connect(G_OBJECT(dialog), "delete_event", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
 
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), notebook, 
@@ -579,47 +573,34 @@ void options_dialog (gpointer data)
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-#else
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC(apply_changes), NULL);
-    gtk_signal_connect_object(GTK_OBJECT(tempwid), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(dialog));
-#endif
+
     gtk_widget_show(tempwid);
 
     tempwid = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(delete_widget), 
 		     dialog);
-#else
-    gtk_signal_connect_object(GTK_OBJECT(tempwid), "clicked", 
-			      GTK_SIGNAL_FUNC(gtk_widget_destroy), 
-			      GTK_OBJECT(dialog));
-#endif
+
     gtk_widget_show(tempwid);
 
     tempwid = standard_button(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
 		     G_CALLBACK(apply_changes), NULL);
-#else
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC(apply_changes), NULL);
-#endif
+
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
 
@@ -699,16 +680,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_container_set_border_width(GTK_CONTAINER(box), 10);
     gtk_widget_show(box);
 
-    if (tab == 1)
+    if (tab == 1) {
 	tempwid = gtk_label_new(_("General"));
-    else if (tab == 2)
+    } else if (tab == 2) {
 	tempwid = gtk_label_new(_("Databases"));
-    else if (tab == 3)
+    } else if (tab == 3) {
 	tempwid = gtk_label_new(_("Programs"));
-    else if (tab == 4)
+    } else if (tab == 4) {
 	tempwid = gtk_label_new(_("Open/Save path"));
-    else if (tab == 5)
+    } else if (tab == 5) {
 	tempwid = gtk_label_new(_("Data files"));
+    }
     
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
@@ -746,30 +728,18 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 
 		/* special case: warning */
 		if (!strcmp(rc->key, "wimp") || !strcmp(rc->key, "lcnumeric")) {
-#ifndef OLD_GTK
 		    g_signal_connect(G_OBJECT(rc->widget), "toggled",
 				     G_CALLBACK(takes_effect_on_restart), 
 				     NULL);
-#else
-		    gtk_signal_connect(GTK_OBJECT(rc->widget), "toggled",
-				       GTK_SIGNAL_FUNC(takes_effect_on_restart), 
-				       NULL);
-#endif
 		}
 
 		/* special case: link between toggle and preceding entry */
 		if (rc->len && !(rc->type & FIXSET)) {
 		    gtk_widget_set_sensitive(rc_vars[i-1].widget,
 					     GTK_TOGGLE_BUTTON(rc->widget)->active);
-#ifndef OLD_GTK
 		    g_signal_connect(G_OBJECT(rc->widget), "clicked",
 				     G_CALLBACK(flip_sensitive),
 				     rc_vars[i-1].widget);
-#else
-		    gtk_signal_connect(GTK_OBJECT(rc->widget), "clicked",
-				       GTK_SIGNAL_FUNC(flip_sensitive),
-				       rc_vars[i-1].widget);
-#endif
 		} 
 
 		gtk_widget_show(rc->widget);
@@ -1024,6 +994,19 @@ static void initialize_file_lists (void)
     }
 }
 
+static char **get_file_list (int filetype)
+{
+    if (filetype == FILE_LIST_DATA) {
+	return datap;
+    } else if (filetype == FILE_LIST_SESSION) {
+	return sessionp;
+    } else if (filetype == FILE_LIST_SCRIPT) {
+	return scriptp;
+    } else {
+	return NULL;
+    }
+}
+
 /* .................................................................. */
 
 #ifdef GNOME2
@@ -1110,9 +1093,13 @@ static void read_rc (void)
 				       GCONF_VALUE_STRING, NULL);
 	if (flist != NULL) {
 	    for (j=0; j<MAXRECENT; j++) {
-		if (i == 0) strcpy(datalist[j], flist->data);
-		else if (i == 1) strcpy(sessionlist[j], flist->data);
-		else if (i == 2) strcpy(scriptlist[j], flist->data);
+		if (i == 0) {
+		    strcpy(datalist[j], flist->data);
+		} else if (i == 1) {
+		    strcpy(sessionlist[j], flist->data);
+		} else if (i == 2) {
+		    strcpy(scriptlist[j], flist->data);
+		}
 		flist = flist->next;
 	    }
 	    g_slist_free(flist);
@@ -1690,8 +1677,12 @@ void font_selector (gpointer data, guint u, GtkWidget *w)
 				   GTK_SIGNAL_FUNC(gtk_widget_destroy),
 				   GTK_OBJECT (fontsel));
     }
-    if (!GTK_WIDGET_VISIBLE (fontsel)) gtk_widget_show (fontsel);
-    else gtk_widget_destroy (fontsel);
+
+    if (!GTK_WIDGET_VISIBLE(fontsel)) {
+	gtk_widget_show(fontsel);
+    } else {
+	gtk_widget_destroy(fontsel);
+    }
 }
 
 # endif /* non-Windows, gtk version branches */
@@ -1811,14 +1802,15 @@ static void clear_files_list (int filetype, char **filep)
 	N_("/File/Open command file")
     };
 
-    if (filetype == FILE_LIST_DATA) 
+    if (filetype == FILE_LIST_DATA) {
 	pindex = 0;
-    else if (filetype == FILE_LIST_SESSION)
+    } else if (filetype == FILE_LIST_SESSION) {
 	pindex = 1;
-    else if (filetype == FILE_LIST_SCRIPT)
+    } else if (filetype == FILE_LIST_SCRIPT) {
 	pindex = 2;
-
-    if (pindex == -1) return;
+    } else {
+	return;
+    }
 
     for (i=0; i<MAXRECENT; i++) {
 #ifndef OLD_GTK
@@ -1863,13 +1855,22 @@ void mkfilelist (int filetype, char *fname)
     char *tmp[MAXRECENT-1];
     char **filep;
     int i, match = -1;
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    char trfname[MAXLEN];
+#endif
 
     cut_multiple_slashes(fname);
 
-    if (filetype == FILE_LIST_DATA) filep = datap;
-    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
-    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
-    else return;
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    strcpy(trfname, fname);
+    my_filename_to_utf8(trfname);
+    fname = trfname;
+#endif
+
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
+    }
 
     /* see if this file is already on the list */
     for (i=0; i<MAXRECENT; i++) {
@@ -1884,7 +1885,9 @@ void mkfilelist (int filetype, char *fname)
     clear_files_list(filetype, filep);
     
     /* save pointers to current order */
-    for (i=0; i<MAXRECENT-1; i++) tmp[i] = filep[i];
+    for (i=0; i<MAXRECENT-1; i++) {
+	tmp[i] = filep[i];
+    }
 
     /* copy fname into array, if not already present */
     if (match == -1) {
@@ -1920,10 +1923,10 @@ void delete_from_filelist (int filetype, const char *fname)
     char **filep;
     int i, match = -1;
 
-    if (filetype == FILE_LIST_DATA) filep = datap;
-    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
-    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
-    else return;
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
+    }
 
     /* save pointers to current order */
     for (i=0; i<MAXRECENT; i++) {
@@ -1952,10 +1955,11 @@ void delete_from_filelist (int filetype, const char *fname)
 char *endbit (char *dest, char *src, int addscore)
 {
     /* take last part of src filename */
-    if (strrchr(src, SLASH))
+    if (strrchr(src, SLASH)) {
 	strcpy(dest, strrchr(src, SLASH) + 1);
-    else
+    } else {
 	strcpy(dest, src);
+    }
 
     if (addscore != 0) {
 	/* then either double (1) or delete (-1) any underscores */
@@ -1976,10 +1980,17 @@ char *endbit (char *dest, char *src, int addscore)
 	}
 	strcpy(dest, mod);
     }
+
     return dest;
 }
 
 /* .................................................................. */
+
+static char *file_sections[] = {
+    "recent_data_files",
+    "recent_session_files",
+    "recent_script_files"
+};
 
 #ifdef GNOME2
 
@@ -1991,17 +2002,10 @@ static void printfilelist (int filetype, FILE *fp)
     gchar *key;
     int i;
     char **filep;
-    static char *sections[] = {
-	"recent_data_files",
-	"recent_session_files",
-	"recent_script_files"
-    };
 
-    switch (filetype) {
-    case FILE_LIST_DATA: filep = datap; break;
-    case FILE_LIST_SESSION: filep = sessionp; break;
-    case FILE_LIST_SCRIPT: filep = scriptp; break;
-    default: return;
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
     }
 
     client = gconf_client_get_default();
@@ -2010,7 +2014,7 @@ static void printfilelist (int filetype, FILE *fp)
 	flist = g_slist_append (flist, g_strdup(filep[i]));
     }
 
-    key = g_strdup_printf("/apps/gretl/%s", sections[filetype - 1]);
+    key = g_strdup_printf("/apps/gretl/%s", file_sections[filetype - 1]);
 
     gconf_client_set_list (client, key, GCONF_VALUE_STRING, 
 			   flist, NULL);
@@ -2022,56 +2026,41 @@ static void printfilelist (int filetype, FILE *fp)
 
 #elif defined(USE_GNOME)
 
-static void printfilelist (int filetype, FILE *fp)
-     /* fp is ignored */
+static void printfilelist (int filetype, /* ignored */ FILE *fp)
 {
     int i;
     char **filep;
     char gpath[MAXLEN];
-    static char *section[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
 
-    switch (filetype) {
-    case FILE_LIST_DATA: filep = datap; break;
-    case FILE_LIST_SESSION: filep = sessionp; break;
-    case FILE_LIST_SCRIPT: filep = scriptp; break;
-    default: return;
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
+	sprintf(gpath, "/gretl/%s/%d", file_sections[filetype - 1], i);
 	gnome_config_set_string(gpath, filep[i]);
     }
 }
 
 #elif defined(G_OS_WIN32)
 
-static void printfilelist (int filetype, FILE *fp)
-     /* param fp is ignored */
+static void printfilelist (int filetype, /* ignored */ FILE *fp)
 {
     int i;
     char **filep;
     char rpath[MAXLEN];
-    static char *sections[] = {
-	"recent data files",
-	"recent session files",
-	"recent script files"
-    };
 
-    switch (filetype) {
-    case FILE_LIST_DATA: filep = datap; break;
-    case FILE_LIST_SESSION: filep = sessionp; break;
-    case FILE_LIST_SCRIPT: filep = scriptp; break;
-    default: return;
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	if (filep[i] == NULL) continue;
-	sprintf(rpath, "%s\\%d", sections[filetype - 1], i);
-	write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
+	if (filep[i] != NULL) {
+	    sprintf(rpath, "%s\\%d", file_sections[filetype - 1], i);
+	    write_reg_val(HKEY_CURRENT_USER, "gretl", rpath, filep[i]);
+	}
     }
 }
 
@@ -2082,34 +2071,41 @@ static void printfilelist (int filetype, FILE *fp)
     int i;
     char **filep;
 
-    if (filetype == FILE_LIST_DATA) {
-	fprintf(fp, "recent data files:\n");
-	filep = datap;
-    } else if (filetype == FILE_LIST_SESSION) {
-	fprintf(fp, "recent session files:\n");
-	filep = sessionp;
-    } else if (filetype == FILE_LIST_SCRIPT) {
-	fprintf(fp, "recent script files:\n");
-	filep = scriptp;
-    } else 
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
 	return;
+    }
+
+    fprintf(fp, "%s:\n", file_sections[filetype - 1]);
 
     for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0]) 
+	if (filep[i][0]) {
 	    fprintf(fp, "%s\n", filep[i]);
-	else break;
+	} else {
+	    break;
+	}
     }
 }
 
 #endif 
+
+static void copy_sys_filename (char *targ, const char *src)
+{
+    strcpy(targ, src);
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
+    my_filename_from_utf8(targ);
+#endif
+}    
 
 /* ........................................................... */
 
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
 {
-    strcpy(trydatfile, datap[i]);
-    if (strstr(trydatfile, ".csv")) delimiter_dialog();
+    copy_sys_filename(trydatfile, datap[i]);
+    if (strstr(trydatfile, ".csv")) {
+	delimiter_dialog();
+    }
     verify_open_data(NULL, 0);
 }
 
@@ -2118,7 +2114,7 @@ static void set_data_from_filelist (gpointer data, guint i,
 static void set_session_from_filelist (gpointer data, guint i, 
 				       GtkWidget *widget)
 {
-    strcpy(tryscript, sessionp[i]);
+    copy_sys_filename(tryscript, sessionp[i]);
     verify_open_session(NULL);
 }
 
@@ -2127,7 +2123,7 @@ static void set_session_from_filelist (gpointer data, guint i,
 static void set_script_from_filelist (gpointer data, guint i, 
 				      GtkWidget *widget)
 {
-    strcpy(tryscript, scriptp[i]);
+    copy_sys_filename(tryscript, scriptp[i]);
     do_open_script();
 }
 
@@ -2137,7 +2133,7 @@ void add_files_to_menu (int filetype)
 {
     int i;
     char **filep, tmp[MAXSTR];
-    void (*callfunc)();
+    void (*callfunc)() = NULL;
     GtkItemFactoryEntry fileitem;
     GtkWidget *w;
     const gchar *msep[] = {
@@ -2153,17 +2149,18 @@ void add_files_to_menu (int filetype)
 
     fileitem.path = NULL;
 
+    filep = get_file_list(filetype);
+    if (filep == NULL) {
+	return;
+    }
+
     if (filetype == FILE_LIST_DATA) {
 	callfunc = set_data_from_filelist;
-	filep = datap;
     } else if (filetype == FILE_LIST_SESSION) {
 	callfunc = set_session_from_filelist;
-	filep = sessionp;
     } else if (filetype == FILE_LIST_SCRIPT) {
 	callfunc = set_script_from_filelist;
-	filep = scriptp;
-    }
-    else return;
+    } 
 
     /* See if there are any files to add */
     if (filep[0][0] == '\0') {
@@ -2361,11 +2358,7 @@ GtkWidget *color_patch_button (int colnum)
     } else {
 	button = gtk_button_new();
 	gtk_container_add(GTK_CONTAINER(button), image);
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(button), "image", image);
-#else
-	gtk_object_set_data(GTK_OBJECT(button), "image", image);
-#endif
     }	
 
     return button;

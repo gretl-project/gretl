@@ -243,17 +243,13 @@ static GtkWidget *build_menu (PLOTGROUP *grp)
 	    continue;
 	}
 	item = gtk_menu_item_new_with_label(_(items[i]));
-#ifndef OLD_GTK	
         g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(box_popup_activated),
 			 _(items[i]));
 	g_object_set_data(G_OBJECT(item), "group", grp);
+#ifndef OLD_GTK	
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 #else
-        gtk_signal_connect(GTK_OBJECT(item), "activate",
-                           (GtkSignalFunc) box_popup_activated,
-                           _(items[i]));
-	gtk_object_set_data(GTK_OBJECT(item), "group", grp);
         gtk_menu_append(GTK_MENU(menu), item);
 #endif
 	gtk_widget_show(item);
@@ -715,13 +711,13 @@ make_area (PLOTGROUP *grp)
     
     gtk_widget_set_sensitive(grp->area, TRUE);
 
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(grp->area), "configure_event",
 		     G_CALLBACK(configure_event), grp);
 
     g_signal_connect(G_OBJECT(grp->area), "expose_event",
 		     G_CALLBACK(expose_event), grp);
 
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(grp->area), "button_press_event", 
 		     G_CALLBACK(box_popup), grp);
 
@@ -734,12 +730,6 @@ make_area (PLOTGROUP *grp)
     gtk_widget_set_size_request (GTK_WIDGET(grp->area),
 				 grp->width, grp->height); 
 #else
-    gtk_signal_connect(GTK_OBJECT(grp->area), "configure_event",
-		       GTK_SIGNAL_FUNC(configure_event), grp);
-
-    gtk_signal_connect(GTK_OBJECT(grp->area), "expose_event",
-		       GTK_SIGNAL_FUNC(expose_event), grp);
-
     gtk_signal_connect(GTK_OBJECT(grp->window), "button_press_event", 
 		       GTK_SIGNAL_FUNC(box_popup), grp);
 

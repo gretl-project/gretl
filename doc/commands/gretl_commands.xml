@@ -106,16 +106,18 @@
 	  <flag>--nc</flag>
 	  <effect>test without a constant</effect>
 	  <flag>--c</flag>
-	  <effect>test with constant only</effect>
-	  <flag>--t</flag>
-	  <effect>test with constant and trend</effect>
-	  <flag>--tt</flag>
-	  <effect>test with constant and quadratic trend</effect>
+	  <effect>with constant only</effect>
+	  <flag>--ct</flag>
+	  <effect>with constant and trend</effect>
+	  <flag>--ctt</flag>
+	  <effect>with constant, trend and trend squared</effect>
+	  <flag>--verbose</flag>
+	  <effect>print results of test regression</effect>
 	</option>
       </options>
       <examples>
 	<example>adf 0 y</example>
-        <example>adf 2 y --nc --c --t</example>
+        <example>adf 2 y --nc --c --ct</example>
       </examples>
     </usage>
 

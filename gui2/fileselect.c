@@ -755,11 +755,7 @@ void file_selector (const char *msg, int action, gpointer data)
     }
 
 #ifdef ENABLE_NLS
-    trfname = my_locale_to_utf8(fname);
-    if (trfname != NULL) {
-	strcpy(fname, trfname);
-	g_free(trfname);
-    }
+    my_filename_to_utf8(fname);
 #endif
 
     file_selector_process_result(fname, action, data);

@@ -7,8 +7,8 @@ adf 0 r_s --ctt
 adf 1 r_s --ctt
 # unit root tests for medium-term interest rate
 adf 0 r_m --c
-adf 0 r_m --ctt
-adf 1 r_m --ctt
+adf 0 r_m --ctt --verbose
+adf 1 r_m --ctt --verbose
 # tests for long rate
 adf 0 r_l --ctt
 adf 1 r_l --ctt
@@ -17,13 +17,3 @@ adf 1 pi_c --ctt
 # inflation by GDP deflator
 adf 1 pi_y --ctt
 adf 2 pi_y --ctt
-# check figures for the medium-term rate
-genr rm1 = r_m(-1)
-genr drm = r_m - rm1
-genr drm1 = rm1 - r_m(-2)
-genr time
-genr t2 = time * time
-# run Dickey-Fuller regression (ctt, 0) manually
-ols drm 0 time t2 rm1
-# run Dickey-Fuller regression (ctt, 1) manually
-ols drm 0 time t2 rm1 drm1

@@ -872,15 +872,10 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 		gp_string_to_entry(tempwid, spec->titles[i]);
             }		
 
-#ifdef OLD_GTK		
-	    gtk_signal_connect(GTK_OBJECT(tempwid), "activate", 
-			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			       spec);
-#else
 	    g_signal_connect(G_OBJECT(tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
-#endif
+
 	    gtk_widget_show (tempwid);
 	    gpt_titles[i].widget = tempwid;
 	}
@@ -1039,15 +1034,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_box_pack_start(GTK_BOX(box), tempwid, FALSE, FALSE, 0);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      box, 1, 2, tbl_len-1, tbl_len);
-#ifdef OLD_GTK
-	    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
-			       GTK_SIGNAL_FUNC(gnuplot_color_selector), 
-			       GINT_TO_POINTER(i));
-#else
 	    g_signal_connect(G_OBJECT(tempwid), "clicked", 
 			     G_CALLBACK(gnuplot_color_selector), 
 			     GINT_TO_POINTER(i));
-#endif
 	    gtk_widget_show_all(tempwid);
 	    gtk_widget_show(box);
 	}
@@ -1107,15 +1096,9 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     tbl_len++;
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      filesavebutton, 1, 2, tbl_len-1, tbl_len);
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(filesavebutton), "clicked", 
-                        GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			spec);
-#else
     g_signal_connect (G_OBJECT(filesavebutton), "clicked", 
 		      G_CALLBACK(apply_gpt_changes), 
 		      spec);
-#endif
     gtk_widget_grab_default(filesavebutton);
     gtk_widget_show(filesavebutton);    
 }
@@ -1190,21 +1173,14 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
 	gp_string_to_entry(linetitle[i], spec->lines[i].title);
-#ifdef OLD_GTK
-	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "changed", 
-			    GTK_SIGNAL_FUNC(linetitle_callback), 
-			    spec);
-	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "activate", 
-			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			    spec);
-#else
-	g_signal_connect (G_OBJECT(linetitle[i]), "changed", 
-			  G_CALLBACK(linetitle_callback), 
-			  spec);
-	g_signal_connect (G_OBJECT(linetitle[i]), "activate", 
-			  G_CALLBACK(apply_gpt_changes), 
-			  spec);
-#endif
+
+	g_signal_connect(G_OBJECT(linetitle[i]), "changed", 
+			 G_CALLBACK(linetitle_callback), 
+			 spec);
+	g_signal_connect(G_OBJECT(linetitle[i]), "activate", 
+			 G_CALLBACK(apply_gpt_changes), 
+			 spec);
+
 	gtk_widget_show(linetitle[i]);
 
 	/* line type or style */
@@ -1388,20 +1364,15 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 	if (!plot_not_mouseable(plot)) {
 	    /* button to invoke mouse-assisted placement */
 	    button = gtk_button_new();
+	    g_object_set_data(G_OBJECT(button), "labelpos_entry",
+			      labelpos[i]);
+	    g_signal_connect(G_OBJECT(button), "clicked",
+			     G_CALLBACK(label_pos_click), spec);
 #ifdef OLD_GTK
-	    gtk_object_set_data(GTK_OBJECT(button), "labelpos_entry",
-				labelpos[i]);
-	    gtk_signal_connect (GTK_OBJECT(button), "clicked",
-				GTK_SIGNAL_FUNC(label_pos_click), spec);
-
 	    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
 						  &mask, NULL, mini_mouse_xpm);
 	    image = gtk_pixmap_new(pixmap, mask);
 #else
-	    g_object_set_data(G_OBJECT(button), "labelpos_entry",
-			      labelpos[i]);
-	    g_signal_connect (G_OBJECT(button), "clicked",
-			      G_CALLBACK(label_pos_click), spec);
 	    icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
 	    image = gtk_image_new_from_pixbuf(icon);
 	    gtk_widget_set_size_request(button, 32, 26);
@@ -1487,15 +1458,11 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, 2, tbl_len-1, tbl_len);
 	    gp_string_to_entry(tempwid, spec->titles[i]);
-#ifdef OLD_GTK
-	    gtk_signal_connect(GTK_OBJECT (tempwid), "activate", 
-			       GTK_SIGNAL_FUNC(apply_gpt_changes), 
-			       spec);
-#else
+
 	    g_signal_connect(G_OBJECT (tempwid), "activate", 
 			     G_CALLBACK(apply_gpt_changes), 
 			     spec);
-#endif
+
 	    gtk_widget_show(tempwid);
 	    gpt_titles[i].widget = tempwid;
 	}
@@ -1513,15 +1480,11 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_widget_show(tempwid);
     axis_range[axis].isauto = 
 	gtk_radio_button_new_with_label(NULL, _("auto axis range"));
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(axis_range[axis].isauto), "clicked",
-		       GTK_SIGNAL_FUNC(flip_manual_range), 
-		       GINT_TO_POINTER(axis_range[axis].ID));
-#else
+
     g_signal_connect(G_OBJECT(axis_range[axis].isauto), "clicked",
 		     G_CALLBACK(flip_manual_range), 
 		     GINT_TO_POINTER(axis_range[axis].ID));
-#endif
+
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON
 				 (axis_range[axis].isauto), TRUE);
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -1529,16 +1492,6 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 			      0, 1, tbl_len-2, tbl_len-1);
     gtk_widget_show(axis_range[axis].isauto);
 
-#ifdef OLD_GTK
-    manual = 
-	gtk_radio_button_new_with_label(gtk_radio_button_group 
-					(GTK_RADIO_BUTTON 
-					 (axis_range[axis].isauto)),
-					_("manual range:")); 
-    gtk_signal_connect(GTK_OBJECT(manual), "clicked",
-		       GTK_SIGNAL_FUNC(flip_manual_range), 
-		       GINT_TO_POINTER(axis_range[axis].ID));
-#else
     manual = 
 	gtk_radio_button_new_with_label(gtk_radio_button_get_group 
 					(GTK_RADIO_BUTTON 
@@ -1547,7 +1500,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     g_signal_connect(G_OBJECT(manual), "clicked",
 		     G_CALLBACK(flip_manual_range), 
 		     GINT_TO_POINTER(axis_range[axis].ID));
-#endif
+
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      manual, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(manual);
@@ -1563,15 +1516,11 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      axis_range[axis].min, 1, 2, tbl_len-1, tbl_len);
     gtk_entry_set_text(GTK_ENTRY(axis_range[axis].min), "");
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(axis_range[axis].min), "activate", 
-		       GTK_SIGNAL_FUNC(apply_gpt_changes), 
-		       spec);
-#else
+
     g_signal_connect(G_OBJECT(axis_range[axis].min), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
 		     spec);
-#endif
+
     gtk_widget_show(axis_range[axis].min);
 
     /* axis range max. entry */
@@ -1585,15 +1534,11 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      axis_range[axis].max, 1, 2, tbl_len-1, tbl_len);
     gtk_entry_set_text(GTK_ENTRY(axis_range[axis].max), "");
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(axis_range[axis].max), "activate", 
-		       GTK_SIGNAL_FUNC(apply_gpt_changes), 
-		       spec);
-#else
+
     g_signal_connect(G_OBJECT(axis_range[axis].max), "activate", 
 		     G_CALLBACK(apply_gpt_changes), 
 		     spec);
-#endif
+
     gtk_widget_show(axis_range[axis].max);
    
     if (strcmp(spec->range[axis][0], "*") == 0)
@@ -1642,15 +1587,9 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_box_set_homogeneous(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW(gpt_control), GTK_WIN_POS_MOUSE);
 
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (gpt_control), "destroy",
-                        GTK_SIGNAL_FUNC (close_plot_controller), 
-			(gpointer *) spec);
-#else
-    g_signal_connect (G_OBJECT (gpt_control), "destroy",
-		      G_CALLBACK (close_plot_controller), 
-		      (gpointer *) spec);
-#endif
+    g_signal_connect(G_OBJECT(gpt_control), "destroy",
+		     G_CALLBACK(close_plot_controller), 
+		     (gpointer *) spec);
    
     notebook = gtk_notebook_new();
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->vbox), 
@@ -1674,13 +1613,8 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(tempwid), "clicked", 
-                        GTK_SIGNAL_FUNC(apply_gpt_changes), spec);
-#else
     g_signal_connect (G_OBJECT(tempwid), "clicked", 
 		      G_CALLBACK(apply_gpt_changes), spec);
-#endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
@@ -1688,17 +1622,10 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     tempwid = standard_button(GTK_STOCK_OK);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT(tempwid), "clicked", 
-                        GTK_SIGNAL_FUNC(apply_gpt_changes), spec);
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-                       GTK_SIGNAL_FUNC(delete_widget), gpt_control);
-#else
-    g_signal_connect (G_OBJECT(tempwid), "clicked", 
-		      G_CALLBACK(apply_gpt_changes), spec);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(apply_gpt_changes), spec);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(delete_widget), gpt_control);
-#endif
     gtk_widget_show (tempwid);
 
     /* Close button (do not apply changes */
@@ -1706,28 +1633,17 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-                       GTK_SIGNAL_FUNC(delete_widget), gpt_control);
-#else
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(delete_widget), gpt_control);
-#endif
     gtk_widget_show(tempwid);
 
     tempwid = standard_button(GTK_STOCK_HELP);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
-#ifdef OLD_GTK
-    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			GTK_SIGNAL_FUNC(context_help), 
-			GINT_TO_POINTER(GR_PLOT));
-#else
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK(context_help), 
-		      GINT_TO_POINTER(GR_PLOT));
-#endif
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(context_help), 
+		     GINT_TO_POINTER(GR_PLOT));
     gtk_widget_show (tempwid);
 
     set_keyspec_sensitivity (spec);
@@ -2947,17 +2863,10 @@ static void attach_color_popup (GtkWidget *w, png_plot_t *plot)
 
     for (i=0; i<2; i++) {
 	item = gtk_menu_item_new_with_label(_(color_items[i]));
-#ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(item), "activate",
-			   (GtkSignalFunc) color_popup_activated,
-			   _(color_items[i]));
-	gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
-#else
 	g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(color_popup_activated),
 			 _(color_items[i]));
 	g_object_set_data(G_OBJECT(item), "plot", plot);
-#endif
 	gtk_widget_show(item);
 	gtk_menu_shell_append(GTK_MENU_SHELL(cpopup), item);
     } 
@@ -3055,28 +2964,16 @@ static void build_plot_menu (png_plot_t *plot)
 	    attach_color_popup(item, plot);
 	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
 	} else {
-#ifdef OLD_GTK
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       GTK_SIGNAL_FUNC(plot_popup_activated),
-			       _(plot_items[i]));
-#else
 	    g_signal_connect(G_OBJECT(item), "activate",
 			     G_CALLBACK(plot_popup_activated),
 			     _(plot_items[i]));
-#endif
 	}
         i++;
     }
 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(plot->popup), "destroy",
-		       GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
-		       &plot->popup);
-#else
     g_signal_connect(G_OBJECT(plot->popup), "destroy",
 		     G_CALLBACK(gtk_widget_destroyed), 
 		     &plot->popup);
-#endif
 }
 
 static int redisplay_edited_png (png_plot_t *plot)
@@ -3836,17 +3733,10 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     vbox = gtk_vbox_new(FALSE, 2);
     gtk_container_add(GTK_CONTAINER(plot->shell), vbox);
 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(plot->shell), "destroy",
-		       GTK_SIGNAL_FUNC(destroy_png_plot), plot);
-    gtk_signal_connect(GTK_OBJECT(plot->shell), "key_press_event", 
-                       GTK_SIGNAL_FUNC(plot_key_handler), plot);
-#else
     g_signal_connect(G_OBJECT(plot->shell), "destroy",
 		     G_CALLBACK(destroy_png_plot), plot);
     g_signal_connect(G_OBJECT(plot->shell), "key_press_event", 
 		     G_CALLBACK(plot_key_handler), plot);
-#endif
 
     /* box to hold canvas */
     canvas_hbox = gtk_hbox_new(FALSE, 1);
@@ -3881,18 +3771,10 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     GTK_WIDGET_SET_FLAGS (plot->canvas, GTK_CAN_FOCUS);
 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_press_event", 
-                       GTK_SIGNAL_FUNC(plot_button_press), plot);
-
-    gtk_signal_connect(GTK_OBJECT(plot->canvas), "button_release_event", 
-                       GTK_SIGNAL_FUNC(plot_button_release), plot);
-#else
     g_signal_connect(G_OBJECT(plot->canvas), "button_press_event", 
 		     G_CALLBACK(plot_button_press), plot);
     g_signal_connect(G_OBJECT(plot->canvas), "button_release_event", 
 		     G_CALLBACK(plot_button_release), plot);
-#endif
 
     /* create the contents of the status area */
     if (plot_has_xrange) {
@@ -3921,13 +3803,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 			plot->cid, _(" Click on graph for pop-up menu"));
     
     if (plot_has_xrange) {
-#ifdef OLD_GTK
-	gtk_signal_connect (GTK_OBJECT (plot->canvas), "motion_notify_event",
-			    GTK_SIGNAL_FUNC(motion_notify_event), plot);
-#else
-	g_signal_connect (G_OBJECT (plot->canvas), "motion_notify_event",
-			  G_CALLBACK(motion_notify_event), plot);
-#endif
+	g_signal_connect(G_OBJECT(plot->canvas), "motion_notify_event",
+			 G_CALLBACK(motion_notify_event), plot);
     }
 
     /* pack the widgets */
@@ -3971,13 +3848,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     plot->pixmap = gdk_pixmap_new(plot->shell->window, 
 				  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT, 
 				  -1);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
-		       GTK_SIGNAL_FUNC(plot_expose), plot->pixmap);
-#else
     g_signal_connect(G_OBJECT(plot->canvas), "expose_event",
 		     G_CALLBACK(plot_expose), plot->pixmap);
-#endif
 
     render_pngfile(plot, PNG_START);
 

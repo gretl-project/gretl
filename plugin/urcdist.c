@@ -1,11 +1,15 @@
-/* Driver plugin for James MacKinnons's "urcval" function, to calculate
+/* Driver for James MacKinnons's "urcval" function, to calculate
    p-values for unit root tests.
 
    See James G. MacKinnon, "Numerical Distribution Functions for Unit
    Root and Cointegration Tests", Journal of Applied Econometrics,
-   Vol. 11, No. 6, 1996, pp. 601-618.
+   Vol. 11, No. 6, 1996, pp. 601-618, and also 
 
-   The calculation code here is Copyright (c) James G. MacKinnon.
+   http://qed.econ.queensu.ca/pub/faculty/mackinnon/numdist/
+
+   The calculation code here is Copyright (c) James G. MacKinnon, 
+   1996 (corrected 2003-5-5).
+
    The "wrapper" is written by Allin Cottrell, 2004.
 */
 
@@ -23,17 +27,11 @@ enum urc_errs {
 
 #define MAXVARS 8
 #define URCLEN 221
-
-/* The following code translated from James MacKinnon's FORTRAN file
-   urcrouts.f, with the help of f2c (version 20030306).
-*/
-
-/* private FORTRAN-derived functions */
+#define BIGLEN 884
 
 static double fpval (double *beta, double *cnorm, double *wght, 
-		     double *probs, double stat, 
-		     double precrt, int nobs, int model, 
-		     int nreg, int np);
+		     double *probs, double stat, int nobs, 
+		     int model, int nreg);
 
 static double eval (double *beta, int model, int nreg, int nobs);
 
@@ -42,7 +40,7 @@ static int gls (double *xmat, double *yvect, double *omega,
 		double *resid, double *ssr, double *ssrt, int nobs, 
 		int nvar, int nomax, int nvmax, int ivrt);
 
-static int cholx (double *amat, int m, int n, int *kxx);
+static int cholx (double *a, int m, int n);
 
 static double ddnor (double ystar);
 
@@ -59,66 +57,47 @@ static char *read_double_and_advance (double *val, char *s)
     return s;
 }
 
-/* Copyright (c) James G. MacKinnon, 1996 (corrected 2003-5-5) */
-
-/* urcrouts.f: This is a set of subroutines to estimate critical values
-   and P values for unit root and cointegration tests. It is written in
-   Fortran 77. Simply call urcval, specifying the first seven arguments.
-   The result comes back in the last argument.
-
-   These routines and the associated data files may be used freely for
-   non-commercial purposes, provided that proper attribution is made.
-   Please cite the paper
-
-   James G. MacKinnon, "Numerical distribution functions for unit root
-   and cointegration tests," Journal of Applied Econometrics, 11,
-   1996, 601-618.
-
-   The routines and data files may not be incorporated into any book
-   or computer program without the express, written consent of the author.
-
-   The routines must have access to the files probs.tab and urc-#.tab
-   for # = 1, 2, 3 ..., 12.
+/* 
+   niv = # of integrated variables
+   itv = appropriate ur_code for nc, c, ct, ctt models
+   nobs = sample size (0 for asymptotic)
+   arg = test statistic
+   val = P-value (returned by routine)
 */
 
-int urcval (int niv, int itv, int nobs, double arg, 
-	    double *val, const char *path)
+static int urcval (int niv, int itv, int nobs, double arg, 
+		   double *val, const char *path)
 {
     gzFile fz;
     char line[80], code[8];
 
     int urc_ret = URC_OK;
 
-    int i, j, iskip;
-    int nvar;
+    int i, j, iskip, nvar;
     char datfile[FILENAME_MAX];
 
     struct {
-	double probs[URCLEN], cnorm[URCLEN], beta[884], wght[URCLEN];
+	double probs[URCLEN];
+	double cnorm[URCLEN];
+	double beta[BIGLEN];
+	double wght[URCLEN];
 	int nz, nreg, model, minsize;
     } urc;
 
+    /* byte offsets into data */
     int urc_offsets[] = {
-	39, 
-	60685,
-	121331,
-	178662,
-	239308,
-	303269,
-	360600,
-	427876,
-	481892
+	39,     /* urc-1 */
+	60685,  /* urc-2 */
+	121331, /* urc-3 */
+	178662, /* urc-4 */
+	239308, /* urc-5 */
+	303269, /* urc-6 */
+	360600, /* urc-7 */
+	427876, /* urc-8 */
+	481892  /* probs */
     };
 
-    /* 
-       niv = # of integrated variables
-       itv = appropriate ur_code for nc, c, ct, ctt models
-       nobs = sample size (0 for asymptotic)
-       arg = test statistic
-       val = P-value (returned by routine)
-    */
-
-    /* Check that parameters are valid. */
+    /* Check that parameters are valid */
     if (niv < 1 || niv > MAXVARS) {
 	return URC_BAD_PARAM;
     }
@@ -177,7 +156,7 @@ int urcval (int niv, int itv, int nobs, double arg,
     }
 
     *val = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
-		 arg, 2.0, nobs, urc.model, urc.nreg, 9);
+		 arg, nobs, urc.model, urc.nreg);
 
     gzclose(fz);
 
@@ -185,48 +164,39 @@ int urcval (int niv, int itv, int nobs, double arg,
 }
 
 static double fpval (double *beta, double *cnorm, double *wght, 
-		     double *probs, double stat, 
-		     double precrt, int nobs, int model, 
-		     int nreg, int np)
+		     double *prob, double stat, int nobs, 
+		     int model, int nreg)
 {
-    /* System generated locals */
-    double d1, d2;
-
-    /* Local variables */
-    int imin, i, j, ic, jc;
-    double sd4;
-    int np1, nph, nptop;
+    double d1, precrt = 2.0;
+    int i, j, ic, jc, imin = 0;
+    int np1, nph, nptop, np = 9;
     double bot, top, ssr, diff;
-    static double fits[20], xmat[80], xomx[16],	
-	ssrt, gamma[4], diffm, omega[400],
-	resid[20], crfit;
-    static double crits[URCLEN], yvect[20];
-    static double ttest;
-
+    double sd4, ttest, crfit;
+    double ssrt, diffm = 1000.0; 
+    double yvec[20], fits[20], resid[20];
+    double xmat[80], xomx[16], gamma[4], omega[400];
+    double crits[URCLEN];
     double pval = 0.0;
 
     /* Copyright (c) James G. MacKinnon, 1995.
        Routine to find P value for any specified test statistic. 
     */
 
-    /* first, compute all the estimated critical values */
-
     /* Parameter adjustments */
-    --probs;
+    --prob;
     --wght;
     --cnorm;
     beta -= 5;
 
-    /* Function Body */
+    /* first, compute all the estimated critical values */
+
     for (i = 1; i <= URCLEN; ++i) {
 	crits[i - 1] = eval(&beta[(i << 2) + 1], model, nreg, nobs);
     }
 
     /* find critical value closest to test statistic */
-    diffm = 1.0e3;
-    imin = 0;
-    for (i = 1; i <= URCLEN; ++i) {
-	diff = (d1 = stat - crits[i - 1], abs(d1));
+    for (i = 0; i < URCLEN; i++) {
+	diff = fabs(stat - crits[i]);
 	if (diff < diffm) {
 	    diffm = diff;
 	    imin = i;
@@ -240,7 +210,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	/* imin is not too close to the end. Use np points around stat. */
 	for (i = 1; i <= np; ++i) {
 	    ic = imin - nph - 1 + i;
-	    yvect[i - 1] = cnorm[ic];
+	    yvec[i - 1] = cnorm[ic];
 	    xmat[i - 1] = 1.;
 	    xmat[i + 19] = crits[ic - 1];
 	    xmat[i + 39] = xmat[i + 19] * crits[ic - 1];
@@ -252,10 +222,9 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    for (j = i; j <= np; ++j) {
 		ic = imin - nph - 1 + i;
 		jc = imin - nph - 1 + j;
-		top = probs[ic] * (1. - probs[jc]);
-		bot = probs[jc] * (1. - probs[ic]);
-		omega[i + j * 20 - 21] = 
-		    wght[ic] * wght[jc] * sqrt(top / bot);
+		top = prob[ic] * (1. - prob[jc]);
+		bot = prob[jc] * (1. - prob[ic]);
+		omega[i + j * 20 - 21] = wght[ic] * wght[jc] * sqrt(top / bot);
 	    }
 	}
 	for (i = 1; i <= np; ++i) {
@@ -264,24 +233,20 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	}
 
-	gls(xmat, yvect, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np, 
+	gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np, 
 	    4, 20, 4, 0);
 
 	/* check to see if gamma(4) is needed */
 	sd4 = sqrt(ssrt / (np - 4) * xomx[15]);
-	ttest = abs(gamma[3]) / sd4;
+	ttest = fabs(gamma[3]) / sd4;
 	if (ttest > precrt) {
-	    /* Computing 2nd power */
 	    d1 = stat;
-	    /* Computing 3rd power */
-	    d2 = stat;
-	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1) + 
-		gamma[3] * (d2 * (d2 * d2));
+	    crfit = gamma[0] + gamma[1] * d1 + gamma[2] * (d1 * d1) + 
+		gamma[3] * (d1 * d1 * d1);
 	    return ddnor(crfit);
 	} else {
-	    gls(xmat, yvect, omega, gamma, xomx, fits, resid, &ssr, &ssrt, 
+	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, 
 		np, 3, 20, 4, 1);
-	    /* Computing 2nd power */
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
 	    return ddnor(crfit);
@@ -295,7 +260,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 		np1 = 5;
 	    }
 	    for (i = 1; i <= np1; ++i) {
-		yvect[i - 1] = cnorm[i];
+		yvec[i - 1] = cnorm[i];
 		xmat[i - 1] = 1.;
 		xmat[i + 19] = crits[i - 1];
 		xmat[i + 39] = xmat[i + 19] * crits[i - 1];
@@ -308,7 +273,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	    for (i = 1; i <= np1; ++i) {
 		ic = (URCLEN + 1) - i;
-		yvect[i - 1] = cnorm[ic];
+		yvec[i - 1] = cnorm[ic];
 		xmat[i - 1] = 1.;
 		xmat[i + 19] = crits[ic - 1];
 		xmat[i + 39] = xmat[i + 19] * crits[ic - 1];
@@ -320,8 +285,8 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	for (i = 1; i <= np1; ++i) {
 	    for (j = i; j <= np1; ++j) {
 		if (imin < np) {
-		    top = probs[i] * (1. - probs[j]);
-		    bot = probs[j] * (1. - probs[i]);
+		    top = prob[i] * (1. - prob[j]);
+		    bot = prob[j] * (1. - prob[i]);
 		    omega[i + j * 20 - 21] = wght[i] * wght[j] * sqrt(top / bot);
 		} else {
 		    /* This is to avoid numerical singularities at the upper end */
@@ -338,35 +303,31 @@ static double fpval (double *beta, double *cnorm, double *wght,
 	    }
 	}
 
-	gls(xmat, yvect, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np1, 
+	gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt, np1, 
 	    4, 20, 4, 0);
 
 	/* check to see if gamma(4) is needed */
 	sd4 = sqrt(ssrt / (np1 - 4) * xomx[15]);
-	ttest = abs(gamma[3]) / sd4;
+	ttest = fabs(gamma[3]) / sd4;
 	if (ttest > precrt) {
-	    /* Computing 2nd power */
 	    d1 = stat;
-	    /* Computing 3rd power */
-	    d2 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1) + 
-		gamma[3] * (d2 * (d2 * d2));
+		gamma[3] * (d1 * d1 * d1);
 	    pval = ddnor(crfit);
 	} else {
-	    gls(xmat, yvect, omega, gamma, xomx, fits, resid, &ssr, &ssrt,
+	    gls(xmat, yvec, omega, gamma, xomx, fits, resid, &ssr, &ssrt,
 		np1, 3, 20, 4, 1);
-	    /* Computing 2nd power */
 	    d1 = stat;
 	    crfit = gamma[0] + gamma[1] * stat + gamma[2] * (d1 * d1);
 	    pval = ddnor(crfit);
 	}
 
 	/* check that nothing crazy has happened at the ends */
-	if (imin == 1 && pval > probs[1]) {
-	    pval = probs[1];
+	if (imin == 1 && pval > prob[1]) {
+	    pval = prob[1];
 	}
-	if (imin == URCLEN && pval < probs[URCLEN]) {
-	    pval = probs[URCLEN];
+	if (imin == URCLEN && pval < prob[URCLEN]) {
+	    pval = prob[URCLEN];
 	}
 	return pval;
     }
@@ -376,9 +337,7 @@ static double fpval (double *beta, double *cnorm, double *wght,
 
 static double eval (double *beta, int model, int nreg, int nobs)
 {
-    double d1, d2;
-    double onobs;
-    double cval = 0.0;
+    double d, cval = 0.0;
 
     /* Copyright (c) James G. MacKinnon, 1995. Routine to evaluate
        response surface for specified betas and sample size. 
@@ -391,31 +350,19 @@ static double eval (double *beta, int model, int nreg, int nobs)
     if (nobs == 0) {
 	cval = beta[1];
     } else if (model == 2) {
-	onobs = 1. / nobs;
-	/* Computing 2nd power */
-	d1 = onobs;
-	cval = beta[1] + beta[2] * onobs + beta[3] * (d1 * d1);
+	d = 1. / nobs;
+	cval = beta[1] + beta[2] * d + beta[3] * (d * d);
     } else if (model == 3) {
-	onobs = 1. / nobs;
-	/* Computing 2nd power */
-	d1 = onobs;
-	/* Computing 3rd power */
-	d2 = onobs;
-	cval = beta[1] + beta[2] * onobs + beta[3] * (d1 * d1) 
-	    + beta[4] * (d2 * (d2 * d2));
+	d = 1. / nobs;
+	cval = beta[1] + beta[2] * d + beta[3] * (d * d) 
+	    + beta[4] * (d * d * d);
     } else if (model == 4) {
-	onobs = 1. / (nobs - nreg);
-	/* Computing 2nd power */
-	d1 = onobs;
-	cval = beta[1] + beta[2] * onobs + beta[3] * (d1 * d1);
+	d = 1. / (nobs - nreg);
+	cval = beta[1] + beta[2] * d + beta[3] * (d * d);
     } else if (model == 5) {
-	onobs = 1. / (nobs - nreg);
-	/* Computing 2nd power */
-	d1 = onobs;
-	/* Computing 3rd power */
-	d2 = onobs;
-	cval = beta[1] + beta[2] * onobs + 
-	    beta[3] * (d1 * d1) + beta[4] * (d2 * (d2 * d2));
+	d = 1. / (nobs - nreg);
+	cval = beta[1] + beta[2] * d + beta[3] * (d * d) 
+	    + beta[4] * (d * d * d);
     } else {
 	fputs("*** Warning! Error in input file. ***", stderr);
     }
@@ -423,17 +370,16 @@ static double eval (double *beta, int model, int nreg, int nobs)
     return cval;
 }
 
-static int gls (double *xmat, double *yvect, double *omega, 
+static int gls (double *xmat, double *yvec, double *omega, 
 		double *beta, double *xomx, double *fits, 
 		double *resid, double *ssr, double *ssrt, int nobs, 
 		int nvar, int nomax, int nvmax, int ivrt)
 {
-    double d1;
     int omega_offset = 1 + nomax;
     int xomx_offset = 1 + nvmax;
     int xmat_offset = 1 + nomax;
-    int i, j, k, l, kxx;
-    static double xomy[50];
+    int i, j, k, l;
+    double xomy[50];
 
     /* Copyright (c) James G. MacKinnon, 1995.  Subroutine to do GLS
        estimation the obvious way.  Use only when sample size is small
@@ -445,32 +391,30 @@ static int gls (double *xmat, double *yvect, double *omega,
        gets replaced. */
 
     /* Parameter adjustments */
+    omega -= omega_offset;
+    xomx -= xomx_offset;
+    xmat -= xmat_offset;
     --resid;
     --fits;
-    omega -= omega_offset;
-    --yvect;
-    xomx -= xomx_offset;
+    --yvec;
     --beta;
-    xmat -= xmat_offset;
 
     if (ivrt == 0) {
-	cholx(&omega[omega_offset], nomax, nobs, &kxx);
+	cholx(&omega[omega_offset], nomax, nobs);
     }
 
     /* form xomx matrix and xomy vector */
-
     for (j = 1; j <= nvar; ++j) {
 	xomy[j - 1] = 0.;
 	for (l = j; l <= nvar; ++l) {
 	    xomx[j + l * nvmax] = 0.;
 	}
     }
-
     for (i = 1; i <= nobs; ++i) {
 	for (k = 1; k <= nobs; ++k) {
 	    for (j = 1; j <= nvar; ++j) {
 		xomy[j - 1] += xmat[i + j * nomax] * 
-		    omega[k + i * nomax] * yvect[k];
+		    omega[k + i * nomax] * yvec[k];
 		for (l = j; l <= nvar; ++l) {
 		    xomx[j + l * nvmax] += xmat[i + j * nomax] * 
 			omega[k + i * nomax] * 
@@ -487,9 +431,9 @@ static int gls (double *xmat, double *yvect, double *omega,
     }
 
     /* invert xomx matrix */
-    cholx(&xomx[xomx_offset], nvmax, nvar, &kxx);
+    cholx(&xomx[xomx_offset], nvmax, nvar);
 
-    /*  now form estimates of beta. */
+    /* form estimates of beta */
     for (i = 1; i <= nvar; ++i) {
 	beta[i] = 0.;
 	for (j = 1; j <= nvar; ++j) {
@@ -504,10 +448,8 @@ static int gls (double *xmat, double *yvect, double *omega,
 	for (j = 1; j <= nvar; ++j) {
 	    fits[i] += xmat[i + j * nomax] * beta[j];
 	}
-	resid[i] = yvect[i] - fits[i];
-	/* Computing 2nd power */
-	d1 = resid[i];
-	*ssr += d1 * d1;
+	resid[i] = yvec[i] - fits[i];
+	*ssr += resid[i] * resid[i];
     }
 
     /* find ssr from transformed regression */
@@ -521,49 +463,46 @@ static int gls (double *xmat, double *yvect, double *omega,
     return 0;
 }
 
-static int cholx (double *amat, int m, int n, int *kxx)
+static int cholx (double *a, int m, int n)
 {
-    int i, j, k;
-    double t;
-    int kl;
-    double ooa = 0.0;
+    int i, j, k, kl;
+    double t, ooa = 0.0;
+    int err = 0;
 
     /* Copyright (c) James G. MacKinnon, 1993.  This routine uses the
        cholesky decomposition to invert a real symmetric matrix.
     */
 
     /* Parameter adjustment */
-    amat -= 1 + m;
+    a -= 1 + m;
 
-    *kxx = 0;
     for (i = 1; i <= n; ++i) {
 	kl = i - 1;
 	for (j = i; j <= n; ++j) {
 	    if (i > 1) {
 		for (k = 1; k <= kl; ++k) {
-		    amat[i + j * m] -= 
-			amat[k + i * m] * amat[k + j * m];
+		    a[i + j * m] -= a[k + i * m] * a[k + j * m];
 		}
 	    } else {
-		if (amat[i + i * m] <= 0.0) {
-		    *kxx = i;
+		if (a[i + i * m] <= 0.0) {
+		    err = i;
 		    goto L20;
 		}
 	    }
 	    if (i == j) {
-		amat[i + i * m] = sqrt(amat[i + i * m]);
+		a[i + i * m] = sqrt(a[i + i * m]);
 	    } else {
 		if (j == i + 1) {
-		    ooa = 1. / amat[i + i * m];
+		    ooa = 1. / a[i + i * m];
 		}
-		amat[i + j * m] *= ooa;
+		a[i + j * m] *= ooa;
 	    }
 	}
     }
 
     for (i = 1; i <= n; ++i) {
 	for (j = i; j <= n; ++j) {
-	    ooa = 1. / amat[j + j * m];
+	    ooa = 1. / a[j + j * m];
 	    if (i >= j) {
 		t = 1.;
 		goto L12;
@@ -571,10 +510,10 @@ static int cholx (double *amat, int m, int n, int *kxx)
 	    kl = j - 1;
 	    t = 0.;
 	    for (k = i; k <= kl; ++k) {
-		t -= amat[i + k * m] * amat[k + j * m];
+		t -= a[i + k * m] * a[k + j * m];
 	    }
 L12:
-	    amat[i + j * m] = t * ooa;
+	    a[i + j * m] = t * ooa;
 	}
     }
 
@@ -582,15 +521,15 @@ L12:
 	for (j = i; j <= n; ++j) {
 	    t = 0.;
 	    for (k = j; k <= n; ++k) {
-		t += amat[i + k * m] * amat[j + k * m];
+		t += a[i + k * m] * a[j + k * m];
 	    }
-	    amat[i + j * m] = t;
-	    amat[j + i * m] = t;
+	    a[i + j * m] = t;
+	    a[j + i * m] = t;
 	}
     }
 
 L20:
-    return 0;
+    return err;
 }
 
 static double ddnor (double ystar)
@@ -648,10 +587,11 @@ static double ddnor (double ystar)
 		    15.7449261107098347253 
     };
 
-    double x, y, x2, x3, x4, x5, x6, x7, x8, xm2, xm4, xm6, xm8;
+    double x, x2, x3, x4, x5, x6, x7, x8, xm2, xm4, xm6, xm8;
     double erf, bot, xm10;
     double top, erfc, crap;
-    int isw;
+    double y = ystar;
+    int isw = 1;
 
     /* Copyright (c) James G. MacKinnon, 1993.  Routine to evaluate
        cumulative normal distribution Written originally in late
@@ -664,15 +604,14 @@ static double ddnor (double ystar)
        mdnor.
     */
 
-    isw = 1;
-    y = ystar;
     if (ystar < -16.) {
 	y = -16.;
-    }
-    if (ystar > 16.) {
+    } else if (ystar > 16.) {
 	y = 16.;
     }
+
     x = -y * root2;
+
     if (x > 0.) {
 	goto L1;
     }

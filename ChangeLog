@@ -1,4 +1,7 @@
 version 1.3.0
+- revamp the Dickey-Fuller test functionality, with more
+  options, clearer presentation (I hope), and p-values
+  using James MacKinnon's code (JAE, 1996)
 - fix panel data bugs: observation strings were broken for
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
@@ -31,7 +34,7 @@ version 1.3.0
   plotting colors (required a modification to gnuplot)
 - add option to save graphs in EMF format
 - various minor gui fixes and enhancements
-- update Windows version to gtk 2.4.9
+- update Windows version to gtk 2.4.10
 - start adding user-defined functions
 - add mechanism for customizing gretl's tex preamble
 

@@ -688,6 +688,69 @@ void do_coint2 (GtkWidget *widget, gpointer p)
     real_do_coint(p, COINT2);
 }
 
+void do_adf (gpointer data, guint u, GtkWidget *widget)
+{
+    PRN *prn;
+    const char *adf_opts[] = {
+	N_("test without constant"),
+	N_("with constant"),
+	N_("with constant and trend"),
+	N_("with constant, trend and trend squared")
+    };
+    const char *title = N_("gretl: ADF test");
+    const char *spintext = N_("Lag order for ADF test:");
+    int active[] = { 0, 1, 1, 1 };
+    int order = 1;
+    int omax, err;
+
+    if (datainfo->pd == 1) {
+	omax = 4;
+    } else {
+	omax = 2 * datainfo->pd;
+    }
+
+    if (omax > datainfo->n - 6) {
+	omax = datainfo->n - 6;
+	if (omax < 0) {
+	    return;
+	}
+    }
+    
+    err = checks_dialog(_(title), 
+			adf_opts, 4,
+			active,
+			&order, spintext,
+			omax, ADF);
+
+    if (err < 0) return;
+
+    if (active[0] == 0 &&
+	active[1] == 0 &&
+	active[2] == 0 &&
+	active[3] == 0) {
+	return;
+    }
+
+    sprintf(line, "adf %d %s", order, datainfo->varname[mdata->active_var]);
+    if (active[0]) strcat(line, " --nc");
+    if (active[1]) strcat(line, " --c");
+    if (active[2]) strcat(line, " --ct");
+    if (active[3]) strcat(line, " --ctt");
+
+    if (verify_and_record_command(line) || bufopen(&prn)) {
+	return;
+    }
+
+    err = adf_test(order, cmd.list[1], &Z, datainfo, cmd.opt, prn);
+
+    if (err) {
+	gui_errmsg(err);
+	gretl_print_destroy(prn);
+    } else {
+	view_buffer(prn, 78, 350, title, ADF, NULL);
+    }    
+}
+
 /* ........................................................... */
 
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
@@ -709,16 +772,6 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 
     /* set up the command */
     switch (action) {
-    case ADF:
-	sprintf(line, "adf %s %s", buf, datainfo->varname[mvar]);
-	strcat(title, _("adf test"));
-	vsize = 350;
-	break;
-    case COINT:
-	sprintf(line, "coint %s", buf);
-	strcat(title, _("cointegration test"));
-	vsize = 400;
-	break;
     case SPEARMAN:
 	sprintf(line, "spearman -o %s", buf);
 	strcat(title, _("rank correlation"));
@@ -757,22 +810,6 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 
     /* execute the command */
     switch (action) {
-    case ADF:
-    case COINT:
-	order = atoi(cmd.param);
-	if (!order && strcmp(cmd.param, "0")) {
-	    errbox((action == ADF)? 
-		   _("Couldn't read ADF order") :
-		   _("Couldn't read cointegration order"));
-	    gretl_print_destroy(prn);
-	    return;
-	}
-	if (action == ADF) {
-	    err = adf_test(order, cmd.list[1], &Z, datainfo, 0L, prn);
-	} else {
-	    err = coint(order, cmd.list, &Z, datainfo, prn);
-	}
-	break;
     case SPEARMAN:
 	err = spearman(cmd.list, Z, datainfo, 1, prn);
 	break;

@@ -64,6 +64,11 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 int radio_dialog (const char *title, const char **opts, 
 		  int nopts, int deflt);
 
+int checks_dialog (const char *title, const char **opts, 
+		   int nopts, int *active, int *spinval,
+		   const char *spintext, int spinmax,
+		   int helpcode);
+
 #ifdef OLD_GTK
 GtkWidget *standard_button (int code);
 #endif
