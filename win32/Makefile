@@ -37,6 +37,7 @@ vpath %.c $(topsrc)/gui2
 vpath %.c $(extradir)
 vpath %.c $(topsrc)/plugin
 vpath %.c $(topsrc)/plugin/libole2
+vpath %.c $(topsrc)/tests
 vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui2:$(extradir):$(topsrc)/plugin:.
 vpath %.h $(topsrc)/cephes
 
@@ -45,6 +46,8 @@ vpath %.h $(topsrc)/cephes
 CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
+CHECKER = nisttest.exe
+
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
 	plugins/excel_import-2.dll plugins/des_import.dll plugins/mp_ols.dll \
@@ -70,6 +73,9 @@ LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
 CLIOBJ = $(CLISRC:.c=.o)
+
+CHECKSRC = nistcheck.c
+CHECKOBJ = $(CHECKSRC:.c=.o)
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
@@ -105,9 +111,14 @@ $(CLIPROG): $(CLIOBJ)
 $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES) 
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB)
 
+$(CHECKER):
+	$(CC) -s -o $@ $^ $(LIBS) $(ZLIB_LIB)
+
 $(CLIOBJ): $(CLI_SRC) 
 
 $(GUIOBJ): $(GUISRC) $(GUIHDR)
+
+$(CHECKOBJ): $(CHECKSRC)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
