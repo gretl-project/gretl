@@ -20,7 +20,12 @@
 /* boxplots for gretl */
 
 #include "gretl.h"
-#include <gtkextra/gtkextra.h>
+
+#ifndef G_OS_WIN32
+# include <gtkextra/gtkextra.h>
+#else
+# include "gtkextra.h"
+#endif
 
 typedef struct {
     double median;
