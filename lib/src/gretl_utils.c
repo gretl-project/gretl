@@ -930,6 +930,47 @@ struct gretl_opt gretl_opts[] = {
     { 0,        0L,    NULL }
 };
 
+#if 0
+unsigned long get_opts_for_gretl_command (int ci)
+{
+    unsigned long opts;
+    int i = 0;
+
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (gretl_opts[i].ci == ci) opts |= gretl_opts[i].o;
+    }
+
+    return ret;
+}
+#endif
+
+const char **get_opts_for_command (int ci)
+{
+    int i, j, nopt = 0;
+    const char **ret = NULL;
+
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (gretl_opts[i].ci == ci) nopt++;
+    }
+
+    if (nopt == 0) return NULL;
+
+    ret = malloc((nopt + 1) * sizeof *ret);
+    if (ret == NULL) return NULL;
+
+    j = 0;
+    for (i=0; gretl_opts[i].ci != 0; i++) {
+	if (gretl_opts[i].ci == ci) {
+	    ret[j++] = gretl_opts[i].longopt;
+	}
+    }
+
+    ret[j] = NULL;
+
+    return ret;
+}
+
+
 struct flag_match flag_matches[] = {
     { OPT_A, 'a' },
     { OPT_B, 'b' },

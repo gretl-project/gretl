@@ -1,6 +1,7 @@
 version 1.2.3
-- Add Tobit model command, with a new plugin (thanks to
-  Jack Lucchetti)
+	
+- Add Tobit model command, with a new plugin (thanks to Jack
+  Lucchetti)
 - Add color selector for the histogram in frequency plots
 - Fix bug: genr was broken for some special cases of
   repeated function calls
@@ -20,12 +21,15 @@ version 1.2.3
   graphs, these objects appear in the Session icon
   window, and they can be displayed and freed using
   objectname.show, objectname.free
-- Make the model table available via script and gui
-  console (new command "modeltab")
+- Make the model table available via script and gui console 
+  (new command "modeltab")
 - Add an OLS option, "-r" or "--robust", which calls for
   the use of White's robust standard errors (HC0) in the
   case of cross-sectional data, or HAC in the case of time
-  series data
+  series data.  Details can be configured using the new
+  "set" command.
+- New command, "set", for configuring some program
+  parameters via script or console
 - Fix bug: latent problems when adding an observation to
   the working dataset
 - Fix bug: set the frequency and starting observation could

@@ -106,6 +106,8 @@ int catchflags (char *line, unsigned long *oflag);
 
 const char *print_flags (unsigned long flags, int ci);
 
+const char **get_opts_for_command (int ci);
+
 int copylist (int **target, const int *src);
 
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo);
