@@ -4046,25 +4046,48 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
 
 /* ........................................................... */
 
-void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
+void view_latex (gpointer data, guint code, GtkWidget *widget)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
-    int dot, err;
-    windata_t *mydata = (windata_t *) data;
-    MODEL *pmod = (MODEL *) mydata->data;
+    int dot, err = 0;
+    windata_t *mydata = NULL;
+    MODEL *pmod = NULL;
     struct stat sbuf;
 
-    if (pmod->errcode == E_NAN) {
-	errbox("Sorry, can't format this model");
-	return;
+    if (code != LATEX_VIEW_MODELTABLE) {
+	mydata = (windata_t *) data;
+	pmod = (MODEL *) mydata->data;
+	if (pmod->errcode == E_NAN) {
+	    errbox(_("Sorry, can't format this model"));
+	    return;
+	}
     }
 
     *texfile = 0;
 
-    if (prn_code)
+    if (code == LATEX_VIEW_EQUATION) {
 	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
-    else 
+    } 
+    else if (code == LATEX_VIEW_TABULAR) {
 	err = tabprint(pmod, datainfo, &paths, texfile, model_count, 1);
+    }
+    else if (code == LATEX_VIEW_MODELTABLE) {
+	PRN *prn;
+	FILE *fp;
+
+	prn = (PRN *) data;
+	sprintf(texfile, "%smodeltable.tex", paths.userdir);
+	fp = fopen(texfile, "w");
+	if (fp == NULL) {
+	    sprintf(errtext, _("Couldn't write to %s"), texfile);
+	    errbox(errtext);
+	    gretl_print_destroy(prn);
+	    return;
+	} 
+	fputs(prn->buf, fp);
+	fclose(fp);
+	gretl_print_destroy(prn);
+    }
 	
     if (err) {
 	errbox(_("Couldn't open tex file for writing"));

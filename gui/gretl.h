@@ -279,6 +279,12 @@ enum varclick_actions {
     VARCLICK_INSERT_TEXT
 };
 
+enum latex_views {
+    LATEX_VIEW_TABULAR,
+    LATEX_VIEW_EQUATION,
+    LATEX_VIEW_MODELTABLE
+};
+
 /* functions follow */
 
 void gretl_fork (const char *prog, const char *arg);

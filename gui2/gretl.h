@@ -298,6 +298,12 @@ enum font_selections {
     GRAPH_FONT_SELECTION
 };
 
+enum latex_views {
+    LATEX_VIEW_TABULAR,
+    LATEX_VIEW_EQUATION,
+    LATEX_VIEW_MODELTABLE
+};
+
 /* functions follow */
 
 #ifndef G_OS_WIN32

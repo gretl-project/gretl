@@ -26,13 +26,13 @@ static const MODEL **model_list;
 static int model_list_len;
 static int *grand_list;
 
-static void tex_print_model_table (void);
+static void tex_print_model_table (gpointer p, guint view, GtkWidget *w);
 static void rtf_print_model_table (void);
 static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_TABLE_MODELS 6
 
-#ifdef GNULL
+#ifdef GNULL /* issue: gtk+-1.2 versus gtk+-2.0 */
 GtkItemFactoryEntry model_table_items[] = {
 # ifdef USE_GNOME
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },     
@@ -44,6 +44,7 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL, GNULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL, GNULL },
     { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL, GNULL },
+    { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, GNULL },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 #else
@@ -58,9 +59,10 @@ GtkItemFactoryEntry model_table_items[] = {
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, tex_print_model_table, 0, NULL },
     { N_("/Edit/Copy all/as _RTF"), NULL, rtf_print_model_table, 0, NULL },
+    { N_("/_LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, },
     { NULL, NULL, NULL, 0, NULL }
 };
-#endif
+#endif /* GNULL */
 
 static int real_model_table_list_length (void)
 {
@@ -330,6 +332,16 @@ static const char *get_asts (double pval)
     return (pval >= 0.1)? "  " : (pval >= 0.05)? "* " : "**";
 }
 
+static const char *tex_get_asts (double pval)
+{
+    return (pval >= 0.1)? "" : (pval >= 0.05)? "$^{*}$" : "$^{**}$";
+}
+
+static const char *get_pre_asts (double pval)
+{
+    return (pval >= 0.1)? "" : (pval >= 0.05)? "$\\,$" : "$\\,\\,$";
+}
+
 static void print_model_table_coeffs (PRN *prn)
 {
     int i, j, k;
@@ -378,9 +390,11 @@ static void print_model_table_coeffs (PRN *prn)
 
 		if (tex) {
 		    if (x < 0) {
-			pprintf(prn, "& $-$%#.4g%s ", fabs(x), get_asts(pval));
+			pprintf(prn, "& %s$-$%#.4g%s ", get_pre_asts(pval),
+				fabs(x), tex_get_asts(pval));
 		    } else {
-			pprintf(prn, "& %#.4g%s ", x, get_asts(pval));
+			pprintf(prn, "& %s%#.4g%s ", get_pre_asts(pval), 
+				x, tex_get_asts(pval));
 		    }
 		} else if (rtf) {
 		    pprintf(prn, "\\qc %s%s\\cell ", numstr, get_asts(pval));
@@ -583,7 +597,7 @@ int display_model_table (void)
     return 0;
 }
 
-static void tex_print_model_table (void)
+static void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
 {
     int j, ci;
     int binary = 0;
@@ -601,6 +615,17 @@ static void tex_print_model_table (void)
     prn->format = GRETL_PRINT_FORMAT_TEX;
 
     ci = common_estimator();
+
+    if (view) {
+	pputs(prn, "\\documentclass[11pt]{article}\n");
+
+#ifdef ENABLE_NLS
+	pputs(prn, "\\usepackage[latin1]{inputenc}\n\n");
+#endif
+
+	pputs(prn, "\\begin{document}\n\n"
+		"\\thispagestyle{empty}\n\n");
+    }
 
     pputs(prn, "\\begin{center}\n");
 
@@ -666,7 +691,15 @@ static void tex_print_model_table (void)
 
     pputs(prn, "\\end{center}\n");
 
-    prn_to_clipboard(prn, COPY_LATEX);
+    if (view) {
+	pputs(prn, "\n\\end{document}\n");
+    }
+
+    if (view) {
+	view_latex(prn, LATEX_VIEW_MODELTABLE, NULL);
+    } else {
+	prn_to_clipboard(prn, COPY_LATEX);
+    }
 }
 
 static void print_rtf_row_spec (PRN *prn, int tall)
