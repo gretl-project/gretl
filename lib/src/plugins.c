@@ -42,7 +42,8 @@ enum {
     P_STATS_TABLES,
     P_SUR,
     P_TRAMO_X12A,
-    P_NISTCHECK
+    P_NISTCHECK,
+    P_ARMA
 } plugin_codes;
 
 struct plugin_info {
@@ -74,6 +75,7 @@ struct plugin_info plugins[] = {
     { P_SUR,             "sur" },
     { P_TRAMO_X12A,      "tramo-x12a" },
     { P_NISTCHECK,       "nistcheck" },
+    { P_ARMA,            "arma" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -130,6 +132,9 @@ struct plugin_function plugin_functions[] = {
 #ifdef WIN32
     { "real_unmangle", P_LONGNAME },
 #endif
+    
+    /* ARMA */
+    { "arma_model", P_ARMA },
 
     /* sentinel */
     { NULL, 0 },

@@ -206,18 +206,8 @@ static int check_arma_list (const int *list)
     return err;
 }
 
-/**
- * arma:
- * @list: dependent variable plus AR and MA orders
- * @pZ: pointer to data matrix.
- * @pdinfo: information on the data set.
- *
- * Calculate ARMA estimates.
- * 
- * Returns: a #MODEL struct, containing the estimates.
- */
-
-MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
+		  PRN *prn)
 {
     int an = pdinfo->t2 - pdinfo->t1 + 1;
     int nc, v, p, q;

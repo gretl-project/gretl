@@ -37,4 +37,6 @@ void varinfo_dialog (int varnum, int full);
 
 void set_sample_dialog (gpointer p, guint u, GtkWidget *w);
 
+void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
+
 #endif /* DIALOGS_H */

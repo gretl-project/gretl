@@ -68,6 +68,7 @@ PLUGINSRC = \
 	tramo_options.c \
 	tramo-x12a.c \
 	nistcheck.c \
+	arma.c \
 	workbook.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
@@ -75,7 +76,7 @@ PLUGINOBJ = $(PLUGINSRC:.c=.o)
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
 	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
-	plugins/johansen.dll \
+	plugins/johansen.dll plugins/arma.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll
 
@@ -253,6 +254,10 @@ plugins/pca.dll: pca.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
 
 plugins/nistcheck.dll: nistcheck.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+plugins/arma.dll: arma.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

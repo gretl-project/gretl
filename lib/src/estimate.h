@@ -34,6 +34,9 @@ int hilu_corc (double *toprho, LIST list,
 
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo); 
 
+MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
+	    PRN *prn);
+
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);
 

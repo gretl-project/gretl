@@ -53,11 +53,12 @@ endif
 SRCS = excel_import.c gnumeric_import.c import_common.c \
 	johansen.c lad.c longname.c mp_ols.c panel_data.c pca.c progress_bar.c \
 	range-mean.c stats_tables.c sur.c tramo_options.c tramo-x12a.c \
-	workbook.c nistcheck.c
+	workbook.c nistcheck.c arma.c
 
 PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
 	progress_bar.la gnumeric_import.la excel_import.la \
-	johansen.la sur.la leverage.la pca.la nistcheck.la $(TXPLUGIN)
+	johansen.la sur.la leverage.la pca.la nistcheck.la arma.la \
+	$(TXPLUGIN)
 
 ifeq ($(have_gmp),yes)
   PLUGINS += mp_ols.la
@@ -132,6 +133,9 @@ leverage.la: leverage.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 nistcheck.la: nistcheck.lo 
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+arma.la: arma.lo 
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 $(GRETLLIB):

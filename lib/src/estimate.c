@@ -3035,3 +3035,35 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     return lad_model;
 }
+
+/**
+ * arma:
+ * @list: dependent variable plus AR and MA orders
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @PRN: for printing details of iterations (or NULL) 
+ *
+ * Calculate ARMA estimates.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+{
+    MODEL armod;
+    void *handle;
+    MODEL (*arma_model) (int *, const double **, DATAINFO *, PRN *);
+
+    arma_model = get_plugin_function("arma_model", &handle);
+    if (arma_model == NULL) {
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	armod.errcode = E_FOPEN;
+	return armod;
+    }
+
+    armod = (*arma_model) (list, Z, pdinfo, prn);
+
+    close_plugin(handle);
+
+    return armod;
+}     

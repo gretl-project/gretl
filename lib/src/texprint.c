@@ -180,7 +180,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     if (isnan(pmod->coeff[v]) || na(pmod->coeff[v])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->coeff[c-2], coeff);
+	tex_dcolumn_double(pmod->coeff[v], coeff);
     }
 
     if (isnan(pmod->sderr[v]) || na(pmod->sderr[v])) {
@@ -188,7 +188,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
 	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
     } else {
-	tex_dcolumn_double(pmod->sderr[c-2], sderr);
+	tex_dcolumn_double(pmod->sderr[v], sderr);
 	sprintf(tratio, "%.4f", pmod->coeff[v] / pmod->sderr[v]);
 	sprintf(pval, "%.4f", tprob(pmod->coeff[v] / pmod->sderr[v], 
 				    pmod->dfd));
@@ -222,7 +222,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	char slope[32];
 
 	if (pmod->list[c]) {
-	    tex_dcolumn_double(pmod->slope[c-2], slope);
+	    tex_dcolumn_double(pmod->slope[v], slope);
 	}
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
