@@ -2239,6 +2239,25 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
     return miss;
 }
 
+static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
+{
+    int i;
+
+    for (i=0; i<pdinfo->v; i++) {
+	double *tmp = realloc((*pZ)[i], (pdinfo->n + 1) * sizeof ***pZ);
+
+	if (tmp != NULL) {
+	    (*pZ)[i] = tmp;
+	} else {
+	    return 1;
+	}
+    }
+
+    pdinfo->n += 1;
+
+    return 0;
+}
+
 /**
  * import_csv:
  * @pZ: pointer to data set.
@@ -2253,7 +2272,7 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
  *
  */
 
-int import_csv (double ***pZ, DATAINFO *pdinfo, 
+int import_csv (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn)
 {
     int ncols, chkcols;
@@ -2272,7 +2291,8 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	"should be blank, or should say 'obs' or 'date'.\n"
 	"- The remainder of the file must be a rectangular "
 	"array of data.\n");
-    char delim = pdinfo->delim;
+    char delim = (*ppdinfo)->delim;
+    int numcount, auto_name_vars = 0;
 
     if (prn->fp == stdout || prn->fp == stderr) {
 	printing_to_console = 1;
@@ -2394,7 +2414,8 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     p = line;
     if (delim == ' ' && *p == ' ') p++;
     pprintf(prn, M_("   line: %s\n"), p);
-
+    
+    numcount = 0;
     for (k=0; k<ncols; k++) {
 	int nv = 0;
 
@@ -2410,24 +2431,48 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	} else {
 	    nv = (blank_1 || obs_1)? k : k + 1;
 
-	    if (strlen(csvstr) == 0) {
+	    if (*csvstr == '\0') {
 		pprintf(prn, M_("   variable name %d is missing: aborting\n"), nv);
 		pputs(prn, msg);
 		goto csv_bailout;
 	    } else {
 		csvinfo->varname[nv][0] = 0;
 		strncat(csvinfo->varname[nv], csvstr, 8);
-		if (check_varname(csvinfo->varname[nv])) {
-		    pprintf(prn, "%s\n", gretl_errmsg);
-		    goto csv_bailout;
+		if (isdigit(*csvstr)) {
+		    numcount++;
+		} else {
+		    if (check_varname(csvinfo->varname[nv])) {
+			pprintf(prn, "%s\n", gretl_errmsg);
+			*gretl_errmsg = '\0';
+			goto csv_bailout;
+		    }
 		}
 	    }
 	}
 	if (nv == csvinfo->v - 1) break;
     }
+
+    if (numcount == csvinfo->v - 1) {
+	pputs(prn, M_("it seems there are no variable names\n"));
+	if (dataset_add_obs(&csvZ, csvinfo)) {
+	    pputs(prn, _("Out of memory\n"));
+	    goto csv_bailout;
+	}
+	auto_name_vars = 1;
+	rewind(fp);
+    } else if (numcount > 0) {
+	for (i=0; i<csvinfo->v; i++) {
+	    if (check_varname(csvinfo->varname[i])) {
+		pprintf(prn, "%s\n", gretl_errmsg);
+		*gretl_errmsg = '\0';
+		break;
+	    }
+	}	    
+	goto csv_bailout;
+    }
     
 #ifdef ENABLE_NLS
-    if (pdinfo->decpoint != ',') setlocale(LC_NUMERIC, "C");
+    if ((*ppdinfo)->decpoint != ',') setlocale(LC_NUMERIC, "C");
 #endif
 
     pputs(prn, M_("scanning for row labels and data...\n"));
@@ -2462,7 +2507,13 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		if (csv_missval(csvstr, k, t+1, prn)) {
 		    csvZ[nv][t] = NADBL;
 		} else {
-		    csvZ[nv][t] = atof(csvstr);
+		    if (check_atof(csvstr)) {
+			pprintf(prn, "%s\n", gretl_errmsg);
+			*gretl_errmsg = '\0';
+			goto csv_bailout;
+		    } else {
+			csvZ[nv][t] = atof(csvstr);
+		    }
 		}
 	    }
 	}
@@ -2498,11 +2549,18 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	csvinfo->S = NULL;
     }
 
+    if (auto_name_vars) {
+	for (i=1; i<csvinfo->v; i++) {
+	    sprintf(csvinfo->varname[i], "v%d", i);
+	}
+    }
+
     if (*pZ == NULL) {
 	*pZ = csvZ;
-	*pdinfo = *csvinfo;
+	if (*ppdinfo != NULL) free(*ppdinfo);
+	*ppdinfo = csvinfo;
     } else {
-	if (merge_data(pZ, pdinfo, csvZ, csvinfo, prn))
+	if (merge_data(pZ, *ppdinfo, csvZ, csvinfo, prn))
 	    goto csv_bailout;
     }
 
@@ -2604,19 +2662,18 @@ static char *unspace (char *s)
  *
  */
 
-int import_box (double ***pZ, DATAINFO *pdinfo, 
+int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn)
 {
     int c, cc, i, t, v, realv, gotdata;
     int maxline, dumpvars;
     char tmp[48];
     unsigned *varsize, *varstart;
-    char *test, *line;
+    char *line;
     double x;
     FILE *fp;
     DATAINFO *boxinfo;
     double **boxZ = NULL;
-    extern int errno;
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -2752,29 +2809,17 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 		strncpy(tmp, line + varstart[i], varsize[i]);
 		tmp[varsize[i]] = '\0';
 		top_n_tail(tmp);
-		x = strtod(tmp, &test);
+
+		if (check_atof(tmp)) {
+		    pprintf(prn, "%s\n", gretl_errmsg);
+		    x = NADBL;
+		} else {
+		    x = atof(tmp);
+		}
 #ifdef BOX_DEBUG
 		fprintf(stderr, "read %d chars from pos %d: '%s' -> %g\n",
 			varsize[i], varstart[i], tmp, x); 
 #endif
-		if (!strcmp(tmp, test)) {
-		    pprintf(prn, M_("'%s' -- no numeric conversion performed!\n"), 
-			    tmp);
-		    x = -999.0;
-		}
-		if (test[0] != '\0') {
-		    if (isprint(test[0]))
-			pprintf(prn, M_("Extraneous character '%c' in data\n"), 
-				test[0]);
-		    else
-			pprintf(prn, M_("Extraneous character (0x%x) in data\n"), 
-				test[0]);
-		    x = -999.0;
-		}
-		if (errno == ERANGE) {
-		    pprintf(prn, M_("'%s' -- number out of range!\n"), tmp);
-		    x = -999.0;
-		}
 		boxZ[realv][t] = x;
 #ifdef BOX_DEBUG
 		fprintf(stderr, "setting Z[%d][%d] = %g\n", realv, t, x);
@@ -2810,7 +2855,8 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 
     if (*pZ == NULL) {
 	*pZ = boxZ;
-	*pdinfo = *boxinfo;
+	if (*ppdinfo != NULL) free(*ppdinfo);
+	*ppdinfo = boxinfo;
     }
 
     return 0;
@@ -3030,6 +3076,11 @@ static int write_xmldata (const char *fname, const int *list,
     long sz = 0L;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
+#ifdef USE_GTK2
+    const char *enc = "UTF-8";
+#else
+    const char *enc = "ISO-8859-1";
+#endif
 
     err = 0;
 
@@ -3088,17 +3139,17 @@ static int write_xmldata (const char *fname, const int *list,
     simple_fname(datname, fname);
 
     if (opt) {
-	gzprintf(fz, "<?xml version=\"1.0\"?>\n"
+	gzprintf(fz, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		 "<gretldata name=\"%s\" frequency=\"%d\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 datname, pdinfo->pd, startdate, enddate);
+		 enc, datname, pdinfo->pd, startdate, enddate);
     } else {
-	fprintf(fp, "<?xml version=\"1.0\"?>\n"
+	fprintf(fp, "<?xml version=\"1.0\" encoding=\"%s\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 		"<gretldata name=\"%s\" frequency=\"%d\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		datname, pdinfo->pd, startdate, enddate);
+		enc, datname, pdinfo->pd, startdate, enddate);
     }
 
     switch (pdinfo->time_series) {
@@ -3798,3 +3849,36 @@ char *get_xml_description (const char *fname)
     return buf;
 }
 
+int check_atof (const char *numstr)
+{
+    char *test;
+    extern int errno;
+
+    errno = 0;
+
+    /* accept blank entries */
+    if (*numstr == '\0') return 0;
+
+    (void) strtod(numstr, &test);
+
+    if (strcmp(numstr, test) == 0) {
+	sprintf(gretl_errmsg, _("'%s' -- no numeric conversion performed!"), numstr);
+	return 1;
+    }
+
+    if (*test != '\0') {
+	if (isprint(test[0])) {
+	    sprintf(gretl_errmsg, _("Extraneous character '%c' in data"), test[0]);
+	} else {
+	    sprintf(gretl_errmsg, _("Extraneous character (0x%x) in data"), test[0]);
+	}
+	return 1;
+    }
+
+    if (errno == ERANGE) {
+	sprintf(gretl_errmsg, _("'%s' -- number out of range!"), numstr);
+	return 1;
+    }
+
+    return 0;
+}

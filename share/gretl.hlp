@@ -237,6 +237,7 @@ non-contiguous variables by clicking on them with the Ctrl key pressed.
 #
 diff
 @Transformations
+First differences
 
 The first difference of each variable in the given list is obtained and the
 result stored in a new variable with the prefix "d_".  Thus for instance the
@@ -245,7 +246,7 @@ new variables d_x = x(t) - x(t-1).
 #
 export
 @Dataset
-Export data from gretl to other formats.  
+Export data from gretl to other formats  
 
 You may export data in Comma-Separated Values (CSV) format: such data may be
 opened in spreadsheets and many other application programs.
@@ -258,6 +259,7 @@ http://www.r-project.org/ and http://www.octave.org/
 #
 factorized plot
 @Graphs
+Plot with a dummy variable
 
 This command requires the selection of three variables, the last of which must
 be a dummy variable (values 1 or 0).  The Y variable is plotted against the X
@@ -271,9 +273,26 @@ using the GENDER dummy as factor will show the data points for men in one
 color and those for women in another (with a legend to identify them).
 
 #
+fcasterr
+@Estimation
+Forecasts with confidence intervals
+
+After estimating a model via OLS you can print out predicted values over a
+specified observation range, along with the estimated standard errors of those
+predictions and 95 percent confidence intervals.  The prediction range is not
+necessarily the same as the data range over which the model was estimated.
+
+The standard errors are calculated in the manner described by Wooldridge in
+chapter 6 of his Introductory Econometrics.  They incorporate two sources of
+variation: the variance associated with the expected value of the dependent
+variable, conditional on the given values of the indepedent variables, and the
+variance of the regression residuals.
+
+#
 genr
 @Transformations
 Generate a new variable 
+
 Usage:          newvarname = transformation
 
 Creates new variables, usually through transformations of existing

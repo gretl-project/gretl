@@ -678,10 +678,10 @@ int main (int argc, char *argv[])
 			      prn, 0);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, datainfo, paths.datfile, prn);
+	    err = import_csv(&Z, &datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_BOX_DATA:
-	    err = import_box(&Z, datainfo, paths.datfile, prn);
+	    err = import_box(&Z, &datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_EXCEL:
 	case GRETL_GNUMERIC:

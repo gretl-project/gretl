@@ -54,36 +54,6 @@ static GtkItemFactoryEntry sheet_items[] = {
 
 /* ........................................................... */
 
-static int check_atof (char *numstr)
-{
-    char *test;
-    extern int errno;
-
-    (void) strtod(numstr, &test);
-
-    if (strcmp(numstr, test) == 0) {
-	sprintf(errtext, _("'%s' -- no numeric conversion performed!"), numstr);
-	errbox(errtext);
-	return 1;
-    }
-    if (test[0] != '\0') {
-	if (isprint(test[0]))
-	    sprintf(errtext, _("Extraneous character '%c' in data"), test[0]);
-	else
-	    sprintf(errtext, _("Extraneous character (0x%x) in data"), test[0]);
-	errbox(errtext);
-	return 1;
-    }
-    if (errno == ERANGE) {
-	sprintf(errtext, _("'%s' -- number out of range!"), numstr);
-	errbox(errtext);
-	return 1;
-    }
-    return 0;
-}
-
-/* ........................................................... */
-
 static int check_data_in_sheet (void)
 {
     gint err, i, t, n = datainfo->n;
@@ -96,7 +66,10 @@ static int check_data_in_sheet (void)
 	    if (celltext != NULL) {
 		strncpy(numstr, celltext, 31);
 		err = check_atof(numstr);
-		if (err) return 1;
+		if (err) {
+		    errbox(get_gretl_errmsg());
+		    return 1;
+		}
 	    }
 	}
     }
@@ -320,6 +293,7 @@ static void parse_numbers (GtkWidget *widget, gpointer data)
     if (entrytext == NULL) return;
 
     if (check_atof(entrytext)) {
+	errbox(get_gretl_errmsg());
 	*label = 0;
     } else {
 	sprintf(label, "%.*f", DEFAULT_PRECISION, atof(entrytext));

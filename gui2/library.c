@@ -3582,9 +3582,9 @@ void do_open_csv_box (char *fname, int code, int append)
     if (bufopen(&prn)) return;
 
     if (code == OPEN_BOX) {
-	err = import_box(&Z, datainfo, fname, prn);
+	err = import_box(&Z, &datainfo, fname, prn);
     } else {
-	err = import_csv(&Z, datainfo, fname, prn); 
+	err = import_csv(&Z, &datainfo, fname, prn); 
     }
 
     sprintf(buf, _("gretl: import %s data"), 
@@ -4678,9 +4678,9 @@ int gui_exec_line (char *line,
 	if (data_status & HAVE_DATA)
 	    close_session();
         if (oflag)
-            err = import_box(&Z, datainfo, datfile, prn);
+            err = import_box(&Z, &datainfo, datfile, prn);
         else
-            err = import_csv(&Z, datainfo, datfile, prn);
+            err = import_csv(&Z, &datainfo, datfile, prn);
         if (!err) { 
 	    data_status |= IMPORT_DATA;
 	    register_data(datfile, NULL, (exec_code != REBUILD_EXEC));
@@ -4711,9 +4711,9 @@ int gui_exec_line (char *line,
 	}
 
 	if (chk == GRETL_CSV_DATA) {
-	    err = import_csv(&Z, datainfo, datfile, prn);
+	    err = import_csv(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_BOX_DATA) {
-	    err = import_box(&Z, datainfo, datfile, prn);
+	    err = import_box(&Z, &datainfo, datfile, prn);
 	} else if (chk == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
 	} else if (dbdata) {

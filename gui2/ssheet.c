@@ -59,44 +59,6 @@ static GtkItemFactoryEntry sheet_items[] = {
     { N_("/Add _Variable"), NULL, sheet_add_var_callback, 0, NULL, GNULL }
 };
 
-/* ........................................................... */
-
-static int check_atof (const char *numstr)
-{
-    char *test;
-    extern int errno;
-
-    errno = 0;
-
-    /* accept blank entries */
-    if (*numstr == '\0') return 0;
-
-    (void) strtod(numstr, &test);
-
-    if (strcmp(numstr, test) == 0) {
-	sprintf(errtext, _("'%s' -- no numeric conversion performed!"), numstr);
-	errbox(errtext);
-	return 1;
-    }
-
-    if (test[0] != '\0') {
-	if (isprint(test[0]))
-	    sprintf(errtext, _("Extraneous character '%c' in data"), test[0]);
-	else
-	    sprintf(errtext, _("Extraneous character (0x%x) in data"), test[0]);
-	errbox(errtext);
-	return 1;
-    }
-
-    if (errno == ERANGE) {
-	sprintf(errtext, _("'%s' -- number out of range!"), numstr);
-	errbox(errtext);
-	return 1;
-    }
-
-    return 0;
-}
-
 /* .................................................................. */
 
 static gint sheet_cell_edited (GtkCellRendererText *cell,
@@ -109,7 +71,9 @@ static gint sheet_cell_edited (GtkCellRendererText *cell,
 
     err = check_atof(new_text);
 
-    if (!err) {
+    if (err) {
+	errbox(get_gretl_errmsg());
+    } else {
 	gint *column;
 	GtkTreePath *path;
 	GtkTreeIter iter;

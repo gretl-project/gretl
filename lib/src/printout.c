@@ -25,6 +25,8 @@
 #include <stdarg.h>
 #include <time.h>
 
+/* #define PRN_DEBUG */
+
 static void 
 print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
 		      int c, PRN *prn);
@@ -959,8 +961,9 @@ static int get_signif (double *x, int n)
 	use when printing the series (-) */
 {
     static char numstr[48];
-    int i, j, s, smax = 0;
+    int i, j, s, smax = 0; 
     int lead, leadmax = 0, leadmin = 99;
+    int gotdec, trail, trailmax = 0;
     double xx;
     int allfrac = 1;
     char decpoint = '.';
@@ -970,37 +973,68 @@ static int get_signif (double *x, int n)
 #endif
 
     for (i=0; i<n; i++) {
+
 	if (na(x[i])) continue;
+
 	xx = fabs(x[i]);
+
 	if (xx >= 1.0) allfrac = 0;
 	sprintf(numstr, "%.12f", xx);
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: numstr = '%s'\n", numstr);
 #endif
 	s = strlen(numstr) - 1;
+	trail = 12;
+	gotdec = 0;
 	for (j=s; j>0; j--) {
-	    if (numstr[j] == '0') s--;
+	    if (numstr[j] == '0') {
+		s--;
+		if (!gotdec) trail--;
+	    }
 	    else if (numstr[j] == decpoint) {
+		gotdec = 1;
 		if (xx < 10000) break;
 		else continue;
 	    }
 	    else break;
 	}
+
+	if (trail > trailmax) trailmax = trail;
+
 	if (xx < 1.0) s--; /* don't count leading zero */
+
 	if (s > smax) smax = s;
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
 #endif
+
 	lead = 0;
 	for (j=0; j<=s; j++) {
 	    if (xx >= 1.0 && numstr[j] != decpoint) lead++;
 	    else break;
 	}
-	if (lead > leadmax) leadmax = lead;
-	if (lead < leadmin) leadmin = lead;
-    }
+
+	if (lead > leadmax) {
+#ifdef PRN_DEBUG
+	    fprintf(stderr, "lead=%d, leadmax=%d: setting leadmax=%d\n",
+		    lead, leadmax, lead);
+#endif
+	    leadmax = lead;
+	}
+	if (lead < leadmin) {
+#ifdef PRN_DEBUG
+	    fprintf(stderr, "lead=%d, leadmin=%d: setting leadmin=%d\n",
+		    lead, leadmax, lead);
+#endif
+	    leadmin = lead;
+	}
+    } 
+
     if (smax > SMAX) smax = SMAX;
-    if ((leadmin < leadmax) && (leadmax < smax)) {
+
+    if (trailmax > 0 && (leadmax + trailmax <= SMAX)) {
+	smax = -trailmax;
+    } else if ((leadmin < leadmax) && (leadmax < smax)) {
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n", 
 		smax, leadmax);
@@ -1014,9 +1048,11 @@ static int get_signif (double *x, int n)
 #endif
 	smax = -1 * (smax - 1);
     } 
+
 #ifdef PRN_DEBUG
     fprintf(stderr, "get_signif: returning smax = %d\n", smax);
 #endif
+
     return smax;
 }
 
@@ -1030,16 +1066,19 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     if (signif < 0) {
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for signif: "
-		    "printing with %%.%df\n", signif, signif);
+		    "printing with %%.%df\n", signif, -signif);
 #endif
-	sprintf(numstr, "%.*f", -1 * signif, x);
-    } else if (signif == 0) {
+	sprintf(numstr, "%.*f", -signif, x);
+    }
+
+    else if (signif == 0) {
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got 0 for signif: "
 		    "printing with %%.0f\n");
 #endif
 	sprintf(numstr, "%.0f", x);
-    } else {
+    } 
+    else {
 	double z = fabs(x);
 
 	if (z < 1) l = 0;
@@ -1050,6 +1089,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	else if (z < 100000) l = 5;
 	else if (z < 1000000) l = 6;
 	else l = 7;
+
 	if (l >= signif) { 
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
@@ -1073,8 +1113,9 @@ static int bufprintnum (char *buf, double x, int signif, int width)
     }
 
     l = width - strlen(numstr);
-    for (i=0; i<l; i++)
+    for (i=0; i<l; i++) {
 	strcat(buf, " ");
+    }
     strcat(buf, numstr);
 
     return 0;
@@ -1254,10 +1295,13 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	    } /* end of t loop */
 	} /* end if nvj5 */
     } /* end for j loop */
+
     pputs(prn, "\n");
     lineno++;
+
     if (freelist) free(list);
     free(pmax);
+
     return 0;
 }
 

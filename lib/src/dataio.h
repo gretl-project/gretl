@@ -103,10 +103,10 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   int data_status, int length,
 		   PRN *prn);
 
-int import_csv (double ***pZ, DATAINFO *pdinfo, 
+int import_csv (double ***pZ, DATAINFO **ppdinfo, 
                 const char *fname, PRN *prn);
 
-int import_box (double ***pZ, DATAINFO *pdinfo, 
+int import_box (double ***pZ, DATAINFO **ppdinfo, 
 		const char *fname, PRN *prn);
 
 int add_case_markers (DATAINFO *pdinfo, const char *fname);
@@ -126,3 +126,4 @@ void *get_plugin_function (const char *funcname, void *handle);
 
 void close_plugin (void *handle);
 
+int check_atof (const char *numstr);
