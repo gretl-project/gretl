@@ -27,6 +27,9 @@
 #define POISSON_TOL 1.0e-10 
 #define POISSON_MAX_ITER 100 
 
+/* check whether a series contains nothing but non-negative
+   integer values (some of which are > 1) */
+
 static int is_count_variable (const double *x, int t1, int t2)
 {
     int t, xi;
@@ -79,13 +82,49 @@ static double poisson_ll (const double *y, const double *mu,
     return loglik;
 }
 
+/* make covariance matrix based on the artificial regression, and
+   transcribe the relevant elements into the target model */
+
+static int make_poisson_vcv (MODEL *targ, MODEL *src)
+{
+    int nc = targ->ncoeff;
+    int nt = (nc * nc + nc) / 2;
+    int tidx, sidx;
+    int i, j;
+    int err = 0;
+
+    if (makevcv(src)) {
+	err = 1;
+    }
+
+    if (!err) {
+	targ->vcv = malloc(nt * sizeof *targ->vcv);
+	if (targ->vcv == NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	for (i=0; i<targ->ncoeff; i++) {
+	    for (j=i; j<targ->ncoeff; j++) {
+		tidx = ijton(i, j, targ->ncoeff);
+		sidx = ijton(i, j, src->ncoeff);
+		targ->vcv[tidx] = src->vcv[sidx];
+	    }
+	}
+    }
+
+    return err;
+}
+
 static int 
-transcribe_poisson_results (MODEL *targ, const MODEL *src,
+transcribe_poisson_results (MODEL *targ, MODEL *src,
 			    const double **X, int nvars,
 			    int n, int iter)
 {
     double mt;
     int i, t, s;
+    int err = 0;
     
     gretl_model_set_int(targ, "iters", iter);
 
@@ -109,7 +148,7 @@ transcribe_poisson_results (MODEL *targ, const MODEL *src,
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
 #endif
 
-    mle_aic_bic(targ, 0); /* FIXME? */
+    mle_aic_bic(targ, 0); /* is the number of params right? */
 
     /* mask invalid statistics */
     targ->rsq = NADBL;
@@ -118,7 +157,9 @@ transcribe_poisson_results (MODEL *targ, const MODEL *src,
     targ->sigma = NADBL;
     targ->fstt = NADBL;
 
-    return 0;
+    err = make_poisson_vcv(targ, src);
+
+    return err;
 }
 
 static int 
@@ -239,6 +280,7 @@ do_poisson (MODEL *pmod, const double **Z, DATAINFO *pdinfo, PRN *prn)
 	}
 
 	if (crit > POISSON_TOL) {
+	    /* going round again: don't leak memory */
 	    clear_model(&tmpmod);
 	}
     }
