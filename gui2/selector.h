@@ -35,10 +35,6 @@
 
 #define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
 
-#define DATA_SAVE_CODE(c) (c == SAVE_DATA || c == SAVE_DATA_AS || \
-                           c == SAVE_GZDATA || c == EXPORT_CSV || \
-                           c == EXPORT_R || c == EXPORT_OCTAVE)
-
 typedef struct {
     GtkWidget *dlg;
     GtkWidget *vbox;

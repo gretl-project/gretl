@@ -771,7 +771,7 @@ build_selector_buttons (selector *sr, const char *oktxt, void (*okfunc)())
                        GTK_SIGNAL_FUNC(delete_widget), sr->dlg);
     gtk_widget_show(tmp);
 
-    if (sr->code != PRINT) {
+    if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
 	tmp = gtk_button_new_with_label(_("Help"));
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->action_area), 
@@ -1179,5 +1179,41 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_main();
 }
 
+static const char *data_save_title (int code)
+{
+    switch (code) {
+    case EXPORT_CSV:
+        return _("Save CSV data file");
+    case EXPORT_R:
+    case EXPORT_R_ALT:
+        return _("Save R data file");
+    case EXPORT_OCTAVE:
+        return _("Save octave data file");
+    default:
+        return _("Save data file");
+    }
+    return "";
+}
 
+static void data_save_selection_callback (GtkWidget *w, gpointer p)
+{
+    selector *sr = (selector *) p;
 
+    if (sr->cmdlist == NULL || *sr->cmdlist == 0) return;
+
+    if (storelist != NULL) {
+        free(storelist);
+        storelist = NULL;
+    }
+
+    storelist = g_strdup(sr->cmdlist);
+
+    file_selector(data_save_title(sr->code), sr->code, NULL);
+}
+
+void data_save_selection_wrapper (int file_code)
+{
+    simple_selection(_("Save data"), _("OK"), 
+		     data_save_selection_callback, file_code, 
+                     NULL);
+}

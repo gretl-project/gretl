@@ -626,7 +626,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
 {
-    if (DATA_SAVE_CODE(sr->code)) {
+    if (SAVE_DATA_ACTION(sr->code)) {
 	gtk_main_quit();
     }
     free(sr->cmdlist);
@@ -1008,7 +1008,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
 		     G_CALLBACK(delete_widget), sr->dlg);
     gtk_widget_show(tmp);
 
-    if (sr->code != PRINT && !DATA_SAVE_CODE(sr->code)) {
+    if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
 	tmp = standard_button (GTK_STOCK_HELP);
 	GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
 	gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);

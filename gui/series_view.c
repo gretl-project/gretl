@@ -292,7 +292,6 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     GtkWidget *w, *tmp, *label, *button;
     GtkWidget *vbox, *hbox;
     GtkObject *adj;
-    GSList *group;
     series_view_t *sview = (series_view_t *) vwin->data;
 
     if (series_view_allocate(sview)) return;

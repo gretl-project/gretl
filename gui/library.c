@@ -1758,24 +1758,6 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void set_storelist (GtkWidget *widget, dialog_t *ddata)
-{
-    char *edttext;
-    size_t len;
-
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (edttext == NULL || *edttext == '\0') return;
-
-    len = strlen(edttext);
-    if (len >= MAXLEN || (storelist && !strcmp(storelist, edttext))) {
-	free(storelist);
-	storelist = NULL; /* default list -- don't need to be explicit */
-    } else
-	strcpy(storelist, edttext);
-}
-
-/* ........................................................... */
-
 static int model_error (const MODEL *pmod)
 {
     if (pmod->errcode) {
@@ -3419,20 +3401,20 @@ static int dat_suffix (const char *fname)
 int do_store (char *mydatfile, int opt, int overwrite)
 {
     char f = getflag(opt);
-    gchar *msg;
+    gchar *msg, *tmp = NULL;
     FILE *fp;
     int showlist = 1;
+    int err = 0;
 
-    line[0] = '\0';
-
+    /* "storelist" is a global */
     if (storelist == NULL) showlist = 0;
 
     if (f) { /* not a standard native save */
-	sprintf(line, "store '%s' %s -%c", mydatfile, 
-		(showlist)? storelist : "", f);
+	tmp = g_strdup_printf("store '%s' %s -%c", mydatfile, 
+			      (showlist)? storelist : "", f);
     } else if (dat_suffix(mydatfile)) { /* saving as ".dat" */
-	sprintf(line, "store '%s' %s -t", mydatfile, 
-		(showlist)? storelist : "");
+	tmp = g_strdup_printf("store '%s' %s -t", mydatfile, 
+			      (showlist)? storelist : "");
 	opt = OPT_T;
     } else {
 	if (!overwrite) {
@@ -3441,17 +3423,21 @@ int do_store (char *mydatfile, int opt, int overwrite)
 		fclose(fp);
 		if (yes_no_dialog(_("gretl: save data"), 
 				  _("There is already a data file of this name.\n"
-				  "OK to overwrite it?"), 0)) {
-		    return 1;
+				    "OK to overwrite it?"), 0)) {
+		    goto store_get_out;
 		}
 	    }
 	}
-	sprintf(line, "store '%s' %s", mydatfile, 
-	       (showlist)? storelist : "");   
+	tmp = g_strdup_printf("store '%s' %s", mydatfile, 
+			      (showlist)? storelist : "");   
 	strcpy(paths.datfile, mydatfile);
     }
 
-    if (check_cmd(line) || cmd_init(line)) return 1; 
+    err = check_cmd(tmp);
+    if (err) goto store_get_out;
+
+    err = cmd_init(tmp);
+    if (err) goto store_get_out;
 
     /* back up existing datafile if need be */
     if ((fp = fopen(mydatfile, "r")) && fgetc(fp) != EOF &&
@@ -3461,7 +3447,8 @@ int do_store (char *mydatfile, int opt, int overwrite)
 	sprintf(backup, "%s~", mydatfile);
 	if (copyfile(mydatfile, backup)) {
 	    errbox(_("Couldn't make backup of data file"));
-	    return 1;
+	    err = 1;
+	    goto store_get_out;
 	}
     }
 
@@ -3470,11 +3457,13 @@ int do_store (char *mydatfile, int opt, int overwrite)
 	sprintf(errtext, _("Write of data file failed\n%s"),
 		get_gretl_errmsg());
 	errbox(errtext);
-	return 1;
+	err = 1;
+	goto store_get_out;
     }
 
-    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT)
+    if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT) {
 	mkfilelist(1, mydatfile);
+    }
 
     msg = g_strdup_printf(_("%s written OK"), mydatfile);
     infobox(msg);
@@ -3486,7 +3475,16 @@ int do_store (char *mydatfile, int opt, int overwrite)
 	set_sample_label(datainfo);
     }
 
-    return 0;
+ store_get_out:
+
+    if (storelist != NULL) {
+	free(storelist);
+	storelist = NULL;
+    }
+
+    g_free(tmp);
+
+    return err;
 }
 
 /* ........................................................... */

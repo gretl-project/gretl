@@ -34,62 +34,6 @@ int session_saved;
 
 /* ........................................................... */
 
-int make_default_storelist (void)
-{
-    int i;
-    char numstr[5];
-
-    if (storelist != NULL) free(storelist);
-    storelist = NULL;
-
-    /* if there are very many variables, we won't offer
-       a selection, but just save them all */
-    if (datainfo->v < 50) {
-	storelist = mymalloc(datainfo->v * 4);
-	if (storelist == NULL) return 1;
-
-	strcpy(storelist, "1 ");
-	for (i=2; i<datainfo->v; i++) {
-	    if (hidden_var(i, datainfo)) continue;
-	    if (!datainfo->vector[i]) continue;
-	    sprintf(numstr, "%d ", i);
-	    strcat(storelist, numstr);
-	}
-	storelist[strlen(storelist) - 1] = '\0';
-    }
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static void cancel_data_save (GtkWidget *widget, dialog_t *ddata)
-{
-    int *cancel = (int *) ddata->data;
-
-    *cancel = -1;
-}
-
-/* ........................................................... */
-
-int storevars_dialog (int code) 
-{
-    int cancel = 0;
-
-    if (make_default_storelist()) return 1;
-    if (storelist == NULL) return 0;
-
-    edit_dialog ((code == EXPORT)? 
-		 _("gretl: export data"): _("gretl: store data"),
-		 _("Enter ID numbers of variables to save: "), 
-		 storelist, 1, 
-		 " OK ", set_storelist, NULL, 
-		 _(" Cancel "), cancel_data_save, &cancel, code, 1);
-    return cancel;
-}
-
-/* ........................................................... */
-
 void random_dialog (gpointer data, guint code, GtkWidget *widget) 
 {
     if (code == GENR_UNIFORM) {

@@ -23,8 +23,6 @@
 	                    i == SAVE_TEX_TAB_FRAG || \
                             i == SAVE_TEX_EQ_FRAG)
 
-#define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)
-
 #define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
                               i == SAVE_THIS_GRAPH || \
                               i == SAVE_LAST_GRAPH || \

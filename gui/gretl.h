@@ -179,6 +179,8 @@ enum file_ops {
     OP_MAX
 };
 
+#define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)
+
 enum browser_codes {
     RAMU_DATA = OP_MAX + 1, /* don't collide with file_ops enum */
     RAMU_PS,
@@ -272,7 +274,7 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* functions defined in files other than gretl.c */
 
-void file_selector (char *msg, int action, gpointer data);
+void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, 
 		     GtkWidget *widget);
 void display_files (gpointer data, guint code, GtkWidget *widget);

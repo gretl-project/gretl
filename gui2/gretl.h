@@ -189,6 +189,8 @@ enum file_ops {
     FILE_OP_MAX
 };
 
+#define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)
+
 enum browser_codes {
     RAMU_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
     RAMU_PS,

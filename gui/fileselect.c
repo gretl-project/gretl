@@ -415,7 +415,7 @@ static void extra_get_filter (int action, gpointer data, char *suffix)
 
 /* ........................................................... */
 
-void file_selector (char *msg, int action, gpointer data) 
+void file_selector (const char *msg, int action, gpointer data) 
 {
     GtkWidget *filesel;
     int gotdir = 0;
