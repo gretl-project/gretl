@@ -437,8 +437,8 @@ int main (int argc, char *argv[])
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
-    if (Z != NULL) free(Z);
-    if (fullZ != NULL) free(fullZ);
+    free(Z);
+    if (fullZ) free(fullZ);
     free_model(models[0]);
     free_model(models[1]);
     free(models);
@@ -450,7 +450,7 @@ int main (int argc, char *argv[])
 	free(fullinfo);
     }
     if (runfile_open && fb != NULL) fclose (fb);
-    if (line != NULL) free(line);
+    free(line);
 
     if (modelspec) {
 	i = 0;
@@ -862,6 +862,9 @@ void exec_line (char *line, PRN *prn)
 	    err = import_csv(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, datfile, prn);
+	else if (check == GRETL_XML_DATA)
+	    err = get_xmldata(&Z, datainfo, datfile, &paths, 
+			      data_status, prn);
 	else 
 	    err = get_data(&Z, datainfo, datfile, &paths, 
 			   data_status, prn);

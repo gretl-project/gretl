@@ -183,7 +183,7 @@ void browser_open_data (GtkWidget *w, gpointer data)
     if (mydata->action == PWT_DATA) 
 	sprintf(trydatfile, "%s%s", pwtpath, fname);
     else if (mydata->action == RAMU_DATA)  
-	sprintf(trydatfile, "%s%s", paths.datadir, fname);
+	sprintf(trydatfile, "%s%s.gdt", paths.datadir, fname);
     else if (mydata->action == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");

@@ -2168,14 +2168,14 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     if (n > 4 && strcmp(fname + n - 4, ".inp") == 0) 
 	return GRETL_SCRIPT;
 
-    addpath(fname, ppaths, 0);    
+    addpath(fname, ppaths, 0); 
+
+    if (xmlfile(fname))
+	return GRETL_XML_DATA;   
 
     fp = fopen(fname, "r");
     if (fp == NULL)  
 	return GRETL_NATIVE_DATA; /* may be native file in different location */
-
-    if (xmlfile(fname))
-	return GRETL_XML_DATA;
 
     /* first look at extension */
     n = strlen(fname);
@@ -2441,12 +2441,8 @@ static int write_xmldata (const char *fname, const int *list,
 static int 
 process_description (xmlDocPtr doc, xmlNodePtr node, DATAINFO *pdinfo)
 {
-    char *desc =
+    pdinfo->descrip =
 	xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
-
-    pdinfo->descrip = malloc(strlen(desc) + 1);
-    if (pdinfo->descrip == NULL) return 1;
-    strcpy(pdinfo->descrip, desc);
     return 0;
 }
 
@@ -2469,6 +2465,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
 	    sprintf(gretl_errmsg, "out of memory reading data file");
 	    return 1;
 	}
+	free(tmp);
     }
     else {
 	sprintf(gretl_errmsg, "Got no variables");
@@ -2492,6 +2489,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
 	    if (tmp) {
 		strncpy(pdinfo->varname[i], tmp, 8);
 		pdinfo->varname[i][8] = '\0';
+		free(tmp);
 	    } else {
 		sprintf(gretl_errmsg, "variable %d has no name", i);
 		return 1;
@@ -2499,7 +2497,8 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
 	    tmp = xmlGetProp(cur, (UTF) "label");
 	    if (tmp) {
 		strncpy(pdinfo->label[i], tmp, MAXLABEL-1);
-		pdinfo->varname[i][MAXLABEL-1] = '\0';
+		pdinfo->label[i][MAXLABEL-1] = '\0';
+		free(tmp);
 	    }
 	    i++;
 	}	    
@@ -2547,6 +2546,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    sprintf(gretl_errmsg, "failed to parse number of observations");
 	    return 1;
 	}
+	free(tmp);
     } else 
 	return 1;
 
@@ -2563,6 +2563,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    "'true' or 'false'");
 	    return 1;
 	}
+	free(tmp);
     } else
 	return 1;
 
@@ -2594,6 +2595,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		if (tmp) {
 		    strncpy(pdinfo->S[t], tmp, 8);
 		    pdinfo->S[t][8] = '\0';
+		    free(tmp);
 		} else {
 		    sprintf(gretl_errmsg, "case marker missing at obs %d", t+1);
 		    return 1;
@@ -2603,6 +2605,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	    if (tmp) {
 		if (process_values(*pZ, pdinfo, t, tmp))
 		    return 1;
+		free(tmp);
 		t++;
 	    } else {
 		sprintf(gretl_errmsg, "values missing at observation %d", t+1);
@@ -2646,6 +2649,10 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 
     gretl_errmsg[0] = '\0';
 
+    /* COMPAT: Do not generate nodes for formatting spaces */
+    LIBXML_TEST_VERSION
+	xmlKeepBlanksDefault(0);
+
     doc = xmlParseFile(fname);
     if (doc == NULL) {
 	sprintf(gretl_errmsg, "xmlParseFile failed on %s", fname);
@@ -2687,6 +2694,7 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	    sprintf(gretl_errmsg, "unrecognized type attribute for data file");
 	    return 1;
 	}
+	free(tmp);
     }
     pdinfo->pd = 1;
     tmp = xmlGetProp(cur, (UTF) "frequency");
@@ -2699,6 +2707,7 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	    strcpy(gretl_errmsg, "failed to parse data frequency");
 	    return 1;
 	}
+	free(tmp);
     }
     strcpy(pdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
@@ -2712,6 +2721,7 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	    strcpy(gretl_errmsg, "failed to parse startobs");
 	    return 1;
 	}
+	free(tmp);
     }
     pdinfo->endobs[0] = '\0';
     tmp = xmlGetProp(cur, (UTF) "endobs");
@@ -2724,7 +2734,8 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	} else {
 	    strcpy(gretl_errmsg, "failed to parse endobs");
 	    return 1;
-	}	
+	}
+	free(tmp);
     }
 
     /* Now walk the tree */
@@ -2751,6 +2762,9 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	}
 	cur = cur->next;
     }
+
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
 
     if (!gotvars) {
 	sprintf(gretl_errmsg, "variables information is missing");

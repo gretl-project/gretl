@@ -8,6 +8,8 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
+XML_CFLAGS = @XML_CFLAGS@
+XML_LIBS = @XML_LIBS@
 
 ifeq ($(prefix),)
   prefix = /opt/esl
@@ -37,18 +39,20 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 
-# Directories
-srcdir  = ./src
-VPATH = ./src
+# Installation directories
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
-share = $(prefix)/share/gretl/
 
 # General compile options and libs:
 LIBGRETL  = libgretl.la
-LIBS = -lm -L/usr/local/lib -lz
+LIBS = -lm -L/usr/local/lib -lz $(XML_LIBS)
 
 #### End of system configuration section. ####
+
+VPATH += ./src
+srcdir  = ./src
+libdir = $(prefix)/lib
+includedir = $(prefix)/include/gretl
 
 SRCS = estimate.c compare.c utils.c errors.c pvalues.c dataio.c \
 	generate.c strutils.c describe.c printout.c texprint.c var.c \
@@ -67,7 +71,7 @@ LOBJS = estimate.lo compare.lo utils.lo errors.lo pvalues.lo dataio.lo \
 	interact.lo graphing.lo monte_carlo.lo nonparam.lo discrete.lo \
 	subsample.lo
 
-COMPILE = ../libtool --mode=compile $(CC) -c -I.. -I./src $(CFLAGS)
+COMPILE = ../libtool --mode=compile $(CC) -c -I.. -I./src $(CFLAGS) $(XML_CFLAGS)
 
 .c.o:        
 	$(COMPILE) $<

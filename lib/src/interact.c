@@ -62,7 +62,7 @@ static int trydatafile (char *line, int *ignore)
 	else if (line[i] == '*' && line[i+1] == ')') *ignore = 0;
     }
     if (datfile[0] != '\0') {
-	sprintf(line, "open %s", datfile);
+	sprintf(line, "open %s.gdt", datfile);
 	return 1;
     } 
     return 0;

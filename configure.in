@@ -112,16 +112,17 @@ AC_CHECK_LIB(z, gzopen,have_zlib="yes" ; \
   ZLIB="-lz" ; AC_DEFINE(HAVE_ZLIB),,)
 AC_SUBST(have_zlib)
 
-xmlconf=''
+XMLCONF=''
 AC_DEFUN(AC_LIB_XML,
-[AC_CHECK_PROGS(xmlconf,xml-config xml2-config,)])
+[AC_CHECK_PROGS(XMLCONF,xml-config xml2-config,)])
 
 AC_LIB_XML
-if test x"${xmlconf}" != x
-then
-  AC_DEFINE(HAVE_LIBXML)
+if test x"${XMLCONF}" != x ; then
   have_libxml=yes
-  AC_SUBST(xmlconf)
+  XML_CFLAGS=`$XMLCONF --cflags`
+  XML_LIBS=`$XMLCONF --libs`
+  AC_SUBST(XML_CFLAGS)
+  AC_SUBST(XML_LIBS)
 fi
 
 dnl Checks for header files.
@@ -551,7 +552,7 @@ zlib is available via http://www.info-zip.org/pub/infozip/zlib/
 elif test "${have_libxml}" = "no" ; then
 echo "
 Please install libxml and then reconfigure gretl.
-libxml is available from...
+libxml is available from http://xmlsoft.org/
 "
 
 else
