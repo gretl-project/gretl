@@ -88,7 +88,8 @@
 	     <keyword>pergm</keyword>
 	     <keyword>plot</keyword>    
 	     <keyword>pooled</keyword>
-	     <keyword>print</keyword>  
+	     <keyword>print</keyword>
+             <keyword>printf</keyword>  
 	     <keyword>probit</keyword>
 	     <keyword>pvalue</keyword>  
 	     <keyword>quit</keyword>

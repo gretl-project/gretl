@@ -435,7 +435,8 @@ int _reserved (const char *str)
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
 			     "full", "subdum", 
-			     "t", "annual", "qtrs", "months", "hrs", "i", "obs",
+			     "t", "annual", "qtrs", "months", "hrs", 
+			     "i", "obs", 
 			     NULL};
     int i = 0;
 
@@ -469,7 +470,7 @@ int _reserved (const char *str)
 	    case 16: case 17: case 18: case 19: case 20:
 		otheruse(str, _("plotting variable"));
 		break;
-	    case 21: case 22:
+	    case 21: case 22: 
 		otheruse(str, _("internal variable"));
 		break;
 	    default:
@@ -3146,7 +3147,7 @@ static void varerror (const char *ss)
         sprintf(gretl_errmsg,
 		_("uhat can be used only in genr.  First use the command: "
 		  "genr newname = uhat"));
-    else if (ss[0] == '$') 
+    else if (*ss == '$') 
 	sprintf(gretl_errmsg, _("Reserved var. names starting with "
 				"$ can be used only in genr.\nFirst use the "
 				"command:  genr newname = %s"), ss);
@@ -3157,73 +3158,89 @@ static void varerror (const char *ss)
 int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
      /* for "sim" command */
 {
-    int f, i, t, t1, t2, m, nv, pv, *isconst;
-    char varname[32], tmpstr[MAXLEN], parm[9], **toks;
-    double xx, yy, *a;
+    int f, i, t, t1, t2, m, nv, pv;
+    char varname[9], parm[16], tmpstr[MAXLEN];
+    char *isconst = NULL, **toks = NULL;
+    double xx, yy, *a = NULL;
+    int vtok = 2, err = 0;
+
+    *gretl_errmsg = '\0';
 
     f = _count_fields(cmd);
-    m = f - 4;
+    m = f - 3;
 
     a = malloc(m * sizeof *a);
     isconst = malloc(m * sizeof *isconst);
-    toks = malloc(f * 9);
+    toks = malloc((f - 1) * sizeof *toks);
 
-    if (a == NULL || isconst == NULL || toks == NULL) return E_ALLOC;
+    if (a == NULL || isconst == NULL || toks == NULL) {
+	err = E_ALLOC;
+	goto sim_bailout;
+    }
 
     for (i=0; i<m; i++) isconst[i] = 1;
 
     *tmpstr = 0;
     strncat(tmpstr, cmd, MAXLEN - 1);
     
-    strtok(tmpstr, " ");
+    strtok(tmpstr, " "); /* discard the "sim" */
     for (i=0; i<f-1; i++) {
 	toks[i] = strtok(NULL, " ");
     }
 
-    /* try getting valid obs from stobs and endobs */
-    t1 = dateton(toks[0], pdinfo);
-    t2 = dateton(toks[1], pdinfo);
-    if (strlen(gretl_errmsg) || t1 < 0 || t1 > t2 || t2 > pdinfo->n) {
-	free(a);
-	free(isconst);
-	free(toks);
-	return 1;
+    /* allow for "full" in place of starting and ending dates */
+    if (!strcmp(toks[0], "full")) {
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
+	vtok = 1;
+    } else {
+	m--;
+	/* try getting valid obs from stobs and endobs */
+	t1 = dateton(toks[0], pdinfo);
+	t2 = dateton(toks[1], pdinfo);
+	if (*gretl_errmsg || t1 < 0 || t1 > t2 || t2 >= pdinfo->n) {
+
+	    if (t1 < 0 || t2 >= pdinfo->n) {
+		strcpy(gretl_errmsg, _("Observation number out of bounds"));
+	    } else if (t1 > t2 ) {
+		strcpy(gretl_errmsg, _("Invalid null sample"));
+	    }
+
+	    err = 1;
+	    goto sim_bailout;
+	}
     }
 
     /* name of var to simulate */
     *varname = 0;
-    strncat(varname, toks[2], 8);
+    strncat(varname, toks[vtok], 8);
     nv = varindex(pdinfo, varname);
 
     if (nv > 0 && nv < pdinfo->v && pdinfo->vector[nv] == 0) {
 	sprintf(gretl_errmsg, _("variable %s is a scalar"), 
 		pdinfo->varname[nv]);
-	free(a);
-	free(toks);
-	return 1;
+	err = 1;
+	goto sim_bailout;
     }
 		
     if (nv == 0 || nv >= pdinfo->v) {
 	sprintf(gretl_errmsg, (nv)? _("For 'sim', the variable must already "
 				      "exist") :
 		_("You can't use the constant for this purpose"));
-	free(a);
-	free(isconst);
-	free(toks);
-	return 1;
+	err = 1;
+	goto sim_bailout;
     }
 
     /* get the parameter terms */
     for (i=0; i<m; i++) {
-	strcpy(parm, toks[i+3]);
-	if (isalpha((unsigned char) parm[0])) {
+	*parm = '\0';
+	strncat(parm, toks[i + vtok + 1], sizeof parm - 1);
+	if (isalpha((unsigned char) *parm)) {
 	    pv = varindex(pdinfo, parm);
 	    if (pv == 0 || pv >= pdinfo->v) {
 		sprintf(gretl_errmsg, _("Bad varname '%s' in sim"), parm);
-		free(a);
-		free(isconst);
-		free(toks);
-		return 1;
+		err = 1;
+		goto sim_bailout;
 	    } else {
 		isconst[i] = !pdinfo->vector[pv];
 		/*  fprintf(fp, "param[%d] is a variable, %d\n", i, pv); */ 
@@ -3257,11 +3274,13 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	(*pZ)[nv][t] = xx;
     }
 
+ sim_bailout:
+
     free(a);
     free(isconst);
     free(toks);
 
-    return 0;
+    return err;
 }
 
 /* .......................................................... */

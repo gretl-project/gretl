@@ -91,3 +91,7 @@ int pprintf (PRN *prn, const char *template, ...);
 int pputs (PRN *prn, const char *s);
 
 int pputc (PRN *prn, int c);
+
+int do_printf (const char *line, double ***pZ, 
+	       DATAINFO *pdinfo, MODEL *pmod,
+	       PRN *prn);

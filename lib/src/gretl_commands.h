@@ -90,6 +90,7 @@ typedef enum {
     PLOT,    
     POOLED,
     PRINT, 
+    PRINTF,
     PROBIT,
     PVALUE,  
     QUIT, 

@@ -648,7 +648,7 @@ void exec_line (char *line, PRN *prn)
     case MULTIPLY:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
-    case PRINT:
+    case PRINT: 
     case SUMMARY:
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
@@ -1234,6 +1234,10 @@ void exec_line (char *line, PRN *prn)
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  batch, optflag, prn);
 	if (err) pputs(prn, _("Failed to generate periodogram\n"));
+	break;
+
+    case PRINTF:
+	err = do_printf(line, &Z, datainfo, models[0], prn);
 	break;
 
     case PVALUE:

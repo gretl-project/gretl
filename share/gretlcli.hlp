@@ -1136,6 +1136,31 @@ print "Literal string" prints the given string.  The closing quote is not
 required, but the opening quote is needed to trigger this behavior.
 
 #
+printf
+@Printing
+
+Prints scalar values under the control of a format string (providing a small
+subset of the printf() statement in C).  Recognized formats are "%g" and "%f",
+in each case with the various modifiers available in C.  Examples: the format
+"%.10g" prints a value to 10 significant figures; "%12.6f" prints a value to 6
+decimal places, with a width of 12 characters.  
+
+The format string itself must be enclosed in double quotes.  The values to be
+printed must follow the format string, separated by commas.  These values
+should take the form of either (a) the names of variables in the dataset, or
+(b) expressions that are valid for the "genr" command.  The following example
+prints the values of two variables plus that of a calculated expression:
+
+ols 1 0 2 3
+genr b = coeff(2)
+genr se_b = stderr(2)
+printf "b = %.8g, standard error %.8g, t = %.4f\n", b, se_b, b/se_b
+
+The maximum length of a format string is 127 characters.  The escape sequences
+"\n" (newline), "\t" (tab), "\v" (vertical tab) and "\\" (literal backslash)
+are recognized.  To print a literal percent sign, use "%%".
+
+#
 probit
 @Estimation
 Usage:          probit depvar indepvars

@@ -150,7 +150,6 @@ void delchar (int c, char *str)
 	if (str[i] != c)
 	    str[j++] = str[i];
     str[j] = '\0';
-
 }
 
 /**

@@ -4749,7 +4749,7 @@ int gui_exec_line (char *line,
     case MULTIPLY:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
-    case PRINT:
+    case PRINT: 
     case SUMMARY:
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
@@ -5364,6 +5364,12 @@ int gui_exec_line (char *line,
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  1, oflag, prn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
+	break;
+
+    case PRINTF:
+	err = do_printf(line, &Z, datainfo, 
+			(last_model == 's')? models[0] : models[2], 
+			prn);
 	break;
 
     case PVALUE:

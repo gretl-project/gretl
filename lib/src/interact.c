@@ -222,6 +222,7 @@ static int aliased (char *cmd)
                        c == NLS || \
                        c == DATA || \
 	               c == GENR || \
+                       c == PRINTF || \
                        c == OUTFILE)
 
 /* ........................................................... */

@@ -1716,3 +1716,211 @@ int pputc (PRN *prn, int c)
 
     return 0;
 }
+
+/* apparatus for user-defined printf statements */
+
+/* #define PRINTF_DEBUG */
+
+static int print_arg (const char **pfmt, double val, PRN *prn)
+{
+    char fmt[16];
+    int fc = *(*pfmt + 1);
+    size_t n = 0;
+    int err = 0;
+
+    *fmt = '%';
+
+    if (fc == 'g' || fc == 'f') {
+	fmt[1] = fc;
+	fmt[2] = '\0';
+	n = 2;
+    } else {
+	sscanf(*pfmt + 1, "%14[^gf]", fmt + 1);
+	n = strlen(fmt);
+	fc = *(*pfmt + n);
+	fmt[n] = fc;
+	fmt[++n] = '\0';
+    }
+
+    if (n == 0 || (fc != 'g' && fc != 'f')) err = 1;
+    else {
+#ifdef PRINTF_DEBUG
+	fprintf(stderr, "fmt='%s', val = %g\n", fmt, val);
+#endif
+	pprintf(prn, fmt, val);
+	*pfmt += n;
+    }
+    
+    return err;
+}
+
+static int handle_escape (int c, PRN *prn)
+{
+    int err = 0;
+
+    switch (c) {
+    case 'n':
+	pputc(prn, '\n');
+	break;
+    case 't':
+	pputc(prn, '\t');
+	break;
+    case 'v':
+	pputc(prn, '\v');
+	break;
+    case '\\':
+	pputc(prn, '\\');
+	break;
+    default:
+	err = 1;
+    }
+
+    return err;
+}
+
+static int output_format_only (const char *s, PRN *prn)
+{
+    int err = 0;
+
+    while (*s) {
+	if (*s == '\\') {
+	    err = handle_escape(*(s+1), prn);
+	    s++;
+	} else {
+	    pputc(prn, *s);
+	}
+	s++;
+    }
+
+    return err;
+}
+
+static int get_generated_value (const char *argv, double *val,
+				double ***pZ, DATAINFO *pdinfo,
+				MODEL *pmod)
+{
+    char *genline = malloc(strlen(argv) + 12);
+    int err = 0;
+
+    if (genline == NULL) {
+	err = E_ALLOC;
+    } else {
+	sprintf(genline, "genr argv=%s", argv);
+	err = generate(pZ, pdinfo, genline, 0, pmod, 0);
+	free(genline);
+	if (!err) {
+	    *val = (*pZ)[pdinfo->v - 1][0];
+	    err = dataset_drop_var(pdinfo->v - 1, pZ, pdinfo);
+	}
+    }
+
+    return err;
+}
+
+int do_printf (const char *line, double ***pZ, 
+	       DATAINFO *pdinfo, MODEL *pmod,
+	       PRN *prn)
+{
+    const char *p;
+    char format[128];
+    char *argv, *str = NULL;
+    double *vals = NULL;
+    int i, argc = 0, cnvc = 0;
+    int err = 0;
+
+#ifdef PRINTF_DEBUG
+    fprintf(stderr, "do_printf: line='%s'\n", line);
+#endif
+
+    *gretl_errmsg = '\0';
+
+    line += 7; /* skip "printf" */
+    if (sscanf(line, "\"%127[^\"]\"", format) != 1) {
+	return 1;
+    }
+
+#ifdef PRINTF_DEBUG
+    fprintf(stderr, "do_printf: format='%s'\n", format);
+#endif
+
+    p = format;
+    while (*p) {
+	if (*p == '%') {
+	    if (*(p+1) == '%') p++;
+	    else cnvc++;
+	}
+	p++;
+    }
+
+    line += strlen(format) + 2;
+    if (*line != ',') {
+	err = output_format_only(format, prn);
+	return err;
+    }
+
+    line++;
+    p = line;
+    while (*p) {
+	if (*p == ',') argc++;
+	p++;
+    }
+
+    argc++;
+    if (argc != cnvc) {
+#ifdef PRINTF_DEBUG
+	fprintf(stderr, "do_printf: argc = %d but conversions = %d\n",
+		argc, cnvc);
+#endif
+	err = 1;
+	goto printf_bailout;
+    }
+
+    vals = malloc(argc * sizeof *vals);
+    str = malloc(strlen(line) + 1);
+    if (vals == NULL || str == NULL) {
+	err = E_ALLOC;
+	goto printf_bailout;
+    }
+
+    strcpy(str, line);
+    for (i=0; i<argc; i++) {
+	int v;
+
+	argv = strtok((i > 0)? NULL : str, ",");
+	chopstr(argv);
+	v = varindex(pdinfo, argv);
+	if (v < pdinfo->v) {
+	    /* simple varname */
+	    if (pdinfo->vector[v]) vals[i] = (*pZ)[v][pdinfo->t1];
+	    else vals[i] = (*pZ)[v][0];
+	} else {
+	    err = get_generated_value(argv, &vals[i], pZ, pdinfo, pmod);
+	}
+	if (err) goto printf_bailout;
+    }    
+
+    p = format;
+    i = 0;
+    while (*p && !err) {
+	if (*p == '%') {
+	    if (*(p + 1) == '%') {
+		pputc(prn, '%');
+		p += 2;
+	    } else {
+		err = print_arg(&p, vals[i++], prn);
+	    }
+	} else if (*p == '\\') {
+	    err = handle_escape(*(p + 1), prn);
+	    p += 2;
+	} else {
+	    pputc(prn, *p);
+	    p++;
+	}
+    }
+
+ printf_bailout:
+    free(vals);
+    free(str);
+
+    return err;
+}

@@ -1,5 +1,6 @@
 version 1.2.0
 - add "rename" command (rename a variable)
+- add "printf" command for generating formatted output
 - "delete" command: add the ability to delete a specific
   variable, identified by its number
 - When adding a variable to the dataset from a model window,
@@ -19,10 +20,13 @@ version 1.2.0
 - genr command: add facility for using date strings in boolean
   comparisons, e.g. "genr dummy = t > 1973:4" will work for 
   quarterly data
+- Allow '#' comments in loop constructions
+- sim command: allow "full" in place of specifying starting and
+  ending observations, to simulate over the full sample range
 - VARs: add facility to separate deterministic terms such as 
   trend and dummies from the other variables in the regression 
   list; add Durbin-Watson statistic to model printouts; add 
-  printing of impulse responses and variance decompositions
+  impulse responses and variance decompositions
 - Improvements to data-editing spreadsheet in gtk-2.0 version
 - New, improved dialogs for setting the sample range and sub-
   sampling using a dummy variable
