@@ -267,7 +267,7 @@ tex_escape
 </SECTION>
 
 <SECTION>
-<FILE>utils</FILE>
+<FILE>gretl_utils</FILE>
 free_model
 dataset_is_time_series
 dataset_is_panel

@@ -1,6 +1,8 @@
-07/24/2002 version 0.999
+08/25/2002 version 0.999
 - add support for gtk 2.0 and gnome 2.0
 - enhanced gui with gtk 2.0
+- add "make check" target to test against the NIST reference
+  data files for numerical accuracy
 - improve support for building on win32
 - bug fixes in boxplot functions
 - always show 6 significant figures for coefficient estimates

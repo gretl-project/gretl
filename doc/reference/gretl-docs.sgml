@@ -1,4 +1,4 @@
-<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 <!ENTITY gretl-commands SYSTEM "sgml/commands.sgml">
 <!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">
 <!ENTITY gretl-dataio SYSTEM "sgml/dataio.sgml">
@@ -19,7 +19,7 @@
 <!ENTITY gretl-strutils SYSTEM "sgml/strutils.sgml">
 <!ENTITY gretl-subsample SYSTEM "sgml/subsample.sgml">
 <!ENTITY gretl-texprint SYSTEM "sgml/texprint.sgml">
-<!ENTITY gretl-utils SYSTEM "sgml/utils.sgml">
+<!ENTITY gretl-utils SYSTEM "sgml/gretl_utils.sgml">
 <!ENTITY gretl-var SYSTEM "sgml/var.sgml">
 ]>
 <article id="index">

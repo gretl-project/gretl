@@ -82,6 +82,11 @@ cli_read_registry
 </SECTION>
 
 <SECTION>
+<FILE>discrete</FILE>
+logit_probit
+</SECTION>
+
+<SECTION>
 <FILE>errors</FILE>
 gretl_errno
 error_codes
@@ -141,11 +146,6 @@ open_gnuplot_pipe
 go_gnuplot
 free_plot
 termtype_to_termstr
-</SECTION>
-
-<SECTION>
-<FILE>discrete</FILE>
-logit_probit
 </SECTION>
 
 <SECTION>
@@ -331,6 +331,18 @@ LIBGRETL_AGE
 </SECTION>
 
 <SECTION>
+<FILE>calendar</FILE>
+MISSOBS
+get_epoch_day
+daily_obs_number
+daily_date_string
+missobs_vector
+undo_repack_missing
+repack_missing
+get_misscount
+</SECTION>
+
+<SECTION>
 <FILE>gretl_utils</FILE>
 free_model
 dataset_is_time_series
@@ -383,17 +395,5 @@ balanced_panel
 get_xvalue
 free_gretl_mp_results
 gretl_mp_results_new
-</SECTION>
-
-<SECTION>
-<FILE>calendar</FILE>
-MISSOBS
-get_epoch_day
-daily_obs_number
-daily_date_string
-missobs_vector
-undo_repack_missing
-repack_missing
-get_misscount
 </SECTION>
 

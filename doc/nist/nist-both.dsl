@@ -317,7 +317,7 @@
 (define ($section-separator$)
   (empty-sosofo)) 
 
-(define %stylesheet% "dbtex.css")
+(define %stylesheet% "../css-gretl.html")
 
 (define %html-pubid%
   ;; REFENTRY html-pubid
