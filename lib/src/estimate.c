@@ -2118,7 +2118,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL white;
     int err = 0;
 
-    if (pmod->ci == NLS) return E_NOTIMP;
+    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
+	return E_NOTIMP;
 
     gretl_model_init(&white, pdinfo);
 

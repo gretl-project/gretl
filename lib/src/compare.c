@@ -240,8 +240,11 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
 	omit.chisq = gretl_model_get_double(pmodB, "chisq");
     }
 
-    for (i=0; i<8; i++) 
-	if (pmodB->criterion[i] < pmodA->criterion[i]) omit.score++;
+    for (i=0; i<8; i++) { 
+	if (pmodB->criterion[i] < pmodA->criterion[i]) {
+	    omit.score++;
+	}
+    }
 
     return omit;
 }
@@ -348,7 +351,11 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     double trsq = 0.0, rho = 0.0; 
     int newvars = 0, err = 0;
 
-    if (orig->ci == TSLS || orig->ci == NLS) return E_NOTIMP;
+    if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
+	return E_NOTIMP;
+
+    if (orig->ci == LOGISTIC && aux_code != AUX_ADD)
+	return E_NOTIMP;
 
     /* temporarily re-impose the sample that was in force when the
        original model was estimated */
@@ -436,6 +443,14 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    } 
 	    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
 		*new = logit_probit(newlist, pZ, pdinfo, orig->ci);
+	    }
+	    else if (orig->ci == LOGISTIC) {
+		char lmaxstr[32];
+		double lmax;
+
+		lmax = gretl_model_get_double(orig, "lmax");
+		sprintf(lmaxstr, "lmax=%g", lmax);
+		*new = logistic_model(newlist, pZ, pdinfo, lmaxstr);
 	    }
 	    else {
 		*new = lsq(newlist, pZ, pdinfo, orig->ci, 1, rho);
@@ -569,16 +584,18 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     double rho = 0.0;
     int err = 0;
 
-    if (orig->ci == TSLS || orig->ci == NLS) return E_NOTIMP;
+    if (orig->ci == TSLS || orig->ci == NLS || orig->ci == ARMA) 
+	return E_NOTIMP;
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(orig, pdinfo);
 
-    if (orig->ci == AR) 
+    if (orig->ci == AR) { 
 	maxlag = orig->arinfo->arlist[orig->arinfo->arlist[0]];
-    else if (orig->ci == ARCH) 
+    } else if (orig->ci == ARCH) {
 	maxlag = orig->order;
+    }
     pdinfo->t1 = orig->t1 - maxlag;
 
     tmplist = malloc((orig->ncoeff + 2) * sizeof *tmplist);
@@ -623,6 +640,14 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *new = logit_probit(tmplist, pZ, pdinfo, orig->ci);
 	    new->aux = AUX_OMIT;
 	}
+	else if (orig->ci == LOGISTIC) {
+	    char lmaxstr[32];
+	    double lmax;
+
+	    lmax = gretl_model_get_double(orig, "lmax");
+	    sprintf(lmaxstr, "lmax=%g", lmax);
+	    *new = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
+	}
 	else {
 	    *new = lsq(tmplist, pZ, pdinfo, orig->ci, 1, rho);
 	}
@@ -644,8 +669,9 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    gretl_model_set_double(new, "chisq", chisq);
 	}
 	omit = omit_compare(orig, new);
-	if (orig->ci != AR && orig->ci != ARCH) 
+	if (orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
+	}
 	_difflist(orig->list, new->list, omitvars);
 	gretl_print_omit(&omit, omitvars, pdinfo, prn);     
 
@@ -948,7 +974,8 @@ int autocorr_test (MODEL *pmod, int order,
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
-    if (pmod->ci == NLS) return E_NOTIMP;
+    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
+	return E_NOTIMP;
 
     if (dataset_is_panel(pdinfo)) {
 	void *handle;
@@ -1706,7 +1733,8 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	return E_DATA;
     }
 
-    if (pmod->ci == TSLS) return E_NOTIMP;
+    if (pmod->ci == TSLS || pmod->ci == NLS || pmod->ci == ARMA) 
+	return E_NOTIMP;
 
     tmplist = malloc((pmod->list[0] + 1) * sizeof *tmplist);
     if (tmplist == NULL) return E_ALLOC;
@@ -1752,6 +1780,14 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	else if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    summod = logit_probit(tmplist, pZ, pdinfo, pmod->ci);
 	}
+	else if (pmod->ci == LOGISTIC) {
+	    char lmaxstr[32];
+	    double lmax;
+
+	    lmax = gretl_model_get_double(pmod, "lmax");
+	    sprintf(lmaxstr, "lmax=%g", lmax);
+	    summod = logistic_model(tmplist, pZ, pdinfo, lmaxstr);
+	}
 	else {
 	    summod = lsq(tmplist, pZ, pdinfo, pmod->ci, 1, rho);
 	}
@@ -1762,9 +1798,6 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	} else {
 	    int i;
 
-#if 0
-	    pprintf(prn, "testcoeff = %d\n", testcoeff);
-#endif
 	    pprintf(prn, "\n%s: ", _("Variables"));
 	    for (i=1; i<=sumvars[0]; i++) {
 		pprintf(prn, "%s ", pdinfo->varname[sumvars[i]]);

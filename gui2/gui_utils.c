@@ -2365,7 +2365,10 @@ static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/LaTeX", s);
 }
 
-/* ........................................................... */
+static void RESET_menu_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/Tests/Ramsey's RESET", s);
+}
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
@@ -2430,6 +2433,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
 	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
+	else if (pmod->ci == LOGISTIC) 
+	    RESET_menu_state(vwin->ifac, FALSE);
 	else if (pmod->ci == ARMA) {
 	    arma_menu_mod(vwin->ifac);
 	    if (arma_by_x12a(pmod)) {

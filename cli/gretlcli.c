@@ -165,7 +165,7 @@ int model_test_start (const int id, PRN *prn, int ols_only)
     }    
     else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3) &&
 	     strncmp(modelspec[m].cmd, "pooled", 6)) {
-	pputs(prn, _("This command only available for OLS models "
+	pputs(prn, _("This command is only available for OLS models "
 		"at present\n"));
 	return 1;
     }
@@ -756,8 +756,7 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
-	    ++model_count;
-	    (models[0])->ID = model_count;
+	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
 	}	
 	break;
@@ -800,8 +799,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn); 
 	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
 	break;
@@ -813,8 +811,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	/* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
 	break;
@@ -872,8 +869,7 @@ void exec_line (char *line, PRN *prn)
 		errmsg(err, prn);
 		break;
 	    }
-	    ++model_count;
-	    (models[0])->ID = model_count;
+	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
 	    if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
 	} 
@@ -1042,8 +1038,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn);
 	break;
@@ -1176,8 +1171,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); 
 	break;	
@@ -1190,8 +1184,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); 
 	break;
@@ -1251,8 +1244,7 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[0], NULL);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (cmd.opt != 'q') {
 	    printmodel(models[0], datainfo, prn);
 	}
@@ -1505,8 +1497,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);
 	/* is this OK? */
 	if (cmd.opt) {

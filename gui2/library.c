@@ -1994,8 +1994,7 @@ static int model_output (MODEL *pmod, PRN *prn)
 {
     if (model_error(pmod)) return 1;
 
-    ++model_count;
-    pmod->ID = model_count;
+    pmod->ID = ++model_count;
     if (printmodel(pmod, datainfo, prn)) {
 	pmod->errcode = E_NAN; /* some statistics were NAN */
     }
@@ -4744,7 +4743,7 @@ int execute_script (const char *runfile, const char *buf,
 
 /* ........................................................... */
 
-static int script_model_test (const int id, PRN *prn, const int ols_only)
+static int script_model_test (int id, PRN *prn, int ols_only)
 {
     /* need to work in terms of modelspec here, _not_ model_count */
 
@@ -5030,18 +5029,18 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}	
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	printmodel(models[0], datainfo, prn);	
 	break;
 
     case BXPLOT:
 	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
 	    break;
-	if (cmd.nolist) 
+	if (cmd.nolist) { 
 	    err = boolean_boxplots(line, &Z, datainfo, (cmd.opt != 0));
-	else
+	} else {
 	    err = boxplots(cmd.list, NULL, &Z, datainfo, (cmd.opt != 0));
+	}
 	break;
 
     case CHOW:
@@ -5089,8 +5088,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
@@ -5103,8 +5101,7 @@ int gui_exec_line (char *line,
             errmsg(err, prn);
             break;
         }
-        ++model_count;
-        (models[0])->ID = model_count;
+        (models[0])->ID = ++model_count;
         printmodel(models[0], datainfo, prn);
         /* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
         break;
@@ -5164,8 +5161,7 @@ int gui_exec_line (char *line,
 		errmsg(err, prn);
 		break;
 	    }
-	    ++model_count;
-	    (models[0])->ID = model_count;
+	    (models[0])->ID = ++model_count;
 	    printmodel(models[0], datainfo, prn);
 	    if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
 	} 
@@ -5203,16 +5199,18 @@ int gui_exec_line (char *line,
 	if ((err = script_model_test(0, prn, (cmd.ci == EQNPRINT)))) 
 	    break;
 	strcpy(texfile, cmd.param);
-	if (cmd.ci == EQNPRINT)
+	if (cmd.ci == EQNPRINT) {
 	    err = eqnprint(models[0], datainfo, &paths, 
 			   texfile, model_count, cmd.opt);
-	else
+	} else {
 	    err = tabprint(models[0], datainfo, &paths, 
 			   texfile, model_count, cmd.opt);
-	if (err) 
+	}
+	if (err) {
 	    pprintf(prn, _("Couldn't open tex file for writing\n"));
-	else 
+	} else {
 	    pprintf(prn, _("Model printed to %s\n"), texfile);
+	}
 	break;
 
     case FCAST:
@@ -5252,7 +5250,7 @@ int gui_exec_line (char *line,
 	    plotvar(&Z, datainfo, "time");
 	    cmd.list = myrealloc(cmd.list, 4 * sizeof(int));
 	    cmd.list[0] = 3; 
-	    cmd.list[1] = (models[0])->list[1];
+	    cmd.list[1] = (models[0])->list[1]; /* FIXME arma */
 	    cmd.list[2] = varindex(datainfo, "autofit");
 	    cmd.list[3] = varindex(datainfo, "time");
 	    lines[0] = cmd.opt;
@@ -5307,7 +5305,6 @@ int gui_exec_line (char *line,
 			      &Z, datainfo, &paths, &plot_count, plotflags);
 	    }
 	} else {
-	    /* multiple scatter plots */
 	    err = multi_scatters(cmd.list, atoi(cmd.param), &Z, 
 				 datainfo, &paths, &plot_count, plotflags);
 	}
@@ -5343,8 +5340,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn);
@@ -5474,8 +5470,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
@@ -5489,8 +5484,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	if (cmd.opt) outcovmx(models[0], datainfo, 0, prn); 
@@ -5553,8 +5547,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (cmd.opt != 'q' && printmodel(models[0], datainfo, prn)) {
 	    (models[0])->errcode = E_NAN;
 	}
@@ -5769,8 +5762,7 @@ int gui_exec_line (char *line,
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	++model_count;
-	(models[0])->ID = model_count;
+	(models[0])->ID = ++model_count;
 	if (printmodel(models[0], datainfo, prn))
 	    (models[0])->errcode = E_NAN;
 	/* is this OK? */
@@ -5808,9 +5800,8 @@ int gui_exec_line (char *line,
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}
     }
-		
-    if (err) return 1;
-    else return 0;
+
+    return (err != 0);
 }
 
 /* ........................................................... */
