@@ -585,7 +585,8 @@ void save_session (char *fname)
 		strcpy((session.graphs[i])->fname, tmp);
 	    }
 	}
-	fprintf(fp, "graph %d \"%s\" %s\n", 
+	fprintf(fp, "%s %d \"%s\" %s\n", 
+		((session.graphs[i])->name[0] == 'G')? "graph" : "plot",
 		(session.graphs[i])->ID, 
 		(session.graphs[i])->name, 
 		(session.graphs[i])->fname);

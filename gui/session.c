@@ -111,8 +111,9 @@ static void data_popup_activated (GtkWidget *widget, gpointer data);
 gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
 gui_obj *session_new_model (void);
 gui_obj *session_add_object (gpointer data, int sort);
-void open_gui_model (gui_obj *gobj);
-void open_gui_graph (gui_obj *gobj);
+static void open_gui_model (gui_obj *gobj);
+static void open_gui_graph (gui_obj *gobj);
+static void open_boxplot (gui_obj *gobj);
 static void session_open_object (GtkWidget *widget, 
 				 GtkIconListItem *item, GdkEvent *event,
 				 gpointer data);
@@ -169,17 +170,29 @@ char *space_to_score (char *str)
 
 /* ........................................................... */
 
-void add_last_graph (void)
+void add_last_graph (gpointer data, guint code, GtkWidget *w)
 {
     char grname[12], pltname[MAXLEN];
     int i = session.ngraphs;
+    static int boxplot_count;
 
-    sprintf(grname, "Graph %d", plot_count + 1);
-    sprintf(pltname, "%ssession.Graph_%d", paths.userdir, plot_count + 1);
-    if (copyfile(paths.plotfile, pltname)) {
-	errbox("Failed to copy graph commands file");
-	return;
-    }
+    if (code == 0) { /* gnuplot graph */
+	sprintf(pltname, "%ssession.Graph_%d", paths.userdir, plot_count + 1);
+	sprintf(grname, "Graph %d", plot_count + 1);
+	if (copyfile(paths.plotfile, pltname)) {
+	    errbox("Failed to copy graph commands file");
+	    return;
+	}
+    } else { /* gretl boxplot */
+	sprintf(pltname, "%ssession.Plot_%d", paths.userdir, boxplot_count + 1);
+	sprintf(grname, "Boxplot %d", boxplot_count + 1);
+	boxplot_count++;
+	if (copyfile("boxdump", pltname)) {
+	    errbox("Failed to copy boxplot file");
+	    return;
+	}
+	remove("boxdump");
+    }	
 
     /* write graph into session struct */
     if (session.ngraphs)
@@ -193,8 +206,8 @@ void add_last_graph (void)
     session.graphs[i] = mymalloc(sizeof(GRAPHT));
     if (session.graphs[i] == NULL) return;
 
-    (session.graphs[i])->name = mymalloc(64);
-    (session.graphs[i])->fname = mymalloc(64);
+    (session.graphs[i])->name = mymalloc(24);
+    (session.graphs[i])->fname = mymalloc(MAXLEN);
     if ((session.graphs[i])->name == NULL || 
 	(session.graphs[i])->fname == NULL) {
 	return;
@@ -203,8 +216,10 @@ void add_last_graph (void)
     strcpy((session.graphs[i])->name, grname);
     (session.graphs[i])->ID = plot_count++;
     session.ngraphs += 1;
-    if (iconview == NULL) view_session();
-    else session_add_object(session.graphs[i], 'g');   
+    if (iconview == NULL) 
+	view_session();
+    else 
+	session_add_object(session.graphs[i], (code == 0)? 'g' : 'b');   
 }
 
 /* ........................................................... */
@@ -320,8 +335,8 @@ static int alloc_graph (GRAPHT **pgraph)
 {
     *pgraph = mymalloc(sizeof **pgraph);
     if (*pgraph == NULL) return 1;
-    (*pgraph)->name = mymalloc(64);
-    (*pgraph)->fname = mymalloc(64);
+    (*pgraph)->name = mymalloc(24);
+    (*pgraph)->fname = mymalloc(128);
     if ((*pgraph)->name == NULL || (*pgraph)->fname == NULL) 
 	return 1;
     (*pgraph)->ID = 0;
@@ -484,7 +499,7 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 		rebuild->model_name = 
 		    myrealloc(rebuild->model_name,
 			      rebuild->nmodels * sizeof(char *));
-		rebuild->model_name[i] = mymalloc(64);
+		rebuild->model_name[i] = mymalloc(24);
 		if (rebuild->model_ID == NULL ||
 		    rebuild->model_name == NULL ||
 		    rebuild->model_name[i] == NULL) {
@@ -494,7 +509,7 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 	    }
 	    rebuild->model_ID[i] = id;
 	    tmp = strchr(line, '"') + 1;
-	    strncpy(rebuild->model_name[i], tmp, 63);
+	    strncpy(rebuild->model_name[i], tmp, 23);
 	    n = strlen(rebuild->model_name[i]);
 	    for (j=n; j>0; j--) {
 		if (rebuild->model_name[i][j] == '"') {
@@ -505,7 +520,7 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 	    i++;
 	    continue;
 	}
-	if (strcmp(object, "graph") == 0) {
+	if (!strcmp(object, "graph") || !strcmp(object, "plot")) {
 	    psession->ngraphs += 1;
 	    if (k > 0) {
 		psession->graphs = myrealloc(psession->graphs,
@@ -520,7 +535,7 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 		return 1;
 	    }
 	    tmp = strchr(line, '"') + 1;
-	    strncpy((psession->graphs[k])->name, tmp, 63);
+	    strncpy((psession->graphs[k])->name, tmp, 23);
 	    n = strlen((psession->graphs[k])->name);
 	    for (j=n-1; j>0; j--) {
 		if ((psession->graphs[k])->name[j] == '"') {
@@ -667,8 +682,11 @@ void view_session (void)
 #endif
 	session_add_object(session.models[i], 'm');
     }
-    for (i=0; i<session.ngraphs; i++)
-	session_add_object(session.graphs[i], 'g');
+    for (i=0; i<session.ngraphs; i++) {
+	/* distinguish gnuplot graphs from gretl boxplots */
+	session_add_object(session.graphs[i], 
+			   ((session.graphs[i])->name[0] == 'G')? 'g' : 'b');
+    }
 
     gtk_widget_show(iconlist1);
     gtk_widget_show(iconview);
@@ -729,6 +747,8 @@ void session_open_object (GtkWidget *widget,
 	switch (gobj->sort) {
 	case 'm':
 	    open_gui_model(gobj); break;
+	case 'b':
+	    open_boxplot(gobj); break;
 	case 'g':
 	    open_gui_graph(gobj); break;
 	case 'd':
@@ -750,7 +770,6 @@ void session_open_object (GtkWidget *widget,
 	 gobj->sort == 'd' ||
 	 gobj->sort == 's'))
 	object_popup_show(item, (GdkEventButton *) event);
-  
 }
 
 /* ........................................................... */
@@ -835,7 +854,7 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, "Save As...") == 0) 
 	file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
     else if (strcmp(item, "Add last graph") == 0)
-	add_last_graph();
+	add_last_graph(NULL, 0, NULL);
 }
 
 /* ........................................................... */
@@ -971,6 +990,7 @@ gui_obj *session_add_object (gpointer data, int sort)
 	pmod = (MODEL *) data;
 	name = g_strdup(pmod->name);
 	break;
+    case 'b':
     case 'g':
 	graph = (GRAPHT *) data;
 	name = g_strdup(graph->name);
@@ -1015,6 +1035,7 @@ gui_obj *session_add_object (gpointer data, int sort)
 	    free(str);
 	}
     }
+    else if (sort == 'b') gobj->data = graph;
     else if (sort == 'd') gobj->data = paths.datfile;
     else if (sort == 'i') gobj->data = paths.hdrfile;
     else if (sort == 's') gobj->data = cmdfile;
@@ -1026,7 +1047,7 @@ gui_obj *session_add_object (gpointer data, int sort)
 
 /* ........................................................... */
 
-void open_gui_model (gui_obj *gobj)
+static void open_gui_model (gui_obj *gobj)
 { 
     print_t *prn;
     MODEL *pmod = (MODEL *) gobj->data;
@@ -1038,7 +1059,7 @@ void open_gui_model (gui_obj *gobj)
 
 /* ........................................................... */
 
-void open_gui_graph (gui_obj *gobj)
+static void open_gui_graph (gui_obj *gobj)
 {
     char buf[MAXLEN];
     GRAPHT *graph = (GRAPHT *) gobj->data;
@@ -1052,6 +1073,18 @@ void open_gui_graph (gui_obj *gobj)
     if (system(buf))
 	errbox("gnuplot command failed");
 #endif
+}
+
+/* ........................................................... */
+
+extern int retrieve_boxplot (const char *fname);
+
+static void open_boxplot (gui_obj *gobj)
+{
+    GRAPHT *graph = (GRAPHT *) gobj->data;
+
+    if (retrieve_boxplot(graph->fname)) 
+	errbox("Failed to reconstruct boxplot");
 }
 
 /* ........................................................... */
@@ -1072,7 +1105,7 @@ gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort)
 
     switch (sort) {
     case 'm': image = model_xpm; break;
-    case 'g': image = gnuplot_xpm; break;
+    case 'b': case 'g': image = gnuplot_xpm; break;
     case 'd': image = dot_sc_xpm; break;
     case 'i': image = xfm_info_xpm; break;
     case 's': image = text_xpm; break;

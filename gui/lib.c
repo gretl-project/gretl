@@ -3154,6 +3154,7 @@ static int gui_exec_line (char *line,
 	break;
 
     case BXPLOT:
+	if (exec_code == REBUILD_EXEC) break;
 	err = boxplots (command.list, &Z, datainfo, (oflag != 0));
 	break;
 
