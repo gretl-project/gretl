@@ -352,7 +352,7 @@ void norm_lookup (PRN *prn, int gui)
     pprintf(prn, _("(For example, for a two-tailed test using the 10%% "
 	    "significance\nlevel, use the 0.05 column.)\n\n"));
     pprintf(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
-    pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f",
+    pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f\n",
 	    1.282, 1.645, 1.960, 2.326, 3.090);
     if (gui) other_tables(prn);
 }
