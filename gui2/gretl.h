@@ -133,6 +133,7 @@ enum extra_cmds {
     VIEW_LOG,
     VIEW_DATA,
     VIEW_SCRIPT,
+    VIEW_CODEBOOK,
     DATA_REPORT,
     SCRIPT_OUT,
     CONSOLE,
@@ -194,14 +195,8 @@ enum file_ops {
 #define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)
 
 enum browser_codes {
-    RAMU_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
-    RAMU_PS,
-    GREENE_DATA,
-    GREENE_PS,
-    JW_DATA,
-    TEXTBOOK_DATA,
-    PWT_DATA,
-    PWT_PS,
+    TEXTBOOK_DATA = FILE_OP_MAX + 1, /* don't collide with file_ops enum */
+    PS_FILES,
     NATIVE_DB,
     RATS_DB,
     REMOTE_DB,

@@ -165,8 +165,8 @@ RCVARS rc_vars[] = {
      N_("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
     {"olddat", N_("Use \".dat\" as default datafile suffix"), 
      N_("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
-    {"jwdata", N_("Toolbar folder icon opens Wooldridge data"), 
-     N_("Toolbar folder icon opens Ramanathan data"), 
+    {"jwdata", N_("Show Wooldridge data first"), 
+     N_("Show Ramanathan data first"), 
      &jwdata, 'B', 0, 5, NULL},
     {"Fixed_font", N_("Fixed font"), NULL, fixedfontname, 'U', MAXLEN, 0, NULL},
 #ifndef USE_GNOME

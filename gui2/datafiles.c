@@ -35,22 +35,35 @@ extern gint populate_dbfilelist (windata_t *ddata);
 extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
-char woolpath[MAXLEN];
+char jwpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
-static GtkWidget *files_notebook (windata_t *fdata, 
-				  GtkWidget **w1, GtkWidget **w2);
+static GtkWidget *files_notebook (windata_t *fdata, GtkWidget **datapages, 
+				  int code);
 static int populate_notebook_filelists (windata_t *fdata, 
-					GtkWidget *lbox1, 
-					GtkWidget *lbox2,
-					GtkWidget *notebook);
+					GtkWidget **datapages,
+					GtkWidget *notebook,
+					int code);
 gint populate_filelist (windata_t *fdata);
 void browser_open_data (GtkWidget *w, gpointer data);
 void browser_open_ps (GtkWidget *w, gpointer data);
 
 extern int jwdata;  /* settings.c */
 
+enum {
+    RAMU_DATA = 0,
+    GREENE_DATA,
+    JW_DATA,
+    PWT_DATA,
+    MAX_DATA,
+    RAMU_PS,
+    GREENE_PS,
+    PWT_PS,
+    MAX_PS
+} page_file_codes;
+
+#define N_PS_FILES 3
 
 /* ........................................................... */
 
@@ -113,7 +126,7 @@ static int read_data_descriptions (windata_t *fdata)
     else if (fdata->role == PWT_DATA)
 	build_path(pwtpath, "descriptions", fname, NULL);
     else if (fdata->role == JW_DATA)
-	build_path(woolpath, "jw_descriptions", fname, NULL);
+	build_path(jwpath, "jw_descriptions", fname, NULL);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
@@ -149,41 +162,27 @@ static int read_data_descriptions (windata_t *fdata)
 
 /* ........................................................... */
 
-static void get_textbook_file_path (const char *fname, char *fullname,
-				    const char *suffix)
-{
-    FILE *fp;
-
-    build_path(paths.datadir, fname, fullname, suffix);
-    fp = fopen(fullname, "r");
-    if (fp != NULL) {
-	fclose(fp);
-    } else {
-	build_path(woolpath, fname, fullname, suffix);
-    }
-}
-
-/* ........................................................... */
-
 static void browse_header (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     PRN *prn;
     gchar *fname;
+    gint file_code;
 
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), win->active_var,
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var,
 			 0, &fname);
 
-    if (win->role == PWT_DATA) { 
+    file_code = GPOINTER_TO_INT
+	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+
+    if (file_code == PWT_DATA)  
 	build_path(pwtpath, fname, hdrname, ".gdt");
-    } else if (win->role == RAMU_DATA) {
+    else if (file_code == RAMU_DATA) 
 	build_path(paths.datadir, fname, hdrname, ".gdt");
-    } else if (win->role == JW_DATA) {
-	build_path(woolpath, fname, hdrname, ".gdt");
-    } else if (win->role == TEXTBOOK_DATA) {
-	get_textbook_file_path(fname, hdrname, ".gdt");
-    } else if (win->role == GREENE_DATA) {
+    else if (file_code == JW_DATA) 
+	build_path(jwpath, fname, hdrname, ".gdt");
+    else if (file_code == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
@@ -208,25 +207,23 @@ static void browse_header (GtkWidget *w, gpointer data)
 
 void browser_open_data (GtkWidget *w, gpointer data)
 {
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     gchar *datname;
+    gint file_code;
 
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), win->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &datname);
 
-    if (win->role == PWT_DATA) {
+    file_code = GPOINTER_TO_INT
+	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+
+    if (file_code == PWT_DATA) 
 	build_path(pwtpath, datname, trydatfile, ".gdt");
-    }
-    else if (win->role == RAMU_DATA) {
+    else if (file_code == RAMU_DATA) 
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
-    }
-    else if (win->role == JW_DATA) {
-	build_path(woolpath, datname, trydatfile, ".gdt");
-    }
-    else if (win->role == TEXTBOOK_DATA) {
-	get_textbook_file_path(datname, trydatfile, ".gdt");
-    }
-    else if (win->role == GREENE_DATA) {
+    else if (file_code == JW_DATA) 
+	build_path(jwpath, datname, trydatfile, ".gdt");
+    else if (file_code == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
 	strcat(trydatfile, datname);
@@ -235,26 +232,30 @@ void browser_open_data (GtkWidget *w, gpointer data)
 
     g_free(datname);
 
-    verify_open_data(win, OPEN_DATA);
+    verify_open_data(vwin, OPEN_DATA);
 } 
 
 /* ........................................................... */
 
 void browser_open_ps (GtkWidget *w, gpointer data)
 {
-    windata_t *win = (windata_t *) data;
+    windata_t *vwin = (windata_t *) data;
     gchar *fname;
+    gint file_code;
 
-    tree_view_get_string(GTK_TREE_VIEW(win->listbox), win->active_var, 
+    tree_view_get_string(GTK_TREE_VIEW(vwin->listbox), vwin->active_var, 
 			 0, &fname);
 
-    if (win->role == PWT_PS)
+    file_code = GPOINTER_TO_INT
+	(g_object_get_data(G_OBJECT(vwin->listbox), "file_code"));
+
+    if (file_code == PWT_PS)
 	build_path(pwtpath, fname, scriptfile, ".inp");
     else
 	build_path(paths.scriptdir, fname, scriptfile, ".inp");
 
     g_free(fname);
-    gtk_widget_destroy(GTK_WIDGET(win->w));
+    gtk_widget_destroy(GTK_WIDGET(vwin->w));
 
     mkfilelist(3, scriptfile);
 
@@ -422,7 +423,8 @@ static void build_datafiles_popup (windata_t *win)
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
     GtkWidget *filebox, *openbutton, *midbutton, *closebutton;
-    GtkWidget *lbox1, *lbox2;
+    GtkWidget *datapages[MAX_DATA];
+    GtkWidget *pspages[N_PS_FILES];
     GtkWidget *main_vbox, *button_box;
     windata_t *fdata;
     int err = 0;
@@ -441,17 +443,11 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 		      fdata);
 
     switch (code) {
-    case RAMU_PS:
-    case GREENE_PS:
-    case PWT_PS:
+    case PS_FILES:
 	gtk_window_set_title(GTK_WINDOW(fdata->w), 
 			     _("gretl: practice files"));
 	browse_func = browser_open_ps;
 	break;
-    case RAMU_DATA:
-    case GREENE_DATA:
-    case JW_DATA:
-    case PWT_DATA:
     case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(fdata->w), 
 			     _("gretl: data files"));
@@ -478,7 +474,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     fdata->role = code;
 
     if (code == TEXTBOOK_DATA) {
-	filebox = files_notebook(fdata, &lbox1, &lbox2);
+	filebox = files_notebook(fdata, datapages, code);
+    } else if (code == PS_FILES) {
+	filebox = files_notebook(fdata, pspages, code);
     } else {
 	filebox = files_window(fdata);
     }
@@ -486,20 +484,17 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start(GTK_BOX(main_vbox), filebox, TRUE, TRUE, 0);
 
     /* popup menu? */
-    if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
-	|| code == JW_DATA || code == TEXTBOOK_DATA) { 
+    if (code == TEXTBOOK_DATA) { 
+	int i;
+
 	build_datafiles_popup(fdata);
-	if (code == TEXTBOOK_DATA) {
-	    g_signal_connect (G_OBJECT(lbox1), "button_press_event",
-			      G_CALLBACK(popup_menu_handler), 
-			      (gpointer) fdata->popup);
-	    g_signal_connect (G_OBJECT(lbox2), "button_press_event",
-			      G_CALLBACK(popup_menu_handler), 
-			      (gpointer) fdata->popup);
-	} else {
-	    g_signal_connect (G_OBJECT(fdata->listbox), "button_press_event",
-			      G_CALLBACK(popup_menu_handler), 
-			      (gpointer) fdata->popup);
+
+	for (i=RAMU_DATA; i<MAX_DATA; i++) {
+	    if (datapages[i] != NULL) {
+		g_signal_connect (G_OBJECT(datapages[i]), "button_press_event",
+				  G_CALLBACK(popup_menu_handler), 
+				  (gpointer) fdata->popup);
+	    }
 	}
     } 
 
@@ -528,8 +523,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			 G_CALLBACK(delete_widget), fdata->w); 
     }
 
-    if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
-	|| code == JW_DATA || code == TEXTBOOK_DATA || code == REMOTE_DB) {
+    if (code == TEXTBOOK_DATA || code == REMOTE_DB) {
 	midbutton = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
@@ -539,7 +533,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			 G_CALLBACK(browse_header), fdata);
     }
 
-    if (code == RAMU_DATA || code == JW_DATA || code == TEXTBOOK_DATA) {
+    if (code == TEXTBOOK_DATA) {
 	midbutton = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(midbutton), "clicked",
@@ -553,7 +547,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     /* put stuff into list box(es) */
     if (code == TEXTBOOK_DATA) {
-	err = populate_notebook_filelists(fdata, lbox1, lbox2, filebox);
+	err = populate_notebook_filelists(fdata, datapages, filebox, code);
+    } else if (code == PS_FILES) {
+	err = populate_notebook_filelists(fdata, pspages, filebox, code);
     } else {
 	err = populate_filelist(fdata);
     }
@@ -859,46 +855,97 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 }
 
 static void 
-datafiles_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
-			 guint page_num, windata_t *fdata)
+switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
+			   guint page_num, windata_t *fdata)
 {
-    if (page_num == 0) {
-	fdata->listbox = g_object_get_data(G_OBJECT(notebook), "w1");
-    } else if (page_num == 1) {
-	fdata->listbox = g_object_get_data(G_OBJECT(notebook), "w2");
-    }
+    char winnum[3];
+
+    sprintf(winnum, "%d", (int) page_num);
+    fdata->listbox = g_object_get_data(G_OBJECT(notebook), winnum);
 }
 
+static int page_missing (int i)
+{
+    if (i == JW_DATA && *jwpath == '\0') return 1;
+    if (i == PWT_DATA && *pwtpath == '\0') return 1;
+    if (i == PWT_PS && *pwtpath == '\0') return 1;
+    return 0;
+}
+
+/* below: construct a set of notebook pages for either
+   data files (Ramanathan, Wooldridge, etc) or practice
+   scripts.  creates the pages but does not fill them out.
+*/
+
 static GtkWidget *files_notebook (windata_t *fdata, 
-				  GtkWidget **w1, GtkWidget **w2)
+				  GtkWidget **pages,
+				  int code)
 {
     GtkWidget *notebook;
     GtkWidget *listpage;
     GtkWidget *label;
-    int role = fdata->role;
+    int i, j, role = fdata->role;
+    char winnum[3];
+    const gchar *data_tab_labels[] = {
+	"Ramanathan",
+	"Greene",
+	"Wooldridge",
+	"Penn World Table"
+    };
+    const gchar *ps_tab_labels[] = {
+	"Ramanathan",
+	"Greene",
+	"Penn World Table"
+    };
 
     notebook = gtk_notebook_new();
 
-    fdata->role = RAMU_DATA;
-    listpage = files_window(fdata);
-    label = gtk_label_new("Ramanathan");
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
-    *w1 = fdata->listbox;
-    g_object_set_data(G_OBJECT(notebook), "w1", *w1);
-
-    fdata->role = JW_DATA;
-    listpage = files_window(fdata);
-    label = gtk_label_new("Wooldridge");
-    gtk_widget_show(label);
-    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
-    *w2 = fdata->listbox;
-    g_object_set_data(G_OBJECT(notebook), "w2", *w2);
+    if (code == TEXTBOOK_DATA) {
+	j = 0;
+	for (i=RAMU_DATA; i<MAX_DATA; i++) {
+	    if (page_missing(i)) {
+		pages[i] = NULL;
+		continue;
+	    }
+	    fdata->role = i;
+	    listpage = files_window(fdata);
+	    label = gtk_label_new(data_tab_labels[i]);
+	    gtk_widget_show(label);
+	    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
+	    pages[i] = fdata->listbox;
+	    sprintf(winnum, "%d", j++);
+	    g_object_set_data(G_OBJECT(notebook), winnum, pages[i]);
+	    g_object_set_data(G_OBJECT(pages[i]), "file_code", 
+			      GINT_TO_POINTER(i));
+	}
+    }
+    else if (code == PS_FILES) {
+	int k;
+	
+	j = 0;
+	for (i=RAMU_PS; i<MAX_PS; i++) {
+	    k = i - RAMU_PS; 
+	    if (page_missing(i)) {
+		pages[k] = NULL;
+		continue;
+	    }
+	    fdata->role = i;
+	    listpage = files_window(fdata);
+	    label = gtk_label_new(ps_tab_labels[k]);
+	    gtk_widget_show(label);
+	    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
+	    pages[k] = fdata->listbox;
+	    sprintf(winnum, "%d", j++);
+	    g_object_set_data(G_OBJECT(notebook), winnum, pages[k]);
+	    g_object_set_data(G_OBJECT(pages[k]), "file_code", 
+			      GINT_TO_POINTER(i));
+	}
+    }
 
     fdata->role = role;
 
     g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
-		     G_CALLBACK(datafiles_page_callback),
+		     G_CALLBACK(switch_file_page_callback),
 		     fdata);
 
     gtk_widget_show(notebook);
@@ -906,31 +953,53 @@ static GtkWidget *files_notebook (windata_t *fdata,
     return notebook;
 }
 
+/* below: fill out a set of notebook pages (for data files
+   or scripts files), entering the details into the page.
+*/
+
 static int populate_notebook_filelists (windata_t *fdata, 
-					GtkWidget *lbox1, 
-					GtkWidget *lbox2,
-					GtkWidget *notebook)
+					GtkWidget **pages,
+					GtkWidget *notebook,
+					int code)
 {
-    int role = fdata->role;
+    int i, role = fdata->role;
 
-    fdata->role = RAMU_DATA;
-    fdata->listbox = lbox1;
-    if (populate_filelist(fdata)) {
-	return 1;
+    if (code == TEXTBOOK_DATA) {
+	for (i=RAMU_DATA; i<MAX_DATA; i++) {
+	    if (page_missing(i)) {
+		continue;
+	    }
+	    fdata->role = i;
+	    fdata->listbox = pages[i];
+	    if (populate_filelist(fdata)) {
+		return 1;
+	    }
+	}
+    }
+    else if (code == PS_FILES) {
+	for (i=RAMU_PS; i<MAX_PS; i++) {
+	    if (page_missing(i)) {
+		continue;
+	    }
+	    fdata->role = i;
+	    fdata->listbox = pages[i - RAMU_PS];
+	    if (populate_filelist(fdata)) {
+		return 1;
+	    }
+	}
     }
 
-    fdata->role = JW_DATA;
-    fdata->listbox = lbox2;
-    if (populate_filelist(fdata)) {
-	return 1;
+    if (code == TEXTBOOK_DATA) {
+	if (jwdata && *jwpath != '\0') {
+	    fdata->listbox = pages[JW_DATA];
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), JW_DATA);
+	} else {
+	    fdata->listbox = pages[RAMU_DATA];
+	    gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), RAMU_DATA);
+	}
     }
-
-    if (jwdata) {
-	fdata->listbox = lbox2;
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 1);
-    } else {
-	fdata->listbox = lbox1;
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
+    else if (code == PS_FILES) {
+	fdata->listbox = pages[0];
     }
 
     fdata->role = role;

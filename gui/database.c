@@ -20,6 +20,8 @@
 /* database.c for gretl */
 
 #include "gretl.h"
+#include "boxplots.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -99,6 +101,7 @@ typedef struct {
     int pd;
     int offset;
     int err;
+    int undated;
 } SERIESINFO;
 
 /* private functions */
@@ -282,9 +285,17 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     int err, lines[1], list[3];
     char pd[7];
 
+    if (dbdinfo->time_series == 0) { /* undated */
+	list[0] = 1; list[1] = 1;
+	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
+	if (err) {
+	   errbox(_("boxplot command failed"));
+	}
+	return;
+    }
+
     if (dbdinfo->pd == 12) strcpy(pd, "months");
     else if (dbdinfo->pd == 4) strcpy(pd, "qtrs");
-    /* else if (dbdinfo->pd == 5) strcpy(pd, "days"); */
     else strcpy(pd, "time");
     plotvar(dbZ, dbdinfo, pd);
 
@@ -1209,10 +1220,12 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
     }
 
     sinfo->pd = 1;
+    sinfo->undated = 0;
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
     else if (pdc == 'B') sinfo->pd = 5;
     else if (pdc == 'D') sinfo->pd = 7;
+    else if (pdc == 'U') sinfo->undated = 1;
 
     if (strchr(stobs, '/')) { /* daily data */
 	char *q = stobs;

@@ -8,14 +8,17 @@ version 1.0.4
 - fix bug in coefficient printing: sometimes values were being
   truncated at 5 figures
 - when dataset is sub-sampled, add dialog offering option to
-  restore full data range when saving data
+  restore full data range before saving data
 - add recognition of environment variables GRETL_PNG_GRAPH_FONT
   and GRETL_PNG_GRAPH_FONT_SIZE (e.g. "verdana" and "8") for
   generation of PNG graphs when gnuplot is linked to gd, and
   gd has TrueType font support enabled
-- If Wooldridge data are installed, the toolbar "open data" icon
-  presents a tabbed dialog with both Ramanathan and Wooldridge
-  file available
+- The sample data files selector and practice scripts selector
+  now offer a tabbed collection of the available sets of files,
+  and the associated menu items are simplified
+- Replace Box-Pierce statistic with Ljung-Box throughout, and
+  revamp the correlogram graph
+- Add several configuration options to the tramo/seats plugin
 - update libtool to 1.4.3 and autoreconf
 - raise library revision number to 4
 

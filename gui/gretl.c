@@ -190,15 +190,7 @@ GtkItemFactoryEntry data_items[] = {
     /* File, Open data */
     { N_("/File/_Open data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
-    { N_("/File/Open data/sample file"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Open data/sample file/Ramanathan..."), NULL, 
-      display_files, RAMU_DATA, NULL },
-    { N_("/File/Open data/sample file/Greene..."), NULL, 
-      display_files, GREENE_DATA, NULL },
-    { N_("/File/Open data/sample file/Wooldridge..."), NULL, 
-      display_files, JW_DATA, NULL },
-    { N_("/File/Open data/sample file/Penn World Table..."), NULL, 
-      display_files, PWT_DATA, NULL },
+    { N_("/File/Open data/sample file..."), NULL, display_files, TEXTBOOK_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
@@ -281,13 +273,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/user file..."), NULL, open_script, 
       OPEN_SCRIPT, NULL },
-    { N_("/File/Open command file/practice file"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Open command file/practice file/Ramanathan..."), NULL, 
-      display_files, RAMU_PS, NULL },
-    { N_("/File/Open command file/practice file/Greene..."), NULL, 
-      display_files, GREENE_PS, NULL },
-    { N_("/File/Open command file/practice file/Penn World Table..."), NULL, 
-      display_files, PWT_PS, NULL },
+    { N_("/File/Open command file/practice file..."), NULL, 
+      display_files, PS_FILES, NULL },
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
     { N_("/File/New command file/Monte Carlo loop"), NULL, 
@@ -1421,46 +1408,42 @@ static void check_for_extra_data (void)
 {
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char woolpath[MAXLEN]; /* datafiles.c */
+    extern char jwpath[MAXLEN]; /* datafiles.c */
     int gotpwt = 0, gotwool = 0;
 
     /* first check for Penn World Table */
-    build_path(paths.datadir, "pwt56", pwtpath, NULL); /* try at system level */
+    build_path(paths.datadir, "pwt56", pwtpath, NULL); 
+    /* try at system level */
     if ((dir = opendir(pwtpath)) != NULL) {
 	closedir(dir);
 	gotpwt = 1;
     } else {
-	build_path(paths.userdir, "pwt56", pwtpath, NULL); /* and at user level */
+	build_path(paths.userdir, "pwt56", pwtpath, NULL); 
+	/* and at user level */
 	if ((dir = opendir(pwtpath)) != NULL) {
 	    closedir(dir);
 	    gotpwt = 1; 
 	}
     }
 
-    if (!gotpwt) {
-	flip (mdata->ifac, "/File/Open data/sample file/Penn World Table...", 
-	      FALSE);
-	flip (mdata->ifac, "/File/Open command file/practice file/Penn World Table...", 
-	      FALSE);
-    }
+    if (!gotpwt) *pwtpath = 0;
 
     /* then check for Wooldridge data */
-    build_path(paths.datadir, "wooldridge", woolpath, NULL); /* try at system level */
-    if ((dir = opendir(woolpath)) != NULL) {
+    build_path(paths.datadir, "wooldridge", jwpath, NULL); 
+    /* try at system level */
+    if ((dir = opendir(jwpath)) != NULL) {
 	closedir(dir);
 	gotwool = 1;
     } else {
-	build_path(paths.userdir, "wooldridge", woolpath, NULL); /* and at user level */
-	if ((dir = opendir(woolpath)) != NULL) {
+	build_path(paths.userdir, "wooldridge", jwpath, NULL); 
+	/* and at user level */
+	if ((dir = opendir(jwpath)) != NULL) {
 	    closedir(dir);
 	    gotwool = 1;
 	}
     }
 
-    if (!gotwool) {
-	flip (mdata->ifac, "/File/Open data/sample file/Wooldridge...", 
-	      FALSE);
-    }
+    if (!gotwool) *jwpath = 0;
 }
 
 /* ........................................................... */

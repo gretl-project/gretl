@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "treeutils.h"
+#include "boxplots.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -99,6 +100,7 @@ typedef struct {
     int pd;
     int offset;
     int err;
+    int undated;
 } SERIESINFO;
 
 /* private functions */
@@ -286,9 +288,17 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     int err, lines[1], list[3];
     char pd[7];
 
+    if (dbdinfo->time_series == 0) { /* undated */
+	list[0] = 1; list[1] = 1;
+	err = boxplots(list, NULL, dbZ, dbdinfo, 0);
+	if (err) {
+	   errbox(_("boxplot command failed"));
+	}
+	return;
+    }
+
     if (dbdinfo->pd == 12) strcpy(pd, "months");
     else if (dbdinfo->pd == 4) strcpy(pd, "qtrs");
-    /* else if (dbdinfo->pd == 5) strcpy(pd, "days"); */
     else strcpy(pd, "time");
     plotvar(dbZ, dbdinfo, pd);
 
@@ -478,6 +488,19 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+static void db_view_codebook (GtkWidget *w, windata_t *dbdat)
+{
+    char cbname[MAXLEN];
+    extern GtkItemFactoryEntry view_items[];
+
+    strcpy(cbname, dbdat->fname);
+    strcat(cbname, ".cb");
+    
+    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, view_items);
+}
+
+/* ........................................................... */
+
 static void db_menu_find (GtkWidget *w, windata_t *dbdat)
 {
     menu_find(dbdat, 1, NULL);
@@ -485,7 +508,7 @@ static void db_menu_find (GtkWidget *w, windata_t *dbdat)
 
 /* ........................................................... */
 
-static void build_db_popup (windata_t *win)
+static void build_db_popup (windata_t *win, int cb)
 {
     if (win->popup != NULL) return;
 
@@ -503,6 +526,11 @@ static void build_db_popup (windata_t *win)
     add_popup_item(_("Find..."), win->popup, 
 		   G_CALLBACK(db_menu_find), 
 		   win);
+    if (cb) {
+	add_popup_item(_("Codebook"), win->popup, 
+		       G_CALLBACK(db_view_codebook), 
+		       win);
+    }
 }
 
 /* ........................................................... */
@@ -514,12 +542,12 @@ static void set_up_db_menu (GtkWidget *window, windata_t *win,
 
     while (items[n_items].path != NULL) n_items++;
 
-    win->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
-					NULL);
+    win->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
+				     NULL);
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(win->ifac, menu_translate, NULL, NULL);
 #endif
-    gtk_item_factory_create_items (win->ifac, n_items, items, win);
+    gtk_item_factory_create_items(win->ifac, n_items, items, win);
     win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
 }
 
@@ -535,6 +563,24 @@ static void destroy_db_win (GtkWidget *w, gpointer data)
 	free(win);
 	win = NULL;
     }
+}
+
+/* ........................................................... */
+
+static int db_has_codebook (const char *fname)
+{
+    char cbname[MAXLEN];
+    FILE *fp;
+
+    strcpy(cbname, fname);
+    strcat(cbname, ".cb");
+
+    fp = fopen(cbname, "r");
+    
+    if (fp == NULL) return 0;
+    
+    fclose(fp);
+    return 1;
 }
 
 /* ........................................................... */
@@ -573,14 +619,14 @@ void display_db_series_list (int action, char *fname, char *buf)
     if (action == NATIVE_SERIES) trim_ext(fname);
 
     strcpy(dbwin->fname, fname);
-
+    
     /* set up grids */
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
     set_up_db_menu(dbwin->w, dbwin, db_items);
-    build_db_popup(dbwin);
+    build_db_popup(dbwin, db_has_codebook(fname));
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show(dbwin->mbar);
@@ -810,7 +856,7 @@ static GtkWidget *database_window (windata_t *ddata)
     const char *titles[] = {
 	_("Name"), 
 	_("Description"), 
-	_("Frequency and dates")
+	_("Observations")
     };
     GtkWidget *box;
     int cols = 3;
@@ -1244,10 +1290,12 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
     g_free(temp);
 
     sinfo->pd = 1;
+    sinfo->undated = 0;
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
     else if (pdc == 'B') sinfo->pd = 5;
     else if (pdc == 'D') sinfo->pd = 7;
+    else if (pdc == 'U') sinfo->undated = 1;
 
     if (strchr(stobs, '/')) { /* daily data */
 	char *q = stobs;

@@ -227,15 +227,7 @@ GtkItemFactoryEntry data_items[] = {
     /* File, Open data */
     { N_("/File/_Open data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
-    { N_("/File/Open data/sample file"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Open data/sample file/Ramanathan..."), NULL, 
-      display_files, RAMU_DATA, NULL },
-    { N_("/File/Open data/sample file/Greene..."), NULL, 
-      display_files, GREENE_DATA, NULL },
-    { N_("/File/Open data/sample file/Wooldridge..."), NULL,
-      display_files, JW_DATA, NULL },
-    { N_("/File/Open data/sample file/Penn World Table..."), NULL, 
-      display_files, PWT_DATA, NULL },
+    { N_("/File/Open data/sample file..."), NULL, display_files, TEXTBOOK_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
@@ -323,13 +315,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/user file..."), NULL, open_script, 
       OPEN_SCRIPT, NULL },
-    { N_("/File/Open command file/practice file"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/Open command file/practice file/Ramanathan..."), NULL, 
-      display_files, RAMU_PS, NULL },
-    { N_("/File/Open command file/practice file/Greene..."), NULL, 
-      display_files, GREENE_PS, NULL },
-    { N_("/File/Open command file/practice file/Penn World Table..."), NULL, 
-      display_files, PWT_PS, NULL },
+    { N_("/File/Open command file/practice file..."), NULL, 
+      display_files, PS_FILES, NULL },
     { N_("/File/New command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
     { N_("/File/New command file/Monte Carlo loop"), NULL, 
@@ -1611,13 +1598,7 @@ static void check_for_extra_data (void)
 {
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char woolpath[MAXLEN]; /* datafiles.c */
-    const char *pwt_menu_paths[] = {
-	"/File/Open data/sample file/Penn World Table...",
-	"/File/Open command file/practice file/Penn World Table..."
-    };
-    const char *wool_menu_path =
-	"/File/Open data/sample file/Wooldridge...";
+    extern char jwpath[MAXLEN];  /* datafiles.c */
     int gotpwt = 0, gotwool = 0;
 
     /* first check for Penn World Table */
@@ -1635,27 +1616,24 @@ static void check_for_extra_data (void)
         }
     }
 
-    if (!gotpwt) {
-        flip (mdata->ifac, pwt_menu_paths[0], FALSE);
-        flip (mdata->ifac, pwt_menu_paths[1], FALSE);
-    }
+    if (!gotpwt) *pwtpath = 0;
 
     /* then check for Wooldridge data */
-    build_path(paths.datadir, "wooldridge", woolpath, NULL); 
+    build_path(paths.datadir, "wooldridge", jwpath, NULL); 
     /* try at system level */
-    if ((dir = opendir(woolpath)) != NULL) {
+    if ((dir = opendir(jwpath)) != NULL) {
         closedir(dir);
         gotwool = 1;
     } else {
-        build_path(paths.userdir, "wooldridge", woolpath, NULL); 
+        build_path(paths.userdir, "wooldridge", jwpath, NULL); 
 	/* and at user level */
-        if ((dir = opendir(woolpath)) != NULL) {
+        if ((dir = opendir(jwpath)) != NULL) {
             closedir(dir);
             gotwool = 1;
         }
     }
 
-    if (!gotwool) flip (mdata->ifac, wool_menu_path, FALSE);
+    if (!gotwool) *jwpath = 0;
 }
 
 /* ........................................................... */
@@ -1897,14 +1875,7 @@ static void show_edit (void)
 
 static void open_textbook_data (void)
 {
-    GtkWidget *w = gtk_item_factory_get_item
-	(mdata->ifac, "/File/Open data/sample file/Wooldridge...");
-
-    if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
-	display_files(NULL, TEXTBOOK_DATA, NULL);
-    } else {
-	display_files(NULL, RAMU_DATA, NULL);
-    }
+    display_files(NULL, TEXTBOOK_DATA, NULL);
 }
 
 /* ........................................................... */

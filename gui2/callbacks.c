@@ -59,16 +59,10 @@ gint listbox_double_click (GtkWidget *widget, GdkEventButton *event,
 	case MAINWIN:
 	    display_var();
 	    break;
-	case RAMU_DATA:
-	case GREENE_DATA:
-	case JW_DATA:
-	case PWT_DATA:
 	case TEXTBOOK_DATA:
 	    browser_open_data(NULL, win);
 	    break;
-	case RAMU_PS:
-	case GREENE_PS:
-	case PWT_PS:
+	case PS_FILES:
 	    browser_open_ps(NULL, win);
 	    break;
 	case NATIVE_DB:

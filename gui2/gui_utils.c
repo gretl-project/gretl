@@ -1395,7 +1395,9 @@ windata_t *view_file (char *filename, int editable, int del_file,
     gchar *title;
     int show_viewbar = (role != CONSOLE &&
 			role != HELP &&
-			role != CLI_HELP && role != VIEW_DATA);
+			role != CLI_HELP && 
+			role != VIEW_DATA &&
+			role != VIEW_CODEBOOK);
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);
@@ -1408,8 +1410,9 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
 
     title = make_viewer_title(role, filename);
-    vwin = common_viewer_new(role, title, NULL, !doing_script);
-    g_free(title);
+    vwin = common_viewer_new(role, (title != NULL)? title : filename, 
+			     NULL, !doing_script);
+    if (title != NULL) g_free(title);
     if (vwin == NULL) return NULL;
 
     strcpy(vwin->fname, filename);
