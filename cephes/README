@@ -6,3 +6,6 @@ is the book by Moshier, Methods and Programs for Mathematical
 Functions, Prentice-Hall, 1989.
 
 See http://www.netlib.org/cephes/
+
+Some slight modifications made by Allin Cottrell for use with
+gretl, but no changes to the substance of the code.

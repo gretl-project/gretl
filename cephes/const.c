@@ -59,26 +59,26 @@ Cephes Math Library Release 2.3:  March, 1995
 Copyright 1984, 1995 by Stephen L. Moshier
 */
 
+/* slightly modified by Allin Cottrell, Feb 2005 */
+
 #include "mconf.h"
 
-#if 1
-double MACHEP =  1.11022302462515654042E-16;   /* 2**-53 */
+/* values gathering by running Beebe floating-point test suite */
+#define BEEBE
+
+#ifdef BEEBE
+double MACHEP      = 2.22044604925031308e-16;
+double UFLOWTHRESH = 2.22507385850720188e-308;
+double MAXNUM      = 1.79769313486231571e+308;
 #else
-double MACHEP =  1.38777878078144567553E-17;   /* 2**-56 */
+double MACHEP      = 1.11022302462515654042E-16;  /* 2**-53 */
+double UFLOWTHRESH = 2.22507385850720138309E-308; /* 2**-1022 */
+double MAXNUM      = 1.79769313486231570815E308;  /* 2**1024*(1-MACHEP) */
 #endif
 
-double UFLOWTHRESH =  2.22507385850720138309E-308; /* 2**-1022 */
-
-#ifdef DENORMAL
-double MAXLOG =  7.09782712893383996732E2;     /* log(MAXNUM) */
-/* double MINLOG = -7.44440071921381262314E2; */     /* log(2**-1074) */
-double MINLOG = -7.451332191019412076235E2;     /* log(2**-1075) */
-#else
 double MAXLOG =  7.08396418532264106224E2;     /* log 2**1022 */
 double MINLOG = -7.08396418532264106224E2;     /* log 2**-1022 */
-#endif
 
-double MAXNUM =  1.79769313486231570815E308;    /* 2**1024*(1-MACHEP) */
 double PI     =  3.14159265358979323846;       /* pi */
 double PIO2   =  1.57079632679489661923;       /* pi/2 */
 double PIO4   =  7.85398163397448309616E-1;    /* pi/4 */
