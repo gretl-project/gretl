@@ -292,7 +292,13 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 	if (sstnext > 0) {
 	    int i, skip, remlen;
 
-	    ptr = q->data + slop; 
+	    ptr = q->data;
+	    if (slop > 0) {
+		unsigned char flags = *ptr;
+		int csize = (flags & 0x01)? 2 : 1;
+
+		ptr += 1 + csize * slop;
+	    }
 	    for (i=sstnext; i<sstsize; i++) {
 		remlen = q->length - (ptr - q->data);
 		if (remlen <= 0) {
@@ -706,7 +712,7 @@ copy_unicode_string (unsigned char *src, int remlen,
     /* size check */
     if (slop != NULL) {
 	if (remlen > 0 && this_skip + count > remlen) {
-	    *slop = this_skip + count - remlen + 1;
+	    *slop = this_skip + count - remlen;
 	} else {
 	    *slop = 0;
 	}
