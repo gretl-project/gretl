@@ -143,7 +143,7 @@ void series_view_print (windata_t *vwin)
 	}
     }
 
-    /* clear existing text buffer and insert sorted data */
+    /* clear existing text buffer and insert data */
     gtk_text_buffer_set_text(tbuf, prn->buf, -1);
 
     gretl_print_destroy(prn);
