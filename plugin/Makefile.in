@@ -23,6 +23,7 @@ LAPACK_LIBS = @LAPACK_LIBS@
 FLIB = @FLIB@
 HAVE_X12A = @HAVE_X12A@
 HAVE_TRAMO = @HAVE_TRAMO@
+HAVE_AUDIO = @HAVE_AUDIO@
 
 ifeq ($(CC),)
   CC = gcc
@@ -72,6 +73,13 @@ ifeq ($(HAVE_X12A),1)
   TXPLUGIN = tramo-x12a.la
 endif
 
+ifeq ($(HAVE_AUDIO),1)
+  PLUGINS += audio.la
+  AUDIO_CFLAGS = -I/opt/speech/include
+  AUDIO_LIBS = -L/opt/speech/lib -lflite_cmu_us_kal16 \
+     -lflite_usenglish -lflite_cmulex -lflite -lasound -lm
+endif  
+
 ifeq ($(LIBOLE2_LIBS),)
   query-ms-ole.lo = ms-ole.lo
   vpath %.c $(topsrc)/plugin/libole2
@@ -80,7 +88,7 @@ ifeq ($(LIBOLE2_LIBS),)
 endif
 
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
-	$(LIBOLE2_CFLAGS) -I. $(GMPDEF)
+	$(LIBOLE2_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
 
 %.lo: %.c
 	$(COMPILE) $< 
@@ -149,6 +157,9 @@ tobit.la: tobit.lo
 
 garch.la: garch.lo fcp.lo
 	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+audio.la: audio.lo midi_utils.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(AUDIO_LIBS)
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

@@ -47,7 +47,8 @@ enum {
     P_ARMA_X12,
     P_LOGISTIC,
     P_TOBIT,
-    P_GARCH
+    P_GARCH,
+    P_AUDIO
 } plugin_codes;
 
 struct plugin_info {
@@ -83,7 +84,8 @@ struct plugin_info plugins[] = {
     { P_ARMA_X12,        "arma_x12" },
     { P_LOGISTIC,        "logistic" },
     { P_TOBIT,           "tobit" },
-    { P_GARCH,           "garch" }
+    { P_GARCH,           "garch" },
+    { P_AUDIO,           "audio" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -147,6 +149,9 @@ struct plugin_function plugin_functions[] = {
     { "logistic_estimate", P_LOGISTIC },
     { "tobit_estimate",    P_TOBIT },
     { "garch_model",       P_GARCH },
+
+    /* audio graphs */
+    { "midi_play_graph",   P_AUDIO },
 
     /* sentinel */
     { NULL, 0 }
