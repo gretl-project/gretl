@@ -142,12 +142,12 @@ int get_gretl_errno (void)
     return gretl_errno;
 }
 
-char *get_gretl_errmsg (void)
+const char *get_gretl_errmsg (void)
 {
     return gretl_errmsg;
 }
 
-char *get_gretl_msg (void)
+const char *get_gretl_msg (void)
 {
     if (*gretl_msg == '\0') return NULL;
     return gretl_msg;

@@ -91,9 +91,9 @@ void errmsg (const int errcode, PRN *prn);
 
 int get_gretl_errno (void);
 
-char *get_gretl_errmsg (void);
+const char *get_gretl_errmsg (void);
 
-char *get_gretl_msg (void);
+const char *get_gretl_msg (void);
 
 int print_gretl_msg (PRN *prn);
 

@@ -1169,7 +1169,9 @@ static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
 
     for (i=1; i<src->v; i++) {
 	strcpy(dest->varname[i], src->varname[i]);
-	copy_varinfo(dest->varinfo[i], src->varinfo[i]);
+	if (src->varinfo != NULL) {
+	    copy_varinfo(dest->varinfo[i], src->varinfo[i]);
+	}
 	dest->vector[i] = src->vector[i];	
     }
 }

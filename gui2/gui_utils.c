@@ -2951,7 +2951,11 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Model data/Define new variable...", ok);
 
     if (!ok) {
-	infobox(get_gretl_errmsg());
+	const char *msg = get_gretl_errmsg();
+
+	if (msg != NULL && *msg != 0) {
+	    infobox(msg);
+	}
     } 
 
     return FALSE;
@@ -3181,6 +3185,37 @@ gchar *my_filename_from_utf8 (char *fname)
     return fname;
 }
 
+#if 1
+
+static gchar *
+real_locale_from_utf8 (const gchar *src, int unused)
+{
+    gchar *trstr;
+    gsize bytes;
+    GError *err = NULL;
+
+    trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);
+
+    if (err != NULL) {
+	const gchar *cset = NULL;
+
+	g_get_charset(&cset);
+	if (cset != NULL) {
+	    sprintf(errtext, "g_locale_from_utf8 failed for charset '%s'",
+		    cset);
+	} else {
+	    strcpy(errtext, "g_locale_from_utf8 failed; "
+		   "so did g_get_charset");
+	}
+	errbox(errtext);
+	g_error_free(err);
+    }
+
+    return trstr;
+}
+
+#else
+
 static gchar *
 real_locale_from_utf8 (const gchar *src, int force)
 {
@@ -3209,6 +3244,8 @@ real_locale_from_utf8 (const gchar *src, int force)
 
     return trstr;
 }
+
+#endif
 
 gchar *my_locale_from_utf8 (const gchar *src)
 {
