@@ -27,7 +27,8 @@ gretl_string_table *gretl_string_table_new (void);
 int gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 			      int addcol, PRN *prn);
 
-int gretl_string_table_print (gretl_string_table *st, PATHS *ppaths, PRN *prn);
+int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
+			      PATHS *ppaths, PRN *prn);
 
 void gretl_string_table_destroy (gretl_string_table *st);
 

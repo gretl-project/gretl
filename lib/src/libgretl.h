@@ -237,6 +237,7 @@ struct _PATHS {
 #endif
     char dbhost_ip[16];
     char pngfont[16];
+    unsigned char status;
 };
 
 struct _GRETLTEST {

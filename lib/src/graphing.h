@@ -110,8 +110,6 @@ enum plot_type_codes {
     PLOT_TYPE_MAX
 };
     
-#define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])
-
 /* functions follow */
  
 int plot (const LIST list, 

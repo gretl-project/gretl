@@ -170,8 +170,8 @@ void gretl_string_table_destroy (gretl_string_table *st)
     free(st);
 }
 
-int gretl_string_table_print (gretl_string_table *st, PATHS *ppaths, 
-			       PRN *prn)
+int gretl_string_table_print (gretl_string_table *st, DATAINFO *pdinfo,
+			      PATHS *ppaths, PRN *prn)
 {
     int i, j;
     const col_table *ct;
@@ -189,18 +189,26 @@ int gretl_string_table_print (gretl_string_table *st, PATHS *ppaths,
     for (i=0; i<st->n_cols; i++) {
 	ct = st->cols[i];
 	if (!err) {
-	    fprintf(fp, M_("String code table for variable %d:\n"), ct->idx);
+	    fprintf(fp, M_("String code table for variable %d (%s):\n"), 
+		    ct->idx, pdinfo->varname[ct->idx]);
+	} else {
+	    pprintf(prn, M_("String code table for variable %d (%s):\n"), 
+		    ct->idx, pdinfo->varname[ct->idx]);
 	}
-	pprintf(prn, M_("String code table for variable %d:\n"), ct->idx);
 	for (j=0; j<ct->n_strs; j++) {
 	    if (!err) {
 		fprintf(fp, "%3d = '%s'\n", j, ct->strs[j]);
+	    } else {
+		pprintf(prn, "%3d = '%s'\n", j, ct->strs[j]);
 	    }
-	    pprintf(prn, "%3d = '%s'\n", j, ct->strs[j]);
 	}
     }
 
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL) {
+	pprintf(prn, M_("String code table written to\n %s\n"), stname);
+	fclose(fp);
+	set_string_table_written(ppaths);
+    }
 
     gretl_string_table_destroy(st);
 

@@ -501,9 +501,32 @@ static char *internal_path_stuff (int code, const char *path)
     return NULL;
 }
 
+/* .......................................................... */
+
 const char *fetch_gretl_lib_path (void)
 {
     return internal_path_stuff (0, NULL);
+}
+
+void set_string_table_written (PATHS *ppaths)
+{
+    ppaths->status |= STRING_TABLE_WRITTEN;
+}
+
+int gretl_string_table_written (PATHS *ppaths)
+{
+    int ret = 0;
+
+    if (ppaths->status & STRING_TABLE_WRITTEN) ret = 1;
+
+    ppaths->status &= ~STRING_TABLE_WRITTEN;
+
+    return ret;
+}
+
+int gretl_using_gui (const PATHS *ppaths)
+{
+    return ppaths->status & GRETL_USING_GUI;
 }
 
 /* .......................................................... */
@@ -559,9 +582,11 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretl_hlp.txt"));
 	sprintf(ppaths->cmd_helpfile, "%s\\%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
+	ppaths->status = GRETL_USING_GUI;
     } else { 
 	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
+	ppaths->status = 0;
     }
 
     if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
@@ -628,9 +653,12 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 		_("gretl.hlp"));
 	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
-    } else
+	ppaths->status = GRETL_USING_GUI;
+    } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
+	ppaths->status = 0;
+    }
 
     *ppaths->plotfile = '\0';
 

@@ -4192,6 +4192,16 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 
 /* ........................................................... */
 
+static void maybe_display_string_table (void)
+{
+    if (gretl_string_table_written(&paths)) {
+	char stname[MAXLEN];
+
+	build_path(paths.userdir, "string_table.txt", stname, NULL);
+	view_file(stname, 0, 0, 78, 350, VIEW_FILE);
+    }
+}
+
 void do_open_csv_box (char *fname, int code, int append)
 {
     int err;
@@ -4213,6 +4223,7 @@ void do_open_csv_box (char *fname, int code, int append)
 
     if (err) return;
 
+    maybe_display_string_table();
     data_status |= IMPORT_DATA;
 
     if (append) {
@@ -5567,6 +5578,7 @@ int gui_exec_line (char *line,
             err = import_csv(&Z, &datainfo, datfile, &paths, prn);
 	}
         if (!err) { 
+	    maybe_display_string_table();
 	    data_status |= IMPORT_DATA;
 	    register_data(datfile, NULL, (exec_code != REBUILD_EXEC));
             print_smpl(datainfo, 0, prn);
@@ -5613,8 +5625,10 @@ int gui_exec_line (char *line,
 	if (!dbdata) {
 	    strncpy(paths.datfile, datfile, MAXLEN-1);
 	}
-	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata)
+	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata) {
 	    data_status |= IMPORT_DATA;
+	    maybe_display_string_table();
+	}
 	if (datainfo->v > 0 && !dbdata) {
 	    /* below: was (exec_code != REBUILD_EXEC), not 0 */
 	    register_data(paths.datfile, NULL, 0);

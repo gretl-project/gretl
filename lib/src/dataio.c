@@ -2978,7 +2978,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 #endif
 
     if (st != NULL) {
-	gretl_string_table_print(st, ppaths, prn);
+	gretl_string_table_print(st, csvinfo, ppaths, prn);
     }
 
     csvinfo->t1 = 0;

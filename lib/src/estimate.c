@@ -3170,7 +3170,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     void *handle;
     MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
 			     const char *, const char *, int);
-    int gui = GRETL_GUI(ppaths);
+    int gui = gretl_using_gui(ppaths);
 
     *gretl_errmsg = '\0';
 

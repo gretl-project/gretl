@@ -715,11 +715,13 @@ const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype)
 
 int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
 {
+    int gui = gretl_using_gui(ppaths);
+
     if (*gnuplot_path == 0) {
 	strcpy(gnuplot_path, ppaths->gnuplot);
     }
 
-    if (GRETL_GUI(ppaths)) {
+    if (gui) {
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
 	if (mktemp(ppaths->plotfile) == NULL) return 1;
     } else {
@@ -729,7 +731,7 @@ int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp)
     *fpp = fopen(ppaths->plotfile, "w");
     if (*fpp == NULL) return 1;
 
-    if (GRETL_GUI(ppaths)) {
+    if (gui) {
 	fprintf(*fpp, "%s\n", get_gretl_png_term_line(ppaths, plottype));
 	fprintf(*fpp, "set output '%sgretltmp.png'\n", ppaths->userdir);
     }
@@ -756,7 +758,7 @@ int gnuplot_display (const PATHS *ppaths)
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 # else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
-	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
+	    (gretl_using_gui(ppaths))? "" : " -persist", ppaths->plotfile);
     err = gretl_spawn(plotcmd);  
 # endif /* WIN32 */
 

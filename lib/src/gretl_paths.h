@@ -20,6 +20,17 @@
 #ifndef GRETL_PATHS_H
 #define GRETL_PATHS_H
 
+enum paths_status {
+    GRETL_USING_GUI      = 1 << 0,
+    STRING_TABLE_WRITTEN = 1 << 1
+};
+
+void set_string_table_written (PATHS *ppaths);
+
+int gretl_string_table_written (PATHS *ppaths);
+
+int gretl_using_gui (const PATHS *ppaths);
+
 char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,

@@ -76,7 +76,6 @@
 	     <keyword>meantest</keyword>
 	     <keyword>mpols</keyword>
 	     <keyword>multiply</keyword>
-	     <keyword>mvavg</keyword>
 	     <keyword>nls</keyword>
 	     <keyword>noecho</keyword>
 	     <keyword>nulldata</keyword>
@@ -93,7 +92,8 @@
 	     <keyword>print</keyword>
              <keyword>printf</keyword>  
 	     <keyword>probit</keyword>
-	     <keyword>pvalue</keyword>  
+	     <keyword>pvalue</keyword>
+	     <keyword>pwe</keyword>
 	     <keyword>quit</keyword>
              <keyword>rename</keyword> 
 	     <keyword>reset</keyword>
