@@ -8500,8 +8500,7 @@ done
   fi
 fi
 
-ac_save_CFLAGS=$CFLAGS
-ac_save_LIBS=$LIBS
+orig_CFLAGS=$CFLAGS
 # Check whether --with-gtk-prefix or --without-gtk-prefix was given.
 if test "${with_gtk_prefix+set}" = set; then
   withval="$with_gtk_prefix"
@@ -8552,7 +8551,7 @@ fi
   # Extract the first word of "gtk-config", so it can be a program name with args.
 set dummy gtk-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:8556: checking for $ac_word" >&5
+echo "configure:8555: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -8587,7 +8586,7 @@ fi
 
   min_gtk_version=1.2.3
   echo $ac_n "checking for GTK - version >= $min_gtk_version""... $ac_c" 1>&6
-echo "configure:8591: checking for GTK - version >= $min_gtk_version" >&5
+echo "configure:8590: checking for GTK - version >= $min_gtk_version" >&5
   no_gtk=""
   if test "$GTK_CONFIG" = "no" ; then
     no_gtk=yes
@@ -8610,7 +8609,7 @@ echo "configure:8591: checking for GTK - version >= $min_gtk_version" >&5
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 8614 "configure"
+#line 8613 "configure"
 #include "confdefs.h"
 
 #include <gtk/gtk.h>
@@ -8688,7 +8687,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:8692: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:8691: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -8722,7 +8721,7 @@ fi
           CFLAGS="$CFLAGS $GTK_CFLAGS"
           LIBS="$LIBS $GTK_LIBS"
           cat > conftest.$ac_ext <<EOF
-#line 8726 "configure"
+#line 8725 "configure"
 #include "confdefs.h"
 
 #include <gtk/gtk.h>
@@ -8732,7 +8731,7 @@ int main() {
  return ((gtk_major_version) || (gtk_minor_version) || (gtk_micro_version)); 
 ; return 0; }
 EOF
-if { (eval echo configure:8736: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:8735: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
    echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding GTK or finding the wrong"
@@ -8825,7 +8824,7 @@ fi
   # Extract the first word of "gtkextra-config", so it can be a program name with args.
 set dummy gtkextra-config; ac_word=$2
 echo $ac_n "checking for $ac_word""... $ac_c" 1>&6
-echo "configure:8829: checking for $ac_word" >&5
+echo "configure:8828: checking for $ac_word" >&5
 if eval "test \"`echo '$''{'ac_cv_path_GTK_EXTRA_CONFIG'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
 else
@@ -8860,7 +8859,7 @@ fi
 
   min_gtkextra_version=0.99.15
   echo $ac_n "checking for GTK_EXTRA - version >= $min_gtkextra_version""... $ac_c" 1>&6
-echo "configure:8864: checking for GTK_EXTRA - version >= $min_gtkextra_version" >&5
+echo "configure:8863: checking for GTK_EXTRA - version >= $min_gtkextra_version" >&5
   no_gtkextra=""
   if test "$GTK_EXTRA_CONFIG" = "no" ; then
     no_gtkextra=yes
@@ -8883,7 +8882,7 @@ echo "configure:8864: checking for GTK_EXTRA - version >= $min_gtkextra_version"
   echo $ac_n "cross compiling; assumed OK... $ac_c"
 else
   cat > conftest.$ac_ext <<EOF
-#line 8887 "configure"
+#line 8886 "configure"
 #include "confdefs.h"
 
 #include <gtkextra/gtkextra.h>
@@ -8961,7 +8960,7 @@ main ()
 }
 
 EOF
-if { (eval echo configure:8965: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
+if { (eval echo configure:8964: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext} && (./conftest; exit) 2>/dev/null
 then
   :
 else
@@ -8995,7 +8994,7 @@ fi
           CFLAGS="$CFLAGS $GTK_EXTRA_CFLAGS"
           LIBS="$LIBS $GTK_EXTRA_LIBS"
           cat > conftest.$ac_ext <<EOF
-#line 8999 "configure"
+#line 8998 "configure"
 #include "confdefs.h"
 
 #include <gtkextra/gtkextra.h>
@@ -9005,7 +9004,7 @@ int main() {
  return ((gtkextra_major_version) || (gtkextra_minor_version) || (gtkextra_micro_version)); 
 ; return 0; }
 EOF
-if { (eval echo configure:9009: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:9008: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
    echo "*** The test program compiled, but did not run. This usually means"
           echo "*** that the run-time linker is not finding GTK_EXTRA or finding the wrong"
@@ -9055,8 +9054,7 @@ cat >> confdefs.h <<EOF
 EOF
 
 
-CFLAGS="$ac_save_CFLAGS"
-LIBS="$ac_save_LIBS"
+CFLAGS="$orig_CFLAGS"
 trap '' 1 2 15
 cat > confcache <<\EOF
 # This file is a shell script that caches the results of configure

@@ -266,8 +266,7 @@ if test x"${XML_LIBS}" = x ; then
   fi
 fi
 
-ac_save_CFLAGS=$CFLAGS
-ac_save_LIBS=$LIBS
+orig_CFLAGS=$CFLAGS
 AM_PATH_GTK(1.2.3,have_gtk="yes",have_gtk="no")
 if test "${have_gtk}" = "no" ; then
    exit
@@ -286,8 +285,7 @@ fi
 AC_DEFINE_UNQUOTED(GRETL, "${prefix}/share/gretl/")
 
 dnl Create output
-CFLAGS="$ac_save_CFLAGS"
-LIBS="$ac_save_LIBS"
+CFLAGS="$orig_CFLAGS"
 AC_OUTPUT([ 
 Makefile 
 gretl_sh 
