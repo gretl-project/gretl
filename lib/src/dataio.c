@@ -288,7 +288,7 @@ static int add_case_marker (DATAINFO *pdinfo, int n)
 char **allocate_case_markers (int n)
 {
     char **S;
-    int t;
+    int j, t;
 
     S = malloc(n * sizeof *S);
     if (S == NULL) return NULL;
@@ -296,8 +296,6 @@ char **allocate_case_markers (int n)
     for (t=0; t<n; t++) {
 	S[t] = malloc(OBSLEN);
 	if (S[t] == NULL) {
-	    int j;
-
 	    for (j=0; j<t; j++) {
 		free(S[j]);
 	    }
@@ -1913,15 +1911,21 @@ int is_gzipped (const char *fname)
     FILE *fp;
     int gz = 0;
 
-    if (fname == NULL || *fname == '\0') return 0;
+    if (fname == NULL || *fname == '\0') {
+	return 0;
+    }
 
     fp = fopen(fname, "rb");
-    if (fp == NULL) return 0;
+    if (fp == NULL) {
+	return 0;
+    }
 
-    if (fgetc(fp) == 037 && fgetc(fp) == 0213) 
+    if (fgetc(fp) == 037 && fgetc(fp) == 0213) {
 	gz = 1;
+    }
 
     fclose(fp);
+
     return gz;
 }
 
@@ -1939,10 +1943,11 @@ int has_gz_suffix (const char *fname)
 {
     size_t n = strlen(fname);
 	
-    if (n < 4 || strncmp(fname + n - 3, ".gz", 3))
+    if (n < 4 || strncmp(fname + n - 3, ".gz", 3)) {
 	return 0;
-    else
+    } else {
 	return 1;
+    }
 }
 
 /**
@@ -2250,6 +2255,10 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
     pdinfo->pd = guess_daily_pd(pdinfo);
     pdinfo->structure = TIME_SERIES;
 
+#if 0    
+    fprintf(stderr, "guessed daily pd = %d\n", pdinfo->pd);
+#endif
+
     if (!err) {
 	ed2 = get_epoch_day(pdinfo->S[pdinfo->n - 1]);
 	if (ed2 <= ed1) {
@@ -2281,7 +2290,7 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 		*pd = 12;
 	    } else if (nmiss > 5 * pdinfo->n) {
 		fprintf(stderr, "Probably weekly data\n");
-		*pd = 52;
+		*pd = pdinfo->pd = 52;
 	    } else {
 		fprintf(stderr, "Missing daily observations: %d\n", nmiss);
 	    }
@@ -2311,6 +2320,11 @@ static int check_daily_dates (DATAINFO *pdinfo, int *pd)
 	    pdinfo->markers = DAILY_DATE_STRINGS;
 	}
     }
+
+#if 0
+    fprintf(stderr, "check_daily_dates: pd = %d, err = %d\n", 
+	    pdinfo->pd, err);
+#endif
 
     return (err)? -1 : pdinfo->pd;
 }
@@ -2392,6 +2406,22 @@ static int transform_daily_dates (DATAINFO *pdinfo, int dorder)
     return err;
 }
 
+static int csv_weekly_data (DATAINFO *pdinfo)
+{
+    int ret = 1;
+    int t, tc;
+
+    for (t=0; t<pdinfo->n; t++) {
+	tc = calendar_obs_number(pdinfo->S[t], pdinfo);
+	if (tc != t) {
+	    ret = 0;
+	    break;
+	}
+    }
+    
+    return ret;
+}
+
 static int csv_daily_date_check (DATAINFO *pdinfo, PRN *prn)
 {
     int d1[3], d2[3];
@@ -2445,8 +2475,16 @@ static int csv_daily_date_check (DATAINFO *pdinfo, PRN *prn)
 	    pprintf(prn, "? %s - %s\n", lbl1, lbl2);
 	    ret = check_daily_dates(pdinfo, &pd);
 	    if (ret >= 0 && pd > 0) {
-		compress_daily(pdinfo, pd);
-		ret = csv_time_series_check(pdinfo, prn);
+		if (pd == 52) {
+		    if (csv_weekly_data(pdinfo)) {
+			ret = 52;
+		    } else {
+			ret = -1;
+		    }
+		} else {
+		    compress_daily(pdinfo, pd);
+		    ret = csv_time_series_check(pdinfo, prn);
+		}
 	    } 
 	    return ret;
 	}
@@ -4619,19 +4657,6 @@ static long get_filesize (const char *fname)
     }
 }
 
-static void colon_to_point (char *str)
-{
-    char *p = str;
-
-    while (*p) {
-	if (*p == ':') {
-	    *p = '.';
-	    break;
-	}
-	p++;
-    }
-}
-
 /**
  * get_xmldata:
  * @pZ: pointer to data set.
@@ -4738,6 +4763,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     }
 
     tmpdinfo->pd = 1;
+
     tmp = xmlGetProp(cur, (UTF) "frequency");
     if (tmp) {
 	int pd = 0;
@@ -4760,27 +4786,34 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 #endif
 
     strcpy(tmpdinfo->stobs, "1");
+
     tmp = xmlGetProp(cur, (UTF) "startobs");
-    if (tmp) {
+
+    if (tmp != NULL) {
 	char obstr[16];
 
-	strcpy(obstr, tmp);
-	colon_to_point(obstr);
+	obstr[0] = '\0';
+	strncat(obstr, tmp, 15);
+	charsub(obstr, ':', '.');
 	
-	if (dataset_is_daily(tmpdinfo)) {
-	    if (!strcmp(tmp, "1")) { /* undated */
-		tmpdinfo->sd0 = 1.0;
-	    } else {
-		long ed = get_epoch_day(tmp);
+	if (strchr(obstr, '/') != NULL && 
+	    (dataset_is_daily(tmpdinfo) || 
+	     dataset_is_weekly(tmpdinfo))) {
+	    long ed = get_epoch_day(tmp);
 
-		if (ed < 0) err = 1;
-		else tmpdinfo->sd0 = ed;
+	    if (ed < 0) {
+		err = 1;
+	    } else {
+		tmpdinfo->sd0 = ed;
 	    }
 	} else {
 	    double x;
 
-	    if (sscanf(obstr, "%lf", &x) != 1) err = 1;
-	    else tmpdinfo->sd0 = x;
+	    if (sscanf(obstr, "%lf", &x) != 1) {
+		err = 1;
+	    } else {
+		tmpdinfo->sd0 = x;
+	    }
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
@@ -4795,16 +4828,20 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     }
 
     *tmpdinfo->endobs = '\0';
+
     tmp = xmlGetProp(cur, (UTF) "endobs");
-    if (tmp) {
-	if (dataset_is_daily(tmpdinfo) && tmpdinfo->sd0 > 1.0) {
+
+    if (tmp!= NULL) {
+	if (calendar_data(tmpdinfo)) {
 	    long ed = get_epoch_day(tmp);
 
 	    if (ed < 0) err = 1;
 	} else {
 	    double x;
 
-	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
+	    if (sscanf(tmp, "%lf", &x) != 1) {
+		err = 1;
+	    }
 	} 
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse endobs"));

@@ -624,7 +624,13 @@ real_list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo,
 
 int list_laggenr (const int *list, double ***pZ, DATAINFO *pdinfo)
 {
-    int maxlag = pdinfo->pd;
+    int maxlag;
+
+    if (pdinfo->pd < 52) {
+	maxlag = pdinfo->pd;
+    } else {
+	maxlag = 14;
+    } 
 
     /* play safe with panel data */
     if (dataset_is_panel(pdinfo)) {

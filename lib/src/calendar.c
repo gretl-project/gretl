@@ -473,22 +473,28 @@ int n_hidden_missing_obs (const DATAINFO *pdinfo)
 int guess_daily_pd (const DATAINFO *pdinfo)
 {
     int t, wd, pd = 5;
-    int gotsat = 0;
+    int wdbak = -1;
+    int gotsat = 0, gotsun = 0;
+    int contig = 0;
 
     for (t=0; t<pdinfo->n && t<28; t++) {
 	wd = get_day_of_week(pdinfo->S[t]);
 	if (wd == 0) {
-	    /* got a Sunday, has to be seven-day data */
-	    pd = 7;
-	    break;
-	}
-	if (wd == 6) {
+	    gotsun = 1;
+	} else if (wd == 6) {
 	    gotsat = 1;
 	}
+	if ((wdbak + 1) % 7 == wd) {
+	    contig++;
+	}
+	wdbak = wd;
     }
 
-    if (pd == 5 && gotsat) {
-	pd = 6;
+    if (contig > 10) {
+	if (gotsun) pd = 7;
+	else if (gotsat) pd = 6;
+    } else {
+	pd = 7;
     }
 
     return pd;
