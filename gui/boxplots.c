@@ -160,7 +160,7 @@ static gint popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, "Five-number summary")) 
         five_numbers(grp);
     else if (!strcmp(item, "Save to session as icon")) {
-        dump_boxplot(grp, "boxdump");
+        dump_boxplot(grp, "boxdump.tmp");
 	add_last_graph(NULL, 1, NULL);
     }
     else if (!strcmp(item, "Save as EPS...")) 
@@ -1260,7 +1260,7 @@ int dump_boxplot (PLOTGROUP *grp, const char *fname)
 	    fprintf(fp, "%d rmax rmin = %f %f\n", i, 
 		    plt->outliers->rmax, plt->outliers->rmin);
 	    for (j=0; j<plt->outliers->n; j++) 
-		fprintf(fp, "%d vals %f\n", plt->outliers->vals[j]); 
+		fprintf(fp, "%d vals %f\n", i, plt->outliers->vals[j]); 
 	} else
 	    fprintf(fp, "%d n_outliers = 0\n", i);
 	
@@ -1273,8 +1273,8 @@ int retrieve_boxplot (const char *fname)
 {
     FILE *fp;
     int i, j, nout;
-    PLOTGROUP *grp;
-    BOXPLOT *plt;
+    PLOTGROUP *grp = NULL;
+    BOXPLOT *plt = NULL;
     char line[80], numstr[24];
 
     fp = fopen(fname, "r");
@@ -1305,7 +1305,8 @@ int retrieve_boxplot (const char *fname)
 
     if (strcmp(numstr, "NULL")) {
 	grp->numbers = malloc(strlen(numstr) + 1);
-	strcpy(grp->numbers, numstr);
+	if (grp->numbers != NULL) 
+	    strcpy(grp->numbers, numstr);
     }
 
     grp->plots = malloc(grp->nplots * sizeof(BOXPLOT));
@@ -1317,6 +1318,8 @@ int retrieve_boxplot (const char *fname)
 
     for (i=0; i<grp->nplots; i++) {
 	plt = &grp->plots[i];
+	plt->outliers = NULL;
+	nout = 0;
 	for (j=0; j<7 && fgets(line, 79, fp); j++) {
 	    if (j == 0 && 
 		sscanf(line, "%*d median = %lf", &plt->median) != 1)
@@ -1343,21 +1346,21 @@ int retrieve_boxplot (const char *fname)
 		sscanf(line, "%*d n_outliers = %d", &nout) != 1)
 		goto corrupt;
 	}
-	/* outliers? needs checking */
-	if (nout) {
-	    plt->outliers = malloc(sizeof(OUTLIERS));
-	    plt->outliers->vals = malloc(nout * sizeof(double));
+	/* any outliers? */
+	if (nout && 
+	    (plt->outliers = malloc(sizeof(OUTLIERS))) &&
+	    (plt->outliers->vals = malloc(nout * sizeof(double)))) {
 	    plt->outliers->n = nout;
 	    for (j=-1; j<nout && fgets(line, 79, fp); j++) {
 		if (j == -1 &&
-		    sscanf(line, "%*d rmax rmin = %lf %lf", &nout) != 2)
+		    sscanf(line, "%*d rmax rmin = %lf %lf", 
+			   &plt->outliers->rmax, &plt->outliers->rmin) != 2)
 		    goto corrupt;
-		else if (sscanf(line, "%*d vals %lf", 
+		else if (j >=0 && sscanf(line, "%*d vals %lf", 
 				&plt->outliers->vals[j]) != 1)
 		    goto corrupt;
 	    }
-	} else /* no outliers */
-	    plt->outliers = NULL;
+	} 
     }
     
     fclose(fp);

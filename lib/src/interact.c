@@ -968,7 +968,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case INFO:
 	err = get_info(paths->hdrfile, prn);
-	if (err) 
+	if (err == 1) /* err = 2 means no info rather than read error */
 	    pprintf(prn, "Error reading data header file.\n");
 	break;
 

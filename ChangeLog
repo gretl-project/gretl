@@ -1,3 +1,9 @@
+version 0.98
+- fix some build problems
+- add more functionality to boxplots
+- various fixes to "session" mechanism
+- better handling of empty data header info
+
 version 0.97
 - fix breakage of var command in GUI
 - add facility to draw boxplots

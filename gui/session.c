@@ -188,11 +188,11 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	sprintf(pltname, "%ssession.Plot_%d", paths.userdir, boxplot_count + 1);
 	sprintf(grname, "Boxplot %d", boxplot_count + 1);
 	boxplot_count++;
-	if (copyfile("boxdump", pltname)) {
+	if (copyfile("boxdump.tmp", pltname)) {
 	    errbox("Failed to copy boxplot file");
 	    return;
 	}
-	remove("boxdump");
+	remove("boxdump.tmp");
     }	
 
     /* write graph into session struct */
@@ -399,19 +399,25 @@ int delete_session_model (GtkWidget *w, gpointer data)
     myd = (dialog_t *) data;
     myobject = (gui_obj *) myd->data;
     junk = (MODEL *) myobject->data;
-    ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
-    if (session.nmodels > 1 && ppmod == NULL) {
-	return 1;
+
+    /* special case: only one model currently */
+    if (session.nmodels == 1) {
+	free_model(session.models[0]);
+    } else {
+	ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
+	if (session.nmodels > 1 && ppmod == NULL) {
+	    return 1;
+	}
+	j = 0;
+	for (i=0; i<session.nmodels; i++) {
+	    if ((session.models[i])->ID != junk->ID) 
+		ppmod[j++] = session.models[i];
+	    else 
+		free_model(session.models[i]);
+	}
+	free(session.models);
+	session.models = ppmod;
     }
-    j = 0;
-    for (i=0; i<session.nmodels; i++) {
-	if ((session.models[i])->ID != junk->ID) 
-	    ppmod[j++] = session.models[i];
-	else 
-	    free_model(session.models[i]);
-    }
-    free(session.models);
-    session.models = ppmod;
     session.nmodels -= 1;
     gtk_icon_list_remove(GTK_ICON_LIST(iconlist1), active_icon);
     return 0;

@@ -228,10 +228,29 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
     gint err;
 
     if (bufopen(&prn)) return;
+
     err = get_info(paths.hdrfile, prn);
+
     if (err) {
-	errbox("Couldn't find any data info");
 	gretl_print_destroy(prn);
+	if (err == 1) {
+	    errbox("Couldn't read data header file");
+	} else if (err == 2) { /* default blank header */
+	    FILE *fp;
+
+	    fp = fopen(paths.hdrfile, "a");
+	    if (fp == NULL) {
+		infobox("No info in data header file");
+	    } else {
+		fclose(fp);
+		if (!yes_no_dialog("gretl: add info", 
+				  "The data header file contains no\n"
+				  "informative comments.  Would you like\n"
+				  "to add some now?", 0)) {
+				     edit_header (NULL, 1, NULL);
+		}
+	    }
+	}
 	return;
     }
     view_buffer(prn, 80, 300, "gretl: data info", INFO, NULL);

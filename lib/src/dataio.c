@@ -606,6 +606,22 @@ void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
 
 /* .......................................................... */
 
+static int blank_check (FILE *fp)
+{
+    int i, deflt = 1;
+    char s[MAXLEN];
+
+    for (i=0; i<3 && deflt && fgets(s, MAXLEN-1, fp) ; i++) {
+	if (i == 0 && strncmp(s, "(*", 2)) deflt = 0;
+	else if (i == 1 && strncmp(s, "space for comments", 18)) deflt = 0;
+	else if (i == 2 && strncmp(s, "*)", 2)) deflt = 0;
+    }
+    fclose(fp);
+    return deflt;
+}
+
+/* .......................................................... */
+
 int get_info (const char *hdrfile, print_t *prn)
 {      
     char s[MAXLEN];
@@ -616,6 +632,19 @@ int get_info (const char *hdrfile, print_t *prn)
 	pprintf(prn, "Couldn't open %s\n", hdrfile); 
 	return 1;
     }
+
+    /* see if it's just the default "space for comments" */
+    if (blank_check(hdr)) { /* yes */
+	pprintf(prn, "No info in %s\n", hdrfile);
+	return 2;
+    } 
+
+    /* no, so restart the read */
+    if ((hdr = fopen(hdrfile, "r")) == NULL) {
+	pprintf(prn, "Couldn't open %s\n", hdrfile); 
+	return 1;
+    }    
+
     pprintf(prn, "Data info in file %s:\n\n", hdrfile);
     if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, STARTCOMMENT, 2) == 0) {
 	do {
