@@ -2288,6 +2288,52 @@
 
   </command>
 
+  <command name="kpss" section="Tests" label="Test KPSS">
+
+    <usage>
+      <arguments>
+        <argument>ordine</argument>
+        <argument>nome-variabile</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--trend</flag>
+	  <effect>include un trend</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostra i risultati della regressione</effect>
+	</option>
+      </options>
+      <examples>
+	<example>kpss 8 y</example>
+        <example>kpss 4 x1 --trend</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Calcola il test KPSS (Kwiatkowski, Phillips, Schmidt e
+	Shin, 1992) per la stazionarietà di una variabile. L'ipotesi
+        nulla è che la variabile in questione sia stazionaria, attorno
+        a un valore fisso o, se è stata usata l'opzione <lit>--trend</lit>,
+        attorno a un trend deterministico lineare.
+      </para>
+
+      <para>
+	L'argomento ordine determina la dimensione della finestra usata per
+        il livellamento di Bartlett.  Se si usa l'opzione <lit>--verbose</lit>,
+        vengono mostrati anche i risultati della regressione ausiliaria, insieme
+        alla varianza stimata della componente random walk della variabile.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variabile/Test KPSS</menu-path>
+    </gui-access>
+
+  </command>
   <command name="labels" section="Dataset" context="cli">
 
     <description>
