@@ -2304,7 +2304,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    int i, index, err = 0;
+    int err = 0;
     MODEL lad_model;
     void *handle;
     int (*lad_driver)(MODEL *, double **, DATAINFO *, PRN *);
@@ -2319,6 +2319,7 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     }
 
     if (open_plugin("lad", &handle)) {
+	pprintf(prn, _("Couldn't load plugin function\n"));
 	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }
@@ -2327,41 +2328,12 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     if (lad_driver == NULL) {
 	pprintf(prn, _("Couldn't load plugin function\n"));
 	close_plugin(handle);
+	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }
 
     (*lad_driver) (&lad_model, *pZ, pdinfo, prn);
     close_plugin(handle);
-
-    lad_model.ci = LAD;
-
-    /* FIXME */
-
-    if (0) {
-	for (i=1; i<=lad_model.ncoeff; i++) {
-	    /* approx using OLS std errs */
-	    lad_model.sderr[i] *= sqrt(2 * M_PI) / 2.0;
-	}
-    } else if (0) {
-	XPXXPY xpxxpy;
-	CHOLBETA cb;
-
-	xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
-	cb = cholbeta(xpxxpy);    
-	lad_model.xpx = cb.xpxxpy.xpx;
-	free(cb.coeff);
-	free(cb.xpxxpy.xpy);
-
-	makevcv(&lad_model);
-
-	for (i=1; i<=lad_model.ncoeff; i++) {
-	    index = ijton(i, i, list[0] - 1);
-	    lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
-	}
-
-	free(lad_model.vcv);
-	lad_model.vcv = NULL;
-    }
 
     return lad_model;
 }

@@ -91,7 +91,11 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 
     pmod->sigma = pmod->rho / pmod->nobs;
 
-    bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim);
+    if (bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim)) {
+	pmod->errcode = E_ALLOC;
+    }
+
+    pmod->ci = LAD;
 
     free(a);
     free(x);
@@ -520,8 +524,6 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 
     for (k=0; k<ITERS; k++) {
 
-	fprintf(stderr, "bootstrap: iter = %d\n", k);
-
 	/* initialize arrays */
 	for (i=0; i<dim; i++) {
 	    a[i] = 0.0;
@@ -542,8 +544,6 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	r = 0;
 	for (j = 1; j <= n; ++j) {
 	    for (i = 1; i <= m; ++i) {
-		fprintf(stderr, "setting a[%d] using t=%d\n", 
-			i + r * nrows - 1, sample[i - 1 + pmod->t1]);
 		a[i + r * nrows - 1] = 
 		    Z[pmod->list[j+1]][sample[i - 1 + pmod->t1]];
 	    }
@@ -563,19 +563,19 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	}
     }
 
-    /* find means of coeff estimates */
+    /* initialize */
     for (i=0; i<pmod->ncoeff; i++) {
 	coeffs[i][ITERS] = 0.0;
 	pmod->sderr[i+1] = 0.0;
     }
-    for (k=0; k<ITERS; k++) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    coeffs[i][ITERS] += coeffs[i][k];
-	}
-    }
+
+    /* find means of coeff estimates */
     for (i=0; i<pmod->ncoeff; i++) {
+	for (k=0; k<ITERS; k++) {
+	   coeffs[i][ITERS] += coeffs[i][k];
+	} 
 	coeffs[i][ITERS] /= ITERS;
-    }
+    }    
 
     /* find standard deviations */
     for (k=0; k<ITERS; k++) {
@@ -585,8 +585,7 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	}
     }
     for (i=0; i<pmod->ncoeff; i++) {
-	/* df correction? */
-	pmod->sderr[i+1] = sqrt(pmod->sderr[i+1] / pmod->nobs);
+	pmod->sderr[i+1] = sqrt(pmod->sderr[i+1] / ITERS);
     }
 
     free(sample);
