@@ -466,7 +466,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "\n%s\n", _(aux_string(pmod->aux)));
 	break;
     case AUX_AR:
-	pprintf(prn, _("\nTest for "));
+	pprintf(prn, _("\nBreusch-Pagan test for "));
 	if (pmod->order > 1)
 	    pprintf(prn, _("autocorrelation up to order %d\n"), pmod->order);
 	else
@@ -481,16 +481,22 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     default:
 	if (pmod->ID < 0) pprintf(prn, "\n");
 	if (pmod->name) pprintf(prn, "\n%s:\n", pmod->name);
-	else pprintf(prn, _("\nMODEL %d: "), pmod->ID);
+	else pprintf(prn, "\n%s %d: ", _("MODEL"), pmod->ID);
 	break;
     }
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
 	    _(estimator_string(pmod->ci)), pmod->nobs, startdate, enddate);
+
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
-	pprintf(prn, _("Dependent variable: uhat"));
-    else pprintf(prn, _("Dependent variable: %s\n"), 
+	pprintf(prn, "%s: uhat\n", _("Dependent variable"));
+    else if (pmod->aux == AUX_WHITE)
+	pprintf(prn, "%s: uhat^2\n", _("Dependent variable"));
+    else if (pmod->aux == AUX_ARCH)
+	pprintf(prn, "%s: ut^2\n", _("Dependent variable"));
+    else pprintf(prn, "%s: %s\n", _("Dependent variable"), 
 		 pdinfo->varname[pmod->list[1]]);
+
     if (pmod->ci == WLS || pmod->ci == ARCH) 
 	pprintf(prn, _("Variable used as weight: %s\n"), 
 		pdinfo->varname[pmod->nwt]);
@@ -950,14 +956,43 @@ static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */ 
 
+static int make_cname (const char *orig, char **cname)
+{
+    int lag;
+    char *p;
+
+    p = strrchr(orig, '_');
+    if (p == NULL) return 1;
+
+    lag = atoi(++p);
+
+    *cname = malloc(strlen(orig) + 2);
+    if (*cname == NULL) return 1;
+
+    sprintf(*cname, "ut^2(-%d)", lag);
+
+    return 0;
+}
+
+/* ......................................................... */ 
+
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			 const int c, PRN *prn)
+			const int c, PRN *prn)
 {
     double t, pvalue;
-    int gotnan = 0;
+    int gotnan = 0, freeit = 0;
+    char *cname;
 
-    pprintf(prn, " %3d) %8s ", pmod->list[c], 
-	   pdinfo->varname[pmod->list[c]]);
+    if (pmod->aux == AUX_ARCH) {
+	if (make_cname(pdinfo->varname[pmod->list[c]], &cname))
+	    cname = pdinfo->varname[pmod->list[c]];
+	else freeit = 1;
+    } else {
+	cname = pdinfo->varname[pmod->list[c]];
+    }
+
+    pprintf(prn, " %3d) %8s ", pmod->list[c], cname);
+    if (freeit) free(cname);
     _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1])) {
 	pprintf(prn, "%10s", _("undefined"));

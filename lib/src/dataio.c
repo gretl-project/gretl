@@ -1237,33 +1237,36 @@ int write_data (const char *fname, const int *list,
     return 0;
 }
 
+static void type_string (char *str, const DATAINFO *pdinfo)
+{
+    if (dataset_is_time_series(pdinfo)) 
+	strcpy(str, _("time series"));
+    else if (dataset_is_panel(pdinfo)) 
+        strcpy(str, _("panel"));
+    else 
+        strcpy(str, _("undated"));
+}
+
 static void pd_string (char *str, const DATAINFO *pdinfo)
 {
-    if (dataset_is_time_series(pdinfo)) {
-        switch (pdinfo->pd) {
-        case 1:
-            strcpy(str, _("Annual")); break;
-        case 4:
-            strcpy(str, _("Quarterly")); break;
-        case 12:
-            strcpy(str, _("Monthly")); break;
-        case 24:
-            strcpy(str, _("Hourly")); break;
-        case 52:
-            strcpy(str, _("Weekly")); break;
-        case 5:
-            strcpy(str, _("Daily")); break;
-        case 7:
-            strcpy(str, _("Daily")); break;
-        default:
-            strcpy(str, _("Unknown")); break;
-        }
-	strcat(str, _(" time-series"));
-    } 
-    else if (dataset_is_panel(pdinfo)) 
-        strcpy(str, _("Panel"));
-    else 
-        strcpy(str, _("Undated"));
+    switch (pdinfo->pd) {
+    case 1:
+	strcpy(str, _("annual")); break;
+    case 4:
+	strcpy(str, _("quarterly")); break;
+    case 12:
+	strcpy(str, _("monthly")); break;
+    case 24:
+	strcpy(str, _("hourly")); break;
+    case 52:
+	strcpy(str, _("weekly")); break;
+    case 5:
+	strcpy(str, _("daily")); break;
+    case 7:
+	strcpy(str, _("daily")); break;
+    default:
+	strcpy(str, _("unknown")); break;
+    }
 }
 
 /**
@@ -1280,7 +1283,7 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 {
-    char startdate[9], enddate[9], pdstr[36];
+    char startdate[9], enddate[9], typestr[32], pdstr[32];
     time_t prntime = time(NULL);
     int i;
 
@@ -1296,9 +1299,16 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 	pprintf(prn, "%s\n\n", pdinfo->descrip);
     }
 
-    pd_string(pdstr, pdinfo);
-    pprintf(prn, _("%s data, %s - %s (n = %d)\n\n"),
-	    pdstr, startdate, enddate, pdinfo->n);
+    type_string(typestr, pdinfo);
+    pprintf(prn, "%s: %s\n", _("Type of data"), typestr);
+    
+    if (dataset_is_time_series(pdinfo)) {
+	pd_string(pdstr, pdinfo);
+	pprintf(prn, "%s: %s\n", _("Frequency"), pdstr);
+    }	
+
+    pprintf(prn, _("%s: %s - %s (n = %d)\n\n"), _("Range"),
+	    startdate, enddate, pdinfo->n);
 
     pprintf(prn, _("Listing of variables:\n\n"));
 

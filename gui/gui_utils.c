@@ -1934,9 +1934,12 @@ int validate_varname (const char *varname)
 {
     int i, n = strlen(varname);
     char namebit[9];
+    unsigned char c;
+
+    *namebit = 0;
     
     if (n > 8) {
-	safecpy(namebit, varname, 8);
+	strncat(namebit, varname, 8);
 	sprintf(errtext, _("Variable name %s... is too long\n"
 	       "(the max is 8 characters)"), namebit);
 	errbox(errtext);
@@ -1949,11 +1952,11 @@ int validate_varname (const char *varname)
 	return 1;
     }
     for (i=1; i<n; i++) {
-	if (!(isalpha(varname[i]))  
-	    && !(isdigit(varname[i]))
-	    && varname[i] != '_') {
+	c = (unsigned char) varname[i];
+	
+	if ((!(isalpha(c)) && !(isdigit(c)) && c != '_') || c > 127) {
 	    sprintf(errtext, _("Name contains an illegal char (in place %d)\n"
-		    "Use only letters, digits and underscore"), i + 1);
+		    "Use only unaccented letters, digits and underscore"), i + 1);
 	    errbox(errtext);
 	    return 1;
 	}

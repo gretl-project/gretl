@@ -228,7 +228,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 
     if (code == 0) { /* gnuplot graph */
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
-	sprintf(grname, "Graph %d", plot_count + 1);
+	sprintf(grname, "%s %d", _("Graph"), plot_count + 1);
 #ifdef GNUPLOT_PNG
 	if (filter_plotfile(plot->fname, pltname)) return;
 #else
@@ -240,7 +240,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 #endif
     } else { /* gretl boxplot */
 	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count + 1);
-	sprintf(grname, "Boxplot %d", boxplot_count + 1);
+	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count + 1);
 	boxplot_count++;
 	if (copyfile("boxdump.tmp", pltname)) {
 	    errbox(_("Failed to copy boxplot file"));
@@ -286,7 +286,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
 
     if (pmod->name) return;
     if ((pmod->name = mymalloc(24)) == NULL) return;
-    sprintf(pmod->name, "Model %d", pmod->ID);
+    sprintf(pmod->name, "%s %d", _("Model"), pmod->ID);
 
     if (session.nmodels)
 	session.models = myrealloc(session.models, 

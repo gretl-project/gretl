@@ -403,6 +403,7 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 
+#ifdef notdef
     /* special on-screen string for notched plots */
     if (pc == NULL && grp->plots[0].conf[0] != -999.0 && grp->width >=460) {
 	setup_text (grp->area, grp->pixmap, gc, pc, 
@@ -412,6 +413,7 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 		    grp->height * headroom / 3.0,
 		    GTK_JUSTIFY_CENTER);
     }
+#endif
 }
 
 /* ............................................................. */

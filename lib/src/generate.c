@@ -462,6 +462,22 @@ static int getword (char c, char *str, char *word, int oflag)
 
 /* ........................................................... */
 
+static void fix_decimal_commas (char *str)
+{
+    char *p = str;
+
+    if (*p == 0) return;
+    p++;
+    
+    while (*p && *(p + 1)) {
+	if (*p == ',' && isdigit(*(p - 1)) && isdigit(*(p + 1)))
+	    *p = '.';
+	p++;
+    }
+}
+
+/* ........................................................... */
+
 static void get_genr_formula (char *formula, const char *line)
 {
     /* skip over " genr " */
@@ -548,6 +564,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     strcpy(genrs, s); 
     catch_double_symbols(s);
     delchar(' ', s);
+
+#ifdef ENABLE_NLS
+    if (',' == get_local_decpoint())
+	fix_decimal_commas(s);
+#endif
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "\n*** starting genr, s='%s'\n", s);
