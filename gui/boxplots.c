@@ -20,6 +20,7 @@
 /* boxplots for gretl */
 
 #include "gretl.h"
+#include "boxplots.h"
 
 #include <gtkextra/gtkextra.h>
 

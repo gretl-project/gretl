@@ -75,7 +75,7 @@ static struct extmap action_map[] = {
     {OPEN_EXCEL, ".xls"},
     {APPEND_EXCEL, ".xls"},
     {OPEN_DES, ".des"},
-    {OP_MAX, NULL}
+    {FILE_OP_MAX, NULL}
 };
 
 /* ........................................................... */

@@ -1408,7 +1408,7 @@ static void check_for_extra_data (void)
 {
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char jwpath[MAXLEN]; /* datafiles.c */
+    extern char jwpath[MAXLEN];  /* datafiles.c */
     int gotpwt = 0, gotwool = 0;
 
     /* first check for Penn World Table */
@@ -1626,14 +1626,7 @@ void colorize_tooltips (GtkTooltips *tip)
 
 static void open_textbook_data (void)
 {
-    GtkWidget *w = gtk_item_factory_get_item
-	(mdata->ifac, "/File/Open data/sample file/Wooldridge...");
-
-    if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
-	display_files(NULL, TEXTBOOK_DATA, NULL);
-    } else {
-	display_files(NULL, RAMU_DATA, NULL);
-    }
+    display_files(NULL, TEXTBOOK_DATA, NULL);
 }
 
 /* ........................................................... */

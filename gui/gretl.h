@@ -184,7 +184,7 @@ enum file_ops {
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
     SET_PATH,
-    OP_MAX
+    FILE_OP_MAX
 };
 
 #define SAVE_DATA_ACTION(i) (i >= SAVE_DATA && i < END_SAVE_DATA)

@@ -106,9 +106,9 @@ typedef struct {
 
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
-static int populate_series_list (windata_t *dbdat, PATHS *ppaths);
-static int populate_remote_series_list (windata_t *dbdat, char *buf);
-static int rats_populate_series_list (windata_t *dbdat);
+static int populate_series_list (windata_t *dbwin, PATHS *ppaths);
+static int populate_remote_series_list (windata_t *dbwin, char *buf);
+static int rats_populate_series_list (windata_t *dbwin);
 static SERIESINFO *get_series_info (windata_t *ddata, int action);
 static int read_RATSBase (GtkWidget *widget, FILE *fp);
 static int get_rats_data (const char *fname, const int series_number,
@@ -205,11 +205,11 @@ float retrieve_float (netfloat nf)
 
 /* ........................................................... */
 
-static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo, 
+static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
 			       double ***pZ)
 {
     char *getbuf, errbuf[80], numstr[16];
-    char *dbbase = dbdat->fname;
+    char *dbbase = dbwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
     size_t offset;
@@ -221,7 +221,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         return 1;
     clear(getbuf, 8192);
 
-    update_statusline(dbdat, _("Retrieving data..."));
+    update_statusline(dbwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
 		       errbuf);
@@ -234,9 +234,9 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         if (strlen(errbuf)) {
 	    if (errbuf[strlen(errbuf)-1] == '\n')
 		errbuf[strlen(errbuf)-1] = 0;
-	    update_statusline(dbdat, errbuf);
+	    update_statusline(dbwin, errbuf);
 	} else 
-	    update_statusline(dbdat, _("Error retrieving data from server"));
+	    update_statusline(dbwin, _("Error retrieving data from server"));
 	free(getbuf);
 	return err;
     } 
@@ -258,7 +258,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         sprintf(numstr, "%g", val); 
         (*pZ)[1][t] = atof(numstr);
     }
-    update_statusline(dbdat, "OK");
+    update_statusline(dbwin, "OK");
     free(getbuf);
 
     return 0;
@@ -318,7 +318,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
-static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
+static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
     double *xvec;
@@ -391,12 +391,12 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	/* time series data? */
 	set_time_series(datainfo);
 	start_new_Z(&Z, datainfo, 0);
-	if (dbdat->role == NATIVE_SERIES) 
-	    err = get_db_data(dbdat->fname, sinfo, &Z);
-	else if (dbdat->role == REMOTE_SERIES)
-	    err = get_remote_db_data(dbdat, sinfo, &Z);
-	else if (dbdat->role == RATS_SERIES)
-	    err = get_rats_data(dbdat->fname, dbdat->active_var + 1,
+	if (dbwin->role == NATIVE_SERIES) 
+	    err = get_db_data(dbwin->fname, sinfo, &Z);
+	else if (dbwin->role == REMOTE_SERIES)
+	    err = get_remote_db_data(dbwin, sinfo, &Z);
+	else if (dbwin->role == RATS_SERIES)
+	    err = get_rats_data(dbwin->fname, dbwin->active_var + 1,
 				sinfo, &Z);
 	if (err) {
 	    errbox(_("Couldn't access binary data"));
@@ -414,32 +414,32 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 
 /* ........................................................... */
 
-static void gui_display_series (GtkWidget *w, windata_t *dbdat)
+static void gui_display_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_DISPLAY, NULL);
+    gui_get_series(dbwin, DB_DISPLAY, NULL);
 }
 
-static void gui_graph_series (GtkWidget *w, windata_t *dbdat)
+static void gui_graph_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_GRAPH, NULL);
+    gui_get_series(dbwin, DB_GRAPH, NULL);
 }
 
-static void gui_import_series (GtkWidget *w, windata_t *dbdat)
+static void gui_import_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_IMPORT, NULL);
+    gui_get_series(dbwin, DB_IMPORT, NULL);
 }
 
 /* ........................................................... */
 
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
-    windata_t *dbdat = (windata_t *) data;
-    int err = 0, dbcode = dbdat->role;
+    windata_t *dbwin = (windata_t *) data;
+    int err = 0, dbcode = dbwin->role;
     DATAINFO *dbdinfo;
     SERIESINFO *sinfo;
     double **dbZ = NULL;
 
-    sinfo = get_series_info(dbdat, dbcode);
+    sinfo = get_series_info(dbwin, dbcode);
     if (sinfo == NULL) return;
 
     dbdinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
@@ -456,11 +456,11 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     set_time_series(dbdinfo);
 
     if (dbcode == NATIVE_SERIES) 
-	err = get_db_data(dbdat->fname, sinfo, &dbZ);
+	err = get_db_data(dbwin->fname, sinfo, &dbZ);
     else if (dbcode == REMOTE_SERIES) 
-	err = get_remote_db_data(dbdat, sinfo, &dbZ);
+	err = get_remote_db_data(dbwin, sinfo, &dbZ);
     else if (dbcode == RATS_SERIES)
-	err = get_rats_data(dbdat->fname, dbdat->active_var + 1, 
+	err = get_rats_data(dbwin->fname, dbwin->active_var + 1, 
 			    sinfo, &dbZ);
     if (err && dbcode != REMOTE_SERIES) {
 	errbox(_("Couldn't access binary datafile"));
@@ -474,7 +474,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     else if (action == DB_GRAPH) 
 	graph_dbdata(&dbZ, dbdinfo);
     else if (action == DB_IMPORT) 
-	add_dbdata(dbdat, &dbZ, sinfo);
+	add_dbdata(dbwin, &dbZ, sinfo);
     free_Z(dbZ, dbdinfo);
     free_datainfo(dbdinfo);
     free(sinfo);
@@ -482,47 +482,82 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void db_menu_find (GtkWidget *w, windata_t *dbdat)
+static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
 {
-    menu_find(dbdat, 1, NULL);
+    char cbname[MAXLEN];
+    extern GtkItemFactoryEntry view_items[];
+
+    strcpy(cbname, dbwin->fname);
+    strcat(cbname, ".cb");
+    
+    view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, view_items);
 }
 
 /* ........................................................... */
 
-static void build_db_menu (windata_t *dbdat)
+static void db_menu_find (GtkWidget *w, windata_t *dbwin)
+{
+    menu_find(dbwin, 1, NULL);
+}
+
+/* ........................................................... */
+
+static void build_db_popup (windata_t *dbwin, int cb)
 {
     GtkWidget *database_menu;
 
     database_menu = gtk_menu_new();
 
     add_popup_item(_("Display"), database_menu, gui_display_series, 
-		   (gpointer) dbdat);
+		   (gpointer) dbwin);
     add_popup_item(_("Graph"), database_menu, gui_graph_series, 
-		   (gpointer) dbdat);
+		   (gpointer) dbwin);
     add_popup_item(_("Import"), database_menu, gui_import_series, 
-		   (gpointer) dbdat);
+		   (gpointer) dbwin);
     add_popup_item(_("Find..."), database_menu, db_menu_find, 
-		   (gpointer) dbdat);
+		   (gpointer) dbwin);
+    if (cb) {
+	add_popup_item(_("Codebook"), database_menu, db_view_codebook, 
+		       (gpointer) dbwin);
+    }
 
-    dbdat->popup = database_menu;
+    dbwin->popup = database_menu;
 }
 
 /* ........................................................... */
 
-static void set_up_db_menu (GtkWidget *window, windata_t *dbdat, 
+static void set_up_db_menu (GtkWidget *window, windata_t *dbwin, 
 			    GtkItemFactoryEntry items[])
 {
     gint n_items = 0;
 
     while (items[n_items].path != NULL) n_items++;
 
-    dbdat->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
+    dbwin->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
 					NULL);
 #ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(dbdat->ifac, menu_translate, NULL, NULL);
+    gtk_item_factory_set_translate_func(dbwin->ifac, menu_translate, NULL, NULL);
 #endif
-    gtk_item_factory_create_items (dbdat->ifac, n_items, items, dbdat);
-    dbdat->mbar = gtk_item_factory_get_widget(dbdat->ifac, "<main>");
+    gtk_item_factory_create_items (dbwin->ifac, n_items, items, dbwin);
+    dbwin->mbar = gtk_item_factory_get_widget(dbwin->ifac, "<main>");
+}
+
+/* ........................................................... */
+
+static int db_has_codebook (const char *fname)
+{
+    char cbname[MAXLEN];
+    FILE *fp;
+
+    strcpy(cbname, fname);
+    strcat(cbname, ".cb");
+
+    fp = fopen(cbname, "r");
+    
+    if (fp == NULL) return 0;
+    
+    fclose(fp);
+    return 1;
 }
 
 /* ........................................................... */
@@ -533,23 +568,23 @@ void display_db_series_list (int action, char *fname, char *buf)
     GtkWidget *main_vbox;
     gint i;
     char *titlestr;
-    windata_t *dbdat;
+    windata_t *dbwin;
 
-    if ((dbdat = mymalloc(sizeof *dbdat)) == NULL)
+    if ((dbwin = mymalloc(sizeof *dbwin)) == NULL)
 	return;
-    windata_init(dbdat);
+    windata_init(dbwin);
 
-    dbdat->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_signal_connect (GTK_OBJECT (dbdat->w), "destroy",
+    dbwin->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_signal_connect (GTK_OBJECT (dbwin->w), "destroy",
 			GTK_SIGNAL_FUNC (free_windata),
-			dbdat);
+			dbwin);
 
     if (buf == NULL && strrchr(fname, SLASH)) {
 	titlestr = strrchr(fname, SLASH) + 1;
     } else {
 	titlestr = fname;
     }
-    gtk_window_set_title(GTK_WINDOW(dbdat->w), titlestr);
+    gtk_window_set_title(GTK_WINDOW(dbwin->w), titlestr);
     if (action == NATIVE_SERIES) {
 	for (i=strlen(fname)-1; i>0; i--) {
 	    if (fname[i] != '.') fname[i] = '\0';
@@ -557,22 +592,22 @@ void display_db_series_list (int action, char *fname, char *buf)
 	}
 	fname[i] = '\0';
     } 
-    strcpy(dbdat->fname, fname);
+    strcpy(dbwin->fname, fname);
 
     /* set up grids */
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
-    gtk_container_add (GTK_CONTAINER (dbdat->w), main_vbox);
+    gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
-    set_up_db_menu(dbdat->w, dbdat, db_items);
-    build_db_menu(dbdat);  /* popup */
+    set_up_db_menu(dbwin->w, dbwin, db_items);
+    build_db_popup(dbwin, db_has_codebook(fname)); 
 
-    gtk_box_pack_start (GTK_BOX (main_vbox), dbdat->mbar, FALSE, TRUE, 0);
-    gtk_widget_show(dbdat->mbar);
+    gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
+    gtk_widget_show(dbwin->mbar);
 
-    dbdat->role = action;
+    dbwin->role = action;
 
-    frame = database_window(dbdat);
+    frame = database_window(dbwin);
     gtk_box_pack_start (GTK_BOX (main_vbox), frame, TRUE, TRUE, 0);
 
     if (action == REMOTE_SERIES) {
@@ -580,30 +615,30 @@ void display_db_series_list (int action, char *fname, char *buf)
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
-	dbdat->status = gtk_label_new(_("Network status: OK"));
-	gtk_label_set_justify(GTK_LABEL(dbdat->status), GTK_JUSTIFY_LEFT);
-	gtk_box_pack_start(GTK_BOX(hbox), dbdat->status, FALSE, FALSE, 0);
+	dbwin->status = gtk_label_new(_("Network status: OK"));
+	gtk_label_set_justify(GTK_LABEL(dbwin->status), GTK_JUSTIFY_LEFT);
+	gtk_box_pack_start(GTK_BOX(hbox), dbwin->status, FALSE, FALSE, 0);
     }
 
     closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT(closebutton), "clicked", 
-			GTK_SIGNAL_FUNC(delete_widget), dbdat->w);
+			GTK_SIGNAL_FUNC(delete_widget), dbwin->w);
 
     if (action == NATIVE_SERIES) { 
-	if (populate_series_list(dbdat, &paths)) 
+	if (populate_series_list(dbwin, &paths)) 
 	    return;
     } 
     else if (action == REMOTE_SERIES) { 
-	if (populate_remote_series_list(dbdat, buf)) 
+	if (populate_remote_series_list(dbwin, buf)) 
 	    return;
     }
     else {
-	if (rats_populate_series_list(dbdat)) 
+	if (rats_populate_series_list(dbwin)) 
 	    return;
     }
 
-    gtk_widget_show_all(dbdat->w); 
+    gtk_widget_show_all(dbwin->w); 
 }
 
 /* ........................................................... */
@@ -658,7 +693,7 @@ static char *start_trim (char *s)
 
 /* ........................................................... */
 
-static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
+static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
 {
     gchar *row[3];
     char sername[9], line1[256], line2[72], dbidx[MAXLEN];
@@ -667,7 +702,7 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
     int err = 0;
     gint i;
 
-    strcpy(dbidx, dbdat->fname);
+    strcpy(dbidx, dbwin->fname);
     strcat(dbidx, ".idx");
     fp = fopen(dbidx, "r");
     if (fp == NULL) {
@@ -696,23 +731,23 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
 	row[2] = line2;
 
 	if (!err) err = check_serinfo(line2, sername);
-	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
+	gtk_clist_append(GTK_CLIST(dbwin->listbox), row);
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(dbdat->listbox), 
+	    gtk_clist_set_background(GTK_CLIST(dbwin->listbox), 
 				     i, &gray);
 	}
 	i++;
     }
     fclose(fp);
-    dbdat->active_var = 0;
+    dbwin->active_var = 0;
     gtk_clist_select_row 
-	(GTK_CLIST (dbdat->listbox), dbdat->active_var, 1);  
+	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
     return 0;
 }
 
 /* ........................................................... */
 
-static int populate_remote_series_list (windata_t *dbdat, char *buf)
+static int populate_remote_series_list (windata_t *dbwin, char *buf)
 {
     gchar *row[3];
     char sername[9], line1[150], line2[150];
@@ -739,9 +774,9 @@ static int populate_remote_series_list (windata_t *dbdat, char *buf)
 	getbufline(buf, line2, 0);
 	row[2] = line2;
 	if (!err) err = check_serinfo(line2, sername);
-	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
+	gtk_clist_append(GTK_CLIST(dbwin->listbox), row);
 	if (i % 2) {
-	    gtk_clist_set_background(GTK_CLIST(dbdat->listbox), 
+	    gtk_clist_set_background(GTK_CLIST(dbwin->listbox), 
 				     i, &gray);
 	}
 	i++;
@@ -751,21 +786,21 @@ static int populate_remote_series_list (windata_t *dbdat, char *buf)
 
 /* ......................................................... */
 
-static int rats_populate_series_list (windata_t *dbdat)
+static int rats_populate_series_list (windata_t *dbwin)
 {
     FILE *fp;
 
-    fp = fopen(dbdat->fname, "rb");
+    fp = fopen(dbwin->fname, "rb");
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
     } else {
 	/* extract catalog from RATS file */
-	read_RATSBase(dbdat->listbox, fp);
+	read_RATSBase(dbwin->listbox, fp);
 	fclose(fp);
-	dbdat->active_var = 0;
+	dbwin->active_var = 0;
 	gtk_clist_select_row 
-	    (GTK_CLIST (dbdat->listbox), dbdat->active_var, 1);  
+	    (GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
 	return 0;
     }
 }
@@ -1175,13 +1210,13 @@ static int read_RATSBase (GtkWidget *widget, FILE *fp)
 
 /* ........................................................... */
 
-static SERIESINFO *get_series_info (windata_t *dbdat, int action)
+static SERIESINFO *get_series_info (windata_t *dbwin, int action)
 /* get series info from clist line */
 {
     char pdc;
     gchar *temp;
     SERIESINFO *sinfo;
-    int sernum = dbdat->active_var;
+    int sernum = dbwin->active_var;
     char stobs[11], endobs[11];
 
     sinfo = mymalloc(sizeof *sinfo);
@@ -1193,7 +1228,7 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
 	sinfo->offset = 0;
 	for (i=0; i<sernum; i++) {
 	    gtk_clist_get_text
-		(GTK_CLIST(dbdat->listbox), i, 2, &temp);
+		(GTK_CLIST(dbwin->listbox), i, 2, &temp);
 	    sscanf(temp, "%*c %*s %*s %*s %*s %*s %d", &n);
 	    sinfo->offset += n;
 	}
@@ -1201,17 +1236,17 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
     }
 
     gtk_clist_get_text 
-	(GTK_CLIST(dbdat->listbox), sernum, 0, &temp);
+	(GTK_CLIST(dbwin->listbox), sernum, 0, &temp);
     sinfo->varname[0] = 0;
     strncat(sinfo->varname, temp, 8);
 
     gtk_clist_get_text 
-	(GTK_CLIST(dbdat->listbox), sernum, 1, &temp);
+	(GTK_CLIST(dbwin->listbox), sernum, 1, &temp);
     sinfo->descrip[0] = 0;
     strncat(sinfo->descrip, temp, MAXLABEL-1);
 
     gtk_clist_get_text 
-	(GTK_CLIST(dbdat->listbox), sernum, 2, &temp);
+	(GTK_CLIST(dbwin->listbox), sernum, 2, &temp);
     if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
 	       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
 	errbox(_("Failed to parse series information"));

@@ -92,7 +92,8 @@ static int tx_dialog (tx_request *request)
 #else
     request->dialog = gtk_dialog_new();
     gtk_window_set_title (GTK_WINDOW(request->dialog), 
-			  (request->code == TRAMO_SEATS)? "TRAMO/SEATS" : "X-12-ARIMA");
+			  (request->code == TRAMO_SEATS)? 
+			  "TRAMO/SEATS" : "X-12-ARIMA");
 #endif
 
     vbox = gtk_vbox_new(FALSE, 0);    
@@ -109,7 +110,7 @@ static int tx_dialog (tx_request *request)
 	gtk_widget_show(tmp);
 	gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
 	request->opt[D11].check = tmp;
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
 	tmp = gtk_check_button_new_with_label(_("Trend/cycle"));
 	gtk_widget_show(tmp);
@@ -292,6 +293,21 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
 
     strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
     strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+}
+
+static void clear_tramo_files (const char *tpath, const char *varname)
+{
+    char tfname[MAXLEN];
+    int i;
+
+    for (i=D11; i<TRIGRAPH; i++) {
+	sprintf(tfname, "%s%cgraph%cseries%c%s", tpath, SLASH, SLASH, SLASH,
+		tramo_series_strings[i]);
+	remove(tfname);
+    }
+
+    sprintf(tfname, "%s%coutput%c%s.out", tpath, SLASH, SLASH, varname);
+    remove(tfname);
 }
 
 static int add_series_from_file (const char *fname, int code,
@@ -706,6 +722,9 @@ int write_tx_data (char *fname, int varnum,
 #endif
     } else { /* TRAMO_SEATS */
 	char seats[MAXLEN];
+
+	/* ensure any stale files get deleted first, just in case */
+	clear_tramo_files(workdir, varname);
 
 #ifdef OS_WIN32 
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);

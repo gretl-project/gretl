@@ -185,8 +185,6 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
     else if (file_code == JW_DATA)
 	build_path(jwpath, fname, hdrname, ".gdt");
-    else if (file_code == TEXTBOOK_DATA) 
-	get_textbook_file_path(fname, hdrname, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
@@ -226,8 +224,6 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
     else if (file_code == JW_DATA)
 	build_path(jwpath, datname, trydatfile, ".gdt");
-    else if (file_code == TEXTBOOK_DATA) 
-	get_textbook_file_path(datname, trydatfile, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");

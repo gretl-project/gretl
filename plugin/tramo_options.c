@@ -100,7 +100,7 @@ static void tramo_options_set_defaults (tramo_options *opts, int pd)
     opts->q = opts->bq = 1;
     opts->mq = pd;
     opts->noadmiss = 1;      /* use approximation if needed */
-    opts->seats = 1;         /* make SEATS file and re-do estimation */
+    opts->seats = 2;         /* make SEATS file and re-do estimation */
     opts->out = 0;           /* verbose */
 }
 
@@ -257,6 +257,7 @@ seats_specific_widgets_set_sensitive (tramo_options *opts,
     gtk_widget_set_sensitive(request->opt[D11].check, s);
     gtk_widget_set_sensitive(request->opt[D12].check, s);
     gtk_widget_set_sensitive(request->opt[D13].check, s);
+    gtk_widget_set_sensitive(request->opt[TRIGRAPH].check, s);
 }				      
 
 static void real_set_seats (tramo_options *opts, gint run_seats)
@@ -1096,8 +1097,12 @@ int print_tramo_options (tx_request *request, FILE *fp)
 	fprintf(fp, "out=%d,", opts->out);
     }
 
-    fprintf(fp, "seats=%d\n", opts->seats);
-    if (opts->seats == 0) run_seats = 0;
+    if (opts->seats == 0) {
+	fputs("seats=0", fp);
+	if (opts->seats == 0) run_seats = 0;
+    }
+
+    fputs("$\n", fp);
 
     free(opts);
     request->opts = NULL;

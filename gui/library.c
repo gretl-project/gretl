@@ -25,6 +25,7 @@
 #include "selector.h"
 #include "series_view.h"
 #include "gpt_control.h"
+#include "boxplots.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -35,12 +36,6 @@ extern double **fullZ;
 static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, PRN *prn);
-/* boxplots.c */
-extern int boxplots (int *list, char **bools, 
-		     double ***pZ, const DATAINFO *pdinfo, 
-		     int notches);
-extern int boolean_boxplots (const char *str, double ***pZ, 
-			     DATAINFO *pdinfo, int notches);
 
 /* private functions */
 static int gui_exec_line (char *line, 
