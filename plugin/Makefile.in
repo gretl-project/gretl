@@ -44,7 +44,6 @@ GRETLLIB = ../lib/libgretl-1.0.la
 
 ifeq ($(have_gtk),2.0)
   plugindir = $(prefix)/lib/gretl-gtk2
-  GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
   GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell pkg-config --cflags glib-2.0)
 else
   plugindir = $(prefix)/lib/gretl-gtk1
