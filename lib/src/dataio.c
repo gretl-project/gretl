@@ -1029,20 +1029,9 @@ static int get_dot_pos (const char *s)
     return pos;
 }
 
-/**
- * dateton:
- * @date: string representation of date for processing.
- * @pdinfo: pointer to data information struct.
- * 
- * Given a "current" date string, a periodicity, and a starting
- * date string, returns the observation number corresponding to
- * the current date string, counting from zero.
- * 
- * Returns: integer observation number.
- *
- */
-
-int dateton (const char *date, const DATAINFO *pdinfo)
+static int 
+real_dateton (const char *date, const DATAINFO *pdinfo,
+	      int nolimit)
 {
     int t, n = -1;
 
@@ -1140,12 +1129,38 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	}
     }
 
-    if (pdinfo->n > 0 && n >= pdinfo->n) {
+    if (!nolimit && pdinfo->n > 0 && n >= pdinfo->n) {
 	sprintf(gretl_errmsg, _("Observation number out of bounds"));
 	n = -1; 
     }
    
     return n;
+}
+
+/**
+ * dateton:
+ * @date: string representation of date for processing.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Given a "current" date string, a periodicity, and a starting
+ * date string, returns the observation number corresponding to
+ * the current date string, counting from zero.
+ * 
+ * Returns: integer observation number.
+ *
+ */
+
+int dateton (const char *date, const DATAINFO *pdinfo)
+{
+    return real_dateton(date, pdinfo, 0);
+}
+
+/* special for appending data: allow the date to be outside of
+   the range of the current dataset */
+
+static int merge_dateton (const char *date, const DATAINFO *pdinfo)
+{
+    return real_dateton(date, pdinfo, 1);
 }
 
 static char *
@@ -2683,61 +2698,79 @@ static int test_markers_for_dates (DATAINFO *pdinfo, PRN *prn)
     return -1;
 }
 
-static int var_overlap (const DATAINFO *pdinfo, const DATAINFO *addinfo)
+static int count_add_vars (const DATAINFO *pdinfo, const DATAINFO *addinfo)
 {
+    int addvars = addinfo->v - 1;
     int i, j;
-    int match = 0;
 
-    for (i=1; i<pdinfo->v; i++) {
-	for (j=1; j<addinfo->v; j++) {
-	    if (!strcmp(pdinfo->varname[i], addinfo->varname[j])) {
-		match++;
+    for (i=1; i<addinfo->v; i++) {
+	for (j=1; j<pdinfo->v; j++) {
+	    if (!strcmp(addinfo->varname[i], pdinfo->varname[j])) {
+		if (!pdinfo->vector[j]) {
+		    addvars = -1;
+		} else {
+		    addvars--;
+		}
 		break;
+	    }
+	}
+	if (addvars < 0) {
+	    break;
+	}
+    }
+
+    return addvars;
+}
+
+static int compare_ranges (const DATAINFO *pdinfo,
+			   const DATAINFO *addinfo,
+			   int *offset)
+{
+    int ed0, sd1, ed1;
+    int addobs = -1;
+
+    ed0 = dateton(pdinfo->endobs, pdinfo);
+    sd1 = merge_dateton(addinfo->stobs, pdinfo);
+    ed1 = merge_dateton(addinfo->endobs, pdinfo);
+
+    if (sd1 < 0) {
+	addobs = -1;
+    }
+
+    /* case: exact match of ranges */
+    else if (sd1 == 0 && ed1 == ed0) {
+	*offset = 0;
+	addobs = 0;
+    }    
+
+    /* case: starting obs the same */
+    else if (sd1 == 0) {
+	*offset = 0;
+	if (ed1 > ed0) {
+	    addobs = ed1 - ed0;
+	}
+    }
+
+    /* case: new data start right after end of old */
+    else if (sd1 == ed0 + 1) {
+	*offset = sd1;
+	addobs = addinfo->n;
+    }
+
+    /* case: new data start later than old */
+    else if (sd1 > 0) {
+	if (sd1 <= ed0) {
+	    /* but there's some overlap */
+	    *offset = sd1;
+	    if (ed1 > ed0) {
+		addobs = ed1 - ed0;
+	    } else {
+		addobs = 0;
 	    }
 	}
     }
 
-    return match;
-}
-
-static int new_data_offset_ok (const DATAINFO *pdinfo,
-			       const DATAINFO *addinfo,
-			       int *offset)
-{
-    int sd0, sd1;
-    int ed0, ed1;
-    int ok = 0;
-
-    sd0 = dateton(pdinfo->stobs, pdinfo);
-    sd1 = dateton(addinfo->stobs, pdinfo);
-    ed0 = dateton(pdinfo->endobs, pdinfo);
-    ed1 = dateton(addinfo->endobs, pdinfo);
-
-    /* case: starting obs the same */
-    if (sd1 == sd0) {
-	*offset = 0;
-	ok = 1;
-    }
-
-    /* case: new data start later */
-    else if (sd1 > sd0) {
-	if (sd1 < ed0) {
-	    /* but there's some overlap */
-	    *offset = sd1 - sd0;
-	    ok = 1;
-	}
-    }
-
-    /* case: new data start earlier */
-    else if (sd1 < sd0) {
-	if (ed1 > sd0) {
-	    /* but there's some overlap */
-	    *offset = sd1 - sd0;
-	    ok = 1;
-	}
-    }
-
-    return ok;
+    return addobs;
 }
 
 static void merge_error (char *msg, PRN *prn)
@@ -2765,9 +2798,10 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 		double **addZ, DATAINFO *addinfo,
 		PRN *prn)
 {
-    int err = 0, addrows = 0, addcols = 0;
+    int addvars = 0;
+    int addobs = 0;
     int offset = 0;
-    int match_obs = 0, match_vars = 0;
+    int err = 0;
 
     /* first check for conformability */
 
@@ -2777,76 +2811,24 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	match_obs = new_data_offset_ok(pdinfo, addinfo, &offset);
-	match_vars = var_overlap(pdinfo, addinfo);
+	addobs = compare_ranges(pdinfo, addinfo, &offset);
+	addvars = count_add_vars(pdinfo, addinfo);
     }
 
-    if (!err && !match_obs && !match_vars) {
+    if (!err && (addobs < 0 || addvars < 0)) {
 	merge_error(_("New data not conformable for appending\n"), prn);
 	err = 1;
     }
 
-    else if (!err && match_obs && !match_vars) {
-	/* adding variable(s) */
-	addcols = 1;
+    if (!err && pdinfo->markers != addinfo->markers) {
+	merge_error(_("Inconsistency in observation markers\n"), prn);
+	err = 1;
     }
-
-    else if (!err && match_vars) {
-	/* adding observations */
-	addrows = 1;
-    }
-
-    if (!err && addrows && !addcols) {
-	if (pdinfo->structure && 
-	    dateton(addinfo->stobs, pdinfo) != pdinfo->n) {
-	    merge_error(_("Starting point of new data does not fit\n"), prn);
-	    err = 1;
-	}
-	else if (pdinfo->markers != addinfo->markers) {
-	    merge_error(_("Inconsistency in observation markers\n"), prn);
-	    err = 1;
-	}
-	if (err) addrows = 0;
-    }
-
+	
     /* if checks are passed, try merging the data */
 
-   if (!err && addcols) { 
-       int orig_vars = pdinfo->v;
-       int i, t, nvars = pdinfo->v + addinfo->v - 1;
-
-       if (dataset_add_vars(addinfo->v - 1, pZ, pdinfo)) {
-	   merge_error(_("Out of memory adding data\n"), prn);
-	   err = 1;
-       }
-
-       for (i=orig_vars; i<nvars && !err; i++) {
-	   strcpy(pdinfo->varname[i], addinfo->varname[i - orig_vars + 1]);
-
-	   if (offset >= 0) {
-	       /* positive offset means new data start later */
-	       for (t=0; t<pdinfo->n; t++) {
-		   if (t >= offset && t - offset < addinfo->n) {
-		       (*pZ)[i][t] = addZ[i - orig_vars + 1][t - offset];
-		   } else {
-		       (*pZ)[i][t] = NADBL;
-		   }
-	       }
-	   } else {
-	       /* negative offset: new data start earlier */
-	       for (t=0; t<pdinfo->n; t++) {
-		   if (t - offset < addinfo->n) {
-		       (*pZ)[i][t] = addZ[i - orig_vars + 1][t - offset];
-		   } else {
-		       (*pZ)[i][t] = NADBL;
-		   }
-	       }
-	   }
-       }
-   }
-
-   else if (!err && addrows) { 
-       int i, t, tnew = pdinfo->n + addinfo->n;
+    if (!err && addobs > 0) { 
+       int i, t, tnew = pdinfo->n + addobs;
        double *xx;
 
        if (pdinfo->markers) {
@@ -2857,21 +2839,31 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	   } else {
 	       for (t=pdinfo->n; t<tnew && !err; t++) {
 		   S[t] = malloc(OBSLEN);
-		   if (S[t] == NULL) err = 1;
-		   else strcpy(S[t], addinfo->S[t - pdinfo->n]);
+		   if (S[t] == NULL) {
+		       err = 1;
+		   } else {
+		       strcpy(S[t], addinfo->S[t - offset]);
+		   }
 	       }
 	       pdinfo->S = S;
 	   }
        }
 
        for (i=0; i<pdinfo->v && !err; i++) {
+	   if (!pdinfo->vector[i]) {
+	       continue;
+	   }
 	   xx = realloc((*pZ)[i], tnew * sizeof *xx);
 	   if (xx == NULL) {
 	       err = 1;
 	       break;
 	   } else {
 	       for (t=pdinfo->n; t<tnew; t++) {
-		   xx[t] = addZ[i][t - pdinfo->n];
+		   if (i == 0) {
+		       xx[t] = 1.0;
+		   } else {
+		       xx[t] = NADBL;
+		   }
 	       }
 	       (*pZ)[i] = xx;
 	   }
@@ -2886,7 +2878,37 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
        }
    }
 
-   if (!err && (addcols || addrows)) {
+   if (!err) { 
+       int k = pdinfo->v;
+       int i, t;
+
+       if (addvars > 0 && dataset_add_vars(addvars, pZ, pdinfo)) {
+	   merge_error(_("Out of memory adding data\n"), prn);
+	   err = 1;
+       }
+
+       for (i=1; i<addinfo->v && !err; i++) {
+	   int v = varindex(pdinfo, addinfo->varname[i]);
+	   int newvar = 0;
+
+	   if (v >= k) {
+	       /* a  new variable */
+	       v = k++;
+	       newvar = 1;
+	       strcpy(pdinfo->varname[v], addinfo->varname[i]);
+	   } 
+
+	   for (t=0; t<pdinfo->n; t++) {
+	       if (t >= offset && t - offset < addinfo->n) {
+		   (*pZ)[v][t] = addZ[i][t - offset];
+	       } else if (newvar) {
+		   (*pZ)[v][t] = NADBL;
+	       }
+	   }
+       }
+   }
+
+   if (!err && (addvars || addobs)) {
        pputs(prn, _("Data appended OK\n"));
    }
 

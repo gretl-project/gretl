@@ -722,8 +722,10 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 		err = 1;
 	    }
 	}
-	
-	err = allocate_each_strings(loop, *nf);
+
+	if (!err) {
+	    err = allocate_each_strings(loop, *nf);
+	}
 
 	if (!err) {
 	    int i;

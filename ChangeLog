@@ -1,6 +1,10 @@
 version 1.3.3
 - Fix memory leak in VAR command with impulse responses, in the
   command-line program
+- Fix bug: possible crash in "loop foreach" if an invalid variable
+  name is given
+- Fixes for appending data (make more fliexible)
+
 01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
   at the wrong coefficient in some cases
