@@ -516,12 +516,18 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 				const char *s)
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
+    char *scpy;
     int nf = 0;
     int err = 0;
 
-    while (isspace((unsigned char) *s)) s++;
+    scpy = gretl_strdup(s);
+    if (scpy == NULL) {
+	return E_ALLOC;
+    }
 
-    if (sscanf(s, "%8[^.]..%8s", vn1, vn2) != 2) {
+    delchar(' ', scpy);
+
+    if (sscanf(scpy, "%8[^.]..%8s", vn1, vn2) != 2) {
 	err = 1;
     } else {
 	int v1, v2;
@@ -561,6 +567,8 @@ each_strings_from_list_of_vars (LOOPSET *loop, const DATAINFO *pdinfo,
 	    }
 	}
     }
+    
+    free(scpy);
 
     if (!err) {
 	loop->type = EACH_LOOP;
@@ -600,7 +608,7 @@ parse_as_each_loop (LOOPSET *loop, const DATAINFO *pdinfo, const char *s)
 	return 1;
     }
 
-    if (nf == 1 && strstr(s, "..") != NULL) {
+    if (nf <= 3 && strstr(s, "..") != NULL) {
 	err = each_strings_from_list_of_vars(loop, pdinfo, s);
     } else {
 	loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
