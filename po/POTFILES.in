@@ -96,6 +96,7 @@ plugin/audioprint.c
 plugin/excel_import.c
 plugin/fcp.c
 plugin/fiml.c
+plugin/fractals.c
 plugin/garch.c
 plugin/gnumeric_import.c
 plugin/import_common.c
@@ -109,6 +110,7 @@ plugin/midi_utils.c
 plugin/mp_ols.c
 plugin/panel_data.c
 plugin/pca.c
+plugin/poisson.c
 plugin/progress_bar.c
 plugin/range-mean.c
 plugin/stats_tables.c

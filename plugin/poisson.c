@@ -281,7 +281,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 	crit = tmpmod.nobs * tmpmod.rsq;
 
-	pprintf(prn, "iter = %d\tcrit = %g\n", iter, crit);
+	pprintf(prn, "%s %3d\tcrit = %g\n", _("iteration"), iter, crit);
 
 	for (i=0; i<tmpmod.ncoeff; i++) { 
 	    pmod->coeff[i] += tmpmod.coeff[i];
