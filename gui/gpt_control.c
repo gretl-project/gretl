@@ -1076,8 +1076,10 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    tmp += 7;
 	    plot->lines[i].title[0] = '\'';
 	    j = 0;
-	    while (tmp[j] != '\'') 
-		plot->lines[i].title[j] = tmp[j++];
+	    while (tmp[j] != '\'') { 
+		plot->lines[i].title[j] = tmp[j];
+		j++;
+	    }
 	    plot->lines[i].title[j] = 0; 
 	}
 

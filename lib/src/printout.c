@@ -1079,7 +1079,7 @@ static void outxx (const double xx, const int ci, PRN *prn)
 {
     if (ci == CORR) {
 	if (na(xx)) pprintf(prn, " %13s", _("undefined"));
-	else pprintf(prn, " %13.3f", xx);
+	else pprintf(prn, " %13.4f", xx);
     } else {
 	if (xx > -0.001 && xx < 0.001)
 	    pprintf(prn, " %13e", xx);

@@ -1706,7 +1706,7 @@ int _forecast (int t1, int t2, int nv,
 int _full_model_list (MODEL *pmod, int **plist)
 /* reconstitute full varlist for WLS and AR models */
 {
-    int i, pos = 0, len, *mylist;
+    int i, pos = 0, len, *mylist = NULL;
 
     if (pmod->ci != WLS && pmod->ci != AR) return 0;
 

@@ -459,9 +459,10 @@ static int factorized_vars (double ***pZ,
 #ifndef OS_WIN32
 static int gp_png_wants_color (void)
 {
-    int c; 
+    static int c = -1; 
 
-    c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
+    if (c == -1)
+	c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
     return !c;
 }
 #endif
