@@ -1085,6 +1085,7 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	write_uvar_to_dataset(uvar, nunits, T, *pZ, pdinfo);
 
 	if (opt & OPT_T) {
+	    /* save coefficients for comparison */
 	    for (i=0; i<mdl.ncoeff; i++) {
 		bvec[i] = mdl.coeff[i];
 	    }
@@ -1106,6 +1107,7 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 			mdl.ess / mdl.nobs);
 	    }
 	} else {
+	    /* one-step FGLS */
 	    break;
 	} 
     }
