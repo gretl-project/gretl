@@ -23,7 +23,7 @@
 #define GUIPRINT_H
 
 #ifdef G_OS_WIN32
-int win_copy_rtf (char *rtf_str);
+int win_copy_rtf (print_t *prn);
 #endif
 
 void model_to_rtf (MODEL *pmod);

@@ -186,8 +186,6 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");
 
-    if (prn->fp) fclose(prn->fp);
-
     return 0;
 }
 
@@ -279,8 +277,6 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
     if (standalone) 
 	pprintf(prn, "\n\\end{document}\n");
 
-    if (prn->fp) fclose(prn->fp);
-
     return 0;
 }
 
@@ -296,6 +292,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	return 1;
 
     tex_print_model(pmod, pdinfo, oflag, &prn);
+    if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }
 
@@ -311,5 +308,6 @@ int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	return 1;
 
     tex_print_equation(pmod, pdinfo, oflag, &prn);
+    if (prn.fp != NULL) fclose(prn.fp);
     return 0;
 }

@@ -61,7 +61,7 @@ extern gchar datalabel[64];
 extern PATHS paths; 
 extern double *Z;
 extern CMD command;
-extern print_t cmds;
+extern print_t *cmds;
 extern int plot_count;
 extern int popup_connected;
 
@@ -148,7 +148,8 @@ enum browser_codes {
 enum exec_codes {
     CONSOLE_EXEC,
     SCRIPT_EXEC,
-    SESSION_EXEC
+    SESSION_EXEC,
+    REBUILD_EXEC
 };
 
 enum cgi_options {

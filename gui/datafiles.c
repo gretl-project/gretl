@@ -133,7 +133,7 @@ static void browse_header (GtkWidget *w, gpointer data)
     char hdrname[MAXLEN], line[MAXLEN];
     FILE *fp;
     windata_t *mydata = (windata_t *) data;
-    print_t prn;
+    print_t *prn;
     gchar *fname;
 
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
@@ -165,11 +165,11 @@ static void browse_header (GtkWidget *w, gpointer data)
        the appearance in the gtk text box */
     while (fgets(line, MAXLEN-1, fp)) {
 	delchar('\r', line);
-	pprintf(&prn, "%s", line);
+	pprintf(prn, "%s", line);
     }
     fclose(fp);
 
-    view_buffer(&prn, 80, 300, "gretl: data header", INFO, NULL);
+    view_buffer(prn, 80, 300, "gretl: data header", INFO, NULL);
 }
 
 /* ........................................................... */

@@ -1629,3 +1629,77 @@ static void print_discrete_stats (const MODEL *pmod,
 		i, pmod->chisq, chisq(pmod->chisq, i));
     } else pprintf(prn, "\n");
 }
+
+/* ........................................................... */
+
+void gretl_print_destroy (print_t *prn)
+{
+    if (prn == NULL) return;
+
+    if (prn->fp != stdout && prn->fp != stderr && prn->fp != NULL)
+	fclose(prn->fp);
+    prn->fp = NULL;
+    if (prn->buf != NULL) {
+#ifdef PRN_DEBUG
+  	fprintf(stderr, "freeing buffer at %p\n", (void *) prn->buf); 
+#endif
+	free(prn->buf);
+    }
+    prn->buf = NULL;
+    free(prn);
+    prn = NULL;
+}
+
+/* ........................................................... */
+
+print_t *gretl_print_new (int prncode, const char *fname)
+{
+    print_t *prn = NULL;
+
+    if (prncode == GRETL_PRINT_FILE && fname == NULL) {
+	fprintf(stderr, "gretl_prn_new: Must supply a filename\n");
+	return NULL;
+    }
+
+    prn = malloc(sizeof *prn);
+    if (prn == NULL) {
+	fprintf(stderr, "gretl_prn_new: out of memory\n");
+	return NULL;
+    }
+
+    if (prncode == GRETL_PRINT_NULL) {
+	prn->fp = NULL;
+	prn->buf = NULL;
+    }	
+	
+    else if (prncode == GRETL_PRINT_FILE) {
+	prn->buf = NULL;
+	prn->fp = fopen(fname, "w");
+	if (prn->fp == NULL) {
+	    fprintf(stderr, "gretl_prn_new: couldn't open %s\n", fname);
+	    free(prn);
+	    return NULL;
+	}
+    }
+
+    else if (prncode == GRETL_PRINT_STDOUT) {
+	prn->buf = NULL;
+	prn->fp = stdout;
+    }
+
+    else if (prncode == GRETL_PRINT_STDERR) {
+	prn->buf = NULL;
+	prn->fp = stderr;
+    }	    
+
+    else if (prncode == GRETL_PRINT_BUFFER) {
+	prn->fp = NULL;
+	if (pprintf(prn, "@init")) {
+	    fprintf(stderr, "gretl_prn_new: out of memory\n");
+	    free(prn);
+	    return NULL;
+	}
+    }    
+
+    return prn;
+}

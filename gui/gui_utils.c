@@ -395,7 +395,7 @@ void clear_clist (GtkWidget *widget)
 
 /* ........................................................... */
 
-void register_data (const char *fname)
+void register_data (const char *fname, int record)
 {    
     char datacmd[MAXLEN];
 
@@ -409,6 +409,7 @@ void register_data (const char *fname)
     menubar_state(TRUE);
     session_state(TRUE);    
 
+    if (!record) return;
     /* record opening of data file in command log */
     if (fname != NULL) {
 	mkfilelist(1, fname);
@@ -431,7 +432,7 @@ void do_open_data (GtkWidget *w, gpointer data)
      */
 {
     gint datatype, err;
-    print_t prn;
+    print_t *prn;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
 
@@ -446,8 +447,8 @@ void do_open_data (GtkWidget *w, gpointer data)
 
     /* check file type first */
     if (bufopen(&prn)) return;
-    datatype = detect_filetype(paths.datfile, &paths, &prn);
-    prnclose(&prn);
+    datatype = detect_filetype(paths.datfile, &paths, prn);
+    gretl_print_destroy(prn);
 
     if (datatype == 2) {
 	do_open_csv_box(paths.datfile, OPEN_CSV);
@@ -467,7 +468,7 @@ void do_open_data (GtkWidget *w, gpointer data)
     /* trash the practice files window that launched the query? */
     if (fwin) gtk_widget_destroy(fwin->w);    
 
-    register_data(paths.datfile);
+    register_data(paths.datfile, 1);
 }
 
 /* ........................................................... */
@@ -539,7 +540,7 @@ void save_session (char *fname)
     char msg[MAXLEN], savedir[MAXLEN], fname2[MAXLEN];
     char session_base[MAXLEN], tmp[MAXLEN], grftmp[64];
     FILE *fp;
-    print_t prn;
+    print_t *prn;
 
     spos = slashpos(fname);
     if (spos) 
@@ -598,13 +599,13 @@ void save_session (char *fname)
 
     /* save output */
     switch_ext(fname2, fname, "txt");
-    prn.fp = fopen(fname2, "w");
-    if (prn.fp == NULL) {
+    prn = gretl_print_new(GRETL_PRINT_FILE, fname2);
+    if (prn == NULL) {
 	errbox("Couldn't open output file for writing");
 	return;
     }
-    execute_script(cmdfile, NULL, NULL, &prn, SESSION_EXEC); 
-    fclose(prn.fp);
+    execute_script(cmdfile, NULL, NULL, prn, SESSION_EXEC); 
+    gretl_print_destroy(prn);
 
     if (savedir)
 	sprintf(msg, "session saved to %s -\n", savedir);
@@ -919,7 +920,7 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
     gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 		    NULL, NULL, prn->buf, 
 		    strlen(prn->buf));
-    prnclose(prn);
+    gretl_print_destroy(prn);
     
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
@@ -1421,7 +1422,7 @@ int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize,
 		    NULL, NULL, prn->buf, 
 		    strlen(prn->buf));
     /*      fprintf(stderr, "view_model: freeing model buffer\n"); */
-    prnclose(prn);
+    gretl_print_destroy(prn);
 
     copylist(&default_list, pmod->list);
 
@@ -2212,17 +2213,17 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 
 /* .................................................................. */
 
-void buf_to_clipboard (char *buf)
+void prn_to_clipboard (print_t *prn)
 {
     size_t len;
 
-    if (buf == NULL) return;
-    len = strlen(buf);
+    if (prn->buf == NULL) return;
+    len = strlen(prn->buf);
 
     if (clipboard_buf) g_free(clipboard_buf);
     clipboard_buf = mymalloc(len + 1);
 
-    memcpy(clipboard_buf, buf, len + 1);
+    memcpy(clipboard_buf, prn->buf, len + 1);
     gtk_selection_owner_set(mdata->w,
 			    GDK_SELECTION_PRIMARY,
 			    GDK_CURRENT_TIME);
@@ -2233,7 +2234,7 @@ void buf_to_clipboard (char *buf)
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *mydata = (windata_t *) data;
-    print_t prn;
+    print_t *prn;
 
     /* mydata->action code says what sort of thing is displayed in
        the window in question */
@@ -2244,17 +2245,17 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
-	    texprint_summary(summ, datainfo, &prn);
-	    buf_to_clipboard(prn.buf);
+	    texprint_summary(summ, datainfo, prn);
+	    prn_to_clipboard(prn);
 	} else {
-	    rtfprint_summary(summ, datainfo, &prn);
+	    rtfprint_summary(summ, datainfo, prn);
 #ifdef G_OS_WIN32
-	    win_copy_rtf(prn.buf);
+	    win_copy_rtf(prn);
 #else
-	    buf_to_clipboard(prn.buf);
+	    prn_to_clipboard(prn);
 #endif
 	}
-	prnclose(&prn);
+	gretl_print_destroy(prn);
 	return;
     }
 
@@ -2264,17 +2265,17 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX) {
-	    texprint_corrmat(corr, datainfo, &prn);
-	    buf_to_clipboard(prn.buf);
+	    texprint_corrmat(corr, datainfo, prn);
+	    prn_to_clipboard(prn);
 	} else {
-	    rtfprint_corrmat(corr, datainfo, &prn);
+	    rtfprint_corrmat(corr, datainfo, prn);
 #ifdef G_OS_WIN32
-	    win_copy_rtf(prn.buf);
+	    win_copy_rtf(prn);
 #else
-	    buf_to_clipboard(prn.buf);
+	    prn_to_clipboard(prn);
 #endif
 	}
-	prnclose(&prn);
+	gretl_print_destroy(prn);
 	return;
     }
 
@@ -2295,11 +2296,11 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	if (bufopen(&prn)) return;
 	if (how == COPY_LATEX)
-	    tex_print_model(pmod, datainfo, 0, &prn);
+	    tex_print_model(pmod, datainfo, 0, prn);
 	else
-	    h_printmodel(pmod, datainfo, &prn);
-	buf_to_clipboard(prn.buf);
-	prnclose(&prn);
+	    h_printmodel(pmod, datainfo, prn);
+	prn_to_clipboard(prn);
+	gretl_print_destroy(prn);
 	return;
     }
 

@@ -44,25 +44,25 @@ static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 #ifdef G_OS_WIN32
 
 /* win32 only: copy rtf to clipboard for pasting into Word */
-int win_copy_rtf (char *rtf_str)
+int win_copy_rtf (print_t *prn)
 {
     HGLOBAL winclip;
     char *ptr;
     unsigned rtf_format = RegisterClipboardFormat("Rich Text Format");
     size_t len;
 
-    if (rtf_str == NULL) return 0;
+    if (prn->buf == NULL) return 0;
     if (!OpenClipboard(NULL)) return 1;
 
     EmptyClipboard();
 
-    len = strlen(rtf_str);
+    len = strlen(prn->buf);
         
     winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
 
     ptr = (char *) GlobalLock(winclip);
 
-    memcpy(ptr, rtf_str, len + 1);
+    memcpy(ptr, prn->buf, len + 1);
 
     GlobalUnlock(winclip);
 
@@ -77,18 +77,18 @@ int win_copy_rtf (char *rtf_str)
 
 void model_to_rtf (MODEL *pmod)
 {
-    print_t prn;
+    print_t *prn;
 
     if (bufopen(&prn)) return;
     
-    r_printmodel(pmod, datainfo, &prn);
+    r_printmodel(pmod, datainfo, prn);
 
 #ifdef G_OS_WIN32
-    win_copy_rtf(prn.buf);
+    win_copy_rtf(prn);
 #else
-    buf_to_clipboard(prn.buf);
+    prn_to_clipboard(prn);
 #endif
-    prnclose(&prn);
+    gretl_print_destroy(prn);
 }
 
 /* row format specifications for RTF "tables" */

@@ -731,19 +731,19 @@ five_numbers (gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
     int i;
-    print_t prn;
+    print_t *prn;
     extern GtkItemFactoryEntry view_items[];
 
     if (bufopen(&prn)) return 1;
 
     if (grp->plots[0].conf[0] == -999.0) { /* no confidence intervals */
-	pprintf(&prn, "Five-number summar%s\n\n"
+	pprintf(prn, "Five-number summar%s\n\n"
 		"%20s%10s%10s%10s%10s\n",
 		(grp->nplots > 1)? "ies" : "y",
 		"min", "Q1", "median", "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
-	    pprintf(&prn, "%-10s%10g%10g%10g%10g%10g\n",
+	    pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
 		    grp->plots[i].varname, grp->plots[i].min, 
 		    grp->plots[i].lq, grp->plots[i].median,
 		    grp->plots[i].uq, grp->plots[i].max);
@@ -751,7 +751,7 @@ five_numbers (gpointer data)
     } else { /* confidence intervals */
 	char intstr[24];
 
-	pprintf(&prn, "Five-number summar%s with bootstrapped confidence "
+	pprintf(prn, "Five-number summar%s with bootstrapped confidence "
 		"interval for median\n\n"
 		"%18s%10s%10s%17s%10s%10s\n",
 		(grp->nplots > 1)? "ies" : "y",
@@ -760,7 +760,7 @@ five_numbers (gpointer data)
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
 		    grp->plots[i].conf[1]);
-	    pprintf(&prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
+	    pprintf(prn, "%-10s%8g%10g%10g%17s%10g%10g\n",
 		    grp->plots[i].varname, grp->plots[i].min, 
 		    grp->plots[i].lq, grp->plots[i].median,
 		    intstr,
@@ -768,7 +768,7 @@ five_numbers (gpointer data)
 	}
     }
 
-    (void) view_buffer(&prn, 78, 240, "gretl: 5 numbers", BXPLOT,
+    (void) view_buffer(prn, 78, 240, "gretl: 5 numbers", BXPLOT,
                        view_items);
 
     return 0;

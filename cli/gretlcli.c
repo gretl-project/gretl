@@ -62,7 +62,7 @@ CMD command;                  /* struct for command characteristics */
 GENERATE genr;                /* genr_func return struct */
 PATHS paths;                  /* useful paths */
 LOOPSET loop;                 /* struct for monte carlo loop */
-print_t cmds;
+print_t *cmds;
 MODELSPEC *modelspec;
 MODEL tmpmod;
 FILE *dat, *fb;
@@ -269,8 +269,8 @@ int main (int argc, char *argv[])
     if (!batch) {
 	strcpy(cmdfile, paths.userdir);
 	strcat(cmdfile, "session.inp");
-	cmds.fp = fopen(cmdfile, "w");
-	if (cmds.fp == NULL) {
+	cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
+	if (cmds == NULL) {
 	    printf("Can't open file to save commands.\n");
 	    return EXIT_FAILURE;
 	}
@@ -303,7 +303,7 @@ int main (int argc, char *argv[])
 	    }
 	    data_file_open = 1;
 	    if (!batch) 
-		fprintf(cmds.fp, "open %s\n", paths.datfile);
+		pprintf(cmds, "open %s\n", paths.datfile);
 	}
     }
 
@@ -486,7 +486,7 @@ void exec_line (char *line, print_t *prn)
     /* but if we're stacking commands for a loop, parse lightly */
     if (loopstack) get_cmd_ci(line, &command);
     else 
-	getcmd(line, datainfo, &command, &ignore, &Z, &cmds);
+	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
     /* if in batch mode, echo comments in input */
     if (batch && command.ci == -2) {
 	printf("%s", linebak);
@@ -502,7 +502,7 @@ void exec_line (char *line, print_t *prn)
 	    return;
 	} else {
 	    echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
-		     0, oflag, &cmds);
+		     0, oflag, cmds);
 	    if (command.ci != ENDLOOP) {
 		if (add_to_loop(&loop, line, command.ci, &Z, datainfo, oflag)) 
 		    printf("Failed to add command to loop stack.\n");
@@ -512,7 +512,7 @@ void exec_line (char *line, print_t *prn)
     }
     if (command.ci != ENDLOOP) 
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 0, 
-		 oflag, &cmds);
+		 oflag, cmds);
 
     /* FIXME ?? */
 /*      if (is_model_ref_cmd(command.ci) &&  */
@@ -995,7 +995,7 @@ void exec_line (char *line, print_t *prn)
 	    break;
 	}
 	pprintf(prn, "commands saved as %s\n", cmdfile);
-	if (cmds.fp != NULL) fclose(cmds.fp);
+	gretl_print_destroy(cmds);
 	if (command.param[0] == 'x') break;
 	printf("type a filename to store output (enter to quit): ");
 	*line = '\0';

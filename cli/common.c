@@ -31,7 +31,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
-    getcmd(linecpy, datainfo, &command, &ignore, &Z, &cmds);
+    getcmd(linecpy, datainfo, &command, &ignore, &Z, cmds);
     if (command.ci < 0) return 0;
     if (command.errcode) {
 	errmsg(command.errcode, command.errmsg, prn);

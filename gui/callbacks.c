@@ -225,17 +225,17 @@ void dummy_call (void)
 
 void open_info (gpointer data, guint edit, GtkWidget *widget)
 {
-    print_t prn;
+    print_t *prn;
     gint err;
 
     if (bufopen(&prn)) return;
-    err = get_info(paths.hdrfile, &prn);
+    err = get_info(paths.hdrfile, prn);
     if (err) {
 	errbox("Couldn't find any data info");
-	prnclose(&prn);
+	gretl_print_destroy(prn);
 	return;
     }
-    view_buffer(&prn, 80, 300, "gretl: data info", INFO, NULL);
+    view_buffer(prn, 80, 300, "gretl: data info", INFO, NULL);
 }
 
 /* ........................................................... */

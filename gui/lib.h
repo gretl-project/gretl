@@ -24,17 +24,15 @@
 
 /* general purpose functions */
 
-char *user_fopen (const char *fname, char *fullname, print_t *prn);
+char *user_fopen (const char *fname, char *fullname, print_t **pprn);
 
-gint bufopen (print_t *prn);
-
-void prnclose (print_t *prn);
+gint bufopen (print_t **pprn);
 
 gint check_cmd (char *line);
  
 gint cmd_init (char *line);
 
-gint dump_cmd_stack (const char *fname);
+gint dump_cmd_stack (char *fname);
 
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 

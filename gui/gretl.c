@@ -130,7 +130,7 @@ GENERATE genr;              /* generate new variable struct */
 
 int oflag, plot_count, data_file_open, batch = 1;
 int model_action, orig_vars;
-print_t cmds;
+print_t *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
 /* defaults for some options */
@@ -567,12 +567,12 @@ int main (int argc, char *argv[])
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
-    cmds.fp = fopen(cmdfile, "w");
-    if (cmds.fp == NULL) {
+    cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
+    if (cmds == NULL) {
 	fprintf(stderr, "Can't open file to save commands.\n");
 	return EXIT_FAILURE;
     }
-    fclose(cmds.fp);
+    fclose(cmds->fp);
 
     /* allocate memory for data information struct */
     datainfo = malloc(sizeof *datainfo);
@@ -716,7 +716,6 @@ int main (int argc, char *argv[])
 
     free_command_stack();
     free_modelspec();
-    dump_cmd_stack(NULL);
 
     remove(paths.plotfile);
     Rcleanup();

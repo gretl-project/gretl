@@ -67,4 +67,7 @@ int print_fit_resid (const MODEL *pmod,
 
 void printxx (const double xx, char *str, const int ci);
 
+void gretl_print_destroy (print_t *prn);
+
+print_t *gretl_print_new (int prncode, const char *fname);
 

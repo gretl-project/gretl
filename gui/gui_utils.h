@@ -19,7 +19,7 @@ void add_files_to_menu (int filetype);
 
 int copyfile (const char *src, const char *dest);
 
-void buf_to_clipboard (char *buf);
+void prn_to_clipboard (print_t *prn);
 
 int isdir (const char *path);
 
@@ -39,7 +39,7 @@ void *myrealloc (void *ptr, size_t size);
 
 void clear_data (void);
 
-void register_data (const char *fname);
+void register_data (const char *fname, int record);
 
 void verify_open_data (gpointer userdata);
 

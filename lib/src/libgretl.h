@@ -40,6 +40,14 @@ enum format_codes {
     RTF
 };
 
+enum prn_codes {
+    GRETL_PRINT_STDOUT,
+    GRETL_PRINT_STDERR,
+    GRETL_PRINT_FILE,
+    GRETL_PRINT_BUFFER,
+    GRETL_PRINT_NULL
+};
+
 /* information on data set */
 typedef struct { 
     int v;              /* number of variables */

@@ -656,7 +656,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
 void do_save_graph (const char *fname, char *savestr)
 {
     FILE *fq;
-    print_t prn;
+    print_t *prn;
     char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
     char termstr[MAXLEN];
     int cmds;
@@ -665,7 +665,7 @@ void do_save_graph (const char *fname, char *savestr)
     fq = fopen(paths.plotfile, "r");
     if (fq == NULL) {
 	errbox("Couldn't access graph info");
-	prnclose(&prn);
+	gretl_print_destroy(prn);
 	return;
     } 
     cmds = termtype_to_termstr(savestr, termstr);  
@@ -674,12 +674,12 @@ void do_save_graph (const char *fname, char *savestr)
 	    errbox("Failed to copy graph file");
 	return;
     } else {
-	pprintf(&prn, "set term %s\n", termstr);
-	pprintf(&prn, "set output '%s'\n", fname);
+	pprintf(prn, "set term %s\n", termstr);
+	pprintf(prn, "set output '%s'\n", fname);
 	while (fgets(plotline, MAXLEN-1, fq))
-	    fputs(plotline, prn.fp);
+	    pprintf(prn, "%s", plotline);
     }
-    prnclose(&prn);
+    gretl_print_destroy(prn);
     fclose(fq);
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
 #ifdef G_OS_WIN32

@@ -36,6 +36,7 @@
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
+/* #define SESSION_DEBUG */
 
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
@@ -293,6 +294,10 @@ void do_open_session (GtkWidget *w, gpointer data)
     free_session();
     session_init();
 
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "do_open_session: about to check %s\n", scriptfile);
+#endif
+
     if (parse_savefile(scriptfile, &session, &rebuild)) 
 	return;
     if (recreate_session(scriptfile, &session, &rebuild)) 
@@ -316,9 +321,9 @@ void close_session (void)
 {
     clear_data();
     free_session();
-    dump_cmd_stack(NULL);
     session_state(FALSE);
     session_close_state(FALSE);
+    session_file_open = 0;
     /* FIXME - more to do here (icon window?) */
 }
 
@@ -428,6 +433,10 @@ int saved_objects (char *fname)
     char line[MAXLEN];
     int saves = 0;
 
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "saved_objects: checking %s\n", fname);
+#endif    
+
     fp = fopen(fname, "r");
     if (fp == NULL) return -1;
 
@@ -471,6 +480,10 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 	errbox("Out of memory!");
 	return 1;
     }
+
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "parse_savefile (%s): got saved objects\n", fname);
+#endif
 
     i = 0; /* models */
     k = 0; /* graphs */
@@ -554,15 +567,19 @@ int parse_savefile (char *fname, SESSION *psession, session_t *rebuild)
 int recreate_session (char *fname, SESSION *psession, session_t *rebuild)
      /* called on start-up when a "session" file is loaded */
 {
-    print_t prn;
+    print_t *prn;
 
     /* no printed output wanted */
-    prn.fp = NULL;
-    prn.buf = NULL;
+    prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
 
-    if (execute_script(fname, psession, rebuild, &prn, SESSION_EXEC)) 
+#ifdef SESSION_DEBUG
+    fprintf(stderr, "recreate_session: fname = %s\n", fname);
+#endif
+
+    if (execute_script(fname, psession, rebuild, prn, REBUILD_EXEC)) 
 	errbox("Error recreating session");
     free_rebuild(rebuild);
+    gretl_print_destroy(prn);
     return 0;
 }
 
@@ -976,12 +993,12 @@ gui_obj *session_add_object (gpointer data, int sort)
 
 void open_gui_model (gui_obj *gobj)
 { 
-    print_t prn;
+    print_t *prn;
     MODEL *pmod = (MODEL *) gobj->data;
 
     if (bufopen(&prn)) return;
-    printmodel(pmod, datainfo, &prn);
-    view_model((void *) &prn, pmod, 78, 400, gobj->name);
+    printmodel(pmod, datainfo, prn);
+    view_model((void *) prn, pmod, 78, 400, gobj->name);
 }
 
 /* ........................................................... */

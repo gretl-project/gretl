@@ -243,13 +243,13 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 
 static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
 {
-    print_t prn;
+    print_t *prn;
 
     if (bufopen(&prn)) return;
 
-    printdata(NULL, dbZ, dbdinfo, 1, 1, &prn);
+    printdata(NULL, dbZ, dbdinfo, 1, 1, prn);
 
-    view_buffer(&prn, 36, 350, "gretl: display database series", PRINT,
+    view_buffer(prn, 36, 350, "gretl: display database series", PRINT,
 		NULL); 
 }
 

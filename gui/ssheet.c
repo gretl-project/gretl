@@ -481,7 +481,7 @@ static void get_data_from_sheet (void)
 	for (t=0; t<n; t++)
 	    strcpy(datainfo->S[t], sheet->row[t].button.label); 
     }
-    register_data(NULL);
+    register_data(NULL, 1);
     if (missobs)
 	infobox("Warning: there were missing observations");
     else
