@@ -47,6 +47,11 @@ struct flag_match {
 struct gretl_option gretl_opts[] = {
     { ADD,      OPT_Q, "quiet" },
     { ADDTO,    OPT_Q, "quiet" },
+    { ADF,      OPT_N, "no-constant" }, 
+    { ADF,      OPT_C, "constant" }, 
+    { ADF,      OPT_R, "quadratic-trend" },     
+    { ADF,      OPT_T, "trend" }, 
+    { ADF,      OPT_V, "all" }, 
     { ARMA,     OPT_N, "native" },
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },

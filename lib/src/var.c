@@ -57,7 +57,7 @@ enum {
 
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
-			  PRN *prn);
+			  gretlopt opt, int cointcode, PRN *prn);
 
 /* ...................................................................  */
 
@@ -785,6 +785,7 @@ static int diffvarnum (int index, const DATAINFO *pdinfo)
     gretl_trunc(s, 6);
     strcpy(diffname, "d_");
     strcat(diffname, s);
+
     return varindex(pdinfo, diffname);
 }
 
@@ -920,8 +921,11 @@ static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 
     strcpy(lagname, pdinfo->varname[iv]);
 
-    if (pdinfo->pd >=10) gretl_trunc(lagname, 5);
-    else gretl_trunc(lagname, 6);
+    if (pdinfo->pd >=10) {
+	gretl_trunc(lagname, 5);
+    } else {
+	gretl_trunc(lagname, 6);
+    }
 
     sprintf(ext, "_%d", lag);
     strcat(lagname, ext);
@@ -1476,20 +1480,25 @@ static double df_pvalue_from_plugin (double tau, int n, int niv, int itv)
 
 int coint (int order, const LIST list, double ***pZ, 
 	   DATAINFO *pdinfo, PRN *prn)
-     /* FIXME - need proper error checking here */
 {
     int i, t, n, nv, l0 = list[0];
-    MODEL coint_model;
+    MODEL cmod;
     int *cointlist = NULL;
+    int adfcode = UR_CONST;
 
-    gretl_model_init(&coint_model);
+    gretl_model_init(&cmod);
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
-	if (i > 1) pputc(prn, '\n');
+	if (list[i] == 0) {
+	    continue;
+	}
+	if (i > 1) {
+	    pputc(prn, '\n');
+	}
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		i, pdinfo->varname[list[i]]);
-	real_adf_test(order, list[i], 1, pZ, pdinfo, prn);
+	real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_V, -1, prn);
     }
 
     /* step 2: carry out the cointegrating regression */
@@ -1511,42 +1520,45 @@ int coint (int order, const LIST list, double ***pZ,
     }
 
     pputc(prn, '\n');
-    pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
+    pprintf(prn, _("Step %d: cointegrating regression\n"), l0 + 1);
     
-    coint_model = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
-    coint_model.aux = AUX_COINT;
-    printmodel(&coint_model, pdinfo, OPT_NONE, prn);
+    cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
+    cmod.aux = AUX_COINT;
+    printmodel(&cmod, pdinfo, OPT_NONE, prn);
 
     /* add residuals from cointegrating regression to data set */
     n = pdinfo->n;
-    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
     nv = pdinfo->v - 1;
 
-    for (t=0; t<coint_model.t1; t++) {
+    for (t=0; t<cmod.t1; t++) {
 	(*pZ)[nv][t] = NADBL;
     }
-    for (t = coint_model.t1; t<=coint_model.t2; t++) {
-	(*pZ)[nv][t] = coint_model.uhat[t];
+    for (t=cmod.t1; t<=cmod.t2; t++) {
+	(*pZ)[nv][t] = cmod.uhat[t];
     }
-    for (t=coint_model.t2 + 1; t<n; t++) {
+    for (t=cmod.t2+1; t<n; t++) {
 	(*pZ)[nv][t] = NADBL;
     }
 
     strcpy(pdinfo->varname[nv], "uhat");
 
-    /* Run ADF test on these residuals */
     pputc(prn, '\n');
-    real_adf_test(order, pdinfo->v - 1, l0, pZ, pdinfo, prn);
+    pprintf(prn, _("Step %d: Dickey-Fuller test on residuals\n"), l0 + 2);
+
+    /* Run (A)DF test on the residuals */
+    real_adf_test(pdinfo->v - 1, order, 1 + cmod.ncoeff - cmod.ifc, 
+		  pZ, pdinfo, OPT_N, adfcode, prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
-	    "(a) The unit-root hypothesis is not rejected for the individual"
-	    " variables.\n(b) The unit-root hypothesis is rejected for the "
-	    "residuals (uhat) from the \n    cointegrating regression.\n"
-	    "\n(Note that significance levels for the D-W and F statistics here "
-	    "cannot be \nread from the usual statistical tables.)\n"));
+		 "(a) The unit-root hypothesis is not rejected for the individual"
+		 " variables.\n(b) The unit-root hypothesis is rejected for the "
+		 "residuals (uhat) from the \n    cointegrating regression.\n"));
 
     /* clean up and get out */
-    clear_model(&coint_model);
+    clear_model(&cmod);
     free(cointlist);
     dataset_drop_vars(1, pZ, pdinfo);
 
@@ -1591,8 +1603,7 @@ static int *adf_prepare_vars (int order, int varno,
 
     /* dependent var is the first diff */
     list[1] = diffvarnum(varno, pdinfo);
-    list[2] = 0;
-    list[3] = lagvarnum(varno, 1, pdinfo);
+    list[2] = lagvarnum(varno, 1, pdinfo);
 
     /* generate lags of difference for augmented test */
     for (i=1; i<=order && !err; i++) {
@@ -1602,7 +1613,7 @@ static int *adf_prepare_vars (int order, int varno,
 	    fprintf(stderr, "Error generating lag variable\n");
 	    err = 1;
 	} else {
-	    list[i+3] = lnum;
+	    list[2 + i] = lnum;
 	} 
     } 
 
@@ -1611,29 +1622,35 @@ static int *adf_prepare_vars (int order, int varno,
 
 static int real_adf_test (int varno, int order, int niv,
 			  double ***pZ, DATAINFO *pdinfo, 
+			  gretlopt opt, int cointcode,
 			  PRN *prn)
 {
     const char *models[] = {
+	"(1 - L)y = (a-1)*y(-1) + e",
 	"(1 - L)y = b0 + (a-1)*y(-1) + e",
 	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + e",
 	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + e"
     };
     const char *aug_models[] = {
+	"(1 - L)y = (a-1)*y(-1) + ... + e",
 	"(1 - L)y = b0 + (a-1)*y(-1) + ... + e",
 	"(1 - L)y = b0 + b1*t + (a-1)*y(-1) + ... + e",
 	"(1 - L)y = b0 + b1*t + b2*t^2 + (a-1)*y(-1) + ... + e"
     };
     const char *teststrs[] = {
+	N_("test without constant"),
 	N_("test with constant"),
 	N_("with constant and trend"),
 	N_("with constant and quadratic trend")
     };
     int orig_nvars = pdinfo->v;
+    int blurb_done = 0;
     MODEL dfmod;
     int *list;
     char pvstr[48];
     double DFt, pv;
-    int i;
+    int i, imin = 1, imax = 3;
+    int itv;
 
     list = adf_prepare_vars(order, varno, pZ, pdinfo);
     if (list == NULL) {
@@ -1642,19 +1659,46 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    for (i=0; i<3; i++) {
+    if (opt & OPT_V) {
+	/* verbose: show all */
+	imin = 0;
+	imax = 4;
+    } else if (opt & OPT_N) {
+	/* no constant */
+	imin = 0;
+	imax = 1;
+    } else if (opt & OPT_C) {
+	/* constant only */
+	imin = 1;
+	imax = 2;
+    } else if (opt & OPT_T) {
+	/* trend only */
+	imin = 2;
+	imax = 3;
+    } else if (opt & OPT_R) {
+	/* quadratic trend only */
+	imin = 3;
+	imax = 4;
+    }
 
-	list[0] = 3 + order + i;
+    for (i=imin; i<imax; i++) {
+	int dfnum = (i > 0);
 
-	if (i == 1) {
-	    list[4 + order] = gettrend(pZ, pdinfo, 0);
-	    if (list[4 + order] == TREND_FAILED) {
+	list[0] = 2 + order + i;
+
+	if (i > 0) {
+	    list[list[0]] = 0;
+	} 
+
+	if (i >= 2) {
+	    list[3 + order] = gettrend(pZ, pdinfo, 0);
+	    if (list[3 + order] == TREND_FAILED) {
 		return 1;
 	    }
 	}
-	if (i > 1) {
-	    list[5 + order] = gettrend(pZ, pdinfo, 1);
-	    if (list[5 + order] == TREND_FAILED) {
+	if (i > 2) {
+	    list[4 + order] = gettrend(pZ, pdinfo, 1);
+	    if (list[4 + order] == TREND_FAILED) {
 		return 1;
 	    }
 	}	    
@@ -1664,15 +1708,21 @@ static int real_adf_test (int varno, int order, int niv,
 	    return dfmod.errcode;
 	}
 
-	DFt = dfmod.coeff[1] / dfmod.sderr[1];
+	DFt = dfmod.coeff[dfnum] / dfmod.sderr[dfnum];
+
+	if (cointcode > 0) {
+	    itv = cointcode;
+	} else {
+	    itv = (i == 0)? UR_NO_CONST :
+		(i == 1)? UR_CONST : 
+		(i == 2)? UR_TREND :
+		UR_TREND_SQUARED;
+	}
 
 	pv = df_pvalue_from_plugin(DFt, 
 				   /* use asymptotic p-value for augmented case */
 				   (order > 0)? 0 : dfmod.nobs, 
-				   niv, 
-				   (i == 0)? UR_CONST : 
-				   (i == 1)? UR_TREND :
-				   UR_TREND_SQUARED);
+				   niv, itv);
 
 	if (na(pv)) {
 	    sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
@@ -1682,7 +1732,7 @@ static int real_adf_test (int varno, int order, int niv,
 		    pv);
 	} 
 
-	if (i == 0) {
+	if (!blurb_done) {
 	    if (order > 0) {
 		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
 			order, pdinfo->varname[varno]);
@@ -1693,23 +1743,25 @@ static int real_adf_test (int varno, int order, int niv,
 	    pprintf(prn, _("sample size %d\n"), dfmod.nobs);
 	    pputs(prn, _("unit-root null hypothesis: a = 1"));
 	    pputs(prn, "\n\n");
+	    blurb_done = 1;
 	}
 
-	pprintf(prn, "   %s\n"
-		"   %s: %s\n"
-		"   %s: %g\n"
+	pprintf(prn, "   %s\n", _(teststrs[i]));
+	if (cointcode == 0) {
+	pprintf(prn, "   %s: %s\n", _("model"), 
+		(order > 0)? aug_models[i] : models[i]);
+	}
+	pprintf(prn, "   %s: %g\n"
 		"   %s: t = %g\n"
 		"   %s\n\n",
-		_(teststrs[i]), 
-		_("model"), (order > 0)? aug_models[i] : models[i],
-		_("estimated value of (a - 1)"), dfmod.coeff[1],
+		_("estimated value of (a - 1)"), dfmod.coeff[dfnum],
 		_("test statistic"), DFt,
-		pvstr);
+		pvstr);	
 
 	clear_model(&dfmod);
     }
 
-    pputs(prn, _("reported p-values based on MacKinnon (JAE, 1996)\n"));
+    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
 
     free(list);
     dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
@@ -1723,6 +1775,7 @@ static int real_adf_test (int varno, int order, int niv,
  * @varno: ID number of the variable to test.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
+ * @opt: option flag.
  * @prn: gretl printing struct.
  *
  * Carries out and prints the results of the Augmented Dickey-Fuller test for 
@@ -1733,9 +1786,9 @@ static int real_adf_test (int varno, int order, int niv,
  */
 
 int adf_test (int order, int varno, double ***pZ,
-	      DATAINFO *pdinfo, PRN *prn)
+	      DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    return real_adf_test(varno, order, 1, pZ, pdinfo, prn);
+    return real_adf_test(varno, order, 1, pZ, pdinfo, opt, 0, prn);
 }
 
 static int 

@@ -53,7 +53,7 @@ int coint (int order, const LIST list,
 
 int adf_test (int order, const int varno, 
 	      double ***pZ, DATAINFO *pdinfo, 
-	      PRN *prn);
+	      gretlopt opt, PRN *prn);
 
 int johansen_test (int order, const LIST list, 
 		   double ***pZ, DATAINFO *pdinfo,

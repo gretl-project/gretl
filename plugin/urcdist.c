@@ -1,25 +1,18 @@
 /* Driver plugin for James MacKinnons's "urcval" function, to calculate
-   p-values for Dickey-Fuller tests.
+   p-values for unit root tests.
 
    See James G. MacKinnon, "Numerical Distribution Functions for Unit
    Root and Cointegration Tests", Journal of Applied Econometrics,
    Vol. 11, No. 6, 1996, pp. 601-618.
 
    The calculation code here is Copyright (c) James G. MacKinnon.
-   The "wrapper" is written by Allin Cottrell.
-
-   The plugin requires MacKinnpn's datafiles, probs.tab and urc-1.tab,
-   available in tabs-unix.zip, at
-
-   http://qed.econ.queensu.ca/pub/faculty/mackinnon/numdist/
-
-   The datafiles should be placed in a subdirectory named "data" of
-   the gretl plugin directory.
-
+   The "wrapper" is written by Allin Cottrell, 2004.
 */
 
 #include "libgretl.h"
 #include "var.h"
+
+#include <zlib.h>
 
 enum urc_errs {
     URC_OK,
@@ -53,6 +46,19 @@ static int cholx (double *amat, int m, int n, int *kxx);
 
 static double ddnor (double ystar);
 
+static char *read_double_and_advance (double *val, char *s)
+{
+    char valstr[16];
+
+    while (isspace((unsigned char) *s)) s++;
+
+    sscanf(s, "%s", valstr);
+    *val = atof(valstr);
+    s += strlen(valstr);
+
+    return s;
+}
+
 /* Copyright (c) James G. MacKinnon, 1996 (corrected 2003-5-5) */
 
 /* urcrouts.f: This is a set of subroutines to estimate critical values
@@ -78,8 +84,8 @@ static double ddnor (double ystar);
 int urcval (int niv, int itv, int nobs, double arg, 
 	    double *val, const char *path)
 {
-    FILE *fp;
-    char line[80];
+    gzFile fz;
+    char line[80], code[8];
 
     int urc_ret = URC_OK;
 
@@ -121,27 +127,27 @@ int urcval (int niv, int itv, int nobs, double arg,
     }
 
     /* Open data file */
-    sprintf(datfile, "%sdata%curcdata", path, SLASH);
-    fp = fopen(datfile, "r");
-    if (fp == NULL) {
+    sprintf(datfile, "%sdata%curcdata.gz", path, SLASH);
+    fz = gzopen(datfile, "r");
+    if (fz == NULL) {
 	return URC_NOT_FOUND;
     }
 
     /* skip to appropriate location in data file */
-    fseek(fp, (long) urc_offsets[niv - 1], SEEK_SET);
+    gzseek(fz, (z_off_t) urc_offsets[niv - 1], SEEK_SET);
 
     iskip = (itv - 1) * (URCLEN + 1);
     for (i = 0; i < iskip; i++) {
-	fgets(line, sizeof line, fp);
+	gzgets(fz, line, sizeof line);
     }
 
-    fgets(line, sizeof line, fp);
-    sscanf(line, "%*s %d %d %d %d", &urc.nz, &urc.nreg,
+    gzgets(fz, line, sizeof line);
+    sscanf(line, "%s %d %d %d %d", code, &urc.nz, &urc.nreg,
 	   &urc.model, &urc.minsize);
 
 #if 0
-    printf("nz=%d, nreg=%d, model=%d, minsize=%d\n",
-	   urc.nz, urc.nreg, urc.model, urc.minsize);
+    printf("code=%s nz=%d, nreg=%d, model=%d, minsize=%d\n",
+	   code, urc.nz, urc.nreg, urc.model, urc.minsize);
 #endif
 
     if (urc.model == 2 || urc.model == 4) {
@@ -151,17 +157,19 @@ int urcval (int niv, int itv, int nobs, double arg,
     }
 
     for (i = 1; i <= URCLEN; i++) {
+	char *s = gzgets(fz, line, sizeof line);
+
 	for (j = 1; j <= nvar; j++) {
-	    fscanf(fp, "%lf", &urc.beta[j + (i << 2) - 5]);
+	    s = read_double_and_advance(&urc.beta[j + (i << 2) - 5], s);
 	}
-	fscanf(fp, "%lf", &urc.wght[i - 1]);
+	read_double_and_advance(&urc.wght[i - 1], s);
     }
 
     /* read from embedded "probs.tab" */
-    fseek(fp, (long) urc_offsets[MAXVARS], SEEK_SET);
+    gzseek(fz, (z_off_t) urc_offsets[MAXVARS], SEEK_SET);
     for (i = 0; i < URCLEN; i++) {
-	fscanf(fp, "%lf", &urc.probs[i]);
-	fscanf(fp, "%lf", &urc.cnorm[i]);
+	gzgets(fz, line, sizeof line);
+	sscanf(line, "%lf %lf", &urc.probs[i], &urc.cnorm[i]);
     }
 
     if (nobs > 0 && nobs < urc.minsize) {
@@ -171,7 +179,7 @@ int urcval (int niv, int itv, int nobs, double arg,
     *val = fpval(urc.beta, urc.cnorm, urc.wght, urc.probs,
 		 arg, 2.0, nobs, urc.model, urc.nreg, 9);
 
-    fclose(fp);
+    gzclose(fz);
 
     return urc_ret;
 }
@@ -746,6 +754,11 @@ double mackinnon_pvalue (double tval, int n, int niv, int itv, char *path)
 {
     double val;
     int check;
+
+#if 0
+    printf("mackinnon_pvalue: tval=%g, n=%d, niv=%d, itv=%d\n",
+	   tval, n, niv, itv);
+#endif
 
     check = urcval(niv, itv, n, tval, &val, path);
 

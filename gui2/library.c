@@ -767,10 +767,11 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	    gretl_print_destroy(prn);
 	    return;
 	}
-	if (action == ADF)
-	    err = adf_test(order, cmd.list[1], &Z, datainfo, prn);
-	else
+	if (action == ADF) {
+	    err = adf_test(order, cmd.list[1], &Z, datainfo, 0L, prn);
+	} else {
 	    err = coint(order, cmd.list, &Z, datainfo, prn);
+	}
 	break;
     case SPEARMAN:
 	err = spearman(cmd.list, Z, datainfo, 1, prn);

@@ -33,6 +33,10 @@ endif
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
 endif
+ifeq ($(INSTALL_DATA),)
+  INSTALL_DATA = $(INSTALL) -m 644
+endif
+
 
 VPATH = $(topsrc)/plugin:$(topsrc)/tests
 
@@ -89,6 +93,8 @@ ifeq ($(LIBOLE2_LIBS),)
   LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
+URCDATA = $(topsrc)/plugin/data/urcdata.gz
+
 override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
 	$(LIBOLE2_CFLAGS) $(AUDIO_CFLAGS) -I. $(GMPDEF)
 
@@ -119,7 +125,7 @@ vif.la: vif.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 urcdist.la: urcdist.lo
-	$(LINK) -o $@ $<
+	$(LINK) -o $@ $< -lz
 
 pca.la: pca.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(LAPACK_LIBS)
@@ -174,9 +180,10 @@ $(GRETLLIB):
 
 .PHONY: 
 
-install: $(GRETLLIB) $(PLUGINS) installdirs
+install: $(GRETLLIB) $(PLUGINS) $(URCDATA) installdirs 
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
 	$(PLUGINS) $(plugindir)
+	$(INSTALL_DATA) $(URCDATA) $(plugindir)/data
 
 install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
@@ -184,6 +191,7 @@ install-strip: $(GRETLLIB) $(PLUGINS) installdirs
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
+	$(topsrc)/tools/mkinstalldirs $(plugindir)/data
 
 clean:
 	rm -f *.lo *.o *.la

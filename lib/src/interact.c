@@ -1942,7 +1942,7 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	/* flag an error if cmd->list[0] > 1? */
 	order = atoi(cmd->param);
-	err = adf_test(order, cmd->list[1], pZ, datainfo, prn);
+	err = adf_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
 	break;
 
     case COINT:
