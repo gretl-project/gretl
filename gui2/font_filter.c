@@ -16,6 +16,11 @@ static gboolean font_is_latin_monospaced (PangoFontDescription *desc)
     pango_context_set_font_description(context, desc);
 
     layout = pango_layout_new(context);
+    if (layout == NULL) {
+	gtk_widget_destroy(wdg);
+	return FALSE;
+    }
+
     pango_layout_set_text(layout, "i", 1);
     pango_layout_get_pixel_size(layout, &x1, NULL);
     pango_layout_set_text(layout, "W", 1);

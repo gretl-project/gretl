@@ -394,7 +394,7 @@ static struct winfilter get_filter (int action, gpointer data)
     if (action == SAVE_LAST_GRAPH) {
 	return get_gp_filter(data);
     }
-    for (i=0; i< sizeof map/sizeof *map; i++) {
+    for (i=0; i< sizeof map / sizeof *map; i++) {
 	if (action == map[i].action) {
 	    filter = map[i].filter;
 	    break;
@@ -407,7 +407,6 @@ static char *make_winfilter (int action, gpointer data)
 {
     char *p = mymalloc(128);
     char *start = p;
-    gchar *trf = NULL;
     struct winfilter filter;
 
     if (p == NULL) return NULL;
@@ -424,8 +423,6 @@ static char *make_winfilter (int action, gpointer data)
     strcpy(p, "*.*");
     p += strlen(p) + 1;
     *p = '\0';
-
-    if (nls_on) g_free(trf);
 
     return start;
 }
