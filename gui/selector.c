@@ -1128,7 +1128,7 @@ void simple_selection (const char *title, const char *oktxt,
 
     sr->varlist = gtk_clist_new(2);
     gtk_clist_clear(GTK_CLIST(sr->varlist));
-    if (cmdcode == OMIT || cmdcode == ADD || code == COEFFSUM) {
+    if (cmdcode == OMIT || cmdcode == ADD || cmdcode == COEFFSUM) {
         add_omit_list(p, sr);
     } else {
 	for (i=1; i<datainfo->v; i++) {
