@@ -1351,20 +1351,29 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&corc_model, pdinfo);
 		return err;
 	    }
-#if 0
-	    if (step == 1) {
+	    ess = corc_model.ess;
+	    if (batch && step == 1) {
 		pprintf(prn, "\n RHO       %s      RHO       %s      "
 			"RHO       %s      RHO       %s     \n",
 			_("ESS"), _("ESS"), _("ESS"), _("ESS"));
 	    }
-#endif
-	    ssr[nn] = ess = corc_model.ess;
-	    rh[nn++] = rho;
-#if 0
-	    pprintf(prn, "%6.3f %9.4g", rho, ess);
-	    if (step % 4 == 0) pputs(prn, "\n");
-	    else _bufspace(3, prn);
-#endif
+	    if (batch) {
+		char num[16];
+		int chk;
+
+		sprintf(num, "%f", 100 * fabs(rho));
+		chk = atoi(num);
+		if (chk == 99 || chk % 10 == 0) {
+		    ssr[nn] = ess;
+		    rh[nn++] = rho;
+		    pprintf(prn, "%5.2f %10.4g", rho, ess);
+		    if (nn % 4 == 0) pputs(prn, "\n");
+		    else _bufspace(3, prn);
+		} 
+	    } else {
+		ssr[nn] = ess;
+		rh[nn++] = rho;
+	    }
 	    if (step == 1) {
 		essmin = ess;
 	    } else {
@@ -1375,7 +1384,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    step++;
 	}					
 	rho0 = rho = finalrho;
-	pprintf(prn, _("\n\nESS is minimum for rho = %.3f\n\n"), rho);
+	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
 	if (batch) {
 	    _graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	    pputs(prn, "\n");
