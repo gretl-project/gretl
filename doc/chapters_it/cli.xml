@@ -1,0 +1,143 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="cli"><title>L'interfaccia a riga di comando</title>
+
+  <sect1 id="cli-console"><title>Gretl in console</title>
+
+    <para>
+      Il pacchetto <application>gretl</application> include il programma
+      a riga di comando <application>gretlcli</application>. Su Linux è
+      possibile esegurlo in console o in un xterm (o simili), mentre su
+      MS Windows può essere eseguito in una finestra della console (quella
+      che di solito viene chiamata <quote>prompt di MS-DOS</quote>).
+      <application>gretlcli</application> ha un file di aiuto, a cui si
+      accede inserendo il comando <quote>help</quote> al prompt. Inoltre,
+      può essere usato in modalità batch, inviando i risultati direttamente
+      a un file (si veda il??? <xref linkend="optarg2"/> sopra???).
+    </para>
+
+    <para>
+      Se <application>gretlcli</application> è linkato alla libreria
+      <application>readline</application> (ciò avviene automaticamente
+      nella versione MS Windows version, si veda anche la???
+      <xref linkend="app-technote"/>), è possibile richiamare e modificare
+      i comandi già eseguiti, inoltre è disponibile il completamento 
+      automatico dei comandi. Per muoversi nella lista dei comandi già
+      eseguiti è possibile usare i tasti Freccia Su/Giù, mentre per muoversi
+      sulla riga di comando è possibile usare i tasti Freccia a destra/sinistra
+      e le scorciatoie in stile Emacs<footnote><para>In realtà quelli mostrati
+      sono i valori predefiniti, ma possono essere modificati: si veda il
+      <ulink url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">manuale
+      di readline</ulink>.</para>
+      </footnote>. Le scorciatoie più usate sono:
+    </para>
+
+    <informaltable frame="none">
+      <tgroup cols="2">
+	<thead>
+	  <row>
+	    <entry>Scorciatoia</entry>
+	    <entry>Effetto</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry><literal>Ctrl-a</literal></entry>
+	    <entry>Va all'inizio della riga</entry>
+	  </row>
+	  <row>
+	    <entry><literal>Ctrl-e</literal></entry>
+	    <entry>Va alla fine della riga</entry>
+	  </row>
+	  <row>
+	    <entry><literal>Ctrl-d</literal></entry>
+	    <entry>Cancella il carattere a destra</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+
+    <para>
+      dove <quote><literal>Ctrl-a</literal></quote> significa premere
+      il tasto <quote><literal>a</literal></quote> mentre si tiene
+      premuto il tasto <quote><literal>Ctrl</literal></quote>.
+      Quindi se si vuole correggere qualcosa all'inizio della riga di
+      comando, <emphasis>non occorre</emphasis> usare il tasto di 
+      cancellazione all'indietro su tutta la riga, basta saltare
+      all'inizio della riga e aggiungere o cancellare i caratteri desiderati.
+    </para>
+
+    <para>Inserendo le prime lettere del nome di un comando e premendo
+      il tasto Tab, readline cercherà di completare automaticamente il
+      nome del comando. Se esiste un solo modo di completare le lettere
+      inserite, verrà inserito il comando corrispondente, altrimenti
+      premendo Tab una seconda volta verrà visualizzata una lista delle
+      alternative possibili.
+    </para>
+
+  </sect1>
+
+  <sect1 id="cli-syntax"><title>Differenze da ESL di Ramanathan</title>
+
+    <para><application>gretlcli</application> ha ereditato la sintassi
+      di base dei comandi dal programma <application>ESL</application>
+      di Ramu Ramanathan e gli script di comandi sviluppati per
+      <application>ESL</application> dovrebbero essere utilizzabili con
+      con pochi cambiamenti: le uniche cose a cui stare attenti sono i
+      comandi multilinea e il comando <command>freq</command>.
+    </para>
+
+    <itemizedlist>
+      <listitem>
+	<para>In <application>ESL</application> viene usato un punto e
+          virgola come terminatore per molti comandi.
+	  In <application>gretlcli</application> ho deciso di rimuovere
+          questa caratteristica: il carattere punto e virgola è semplicemente
+          ignorato, a parte in alcuni casi speciali in cui ha un significato
+          particolare: come separatore per due liste nei comandi
+	  <command>ar</command> e <command>tsls</command>, e come segnaposto
+          per l'osservazione iniziale o finale immutata nel comando
+	  <command>smpl</command>. In <application>ESL</application> il punto
+          e virgola dà la possibilità di spezzare le righe di comando su
+          più righe dello schermo; in <application>gretlcli</application>
+          si ottiene questo risultato inserendo una barra rovesciata
+	  <literal>\</literal> alla fine della riga da spezzare.
+	</para>
+      </listitem>
+      <listitem>
+	<para>Per quanto riguarda <command>freq</command>, al momento non è
+          possibile specificare intervalli personalizzati, come avviene in
+	  <application>ESL</application>. Inoltre, ai risultati del comando
+          è stato aggiunto un test chi-quadro di normalità.
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      Si noti anche che i comandi per usare la modalità batch sono stati
+      semplificati. In <application>ESL</application> si usava, ad esempio:
+      <programlisting> 
+        esl -b filedati &lt; fileinput &gt; fileoutput
+      </programlisting> mentre in <application>gretlcli</application>
+      si usa: 
+      <programlisting>
+	gretlcli -b fileinput &gt; fileoutput
+      </programlisting>
+      Il file di input viene trattato come un argomento del programma, mentre
+      il file di dati su cui operare va indicato all'interno del file di input,
+      usando il comando <command>open datafile</command> o il commento speciale
+      <literal>(* !</literal> <replaceable>filedati</replaceable>
+      <literal>*)</literal>.
+    </para>
+
+  </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

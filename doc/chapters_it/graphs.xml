@@ -1,0 +1,209 @@
+ <chapter id="chap-graphs"><title>Grafici e diagrammi</title>
+
+  <sect1 id="gnuplot-graphs"><title>Grafici gnuplot</title>
+    
+    <para>Gretl richiama un programma separato,
+    <application>gnuplot</application>, per generare i grafici. Gnuplot
+    è un programma di grafica molto completo, con una miriade di
+    opzioni. È disponibile su <ulink
+    url="http://www.gnuplot.info/">www.gnuplot.info</ulink> (ma la versione
+    MS Windows di <application>gretl</application> comprende già
+    gnuplot). <application>gretl</application> fornisce l'accesso, attraverso
+    un'interfaccia grafica, a una parte di queste opzioni, ma è
+    possibile anche controllare l'aspetto di un grafico in tutti i suoi
+    dettagli, se si vuole.</para>
+
+    <para>Mentre un grafico viene visualizzato, facendo clic sulla
+    finestra del grafico si aprirà un menù pop-up con le seguenti
+    opzioni:</para>
+
+      <itemizedlist>
+	<listitem><para><guimenuitem>Salva come postscript</guimenuitem>:
+        salva il grafico in formato encapsulated postscript (EPS)</para>
+	</listitem>
+	<listitem><para><guimenuitem>Salva come PNG</guimenuitem>:
+        salva in formato Portable Network Graphics</para>
+	</listitem>
+	<listitem><para><guimenuitem>Salva alla sessione come icona</guimenuitem>:
+        il grafico apparirà sotto forma di icona quando si seleziona
+        "Visualizza Icone" dal menù Sessione</para>
+	</listitem>
+	<listitem><para><guimenuitem>Ingrandisci</guimenuitem>:
+        permette di selezionare un'area all'interno del grafico per visualizzarla 
+        da vicino</para>
+	</listitem>
+        <listitem><para><guimenuitem>Stampa</guimenuitem>: permette di stampare 
+        il grafico direttamente (disponibile solo in Gnome e MS Windows)</para>
+	</listitem>
+	<listitem><para><guimenuitem>Copia negli appunti</guimenuitem>:
+        (solo in MS Windows) permette di copiare il grafico per poi
+        incollarlo in altri programmi Windows, come ad esempio MS Word
+        <footnote><para>Per ottenere i risultati migliori quando si
+        incollano grafici nelle applicazioni di MS Office, usare il
+        comando <quote>Modifica, Incolla speciale...</quote>
+        dell'applicazione e selezionare l'opzione <quote>Immagine
+        (Enhanced Metafile)</quote>.</para></footnote>
+        </para>
+	</listitem>
+        <listitem><para><guimenuitem>Modifica</guimenuitem>: apre una
+        finestra che permette di modificare vari dettagli dell'aspetto
+        del grafico</para>
+	</listitem>
+        <listitem><para><guimenuitem>Chiudi</guimenuitem>: chiude la
+        finestra del grafico</para>
+        </listitem>
+    </itemizedlist>
+    
+    
+    <para>If you know something about
+      <application>gnuplot</application> and wish to get finer control
+      over the appearance of a graph than is available via the
+      graphical controller (<quote>Edit</quote> option), you have two
+      further options.</para>
+    
+    <para>Se si conosce <application>gnuplot</application> e si desidera
+    un controllo sull'aspetto del grafico più preciso di quello fornito
+    dalla finestra di modifica del grafico (opzione
+    <quote>Modifica</quote>), ci sono due possibilità:</para>
+
+    <itemizedlist>
+      <listitem><para>Una volta salvato il grafico come icona di sessione,
+        facendo clic col tasto destro sull'icona si apre un altro menù
+        pop-up. Una delle opzioni disponibili è <quote>Comandi per
+        modificare il grafico</quote>, che apre una finestra di modifica
+        con i comandi di gnuplot. È possibile modificare questi comandi
+        e salvarli per il futuro, oppure inviarli direttamente a
+        gnuplot (con il comando <quote>File/Invia a gnuplot</quote> del
+        menù della finestra di modifica dei comandi).</para>
+      </listitem>
+      <listitem><para>Un altro modo per salvare i comandi del grafico (o per
+        salvare il grafico in formati diversi da EPS o PNG) è quello di
+        usare il comando <quote>Modifica</quote> nel menù pop-up del
+        grafico per aprire la finestra di modifica del grafico, quindi
+        fare clic su <quote>File</quote>: verrà visualizzato un menù a
+        discesa con i formati in cui è possibile salvare il grafico.
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Per saperne di più su <application>gnuplot</application>
+      si veda il <ulink
+	url="http://ricardo.ecn.wfu.edu/gnuplot.html">manuale online</ulink> o <ulink
+	url="http://www.gnuplot.info/">www.gnuplot.info</ulink>.</para>
+
+    <para>Si veda anche la voce <command>gnuplot</command> nella
+      <xref linkend="cmdref"/> e i comandi
+      <command>graph</command> e <command>plot</command> per generare
+      dei semplici <quote>grafici ASCII</quote>.</para>
+
+    <figure id="fig-plot" float="1" pgwide="1">
+      <title>La finestra di modifica dei grafici gnuplot di gretl</title>
+      <screenshot>
+	<screeninfo>finestra di modifica dei grafici</screeninfo>
+	<graphic fileref="figures/plot_control" align="center"/>
+      </screenshot>
+    </figure>
+
+  </sect1>
+
+    <sect1 id="sect-boxplots"><title>Boxplot</title>
+
+      <para>I grafici boxplot non vengono generati con gnuplot, ma da
+	<application>gretl</application> stesso.</para>
+
+      <para>Questi grafici (da Tukey e Chambers) mostrano la distribuzione
+        di una variabile. La <quote>scatola</quote> centrale (box) racchiude il
+        50 per cento centrale dei dati, ossia è delimitato dal primo e terzo
+        quartile. I <quote>baffi</quote> (whiskers) si estendono fino ai valori
+        minimo e massimo. Una linea trasversale sulla scatola indica la mediana.
+	</para> 
+
+      <para>Nel caso dei grafici a tacca ("notches"), una tacca indica i limiti
+        dell'intervallo di confidenza approssimato al 90 per cento per la
+        mediana, ottenuto col metodo bootstrap (se la serie dei dati è
+        molto lunga, potrebbe essere necessario un po' di tempo).</para>
+
+      <para>Facendo clic nella finestra del boxplot si ottiene un menù
+	che permette di salvare il grafico come file encapsulated postscript
+	(EPS) o come file postscript a piena pagina. Se si usa il
+        sistema X Window è anche possibile salvare il grafico come file
+        XPM, mentre in MS Windows è possibile copiarlo negli appunti in
+        formato bitmap. Il menù dà anche la possibilità di mostrare un
+        riepilogo in cinque numeri (minimo, primo quartile, mediana,
+        terzo quartile, massimo) e un intervallo di confidenza per la
+        mediana, se il boxplot è del tipo <quote>a tacca</quote>.
+      </para>
+
+      <para>Alcuni dettagli del funzionamento dei boxplot di gretl possono
+        essere controllati attraverso un file testuale chiamato
+        <filename>.boxplotrc</filename>, che viene cercato, nell'ordine,
+        nella directory di lavoro attuale, nella directory home
+        dell'utente (che corrisponde alla variabile d'ambiente 
+	<envar>HOME</envar>) e nella directory utente di gretl (scelta
+        attraverso il comando <quote>File, Preferenze, Generali...</quote>).
+        Tra le opzioni che possono essere specificate in questo modo ci
+        sono: il carattere da usare per l'output in postscript (deve
+        essere un nome di font postscript valido; il valore predefinito
+        è Helvetica), la dimensione del carattere in punti (sempre per
+        l'output in postscript; il valore predefinito è 12), i valori
+        minimo e massimo per l'asse y, la larghezza e l'altezza del
+        grafico in pixel (valori predefiniti: 560 x 448), se occorre
+        mostrare anche i valori numerici per i quartili e la mediana
+        (l'impostazione predefinita non li mostra) e se occorre indicare
+        separatamente gli outlier, ossia i punti che distano più di 1.5
+        volte il range interquartile dalla scatola centrale
+        (l'impostazione predefinita non li mostra). Ecco un esempio:</para>
+
+      <programlisting>
+font = Times-Roman
+fontsize = 16
+max = 4.0
+min = 0
+width = 400
+height = 448
+numbers = %3.2f
+outliers = true
+      </programlisting>
+
+      <para>Sulla penultima riga, il valore associato a
+	<literal>numbers</literal> è una stringa di formato <quote>printf</quote>
+        come quelle usate nel linguaggio di programmazione C; se viene
+        specificata, controlla il modo in cui vengono mostrati la
+        mediana e i quartili accanto al boxplot, altrimenti questi
+        valori non vengono mostrati. Nell'esempio, i valori verranno
+        mostrati usando 3 cifre in totale e 2 cifre di precisione dopo
+        il punto decimale.</para>
+
+      <para>Non occorre specificare tutte le opzioni, né importa
+      l'ordine in cui vengono specificate. Le righe che non seguono la
+      struttura <quote>variabile = valore</quote> vengono ignorate, così
+      come le righe che iniziano con il carattere cancelletto, <literal>#</literal>.
+      </para>
+
+      <para>Dopo ogni variabile specificata nel comando boxplot è
+      possibile inserire un'espressione booleana tra parentesi per
+      limitare il campione da utilizzare per la variabile in questione,
+      avendo cura di inserire uno spazio tra il nome (o il numero) della
+      variabile e l'espressione. Si supponga di avere una variabile
+      <literal>salary</literal> con gli stipendi di uomini e donne, e una
+      variabile dummy <literal>GENDER</literal> che vale 1 per gli
+      uomini e 0 per le donne. In questo caso è possibile disegnare dei
+      boxplot comparativi usando il seguente comando nella finestra di
+      dialogo:
+      </para>
+      <programlisting>
+      salary (GENDER=1) salary (GENDER=0)
+      </programlisting>
+
+    </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

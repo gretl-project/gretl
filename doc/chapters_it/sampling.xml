@@ -1,0 +1,254 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="sampling"><title>Creare dei sotto-campioni</title>
+
+  <sect1 id="sample-intro"><title>Introduzione</title>
+
+    <para>Questo capitolo affronta alcune questioni correlate alla
+      creazione di sotto-campioni in un dataset.</para>
+
+    <para>È possibile definire un sotto-campione per un dataset in due
+    modi diversi, che chiameremo rispettivamente
+    <quote>impostazione</quote> del campione e
+    <quote>restrizione</quote> del campione.
+    </para>
+
+  </sect1>
+
+  <sect1 id="sample-set"><title>Impostazione del campione</title>
+
+    <para>Per <quote>impostazione</quote> del campione, si intende la
+      definizione di un campione ottenuta indicando il punto iniziale e/o
+      quello finale dell'intervallo attuale del campione. Questa
+      modalità è usata tipicamente con serie storiche; ad esempio se
+      si hanno dati trimestrali per l'intervallo 1960:1 to 2003:4 e si
+      vuole stimare una regressione usando solo i dati degli anni '70,
+      un comando adeguato è
+
+      <programlisting>smpl 1970:1 1979:4</programlisting>
+      
+      Oppure se si vuole riservare la parte finale delle osservazioni
+      disponibili per eseguire una previsione "fuori dal campione", si
+      può usare il comando
+
+      <programlisting>smpl ; 2000:4</programlisting>, 
+      dove il punto e virgola significa <quote>mantenere
+      inalterata l'osservazione iniziale</quote> (e potrebbe essere
+      usata in modo analogo al posto del secondo parametro, indicando
+      di mantenere inalterata l'osservazione finale). Per
+      <quote>inalterata</quote> in questo caso si intende inalterata
+      relativamente all'ultima impostazione eseguita con
+      <literal>smpl</literal>, o relativamente all'intero dataset, se
+      non è ancora stato definito alcun sotto-campione in precedenza.
+      Ad esempio, dopo
+
+      <programlisting>
+	smpl 1970:1 2003:4
+	smpl ; 2000:4
+      </programlisting>
+      
+      l'intervallo del campione sarà da 1970:1 a 2000:4.</para>  
+
+    <para>È possibile anche impostare l'intervallo del campione in
+    modo incrementale o relativo: in questo caso occorre indicare per
+    il punto iniziale e finale uno spostamento relativo, sotto forma
+    di numero preceduto dal segno più o dal segno meno (o da un punto
+    e virgola per indicare nessuna variazione). Ad esempio
+
+      <programlisting>
+	smpl +1 ;
+      </programlisting>
+      
+      sposterà in avanti di un'osservazione l'inizio del campione,
+      mantenendo inalterata la fine del campione, mentre
+
+      <programlisting>
+	smpl +2 -1
+      </programlisting> sposterà l'inizio del campione in avanti di
+      due osservazioni e la fine del campione indietro di una.</para>
+
+    <para>Una caratteristica importante dell'operazione di
+    <quote>impostazione</quote> del campione descritta fin qui è che
+    il sotto-campione creato risulta sempre composto da un insieme di
+    osservazioni contigue. La struttura del dataset rimane quindi
+    inalterata: se si lavora su una serie trimestrale, dopo aver
+    impostato il campione, la serie rimane trimestrale.
+    </para> 
+
+  </sect1>
+
+  <sect1 id="sample-restrict"><title>Restrizione del campione</title>
+
+    <para>Per <quote>restrizione</quote> del campione si intende la
+    definizione di un campione ottenuta selezionando le osservazioni
+    in base a un criterio Booleano (logico), o usando un generatore di
+    numeri casuali. Questa modalità è usata tipicamente con dati di
+    tipo cross-section o panel.</para>  
+
+    <para>Si supponga di avere dei dati di tipo cross-section, che descrivono
+    il genere, il reddito e altre caratteristiche di un gruppo di individui e
+    si vogliano analizzare solo le donne presenti nel campione. Se si
+    dispone di una variabile dummy <varname>genere</varname>, che vale
+    1 per gli uomini e 0 per le donne, si potrebbe ottenere questo
+    risultato con
+
+      <programlisting>
+	smpl genere=0 --restrict
+      </programlisting>.
+    
+    Oppure si supponga di voler limitare il campione di lavoro ai soli
+    individui con un reddito superiore ai 50.000 euro. Si potrebbe
+    usare</para>
+
+      <programlisting>
+	smpl reddito>50000 --restrict
+      </programlisting>
+
+    <para>Qui sorge un problema: eseguendo in sequenza i due comandi
+    visti sopra, cosa conterrà il sotto-campione? Tutti gli individui
+    con reddito superiore a 50.000 euro o solo le donne con reddito
+    superiore a 50.000 euro? La risposta corretta è la seconda: la
+    seconda restrizione si aggiunge alla prima. Se si vuole applicare
+    una nuova restrizione indipendentemente da quelle applicate in
+    precedenza, occorre prima re-impostare il campione alla sua
+    lunghezza originaria, usando
+    </para>
+
+    <programlisting>
+      smpl full
+    </programlisting>
+
+    <para>In alternativa, è possibile aggiungere l'opzione
+    <literal>replace</literal> al comando <literal>smpl</literal>:</para>
+
+    <programlisting>
+      smpl income>50000 --restrict --replace
+    </programlisting>
+
+    <para>Questa opzione ha l'effetto di re-impostare automaticamente
+    il campione completo prima di applicare la nuova restrizione.</para>
+
+    <para>A differenza della semplice <quote>impostazione</quote> del
+    campione, la <quote>restrizione</quote> del campione può produrre
+    un insieme di osservazioni non contigue nel dataset originale e
+    può anche modificare la struttura del dataset.</para> 
+
+    <para>Questo fenomeno può essere osservato nel caso dei dati
+    panel: si supponga di avere un panel di cinque imprese
+    (indicizzate dalla variabile <varname>impresa</varname>) osservate
+    in ognuno degli anni identificati dalla variabile <varname>anno</varname>.
+    La restrizione
+
+      <programlisting>
+	smpl anno=1995 --restrict
+      </programlisting> produce un dataset che non è più di tipo panel, ma
+      cross-section per l'anno 1995.
+      In modo simile
+
+      <programlisting>
+	smpl impresa=3 --restrict</programlisting> produce un dataset
+        di serie storiche per l'impresa numero 3.</para> 
+
+    <para>Per questi motivi (possibile non-contiguità nelle
+    osservazioni, possibile cambiamento nella struttura dei dati)
+    gretl si comporta in modo diverso a seconda che si operi una
+    <quote>restrizione</quote> del campione o una semplice
+    <quote>impostazione</quote> di esso. Nel caso dell'impostazione,
+    il programma memorizza semplicemente le osservazioni iniziali e
+    finali e le usa come parametri per i vari comandi di stima dei
+    modelli, di calcolo delle statistiche ecc. Nel caso della
+    restrizione, il programma crea una copia ridotta del dataset e la
+    tratta come un semplice dataset di tipo cross-section non datato.
+    Se si vuole re-impostare un'interpretazione di tipo "serie
+    storiche" o "panel" al dataset ridotto, occorre usare il comando
+    <xref linkend="cmd-setobs"/> (e <xref linkend="cmd-panel"/>, se
+      appropriato).</para> 
+
+    <para>Il fatto che una <quote>restrizione</quote> del campione
+    comporti la creazione di una copia ridotta del dataset originale
+    può creare problemi quando il dataset è molto grande (nell'ordine
+    delle migliaia di osservazioni). Usando dataset simili, la
+    creazione di una copia può causare l'esaurimento della memoria del
+    sistema nel calcolo dei risultati delle regressioni. È possibile
+    aggirare il problema in questo modo:</para>
+
+    <orderedlist>
+      <listitem>
+	<para>
+	  Aprire il dataset completo e imporre la restrizione sul
+          campione.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Salvare una copia del dataset ridotto su disco.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Chiudere il dataset completo e aprire quello ridotto.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Procedere con l'analisi.
+	</para>
+      </listitem>
+    </orderedlist>
+
+  </sect1>
+
+  <sect1 id="sample-random"><title>Campionamento casuale</title>
+
+    <para>Se si usano dataset molto grandi (o se si deve studiare le
+    proprietà di uno stimatore), può essere utile estrarre un campione
+    casuale dal dataset completo. È possibile farlo ad esempio con
+
+      <programlisting>
+	smpl 100 --random
+      </programlisting> che seleziona 100 osservazioni.
+    
+    Se occorre che il campione sia riproducibile, occorre per prima
+    cosa impostare il seme del generatore di numeri casuali, usando
+      <xref linkend="cmd-set"/>.</para>
+
+    <para>Questo tipo di campionamento è un esempio di
+      <quote>restrizione</quote> del campione: viene infatti generata
+      una copia ridotta del dataset.</para>
+
+  </sect1>
+
+  <sect1 id="sample-menu"><title>I comandi del menù Campione</title>
+
+    <para>Gli esempi visti finora hanno mostrato il comando testuale
+      <xref linkend="cmd-smpl"/>, ma è possibile creare un
+      sotto-campione usando i comandi del menù <guimenuitem>Campione</guimenuitem>
+      nell'interfaccia grafica del programma.</para>
+
+    <para>I comandi del menù permettono di ottenere gli stessi
+    risultati delle varianti del comando testuale
+    <literal>smpl</literal>, con la seguente eccezione: se si usa il
+    comando <quote>Campione, Imposta in base a condizione...</quote> e
+    sul dataset è già stato impostato un sotto-campione, viene data la
+    possibilità di preservare la restrizione già attiva o di sostituirla
+    (in modo analogo a quanto avviene invocando l'opzione <literal>replace</literal>
+    descritta in (<xref linkend="sample-restrict"/>).
+    </para>
+
+  </sect1>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,159 @@
+
+  <bibliography id="bib">
+
+  <bibliomixed>
+    <bibliomset relation='article'>Baiocchi, G. and Distaso, W. (2003)
+      <title>GRETL: Econometric software for the GNU
+	generation</title>, </bibliomset> <bibliomset
+      relation='journal'><title>Journal of Applied
+	Econometrics</title>, 18, pp. 105&ndash;10.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    Belsley, D., Kuh, E. and Welsch, R. (1980) <title>Regression
+      Diagnostics</title>, New York: Wiley.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Berndt, E., Hall, B., Hall, R. and
+      Hausman, J. (1974) <title>Estimation and Inference in Nonlinear
+	Structural Models</title>, </bibliomset> <bibliomset
+      relation='journal'><title>Annals of Economic and Social
+	Measurement</title>, 3/4, pp. 653&ndash;65.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
+      (1958) <title>A Note on the Generation of Random Normal
+	Deviates</title>,</bibliomset> <bibliomset relation='journal'>
+      <title>Annals of Mathematical Statistics</title>, 29, pp.
+      610&ndash;11. </bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    Davidson, R. and MacKinnon, J. G. (1993) <title>Estimation and
+      Inference in Econometrics</title>, New York: Oxford University
+    Press.
+  </bibliomixed>
+
+  <bibliomixed>
+    Davidson, R. and MacKinnon, J. G. (2004) <title>Econometric Theory
+      and Methods</title>, New York: Oxford University Press.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Doornik, J. A. and Hansen, H.
+      (1994) <title>An Omnibus Test for Univariate and Multivariate
+	Normality</title>, working paper, Nuffield College,
+      Oxford.</bibliomset> 
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Doornik, J. A. (1998)
+      <title>Approximations to the Asymptotic Distribution of
+	Cointegration Tests</title>,</bibliomset> <bibliomset
+      relation='journal'> <title>Journal of Economic Surveys</title>,
+      12, pp. 573&ndash;93.</bibliomset>  Reprinted with corrections
+    in M. McAleer and L. Oxley (1999) <title>Practical Issues in
+      Cointegration Analysis</title>, Oxford: Blackwell.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Fiorentini, G., Calzolari, G. and
+      Panattoni, L. (1996) <title>Analytic Derivatives and the
+	Computation of GARCH Etimates</title>,</bibliomset>
+    <bibliomset relation='journal'> <title>Journal of Applied
+	Econometrics</title>, 11, pp. 399&ndash;417.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    Greene, William H. (2000) <title>Econometric Analysis</title>, 4th
+    edition, Upper Saddle River, NJ: Prentice-Hall. 
+  </bibliomixed>
+
+  <bibliomixed>
+    Hamilton, James D. (1994) <title>Time Series Analysis</title>,
+    Princeton, NJ: Princeton University Press.
+    (trad. it. <title>Econometria delle serie storiche</title>,
+    Monduzzi, Bologna, 1995)
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Kiviet, J. F. (1986) <title>On the
+	Rigour of Some Misspecification Tests for Modelling Dynamic
+	Relationships</title>,</bibliomset> <bibliomset
+      relation='journal'><title>Review of Economic Studies</title>,
+      53, pp. 241&ndash;261.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>MacKinnon, J. G. and White, H.
+      (1985) <title>Some Heteroskedasticity-Consistent Covariance
+	Matrix Estimators with Improved Finite Sample
+	Properties</title>, </bibliomset> <bibliomset
+      relation='journal'> <title>Journal of Econometrics</title>, 29,
+      pp. 305&ndash;25. </bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
+    Maddala, G. S. (1992) <title>Introduction to Econometrics</title>,
+    2nd edition, Englewood Cliffs, NJ: Prentice-Hall. 
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'>Matsumoto, M. and Nishimura, T.
+      (1998) <title>Mersenne twister: a 623-dimensionally
+	equidistributed uniform pseudo-random number
+	generator</title>, </bibliomset> <bibliomset
+      relation='journal'><title>ACM Transactions on Modeling and
+	Computer Simulation</title>, 8: 1.
+    </bibliomset>
+  </bibliomixed> 
+
+  <bibliomixed>
+    Neter, J. Wasserman, W. and Kutner, M. H. (1990)
+    <title>Applied Linear Statistical Models</title>, 3rd edition,
+    Boston, MA: Irwin. 
+  </bibliomixed>  
+
+  <bibliomixed>
+    R Core Development Team (2000) <title>An Introduction to
+      R</title>, version 1.1.1. <!-- <ulink
+    url="http://cran.r-project.org/doc/manuals/R-intro.pdf"></ulink>.
+    <ulink url="http://cran.r-project.org/doc/contrib/Mineo-dispensaR.pdf">Versione
+    italiana</ulink>
+    -->
+  </bibliomixed>
+
+  <bibliomixed>
+    Ramanathan, Ramu (2002) <title>Introductory Econometrics with
+      Applications</title>, 5th edition, Fort Worth: Harcourt.
+  </bibliomixed>
+
+  <bibliomixed>Ruud, Paul A. (2000) <title>An Introduction to
+      Classical Econometric Theory</title>, New York and Oxford:
+    Oxford University Press.
+  </bibliomixed>
+
+  <bibliomixed>
+    <bibliomset relation='article'> Salkever, D. (1976) <title>The Use
+	of Dummy Variables to Compute Predictions, Prediction Errors,
+	and Confidence Intervals</title>, </bibliomset> <bibliomset
+      relation='journal'> <title>Journal of Econometrics</title>, 4,
+      <artpagenums>pp. 393&ndash;7</artpagenums>. </bibliomset>
+  </bibliomixed> 
+
+  <bibliomixed>Wooldridge, Jeffrey M. (2002) <title>Introductory
+      Econometrics, A Modern Approach</title>, 2nd edition, Mason,
+    Ohio: South-Western.
+  </bibliomixed>
+
+  </bibliography>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "bibliography")
+End:
+-->

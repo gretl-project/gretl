@@ -1,0 +1,369 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="chap-panel"><title>Dati panel</title>
+
+  <sect1 id="panel-structure"><title>Struttura panel</title>
+
+    <para>I dati di tipo panel (cross-section e serie storiche uniti) richiedono
+      una cura particolare: ecco alcuni riferimenti.</para>
+
+    <para>Si consideri un dataset composto da osservazioni su ognuna
+    di <emphasis>n</emphasis> unità cross-section (regioni, stati,
+    persone o altro) in ognuno di <emphasis>T</emphasis> periodi.
+    Si supponga che ogni osservazione comprenda i valori di
+    <emphasis>k</emphasis> variabili di interesse. Il dataset contiene
+    dunque <emphasis>knT</emphasis> valori.</para>
+
+    <para>I dati dovrebbero essere organizzati <quote>per osservazione</quote>:
+      ogni riga rappresenta un'osservazione, ogni colonna contiene i
+      valori di una particolare variabile. La matrice dei dati
+      contiene dunque <emphasis>nT</emphasis> righe e
+      <emphasis>k</emphasis> colonne. Ciò lascia aperta la questione
+      di come debbano essere disposte le righe; ci sono due
+      possibilità<footnote><para>Se non si intende operare distinzioni
+      concettuali o statistiche tra la variazione dei dati nella
+      dimensione temporale o longitudinale, è possibile disporre le
+      righe in modo arbitrario, ma così facendo probabilmente si
+      sprecherà informazione.</para>
+      </footnote>:</para>
+
+    <itemizedlist>
+      <listitem><para>Righe raggruppate per
+      <emphasis>unità</emphasis>. Si pensi alla matrice dei dati come
+      composta da <emphasis>n</emphasis> blocchi, ognuno composto da
+      <emphasis>T</emphasis> righe. Il primo blocco di
+      <emphasis>T</emphasis> righe contiene le osservazioni relative
+      all'unità cross-section numero 1 per ognuno dei periodi; il
+      blocco successivo contiene le osservazioni dell'unità numero 2 e
+      così via. In pratica, la matrice dei dati è un insieme di
+      dataset di serie storiche impilati verticalmente.</para></listitem>
+      <listitem><para>Righe raggruppate per <emphasis>periodo</emphasis>.
+      Si pensi alla matrice dei dati come composta da
+      <emphasis>T</emphasis> blocchi, ognuno composto da
+      <emphasis>n</emphasis> righe. Le prime <emphasis>n</emphasis>
+      righe contengono le osservazioni per ognuna delle unità
+      cross-section nel primo periodo; il blocco successivo contiene
+      le osservazioni per tutte le unità nel secondo periodo, e così
+      via. La matrice dei dati è un insieme di dati cross-section
+      impilati verticalmente.</para></listitem>
+    </itemizedlist>
+
+    <para>È possibile usare entrambi i metodi, ma forse il secondo è più
+      scomodo da gestire, visto che occorre assicurarsi che tutte le
+      unità cross-section appaiano nello stesso ordine in tutti i blocchi
+      di dati relativi ai vari periodi. Il menù
+      <guimenu>Campione</guimenu> di <application>gretl</application>
+      contiene il comando
+      <quote>Ristruttura panel</quote>, che permette di passare dalla
+      disposizione "pila di dati cross-section" a quella "pila di
+      serie storiche" e viceversa.</para>
+
+    <para>Quando si importano dati panel in
+    <application>gretl</application> da un foglio di calcolo o da un
+    file con valori separati da virgole, la struttura panel non verrà
+    riconosciuta automaticamente (molto probabilmente i dati verranno
+    trattati come <quote>non datati</quote>). Per far sì che i dati
+    siano interpretati correttamente, occorre agire in due tempi:
+    per prima cosa stabilire la periodicità dei dati e l'osservazione
+    iniziale, in seguito decidere la struttura panel dei dati (pila di
+    dati cross-section, o pila di serie storiche).
+    </para>
+
+    <orderedlist>
+      <listitem>
+	<para>Per i dati panel, la <emphasis>periodicità</emphasis>
+	  è pari al numero di periodi temporali, nel caso delle serie
+          storiche impilate, o al numero delle unità cross-section,
+          nel caso dei dati cross-section impilati (ossia, è pari al
+          numero di righe in ognuno dei blocchi da cui è composta la
+          matrice dei dati).
+	</para> 
+	<para>L'<emphasis>osservazione iniziale</emphasis> deve essere
+          indicata nella forma <literal>1:1</literal> (se la
+          periodicità è inferiore a 10), o <literal>1:01</literal> (se
+          la periodicità è compresa tra 10 e 99; se la periodicità è
+          maggiore di 100 occorrerà aggiungere un altro zero
+          iniziale). Il primo di questa coppia di numeri separati dal
+          punto e virgola rappresenta il blocco di dati, mentre il
+          secondo numero rappresenta l'osservazione all'interno di
+          questo blocco (ad esempio, se il panel è organizzato come
+          pila di dati cross-section, l'etichetta
+          <literal>3:02</literal> indica l'osservazione relativa
+          alla terza unità nel secondo periodo).</para>
+	<para>La periodicità e l'osservazione iniziale possono essere
+        impostate usando il comando testuale <command>setobs</command>
+        o il comando dal menù <guimenuitem>Campione, Imposta frequenza
+        e inizio&hellip;</guimenuitem>.</para>
+      </listitem>
+      <listitem>
+        <para>Una volta impostate la periodicità e l'osservazione
+        iniziale, è possibile imporre la corretta interpretazione
+        della struttura dei dati usando il comando testuale
+        <command>panel</command> o quello grafico dal menù
+        <guimenuitem>Campione, Interpreta come panel</guimenuitem>.
+        Il comando <command>panel</command> accetta un'opzione, che
+        può essere <literal>--time-series</literal> (per indicare una
+        pila di serie storiche) o <literal>--cross-section</literal>
+        (per indicare una pila di dati cross-section). Se non si
+        indica alcuna opzione, verrà usata l'interpretazione come pila
+        di dati cross-section. Il comando del menù <quote>interpreta
+        come panel</quote> apre una finestra di dialogo in cui è
+        possibile selezionare uno dei due metodi di interpretazione.
+        </para>
+	</listitem>
+    </orderedlist>
+
+  </sect1>
+
+  <sect1 id="dummies"><title>Variabili dummy</title>
+
+    <para>In uno studio panel, può nascere l'esigenza di costruire
+      delle variabili dummy di uno dei seguenti tipi: (a) dummy che
+      identificano ciascuna delle unità cross-section, o (b) dummy che
+      identificano ciascuna delle unità temporali. Il primo tipo può
+      essere usato per permettere all'intercetta della regressione di
+      variare tra le unità cross-section, il secondo per permettere
+      all'intercetta di variare tra i periodi.</para>
+
+    <para>Per creare questo tipo di dummy, è possibile usare due
+    funzioni speciali del menù <guimenuitem>Dati, Aggiungi
+      variabile</guimenuitem>, o del comando testuale
+      <command>genr</command>.</para>
+
+    <orderedlist>
+      <listitem><para><quote>Dummy periodiche</quote> (comando
+          testuale <command>genr dummy</command>). Questo comando è
+          usato tipicamente nello studio di serie storiche, per
+          creare un insieme di variabili dummy periodiche adeguate
+          alla frequenza dei dati (ad esempio, un insieme di dummy
+          trimestrali da usare per eseguire un aggiustamento
+          stagionale), ma funziona anche con i dati panel. Si noti che
+          l'interpretazione delle dummy create dal comando differisce
+          a seconda che le righe di dati panel siano raggruppate per
+          unità cross-section o per periodo. Se il raggruppamento è
+          per <emphasis>unità</emphasis> (frequenza pari a
+          <emphasis>T</emphasis>), verranno create
+          <emphasis>T dummy periodiche</emphasis>, ad esempio
+	  <varname>dummy_2</varname> avrà valore 1 in ogni riga dei
+          dati corrispondente a un'osservazione del periodo 2, e avrà
+          valore 0 altrove. Se il raggruppamento è per
+          <emphasis>periodo</emphasis> (frequenza pari a
+	  <emphasis>n</emphasis>), verranno create <emphasis>n</emphasis>
+	  <emphasis>dummy longitudinali</emphasis>:
+	  <varname>dummy_2</varname> avrà valore 1 in ogni riga dei
+          dati associata alla seconda unità cross-section, e 0
+          altrove.</para></listitem>
+      <listitem><para><quote>dummy panel</quote> (comando testuale
+	  <command>genr paneldum</command>). Questo comando crea tutte
+          le dummy, periodiche e longitudinali, in un colpo solo. Le
+          dummy longitudinali sono chiamate <varname>du_1</varname>,
+	  <varname>du_2</varname> e così via, mentre le dummy
+          periodiche sono chiamate <varname>dt_1</varname>, <varname>dt_2</varname>,
+          ecc.</para>
+      </listitem>
+    </orderedlist>
+
+    <para>Se un dataset panel contiene l'anno di ogni osservazione
+      all'interno della variabile <literal>ANNO</literal>, è possibile
+      creare una dummy periodica per un anno particolare, ad esempio con
+      <command>genr dum = (ANNO=1960)</command>. È anche possibile
+      creare variabili dummy periodiche usando l'operatore modulo,
+      <literal>%</literal>.  Ad esempio, per creare una dummy che
+      valga 1 ogni trenta osservazioni a partire dalla prima e 0
+      altrove, basta eseguire</para>
+
+    <programlisting>
+      genr index 
+      genr dum = ((index-1)%30) = 0
+    </programlisting>
+
+  </sect1>
+
+  <sect1 id="panel-lagged"><title>Ritardi e differenze con dati panel</title>
+
+    <para>Se i periodi temporali sono distanziati in modo uniforme, è
+      possibile usare valori ritardati delle variabili in una
+      regressione panel, come anche costruire differenze prime delle
+      variabili.</para>
+
+    <para>Se un dataset è identificato correttamente come panel
+      (si veda il paragrafo precedente),
+      <application>gretl</application> gestirà correttamente la
+      generazione di questo tipo di variabili. Ad esempio, il comando
+      <command>genr x1_1 = x1(-1)</command> creerà una variabile che
+      contiene il primo ritardo di <literal>x1</literal>, laddove è
+      disponibile, e il codice di valora mancante, laddove il ritardo
+      non è disponibile.
+    </para>
+
+    <para>Se occorre includere una variabile ritardata in una
+    regressione, occorre assicurarsi che la prima osservazione di ogni
+    blocco di dati cross-section venga scartato. Un modo per farlo
+    consiste nell'usare i minimi quadrati ponderati
+    (<command>wls</command>) con una dummy appropriata come peso:
+    questa dummy (che può essere chiamata <command>lagdum</command>)
+    deve valere 0 per le osservazioni da scartare, e 1 altrove (ossia
+    deve essere il complementare di una variabile dummy periodica per
+    il periodo 1). Quindi, se è già stato usato il comando
+    <command>genr dummy</command>, è possibile eseguire
+    <command>genr lagdum = 1 - dummy_1</command>; se invece è stato
+    usato <command>genr paneldum</command>, occorre eseguire
+      <command>genr lagdum = 1 - dt_1</command>. Fatto questo, è
+      possibile eseguire</para>
+
+    <para>
+      <command>wls lagdum y const x1_1 ...</command>
+    </para>
+
+    <para>per ottenere una regressione <quote>pooled</quote>, che usa il primo
+    ritardo di <varname>x1</varname> ed esclude tutte le osservazioni
+    relative al periodo 1.</para>
+
+    <para>Un'altra possibilità consiste nell'usare il comando
+    <command>smpl</command> con l'opzione
+    <command>--restrict</command> o <command>--dummy</command>.
+      <xref linkend="examp-pwt"/> mostra alcuni esempi, assumendo che
+      ogni blocco di dati contenga osservazioni relative a 30 periodi
+      e che si intenda scartare la prima riga di ogni blocco. È così
+      possibile stimare regressioni sul campione limitato senza dover
+      usare il comando <command>wls</command>. Se si intende
+      riutilizzare il campione limitato, è possibile salvarlo usando
+      il comando <command>store</command> (si veda <xref
+	linkend="cmdref"/>).
+    </para>
+
+    <example id="examp-panel-lags">
+      <title>Ritardi con dati panel</title>
+    <programlisting>
+      # Create la variabile indice "index" 
+      genr index 
+      # Crea la dummy "dum", pari a 0 ogni 30 osservazioni
+      genr dum = ((index-1)%30) > 0 
+      # Imposta il campione basandosi sulla dummy
+      smpl --dummy dum 
+      # Ricrea la struttura delle osservazioni basata su 29 periodi
+      setobs 29 1.01 
+    </programlisting>
+    </example>
+
+  </sect1>
+
+  <sect1 id="pooled-est"><title>Stima pooled</title>
+
+    <para>Esiste un comando speciale di stima utilizzabile con i dati
+    panel, il comando <guimenuitem>Pooled OLS</guimenuitem> nel menù
+      <guimenu>Modello</guimenu>. Questo comando è disponibile solo se
+      il dataset è riconosciuto come panel; per usarlo, occorre
+      specificare un modello senza alcuna variabile dummy relativa
+      alle unità cross-section. Il comando esegue una semplice stima
+      OLS, trattando allo stesso modo la variazione longitudinale e
+      quella temporale presente nei dati. Questo modello può essere
+      appropriato o no: il menù <guimenu>Test</guimenu> della
+      finestra del modello contiene il comando <guimenuitem>Diagnosi
+      panel</guimenuitem>, che esegue un test del modello OLS pooled contro
+      le principali alternative: il modello a effetti fissi e quello a
+      effetti casuali.</para>
+
+    <para>
+	Il modello a effetti fissi aggiunge una variabile dummy per
+        tutte le unità cross section tranne una, permettendo così
+        all'intercetta della regressione di variare per ogni unità.
+	Viene eseguito un test <mathvar>F</mathvar> per la
+        significatività congiunta di queste dummy: un basso p-value per
+        questo test va contro l'ipotesi nulla (che il semplice modello
+        pooled OLS sia adeguato) e a favore del modello a effetti
+        fissi.</para>
+
+    <para>Il modello a effetti casuali, d'altra parte, scompone la
+    varianza dei residui in due parti: una specifica all'unità cross
+    section, o <quote>gruppo</quote>, e una specifica all'osservazione
+    particolare (la stima può essere eseguita solo se il panel è
+    abbastanza <quote>largo</quote>, ossia se il numero delle unità
+    cross section nel dataset è maggiore del numero dei
+    parametri da stimare). La statistica LM di Breusch&ndash;Pagan
+    testa l'ipotesi nulla (che il modello pooled OLS sia adeguato)
+    contro l'alternativa a effetti casuali.</para>
+
+    <para>
+	Può accadere che il modello pooled OLS sia rifiutato nei confronti
+        di entrambe le alternative, a effetti fissi o casuali. Come
+        giudicare quindi l'adeguatezza relativa dei due metodi
+        alternativi di stima? Il test di Hausman (i cui risultati sono
+        mostrati a patto che il modello a effetti casuali possa essere
+        stimato) cerca di risolvere questo problema.  A patto che gli
+        errori specifici di unità o di gruppo siano non correlati con
+        le variabili indipendenti, lo stimatore a effetti casuali è
+        più efficiente dello stimatore a effetti fissi; nel caso
+        contrario lo stimatore a effetti casuali non è consistente e
+        deve essergli preferito lo stimatore a effetti fissi.
+        L'ipotesi nulla per il test di Hausman è che l'errore
+        specifico di gruppo non sia correlato con le variabili
+        indipendenti (e quindi che il modello a effetti casuali sia
+        preferibile). Un basso p-value per questo test suggerisce di
+        rifiutare il modello a effetti casuali in favore del modello a
+        effetti fissi.
+      </para>
+
+    <para>Per una discussione rigorosa di questo argomento, si veda il
+    capitolo 14 di Greene (2000).</para>
+
+  </sect1>
+
+  <sect1 id="PWT"><title>Esempio: la Penn World Table</title>
+
+    <para>La Penn World Table (homepage a <ulink
+	url="http://pwt.econ.upenn.edu/">pwt.econ.upenn.edu</ulink>)
+      è un ricco dataset panel macroeconomico, che comprende 152 paesi
+      sull'arco temporale 1950&ndash;1992. I dati sono disponibili in
+      formato <application>gretl</application>: si veda la <ulink
+      url="http://ricardo.ecn.wfu.edu/gretl/gretl_data_it.html">pagina
+      dei dati</ulink> di <application>gretl</application>
+      (i dati sono liberamente scaricabili, anche se non sono
+      distribuiti nel pacchetto principale di
+      <application>gretl</application>).</para>  
+
+    <para>L'<xref linkend="examp-pwt"/> sottostante apre il file
+      <filename>pwt56_60_89.gdt</filename>, un sottoinsieme della Penn
+      World Table che contiene dati per 120 paesi negli anni
+      1960&ndash;89, su 20 variabili, senza osservazioni mancanti (il
+      dataset completo, anch'esso compreso nel pacchetto pwt per
+      <application>gretl</application>, contiene molte osservazioni
+      mancanti). Viene calcolata la crescita del PIL reale sul periodo
+      1960&ndash;89 per ogni paese, e viene regredita sul livello del
+      PIL reale dell'anno 1960, per analizzare l'ipotesi della
+      <quote>convergenza</quote> (ossia di una crescita più veloce da parte
+      dei paesi che partono da una situazione peggiore).</para>
+
+    <example id="examp-pwt">
+      <title>Uso della Penn World Table</title>
+      <programlisting>
+	  open pwt56_60_89.gdt 
+	  # Per l'anno 1989 (l'ultima oss.) il ritardo 29 dà 1960, la prima oss. 
+	  genr gdp60 = RGDPL(-29) 
+	  # Calcola la crescita totale del PIL reale sui 30 anni
+	  genr gdpgro = (RGDPL - gdp60)/gdp60
+	  # Restringi il campione a una cross-section del 1989
+	  smpl --restrict YEAR=1989 
+	  # convergenza: i paesi che partono più indietro crescono di più?
+	  ols gdpgro const gdp60 
+	  # risultato: no! Proviamo una relazione inversa?
+	  genr gdp60inv = 1/gdp60 
+	  ols gdpgro const gdp60inv 
+	  # Ancora no. Proviamo a trattare l'Africa in modo speciale? 
+	  genr afdum = (CCODE = 1)
+	  genr afslope = afdum * gdp60 
+	  ols gdpgro const afdum gdp60 afslope 
+      </programlisting>
+    </example>
+  </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

@@ -1,0 +1,427 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="looping"><title>Costrutti loop</title>
+
+  <sect1 id="loop-intro"><title>Introduzione</title>
+
+    <para>Il comando <command>loop</command> apre una modalità speciale,
+      in cui <application>gretl</application> accetta un blocco di comandi
+      da ripetere una o più volte. Questa funzionalità è destinata all'uso
+      per le simulazioni Monte Carlo, per il bootstrapping delle statistiche
+      test e altre procedure di stima iterativa. La forma generale di un loop,
+      o ciclo, è:</para>
+    
+    <programlisting>
+      loop <replaceable>espressione di controllo</replaceable> [ --progressive ]
+         <replaceable>corpo del loop</replaceable>
+      endloop</programlisting>
+
+    <para>Come si spiega oltre, sono disponibili quattro tipi di
+      <replaceable>espressione di controllo</replaceable>. Nel
+      <replaceable>corpo del loop</replaceable> sono accettati i seguenti comandi:
+      <command>genr</command>, <command>ols</command>,
+      <command>print</command>, <command>printf</command>,
+      <command>pvalue</command>, <command>sim</command>,
+      <command>smpl</command>, <command>store</command>,
+      <command>summary</command>, <command>if</command>,
+      <command>else</command> e <command>endif</command>.</para>
+
+    <para>L'opzione <literal>--progressive</literal> di
+      <command>loop</command> modifica il comportamento dei comandi
+      <command>ols</command>, <command>print</command> e
+      <command>store</command> rendendoli più comodi per l'uso in analisi di
+      tipo Monte Carlo. Le sezioni che seguono descrivono le varie forme di
+      espressioni di controllo e gli effetti dell'opzione
+      <literal>--progressive</literal>. Il capitolo termina con alcuni esempi
+      di uso dei loop.</para>  
+
+  </sect1>
+
+  <sect1 id="loop-control"><title>Varianti di controllo del loop</title>
+
+    <sect2 id="loop-count"><title>Loop limitati</title>
+
+      <para>Il modo più semplice di controllare un loop consiste nello
+        specificare direttamente il numero di volte che il ciclo deve
+        essere ripetuto, in un cosiddetto <quote>loop limitato</quote>.
+        Il numero di ripetizioni può essere una costante numerica, ad
+        esempio <literal>loop 1000</literal>, o può essere letto da una
+        variabile, come in <literal>loop volte</literal>.</para>
+
+      <para>Se il numero di ripetizioni è indicato da una variabile, ad es.
+	<varname>volte</varname>, la variabile dovrebbe essere uno scalare
+        intero: se si usa una serie, viene letto il primo valore, e se
+        questo non è intero, viene troncata la sua parte decimale. Si noti
+        che <varname>volte</varname> viene valutata solo una volta, quando
+        il loop viene impostato.
+      </para>
+
+    </sect2>
+
+    <sect2 id="loop-while"><title>Loop di tipo <quote>while</quote></title>
+
+      <para>Un secondo tipo di espressione di controllo consiste nell'uso
+        del comando <command>while</command> seguito da una disuguaglianza,
+        in cui il termine a sinistra è il nome di una variabile
+        predefinita, mentre il lato destro può essere una costante numerica
+        o il nome di un'altra variabile predefinita. Ad esempio:
+	</para>
+
+      <para>
+	<command>loop while differ > .00001</command>
+      </para>
+
+      <para>L'esecuzione del ciclo di comandi continuerà fintanto che la
+        condizione specificata rimane vera. Se il termine a destra della
+        disuguaglianza è una variabile, essa viene valutata all'inizio di
+        ogni nuova iterazione del ciclo.</para>
+
+    </sect2>
+
+    <sect2 id="loop-index"><title>Loop con indice</title>
+
+      <para>Un terzo tipo di controllo di un loop utilizza la speciale
+        variabile indice <varname>i</varname>.  In questo caso, vengono
+        specificati valori iniziali e finali per <varname>i</varname>, che
+        viene incrementata di uno ogni volta che viene eseguito il ciclo.
+        La sintassi è la seguente: <command>loop i=1..20</command>.</para>
+
+      <para>La variabile indice può essere usata all'interno del corpo del
+      loop, in uno dei modi seguenti: è possibile accedere al valore di
+	<varname>i</varname> (si veda <xref
+      linkend="loop-panel-script"/>), oppure è possibile usare la sua
+      rappresentazione come stringa <literal>$i</literal> (si veda <xref
+	  linkend="loop-string-script"/>).</para>
+
+      <para>I valori iniziale e finale per l'indice possono essere indicati
+        in forma numerica, o come riferimento a variabili predefinite.
+	Nell'ultimo caso, le variabili vengono valutate una volta, quando
+        il loop viene impostato. Inoltre, con dataset di serie storiche è
+        possibile indicare i valori iniziale e finale sotto forma di date,
+        ad esempio: <command>loop i=1950:1..1999:4</command>.
+      </para>
+
+    </sect2>
+
+    <sect2 id="loop-for"><title>Loop di tipo for</title>
+    
+      <para>L'ultimo tipo di controllo usa una forma semplificata
+        dell'istruzione <command>for</command> del linguaggio di
+        programmazione C. L'espressione di controllo si compone di tre
+        parti, separate da punto e virgola. La prima parte specifica una
+        condizione iniziale, espressa per mezzo di una variabile di
+        controllo; la seconda parte imposta una condizione di continuazione
+        (espressa in funzione della stessa variabile di controllo), mentre
+        la terza parte specifica un incremento (o un decremento) per la
+        variabile di controllo, da applicare ogni volta che il ciclo viene
+        eseguito. L'intera espressione deve essere racchiusa tra parentesi.
+        Ad esempio:</para>
+
+      <para><command>loop for (r=0.01; r<.991; r+=.01)</command></para>
+
+      <para>La variable <varname>r</varname> assumerà i valori 0.01, 0.02,
+        &hellip;, 0.99 nel giro di 100 iterazioni. Si noti che a causa della
+        precisione limitata dell'aritmetica in virgola mobile usata dal
+        computer, può dover essere necessario usare una condizione di
+        continuazione come quella mostrata sopra,
+	<literal>r<.991</literal>, invece della più
+	<quote>naturale</quote> <literal>r<=.99</literal> (usando numeri in
+        doppia precisione su un processore x86, quando ci si aspetta che
+	<varname>r</varname> valga 0.99, potrebbe in realtà valere
+	0.990000000000001).</para>
+
+      <para>Altre regole per i tre componenti dell'espressione di
+        controllo: (1) la condizione iniziale deve avere forma
+        X1 = Y1, dove Y1 deve essere una costante numerica o una
+        variabile predefinita. Se la variabile X1 non esiste, viene creata
+        automaticamente. (2) La condizione di continuazione deve avere la
+        forma X1 <replaceable>operatore</replaceable> Y2, dove
+        l'<replaceable>operatore</replaceable> può essere <literal>&lt;</literal>,
+	<literal>&gt;</literal>, <literal>&lt;=</literal> o
+	<literal>&gt;=</literal> e Y2 deve essere una costante numerica o
+        una variabile predefinita (nel caso in cui sia una variabile, essa
+        viene valutata ad ogni esecuzione del ciclo). (3) L'espressione che
+        indica l'incremento o il decremento deve avere la forma X1 +=
+        DELTA, oppre X1 -= DELTA, dove DELTA è una costante numerica o una
+        variabile predefinita (nel secondo caso, essa viene valutata solo
+        una volta, quando il loop viene impostato).
+      </para>
+
+    </sect2> 
+
+  </sect1>
+
+  <sect1 id="loop-progressive"><title>La modalità <quote>progressiva</quote></title>
+
+    <para>Usando l'opzione <literal>--progressive</literal> nel comando
+    loop, l'effetto dei comandi <command>ols</command>,
+      <command>print</command> e <command>store</command> è modificato nel
+      modo seguente.</para>
+    
+    <para><command>ols</command>: i risultati di ogni iterazione della
+    regressione non vengono mostrati. Al contrario, una volta terminato il
+    loop si ottiene un elenco dei seguenti valori: (a) il valore medio di
+    ognuno dei coefficienti stimati, calcolato su tutte le iterazioni; (b)
+    la deviazione standard relativa a questa media; (c) il valore medio
+    dell'errore standard stimato per ogni coefficiente; (d) la deviazione
+    standard degli errori standard stimati. Tutto ciò ha senso solo se
+    ogni iterazione del loop contiene un elemento di casualità.
+    </para>  
+
+    <para><command>print</command>:  se si usa questo comando per mostrare
+    il valore di una variabile, questo non viene mostrato ad ogni
+    iterazione. Al contrario, alla fine del loop si ottiene il valore medio
+    e la deviazione standard della variabile, calcolata su tutte le
+    iterazioni del ciclo. Questa funzione è utile per le variabili che
+    assumono un singolo valore per ogni iterazione, ad esempio la somma dei
+    quadrati degli errori di una regressione.  </para>
+
+    <para><command>store</command>: questo comando scrive i valori delle
+    variabili specificate, ad ogni iterazione del loop, nel file indicato,
+    ossia, tiene traccia completa del valore delle variabili in tutte le
+    iterazioni. Ad esempio, si potrebbero salvare le stime dei coefficienti
+    per poi studiarne la distribuzione di frequenza. È possibile usare il
+    comando <command>store</command> solo una volta all'interno di un loop.</para>
+
+  </sect1>   
+
+  <sect1 id="loop-examples"><title>Esempi di loop</title>
+
+    <sect2 id="loop-mc-example"><title>Esempio di procedura Monte Carlo</title>
+
+      <para>Un semplice esempio di uso della modalità
+	<quote>progressiva</quote> per realizzare una procedura Monte Carlo
+        è mostrato in <xref linkend="mc-loop"/>.</para>
+
+      <example id="mc-loop"><title>Un semplice loop di tipo Monte Carlo</title>
+	<programlisting>
+	  nulldata 50
+	  seed 547
+	  genr x = 100 * uniform()
+	  # Apre un loop "progressivo", da ripetere 100 volte
+	  loop 100 --progressive
+	     genr u = 10 * normal()
+	     # Costruisce la variabile dipendente
+	     genr y = 10*x + u
+	     # Esegue la regressione OLS
+	     ols y const x
+	     # Definisce variabili per i coefficienti e R-quadro
+	     genr a = coeff(const)
+	     genr b = coeff(x)
+	     genr r2 = $rsq
+	     # Mostra le statistiche su queste variabili
+	     print a b r2
+	     # Salva i coefficienti in un file
+	     store coeffs.gdt a b
+	  endloop</programlisting>
+      </example>
+
+      <para>Questo loop mostrerà le statistiche di riepilogo per le stime
+        di "a", "b" e &rsqu; lungo le 100 iterazioni. Dopo aver eseguito
+        il loop, è possibile aprire con <application>gretl</application>
+        il file <filename>coeffs.gdt</filename>, che contiene le stime dei
+        singoli coefficienti durante tutte le iterazioni, ed esaminare nel
+        dettaglio la distribuzione di frequenza delle stime.</para>
+
+      <para>Il comando <command>nulldata</command> è utile per le procedure
+        Monte Carlo: invece di aprire un <quote>vero</quote> dataset,
+        <command>nulldata 50</command> (ad esempio) apre un finto dataset
+        da 50 osservazioni, che contiene solo la costante e una variabile
+        indice. Successivamente è possibile aggiungervi variabili usando il
+        comando <command>genr</command>.</para>  
+
+      <para>Si veda il comando <command>seed</command> nella
+      <xref linkend="cmdref"/> per informazioni su come generare numeri
+      pseudo-casuali in modo ripetibile.</para>
+
+    </sect2>
+
+    <sect2 id="loop-ils-examples"><title>Minimi quadrati iterati</title>
+
+      <para><xref linkend="greene-ils-script"/> usa un loop di tipo
+	<quote>while</quote> per replicare la stima di una funzione di
+        consumo non lineare nella forma
+	<inlineequation>
+	  <alt role="tex">
+	    $C = \alfa + \beta Y^{\gamma} + \epsilon$
+	  </alt>
+	  <inlinemediaobject>
+	    <imageobject>
+	      <imagedata align="center" fileref="figures/greeneC"/>
+	    </imageobject>
+	  </inlinemediaobject>
+	</inlineequation> presentata in Greene (2000, Esempio 11.3).
+	Questo script è compreso nella distribuzione di
+	<application>gretl</application> distribution con il nome
+	<filename>greene11_3.inp</filename>; è possibile aprirlo usando il
+        comando del menù <quote>File, Apri file comandi, File di esempio,
+	  Greene...</quote>.</para>
+
+      <para>L'opzione <literal>--print-final</literal> per il comando
+      <command>ols</command> fa sì che non vengano mostrati i risultati
+      della regressione per ogni iterazione, ma solo quelli dell'ultima
+      iterazione del loop.</para>
+
+      <example id="greene-ils-script"><title>Funzione di consumo non
+      lineare</title>
+	<programlisting>
+	  open greene11_3.gdt
+	  # Esegue la regressione OLS iniziale
+	  ols C 0 Y
+	  genr essbak = $ess
+	  genr essdiff = 1
+	  genr beta = coeff(Y)
+	  genr gamma = 1
+	  # Itera OLS finché la somma dei quadrati degli errori converge
+	  loop while essdiff > .00001
+	     # Genera le variabili linearizzate
+	     genr C0 = C + gamma * beta * Y^gamma * log(Y)
+	     genr x1 = Y^gamma
+	     genr x2 = beta * Y^gamma * log(Y)
+	     # Esegue la regressione OLS 
+	     ols C0 0 x1 x2 --print-final --no-df-corr --vcv
+	     genr beta = coeff(x1)
+	     genr gamma = coeff(x2)
+	     genr ess = $ess
+	     genr essdiff = abs(ess - essbak)/essbak
+	     genr essbak = ess
+	  endloop 
+	  # Mostra le stime dei parametri usando i "nomi giusti"
+	  noecho
+	  printf "alfa = %g\n", coeff(0)
+	  printf "beta  = %g\n", beta
+	  printf "gamma = %g\n", gamma</programlisting>
+      </example>
+
+      <para><xref linkend="jack-arma"/> (gentilmente fornito da
+	Riccardo <quote>Jack</quote> Lucchetti dell'Università di Ancona)
+        mostra come sia possibile usare un loop per stimare un modello ARMA
+        usando la regressione <quote>prodotto esterno del gradiente</quote>
+        (OPG - <quote>outer product of the gradient</quote>) discussa da
+	Davidson e MacKinnon nel loro <citetitle>Estimation and Inference in
+	  Econometrics</citetitle>.</para>
+
+      <example id="jack-arma"><title>ARMA 1, 1</title>
+	<programlisting>
+	open armaloop.gdt
+
+	genr c = 0
+	genr a = 0.1
+	genr m = 0.1
+
+	genr e = const * 0.0
+	genr de_c = e
+	genr de_a = e
+	genr de_m = e
+
+	genr crit = 1
+	loop while crit > 1.0e-9
+
+	   # Errori di previsione "one-step"
+	   genr e = y - c - a*y(-1) - m*e(-1)  
+
+	   # Log-verosimiglianza 
+	   genr loglik = -0.5 * sum(e^2)
+	   print loglik
+
+	   # Derivate parziali degli errori di previsione rispetto a c, a e m
+	   genr de_c = -1 - m * de_c(-1) 
+	   genr de_a = -y(-1) -m * de_a(-1)
+	   genr de_m = -e(-1) -m * de_m(-1)
+   
+	   # Derivate parziali di l rispetto a c, a e m
+	   genr sc_c = -de_c * e
+	   genr sc_a = -de_a * e
+	   genr sc_m = -de_m * e
+   
+	   # Regressione OPG
+	   ols const sc_c sc_a sc_m --print-final --no-df-corr --vcv
+
+	   # Aggiorna i parametri
+	   genr dc = coeff(sc_c) 
+	   genr c = c + dc
+	   genr da = coeff(sc_a) 
+	   genr a = a + da
+	   genr dm = coeff(sc_m) 
+	   genr m = m + dm
+
+	   printf "  constant        = %.8g (gradient = %#.6g)\n", c, dc
+	   printf "  ar1 coefficient = %.8g (gradient = %#.6g)\n", a, da
+	   printf "  ma1 coefficient = %.8g (gradient = %#.6g)\n", m, dm
+
+	   genr crit = $T - $ess
+	   print crit
+	endloop
+
+	genr se_c = stderr(sc_c)
+	genr se_a = stderr(sc_a)
+	genr se_m = stderr(sc_m)
+
+	noecho
+	print "
+	printf "constant = %.8g (se = %#.6g, t = %.4f)\n", c, se_c, c/se_c
+	printf "ar1 term = %.8g (se = %#.6g, t = %.4f)\n", a, se_a, a/se_a
+	printf "ma1 term = %.8g (se = %#.6g, t = %.4f)\n", m, se_m, m/se_m
+	</programlisting>
+      </example>    
+
+    </sect2>
+
+    <sect2><title>Esempi di loop con indice</title>
+
+      <para><xref
+	  linkend="loop-panel-script"/> mostra un loop con indice, in cui
+          il comando <command>smpl</command> contiene la variabile indice
+	<varname>i</varname>.  Si supponga di avere un dataset di tipo
+        panel, con osservazioni su alcuni ospedali per gli anni dal 1991 al
+	2000 (dove l'anno dell'osservazione è indicato da una variabile
+        chiamata <varname>anno</varname>).  Ad ogni iterazione,
+        restringiamo il campione a un certo anno e calcoliamo statistiche
+        di riepilogo sulla dimensione longitudinale (cross-section) per le
+        variabili da 1 a 4.</para>
+
+      <example id="loop-panel-script"><title>Statistiche panel</title>
+	<programlisting>
+	  open ospedali.gdt
+	  loop i=1991..2000
+	    smpl (annor=i) --restrict --replace
+	    summary 1 2 3 4
+	  endloop</programlisting>
+      </example>
+
+      <para>
+	<xref linkend="loop-string-script"/> illustra un loop indicizzato
+        per sostituire stringhe.</para>
+
+      <example id="loop-string-script"><title>Sostituzione di stringhe</title>
+	<programlisting>
+	open bea.dat
+	loop i=1987..2001
+	  genr V = COMP$i
+	  genr TC = GOC$i - PBT$i
+	  genr C = TC - V
+	  ols PBT$i const TC V
+	  endloop</programlisting>
+      </example>
+
+      <para>Alla prima iterazione, la variabile	<varname>V</varname> verrà
+      impostata a <varname>COMP1987</varname> e la variabile dipendente per
+      il comando <command>ols</command> satà <varname>PBT1987</varname>.
+      All'iterazione successiva, <varname>V</varname> verrà ridefinita come
+      <varname>COMP1988</varname> e la variabile dipendente della
+      regressione sarà <varname>PBT1988</varname>, e così via.</para>
+
+    </sect2>
+
+  </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

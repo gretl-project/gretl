@@ -1,0 +1,383 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="chap-nls"><title>Minimi quadrati non lineari</title>
+
+  <sect1 id="nls-intro"><title>Introduzione ed esempi</title>
+
+    <para>
+      Dalla versione 1.0.9, <application>gretl</application> supporta
+      i minimi quadrati non lineari (NLS - nonlinear least squares),
+      usando una variante dell'algoritmo Levenberg&ndash;Marquandt.
+      L'utente deve fornire la specificazione della funzione di
+      regressione, e, prima ancora di fare questo, occorre
+      <quote>dichiarare</quote> i parametri da stimare e fornire dei
+      valori iniziali. È anche possibile indicare analiticamente delle
+      derivate della funzione di regressione rispetto a ognuno dei
+      parametri. La tolleranza usata per fermare la procedura
+      iterativa di stima può essere impostata con il comando
+      <command>genr</command>.</para>
+
+    <para>La sintassi per la specificazione della funzione da stimare
+    è la stessa usata per il comando <command>genr</command>. Ecco due
+    esempi, che includono anche le derivate.</para>
+
+    <example id="nls-cons"><title>Funzione di consumo da Greene</title>
+	<programlisting>
+	  nls C = alfa + beta * Y^gamma
+	  deriv alfa = 1
+	  deriv beta = Y^gamma
+	  deriv gamma = beta * Y^gamma * log(Y)
+	  end nls
+	</programlisting>
+    </example>
+
+    <example id="nls-ects"><title>Funzione non lineare da Russell
+	Davidson</title>
+	<programlisting>
+	  nls y = alfa + beta * x1 + (1/beta) * x2
+	  deriv alfa = 1
+	  deriv beta = x1 - x2/(beta*beta)
+	  end nls
+	</programlisting>
+    </example> 
+
+    <para>
+      Si notino i comandi <command>nls</command> (che indica la
+      funzione di regressione), <command>deriv</command> (che indica
+      la specificazione di una derivata) e <command>end
+	nls</command>, che conclude la specificazione e avvia la
+        stima. Se si aggiunge l'opzione <command>--vcv</command>
+        all'ultima riga, verrà mostrata la matrice di covarianza delle
+        stime dei parametri.</para>
+
+  </sect1>
+
+  <sect1 id="nls-param"><title>Inizializzazione dei parametri</title>
+
+    <para>Occorre definire dei valori iniziali per i parametri della
+    funzione di regressione prima di eseguire il comando
+    <command>nls</command>. Per farlo, è possibile usare il comando
+    <command>genr</command> (o, nella versione grafica del programma,
+    con il comando <guimenuitem>Definisci nuova
+    variabile</guimenuitem>).  In alcuni casi, in cui la funzione non
+    lineare è una generalizzazione di un modello lineare (o di una sua
+    forma ristretta), può essere conveniente eseguire un comando
+    <command>ols</command> e inizializzare i parametri a partire dalle
+    stime OLS dei coefficienti. In relazione al primo degli esempi
+    visti sopra, si potrebbe usare:</para>
+
+    <programlisting>
+      ols C 0 Y
+      genr alfa = coeff(0)
+      genr beta = coeff(Y)
+      genr gamma = 1
+    </programlisting>
+
+    <para>E in relazione al secondo esempio si userebbe:</para>
+
+    <programlisting>
+      ols y 0 x1 x2
+      genr alfa = coeff(0)
+      genr beta = coeff(x1)
+    </programlisting> 
+
+  </sect1>
+
+  <sect1 id="nls-gui"><title>Finestra di dialogo NLS</title>
+
+    <para>
+      Proabilmente il modo più comodo di formulare i comandi per una
+      stima NLS consiste nell'usare uno script per
+      <application>gretl</application>, ma è possibile anche procedere
+      interattivamente, selezionando il comando <guimenuitem>Minimi
+      quadrati non lineari</guimenuitem> dal menù Modello. In questo
+      modo, si aprirà una finestra di dialogo in cui è possibile
+      scrivere la specificazione della funzione (opzionalmente
+      preceduta da linee <command>genr</command> per impostare i
+      valori iniziali dei parametri) e le derivate, se sono
+      disponibili. Un esempio è mostrato in <xref
+	linkend="fig-nls-dialog"/>.  Si noti che in questo contesto
+        non occorre scrivere i comandi <command>nls</command> e <command>end
+      nls</command>.</para>
+
+    <figure id="fig-nls-dialog" float="1" pgwide="1">
+      <title>Finestra di dialogo NLS</title>
+      <screenshot>
+        <screeninfo>Finestra di dialogo di Minimi quadrati non lineari</screeninfo>
+        <graphic fileref="figures/nls_window" align="center"/>
+      </screenshot>
+    </figure>
+
+  </sect1>
+
+
+   <sect1 id="nls-deriv"><title>Derivate analitiche e numeriche</title>
+
+    <para>Se si è in grado di calcolare le derivate dalla funzione di
+    regressione rispetto ai parametri, è consigliabile indicarle come
+    mostrato negli esempi precedenti. Se ciò non è possibile,
+      <application>gretl</application> calcolerà delle derivate
+      approssimate numericamente. Le proprietà dell'algoritmo NLS in
+      questo caso potrebbero non essere ottimali (si veda
+      <xref linkend="nls-accuracy"/>).</para>
+
+    <para>Se vengono fornite delle derivate analitiche, ne viene
+    controllata la coerenza con la funzione non lineare data. Se esse
+    sono chiaramente scorrette, la stima viene annullata con un
+    messaggio di errore. Se le derivate sono <quote>sospette</quote>,
+    viene mostrato un messaggio di avvertimento, ma la stima prosegue.
+    Questo avvertimento può essere causato da derivate scorrette, ma
+    può anche essere dovuto a un alto grado di collinearità tra le
+    derivate.</para>
+
+    <para>Si noti che non è possibile mischiare derivate numeriche e
+    analitiche: se si indicano espressioni analitiche per le derivate,
+    occorre farlo per tutte.</para>
+
+  </sect1>
+    
+   <sect1 id="nls-toler"><title>Arresto della procedura</title>
+
+    <para>La procedura di stima NLS è iterativa: l'iterazione viene
+    arrestata si verifica una qualunque delle seguenti condizioni:
+    viene raggiunto un criterio di convergenza, o si supera il massimo
+    numero di iterazioni impostato. Il massimo numero di iterazioni è
+      <command>100*(k+1)</command> se vengono fornite derivate
+      analitiche, o <command>200*(k+1)</command> se vengono usate
+      derivate numeriche, dove <varname>k</varname> indica il numero
+      di parametri da stimare. Il criterio di convergenza consiste nel
+      fatto che l'errore relativo nella somma dei quadrati e/o
+      l'errore relativo tra il vettore dei coefficienti e la soluzione
+      sia stimato inferiore a un certo valore piccolo. Questo
+      <quote>valore piccolo</quote> è impostato in modo predefinito
+      pari alla precisione della macchina elevato alla potenza 3/4, ma
+      può essere impostato con il comando <command>genr</command>,
+      usando la variabile speciale <varname>toler</varname>. Ad
+      esempio</para>
+
+    <programlisting>genr toler = .0001</programlisting> 
+
+    <para>imposterà la tolleranza a 0.0001.</para>
+
+  </sect1>
+
+   <sect1 id="nls-code"><title>Dettagli sul codice</title>  
+
+    <para>Il motore sottostante la stima NLS è basato sulla suite di
+    funzioni <application>minpack</application>, disponibile su <ulink
+	url="http://www.netlib.org/minpack/">netlib.org</ulink>.
+      Nello specifico, sono usate le seguenti funzioni
+      <application>minpack</application>:</para>
+
+    <informaltable frame="none">
+      <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	<tbody>
+	  <row>
+	    <entry><filename>lmder</filename></entry>
+	    <entry>Algoritmo Levenberg&ndash;Marquandt con derivate analitiche
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>chkder</filename></entry>
+	    <entry>Controllo delle derivate analitiche fornite
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>lmdif</filename></entry>
+	    <entry>Algoritmo Levenberg&ndash;Marquandt con derivate
+            numeriche
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>fdjac2</filename></entry>
+	    <entry>Calcolo del Jacobiano approssimato finale se si
+            usano le derivate numeriche
+	    </entry>
+	  </row>
+	  <row>
+	    <entry><filename>dpmpar</filename></entry>
+	    <entry>Determinazioen della precisione della macchina
+	    </entry>
+	  </row>
+	</tbody>
+      </tgroup>
+      </informaltable>
+
+    <para>In caso di successo nell'iterazione
+    Levenberg&ndash;Marquandt, viene usata una regressione
+	Gauss&ndash;Newton per calcolare la matrice di covarianza per
+        le stime dei parametri. Poiché i risultati NLS sono
+        asintotici, si può discutere sulla necessità di applicare una
+        correzione per i gradi di libertà nel calcolo dell'errore
+        standard della regressione (e di quello delle stime dei
+        parametri). Per confrontabilità con OLS, e seguendo il
+        ragionamento in Davidson e MacKinnon (1993), le stime
+        calcolate in <application>gretl</application>
+	<emphasis>usano</emphasis> una correzione per i gradi di
+        libertà.</para>
+
+  </sect1>
+
+  <sect1 id="nls-accuracy"><title>Accuratezza numerica</title>
+
+    <para>La <xref linkend="tab-nls"/> mostra i risultati dell'uso
+    della procedura NLS di <application>gretl</application> sui 27
+    "Statistical Reference Dataset" forniti dal National Institute of
+    Standards and Technology (NIST) statunitense, per il test del
+    software di regressione non lineare <footnote><para>Per una
+    discussione dell'accuratezza di <application>gretl</application>
+    nella stima di modelli lineari, si veda <xref linkend="app-accuracy"/></para>
+    </footnote>. Per ogni dataset, il file di test indicano due valori
+    iniziali per i parametri, quindi il test completo riporta 54
+    stime. Sono stati eseguiti due test completi, uno usando derivate
+    analitiche e uno usando approssimazioni numeriche; in entrambi
+    casi si è usata la tolleranza predefinita<footnote><para>I dati
+    mostrati nella tabella derivano da una versione di
+    <application>gretl</application> 1.0.9, compilata con
+    <application>gcc</application> 3.3, collegata a
+    <application>glibc</application> 2.3.2 ed eseguita in Linux su un
+    PC i686 (IBM ThinkPad A21m).</para>
+      </footnote></para>.
+
+    <para>Sulle 54 stime, <application>gretl</application> non riesce
+    a produrre una soluzione in 4 casi, se vengono usate le derivate
+    analitiche, e in 5 casi se vengono usate le approssimazioni
+    numeriche. Dei quattro fallimenti in modalità derivate analitiche,
+    due sono dovuti alla non convergenza dell'algoritmo
+    Levenberg&ndash;Marquandt dopo il numero massimo di iterazioni
+    (su <filename>MGH09</filename> e <filename>Bennett5</filename>,
+    entrambi descritti dal NIST come di <quote>alta
+    difficoltà</quote>) e due sono dovuti ad errori di intervallo
+    (valori in virgola mobile al di fuori dei limiti) occorsi durante
+    il calcolo del Jacobiano (su <filename>BoxBOD</filename> e <filename>MGH17</filename>,
+    rispettivamente descritti come di <quote>alta difficoltà</quote> e
+    di <quote>media difficoltà</quote>). In modalità approssimazione
+    numerica, l'ulteriore caso di fallimento è rappresentato da
+    <filename>MGH10</filename> (<quote>alta difficoltà</quote>,
+    massimo numero di iterazioni raggiunto).</para>
+
+    <para>La tabella mostra informazioni su vari aspetti dei test:
+    numero di fallimenti, numero medio di iterazioni richieste per
+    produrre una soluzione, e due tipi di misura dell'accuratezza dei
+    risultati per i parametri e per i loro errori standard.
+    </para>
+
+    <para>Per ognuno dei 54 test eseguiti in ogni modalità, se è stata
+    prodotta una soluzione, sono state confrontate le stime dei
+    parametri ottenute da <application>gretl</application> con i
+    valori certificati dal NIST. È stata definita la variabile
+    <quote>numero minimo di cifre corrette</quote> per una data stima
+    come il numero di cifre significative per cui la <emphasis>meno
+    accurata</emphasis> delle stime di
+    <application>gretl</application> coincide con il valore
+    certificato. La tabella mostra i valori medio e minimo di questa
+    variabile, calcolati sulle stime che hanno prodotto una soluzione;
+    la stessa informazione è fornita per gli errori standard stimati
+    <footnote><para>Per gli errori standard, dalle statistiche
+    mostrate nella tabella, è stato escluso l'outlier costituito
+    da <filename>Lanczos1</filename>, che rappresenta un caso strano,
+    composto da dati generati con un adattamento quasi esatto;
+    gli errori standard sono di 9 o 10 ordini di grandezza più piccoli
+    dei coefficienti. In questo caso <application>gretl</application>
+    riesce a riprodurre gli errori standard solo per 3 cifre (con
+    derivate analitiche) e per 2 cifre (con derivate numeriche).</para>
+      </footnote></para>.
+      
+    <para>
+      La seconda misura di accuratezza mostrata è la percentuale di
+      casi, tenendo conto di tutti i parametri di tutte le stime
+      giunte a buon fine, in cui la stima di
+      <application>gretl</application> concorda con il valore
+      certificato per almeno 6 cifre significative, che sono mostrate
+      in modo predefinito nei risultati delle regressioni di
+      <application>gretl</application>.</para>
+
+    <table id="tab-nls" frame="none">
+      <title>Regressione non lineare: i test NIST</title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>&nbsp;</entry>
+	    <entry>Derivate analitiche</entry>
+	    <entry>Derivate numeriche</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+	    <entry>Falimenti in 54 test</entry>
+	    <entry align="center">4</entry>
+	    <entry align="center">5</entry>
+	  </row>
+          <row>
+	    <entry>Iterazioni medie</entry>
+	    <entry align="center">32</entry>
+	    <entry align="center">127</entry>
+	  </row>
+          <row>
+	    <entry>Media del "numero minimo di cifre corrette", stima dei parametri</entry>
+	    <entry align="center">8.120</entry>
+	    <entry align="center">6.980</entry>
+	  </row>
+          <row>
+	    <entry>Valore minimo del "numero minimo di cifre corrette", stima dei parametri</entry>
+	    <entry align="center">4</entry>
+	    <entry align="center">3</entry>
+	  </row>
+          <row>
+            <entry>Media del "numero minimo di cifre corrette", stima degli errori standard</entry>
+	    <entry align="center">8.000</entry>
+	    <entry align="center">5.673</entry>
+	  </row>
+          <row>
+            <entry>Valore minimo del "numero minimo di cifre corrette", stima degli errori standard</entry>
+	    <entry align="center">5</entry>
+	    <entry align="center">2</entry>
+	  </row>
+          <row>
+	    <entry>Percentuale delle stime corrette a 6 cifre, stima dei parametri</entry>
+	    <entry align="center">96.5</entry>
+	    <entry align="center">91.9</entry>
+	  </row>
+          <row>
+	    <entry>Percentuale delle stime corrette a 6 cifre, stima degli errori standard</entry>
+	    <entry align="center">97.7</entry>
+	    <entry align="center">77.3</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para>Usando derivate analitiche, i valori dei casi peggiori sia per
+    le stime dei parametri che per gli errori standard sono stati
+    migliorati a 6 cifre corrette restringendo il valore di tolleranza a
+      1.0e&minus;14.  Usando derivate numeriche, la stessa modifica
+      del limite di tolleranza ha innalzato la precisione dei valori
+      peggiori a 5 cifre corrette per i parametri e 3 cifre per gli
+      errori standard, al costo di un fallimento in più nella
+      convergenza.
+      </para>
+
+    <para>Si noti la tendenziale superiorità delle derivate
+    analitiche: in media le soluzioni ai problemi dei test sono state
+    ottenute con molte meno iterazioni e i risultati sono più accurati
+    (in modo evidente per gli errori standard stimati). Si noti anche
+    che i risultati a 6 cifre mostrati da
+    <application>gretl</application> non sono affidabili al 100 per
+    cento per i problemi non lineari difficili (in particolare se si
+    usano derivate numeriche). Tenendo presente questi limiti, la
+    percentuale dei casi in cui i risultati sono accurati alla sesta
+    cifra o più sembra sufficiente per giustificarne l'utilizzo in
+    questa forma.</para>
+
+  </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+

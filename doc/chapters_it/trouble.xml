@@ -1,0 +1,100 @@
+  <chapter id="trouble"><title>Risoluzione dei problemi</title>
+
+  <sect1 id="trouble-bugs"><title>Segnalazione dei bug</title>
+
+    <para>
+      Le segnalazioni dei bug sono benvenute. È difficile trovare errori
+      di calcolo in <application>gretl</application> (ma questa
+      affermazione non costituisce alcuna sorta di garanzia), ma è
+      possibile imbattersi in bug o stranezze nel comportamento
+      dell'interfaccia grafica. Si tenga presente che l'utilità delle
+      segnalazioni aumenta quanto più si è precisi nella descrizione:
+      cosa <emphasis>esattamente</emphasis> non funziona, in che
+      condizioni, con quale sistema operativo? Se si ricevono messaggi
+      di errore, cosa dicono esattamente?</para>
+
+  </sect1>
+
+  <sect1 id="trouble-programs"><title>Programmi ausiliari</title>
+
+    <para>
+      Come detto in precedenza, <application>gretl</application>
+      richiama alcuni altri programmi per eseguire alcune operazioni
+      (gnuplot per i grafici, &latex; per la stampa ad alta qualità dei
+      risultati delle regressioni, GNU R).  Se succede qualche problema
+      durante questi collegamenti esterni, non è sempre facile fornire
+      un messaggio di errore abbastanza informativo. Se il problema si
+      verifica durante l'uso di <application>gretl</application> con
+      l'interfaccia grafica, può essere utile avviare
+      <application>gretl</application> dal prompt dei comandi (ad es. da
+      una finestra di xterm nel sistema X window, o da un <quote>Prompt
+      di MS-DOS</quote> in MS Windows, nel qual caso occorre digitare
+      <command>gretlw32.exe</command>), invece che da un menù o da
+      un'icona: la finestra del terminale potrà quindi contenere messaggi 
+      di errore aggiuntivi.</para>
+
+    <para>
+      Si tenga anche presente che nella maggior parte dei casi
+      <application>gretl</application> assume che i programmi in
+      questione siano disponibili nel <quote>path</quote> dell'utente
+      &mdash; ossia, che possano essere invocati semplicemente con il
+      nome del programma, senza indicare il percorso completo.
+      
+      <footnote><para>L'eccezione a questa regola è costituita
+      dall'invocazione di gnuplot in MS Windows, dove occorre indicare
+      il percorso completo del programma.</para>
+      </footnote>
+      
+      Quindi se un certo programma non si avvia, conviene provare ad
+      eseguirlo da un prompt dei comandi, come descritto qui sotto.
+      </para>
+
+    <informaltable frame="none">
+      <tgroup cols="4">
+	<thead>
+	  <row>
+	    <entry>Sistema</entry>
+	    <entry>Grafica</entry>
+	    <entry>Stampa</entry>
+	    <entry>GNU R</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry>Sistema X window</entry>
+	    <entry>gnuplot</entry>
+	    <entry>latex, xdvi</entry>
+	    <entry>R</entry>
+	  </row>
+	  <row>
+	    <entry>MS Windows</entry>
+	    <entry>wgnuplot.exe</entry>
+	    <entry>latex, windvi</entry>
+	    <entry>RGui.exe</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </informaltable>
+
+
+    <para>
+      Se il programma non si avvia dal prompt, non è un problema di
+      <application>gretl</application>: probabilmente la directory
+      principale del programma non è contenuta nel path dell'utente,
+      oppure il programma non è stato installato correttamente.
+      Per i dettagli su come modificare il path dell'utente, si veda la
+      documentazione o l'aiuto online per il proprio sistema operativo.
+    </para>
+
+  </sect1>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
