@@ -10,6 +10,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+USE_GTK2 = @USE_GTK2@
 
 ifeq ($(INSTALL_PROGRAM),)
   INSTALL_PROGRAM = $(INSTALL) -m 755
@@ -25,9 +26,17 @@ endif
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 aclocaldir = $(prefix)/share/aclocal
+pkgconfigdir = $(libdir)/pkgconfig
 
-# General compile options and libs:
-LIBGRETL = libgretl.la
+INSTALLDIRS = $(libdir) $(includedir) $(aclocaldir)
+
+# Libraries:
+ifeq ($(USE_GTK2),"yes")
+  LIBGRETL = libgretl-2.la 
+  INSTALLDIRS += $(pkgconfigdir) 
+else
+  LIBGRETL = libgretl.la
+endif
 LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS)
 
 #### End of system configuration section. ####
@@ -76,7 +85,7 @@ install-data: installdirs
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)
 
 installdirs:
-	$(topsrc)/tools/mkinstalldirs $(libdir) $(includedir) $(aclocaldir)
+	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
 	rm -f *.o *.lo $(LIBGRETL) core 
@@ -143,12 +152,12 @@ generate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
 generate.o: src/texprint.h src/var.h src/interact.h src/graphing.h
 generate.o: src/monte_carlo.h src/nonparam.h src/discrete.h
 generate.o: src/subsample.h src/calendar.h src/internal.h
-graphing.o: ../config.h src/libgretl.h src/commands.h src/errors.h
-graphing.o: src/estimate.h src/generate.h src/utils.h src/compare.h
-graphing.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-graphing.o: src/printout.h src/texprint.h src/var.h src/interact.h
-graphing.o: src/graphing.h src/monte_carlo.h src/nonparam.h
-graphing.o: src/discrete.h src/subsample.h src/calendar.h src/internal.h
+graphing.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+graphing.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+graphing.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+graphing.o: src/monte_carlo.h src/nonparam.h src/discrete.h
+graphing.o: src/subsample.h src/calendar.h src/internal.h
 interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
 interact.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
 interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
@@ -197,12 +206,12 @@ texprint.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
 texprint.o: src/texprint.h src/var.h src/interact.h src/graphing.h
 texprint.o: src/monte_carlo.h src/nonparam.h src/discrete.h
 texprint.o: src/subsample.h src/calendar.h
-utils.o: ../config.h src/libgretl.h src/commands.h src/errors.h
-utils.o: src/estimate.h src/generate.h src/utils.h src/compare.h
-utils.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-utils.o: src/printout.h src/texprint.h src/var.h src/interact.h
-utils.o: src/graphing.h src/monte_carlo.h src/nonparam.h src/discrete.h
-utils.o: src/subsample.h src/calendar.h src/internal.h
+utils.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
+utils.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
+utils.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
+utils.o: src/texprint.h src/var.h src/interact.h src/graphing.h
+utils.o: src/monte_carlo.h src/nonparam.h src/discrete.h src/subsample.h
+utils.o: src/calendar.h src/internal.h
 var.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
 var.o: src/generate.h src/utils.h src/compare.h src/pvalues.h
 var.o: src/dataio.h src/strutils.h src/describe.h src/printout.h

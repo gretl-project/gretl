@@ -1,10 +1,12 @@
 #!/bin/sh
 
-# Shell script to make gretl win32 distribution
+# Shell script to make gretl2 win32 distribution
 
 GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp372w32.zip
 INNO_EXE="c:/Userdata/Inno Setup 2/ISCC.exe"
 RECODE=recode
+THISDIR=`pwd`
+GTK2DLLS=gtk-2.0-dlls.tar.gz
 
 # add gnuplot distribution
 function process_gnuplot {
@@ -15,7 +17,7 @@ function process_gnuplot {
 # create the gretl installer
 function inno_compile {
     echo "Building gretl installer executable..."
-    wine "$INNO_EXE" ./gretl.iss 2>/dev/null
+    wine "$INNO_EXE" ./gretl2.iss 2>/dev/null
     mv Output/setup.exe Output/gretl_install.exe
 }
 
@@ -43,20 +45,38 @@ mkdir -p windist/gretl/data
 mkdir -p windist/gretl/data/greene
 mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/db
-mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/user
+mkdir -p windist/gretl/plugins
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
+mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
 
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretlw32.exe gretl/gretlw32.exe
 
-# dynamic libs
+# home-made dynamic libs
 for f in dlls/*.dll ; do
     add_file $f gretl/`basename $f`
 done
+
+# gretl plugins
 for f in plugins/*.dll ; do
     add_file $f gretl/plugins/`basename $f`
+done
+
+# gtk dlls
+for f in `tar tvfz $GTK2DLLS | grep -v /$ | awk '{ print $NF }'` ; do
+    echo "gretl/$f" >> windist/MANIFEST
+done
+cd windist/gretl 
+tar xvfz $THISDIR/$GTK2DLLS
+cd $THISDIR
+
+# auxiliary dlls
+for f in \
+  iconv.dll libgmp.dll libintl-1.dll libxml.dll readline.dll zlib.dll
+do
+    add_file ../../gretl/win32/dlls/$f gretl/$f
 done
 
 # help files, license, logo
@@ -73,7 +93,7 @@ for lang in es ; do
 done
 add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/COPYING gretl/COPYING
-add_file ${TOPDIR}/gui/gretl-logo.xpm gretl/gretl-logo.xpm
+add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file doc/gretl.chm gretl/gretl.chm
 
 # data files
@@ -96,6 +116,7 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 
 # translations
 add_file mo/es.mo gretl/locale/es/LC_MESSAGES/gretl.mo
+add_file mo/gtk20.mo gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
 
 # misc files
 add_file gretl_website.url gretl/gretl_website.url
@@ -108,7 +129,7 @@ cd windist
 process_gnuplot
 
 # make Inno builder file
-cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss 
+cat MANIFEST | ./make_iss2.pl $VERSION | todos > gretl2.iss 
 
 # make Inno installer
 inno_compile

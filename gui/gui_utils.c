@@ -910,19 +910,19 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 
 /* ........................................................... */
 
-#include "pixmaps/save.xpm"
-#include "pixmaps/saveas.xpm"
+#include "../pixmaps/save.xpm"
+#include "../pixmaps/saveas.xpm"
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-# include "pixmaps/print.xpm"
+# include "../pixmaps/print.xpm"
 #endif
-#include "pixmaps/exec_small.xpm"
-#include "pixmaps/copy.xpm"
-#include "pixmaps/paste.xpm"
-#include "pixmaps/search.xpm"
-#include "pixmaps/replace.xpm"
-#include "pixmaps/undo.xpm"
-#include "pixmaps/question.xpm"
-#include "pixmaps/close.xpm"
+#include "../pixmaps/exec_small.xpm"
+#include "../pixmaps/copy.xpm"
+#include "../pixmaps/paste.xpm"
+#include "../pixmaps/search.xpm"
+#include "../pixmaps/replace.xpm"
+#include "../pixmaps/undo.xpm"
+#include "../pixmaps/question.xpm"
+#include "../pixmaps/close.xpm"
 
 static void make_viewbar (windata_t *vwin)
 {

@@ -31,15 +31,15 @@
 # include <windows.h>
 #endif
 
-#include "pixmaps/model.xpm"
-#include "pixmaps/boxplot.xpm"
-#include "pixmaps/gnuplot.xpm"
-#include "pixmaps/xfm_sc.xpm"
-#include "pixmaps/xfm_info.xpm"
-#include "pixmaps/xfm_text.xpm"
-#include "pixmaps/xfm_make.xpm"
-#include "pixmaps/rhohat.xpm"
-#include "pixmaps/summary.xpm"
+#include "../pixmaps/model.xpm"
+#include "../pixmaps/boxplot.xpm"
+#include "../pixmaps/gnuplot.xpm"
+#include "../pixmaps/xfm_sc.xpm"
+#include "../pixmaps/xfm_info.xpm"
+#include "../pixmaps/xfm_text.xpm"
+#include "../pixmaps/xfm_make.xpm"
+#include "../pixmaps/rhohat.xpm"
+#include "../pixmaps/summary.xpm"
 
 /* #define SESSION_DEBUG */
 

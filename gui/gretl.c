@@ -25,7 +25,7 @@
 #ifndef G_OS_WIN32
 # include <unistd.h>
 # include <signal.h>
-# include "pixmaps/gretl.xpm"  /* program icon for X */
+# include "../pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h>
 # ifdef USE_HHCTRL
@@ -34,17 +34,17 @@
 #endif
 
 /* pixmaps for gretl toolbar */
-#include "pixmaps/mini.calc.xpm"
-#include "pixmaps/mini.edit.xpm"
-#include "pixmaps/mini.sh.xpm"
-#include "pixmaps/mini.session.xpm"
-#include "pixmaps/mini.manual.xpm"
-#include "pixmaps/mini.netscape.xpm"
-#include "pixmaps/mini.pdf.xpm"
-#include "pixmaps/mini.plot.xpm"
-#include "pixmaps/mini.ofolder.xpm"
+#include "../pixmaps/mini.calc.xpm"
+#include "../pixmaps/mini.edit.xpm"
+#include "../pixmaps/mini.sh.xpm"
+#include "../pixmaps/mini.session.xpm"
+#include "../pixmaps/mini.manual.xpm"
+#include "../pixmaps/mini.netscape.xpm"
+#include "../pixmaps/mini.pdf.xpm"
+#include "../pixmaps/mini.plot.xpm"
+#include "../pixmaps/mini.ofolder.xpm"
 #ifndef GNUPLOT_PNG
-# include "pixmaps/mini.camera.xpm"
+# include "../pixmaps/mini.camera.xpm"
 #endif
 
 /* functions from other gretl GUI files */

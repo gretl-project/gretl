@@ -95,7 +95,7 @@ install-strip: $(PROG) install-data $(query_install_gnome)
 
 install-data: installdirs
 	$(INSTALL_PROGRAM) $(topsrc)/gretl_sh $(bindir)/gretl
-	$(INSTALL_DATA) gretl-logo.xpm $(gretldir)
+	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gretldir)
 	$(INSTALL_DATA) $(topsrc)/COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 
@@ -103,18 +103,18 @@ install-exec: $(PROG) installdirs
 
 install-gnome: $(PROG) installdirs 
 	$(tooldir)/mkinstalldirs $(gpixmaps)
-	$(INSTALL_DATA) gnome/gretl-gnome-logo.xpm $(gpixmaps)
-	$(INSTALL_DATA) gnome/gretl.png $(gpixmaps)
-	$(INSTALL_DATA) gnome/gnome-*.png $(gpixmaps)
+	$(INSTALL_DATA) ../gnome/gretl-gnome-logo.xpm $(gpixmaps)
+	$(INSTALL_DATA) ../gnome/gretl.png $(gpixmaps)
+	$(INSTALL_DATA) ../gnome/gnome-*.png $(gpixmaps)
 	$(tooldir)/mkinstalldirs $(desktopdir)
-	$(INSTALL_DATA) gnome/gretl.desktop $(desktopdir)
+	$(INSTALL_DATA) ../gnome/gretl.desktop $(desktopdir)
 	$(tooldir)/mkinstalldirs $(mimedir)
-	$(INSTALL_DATA) gnome/gretl.mime $(mimedir)
-	$(INSTALL_DATA) gnome/gretl.keys $(mimedir)
+	$(INSTALL_DATA) ../gnome/gretl.mime $(mimedir)
+	$(INSTALL_DATA) ../gnome/gretl.keys $(mimedir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
-	$(INSTALL_DATA) gnome/topic.dat $(ghelpdir)/C
+	$(INSTALL_DATA) ../gnome/topic.dat $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/manual-html/*.html $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/manual-html/*.css $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
@@ -224,11 +224,12 @@ gretl.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
 gretl.o: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
 gretl.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 gretl.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h dialogs.h
-gretl.o: library.h session.h settings.h helpfiles.h pixmaps/gretl.xpm
-gretl.o: pixmaps/mini.calc.xpm pixmaps/mini.edit.xpm pixmaps/mini.sh.xpm
-gretl.o: pixmaps/mini.session.xpm pixmaps/mini.manual.xpm
-gretl.o: pixmaps/mini.netscape.xpm pixmaps/mini.pdf.xpm pixmaps/mini.plot.xpm
-gretl.o: pixmaps/mini.ofolder.xpm
+gretl.o: library.h session.h settings.h helpfiles.h ../pixmaps/gretl.xpm
+gretl.o: ../pixmaps/mini.calc.xpm ../pixmaps/mini.edit.xpm
+gretl.o: ../pixmaps/mini.sh.xpm ../pixmaps/mini.session.xpm
+gretl.o: ../pixmaps/mini.manual.xpm ../pixmaps/mini.netscape.xpm
+gretl.o: ../pixmaps/mini.pdf.xpm ../pixmaps/mini.plot.xpm
+gretl.o: ../pixmaps/mini.ofolder.xpm
 guiprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 guiprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 guiprint.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -249,10 +250,11 @@ gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gui_utils.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 gui_utils.o: dialogs.h library.h session.h settings.h helpfiles.h htmlprint.h
-gui_utils.o: guiprint.h pixmaps/save.xpm pixmaps/saveas.xpm pixmaps/print.xpm
-gui_utils.o: pixmaps/exec_small.xpm pixmaps/copy.xpm pixmaps/paste.xpm
-gui_utils.o: pixmaps/search.xpm pixmaps/replace.xpm pixmaps/undo.xpm
-gui_utils.o: pixmaps/question.xpm pixmaps/close.xpm
+gui_utils.o: guiprint.h ../pixmaps/save.xpm ../pixmaps/saveas.xpm
+gui_utils.o: ../pixmaps/print.xpm ../pixmaps/exec_small.xpm
+gui_utils.o: ../pixmaps/copy.xpm ../pixmaps/paste.xpm ../pixmaps/search.xpm
+gui_utils.o: ../pixmaps/replace.xpm ../pixmaps/undo.xpm
+gui_utils.o: ../pixmaps/question.xpm ../pixmaps/close.xpm
 helpfiles.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 helpfiles.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 helpfiles.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -302,10 +304,11 @@ session.o: ../lib/src/interact.h ../lib/src/graphing.h
 session.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 session.o: ../lib/src/discrete.h ../lib/src/subsample.h ../lib/src/calendar.h
 session.o: gretltypes.h gui_utils.h callbacks.h dialogs.h library.h session.h
-session.o: settings.h helpfiles.h selector.h pixmaps/model.xpm
-session.o: pixmaps/boxplot.xpm pixmaps/gnuplot.xpm pixmaps/xfm_sc.xpm
-session.o: pixmaps/xfm_info.xpm pixmaps/xfm_text.xpm pixmaps/xfm_make.xpm
-session.o: pixmaps/rhohat.xpm pixmaps/summary.xpm
+session.o: settings.h helpfiles.h selector.h ../pixmaps/model.xpm
+session.o: ../pixmaps/boxplot.xpm ../pixmaps/gnuplot.xpm
+session.o: ../pixmaps/xfm_sc.xpm ../pixmaps/xfm_info.xpm
+session.o: ../pixmaps/xfm_text.xpm ../pixmaps/xfm_make.xpm
+session.o: ../pixmaps/rhohat.xpm ../pixmaps/summary.xpm
 settings.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 settings.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 settings.o: ../lib/src/utils.h ../lib/src/compare.h ../lib/src/pvalues.h

@@ -6,17 +6,18 @@ include config.mk
 # directories
 topsrc = ..
 libdir  = $(topsrc)/lib/src
-extradir = ./gtkextra-lib
+extradir = ../gui2/gtkextra-lite
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall
+CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 DLLTOOL = $(MGW_PREFIX)-dlltool
 
 # libraries
-GTKLIBS = -L$(imports) -lglib-2.0.dll -lgtk.dll -lgdk.dll
+GTKLIBS := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
+                          pkg-config --libs gtk+-win32-2.0)
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
@@ -26,17 +27,18 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-CFLAGS = -DHAVE_READLINE -DOS_WIN32 -I. -I$(libdir) -I$(GLIB_INC) -I$(extradir)
+CFLAGS := -DHAVE_READLINE -DOS_WIN32 -I. -I$(libdir) -I$(extradir) \
+$(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) pkg-config --cflags gtk+-win32-2.0)
 
 # source paths
 vpath %.c $(libdir)
 vpath %.c $(topsrc)/cephes
 vpath %.c $(topsrc)/cli
-vpath %.c $(topsrc)/gui
+vpath %.c $(topsrc)/gui2
 vpath %.c $(extradir)
 vpath %.c $(topsrc)/plugin
 vpath %.c $(topsrc)/plugin/libole2
-vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin:.
+vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui2:$(extradir):$(topsrc)/plugin:.
 vpath %.h $(topsrc)/cephes
 
 #### End of system configuration section. ####
@@ -45,8 +47,8 @@ CLIPROG = gretlcli.exe
 GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
-	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/des_import.dll plugins/mp_ols.dll
+	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
+	plugins/excel_import-2.dll plugins/des_import.dll plugins/mp_ols.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -72,14 +74,18 @@ CLIOBJ = $(CLISRC:.c=.o)
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
 	calculator.c fileselect.c htmlprint.c guiprint.c boxplots.c \
-	selector.c settings.c helpfiles.c 
+	selector.c settings.c helpfiles.c treeutils.c console.c 
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
-	webget.h htmlprint.h guiprint.h selector.h settings.h helpfiles.h
+	webget.h htmlprint.h guiprint.h selector.h settings.h helpfiles.h \
+	treeutils.h
 GUIOBJ = $(GUISRC:.c=.o)
 
-EXTRASRC = gtkitementry.c gtksheet.c gtkiconlist.c \
-	gtkplotpc.c gtkplotps.c gtkpsfont.c gtkplot.c
-EXTRAHDR = $(EXTRASRC:.c=.h)
+HACK_SRC = gtkfontselhack.c font_filter.c
+HACK_HDR = gtkfontselhack.h
+HACK_OBJ = gtkfontselhack.o
+
+EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c
+EXTRAHDR = gtkplot-lite.h gtkplotps.h gtkplotpc.h gtkpsfont.h
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
 PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
@@ -96,12 +102,14 @@ all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
 
-$(GUIPROG): $(GUIOBJ) $(WRES) 
+$(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES) 
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB)
 
 $(CLIOBJ): $(CLI_SRC) 
 
 $(GUIOBJ): $(GUISRC) $(GUIHDR) build.h
+
+$(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
 build.h:
 	./builddate.pl
@@ -137,7 +145,7 @@ clean:
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
-	rm -f windist/MANIFEST windist/gretl.iss 
+	rm -f windist/MANIFEST windist/gretl2.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output
 	make -C updater clean
 	make -C mo clean
@@ -172,16 +180,16 @@ plugins/panel_data.dll: panel_data.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
 
-plugins/progress_bar.dll: progress_bar.o dllinit.o
+plugins/progress_bar-2.dll: progress_bar-2.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GTKLIBS) -L$(imports) -lintl.dll
 
-plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
+plugins/gnumeric_import-2.dll: gnumeric_import.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ -L$(imports) -lxml \
 	$(GRETLLIB) $(GTKLIBS)
 
-plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
+plugins/excel_import-2.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
 

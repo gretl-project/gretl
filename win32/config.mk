@@ -11,3 +11,6 @@ GLIB_INC = /usr/local/cross-tools/mingw32/include/glib-2.0
 
 # msgfmt command for producing win32 messages file
 WIN32_MSGFMT = wine c:/Userdata/gettext/msgfmt.exe
+
+# pkgconfig path
+PKG_CONFIG_PATH = /usr/local/cross-tools/mingw32/lib/pkgconfig

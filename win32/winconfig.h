@@ -21,11 +21,14 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #ifndef WINCONFIG_H
 #define WINCONFIG_H
 
+/* Are we using gtk 2.0 / gnome 2.0 ? */
+#define GRETL2 1
+
 /* Native language support */
 #define ENABLE_NLS 1
-#define PACKAGE gretl
+#define PACKAGE "gretl"
 
-/* try to use Windows GUI font */
+/* try to use Windows GUI font? */
 #define USE_WINFONT 1
 
 /* GMP library support -- broken on win32 at present */

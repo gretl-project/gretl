@@ -295,7 +295,7 @@ Makefile
 gretl_sh 
 gretl-config 
 gui/Makefile
-gui/gnome/gretl.keys 
+gnome/gretl.keys 
 cli/Makefile 
 lib/Makefile 
 cephes/Makefile

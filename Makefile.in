@@ -8,14 +8,18 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
 LN = @LN_S@
-have_readline = @have_readline@
-have_zlib = @have_zlib@
-have_gnome = @have_gnome@
 CLI_LIBS = @CLI_LIBS@
 RL_OBJ = @RL_OBJ@
+USE_GTK2 = @USE_GTK2@
 
 ifeq ($(CC),)
   CC = gcc
+endif
+
+ifeq ($(USE_GTK2),"yes")
+  GUIDIR = gui2
+else
+  GUDIR = gui
 endif
 
 INSTALL_PROGRAM = ${INSTALL} -m 755
@@ -25,7 +29,7 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = cephes lib cli gui plugin po
+SUBDIRS = cephes lib cli $(GUIDIR) plugin po
 
 .PHONY :
 
@@ -52,7 +56,7 @@ install-man:
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
 
 tags:
-	etags lib/src/*.[hc] cli/*.[hc] gui/*.[hc] plugin/*.[hc]
+	etags lib/src/*.[hc] cli/*.[hc] $(GUIDIR)/*.[hc] plugin/*.[hc]
 
 depend:
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done
@@ -67,8 +71,9 @@ snapshot: distdepend
 	./tools/makesnap
 
 distclean: clean
+	make -C win32 clean
 	rm -f config.log config.cache config.status config.h 
-	rm -f gretl_sh gretl-config
+	rm -f gretl_sh gretl-config gretl2_sh gretl2.pc
 	rm -f libtool Makefile lib/Makefile cli/Makefile gui/Makefile \
 	share/Makefile plugin/Makefile cephes/Makefile
 	rm -rf win32/dlls win32/import-libs win32/gtkextra-lib win32/plugins

@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# loader for gretl2
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+bindir=@bindir@
+
+if [ "x$DISPLAY" = "x" ] ; then
+    exec ${bindir}/gretlcli "$@"
+else
+    exec ${bindir}/gretl2_x11 "$@"
+fi
+
+
+
