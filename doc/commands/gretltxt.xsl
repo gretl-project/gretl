@@ -196,4 +196,22 @@ Menu path:    <xsl:apply-templates/>
 Other access: <xsl:apply-templates/>
 </xsl:template>
 
+<xsl:template match="table">
+  <xsl:text>[TABLE]&#xa;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>[/TABLE]&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="row">
+  <xsl:text>[ROW]&#xa;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>[/ROW]&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="cell">
+  <xsl:text>[CELL]&#xa;</xsl:text>
+  <xsl:apply-templates/>
+  <xsl:text>[/CELL]&#xa;</xsl:text>
+</xsl:template>
+
 </xsl:stylesheet>

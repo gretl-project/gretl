@@ -15,6 +15,11 @@
 #define MAXLEN 78     /* length at which lines will wrap */
 #define LISTINDENT 2  /* indent for list items */
 
+struct table_row {
+    char *row;
+    char *cells[2];
+};
+
 struct utf_stuff {
     char *targ;
     char *sub;
@@ -110,15 +115,14 @@ static void trim (char *s)
 }
 
 /* Reflow a paragraph buffer, with max line length MAXLEN.
-   This function needs some work.
 */
 
-static int format_buf (char *buf, int listpara)
+static int format_buf (char *buf, int inlist)
 {
     char *p, *q, line[80];
     int i, n, out, maxline = MAXLEN;
 
-    if (listpara) maxline -= LISTINDENT;
+    if (inlist) maxline -= LISTINDENT;
 
     compress_spaces(buf);
     n = strlen(buf);
@@ -133,13 +137,81 @@ static int format_buf (char *buf, int listpara)
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
-	    if (listpara) {
+	    if (inlist) {
 		for (i=0; i<LISTINDENT; i++) putchar(' ');
 	    } 
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
     }
+
+    putchar('\n');
     
+    return 0;
+}
+
+static int analyse_row (struct table_row *trow, int *lmax, int *rmax)
+{
+    char *p, *cell;
+    size_t len;
+    int j;
+
+    p = trow->row;
+    for (j=0; j<2; j++) {
+	p = strstr(p, "[CELL]");
+	if (p == NULL) return 1;
+	cell = p + strlen("[CELL]");
+	p = strstr(cell, "[/CELL]");
+	if (p == NULL) return 1;
+	len = p - cell - 1;
+	if (j == 0) {
+	    if (len > *lmax) *lmax = len;
+	} else {
+	    if (len > *rmax) *rmax = len;
+	}
+    }
+
+    return 0;
+}
+
+static int process_table (char *buf, int inlist)
+{
+    struct table_rows *trows;
+    char line[128];
+    char *p;
+    int i, nrows = 0;
+    int lmax = 0, rmax = 0;
+
+    p = buf;
+    while (1) {
+	p = strstr(p, "[ROW]");
+	if (p == NULL) break;
+	p += strlen("[ROW]");
+	nrows++;
+    }
+
+    printf("found a table with %d rows\n", nrows);
+    
+    rows = malloc(nrows * sizeof *rows);
+    if (rows == NULL) return 1;
+
+    p = buf;
+    i = 0;
+    while (1) {
+	p = strstr(p, "[ROW]");
+	if (p == NULL) break;
+	p += strlen("[ROW]");
+	trows[i].row = p;
+	p = strstr(p, "[/ROW]");
+	if (p == NULL) return 1;
+	*(p - 1) = 0;
+	p += strlen("[/ROW]");
+	printf("** row[%d] = '%s'\n", i, trows[i].row);
+	analyse_row(&trows[i], &lmax, &rmax);
+	i++;
+    } 
+
+    printf("** TABLE lcol max = %d, rcol max = %d **\n", lmax, rmax);
+	
     return 0;
 }
 
@@ -156,66 +228,85 @@ void strip_marker (char *s, const char *targ)
     }
 }
 
+int process_para (char *s, char *inbuf, int k)
+{
+    char line[128];
+    char tabbuf[8096];
+    const char *starts[] = { "[PARA]", "[LISTPARA]", "[TABLE]" };
+    const char *stops[] = { "[/PARA]", "[/LISTPARA]", "[/TABLE]" };
+    char *p, *buf;
+    int done = 0;
+
+    buf = inbuf;
+    *buf = 0;
+
+    p = strstr(s, starts[k]);
+    strip_marker(p, starts[k]);
+    strcpy(line, s);
+    strcat(buf, line);
+
+    /* one-liner? */
+    if ((p = strstr(line, stops[k]))) {
+	strip_marker(p, stops[k]);
+    } else {	
+	while (!done && fgets(line, sizeof line, stdin)) {
+	    if ((p = strstr(line, starts[2]))) {
+		process_para(line, tabbuf, 2);
+	    }
+	    if ((p = strstr(line, stops[k]))) {
+		strip_marker(p, stops[k]);
+		done = 1;
+	    }
+	    strcat(buf, line);
+	}
+    }
+
+    if (k < 2) {
+	format_buf(buf, k);
+    } else {
+	process_table(buf, k);
+    }
+
+    return 0;
+}
+
 int main (void)
 { 
     char buf[8096]; /* can't handle paragraphs > 8Kb */
     char line[128];
-    int blank = 0, inpara = 0, last = 0, listpara = 0;
-    char *p;
+    int blank = 0;
 
     while (fgets(line, sizeof line, stdin)) {
 
 	/* strip out xml declaration */
 	if (!strncmp(line, "<?xml", 5)) continue;
 
-	/* look for start-of-para marker inserted by xsl */
-	if ((p = strstr(line, "[PARA]"))) {
-	    strip_marker(p, "[PARA]");
-	    *buf = 0;
-	    inpara = 1;
-	    listpara = 0;
-	} else if ((p = strstr(line, "[LISTPARA]"))) {
-	    strip_marker(p, "[LISTPARA]");
-	    *buf = 0;
-	    inpara = 1;
-	    listpara = 1;
+	else if (strstr(line, "[PARA]")) {
+	    process_para(line, buf, 0);
+	    blank++;
 	}
 
-	/* also end-of-para markers */
-	if ((p = strstr(line, "[/PARA]"))) {
-	    strip_marker(p, "[/PARA]");
-	    strcat(buf, line);
-	    format_buf(buf, listpara);
-	    blank = inpara = 0;
-	    last = 1;
-	} else if ((p = strstr(line, "[/LISTPARA]"))) {
-	    strip_marker(p, "[/LISTPARA]");
-	    strcat(buf, line);
-	    format_buf(buf, listpara);
-	    blank = inpara = 0;
-	    last = 1;
-	} else {
-	    last = 0;
+	else if (strstr(line, "[LISTPARA]")) {
+	    process_para(line, buf, 1);
+	    blank++;
 	}
 
-	/* If inside a para to be reflowed, add the line to the 
-	   para buffer for reformatting; otherwise just send out
-	   the line as is -- but try to prevent multiple blank
-	   lines in succession.
-	*/
-	
-	if (inpara) {
-	    strcat(buf, line);
-	} else if (!last) {
-	    /* alow only single blank lines in output */
-	    if (blank_string(line)) blank++;
-	    if (blank == 2) {
-		blank = 0;
+	else if (strstr(line, "[TABLE]")) {
+	    process_para(line, buf, 2);
+	    blank++;
+	}
+
+	else {
+	    if (blank_string(line)) {
+		blank++;
+		if (blank < 2) putchar('\n');
 	    } else {
 		utf_replace(line);
 		fputs(line, stdout);
+		blank = 0;
 	    }
-	}
+	}	
+
     }
 
     return 0;

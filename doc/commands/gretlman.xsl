@@ -219,4 +219,24 @@
   <para>Other access: <xsl:apply-templates/></para>
 </xsl:template>
 
+<xsl:template match="table">
+  <informaltable role="cmd" frame="none">
+    <tgroup cols="2">
+      <colspec colwidth="{@lwidth}"/>
+      <colspec colwidth="{@rwidth}"/>
+      <tbody>
+        <xsl:apply-templates/>
+      </tbody>
+    </tgroup>
+  </informaltable>
+</xsl:template>
+
+<xsl:template match="row">
+  <row><xsl:apply-templates/></row>
+</xsl:template>
+
+<xsl:template match="cell">
+  <entry><xsl:apply-templates/></entry>
+</xsl:template>
+
 </xsl:stylesheet>

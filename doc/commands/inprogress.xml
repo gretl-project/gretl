@@ -16,7 +16,7 @@
       </options>
       <examples>
         <example>add 5 7 9</example>
-        <example>xx yy zz</example>
+        <example>add xx yy zz</example>
       </examples>
     </usage>
 
@@ -144,7 +144,7 @@
 	    \rho_4 u_{t-4} + e_t\]"
 	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
 	  graphic="corc"/>
-	<repl>depvar</repl> is the
+	where <repl>depvar</repl> is the
 	dependent variable and <repl>indepvars</repl> is
 	the list of independent variables.  Residuals of the
 	transformed regression are stored under the name
@@ -1099,11 +1099,71 @@
 	    of special dummy variables for use with a panel data set
 	    &mdash; see <cmdref targ="panel"/>.</para>
 	</li>
-	<li><para>Various internal variables defined in the
-	    course of running a regression can be retrieved using
+	<li><para>Various internal variables defined in the course of
+	    running a regression can be retrieved using
 	    <cmd>genr</cmd>, as follows:</para>
 
-	  <!-- include little table -->
+	  <table lwidth="100pt" rwidth="300pt">
+	    <row> 
+	      <cell><literal>$ess</literal></cell>
+	      <cell>error sum of squares</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$rsq</literal></cell> 
+	      <cell>unadjusted <emphasis>R</emphasis>-squared</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$T</literal></cell> 
+	      <cell>number of observations used </cell> 
+	    </row> 
+	    <row> 
+	      <cell><literal>$df</literal></cell>
+	      <cell>degrees of freedom</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$trsq</literal></cell>
+	      <cell><emphasis>TR</emphasis>-squared (sample size times
+		<emphasis>R</emphasis>-squared)</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$sigma</literal></cell> 
+	      <cell>standard error of residuals</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$aic</literal></cell> 
+	      <cell>Akaike Information Criterion</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$lnl</literal></cell> 
+	      <cell>log-likelihood (logit and probit models)</cell> 
+	    </row> 
+	    <row>
+	      <cell><literal>$sigma</literal></cell> 
+	      <cell>standard error of residuals</cell> 
+	    </row> 
+	    <row>
+	      <cell>coeff(<repl>var</repl>)</cell> 
+	      <cell>estimated coefficient for variable
+		<repl>var</repl></cell> 
+	    </row> 
+	    <row>
+	      <cell>stderr(<repl>var</repl>)</cell> 
+	      <cell>estimated standard error for variable
+		<repl>var</repl> 
+	      </cell> 
+	    </row> 
+	    <row>
+	      <cell>rho(<repl>i</repl>)</cell>
+	      <cell><repl>i</repl>th order autoregressive coefficient
+		for residuals</cell> 
+	    </row> 
+	    <row>
+	      <cell>vcv(<repl>var1</repl>,<repl>var2</repl>)</cell>
+	      <cell>covariance between coefficients for named
+		variables <repl>var1</repl> and <repl>var2</repl> 
+	      </cell> 
+	    </row>
+	  </table>
 
 	</li>
       </ilist> 

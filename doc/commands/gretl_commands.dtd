@@ -62,7 +62,7 @@
 <!ELEMENT code (#PCDATA)>
 
 <!ELEMENT ilist (li)+>
-<!ELEMENT li (para | code)*>
+<!ELEMENT li (para | code | table)*>
 
 <!-- stuff that can go into paras -->
 
@@ -89,6 +89,14 @@
 <!ELEMENT tabref EMPTY>
 <!ATTLIST tabref
    targ    CDATA #REQUIRED
+>
+
+<!ELEMENT table (row)+>
+<!ELEMENT row (cell)+>
+<!ELEMENT cell (#PCDATA | literal | repl | emphasis)*>
+<!ATTLIST table
+   lwidth   CDATA #REQUIRED
+   rwidth   CDATA #REQUIRED
 >
 
 <!ELEMENT repl     (#PCDATA)>
