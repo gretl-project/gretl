@@ -163,6 +163,8 @@ double gretl_model_get_double (const MODEL *pmod, const char *key)
     return NADBL;
 }
 
+#ifdef HAVE_X12A
+
 static void maybe_delete_x12_file (const MODEL *pmod)
 {
     char *fname = NULL;
@@ -171,6 +173,8 @@ static void maybe_delete_x12_file (const MODEL *pmod)
     if (fname != NULL) remove(fname);
 }
 
+#endif
+
 static void destroy_all_data_items (MODEL *pmod)
 {
     model_data_item *item;
@@ -178,7 +182,9 @@ static void destroy_all_data_items (MODEL *pmod)
 
     if (pmod->n_data_items == 0) return;
 
+#ifdef HAVE_X12A
     maybe_delete_x12_file(pmod);
+#endif
 
     for (i=0; i<pmod->n_data_items; i++) {
 	item = pmod->data_items[i];

@@ -641,8 +641,10 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	    *ppaths->userdir = '\0';
 	}
 
+#ifdef HAVE_X12A
 	strcpy(ppaths->x12a, "x12a");
 	sprintf(ppaths->x12adir, "%sx12arima", ppaths->userdir);
+#endif
     } 
 
     sprintf(ppaths->datadir, "%sdata/", ppaths->gretldir);

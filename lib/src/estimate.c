@@ -3152,6 +3152,8 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     return armod;
 } 
 
+#ifdef HAVE_X12A
+
 /**
  * arma_x12a:
  * @list: dependent variable plus AR and MA orders
@@ -3190,6 +3192,8 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     return armod;
 }  
+
+#endif /* HAVE_X12A */
 
 /**
  * logistic_model:
