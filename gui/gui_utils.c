@@ -1204,7 +1204,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
     windata_t *vwin;
-    int console = 0, show_editbar = 0;
+    int console = 0, show_editbar = 0, doing_help = 0;
     static GtkStyle *style;
 
     fd = fopen(filename, "r");
@@ -1218,6 +1218,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	return NULL;
     windata_init(vwin);
     strcpy(vwin->fname, filename);
+
+    if (!strcmp(filename, paths.cmd_helpfile) ||
+	!strcmp(filename, paths.helpfile))
+	doing_help = 1;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1323,8 +1327,11 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	if (tempstr[0] == '?') 
 	    colptr = (console)? &red : &blue;
 	if (tempstr[0] == '#') {
-	    tempstr[0] = ' ';
-	    nextcolor = &red;
+	    if (doing_help) {
+		tempstr[0] = ' ';
+		nextcolor = &red;
+	    } else
+		colptr = &blue;
 	} else
 	    nextcolor = NULL;
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
