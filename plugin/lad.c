@@ -1,6 +1,5 @@
-/* ladrho.c */
+/* lad.c -- Least Absolute Deviation regression for gretl */
 
-#include <stdlib.h>
 #include "libgretl.h"
 
 #define TRUE_ 1
@@ -8,22 +7,23 @@
 
 static double toler = 1.0e-9;
 
-static int lad_calculate (int m, int n, 
-			  double *a, double *b, 
-			  double *x, double *e);
+static int l1_ (int m, int n, 
+		double *a, double *b, 
+		double *x, double *e);
 
 static int col_(double *v1, double *v2, double amlt, 
 		int m1, int iout);
 
+static int 
+bootstrap_stderrs (MODEL *pmod, double **Z,
+		   double *a, double *b, double *e, double *x,
+		   int m, int n, int dim);
+
 
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 {
-    int iter;
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
     int i, j, k, m, n, nrows, dim;
-    int irank;
-    double sumre;
-    int iexcode;
 
     m = pmod->nobs;
     n = pmod->list[0] - 1;
@@ -69,22 +69,29 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
 	    Z[pmod->list[1]][i - 1 + pmod->t1];
     }
 
-    lad_calculate(m, n, a, b, x, e);
+    l1_(m, n, a, b, x, e);
 
     for (i=0; i<n; i++) {
 	pmod->coeff[i+1] = x[i];
     }
 
-    irank = (int) a[m + 1 + (n + 2) * nrows - (nrows + 1)];
-    iter = (int) a[m + 2 + (n + 2) * nrows - (nrows + 1)];
-    iexcode = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
-    sumre = a[m + 1 + (n + 1) * nrows - (nrows + 1)];
+    pmod->ess = 0.0;
+    for (i=0; i<m; i++) {
+	pmod->yhat[i + pmod->t1] = Z[pmod->list[1]][i + pmod->t1] - e[i];
+	pmod->uhat[i + pmod->t1] = e[i];
+	pmod->ess += e[i] * e[i];
+    }
 
-    pprintf(prn, "LAD: irank=%d, iter=%d, iexcode=%d\n",
-	    irank, iter, iexcode);
+    /* abuse of "correct" and "rho" here! */
 
-    pmod->ess = sumre;
-    pmod->sigma = sumre / pmod->nobs;
+    /* exit code from L1 function */
+    pmod->correct = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
+    /* sum of absolute residuals */
+    pmod->rho = a[m + 1 + (n + 1) * nrows - (nrows + 1)];
+
+    pmod->sigma = pmod->rho / pmod->nobs;
+
+    bootstrap_stderrs (pmod, Z, a, b, e, x, m, n, dim);
 
     free(a);
     free(x);
@@ -94,9 +101,54 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
-static int lad_calculate (int m, int n, 
-			  double *a, double *b, 
-			  double *x, double *e)
+/*    Based on SUBROUTINE L1(M,N,TOLER,X,A,B)
+C
+C  ***************************************************************
+C  *  COMMUNICATIONS OF THE ASSOCIATION FOR COMPUTING MACHINERY  *
+C  *  ALGORITHM 478                                              *
+C  *  SOLUTION OF AN OVERDETERMINED SYSTEM OF EQUATIONS IN THE   *
+C  *  L1 NORM -- I. BARRODALE AND F.D.K. ROBERTS                 *
+C  ***************************************************************
+C
+C  ****************************************************************
+C  * THIS SUBROUTINE USES A MODIFICATION OF THE SIMPLEX METHOD OF *
+C  * LINEAR PROGRAMMING TO CALCULATE AN L1 SOLUTION TO THE OVER-  *
+C  * DETERMINED SYSTEM OF LINEAR EQUATIONS, A*X = B.
+C  *                                                              *
+C  *                         PARAMETERS                           *
+C  *                                                              *
+C  * M     - NUMBER OF EQUATIONS.  NOTE THAT THIS IS THE N IN     *
+C  *         SUBROUTINE LAD.                                      *
+C  * N     - NUMBER OF UNKNOWNS (M.GE.N).                         *
+C  * TOLER - A SMALL POSITIVE TOLERANCE. THE ROUTINE REGARDS ANY  *
+C  *         QUANTITY AS ZERO UNLES ITS MAGNITUDE EXCEEDS TOLER.  *
+C  *         EMPIRICAL EVIDENCE SUGGESTS TOLER = 10**(-D*2/3)     *
+C  *         WHERE D REPRESENTS THE NUMBER OF DECIMAL DIGITS OF   *
+C  *         ACCURACY AVAILABLE.                                  *
+C  * X     - ONE DIMENSIONAL REAL ARRAY.  ON EXIT, THIS ARRAY     *
+C  *         CONTAINS A SOLUTION TO THE L1 PROBLEM.               *
+C  *                                                              *
+C  * THE ORIGINAL CONTENTS OF THE ARRAYS A AND B ARE DESTROYED BY *
+C  * THIS ROUTINE.                                                *
+C  *                                                              *
+C  * ON EXIT FROM THE SUBROUTINE, THE ARRAY A CONTAINS THE        *
+C  * FOLLOWING INFORMATION.                                       *
+C  *                                                              *
+C  * A(M+1,N+1)  THE MINIMUM SUM OF THE ABSOLUTE VALUES OF THE    *
+C  *             RESIDUALS.                                       *
+C  * A(M+1,N+2)  THE RANK OF THE MATRIX OF COEFFICIENTS.          *
+C  * A(M+2,N+1)  EXIT CODE WITH VALUES                            *
+C  *             0 - OPTIMAL SOLUTION - PROBABLY NON-UNIQUE       *
+C  *             1 - UNIQUE OPTIMAL SOLUTION                      *
+C  *             2 - PREMATURE TERMINATION DUE TO ROUNDING ERRORS *
+C  * A(M+2,N+2)  NUMBER OF SIMPLEX ITERATIONS PERFORMED.          *
+C  *                                                              *
+C  ****************************************************************
+C */
+
+static int l1_ (int m, int n, 
+		double *a, double *b, 
+		double *x, double *e)
 {
     static double big = 1e200;
 
@@ -432,4 +484,117 @@ static int col_(double *v1, double *v2, double amlt,
 	}
     }
     return 0;
-} 
+}
+
+#define ITERS 500
+
+static int 
+bootstrap_stderrs (MODEL *pmod, double **Z,
+		   double *a, double *b, double *e, double *x,
+		   int m, int n, int dim)
+     /* obtain bootstrap estimates of LAD standard errors */
+{
+    double **coeffs = NULL;
+    int i, j, k, r, *sample = NULL;
+    int nrows = m + 2;
+
+    /* an array for each coefficient */
+    coeffs = malloc (pmod->ncoeff * sizeof *coeffs);
+    if (coeffs == NULL) return 1;
+
+    /* each array has length ITERS + 1*/
+    for (i=0; i<pmod->ncoeff; i++) {
+	coeffs[i] = malloc((ITERS + 1) * sizeof **coeffs);
+	if (coeffs[i] == NULL) return 1;
+    }
+
+    /* sample array has length pmod->nobs */
+    sample = malloc(m * sizeof *sample);
+    if (sample == NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    free(coeffs[i]);
+	}
+	free(coeffs);
+	return 1;
+    }
+
+    for (k=0; k<ITERS; k++) {
+
+	fprintf(stderr, "bootstrap: iter = %d\n", k);
+
+	/* initialize arrays */
+	for (i=0; i<dim; i++) {
+	    a[i] = 0.0;
+	}
+	for (i=0; i<m; i++) {
+	    e[i] = b[i] = 0.0;
+	}
+	for (i=0; i<n; i++) {
+	    x[i] = 0.0;
+	}
+	
+	/* create sample index array */
+	for (i=0; i<m; i++) {
+	    sample[i] = rand() / (RAND_MAX / m + 1);
+	}
+
+	/* populate data array using the sample */
+	r = 0;
+	for (j = 1; j <= n; ++j) {
+	    for (i = 1; i <= m; ++i) {
+		fprintf(stderr, "setting a[%d] using t=%d\n", 
+			i + r * nrows - 1, sample[i - 1 + pmod->t1]);
+		a[i + r * nrows - 1] = 
+		    Z[pmod->list[j+1]][sample[i - 1 + pmod->t1]];
+	    }
+	    r++;
+	}
+
+	for (i = 1; i <= m; ++i) {
+	    b[i - 1] = a[i + (n + 1) * nrows - (nrows + 1)] =
+		Z[pmod->list[1]][sample[i - 1 + pmod->t1]];
+	}
+
+	/* estimate LAD model and store coeffs */
+	l1_(m, n, a, b, x, e);
+
+	for (i=0; i<n; i++) {
+	    coeffs[i][k] = x[i];
+	}
+    }
+
+    /* find means of coeff estimates */
+    for (i=0; i<pmod->ncoeff; i++) {
+	coeffs[i][ITERS] = 0.0;
+	pmod->sderr[i+1] = 0.0;
+    }
+    for (k=0; k<ITERS; k++) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    coeffs[i][ITERS] += coeffs[i][k];
+	}
+    }
+    for (i=0; i<pmod->ncoeff; i++) {
+	coeffs[i][ITERS] /= ITERS;
+    }
+
+    /* find standard deviations */
+    for (k=0; k<ITERS; k++) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    pmod->sderr[i+1] += (coeffs[i][k] - coeffs[i][ITERS]) *
+		(coeffs[i][k] - coeffs[i][ITERS]); 
+	}
+    }
+    for (i=0; i<pmod->ncoeff; i++) {
+	/* df correction? */
+	pmod->sderr[i+1] = sqrt(pmod->sderr[i+1] / pmod->nobs);
+    }
+
+    free(sample);
+    for (i=0; i<pmod->ncoeff; i++) {
+	free(coeffs[i]);
+    }
+    free(coeffs);
+
+    return 0;
+}
+

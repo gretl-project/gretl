@@ -181,17 +181,24 @@ static void ladstats (const MODEL *pmod, PRN *prn)
     int utf = PLAIN_FORMAT(prn->format);
 
     if (TEX_FORMAT(prn->format)) {  
-	char x1str[32];
+	char x1str[32], x2str[32];
 
-	tex_dcolumn_double(pmod->ess, x1str);
+	tex_dcolumn_double(pmod->rho, x1str); /* "rho" is abused */
+	tex_dcolumn_double(pmod->ess, x2str);
 	pprintf(prn, "%s & %s \\\\\n",
 		I_("Sum of absolute residuals"), x1str); 
+	pprintf(prn, "%s & %s \\\\\n",
+		I_("Sum of squared residuals"), x2str); 
     }
     
     else {
 	pprintf(prn, "  %s = %g\n", 
 		(utf)? _("Sum of absolute residuals") :
 		I_("Sum of absolute residuals"),
+		pmod->rho);
+	pprintf(prn, "  %s = %g\n", 
+		(utf)? _("Sum of squared residuals") :
+		I_("Sum of squared residuals"),
 		pmod->ess);
     }
 }

@@ -1,2 +1,2 @@
-set args -b ./test.inp
+set args greene9_1.dat 
 run

@@ -2306,8 +2306,6 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int i, index, err = 0;
     MODEL lad_model;
-    XPXXPY xpxxpy;
-    CHOLBETA cb;
     void *handle;
     int (*lad_driver)(MODEL *, double **, DATAINFO *, PRN *);
 
@@ -2337,23 +2335,33 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     lad_model.ci = LAD;
 
-    /* FIXME: this does not produce correct standard errors */
+    /* FIXME */
 
-    xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
-    cb = cholbeta(xpxxpy);    
-    lad_model.xpx = cb.xpxxpy.xpx;
-    free(cb.coeff);
-    free(cb.xpxxpy.xpy);
+    if (0) {
+	for (i=1; i<=lad_model.ncoeff; i++) {
+	    /* approx using OLS std errs */
+	    lad_model.sderr[i] *= sqrt(2 * M_PI) / 2.0;
+	}
+    } else if (0) {
+	XPXXPY xpxxpy;
+	CHOLBETA cb;
 
-    makevcv(&lad_model);
+	xpxxpy = xpxxpy_func(list, lad_model.t1, lad_model.t2, *pZ, 0, 0.0);
+	cb = cholbeta(xpxxpy);    
+	lad_model.xpx = cb.xpxxpy.xpx;
+	free(cb.coeff);
+	free(cb.xpxxpy.xpy);
 
-    for (i=1; i<=lad_model.ncoeff; i++) {
-	index = ijton(i, i, list[0] - 1);
-	lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
+	makevcv(&lad_model);
+
+	for (i=1; i<=lad_model.ncoeff; i++) {
+	    index = ijton(i, i, list[0] - 1);
+	    lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
+	}
+
+	free(lad_model.vcv);
+	lad_model.vcv = NULL;
     }
-
-    free(lad_model.vcv);
-    lad_model.vcv = NULL;
 
     return lad_model;
 }

@@ -235,7 +235,7 @@ typedef struct {
     char *name;
     int ntests;
     GRETLTEST *tests;
-    void *data;                   /* all purpose pointer */
+    void *data;                   /* pointer for use in re. missing data */
 } MODEL;
 
 typedef struct {
