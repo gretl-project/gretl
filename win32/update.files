@@ -1,0 +1,6 @@
+# first col: filename, second col: destination dir
+# ("root") means the top-level gretl dir
+gretlw32.exe		root
+gretlcli.exe		root
+dlls/libgretl.dll	root
+

@@ -1,0 +1,26 @@
+#!/bin/sh
+
+DATADIR=www-home/gretl/cgi-bin/updater
+TGZ=update_files.tgz
+
+mkdir -p ./updates
+
+IFS='
+'
+for f in `cat update.files | grep -v ^#` ; do
+   fname=`echo $f | awk '{ print $1 }'`
+   dest=`echo $f | awk '{ print $2 }'`
+   if [ "$dest" != "root" ] ; then
+       mkdir -p ./updates/$dest
+       cp $fname ./updates/$dest
+   else
+       cp $fname ./updates
+   fi
+done   
+
+tar cvfz $TGZ ./updates && tar tvfz $TGZ
+scp $TGZ cottrell@ricardo:./$DATADIR
+
+rm -rf ./updates
+rm $TGZ
+
