@@ -802,6 +802,7 @@ static void read_rc (void)
 
 	    val = gconf_client_get_bool (client, key, &error);
 	    if (error) {
+		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else {
 		*(int *) rc_vars[i].var = val;
@@ -810,6 +811,7 @@ static void read_rc (void)
 	    value = gconf_client_get_string (client, key, &error);
 
 	    if (error) {
+		fprintf(stderr, "Error reading %s\n", rc_vars[i].key);
 		g_clear_error(&error);
 	    } else if (value != NULL) {
 		char *s = (char *) rc_vars[i].var;
@@ -842,7 +844,7 @@ static void read_rc (void)
 		else if (i == 2) strcpy(scriptlist[j], flist->data);
 		flist = flist->next;
 	    }
-	    g_slist_free(flist);
+	    /* g_slist_free(flist); */
 	    flist = NULL;
 	}
     }
