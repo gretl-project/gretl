@@ -950,11 +950,18 @@ static void print_model_heading (const MODEL *pmod,
 		    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
 	}
     } else {
+	int effn = gretl_model_get_int(pmod, "n_included_units");
+
 	pprintf(prn, (utf)?
 		_("%s estimates using %d observations") :
 		I_("%s estimates using %d observations"),
 		_(my_estimator_string(pmod, prn->format)), 
 		pmod->nobs);
+	if (effn > 0) {
+	    model_print_newline(prn);
+	    pprintf(prn, (utf)? _("Included %d cross-sectional units") :
+		    I_("Included %d cross-sectional units"), effn);
+	}
     }
 
     model_print_newline(prn);
@@ -1010,6 +1017,16 @@ static void print_model_heading (const MODEL *pmod,
     }
     else if (gretl_model_get_int(pmod, "garch_vcv")) {
 	garch_vcv_line(pmod, prn);
+    }
+
+    /* WLS on panel data */
+    else if (gretl_model_get_int(pmod, "unit_weights")) {
+	if (tex) {
+	    pputs(prn, "\\\\\n");
+	}
+	pprintf(prn, (utf)? _("Weights based on per-unit error variances") : 
+		I_("Weights based on per-unit error variances"));
+	pputc(prn, '\n');
     }
 
     /* weight variable for WLS and ARCH */

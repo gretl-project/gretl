@@ -534,8 +534,39 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo, 
-			     int nunits, int *unit_obs,
+static void 
+unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
+		      int nunits, int T, const int *unit_obs)
+{
+    int i, t, start = 0;
+
+    for (i=0; i<nunits; i++) {
+	uvar[i] = 0.0;
+	if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	    for (t=start; t<start+T; t++) {
+		if (!na(pmod->uhat[t])) {
+		    uvar[i] += pmod->uhat[t] * pmod->uhat[t];
+		}
+	    }
+	    start += T;
+	} else {
+	    for (t=start; t<pdinfo->n; t += nunits) {
+		if (!na(pmod->uhat[t])) {
+		    uvar[i] += pmod->uhat[t] * pmod->uhat[t];
+		}
+	    }
+	    start++;
+	}
+	if (unit_obs[i] > 1) {
+	    uvar[i] /= (double) unit_obs[i]; 
+	}
+    }
+}
+
+/* .................................................................. */
+
+static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo, 
+			     int nunits, const int *unit_obs,
 			     int T, int effT, PRN *prn)
 {
     double *ubar, LM, eprime = 0.0;
@@ -749,7 +780,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     effn = n_included_units(pmod, pdinfo, unit_obs);
-    fprintf(stderr, "number of units included = %d\n", effn);
+    if (effn < nunits) {
+	fprintf(stderr, "number of units included = %d\n", effn);
+    }
     effT = effective_T(unit_obs, nunits);
 
 #ifdef PDEBUG
@@ -812,6 +845,135 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     haus_free(&haus);
 
     return err;
+}
+
+/* .................................................................. */
+
+static int 
+add_uvar_to_dataset (double *uvar, int nunits, int T,
+		     double ***pZ, DATAINFO *pdinfo)
+{
+    int i, t, uv, bigt;
+
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    uv = pdinfo->v - 1;
+    strcpy(pdinfo->varname[uv], "unit_wt");
+
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	for (i=0; i<nunits; i++) {
+	    for (t=0; t<T; t++) {
+		bigt = i * T + t;
+		if (uvar[i] <= 0.0) {
+		    (*pZ)[uv][bigt] = 0.0;
+		} else {
+		    (*pZ)[uv][bigt] = 1.0 / sqrt(uvar[i]);
+		}
+	    }
+	}
+    } else {
+	for (t=0; t<T; t++) {
+	    for (i=0; i<nunits; i++) {
+		bigt = t * nunits + i;
+		if (uvar[i] <= 0.0) {
+		    (*pZ)[uv][bigt] = 0.0;
+		} else {
+		    (*pZ)[uv][bigt] = 1.0 / sqrt(uvar[i]);
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
+
+MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL mdl;
+    double *uvar = NULL;
+    int *unit_obs = NULL;
+    int *wlist = NULL;
+    int nunits, effn, T, effT;
+    int orig_v = pdinfo->v;
+    int i;
+
+    gretl_model_init(&mdl);
+
+    if (get_panel_structure(pdinfo, &nunits, &T)) {
+	mdl.errcode = E_DATA;
+	return mdl;
+    }
+
+    unit_obs = malloc(nunits * sizeof *unit_obs);
+    if (unit_obs == NULL) {
+	mdl.errcode = E_ALLOC;
+	return mdl;
+    }
+
+    uvar = malloc(nunits * sizeof *uvar);
+    if (unit_obs == NULL) {
+	free(unit_obs);
+	mdl.errcode = E_ALLOC;
+	return mdl;
+    }    
+    
+    mdl = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (mdl.errcode) {
+	goto bailout;
+    }
+
+    effn = n_included_units(&mdl, pdinfo, unit_obs);
+    effT = effective_T(unit_obs, nunits);    
+
+    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
+
+#if 0
+    for (i=0; i<nunits; i++) {
+	if (unit_obs[i] > 0) {
+	    fprintf(stderr, "unit or group error variance, unit %d = %g\n",
+		    i + 1, uvar[i]);
+	}
+    }
+#endif
+
+    if (add_uvar_to_dataset(uvar, nunits, T, pZ, pdinfo)) {
+	mdl.errcode = E_ALLOC;
+	goto bailout;
+    }	
+
+    wlist = malloc((mdl.list[0] + 2) * sizeof *wlist);
+    if (wlist == NULL) {
+	mdl.errcode = E_ALLOC;
+	goto bailout;
+    }
+
+    /* construct WLS regression list */
+    wlist[0] = mdl.list[0] + 1;
+    wlist[1] = pdinfo->v - 1; /* weight var, last added */
+    for (i=2; i<=wlist[0]; i++) {
+	wlist[i] = mdl.list[i-1];
+    }
+
+    clear_model(&mdl);
+
+    mdl = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
+    if (!mdl.errcode) {
+	gretl_model_set_int(&mdl, "n_included_units", effn);
+	gretl_model_set_int(&mdl, "unit_weights", 1);
+	mdl.nwt = 0;
+    }
+
+ bailout:
+
+    free(unit_obs);
+    free(uvar);
+    free(wlist);
+
+    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
+    
+    return mdl;
 }
 
 /* .................................................................. */

@@ -2627,17 +2627,29 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     GRETLTEST test;
+    double ***rZ;
+    DATAINFO *rinfo;
 
     if (bufopen(&prn)) return;
+    
+    if (pmod->dataset != NULL) {
+	rZ = &pmod->dataset->Z;
+	rinfo = pmod->dataset->dinfo;
+    } else {
+	rZ = &Z;
+	rinfo = datainfo;
+    }
 
-    if (genr_fit_resid(pmod, &Z, datainfo, GENR_RESID, 1)) {
+    if (genr_fit_resid(pmod, rZ, rinfo, GENR_RESID, 1)) {
 	errbox(_("Out of memory attempting to add variable"));
 	return;
     }
 
-    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
+    freq = get_freq(rinfo->v - 1, (const double **) *rZ, rinfo, 
 		    pmod->ncoeff, OPT_NONE);
-    dataset_drop_vars(1, &Z, datainfo);
+
+    dataset_drop_vars(1, rZ, rinfo);
+
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
 	return;
@@ -3069,12 +3081,13 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
     int err;
 
     if (pmod->dataset != NULL) {
-	if (!undo) return 1;
+	if (!undo) {
+	    return 1;
+	} 
 	err = genr_fit_resid(pmod, 
-			     &(pmod->dataset->Z), 
+			     &pmod->dataset->Z, 
 			     pmod->dataset->dinfo, 
-			     code, 
-			     undo);
+			     code, undo);
     } else {
 	err = genr_fit_resid(pmod, &Z, datainfo, code, undo);
     }
@@ -3254,7 +3267,8 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 	return;
     }
 
-    origv = (pmod->dataset != NULL)? pmod->dataset->dinfo->v : datainfo->v;
+    origv = (pmod->dataset != NULL)? 
+	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;

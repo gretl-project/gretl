@@ -68,6 +68,7 @@ static int depvar_zero (int t1, int t2, int yno, int nwt,
 			const double **Z);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
+static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo);
 /* end private protos */
 
 
@@ -430,7 +431,9 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
 	return hsk_func(list, pZ, pdinfo);
     } else if (ci == HCCM) {
 	return hccm_func(list, pZ, pdinfo);
-    } 
+    } else if (ci == POOLED && (opts & OPT_W)) {
+	return pooled_wls(list, pZ, pdinfo);
+    }
 
     gretl_model_init(&mdl);
     gretl_model_smpl_init(&mdl, pdinfo);
@@ -3398,3 +3401,28 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
 
     return gmod;
 } 
+
+static MODEL pooled_wls (int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL wmod;
+    void *handle;
+    MODEL (*panel_wls_by_unit) (int *, double ***, DATAINFO *);
+
+    *gretl_errmsg = '\0';
+
+    panel_wls_by_unit = get_plugin_function("panel_wls_by_unit", &handle);
+
+    if (panel_wls_by_unit == NULL) {
+	gretl_model_init(&wmod);
+	wmod.errcode = E_FOPEN;
+	return wmod;
+    }
+
+    wmod = (*panel_wls_by_unit) (list, pZ, pdinfo);
+
+    close_plugin(handle);
+
+    set_model_id(&wmod);
+
+    return wmod;
+}

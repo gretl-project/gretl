@@ -1232,11 +1232,12 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     integer n = m->rows;
     integer info;
     integer lwork;
-    integer one = 1;
-    integer nvr = n;
-    char jvl = 'N', jvr = 'V';
+    integer nvr, nvl = 2;
+    char jvr, jvl = 'N';
     double *work, *work2;
     double *wr = NULL, *wi = NULL, *vr = NULL;
+    double nullvl[2] = {0.0};
+    double nullvr[2] = {0.0};
 
     work = malloc(sizeof *work);
     if (work == NULL) {
@@ -1252,14 +1253,17 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     if (ev != NULL) {
 	/* eigenvectors wanted */
 	vr = ev->val;
+	nvr = n;
+	jvr = 'V';
     } else {
+	vr = nullvr;
+	nvr = 2;
 	jvr = 'N';
-	nvr = 1;
     }	
 
     lwork = -1; /* find optimal workspace size */
-    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, NULL, 
-	   &one, vr, &nvr, work, &lwork, &info);
+    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
+	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
@@ -1275,8 +1279,8 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 	work = work2;
     }
 
-    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, NULL, 
-	   &one, vr, &nvr, work, &lwork, &info);
+    dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, nullvl, 
+	   &nvl, vr, &nvr, work, &lwork, &info);
 
     if (info != 0) {
 	goto bailout;
@@ -1291,6 +1295,7 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     free(work);
     free(wr);
     free(wi);
+
     return NULL;    
 }
 

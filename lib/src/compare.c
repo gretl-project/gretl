@@ -209,12 +209,17 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     double rho = 0.0;
     int *list = *plist;
     int pos, mc = get_model_count();
+    int repci = orig->ci;
 
     gretl_model_init(&rep);
 
     if (orig->ci == CORC || orig->ci == HILU || orig->ci == PWE) {
 	rho = estimate_rho(list, pZ, pdinfo, 1, orig->ci, 
 			   &rep.errcode, prn);
+    } else if (gretl_model_get_int(orig, "unit_weights")) {
+	/* panel model with per-unit weights */
+	lsqopt |= OPT_W;
+	repci = POOLED;
     } else if (orig->ci == WLS || orig->ci == AR) {
 	int *full_list = full_model_list(orig, list, &pos);
 
@@ -258,8 +263,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	break;
     default:
 	/* handles OLS, WLS, HSK, HCCM, etc. */
-	if (gretl_model_get_int(orig, "robust")) lsqopt |= OPT_R;
-	rep = lsq(list, pZ, pdinfo, orig->ci, lsqopt, rho);
+	if (gretl_model_get_int(orig, "robust")) {
+	    lsqopt |= OPT_R;
+	}
+	rep = lsq(list, pZ, pdinfo, repci, lsqopt, rho);
 	break;
     }
 
@@ -458,7 +465,6 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	struct COMPARE cmp;
 
 	new->aux = AUX_ADD;
 
@@ -466,13 +472,19 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, opt, prn);
 	}
 
-	cmp = add_or_omit_compare(orig, new, 1);
+	if (new->nobs == orig->nobs) {
+	    struct COMPARE cmp;
 
-	gretl_list_diff(addvars, new->list, orig->list);
-	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
-	    cmp.F = robust_omit_F(addvars, new);
+	    cmp = add_or_omit_compare(orig, new, 1);
+
+	    gretl_list_diff(addvars, new->list, orig->list);
+
+	    if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
+		cmp.F = robust_omit_F(addvars, new);
+	    }
+
+	    gretl_print_compare(&cmp, addvars, pdinfo, prn, opt);
 	}
-	gretl_print_compare(&cmp, addvars, pdinfo, prn, opt);
     }
 
     /* trash any extra variables generated (squares, logs) */
@@ -658,25 +670,27 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     }
 
     if (!err) {
-	struct COMPARE cmp;
-
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_OMIT;
 	}
 
-	cmp = add_or_omit_compare(orig, new, 0);
-
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, opt, prn); 
+	}	
+
+	if (new->nobs == orig->nobs) {
+	    struct COMPARE cmp;
+
+	    cmp = add_or_omit_compare(orig, new, 0);
+
+	    gretl_list_diff(omitvars, orig->list, new->list);
+
+	    if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
+		cmp.F = robust_omit_F(omitvars, orig);
+	    }
+
+	    gretl_print_compare(&cmp, omitvars, pdinfo, prn, opt); 
 	}
-
-	gretl_list_diff(omitvars, orig->list, new->list);
-
-	if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
-	    cmp.F = robust_omit_F(omitvars, orig);
-	}
-
-	gretl_print_compare(&cmp, omitvars, pdinfo, prn, opt); 
 
 	if (orig->ci == LOGIT || orig->ci == PROBIT) {
 	    new->aux = AUX_NONE;

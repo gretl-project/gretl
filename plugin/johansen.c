@@ -278,7 +278,8 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 			int k, int T, int trends, PRN *prn)
 {
     gretl_matrix *Suu = NULL, *Svv = NULL, *Suv = NULL;
-    gretl_matrix *Inv = NULL, *TmpL = NULL, *TmpR = NULL, *M = NULL;
+    gretl_matrix *Inv = NULL, *M = NULL;
+    gretl_matrix *TmpL = NULL, *TmpR = NULL;
     double *eigvals = NULL;
     int r = 0, err = 0;
 

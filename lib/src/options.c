@@ -94,6 +94,7 @@ struct gretl_option gretl_opts[] = {
     { OUTFILE,  OPT_W, "write" },
     { PANEL,    OPT_C, "cross-section" },
     { PANEL,    OPT_S, "time-series" },
+    { POOLED,   OPT_W, "unit-weights" },
     { PCA,      OPT_A, "save-all" },
     { PCA,      OPT_O, "save" },
     { PERGM,    OPT_O, "bartlett" },
