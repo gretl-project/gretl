@@ -81,6 +81,17 @@ int *system_get_endog_vars (const gretl_equation_system *sys);
 
 int *system_get_instr_vars (const gretl_equation_system *sys);
 
+void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u);
+
+const gretl_matrix *system_get_uhat (const gretl_equation_system *sys);
+
+void system_attach_models (gretl_equation_system *sys, MODEL **models);
+
+MODEL *system_get_model (const gretl_equation_system *sys, int i);
+
+int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
+			 int rhsvar);
+
 void print_fiml_sys_info (const gretl_equation_system *sys, 
 			  const DATAINFO *pdinfo, PRN *prn);
 

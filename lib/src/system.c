@@ -57,6 +57,8 @@ struct _gretl_equation_system {
     int *endog_vars;
     int *instr_vars;
     identity **idents;
+    gretl_matrix *uhat;
+    MODEL **models;
 };
 
 const char *gretl_system_type_strings[] = {
@@ -164,6 +166,8 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->endog_vars = NULL;
     sys->instr_vars = NULL;
     sys->idents = NULL;
+    sys->uhat = NULL;
+    sys->models = NULL;
 
     return sys;
 }
@@ -187,6 +191,8 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 
     free(sys->endog_vars);
     free(sys->instr_vars);
+
+    gretl_matrix_free(sys->uhat);
 
     free(sys);
 }
@@ -462,7 +468,54 @@ int *system_get_instr_vars (const gretl_equation_system *sys)
     return sys->instr_vars;
 }
 
+void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u)
+{
+    if (sys->uhat != NULL) {
+	gretl_matrix_free(sys->uhat);
+    }
+    sys->uhat = u;
+}
+
+const gretl_matrix *system_get_uhat (const gretl_equation_system *sys)
+{
+    return sys->uhat;
+}
+
+void system_attach_models (gretl_equation_system *sys, MODEL **models)
+{
+    sys->models = models;
+}
+
+MODEL *system_get_model (const gretl_equation_system *sys, int i)
+{
+    if (sys->models == NULL || i >= sys->n_equations) {
+	return NULL; 
+    }   
+
+    return sys->models[i];
+}
+
 /* dealing with identities (FIML) */
+
+int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
+			 int rhsvar)
+{
+    const identity *ident;
+    int i, j;
+
+    for (i=0; i<sys->n_identities; i++) {
+	ident = sys->idents[i];
+	if (ident->depvar == lhsvar) {
+	    for (j=0; j<ident->n_atoms; j++) {
+		if (ident->atoms[j].varnum == rhsvar) {
+		    return (ident->atoms[j].op == OP_PLUS)? 1 : -1;
+		}
+	    }
+	}
+    }
+
+    return 0;
+}
 
 int eval_identity (double *targ, identity *ident,
 		   const double **Z, int t1, int t2)

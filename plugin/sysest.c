@@ -21,6 +21,12 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
+#define TRY_FIML
+
+#ifdef TRY_FIML
+#include "fiml.c"
+#endif
+
 static int in_list (const int *list, int k)
 {
     int i;
@@ -351,7 +357,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     /* just testing for now */
     if (systype == FIML) {
 	print_fiml_sys_info(sys, pdinfo, prn);
-	pprintf(prn, "Sorry, FIML is not really implmented yet.\n");
+	pprintf(prn, "Sorry, FIML is not really implemented yet.\n");
     }
 
     /* first grab the single-equation residuals */
@@ -481,8 +487,15 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     /* FIXME: implement FIML here, after getting 3SLS starting values */
     if (systype == FIML) {
+#ifdef TRY_FIML
+	system_attach_uhat(sys, uhat);
+	system_attach_models(sys, models);
+	uhat = NULL;
+	fiml_driver(sys, (const double **) *pZ, pdinfo);
+#else
 	pprintf(prn, "Sorry, FIML is not implmented yet.\n"
 		"The following are just 3SLS estimates.\n");
+#endif
     }
 
     j = 0;
