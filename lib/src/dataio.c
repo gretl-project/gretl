@@ -969,9 +969,7 @@ static int writehdr (const char *hdrfile, const int *list,
     fputs(";\n", fp);
 
     /* then obs line */
-    fprintf(fp, "%d ", pdinfo->pd);
-    fprintf(fp, "%s ", startdate);
-    fprintf(fp, "%s\n", enddate);
+    fprintf(fp, "%d %d %s\n", pdinfo->pd, startdate, enddate);
     
     /* and flags as required */
     if (bin == 1) fputs("BYVAR\nSINGLE\n", fp);
