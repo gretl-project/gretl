@@ -311,10 +311,14 @@ int real_add_graph_to_session (const char *fname, const char *grname,
 	    session.graphs = mymalloc(sizeof *session.graphs);
 	}
 
-	if (session.graphs == NULL) return ADD_OBJECT_FAIL;
+	if (session.graphs == NULL) {
+	    return ADD_OBJECT_FAIL;
+	}
 
 	session.graphs[i] = mymalloc(sizeof **session.graphs);
-	if (session.graphs[i] == NULL) return ADD_OBJECT_FAIL;
+	if (session.graphs[i] == NULL) {
+	    return ADD_OBJECT_FAIL;
+	}
 
 	(session.graphs[i])->sort = code;
 
@@ -667,9 +671,10 @@ void do_open_session (GtkWidget *w, gpointer data)
     int status;
 
     if (data != NULL) {    
-	if (w == NULL) /* not coming from edit_dialog */
+	if (w == NULL) {
+	    /* not coming from edit_dialog */
 	    fwin = (windata_t *) data;
-	else {
+	} else {
 	    d = (dialog_t *) data;
 	    fwin = (windata_t *) dialog_data_get_data(d);
 	}
@@ -703,8 +708,9 @@ void do_open_session (GtkWidget *w, gpointer data)
 	return;
     }
 
-    if (recreate_session(scriptfile)) 
+    if (recreate_session(scriptfile)) { 
 	return;
+    }
 
     mkfilelist(FILE_LIST_SESSION, scriptfile);
 

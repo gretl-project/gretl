@@ -4033,8 +4033,7 @@ void do_open_script (void)
 	delete_from_filelist(FILE_LIST_SESSION, tryscript);
 	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
-    }
-    else if (ret > 0) {
+    } else if (ret > 0) {
 	verify_open_session(NULL);
 	return;
     }
