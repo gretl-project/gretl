@@ -1231,10 +1231,6 @@ void exec_line (char *line, PRN *prn)
 	if (err) errmsg(err, prn);
 	break;
 
-    case NOECHO:
-	echo_off = 1;
-	break;
-
     case NULLDATA:
 	nulldata_n = atoi(cmd.param);
 	if (nulldata_n < 2) {
@@ -1379,6 +1375,11 @@ void exec_line (char *line, PRN *prn)
 	gretl_rand_set_seed(atoi(cmd.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
 		atoi(cmd.param));
+	break;
+
+    case SET:
+	err = parse_set_line(line, &echo_off);
+	if (err) errmsg(err, prn);
 	break;
 
     case SETOBS:

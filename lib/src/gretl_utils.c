@@ -2731,6 +2731,7 @@ int is_model_cmd (const char *s)
 	!strncmp(s, "tsls", 4) ||
 	!strncmp(s, "logit", 5)  ||
 	!strncmp(s, "probit", 6) ||
+	!strncmp(s, "tobit", 5) ||
 	!strncmp(s, "logistic", 8) ||
 	!strncmp(s, "end nls", 7) ||
 	!strncmp(s, "arma", 4) ||

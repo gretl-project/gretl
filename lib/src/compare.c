@@ -883,8 +883,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
 	return E_ALLOC;
     }
 
-    /* Newey-West suggestion (from Wooldridge) */
-    g = 4.0 * pow(pmod->nobs/100.0, 2.0/9.0);
+    g = get_hac_lag(pmod->nobs);
 
     auxlist[0] = pmod->list[0] - 1;
 

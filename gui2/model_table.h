@@ -34,9 +34,9 @@ void free_model_table_list (PRN *prn);
 
 int display_model_table (int gui);
 
-void tex_print_model_table (gpointer p, guint view, GtkWidget *w);
+int tex_print_model_table (int view);
 
-void rtf_print_model_table (void);
+int rtf_print_model_table (void);
 
 int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn);
 

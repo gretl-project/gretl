@@ -495,6 +495,7 @@ const char *estimator_string (int ci, int format)
     else if (ci == HCCM) return N_("HCCM");
     else if (ci == PROBIT) return N_("Probit");
     else if (ci == LOGIT) return N_("Logit");
+    else if (ci == TOBIT) return N_("Tobit");
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
     else if (ci == ARMA) return N_("ARMA");

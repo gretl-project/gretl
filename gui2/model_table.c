@@ -625,7 +625,7 @@ int display_model_table (int gui)
     return 0;
 }
 
-void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
+int tex_print_model_table (int view)
 {
     int j, ci;
     int binary = 0;
@@ -634,12 +634,13 @@ void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
 
     if (model_list_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
-	return;
+	return 1;
     }
 
-    if (make_grand_varlist()) return;
+    if (make_grand_varlist()) return 1;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) return 1;
+
     prn->format = GRETL_PRINT_FORMAT_TEX;
 
     ci = common_estimator();
@@ -728,6 +729,8 @@ void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
     } else {
 	prn_to_clipboard(prn, COPY_LATEX);
     }
+
+    return 0;
 }
 
 static void print_rtf_row_spec (PRN *prn, int tall)
@@ -743,7 +746,7 @@ static void print_rtf_row_spec (PRN *prn, int tall)
     pputs(prn, "\n");
 }
 
-void rtf_print_model_table (void)
+int rtf_print_model_table (void)
 {
     int j, ci;
     int binary = 0;
@@ -751,12 +754,13 @@ void rtf_print_model_table (void)
 
     if (model_list_empty()) {
 	mtable_errmsg(_("The model table is empty"), 1);
-	return;
+	return 1;
     }
 
-    if (make_grand_varlist()) return;
+    if (make_grand_varlist()) return 1;
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) return 1;
+
     prn->format = GRETL_PRINT_FORMAT_RTF;
 
     ci = common_estimator();
@@ -823,6 +827,8 @@ void rtf_print_model_table (void)
     pputs(prn, "\\par\n}\n");
 
     prn_to_clipboard(prn, COPY_RTF);
+
+    return 0;
 }
 
 int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)

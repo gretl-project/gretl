@@ -70,13 +70,6 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
-/* use Cholesky or QR for regression? */
-static int use_qr;
-void set_use_qr (int set)
-{
-    use_qr = set;
-}
-
 static int reorganize_uhat_yhat (MODEL *pmod) 
 {
     int t, g;
@@ -321,6 +314,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     int effobs = 0;
     int missv = 0, misst = 0;
     int ldepvar = 0;
+    int use_qr = get_use_qr();
     double *xpy;
     MODEL mdl;
 
@@ -434,12 +428,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* check degrees of freedom */
     if (get_model_df(&mdl, rho)) {
         goto lsq_abort; 
-    }
-
-    if (getenv("GRETL_USE_QR")) {
-	char *s = getenv("GRETL_USE_QR");
-
-	if (*s && *s != '0') set_use_qr(1);
     }
 
     if (dataset_is_time_series(pdinfo)) {
@@ -1954,7 +1942,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hccm.ci = HCCM;
     nobs = hccm.nobs;
 
-    if (use_qr) {
+    if (get_use_qr()) {
 	/* vcv is already computed */
 	int nt = (ncoeff * ncoeff + ncoeff) / 2; 
 	double sgmasq = hccm.sigma * hccm.sigma;

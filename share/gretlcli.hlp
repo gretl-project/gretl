@@ -1368,6 +1368,33 @@ repeatable sequences of pseudo-random numbers you will need to set the seed
 manually.
 
 #
+set
+@Programming
+Usage           set variable [value]
+
+Set the values of certain program parameters.  The given value remains in
+force until it is changed by a further call to "set".  The possibilities are
+as follows (default values are marked with an asterisk):
+
+set echo [ off | on* ]     suppress or resume the echoing of commands in
+                           gretl's output
+
+set qr   [ on | off* ]     use QR rather than Cholesky decomposition in
+                           calculating OLS estimates
+
+set hac_lag [ nw1* | nw2 | integer ]  
+
+Set the maximum lag value, p, used when calculating HAC (Heteroskedasticity-
+and Autocorrelation-robust) standard errors using the Newey-West approach.
+"nw1" and "nw2" represent two variant automatic calculations based on the
+sample size, T.
+
+nw1:   p = 0.75 * T^(1/3) 
+nw2:   p = 4 * (T/100)^(2/9) 
+
+Alternatively you can set p manually by supplying an integer value.
+
+#
 setobs
 @Dataset
 Usage:          setobs periodicity startobs

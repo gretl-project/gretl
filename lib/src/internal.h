@@ -114,4 +114,10 @@ double corrrsq (int nobs, const double *y, const double *yhat);
 int addtolist (const int *oldlist, const int *addvars, int **plist,
 	       const DATAINFO *pdinfo, int model_count);
 
+int get_hac_lag (int m);
+
+int get_hc_version (void);
+
+int get_use_qr (void);
+
 #endif /* GRETL_INTERNAL_H */

@@ -179,7 +179,6 @@ static int aliased (char *cmd)
 }
 
 #define NO_VARLIST(c) (c == VARLIST || \
-	               c == NOECHO || \
 	               c == QUIT || \
 	               c == SMPL || \
 	               c == EQNPRINT || \
@@ -213,6 +212,7 @@ static int aliased (char *cmd)
                        c == NLS || \
                        c == DATA || \
 	               c == GENR || \
+                       c == SET || \
                        c == PRINTF || \
                        c == OUTFILE)
 
@@ -389,6 +389,8 @@ static void parse_logistic_ymax (char *line, CMD *cmd)
     }
 }
 
+
+
 /**
  * getcmd:
  * @line: the command line (string).
@@ -442,6 +444,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->nolist = 1;
 	command->ci = -1;
 	return;
+    }
+
+    /* backwards compatibility */
+    if (!strcmp(command->cmd, "noecho")) {
+	strcpy(command->cmd, "set");
+	strcpy(line, "set echo off");
     }
 
     /* command aliases */
@@ -1751,7 +1759,7 @@ int ready_for_command (const char *line)
 	"(*", 
 	"man ", 
 	"help", 
-	"noecho", 
+	"set", 
 	"critical", 
 	"seed", 
 	"genr",

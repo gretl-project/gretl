@@ -2049,8 +2049,8 @@ static int parse_label_line (GPT_SPEC *spec, const char *line, int i)
 
 /* ........................................................... */
 
-static int parse_set_line (GPT_SPEC *spec, const char *line,
-			   int *i, int *labelno)
+static int parse_gp_set_line (GPT_SPEC *spec, const char *line,
+			      int *i, int *labelno)
 {
     char set_thing[12], setting[MAXLEN], range[32];
     size_t n, j;
@@ -2269,7 +2269,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	if (strncmp(line, "# ", 2) == 0) continue;
 
 	if (strncmp(line, "set ", 4)) break;
-	if (parse_set_line(spec, line, &i, &labelno)) goto plot_bailout;
+	if (parse_gp_set_line(spec, line, &i, &labelno)) goto plot_bailout;
     }
 
     if (got == NULL) goto plot_bailout;

@@ -229,13 +229,15 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     gretl_matrix *X;
     int m = pmod->nobs;
     int n = pmod->ncoeff;
-    int p = 0.75 * pow(m, 1.0/3.0); /* FIXME: make configurable */
-    int i, j, t;
+    int p, i, j, t;
     double mult, uu;
     int err = 0;
 
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
+
+    p = get_hac_lag(m);
+    fprintf(stderr, "nobs = %d, HAC lag = %d\n", m, p);
 
     vcv = gretl_matrix_alloc(n, n);
     wtj = gretl_matrix_alloc(n, n);

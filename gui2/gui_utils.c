@@ -1207,7 +1207,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
 static void modeltable_tex_view (void)
 {
-    tex_print_model_table (NULL, 1, NULL);
+    tex_print_model_table(1);
 }
 
 #ifndef OLD_GTK
@@ -3107,10 +3107,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     /* or from the model table? */
     else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
 	if (how == COPY_LATEX) {
-	    tex_print_model_table(NULL, 0, NULL);
+	    if (tex_print_model_table(0)) return;
 	}
 	else if (how == COPY_RTF) {
-	    rtf_print_model_table();
+	    if (rtf_print_model_table()) return;
 	} 
     }
 

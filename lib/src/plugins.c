@@ -45,7 +45,8 @@ enum {
     P_NISTCHECK,
     P_ARMA,
     P_ARMA_X12,
-    P_LOGISTIC
+    P_LOGISTIC,
+    P_TOBIT
 } plugin_codes;
 
 struct plugin_info {
@@ -79,7 +80,8 @@ struct plugin_info plugins[] = {
     { P_NISTCHECK,       "nistcheck" },
     { P_ARMA,            "arma" },
     { P_ARMA_X12,        "arma_x12" },
-    { P_LOGISTIC,        "logistic" }
+    { P_LOGISTIC,        "logistic" },
+    { P_TOBIT,           "tobit" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -137,14 +139,11 @@ struct plugin_function plugin_functions[] = {
     { "real_unmangle", P_LONGNAME },
 #endif
     
-    /* ARMA */
-    { "arma_model", P_ARMA },
-
-    /* ARMA X12A */
-    { "arma_x12_model", P_ARMA_X12 },
-
-    /* logistic */
+    /* modeling */
+    { "arma_model",        P_ARMA },
+    { "arma_x12_model",    P_ARMA_X12 },
     { "logistic_estimate", P_LOGISTIC },
+    { "tobit_model",       P_TOBIT },
 
     /* sentinel */
     { NULL, 0 },

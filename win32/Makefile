@@ -71,7 +71,8 @@ PLUGINSRC = \
 	arma.c \
         arma_x12.c \
 	workbook.c \
-	logistic.c
+	logistic.c \
+	tobit.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
@@ -81,7 +82,7 @@ PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll \
-	plugins/logistic.dll
+	plugins/logistic.dll plugins/tobit.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -93,8 +94,9 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = calendar.c compare.c dataio.c dbread.c describe.c discrete.c \
         estimate.c generate.c genstack.c graphing.c gretl_commands.c \
 	gretl_errors.c gretl_matrix.c gretl_utils.c gretl_win32.c interact.c \
-	modelprint.c monte_carlo.c nls.c nonparam.c plugins.c printout.c pvalues.c \
-	qr_estimate.c random.c strutils.c subsample.c system.c texprint.c var.c
+	libset.c modelprint.c monte_carlo.c nls.c nonparam.c plugins.c printout.c \
+	pvalues.c qr_estimate.c random.c strutils.c subsample.c system.c \
+	texprint.c var.c
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -268,6 +270,10 @@ plugins/arma_x12.dll: arma_x12.o dllinit.o
 plugins/logistic.dll: logistic.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS)
+
+plugins/tobit.dll: tobit.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
