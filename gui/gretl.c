@@ -1803,13 +1803,40 @@ static void auto_store (void)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
+
+static int old_windows (void) {
+    OSVERSIONINFO winver;
+    int old = 1;
+
+    winver.dwOSVersionInfoSize = sizeof *winver;
+    GetVersionEx(&winver);
+    switch (winver.dwPlatformId) {
+    case VER_PLATFORM_WIN32_WINDOWS:
+        if (winver.dwMinorVersion >= 10) /* win98 or higher */
+	    old = 0;
+        break;
+    case VER_PLATFORM_WIN32_NT:
+        if (winver.dwMajorVersion > 4) /* win2000 or higher */
+	    old = 0;
+        break;
+    }
+    return old;
+}
+
 static int unmangle (const char *dosname, char *longname)
 {
-    int err = GetLongPathName(dosname, longname, MAXLEN);
+    int err = 0;
 
-    if (err > 0 && err <= MAXLEN) err = 0;
-    else err = 1;
+    if (old_windows()) {
+	/* sorry but I really can't be bothered */
+	strcpy(longname, dosname);
+    } else {
+	err = GetLongPathName(dosname, longname, MAXLEN);
+	if (err > 0 && err <= MAXLEN) err = 0;
+	else err = 1;
+    }
     return err;
 }
+
 #endif
 
