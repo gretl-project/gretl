@@ -454,7 +454,7 @@ static genatom *parse_token (const char *s, char op,
 			scalar = 1;
 		    }
 		} else {
-		    /* not a variable of function: dead end? */
+		    /* not a variable or function: dead end? */
 		    genr->err = E_SYNTAX; 
 		}
 	    } 
@@ -793,25 +793,24 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 {
     double x = NADBL;
 
-    /* case of constants, scalar variables and specific 
-       observation from a series */
+    /* constant, scalar variable, or specific obs from a series */
     if (atom->scalar) {
 	x = atom->val;
 	DPRINTF(("eval_atom: got scalar = %g\n", x));
     } 
 
-    /* case of temporary variables */
+    /* temporary variable */
     if (atom->tmpvar >= 0) {
 	x = genr->tmpZ[atom->tmpvar][t];
 	DPRINTF(("eval_atom: got temp obs = %g\n", x));
     }
 
-    /* trend/index variables */
+    /* trend/index variable */
     else if (atom->varnum == TNUM) {
 	x = get_tnum(genr->pdinfo, t);
     }
 
-    /* regular variables and lagged terms */
+    /* regular variable or lagged term */
     else if (atom->varnum >= 0) {
 	if (!atom->lag) {
 	    x = (*genr->pZ)[atom->varnum][t];
@@ -825,7 +824,7 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	}
     }
 
-    /* functions */
+    /* function */
     else if (atom->func) {
 	if (STANDARD_MATH(atom->func)) {
 	    x = evaluate_math_function(a, atom->func, &genr->err);
@@ -869,7 +868,7 @@ static int add_random_series_to_genr (GENERATE *genr, genatom *atom)
 
     if (genr_add_var(genr, x)) {
 	free(x);
-	return 1;
+	return E_ALLOC;
     }
 
     atom->tmpvar = genr->tmpv - 1;
@@ -968,7 +967,6 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
     y = get_tmp_series(x, (const DATAINFO *) genr->pdinfo, 
 		       atom->func, &genr->err);
     if (y == NULL) return genr->err;
-
     free(x);
 
     if (genr_add_var(genr, y)) {
