@@ -1,13 +1,13 @@
-# translation of gretl.po to Spanish
+# translation of gretl-1.1.5.es.po to Spanish
 # Copyright (C) 2003 Free Software Foundation, Inc.
 # This file is distributed under the same license as the gretl package.
 # Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>, 2003
-# 
+#
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl.1.1.3b.es\n"
+"Project-Id-Version: gretl 1.1.5\n"
 "POT-Creation-Date: 2003-10-23 15:28-0400\n"
-"PO-Revision-Date: 2003-10-10 15:08-0400\n"
+"PO-Revision-Date: 2003-10-24 10:55+0200\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -683,7 +683,7 @@ msgstr "   falta el nombre de la variable %d: abortando\n"
 
 #: lib/src/dataio.c:2456
 msgid "it seems there are no variable names\n"
-msgstr ""
+msgstr "Parece que no hay nombres de variables\n"
 
 #: lib/src/dataio.c:2478
 msgid "scanning for row labels and data...\n"
@@ -2269,9 +2269,8 @@ msgid "(%d units observed in each of %d periods)\n"
 msgstr "(%d unidades observadas en cada %d periodos)\n"
 
 #: lib/src/gretl_utils.c:2674
-#, fuzzy
 msgid "Command failed"
-msgstr "falló la instrucción 'run'\n"
+msgstr "Falló la instrucción"
 
 #: lib/src/gretl_win32.c:44
 msgid "Couldn't open registry\n"
@@ -8242,11 +8241,8 @@ msgid "Couldn't open command file for writing"
 msgstr "No se pudo abrir para escritura el fichero de instrucciones"
 
 #: gui/library.c:714 gui2/library.c:706
-#, fuzzy
 msgid "Please give the current dataset a name"
-msgstr ""
-"¿Desea registrar el conjunto de datos actual\n"
-"como %s?"
+msgstr "Por favor, asigne un nombre al conjunto de datos actual"
 
 #: gui/library.c:802 gui/library.c:808 gui2/library.c:794 gui2/library.c:800
 msgid "correlation matrix"
@@ -8650,9 +8646,8 @@ msgstr ""
 "de las cuales ha de ser una variable ficticia (valores 1 o 0)"
 
 #: gui/library.c:3672 gui2/library.c:3594
-#, fuzzy
 msgid "Couldn't find xterm or rxvt"
-msgstr "No se pudo encontrar un manejador de 'socket' utilizable\n"
+msgstr "No se pudo encontrar ni 'xterm' ni 'rxvt'"
 
 #: gui/library.c:3914 gui2/library.c:3836
 #, c-format
@@ -9465,7 +9460,7 @@ msgstr "Usar las preferencias locales para el punto decimal"
 
 #: gui/settings.c:114 gui2/settings.c:140
 msgid "Command to launch gnuplot"
-msgstr "Instrucción lanzar gnuplot"
+msgstr "Instrucción para lanzar gnuplot"
 
 #: gui/settings.c:116 gui2/settings.c:142
 msgid "Command to launch GNU R"
@@ -9761,7 +9756,7 @@ msgid "(no description)"
 msgstr "(sin descripción)"
 
 #: gui/webget.c:1649 gui2/webget.c:1649
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "New files are available from the gretl web site.\n"
 "These files have a combined size of %u bytes.\n"
@@ -9772,11 +9767,8 @@ msgstr ""
 "Hay ficheros nuevos disponibles en el sitio web de gretl.\n"
 "Estos ficheros tienen un tamaño combinado de %u bytes.\n"
 "\n"
-"Si desea actualizar su instalación, por favor salga de gretl\n"
-"y ejecute el programa \"gretl updater\".\n"
-"\n"
-"Una vez que el programa de actualización haya finalizado Vd puede reiniciar "
-"gretl"
+"¿Desea salir de gretl y actualizar su instalación ahora?\n"
+"(Si lo prefiere, puede ejecutar gretl_updater.exe más tarde)"
 
 #: gui/webget.c:1657 gui2/webget.c:1657
 msgid ""
@@ -10133,9 +10125,8 @@ msgid "Copy"
 msgstr "Copiar"
 
 #: gui2/gui_utils.c:1054
-#, fuzzy
 msgid "LaTeX"
-msgstr "/_LaTeX"
+msgstr "LaTeX"
 
 #: gui2/gui_utils.c:2698
 msgid "Copied selection to clipboard"
@@ -10854,6 +10845,8 @@ msgid ""
 "TRAMO can't handle more than 600 observations.\n"
 "Please select a smaller sample."
 msgstr ""
+"TRAMO no puede manejar más de 600 observaciones.\n"
+"Por favor, seleccione una muestra más pequeña."
 
 #: plugin/workbook.c:403
 msgid "No book or workbook streams found."
@@ -10881,8 +10874,14 @@ msgstr "Error inesperado al leer el fichero\n"
 msgid "Unexpected error reading the file"
 msgstr "Error inesperado al leer el fichero"
 
-#~ msgid "/_LaTeX/_View"
-#~ msgstr "/_LaTeX/_Ver"
+#~ msgid "Starting observation does not match"
+#~ msgstr "La observación inicial no casa"
+
+#~ msgid "Ending observation does not match"
+#~ msgstr "La observación final no casa"
+
+#~ msgid "read %d chars from pos %d: '%s' -> %g\n"
+#~ msgstr "leer %d caracteres desde posición %d: '%s' -> %g\n"
 
 #~ msgid "'%s' -- no numeric conversion performed!\n"
 #~ msgstr "'%s' -- ¡realizada conversión no numérica!\n"
@@ -10898,16 +10897,3 @@ msgstr "Error inesperado al leer el fichero"
 
 #~ msgid "forecasting model failed in fcast_with_errs()\n"
 #~ msgstr "el modelo de predicción falló en fcast_with_errs()\n"
-
-#, fuzzy
-#~ msgid "Number of common variables = %d\n"
-#~ msgstr "   número de variables: %d\n"
-
-#~ msgid "Starting observation does not match"
-#~ msgstr "La observación inicial no casa"
-
-#~ msgid "Ending observation does not match"
-#~ msgstr "La observación final no casa"
-
-#~ msgid "read %d chars from pos %d: '%s' -> %g\n"
-#~ msgstr "leer %d caracteres desde posición %d: '%s' -> %g\n"

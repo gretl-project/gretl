@@ -4617,6 +4617,9 @@ int gui_exec_line (char *line,
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      0, oflag, prn);
 	if (err) errmsg(err, prn);
+	else if (command.ci == DATA) {
+	    register_data(NULL, NULL, 0);
+	}
 	break;
 
     case ADD:
@@ -5056,7 +5059,9 @@ int gui_exec_line (char *line,
 	    gui_errmsg(err);
 	    break;
 	}
-	strncpy(paths.datfile, datfile, MAXLEN-1);
+	if (!dbdata) {
+	    strncpy(paths.datfile, datfile, MAXLEN-1);
+	}
 	if (chk == GRETL_CSV_DATA || chk == GRETL_BOX_DATA || dbdata)
 	    data_status |= IMPORT_DATA;
 	if (datainfo->v > 0 && !dbdata) {

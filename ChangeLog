@@ -1,4 +1,4 @@
-version 1.1.5
+10/24/2003 version 1.1.5
 - Gtk2 version: Make selection dialog tall enough for wls,
   tsls and ar model selections
 - Model window, graph menu: if there are two independent vars,
@@ -28,6 +28,8 @@ version 1.1.5
   or Gnumeric
 - Add an error message for an attempt to run TRAMO when the
   sample size is > 600
+- Fixes for reading of plot range info in graph window in
+  non-English locales
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter
