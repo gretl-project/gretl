@@ -397,9 +397,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     if (gotlp) {
-	pprintf(prn, "\n%s\n", _("('*' indicates a leverage point)"));
+	pprintf(prn, "\n%s\n\n", _("('*' indicates a leverage point)"));
     } else {
-	pprintf(prn, "\n%s\n", _("No leverage points were found"));
+	pprintf(prn, "\n%s\n\n", _("No leverage points were found"));
     }
 
     if (ppaths != NULL) {
