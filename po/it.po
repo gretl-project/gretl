@@ -5,9 +5,9 @@
 # Thanks to Daniele "Madrid" Medri for useful suggestions.
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.2.8\n"
+"Project-Id-Version: gretl 1.2.9\n"
 "POT-Creation-Date: 2004-07-18 20:31-0400\n"
-"PO-Revision-Date: 2004-07-03 19:36+0200\n"
+"PO-Revision-Date: 2004-07-19 22:09+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2241,35 +2241,34 @@ msgid "parse error in '%s'\n"
 msgstr "errore di lettura in '%s'\n"
 
 #: lib/src/gretl_restrict.c:306
-#, fuzzy
 msgid "Restriction set"
-msgstr "Descrizione"
+msgstr "Insieme di vincoli"
 
 #: lib/src/gretl_restrict.c:308
-#, fuzzy
 msgid "Restriction"
-msgstr "Descrizione"
+msgstr "Vincolo"
 
 #: lib/src/gretl_restrict.c:413
-#, fuzzy, c-format
+#, c-format
 msgid "Coefficient number (%d) is out of range"
-msgstr "Il numero di variabile %d è fuori dai limiti"
+msgstr "Il numero di coefficienti (%d) è fuori dai limiti"
 
 #: lib/src/gretl_restrict.c:446
 #, c-format
 msgid "Too many restrictions (maximum is %d)"
-msgstr ""
+msgstr "Troppi vincoli (il massimo è %d)"
 
 #: lib/src/gretl_restrict.c:497 lib/src/gretl_restrict.c:557
 msgid ""
 "Matrix inversion failed:\n"
 " restrictions may be inconsistent or redundant\n"
 msgstr ""
+"Inversione della matrice fallita:\n"
+" è possibile che i vincoli siano incoerenti o ridondanti\n"
 
 #: lib/src/gretl_restrict.c:564
-#, fuzzy
 msgid "Failed to compute F statistic for test\n"
-msgstr "Impossibile generare le statistiche descrittive"
+msgstr "Impossibile calcolare la statistica F per il test\n"
 
 #: lib/src/gretl_restrict.c:571 lib/src/printout.c:171 lib/src/printout.c:231
 msgid "Robust F"
@@ -3949,9 +3948,9 @@ msgid "Variable '%s' not defined"
 msgstr "La variabile '%s' non è definita"
 
 #: lib/src/subsample.c:272
-#, fuzzy, c-format
+#, c-format
 msgid "Invalid number of cases %d"
-msgstr "   Numero di variabili: %d\n"
+msgstr "Numero di casi non valido: %d"
 
 #: lib/src/subsample.c:379
 msgid "Sub-sample command failed mysteriously"
@@ -4099,7 +4098,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test F di zero restrizioni:\n"
+"Test F per zero vincoli:\n"
 "\n"
 
 #: lib/src/var.c:1038 lib/src/var.c:2050 lib/src/var.c:2056
@@ -4287,7 +4286,7 @@ msgstr "Errore nel controllo per i trend temporali"
 
 #: lib/src/var.c:2041
 msgid "F-tests of zero restrictions"
-msgstr "Test F per zero restrizioni"
+msgstr "Test F per zero vincoli"
 
 #: lib/src/var.c:2053
 #, c-format
@@ -5234,9 +5233,8 @@ msgid "/Sample/_Restrict, based on criterion..."
 msgstr "/Campione/Imposta in base a _condizione..."
 
 #: gui/gretl.c:394 gui2/gretl.c:470
-#, fuzzy
 msgid "/Sample/R_andom sub-sample..."
-msgstr "/Campione/Imposta _intervallo..."
+msgstr "/Campione/_Sotto-campione casuale..."
 
 #: gui/gretl.c:395 gui2/gretl.c:471
 msgid "/Sample/sep3"
@@ -7110,14 +7108,12 @@ msgid "NLS: Specify function, and derivatives if possible:"
 msgstr "NLS: specificare la funzione e le derivate, se possibile:"
 
 #: gui2/callbacks.c:617
-#, fuzzy
 msgid "gretl: linear restrictions"
-msgstr "gretl: minimi quadrati non lineari"
+msgstr "gretl: vincoli lineari"
 
 #: gui2/callbacks.c:618
-#, fuzzy
 msgid "Specify restrictions:"
-msgstr "Test F per zero restrizioni"
+msgstr "Specificare i vincoli:"
 
 #: gui2/callbacks.c:644 gui2/library.c:3487 gui2/session.c:1502
 #, c-format
@@ -7588,14 +7584,12 @@ msgstr ""
 "come frequenza valida per serie storiche"
 
 #: gui2/dialogs.c:264
-#, fuzzy
 msgid "replace current restriction"
-msgstr "Sessione corrente"
+msgstr "sostituisci il vincolo attuale"
 
 #: gui2/dialogs.c:271
-#, fuzzy
 msgid "add to current restriction"
-msgstr "Sessione corrente"
+msgstr "aggiungi al vincolo attuale"
 
 #: gui2/dialogs.c:380
 msgid "(Please refer to Help for guidance)"
@@ -7723,9 +7717,9 @@ msgid "Name of dummy variable to use:"
 msgstr "Variabile dummy da usare:"
 
 #: gui2/dialogs.c:1863
-#, fuzzy, c-format
+#, c-format
 msgid "Number of observations to select (max %d)"
-msgstr "Numero di osservazioni = %d\n"
+msgstr "Numero di osservazioni da selezionare (max %d)"
 
 #: gui2/dialogs.c:1884
 msgid "Set sample range"
@@ -8499,9 +8493,8 @@ msgid "/Tests/sum of coefficients"
 msgstr "/Test/COEFFSUM - Somma coefficienti"
 
 #: gui2/gui_utils.c:130 gui2/gui_utils.c:198
-#, fuzzy
 msgid "/Tests/linear restrictions"
-msgstr "Test F per zero restrizioni"
+msgstr "/Test/vincoli lineari"
 
 #: gui2/gui_utils.c:131 gui2/gui_utils.c:199
 msgid "/Tests/sep1"
@@ -9272,9 +9265,8 @@ msgid "gretl: high precision estimates"
 msgstr "gretl: stime a precisione multipla"
 
 #: gui2/library.c:1878
-#, fuzzy
 msgid "linear restrictions"
-msgstr "Test F per zero restrizioni"
+msgstr "vincoli lineari"
 
 #: gui2/library.c:2007
 msgid "A variable was duplicated in the list of regressors"
@@ -11091,16 +11083,3 @@ msgstr ""
 #: plugin/workbook.c:583
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
-
-#, fuzzy
-#~ msgid "Variable %d was not in the original list"
-#~ msgstr "La variabile %d non ha nome"
-
-#~ msgid "Nonlinear least squares"
-#~ msgstr "Minimi quadrati non lineari"
-
-#~ msgid "This command is only available for OLS models at present\n"
-#~ msgstr "Questo comando al momento è disponibile solo per i modelli OLS\n"
-
-#~ msgid "model command"
-#~ msgstr "comando model"
