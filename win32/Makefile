@@ -91,8 +91,8 @@ RCFLAGS = --define __WIN32__ --define __WIN95__ --define MSRC \
 RCOUT   = gretlw32_res.o
 RES2COFF = echo gretlw32_res.o
 
-LIBSRC = calendar.c compare.c dataio.c dbread.c describe.c discrete.c \
-        estimate.c generate.c genstack.c graphing.c gretl_commands.c \
+LIBSRC = bhhh_max.c calendar.c compare.c dataio.c dbread.c describe.c \
+        discrete.c estimate.c generate.c genstack.c graphing.c gretl_commands.c \
 	gretl_errors.c gretl_matrix.c gretl_model.c gretl_paths.c \
 	gretl_utils.c gretl_win32.c interact.c libset.c modelprint.c \
 	monte_carlo.c nls.c nonparam.c plugins.c printout.c pvalues.c \
