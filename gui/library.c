@@ -2857,7 +2857,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	g_free(buf);
 
 	gdk_window_set_cursor(mydata->dialog->window, NULL);
-	gdk_window_set_cursor(mydata->w->window, NULL);
+	gdk_window_set_cursor(GTK_TEXT(mydata->w)->text_area, NULL);
     } else
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
 
