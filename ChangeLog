@@ -18,6 +18,7 @@ version 1.2.4
 - Improve path-searching for data files
 - Beef up error-checking on opening of native gretl data files
 - Improve error-checking on pvalue command
+- Fix for Excel importer: allow more than 16K rows
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack

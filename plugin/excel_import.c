@@ -40,7 +40,7 @@
 extern int excel_book_get_info (const char *fname, wbook *book);
 
 static void free_sheet (void);
-static int getshort (char *rec, int offset);
+static short getshort (char *rec, int offset);
 static int process_item (int rectype, int reclen, char *rec, wbook *book, PRN *prn); 
 static int allocate_row_col (int row, int col, wbook *book);
 static char *copy_unicode_string (char **src);
@@ -265,6 +265,12 @@ static double biff_get_rk (const unsigned char *ptr)
     return NADBL;
 }
 
+static int get_row_col (char *rec, int offset)
+{
+    return (*((unsigned char *)(rec + offset)) |
+	    ((*((unsigned char *)(rec + offset + 1))) << 8));
+}
+
 static int process_item (int rectype, int reclen, char *rec, wbook *book,
 			 PRN *prn) 
 {
@@ -274,7 +280,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
     if (rectype == LABEL || rectype == CONSTANT_STRING || 
 	rectype == NUMBER || rectype == RK || rectype == MULRK || 
 	rectype == FORMULA) {
-	row = getshort(rec, 0);
+	row = get_row_col(rec, 0);
 	col = getshort(rec, 2);
 	if (negerr(row, col)) return 1;
     }
@@ -654,10 +660,10 @@ static int allocate_row_col (int row, int col, wbook *book)
     return 0;
 }
 
-static int getshort (char *rec, int offset) 
+static short getshort (char *rec, int offset) 
 {
-    return (signed short int) (*((unsigned char *)(rec + offset)) |
-			       ((*((unsigned char *)(rec + offset + 1))) << 8));
+    return (*((unsigned char *)(rec + offset)) |
+	    ((*((unsigned char *)(rec + offset + 1))) << 8));
 }	      
 
 static void free_sheet (void) 
@@ -1022,10 +1028,10 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
 		    rowptr[t_sheet].cells[i_sheet] == NULL) continue;
+#ifdef EDEBUG
 		fprintf(stderr, "accessing rowptr[%d].cells[%d] at %p\n",
 			t_sheet, i_sheet,
 			(void *) rowptr[t_sheet].cells[i_sheet]);
-#ifdef EDEBUG
 		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
 			"= '%s'\n", i, t, i_sheet, t_sheet, 
 			rowptr[t_sheet].cells[i_sheet]);
