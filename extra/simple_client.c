@@ -38,11 +38,11 @@ int main (void)
     double *Z;                  /* the data set */
     int *list;                  /* list of regressors etc. */
     MODEL *model;               /* pointer to model struct */
-    print_t prn;                /* struct for printing */
+    print_t *prn;               /* pointer to struct for printing */
     int model_count = 0;        /* keep a tally of models estimated */
 
     logo(); /* print version info and session time */
-    prn.fp = stdout; /* simple printing */
+    prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); /* simple printing */
 
     /* create the datainfo struct and data matrix -- pass in pointer
        to data array; specify the number of variables (allowing one
@@ -120,7 +120,7 @@ int main (void)
     model->ID = model_count;
 
     /* ...and print info from the regression. */
-    printmodel(model, datainfo, &prn);
+    printmodel(model, datainfo, prn);
 
     /* memory management check -- try explicitly freeing all allocated
        memory */
@@ -128,6 +128,7 @@ int main (void)
     free_model(model);
     free(list);
     free_datainfo(datainfo);
+    gretl_print_destroy(prn);
 
     return 0;
 
