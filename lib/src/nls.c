@@ -81,6 +81,67 @@ static int nls_auto_gen (int i)
     return err;
 }
 
+static int add_term_from_nlfunc (const char *vname)
+{
+    nls_term *terms;
+    double *coeff;
+    int v, nt = nlspec.nparam + 1; 
+
+    v = varindex(pdinfo, vname);
+    if (v >= pdinfo->v) return E_UNKVAR;
+
+    if (pdinfo->vector[v]) return 0;
+
+    terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
+    if (terms == NULL) return E_ALLOC;
+
+    coeff = realloc(nlspec.coeff, nt * sizeof *nlspec.coeff);
+    if (coeff == NULL) {
+	free(terms);
+	return E_ALLOC;
+    }
+
+    nlspec.coeff = coeff;
+
+    terms[nt-1].varnum = v;
+    strcpy(terms[nt-1].name, vname);
+    nlspec.coeff[nt-1] = (*pZ)[v][0];
+    nlspec.terms = terms;
+    nlspec.nparam += 1;
+	
+    return 0;
+}
+
+static int get_params_from_nlfunc (void)
+{
+    const char *s = nlspec.nlfunc;
+    const char *p;
+    char vname[9];
+    int n, np = 0;
+    int err = 0;
+
+    while (*s && !err) {
+	p = s;
+	if (isalpha(*s) && *(s + 1)) {
+	    p++;
+	    n = 1;
+	    while (isalnum(*p) || *p == '_') {
+		p++; n++;
+	    }
+	    if (n > 8) return 1;
+	    *vname = 0;
+	    strncat(vname, s, n);
+	    if (np > 0) {
+		err = add_term_from_nlfunc(vname);
+	    }
+	    np++;
+	} else p++;
+	s = p;
+    }
+
+    return err;
+}
+
 static int check_for_missing_vals (void)
 {
     int t, v, miss = 0;
@@ -198,6 +259,15 @@ int nls_calc (integer *m, integer *n, double *x, double *fvec,
     return 0;
 }
 
+int nls_calc_approx (integer *m, integer *n, double *x, double *fvec,
+		     integer *iflag)
+{
+    update_params(x);
+    if (get_resid(fvec)) *iflag = -1;
+
+    return 0;
+}
+
 static void add_stats_to_model (MODEL *pmod)
 {
     double d, tss;
@@ -272,7 +342,7 @@ static void add_fit_resid_to_model (MODEL *pmod, double *fvec)
     }
 }
 
-static MODEL GNR (double *fvec)
+static MODEL GNR (double *fvec, double *fjac)
 {
     double **nZ = NULL;
     DATAINFO *ninfo;
@@ -306,6 +376,7 @@ static MODEL GNR (double *fvec)
     for (i=0; i<=nlspec.nparam; i++) {
 	nlist[i+1] = i;
 	if (i == 0) {
+	    /* dependent variable (NLS residual) */
 	    j = 0;
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t < t1 || t > t2) nZ[i][t] = NADBL;
@@ -313,6 +384,15 @@ static MODEL GNR (double *fvec)
 	    }
 	} else {
 	    get_deriv(i-1, nZ[i]);
+#if 0
+	    j = T * (i - 1);
+	    for (t=0; t<pdinfo->n; t++) {
+		if (t < t1 || t > t2) nZ[i][t] = NADBL;
+		else nZ[i][t] = fjac[j++];
+		fprintf(stderr, "Set nZ[%d][%d] = %g\n",
+			i, t, nZ[i][t]); 
+	    }
+#endif	    
 	}
     }
 
@@ -536,13 +616,13 @@ static int check_derivs (integer m, integer n, double *x,
     return zerocount;
 }
 
-static int lm_calculate (double *fvec, double toler)
+static int lm_calculate (double *fvec, double *fjac, double toler)
 {
     integer info, lwa;
     integer m, n, ldfjac;
     integer *ipvt;
     doublereal tol;
-    doublereal *fjac, *wa;
+    doublereal *wa;
     int err = 0;
 
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
@@ -553,9 +633,8 @@ static int lm_calculate (double *fvec, double toler)
 
     wa = malloc(lwa * sizeof *wa);
     ipvt = malloc(n * sizeof *ipvt);
-    fjac = malloc(m * n * sizeof *fjac);
 
-    if (wa == NULL || ipvt == NULL || fjac == NULL) {
+    if (wa == NULL || ipvt == NULL) {
 	err = E_ALLOC;
 	goto nls_cleanup;
     }
@@ -563,7 +642,8 @@ static int lm_calculate (double *fvec, double toler)
     err = check_derivs(m, n, nlspec.coeff, fvec, fjac, ldfjac);
     if (err) goto nls_cleanup; 
 
-    /* run levenberg-marquandt nonlinear least squares from minpack */
+    /* run levenberg-marquandt nonlinear least squares from minpack,
+       analytical derivatives version */
     lmder1_(nls_calc, &m, &n, nlspec.coeff, fvec, fjac, &ldfjac, &tol, 
 	    &info, ipvt, wa, &lwa);
 
@@ -596,33 +676,133 @@ static int lm_calculate (double *fvec, double toler)
  nls_cleanup:
     free(wa);
     free(ipvt);
-    free(fjac);
 
     return err;    
 }
 
-#if 0
-static void print_nls_spec (void)
-{
-    int i;
+/*
+c       fjac is an output m by n array. the upper n by n submatrix
+c         of fjac contains an upper triangular matrix r with
+c         diagonal elements of nonincreasing magnitude such that
+c
+c                t     t           t
+c               p *(jac *jac)*p = r *r,
+c
+c         where p is a permutation matrix and jac is the final
+c         calculated jacobian. column j of p is column ipvt(j)
+c         (see below) of the identity matrix. the lower trapezoidal
+c         part of fjac contains information generated during
+c         the computation of r.
 
-    printf("NLS specification:\n");
-    printf("residual: %s\n", nlspec.nlfunc);
-    for (i=0; i<nlspec.nparam; i++) {
-	printf("deriv[%d] (var number %d): %s = %s\n", i+1, 
-	       (nlspec.terms[i]).varnum,
-	       (nlspec.terms[i]).name,
-	       (nlspec.terms[i]).deriv);
+c       ipvt is an integer output array of length n. ipvt
+c         defines a permutation matrix p such that jac*p = q*r,
+c         where jac is the final calculated jacobian, q is
+c         orthogonal (not stored), and r is upper triangular
+c         with diagonal elements of nonincreasing magnitude.
+c         column j of p is column ipvt(j) of the identity matrix.
+c
+c       qtf is an output array of length n which contains
+c         the first n elements of the vector (q transpose)*fvec.
+*/
+
+static int lm_approximate (double *fvec, double *fjac)
+{
+    integer info, m, n, ldfjac, one = 1;
+    integer maxfev = 100, mode = 1, nprint = 0, nfev = 0;
+    integer *ipvt;
+    doublereal ftol, xtol, gtol = 0.0;
+    doublereal epsfcn = 0.0001, factor = 100.;
+    doublereal *diag, *qtf;
+    doublereal *wa1, *wa2, *wa3, *wa4;
+    int err = 0;
+
+    xtol = ftol = sqrt(dpmpar_(&one));
+
+    m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
+    n = nlspec.nparam;             /* number of parameters */
+    ldfjac = m;                    /* leading dimension of fjac array */
+
+    diag = malloc(n * sizeof *diag);
+    qtf = malloc(n * sizeof *qtf);
+    wa1 = malloc(n * sizeof *wa1);
+    wa2 = malloc(n * sizeof *wa2);
+    wa3 = malloc(n * sizeof *wa3);
+    wa4 = malloc(m * sizeof *wa4);
+    ipvt = malloc(n * sizeof *ipvt);
+
+    if (diag == NULL || qtf == NULL ||
+	wa1 == NULL || wa2 == NULL || wa3 == NULL || wa4 == NULL ||
+	ipvt == NULL) {
+	err = E_ALLOC;
+	goto nls_cleanup;
     }
+
+    /* run levenberg-marquandt nonlinear least squares from minpack,
+       approximate derivatives version */
+    lmdif_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, 
+	   &ftol, &xtol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
+	   &nprint, &info, &nfev, fjac, &ldfjac, 
+	   ipvt, qtf, wa1, wa2, wa3, wa4);
+
+    nlspec.iters = nfev;
+
+    switch ((int) info) {
+    case -1: 
+	err = 1;
+	break;
+    case 0:
+	pputs(prn, _("Invalid NLS specification"));
+	pputs(prn, "\n");
+	err = 1;
+	break;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+	pprintf(prn, _("NLS: convergence achieved after %d iterations\n"),
+		nlspec.iters);
+	break;
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+	pputs(prn, _("NLS failed to converge\n"));
+	err = 1;
+	break;
+    default:
+	break;
+    }
+
+    if (1) {
+	int i;
+	for (i=0; i<n; i++) {
+	    fprintf(stderr, "qtf[%d] = %g\n", i, qtf[i]);
+	    fprintf(stderr, "fvec[%d] = %g\n", i, fvec[i]);
+	}
+	for (i=0; i<n*m; i++) {
+	    fprintf(stderr, "fjac[%d] = %g\n", i, fjac[i]);
+	}	
+    }
+
+ nls_cleanup:
+    free(diag);
+    free(qtf);
+    free(wa1);
+    free(wa2);
+    free(wa3);
+    free(wa4);
+    free(ipvt);
+
+    return err;    
 }
-#endif
 
 MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 {
     MODEL nlsmod;
-    double *fvec;
+    double *fvec, *fjac;
     double toler = 0.0001; /* make this configurable */
     int origv = maininfo->v;
+    int numderiv = 0;
     int err = 0;
 
     _init_model(&nlsmod, maininfo);
@@ -631,33 +811,60 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	sprintf(gretl_errmsg, _("No regression function has been specified"));
 	nlsmod.errcode = E_PARSE;
 	return nlsmod;
-    }    
+    }   
+
+    /* "export" these as file-scope globals */
+    pZ = mainZ;
+    pdinfo = maininfo;
+    prn = mainprn; 
 
     if (nlspec.nparam == 0) {
-	sprintf(gretl_errmsg, _("No derivatives have been specified"));
-	nlsmod.errcode = E_PARSE;
-	return nlsmod;
+	numderiv = 1;
+	err = get_params_from_nlfunc();
+	if (err) {
+	    nlsmod.errcode = E_PARSE;
+	    return nlsmod;
+	}
     }
 
-    fvec = malloc(maininfo->n * sizeof *fvec);
+    if (nlspec.nparam == 0) {
+	sprintf(gretl_errmsg, _("No regression function has been specified"));
+	clear_nls_spec();
+	nlsmod.errcode = E_PARSE;
+	return nlsmod;
+    }   
+
+    fvec = malloc(pdinfo->n * sizeof *fvec);
     if (fvec == NULL) {
 	nlsmod.errcode = E_ALLOC;
 	return nlsmod;
     }
 
-    /* "export" these as file-scope globals */
-    pZ = mainZ;
-    pdinfo = maininfo;
-    prn = mainprn;
-
-#if 0
-    print_nls_spec();
-#endif
+    fjac = malloc(pdinfo->n * nlspec.nparam * sizeof *fvec);
+    if (fjac == NULL) {
+	free(fvec);
+	nlsmod.errcode = E_ALLOC;
+	return nlsmod;
+    }
 
     nlsmod.errcode = err = check_for_missing_vals();
 
-    if (!err) err = lm_calculate(fvec, toler);
-    if (!err) nlsmod = GNR(fvec);
+    if (!err) {
+	if (numderiv) {
+	    pprintf(prn, _("Using numerical derivatives\n"));
+	    err = lm_approximate(fvec, fjac);
+	} else {
+	    pprintf(prn, _("Using analytical derivatives\n"));
+	    err = lm_calculate(fvec, fjac, toler);
+	}
+    }
+
+    if (!err) {
+	nlsmod = GNR(fvec, fjac);
+    } else {
+	nlsmod.errcode = E_UNSPEC;
+    }
+
     if (!err) {
 	add_stats_to_model(&nlsmod);  
 	_aicetc(&nlsmod);
@@ -665,6 +872,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     } 
 
     free(fvec);
+    free(fjac);
     clear_nls_spec();
 
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
