@@ -277,7 +277,7 @@ void about_dialog (gpointer data)
 
 #  ifdef ENABLE_NLS
     if (strcmp(_("translator_credits"), "translator_credits")) {
-	comment = g_strconcat(_(gnome_blurb), " ", _("translator_credits"),
+	comment = g_strconcat(_(gretl_gnome_blurb), " ", _("translator_credits"),
 			      NULL);
     }
 #  endif 
@@ -285,7 +285,7 @@ void about_dialog (gpointer data)
     dlg = gnome_about_new("gretl", version_string,
 			  copyright, 
 			  authors, 
-			  (comment != NULL)? comment : _(gnome_blurb),
+			  (comment != NULL)? comment : _(gretl_gnome_blurb),
 			  gnome_pixmap_file("gretl-logo.xpm") 
 			  );
 

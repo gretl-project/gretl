@@ -29,6 +29,7 @@
 #include "model_table.h"
 #include "graph_page.h"
 #include "textbuf.h"
+#include "cmdstack.h"
 
 #include "var.h"
 

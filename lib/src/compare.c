@@ -92,8 +92,7 @@ int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo,
 	}
 	if (!match) {
 	    biglist[0] += 1;
-	    k++;
-	    biglist[k] = add[i];
+	    biglist[++k] = add[i];
 	}
     }
 

@@ -1211,7 +1211,7 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 
 /* ........................................................... */
 
-void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
+void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 {
     int err;
     windata_t *mydata = (windata_t *) data;
@@ -1224,7 +1224,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
     strcpy(title, _("gretl: LM test "));
     clear(line, MAXLEN);
 
-    if (aux_code == AUX_WHITE) {
+    if (action == LMTEST_WHITE) {
 	strcpy(line, "lmtest -w");
 	err = whites_test(pmod, &Z, datainfo, prn, &test);
 	if (err) {
@@ -1238,14 +1238,17 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	}
     } 
     else {
-	if (aux_code == AUX_SQ) { 
+	int aux = 
+	    (action == LMTEST_SQUARES)? AUX_SQ : AUX_LOG;
+
+	if (action == LMTEST_SQUARES) { 
 	    strcpy(line, "lmtest -s");
 	} else {
 	    strcpy(line, "lmtest -l");
 	}
 	clear_model(models[0], NULL);
 	err = auxreg(NULL, pmod, models[0], &model_count, 
-		     &Z, datainfo, aux_code, prn, &test, 0);
+		     &Z, datainfo, aux, prn, &test, 0);
 	if (err) {
 	    gui_errmsg(err);
 	    clear_model(models[0], NULL);
@@ -1387,6 +1390,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 #endif
 	gnuplot_display(&paths);
 	register_graph();
+	/* FIXME command not recorded in session */
     } else {
 	errbox(_("Command failed"));
     }

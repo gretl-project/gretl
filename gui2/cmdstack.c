@@ -20,9 +20,10 @@
 #include "gretl.h"
 #include "cmdstack.h"
 
+#undef CMD_DEBUG
+
 typedef struct {
     int ID;
-    int cmdnum;
     int n;
     char **cmds;
 } model_stack;
@@ -32,9 +33,6 @@ static int n_mstacks;
 
 static char **cmd_stack;
 static int n_cmds;
-
-/* FIXME: what about n_cmds and mstacks when the session is
-   changed or datafile is changed?? */
 
 /* ........................................................... */
 
@@ -52,8 +50,10 @@ void free_command_stack (void)
 
     if (n_mstacks > 0 && mstacks != NULL) {  
 	for (i=0; i<n_mstacks; i++) {
-	    for (j=0; j<mstacks[i].n; j++)
+	    for (j=0; j<mstacks[i].n; j++) {
 		free(mstacks[i].cmds[j]); 
+	    }
+	    free(mstacks[i].cmds);
 	}
 	free(mstacks);
 	mstacks = NULL;
@@ -77,6 +77,11 @@ int add_command_to_stack (const char *str)
 	return 1;
 
     strcpy(cmd_stack[n_cmds], str);
+
+#ifdef CMD_DEBUG
+    fprintf(stderr, "added to stack as cmd_stack[%d]:\n"
+	    " %s\n", n_cmds, cmd_stack[n_cmds]);
+#endif
     
     n_cmds++;
 
@@ -105,12 +110,12 @@ static model_stack *add_model_stack (int model_id)
     n_mstacks++;
 
     mstacks[nm].ID = model_id;    
-    mstacks[nm].cmdnum = n_cmds - 1;
     mstacks[nm].n = 0;
     mstacks[nm].cmds = NULL;
 
 #ifdef CMD_DEBUG
-    fprintf(stderr, "mstacks[%d]: ID=%d, cmdnum=%d\n", nm, model_id, n_cmds - 1);
+    fprintf(stderr, "add_model_stack:\n"
+	    " mstacks[%d]: ID=%d\n", nm, model_id);
 #endif
 
     return &mstacks[nm];
@@ -133,6 +138,11 @@ static int add_command_to_mstack (model_stack *mstack, const char *str)
     if (mstack->cmds[nc] == NULL) return 1;
 
     strcpy(mstack->cmds[nc], str);
+
+#ifdef CMD_DEBUG
+    fprintf(stderr, "add_command_to_mstack, with ID=%d:\n"
+	    " %s\n", mstack->ID, str);
+#endif
 
     return 0;
 }
@@ -189,14 +199,14 @@ int model_cmd_init (char *line, CMD *cmd, int ID)
 
 /* ........................................................... */
 
-static void dump_model_cmds (FILE *fp, int m)
+static void dump_model_cmds (const model_stack *mstack, FILE *fp)
 {
     int i;
 
-    fprintf(fp, "(* commands pertaining to model %d *)\n", mstacks[m].ID);
+    fprintf(fp, "(* commands pertaining to model %d *)\n", mstack->ID);
 
-    for (i=0; i<mstacks[m].n; i++) {
-	fprintf(fp, "%s", mstacks[m].cmds[i]);
+    for (i=0; i<mstack->n; i++) {
+	fprintf(fp, "%s", mstack->cmds[i]);
     }
 }
 
@@ -206,8 +216,9 @@ int dump_cmd_stack (const char *fname, int insert_open_data)
      /* ship out the stack of commands entered in the current
 	session */
 {
+    model_stack *mstack;
     FILE *fp;
-    int i, j;
+    int i, modnum;
 
     if (fname == NULL || *fname == '\0') return 0;
 
@@ -259,23 +270,23 @@ int dump_cmd_stack (const char *fname, int insert_open_data)
 	}
     }
 
+    modnum = 0;
     for (i=0; i<n_cmds; i++) {
 	fprintf(fp, "%s", cmd_stack[i]);
-	if (is_model_cmd(cmd_stack[i]) && mstacks != NULL) {
+	if (is_model_cmd(cmd_stack[i])) {
 #ifdef CMD_DEBUG
 	    fprintf(stderr, "cmd_stack[%d]: looking for model commands\n", i);
 #endif
-	    for (j=0; j<n_mstacks; j++) { 
-		if (mstacks[j].cmdnum == i) {
-		   dump_model_cmds(fp, j);
-		   break;
-		} 
+	    mstack = mstack_from_model_id(++modnum);
+	    if (mstack != NULL) {
+		dump_model_cmds(mstack, fp);
 	    }
 	}
-    }
+    } 
 
-    if (strcmp(fname, "stderr")) 
+    if (strcmp(fname, "stderr")) { 
 	fclose(fp);
+    }
 
     return 0;
 }
