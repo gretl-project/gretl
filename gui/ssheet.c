@@ -139,7 +139,7 @@ static void name_var_dialog (void)
     edit_dialog (_("gretl: name variable"), 
 		 _("Enter name for new variable\n"
 		 "(max. 8 characters)"),
-		 NULL, 1,
+		 NULL, 
 		 _("Apply"), name_new_var, mdata, 
 		 _("Cancel"), NULL, NULL, 0, 0);
 }
@@ -151,7 +151,7 @@ static void new_case_dialog (void)
     edit_dialog (_("gretl: case marker"), 
 		 _("Enter case marker for new obs\n"
 		 "(max. 8 characters)"),
-		 NULL, 1,
+		 NULL, 
 		 _("Apply"), name_new_obs, mdata, 
 		 _("Cancel"), NULL, NULL, 0, 0);
 }

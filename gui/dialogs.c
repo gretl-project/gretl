@@ -27,6 +27,8 @@ extern const char *version_string;
 
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
+extern GtkWidget *active_edit_text;
+
 extern void show_spreadsheet (DATAINFO *pdinfo);
 
 GtkWidget *open_dialog;
@@ -40,13 +42,13 @@ void random_dialog (gpointer data, guint code, GtkWidget *widget)
 	edit_dialog (_("gretl: uniform variable"), 
 		     _("Enter name for variable, and\n"
 		     "minimum and maximum values:"), 
-		     "unif 0 100", 1, 
+		     "unif 0 100",  
 		     _("Apply"), do_random, NULL, 
 		     _("  Cancel  "), NULL, NULL, GENR_UNIFORM, GENR);
     } else if (code == GENR_NORMAL) {
 	edit_dialog (_("gretl: normal variable"), 
 		     _("Enter name, mean and standard deviation:"), 
-		     "norm 0 1", 1,
+		     "norm 0 1", 
 		     _("Apply"), do_random, NULL, 
 		     _("  Cancel  "), NULL, NULL, GENR_NORMAL, GENR);
     }
@@ -263,7 +265,7 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
     edit_dialog (_("gretl: create data set"), 
 		 _("Enter start and end obs for new data set\n"
 		 "and name of first var to add:"), 
-		 obsstr, 1,
+		 obsstr, 
 		 _("Apply"), prep_spreadsheet, wdata, 
 		 _(" Cancel "), NULL, NULL, 0, 0);
     g_free(obsstr);
@@ -282,7 +284,7 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 		 "the name of the first variable to add.\n"
 		 "The example below is suitable for 20 units\n"
 		 "observed over 10 periods"), 
-		 "1.01 10.20 newvar", 1,
+		 "1.01 10.20 newvar", 
 		 _("Apply"), prep_spreadsheet, wdata, 
 		 _(" Cancel "), NULL, NULL, 0, 0);
 }
@@ -313,6 +315,7 @@ void destroy_dialog_data (GtkWidget *w, gpointer data)
     open_dialog = NULL;
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
+    if (active_edit_text) active_edit_text = NULL;
 }
 
 /* ........................................................... */
@@ -352,7 +355,6 @@ static GtkWidget *text_edit_new (int *hsize)
 /* ........................................................... */
 
 void edit_dialog (char *diagtxt, char *infotxt, char *deftext, 
-		  int edit_shown, 
 		  char *oktxt, void (*okfunc)(), void *okptr,
 		  char *canceltxt, void (*cancelfunc)(), 
 		  void *cancelptr, guint cmdcode, guint varclick)
@@ -423,23 +425,21 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 	if (okfunc) 
 	    gtk_signal_connect (GTK_OBJECT (d->edit), "activate", 
 				GTK_SIGNAL_FUNC (okfunc), (gpointer) d);
-#if 0
-	gtk_signal_connect_object (GTK_OBJECT (d->edit), "activate", 
-				   GTK_SIGNAL_FUNC (gtk_object_destroy), 
-				   GTK_OBJECT(d->dialog));
-#endif
 
-	gtk_entry_set_visibility (GTK_ENTRY (d->edit), edit_shown);
+	gtk_entry_set_visibility (GTK_ENTRY (d->edit), TRUE);
 	if (deftext) {
 	    gtk_entry_set_text (GTK_ENTRY (d->edit), deftext);
 	    gtk_entry_select_region (GTK_ENTRY (d->edit), 0, strlen (deftext));
 	}
-	if (edit_shown) {
-	    gtk_widget_show (d->edit);
-	    if (varclick == 1) active_edit_id = d->edit; 
-	    if (varclick == 2) active_edit_name = d->edit;
-	}
+	gtk_widget_show (d->edit);
     }
+
+    if (varclick == VARCLICK_INSERT_ID)
+	active_edit_id = d->edit; 
+    else if (varclick == VARCLICK_INSERT_NAME)
+	active_edit_name = d->edit;
+    else if (varclick == VARCLICK_INSERT_TEXT)
+	active_edit_text = d->edit;
 
     gtk_widget_grab_focus (d->edit);
 

@@ -31,6 +31,7 @@ extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;
+GtkWidget *active_edit_text = NULL;
 
 /* ......................................................... */
 
@@ -47,17 +48,22 @@ void selectrow (GtkCList *clist, gint row, gint column,
 	mydata->active_var = row;
     }
 
-    if (active_edit_id) {
+    if (active_edit_id != NULL) {
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_id));
 	if (strlen(edttext)) sprintf(addvar, " %d", mydata->active_var);
 	else sprintf(addvar, "%d", mydata->active_var);
 	gtk_entry_append_text(GTK_ENTRY (active_edit_id), addvar);
     }
-    else if (active_edit_name) {
+    else if (active_edit_name != NULL) {
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_name));
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), 
 			      datainfo->varname[mydata->active_var]);
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
+    }
+    else if (active_edit_text != NULL) {
+	gtk_text_insert (GTK_TEXT (active_edit_text), fixed_font, 
+			 NULL, NULL, datainfo->varname[mydata->active_var],
+			 strlen(datainfo->varname[mydata->active_var]));
     }
 
     /* response to double-click */
@@ -277,7 +283,7 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
     char title[36], query[MAXLABEL], defstr[MAXLEN];
     char startdate[9], enddate[9];
     void (*okfunc)() = NULL;
-    guint varclick = 0;
+    guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
 
     *defstr = '\0';
@@ -320,11 +326,11 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: add var"));
 	strcpy(query, _("Enter formula for new variable:"));
 	okfunc = do_model_genr;
-	varclick = 2;
+	varclick = VARCLICK_INSERT_NAME;
 	break;
     }
 
-    edit_dialog(title, query, defstr, 1,
+    edit_dialog(title, query, defstr, 
 		_(" Apply "), okfunc, mydata, 
 		_(" Cancel "), NULL, NULL, action, varclick);   
 }
@@ -407,7 +413,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     char startdate[9], enddate[9];
     void (*okfunc)() = NULL;
     int v;
-    guint varclick = 0;
+    guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
 
     defstr[0] = '\0';
@@ -426,13 +432,13 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, _("Name of dummy variable to use:"));
 	strcpy(defstr, datainfo->varname[mdata->active_var]);
 	okfunc = do_sampledum;
-	varclick = 2;
+	varclick = VARCLICK_INSERT_NAME;
 	break;
     case SMPLBOOL:
 	strcpy(title, _("gretl: restrict sample"));
 	strcpy(query, _("Enter boolean condition for selecting cases:"));
 	okfunc = do_samplebool;
-	varclick = 2;
+	varclick = VARCLICK_INSERT_NAME;
 	break;
     case SETOBS:
 	strcpy(title, _("gretl: set data frequency"));
@@ -479,26 +485,26 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: rank correlation"));
 	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
-	varclick = 1;
+	varclick = VARCLICK_INSERT_ID;
 	break;
     case MEANTEST:
     case MEANTEST2:
 	strcpy(title, _("gretl: means test"));
 	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
-	varclick = 1;
+	varclick = VARCLICK_INSERT_ID;
 	break;
     case VARTEST:
 	strcpy(title, _("gretl: variances test"));
 	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
-	varclick = 1;
+	varclick = VARCLICK_INSERT_ID;
 	break;
     case GENR:
 	strcpy(title, _("gretl: add var"));
 	strcpy(query, _("Enter formula for new variable:"));
 	okfunc = do_genr;
-	varclick = 2;
+	varclick = VARCLICK_INSERT_NAME;
 	break;
     case RENAME:
 	strcpy(title, _("gretl: rename var"));
@@ -542,19 +548,20 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: boxplots"));
 	strcpy(query, _("Specify variables to plot:"));
 	okfunc = do_box_graph_trad;
-	varclick = 2;
+	varclick = VARCLICK_INSERT_NAME;
 	break;
     case NLS:
 	strcpy(title, _("gretl: nonlinear least squares"));
 	strcpy(query, _("Specify regression function and derivatives:"));
 	okfunc = do_nls_model;
+	varclick = VARCLICK_INSERT_TEXT;
 	break;		
     default:
 	errbox("Bug: unrecognized action code in gretl_callback");
 	return;
     }
 
-    edit_dialog(title, query, defstr, 1,
+    edit_dialog(title, query, defstr, 
 		_(" Apply "), okfunc, mydata, 
 		_(" Cancel "), NULL, NULL, action, varclick);   
 }

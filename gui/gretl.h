@@ -269,6 +269,13 @@ enum graph_types {
     GRETL_BOXPLOT
 };
 
+enum varclick_actions {
+    VARCLICK_NONE,
+    VARCLICK_INSERT_ID,
+    VARCLICK_INSERT_NAME,
+    VARCLICK_INSERT_TEXT
+};
+
 /* functions follow */
 
 void gretl_fork (const char *prog, const char *arg);

@@ -32,6 +32,7 @@ extern const char *version_string;
 
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
+extern GtkWidget *active_edit_text;
 
 GtkWidget *open_dialog;
 int session_saved;
@@ -303,6 +304,7 @@ void destroy_dialog_data (GtkWidget *w, gpointer data)
     open_dialog = NULL;
     if (active_edit_id) active_edit_id = NULL;
     if (active_edit_name) active_edit_name = NULL;
+    if (active_edit_text) active_edit_text = NULL;
 }
 
 /* ........................................................... */
@@ -426,8 +428,12 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	gtk_widget_show (d->edit);
     }
 
-    if (varclick == 1) active_edit_id = d->edit; 
-    if (varclick == 2) active_edit_name = d->edit;
+    if (varclick == VARCLICK_INSERT_ID) 
+	active_edit_id = d->edit; 
+    else if (varclick == VARCLICK_INSERT_NAME) 
+	active_edit_name = d->edit;
+    else if (varclick == VARCLICK_INSERT_TEXT) 
+	active_edit_text = d->edit;
 
     gtk_widget_grab_focus (d->edit);
 

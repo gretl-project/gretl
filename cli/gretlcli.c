@@ -782,6 +782,7 @@ void exec_line (char *line, PRN *prn)
 	    ++model_count;
 	    (models[0])->ID = model_count;
 	    printmodel(models[0], datainfo, prn);
+	    if (oflag) outcovmx(models[0], datainfo, !batch, prn);
 	} 
 	else {
 	    err = 1;

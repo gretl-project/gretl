@@ -32,6 +32,7 @@
 char *storelist = NULL;
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;
+GtkWidget *active_edit_text = NULL;
 
 extern int session_saved;
 extern GtkWidget *mysheet;
@@ -1631,14 +1632,14 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(vwin->vbox), close, FALSE, TRUE, 0);
     g_signal_connect(G_OBJECT(close), "clicked", 
-		       G_CALLBACK(delete_file_viewer), vwin);
+		     G_CALLBACK(delete_file_viewer), vwin);
     gtk_widget_show(close);
 
     /* insert and then free the model buffer */
     gtk_text_buffer_set_text(tbuf, prn->buf, strlen(prn->buf));
     gretl_print_destroy(prn);
 
-    copylist(&default_list, pmod->list);
+    if (pmod->ci != NLS) copylist(&default_list, pmod->list);
 
     /* attach shortcuts */
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
@@ -1689,6 +1690,15 @@ static void model_rtf_copy_state (GtkItemFactory *ifac, gboolean s)
 static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/Edit/Copy all/as LaTeX", s);
+}
+
+/* ........................................................... */
+
+static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/LaTeX/View/Equation", s);
+    flip(ifac, "/LaTeX/Save/Equation", s);
+    flip(ifac, "/LaTeX/Copy/Equation", s);
 }
 
 /* ........................................................... */
@@ -1751,13 +1761,25 @@ static void ols_menu_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-static void lad_menu (GtkItemFactory *ifac)
+static void lad_menu_mod (GtkItemFactory *ifac)
 {
     flip(ifac, "/Tests", FALSE);
     flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
     flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
     flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
     flip(ifac, "/Model data/Add to data set/T*R-squared", FALSE);
+}
+
+/* ........................................................... */
+
+static void nls_menu_mod (GtkItemFactory *ifac)
+{
+    flip(ifac, "/Tests/omit variables", FALSE);
+    flip(ifac, "/Tests/add variables", FALSE);
+    flip(ifac, "/Tests/sum of coefficients", FALSE);
+    flip(ifac, "/Tests/Ramsey's RESET", FALSE);
+    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
+    flip(ifac, "/Model data/Confidence intervals for coefficients", FALSE);
 }
 
 /* ........................................................... */
@@ -1805,6 +1827,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	model_latex_copy_state(vwin->ifac, !pmod->errcode);
 	latex_menu_state(vwin->ifac, !pmod->errcode);
 
+	model_equation_copy_state(vwin->ifac, 
+				  !pmod->errcode && pmod->ci != NLS);
+
 	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
 
 	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
@@ -1818,7 +1843,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 	if (pmod->name) model_save_state(vwin->ifac, FALSE);
 
-	if (pmod->ci == LAD) lad_menu(vwin->ifac);
+	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
+	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
 
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
@@ -1959,7 +1985,7 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     int s, ok = 1;
 
     if (Z == NULL) {
-	flip(mwin->ifac, "/File/Save to sesssion as icon", FALSE);
+	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
 	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
 	flip(mwin->ifac, "/Edit/Copy all", FALSE);
 	flip(mwin->ifac, "/Model data", FALSE);

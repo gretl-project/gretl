@@ -2047,7 +2047,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     *pmod = nls(&Z, datainfo, prn);
     err = model_output(pmod, prn);
-    /* if (oflag) outcovmx(pmod, datainfo, 0, prn); */
+    if (oflag) outcovmx(pmod, datainfo, 0, prn);
 
     if (err) {
 	gretl_print_destroy(prn);
@@ -4475,6 +4475,7 @@ static int gui_exec_line (char *line,
 	    ++model_count;
 	    (models[0])->ID = model_count;
 	    printmodel(models[0], datainfo, prn);
+	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	} 
 	else {
 	    err = 1;

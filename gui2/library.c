@@ -1846,7 +1846,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     if (blank_entry(buf, ddata)) return;
 
     bufgets(NULL, 0, buf);
-    while (bufgets(line, MAXLEN-1, buf && !err)) {
+    while (bufgets(line, MAXLEN-1, buf) && !err) {
 	if (!started && !strncmp(line, "genr", 4)) {
 	    err = do_nls_genr();
 	    continue;
@@ -1867,6 +1867,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     g_free(buf);
     if (err) return;
 
+    /* if the user didn't give "end nls", supply it */
     if (strncmp(line, "end nls", 7)) {
 	strcpy(line, "end nls");
 	cmd_init(line);
@@ -1882,7 +1883,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     *pmod = nls(&Z, datainfo, prn);
     err = model_output(pmod, prn);
-    /* if (oflag) outcovmx(pmod, datainfo, 0, prn); */
+    if (oflag) outcovmx(pmod, datainfo, 0, prn);
 
     if (err) {
 	gretl_print_destroy(prn);
@@ -4304,6 +4305,7 @@ int gui_exec_line (char *line,
 	    ++model_count;
 	    (models[0])->ID = model_count;
 	    printmodel(models[0], datainfo, prn);
+	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
 	} 
 	else {
 	    err = 1;

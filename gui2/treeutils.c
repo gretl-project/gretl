@@ -24,6 +24,7 @@
 
 extern GtkWidget *active_edit_id; /* gui_utils.h */
 extern GtkWidget *active_edit_name;
+extern GtkWidget *active_edit_text;
 
 static gint list_alpha_compare (GtkTreeModel *model, 
 				GtkTreeIter *a, GtkTreeIter *b,
@@ -76,6 +77,16 @@ static void update_dialogs_from_varclick (int active_var)
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
 				 datainfo->varname[active_var]);
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), " ");
+    }
+    else if (active_edit_text != NULL) {
+	GtkTextBuffer *tbuf;
+
+	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));
+	if (tbuf != NULL) {
+	    gtk_text_buffer_insert_at_cursor(tbuf, 
+					     datainfo->varname[active_var], 
+					     -1);
+	}
     }  
 }
 
