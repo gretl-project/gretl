@@ -1776,17 +1776,34 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 	if (roots != NULL) {
 	    int p = pmod->list[1];
 	    int q = pmod->list[2];
-	    int i;
+	    int i, mod;
 
 	    if (p > 0) {
+		mod = 0;
 		pprintf(prn,"\n  %s:\t", _("AR roots"));
 		for (i=0; i<p; i++) {
 		    pprintf(prn, "%7.4f", roots[i].r);
 		    if (roots[i].i != 0) {
 			pputs(prn, (roots[i].i > 0) ? "+" : "");
 			pprintf(prn, "%6.4fi", roots[i].i);
+			mod = 1;
 		    }
 		    pputc(prn, '\t');
+		}
+		if (mod) {
+		    pputc(prn, '\n');
+		    pprintf(prn, "  %s:\t", _("Moduli"));
+		    for (i=0; i<p; i++) {
+			if (roots[i].i != 0) {
+			    double x = roots[i].r * roots[i].r +
+				roots[i].i * roots[i].i;
+			    
+			    pprintf(prn, "%7.4f", sqrt(x));
+			    _bufspace(9, prn);
+			} else {
+			    _bufspace(16, prn);
+			}
+		    }
 		}
 		pputc(prn, '\n');
 	    } else {
@@ -1794,15 +1811,32 @@ static void print_ll_stats (const MODEL *pmod, PRN *prn)
 	    }
 
 	    if (q > 0) {
+		mod = 0;
 		pprintf(prn,"  %s:\t", _("MA roots"));
 		for (i=p; i<p+q; i++) {
 		    pprintf(prn,"%7.4f", roots[i].r);
 		    if (roots[i].i != 0) {
 			pprintf(prn, (roots[i].i > 0) ? "+" : "");
 			pprintf(prn, "%6.4fi", roots[i].i);
-		    }
+			mod = 1;
+		    } 
 		    pputc(prn, '\t');
 		}
+		if (mod) {
+		    pputc(prn, '\n');
+		    pprintf(prn, "  %s:\t", _("Moduli"));
+		    for (i=p; i<p+q; i++) {
+			if (roots[i].i != 0) {
+			    double x = roots[i].r * roots[i].r +
+				roots[i].i * roots[i].i;
+			    
+			    pprintf(prn, "%7.4f", sqrt(x));
+			    _bufspace(9, prn);
+			} else {
+			    _bufspace(16, prn);
+			}
+		    }
+		}		
 		pputc(prn, '\n');	
 	    }
 	}

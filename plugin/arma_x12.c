@@ -256,7 +256,10 @@ static int print_iterations (const char *path, PRN *prn)
 
     sprintf(fname, "%s.out", path);
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from '%s'\n", fname);
+	return 1;
+    }
 
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, " MODEL EST", 10)) print = 1;
@@ -292,7 +295,10 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
     double x;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from '%s'\n", fname);
+	return 1;
+    }
 
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
@@ -374,7 +380,10 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
     int err = 0;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from '%s'\n", fname);
+	return 1;
+    }
 
     for (i=0; i<nc; i++) {
 	coeff[i] = sderr[i] = NADBL;
@@ -433,7 +442,10 @@ static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
     int t, start = 0, nobs = 0;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return NULL;
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't read from '%s'\n", fname);
+	return NULL;
+    }
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return NULL;
@@ -573,7 +585,10 @@ static int write_spc_file (const char *fname,
     char *s, tmp[8];
 
     fp = fopen(fname, "w");
-    if (fp == NULL) return 1;    
+    if (fp == NULL) {
+	fprintf(stderr, "Couldn't write to '%s'\n", fname);
+	return 1;  
+    }  
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
