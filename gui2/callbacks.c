@@ -27,6 +27,7 @@
 #include "ssheet.h"
 #include "textbuf.h"
 #include "textutil.h"
+#include "boxplots.h"
 
 #ifdef OLD_GTK
 # include <gtkextra/gtkiconfilesel.h>
