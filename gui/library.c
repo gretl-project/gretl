@@ -27,7 +27,6 @@
 # include <unistd.h>
 #endif
 
-#include "htmlprint.h"
 #include "selector.h"
 
 extern DATAINFO *subinfo;

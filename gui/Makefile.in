@@ -82,7 +82,7 @@ vpath %.c $(topsrc)/cli
 
 OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o htmlprint.o guiprint.o boxplots.o \
+	webget.o calculator.o guiprint.o boxplots.o \
 	selector.o settings.o helpfiles.o
 
 $(PROG): $(OBJS) $(query_gtkextra_lib)
@@ -247,10 +247,9 @@ gui_utils.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 gui_utils.o: ../lib/src/nonparam.h ../lib/src/discrete.h
 gui_utils.o: ../lib/src/subsample.h ../lib/src/calendar.h gretltypes.h
 gui_utils.o: gui_utils.h callbacks.h dialogs.h library.h session.h settings.h
-gui_utils.o: helpfiles.h htmlprint.h guiprint.h ../pixmaps/save.xpm
-gui_utils.o: ../pixmaps/saveas.xpm ../pixmaps/print.xpm
-gui_utils.o: ../pixmaps/exec_small.xpm ../pixmaps/copy.xpm
-gui_utils.o: ../pixmaps/paste.xpm ../pixmaps/search.xpm
+gui_utils.o: helpfiles.h guiprint.h ../pixmaps/save.xpm ../pixmaps/saveas.xpm
+gui_utils.o: ../pixmaps/print.xpm ../pixmaps/exec_small.xpm
+gui_utils.o: ../pixmaps/copy.xpm ../pixmaps/paste.xpm ../pixmaps/search.xpm
 gui_utils.o: ../pixmaps/replace.xpm ../pixmaps/undo.xpm
 gui_utils.o: ../pixmaps/question.xpm ../pixmaps/close.xpm
 helpfiles.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
@@ -264,17 +263,6 @@ helpfiles.o: ../lib/src/nonparam.h ../lib/src/discrete.h
 helpfiles.o: ../lib/src/subsample.h ../lib/src/calendar.h gretltypes.h
 helpfiles.o: gui_utils.h callbacks.h dialogs.h library.h session.h settings.h
 helpfiles.o: helpfiles.h
-htmlprint.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
-htmlprint.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
-htmlprint.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-htmlprint.o: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
-htmlprint.o: ../lib/src/describe.h ../lib/src/printout.h
-htmlprint.o: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
-htmlprint.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-htmlprint.o: ../lib/src/nonparam.h ../lib/src/discrete.h
-htmlprint.o: ../lib/src/subsample.h ../lib/src/calendar.h gretltypes.h
-htmlprint.o: gui_utils.h callbacks.h dialogs.h library.h session.h settings.h
-htmlprint.o: helpfiles.h htmlprint.h
 library.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 library.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 library.o: ../lib/src/gretl_utils.h ../lib/src/compare.h ../lib/src/pvalues.h
@@ -284,7 +272,7 @@ library.o: ../lib/src/interact.h ../lib/src/graphing.h
 library.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 library.o: ../lib/src/discrete.h ../lib/src/subsample.h ../lib/src/calendar.h
 library.o: gretltypes.h gui_utils.h callbacks.h dialogs.h library.h session.h
-library.o: settings.h helpfiles.h htmlprint.h selector.h ../cli/common.c
+library.o: settings.h helpfiles.h selector.h ../cli/common.c
 selector.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 selector.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 selector.o: ../lib/src/gretl_utils.h ../lib/src/compare.h

@@ -784,7 +784,7 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 static void set_addgraph_mode (void)
 {
     GtkWidget *gmenu = 
-	gtk_item_factory_get_item(mdata->ifac, _("/Session/Add last graph"));
+	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
 
     if (gmenu == NULL || addgraph == NULL) return;
 

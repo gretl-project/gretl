@@ -228,9 +228,6 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
     case SAVE_TEX_EQ_FRAG:
 	file_selector(_("Save LaTeX file"), file_code, mydata->data);
 	break;
-    case SAVE_HTML:
-	file_selector(_("Save HTML file"), file_code, mydata->data);
-	break;
     case SAVE_MODEL:
 	file_selector(_("Save model output"), file_code, mydata->w);
 	break;

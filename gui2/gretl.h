@@ -176,7 +176,6 @@ enum file_ops {
     SAVE_THIS_GRAPH,
     SAVE_GP_CMDS,
     SAVE_CONSOLE,
-    SAVE_HTML,
     OP_MAX
 };
 
@@ -231,7 +230,6 @@ enum clipstuff {
 enum copy_variants {
     COPY_SELECTION = 1,
     COPY_TEXT,
-    COPY_HTML,
     COPY_LATEX,
     COPY_LATEX_EQUATION,
     COPY_RTF

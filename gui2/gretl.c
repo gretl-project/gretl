@@ -138,7 +138,7 @@ SESSIONBUILD rebuild;       /* rebuild session later */
 
 int plot_count, data_status, orig_vars;
 PRN *cmds;
-gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
+gchar *clipboard_buf; /* for copying models as LaTeX */
 
 /* Is NLS translation in effect? */
 int nls_on;

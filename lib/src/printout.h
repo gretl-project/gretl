@@ -19,6 +19,8 @@
 
 /* printout.h for gretl */
 
+#define GRETL_DIGITS 6
+
 /* functions follow */
  
 void session_time (FILE *fp);

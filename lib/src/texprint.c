@@ -21,11 +21,9 @@
 
 #include "libgretl.h"
 
-#define PRECISION 6
-
 /* ......................................................... */
 
-static void tex_print_float (const double x, const int tab, PRN *prn)
+static void tex_print_float (double x, int tab, PRN *prn)
      /* prints a floating point number as a TeX math string.
 	if tab != 0, print the sign in front, separated by a
 	tab symbol (for equation-style regression printout).
@@ -33,7 +31,7 @@ static void tex_print_float (const double x, const int tab, PRN *prn)
 {
     char number[16];
 
-    sprintf(number, "%#.*g", PRECISION, x);
+    sprintf(number, "%#.*g", GRETL_DIGITS, x);
 
     if (!tab) {
 	if (x < 0.) pprintf(prn, "$-$%s", number + 1);
@@ -67,14 +65,14 @@ char *tex_escape (char *targ, const char *src)
     return targ;
 }
 
-#define UPPER_F_LIMIT (pow(10, PRECISION))
+#define UPPER_F_LIMIT (pow(10, GRETL_DIGITS))
 #define LOWER_F_LIMIT (pow(10, -4))
 
-static void dcol_float (double xx, char *numstr)
+void tex_dcolumn_double (double xx, char *numstr)
 {
     double a = fabs(xx);
 
-    sprintf(numstr, "%#.*g", PRECISION, xx);
+    sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
 
     if (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT) {
 	int expon;
@@ -89,7 +87,7 @@ static void dcol_float (double xx, char *numstr)
 }
 
 static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
-			     const int c, PRN *prn)
+			     int c, PRN *prn)
 {
     char tmp[16], coeff[32], sderr[32];
     double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
@@ -97,8 +95,8 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     tmp[0] = '\0';
     tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
 
-    dcol_float(pmod->coeff[c-1], coeff);
-    dcol_float(pmod->sderr[c-1], sderr);
+    tex_dcolumn_double(pmod->coeff[c-1], coeff);
+    tex_dcolumn_double(pmod->sderr[c-1], sderr);
 
     pprintf(prn, "%s &\n"
 	    "  %s &\n"
@@ -114,7 +112,7 @@ static void tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
 /* ......................................................... */
 
-static int make_texfile (const PATHS *ppaths, const int model_count,
+static int make_texfile (const PATHS *ppaths, int model_count,
 			 int equation, char *texfile, PRN *prn)
 {
     prn->buf = NULL;
@@ -142,7 +140,7 @@ static int make_texfile (const PATHS *ppaths, const int model_count,
  */
 
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
-			const int standalone, PRN *prn)
+			int standalone, PRN *prn)
 {
 
     int i, start, constneg = 0, ncoeff = pmod->list[0];
@@ -225,8 +223,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 static void tex_depvarstats (const MODEL *pmod, PRN *prn,
 			     char *x1str, char *x2str)
 {
-    dcol_float(pmod->ybar, x1str);
-    dcol_float(pmod->sdy, x2str);
+    tex_dcolumn_double(pmod->ybar, x1str);
+    tex_dcolumn_double(pmod->sdy, x2str);
     pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
 	    I_("Mean of dependent variable"), x1str,
 	    I_("S.D. of dependent variable"), x2str);
@@ -235,8 +233,8 @@ static void tex_depvarstats (const MODEL *pmod, PRN *prn,
 static void tex_essline (const MODEL *pmod, PRN *prn,
 			 char *x1str, char *x2str)
 {
-    dcol_float(pmod->ess, x1str);
-    dcol_float(pmod->sigma, x2str);
+    tex_dcolumn_double(pmod->ess, x1str);
+    tex_dcolumn_double(pmod->sigma, x2str);
     pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
 	    I_("Sum of squared residuals"), x1str,
 	    I_("Standard error of residuals"), x2str);
@@ -245,8 +243,8 @@ static void tex_essline (const MODEL *pmod, PRN *prn,
 static void tex_rsqline (const MODEL *pmod, PRN *prn,
 			 char *x1str, char *x2str)
 {
-    dcol_float(pmod->rsq, x1str);
-    dcol_float(pmod->adjrsq, x2str);
+    tex_dcolumn_double(pmod->rsq, x1str);
+    tex_dcolumn_double(pmod->adjrsq, x2str);
     pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
 	    I_("Unadjusted $R^2$"), x1str, 
 	    I_("Adjusted $\\bar{R}^2$"), x2str);
@@ -255,8 +253,8 @@ static void tex_rsqline (const MODEL *pmod, PRN *prn,
 static void tex_fline (const MODEL *pmod, PRN *prn,
 		       char *x1str, char *x2str)
 {
-    dcol_float(pmod->fstt, x1str);
-    dcol_float(fdist(pmod->fstt, pmod->dfn, pmod->dfd), x2str);
+    tex_dcolumn_double(pmod->fstt, x1str);
+    tex_dcolumn_double(fdist(pmod->fstt, pmod->dfn, pmod->dfd), x2str);
     pprintf(prn, "%s (%d, %d) & %s \\\\\n %s & %s \\\\\n",
 	    I_("F-statistic"), pmod->dfn, pmod->dfd, x1str,
 	    I_("p-value for F()"), x2str);
@@ -265,8 +263,8 @@ static void tex_fline (const MODEL *pmod, PRN *prn,
 static void tex_dwline (const MODEL *pmod, PRN *prn,
 			char *x1str, char *x2str)
 {
-    dcol_float(pmod->dw, x1str);
-    dcol_float(pmod->rho, x2str);
+    tex_dcolumn_double(pmod->dw, x1str);
+    tex_dcolumn_double(pmod->rho, x2str);
     pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\rho}$) & %s \n",
 	    I_("Durbin--Watson statistic"), x1str, 
 	    I_("First-order autocorrelation coeff."), x2str);
@@ -329,7 +327,7 @@ static const char *tex_estimator_string (int ci)
  */
 
 int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
-		     const int standalone, PRN *prn)
+		     int standalone, PRN *prn)
 {
     int i, ncoeff = pmod->list[0];
     int t1 = pmod->t1, t2 = pmod->t2;
@@ -453,7 +451,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag)
+	      int model_count, int oflag)
 {
     PRN prn;
 
@@ -483,7 +481,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
 
 int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
-	      const int model_count, int oflag)
+	      int model_count, int oflag)
 {
     PRN prn;
 

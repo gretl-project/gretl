@@ -29,11 +29,8 @@ ifeq ($(USE_NLS),yes)
   localedir = $(datadir)/locale
   DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 endif
-ifeq ($(have_gtk),2.0)
-  GRETLLIB = ../lib/libgretl-2.la
-else
-  GRETLLIB = ../lib/libgretl.la
-endif
+
+GRETLLIB = ../lib/libgretl.la
 
 # General compile options and libs:
 LIBS = $(CLI_LIBS)

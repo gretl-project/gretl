@@ -37,5 +37,7 @@ int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
 
 char *tex_escape (char *targ, const char *src);
 
+void tex_dcolumn_double (double xx, char *numstr);
+
 
 

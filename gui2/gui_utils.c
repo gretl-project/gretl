@@ -22,7 +22,6 @@
 #include "gretl.h"
 #include <sys/stat.h>
 #include <unistd.h>
-#include "htmlprint.h"
 #include "guiprint.h"
 
 #ifdef G_OS_WIN32
@@ -69,7 +68,6 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
     { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
     { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
@@ -1554,7 +1552,6 @@ static void model_rtf_copy_state (GtkItemFactory *ifac, gboolean s)
 
 static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/Edit/Copy all/as HTML", s);
     flip(ifac, "/Edit/Copy all/as LaTeX", s);
 }
 
@@ -2000,7 +1997,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     /* or it's a model window we're copying from? */
     if (vwin->role == VIEW_MODEL &&
 	(how == COPY_RTF || how == COPY_LATEX ||
-	 how == COPY_LATEX_EQUATION || how == COPY_HTML)) {
+	 how == COPY_LATEX_EQUATION)) {
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->errcode) { 
@@ -2019,8 +2016,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    tex_print_model(pmod, datainfo, 0, prn);
 	else if (how == COPY_LATEX_EQUATION)
 	    tex_print_equation(pmod, datainfo, 0, prn);
-	else /* HTML */
-	    h_printmodel(pmod, datainfo, prn);
 
 	prn_to_clipboard(prn);
 	gretl_print_destroy(prn);

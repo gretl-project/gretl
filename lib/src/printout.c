@@ -24,8 +24,6 @@
 #include "version.h"
 #include <time.h>
 
-#define GRETL_DIGITS 6
-
 #ifdef OS_WIN32
 #define isnan(x) ((x) != (x))
 #endif
@@ -35,7 +33,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 static void depvarstats (const MODEL *pmod, PRN *prn);
 static int essline (const MODEL *pmod, PRN *prn, int wt);
 static void rsqline (const MODEL *pmod, PRN *prn);
-static int Fline (const MODEL *pmod, PRN *prn);
+static void Fline (const MODEL *pmod, PRN *prn);
 static void dwline (const MODEL *pmod, PRN *prn);
 static int print_discrete_stats (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
@@ -109,8 +107,11 @@ void printxx (const double xx, char *str, int ci)
 static int essline (const MODEL *pmod, PRN *prn, int wt)
 {
     if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
-	pprintf(prn, _("Error sum of squares (%g) is not > 0\n\n"), 
-		(wt)? pmod->ess_wt : pmod->ess);
+	char tmp[128];
+
+	sprintf(tmp, _("Error sum of squares (%g) is not > 0"), 
+		(wt)? pmod->ess_wt : pmod->ess), 
+	pprintf(prn, "%s\n\n", tmp);
 	return 1;
     }
 
@@ -135,7 +136,7 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static int Fline (const MODEL *pmod, PRN *prn)
+static void Fline (const MODEL *pmod, PRN *prn)
 {
     char tmp[32];
 
@@ -147,8 +148,6 @@ static int Fline (const MODEL *pmod, PRN *prn)
 	pprintf(prn, " (%s = %.3g)\n", _("p-value"), 
 		fdist(pmod->fstt, pmod->dfn, pmod->dfd));
     }
-
-    return 0;
 }
 
 /* ......................................................... */ 
@@ -173,12 +172,16 @@ static void dhline (const MODEL *pmod, PRN *prn)
     sderr = pmod->sderr[i-1];
 
     if ((T * sderr * sderr) < 1.0) {
-	h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
+	char tmp[128];
 
-	pprintf(prn, _("Durbin's h stat. %#g  First-order autocorr. coeff %#g\n"), 
+	h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
+	sprintf(tmp, _("Durbin's h stat. %#g  First-order autocorr. coeff %#g"), 
 		h, pmod->rho);
-	pprintf(prn, _("(Using variable %d for h stat, with T' = %d)\n"), 
+	pprintf(prn, "  %s\n", tmp);
+
+	sprintf(tmp, _("(Using variable %d for h stat, with T' = %d)"), 
 		pmod->list[i], T);
+	pprintf(prn, "  %s\n", tmp);
     }
 }
 
@@ -208,16 +211,17 @@ static void pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
     int k = pmod->ncoeff - pmod->ifc;
 
     if (k < 2) return;
-    if ((k = _pmax(pmod)))
+    if ((k = _pmax(pmod))) {
 	pprintf(prn, _("Excluding the constant, p-value was highest "
 		"for variable %d (%s)\n\n"), k, pdinfo->varname[k]);
+    }
 }
 
 /* ......................................................... */ 
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, _("\nCOVARIANCE MATRIX OF REGRESSION COEFFICIENTS\n\n"));
+    pprintf(prn, "\n%s\n\n", _("COVARIANCE MATRIX OF REGRESSION COEFFICIENTS"));
 }
 
 /* ......................................................... */ 
@@ -398,14 +402,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, "\n%s\n", _(aux_string(pmod->aux)));
 	break;
     case AUX_AR:
-	pprintf(prn, _("\nBreusch-Pagan test for "));
+	pprintf(prn, "\n%s ", _("Breusch-Pagan test for"));
 	if (pmod->order > 1)
-	    pprintf(prn, _("autocorrelation up to order %d\n"), pmod->order);
+	    pprintf(prn, "%s %d\n", _("autocorrelation up to order"), pmod->order);
 	else
-	    pprintf(prn, _("first-order autocorrelation\n"));
+	    pprintf(prn, "%s\n", _("first-order autocorrelation"));
 	break;	
     case AUX_ARCH:
-	pprintf(prn, _("\nTest for ARCH of order %d\n"), pmod->order);
+	pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), pmod->order);
 	break;	
     case VAR:
 	break;
@@ -417,8 +421,9 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	break;
     }
 
-    pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
+    pprintf(prn, _("%s estimates using the %d observations %s-%s"),
 	    _(estimator_string(pmod->ci)), pmod->nobs, startdate, enddate);
+    pprintf(prn, "\n");
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, "%s: uhat\n", _("Dependent variable"));
@@ -430,11 +435,11 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 		 pdinfo->varname[pmod->list[1]]);
 
     if (pmod->ci == WLS || pmod->ci == ARCH) 
-	pprintf(prn, _("Variable used as weight: %s\n"), 
+	pprintf(prn, "%s: %s\n", _("Variable used as weight"), 
 		pdinfo->varname[pmod->nwt]);
     if (gretl_msg[0] != '\0') pprintf(prn, "%s\n", gretl_msg);
     if (pmod->wt_dummy) 
-	pprintf(prn, _("Weight var is a dummy variable, effective obs = %d\n\n"),
+	pprintf(prn, "%s %d\n\n", _("Weight var is a dummy variable, effective obs ="), 
 		pmod->nobs);
     else pprintf(prn, "\n");
 
@@ -468,7 +473,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     
     if (pmod->aux == AUX_WHITE) {
 	rsqline(pmod, prn);
-	pprintf(prn, _("\nTest statistic: TR^2 = %f,\n"), 
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), 
 		pmod->rsq * pmod->nobs);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
 		pmod->ncoeff - 1, pmod->rsq * pmod->nobs,
@@ -487,7 +492,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) return gotnan;
 	rsqline(pmod, prn);
-	if (Fline(pmod, prn)) gotnan = 1;
+	Fline(pmod, prn);
 	if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
 	    if (pmod->ldepvar) dhline(pmod, prn);
 	    else dwline(pmod, prn);
@@ -503,31 +508,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
     else if (pmod->ci == HSK || pmod->ci == ARCH ||
 	     (pmod->ci == WLS && pmod->wt_dummy == 0)) {
-#ifdef RAMANATHAN
-	pprintf(prn, _("Statistics based on the weighted data:\n\n"
-	       "R-squared is suppressed as it is not meaningful.  The "
-	       "F-statistic tests\nthe hypothesis that all parameters "
-	       "including the constant term are zero.\n\n"));
-	if (essline(pmod, prn, 1)) return gotnan;
-	if (Fline(pmod, prn)) gotnan = 1;
-	dwline(pmod, prn);
-	pprintf(prn, _("\nStatistics based on the original data:\n\n"
-	       "R-squared is computed as the square of the correlation "
-	       "between observed and\nfitted values of the dependent "
-	       "variable.\n\n"));
-	depvarstats(pmod, prn);
-	if (essline(pmod, prn, 0)) return gotnan;
-	rsqline(pmod, prn);
-#else
-	pprintf(prn, _("Statistics based on the weighted data:\n\n"));
+	pprintf(prn, "%s:\n\n", _("Statistics based on the weighted data"));
 	if (essline(pmod, prn, 1)) return gotnan;
 	rsqline(pmod, prn);
-	if (Fline(pmod, prn)) gotnan = 1;
+	Fline(pmod, prn);
 	dwline(pmod, prn);
-	pprintf(prn, _("\nStatistics based on the original data:\n\n"));
+	pprintf(prn, "\n%s:\n\n", _("\nStatistics based on the original data")); 
 	depvarstats(pmod, prn);
 	if (essline(pmod, prn, 0)) return gotnan;
-#endif 
 	print_aicetc(pmod, prn);
 	pmax_line(pmod, pdinfo, prn);
     }
@@ -538,7 +526,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	       "variable.\n\n"));	
 	if (essline(pmod, prn, 0)) return gotnan;
 	rsqline(pmod, prn);
-	if (Fline(pmod, prn)) gotnan = 1;
+	Fline(pmod, prn);
 	dwline(pmod, prn);
 	print_aicetc(pmod, prn);
 	pmax_line(pmod, pdinfo, prn);
@@ -568,7 +556,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, _("\n  Test statistic: F(%d, %d) = %f, "), 
+	pprintf(prn, "\n  %s: F(%d, %d) = %f, ", _("Test statistic"), 
 		add->dfn, add->dfd, add->F);
 	pprintf(prn, _("with p-value = %f\n"), 
 		fdist(add->F, add->dfn, add->dfd));
@@ -578,15 +566,14 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, _("\n  Test statistic: Chi-square(%d) = %f, "), 
-		add->dfn, add->chisq);
+	pprintf(prn, "\n  %s: %s(%d) = %f, ", _("Test statistic"), 
+		_("Chi-square"), add->dfn, add->chisq);
 	pprintf(prn, _("with p-value = %f\n\n"), 
 		chisq(add->chisq, add->dfn));
 	return;
     }
     else if (aux_code == AUX_SQ || aux_code == AUX_LOG) {
-	pprintf(prn, _("\nTest statistic: "
-		"TR^2 = %f,\n"), add->trsq);
+	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), add->trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
 		add->dfn, add->trsq, chisq(add->trsq, add->dfn));
 	return;
@@ -612,7 +599,7 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	for (i = 1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
-	pprintf(prn, _("\n  Test statistic: F(%d, %d) = %f, "), 
+	pprintf(prn, "\n  %s: F(%d, %d) = %f, ", _("Test statistic"), 
 		omit->dfn, omit->dfd, omit->F);
 	pprintf(prn, _("with p-value = %f\n"), 
 		fdist(omit->F, omit->dfn, omit->dfd));
@@ -623,8 +610,8 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	for (i = 1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
-	pprintf(prn, _("\n  Test statistic: Chi-square(%d) = %f, "), 
-		omit->dfn, omit->chisq);
+	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),
+		_("Chi-square"), omit->dfn, omit->chisq);
 	pprintf(prn, _("with p-value = %f\n\n"), 
 		chisq(omit->chisq, omit->dfn));
 	return;
@@ -766,8 +753,9 @@ void printfreq (FREQDIST *freq, PRN *prn)
 
     pprintf(prn, "\n%s:\n", _("Test for null hypothesis of normal distribution"));
     
-    pprintf(prn, _("Chi-squared(2) = %.3f with pvalue %.5f\n"), 
-	   freq->chisqu, chisq(freq->chisqu, 2));
+    pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
+	    _("Chi-square"), freq->chisqu, 
+	    _("with p-value"), chisq(freq->chisqu, 2));
 }
 
 /**
@@ -793,9 +781,9 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
-    pprintf(prn, _("Full data range: %s - %s (n = %d)\n"),
+    pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, _("Current sample:  %s - %s"), date1, date2);
+    pprintf(prn, "%s:  %s - %s", ("Current sample"), date1, date2);
     if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) 
 	pprintf(prn, "\n");
     else pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
@@ -1943,17 +1931,17 @@ static int print_discrete_stats (const MODEL *pmod,
 	if (ret) gotnan = 1;
     }
     pprintf(prn, "\n");
-    pprintf(prn, _("Mean of %s = %.3f\n"), 
+    pprintf(prn, "%s %s = %.3f\n", _("Mean of"), 
 	    pdinfo->varname[pmod->list[1]], pmod->ybar);
-    pprintf(prn, _("Number of cases 'correctly predicted' = %d (%.1f%%)\n"), 
+    pprintf(prn, "%s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 
 	    pmod->correct, 100 * (double) pmod->correct / (double) pmod->nobs);
     pprintf(prn, _("f(beta'x) at mean of independent vars = %.3f\n"), pmod->sdy);
-    pprintf(prn, _("Log-likelihood = %.3f\n"), pmod->lnL);
+    pprintf(prn, "%s = %.3f\n", _("Log-likelihood"), pmod->lnL);
     if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	i = pmod->ncoeff - 1;
-	pprintf(prn, _("Likelihood ratio test: "
-		"Chi-square(%d) = %.3f (p-value %f)\n\n"),
-		i, pmod->chisq, chisq(pmod->chisq, i));
+	pprintf(prn, "%s: %s(%d) = %.3f (%s %f)\n\n",
+		_("Likelihood ratio test"), _("Chi-square"), 
+		i, pmod->chisq, _("p-value"), chisq(pmod->chisq, i));
     } else pprintf(prn, "\n");
 
     return gotnan;

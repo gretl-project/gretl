@@ -4,6 +4,10 @@ version 1.0rc1
 - gtk 2.0: fix remove/add toolbar breakage; change
   name of program back to "gretl" and "gretl_x11"
   (not "gretl2", "gretl2_x11")
+- revamp and internationalize TeX and RTF printing functions
+  including those for summary stats and correlation matrix
+- remove HTML print/copy options: can't maintain four formats
+  with internationalization!
 
 08/25/2002 version 0.999
 - add support for gtk 2.0 and gnome 2.0

@@ -1238,8 +1238,8 @@ void augment_copy_menu (windata_t *vwin)
 
     item.path = NULL;
 
-    if (gtk_item_factory_get_item(vwin->ifac, _("/Edit/Copy all")))
-	gtk_item_factory_delete_item(vwin->ifac, _("/Edit/Copy all"));
+    if (gtk_item_factory_get_item(vwin->ifac, "/Edit/Copy all"))
+	gtk_item_factory_delete_item(vwin->ifac, "/Edit/Copy all");
 
     /* menu branch */
     item.path = mymalloc(64);

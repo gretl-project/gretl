@@ -35,16 +35,15 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared
 
 GRETLINC = -I$(topsrc)/lib/src
+GRETLLIB = ../lib/libgretl.la
 
 ifeq ($(have_gtk),2.0)
-  GRETLLIB = ../lib/libgretl-2.la
   PROGRESS_PLUGIN = progress_bar-2.so
   GNUMERIC_PLUGIN = gnumeric_import-2.so
   EXCEL_PLUGIN = excel_import-2.so
   GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
   GRETL_LIBOLE2_CFLAGS := -I. $(shell pkg-config --cflags glib-2.0)
 else
-  GRETLLIB = ../lib/libgretl.la
   PROGRESS_PLUGIN = progress_bar.so
   GNUMERIC_PLUGIN = gnumeric_import.so
   EXCEL_PLUGIN = excel_import.so
