@@ -19,6 +19,11 @@ version 0.993
 - add noecho command to suppress echo of commands in script
   output
 - modify "print" command to support printing of string literals
+- add menu item to find a variable in the main window
+- improve context help in script windows
+- extend LaTeX printing of models to Cochrane-Orcutt and Hildreth-
+  Lu estimators
+- add edit/print taskbar to more windows
 
 04/01/2002 version 0.992
 - bounds checking for critical values look-up; also add this
