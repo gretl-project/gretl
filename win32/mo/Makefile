@@ -1,9 +1,11 @@
+include ../config.mk
+
 PODIR = ../../po
 
 es.mo: $(PODIR)/es.po
 	cp $< .
 	msgconv -t utf-8 -o es-utf8.po es.po
-	wine c:/Userdata/gettext/msgfmt.exe es-utf8.po && \
+	$(WIN32_MSGFMT) es-utf8.po && \
 	rm es-utf8.po
 	mv messages $@ && rm es.po
 

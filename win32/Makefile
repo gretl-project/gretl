@@ -1,8 +1,7 @@
 # Makefile for cross-compiling gretl for win32 on Linux,
 # using mingw compiler
 
-# glib includes: adjust to match your system
-glibinc = /usr/local/cross-tools/mingw32/include/glib-2.0
+include config.mk
 
 # directories
 topsrc = ..
@@ -11,10 +10,10 @@ extradir = ./gtkextra-lib
 imports = ./import-libs
 
 # tools
-CC = mingw32-gcc -fnative-struct -Wall
-AS = mingw32-as
-DLLWRAP = mingw32-dllwrap
-DLLTOOL = mingw32-dlltool
+CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall
+AS = $(MGW_PREFIX)-as
+DLLWRAP = $(MGW_PREFIX)-dllwrap
+DLLTOOL = $(MGW_PREFIX)-dlltool
 
 # libraries
 GTKLIBS = -L$(imports) -lglib-2.0.dll -lgtk.dll -lgdk.dll
@@ -27,8 +26,7 @@ LIBS = -lm $(GRETLLIB) -ladvapi32
 
 # flags/defines
 LDFLAGS = -s 
-GLIBINC = -I$(glibinc) -I$(extradir) 
-CFLAGS = -I. -I$(libdir) -DHAVE_READLINE -DOS_WIN32 $(GLIBINC)
+CFLAGS = -DHAVE_READLINE -DOS_WIN32 -I. -I$(libdir) -I$(GLIB_INC) -I$(extradir)
 
 # source paths
 vpath %.c $(libdir)
@@ -37,7 +35,7 @@ vpath %.c $(topsrc)/gui
 vpath %.c $(extradir)
 vpath %.c $(topsrc)/plugin
 vpath %.c $(topsrc)/plugin/libole2
-vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin
+vpath %.h $(libdir):$(topsrc)/cli:$(topsrc)/gui:$(extradir):$(topsrc)/plugin:.
 
 #### End of system configuration section. ####
 
@@ -49,8 +47,8 @@ PLUGINS = dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
 	dlls/excel_import.dll # dlls/mp_ols.dll
 
 WRES    = gretlw32_res.o
-RC      = mingw32-windres
-RCFLAGS = --include-dir /usr/local/cross-tools/mingw32/include \
+RC      = $(MGW_PREFIX)-windres
+RCFLAGS = --include-dir $(MGW_INC) \
 	--define __WIN32__ --define __WIN95__ --define MSRC \
 	--define __GNUWIN32__
 RCOUT   = gretlw32_res.o
@@ -82,8 +80,10 @@ EXTRASRC = gtkitementry.c gtksheet.c gtkiconlist.c \
 EXTRAHDR = $(EXTRASRC:.c=.h)
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
+MO = mo/es.mo
+
 # targets begin
-all: dirs dll extra-dll plugin $(CLIPROG) $(GUIPROG) 
+all: dirs dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -93,10 +93,10 @@ $(GUIPROG): $(GUIOBJ) $(WRES)
 
 $(CLIOBJ): $(CLI_SRC) 
 
-$(GUIOBJ): $(GUISRC) $(GUIHDR) guistamp
+$(GUIOBJ): $(GUISRC) $(GUIHDR) build.h
 
-guistamp:
-	./builddate.pl > build.h
+build.h:
+	./builddate.pl
 
 $(EXTRAOBJ): $(EXTRAHDR) $(EXTRASRC) 
 
@@ -108,6 +108,9 @@ $(WRES): gretlw32.rc
 
 $(UPDATER):
 	make -C updater
+
+$(MO):
+	make -C mo
 
 dirs:
 	mkdir -p dlls 

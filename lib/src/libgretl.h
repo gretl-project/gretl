@@ -30,7 +30,7 @@
 #endif
 
 #ifdef OS_WIN32
-# include "../../winconfig.h"
+# include "winconfig.h"
 #endif
 
 #ifndef __GNOME_I18N_H__

@@ -60,8 +60,10 @@ htmlhelp:
 	cp figures/*.png gretlhlp/figures
 	for f in gretlhlp/figures/*.png ; do
 	convert $f ${f%.png}.gif ; done
-	zip -r gretlhlp.zip gretlhlp/*
+	wineconsole "c:/Program Files/HTML Help Workshop/hhc.exe" \
+	gretlhlp/gretl.hhp
+	mv gretlhlp/gretl.chm ../win32/doc/gretl.chm
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex
-	rm -rf $(DOC)-html 
+	rm -rf $(DOC)-html gretlhlp
