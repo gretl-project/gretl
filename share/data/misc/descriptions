@@ -1,4 +1,5 @@
 # Gretl: various illustrative datafiles
+"anscombe","Anscombe's Quartet (artificial data)"
 "arma","artificial data for ARMA script example"
 "b-g","Bollerslev and Ghysels exchange rate data"
 "djclose","Daily close of Dow-Jones, 1980s"

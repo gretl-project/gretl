@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="anscombe" frequency="1" startobs="1" endobs="11" type="cross-section">
+<description>
+The data for &quot;Anscombe's quartet&quot;
+F. J. Anscombe, &quot;Graphs in Statistical Analysis&quot;,
+American Statistician, 27 (February 1973), pp. 17-21</description>
+<variables count="6">
+<variable name="x"
+ label="x-axis variable for use with y1, y2, y3"
+/>
+<variable name="y1"
+ label="&quot;random&quot; y variable"
+/>
+<variable name="y2"
+ label="nonlinear y variable"
+/>
+<variable name="y3"
+ label="linear plus outlier"
+/>
+<variable name="x4"
+ label="x-axis variable for use with y4"
+/>
+<variable name="y4"
+ label="&quot;chord&quot; plus outlier"
+/>
+</variables>
+<observations count="11" labels="false">
+<obs>10 8.04 9.14 7.46 8 6.58 </obs>
+<obs>8 6.95 8.14 6.77 8 5.76 </obs>
+<obs>13 7.58 8.74 12.74 8 7.71 </obs>
+<obs>9 8.81 8.77 7.11 8 8.84 </obs>
+<obs>11 8.33 9.26 7.81 8 8.47 </obs>
+<obs>14 9.96 8.10 8.84 8 7.04 </obs>
+<obs>6 7.24 6.13 6.08 8 5.25 </obs>
+<obs>4 4.26 3.10 5.39 19 12.50 </obs>
+<obs>12 10.84 9.13 8.15 8 5.56 </obs>
+<obs>7 4.82 7.26 6.42 8 7.91 </obs>
+<obs>5 5.68 4.74 5.73 8 6.89 </obs>
+</observations>
+</gretldata>
