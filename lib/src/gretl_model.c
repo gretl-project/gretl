@@ -775,24 +775,3 @@ int command_ok_for_model (int test_ci, int model_ci)
     return ok;
 }
 
-/**
- * model_ci_from_modelspec:
- * @spec: pointer to model specification.
- *
- * Returns: the command index (e.g. OLS, CORC) associated
- * with the model specification.
- */
-
-int model_ci_from_modelspec (MODELSPEC *spec)
-{
-    char mword[9];
-    int ci;
-
-    if (!sscanf(spec->cmd, "%8s", mword)) {
-	ci = -1;
-    } else {
-	ci = gretl_command_number(mword);
-    }
-
-    return ci;
-}

@@ -23,7 +23,7 @@
 #include "gretl_private.h"
 #include "libset.h"
 
-static int use_qr;
+static int use_qr = -1;
 static double hp_lambda;
 
 enum {
@@ -230,10 +230,15 @@ void set_use_qr (int set)
 
 int get_use_qr (void)
 {
-    if (getenv("GRETL_USE_QR")) {
+    /* if use_qr has not been set explicitly, try env */
+    if (use_qr == -1) {
 	char *s = getenv("GRETL_USE_QR");
 
-	if (*s && *s != '0') use_qr = 1;
+	if (s != NULL && *s != '\0' && *s != '0') {
+	    use_qr = 1;
+	} else {
+	    use_qr = 0;
+	}
     } 
 
     return use_qr;

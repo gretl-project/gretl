@@ -65,6 +65,4 @@ int swap_models (MODEL **targ, MODEL **src);
 
 int command_ok_for_model (int test_ci, int model_ci);
 
-int model_ci_from_modelspec (MODELSPEC *spec);
-
 #endif /* GRETL_MODEL_H */

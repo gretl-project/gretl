@@ -19,7 +19,7 @@
 
 /* datafiles.c : for gretl */
 
-/* #define COLL_DEBUG */
+#undef COLL_DEBUG
 
 #include "gretl.h"
 #include "datafiles.h"
@@ -161,6 +161,8 @@ static int get_title_from_descfile (file_collection *coll)
 	fclose(fp);
 	return err;
     }
+
+    chopstr(line);
     
     if (sscanf(line, "# %23[^:]", title) == 1) {
 	coll->title = malloc(strlen(title) + 1);

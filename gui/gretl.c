@@ -49,7 +49,7 @@
 #include "../pixmaps/mini.ofolder.xpm"
 
 /* functions from other gretl GUI files */
-extern void free_modelspec (void);
+extern void exit_free_modelspec (void);
 extern void free_command_stack (void);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
@@ -817,7 +817,7 @@ int main (int argc, char *argv[])
     }
 
     free_command_stack();
-    free_modelspec();
+    exit_free_modelspec();
 
     remove(paths.plotfile);
 

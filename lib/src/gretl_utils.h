@@ -138,7 +138,7 @@ int is_model_cmd (const char *line);
 
 int is_model_ref_cmd (int ci);
 
-int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo);
+int is_quiet_model_test (int ci, gretlopt opt);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo);

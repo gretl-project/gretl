@@ -246,7 +246,9 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	return;
     } 
 
-    if (!(opt & OPT_Q)) {
+    if (opt & OPT_Q) {
+	pputc(prn, '\n');
+    } else {
 	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
 		omit->score, (omit->score == 1)? 
 		_("has improved") : _("have improved"));

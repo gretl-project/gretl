@@ -28,6 +28,7 @@
 #include "libgretl.h"
 #include "var.h"
 #include "gretl_restrict.h"
+#include "modelspec.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -148,33 +149,39 @@ void noalloc (const char *str)
     exit(EXIT_FAILURE);
 }
 
-void nosub (PRN *prn) 
-{
-    pputs(prn, _("Can't do: the current data set is different from " 
-	    "the one on which\nthe reference model was estimated\n"));
-}
-
 int model_test_start (int test_ci, int model_id, PRN *prn)
 {
-    int m = (model_id)? model_id - 1 : model_count - 1;
-    int err = 0;
+    int m, err = 0;
 
-    if (model_count == 0) { 
-	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
-	err = 1;
+    if (model_id != 0) {
+	m = modelspec_index_from_model_id(modelspec, model_id);
+    } else {
+	m = modelspec_last_index(modelspec);
     }
-    else if (model_id > model_count) { 
-	pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
-	err = 1;
+
+#ifdef MSPEC_DEBUG
+    fprintf(stderr, "model_test_start: test_ci=%d, model_id=%d, m=%d\n",
+	    test_ci, model_id, m);
+#endif
+
+    if (m < 0) { 
+	if (model_id == 0) {
+	    pputs(prn, _("Can't do this: no model has been estimated yet\n"));
+	    err = 1;
+	} else {
+	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
+	    err = 1;
+	}
     }    
     else if (!command_ok_for_model(test_ci, 
-				   model_ci_from_modelspec(&modelspec[m]))) {
+				   model_ci_from_modelspec(modelspec, m))) {
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	err = 1;
     }
-    else if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
-	nosub(prn);
+    else if (model_sample_issue(NULL, modelspec, m, datainfo)) {
+	pputs(prn, _("Can't do: the current data set is different from "
+		     "the one on which\nthe reference model was estimated\n"));
 	err = 1;
     }
 
@@ -250,23 +257,6 @@ static void force_english (void)
 
 #endif /* ENABLE_NLS */
 
-void free_modelspec (void)
-{
-    int i = 0;
-
-    if (modelspec != NULL) {
-	while (modelspec[i].cmd != NULL) {
-	    free(modelspec[i].cmd);
-	    if (modelspec[i].subdum != NULL) {
-		free(modelspec[i].subdum);
-	    }
-	    i++;
-	}
-	free(modelspec);
-	modelspec = NULL;
-    }
-}
-
 int clear_data (void)
 {
     int err = 0;
@@ -284,7 +274,7 @@ int clear_data (void)
     clear_model(models[0], NULL);
     clear_model(models[1], NULL);
 
-    free_modelspec();
+    free_modelspec(modelspec);
     modelspec = NULL;
 
     model_count = 0;
@@ -606,7 +596,7 @@ int main (int argc, char *argv[])
     free(line);
 
     if (modelspec != NULL) {
-	free_modelspec();
+	free_modelspec(modelspec);
     }
 
     if (!batch) remove(paths.plotfile);
@@ -704,14 +694,6 @@ void exec_line (char *line, PRN *prn)
 	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 
 		 cmdprn);
 
-#ifdef notdef
-    if (is_model_ref_cmd(cmd.ci) &&
- 	model_sample_issue(NULL, &modelspec[0], &Z, datainfo)) {
- 	nosub(prn);
- 	return;
-    }
-#endif
-
     lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
@@ -765,7 +747,8 @@ void exec_line (char *line, PRN *prn)
 	i = atoi(cmd.param);
 	if ((err = model_test_start(cmd.ci, i, prn))) break;
 	if (i == (models[0])->ID) goto plain_add_omit;
-	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
+	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
+			  &tmpmod, &Z, datainfo);
 	if (err) {
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
@@ -1666,12 +1649,6 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
-#ifdef notyet
-    case MVAVG:
-	err = ma_model(cmd.list, &Z, datainfo, prn);
-	break;
-#endif
-
     case VAR:
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, !batch, 
@@ -1689,32 +1666,22 @@ void exec_line (char *line, PRN *prn)
 	break;
     }
 
-    if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
-		 || arch_model)) { 
-	int m = model_count;
-
-	if (modelspec == NULL) {
-	    modelspec = malloc(2 * sizeof *modelspec);
-	} else {
-	    modelspec = realloc(modelspec, (m+1) * sizeof *modelspec);
-	}
-	if (modelspec == NULL) noalloc(_("model command"));
-
-	modelspec[m-1].cmd = malloc(MAXLEN);
-	if (modelspec[m-1].cmd == NULL) {
-	    noalloc(_("model command"));
-	}
-	modelspec[m-1].subdum = NULL;
-
-	modelspec[m].cmd = NULL;
-	modelspec[m].subdum = NULL;
+    if (!err && 
+	(is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7) || arch_model)
+	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
 	if (fullZ != NULL) {
 	    fullinfo->varname = datainfo->varname;
 	    fullinfo->varinfo = datainfo->varinfo;
 	    attach_subsample_to_model(models[0], datainfo, fullinfo->n);
 	}
-	save_model_spec(models[0], &modelspec[m-1], fullinfo);
+	
+#ifdef MSPEC_DEBUG
+	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
+		(models[0])->ID, model_count);
+#endif
+
+	err = modelspec_save(models[0], &modelspec, fullinfo);
     }
 
 }

@@ -872,6 +872,16 @@ int is_model_ref_cmd (int ci)
     return 0;
 }
 
+int is_quiet_model_test (int ci, gretlopt opt)
+{
+    if ((opt & OPT_Q) && (ci == OMIT || ci == ADD ||
+			  ci == OMITFROM || ci == ADDTO)) {
+	return 1;
+    }
+
+    return 0;
+}
+
 /* .......................................................... */
 
 int list_dups (const int *list, int ci)
@@ -1587,43 +1597,6 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     free_fit_resid(fr);
     
     return err;
-}
-
-
-/* ........................................................... */
-
-static void store_list (int *list, char *buf)
-{
-    int i;
-    char numstr[5];
-
-    for (i=1; i<=list[0]; i++) {
-	sprintf(numstr, "%d ", list[i]);
-	strcat(buf, numstr);
-    }
-}
-
-/* ........................................................... */
-
-int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
-{
-    if (pmod->list == NULL) return 1;
-
-    sprintf(spec->cmd, "%s ", gretl_command_word(pmod->ci));
-    
-    if (pmod->ci == AR) {
-	store_list(pmod->arinfo->arlist, spec->cmd);
-	strcat(spec->cmd, "; ");
-    }
-
-    store_list(pmod->list, spec->cmd);
-
-    if (pmod->subdum != NULL) {
-	spec->subdum = copy_subdum(pmod->subdum, fullinfo->n);
-	if (spec->subdum == NULL) return 1;
-    }
-
-    return 0;
 }
 
 /* ........................................................... */

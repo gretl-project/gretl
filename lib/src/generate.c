@@ -23,6 +23,7 @@
 #include "gretl_private.h"
 #include "genstack.h"
 #include "libset.h"
+#include "modelspec.h"
 
 #include <time.h>
 #include <errno.h>
@@ -2696,7 +2697,7 @@ static double *get_model_series (const DATAINFO *pdinfo,
 	return NULL;
 
     if (pmod->t2 - pmod->t1 + 1 > n || 
-	model_sample_issue(pmod, NULL, pdinfo)) {
+	model_sample_issue(pmod, NULL, 0, pdinfo)) {
 	strcpy(gretl_errmsg, 
 	       (v == UHATNUM)? 
 	       _("Can't retrieve uhat: data set has changed") :

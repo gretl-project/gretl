@@ -170,7 +170,6 @@ typedef struct _CORRMAT CORRMAT;
 typedef struct _SAMPLE SAMPLE;
 typedef struct _ARINFO ARINFO;
 typedef struct _MODEL MODEL;
-typedef struct _MODELSPEC MODELSPEC;
 typedef struct _GRAPHT GRAPHT;
 typedef struct _PRN PRN;
 typedef struct _FITRESID FITRESID;
@@ -331,11 +330,6 @@ struct _MODEL {
 				    sub-sampled portion of the dataset */
     int n_data_items;            /* number of extra data items */
     model_data_item **data_items; /* pointer to additional data */
-};
-
-struct _MODELSPEC {
-    char *cmd;
-    char *subdum;
 };
 
 struct _GRAPHT {

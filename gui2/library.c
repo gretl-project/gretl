@@ -24,6 +24,7 @@
 #include "textbuf.h"
 #include "gpt_control.h"
 #include "gretl_restrict.h"
+#include "modelspec.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>
@@ -62,7 +63,7 @@ int gui_exec_line (char *line,
 
 /* private functions */
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
-static gint stack_model (int gui);
+static gint stack_model (MODEL *pmod);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -87,10 +88,18 @@ static int model_count;
 static char **cmd_stack;
 static int n_cmds;
 static MODELSPEC *modelspec;
-static char *model_origin;
 static char last_model = 's';
 static gretl_equation_system *sys;
 static gretl_restriction_set *rset;
+
+/* ........................................................... */
+
+void exit_free_modelspec (void)
+{
+    if (modelspec != NULL) {
+	free_modelspec(modelspec);
+    }
+}
 
 /* ........................................................... */
 
@@ -252,7 +261,7 @@ static void launch_gnuplot_interactive (void)
 
 int quiet_sample_check (MODEL *pmod)
 {
-    return model_sample_issue(pmod, NULL, datainfo);
+    return model_sample_issue(pmod, NULL, 0, datainfo);
 }
 
 /* ......................................................... */
@@ -278,25 +287,6 @@ static void set_sample_label_special (void)
 	    " n = %d"), fullinfo->n, datainfo->n);
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
-}
-
-/* ........................................................... */
-
-void free_modelspec (void)
-{
-    int i = 0;
-
-    if (modelspec != NULL) {
-	while (modelspec[i].cmd != NULL) {
-	    free(modelspec[i].cmd);
-	    if (modelspec[i].subdum != NULL) {
-		free(modelspec[i].subdum);
-	    }
-	    i++;
-	}
-	free(modelspec);
-	modelspec = NULL;
-    }
 }
 
 /* ........................................................... */
@@ -346,10 +336,9 @@ void clear_data (void)
     clear_model(models[2], NULL);
 
     free_command_stack(); 
-    free_modelspec();
+    free_modelspec(modelspec);
     modelspec = NULL;
 
-    stack_model(-1);
     model_count = 0;
 }
 
@@ -659,55 +648,31 @@ static gint model_cmd_init (char *line, int ID)
 
 /* ........................................................... */
 
-static gint stack_model (int gui)
+static gint stack_model (MODEL *pmod)
 {
-    static int m;
+    int script, err = 0;
 
-    if (gui == -1) { /* code for reset, when changing datasets */
-	m = 0;
-	return 0;
-    }
+    script = gretl_model_get_int(pmod, "script");
 
-    /* record the way this model was estimated (GUI or not) */
-    if (model_origin == NULL) {
-	model_origin = malloc(sizeof *model_origin);
-    } else {
-	model_origin = myrealloc(model_origin, 
-				 model_count * sizeof *model_origin);
-    }
-    if (model_origin == NULL) return 1;
+    last_model = (script)? 's' : 'g';
 
-    last_model = (gui == 1)? 'g' : 's';
+    if (script) { /* Model estimated via console or script: unlike a gui
+		     model, which is kept in memory so long as its window
+		     is open, these models are immediately discarded.  So
+		     if we want to be able to refer back to them later we
+		     need to record their specification */
 
-    model_origin[model_count - 1] = last_model;
-
-    if (!gui) { /* Model estimated via console or script: unlike a gui
-		   model, which is kept in memory so long as its window
-		   is open, these models are immediately discarded.  So
-		   if we want to be able to refer back to them later we
-		   need to record their specification */
-	if (modelspec == NULL) {
-	    modelspec = mymalloc(2 * sizeof *modelspec);
-	} else {
-	    modelspec = myrealloc(modelspec, (m+2) * sizeof *modelspec);
+	if (fullZ != NULL) {
+	    fullinfo->varname = datainfo->varname;
+	    fullinfo->varinfo = datainfo->varinfo;
+	    fullinfo->vector = datainfo->vector;
+	    attach_subsample_to_model(models[0], datainfo, fullinfo->n);
 	}
-	if (modelspec == NULL) return 1;
-	else {
-	    modelspec[m].cmd = mymalloc(MAXLEN);
-	    modelspec[m].subdum = NULL;
-	    modelspec[m+1].cmd = NULL;
-	    modelspec[m+1].subdum = NULL;
-	    if (fullZ != NULL) {
-		fullinfo->varname = datainfo->varname;
-		fullinfo->varinfo = datainfo->varinfo;
-		fullinfo->vector = datainfo->vector;
-		attach_subsample_to_model(models[0], datainfo, fullinfo->n);
-	    }
-	    save_model_spec(models[0], &modelspec[m], fullinfo);
-	    m++;
-	}
+
+	err = modelspec_save(models[0], &modelspec, fullinfo);
     }
-    return 0;
+
+    return err;
 }
 
 /* ........................................................... */
@@ -1463,7 +1428,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
         return;
     }
 
-    if (cmd_init(line) || stack_model(1)) {
+    if (cmd_init(line) || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2276,7 +2241,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 
     close_dialog(ddata);
 
-    if (stack_model(1)) {
+    if (stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2460,7 +2425,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (cmd_init(line) || stack_model(1)) {
+    if (cmd_init(line) || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2528,7 +2493,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 	return;
     }
 
-    if (cmd_init(line) || stack_model(1)) {
+    if (cmd_init(line) || stack_model(pmod)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -4944,68 +4909,52 @@ int execute_script (const char *runfile, const char *buf,
 
 /* ........................................................... */
 
-static int get_modelspec_number (int m)
-{
-    int i, j = -1;
-    
-    for (i=0; i<model_count; i++) {
-	if (model_origin[i] == 's') j++;
-	if (i == m) return j;
-    }
-
-    return -1;
-}
-
-/* ........................................................... */
-
 static int script_model_test (int test_ci, int model_id, PRN *prn)
 {
-    /* need to work in terms of modelspec here, _not_ model_count */
+    int m;
+    const char *no_gui_test = 
+	N_("Sorry, can't do this.\nTo operate on a model estimated "
+	   "via the graphical interface, please use the\nmenu items in "
+	   "the model window.\n");
 
-    int m = (model_id)? model_id - 1 : 0;
+    if (model_id != 0) {
+	m = modelspec_index_from_model_id(modelspec, model_id);
+    } else {
+	m = modelspec_last_index(modelspec);
+    }  
 
-    if (model_count == 0) { 
-	pprintf(prn, _("Can't do this: no model has been estimated yet\n"));
-	return 1;
-    }
+#ifdef MSPEC_DEBUG
+    fprintf(stderr, "model_test_start: test_ci=%d, model_id=%d, m=%d\n",
+	    test_ci, model_id, m);
+#endif
 
-    if (model_id > model_count) { 
-	pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
-	return 1;
-    }
-
-    /* ID == 0 -> no model specified -> look for last script model */
-    if (modelspec != NULL && model_id == 0) {
-	m = model_count - 1;
-	while (m) { 
-	    if (model_origin[m] == 's') break;
-	    m--;
+    if (m < 0) { 
+	/* reference model not found */
+	if (model_count == 0) {
+	    pputs(prn, _("Can't do this: no model has been estimated yet\n"));
+	} else if (model_id == 0) {
+	    /* requested "the last model" */
+	    pputs(prn, _(no_gui_test));
+	} else if (model_id > model_count) {
+	    /* requested specific, out-of-range model */
+	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
+	} else {
+	    /* requested specific, in-range model, but it's a gui model */
+	    pputs(prn, _(no_gui_test));
 	}
-    }
-
-    if (modelspec == NULL || model_origin[m] == 'g') {
-	pprintf(prn, _("Sorry, can't do this.\nTo operate on a model estimated "
-		"via the graphical interface, please use the\nmenu items in "
-		"the model window.\n"));
-	return 1;
-    } 
-
-    m = get_modelspec_number(m);
-    if (m < 0) {
-	fprintf(stderr, "Something bad has gone wrong\n");
 	return 1;
     }
-
+     
     if (!command_ok_for_model(test_ci, 
-			      model_ci_from_modelspec(&modelspec[m]))) {
+			      model_ci_from_modelspec(modelspec, m))) {
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	return 1;
     }			      
 
-    if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
-	pprintf(prn, _("Can't do: the current data set is different from "
-		"the one on which\nthe reference model was estimated\n"));
+    if (model_sample_issue(NULL, modelspec, m, datainfo)) {
+	pputs(prn, _("Can't do: the current data set is different from "
+		     "the one on which\nthe reference model was estimated\n"));
 	return 1;
     }
 
@@ -5197,7 +5146,8 @@ int gui_exec_line (char *line,
 	i = atoi(cmd.param);
 	if ((err = script_model_test(cmd.ci, i, prn))) break;
 	if (i == (models[0])->ID) goto plain_add_omit;
-	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
+	err = re_estimate(modelspec_get_command_by_id(modelspec, i), 
+			  &tmpmod, &Z, datainfo);
 	if (err) {
 	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
@@ -6124,7 +6074,8 @@ int gui_exec_line (char *line,
 
     if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)
 		 || arch_model)) {
-	err = stack_model(0);
+	gretl_model_set_int(models[0], "script", 1);
+	err = stack_model(models[0]);
 	if (exec_code != REBUILD_EXEC && !arch_model && *cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}

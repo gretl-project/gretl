@@ -26,9 +26,6 @@
 
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n);
 
-int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
-			const DATAINFO *pdinfo);
-
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,

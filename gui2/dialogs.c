@@ -445,7 +445,9 @@ void menu_exit_check (GtkWidget *w, gpointer data)
 {
     int ret = exit_check(w, NULL, data);
 
-    if (ret == FALSE) gtk_main_quit();
+    if (ret == FALSE) {
+	gtk_main_quit();
+    }
 }
 
 /* ......................................................... */
@@ -549,9 +551,10 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	    return TRUE; 
 	}
 	else if (resp == GRETL_CANCEL || resp == -1) return TRUE;
-    }    
+    } 
 
     write_rc();
+
     return FALSE;
 }
 
