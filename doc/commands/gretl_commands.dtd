@@ -12,7 +12,7 @@
 
 <!ELEMENT command (arglist?, optargs?, options?, examples?,
                    description, option-notes?, addendum?, 
-                   gui-access?)>
+                   gui-access?, numinfo?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
@@ -20,6 +20,14 @@
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
                  Transformations | Utilities | Unknown) "Unknown"
+>
+
+<!ELEMENT numinfo EMPTY>
+<!ATTLIST numinfo
+   args       CDATA #REQUIRED
+   optargs    CDATA #REQUIRED
+   options    CDATA #REQUIRED
+   examples   CDATA #REQUIRED
 >
 
 <!ELEMENT arglist      (argument)+>
@@ -41,7 +49,8 @@
 <!ELEMENT menu-path    (#PCDATA)>
 <!ELEMENT other-access (#PCDATA)>
 
-<!ELEMENT para (#PCDATA | itals | program | mathvar | equation)*>
+<!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
+                literal | cmd)*>
 
 <!-- stuff that can go into paras -->
 
@@ -52,9 +61,10 @@
    graphic CDATA #REQUIRED
    status (inline | display) "inline"
 >
-<!ELEMENT itals   (#PCDATA)>
+<!ELEMENT repl    (#PCDATA)>
 <!ELEMENT program (#PCDATA)>
-<!ELEMENT tt      (#PCDATA)>
+<!ELEMENT literal (#PCDATA)>
+<!ELEMENT cmd     (#PCDATA)>
 <!ELEMENT mathvar (#PCDATA | sub | super)*>
 <!ELEMENT sub     (#PCDATA)>
 <!ELEMENT super   (#PCDATA)>

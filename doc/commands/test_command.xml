@@ -4,10 +4,12 @@
 <commandlist language="english"> 
 
   <command name="ols" xref="ols" section="Estimation">
+
     <arglist>
       <argument>depvar</argument>
       <argument>indepvars</argument>
     </arglist>
+
     <options>
       <option>
 	<flag>--vcv</flag>
@@ -22,16 +24,40 @@
 	<effect>Suppress printing of results</effect>
       </option>
     </options>
+
     <examples>
       <example>ols 1 0 2 3 4</example>
       <example>ols y 0 x1 x3 --vcv</example>
     </examples>
-    <description><para>The description goes here.</para>
+
+    <description>
+      <para>
+	Computes ordinary least squares (OLS) estimates with
+	<repl>depvar</repl> as the dependent variable and
+	<repl>indepvars</repl> as the list of independent variables.
+      </para>
+
+      <para>Variables may be specified by name or number; use the
+	number zero for a constant term. The program also prints the
+	p-values for <mathvar>t</mathvar> (two-tailed) and
+	<mathvar>F</mathvar>-statistics.  A p-value below 0.01
+	indicates significance at the 1 percent level and is denoted
+	by <literal>***</literal>. <literal>**</literal> indicates
+	significance between 1 and 5 percent and <literal>*</literal>
+	indicates significance between 5 and 10 percent levels. Model
+	selection statistics (described in Ramanathan, Section 4.3)
+	are also printed. Various internal variables may be retrieved
+	using the <cmd>genr</cmd> command, provided
+	<cmd>genr</cmd> is invoked immediately after this
+	command.
+      </para>
     </description>
+
     <gui-access>
       <menu-path>/Model/Ordinary Least Squares</menu-path>
       <other-access>Beta-hat button on toolbar</other-access>
     </gui-access>
+
   </command>
 
 </commandlist>

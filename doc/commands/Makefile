@@ -1,7 +1,7 @@
 CC = gcc -O2 -Wall
 
-CFLAGS = `pkg-config --cflags libxml-2.0`
-XML_LIBS = `pkg-config --libs libxml-2.0`
+CFLAGS = `pkg-config --cflags libxml-2.0 libxslt`
+XML_LIBS = `pkg-config --libs libxml-2.0 libxslt`
 
 GRETL_CFLAGS = `pkg-config --cflags gretl`
 GRETL_LIBS = `pkg-config --libs gretl`
@@ -10,7 +10,7 @@ XMLDCL = /opt/jade/share/xml.dcl
 
 all: formatter skeleton
 
-formatter: formatter.o xml_print.o
+formatter: formatter.o 
 	$(CC) -o $@ $^ $(XML_LIBS)
 
 skeleton: skeleton.c
@@ -24,8 +24,7 @@ skeleton.xml: skeleton gretl_commands.dtd
 # test validity of skeleton.xml, and ability of formatter
 # to generate dummy 'formatted' output (text, and XML to trial.xml)
 testprint.txt: skeleton.xml formatter
-	nsgmls -wxml -s $(XMLDCL) $<
-	./formatter skeleton.xml > $@
+	xmllint --valid --noout $< && ./formatter skeleton.xml > $@
 
 clean:
 	rm -f formatter skeleton skeleton.xml testprint.txt \

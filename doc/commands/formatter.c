@@ -26,331 +26,114 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
+#include <libxslt/xslt.h>
+#include <libxslt/xsltInternals.h>
+#include <libxslt/transform.h>
+#include <libxslt/xsltutils.h>
+
 #include "formatter.h"
 
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
-enum {
-    TARGET_DUMMY,
-    TARGET_CLI_HLP,
-    TARGET_GUI_HLP,
-    TARGET_XML_MAN
-} print_targets;
-
-struct _COMMANDLIST {
-    char *language;
-    int n_commands;
-    COMMAND **commands;
-};
-
-void print_option (OPTION *opt)
-{
-    printf(" flag: '%s'\n", opt->flag);
-    printf(" effect: '%s'\n", opt->effect);
-}
-
-void dummy_print_command (const COMMAND *cmd, int k)
-{
-    int i;
-
-    printf("*** command %d ***\n"
-	   " name: '%s'\n xref: '%s'\n section: '%s'\n",
-	   k, cmd->name, cmd->xref, cmd->section);
-    
-    printf(" number of required args = %d\n", cmd->arglist.n_args);
-    for (i=0; i<cmd->arglist.n_args; i++) {
-	printf("  '%s'\n", cmd->arglist.args[i]);
-    }
-	       
-    printf(" number of optional args = %d\n", cmd->optargs.n_args);
-    for (i=0; i<cmd->optargs.n_args; i++) {
-	printf("  '%s'\n", cmd->optargs.args[i]);
-    }
-
-    printf(" number of options = %d\n", cmd->n_options);
-    for (i=0; i<cmd->n_options; i++) {
-	print_option(&cmd->options[i]);
-    }
-
-    printf(" number of examples = %d\n", cmd->n_examples);
-    for (i=0; i<cmd->n_examples; i++) {
-	printf("  '%s'\n", cmd->examples[i]);
-    }
-}
-
-int print_command_list (COMMANDLIST *clist, int target)
-{
-    int i;
-    const char *xmlout = "trial.xml";
-    FILE *fp = NULL;
-
-    fprintf(stderr, "Printing %d valid command(s)\n", clist->n_commands);
-
-    if (target == TARGET_XML_MAN) {
-	fp = fopen(xmlout, "w");
-	if (fp == NULL) return 1;
-    }
-    
-    for (i=0; i<clist->n_commands; i++) {
-	if (target == TARGET_DUMMY) {
-	    dummy_print_command(clist->commands[i], i + 1);
-	}
-	else if (target == TARGET_CLI_HLP) {
-	    fprintf(stderr, "cli hlp not ready!\n");
-	    break;
-	}
-	else if (target == TARGET_GUI_HLP) {
-	    fprintf(stderr, "gui hlp not ready!\n");
-	    break;
-	}
-	else if (target == TARGET_XML_MAN) {
-	    xml_format_command(clist->commands[i], fp);
-	}
-    }
-
-    if (fp != NULL) fclose(fp);
-
-    return 0;
-}
-
-void missing_attrib (const char *element, const char *attrib)
-{
-    fprintf(stderr, "Required attribute '%s' missing for element '%s'\n",
-	    attrib, element);
-}
-
-void command_list_init (COMMANDLIST *clist)
-{
-    clist->language = NULL;
-    clist->n_commands = 0;
-    clist->commands = NULL;
-}
-
-COMMAND *command_new (void)
-{
-    COMMAND *cmd;
-
-    cmd = malloc(sizeof *cmd);
-    if (cmd != NULL) {
-	cmd->name = NULL;
-	cmd->xref = NULL;
-	cmd->section = NULL;
-
-	cmd->n_options = 0;
-	cmd->options = NULL;
-
-	cmd->n_examples = 0;
-	cmd->examples = NULL;
-
-	cmd->descrip = NULL;
-	cmd->optnotes = NULL;
-	cmd->addendum = NULL;
-
-	cmd->arglist.n_args = 0;
-	cmd->arglist.args = NULL;
-
-	cmd->optargs.n_args = 0;
-	cmd->optargs.args = NULL;
-
-	cmd->gui_access.menu_path = NULL;
-	cmd->gui_access.other_access = NULL;
-    }
-
-    return cmd;
-}
-
-void process_option (xmlDocPtr doc, xmlNodePtr node, OPTION *opt)
+int get_n_real_children (xmlDocPtr doc, xmlNodePtr node, const char *test)
 {
     xmlNodePtr cur;
+    char *tmp;
+    int nkids = 0;
 
     cur = node->xmlChildrenNode;
     while (cur != NULL) {  
-        if (!xmlStrcmp(cur->name, (UTF) "flag")) {
-	    opt->flag = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	} 
-	else if (!xmlStrcmp(cur->name, (UTF) "effect")) {
-	    opt->effect = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	}
-	cur = cur->next;
-    }
-}
-
-int process_example_list (xmlDocPtr doc, xmlNodePtr node, COMMAND *cmd)
-{
-    xmlNodePtr cur;
-    char *tmp, **examples;
-    int nex, err = 0;
-
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "example")) {
-	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	    nex = cmd->n_examples + 1;
-	    examples = realloc(cmd->examples, nex * sizeof *examples);
-	    if (examples == NULL) return 1;
-	    cmd->examples = examples;
-	    cmd->n_examples = nex;
-	    cmd->examples[nex - 1] = tmp;
-	}
-	cur = cur->next;
-    }
-
-    return err;
-}
-
-int process_option_list (xmlDocPtr doc, xmlNodePtr node, COMMAND *cmd)
-{
-    xmlNodePtr cur;
-    OPTION *opts;
-    int nopt, err = 0;
-
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "option")) {
-	    nopt = cmd->n_options + 1;
-	    opts = realloc(cmd->options, nopt * sizeof *opts);
-	    if (opts == NULL) return 1;
-	    cmd->options = opts;
-	    cmd->n_options = nopt;
-	    process_option(doc, cur, &cmd->options[nopt-1]);
-	}
-	cur = cur->next;
-    }
-
-    return err;
-}
-
-int process_arglist (xmlDocPtr doc, xmlNodePtr node, COMMAND *cmd,
-		     int req)
-{
-    xmlNodePtr cur;
-    char *tmp, **args;
-    int na, err = 0;
-
-    cur = node->xmlChildrenNode;
-    while (cur != NULL && !err) {
-        if (!xmlStrcmp(cur->name, (UTF) "argument")) {
-	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-	    if (req) {
-		na = cmd->arglist.n_args + 1;
-		args = realloc(cmd->arglist.args, na * sizeof *args);
-	    } else {
-		na = cmd->optargs.n_args + 1;
-		args = realloc(cmd->optargs.args, na * sizeof *args);
+        if (!xmlStrcmp(cur->name, (UTF) test)) {
+            tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    if (tmp != NULL) {
+		nkids++;
+		free(tmp);
 	    }
-	    if (args == NULL) return 1;
-	    if (req) {
-		cmd->arglist.args = args;
-		cmd->arglist.args[na - 1] = tmp;
-		cmd->arglist.n_args = na;
-	    } else {
-		cmd->optargs.args = args;
-		cmd->optargs.args[na - 1] = tmp;
-		cmd->optargs.n_args = na;
-	    }
-	}
-	cur = cur->next;
+        } 
+        cur = cur->next;
     }
 
-    return err;
+    return nkids;
 }
 
-int process_command (xmlDocPtr doc, xmlNodePtr node, COMMANDLIST *clist)
+int process_command (xmlDocPtr doc, xmlNodePtr node)
 {
-    COMMAND *cmd, **cmds;
-    xmlNodePtr cur;
-    char *tmp;
-    int nc, err = 0;
-
-    cmd = command_new();
-    if (cmd == NULL) {
-	fprintf(stderr, "Out of memory\n");
-	return 1;
-    }
-
-    tmp = xmlGetProp(node, (UTF) "name");
-    if (tmp == NULL) {
-	missing_attrib("command", "name");
-	return 1;
-    } else {
-	cmd->name = tmp;
-    }
-
-    tmp = xmlGetProp(node, (UTF) "xref");
-    if (tmp == NULL) {
-	missing_attrib("command", "xref");
-	return 1;
-    } else {
-	cmd->xref = tmp;
-    }
-
-    tmp = xmlGetProp(node, (UTF) "section");
-    if (tmp == NULL) {
-	missing_attrib("command", "section");
-	return 1;
-    } else {
-	cmd->section = tmp;
-    }
-
-    nc = clist->n_commands + 1;
-    cmds = realloc(clist->commands, nc * sizeof *cmds);
-    if (cmds == NULL) {
-	fprintf(stderr, "Out of memory\n");
-	return 1;
-    }
-
-    clist->commands = cmds;
-    clist->commands[nc - 1] = cmd;
-
-    clist->n_commands = nc;
+    xmlNodePtr cur, numinfo;
+    char tmp[64];
+    int opts = 0, args = 0, optargs = 0, examples = 0;
+    int err = 0;
 
     /* walk the tree for this command */
     cur = node->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "arglist")) {
-	    err = process_arglist(doc, cur, cmd, 1);
+	    args = get_n_real_children(doc, cur, "argument");
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "optargs")) {
-	    err = process_arglist(doc, cur, cmd, 0);
+	    optargs = get_n_real_children(doc, cur, "argument");
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "options")) {
-	    err = process_option_list(doc, cur, cmd);
+	    opts = get_n_real_children(doc, cur, "flag");
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "examples")) {
-	    err = process_example_list(doc, cur, cmd);
+	    examples = get_n_real_children(doc, cur, "example");
 	}
-#if 0 /* not done yet */
-        else if (!xmlStrcmp(cur->name, (UTF) "description")) {
-	    err = process_description(doc, cur, cmd);
-	}
-        else if (!xmlStrcmp(cur->name, (UTF) "option-notes")) {
-	    err = process_optnotes(doc, cur, cmd);
-	}
-        else if (!xmlStrcmp(cur->name, (UTF) "addendum")) {
-	    err = process_addendum(doc, cur, cmd);
-	}
-        else if (!xmlStrcmp(cur->name, (UTF) "gui-access")) {
-	    err = process_gui_access(doc, cur, cmd);
-	}
-#endif
 	cur = cur->next;
     }
 
+    sprintf(tmp, "args=%d optargs=%d opts=%d examples=%d", 
+	    args, optargs, opts, examples);
+
+    /* add numeric info to command */
+    numinfo = xmlNewChild(node, NULL, (UTF) "numinfo", (UTF) tmp);
+    if (numinfo == NULL) {
+	fprintf(stderr, "Failed to add numinfo\n");
+    }
+
     return err;
+}
+
+int apply_xslt (xmlDocPtr doc)
+{
+    xsltStylesheetPtr style;
+    xmlDocPtr result;
+    const char **params = NULL;
+    FILE *fp;
+
+    style = xsltParseStylesheetFile("gretlman.xsl");
+    if (style == NULL) {
+	fprintf(stderr, "style was NULL\n");
+	return 1;
+    }
+
+    result = xsltApplyStylesheet(style, doc, params);
+    if (result == NULL) {
+	fprintf(stderr, "result was NULL\n");
+	return 1;
+    }
+
+    fp = fopen("foo.xml", "w");
+    
+    xmlIndentTreeOutput = 1;
+    xsltSaveResultToFile(fp, result, style);
+
+    fclose(fp);
+
+    return 0;
 }
 
 int parse_commands_data (const char *fname) 
 {
     xmlDocPtr doc;
     xmlNodePtr cur;
-    COMMANDLIST clist;
-    char *tmp;
     int err = 0;
 
-    command_list_init(&clist);
+    LIBXML_TEST_VERSION 
+	xmlKeepBlanksDefault(0);
 
-    LIBXML_TEST_VERSION xmlKeepBlanksDefault(0);
+    xmlSubstituteEntitiesDefault(1);
+    xmlLoadExtDtdDefaultValue = 1;
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
@@ -374,27 +157,16 @@ int parse_commands_data (const char *fname)
 	goto bailout;
     }
 
-    /* set commandlist language */
-    tmp = xmlGetProp(cur, (UTF) "language");
-    if (tmp == NULL) {
-	missing_attrib("commandlist", "language");
-	err = 1;
-	goto bailout;
-    } else {
-	clist.language = tmp;
-    }
-
     /* Now walk the tree */
     cur = cur->xmlChildrenNode;
     while (cur != NULL && !err) {
         if (!xmlStrcmp(cur->name, (UTF) "command")) {
-	    err = process_command(doc, cur, &clist);
+	    err = process_command(doc, cur);
 	}
 	cur = cur->next;
     }
 
-    print_command_list(&clist, TARGET_DUMMY);
-    print_command_list(&clist, TARGET_XML_MAN);
+    apply_xslt(doc);
 
     xmlFreeDoc(doc);
     xmlCleanupParser();

@@ -22,6 +22,8 @@ struct _GUI_ACCESS {
     char *other_access;
 };
 
+
+
 struct _COMMAND {
     char *name;
     char *xref;
@@ -32,7 +34,8 @@ struct _COMMAND {
     OPTION *options;
     int n_examples;
     char **examples;
-    char *descrip;
+    int n_descrip_paras;
+    char **descrip;
     char *optnotes;
     char *addendum;
     GUI_ACCESS gui_access;
