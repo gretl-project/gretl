@@ -506,7 +506,6 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == SEED ||
 	command->ci == LMTEST ||
 	command->ci == NULLDATA ||
-	command->ci == DELEET ||
 	(command->ci == PRINT && strstr(line, "\""))) {
 	command->nolist = 1;
 	if (!strncmp(line, "man ", 4)) n--;
@@ -807,7 +806,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* suppress echo of the list -- may be too long */
 	    command->nolist = 1;
 	}
-    } else if (command->ci != SETMISS) {
+    } else if (command->ci != SETMISS && command->ci != DELEET) {
 	/* command that needs a list but doesn't have one */
 	if (command->list[0] == 0) command->errcode = E_ARGS;
     }

@@ -570,6 +570,7 @@ void delete_var_by_id (int id)
 	if (id < datainfo->v) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
+	/* FIXME: mark dataset as modified? */
     }
 }
 

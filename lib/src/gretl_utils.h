@@ -134,6 +134,9 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
 int varnum_from_string (const char *str, DATAINFO *pdinfo);
 
+int dataset_drop_listed_vars (const int *list, double ***pZ, 
+			      DATAINFO *pdinfo, int *renumber);
+
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);

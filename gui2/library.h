@@ -123,8 +123,6 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata);
 
 void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata);
 
-void delete_var (void);
-
 void do_edit_label (GtkWidget *widget, dialog_t *ddata);
 
 void do_resid_freq (gpointer data, guint action, GtkWidget *widget);
@@ -180,6 +178,8 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget);
 void do_box_graph (GtkWidget *widget, dialog_t *ddata);
 
 void do_dummy_graph (GtkWidget *widget, gpointer p);
+
+void delete_selected_vars (void);
 
 void display_selected (gpointer data, guint action, GtkWidget *widget);
 

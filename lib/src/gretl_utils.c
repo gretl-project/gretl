@@ -1669,6 +1669,75 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
+int dataset_drop_listed_vars (const int *list, double ***pZ, 
+			      DATAINFO *pdinfo, int *renumber)
+{
+    double **newZ;
+    char **varname;
+    char *vector;
+    VARINFO **varinfo;
+    int oldv = pdinfo->v, vmax = pdinfo->v;
+    int i, v, ndel = 0; 
+
+    *renumber = 0;
+
+    for (i=1; i<=list[0]; i++) {
+	v = list[i];
+	if (v > 0 && v < oldv) {
+	    free((*pZ)[v]);
+	    (*pZ)[v] = NULL;
+	    free(pdinfo->varname[v]);
+	    if (pdinfo->varinfo[v] != NULL) {
+		free(pdinfo->varinfo[v]);
+	    }
+	    ndel++;
+	}
+    }
+
+    for (v=1; v<vmax; v++) {
+	if ((*pZ)[v] == NULL) {
+	    int gap = 1;
+
+	    for (i=v+1; i<vmax; i++) {
+		if ((*pZ)[i] == NULL) gap++;
+		else break;
+	    }
+	    if (i < vmax) {
+		*renumber = 1;
+		vmax -= gap;
+		for (i=v; i<vmax; i++) {
+		    pdinfo->varname[i] = pdinfo->varname[i + gap];
+		    pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
+		    (*pZ)[i] = (*pZ)[i + gap];
+		}		    
+	    } else {
+		/* deleting all subsequent vars */
+		break;
+	    }
+	}
+    }
+
+    varname = realloc(pdinfo->varname, (oldv - ndel) * sizeof *varname);
+    if (varname == NULL) return E_ALLOC;
+    else pdinfo->varname = varname;
+
+    vector = realloc(pdinfo->vector, (oldv - ndel) * sizeof *vector);
+    if (vector == NULL) return E_ALLOC;
+    else pdinfo->vector = vector;
+
+    varinfo = realloc(pdinfo->varinfo, (oldv - ndel) * sizeof *varinfo);
+    if (varinfo == NULL) return E_ALLOC;
+    else pdinfo->varinfo = varinfo;
+
+    newZ = realloc(*pZ, (oldv - ndel) * sizeof *newZ); 
+    if (newZ == NULL) return E_ALLOC;
+    else *pZ = newZ;
+
+    pdinfo->v -= ndel;
+
+    return 0;
+}
+
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;

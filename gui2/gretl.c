@@ -557,7 +557,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/sep3"), NULL, NULL, 0, "<Separator>", NULL },
     { N_("/Variable/Simulate..."), NULL, gretl_callback, SIM, NULL, GNULL },
     { N_("/Variable/Define _new variable..."), NULL, gretl_callback, GENR, NULL, GNULL },
-    { N_("/Variable/Delete last variable"), NULL, delete_var, 0, NULL, GNULL },
 
     /* Model menu */
     { N_("/_Model"), NULL, NULL, 0, "<Branch>", NULL },
@@ -1094,7 +1093,6 @@ void restore_sample_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Sample/Restore full range", s);
-	flip(mdata->ifac, "/Variable/Delete last variable", !s);
     }
 }
 
@@ -1573,6 +1571,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	gretl_callback(NULL, CORRGM, NULL);
     else if (!strcmp(item, _("Spectrum"))) 
 	do_pergm(NULL, 0, NULL);
+    else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
+	do_pergm(NULL, 1, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	gretl_callback(NULL, ADF, NULL);
     else if (!strcmp(item, _("Runs test"))) 
@@ -1600,6 +1600,7 @@ static void build_var_popup (windata_t *win)
 	N_("Boxplot"),
 	N_("Correlogram"),
 	N_("Spectrum"),
+	N_("Spectrum (Bartlett)"),
 	N_("Dickey-Fuller test"),
 	N_("Runs test"),
 	N_("Edit attributes"),
@@ -1649,6 +1650,9 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
 	plot_from_selection(NULL, GR_PLOT, NULL);
     else if (!strcmp(item, _("Copy to clipboard"))) 
 	csv_selected_to_clipboard();
+    else if (!strcmp(item, _("Delete"))) 
+	delete_selected_vars();
+
     return TRUE;
 }
 
@@ -1661,6 +1665,7 @@ static void build_selection_popup (void)
 	N_("Principal components"),
 	N_("Time series plot"),
 	N_("Copy to clipboard"),
+	N_("Delete"),
     };
 
     GtkWidget *item;

@@ -2549,22 +2549,6 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void delete_var (void)
-{
-    if (datainfo->v <= 1) {
-	errbox(_("Can't delete last variable"));
-	return;
-    }
-    if (dataset_drop_vars(1, &Z, datainfo)) {
-	errbox(_("Failed to shrink the data set"));
-	return;
-    }
-    populate_varlist();
-    mark_dataset_as_modified();
-}
-
-/* ........................................................... */
-
 static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
     strcpy(test->type, _("Test for normality of residual"));
@@ -3494,6 +3478,43 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
 		    fr);  
     }  
+}
+
+/* ........................................................... */
+
+void delete_selected_vars (void)
+{
+    int err, renumber;
+    char *liststr = mdata_selection_to_string(0);
+    char *msg;
+
+    if (liststr == NULL) return;
+
+    msg = g_strdup_printf(_("Really delete %s?"), liststr);
+    if (yes_no_dialog(_("gretl: delete"), msg, 0) != GRETL_YES) {
+	g_free(msg);
+	free(liststr);
+	return;
+    }
+
+    g_free(msg);
+    clear(line, MAXLEN);
+    sprintf(line, "delete%s", liststr);
+    free(liststr);    
+
+    if (verify_and_record_command(line)) return;
+
+    err = dataset_drop_listed_vars(command.list, &Z, datainfo, 
+				   &renumber);
+    if (err) {
+	errbox(_("Out of memory reorganizing data set"));
+    } else {
+	refresh_data();
+	/* should mark dataset as modified? */
+	if (renumber) {
+	    infobox(_("Take note: variables have been renumbered"));
+	}
+    }
 }
 
 /* ........................................................... */
@@ -4670,7 +4691,7 @@ int gui_exec_line (char *line,
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
-    int dbdata = 0, dropv;
+    int dbdata = 0, renumber;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -4959,17 +4980,17 @@ int gui_exec_line (char *line,
 		    " mode\n"));
 	    break;
 	}	
-	if (*command.param != '\0') {
-	    dropv = varnum_from_string(command.param, datainfo);
-	    err = dataset_drop_var(dropv, &Z, datainfo);
+	if (command.list[0]) {
+	    err = dataset_drop_listed_vars(command.list, &Z, datainfo,
+					   &renumber);
 	} else {
-	    dropv = datainfo->v - 1;
+	    renumber = 0;
 	    err = dataset_drop_vars(1, &Z, datainfo);
 	}
 	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
 	} else {
-	    if (dropv < datainfo->v) {
+	    if (renumber) {
 		pputs(prn, _("Take note: variables have been renumbered"));
 		pputc(prn, '\n');
 	    }
