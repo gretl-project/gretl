@@ -397,9 +397,6 @@ void set_sample_label (DATAINFO *pdinfo)
     ts_or_panel_menu_state(dataset_is_time_series(pdinfo) ||
 			   dataset_is_panel(pdinfo));
 
-    flip(mdata->ifac, "/Sample/Interpret as panel...", 
-	 !(pdinfo->pd == 1));
-
     flip(mdata->ifac, "/Sample/Restructure panel...", 
 	 pdinfo->structure == STACKED_CROSS_SECTION);
 

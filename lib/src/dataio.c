@@ -181,8 +181,9 @@ double get_date_x (int pd, const char *obs)
 	long ed = get_epoch_day(obs);
 
 	if (ed >= 0) x = ed;
-    } else 
+    } else {
 	x = obs_str_to_double(obs); 
+    }
 
     return x;
 }

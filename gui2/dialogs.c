@@ -1421,11 +1421,11 @@ static void free_vsettings (GtkWidget *w,
 static const char *comp_int_to_string (int i)
 {
     if (i == COMPACT_NONE) return N_("not set");
-    else if (i == COMPACT_AVG) return N_("average of observations");
-    else if (i == COMPACT_SUM) return N_("sum of observations");
-    else if (i == COMPACT_SOP) return N_("first observation");
-    else if (i == COMPACT_EOP) return N_("last observation");
-    else return N_("not set");
+    if (i == COMPACT_AVG)  return N_("average of observations");
+    if (i == COMPACT_SUM)  return N_("sum of observations");
+    if (i == COMPACT_SOP)  return N_("first observation");
+    if (i == COMPACT_EOP)  return N_("last observation");
+    return N_("not set");
 }
 
 void varinfo_dialog (int varnum, int full)
@@ -3001,7 +3001,7 @@ GtkWidget *standard_button (int code)
 
 /* --------------  Dataset structure "wizard" ---------------- */
 
-#define DWDEBUG 1
+#define DWDEBUG 0
 
 enum {
     DW_SET_TYPE,
@@ -3052,14 +3052,28 @@ static void dwinfo_init (DATAINFO *dwinfo)
 static void 
 datawiz_make_changes (DATAINFO *dwinfo)
 {
+    ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
 	infobox("No changes were made");
     } else {
-	fprintf(stderr, "New data structure: pd=%d, structure=%d,"
+	fprintf(stderr, "New data structure: pd=%d, structure=%d, "
 		"starting obs = '%s'\n", dwinfo->pd, dwinfo->structure,
 		dwinfo->stobs);
+
+#if 0 /* activate this when all is ready */
+	datainfo->pd = dwinfo->pd;
+	datainfo->structure = dwinfo->structure;
+	strcpy(datainfo->stobs, dwinfo->stobs);
+
+	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);	
+	ntodate_full(datainfo->endobs, datainfo->n - 1, datainfo);
+
+	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
+#endif
     }
 }
 
@@ -3148,12 +3162,12 @@ static const char *datawiz_radio_strings (int wizcode, int i)
 	if (i == 0) return N_("Cross-sectional");
 	if (i == 1) return N_("Time series");
 	if (i == 2) return N_("Panel");
-    } else if (wizcode == DW_TS_FREQUENCY) {
-	return datawiz_pd_str(i);
     } else if (wizcode == DW_WEEK_DAYS) {
 	if (i == 5) return N_("5 days in week");
 	if (i == 6) return N_("6 days in week");
 	if (i == 7) return N_("7 days in week");
+    } else if (wizcode == DW_TS_FREQUENCY) {
+	return datawiz_pd_str(i);
     } else if (wizcode == DW_PANEL_MODE) {  
 	return datawiz_pantype_str(i);
     }
@@ -3198,7 +3212,7 @@ struct ts_pd {
     const char *label;
 };
 
-static void confirmation_text (char *ctxt, const DATAINFO *dwinfo)
+static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 {
     struct ts_pd ok_pd[] = {
 	{  1, N_("annual data") },
@@ -3216,6 +3230,8 @@ static void confirmation_text (char *ctxt, const DATAINFO *dwinfo)
 	sprintf(ctxt, "cross-sectional data, observations 1 to %d\n",
 		datainfo->n);
     } else if (dwinfo->structure == TIME_SERIES) {
+	char stobs[OBSLEN];
+	char endobs[OBSLEN];
 	const char *tslabel = NULL;
 	int i;
 
@@ -3228,18 +3244,85 @@ static void confirmation_text (char *ctxt, const DATAINFO *dwinfo)
 	if (tslabel == NULL) {
 	    tslabel = N_("time-series data");
 	}
-	sprintf(ctxt, "%s\nobservations 1 to %d\n", tslabel,
+
+	if (dwinfo->pd != 52 && dwinfo->pd != 24) {
+	    int lastobs = dwinfo->t1 + datainfo->n - 1;
+
+	    if (lastobs > dwinfo->n - 1) {
+		dwinfo->n = lastobs + 1;
+	    }
+
+	    ntodate_full(stobs, dwinfo->t1, dwinfo);
+	    ntodate_full(endobs, lastobs, dwinfo);
+	    sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
+	} else {
+	    sprintf(ctxt, "%s, observations 1 to %d", tslabel,
 		datainfo->n);
+	}
     } else if (dwinfo->structure == STACKED_TIME_SERIES) {
-	sprintf(ctxt, "panel data (stacked time series)\nobservations 1 to %d\n",
+	sprintf(ctxt, "panel data (stacked time series)\nobservations 1 to %d",
 		datainfo->n);
     } else if (dwinfo->structure == STACKED_CROSS_SECTION) {
-	sprintf(ctxt, "panel data (stacked cross sections)\nobservations 1 to %d\n",
+	sprintf(ctxt, "panel data (stacked cross sections)\nobservations 1 to %d",
 		datainfo->n);
     } else if (dwinfo->structure == TIME_SERIES_SPECIAL) {
-	sprintf(ctxt, "time-series data\nobservations 1 to %d\n",
+	sprintf(ctxt, "time-series data, observations 1 to %d",
 		datainfo->n);
     }	
+}
+
+/* we're doing this only in case of time series */
+
+static void dw_compute_datainfo (DATAINFO *dwinfo)
+{
+#if DWDEBUG
+    char obsstr[OBSLEN];
+#endif
+    dwinfo->t1 = 0;
+
+    if (dwinfo->pd == 1) {
+	strcpy(dwinfo->stobs, "1700");
+	dwinfo->n = 400;
+	dwinfo->t1 = 250;
+    } else if (dwinfo->pd == 4) {
+	strcpy(dwinfo->stobs, "1900:1");
+	dwinfo->n = 500;
+	dwinfo->t1 = 200;
+    } else if (dwinfo->pd == 12) {
+	strcpy(dwinfo->stobs, "1900:01");
+	dwinfo->n = 1500;
+	dwinfo->t1 = 960;
+    } else if (dwinfo->pd == 5 ||
+	       dwinfo->pd == 6 ||
+	       dwinfo->pd == 7) {
+	strcpy(dwinfo->stobs, "1950/01/01");
+	dwinfo->n = 24000;
+	dwinfo->t1 = 12000;
+    }
+
+    if (datainfo->structure == TIME_SERIES &&
+	datainfo->pd == dwinfo->pd) {
+	/* make the current start the default */
+	dwinfo->t1 = dateton(datainfo->stobs, dwinfo);
+    }
+
+    dwinfo->sd0 = get_date_x(dwinfo->pd, dwinfo->stobs);
+    ntodate_full(dwinfo->endobs, dwinfo->n - 1, dwinfo);
+
+#if DWDEBUG
+    ntodate_full(obsstr, dwinfo->t1, dwinfo);
+    fprintf(stderr, "dwinfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
+	    dwinfo->pd, dwinfo->stobs, dwinfo->sd0, dwinfo->t1, obsstr);
+
+    ntodate_full(obsstr, datainfo->t1, datainfo);
+    fprintf(stderr, "datainfo: pd=%d, stobs='%s', sd0=%g, t1=%d (%s)\n",
+	    datainfo->pd, datainfo->stobs, datainfo->sd0, datainfo->t1, obsstr);
+#endif
+}
+
+static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
+{
+    dwinfo->t1 = (int) GTK_ADJUSTMENT(w)->value;
 }
 
 static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog, DATAINFO *dwinfo)
@@ -3249,10 +3332,7 @@ static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog, DATAINFO *dwinfo)
     GtkWidget *label;
     GtkWidget *startspin;
 
-    /* somewhere in here: need to adjust dwinfo in light of
-       selections made to date, so that the spinner shows
-       appropriate possible values for a starting observation
-    */
+    dw_compute_datainfo(dwinfo);
 
     hbox = gtk_hbox_new(TRUE, 5);
 
@@ -3260,10 +3340,13 @@ static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog, DATAINFO *dwinfo)
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
 
-    /* FIXME below */
-    adj = gtk_adjustment_new(datainfo->t1, 
-			     0, datainfo->n - 1,
+    /* FIXME step size? */
+    adj = gtk_adjustment_new(dwinfo->t1, 
+			     0, dwinfo->n - 1,
 			     1, 1, 1);
+    g_signal_connect(G_OBJECT(adj), "value-changed", 
+		     G_CALLBACK(dw_set_t1), dwinfo);
+
     startspin = obs_button_new(GTK_ADJUSTMENT(adj), dwinfo);
     gtk_box_pack_start(GTK_BOX(hbox), startspin, FALSE, FALSE, 0);
     gtk_widget_show(startspin);
@@ -3316,10 +3399,12 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     } 
 
     /* top label */
-    tempwid = gtk_label_new(_(wizcode_string(step)));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       tempwid, TRUE, TRUE, 0);
-    gtk_widget_show(tempwid);
+    if (step != DW_STARTING_OBS) {
+	tempwid = gtk_label_new(_(wizcode_string(step)));
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+			   tempwid, TRUE, TRUE, 0);
+	gtk_widget_show(tempwid);
+    }
 
     /* radio options? */
     for (i=0; i<nopts; i++) {
@@ -3380,7 +3465,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     if (step == DW_CONFIRM) {
 	char ctxt[256];
 
-	confirmation_text(ctxt, dwinfo);
+	make_confirmation_text(ctxt, dwinfo);
 	tempwid = gtk_label_new(ctxt);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   tempwid, TRUE, TRUE, 0);
@@ -3481,6 +3566,9 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_TS_FREQUENCY) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
+		} else if (dwinfo->pd == 52 || dwinfo->pd == 24) {
+		    /* we don't do dates for weekly or hourly */
+		    step = DW_CONFIRM;
 		} else {
 		    step = DW_STARTING_OBS;
 		}
@@ -3507,7 +3595,8 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_PANEL_SIZE) {
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
-		if (dwinfo->structure == TIME_SERIES) {
+		if (dwinfo->structure == TIME_SERIES &&
+		    dwinfo->pd != 52 && dwinfo->pd != 24) {
 		    step = DW_STARTING_OBS;
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
