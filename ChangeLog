@@ -10,6 +10,7 @@ version 0.998 (not released)
 - correct over-eager rejection of some variable names in data
   files ("c" and "C")
 - recompile gretl_updater.exe with new zlib dll
+- fixes to graph editing (this got broken by NLS changes)
 
 
 05/28/2002 version 0.997
