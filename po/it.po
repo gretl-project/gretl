@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-08 10:45-0500\n"
-"PO-Revision-Date: 2005-01-05 00:20+0100\n"
+"PO-Revision-Date: 2005-01-08 18:31+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4258,9 +4258,8 @@ msgid "Two-Stage Least Squares"
 msgstr "Minimi quadrati a due stadi"
 
 #: lib/src/system.c:84
-#, fuzzy
 msgid "Weighted Least Squares"
-msgstr "WLS - Minimi quadrati ponderati"
+msgstr "Minimi quadrati ponderati"
 
 #: lib/src/system.c:88
 msgid "No system of equations has been defined"
@@ -11236,9 +11235,8 @@ msgid "log determinant"
 msgstr "log determinante"
 
 #: plugin/sysest.c:81
-#, fuzzy
 msgid "LR test for diagonal covariance matrix"
-msgstr "Test Breusch-Pagan per la matrice di covarianza diagonale"
+msgstr "Test LR per la matrice di covarianza diagonale"
 
 #: plugin/sysest.c:91
 msgid "Breusch-Pagan test for diagonal covariance matrix"
