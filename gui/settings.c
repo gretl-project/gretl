@@ -355,12 +355,10 @@ void filesel_set_path_callback (const char *setting, char *strvar)
 {
     int i = 0;
 
-    strcpy(strvar, setting);
-
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].var == (void *) strvar) {
 	    gtk_entry_set_text(GTK_ENTRY(rc_vars[i].widget), 
-			       strvar);
+			       setting);
 	    break;
 	}
 	i++;

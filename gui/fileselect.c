@@ -480,22 +480,22 @@ void file_selector (const char *msg, int action, gpointer data)
 
     else if (action == SET_PATH) {
 	char *strvar = (char *) data;
-	char *fname;
 	char startd[MAXLEN];
 
 	if (get_base(startd, strvar, SLASH) == 1) {
 	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gotdir = 1;
-	    fname = strvar + slashpos(strvar) + 1; 
+	    gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			       strvar + slashpos(strvar) + 1);
 	} else {
-	    fname = strvar;
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), 
+					     "/usr/bin/");
 	}
-	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   fname);
+	gotdir = 1;
     }
 
-    if (!gotdir)
+    if (!gotdir) {
 	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
+    }
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
 		       gtk_main_quit, NULL);

@@ -82,7 +82,7 @@ OBJS = boxplots.o calculator.o callbacks.o console.o database.o \
 	series_view.o session.o settings.o ssheet.o treeutils.o \
 	webget.o 
 
-HACK_SRC = font_filter.c gtkfontselhack.c
+HACK_SRC = gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 

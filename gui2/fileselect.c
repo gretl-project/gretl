@@ -456,9 +456,7 @@ void file_selector (const char *msg, int action, gpointer data)
 	if (strvar != NULL && *strvar != 0) {
 	    if (get_base(startdir, strvar, SLASH)) {
 		strcpy(fname, strvar + slashpos(strvar) + 1);
-	    } else {
-		strcpy(fname, strvar);
-	    }
+	    } 
 	}
     }	
 
