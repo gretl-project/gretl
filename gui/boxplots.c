@@ -20,7 +20,9 @@
 /* boxplots for gretl */
 
 #include "gretl.h"
-/* #include <gdk-pixbuf/gdk-pixbuf.h> */
+#include <gtkextra/gtkextra.h>
+
+extern GdkColor red, blue;
 
 typedef struct {
     double median;
@@ -79,7 +81,7 @@ expose_event (GtkWidget *widget, GdkEventExpose *event)
 /* ............................................................. */
 
 static void
-setup_text (GtkWidget *area, GdkGC *gc, char *text, 
+setup_text (GtkWidget *area, GdkGC *gc, GtkPlotPC *pc, char *text, 
 	    double x, double y, unsigned just)
 {
     GdkRectangle rect; 
@@ -96,19 +98,38 @@ setup_text (GtkWidget *area, GdkGC *gc, char *text,
 	x -= len * cw;
     }
 
-    rect.x = x;
-    rect.y = y;
-    rect.width = 80;
-    rect.height = 10;
-    
-    gdk_draw_string (pixmap, fixed_font, gc, x, y, text);
-    gtk_widget_draw (area, &rect);
+    if (pc != NULL) {
+	GdkGCValues vals;
+
+	gdk_gc_get_values(gc, &vals);
+	gtk_plot_pc_draw_string (pc,
+				 x, y,
+				 0,
+				 &blue,
+				 &red,
+				 FALSE,
+				 0,
+				 0,
+				 0,
+				 0,
+				 "Courier",
+				 10,
+				 GTK_JUSTIFY_LEFT,
+				 text);
+    } else {
+	rect.x = x;
+	rect.y = y;
+	rect.width = 80;
+	rect.height = 10;	
+	gdk_draw_string (pixmap, fixed_font, gc, x, y, text);
+	gtk_widget_draw (area, &rect);
+    }
 }
 
 /* ............................................................. */
 
 static void 
-draw_line (double *points, GtkWidget *area, GdkGC *gc)
+draw_line (double *points, GtkWidget *area, GdkGC *gc, GtkPlotPC *pc)
 {
     GdkRectangle rect; 
 
@@ -116,9 +137,13 @@ draw_line (double *points, GtkWidget *area, GdkGC *gc)
     rect.y = points[1];
     rect.width = points[2] - points[1] + 1;
     rect.height = points[3] - points[1] + 1;
-  
-    gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
-    gtk_widget_draw (area, &rect);
+
+    if (pc != NULL) {
+	gtk_plot_pc_draw_line (pc, points[0], points[1], points[2], points[3]); 
+    } else {
+	gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
+	gtk_widget_draw (area, &rect);
+    }
 }
 
 /* ............................................................. */
@@ -170,7 +195,7 @@ free_plotgrp (BOXPLOT **plotgrp)
 /* ............................................................. */
 
 static void 
-gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style, 
+gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style, GtkPlotPC *pc,
 		    double gmax, double gmin, int winheight)
 {
     double points[4];
@@ -183,26 +208,26 @@ gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style,
     points[0] = points[2] = scalepos;
     points[1] = top;
     points[3] = bottom;
-    draw_line (points, area, gc);
+    draw_line (points, area, gc, pc);
 
     /* draw backticks top and bottom */
     points[2] = points[0] - 5;
     points[1] = points[3] = top;
-    draw_line (points, area, gc);
+    draw_line (points, area, gc, pc);
     points[1] = points[3] = bottom;
-    draw_line (points, area, gc);
+    draw_line (points, area, gc, pc);
 
     /* draw backtick at middle */
     points[1] = points[3] = top + (bottom - top) / 2.0;
-    draw_line (points, area, gc);
+    draw_line (points, area, gc, pc);
     
     /* mark max and min values on scale */
     sprintf(numstr, "%.4g", gmax);
-    setup_text(area, gc, numstr, scalepos - 10, top, GTK_ANCHOR_E);
+    setup_text(area, gc, pc, numstr, scalepos - 10, top, GTK_ANCHOR_E);
     sprintf(numstr, "%.4g", gmin);
-    setup_text (area, gc, numstr, scalepos - 10, bottom, GTK_ANCHOR_E);
+    setup_text (area, gc, pc, numstr, scalepos - 10, bottom, GTK_ANCHOR_E);
     sprintf(numstr, "%.4g", (gmax + gmin) / 2.0);
-    setup_text (area, gc, numstr, scalepos - 10, 
+    setup_text (area, gc, pc, numstr, scalepos - 10, 
 		top + (bottom - top) / 2.0, GTK_ANCHOR_E);
 }
 
@@ -210,7 +235,7 @@ gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style,
 
 static void 
 gtk_area_boxplot (BOXPLOT *plot, double gmax, double gmin,
-		  GtkWidget *area, GtkStyle *style, 
+		  GtkWidget *area, GtkStyle *style, GtkPlotPC *pc,
 		  int winheight)
 {
     double points[4];
@@ -233,47 +258,56 @@ gtk_area_boxplot (BOXPLOT *plot, double gmax, double gmin,
     rect.y = uq;
     rect.width = plot->boxwidth;
     rect.height = uq - lq; 
-    gdk_draw_rectangle (pixmap, 
-			gc, 
-			TRUE, /* filled ? */
-			plot->xbase, 
-			uq, 
-			plot->boxwidth, 
-			lq - uq);
-    gtk_widget_draw (area, &rect);
+
+    if (pc != NULL) 
+	gtk_plot_pc_draw_rectangle (pc,
+				    TRUE,
+				    plot->xbase, uq,
+				    plot->boxwidth,
+				    lq - uq);
+    else {
+	gdk_draw_rectangle (pixmap, 
+			    gc, 
+			    TRUE, /* filled ? */
+			    plot->xbase, 
+			    uq, 
+			    plot->boxwidth, 
+			    lq - uq);
+	gtk_widget_draw (area, &rect);
+    }
 
     /* draw line at median */
     points[0] = plot->xbase;
     points[1] = points[3] = median;
     points[2] = plot->xbase + plot->boxwidth;
-    draw_line(points, area, whitegc);
+    draw_line(points, area, whitegc, pc);
 
     /* draw line to maximum value */
     points[0] = points[2] = xcenter;
     points[1] = maxval;
     points[3] = uq;
-    draw_line(points, area, gc);
+    draw_line(points, area, gc, pc);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = maxval;
-    draw_line(points, area, gc);
+    draw_line(points, area, gc, pc);
 
     /* draw line to minimum value */
     points[0] = points[2] = xcenter;
     points[1] = lq;
     points[3] = minval;
-    draw_line(points, area, gc);
+    draw_line(points, area, gc, pc);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = minval;
-    draw_line(points, area, gc);
+    draw_line(points, area, gc, pc);
 
     /* write name of variable beneath */
-    setup_text (area, gc, plot->varname, xcenter, 
+    setup_text (area, gc, pc, plot->varname, xcenter, 
 		winheight * (1.0 - headroom/4.0), GTK_ANCHOR_N);
 }
 
@@ -352,6 +386,254 @@ compare_doubles (const void *a, const void *b)
     return (*da > *db) - (*da < *db);
 }
 
+/* functions borrowed from gtkplotps.c in gtkextra.  They are declared
+   static there, but we want direct access to them. */
+
+static void ps_reencode_font (FILE *file, char *fontname);
+
+static void psleave (GtkPlotPS *ps)
+{
+    fprintf(ps->psfile, "showpage\n");
+    fprintf(ps->psfile, "%%%%Trailer\n");
+    fprintf(ps->psfile, "%%%%EOF\n");
+    fclose(ps->psfile);
+}
+
+static gboolean psinit (GtkPlotPS *ps)
+{
+    time_t now;
+    FILE *psout;
+
+    now = time(NULL);
+
+    psout = ps->psfile;
+
+    if ((psout = fopen(ps->psname, "w")) == NULL){
+       g_warning("ERROR: Cannot open file: %s", ps->psname); 
+       return FALSE;
+    }
+
+    ps->psfile = psout;
+
+    if (ps->epsflag)
+       fprintf (psout, "%%!PS-Adobe-2.0 PCF-2.0\n");
+    else
+       fprintf (psout, "%%!PS-Adobe-2.0\n");
+
+    fprintf (psout,
+             "%%%%Title: %s\n"
+             "%%%%Creator: %s v%s Copyright (c) 1999 Adrian E. Feiguin\n"
+             "%%%%CreationDate: %s"
+             "%%%%Magnification: 1.0000\n",
+             ps->psname,
+             "GtkPlot", "3.x",
+             ctime (&now));
+
+    if(ps->orientation == GTK_PLOT_PORTRAIT)
+             fprintf(psout,"%%%%Orientation: Portrait\n");
+    else
+             fprintf(psout,"%%%%Orientation: Landscape\n");
+
+    if(ps->epsflag)
+          fprintf (psout,
+                   "%%%%BoundingBox: 0 0 %d %d\n"
+                   "%%%%Pages: 1\n"
+                   "%%%%EndComments\n",
+                   ps->page_width,
+                   ps->page_height);
+
+
+    fprintf (psout,
+             "/cp {closepath} bind def\n"
+             "/c {curveto} bind def\n"
+             "/f {fill} bind def\n"
+             "/a {arc} bind def\n"
+             "/ef {eofill} bind def\n"
+             "/ex {exch} bind def\n"
+             "/gr {grestore} bind def\n"
+             "/gs {gsave} bind def\n"
+             "/sa {save} bind def\n"
+             "/rs {restore} bind def\n"
+             "/l {lineto} bind def\n"
+             "/m {moveto} bind def\n"
+             "/rm {rmoveto} bind def\n"
+             "/n {newpath} bind def\n"
+             "/s {stroke} bind def\n"
+             "/sh {show} bind def\n"
+             "/slc {setlinecap} bind def\n"
+             "/slj {setlinejoin} bind def\n"
+             "/slw {setlinewidth} bind def\n"
+             "/srgb {setrgbcolor} bind def\n"
+             "/rot {rotate} bind def\n"
+             "/sc {scale} bind def\n"
+             "/sd {setdash} bind def\n"
+             "/ff {findfont} bind def\n"
+             "/sf {setfont} bind def\n"
+             "/scf {scalefont} bind def\n"
+             "/sw {stringwidth pop} bind def\n"
+             "/tr {translate} bind def\n"
+
+             "/JR {\n"
+             " neg 0\n"
+             " rmoveto\n"
+             "} bind def\n"
+
+             "/JC {\n"
+             " 2 div neg 0\n"
+             " rmoveto\n"
+             "} bind def\n"
+  
+             "\n/ellipsedict 8 dict def\n"
+             "ellipsedict /mtrx matrix put\n"
+             "/ellipse\n"
+             "{ ellipsedict begin\n"
+             "   /endangle exch def\n"
+             "   /startangle exch def\n"
+             "   /yrad exch def\n"
+             "   /xrad exch def\n"
+             "   /y exch def\n"
+             "   /x exch def"
+             "   /savematrix mtrx currentmatrix def\n"
+             "   x y tr xrad yrad sc\n"
+             "   0 0 1 startangle endangle arc\n"
+             "   savematrix setmatrix\n"
+             "   end\n"
+             "} def\n\n"
+    ); 
+  
+    fprintf(psout,
+          "[ /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /space /exclam /quotedbl /numbersign /dollar /percent /ampersand /quoteright\n"
+          "/parenleft /parenright /asterisk /plus /comma /hyphen /period /slash /zero /one\n"
+          "/two /three /four /five /six /seven /eight /nine /colon /semicolon\n"          "/less /equal /greater /question /at /A /B /C /D /E\n"
+          "/F /G /H /I /J /K /L /M /N /O\n"
+          "/P /Q /R /S /T /U /V /W /X /Y\n"
+          "/Z /bracketleft /backslash /bracketright /asciicircum /underscore /quoteleft /a /b /c\n"
+          "/d /e /f /g /h /i /j /k /l /m\n"
+          "/n /o /p /q /r /s /t /u /v /w\n"
+          "/x /y /z /braceleft /bar /braceright /asciitilde /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+          "/space /exclamdown /cent /sterling /currency /yen /brokenbar /section /dieresis /copyright\n"
+          "/ordfeminine /guillemotleft /logicalnot /hyphen /registered /macron /degree /plusminus /twosuperior /threesuperior\n"
+          "/acute /mu /paragraph /periodcentered /cedilla /onesuperior /ordmasculine /guillemotright /onequarter /onehalf\n"
+          "/threequarters /questiondown /Agrave /Aacute /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
+          "/Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute /Icircumflex /Idieresis /Eth /Ntilde\n"
+          "/Ograve /Oacute /Ocircumflex /Otilde /Odieresis /multiply /Oslash /Ugrave /Uacute /Ucircumflex\n"
+          "/Udieresis /Yacute /Thorn /germandbls /agrave /aacute /acircumflex /atilde /adieresis /aring\n"
+          "/ae /ccedilla /egrave /eacute /ecircumflex /edieresis /igrave /iacute /icircumflex /idieresis\n"
+          "/eth /ntilde /ograve /oacute /ocircumflex /otilde /odieresis /divide /oslash /ugrave\n"
+          "/uacute /ucircumflex /udieresis /yacute /thorn /ydieresis] /isolatin1encoding exch def\n");
+ 
+    ps_reencode_font(psout, "Times-Roman");
+    ps_reencode_font(psout, "Times-Italic");
+    ps_reencode_font(psout, "Times-Bold");
+    ps_reencode_font(psout, "Times-BoldItalic");
+    ps_reencode_font(psout, "AvantGarde-Book");
+    ps_reencode_font(psout, "AvantGarde-BookOblique");
+    ps_reencode_font(psout, "AvantGarde-Demi");
+    ps_reencode_font(psout, "AvantGarde-DemiOblique");
+    ps_reencode_font(psout, "Bookman-Light");
+    ps_reencode_font(psout, "Bookman-LightItalic");
+    ps_reencode_font(psout, "Bookman-Demi");
+    ps_reencode_font(psout, "Bookman-DemiItalic");
+    ps_reencode_font(psout, "Courier");
+    ps_reencode_font(psout, "Courier-Oblique");
+    ps_reencode_font(psout, "Courier-Bold");
+    ps_reencode_font(psout, "Courier-BoldOblique");
+    ps_reencode_font(psout, "Helvetica");
+    ps_reencode_font(psout, "Helvetica-Oblique");
+    ps_reencode_font(psout, "Helvetica-Bold");
+    ps_reencode_font(psout, "Helvetica-BoldOblique");
+    ps_reencode_font(psout, "Helvetica-Narrow");
+    ps_reencode_font(psout, "Helvetica-Narrow-Oblique");
+    ps_reencode_font(psout, "Helvetica-Narrow-Bold");
+    ps_reencode_font(psout, "Helvetica-Narrow-BoldOblique");
+    ps_reencode_font(psout, "NewCenturySchoolbook-Roman");
+    ps_reencode_font(psout, "NewCenturySchoolbook-Italic");
+    ps_reencode_font(psout, "NewCenturySchoolbook-Bold");
+    ps_reencode_font(psout, "NewCenturySchoolbook-BoldItalic");
+    ps_reencode_font(psout, "Palatino-Roman");
+    ps_reencode_font(psout, "Palatino-Italic");
+    ps_reencode_font(psout, "Palatino-Bold");
+    ps_reencode_font(psout, "Palatino-BoldItalic");
+    ps_reencode_font(psout, "Symbol");
+    ps_reencode_font(psout, "ZapfChancery-MediumItalic");
+    ps_reencode_font(psout, "ZapfDingbats");
+   
+    if(ps->orientation == GTK_PLOT_PORTRAIT)
+             fprintf(psout, "%d %d translate\n"
+                            "%g %g scale\n",
+                            0, ps->page_height,
+                            ps->scalex, -ps->scaley);
+
+    if(ps->orientation == GTK_PLOT_LANDSCAPE)
+             fprintf(psout, "%g %g scale\n"
+                            "-90 rotate \n",
+                            ps->scalex, -ps->scaley);
+
+    fprintf(psout,"%%%%EndProlog\n\n\n");
+
+    return TRUE;
+}
+
+static void ps_reencode_font(FILE *file, char *fontname)
+{
+  if (!strcmp(fontname, "Symbol"))
+    fprintf(file,
+            "/%s-latin1\n"
+            "    /%s findfont\n"
+            "definefont pop\n", fontname, fontname);
+  else
+    fprintf(file,
+            "/%s-latin1\n"
+            "    /%s findfont\n"
+            "    dup length dict begin\n"
+            "   {1 index /FID ne {def} {pop pop} ifelse} forall\n"
+            "   /Encoding isolatin1encoding def\n"
+            "    currentdict end\n"
+            "definefont pop\n", fontname, fontname);
+}
+
+/* ............................................................. */
+
+static int ps_print_plots (BOXPLOT **plotgrp, int nplots, 
+			   int winwidth, int winheight,
+			   double gmax, double gmin,
+			   GtkStyle *style)
+{
+    GtkPlotPS *ps;
+    int i;
+
+    ps = GTK_PLOT_PS(gtk_plot_ps_new ("foo.eps", 
+				      GTK_PLOT_PORTRAIT, 
+				      TRUE, /* epsflag */
+				      GTK_PLOT_LETTER, 
+				      1.0, 1.0)
+		     );
+
+    ps->pc.width = winwidth;
+    ps->pc.height = winheight;
+
+    psinit (ps);
+    gtk_psfont_init();
+
+    for (i=0; i<nplots; i++)
+	gtk_area_boxplot (plotgrp[i], gmax, gmin, NULL, 
+			  style, &(ps->pc), winheight);
+    
+    gtk_boxplot_yscale(NULL, style, &(ps->pc), gmax, gmin, winheight);
+
+    psleave(ps);
+    gtk_object_destroy(GTK_OBJECT(ps));
+    gtk_psfont_unref();
+
+    return 0;
+}
+
 /* ............................................................. */
 
 int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
@@ -397,30 +679,19 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
 
     for (i=0; i<nplots; i++)
 	gtk_area_boxplot (plotgrp[i], gmax, gmin, area, 
-			  boxwin->style, winheight);
+			  boxwin->style, NULL, winheight);
     
-    gtk_boxplot_yscale(area, boxwin->style, gmax, gmin, winheight);
+    gtk_boxplot_yscale(area, boxwin->style, NULL, gmax, gmin, winheight);
+
+    /* just testing -- needs to be put on a menu or something */
+    ps_print_plots (plotgrp, nplots, winwidth, winheight, 
+		    gmax, gmin, boxwin->style);
 
     free_plotgrp(plotgrp);
 
     return 0;
 }
 
-#ifdef notdef
-void grab_buffer (GtkWidget *area)
-{
-    GdkPixbuf *pbuf;
-    GdkColormap *cmap;
 
-    cmap = gdk_drawable_get_colormap (GTK_DRAWING_AREA(area));
 
-    pbuf = gdk_pixbuf_get_from_drawable (NULL,
-					 pixmap,
-					 cmap,
-					 0, 0,
-					 0, 0,
-					 -1, -1);
 
-    fprintf(stderr, "pbuf is at %p\n", (void *) pbuf);
-}
-#endif
