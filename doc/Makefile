@@ -62,7 +62,7 @@ manual-a4.xml: manual.xml
 	cp $< $@
 
 $(CMDLIST): $(CMDREF) $(MANXSL) 
-	make -C commands docbook
+	make -C commands -f cmdref.mk
 
 html: manual.xml db2html $(DSL) $(HMATHSS) 
 	./db2html manual.xml
