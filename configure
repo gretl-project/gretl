@@ -12216,7 +12216,10 @@ fi;
      lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
   fi
 
-  echo "$as_me:$LINENO: checking for c_sqrt in -lf2c" >&5
+  if test x"${LAPACK_LIBS}" = x ; then
+     echo "$as_me:$LINENO: checking for libf2c" >&5
+echo $ECHO_N "checking for libf2c... $ECHO_C" >&6
+     echo "$as_me:$LINENO: checking for c_sqrt in -lf2c" >&5
 echo $ECHO_N "checking for c_sqrt in -lf2c... $ECHO_C" >&6
 if test "${ac_cv_lib_f2c_c_sqrt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -12276,8 +12279,8 @@ else
   FLIB="none"
 fi
 
-  if test $FLIB = "none" ; then
-    echo "$as_me:$LINENO: checking for c_sqrt in -lg2c" >&5
+     if test $FLIB = "none" ; then
+        echo "$as_me:$LINENO: checking for c_sqrt in -lg2c" >&5
 echo $ECHO_N "checking for c_sqrt in -lg2c... $ECHO_C" >&6
 if test "${ac_cv_lib_g2c_c_sqrt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -12337,15 +12340,14 @@ else
   FLIB="none"
 fi
 
-  fi
-  if test $FLIB = "none" ; then
-     echo "*** Couldn't find either libf2c or libg2c"
+     fi
+     if test $FLIB = "none" ; then
+        echo "*** Couldn't find either libf2c or libg2c"
+     fi
   fi
 
   echo "$as_me:$LINENO: checking for LAPACK" >&5
 echo $ECHO_N "checking for LAPACK... $ECHO_C" >&6
-
-  LAPACK_CFLAGS="-I$lapack_config_prefix/include -I./plugin"
   if test x"${LAPACK_LIBS}" = x ; then
      LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
   fi
