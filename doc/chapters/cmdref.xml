@@ -13,7 +13,7 @@
       <application>gretl</application>'s online help), except that you
       should <emphasis>not</emphasis> type the initial command word
       &mdash; it is implicit from the context. One other difference is
-      that you should not type the <command>-o</command> flag for
+      that you cannot enter the <command>-o</command> flag for
       regression commands in GUI dialog boxes: there is a menu item
       for displaying the coefficient variance&ndash;covariance matrix
       (which is the effect of <command>-o</command> in regression

@@ -931,6 +931,7 @@ static struct gui_help_item gui_help_items[] = {
     { COMPACT,    "compact" },
     { VSETMISS,   "missing" },
     { GSETMISS,   "missing" },
+    { GUI_HELP,   "dialog" },
     { 0,          NULL },
 };
 

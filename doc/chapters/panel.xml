@@ -76,13 +76,12 @@
     </itemizedlist>
 
     <para>If you decide to construct a panel data set using a
-      spreadsheet program first, then bring the data into
-      <application>gretl</application> as a CSV import, the program
-      will (probably) not at first recognize the special nature of the
-      data.  You can fix this by using the command
-      <command>setobs</command> (see <xref linkend="cmdref"/>) or the
-      GUI menu item
-      <quote>Sample, Set frequency, startobs&hellip;</quote>.</para>
+      spreadsheet program then import the data into
+      <application>gretl</application>, the program may
+      not at first recognize the special nature of the data.  You can
+      fix this by using the command <command>setobs</command> (see
+      <xref linkend="cmdref"/>) or the GUI menu item <quote>Sample,
+      Set frequency, startobs&hellip;</quote>.</para>
 
     <sect1 id="dummies"><title>Dummy variables</title>
 

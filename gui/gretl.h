@@ -125,6 +125,7 @@ enum extra_cmds {
     EDIT_SCRIPT,
     EDIT_NOTES,
     CLI_HELP,
+    GUI_HELP,
     CMD_MAX
 };
 

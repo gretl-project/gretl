@@ -193,6 +193,22 @@ transformed regression is performed for the observation range stobs+1 endobs
 currently in effect.
 
 #
+dialog box for models
+@Estimation
+
+To select the dependent variable, highlight a variable in the list on the left
+and press the "Choose" button pointing to the Dependent variable slot.  A
+shortcut is to double-click a variable on the left.  If you check the "Set as
+default" box, the selected variable will be pre-selected as dependent when
+the model dialog is next opened.  
+
+To select independent variables, highlight them on the left and press the
+"Add" button.  A shortcut for adding a single independent variable is to
+highlight it and right-click.  You can highlight several contiguous variables
+by dragging with the mouse.  You can highlight a group of non-contiguous
+variables by clicking on them with the Ctrl key pressed.
+
+#
 diff
 @Transformations
 
@@ -539,22 +555,6 @@ missing value code" under the Variable menu and type in the value "-1"
 (without the quotes).  Gretl will then read the -1s as missing observations.
 
 #
-model dialog
-@Estimation
-
-To select the dependent variable, highlight a variable in the list on the left
-and press the "Choose" button pointing to the Dependent variable slot.  A
-shortcut is to double-click a variable on the left.  If you check the "Set as
-default" box, the selected variable will be pre-selected as dependent when
-the model dialog is next opened.  
-
-To select independent variables, highlight them on the left and press the
-"Add" button.  A shortcut for selecting a single independent variable is to
-right-click on it.  You can highlight several contiguous variables by dragging
-with the mouse.  You can highlight a group of non-contiguous variables by
-clicking on them with the Ctrl key pressed.
-
-#
 nulldata
 @Dataset
 
@@ -573,6 +573,9 @@ Computes ordinary least squares estimates of the coefficients for the
 specified model.  Prints the p-values for t- (two-tailed) and F-statistics.  A
 p-value below 0.01 indicates significance at the 1 percent level.  Model
 selection statistics are also printed.
+
+See /Topics/Estimation/dialog for help on using the model specification dialog
+box.
 
 #
 omit

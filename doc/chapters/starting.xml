@@ -1,126 +1,138 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
   <chapter id="getting-started"><title>Getting started</title>
 
-    <para>This introduction is mostly angled towards the graphical
-      client program; please see <xref linkend="cmdref"/> and
+  <para>This introduction is mostly angled towards the graphical
+    client program; please see <xref linkend="cmdref"/> and
       <xref linkend="cli"/>  below for details on the command-line
-      program, <application>gretlcli</application>.
-    </para>
+    program, <application>gretlcli</application>.
+  </para>
 
-    <para>
+  <para>
       You can supply the name of a data file to open as an argument to
-      <application>gretl</application>, but for the moment let's not
-      do that: just fire up the program.<footnote><para>For
-      convenience I will refer to the graphical client program simply
-      as <application>gretl</application> in this manual.  Note,
-      however, that the specific name of the program differs according
-      to the computer platform.  On unix-like systems it is called
-      <filename>gretl_x11</filename> while on MS Windows it is
-      <filename>gretlw32.exe</filename>. On unix-like systems a
-      wrapper script named <filename>gretl</filename> is also
-      installed &mdash; see also <xref
-      linkend="optarg"/>.</para></footnote> You should see a main
-      window (which will hold information on the data set but which is
-      at first blank) and various menus, some of them disabled at
-      first.
-    </para>
+    <application>gretl</application>, but for the moment let's not do
+    that: just fire up the program.<footnote><para>For convenience
+	I will refer to the graphical client program simply as
+	<application>gretl</application> in this manual. Note,
+	however, that the specific name of the program differs
+	according to the computer platform.  On unix-like systems it
+	is called <filename>gretl_x11</filename> while on MS Windows
+	it is <filename>gretlw32.exe</filename>. On unix-like systems
+	a wrapper script named <filename>gretl</filename> is also
+	installed &mdash; see also <xref
+	  linkend="optarg"/>.</para></footnote> You should see a main
+    window (which will hold information on the data set but which is
+    at first blank) and various menus, some of them disabled at first.
+  </para>
 
-    <para>
-      What can you do at this point?  You can browse the supplied data
-      files (or databases), open a data file, create a new data file,
-      read the help items, or open a command script.  For now let's
-      browse the supplied data files.  Under the File menu choose
-      <quote>Open data, sample file, Ramanathan&hellip;</quote>.  A
-      second window should open, presenting a list of data files
-      supplied with the package (see <xref linkend="fig-datafiles"/>).
-      The numbering of the files corresponds to the chapter
-      organization of Ramanathan (2002), which contains discussion of
-      the analysis of these data. The data will be useful for practice
-      purposes even without the text.
-    </para>
+  <para>
+    What can you do at this point?  You can browse the supplied data
+    files (or databases), open a data file, create a new data file,
+    read the help items, or open a command script.  For now let's
+    browse the supplied data files.  Under the File menu choose
+    <quote>Open data, sample file, Ramanathan&hellip;</quote>.  A
+    second window should open, presenting a list of data files
+    supplied with the package (see <xref linkend="fig-datafiles"/>).
+    The numbering of the files corresponds to the chapter organization
+    of Ramanathan (2002), which contains discussion of the analysis of
+    these data. The data will be useful for practice purposes even
+    without the text.
+  </para>
 
-    <figure id="fig-datafiles" float="1" pgwide="1">
-      <title>Practice data files window</title>
-      <screenshot>
-	<screeninfo>Practice data files window</screeninfo>
-	<graphic fileref="figures/datafiles" align="center"/>
-      </screenshot>
-    </figure>
+  <figure id="fig-datafiles" float="1" pgwide="1">
+    <title>Practice data files window</title>
+    <screenshot>
+      <screeninfo>Practice data files window</screeninfo>
+      <graphic fileref="figures/datafiles" align="center"/>
+    </screenshot>
+  </figure>
 
-    <para>
-      If you select a row in this window and click on
-      <quote>Info</quote> this pops open the the <quote>header
-	file</quote> for the data set in question, which tells you
-      something about the source and definition of the variables.  If
-      you find a file that is of interest, you may open it by clicking
-      on <quote>Open</quote>, or just double-clicking on the file
-      name.  For the moment let's open <filename>data3-6</filename>.
-    </para>
+  <para>
+    If you select a row in this window and click on
+    <quote>Info</quote> this pops open the the <quote>header
+      file</quote> for the data set in question, which tells you
+    something about the source and definition of the variables.  If
+    you find a file that is of interest, you may open it by clicking
+    on <quote>Open</quote>, or just double-clicking on the file name.
+    For the moment let's open <filename>data3-6</filename>.
+  </para>
 
-    <tip>
-      <para>In <application>gretl</application> windows containing
-	lists, double-clicking on a line launches a default action for
-	the associated list entry: e.g. displaying the values of a
-	data series, opening a file.</para>
-    </tip>
+  <tip>
+    <para>In <application>gretl</application> windows containing
+      lists, double-clicking on a line launches a default action for
+      the associated list entry: e.g. displaying the values of a data
+      series, opening a file.</para>
+  </tip>
 
-    <para>
+  <para>
       This file contains data pertaining to a classic econometric
-      <quote>chestnut</quote>, the consumption function.  The data
-      window should now display the name of the current data file, the
-      overall data range and sample range, and the names of the
-      variables along with brief descriptive tags &mdash; see
+    <quote>chestnut</quote>, the consumption function.  The data
+    window should now display the name of the current data file, the
+    overall data range and sample range, and the names of the
+    variables along with brief descriptive tags &mdash; see
       <xref linkend="fig-mainwin"/>.
-    </para>
+  </para>
 
-    <figure id="fig-mainwin" float="1" pgwide="1">
-     <title>Main window, with a practice data file open</title>
-     <screenshot>
-	<screeninfo>Main window</screeninfo>
-	<graphic fileref="figures/mainwin" align="center"/>
-     </screenshot>
-    </figure>
+  <figure id="fig-mainwin" float="1" pgwide="1">
+    <title>Main window, with a practice data file open</title>
+    <screenshot>
+      <screeninfo>Main window</screeninfo>
+      <graphic fileref="figures/mainwin" align="center"/>
+    </screenshot>
+  </figure>
 
-    <para>
+  <para>
       OK, what can we do now?  Hopefully the various menu options
-      should be fairly self explanatory.  For now we'll dip into the
-      Model menu; a brief tour of all the main window menus is given
-      in <xref linkend="menus"/> below.
-    </para>
+    should be fairly self explanatory.  For now we'll dip into the
+    Model menu; a brief tour of all the main window menus is given in
+    <xref linkend="menus"/> below.
+  </para>
 
-    <para>
-      <application>gretl</application>'s Model menu offers numerous
-      various econometric estimation routines.  The simplest and most
-      standard is Ordinary Least Squares (OLS).</para>
+  <para>
+    <application>gretl</application>'s Model menu offers numerous
+    various econometric estimation routines.  The simplest and most
+    standard is Ordinary Least Squares (OLS). Selecting OLS pops up a
+    dialog box calling for a <emphasis>model specification</emphasis>
+    &mdash; see <xref linkend="fig-selector"/>.
+  </para>
 
-    <para>Selecting OLS pops up a dialog box calling for a
-      <emphasis>model specification</emphasis>.  This takes the form
-      of a list of variable names or numbers, separated by spaces.
-      The first name or number represents the dependent variable, the
-      remainder the independent variables.  It is usual to include a
-      constant (ID number 0) among the independent variables
-      (otherwise you are forcing the intercept to equal zero).
-    </para>
+  <figure id="fig-selector" float="1" pgwide="1">
+    <title>Model specification dialog</title>
+    <screenshot>
+      <screeninfo>Model specification dialog</screeninfo>
+      <graphic fileref="figures/selector" align="center"/>
+    </screenshot>
+  </figure>
 
-    <tip><para>You can put a variable's ID number into the dialog box
-	by clicking on that variable's row in the main
-	window.</para></tip>
+  <para>
+    To select the dependent variable, highlight the variable you
+    want in the list on the left and either click the
+    <quote>Choose</quote> button that points to the Dependent variable
+    slot or double-click on the variable.  If you check the <quote>Set
+      as default</quote> box this variable will be pre-selected as
+    dependent when you next open the model dialog box. To select
+    independent variables, highlight them on the left and click the
+    <quote>Add</quote> button (or click the right mouse button over
+    the highlighted variable).  To select several variable in the list
+    box, drag the mouse over them; to select several non-contiguous
+    variables, hold down the <literal>Ctrl</literal> key and click on
+    the variables you want.
+  </para>
 
-    <para>Thus, continuing the example of
-      <filename>data3-6</filename>, the entry <command>1 0 2</command>
-      (or equivalently <command>Ct 0 Yt</command>) specifies a
-      regression of consumption (dependent) on income and a constant.
-    </para>
+  <figure id="fig-selector" float="1" pgwide="1">
+    <title>Model specification dialog</title>
+    <screenshot>
+      <screeninfo>Model specification dialog</screeninfo>
+      <graphic fileref="figures/selector" align="center"/>
+    </screenshot>
+  </figure>
 
-    <para>You can specify a lagged value of an existing variable
-      without explicitly adding this to the data set first.  Thus a
-      variant on the above estimation command which includes the first
-      lag of income on the right-hand side would be <command>1 0 2
-	Yt(-1)</command> The lag is selected using a negative integer
-      enclosed in parentheses. Note that in this context the name, not
-      the number, of the variable in question must be used.
-    </para>
+  <para>To run a regression with consumption as the dependent variable
+    and income as independent, click <varname>Ct</varname> into the
+    Dependent slot and add <varname>Yt</varname> to the Independent
+    variables list.</para>
 
-    <sect1 id="est-output"><title>Estimation output</title>
+  <sect1 id="est-output"><title>Estimation output</title>
 
     <para>
       Once you've specified a model, a window displaying the
@@ -130,11 +142,11 @@
     </para>  
 
     <figure id="fig-modelwin" float="1" pgwide="1">
-     <title>Model output window</title>
-     <screenshot>
+      <title>Model output window</title>
+      <screenshot>
 	<screeninfo>Model window</screeninfo>
 	<graphic fileref="figures/modelwin" align="center"/>
-     </screenshot>
+      </screenshot>
     </figure>
 
     <para>The output window contains menus that allow you to inspect
@@ -166,16 +178,16 @@
 	font (e.g. Courier) to preserve the output's tabular
 	formatting.  Select a small font (10-point Courier should do)
 	to prevent the output lines from being broken in the wrong
-	place.</para></tip>
+	place.</para>
+    </tip>
 
-    </sect1>
+  </sect1>
   </chapter>
-
 
 <!-- Keep this comment at the end of the file
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
-mode: sgml
+mode: xml
 sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->
