@@ -572,9 +572,13 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (wbook_get_info(fname, &book, prn)) {
 	pputs(prn, _("Failed to get workbook info"));
-	err = 1;
-    } else
+#ifdef ENABLE_NLS
+	setlocale(LC_NUMERIC, "");
+#endif
+	return 1;
+    } else {
 	wbook_print_info(&book);
+    }
 
     if (book.nsheets == 0) {
 	pputs(prn, _("No worksheets found"));
@@ -620,10 +624,14 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 		if (*s == '"' || *s == '\'') s++;
 		newinfo->pd = pd;
-		newinfo->sd0 = atof(s);
+		newinfo->time_series = TIME_SERIES;
+
 		strcpy(newinfo->stobs, s);
 		colonize_obs(newinfo->stobs);
-		newinfo->time_series = TIME_SERIES;
+		fprintf(stderr, "stobs='%s'\n", newinfo->stobs);
+
+		newinfo->sd0 = get_date_x(newinfo->pd, newinfo->stobs);
+
 		sheet.text_cols = 1;
 		time_series = 1;
 		label_strings = 0;
@@ -647,6 +655,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    newinfo->time_series = 0;
 	} else {
 	    ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
+	    fprintf(stderr, "endobs='%s'\n", newinfo->endobs);
 	}
 
 	j = 1;

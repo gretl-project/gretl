@@ -760,7 +760,17 @@ int get_worksheet_data (char *fname, int datatype, int append,
     int err;
     void *handle;
     PRN *errprn;
+    FILE *fp;
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
+    
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	sprintf(errtext, _("Couldn't open %s"), fname);
+	errbox(errtext);
+	return 1;
+    } else {
+	fclose(fp);
+    }
 
     if (datatype == GRETL_GNUMERIC) {
 	sheet_get_data = gui_get_plugin_function("wbook_get_data",

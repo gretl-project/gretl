@@ -697,14 +697,14 @@ static int consistent_date_labels (int row_offset)
     for (t=tstart; t<=lastrow; t++) {
 	test = rowptr[t].cells[0];
 	if (*test == '\0') {
-	    fprintf(stderr, " no: blank cell at row %d\n", t);
+	    fprintf(stderr, " no: blank cell at row %d\n", t + 1);
 	    return 0;
 	}
 	if (*test == '"' || *test == '\'') test++;
 	pd = label_is_date(test);
 	if (pd == 0) {
-	    fprintf(stderr, " no: label '%s' at row %d is not a date\n", 
-		    test, t);
+	    fprintf(stderr, " no: label '%s' on row %d is not a date\n", 
+		    test, t + 1);
 	    return 0;
 	}
 	x = atof(test);

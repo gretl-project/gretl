@@ -341,8 +341,16 @@ static void filesel_open_session (const char *fname)
 
 static char *suggested_savename (const char *fname)
 {
-    char *s = g_strdup(fname);
-    char *sfx = strrchr(s, '.');
+    const char *ss = strrchr(fname, SLASH);
+    char *s, *sfx;
+
+    if (ss == NULL) {
+	s = g_strdup(fname);
+    } else {
+	s = g_strdup(ss + 1);
+    }
+
+    sfx = strrchr(s, '.');
 
     if (sfx != NULL && (strlen(sfx) == 4 || !strcmp(sfx, ".gnumeric"))) {
 	const char *test = (olddat)? ".dat" : ".gdt";
@@ -522,9 +530,8 @@ void file_selector (const char *msg, int action, gpointer data)
     /* special case: default save of data */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && 
 	paths.datfile[0]) {
-	char *tmp = paths.datfile + slashpos(paths.datfile) + 1;
-	char *savename = suggested_savename(tmp);
-	
+	char *savename = suggested_savename(paths.datfile);
+
 	strcpy(fname, savename);
 	g_free(savename);
 	get_base(startdir, paths.datfile, SLASH);
@@ -1002,8 +1009,7 @@ void file_selector (const char *msg, int action, gpointer data)
 
     else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
 	     && paths.datfile[0]) {
-	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
-	char *savename = suggested_savename(fname);
+	char *savename = suggested_savename(paths.datfile);
 	char startd[MAXLEN];
 
 	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
