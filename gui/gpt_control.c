@@ -1124,6 +1124,65 @@ typedef struct png_plot_t {
 extern void gnome_print_graph (const char *fname);
 #endif
 
+/* experimental drawing stuff */
+
+#define DRAWING 1
+
+#ifdef DRAWING
+
+/* Draw a rectangle on the screen */
+static void
+draw_brush (GtkWidget *widget, gdouble x, gdouble y, GdkPixmap *pixmap)
+{
+    GdkRectangle update_rect;
+
+    update_rect.x = x - 5;
+    update_rect.y = y - 5;
+    update_rect.width = 10;
+    update_rect.height = 10;
+    gdk_draw_rectangle (pixmap,
+                        widget->style->black_gc,
+                        TRUE,
+                        update_rect.x, update_rect.y,
+                        update_rect.width, update_rect.height);
+    gtk_widget_draw (widget, &update_rect);
+}
+
+static gint
+button_press_event (GtkWidget *widget, GdkEventButton *event,
+		    GdkPixmap *pixmap)
+{
+
+    fprintf(stderr, "x=%g, y=%g\n", event->x, event->y);
+    if (event->button == 1 && pixmap != NULL)
+        draw_brush (widget, event->x, event->y, pixmap);
+
+    return TRUE;
+}
+
+static gint
+motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
+		     GdkPixmap *pixmap)
+{
+    int x, y;
+    GdkModifierType state;
+
+    if (event->is_hint)
+        gdk_window_get_pointer (event->window, &x, &y, &state);
+    else {
+        x = event->x;
+        y = event->y;
+        state = event->state;
+    }
+    
+    if (state & GDK_BUTTON1_MASK && pixmap != NULL)
+        draw_brush (widget, x, y, pixmap);
+  
+    return TRUE;
+}
+
+#endif /* end experimental drawing */
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
@@ -1284,12 +1343,28 @@ int gnuplot_show_png (char *plotfile)
     /* Create drawing-area widget */
     drawing_area = gtk_drawing_area_new();
     plot->area = drawing_area;
+#ifdef DRAWING
+    gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
+                           | GDK_LEAVE_NOTIFY_MASK
+                           | GDK_BUTTON_PRESS_MASK
+                           | GDK_POINTER_MOTION_MASK
+                           | GDK_POINTER_MOTION_HINT_MASK);
+#else
     gtk_widget_set_events (drawing_area, GDK_EXPOSURE_MASK
                            | GDK_LEAVE_NOTIFY_MASK
                            | GDK_BUTTON_PRESS_MASK);
+#endif
     gtk_widget_set_sensitive(drawing_area, TRUE);
+
+#ifdef DRAWING
+    gtk_signal_connect (GTK_OBJECT (drawing_area), "motion_notify_event",
+                        (GtkSignalFunc) motion_notify_event, dbuf_pixmap);
+    gtk_signal_connect (GTK_OBJECT (drawing_area), "button_press_event",
+                        (GtkSignalFunc) button_press_event, dbuf_pixmap);
+#else
     gtk_signal_connect(GTK_OBJECT(drawing_area), "button_press_event", 
                        GTK_SIGNAL_FUNC(plot_popup), plot);
+#endif
 
     gtk_container_add(GTK_CONTAINER(w), drawing_area);
 
