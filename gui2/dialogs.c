@@ -1531,7 +1531,7 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 
     /* X12 vs native radio buttons */
     hbox = gtk_hbox_new(FALSE, 5);
-    opts->x12check = gtk_radio_button_new_with_label(NULL, _("Use X12-ARIMA"));
+    opts->x12check = gtk_radio_button_new_with_label(NULL, _("Use X-12-ARIMA"));
     gtk_box_pack_start(GTK_BOX(hbox), opts->x12check, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1559,6 +1559,14 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 			tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tmp), "clicked", 
 		      G_CALLBACK(destroy_arma_opts), opts->dlg);
+
+    /* plus Help */
+    tmp = gtk_button_new_from_stock(GTK_STOCK_HELP);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(opts->dlg)->action_area), 
+			tmp, TRUE, TRUE, 0);
+    g_signal_connect (G_OBJECT (tmp), "clicked", 
+		      G_CALLBACK(context_help), 
+		      GINT_TO_POINTER(ARMA));
 
     gtk_widget_show_all(opts->dlg);
 }

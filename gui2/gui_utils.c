@@ -2619,7 +2619,7 @@ static void add_x12_output_menu_item (windata_t *vwin)
     MODEL *pmod = vwin->data;
     const char *mpath[] = {
 	N_("/Model data/x12sep"),
-	N_("/Model data/view X12ARIMA output")
+	N_("/Model data/view X-12-ARIMA output")
     };
 
     if (pmod->params == NULL || pmod->params[0] == NULL)

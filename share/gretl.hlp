@@ -65,6 +65,16 @@ positive, then the corresponding uhat square is used instead.  Weighted least
 square estimation is then performed on the original model.
 
 #
+arma
+@Estimation
+Univariate ARMA model
+
+Calls X-12-ARIMA to estimate a univariate ARMA (Autoregressive, Moving
+Average) model.  This command will work only if the X-12-ARIMA package for
+gretl is installed.  See the gretl website, http://gretl.sourceforge.net, for
+details.
+
+#
 boxplots
 @Graphs
 Exploratory data analysis

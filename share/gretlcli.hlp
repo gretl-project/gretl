@@ -81,6 +81,20 @@ corresponding uhat square is used instead.  Weighted least square estimation
 is then performed on the original model.
 
 #
+arma
+@Estimation
+Usage:          arma p q ; depvar 
+                arma p q ; depvar -o     
+Example:        ar 1 1 ; y 
+
+Calls X-12-ARIMA to estimate a univariate ARMA (Autoregressive, Moving
+Average) model.  The integer values p and q represent the AR and MA orders
+respectively.  If the -o flag is given, details of the iterative estimation
+procedure are shown.  This command will work only if the X-12-ARIMA package
+for gretl is installed.  See the gretl website, http://gretl.sourceforge.net,
+for details.
+
+#
 boxplot
 @Graphs
 Usage:         boxplot varname
