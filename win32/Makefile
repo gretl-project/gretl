@@ -46,7 +46,7 @@ GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
 PLUGINS = dlls/stats_tables.dll dlls/panel_data.dll dlls/longname.dll \
 	dlls/progress_bar.dll dlls/gnumeric_import.dll \
-	dlls/excel_import.dll # dlls/mp_ols.dll
+	dlls/excel_import.dll dlls/mp_ols.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -190,7 +190,7 @@ dlls/longname.dll: longname.o
 
 dlls/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp.dll
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lgmp
 
 panel_data.o: panel_data.c 
 	$(CC) -c $(CFLAGS) $(GLIBINC) $<

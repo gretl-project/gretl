@@ -542,7 +542,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     gretl_errmsg[0] = '\0';
     genr.label[0] = '\0';
 
-    *s = *genrs = *snew = '\0';
+    *s = *genrs = *snew = *sleft = '\0';
     get_genr_formula(s, line);
     delchar('\n', s);
     strcpy(genrs, s); 
@@ -701,7 +701,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
         } else { /* indx1 != NULL: left paren was found */
             nright1 = strlen(indx1);    /* no. of characters to right of ( */
             nleft1 = ls - nright1;      /* no. of characters before ( */
-            strncpy(sleft, s, nleft1);  /*string to left of (  */
+            strncpy(sleft, s, nleft1);  /* string to left of (  */
             strcpy(sleft + nleft1, "\0");
             /* calculate equation inside parenthesis */
             strcpy(sright, indx1);         /*string to right of ( */
@@ -1669,28 +1669,32 @@ static int scanb (const char *ss, char *word)
 	 left of operator 
      */
 {
-    register int i;
     int n = strlen(ss);
+    int i = n - 1;
 
     *word = '\0';
-    i = n - 1;
+
+    if (i < 0) return 0;
+
     if (ss[i] == '(' || ss[i] == '\0' || is_operator(ss[i])) {
 	word[0] = ss[n-1];
 	word[1] = '\0';
 	return 0;
     }
+
     for (i=n-1; i>=0; i--) {
 	if (ss[i] == '(' || ss[i] == '\0' || is_operator(ss[i])) {
 	    strcpy(word, ss+i+1);
 	    return 1;
 	}
     }
+
     if (i == -1) {
-	strcpy(word, ss);
-	if (ss[0] == '\0') return 0;
-	else
-	    return 1;
+        strcpy(word, ss);
+        if (ss[0] == '\0') return 0;
+        else return 1;
     }
+
     return 0;
 }
 

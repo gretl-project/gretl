@@ -4,6 +4,7 @@
 
 GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp372w32.zip
 INNO_EXE="c:/Userdata/Inno Setup 2/ISCC.exe"
+RECODE=recode
 
 # add gnuplot distribution
 function process_gnuplot {
@@ -56,6 +57,12 @@ done
 
 # help files, license, logo
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
+for lang in es ; do
+   $RECODE l1..utf-8 < ${TOPDIR}/share/gretlcli.hlp.$lang \
+       > ${TOPDIR}/share/gretlcli_hlp_${lang}.txt
+   add_file ${TOPDIR}/share/gretlcli_hlp_${lang}.txt \
+       gretl/gretlcli_hlp_${lang}.txt
+done
 add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/gui/gretl-logo.xpm gretl/gretl-logo.xpm
@@ -97,5 +104,5 @@ cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss
 
 # make Inno installer
 inno_compile
-
+ls -l Output/gretl_install.exe
 

@@ -974,7 +974,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else {
 	print_float_10 (pmod->sderr[c-1], prn); 
 	if (pmod->sderr[c-1] > 0.) {
-	    t = pmod->coeff[c-1]/pmod->sderr[c-1];
+	    t = pmod->coeff[c-1] / pmod->sderr[c-1];
 	    if (pmod->aux == AUX_ADF) {
 		pvalue = 1.;
 		pprintf(prn, " %12.3f %13s", t, _("unknown"));

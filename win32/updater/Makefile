@@ -7,18 +7,15 @@ libsrc = ../../lib/src
 
 PROG = gretl_updater.exe
 
-$(PROG): $(OBJ) 
+vpath %.h $(libsrc)
+
+$(PROG): $(OBJ) version.h
 	 $(CC) -mwindows -s -o $@ $^ $(LIBS)
-
-$(OBJ): version.h
-
-version.h:
-	cp $(libsrc)/$@ .
 
 .PHONY :
 
 clean:
-	rm -f *.o $(PROG) rm -f version.h
+	rm -f *.o $(PROG)
 
 tags:
 	etags *.c

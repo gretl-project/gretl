@@ -43,13 +43,13 @@ const char negval[] = N_("\nEnter x value (value < 0 will exit menu): ");
  * @df: degrees of freedom.
  * 
  * Returns: the 95 percent critical value for the t distribution
- * with @df degrees of freedom.
+ * with @df degrees of freedom (two-sided)
  *
  */
 
 double _tcrit95 (int df)
 {
-    return stdtri(df, 0.95);
+    return stdtri(df, 0.975);
 }
 
 /**
@@ -63,7 +63,7 @@ double _tcrit95 (int df)
 
 double rhocrit95 (int n)
 {
-    double x = stdtri(n - 2, 0.95);
+    double x = stdtri(n - 2, 0.975);
     
     return sqrt(x*x / (x*x - 2 + n));
 }
@@ -79,7 +79,12 @@ double rhocrit95 (int n)
 
 double tprob (double x, int df)
 {
-    return 1.0 - stdtr(df, x);
+    double xx;
+
+    if (df <= 0) return -1.0;
+    xx = x*x;
+    return fdist(xx, 1, df);
+    /* return 1.0 - stdtr(df, x); */
 }
 
 /**
@@ -239,18 +244,16 @@ double batch_pvalue (const char *str,
 	    pprintf(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
-	tmp = xval;
-	if (xval < 0.0) tmp = -1.0 * xval;
-	xx = tprob(tmp, df1);
+	xx = tprob(xval, df1);
 	if (xx < 0) {
 	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
 	pprintf(prn, _("\nt(%d): area to the %s of %f = %.4g\n"), 
 		df1, (xval > 0)? _("right"): _("left"),
-		xval, xx);
+		xval, 0.5 * xx);
 	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
-		2.0 * xx, 1.0 - 2.0 * xx);
+		xx, 1.0 - xx);
 	return xx;
 
     case '3':
