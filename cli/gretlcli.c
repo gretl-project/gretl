@@ -153,7 +153,7 @@ void nosub (PRN *prn)
 
 int model_test_start (const int id, PRN *prn, int ols_only)
 {
-    int m = (id)? id - 1 : 0;
+    int m = (id)? id - 1 : model_count - 1;
 
     if (model_count == 0) { 
 	pputs(prn, _("Can't do this: no model has been estimated yet\n"));
