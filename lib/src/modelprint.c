@@ -105,6 +105,11 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
+	if (pmod->ci == ARMA) {
+	    pprintf(prn, "  %s = %.*g\n", _("Mean of residuals"), 
+		    GRETL_DIGITS, pmod->ess_wt);
+	}
+
 	pprintf(prn, "  %s = %.*g\n", _("Sum of squared residuals"), 
 		GRETL_DIGITS, wt? pmod->ess_wt : pmod->ess);
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
@@ -122,6 +127,11 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
+	if (pmod->ci == ARMA) {
+	    pprintf(prn, "%s = %g\n", I_("Mean of residuals"), 
+		    pmod->ess_wt);
+	}
+
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Sum of squared residuals"), 
 		wt? pmod->ess_wt : pmod->ess);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of residuals"), 
@@ -131,6 +141,12 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 
     if (TEX_FORMAT(prn->format)) {
 	char x1str[32], x2str[32];
+
+	if (pmod->ci == ARMA) {
+	    tex_dcolumn_double(pmod->ess_wt, x1str);
+	    pprintf(prn, "%s & %s \\\\\n", I_("Mean of residuals"), 
+		    x1str);
+	}
 
 	tex_dcolumn_double(pmod->ess, x1str);
 	tex_dcolumn_double(pmod->sigma, x2str);
@@ -1029,47 +1045,20 @@ static void model_format_end (PRN *prn)
     }
 } 
 
-static int print_arma_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, 
-				    PRN *prn)
-{
-    int i, err = 0, gotnan = 0;
-    int p = pmod->list[1], q = pmod->list[2];
-
-    for (i=0; i<=p+q; i++) {
-	if (PLAIN_FORMAT(prn->format)) {
-	    err = print_coeff(pdinfo, pmod, i, prn);
-	}
-	else if (TEX_FORMAT(prn->format)) {
-	    err = tex_print_coeff(pdinfo, pmod, i, prn);
-	}
-	else if (RTF_FORMAT(prn->format)) {
-	    err = rtf_print_coeff(pdinfo, pmod, i, prn);
-	}
-	if (err) gotnan = 1;
-    }
-
-    return gotnan;
-}
-
 static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
-    int n = pmod->list[0];
+    int n = pmod->ncoeff;
 
-    if (pmod->ci == ARMA) {
-	return print_arma_coefficients(pmod, pdinfo, prn);
-    }
-
-    for (i=2; i<=n; i++) {
-	if (pmod->list[i] == LISTSEP) break;
+    for (i=0; i<n; i++) {
 	if (PLAIN_FORMAT(prn->format)) {
-	    err = print_coeff(pdinfo, pmod, i, prn);
+	    err = print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	else if (TEX_FORMAT(prn->format)) {
-	    err = tex_print_coeff(pdinfo, pmod, i, prn);
+	    err = tex_print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	else if (RTF_FORMAT(prn->format)) {
-	    err = rtf_print_coeff(pdinfo, pmod, i, prn);
+	    err = rtf_print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	if (err) gotnan = 1;
     }
@@ -1462,22 +1451,6 @@ static void print_pval_str (double pval, char *str)
 
 /* ......................................................... */ 
 
-static void arma_coeff_name (char *varname, const DATAINFO *pdinfo,
-			     const MODEL *pmod, int c)
-{
-    int p = pmod->list[1];
-
-    if (c == 0) {
-	strcpy(varname, pdinfo->varname[0]);
-    } else if (c <= p) {
-	sprintf(varname, "%s(-%d)", pdinfo->varname[pmod->list[4]], c);
-    } else {
-	sprintf(varname, "e(-%d)", c - p);
-    }
-}
-
-/* ......................................................... */ 
-
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int c, PRN *prn)
 {
@@ -1489,17 +1462,14 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
-    } else if (pmod->ci == NLS) {
+    } else if (pmod->ci == NLS || pmod->ci == ARMA) {
 	strcpy(varname, pmod->params[c-1]);
-    } else if (pmod->ci == ARMA) {
-	arma_coeff_name(varname, pdinfo, pmod, c);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
 
     if (pmod->ci == ARMA) {
-	pprintf(prn, " %3d) %8s ", c, varname);
-	c += 2;
+	pprintf(prn, " %3d) %8s ", c - 1, varname);
     } else {
 	pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
     }
@@ -1527,8 +1497,11 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* std error is well-defined, but is it positive? */
     if (pmod->sderr[c-2] > 0.) {
 	t = pmod->coeff[c-2] / pmod->sderr[c-2];
-	if (t >= 1000.0) {
-	    pprintf(prn, " %#7.2G", t);
+	if (fabs(t) >= 1000.0) { /* || t < .001 ? */
+	    char numstr[9];
+
+	    sprintf(numstr, "%#8.2G", t);
+	    pprintf(prn, " %8s", numstr);
 	} else {
 	    pprintf(prn, " %7.3f", t);
 	}

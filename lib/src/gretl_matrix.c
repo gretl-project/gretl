@@ -23,8 +23,8 @@
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
-#define mdx(a,i,j)   (j)*(a)->rows+(i)
-#define mdxtr(a,i,j) (i)*(a)->rows+(j)
+#define mdx(a,i,j)   ((j)*(a)->rows+(i))
+#define mdxtr(a,i,j) ((i)*(a)->rows+(j))
 
 /* ....................................................... */
 

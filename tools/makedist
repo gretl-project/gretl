@@ -30,6 +30,7 @@ for f in \
   helpfiles.c helpfiles.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
+  series_view.c series_view.h \
   session.c session.h \
   settings.c settings.h \
   webget.c webget.h \

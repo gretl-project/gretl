@@ -154,20 +154,17 @@ static int tex_greek_param (char *targ, const char *src)
     return (*targ != 0);
 }
 
-static void tex_arma_coeff_name (char *varname, const DATAINFO *pdinfo,
-				 const MODEL *pmod, int c)
+static void tex_arma_coeff_name (char *targ, const char *src)
 {
-    int p = pmod->list[1];
+    char vname[VNAMELEN], vnesc[16];
+    int lag;
 
-    if (c == 0) {
-	strcpy(varname, pdinfo->varname[0]);
-    } else if (c <= p) {
-	char tmp[16];
-
-	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
-	sprintf(varname, "%s$_{t-%d}$", tmp, c);
+    if (sscanf(src, "%[^(](-%d)", vname, &lag) == 2) {
+	tex_escape(vnesc, vname);
+	sprintf(targ, "%s$_{t-%d}$", vnesc, lag);
     } else {
-	sprintf(varname, "e$_{t-%d}$", c - p);
+	tex_escape(vnesc, src);
+	strcpy(targ, vnesc);
     }
 }
 
@@ -175,7 +172,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 		     int c, PRN *prn)
 {
     char tmp[24], coeff[64], sderr[64], tratio[64], pval[64];
-    int v = (pmod->ci == ARMA)? c : c - 2;
+    int v = c - 2;
 
     if (isnan(pmod->coeff[v]) || na(pmod->coeff[v])) {
 	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
@@ -202,7 +199,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    tex_escape(tmp, pmod->params[c-1]);
 	}
     } else if (pmod->ci == ARMA) {
-	tex_arma_coeff_name(tmp, pdinfo, pmod, c);
+	tex_arma_coeff_name(tmp, pmod->params[c-1]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }
@@ -309,7 +306,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* dependent variable */
     *tmp = '\0';
-    tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+    if (pmod->ci == ARMA) {
+	tex_escape(tmp, pmod->params[0]);
+    } else {
+	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
+    }
     pprintf(prn, "$\\widehat{\\rm %s}$ & = &\n", tmp);
 
     /* coefficients times indep vars */
@@ -317,7 +318,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     start = (pmod->ifc)? 1 : 0;
     for (i=start; i<ncoeff; i++) {
 	tex_print_float(pmod->coeff[i], (i > 0), prn);
-	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+	if (pmod->ci == ARMA) {
+	    tex_arma_coeff_name(tmp, pmod->params[i+1]);
+	} else {
+	    tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
+	}
 	pprintf(prn, " & %s ", tmp);
     }
     pputs(prn, "\\\\\n");

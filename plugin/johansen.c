@@ -171,9 +171,9 @@ static int inverse_compare_doubles (const void *a, const void *b)
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
 			int k, int T, int trends, PRN *prn)
 {
-    gretl_matrix *Suu, *Svv, *Suv;
-    gretl_matrix *Inv, *TmpL, *TmpR, *M;
-    double *eigvals;
+    gretl_matrix *Suu = NULL, *Svv = NULL, *Suv = NULL;
+    gretl_matrix *Inv = NULL, *TmpL = NULL, *TmpR = NULL, *M = NULL;
+    double *eigvals = NULL;
     int err = 0;
 
     Suu = gretl_matrix_from_2d_array(X, k, k);
@@ -185,17 +185,34 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     TmpR = gretl_matrix_alloc(k, k);
     M = gretl_matrix_alloc(k, k);
 
+    if (Suu == NULL || Svv == NULL || Suv == NULL ||
+	Inv == NULL || TmpL == NULL || TmpR == NULL ||
+	M == NULL) {
+	err = 1;
+	goto eigenvals_bailout;
+    }
+
     /* calculate Suu^{-1} Suv */
-    gretl_invert_general_matrix(Suu);
-    gretl_matrix_multiply(Suu, Suv, TmpR);
+    err = gretl_invert_general_matrix(Suu);
+    if (!err) {
+	err = gretl_matrix_multiply(Suu, Suv, TmpR);
+    }
 
     /* calculate Svv^{-1} Suv' */
-    gretl_invert_general_matrix(Svv);
-    gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
-			      Suv, GRETL_MOD_TRANSPOSE, 
-			      TmpL);
+    if (!err) {
+	err = gretl_invert_general_matrix(Svv);
+    }
+    if (!err) {
+	err = gretl_matrix_multiply_mod(Svv, GRETL_MOD_NONE,
+					Suv, GRETL_MOD_TRANSPOSE, 
+					TmpL);
+    }
 
-    gretl_matrix_multiply(TmpL, TmpR, M);
+    if (!err) {
+	err = gretl_matrix_multiply(TmpL, TmpR, M);
+    }
+
+    if (err) goto eigenvals_bailout;
 
     eigvals = gretl_general_matrix_eigenvals(M);
 

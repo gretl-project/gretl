@@ -22,6 +22,66 @@
 
 #define DEFAULT_MAX_ITER 250
 
+static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
+			     const MODEL *pmod, int i)
+{
+    int j, p = pmod->list[1];
+
+    if (i == 0) {
+	strcpy(s, pdinfo->varname[pmod->list[4]]);
+	return;
+    }
+
+    if (i == 1 && pmod->ifc) {
+	strcpy(s, pdinfo->varname[0]);
+	return;
+    }
+
+    if (pmod->ifc) j = i - 1;
+    else j = i;
+
+    if (j - p < 1) {
+	const char *depvar = pmod->params[0];
+	size_t n = strlen(depvar);
+	
+	if (n < VNAMELEN - 4) {
+	    sprintf(s, "%s(-%d)", depvar, j);
+	} else {
+	    sprintf(s, "y(-%d)", j);
+	}
+    } else {
+	sprintf(s, "e(-%d)", j - p);
+    }
+}
+
+static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
+{
+    int i, np = 2 + pmod->list[1] + pmod->list[2];
+
+    pmod->params = malloc(np * sizeof pmod->params);
+    if (pmod->params == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }
+
+    for (i=0; i<np; i++) {
+	pmod->params[i] = malloc(VNAMELEN);
+	if (pmod->params[i] == NULL) {
+	    int j;
+
+	    for (j=0; j<i; j++) free(pmod->params[j]);
+	    free(pmod->params);
+	    pmod->params = NULL;
+	    pmod->errcode = E_ALLOC;
+	    return;
+	}
+    }
+
+    for (i=0; i<np; i++) { 
+	arma_coeff_name(pmod->params[i], pdinfo, pmod, i);
+    }
+}
+
 static int get_maxiter (void)
 {
     static int ml = 0;
@@ -68,7 +128,7 @@ static void update_fcast_errs (double *e, const double *y,
    genr de_m = -e(-1) -m * de_m(-1)
 */
 
-/* FIXME: the general case below is probably broken */
+/* FIXME: the general case below needs more checking */
 
 static void update_error_partials (double *e, const double *y, 
 				   double **Z, const double *coeff,
@@ -94,6 +154,12 @@ static void update_error_partials (double *e, const double *y,
 	    k = t - (j + 1);
 	    if (k < 0 || na(y[k])) continue;
 	    Z[a][t] = -y[k];
+#if 0
+	    /* hmm... do we want this? */
+	    for (i=j-1; i>=0; i--) {
+		Z[a][t] -= coeff[i+1] * y[k];
+	    }
+#endif
 	    for (i=q-1; i>=0; i--) {
 		k = t - (i + 1);
 		if (k < 0) continue;
@@ -187,7 +253,6 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     int maxlag = (p > q)? p : q;
     int realt1 = pmod->t1 + pdinfo->t1;
     int realt2 = pmod->t2 + pdinfo->t1;
-    double emean;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
@@ -212,7 +277,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	}
     }
 
-    emean = pmod->ess = 0.0;
+    pmod->ess_wt = pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	if (t < (realt1 + maxlag) || t > realt2) {
 	    pmod->uhat[t] = pmod->yhat[t] = NADBL;
@@ -220,13 +285,12 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 	    pmod->uhat[t] = e[t - realt1];
 	    pmod->yhat[t] = y[t] - pmod->uhat[t];
 	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-	    emean += pmod->uhat[t];
+	    pmod->ess_wt += pmod->uhat[t];
 	}
     }
 
-    /* FIXME: make this available for printing along with the model */
-    emean /= pmod->nobs;
-    fprintf(stderr, "Mean of estimated errors = %g\n", emean);
+    /* ess_wt is being "borrowed" to record the mean error */
+    pmod->ess_wt /= pmod->nobs;
 
     pmod->sigma = sqrt(pmod->ess / pmod->dfd);
 
@@ -261,14 +325,75 @@ static int check_arma_list (const int *list)
 
     if (list[0] != 4) err = 1;
 
-    /* for now we'll accept ARMA (2,2) at max */
-    else if (list[1] < 0 || list[1] > 2) err = 1;
-    else if (list[2] < 0 || list[2] > 2) err = 1;
+    /* for now we'll accept ARMA (3,3) at max */
+    else if (list[1] < 0 || list[1] > 3) err = 1;
+    else if (list[2] < 0 || list[2] > 3) err = 1;
+    else if (list[1] + list[2] == 0) err = 1;
 
     if (err) {
 	gretl_errmsg_set(_("Syntax error in arma command"));
     }
     
+    return err;
+}
+
+/* below: run an initial OLS to get starting values for the
+   coefficients, in the pure AR case.  But the pure AR case
+   doesn't seem to work right anyway... FIXME */
+
+static int ar_init_by_ols (int v, int p, double *coeff,
+			   const double **Z, const DATAINFO *pdinfo)
+{
+    int an = pdinfo->t2 - pdinfo->t1 + 1;
+    double **aZ = NULL;
+    DATAINFO *ainfo = NULL;
+    int *alist = NULL;
+    MODEL armod;
+    int i, t, err = 0;
+
+    _init_model(&armod, pdinfo);  
+
+    alist = malloc((p + 3) * sizeof *alist);
+    if (alist == NULL) return 1;
+
+    alist[0] = p + 2;
+    alist[1] = 1;
+    alist[2] = 0;
+    for (i=0; i<p; i++) {
+	alist[i + 3] = i + 2;
+    }
+
+    ainfo = create_new_dataset(&aZ, p + 2, an, 0);
+    if (ainfo == NULL) {
+	free(alist);
+	return 1;
+    }
+    ainfo->extra = 1; 
+    
+    for (t=0; t<an; t++) {
+	for (i=0; i<=p; i++) {
+	    int k = t + pdinfo->t1 - i;
+
+	    if (k < 0) aZ[i+1][t] = NADBL;
+	    else aZ[i+1][t] = Z[v][k];
+	}
+    }
+
+    armod = lsq(alist, &aZ, ainfo, OLS, 1, 0.0);
+    err = armod.errcode;
+    if (!err) {
+	for (i=0; i<armod.ncoeff; i++) {
+	    coeff[i] = armod.coeff[i];
+	}
+    }
+    
+    free(alist);
+    free_Z(aZ, ainfo);
+    clear_datainfo(ainfo, CLEAR_FULL);
+    free(ainfo);
+
+    clear_model(&armod, ainfo);
+
     return err;
 }
 
@@ -343,10 +468,14 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
     ainfo->extra = 1; /* ? can't remember what this does */
 
-    /* initialize the coefficients (FIXME: make configurable?) */
-    coeff[0] = 0.0;
-    for (i=0; i<p; i++) coeff[i+1] = 0.1;
-    for (i=0; i<q; i++) coeff[i+p+1] = 0.1;
+    /* initialize the coefficients (FIXME) */
+    if (p > 0 && q == 0) {
+	ar_init_by_ols(v, p, coeff, Z, pdinfo);
+    } else {
+	coeff[0] = 0.0;
+	for (i=0; i<p; i++) coeff[i+1] = 0.1;
+	for (i=0; i<q; i++) coeff[i+p+1] = 0.1;
+    }
 
     /* initialize forecast errors and derivatives */
     for (t=0; t<an; t++) {
@@ -447,7 +576,6 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	    steplength *= 2.0;
 	} else if (subiters == 0) {
 	    /* time to quit */
-	    pputs(prn, _("Warning: convergence criterion was not met\n"));
 	    break;
 	}
 
@@ -455,12 +583,20 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
     }
 
+    if (crit > tol) {
+	pputs(prn, _("Warning: convergence criterion was not met\n"));
+    }
+
     y = Z[v];
     armod.lnL = ll;
     rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
+    if (!armod.errcode) {
+	add_arma_varnames(&armod, pdinfo);
+    }
 
  arma_bailout:
 
+    free(alist);
     free(coeff);
     free(d_coef);
     free_Z(aZ, ainfo);

@@ -609,23 +609,6 @@ int page_break (int n, int *lineno, int quit_option)
     return 0;
 }
 
-static void get_arma_string (char *s, const DATAINFO *pdinfo,
-			     const MODEL *pmod, int i)
-{
-    int p = pmod->list[1];
-
-    if (i == 1 && pmod->ifc) {
-	strcpy(s, pdinfo->varname[0]);
-	return;
-    }
-
-    if (i <= p + 1) {
-	sprintf(s, "%s(-%d)", pdinfo->varname[pmod->list[4]], i - 1);
-    } else {
-	sprintf(s, "e(-%d)", i - p - 1);
-    }
-}
-
 /* ........................................................ */
 
 void text_print_matrix (const double *rr, const int *list, 
@@ -665,12 +648,9 @@ void text_print_matrix (const double *rr, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    if (nls) {
+	    if (nls || arma) {
 		ljnf = j + nf;
 		strcpy(s, pmod->params[ljnf]);
-	    } else if (arma) {
-		ljnf = j + nf;
-		get_arma_string(s, pdinfo, pmod, ljnf);
 	    } else {
 		ljnf = list[j + nf];
 		strcpy(s, pdinfo->varname[ljnf]);
@@ -689,7 +669,7 @@ void text_print_matrix (const double *rr, const int *list,
 		index = ijton(j, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls)? j : list[j]);
+	    pprintf(prn, "   (%d\n", (nls || arma)? j : list[j]);
 	}
 
 	/* print upper triangular part of matrix */
