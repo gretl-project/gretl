@@ -27,6 +27,8 @@ void set_app_font (const char *fontname);
 
 void gnuplot_color_selector (GtkWidget *w, gpointer p);
 
+GtkWidget *color_patch_button (int colnum);
+
 char *endbit (char *dest, char *src, int addscore);
 
 void get_default_dir (char *s);

@@ -494,18 +494,14 @@ GtkItemFactoryEntry data_items[] = {
 
     /* Sample menu */
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>", NULL },
-#if 1
-    { N_("/Sample/_Set range..."), NULL, sample_range_dialog, 0, NULL, GNULL },
-#else
-    { N_("/Sample/_Set range..."), NULL, gretl_callback, SMPL, NULL, GNULL },
-#endif
+    { N_("/Sample/_Set range..."), NULL, sample_range_dialog, SMPL, NULL, GNULL },
     { N_("/Sample/_Restore full range"), NULL, restore_sample_callback, 1, NULL, GNULL },
     { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>", NULL },    
     { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
       SETOBS, NULL, GNULL },
     { N_("/Sample/Compact data..."), NULL, compact_data_set, 0, NULL, GNULL },
     { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>", NULL },   
-    { N_("/Sample/_Define, based on dummy..."), NULL, gretl_callback, 
+    { N_("/Sample/_Define, based on dummy..."), NULL, sample_range_dialog, 
       SMPLDUM, NULL, GNULL },
     { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL, GNULL },

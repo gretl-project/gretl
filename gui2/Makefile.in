@@ -92,8 +92,8 @@ vpath %.h $(topsrc)/gui2
 SRCS = boxplots.c calculator.c callbacks.c console.c database.c \
 	datafiles.c dialogs.c fileselect.c gpt_control.c gretl.c \
 	guiprint.c gui_utils.c helpfiles.c library.c model_table.c \
-	objectsave.c selector.c series_view.c session.c settings.c \
-	ssheet.c treeutils.c webget.c 
+	objectsave.c obsbutton.c selector.c series_view.c session.c \
+	settings.c ssheet.c treeutils.c webget.c 
 OBJS = $(SRCS:.c=.o)
 
 HACK_SRC = gtkfontselhack.c

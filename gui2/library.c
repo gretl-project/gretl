@@ -1139,7 +1139,6 @@ void view_log (void)
     view_file(fname, 0, 0, 78, 370, VIEW_LOG);
 }
 
-
 /* ........................................................... */
 
 void gui_errmsg (const int errcode)
@@ -1159,6 +1158,8 @@ void gui_errmsg (const int errcode)
 }
 
 /* ........................................................... */
+
+#ifdef OLD_GTK
 
 void change_sample (GtkWidget *widget, dialog_t *ddata) 
 {
@@ -1180,9 +1181,12 @@ void change_sample (GtkWidget *widget, dialog_t *ddata)
 	restore_sample_state(TRUE);
     }
 }
+
+#endif
+
 /* ........................................................... */
 
-static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
+int bool_subsample (gpointer data, guint opt, GtkWidget *w)
      /* opt = 0     -- drop all obs with missing data values 
 	opt = 'o'   -- sample using dummy variable
 	opt = 'r'   -- sample using boolean expression
@@ -1191,13 +1195,16 @@ static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
     int err = 0;
 
     restore_sample();
+
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return 1;
 
-    if (opt == 0)
+    if (opt == 0) {
 	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, 'o');
-    else
+    } else {
 	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, opt);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	return 1;
@@ -1211,10 +1218,11 @@ static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
 
     set_sample_label_special();
     restore_sample_state(TRUE);
-    if (opt == 0)
+    if (opt == 0) {
 	infobox(_("Sample now includes only complete observations"));
-    else
+    } else {
 	infobox(_("Sub-sampling done"));
+    }
 
     return 0;
 }
@@ -1248,6 +1256,8 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
+#ifdef OLD_GTK
+
 void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf = NULL;
@@ -1269,6 +1279,8 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 	close_dialog(ddata); 
     }   
 }
+
+#endif
 
 /* ........................................................... */
 

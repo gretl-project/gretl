@@ -25,6 +25,7 @@
 #include "../pixmaps/mouse.xpm"
 
 /* #define POINTS_DEBUG 1 */
+#define GNUPLOT_COLOR_SELECTION
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -805,11 +806,11 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 #ifdef GNUPLOT_COLOR_SELECTION
     /* Allow setting of gnuplot pallette: not ready yet */
     if (1) {
-	GtkWidget *cbox, *button;
+	GtkWidget *cbox, *button, *image;
 
 	/* first a separator */
 	tbl_len++;
-	tempwid = gtk_hseparator_new ();
+	tempwid = gtk_hseparator_new();
 	gtk_table_attach_defaults 
 	    (GTK_TABLE (tbl), tempwid, 0, 2, tbl_len-1, tbl_len);  
 	gtk_widget_show (tempwid);	
@@ -827,13 +828,13 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gtk_widget_show(tempwid);
 	    gtk_widget_show(cbox);
 
-	    button = gtk_button_new_with_label(_("Select color"));
+	    button = color_patch_button(i);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      button, 1, 2, tbl_len-1, tbl_len);
 	    g_signal_connect(G_OBJECT(button), "clicked", 
 			     G_CALLBACK(gnuplot_color_selector), 
 			     GINT_TO_POINTER(i));
-	    gtk_widget_show (button);
+	    gtk_widget_show_all (button);
 	}
     }
 #endif /* GNUPLOT_COLOR_SELECTION */

@@ -1732,19 +1732,76 @@ static void color_cancel (GtkWidget *button, GtkWidget *w)
     gtk_widget_destroy(w);
 }
 
+#define XPMROWS 19
+#define XPMCOLS 17
+
+GtkWidget *color_patch_button (int colnum)
+{
+    GtkWidget *image, *button;
+    GdkPixbuf *icon;
+    const char *colstr;
+    static char **xpm = NULL;
+    int i;
+
+    if (xpm == NULL) {
+	xpm = malloc(XPMROWS * sizeof *xpm);
+	if (xpm == NULL) return NULL;
+	for (i=0; i<XPMROWS; i++) {
+	    xpm[i] = malloc(XPMCOLS * sizeof **xpm);
+	    if (xpm[i] == NULL) {
+		int j;
+
+		for (j=0; j<i; j++) free(xpm[j]);
+		free(xpm);
+		return NULL;
+	    }
+	    if (i == 0) {
+		strcpy(xpm[i], "16 16 2 1");
+	    } else if (i == 1) {
+		strcpy(xpm[i], "X      c #000000");
+	    } else if (i == 2) {
+		strcpy(xpm[i], ".      c #000000");
+	    } else if (i == 3 || i == XPMROWS - 1) {
+		strcpy(xpm[i], "................");
+	    } else {
+		strcpy(xpm[i], ".XXXXXXXXXXXXXX.");
+	    }
+	}
+    }
+
+    colstr = get_gnuplot_pallette(colnum, 0);
+
+    for (i=0; i<6; i++) {
+	xpm[1][10+i] = colstr[1+i];
+    }
+
+    icon = gdk_pixbuf_new_from_xpm_data((const char **) xpm);
+    image = gtk_image_new_from_pixbuf(icon);
+    button = gtk_button_new();
+    gtk_container_add(GTK_CONTAINER(button), image);
+
+    return button;
+}
+
 void gnuplot_color_selector (GtkWidget *w, gpointer p)
 {
     GtkWidget *cdlg;
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
+    char colstr[8];
+    GdkColor color;
 
-    fprintf(stderr, "Doing selection for color %d\n", i);
+    strcpy(colstr, get_gnuplot_pallette(i, 0));
+    *colstr = '#';
+    gdk_color_parse(colstr, &color);
 
     cdlg = gtk_color_selection_dialog_new("gretl color selection");
 
-    fprintf(stderr, "cdlg = %p\n", (void *) cdlg);
-
     g_object_set_data(G_OBJECT(cdlg), "colnum", GINT_TO_POINTER(i));
+
+    gtk_color_selection_set_current_color(GTK_COLOR_SELECTION
+					  (GTK_COLOR_SELECTION_DIALOG(cdlg)->colorsel),
+					  &color);					  
 
     button = GTK_COLOR_SELECTION_DIALOG(cdlg)->ok_button;
     g_signal_connect(G_OBJECT(button), "clicked", 
@@ -1754,7 +1811,7 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     g_signal_connect(G_OBJECT(button), "clicked", 
 		     G_CALLBACK(color_cancel), cdlg);
     
-    gtk_dialog_run(GTK_DIALOG(cdlg));
+    gtk_widget_show(cdlg);
 }
 
 #ifndef G_OS_WIN32

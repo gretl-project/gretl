@@ -44,8 +44,6 @@ static char gnuplot_path[MAXLEN];
 
 static const char *auto_ols_string = "# plot includes automatic OLS line\n";
 
-static const char *get_gnuplot_pallette (int i, int plottype);
-
 /* ........................................................ */
 
 #ifdef GLIB2
@@ -2221,7 +2219,7 @@ static char gnuplot_pallette[3][8] = {
     "x00cc00"  /* full-intensity green is not very legible */
 };
 
-static const char *get_gnuplot_pallette (int i, int ptype)
+const char *get_gnuplot_pallette (int i, int ptype)
 {
 #ifdef GNUPLOT_DEBUG
     fprintf(stderr, "get_gnuplot_pallette: i=%d, ptype=%d\n",
