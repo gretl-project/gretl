@@ -3423,8 +3423,11 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	    perror("fork");
 	    return;
 	} else if (pid == 0) {
-	    execlp("xterm", "xterm", "-e", paths.gnuplot, 
-		   paths.plotfile, "-", NULL);
+	    execlp("xterm", "xterm", "+sb", "+ls",
+		   "-geometry", "40x4", "-title",
+		   "gnuplot: type q to quit",
+		   "-e", paths.gnuplot, paths.plotfile, "-", 
+		   NULL);
 	    perror("execlp");
 	    _exit(EXIT_FAILURE);
 	}
