@@ -194,7 +194,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 {
     int t;
 
-    if (sys->flags & GRETL_SYSTEM_SAVE_UHAT) {
+    if (system_save_uhat(sys)) {
 	for (t=0; t<pdinfo->n; t++) {
 	    Z[*pj][t] = pmod->uhat[t];
 	}
@@ -203,7 +203,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 		i + 1);
 	*pj += 1;
     }
-    if (sys->flags & GRETL_SYSTEM_SAVE_YHAT) {
+    if (system_save_yhat(sys)) {
 	for (t=0; t<pdinfo->n; t++) {
 	    Z[*pj][t] = pmod->yhat[t];
 	}	
@@ -227,10 +227,10 @@ int sur (gretl_equation_system *sys,
     int err = 0;
 
     /* number of equations */
-    m = sys->n_equations;
+    m = system_n_equations(sys);
 
     /* number of indep vars per equation */
-    k = sys->lists[0][0] - 1;
+    k = system_n_indep_vars(sys);
 
     /* number of observations per series */
     T = pdinfo->t2 - pdinfo->t1 + 1;
@@ -253,7 +253,7 @@ int sur (gretl_equation_system *sys,
 
     /* first grab the OLS residuals */
     for (i=0; i<m; i++) {
-	*models[i] = lsq(sys->lists[i], pZ, pdinfo, OLS, 1, 0.0);
+	*models[i] = lsq(system_get_list(sys, i), pZ, pdinfo, OLS, 1, 0.0);
 	if ((models[i])->errcode) {
 	    fprintf(stderr, "model failed on lists[%d], code=%d\n",
 		    i, (models[i])->errcode);
@@ -281,10 +281,10 @@ int sur (gretl_equation_system *sys,
 #ifdef SUR_DEBUG
 	fprintf(stderr, "doing make_Xi_from_Z(), i=%d\n", i);
 #endif
-	make_Xi_from_Z(Xi, *pZ, sys->lists[i], T);
+	make_Xi_from_Z(Xi, *pZ, system_get_list(sys, i), T);
 	for (j=0; j<m; j++) { 
 	    if (i != j) {
-		make_Xi_from_Z(Xj, *pZ, sys->lists[j], T);
+		make_Xi_from_Z(Xj, *pZ, system_get_list(sys, j), T);
 	    }
 #ifdef LDEBUG
 	    pprintf(prn, "Xi:\n");
@@ -320,7 +320,7 @@ int sur (gretl_equation_system *sys,
 #ifdef SUR_DEBUG
 	fprintf(stderr, "working on block %d\n", i);
 #endif
-	make_Xi_from_Z(Xi, *pZ, sys->lists[i], T);
+	make_Xi_from_Z(Xi, *pZ, system_get_list(sys, i), T);
 	for (j=0; j<k; j++) { /* loop over the k rows within each of 
 				 the m blocks */
 #ifdef SUR_DEBUG
@@ -329,6 +329,8 @@ int sur (gretl_equation_system *sys,
 	    tmp_y[v] = 0.0;
 	    for (l=0; l<m; l++) { /* loop over the m components that
 				     must be added to form each element */
+		int depvar = system_get_depvar(sys, l);
+
 #ifdef SUR_DEBUG
 		fprintf(stderr, "  component %d of row %d\n", 
 		       l+1, i * k + j + 1);
@@ -336,7 +338,7 @@ int sur (gretl_equation_system *sys,
 		fprintf(stderr, "X'_%d[%d] * ", i, j);
 		fprintf(stderr, "y_%d\n", l);
 #endif
-		y = (*pZ)[sys->lists[l][1]];
+		y = (*pZ)[depvar];
 		/* multiply X'[l] into y */
 		xx = 0.0;
 		for (t=0; t<T; t++) {
@@ -359,11 +361,11 @@ int sur (gretl_equation_system *sys,
     gls_sigma_from_uhat (sigma, uhat, m, T);
 
     j = 0;
-    if (sys->flags & GRETL_SYSTEM_SAVE_UHAT) {
+    if (system_save_uhat(sys)) {
 	j = pdinfo->v;
 	err = dataset_add_vars(m, pZ, pdinfo);
     }
-    if (sys->flags & GRETL_SYSTEM_SAVE_YHAT) {
+    if (system_save_yhat(sys)) {
 	if (j == 0) j = pdinfo->v;
 	err = dataset_add_vars(m, pZ, pdinfo);
     }

@@ -23,6 +23,13 @@
 #include "libgretl.h"
 #include "internal.h"
 
+struct _gretl_equation_system {
+    int type;
+    int n_equations;
+    char flags;
+    int **lists;
+};
+
 enum {
     SUR = 0
 } gretl_system_types;
@@ -211,6 +218,38 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
     return err;
 }
 
+/* simple accessor functions */
 
+int system_save_uhat (const gretl_equation_system *sys)
+{
+    return sys->flags & GRETL_SYSTEM_SAVE_UHAT;
+}
 
+int system_save_yhat (const gretl_equation_system *sys)
+{
+    return sys->flags & GRETL_SYSTEM_SAVE_YHAT;
+}
 
+int system_n_equations (const gretl_equation_system *sys)
+{
+    return sys->n_equations;
+}
+
+int system_n_indep_vars (const gretl_equation_system *sys)
+{
+    return sys->lists[0][0] - 1;
+}
+
+int *system_get_list (const gretl_equation_system *sys, int i)
+{
+    if (i >= sys->n_equations) return NULL;
+
+    return sys->lists[i];
+}
+
+int system_get_depvar (const gretl_equation_system *sys, int i)
+{
+    if (i >= sys->n_equations) return 0;
+
+    return sys->lists[i][1];
+}

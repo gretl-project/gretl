@@ -22,13 +22,6 @@
 
 typedef struct _gretl_equation_system gretl_equation_system;
 
-struct _gretl_equation_system {
-    int type;
-    int n_equations;
-    char flags;
-    int **lists;
-};
-
 enum {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1
@@ -46,5 +39,16 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
+int system_save_uhat (const gretl_equation_system *sys);
+
+int system_save_yhat (const gretl_equation_system *sys);
+
+int system_n_equations (const gretl_equation_system *sys);
+
+int system_n_indep_vars (const gretl_equation_system *sys);
+
+int *system_get_list (const gretl_equation_system *sys, int i);
+
+int system_get_depvar (const gretl_equation_system *sys, int i);
 
 #endif /* GRETL_EQUATION_SYSTEM_H */
