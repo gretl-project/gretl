@@ -739,7 +739,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
     }
 
     /* daily data: special */
-    if (datainfo->pd == 5 || datainfo->pd == 7) {
+    if (datainfo->pd == 5 || datainfo->pd == 6 || datainfo->pd == 7) {
 	int err = 0;
 	sd0 = (double) get_epoch_day(stobs); 
 	ed0 = (double) get_epoch_day(endobs);
@@ -819,8 +819,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
 		return;
 	    }
 	}	
-    } 
-    else if (datainfo->pd != 5 && datainfo->pd != 7) { 
+    } else if (datainfo->pd != 5 && 
+	       datainfo->pd != 6 && 
+	       datainfo->pd != 7) { 
 	char year[8], subper[8];
 
 	if (sscanf(stobs, "%[^:]:%s", year, subper) != 2 ||
@@ -910,8 +911,7 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
     edit_dialog (_("gretl: create data set"), 
 		 _("Enter start and end obs for new data set\n"
 		   "and name of first var to add:"), 
-		 obsstr, 
-		 prep_spreadsheet, wdata, 
+		 obsstr, prep_spreadsheet, wdata, 
 		 0, 0);
 
     g_free(obsstr);

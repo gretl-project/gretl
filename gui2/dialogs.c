@@ -3142,6 +3142,11 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	/* fixme weekly data */
     }
 
+    /* handle conversion to cross-section */
+    if (dwinfo->structure == CROSS_SECTION) {
+	strcpy(dwinfo->stobs, "1");
+    }
+
     sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
 
     if (dwinfo->structure == TIME_SERIES) {

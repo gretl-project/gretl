@@ -173,8 +173,8 @@ static void get_word_and_command (const char *s, char *word,
 
     strncat(word, p, len);
 
-    if (word[strlen(word) - 1] == '"') {
-	word[strlen(word) - 1] = 0;
+    if (word[len - 1] == '"') {
+	word[len - 1] = 0;
     }
 
 #if 0
