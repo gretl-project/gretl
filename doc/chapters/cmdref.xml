@@ -1669,15 +1669,15 @@
 	to be repeated either a specified number of times, or so long
 	as a specified condition holds true, or for successive integer
 	values of the (internal) index variable <varname>i</varname>.
-	Within a loop, only six commands can be used:
+	Within a loop, only 7 commands can be used:
 	<command>genr</command>, <command>ols</command>,
-	<command>print</command>, <command>smpl</command>,
-	<command>store</command> and <command>summary</command> (store
-	can't be used in a <quote>while</quote> loop).  You exit the
-	mode of entering loop commands with
-	<command>endloop</command>: at this point the stacked commands
-	are executed.  Loops cannot be nested.  See <xref
-	  linkend="looping"/> for details.
+	<command>print</command>, <command>sim</command>,
+	<command>smpl</command>, <command>store</command> and
+	<command>summary</command> (store can't be used in a
+	<quote>while</quote> loop).  You exit the mode of entering
+	loop commands with <command>endloop</command>: at this point
+	the stacked commands are executed.  Loops cannot be nested.
+	See <xref linkend="looping"/> for details.
       </para>
 
     </sect2>
