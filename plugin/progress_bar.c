@@ -120,7 +120,7 @@ int show_progress (long res, long expected, int flag)
     }
 
     if (flag == SP_LOAD_INIT || flag == SP_SAVE_INIT) {
-	char bytestr[48];
+	char bytestr[64];
 
 	offs = 0L;
 	if ((pdata = progress_window(flag)) == NULL) return 0;
