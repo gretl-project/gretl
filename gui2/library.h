@@ -93,8 +93,6 @@ int dataset_is_restricted (void);
 
 int maybe_restore_full_data (int action);
 
-int dataset_added_to_model (MODEL *pmod);
-
 void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 
 /* model-related functions */

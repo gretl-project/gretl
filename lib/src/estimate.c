@@ -350,7 +350,6 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	reject_missing = 1;
     } 
 
-    /* FIXME: relax for POOLED when ready */
     if (opts & OPT_M) {
 	reject_missing = 1;
     }

@@ -483,19 +483,19 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
     if (action == ADD || action == OMIT) {
 	strcpy(title, _("gretl: model tests"));
-	simple_selection (title, do_add_omit, action, vwin);
+	simple_selection(title, do_add_omit, action, vwin);
 	return;
     }
 
     if (action == COEFFSUM) {
 	strcpy(title, _("gretl: model tests"));
-	simple_selection (title, do_coeff_sum, action, vwin);
+	simple_selection(title, do_coeff_sum, action, vwin);
 	return;
     }
 
     if (action == GR_PLOT) {
 	strcpy(title, _("gretl: model tests"));
-	simple_selection (title, do_graph_from_selector, action, vwin);
+	simple_selection(title, do_graph_from_selector, action, vwin);
 	return;
     }
 

@@ -150,7 +150,7 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
     CloseClipboard();
 
-    if (tr != NULL && tr != buf) {
+    if (tr != NULL) {
 	free(tr);
     }
 
@@ -343,11 +343,7 @@ void winprint (char *fullbuf, char *selbuf)
     GlobalFree(pdlg.hDevNames);
 
 #ifdef ENABLE_NLS
-    if (printbuf != NULL && 
-	printbuf != fullbuf && 
-	printbuf != selbuf) {
-	g_free(printbuf);
-    }
+    g_free(printbuf);
 #endif
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */

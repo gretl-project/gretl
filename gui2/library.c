@@ -260,24 +260,6 @@ static void launch_gnuplot_interactive (void)
 
 #endif
 
-/* ........................................................... */
-
-int quiet_sample_check (MODEL *pmod)
-{
-    return model_sample_issue(pmod, NULL, 0, datainfo);
-}
-
-/* ......................................................... */
-
-int dataset_added_to_model (MODEL *pmod)
-{
-    int err;
-
-    err = add_subsampled_dataset_to_model(pmod);
-
-    return !err;
-}
-
 /* ......................................................... */
 
 static void set_sample_label_special (void)
@@ -738,9 +720,9 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 	spintext = adf_spintext;
 	opts = adf_opts;
 	if (datainfo->pd == 1) {
-	    omax = 4;
+	    omax = 8;
 	} else {
-	    omax = 2 * datainfo->pd;
+	    omax = 3 * datainfo->pd;
 	}
 	if (omax > datainfo->n - 6) {
 	    omax = datainfo->n - 6;
@@ -1202,10 +1184,11 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     if (*buf == 0) return;
     
     clear(line, MAXLEN);
-    if (selector_code(sr) == ADD) 
+    if (selector_code(sr) == ADD) {
         sprintf(line, "addto %d %s", orig->ID, buf);
-    else 
+    } else {
         sprintf(line, "omitfrom %d %s", orig->ID, buf);
+    }
 
     if (check_cmd(line) || bufopen(&prn)) return;
 
@@ -1237,8 +1220,9 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     }
 
     /* update copy of most recently estimated model */
-    if (copy_model(models[2], pmod, datainfo))
+    if (copy_model(models[2], pmod, datainfo)) {
 	errbox(_("Out of memory copying model"));
+    }
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);

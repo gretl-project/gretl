@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "var.h"
+#include "modelspec.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -2905,8 +2906,8 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 {
     windata_t *mwin = (windata_t *) data;
     MODEL *pmod = mwin->data;
-    extern int quiet_sample_check (MODEL *pmod); /* library.c */
-    int s, ok = 1;
+    gboolean s;
+    int ok = 1, graphs_ok = 1;
 
     if (Z == NULL) {
 	flip(mwin->ifac, "/File/Save to session as icon", FALSE);
@@ -2917,44 +2918,37 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Graphs", FALSE);
 	flip(mwin->ifac, "/Model data", FALSE);
 	flip(mwin->ifac, "/LaTeX", FALSE);
+
 	return FALSE;
     }
 
-    if (quiet_sample_check(pmod)) ok = 0;
-
-    s = GTK_WIDGET_IS_SENSITIVE
-	(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
-    if ((s && ok) || (!s && !ok)) return FALSE;
-    s = !s;
-
-#ifdef ALLOW_MODEL_DATASETS
-    if (!ok && dataset_added_to_model(pmod)) {
-	flip(mwin->ifac, "/Tests", s);
-	flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
-	if (pmod->ci != LAD) {
-	    flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+    if (model_sample_issue(pmod, NULL, 0, datainfo)) {
+	ok = 0;
+	graphs_ok = 0;
+#ifdef ALLOW_MODEL_DATASETS /* for generating model graphs */
+	if (add_subsampled_dataset_to_model(pmod) == 0) {
+	    graphs_ok = 1;
 	}
-	flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
-	flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
-	flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
-	flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
-	flip(mwin->ifac, "/Model data/Define new variable...", s);
-	infobox(get_gretl_errmsg());
+#endif
+    }
+
+    s = GTK_WIDGET_IS_SENSITIVE(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
+    if ((s && ok) || (!s && !ok)) {
+	/* no need to flip state */
 	return FALSE;
     }
-#endif
 
-    flip(mwin->ifac, "/Tests", s);
-    flip(mwin->ifac, "/Graphs", s);
-    flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
+    flip(mwin->ifac, "/Tests", ok);
+    flip(mwin->ifac, "/Graphs", graphs_ok);
+    flip(mwin->ifac, "/Model data/Display actual, fitted, residual", ok);
     if (pmod->ci != LAD) {
-	flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+	flip(mwin->ifac, "/Model data/Forecasts with standard errors", ok);
     }
-    flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
-    flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
-    flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
-    flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
-    flip(mwin->ifac, "/Model data/Define new variable...", s);
+    flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", ok);
+    flip(mwin->ifac, "/Model data/Add to data set/fitted values", ok);
+    flip(mwin->ifac, "/Model data/Add to data set/residuals", ok);
+    flip(mwin->ifac, "/Model data/Add to data set/squared residuals", ok);
+    flip(mwin->ifac, "/Model data/Define new variable...", ok);
 
     if (!ok) {
 	infobox(get_gretl_errmsg());
@@ -3088,7 +3082,7 @@ static int seven_bit_string (const unsigned char *s)
 static int seven_bit_file (const char *fname)
 {
     FILE *fp;
-    char line[128];
+    char line[256];
     int ascii = 1;
     
     fp = fopen(fname, "r");
@@ -3143,9 +3137,7 @@ static int maybe_recode_file (const char *fname)
 	    trbuf = my_locale_from_utf8(line);
 	    if (trbuf != NULL) {
 		fputs(trbuf, fout);
-		if (trbuf != line) {
-		    g_free(trbuf);
-		}
+		g_free(trbuf);
 	    } else {
 		err = 1;
 	    }
@@ -3198,7 +3190,7 @@ real_locale_from_utf8 (const gchar *src, int force)
     const gchar *cset = NULL;
 
     if (!force && g_get_charset(&cset)) {
-	return (gchar *) src;
+	return g_strdup(src);
     }
 
     trstr = g_locale_from_utf8(src, -1, NULL, &bytes, &err);

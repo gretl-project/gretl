@@ -199,16 +199,20 @@ static int subdum_match (char *s1, char *s2, int n)
     return 1;
 }
 
+/* check a model (or modelspec) against the datainfo to see if it may
+   have been estimated on a different (subsampled) data set from the
+   current one
+*/
+
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 			const DATAINFO *pdinfo)
-     /* check a model (or modelspec) against the datainfo to see if 
-	it may have been estimated on a different (subsampled) data 
-	set from the current one */
 {
     int n = pdinfo->n;
     char *subdum;
 
-    if (pmod == NULL && spec == NULL) return 0;
+    if (pmod == NULL && spec == NULL) {
+	return 0;
+    }
 
     if (pmod != NULL) {
 	subdum = pmod->subdum;
@@ -222,7 +226,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 	if (pdinfo->subdum == NULL) {
 	    return 0;
 	} else {
-	    fputs(_("dataset is subsampled, model is not\n"), stderr);
+	    fputs(I_("dataset is subsampled, model is not\n"), stderr);
 	    strcpy(gretl_errmsg, _("dataset is subsampled, model is not\n"));
 	    return 1;
 	}
@@ -230,7 +234,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 
     /* case: model (or modelspec) has sub-sampling info recorded */
     if (pdinfo->subdum == NULL) {
-	fputs(_("model is subsampled, dataset is not\n"), stderr);
+	fputs(I_("model is subsampled, dataset is not\n"), stderr);
 	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { 
@@ -238,7 +242,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, int i,
 	if (subdum_match(pdinfo->subdum, subdum, n)) {
 	    return 0;
 	} else {
-	    fputs(_("model and dataset subsamples not the same\n"), stderr);
+	    fputs(I_("model and dataset subsamples not the same\n"), stderr);
 	    strcpy(gretl_errmsg, _("model and dataset subsamples not the same\n"));
 	    return 1;
 	}

@@ -23,6 +23,8 @@
 #include "f2c.h"
 #include "clapack_double.h"
 
+#undef PDEBUG
+
 typedef struct hausman_t_ hausman_t;
 
 struct hausman_t_ {
@@ -32,8 +34,6 @@ struct hausman_t_ {
     double *bdiff;
     double *sigma;
 };
-
-#undef PDEBUG
 
 /* .................................................................. */
 

@@ -434,9 +434,8 @@ int prn_to_clipboard (PRN *prn, int copycode)
 
     if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
 	/* need to convert from utf8 */
-	gchar *trbuf;
+	gchar *trbuf = my_locale_from_utf8(prn->buf);
 	
-	trbuf = my_locale_from_utf8(prn->buf);
 	if (trbuf != NULL) {
 	    size_t len = strlen(trbuf);
 
@@ -452,9 +451,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	    if (copycode != COPY_TEXT_AS_RTF) {
 		memcpy(clipboard_buf, trbuf, len + 1);
 	    }
-	    if (trbuf != prn->buf) {
-		g_free(trbuf);
-	    }
+	    g_free(trbuf);
 	}
     } else { /* copying TeX, RTF or CSV */
 	size_t len = strlen(prn->buf);

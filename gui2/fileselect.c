@@ -287,9 +287,7 @@ static void save_editable_content (int action, const char *fname,
     trbuf = my_locale_from_utf8(buf);
     if (trbuf != NULL) {
 	system_print_buf(trbuf, fp);
-	if (trbuf != buf) {
-	    g_free(trbuf);
-	}
+	g_free(trbuf);
     }
 #else
     system_print_buf(buf, fp);
@@ -738,9 +736,7 @@ void file_selector (const char *msg, int action, gpointer data)
     }
 
     free(filter);
-    if (trmsg != NULL && trmsg != msg) {
-	g_free(trmsg);
-    }
+    g_free(trmsg);
 
     if (!retval) {
 	if (CommDlgExtendedError()) {
