@@ -259,6 +259,7 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
 
     pmod->nobs -= maxlag;
     pmod->dfd -= maxlag;
+    pmod->dfn = p + q;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	pmod->coeff[i] = coeff[i];
@@ -588,7 +589,8 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
 
     y = Z[v];
-    armod.lnL = ll;
+    /* "ll" does not seem to be a true log-likelihood */
+    armod.lnL = NADBL; 
     rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
     if (!armod.errcode) {
 	add_arma_varnames(&armod, pdinfo);

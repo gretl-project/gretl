@@ -18,7 +18,9 @@
  */
 
 #include "libgretl.h"
-#include <gtk/gtk.h>
+#include "internal.h"
+
+#include <glib.h>
 
 #ifdef WIN32
 # include <windows.h>
@@ -106,6 +108,144 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 
 #endif
 
+static void arma_coeff_name (char *s, const DATAINFO *pdinfo,
+			     const MODEL *pmod, int i)
+{
+    int j, p = pmod->list[1];
+
+    if (i == 0) {
+	strcpy(s, pdinfo->varname[pmod->list[4]]);
+	return;
+    }
+
+    if (i == 1 && pmod->ifc) {
+	strcpy(s, pdinfo->varname[0]);
+	return;
+    }
+
+    if (pmod->ifc) j = i - 1;
+    else j = i;
+
+    if (j - p < 1) {
+	const char *depvar = pmod->params[0];
+	size_t n = strlen(depvar);
+	
+	if (n < VNAMELEN - 4) {
+	    sprintf(s, "%s(-%d)", depvar, j);
+	} else {
+	    sprintf(s, "y(-%d)", j);
+	}
+    } else {
+	sprintf(s, "e(-%d)", j - p);
+    }
+}
+
+static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
+{
+    int i, np = 2 + pmod->list[1] + pmod->list[2];
+
+    pmod->params = malloc(np * sizeof pmod->params);
+    if (pmod->params == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }
+
+    for (i=0; i<np; i++) {
+	pmod->params[i] = malloc(VNAMELEN);
+	if (pmod->params[i] == NULL) {
+	    int j;
+
+	    for (j=0; j<i; j++) free(pmod->params[j]);
+	    free(pmod->params);
+	    pmod->params = NULL;
+	    pmod->errcode = E_ALLOC;
+	    return;
+	}
+    }
+
+    for (i=0; i<np; i++) { 
+	arma_coeff_name(pmod->params[i], pdinfo, pmod, i);
+    }
+}
+
+static void write_arma_model_stats (MODEL *pmod, const int *list, 
+				    const double *y, 
+				    const DATAINFO *pdinfo)
+{
+    int t;
+    int p = list[1], q = list[2];
+
+    pmod->ci = ARMA;
+    pmod->ifc = 1;
+    pmod->t1 = pdinfo->t1;
+    pmod->t2 = pdinfo->t2;
+    pmod->nobs = pmod->t2 - pmod->t1 + 1;
+    pmod->dfn = p + q;
+    pmod->dfd = pmod->nobs - pmod->dfn;
+    pmod->ncoeff = p + q + 1;
+
+    copylist(&pmod->list, list);
+
+    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
+
+    pmod->ess_wt = pmod->ess = 0.0;
+    for (t=0; t<pdinfo->n; t++) {
+	if (!na(pmod->uhat[t])) {
+	    pmod->yhat[t] = y[t] - pmod->uhat[t];
+	    pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+	    pmod->ess_wt += pmod->uhat[t];
+	} else {
+	    pmod->yhat[t] = NADBL;
+	}
+    }
+
+    /* ess_wt is being "borrowed" to record the mean error */
+    pmod->ess_wt /= pmod->nobs;
+
+    pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+
+    pmod->tss = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->tss += (y[t] - pmod->ybar) * (y[t] - pmod->ybar);
+    }
+
+    pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
+
+    pmod->rsq = pmod->adjrsq = NADBL;
+
+    if (pmod->tss > 0) {
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	if (pmod->dfd > 0) {
+	    double den = pmod->tss * pmod->dfd;
+
+	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
+	}
+    }
+}
+
+static int print_iterations (const char *path, PRN *prn)
+{
+    char fname[MAXLEN];
+    FILE *fp;
+    char line[129];
+    int print = 0;
+
+    sprintf(fname, "%s.out", path);
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
+
+    while (fgets(line, sizeof line, fp)) {
+	if (!strncmp(line, " MODEL EST", 10)) print = 1;
+	if (print) pputs(prn, line);
+	if (!strncmp(line, " Estimatio", 10)) break;
+    }
+
+    fclose(fp);
+    
+    return 0;
+}
+
 static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 {
     char date[12];
@@ -118,33 +258,84 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
     return dateton(date, pdinfo);
 }
 
-static int get_estimates (const char *fname, int nc,
-			  double *coeff, double *sderr)
+static int get_ll_stats (const char *fname, MODEL *pmod)
 {
     FILE *fp;
-    char line[129];
-    double b, se;
-    int i, start = 0;
+    char line[80], statname[12];
+    double x;
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
 
-    i = 1;
-    while (fgets(line, sizeof line, fp) && i < nc) {
-	if (*line == '-') {
-	    start = 1;
-	    continue;
-	}
-	if (start && sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
-	    coeff[i] = b;
-	    sderr[i] = se;
-	    i++;
+    while (fgets(line, sizeof line, fp)) {
+	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
+	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
+	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
+	    else if (!strcmp(statname, "aic")) pmod->criterion[0] = x;
+	    else if (!strcmp(statname, "bic")) pmod->criterion[1] = x;
 	}
     }
 
     fclose(fp);
 
     return 0;
+}
+
+static int get_estimates (const char *fname, double *coeff, double *sderr,
+			  int p, int q)
+{
+    FILE *fp;
+    char line[128], word[16];
+    double b, se;
+    int i, j, nc = p + q + 1;
+    int err = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
+
+    for (i=0; i<nc; i++) {
+	coeff[i] = sderr[i] = NADBL;
+    }
+
+    i = 1;
+    j = p + 1;
+    while (fgets(line, sizeof line, fp) && i < nc) {
+	if (sscanf(line, "%15s", word) == 1) {
+	    if (!strcmp(word, "Constant")) {
+		if (sscanf(line, "%*s %*s %lf %lf", &b, &se) == 2) {
+		    coeff[0] = b;
+		    sderr[0] = se;
+		    /* FIXME: these need adjusting */
+		}
+	    }
+	    else if (!strcmp(word, "AR")) {
+		if (sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
+		    coeff[i] = b;
+		    sderr[i++] = se;
+		}
+	    }
+	    else if (!strcmp(word, "User-defined")) {
+		if (sscanf(line, "%*s %*s %lf %lf", &b, &se) == 2) {
+		    coeff[i] = b;
+		    sderr[i++] = se;
+		}
+	    }
+	    else if (!strcmp(word, "MA")) {
+		if (sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
+		    coeff[j] = -b;
+		    sderr[j++] = se;
+		}
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    for (i=0; i<nc; i++) {
+	if (na(coeff[i]) || na(sderr[i])) err = 1;
+    }
+
+    return err;
 }
 
 static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
@@ -186,52 +377,97 @@ static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
     return uhat;
 }
 
-static int 
-populate_arma_model (const char *path, const DATAINFO *pdinfo,
-		     int nc)
+static void 
+populate_arma_model (MODEL *pmod, const int *list, const char *path, 
+		     const double *y, const DATAINFO *pdinfo, int nc)
 {
-    double *uhat, *coeff, *sderr;
+    double *uhat = NULL, *yhat = NULL;
+    double *coeff = NULL, *sderr = NULL;
     char fname[MAXLEN];
     int err = 0;
 
     sprintf(fname, "%s.rsd", path);
     uhat = get_uhat(fname, pdinfo);
-    if (uhat == NULL) return 1;
+    if (uhat == NULL) {
+	pmod->errcode = E_ALLOC;
+	return;
+    }
 
+    yhat = malloc(pdinfo->n * sizeof *yhat);
     coeff = malloc(nc * sizeof *coeff);
     sderr = malloc(nc * sizeof *sderr);
-    if (coeff == NULL || sderr == NULL) {
+    if (yhat == NULL || coeff == NULL || sderr == NULL) {
+	free(yhat);
 	free(coeff);
 	free(uhat);
-	return 1;
+	pmod->errcode = E_ALLOC;
+	return;
     }
 
     coeff[0] = sderr[0] = 0.0;
     sprintf(fname, "%s.est", path);
-    err = get_estimates(fname, nc, coeff, sderr);
+    err = get_estimates(fname, coeff, sderr, list[1], list[2]);
+
+    sprintf(fname, "%s.lks", path);
+    err = get_ll_stats(fname, pmod);
 
     if (err) {
 	fprintf(stderr, "problem getting model info\n");
+	pmod->errcode = E_FOPEN;
     } else {
-	int i;
+	pmod->uhat = uhat;
+	pmod->yhat = yhat;
+	pmod->coeff = coeff;
+	pmod->sderr = sderr;
+	write_arma_model_stats(pmod, list, y, pdinfo);
+	add_arma_varnames(pmod, pdinfo);
+    }
+}
 
-	fprintf(stderr, "Got model info\n");
-	fprintf(stderr, "first resid = %g\n", uhat[0]);
-	for (i=1; i<nc; i++) {
-	    fprintf(stderr, "coeff[%d]=%g (%g)\n", i, coeff[i], sderr[i]);
+static void output_series_to_spc (const double *x, const DATAINFO *pdinfo, 
+				  FILE *fp, int lag, int offset)
+{
+    int i, t;
+
+    fputs(" data = (\n", fp);
+
+    i = 0;
+    for (t=pdinfo->t1 + offset; t<=pdinfo->t2; t++) {
+	if (t - lag < 0) continue;
+	else if (na(x[t-lag])) {
+	    fputs("0.0 ", fp); /* FIXME */
+	} else {
+	    fprintf(fp, "%g ", x[t-lag]);
+	}
+	if ((i + 1) % 7 == 0) fputc('\n', fp);
+	i++;
+    }
+    fputs(" )\n", fp);
+}
+
+static int get_offset (const double *y, const DATAINFO *pdinfo, int p)
+{
+    int t, j, offset = 0;
+
+    for (t=pdinfo->t1; t<=pdinfo->t1 + p; t++) {
+	for (j=0; j<=p; j++) {
+	    if (t - j < 0 || na(y[t-j])) {
+		offset++;
+		break;
+	    }
 	}
     }
 
-    return err;
+    return offset;
 }
 
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo, 
-			   int depvar, int p, int q, int verbose) 
+			   int v, int p, int q, int verbose) 
 {
     double x;
     FILE *fp;
-    int i, t;
+    int offset;
     int startyr, startper;
     char *s, tmp[8];
 
@@ -242,37 +478,49 @@ static int write_spc_file (const char *fname,
     setlocale(LC_NUMERIC, "C");
 #endif 
 
-    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    offset = get_offset(Z[v], pdinfo, p);
+
+    x = date(pdinfo->t1 + offset, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     s = strchr(tmp, '.');
     if (s != NULL) startper = atoi(s + 1);
     else startper = 1;
 
-    fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, 
-	    pdinfo->varname[depvar]);
-    fprintf(fp, " start=%d.%d\n", startyr, startper);
-    fputs(" data=(\n", fp);
+    fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
+	    pdinfo->varname[v]);
+    fprintf(fp, " start = %d.%d\n", startyr, startper);
+    output_series_to_spc(Z[v], pdinfo, fp, 0, offset);
+    fputs("}\n", fp);
 
-    i = 0;
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (na(Z[depvar][t])) {
-	    fputs("-99999 ", fp); /* FIXME? */
-	} else {
-	    fprintf(fp, "%g ", Z[depvar][t]);
+    fputs("Regression {\n Variables = (const)\n", fp);
+#ifdef MANUAL_LAGS
+    if (p > 0) {
+	int i;
+
+	fputs(" user = (", fp);
+	for (i=0; i<p; i++) {
+	    fprintf(fp, "ylag%d", i + 1);
+	    if (i + 1 < p) fputc(' ', fp);
 	}
-	if ((i + 1) % 7 == 0) fputc('\n', fp);
-	i++;
+	fputs(")\n", fp);
+	for (i=0; i<p; i++) {
+	    output_series_to_spc(Z[v], pdinfo, fp, i + 1, offset);
+	}
     }
-    fputs(" )\n}\n", fp);
-
-    fprintf(fp, "arima{\nmodel = (%d 0 %d)(0 0 0)\n}\n", p, q);
+#endif
+    fputs("}\n", fp);
+#ifdef MANUAL_LAGS
+    fprintf(fp, "arima {\n model = (0 0 %d)\n}\n", q); 
+#else
+    fprintf(fp, "arima {\n model = (%d 0 %d)\n}\n", p, q); 
+#endif
     if (verbose) {
-	fputs("estimate{\nprint = (acm itr lkf lks mdl est rts rcm)\n", fp);
+	fputs("estimate {\n print = (acm itr lkf lks mdl est rts rcm)\n", fp);
     } else {
-	fputs("estimate{\nprint = (acm lkf lks mdl est rts rcm)\n", fp);
+	fputs("estimate {\n print = (acm lkf lks mdl est rts rcm)\n", fp);
     }
-    fputs("save = (rsd est lks acm)\n}\n", fp);
+    fputs(" save = (rsd est lks acm itr)\n}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -301,40 +549,46 @@ static int check_arma_list (const int *list)
     return err;
 }
 
-int write_x12_arma (int *list, const double **Z, 
-		    const DATAINFO *pdinfo, PATHS *paths, 
-		    const char *prog, const char *workdir,
-		    char *fname, int verbose)
+MODEL arma_x12_model (int *list, const double **Z, 
+		      const DATAINFO *pdinfo, PRN *prn, 
+		      const char *prog, const char *workdir)
 {
     int err = 0;
-    char varname[VNAMELEN];
+    int verbose = (prn != NULL);
+    char varname[VNAMELEN], path[MAXLEN];
 #ifndef GLIB2
     char cmd[MAXLEN];
 #endif
-    int depvar, p, q;
+    int v, p, q;
+    MODEL armod;
 
-    err = check_arma_list(list);
-    if (err) return 1;
+    _init_model(&armod, pdinfo);  
+
+    if (check_arma_list(list)) {
+	armod.errcode = E_UNSPEC;
+	return armod;
+    }
 
     p = list[1];
     q = list[2];
-    depvar = list[4];
+    v = list[4];
 
     /* sanity check */
-    if (!pdinfo->vector[depvar]) {
+    if (!pdinfo->vector[v]) {
 	char msg[48];
 
-	sprintf(msg, "%s %s", pdinfo->varname[depvar], 
+	sprintf(msg, "%s %s", pdinfo->varname[v], 
 		_("is a scalar"));
 	gretl_errmsg_set(msg);
-	return 1;
+	armod.errcode = E_DATA;
+	return armod;
     }
 
-    sprintf(varname, pdinfo->varname[depvar]);
+    sprintf(varname, pdinfo->varname[v]);
 
     /* write out an .spc file */
-    sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
-    write_spc_file(fname, Z, pdinfo, depvar, p, q, verbose);
+    sprintf(path, "%s%c%s.spc", workdir, SLASH, varname);
+    write_spc_file(path, Z, pdinfo, v, p, q, verbose);
 
     /* run the program */
 #if defined(WIN32)
@@ -350,13 +604,15 @@ int write_x12_arma (int *list, const double **Z,
 #endif
 
     if (!err) {
-	char path[MAXLEN];
+	const double *y = Z[v];
 
-	sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	sprintf(path, "%s%c%s", workdir, SLASH, varname); 
-	err = populate_arma_model(path, pdinfo, p + q + 1);
+	populate_arma_model(&armod, list, path, y, pdinfo, p + q + 1);
+	if (verbose && !armod.errcode) {
+	    print_iterations(path, prn);
+	}
     }
 
-    return err;
+    return armod;
 }
 

@@ -139,7 +139,7 @@ struct plugin_function plugin_functions[] = {
     { "arma_model", P_ARMA },
 
     /* ARMA X12A */
-    { "write_x12_arma", P_ARMA_X12 },
+    { "arma_x12_model", P_ARMA_X12 },
 
     /* sentinel */
     { NULL, 0 },

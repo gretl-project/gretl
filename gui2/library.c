@@ -2325,7 +2325,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_arma (int v, int ar, int ma, int verbose)
+void do_arma (int v, int ar, int ma, int verbose, int use_x12)
 {
     char title[26];
     int err = 0;
@@ -2347,8 +2347,13 @@ void do_arma (int v, int ar, int ma, int verbose)
 	return;
     }
 
-    *pmod = arma(cmd.list, (const double **) Z, datainfo,
-		 (verbose)? prn : NULL); 
+    if (use_x12) {
+	*pmod = arma_x12(cmd.list, (const double **) Z, datainfo,
+			 (verbose ? prn : NULL), x12a, x12adir); 
+    } else {
+	*pmod = arma(cmd.list, (const double **) Z, datainfo,
+		     (verbose)? prn : NULL); 
+    }
     err = model_output(pmod, prn);
 
     if (err) {
@@ -2376,40 +2381,6 @@ void do_arma (int v, int ar, int ma, int verbose)
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
     view_model(prn, pmod, 78, 400, title); 
-}
-
-void do_x12a_arma (int v, int ar, int ma, int verbose)
-{
-    void *handle;
-    int list[5];
-    int err;
-    char fname[MAXLEN];
-    int (*write_x12_arma)(int *, const double **, DATAINFO *, 
-			  PATHS *, const char *, const char *,
-			  char *, int);
-
-    list[0] = 4;
-    list[1] = ar;
-    list[2] = ma;
-    list[3] = LISTSEP;
-    list[4] = v;
-
-    write_x12_arma = gui_get_plugin_function("write_x12_arma",
-					     &handle);
-    if (write_x12_arma == NULL) {
-	return;
-    }    
-
-    err = write_x12_arma(list, (const double **) Z, datainfo,
-			 &paths, x12a, x12adir, fname, verbose);
-    
-    close_plugin(handle);
-
-    if (err) {
-	gui_errmsg(err);
-    } else {
-	view_file(fname, 0, 0, 78, 450, VIEW_DATA);
-    }
 }
 
 /* ........................................................... */

@@ -1421,6 +1421,7 @@ struct arma_options {
     GtkWidget *arspin;
     GtkWidget *maspin;
     GtkWidget *verbcheck;
+    GtkWidget *x12check;
 };
 
 static void free_arma_opts (GtkWidget *w, struct arma_options *opts)
@@ -1435,14 +1436,14 @@ static void destroy_arma_opts (GtkWidget *w, gpointer p)
 
 static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 {
-    int ar, ma, verb;
+    int ar, ma, verb, x12;
 
     ar = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->arspin));
     ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
     verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
+    x12 = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->x12check));
 
-    /* do_arma(opts->v, ar, ma, verb); */
-    do_x12a_arma(opts->v, ar, ma, verb);
+    do_arma(opts->v, ar, ma, verb, x12);
 
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
@@ -1476,14 +1477,14 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     /* AR spinner */
     tmp = gtk_label_new (_("AR order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 3, 1, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 4, 1, 1, 0);
     opts->arspin = gtk_spin_button_new(adj, 0, 0);
     gtk_box_pack_start(GTK_BOX(hbox), opts->arspin, FALSE, FALSE, 0);
 
     /* MA spinner */
     tmp = gtk_label_new (_("MA order:"));
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
-    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 3, 1, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(1, 0, 4, 1, 1, 0);
     opts->maspin = gtk_spin_button_new(adj, 0, 0);
     gtk_box_pack_start(GTK_BOX(hbox), opts->maspin, FALSE, FALSE, 0);
 
@@ -1495,6 +1496,13 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     hbox = gtk_hbox_new(FALSE, 5);
     opts->verbcheck = gtk_check_button_new_with_label(_("Show details of iterations"));
     gtk_box_pack_start(GTK_BOX(hbox), opts->verbcheck, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 5);
+
+    /* X12 button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    opts->x12check = gtk_check_button_new_with_label(_("Use X12-ARIMA"));
+    gtk_box_pack_start(GTK_BOX(hbox), opts->x12check, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 

@@ -546,14 +546,7 @@ void gretl_aic_etc (MODEL *pmod)
     ersq = ess / nobs;
     pmod->criterion[2] = ersq * (nobs + ncoeff) / zz;
     zz = 2.0 * ncoeff / nobs;
-    if (0 && pmod->ci == ARMA) {
-	/* what is supposed to be standard here? */
-	pmod->criterion[1] = -2 * pmod->lnL + 2 * ncoeff;
-	pmod->criterion[1] = log(pmod->sigma * pmod->sigma) +
-	    2 * (pmod->ncoeff - pmod->ifc) / pmod->nobs;
-    } else {
-	pmod->criterion[1] = ersq * exp(zz);
-    }
+    pmod->criterion[1] = ersq * exp(zz);
     pmod->criterion[5] = ersq * (1.0 + zz);
     pmod->criterion[7] = ((1-zz) > 0.0)? ersq/(1-zz) : NADBL;
     zn = (double) nobs;

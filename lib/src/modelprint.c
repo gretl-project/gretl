@@ -45,7 +45,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
-static void print_ll (const MODEL *pmod, PRN *prn);
+static void print_ll_stats (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
@@ -1286,7 +1286,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	}
 
-	if (pmod->ci == ARMA) print_ll(pmod, prn);
+	if (pmod->ci == ARMA && !na(pmod->lnL)) 
+	    print_ll_stats(pmod, prn);
 
 	print_middle_table_end(prn);
 
@@ -1336,11 +1337,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	print_middle_table_end(prn);
     }
 
-    if (PLAIN_FORMAT(prn->format)) print_aicetc(pmod, prn);
-    else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
-    else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
+    if (!(pmod->ci == ARMA && !na(pmod->lnL))) {
+	if (PLAIN_FORMAT(prn->format)) print_aicetc(pmod, prn);
+	else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
+	else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
+    }
 
-    if (pmod->ci != ARMA && pmod->ci != NLS) pval_max_line(pmod, pdinfo, prn);
+    if (pmod->ci != ARMA && pmod->ci != NLS) 
+	pval_max_line(pmod, pdinfo, prn);
     
     print_model_tests(pmod, prn);
 
@@ -1715,19 +1719,27 @@ static void tex_float_str (double x, char *str)
     }
 }
 
-static void print_ll (const MODEL *pmod, PRN *prn)
+static void print_ll_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[0]);
+	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[1]);
     }
     else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, "\\par %s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "\\par %s = %.3f\n", I_("AIC"), pmod->criterion[0]);
+	pprintf(prn, "\\par %s = %.3f\n", I_("BIC"), pmod->criterion[1]);
     }
     else if (TEX_FORMAT(prn->format)) {
-	char lnlstr[32];
+	char xstr[32];
 
-	tex_dcolumn_double(pmod->lnL, lnlstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), lnlstr);
+	tex_dcolumn_double(pmod->lnL, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+	tex_dcolumn_double(pmod->criterion[0], xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
+	tex_dcolumn_double(pmod->criterion[1], xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
     }
 }
 

@@ -37,6 +37,9 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo);
 MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, 
 	    PRN *prn);
 
+MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, 
+		PRN *prn, const char *prog, const char *workdir);
+
 MODEL tsls_func (LIST list, const int pos, 
 		 double ***pZ, DATAINFO *pdinfo);
 

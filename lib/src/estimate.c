@@ -3057,4 +3057,26 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     return armod;
 } 
 
- 
+MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
+		const char *prog, const char *workdir)
+{
+    MODEL armod;
+    void *handle;
+    MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
+			     const char *, const char *);
+
+    arma_x12_model = get_plugin_function("arma_x12_model", &handle);
+    if (arma_x12 == NULL) {
+	fprintf(stderr, I_("Couldn't load plugin function\n"));
+	armod.errcode = E_FOPEN;
+	return armod;
+    }
+
+    *gretl_errmsg = '\0';
+
+    armod = (*arma_x12_model) (list, Z, pdinfo, prn, prog, workdir);
+
+    close_plugin(handle);
+
+    return armod;
+}  
