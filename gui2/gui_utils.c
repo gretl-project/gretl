@@ -903,6 +903,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_corrmat(vwin->data);
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);
+	else if (vwin->role == COEFFINT)
+	    free_confint(vwin->data);
 	else if (vwin->role == MPOLS)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
@@ -2161,8 +2163,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    texprint_fit_resid(fr, datainfo, prn);
 	} 
 	else if (how == COPY_RTF) { 
-	    /* rtfprint_fit_resid(fr, datainfo, prn); */
-	    ;
+	    rtfprint_fit_resid(fr, datainfo, prn);
 	}
 
 	prn_to_clipboard(prn, how);
@@ -2180,8 +2181,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    texprint_fcast_with_errs(fr, datainfo, prn);
 	} 
 	else if (how == COPY_RTF) { 
-	    /* rtfprint_fcast_with_errs(fr, datainfo, prn); */
-	    ;
+	    rtfprint_fcast_with_errs(fr, datainfo, prn);
 	}
 
 	prn_to_clipboard(prn, how);

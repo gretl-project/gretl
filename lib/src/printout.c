@@ -24,8 +24,10 @@
 #include "version.h"
 #include <time.h>
 
-static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  int c, double t, PRN *prn);
+static void 
+print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
+		      int c, PRN *prn);
+
 void _mxout (const double *rr, const int *list, int ci,
 	     const DATAINFO *pdinfo, int pause, PRN *prn);
 
@@ -114,32 +116,31 @@ void gui_logo (FILE *fp)
 }
 
 /**
- * print_model_confints:
- * @pmod: pointer to gretl model.
+ * text_print_model_confints:
+ * @cf: pointer to confidence intervals.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
- * Print to @prn the 95 percent confidence intervals for the parameter
- * estimates in @pmod.
+ * Print to @prn the 95 percent confidence intervals for parameter
+ * estimates.
  */
 
-void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo, 
-			   PRN *prn)
+void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo, 
+				PRN *prn)
 {
-    int i, ncoeff = pmod->list[0];
-    double t = _tcrit95(pmod->dfd);
+    int i, ncoeff = cf->list[0];
 
-    pprintf(prn, "t(%d, .025) = %.3f\n\n", pmod->dfd, t);
+    pprintf(prn, "t(%d, .025) = %.3f\n\n", cf->df, _tcrit95(cf->df));
     pprintf(prn, _("      VARIABLE      COEFFICIENT      95%% CONFIDENCE "
 	    "INTERVAL\n\n"));      
 
-    if (pmod->ifc) {
-	print_coeff_interval(pdinfo, pmod, ncoeff, t, prn);
+    if (cf->ifc) {
+	print_coeff_interval(cf, pdinfo, ncoeff, prn);
 	ncoeff--;
     }
 
     for (i=2; i<=ncoeff; i++) {
-	print_coeff_interval(pdinfo, pmod, i, t, prn);
+	print_coeff_interval(cf, pdinfo, i, prn);
     }
 
     pprintf(prn, "\n");
@@ -462,31 +463,28 @@ void gretl_print_value (double x, PRN *prn)
 
 /* ......................................................... */ 
 
-static void print_coeff_interval (const DATAINFO *pdinfo, const MODEL *pmod, 
-				  int c, double t, PRN *prn)
+static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo, 
+				  int c, PRN *prn)
 {
-    double maxerr;
-
-    pprintf(prn, " %3d) %8s ", pmod->list[c], 
-	   pdinfo->varname[pmod->list[c]]);
+    pprintf(prn, " %3d) %8s ", cf->list[c], 
+	   pdinfo->varname[cf->list[c]]);
 
     _bufspace(3, prn);
 
-    if (isnan(pmod->coeff[c-1])) {
+    if (isnan(cf->coeff[c-1])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
     } else {
-	gretl_print_value (pmod->coeff[c-1], prn);
+	gretl_print_value (cf->coeff[c-1], prn);
     }
 
     _bufspace(2, prn);
 
-    if (isnan(pmod->sderr[c-1])) {
+    if (isnan(cf->maxerr[c-1])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
     } else {
-	maxerr = (pmod->sderr[c-1] > 0)? t * pmod->sderr[c-1] : 0;
 	pprintf(prn, " (%#.*g, %#.*g)", 
-		GRETL_DIGITS, pmod->coeff[c-1] - maxerr,
-		GRETL_DIGITS, pmod->coeff[c-1] + maxerr);
+		GRETL_DIGITS, cf->coeff[c-1] - cf->maxerr[c-1],
+		GRETL_DIGITS, cf->coeff[c-1] + cf->maxerr[c-1]);
     }
     pprintf(prn, "\n");
 }
@@ -1290,7 +1288,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
     if (maxerr == NULL) return E_ALLOC;
 
     pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-	    fr->pmax, fr->tval);
+	    fr->df, fr->tval);
     pprintf(prn, "\n     Obs ");
     pprintf(prn, "%12s", fr->depvar);
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));

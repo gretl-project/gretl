@@ -873,8 +873,33 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     if (fr->nobs == pdinfo->n) pprintf(prn, "\\\\\n");
     else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
 
-    pprintf(prn, I_("Standard error of residuals = %f\n"), fr->sigma);
+    pprintf(prn, I_("Standard error of residuals = %g\n"), fr->sigma);
     pprintf(prn, "\\end{raggedright}\n");
+}
+
+/* ........................................................... */
+
+static 
+void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
+			 PRN *prn)
+{
+    char date1[9], date2[9]; 
+    char tmp[128];
+
+    ntodate(date1, fr->t1, pdinfo);
+    ntodate(date2, fr->t2, pdinfo);
+
+    sprintf(tmp, I_("Full data range: %s - %s"),
+	    pdinfo->stobs, pdinfo->endobs);
+    pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n", tmp);
+
+    sprintf(tmp, I_("Model estimation range: %s - %s (n = %d)"), 
+		    date1, date2, fr->nobs);
+    pprintf(prn, "\\qc %s\\par\n", tmp);
+
+    sprintf(tmp, I_("Standard error of residuals = %g"), 
+		    fr->sigma);
+    pprintf(prn, "\\qc %s\\par\n", tmp);
 }
 
 /* ........................................................... */
@@ -885,8 +910,11 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     int t, anyast = 0;
     int n = pdinfo->n;
     double xx;
+    char vname[16];
 
     tex_fit_resid_head(fr, pdinfo, prn); 
+
+    tex_escape(vname, fr->depvar);
 
     pprintf(prn, "\n\\begin{center}\n"
 	    "\\begin{tabular}{rrrrl}\n"
@@ -894,7 +922,7 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    " \\multicolumn{1}{c}{%s} & \n"
 	    "  \\multicolumn{1}{c}{%s} & \n"
 	    "   \\multicolumn{1}{c}{%s}\\\\\n",
-	    I_("Obs"), fr->depvar,
+	    I_("Obs"), vname,
 	    I_("fitted"), I_("residuals"));
 
     for (t=0; t<n; t++) {
@@ -928,36 +956,169 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 /* .................................................................. */
 
+#define FR_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                "\\cellx800\\cellx2400\\cellx4000\\cellx5600" \
+                "\\cellx6000\n"
+
+void rtfprint_fit_resid (const FITRESID *fr, 
+			 const DATAINFO *pdinfo, 
+			 PRN *prn)
+{
+    double xx;
+    int anyast = 0;
+    int t, n = pdinfo->n;
+
+    rtf_fit_resid_head(fr, pdinfo, prn);
+
+    pprintf(prn, "{" FR_ROW "\\intbl ");
+    pprintf(prn, 
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n",
+	    I_("Obs"), fr->depvar, I_("fitted"), I_("residual"));
+
+    for (t=0; t<n; t++) {
+	pprintf(prn, "\\qr ");
+	print_obs_marker(t, pdinfo, prn);
+	pprintf(prn, "\\cell"); 
+	
+	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+	    pprintf(prn, "\\intbl \\row\n"); 
+	} else {
+	    int ast;
+
+	    xx = fr->actual[t] - fr->fitted[t];
+	    ast = (fabs(xx) > 2.5 * fr->sigma);
+	    if (ast) anyast = 1;
+	    printfrtf(fr->actual[t], prn, 0);
+	    printfrtf(fr->fitted[t], prn, 0);
+	    printfrtf(xx, prn, 0);
+	    if (ast) pprintf(prn, "\\ql *\\cell");
+	    pprintf(prn, "\\intbl \\row\n");
+	}
+    }
+
+    pprintf(prn, "}\n");
+    if (anyast) {
+	pprintf(prn, "\\par\n\\qc %s \\par\n",
+		I_("Note: * denotes a residual in excess of 2.5 standard errors"));
+    }
+    pprintf(prn, "}\n");
+}
+
+/* .................................................................. */
+
 void texprint_fcast_with_errs (const FITRESID *fr, 
 			       const DATAINFO *pdinfo, 
 			       PRN *prn)
 {
     int t;
-    double *maxerr;
+    double maxerr;
+    char actual[32], fitted[32], sderr[32], lo[32], hi[32];
+    char vname[16];
+    char pt = get_local_decpoint();
 
-    maxerr = mymalloc(fr->nobs * sizeof *maxerr);
-    if (maxerr == NULL) return;
+    pprintf(prn, I_("For 95 percent confidence intervals, "
+		    "$t(%d, .025) = %.3f$\n\n"), 
+	    fr->df, fr->tval);
 
-    pprintf(prn, I_(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
-	    fr->pmax, fr->tval);
-    pprintf(prn, "\n     Obs ");
-    pprintf(prn, "%12s", fr->depvar);
-    pprintf(prn, "%*s", UTF_WIDTH(I_("prediction"), 14), _("prediction"));
-    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
-    pprintf(prn, _("   95%% confidence interval\n"));
-    pprintf(prn, "\n");
+    pprintf(prn, "%% The table below needs the \"dcolumn\" package\n\n");
+
+    pprintf(prn, "\\begin{center}\n"
+	    "\\begin{tabular}{%%\n"
+	    "r%% col 1: obs\n"
+	    "  l%% col 2: varname\n"
+	    "    D{%c}{%c}{-1}%% col 3: fitted\n"
+	    "      D{%c}{%c}{-1}%% col 4: std error\n"
+	    "        D{%c}{%c}{-1}%% col 5: conf int lo\n"
+	    "         D{%c}{%c}{-1}}%% col 5: conf int hi\n",
+	    pt, pt, pt, pt, pt, pt, pt, pt);
+
+    tex_escape(vname, fr->depvar);
+
+    pprintf(prn, "%s & %s & \\multicolumn{1}{c}{%s}\n"
+	    " & \\multicolumn{1}{c}{%s}\n"
+	    "  & \\multicolumn{2}{c}{%s} \\\\\n",
+	    I_("Obs"), vname,
+	    I_("prediction"), I_("std. error"),
+	    I_("95\\% confidence interval"));
+
+    pprintf(prn, "& & & & \\multicolumn{1}{c}{low} & "
+	    "\\multicolumn{1}{c}{high} \\\\\n");
 
     for (t=0; t<fr->nobs; t++) {
+	maxerr = fr->tval * fr->sderr[t];
+	tex_dcolumn_double(fr->actual[t], actual);
+	tex_dcolumn_double(fr->fitted[t], fitted);
+	tex_dcolumn_double(fr->sderr[t], sderr);
+	tex_dcolumn_double(fr->fitted[t] - maxerr, lo);
+	tex_dcolumn_double(fr->fitted[t] + maxerr, hi);
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	_printxs(fr->actual[t], 15, PRINT, prn);
-	_printxs(fr->fitted[t], 15, PRINT, prn);
-	_printxs(fr->sderr[t], 15, PRINT, prn);
-	maxerr[t] = fr->tval * fr->sderr[t];
-	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
-	pprintf(prn, " -");
-	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
-	pprintf(prn, "\n");
+	pprintf(prn, " & %s & %s & %s & %s & %s \\\\\n",
+		actual, fitted, sderr, lo, hi);
     }
+
+    pprintf(prn, "\\end{tabular}\n"
+	    "\\end{center}\n\n");
+}
+
+/* .................................................................. */
+
+#define FC_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                "\\cellx800\\cellx2200\\cellx3600\\cellx5000" \
+                "\\cellx6400\\cellx7800\n"
+
+void rtfprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    int t;
+    double maxerr;
+    char tmp[128];
+
+    sprintf(tmp, I_("For 95 percent confidence intervals, "
+		    "t(%d, .025) = %.3f"), 
+	    fr->df, fr->tval);
+
+    pprintf(prn, "{\\rtf1\\par\n\\qc %s\\par\n\\par\n", tmp);
+
+    pprintf(prn, "{" FC_ROW "\\intbl ");
+    pprintf(prn, 
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\qr %s\\cell"
+	    " \\ql %s\\cell"
+	    " \\intbl \\row\n", /* need to merge last two cells */
+	    I_("Obs"), fr->depvar, I_("prediction"), 
+	    I_("std. error"), I_("95%"), I_("interval"));
+
+    pprintf(prn, 
+	    " \\qc \\cell"
+	    " \\qc \\cell"
+	    " \\qc \\cell"
+	    " \\qc \\cell"
+	    " \\qc %s\\cell"
+	    " \\qc %s\\cell"
+	    " \\intbl \\row\n",
+	    I_("low"), I_("high")); 
+
+    for (t=0; t<fr->nobs; t++) {
+	pprintf(prn, "\\qr ");
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	pprintf(prn, "\\cell"); 
+	maxerr = fr->tval * fr->sderr[t];
+	printfrtf(fr->actual[t], prn, 0);
+	printfrtf(fr->fitted[t], prn, 0);
+	printfrtf(fr->sderr[t], prn, 0);
+	printfrtf(fr->fitted[t] - maxerr, prn, 0);
+	printfrtf(fr->fitted[t] + maxerr, prn, 1);
+    }
+
+    pprintf(prn, "}}\n");
 }
 
 /* .................................................................. */

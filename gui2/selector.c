@@ -43,7 +43,7 @@ static gint remove_right_click (GtkWidget *widget, GdkEventButton *event,
 static gint add_right_click (GtkWidget *widget, GdkEventButton *event, 
 			     selector *sr);
 
-
+#if 0
 static inline guint STRING_WIDTH(GtkWidget *widget, const gchar *text)
 {
   PangoRectangle rect;
@@ -57,6 +57,7 @@ static inline guint STRING_WIDTH(GtkWidget *widget, const gchar *text)
 
   return rect.width;
 }
+#endif
 
 static gboolean set_active_var (GtkWidget *widget, GdkEventButton *event,
 				selector *sr)

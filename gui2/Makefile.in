@@ -284,6 +284,7 @@ gui_utils.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gui_utils.o: ../lib/src/discrete.h ../lib/src/subsample.h
 gui_utils.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 gui_utils.o: dialogs.h library.h session.h settings.h helpfiles.h guiprint.h
+gui_utils.o: series_view.h
 helpfiles.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 helpfiles.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 helpfiles.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
@@ -305,7 +306,7 @@ library.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 library.o: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
 library.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 library.o: dialogs.h library.h session.h settings.h helpfiles.h gpt_control.h
-library.o: selector.h boxplots.h ../cli/common.c
+library.o: selector.h boxplots.h series_view.h ../cli/common.c
 selector.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 selector.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 selector.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
@@ -318,6 +319,18 @@ selector.o: ../lib/src/discrete.h ../lib/src/subsample.h
 selector.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
 selector.o: dialogs.h library.h session.h settings.h helpfiles.h selector.h
 selector.o: treeutils.h
+series_view.o: gretl.h ../config.h ../lib/src/libgretl.h
+series_view.o: ../lib/src/commands.h ../lib/src/errors.h
+series_view.o: ../lib/src/estimate.h ../lib/src/generate.h
+series_view.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
+series_view.o: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
+series_view.o: ../lib/src/describe.h ../lib/src/printout.h
+series_view.o: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
+series_view.o: ../lib/src/interact.h ../lib/src/graphing.h
+series_view.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+series_view.o: ../lib/src/discrete.h ../lib/src/subsample.h
+series_view.o: ../lib/src/calendar.h gretltypes.h gui_utils.h callbacks.h
+series_view.o: dialogs.h library.h session.h settings.h helpfiles.h
 session.o: gretl.h ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 session.o: ../lib/src/errors.h ../lib/src/estimate.h ../lib/src/generate.h
 session.o: ../lib/src/gretl_utils.h ../lib/src/compare.h ../lib/src/pvalues.h

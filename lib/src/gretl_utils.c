@@ -2047,7 +2047,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fr->t1 = ft1;
     fr->t2 = ft2;
     fr->nobs = ft2 - ft1 + 1;
-    fr->pmax = pmod->dfd;
+    fr->df = pmod->dfd;
 
     clear_model(&fmod, &fdatainfo);
     free_Z(fZ, &fdatainfo);
@@ -2461,6 +2461,63 @@ void free_fit_resid (FITRESID *fr)
     free(fr);
 }
 
+/* ........................................................... */
 
+/**
+ * get_model_confints:
+ * @pmod: pointer to gretl model.
+ *
+ * Save the 95 percent confidence intervals for the parameter
+ * estimates in @pmod.
+ */
 
+CONFINT *get_model_confints (const MODEL *pmod)
+{
+    int i, ncoeff = pmod->list[0];
+    double t = _tcrit95(pmod->dfd);
+    CONFINT *cf;
 
+    cf = malloc(sizeof *cf);
+    if (cf == NULL) return NULL;
+
+    cf->coeff = malloc((ncoeff + 1) * sizeof *cf->coeff);
+    if (cf->coeff == NULL) {
+	free(cf);
+	return NULL;
+    }
+
+    cf->maxerr = malloc((ncoeff + 1) * sizeof *cf->maxerr);
+    if (cf->maxerr == NULL) {
+	free(cf);
+	free(cf->coeff);
+	return NULL;
+    }
+
+    cf->list = NULL;
+    if (copylist(&cf->list, pmod->list)) {
+	free(cf);
+	free(cf->coeff);
+	free(cf->maxerr);
+	return NULL;
+    }
+
+    for (i=1; i<=ncoeff; i++) { /* FIXME? */
+	cf->coeff[i] = pmod->coeff[i];
+	cf->maxerr[i] = (pmod->sderr[i] > 0)? t * pmod->sderr[i] : 0;
+    }
+
+    cf->df = pmod->dfd;
+    cf->ifc = pmod->ifc;
+
+    return cf;
+}
+
+/* ........................................................... */
+
+void free_confint (CONFINT *cf)
+{
+    free(cf->coeff);
+    free(cf->maxerr);
+    free(cf->list);
+    free(cf);
+}

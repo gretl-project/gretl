@@ -201,4 +201,8 @@ FITRESID *fit_resid_new (int n, int errs);
 
 void free_fit_resid (FITRESID *fr);
 
+CONFINT *get_model_confints (const MODEL *pmod);
+
+void free_confint (CONFINT *cf);
+
 #endif /* UTILS_H */

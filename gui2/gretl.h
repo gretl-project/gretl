@@ -121,7 +121,7 @@ enum extra_cmds {
     GR_BOX,
     GR_NBOX,
     COMPACT,
-    CONFINT,
+    COEFFINT,
     COVAR,
     STAT_TABLE,
     H_TEST,

@@ -30,9 +30,9 @@ void logo (void);
 
 void gui_logo (FILE *fp);
 
-void print_model_confints (const MODEL *pmod, 
-			   const DATAINFO *pdinfo, 
-			   PRN *prn);
+void text_print_model_confints (const CONFINT *cf,
+				const DATAINFO *pdinfo, 
+				PRN *prn);
 
 void printfreq (FREQDIST *freq, 
 		PRN *prn);

@@ -881,6 +881,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_corrmat(vwin->data);
 	else if (vwin->role == FCASTERR || vwin->role == FCAST)
 	    free_fit_resid(vwin->data);
+	else if (vwin->role == COEFFINT)
+	    free_confint(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
 	if (vwin->dialog)

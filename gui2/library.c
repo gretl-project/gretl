@@ -2427,14 +2427,20 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 {
     PRN *prn;
     windata_t *mydata = (windata_t *) data;
+    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
+    CONFINT *cf;
 
     if (bufopen(&prn)) return;
 
-    print_model_confints(pmod, datainfo, prn);
-
-    view_buffer(prn, 78, 300, _("gretl: coefficient confidence intervals"), 
-		CONFINT, view_items);
+    cf = get_model_confints(pmod);
+    if (cf != NULL) {
+	text_print_model_confints(cf, datainfo, prn);
+	vwin = view_buffer(prn, 78, 300, 
+			   _("gretl: coefficient confidence intervals"), 
+			   COEFFINT, view_items);
+	vwin->data = cf;
+    }
 }
 
 /* ........................................................... */

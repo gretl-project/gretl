@@ -48,7 +48,15 @@ void texprint_fit_resid (const FITRESID *fr,
 			 const DATAINFO *pdinfo, 
 			 PRN *prn);
 
+void rtfprint_fit_resid (const FITRESID *fr, 
+			 const DATAINFO *pdinfo, 
+			 PRN *prn);
+
 void texprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn);
+
+void rtfprint_fcast_with_errs (const FITRESID *fr, 
 			       const DATAINFO *pdinfo, 
 			       PRN *prn);
 

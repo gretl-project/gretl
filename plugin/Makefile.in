@@ -231,7 +231,7 @@ panel_data.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
 panel_data.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 panel_data.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
 panel_data.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-progress_bar-2.lo: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+progress_bar-2.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 progress_bar-2.lo: ../lib/src/errors.h ../lib/src/estimate.h
 progress_bar-2.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
 progress_bar-2.lo: ../lib/src/compare.h ../lib/src/pvalues.h

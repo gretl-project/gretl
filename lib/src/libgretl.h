@@ -302,11 +302,19 @@ typedef struct {
     double sigma;
     double tval;
     int pmax;
+    int df;
     int t1, t2;
     int nobs;
     char depvar[9];
 } FITRESID;
 
+typedef struct {
+    int *list;
+    double *coeff;
+    double *maxerr;
+    int df;
+    int ifc;
+} CONFINT;
 
 #include "commands.h"
 #include "errors.h"
