@@ -400,9 +400,11 @@ static XPXXPY xpxxpy_func (const int *list, int t1, int t2,
 			   double **Z, int nwt, double rho)
 /*
         This function forms the X'X matrix and X'y vector
+
         - if rho is non-zero transforms data first
         - if nwt is non-zero, uses that variable as weight
-        Z[v][t] = t-th observation for the v-th variable
+
+        Z[v][t] = observation t on variable v
         n = number of obs in data set
         t1, t2 = starting and ending observations
         rho = first order serial correlation coefficent
@@ -551,6 +553,7 @@ static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
         pmod->errcode = E_ALLOC;
         return;
     }
+
     nobs = pmod->nobs;
     if (rho) pmod->nobs = nobs = t2-t1;
     pmod->ncoeff = nv;
@@ -779,14 +782,16 @@ static void diaginv (XPXXPY xpxxpy, double *diag)
     double d, e;
 
     nv = xpxxpy.nv;
-    nstop = nv * (nv+1)/2;
+    nstop = nv * (nv + 1) / 2;
+
     for (l=1; l<=nv-1; l++) {
         d = xpxxpy.xpx[kk];
         xpxxpy.xpy[l] = d;
         e = d * d;
         m = 0;
-        if (l > 1) 
+        if (l > 1) {
 	    for (j=1; j<=l-1; j++) m += nv - j;
+	}
         for (i=l+1; i<=nv; i++) {
             d = 0.0;
             k = i + m;

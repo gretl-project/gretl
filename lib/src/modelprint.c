@@ -402,16 +402,20 @@ static void pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static const char *aux_string (int aux, int format)
 {
-    if (aux == AUX_SQ)
+    if (aux == AUX_SQ) {
 	return N_("Auxiliary regression for non-linearity test "
 		 "(squared terms)");
-    else if (aux == AUX_LOG)
+    }
+    else if (aux == AUX_LOG) {
 	return N_("Auxiliary regression for non-linearity test "
 		 "(log terms)");
-    else if (aux == AUX_WHITE)
+    }
+    else if (aux == AUX_WHITE) {
 	return N_("White's test for heteroskedasticity");
-    else if (aux == AUX_CHOW)
+    }
+    else if (aux == AUX_CHOW) {
 	return N_("Augmented regression for Chow test");
+    }
     else if (aux == AUX_COINT) {
 	if (TEX_FORMAT(format)) return N_("Cointegrating regression -- ");
 	else return N_("Cointegrating regression - ");
@@ -681,12 +685,12 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? "$\\hat{u}$" : "uhat");
     }
     else if (pmod->aux == AUX_WHITE) {
-	pprintf(prn, "%s: uhat^2\n", 
+	pprintf(prn, "%s: %s\n", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
     }
     else if (pmod->aux == AUX_ARCH) {
-	pprintf(prn, "%s: ut^2\n", 
+	pprintf(prn, "%s: %s\n", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     }
@@ -970,7 +974,7 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
 		chisq(pmod->rsq * pmod->nobs, pmod->ncoeff - 1)); 
     }
 
-    if (RTF_FORMAT(prn->format)) { /* FIXME */
+    else if (RTF_FORMAT(prn->format)) { /* FIXME */
 	pprintf(prn, "\\par \\ql\n%s: TR{\\super 2} = %f,\n", I_("Test statistic"), 
 		pmod->rsq * pmod->nobs);
 	pprintf(prn, "%s = P(%s(%d) > %f) = %f\n\n", 
@@ -1213,11 +1217,11 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
 
-    _bufspace(3, prn);
+    _bufspace(2, prn);
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[c-1])) {
-	pprintf(prn, "%16s", _("undefined"));
+	pprintf(prn, "%17s", _("undefined"));
 	gotnan = 1;
     } else {
 	gretl_print_value (pmod->coeff[c-1], prn);

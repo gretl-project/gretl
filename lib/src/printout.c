@@ -417,14 +417,14 @@ static void cut_extra_zero (char *numstr, char decpoint, int digits)
    decimal point will be printed in the same position for all
    numbers printed this way.  The total width of the number
    string (including possible padding on left or right) is 
-   2*P + 4 characters, where P denotes the precision ("digits"). 
+   2*P + 5 characters, where P denotes the precision ("digits"). 
 */
 
 void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 {
-    char numstr[32], final[32];
+    char numstr[36], final[36];
     char *p;
-    size_t i, tmp, forept = 0;
+    int i, tmp, forept = 0;
     char decpoint = '.';
 
 #ifdef ENABLE_NLS
@@ -435,18 +435,24 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
     fix_exponent(numstr);
 
     p = strchr(numstr, decpoint);
-    if (p != NULL) forept = p - numstr;
-    tmp = digits - forept;
+    if (p != NULL) {
+	forept = p - numstr;
+    }
+    tmp = digits + 1 - forept;
     *final = 0;
-    for (i=0; i<tmp; i++) strcat(final, " ");
+    for (i=0; i<tmp; i++) {
+	strcat(final, " ");
+    }
 
     tmp = strlen(numstr) - 1;
-    if (numstr[tmp] == decpoint) numstr[tmp] = 0;
+    if (numstr[tmp] == decpoint) {
+	numstr[tmp] = 0;
+    }
     cut_extra_zero(numstr, decpoint, digits);
 
     strcat(final, numstr);
 
-    tmp = 2 * digits + 4 - strlen(final);
+    tmp = 2 * digits + 5 - strlen(final);
     for (i=0; i<tmp; i++) strcat(final, " ");
 
     pprintf(prn, "%s", final);

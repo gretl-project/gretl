@@ -1073,6 +1073,8 @@ int _list_dups (const int *list, int ci)
 
 void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
+    int i;
+
     if (pmod == NULL) return;
     pmod->list = NULL;
     pmod->subdum = NULL;
@@ -1097,6 +1099,10 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->aux = 0;
     gretl_errmsg[0] = '\0';
     gretl_msg[0] = '\0';
+    
+    for (i=0; i<8; i++) {
+	pmod->criterion[i] = 0.0;
+    }
 }
 
 /**

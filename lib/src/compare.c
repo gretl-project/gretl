@@ -182,9 +182,9 @@ static COMPARE add_compare (const MODEL *pmodA, const MODEL *pmodB)
 	add.chisq = 2.0 * (pmodB->lnL - pmodA->lnL);
 	return add;
     }
-    for(i=0; i<8; i++) 
-	if (pmodB->criterion[i] < pmodA->criterion[i]) 
-	    add.score++;
+    for (i=0; i<8; i++) {
+	if (pmodB->criterion[i] < pmodA->criterion[i]) add.score++;
+    }
     return add;
 }	    
 
