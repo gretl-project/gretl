@@ -56,6 +56,8 @@ static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
 static void print_poisson_stats (const MODEL *pmod, PRN *prn);
+static void print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, 
+				  PRN *prn);
 static void print_ll (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
@@ -1315,7 +1317,6 @@ static int
 print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, err = 0, gotnan = 0;
-    int n = pmod->ncoeff;
     int longnames = 0;
     int gn = -1;
 
@@ -1328,7 +1329,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	pmod->ci != NLS && 
 	pmod->ci != ARMA && 
 	pmod->ci != GARCH) {
-	for (i=0; i<n; i++) {
+	for (i=0; i<pmod->ncoeff; i++) {
 	    int len = strlen(pdinfo->varname[pmod->list[i+2]]);
 
 	    if (len > 8) {
@@ -1337,7 +1338,7 @@ print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<pmod->ncoeff; i++) {
 	if (PLAIN_FORMAT(prn->format)) {
 	    if (i == gn) {
 		pputc(prn, '\n');
@@ -1522,6 +1523,8 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (pmod->ci == AR) {
 	print_rho_terms(pmod, prn); 
+    } else if (pmod->ci == POISSON) {
+	print_poisson_offset(pmod, pdinfo, prn);
     }
 
     print_coeff_table_end(prn);
@@ -2219,6 +2222,30 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+    }
+}
+
+static void 
+print_poisson_offset (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+{
+    int offvar = gretl_model_get_int(pmod, "offset_var");
+
+    if (offvar > 0) {
+	char namestr[14];
+
+	sprintf(namestr, "log(%.8s)", pdinfo->varname[offvar]);
+	if (PLAIN_FORMAT(prn->format)) {
+	    pprintf(prn, "\n %13s         1.0\n", namestr);
+	} else if (RTF_FORMAT(prn->format)) {
+	    pputs(prn, RTF_COEFF_ROW);
+	    pprintf(prn, " \\qr \\cell\\ql %s\\cell\\qc 1.0\\cell", namestr);
+	    pputs(prn, "\\qc \\cell\\qc \\cell \\qc \\cell \\intbl \\row\n");
+	} else if (TEX_FORMAT(prn->format)) {
+	    char tmp[32];
+
+	    tex_escape(tmp, namestr);
+	    pprintf(prn, "{\\rm %s} & \\multicolumn{1}{c}{1.0} \\\\\n", tmp);
+	}
     }
 }
 

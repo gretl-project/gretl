@@ -3814,7 +3814,7 @@ MODEL poisson_model (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
        coefficients etc.
     */
 
-    pmodel = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
+    pmodel = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 
     if (pmodel.errcode) {
         return pmodel;

@@ -22,6 +22,8 @@
 #include "gretl_private.h"
 #include "../cephes/libprob.h"
 
+#define GNR_METHOD 0
+
 #undef PDEBUG 
 
 #define POISSON_TOL 1.0e-10 
@@ -69,85 +71,53 @@ static double poisson_ll (const double *y, const double *mu,
     double mt, lmt, yt, lytfact, llt;
 
     for (t=t1; t<=t2; t++) {
-	if (y[t] != NADBL) {
-	    mt = mu[t];
-	    lmt = log(mt);
-	    yt = y[t];
-	    lytfact = log(cephes_gamma(1.0 + yt));
-	    llt = (-mt + yt*lmt - lytfact);
-	    loglik += llt;
+	if (na(y[t]) || na(mu[t])) {
+	    continue;
 	}
+	mt = mu[t];
+	lmt = log(mt);
+	yt = y[t];
+	lytfact = log(cephes_gamma(1.0 + yt));
+	llt = (-mt + yt*lmt - lytfact);
+	loglik += llt;
     }  
 
     return loglik;
 }
 
-/* make covariance matrix based on the 'artificial' regression, and
-   transcribe the relevant elements into the target model */
-
-static int make_poisson_vcv (MODEL *targ, MODEL *src)
-{
-    int nc = targ->ncoeff;
-    int nt = (nc * nc + nc) / 2;
-    int tidx, sidx;
-    int i, j;
-    int err = 0;
-
-    if (makevcv(src)) {
-	err = 1;
-    }
-
-    if (!err && targ->vcv == NULL) {
-	targ->vcv = malloc(nt * sizeof *targ->vcv);
-	if (targ->vcv == NULL) {
-	    err = 1;
-	}
-    }
-
-    if (!err) {
-	for (i=0; i<targ->ncoeff; i++) {
-	    for (j=i; j<targ->ncoeff; j++) {
-		tidx = ijton(i, j, targ->ncoeff);
-		sidx = ijton(i, j, src->ncoeff);
-		targ->vcv[tidx] = src->vcv[sidx];
-	    }
-	}
-    }
-
-    return err;
-}
-
-#undef POISSON_USE_GNR
-
-#ifdef POISSON_USE_GNR
-
-/* try the GNR-type approach in Davidson and MacKinnon, ETM, ch 11 */
-
 static int 
-transcribe_poisson_results (MODEL *targ, MODEL *src,
-			    const double **Z, int yno, int munum,
-			    int iter)
+transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y, 
+			    int iter, int offvar)
 {
-    int i, t;
+    double sigma = src->sigma_wt;
+    double sigma2 = sigma * sigma;
+    int i, j, t;
     int err = 0;
+
+    targ->ci = POISSON;
     
     gretl_model_set_int(targ, "iters", iter);
 
-    targ->ci = POISSON;
+    if (offvar > 0) {
+	gretl_model_set_int(targ, "offset_var", offvar);
+    }
 
     targ->ess = 0.0;
 
     for (t=targ->t1; t<=targ->t2; t++) {
-	targ->yhat[t] = Z[munum][t];
-	targ->uhat[t] = Z[yno][t] - Z[munum][t];
-	targ->ess += targ->uhat[t] * targ->uhat[t];
+	if (na(targ->yhat[t])) {
+	    targ->uhat[t] = NADBL;
+	} else {
+	    targ->uhat[t] = y[t] - targ->yhat[t];
+	    targ->ess += targ->uhat[t] * targ->uhat[t];
+	}
     }
 
     for (i=0; i<targ->ncoeff; i++) {
-	targ->sderr[i] = src->sderr[i];
+	targ->sderr[i] = src->sderr[i] / sigma;
     }
 
-    targ->lnL = poisson_ll(Z[yno], Z[munum], targ->t1, targ->t2);
+    targ->lnL = poisson_ll(y, targ->yhat, targ->t1, targ->t2);
 
 #ifdef PDEBUG
     fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
@@ -161,27 +131,117 @@ transcribe_poisson_results (MODEL *targ, MODEL *src,
     targ->sigma = NADBL;
     targ->fstt = NADBL;
 
-    err = make_poisson_vcv(targ, src);
+    if (makevcv(src)) {
+	err = 1;
+    } else {
+	int idx;
+
+	if (targ->vcv != NULL) {
+	    free(targ->vcv);
+	}
+	targ->vcv = src->vcv;
+	src->vcv = NULL;
+	for (i=0; i<targ->ncoeff; i++) {
+	    for (j=i; j<targ->ncoeff; j++) {
+		idx = ijton(i, j, targ->ncoeff);
+		targ->vcv[idx] /= sigma2;
+	    }
+	}
+    }   
 
     return err;
 }
+
+#if GNR_METHOD
+
+/* construct the log of the "offset" variable */
+
+static double *get_log_offset (MODEL *pmod, int offvar, double **Z)
+{
+    double *logoff = NULL;
+    int t, err = 0;
+
+    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	} else if (na(Z[offvar][t])) {
+	    err = 1;
+	} else if (Z[offvar][t] <= 0.0) {
+	    err = 1;
+	} else {
+	    pmod->uhat[t] = log(Z[offvar][t]);
+	}
+    }
+
+    if (err == 0) {
+	/* we're borrowing this allocated storage */
+	logoff = pmod->uhat;
+    }
+
+    return logoff;
+}
+
+#else
+
+static double *get_offset (MODEL *pmod, int offvar, double **Z,
+			   double *offmean)
+{
+    double *offset = NULL;
+    int t, err = 0;
+
+    for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	if (na(pmod->uhat[t])) {
+	    continue;
+	} else if (na(Z[offvar][t])) {
+	    err = 1;
+	} else if (Z[offvar][t] <= 0.0) {
+	    err = 1;
+	} 
+    }
+
+    if (err == 0) {
+	offset = Z[offvar];
+	*offmean = gretl_mean(pmod->t1, pmod->t2, offset);
+    }
+
+    return offset;
+}
+
+#endif
+
+/* GNR_METHOD: the GNR-type approach in Davidson and MacKinnon, ETM, ch 11 */
 
 static int 
 do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int i, t;
     int origv = pdinfo->v;
-    int yno = pmod->list[1];
-    int wtnum, depnum, munum;
+    int orig_t1 = pdinfo->t1;
+    int orig_t2 = pdinfo->t2;
 
     int iter = 0;
     double crit = 1.0;
+
+    double *offset = NULL;
+
+#if GNR_METHOD
     double xb;
+#else
+    double offmean = NADBL;
+#endif
+
+    double *y;
+    double *wgt;
+    double *depvar;
 
     MODEL tmpmod;
     int *local_list = NULL;
 
     gretl_model_init(&tmpmod);
+
+    /* set the sample to that of the initial OLS model */
+    pdinfo->t1 = pmod->t1;
+    pdinfo->t2 = pmod->t2;
 
     local_list = gretl_list_new(pmod->list[0] + 1);
     if (local_list == NULL) {
@@ -189,19 +249,37 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	goto bailout;
     }
 
-    if (dataset_add_vars(3, pZ, pdinfo)) {
+    if (dataset_add_vars(2, pZ, pdinfo)) {
 	pmod->errcode = E_ALLOC;
 	goto bailout;
     }
 
-    wtnum = origv;
-    depnum = origv + 1;
-    munum = origv + 2;
+    if (offvar > 0) {
+#if GNR_METHOD
+	offset = get_log_offset(pmod, offvar, *pZ);
+#else
+	offset = get_offset(pmod, offvar, *pZ, &offmean);
+#endif
+	if (offset == NULL) {
+	    pmod->errcode = E_DATA;
+	    goto bailout;
+	}
+    }
 
+    /* the original dependent variable */
+    y = (*pZ)[pmod->list[1]];
+
+    /* local_list includes a weight variable */
     local_list[0] = pmod->list[0] + 1;
-    local_list[1] = wtnum;
-    local_list[2] = depnum;
 
+    /* weighting variable */
+    local_list[1] = origv;
+    wgt = (*pZ)[origv];
+
+    /* dependent variable for GNR */
+    local_list[2] = origv + 1;
+    depvar = (*pZ)[origv + 1];
+    
     for (i=3; i<=local_list[0]; i++) { 
 	/* original independent vars */
 	local_list[i] = pmod->list[i-1];
@@ -212,14 +290,34 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	pmod->coeff[i] = 0.0;
     }
 
+#if GNR_METHOD
     xb = pmod->coeff[0];
+#else
+    if (offvar > 0) {
+	pmod->coeff[0] -= log(offmean);
+    }
+#endif
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (offvar > 0) {
-	    xb = pmod->coeff[0] + log((*pZ)[offvar][t]);
+	if (na(pmod->uhat[t])) {
+	    depvar[t] = NADBL;
+	    wgt[t] = NADBL;
+	} else {
+#if GNR_METHOD
+	    if (offvar > 0) {
+		xb = pmod->coeff[0] + offset[t];
+	    }
+	    depvar[t] = exp(-xb) * (y[t] - exp(xb));
+	    wgt[t] = exp(.5 * xb);
+#else
+	    pmod->yhat[t] = pmod->ybar;
+	    if (offvar > 0) {
+		pmod->yhat[t] *= offset[t] / offmean;
+	    }
+	    depvar[t] = y[t] / pmod->yhat[t] - 1.0;
+	    wgt[t] = sqrt(pmod->yhat[t]);
+#endif
 	}
-	(*pZ)[depnum][t] = exp(-xb) * ((*pZ)[yno][t] - exp(xb));
-	(*pZ)[wtnum][t] = exp(.5 * xb);
     }
 
     pputc(prn, '\n');
@@ -228,7 +326,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 	iter++;
 
-	tmpmod = lsq(local_list, pZ, pdinfo, WLS, OPT_A | OPT_M, 0.0);
+	tmpmod = lsq(local_list, pZ, pdinfo, WLS, OPT_A, 0.0);
 
 	if (tmpmod.errcode) {
 	    fprintf(stderr, "poisson_estimate: lsq returned %d\n", 
@@ -243,14 +341,17 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
 	for (i=0; i<tmpmod.ncoeff; i++) { 
 	    pmod->coeff[i] += tmpmod.coeff[i];
-	    tmpmod.coeff[i] = pmod->coeff[i];
 #ifdef PDEBUG
-	    fprintf(stderr, "coeff[%d] = %g,\tgrad[%d] = %g\n", i, coeff[i], 
-		    i, tmpmod.coeff[i]);
+	    fprintf(stderr, "coeff[%d] = %g,\tgrad[%d] = %g\n", 
+		    i, pmod->coeff[i], i, tmpmod.coeff[i]);
 #endif
 	}
 
 	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (na(pmod->uhat[t])) {
+		continue;
+	    }
+#if GNR_METHOD
 	    xb = 0.0;
 	    for (i=0; i<tmpmod.ncoeff; i++) { 
 		int vi = pmod->list[i+2];
@@ -258,11 +359,16 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		xb += pmod->coeff[i] * (*pZ)[vi][t];
 	    }
 	    if (offvar > 0) {
-		xb += log((*pZ)[offvar][t]);
+		xb += offset[t];
 	    }
-	    (*pZ)[depnum][t] = exp(-xb) * ((*pZ)[yno][t] - exp(xb));
-	    (*pZ)[wtnum][t] = exp(.5 * xb);
-	    (*pZ)[munum][t] = exp(xb);
+	    pmod->yhat[t] = exp(xb);
+	    depvar[t] = exp(-xb) * (y[t] - exp(xb));
+	    wgt[t] = exp(.5 * xb);
+#else
+	    pmod->yhat[t] *= exp(tmpmod.yhat[t]);
+	    depvar[t] = y[t] / pmod->yhat[t] - 1;
+	    wgt[t] = sqrt(pmod->yhat[t]);
+#endif
 	}
 
 	if (crit > POISSON_TOL) {
@@ -277,8 +383,7 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     } 
 
     if (pmod->errcode == 0) {
-	transcribe_poisson_results(pmod, &tmpmod, (const double **) *pZ, 
-				   yno, munum, iter);
+	transcribe_poisson_results(pmod, &tmpmod, y, iter, offvar);
     }
 
  bailout:
@@ -287,206 +392,11 @@ do_poisson (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     free(local_list);
     dataset_drop_vars(pdinfo->v - origv, pZ, pdinfo);
 
-    return pmod->errcode;
-}
-
-#else
-
-static int 
-transcribe_poisson_results (MODEL *targ, MODEL *src,
-			    const double **X, int nvars,
-			    int n, int iter)
-{
-    double mt;
-    int i, t, s;
-    int err = 0;
-    
-    gretl_model_set_int(targ, "iters", iter);
-
-    targ->ci = POISSON;
-
-    targ->ess = 0.0;
-
-    for (t=0; t<n; t++) {
-	s = t + targ->t1;
-	mt = X[nvars][t];
-	targ->yhat[s] = mt;
-	targ->uhat[s] = X[0][t] - mt;
-	targ->ess += targ->uhat[s] * targ->uhat[s];
-    }
-
-    for (i=0; i<targ->ncoeff; i++) {
-	targ->sderr[i] = src->sderr[i];
-    }
-
-    targ->lnL = poisson_ll(X[0], X[nvars], 0, n - 1);
-
-#ifdef PDEBUG
-    fprintf(stderr, "log-likelihood = %g\n", targ->lnL);
-#endif
-
-    mle_aic_bic(targ, 0); /* is the number of params right? */
-
-    /* mask invalid statistics */
-    targ->rsq = NADBL;
-    targ->adjrsq = NADBL;
-    targ->sigma = NADBL;
-    targ->fstt = NADBL;
-
-    err = make_poisson_vcv(targ, src);
-
-    return err;
-}
-
-static int do_poisson (MODEL *pmod, const double **Z, DATAINFO *pdinfo, PRN *prn)
-{
-    int i, t, s;
-    int iter = 0;
-    double crit = 1.0;
-
-    MODEL tmpmod;
-    double **X = NULL;
-    DATAINFO *tmpinfo = NULL;
-    int *local_list = NULL;
-
-    int nvars = pmod->list[0];
-    int ncolX = nvars + 3;
-    int ncoeff = nvars - 1;
-    int n = pmod->nobs;
-    
-    double mt, et, wt;
-
-#ifdef PDEBUG
-    for (i=0; i<=pmod->list[0]; i++) { /* original vars */
-	fprintf(stderr, "list[%d] = %d\n", i, pmod->list[i]);
-    }
-#endif
-
-    gretl_model_init(&tmpmod);
-
-    /* last 3 columns: mu_t, stdresid_t, wgt_t */
-    
-    local_list = gretl_list_new(nvars + 1);
-    if (local_list == NULL) {
-	pmod->errcode = E_ALLOC;
-	goto bailout;
-    }
-
-    local_list[0] = nvars + 1; /* original vars + weights */
-
-    for (i=3; i<=local_list[0]; i++) { /* original vars */
-	local_list[i] = i - 2;
-    }
-
-    local_list[1] = ncolX - 1; /* weights */
-    local_list[2] = ncolX - 2; /* pseudo-residuals */
-
-    /* note: the dataset X may be shorter than the original
-       dataset, Z */
-
-    tmpinfo = create_new_dataset(&X, ncolX, n, 0);
-    if (tmpinfo == NULL) {
-	pmod->errcode = E_ALLOC;
-	goto bailout;
-    }
-
-#ifdef PDEBUG
-    fprintf(stderr, "poisson_estimate: ybar = %g\n", pmod->ybar);
-#endif
-
-    mt = pmod->ybar;
-    wt = sqrt(mt);
-
-    pmod->coeff[0] = log(mt);
-    for (i=1; i<ncoeff; i++) { 
-	pmod->coeff[i] = 0.0;
-    }
-
-    for (t=0; t<n; t++) {
-	s = t + pmod->t1;
-	for (i=0; i<nvars; i++) { /* dep var + regressors */
-	    X[i][t] = Z[pmod->list[i+1]][s];
-	}
-	et = X[0][t] / mt - 1.0;
-	X[nvars][t] = mt;
-	X[nvars + 1][t] = et;
-	X[nvars + 2][t] = wt;
-    }
-
-    pputc(prn, '\n');
-
-    while (iter < POISSON_MAX_ITER && crit > POISSON_TOL) {
-
-	iter++;
-
-	tmpmod = lsq(local_list, &X, tmpinfo, WLS, OPT_A | OPT_M, 0.0);
-
-	if (tmpmod.errcode) {
-	    fprintf(stderr, "poisson_estimate: lsq returned %d\n", 
-		    tmpmod.errcode);
-	    pmod->errcode = tmpmod.errcode;
-	    break;
-	}
-
-	crit = n * tmpmod.rsq;
-
-	pprintf(prn, "iter = %d\tcrit = %g\n", iter, crit);
-
-	for (i=0; i<tmpmod.ncoeff; i++) { 
-	    pmod->coeff[i] += tmpmod.coeff[i];
-	    tmpmod.coeff[i] = pmod->coeff[i];
-#ifdef PDEBUG
-	    fprintf(stderr, "coeff[%d] = %g,\tgrad[%d] = %g\n", i, pmod->coeff[i], 
-		    i, tmpmod.coeff[i]);
-#endif
-	}
-
-	for (t=0; t<n; t++) {
-	    X[nvars][t] *= exp(tmpmod.yhat[t]);
-	    mt = X[nvars][t];
-	    et = X[0][t] / mt - 1;
-	    X[nvars + 1][t] = et;
-	    X[nvars + 2][t] = sqrt(mt);
-	}
-
-	if (crit > POISSON_TOL) {
-	    /* going round again: don't leak memory */
-	    clear_model(&tmpmod);
-	}
-    }
-
-    pputc(prn, '\n');
-
-    if (crit > POISSON_TOL) {
-	pmod->errcode = E_NOCONV;
-    } 
-
-    if (pmod->errcode == 0) {
-	transcribe_poisson_results(pmod, &tmpmod, (const double **) X, 
-				   nvars, n, iter);
-    }
-
- bailout:
-
-    clear_model(&tmpmod);
-
-    free(local_list);		 
-    free_Z(X, tmpinfo);
-
-    clear_datainfo(tmpinfo, CLEAR_FULL);
-    free(tmpinfo); 
+    pdinfo->t1 = orig_t1;
+    pdinfo->t2 = orig_t2;
 
     return pmod->errcode;
 }
-
-#endif
-
-/* "offvar" = ID number of offset variable, i.e. a variable whose log
-   should enter the equation with a coefficient of 1 (scaling).  This
-   seems to be a fairly common thing.  I'm not sure how to implement it
-   with the Amemiya approach, though I'm probably missing something
-   simple.  AC
-*/
 
 int 
 poisson_estimate (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
@@ -498,11 +408,7 @@ poisson_estimate (MODEL *pmod, int offvar, double ***pZ, DATAINFO *pdinfo,
 	gretl_errmsg_set(_("poisson: the dependent variable must be count data"));
 	err = pmod->errcode = E_DATA;
     } else {
-#ifdef POISSON_USE_GNR
 	err = do_poisson(pmod, offvar, pZ, pdinfo, prn);
-#else
-	err = do_poisson(pmod, (const double **) *pZ, pdinfo, prn);
-#endif
     }
 
     return err;
