@@ -2399,16 +2399,58 @@ extern char tramodir[];
 extern char x12a[];
 extern char x12adir[];
 
+#define CHUNK 8192
+
+static int file_get_contents (const char *fname, char **bufp)
+{
+    char *buf, *p;
+    FILE *fp;
+    size_t count = 0;
+    int c, i = 0, nchunks = 2;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
+
+    buf = malloc(CHUNK);
+    if (buf == NULL) {
+	fclose(fp);
+	return 1;
+    }
+
+    while ((c = getc(fp)) != EOF) {
+	count++;
+	if (count % CHUNK == 0) {
+	    p = realloc(buf, nchunks * CHUNK);
+	    if (p == NULL) {
+		free(buf);
+		fclose(fp);
+		return 1;
+	    }
+	    buf = p;
+	    nchunks++;
+	}
+	buf[i++] = c;
+    }
+    buf[i] = 0;
+
+    fclose(fp);
+    *bufp = buf;
+
+    return 0;
+}
+
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
     int graph = 0, oldv = datainfo->v;
     void *handle;
+    char *databuf = NULL;
     int (*write_tx_data) (char *, int, 
 			  double ***, DATAINFO *, 
 			  PATHS *, int *,
 			  const char *, const char *, char *);
     char fname[MAXLEN];
+    PRN *prn;
 
     if (!datainfo->vector[mdata->active_var]) {
 	errbox(_("Can't do this analysis on a scalar"));
@@ -2423,11 +2465,15 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
     write_tx_data = get_plugin_function("write_tx_data", handle);
-
     if (write_tx_data == NULL) {
 	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
 	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return; 
     }
 
     *fname = 0;
@@ -2442,16 +2488,28 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     close_plugin(handle);
 
     if (err) {
-	errbox((opt == TRAMO)? _("TRAMO command failed") : 
-	       _("X-12-ARIMA command failed"));
-	/* FIXME: deal with errtext here */
+	if (*errtext != 0) errbox(errtext);
+	else errbox((opt == TRAMO)? _("TRAMO command failed") : 
+		   _("X-12-ARIMA command failed"));
 	return;
     } else {
 	if (*fname == 0) return;
     }	
 
-    view_file (fname, 0, 0, (opt == TRAMO)? 120 : 84, 500, 
-	       TRAMO_X12A, view_items);
+    if (file_get_contents(fname, &databuf) || databuf == NULL) {
+	errbox((opt == TRAMO)? _("TRAMO command failed") : 
+	       _("X-12-ARIMA command failed"));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    free(prn->buf);
+    prn->buf = databuf;
+
+    view_buffer(prn, (opt == TRAMO)? 120 : 84, 500, 
+		(opt == TRAMO)? _("gretl: TRAMO analysis") :
+		_("gretl: X-12-ARIMA analysis"),
+		TRAMO_X12A, view_items);
 
     if (graph) {
 	gnuplot_display(&paths);

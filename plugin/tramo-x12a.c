@@ -379,6 +379,11 @@ static int add_series_from_file (const char *fname, int code,
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
     sprintf(pdinfo->label[v], _(tx_descrip_formats[code]), pdinfo->varname[0]);
+    if (opt == TRAMO) {
+	strcat(pdinfo->label[v], " (TRAMO/SEATS)");
+    } else {
+	strcat(pdinfo->label[v], " (X-12-ARIMA)");
+    }	
 
     for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;
 

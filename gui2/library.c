@@ -2259,9 +2259,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 
     if (gui_open_plugin("tramo-x12a", &handle)) return;
 
-    *fname = 0;
     write_tx_data = get_plugin_function("write_tx_data", handle);
-
     if (write_tx_data == NULL) {
 	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
@@ -2273,6 +2271,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
+    *fname = 0;
     if (opt == TRAMO) {
 	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, tramo, tramodir, errtext);
@@ -2284,9 +2283,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     close_plugin(handle);
 
     if (err) {
-	errbox((opt == TRAMO)? _("TRAMO command failed") : 
-	       _("X-12-ARIMA command failed"));
-	/* FIXME: use errtext here */
+	if (*errtext != 0) errbox(errtext);
+	else errbox((opt == TRAMO)? _("TRAMO command failed") : 
+		   _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
 	return;
     } else {
