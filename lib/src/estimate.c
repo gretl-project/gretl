@@ -1376,55 +1376,16 @@ double corrrsq (int nobs, const double *y, const double *yhat)
 
 /* compute fitted values and residuals */
 
-#undef OUT_OF_SAMPLE_OK
-
 static int hatvar (MODEL *pmod, int n, double **Z)
 {
     int xno, i, t;
     int yno = pmod->list[1];
     double x;
 
-#ifdef OUT_OF_SAMPLE_OK
-    double y;
-
-    for (t=0; t<n; t++) {
-	int missing = 0;
-
-	y = Z[yno][t];
-	if (na(y)) {
-	    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-	    continue;
-	}
-	pmod->yhat[t] = 0.0;
-        for (i=0; i<pmod->ncoeff; i++) {
-            xno = pmod->list[i+2];
-	    x = Z[xno][t];
-	    if (na(x)) {
-		missing = 1;
-		break;
-	    }
-	    if (pmod->nwt) {
-		if (na(Z[pmod->nwt][t])) {
-		    missing = 1;
-		    break;
-		}
-		x *= Z[pmod->nwt][t];
-	    }
-            pmod->yhat[t] += pmod->coeff[i] * x;
-        }
-	if (missing) {
-	    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-	} else {
-	    if (pmod->nwt) { 
-		y *= Z[pmod->nwt][t];
-	    }
-	    pmod->uhat[t] = y - pmod->yhat[t]; 
-	}               
-    }
-#else
     for (t=0; t<n; t++) {
 	pmod->yhat[t] = pmod->uhat[t] = NADBL;
     }
+
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (model_missing(pmod, t)) {
 	    continue;
@@ -1444,7 +1405,6 @@ static int hatvar (MODEL *pmod, int n, double **Z)
 	}
         pmod->uhat[t] = x - pmod->yhat[t];                
     }
-#endif
 
     return 0;
 }

@@ -139,10 +139,6 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
     int pwe = gretl_model_get_int(pmod, "pwe");
     int yvar = pmod->list[1];
     double u, y;
-#ifdef OUT_OF_SAMPLE_OK
-    int j;
-    double x;
-#endif
 
     if (dwt) dwt = pmod->nwt;
 
@@ -185,34 +181,6 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 	    }
 	}
     } else {
-#ifdef OUT_OF_SAMPLE_OK
-	for (t=0; t<fulln; t++) {
-	    if (t < pmod->t1 || t > pmod->t2) {
-		y = Z[yvar][t];
-		if (na(y)) {
-		    pmod->yhat[t] = pmod->uhat[t] = NADBL;
-		    continue;
-		}
-		pmod->yhat[t] = 0.0;
-		for (j=0; j<pmod->ncoeff; j++) {
-		    int xno = pmod->list[j+2];
-
-		    x = Z[xno][t];
-		    if (na(x)) {
-			pmod->yhat[t] = pmod->uhat[t] = NADBL;
-			continue;
-		    }
-		    pmod->yhat[t] += pmod->coeff[j] * x;
-		}
-		pmod->uhat[t] = y - pmod->yhat[t];  
-	    } else {
-		pmod->yhat[t] = yhat->val[i];
-		pmod->uhat[t] = Z[yvar][t] - pmod->yhat[t];
-		pmod->ess += pmod->uhat[t] * pmod->uhat[t];
-		i++;
-	    }
-	}
-#else
 	for (t=0; t<fulln; t++) {
 	    if (t < pmod->t1 || t > pmod->t2 || model_missing(pmod, t)) {
 		pmod->yhat[t] = pmod->uhat[t] = NADBL;
@@ -223,7 +191,6 @@ static void get_resids_and_SSR (MODEL *pmod, const double **Z,
 		i++;
 	    }
 	}
-#endif
     }
 
     /* if SSR is small enough, treat it as zero */
