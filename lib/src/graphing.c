@@ -748,7 +748,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int i, j, oddman = 0;
     char s1[MAXDISP], s2[MAXDISP], xlabel[MAXDISP], withstring[8];
     char depvar[9];
-    int tscale = 0;   /* time series scaling needed? */
+    int yscale = 0;   /* two y axis scales needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
     int pdist = 0;    /* plotting probability dist. */
     double a = 0, b = 0, offset = 0, xrange = 0;
@@ -800,7 +800,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	}
 	/* strcpy(xlabel, I_("Observation")); */
 	*xlabel = 0;
-	if (lo > 2 && lo < 7) tscale = 1;
+	if (lo > 2 && lo < 7) yscale = 1;
     } else {
 	if (flags & GP_DUMMY) {
 	    strcpy(xlabel, get_series_name(pdinfo, list[2])); 
@@ -931,8 +931,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	xrange = xmax - xmin;
     }
 
-    if (tscale) { 
-	/* two or more vars plotted against time */
+    if (yscale) { 
+	/* two or more y vars plotted against some x */
 	double ymin[6], ymax[6];
 	double ratio;
 	int oddcount;
@@ -941,14 +941,14 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	for (i=1; i<lo; i++) {
 	    _minmax(t1, t2, (*pZ)[list[i]], &(ymin[i]), &(ymax[i]));
 	}
-	tscale = 0;
+	yscale = 0;
 	for (i=1; i<lo; i++) {
 	    oddcount = 0;
 	    for (j=1; j<lo; j++) {
 		if (j == i) continue;
 		ratio = ymax[i] / ymax[j];
 		if (ratio > 5.0 || ratio < 0.2) {
-		    tscale = 1;
+		    yscale = 1;
 		    oddcount++;
 		}
 	    }
@@ -959,7 +959,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	}
     }
 
-    if (tscale) {
+    if (yscale) {
 	fputs("set ytics nomirror\n", fq);
 	fputs("set y2tics\n", fq);
     }
@@ -968,7 +968,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	print_gnuplot_literal_lines(literal, fq);
     }
 
-    if (tscale) {
+    if (yscale) {
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++) {
 	    if (i != oddman) {
@@ -1696,7 +1696,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    } else {
 		fprintf(fp, "%.8g", xx);
 	    }
-	    if (spec->labels != NULL && datlines == 1) {
+	    if (spec->labels != NULL && i == 1) {
 		fprintf(fp, " # %s", spec->labels[t]);
 	    }
 	    fputc('\n', fp);

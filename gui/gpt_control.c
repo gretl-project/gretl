@@ -531,6 +531,12 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 #if defined(GNUPLOT_PNG) && !defined(GNUPLOT_PIPE)
 	png_plot_t *plot = (png_plot_t *) spec->ptr;
 
+	if (spec->flags & GPTSPEC_Y2AXIS) {
+	    plot->format |= PLOT_Y2AXIS;
+	} else {
+	    plot->format &= ~PLOT_Y2AXIS;
+	}
+
 	redisplay_edited_png(plot);
 #else
 	go_gnuplot(spec, NULL, &paths);
@@ -2051,6 +2057,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
     }
 
+    /* Below: read the data from the plot.  There may be more
+       than one y series. */
     j = 1;
     t = 0;
     n = 0;
@@ -2292,7 +2300,23 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     }
 
     data_x = &plot->spec->data[0];
-    data_y = &plot->spec->data[plot->spec->n_y_series * plot_n];
+    /* there's an ambiguity here: in case of more than one y series,
+       what do we want to use as "data_y"? */
+    if (plot_has_y2axis(plot)) {
+	/* use first y-var that's on y1 axis */
+	int i;
+
+	for (i=0; i<plot->spec->nlines; i++) {
+	    if (plot->spec->lines[i].yaxis == 1) {
+		data_y = &plot->spec->data[(i + 1) * plot_n];
+		break;
+	    }
+	}
+    } 
+
+    if (data_y == NULL) {
+	data_y = &plot->spec->data[plot->spec->n_y_series * plot_n];
+    }
 
     /* try to find the best-matching data point */
     for (t=0; t<plot_n; t++) {

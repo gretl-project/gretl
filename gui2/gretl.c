@@ -259,10 +259,17 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>", GNULL },    
     { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL, GNULL },
     { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL, GNULL },
+#ifdef G_OS_WIN32
+    { N_("/File/Open data/import Excel..."), NULL, open_data, 
+      OPEN_EXCEL, NULL, GNULL },
+    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
+      OPEN_GNUMERIC, NULL, GNULL },
+#else
     { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
       OPEN_GNUMERIC, NULL, GNULL },
     { N_("/File/Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL, GNULL },
+#endif
 
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>", GNULL },
