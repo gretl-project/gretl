@@ -50,6 +50,7 @@ struct _db_table_row {
 
 struct _db_table {
     int nrows;
+    int nalloc;
     db_table_row *rows;
 };
 

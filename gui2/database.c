@@ -1305,7 +1305,9 @@ void open_db_list (GtkWidget *w, gpointer data)
 
     display_db_series_list(action, dbfile, NULL); 
 #ifndef KEEP_BROWSER_OPEN
-    gtk_widget_destroy(GTK_WIDGET(win->w));
+    if (win != NULL && win->w != NULL && GTK_IS_WIDGET(win->w)) {
+	gtk_widget_destroy(GTK_WIDGET(win->w));
+    }
 #endif
 }
 

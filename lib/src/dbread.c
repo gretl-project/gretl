@@ -29,6 +29,7 @@
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
 #define RATSCOMMENTS 2
+#define RATS_PARSE_ERROR -999
 
 typedef struct {
     long daynumber;                /* Number of days from 1-1-90
@@ -294,8 +295,12 @@ static int dinfo_sanity_check (const DATEINFO *dinfo)
     if (dinfo->info < 0 || dinfo->info > 365 ||
 	dinfo->year < 0 || dinfo->year > 3000 ||
 	dinfo->month < 0 || dinfo->month > 12 ||
-	dinfo->day < 0 || dinfo->day > 31) {
+	dinfo->day < 0 || dinfo->day > 365) {
 	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	fprintf(stderr, "rats database: failed dinfo_sanity_check:\n"
+		" info=%ld, year=%d, month=%d, day=%d\n",
+		dinfo->info, (int) dinfo->year, (int) dinfo->month, 
+		(int) dinfo->day);
 	return 1;
     }
 
@@ -389,7 +394,7 @@ static int dinfo_to_tbl_row (const DATEINFO *dinfo, db_table_row *row,
 	row->comment = g_strdup(comment);
 	row->obsinfo = g_strdup_printf("%c  %d%s - %s  n = %d", pd, 
 				       (int) dinfo->year, pdstr, endobs, n);
-    }
+    } 
 
     return err;
 }
@@ -448,7 +453,7 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
     }
 
     if (err) {
-	return -999;
+	return RATS_PARSE_ERROR;
     } else {
 	return rdir.forward_point;
     }
@@ -459,6 +464,7 @@ static RECNUM read_rats_directory (FILE *fp, db_table_row *row,
 static db_table *db_table_new (void)
 {
     db_table *tbl;
+    int i;
 
     tbl = malloc(sizeof *tbl);
     if (tbl == NULL) return NULL;
@@ -470,7 +476,14 @@ static db_table *db_table_new (void)
 	return NULL;
     }
 
+    for (i=0; i<DB_INIT_ROWS; i++) {
+	tbl->rows[i].varname = NULL;
+	tbl->rows[i].comment = NULL;
+	tbl->rows[i].obsinfo = NULL;
+    }
+
     tbl->nrows = 0;
+    tbl->nalloc = DB_INIT_ROWS;
 
     return tbl;
 }
@@ -478,7 +491,7 @@ static db_table *db_table_new (void)
 static int db_table_expand (db_table *tbl)
 {
     db_table_row *rows;
-    int newsz;
+    int i, newsz;
 
     newsz = (tbl->nrows / DB_INIT_ROWS) + 1;
     newsz *= DB_INIT_ROWS;
@@ -491,6 +504,14 @@ static int db_table_expand (db_table *tbl)
     }
 
     tbl->rows = rows;
+
+    for (i=tbl->nalloc; i<newsz; i++) {
+	tbl->rows[i].varname = NULL;
+	tbl->rows[i].comment = NULL;
+	tbl->rows[i].obsinfo = NULL;
+    }
+
+    tbl->nalloc = newsz;
 
     return 0;
 }
@@ -538,6 +559,7 @@ db_table *read_rats_db (FILE *fp)
     /* basic check */
     if (forward <= 0) {
 	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return NULL;
     }
 
@@ -561,7 +583,7 @@ db_table *read_rats_db (FILE *fp)
 	if (!err) {
 	    fseek(fp, (forward - 1) * 256L, SEEK_SET);
 	    forward = read_rats_directory(fp, &tbl->rows[i++], NULL, NULL);
-	    if (forward == -999) err = 1;
+	    if (forward == RATS_PARSE_ERROR) err = 1;
 	}
     }
 
@@ -629,7 +651,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
     while (rdata.forward_point) {
 	fseek(fp, (rdata.forward_point - 1) * 256L, SEEK_SET);
 	/* the RATSData struct is actually 256 bytes.  Yay! */
-	fread(&rdata, sizeof(RATSData), 1, fp);
+	fread(&rdata, sizeof rdata, 1, fp);
 	for (i=0; i<31 && t<sinfo->nobs; i++) {
 	    sprintf(numstr, "%g", rdata.data[i]);
 	    val = atof(numstr);
@@ -707,6 +729,7 @@ get_rats_series_offset_by_name (FILE *fp,
     /* basic check */
     if (forward <= 0) {
 	strcpy(gretl_errmsg, _("This is not a valid RATS 4.0 database"));
+	fprintf(stderr, "rats database: got forward = %ld\n", forward);
 	return -1;
     }
 
@@ -716,7 +739,7 @@ get_rats_series_offset_by_name (FILE *fp,
     while (forward) {
 	fseek(fp, (forward - 1) * 256L, SEEK_SET);
 	forward = read_rats_directory(fp, NULL, series_name, sinfo);
-	if (forward == -999) sinfo->offset = -1;
+	if (forward == RATS_PARSE_ERROR) sinfo->offset = -1;
 	if (sinfo->offset != 0) break;
     }
 
@@ -1152,7 +1175,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 }
 
 void get_db_padding (SERIESINFO *sinfo, DATAINFO *pdinfo, 
-			 int *pad1, int *pad2)
+		     int *pad1, int *pad2)
 {
     *pad1 = dateton(sinfo->stobs, pdinfo); 
     *pad2 = pdinfo->n - sinfo->nobs - *pad1;
