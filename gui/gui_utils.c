@@ -1167,6 +1167,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     } 
     else if (mydata->role == EDIT_NOTES) {
 	infobox("Notes saved");
+	session_changed(1);
     }
 }
 
@@ -1733,6 +1734,11 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     if (*pbuf)
 	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 			NULL, NULL, *pbuf, strlen(*pbuf));
+    else {
+	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			NULL, NULL, "A", strlen("A"));
+	gtk_editable_delete_text(GTK_EDITABLE(vwin->w), 0, -1);
+    }
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
