@@ -1,5 +1,5 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ * Copyright (C) 1999-2004 by Allin Cottrell
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -17,8 +17,8 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* The beginings of a GARCH plugin using the Fiorentini, Calzolari and
-   Panattoni (fcp) fortran code.
+/* GARCH plugin for gretl using the Fiorentini, Calzolari and 
+   Panattoni mixed-gradient algorithm.
 */
 
 #include "libgretl.h"
@@ -76,17 +76,33 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
+static int make_packed_vcv (MODEL *pmod, double *vcv, int np)
+{
+    const int nterms = np * (np + 1) / 2;
+    int i, j, k;
+
+    free(pmod->vcv);
+    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) return 1;  
+
+    for (i=0; i<np; i++) {
+	for (j=0; j<=i; j++) {
+	    k = ijton(i+1, j+1, np);
+	    pmod->vcv[k] = vcv[i + np * j];
+	}
+    }
+
+    return 0;
+}
+
 static int write_garch_stats (MODEL *pmod, const double **Z,
 			      const DATAINFO *pdinfo,
 			      const int *list, const double *theta, 
-			      int nparam, const double *res)
+			      int nparam, int pad, const double *res)
 {
     int err = 0;
     double *coeff, *sderr;
-    int maxlag, i, ynum = list[4];
-
-    if (list[2] > list[1]) maxlag = list[2];
-    else maxlag = list[1];
+    int i, ynum = list[4];
 
     coeff = realloc(pmod->coeff, nparam * sizeof *pmod->coeff);
     sderr = realloc(pmod->sderr, nparam * sizeof *pmod->sderr);
@@ -105,7 +121,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
 
     pmod->ess = 0.0;
     for (i=pmod->t1; i<=pmod->t2; i++) {
-	pmod->uhat[i] = res[i+maxlag];
+	pmod->uhat[i] = res[i+pad];
 	pmod->ess += pmod->uhat[i] * pmod->uhat[i];
 	pmod->yhat[i] =  Z[ynum][i] - pmod->uhat[i];
     }
@@ -119,93 +135,156 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     return err;
 }
 
-int do_fcp (const int *list, const double **Z, 
-	    const DATAINFO *pdinfo, MODEL *pmod,
-	    PRN *prn)
+static int make_garch_dataset (const int *list, double **Z,
+			       int bign, int pad, int nx,
+			       double **py, double ***pX)
 {
-    int t1, t2;
-    double **X;
-    int nx, nobs;
-    double *yhat;
-    int ncoeff;
-    double *coeff;
-    double *vc, *res, *res2;
-    double *ystoc;
-    double *amax;
-    double *b;
-    int err = 0, iters = 0;
-    int maxlag;
-    int nobsmod;
-    int nparam;
-    int i, p, q, ynum;
+    double *y = NULL, **X = NULL;
+    int i, k, t;
+    int xnum, ynum = list[4];
 
-    t1 = pmod->t1;
-    t2 = pmod->t2;
-    ncoeff = pmod->ncoeff;
-    nx = ncoeff - 1;
+    if (nx > 0) k = 5;
+    else k = 0;
 
-    p = list[1];
-    q = list[2];
-    ynum = list[4];
-    maxlag = (p > q)? p : q; 
+    /* If pad > 0 we have to create a newly allocated, padded
+       dataset.  Otherwise we can use a virtual dataset, made
+       up of pointers into the original dataset, Z. 
+    */
 
-    nparam = ncoeff + p + q + 1;
-
-    nobs = t2 + 1;
-    nobsmod = nobs + maxlag;
-
-    yhat = malloc(nobsmod * sizeof *yhat);
-    ystoc = malloc(nobsmod * sizeof *ystoc);
-
-    res2 = malloc(nobsmod * sizeof *res2);
-    for (i=0; i<nobsmod; i++) {
-	res2[i] = 0.0;
-    }
-
-    res = malloc(nobsmod * sizeof *res);
-    for (i=0; i<nobsmod; i++) {
-	res[i] = 0.0;
-    }    
-
-    amax = malloc(nobsmod * sizeof *amax);
-    for (i=0; i<nobsmod; i++) {
-	amax[i] = 0.0;
-    }
-
-    coeff = malloc(ncoeff * sizeof *coeff);
-    b = malloc(ncoeff * sizeof *b);
-    for (i=0; i<ncoeff; i++) {
-	coeff[i] = b[i] = 0.0;
-    }    
-
-    vc = malloc((ncoeff * ncoeff) * sizeof *vc);
-    for (i=0; i<ncoeff; i++) {
-	vc[i] = 0.0;
+    if (pad > 0) {
+	y = malloc(bign * sizeof *y);
+	if (y == NULL) return 1;
     } 
 
     if (nx > 0) {
 	X = malloc(nx * sizeof *X);
-	/* FIXME */
-    } else {
-	X = NULL;
+	if (X == NULL) goto bailout;
+
+	if (pad > 0) {
+	    for (i=0; i<nx; i++) {
+		X[i] = malloc(bign * sizeof **X);
+		if (X[i] == NULL) {
+		    for (t=0; t<i; t++) {
+			free(X[t]);
+		    }
+		    free(X);
+		    goto bailout;
+		}
+	    } 
+	}  
     }
 
-    for (i=0; i<maxlag; i++) {
-	ystoc[i] = yhat[i] = 0.0;
-    }    
-    for (i=maxlag; i<nobsmod; i++) {
-	ystoc[i] = yhat[i] = Z[ynum][i-maxlag];
+    if (pad > 0) {
+	/* build padded dataset */
+	for (t=0; t<bign; t++) {
+	    if (t < pad) {
+		y[t] = 0.0;
+		for (i=0; i<nx; i++) {
+		    X[i][t] = 0.0;
+		}
+	    } else {
+		y[t] = Z[ynum][t-pad];
+		for (i=0; i<nx; i++) {
+		    xnum = list[k++]; 
+		    if (xnum == 0) xnum = list[k++];
+		    X[i][t] = Z[xnum][t-pad];
+		}
+	    }
+	}
+	*py = y;
+    } else {
+	/* build virtual dataset */
+	*py = Z[ynum];
+	for (i=0; i<nx; i++) {
+	    xnum = list[k++]; 
+	    if (xnum == 0) xnum = list[k++];
+	    X[i] = Z[xnum];
+	}
+    }
+
+    *pX = X;
+
+    return 0;
+
+ bailout:
+
+    free(y);
+    return E_ALLOC;
+}
+
+int do_fcp (const int *list, double **Z, 
+	    const DATAINFO *pdinfo, MODEL *pmod,
+	    PRN *prn)
+{
+    int t1 = pmod->t1, t2 = pmod->t2;
+    int ncoeff = pmod->ncoeff;
+    int p = list[1];
+    int q = list[2];
+    double *y = NULL;
+    double **X = NULL;
+    double *yhat = NULL, *amax = NULL; 
+    double *res = NULL, *res2 = NULL;
+    double *coeff = NULL, *b = NULL;
+    double *vcv = NULL;
+    int err = 0, iters = 0;
+    int nobs, maxlag, bign, pad = 0;
+    int nx, nparam;
+    int i;
+
+    nx = ncoeff - 1;
+    maxlag = (p > q)? p : q; 
+    nparam = ncoeff + p + q + 1;
+
+    nobs = t2 + 1; /* number of obs in full dataset */
+
+    if (maxlag > t1) {
+	/* need to pad data series at start */
+	pad = maxlag - t1;
+    } 
+
+    /* length of series to pass to garch_estimate */
+    bign = nobs + pad;
+	
+    yhat = malloc(bign * sizeof *yhat);
+    res2 = malloc(bign * sizeof *res2);
+    res = malloc(bign * sizeof *res);
+    amax = malloc(bign * sizeof *amax);
+    if (yhat == NULL || res2 == NULL || res == NULL || amax == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+    for (i=0; i<bign; i++) {
+	yhat[i] = res2[i] = res[i] = amax[i] = 0.0;
+    }   
+ 
+    coeff = malloc(ncoeff * sizeof *coeff);
+    b = malloc(ncoeff * sizeof *b);
+    if (coeff == NULL || b == NULL) {
+	err = E_ALLOC;
+	goto bailout;	
+    }
+
+    vcv = malloc((nparam * nparam) * sizeof *vcv);
+    if (vcv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+    for (i=0; i<nparam * nparam; i++) {
+	vcv[i] = 0.0;
+    } 
+
+    /* create dataset for garch estimation */
+    err = make_garch_dataset(list, Z, bign, pad, nx, &y, &X);
+    if (err) {
+	goto bailout;
     }
 
     /* initial coefficients from OLS */
     for (i=0; i<ncoeff; i++) {
 	coeff[i] = pmod->coeff[i];
+	b[i] = 0.0;
     }
 
-    /* initialize elements of alpha, beta such that 
-       alpha_0/(1 - alpha_1 - beta_1) = unconditional
-       variance of y (?)
-    */
     amax[0] = pmod->sigma * pmod->sigma;
     amax[1] = p;
     amax[2] = q; 
@@ -214,48 +293,61 @@ int do_fcp (const int *list, const double **Z,
 	amax[3+i] = 0.1;
     }
 
-    /* Need to set starting point high enough to allow for lags? */
-
-    err = garch_estimate(t1 + maxlag, t2 + maxlag, 
-			 nobsmod, 
+    err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, 
-			 yhat, 
-			 coeff, ncoeff, 
-			 vc, 
-			 res2, 
-			 res, 
-			 ystoc, 
+			 yhat, coeff, ncoeff, 
+			 vcv, res2, res, y, 
 			 amax, b, &iters, prn);
 
     if (err != 0) {
 	fprintf(stderr, "garch_estimate returned %d\n", err);
-    }
-
-    if (err == 0) {
+	pmod->errcode = err;
+    } else {
 	int nparam = ncoeff + p + q + 1;
 
 	for (i=1; i<=nparam; i++) {
 	    pprintf(prn, "theta[%d]: %#14.6g (%#.6g)\n", i-1, amax[i], 
 		    amax[i+nparam]);
 	}
+	pputc(prn, '\n');
+
+	write_garch_stats(pmod, (const double **) Z, pdinfo, list, 
+			  amax, nparam, pad, res);
+	make_packed_vcv(pmod, vcv, nparam);
+	gretl_model_set_int(pmod, "iters", iters);
+	pmod->lnL = amax[0];
     }
 
-    write_garch_stats(pmod, Z, pdinfo, list, amax, nparam, res);
-    gretl_model_set_int(pmod, "iters", iters);
-    pmod->lnL = amax[0];
+ bailout:
 
-    free(X); /* FIXME */
     free(yhat);
-    free(coeff);
-    free(vc);
     free(res2);
     free(res);
-    free(ystoc);
-    free(amax);
+    free(amax);    
+    free(coeff);
     free(b);
+    free(vcv); 
 
-    return 0;
+    if (pad > 0) {
+	/* don't free y if it's just a pointer into Z */
+	free(y);
+    }
+    
+    if (X != NULL) {
+	if (pad > 0) {
+	    /* don't free the X[i] if they're just pointers into
+	       the original data matrix */
+	    for (i=0; i<nx; i++) {
+		free(X[i]);
+	    }
+	}
+	free(X);
+    }
+
+    return err;
 }
+
+/* make regresson list for initial OLS */
 
 static int *make_ols_list (const int *list)
 {
@@ -271,7 +363,7 @@ static int *make_ols_list (const int *list)
 	if (list[i] == 0) ifc = 1;
     }
 
-    /* add constant, if absent */
+    /* add the constant, if not present */
     if (!ifc) {
 	olist[0] += 1;
 	olist[olist[0]] = 0;
@@ -299,10 +391,12 @@ MODEL garch_model (int *list, double ***pZ, DATAINFO *pdinfo,
     /* run initial OLS */
     model = lsq(ols_list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (model.errcode) {
+	free(ols_list);
         return model;
     } 
 
-    do_fcp(list, (const double **) *pZ, pdinfo, &model, prn); 
+    free(ols_list);
+    do_fcp(list, *pZ, pdinfo, &model, prn); 
 
     return model;
 }

@@ -13,13 +13,14 @@
 #include "libgretl.h"
 #include "fcp.h"
 
-/* #define FDEBUG */
+/* #define FDEBUG  */
 
 #define NLL    50   /* number of iterative results to store */
 #define ABNUM   4   /* max number of GARCH lags */
 
 #define LOG_SQRT_2_PI 0.9189385332056725
-#define SMALL_HT      1.0e-7   
+#define SMALL_HT      1.0e-7 
+#define IVOLTA_DONE   999  
 
 int global_np;
 
@@ -85,34 +86,34 @@ garch_full_hessian (int t1, int t2,
        dhtdp sono le derivate di ht rispetto a tutti i parametri 
 */
 
-static void free_2d_array (double **X, int k)
+static void free_2d_array (double **A, int k)
 {
     int i;
 
-    if (X == NULL) return;
+    if (A == NULL) return;
 
-    for (i=0; i<k; i++) free(X[i]);
-    free(X);
+    for (i=0; i<k; i++) free(A[i]);
+    free(A);
 }
 
 static double **allocate_2d_array (int k, int T)
 {
-    double **X;
+    double **A;
     int i, j;
 
-    X = malloc(k * sizeof *X);
-    if (X == NULL) return NULL;
+    A = malloc(k * sizeof *A);
+    if (A == NULL) return NULL;
 
     for (i=0; i<k; i++) {
-	X[i] = malloc(T * sizeof **X);
-	if (X[i] == NULL) {
-	    for (j=0; j<i; j++) free(X[j]);
-	    free(X);
+	A[i] = malloc(T * sizeof **A);
+	if (A[i] == NULL) {
+	    for (j=0; j<i; j++) free(A[j]);
+	    free(A);
 	    return NULL;
 	}
     }
 
-    return X;
+    return A;
 }
 
 static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
@@ -248,13 +249,17 @@ static void copy_coeff (const double *c, int nc, double *b)
     }
 } 
 
-int ols_ (int t1, int t2,  const double **X, int nx, 
-	  double *c, int nc, double *vc, double *ystoc, 
+int ols_ (int t1, int t2, const double **X, int nx, 
+	  double *c, int nc, double *ystoc, 
 	  double *amax, double *aux, double *b, double **g)
 {
     int i, j, k, t, err;
     double deltc, deriv, relinc = 0.5;
     double oldc, yy;
+    double *vc;
+
+    vc = malloc(nc * nc * sizeof *vc);
+    if (vc == NULL) return 1;
 
     copy_coeff(c, nc, b);
 
@@ -320,12 +325,14 @@ int ols_ (int t1, int t2,  const double **X, int nx,
 	}
     }
 
+    free(vc);
+
     return 0;
 } 
 
 int garch_estimate (int t1, int t2, int nobs, 
 		    const double **X, int nx, double *yhat, 
-		    double *coeff, int nc, double *vc, 
+		    double *coeff, int nc, double *vcv, 
 		    double *res2, double *res,
 		    double *ystoc, double *amax, double *b, 
 		    int *iters, PRN *prn)
@@ -404,7 +411,7 @@ int garch_estimate (int t1, int t2, int nobs,
     }
 
     /* this is only to calculate matrix of regressors (g) */
-    ols_(t1, t2, X, nx, c, nc, vc, ystoc, amax, aux, b, g);
+    ols_(t1, t2, X, nx, c, nc, ystoc, amax, aux, b, g);
 
 #ifdef FFDEBUG
     for (i = 0; i < 3; i++) {
@@ -432,7 +439,7 @@ int garch_estimate (int t1, int t2, int nobs,
 	/* store previous coefficients */
 	for (i = 0; i < nparam; ++i) {
 	    parpre[i] = param[i];
-	    partrc[i][nzo-1] = param[i]; /* FIXME? */
+	    partrc[i][nzo-1] = param[i];
 #ifdef FDEBUG
 	    fprintf(stderr, "param[%d] = %.9g\n", i, param[i]);	    
 #endif
@@ -471,7 +478,6 @@ int garch_estimate (int t1, int t2, int nobs,
     fprintf(stderr, "\n\n*** Now going to Hessian ***\n\n");
 #endif
 
-    /* full hessian and search */
     ivolt2 = 0;
     nzo1 = 0;
 
@@ -504,7 +510,7 @@ int garch_estimate (int t1, int t2, int nobs,
 			   aux3, param, nparam, b, &alfa0, alfa, beta, 
 			   nalfa, nbeta, h, dhdp, zt);
 
-	/* if relative euclidean distance is used as converg. */
+	/* if relative Euclidean distance is used as converg. */
 	s_1 = 0.0;
 	s_2 = 0.0;
 
@@ -530,8 +536,8 @@ int garch_estimate (int t1, int t2, int nobs,
 	    goto L999;
 	}
 
-	pprintf(prn, "\nFull Hessian convergence at iteration %d, tol = %.9g\n",
-		nzo, toler2);
+	pprintf(prn, "\nFull Hessian convergence at iteration %d, "
+		"tol = %.9g\n\n", nzo, toler2);
 
 	*iters = nzo;
 	amax[0] = ll;
@@ -586,7 +592,27 @@ L6766:
 	    }
 	    amax[i+1] = param[i];
 	    amax[i+1+nparam] = sderr;
+	    for (j = 0; j < nparam; ++j) {
+		vcv[vix(i,i)] = vc5[vix(i,i)];
+	    }
 	}
+    }
+
+    if (1) {
+	double *vci = malloc(nparam * nparam * sizeof *vci);
+
+	garch_info_matrix(t1, t2, X, nx, yhat, c, 
+			  nc, res2, res, ystoc,
+			  toler1, &ivolta, vci, (const double **) g, 
+			  aux3, param, nparam, b, 
+			  &alfa0, alfa, beta, nalfa,
+			  nbeta, h, dhdp, zt);
+	fprintf(stderr, "IM standard errors:\n");
+	for (i=0; i<nparam; i++) {
+	    fprintf(stderr, "sderr[%d] = %g\n", i, 
+		    sqrt(vci[vix(i,i)]));
+	}
+	free(vci);
     }
 
  L999:
@@ -595,9 +621,6 @@ L6766:
 
     return err;
 }
-
-
-
 
 /* compute the log-likelihood function.
    i parametri sono passati nel vettore param(nparam). 
@@ -729,72 +752,23 @@ static void check_ht (double *param, int nparam)
     }
 } 
 
+/* common portion of setup for information matrix and Hessian */
 
-/* matrice di informazione diagonale a blocchi */
-
-/* i parametri sono passati dentro il vettore param 
-   c, alfa e beta si ricavano all'inizio da param 
-*/
-
-static int 
-garch_info_matrix (int t1, int t2, 
-		   const double **X, int nx, double *yhat, double *c, 
-		   int nc, double *res2, double *res, double *ystoc,
-		   double toler, int *ivolta, double *vc5, 
-		   const double **g, double *aux3, 
-		   double *param, int nparam, double *b,  
-		   double *alfa0, double *alfa, double *beta, int nalfa,
-		   int nbeta, double *h, double **dhdp, double *zt)
+static void common_matrix_setup (int t1, int t2, double *c, int nc, 
+				 double *res2, double *res, int *ivolta, 
+				 const double **g, double *aux3, 
+				 double *param, int nparam, 
+				 double *alfa0, double *alfa, double *beta, 
+				 int nalfa, int nbeta, double *h, 
+				 double **dhdp, double *zt, double *asum2, 
+				 double ***H)
 {
-    int i, j, t;
-    double d, d0, d1, d2, ll2, d3;
-    double ll3, d12, d31, d23, dd;
-    double di, ff, dm;
-    double ds;
-    int iv, nexp;
-    double a1s, a2s, a3s;
-    int it1, it2, it3, it4, it5;
-    double dac;
-    double d12s, dub, d23s, d31s;
-    int isp, ier5;
-    double bigd, s_2;
-    double stre, rsuh, s_1, r2suh;
-    double cappa;
-    int ncall, n;
-    double r2suh3;
-    int nvparm, lag;
-    double oldstp = 9.0e+39;
-    static double ll1 = 0.0, fs = 0.0;
+    int i, j, k, t, n, lag, isp;
+    int nvparm = nalfa + nbeta + 1;
 
-    double *gg, *step, *asum2;
-
-    gg = malloc(nparam * sizeof *gg);
-    if (gg == NULL) {
-	return 1;
+    if (*ivolta != IVOLTA_DONE) {
+	++(*ivolta);
     }
-
-    step = malloc(nparam * sizeof *step);
-    if (step == NULL) {
-	free(gg);
-	return 1;
-    } 
-
-    asum2 = malloc(nc * sizeof *asum2);
-    if (asum2 == NULL) {
-	free(gg);
-	free(step);
-	return 1;
-    }
-
-    iv = 0;
-    it1 = 0;
-    it2 = 0;
-    it3 = 0;
-    it4 = 0;
-    it5 = 0;
-    nvparm = nalfa + nbeta + 1;
-
-    ++(*ivolta);
 
     for (i = 0; i < nc; ++i) {
 	c[i] = param[i];
@@ -802,20 +776,20 @@ garch_info_matrix (int t1, int t2,
 
     *alfa0 = param[nc];
 #ifdef FDEBUG
-    fprintf(stderr, "garcim: alfa0=%.9g\n", *alfa0);
+    fprintf(stderr, "alfa0=%.9g\n", *alfa0);
 #endif
 
     for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[nc + 1 + i];
 #ifdef FDEBUG
-	fprintf(stderr, "garcim: alfa[%d]=%.9g\n", i, alfa[i]);
+	fprintf(stderr, "alfa[%d]=%.9g\n", i, alfa[i]);
 #endif
     }
 
     for (i = 0; i < nbeta; ++i) {
 	beta[i] = param[nc + 1 + nalfa + i];
 #ifdef FDEBUG
-	fprintf(stderr, "garcim: beta[%d]=%.9g\n", i, beta[i]);
+	fprintf(stderr, "beta[%d]=%.9g\n", i, beta[i]);
 #endif
     }
 
@@ -826,9 +800,14 @@ garch_info_matrix (int t1, int t2,
        impiega la varianza noncondizionata calcolata dai residui.
     */
 
-    for (t = 1; t <= nbeta; ++t) { /* FIXME?? */
+    for (k = 1; k <= nbeta; k++) { /* FIXME date index?? */
 	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t1-t] = 0.0;
+	    dhdp[nc+i][t1-k] = 0.0;
+	    if (H != NULL) { /* hessian only */
+		for (j = 0; j < nvparm; ++j) {
+		    H[nc+i][nc+j][k] = 0.0;
+		}
+	    }
 	}
     }
 
@@ -837,15 +816,15 @@ garch_info_matrix (int t1, int t2,
     for (t = t1; t <= t2; ++t) {
 
 	/* si riempie zt al tempo t (p. 315) */
-	
+
 	zt[0] = 1.0;
 
 	for (i = 1; i <= nalfa; ++i) {
-	    zt[i] = res2[t - i];
+	    zt[i] = res2[t-i];
 	}
 
 	for (i = 1; i <= nbeta; ++i) {
-	    zt[nalfa + i] = h[t - i];
+	    zt[nalfa+i] = h[t-i];
 	}
 
 	/*  si riempie dhtdp al tempo t la parte relativa ai parametri 
@@ -860,26 +839,11 @@ garch_info_matrix (int t1, int t2,
 	}
 
 	for (i = 0; i < nvparm; ++i) {
-	    for (j = 1; j <= nbeta; ++j) { /* FIXME?? */
+	    for (j = 1; j <= nbeta; ++j) {
 		dhdp[nc+i][t] += dhdp[nc+i][t-j] * beta[j-1];
 	    }
 	}
-#if FFDEBUG
-	if (t < 10) {
-	    for (i=0; i<nvparm; i++) {
-		 fprintf(stderr, "I(%d,%d) = %.9g\n", nc+i, t, 
-			 dhdp[nc+i][t]);
-	    }
-	}
-#endif
-
     }
-
-#if FFDEBUG
-    for (i=0; i<=nalfa + nbeta; i++) {
-	fprintf(stderr, "zt[%d] = %.9g\n", i, zt[i]);
-    }
-#endif    
 
     /* costruzione matrice dhtdp, parte relativa ai coefficienti
        (eq.24) come valori iniziali (tempo 0, -1, ecc.) delle derivate
@@ -905,12 +869,42 @@ garch_info_matrix (int t1, int t2,
 	}
     }
 
-    for (t = t1; t <= t2; ++t) {
+    /*  i valori iniziali di dhdpdp sono 2/t x'x e zero per i blocchi 
+	fuori diagonale */
 
+    if (H != NULL) {
+	for (t = 0; t < lag; ++t) {
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nc; ++j) {
+		    H[i][j][t+1] = 0.; /* FIXME t or t+1? */
+		}
+	    }
+	    for (isp = t1; isp <= t2; ++isp) {
+		for (i = 0; i < nc; ++i) {
+		    for (j = 0; j < nc; ++j) {
+			H[i][j][t+1] += 2.0 *  /* t or t+1? */
+			    g[i][isp] * g[j][isp] / n;
+#ifdef FFDEBUG  
+			if (isp == t1 || isp == t2) {
+			    fprintf(stderr, "set H[%d][%d][%d] = %.9g\n",
+				    i,j,t+1, H[i][j][t+1]); /* t or t+1? */
+			}
+#endif
+		    }
+		}
+	    }
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nvparm; ++j) {
+		    H[i][nc+j][t+1] = 0.0; /* t or t+1? */
+		}
+	    }
+	}
+    }
+
+    for (t = t1; t <= t2; ++t) {
 	for (i = 0; i < nc; ++i) {
 	    dhdp[i][t] = 0.0;
 	}
-
 	for (i = 0; i < nc; ++i) {
 	    for (j = 1; j <= nalfa; ++j) {
 		if (t - nalfa < t1) {
@@ -921,7 +915,6 @@ garch_info_matrix (int t1, int t2,
 		}
 	    }
 	}
-
 	for (i = 0; i < nc; ++i) {
 	    for (j = 1; j <= nbeta; ++j) {
 		dhdp[i][t] += dhdp[i][t-j] * beta[j-1];
@@ -929,41 +922,111 @@ garch_info_matrix (int t1, int t2,
 	}
     }
 
-    /* si inizia il calcolo del gradiente aux3 */
+    /*  si inizia il calcolo del gradiente aux3 */
 
     for (i = 0; i < nparam; ++i) {
 	aux3[i] = 0.0;
     }
 
     for (t = t1; t <= t2; ++t) {
+	double rsuh, r2suh;
 
-	/* prima parte relativa ai coefficienti (eq. 22 pag. 316) err. di 
-	   stampa nel secondo termine c'e' un *ht invece di /ht 
+	/*  prima parte relativa ai coefficienti (eq. 22, p. 316) err. di 
+	    stampa nel secondo termine c'e' un *ht invece di /ht 
 	*/
 	rsuh = res[t] / h[t];
 	r2suh = rsuh * res[t];
 
 	for (i = 0; i < nc; ++i) {
-	    aux3[i] += rsuh * g[i][t] + .5 / h[t] * 
-		dhdp[i][t] * (r2suh - 1.0);
+	    aux3[i] += rsuh * g[i][t] 
+		+ .5 / h[t] * dhdp[i][t] * (r2suh - 1.0);
 	}
 
-	/* seconda parte relativa ad alfa e beta (eq. 19 pag. 315) */
+	/* seconda parte relativa ad alfa e beta (eq. 19,  p. 315) */
 	for (i = 0; i < nvparm; ++i) {
 	    aux3[nc + i] += 
 		.5 / h[t] * dhdp[nc+i][t] * (r2suh - 1.0);
 	}
     }
 
+    /* done common setup */
+}
+
+
+/* matrice di informazione diagonale a blocchi */
+
+/* i parametri sono passati dentro il vettore param 
+   c, alfa e beta si ricavano all'inizio da param 
+*/
+
+static int 
+garch_info_matrix (int t1, int t2, 
+		   const double **X, int nx, double *yhat, double *c, 
+		   int nc, double *res2, double *res, double *ystoc,
+		   double toler, int *ivolta, double *vcv, 
+		   const double **g, double *aux3, 
+		   double *param, int nparam, double *b,  
+		   double *alfa0, double *alfa, double *beta, int nalfa,
+		   int nbeta, double *h, double **dhdp, double *zt)
+{
+    int i, j, t;
+    double d, d0, d1, d2, ll2, d3;
+    double ll3, d12, d31, d23, dd;
+    double di, ff, dm;
+    double ds;
+    int iv, nexp;
+    double a1s, a2s, a3s;
+    int it1, it2, it3, it4, it5;
+    double dac;
+    double d12s, dub, d23s, d31s;
+    int ier5;
+    double bigd, s_2;
+    double stre, s_1;
+    double cappa;
+    int ncall;
+    int nvparm;
+    double oldstp = 9.0e+39;
+    static double ll1 = 0.0, fs = 0.0;
+
+    double *gg, *step, *asum2;
+
+    gg = malloc(nparam * sizeof *gg);
+    if (gg == NULL) {
+	return 1;
+    }
+
+    step = malloc(nparam * sizeof *step);
+    if (step == NULL) {
+	free(gg);
+	return 1;
+    } 
+
+    asum2 = malloc(nc * sizeof *asum2);
+    if (asum2 == NULL) {
+	free(gg);
+	free(step);
+	return 1;
+    }
+
+    iv = 0;
+    it1 = it2 = it3 = it4 = it5 = 0;
+    nvparm = nalfa + nbeta + 1;
+
+    common_matrix_setup(t1, t2, c, nc, res2, res, 
+			ivolta, g, aux3, param, nparam, 
+			alfa0, alfa, beta, nalfa, nbeta, h,
+			dhdp, zt, asum2, NULL);
+
     /* ora si riempie la matinf */
 
     for (i = 0; i < nparam; ++i) {
 	for (j = 0; j < nparam; ++j) {
-	    vc5[vix(i,j)] = 0.0;
+	    vcv[vix(i,j)] = 0.0;
 	}
     }
 
     for (t = t1; t <= t2; ++t) {
+	double rsuh, r2suh, r2suh3;
 
 	rsuh = res[t] / h[t];
 	r2suh = rsuh * res[t];
@@ -973,10 +1036,9 @@ garch_info_matrix (int t1, int t2,
 	   si ricorda che si prende il valore atteso e restano solo i primi
 	   due termini 
 	*/
-
 	for (i = 0; i < nc; ++i) {
 	    for (j = 0; j < nc; ++j) {
-		vc5[vix(i,j)] = vc5[vix(i,j)] 
+		vcv[vix(i,j)] = vcv[vix(i,j)] 
 		    - g[i][t] * g[j][t] / h[t] 
 		    - dhdp[i][t] * .5 * dhdp[j][t] / (h[t] * h[t]);
 	    }
@@ -986,10 +1048,9 @@ garch_info_matrix (int t1, int t2,
 	   si ricorda che si prende il valore atteso e resta solo il secondo 
 	   termine 
 	*/
-
 	for (i = nc; i < nparam; ++i) {
 	    for (j = nc; j < nparam; ++j) {
-		vc5[vix(i,j)] -= .5 * dhdp[i][t] * 
+		vcv[vix(i,j)] -= .5 * dhdp[i][t] * 
 		    dhdp[j][t] / (h[t] * h[t]);
 	    }
 	}
@@ -997,31 +1058,35 @@ garch_info_matrix (int t1, int t2,
 
 #if FFDEBUG
     for (i=0; i<nparam * nparam; i++) {
-	fprintf(stderr, "vc5[%d] = %.9g\n", i, vc5[i]);
+	fprintf(stderr, "vcv[%d] = %.9g\n", i, vcv[i]);
     }
 #endif
 
-    /* adesso si inverte la matinf */
-
-    ier5 = invert(vc5, nparam);
+    /* Invert the information matrix */
+    ier5 = invert(vcv, nparam);
     if (ier5 != 0) {
 	fprintf(stderr, "matrix inversion failed\n");
     }
 
+    if (*ivolta == IVOLTA_DONE) {
+	/* just calculating vcv at convergence */
+	goto vcv_exit;
+    }
+
     /* adesso si comincia con le iterazioni */
 
-    /* calcolare lo step per i nuovi coefficenti */
+    /* calculate the step for the new coefficients */
     s_2 = 0.0;
     for (i = 0; i < nparam; ++i) {
 	gg[i] = param[i];
 	step[i] = 0.0;
 	for (j = 0; j < nparam; ++j) {
-	    step[i] -= vc5[vix(i,j)] * aux3[j];
+	    step[i] -= vcv[vix(i,j)] * aux3[j];
 	}
 	s_2 += step[i] * step[i];
     }
 
-    /* if relative euclidean distance is used as converg. */
+    /* if rel. Euclidean distance is used as converg. */
     s_1 = 0.0;
     for (i = 0; i < nparam; ++i) {
 	s_1 += param[i] * param[i];
@@ -1057,8 +1122,6 @@ garch_info_matrix (int t1, int t2,
     d0 /= cappa;
     dac = d0 * .001;
     dub = d0 * 4.0;
-
-    /* print d0, dac, dub? */
 
     if (*ivolta == 1) {
 	ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
@@ -1325,10 +1388,12 @@ garch_info_matrix (int t1, int t2,
     fs = -fs;
     it5 += iv;
 
-    /* si cambia il segno alla matrice */
+ vcv_exit:
+
+    /* change the sign of the matrix */
     for (i = 0; i < nparam; ++i) {
 	for (j = 0; j < nparam; ++j) {
-	    vc5[vix(i,j)] *= -1.0;
+	    vcv[vix(i,j)] *= -1.0;
 	}
     }
 
@@ -1385,16 +1450,16 @@ garch_full_hessian (int t1, int t2,
 {
     int i, j, k, t;
     double d;
-    double d0, d1, d2, ll2, d3; /* static? */
-    double ll3, d12, d31, d23, dd, di, ff; /* static? */
-    int iv, ncall, n, nexp, nvparm;
-    double dm, ds; /* static? */
+    double d0, d1, d2, ll2, d3; 
+    double ll3, d12, d31, d23, dd, di, ff; 
+    int iv, ncall, nexp, nvparm;
+    double dm, ds; 
     double a1s, a2s, a3s;
     int it1, it2, it3, it4, it5;
-    double dac, d12s, dub, d23s, d31s; /* static? */
-    int isp, ier5;
+    double dac, d12s, dub, d23s, d31s;
+    int ier5;
     double bigd, s_2;
-    double stre, rsuh, s_1, r2suh, r2suh3, usuh2;
+    double stre, s_1;
     double cappa;
     int lag;
     static double ll1 = 0.0, fs = 0.0;
@@ -1430,223 +1495,17 @@ garch_full_hessian (int t1, int t2,
     }
 
     iv = 0;
-    it1 = 0;
-    it2 = 0;
-    it3 = 0;
-    it4 = 0;
-    it5 = 0;
+    it1 = it2 = it3 = it4 = it5 = 0;
     nvparm = nalfa + nbeta + 1;
-
-    ++(*ivolta);
-
-    for (i = 0; i < nc; ++i) {
-	c[i] = param[i];
-    }
-    *alfa0 = param[nc];
-#ifdef FDEBUG
-    fprintf(stderr, "hessian: alfa0=%.9g\n", *alfa0);
-#endif
-
-    for (i = 0; i < nalfa; ++i) {
-	alfa[i] = param[nc + 1 + i];
-#ifdef FDEBUG
-	fprintf(stderr, "hessian: alfa[%d]=%.9g\n", i, alfa[i]);
-#endif
-    }
-
-    for (i = 0; i < nbeta; ++i) {
-	beta[i] = param[nc + 1 + nalfa + i];
-#ifdef FDEBUG
-	fprintf(stderr, "hessian: beta[%d]=%.9g\n", i, beta[i]);
-#endif
-    }
-
-    /* 
-       Inizio del calcolo di dhtdp e dhdpdp parte relativa ai parametri
-       alfa e beta. Si comincia calcolando le derivate dei valori iniziali
-       avendo scelto come val. iniziali la varianza noncondizionata. Come
-       valore iniziale (ai tempi 0, -1, -2, ecc.) di ht si impiega la
-       varianza noncondizionata calcolata dai residui.
-    */
-
-    for (k = 0; k < nbeta; ++k) { /* or 1 to <= nbeta ? */
-	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t1-k] = 0.0;
-	    for (j = 0; j < nvparm; ++j) {
-		H[nc+i][nc+j][k+1] = 0.0;
-	    }
-	}
-    }
-
-    /* costruzione matrice dhtdp, parte relativa a alfa e beta (eq. 21) */
-
-    for (t = t1; t <= t2; ++t) {
-
-	/* si riempie zt al tempo t (p. 315) */
-
-	zt[0] = 1.0;
-
-	for (i = 1; i <= nalfa; ++i) {
-	    zt[i] = res2[t-i];
-	}
-
-	for (i = 1; i <= nbeta; ++i) {
-	    zt[nalfa+i] = h[t-i];
-	}
-
-	/*  si riempie dhtdp al tempo t la parte relativa ai parametri 
-	    alfa e beta (eq. 21 p. 316) */
-
-	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t] = 0.0;
-	}	
-
-	for (i = 0; i < nvparm; ++i) {
-	    dhdp[nc+i][t] += zt[i];
-	}
-
-	for (i = 0; i < nvparm; ++i) {
-	    for (j = 1; j <= nbeta; ++j) {
-		dhdp[nc+i][t] += dhdp[nc+i][t-j] * beta[j-1];
-	    }
-	}
-    }
-
-    /* 
-       costruzione matrice dhtdp, parte relativa ai coefficienti
-       (eq.24) come valori iniziali (tempo 0, -1, ecc.) delle derivate
-       di ht rispetto ai coefficienti si prende der di uncvar rispetto
-       ai coeff come valori iniziali dei residui si prende zero (gia'
-       fatto dentro valunc) costruzione della matrice dhdpdp iniziale
-    */
-
     lag = (nbeta > nalfa)? nbeta : nalfa;
-    n = t2 - t1 + 1;
 
-    for (t = t1-lag; t < t1; ++t) {
-	for (i = 0; i < nc; ++i) {
-	    asum2[i] = 0.0;
-	    for (isp = t1; isp <= t2; ++isp) {
-		asum2[i] -= res[isp] * 2.0 * g[i][isp];
-	    }
-	    asum2[i] /= n;
-	    dhdp[i][t] = asum2[i];
-	}
-    }
+    common_matrix_setup(t1, t2, c, nc, res2, res, 
+			ivolta, g, aux3, param, nparam, 
+			alfa0, alfa, beta, nalfa, nbeta, h,
+			dhdp, zt, asum2, H);
 
-    /*  i valori iniziali di dhdpdp sono 2/t x'x e zero per i blocchi 
-	fuori diagonale */
 
-    for (t = 0; t < lag; ++t) {
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nc; ++j) {
-		H[i][j][t+1] = 0.; /* FIXME t or t+1? */
-	    }
-	}
-	for (isp = t1; isp <= t2; ++isp) {
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nc; ++j) {
-		    H[i][j][t+1] += 2.0 *  /* t or t+1? */
-			g[i][isp] * g[j][isp] / n;
-#ifdef FFDEBUG  
-		    if (isp == t1 || isp == t2) {
-			fprintf(stderr, "set H[%d][%d][%d] = %.9g\n",
-				i,j,t+1, H[i][j][t+1]); /* t or t+1? */
-		    }
-#endif
-		}
-	    }
-	}
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nvparm; ++j) {
-		H[i][nc+j][t+1] = 0.0; /* t or t+1? */
-	    }
-	}
-    }
-
-    for (t = t1; t <= t2; ++t) {
-
-	for (i = 0; i < nc; ++i) {
-	    dhdp[i][t] = 0.0;
-	}
-
-	for (i = 0; i < nc; ++i) {
-	    for (j = 1; j <= nalfa; ++j) {
-		if (t - nalfa < t1) {
-		    dhdp[i][t] += alfa[j-1] * asum2[i];
-		} else {
-		    dhdp[i][t] -= 2.0 *
-			alfa[j-1] * g[i][t-j] * res[t-j];
-		}
-	    }
-	}
-
-	for (i = 0; i < nc; ++i) {
-	    for (j = 1; j <= nbeta; ++j) {
-		dhdp[i][t] += dhdp[i][t-j] * beta[j-1];
-	    }
-	}
-
-#ifdef FFDEBUG
-	if (t == t1 || t == t2) {
-	    for (i = 0; i < nc; ++i) {
-		fprintf(stderr, "I(%d,%d) = %.9g\n", i,t, dhdp[i][t]);
-	    }
-	}
-#endif
-
-    }
-
-    /*  si inizia il calcolo del gradiente aux3 */
-
-    for (i = 0; i < nparam; ++i) {
-	aux3[i] = 0.0;
-    }
-
-    for (t = t1; t <= t2; ++t) {
-
-	/*  prima parte relativa ai coefficienti (eq. 22, p. 316) err. di 
-	    stampa nel secondo termine c'e' un *ht invece di /ht 
-	*/
-	rsuh = res[t] / h[t];
-	r2suh = rsuh * res[t];
-
-	for (i = 0; i < nc; ++i) {
-	    aux3[i] += rsuh * g[i][t] 
-		+ .5 / h[t] * dhdp[i][t] * (r2suh - 1.0);
-	}
-
-#ifdef FFDEBUG
-	if (t == t1 || t == t2) {
-	    for (i=0; i<nc; i++) {
-		fprintf(stderr, " (prima) aux3[%d] = %.9g\n", i, aux3[i]);
-	    }
-	}
-#endif
-
-	/* seconda parte relativa ad alfa e beta (eq. 19,  p. 315) */
-	for (i = 0; i < nvparm; ++i) {
-	    aux3[nc + i] += 
-		.5 / h[t] * dhdp[nc+i][t] * (r2suh - 1.0);
-	}
-
-#ifdef FFDEBUG
-	if (t == t1 || t == t2) {
-	    for (i=0; i<nvparm; i++) {
-		fprintf(stderr, " (seconda) aux3[%d] = %.9g\n", nc+i, aux3[nc+i]);
-	    }
-	}
-#endif
-
-    }
-
-#ifdef FFDEBUG
-    for (i=0; i<nvparm; i++) {
-	fprintf(stderr, " aux3[%d] = %.9g\n", i, aux3[i]);
-    }
-#endif
-
-    /* ora si riempie la hess */
+    /* Now we fill out the Hessian */
 
     for (i = 0; i < nparam; ++i) {
 	for (j = 0; j < nparam; ++j) {
@@ -1655,6 +1514,7 @@ garch_full_hessian (int t1, int t2,
     }
 
     for (t = t1; t <= t2; ++t) {
+	double rsuh, r2suh, r2suh3, usuh2;
 
 	rsuh = res[t] / h[t];
 	r2suh = rsuh * res[t];
@@ -1849,16 +1709,11 @@ garch_full_hessian (int t1, int t2,
 
     for (i = 0; i < nc; ++i) {
 	for (j = 0; j < nvparm; ++j) {
-#ifdef FDEBUG
-	    fprintf(stderr, "setting vc5[%d]=vc5[%d]=%.9g\n",
-		    vix(nc+j, i), vix(i, nc+j), vc5[vix(i, nc+j)]);
-#endif
 	    vc5[vix(nc+j, i)] = vc5[vix(i, nc+j)];
 	}
     }
 
-    /* adesso si inverte la hess */
-
+    /* Invert the Hessian */
     ier5 = invert(vc5, nparam);
     if (ier5 != 0) {
 	fprintf(stderr, "matrix inversion failed\n");
@@ -1877,7 +1732,7 @@ garch_full_hessian (int t1, int t2,
 	s_2 += step[i] * step[i];
     }
 
-    /* if relative euclidean distance is used as converg. */
+    /* if rel. Euclidean distance is used as converg. */
     s_1 = 0.0;
     for (i = 0; i < nparam; ++i) {
 	s_1 += param[i] * param[i];
@@ -2167,13 +2022,6 @@ L490:
 
     return 0;
 } /* garch_full_hessian */
-
-
-/* Standard for models with no restrictions on the structural 
-   coefficients, such as distributed lags, or restrictions on 
-   the sum (Cobb-Douglas), etc.
-*/
-
 
 static int invert (double *g, int dim)
 {
