@@ -95,7 +95,7 @@ double tprob (const double x, const int df)
  * @dfn: numerator degrees of freedom.
  * @dfd: denominator degrees of freedom.
  * 
- * Returns: the probability a random variable disstributed as
+ * Returns: the probability a random variable distributed as
  * F(@dfn, @dfd) is greater than @x, or -1 if either @dfn or @dfd is
  * negative.
  */

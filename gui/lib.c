@@ -1084,7 +1084,7 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 
     err = set_obs(line, datainfo, opt);
     if (err) {
-	errbox(gretl_errmsg);
+	errbox(get_gretl_errmsg());
 	return;
     } else {
 	char msg[80];

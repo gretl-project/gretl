@@ -155,7 +155,7 @@ static void get_critical (GtkWidget *w, gpointer data)
 	break;
     }
 
-    if (funp == NULL)  {
+    if (i != 3 && funp == NULL)  {
 	close_plugin(handle);
 	gretl_print_destroy(prn);
 	return;
