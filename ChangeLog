@@ -1,4 +1,8 @@
-version 1.0pre4
+version 1.0
+- change *nix library name to libgretl-1.0
+
+11/06/02 version 1.0pre4 (for translators)
+- fix bug in progress bar when loading large data set
 - fix bad "smpl -r" bug in gretlcli
 - add Ramsey's RESET test (command "reset")
 - improve consistency of editing commands

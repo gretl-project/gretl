@@ -153,7 +153,7 @@ clean:
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
-	rm -f windist/MANIFEST windist/gretl2.iss 
+	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output
 	make -C updater clean
 	make -C mo clean

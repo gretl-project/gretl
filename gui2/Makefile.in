@@ -39,12 +39,12 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 ifeq ($(have_gnome),2.0)
-  LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl.la
+  LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
   GUI_CFLAGS = $(GNOME_CFLAGS) $(GTK_EXTRA_CFLAGS)
   query_install_gnome = install-gnome
   GNOMEDEF = -DGNOME_DISABLE_DEPRECATED -DDATADIR=\"$(gnome_prefix)/share\"
 else
-  LIBS = $(GTK_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl.la
+  LIBS = $(GTK_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
   GUI_CFLAGS = $(GTK_CFLAGS) $(GTK_EXTRA_CFLAGS)
 endif
 ifeq ($(USE_NLS),yes)

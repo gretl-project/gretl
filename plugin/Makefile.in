@@ -35,7 +35,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared
 
 GRETLINC = -I$(topsrc)/lib/src
-GRETLLIB = ../lib/libgretl.la
+GRETLLIB = ../lib/libgretl-1.0.la
 
 ifeq ($(have_gtk),2.0)
   PROGRESS_PLUGIN = progress_bar-2.so

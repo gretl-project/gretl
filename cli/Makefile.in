@@ -30,7 +30,7 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H
 endif
 
-GRETLLIB = ../lib/libgretl.la
+GRETLLIB = ../lib/libgretl-1.0.la
 
 # General compile options and libs:
 LIBS = $(CLI_LIBS)

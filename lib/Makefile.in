@@ -30,7 +30,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 
 INSTALLDIRS = $(libdir) $(includedir) $(aclocaldir)
 
-LIBGRETL = libgretl.la 
+LIBGRETL = libgretl-1.0.la 
 
 # Libraries:
 ifeq ($(have_gtk),2.0)
@@ -78,7 +78,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 $(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_OBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
-	-rpath $(prefix)/lib $(LIBS) -version-info 18:0:0
+	-rpath $(prefix)/lib $(LIBS) -version-info 0:0:0
 
 .PHONY: 
 
