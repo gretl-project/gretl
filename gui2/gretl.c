@@ -1897,10 +1897,11 @@ static void show_edit (void)
 
 static void open_textbook_data (void)
 {
-    extern int jwdata; /* settings.c */
+    GtkWidget *w = gtk_item_factory_get_item
+	(mdata->ifac, "/File/Open data/sample file/Wooldridge...");
 
-    if (jwdata) {
-	display_files(NULL, JW_DATA, NULL);
+    if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
+	display_files(NULL, TEXTBOOK_DATA, NULL);
     } else {
 	display_files(NULL, RAMU_DATA, NULL);
     }

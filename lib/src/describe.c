@@ -389,7 +389,6 @@ int corrgram (int varno, int order, double ***pZ,
 {
     double *x, *y, *acf, *xl, box, pm;
     double *pacf = NULL;
-    double maxspike = 0, minspike = 0;
     int err = 0, k, l, m, nobs, n = pdinfo->n; 
     int maxlag = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
@@ -448,8 +447,6 @@ int corrgram (int varno, int order, double ***pZ,
 	    y[k] = (*pZ)[varno][t-l];
 	}
 	acf[l] = _corr(nobs-l, x, y);
-	if (acf[l] > maxspike) maxspike = acf[l];
-	if (acf[l] < minspike) minspike = acf[l];
     }
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
@@ -504,8 +501,6 @@ int corrgram (int varno, int order, double ***pZ,
 	    pputs(prn, ":\n\n");
 	for (l=1; l<=maxlag; l++) {
 	    pprintf(prn, "%5d)%7.3f", l, pacf[l-1]);
-	    if (pacf[l-1] > maxspike) maxspike = pacf[l-1];
-	    if (pacf[l-1] < minspike) minspike = pacf[l-1];
 	    if (l%5 == 0) pputs(prn, "\n");
 	}
     }
@@ -528,7 +523,7 @@ int corrgram (int varno, int order, double ***pZ,
     fputs("set xzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
     fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
-    fprintf(fq, "set yrange [%g:%g]\n", 1.2 * minspike, 1.2 * maxspike);
+    fputs("set yrange [-1.0:1.0]\n", fq);
 
     /* upper plot: Autocorrelation Function or ACF) */
     fputs("set origin 0.0,0.50\n", fq);

@@ -20,15 +20,18 @@
 #ifndef GRETLTYPES_H
 #define GRETLTYPES_H
 
-typedef struct {
+typedef struct _dialog_t dialog_t;
+typedef struct _windata_t windata_t;
+
+struct _dialog_t {
     GtkWidget *dialog;
     GtkWidget *edit;
     GList *all_buttons;
     gpointer data;
     gint code;
-} dialog_t;
+};
 
-typedef struct {
+struct _windata_t {
     GtkWidget *dialog;
     GtkWidget *vbox;
     GtkWidget *listbox; 
@@ -42,6 +45,6 @@ typedef struct {
     int role;
     int help_active;
     char fname[MAXLEN];
-} windata_t; 
+}; 
 
 #endif /* GRETLTYPES_H */

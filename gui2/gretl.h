@@ -199,6 +199,7 @@ enum browser_codes {
     GREENE_DATA,
     GREENE_PS,
     JW_DATA,
+    TEXTBOOK_DATA,
     PWT_DATA,
     PWT_PS,
     NATIVE_DB,

@@ -39,9 +39,17 @@ char woolpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
+static GtkWidget *files_notebook (windata_t *fdata, 
+				  GtkWidget **w1, GtkWidget **w2);
+static int populate_notebook_filelists (windata_t *fdata, 
+					GtkWidget *lbox1, 
+					GtkWidget *lbox2,
+					GtkWidget *notebook);
 gint populate_filelist (windata_t *fdata);
 void browser_open_data (GtkWidget *w, gpointer data);
 void browser_open_ps (GtkWidget *w, gpointer data);
+
+extern int jwdata;  /* settings.c */
 
 
 /* ........................................................... */
@@ -141,6 +149,22 @@ static int read_data_descriptions (windata_t *fdata)
 
 /* ........................................................... */
 
+static void get_textbook_file_path (const char *fname, char *fullname,
+				    const char *suffix)
+{
+    FILE *fp;
+
+    build_path(paths.datadir, fname, fullname, suffix);
+    fp = fopen(fullname, "r");
+    if (fp != NULL) {
+	fclose(fp);
+    } else {
+	build_path(woolpath, fname, fullname, suffix);
+    }
+}
+
+/* ........................................................... */
+
 static void browse_header (GtkWidget *w, gpointer data)
 {
     char hdrname[MAXLEN];
@@ -151,13 +175,15 @@ static void browse_header (GtkWidget *w, gpointer data)
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), win->active_var,
 			 0, &fname);
 
-    if (win->role == PWT_DATA) 
+    if (win->role == PWT_DATA) { 
 	build_path(pwtpath, fname, hdrname, ".gdt");
-    else if (win->role == RAMU_DATA)
+    } else if (win->role == RAMU_DATA) {
 	build_path(paths.datadir, fname, hdrname, ".gdt");
-    else if (win->role == JW_DATA)
+    } else if (win->role == JW_DATA) {
 	build_path(woolpath, fname, hdrname, ".gdt");
-    else if (win->role == GREENE_DATA) {
+    } else if (win->role == TEXTBOOK_DATA) {
+	get_textbook_file_path(fname, hdrname, ".gdt");
+    } else if (win->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
@@ -196,6 +222,9 @@ void browser_open_data (GtkWidget *w, gpointer data)
     }
     else if (win->role == JW_DATA) {
 	build_path(woolpath, datname, trydatfile, ".gdt");
+    }
+    else if (win->role == TEXTBOOK_DATA) {
+	get_textbook_file_path(datname, trydatfile, ".gdt");
     }
     else if (win->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
@@ -392,9 +421,11 @@ static void build_datafiles_popup (windata_t *win)
 
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
-    GtkWidget *listbox, *openbutton, *midbutton, *closebutton;
+    GtkWidget *filebox, *openbutton, *midbutton, *closebutton;
+    GtkWidget *lbox1, *lbox2;
     GtkWidget *main_vbox, *button_box;
     windata_t *fdata;
+    int err = 0;
     void (*browse_func)() = NULL;
 
     if (file_sel_open) return;
@@ -421,6 +452,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     case GREENE_DATA:
     case JW_DATA:
     case PWT_DATA:
+    case TEXTBOOK_DATA:
 	gtk_window_set_title(GTK_WINDOW(fdata->w), 
 			     _("gretl: data files"));
 	browse_func = browser_open_data;
@@ -444,18 +476,32 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
 
     fdata->role = code;
-    listbox = files_window(fdata);
 
-    gtk_box_pack_start(GTK_BOX(main_vbox), listbox, TRUE, TRUE, 0);
+    if (code == TEXTBOOK_DATA) {
+	filebox = files_notebook(fdata, &lbox1, &lbox2);
+    } else {
+	filebox = files_window(fdata);
+    }
+
+    gtk_box_pack_start(GTK_BOX(main_vbox), filebox, TRUE, TRUE, 0);
 
     /* popup menu? */
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
-	|| code == JW_DATA) {
+	|| code == JW_DATA || code == TEXTBOOK_DATA) { 
 	build_datafiles_popup(fdata);
-	g_signal_connect (G_OBJECT(fdata->listbox), "button_press_event",
-			  G_CALLBACK(popup_menu_handler), 
-			  (gpointer) fdata->popup);
-    }
+	if (code == TEXTBOOK_DATA) {
+	    g_signal_connect (G_OBJECT(lbox1), "button_press_event",
+			      G_CALLBACK(popup_menu_handler), 
+			      (gpointer) fdata->popup);
+	    g_signal_connect (G_OBJECT(lbox2), "button_press_event",
+			      G_CALLBACK(popup_menu_handler), 
+			      (gpointer) fdata->popup);
+	} else {
+	    g_signal_connect (G_OBJECT(fdata->listbox), "button_press_event",
+			      G_CALLBACK(popup_menu_handler), 
+			      (gpointer) fdata->popup);
+	}
+    } 
 
     if (code == REMOTE_DB) {
 	GtkWidget *hbox;
@@ -483,7 +529,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     }
 
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
-	|| code == JW_DATA || code == REMOTE_DB) {
+	|| code == JW_DATA || code == TEXTBOOK_DATA || code == REMOTE_DB) {
 	midbutton = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
@@ -493,7 +539,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 			 G_CALLBACK(browse_header), fdata);
     }
 
-    if (code == RAMU_DATA || code == JW_DATA) {
+    if (code == RAMU_DATA || code == JW_DATA || code == TEXTBOOK_DATA) {
 	midbutton = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	g_signal_connect(G_OBJECT(midbutton), "clicked",
@@ -505,11 +551,17 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     g_signal_connect(G_OBJECT(closebutton), "clicked",
 		     G_CALLBACK(delete_widget), fdata->w);
 
-    /* put stuff into list box */
-    if (populate_filelist(fdata)) {
+    /* put stuff into list box(es) */
+    if (code == TEXTBOOK_DATA) {
+	err = populate_notebook_filelists(fdata, lbox1, lbox2, filebox);
+    } else {
+	err = populate_filelist(fdata);
+    }
+
+    if (err) {
 	gtk_widget_destroy(fdata->w);
 	return;
-    }
+    }	
 
     gtk_widget_show_all(fdata->w); 
 }
@@ -559,11 +611,6 @@ static GtkWidget *files_window (windata_t *fdata)
 
     const char **titles = data_titles;
 
-    int data_col_width[] = {128, 256}; 
-    int ps_col_width[] = {68, 180, 160};
-    int db_col_width[] = {80, 304};
-    int remote_col_width[] = {80, 256, 180};
-    int *col_width = data_col_width;
     int full_width = 500, file_height = 260;
     int hidden_col = 0;
 
@@ -573,20 +620,16 @@ static GtkWidget *files_window (windata_t *fdata)
     switch (fdata->role) {
     case NATIVE_DB:
 	titles = db_titles;
-	col_width = db_col_width;
 	hidden_col = 1;
 	break;
     case REMOTE_DB:
 	titles = remote_titles;
 	cols = 3;
-	col_width = remote_col_width;
 	full_width = 560;
 	break;
     case RATS_DB:
 	titles = db_titles;
 	cols = 1;
-	col_width = db_col_width;
-	col_width[0] = 200;
 	full_width = 240;
 	hidden_col = 1;
 	break;
@@ -595,15 +638,9 @@ static GtkWidget *files_window (windata_t *fdata)
     case PWT_PS:
 	titles = ps_titles;
 	cols = 3;
-	col_width = ps_col_width;
 	full_width = 480;
 	break;
-    case GREENE_DATA:
-    case PWT_DATA:
-	break;
-    case RAMU_DATA:
-	col_width[0] = 64;
-	col_width[1] = 320;
+    default:
 	break;
     }
 
@@ -821,7 +858,85 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
     }
 }
 
+static void 
+datafiles_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
+			 guint page_num, windata_t *fdata)
+{
+    if (page_num == 0) {
+	fdata->listbox = g_object_get_data(G_OBJECT(notebook), "w1");
+    } else if (page_num == 1) {
+	fdata->listbox = g_object_get_data(G_OBJECT(notebook), "w2");
+    }
+}
 
+static GtkWidget *files_notebook (windata_t *fdata, 
+				  GtkWidget **w1, GtkWidget **w2)
+{
+    GtkWidget *notebook;
+    GtkWidget *listpage;
+    GtkWidget *label;
+    int role = fdata->role;
+
+    notebook = gtk_notebook_new();
+
+    fdata->role = RAMU_DATA;
+    listpage = files_window(fdata);
+    label = gtk_label_new("Ramanathan");
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
+    *w1 = fdata->listbox;
+    g_object_set_data(G_OBJECT(notebook), "w1", *w1);
+
+    fdata->role = JW_DATA;
+    listpage = files_window(fdata);
+    label = gtk_label_new("Wooldridge");
+    gtk_widget_show(label);
+    gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
+    *w2 = fdata->listbox;
+    g_object_set_data(G_OBJECT(notebook), "w2", *w2);
+
+    fdata->role = role;
+
+    g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
+		     G_CALLBACK(datafiles_page_callback),
+		     fdata);
+
+    gtk_widget_show(notebook);
+
+    return notebook;
+}
+
+static int populate_notebook_filelists (windata_t *fdata, 
+					GtkWidget *lbox1, 
+					GtkWidget *lbox2,
+					GtkWidget *notebook)
+{
+    int role = fdata->role;
+
+    fdata->role = RAMU_DATA;
+    fdata->listbox = lbox1;
+    if (populate_filelist(fdata)) {
+	return 1;
+    }
+
+    fdata->role = JW_DATA;
+    fdata->listbox = lbox2;
+    if (populate_filelist(fdata)) {
+	return 1;
+    }
+
+    if (jwdata) {
+	fdata->listbox = lbox2;
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 1);
+    } else {
+	fdata->listbox = lbox1;
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(notebook), 0);
+    }
+
+    fdata->role = role;
+
+    return 0;
+} 
 
 
 

@@ -25,13 +25,15 @@ typedef struct _tramo_options tramo_options;
 
 struct _tramo_options {
     int iatip;    /* correction for outliers? 0=no, 1=auto */
-    int aio;      /* sorts of outliers recognized (codes 1, 2, or 3) */
+    int aio;      /* sorts of outliers recognized (codes 1, 2, or 3;
+		     0 is also acceptable in case only tramo is run) */
     float va;     /* critical value for outliers (or 0.0 for auto) */
 
     /* widgets for dealing with outliers */
     GtkWidget *iatip_button;
     GtkWidget *aio_transitory_button;
     GtkWidget *aio_shift_button;
+    GtkWidget *aio_innov_button;
     GtkWidget *va_button;
     GtkWidget *va_spinner;
     GtkWidget *aio_label;
@@ -40,6 +42,11 @@ struct _tramo_options {
     int lam;      /* log transformation? (0=logs, 1=levels, -1=auto) */
     int imean;    /* mean correction? (0=no, 1=yes) */
 
+    int inic;     /* controls automatic model identification */
+    int idif;     /* ditto */
+
+    int auto_arima;  /* 1 = ARIMA spec will be left up to TRAMO; 
+			0 for manual specification */
     int d;        /* number of non-seasonal differences */
     int bd;       /* number of seasonal differences */
     int p;        /* number of non-seasonal AR terms */
@@ -47,13 +54,21 @@ struct _tramo_options {
     int q;        /* number of non-seasonal MA terms */
     int bq;       /* number of seasonal MA terms */
 
+    /* widgets for dealing with ARIMA terms */
+    GtkWidget *d_list;
+    GtkWidget *bd_list;
+    GtkWidget *p_list;
+    GtkWidget *bp_list;
+    GtkWidget *q_list;
+    GtkWidget *bq_list;
+
     int mq;       /* periodicity (12 = monthly; acceptable values are
 		     1, 2, 3, 4, 5, 6 and 12 */
-    int noadmiss; /* when model "does not accept an admissable decomposition",
+    int noadmiss; /* when model "does not accept an admissible decomposition",
 		     use an approximation (1) or not (0) */
-    int seats;    /* 0: no SEARS input file created 
-		     1: create SEATS file; estimation redone in SEATS
-		     2: create SEATS file; no estimation redone in SEATS
+    int seats;    /* 0: no SEATS input file created 
+		     1: create SEATS file; estimation re-done in SEATS
+		     2: create SEATS file; estimation not re-done in SEATS
 		  */
     int out;      /* verbosity level: 
 		     0 = detailed output file per series
@@ -72,12 +87,15 @@ static void tramo_options_set_defaults (tramo_options *opts, int pd)
     opts->va = 0.0;          /* let critical value be decided by tramo */
     opts->lam = -1;          /* leave log/level decision to tramo */
     opts->imean = 1;         /* mean correction */
+    opts->auto_arima = 1;    /* leave ARIMA spec to tramo */
+    opts->inic = 3;
+    opts->idif = 3;
     opts->d = opts->bd = 1;  
     opts->p = opts->bp = 0;
     opts->q = opts->bq = 1;
     opts->mq = pd;
     opts->noadmiss = 1;      /* use approximation if needed */
-    opts->seats = 2;         /* make SEATS file; don't re-do estimation */
+    opts->seats = 1;         /* make SEATS file and re-do estimation */
     opts->out = 0;           /* verbose */
 }
 
@@ -97,6 +115,7 @@ static void outlier_options_set_sensitive (tramo_options *opts, gboolean s)
     gtk_widget_set_sensitive(opts->aio_label, s);
     gtk_widget_set_sensitive(opts->aio_transitory_button, s);
     gtk_widget_set_sensitive(opts->aio_shift_button, s);
+    gtk_widget_set_sensitive(opts->aio_innov_button, s && opts->seats == 0);
     gtk_widget_set_sensitive(opts->va_label, s);
     gtk_widget_set_sensitive(opts->va_button, s);
     va_spinner_set_state(opts);
@@ -124,6 +143,41 @@ static void flip_auto_va (GtkWidget *w, tramo_options *opts)
 	opts->va = 0.0;
     } else {
 	gtk_widget_set_sensitive(opts->va_spinner, TRUE);
+    }
+}
+
+static void arima_options_set_sensitive (tramo_options *opts, gboolean s)
+{
+    gtk_widget_set_sensitive(opts->d_list, s);
+    gtk_widget_set_sensitive(opts->bd_list, s);
+    gtk_widget_set_sensitive(opts->p_list, s);
+    gtk_widget_set_sensitive(opts->bp_list, s);
+    gtk_widget_set_sensitive(opts->q_list, s);
+    gtk_widget_set_sensitive(opts->bq_list, s);
+}
+
+static void flip_auto_arima (GtkWidget *w, tramo_options *opts)
+{
+    if (!option_widgets_shown(opts)) return;  
+  
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	arima_options_set_sensitive(opts, FALSE);
+	opts->auto_arima = 1;
+    } else {
+	arima_options_set_sensitive(opts, TRUE);
+	opts->auto_arima = 0;
+    }
+}
+
+static void tramo_innov_callback (GtkWidget *w, tramo_options *opts)
+{
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	gtk_toggle_button_set_active
+	    (GTK_TOGGLE_BUTTON(opts->aio_transitory_button), TRUE);
+	gtk_toggle_button_set_active
+	    (GTK_TOGGLE_BUTTON(opts->aio_shift_button), TRUE);
+	opts->aio = 0;
+	opts->seats = 0;
     }
 }
 
@@ -158,6 +212,28 @@ static void tramo_aio_callback (GtkWidget *w, tramo_options *opts)
 	opts->aio = 3;
     }
 }
+
+static void real_set_seats (tramo_options *opts, gint run_seats)
+{
+    if (run_seats) {
+	opts->seats = 1; /* should this be 2? */
+	gtk_widget_set_sensitive(opts->aio_innov_button, FALSE);
+    } else {
+	opts->seats = 0;
+	gtk_widget_set_sensitive(opts->aio_innov_button, TRUE);
+    }
+}
+
+static void set_seats (GtkWidget *w, tramo_options *opts)
+{
+    real_set_seats(opts, 1);
+}
+
+static void set_no_seats (GtkWidget *w, tramo_options *opts)
+{
+    real_set_seats(opts, 0);
+}
+
 
 static void set_out (GtkWidget *w, tramo_options *opts)
 {
@@ -214,6 +290,74 @@ static GtkWidget *make_notebook_page_table (GtkWidget *notebook,
     gtk_widget_show(tbl); 
 
     return tbl;
+}
+
+static void tramo_tab_general (GtkWidget *notebook, tx_request *request)
+{
+    GtkWidget *tbl, *tmp;
+    int tbl_len = 4, row = 0;
+    GSList *group = NULL;
+    const char *radio_labels[] = {
+	N_("Time-series model plus seasonal adjustment"),
+	N_("Time-series model only")
+    };
+   
+    tbl = make_notebook_page_table(notebook, _("General"), tbl_len, 2);
+
+    /* checkbox for standard default run -- FIXME: hook me up!*/
+    tmp = gtk_check_button_new_with_label(_("Standard automatic analysis"));
+    gtk_widget_show(tmp);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 1, row, row + 1);
+    row++;
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
+
+    /* horizontal separator */
+    tmp = gtk_hseparator_new();
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    gtk_widget_show(tmp);    
+
+    /* TRAMO + SEATS option */
+    tmp = gtk_radio_button_new_with_label(NULL, _(radio_labels[0]));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);    
+#if GTK_MAJOR_VERSION >= 2
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+#else
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
+#endif
+    gtk_widget_show(tmp);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_seats), 
+		     request->opts);
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_seats), 
+		       request->opts);
+#endif
+
+    /* TRAMO-only option */
+    tmp = gtk_radio_button_new_with_label(group, _(radio_labels[1]));
+#if GTK_MAJOR_VERSION >= 2
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
+#else
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON(tmp));
+#endif
+    gtk_widget_show(tmp);
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(set_no_seats), 
+		     request->opts);
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_no_seats), 
+		       request->opts);
+#endif
 }
 
 static void tramo_tab_output (GtkWidget *notebook, tx_request *request)
@@ -561,6 +705,24 @@ static void tramo_tab_outliers (GtkWidget *notebook, tramo_options *opts)
 		       GTK_SIGNAL_FUNC(tramo_aio_callback), 
 		       opts);
 #endif
+
+    /* innovationals button */
+    tmp = gtk_check_button_new_with_label(_("innovational outliers"));
+    opts->aio_innov_button = tmp;
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    gtk_widget_show(tmp);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), (opts->aio == 0));
+    gtk_widget_set_sensitive(tmp, opts->seats == 0);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(tramo_innov_callback), 
+		     opts);
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(tramo_innov_callback), 
+		       opts);
+#endif
     
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -666,7 +828,7 @@ static GtkWidget *make_labeled_combo (const gchar *label,
 static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
 {
     GtkWidget *tbl, *tmp;
-    int i, tbl_len = 9, row = 0;
+    int i, tbl_len = 10, row = 0;
     GList *onelist = NULL, *twolist = NULL, *threelist = NULL;
     gchar *intvals[] = {
 	"0", "1", "2", "3"
@@ -685,15 +847,33 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     tbl = make_notebook_page_table(notebook, _("ARIMA"), tbl_len, 2);
     gtk_table_set_homogeneous(GTK_TABLE(tbl), FALSE);
 
+    /* auto versus manual button */
+    tmp = gtk_check_button_new_with_label(_("Automatic"));
+    gtk_table_attach_defaults(GTK_TABLE(tbl), tmp, 0, 2, row, row + 1);
+    row++;
+    gtk_widget_show(tmp);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), opts->auto_arima);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(tmp), "clicked",
+		     G_CALLBACK(flip_auto_arima), 
+		     opts);
+#else
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(flip_auto_arima), 
+		       opts);
+#endif
+
     /* difference terms */
     tmp = make_labeled_combo(_("Non-seasonal differences:"), tbl, row,
 			     twolist, &opts->d);
-    gtk_widget_show(tmp);
     row++;
+    gtk_widget_show(tmp);
+    opts->d_list = tmp;
     tmp = make_labeled_combo(_("Seasonal differences:"), tbl, row,
 			     onelist, &opts->bd);
-    gtk_widget_show(tmp);
     row++;
+    gtk_widget_show(tmp);
+    opts->bd_list = tmp;
 	    
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -704,12 +884,14 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     /* AR terms */
     tmp = make_labeled_combo(_("Non-seasonal AR terms:"), tbl, row,
 			     threelist, &opts->p);
-    gtk_widget_show(tmp);
     row++;
+    gtk_widget_show(tmp);
+    opts->p_list = tmp;
     tmp = make_labeled_combo(_("Seasonal AR terms:"), tbl, row,
 			     onelist, &opts->bp);
-    gtk_widget_show(tmp);
     row++;
+    gtk_widget_show(tmp);
+    opts->bp_list = tmp;
 
     /* horizontal separator */
     tmp = gtk_hseparator_new();
@@ -720,11 +902,15 @@ static void tramo_tab_arima (GtkWidget *notebook, tramo_options *opts)
     /* MA terms */
     tmp = make_labeled_combo(_("Non-seasonal MA terms:"), tbl, row,
 			     threelist, &opts->q);
-    gtk_widget_show(tmp);
     row++;
+    gtk_widget_show(tmp);
+    opts->q_list = tmp;
     tmp = make_labeled_combo(_("Seasonal MA terms:"), tbl, row,
 			     onelist, &opts->bq);
     gtk_widget_show(tmp);
+    opts->bq_list = tmp;
+
+    arima_options_set_sensitive(opts, (opts->auto_arima == 0));
 }
 
 static void real_show_tramo_options (tx_request *request, GtkWidget *vbox) 
@@ -735,6 +921,7 @@ static void real_show_tramo_options (tx_request *request, GtkWidget *vbox)
     gtk_box_pack_start(GTK_BOX(vbox), notebook, TRUE, TRUE, 0);
     gtk_widget_show(notebook);
 
+    tramo_tab_general(notebook, request);    
     tramo_tab_output(notebook, request);
     tramo_tab_outliers(notebook, request->opts);
     tramo_tab_transform(notebook, request->opts);
@@ -779,17 +966,23 @@ int show_tramo_options (tx_request *request, GtkWidget *vbox)
     return 0;
 }
 
-/* below: print then free the tramo options structure */
+/* Below: print then free the tramo options structure.
+   Return an indication of whether seats will be run (1) or not (0)
+*/
 
-void print_tramo_options (tx_request *request, FILE *fp)
+int print_tramo_options (tx_request *request, FILE *fp)
 {
     tramo_options *opts;
+    int run_seats = 1;
 
-    if (request->opts == NULL) return;
+    if (request->opts == NULL) return 0;
 
     opts = request->opts;
 
     fputs("$INPUT ", fp);
+
+    /* note: if values are at their TRAMO defaults, don't bother
+       printing them */
 
     if (opts->lam != -1) {
 	fprintf(fp, "lam=%d,", opts->lam);
@@ -802,17 +995,22 @@ void print_tramo_options (tx_request *request, FILE *fp)
     fprintf(fp, "iatip=%d,", opts->iatip);
 
     if (opts->iatip == 1) {
-	fprintf(fp, "aio=%d,", opts->aio);
+	if (opts->aio != 2) {
+	    fprintf(fp, "aio=%d,", opts->aio);
+	}
 	if (opts->va != 0.0) {
 	    fprintf(fp, "va=%.1f,", opts->va);
 	}
     }
 
-#if 1
-    fprintf(fp, "D=%d,BD=%d,", opts->d, opts->bd);
-    fprintf(fp, "P=%d,BP=%d,", opts->p, opts->bp);
-    fprintf(fp, "Q=%d,BQ=%d,", opts->q, opts->bq);
-#endif
+    if (!opts->auto_arima) {
+	fprintf(fp, "D=%d,BD=%d,", opts->d, opts->bd);
+	fprintf(fp, "P=%d,BP=%d,", opts->p, opts->bp);
+	fprintf(fp, "Q=%d,BQ=%d,", opts->q, opts->bq);
+    } else {
+	fprintf(fp, "inic=%d,", opts->inic);
+	fprintf(fp, "idif=%d,", opts->idif);
+    }
 
     if (opts->mq > 0) {
 	fprintf(fp, "mq=%d,", opts->mq);
@@ -822,11 +1020,17 @@ void print_tramo_options (tx_request *request, FILE *fp)
 	fprintf(fp, "out=%d,", opts->out);
     }
 
-    fprintf(fp, "noadmiss=%d,seats=%d\n", opts->noadmiss, 
-	    opts->seats);
+    if (opts->noadmiss != 1) {
+	fprintf(fp, "noadmiss=%d,", opts->noadmiss);
+    }
+
+    fprintf(fp, "seats=%d\n", opts->seats);
+    if (opts->seats == 0) run_seats = 0;
 
     free(opts);
     request->opts = NULL;
+
+    return run_seats;
 }
 
 

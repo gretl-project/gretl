@@ -28,7 +28,8 @@
 #endif
 
 enum opt_codes {
-    TRAMO,
+    TRAMO_SEATS,
+    TRAMO_ONLY,
     X12A
 };
 
@@ -78,7 +79,7 @@ static int tx_dialog (tx_request *request)
 
     request->dialog = 
 	gtk_dialog_new_with_buttons (
-				     (request->code == TRAMO)?
+				     (request->code == TRAMO_SEATS)?
 				     "TRAMO/SEATS" : "X-12-ARIMA",
 				     NULL,
 				     GTK_DIALOG_MODAL | 
@@ -91,12 +92,12 @@ static int tx_dialog (tx_request *request)
 #else
     request->dialog = gtk_dialog_new();
     gtk_window_set_title (GTK_WINDOW(request->dialog), 
-			  (request->code == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
+			  (request->code == TRAMO_SEATS)? "TRAMO/SEATS" : "X-12-ARIMA");
 #endif
 
     vbox = gtk_vbox_new(FALSE, 0);    
 
-    if (request->code == TRAMO) {
+    if (request->code == TRAMO_SEATS) {
 	show_tramo_options(request, vbox);
     } else {
 	/* X-12-ARIMA */
@@ -203,7 +204,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (opt == TRAMO) {
+    if (opt == TRAMO_SEATS) {
 	fputs("# TRAMO/SEATS tri-graph (no auto-parse)\n", fp);
     } else {
 	fputs("# X-12-ARIMA tri-graph (no auto-parse)\n", fp);
@@ -234,7 +235,7 @@ static int graph_series (double **Z, DATAINFO *pdinfo,
 	double y = Z[D13 + 1][t];
 
 	fprintf(fp, "%g %g\n", Z[XAXIS][t], 
-		(opt == TRAMO)? y / 100.0 : y);
+		(opt == TRAMO_SEATS)? y / 100.0 : y);
     }
     fputs("e\n", fp);
 
@@ -303,7 +304,7 @@ static int add_series_from_file (const char *fname, int code,
     int d, yr, per, err = 0;
     int t;
 
-    if (opt == TRAMO) {
+    if (opt == TRAMO_SEATS) {
 	sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
 		tramo_series_strings[code]);
     } else {
@@ -320,7 +321,7 @@ static int add_series_from_file (const char *fname, int code,
 
     /* formulate name of new variable to add */
     strcpy(varname, pdinfo->varname[0]);
-    if (opt == TRAMO) {
+    if (opt == TRAMO_SEATS) {
 	truncate(varname, 5);
 	strcat(varname, "_");
 	strncat(varname, tramo_series_strings[code], 2);
@@ -333,7 +334,7 @@ static int add_series_from_file (const char *fname, int code,
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
     sprintf(pdinfo->label[v], _(tx_descrip_formats[code]), pdinfo->varname[0]);
-    if (opt == TRAMO) {
+    if (opt == TRAMO_SEATS) {
 	strcat(pdinfo->label[v], " (TRAMO/SEATS)");
     } else {
 	strcat(pdinfo->label[v], " (X-12-ARIMA)");
@@ -345,7 +346,7 @@ static int add_series_from_file (const char *fname, int code,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    if (opt == TRAMO) {
+    if (opt == TRAMO_SEATS) {
 	int i = 0;
 
 	t = pdinfo->t1;
@@ -402,7 +403,17 @@ static void set_opts (tx_request *request)
 	    request->opt[i].save = 0;
 	} 
     }
-    
+}
+
+static void cancel_savevars (tx_request *request)
+{
+    int i;
+
+    request->savevars = 0;
+
+    for (i=0; i<4; i++) {
+	request->opt[i].save = 0;
+    } 
 }
 
 static int write_tramo_file (const char *fname, 
@@ -447,7 +458,9 @@ static int write_tramo_file (const char *fname,
 	fputc('\n', fp);
     }
 
-    print_tramo_options(request, fp);
+    if (print_tramo_options(request, fp) == 0) {
+	request->code = TRAMO_ONLY; /* not running SEATS */
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -602,7 +615,7 @@ int write_tx_data (char *fname, int varnum,
 		   const char *prog, const char *workdir,
 		   char *errmsg)
 {
-    int i, opt, doit, err = 0;
+    int i, doit, err = 0;
     char varname[9], cmd[MAXLEN];
     int varlist[4];
     FILE *fp = NULL;
@@ -620,9 +633,9 @@ int write_tx_data (char *fname, int varnum,
 
     /* figure out which program we're using */
     if (strstr(prog, "tramo") != NULL) {
-	request.code = opt = TRAMO;
+	request.code = TRAMO_SEATS;
     } else {
-	request.code = opt = X12A;
+	request.code = X12A;
     }
 
     request.pd = pdinfo->pd;
@@ -637,7 +650,7 @@ int write_tx_data (char *fname, int varnum,
     gtk_widget_destroy(request.dialog);
 
 #if 0
-    if (opt == TRAMO) {
+    if (request.code == TRAMO_SEATS) {
 	print_tramo_options(&request, stderr);
 	return 1;
     }
@@ -648,7 +661,7 @@ int write_tx_data (char *fname, int varnum,
     if (tmpinfo == NULL) return E_ALLOC;
     copy_basic_data_info(tmpinfo, pdinfo);
 
-    if (opt == X12A) { 
+    if (request.code == X12A) { 
 	/* make a default x12a.mdl file if it doesn't already exist */
 	sprintf(fname, "%s%cx12a.mdl", workdir, SLASH);
 	fp = fopen(fname, "r");
@@ -665,18 +678,23 @@ int write_tx_data (char *fname, int varnum,
     sprintf(varname, pdinfo->varname[varnum]);
     form_varlist(varlist, &request);
 
-    if (opt == X12A) { 
+    if (request.code == X12A) { 
 	/* write out the .spc file for x12a */
 	sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
 	write_spc_file(fname, *pZ, pdinfo, varnum, varlist);
     } else { /* TRAMO */
 	lower(varname);
 	sprintf(fname, "%s%c%s", workdir, SLASH, varname);
-	write_tramo_file(fname, *pZ, pdinfo, varnum, & request);
+	/* next line: this also sets request->code = TRAMO_ONLY if
+	   seats is not to be run */
+	write_tramo_file(fname, *pZ, pdinfo, varnum, &request);
+	if (request.code == TRAMO_ONLY) {
+	    cancel_savevars(&request); /* FIXME later */
+	}
     }
 
     /* run the program */
-    if (opt == X12A) {
+    if (request.code == X12A) {
 #ifdef G_OS_WIN32
 	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED, 
@@ -686,14 +704,14 @@ int write_tx_data (char *fname, int varnum,
 		workdir, prog, varname);
 	err = system(cmd);
 #endif
-    } else { /* TRAMO */
+    } else { /* TRAMO_SEATS */
 	char seats[MAXLEN];
 
 #ifdef OS_WIN32 
 	sprintf(cmd, "\"%s\" -i %s -k serie", prog, varname);
 	err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
 		      CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS);
-	if (!err) {
+	if (!err && request.code == TRAMO_SEATS) {
 	    get_seats_command(seats, prog);
 	    sprintf(cmd, "\"%s\" -OF %s", seats, varname);
 	    err = winfork(cmd, workdir, SW_SHOWMINIMIZED,
@@ -703,7 +721,7 @@ int write_tx_data (char *fname, int varnum,
 	sprintf(cmd, "cd \"%s\" && \"%s\" -i %s -k serie >/dev/null", workdir, prog, 
 		varname);
 	err = system(cmd);
-	if (!err) {
+	if (!err && request.code == TRAMO_SEATS) {
 	    get_seats_command(seats, prog);
 	    sprintf(cmd, "cd \"%s\" && \"%s\" -OF %s", workdir, seats, varname);
 	    err = system(cmd);
@@ -712,7 +730,7 @@ int write_tx_data (char *fname, int varnum,
     }
     
     if (!err) {
-	if (opt == X12A) {
+	if (request.code == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	} else {
 	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
@@ -722,14 +740,14 @@ int write_tx_data (char *fname, int varnum,
 	if (varlist[0] > 0) {
 	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
 	    for (i=1; i<=varlist[0]; i++) {
-		err = add_series_from_file((opt == X12A)? fname : workdir, 
-					   varlist[i], tmpZ, tmpinfo, i, opt, 
-					   errmsg);
+		err = add_series_from_file((request.code == X12A)? fname : workdir, 
+					   varlist[i], tmpZ, tmpinfo, i, 
+					   request.code, errmsg);
 	    }
 	    if (request.opt[TRIGRAPH].save) {
 		err = make_x_axis_var(&tmpZ, tmpinfo);
 		if (!err) {
-		    err = graph_series(tmpZ, tmpinfo, paths, opt);
+		    err = graph_series(tmpZ, tmpinfo, paths, request.code);
 		}
 		if (!err) *graph = 1;
 	    }

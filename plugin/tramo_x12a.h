@@ -48,4 +48,4 @@ struct _tx_request {
 
 int show_tramo_options (tx_request *request, GtkWidget *vbox);
 
-void print_tramo_options (tx_request *request, FILE *fp);
+int print_tramo_options (tx_request *request, FILE *fp);
