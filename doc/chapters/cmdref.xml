@@ -262,7 +262,6 @@
 	Weighted least square estimation is then performed on the
 	original model. The flag <literal>-o</literal> calls for the
 	coefficient covariance matrix.
-	
       </para>
 
     </sect2>

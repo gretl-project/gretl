@@ -31,10 +31,10 @@
       <varlistentry><term>Cross-platform</term>
 	<listitem><para><application>gretl</application>'s home
 	    platform is Linux, but it is also available for MS
-	    Windows.  I have compiled it on AIX and it should work on
-	    any unix-like system that has the appropriate basic
-	    libraries (see
-	    <xref linkend="app-technote"/>).</para>
+	    Windows.  I have compiled it on Mac OS X and AIX and it
+	    should work on any unix-like system that has the
+	    appropriate basic libraries (see
+	<xref linkend="app-technote"/>).</para>
 	</listitem>
       </varlistentry>  
       <varlistentry><term>Open source</term>
@@ -75,8 +75,9 @@
       </varlistentry>
       <varlistentry><term>International</term>
 	<listitem><para><application>gretl</application> will produce
-	    its output in English, Spanish or French, depending on
-	    your computer's native language setting.</para>
+	    its output in English, French, Italian or Spanish,
+	    depending on your computer's native language
+	    setting.</para>
 	</listitem>
       </varlistentry>
     </variablelist>
@@ -113,8 +114,9 @@
 
     <para>With regard to the internationalization of
       <application>gretl</application>, I wish to thank Ignacio
-      D&iacute;az-Emparanza and Michel Robitaille, who prepared the
-      Spanish and French translations respectively.</para>
+      D&iacute;az-Emparanza, Michel Robitaille and Christian
+      Rigamonti, who prepared the Spanish, French and Italian
+      translations respectively.</para>
 
     <para>I have benefitted greatly from the work of numerous
       developers of open-source software: for specifics please see
@@ -127,9 +129,10 @@
     <para>Many users of <application>gretl</application> have
       submitted useful suggestions and bug reports.  In this
       connection particular thanks are due to Ignacio
-      D&iacute;az-Emparanza and Dirk Eddelbuettel, who maintains the
-      <application>gretl</application> package for Debian
-      GNU/Linux.</para>
+      D&iacute;az-Emparanza, Riccardo <quote>Jack</quote> Lucchetti,
+      who has contributed some very helpful patches, and Dirk
+      Eddelbuettel, who maintains the <application>gretl</application>
+      package for Debian GNU/Linux.</para>
 
   </sect1>
 

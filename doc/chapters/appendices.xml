@@ -267,7 +267,11 @@
     Some features of <application>gretl</application> make use of
     Adrian Feguin's <application>gtkextra</application> library. You
     can find gtkextra at <ulink
-      url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>.
+      url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>. 
+    Unfortunately, it seems that <application>gtkextra</application>
+    is no longer being maintained.  The relevant parts of this package
+    are included (in slightly modified form) with the
+    <application>gretl</application> source distribution.
   </para>
 
   <para>
