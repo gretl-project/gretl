@@ -287,7 +287,7 @@ set_series_float_format (GtkWidget *w, gpointer p)
 static void 
 series_view_format_dialog (GtkWidget *src, windata_t *vwin)
 {
-    GtkWidget *w, *tmp, *label;
+    GtkWidget *w, *tmp, *label, *button;
     GtkWidget *vbox, *hbox;
     GtkObject *adj;
     GSList *group;
@@ -319,17 +319,20 @@ series_view_format_dialog (GtkWidget *src, windata_t *vwin)
     gtk_box_pack_start (GTK_BOX (hbox), sview->digit_spin, FALSE, FALSE, 5);
 
     /* select decimal places versus significant figures */
-    tmp = gtk_radio_button_new_with_label (NULL, _("significant figures"));
-    gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
+    button = gtk_radio_button_new_with_label (NULL, _("significant figures"));
+    gtk_box_pack_start (GTK_BOX(vbox), button, TRUE, TRUE, 0);
     if (sview->format == 'G')
-        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
-    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+        gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_series_float_format), sview);
-    gtk_object_set_data(GTK_OBJECT(tmp), "action", 
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER('G'));
 
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (tmp));
-    tmp = gtk_radio_button_new_with_label(group, _("decimal places"));
+    tmp = gtk_radio_button_new_with_label(
+					  gtk_radio_button_group 
+					  (GTK_RADIO_BUTTON(button)),
+					  _("decimal places")
+					  );
     gtk_box_pack_start (GTK_BOX(vbox), tmp, TRUE, TRUE, 0);
     if (sview->format == 'f')
         gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (tmp), TRUE);
