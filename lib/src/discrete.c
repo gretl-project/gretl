@@ -24,18 +24,14 @@
 
 #define TINY 1.0e-13
 
-static double *hessian (MODEL *pmod, double **Z, const int n, 
-			const int opt); 
-static double *hess_wts (MODEL *pmod, double **Z, const int n, 
-			 const int opt);
-static int neginv (double *xpx, double *diag, int nv);
+static int neginv (const double *xpx, double *diag, int nv);
 static int cholesky_decomp (double *xpx, int nv);
 
 /* .......................................................... */
 
 static double _norm_pdf (const double xx)
 {
-    return (1.0/sqrt(2.0 * M_PI)) * exp(-0.5 * xx * xx);
+    return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * xx * xx);
 }
 
 /* .......................................................... */
@@ -49,7 +45,7 @@ static double _norm_cdf (const double xx)
 
 static double _logit (double xx)
 {
-    return 1.0/(1.0 + exp(-xx));
+    return 1.0 / (1.0 + exp(-xx));
 }
 
 /* .......................................................... */
@@ -58,7 +54,7 @@ static double _logit_pdf (double xx)
 {
     double zz = exp(-xx);
 
-    return zz/((1.0 + zz) * (1.0 + zz));
+    return zz / ((1.0 + zz) * (1.0 + zz));
 }
 
 /* .......................................................... */
@@ -69,7 +65,9 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     double Lr, chisq;
     
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (floateq(Z[pmod->list[1]][t], 1.0)) ones++;
+	if (floateq(Z[pmod->list[1]][t], 1.0)) {
+	    ones++;
+	} 
     }
     zeros = m - ones;
 
@@ -88,16 +86,21 @@ static void Lr_chisq (MODEL *pmod, double **Z)
 
 static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
 {
+    double q, lnL = 0.0;
     int t;
-    double q, lnL = 0;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
+	if (na(pmod->yhat[t])) {
+	    continue;
+	}
 	q = 2.0 * y[t] - 1.0;
-	if (opt == LOGIT) 
+	if (opt == LOGIT) {
 	    lnL += log(_logit(q * pmod->yhat[t]));
-	else
+	} else {
 	    lnL += log(_norm_cdf(q * pmod->yhat[t]));
+	}
     }
+
     return lnL;
 }
 
@@ -106,26 +109,133 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
 static int add_slopes_to_model (MODEL *pmod, double fbx)
 {
     double *slopes;
-    size_t size = pmod->ncoeff * sizeof *slopes;
+    size_t ssize = pmod->ncoeff * sizeof *slopes;
     int i;
 
-    slopes = malloc(size);
+    slopes = malloc(ssize);
 
     if (slopes == NULL) {
 	return 1;
     }
 
     for (i=0; i<pmod->ncoeff; i++) {
-	if (pmod->list[i+2] == 0) continue;
+	if (pmod->list[i+2] == 0) {
+	    continue;
+	}
 	slopes[i] = pmod->coeff[i] * fbx;
     }
 
-    if (gretl_model_set_data(pmod, "slopes", slopes, size)) {
+    if (gretl_model_set_data(pmod, "slopes", slopes, ssize)) {
 	free(slopes);
 	return 1;
     }
 
     return 0;
+}
+
+/* .......................................................... */
+
+int dmod_isdummy (const double *x, int t1, int t2)
+{
+    int t, m = 0, goodobs = 0;
+
+    for (t=t1; t<=t2; t++) {
+	if (na(x[t])) {
+	    continue;
+	}
+	if (x[t] != 0.0 && x[t] != 1.0) {
+	    return 0;
+	}
+	if (x[t] == 1.0) {
+	    m++;
+	}
+	goodobs++;
+    }
+
+    if (m < goodobs) return m;
+
+    return 0;
+} 
+
+/* .......................................................... */
+
+static double *hess_wts (MODEL *pmod, double **Z, int opt) 
+{
+    int i, t, tm, n = pmod->t2 - pmod->t1 + 1;
+    double q, bx, xx, *w;
+
+    w = malloc(n * sizeof *w);
+    if (w == NULL) {
+	return NULL;
+    }
+
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	tm = t - pmod->t1;
+	if (model_missing(pmod, t)) {
+	    w[tm] = NADBL;
+	    continue;
+	}
+	bx = 0.0;
+	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
+	for (i=0; i<pmod->ncoeff; i++) {
+	    bx += pmod->coeff[i] * Z[pmod->list[i+2]][t];
+	}
+	if (opt == LOGIT) {
+	    w[tm] = -1.0 * _logit(bx) * (1.0 - _logit(bx));
+	} else {
+	    xx = (q * _norm_pdf(q * bx)) / _norm_cdf(q * bx);
+	    w[tm] = -xx * (xx + bx);
+	}
+    }
+
+    return w;
+}
+
+/* .......................................................... */
+
+static double *hessian (MODEL *pmod, double **Z, int opt) 
+{
+    int i, j, li, lj, m, t;
+    const int l0 = pmod->list[0];
+    double xx, *wt, *xpx;
+
+    i = l0 - 1;
+    m = i * (i + 1) / 2;
+
+    xpx = malloc(m * sizeof *xpx);
+    if (xpx == NULL) {
+	return NULL;
+    }
+
+    wt = hess_wts(pmod, Z, opt);
+    if (wt == NULL) {
+	free(xpx);
+	return NULL;
+    }
+
+    m = 0;
+    for (i=2; i<=l0; i++) {
+	li = pmod->list[i];
+	for (j=i; j<=l0; j++) {
+	    lj = pmod->list[j];
+	    xx = 0.0;
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		if (!model_missing(pmod, t)) {
+		    xx += wt[t-pmod->t1] * Z[li][t] * Z[lj][t];
+		}
+	    }
+	    if (floateq(xx, 0.0) && li == lj) {
+		free(xpx);
+		free(wt);
+		return NULL;
+	    }
+	    xpx[m++] = -xx;
+	}
+    }
+
+    free(wt);
+
+    return xpx; 
 }
 
 /**
@@ -137,16 +247,16 @@ static int add_slopes_to_model (MODEL *pmod, double fbx)
  * perform probit regression.
  *
  * Computes estimates of the discrete model specified by @list,
- * using an estimator determined by the value of @opt.
+ * using an estimator determined by the value of @opt.  Uses the
+ * EM algorithm; see Ruud.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
 MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
-     /* EM algorithm, see Ruud */
 {
     int i, t, v, depvar = list[1];
-    int n = pdinfo->n, itermax = 200;
+    int itermax = 200;
     int *dmodlist = NULL;
     int dummy, n_correct;
     double xx, zz, fx, Fx, fbx, Lbak;
@@ -156,7 +266,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     gretl_model_init(&dmod);
     
     /* check whether depvar is binary */
-    dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
+    dummy = dmod_isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
     if (!dummy) {
 	dmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
@@ -188,9 +298,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 
     v = pdinfo->v - 1; /* the last created variable */
 
-    /* Below: might want to implement skipping of missing obs */
-
-    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A | OPT_M, 0);
+    dmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
     if (dmod.ifc == 0) {
 	dmod.errcode = E_NOCONST;
     }
@@ -205,7 +313,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	dmodlist[i] = list[i];
 	xbar[i-2] = 0.0;
 	for (t=dmod.t1; t<=dmod.t2; t++) {
-	    xbar[i-2] += (*pZ)[dmod.list[i]][t];
+	    if (!model_missing(&dmod, t)) {
+		xbar[i-2] += (*pZ)[dmod.list[i]][t];
+	    }
 	}
 	xbar[i-2] /= dmod.nobs;
     }
@@ -219,24 +329,28 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     for (i=0; i<itermax; i++) {
 	for (t=dmod.t1; t<=dmod.t2; t++) {
 	    xx = dmod.yhat[t];
-	    if (opt == LOGIT) {
-		fx = _logit_pdf(xx);
-		Fx = _logit(xx);
-	    } else {
-		fx = _norm_pdf(xx);
-		Fx = _norm_cdf(xx);
-	    }
-	    if (floateq((*pZ)[depvar][t], 0.0)) {
-		xx -= fx/(1.0 - Fx);
-	    } else {
-		xx += fx/Fx;
+	    if (!na(dmod.yhat[t])) {
+		if (opt == LOGIT) {
+		    fx = _logit_pdf(xx);
+		    Fx = _logit(xx);
+		} else {
+		    fx = _norm_pdf(xx);
+		    Fx = _norm_cdf(xx);
+		}
+		if (floateq((*pZ)[depvar][t], 0.0)) {
+		    xx -= fx / (1.0 - Fx);
+		} else {
+		    xx += fx / Fx;
+		}
 	    }
 	    (*pZ)[v][t] = xx;
 	}
+
 	dmod.lnL = _logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
 	if (fabs(dmod.lnL - Lbak) < .000005) {
 	    break; 
 	}
+
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod);
@@ -267,8 +381,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     if (dmod.xpx != NULL) {
 	free(dmod.xpx);
     }
-    /* if (dmod.vcv != NULL) free(dmod.vcv); */
-    dmod.xpx = hessian(&dmod, *pZ, n, opt);
+    dmod.xpx = hessian(&dmod, *pZ, opt);
     if (dmod.xpx == NULL) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
@@ -317,6 +430,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     xx = 0.0;
     n_correct = 0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
+	if (model_missing(&dmod, t)) {
+	    continue;
+	}
 	zz = (*pZ)[depvar][t];
 	xx += zz;
 	n_correct += ((dmod.yhat[t] > 0.0 && floateq(zz, 1.0)) ||
@@ -333,89 +449,24 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     return dmod;
 }
 
-/* .......................................................... */
-
-static double *hessian (MODEL *pmod, double **Z, const int n, 
-			const int opt) 
-{
-    int i, j, li, lj, m, t;
-    const int l0 = pmod->list[0];
-    double xx, *wt, *xpx;
-
-    i = l0 - 1;
-    m = i * (i + 1) / 2;
-
-    xpx = malloc(m * sizeof *xpx);
-    if (xpx == NULL) return NULL;
-
-    if ((wt = hess_wts(pmod, Z, n, opt)) == NULL) {
-	free(xpx);
-	return NULL;
-    }
-
-    m = 0;
-    for (i=2; i<=l0; i++) {
-	li = pmod->list[i];
-	for (j=i; j<=l0; j++) {
-	    lj = pmod->list[j];
-	    xx = 0.0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) 
-		xx += wt[t] * Z[li][t] * Z[lj][t];
-	    if (floateq(xx, 0.0) && li == lj) {
-		free(xpx);
-		free(wt);
-		return NULL;
-	    }
-	    xpx[m++] = -xx;
-	}
-    }
-
-    free(wt);
-
-    return xpx; 
-}
-
-/* .......................................................... */
-
-static double *hess_wts (MODEL *pmod, double **Z, const int n, 
-			 const int opt) 
-{
-    int i, t;
-    double q, bx, xx, *wt;
-
-    wt = malloc(n * sizeof *wt);
-    if (wt == NULL) return NULL;
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	bx = 0.0;
-	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
-	for (i=0; i<pmod->ncoeff; i++) {
-	    bx += pmod->coeff[i] * Z[pmod->list[i+2]][t];
-	}
-	if (opt == LOGIT) {
-	    wt[t] = -1.0 * _logit(bx) * (1.0 - _logit(bx));
-	} else {
-	    xx = (q * _norm_pdf(q * bx)) / _norm_cdf(q * bx);
-	    wt[t] = -xx * (xx + bx);
-	}
-    }
-    return wt;
-}
-
-/* ...............................................................    */
-
-static int neginv (double *xpx, double *diag, int nv)
-/*
-  Solves for diagonal elements of X'X inverse matrix.
-  X'X must be Cholesky-decomposed already.
+/* Solves for diagonal elements of X'X inverse matrix.
+   X'X must be Cholesky-decomposed already.
 */
+
+static int neginv (const double *xpx, double *diag, int nv)
 {
     int kk, l, m, k, i, j;
     const int nxpx = nv * (nv + 1) / 2;
     double d, e, *tmp;
 
     tmp = malloc((nv + 1) * sizeof *tmp);
-    if (tmp == NULL) return 1;
-    for (i=0; i<=nv; i++) tmp[i] = 0.0;
+    if (tmp == NULL) {
+	return 1;
+    }
+
+    for (i=0; i<=nv; i++) {
+	tmp[i] = 0.0;
+    }
 
     kk = 0;
 
@@ -448,17 +499,19 @@ static int neginv (double *xpx, double *diag, int nv)
     return 0;
 }
 
-/* .......................................................... */
+/* Cholesky decomposition of X'X */
 
 static int cholesky_decomp (double *xpx, int nv)
-     /* Cholesky decomposition of X'X */
 {
     int i, j, k, kk, l, jm1;
     double e, d, d1, test, xx;
 
-    e = 1 / sqrt(xpx[0]);
+    e = 1.0 / sqrt(xpx[0]);
     xpx[0] = e;
-    for (i=1; i<nv; i++) xpx[i] *= e;
+
+    for (i=1; i<nv; i++) {
+	xpx[i] *= e;
+    }
 
     kk = nv;
 
@@ -472,7 +525,9 @@ static int cholesky_decomp (double *xpx, int nv)
             k += nv-l;
         }
         test = xpx[kk] - d;
-        if (test / xpx[kk] < TINY) return 1;
+        if (test / xpx[kk] < TINY) {
+	    return 1;
+	}
         e = 1 / sqrt(test);
         xpx[kk] = e;
         /* off-diagonal elements */
