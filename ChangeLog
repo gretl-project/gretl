@@ -13,6 +13,8 @@ version 0.98
 - change default user directory to ~/gretl under unix
 - add option to make cwd rather than userdir the default
   for file opening and saving
+- switch from ".dat" to ".gdt" as default filename extension
+  for gretl datafiles (but add option to GUI to use ".dat")
 
 version 0.97
 - fix breakage of var command in GUI

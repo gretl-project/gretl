@@ -362,10 +362,10 @@ To make a time-series graph, do "gnuplot yvars time". If no variable named
 "time" already exists, then it will be generated automatically.  Special dummy
 variables will be created for plotting quarterly and monthly data.
 
-In interactive mode the result is piped to gnuplot for display.  In batch
-mode a pair of files are written, gpttmp<n>.dat and gpttmp<n>.plt, where <n>
-is a number from 01 to 99. The plots can be generated later using the shell
-command "gnuplot gpttmp<n>.plt".
+In interactive mode the result is piped to gnuplot for display.  In batch mode
+a file named gpttmp<n>.plt is written out, where <n> is a number from 01 to
+99. The plots can be generated later using the shell command "gnuplot
+gpttmp<n>.plt".
 
 #
 graph
@@ -553,7 +553,7 @@ Example of loop code (Monte Carlo):
    print r2
    genr a = coeff(const)
    genr b = coeff(x)
-   store foo.dat a b
+   store foo.gdt a b
    endloop
 
 #
@@ -851,9 +851,9 @@ because we will get the same variable.
 store
 Usages:          store filename flag              
                  store filename flag varlist 
-Examples:        store mydata.dat
+Examples:        store mydata.gdt
                  store mydata.csv -c
-                 store mydatabin.dat -o 2 3 4
+                 store mydatabin.gdt -o 2 3 4
 Filename is the name of the file in which the values should be stored.  If 
 varlist is absent, the values of all the variables will be stored, otherwise
 only those variables specified will be written to file.  

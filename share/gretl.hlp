@@ -482,7 +482,7 @@ Example of loop code (Monte Carlo):
    print r2
    genr a = coeff(const)
    genr b = coeff(x)
-   store foo.dat a b
+   store foo.gdt a b
    endloop
    
 #
