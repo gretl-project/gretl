@@ -3,11 +3,9 @@ version 1.3.0
   frequency greater than 99, and the "panel" command did not
   obey the "cross-section" option (thanks to Mihai Nica for
   the report)
-- update Windows version to gtk 2.4.9
+- add support for compacting daily data to weekly or monthly
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)
-- slight improvement to main window treeview focusing in
-  gtk2 version
 - add stack() function to genr command: creates a stacked
   series from a comma-separated list of series, or a
   range of series as in stack(x1..xn)
@@ -17,7 +15,8 @@ version 1.3.0
 - switch to St Louis Fed database as gretl "sample" database
   (the BCIH database is getting too out-of-date)
 - add the Anscombe Quartet to the gretl data files
-- small gui fixes
+- various minor gui fixes and enhancements
+- update Windows version to gtk 2.4.9
 
 7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models
