@@ -1,4 +1,4 @@
-7/06/2004 version 1.2.8
+7/07/2004 version 1.2.8
 - fixes for LaTeX versions of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
@@ -17,6 +17,7 @@
   ('-c' or '--dump')
 - small fixes for nonlinear least squares
 - Replace fixed IP address for database server with hostname
+- Fix for copying from gretl windows using Ctrl-C on Windows
 - Update Windows version to gtk 2.4.3 runtime
 - add "restrict" command for general Wald test (not yet trans-
   lated, too new)

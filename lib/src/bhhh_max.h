@@ -24,6 +24,12 @@ enum bhhh_opts {
 
 typedef struct _model_info model_info;
 
+typedef int (*LL_FUNC) (double *, 
+			const double **, 
+			double **, 
+			model_info *, 
+			int);
+
 void model_info_free (model_info *model);
 
 model_info *model_info_new (void);
@@ -65,7 +71,8 @@ void model_info_set_tol (model_info *model, double tol);
 
 void model_info_set_ll (model_info *model, double ll, int do_score);
 
-int bhhh_max (int (*loglik) (double *, const double **, double **,
-			     model_info *, int), 
-	      const double **X, const double *init_coeff,
-	      model_info *model, PRN *prn);
+int bhhh_max (LL_FUNC loglik, 
+	      const double **X, 
+	      const double *init_coeff,
+	      model_info *model, 
+	      PRN *prn);

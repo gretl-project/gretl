@@ -65,7 +65,7 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
  * gretl_model_get_data().  Note that the data are not "physically"
  * copied to the model; simply, the pointer is recorded.  The 
  * size is needed in case the model is copied.  The data pointer
- * will be freed when the model is cleared, with #clear_model().
+ * will be freed when the model is cleared, with clear_model().
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -97,7 +97,7 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
  * @val: integer value to set.
  *
  * Records an integer value on a model: the value can be retrieved 
- * later using #gretl_model_get_int().  
+ * later using gretl_model_get_int().  
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -132,7 +132,7 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
  * @val: double-precision value to set.
  *
  * Records a floating-point value on a model: the value can be 
- * retrieved later using #gretl_model_get_double().  
+ * retrieved later using gretl_model_get_double().  
  *
  * Returns: 0 on success, 1 on failure.
  */
@@ -165,7 +165,7 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
  * @pmod: pointer to #MODEL.
  * @key: key string.
  *
- * Returns: the data pointer identified by @key, or %NULL on failure.
+ * Returns the data pointer identified by @key, or %NULL on failure.
  */
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
@@ -333,9 +333,9 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
  * @pdinfo: pointer to data information struct (or %NULL).
  * 
  * Allocates memory for a gretl MODEL struct and initializes the struct,
- * using #gretl_model_init().
+ * using gretl_model_init().
  *
- * Returns: pointer to #MODEL (or NULL if allocation fails).
+ * Returns: pointer to #MODEL (or %NULL if allocation fails).
  */
 
 MODEL *gretl_model_new (const DATAINFO *pdinfo)
@@ -415,7 +415,7 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
  *
  * Clears a gretl #MODEL, freeing all allocated storage and setting
  * pointer members to %NULL.  Also frees any data pointers attached
- * via #gretl_model_set_data().
+ * via gretl_model_set_data().
  */
 
 void clear_model (MODEL *pmod, const DATAINFO *pdinfo)

@@ -553,6 +553,7 @@ gretl_vector_get
 gretl_matrix_set
 gretl_vector_set
 gretl_matrix_add_to
+gretl_matrix_subtract_from
 gretl_square_matrix_transpose
 gretl_matrix_add_self_transpose
 gretl_matrix_multiply_mod
@@ -568,13 +569,17 @@ gretl_symmetric_matrix_eigenvals
 gretl_matrix_cholesky_decomp
 gretl_matrix_ols
 gretl_scalar_b_prime_X_b
+gretl_matrix_A_X_A_prime
 gretl_vcv_matrix_from_model
+gretl_coeff_vector_from_model
 gretl_matrix_print
 gretl_matrix_set_int
 gretl_matrix_get_int
 gretl_vector_get_length
 gretl_matrix_cols
 gretl_matrix_rows
+gretl_is_identity_matrix
+gretl_is_zero_vector
 </SECTION>
 
 <SECTION>
@@ -639,6 +644,7 @@ close_plugin
 <SECTION>
 <FILE>bhhh_max</FILE>
 model_info
+LL_FUNC
 model_info_free
 model_info_new
 model_info_capture_OPG_model
@@ -688,6 +694,7 @@ fetch_gretl_lib_path
 <SECTION>
 <FILE>gretl_model</FILE>
 free_model
+AR_MODEL
 gretl_model_new
 gretl_model_init
 gretl_model_set_auxiliary
@@ -702,6 +709,8 @@ gretl_model_get_double
 debug_print_model_info
 copy_model
 swap_models
+command_ok_for_model
+model_ci_from_modelspec
 </SECTION>
 
 <SECTION>
@@ -724,5 +733,12 @@ gretl_string_table_new
 gretl_string_table_index
 gretl_string_table_print
 gretl_string_table_destroy
+</SECTION>
+
+<SECTION>
+<FILE>gretl_restrict</FILE>
+restriction_set_start
+restriction_set_parse_line
+gretl_restriction_set_finalize
 </SECTION>
 

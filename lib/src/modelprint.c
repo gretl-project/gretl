@@ -1327,7 +1327,7 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
  * 
- * Returns: 0 on success, 1 if some of the values to print were NAN.
+ * Returns: 0 on success, 1 if some of the values to print were %NaN.
  */
 
 int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)

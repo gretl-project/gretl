@@ -22,7 +22,7 @@
 
 #include "bhhh_max.h"
 
-/* #define DEBUG */
+#undef BDEBUG
 
 struct _model_info {
 
@@ -99,7 +99,14 @@ void model_info_free (model_info *model)
     free(model);
 }
 
-/* accessor functions for (private) model_info struct */
+/**
+ * model_info_capture_OPG_model:
+ * @model: model info pointer.
+ *
+ * Returns: pointer to a gretl #MODEL, which contains the
+ * results of the OPG (Outer Product of the Gradient) regression
+ * associated with @model.
+ */
 
 MODEL *model_info_capture_OPG_model (model_info *model)
 {
@@ -109,35 +116,89 @@ MODEL *model_info_capture_OPG_model (model_info *model)
     return pmod;
 }
 
+/**
+ * model_info_get_VCV:
+ * @model: model info pointer.
+ *
+ * Returns: pointer to the covariance matrix of @model.
+ */
+
 gretl_matrix *model_info_get_VCV (model_info *model)
 {
     return model->VCV;
 }
+
+/**
+ * model_info_get_theta:
+ * @model: model info pointer.
+ *
+ * Returns: parameter vector @theta from @model.
+ */
 
 double *model_info_get_theta (model_info *model)
 {
     return model->theta;
 }
 
+/**
+ * model_info_get_t1:
+ * @model: model info pointer.
+ *
+ * Returns: the (zero-based) start of the sample range for 
+ * @model.
+ */
+
 int model_info_get_t1 (const model_info *model)
 {
     return model->t1;
 }
+
+/**
+ * model_info_get_t2:
+ * @model: model info pointer.
+ *
+ * Returns: the end of the sample range for @model.
+ */
 
 int model_info_get_t2 (const model_info *model)
 {
     return model->t2;
 }
 
+/**
+ * model_info_get_n:
+ * @model: model info pointer.
+ *
+ * Returns: the number of observations used in @model.
+ */
+
 int model_info_get_n (const model_info *model)
 {
     return model->n;
-}    
+} 
+
+/**
+ * model_info_get_iters:
+ * @model: model info pointer.
+ *
+ * Returns: the number of iterations taken in estimating
+ * @model.
+ */  
 
 int model_info_get_iters (const model_info *model)
 {
     return model->iters;
 }
+
+/**
+ * model_info_get_pqr:
+ * @model: model info pointer.
+ * @p: pointer to receive the AR order of @model.
+ * @q: pointer to receive the MA order of @model.
+ * @r: pointer to receive the number of regular regressors in 
+ * ARMA(X) @model.
+ *
+ */  
  
 void model_info_get_pqr (const model_info *model, 
 			 int *p, int *q, int *r)
@@ -147,15 +208,40 @@ void model_info_get_pqr (const model_info *model,
     *r = model->r;
 }
 
+/**
+ * model_info_get_series:
+ * @model: model info pointer.
+ *
+ * Returns: FIXME.
+ */  
+
 double **model_info_get_series (const model_info *model)
 {
     return model->series;
 }
 
+/**
+ * model_info_get_ll:
+ * @model: model info pointer.
+ *
+ * Returns: the log-likelihood for @model.
+ */ 
+
 double model_info_get_ll (const model_info *model)
 {
     return model->ll;
 }
+
+/**
+ * model_info_set_ll:
+ * @model: model info pointer.
+ * @ll: log-likehood.
+ * @do_score:
+ *
+ * Sets the log-likelihood for @model.  If @do_score is non-zero,
+ * sets the primary ll value, otherwise sets the secondary value.
+ * FIXME: explain this.
+ */ 
 
 void model_info_set_ll (model_info *model, double ll, int do_score)
 {
@@ -166,15 +252,43 @@ void model_info_set_ll (model_info *model, double ll, int do_score)
     }
 }
 
+/**
+ * model_info_set_opts:
+ * @model: model info pointer.
+ * @opts: option flags to set.
+ *
+ * Sets the option flags for @model. 
+ * FIXME: explain this.
+ */ 
+
 void model_info_set_opts (model_info *model, unsigned char opts)
 {
     model->opts = opts;
 }
 
+/**
+ * model_info_set_tol:
+ * @model: model info pointer.
+ * @tol: tolerance for convergence of estimates.
+ *
+ * Sets the convergence tolerance for @model. 
+ * FIXME: explain this.
+ */ 
+
 void model_info_set_tol (model_info *model, double tol)
 {
     model->tol = tol;
 }
+
+/**
+ * model_info_set_pqr:
+ * @model: model info pointer.
+ * @p: AR order for @model.
+ * @q: MA order for @model.
+ * @r: Number of regular regressors in ARMA(X) @model.
+ *
+ * Sets the specified parameters for @model.
+ */ 
 
 void model_info_set_pqr (model_info *model, int p, int q, int r)
 {
@@ -184,21 +298,53 @@ void model_info_set_pqr (model_info *model, int p, int q, int r)
     model->k = p + q + r + 1;
 }
 
+/**
+ * model_info_set_k:
+ * @model: model info pointer.
+ * @k: number of regressors in (non-ARMA) model.
+ *
+ * Sets the number of regressors.
+ */ 
+
 void model_info_set_k (model_info *model, int k)
 {
     model->k = k;
     model->p = model->q = model->r = 0;
 }
 
+/**
+ * model_info_get_k:
+ * @model: model info pointer.
+ *
+ * Returns: the number of regressors in (non-ARMA) @model.
+ */ 
+
 int model_info_get_k (model_info *model)
 {
     return model->k;
 }
 
+/**
+ * model_info_set_n_series:
+ * @model: model info pointer.
+ * @n: number of data series.
+ *
+ * Sets the number of auxiliary data series needed for @model.
+ */ 
+
 void model_info_set_n_series (model_info *model, int n)
 {
     model->n_series = n;
 }
+
+/**
+ * model_info_set_t1_t2:
+ * @model: model info pointer.
+ * @t1: starting observation number (zero-based).
+ * @t2: ending observation number.
+ *
+ * Sets the sample range for @model.
+ */ 
 
 void model_info_set_t1_t2 (model_info *model, int t1, int t2)
 {
@@ -225,7 +371,7 @@ static int *make_opg_list (int k)
 	list[i+2] = i + 1; 
     }
 
-#ifdef DEBUG
+#ifdef BDEBUG
     printlist(list, "OPG regression list");
 #endif
 
@@ -275,6 +421,12 @@ static int model_info_init (model_info *model, const double *init_coeff)
     return err;
 }
 
+/**
+ * model_info_new:
+ *
+ * Returns: pointer to newly allocated model_info.
+ */
+ 
 model_info *model_info_new (void)
 {
     model_info *mi;
@@ -314,7 +466,7 @@ static void bhhh_iter_info (int iter, double *theta, int m, double ll,
  * @init_coeff: starting values for coefficients.
  * @model: model info struct, with some initialization carried out by
  * the caller.
- * @prn: printing struct for iteration info (or NULL).
+ * @prn: printing struct for iteration info (or %NULL).
  *
  * Maximize likelihood using the BHHH conditional ML method,
  * implemented via iteration of the Outer Product of the Gradient 
@@ -323,10 +475,11 @@ static void bhhh_iter_info (int iter, double *theta, int m, double ll,
  * Returns: 0 on successful completion, non-zero error code otherwise.
  */
 
-int bhhh_max (int (*loglik) (double *, const double **, double **,
-			     model_info *, int), 
-	      const double **X, const double *init_coeff,
-	      model_info *model, PRN *prn)
+int bhhh_max (LL_FUNC loglik,
+	      const double **X, 
+	      const double *init_coeff,
+	      model_info *model, 
+	      PRN *prn)
 {
     /* OPG model */
     MODEL *bmod;
