@@ -45,6 +45,16 @@ extern DATAINFO *fullinfo;
 extern double **subZ;
 extern double **fullZ;
 
+#ifdef HAVE_TRAMO
+extern char tramo[];
+extern char tramodir[];
+#endif
+
+#ifdef HAVE_X12A
+extern char x12a[];
+extern char x12adir[];
+#endif
+
 /* ../cli/common.c */
 static int data_option (unsigned char flag);
 static int loop_exec_line (LOOPSET *plp, const int round, 
@@ -2368,6 +2378,40 @@ void do_arma (int v, int ar, int ma, int verbose)
     view_model(prn, pmod, 78, 400, title); 
 }
 
+void do_x12a_arma (int v, int ar, int ma, int verbose)
+{
+    void *handle;
+    int list[5];
+    int err;
+    char fname[MAXLEN];
+    int (*write_x12_arma)(int *, const double **, DATAINFO *, 
+			  PATHS *, const char *, const char *,
+			  char *);
+
+    list[0] = 4;
+    list[1] = ar;
+    list[2] = ma;
+    list[3] = LISTSEP;
+    list[4] = v;
+
+    write_x12_arma = gui_get_plugin_function("write_x12_arma",
+					     &handle);
+    if (write_x12_arma == NULL) {
+	return;
+    }    
+
+    err = write_x12_arma(list, (const double **) Z, datainfo,
+			 &paths, x12a, x12adir, fname);
+    
+    close_plugin(handle);
+
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	view_file(fname, 0, 0, 78, 450, VIEW_DATA);
+    }
+}
+
 /* ........................................................... */
 
 void do_sim (GtkWidget *widget, dialog_t *ddata)
@@ -2730,16 +2774,6 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 }
 
 /* ........................................................... */
-
-#ifdef HAVE_TRAMO
-extern char tramo[];
-extern char tramodir[];
-#endif
-
-#ifdef HAVE_X12A
-extern char x12a[];
-extern char x12adir[];
-#endif
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 

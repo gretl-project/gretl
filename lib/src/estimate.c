@@ -3055,4 +3055,6 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     close_plugin(handle);
 
     return armod;
-}     
+} 
+
+ 

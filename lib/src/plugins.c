@@ -43,7 +43,8 @@ enum {
     P_SUR,
     P_TRAMO_X12A,
     P_NISTCHECK,
-    P_ARMA
+    P_ARMA,
+    P_ARMA_X12
 } plugin_codes;
 
 struct plugin_info {
@@ -75,7 +76,8 @@ struct plugin_info plugins[] = {
     { P_SUR,             "sur" },
     { P_TRAMO_X12A,      "tramo-x12a" },
     { P_NISTCHECK,       "nistcheck" },
-    { P_ARMA,            "arma" }
+    { P_ARMA,            "arma" },
+    { P_ARMA_X12,        "arma_x12" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -135,6 +137,9 @@ struct plugin_function plugin_functions[] = {
     
     /* ARMA */
     { "arma_model", P_ARMA },
+
+    /* ARMA X12A */
+    { "write_x12_arma", P_ARMA_X12 },
 
     /* sentinel */
     { NULL, 0 },

@@ -1441,7 +1441,8 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
     ma = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(opts->maspin));
     verb = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(opts->verbcheck));
 
-    do_arma(opts->v, ar, ma, verb);
+    /* do_arma(opts->v, ar, ma, verb); */
+    do_x12a_arma(opts->v, ar, ma, verb);
 
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
