@@ -50,13 +50,14 @@ endif
 PLUGINS = lad.so stats_tables.so panel_data.so range-mean.so \
 	progress_bar.so gnumeric_import.so excel_import.so $(TXPLUGIN)
 
+LAPACK_PLUGINS = johansen.so sur.so 
+
 ifdef GMP_LIBS
   PLUGINS += mp_ols.so
 endif
 
 ifdef LAPACK_LIBS
-  PLUGINS += sur.so
-  PLUGINS += johansen.so
+  PLUGINS += $(LAPACK_PLUGINS)
   LAPACK_CFLAGS = -I.
 endif
 
@@ -166,6 +167,10 @@ install: $(PLUGINS) installdirs
 install-strip: $(PLUGINS) installdirs
 	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s \
 	$(PLUGINS) $(plugindir)
+
+install-lapack: $(PLUGINS) installdirs
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) \
+	$(LAPACK_PLUGINS) $(plugindir)
 
 installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)

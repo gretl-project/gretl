@@ -51,6 +51,9 @@ install-strip: $(SUBDIRS) installdirs install-man
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip; done
 	$(MAKE) -C share install-strip
 
+install-lapack: $(SUBDIRS) installdirs
+	$(MAKE) -C plugin install-lapack
+
 install-man:
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
 	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
