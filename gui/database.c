@@ -1586,9 +1586,10 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), 
 		       mydata->active_var, 0, &dbname);
 
-    if ((ggzname = mymalloc(MAXLEN)) == NULL) {
-	return;
-    }
+    ggzname = mymalloc(MAXLEN);
+    if (ggzname == NULL) return;
+
+    build_path(paths.binbase, dbname, ggzname, ".ggz");
 
     errno = 0;
     fp = fopen(ggzname, "w");
@@ -1616,9 +1617,11 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 #endif
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);
-	else { 
+	else {
+	    fprintf(stderr, "grab_remote_db: retrieve_url() returned %d\n", err);
 	    errbox(_("Error retrieving data from server"));
 	}
+	free(dbname);
 	free(ggzname);
 	return;
     } 
