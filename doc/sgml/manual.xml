@@ -34,7 +34,7 @@
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>September, 2000</date>
+    <date>October, 2001</date>
 
     <legalnotice id="legalnotice">
       <para>Permission is granted to copy, distribute and/or modify
@@ -548,74 +548,77 @@
 	  <listitem><para><guimenuitem>Display values</guimenuitem>:
 	      pops up a window with a simple (not editable) printout
 	      of the values of the variables (either all of them or a
-	      selected subset).</para></listitem> 
-	  <listitem><para><guimenuitem>Edit values</guimenuitem>: pops
-	      up a spreadsheet window where you can make changes, add
-	      new variables, and extend the number of observations.
-	      (The data matrix must remain rectangular, with the same
-	      number of observations for each
-	      series.)</para></listitem> 
-	  <listitem><para><guimenuitem>Graph specified
-		vars</guimenuitem>: Gives a choice between a time
-	      series plot, a regular X&ndash;Y scatter plot, an
-	      X&ndash;Y plot using impulses (vertical bars), and an
-	      X&ndash;Y plot <quote>with factor separation</quote>
-	      (i.e. with the points colored differently depending to
-	      the value of a given dummy variable).  Serves up a
-	      dialog box where you specify the variables to graph.
-	      The simplest way to fill out the dialog entry is to
-	      refer to the variables by their ID numbers (shown in the
-	      leftmost column of the main data window). Thus, having
-	      chosen the scatter plot option, an entry of <quote>2
-		3</quote> will plot variable number 2 (here,
-	      consumption) against variable number 3 (income). The
-	      last referenced variable will be on the <emphasis>x</emphasis> axis.
-	      Gnuplot is used to render the graph.</para></listitem>
-	  <listitem><para><guimenuitem>Multiple
-		scatterplots</guimenuitem>: Show a collection of (at
+	      selected subset).</para></listitem>
+	      <listitem><para><guimenuitem>Edit values</guimenuitem>:
+	      pops up a spreadsheet window where you can make changes,
+	      add new variables, and extend the number of
+	      observations.  (The data matrix must remain rectangular,
+	      with the same number of observations for each
+	      series.)</para></listitem>
+	      <listitem><para><guimenuitem>Graph specified
+	      vars</guimenuitem>: Gives a choice between a time series
+	      plot, a regular X&ndash;Y scatter plot, an X&ndash;Y
+	      plot using impulses (vertical bars), and an X&ndash;Y
+	      plot <quote>with factor separation</quote> (i.e. with
+	      the points colored differently depending to the value of
+	      a given dummy variable).  Serves up a dialog box where
+	      you specify the variables to graph.  The simplest way to
+	      fill out the dialog entry is to refer to the variables
+	      by their ID numbers (shown in the leftmost column of the
+	      main data window). Thus, having chosen the scatter plot
+	      option, an entry of <quote>2 3</quote> will plot
+	      variable number 2 (here, consumption) against variable
+	      number 3 (income). The last referenced variable will be
+	      on the <emphasis>x</emphasis> axis.  Gnuplot is used to
+	      render the graph.</para></listitem>
+	      <listitem><para><guimenuitem>Multiple
+	      scatterplots</guimenuitem>: Show a collection of (at
 	      most six) pairwise plots, with either a given variable
-	      on the <emphasis>y</emphasis> axis plotted against several different
-	      variables on the <emphasis>x</emphasis> axis, or several <emphasis>y</emphasis> variables
-	      plotted against a given <emphasis>x</emphasis>. May be useful for
-	      exploratory data analysis.</para></listitem>
-	  <listitem><para><guimenuitem>Read info</guimenuitem>,
+	      on the <emphasis>y</emphasis> axis plotted against
+	      several different variables on the
+	      <emphasis>x</emphasis> axis, or several
+	      <emphasis>y</emphasis> variables plotted against a given
+	      <emphasis>x</emphasis>. May be useful for exploratory
+	      data analysis.</para></listitem>
+	      <listitem><para><guimenuitem>Read info</guimenuitem>,
 	      <guimenuitem>Edit header</guimenuitem>: <quote>Read
-		info</quote> just displays the header file information
+	      info</quote> just displays the header file information
 	      for the current data file; <quote>Edit header</quote>
 	      allows you to make changes to it (if you have permission
 	      to do so).</para></listitem>
-	  <listitem><para><guimenuitem>Summary
-		statistics</guimenuitem>: shows a fairly full set of
+	      <listitem><para><guimenuitem>Summary
+	      statistics</guimenuitem>: shows a fairly full set of
 	      descriptive statistics for all variables in the data
 	      set.</para></listitem>
-	  <listitem><para><guimenuitem>Correlation
-		matrix</guimenuitem>: shows the pairwise correlation
+	      <listitem><para><guimenuitem>Correlation
+	      matrix</guimenuitem>: shows the pairwise correlation
 	      coefficients for the variables in the data
 	      set.</para></listitem>
-	  <listitem><para><guimenuitem>Difference of
-		means</guimenuitem>: calculates the <emphasis>t</emphasis> statistic for
-	      the null hypothesis that the population means are equal
-	      for two selected variables and shows its
-	      p-value.</para></listitem>
-	  <listitem><para><guimenuitem>Difference of
-		variances</guimenuitem>: calculates the <emphasis>F</emphasis> statistic
-	      for the null hypothesis that the population variances
-	      are equal for two selected variables and shows its
-	      p-value.</para></listitem>
-	  <listitem><para><guimenuitem>Add variables</guimenuitem>
+	      <listitem><para><guimenuitem>Difference of
+	      means</guimenuitem>: calculates the
+	      <emphasis>t</emphasis> statistic for the null hypothesis
+	      that the population means are equal for two selected
+	      variables and shows its p-value.</para></listitem>
+	      <listitem><para><guimenuitem>Difference of
+	      variances</guimenuitem>: calculates the
+	      <emphasis>F</emphasis> statistic for the null hypothesis
+	      that the population variances are equal for two selected
+	      variables and shows its p-value.</para></listitem>
+	      <listitem><para><guimenuitem>Add variables</guimenuitem>
 	      gives a sub-menu of standard transformations of
 	      variables (logs, lags, squares, etc.) that you may wish
 	      to add to the data set. Also gives the option of adding
 	      random variables, and (for time-series data) adding
-	      seasonal dummy variables (e.g. quarterly dummy
-	      variables for quarterly data). Includes an item for
-	      seeding the program's pseudo-random number
+	      seasonal dummy variables (e.g. quarterly dummy variables
+	      for quarterly data). Includes an item for seeding the
+	      program's pseudo-random number
 	      generator.</para></listitem>
-	  <listitem><para><guimenuitem>Refresh window</guimenuitem>
-	      Sometimes <application>gretl</application> commands
-	      generate new variables.  The <quote>refresh</quote> item
-	      ensures that the listing of variables visible in the
-	      main data window is in sync with the program's internal
+	      <listitem><para><guimenuitem>Refresh
+	      window</guimenuitem> Sometimes
+	      <application>gretl</application> commands generate new
+	      variables.  The <quote>refresh</quote> item ensures that
+	      the listing of variables visible in the main data window
+	      is in sync with the program's internal
 	      state.</para></listitem>
 	</itemizedlist>
       </listitem>
@@ -1500,31 +1503,33 @@
 
     <itemizedlist>
       <listitem><para><emphasis>Grouped by unit</emphasis>: Set the
-	  frequency equal to <emphasis>T</emphasis>. Suppose you have observations on 20
-	  units in each of 5 time periods. Then this observations line
-	  is appropriate: <literal>5 1.1 20.5</literal> (read: frequency 5,
-	  starting with the observation for unit 1, period 1, and
-	  ending with the observation for unit 20, period 5). Then,
-	  for instance, you can refer to the observation for unit 2 in
-	  period 5 as <literal>2.5</literal>, and that for unit 13 in period 1
-	  as <literal>13.1</literal>.</para></listitem>
+	  frequency equal to <emphasis>T</emphasis>. Suppose you have
+	  observations on 20 units in each of 5 time periods. Then
+	  this observations line is appropriate: <literal>5 1.1
+	    20.5</literal> (read: frequency 5, starting with the
+	  observation for unit 1, period 1, and ending with the
+	  observation for unit 20, period 5). Then, for instance, you
+	  can refer to the observation for unit 2 in period 5 as
+	  <literal>2.5</literal>, and that for unit 13 in period 1 as
+	  <literal>13.1</literal>.</para></listitem>
       <listitem><para><emphasis>Grouped by period</emphasis>: Set the
-	  frequency equal to <emphasis>n</emphasis>.  In this case if you have
-	  observations on 20 units in each of 5 periods, the
-	  observations line should be: <literal>20 1.01 5.20</literal> (read:
-	  frequency 20, starting with the observation for period 1,
-	  unit 01, and ending with the observation for period 5, unit
-	  20).  One refers to the observation for unit 2, period 5 as
-	  <literal>5.02</literal>.</para></listitem>
+	  frequency equal to <emphasis>n</emphasis>.  In this case if
+	  you have observations on 20 units in each of 5 periods, the
+	  observations line should be: <literal>20 1.01 5.20</literal>
+	  (read: frequency 20, starting with the observation for
+	  period 1, unit 01, and ending with the observation for
+	  period 5, unit 20).  One refers to the observation for unit
+	  2, period 5 as <literal>5.02</literal>.</para></listitem>
     </itemizedlist>
 
     <para>If you decide to construct a panel data set using a
       spreadsheet program first, then bring the data into
       <application>gretl</application> as a CSV import, the program
       will (probably) not at first recognize the special nature of the
-      data.  You can fix this by using the command <command>setobs</command>
-      (see <xref linkend="cmdref"/>) or the GUI menu item <quote>Sample,
-	Set frequency, startobs&hellip;</quote>.</para>
+      data.  You can fix this by using the command
+      <command>setobs</command> (see <xref linkend="cmdref"/>) or the
+      GUI menu item
+      <quote>Sample, Set frequency, startobs&hellip;</quote>.</para>
 
     <sect1 id="dummies"><title>Dummy variables</title>
 
@@ -1867,12 +1872,12 @@
       comment lines are permitted in a loop (as shown in the example),
       they cannot run over more than one line.</para>
 
-    <para>The command <command>nulldata</command> is useful for Monte Carlo
-      work.  Instead of opening a <quote>real</quote> data set,
-      <command>nulldata 50</command> (for instance) opens an empty data set,
-      with only a constant, with a series length of 50.  Constructed
-      variables can then be added using the <command>genr</command>
-      command.</para>  
+    <para>The command <command>nulldata</command> is useful for Monte
+	Carlo work.  Instead of opening a <quote>real</quote> data
+	set, <command>nulldata 50</command> (for instance) opens an
+	empty data set, with only a constant, with a series length of
+	50.  Constructed variables can then be added using the
+	<command>genr</command> command.</para>  
 
     <para>See the <command>seed</command> command in 
       <xref linkend="cmdref"/> for information on generating
@@ -1888,12 +1893,13 @@
       nonlinear models.</para>
 
     <para>To open this second sort of loop you need to specify a
-      <emphasis>condition</emphasis> rather than an unconditional number of times
-      to iterate.  This should take the form of the keyword
-      <command>while</command> followed by an inequality: the left-hand term
-      should be the name of a variable that is already defined; the
-      right-hand side may be either a numerical constant or the name
-      of another predefined variable.  For example,</para> 
+	<emphasis>condition</emphasis> rather than an unconditional
+	number of times to iterate.  This should take the form of the
+	keyword <command>while</command> followed by an inequality:
+	the left-hand term should be the name of a variable that is
+	already defined; the right-hand side may be either a numerical
+	constant or the name of another predefined variable.  For
+	example,</para> 
 
     <para>
       <command> loop while essdiff > .00001 
@@ -2490,7 +2496,7 @@
 		</mml:msub>
 		<mml:mo>+</mml:mo>
 		<mml:msub>
-		  <mml:mi>&egr;</mml:mi>
+		  <mml:mi>&epsiv;</mml:mi>
 		  <mml:mi>t</mml:mi>
 		</mml:msub>
 	      </mml:mrow>
@@ -5876,9 +5882,66 @@
       <application>gretl</application> does a good job of tracking the
       certified results. (Total run time for the tests was 0.195
       seconds on a 333MHz i686 machine running GNU/Linux.)  With the
-      <filename>Filip</filename> data set, where the model is $$y_t =
-      \beta_0 + \beta_1 x_t + \beta_2 x^2_t + \beta_3 x^3_t + \cdots +
-      \beta_{10} x^{10}_t + \epsilon$$
+      <filename>Filip</filename> data set, where the model is 
+
+      <informalequation>
+	<!--
+	<texmath figfile="poly">
+	$y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots +\beta_{10}x^{10}_t+\epsilon$
+	</texmath>
+	-->
+	<mml:math>
+	  <mml:msub>
+	    <mml:mi>y</mml:mi>
+	    <mml:mi>t</mml:mi>
+	  </mml:msub>
+	  <mml:mo>=</mml:mo>
+	  <mml:msub>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mi>0</mml:mi>
+	  </mml:msub>
+	  <mml:mo>+</mml:mo>
+	  <mml:msub>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mi>1</mml:mi>
+	  </mml:msub>
+	  <mml:msub>
+	    <mml:mi>x</mml:mi>
+	    <mml:mi>t</mml:mi>
+	  </mml:msub>
+	  <mml:mo>+</mml:mo>
+	  <mml:msub>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mi>2</mml:mi>
+	  </mml:msub>
+	  <mml:msubsup>
+	    <mml:mi>x</mml:mi>
+	    <mml:mi>t</mml:mi>
+	    <mml:mn>2</mml:mn>
+	  </mml:msubsup>
+	  <mml:mo>+</mml:mo>
+	  <mml:msub>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mi>3</mml:mi>
+	  </mml:msub>
+	  <mml:msubsup>
+	    <mml:mi>x</mml:mi>
+	    <mml:mi>t</mml:mi>
+	    <mml:mn>3</mml:mn>
+	  </mml:msubsup>	  
+	  <mml:mo>+</mml:mo>
+	  <mml:msub>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mi>10</mml:mi>
+	  </mml:msub>
+	  <mml:msubsup>
+	    <mml:mi>x</mml:mi>
+	    <mml:mi>t</mml:mi>
+	    <mml:mn>10</mml:mn>
+	  </mml:msubsup>	
+	</mml:math>
+      </informalequation>
+
       <application>gretl</application> refuses to produce estimates
       due to a high degree of multicollinearity (the popular
       commercial econometrics program <citetitle>Eviews
@@ -5893,7 +5956,38 @@
       intercept. <application>gretl</application> reports the square
       of the correlation coefficient between the fitted and actual
       values of the dependent variable in this case, while the NIST
-      figure is $$R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}$$ There is
+      figure is 
+
+      <informalequation>
+	<!--
+	<texmath figfile="nistr2">
+	$R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}$
+	</texmath>
+	-->
+	<mml:math>
+	  <mml:msup>
+	    <mml:mi>R</mml:mi>
+	    <mml:mn>2</mml:mn>
+	  </mml:msup>
+	  <mml:mo>=</mml:mo>
+	  <mml:mn>1</mml:mn>
+	  <mml:mo>-</mml:mo>
+	  <mml:mfrac>
+	    <mml:mrow>
+	      <mml:mtext>ESS</mml:mtext>
+	    </mml:mrow>
+	    <mml:mrow>
+	      <mml:mo>&sum;</mml:mo>
+	      <mml:msup>
+		<mml:mi>y</mml:mi>
+		<mml:mn>2</mml:mn>
+	      </mml:msup>
+	    </mml:mrow>
+	  </mml:mfrac>
+	</mml:math>
+      </informalequation>
+
+      There is
       no universal agreement among statisticians on the
       <quote>correct</quote> formula (see for instance the discussion
       in Ramanathan, 1998, pp. 163&ndash;4). <citetitle>Eviews
@@ -5909,14 +6003,91 @@
       certified values, up to <application>gretl</application>'s
       precision.</para>
 
-    <para>As for the univariate summary statistics, the certified
+    <para>
+      As for the univariate summary statistics, the certified
       values given by NIST are for the sample mean, sample standard
       deviation and sample lag-1 autocorrelation coefficient.  NIST
       note that the latter statistic <quote>may have several
-	definitions</quote>. The certified value is computed as $$r_1
-      = \frac{\sum^T_2 (y_t - \bar{y})(y_{t-1} - \bar{y})}% {\sum^T_1
-      (y_t - \bar{y})^2}$$ while <application>gretl</application>
-      gives the correlation coefficient between $y_t$ and $y_{t-1}$.
+	definitions</quote>. The certified value is computed as 
+
+      <informalequation>
+	<!--
+	<texmath figfile="nistr1">
+	$r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})}{\sum^T_1 (y_t - \bar{y})^2}$
+	</texmath>
+	-->
+	<mml:math>
+	  <mml:msub>
+	    <mml:mi>r</mml:mi>
+	    <mml:mn>1</mml:mn>
+	  </mml:msub>
+	  <mml:mo>=</mml:mo>
+	  <mml:mfrac>
+	    <mml:mrow>
+	      <mml:msubsup>
+		<mml:mo>&sum;</mml:mo>
+		<mml:mn>2</mml:mn>
+		<mml:mi>T</mml:mi>
+	      </mml:msubsup>
+	      <mml:mo>(</mml:mo>
+	      <mml:msub>
+		<mml:mi>y</mml:mi>
+		<mml:mi>t</mml:mi>
+	      </mml:msub>
+              <mml:mo>-</mml:mo>
+	      <mml:mover accent="true">
+		<mml:mi>y</mml:mi>
+		<mml:mo>&OverBar;</mml:mo>
+	      </mml:mover>
+	      <mml:mo>)</mml:mo>
+              <mml:mo>(</mml:mo>
+	      <mml:msub>
+		<mml:mi>y</mml:mi>
+		<mml:mrow>
+		  <mml:mi>t</mml:mi>
+		  <mml:mo>-</mml:mo>
+		  <mml:mn>1</mml:mn>
+		</mml:mrow>
+	      </mml:msub>
+	      <mml:mo>-</mml:mo>
+	      <mml:mover accent="true">
+		<mml:mi>y</mml:mi>
+		<mml:mo>&OverBar;</mml:mo>
+	      </mml:mover>	      
+	      <mml:mo>)</mml:mo>
+            </mml:mrow>
+            <mml:mrow>
+	      <mml:msubsup>
+		<mml:mo>&sum;</mml:mo>
+		<mml:mn>1</mml:mn>
+		<mml:mi>T</mml:mi>
+	      </mml:msubsup>
+	      <mml:msup>
+		<mml:mrow>
+		  <mml:mo>(</mml:mo>
+		  <mml:msub>
+		    <mml:mi>y</mml:mi>
+		    <mml:mi>t</mml:mi>
+		  </mml:msub>
+		  <mml:mo>-</mml:mo>
+		  <mml:mover accent="true">
+		    <mml:mi>y</mml:mi>
+		    <mml:mo>&OverBar;</mml:mo>
+		  </mml:mover>
+		  <mml:mo>)</mml:mo>
+		</mml:mrow>
+		<mml:mn>2</mml:mn>
+	      </mml:msup>
+            </mml:mrow>
+          </mml:mfrac>
+         </mml:math>
+      </informalequation>
+      
+      while <application>gretl</application>
+      gives the correlation coefficient between 
+      <emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>
+      and
+      <emphasis>y</emphasis><subscript><emphasis>t</emphasis>&minus; 1</subscript>.
       For the purposes of comparison, the NIST figure was computed
       within <application>gretl</application> as follows:</para>
 
@@ -5989,7 +6160,7 @@
 	      </mml:msub>
 	      <mml:mo>+</mml:mo>
 	      <mml:msub>
-		<mml:mi>&egr;</mml:mi>
+		<mml:mi>&epsiv;</mml:mi>
 		<mml:mi>t</mml:mi>
 	      </mml:msub>
 	    </mml:mrow>
@@ -6000,25 +6171,26 @@
 	  variable</emphasis>, <emphasis>y</emphasis>, at observation
 	<emphasis>t</emphasis>, as a linear function (with intercept
 	&alpha; and slope &beta;) of a single <emphasis>independent
-	  variable</emphasis>, 
-	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>,
-	plus a random
-	<quote>error</quote> or <quote>disturbance</quote> term
-	&egr;<subscript><emphasis>t</emphasis></subscript>.
-	The random term may be thought of as summing up
-	various influences on $y_t$ not specified in the equation, or
-	as reflecting inherently stochastic behavior in $y_t$, or in
-	various other ways. The task of econometric estimation is to
-	provide estimates of the parameters &alpha; and &beta; (and
-	the variance, $\sigma^2$, of the error term), given some
-	actual data on <emphasis>x</emphasis> and
+	  variable</emphasis>,
+	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	plus a random <quote>error</quote> or
+	<quote>disturbance</quote> term
+	&epsiv;<subscript><emphasis>t</emphasis></subscript>. The random
+	term may be thought of as summing up various influences on
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
+	not specified in the equation, or as reflecting inherently
+	stochastic behavior in <emphasis>y</emphasis>, or in various
+	other ways. The task of econometric estimation is to provide
+	estimates of the parameters &alpha; and &beta; (and the
+	variance, &sigma;<superscript>2</superscript>, of the error
+	term), given some actual data on <emphasis>x</emphasis> and
 	<emphasis>y</emphasis>.</para> 
 
     </section>
 
     <section id="metrics-ols"><title>Least Squares</title>
 
-      <para>Provided that the distribution of &egr; satisfies
+      <para>Provided that the distribution of &epsiv; satisfies
 	certain conditions (it has a mean or expected value of zero;
 	it has a constant variance; it is uncorrelated across
 	observations; it is uncorrelated with the independent
@@ -6032,37 +6204,100 @@
 	Let the least-squares estimates of &alpha; and &beta; be
 	denoted by <emphasis>a</emphasis> and <emphasis>b</emphasis>:
 	we then represent the equation <quote>fitted</quote> via least
-	squares as $$\hat{y}_t = a + b x_t$$ We define the regression
-	<quote>residual</quote> as $y_t - \hat{y}_t$, the difference
-	between actual <emphasis>y</emphasis> at observation
-	<emphasis>t</emphasis> and the <quote>fitted</quote> or
-	predicted value (which lies on the least-squares regression
-	line). The least squares method consists in finding the
-	specific coefficient values <emphasis>a</emphasis> and
-	<emphasis>b</emphasis> which produce the smallest possible sum
-	of squared residuals. Provided the equation in view is indeed
-	linear, this is just an exercise in the differential calculus.
-	The sum of squared residuals (or estimated errors), ESS, is a
-	function of <emphasis>a</emphasis> and <emphasis>b</emphasis>
-	(and the data).  One takes the partial derivatives of ESS with
-	respect to both <emphasis>a</emphasis> and
-	<emphasis>b</emphasis> and sets them to zero, then solves the
-	resulting two equations for the implied <emphasis>a</emphasis>
-	and <emphasis>b</emphasis> values. The same principle extends
-	to higher-dimensional systems.</para>
+	squares as 
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="yhat">
+	  $\hat{y}_t = a + b x_t$
+	  </texmath
+	  -->
+	  <mml:math>
+	    <mml:msub>
+	      <mml:mover accent="true">
+		<mml:mi>y</mml:mi>
+		<mml:mo>&Hat;</mml:mo>
+	      </mml:mover>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:mi>a</mml:mi>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>b</mml:mi>
+	    <mml:msub>
+	      <mml:mi>x</mml:mi>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	  </mml:math>
+	</informalequation> 
+
+	We define the regression <quote>residual</quote> as 
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="resid">
+	  $\hat{\epsilon}_t = y_t - \hat{y}_t$
+	  </texmath
+	  -->
+	  <mml:math>
+	    <mml:msub>
+	      <mml:mover accent="true">
+		<mml:mi>&epsiv;</mml:mi>
+		<mml:mo>&Hat;</mml:mo>
+	      </mml:mover>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:msub>
+	      <mml:mi>y</mml:mi>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>-</mml:mo>
+	    <mml:msub>
+	      <mml:mover accent="true">
+		<mml:mi>y</mml:mi>
+		<mml:mo>&Hat;</mml:mo>
+	      </mml:mover>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	  </mml:math>
+	</informalequation> 
+
+	the difference between actual
+	<emphasis>y</emphasis> at observation <emphasis>t</emphasis>
+	and the <quote>fitted</quote> or predicted value (which lies
+	on the least-squares regression line). The least squares
+	method consists in finding the specific coefficient values
+	<emphasis>a</emphasis> and <emphasis>b</emphasis> which
+	produce the smallest possible sum of squared residuals.
+	Provided the equation in view is indeed linear, this is just
+	an exercise in the differential calculus. The sum of squared
+	residuals (or estimated errors), ESS, is a function of
+	<emphasis>a</emphasis> and <emphasis>b</emphasis> (and the
+	data).  One takes the partial derivatives of ESS with respect
+	to both <emphasis>a</emphasis> and <emphasis>b</emphasis> and
+	sets them to zero, then solves the resulting two equations for
+	the implied <emphasis>a</emphasis> and <emphasis>b</emphasis>
+	values. The same principle extends to higher-dimensional
+	systems.</para>
 
     </section>
 
     <section id="pop-and-sample"><title>Population and sample</title>
 
       <para>On the classical sampling paradigm, the actual observed
-	data $(x_t, y_t)$ from any given period are conceived as a
-	particular sample <emphasis>realization</emphasis> of the
-	(potentially infinite) <emphasis>population</emphasis> of
-	$x_t, y_t$ pairs that could have been observed, given
-	different possible <quote>drawings</quote> from the
-	distribution of the error term, $\epsilon_t$, in each
-	sub-period.  Application of the least-squares method
+	data
+	(<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>) 
+	from any given period are conceived as a particular sample
+	<emphasis>realization</emphasis> of the (potentially infinite)
+	<emphasis>population</emphasis> of
+	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
+	pairs that could have been observed, given different possible
+	<quote>drawings</quote> from the distribution of the error
+	term, &epsiv;<subscript><emphasis>t</emphasis></subscript>, in
+	each sub-period.  Application of the least-squares method
 	guarantees the <quote>best fit</quote> (in a well-defined
 	sense) to any given set of sample data, but data from any
 	finite sample may be more or less unrepresentative of the
@@ -6143,19 +6378,130 @@
       <para>As mentioned above, the least squares regression routines
 	in <application>gretl</application> presuppose a linear model.
 	This is not quite as restrictive as it may seem.  We require
-	an equation that is linear in its parameters, but this does
-	not necessarily mean that it is linear in the variables of
-	interest.  For example, all of the following equations
-	represent nonlinear relationships between
-	<emphasis>y</emphasis> and <emphasis>x</emphasis> that can
-	readily be estimated using OLS or similar: $$y_t = \alpha +
-	\beta(1/x_t) + \epsilon_t$$ $$y_t = \alpha + \beta x_t +
-	\gamma x^2_t + \epsilon_t$$ $$y_t = \alpha + \beta \log x_t +
-	\epsilon_t$$ $$\log y_t = \alpha + \beta \log x_t +
-	\epsilon_t$$ Of course there are nonlinear relationships that
-	cannot be reduced to linearity by this sort of change of
-	variables: OLS cannot deal with these; more complex estimators
-	are required. Of these additional estimators,
+	an equation that is linear in its
+	<emphasis>parameters</emphasis>, but this does not necessarily
+	mean that it is linear in the variables of interest.  For
+	example, all of the following equations represent nonlinear
+	relationships between <emphasis>y</emphasis> and
+	<emphasis>x</emphasis> that can readily be estimated using OLS
+	or similar:</para>
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="nonlin1">
+	  $y_t = \alpha + \beta(1/x_t) + \epsilon_t$
+	  </texmath>
+	  -->
+	  <mml:math>
+	    <mml:msub>
+	      <mml:mi>y</mml:mi>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:mi>&alpha;</mml:mi>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mo>(</mml:mo>
+	    <mml:mn>1</mml:mn>
+	    <mml:mo>/</mml:mo>
+	    <mml:msub>
+	      <mml:mi>x</mml:mi>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>)</mml:mo>
+	    <mml:mo>+</mml:mo>
+	    <mml:msub>
+	      <mml:mi>&epsiv;</mml:mi>
+	      <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo></mml:mo>
+	  </mml:math>
+	</informalequation>
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="nonlin2">
+	  $y_t = \alpha + \beta x_t + \gamma x^2_t + \epsilon_t$
+	  </texmath>
+	  -->	  
+	  <mml:math>
+	    <mml:msub>
+	      <mml:mi>y</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:mi>&alpha;</mml:mi>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:msub>
+	      <mml:mi>x</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>&gamma;</mml:mi>
+	    <mml:msubsup>
+	      <mml:mi>x</mml:mi> <mml:mi>t</mml:mi> <mml:mn>2</mml:mn>
+	    </mml:msubsup>
+	    <mml:mo>+</mml:mo>
+	    <mml:msub>
+	      <mml:mi>&epsiv;</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	  </mml:math>
+	</informalequation>
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="nonlin3">
+	  $y_t = \alpha + \beta \log x_t + \epsilon_t$
+	  </texmath>
+	  -->	  
+	  <mml:math>
+	    <mml:msub>
+	      <mml:mi>y</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:mi>&alpha;</mml:mi>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mtext>log</mml:mtext>
+	    <mml:msub>
+	      <mml:mi>x</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>+</mml:mo>
+	    <mml:msub>
+	      <mml:mi>&epsiv;</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	  </mml:math>
+	</informalequation>
+
+	<informalequation>
+	  <!-- 
+	  <texmath figfile="nonlin4">
+	  $\log y_t = \alpha + \beta \log x_t + \epsilon_t$
+	  </texmath>
+	  -->	  
+	  <mml:math>
+	    <mml:mtext>log</mml:mtext>
+	    <mml:msub>
+	      <mml:mi>y</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>=</mml:mo>
+	    <mml:mi>&alpha;</mml:mi>
+	    <mml:mo>+</mml:mo>
+	    <mml:mi>&beta;</mml:mi>
+	    <mml:mtext>log</mml:mtext>
+	    <mml:msub>
+	      <mml:mi>x</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	    <mml:mo>+</mml:mo>
+	    <mml:msub>
+	      <mml:mi>&epsiv;</mml:mi> <mml:mi>t</mml:mi>
+	    </mml:msub>
+	  </mml:math>
+	</informalequation>
+
+	<para>Of course there are nonlinear relationships that cannot
+	be reduced to linearity by this sort of change of variables:
+	OLS cannot deal with these; more complex estimators are
+	required. Of these additional estimators,
 	<application>gretl</application> offers only the logit and
 	probit models for a binomial dependent variable (but see also
 	<xref linkend="ils"/> above for the use of iterated least

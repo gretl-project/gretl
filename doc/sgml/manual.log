@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  28 SEP 2001 15:08
+This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  16 OCT 2001 16:03
 **manual
 (./manual.tex{/usr/share/texmf/tex/pdftex/base/pdftex.cfg}
 JadeTeX 2001/07/19: 3.11
@@ -530,24 +530,24 @@ LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
 
 ]
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <13.35974> not available
-(Font)              Font shape `T1/phv/b/it' tried instead on input line 6174.
+(Font)              Font shape `T1/phv/b/it' tried instead on input line 6177.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <13.35974> not available
-(Font)              Font shape `T1/phv/b/sl' tried instead on input line 6174.
+(Font)              Font shape `T1/phv/b/sl' tried instead on input line 6177.
 
 ! pdfTeX warning (ext4): destination with the same identifier (name{page.1}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.6678       \endPar{}
+l.6681       \endPar{}
                       \endNode{}\Node% [1.0.26
 
 
 
 ]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12.14523> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 6837.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 6840.
 
-Overfull \hbox (2.18053pt too wide) in paragraph at lines 7153--7172
+Overfull \hbox (2.18053pt too wide) in paragraph at lines 7156--7175
  /hlhr8t@9.57112pt/You will be prompted for a lo-ca-tion to in-stall the pack-a
 ge (the de-fault is []  /hlsrt8t@8.70477pt/c:\userdata\gretl/hlhr8t@9.57112pt/)
 . 
@@ -557,26 +557,26 @@ ge (the de-fault is []  /hlsrt8t@8.70477pt/c:\userdata\gretl/hlhr8t@9.57112pt/)
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7185 {1}}
+l.7188 {1}}
            \Seq% [2.0.26]
 ! pdfTeX warning (ext4): destination with the same identifier (name{page.3}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7300 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
+l.7303 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
                                                   {}\endNode{}\Node% [3.0.26
 ! pdfTeX warning (ext4): destination with the same identifier (name{updating}) 
 has been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.7300 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
+l.7303 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
                                                   {}\endNode{}\Node%]
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 6.16585pt on input line 7464.
+(Font)              scaled to size 6.16585pt on input line 7467.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 8.70477pt on input line 7512.
+(Font)              scaled to size 8.70477pt on input line 7515.
 LaTeX Font Info:    Font shape `T1/hlst/m/n' will be
-(Font)              scaled to size 7.91585pt on input line 7512.
+(Font)              scaled to size 7.91585pt on input line 7515.
 
 <figures/datafiles.png, id=1127, 400.60777pt x 290.86444pt>
 File: figures/datafiles.png Graphic file (type png)
@@ -586,18 +586,18 @@ File: figures/datafiles.png Graphic file (type png)
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7682 {1}}
+l.7685 {1}}
             [4.0.26
 
  <./figures/datafiles.png>]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <9.03365> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 7734.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 7737.
 
 <figures/mainwin.png, id=1151, 453.24889pt x 373.84111pt>
 File: figures/mainwin.png Graphic file (type png)
 
 <use figures/mainwin.png>
-Overfull \hbox (31.67766pt too wide) detected at line 7826
+Overfull \hbox (31.67766pt too wide) detected at line 7829
  [] 
  []
 
@@ -605,78 +605,78 @@ Overfull \hbox (31.67766pt too wide) detected at line 7826
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7842 {1}}
+l.7845 {1}}
             [5.0.26 <./figures/mainwin.png>]
 ! pdfTeX warning (ext4): destination with the same identifier (name{page.6}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.8171 ...ce.\endPar{}\endNode{}\endDisplayGroup{}
+l.8174 ...ce.\endPar{}\endNode{}\endDisplayGroup{}
                                                   \endNode{}\endSeq{}\endDis...
 [6.0.26] [7.0.26]
 LaTeX Font Info:    Font shape `TS1/hlh/m/n' will be
-(Font)              scaled to size 7.81813pt on input line 8360.
+(Font)              scaled to size 7.81813pt on input line 8363.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 7.1814pt on input line 8398.
+(Font)              scaled to size 7.1814pt on input line 8401.
 LaTeX Font Info:    Font shape `TS1/hlh/m/n' will be
-(Font)              scaled to size 7.1814pt on input line 8398.
+(Font)              scaled to size 7.1814pt on input line 8401.
 LaTeX Font Info:    Calculating math sizes for size <10.03738> on input line 87
-82.
+85.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8782.
+(Font)              scaled to size 7.008pt on input line 8785.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8782.
+(Font)              scaled to size 5.25848pt on input line 8785.
 LaTeX Font Info:    Try loading font information for OML+hlcm on input line 878
-2.
+5.
  (/usr/share/texmf/tex/latex/sitefonts/omlhlcm.fd
 File: omlhlcm.fd 1997/02/20 v4.1 Lucida New Math Italic(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 9.57112pt on input line 8782.
+(Font)              scaled to size 9.57112pt on input line 8785.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 7.008pt on input line 8782.
+(Font)              scaled to size 7.008pt on input line 8785.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 5.25848pt on input line 8782.
+(Font)              scaled to size 5.25848pt on input line 8785.
 LaTeX Font Info:    Try loading font information for OMS+hlcy on input line 878
-2.
+5.
 
 (/usr/share/texmf/tex/latex/sitefonts/omshlcy.fd
 File: omshlcy.fd 1997/02/20 v4.1 Lucida New Math Symbols(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8782.
+(Font)              scaled to size 9.57112pt on input line 8785.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8782.
+(Font)              scaled to size 7.008pt on input line 8785.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8782.
+(Font)              scaled to size 5.25848pt on input line 8785.
 LaTeX Font Info:    Try loading font information for OMX+hlcv on input line 878
-2.
+5.
 
 (/usr/share/texmf/tex/latex/sitefonts/omxhlcv.fd
 File: omxhlcv.fd 1997/02/20 v4.1 Lucida New Math Extension(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8782.
+(Font)              scaled to size 9.57112pt on input line 8785.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8782.
+(Font)              scaled to size 7.008pt on input line 8785.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8782.
-LaTeX Font Info:    Try loading font information for U+msa on input line 8782.
+(Font)              scaled to size 5.25848pt on input line 8785.
+LaTeX Font Info:    Try loading font information for U+msa on input line 8785.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 1995/01/05 v2.2e AMS font definitions
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 8782.
+LaTeX Font Info:    Try loading font information for U+msb on input line 8785.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 1995/01/05 v2.2e AMS font definitions
 )
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8782.
+(Font)              scaled to size 9.57112pt on input line 8785.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8782.
+(Font)              scaled to size 7.008pt on input line 8785.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8782.
+(Font)              scaled to size 5.25848pt on input line 8785.
  [8.0.26
 
 ] [9.0.26] [10.0.26]
@@ -687,10 +687,10 @@ File: figures/session.png Graphic file (type png)
 
 <use figures/session.png> [12.0.26 <./figures/session.png>]
 LaTeX Font Info:    Font shape `T1/hlst/m/it' in size <10.03738> not available
-(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 11062
+(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 11068
 .
 LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
-(Font)              scaled to size 9.57112pt on input line 11062.
+(Font)              scaled to size 9.57112pt on input line 11068.
  [13.0.26] [14.0.26] [15.0.26
 
 ] [16.0.26] [17.0.26] [18.0.26] [19.0.26] [20.0.26] [21.0.26
@@ -707,18 +707,18 @@ File: figures/plot_control.png Graphic file (type png)
 
 ] [29.0.26] [30.0.26]
 LaTeX Font Info:    Font shape `T1/hlst/bx/n' in size <12.02377> not available
-(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17299.
+(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17308.
 
 LaTeX Font Info:    Font shape `T1/hlst/b/n' will be
-(Font)              scaled to size 11.2238pt on input line 17299.
+(Font)              scaled to size 11.2238pt on input line 17308.
  [31.0.26
 
 ]
 LaTeX Font Info:    Font shape `T1/hlst/m/it' in size <9.03365> not available
-(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18569
+(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18578
 .
 LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
-(Font)              scaled to size 8.70477pt on input line 18569.
+(Font)              scaled to size 8.70477pt on input line 18578.
  [32.0.26] [33.0.26] [34.0.26] [35.0.26
 
 ] [36.0.26] [37.0.26] [38.0.26] [39.0.26] [40.0.26
@@ -726,44 +726,47 @@ LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
 has been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.23945 {1}}
+l.23954 {1}}
             \Seq%] [41.0.26] [42.0.26] [43.0.26
 ! pdfTeX warning (ext4): destination with the same identifier (name{gnuplot}) h
 as been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.26401 {1}}
+l.26410 {1}}
             \Node%] [44.0.26] [45.0.26] [46.0.26] [47.0.26] [48.0.26] [49.0.26]
 [50.0.26] [51.0.26] [52.0.26] [53.0.26] [54.0.26] [55.0.26
 ! pdfTeX warning (ext4): destination with the same identifier (name{tsls}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.36191       \endPar{}
+l.36200       \endPar{}
                        \endNode{}\endSeq{}\endDisplayGroup{}\endNode{}\endSe...
 ] [56.0.26] [57.0.26] [58.0.26
 
 ] [59.0.26
 
 ]
-Overfull \hbox (17.09665pt too wide) in paragraph at lines 39155--39163
+Overfull \hbox (17.09665pt too wide) in paragraph at lines 39164--39172
  []/hlhr8t@9.57112pt/These are de-scribed in de-tail in [][]Chap-ter 11[][]. Th
 ey are briefly sum-ma-rized in Ta-ble~\ref{cmdtab}. 
  []
 
 [60.0.26] [61.0.26]
 LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
-(Font)              scaled to size 8.70477pt on input line 39697.
+(Font)              scaled to size 8.70477pt on input line 39706.
  [62.0.26
 
-] [63.0.26] [64.0.26] [65.0.26
+]
+LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
+(Font)              scaled to size 6.16585pt on input line 40892.
+ [63.0.26] [64.0.26] [65.0.26
 
 ] [66.0.26] [67.0.26] [68.0.26
 
 ] [69.0.26
 
 ]
-Overfull \hbox (2.51035pt too wide) in paragraph at lines 42660--42667
+Overfull \hbox (2.51035pt too wide) in paragraph at lines 43771--43778
  []/hlhr8t@9.57112pt/Greene, William H. (2000) /hlhri8t@9.57112pt/Econo-met-ric
  Analy-sis/hlhr8t@9.57112pt/, 4th edi-tion, Up-per Sad-dle River, NJ: Prentice-
 
@@ -773,16 +776,16 @@ Overfull \hbox (2.51035pt too wide) in paragraph at lines 42660--42667
 
 ] (./manual.aux) ) 
 Here is how much of TeX's memory you used:
- 7814 strings out of 41056
- 60208 string characters out of 347609
- 157187 words of memory out of 263001
- 17630 multiletter control sequences out of 10000+50000
- 59326 words of font info for 94 fonts, out of 200000 for 1000
+ 8118 strings out of 41056
+ 61843 string characters out of 347609
+ 157199 words of memory out of 263001
+ 17833 multiletter control sequences out of 10000+50000
+ 60244 words of font info for 96 fonts, out of 200000 for 1000
  15 hyphenation exceptions out of 1000
  28i,12n,39p,684b,4511s stack positions out of 1500i,500n,1500p,12000b,5000s
-</usr/local/psfonts/lucida/lbms.pfb>{/usr/share/texmf/dvips/8
-r.enc}</usr/local/psfonts/lucida/lstb.pfb></usr/local/psfonts/lucida/lsto.pfb><
-/usr/local/psfonts/lucida/lbmo.pfb></usr/local/psfonts/lucida/lstr.pfb></usr/lo
-cal/psfonts/lucida/lbd.pfb></usr/local/psfonts/lucida/lbi.pfb></usr/local/psfon
-ts/lucida/lbr.pfb>
-Output written on manual.pdf (76 pages, 663950 bytes).
+</usr/local/psfonts/lucida/lbme.pfb></usr/local/psfonts/lucid
+a/lbms.pfb>{/usr/share/texmf/dvips/8r.enc}</usr/local/psfonts/lucida/lstb.pfb><
+/usr/local/psfonts/lucida/lsto.pfb></usr/local/psfonts/lucida/lbmo.pfb></usr/lo
+cal/psfonts/lucida/lstr.pfb></usr/local/psfonts/lucida/lbd.pfb></usr/local/psfo
+nts/lucida/lbi.pfb></usr/local/psfonts/lucida/lbr.pfb>
+Output written on manual.pdf (76 pages, 677483 bytes).

@@ -30,7 +30,7 @@ while ($line = <MAN>) {
         print "Got figfile: $figfile\n";
         $line = <MAN>;
         chomp($line);
-        $line =~ s/\s+//g;
+        $line =~ s/\s+/ /g;
         print "read TeX: $line\n";
 	print "creating $figfile.png\n";
 	printtex();
