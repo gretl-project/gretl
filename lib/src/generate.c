@@ -2990,6 +2990,19 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return pdinfo->v;
 }
 
+static int descindex (const DATAINFO *pdinfo, const char *desc)
+{
+    int i;
+
+    for (i=0; i<pdinfo->v; i++) { 
+	if (!strcmp(VARLABEL(pdinfo, i), desc)) { 
+	    return i;
+	}
+    }
+
+    return pdinfo->v;
+}
+
 /* ........................................................ */
 
 static void genrfree (GENERATE *genr)
@@ -3020,8 +3033,8 @@ static void genrfree (GENERATE *genr)
 
 int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    register int i;
-    int j, t, v, nvar = pdinfo->v, n = pdinfo->n;
+    int i, t, nlogs;
+    int v, newv, nvar = pdinfo->v, n = pdinfo->n;
     int check, le_zero;
     int l0 = list[0];
     double xx;
@@ -3029,20 +3042,26 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 
     if (dataset_add_vars(l0, pZ, pdinfo)) return -1;
 
-    j = 0;
+    nlogs = 0;
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
-	if (v == 0) continue; /* dont try to take log of constant */
+	if (v == 0) continue; /* don't try to take log of constant */
 	/* and don't try to take the log of a dummy variable */
-	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2))
+	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
 	    continue;
+	}
 	if (v < nvar)  { 
+	    newv = nvar + nlogs;
 	    le_zero = 0;
-	    for (t=0; t<n; t++) (*pZ)[nvar+j][t] = NADBL;
+
+	    for (t=0; t<n; t++) {
+		(*pZ)[newv][t] = NADBL;
+	    }
+
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		xx = (pdinfo->vector[v])? (*pZ)[v][t] : (*pZ)[v][0];
 		if (xx <= 0.0) {
-		    (*pZ)[nvar+j][t] = NADBL;
+		    (*pZ)[newv][t] = NADBL;
 		    if (!na(xx)) {
 			sprintf(gretl_errmsg, 
 				_("Log error: Variable '%s', obs %d,"
@@ -3051,34 +3070,48 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 			le_zero = 1;
 		    }
 		}
-		else (*pZ)[nvar+j][t] = log(xx); 
+		else (*pZ)[newv][t] = log(xx); 
 	    }
-	    if (le_zero) continue;
+
+	    if (le_zero) {
+		continue;
+	    }
+
+	    /* create name for new var */
 	    strcpy(s, "l_");
 	    strcat(s, pdinfo->varname[v]);
-	    _esl_trunc(s, 8);
-	    strcpy(pdinfo->varname[nvar+j], s);
-	    strcat(s, _(" = log of "));
+	    _esl_trunc(s, VNAMELEN - 1);
+	    strcpy(pdinfo->varname[newv], s);
+
+	    /* write description of new var */
+	    strcpy(s, _(" = log of "));
 	    strcat(s, pdinfo->varname[v]);
-	    strcpy(VARLABEL(pdinfo, nvar+j), s);
-	    check = varindex(pdinfo, pdinfo->varname[j]);
+	    strcpy(VARLABEL(pdinfo, newv), s);
+
+	    /* have we duplicated an existing var? */
+	    check = descindex(pdinfo, VARLABEL(pdinfo, newv));
 	    if (check < nvar) {
 		if (pdinfo->vector[check]) {
-		    if (vars_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
-			j--;
-		    }
+		    if (vars_identical((*pZ)[check], (*pZ)[newv], n)) {
+			nlogs--;
+		    } 
 		}
 	    } 
 	} else varerror(s);
-	j++;
+	nlogs++;
+    }
+
+    /* ensure new vars have unique names */
+    for (i=nvar; i<nvar+nlogs; i++) {
+	make_varname_unique(pdinfo->varname[i], i, pdinfo);
     }
 
     /* shrink Z if warranted (not all vars logged) */
-    if (j < l0) dataset_drop_vars(l0 - j, pZ, pdinfo);
+    if (nlogs < l0) dataset_drop_vars(l0 - nlogs, pZ, pdinfo);
 
-    if (j == 0) j = -1;
+    if (nlogs == 0) nlogs = -1;
 
-    return j;
+    return nlogs;
 }
 
 /**
@@ -3206,8 +3239,9 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (terms < maxterms) 
+    if (terms < maxterms) {
 	dataset_drop_vars(maxterms - terms, pZ, pdinfo);
+    }
 
     return terms;
 }
