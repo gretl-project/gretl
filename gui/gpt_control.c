@@ -21,10 +21,6 @@
 
 #include "gretl.h"
 
-#ifdef G_OS_WIN32
-# include <windows.h>
-#endif
-
 struct gpt_titles_t {
     char *description; /* How the field will show up in the options dialog */
     short tab;         /* which tab (if any) does the item fall under? */
@@ -65,11 +61,7 @@ static void close_plot (GtkWidget *widget, gpointer data)
     GPT_SPEC *plot = (GPT_SPEC *) data;
 
     gpt_control = NULL;
-#ifdef G_OS_WIN32
-    if (plot->fp != NULL) fclose(plot->fp);
-#else
     pclose(plot->fp);
-#endif
     free_plot(plot);
 }    
 
@@ -717,17 +709,11 @@ void do_save_graph (const char *fname, char *savestr)
     fclose(fq);
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
 
-#ifdef G_OS_WIN32
-    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) {
-	err = 1;
-	errbox(_("Gnuplot error creating graph"));
-    }
-#else
     if (system(plotcmd)) {
 	err = 1;
 	errbox(_("Gnuplot error creating graph"));
     }
-#endif
+
     remove(plottmp);
     if (!err) infobox(_("Graph saved"));
 }

@@ -22,11 +22,7 @@
 #ifndef SESSION_H
 #define SESSION_H
 
-#ifndef G_OS_WIN32
-# include <gtkextra/gtkiconlist.h>
-#else
-# include "gtkiconlist.h"
-#endif 
+#include <gtkextra/gtkiconlist.h>
 
 typedef struct {
     gchar *name;

@@ -22,11 +22,7 @@
 #include "gretl.h"
 #include <unistd.h>
 
-#ifdef G_OS_WIN32
-# include <windows.h>
-#endif
-
-#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
+#ifndef USE_GNOME
 char rcfile[MAXLEN];
 #endif
 
@@ -62,9 +58,7 @@ static char scriptlist[MAXRECENT][MAXSTR], *scriptp[MAXRECENT];
 
 static void make_prefs_tab (GtkWidget *notebook, int tab);
 static void apply_changes (GtkWidget *widget, gpointer data);
-#ifndef G_OS_WIN32
 static void read_rc (void);
-#endif
 
 /* font handling */
 static char fontspec[MAXLEN] = 
@@ -652,83 +646,7 @@ static void read_rc (void)
 #endif
 }
 
-/* end of gnome versions, now win32 */
-#elif defined(G_OS_WIN32)
-
-void write_rc (void) 
-{
-    int i = 0;
-    char val[6];
-
-    while (rc_vars[i].key != NULL) {
-	if (rc_vars[i].type == 'B') {
-	    boolvar_to_str(rc_vars[i].var, val);
-	    write_reg_val(HKEY_CURRENT_USER, rc_vars[i].key, val);
-	} else
-	    write_reg_val((rc_vars[i].type == 'R')? 
-			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			  rc_vars[i].key, rc_vars[i].var);
-	i++;
-    }
-    printfilelist(1, NULL); /* data files */
-    printfilelist(2, NULL); /* session files */
-    printfilelist(3, NULL); /* script files */
-    set_paths(&paths, 0, 1);
-}
-
-void read_rc (void) 
-{
-    int i = 0;
-    char rpath[MAXSTR], value[MAXSTR];
-
-    while (rc_vars[i].key != NULL) {
-	if (read_reg_val((rc_vars[i].type == 'R')? 
-			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			 rc_vars[i].key, value) == 0) {
-	    if (rc_vars[i].type == 'B') {
-		str_to_boolvar(value, rc_vars[i].var);
-	    } else
-		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
-	}
-	i++;
-    }
-
-    /* initialize lists of recently opened files */
-    for (i=0; i<MAXRECENT; i++) { 
-	datalist[i][0] = 0;
-	sessionlist[i][0] = 0;
-	scriptlist[i][0] = 0;
-    }
-    /* get recent file lists */
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent data files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
-	    strcpy(datalist[i], value);
-	else break;
-    }    
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent session files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
-	    strcpy(sessionlist[i], value);
-	else break;
-    } 
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "recent script files\\%d", i);
-	if (read_reg_val(HKEY_CURRENT_USER, rpath, value) == 0) 
-	    strcpy(scriptlist[i], value);
-	else break;
-    }
-
-    set_paths(&paths, 0, 1);
-#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
-    set_tramo_x12a_dirs();
-#endif
-#ifdef ENABLE_NLS
-    set_lcnumeric();
-#endif
-}
-
-#else /* end of win32 versions, now plain GTK */
+#else /* plain GTK */
 
 void write_rc (void) 
 {
@@ -1073,31 +991,6 @@ static void printfilelist (int filetype, FILE *fp)
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
 	gnome_config_set_string(gpath, filep[i]);
-    }
-}
-
-#elif defined(G_OS_WIN32)
-
-static void printfilelist (int filetype, FILE *fp)
-     /* fp is ignored */
-{
-    int i;
-    char **filep;
-    char rpath[MAXLEN];
-    static char *section[] = {"recent data files",
-			      "recent session files",
-			      "recent script files"};
-
-    switch (filetype) {
-    case 1: filep = datap; break;
-    case 2: filep = sessionp; break;
-    case 3: filep = scriptp; break;
-    default: return;
-    }
-
-    for (i=0; i<MAXRECENT; i++) {
-	sprintf(rpath, "%s\\%d", section[filetype - 1], i);
-	write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
     }
 }
 

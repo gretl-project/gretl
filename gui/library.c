@@ -20,12 +20,7 @@
 /* lib.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
-#ifdef G_OS_WIN32 
-# include "../lib/src/cmdlist.h"
-# include <io.h>
-#else
-# include <unistd.h>
-#endif
+#include <unistd.h>
 
 #include "selector.h"
 
@@ -63,7 +58,7 @@ GtkItemFactoryEntry log_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
     { N_("/File/_Save As..."), NULL, file_save, SAVE_CMDS, NULL },
     { N_("/File/_Run"), NULL, do_run_script, SESSION_EXEC, NULL },
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef USE_GNOME
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -85,7 +80,7 @@ GtkItemFactoryEntry script_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" }, 
     { N_("/File/Save _As..."), NULL, file_save, SAVE_SCRIPT, NULL },
     { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef USE_GNOME
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -101,7 +96,7 @@ GtkItemFactoryEntry sample_script_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
     { N_("/File/_Save As..."), NULL, file_save, SAVE_SCRIPT, NULL },
     { N_("/File/_Run"), NULL, do_run_script, SCRIPT_EXEC, NULL },
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef USE_GNOME
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -113,7 +108,7 @@ GtkItemFactoryEntry sample_script_items[] = {
 GtkItemFactoryEntry script_out_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },    
     { N_("/File/Save _As..."), NULL, file_save, SAVE_OUTPUT, NULL },
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef USE_GNOME
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -123,7 +118,7 @@ GtkItemFactoryEntry script_out_items[] = {
 };
 
 GtkItemFactoryEntry view_items[] = {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#ifdef USE_GNOME
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },     
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
@@ -3473,71 +3468,6 @@ int do_store (char *mydatfile, int opt, int overwrite)
     return 0;
 }
 
-#ifdef G_OS_WIN32
-
-static void win_show_error (void)
-{
-    LPVOID buf;
-
-    FormatMessage( 
-		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
-		  FORMAT_MESSAGE_FROM_SYSTEM | 
-		  FORMAT_MESSAGE_IGNORE_INSERTS,
-		  NULL,
-		  GetLastError(),
-		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		  (LPTSTR) &buf,
-		  0,
-		  NULL 
-		  );
-    MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
-    LocalFree(buf);
-}
-
-static int get_latex_path (char *latex_path)
-{
-    int ret;
-    char *p;
-
-    ret = SearchPath(NULL, "latex.exe", NULL, MAXLEN, latex_path, &p);
-
-    return (ret == 0);
-}
-
-int winfork (char *cmdline, const char *dir, int wshow)
-{
-    int child;
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi; 
-
-    ZeroMemory(&si, sizeof(si));
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = wshow;
-
-    ZeroMemory(&pi, sizeof(pi));    
-
-    /* zero return means failure */
-    child = CreateProcess(NULL, cmdline, 
-			  NULL,NULL, FALSE,
-			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-			  NULL, dir,
-			  &si, &pi);
-
-    if (!child) {
-	win_show_error();
-	return 1;
-    }
-
-    WaitForSingleObject(pi.hProcess, INFINITE);    
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-
-    return 0;
-}
-
-#endif
-
 /* ........................................................... */
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
@@ -3566,40 +3496,17 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     *texbase = 0;
     strncat(texbase, texfile, dot);     
 
-#ifdef G_OS_WIN32
-    {
-	static char latex_path[MAXLEN];
-	char *texshort = strrchr(texbase, SLASH) + 1;
-
-	if (*latex_path == 0 && get_latex_path(latex_path)) {
-	    win_show_error();
-	    return;
-	}
-
-	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED)) {
-	    return;
-	} else {
-	    sprintf(tmp, "\"%s\" %s.dvi", viewdvi, texbase);
-	    if (WinExec(tmp, SW_SHOWNORMAL) < 32)
-		win_show_error();	
-	}
-    }
-#else
     sprintf(tmp, "cd %s && latex %s", paths.userdir, texbase);
     err = system(tmp);
     if (err) 
 	errbox("Failed to run latex");
     else 
 	gretl_fork(viewdvi, texbase);
-#endif
 
     remove(texfile);
-#ifndef G_OS_WIN32
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
     remove(tmp);
-#endif
     sprintf(tmp, "%s.log", texbase);
     remove(tmp);
     sprintf(tmp, "%s.aux", texbase);

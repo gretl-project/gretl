@@ -3,45 +3,6 @@
 #ifndef WEBGET_H
 #define WEBGET_H
 
-#ifdef OS_WIN32
-/*  #define REALCLOSE(x) closesocket (x) */
-#define EWOULDBLOCK             WSAEWOULDBLOCK
-#define EINPROGRESS             WSAEINPROGRESS
-#define EALREADY                WSAEALREADY
-#define ENOTSOCK                WSAENOTSOCK
-#define EDESTADDRREQ            WSAEDESTADDRREQ
-#define EMSGSIZE                WSAEMSGSIZE
-#define EPROTOTYPE              WSAEPROTOTYPE
-#define ENOPROTOOPT             WSAENOPROTOOPT
-#define EPROTONOSUPPORT         WSAEPROTONOSUPPORT
-#define ESOCKTNOSUPPORT         WSAESOCKTNOSUPPORT
-#define EOPNOTSUPP              WSAEOPNOTSUPP
-#define EPFNOSUPPORT            WSAEPFNOSUPPORT
-#define EAFNOSUPPORT            WSAEAFNOSUPPORT
-#define EADDRINUSE              WSAEADDRINUSE
-#define EADDRNOTAVAIL           WSAEADDRNOTAVAIL
-#define ENETDOWN                WSAENETDOWN
-#define ENETUNREACH             WSAENETUNREACH
-#define ENETRESET               WSAENETRESET
-#define ECONNABORTED            WSAECONNABORTED
-#define ECONNRESET              WSAECONNRESET
-#define ENOBUFS                 WSAENOBUFS
-#define EISCONN                 WSAEISCONN
-#define ENOTCONN                WSAENOTCONN
-#define ESHUTDOWN               WSAESHUTDOWN
-#define ETOOMANYREFS            WSAETOOMANYREFS
-#define ETIMEDOUT               WSAETIMEDOUT
-#define ECONNREFUSED            WSAECONNREFUSED
-#define ELOOP                   WSAELOOP
-#define EHOSTDOWN               WSAEHOSTDOWN
-#define EHOSTUNREACH            WSAEHOSTUNREACH
-#define EPROCLIM                WSAEPROCLIM
-#define EUSERS                  WSAEUSERS
-#define EDQUOT                  WSAEDQUOT
-#define ESTALE                  WSAESTALE
-#define EREMOTE                 WSAEREMOTE
-#endif
-
 /* Document-type flags */
 enum {
     TEXTHTML      = 0x0001,	/* document is of type text/html */
@@ -96,18 +57,12 @@ typedef enum {
 
 #define RBUF_FD(rbuf) ((rbuf)->fd)
 
-/* read & write don't work with sockets on Windows 95. */
-#ifdef OS_WIN32
-# define READ(fd, buf, cnt) recv ((fd), (buf), (cnt), 0)
-# define WRITE(fd, buf, cnt) send ((fd), (buf), (cnt), 0)
-#else
-# ifndef READ
-#  define READ(fd, buf, cnt) read((fd), (buf), (cnt))
-# endif
-# ifndef WRITE
-#  define WRITE(fd, buf, cnt) write((fd), (buf), (cnt))
-# endif
-#endif /* OS_WIN32 */
+#ifndef READ
+# define READ(fd, buf, cnt) read((fd), (buf), (cnt))
+#endif
+#ifndef WRITE
+# define WRITE(fd, buf, cnt) write((fd), (buf), (cnt))
+#endif
 
 struct proto {
     char *name;

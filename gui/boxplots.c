@@ -21,12 +21,7 @@
 
 #include "gretl.h"
 
-#ifndef G_OS_WIN32
-# include <gtkextra/gtkextra.h>
-#else
-# include "gtkextra.h"
-# include <windows.h>
-#endif
+#include <gtkextra/gtkextra.h>
 
 typedef struct {
     int n;
@@ -66,12 +61,7 @@ int boxfontsize = 12;
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
 int dump_boxplot (PLOTGROUP *grp, const char *fname);
-
-#ifdef G_OS_WIN32
-static int cb_copy_image (gpointer data);
-#else
 int plot_to_xpm (const char *fname, gpointer data);
-#endif
 
 /* ............................................................. */
 
@@ -131,15 +121,9 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
     }
-#ifdef G_OS_WIN32
-    else if (key->keyval == GDK_c) {  
-	cb_copy_image(data);
-    }
-#else
     else if (key->keyval == GDK_c) { 
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, data);	
     }
-#endif
     return TRUE;
 }
 
@@ -161,13 +145,8 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, ptr);
     else if (!strcmp(item, _("Save as PS..."))) 
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, ptr);
-#ifdef G_OS_WIN32
-    else if (!strcmp(item, _("Copy to clipboard")))
-	cb_copy_image(ptr);
-#else
     else if (!strcmp(item, _("Save as XPM...")))
         file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, ptr);
-#endif
     else if (!strcmp(item, _("Help")))
 	context_help (NULL, GINT_TO_POINTER(GR_BOX));
     else if (!strcmp(item, _("Close"))) { 
@@ -192,11 +171,7 @@ static GtkWidget *build_menu (gpointer data)
 	N_("Save to session as icon"),
         N_("Save as EPS..."),
         N_("Save as PS..."),
-#ifdef G_OS_WIN32
-	N_("Copy to clipboard"),
-#else
 	N_("Save as XPM..."),
-#endif
 	N_("Help"),
         N_("Close"),
 	NULL
@@ -1005,140 +980,6 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 
 /* copy functions */
 
-#ifdef G_OS_WIN32
-
-static int cb_copy_image (gpointer data)
-{
-    PLOTGROUP *grp = (PLOTGROUP *) data;
-    GdkImage *image;
-    int i;
-    guint32 pixel, white_pixel;
-    size_t image_bytes, dibsize, linelen;
-    size_t palsize = sizeof(RGBQUAD) * 2;
-    HANDLE hDIB;
-    BOOL ret;
-    BITMAPINFOHEADER *hdr;
-
-    image = gdk_image_get(grp->pixmap, 0, 0, 
-			  grp->width, grp->height);
-
-    white_pixel = pow(2, image->depth) - 1;
-    linelen = ((grp->width/8 - 1)/4 + 1) * 4;
-    image_bytes = grp->height * linelen;
-
-    /* allocate room for DIB */
-    dibsize = sizeof(BITMAPINFOHEADER) + palsize + image_bytes;
-
-    hDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
-    if (hDIB == NULL) {
-	    errbox (_("Failed to allocate DIB"));
-	    return FALSE;
-    }
-
-    /* fill header info */
-    ret = FALSE;
-    hdr = GlobalLock(hDIB);
-    if (hdr) {
-	hdr->biSize = sizeof(BITMAPINFOHEADER);
-	hdr->biWidth = grp->width;
-	hdr->biHeight = grp->height; 
-	hdr->biPlanes = 1;
-	hdr->biBitCount = 1;
-	hdr->biCompression = BI_RGB; /* none */
-	hdr->biSizeImage = image_bytes; /* not needed? */
-	hdr->biXPelsPerMeter = 0;
-	hdr->biYPelsPerMeter = 0;
-	hdr->biClrUsed = 0; 
-	hdr->biClrImportant = 0; /* all */
-          
-	GlobalUnlock(hDIB);
-	ret = TRUE;
-    } else 
-	errbox(_("Failed to lock DIB Header"));
-
-    /* fill color map */
-    if (ret) {
-	char *bmp = GlobalLock(hDIB);
-      
-	ret = FALSE;
-	if (bmp) {
-	    RGBQUAD *pal = (RGBQUAD *)(bmp + sizeof(BITMAPINFOHEADER));
-
-	    /* white, for cleared bits */
-	    pal[0].rgbBlue = pal[0].rgbGreen = pal[0].rgbRed = 255;
-	    pal[0].rgbReserved = 0;
-	    /* black, for set bits */
-	    pal[1].rgbBlue = pal[1].rgbGreen = pal[1].rgbRed = 0;
-	    pal[1].rgbReserved = 0;
-	  
-	    ret = TRUE;
-	    GlobalUnlock(hDIB);
-	} else
-	    errbox (_("Failed to lock DIB Palette"));
-    } 
-  
-    /* copy data to DIB */
-    if (ret) {
-	unsigned char *data = GlobalLock(hDIB);
-      
-	ret = FALSE;
-	if (data) {
-	    unsigned char c;
-	    int x, y;
-	    int pad = linelen - grp->width/8 - (grp->width % 8 > 0);
-	    
-	    data += (sizeof(BITMAPINFOHEADER) + palsize);
-
-	    for (y=grp->height-1; y>=0; y--) {
-		i = 0; c = 0;
-		for (x=0; x<grp->width; x++) {
-		    pixel = gdk_image_get_pixel(image, x, y);
-		    if (pixel != white_pixel) c |= (1 << (7-i)); 
-		    i++;
-		    if (i == 8) { /* done 8 bits -> ship out char */
-			*data++ = c;
-			i = 0;
-			c = 0;
-		    }
-		}
-		for (i=0; i<pad; i++) *data++ = 0;
-	    }
-	    ret = TRUE;
-	    GlobalUnlock (hDIB);
-	} else 
-	    errbox(_("Failed to lock DIB Data"));
-    } /* copy data to DIB */
-  
-    /* copy DIB to ClipBoard */
-    if (ret) {      
-	if (!OpenClipboard (NULL)) {
-	    errbox (_("Cannot open the Clipboard!"));
-	    ret = FALSE;
-	} else {
-	    if (ret && !EmptyClipboard ()) {
-		errbox (_("Cannot empty the Clipboard"));
-		ret = FALSE;
-	    }
-	    if (ret) {
-		if (NULL != SetClipboardData (CF_DIB, hDIB))
-		    hDIB = NULL; /* data now owned by clipboard */
-		else
-		    errbox (_("Failed to set clipboard data"));
-	    }
-	    if (!CloseClipboard ())
-		errbox (_("Failed to close Clipboard"));
-	}
-    }
-    /* done */
-    if (hDIB) GlobalFree(hDIB);
-  
-    gdk_image_destroy (image);
-  
-    return ret;
-} 
-
-#else /* end G_OS_WIN32 */
-
 int plot_to_xpm (const char *fname, gpointer data)
 {    
     PLOTGROUP *grp = (PLOTGROUP *) data;
@@ -1183,8 +1024,6 @@ int plot_to_xpm (const char *fname, gpointer data)
 
     return 0;
 }
-
-#endif 
 
 static void read_boxrc (PLOTGROUP *grp)
 {

@@ -20,13 +20,8 @@
 #include "gretl.h"
 #include <errno.h>
 #include <ctype.h>
-#ifndef G_OS_WIN32
-# include <gtkextra/gtksheet.h>
-# include <gtkextra/gtkitementry.h>
-#else
-# include <gtksheet.h>
-# include <gtkitementry.h>
-#endif
+#include <gtkextra/gtksheet.h>
+#include <gtkextra/gtkitementry.h>
 
 #define DEFAULT_PRECISION 6
 #define DEFAULT_SPACE 8

@@ -33,14 +33,10 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef G_OS_WIN32
-# include <winsock.h>
-#else
-# include <sys/socket.h>
-# include <netdb.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-#endif /* G_OS_WIN32 */
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "webget.h"
 
@@ -140,37 +136,6 @@ static uerr_t make_connection (int *sock, char *hostname,
 static int iread (int fd, char *buf, int len);
 static int iwrite (int fd, char *buf, int len);
 static char *print_option (int opt);
-
-#ifdef G_OS_WIN32
-static void ws_cleanup (void)
-{
-    WSACleanup();
-}
-
-/* ........................................................... */
-
-int ws_startup (void)
-{
-    WORD requested;
-    WSADATA data;
-
-    requested = MAKEWORD(1, 1);
-
-    if (WSAStartup(requested, &data)) {
-	fprintf(stderr, _("Couldn't find usable socket driver\n"));
-	return 1;
-    }
-
-    if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
-				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, _("Couldn't find usable socket driver\n"));
-	WSACleanup();
-	return 1;
-    }
-    atexit(ws_cleanup);
-    return 0;
-}
-#endif
 
 /* ........................................................... */
 
@@ -577,9 +542,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     range = NULL;
     sprintf(useragent, "gretl-%s", version_string);
-#ifdef G_OS_WIN32
-    strcat(useragent, "w");
-#endif
 
     request = mymalloc(strlen(command) + strlen(path)
 		       + strlen(useragent)
@@ -990,10 +952,6 @@ static int store_hostaddress (unsigned char *where, const char *hostname)
 	return 0;
 }
 
-#ifdef G_OS_WIN32
-#define ECONNREFUSED WSAECONNREFUSED
-#endif
-
 /* ........................................................... */
 
 static uerr_t make_connection (int *sock, char *hostname, unsigned short port)
@@ -1124,38 +1082,15 @@ static int get_update_info (char **saver, char *errbuf, time_t filedate,
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32
-static size_t get_size (char *buf)
-{
-    size_t i, newsize = 0L;
-    int pos;
-    char line[60];
-
-    while ((pos = haschar('\n', buf)) > 0) {
-	strncpy(line, buf, pos);
-	line[pos] = 0;
-	sscanf(line, "%*s %u", &i);
-	newsize += i;
-	buf += pos + 1;
-    }
-
-    return newsize;
-}
-#endif /* G_OS_WIN32 */
-
-/* ........................................................... */
-
 int update_query (int verbose)
 {
     int err = 0;
     char *getbuf = NULL;
     char errbuf[80];
     char testfile[MAXLEN];
-#ifndef G_OS_WIN32
     int admin = 0;
     char hometest[MAXLEN];
     FILE *fp;
-#endif
     struct stat fbuf;
     long filedate = 0L;
 
@@ -1167,7 +1102,6 @@ int update_query (int verbose)
 	return 1;
     } else {
 	filedate = fbuf.st_mtime;
-#ifndef G_OS_WIN32
 	hometest[0] = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
@@ -1177,7 +1111,6 @@ int update_query (int verbose)
 	    }
 	} else 
 	    admin = 1;
-#endif
     }
 
     getbuf = malloc(2048); 
@@ -1192,14 +1125,6 @@ int update_query (int verbose)
     } else if (strncmp(getbuf, "No new files", 12)) {
 	char infotxt[512];
 
-#ifdef G_OS_WIN32 
-	sprintf(infotxt, _("New files are available from the gretl web site.\n"
-		"These files have a combined size of %u bytes.\n\nIf you "
-		"would like to update your installation, please quit gretl\n"
-		"and run the program titled \"gretl updater\".\n\nOnce the "
-		"updater has completed you may restart gretl."),
-		get_size(getbuf));
-#else
 	if (admin) {
 	    strcpy(infotxt, _("New files are available from the gretl web site\n"
 		   "http://gretl.sourceforge.net/"));
@@ -1215,7 +1140,6 @@ int update_query (int verbose)
 		    "system\n"));
 	    fclose(fp);
 	}
-#endif /* G_OS_WIN32 */
 	infobox(infotxt);
     } else if (verbose) {
 	infobox(_("No new files"));
@@ -1330,66 +1254,3 @@ int retrieve_url (int opt, const char *dbase, const char *series,
     }
 }
 
-#ifdef G_OS_WIN32
-
-#include <windows.h>
-#include <shellapi.h>
-#include <string.h>
-
-long GetRegKey (HKEY key, char *subkey, char *retdata)
-{
-    long err;
-    HKEY hkey;
-
-    err = RegOpenKeyEx(key, subkey, 0, KEY_QUERY_VALUE, &hkey);
-
-    if (err == ERROR_SUCCESS) {
-	long datasize = MAX_PATH;
-	char data[MAX_PATH];
-
-	RegQueryValue(hkey, NULL, (LPSTR)data, &datasize);
-
-	lstrcpy(retdata, data);
-	RegCloseKey(hkey);
-    }
-
-    return err;
-}
-
-int goto_url (const char *url)
-{
-    char key[MAX_PATH + MAX_PATH];
-    int err = 0;
-
-    /* if the ShellExecute() fails */
-    if ((long)ShellExecute(NULL, "open", url, NULL, NULL, SW_SHOW) <= 32) {
-	/* get the .htm regkey and lookup the program */
-	if (GetRegKey(HKEY_CLASSES_ROOT, ".htm", key) == ERROR_SUCCESS) {
-	    lstrcat(key,"\\shell\\open\\command");
-	    if (GetRegKey(HKEY_CLASSES_ROOT, key, key) == ERROR_SUCCESS) {
-		char *pos;
-		pos = strstr(key,"\"%1\"");
-		if (pos == NULL) {    /* if no quotes */
-		    /* now check for %1, without the quotes */
-		    pos = strstr(key, "%1");
-		    if(pos == NULL) /* if no parameter */
-			pos = key + lstrlen(key) - 1;
-		    else
-			*pos = '\0';    /* remove the parameter */
-		}
-		else
-		    *pos = '\0';        /* remove the parameter */
-
-		lstrcat(pos, " ");
-		lstrcat(pos, url);
-		if (WinExec(key, SW_SHOW) < 32) err = 1;
-	    }
-	}
-    }
-    else
-	err = 0;
-
-    return err;
-}
-
-#endif

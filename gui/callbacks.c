@@ -21,9 +21,7 @@
 
 #include "gretl.h"
 #include "selector.h"
-#ifndef G_OS_WIN32
-# include <gtkextra/gtkiconfilesel.h>
-#endif
+#include <gtkextra/gtkiconfilesel.h>
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
 extern void browser_open_ps (GtkWidget *w, gpointer data);

@@ -22,11 +22,7 @@
 #ifndef GUIPRINT_H
 #define GUIPRINT_H
 
-#ifdef G_OS_WIN32
-int win_copy_text (PRN *prn, int format);
-#endif
-
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
+#ifdef USE_GNOME
 void winprint (char *fullbuf, char *selbuf);
 #endif
 

@@ -1,10 +1,6 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
-#ifdef G_OS_WIN32
-void read_rc (void);
-#endif
-
 void set_rcfile (void);
 
 void write_rc (void);

@@ -24,12 +24,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifndef G_OS_WIN32
-# include <gtkextra/gtkextra.h>
-#else
-# include "gtkextra.h"
-# include <windows.h>
-#endif
+#include <gtkextra/gtkextra.h>
 
 #include "../pixmaps/model.xpm"
 #include "../pixmaps/boxplot.xpm"
@@ -1317,15 +1312,9 @@ static void open_gui_graph (gui_obj *gobj)
     char buf[MAXLEN];
     GRAPHT *graph = (GRAPHT *) gobj->data;
 
-#ifdef G_OS_WIN32
-    sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, graph->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32)
-	errbox(_("gnuplot command failed"));
-#else
     sprintf(buf, "gnuplot -persist \"%s\"", graph->fname);
     if (system(buf))
 	errbox(_("gnuplot command failed"));
-#endif
 }
 
 /* ........................................................... */
@@ -1402,15 +1391,9 @@ static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 
     auto_save_gp(data, 1, NULL);
 
-#ifdef G_OS_WIN32
-    sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, mydata->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32)
-        errbox(_("gnuplot command failed"));
-#else
     sprintf(buf, "gnuplot -persist \"%s\"", mydata->fname);
     if (system(buf))
         errbox(_("gnuplot command failed"));
-#endif
 }
 
 

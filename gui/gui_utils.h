@@ -3,7 +3,7 @@
 
 /* functions follow */
 
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
+#ifdef USE_GNOME
 void window_print (windata_t *mydata, guint u, GtkWidget *widget);
 #endif
 

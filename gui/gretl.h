@@ -22,15 +22,13 @@
 #ifndef GRETL_H
 #define GRETL_H
 
-#ifdef OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-# include <gtkextra/gtkiconfilesel.h>
-# ifdef USE_GNOME
-#   include <gnome.h>
-# endif
+#include "../config.h"
+#include <gtkextra/gtkiconfilesel.h>
+
+#ifdef USE_GNOME
+# include <gnome.h>
 #endif
+
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
 #include "libgretl.h"
@@ -248,9 +246,7 @@ enum data_status {
 
 /* functions follow */
 
-#ifndef G_OS_WIN32
 void gretl_fork (const char *prog, const char *arg);
-#endif
  
 void menubar_state (gboolean s);
 
@@ -287,11 +283,6 @@ int retrieve_url (int opt, const char *dbase, const char *series,
 		  int filesave, char **saver, char *errbuf);
 int proxy_init (const char *dbproxy);
 
-
-#ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);
-#else
-# define isnan(x) ((x) != (x))
-#endif
 
 #endif /* GRETL_H */
