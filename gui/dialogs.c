@@ -329,30 +329,6 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 
 /* ........................................................... */
 
-void graph_dialog (gpointer data, guint code, GtkWidget *widget) 
-{
-    windata_t *wdata = NULL;
-    void (*gfunc)() = NULL;
-    char title[32], request[68];
-    int i;
-
-    switch (code) {
-    case GR_DUMMY:
-	gfunc = do_dummy_graph;
-	strcpy(title, _("gretl: define plot"));
-	strcpy(request, _("Enter 3 var names or nos. (Y, X, factor):"));
-	break;
-    default:
-	break;
-
-    }
-    edit_dialog (title, request, NULL, 
-		 1, _(" Graph "), gfunc, wdata, 
-		 _(" Cancel "), NULL, NULL, code, 1);
-}
-
-/* ........................................................... */
-
 void destroy_dialog_data (GtkWidget *w, gpointer data) 
 {
     GList *list;

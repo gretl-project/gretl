@@ -347,18 +347,26 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    if (action == GR_XY || action == GR_IMP) {
+    if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
+	|| action == SCATTERS) {
+	switch (action) {
+	case GR_XY:
+	case GR_IMP:
+	    okfunc = do_graph_from_selector;
+	    break;
+	case GR_DUMMY:
+	    okfunc = do_dummy_graph;
+	    break;
+	case SCATTERS:
+	    okfunc = do_scatters;
+	    break;
+	default:
+	    return;
+	}
 	selection_dialog (_("gretl: define graph"), _("Graph"), 
-			  do_graph_from_selector, action);
+			  okfunc, action);
 	return;
     }
-
-    if (action == SCATTERS) {
-	selection_dialog (_("gretl: define graph"), _("Graph"), 
-			  do_scatters, action);
-	return;
-    }
-    
 
     switch (action) {
     case ADD:

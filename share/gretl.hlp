@@ -3,14 +3,11 @@ add
 @Tests
 Add variables to a model and test for their significance
 
-This command needs a list of variables, referenced by their names or numbers
-and separated by spaces.
-
-The variables in the list will be added to the previous model and the new
-model estimated.  If more than one variable is added the F statistic for the
-joint significance of the added variables is printed (for the OLS procedure
-only) along with its p-value.  A p-value below 0.05 means that the
-coefficients are jointly significant at the 5 percent level.
+The selected variables will be added to the previous model and the new model
+estimated.  If more than one variable is added the F statistic for the joint
+significance of the added variables is printed (for the OLS procedure only)
+along with its p-value.  A p-value below 0.05 means that the coefficients are
+jointly significant at the 5 percent level.
 
 #
 adf
@@ -44,23 +41,15 @@ ar
 @Estimation
 Generalized Cochrane-Orcutt (autoregressive) estimation
 
-This command needs two lists: first a list of lags of the residual to
-use; second, an ordinary regression list (as with OLS estimation).
-
-Schematically:  <laglist> ; <varlist>
-Example:        1 3 4 ; y 0 x1 x2 x3 
-
 The procedure computes the estimates of a model using the generalized
 Cochrane-Orcutt iterative procedure.  Iteration is terminated when successive
 error sum of squares do not vary by more than 0.005 percent or when 20
-iterations have been done.  lags is a list of lags in the residuals,
-terminated by a semicolon.  In the above example, the error term is specified
-as
+iterations have been done.  
 
-     u(t) = rho1 u(t-1) + rho3 u(t-3) + rho4 u(t-4) + et
+The "list of AR lags" specifies the structure of the error process.  For
+example, the entry "1 3 4" corresponds to the process
 
-depvar is the dependent variable and indepvars is the list of independent
-variables separated by spaces.  Use the number zero for a constant term.
+     u(t) = rho1*u(t-1) + rho3*u(t-3) + rho4*u(t-4) + et
 
 #
 arch
@@ -161,16 +150,13 @@ coint
 @Tests
 Cointegration test
 
-This command needs an integer lag order, followed by the ID number or name of
-the dependent variable and the ID numbers or names of the independent
-variables (all separated by spaces).
-
-The command carries out Augmented Dickey-Fuller tests on the null hypothesis
-that each of the variables listed has a unit root, using the given lag
-order. The cointegrating regression is estimated, and an ADF test is run on
-the residuals from this regression.  The Durbin-Watson statistic for the
-cointegrating regression is also given.  (Note that none of these test
-statistics can be referred to the usual statistical tables.)
+The command (which needs an integer lag order) carries out Augmented
+Dickey-Fuller tests on the null hypothesis that each of the selected variables
+has a unit root, using the given lag order. The cointegrating regression is
+estimated, and an ADF test is run on the residuals from this regression.  The
+Durbin-Watson statistic for the cointegrating regression is also given.  (Note
+that none of these test statistics can be referred to the usual statistical
+tables.)
 
 #
 compact
@@ -199,18 +185,6 @@ options for the compacting:
 corc
 @Estimation
 Cochrane-Orcutt model
-
-This command needs a list of variables, by name or number, separated by
-spaces.
-
-The first variable given is the dependent variable; the rest are the
-independent variables.  It is standard to put "0" or "const" in the second
-place, to include a constant on the right hand side.  Otherwise you are
-forcing the Y-intercept to equal 0, which is not usually appropriate.
-
-To include lagged variables, use an expression like "income(-1)", i.e.  the
-name of the variable followed by the required lag in parentheses, preceded by
-a minus sign.
 
 This procedure computes the estimates of a model using the Cochrane-Orcutt
 iterative procedure.  Iteration is terminated when successive rho values do
@@ -243,16 +217,16 @@ http://www.r-project.org/ and http://www.octave.org/
 factorized plot
 @Graphs
 
-This command requires the names or numbers of three variables, the last of
-which must be a dummy variable (values 1 or 0).  The first variable is plotted
-against the second, with the data points colored differently depending on the
-value of the third.
+This command requires the selection of three variables, the last of which must
+be a dummy variable (values 1 or 0).  The Y variable is plotted against the X
+variable, with the data points colored differently depending on the value of
+the third.
 
-Example: You have data on wages and years of experience for a sample of
+Example: You have data on wages and educational attainment for a sample of
 people; you also have a dummy variable with value 1 for men and 0 for women
-(as in the supplied file data7-2).  A "factorized plot" of wage against
-experience using the gender dummy as factor will show the data points for men
-in one color and those for women in another (with a legend to identify them).  
+(as in the supplied file data7-2).  A "factorized plot" of WAGE against EDUC
+using the GENDER dummy as factor will show the data points for men in one
+color and those for women in another (with a legend to identify them).
 
 #
 genr
@@ -389,23 +363,16 @@ hilu
 @Estimation
 Hildreth-Lu model
 
-This command needs a list of variables, by name or number, separated by
-spaces.
-
 Computes the estimates of a model using the Hildreth-Lu search procedure (fine
-tuned by the CORC procedure) with the first list entry as the dependent
-variable and the rest as independent variables.  Use the number zero for a
-constant term.  The error sum of squares of the transformed model is graphed
-against the value of rho from -0.99 to 0.99.  The final transformed regression
-is performed for the observation range stobs+1 endobs currently in effect.
+tuned by the CORC procedure).  The error sum of squares of the transformed
+model is graphed against the value of rho from -0.99 to 0.99.  The final
+transformed regression is performed for the observation range stobs+1 endobs
+currently in effect.
 
 #
 hsk
 @Estimation
 Heteroskedasticity-corrected estimates
-
-This procedure needs a list of variables, by name or number, separated by
-spaces, just like the "ols" command.
 
 An OLS regression is run and the residuals are saved.  The logs of the squares
 of these residuals then become the dependent variable in an auxiliary
@@ -441,16 +408,13 @@ logit
 Logit regression
 @Estimation
 
-This command needs a list of variables, by name or number, separated by
-spaces.
-
-The dependent variable (given first) should be a binary variable.  Maximum
-likelihood estimates of the coefficients on indepvars are obtained via
-interated least squares (the EM or Expectation-Maximization method).  As the
-model is non-linear the slopes depend on the values of the independent
-variables: the reported slopes are evaluated at the means of those variables.
-The Chi-square statistic tests the null hypothesis that all coefficients are
-zero apart from the constant.
+The dependent variable should be a binary variable.  Maximum likelihood
+estimates of the coefficients on indepvars are obtained via interated least
+squares (the EM or Expectation-Maximization method).  As the model is
+non-linear the slopes depend on the values of the independent variables: the
+reported slopes are evaluated at the means of those variables.  The Chi-square
+statistic tests the null hypothesis that all coefficients are zero apart from
+the constant.
 
 #
 logs
@@ -575,6 +539,22 @@ missing value code" under the Variable menu and type in the value "-1"
 (without the quotes).  Gretl will then read the -1s as missing observations.
 
 #
+model dialog
+@Estimation
+
+To select the dependent variable, highlight a variable in the list on the left
+and press the "Choose" button pointing to the Dependent variable slot.  A
+shortcut is to double-click a variable on the left.  If you check the "Set as
+default" box, the selected variable will be pre-selected as dependent when
+the model dialog is next opened.  
+
+To select independent variables, highlight them on the left and press the
+"Add" button.  A shortcut for selecting a single independent variable is to
+right-click on it.  You can highlight several contiguous variables by dragging
+with the mouse.  You can highlight a group of non-contiguous variables by
+clicking on them with the Ctrl key pressed.
+
+#
 nulldata
 @Dataset
 
@@ -589,32 +569,17 @@ ols
 @Estimation
 Ordinary Least Squares model
 
-This command needs a list of variables, by name or number, separated by
-spaces.
-
-The first variable given is the dependent variable; the rest are the
-independent variables.  It is standard to put "0" or "const" in the second
-place, to include a constant on the right hand side.  Otherwise you are
-forcing the Y-intercept to equal 0, which is not usually appropriate.
-
-To include lagged variables, use an expression like "income(-1)", i.e.  the
-name of the variable followed by the required lag in parentheses, preceded by
-a minus sign.
-
-Computes ordinary least squares estimates of the coefficients.  Prints the
-p-values for t- (two-tailed) and F-statistics.  A p-value below 0.01 indicates
-significance at the 1 percent level.  Model selection statistics are also
-printed.
+Computes ordinary least squares estimates of the coefficients for the
+specified model.  Prints the p-values for t- (two-tailed) and F-statistics.  A
+p-value below 0.01 indicates significance at the 1 percent level.  Model
+selection statistics are also printed.
 
 #
 omit
 @Tests
 Omit variables from a model and test for their joint significance
 
-This command needs a list of variables, referenced by their names or numbers
-and separated by spaces.
-
-The specified variables are dropped from the previous model and the new model
+The selected variables are dropped from the previous model and the new model
 estimated.  If more than one variable is omitted, the Wald F-statistic for the
 omitted variables will be printed along with the pvalue for it (for the OLS
 procedure only).  A pvalue below 0.05 means that the coefficients are jointly
@@ -732,16 +697,13 @@ probit
 @Estimation
 Probit regression
 
-This command needs a list of variables, by name or number, separated by
-spaces.
-
-The dependent variable (given first) should be a binary variable.  Maximum
-likelihood estimates of the coefficients on indepvars are obtained via
-interated least squares (the EM or Expectation-Maximization method).  As
-the model is non-linear the slopes depend on the values of the independent
-variables: the reported slopes are evaluated at the means of those
-variables.  The Chi-square statistic tests the null hypothesis that all
-coefficients are zero apart from the constant.
+The dependent variable should be a binary variable.  Maximum likelihood
+estimates of the coefficients on indepvars are obtained via interated least
+squares (the EM or Expectation-Maximization method).  As the model is
+non-linear the slopes depend on the values of the independent variables: the
+reported slopes are evaluated at the means of those variables.  The Chi-square
+statistic tests the null hypothesis that all coefficients are zero apart from
+the constant.
 
 #
 rhodiff
@@ -758,18 +720,10 @@ scatters
 @Graphs
 Multiple pairwise scatter plots
 
-This command wants list input in one or other of these forms:
-
-  yvar ; xvarlist  (Example: 1 ; 2 3 4 5)   
-  yvarlist ; xvar  (Example: 1 2 3 4 5 6 ; time)
-
-It plots pairwise scatters of yvar against all the variables in xvarlist, or
-of all the variables in yvarlist against xvar.  The first example above puts
-variable 1 on the y-axis and draws four graphs, the first having variable 2 on
-the x-axis, the second variable 3 on the x-axis, and so on.  The second draws
-plots of variables 1 through 6 against time.  Scanning a set of such plots can
-be a useful step in exploratory data analysis.  The maximum number of plots is
-six; any extra variable in the list will be ignored.
+Draws a set of pairwise scatters of the selected "Y-axis variable" against
+each of the selected "X-axis variables" in turn.  Scanning a set of such plots
+can be a useful step in exploratory data analysis.  The maximum number of
+plots is six; any extra variables in the X-axis list will be ignored.
 
 #
 seed
@@ -905,21 +859,11 @@ tsls
 @Estimation
 Two-Stage Least Squares
 
-This command requires two lists of variables (by name or number).  The
-elements of the lists are separated by spaces, while the lists themselves are
-separated by a semi-colon.
-
-Schematically:  <varlist1> ; <varlist2>
-For example:       1 0 2 3 ; 0 4 5 6
-
-The first list is a standard "regression list," as supplied to the ols
-(Ordinary Least Squares) command: the first element is the name or number of
-the dependent variable, and the remaining elements are the names or numbers of
-the independent variables (usually including 0 or "const" for a constant).
-
-The second list comprises the exogenous and/or predetermined variables that
-may be used as regressors to derive fitted values of endogenous variables
-appearing in "right-hand side" positions in the first list.
+This command requires the selection of two lists of variables: the independent
+variables to appear in the given model and a set of "instruments".  The latter
+comprises the exogenous and/or predetermined variables that may be used as
+regressors to derive fitted values for the right-hand side endogenous
+variables.
 
 If some of the right-hand side variables for the model are exogenous, they
 should be referenced in both lists.
@@ -929,15 +873,10 @@ var
 @Estimation
 Vector Autoregression
 
-This command takes a list: the first (integer) entry is the lag order of the
-system, then the dependent variable in the first equation (by name or number),
-then the list of independent variables in that equation.  DON'T include any
-lagged variables in the list -- they will be added automatically.
-
-Example:       4 x1 const time x2 x3
-
-This calls for a four-lag VAR.  The dependent variable in the first equation
-is x1.  Equations for x2 and x3 will also be estimated.
+This command requires an integer lag order.  Select the dependent and
+independent variables for the first equation in the system; these will be
+permuted to obtain the other equations.  DON'T include any lagged variables in
+the list of independent variables -- they will be added automatically.
 
 In general, a regression will be run for each variable in the list, excluding
 the constant, the time trend and any dummy variables.  Output for each
@@ -956,15 +895,9 @@ wls
 @Estimation
 Weighted Least Squares model
 
-This command needs a list of variables, by name or number, separated by
-spaces.  The first variable given is the WEIGHT variable, the second the
-dependent variable, and subsequent ones are independent variables.
-
-It is standard to put "0" or "const" in the third place, to include a constant
-on the right hand side.  Otherwise you are forcing the Y-intercept to equal 0,
-which is not usually appropriate.
-
-An OLS regression is run on weightvar*depvar against weight*indepvar.  If the
-weightvar is a dummy variable, this is equivalent to eliminating all
-observations with the number zero for weightvar.
+Let "wtvar" denote the variable selected in the "Weight variable" box.  An OLS
+regression is run, where the dependent variable is the product of wtvar and
+the selected dependent variable and the independent variables are also
+multiplied by wtvar.  If wtvar is a dummy variable, this is equivalent to
+eliminating all observations with the number zero for wtvar.
 

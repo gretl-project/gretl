@@ -2802,14 +2802,15 @@ void do_box_graph (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
+void do_dummy_graph (GtkWidget *widget, gpointer p)
      /* X, Y scatter with separation by dummy (factor) */
 {
+    selector *sr = (selector *) p;
     char *edttext;
     gint err, lines[1] = {0}; 
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    edttext = sr->cmdlist;
+    if (*edttext == 0) return;
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot -z %s", edttext);
@@ -2835,41 +2836,6 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
 #ifdef GNUPLOT_PNG
 extern int gnuplot_show_png (char *fname); /* gpt_control.c */
 #endif
-
-void do_graph (GtkWidget *widget, dialog_t *ddata)
-{
-    char *edttext;
-    gint i, err, *lines = NULL;
-    gint imp = (ddata->code == GR_IMP);
-
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
-
-    clear(line, MAXLEN);
-    sprintf(line, "gnuplot %s%s", (imp)? "-m " : "", edttext);
-
-    if (check_cmd(line) || cmd_init(line)) return;
-    lines = mymalloc(command.list[0] - 1);
-    if (lines == NULL) return;
-    for (i=0; i<command.list[0]-1 ; i++) 
-	lines[i] = 0;
-
-    if (imp) {
-	err = gnuplot(command.list, NULL, &Z, datainfo,
-		      &paths, &plot_count, 0, 1, OPT_M);
-    } else {
-	err = gnuplot(command.list, lines, &Z, datainfo,
-		      &paths, &plot_count, 0, 1, 0);
-    }
-    if (err == -999)
-	errbox(_("No data were available to graph"));
-    else if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
-
-    free(lines);
-}
-
-/* ........................................................... */
 
 void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {

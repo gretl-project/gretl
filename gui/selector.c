@@ -33,7 +33,7 @@ static gint list_sorter (gconstpointer a, gconstpointer b)
     return GPOINTER_TO_INT(b) - GPOINTER_TO_INT(a);
 }
 
-static void set_weight_var (gint i, selector *sr)
+static void set_extra_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
 
@@ -44,13 +44,34 @@ static void set_weight_var (gint i, selector *sr)
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
-static void select_weight_callback (GtkWidget *w, selector *sr)
+static void select_extra_var_callback (GtkWidget *w, selector *sr)
 {
     GList *mylist = GTK_CLIST(sr->varlist)->selection;
 
     if (mylist != NULL) {
 	mylist = g_list_first(mylist);
-	g_list_foreach(mylist, (GFunc) set_weight_var, sr);
+	g_list_foreach(mylist, (GFunc) set_extra_var, sr);
+    }
+}
+
+static void set_dummy (gint i, selector *sr)
+{
+    gchar *vnum, *vname;
+
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
+    gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
+    gtk_entry_set_text(GTK_ENTRY(sr->rightvars), vname);
+    gtk_object_set_user_data(GTK_OBJECT(sr->rightvars),
+			     GINT_TO_POINTER(atoi(vnum)));
+}
+
+static void select_factor_callback (GtkWidget *w, selector *sr)
+{
+    GList *mylist = GTK_CLIST(sr->varlist)->selection;
+
+    if (mylist != NULL) {
+	mylist = g_list_first(mylist);
+	g_list_foreach(mylist, (GFunc) set_dummy, sr);
     }
 }
 
@@ -169,8 +190,11 @@ static void clear_vars (GtkWidget *w, selector *sr)
 
     gtk_clist_unselect_all(GTK_CLIST(sr->varlist));
     if (sr->depvar != NULL) 
-	gtk_entry_set_text(GTK_ENTRY(sr->depvar), ""); 
-    gtk_clist_clear(GTK_CLIST(sr->rightvars));
+	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
+    if (sr->code == GR_DUMMY)
+	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
+    else
+	gtk_clist_clear(GTK_CLIST(sr->rightvars));
     if (MODEL_CODE(sr->code)) {
 	row[0] = "0";
 	row[1] = "const";
@@ -178,16 +202,35 @@ static void clear_vars (GtkWidget *w, selector *sr)
     }
 }
 
+static void topslot_empty (int code)
+{
+    switch (code) {
+    case GR_XY:
+    case GR_IMP:
+	errbox(_("You must select an X-axis variable"));
+	break;
+    case SCATTERS:
+	errbox(_("You must select a Y-axis variable"));
+	break;
+    default:
+	errbox(_("You must select a dependent variable"));
+    }
+}
+
 static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
-    gint i = 0, rows = GTK_CLIST(sr->rightvars)->rows;
-    gchar numstr[6];
+    gint i = 0, rows = 0;
+    gchar numstr[6], grvar[6];
     int err = 0;
 
     sr->cmdlist = mymalloc(MAXLEN);
     if (sr->cmdlist == NULL) return;
     sr->cmdlist[0] = 0;
 
+    if (sr->code != GR_DUMMY)
+	rows = GTK_CLIST(sr->rightvars)->rows;
+
+    /* first deal with content of "extra" widget */
     if (sr->code == WLS) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
@@ -220,25 +263,63 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	sprintf(numstr, "%d ", i);
 	strcat(sr->cmdlist, numstr);
     }
-
-    /* need to deal with XY graph case about here */
-    if (sr->depvar != NULL) {
-	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+    else if (sr->code == GR_DUMMY) {
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
 	if (str == NULL || !strlen(str)) {
-	    errbox(_("You must select a dependent variable"));
+	    errbox(_("You must select a Y-axis variable"));
 	    err = 1;
 	} else {
-	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
-	    sprintf(numstr, "%d", i);
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
+	    sprintf(numstr, "%d ", i);
 	    strcat(sr->cmdlist, numstr);
 	}
     }
-    
-    if (sr->default_check != NULL && GTK_TOGGLE_BUTTON(sr->default_check)->active) 
+
+    /* next deal with the "depvar" widget */
+    if (!err && sr->depvar != NULL) {
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
+
+	if (str == NULL || !strlen(str)) {
+	    topslot_empty(sr->code);
+	    err = 1;
+	} else {
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
+	    if (sr->code == GR_XY || sr->code == GR_IMP)
+		sprintf(grvar, " %d", i);
+	    else {
+		sprintf(numstr, "%d", i);
+		strcat(sr->cmdlist, numstr);
+	    }
+	}
+    }
+
+    /* bail out if things have gone wrong already */
+    if (err) {
+	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
+	return;
+    }
+
+    if (sr->default_check != NULL && 
+	GTK_TOGGLE_BUTTON(sr->default_check)->active) 
 	default_var = i;
 
     if (sr->code == SCATTERS) strcat(sr->cmdlist, ";");
+
+    if (sr->code == GR_DUMMY) { /* special case */
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
+
+	if (str == NULL || !strlen(str)) {
+	    errbox(_("You must select a factor variable"));
+	    err = 1;
+	} else {
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rightvars)));
+	    sprintf(numstr, " %d", i);
+	    strcat(sr->cmdlist, numstr);
+	}
+	if (err) gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
+	return;
+    }
 
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
@@ -275,6 +356,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    err = 1;
 	}
     }
+
+    if (sr->code == GR_XY || sr->code == GR_IMP)
+	strcat(sr->cmdlist, grvar);
 
     if (err) 
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
@@ -331,6 +415,8 @@ static char *extra_string (int cmdnum)
 	return _("Instruments");
     case AR:
 	return _("List of AR lags");
+    case GR_DUMMY:
+	return _("Y-axis variable");
     default:
 	return NULL;
     }
@@ -399,7 +485,6 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
     gtk_box_pack_start(GTK_BOX(right_vbox), x_hbox, FALSE, FALSE, 0);
     gtk_widget_show(x_hbox); 
 
-    /* separator */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
@@ -410,9 +495,9 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
     GtkWidget *tmp, *depvar_hbox;
 
     if (sr->code == VAR)
-	tmp = gtk_label_new("First dependent variable");
+	tmp = gtk_label_new ("First dependent variable");
     else
-	tmp = gtk_label_new("Dependent variable");
+	tmp = gtk_label_new ("Dependent variable");
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -441,7 +526,6 @@ static void build_depvar_section (selector *sr, GtkWidget *right_vbox)
     gtk_box_pack_start(GTK_BOX(right_vbox), sr->default_check, FALSE, TRUE, 0);
     gtk_widget_show(sr->default_check); 
 
-    /* separator */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
@@ -466,7 +550,22 @@ static void lag_order_spin (selector *sr, GtkWidget *right_vbox)
     gtk_widget_show(midhbox); 
 }
 
-static void weight_box (selector *sr, GtkWidget *right_vbox)
+static void dummy_box (selector *sr, GtkWidget *hbox)
+{
+    GtkWidget *tmp;
+
+    tmp = gtk_button_new_with_label (_("Choose ->"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+    gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
+			GTK_SIGNAL_FUNC(select_factor_callback), sr);
+    gtk_widget_show(tmp); 
+
+    sr->rightvars = gtk_entry_new_with_max_length(8);
+    gtk_box_pack_start(GTK_BOX(hbox), sr->rightvars, FALSE, TRUE, 0);
+    gtk_widget_show(sr->rightvars); 
+}
+
+static void extra_var_box (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
 
@@ -474,7 +573,7 @@ static void weight_box (selector *sr, GtkWidget *right_vbox)
     tmp = gtk_button_new_with_label (_("Choose ->"));
     gtk_box_pack_start(GTK_BOX(midhbox), tmp, TRUE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-			GTK_SIGNAL_FUNC(select_weight_callback), sr);
+			GTK_SIGNAL_FUNC(select_extra_var_callback), sr);
     gtk_widget_show(tmp); 
 
     sr->extra = gtk_entry_new_with_max_length(8);
@@ -561,20 +660,19 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS) 
-	weight_box (sr, right_vbox);
+    if (sr->code == WLS || sr->code == GR_DUMMY) 
+	extra_var_box (sr, right_vbox);
     else if (sr->code == VAR || sr->code == COINT)
 	lag_order_spin (sr, right_vbox);
     else if (sr->code == TSLS)
 	tsls_box (sr, right_vbox);
     else if (sr->code == AR) {
-	sr->extra = gtk_entry_new_with_max_length(8);
+	sr->extra = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra); 
     }
 
-    /* separator */
     tmp = gtk_hseparator_new();
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
@@ -694,8 +792,11 @@ void selection_dialog (const char *title, const char *oktxt,
 	strcpy(topstr, "plot with impulses");
     else if (cmdcode == SCATTERS)
 	strcpy(topstr, "multiple scatterplots");
+    else if (cmdcode == GR_DUMMY)
+	strcpy(topstr, "factorized plot");
     else
 	strcpy(topstr, "fixme need string");
+
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       tmp, FALSE, FALSE, 5);
@@ -715,6 +816,7 @@ void selection_dialog (const char *title, const char *oktxt,
 	gchar *row[2];
 	gchar id[5];
 
+	if (i == 0 && !MODEL_CODE(cmdcode)) continue;
         if (hidden_var(i, datainfo)) continue;
 	if (screen_scalar(i, cmdcode)) continue;
 	sprintf(id, "%d", i);
@@ -745,12 +847,13 @@ void selection_dialog (const char *title, const char *oktxt,
     if (MODEL_CODE(cmdcode)) 
 	build_depvar_section(sr, right_vbox);
     /* graphs: top right -> x-axis variable */
-    else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == SCATTERS)
+    else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
+	     || cmdcode == SCATTERS)
 	build_x_axis_section(sr, right_vbox);
 
-    /* middle right: used for some estimators */
+    /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
-	cmdcode == VAR || cmdcode == COINT) 
+	cmdcode == VAR || cmdcode == COINT || cmdcode == GR_DUMMY) 
 	build_mid_section(sr, right_vbox);
     
     /* lower right: selected (independent) variables */
@@ -760,67 +863,74 @@ void selection_dialog (const char *title, const char *oktxt,
 	tmp = gtk_label_new("Y-axis variables");
     else if (cmdcode == SCATTERS)
 	tmp = gtk_label_new("X-axis variables");
+    else if (cmdcode == GR_DUMMY)
+	tmp = gtk_label_new("Factor (dummy)");
     
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
     indepvar_hbox = gtk_hbox_new(FALSE, 5);
 
-    /* push/pull buttons first, in their own little vbox */
-    button_vbox = gtk_vbox_new(TRUE, 5);
+    if (cmdcode == GR_DUMMY) {
+	dummy_box(sr, indepvar_hbox);
+    } else { /* all other uses: scrollable list of vars */
 
-    tmp = gtk_button_new_with_label (_("Add ->"));
-    gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
-    gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
-                        GTK_SIGNAL_FUNC(add_to_right_callback), sr);
-    gtk_widget_show(tmp);
+	/* push/pull buttons first, in their own little vbox */
+	button_vbox = gtk_vbox_new(TRUE, 5);
+
+	tmp = gtk_button_new_with_label (_("Add ->"));
+	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
+	gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
+			    GTK_SIGNAL_FUNC(add_to_right_callback), sr);
+	gtk_widget_show(tmp);
     
-    tmp = gtk_button_new_with_label (_("<- Remove"));
-    gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
-    gtk_signal_connect_after (GTK_OBJECT(tmp), "clicked", 
-			      GTK_SIGNAL_FUNC(remove_from_right_callback), sr);
-    gtk_widget_show(tmp);
+	tmp = gtk_button_new_with_label (_("<- Remove"));
+	gtk_box_pack_start(GTK_BOX(button_vbox), tmp, TRUE, FALSE, 0);
+	gtk_signal_connect_after (GTK_OBJECT(tmp), "clicked", 
+				  GTK_SIGNAL_FUNC(remove_from_right_callback), sr);
+	gtk_widget_show(tmp);
 
-    gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
-    gtk_widget_show(button_vbox);
+	gtk_box_pack_start(GTK_BOX(indepvar_hbox), button_vbox, TRUE, TRUE, 0);
+	gtk_widget_show(button_vbox);
 
-    /* then the listing */
-    scroller = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
-				    GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	/* then the listing */
+	scroller = gtk_scrolled_window_new (NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
+					GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 
-    sr->rightvars = gtk_clist_new(2);
-    gtk_clist_clear(GTK_CLIST(sr->rightvars));
+	sr->rightvars = gtk_clist_new(2);
+	gtk_clist_clear(GTK_CLIST(sr->rightvars));
 
-    if (MODEL_CODE(cmdcode) && xlist != NULL) {
-	for (i=1; i<=xlist[0]; i++) {
-	    gchar *row[2];
-	    gchar id[4];
+	if (MODEL_CODE(cmdcode) && xlist != NULL) {
+	    for (i=1; i<=xlist[0]; i++) {
+		gchar *row[2];
+		gchar id[4];
 
-	    sprintf(id, "%d", xlist[i]);
-	    row[0] = id;
-	    row[1] = datainfo->varname[xlist[i]];
-	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
-	}
-    } else if (MODEL_CODE(cmdcode) && cmdcode != COINT) {
+		sprintf(id, "%d", xlist[i]);
+		row[0] = id;
+		row[1] = datainfo->varname[xlist[i]];
+		gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+	    }
+	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT) {
 	    gchar *row[2];
 
 	    row[0] = "0";
 	    row[1] = "const";
 	    gtk_clist_append(GTK_CLIST(sr->rightvars), row);
+	}
+
+	gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
+	gtk_widget_set_usize (sr->rightvars, 80, 120);
+	gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
+				      GTK_SELECTION_EXTENDED);
+	gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
+			   (GtkSignalFunc) remove_right_click, sr);
+	gtk_widget_show(sr->rightvars); 
+	gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
+
+	gtk_widget_show(scroller);
+	gtk_box_pack_start(GTK_BOX(indepvar_hbox), scroller, TRUE, TRUE, 0);
     }
-
-    gtk_clist_set_column_width (GTK_CLIST(sr->rightvars), 1, 80);
-    gtk_widget_set_usize (sr->rightvars, 80, 120);
-    gtk_clist_set_selection_mode (GTK_CLIST(sr->rightvars),
-				  GTK_SELECTION_EXTENDED);
-    gtk_signal_connect(GTK_OBJECT(sr->rightvars), "button_press_event",
-		       (GtkSignalFunc) remove_right_click, sr);
-    gtk_widget_show(sr->rightvars); 
-    gtk_container_add(GTK_CONTAINER(scroller), sr->rightvars);
-
-    gtk_widget_show(scroller);
-    gtk_box_pack_start(GTK_BOX(indepvar_hbox), scroller, TRUE, TRUE, 0);
 
     /* pack the lower right stuff into the RHS vbox */
     gtk_box_pack_start(GTK_BOX(right_vbox), indepvar_hbox, TRUE, TRUE, 0);

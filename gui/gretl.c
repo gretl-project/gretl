@@ -317,7 +317,7 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Data/_Graph specified vars/X-Y with impulses..."), 
       NULL, selector_callback, GR_IMP, NULL },
     { _("/Data/_Graph specified vars/X-Y with factor separation..."), 
-      NULL, graph_dialog, GR_DUMMY, NULL },
+      NULL, selector_callback, GR_DUMMY, NULL },
     { _("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL},
     { _("/Data/_Graph specified vars/Boxplots..."), 
@@ -1581,7 +1581,7 @@ static void gretl_pdf (void)
 static void xy_graph (void)
 {
     if (data_status)
-	graph_dialog(NULL, GR_XY, NULL);
+	selector_callback(NULL, GR_XY, NULL);
     else
 	errbox(_("Please open a data file first"));
 }
