@@ -397,17 +397,21 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
     while (!err) {
 	tmpstr[0] = tmpstr[1] = tmpstr[2] = NULL;
 
+	if (!GTK_IS_TREE_MODEL(model)) break;
+
 	gtk_tree_model_get(model, &iter, 
 			   0, &tmpstr[0], 
 			   1, &tmpstr[1],
 			   2, &tmpstr[2],
 			   -1);
 
-	line = g_strdup_printf("%s. %s. %s.\n", tmpstr[0], 
+	line = g_strdup_printf("%s. %s. %s.\n", 
+			       ((tmpstr[0] != NULL && *tmpstr[0] != '\0')?
+				tmpstr[0] : "empty column"),
 			       ((tmpstr[1] != NULL && *tmpstr[1] != '\0')?
-			       tmpstr[1] : "empty column"),
+				tmpstr[1] : "empty column"),
 			       ((tmpstr[2] != NULL && *tmpstr[2] != '\0')?
-			       tmpstr[2] : "empty column"));
+				tmpstr[2] : "empty column"));
 
 	err = speak_line(line);
 
@@ -416,7 +420,9 @@ static int read_listbox_content (windata_t *vwin, int (*should_stop)())
 	}
 	g_free(line);
 
-	if (!gtk_tree_model_iter_next(model, &iter) || should_stop()) {
+	if (!GTK_IS_TREE_MODEL(model) ||
+	    !gtk_tree_model_iter_next(model, &iter) || 
+	    should_stop()) {
 	    break;
 	}
     }

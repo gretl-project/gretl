@@ -135,7 +135,7 @@ static int write_note_event (note_event *event, midi_spec *spec)
     putc(event->force, spec->fp);
     len += 3;
 
-    /* use running status */
+    /* use "running status" */
     len += delta_time(event->duration, spec->nticks, spec->fp);
     putc(event->pitch, spec->fp);    
     putc(0, spec->fp);
@@ -153,7 +153,7 @@ static void write_midi_track (midi_track *track,
     int i, n;
 
     fwrite(track_hdr, 1, 4, spec->fp);
-    write_be_long(0, spec->fp); /* revisit below */
+    write_be_long(0, spec->fp); /* revisited below */
 
     delta_time_zero(spec->fp);
     len++;
@@ -203,7 +203,8 @@ static void write_midi_track (midi_track *track,
     len += write_midi_eot(spec->fp);
 
     fseek(spec->fp, -(len + 4), SEEK_CUR);
-    write_be_long(len, spec->fp); /* now fix the length */
+    /* now fix the length */
+    write_be_long(len, spec->fp); 
     fseek(spec->fp, len, SEEK_CUR);
 }
 
@@ -219,7 +220,7 @@ static void four_four_header (midi_spec *spec)
     /* tempo/time track */
     fwrite(track_hdr, 1, 4, spec->fp);
     pos = ftell(spec->fp);
-    write_be_long(0, spec->fp); /* revisit below */
+    write_be_long(0, spec->fp); /* revisited below */
 
     /* time sig */
     delta_time_zero(spec->fp);
@@ -447,6 +448,8 @@ static int get_comment (const char *line, dataset *dset)
     return ret;
 }
 
+#ifdef PLAY_AUTOFIT_LINE
+
 static int get_fit_params (char *line, dataset *dset)
 {
     double a, b;
@@ -463,6 +466,8 @@ static int get_fit_params (char *line, dataset *dset)
 
     return 0;
 }
+
+#endif
 
 static void tail_strip_line (char *line)
 {
@@ -505,10 +510,11 @@ static int read_datafile (const char *fname, dataset *dset)
 	fprintf(stderr, "Reading %s...\n", fname);
     }
 
-    while (fgets(line, 256, fdat)) {
+    while (fgets(line, sizeof line, fdat)) {
 	tail_strip_line(line);
-	if (get_comment(line, dset)) continue;
-	else if (!strcmp(line, "e")) {
+	if (get_comment(line, dset)) {
+	    continue;
+	} else if (!strcmp(line, "e")) {
 	    fprintf(stderr, "Got end of data marker\n");
 	    got_e++;
 	    if (got_e == 2) {
@@ -519,9 +525,11 @@ static int read_datafile (const char *fname, dataset *dset)
 	    fitline = 1;
 	} else if (isdigit((unsigned char) line[0])) {
 	    if (strstr(line, "title")) {
+#ifdef PLAY_AUTOFIT_LINE
 		if (fitline) {
 		    get_fit_params(line, dset);
 		}
+#endif
 		continue;
 	    }
 	    if (!got_e) {
