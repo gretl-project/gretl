@@ -825,7 +825,7 @@ int restrict_sample (const char *line,
 /* .......................................................... */
 
 static int 
-get_sample_limit (const char *s, const double **Z, DATAINFO *pdinfo)
+get_sample_limit (char *s, const double **Z, DATAINFO *pdinfo)
 {
     int v, ret = -1;
 

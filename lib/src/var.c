@@ -49,6 +49,7 @@ struct var_lists {
     int *detvars;
     int *stochvars;
     int *reglist;
+    int *testlist;
     int **lagvlist;
 };
 
@@ -806,6 +807,7 @@ static void var_lists_free (struct var_lists *vl)
     free(vl->detvars);
     free(vl->stochvars);
     free(vl->reglist);
+    free(vl->testlist);
 }
 
 static int **lagvlist_construct (int nstoch, int order)
@@ -838,24 +840,28 @@ static int var_lists_init (struct var_lists *vl,
 			   int order)
 {
     int nreg = 1 + ndet + nstoch * order;
+    int ntest = nstoch * 2 + ndet;
 
     vl->detvars = NULL;
     vl->stochvars = NULL;
     vl->reglist = NULL;
+    vl->testlist = NULL;
     vl->lagvlist = NULL;
 
     vl->detvars = malloc((ndet + 1) * sizeof *vl->detvars);
     vl->stochvars = malloc((nstoch + 1) * sizeof *vl->stochvars);
     vl->reglist = malloc((nreg + 1) * sizeof *vl->reglist);
+    vl->testlist = malloc((ntest + 1) * sizeof *vl->testlist);
 
     if (vl->detvars == NULL || vl->stochvars == NULL ||
-	vl->reglist == NULL) {
+	vl->reglist == NULL || vl->testlist == NULL) {
 	goto bailout;
     }
 
     vl->detvars[0] = ndet;
     vl->stochvars[0] = nstoch;
     vl->reglist[0] = nreg;
+    vl->testlist[0] = ntest;
 
     vl->lagvlist = lagvlist_construct(nstoch, order);
     if (vl->lagvlist == NULL) {
@@ -1013,8 +1019,19 @@ compose_varlist (struct var_lists *vl, int depvar, int order, int omit,
 	vl->reglist[pos++] = vl->detvars[i];
     }
 
+    /* now build the test list (to screen missing values) */
+    pos = 1;
+    for (i=1; i<=vl->stochvars[0]; i++) {
+	vl->testlist[pos++] = vl->stochvars[i];
+	vl->testlist[pos++] = vl->lagvlist[i-1][order];
+    }
+    for (i=1; i<=vl->detvars[0]; i++) {
+	vl->testlist[pos++] = vl->detvars[i];
+    }    
+
 #if VAR_DEBUG
     printlist(vl->reglist, "composed VAR list");
+    printlist(vl->testlist, "composed test list");
 #endif
 
     return err;
@@ -1213,7 +1230,8 @@ static int real_var (int order, const int *inlist,
 
     neqns = vlists.stochvars[0];    
 
-    /* compose base VAR list (entry 1 will vary across equations) */
+    /* compose base VAR list (entry 1 will vary across equations);
+       assemble test list for t1 and t2 while we're at it */
     err = compose_varlist(&vlists, vlists.stochvars[1], 
 			  order, 0, pdinfo);
     if (err) {
@@ -1224,8 +1242,8 @@ static int real_var (int order, const int *inlist,
     /* sort out sample range */
     t1 = pdinfo->t1;
     t2 = pdinfo->t2;
-
-    if ((missv = adjust_t1t2(NULL, vlists.reglist, &t1, &t2, 
+    
+    if ((missv = adjust_t1t2(NULL, vlists.testlist, &t1, &t2, 
 			     (const double **) *pZ, &misst))) {
 	err = 1;
 	goto var_bailout;
