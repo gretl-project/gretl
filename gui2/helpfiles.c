@@ -507,7 +507,11 @@ void context_help (GtkWidget *widget, gpointer data)
 	}
     }
 
-    do_gui_help(NULL, pos, NULL);
+    if (!pos) {
+	dummy_call();
+    } else {
+	do_gui_help(NULL, pos, NULL);
+    }
 }
 
 /* ........................................................... */

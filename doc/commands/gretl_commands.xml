@@ -1442,62 +1442,62 @@
       </ilist>
 
       <table id="tab-genr" title="Examples of use of genr command"
-	lhead="Command" rhead="Comment">
+	lhead="Formula" rhead="Comment">
 	<row>
-	  <cell><lit>genr y = x1^3</lit></cell>
+	  <cell><lit>y = x1^3</lit></cell>
 	  <cell><lit>x1</lit> cubed</cell>
 	</row>          
 	<row>
-	  <cell><lit>genr y = ln((x1+x2)/x3)</lit></cell>
+	  <cell><lit>y = ln((x1+x2)/x3)</lit></cell>
 	  <cell></cell>
 	</row>
 	<row>
-	  <cell><lit>genr z = x&gt;y</lit></cell>
+	  <cell><lit>z = x&gt;y</lit></cell>
 	  <cell><lit>z(t)</lit> = 1 if <lit>x(t) &gt; y(t)</lit>,
 	    otherwise 0</cell>
 	</row> 
 	<row>
-	  <cell><lit>genr y = x(-2)</lit></cell>
+	  <cell><lit>y = x(-2)</lit></cell>
 	  <cell><lit>x</lit> lagged 2 periods</cell>
 	</row>     
 	<row>
-	  <cell><lit>genr y = x(2)</lit></cell>
+	  <cell><lit>y = x(2)</lit></cell>
 	  <cell><lit>x</lit> led 2 periods</cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = diff(x)</lit></cell>
+	  <cell><lit>y = diff(x)</lit></cell>
 	  <cell><lit>y(t) = x(t) - x(t-1)</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = ldiff(x)</lit></cell>
+	  <cell><lit>y = ldiff(x)</lit></cell>
 	  <cell><lit>y(t) = log x(t) - log x(t-1)</lit>, the
 	    instantaneous rate of growth of <lit>x</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = sort(x)</lit></cell>
+	  <cell><lit>y = sort(x)</lit></cell>
 	  <cell>sorts <lit>x</lit> in increasing order and stores in
 	    <lit>y</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = -sort(-x)</lit></cell>
+	  <cell><lit>y = -sort(-x)</lit></cell>
 	  <cell>sort <lit>x</lit> in decreasing order</cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = int(x)</lit></cell>
+	  <cell><lit>y = int(x)</lit></cell>
 	  <cell>truncate <lit>x</lit> and store its integer value as
 	    <lit>y</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = abs(x)</lit></cell>
+	  <cell><lit>y = abs(x)</lit></cell>
 	  <cell>store the absolute values of <lit>x</lit></cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = sum(x)</lit></cell>
+	  <cell><lit>y = sum(x)</lit></cell>
 	  <cell>sum <lit>x</lit> values excluding missing &minus;999
 	    entries</cell>
 	</row>
 	<row>
-	  <cell><lit>genr y = cum(x)</lit></cell>
+	  <cell><lit>y = cum(x)</lit></cell>
 	  <cell>cumulation: 
 		<equation status="inline"
 		  tex="$y_t = \sum_{\tau=1}^t x_{\tau}$"
@@ -1506,37 +1506,37 @@
 	  </cell>
 	</row>
 	<row>
-	  <cell><lit>genr aa = $ess</lit></cell>
+	  <cell><lit>aa = $ess</lit></cell>
 	  <cell>set <lit>aa</lit> equal to the Error Sum of Squares
 	    from last regression</cell>
 	</row>
 	<row>
-	  <cell><lit>genr x = coeff(sqft)</lit></cell>
+	  <cell><lit>x = coeff(sqft)</lit></cell>
 	  <cell>grab the estimated coefficient on the variable
 	    <lit>sqft</lit> from the last regression</cell>
 	</row>
 	<row>
-	  <cell><lit>genr rho4 = rho(4)</lit></cell>
+	  <cell><lit>rho4 = rho(4)</lit></cell>
 	  <cell>grab the 4th-order autoregressive coefficient from the
 	    last model (presumes an <lit>ar</lit> model)</cell>
 	</row>
 	<row>
-	  <cell><lit>genr cvx1x2 = vcv(x1, x2)</lit></cell>
+	  <cell><lit>cvx1x2 = vcv(x1, x2)</lit></cell>
 	  <cell>grab the estimated coefficient covariance of vars
 	    <lit>x1</lit> and <lit>x2</lit> from the last model</cell>
 	</row>
 	<row>
-	  <cell><lit>genr foo = uniform()</lit></cell>
+	  <cell><lit>foo = uniform()</lit></cell>
 	  <cell>uniform pseudo-random variable in range
 	    0&ndash;1</cell>
 	</row>
 	<row>
-	  <cell><lit>genr bar = 3 * normal()</lit></cell>
+	  <cell><lit>bar = 3 * normal()</lit></cell>
 	  <cell>normal pseudo-random variable, &mu; = 0, &sigma; =
 	    3</cell>
 	</row>
 	<row>
-	  <cell><lit>genr samp = !missing(x)</lit></cell>
+	  <cell><lit>samp = !missing(x)</lit></cell>
 	  <cell>= 1 for observations where <lit>x</lit> is not
 	    missing.</cell>
 	</row>
@@ -2757,7 +2757,7 @@
 	and calls for estimation.</para>
 
       <para>For further details on NLS estimation please see
-	<manref targ="nlschap"/>.</para>
+	<manref targ="chap-nls"/>.</para>
     </description>
 
     <gui-access>
@@ -3976,7 +3976,7 @@
 
   </command>
 
-  <command name="square" section="Transformations">
+  <command name="square" section="Transformations" context="cli">
 
     <blurb>Squares and cross-products</blurb>
 

@@ -551,7 +551,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Help/sep1"), NULL, NULL, 0, "<Separator>", NULL },
 #if defined(USE_GNOME)
     { N_("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL, GNULL },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", NULL },
+    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
 #elif defined(G_OS_WIN32)
     { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL, GNULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },

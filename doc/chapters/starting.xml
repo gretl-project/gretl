@@ -533,7 +533,7 @@
 	  <xref linkend="estimators"/> and <xref
 	linkend="cmdref"/> below, and/or the online help under
 	  <quote>Help, Estimation</quote>.  Also see <xref
-	    linkend="nlschap"/> regarding the estimation of nonlinear
+	    linkend="chap-nls"/> regarding the estimation of nonlinear
 	  models.</para></listitem>
 
       <listitem><para><guimenu>Help menu</guimenu>  Please use this as

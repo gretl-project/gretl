@@ -1,6 +1,6 @@
 <?PSGML NOFILL programlisting example informalequation?>
 
-  <chapter id="nlschap"><title>Nonlinear least squares</title>
+  <chapter id="chap-nls"><title>Nonlinear least squares</title>
 
   <sect1 id="nls-intro"><title>Introduction and examples</title>
 
@@ -45,10 +45,10 @@
       Note the command words <command>nls</command> (which introduces
       the regression function), <command>deriv</command> (which
       introduces the specification of a derivative), and <command>end
-      nls</command>, which terminates the specification and calls for
-      estimation. If the <command>-o</command> flag is appended to the
-      last line the covariance matrix of the parameter estimates is
-      printed.</para>
+	nls</command>, which terminates the specification and calls
+      for estimation. If the <command>--vcv</command> flag is appended
+      to the last line the covariance matrix of the parameter
+      estimates is printed.</para>
 
   </sect1>
 
