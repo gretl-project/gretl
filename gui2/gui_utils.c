@@ -283,15 +283,19 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
     int i;
 
     switch (code) {
+
     case STACK_DESTROY:	
 	for (i=0; i<n_windows; i++) 
 	    if (wstack[i] != NULL) 
 		gtk_widget_destroy(wstack[i]);
 	free(wstack);
+	/* fall-through intended */
+
     case STACK_INIT:
 	wstack = NULL;
 	n_windows = 0;
 	break;
+
     case STACK_ADD:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] == NULL) {
@@ -306,6 +310,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 		wstack[n_windows-1] = w;
 	}
 	break;
+
     case STACK_REMOVE:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] == w) {
@@ -314,6 +319,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    }
 	}
 	break;
+
     case STACK_QUERY:
 	for (i=0; i<n_windows; i++) {
 	    if (wstack[i] != NULL) {
@@ -326,6 +332,7 @@ static int winstack (int code, GtkWidget *w, gpointer ptest)
 	    }
 	}
 	break;
+
     default:
 	break;
     }
@@ -360,10 +367,10 @@ static void winstack_remove (GtkWidget *w)
 
 /* ........................................................... */
 
-static void delete_file (GtkWidget *widget, char *fle) 
+static void delete_file (GtkWidget *widget, char *fname) 
 {
-    remove(fle);
-    g_free(fle);
+    remove(fname);
+    g_free(fname);
 }
 
 /* ........................................................... */
@@ -1184,6 +1191,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl console")); break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
+    case VIEW_FILE:
 	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp"))
 	    title = g_strdup(_("gretl: command script"));
 	else {
@@ -1677,12 +1685,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
 #ifdef USE_GTKSOURCEVIEW
     GtkSourceBuffer *sbuf = NULL;
 #endif
-    char *fle = NULL;
+    char *fname = NULL;
     FILE *fp = NULL;
     windata_t *vwin;
     gchar *title;
     int show_viewbar = (role != CONSOLE &&
 			role != VIEW_DATA &&
+			role != VIEW_FILE &&
 			!help_role(role));
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
@@ -1747,10 +1756,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* is the file to be deleted after viewing? */
     if (del_file) {
-	if ((fle = mymalloc(strlen(filename) + 1)) == NULL) {
-	    return NULL;
-	}
-	strcpy(fle, filename);
+	fname = g_strdup(filename);
     }
 
     /* should we show a toolbar at the foot of the window? */
@@ -1804,7 +1810,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* clean up when dialog is destroyed */
     if (del_file) {
 	g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
-			 G_CALLBACK(delete_file), (gpointer) fle);
+			 G_CALLBACK(delete_file), (gpointer) fname);
     }
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 
 		     G_CALLBACK(free_windata), vwin);
@@ -2883,43 +2889,4 @@ int build_path (const char *dir, const char *fname, char *path,
     return 0;
 }
 
-/* .................................................................. */
 
-/* #ifndef G_OS_WIN32 */
-#define USE_GTK_STOCK_BUTTONS
-/* #endif */
-
-#ifndef USE_GTK_STOCK_BUTTONS
-struct button_type {
-    const gchar *flag;
-    const gchar *text;
-};
-#endif
-
-GtkWidget *standard_button (const gchar *flag)
-{
-#ifdef USE_GTK_STOCK_BUTTONS
-    return gtk_button_new_from_stock(flag);
-#else
-    struct button_type mybuttons[] = {
-	{ GTK_STOCK_APPLY, N_("Apply") },
-	{ GTK_STOCK_CANCEL, N_("Cancel") },
-	{ GTK_STOCK_CLEAR, N_("Clear") },
-	{ GTK_STOCK_CLOSE, N_("Close") },
-	{ GTK_STOCK_HELP, N_("Help") }, 
-	{ GTK_STOCK_OK, N_("OK") },
-	{ GTK_STOCK_SAVE, N_("Save") },
-	{ NULL, NULL }
-    };
-
-    int i;
-
-    for (i=0; mybuttons[i].flag != NULL; i++) {
-	if (!strcmp(flag, mybuttons[i].flag)) {
-	    return gtk_button_new_with_label(_(mybuttons[i].text));
-	}
-    }
-
-    return NULL;
-#endif
-}

@@ -3688,6 +3688,10 @@ void display_var (void)
 
 /* ........................................................... */
 
+#define PGRAB /* downside is that this _may_ cause a lockup of the GUI,
+		 if execute_script() fails to terminate.  Hopefully
+		 we have made that very unlikely... */
+
 void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
@@ -3976,6 +3980,12 @@ int do_store (char *mydatfile, unsigned char oflag, int overwrite)
     return err;
 }
 
+enum {
+    LATEX_OK,
+    LATEX_EXEC_FAILED,
+    LATEX_ERROR
+} tex_return_codes;
+
 #ifdef G_OS_WIN32
 
 static int get_latex_path (char *latex_path)
@@ -3990,8 +4000,6 @@ static int get_latex_path (char *latex_path)
 
 #else
 
-# if 1
-
 static int spawn_latex (char *texbase)
 {
     GError *error = NULL;
@@ -4004,6 +4012,7 @@ static int spawn_latex (char *texbase)
 	NULL
     };
     int ok, status;
+    int ret = LATEX_OK;
 
     signal(SIGCHLD, SIG_DFL);
 
@@ -4021,9 +4030,10 @@ static int spawn_latex (char *texbase)
     if (!ok) {
 	errbox(error->message);
 	g_error_free(error);
+	ret = LATEX_EXEC_FAILED;
     } else if (errout && *errout) {
 	errbox(errout);
-	ok = 0;
+	ret = LATEX_ERROR;
     } else if (status != 0) {
 	gchar *errmsg;
 
@@ -4032,45 +4042,23 @@ static int spawn_latex (char *texbase)
 				 sout);
 	errbox(errmsg);
 	g_free(errmsg);
-	ok = 0;
+	ret = LATEX_ERROR;
     }
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
 
-    return ok;
+    return ret;
 }
 
-# else /* old "spawn_latex" code */
-
-static int spawn_latex (const char *texbase)
-{
-    gchar *tmp;
-    struct stat sbuf;
-    int err, ok = 1;
-
-    tmp = g_strdup_printf("cd %s && "
-			  "latex \\\\batchmode \\\input %s",
-			  paths.userdir, texbase);
-
-    system(tmp);
-    sprintf(tmp, "%s.dvi", texbase);
-    if (stat(tmp, &sbuf)) ok = 0;
-    g_free(tmp);
-
-    return ok;
-}
-
-# endif /* GSPAWN */
-
-#endif
+#endif /* !G_OS_WIN32 */
 
 /* ........................................................... */
 
 void view_latex (gpointer data, guint code, GtkWidget *widget)
 {
     char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
-    int dot, err = 0;
+    int dot, err = LATEX_OK;
     windata_t *mydata = NULL;
     MODEL *pmod = NULL;
 #ifdef G_OS_WIN32
@@ -4146,21 +4134,27 @@ void view_latex (gpointer data, guint code, GtkWidget *widget)
 	}	
     }
 #else
-    if (spawn_latex(texbase)) {
+    err = spawn_latex(texbase);
+    if (err == LATEX_OK) {
 	gretl_fork(viewdvi, texbase);
     }
 #endif /* G_OS_WIN32 */
 
-    err = remove(texfile);
+    remove(texfile);
 #ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);
     remove(tmp);
 #endif
     sprintf(tmp, "%s.log", texbase);
-    remove(tmp);
+    if (err == LATEX_ERROR) {
+	view_file(tmp, 0, 1, 78, 350, VIEW_FILE, NULL);
+    } else {
+	remove(tmp);
+    }
     sprintf(tmp, "%s.aux", texbase);
     remove(tmp);
+    
 }
 
 /* ........................................................... */

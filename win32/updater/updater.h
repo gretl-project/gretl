@@ -1,6 +1,11 @@
 #ifndef UPDATER_H_
 #define UPDATER_H_
 
+#define GRETL_BUFSIZE 8192
+
+extern FILE *flg;
+extern int logit;
+
 int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
 		  char *errbuf, time_t filedate);
 void clear (char *str, const int len);

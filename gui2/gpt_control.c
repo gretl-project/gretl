@@ -196,6 +196,13 @@ typedef struct {
     double ymax;
 } png_bounds_t;
 
+#ifdef G_OS_WIN32
+enum {
+    WIN32_TO_CLIPBOARD,
+    WIN32_TO_PRINTER
+};
+#endif
+
 static int get_png_bounds_info (png_bounds_t *bounds);
 #endif /* PNG_COMMENTS */
 
@@ -1385,7 +1392,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 #ifdef GNUPLOT_PNG
 
 #ifdef G_OS_WIN32
-static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color);
+static void win32_process_graph (GPT_SPEC *spec, int color, int dest);
 #endif
 
 void save_this_graph (GPT_SPEC *plot, const char *fname)
@@ -2595,8 +2602,11 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
 		      plot->spec);
     } 
 #ifdef G_OS_WIN32
-    else if (!strcmp(parent_item, "Copy to clipboard")) {
-	gnuplot_graph_to_clipboard(plot->spec, color);
+    else if (!strcmp(parent_item, _("Copy to clipboard"))) {
+	win32_process_graph(plot->spec, color, WIN32_TO_CLIPBOARD);
+    }
+    else if (!strcmp(parent_item, _("Print"))) {
+	win32_process_graph(plot->spec, color, WIN32_TO_PRINTER);
     }    
 #endif   
 
@@ -2676,9 +2686,12 @@ static void build_plot_menu (png_plot_t *plot)
 #endif
 	N_("Save to session as icon"),
 	N_("Clear data labels"),
-	N_("Zoom..."), 
+	N_("Zoom..."),
 #ifdef USE_GNOME
 	N_("Print..."),
+#endif
+#ifdef G_OS_WIN32
+	N_("Print"),
 #endif
 	N_("Edit"),
 	N_("Help"),
@@ -2755,7 +2768,8 @@ static void build_plot_menu (png_plot_t *plot)
         gtk_menu_shell_append(GTK_MENU_SHELL(plot->popup), item);
 
 	if (!strcmp(plot_items[i], "Save as postscript (EPS)...") ||
-	    !strcmp(plot_items[i], "Copy to clipboard")) {
+	    !strcmp(plot_items[i], "Copy to clipboard") ||
+	    !strcmp(plot_items[i], "Print")) {
 	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), plot->color_popup);
 	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
 	} else {
@@ -3684,56 +3698,21 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 
 #ifdef G_OS_WIN32
 
-/* win32: copy plot to clipboard by generating an EMF file
-   (enhanced metafile), reading it into a buffer, and putting
-   it on the clipboard.
-*/
+/* win32: copy plot to clipboard by generating an EMF file (enhanced
+   metafile), reading it into a buffer, and putting it on the
+   clipboard.
 
-#if 0
-METAFILEPICT *make_dummy_pict (void)
-{
-    HMETAFILE hmf;
-    METAFILEPICT *mfpict;
-    LPTSTR handle;
-    HDC hdc;
-    const char *msg = "Please use \"Paste special\" to insert the graph";
-    
-    hdc = CreateMetaFile(NULL);
-    TextOut(hdc, 10, 50, msg, strlen(msg));
-    hmf = CloseMetaFile(hdc);
-
-    mfpict = GlobalAlloc(GMEM_MOVEABLE, sizeof *mfpict);
-    if (mfpict == NULL) return NULL;
-
-    handle = GlobalLock(mfpict);
-    mfpict->mm = MM_ANISOTROPIC;
-    mfpict->xExt = 0;
-    mfpict->yExt = 0;
-    mfpict->hMF = hmf;
-    GlobalUnlock(handle);
-
-    PlayMetaFile(GetDC(0), hmf);
-
-    return mfpict;
-}
-#endif
-
-/* Weirdness: when an emf is put on the clipboard as below (it doesn't
-   matter whether the short method is used, or the long one that is
-   invoked when CLIPTEST is defined), Word 2000 behaves thus: a
-   straight "Paste" puts in a version of the graph with squashed up
-   numbers on the axes and no legend text; but a "Paste special"
-   (where one accepts the default of pasting it as an enhanced
-   metafile) puts in an accurate version with correct text.  Go
-   figure.
+   Weirdness: when an emf is put on the clipboard as below, Word 2000
+   behaves thus: a straight "Paste" puts in a version of the graph
+   with squashed up numbers on the axes and no legend text; but a
+   "Paste special" (where one accepts the default of pasting it as an
+   enhanced metafile) puts in an accurate version with correct text.
+   Go figure.  (This is on win98)
 */
 
 static int emf_to_clip (char *emfname)
 {
     HENHMETAFILE hemf, hemfclip;
-#if 0
-    METAFILEPICT *mfdummy;  
-#endif  
 
     if (!OpenClipboard(NULL)) {
 	errbox(_("Cannot open the clipboard"));
@@ -3745,24 +3724,16 @@ static int emf_to_clip (char *emfname)
     hemf = GetEnhMetaFile(emfname);
     hemfclip = CopyEnhMetaFile(hemf, NULL);
 
-#if 0
-    mfdummy = make_dummy_pict();
-#endif
-
     SetClipboardData(CF_ENHMETAFILE, hemfclip);
-#if 0
-    SetClipboardData(CF_METAFILEPICT, mfdummy);
-#endif
 
     CloseClipboard();
 
     DeleteEnhMetaFile(hemf);
-    /* DeleteMetaFile(mfdummy->hMF); */
 
     return 0;
 }
 
-static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
+static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 {
     FILE *fq;
     PRN *prn;
@@ -3809,10 +3780,13 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
     
     if (err) {
         errbox(_("Gnuplot error creating graph"));
-    } else {
-	/* copy from emf on disk onto clipboard */
-	emf_to_clip(emfname);
-	infobox(_("To paste, use Edit/Paste special.../Enhanced metafile"));
+    } else if (dest == WIN32_TO_CLIPBOARD) {
+	err = emf_to_clip(emfname);
+	if (!err) {
+	    infobox(_("To paste, use Edit/Paste special.../Enhanced metafile"));
+	}
+    } else if (dest == WIN32_TO_PRINTER) {
+	err = winprint_graph(emfname);
     }
 
     remove(emfname); 

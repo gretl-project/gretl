@@ -170,8 +170,8 @@ void winprint (char *fullbuf, char *selbuf)
     gsize bytes;
 #endif
 
-    memset(&pdlg, 0, sizeof(pdlg));
-    pdlg.lStructSize = sizeof(pdlg);
+    memset(&pdlg, 0, sizeof pdlg);
+    pdlg.lStructSize = sizeof pdlg;
     pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
     PrintDlg(&pdlg);
     dc = pdlg.hDC;
@@ -207,8 +207,8 @@ void winprint (char *fullbuf, char *selbuf)
     }
         
     /* Initialize print document details */
-    memset(&di, 0, sizeof(DOCINFO));
-    di.cbSize = sizeof(DOCINFO);
+    memset(&di, 0, sizeof di);
+    di.cbSize = sizeof di;
     di.lpszDocName = "gretl";
     
     printok = StartDoc(dc, &di);
@@ -268,6 +268,94 @@ void winprint (char *fullbuf, char *selbuf)
     if (selbuf) {
 	free(selbuf);
     }
+}
+
+/* #define WGRDEBUG */
+
+int winprint_graph (char *emfname)
+{
+    HENHMETAFILE hemf;
+    HDC dc;
+    PRINTDLG pdlg;
+    DOCINFO di;
+    int printok;
+#ifdef WGRDEBUG
+    FILE *fp = fopen("debug.txt", "w");
+#endif
+
+    hemf = GetEnhMetaFile(emfname);
+    if (hemf == NULL) {
+	sprintf(errtext, _("Couldn't open %s"), emfname);
+	errbox(errtext);
+	return 1;
+    }
+
+    memset(&pdlg, 0, sizeof pdlg);
+    pdlg.lStructSize = sizeof pdlg;
+    pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
+    PrintDlg(&pdlg);
+    dc = pdlg.hDC;
+
+    memset(&di, 0, sizeof di);
+    di.cbSize = sizeof di;
+    di.lpszDocName = "gretl";
+    
+    printok = StartDoc(dc, &di);
+
+    if (printok) {
+	RECT rect;
+	float hfrac = 0.8, vfrac;
+	float hpx, vpx;
+	float hppi, vppi;
+	float hsize, vsize;
+	float hmarg, vmarg;
+
+	StartPage(dc);
+
+	hpx = (float) GetDeviceCaps(dc, HORZRES); 
+	vpx = (float) GetDeviceCaps(dc, VERTRES);
+	hppi = (float) GetDeviceCaps(dc, LOGPIXELSX);
+	vppi = (float) GetDeviceCaps(dc, LOGPIXELSY);
+
+	hsize = hfrac * hpx;
+	hmarg = ((1.0 - hfrac) / 2.0) * hpx;
+
+	vsize = hsize * 0.75 * (vppi / hppi);
+	vfrac = vsize / vpx;
+	vmarg = ((1.0 - vfrac) / 3.0) * vpx;
+	
+	rect.left = (long) hmarg;
+	rect.top = (long) vmarg;
+	rect.right = (long) (hmarg + hsize);
+	rect.bottom = (long) (vmarg + vsize);
+
+#ifdef WGRDEBUG
+	fprintf(fp, "hpx=%g, vpx=%g\n", hpx, vpx);
+	fprintf(fp, "hsize=%g, vsize=%g\n", hsize, vsize);
+	fprintf(fp, "hfrac=%g, vfrac=%g\n", hfrac, vfrac);
+	fprintf(fp, "rect = %ld, %ld, %ld, %ld\n", 
+		rect.left, rect.top, rect.right, rect.bottom);
+	fclose(fp);
+#endif
+
+	PlayEnhMetaFile(dc, hemf, &rect);
+
+	printok = (EndPage(dc) > 0);
+    }
+    
+    if (printok) {
+        EndDoc(dc);
+    } else {
+        AbortDoc(dc);
+    }
+
+    DeleteDC(dc);
+    GlobalFree(pdlg.hDevMode);
+    GlobalFree(pdlg.hDevNames);
+
+    DeleteEnhMetaFile(hemf);
+
+    return !printok;
 }
 
 #elif defined(USE_GNOME)

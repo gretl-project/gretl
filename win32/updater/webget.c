@@ -452,7 +452,7 @@ static char *herrmsg (int error)
 static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs, 
 		       int *dt, struct urlinfo *proxy)
 {
-    char *request, *type, *command, *path;
+    char *request, *type, *command, *path = NULL;
     char *pragma_h, *range, useragent[16];
     char *all_headers = NULL;
     struct urlinfo *conn;
@@ -518,8 +518,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
     if (proxy) {
 	path = mymalloc(strlen(dbhost_ip) + strlen(u->path) + 8);
 	sprintf(path, "http://%s%s", dbhost_ip, u->path);
-    } else 
+    } else {
 	path = u->path; 
+    }
 
     command = (*dt & HEAD_ONLY)? "HEAD" : "GET";
     if (*dt & SEND_NOCACHE)
@@ -545,6 +546,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	    "%s\r\n",
 	    command, path, useragent, u->host, u->port, HTTP_ACCEPT,
 	    pragma_h); 
+
     if (proxy) free(path);
 
 #ifdef WDEBUG
@@ -561,6 +563,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 #endif
 	return WRITEFAILED;
     }
+
     contlen = contrange = -1;
     type = NULL;
     statcode = -1;
@@ -623,10 +626,11 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		free(hdr);
 		break;
 	    }
-	    else if (!*error)
+	    else if (!*error) {
 		hs->error = strdup("(no description)");
-	    else
+	    } else {
 		hs->error = strdup(error);
+	    }
 	    goto done_header;
 	}
 
@@ -726,8 +730,9 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     free(all_headers);
     close(sock);
-    if (hs->res == -2)
+    if (hs->res == -2) {
 	return FWRITEERR;
+    }
     return RETRFINISHED;
 }
 
@@ -832,7 +837,7 @@ static struct urlinfo *newurl (void)
 {
     struct urlinfo *u;
 
-    u = mymalloc(sizeof (struct urlinfo));
+    u = mymalloc(sizeof *u);
     memset(u, 0, sizeof *u);
     
     return u;
@@ -855,41 +860,53 @@ static void freeurl (struct urlinfo *u, int complete)
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 struct rbuf *rbuf)
 {
-    int i, res = 0;
-    static char c[8192];
+    int res = 0;
+    static char cbuf[GRETL_BUFSIZE];
+    size_t allocated;
+    int nchunks;
 
     *len = 0L;
+
     if (rbuf && RBUF_FD(rbuf) == fd) {
-	while ((res = rbuf_flush(rbuf, c, sizeof c)) != 0) {
-	    if (fp == NULL)
-		strncat(*getbuf, c, res);  
-	    else 
-		if (fwrite(c, 1, res, fp) < (unsigned)res)
+	while ((res = rbuf_flush(rbuf, cbuf, sizeof cbuf)) != 0) {
+	    if (fp == NULL) {
+		memcpy(*getbuf, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
 		    return -2;
+		}
+	    }
 	    *len += res;
 	}
     }
-    /* Read from fd while there is available data. */
-    i = (res)? 2 : 1;
+
+    /* Read from fd while there are data available */
+    nchunks = 1;
+    allocated = GRETL_BUFSIZE;
     do {
-	res = iread(fd, c, sizeof c);
+	res = iread(fd, cbuf, sizeof cbuf);
 	if (res > 0) {
 	    if (fp == NULL) {
-		if (i > 1) {
-		    *getbuf = realloc(*getbuf, i * 8192);
-		    if (*getbuf == NULL)
+		if ((size_t) (*len + res) > allocated) {
+		    nchunks *= 2;
+		    *getbuf = realloc(*getbuf, nchunks * GRETL_BUFSIZE);
+		    if (*getbuf == NULL) {
 			return -2;
+		    }
+		    allocated = nchunks * GRETL_BUFSIZE;
 		}
-		strncat(*getbuf, c, res);  
-	    } else
-		if (fwrite(c, 1, res, fp) < (unsigned)res)
+		memcpy(*getbuf + *len, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res) {
 		    return -2;
+		}
+	    }
 	    *len += res;
 	}
-	i++;
     } while (res > 0);
-    if (res < -1)
-	res = -1;
+
+    if (res < -1) res = -1;
+
     return res;
 }
 
@@ -1062,14 +1079,17 @@ struct urlinfo *proxy_init (void)
 	       "format must be ipnumber:port");
 	return NULL;
     }
+
     gretlproxy.port = atoi(p + 1);
     gretlproxy.host = mymalloc(16);
     if (gretlproxy.host == NULL) return NULL;
     iplen = p - dbproxy;
+
     if (iplen > 15) {
 	errbox("HTTP proxy: first field must be an IP number");
 	return NULL;	
     }
+
     gretlproxy.host[0] = '\0';
     strncat(gretlproxy.host, dbproxy, iplen);
 #ifdef WDEBUG
@@ -1102,7 +1122,7 @@ int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
     u->port = DEFAULT_HTTP_PORT;
     u->host = mymalloc(16);
     strcpy(u->host, host);
-    u->path = mymalloc(strlen(cgi) + flen + 24);
+    u->path = mymalloc(strlen(cgi) + flen + 32);
     sprintf(u->path, "%s?opt=%s", cgi, print_option(opt));
 
     if (flen) {
@@ -1120,7 +1140,7 @@ int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
 
     if (localfile != NULL) {
 	u->filesave = 1;
-	u->local = mymalloc(sizeof(char *));
+	u->local = mymalloc(sizeof *u->local);
 	*(u->local) = mymalloc(strlen(localfile) + 1);
 	strcpy(*(u->local), localfile);
     } else {
@@ -1128,12 +1148,27 @@ int retrieve_url (int opt, char *fname, char **savebuf, char *localfile,
 	u->local = savebuf;
     }
 
+    if (logit) {
+	fprintf(flg, "Query is '%s'\n", u->path);
+    }
+
     proxy = proxy_init();
+
+    if (logit) {
+	fputs("Done proxy init ", flg);
+	if (proxy != NULL) {
+	    fprintf(flg, "host %s, port %d", proxy->host, proxy->port);
+	} else {
+	    fputs(" (no proxy)\n", flg);
+	}
+    }
+
     result = http_loop(u, &dt, proxy);
+
     freeurl(u, 1);
 
     if (result == RETROK) {
-	errbuf[0] = 0;
+	*errbuf = 0;
 	return 0;
     } else {
 	strcpy(errbuf, u->errbuf);

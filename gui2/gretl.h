@@ -140,6 +140,7 @@ enum extra_cmds {
     VIEW_DATA,
     VIEW_SCRIPT,
     VIEW_CODEBOOK,
+    VIEW_FILE,
     DATA_REPORT,
     SCRIPT_OUT,
     CONSOLE,
@@ -352,6 +353,5 @@ void set_wm_icon (GtkWidget *w, gpointer data);
 #else
 int create_child_process (char *prog, char *env);
 #endif
-
 
 #endif /* GRETL_H */

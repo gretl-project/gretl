@@ -1,6 +1,8 @@
 /* auto updater program for gretl on win32
    Allin Cottrell, november 2000 */
 
+/* last mods, October 2003 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,9 +16,8 @@
 
 #include "updater.h"
 
-/* debugging */
-FILE *dbg;
-int debug;
+FILE *flg;
+int logit;
 
 #define MAXLEN 512
 
@@ -25,11 +26,29 @@ enum cgi_options {
     GRAB_FILE
 };
 
+
+#ifdef OS_WIN32
+static void switch_cursor (int cursor)
+{
+    HANDLE h;
+
+    h = LoadImage(0, 
+		  MAKEINTRESOURCE(cursor), 
+		  IMAGE_CURSOR, 
+		  0, 0, 
+		  LR_DEFAULTSIZE);
+
+    if (h != NULL) {
+	SetCursor(h);
+    }
+}
+#endif
+
 static void getout (int err)
 {
-    if (debug) {
-	fprintf(dbg, "Exiting with err = %d\n", err);
-	fclose(dbg);
+    if (logit) {
+	fprintf(flg, "Exiting with err = %d\n", err);
+	fclose(flg);
     }
 
     if (err) {
@@ -110,13 +129,13 @@ void listerr (char *buf, char *fname)
 
     if (fname != NULL) {
 	sprintf(errbuf, "Error retrieving '%s'", fname);
-	if (debug) {
-	    fprintf(dbg, "Error retrieving '%s'\n", fname);
+	if (logit) {
+	    fprintf(flg, "Error retrieving '%s'\n", fname);
 	}
     } else {
 	sprintf(errbuf, "Error retrieving file listing");
-	if (debug) {
-	    fputs("Error retrieving file listing\n", dbg);
+	if (logit) {
+	    fputs("Error retrieving file listing\n", flg);
 	}
     }
 
@@ -160,8 +179,8 @@ time_t get_time_from_stamp_file (const char *fname)
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	if (debug) {
-	    fprintf(dbg, "Couldn't open %s\n", fname);
+	if (logit) {
+	    fprintf(flg, "Couldn't open %s\n", fname);
 	}
 	return (time_t) 0;
     }
@@ -170,8 +189,8 @@ time_t get_time_from_stamp_file (const char *fname)
 	       wday, mon, &stime.tm_mday, &stime.tm_hour,
 	       &stime.tm_min, &stime.tm_sec, &stime.tm_year) != 7) {
 	fclose(fp);
-	if (debug) {
-	    fprintf(dbg, "Didn't get a valid date from %s\n", fname);
+	if (logit) {
+	    fprintf(flg, "Didn't get a valid date from %s\n", fname);
 	}
 	return (time_t) 0;
     }
@@ -187,8 +206,8 @@ time_t get_time_from_stamp_file (const char *fname)
     }
 
     if (stime.tm_mon == 20) {
-	if (debug) {
-	    fprintf(dbg, "Didn't get a valid month from %s\n", fname);
+	if (logit) {
+	    fprintf(flg, "Didn't get a valid month from %s\n", fname);
 	}
 	return (time_t) 0;
     }
@@ -202,6 +221,7 @@ int main (int argc, char *argv[])
 {
     int i, err = 0, tarerr = 0, remerr = 0;
     int unpack_ok = 0;
+    int debug = 0;
     char *getbuf = NULL;
     char *line, fname[48], errbuf[256], infobuf[80];
     const char *testfile = "gretl.stamp";
@@ -213,32 +233,36 @@ int main (int argc, char *argv[])
     if (argc == 2 && !strcmp(argv[1], "-d")) {
 	argc--;
 	debug = 1;
-	dbg = fopen("updater_debug.txt", "w");
-	if (dbg == NULL) exit(EXIT_FAILURE);
     }
 
 #ifdef OS_WIN32
-    if (ws_startup()) return 1;
-
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	errbox("Couldn't get the path to the gretl installation\n"
 	       "from the Windows registry");
-	if (debug) {
-	    fputs("Couldn't get gretl path from registry\n", dbg);
-	}
-	getout(1);
+	exit(EXIT_FAILURE);
     }
 
-    if (chdir(gretldir)) {
+    if (!SetCurrentDirectory(gretldir)) {
 	errbox("Couldn't move to the gretl folder");
-	if (debug) {
-	    fprintf(dbg, "Couldn't chdir to '%s'\n", gretldir);
-	}
-	getout(1);
+	exit(EXIT_FAILURE);
     }
+
+    if (ws_startup()) exit(EXIT_FAILURE);
 #endif
 
+    flg = fopen("updater.log", "w");
+    if (flg == NULL) {
+	logit = 0;
+    } else {
+	time_t now = time(NULL);
+
+	setvbuf(flg, NULL, _IOLBF, 0);
+	fprintf(flg, "gretl updater running %s", ctime(&now));
+	logit = 1;
+    }    
+
     filedate = get_time_from_stamp_file(testfile);
+
     if (filedate == (time_t) 0) {
 	sprintf(errbuf, "Couldn't get time-stamp from file '%s'", testfile);
 	errbox(errbuf);
@@ -252,16 +276,18 @@ int main (int argc, char *argv[])
     if (argc == 1) {
 	/* no arguments: a default update */
 
-	if (debug) {
-	    fputs("argc = 1, default update\n", dbg);
+	if (logit) {
+	    fputs("doing default update (argc = 1)\n", flg);
 	}
 
-	getbuf = mymalloc(8192);
+	getbuf = mymalloc(GRETL_BUFSIZE);
 	if (getbuf == NULL) return 1;
 
-	clear(getbuf, 8192);
+	clear(getbuf, GRETL_BUFSIZE);
 
-	if (debug) fputs("getbuf allocated OK\n", dbg);
+	if (logit) {
+	    fputs("getbuf allocated OK\n", flg);
+	}
 
 	err = retrieve_url(QUERY, NULL, &getbuf, NULL, errbuf, filedate);
 	if (err) {
@@ -269,13 +295,13 @@ int main (int argc, char *argv[])
 	   getout(1);
 	}
 
-	if (debug) fputs("initial call to retrieve_url: success\n", dbg);
+	if (logit) fputs("first call to retrieve_url: success\n", flg);
 
 	i = 0;
 	while ((line = strtok((i)? NULL: getbuf, "\n"))) {
 
-	    if (debug) {
-		fprintf(dbg, "working on line %d of getbuf\n = '%s'", 
+	    if (logit) {
+		fprintf(flg, "working on line %d of getbuf\n = '%s'\n", 
 			i, line);
 	    }
 
@@ -284,33 +310,50 @@ int main (int argc, char *argv[])
 
 	    if (!strcmp(fname, "No")) {
 		infobox("There are no new files on the server");
+		if (logit) {
+		    fputs("no new files on server\n", flg);
+		}
 		break;
 	    }
 
 	    sprintf(infobuf, "getting '%s'", fname);
 	    infobox(infobuf);
-	    if (debug) {
-		fprintf(dbg, "trying to get '%s'\n", fname);
-	    }	    
+	    if (logit) {
+		fprintf(flg, "trying to get '%s'\n", fname);
+	    }
 
+#ifdef OS_WIN32
+	    switch_cursor(OCR_WAIT);
+#endif
 	    err = retrieve_url(GRAB_FILE, fname, NULL, fname, errbuf, 0);
-	    if (debug) {
-		fprintf(dbg, "retrieve_url() returned %d\n", err);
+#ifdef OS_WIN32
+	    switch_cursor(OCR_NORMAL);
+#endif
+
+	    if (logit) {
+		fprintf(flg, "retrieve_url() returned %d\n", err);
 	    }	    
 	    if (err) {
 		listerr(errbuf, fname);
 		return 1;
 	    }
 
-	    if (debug) fputs("Doing untgz...\n", dbg);
-	    tarerr = untgz(fname);
-	    if (debug) fputs("Doing remove...\n", dbg);
-	    remerr = remove(fname);
-	    if (!err && !tarerr && !remerr) unpack_ok = 1;
-	}
+	    if (logit) fprintf(flg, "Doing untgz on %s...\n", fname);
+	    if (logit && debug) {
+		fputs("[debug: faking it]\n", flg);
+	    } else {
+		tarerr = untgz(fname);
+	    }
 
-	if (debug) {
-	    fprintf(dbg, "leaving retrieve_url() loop, i = %d\n", i);
+	    if (logit) fprintf(flg, "Removing %s... ", fname);
+	    remerr = remove(fname);
+
+	    if (logit) fprintf(flg, "%s\n", (remerr)? "failed" : "succeeded");
+	    if (!err && !tarerr && !remerr) {
+		unpack_ok = 1;
+	    } else {
+		err = 1;
+	    }
 	}
     }
 
@@ -342,8 +385,7 @@ int main (int argc, char *argv[])
     }
 
     if (unpack_ok) {
-	sprintf(infobuf, "Successfully unpacked %s", fname);
-	infobox(infobuf);
+	infobox("gretl update succeeded");
     }
 
     getout(err);

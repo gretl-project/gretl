@@ -93,7 +93,7 @@ int build_path (const char *dir, const char *fname, char *path,
 
 int prn_to_clipboard (PRN *prn, int copycode);
 
-GtkWidget *standard_button (const gchar *flag);
+#define standard_button(f) gtk_button_new_from_stock(f)
 
 int get_worksheet_data (const char *fname, int datatype, int append);
 

@@ -24,6 +24,7 @@
 
 #ifdef G_OS_WIN32
 int win_copy_buf (char *buf, int format, size_t len);
+int winprint_graph (char *emfname);
 #endif
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
