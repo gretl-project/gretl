@@ -487,11 +487,14 @@ char *switch_ext (char *targ, const char *src, char *ext)
 {
     int i = dotpos(src);
 
-    if (targ != src)
+    if (targ != src) {
         strncpy(targ, src, i);
+    }
+
     targ[i] = '.';
     targ[i + 1] = 0;
     strcat(targ, ext);
+
     return targ;
 }
 
@@ -515,6 +518,7 @@ int get_base (char *targ, const char *src, char c)
     if (src == NULL || *src == '\0') return 0;
 
     n = strlen(src);
+
     for (i=n-1; i>=0; i--) {
 	if (src[i] == c) {
 	    *targ = '\0';
@@ -611,35 +615,42 @@ char *tailstrip (char *str)
 
 /**
  * compress_spaces:
- * @str: the string to process.
+ * @s: the string to process.
  *
  * Reduce multiple contiguous space characters to single spaces
- * within @str.
+ * within @s.
  * 
  */
 
-void compress_spaces (char *s)
+char *compress_spaces (char *s)
 {
-    char *p;
+    char *p, *q;
 
-    if (s == NULL || *s == 0) return;
+    if (s == NULL || *s == 0) {
+	return s;
+    }
 
     if (strchr(s, '"') != NULL) {
 	/* don't mess with literals */
-	return;
+	return s;
     }
 
-    p = s;
+    p = q = s;
+
     while (*s) {
 	if (*s == '\t') *s = ' '; /* trash tabs */
 	if (*s == ' ') {
 	    p = s + 1;
 	    if (*p == 0) break;
 	    while (*p == ' ') p++;
-	    if (p - s > 1) memmove(s + 1, p, strlen(p) + 1);
+	    if (p - s > 1) {
+		memmove(s + 1, p, strlen(p) + 1);
+	    }
 	}
 	s++;
     }
+
+    return q;
 } 
 
 /**
@@ -1689,6 +1700,23 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
     }
 
     return vname;
+}
+
+int fix_varname_duplicates (DATAINFO *pdinfo)
+{
+    int dups = 0;
+    int i, j;
+
+    for (i=1; i<pdinfo->v; i++) {
+	for (j=i+1; j<pdinfo->v; j++) {
+	    if (!strcmp(pdinfo->varname[i], pdinfo->varname[j])) {
+		dups = 1;
+		make_varname_unique(pdinfo->varname[j], j, pdinfo);
+	    }
+	}
+    }
+
+    return dups;
 }
 
 char *append_dir (char *fname, const char *dir)

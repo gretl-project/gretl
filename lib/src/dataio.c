@@ -532,7 +532,7 @@ static void eatspace (FILE *fp)
 /* ................................................. */
 
 static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
-		     int binary)
+		     int binary, int old_byvar)
 {
     int i, t, n = pdinfo->n;
     char c, marker[OBSLEN];
@@ -552,8 +552,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		Z[i][t] = (double) x;
 	    }
 	}
-    }
-    else if (binary == 2) { /* double-precision binary data */
+    } else if (binary == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!fread(Z[i], sizeof(double), n, fp)) {
 		sprintf(gretl_errmsg, 
@@ -561,7 +560,24 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		return 1;
 	    }
 	}
-    } else { /* ascii data file */
+    } else if (old_byvar) {
+	/* ascii data by variable */
+	for (i=1; i<pdinfo->v; i++) {
+	   for (t=0; t<n && !err; t++) {
+		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
+		    sprintf(gretl_errmsg, 
+			    _("WARNING: ascii data read error at var %d, "
+			    "obs %d"), i, t + 1);
+		    err = 1;
+		    break;
+		}
+		if (Z[i][t] == -999.0) {
+		    Z[i][t] = NADBL;
+		} 
+	   }
+	}	       
+    } else { 
+	/* ascii data by observation */
 	char sformat[8];
 
 	sprintf(sformat, "%%%ds", OBSLEN - 1);
@@ -573,7 +589,9 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 	    eatspace(fp);
 	    c = fgetc(fp);  /* test for a #-opened comment line */
 	    if (c == '#') {
-		while (c != '\n') c = fgetc(fp);
+		while (c != '\n') {
+		    c = fgetc(fp);
+		}
 	    } else {
 		ungetc(c, fp);
 	    }
@@ -590,6 +608,9 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z,
 		    err = 1;
 		    break;
 		}
+		if (Z[i][t] == -999.0) {
+		    Z[i][t] = NADBL;
+		} 
 	    }
 	}
 #ifdef ENABLE_NLS
@@ -737,7 +758,8 @@ int check_varname (const char *varname)
 
 /* ................................................ */
 
-static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
+static int readhdr (const char *hdrfile, DATAINFO *pdinfo, 
+		    int *binary, int *old_byvar)
 {
     FILE *fp;
     int n, i = 0, panel = 0, descrip = 0;
@@ -750,6 +772,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 	sprintf(gretl_errmsg, _("Couldn't open file %s"),  hdrfile);
 	return E_FOPEN;
     }
+
     fscanf(fp, "%s", str);
     i += skipcomments(fp, str); 
 
@@ -778,6 +801,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 
     i = 1;
     fp = fopen(hdrfile, "r");
+
     str[0] = 0;
     fscanf(fp, "%s", str);
     if (skipcomments(fp, str)) {
@@ -832,7 +856,11 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
     *binary = 0;
     pdinfo->markers = NO_MARKERS;
 
-    if (fscanf(fp, "%5s %7s", byobs, option) == 2) {
+    n = fscanf(fp, "%5s %7s", byobs, option);
+
+    if (n == 1 && strcmp(byobs, "BYVAR") == 0) {
+	*old_byvar = 1;
+    } else if (n == 2) {
 	if (strcmp(option, "SINGLE") == 0) {
 	    *binary = 1;
 	} else if (strcmp(option, "BINARY") == 0) {
@@ -846,7 +874,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 	    panel = 1;
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	}
-    }
+    } 
 
     if (!panel && fscanf(fp, "%6s", option) == 1) {
 	if (strcmp(option, "PANEL2") == 0) {
@@ -888,6 +916,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo, int *binary)
 
     fclose(fp);
     clear_datainfo(pdinfo, CLEAR_FULL);
+
     return E_DATA;
 }
 
@@ -1910,7 +1939,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     FILE *dat = NULL;
     gzFile fz = NULL;
     int err = 0, gzsuff = 0, add_gdt = 0;
-    int binary = 0;
+    int binary = 0, old_byvar = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
     *gretl_errmsg = '\0';
@@ -1966,7 +1995,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
     }
 
     /* read data header file */
-    err = readhdr(hdrfile, tmpdinfo, &binary);
+    err = readhdr(hdrfile, tmpdinfo, &binary, &old_byvar);
     if (err) {
 	return err;
     } else { 
@@ -2023,7 +2052,7 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 	err = gz_readdata(fz, tmpdinfo, tmpZ, binary); 
 	gzclose(fz);
     } else {
-	err = readdata(dat, tmpdinfo, tmpZ, binary); 
+	err = readdata(dat, tmpdinfo, tmpZ, binary, old_byvar); 
 	fclose(dat);
     }
 
@@ -3313,6 +3342,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	for (i=1; i<csvinfo->v; i++) {
 	    sprintf(csvinfo->varname[i], "v%d", i);
 	}
+    } else if (fix_varname_duplicates(csvinfo)) {
+	pputs(prn, M_("warning: some variable names were duplicated\n"));
     }
 
     if (*pZ == NULL) {

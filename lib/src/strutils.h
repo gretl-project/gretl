@@ -75,7 +75,7 @@ int top_n_tail (char *str);
 
 char *tailstrip (char *str);
 
-void compress_spaces (char *str);
+char *compress_spaces (char *s);
 
 char *space_to_score (char *s);
 
@@ -133,6 +133,8 @@ void unescape_url (char *url);
 char *iso_to_ascii (char *s);
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
+
+int fix_varname_duplicates (DATAINFO *pdinfo);
 
 char *append_dir (char *fname, const char *dir);
 
