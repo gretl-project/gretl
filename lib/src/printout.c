@@ -612,11 +612,12 @@ static void outxx (const double xx, int ci, PRN *prn)
 	char numstr[18];
 
 	if (xx > -0.001 && xx < 0.001) {
-	    sprintf(numstr, " %13e", xx);
+	    sprintf(numstr, "%e", xx);
 	} else {
-	    sprintf(numstr, " %13g", xx);
+	    sprintf(numstr, "%g", xx);
 	}
-	pputs(prn, gretl_fix_exponent(numstr));
+	gretl_fix_exponent(numstr);
+	pprintf(prn, "%14s", numstr);
     }
 }
 

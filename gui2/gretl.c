@@ -975,6 +975,7 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Variable/Spectrum", s);
 	flip(mdata->ifac, "/Variable/Runs test", s);
 	flip(mdata->ifac, "/Variable/Augmented Dickey-Fuller test", s);
+	flip(mdata->ifac, "/Variable/ARMA model", s);
 #ifdef HAVE_X12A
 	flip(mdata->ifac, "/Variable/X-12-ARIMA analysis", s);
 #endif
@@ -984,6 +985,8 @@ static void time_series_menu_state (gboolean s)
 	flip(mdata->ifac, "/Model/Cochrane-Orcutt...", s);
 	flip(mdata->ifac, "/Model/Hildreth-Lu...", s);
 	flip(mdata->ifac, "/Model/Autoregressive estimation...", s);
+	flip(mdata->ifac, "/Model/ARMAX...", s);
+	flip(mdata->ifac, "/Model/GARCH...", s);
 	flip(mdata->ifac, "/Model/Vector Autoregression...", s);
 	flip(mdata->ifac, "/Model/Cointegration test", s);
 	flip(mdata->ifac, "/Sample/Compact data...", 
