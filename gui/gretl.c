@@ -700,7 +700,7 @@ int main (int argc, char *argv[])
     gtk_main();
 
     /* clean up before exiting */
-    if (mdata) free_windata(NULL, mdata);
+    /* if (mdata) free_windata(NULL, mdata); */
     free_session();
     if (Z) free(Z);
     if (fullZ) free(fullZ);
@@ -976,11 +976,9 @@ static GtkWidget *make_main_window (int gui_get_data)
 #endif
 
     gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
-			GTK_SIGNAL_FUNC (exit_check),
-			NULL);
+			GTK_SIGNAL_FUNC (exit_check), NULL);
     gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
 			GTK_SIGNAL_FUNC (destroy), NULL);
-
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_policy(GTK_WINDOW (mdata->w), TRUE, TRUE, FALSE);
@@ -1051,7 +1049,6 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     mdata->status = gtk_label_new("");
     
-
     gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into clist, activate menus */

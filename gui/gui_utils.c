@@ -1912,7 +1912,7 @@ void write_rc (void)
 static void read_rc (void) 
 {
     FILE *rc;
-    int i, j, numvars = sizeof rc_vars / sizeof *rc_vars;
+    int i, j;
     char line[MAXLEN], key[32], linevar[MAXLEN];
     int gotrecent = 0;
 
@@ -1931,7 +1931,7 @@ static void read_rc (void)
 	if (sscanf(line, "%s", key) == 1) {
 	    strcpy(linevar, line + strlen(key) + 3); 
 	    chopstr(linevar); 
-	    for (j=0; j<numvars; j++) {
+	    for (j=0; rc_vars[j].key != NULL; j++) {
 		if (!strcmp(key, rc_vars[j].key))
 		    strcpy(rc_vars[j].var, linevar);
 	    }

@@ -516,12 +516,12 @@ else
 echo "
 Configuration:
   
-  Installation path:			${prefix}
-  Build GTK gui:			${have_gtk}
-  Use readline library:			${have_readline}
+  Installation path:                    ${prefix}
+  Build GTK gui:                        ${have_gtk}
+  Use readline library:                 ${have_readline}
   Use libz compression:                 ${have_zlib}
-  Use gnuplot for graphs:		${have_gnuplot}
-  Use LaTeX for typesetting output:	${have_latex}
+  Use gnuplot for graphs:               ${have_gnuplot}
+  Use LaTeX for typesetting output:     ${have_latex}
   Build with gnome support:             ${have_gnome}
 
 Now type '$MAKE' to build gretl.
