@@ -64,7 +64,7 @@ depend:
 distdepend:
 	- for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d distdepend 2>/dev/null; done	
 
-dist: distdepend	
+dist: 
 	./tools/makedist
 
 snapshot: distdepend
