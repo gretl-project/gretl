@@ -75,7 +75,6 @@ CLISRC = gretlcli.c complete.c
 CLIOBJ = $(CLISRC:.c=.o)
 
 CHECKSRC = nistcheck.c
-CHECKOBJ = $(CHECKSRC:.c=.o)
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
@@ -104,7 +103,7 @@ MO = mo/es.mo
 
 # targets begin
 all: buildstamp dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) \
-	$(CKECKER) $(MO)
+	$(CHECKER) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -112,14 +111,12 @@ $(CLIPROG): $(CLIOBJ)
 $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES) 
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB)
 
-$(CHECKER):
-	$(CC) -s -o $@ $^ $(LIBS) $(ZLIB_LIB)
+$(CHECKER): $(CHECKSRC)
+	$(CC) -s -I../lib/src -o $@ $^ $(LIBS) $(ZLIB_LIB)
 
 $(CLIOBJ): $(CLI_SRC) 
 
 $(GUIOBJ): $(GUISRC) $(GUIHDR)
-
-$(CHECKOBJ): $(CHECKSRC)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
