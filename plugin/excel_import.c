@@ -213,13 +213,23 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 {
     struct rowdescr *prow = NULL;
     static char **saved_ref;
-    int row = 0, col = 0;
+    int row = 0, col = 0, xfref = 0;
 
     if (cell_record(q->ls_op)) {
 	row = MS_OLE_GET_GUINT16(q->data + 0);
 	col = MS_OLE_GET_GUINT16(q->data + 2);
-	if (row_col_err(row, col, prn)) return 1;
+	if (row_col_err(row, col, prn)) {
+	    return 1;
+	}
+	xfref = MS_OLE_GET_GUINT16(q->data + 4);
     }
+
+#ifdef FORMAT_INFO
+    if (q->ls_op == BIFF_NUMBER || q->ls_op == BIFF_RK) {
+	fprintf(stderr, "Numeric cell (%d, %d), format ref = %d\n", 
+		row, col, xfref);
+    }
+#endif
 
     switch (q->ls_op) {
 
@@ -451,6 +461,37 @@ static int process_item (BiffQuery *q, wbook *book, PRN *prn)
 #endif
 	break;
 
+#ifdef FORMAT_INFO
+    case BIFF_COLINFO:
+	fprintf(stderr, "Got BIFF_COLINFO: col range (%d, %d), XF index %d\n",
+		(int) MS_OLE_GET_GUINT16(q->data + 0),
+		(int) MS_OLE_GET_GUINT16(q->data + 2),
+		(int) MS_OLE_GET_GUINT16(q->data + 6));
+	break;
+
+    case BIFF_XF: {
+	unsigned short tp = MS_OLE_GET_GUINT16(q->data + 4);
+
+	fprintf(stderr, "Got BIFF_XF: format record index %d ",
+		(int) MS_OLE_GET_GUINT16(q->data + 2));
+	if (tp & 0x04) {
+	    fprintf(stderr, "(style XF)\n");
+	} else {
+	    fprintf(stderr, "(cell XF)\n");
+	}
+	break;
+    }
+
+    case BIFF_FORMAT: {
+	int idx = MS_OLE_GET_GUINT16(q->data + 0);
+
+	if ((idx >= 14 && idx <= 17) || idx >= 164) {
+	    fprintf(stderr, "Got BIFF_FORMAT: index %d\n", idx);
+	}
+	break;
+    }
+#endif
+
     default: 
 	break;
     }
@@ -476,6 +517,18 @@ static int handled_record (BiffQuery *q)
 	    return 1;
 	}
     }
+
+#ifdef FORMAT_INFO
+    if (q->opcode == BIFF_COLINFO ||
+	q->opcode == BIFF_XF) {
+	return 1;
+    }
+    if (q->ms_op == 0x04) {
+	if (q->ls_op == BIFF_FORMAT) {
+	    return 1;
+	}
+    } 
+#endif   
 
     if (q->ms_op == 0x08) {
 	if (q->ls_op == BIFF_BOF) return 1;

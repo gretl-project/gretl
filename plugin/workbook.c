@@ -441,7 +441,7 @@ ms_excel_read_workbook (MsOle *file, BiffBoundsheetData ***bounds,
 	    case BIFF_SUPBOOK:
 		break;
 	    default:
-		fprintf(stderr, "Got unexpected BIFF token\n");
+		fprintf(stderr, "Got unexpected BIFF token 0x%x\n", q->opcode);
 	    }
 	    continue;
 	}

@@ -916,7 +916,7 @@ int bool_subsample (gretlopt opt)
 	return 1;
     }
 
-    if (dataset_is_panel(datainfo)) {
+    if (dataset_is_panel(datainfo) || dataset_is_time_series(datainfo)) {
 	set_sample_label(datainfo);
     } else {
 	/* special for undated data */

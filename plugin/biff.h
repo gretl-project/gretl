@@ -22,25 +22,27 @@ typedef struct _BiffQuery BiffQuery;
  **/
 
 struct _BiffQuery {
-	guint8  ms_op;
-	guint8  ls_op;
-	guint16 opcode;
+    guint8  ms_op;
+    guint8  ls_op;
+    guint16 opcode;
 
-	guint8  *data;
-	int     data_malloced;
-	guint32 length;
+    guint8  *data;
+    int     data_malloced;
+    guint32 length;
 
-	guint32 streamPos;
-	MsOleStream *pos;
+    guint32 streamPos;
+    MsOleStream *pos;
 };
 
-typedef enum { MS_BIFF_V2 = 2,
-               MS_BIFF_V3 = 3,
-               MS_BIFF_V4 = 4,
-               MS_BIFF_V5 = 5, /* Excel 5.0 */
-               MS_BIFF_V7 = 7, /* Excel 95 */
-               MS_BIFF_V8 = 8, /* Excel 97 */
-               MS_BIFF_V_UNKNOWN = 0} MsBiffVersion ;
+typedef enum { 
+    MS_BIFF_V2 = 2,
+    MS_BIFF_V3 = 3,
+    MS_BIFF_V4 = 4,
+    MS_BIFF_V5 = 5, /* Excel 5.0 */
+    MS_BIFF_V7 = 7, /* Excel 95 */
+    MS_BIFF_V8 = 8, /* Excel 97 */
+    MS_BIFF_V_UNKNOWN = 0
+} MsBiffVersion;
 
 
 /* Pass this a BiffQuery * */
@@ -55,32 +57,48 @@ typedef enum { MS_BIFF_V2 = 2,
 #define EX_SETSTRLEN(p,d) (MS_OLE_SET_GUINT16(p + 6, d))
 
 /* Version info types as found in various Biff records */
-typedef enum { MS_BIFF_TYPE_Workbook=0, 
-	       MS_BIFF_TYPE_VBModule=1, 
-	       MS_BIFF_TYPE_Worksheet=2,
-	       MS_BIFF_TYPE_Chart=3, 
-	       MS_BIFF_TYPE_Macrosheet=4, 
-	       MS_BIFF_TYPE_Workspace=5,
-	       MS_BIFF_TYPE_Unknown=6 } MsBiffFileType ;
+typedef enum { 
+    MS_BIFF_TYPE_Workbook, 
+    MS_BIFF_TYPE_VBModule, 
+    MS_BIFF_TYPE_Worksheet,
+    MS_BIFF_TYPE_Chart, 
+    MS_BIFF_TYPE_Macrosheet, 
+    MS_BIFF_TYPE_Workspace,
+    MS_BIFF_TYPE_Unknown 
+} MsBiffFileType;
 
 
 /* Cell / XF types */
-typedef enum { MS_BIFF_H_VISIBLE=0, MS_BIFF_H_HIDDEN=1,
-	       MS_BIFF_H_VERY_HIDDEN=2 } MsBiffHidden ;
-typedef enum { MS_BIFF_X_STYLE=0, MS_BIFF_X_CELL=1 } MsBiffXfType ;
-typedef enum { MS_BIFF_F_MS=0, MS_BIFF_F_LOTUS=1 } MsBiffFormat ;
-typedef enum { MS_BIFF_E_CONTEXT=0, MS_BIFF_E_LEFT_TO_RIGHT=1,
-	       MS_BIFF_E_RIGHT_TO_LEFT=2 } MsBiffEastern ;
+typedef enum { 
+    MS_BIFF_H_VISIBLE, 
+    MS_BIFF_H_HIDDEN,
+    MS_BIFF_H_VERY_HIDDEN 
+} MsBiffHidden;
 
-typedef struct
-{
-  MsBiffVersion version ;
-  MsBiffFileType type ;
-} MsBiffBofData ;
+typedef enum { 
+    MS_BIFF_X_STYLE, 
+    MS_BIFF_X_CELL 
+} MsBiffXfType;
+
+typedef enum { 
+    MS_BIFF_F_MS, 
+    MS_BIFF_F_LOTUS 
+} MsBiffFormat;
+
+typedef enum { 
+    MS_BIFF_E_CONTEXT, 
+    MS_BIFF_E_LEFT_TO_RIGHT,
+    MS_BIFF_E_RIGHT_TO_LEFT 
+} MsBiffEastern;
+
+typedef struct {
+    MsBiffVersion version;
+    MsBiffFileType type;
+} MsBiffBofData;
 
 typedef enum {
-	MsBiffMaxRowsV7 = 16384,
-	MsBiffMaxRowsV8 = 65536
+    MsBiffMaxRowsV7 = 16384,
+    MsBiffMaxRowsV8 = 65536
 } MsBiffMaxRows;
 
 int excel_book_get_info (const char *fname, wbook *book);
@@ -283,4 +301,4 @@ void ms_biff_query_destroy (BiffQuery *bq);
 #define BIFF_RECALCID		       0x1c1	/* ONLY 1 */
 #define BIFF_UNKNOWN_1		       0x810	/* what this is */
 
-#endif
+#endif /* GNUMERIC_BIFF_H */

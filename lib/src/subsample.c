@@ -500,6 +500,44 @@ int model_mask_leaves_balanced_panel (const MODEL *pmod,
 					   1);
 }
 
+/* when subsampling cases from a time series, if the resulting dataset
+   is still a time series without internal "holes" then automatically
+   set a time series interpretation of the reduced dataset
+*/
+
+static void
+maybe_reconstitute_time_series (const DATAINFO *pdinfo,
+				const char *mask,
+				DATAINFO *subinfo)
+{
+    int missing = 1, switches = 0;
+    int t, t1 = 0, ts_ok = 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	if (missing && mask[t] == 1) {
+	    t1 = t;
+	    switches++;
+	    missing = 0;
+	} else if (!missing && mask[t] == 0) {
+	    switches++;
+	    missing = 1;
+	}
+	if (switches > 2) {
+	    ts_ok = 0;
+	    break;
+	}
+    }
+
+    if (ts_ok) {
+	char line[32];
+	char stobs[OBSLEN];
+
+	ntodate(stobs, t1, pdinfo);
+	sprintf(line, "setobs %d %s", pdinfo->pd, stobs);
+	set_obs(line, subinfo, OPT_NONE);
+    } 
+}
+
 /* when subsampling cases from a panel dataset, if the resulting
    dataset is still a balanced panel then automatically set the
    interpretation of the reduced dataset as a panel
@@ -748,10 +786,15 @@ int restrict_sample (const char *line,
 				 (const double **) *pZ, 
 				 *ppdinfo);
 
-    if (dataset_is_panel((*ppdinfo)) &&
-	(opt == SUBSAMPLE_USE_DUMMY || opt == SUBSAMPLE_BOOLEAN)) {
-	maybe_reconstitute_panel(*ppdinfo, mask, subinfo);
-    } 
+    if (opt == SUBSAMPLE_USE_DUMMY || 
+	opt == SUBSAMPLE_BOOLEAN ||
+	opt == SUBSAMPLE_DROP_MISSING) {
+	if (dataset_is_panel(*ppdinfo)) {
+	    maybe_reconstitute_panel(*ppdinfo, mask, subinfo);
+	} else if (dataset_is_time_series(*ppdinfo)) {
+	    maybe_reconstitute_time_series(*ppdinfo, mask, subinfo);
+	}
+    }
 
     /* save state */
     backup_full_dataset(pZ, ppdinfo, subinfo);

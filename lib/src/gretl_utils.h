@@ -41,7 +41,7 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains time series
  * data (1) or not (0).
  */
-#define dataset_is_time_series(p) (p->time_series == TIME_SERIES)
+#define dataset_is_time_series(p) ((p)->time_series == TIME_SERIES)
 
 /**
  * dataset_is_daily:
@@ -102,8 +102,8 @@ enum model_selection_criteria {
  * Attempt to determine whether a data set contains panel
  * data (1) or not (0).
  */
-#define dataset_is_panel(p) (p->time_series == STACKED_TIME_SERIES \
-                            || p->time_series == STACKED_CROSS_SECTION)
+#define dataset_is_panel(p) ((p)->time_series == STACKED_TIME_SERIES \
+                            || (p)->time_series == STACKED_CROSS_SECTION)
 
 #include <float.h>
 
