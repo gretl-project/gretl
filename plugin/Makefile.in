@@ -9,6 +9,7 @@ INSTALL = @INSTALL@
 LN = @LN_S@
 
 have_gtk = @have_gtk@
+darwin_build = @darwin_build@
 GTK_CFLAGS = @GTK_CFLAGS@
 GTK_LIBS = @GTK_LIBS@
 XML_CFLAGS = @XML_CFLAGS@
@@ -31,11 +32,19 @@ endif
 # Installation directory
 plugindir = $(prefix)/lib/gretl
 
-override CFLAGS += -I.. -DHAVE_CONFIG_H -fPIC -DPIC
+ifeq ($(darwin_build),yes)
+  PIC_FLAGS = -fno-common
+  SHARED_FLAG = -bundle
+else
+  PIC_FLAGS = -fPIC -DPIC
+  SHARED_FLAG = -shared
+endif
+
+override CFLAGS += -I.. -DHAVE_CONFIG_H $(PIC_FLAGS)
 
 LIBTOOL = $(topsrc)/libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
-LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) -shared #-rpath $(plugindir)
+LINK = $(LIBTOOL) --mode=link $(CC) $(CFLAGS) $(SHARED_FLAG)
 
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl-1.0.la

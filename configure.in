@@ -43,6 +43,7 @@ png_comments="yes"
 prefer_xml1="no"
 have_tramo="no"
 have_x12a="no"
+darwin_build="no"
 MAKE="make"
 XML_LIBS=
 
@@ -216,8 +217,16 @@ fi,
 try_lapack=yes)
 
 AC_PROG_CC
-dnl AC_CANONICAL_HOST
+
+AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
+case $host_os in
+    darwin*)
+      darwin_build="yes"
+      AC_SUBST(darwin_build)
+      ;;
+esac
+
 AC_PROG_INSTALL
 
 AC_DISABLE_STATIC
