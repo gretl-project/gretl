@@ -474,8 +474,24 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
+double get_pacf_from_resids (const MODEL *m1, const MODEL *m2)
+{
+    double num = 0.0, d1 = 0.0, d2 = 0.0;
+    int t;
+
+    for (t=m1->t1; t<=m1->t2; t++) {
+	num += m1->uhat[t] * m2->uhat[t];
+	d1 += m1->uhat[t] * m1->uhat[t];
+	d2 += m2->uhat[t] * m2->uhat[t];
+    }
+
+    return num / sqrt(d1 * d2);
+}
+
+#if 1
+
 static int get_pacf (double *pacf, int m, int varnum, 
-		     double ***pZ, DATAINFO *pdinfo)
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, err = 0;
     int *laglist, *list;
@@ -505,11 +521,12 @@ static int get_pacf (double *pacf, int m, int varnum,
     }
 
     gretl_model_init(&tmp, pdinfo);
-    pdinfo->t1 = t1;
+    /* pdinfo->t1 = t1; */
+    /* force same sample period for all regressions? */
+    pdinfo->t1 = t1 + m;
 
     list[1] = varnum;
-
-    for (i=2; i<=m; i++) {
+    for (i=1; i<=m; i++) {
 	list[0] = i + 2;
 	list[2] = 0;
 	for (j=0; j<i; j++) list[j+3] = laglist[j];
@@ -518,6 +535,7 @@ static int get_pacf (double *pacf, int m, int varnum,
 	    fprintf(stderr, "error estimating model for pacf\n");
 	    break;
 	}
+	printmodel(&tmp, pdinfo, prn);
 	pacf[i-1] = tmp.coeff[i];
 	if (i < m) clear_model(&tmp, pdinfo);
     }
@@ -527,7 +545,102 @@ static int get_pacf (double *pacf, int m, int varnum,
     free(laglist);
     free(list);
 
+    pdinfo->t1 = t1;
+
     return err;
+}
+
+#else
+
+static int get_pacf (double *pacf, int m, int varnum, 
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn)
+{
+    int k, j, err = 0;
+    int *laglist, *list;
+    int t1 = pdinfo->t1;
+    int v = pdinfo->v;
+    MODEL tmp1, tmp2;
+
+    pdinfo->t1 = 0; 
+
+    list = malloc((m + 3) * sizeof *list);
+    laglist = malloc(m * sizeof *laglist);
+    if (list == NULL || laglist == NULL) {
+	pdinfo->t1 = t1;
+	return 1;
+    }
+
+    /* add appropriate number of lags to data set */
+    for (k=1; k<=m; k++) {
+	int lnum = laggenr(varnum, k, 0, pZ, pdinfo);
+
+	if (lnum < 0) {
+	    free(list);
+	    free(laglist);
+	    return 1;
+	}
+	laglist[k-1] = lnum; 
+    }
+
+    gretl_model_init(&tmp1, pdinfo);
+    gretl_model_init(&tmp2, pdinfo);
+    pdinfo->t1 = t1;
+
+    for (k=2; k<=m; k++) {
+	list[0] = k + 1;
+	list[2] = 0;
+	for (j=0; j<k; j++) {
+	    list[j+3] = laglist[j];
+	}
+	list[1] = varnum;
+	tmp1 = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
+	if ((err = tmp1.errcode)) {
+	    clear_model(&tmp1, pdinfo);
+	    fprintf(stderr, "error estimating model for pacf\n");
+	    break;
+	}
+	printmodel(&tmp1, pdinfo, prn);
+	list[1] = laglist[k-1];
+	tmp2 = lsq(list, pZ, pdinfo, OLS, OPT_A, 0);
+	if ((err = tmp2.errcode)) {
+	    clear_model(&tmp2, pdinfo);
+	    fprintf(stderr, "error estimating model for pacf\n");
+	    break;
+	}
+	printmodel(&tmp2, pdinfo, prn);
+	pacf[k-1] = get_pacf_from_resids(&tmp1, &tmp2);
+	clear_model(&tmp1, pdinfo);
+	clear_model(&tmp2, pdinfo);
+    }
+
+    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
+    free(laglist);
+    free(list);
+
+    return err;
+}
+
+#endif
+
+static double gretl_acf (int n, int k, const double *y)
+{
+    int t;
+    double z, ybar, num = 0.0, den = 0.0;
+
+    if (n == 0 || gretl_isconst(0, n-1, y)) 
+	return NADBL;
+
+    ybar = gretl_mean(0, n-1, y);
+
+    for (t=0; t<n; t++) {
+	z = y[t] - ybar;
+	den += z * z;
+	if (t >= k) {
+	    num += z * (y[t-k] - ybar);
+	}
+    }
+
+    return num / den;
 }
 
 /**
@@ -551,7 +664,7 @@ int corrgram (int varno, int order, double ***pZ,
 	      DATAINFO *pdinfo, PATHS *ppaths, 
 	      int batch, PRN *prn)
 {
-    double *x, *y, *acf, box, pm;
+    double *acf, box, pm;
     double *pacf = NULL;
     int k, l, acf_m, pacf_m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
@@ -585,7 +698,7 @@ int corrgram (int varno, int order, double ***pZ,
     /* determine the automatic setting of the lag order, acf_m */
     switch (pdinfo->pd) {
     case 4: 
-	acf_m = (nobs <= 20)? nobs - 5 : 14;
+	acf_m = (nobs <= 20)? nobs - 5 : 22; /* 14 */
 	break;
     case 12: 
     case 52: 
@@ -602,24 +715,25 @@ int corrgram (int varno, int order, double ***pZ,
     /* If the user wanted a shorter order than acf_m, respect this choice */
     if (order != 0 && order < acf_m) acf_m = order;
 
-    x = malloc(pdinfo->n * sizeof *x);
-    y = malloc(pdinfo->n * sizeof *y);
     acf = malloc(acf_m * sizeof *acf);
-    if (x == NULL || y == NULL || acf == NULL) {
-	free(x);
-	free(y);
+    if (acf == NULL) {
 	return E_ALLOC;    
     }
 
     /* calculate acf, with lag order m */
+#if 0
     for (l=1; l<=acf_m; l++) {
-	for (t=t1+l; t<=t2; t++) {
-	    k = t - (t1+l);
-	    x[k] = (*pZ)[varno][t];
-	    y[k] = (*pZ)[varno][t-l];
-	}
-	acf[l-1] = gretl_corr(nobs-l, x, y);
+	const double *z1, *z2;
+
+	z1 = &(*pZ)[varno][t1+l];
+	z2 = &(*pZ)[varno][t1];
+	acf[l-1] = gretl_corr(nobs - l, z1, z2);
     }
+#else
+    for (l=1; l<=acf_m; l++) {
+	acf[l-1] = gretl_acf(nobs, l, &(*pZ)[varno][t1]);
+    }
+#endif
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
 	    pdinfo->varname[varno]);
@@ -638,7 +752,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     /* print acf */
     for (t=0; t<acf_m; t++) {
-	pprintf(prn, "%5d)%7.3f", t + 1, acf[t]);
+	pprintf(prn, "%5d)%8.4f", t + 1, acf[t]);
 	if ((t + 1) % 5 == 0) pputc(prn, '\n');
     }
     pputc(prn, '\n');
@@ -651,7 +765,9 @@ int corrgram (int varno, int order, double ***pZ,
 	    err = E_ALLOC;
 	    goto acf_getout;
 	}
-	for (l=0; l<acf_m; l++) xl[l] = l + 1.0;
+	for (l=0; l<acf_m; l++) {
+	    xl[l] = l + 1.0;
+	}
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
 	graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
 		 _("lag"), NULL, 0, prn);
@@ -671,7 +787,7 @@ int corrgram (int varno, int order, double ***pZ,
 	goto acf_getout;
     }
 
-    err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo);
+    err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo, prn);
 
     if (!err) {
 	pacf[0] = acf[0];
@@ -682,7 +798,7 @@ int corrgram (int varno, int order, double ***pZ,
 	    pputs(prn, ":\n\n");
 	}
 	for (k=0; k<pacf_m; k++) {
-	    pprintf(prn, "%5d)%7.3f", k+1, pacf[k]);
+	    pprintf(prn, "%5d)%8.4f", k+1, pacf[k]);
 	    if ((k + 1) % 5 == 0) pputc(prn, '\n');
 	}
     }
@@ -761,8 +877,6 @@ int corrgram (int varno, int order, double ***pZ,
     err = gnuplot_display(ppaths);
 
  acf_getout:
-    free(x);
-    free(y);
     free(acf);
     free(pacf);
 

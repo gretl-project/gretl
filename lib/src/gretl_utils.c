@@ -38,31 +38,31 @@ static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
 /* .......................................................  */
 
 double gretl_corr (int n, const double *zx, const double *zy)
-/*
-        returns the simple correlation coefficient between the the
-        arrays zx and zy, for the n observations 0 to n-1.  returns
-        NADBL if square root argument is invalid or no of observations
-        is zero 
-*/
+     /*
+       returns the simple correlation coefficient between the the
+       arrays zx and zy, for the n observations 0 to n-1.  returns
+       NADBL if square root argument is invalid or no of observations
+       is zero 
+     */
 {
     int i, nn;
-    double sx, sy, sxx, syy, sxy, den, zxi, zyi, zxbar, zybar;
+    double sx, sy, sxx, syy, sxy, den, zxbar, zybar;
     double cval = 0.0;
 
     if (n == 0) return NADBL;
-    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) return NADBL;
+
+    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) 
+	return NADBL;
 
     nn = n;
     sx = sy = 0.0;
     for (i=0; i<n; ++i) {
-        zxi = zx[i];
-        zyi = zy[i];
-        if (na(zxi) || na(zyi)) {
+        if (na(zx[i]) || na(zy[i])) {
             nn--;
             continue;
         }
-        sx += zxi;
-        sy += zyi;
+        sx += zx[i];
+        sy += zy[i];
     }
 
     if (nn == 0) return NADBL;
@@ -72,11 +72,9 @@ double gretl_corr (int n, const double *zx, const double *zy)
     sxx = syy = sxy = 0.0;
 
     for (i=0; i<n; ++i) {
-        zxi = zx[i];
-        zyi = zy[i];
-        if (na(zxi) || na(zyi)) continue;
-        sx = zxi - zxbar;
-        sy = zyi - zybar;
+        if (na(zx[i]) || na(zy[i])) continue;
+        sx = zx[i] - zxbar;
+        sy = zy[i] - zybar;
 	sxx += sx * sx;
 	syy += sy * sy;
 	sxy += sx * sy;

@@ -2991,7 +2991,7 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     if (lx == NULL) return -1;
 
     strcpy(s, pdinfo->varname[parent]);
-    if (pdinfo->pd >=10) gretl_trunc(s, 5);
+    if (pdinfo->pd >= 10) gretl_trunc(s, 5);
     else gretl_trunc(s, 6);
     sprintf(word, "_%d", lag);
     strcat(s, word);
