@@ -1341,6 +1341,8 @@ void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w)
     panel_structure_dialog(datainfo, open_dialog); 
 }
 
+
+
 /* ........................................................... */
 
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
@@ -2163,6 +2165,60 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	}
 	free_freq(freq);
     }
+}
+
+/* ........................................................... */
+
+void do_tramo (gpointer data, guint opt, GtkWidget *widget)
+{
+    gint err;
+    gchar *databuf;
+    GError *error = NULL;
+    void *handle;
+    int (*write_tramo_data) (char *, int, double **, const DATAINFO *, 
+			     PATHS *);
+    PRN *prn;
+    char fname[MAXLEN];
+
+    /* FIXME: screen out scalars and non-seasonal data */
+
+    if (gui_open_plugin("tramo-seats", &handle)) return;
+    write_tramo_data = get_plugin_function("write_tramo_data", handle);
+
+    if (write_tramo_data == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    }
+
+    if (bufopen(&prn)) {
+	close_plugin(handle);
+	return; 
+    }
+
+    err = write_tramo_data (fname, mdata->active_var, Z, datainfo, &paths);
+
+    close_plugin(handle);
+
+    if (err) {
+	errbox(_("TRAMO command failed"));
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    g_file_get_contents (fname, &databuf, NULL, &error);
+
+    if (databuf == NULL) {
+	errbox(_("TRAMO command failed"));
+	g_clear_error(&error);
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    free(prn->buf);
+    prn->buf = databuf;
+
+    view_buffer(prn, 120, 500, _("gretl: TRAMO analysis"), TRAMO, NULL);
 }
 
 /* ........................................................... */

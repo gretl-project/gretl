@@ -118,6 +118,8 @@ void do_freqplot (gpointer data, guint gamma, GtkWidget *widget);
 
 void do_pergm (gpointer data, guint opt, GtkWidget *widget);
 
+void do_tramo (gpointer data, guint opt, GtkWidget *widget);
+
 void do_outcovmx (gpointer data, guint action, GtkWidget *widget);
 
 void add_dummies (gpointer data, guint action, GtkWidget *widget);

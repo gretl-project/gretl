@@ -474,6 +474,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
+    { N_("/Variable/TRAMO analysis"), NULL, do_tramo, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Rename"), NULL, mdata_edit, RENAME, NULL },

@@ -120,6 +120,7 @@ enum extra_cmds {
     COVAR,
     STAT_TABLE,
     H_TEST,
+    TRAMO,
     VIEW_MODEL,
     VIEW_LOG,
     VIEW_DATA,
