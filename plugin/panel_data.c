@@ -569,42 +569,29 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 			     int nunits, const int *unit_obs,
 			     int T, int effT, PRN *prn)
 {
-    double *ubar, LM, eprime = 0.0;
+    double ubar, LM, eprime = 0.0;
     double x;
-    int i, t;
-
-    ubar = malloc(nunits * sizeof *ubar);
-    if (ubar == NULL) {
-	return E_ALLOC;
-    }
-
-    for (i=0; i<nunits; i++) {
-	ubar[i] = 0.0;
-	for (t=0; t<T; t++) {
-	    x = pmod->uhat[panel_index(i, t)];
-	    if (!na(x)) {
-		ubar[i] += x;
-	    }
-	}
-	ubar[i] /= (double) unit_obs[i]; 
-	eprime += ubar[i] * ubar[i];
-    }
-
-#ifdef PDEBUG
-    fprintf(stderr,  "breusch_pagan: found ubars\n");
-#endif
+    int i, t, Ti;
 
     pputs(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
 		 "units:\n\n"));
 
     for (i=0; i<nunits; i++) {
-	if (unit_obs[i] == 0) {
+	Ti = unit_obs[i];
+	if (Ti == 0) {
 	    continue;
 	}
-	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, ubar[i]);
+	ubar = 0.0;
+	for (t=0; t<T; t++) {
+	    x = pmod->uhat[panel_index(i, t)];
+	    if (!na(x)) {
+		ubar += x;
+	    }
+	}
+	ubar /= (double) Ti; 
+	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, ubar);
+	eprime += ubar * ubar;
     }
-
-    free(ubar);
 
     /* FIXME for unbalanced panels */
 
