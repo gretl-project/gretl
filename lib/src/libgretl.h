@@ -207,6 +207,7 @@ struct _DATAINFO {
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */
+    char *subdum;       /* subsampling vector */
     void *data;         /* all-purpose pointer */
 };
 

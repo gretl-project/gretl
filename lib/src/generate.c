@@ -1758,8 +1758,9 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr)
 	if (!modify) {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
 	}
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    (*pZ)[v][t] = genr->xvec[t];
+	}
     }
 
     genrfree(genr);
@@ -2477,7 +2478,7 @@ static double *get_model_series (double **Z, const DATAINFO *pdinfo,
     if (pmod == NULL || (v != UHATNUM && v != YHATNUM && v != HNUM))
 	return NULL;
 
-    if (pmod->t2 - pmod->t1 + 1 > n ||
+    if (pmod->t2 - pmod->t1 + 1 > n || 
 	model_sample_issue(pmod, NULL, Z, pdinfo)) {
 	strcpy(gretl_errmsg, 
 	       (v == UHATNUM)? 

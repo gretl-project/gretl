@@ -103,6 +103,10 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->markers = NO_MARKERS;
     } 
 
+    if (pdinfo->subdum != NULL) {
+	free(pdinfo->subdum);
+    }
+
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
@@ -332,6 +336,7 @@ DATAINFO *datainfo_new (void)
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
+    dinfo->subdum = NULL;
     dinfo->data = NULL;
     dinfo->time_series = 0;
 
@@ -420,6 +425,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     pdinfo->data = NULL;
+    pdinfo->subdum = NULL;
     
     return 0;
 }

@@ -26,6 +26,32 @@
 
 /* .......................................................... */
 
+int attach_subsample_to_dataset (DATAINFO *pdinfo, double ***fullZ, 
+				 const DATAINFO *fullinfo)
+     /* if the data set is currently subsampled, record the
+	subsample info in the datainfo struct */
+{
+    int i, t, n = fullinfo->n;
+
+    /* no subsample currently in force */
+    if (fullZ == NULL) return 0;
+
+    pdinfo->subdum = malloc(n * sizeof *pdinfo->subdum);
+    if (pdinfo->subdum == NULL) return E_ALLOC;
+
+    i = varindex(fullinfo, "subdum");
+    if (i == fullinfo->v) { /* safety measure: should be impossible */
+	fprintf(stderr, I_("mystery failure in attach_subsample_to_model\n"));
+	return 1;   
+    } 
+
+    for (t=0; t<n; t++) {
+	pdinfo->subdum[t] = (*fullZ)[i][t];
+    }
+    
+    return 0;
+}
+
 int attach_subsample_to_model (MODEL *pmod, double ***fullZ, 
 			       const DATAINFO *fullinfo)
      /* if the data set is currently subsampled, record the
@@ -54,19 +80,30 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
 
 /* .......................................................... */
 
-static int subsampled (double **Z, const DATAINFO *pdinfo, 
-		       const int subnum)
+static int subsampled (const DATAINFO *pdinfo) 
      /* Is the data set currently "sub-sampled" via selection of 
-	cases?  Use this func _only_ if subnum tests < pdinfo->v,
-        i.e. only if the dummy variable exists. 
+	cases?   
      */
 {
     int t, n = pdinfo->n;
 
+    if (pdinfo->subdum == NULL) return 0;
+
     for (t=0; t<n; t++) {
-	if (floatneq(Z[subnum][t], 0.0)) return 1;
+	if (!pdinfo->subdum[t]) return 1;
     }
     return 0;
+}
+
+static int subdum_match (char *s, double *x, int n)
+{
+    int t;
+
+    for (t=0; t<n; t++) {
+	if ((double) s[t] != x[t]) return 0;
+    }
+
+    return 1;
 }
 
 /* .......................................................... */
@@ -77,13 +114,10 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	it may have been estimated on a different (subsampled) data 
 	set from the current one */
 {
-    int i, n = pdinfo->n;
+    int n = pdinfo->n;
     double *subdum;
 
     if (pmod == NULL && spec == NULL) return 0;
-
-    /* if no sub-sampling has been done, we're OK */
-    if ((i = varindex(pdinfo, "subdum")) == pdinfo->v) return 0;
 
     if (pmod != NULL) {
 	subdum = pmod->subdum;
@@ -91,10 +125,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	subdum = spec->subdum;
     }
 
+    /* if no sub-sampling has been done, we're OK */
+    if (subdum == NULL && pdinfo->subdum == NULL) return 0;
+
     /* case: model has no sub-sampling info recorded */
     if (subdum == NULL) {
 	/* if data set is not currently sub-sampled, we're OK */
-	if (!subsampled(Z, pdinfo, i)) {
+	if (!subsampled(pdinfo)) {
 	    return 0;
 	} else {
 	    fputs(_("dataset is subsampled, model is not\n"), stderr);
@@ -104,13 +141,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
     }
 
     /* case: model has sub-sampling info recorded */
-    if (!subsampled(Z, pdinfo, i)) {
+    if (!subsampled(pdinfo)) {
 	fputs(_("model is subsampled, dataset is not\n"), stderr);
 	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { 
 	/* do the subsamples (model and current data set) agree? */
-	if (vars_identical(Z[i], subdum, n)) {
+	if (subdum_match(pdinfo->subdum, subdum, n)) {
 	    return 0;
 	} else {
 	    fputs(_("model and dataset subsamples not the same\n"), stderr);
@@ -373,6 +410,8 @@ int restrict_sample (const char *line,
 
     prep_subdinfo(newinfo, oldinfo->markers, sn);
     if (oldinfo->markers) newinfo->S = S;
+
+    attach_subsample_to_dataset(newinfo, oldZ, oldinfo);
 
     if (dum != NULL) free(dum);
 

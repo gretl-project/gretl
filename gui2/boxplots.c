@@ -199,7 +199,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif
     else if (!strcmp(item, _("Help"))) {
-	context_help (NULL, GINT_TO_POINTER(GR_BOX));
+	context_help (NULL, GINT_TO_POINTER(BXPLOT));
     }
     else if (!strcmp(item, _("Close"))) { 
 	gtk_widget_destroy(grp->popup);

@@ -1026,12 +1026,13 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case GENR:
-	err = generate(&Z, datainfo, line, model_count,
+	err = generate(&Z, datainfo, line, model_count, 
 		       models[0], cmd.opt);
-	if (err) 
+	if (err) { 
 	    errmsg(err, prn);
-	else 
-	    pprintf(prn, "%s\n", get_gretl_msg());	
+	} else {
+	    pprintf(prn, "%s\n", get_gretl_msg());
+	}	
 	break;
 
     case GNUPLOT:

@@ -618,7 +618,7 @@ static void outxx (const double xx, int ci, PRN *prn)
 	char numstr[18];
 
 	if (xx > -0.001 && xx < 0.001) {
-	    sprintf(numstr, "%e", xx);
+	    sprintf(numstr, "%.5e", xx);
 	} else {
 	    sprintf(numstr, "%g", xx);
 	}

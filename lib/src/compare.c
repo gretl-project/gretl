@@ -579,19 +579,20 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 {
     int err = 0;
     int q = list[0];
-    gretl_matrix *sigma;
-    gretl_matrix *betahat;
-    gretl_matrix *tmp;
-    double x, F;
+    gretl_matrix *sigma = NULL;
+    gretl_matrix *betahat = NULL;
+    gretl_matrix *tmp = NULL;
+    double F;
     int i, j, k, ii, jj, idx;
     
     sigma = gretl_matrix_alloc(q, q);
     betahat = gretl_matrix_alloc(q, 1);
     tmp = gretl_matrix_alloc(1, q);
 
-    if (sigma == NULL || betahat == NULL) {
+    if (sigma == NULL || betahat == NULL || tmp == NULL) {
 	gretl_matrix_free(sigma);
 	gretl_matrix_free(betahat);
+	gretl_matrix_free(tmp);
 	return E_ALLOC;
     }
 
@@ -600,18 +601,12 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 	k = pmod->list[i];
 	if (in_omit_list(k, list)) {
 	    gretl_matrix_set(betahat, ii, 0, pmod->coeff[i-2]);
-	    pprintf(prn, "set betahat[%d] = coeff[%d] = %g\n",
-		    ii, i-2, pmod->coeff[i-2]);
 	    jj = 0;
-	    for (j=i; j<=pmod->list[0]; j++) {
+	    for (j=ii; j<=pmod->list[0]; j++) {
 		k = pmod->list[j];
 		if (in_omit_list(k, list)) {
 		    idx = ijton(i-1, j-1, pmod->ncoeff);
 		    gretl_matrix_set(sigma, ii, jj, pmod->vcv[idx]);
-		    gretl_matrix_set(sigma, jj, ii, pmod->vcv[idx]);
-		    pprintf(prn, "set sigma(%d,%d) = vcv[%d] = %g\n",
-			    ii, jj, idx, pmod->vcv[idx]);
-
 		    jj++;
 		}
 	    }
@@ -619,18 +614,30 @@ static int robust_omit_test (LIST list, MODEL *pmod, PRN *prn)
 	}
     }
 
-#if 1	
     err = gretl_invert_symmetric_matrix(sigma);
-    err = gretl_matrix_multiply_mod(betahat, GRETL_MOD_TRANSPOSE,
-				    sigma, GRETL_MOD_NONE,
-				    tmp);
 
-    F = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
-				 betahat, GRETL_MOD_NONE,
-				 &err);
+    if (!err) {
+	err = gretl_matrix_multiply_mod(betahat, GRETL_MOD_TRANSPOSE,
+					sigma, GRETL_MOD_NONE,
+					tmp);
+    }
 
-    pprintf(prn, "Robust F(%d,%d) = %g\n", q, pmod->dfd, F);
-#endif
+    if (!err) {
+	F = gretl_matrix_dot_product(tmp, GRETL_MOD_NONE,
+				     betahat, GRETL_MOD_NONE,
+				     &err);
+	F /= q;
+    }
+
+    if (!err) {
+	pprintf(prn, "  \"Robust\" Wald F(%d, %d) = %g, "
+		"with p-value = %g\n", q, pmod->dfd, F,
+		fdist(F, q, pmod->dfd));
+    }
+
+    gretl_matrix_free(sigma);
+    gretl_matrix_free(betahat);
+    gretl_matrix_free(tmp);
 
     return err;
 }
@@ -685,10 +692,6 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	if (err) {
 	    free(tmplist);
 	}
-    }
-
-    if (!err && gretl_model_get_int(orig, "hc")) {
-	return robust_omit_test(omitvars, orig, prn);
     }
 
     if (!err) {
@@ -761,8 +764,12 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, prn); 
 	}
 	_difflist(orig->list, new->list, omitvars);
-	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt);     
+	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
+	if (gretl_model_get_int(orig, "hc")) {
+	    robust_omit_test(omitvars, orig, prn);
+	}    
+	
 	*model_count += 1;
 	free(tmplist);
 	if (orig->ci == LOGIT || orig->ci == PROBIT)
