@@ -375,7 +375,7 @@ void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn)
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
-	    pprintf(prn, "%#10.5g ", gretl_matrix_get(m, i, j));
+	    pprintf(prn, "%#12.5g ", gretl_matrix_get(m, i, j));
 	}
 	pputs(prn, "\n");
     }
@@ -420,11 +420,19 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
     if (m == NULL) return m;
 
     p = 0;
+#if 0
     for (j=0; j<rows; j++) {
 	for (i=0; i<cols; i++) {
 	    m->val[p++] = X[i][j];
 	}
     } 
+#else
+    for (j=0; j<cols; j++) {
+	for (i=0; i<rows; i++) {
+	    m->val[p++] = X[j][i];
+	}
+    }
+#endif
 
     return m;
 }
@@ -483,6 +491,61 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     }
 
     return GRETL_MATRIX_OK;
+}
+
+static double 
+gretl_matrix_column_mean (const gretl_matrix *m, int col)
+{
+    int i;
+    double sum = 0.0;
+
+    for (i=0; i<m->rows; i++) {
+	sum += m->val[mdx(m, i, col)];
+    }
+
+    return sum / (double) m->rows;
+}
+
+/* Form a VCV matrix from matrix m (which is expected to have rows >= cols).
+   Returns NULL on failure, allocated VCV on success.  Note that m is
+   overwritten, the column means being subtracted.  It is up to the
+   caller to free both m and VCV.
+*/
+
+gretl_matrix *gretl_matrix_vcv (gretl_matrix *m)
+{
+    int i, j, err = 0;
+    double colmean;
+    gretl_matrix *v;
+
+    if (m->cols > m->rows) {
+	fputs("gretl_matrix_vcv: expected rows >= cols\n", stderr);
+	return NULL;
+    }
+
+    v = gretl_matrix_alloc(m->cols, m->cols);
+    if (v == NULL) return NULL;
+
+    /* subtract the column means from the column elements */
+    for (j=0; j<m->cols; j++) {
+	colmean = gretl_matrix_column_mean(m, j);
+	for (i=0; i<m->rows; i++) {
+	    m->val[mdx(m, i, j)] -= colmean;
+	}
+    }
+
+    err = gretl_matrix_multiply_mod(m, GRETL_MOD_TRANSPOSE,
+				    m, GRETL_MOD_NONE,
+				    v);
+
+    gretl_matrix_divide_by_scalar(v, (double) m->rows);
+
+    if (err) {
+	gretl_matrix_free(v);
+	return NULL;
+    }
+
+    return v;
 }
 
 int gretl_matrix_multiply (const gretl_matrix *a, const gretl_matrix *b,

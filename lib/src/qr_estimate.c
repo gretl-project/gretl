@@ -217,9 +217,6 @@ static void wtw (gretl_matrix *wt, gretl_matrix *X,
 	xi = gretl_matrix_get(X, t, i);
 	for (j=0; j<n; j++) {
 	    xj = gretl_matrix_get(X, t - lag, j);
-	    fprintf(stderr, "t=%d, setting wt(%d, %d) = "
-		    "X(%d,%d) * X(%d,%d) = %g\n", t, i, j, 
-		    t, i, t-lag, j, xi*xj);
 	    gretl_matrix_set(wt, i, j, xi * xj);
 	}
     }
@@ -237,8 +234,6 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
     double mult, uu;
     int err = 0;
 
-    PRN *prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
-
     X = make_data_X(pmod, Z);
     if (X == NULL) return 1;
 
@@ -252,11 +247,8 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
 
     gretl_matrix_zero(vcv);
 
-    fprintf(stderr, "qr_make_hac: NW p = %d\n", p);
-
     for (j=0; j<=p; j++) {
 	/* cumulate running sum of gamma-hat terms */
-	fprintf(stderr, " doing j = %d\n", j);
 	gretl_matrix_zero(gammaj);
 	for (t=j; t<m; t++) {
 	    wtw(wtj, X, n, t, j);
@@ -271,8 +263,6 @@ static int qr_make_hac (MODEL *pmod, const double **Z,
 	    mult = 1.0 -  j / (double) (p + 1.0);
 	    gretl_matrix_multiply_by_scalar(gammaj, mult);
 	}
-
-	gretl_matrix_print(gammaj, "adding to vcv", prn);
 
 	gretl_matrix_add_to(vcv, gammaj);
     }
