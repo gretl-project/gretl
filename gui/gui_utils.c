@@ -1264,8 +1264,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     int show_viewbar = (role != CONSOLE &&
 			role != HELP &&
 			role != CLI_HELP && 
-			role != VIEW_DATA &&
-			role != VIEW_CODEBOOK);
+			role != VIEW_DATA);
     int doing_script = (role == EDIT_SCRIPT ||
 			role == VIEW_SCRIPT ||
 			role == VIEW_LOG);
