@@ -3,6 +3,7 @@
 	-lf2c -lm   (in that order)
 */
 
+#include "libgretl.h"
 #include "f2c.h"
 
 /* Table of constant values */
@@ -48,10 +49,13 @@ static real c_b164 = 2.f;
 	doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
 	 doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
 	 doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
-	 doublereal *b, integer *ncoefb, integer *iters, integer *info)
+	 doublereal *b, integer *ncoefb, integer *iters, integer *info,
+         PRN *prn)
 {
     /* Format strings */
+#ifdef PRINT_LL
     static char fmt_8901[] = "(4g19.12)";
+#endif
 
     /* System generated locals */
     integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ydet_dim1, 
@@ -122,10 +126,9 @@ static real c_b164 = 2.f;
 
     /* Fortran I/O blocks */
     static cilist io___41 = { 0, 6, 0, 0, 0 };
+#ifdef PRINT_LL
     static cilist io___42 = { 0, 6, 0, fmt_8901, 0 };
-
-
-
+#endif
 
 
 /*     The first row of AMAX contains the initial values */
@@ -413,6 +416,7 @@ L511:
 	*iters = nzo;
 	amax[amax_dim1 + 1] = toler2;
 /*      WRITE(6,8900)NZO */
+#ifdef PRINT_LL
 	s_wsfe(&io___42);
 	i__1 = nzo;
 	for (i__ = 1; i__ <= i__1; ++i__) {
@@ -420,6 +424,7 @@ L511:
 		    );
 	}
 	e_wsfe();
+#endif
 /* 8900  FORMAT(I5) */
 	tollog = 0.f;
 	totdis = 0.f;
@@ -662,9 +667,11 @@ doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2,
 	doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
 	 integer *nbeta, doublereal *ht)
 {
+#if 0
     /* Format strings */
     static char fmt_200[] = "(\002 ALFA0,ALFA1,BETA1=\002,3g15.6)";
     static char fmt_101[] = "(\002 VALUNC: HT NEGATIV=\002,g15.6)";
+#endif
 
     /* System generated locals */
     integer ydet_dim1, ydet_offset, yobs_dim1, yobs_offset, res2_dim1, 
@@ -685,9 +692,11 @@ doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2,
     extern /* Subroutine */ int vsrstr_(doublereal *, integer *, doublereal *,
 	     integer *);
 
+#if 0
     /* Fortran I/O blocks */
     static cilist io___68 = { 0, 6, 0, fmt_200, 0 };
     static cilist io___69 = { 0, 6, 0, fmt_101, 0 };
+#endif
 
 
     /* Parameter adjustments */
@@ -806,6 +815,7 @@ L270:
 	    ht[ic] += ht[ic - i__] * beta[i__];
 	}
 L272:
+#if 0
 	if (ht[ic] < 0.f) {
 	    s_wsfe(&io___68);
 	    do_fio(&c__1, (char *)&(*alfa0), (ftnlen)sizeof(doublereal));
@@ -818,6 +828,7 @@ L272:
 	    do_fio(&c__1, (char *)&ht[ic], (ftnlen)sizeof(doublereal));
 	    e_wsfe();
 	}
+#endif
 /* ARBITRARIO */
 	if (ht[ic] <= 0.f) {
 	    ht[ic] = 1e-7f;
@@ -846,10 +857,6 @@ L272:
 	ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *
 	alfa, doublereal *beta, integer *nalfa, integer *nbeta)
 {
-    /* Format strings */
-    static char fmt_1037[] = "(\002   ESTIMATION OF SIGMA \002)";
-    static char fmt_1038[] = "(g15.6)";
-
     /* System generated locals */
     integer yobs_dim1, yobs_offset, xobs_dim1, xobs_offset, ystoc_dim1, 
 	    ystoc_offset, sigma_dim1, sigma_offset, res_dim1, res_offset, 
@@ -864,12 +871,6 @@ L272:
 	     integer *, integer *, doublereal *, integer *, doublereal *, 
 	    doublereal *, doublereal *, integer *, integer *), vsrstr_(
 	    doublereal *, integer *, doublereal *, integer *);
-
-    /* Fortran I/O blocks */
-    static cilist io___72 = { 0, 6, 0, fmt_1037, 0 };
-    static cilist io___73 = { 0, 6, 0, fmt_1038, 0 };
-
-
 
     /* Parameter adjustments */
     --yy;
@@ -913,11 +914,6 @@ L272:
 		;
     }
     sigma[sigma_dim1 + 1] /= *nfinsm - *ninit + 1;
-    s_wsfe(&io___72);
-    e_wsfe();
-    s_wsfe(&io___73);
-    do_fio(&c__1, (char *)&sigma[sigma_dim1 + 1], (ftnlen)sizeof(doublereal));
-    e_wsfe();
 /*     E METTE A XXXX GLI ALTRI ALFA E BETA */
     if (*nalfa <= 0) {
 	goto L1;

@@ -1,10 +1,57 @@
-extern int vsanal_(integer *ninit, integer *nfinsm, doublereal *yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *yy, doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc, doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma, doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin, doublereal *b, integer *ncoefb, integer *iters, integer *info);
-extern int ols_(integer *ninit, integer *nfinsm, doublereal *yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, doublereal *umc, integer *nstoch, doublereal *yy, doublereal *c__, integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc, doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb, doublereal *g);
-extern doublereal valunc_(doublereal *c__, integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ydet, doublereal *yobs, doublereal *ystoc, doublereal *xobs, integer *nend, integer *iread, integer *nexo, doublereal *umc, integer *nstoch, integer *ninit, integer *nfinsm, doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa, integer *nbeta, doublereal *ht);
-extern int sig_(integer *ninit, integer *nfinsm, doublereal *yobs, integer *nend, integer *iread, doublereal *umc, doublereal *xobs, integer *nexo, integer *nstoch, doublereal *yy, doublereal *c__, integer *ncoeff, doublereal *res, doublereal *sigma, doublereal *ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa, integer *nbeta);
-extern int check_(doublereal *param, integer *ncoeff, integer *nparam);
-extern int garcim_(integer *ninit, integer *nfinsm, doublereal *yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__, integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc, doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa, integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt);
-extern int garcfh_(integer *ninit, integer *nfinsm, doublereal *yobs, integer *nend, integer *iread, doublereal *xobs, integer *nexo, doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__, integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc, doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5, integer *ih, doublereal *g, doublereal *pp, doublereal *aux3, doublereal *param, integer *nparam, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa, integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt);
-extern int vsrstr_(doublereal *c__, integer *ncoeff, doublereal *b, integer *ncoefb);
-extern int vsdmig_(doublereal *g, integer *ig, integer *n, doublereal *aux, integer *ier);
-extern int vsmode_(doublereal *y, doublereal *x, integer *nexo, integer *iread, integer *i__, doublereal *yl, integer *nend, doublereal *u, doublereal *a, doublereal *z__, integer *nstoch, integer *ncoeff);
+extern int vsanal_(integer *ninit, integer *nfinsm, doublereal *yobs,
+integer *nend, integer *iread, doublereal *xobs, integer *nexo,
+doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *yy,
+doublereal *coeff, integer *ncoeff, doublereal *d__, doublereal *oldc,
+doublereal *vc, doublereal *res2, doublereal *res, doublereal *sigma,
+doublereal *a, doublereal *ystoc, doublereal *amax, doublereal *amin,
+doublereal *b, integer *ncoefb, integer *iters, integer *info, PRN
+*prn);
+
+extern int ols_(integer *ninit, integer *nfinsm, doublereal *yobs,
+integer *nend, integer *iread, doublereal *xobs, integer *nexo,
+doublereal *umc, integer *nstoch, doublereal *yy, doublereal *c__,
+integer *ncoeff, doublereal *oldc, doublereal *vc, doublereal *ystoc,
+doublereal *amax, doublereal *aux, doublereal *b, integer *ncoefb,
+doublereal *g); extern doublereal valunc_(doublereal *c__, integer
+*ncoeff, doublereal *res2, doublereal *res, doublereal *ydet,
+doublereal *yobs, doublereal *ystoc, doublereal *xobs, integer *nend,
+integer *iread, integer *nexo, doublereal *umc, integer *nstoch,
+integer *ninit, integer *nfinsm, doublereal *param, integer *nparam,
+doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal *alfa,
+doublereal *beta, integer *nalfa, integer *nbeta, doublereal *ht);
+extern int sig_(integer *ninit, integer *nfinsm, doublereal *yobs,
+integer *nend, integer *iread, doublereal *umc, doublereal *xobs,
+integer *nexo, integer *nstoch, doublereal *yy, doublereal *c__,
+integer *ncoeff, doublereal *res, doublereal *sigma, doublereal
+*ystoc, doublereal *b, integer *ncoefb, doublereal *alfa0, doublereal
+*alfa, doublereal *beta, integer *nalfa, integer *nbeta);
+
+extern int check_(doublereal *param, integer *ncoeff, integer
+*nparam);
+
+extern int garcim_(integer *ninit, integer *nfinsm, doublereal *yobs,
+integer *nend, integer *iread, doublereal *xobs, integer *nexo,
+doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__,
+integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
+doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5,
+integer *ih, doublereal *g, doublereal *pp, doublereal *aux3,
+doublereal *param, integer *nparam, doublereal *b, integer *ncoefb,
+doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
+integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt);
+
+extern int garcfh_(integer *ninit, integer *nfinsm, doublereal *yobs,
+integer *nend, integer *iread, doublereal *xobs, integer *nexo,
+doublereal *umc, integer *nstoch, doublereal *ydet, doublereal *c__,
+integer *ncoeff, doublereal *res2, doublereal *res, doublereal *ystoc,
+doublereal *toler, integer *izo, integer *ivolta, doublereal *vc5,
+integer *ih, doublereal *g, doublereal *pp, doublereal *aux3,
+doublereal *param, integer *nparam, doublereal *b, integer *ncoefb,
+doublereal *alfa0, doublereal *alfa, doublereal *beta, integer *nalfa,
+integer *nbeta, doublereal *ht, doublereal *dhtdp, doublereal *zt);
+
+extern int vsrstr_(doublereal *c__, integer *ncoeff, doublereal *b,
+integer *ncoefb); extern int vsdmig_(doublereal *g, integer *ig,
+integer *n, doublereal *aux, integer *ier); extern int
+vsmode_(doublereal *y, doublereal *x, integer *nexo, integer *iread,
+integer *i__, doublereal *yl, integer *nend, doublereal *u, doublereal
+*a, doublereal *z__, integer *nstoch, integer *ncoeff);

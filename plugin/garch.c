@@ -157,7 +157,7 @@ int do_fcp (const int *list, const double **Z,
 	    xobs, &nexo, &umc[1], &nstoch, &ydet[1], 
 	    &yy[1], &coeff[1], &ncoeff, &d[1], &oldc[1], 
 	    &vc[1], &res2[1], &res[1], &sigma[1], &a[1], &ystoc[1], 
-	    &amax[1], &amin[1], &b[1], &ncoefb, &iters, &info);
+	    &amax[1], &amin[1], &b[1], &ncoefb, &iters, &info, prn);
 
     if (info != 0) {
 	fprintf(stderr, "vsanal returned with info = %d\n", (int) info);
