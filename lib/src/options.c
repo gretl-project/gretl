@@ -86,7 +86,7 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_T, "ten" },
-    { SMPL,     OPT_C, "cumulate" },    
+    { SMPL,     OPT_C, "replace" },    
     { SMPL,     OPT_O, "dummy" },
     { SMPL,     OPT_M, "no-missing" },
     { SMPL,     OPT_N, "random" },

@@ -4402,7 +4402,7 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
-	<example>smpl y > 3000 --restrict --cumulate</example>
+	<example>smpl y > 3000 --restrict --replace</example>
 	<example>smpl 100 --random</example>
       </examples>
     </usage>
@@ -4444,13 +4444,11 @@
 	data range.
       </para>
 
-      <para>Note that sample restrictions are not, by default,
-	cumulative: with the exception of the <quote>+i -j</quote>
-	form, the baseline for any <lit>smpl</lit> command is the full
-	data set.  If you wish the command to act in a cumulative
-	manner, so that a given restriction is added to any already in
-	force, you can add the option flag <lit>--cumulate</lit> to
-	the end of the command.</para>
+      <para>Note that sample restrictions are, by default, cumulative:
+	the baseline for any <lit>smpl</lit> command is the current
+	sample. If you wish the command to act so as to replace any
+	existing restriction you can add the option flag
+	<lit>--replace</lit> to the end of the command.</para>
 
       <para>The internal variable <lit>obs</lit> may be used with the
 	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude

@@ -690,14 +690,9 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     *gretl_errmsg = '\0';
 
-    /* Simple case: merely a change of start or end of sample.
-       But if restrictions are supposed to be cumulated, write a
-       mask to represent the current t1, t2 settings...  Or not?
-       For now we'll not do this, or in other words we implicitly
-       set t1 to 0 and t2 to n in all cases. 
-    */
     if (*subZ == NULL) {
-	if (0 && (opt & OPT_C)) { /* note the "0" */
+	if (!(opt & OPT_C)) { 
+	    /* cumulating, not replacing restrictions */
 	    err = make_smpl_mask(Z, *datainfo);
 	}
 
@@ -728,7 +723,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* zero out the "subdum" dummy variable, if not cumulating
        sample restrictions */
-    if (!(opt & OPT_C)) {
+    if (opt & OPT_C) {
 	i = varindex(*fullinfo, "subdum");
 	if (i < (*fullinfo)->v) {
 	    for (t=0; t<n; t++) {

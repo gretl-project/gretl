@@ -7,11 +7,10 @@
     <para>Some subtle issues can arise here.  This section attempts to
       explain the issues.</para>
 
-    <para><application>Gretl</application> maintains a conceptual
-      distinction between two ways of defining a sub-sample in
-      relation to a full data set: we will refer to these as
-      <quote>setting</quote> the sample and <quote>restricting</quote>
-      the sample respectively.</para>
+    <para><application>A sub-sample may be defined in relation to a
+	full data set in two different ways: we will refer to these as
+	<quote>setting</quote> the sample and
+	<quote>restricting</quote> the sample respectively.</para>
 
   </sect1>
 
@@ -94,30 +93,23 @@
     <para>A question arises here.  If we issue the two commands above
       in sequence, what do we end up with in our sub-sample: all cases
       with income over 50000, or just women with income over 50000? By
-      default, in a gretl script, the answer is the former: all cases
-      with income over 50000.  The second restriction replaces the
-      first (but see <xref linkend="sample-menu"/> below).  If you
-      want the restrictions to cumulate (that is, for the active
-      restriction to be calculated as the logical product of the most
-      recently specified restriction and any previous restrictions)
-      you have two options:</para>
+      default, in a gretl script, the answer is the latter: women with
+      income over 50000.  The second restriction augments the first.
+      If you want a new restriction to be applied independently of any
+      existing restrictions you should first recreate the full dataset
+      using</para>
 
-    <itemizedlist>  
-      <listitem><para>Specify the joint restriction:
+    <programlisting>
+      smpl --full</programlisting>
 
-	    <programlisting>	   
-	      smpl (gender=0 &amp; income>50000) --restrict</programlisting>
-	</para>
-      </listitem>
-      <listitem><para>Use the <literal>cumulate</literal> option for
-	  the <literal>smpl</literal> command:
+    <para>Alternatively, you can add the <literal>replace</literal>
+    option to the <literal>smpl</literal> command:</para>
 
-	    <programlisting>
-	      smpl gender=0 --restrict
-	      smpl income>50000 --restrict --cumulate</programlisting>
-	</para>
-      </listitem>
-    </itemizedlist>
+    <programlisting>
+      smpl income>50000 --restrict --replace</programlisting>
+
+    <para>This option has the effect of automatically re-establishing
+      the full dataset before applying the new restriction.</para>
 
     <para>Unlike a simple <quote>setting</quote> of the sample,
       <quote>restricting</quote> the sample may result in selection of
@@ -153,40 +145,6 @@
       the reduced dataset you can do so using <xref
 	linkend="cmd-setobs"/> (and <xref linkend="cmd-panel"/> if
       appropriate).</para> 
-
-    <para>You should be aware that, because of this difference in
-      treatment of the <quote>setting</quote> and
-      <quote>restricting</quote> forms of sub-sampling, the two forms
-      are handled independently by gretl.</para> 
-
-    <itemizedlist>  
-      <listitem>
-	<para>
-	  Regardless of any sample <quote>setting</quote> currently in
-	  place, when you use the <quote>restrict</quote> form of
-	  <literal>smpl</literal> the basis for sub-sampling is always
-	  the entire current data set.
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  After using the <quote>restrict</quote> form, the sample
-	  <quote>setting</quote> defaults to the full range of the
-	  reduced data set.
-	</para>
-      </listitem>
-    </itemizedlist> 
-
-    <para>This means that if you want for some reason to combine a
-      logical restriction with a limitation of the sample based on the
-      observation number, you need to express the latter as a logical
-      restriction, which you can do using the internal variable
-      <varname>obs</varname>. To return to the cross-sectional example
-      given above, if I want a sub-sample consisting of women only,
-      excluding observations 1 to 30, I can do</para>
-
-      <programlisting>
-	smpl (gender=0 &amp; obs > 30) --restrict</programlisting>
 
     <para>The fact that <quote>restricting</quote> the sample results
       in the creation of a reduced copy of the original dataset may
@@ -244,39 +202,13 @@
       select a sub-sample.</para>
 
     <para>The menu items mostly work in the same way as the
-      corresponding <literal>smpl</literal> variant, but with these
-      differences:</para>
-
-    <orderedlist>
-      <listitem>
-	<para>When you use the item <quote>Sample, Restrict based on
+      corresponding <literal>smpl</literal> variant, except that when
+      you use the item <quote>Sample, Restrict based on
 	criterion</quote>, and the dataset is already restricted, you
-	are given the option of preserving or replacing the current
-	restriction.  Preserving the current restriction means,
-	in effect, invoking the <literal>cumulate</literal> option
-	described above (<xref linkend="sample-restrict"/>).
-	</para>
-      </listitem>
-      <listitem>
-	<para>When you use the items <quote>Sample, Define based on
-	dummy</quote> or <quote>Sample, Random sub-sample</quote>, and
-	the dataset is already restricted, the current restriction (if
-	any) is automatically preserved.  
-	</para>
-      </listitem>
-    </orderedlist>
-
-    <para>Note that behavior under point 2 above is
-      <emphasis>not</emphasis> the same as for the script command
-      <literal>smpl</literal>, where the preservation of any previous
-      restrictions is not the default.  The reason for this difference
-      lies in the visual context of the GUI program: when the dataset
-      is restricted, it is the restricted version which is
-      <quote>before</quote> the user, indicated in the program's
-      status bar.  It therefore seems more intuitive to take this as a
-      basis.  If you want to <emphasis>replace</emphasis> the current
-      restriction using one or other of these menu items, you should
-      first invoke the item <quote>Sample, Restore full range</quote>.
+      are given the option of preserving or replacing the current
+      restriction.  Replacinging the current restriction means, in
+      effect, invoking the <literal>replace</literal> option described
+      above (<xref linkend="sample-restrict"/>).
     </para>
 
   </sect1>

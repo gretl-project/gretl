@@ -857,7 +857,7 @@ int bool_subsample (gretlopt opt)
 	OPT_O  sample using dummy variable
 	OPT_R  sample using boolean expression
 	OPT_N  random sub-sample
-	OPT_C  cumulate restrictions
+	OPT_C  replace current restriction
      */
 {
     int err = 0;
@@ -915,7 +915,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     if (opt & OPT_C) { 
-	sprintf(line, "smpl %s --restrict --cumulate", buf); 
+	sprintf(line, "smpl %s --restrict --replace", buf); 
     } else {
 	sprintf(line, "smpl %s --restrict", buf);
     }
@@ -4078,9 +4078,9 @@ int dataset_is_restricted (void)
 {
     /* Should we indicate "restricted" if t1 and t2 are reset, or only
        if a sub-sampling mask is in place?  For now we'll go with the
-       mask option.
+       broader option.
     */
-#if 1
+#if 0
     return (fullZ != NULL);
 #else
     return dataset_is_subsampled();

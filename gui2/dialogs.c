@@ -260,15 +260,15 @@ static void sample_cumulate_buttons (GtkWidget *box, gpointer data)
     GtkWidget *tmp;
     GSList *group;
 
-    /* replace current sample restriction */
-    tmp = gtk_radio_button_new_with_label(NULL, _("replace current restriction"));
+    /* ad to current sample restriction */
+    tmp = gtk_radio_button_new_with_label(NULL, _("add to current restriction"));
     gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
     gtk_widget_show (tmp);
 
-    /* add to current sample restriction */
+    /* replace current sample restriction */
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(tmp));
-    tmp = gtk_radio_button_new_with_label(group, _("add to current restriction"));
+    tmp = gtk_radio_button_new_with_label(group, _("replace current restriction"));
     gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
@@ -1659,15 +1659,10 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	if (sscanf(buf, "%8s", dumv) != 1) return TRUE;
 
-	/* add the "cumulate" option here, since the reckoning of
-	   what is a dummy var, and the number of 1s for a dummy,
-	   is based on the current sub-sample, if any.
-	*/
-
-	sprintf(line, "smpl %s --dummy --cumulate", dumv);
+	sprintf(line, "smpl %s --dummy", dumv);
 	if (verify_and_record_command(line)) return TRUE;
 
-	err = bool_subsample(rset->opt | OPT_C);
+	err = bool_subsample(rset->opt);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
@@ -1680,15 +1675,10 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
 #endif
 
-	/* add the "cumulate" option here, since in the dialog box
-	   we use the "n" corresponding to the current sub-sample, 
-	   (if any) as the basis for the suggested sub-sample size. 
-	*/
-
-	sprintf(line, "smpl %d --random --cumulate", subn);
+	sprintf(line, "smpl %d --random", subn);
 	if (verify_and_record_command(line)) return TRUE;
 
-	err = bool_subsample(rset->opt | OPT_C);
+	err = bool_subsample(rset->opt);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
@@ -1732,7 +1722,7 @@ static GList *get_dummy_list (int *thisdum)
     int i;
 
     for (i=1; i<datainfo->v; i++) {
-	if (isdummy(Z[i], 0, datainfo->n - 1)) {
+	if (isdummy(Z[i], datainfo->t1, datainfo->t2)) {
 	    dumlist = g_list_append(dumlist, datainfo->varname[i]);
 	    if (i == mdata->active_var) *thisdum = 1;
 	}
@@ -1772,10 +1762,12 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
 
 static int default_randsize (void)
 {
-    if (datainfo->n > 1000) {
-	return datainfo->n / 10;
+    int n = datainfo->t2 - datainfo->t1 + 1;
+
+    if (n > 1000) {
+	return n / 10;
     } else {
-	return datainfo->n / 2;
+	return n / 2;
     }
 }
 
