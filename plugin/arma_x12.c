@@ -275,11 +275,15 @@ static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
 
     *date = 0;
     strncat(date, s, 4);
-    strcat(date, ":");
-    strncat(date, s + 4, 4);
+    if (pdinfo->pd > 1) {
+	strcat(date, ":");
+	strncat(date, s + 4, 4);
+    }
 
     return dateton(date, pdinfo);
 }
+
+/* Parse the statistics from the X12ARIMA output file foo.lks */
 
 static int get_ll_stats (const char *fname, MODEL *pmod)
 {
@@ -303,6 +307,13 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 
     return 0;
 }
+
+/* The problem below is that X12ARIMA does not give the full covariance
+   matrix: it gives it only for the ARMA terms, and not for the
+   constant.  This creates problems for the printing of the matrix,
+   since the gretl code is written on the assumption that the full
+   vcv matrix is present.  This could perhaps be changed.
+*/
 
 #if 0
 static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
@@ -348,6 +359,10 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
     return err;
 }
 #endif
+
+/* Below: parse the coefficient estimates and standard errors from
+   the X12ARIMA output file foo.est
+*/
 
 static int get_estimates (const char *fname, double *coeff, double *sderr,
 			  int p, int q)
@@ -407,6 +422,8 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 
     return err;
 }
+
+/* Parse the residuals from the X12ARIMA output file foo.rsd */
 
 static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
 {
@@ -567,11 +584,18 @@ static int write_spc_file (const char *fname,
     sprintf(tmp, "%g", x);
     s = strchr(tmp, '.');
     if (s != NULL) startper = atoi(s + 1);
-    else startper = 1;
+    else {
+	if (pdinfo->pd > 1) startper = 1;
+	else startper = 0;
+    }
 
     fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[v]);
-    fprintf(fp, " start = %d.%d\n", startyr, startper);
+    if (startper > 0) {
+	fprintf(fp, " start = %d.%d\n", startyr, startper);
+    } else {
+	fprintf(fp, " start = %d\n", startyr);
+    }
     output_series_to_spc(Z[v], t1, t2, fp);
     fputs("}\n", fp);
 

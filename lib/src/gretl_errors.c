@@ -84,7 +84,8 @@ const char *gretl_error_messages[] = {
        "regression first"),                                      /* E_MISS */
     N_("The statistic you requested is not meaningful "
        "for this model"),                                        /* E_BADSTAT */
-    N_("Missing sub-sample information; can't merge data")       /* E_NOMERGE */
+    N_("Missing sub-sample information; can't merge data"),      /* E_NOMERGE */
+    N_("The convergence criterion was not met")                  /* E_NOCONV */
 };
 
 /**

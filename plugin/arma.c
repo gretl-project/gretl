@@ -591,13 +591,14 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     }
 
     if (crit > tol) {
-	pputs(prn, _("Warning: convergence criterion was not met\n"));
+	armod.errcode = E_NOCONV;
+    } else {
+	y = Z[v];
+	/* "ll" does not seem to be a true log-likelihood */
+	armod.lnL = NADBL; 
+	rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
     }
 
-    y = Z[v];
-    /* "ll" does not seem to be a true log-likelihood */
-    armod.lnL = NADBL; 
-    rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);
     if (!armod.errcode) {
 	add_arma_varnames(&armod, pdinfo);
     }

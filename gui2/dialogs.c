@@ -1469,6 +1469,7 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tmp, *hbox;
+    GSList *group;
     struct arma_options *opts;
 
     opts = mymalloc(sizeof *opts);
@@ -1516,10 +1517,22 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
 
-    /* X12 button */
+    /* separator */
+    tmp = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       tmp, FALSE, FALSE, 5);
+    
+    /* X12 vs native radio buttons */
     hbox = gtk_hbox_new(FALSE, 5);
-    opts->x12check = gtk_check_button_new_with_label(_("Use X12-ARIMA"));
+    opts->x12check = gtk_radio_button_new_with_label(NULL, _("Use X12-ARIMA"));
     gtk_box_pack_start(GTK_BOX(hbox), opts->x12check, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(opts->x12check));
+    tmp = gtk_radio_button_new_with_label(group, _("Native code (experimental)"));
+    gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(opts->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
     

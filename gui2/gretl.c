@@ -1388,6 +1388,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	do_pergm(NULL, 0, NULL);
     else if (!strcmp(item, _("Spectrum (Bartlett)"))) 
 	do_pergm(NULL, 1, NULL);
+    else if (!strcmp(item, _("ARMA model"))) 
+	arma_options_dialog(NULL, 0, NULL);
     else if (!strcmp(item, _("Dickey-Fuller test"))) 
 	gretl_callback(NULL, ADF, NULL);
     else if (!strcmp(item, _("Runs test"))) 
@@ -1416,6 +1418,7 @@ static void build_var_popup (windata_t *win)
 	N_("Correlogram"),
 	N_("Spectrum"),
 	N_("Spectrum (Bartlett)"),
+	N_("ARMA model"),
 	N_("Dickey-Fuller test"),
 	N_("Runs test"),
 	N_("Edit attributes"),
@@ -1435,7 +1438,7 @@ static void build_var_popup (windata_t *win)
 	    continue;
 	}
 	if (!dataset_is_time_series(datainfo) && 
-	    (i == 6 || i == 7 || i == 8 || i == 9)) {
+	    (i == 6 || i == 7 || i == 8 || i == 9 || i == 10)) {
 	    continue;
 	}
 	var_item = gtk_menu_item_new_with_label(_(var_items[i]));

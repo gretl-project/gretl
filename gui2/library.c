@@ -1978,10 +1978,11 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-static int model_error (const MODEL *pmod)
+static int model_error (MODEL *pmod)
 {
     if (pmod->errcode) {
 	gui_errmsg(pmod->errcode);
+	clear_model(pmod, NULL);
 	return 1;
     }
     return 0;
@@ -1995,8 +1996,9 @@ static int model_output (MODEL *pmod, PRN *prn)
 
     ++model_count;
     pmod->ID = model_count;
-    if (printmodel(pmod, datainfo, prn))
+    if (printmodel(pmod, datainfo, prn)) {
 	pmod->errcode = E_NAN; /* some statistics were NAN */
+    }
 
     return 0;
 }
@@ -2357,7 +2359,11 @@ void do_arma (int v, int ar, int ma, int verbose, int use_x12)
     err = model_output(pmod, prn);
 
     if (err) {
-	gretl_print_destroy(prn);
+	if (verbose && !use_x12) {
+	    view_buffer(prn, 78, 400, _("gretl: ARMA"), PRINT, NULL);
+	} else {
+	    gretl_print_destroy(prn);
+	}
 	return;
     }
 
