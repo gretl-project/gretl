@@ -482,6 +482,37 @@ static int get_point_size (const char *font)
     }
 }
 
+static void strip_lr (gchar *txt)
+{
+    gchar test[16];
+    gchar *p;
+
+    sprintf(test, "(%s)", I_("left"));
+    p = strstr(txt, test);
+    if (p != NULL) {
+	*p = '\0';
+    } else {
+	sprintf(test, "(%s)", I_("right"));
+	p = strstr(txt, test);
+	if (p != NULL) {
+	   *p = '\0';
+	}
+    } 
+}
+
+static void toggle_axis_selection (GtkWidget *w, GPT_SPEC *spec)
+{
+    int no_y2 = GTK_TOGGLE_BUTTON(w)->active;
+    int i;
+
+    for (i=0; i<spec->nlines; i++) {
+	if (i >= MAX_PLOT_LINES) {
+	    break;
+	}
+	gtk_widget_set_sensitive(yaxiscombo[i], !no_y2);
+    }
+}
+
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *label, *vbox, *tbl;
@@ -580,10 +611,10 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  y2_check, 0, TAB_MAIN_COLS, 
 				  tbl_len-1, tbl_len);
-	if (!(spec->flags & GPTSPEC_BORDER_HIDDEN)) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(y2_check),
-					 FALSE);
-	}	
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(y2_check),
+				     FALSE);
+	g_signal_connect(G_OBJECT(y2_check), "clicked", 
+			 G_CALLBACK(toggle_axis_selection), spec);
 	gtk_widget_show(y2_check);
     }
 
@@ -873,6 +904,8 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
+
+	strip_lr(spec->lines[i].title);
 	gp_string_to_entry(linetitle[i], spec->lines[i].title);
 
 	g_signal_connect(G_OBJECT(linetitle[i]), "changed", 

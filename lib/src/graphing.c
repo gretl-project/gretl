@@ -1884,12 +1884,15 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    gp_string(fp, "set title '%s'\n", spec->titles[0], png);
 	}
     }
+
     if (!string_is_blank(spec->titles[1])) {
 	gp_string(fp, "set xlabel '%s'\n", spec->titles[1], png);
     }
+
     if (!string_is_blank(spec->titles[2])) {
 	gp_string(fp, "set ylabel '%s'\n", spec->titles[2], png);
     }
+
     if ((spec->flags & GPTSPEC_Y2AXIS) && !string_is_blank(spec->titles[3])) {
 	gp_string(fp, "set y2label '%s'\n", spec->titles[3], png);
     }
@@ -2005,7 +2008,16 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	if ((spec->flags & GPTSPEC_Y2AXIS) && spec->lines[i].yaxis != 1) {
 	    fprintf(fp, "axes x1y%d ", spec->lines[i].yaxis);
 	}
-	gp_string(fp, "title '%s' ", spec->lines[i].title, png);
+	gp_string(fp, "title '%s", spec->lines[i].title, png);
+	if (spec->flags & GPTSPEC_Y2AXIS) {
+	    if (spec->lines[i].yaxis == 1) {
+		fprintf(fp, " (%s)' ", I_("left"));
+	    } else {
+		fprintf(fp, " (%s)' ", I_("right"));
+	    }
+	} else {
+	    fputs("' ", fp);
+	}
 	fprintf(fp, "w %s", spec->lines[i].style);
 	if (i == nlines - 1) {
 	    fputc('\n', fp);
