@@ -125,7 +125,7 @@ enum extra_cmds {
     COVAR,
     STAT_TABLE,
     H_TEST,
-    TRAMO,
+    TRAMO_X12A,
     RANGE_MEAN,
     VIEW_MODEL,
     VIEW_LOG,

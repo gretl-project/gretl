@@ -17,6 +17,7 @@ LIBOLE2_CFLAGS = @LIBOLE2_CFLAGS@
 LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
+TRAMO_X12 = @TRAMO_X12@
 
 ifeq ($(CC),)
   CC = gcc
@@ -53,10 +54,12 @@ endif
 PLUGINS = stats_tables.so panel_data.so range-mean.so lad.so \
 	$(PROGRESS_PLUGIN) $(GNUMERIC_PLUGIN) $(EXCEL_PLUGIN)
 
-# tramo-seats.so
-
 ifdef GMP_LIBS
   PLUGINS += mp_ols.so
+endif
+
+ifdef TRAMO_X12
+  PLUGINS += tramo-x12a.so
 endif
 
 ifeq ($(LIBOLE2_LIBS),)
@@ -80,8 +83,8 @@ range-mean.so: range-mean.lo
 lad.so: lad.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
-# tramo-seats.so: tramo-seats.lo
-#	$(LINK) -o $@ $< $(GRETLLIB)
+tramo-x12a.so: tramo-x12a.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
 
 progress_bar.so: progress_bar.lo
 	$(LINK) -o $@ $< $(GTK_LIBS)
@@ -116,8 +119,8 @@ range-mean.lo: range-mean.c
 lad.lo: lad.c
 	$(COMPILE) $(GRETLINC) $< 
 
-# tramo-seats.lo: tramo-seats.c
-#	$(COMPILE) $(GRETLINC) $< 
+tramo-x12a.lo: tramo-x12a.c
+	$(COMPILE) $(GRETLINC) $< 
 
 progress_bar.lo: progress_bar.c
 	$(COMPILE) $(GRETLINC) $(GTK_CFLAGS) $< 

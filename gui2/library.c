@@ -2227,18 +2227,20 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifdef USE_TRAMO
+#ifdef TRAMO_X12
 
 extern char tramodir[];
+extern char x12adir[];
 
-void do_tramo (gpointer data, guint opt, GtkWidget *widget)
+void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
     gchar *databuf;
     GError *error = NULL;
     void *handle;
-    int (*write_tramo_data) (char *, int, double **, const DATAINFO *, 
-			     const char *);
+    int (*write_ts_data) (char *, int, double **, const DATAINFO *, 
+			  const char *);
+
     PRN *prn;
     char fname[MAXLEN];
 
@@ -2252,10 +2254,14 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-    if (gui_open_plugin("tramo-seats", &handle)) return;
-    write_tramo_data = get_plugin_function("write_tramo_data", handle);
+    if (gui_open_plugin("tramo-x12a", &handle)) return;
+    if (opt == 1) {
+	write_ts_data = get_plugin_function("write_tramo_data", handle);
+    } else {
+	write_ts_data = get_plugin_function("write_x12a_data", handle);
+    }
 
-    if (write_tramo_data == NULL) {
+    if (write_ts_data == NULL) {
 	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
 	return;
@@ -2266,12 +2272,13 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = write_tramo_data (fname, mdata->active_var, Z, datainfo, tramodir);
+    err = write_ts_data (fname, mdata->active_var, Z, datainfo, 
+			 opt? tramodir : x12adir);
 
     close_plugin(handle);
 
     if (err) {
-	errbox(_("TRAMO command failed"));
+	errbox(opt? _("TRAMO command failed") : _("X-12-ARIMA command failed"));
 	gretl_print_destroy(prn);
 	return;
     }
@@ -2279,7 +2286,7 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
     g_file_get_contents (fname, &databuf, NULL, &error);
 
     if (databuf == NULL) {
-	errbox(_("TRAMO command failed"));
+	errbox(opt? _("TRAMO command failed") : _("X-12-ARIMA command failed"));
 	g_clear_error(&error);
 	gretl_print_destroy(prn);
 	return;
@@ -2288,8 +2295,9 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
     free(prn->buf);
     prn->buf = databuf;
 
-    view_buffer(prn, 120, 500, _("gretl: TRAMO analysis"), TRAMO, 
-		view_items);
+    view_buffer(prn, 120, 500, 
+		opt? _("gretl: TRAMO analysis") :_("gretl: X-12-ARIMA analysis"),
+		TRAMO_X12A, view_items);
 }
 #endif
 
