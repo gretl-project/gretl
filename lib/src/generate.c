@@ -445,6 +445,16 @@ static genatom *parse_token (const char *s, char op,
 	}
     }
 
+    else if (strchr(s, ':')) {
+	/* time-series observation */
+	val = obs_num(s, genr->pdinfo);
+	if (val > 0) {
+	    scalar = 1;
+	} else {
+	    genr->err = E_SYNTAX;
+	}
+    }
+
     else {
 	DPRINTF(("dead end in parse_token, s='%s'\n", s));
 	genr->err = E_SYNTAX;
