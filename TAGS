@@ -144,6 +144,12 @@ lib/src/compare.h,289
 } aux_codes;aux_codes36,1595
 } COMPARE;COMPARE49,2138
 
+lib/src/daily.c,105
+char *missobs_vector 3,29
+int undo_repack_missing 25,481
+int repack_missing 60,1322
+int main 97,2162
+
 lib/src/dataio.c,1949
 #define QUOTE 32,1022
 static char STARTCOMMENT[45,1539
@@ -163,49 +169,49 @@ static void eatspace 354,8444
 static int readdata 369,8661
 static int gz_readdata 422,9998
 int check_varname 510,11983
-static int readhdr 541,12916
-static int check_date 674,16424
-int dateton 708,17234
-void ntodate 776,18912
-static int blank_check 800,19457
-int get_info 827,20106
-static int writehdr 871,21170
-int get_precision 937,22862
-int write_data 970,23616
-static void pd_string 1158,29139
-int data_report 1199,30202
-static double obs_float 1231,31082
-static int readlbl 1254,31623
-static int writelbl 1292,32596
-int is_gzipped 1332,33459
-int has_gz_suffix 1355,33853
-void gz_switch_ext 1376,34300
-static void try_gdt 1391,34648
-int get_data 1421,35342
-int open_nulldata 1551,38746
-static int test_label 1589,39729
-#define MSG(MSG1679,42353
-int merge_data 1701,43031
-static void trim_csv_line 1827,46161
-int import_csv 1858,46838
-int add_case_markers 2140,54309
-static char *unspace 2181,55139
-int import_box 2210,55698
-static int xmlfile 2413,61072
-int open_plugin 2436,61426
-void *get_plugin_function 2455,61913
-void close_plugin 2469,62179
-int detect_filetype 2491,62634
-#define UTF 2557,64416
-static char *simple_fname 2561,64470
-static char *xml_encode 2579,64830
-static int write_xmldata 2645,66207
-static int process_varlist 2844,71744
-static int process_values 2934,73747
-static int process_observations 2953,74199
-static long get_filesize 3072,76978
-int get_xmldata 3100,77677
-char *get_xml_description 3281,82055
+static int readhdr 543,12955
+static int check_date 676,16463
+int dateton 710,17273
+void ntodate 778,18951
+static int blank_check 802,19496
+int get_info 829,20145
+static int writehdr 873,21209
+int get_precision 939,22901
+int write_data 972,23655
+static void pd_string 1160,29178
+int data_report 1201,30241
+static double obs_float 1233,31121
+static int readlbl 1256,31662
+static int writelbl 1294,32635
+int is_gzipped 1334,33498
+int has_gz_suffix 1357,33892
+void gz_switch_ext 1378,34339
+static void try_gdt 1393,34687
+int get_data 1423,35381
+int open_nulldata 1553,38785
+static int test_label 1591,39768
+#define MSG(MSG1681,42392
+int merge_data 1703,43070
+static void trim_csv_line 1829,46200
+int import_csv 1860,46877
+int add_case_markers 2149,54486
+static char *unspace 2190,55316
+int import_box 2219,55875
+static int xmlfile 2422,61249
+int open_plugin 2445,61603
+void *get_plugin_function 2464,62090
+void close_plugin 2478,62356
+int detect_filetype 2500,62811
+#define UTF 2566,64593
+static char *simple_fname 2570,64647
+static char *xml_encode 2588,65007
+static int write_xmldata 2654,66384
+static int process_varlist 2853,71921
+static int process_values 2943,73924
+static int process_observations 2962,74376
+static long get_filesize 3081,77155
+int get_xmldata 3109,77854
+char *get_xml_description 3290,82232
 
 lib/src/dataio.h,673
     GRETL_DATA_FLOAT 24,915
@@ -352,134 +358,136 @@ static CHOLBETA cholbeta 655,18577
 static void diaginv 741,20880
 int makevcv 790,22146
 static double dwstat 866,23952
-static double rhohat 891,24639
-static double altrho 918,25318
-static double corrrsq 946,25979
-static int hatvar 957,26248
-static void dropwt 980,26848
-int hilu_corc 1008,27629
-static void autores 1096,30439
-MODEL tsls_func 1124,31173
-static int get_aux_uhat 1312,36883
-MODEL hsk_func 1386,38921
-MODEL hccm_func 1470,41249
-int whites_test 1587,43861
-MODEL ar_func 1703,46734
-static void omitzero 1895,52435
-static void tsls_omitzero 1937,53586
-static void rearrange 1950,53866
-static int zerror 1969,54276
-static int lagdepvar 1991,54749
-static int tsls_match 2022,55666
-static double wt_dummy_mean 2050,56436
-static double wt_dummy_stddev 2072,56958
-MODEL arch 2113,58168
+static double rhohat 894,24646
+static double altrho 921,25321
+static double corrrsq 949,25982
+static int hatvar 960,26251
+static void dropwt 983,26851
+int hilu_corc 1011,27632
+static void autores 1099,30442
+MODEL tsls_func 1127,31176
+static int get_aux_uhat 1315,36886
+MODEL hsk_func 1389,38924
+MODEL hccm_func 1473,41252
+int whites_test 1590,43864
+MODEL ar_func 1706,46737
+static void omitzero 1898,52438
+static void tsls_omitzero 1940,53589
+static void rearrange 1953,53869
+static int zerror 1972,54279
+static int lagdepvar 1994,54752
+static int tsls_match 2025,55669
+static double wt_dummy_mean 2053,56439
+static double wt_dummy_stddev 2075,56961
+MODEL arch 2116,58171
 
 lib/src/estimate.h,0
 
-lib/src/generate.c,2680
-enum transformations transformations63,2608
-    T_LOG 64,2631
-    T_EXP,65,2647
-    T_SIN,66,2659
-    T_COS,67,2671
-    T_DIFF,68,2683
-    T_LDIFF,69,2695
-    T_MEAN,70,2709
-    T_SD,71,2722
-    T_SORT,72,2733
-    T_INT,73,2746
-    T_LN,74,2758
-    T_COEFF,75,2769
-    T_ABS,76,2782
-    T_RHO,77,2794
-    T_SQRT,78,2806
-    T_SUM,79,2819
-    T_NORMAL,80,2831
-    T_UNIFORM,81,2846
-    T_STDERR,82,2862
-    T_CUM,83,2876
-    T_MISSING,84,2888
-    T_MISSZERO,85,2903
-    T_CORR,86,2919
-    T_VCV,87,2931
-    T_VAR,88,2942
-    T_COV,89,2953
-    T_MEDIAN,90,2964
-    T_ZEROMISS,91,2978
-    T_PVALUE92,2994
-enum retrieve retrieve95,3011
-    R_ESS 96,3027
-    R_NOBS,97,3042
-    R_T,98,3054
-    R_RSQ,99,3063
-    R_SIGMA,100,3074
-    R_DF,101,3087
-    R_LNL,102,3097
-    R_TRSQ,103,3108
-    R_NUMERIC,104,3120
-    R_MATH,105,3135
-    R_VARNAME,106,3147
-    R_UNKNOWN107,3162
-enum composites composites110,3180
-    NEQ 111,3198
-    GEQ,112,3212
-    LEQ113,3221
-static char *math[116,3233
-static char operators[149,3643
-#define LEVELS 155,3764
-static int is_operator 159,3844
-static void catch_double_symbols 170,4042
-static int op_level 194,4464
-static void count_ops 215,4879
-static int insert_paren 223,5040
-static int paren_state 236,5347
-static int parenthesize 253,5689
-int _identical 338,7370
-static void otheruse 351,7661
-static int reserved 359,7905
-static void copy 415,9318
-static int getword 428,9638
-static void get_genr_formula 453,10301
-int genr_scalar_index 477,10955
-GENERATE generate 507,11795
-static void expand_vec 965,25227
-static int cstack 983,25590
-static int panel_missing 1120,28985
-static int domath 1132,29239
-static int evalexp 1348,33779
-static void getvar 1375,34477
-static int check_modelstat 1403,35200
-static int getxvec 1452,36434
-static void get_lag 1585,39669
-static int scanb 1634,40878
-static int strtype 1667,41577
-static int whichtrans 1717,42823
-int dummy 1739,43246
-int paneldum 1778,44348
-static void genrtime 1830,46070
-int plotvar 1867,47068
-int _laggenr 1919,48545
-static int _normal_dist 1958,49544
-static void _uniform 1974,49927
-void varlist 1993,50298
-int varindex 2018,50855
-static int createvar 2037,51350
-static void genrfree 2075,52354
-int logs 2098,52960
-int lags 2172,54861
-int _parse_lagvar 2194,55403
-int xpxgenr 2250,56901
-int rhodiff 2346,59655
-static double genr_cov 2418,61533
-static double genr_corr 2449,62352
-static double genr_vcv 2479,63166
-static void genr_msg 2528,64450
-static int _ismatch 2538,64764
-static void varerror 2549,64982
-int simulate 2567,65660
-int _multiply 2662,67929
-int genr_fit_resid 2731,69662
+lib/src/generate.c,2741
+#define GENR_DEBUG22,831
+enum transformations transformations63,2553
+    T_LOG 64,2576
+    T_EXP,65,2592
+    T_SIN,66,2604
+    T_COS,67,2616
+    T_DIFF,68,2628
+    T_LDIFF,69,2640
+    T_MEAN,70,2654
+    T_SD,71,2667
+    T_SORT,72,2678
+    T_INT,73,2691
+    T_LN,74,2703
+    T_COEFF,75,2714
+    T_ABS,76,2727
+    T_RHO,77,2739
+    T_SQRT,78,2751
+    T_SUM,79,2764
+    T_NORMAL,80,2776
+    T_UNIFORM,81,2791
+    T_STDERR,82,2807
+    T_CUM,83,2821
+    T_MISSING,84,2833
+    T_MISSZERO,85,2848
+    T_CORR,86,2864
+    T_VCV,87,2876
+    T_VAR,88,2887
+    T_COV,89,2898
+    T_MEDIAN,90,2909
+    T_ZEROMISS,91,2923
+    T_PVALUE92,2939
+enum retrieve retrieve95,2956
+    R_ESS 96,2972
+    R_NOBS,97,2987
+    R_T,98,2999
+    R_RSQ,99,3008
+    R_SIGMA,100,3019
+    R_DF,101,3032
+    R_LNL,102,3042
+    R_TRSQ,103,3053
+    R_NUMERIC,104,3065
+    R_MATH,105,3080
+    R_VARNAME,106,3092
+    R_UNKNOWN107,3107
+enum composites composites110,3125
+    NEQ 111,3143
+    GEQ,112,3157
+    LEQ113,3166
+static char *math[116,3178
+static char operators[149,3588
+#define LEVELS 155,3709
+#define SCALAR_SCOPE(SCALAR_SCOPE157,3727
+static int is_operator 163,3969
+static void catch_double_symbols 174,4167
+static int op_level 198,4589
+static void count_ops 219,5004
+static int insert_paren 227,5165
+static int paren_state 240,5472
+static int parenthesize 257,5814
+int _identical 342,7495
+static void otheruse 355,7780
+int _reserved 363,8024
+static void copy 419,9414
+static int getword 432,9722
+static void get_genr_formula 456,10372
+int genr_scalar_index 480,11026
+GENERATE generate 510,11866
+static void expand_vec 968,25289
+static int cstack 986,25652
+static int panel_missing 1123,29041
+static int domath 1135,29295
+static int evalexp 1351,33829
+static void getvar 1381,34606
+static int check_modelstat 1409,35329
+static int getxvec 1458,36563
+static void get_lag 1591,39858
+static int scanb 1640,41067
+static int strtype 1673,41766
+static int whichtrans 1723,43012
+int dummy 1745,43435
+int paneldum 1784,44537
+static void genrtime 1836,46259
+int plotvar 1873,47257
+int _laggenr 1925,48734
+static int normal_dist 1964,49715
+static void uniform 1980,50085
+void varlist 1999,50443
+int varindex 2024,51000
+static int createvar 2043,51495
+static void genrfree 2081,52499
+int logs 2104,53099
+int lags 2178,55000
+int _parse_lagvar 2200,55542
+int xpxgenr 2256,57040
+int rhodiff 2352,59782
+static double genr_cov 2424,61660
+static double genr_corr 2455,62479
+static double genr_vcv 2485,63293
+static void genr_msg 2534,64575
+static int ismatch 2544,64883
+static void varerror 2555,65094
+int simulate 2573,65772
+int _multiply 2668,68041
+int genr_fit_resid 2737,69774
 
 lib/src/generate.h,227
 #define GENERATE_H21,879
@@ -933,9 +941,9 @@ int _lagvarnum 192,5059
 static void reset_list 206,5456
 static int get_listlen 215,5654
 int var 246,6553
-int coint 420,11597
-int adf_test 495,13969
-int ma_model 643,19319
+int coint 420,11611
+int adf_test 495,13983
+int ma_model 643,19343
 
 lib/src/var.h,0
 
@@ -1309,38 +1317,38 @@ static int cant_edit 879,27681
 static int plotspec_init 898,28150
 static int parse_set_line 924,28759
 int read_plotfile 981,30303
-    PNG_START,1170,34952
-    PNG_ZOOM,1171,34967
-    PNG_UNZOOM1172,34981
-} png_zoom;png_zoom1173,34996
-typedef struct zoom_t zoom_t1175,35009
-} zoom_t;zoom_t1180,35137
-typedef struct png_plot_t png_plot_t1182,35148
-} png_plot_t;png_plot_t1199,35520
-#define WIDTH 1205,35693
-#define HEIGHT 1206,35729
-#define PLOTXMIN 1213,35908
-#define PLOTXMAX 1214,35930
-#define PLOTYMIN 1215,35953
-#define PLOTYMAX 1216,35975
-#define NOTITLE_YMIN 1217,35998
-static void get_data_xy 1219,36025
-static double x_to_date 1249,36734
-static void create_selection_gc 1257,36867
-static void draw_selection_rectangle 1265,37068
-motion_notify_event 1297,37967
-static gint plot_popup_activated 1335,38970
-static GtkWidget *build_plot_menu 1382,40396
-static int make_new_png 1431,41538
-static gint plot_button_release 1481,42547
-static gint plot_button_press 1510,43308
-plot_key_handler 1531,43885
-void plot_expose 1540,44049
-static void render_pngfile 1556,44569
-static void plot_quit 1600,45588
-static int get_plot_yrange 1610,45814
-static int get_plot_ranges 1674,47110
-int gnuplot_show_png 1713,48072
+    PNG_START,1170,34953
+    PNG_ZOOM,1171,34968
+    PNG_UNZOOM1172,34982
+} png_zoom;png_zoom1173,34997
+typedef struct zoom_t zoom_t1175,35010
+} zoom_t;zoom_t1180,35138
+typedef struct png_plot_t png_plot_t1182,35149
+} png_plot_t;png_plot_t1199,35521
+#define WIDTH 1205,35694
+#define HEIGHT 1206,35730
+#define PLOTXMIN 1213,35909
+#define PLOTXMAX 1214,35931
+#define PLOTYMIN 1215,35954
+#define PLOTYMAX 1216,35976
+#define NOTITLE_YMIN 1217,35999
+static void get_data_xy 1219,36026
+static double x_to_date 1249,36735
+static void create_selection_gc 1257,36868
+static void draw_selection_rectangle 1265,37069
+motion_notify_event 1297,37968
+static gint plot_popup_activated 1335,38971
+static GtkWidget *build_plot_menu 1382,40397
+static int make_new_png 1431,41539
+static gint plot_button_release 1481,42548
+static gint plot_button_press 1510,43309
+plot_key_handler 1531,43886
+void plot_expose 1540,44050
+static void render_pngfile 1556,44570
+static void plot_quit 1600,45589
+static int get_plot_yrange 1610,45815
+static int get_plot_ranges 1674,47111
+int gnuplot_show_png 1713,48073
 
 gui/gretl.c,3263
 GtkWidget *toolbar_box 73,2529

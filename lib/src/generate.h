@@ -51,8 +51,8 @@ typedef struct {
 /* functions follow */
  
 GENERATE generate (double ***pZ, DATAINFO *pdinfo, 
-		   const char *line, const int model_count, 
-		   MODEL *pmod, const int oflag);
+		   const char *line, int model_count, 
+		   MODEL *pmod, int oflag);
 
 int dummy (double ***pZ, DATAINFO *pdinfo);
 

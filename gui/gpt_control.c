@@ -1002,7 +1002,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     i = 0;
     while ((got = fgets(line, MAXLEN - 1, fp))) {
 	if (cant_edit(line)) goto plot_bailout;
-	if (strncmp(line, "# timeseries", 12) == 0){
+	if (strncmp(line, "# timeseries", 12) == 0) {
 	    plot->ts = 1;
 	    continue;
 	}

@@ -100,4 +100,6 @@ double _tcrit95 (const int df);
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, double **Z);
 
+int _reserved (const char *str);
+
 #endif /* GRETL_INTERNAL_H */

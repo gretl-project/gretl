@@ -512,6 +512,8 @@ int check_varname (const char *varname)
     int i, n = strlen(varname);
 
     gretl_errmsg[0] = '\0';
+
+    if (_reserved(varname)) return 1;
     
     if (!(isalpha((unsigned char) varname[0]))) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
@@ -2009,16 +2011,17 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	if (strlen(varname) == 0 || varname[0] == '\n') {
 	    pprintf(prn, _("   variable name %d is missing: aborting\n"), k);
 	    pprintf(prn, msg);
-	    fclose(fp);
-	    free(line);
-	    clear_datainfo(csvinfo, CLEAR_FULL);
-	    return 1;
+	    goto csv_bailout;
 	}
 	if (k == 1 && skipvar) {
 	    k--;
 	    skipvar = 0;
 	} else {
-	    pprintf(prn, _("   variable %d: '%s'\n"), k, varname); 
+	    pprintf(prn, _("   variable %d: '%s'\n"), k, varname);
+	    if (check_varname(varname)) {
+		pprintf(prn, "%s\n", gretl_errmsg);
+		goto csv_bailout;
+	    }	    
 	    strcpy(csvinfo->varname[k], varname);
 	} 
 	if (k == csvinfo->v - 1) break;
@@ -2122,6 +2125,12 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
 
     return 0;
+
+ csv_bailout:
+    fclose(fp);
+    free(line);
+    clear_datainfo(csvinfo, CLEAR_FULL);
+    return 1;
 }
 
 /**

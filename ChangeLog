@@ -3,6 +3,8 @@
 - numerous small updates to facilitate internationalization
 - give the user a choice of delimiters (comma, space or tab)
   when importing or exporting "CSV" data
+- strengthen checks on invalid variable names in data files
+- improve recognition of scalars versus vectors in genr
 - fix bug in Create Dataset: undated data appeared as "annual"
 - add descriptive report on dataset to Data menu
 - fix bug in writing Utilities/R session: R data set was being
@@ -10,7 +12,7 @@
 - fix bug: datafile name was not being cleared on Close Session
 - refinements to Makefiles: don't expand CFLAGS multiple times
 - handle spaces in filenames when stacking the "open" command
-- fix bug with editing gnuplot graphs
+- fix bugs with editing gnuplot graphs
 - get win32 LaTeX view working properly
 - bugfixes for gnumeric and excel spreadsheet importers
 - bugfix: unitialized data in cointegration test with constant

@@ -19,16 +19,16 @@
 
 /* generate.c for gretl */
 
-/* #define GENR_DEBUG */
+#define GENR_DEBUG
 
 #include "libgretl.h"
 #include "internal.h"
 
-static int cstack (double *xstack, double *xvec, const char op, 
+static int cstack (double *xstack, double *xvec, char op, 
 		   const DATAINFO *pdinfo, int scalar);
-static int domath (double *xvec, const double *mvec, const int nt, 
+static int domath (double *xvec, const double *mvec, int nt, 
 		   const DATAINFO *pdinfo, int *scalar);
-static int evalexp (char *ss, double *mvec, double *xvec, 
+static int evalexp (char *ss, int nt, double *mvec, double *xvec, 
 		    double **Z, const DATAINFO *pdinfo, 
 		    const MODEL *pmod, GENERATE *genr);
 static void getvar (char *str, char *word, char *c);
@@ -38,13 +38,13 @@ static int getxvec (char *s, double *xvec,
 static int scanb (const char *ss, char *word);
 static int strtype (char *ss, const DATAINFO *pdinfo);
 static int whichtrans (const char *ss);
-static int _normal_dist (double *a, const int t1, const int t2); 
-static void _uniform (double *a, const int t1, const int t2);
+static int normal_dist (double *a, int t1, int t2); 
+static void uniform (double *a, int t1, int t2);
 static int createvar (double *xvec, char *snew, char *sleft, 
 		      char *sright, int ssnum, double ***pZ, 
 		      DATAINFO *pdinfo, int scalar);
 static void genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *pgenr,
-		      double *mstack, double *mvec, const int nv);
+		      double *mstack, double *mvec, int nv);
 static void get_lag (int v, int lag, double *lagvec, double **Z, 
 		     const DATAINFO *pdinfo);
 static double genr_cov (const char *str, double ***pZ,
@@ -53,8 +53,8 @@ static double genr_corr (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo);
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod);
-static void genr_msg (GENERATE *pgenr, const int nv);
-static int _ismatch (const int lv, const int *list);
+static void genr_msg (GENERATE *pgenr, int nv);
+static int ismatch (int lv, const int *list);
 static void varerror (const char *ss);
 static void genrtime (DATAINFO *pdinfo, GENERATE *genr, int time);
 
@@ -153,6 +153,10 @@ static char operators[] = {
 };
 
 #define LEVELS 7
+
+#define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
+                         t == T_CORR || t == T_COV || \
+                         t == T_VAR || t == T_MEDIAN)
 
 /* ...................................................... */
 
@@ -335,7 +339,7 @@ static int parenthesize (char *str)
 
 /* ...................................................... */
 
-int _identical (const double *x, const double *y, const int n)
+int _identical (const double *x, const double *y, int n)
      /* check whether two vars are identical or not */
 {
     register int t;
@@ -356,22 +360,22 @@ static void otheruse (const char *str1, const char *str2)
 
 /* .......................................................... */
 
-static int reserved (const char *str)
+int _reserved (const char *str)
 {
-    static char *resword[] = {"uhat", 
-			      "c", "const", "C", "CONST", 
-			      "coeff", "stderr", "rho",
-			      "mean", "median", "var", "cov", "vcv", "sd",
-			      "full", "subdum", 
-			      "t", "annual", "qtrs", "months", "hours", "i",
-			      "log", "exp", "sin", "cos", "diff", "ldiff", 
-			      "sort", "int", "ln", "abs", "sqrt", "cum",
-			      "pvalue", ""};
-    register int i = 0;
+    const char *resword[] = {"uhat", 
+			     "c", "const", "C", "CONST", 
+			     "coeff", "stderr", "rho",
+			     "mean", "median", "var", "cov", "vcv", "sd",
+			     "full", "subdum", 
+			     "t", "annual", "qtrs", "months", "hours", "i",
+			     "log", "exp", "sin", "cos", "diff", "ldiff", 
+			     "sort", "int", "ln", "abs", "sqrt", "cum",
+			     "pvalue", NULL};
+    int i = 0;
 
-    while (strlen(resword[i])) {
+    while (resword[i] != NULL) {
         if (strcmp(str, resword[i]) == 0) {
-            switch(i) {
+            switch (i) {
 	    case 0: 
 		otheruse(str, _("residual vector"));
 		break;
@@ -403,7 +407,7 @@ static int reserved (const char *str)
 		otheruse(str, _("math function"));
 		break;
             }
-            return i+1;
+            return 1;
         }
 	i++; 
     }  
@@ -412,8 +416,8 @@ static int reserved (const char *str)
 
 /* .......................................................... */
 
-static void copy (const char *str, const int indx, 
-		  const int count, char *dest)
+static void copy (const char *str, int indx, 
+		  int count, char *dest)
      /* copies count chars from indx in str to dest */
 {
     int i;
@@ -425,7 +429,7 @@ static void copy (const char *str, const int indx,
 
 /* .........................................................    */
 
-static int getword (const char c, char *str, char *word, const int oflag)
+static int getword (char c, char *str, char *word, int oflag)
 
      /* Scans string str for char c, gets word to the left of it as
 	"word" and deletes word from str.
@@ -443,8 +447,7 @@ static int getword (const char c, char *str, char *word, const int oflag)
     /* special case for auto sub-sampling dummy */
     if (oflag && strcmp(word, "subdum") == 0)
 	return i+1;
-    if (reserved(word)) 
-	return 0;
+    if (_reserved(word)) return 0;
     return i+1;
 }
 
@@ -505,8 +508,8 @@ int genr_scalar_index (int opt, int put)
  */
 
 GENERATE generate (double ***pZ, DATAINFO *pdinfo, 
-		   const char *line, const int model_count, 
-		   MODEL *pmod, const int oflag)
+		   const char *line, int model_count, 
+		   MODEL *pmod, int oflag)
 {
     int nleft1, nleft2, nright1, nright2, vi, lv, ig, iw, nt; 
     int v, ls, nv = pdinfo->v, er, lword, nv1, nvtmp = 0;
@@ -738,7 +741,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
                     return genr;
                 }
                 nv1 = nv + nvtmp;
-                ig = evalexp(sexpr, mvec, genr.xvec, 
+                ig = evalexp(sexpr, 0, mvec, genr.xvec, 
 			     *pZ, pdinfo, pmod, &genr);
                 if (ig != 0) {
 		    genr.errcode = E_IGNONZERO;
@@ -816,7 +819,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 			    return genr;
 			}
-			if (!(vi = _ismatch(atoi(sexpr), pmod->arlist))) {
+			if (!(vi = ismatch(atoi(sexpr), pmod->arlist))) {
 			    genr.errcode = E_INVARG;
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
 			    return genr;
@@ -827,7 +830,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		    }
 		    if (nt == T_NORMAL) {
 			genr.scalar = 0;
-			er = _normal_dist(genr.xvec, t1, t2);
+			er = normal_dist(genr.xvec, t1, t2);
 			if (er) {
 			    genr.errcode = er;
 			    genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
@@ -837,7 +840,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		    }   
 		    if (nt == T_UNIFORM) {
 			genr.scalar = 0;
-			_uniform(genr.xvec, t1, t2);
+			uniform(genr.xvec, t1, t2);
 			break;
 		    }
 		    if (nt == T_COV) {
@@ -892,7 +895,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			lv = _isnumber(sexpr)? atoi(sexpr) : 
 			    varindex(pdinfo, sexpr);
-			vi = _ismatch(lv, pmod->list);
+			vi = ismatch(lv, pmod->list);
 			if (vi == 1) vi = 0;
 			if (!vi) {
 			    genr.errcode = E_INVARG;
@@ -915,7 +918,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			break;
 		    } else {
-			ig = evalexp(sexpr, mvec, genr.xvec, 
+			ig = evalexp(sexpr, nt, mvec, genr.xvec, 
 				     *pZ, pdinfo, pmod, &genr);
 			if (ig != 0) {  
 			    genr.errcode = E_IGNONZERO;
@@ -980,7 +983,7 @@ static void expand_vec (double *xx, const DATAINFO *pdinfo)
 
 /* ............................................................ */
 
-static int cstack (double *xstack, double *xvec, const char op, 
+static int cstack (double *xstack, double *xvec, char op, 
 		   const DATAINFO *pdinfo, int scalar)
      /* calculate stack vector */
 {
@@ -1129,7 +1132,7 @@ static int panel_missing (int t, const DATAINFO *pdinfo)
 
 /* ........................................................  */
 
-static int domath (double *xvec, const double *mvec, const int nt,
+static int domath (double *xvec, const double *mvec, int nt,
 		   const DATAINFO *pdinfo, int *scalar)
      /* do math transformations and return result in xvec */
 {
@@ -1345,23 +1348,26 @@ static int domath (double *xvec, const double *mvec, const int nt,
 
 /* .....................................................*/
 
-static int evalexp (char *ss, double *mvec, double *xvec, 
+static int evalexp (char *ss, int nt, double *mvec, double *xvec, 
 		    double **Z, const DATAINFO *pdinfo, 
 		    const MODEL *pmod, GENERATE *genr)
 {
     char s3[MAXLEN], op2, op3;
     int ig;
+    int *pscalar = &(genr->scalar);
 
 #ifdef GENR_DEBUG
     fprintf(stderr, "evalexp: ss='%s'\n", ss);
 #endif
+
+    if (SCALAR_SCOPE(nt)) pscalar = NULL;
 
     /* evaluate expression inside parentheses and value in xvec */
     op3 = '\0';
     do {
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
-	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, &(genr->scalar));
+	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
 	    if (ig != 0) return ig;
 	    cstack(xvec, mvec, op3, pdinfo, genr->scalar);
 	    op3 = op2;
@@ -1532,13 +1538,13 @@ static int getxvec (char *s, double *xvec,
 		for (t=pmod->t1; t<=pmod->t2; t++) xvec[t] = pmod->uhat[t]; 
 		for (t=pmod->t2 + 1; t<n; t++) xvec[t] = NADBL;
 	    }
-	    *scalar = 0;
+	    if (scalar != NULL) *scalar = 0;
 	}
 	else if (v == INDEXNUM) { /* internal index variable */
 	    int k = genr_scalar_index(0, 0);
 
 	    for (t=0; t<n; t++) xvec[t] = (double) k;
-	    *scalar = 0;
+	    if (scalar != NULL) *scalar = 0;
 	}
 	else if (v == TNUM) { /* auto trend/index */
 	    if (pdinfo->time_series && pdinfo->pd == 1) /* annual */ 
@@ -1563,7 +1569,7 @@ static int getxvec (char *s, double *xvec,
 	    for (t=0; t<n; t++) 
 		xvec[t] = (pdinfo->vector[v])? Z[v][t] : Z[v][0];
 	    if (pdinfo->vector[v]) {
-		*scalar = 0;
+		if (scalar != NULL) *scalar = 0;
 	    }
 	}
 	break;
@@ -1916,7 +1922,7 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 
 /* ......................................................  */
 
-int _laggenr (const int iv, const int lag, const int opt, double ***pZ, 
+int _laggenr (int iv, int lag, int opt, double ***pZ, 
 	      DATAINFO *pdinfo)
      /*
        creates Z[iv][t-lag] and prints label if opt != 0
@@ -1955,7 +1961,7 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 
 /* ........................................................  */
 
-static int _normal_dist (double *a, const int t1, const int t2) 
+static int normal_dist (double *a, int t1, int t2) 
      /* Box and Muller method */
 {
     int i;
@@ -1971,7 +1977,7 @@ static int _normal_dist (double *a, const int t1, const int t2)
 
 /* ........................................................  */
 
-static void _uniform (double *a, const int t1, const int t2) 
+static void uniform (double *a, int t1, int t2) 
 {
     int i;
     double scale = 100.0/RAND_MAX;
@@ -2073,7 +2079,7 @@ static int createvar (double *xvec, char *snew, char *sleft,
 /* ........................................................ */
 
 static void genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
-		      double *mstack, double *mvec, const int nv)
+		      double *mstack, double *mvec, int nv)
 {
     int s = pdinfo->v - nv;
 
@@ -2248,7 +2254,7 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
  */
 
 int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo, 
-	     const int opt, const int nodup)
+	     int opt, int nodup)
 {
     int check, i, j, t, li, lj, l0 = list[0];
     int maxterms, terms, n = pdinfo->n, v = pdinfo->v;
@@ -2500,8 +2506,8 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     v2 = varindex(pdinfo, v2str);
     if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
     /* check model list */
-    v1l = _ismatch(v1, pmod->list);
-    v2l = _ismatch(v2, pmod->list);
+    v1l = ismatch(v1, pmod->list);
+    v2l = ismatch(v2, pmod->list);
     if (!v1l || !v2l) return NADBL;
     /* model vcv matrix */
     if (pmod->vcv == NULL && makevcv(pmod)) return NADBL;
@@ -2525,7 +2531,7 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 
 /* ...................................................... */
 
-static void genr_msg (GENERATE *pgenr, const int nv)
+static void genr_msg (GENERATE *pgenr, int nv)
 {
     sprintf(pgenr->msg, "%s %s %s (ID %d)\n", 
 	    (pgenr->varnum < nv)? _("Replaced") : _("Generated"), 
@@ -2535,7 +2541,7 @@ static void genr_msg (GENERATE *pgenr, const int nv)
 
 /* ......................................................  */
 
-static int _ismatch (const int lv, const int *list)
+static int ismatch (int lv, const int *list)
 {
     int n;
 

@@ -868,21 +868,24 @@ static double dwstat (int order, MODEL *pmod, double **Z)
     opt is the order of autoregression, 0 for OLS and WLS
 */
 {
-    double diff, diffsq = 0.0, utt, utt1;
+    double diff, ut, ut1;
+    double diffsq = 0.0;
     int t;
 
     if (order) order -= 1;
 
     if (pmod->ess <= 0.0) return NADBL;
+
     for (t=pmod->t1+1+order; t<=pmod->t2; t++)  {
-        utt = pmod->uhat[t];
-        utt1 = pmod->uhat[t-1];
-        if (na(utt) || na(utt1) ||
-	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.) || 
-	    floateq(Z[pmod->nwt][t-1], 0.)))) continue;
-        diff = utt - utt1;
+        ut = pmod->uhat[t];
+        ut1 = pmod->uhat[t-1];
+        if (na(ut) || na(ut1) ||
+	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.0) || 
+	    floateq(Z[pmod->nwt][t-1], 0.0)))) continue;
+        diff = ut - ut1;
         diffsq += diff * diff;
     }
+
     return diffsq/pmod->ess;
 }
 
@@ -893,20 +896,20 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     order is the order of autoregression, 0 for OLS.
 */
 {
-    double uh, uh1, uu1, xx, rho;
+    double ut, ut1, uu, xx, rho;
     int t;
 
-    xx = uu1 = 0.0;
+    xx = uu = 0.0;
     if (order) order -= 1;
     for (t=t1+order+1; t<=t2; t++) { 
-        uh = uhat[t];
-        uh1 = uhat[t-1];
-        if (na(uh) || na(uh1)) continue;
-        uu1 += uh * uh1;
-        xx += uh1 * uh1;
+        ut = uhat[t];
+        ut1 = uhat[t-1];
+        if (na(ut) || na(ut1)) continue;
+        uu += ut * ut1;
+        xx += ut1 * ut1;
     }
     if (floateq(xx, 0.0)) return NADBL;
-    rho = uu1/xx;
+    rho = uu/xx;
     if (rho > 1.0 || rho < -1.0) {
 	rho = altrho(order, t1, t2, uhat);
     }
