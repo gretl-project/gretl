@@ -8,9 +8,10 @@ connection with each command (if any), again taken from libgretl.
 
 The output of skeleton is directed to skeleton.xml, an xml file
 that should validate in relation to the gretl command reference
-DTD, gretl_commands.dtd.
+DTD, gretl_commands.dtd.  This could provide a basis for a
+translation.  
 
-formatter.c makes a program called "formatter.c", which parses an
+formatter.c makes a program called "formatter", which parses an
 XML command listing such as skeleton.xml.  The idea is that this
 program will be developed to the point where it can output:
 
@@ -19,10 +20,17 @@ program will be developed to the point where it can output:
 
 * the "online" help files gretl.hlp and gretlcli.hlp
 
-Right now it does neither of these things: it just sends to stdout
-a sort of "proof of concept" simple (incomplete) text printout.
+Right now it outputs a sort of "proof of concept" simple
+(incomplete) text printout, and also sends very incomplete XML
+output to trial.xml, in something like the format this is wanted
+for cmdref.xml.
 
-To see the whole thing in action, do "make testprint.txt".  You
-will probably have to edit the Makefile first though.
+You will probably have to edit the Makefile before doing anything
+else.  Once that's ready, try:
+
+make testprint.txt
+
+and take a look at the output: skeleton.xml, testprint.txt and
+trial.xml
 
 Allin Cottrell, February 2004

@@ -26,44 +26,17 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 
+#include "formatter.h"
+
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
-typedef struct _ARGLIST ARGLIST;
-typedef struct _OPTION OPTION;
-typedef struct _GUI_ACCESS GUI_ACCESS;
-typedef struct _COMMAND COMMAND;
-typedef struct _COMMANDLIST COMMANDLIST;
-
-struct _ARGLIST {
-    int n_args;
-    char **args;
-};
-
-struct _OPTION {
-    char *flag;
-    char *effect;
-};
-
-struct _GUI_ACCESS {
-    char *menu_path;
-    char *other_access;
-};
-
-struct _COMMAND {
-    char *name;
-    char *xref;
-    char *section;
-    ARGLIST arglist;
-    ARGLIST optargs;
-    int n_options;
-    OPTION *options;
-    char **examples;
-    char *descrip;
-    char *optnotes;
-    char *addendum;
-    GUI_ACCESS gui_access;
-};
+enum {
+    TARGET_DUMMY,
+    TARGET_CLI_HLP,
+    TARGET_GUI_HLP,
+    TARGET_XML_MAN
+} print_targets;
 
 struct _COMMANDLIST {
     char *language;
@@ -77,7 +50,7 @@ void print_option (OPTION *opt)
     printf(" effect: '%s'\n", opt->effect);
 }
 
-void print_command (COMMAND *cmd, int k)
+void dummy_print_command (const COMMAND *cmd, int k)
 {
     int i;
 
@@ -99,17 +72,46 @@ void print_command (COMMAND *cmd, int k)
     for (i=0; i<cmd->n_options; i++) {
 	print_option(&cmd->options[i]);
     }
+
+    printf(" number of examples = %d\n", cmd->n_examples);
+    for (i=0; i<cmd->n_examples; i++) {
+	printf("  '%s'\n", cmd->examples[i]);
+    }
 }
 
-void print_command_list (COMMANDLIST *clist)
+int print_command_list (COMMANDLIST *clist, int target)
 {
     int i;
+    const char *xmlout = "trial.xml";
+    FILE *fp = NULL;
 
-    printf("Found %d valid commands in file\n", clist->n_commands);
+    fprintf(stderr, "Printing %d valid command(s)\n", clist->n_commands);
+
+    if (target == TARGET_XML_MAN) {
+	fp = fopen(xmlout, "w");
+	if (fp == NULL) return 1;
+    }
     
     for (i=0; i<clist->n_commands; i++) {
-	print_command(clist->commands[i], i + 1);
+	if (target == TARGET_DUMMY) {
+	    dummy_print_command(clist->commands[i], i + 1);
+	}
+	else if (target == TARGET_CLI_HLP) {
+	    fprintf(stderr, "cli hlp not ready!\n");
+	    break;
+	}
+	else if (target == TARGET_GUI_HLP) {
+	    fprintf(stderr, "gui hlp not ready!\n");
+	    break;
+	}
+	else if (target == TARGET_XML_MAN) {
+	    xml_format_command(clist->commands[i], fp);
+	}
     }
+
+    if (fp != NULL) fclose(fp);
+
+    return 0;
 }
 
 void missing_attrib (const char *element, const char *attrib)
@@ -138,7 +140,9 @@ COMMAND *command_new (void)
 	cmd->n_options = 0;
 	cmd->options = NULL;
 
+	cmd->n_examples = 0;
 	cmd->examples = NULL;
+
 	cmd->descrip = NULL;
 	cmd->optnotes = NULL;
 	cmd->addendum = NULL;
@@ -170,6 +174,29 @@ void process_option (xmlDocPtr doc, xmlNodePtr node, OPTION *opt)
 	}
 	cur = cur->next;
     }
+}
+
+int process_example_list (xmlDocPtr doc, xmlNodePtr node, COMMAND *cmd)
+{
+    xmlNodePtr cur;
+    char *tmp, **examples;
+    int nex, err = 0;
+
+    cur = node->xmlChildrenNode;
+    while (cur != NULL && !err) {
+        if (!xmlStrcmp(cur->name, (UTF) "example")) {
+	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    nex = cmd->n_examples + 1;
+	    examples = realloc(cmd->examples, nex * sizeof *examples);
+	    if (examples == NULL) return 1;
+	    cmd->examples = examples;
+	    cmd->n_examples = nex;
+	    cmd->examples[nex - 1] = tmp;
+	}
+	cur = cur->next;
+    }
+
+    return err;
 }
 
 int process_option_list (xmlDocPtr doc, xmlNodePtr node, COMMAND *cmd)
@@ -290,10 +317,10 @@ int process_command (xmlDocPtr doc, xmlNodePtr node, COMMANDLIST *clist)
         else if (!xmlStrcmp(cur->name, (UTF) "options")) {
 	    err = process_option_list(doc, cur, cmd);
 	}
-#if 0
         else if (!xmlStrcmp(cur->name, (UTF) "examples")) {
-	    err = process_examples(doc, cur, cmd);
+	    err = process_example_list(doc, cur, cmd);
 	}
+#if 0 /* not done yet */
         else if (!xmlStrcmp(cur->name, (UTF) "description")) {
 	    err = process_description(doc, cur, cmd);
 	}
@@ -366,7 +393,8 @@ int parse_commands_data (const char *fname)
 	cur = cur->next;
     }
 
-    print_command_list(&clist);
+    print_command_list(&clist, TARGET_DUMMY);
+    print_command_list(&clist, TARGET_XML_MAN);
 
     xmlFreeDoc(doc);
     xmlCleanupParser();
