@@ -1518,7 +1518,92 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
     pprintf(prn, " \\intbl \\row}\n\n");
 }
 
+/* ....................................................... */
 
+static void mp_other_stats (const mp_results *mpvals, PRN *prn)
+{
+    char fstr[16];
+    int len = 24;
 
+    if (doing_nls()) len = 36;
+    
+    pprintf(prn, "%-*s", len, _("Standard error"));
+    gretl_print_fullwidth_double(mpvals->sigma, GRETL_MP_DIGITS, prn);
+    pprintf(prn, "\n");
 
+    pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
+    gretl_print_fullwidth_double(mpvals->ess, GRETL_MP_DIGITS, prn);
+    pprintf(prn, "\n");
 
+    pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
+    gretl_print_fullwidth_double(mpvals->rsq, GRETL_MP_DIGITS, prn);
+    pprintf(prn, "\n");
+
+    pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
+    gretl_print_fullwidth_double(mpvals->adjrsq, GRETL_MP_DIGITS, prn);
+    pprintf(prn, "\n");
+
+    sprintf(fstr, "F(%d, %d)", mpvals->dfn, mpvals->dfd);
+    pprintf(prn, "%-*s", len, fstr);
+    gretl_print_fullwidth_double(mpvals->fstt, GRETL_MP_DIGITS, prn);
+    pprintf(prn, "\n");
+}
+
+/* ....................................................... */
+
+static void print_mpvals_coeff (const mp_results *mpvals, 
+				int c, PRN *prn)
+{
+    int cnum = c - 1;
+
+    pprintf(prn, " %3d) %8s ", mpvals->varlist[c], mpvals->varnames[c]);
+
+    if (mpvals->ifc && c == mpvals->ncoeff) cnum = 0;
+
+    gretl_print_fullwidth_double(mpvals->coeff[cnum], 
+				 GRETL_MP_DIGITS, prn);
+    gretl_print_fullwidth_double(mpvals->sderr[cnum], 
+				 GRETL_MP_DIGITS, prn); 
+
+    pprintf(prn, "\n");
+}
+
+/* ....................................................... */
+
+void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
+			  PRN *prn)
+{
+    int i, ncoeff;
+    char startdate[9], enddate[9];
+    int nobs = mpvals->t2 - mpvals->t1 + 1;
+
+    ncoeff = mpvals->ncoeff;
+    ntodate(startdate, mpvals->t1, pdinfo);
+    ntodate(enddate, mpvals->t2, pdinfo);
+
+    if (!PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "FIXME: this is still to be implemented!\n\n");
+    }
+
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, _("Multiple-precision OLS estimates using "
+		       "the %d observations %s-%s\n"),
+		nobs, startdate, enddate);
+	pprintf(prn, "%s: %s\n\n", _("Dependent variable"),
+		mpvals->varnames[0]);
+
+	pprintf(prn, _("      VARIABLE         COEFFICIENT          "
+		       "        STD. ERROR\n"));
+    }
+
+    if (mpvals->ifc) {
+	print_mpvals_coeff(mpvals, ncoeff, prn);
+	ncoeff--;
+    }
+    for (i=2; i<=ncoeff; i++) {
+	print_mpvals_coeff(mpvals, i, prn);
+    }
+    pprintf(prn, "\n");
+
+    mp_other_stats (mpvals, prn);
+}

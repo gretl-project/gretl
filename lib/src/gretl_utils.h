@@ -189,5 +189,7 @@ void free_gretl_mp_results (mp_results *mpvals);
 
 mp_results *gretl_mp_results_new (int totvar);
 
+int allocate_mp_varnames (mp_results *mpvals);
+
 
 #endif /* UTILS_H */

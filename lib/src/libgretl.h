@@ -273,11 +273,15 @@ typedef struct {
 
 typedef struct {
     int ncoeff;
+    int t1, t2, ifc;
+    int dfn, dfd;
+    int *varlist;
+    char **varnames;
     double *coeff;
     double *sderr;
     double sigma;
     double ess;
-    double rsq;
+    double rsq, adjrsq;
     double fstt;
 } mp_results;
 

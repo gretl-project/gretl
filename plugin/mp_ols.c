@@ -24,7 +24,6 @@
 
 /* #define MP_DEBUG 1 */
 
-#define GRETL_MP_DIGITS 12          /* significant digits to use in output */
 #define DEFAULT_GRETL_MP_BITS 256   /* min. bits of precision for GMP */
 
 static mpf_t MPF_ONE;
@@ -316,17 +315,11 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->polyvar = 0;
 }
 
-static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
-			    int c, PRN *prn)
+static void get_mp_varname (const MPMODEL *pmod, const DATAINFO *pdinfo,
+			    int c, char *vname)
 {
-    char vname[12];
-    double xx = mpf_get_d (pmod->coeff[c-1]);
-    double yy = mpf_get_d (pmod->sderr[c-1]);
     int realv = (pmod->polyvar)? 
 	pmod->list[0] - pmod->polylist[0] : 0;
-
-    /* a bit of a fiddle getting the variable names to come
-       out right */
 
     if (pmod->polyvar && c >= realv 
 	&& !(pmod->ifc && c == pmod->list[0])
@@ -338,6 +331,19 @@ static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
     } else {
 	strcpy(vname, pdinfo->varname[pmod->varlist[c]]);
     } 
+}
+
+static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
+			    int c, PRN *prn)
+{
+    char vname[12];
+    double xx = mpf_get_d (pmod->coeff[c-1]);
+    double yy = mpf_get_d (pmod->sderr[c-1]);
+
+    /* a bit of a fiddle getting the variable names to come
+       out right */
+
+    get_mp_varname (pmod, pdinfo, c, vname);
 
     pprintf(prn, " %3d) %8s ", pmod->varlist[c], vname);
 
@@ -509,9 +515,10 @@ static void set_gretl_mp_bits (void)
     }
 }
 
-static void copy_mp_results (MPMODEL *pmod, mp_results *results)
+static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
+			    mp_results *results)
 {
-    int i;
+    int i, err = 0;
 
     for (i=0; i<pmod->ncoeff; i++) {
 	results->coeff[i] = mpf_get_d (pmod->coeff[i]);
@@ -527,6 +534,29 @@ static void copy_mp_results (MPMODEL *pmod, mp_results *results)
     results->ess = mpf_get_d (pmod->ess);
     results->rsq = mpf_get_d (pmod->rsq);
     results->fstt = mpf_get_d (pmod->fstt);
+
+    if (results->varnames != NULL) { /* will use results for printing */
+	int ncoeff = pmod->list[0];
+
+	if (pmod->ifc) {
+	    get_mp_varname(pmod, pdinfo, ncoeff, results->varnames[ncoeff]);
+	    ncoeff--;
+	}
+	for (i=2; i<=ncoeff; i++) {
+	    get_mp_varname(pmod, pdinfo, i, results->varnames[i]);
+	}
+	results->t1 = pmod->t1;
+	results->t2 = pmod->t2;
+	results->ifc = pmod->ifc;
+	results->dfn = pmod->dfn;
+	results->dfd = pmod->dfd;
+	results->adjrsq = mpf_get_d (pmod->adjrsq);
+	if (copylist(&results->varlist, pmod->varlist)) {
+	    err = 1;
+	}
+    }
+
+    return err;
 }
 
 /**
@@ -629,7 +659,7 @@ int mplsq (const int *list, const int *polylist,
 	if (results == NULL) {
 	    print_mp_ols (&model, pdinfo, prn);
 	} else {
-	    copy_mp_results (&model, results);
+	    copy_mp_results (&model, pdinfo, results);
 	}
     }
 

@@ -20,6 +20,7 @@
 /* printout.h for gretl */
 
 #define GRETL_DIGITS 6
+#define GRETL_MP_DIGITS 12
 
 /* functions follow */
  

@@ -2285,11 +2285,51 @@ double get_xvalue (int i, double **Z, const DATAINFO *pdinfo)
 
 /* ........................................................... */
 
+static void free_mp_varnames (mp_results *mpvals)
+{
+    int i, n = mpvals->ncoeff + 1;
+
+    if (mpvals->varnames != NULL) {
+	for (i=0; i<n; i++) {
+	    free(mpvals->varnames[i]);
+	}
+	free(mpvals->varnames);
+    }
+}
+
+/* ........................................................... */
+
+int allocate_mp_varnames (mp_results *mpvals)
+{
+    int i, n = mpvals->ncoeff + 1;
+
+    mpvals->varnames = malloc(n * sizeof(char *));
+    if (mpvals->varnames == NULL) return 1;
+
+    for (i=0; i<n; i++) {
+	mpvals->varnames[i] = malloc(12);
+	if (mpvals->varnames[i] == NULL) {
+	    free_mp_varnames(mpvals);
+	    return 1;
+	}
+	mpvals->varnames[i][0] = 0;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
 void free_gretl_mp_results (mp_results *mpvals)
 {
     if (mpvals != NULL) {
 	free(mpvals->coeff);
 	free(mpvals->sderr);
+	if (mpvals->varnames != NULL) {
+	    free_mp_varnames(mpvals);
+	}
+	if (mpvals->varlist != NULL) {
+	    free(mpvals->varlist);
+	}
 	free(mpvals);
     }
 }
@@ -2308,6 +2348,8 @@ mp_results *gretl_mp_results_new (int totvar)
 
     mpvals->coeff = malloc(totvar * sizeof(double));
     mpvals->sderr = malloc(totvar * sizeof(double));
+    mpvals->varnames = NULL;
+    mpvals->varlist = NULL;
 
     if (mpvals->coeff == NULL || 
 	mpvals->sderr == NULL) {
@@ -2320,6 +2362,10 @@ mp_results *gretl_mp_results_new (int totvar)
 
     mpvals->sigma = mpvals->ess = NADBL;
     mpvals->rsq = mpvals->fstt = NADBL;
+    mpvals->adjrsq = NADBL;
+
+    mpvals->t1 = mpvals->t2 = mpvals->ifc = 0;
+    mpvals->dfn = mpvals->dfd = 0;
 
     return mpvals;
 }

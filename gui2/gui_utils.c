@@ -857,8 +857,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	    g_object_unref(G_OBJECT(vwin->ifac));  
 	if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
 	    free_summary(vwin->data); 
-	if (vwin->role == CORR)
+	else if (vwin->role == CORR)
 	    free_corrmat(vwin->data);
+	else if (vwin->role == MPOLS)
+	    free_gretl_mp_results(vwin->data);
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
 	free(vwin);
@@ -1638,7 +1640,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR) {
+	|| vwin->role == CORR || vwin->role == MPOLS) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -1657,10 +1659,12 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    model_menu_state(vwin->ifac, FALSE);
 	    model_ml_menu_state(vwin->ifac, TRUE);
-	} else
+	} else {
 	    model_ml_menu_state(vwin->ifac, FALSE);
-	if (pmod->name)
+	}
+	if (pmod->name) {
 	    model_save_state(vwin->ifac, FALSE);
+	}
     }
 }
 
@@ -1974,6 +1978,29 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	} 
 	else { /* RTF */
 	    rtfprint_corrmat(corr, datainfo, prn);
+#ifdef G_OS_WIN32
+	    win_copy_text(prn, COPY_RTF);
+#else
+	    prn_to_clipboard(prn);
+#endif
+	}
+	gretl_print_destroy(prn);
+	return;
+    }
+
+    /* multiple-precision OLS */
+    if (vwin->role == MPOLS && SPECIAL_COPY(how)) {
+	mp_results *mpvals = (mp_results *) vwin->data;
+
+	if (bufopen(&prn)) return;
+	if (how == COPY_LATEX) { 
+	    prn->format = GRETL_PRINT_FORMAT_TEX;
+	    print_mpols_results (mpvals, datainfo, prn);
+	    prn_to_clipboard(prn);
+	} 
+	else { /* RTF */
+	    prn->format = GRETL_PRINT_FORMAT_RTF;
+	    print_mpols_results (mpvals, datainfo, prn);
 #ifdef G_OS_WIN32
 	    win_copy_text(prn, COPY_RTF);
 #else
