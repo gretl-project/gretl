@@ -17,10 +17,7 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* Native gretl code for ARMA estimation.  Much of the code here
-   was contributed by Riccardo "Jack" Lucchetti, the rest is due
-   to Allin Cottrell; thanks also to Stephen Moshier for cephes.
-*/
+/* The algorithm here was contributed by Riccardo "Jack" Lucchetti. */
 
 #ifdef STANDALONE
 # include <gretl/libgretl.h>
