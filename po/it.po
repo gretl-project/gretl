@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.2.6\n"
 "POT-Creation-Date: 2004-06-04 11:18-0400\n"
-"PO-Revision-Date: 2004-06-05 01:16+0200\n"
+"PO-Revision-Date: 2004-06-05 17:41+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -4850,7 +4850,7 @@ msgstr "Mostra i dettagli delle iterazioni"
 
 #: gui/dialogs.c:1568 gui2/dialogs.c:1621
 msgid "Native code"
-msgstr "Codice incorporato"
+msgstr "Usa gretl"
 
 #: gui/dialogs.c:1575 gui2/dialogs.c:1628
 msgid "Use X-12-ARIMA"
@@ -5659,11 +5659,11 @@ msgstr "/A_iuto"
 
 #: gui/gretl.c:467 gui2/gretl.c:532
 msgid "/Help/_GUI commands"
-msgstr "/Aiuto/Comandi _GUI"
+msgstr "/Aiuto/Comandi: interfaccia _grafica"
 
 #: gui/gretl.c:468 gui2/gretl.c:533
 msgid "/Help/_Script commands syntax"
-msgstr "/Aiuto/_Sintassi comandi"
+msgstr "/Aiuto/Comandi: _sintassi"
 
 #: gui/gretl.c:469 gui2/gretl.c:534
 msgid "/Help/sep1"
@@ -6283,17 +6283,18 @@ msgstr "Troppi elementi selezionati"
 msgid "Please select %d variables first"
 msgstr "Selezionare prima %d variabili"
 
+#  Menu della finestra spreadsheet
 #: gui/ssheet.c:48 gui2/ssheet.c:58
 msgid "/_Observation"
-msgstr "/_Osservazione"
+msgstr "/_Osservazioni"
 
 #: gui/ssheet.c:49 gui2/ssheet.c:59
 msgid "/Observation/_Append obs"
-msgstr "/Osservazione/_Aggiungi oss."
+msgstr "/Osservazioni/_Aggiungi"
 
 #: gui/ssheet.c:50 gui2/ssheet.c:61
 msgid "/Observation/_Insert obs"
-msgstr "/Osservazione/_Inserisci oss."
+msgstr "/Osservazioni/_Inserisci"
 
 #: gui/ssheet.c:52
 msgid "/Variable/_Add"
@@ -6807,7 +6808,7 @@ msgstr "Media"
 
 #: gui2/calculator.c:845 gui2/calculator.c:853 gui2/calculator.c:991
 msgid "std. deviation"
-msgstr "Deviazione std."
+msgstr "Deviazione standard"
 
 #: gui2/calculator.c:858 gui2/calculator.c:868
 msgid "x-value"
@@ -6899,7 +6900,7 @@ msgstr "H0: differenza delle medie ="
 
 #: gui2/calculator.c:1016
 msgid "Assume common population standard deviation"
-msgstr "Assumi deviazione standard comune tra le popolazioni"
+msgstr "Assumi che la deviazione standard sia comune tra le popolazioni"
 
 #: gui2/calculator.c:1020
 msgid "variance of sample 1"
@@ -6927,7 +6928,7 @@ msgstr "H0: differenza delle proporzioni = 0"
 
 #: gui2/calculator.c:1039
 msgid "Show graph of sampling distribution"
-msgstr "Mostra grafico della distribuzione campionaria"
+msgstr "Mostra il grafico della distribuzione campionaria"
 
 #: gui2/calculator.c:1141
 msgid "gretl: p-value finder"
@@ -7694,8 +7695,8 @@ msgid ""
 "Do you want to register the current data set\n"
 "as %s?"
 msgstr ""
-"Si vuole registrare il dataset attuale\n"
-"come %s?"
+"Interpretare il dataset attuale\n"
+"come composto da %s?"
 
 #: gui2/datafiles.c:1568
 msgid "gretl: time series data"
@@ -10739,14 +10740,16 @@ msgstr ""
 "Le intestazioni di colonna mostrano alfa (livello di significatività) per "
 "test a una coda.\n"
 
+#  La mancanza del punto finale e' voluta!
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375
 msgid ""
 "For a two-tailed test, select the column heading showing half the desired\n"
 "alpha level.  "
 msgstr ""
-"Per test a due code, selezionare l'intestazione di colonna che riporta la\n"
-"metà del valore alfa desiderato.  "
+"Per test a due code, selezionare l'intestazione di colonna che riporta la "
+"metà del valore alfa desiderato "
 
+#  I ritorni a capo diversi sono voluti!
 #: plugin/stats_tables.c:348 plugin/stats_tables.c:378
 #, no-c-format
 msgid ""
@@ -10755,9 +10758,7 @@ msgid ""
 "\n"
 msgstr ""
 "(ad esempio, per un test a due code con il livello di significatività del "
-"10%\n"
-"si usi la colonna 0.05)\n"
-"\n"
+"10% si usi la colonna 0.05)\n"
 
 #: plugin/stats_tables.c:372
 msgid ""
