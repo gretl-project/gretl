@@ -77,5 +77,7 @@ int genr_fit_resid (MODEL *pmod,
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);
 
+int genr_scalar_index (int opt, int put);
+
 #endif /* GENERATE_H */
 

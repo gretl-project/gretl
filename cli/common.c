@@ -49,10 +49,9 @@ int numeric_check_model (MODEL *pmod,
 
 static void substitute_dollar_i (char *str)
 {
-    extern int genr_scalar_index (int opt, int put);
-    char *p = strstr(str, "$i");
+    char *p;
 
-    if (p != NULL) {
+    while ((p = strstr(str, "$i")) != NULL) {
 	char ins[8];
 	char *q;
 
@@ -61,7 +60,7 @@ static void substitute_dollar_i (char *str)
 	sprintf(ins, "%d", genr_scalar_index(0, 0));
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
-	free(q);
+	free(q);	
     }
 }
 
@@ -122,7 +121,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
     case HCCM:
 	/* if this is the first time round the loop, allocate space
 	   for each loop model */
-	if (lround == 0) {
+	if (lround == 0 && plp->type != FOR_LOOP) {
 	    plp->nmod += 1;
 	    if (plp->type != COUNT_LOOP) { /* a conditional loop */
 		if (plp->models == NULL) {
@@ -175,7 +174,12 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn,
 	    return 1;
 #endif
 
-	if (plp->type != COUNT_LOOP) { /* conditional loop */
+	if (plp->type == FOR_LOOP) {
+	    (models[0])->ID = lround + 1;
+	    printmodel(models[0], datainfo, prn); 
+	    if (oflag) outcovmx(models[0], datainfo, 0, prn);
+	}
+	else if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
 	    swap_models(&models[0], &plp->models[m]);

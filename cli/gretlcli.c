@@ -427,7 +427,7 @@ int main (int argc, char *argv[])
 	    i = 0;
 	    while (j != MAXLOOP && loop_condition(i, &loop, Z, datainfo)) {
 		if (loop.type == FOR_LOOP && !echo_off)
-		    pprintf(prn, "loop: i = %d\n\n", i + 1);
+		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn, cmdprn)) {
 			printf(_("Error in command loop: aborting\n"));
@@ -437,8 +437,10 @@ int main (int argc, char *argv[])
 		i++;
 	    }
 	    if (j != MAXLOOP) {
-		print_loop_results(&loop, datainfo, prn, &paths, 
-				   &model_count, loopstorefile);
+		if (loop.type != FOR_LOOP) {
+		    print_loop_results(&loop, datainfo, prn, &paths, 
+				       &model_count, loopstorefile);
+		}
 		errfatal = 0;
 	    } 
 	    looprun = 0;

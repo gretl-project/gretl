@@ -29,8 +29,6 @@ enum inequalities {
     LT
 };
 
-extern int genr_scalar_index (int opt, int put);
-
 static int monte_carlo_init (LOOPSET *ploop);
 static void free_loop_model (LOOP_MODEL *plmod);
 static void free_loop_print (LOOP_PRINT *pprn);
