@@ -965,19 +965,30 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	ttfspin = NULL;
     }
 
-    if (!frequency_plot(spec) && gnuplot_has_specified_colors()) { 
+    if (gnuplot_has_specified_colors()) { 
+	int colmax;
+
 	tbl_len++;
 	tempwid = gtk_hseparator_new();
 	gtk_table_attach_defaults 
 	    (GTK_TABLE (tbl), tempwid, 0, TAB_MAIN_COLS, tbl_len-1, tbl_len);  
-	gtk_widget_show (tempwid);	
+	gtk_widget_show (tempwid);
 
-	for (i=0; i<3; i++) {
+	if (frequency_plot(spec)) colmax = 1;
+	else colmax = COLOR_MAX;
+
+	for (i=0; i<colmax; i++) {
 	    char labstr[16];
+
+	    if (frequency_plot(spec)) i = COLOR_MAX;
 
 	    tbl_len++;
 	    box = gtk_hbox_new(FALSE, 2);
-	    sprintf(labstr, _("Color %d"), i + 1);
+	    if (i == COLOR_MAX) {
+		sprintf(labstr, _("Fill color"));
+	    } else {
+		sprintf(labstr, _("Color %d"), i + 1);
+	    }
 	    tempwid = gtk_label_new (labstr);
 	    gtk_container_add(GTK_CONTAINER(box), tempwid);
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 

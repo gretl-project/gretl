@@ -302,12 +302,13 @@ static void model_stats_init (MODEL *pmod)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @ci: command index (see commands.h)
+ * @ci: command index (see gretl_commands.h)
  * @opts: option flags: if & OPT_R compute robust standard errors;
  *                      if & OPT_C force use of Cholesky decomp;
  *                      if & OPT_D calculate dw stat and rhohat;
  *                      if & OPT_A treat as auxiliary regression
- * @rho: coefficient for rho-differencing the data.
+ * @rho: coefficient for rho-differencing the data (0.0 for no
+ * differencing)
  *
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
@@ -3029,6 +3030,19 @@ MODEL arma (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
     return armod;
 } 
 
+/**
+ * arma_x12a:
+ * @list: dependent variable plus AR and MA orders
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @PRN: for printing details of iterations (or NULL).
+ * @ppaths: gretl path info struct (so we can find X-12-ARIMA)
+ *
+ * Calculate ARMA estimates, via a call to X-12-ARIMA.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
 MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 		const PATHS *ppaths)
 {
@@ -3054,6 +3068,19 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     return armod;
 }  
+
+/**
+ * logistic_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @aram: 
+ *
+ * Estimate the model given in @list using the logistic transformation
+ * of the dependent variable.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 		      const char *param)
@@ -3083,6 +3110,8 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @prn: printing struct for iteration info (or NULL is this is not
+ * wanted).
  *
  * Estimate the model given in @list using Tobit.
  * 

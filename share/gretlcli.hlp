@@ -72,6 +72,7 @@ arch
 Usage:          arch lag depvar indepvars    
 Examples:       arch 4 1 0 2 4 6 7      or  
                 arch 4 y 0 x1 x2 x3 x4 
+Option:         --vcv (print covariance matrix)
 
 This command tests the model for ARCH of the order specified in "lag", which
 must be an integer.  If the LM test statistic has p-value below 0.10, then

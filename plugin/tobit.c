@@ -64,11 +64,11 @@ static int get_maxiter (void)
 }
 
 /* Below: we are buying ourselves a considerable simplification when it comes
-   to the tobit_ll function.  That function needs access to the orginal y
+   to the tobit_ll function.  That function needs access to the original y
    and X data.  But the sample used for estimation may be at an offset into
    the full dataset, and the variables chosen for the analysis may not
-   be at contiguous locations in the main dataset.  So we are constructing
-   a "virtual dataset" in the form of a set of const pointers into the real
+   be at contiguous locations in the main dataset.  So we construct a
+   "virtual dataset" in the form of a set of const pointers into the real
    dataset.  These pointers start at the correct sample offset, and are
    contiguous, so the indexing is a lot easier.
 */
@@ -83,13 +83,17 @@ static const double **make_tobit_X (const MODEL *pmod, const double **Z)
     X = malloc(nv * sizeof *X);
     if (X == NULL) return NULL;
 
+    /* constant in slot 0 */
     X[0] = Z[0] + offset;
+
+    /* dependent var in slot 1 */
     X[1] = Z[pmod->list[1]] + offset;
 
+    /* independent vars in slots 2, 3, ... */
     for (i=2; i<nv; i++) {
 	v = pmod->list[i + 1];
 #ifdef DEBUG
-	fprintf(stderr, "setting X[%d] -> Z[%d]\n", i, v);
+	fprintf(stderr, "setting X[%d] -> Z[%d] + %d\n", i, v, offset);
 #endif
 	X[i] = Z[v] + offset;
     }
@@ -488,7 +492,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	tobit_ll(tobit.deltmp, X, tZ, &tobit, 0); 
 
 	while (tobit.ll2 < tobit.ll && stepsize > smallstep && !err) { 
-	    /* ...if not, halve steplength, as with ARMA models */
+	    /* ... if not, halve steplength, as with ARMA models */
 	    stepsize *= 0.5;
 	    for (i=0; i<=k; i++) {
 		tobit.delta[i] *= 0.5;
@@ -508,6 +512,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 	print_iter_info(iters, tobit.theta, k+1, tobit.ll, prn);
 
 	if (tobit.theta[k] < 0.0) {
+	    /* if the variance is negative here, we're stuck */
 	    err = 1;
 	    break;
 	}

@@ -1,6 +1,8 @@
 #ifndef SETTINGS_H
 #define SETTINGS_H
 
+#define COLOR_MAX 3
+
 #ifdef G_OS_WIN32
 void read_rc (void);
 #endif

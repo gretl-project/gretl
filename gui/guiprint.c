@@ -48,9 +48,8 @@ gchar *user_string (void)
     username = pwd->pw_name;
     realname = pwd->pw_gecos;
 
-    if (username != NULL && *username != '\0' && 
-	realname != NULL && *realname != '\0') {
-	ret = g_strdup_printf("%s %s (%s)", _("for"), username, realname);
+    if (realname != NULL && *realname != '\0') {
+	ret = g_strdup_printf("%s %s", _("for"), realname);
     } else if (username != NULL && *username != '\0') {
 	ret = g_strdup_printf("%s %s", _("for"), username);
     }

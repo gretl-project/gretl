@@ -140,9 +140,8 @@ gchar *user_string (void)
     username = g_get_user_name();
     realname = g_get_real_name();
 
-    if (username != NULL && *username != '\0' &&
-	realname != NULL && *realname != '\0') {
-	ret = g_strdup_printf("%s %s (%s)", _("for"), username, realname);
+    if (realname != NULL && *realname != '\0') {
+	ret = g_strdup_printf("%s %s", _("for"), realname);
     } else if (username != NULL && *username != '\0') {
 	ret = g_strdup_printf("%s %s", _("for"), username);
     }

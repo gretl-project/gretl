@@ -107,7 +107,7 @@ GdkFont *fixed_font;
 static int usecwd;
 int olddat;
 int useqr;
-char gpcolors[24];
+char gpcolors[32];
 static char datapage[24];
 static char scriptpage[24];
 
@@ -209,10 +209,13 @@ RCVARS rc_vars[] = {
 #if !defined(USE_GNOME) && !defined(OLD_GTK)
     {"App_font", N_("Menu font"), NULL, appfontname, USERSET, MAXLEN, 0, NULL},
 #endif
-    {"DataPage", "Default data page", NULL, datapage, INVISET, 24, 0, NULL},
-    {"ScriptPage", "Default script page", NULL, scriptpage, INVISET, 24, 0, NULL},    
+    {"DataPage", "Default data page", NULL, datapage, INVISET, 
+     sizeof datapage, 0, NULL},
+    {"ScriptPage", "Default script page", NULL, scriptpage, INVISET, 
+     sizeof scriptpage, 0, NULL},    
     {"Png_font", N_("PNG graph font"), NULL, paths.pngfont, INVISET, 16, 0, NULL},
-    {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, INVISET, 24, 0, NULL},
+    {"Gp_colors", N_("Gnuplot colors"), NULL, gpcolors, INVISET, 
+     sizeof gpcolors, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}
 };
 
@@ -866,12 +869,14 @@ static void set_lcnumeric (void)
 
 static void set_gp_colors (void)
 {
-    char col1[8], col2[8], col3[8];
+    char cstr[4][8];
+    int i, nc;
 
-    if (sscanf(gpcolors, "%7s %7s %7s", col1, col2, col3) == 3) {
-	set_gnuplot_pallette(0, col1);
-	set_gnuplot_pallette(1, col2);
-	set_gnuplot_pallette(2, col3);
+    nc = sscanf(gpcolors, "%7s %7s %7s %7s", 
+		cstr[0], cstr[1], cstr[2], cstr[3]);
+
+    for (i=0; i<nc; i++) {
+	set_gnuplot_pallette(i, cstr[i]);
     }
 }
 
@@ -2244,10 +2249,11 @@ static void color_select_callback (GtkWidget *button, GtkWidget *w)
 
     set_gnuplot_pallette(i, color_string);
 
-    sprintf(gpcolors, "%s %s %s", 
+    sprintf(gpcolors, "%s %s %s %s", 
 	    get_gnuplot_pallette(0, 0),
 	    get_gnuplot_pallette(1, 0),
-	    get_gnuplot_pallette(2, 0));
+	    get_gnuplot_pallette(2, 0),
+	    get_gnuplot_pallette(3, 0));
 
 #ifndef OLD_GTK
     image = g_object_get_data(G_OBJECT(color_button), "image");
@@ -2272,7 +2278,12 @@ GtkWidget *color_patch_button (int colnum)
     GtkWidget *image, *button;
     const char *colstr;
 
-    colstr = get_gnuplot_pallette(colnum, 0);
+    if (colnum == COLOR_MAX) {
+	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
+    } else {
+	colstr = get_gnuplot_pallette(colnum, 0);
+    }
+
     image = get_image_for_color(colstr);
 
     if (image == NULL) {
@@ -2316,8 +2327,15 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
     gdouble color[4];
+    const gchar *colstr;
 
-    colstr_to_color(get_gnuplot_pallette(i, 0), color);
+    if (i == COLOR_MAX) {
+	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
+    } else {
+	colstr = get_gnuplot_pallette(i, 0); 
+    }
+
+    colstr_to_color(colstr, color);
 
     cdlg = gtk_color_selection_dialog_new("gretl color selection");
 
@@ -2346,12 +2364,19 @@ void gnuplot_color_selector (GtkWidget *w, gpointer p)
     GtkWidget *cdlg;
     GtkWidget *button;
     gint i = GPOINTER_TO_INT(p);
-    char colstr[8];
+    const char *colstr;
+    char my_colstr[8];
     GdkColor color;
 
-    strcpy(colstr, get_gnuplot_pallette(i, 0));
-    *colstr = '#';
-    gdk_color_parse(colstr, &color);
+    if (i == COLOR_MAX) {
+	colstr = get_gnuplot_pallette(0, PLOT_FREQ_SIMPLE);
+    } else {
+	colstr = get_gnuplot_pallette(i, 0); 
+    } 
+
+    strcpy(my_colstr, colstr);
+    *my_colstr = '#';
+    gdk_color_parse(my_colstr, &color);
 
     cdlg = gtk_color_selection_dialog_new("gretl color selection");
 

@@ -3899,10 +3899,12 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
     }
+
     strcpy(pdinfo->varname[i], vname);
 
-    if (!undo) 
+    if (!undo) {
 	strcpy(VARLABEL(pdinfo, i), vlabel);
+    }
 
     return 0;
 }

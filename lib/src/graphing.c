@@ -978,7 +978,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     }
 
     /* add a simple regression line if appropriate */
-    if (!pdist && !(flags & GP_OLS_OMIT) && lo == 2 && ts_plot == 0) {
+    if (!pdist && !(flags & GP_OLS_OMIT) && lo == 2 && 
+	ts_plot == 0 && !(flags & GP_RESIDS)) {
 	MODEL plotmod;
 
 	tmplist[0] = 3;
@@ -2172,10 +2173,11 @@ int is_auto_ols_string (const char *s)
 
 /* ........................................................... */
 
-static char gnuplot_pallette[3][8] = {
+static char gnuplot_pallette[4][8] = {
     "xff0000", 
     "x0000ff", 
-    "x00cc00"  /* full-intensity green is not very legible */
+    "x00cc00",  /* full-intensity green is not very legible */
+    "xaabbcc"
 };
 
 const char *get_gnuplot_pallette (int i, int ptype)
@@ -2187,7 +2189,7 @@ const char *get_gnuplot_pallette (int i, int ptype)
     if (i == 0 && (ptype == PLOT_FREQ_SIMPLE ||
 		   ptype == PLOT_FREQ_NORMAL || 
 		   ptype == PLOT_FREQ_GAMMA)) {
-	return "xaabbcc";
+	return gnuplot_pallette[3];
     }
     else if (i >= 0 && i < 3) {
 	return gnuplot_pallette[i];
@@ -2212,7 +2214,7 @@ static int colstr_is_valid (const char *colstr)
 
 void set_gnuplot_pallette (int i, const char *colstr)
 {
-    if (i >= 0 && i < 3 && colstr_is_valid(colstr)) {
+    if (i >= 0 && i <= 3 && colstr_is_valid(colstr)) {
 	strcpy(gnuplot_pallette[i], colstr);
     } else {
 	fprintf(stderr, "Invalid color spec, '%s'\n", colstr);

@@ -19,7 +19,7 @@
 	</string>
 
 	<keyword-list _name = "Commands" style = "Keyword" case-sensitive="TRUE"
-           beginning-regex="^">>
+           beginning-regex="\b" ending-regex="\b">
 	     <keyword>add</keyword>
 	     <keyword>addto</keyword>
 	     <keyword>adf</keyword>      
@@ -102,6 +102,7 @@
 	     <keyword>runs</keyword>
 	     <keyword>scatters</keyword>
 	     <keyword>seed</keyword>
+             <keyword>set</keyword>
 	     <keyword>setobs</keyword>
 	     <keyword>setmiss</keyword>
 	     <keyword>shell</keyword>   
@@ -114,6 +115,7 @@
 	     <keyword>system</keyword>
 	     <keyword>tabprint</keyword>
 	     <keyword>testuhat</keyword>
+             <keyword>tobit</keyword>
 	     <keyword>tsls</keyword>    
 	     <keyword>var</keyword>
 	     <keyword>varlist</keyword>
