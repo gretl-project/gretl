@@ -162,7 +162,7 @@ static void store_list (int *list, char *buf)
     }
 }
 
-int modelspec_save (MODEL *pmod, MODELSPEC **pmspec, DATAINFO *fullinfo)
+int modelspec_save (MODEL *pmod, MODELSPEC **pmspec)
 {
     MODELSPEC *spec;
     int i;
@@ -183,7 +183,9 @@ int modelspec_save (MODEL *pmod, MODELSPEC **pmspec, DATAINFO *fullinfo)
     store_list(pmod->list, spec[i].cmd);
 
     if (pmod->subdum != NULL) {
-	spec[i].subdum = copy_subdum(pmod->subdum, fullinfo->n);
+	int n = get_full_length_n();
+
+	spec[i].subdum = copy_subdum(pmod->subdum, n);
 	if (spec[i].subdum == NULL) return 1;
     }
 

@@ -92,7 +92,7 @@ double get_date_x (int pd, const char *obs);
 
 int write_data (const char *fname, const int *list, 
 		double **Z, const DATAINFO *pdinfo, 
-	        int opt, PATHS *ppaths);
+	        gretlopt flag, PATHS *ppaths);
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn);
 

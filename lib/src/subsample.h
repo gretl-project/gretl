@@ -27,23 +27,24 @@
 int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n);
 
 int restrict_sample (const char *line, 
-		     double ***oldZ, double ***newZ,
-		     DATAINFO *oldinfo, DATAINFO *newinfo,
+		     double ***pZ, DATAINFO **ppdinfo,
 		     const int *list, gretlopt oflag);
+
+int complex_subsampled (void);
+
+int check_dataset_elements (DATAINFO *pdinfo, MODEL *pmod);
+
+int get_full_length_n (void);
 
 int set_sample (const char *line, DATAINFO *pdinfo);
 
-int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
-			 DATAINFO **subinfo, DATAINFO **fullinfo,
-			 DATAINFO **datainfo, gretlopt opt); 
+int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt); 
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 char **allocate_case_markers (int n);
 
-int add_subsampled_dataset_to_model (MODEL *pmod, 
-				     const double **fullZ, 
-				     const DATAINFO *fullinfo);
+int add_subsampled_dataset_to_model (MODEL *pmod);
 
 void free_model_dataset (MODEL *pmod);
 

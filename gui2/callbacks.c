@@ -35,7 +35,6 @@
 #endif
 
 extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
-extern double **fullZ;
 
 /* these live in dialogs.c */
 extern GtkWidget *active_edit_id;
@@ -635,7 +634,7 @@ void delete_var_by_id (int id)
     int renumber, resp;
     gchar *msg;
 
-    if (fullZ != NULL) {
+    if (complex_subsampled()) {
 	errbox(_("Can't delete a variable when in sub-sample"
 		 " mode\n"));
 	return;

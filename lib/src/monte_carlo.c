@@ -22,13 +22,80 @@
 
 #include "libgretl.h" 
 #include "gretl_private.h"
+#include "libset.h"
 
 #include <time.h>
 #include <unistd.h>
 
+#if defined(ENABLE_GMP)
+# include <gmp.h>
+typedef mpf_t bigval;
+#elif defined(HAVE_LONG_DOUBLE)
+typedef long double bigval;
+#else
+typedef double bigval;
+#endif
+
 enum inequalities {
     GT = 1,
     LT
+};
+
+enum loop_types {
+    COUNT_LOOP,
+    WHILE_LOOP,
+    FOR_LOOP
+};
+
+typedef struct {
+    int ID;
+    int *list;
+    bigval *sum;
+    bigval *ssq;
+} LOOP_PRINT;   
+
+typedef struct {
+    int ID;                      /* ID number for model */
+    int ci;                      /* command index for model */
+    int t1, t2, nobs;            /* starting observation, ending
+                                    observation, and number of obs */
+    int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
+                                    freedom in numerator and denominator */
+    int *list;                   /* list of variables by ID number */
+    int ifc;                     /* = 1 if the equation includes a constant,
+                                    else = 0 */
+    bigval *sum_coeff;      /* sums of coefficient estimates */
+    bigval *ssq_coeff;      /* sums of squares of coeff estimates */
+    bigval *sum_sderr;      /* sums of estimated std. errors */
+    bigval *ssq_sderr;      /* sums of squares of estd std. errs */
+} LOOP_MODEL;
+
+struct LOOPSET_ {
+    char type;
+    int level;
+    int err;
+    int ntimes;
+    int lvar, rvar;
+    double rval;
+    int ineq;
+    int ncmds;
+    int nmod;
+    int nprn;
+    int nstore;
+    int next_model;
+    int next_print;
+    char **lines;
+    int *ci;
+    MODEL **models;
+    LOOP_MODEL *lmodels;
+    LOOP_PRINT *prns;
+    char storefile[MAXLEN];
+    char **storename;
+    char **storelbl;
+    double *storeval;
+    LOOPSET *parent;
+    LOOPSET **children;
+    int n_children;
 };
 
 static void gretl_loop_init (LOOPSET *loop);
@@ -44,6 +111,7 @@ static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
 static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths);
 static int get_prnnum_by_id (LOOPSET *loop, int id);
+static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum);
 
 /**
  * ok_in_loop:
@@ -303,7 +371,8 @@ static int get_maxloop (void)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-int loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
+static int 
+loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 {
     static int maxloop = 0;
     int t, cont = 0;
@@ -501,8 +570,8 @@ static void monte_carlo_free (LOOPSET *loop)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
-		     int id)
+static int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
+			    int id)
 {
     int i, ncoeff = pmod->ncoeff;
 
@@ -560,7 +629,7 @@ int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
+static int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
 {
     int i;
 
@@ -606,8 +675,8 @@ int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_store_init (LOOPSET *loop, const char *fname, 
-		     const LIST list, DATAINFO *pdinfo)
+static int loop_store_init (LOOPSET *loop, const char *fname, 
+			    const LIST list, DATAINFO *pdinfo)
 {
     int i, tot = list[0] * loop->ntimes;
 
@@ -650,7 +719,7 @@ int loop_store_init (LOOPSET *loop, const char *fname,
     return 1;
 }
 
-int add_loop_model (LOOPSET *loop, int cmdnum)
+static int add_loop_model (LOOPSET *loop, int cmdnum)
 {
     int err = 0;
     int nm = loop->nmod + 1;
@@ -697,7 +766,7 @@ int add_loop_model (LOOPSET *loop, int cmdnum)
  * Returns: 0 on successful completion.
  */
 
-int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
+static int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 {
     int j, i = get_modnum_by_cmdnum(loop, cmdnum);
     LOOP_MODEL *lmod;
@@ -735,7 +804,7 @@ int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
     return 0;
 }
 
-int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
+static int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
 {
     LOOP_PRINT *prns;
     int np = loop->nprn + 1;
@@ -775,9 +844,9 @@ int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
  */
 
 
-int update_loop_print (LOOPSET *loop, int cmdnum, 
-		       const LIST list, double ***pZ, 
-		       const DATAINFO *pdinfo)
+static int update_loop_print (LOOPSET *loop, int cmdnum, 
+			      const LIST list, double ***pZ, 
+			      const DATAINFO *pdinfo)
 {
     int j, t, i = get_prnnum_by_id(loop, cmdnum);
     LOOP_PRINT *lprn = &loop->prns[i];
@@ -819,8 +888,8 @@ int update_loop_print (LOOPSET *loop, int cmdnum,
  *
  */
 
-void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
-			 PRN *prn, PATHS *ppaths)
+static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
+				PRN *prn, PATHS *ppaths)
 {
     int i, j;
     gretlopt opt;
@@ -1232,7 +1301,7 @@ static int get_prnnum_by_id (LOOPSET *loop, int id)
  * Returns: model ID number, or -1 in case of no match.
  */
 
-int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
+static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 {
     int i;
 
@@ -1270,6 +1339,268 @@ void get_cmd_ci (const char *line, CMD *command)
 	return;
     }    
 } 
+
+static void substitute_dollar_i (char *str)
+{
+    char *p;
+
+    while ((p = strstr(str, "$i")) != NULL) {
+	char ins[8];
+	char *q;
+
+	q = malloc(strlen(p));
+	strcpy(q, p + 2);
+	sprintf(ins, "%d", genr_scalar_index(0, 0));
+	strcpy(p, ins);
+	strcpy(p + strlen(ins), q);
+	free(q);	
+    }
+}
+
+int loop_exec (LOOPSET *loop, 
+	       double ***pZ, DATAINFO **ppdinfo, 
+	       MODEL **models, PATHS *paths, 
+	       int echo_off, PRN *prn)
+{
+    DATAINFO *pdinfo = *ppdinfo;
+    CMD cmd;
+    int lround = 0;
+    int ignore = 0;
+    int err = 0;
+
+    if (loop->ncmds == 0) {
+	pprintf(prn, _("No commands in loop\n"));
+	return 0;
+    }
+
+    err = gretl_cmd_init(&cmd);
+    if (err) {
+	return err;
+    }
+
+    gretl_set_text_pause(0);
+
+    while (!err && loop_condition(lround, loop, *pZ, pdinfo)) {
+	int j;
+
+	if (loop->type == FOR_LOOP && !echo_off) {
+	    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
+	}
+
+	for (j=0; !err && j<loop->ncmds; j++) {
+	    char linecpy[MAXLINE];
+	    static MODEL *tmpmodel;
+
+	    strcpy(linecpy, loop->lines[j]);
+
+	    err = catchflags(linecpy, &cmd.opt);
+	    if (err) {
+		break;
+	    }
+
+	    substitute_dollar_i(linecpy);
+
+	    getcmd(linecpy, pdinfo, &cmd, &ignore, pZ, NULL);
+
+	    if (cmd.ci < 0) continue;
+
+	    if (cmd.errcode) {
+		err = cmd.errcode;
+		break;
+	    }
+
+	    if (!echo_off && loop->type == FOR_LOOP) {
+		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, prn);
+	    }
+
+	    switch (cmd.ci) {
+
+	    case GENR:
+		err = generate(pZ, pdinfo, linecpy, tmpmodel);
+		break;
+
+	    case SIM:
+		err = simulate(linecpy, pZ, pdinfo);
+		break;	
+
+	    case OLS:
+	    case WLS:
+	    case LAD:
+	    case HSK:
+	    case HCCM:
+		/* if this is the first time round the loop, allocate space
+		   for each loop model */
+		if (lround == 0 && loop->type != FOR_LOOP) {
+		    err = add_loop_model(loop, j);
+		    if (err) {
+			break;
+		    }
+		} /* end of basic round 0 setup */
+
+		/* estimate the model called for */
+		clear_model(models[0]);
+
+		if (cmd.ci == OLS || cmd.ci == WLS) {
+		    *models[0] = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
+		} else if (cmd.ci == LAD) {
+		    *models[0] = lad(cmd.list, pZ, pdinfo);
+		} else if (cmd.ci == HSK) {
+		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
+		} else if (cmd.ci == HCCM) {
+		    *models[0] = hccm_func(cmd.list, pZ, pdinfo);
+		}
+
+		if ((err = (models[0])->errcode)) {
+		    break;
+		}
+
+		if (loop->type == FOR_LOOP) {
+		    (models[0])->ID = lround + 1;
+		    printmodel(models[0], pdinfo, cmd.opt, prn); 
+		    tmpmodel = models[0];
+		} else if (loop->type != COUNT_LOOP) { /* conditional loop */
+		    /* deal with model estimate for "while" loop */
+		    int m = get_modnum_by_cmdnum(loop, j);
+
+		    swap_models(&models[0], &loop->models[m]);
+		    (loop->models[m])->ID = j;
+		    tmpmodel = loop->models[m];
+		    model_count_minus();
+		} else { 
+		    /* looping a fixed number of times */
+		    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
+						       models[0], j)) { 
+			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
+			err = 1;
+			break;
+		    } else if (update_loop_model(loop, j, models[0])) {
+			gretl_errmsg_set(_("Failed to add results to loop model\n"));
+			err = 1;
+			break;
+		    }
+		    tmpmodel = models[0];
+		}
+		break;
+
+	    case PRINT:
+		if (cmd.param[0] != '\0') {
+		    simple_commands(&cmd, linecpy, pZ, pdinfo, paths, prn);
+		    break;
+		}
+		if (loop->type != COUNT_LOOP) {
+		    printdata(cmd.list, pZ, pdinfo, cmd.opt, prn);
+		    break;
+		}
+		if (lround == 0) {
+		    if ((err = add_loop_print(loop, cmd.list, j))) {
+			break;
+		    }
+		}
+		if (update_loop_print(loop, j, cmd.list, pZ, pdinfo)) {
+		    gretl_errmsg_set(_("Failed to add values to print loop\n"));
+		    err = 1;
+		}
+		break;
+
+	    case PRINTF:
+		err = do_printf(linecpy, pZ, pdinfo, models[0], prn);
+		break;
+
+	    case SMPL:
+		if (cmd.opt) {
+		    if (restore_full_sample(pZ, ppdinfo, cmd.opt)) {
+			err = 1;
+			break;
+		    }
+		    if (restrict_sample(linecpy, pZ, ppdinfo, 
+					cmd.list, cmd.opt)) {
+			err = 1;
+			break;
+		    }
+		} else {
+		    /* FIXME */
+		    gretl_errmsg_set(_("loop: only the '-o' and '-r' forms of the smpl "
+				       " command may be used.\n"));  
+		    err = 1;
+		}
+		break;
+
+	    case STORE:
+		if (lround == 0) {
+		    loop->nstore = cmd.list[0];
+		    if (loop_store_init(loop, cmd.param, cmd.list, pdinfo)) {
+			err = 1;
+		    }
+		} else {
+		    int i;
+
+		    for (i=0; i<cmd.list[0]; i++) {
+			if (pdinfo->vector[cmd.list[i+1]]) { 
+			    loop->storeval[i * loop->ntimes + lround] = 
+				(*pZ)[cmd.list[i+1]][pdinfo->t1 + 1];
+			} else {
+			    loop->storeval[i * loop->ntimes + lround] = 
+				(*pZ)[cmd.list[i+1]][0];
+			}
+		    }
+		}	
+		break;
+
+	    case PVALUE:
+		batch_pvalue(loop->lines[j], *pZ, pdinfo, prn);
+		break;
+
+	    case SUMMARY:
+		if (loop->type == COUNT_LOOP) {
+		    gretl_errmsg_set( _("The summary command is not available in "
+					"this sort of loop.\n"));
+		    err = 1;
+		} else {
+		    GRETLSUMMARY *summ;
+
+		    summ = summary(cmd.list, pZ, pdinfo, prn);
+		    if (summ == NULL) {
+			gretl_errmsg_set(_("generation of summary stats failed\n"));
+			err = 1;
+		    } else {
+			print_summary(summ, pdinfo, prn);
+			free_summary(summ);
+		    }
+		}	    
+		break; 
+
+	    default: 
+		/* not reachable */
+		pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
+			linecpy);
+		err = 1;
+		break;
+
+	    } /* end switch on command number */
+	} /* end list of commands within loop */
+    } /* end iterations of loop */
+
+    if (err) {
+	print_gretl_errmsg(prn);
+    } else if (loop->err) {
+	print_gretl_errmsg(prn);
+	err = loop->err;
+    }
+
+    if (!err && lround > 0) {
+	if (loop->type != FOR_LOOP) {
+	    print_loop_results(loop, pdinfo, prn, paths); 
+	}
+    } 
+
+#if 0
+    loop = gretl_loop_terminate(loop);
+#endif
+
+    gretl_cmd_free(&cmd);
+
+    return err;
+}
 
 /* ifthen stuff - conditional execution */
 

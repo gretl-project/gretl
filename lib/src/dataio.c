@@ -1186,13 +1186,37 @@ int get_precision (double *x, int n, int placemax)
     return pmax;
 }
 
+static int data_option (gretlopt flag)
+{
+    switch (flag) {
+    case OPT_S:
+	return GRETL_DATA_FLOAT;
+    case OPT_T:
+	return GRETL_DATA_TRAD;
+    case OPT_O:
+	return GRETL_DATA_DOUBLE;
+    case OPT_M:
+	return GRETL_DATA_OCTAVE;
+    case OPT_C:
+	return GRETL_DATA_CSV;
+    case OPT_R:
+	return GRETL_DATA_R;
+    case OPT_Z:
+	return GRETL_DATA_GZIPPED;
+    case OPT_D:
+        return GRETL_DATA_DAT;
+    default:
+	return 0;
+    }
+}
+
 /**
  * write_data:
  * @fname: name of file to write.
  * @list: list of variables to write.
  * @Z: data matrix.
  * @pdinfo: data information struct.
- * @opt: code for format in which to write the data (see #data_options).
+ * @flag: option flag for format in which to write the data (see #data_options).
  * @ppaths: pointer to paths information (should be NULL when not
  * called from gui).
  * 
@@ -1205,9 +1229,9 @@ int get_precision (double *x, int n, int placemax)
 
 int write_data (const char *fname, const int *list, 
 		double **Z, const DATAINFO *pdinfo, 
-		int opt, PATHS *ppaths)
+		gretlopt flag, PATHS *ppaths)
 {
-    int i = 0, t, l0, n = pdinfo->n;
+    int i = 0, t, l0, opt, n = pdinfo->n;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
     FILE *fp = NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
@@ -1219,6 +1243,8 @@ int write_data (const char *fname, const int *list,
 
     l0 = list[0];
     if (l0 == 0) return 1;
+
+    opt = data_option(flag);
 
     if (opt == 0 || opt == GRETL_DATA_GZIPPED) {
 	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);

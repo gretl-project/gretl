@@ -55,12 +55,8 @@ char outfile[MAXLEN];
 char hdrfile[MAXLEN];
 char syscmd[MAXLEN];
 double **Z;                   /* data set */
-double **subZ;                /* sub-sampled data set */
-double **fullZ;               /* convenience pointer */
 MODEL **models;               /* holds ptrs to model structs */
 DATAINFO *datainfo;           /* info on data set */
-DATAINFO *subinfo;            /* info on sub-sampled data set */
-DATAINFO *fullinfo;           /* convenience pointer */
 FREQDIST *freq;               /* struct for freq distributions */
 CMD cmd;                      /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
@@ -85,8 +81,7 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-void exec_line (char *line, LOOPSET *loop, PRN *prn); 
-static int loop_exec (LOOPSET *loop, PRN *prn);
+static void exec_line (char *line, LOOPSET *loop, PRN *prn); 
 
 void usage(void)
 {
@@ -257,9 +252,7 @@ int clear_data (void)
 
     *paths.datfile = 0;
 
-    err = restore_full_sample(&subZ, &fullZ, &Z,
-			      &subinfo, &fullinfo, &datainfo, 
-			      OPT_C); 
+    err = restore_full_sample(&Z, &datainfo, OPT_C); 
 
     if (Z != NULL) {
 	free_Z(Z, datainfo); 
@@ -267,7 +260,6 @@ int clear_data (void)
     clear_datainfo(datainfo, CLEAR_FULL);
 
     Z = NULL;
-    fullZ = NULL;
     data_status = 0;
 
     clear_model(models[0]);
@@ -433,13 +425,13 @@ int main (int argc, char *argv[])
     models[0] = gretl_model_new();
     models[1] = gretl_model_new();
 
-    if (models[0] == NULL || models[1] == NULL) 
+    if (models[0] == NULL || models[1] == NULL) {
 	noalloc("models"); 
-    
-    cmd.list = malloc(sizeof(int));
-    cmd.param = malloc(1);
-    if (cmd.list == NULL || cmd.param == NULL) 
+    }
+
+    if (gretl_cmd_init(&cmd)) {
 	noalloc(_("command list")); 
+    }
 
     /* initialize random number generator */
     gretl_rand_init();
@@ -487,7 +479,9 @@ int main (int argc, char *argv[])
 	if (err && batch && errfatal) gretl_abort(linecopy);
 
 	if (looprun) { 
-	    if (loop_exec(loop, prn)) {
+	    if (loop_exec(loop, &Z, &datainfo,
+			  models, &paths, 
+			  echo_off, prn)) {
 		return 1;
 	    }
 	    looprun = errfatal = 0;
@@ -544,21 +538,15 @@ int main (int argc, char *argv[])
 
     /* leak check -- try explicitly freeing all memory allocated */
     free_Z(Z, datainfo);
-    if (fullZ) free_Z(fullZ, fullinfo);
+    /* FIXME: conditionally free libZ */
 
     free_model(models[0]);
     free_model(models[1]);
     free(models);
 
-    free(cmd.list);
-    free(cmd.param);
+    gretl_cmd_free(&cmd);
 
     if (data_status) free_datainfo(datainfo);
-
-    if (fullinfo != NULL) {
-	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
-	free(fullinfo);
-    }
 
     if (runfile_open && fb != NULL) fclose(fb);
     free(line);
@@ -574,8 +562,6 @@ int main (int argc, char *argv[])
     return 0;
 }
 
-static int data_option (gretlopt flag);
-
 static void printf_strip (char *s)
 {
     int i, n = strlen(s);
@@ -588,7 +574,7 @@ static void printf_strip (char *s)
     printf("%s\n", s);
 }
 
-void exec_line (char *line, LOOPSET *loop, PRN *prn) 
+static void exec_line (char *line, LOOPSET *loop, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
@@ -858,7 +844,7 @@ void exec_line (char *line, LOOPSET *loop, PRN *prn)
 	break;
 
     case DELEET:
-	if (fullZ != NULL) {
+	if (complex_subsampled()) {
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
 			 " mode\n"));
 	    break;
@@ -1437,30 +1423,17 @@ void exec_line (char *line, LOOPSET *loop, PRN *prn)
 
     case SMPL:
 	if (cmd.opt) {
-	    err = restore_full_sample(&subZ, &fullZ, &Z,
-				      &subinfo, &fullinfo, 
-				      &datainfo, cmd.opt);
+	    err = restore_full_sample(&Z, &datainfo, cmd.opt);
 	    if (err) {
 		errmsg(err, prn);
 		break;
-	    }
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
-		err = E_ALLOC;
 	    } else {
-		err = restrict_sample(line, &Z, &subZ, datainfo, 
-				      subinfo, cmd.list, cmd.opt);
-	    }
-	    if (!err) {
-		fullZ = Z;
-		fullinfo = datainfo;
-		datainfo = subinfo;
-		Z = subZ;
+		err = restrict_sample(line, &Z, &datainfo, 
+				      cmd.list, cmd.opt);
 	    }
 	} else if (!strcmp(line, "smpl full") ||
 		   !strcmp(line, "smpl --full")) {
-	    err = restore_full_sample(&subZ, &fullZ, &Z,
-				      &subinfo, &fullinfo, 
-				      &datainfo, OPT_C);
+	    err = restore_full_sample(&Z, &datainfo, OPT_C);
 	} else { 
 	    err = set_sample(line, datainfo);
 	}
@@ -1468,7 +1441,7 @@ void exec_line (char *line, LOOPSET *loop, PRN *prn)
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    print_smpl(datainfo, (cmd.opt)? fullinfo->n : 0, prn);
+	    print_smpl(datainfo, get_full_length_n(), prn);
 	}
 	break;
 
@@ -1499,7 +1472,7 @@ void exec_line (char *line, LOOPSET *loop, PRN *prn)
 	    break;
 	}
 	if (write_data(cmd.param, cmd.list, Z, datainfo, 
-		       data_option(cmd.opt), NULL)) {
+		       cmd.opt, NULL)) {
 	    fprintf(stderr, _("write of data file failed\n"));
 	    break;
 	}
@@ -1596,23 +1569,18 @@ void exec_line (char *line, LOOPSET *loop, PRN *prn)
     if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
-	if (fullZ != NULL) {
-	    fullinfo->varname = datainfo->varname;
-	    fullinfo->varinfo = datainfo->varinfo;
-	    attach_subsample_to_model(models[0], datainfo, fullinfo->n);
-	}
-	
+	check_dataset_elements(datainfo, models[0]);
+
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",
 		(models[0])->ID, get_model_count());
 #endif
 
-	err = modelspec_save(models[0], &modelspec, fullinfo);
+	err = modelspec_save(models[0], &modelspec);
     }
 
 }
 
-#include "common.c"
 
 
 

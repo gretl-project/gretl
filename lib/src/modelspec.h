@@ -35,7 +35,7 @@ int modelspec_index_from_model_id (const MODELSPEC *spec, int ID);
 
 char *modelspec_get_command_by_id (MODELSPEC *spec, int ID);
 
-int modelspec_save (MODEL *pmod, MODELSPEC **pmspec, DATAINFO *fullinfo);
+int modelspec_save (MODEL *pmod, MODELSPEC **pmspec);
 
 void free_modelspec (MODELSPEC *spec);
 

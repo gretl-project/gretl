@@ -2074,6 +2074,28 @@ int ready_for_command (const char *line)
     return 0;
 }
 
+int gretl_cmd_init (CMD *cmd)
+{
+    cmd->list = malloc(sizeof *cmd->list);
+    if (cmd->list == NULL) {
+	return 1;
+    }
+
+    cmd->param = malloc(1);
+    if (cmd->param == NULL) {
+	free(cmd->list);
+	return 1;
+    }
+
+    return 0;
+}
+
+void gretl_cmd_free (CMD *cmd)
+{
+    free(cmd->list);
+    free(cmd->param);
+}
+
 
 
 

@@ -35,7 +35,7 @@ vpath %.c $(topsrc)/cli
 
 #### End of system configuration section. ####
 
-SRCS = gretlcli.c common.c complete.c
+SRCS = gretlcli.c complete.c
 OBJS = gretlcli.o $(RL_OBJ)
 
 DEFS = -DLOCALEDIR=\"$(localedir)\" -DHAVE_CONFIG_H

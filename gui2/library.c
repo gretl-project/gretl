@@ -42,19 +42,10 @@
 #include "model_table.h"
 #include "cmdstack.h"
 
-extern DATAINFO *subinfo;
-extern DATAINFO *fullinfo;
-extern double **subZ;
-extern double **fullZ;
-
 #ifdef HAVE_TRAMO
 extern char tramo[];
 extern char tramodir[];
 #endif
-
-/* ../cli/common.c */
-static int data_option (gretlopt flag);
-static int loop_exec (LOOPSET *loop, PRN *prn);
 
 /* private functions */
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
@@ -88,22 +79,12 @@ void exit_free_modelspec (void)
 
 int library_command_init (void)
 {
-    cmd.list = malloc(sizeof *cmd.list);
-    if (cmd.list == NULL) return 1;
-
-    cmd.param = malloc(sizeof *cmd.param);
-    if (cmd.param == NULL) {
-	free(cmd.list);
-	return 1;
-    }
-
-    return 0;
+    return gretl_cmd_init(&cmd);
 }
 
 void library_command_free (void)
 {
-    free(cmd.list);
-    free(cmd.param);
+    gretl_cmd_free(&cmd);
 }
 
 const int *get_cmd_list (void)
@@ -242,16 +223,6 @@ static void launch_gnuplot_interactive (void)
 
 /* ........................................................... */
 
-static void save_full_dataset (void)
-{
-    fullZ = Z;
-    fullinfo = datainfo;
-    datainfo = subinfo;
-    Z = subZ;
-}
-
-/* ........................................................... */
-
 int quiet_sample_check (MODEL *pmod)
 {
     return model_sample_issue(pmod, NULL, 0, datainfo);
@@ -263,9 +234,7 @@ int dataset_added_to_model (MODEL *pmod)
 {
     int err;
 
-    err = add_subsampled_dataset_to_model(pmod, 
-					  (const double **) fullZ, 
-					  fullinfo);
+    err = add_subsampled_dataset_to_model(pmod);
 
     return !err;
 }
@@ -277,7 +246,7 @@ static void set_sample_label_special (void)
     char labeltxt[80];
 
     sprintf(labeltxt, _("Undated: Full range n = %d; current sample"
-	    " n = %d"), fullinfo->n, datainfo->n);
+	    " n = %d"), get_full_length_n(), datainfo->n);
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
     time_series_menu_state(FALSE);
@@ -298,7 +267,6 @@ void clear_data (void)
     clear_datainfo(datainfo, CLEAR_FULL);
 
     Z = NULL;
-    fullZ = NULL;
 
     clear_varlist(mdata->listbox);
     clear_sample_label();
@@ -501,14 +469,9 @@ static gint stack_model (MODEL *pmod)
 		     if we want to be able to refer back to them later we
 		     need to record their specification */
 
-	if (fullZ != NULL) {
-	    fullinfo->varname = datainfo->varname;
-	    fullinfo->varinfo = datainfo->varinfo;
-	    fullinfo->vector = datainfo->vector;
-	    attach_subsample_to_model(models[0], datainfo, fullinfo->n);
-	}
+	check_dataset_elements(datainfo, models[0]);
 
-	err = modelspec_save(models[0], &modelspec, fullinfo);
+	err = modelspec_save(models[0], &modelspec);
     }
 
     return err;
@@ -865,22 +828,16 @@ int bool_subsample (gretlopt opt)
 
     restore_sample(opt);
 
-    if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
-	return 1;
-
     if (opt & OPT_M) {
-	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, NULL, opt);
+	err = restrict_sample(NULL, &Z, &datainfo, NULL, opt);
     } else {
-	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, NULL, opt);
+	err = restrict_sample(line, &Z, &datainfo, NULL, opt);
     }
 
     if (err) {
 	gui_errmsg(err);
 	return 1;
     }
-
-    /* save the full data set for later use (is this right?) */
-    save_full_dataset();
 
     /* special for undated data */
     set_sample_label_special();
@@ -1139,11 +1096,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    if (fullZ != NULL) {
-	fullinfo->varname = datainfo->varname;
-	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
-    }
+    check_dataset_elements(datainfo, pmod);
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);
@@ -1969,11 +1922,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    if (fullZ != NULL) {
-	fullinfo->varname = datainfo->varname;
-	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
-    }
+    check_dataset_elements(datainfo, pmod);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
@@ -2151,11 +2100,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    if (fullZ != NULL) {
-	fullinfo->varname = datainfo->varname;
-	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
-    }
+    check_dataset_elements(datainfo, pmod);
     
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
@@ -2219,11 +2164,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    if (fullZ != NULL) {
-	fullinfo->varname = datainfo->varname;
-	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
-    }
+    check_dataset_elements(datainfo, pmod);
     
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
@@ -3478,7 +3419,7 @@ void delete_selected_vars (void)
 
     if (liststr == NULL) return;
 
-    if (fullZ != NULL) {
+    if (complex_subsampled()) {
 	errbox(_("Can't delete a variable when in sub-sample"
 		 " mode\n"));
 	return;
@@ -4087,11 +4028,8 @@ int dataset_is_restricted (void)
        if a sub-sampling mask is in place?  For now we'll go with the
        broader option.
     */
-#if 0
-    return (fullZ != NULL);
-#else
+
     return dataset_is_subsampled();
-#endif
 }
 
 /* ........................................................... */
@@ -4190,7 +4128,7 @@ int do_store (char *savename, gretlopt oflag, int overwrite)
 
     /* actually write the data to file */
     if (write_data(savename, cmd.list, Z, datainfo, 
-		   data_option(oflag), &paths)) {
+		   oflag, &paths)) {
 	sprintf(errtext, _("Write of data file failed\n%s"),
 		get_gretl_errmsg());
 	errbox(errtext);
@@ -4580,7 +4518,10 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(cmd.cmd, "quit")) {
 	if (looprun) { 
-	    if (loop_exec(loop, prn)) {
+	    if (loop_exec(loop, 
+			  &Z, &datainfo,
+			  models, &paths, 
+			  echo_off, prn)) {
 		return 1;
 	    }
 	    looprun = 0;
@@ -5056,7 +4997,7 @@ int gui_exec_line (char *line,
 	break;
 
     case DELEET:
-	if (fullZ != NULL) {
+	if (complex_subsampled()) {
 	    pputs(prn, _("Can't delete a variable when in sub-sample"
 		    " mode\n"));
 	    break;
@@ -5600,15 +5541,12 @@ int gui_exec_line (char *line,
 
     case SMPL:
 	if (cmd.opt) {
-	    restore_sample(cmd.opt);
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) { 
-		err = E_ALLOC;
+	    err = restore_sample(cmd.opt);
+	    if (err) {
+		break;
 	    } else {
-		err = restrict_sample(line, &Z, &subZ, datainfo, 
-				      subinfo, cmd.list, cmd.opt);
-	    }
-	    if (!err) {
-		save_full_dataset();
+		err = restrict_sample(line, &Z, &datainfo, 
+				      cmd.list, cmd.opt);
 	    }
 	} else if (!strcmp(line, "smpl full") ||
 		   !strcmp(line, "smpl --full")) {
@@ -5621,7 +5559,7 @@ int gui_exec_line (char *line,
 	if (err) {
 	    errmsg(err, prn);
 	} else {
-	    print_smpl(datainfo, (cmd.opt)? fullinfo->n : 0, prn);
+	    print_smpl(datainfo, get_full_length_n(), prn);
 	    if (cmd.opt) { 
 		set_sample_label_special();
 	    } else {
@@ -5664,7 +5602,7 @@ int gui_exec_line (char *line,
 	}
 
 	if (write_data(cmd.param, cmd.list, 
-		       Z, datainfo, data_option(cmd.opt), NULL)) {
+		       Z, datainfo, cmd.opt, NULL)) {
 	    pprintf(prn, _("write of data file failed\n"));
 	    err = 1;
 	    break;
@@ -5790,4 +5728,3 @@ int gui_exec_line (char *line,
     return (err != 0);
 }
 
-#include "../cli/common.c"

@@ -118,16 +118,12 @@ static const struct poptOption options[] = {
 
 windata_t *mdata;
 DATAINFO *datainfo;
-DATAINFO *subinfo;
-DATAINFO *fullinfo;
 char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
 char line[1024];
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
-double **subZ;              /* sub-sampled data set */
-double **fullZ;             /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 
 int plot_count, data_status, orig_vars;
@@ -805,7 +801,6 @@ int main (int argc, char *argv[])
     free_session();
 
     if (Z) free_Z(Z, datainfo);
-    if (fullZ) free_Z(fullZ, fullinfo);
 
     free_model(models[0]);
     free_model(models[1]);
@@ -815,10 +810,6 @@ int main (int argc, char *argv[])
     library_command_free();
 
     if (data_status) free_datainfo(datainfo);
-    if (fullinfo) {
-	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
-	free(fullinfo);
-    }
 
     free_command_stack();
     exit_free_modelspec();
@@ -1550,9 +1541,7 @@ void restore_sample (gretlopt opt)
 {
     int err;
 
-    err = restore_full_sample(&subZ, &fullZ, &Z,
-			      &subinfo, &fullinfo, 
-			      &datainfo, opt);
+    err = restore_full_sample(&Z, &datainfo, opt);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -1644,7 +1633,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
     if (verify_and_record_command(line) ||
-	write_data(Rdata, get_cmd_list(), Z, datainfo, GRETL_DATA_R, NULL)) {
+	write_data(Rdata, get_cmd_list(), Z, datainfo, OPT_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
