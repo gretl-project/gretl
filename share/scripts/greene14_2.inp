@@ -1,4 +1,4 @@
-(* replicate Example 14.2 (SUR system) from Greene's 5th edition *)
+# replicate Example 14.2 (SUR system) from Greene's 5th edition
 open greene13_1.gdt
 system type=sur
 equation I_GM const F_GM C_GM

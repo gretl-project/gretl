@@ -34,7 +34,7 @@ loop while crit > 1.0e-9
    genr sc_m = -de_m * e
    
    # OPG regression
-   ols const sc_c sc_a sc_m
+   ols const sc_c sc_a sc_m --quiet
 
    # Update the parameters
    genr dc = coeff(sc_c) 

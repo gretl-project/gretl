@@ -175,12 +175,8 @@
       you can type commands and execute them one by one (by pressing
       the Enter key) interactively.  This is essentially the same as
       <application>gretlcli</application>'s mode of operation, except
-      that (a) the GUI is updated based on commands executed from the
-      console, enabling you to work back and forth as you wish, and
-      (b) <application>gretl</application>'s Monte Carlo loop routine
-      (see
-      <xref linkend="monte-carlo"/>) is not at present available in
-      this mode.</para>
+      that the GUI is updated based on commands executed from the
+      console, enabling you to work back and forth as you wish.</para>
 
     <para>In the console, you have <quote>command history</quote>;
       that is, you can use the up and down arrow keys to navigate the

@@ -1196,6 +1196,16 @@
 
   </command>
 
+  <command name="function" section="Programming" context="cli">
+
+    <description>
+      <para>
+	Define a function.  This entry still to be written.
+      </para>
+    </description>
+
+  </command>  
+
   <command name="garch" section="Estimation" label="GARCH model">
 
     <usage>
@@ -2589,8 +2599,15 @@
       <arguments>
         <argument>control</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--progressive</flag>
+	  <effect>enable special forms of certain commands</effect>
+	</option>
+      </options>
       <examples>
         <example>loop 1000</example>
+	<example>loop 1000 --progressive</example>
         <example>loop while essdiff > .00001</example>
         <example>loop for i=1991..2000</example>
         <example>loop for (r=-.99; r&lt;=.99; r+=.01)</example>
@@ -2617,16 +2634,18 @@
       <para>This command opens a special mode in which the program
 	accepts commands to be executed repeatedly.  Within a loop,
 	only certain commands can be used: <cmd>genr</cmd>,
-	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
-	<cmd>smpl</cmd>, <cmd>store</cmd> and <cmd>summary</cmd>
-	(store can't be used in a <quote>while</quote> loop).  You
-	exit the mode of entering loop commands with
-	<cmd>endloop</cmd>: at this point the stacked commands are
-	executed.
+	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>printf</cmd>,
+	<cmd>pvalue</cmd>, <cmd>sim</cmd>, <cmd>smpl</cmd>,
+	<cmd>store</cmd>, <cmd>summary</cmd>, <cmd>if</cmd>,
+	<cmd>else</cmd> and <cmd>endif</cmd>. You exit the mode of
+	entering loop commands with <cmd>endloop</cmd>: at this point
+	the stacked commands are executed.
       </para>
 
       <para>See <manref targ="looping"/> for further details and
-	examples.</para>
+	examples.  The effect of the <lit>--progressive</lit> option
+	(which is designed for use in Monte Carlo simulations) is
+	explained there.</para>
     </description>
 
   </command>
@@ -3084,6 +3103,10 @@
 	  <flag>--quiet</flag>
 	  <effect>suppress printing of results</effect>
         </option>
+        <option>
+	  <flag>--no-df-corr</flag>
+	  <effect>suppress degrees of freedom correction</effect>
+        </option>
       </options>
       <examples>
         <example>ols 1 0 2 4 6 7</example>
@@ -3095,7 +3118,7 @@
     <description>
       <para context="gui">
         Computes ordinary least squares (OLS) estimates for the
-        specified model.
+	specified model.
       </para>
 
       <para context="cli">
@@ -3116,14 +3139,19 @@
 	selection statistics (described in Ramanathan, Section 4.3)
 	are also printed.</para>
 
+      <para>If the option <lit>--no-df-corr</lit> is given, the usual
+	degrees of freedom correction is not applied when calculating
+	the estimated error variance (and hence also the standard
+	errors of the parameter estimates).</para>
+
       <para context="cli">Various internal variables may be retrieved
 	using the <cmdref targ="genr"/> command, provided
 	<cmd>genr</cmd> is invoked immediately after this command.
       </para>
 
-      <para context="cli">The specific formula used for generating robust
-	standard errors (when the <lit>--robust</lit> option is given)
-	can be adjusted via the <cmdref targ="set"/> command.
+      <para context="cli">The specific formula used for generating
+	robust standard errors (when the <lit>--robust</lit> option is
+	given) can be adjusted via the <cmdref targ="set"/> command.
       </para>
     </description>
 

@@ -1,9 +1,9 @@
-(* William Greene, Econometric Analysis, Example 12.1 *)
+# William Greene, Econometric Analysis 4e, Example 12.1
 open greene12_1.gdt
 genr inc2 = income*income
-(* exclude obs where expenditure is zero *)
-smpl -r expend > 0
-ols expend 0 age ownrent income inc2 -o
-(* gretl's "hccm" procedure is more conservative than White *)
-hccm expend 0 age ownrent income inc2 -o
+# exclude obs where expenditure is zero
+smpl expend > 0 --restrict
+ols expend 0 age ownrent income inc2 --vcv
+# gretl's "hccm" procedure is more conservative than White
+hccm expend 0 age ownrent income inc2 --vcv
 

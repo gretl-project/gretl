@@ -1,6 +1,6 @@
 # Reproduce some of the time-series material in Stock and Watson,
 # Introduction to Econometrics, chapter 12
-# Note that S and W seem to use "robust" standard errors throughout
+# Note that S and W use "robust" standard errors throughout
 open sw_ch12.gdt
 genr infl = 400 * log(PUNEW/PUNEW(-1))
 diff infl 

@@ -1,6 +1,6 @@
 # Reproduce the illustrative VAR in Stock and Watson,
 # Introduction to Econometrics, chapter 14
-# (Note that S and W seem to use "robust" standard errors throughout)
+# (Note that S and W use "robust" standard errors throughout)
 open sw_ch14.gdt
 genr infl = 400 * log(PUNEW/PUNEW(-1))
 diff infl 

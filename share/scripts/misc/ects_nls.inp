@@ -7,9 +7,9 @@ genr b0 = beta
 nls y = alpha + beta*x1 + (1/beta)*x2
 deriv alpha = 1
 deriv beta = x1 - x2/(beta*beta)
-end nls -o
+end nls --vcv
 genr alpha = a0
 genr beta = b0
 nls y = alpha + beta*x1 + (1/beta)*x2
-end nls -o
+end nls --vcv
 

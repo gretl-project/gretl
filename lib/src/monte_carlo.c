@@ -27,7 +27,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#define LOOP_DEBUG
+#undef LOOP_DEBUG
 
 #if defined(ENABLE_GMP)
 # include <gmp.h>
@@ -270,7 +270,8 @@ static int parse_as_while_loop (LOOPSET *loop,
 	if (numeric_string(rvar)) {
 	   loop->rval = dot_atof(rvar);
 	} else { 
-	    /* try a varname */
+	    /* try a varname: in this case "rvar" is a true
+	       variable */
 	    loop->rvar = ok_loop_var(pdinfo, rvar);
 	    if (loop->rvar == 0) {
 		loop->lvar = 0;
@@ -312,7 +313,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     int nstart = 0, nend = 0;
     int err = 0;
 
-    if (strcmp(lvar, "i")) {
+    if (lvar != NULL && strcmp(lvar, "i")) {
 	sprintf(gretl_errmsg, 
 		_("The index variable in a 'for' loop must be the "
 		  "special variable 'i'"));
@@ -352,6 +353,10 @@ static int parse_as_count_loop (LOOPSET *loop,
 {
     int nt, err = 0;
 
+    /* note: "lvar" may be a numeric constant or a variable:
+       if it is a variable it is evaluated only once,
+       at loop compile time 
+    */
     nt = get_int_value(lvar, pdinfo, Z, &err);
 
     if (!err && nt <= 0) {
@@ -376,6 +381,8 @@ test_forloop_element (const char *s, LOOPSET *loop,
     int ngot, err = 0;
 
     if (s == NULL) return 1;
+
+    fprintf(stderr, "testing '%s'\n", s);
 
     if (i == 0) {
 	ngot = sscanf(s, "%8[^=]=%8s", lhs, rhs) + 1;
@@ -424,23 +431,20 @@ test_forloop_element (const char *s, LOOPSET *loop,
 		} else {
 		    loop->incr = x;
 		}
-	    } else if (i == 1) {
-		/* middle term in "for (;;)" stuff */
+	    } else {
 		v = ok_loop_var(pdinfo, rhs);
 		if (v > 0) {
-#if 1
-		    loop->rvar = v;
-#else
-		    loop->rval = (*pZ)[v][0];
-#endif
+		    if (i == 0) {
+			loop->initval = (*pZ)[v][0];
+		    } else if (i == 1) {
+			loop->rvar = v;
+		    } else {
+			loop->incr = (*pZ)[v][0];
+		    }
 		} else {
 		    err = 1;
 		}
-	    } else {
-		sprintf(gretl_errmsg, "%s '%s'", 
-			_("Expected numeric data, found string:\n"), rhs);
-		err = 1;
-	    }
+	    } 
 	}
 	
 	/* examine operator(s) */
@@ -567,11 +571,16 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 
     *gretl_errmsg = '\0';
     
-    if (sscanf(line, "loop while %[^ <>=]%[ <>=] %s", lvar, op, rvar) == 3) {
+    if (sscanf(line, "loop while %8[^ <>=]%8[ <>=] %8s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
 
-    else if (sscanf(line, "loop for %[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
+    else if (sscanf(line, "loop i = %8[^.]..%8s", op, rvar) == 2) {
+	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
+				    NULL, op, rvar);
+    }	
+
+    else if (sscanf(line, "loop for %8[^= ] = %8[^.]..%8s", lvar, op, rvar) == 3) {
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    lvar, op, rvar);
     }
@@ -780,6 +789,7 @@ static void gretl_loop_init (LOOPSET *loop)
 
     loop->lines = NULL;
     loop->ci = NULL;
+    loop->models = NULL;
     loop->lmodels = NULL;
     loop->prns = NULL;
 
@@ -828,6 +838,13 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->ci != NULL) { 
 	free(loop->ci);
     }
+
+    if (loop->models != NULL) {
+	for (i=0; i<loop->nmod; i++) {
+	    free_model(loop->models[i]);
+	}
+	free(loop->models);
+    } 
 
     if (loop->lmodels != NULL) {
 	for (i=0; i<loop->nmod; i++) {
@@ -1029,7 +1046,33 @@ static int loop_store_init (LOOPSET *loop, const char *fname,
     return 1;
 }
 
-static int add_loop_model (LOOPSET *loop, int cmdnum)
+static int add_loop_model_record (LOOPSET *loop, int cmdnum)
+{
+    MODEL **lmods;
+    int err = 0;
+    int nm = loop->nmod + 1;
+
+    lmods = realloc(loop->models, nm * sizeof *lmods);
+    if (lmods == NULL) {
+	err = 1;
+    } else {
+	loop->models = lmods;
+	loop->models[loop->nmod] = gretl_model_new();
+	if (loop->models[loop->nmod] == NULL) {
+	    err = 1;
+	} else {
+	    (loop->models[loop->nmod])->ID = cmdnum;
+	}
+    }
+
+    if (!err) {
+	loop->nmod += 1;
+    }
+
+    return err;
+}
+
+static int add_loop_model (LOOPSET *loop)
 {
     int err = 0;
     int nm = loop->nmod + 1;
@@ -1183,7 +1226,7 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 {
     int i;
 
-    if (loop->lvar && loop->type == INDEX_LOOP) { 
+    if (loop->type != COUNT_LOOP) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->ntimes);
     }
 
@@ -1192,18 +1235,34 @@ static void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo,
 	fprintf(stderr, "print_loop_results: loop command %d (i=%d): %s\n", 
 		i+1, i, loop->lines[i]);
 #endif
-	if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
-	    loop->ci[i] == HSK || loop->ci[i] == HCCM || 
-	    loop->ci[i] == WLS) {
-	    print_loop_model(&loop->lmodels[loop->next_model], 
-			     loop->ntimes, pdinfo, prn);
-	    loop->next_model += 1;
-	} else if (loop->ci[i] == PRINT) {
-	    print_loop_prn(&loop->prns[loop->next_print], 
-			   loop->ntimes, pdinfo, prn);
-	    loop->next_print += 1;
-	} else if (loop->ci[i] == STORE) {
-	    print_loop_store(loop, prn, ppaths);
+	if (!loop->progressive && loop->ci[i] == OLS) {
+	    gretlopt opt;
+	    
+	    catchflags(loop->lines[i], &opt);
+	    if (opt & OPT_P) {
+		MODEL *pmod = loop->models[loop->next_model];
+
+		catchflags(loop->lines[i], &opt);
+		set_model_id(pmod);
+		printmodel(pmod, pdinfo, opt, prn);
+		loop->next_model += 1;
+	    }	    
+	}
+
+	if (loop->progressive) {
+	    if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
+		loop->ci[i] == HSK || loop->ci[i] == HCCM || 
+		loop->ci[i] == WLS) {
+		print_loop_model(&loop->lmodels[loop->next_model], 
+				 loop->ntimes, pdinfo, prn);
+		loop->next_model += 1;
+	    } else if (loop->ci[i] == PRINT) {
+		print_loop_prn(&loop->prns[loop->next_print], 
+			       loop->ntimes, pdinfo, prn);
+		loop->next_print += 1;
+	    } else if (loop->ci[i] == STORE) {
+		print_loop_store(loop, prn, ppaths);
+	    }
 	}
     }
 }
@@ -1641,9 +1700,17 @@ static int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 {
     int i;
 
-    for (i=0; i<loop->nmod; i++) {
-	if (loop->lmodels[i].ID == cmdnum) {
-	    return i;
+    if (loop->progressive) {
+	for (i=0; i<loop->nmod; i++) {
+	    if (loop->lmodels[i].ID == cmdnum) {
+		return i;
+	    }
+	}
+    } else {
+	for (i=0; i<loop->nmod; i++) {
+	    if ((loop->models[i])->ID == cmdnum) {
+		return i;
+	    }
 	}
     }
 
@@ -1851,8 +1918,12 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case HCCM:
 		/* if this is the first time round, allocate space
 		   for each loop model */
-		if (lround == 0 && loop->progressive) {
-		    err = add_loop_model(loop, j);
+		if (lround == 0) {
+		    if (loop->progressive) {
+			err = add_loop_model(loop);
+		    } else if (cmd.opt & OPT_P) {
+			err = add_loop_model_record(loop, j);
+		    }
 		    if (err) {
 			break;
 		    }
@@ -1887,8 +1958,16 @@ int loop_exec (LOOPSET *loop, char *line,
 			break;
 		    }
 		    tmpmodel = models[0];
+		} else if (cmd.opt & OPT_P) {
+		    /* deferred printing of model results */
+		    int m = get_modnum_by_cmdnum(loop, j);
+
+		    swap_models(&models[0], &loop->models[m]);
+		    (loop->models[m])->ID = j;
+		    tmpmodel = loop->models[m];
+		    model_count_minus();
 		} else {
-		    (models[0])->ID = ++modnum;
+		    (models[0])->ID = ++modnum; /* FIXME */
 		    printmodel(models[0], pdinfo, cmd.opt, prn);
 		    tmpmodel = models[0];
 		}
@@ -1947,7 +2026,8 @@ int loop_exec (LOOPSET *loop, char *line,
 			if (loop_store_init(loop, cmd.param, cmd.list, pdinfo)) {
 			    err = 1;
 			}
-		    } else {
+		    }
+		    if (!err) {
 			loop_add_storevals(cmd.list, loop, lround,
 					   (const double **) *pZ, pdinfo);
 		    }
@@ -1981,7 +2061,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	err = loop->err;
     }
 
-    if (loop->progressive && !err && lround > 0) {
+    if (!err && lround > 0) {
 	print_loop_results(loop, *ppdinfo, prn, paths); 
     }
 

@@ -73,6 +73,7 @@ struct gretl_option gretl_opts[] = {
     { MEANTEST, OPT_O, "unequal-vars" },
     { OLS,      OPT_N, "no-df-corr" },
     { OLS,      OPT_O, "vcv" }, 
+    { OLS,      OPT_P, "print-final" },
     { OLS,      OPT_R, "robust" },
     { OLS,      OPT_Q, "quiet" },
     { OMIT,     OPT_Q, "quiet" },
