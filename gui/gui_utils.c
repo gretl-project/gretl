@@ -40,8 +40,6 @@ int db_is_native = 0;
 
 extern GtkTooltips *gretl_tips;
 extern int session_saved;
-extern GtkWidget *console_view;
-extern GtkWidget *console_dialog;
 extern GtkWidget *mysheet;
 extern GtkWidget *toolbar_box;
 extern char *space_to_score (char *str);
@@ -482,29 +480,13 @@ void verify_open_data (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    extern int replay; /* lib.c */
-    extern int work_done (void); /* dialogs.c */
-
-    fprintf(stderr, "session_saved = %d\n", session_saved);
-
-    if (data_file_open && 
-	!session_saved && 
-	expert[0] == 'f' && 
-	!replay && work_done()) {
-	edit_dialog ("gretl: open data", 
-		     "Opening a new data file will automatically\n"
-		     "close the current one.  You may want to save\n"
-		     "your work first.  Proceed to open data file?", NULL, 0,
-		     "Yes", do_open_data, userdata, 
-		     "No", NULL, NULL, 0, 0);
-    }
-    else if (data_file_open && expert[0] == 'f') { 
-	edit_dialog ("gretl: open data", 
-		     "Opening a new data file will automatically\n"
-		     "close the current one.  Proceed?", NULL, 0,
-		     "Yes", do_open_data, userdata, 
-		     "No", NULL, NULL, 0, 0);
-    } else 
+    if (data_file_open && expert[0] == 'f' && 
+	yes_no_dialog ("gretl: open data", 
+		       "Opening a new data file will automatically\n"
+		       "close the current one.  Any unsaved work\n"
+		       "will be lost.  Proceed to open data file?", 0))
+	return;
+    else 
 	do_open_data(NULL, userdata);
 }
 
@@ -515,13 +497,13 @@ void verify_open_session (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_file_open && expert[0] == 'f') { 
-	edit_dialog ("gretl: open session", 
-		     "Opening a new session file will automatically\n"
-		     "close the current session.  Proceed?", NULL, 0,
-		     "Yes", do_open_session, userdata, 
-		     "No", NULL, NULL, 0, 0);
-    } else 
+    if (data_file_open && expert[0] == 'f' &&
+	yes_no_dialog ("gretl: open session", 
+		       "Opening a new session file will automatically\n"
+		       "close the current session.  Any unsaved work\n"
+		       "will be lost.  Proceed to open session file?", 0))
+	return;
+    else 
 	do_open_session(NULL, userdata);
 }
 
@@ -669,17 +651,20 @@ void helpfile_init (void)
 
 /* ........................................................... */
 
-void helpwin (gpointer data, guint script, GtkWidget *widget) 
+static windata_t *helpwin (int script) 
 {
+    windata_t *vwin = NULL;
+
     if (script) {
 	help_length = script_help_length;
-	view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
-		  "gretl: command syntax help", script_help_items);
+	vwin = view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
+			 "gretl: command syntax help", script_help_items);
     } else {
 	help_length = gui_help_length;
-	view_file(paths.helpfile, 0, 0, 77, 400, "gretl: help", 
-		  help_items);
+	vwin = view_file(paths.helpfile, 0, 0, 77, 400, "gretl: help", 
+			 help_items);
     }
+    return vwin;
 }
 
 /* ........................................................... */
@@ -737,6 +722,24 @@ void context_help (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
+void help_show (gpointer data, guint cli, GtkWidget *widget)
+{
+    if (help_view == NULL) {
+	windata_t *vwin = helpwin(cli);
+
+	if (vwin != NULL) help_view = vwin->w;
+	gtk_signal_connect(GTK_OBJECT(help_view), "destroy",
+			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+			   &help_view);	
+    } else {
+	gdk_window_show(help_view->parent->window);
+	gdk_window_raise(help_view->parent->window);
+	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 0.0);
+    }
+} 
+
+/* ........................................................... */
+
 void do_help (gpointer data, guint code, GtkWidget *widget) 
 {
     int pos = 0;
@@ -773,13 +776,21 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
 	errbox("Sorry, no help is available on this topic");
 	return;
     }
-    if (help_view == NULL) 
-	helpwin(NULL, 0, NULL); 
-    else
+    if (help_view == NULL) {
+	windata_t *vwin = helpwin(0);
+
+	if (vwin != NULL) help_view = vwin->w;
+	gtk_signal_connect(GTK_OBJECT(help_view), "destroy",
+			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+			   &help_view);	
+    } else {
+	gdk_window_show(help_view->parent->window);
 	gdk_window_raise(help_view->parent->window);
-	
+    }
+
     gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
-	(gfloat) pos * GTK_TEXT(help_view)->vadj->upper / help_length);
+			     (gfloat) pos * 
+			     GTK_TEXT(help_view)->vadj->upper / help_length);
 }
 
 /* ........................................................... */
@@ -802,21 +813,6 @@ static void update_header (GtkWidget *widget, gpointer data)
     else infobox("Edited header saved OK");
     g_free(newhdr);
 } 
-
-/* ........................................................... */
-
-static void close_console (void)
-{    
-    console_state(TRUE);
-    console_view = NULL;
-}
-
-/* ........................................................... */
-
-static void close_help (void)
-{
-    help_view = NULL;
-}
 
 /* .................................................................. */
 
@@ -905,13 +901,6 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 
     vwin->w = gtk_text_new(NULL, NULL);
 
-    /* special case: help viewer */
-    if (strcmp(title, "gretl: help") == 0) {
-	help_view = vwin->w;
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "destroy",
-			   GTK_SIGNAL_FUNC(close_help), NULL);
-    }
-
     gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
 
     gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
@@ -956,9 +945,9 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 
 /* ........................................................... */
 
-int view_file (char *filename, int editable, int del_file, 
-	       int hsize, int vsize, char *title, 
-	       GtkItemFactoryEntry menu_items[]) 
+windata_t *view_file (char *filename, int editable, int del_file, 
+		      int hsize, int vsize, char *title, 
+		      GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *close, *save = NULL, *table;
     GtkWidget *vscrollbar; 
@@ -973,21 +962,16 @@ int view_file (char *filename, int editable, int del_file,
     if (fd == NULL) {
 	sprintf(tempstr, "Can't open %s for reading", filename);
 	errbox(tempstr);
-	return 1;
+	return NULL;
     }
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL)
-	return 1;
+	return NULL;
     windata_init(vwin);
     strcpy(vwin->fname, filename);
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
-
-    if (strcmp(title, "gretl console") == 0) {
-	console_state(FALSE);
-	console = 1;
-    }
 
     dialog = gtk_dialog_new();
     gtk_widget_set_usize (dialog, hsize, vsize);
@@ -1017,26 +1001,16 @@ int view_file (char *filename, int editable, int del_file,
 
     vwin->w = gtk_text_new(NULL, NULL);
 
-    /* special case: help viewer */
-    if (strcmp(title, "gretl: help") == 0 ||
-	strncmp(title, "gretl: command", 14) == 0) {
-	help_view = vwin->w;
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "destroy",
-			   GTK_SIGNAL_FUNC(close_help), NULL);
-    }
     if (editable)
 	gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
     else 
 	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
 
     /* special case: the gretl console */
+    if (strcmp(title, "gretl console") == 0) console = 1;
     if (console) {
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
 			   (GtkSignalFunc) console_handler, NULL);
-	gtk_signal_connect(GTK_OBJECT(vwin->w), "destroy",
-			   GTK_SIGNAL_FUNC(close_console), NULL);
-	console_view = vwin->w;
-	console_dialog = dialog;
     }
 
     gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
@@ -1056,7 +1030,7 @@ int view_file (char *filename, int editable, int del_file,
     /* is the file to be deleted after viewing? */
     if (del_file) {
 	if ((fle = mymalloc(strlen(filename) + 1)) == NULL)
-	    return 1;
+	    return NULL;
 	strcpy(fle, filename);
     }
 
@@ -1115,7 +1089,7 @@ int view_file (char *filename, int editable, int del_file,
 
     gtk_widget_show(dialog);
 
-    return 0;
+    return vwin;
 }
 
 /* ........................................................... */

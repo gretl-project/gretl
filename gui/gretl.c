@@ -205,6 +205,8 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/sep1", NULL, NULL, 0, "<Separator>" },
     { "/File/Save last graph", NULL, gpt_save_dialog, 0, NULL }, 
     { "/File/sep2", NULL, NULL, 0, "<Separator>" },
+    { "/File/_View command log", NULL, view_log, 0, NULL },
+    { "/File/sep2a", NULL, NULL, 0, "<Separator>" },
     { "/File/Open command file/user file...", NULL, open_script, 0, NULL },
     { "/File/Open command file/practice file/Ramanathan...", NULL, 
       display_files, RAMU_PS, NULL },
@@ -216,25 +218,27 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/New command file/Monte Carlo loop", NULL, 
       do_new_script, 1, NULL },
     { "/File/sep3", NULL, NULL, 0, "<Separator>" },
-    { "/File/Gretl console", NULL, console, 0, NULL },
-    { "/File/p-value finder", NULL, stats_calculator, 0, NULL },
-    { "/File/statistical tables", NULL, stats_calculator, 1, NULL },    
-    { "/File/test calculator", NULL, stats_calculator, 2, NULL },
-    { "/File/sep4", NULL, NULL, 0, "<Separator>" },
     { "/File/_Preferences/_General...", NULL, options_dialog, 0, NULL },
     { "/File/_Preferences/_Fixed font...", NULL, font_selector, 0, NULL },
     { "/File/sep5", NULL, NULL, 0, "<Separator>" },
     { "/File/E_xit", NULL, menu_exit_check, 0, NULL },
+    { "/_Utilities", NULL, NULL, 0, "<Branch>" },
+    { "/Utilities/Statistical tables", NULL, stats_calculator, 1, NULL },
+    { "/Utilities/p-value finder", NULL, stats_calculator, 0, NULL },
+    { "/Utilities/Test statistic calculator", NULL, stats_calculator, 2, NULL },
+    { "/Utilities/sep", NULL, NULL, 0, "<Separator>" },
+    { "/Utilities/Gretl console", NULL, console, 0, NULL },
+    { "/Utilities/sep2", NULL, NULL, 0, "<Separator>" },
+    { "/Utilities/Start GNU R", NULL, startR, 0, NULL },
     { "/_Session", NULL, NULL, 0, "<Branch>" },
     { "/Session/_Icon view", NULL, view_session, 0, NULL },
     { "/Session/_Add last graph", NULL, add_last_graph, 0, NULL },
-    { "/Session/_Command _log", NULL, view_log, 0, NULL },
     { "/Session/_Open/user...", NULL, open_script, 1, NULL },
     { "/Session/_Open/practice...", NULL, open_script, 2, NULL },
-    { "/Session/_Save as...", NULL, save_session_callback, 0, NULL },
-    { "/Session/Close", NULL, close_session, 0, NULL },
-    { "/Session/Rsep", NULL, NULL, 0, "<Separator>" },
-    { "/Session/Start GNU R", NULL, startR, 0, NULL },
+    { "/Session/sep", NULL, NULL, 0, "<Separator>" },
+    { "/Session/_Save", NULL, dummy_call, 0, NULL },
+    { "/Session/Save _as...", NULL, save_session_callback, 0, NULL },
+    /* { "/Session/Close", NULL, close_session, 0, NULL }, */
     { "/_Data", NULL, NULL, 0, "<Branch>" },
     { "/Data/_Display values/all variables", NULL, display_data, 0, NULL },
     { "/Data/_Display values/selected variables...", 
@@ -310,6 +314,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Variable/_Time series plot", NULL, do_graph_var, 0, NULL },
     { "/Variable/_Frequency distribution", NULL, do_menu_op, 
       FREQ, NULL },
+    { "/Variable/Frequency plot/simple", NULL, do_freqplot, 0, NULL },
     { "/Variable/Frequency plot/against Normal", NULL, do_freqplot, 
       NORMAL, NULL },
     { "/Variable/Frequency plot/against Gamma", NULL, do_freqplot, 
@@ -349,7 +354,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Model/_Rank correlation...", NULL, gretl_callback, SPEARMAN, NULL },
     { "/Model/_Pooled OLS (panel)...", NULL, model_callback, POOLED, NULL },
     { "/_Help", NULL, NULL, 0, "<LastBranch>" },
-    { "/Help/All _commands", NULL, helpwin, 0, NULL },
+    { "/Help/All _commands", NULL, help_show, 0, NULL },
     { "/Help/sep1", NULL, NULL, 0, "<Separator>" },
     { "/Help/Generate variable syntax", NULL, do_help, GENR, NULL },
     { "/Help/sep2", NULL, NULL, 0, "<Separator>" },
@@ -380,7 +385,7 @@ GtkItemFactoryEntry data_items[] = {
     { "/Help/sep5", NULL, NULL, 0, "<Separator>" },
     { "/Help/Online databases", NULL, do_help, ONLINE, NULL },
     { "/Help/sep6", NULL, NULL, 0, "<Separator>" },
-    { "/Help/_Script commands syntax", NULL, helpwin, 1, NULL },
+    { "/Help/_Script commands syntax", NULL, help_show, 1, NULL },
     { "/Help/sep7", NULL, NULL, 0, "<Separator>" },
 #ifdef USE_GNOME
     { "/Help/Manual in HTML", NULL, gnome_help, 0, NULL },
@@ -651,7 +656,6 @@ int main (int argc, char *argv[])
     add_files_to_menu(3);
     graphmenu_state(FALSE);
     session_state(FALSE);
-    session_close_state(FALSE);
     restore_sample_state(FALSE);
     if (gui_get_data) menubar_state(FALSE);
     else session_state(TRUE);
@@ -750,19 +754,11 @@ void panel_menu_state (gboolean s)
 
 /* ........................................................... */
 
-void console_state (gboolean s)
-{
-    if (mdata->ifac != NULL) 
-	flip(mdata->ifac, "/File/Gretl console", s);
-}
-
-/* ........................................................... */
-
 void session_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Session/Icon view", s);
-	flip(mdata->ifac, "/Session/Command log", s);
+	flip(mdata->ifac, "/Session/Save", s);
 	flip(mdata->ifac, "/Session/Save as...", s);
     }	
 }
@@ -1517,7 +1513,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;    
 	case 5:
 	    toolxpm = mini_manual_xpm;
-	    toolfunc = helpwin;
+	    toolfunc = help_show;
 	    break;
 	case 6:
 	    toolxpm = mini_plot_xpm;

@@ -52,8 +52,8 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
 static gint stack_model (int gui);
 
-GtkWidget *console_view;    /* shared with gui_utils.c */
-GtkWidget *console_dialog;  /* ditto */
+static GtkWidget *console_view;
+
 int replay;                 /* shared to indicate whether we're just
 			       replaying old session commands or not */
 
@@ -252,8 +252,8 @@ char *user_fopen (const char *fname, char *fullname, print_t **pprn)
     strcat(fullname, fname);
 
     *pprn = gretl_print_new(GRETL_PRINT_FILE, fullname);
-    if (*pprn) {
-	errbox("Couldn't open temp file for writing");
+    if (*pprn == NULL) {
+	errbox("Couldn't open file for writing");
 	return NULL;
     }
     return fullname;
@@ -775,19 +775,24 @@ void console (void)
 {
     print_t *prn;
     char fname[MAXLEN];
+    windata_t *vwin;
 
     if (console_view != NULL) {
+	gdk_window_show(console_view->parent->window);
 	gdk_window_raise(console_view->parent->window);
 	return;
     }
 
-    if (!user_fopen("console_tmp", fname, &prn)) {
-	errbox("Can't open output file");
-	return;
-    }
+    if (!user_fopen("console_tmp", fname, &prn)) return;
+
     pprintf(prn, "? ");
     gretl_print_destroy(prn);
-    view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
+    vwin = view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
+    console_view = vwin->w;
+    gtk_signal_connect(GTK_OBJECT(console_view), "destroy",
+		       GTK_SIGNAL_FUNC(gtk_widget_destroyed),
+		       &console_view);
+    
     gtk_text_set_point(GTK_TEXT(console_view), 2);
 
     GTK_TEXT(console_view)->cursor_pos_x = 
@@ -873,7 +878,7 @@ gboolean console_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
 				 len - adjust, len);
     }  
     /* response to Ctrl-A: go to start of typing area */
-    gdk_window_get_pointer(console_dialog->window, NULL, NULL, &mods);
+    gdk_window_get_pointer(console_view->window, NULL, NULL, &mods);
     if (mods & GDK_CONTROL_MASK && 
 	gdk_keyval_to_upper(key->keyval) == GDK_A) {
 	gtk_editable_set_position(GTK_EDITABLE(console_view), 
@@ -901,7 +906,7 @@ void console_exec (void)
     top_n_tail(c_line);
 
     if (strcmp(c_line, "quit") == 0 || strcmp(c_line, "q") == 0) {
-	gtk_widget_destroy(console_dialog);
+	gtk_widget_destroy(console_view->parent->parent->parent);
 	g_free(c_line);
 	return;
     }
@@ -2328,10 +2333,8 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
     if (datainfo->v * datainfo->n > MAXDISPLAY) { /* use file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) {
-	    errbox("Can't open output file");
-	    return;
-	}
+	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+
 	err = printdata(NULL, &Z, datainfo, 1, 1, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
@@ -2377,10 +2380,8 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
     if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
 	char fname[MAXLEN];
 
-	if (!user_fopen("data_display_tmp", fname, &prn)) {
-	    errbox("Can't open output file");
-	    return;
-	}
+	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+
 	printdata(prcmd.list, &Z, datainfo, 1, 1, prn);
 	gretl_print_destroy(prn);
 	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
@@ -2603,10 +2604,7 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w)
     print_t *prn;
     char *runfile = NULL, fname[MAXLEN];
 
-    if (!user_fopen("output_tmp", fname, &prn)) {
-	errbox("Couldn't open output file");
-	return;
-    }
+    if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
     if (code == SCRIPT_EXEC) runfile = scriptfile;
     else if (code == SESSION_EXEC) runfile = cmdfile;

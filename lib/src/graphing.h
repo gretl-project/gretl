@@ -53,7 +53,7 @@ typedef struct {
 } GPT_SPEC;
 
 enum dist_codes {
-    NORMAL,
+    NORMAL = 1,
     GAMMA
 };
 

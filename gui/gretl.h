@@ -187,8 +187,6 @@ void menubar_state (gboolean s);
 
 void graphmenu_state (gboolean s);
 
-void console_state (gboolean s);
-
 gint populate_clist (GtkWidget *widget, DATAINFO *pdatainfo);
 
 void clear_sample_label (void);

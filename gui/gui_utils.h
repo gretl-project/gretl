@@ -55,13 +55,13 @@ void save_session (char *fname);
 
 void helpfile_init (void);
 
-void helpwin (gpointer data, guint script, GtkWidget *widget);
-
 void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
 void close_window (gpointer data, guint win_code, GtkWidget *widget);
 
 void context_help (GtkWidget *widget, gpointer data);
+
+void help_show (gpointer data, guint cli, GtkWidget *widget);
 
 void do_help (gpointer data, guint help_code, GtkWidget *widget);
 
@@ -73,9 +73,9 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]);
 
-int view_file (char *filename, int editable, int del_file, 
-	       int hsize, int vsize, char *title, 
-	       GtkItemFactoryEntry menu_items[]);
+windata_t *view_file (char *filename, int editable, int del_file, 
+		      int hsize, int vsize, char *title, 
+		      GtkItemFactoryEntry menu_items[]);
 
 int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize, 
 		char *title);

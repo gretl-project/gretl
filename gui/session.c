@@ -119,14 +119,6 @@ static void session_open_object (GtkWidget *widget,
 
 /* ........................................................... */
 
-void session_close_state (gboolean s)
-{
-    if (mdata->ifac != NULL) 
-	flip(mdata->ifac, "/Session/Close", s);
-}
-
-/* ........................................................... */
-
 static int rebuild_init (session_t *rebuild)
 {
     rebuild->nmodels = 0;
@@ -300,7 +292,6 @@ void do_open_session (GtkWidget *w, gpointer data)
 
     /* sync gui with session */
     session_file_open = 1;
-    session_close_state(TRUE);
     session_state(TRUE);
     view_session();
 }
@@ -312,7 +303,6 @@ void close_session (void)
     clear_data(0);
     free_session();
     session_state(FALSE);
-    session_close_state(FALSE);
     session_file_open = 0;
     if (iconview != NULL) 
 	gtk_widget_destroy(iconview);
