@@ -37,6 +37,7 @@ gui/helpfiles.c
 gui/library.c
 gui/plotps.c
 gui/selector.c
+gui/series_view.c
 gui/session.c
 gui/settings.c
 gui/ssheet.c
@@ -58,6 +59,7 @@ gui2/gui_utils.c
 gui2/helpfiles.c
 gui2/library.c
 gui2/selector.c
+gui2/series_view.c
 gui2/session.c
 gui2/settings.c
 gui2/ssheet.c
