@@ -205,7 +205,7 @@
   ;; Default (* %para-sep% 2.0)
   (display-space (* %bf-size% 0.75)
      min: (* %bf-size% 0.5)
-	 max: (* %bf-size% 1.5)))
+	 max: (* %bf-size% 2.0)))
   
 (define ($informal-object$ #!optional (rule-before? #f) (rule-after? #f))
   (make display-group
