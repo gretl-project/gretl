@@ -314,8 +314,8 @@ int _identical (const double *x, const double *y, const int n)
 
 static void otheruse (const char *str1, const char *str2)
 {
-    sprintf(gretl_errmsg, "'%s' refers to a %s and may not be used as a "
-	    "variable name", str1, str2); 
+    sprintf(gretl_errmsg, _("'%s' refers to a %s and may not be used as a "
+	    "variable name"), str1, str2); 
 }
 
 /* .......................................................... */
@@ -337,34 +337,34 @@ static int reserved (const char *str)
         if (strcmp(str, resword[i]) == 0) {
             switch(i) {
 	    case 0: 
-		otheruse(str, "residual vector");
+		otheruse(str, _("residual vector"));
 		break;
 	    case 1: case 2: case 3: case 4:
-		otheruse(str, "constant");
+		otheruse(str, _("constant"));
 		break;
 	    case 5:
-		otheruse(str, "regr. coeff.");
+		otheruse(str, _("regr. coeff."));
 		break;
 	    case 6:
-		otheruse(str, "standard error");
+		otheruse(str, _("standard error"));
 		break;
 	    case 7:
-		otheruse(str, "autocorr. coeff.");
+		otheruse(str, _("autocorr. coeff."));
 		break;
 	    case 8: case 9: case 10: case 11: case 12: case 13:
-		otheruse(str, "stats function");
+		otheruse(str, _("stats function"));
 		break;
 	    case 14: case 15:
-		otheruse(str, "sampling concept");
+		otheruse(str, _("sampling concept"));
 		break;
 	    case 16: case 17: case 18: case 19: case 20:
-		otheruse(str, "plotting variable");
+		otheruse(str, _("plotting variable"));
 		break;
 	    case 21:
-		otheruse(str, "internal variable");
+		otheruse(str, _("internal variable"));
 		break;
 	    default:
-		otheruse(str, "math function");
+		otheruse(str, _("math function"));
 		break;
             }
             return i+1;
@@ -506,14 +506,14 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
  
     if (strcmp(s, "dummy") == 0) {
 	if ((genr.errcode = dummy(pZ, pdinfo)) == 0) 
-	    strcpy(genr.msg, "Periodic dummy variables generated.\n");
+	    strcpy(genr.msg, _("Periodic dummy variables generated.\n"));
 	genr.special = 1;
 	_genrfree(pZ, pdinfo, &genr, mystack, mvec, pdinfo->v);
 	return genr;
     }
     if (strcmp(s, "paneldum") == 0) {
 	if ((genr.errcode = paneldum(pZ, pdinfo, oflag)) == 0)
-	    strcpy(genr.msg, "Panel dummy variables generated.\n");
+	    strcpy(genr.msg, _("Panel dummy variables generated.\n"));
 	genr.special = 1;
 	_genrfree(pZ, pdinfo, &genr, mystack, mvec, pdinfo->v);
 	return genr;
@@ -641,7 +641,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
             if (strlen(s) == 0) {
 		/* add or replace transformed variable */
                 if (v < nv && !oflag && model_count > 0) 
-		    sprintf(genr.label, "Replaced after model %d: ", 
+		    sprintf(genr.label, _("Replaced after model %d: "), 
 			    model_count);
 		strcat(genr.label, genrs);
                 for (i=t1; i<=t2; i++) genr.xvec[i] = mystack[i];
@@ -722,8 +722,8 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		    vi = varindex(pdinfo, word);
 		    if (!pdinfo->vector[vi]) {
 			genr.errcode = 1;
-			sprintf(gretl_errmsg, "Variable %s is a scalar; "
-				"can't do lags/leads", pdinfo->varname[vi]);
+			sprintf(gretl_errmsg, _("Variable %s is a scalar; "
+				"can't do lags/leads"), pdinfo->varname[vi]);
 			_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			return genr;
 		    }
@@ -885,7 +885,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		default:
 		    if (strlen(word) != 0) 
 			sprintf(gretl_errmsg, 
-				"%s is not a variable or function", word);
+				_("%s is not a variable or function"), word);
 		    genr.errcode = E_UNSPEC;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 		    return genr;
@@ -955,7 +955,7 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	for (i=t1; i<=t2; i++)  {
 	    xx = xxvec[i];
 	    if (floateq(xx, 0.0)) {  
-		sprintf(gretl_errmsg, "Zero denominator for obs %d", i+1);
+		sprintf(gretl_errmsg, _("Zero denominator for obs %d"), i+1);
 		free(st2);
 		return 1;
 	    }
@@ -970,8 +970,8 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 	    if ((floateq(xx, 0.0) && yy <= 0.0) || 
 		(xx < 0.0 && (double) ny != yy)) {
 		sprintf(gretl_errmsg, 
-			"Invalid power function args for obs. %d"
-			"\nbase value = %f, exponent = %f", i, xx, yy);
+			_("Invalid power function args for obs. %d"
+			"\nbase value = %f, exponent = %f"), i, xx, yy);
 		free(st2);
 		return 1;
 	    }
@@ -1252,32 +1252,32 @@ static int check_modelstat (const MODEL *pmod, int type1)
 	switch (type1) {
 	case 'e':
 	    strcpy(gretl_errmsg, 
-		   "No $ess (error sum of squares) value is available");
+		   _("No $ess (error sum of squares) value is available"));
 	    return 1;
 	    break;
 	case 'r':
 	    strcpy(gretl_errmsg, 
-		   "No $rsq (R-squared) value is available");
+		   _("No $rsq (R-squared) value is available"));
 	    return 1;
 	    break;
 	case 'q':
 	    strcpy(gretl_errmsg, 
-		   "No $trsq (T*R-squared) value is available");
+		   _("No $trsq (T*R-squared) value is available"));
 	    return 1;
 	    break;
 	case 'd':
 	    strcpy(gretl_errmsg, 
-		   "No $df (degrees of freedom) value is available");
+		   _("No $df (degrees of freedom) value is available"));
 	    return 1;
 	    break;
 	case 's':
 	    strcpy(gretl_errmsg, 
-		   "No $sigma (std. err. of model) value is available");
+		   _("No $sigma (std. err. of model) value is available"));
 	    return 1;
 	    break;
 	case 'l':
 	    strcpy(gretl_errmsg, 
-		   "No $lnl (log-likelihood) value is available");
+		   _("No $lnl (log-likelihood) value is available"));
 	    return 1;
 	    break;
 	default:
@@ -1288,7 +1288,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
 	type1 == 'l') {
 	strcpy(gretl_errmsg, 
-	       "$lnl (log-likelihood) is not available for the last model");
+	       _("$lnl (log-likelihood) is not available for the last model"));
 	return 1;
     }
     return 0;
@@ -1367,7 +1367,7 @@ static int _getxvec (char *ss, double *xxvec,
 	    if (pmod->uhat == NULL) return 1;
 	    if (pmod->t2 - pmod->t1 + 1 > n ||
 		model_sample_issue(pmod, NULL, Z, pdinfo)) {
-		strcpy(gretl_errmsg, "Can't retrieve uhat: data set has changed");
+		strcpy(gretl_errmsg, _("Can't retrieve uhat: data set has changed"));
 		return 1;
 	    }	    
 	    for (i=0; i<pmod->t1; i++) xxvec[i] = NADBL;
@@ -1415,7 +1415,7 @@ static int _getxvec (char *ss, double *xxvec,
 
     default:
 	if (strlen(ss) != 0) {
-	    sprintf(gretl_errmsg, "Undefined variable name '%s' in genr", ss);
+	    sprintf(gretl_errmsg, _("Undefined variable name '%s' in genr"), ss);
 	    return 1;
 	}
 	break;
@@ -1517,7 +1517,7 @@ static char _strtype (char *ss, const DATAINFO *pdinfo)
     if (_isnumber(ss)) {
         i = strlen(ss) - 1;
         if (ss[i] == 'e') { 
-	    sprintf(gretl_errmsg, "Scientific notation not allowed for numbers");
+	    sprintf(gretl_errmsg, _("Scientific notation not allowed for numbers"));
             return 'u';
         }
         else return 'n';
@@ -1574,8 +1574,8 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     for (vi=1; vi<=ndummies; vi++) {
         sprintf(word, "dummy_%d", vi);
 	strcpy(pdinfo->varname[nvar+vi-1], word);
-	sprintf(pdinfo->label[nvar+vi-1], "%s = 1 if period is %d, "
-		"0 otherwise", word, vi);
+	sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if period is %d, "
+		"0 otherwise"), word, vi);
         for (t=0; t<pdinfo->n; t++) {
             xx = date(t, pdinfo->pd, pdinfo->sd0);
             yy = (int) xx;
@@ -1623,8 +1623,8 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
 	if (opt) sprintf(word, "du_%d", vi);
         else sprintf(word, "dt_%d", vi);
 	strcpy(pdinfo->varname[nvar+vi-1], word);
-	sprintf(pdinfo->label[nvar+vi-1], "%s = 1 if %s is %d, "
-		"0 otherwise", word, (opt)? "unit": "period", vi);
+	sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if %s is %d, "
+		"0 otherwise"), word, (opt)? _("unit"): _("period"), vi);
         for (t=0; t<pdinfo->n; t++) {
             xx = date(t, pdinfo->pd, pdinfo->sd0);
             yy = (int) xx;
@@ -1638,8 +1638,8 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
 	if (opt) sprintf(word, "dt_%d", vi);
         else sprintf(word, "du_%d", vi);
 	strcpy(pdinfo->varname[nvar+ntdum+vi-1], word);
-	sprintf(pdinfo->label[nvar+ntdum+vi-1], "%s = 1 if %s is %d, "
-		"0 otherwise", word, (opt)? "period": "unit", vi);
+	sprintf(pdinfo->label[nvar+ntdum+vi-1], _("%s = 1 if %s is %d, "
+		"0 otherwise"), word, (opt)? _("period"): _("unit"), vi);
         for (t=0; t<pdinfo->n; t++) 
 	    (*pZ)[nvar+ntdum+vi-1][t] = 0.0;
 	for (t=(vi-1)*pdinfo->pd; t<vi*pdinfo->pd; t++) 
@@ -1658,17 +1658,17 @@ static void _genrtime (DATAINFO *pdinfo, GENERATE *genr, int time)
     if (time) t = varindex(pdinfo, "time");
     else t = varindex(pdinfo, "index");
     if (t < v) {
-	sprintf(gretl_errmsg, "Variable '%s' already exists", 
+	sprintf(gretl_errmsg, _("Variable '%s' already exists"), 
 		(time)? "time" : "index");
 	genr->errcode = E_UNSPEC;
         return;
     }
     if (time) {
 	strcpy(genr->varname, "time");
-	strcpy(genr->label, "time trend variable");
+	strcpy(genr->label, _("time trend variable"));
     } else {
 	strcpy(genr->varname, "index");
-	strcpy(genr->label, "data index variable");
+	strcpy(genr->label, _("data index variable"));
     }
     genr->varnum = v;
     for (t=0; t<n; t++) genr->xvec[t] = (double) (t + 1);
@@ -1701,34 +1701,34 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 
     switch(period[0]) {
     case 'a':
-	strcpy(pdinfo->label[vi], "annual plotting variable"); 
+	strcpy(pdinfo->label[vi], _("annual plotting variable")); 
 	for (t=0; t<n; t++) 
 	    (*pZ)[vi][t] = (double) (t + atoi(pdinfo->stobs));
 	break;
     case 'q':
-	strcpy(pdinfo->label[vi], "quarterly plotting variable");
+	strcpy(pdinfo->label[vi], _("quarterly plotting variable"));
 	(*pZ)[vi][0] = y1 + (10.0 * rm - 1.0)/4.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + .25;
 	break;
     case 'm':
-	strcpy(pdinfo->label[vi], "monthly plotting variable");
+	strcpy(pdinfo->label[vi], _("monthly plotting variable"));
 	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/12.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/12.0);
 	break;
     case 'h':
-	strcpy(pdinfo->label[vi], "hourly plotting variable");
+	strcpy(pdinfo->label[vi], _("hourly plotting variable"));
 	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/24.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/24.0);
 	break; 
     case 'i':
-	strcpy(pdinfo->label[vi], "index variable");
+	strcpy(pdinfo->label[vi], _("index variable"));
 	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     case 't':
-	strcpy(pdinfo->label[vi], "time trend variable");
+	strcpy(pdinfo->label[vi], _("time trend variable"));
 	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     default:
@@ -1829,7 +1829,7 @@ void varlist (const DATAINFO *pdinfo, PRN *prn)
     register int i;
     int n = pdinfo->v;
 
-    pprintf(prn, "Listing %d variables:\n", n);
+    pprintf(prn, _("Listing %d variables:\n"), n);
     for (i=0; i<n; i++) {
 	pprintf(prn, "%3d) %-10s", i, pdinfo->varname[i]);
 	if ((i+1) % 5 == 0) 
@@ -1948,8 +1948,8 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 		    (*pZ)[nvar+j][t] = NADBL;
 		    if (!na(xx)) {
 			sprintf(gretl_errmsg, 
-				"Log error: Variable '%s', obs %d,"
-				" value = %g\n", pdinfo->varname[v],
+				_("Log error: Variable '%s', obs %d,"
+				" value = %g\n"), pdinfo->varname[v],
 				t+1, xx);
 			le_zero = 1;
 		    }
@@ -1961,7 +1961,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    strcat(s, pdinfo->varname[v]);
 	    _esl_trunc(s, 8);
 	    strcpy(pdinfo->varname[nvar+j], s);
-	    strcat(s, " = log of ");
+	    strcat(s, _(" = log of "));
 	    strcat(s, pdinfo->varname[v]);
 	    strcpy(pdinfo->label[nvar+j], s);
 	    check = varindex(pdinfo, pdinfo->varname[j]);
@@ -2112,7 +2112,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 			continue;
 		}
 	    }
-	    sprintf(pdinfo->label[v+terms], "%s = %s squared", s,
+	    sprintf(pdinfo->label[v+terms], _("%s = %s squared"), s,
 		    pdinfo->varname[li]);  
 	    terms++;
 	}
@@ -2140,7 +2140,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 		_esl_trunc(s1, 4);
 		strcat(s, s1);
 		strcpy(pdinfo->varname[v+terms], s);
-		sprintf(pdinfo->label[v+terms], "%s = %s times %s",
+		sprintf(pdinfo->label[v+terms], _("%s = %s times %s"),
 			s, pdinfo->varname[li], pdinfo->varname[lj]);
 		terms++;
 	    }
@@ -2211,7 +2211,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 	_esl_trunc(s, 7);
 	strcat(s, "#");
 	strcpy(pdinfo->varname[v+i-1], s);
-	sprintf(pdinfo->label[v+i-1], "%s = rho-differenced %s", 
+	sprintf(pdinfo->label[v+i-1], _("%s = rho-differenced %s"), 
 		pdinfo->varname[v+i-1], pdinfo->varname[j]);
 	/* fill out values */
 	for (t=0; t<n; t++) (*pZ)[v+i-1][t] = NADBL;
@@ -2350,8 +2350,8 @@ static double _genr_vcv (const char *str, double ***pZ,
 static void _genr_msg (GENERATE *pgenr, const int nv)
 {
 	sprintf(pgenr->msg, "%s %s %s (ID %d)\n", 
-		(pgenr->varnum < nv)? "Replaced" : "Generated", 
-		(pgenr->scalar)? "scalar" : "vector",
+		(pgenr->varnum < nv)? _("Replaced") : _("Generated"), 
+		(pgenr->scalar)? _("scalar") : _("vector"),
 		 pgenr->varname, pgenr->varnum);
 }
 
@@ -2371,17 +2371,17 @@ static int _ismatch (const int lv, const int *list)
 static void _varerror (const char *ss)
 /* print error message for variable not in name list */
 {
-    sprintf(gretl_errmsg, "Undefined variable name '%s'", ss);
+    sprintf(gretl_errmsg, _("Undefined variable name '%s'"), ss);
     if (!strcmp(ss, "const")) 
-        sprintf(gretl_errmsg, "const cannot be used to store values");
+        sprintf(gretl_errmsg, _("const cannot be used to store values"));
     else if (!strcmp(ss, "uhat")) 
         sprintf(gretl_errmsg,
-		"uhat can be used only in genr.  First use the command: "
-		"genr newname = uhat");
+		_("uhat can be used only in genr.  First use the command: "
+		"genr newname = uhat"));
     else if (ss[0] == '$') 
-	sprintf(gretl_errmsg, "Reserved var. names starting with "
+	sprintf(gretl_errmsg, _("Reserved var. names starting with "
 		"$ can be used only in genr.\nFirst use the "
-		"command:  genr newname = %s", ss);
+		"command:  genr newname = %s"), ss);
 }
 
 /* .......................................................... */
@@ -2422,9 +2422,9 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     _esl_trunc(varname, 8);
     nv = varindex(pdinfo, varname);
     if (nv == 0 || nv >= pdinfo->v) {
-	sprintf(gretl_errmsg, (nv)? "For 'sim', the variable must already "
-		"exist" :
-		"You can't use the constant for this purpose");
+	sprintf(gretl_errmsg, (nv)? _("For 'sim', the variable must already "
+		"exist") :
+		_("You can't use the constant for this purpose"));
 	free(a);
 	free(toks);
 	return 1;
@@ -2436,7 +2436,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (isalpha((unsigned char) parm[0])) {
 	    pv = varindex(pdinfo, parm);
 	    if (pv == 0 || pv >= pdinfo->v) {
-		sprintf(gretl_errmsg, "Bad varname '%s' in sim", parm);
+		sprintf(gretl_errmsg, _("Bad varname '%s' in sim"), parm);
 		free(a);
 		free(toks);
 		return 1;
@@ -2568,19 +2568,19 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (code == GENR_RESID) { /* residuals */
 	sprintf(vname, "uhat%d", pmod->ID);
-	sprintf(vlabel, "residual from model %d", pmod->ID);
+	sprintf(vlabel, _("residual from model %d"), pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[i][t] = pmod->uhat[t];
     }
     else if (code == GENR_FITTED) { /* fitted values */
 	sprintf(vname, "yhat%d", pmod->ID);
-	sprintf(vlabel, "fitted value from model %d", pmod->ID);
+	sprintf(vlabel, _("fitted value from model %d"), pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[i][t] = pmod->yhat[t];
     }
     else if (code == GENR_RESID2) { /* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
-	sprintf(vlabel, "squared residual from model %d", pmod->ID);
+	sprintf(vlabel, _("squared residual from model %d"), pmod->ID);
 	for (t=t1; t<=t2; t++) 
 	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
     }

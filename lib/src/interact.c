@@ -219,7 +219,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* trap bogus commands */    
     if ((command->ci = command_number(command->cmd)) == 0) {
 	command->errcode = 1;
-	sprintf(gretl_errmsg, "command '%s' not recognized", 
+	sprintf(gretl_errmsg, _("command '%s' not recognized"), 
 		command->cmd);
 	return;
     }
@@ -399,7 +399,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     command->list = realloc(command->list, (1+nf) * sizeof(int));
     if (command->list == NULL) {
 	command->errcode = E_ALLOC;
-	strcpy (gretl_errmsg, "Memory allocation failed for command list");
+	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
 	free(remainder);
 	return;
     }
@@ -436,7 +436,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    if (_laggenr(lagvar.varnum, lagvar.lag, 0, pZ, pdinfo)) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
-				"generation of lag variable failed");
+				_("generation of lag variable failed"));
 			free(remainder);
 			return;
 		    } else { 
@@ -456,7 +456,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		} else {
 		    command->errcode = 1;
 		    sprintf(gretl_errmsg, 
-			    "'%s' is not the name of a variable", field);
+			    _("'%s' is not the name of a variable"), field);
 		    free(remainder);
 		    return;
 		}
@@ -468,7 +468,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    if (!ar && v > pdinfo->v - 1) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 
-                       "%d is not a valid variable number", v);
+                       _("%d is not a valid variable number"), v);
 		free(remainder);
 		return;
 	    }	
@@ -496,7 +496,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    !(spacename && (field[0] == '"' || field[0] == '\''))) { 
 	    command->errcode = 1;
 	    sprintf(gretl_errmsg, 
-		    "field '%s' in command is invalid", field);
+		    _("field '%s' in command is invalid"), field);
 	    free(remainder);
 	    return;
 	}
@@ -506,7 +506,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    if (!pdinfo->vector[command->list[j]]) {
 		command->errcode = 1;
 		sprintf(gretl_errmsg, 
-			"variable %s is a scalar", field);
+			_("variable %s is a scalar"), field);
 		free(remainder);
 		return;
 	    }
@@ -555,15 +555,15 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     int i, ok;
 
     if (cmd == NULL) {
-	pprintf(prn, "\nValid gretl commands are:\n");
+	pprintf(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
 	    pprintf(prn, "%-9s", commands[i]);
 	    if (i%8 == 0) pprintf(prn, "\n");
 	    else pprintf(prn, " ");
 	}
 	pprintf(prn, "\n");
-	pprintf(prn, "\nFor help on a specific command, type: help cmdname");
-	pprintf(prn, " (e.g. help smpl)\n");
+	pprintf(prn, _("\nFor help on a specific command, type: help cmdname"));
+	pprintf(prn, _(" (e.g. help smpl)\n"));
 	return 0;
     }
 
@@ -586,12 +586,12 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	}
     }
     if (!ok) {
-	pprintf(prn, "\"%s\" is not a gretl command.\n", cmd);
+	pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmd);
 	return 1;
     }
 
     if ((fq = fopen(helpfile, "r")) == NULL) {
-	printf("Unable to access the file %s.\n", helpfile);
+	printf(_("Unable to access the file %s.\n"), helpfile);
 	return 1;
     } 
 
@@ -619,7 +619,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	    return 0;
 	}
     }
-    pprintf(prn, "%s: sorry, no help available.\n", cmd);
+    pprintf(prn, _("%s: sorry, no help available.\n"), cmd);
     fclose(fq);
     return 0;
 }
@@ -642,7 +642,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(essstr[0])) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
-	pprintf(prn, "ess: negative value is out of bounds.\n");
+	pprintf(prn, _("ess: negative value is out of bounds.\n"));
 	return 1;
     }
     if (isalpha((unsigned char) Tstr[0]) &&
@@ -651,7 +651,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(Tstr[0])) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
-	pprintf(prn, "T: negative value is out of bounds.\n");
+	pprintf(prn, _("T: negative value is out of bounds.\n"));
 	return 1;
     }
     if (isalpha((unsigned char) kstr[0]) &&
@@ -660,7 +660,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     else if (isdigit(kstr[0])) k = atoi(kstr);
     else return 1;
     if (k < 0) {
-	pprintf(prn, "k: negative value is out of bounds.\n");
+	pprintf(prn, _("k: negative value is out of bounds.\n"));
 	return 1;
     }    
     _criteria(ess, T, k, prn);
@@ -702,7 +702,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	return -1 * E_ALLOC;
 
     strcpy(pdinfo->varname[vi], varname);
-    strcpy(pdinfo->label[vi], "predicted values");
+    strcpy(pdinfo->label[vi], _("predicted values"));
 
     for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
 
@@ -733,7 +733,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     xx = genr->xvec[pdinfo->t1];
 
     if (genr->scalar) {
-	strcat(pdinfo->label[v], " (scalar)");
+	strcat(pdinfo->label[v], _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = genr->xvec[0];
     } else {
@@ -839,7 +839,7 @@ int shell (const char *arg)
     (void) signal(SIGINT, old1);
     (void) signal(SIGQUIT, old2);
     if (pid == -1) {
-	perror("Try again later");
+	perror(_("Try again later"));
     }
     return 0;
 }
@@ -915,7 +915,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	}
 	err = _list_dups(pcmd->list, pcmd->ci);
 	if (err) {
-	    printf("\nvar number %d duplicated in the command list.\n",
+	    printf(_("\nvar number %d duplicated in the command list.\n"),
 		   err);
 	    pcmd->ci = 999;
 	}
@@ -945,7 +945,7 @@ static void showlabels (const DATAINFO *pdinfo)
 {
     int i;
 
-    printf("Listing labels for variables:\n");
+    printf(_("Listing labels for variables:\n"));
     for (i=0; i<pdinfo->v; i++) {
 	if (strlen(pdinfo->label[i]) > 2) {
 	    printf("%3d) %-10s %s\n", i, 
@@ -972,7 +972,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case ADF:
 	if (!isdigit(cmd->param[0])) {
-	    pprintf(prn, "adf: lag order must be given first\n");
+	    pprintf(prn, _("adf: lag order must be given first\n"));
 	    break;
 	}
 	order = atoi(cmd->param);
@@ -989,12 +989,12 @@ int simple_commands (CMD *cmd, const char *line,
 	if (cmd->list[0] > 3) {
 	    err = esl_corrmx(cmd->list, pZ, datainfo, pause, prn);
 	    if (err) 
-		pprintf(prn, "Error in generating correlation matrix\n");
+		pprintf(prn, _("Error in generating correlation matrix\n"));
 	    break;
 	}
 	corrmat = corrlist(cmd->list, pZ, datainfo);
 	if (corrmat == NULL) 
-	    pprintf(prn, "Couldn't allocate memory for correlation matrix.\n");
+	    pprintf(prn, _("Couldn't allocate memory for correlation matrix.\n"));
 	else printcorr(corrmat, datainfo, prn);
 	free_corrmat(corrmat);
 	break;
@@ -1002,34 +1002,34 @@ int simple_commands (CMD *cmd, const char *line,
     case CRITERIA:
 	err = parse_criteria(line, datainfo, pZ, prn);
 	if (err) 
-	    pprintf(prn, "Error in computing model selection criteria.\n");
+	    pprintf(prn, _("Error in computing model selection criteria.\n"));
 	break;
 
     case DIFF:
 	err = list_diffgenr(cmd->list, pZ, datainfo);
 	if (err) 
-	    pprintf(prn, "Error adding first differences of variables.\n");
+	    pprintf(prn, _("Error adding first differences of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LDIFF:
 	err = list_ldiffgenr(cmd->list, pZ, datainfo);
 	if (err) 
-	    pprintf(prn, "Error adding log differences of variables.\n");
+	    pprintf(prn, _("Error adding log differences of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LAGS:
 	err = lags(cmd->list, pZ, datainfo); 
 	if (err) 
-	    pprintf(prn, "Error adding lags of variables.\n");
+	    pprintf(prn, _("Error adding lags of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LOGS:
 	err = logs(cmd->list, pZ, datainfo);
 	if (err < cmd->list[0]) 
-	    pprintf(prn, "Error adding logs of variables.\n");
+	    pprintf(prn, _("Error adding logs of variables.\n"));
 	if (err > 0) { 
 	    varlist(datainfo, prn);
 	    err = 0;
@@ -1055,7 +1055,7 @@ int simple_commands (CMD *cmd, const char *line,
 	if (datainfo->descrip != NULL) 
 	    pprintf(prn, "%s\n", datainfo->descrip);
 	else 
-	    pprintf(prn, "No data information is available.\n");
+	    pprintf(prn, _("No data information is available.\n"));
 	break;
 
     case LABELS:
@@ -1073,7 +1073,7 @@ int simple_commands (CMD *cmd, const char *line,
     case SUMMARY:
 	summ = summary(cmd->list, pZ, datainfo, prn);
 	if (summ == NULL) 
-	    pprintf(prn, "generation of summary stats failed\n");
+	    pprintf(prn, _("generation of summary stats failed\n"));
 	else {
 	    print_summary(summ, datainfo, pause, prn);
 	    free_summary(summ);

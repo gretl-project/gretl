@@ -153,15 +153,15 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
     x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
     if (x == NULL) {
-	sprintf(gretl_errmsg, "Out of memory in frequency distribution");
+	sprintf(gretl_errmsg, _("Out of memory in frequency distribution"));
 	free(freq);
 	return NULL;
     }
     n = ztox(varno, x, *pZ, pdinfo);
     if (n < 3) {
 	gretl_errno = E_DATA;
-	sprintf(gretl_errmsg, "Insufficient data to build frequency "
-		"distribution for variable %s", pdinfo->varname[varno]);
+	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
+		"distribution for variable %s"), pdinfo->varname[varno]);
 	free(x);
 	return freq;
     }
@@ -172,7 +172,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
     if (_isconst(0, n-1, x)) {
 	gretl_errno = 1;
-	sprintf(gretl_errmsg, "%s is a constant", freq->varname);
+	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
 	return freq;
     }    
     
@@ -186,7 +186,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     if (freq->endpt == NULL || freq->midpt == NULL ||
 	freq->f == NULL) {
 	gretl_errno = E_ALLOC;
-	strcpy(gretl_errmsg, "Out of memory for frequency distribution");
+	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
 	free(x);
 	return freq;
     }
@@ -322,16 +322,16 @@ int corrgram (const int varno, const int order, double ***pZ,
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, "\nMissing values within sample -- can't do correlogram");
+	pprintf(prn, _("\nMissing values within sample -- can't do correlogram"));
 	return 1;
     }
 
     if (nobs < 4) {
-	pprintf(prn, "\nInsufficient observations for correlogram");
+	pprintf(prn, _("\nInsufficient observations for correlogram"));
 	return 1;
     }
     if (_isconst(t1, t2, &(*pZ)[varno][0])) {
-	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
+	pprintf(prn, _("\n'%s' is a constant\n"), pdinfo->varname[varno]);
 	return 1;
     }
 
@@ -367,15 +367,15 @@ int corrgram (const int varno, const int order, double ***pZ,
 	}
 	acf[l] = _corr(nobs-l, x, y);
     }
-    pprintf(prn, "\nAutocorrelation function for %s\n\n", pdinfo->varname[varno]);
+    pprintf(prn, _("\nAutocorrelation function for %s\n\n"), pdinfo->varname[varno]);
 
     /* add Box-Pierce statistic */
     box = 0;
     for (t=1; t<=m; t++) 
 	box += acf[t] * acf[t];
     box *= m;
-    pprintf(prn, "Box-Pierce Q statistic = %.4f\n", box);
-    pprintf(prn, "Degrees of freedom = %d, significance level = %.4f\n\n",
+    pprintf(prn, _("Box-Pierce Q statistic = %.4f\n"), box);
+    pprintf(prn, _("Degrees of freedom = %d, significance level = %.4f\n\n"),
 	    m, chisq(box, m));
 
     for (t=1; t<=m; t++) {
@@ -388,9 +388,9 @@ int corrgram (const int varno, const int order, double ***pZ,
 	xl = malloc(m * sizeof *xl);
 	if (xl == NULL) return E_ALLOC;
 	for (l=0; l<m; l++) xl[l] = l + 1.0;
-        pprintf(prn, "\n\nCorrelogram\n\n");
+        pprintf(prn, _("\n\nCorrelogram\n\n"));
 	_graphyzx(NULL, acf + 1, NULL, xl, m, pdinfo->varname[varno], 
-		  "lag", NULL, 0, prn);
+		  _("lag"), NULL, 0, prn);
 	free(x);
 	free(xl);
 	free(y);
@@ -407,9 +407,9 @@ int corrgram (const int varno, const int order, double ***pZ,
     err = get_pacf(pacf, &maxlag, varno, pZ, pdinfo);
     pacf[0] = acf[1];
     if (!err) {
-	pprintf(prn, "\nPartial autocorrelations");
+	pprintf(prn, _("\nPartial autocorrelations"));
 	if (maxlag < m) 
-	    pprintf(prn, " (to lag %d):\n\n", maxlag);
+	    pprintf(prn, _(" (to lag %d):\n\n"), maxlag);
 	else
 	    pprintf(prn, ":\n\n");
 	for (l=1; l<=maxlag; l++) {
@@ -509,9 +509,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 
     if (!tmp.errcode) {
 	tstat = tmp.coeff[1] / tmp.sderr[1];
-	pprintf(prn, "\nTest for fractional integration\n"
+	pprintf(prn, _("\nTest for fractional integration\n"
 		"  Estimated degree of integration = %f\n"
-		"  test statistic: t(%d) = %f, with p-value %.4f\n",
+		"  test statistic: t(%d) = %f, with p-value %.4f\n"),
 		tmp.coeff[1], tmp.dfd, tstat, tprob(tstat, tmp.dfd));
     } else err = tmp.errcode;
 
@@ -556,16 +556,16 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
-	pprintf(prn, "\nMissing values within sample -- can't do periodogram");
+	pprintf(prn, _("\nMissing values within sample -- can't do periodogram"));
 	return 1;
     }    
 
     if (nobs < 9) {
-	pprintf(prn, "\nInsufficient observations for periodogram");
+	pprintf(prn, _("\nInsufficient observations for periodogram"));
 	return 1;
     }
     if (_isconst(t1, t2, &(*pZ)[varno][0])) {
-	pprintf(prn, "\n'%s' is a constant\n", pdinfo->varname[varno]);
+	pprintf(prn, _("\n'%s' is a constant\n"), pdinfo->varname[varno]);
 	return 1;
     }
 
@@ -666,7 +666,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (opt == 0 && fract_int(nT, hhat, omega, prn)) {
-	pprintf(prn, "\nFractional integration test failed\n");
+	pprintf(prn, _("\nFractional integration test failed\n"));
 	err = 1;
     }
 
@@ -681,7 +681,7 @@ int periodogram (const int varno, double ***pZ, const DATAINFO *pdinfo,
 
 static void printf17 (const double zz, PRN *prn)
 {
-    if (na(zz)) pprintf(prn, "      undefined");
+    if (na(zz)) pprintf(prn, _("      undefined"));
     else _printxs(zz, 17, SUMMARY, prn);
 }
 
@@ -702,10 +702,10 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
 	else _bufspace((ci == SUMMARY)? 15 : 12, prn);
     } 
     
-    pprintf(prn, "%s, using the observations %s - %s\n", str, date1, date2);
+    pprintf(prn, _("%s, using the observations %s - %s\n"), str, date1, date2);
     if (ci == CORR) {
-	pprintf(prn, "               "
-		"(missing values denoted by -999 will be skipped)\n\n");
+	pprintf(prn, _("               "
+		"(missing values denoted by -999 will be skipped)\n\n"));
     }
 }
 
@@ -727,19 +727,19 @@ void print_summary (GRETLSUMMARY *summ,
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
 
-    prhdr("Summary Statistics", pdinfo, SUMMARY, prn);
+    prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
     if (lo == 1) {
 	_bufspace(16, prn);
-	pprintf(prn, "for the variable '%s' (%d valid observations)\n\n", 
+	pprintf(prn, _("for the variable '%s' (%d valid observations)\n\n"), 
 		pdinfo->varname[summ->list[1]], summ->n);
     } else {
-	pprintf(prn, "               "
-		"(missing values denoted by -999 will be skipped)\n\n");
-	pprintf(prn, "\nVariable    ");
+	pprintf(prn, _("               "
+		"(missing values denoted by -999 will be skipped)\n\n"));
+	pprintf(prn, _("\nVariable    "));
     }
 
-    pprintf(prn, "             MEAN         MEDIAN            MIN"
-            "            MAX\n");
+    pprintf(prn, _("             MEAN         MEDIAN            MIN"
+            "            MAX\n"));
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
@@ -757,9 +757,9 @@ void print_summary (GRETLSUMMARY *summ,
     if (pause) page_break(lo + 2, &lineno, 0);
     lineno += 2;
     pprintf(prn, "\n");
-    if (lo > 1) pprintf(prn, "\nVariable    ");
-    pprintf(prn, "             S.D.           C.V.           "
-	 "SKEW       EXCSKURT\n");
+    if (lo > 1) pprintf(prn, _("\nVariable    "));
+    pprintf(prn, _("             S.D.           C.V.           "
+	 "SKEW       EXCSKURT\n"));
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
@@ -843,11 +843,11 @@ GRETLSUMMARY *summary (LIST list,
 	summ->n = ztox(list[v], x, *pZ, pdinfo);
 	if (summ->n < 2) { /* zero or one observations */
 	    if (summ->n == 0)
-		pprintf(prn, "Dropping %s: sample range contains no valid "
-			"observations\n", pdinfo->varname[list[v]]);
+		pprintf(prn, _("Dropping %s: sample range contains no valid "
+			"observations\n"), pdinfo->varname[list[v]]);
 	    else
-		pprintf(prn, "Dropping %s: sample range has only one "
-			"obs, namely %g\n", pdinfo->varname[list[v]], x[0]);
+		pprintf(prn, _("Dropping %s: sample range has only one "
+			"obs, namely %g\n"), pdinfo->varname[list[v]], x[0]);
 	    list_exclude(v, list);
 	    if (list[0] == 0) {
 		free_summary(summ);
@@ -975,9 +975,9 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 			const int pause, PRN *prn)
 {
-    prhdr("Correlation Coefficients", pdinfo, CORR, prn);
-    pprintf(prn, "              5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\n\n", rhocrit95(corr->n), corr->n);
+    prhdr(_("Correlation Coefficients"), pdinfo, CORR, prn);
+    pprintf(prn, _("              5%% critical value (two-tailed) = "
+	    "%.3f for n = %d\n\n"), rhocrit95(corr->n), corr->n);
 
     _mxout(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
 }
@@ -1037,12 +1037,12 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
     n1 = ztox(list[1], x, Z, pdinfo);
     n2 = ztox(list[2], y, Z, pdinfo);
     if (n1 == 0 || n2 == 0) {
-	pprintf(prn, "Sample range has no valid observations.");
+	pprintf(prn, _("Sample range has no valid observations."));
 	free(x); free(y);
 	return 1;
     }
     if (n1 == 1 || n2 == 1) {
-	pprintf(prn, "Sample range has only one observation.");
+	pprintf(prn, _("Sample range has only one observation."));
 	free(x); free(y);
 	return 1;
     }
@@ -1063,16 +1063,16 @@ int means_test (LIST list, double **Z, const DATAINFO *pdinfo,
     t = mdiff / se;
     pval = tprob(t, df);
 
-    pprintf(prn, "\nEquality of means test "
-	    "(assuming %s variances)\n\n", (vareq)? "equal" : "unequal");
-    pprintf(prn, "   Difference between sample means = %g - %g = %g\n", 
+    pprintf(prn, _("\nEquality of means test "
+	    "(assuming %s variances)\n\n"), (vareq)? _("equal") : _("unequal"));
+    pprintf(prn, _("   Difference between sample means = %g - %g = %g\n"), 
 	    m1, m2, mdiff);
-    pprintf(prn, "   Null hypothesis: The two population means are the same.\n");
-    pprintf(prn, "   Estimated standard error = %g\n", se);
-    pprintf(prn, "   Test statistic: t(%d) = %g\n", df, t);
-    pprintf(prn, "   p-value (two-tailed) = %g\n\n", pval);
+    pprintf(prn, _("   Null hypothesis: The two population means are the same.\n"));
+    pprintf(prn, _("   Estimated standard error = %g\n"), se);
+    pprintf(prn, _("   Test statistic: t(%d) = %g\n"), df, t);
+    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
     if (pval > .10)
-	pprintf(prn, "   The difference is not statistically significant.\n\n");
+	pprintf(prn, _("   The difference is not statistically significant.\n\n"));
 
     free(x);
     free(y);
@@ -1108,12 +1108,12 @@ int vars_test (LIST list, double **Z, const DATAINFO *pdinfo,
     n1 = ztox(list[1], x, Z, pdinfo);
     n2 = ztox(list[2], y, Z, pdinfo);
     if (n1 == 0 || n2 == 0) {
-	pprintf(prn, "Sample range has no valid observations.");
+	pprintf(prn, _("Sample range has no valid observations."));
 	free(x); free(y);
 	return 1;
     }
     if (n1 == 1 || n2 == 1) {
-	pprintf(prn, "Sample range has only one observation.");
+	pprintf(prn, _("Sample range has only one observation."));
 	free(x); free(y);
 	return 1;
     }
@@ -1133,13 +1133,13 @@ int vars_test (LIST list, double **Z, const DATAINFO *pdinfo,
 	dfd = n1 - 1;
     }
 
-    pprintf(prn, "\nEquality of variances test\n\n");
-    pprintf(prn, "   Ratio of sample variances = %g\n", F);
-    pprintf(prn, "   Null hypothesis: The two population variances are equal.\n");
-    pprintf(prn, "   Test statistic: F(%d,%d) = %g\n", dfn, dfd, F);
-    pprintf(prn, "   p-value (two-tailed) = %g\n\n", fdist(F, dfn, dfd));
+    pprintf(prn, _("\nEquality of variances test\n\n"));
+    pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
+    pprintf(prn, _("   Null hypothesis: The two population variances are equal.\n"));
+    pprintf(prn, _("   Test statistic: F(%d,%d) = %g\n"), dfn, dfd, F);
+    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), fdist(F, dfn, dfd));
     if (fdist(F, dfn, dfd) > .10)
-	pprintf(prn, "   The difference is not statistically significant.\n\n");
+	pprintf(prn, _("   The difference is not statistically significant.\n\n"));
 
     free(x);
     free(y);

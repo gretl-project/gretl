@@ -196,7 +196,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
 	/* print headings */
-	pprintf(prn, "%25cNOTE: o stands for %s\n\n%8c", ' ', s1, ' ');
+	pprintf(prn, _("%25cNOTE: o stands for %s\n\n%8c"), ' ', s1, ' ');
 	sprintf(word, "x-min = %g", xmin);
 	ls = 8 + strlen(word);
 	pprintf(prn, "%s", word);
@@ -245,11 +245,11 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     xymax = (xmax >= ymax) ? xmax : ymax;
     xyrange = xymax - xymin;
     /* print headings for the two variables */
-    pprintf(prn, "%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
-	   "and %s are equal when scaled\n", ' ', s1, s2, ' ', s1, s2);
+    pprintf(prn, _("%17cNOTE: o stands for %s,   x stands for %s\n%17c+ means %s "
+	   "and %s are equal when scaled\n"), ' ', s1, s2, ' ', s1, s2);
     lineno = 6;
     if (oflag == OPT_O) {
-	pprintf(prn, "%20c%s and %s are plotted on same scale\n\n%8c",
+	pprintf(prn, _("%20c%s and %s are plotted on same scale\n\n%8c"),
 	       ' ', s1, s2, ' ');
 	sprintf(word, "xy-min = %g", xymin);
 	ls = 8 + strlen(word);
@@ -352,7 +352,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 
     m = _list_dups(list, GRAPH);
     if (m) {
-	fprintf(stderr, "var no. %d duplicated in command list.\n", m);
+	fprintf(stderr, _("var no. %d duplicated in command list.\n"), m);
 	return 1;
     }
 
@@ -513,7 +513,7 @@ int gnuplot (LIST list, const int *lines,
 	    plotvar(pZ, pdinfo, s2);
 	    list[lo] = varindex(pdinfo, s2);
 	}
-	strcpy(xlabel, "Observation");
+	strcpy(xlabel, _("Observation"));
 	if (lo > 2 && lo < 7) tscale = 1;
     } else {
 	if (opt == OPT_Z || opt == OPT_RESIDZ)
@@ -525,7 +525,7 @@ int gnuplot (LIST list, const int *lines,
     if (strcmp(pdinfo->varname[list[lo]], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[list[lo]], "months") == 0) {
 	ts_plot = 1;
-	strcpy(xlabel, "period");
+	strcpy(xlabel, _("period"));
     }
 
     /* add a simple regression line if appropriate */
@@ -671,8 +671,8 @@ int gnuplot (LIST list, const int *lines,
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++)  {
 	    if (opt == OPT_FA) {
-		if (i == 1) strcpy(s1, "fitted");
-		else strcpy(s1, "actual");
+		if (i == 1) strcpy(s1, _("fitted"));
+		else strcpy(s1, _("actual"));
 	    } else
 		strcpy(s1, pdinfo->varname[list[i]]);
 	    if (!pdist) { 
@@ -686,7 +686,7 @@ int gnuplot (LIST list, const int *lines,
 	}
     } 
     if (ols_ok) 
-	fprintf(fq, "%f + %f*x title 'least squares fit' w lines\n",
+	fprintf(fq, _("%f + %f*x title 'least squares fit' w lines\n"),
 		a, b);
 
     /* supply the data to gnuplot inline 
@@ -879,10 +879,10 @@ int plot_freq (FREQDIST *freq, const PATHS *ppaths, int dist)
 	    plotmin = freq->xbar - 3.3 * freq->sdx;
 	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
 	    plotmax = freq->xbar + 3.3 * freq->sdx;
-	    fprintf(fp, "set label 'Test statistic for normality:'"
-		    " at graph .05, graph .9\n");
-	    fprintf(fp, "set label 'Chi-squared(2) = %.3f, pvalue %.5f'"
-		    " at graph .05, graph .85\n", 
+	    fprintf(fp, _("set label 'Test statistic for normality:'"
+		    " at graph .05, graph .9\n"));
+	    fprintf(fp, _("set label 'Chi-squared(2) = %.3f, pvalue %.5f'"
+		    " at graph .05, graph .85\n"), 
 		    freq->chisqu, chisq(freq->chisqu, 2));	
 	}
 	else if (dist == GAMMA) {

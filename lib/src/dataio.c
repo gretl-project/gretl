@@ -205,7 +205,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
 	pdinfo->vector[i] = 1;
     }
     strcpy(pdinfo->varname[0], "const");
-    strcpy(pdinfo->label[0], "auto-generated constant");
+    strcpy(pdinfo->label[0], _("auto-generated constant"));
     return 0;
 }
 
@@ -374,8 +374,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof(float), 1, fp)) {
-		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
-			    "var %d", i);
+		    sprintf(gretl_errmsg, _("WARNING: binary data read error at "
+			    "var %d"), i);
 		    return 1;
 		}
 		Z[i][t] = (double) x;
@@ -386,7 +386,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!fread(Z[i], sizeof(double), n, fp)) {
 		sprintf(gretl_errmsg, 
-			"WARNING: binary data read error at var %d", i);
+			_("WARNING: binary data read error at var %d"), i);
 		return 1;
 	    }
 	}
@@ -403,8 +403,8 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	    for (i=1; i<pdinfo->v; i++) {
 		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
 		    sprintf(gretl_errmsg, 
-			    "WARNING: ascii data read error at var %d, "
-			    "obs %d", i, t + 1);
+			    _("WARNING: ascii data read error at var %d, "
+			    "obs %d"), i, t + 1);
 		    return 1;
 		}
 	    }
@@ -427,8 +427,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
 		if (!gzread(fz, &xx, sizeof xx)) {
-		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
-			    "var %d", i);
+		    sprintf(gretl_errmsg, _("WARNING: binary data read error at "
+			    "var %d"), i);
 		    return 1;
 		}
 		Z[i][t] = (double) xx;
@@ -439,7 +439,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
 		sprintf(gretl_errmsg, 
-			"WARNING: binary data read error at var %d", i);
+			_("WARNING: binary data read error at var %d"), i);
 		return 1;
 	    }
 	}
@@ -453,8 +453,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	for (t=0; t<n; t++) {
 	    offset = 0L;
 	    if (!gzgets(fz, line, llen - 1)) {
-		sprintf(gretl_errmsg, "WARNING: ascii data read error at "
-			"obs %d", t + 1);
+		sprintf(gretl_errmsg, _("WARNING: ascii data read error at "
+			"obs %d"), t + 1);
 		free(line);
 		return 1;
 	    }
@@ -467,8 +467,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	    if (pdinfo->markers) {
 		if (sscanf(line, "%8s", pdinfo->S[t]) != 1) {
 		   sprintf(gretl_errmsg, 
-			   "WARNING: failed to read case marker for "
-			   "obs %d", t + 1);
+			   _("WARNING: failed to read case marker for "
+			   "obs %d"), t + 1);
 		   free(line);
 		   return 1;
 		}
@@ -478,8 +478,8 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 	    for (i=1; i<pdinfo->v; i++) {
 		if (sscanf(line + offset, "%23s", numstr) != 1) {
 		    sprintf(gretl_errmsg, 
-			    "WARNING: ascii data read error at var %d, "
-			    "obs %d", i, t + 1);
+			    _("WARNING: ascii data read error at var %d, "
+			    "obs %d"), i, t + 1);
 		    return 1;
 		}
 		numstr[23] = 0;
@@ -510,8 +510,8 @@ int check_varname (const char *varname)
     gretl_errmsg[0] = '\0';
     
     if (!(isalpha((unsigned char) varname[0]))) {
-        sprintf(gretl_errmsg, "First char of varname ('%c') is bad\n"
-               "(first must be alphabetical)", varname[0]);
+        sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
+               "(first must be alphabetical)"), varname[0]);
         return 1;
     }
     for (i=1; i<n; i++) {
@@ -519,12 +519,12 @@ int check_varname (const char *varname)
             && !(isdigit((unsigned char) varname[i]))
             && varname[i] != '_') {
 	    if (isprint((unsigned char) varname[i]))
-		sprintf(gretl_errmsg, "Varname contains illegal character '%c'\n"
-			"Use only letters, digits and underscore", 
+		sprintf(gretl_errmsg, _("Varname contains illegal character '%c'\n"
+			"Use only letters, digits and underscore"), 
 			varname[i]);
 	    else
-		sprintf(gretl_errmsg, "Varname contains illegal character 0x%x\n"
-			"Use only letters, digits and underscore", 
+		sprintf(gretl_errmsg, _("Varname contains illegal character 0x%x\n"
+			"Use only letters, digits and underscore"), 
 			(unsigned) varname[i]);
             return 1;
         }
@@ -544,7 +544,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     fp = fopen(hdrfile, "r");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, "Couldn't open file %s",  hdrfile);
+	sprintf(gretl_errmsg, _("Couldn't open file %s"),  hdrfile);
 	return E_FOPEN;
     }
     fscanf(fp, "%s", str);
@@ -552,9 +552,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     while (1) { /* find number of variables */
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
-	    sprintf(gretl_errmsg, "Opened header file %s\n"
+	    sprintf(gretl_errmsg, _("Opened header file %s\n"
 		    "Couldn't find list of variables (must "
-		    "be terminated with a semicolon)", hdrfile);
+		    "be terminated with a semicolon)"), hdrfile);
 	    return 1;
 	}
 	n = strlen(str);
@@ -652,7 +652,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	    free(dbuf);
 	}
 	else if (lines < 0) 
-	    fprintf(stderr, "Failed to store data comments\n");
+	    fprintf(stderr, _("Failed to store data comments\n"));
 	fclose(fp);
     } 
 	
@@ -677,10 +677,10 @@ static int check_date (const char *date)
 	    && date[i] != ':') {
 	    if (isprint((unsigned char) date[i]))
 		sprintf(gretl_errmsg, 
-			"Bad character '%c' in date string", date[i]);
+			_("Bad character '%c' in date string"), date[i]);
 	    else 
 		sprintf(gretl_errmsg, 
-			"Bad character %d in date string", date[i]);
+			_("Bad character %d in date string"), date[i]);
 	    return 1;
 	}
     }
@@ -733,7 +733,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	}
     }
     if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-	sprintf(gretl_errmsg, "Date strings inconsistent");
+	sprintf(gretl_errmsg, _("Date strings inconsistent"));
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
@@ -791,7 +791,7 @@ static int blank_check (FILE *fp)
 
     for (i=0; i<3 && deflt && fgets(s, MAXLEN-1, fp) ; i++) {
 	if (i == 0 && strncmp(s, "(*", 2)) deflt = 0;
-	else if (i == 1 && strncmp(s, "space for comments", 18)) deflt = 0;
+	else if (i == 1 && strncmp(s, _("space for comments"), 18)) deflt = 0;
 	else if (i == 2 && strncmp(s, "*)", 2)) deflt = 0;
     }
     fclose(fp);
@@ -818,23 +818,23 @@ int get_info (const char *hdrfile, PRN *prn)
     FILE *hdr;
 
     if ((hdr = fopen(hdrfile, "r")) == NULL) {
-	pprintf(prn, "Couldn't open %s\n", hdrfile); 
+	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
 	return 1;
     }
 
     /* see if it's just the default "space for comments" */
     if (blank_check(hdr)) { /* yes */
-	pprintf(prn, "No info in %s\n", hdrfile);
+	pprintf(prn, _("No info in %s\n"), hdrfile);
 	return 2;
     } 
 
     /* no, so restart the read */
     if ((hdr = fopen(hdrfile, "r")) == NULL) {
-	pprintf(prn, "Couldn't open %s\n", hdrfile); 
+	pprintf(prn, _("Couldn't open %s\n"), hdrfile); 
 	return 1;
     }    
 
-    pprintf(prn, "Data info in file %s:\n\n", hdrfile);
+    pprintf(prn, _("Data info in file %s:\n\n"), hdrfile);
     if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, STARTCOMMENT, 2) == 0) {
 	do {
 	    if (fgets(s, MAXLEN-1, hdr) != NULL && strncmp(s, "*)", 2)) {
@@ -846,7 +846,7 @@ int get_info (const char *hdrfile, PRN *prn)
 	    }
 	} while (s != NULL && strncmp(s, ENDCOMMENT, 2));
     }
-    if (i == 0) pprintf(prn, " (none)\n");
+    if (i == 0) pprintf(prn, _(" (none)\n"));
     pprintf(prn, "\n");
 
     if (hdr != NULL) fclose(hdr);
@@ -985,11 +985,11 @@ int write_data (const char *fname, const int *list,
 	    gz_switch_ext(lblfile, datfile, "lbl");
 	}
 	if (writehdr(hdrfile, list, pdinfo, opt)) {
-	    fprintf(stderr, "Write of header file failed");
+	    fprintf(stderr, _("Write of header file failed"));
 	    return 1;
 	}
 	if (writelbl(lblfile, list, pdinfo)) {
-	    fprintf(stderr, "Write of labels file failed");
+	    fprintf(stderr, _("Write of labels file failed"));
 	    return 1;
 	}
     }
@@ -1184,7 +1184,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
         }
         if (sscanf(line, "%s", varname) != 1) {
             fclose(fp);
-	    sprintf(gretl_errmsg, "Bad data label in %s", lblfile); 
+	    sprintf(gretl_errmsg, _("Bad data label in %s"), lblfile); 
             return 0;
         }
         label = line + strlen(varname);
@@ -1195,7 +1195,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 	v = varindex(pdinfo, varname);
 	if (v < pdinfo->v) strcpy(pdinfo->label[v], label);
 	else
-	    fprintf(stderr, "extraneous label for var '%s'\n", varname);
+	    fprintf(stderr, _("extraneous label for var '%s'\n"), varname);
     }
     if (fp != NULL) 
 	fclose(fp);
@@ -1392,7 +1392,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     err = readhdr(hdrfile, pdinfo);
     if (err) return err;
     else 
-	pprintf(prn, "\nReading header file %s\n", hdrfile);
+	pprintf(prn, _("\nReading header file %s\n"), hdrfile);
 
     /* deal with case where first col. of data file contains
        "marker" strings */
@@ -1416,14 +1416,14 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     }
 
     /* print out basic info from the files read */
-    pprintf(prn, "periodicity: %d, maxobs: %d, "
-	   "observations range: %s-%s\n", pdinfo->pd, pdinfo->n,
+    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
-    pprintf(prn, "\nReading ");
+    pprintf(prn, _("\nReading "));
     pprintf(prn, (pdinfo->time_series == TIME_SERIES) ? 
-	    "time-series" : "cross-sectional");
-    pprintf(prn, " datafile");
+	    _("time-series") : _("cross-sectional"));
+    pprintf(prn, _(" datafile"));
     if (strlen(datfile) > 40) pprintf(prn, "\n");
     pprintf(prn, " %s\n\n", datfile);
 
@@ -1487,8 +1487,8 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
 
     /* print out basic info */
-    pprintf(prn, "periodicity: %d, maxobs: %d, "
-	   "observations range: %s-%s\n", pdinfo->pd, pdinfo->n,
+    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+	   "observations range: %s-%s\n"), pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
     /* Set sample range to entire length of data-set by default */
@@ -1515,7 +1515,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     n1 = strlen(lbl1);
     n2 = strlen(lbl2);
 
-    pprintf(prn, "   first row label \"%s\", last label \"%s\"\n", 
+    pprintf(prn, _("   first row label \"%s\", last label \"%s\"\n"), 
 	   lbl1, lbl2);
 
     /* are the labels (probably) just 1, 2, 3 etc.? */
@@ -1524,18 +1524,18 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 	return 0;
 
     if (n1 > 7) {
-	pprintf(prn, "   label strings too long for dates?\n");
+	pprintf(prn, _("   label strings too long for dates?\n"));
 	pdinfo->pd = 1;
 	pdinfo->sd0 = 1.0;
 	return -1;
     }
     if (n1 != n2) {
-	pprintf(prn, "   label strings can't be consistent dates\n");
+	pprintf(prn, _("   label strings can't be consistent dates\n"));
 	return -1;
     }
 
     /* does it look like it starts with a year? */
-    pprintf(prn, "trying to parse row labels as dates...\n");
+    pprintf(prn, _("trying to parse row labels as dates...\n"));
     if (n1 >= 4) {
 	if (isdigit((unsigned char) lbl1[0]) 
 	    && isdigit((unsigned char) lbl1[1]) &&
@@ -1544,16 +1544,16 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 	    safecpy(year, lbl1, 4);
 	    try = atoi(year);
 	    if (try > 0 && try < 3000) {
-		pprintf(prn, "   %s: probably a year... ", year);
+		pprintf(prn, _("   %s: probably a year... "), year);
 	    } else {
-		pprintf(prn, "   %s: out of bounds for a year?\n", year);
+		pprintf(prn, _("   %s: out of bounds for a year?\n"), year);
 	    }
 	    if (n1 == 5) {
-		pprintf(prn, "   but I can't make sense of the extra bit\n");
+		pprintf(prn, _("   but I can't make sense of the extra bit\n"));
 		return -1;
 	    }
 	    if (n1 == 4) {
-		pprintf(prn, "and just a year\n");
+		pprintf(prn, _("and just a year\n"));
 		strcpy(pdinfo->stobs, year);
 		pdinfo->sd0 = atof(pdinfo->stobs);
 		/* need more checking!! FIXME */
@@ -1564,7 +1564,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 	    if (lbl1[4] == '.' || lbl1[4] == ':' || lbl1[4] == 'Q') {
 		strcpy(subper, lbl1+5);
 		if (n1 == 6) {
-		    pprintf(prn, "quarter %s?\n", subper);
+		    pprintf(prn, _("quarter %s?\n"), subper);
 		    sprintf(pdinfo->stobs, "%s.%s", year, subper);
 		    pdinfo->sd0 = atof(pdinfo->stobs);
 		    strncpy(pdinfo->endobs, lbl2, 4);
@@ -1574,7 +1574,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		    return 4;
 		}
 		if (n1 == 7) {
-		    pprintf(prn, "month %s?\n", subper);
+		    pprintf(prn, _("month %s?\n"), subper);
 		    sprintf(pdinfo->stobs, "%s.%s", year, subper);
 		    pdinfo->sd0 = atof(pdinfo->stobs);
 		    strncpy(pdinfo->endobs, lbl2, 4);
@@ -1584,7 +1584,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		    return 12;
 		}
 	    }
-	} else pprintf(prn, "   definitely not a four-digit year\n");
+	} else pprintf(prn, _("   definitely not a four-digit year\n"));
     }
 
     return -1;
@@ -1595,21 +1595,21 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 static int check_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo, 
 			    PRN *prn)
 {
-    pprintf(prn, "Checking for conformability with present data set...\n");
+    pprintf(prn, _("Checking for conformability with present data set...\n"));
     if (pdinfo->n != pcinfo->n) {
-	pprintf(prn, "   Number of observations does not match.\n");
+	pprintf(prn, _("   Number of observations does not match.\n"));
 	return 1;
     }
     if (pdinfo->pd != pcinfo->pd) {
-	pprintf(prn, "   Frequency does not match.\n");
+	pprintf(prn, _("   Frequency does not match.\n"));
 	return 1;
     }
     if (strcmp(pdinfo->stobs, pcinfo->stobs)) {
-	pprintf(prn, "   Starting observation does not match.\n");
+	pprintf(prn, _("   Starting observation does not match.\n"));
 	return 1;
     } 
     if (strcmp(pdinfo->endobs, pcinfo->endobs)) {
-	pprintf(prn, "   Ending observation does not match.\n");
+	pprintf(prn, _("   Ending observation does not match.\n"));
 	return 1;
     }
     pprintf(prn, "   OK.\n");
@@ -1623,9 +1623,9 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
 {
     int i, t, newvars = pcinfo->v, oldvars = pdinfo->v;
 
-    pprintf(prn, "Attempting data merge...\n");
+    pprintf(prn, _("Attempting data merge...\n"));
     if (dataset_add_vars(newvars - 1, pZ, pdinfo)) {
-	pprintf(prn, "   Out of memory.\n");
+	pprintf(prn, _("   Out of memory.\n"));
 	return E_ALLOC;
     }
     for (i=1; i<newvars; i++) {
@@ -1635,7 +1635,7 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
     }  
     free_Z(*csvZ, pcinfo);
     clear_datainfo(pcinfo, CLEAR_FULL);
-    pprintf(prn, "   OK, I think.\n");
+    pprintf(prn, _("   OK, I think.\n"));
     return 0;
 }
 
@@ -1683,45 +1683,45 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     FILE *fp;
     DATAINFO *csvinfo;
     double **csvZ = NULL;
-    const char *msg = "\nPlease note:\n"
+    const char *msg = _("\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
 	"names of the variables.\n"
 	"- The first column may optionally contain date "
 	"strings or other 'markers':\n  in that case its row 1 entry "
 	"should be blank, or should say 'obs' or 'date'.\n"
 	"- The remainder of the file must be a rectangular "
-	"array of data.\n";
+	"array of data.\n");
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, "couldn't open %s\n", fname);
+	pprintf(prn, _("couldn't open %s\n"), fname);
 	return 1;
     }
 
     csvinfo = datainfo_new();
     if (csvinfo == NULL) {
-	pprintf(prn, "Out of memory\n");
+	pprintf(prn, _("Out of memory\n"));
 	return 1;
     }
 
-    pprintf(prn, "parsing %s...\n", fname);
+    pprintf(prn, _("parsing %s...\n"), fname);
 
     /* count chars and fields in first line */
     if (fread(&cbak, 1, 1, fp) == 0 || cbak == '\n') {
-	pprintf(prn, "   empty first line!\n");
+	pprintf(prn, _("   empty first line!\n"));
 	fclose(fp);
 	return 1;
     }
     if (cbak == ',') {
 	blank_1 = 1;
-	pprintf(prn, "   first field is blank (dates?)\n");
+	pprintf(prn, _("   first field is blank (dates?)\n"));
 	ncols++;
     }
     maxlen++;
     while (fread(&c, 1, 1, fp)) {
 	if ((c == '\n' || c == '\r') && cbak == ',') {
 	    bad_commas = 1;
-	    pprintf(prn, "   file has trailing commas (lame)\n");
+	    pprintf(prn, _("   file has trailing commas (lame)\n"));
 	}
 	if (c == '\n') break;
 	cbak = c;
@@ -1730,7 +1730,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
     if (!bad_commas) ncols++;
 
-    pprintf(prn, "   number of columns = %d\n", ncols);
+    pprintf(prn, _("   number of columns = %d\n"), ncols);
 
     /* now count remaining non-blank rows, checking for fields */
     chkcols = (bad_commas)? -1: 0;
@@ -1745,7 +1745,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		chkcols += 1; 
 		csvinfo->n += 1;
 		if (chkcols != ncols) {
-		    pprintf(prn, "   ...but row %d has %d fields: aborting\n",
+		    pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
 			    csvinfo->n, chkcols);
 		    fclose(fp);
 		    pprintf(prn, msg);
@@ -1756,7 +1756,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    chkcols = (bad_commas)? -1: 0;
 	}
     }
-    pprintf(prn, "   longest line: %d characters\n", maxlen + 1);
+    pprintf(prn, _("   longest line: %d characters\n"), maxlen + 1);
 
     if (!blank_1) {
 	rewind(fp);
@@ -1767,18 +1767,18 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	}
 	field_1[i-1] = '\0';
 	delchar('"', field_1);
-	pprintf(prn, "   first field: '%s'\n", field_1);
+	pprintf(prn, _("   first field: '%s'\n"), field_1);
 	lower(field_1);
 	if (strcmp(field_1, "obs") == 0 || strcmp(field_1, "date") == 0) {
-	    pprintf(prn, "   seems to be observation label\n");
+	    pprintf(prn, _("   seems to be observation label\n"));
 	    obs_1 = 1;
 	    skipvar = 1;
 	}
     }
 
     csvinfo->v = (blank_1 || obs_1)? ncols: ncols + 1;
-    pprintf(prn, "   number of variables: %d\n", csvinfo->v - 1);
-    pprintf(prn, "   number of non-blank lines: %d\n", 
+    pprintf(prn, _("   number of variables: %d\n"), csvinfo->v - 1);
+    pprintf(prn, _("   number of non-blank lines: %d\n"), 
 	    csvinfo->n + 1);
 
     fclose(fp);
@@ -1803,12 +1803,12 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* parse the variable names, truncating to 8 chars */
-    pprintf(prn, "scanning for variable names...\n");
+    pprintf(prn, _("scanning for variable names...\n"));
     fgets(line, maxlen + 1, fp);
     trim_csv_line(line);
     delchar(' ', line);
     delchar('"', line);
-    pprintf(prn, "   line: %s\n", line);
+    pprintf(prn, _("   line: %s\n"), line);
     n = strlen(line);
     k = 0;
     for (i=0; i<n; i++) {
@@ -1819,7 +1819,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	varname[j] = '\0';
 	k++;
 	if (strlen(varname) == 0 || varname[0] == '\n') {
-	    pprintf(prn, "   variable name %d is missing: aborting\n", k);
+	    pprintf(prn, _("   variable name %d is missing: aborting\n"), k);
 	    pprintf(prn, msg);
 	    fclose(fp);
 	    free(line);
@@ -1830,7 +1830,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    k--;
 	    skipvar = 0;
 	} else {
-	    pprintf(prn, "   variable %d: '%s'\n", k, varname); 
+	    pprintf(prn, _("   variable %d: '%s'\n"), k, varname); 
 	    strcpy(csvinfo->varname[k], varname);
 	} 
 	if (k == csvinfo->v - 1) break;
@@ -1838,7 +1838,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    while (line[i+1] != ',') i++;
     }
 
-    pprintf(prn, "scanning for row labels and data...\n");
+    pprintf(prn, _("scanning for row labels and data...\n"));
     for (t=0; t<csvinfo->n; t++) {
 	ok = 0;
 	fgets(line, maxlen + 1, fp);
@@ -1875,11 +1875,11 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    if (strlen(numstr) == 0 || numstr[0] == '\n' ||
 		strcmp(numstr, "NA") == 0) {
 		if (numstr[0] == 'N') 
-		    pprintf(prn, "   warning: missing value for variable "
-			    "%d, obs %d\n", k, t+1);
+		    pprintf(prn, _("   warning: missing value for variable "
+			    "%d, obs %d\n"), k, t+1);
 		else 
-		    pprintf(prn, "   the cell for variable %d, obs %d "
-			    "is empty: treating as missing value\n", 
+		    pprintf(prn, _("   the cell for variable %d, obs %d "
+			    "is empty: treating as missing value\n"), 
 			    k, t+1);
 		missval = 1;
 	    } 
@@ -1906,9 +1906,9 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     csvinfo->t2 = csvinfo->n - 1;
     if (blank_1 || obs_1) markertest = test_label(csvinfo, prn);
     if ((blank_1 || obs_1) && (markertest > 0))
-	pprintf(prn, "taking date information from row labels\n\n");
+	pprintf(prn, _("taking date information from row labels\n\n"));
     else {
-	pprintf(prn, "treating these as undated data\n\n");
+	pprintf(prn, _("treating these as undated data\n\n"));
 	dataset_dates_defaults(csvinfo);
     }	
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
@@ -2034,17 +2034,17 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	pprintf(prn, "couldn't open %s\n", fname);
+	pprintf(prn, _("couldn't open %s\n"), fname);
 	return 1;
     }
 
     boxinfo = datainfo_new();
     if (boxinfo == NULL) {
-	pprintf(prn, "Out of memory\n");
+	pprintf(prn, _("Out of memory\n"));
 	return 1;
     }
 
-    pprintf(prn, "parsing %s...\n", fname);
+    pprintf(prn, _("parsing %s...\n"), fname);
 
     /* first pass: find max line length, number of vars and number
        of observations, plus basic sanity check */
@@ -2053,8 +2053,8 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     do {
 	c = getc(fp); 
 	if (c != EOF && c != 10 && !isprint((unsigned char) c)) {
-	    pprintf(prn, "Binary data (%d) encountered: this is not a valid "
-		   "BOX1 file\n", c);
+	    pprintf(prn, _("Binary data (%d) encountered: this is not a valid "
+		   "BOX1 file\n"), c);
 	    fclose(fp);
 	    return 1;
 	}
@@ -2075,13 +2075,13 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     } while (c != EOF);
     fclose(fp);
 
-    pprintf(prn, "   found %d variables\n", boxinfo->v - 1);
-    pprintf(prn, "   found %d observations\n", boxinfo->n);
-    pprintf(prn, "   longest line = %d characters\n", maxline); 
+    pprintf(prn, _("   found %d variables\n"), boxinfo->v - 1);
+    pprintf(prn, _("   found %d observations\n"), boxinfo->n);
+    pprintf(prn, _("   longest line = %d characters\n"), maxline); 
     maxline += 2;
 
     /* allocate space for data etc */
-    pprintf(prn, "allocating memory for data... ");
+    pprintf(prn, _("allocating memory for data... "));
     if (start_new_Z(&boxZ, boxinfo, 0)) return E_ALLOC;
     varstart = malloc((boxinfo->v - 1) * sizeof *varstart);
     if (varstart == NULL) return E_ALLOC;
@@ -2089,11 +2089,11 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
     if (varsize == NULL) return E_ALLOC;
     line = malloc(maxline);
     if (line == NULL) return E_ALLOC;
-    pprintf(prn, "done\n");
+    pprintf(prn, _("done\n"));
 
     fp = fopen(fname, "r");
     if (fp == NULL) return 1;
-    pprintf(prn, "reading variable information...\n");
+    pprintf(prn, _("reading variable information...\n"));
 
     /* second pass: get detailed info on variables */
     v = 0; realv = 1; t = 0;
@@ -2113,11 +2113,11 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	    boxinfo->varname[realv][8] = '\0';
 	    unspace(boxinfo->varname[realv]);
 	    lower(boxinfo->varname[realv]);
-	    pprintf(prn, " variable %d: '%s'\n", v+1, boxinfo->varname[realv]);
+	    pprintf(prn, _(" variable %d: '%s'\n"), v+1, boxinfo->varname[realv]);
 #ifdef notdef  
 	    /* This is wrong!  How do you identify character data? */
 	    if (line[51] != '2') {
-		pprintf(prn, "   Non-numeric data: will be skipped\n");
+		pprintf(prn, _("   Non-numeric data: will be skipped\n"));
 		varstart[v] = 0;
 		varsize[v] = 0;
 		v++;
@@ -2127,25 +2127,25 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	    strncpy(tmp, line+52, 6);
 	    tmp[6] = '\0';
 	    varstart[v] = atoi(tmp) - 1;
-	    pprintf(prn, "   starting col. %d, ", varstart[v]);
+	    pprintf(prn, _("   starting col. %d, "), varstart[v]);
 	    strncpy(tmp, line+58, 4);
 	    tmp[4] = '\0';
 	    varsize[v] = atoi(tmp);
-	    pprintf(prn, "field width %d, ", varsize[v]);
+	    pprintf(prn, _("field width %d, "), varsize[v]);
 	    strncpy(tmp, line+62, 2);
 	    tmp[2] = '\0';
-	    pprintf(prn, "decimal places %d\n", atoi(tmp));
+	    pprintf(prn, _("decimal places %d\n"), atoi(tmp));
 	    tmp[0] = '\0';
 	    strncpy(tmp, line+64, 20);
 	    tmp[20] = '\0';
 	    unspace(tmp);
 	    if (strlen(tmp))
-		pprintf(prn, "   Warning: coded variable (format '%s' "
-			"in BOX file)\n", tmp);
+		pprintf(prn, _("   Warning: coded variable (format '%s' "
+			"in BOX file)\n"), tmp);
 	    strncpy(boxinfo->label[realv], line+87, 99);
 	    boxinfo->label[realv][99] = '\0';
 	    unspace(boxinfo->label[realv]);
-	    pprintf(prn, "   definition: '%s'\n", boxinfo->label[realv]);
+	    pprintf(prn, _("   definition: '%s'\n"), boxinfo->label[realv]);
 	    realv++;
 	    v++;
 	    break;
@@ -2163,25 +2163,25 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 		top_n_tail(tmp);
 		x = strtod(tmp, &test);
 #ifdef BOX_DEBUG
-		fprintf(stderr, "read %d chars from pos %d: '%s' -> %g\n",
+		fprintf(stderr, _("read %d chars from pos %d: '%s' -> %g\n"),
 			varsize[i], varstart[i], tmp, x); 
 #endif
 		if (!strcmp(tmp, test)) {
-		    pprintf(prn, "'%s' -- no numeric conversion performed!\n", 
+		    pprintf(prn, _("'%s' -- no numeric conversion performed!\n"), 
 			    tmp);
 		    x = -999.0;
 		}
 		if (test[0] != '\0') {
 		    if (isprint(test[0]))
-			pprintf(prn, "Extraneous character '%c' in data\n", 
+			pprintf(prn, _("Extraneous character '%c' in data\n"), 
 				test[0]);
 		    else
-			pprintf(prn, "Extraneous character (0x%x) in data\n", 
+			pprintf(prn, _("Extraneous character (0x%x) in data\n"), 
 				test[0]);
 		    x = -999.0;
 		}
 		if (errno == ERANGE) {
-		    pprintf(prn, "'%s' -- number out of range!\n", tmp);
+		    pprintf(prn, _("'%s' -- number out of range!\n"), tmp);
 		    x = -999.0;
 		}
 		boxZ[realv][t] = x;
@@ -2198,7 +2198,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    pprintf(prn, "done reading data\n");
+    pprintf(prn, _("done reading data\n"));
     fclose(fp);
 
     free(varstart);
@@ -2209,7 +2209,7 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 
     if (dumpvars) {
 	dataset_drop_vars(dumpvars, &boxZ, boxinfo);
-	pprintf(prn, "Warning: discarded %d non-numeric variable(s)\n", 
+	pprintf(prn, _("Warning: discarded %d non-numeric variable(s)\n"), 
 		dumpvars);
     }
 
@@ -2353,13 +2353,13 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     case GRETL_CSV_DATA: 
 	if (comma) return GRETL_CSV_DATA;
 	else {
-	    pprintf(prn, "csv file seems to be malformed\n");
+	    pprintf(prn, _("csv file seems to be malformed\n"));
 	    return GRETL_UNRECOGNIZED;
 	}
     case GRETL_BOX_DATA: 
 	if (strcmp(teststr, "00**") == 0) return GRETL_BOX_DATA;
 	else {
-	    pprintf(prn, "box file seems to be malformed\n");
+	    pprintf(prn, _("box file seems to be malformed\n"));
 	    return GRETL_UNRECOGNIZED;
 	}
     }
@@ -2407,7 +2407,7 @@ static char *xml_encode (char *buf)
 
     xmlbuf = malloc(sz);
     if (xmlbuf == NULL) {
-	sprintf(gretl_errmsg, "out of memory in XML encoding");
+	sprintf(gretl_errmsg, _("out of memory in XML encoding"));
 	return NULL;
     }
 #ifdef XML_DEBUG
@@ -2478,19 +2478,19 @@ static int write_xmldata (const char *fname, const int *list,
 	if (fp == NULL) err = 1;
     }
     if (err) {
-	sprintf(gretl_errmsg, "Couldn't open %s for writing", fname);
+	sprintf(gretl_errmsg, _("Couldn't open %s for writing"), fname);
 	return 1;
     }
 
     pmax = malloc(list[0] * sizeof *pmax);
     if (pmax == NULL) {
-	sprintf(gretl_errmsg, "Out of memory");
+	sprintf(gretl_errmsg, _("Out of memory"));
 	return 1;
     } 
 
     sz = (tsamp * pdinfo->v * sizeof(double));
     if (sz > 100000) {
-	fprintf(stderr, "Writing %ld Kbytes of data\n", sz / 1024);
+	fprintf(stderr, _("Writing %ld Kbytes of data\n"), sz / 1024);
 	if (ppaths == NULL) sz = 0L;
     } else sz = 0L;
 
@@ -2665,17 +2665,17 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	if (sscanf(tmp, "%d", &v) == 1) {
 	    pdinfo->v = v + 1;
 	} else {
-	    sprintf(gretl_errmsg, "Failed to parse count of variables");
+	    sprintf(gretl_errmsg, _("Failed to parse count of variables"));
 	    err = 1;
 	}
 	if (!err && dataset_allocate_varnames(pdinfo)) {
-	    sprintf(gretl_errmsg, "Out of memory reading data file");
+	    sprintf(gretl_errmsg, _("Out of memory reading data file"));
 	    err = 1;
 	}
 	if (!err) {
 	    *pZ = malloc(pdinfo->v * sizeof **pZ);
 	    if (*pZ == NULL) {
-		sprintf(gretl_errmsg, "Out of memory reading data file");
+		sprintf(gretl_errmsg, _("Out of memory reading data file"));
 		err = 1;
 	    }
 	}		
@@ -2683,7 +2683,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	if (err) return 1;
     }
     else {
-	sprintf(gretl_errmsg, "Got no variables");
+	sprintf(gretl_errmsg, _("Got no variables"));
 	return 1;
     }
 
@@ -2693,7 +2693,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	cur = cur->next;
     }
     if (cur == 0) {
-	sprintf(gretl_errmsg, "Got no variables");
+	sprintf(gretl_errmsg, _("Got no variables"));
 	return 1;
     }
 
@@ -2706,7 +2706,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		pdinfo->varname[i][8] = '\0';
 		free(tmp);
 	    } else {
-		sprintf(gretl_errmsg, "Variable %d has no name", i);
+		sprintf(gretl_errmsg, _("Variable %d has no name"), i);
 		return 1;
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
@@ -2737,7 +2737,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     }
    
     if (i != pdinfo->v) {
-	sprintf(gretl_errmsg, "Number of variables does not match declaration");
+	sprintf(gretl_errmsg, _("Number of variables does not match declaration"));
 	return 1;
     }
     else return 0;
@@ -2753,7 +2753,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	s = strpbrk(s, "01234567890+-NA");
 	if (!strncmp(s, "NA", 2)) x = NADBL;
 	else if (*s && (sscanf(s, "%lf", &x) != 1)) {
-	    sprintf(gretl_errmsg, "Failed to parse data values at obs %d", t+1);
+	    sprintf(gretl_errmsg, _("Failed to parse data values at obs %d"), t+1);
 	    return 1;
 	}
 	Z[i][t] = x;
@@ -2789,7 +2789,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	if (sscanf(tmp, "%d", &n) == 1) 
 	    pdinfo->n = n;
 	else {
-	    sprintf(gretl_errmsg, "Failed to parse number of observations");
+	    sprintf(gretl_errmsg, _("Failed to parse number of observations"));
 	    return 1;
 	}
 	free(tmp);
@@ -2805,8 +2805,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		return 1;
 	    }
 	} else if (strcmp(tmp, "false")) {
-	    sprintf(gretl_errmsg, "labels attribute for observations must be "
-		    "'true' or 'false'");
+	    sprintf(gretl_errmsg, _("labels attribute for observations must be "
+		    "'true' or 'false'"));
 	    return 1;
 	}
 	free(tmp);
@@ -2833,7 +2833,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	cur = cur->next;
     }
     if (cur == 0) {
-	sprintf(gretl_errmsg, "Got no observations\n");
+	sprintf(gretl_errmsg, _("Got no observations\n"));
 	return 1;
     }
 
@@ -2849,7 +2849,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    pdinfo->S[t][8] = '\0';
 		    free(tmp);
 		} else {
-		    sprintf(gretl_errmsg, "Case marker missing at obs %d", t+1);
+		    sprintf(gretl_errmsg, _("Case marker missing at obs %d"), t+1);
 		    return 1;
 		}
 	    }
@@ -2860,7 +2860,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		free(tmp);
 		t++;
 	    } else {
-		sprintf(gretl_errmsg, "Values missing at observation %d", t+1);
+		sprintf(gretl_errmsg, _("Values missing at observation %d"), t+1);
 		return 1;
 	    }
 	}	    
@@ -2875,7 +2875,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     }
 
     if (t != pdinfo->n) {
-	sprintf(gretl_errmsg, "Number of observations does not match declaration");
+	sprintf(gretl_errmsg, _("Number of observations does not match declaration"));
 	return 1;
     }
     else return 0;
@@ -2926,15 +2926,15 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     fsz = get_filesize(fname);
     if (fsz > 100000) {
-	    fprintf(stderr, "%s %ld bytes of data...\n", 
-		    (is_gzipped(fname))? "Uncompressing" : "Reading",
+	    fprintf(stderr, _("%s %ld bytes of data...\n"), 
+		    (is_gzipped(fname))? _("Uncompressing") : _("Reading"),
 		    fsz);
 	    if (gui) progress = fsz;
     }
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(gretl_errmsg, "xmlParseFile failed on %s", fname);
+	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
 	return 1;
     }
 
@@ -2943,13 +2943,13 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(gretl_errmsg, "%s: empty document", fname);
+        sprintf(gretl_errmsg, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
-        sprintf(gretl_errmsg, "File of the wrong type, root node not gretldata");
+        sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -2958,7 +2958,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     tmp = xmlGetProp(cur, (UTF) "type");
     if (tmp == NULL) {
 	sprintf(gretl_errmsg, 
-		"Required attribute 'type' is missing from data file");
+		_("Required attribute 'type' is missing from data file"));
 	return 1;
     } else {
 	if (!strcmp(tmp, "cross-section")) 
@@ -2970,7 +2970,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	else if (!strcmp(tmp, "stacked-cross-section"))
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	else {
-	    sprintf(gretl_errmsg, "Unrecognized type attribute for data file");
+	    sprintf(gretl_errmsg, _("Unrecognized type attribute for data file"));
 	    return 1;
 	}
 	free(tmp);
@@ -2983,7 +2983,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	if (sscanf(tmp, "%d", &pd) == 1)
 	    pdinfo->pd = pd;
 	else {
-	    strcpy(gretl_errmsg, "Failed to parse data frequency");
+	    strcpy(gretl_errmsg, _("Failed to parse data frequency"));
 	    return 1;
 	}
 	free(tmp);
@@ -3004,7 +3004,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    else pdinfo->sd0 = atof(tmp);
 	}
 	if (err) {
-	    strcpy(gretl_errmsg, "Failed to parse startobs");
+	    strcpy(gretl_errmsg, _("Failed to parse startobs"));
 	    return 1;
 	}
 	strncpy(pdinfo->stobs, tmp, 8);
@@ -3025,7 +3025,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
 	} 
 	if (err) {
-	    strcpy(gretl_errmsg, "Failed to parse endobs");
+	    strcpy(gretl_errmsg, _("Failed to parse endobs"));
 	    return 1;
 	}
 	strncpy(pdinfo->endobs, tmp, 8);
@@ -3047,7 +3047,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
 	    if (!gotvars) {
-		sprintf(gretl_errmsg, "Variables information is missing");
+		sprintf(gretl_errmsg, _("Variables information is missing"));
 		return 1;
 	    }
 	    if (process_observations(doc, cur, pZ, pdinfo, ppaths, progress)) 
@@ -3062,11 +3062,11 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlCleanupParser();
 
     if (!gotvars) {
-	sprintf(gretl_errmsg, "Variables information is missing");
+	sprintf(gretl_errmsg, _("Variables information is missing"));
 	return 1;
     }
     if (!gotobs) {
-	sprintf(gretl_errmsg, "No observations were found");
+	sprintf(gretl_errmsg, _("No observations were found"));
 	return 1;
     }
 
@@ -3074,9 +3074,9 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     ppaths->hdrfile[0] = '\0';
     ppaths->lblfile[0] = '\0';
 
-    pprintf(prn, "\nRead datafile %s\n", fname);
-    pprintf(prn, "periodicity: %d, maxobs: %d, "
-	   "observations range: %s-%s\n\n", pdinfo->pd, pdinfo->n,
+    pprintf(prn, _("\nRead datafile %s\n"), fname);
+    pprintf(prn, _("periodicity: %d, maxobs: %d, "
+	   "observations range: %s-%s\n\n"), pdinfo->pd, pdinfo->n,
 	    pdinfo->stobs, pdinfo->endobs);
 
     return 0;
@@ -3105,19 +3105,19 @@ char *get_xml_description (const char *fname)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(gretl_errmsg, "xmlParseFile failed on %s", fname);
+	sprintf(gretl_errmsg, _("xmlParseFile failed on %s"), fname);
 	return NULL;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(gretl_errmsg, "%s: empty document", fname);
+        sprintf(gretl_errmsg, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return NULL;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
-        sprintf(gretl_errmsg, "File of the wrong type, root node not gretldata");
+        sprintf(gretl_errmsg, _("File of the wrong type, root node not gretldata"));
 	xmlFreeDoc(doc);
 	return NULL;
     }

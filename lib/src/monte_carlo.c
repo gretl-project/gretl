@@ -94,7 +94,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	if (v > 0 && v < pdinfo->v) ploop->lvar = v;
 	else {
 	    sprintf(gretl_errmsg, 
-		    "Undefined variable '%s' in loop condition.", lvar);
+		    _("Undefined variable '%s' in loop condition."), lvar);
 	    return 1;
 	}
 	if (isdigit((unsigned char) rvar[0]) 
@@ -108,7 +108,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 	    return 0;
 	} else {
 	    sprintf(gretl_errmsg, 
-		    "Undefined variable '%s' in loop condition.", rvar);
+		    _("Undefined variable '%s' in loop condition."), rvar);
 	    ploop->lvar = 0;
 	    return 1;
 	}
@@ -118,13 +118,13 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     else if (sscanf(line, "loop for %[^= ] = %d..%d", lvar, &start, &end) == 3) {
 	if (strcmp(lvar, "i")) {
 	    sprintf(gretl_errmsg, 
-		    "The index variable in a 'for' loop must be the "
-		    "special variable 'i'");
+		    _("The index variable in a 'for' loop must be the "
+		    "special variable 'i'"));
 	    return 1;
 	}
 	if (end <= start) {
-	    sprintf(gretl_errmsg, "Ending value for loop index must be greater "
-		    "than starting value.");
+	    sprintf(gretl_errmsg, _("Ending value for loop index must be greater "
+		    "than starting value."));
 	    return 1;
 	}
 	/* initialize special genr index to starting value */
@@ -142,7 +142,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     }
 
     /* out of options, complain */
-    strcpy(gretl_errmsg, "No valid loop condition was given.");
+    strcpy(gretl_errmsg, _("No valid loop condition was given."));
     return 1;
 }
 
@@ -485,7 +485,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
     MODEL *pmod = NULL;
 
     if (ploop->lvar && ploop->lvar != INDEXNUM) 
-	pprintf(prn, "\nNumber of iterations: %d\n\n", ploop->ntimes);
+	pprintf(prn, _("\nNumber of iterations: %d\n\n"), ploop->ntimes);
 
     for (i=0; i<ploop->ncmds; i++) {
 	/*  pprintf(prn, "loop command %d: %s\n\n", i+1, ploop->lines[i]); */
@@ -590,18 +590,18 @@ static void _print_loop_model (LOOP_MODEL *plmod, const int loopnum,
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
-    pprintf(prn, "OLS estimates using the %d observations %s-%s\n",
+    pprintf(prn, _("OLS estimates using the %d observations %s-%s\n"),
 	   t2-t1+1, startdate, enddate);
-    pprintf(prn, "Statistics for %d repetitions\n", loopnum); 
-    pprintf(prn, "Dependent variable: %s\n\n", 
+    pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
+    pprintf(prn, _("Dependent variable: %s\n\n"), 
 	   pdinfo->varname[plmod->list[1]]);
 
-    pprintf(prn, "                     mean of      std. dev. of     mean of"
+    pprintf(prn, _("                     mean of      std. dev. of     mean of"
 	    "     std. dev. of\n"
 	    "                    estimated      estimated"
 	    "      estimated      estimated\n"
 	    "      Variable     coefficients   coefficients   std. errors"
-	    "    std. errors\n\n");
+	    "    std. errors\n\n"));
     for (i=1;i<=nc; i++) 
 	_print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
     pprintf(prn, "\n");
@@ -639,7 +639,7 @@ static void _print_loop_prn (LOOP_PRINT *pprn, const int n,
 
     if (pprn == NULL) return;
 
-    pprintf(prn, "   Variable     mean         std. dev.\n");
+    pprintf(prn, _("   Variable     mean         std. dev.\n"));
     for (i=1; i<=pprn->list[0]; i++) {
 	mean = pprn->sum[i-1] / n;
 	var = (pprn->ssq[i-1] - n * mean * mean) / n;
@@ -674,8 +674,8 @@ static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     writetime = time(NULL);
     fd = fopen(hdrfile, "w");
     if (fd == NULL) return 1;
-    pprintf(prn, "printing data header info to %s\n", hdrfile);
-    fprintf(fd, "(*\n simulation data written %s\n*)\n", 
+    pprintf(prn, _("printing data header info to %s\n"), hdrfile);
+    fprintf(fd, _("(*\n simulation data written %s\n*)\n"), 
 	    ctime(&writetime));
     for (i=0; i<ploop->nstore; i++)
 	fprintf(fd, "%s ", ploop->storename[i]);
@@ -692,7 +692,7 @@ static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     /* print to data file */
     fd = fopen(datfile, "w");    
     if (fd == NULL) return 1;
-    pprintf(prn, "printing %d values of variables to %s\n", 
+    pprintf(prn, _("printing %d values of variables to %s\n"), 
 	    ploop->ntimes, datfile);
     for (t=0; t<ploop->ntimes; t++) {
 	for (i=0; i<ploop->nstore; i++) 
@@ -753,7 +753,7 @@ void get_cmd_ci (const char *line, CMD *command)
     }
     if ((command->ci = command_number(command->cmd)) == 0) {
 	command->errcode = 1;
-	sprintf(gretl_errmsg, "command \"%s\" not recognized", 
+	sprintf(gretl_errmsg, _("command \"%s\" not recognized"), 
 		command->cmd);
 	return;
     }    

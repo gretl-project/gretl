@@ -183,8 +183,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if ((missv = _adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
 			      *pZ, n, &misst))) {
 	if (!dated_daily_data(pdinfo)) {
-	    sprintf(gretl_errmsg, "Missing value encountered for "
-		    "variable %d, obs %d", missv, misst);
+	    sprintf(gretl_errmsg, _("Missing value encountered for "
+		    "variable %d, obs %d"), missv, misst);
 	    model.errcode = E_DATA;
 	    return model;
 	} else {
@@ -248,8 +248,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* check degrees of freedom */
     if (model.nobs < model.ncoeff) { 
 	model.errcode = E_DF;
-        sprintf(gretl_errmsg, "No. of obs (%d) is less than no. "
-		"of parameters (%d)", model.nobs, model.ncoeff);
+        sprintf(gretl_errmsg, _("No. of obs (%d) is less than no. "
+		"of parameters (%d)"), model.nobs, model.ncoeff);
         return model; 
     }
 
@@ -543,7 +543,7 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     if (ess < SMALL && ess > (-SMALL)) pmod->ess = ess = 0.0;
     else if (ess < 0.0) { 
         /*  pmod->errcode = E_ESS; */ 
-	sprintf(gretl_errmsg, "Error sum of squares (%g) is not > 0",
+	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
 		ess);
         return; 
     }
@@ -1017,9 +1017,9 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    rho = rho + diff;
 	}					
 	rho0 = rho = finalrho;
-	pprintf(prn, "\n\nESS is minimum for rho = %.2f\n\n", rho);
+	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
 	_graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
-	pprintf(prn, "\n\nFine-tune rho using the CORC procedure...\n\n"); 
+	pprintf(prn, _("\n\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
@@ -1028,7 +1028,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return err;
 	}
 	rho0 = rho = corc_model.rho;
-	pprintf(prn, "\nPerforming iterative calculation of rho...\n\n");
+	pprintf(prn, _("\nPerforming iterative calculation of rho...\n\n"));
     }
 
     pprintf(prn, "                 ITER       RHO        ESS\n");
@@ -1051,7 +1051,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	rho0 = rho;
 	if (iter == 20) break;
     }
-    pprintf(prn, "                final %11.5f\n\n", rho);
+    pprintf(prn, _("                final %11.5f\n\n"), rho);
     free(uhat);
     clear_model(&corc_model, NULL, NULL, pdinfo);
 
@@ -1130,9 +1130,9 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     ncoeff = list2[0];
     if (ncoeff < list1[0]-1) {
         sprintf(gretl_errmsg, 
-		"Order condition for identification is not satisfied.\n"
+		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1.", list1[0] - 1 - ncoeff);
+		"varlist1."), list1[0] - 1 - ncoeff);
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
@@ -1146,7 +1146,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 	free(s1list); free(s2list);
 	free(newlist);
 	strcpy(gretl_errmsg, 
-	       "Constant term is in varlist1 but not in varlist2");
+	       _("Constant term is in varlist1 but not in varlist2"));
 	tsls.errcode = E_UNSPEC;
 	return tsls;
     }
@@ -1306,7 +1306,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     /* now add squares */
     check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
     if (check < 1) {
-	printf("generation of squares failed\n");
+	printf(_("generation of squares failed\n"));
 	free(tmplist);
 	return E_SQUARES;
     }
@@ -1592,7 +1592,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	/* now add squares */
 	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
 	if (check < 1) {
-	    fprintf(stderr, "generation of squares failed\n");
+	    fprintf(stderr, _("generation of squares failed\n"));
 	    free(tmplist);
 	    err = E_SQUARES;
 	}
@@ -1612,7 +1612,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	err = _addtolist(pmod->list, tmplist, &list, pdinfo, 999);
 	if (err) {
 	    if (err != E_VARCHANGE) 
-		fprintf(stderr, "didn't add to list\n");
+		fprintf(stderr, _("didn't add to list\n"));
 	    else {
 		err = 0;
 	    }
@@ -1631,10 +1631,10 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	printmodel(&white, pdinfo, prn);
 
 	if (test != NULL) {
-	    strcpy(test->type, "White's test for heteroskedasticity");
-	    strcpy(test->h_0, "heteroskedasticity not present");
+	    strcpy(test->type, _("White's test for heteroskedasticity"));
+	    strcpy(test->h_0, _("heteroskedasticity not present"));
 	    sprintf(test->teststat, "TR^2 = %f", white.rsq * white.nobs);
-	    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+	    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
 		    white.ncoeff - 1, white.rsq * white.nobs, 
 		    chisq(white.rsq * white.nobs, white.ncoeff - 1));
 	}
@@ -1732,7 +1732,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     t1 = ar.t1; t2 = ar.t2;
     rholist[1] = v;
 
-    pprintf(prn, "Generalized Cochrane-Orcutt estimation\n\n");
+    pprintf(prn, _("Generalized Cochrane-Orcutt estimation\n\n"));
     _bufspace(17, prn);
     pprintf(prn, "ITER             ESS           %% CHANGE\n\n");
     /* now loop while ess is changing */
@@ -1787,7 +1787,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	ess = ar.ess;
 	pprintf(prn, "%16c%3d %20f ", ' ', iter, ess);
 	if (iter > 1) pprintf(prn, "%13.3f\n", diff);
-	else pprintf(prn, "      undefined\n"); 
+	else pprintf(prn, _("      undefined\n")); 
 	if (iter == 20) break;
     } /* end loop */
 
@@ -1799,13 +1799,13 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     ar.ID = *model_count;
     printmodel(&ar, pdinfo, prn);
 
-    pprintf(prn, "Estimates of the AR coefficients:\n\n");
+    pprintf(prn, _("Estimates of the AR coefficients:\n\n"));
     xx = 0.0;
     for (i=1; i<=arlist[0]; i++) {
 	_print_rho(arlist, &rhomod, i, prn);
 	xx += rhomod.coeff[i];
     }
-    pprintf(prn, "\nSum of AR coefficients = %f\n\n", xx);
+    pprintf(prn, _("\nSum of AR coefficients = %f\n\n"), xx);
     ar.rho_in = xx;
 
     /* special computation of fitted values */
@@ -1890,13 +1890,13 @@ static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo,
 	    }
 	    if (wtzero) {
 		list_exclude(v, pmod->list);
-		sprintf(vnamebit, "weighted %s ", pdinfo->varname[lv]);
+		sprintf(vnamebit, _("weighted %s "), pdinfo->varname[lv]);
 		strcat(pmod->infomsg, vnamebit);
 		drop = 1;
 	    }
 	}
     }
-    if (drop) strcat(pmod->infomsg, "omitted because all obs are zero.");
+    if (drop) strcat(pmod->infomsg, _("omitted because all obs are zero."));
 }
 
 /* .........................................................   */
@@ -2095,7 +2095,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     /* assess the lag order */
     if (order < 1) {
 	archmod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, "Invalid lag order for arch (%d)", order);
+	sprintf(gretl_errmsg, _("Invalid lag order for arch (%d)"), order);
 	err = 1;
     }
 
@@ -2145,27 +2145,27 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	/* print results */
 	archmod.aux = AUX_ARCH;
 	printmodel(&archmod, pdinfo, prn);
-	pprintf(prn, "No of obs. = %d, unadjusted R^2 = %f\n",
+	pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
 		archmod.nobs, archmod.rsq);
 	LM = archmod.nobs * archmod.rsq;
 	xx = chisq(LM, order);
 
 	if (test != NULL) {
-	    sprintf(test->type, "Test for ARCH of order %d", order);
-	    strcpy(test->h_0, "no ARCH effect is present");
+	    sprintf(test->type, _("Test for ARCH of order %d"), order);
+	    strcpy(test->h_0, _("no ARCH effect is present"));
 	    sprintf(test->teststat, "TR^2 = %f", LM);
-	    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+	    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
 		    order, LM, xx);
 	}
 
-	pprintf(prn, "LM test statistic (%f) is distributed as Chi-square "
-		"(%d)\nArea to the right of LM = %f  ", LM, order, xx);
+	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
+		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);
 	if (xx > 0.1) 
-	    pprintf(prn, "\nARCH effect is insignificant at the 10 "
-		    "percent level.\nWeighted estimation not done.\n");
+	    pprintf(prn, _("\nARCH effect is insignificant at the 10 "
+		    "percent level.\nWeighted estimation not done.\n"));
 	else {
-	    pprintf(prn, "\nARCH effect is significant at the 10 "
-		    "percent level.\n");
+	    pprintf(prn, _("\nARCH effect is significant at the 10 "
+		    "percent level.\n"));
 	    /* weighted estimation */
 	    wlist = malloc((list[0] + 2) * sizeof *wlist);
 	    if (wlist == NULL) {

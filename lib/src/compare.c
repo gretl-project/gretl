@@ -147,7 +147,7 @@ static int _justreplaced (const int i, const DATAINFO *pdinfo,
     int j, repl = 0;
 
     for (j=1; j<=list[0]; j++) {
-	if (strncmp(pdinfo->label[list[j]], "Replaced", 8) == 0 &&
+	if (strncmp(pdinfo->label[list[j]], _("Replaced"), 8) == 0 &&
 	    sscanf(pdinfo->label[list[j]], "%*s %*s %*s %d", &repl) == 1)
 	if (repl >= i) return 1;
     }
@@ -381,11 +381,11 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 		if (test) {
 		    df = newlist[0] - orig->list[0];
-		    sprintf(test->type, "Non-linearity test (%s)",
-			    (aux_code == AUX_SQ)? "squares" : "logs");
-		    strcpy(test->h_0, "relationship is linear");
+		    sprintf(test->type, _("Non-linearity test (%s)"),
+			    (aux_code == AUX_SQ)? _("squares") : _("logs"));
+		    strcpy(test->h_0, _("relationship is linear"));
 		    sprintf(test->teststat, "TR^2 = %f", trsq);
-		    sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+		    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
 			    df, trsq, chisq(trsq, df));
 		}
 	    } /* ! aux.errcode */
@@ -586,11 +586,11 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	for (t = pmod->t1; t<= pmod->t2; t++)
 	    (*pZ)[v][t] = pmod->uhat[t];
 	strcpy(pdinfo->varname[v], "uhat");
-	strcpy(pdinfo->label[v], "residual");
+	strcpy(pdinfo->label[v], _("residual"));
 	/* then lags of same */
 	for (i=1; i<=pdinfo->pd; i++) {
 	    if (_laggenr(v, i, 1, pZ, pdinfo)) {
-		sprintf(gretl_errmsg, "lagging uhat failed");
+		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
 	    } else 
 		newlist[pmod->list[0] + i] = v+i;
@@ -614,23 +614,23 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - pdinfo->pd)/pdinfo->pd; 
 
-	pprintf(prn, "\nTest statistic: LMF = %f,\n", LMF);
-	pprintf(prn, "with p-value = prob(F(%d,%d) > %f) = %f\n", 
+	pprintf(prn, _("\nTest statistic: LMF = %f,\n"), LMF);
+	pprintf(prn, _("with p-value = prob(F(%d,%d) > %f) = %f\n"), 
 		pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
 		fdist(LMF, pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd));
 
-	pprintf(prn, "\nAlternative statistic: TR^2 = %f,\n", trsq);
-	pprintf(prn, "with p-value = prob(Chi-square(%d) > %f) = %f\n\n", 
+	pprintf(prn, _("\nAlternative statistic: TR^2 = %f,\n"), trsq);
+	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
 		pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
 
 	if (test != NULL) {
-	    strcpy(test->type, "LM test for autocorrelation");
-	    sprintf(test->h_0, "no autocorrelation up to order %d", pdinfo->pd);
+	    strcpy(test->type, _("LM test for autocorrelation"));
+	    sprintf(test->h_0, _("no autocorrelation up to order %d"), pdinfo->pd);
 	    /* sprintf(test->teststat, "TR^2 = %f", trsq); */
 	    /* sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
 	       pdinfo->pd, trsq, chisq(trsq, pdinfo->pd)); */
 	    sprintf(test->teststat, "LMF = %f", trsq);
-	    sprintf(test->pvalue, "prob(F(%d,%d) > %f) = %f", pdinfo->pd, 
+	    sprintf(test->pvalue, _("prob(F(%d,%d) > %f) = %f"), pdinfo->pd, 
 		    aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
 		    fdist(LMF, pdinfo->pd, 
 			  aux.nobs - pmod->ncoeff - pdinfo->pd));	
@@ -710,7 +710,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	for (t=0; t<n; t++) 
 	    (*pZ)[v][t] = (double) (t > split); 
 	strcpy(pdinfo->varname[v], "splitdum");
-	strcpy(pdinfo->label[v], "dummy variable for Chow test");
+	strcpy(pdinfo->label[v], _("dummy variable for Chow test"));
 	chowlist[pmod->list[0] + 1] = v;
 
 	/* and the interaction terms */
@@ -736,15 +736,15 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    printmodel(&chow_mod, pdinfo, prn);
 	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
 		(chow_mod.ess * newvars);
-	    pprintf(prn, "\nChow test for structural break at observation %s:\n"
-		    "  F(%d, %d) = %f with p-value %f\n\n", chowdate,
+	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
+		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
 		    newvars, chow_mod.dfd, F, 
 		    fdist(F, newvars, chow_mod.dfd)); 
 
 	    if (test != NULL) {
-		sprintf(test->type, "Chow test for structural break at "
-			"observation %s", chowdate);
-		strcpy(test->h_0, "no structural break");
+		sprintf(test->type, _("Chow test for structural break at "
+			"observation %s"), chowdate);
+		strcpy(test->h_0, _("no structural break"));
 		sprintf(test->teststat, "F(%d, %d) = %f", 
 			newvars, chow_mod.dfd, F);
 		sprintf(test->pvalue, "%f", fdist(F, newvars, chow_mod.dfd));
@@ -866,8 +866,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
     if (!err) {
 	wbar /= T - K;
-	pprintf(prn, "\nCUSUM test for stability of parameters\n\n");
-	pprintf(prn, "mean of scaled residuals = %g\n", wbar);
+	pprintf(prn, _("\nCUSUM test for stability of parameters\n\n"));
+	pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
 	sigma = 0;
 	for (j=0; j<n_est; j++) {
 	    xx = (cresid[j] - wbar);
@@ -875,13 +875,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	}
 	sigma /= T - K - 1;
 	sigma = sqrt(sigma);
-	pprintf(prn, "sigmahat                 = %g\n\n", sigma);
+	pprintf(prn, _("sigmahat                 = %g\n\n"), sigma);
 
 	xx = 0.948*sqrt((double) (T-K));
 	yy = 2.0*xx/(T-K);
 
-	pprintf(prn, "Cumulated sum of scaled residuals\n"
-		"('*' indicates a value outside of 95%% confidence band):\n\n");
+	pprintf(prn, _("Cumulated sum of scaled residuals\n"
+		"('*' indicates a value outside of 95%% confidence band):\n\n"));
     
 	for (j=0; j<n_est; j++) {
 	    W[j] = 0.0;
@@ -894,12 +894,12 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		    (fabs(W[j]) > xx + (j+1)*yy)? "*" : "");
 	}
 	hct = (sqrt((double) (T-K)) * wbar) / sigma;
-	pprintf(prn, "\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n", 
+	pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
 		T-K-1, hct, tprob(hct, T-K-1));
 
 	if (test != NULL) {
-	    strcpy(test->type, "CUSUM test for parameter stability");
-	    strcpy(test->h_0, "no change in parameters");
+	    strcpy(test->type, _("CUSUM test for parameter stability"));
+	    strcpy(test->h_0, _("no change in parameters"));
 	    sprintf(test->teststat, "Harvey-Collier t(%d) = %g", T-K-1, hct);
 	    sprintf(test->pvalue, "%f", tprob(hct, T-K-1));
 	}
@@ -955,26 +955,26 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		  const PATHS *ppaths, PRN *prn) 
 {
     if (pmod->ci != POOLED) {
-	pprintf(prn, "This test is only relevant for pooled models\n");
+	pprintf(prn, _("This test is only relevant for pooled models\n"));
 	return 1;
     }
 
     if (!balanced_panel(pdinfo)) {
-	pprintf(prn, "Sorry, can't do this test on an unbalanced panel.\n"
+	pprintf(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
 		"You need to have the same number of observations\n"
-		"for each cross-sectional unit");
+		"for each cross-sectional unit"));
 	return 1;
     } else {
 	void *handle;
 	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
 
 	if (open_plugin(ppaths, "panel_data", &handle)) {
-	    pprintf(prn, "Couldn't access panel plugin\n");
+	    pprintf(prn, _("Couldn't access panel plugin\n"));
 	    return 1;
 	}
 	panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 	if (panel_diagnostics == NULL) {
-	    pprintf(prn, "Couldn't load plugin function\n");
+	    pprintf(prn, _("Couldn't load plugin function\n"));
 	    close_plugin(handle);
 	    return 1;
 	}

@@ -54,7 +54,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     size_t nn;
 
     if (list[0] != 2) {
-	pprintf(prn, "spearman command requires two variables\n");
+	pprintf(prn, _("spearman command requires two variables\n"));
 	return 1;
     }
 
@@ -147,18 +147,18 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 	xx += (rx[i] - ry[i]) * (rx[i] - ry[i]);
     yy = 1.0 - 6 * xx / (nn * (nn * nn - 1));
     xx = sqrt(1./(nn - 1));
-    pprintf(prn, "\nFor the variables '%s' and '%s'\n", pdinfo->varname[vx],
+    pprintf(prn, _("\nFor the variables '%s' and '%s'\n"), pdinfo->varname[vx],
 	    pdinfo->varname[vy]);
-    pprintf(prn, "Spearman's rank correlation coefficient (rho) = %f\n", yy);
-    pprintf(prn, "Under the null hypothesis of no correlation, rho "
-	    "follows N(0, %f)\n", xx);
+    pprintf(prn, _("Spearman's rank correlation coefficient (rho) = %f\n"), yy);
+    pprintf(prn, _("Under the null hypothesis of no correlation, rho "
+	    "follows N(0, %f)\n"), xx);
     if (nn >= 20) {
 	z = fabs(yy/xx);
-	pprintf(prn, "z-score = %f, with one-tailed p-value %f\n", z, 
+	pprintf(prn, _("z-score = %f, with one-tailed p-value %f\n"), z, 
 		normal(z));
     } else {
-	pprintf(prn, "Sample is too small to calculate a p-value based on "
-		"the normal distribution\n");
+	pprintf(prn, _("Sample is too small to calculate a p-value based on "
+		"the normal distribution\n"));
     }
 
     if (opt) { /* print raw and ranked data */
@@ -236,7 +236,7 @@ int runs_test (const int varno, double **Z, const DATAINFO *pdinfo,
 	else x[nn++] = xx;
     }
     if (nn <= 1) {
-	pprintf(prn, "\nInsufficient data for runs test\n");
+	pprintf(prn, _("\nInsufficient data for runs test\n"));
 	free(x);
 	return 1;
     }
@@ -247,11 +247,11 @@ int runs_test (const int varno, double **Z, const DATAINFO *pdinfo,
     mean = (1 + nn/2.0);
     sd = sqrt((double) n - 1)/2.0;
     z = fabs((runs - mean)/sd);
-    pprintf(prn, "\nNumber of runs (R) in the variable '%s' = %d\n", 
+    pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);
-    pprintf(prn, "Under the null hypothesis of randomness, R "
-	    "follows N(%f, %f)\n", mean, sd);
-    pprintf(prn, "z-score = %f, with two-tailed p-value %f\n", z, 
+    pprintf(prn, _("Under the null hypothesis of randomness, R "
+	    "follows N(%f, %f)\n"), mean, sd);
+    pprintf(prn, _("z-score = %f, with two-tailed p-value %f\n"), z, 
 	    2 * normal(z));    
     free(x);
     return 0;

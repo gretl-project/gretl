@@ -27,62 +27,62 @@ char gretl_errmsg[ERRLEN];
 const char *gretl_error_messages[] = {
     NULL,
     NULL,
-    "Data error",                                            /* E_DATA = 2 */
-    "Exact or near collinearity encountered",                /* E_SINGULAR */
-    "Insufficient degrees of freedom for regression",        /* E_DF */
-    "Y-prime * Y equals zero",                               /* E_YPY */
-    "Dependent variable is all zeros, aborting regression",  /* E_ZERO */
-    "Total sum of squares was not positive",                 /* E_TSS */
-    "Sum of squared residuals negative!",                    /* E_ESS */
-    "First character of new name is not a letter",           /* E_NOTALPH */
-    "You can't redefine the constant in genr",               /* E_CONST */
-    "Unbalanced parentheses in genr command",                /* E_UNBAL */
-    "Too many nested parentheses.  genr not done",           /* E_NEST */
-    "Argument must be an integer",                           /* E_NOTINTG */
-    "Sorry, command not available for this estimator",       /* E_NOTIMP */
-    "Evaluation of genr expression failed",                  /* E_IGNONZERO */
-    "Unrecognized term in genr formula",                     /* E_CASEU */
-    "Unspecified error -- FIXME",                            /* E_UNSPEC */
-    "Syntax error in genr formula",                          /* E_SYNTAX */
-    "\"getxvec\" failed in generating new variable",         /* E_ER */
-    "Unrecognized operator in genr formula",                 /* E_BADOP */
-    "This command won't work with the current periodicity",  /* E_PDWRONG */
-    "The \"-o\" flag is not implemented for this command",   /* E_OFLAG */
-    "Error attempting to open file",                         /* E_FOPEN */
-    "Out of memory error",                                   /* E_ALLOC */
-    "Missing equals sign in genr",                           /* E_NOEQ */
-    "No formula supplied in genr",                           /* E_EQN */
-    "Unknown variable name in command",                      /* E_UNKVAR */
-    "The observations specified for the regression "
-    "exceed those in the data set",                          /* E_NODATA */
-    "Command has insufficient arguments",                    /* E_ARGS */
-    "This command is implemented only for OLS models",       /* E_OLSONLY */
-    "Invalid argument for coeff, corr, stderr, rho or pvalue",  /* E_INVARG */
-    "Invalid lag order for adf command",                     /* E_ADF */
-    "Invalid sample split for Chow test",                    /* E_SPLIT */
-    "Syntax error in command line",                          /* E_PARSE */
-    "No independent variables left after omissions",         /* E_NOVARS */
-    "No independent variables were omitted",                 /* E_NOOMIT */
-    "Can't do this: some vars in original model "
-    "have been redefined",                                   /* E_VARCHANGE */
-    "No new independent variables were added",               /* E_NOADD */
-    "One or more \"added\" vars were already present",       /* E_ADDDUP */
-    "Error generating logarithms",                           /* E_LOGS */
-    "Error generating squares",                              /* E_SQUARES */
-    "Error generating lagged variables",                     /* E_LAGS */
-    "Error in auxiliary regression for rho",                 /* E_RHO */
-    "Attempting to take square root of negative number",     /* E_SQRT */
-    "Excessive exponent in genr formula",                    /* E_HIGH */
-    "Weight variable is all zeros, aborting regression",     /* E_WTZERO */
-    "Need valid starting and ending observations",           /* E_OBS */
-    "New variable name was not supplied",                    /* E_NOVAR */
-    "You must include a constant in this sort of model",     /* E_NOCONST */
-    "There were missing observations for the added "
+    _("Data error"),                                            /* E_DATA = 2 */
+    _("Exact or near collinearity encountered"),                /* E_SINGULAR */
+    _("Insufficient degrees of freedom for regression"),        /* E_DF */
+    _("Y-prime * Y equals zero"),                               /* E_YPY */
+    _("Dependent variable is all zeros, aborting regression"),  /* E_ZERO */
+    _("Total sum of squares was not positive"),                 /* E_TSS */
+    _("Sum of squared residuals negative!"),                    /* E_ESS */
+    _("First character of new name is not a letter"),           /* E_NOTALPH */
+    _("You can't redefine the constant in genr"),               /* E_CONST */
+    _("Unbalanced parentheses in genr command"),                /* E_UNBAL */
+    _("Too many nested parentheses.  genr not done"),           /* E_NEST */
+    _("Argument must be an integer"),                           /* E_NOTINTG */
+    _("Sorry, command not available for this estimator"),       /* E_NOTIMP */
+    _("Evaluation of genr expression failed"),                  /* E_IGNONZERO */
+    _("Unrecognized term in genr formula"),                     /* E_CASEU */
+    _("Unspecified error -- FIXME"),                            /* E_UNSPEC */
+    _("Syntax error in genr formula"),                          /* E_SYNTAX */
+    _("\"getxvec\" failed in generating new variable"),         /* E_ER */
+    _("Unrecognized operator in genr formula"),                 /* E_BADOP */
+    _("This command won't work with the current periodicity"),  /* E_PDWRONG */
+    _("The \"-o\" flag is not implemented for this command"),   /* E_OFLAG */
+    _("Error attempting to open file"),                         /* E_FOPEN */
+    _("Out of memory error"),                                   /* E_ALLOC */
+    _("Missing equals sign in genr"),                           /* E_NOEQ */
+    _("No formula supplied in genr"),                           /* E_EQN */
+    _("Unknown variable name in command"),                      /* E_UNKVAR */
+    _("The observations specified for the regression "
+    "exceed those in the data set"),                          /* E_NODATA */
+    _("Command has insufficient arguments"),                    /* E_ARGS */
+    _("This command is implemented only for OLS models"),       /* E_OLSONLY */
+    _("Invalid argument for coeff, corr, stderr, rho or pvalue"),  /* E_INVARG */
+    _("Invalid lag order for adf command"),                     /* E_ADF */
+    _("Invalid sample split for Chow test"),                    /* E_SPLIT */
+    _("Syntax error in command line"),                          /* E_PARSE */
+    _("No independent variables left after omissions"),         /* E_NOVARS */
+    _("No independent variables were omitted"),                 /* E_NOOMIT */
+    _("Can't do this: some vars in original model "
+    "have been redefined"),                                   /* E_VARCHANGE */
+    _("No new independent variables were added"),               /* E_NOADD */
+    _("One or more \"added\" vars were already present"),       /* E_ADDDUP */
+    _("Error generating logarithms"),                           /* E_LOGS */
+    _("Error generating squares"),                              /* E_SQUARES */
+    _("Error generating lagged variables"),                     /* E_LAGS */
+    _("Error in auxiliary regression for rho"),                 /* E_RHO */
+    _("Attempting to take square root of negative number"),     /* E_SQRT */
+    _("Excessive exponent in genr formula"),                    /* E_HIGH */
+    _("Weight variable is all zeros, aborting regression"),     /* E_WTZERO */
+    _("Need valid starting and ending observations"),           /* E_OBS */
+    _("New variable name was not supplied"),                    /* E_NOVAR */
+    _("You must include a constant in this sort of model"),     /* E_NOCONST */
+    _("There were missing observations for the added "
     "variable(s).\nReset the sample and rerun the original "
-    "regression first",                                      /* E_MISS */
-    "The statistic you requested is not meaningful "
-    "for this model",                                        /* E_BADSTAT */
-    "Missing sub-sample information; can't merge data"       /* E_NOMERGE */
+    "regression first"),                                      /* E_MISS */
+    _("The statistic you requested is not meaningful "
+    "for this model"),                                        /* E_BADSTAT */
+    _("Missing sub-sample information; can't merge data")       /* E_NOMERGE */
 };
 
 /**

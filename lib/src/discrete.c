@@ -122,8 +122,8 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     /* check that depvar is really a dummy */
     if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ, n) == 0) {
 	dmod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, "The dependent variable '%s' is not a 0/1 "
-		"variable.\n", pdinfo->varname[depvar]);
+	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
+		"variable.\n"), pdinfo->varname[depvar]);
 	return dmod;
     }
 
@@ -201,7 +201,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     if (dmod.xpx == NULL) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
-	strcpy(gretl_errmsg, "Failed to construct Hessian matrix");
+	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
 	return dmod;
     } 
     /* obtain negative inverse of Hessian */
