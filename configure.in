@@ -19,6 +19,7 @@ have_readline="no"
 new_readline="no"
 have_zlib="no"
 have_libxml="no"
+have_libole2="no"
 have_gtk="no"
 have_gtkextra="no"
 have_gnome="no"
@@ -124,6 +125,16 @@ if test x"${XMLCONF}" != x ; then
   AC_SUBST(XML_CFLAGS)
   AC_SUBST(XML_LIBS)
 fi
+
+dnl See if gnome libole2 is available
+OLE_LIBS=
+OLE_CFLAGS=`gnome-config --cflags libole2 2>/dev/null`
+OLE_LIBS=`gnome-config --libs libole2 2>/dev/null`
+if test x"${OLE_CFLAGS}" = "x" ; then
+   OLE_CFLAGS=-I.. -DHAVE_UNISTD_H
+fi
+AC_SUBST(OLE_CFLAGS)
+AC_SUBST(OLE_LIBS)
 
 dnl Checks for header files.
 AC_HEADER_STDC

@@ -10,6 +10,8 @@ LN = @LN_S@
 
 XML_CFLAGS = @XML_CFLAGS@
 XML_LIBS = @XML_LIBS@
+OLE_CFLAGS = @OLE_CFLAGS@
+OLE_LIBS = @OLE_LIBS@
 
 ifeq ($(CC),)
   CC = gcc
@@ -29,12 +31,14 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl.la
 GTKINC = `gtk-config --cflags`
 GTKLIB = `gtk-config --libs`
-OLEINC = `gnome-config --cflags libole2`
-OLELIB = `gnome-config --libs libole2`
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
 	gnumeric_import.so excel_import.so
 
+ifeq ($(OLE_LIBS),)
+  query-ms-ole.lo="ms-ole.lo"
+  vpath %.c libole2
+endif
 
 all: $(PLUGINS)
 
@@ -50,28 +54,29 @@ progress_bar.so: progress_bar.lo
 gnumeric_import.so: gnumeric_import.lo
 	$(LINK) -o $@ $< $(GTKLIB) $(GRETLLIB) $(XML_LIBS)
 
-excel_import.so: excel_import.lo workbook.lo
-	$(LINK) -o $@ $< $(GTKLIB) $(GRETLLIB) $(OLELIB)
+excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
+	$(LINK) -o $@ $^ $(GTKLIB) $(GRETLLIB) $(OLE_LIBS)
 
-%.lo : %.o
-
-stats_tables.o: stats_tables.c $(GRETLLIB) 
+stats_tables.lo: stats_tables.c $(GRETLLIB) 
 	$(COMPILE) $(GRETLINC) $< 
 
-panel_data.o: panel_data.c $(GRETLLIB)
+panel_data.lo: panel_data.c $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $< 
 
-progress_bar.o: progress_bar.c
+progress_bar.lo: progress_bar.c
 	$(COMPILE) $(GRETLINC) $(GTKINC) $< 
 
-gnumeric_import.o: gnumeric_import.c import_common.c $(GRETLLIB)
+gnumeric_import.lo: gnumeric_import.c import_common.c $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $(GTKINC) $(XML_CFLAGS) $< 
 
-excel_import.o: excel_import.c import_common.c xltypes.h $(GRETLLIB)
+excel_import.lo: excel_import.c import_common.c xltypes.h $(GRETLLIB)
 	$(COMPILE) $(GRETLINC) $(GTKINC) $<
 
-workbook.o: workbook.c biff.h
-	$(COMPILE) $(GRETLINC) $(OLEINC) $<
+workbook.lo: workbook.c biff.h
+	$(COMPILE) $(GRETLINC) $(OLE_CFLAGS) $<
+
+ms-ole.lo: ms-ole.c ms-ole.h
+	$(COMPILE) $(OLE_CFLAGS) $<
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib
@@ -94,50 +99,59 @@ clean:
 	rm -rf .libs
 
 depend:
-	makedepend -Y$(libsrc) *.c 
+	makedepend -Y$(topsrc)/lib/src -o.lo *.c 
 
 # DO NOT DELETE
 
-excel_import.o: xltypes.h
-gnumeric_import.o: ../lib/src/libgretl.h ../lib/src/commands.h
-gnumeric_import.o: ../lib/src/errors.h ../lib/src/estimate.h
-gnumeric_import.o: ../lib/src/generate.h ../lib/src/utils.h
-gnumeric_import.o: ../lib/src/compare.h ../lib/src/pvalues.h
-gnumeric_import.o: ../lib/src/dataio.h ../lib/src/strutils.h
-gnumeric_import.o: ../lib/src/describe.h ../lib/src/printout.h
-gnumeric_import.o: ../lib/src/texprint.h ../lib/src/var.h
-gnumeric_import.o: ../lib/src/interact.h ../lib/src/graphing.h
-gnumeric_import.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-gnumeric_import.o: ../lib/src/discrete.h ../lib/src/subsample.h
-gnumeric_import.o: ../lib/src/calendar.h
-panel_data.o: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
-panel_data.o: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/utils.h
-panel_data.o: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
-panel_data.o: ../lib/src/strutils.h ../lib/src/describe.h
-panel_data.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-panel_data.o: ../lib/src/interact.h ../lib/src/graphing.h
-panel_data.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-panel_data.o: ../lib/src/discrete.h ../lib/src/subsample.h
-panel_data.o: ../lib/src/calendar.h
-progress_bar.o: ../lib/src/libgretl.h ../lib/src/commands.h
-progress_bar.o: ../lib/src/errors.h ../lib/src/estimate.h
-progress_bar.o: ../lib/src/generate.h ../lib/src/utils.h ../lib/src/compare.h
-progress_bar.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-progress_bar.o: ../lib/src/strutils.h ../lib/src/describe.h
-progress_bar.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-progress_bar.o: ../lib/src/interact.h ../lib/src/graphing.h
-progress_bar.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-progress_bar.o: ../lib/src/discrete.h ../lib/src/subsample.h
-progress_bar.o: ../lib/src/calendar.h
-stats_tables.o: ../lib/src/libgretl.h ../lib/src/commands.h
-stats_tables.o: ../lib/src/errors.h ../lib/src/estimate.h
-stats_tables.o: ../lib/src/generate.h ../lib/src/utils.h ../lib/src/compare.h
-stats_tables.o: ../lib/src/pvalues.h ../lib/src/dataio.h
-stats_tables.o: ../lib/src/strutils.h ../lib/src/describe.h
-stats_tables.o: ../lib/src/printout.h ../lib/src/texprint.h ../lib/src/var.h
-stats_tables.o: ../lib/src/interact.h ../lib/src/graphing.h
-stats_tables.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-stats_tables.o: ../lib/src/discrete.h ../lib/src/subsample.h
-stats_tables.o: ../lib/src/calendar.h
-
-
+excel_import.lo: ../lib/src/libgretl.h ../lib/src/commands.h
+excel_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
+excel_import.lo: ../lib/src/generate.h ../lib/src/utils.h
+excel_import.lo: ../lib/src/compare.h ../lib/src/pvalues.h
+excel_import.lo: ../lib/src/dataio.h ../lib/src/strutils.h
+excel_import.lo: ../lib/src/describe.h ../lib/src/printout.h
+excel_import.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+excel_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+excel_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+excel_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h xltypes.h
+excel_import.lo: importer.h import_common.c
+gnumeric_import.lo: ../lib/src/libgretl.h ../lib/src/commands.h
+gnumeric_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
+gnumeric_import.lo: ../lib/src/generate.h ../lib/src/utils.h
+gnumeric_import.lo: ../lib/src/compare.h ../lib/src/pvalues.h
+gnumeric_import.lo: ../lib/src/dataio.h ../lib/src/strutils.h
+gnumeric_import.lo: ../lib/src/describe.h ../lib/src/printout.h
+gnumeric_import.lo: ../lib/src/texprint.h ../lib/src/var.h
+gnumeric_import.lo: ../lib/src/interact.h ../lib/src/graphing.h
+gnumeric_import.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
+gnumeric_import.lo: ../lib/src/discrete.h ../lib/src/subsample.h
+gnumeric_import.lo: ../lib/src/calendar.h importer.h import_common.c
+panel_data.lo: ../lib/src/libgretl.h ../lib/src/commands.h
+panel_data.lo: ../lib/src/errors.h ../lib/src/estimate.h
+panel_data.lo: ../lib/src/generate.h ../lib/src/utils.h ../lib/src/compare.h
+panel_data.lo: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
+panel_data.lo: ../lib/src/describe.h ../lib/src/printout.h
+panel_data.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+panel_data.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+panel_data.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+panel_data.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+progress_bar.lo: ../lib/src/libgretl.h ../lib/src/commands.h
+progress_bar.lo: ../lib/src/errors.h ../lib/src/estimate.h
+progress_bar.lo: ../lib/src/generate.h ../lib/src/utils.h
+progress_bar.lo: ../lib/src/compare.h ../lib/src/pvalues.h
+progress_bar.lo: ../lib/src/dataio.h ../lib/src/strutils.h
+progress_bar.lo: ../lib/src/describe.h ../lib/src/printout.h
+progress_bar.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+progress_bar.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+progress_bar.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+progress_bar.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+stats_tables.lo: ../lib/src/libgretl.h ../lib/src/commands.h
+stats_tables.lo: ../lib/src/errors.h ../lib/src/estimate.h
+stats_tables.lo: ../lib/src/generate.h ../lib/src/utils.h
+stats_tables.lo: ../lib/src/compare.h ../lib/src/pvalues.h
+stats_tables.lo: ../lib/src/dataio.h ../lib/src/strutils.h
+stats_tables.lo: ../lib/src/describe.h ../lib/src/printout.h
+stats_tables.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+stats_tables.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+stats_tables.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+stats_tables.lo: ../lib/src/subsample.h ../lib/src/calendar.h
+workbook.lo: biff.h importer.h
