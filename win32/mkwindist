@@ -150,6 +150,9 @@ for lang in es fr it ja pl ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
 done
 
+# ensure updater is au courant
+make -C updater
+
 # misc files
 add_file ${TOPDIR}/plugin/data/urcdata.gz gretl/plugins/data/urcdata.gz
 add_file gretl_website.url gretl/gretl_website.url
@@ -170,3 +173,4 @@ nice wine "c:/Program Files/Inno Setup 4/ISCC.exe" ./gretl.iss 2>errlog && \
 mv Output/setup.exe Output/gretl_install.exe && \
 ls -l Output/gretl_install.exe
 
+touch dist.stamp

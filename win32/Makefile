@@ -255,9 +255,6 @@ dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
 
-dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(UPDATER)
-	./mkwindist 
-
 clean:
 	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
@@ -396,4 +393,13 @@ workbook.o: workbook.c $(topsrc)/plugin/libole2/ms-ole.h
 
 midi_utils.o: midi_utils.c $(topsrc)/plugin/midi_utils.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
+
+# Distribution executable
+
+dist.stamp:
+	sh ./mkwindist
+
+dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) dist.stamp
+
+
 
