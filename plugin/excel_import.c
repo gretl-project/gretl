@@ -23,7 +23,6 @@
   excel plugin by Michael Meeks.
 */
 
-
 #include <gtk/gtk.h>
 
 #include <stdio.h>
@@ -40,19 +39,42 @@
 extern int excel_book_get_info (const char *fname, wbook *book);
 
 static void free_sheet (void);
-static int process_item (int rectype, int reclen, char *rec, wbook *book, PRN *prn); 
 static int allocate_row_col (int row, int col, wbook *book);
-static char *copy_unicode_string (char **src);
-static char *convert8to7 (char *src, int count);
-static char *convert16to7 (char *src, int count);
-static char *mark_string (char *instr);
+static char *copy_unicode_string (unsigned char **src);
+static char *convert8to7 (const char *src, int count);
+static char *convert16to7 (const char *src, int count);
+static char *mark_string (char *str);
 
 #define EDEBUG
 #undef FULL_EDEBUG
 
 #define EXCEL_IMPORTER
-
 #include "import_common.c"
+
+#define handled_record(r) (r == SST || r == CONTINUE || r == LABEL || \
+                           r == CONSTANT_STRING || r == NUMBER || \
+                           r == RK || r == MULRK || r == FORMULA || \
+                           r == STRING || r == BOF || r == MULBLANK || \
+                           r == INDEX || r == ROW || r == DBCELL)
+
+#define cell_record(r) (r == LABEL || r == CONSTANT_STRING || r == NUMBER || \
+                        r == RK || r == MULRK || r == FORMULA || r == MULBLANK)
+
+#define MS_OLE_GET_GUINT32(p) (guint32)(*((const guint8 *)(p)+0) |        \
+                                        (*((const guint8 *)(p)+1)<<8) |   \
+                                        (*((const guint8 *)(p)+2)<<16) |  \
+                                        (*((const guint8 *)(p)+3)<<24))
+
+struct biff_record {
+    unsigned int type;
+    unsigned int len;
+    unsigned char buf[MAX_MS_RECSIZE+1];
+};
+
+struct rowdescr {
+    int last, end;
+    char **cells;
+};	
 
 enum {
     VARNAMES_OK = 0,
@@ -61,13 +83,20 @@ enum {
     VARNAMES_INVALID
 } varname_errors;
 
-static double biff_get_double (char *rec, int offset) 
+char **sst = NULL;
+int sstsize = 0, sstnext = 0;
+struct rowdescr *rowptr = NULL;
+char **saved_reference = NULL;
+int lastrow = 0; 
+
+static double biff_get_double (const char *rec, int offset) 
 {	
     union { 
 	char cc[8];
 	double d;
     } dconv;
-    char *d, *s;
+    char *d;
+    const char *s;
     int i;
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -79,183 +108,50 @@ static double biff_get_double (char *rec, int offset)
     return dconv.d;
 }
 
-static short getshort (char *rec, int offset) 
-{
-    return (*((unsigned char *)(rec + offset)) |
-	    ((*((unsigned char *)(rec + offset + 1))) << 8));
-}
-
-static int getint (char *rec, int offset)
-{
-    return (*((unsigned char *)(rec + offset)) |
-	    ((*((unsigned char *)(rec + offset + 1))) << 8));
-}
-
-static int process_sheet (FILE *fp, const char *filename, wbook *book,
-			  PRN *prn) 
-{    
-    long rectype, reclen;
-    unsigned char rec[MAX_MS_RECSIZE];
-    int err = 0, itemsread = 1, eofcount = 0;
-    long leading_bytes = 0L;
-    unsigned offset = book->byte_offsets[book->selected];
-
-    while (itemsread) {
-	fread(rec, 2, 1, fp);
-	if (rec[0] != 9 || rec[1] != 8) {
-	    itemsread = fread(rec, 126, 1, fp);
-	} else {
-	    fread(rec, 2, 1, fp);
-	    reclen = getshort(rec, 0);
-	    if (reclen == 8 || reclen == 16) {
-		leading_bytes = ftell(fp) - 4L;
-#ifdef EDEBUG
-		fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
-#endif
-		itemsread = fread(rec, reclen, 1, fp);
-		break;
-	    } else {
-		pprintf(prn, _("%s: Invalid BOF record"), filename);
-	        return 1;
-	    } 
-	}
-    }    
-
-    if (feof(fp)) {
-	pprintf(prn, _("%s: No BOF record found"), filename);
-	return 1;
-    }  
-   
-    while (!err && itemsread) {
-	unsigned char buffer[2];
-
-	rectype = 0;
-	itemsread = fread(buffer, 2, 1, fp);
-	if (itemsread == 0) {
-#ifdef EDEBUG
-	    fprintf(stderr, "Breaking because itemsread = 0\n");
-#endif
-	    break;
-	}
-	rectype = getint(buffer, 0); /* was getshort */
-
-#ifdef EDEBUG
-	if (rectype == BOF) 
-	    fprintf(stderr, "Got BOF at %ld\n", leading_bytes);
-	if (rectype == MSEOF)
-	    fprintf(stderr, "Got MSEOF at %ld\n", ftell(fp) - 2L);
-#endif
-
-	reclen = 0;
-	itemsread = fread(buffer, 2, 1, fp);
-	if (itemsread == 0) {
-#ifdef EDEBUG
-	    fprintf(stderr, "Breaking because itemsread = 0\n");
-#endif
-	    break;
-	}
-
-	reclen = getint(buffer, 0); /* was getshort */
-
-#ifdef EDEBUG
-	fprintf(stderr, "rectype = 0x%lx, reclen = %ld, offset at data = %ld\n", 
-		rectype, reclen, ftell(fp));
-#endif
-
-	if (reclen < MAX_MS_RECSIZE && reclen > 0) {
-	    itemsread = fread(rec, 1, reclen, fp);
-	    rec[reclen] = '\0';
-	}
-
-	if (process_item(rectype, reclen, rec, book, prn)) {
-	    err = 1;
-	    break;
-	}
-
-	if (rectype == MSEOF) {
-	    eofcount++;
-	    if (eofcount == 1 && offset) {
-		/* skip to the worksheet we want */
-#ifdef EDEBUG
-		fprintf(stderr, "currpos=%ld\n", ftell(fp));
-#endif
-		fseek(fp, offset + leading_bytes, SEEK_SET);
-	    }
-	    if (eofcount == 2) break;
-	} 
-    }
-
-    fclose(fp);
-
-    return err;
-}
-
-struct rowdescr {
-    int last, end;
-    char **cells;
-};	
-
-char **sst = NULL;
-int sstsize = 0, sstnext = 0;
-int codepage = 1251; /* default */
-struct rowdescr *rowptr = NULL;
-char **saved_reference = NULL;
-int lastrow = 0; 
-
 static double get_le_double (const void *p)
 {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
-        if (sizeof (double) == 8) {
-                double  d;
-                int     i;
-                guint8 *t  = (guint8 *)&d;
-                guint8 *p2 = (guint8 *)p;
-                int     sd = sizeof (d);
+    if (sizeof(double) == 8) {
+	double d;
+	int i;
+	guint8 *t  = (guint8 *) &d;
+	guint8 *p2 = (guint8 *) p;
+	int sd = sizeof d;
 
-                for (i = 0; i < sd; i++)
-                        t[i] = p2[sd - 1 - i];
-
-                return d;
-        } else {
-                g_error ("Big endian machine, but weird size of doubles");
-        }
+	for (i = 0; i < sd; i++) {
+	    t[i] = p2[sd - 1 - i];
+	}
+	return d;
+    } else {
+	g_error ("Big endian machine, but weird size of doubles");
+    }
 #elif G_BYTE_ORDER == G_LITTLE_ENDIAN
-        if (sizeof (double) == 8) {
-                double data;
+    if (sizeof(double) == 8) {
+	double data;
 
-                memcpy (&data, p, sizeof (data));
-                return data;
-        } else {
-                g_error ("Little endian machine, but weird size of doubles");
-        }
+	memcpy(&data, p, sizeof data);
+	return data;
+    } else {
+	g_error ("Little endian machine, but weird size of doubles");
+    }
 #else
 #error "Byte order not recognised -- out of luck"
 #endif
 }
 
-#define MS_OLE_GET_GUINT32(p) (guint32)(*((const guint8 *)(p)+0) |        \
-                                        (*((const guint8 *)(p)+1)<<8) |   \
-                                        (*((const guint8 *)(p)+2)<<16) |  \
-                                        (*((const guint8 *)(p)+3)<<24))
-
-static int negerr (int row, int col) 
-{
-    if (row < 0 || col < 0) {
-	fprintf(stderr, "Error: got row=%d, col=%d\n", row, col);
-	return 1;
-    }
-    return 0;
-}
-	
 static double biff_get_rk (const unsigned char *ptr)
 {
     gint32 number;
     enum eType {
-	eIEEE = 0, eIEEEx100 = 1, eInt = 2, eIntx100 = 3
+	eIEEE = 0, 
+	eIEEEx100, 
+	eInt, 
+	eIntx100
     } type;
 
-    number = MS_OLE_GET_GUINT32 (ptr);
+    number = MS_OLE_GET_GUINT32(ptr);
     type = (number & 0x3);
+
     switch (type) {
     case eIEEE:
     case eIEEEx100:
@@ -265,41 +161,71 @@ static double biff_get_rk (const unsigned char *ptr)
 	    int lp;
 
 	    for (lp = 0; lp < 4; lp++) {
-		tmp[lp + 4]= (lp > 0) ? ptr[lp]: (ptr[lp] & 0xfc);
-		tmp[lp]=0;
+		tmp[lp + 4] = (lp > 0) ? ptr[lp]: (ptr[lp] & 0xfc);
+		tmp[lp] = 0;
 	    }
-	    answer = get_le_double (tmp);
+	    answer = get_le_double(tmp);
 	    return (type == eIEEEx100)? answer / 100 : answer;
         }
     case eInt:
 	return (double) (number >> 2);
     case eIntx100:
 	number >>= 2;
-	if ((number % 100) == 0)
+	if ((number % 100) == 0) {
 	    return (double) (number/100);
-	else
+	} else {
 	    return (double) (number/100.0);
+	}
     }
+
     return NADBL;
 }
 
-static int process_item (int rectype, int reclen, char *rec, wbook *book,
-			 PRN *prn) 
+static unsigned int getint (const unsigned char *rec, int offset)
+{
+    unsigned char u1 = *(rec + offset);
+    unsigned char u2 = *(rec + offset + 1);
+
+    return u1 | (u2 << 8);
+}
+
+static int row_col_err (int row, int col, PRN *prn) 
+{
+    static int prevrow = -1, prevcol = -1;
+    int err = 0;
+    
+    if (row < 0 || col < 0) {
+	fprintf(stderr, "Error: got row=%d, col=%d\n", row, col);
+	err = 1;
+    } else if (row == prevrow && col == prevcol) {
+	pprintf(prn, "Error: found a second cell entry for cell (%d, %d)\n",
+		prevrow, prevcol);
+	err = 1;
+    }
+	
+    prevrow = row;
+    prevcol = col;
+
+    return err;
+}
+
+
+
+static int process_item (struct biff_record *rec, wbook *book, PRN *prn) 
 {
     struct rowdescr *prow = NULL;
     int row = 0, col = 0;
 
-    if (rectype == LABEL || rectype == CONSTANT_STRING || 
-	rectype == NUMBER || rectype == RK || rectype == MULRK || 
-	rectype == FORMULA) {
-	row = getint(rec, 0);
-	col = getshort(rec, 2);
-	if (negerr(row, col)) return 1;
+    if (cell_record(rec->type)) {
+	row = getint(rec->buf, 0);
+	col = getint(rec->buf, 2);
+	if (row_col_err(row, col, prn)) return 1;
     }
 
-    switch (rectype) {
+    switch (rec->type) {
+
     case SST: {
-	char *ptr = rec + 8;
+	unsigned char *ptr = rec->buf + 8;
 	int i, sz, oldsz = sstsize;
 
 #if 1
@@ -309,7 +235,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	}
 #endif
 
-	sz = getshort(rec, 4);
+	sz = getint(rec->buf, 4);
 	sstsize += sz;
 	sst = realloc(sst, sstsize * sizeof *sst);
 	if (sst == NULL) return 1;
@@ -318,10 +244,10 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 		sstsize, sstsize * sizeof *sst, (void *) sst);
 #endif
 	for (i=oldsz; i<sstsize; i++) {
-	    /* careful: initialize all to NULL */
+	    /* careful: initialize all pointers to NULL */
 	    sst[i] = NULL;
 	}
-	for (i=oldsz; i<sstsize && (ptr - rec)<reclen; i++) {
+	for (i=oldsz; i<sstsize && (ptr - rec->buf) < rec->len; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
 	if (i < sstsize) {
@@ -329,9 +255,10 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	}
 	break;
     }	
+
     case CONTINUE: {
 	int i;
-	char *ptr = rec;
+	unsigned char *ptr = rec->buf;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got CONTINUE, with sstnext = %d\n", sstnext);
@@ -340,16 +267,17 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	if (sstnext == 0) {
 	    break;
 	}
-	for (i=sstnext; i<sstsize && (ptr - rec)<reclen; i++) {
+	for (i=sstnext; i<sstsize && (ptr - rec->buf) < rec->len; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
 	if (i < sstsize) {
 	    sstnext = i;
 	}
 	break;
-    }			   
+    }
+			   
     case LABEL: {
-	int len = getshort(rec, 6);
+	unsigned int len = getint(rec->buf, 6);
 
 	saved_reference = NULL;
 
@@ -357,92 +285,106 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
 #endif
 	if (allocate_row_col(row, col, book)) return 1;
+
 	prow = rowptr + row;
-	prow->cells[col] = mark_string(convert8to7(rec+8, len));
+	prow->cells[col] = mark_string(convert8to7(rec->buf + 8, len));
 	break;
-    }     
+    }   
+  
     case CONSTANT_STRING: {
-	int string_no = getshort(rec, 6);
+	unsigned int sstidx = getint(rec->buf, 6);
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
 #endif
 	saved_reference = NULL;
-	if (allocate_row_col(row, col, book)) return 1;
-	prow = rowptr + row;
-	if (string_no < 0 || string_no >= sstsize) {
-	    pprintf(prn, _("String index too large"));
-	} else if (sst[string_no] != NULL) {	
-	    int len = strlen(sst[string_no]);
-	    char *outptr;
 
+	if (allocate_row_col(row, col, book)) return 1;
+
+	prow = rowptr + row;
+	if (sstidx >= sstsize) {
+	    pprintf(prn, _("String index too large"));
+	    pputc(prn, '\n');
+	} else if (sst[sstidx] != NULL) {	
 #ifdef EDEBUG
 	    fprintf(stderr, "copying sst[%d] '%s' into place\n", 
-		    string_no, sst[string_no]);
+		    sstidx, sst[sstidx]);
 #endif
-	    outptr = prow->cells[col] = malloc(len + 2);
-	    *(outptr++) = '"';
-	    strcpy(outptr, sst[string_no]);
+	    prow->cells[col] = g_strdup_printf("\"%s", sst[sstidx]);
 	} else {
 	    prow->cells[col] = malloc(2);
-	    strcpy(prow->cells[col], "");
+	    if (prow->cells[col] != NULL) {
+		*prow->cells[col] = '\0';
+	    }
 	}	
 	break;
     }
+
     case NUMBER: {
 	double v;
 
 	saved_reference = NULL;
 
-#ifdef EDEBUG
-	fprintf(stderr, "Got NUMBER, row=%d, col=%d\n", row, col);
-#endif
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	v = biff_get_double(rec, 6);
+	v = biff_get_double(rec->buf, 6);
 	prow->cells[col] = g_strdup_printf("%.10g", v);
+#ifdef EDEBUG
+	fprintf(stderr, "Got NUMBER (%g), row=%d, col=%d\n", v, row, col);
+#endif
 	break;
     }
+
     case RK: {
 	double v;
-	char tmp[32];
 
 	saved_reference = NULL;
 
-#ifdef EDEBUG
-	fprintf(stderr, "Got RK, row=%d, col=%d\n", row, col);
-#endif
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	v = biff_get_rk(rec + 6);
-	sprintf(tmp, "%.10g", v);
-	prow->cells[col] = g_strdup(tmp);
+	v = biff_get_rk(rec->buf + 6);
+	prow->cells[col] = g_strdup_printf("%.10g", v);
+#ifdef EDEBUG
+	fprintf(stderr, "Got RK (%g), row=%d, col=%d\n", v, row, col);
+#endif
 	break;
     }
+
     case MULRK: {
+	int i, ncols = (rec->len - 6) / 6;
 	double v;
-	int i, ncols;
 
 	saved_reference = NULL;
-	ncols = (reclen - 6)/ 6;
 
 #ifdef EDEBUG
-	fprintf(stderr, "Got MULRK, row=%d, first_col=%d, sz=%d, ", 
-		row, col, reclen);
-	fprintf(stderr, "ncols = %d\n", ncols);
+	fprintf(stderr, "Got MULRK, row=%d, first_col=%d, ncols=%d\n", 
+		row, col, ncols);
 #endif
 	for (i=0; i<ncols; i++) {
-	    char tmp[32];
-
-	    v = biff_get_rk(rec + 6 + 6*i);
 	    if (allocate_row_col(row, col, book)) return 1;
 	    prow = rowptr + row;
-	    sprintf(tmp, "%.10g", v);
-	    prow->cells[col] = g_strdup(tmp);
+	    v = biff_get_rk(rec->buf + 6 + 6 * i);
+	    prow->cells[col] = g_strdup_printf("%.10g", v);
+#ifdef EDEBUG
+	    fprintf(stderr, " MULRK[col=%d] = %g\n", col, v);
+#endif
 	    col++;
 	}
 	break;
     }
+
+    case MULBLANK: {
+	int ncols = (rec->len - 6) / 2;
+
+	saved_reference = NULL;
+
+#ifdef EDEBUG
+	fprintf(stderr, "Got MULBLANK, row=%d, first_col=%d, ncols=%d\n", 
+		row, col, ncols);
+#endif
+	break;
+    }
+
     case FORMULA: { 
 	saved_reference = NULL;
 
@@ -451,53 +393,96 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 #endif
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	if (((unsigned char) rec[12] == 0xFF) && 
-	    (unsigned char) rec[13] == 0xFF) {
+	if (((unsigned char) rec->buf[12] == 0xFF) && 
+	    (unsigned char) rec->buf[13] == 0xFF) {
 	    /* not a floating point value */
-	    if (rec[6] == 1) {
+	    if (rec->buf[6] == 1) {
 		/* boolean */
 		char buf[2] = "0";
 
-		buf[0] += rec[9];
+		buf[0] += rec->buf[9];
 		prow->cells[col] = g_strdup(buf);
-	    } else if (rec[6] == 2) {
+	    } else if (rec->buf[6] == 2) {
 		/* error */
-		char buf[6] = "ERROR";
-
-		prow->cells[col] = g_strdup(buf);
-	    } else if (rec[6] == 0) {
+		prow->cells[col] = g_strdup("ERROR");
+	    } else if (rec->buf[6] == 0) {
 		saved_reference = prow->cells + col;
 	    }   
 	} else {
-	    double x = biff_get_double(rec, 6);
+	    double v = biff_get_double(rec->buf, 6);
 
-	    if (isnan(x)) {
+	    if (isnan(v)) {
 		fprintf(stderr, "Got a NaN\n");
 		prow->cells[col] = g_strdup("-999.0");
 	    } else {
-		prow->cells[col] = g_strdup_printf("%.10g", x);
+		prow->cells[col] = g_strdup_printf("%.10g", v);
 	    }
 	}
 	break;
     }
-    case STRING: {
-	int len;
 
-	if (!saved_reference) {
+    case STRING: {
+	unsigned int len;
+
+	if (saved_reference == NULL) {
 	    pprintf(prn, _("String record without preceding string formula"));
 	    pputc(prn, '\n');
 	    break;
 	}
-	len = getshort(rec, 0);
-	*saved_reference = mark_string(convert8to7(rec + 2, len + 1));
+	len = getint(rec->buf, 0);
+	*saved_reference = mark_string(convert8to7(rec->buf + 2, len + 1));
 	break;
-    }	    
+    }
+
+    case INDEX: {
+	int rf = getint(rec->buf, 4);
+	int rl = getint(rec->buf, 6);
+	int nm = (rl - rf - 1) / 32 + 1;
+	int i;
+	long off;
+	unsigned char *ptr;
+
+#ifdef EDEBUG
+	fprintf(stderr, "Got INDEX, rf=%d, rl=%d, nm=%d\n", rf, rl, nm);
+#endif
+	ptr = rec->buf + 8;
+	for (i=0; i<nm; i++) {
+	    off = MS_OLE_GET_GUINT32(ptr);
+#ifdef EDEBUG
+	    fprintf(stderr, " offset[%d] = %ld\n", i, off);
+#endif
+	    ptr += 4;
+	}
+	break;
+    }
+	
+    case ROW: {	
+	int rx = getint(rec->buf, 0);
+	int c0 = getint(rec->buf, 2);
+	int cn = getint(rec->buf, 4);
+
+#ifdef EDEBUG
+	fprintf(stderr, "Got ROW, rindex=%d, c0=%d, cn=%d\n",
+		rx, c0, cn);
+#endif
+	break;
+    }
+
+    case DBCELL: {
+	long off = MS_OLE_GET_GUINT32(rec->buf);
+
+#ifdef EDEBUG
+	fprintf(stderr, "Got DBCELL, offset=%ld\n", off);
+#endif
+	break;
+    }
+	    
     case BOF: 
-	if (rowptr) 
+	if (rowptr) {
 	    fprintf(stderr, "BOF when current sheet is not flushed\n");
+	}
 	break;
-    case MSEOF: 
-	break;
+
     default: 
 	break;
     }
@@ -505,29 +490,163 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
     return 0;
 }  
 
-static char *mark_string (char *instr) 
+static int read_record_header (FILE *fp, struct biff_record *rec,
+			       const char *fname, PRN *prn)
 {
-    int len = strlen(instr);
-    char *out = malloc(len + 2);
+    unsigned char buf[2];
 
-    if (out == NULL) return NULL;
+    if (fread(buf, 2, 1, fp) != 1) {
+	return 1;
+    }
+    rec->type = getint(buf, 0);
 
-    *out = '"';
-    strcpy(out+1, instr);
-    free(instr);
-    return out;
+    if (fread(buf, 2, 1, fp) != 1) {
+	return 1;
+    }
+    rec->len = getint(buf, 0);
+
+    if (rec->len > MAX_MS_RECSIZE) {
+	pprintf(prn, "%s: record size too big (%ld bytes)\n", fname, rec->len);
+	return 1;
+    }
+
+    return 0;
+}
+
+#ifdef EDEBUG
+static const char *record_name (int type)
+{
+    switch (type) {
+    case XF: 
+	return "XF";
+    case EXTSST: 
+	return "EXTSST";
+    case CALCCOUNT:
+	return "CALCCOUNT";
+    case REFMODE:
+	return "REFMODE";
+    case DIMENSIONS:
+	return "DIMENSIONS";
+    case COLINFO:
+	return "COLINFO";
+    case DEFCOLWIDTH:
+	return "DEFCOLWIDTH";
+    case SETUP:
+	return "SETUP";
+    default: 
+	return "unknown";
+    }
+}
+#endif
+
+static int process_sheet (FILE *fp, const char *filename, wbook *book,
+			  PRN *prn) 
+{    
+    struct biff_record rec;
+    int err = 0, gotbof = 0, eofcount = 0;
+    long leadbytes = 0L;
+    long offset = book->byte_offsets[book->selected];
+
+    while (!gotbof) {
+	if (fread(rec.buf, 2, 1, fp) != 1) break;
+	if (rec.buf[0] != 9 || rec.buf[1] != 8) {
+	    if (fseek(fp, 126, SEEK_CUR)) break;
+	} else {
+	    if (fread(rec.buf, 2, 1, fp) != 1) break;
+	    rec.len = getint(rec.buf, 0);
+	    if (rec.len == 8 || rec.len == 16) {
+		leadbytes = ftell(fp) - 4L;
+		gotbof = 1;
+#ifdef EDEBUG
+		fprintf(stderr, "process_sheet: got BOF at %ld\n", leadbytes);
+#endif
+		err = fseek(fp, rec.len, SEEK_CUR);
+	    } else {
+		pprintf(prn, _("%s: Invalid BOF record"), filename);
+	        return 1;
+	    } 
+	}
+    }    
+
+    if (!gotbof) {
+	pprintf(prn, _("%s: No BOF record found"), filename);
+	return 1;
+    }  
+
+    while (!err) {
+	err = read_record_header(fp, &rec, filename, prn);
+	if (err) break;
+
+#ifdef EDEBUG
+	fprintf(stderr, "rectype = 0x%02x, reclen = %u, offset of data = %ld\n", 
+		rec.type, rec.len, ftell(fp));
+#endif
+
+	if (!err && rec.type == MSEOF) {
+#ifdef EDEBUG
+	    fprintf(stderr, "got MSEOF at %ld\n", ftell(fp) - 4L);
+#endif
+	    eofcount++;
+	    if (eofcount == 1 && offset) {
+		/* skip to the worksheet we want */
+		fseek(fp, offset + leadbytes, SEEK_SET);
+		fprintf(stderr, "skipped forward to %ld\n", ftell(fp));
+	    }
+	    if (eofcount == 2) break;
+	    else continue;
+	} 
+
+	if (!err && !handled_record(rec.type)) {
+#ifdef EDEBUG
+	    fprintf(stderr, "skipping unhandled record, type 0x%02x (%s)\n", 
+		    rec.type, record_name(rec.type));
+#endif
+	    fseek(fp, rec.len, SEEK_CUR);
+	    continue;
+	}
+
+	if (!err && rec.len > 0) {
+	    if (fread(rec.buf, rec.len, 1, fp) != 1) {
+		err = 1;
+	    } else {
+		rec.buf[rec.len] = '\0';
+	    }
+	}
+
+	if (!err && process_item(&rec, book, prn)) {
+	    err = 1;
+	}
+    }
+
+    fclose(fp);
+
+    return err;
+}
+
+static char *mark_string (char *str) 
+{
+    char *ret = NULL;
+
+    if (str != NULL) {
+	ret = g_strdup_printf("\"%s", str);
+	free(str);
+    } else {
+	ret = g_strdup("\"");
+    }
+
+    return ret;
 }    
 
-static char *copy_unicode_string (char **src) 
+static char *copy_unicode_string (unsigned char **src) 
 {
-    int count = getshort(*src, 0);
+    int count = getint(*src, 0);
     int flags = *(*src + 2);
     int this_skip = 3;
     int skip_to_next = 3;
-    int charsize = (flags & 0x01)? 2 : 1;
+    int csize = (flags & 0x01)? 2 : 1;
     char *realstart;
 
-    skip_to_next += count * charsize;
+    skip_to_next += count * csize;
 
     if (flags & 0x08) {
 	unsigned short rich_text_info_len = 0;
@@ -535,7 +654,7 @@ static char *copy_unicode_string (char **src)
 #ifdef EDEBUG
 	fprintf(stderr, "copy_unicode_string: contains Rich-Text info\n");
 #endif
-	rich_text_info_len = 4 * getshort(*src, 3);
+	rich_text_info_len = 4 * getint(*src, 3);
 	this_skip += 2;
 	skip_to_next += 2 + rich_text_info_len;
     } 
@@ -559,27 +678,24 @@ static char *copy_unicode_string (char **src)
     /* set up for the next read */
     *src += skip_to_next;
 
-    if (charsize == 1) {
+    if (csize == 1) {
 	return convert8to7(realstart, count);
     } else { 
 	return convert16to7(realstart, count);
     }
 }
 
-static char *convert8to7 (char *src, int count) 
+static char *convert8to7 (const char *src, int count) 
 {
-    char *p, *dest = malloc(VNAMELEN);
+    char *p, *dest;
     int i, j = 0;
     unsigned char u;
 
+    dest = malloc(VNAMELEN);
     if (dest == NULL) return NULL;
     memset(dest, 0, VNAMELEN);
+
     p = dest;
-
-#ifdef EDEBUG
-    fprintf(stderr, "convert8to7: input = '%s'\n", src);
-#endif
-
     for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = (unsigned char) src[i];
 	if ((isalnum(u) || ispunct(u)) && u < 128) {
@@ -591,6 +707,7 @@ static char *convert8to7 (char *src, int count)
     if (*dest == '\0') {
 	strcpy(dest, "varname");
     }
+
 #ifdef EDEBUG
     fprintf(stderr, "convert8to7: returning '%s'\n", dest);
 #endif
@@ -598,17 +715,19 @@ static char *convert8to7 (char *src, int count)
     return dest;
 }
 
-static char *convert16to7 (char *src, int count) 
+static char *convert16to7 (const char *src, int count) 
 {
-    char *p, *s = src, *dest = malloc(VNAMELEN);
+    const char *s = src;
+    char *p, *dest = malloc(VNAMELEN);
     int i, j = 0, u;
 
+    dest = malloc(VNAMELEN);
     if (dest == NULL) return NULL;
     memset(dest, 0, VNAMELEN);
-    p = dest;
 
+    p = dest;
     for (i=0; i<count && j<VNAMELEN-1; i++) {
-	u = getshort(s, 0);
+	u = getint(s, 0);
 	s += 2;
 	if (isalnum(u) && u < 128) {
 	    *p++ = u;

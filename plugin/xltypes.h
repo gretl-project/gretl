@@ -4,7 +4,7 @@
   found in the file COPYING accompanying this distribution.
 */
 
-#define MAX_MS_RECSIZE 18000
+#define MAX_MS_RECSIZE 8224
 
 #define MS_UNIX_DATE_DIFF (70*365.2422+1)
 
