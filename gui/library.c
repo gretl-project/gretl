@@ -2870,23 +2870,26 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-void do_ts_graph (GtkWidget *widget, gpointer p)
+void do_graph_from_selector (GtkWidget *widget, gpointer p)
 {
     selector *sr = (selector *) p;
     char *edttext;
     gint i, err, *lines = NULL;
+    int action = sr->code;
 
     edttext = sr->cmdlist;
     if (*edttext == 0) return;
 
     clear(line, MAXLEN);
-    sprintf(line, "gnuplot %s time", edttext);
+    sprintf(line, "gnuplot %s%s", edttext, 
+	    (action == GR_PLOT)? " time" : "");
 
     if (check_cmd(line) || cmd_init(line)) return;
     lines = mymalloc(command.list[0] - 1);
     if (lines == NULL) return;
-    for (i=0; i<command.list[0]-1 ; i++) 
-	lines[i] = 1;
+    for (i=0; i<command.list[0]-1 ; i++) { 
+	lines[i] = (action == GR_PLOT)? 1 : 0;
+    }
 
     err = gnuplot(command.list, lines, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, 0);

@@ -313,7 +313,7 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Data/_Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL },
     { _("/Data/_Graph specified vars/X-Y scatter..."), 
-      NULL, graph_dialog, GR_XY, NULL },
+      NULL, selector_callback, GR_XY, NULL },
     { _("/Data/_Graph specified vars/X-Y with impulses..."), 
       NULL, graph_dialog, GR_IMP, NULL },
     { _("/Data/_Graph specified vars/X-Y with factor separation..."), 

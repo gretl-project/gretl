@@ -347,11 +347,6 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
 	strcpy(title, _("gretl: define impulse plot"));
 	strcpy(request, _("Enter two var names or numbers (Y then X):"));
 	break;
-    case GR_XY:
-	gfunc = do_graph;
-	strcpy(title, _("gretl: define graph"));
-	strcpy(request, _("Enter var names or numbers (X comes last):"));
-	break;
     case SCATTERS:
 	gfunc = do_scatters;
 	strcpy(title, _("gretl: multiple plots"));

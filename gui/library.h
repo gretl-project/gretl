@@ -142,7 +142,7 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata);
 
 void do_graph (GtkWidget *widget, dialog_t *ddata);
 
-void do_ts_graph (GtkWidget *widget, gpointer p);
+void do_graph_from_selector (GtkWidget *widget, gpointer p);
 
 void do_box_graph (GtkWidget *widget, gpointer p);
 

@@ -347,6 +347,12 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
+    if (action == GR_XY) {
+	selection_dialog (_("gretl: define graph"), _("Graph"), 
+			  do_graph_from_selector, GR_XY);
+	return;
+    }
+
     switch (action) {
     case ADD:
     case OMIT:
@@ -363,7 +369,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	break;
     case GR_PLOT:
 	strcpy(title, _("gretl: time-series plot"));
-	okfunc = do_ts_graph;
+	okfunc = do_graph_from_selector;
 	break;
     }
 
