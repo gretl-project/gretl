@@ -19,7 +19,7 @@
 
 /* gretl.c : main for gretl */
 
-#define DND 1  /* drag n drop debugging */
+/* #define DND 1 */
 
 #include "gretl.h"
 #include <dirent.h>
@@ -184,9 +184,12 @@ static void win_help (void)
     sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
     if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
         errbox("Couldn't access help file");
-# endif
+# endif /* USE_HHCTRL */
 }
-#endif
+
+static int unmangle (const char *dosname, char *longname);
+
+#endif /* G_OS_WIN32 */
 
 GtkItemFactoryEntry data_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },
@@ -468,12 +471,16 @@ static void noalloc (char *str)
     exit(EXIT_FAILURE);
 }
 
-static void get_runfile (char *str)
+static void get_runfile (char *fname)
 {
     int i;
 
     tryscript[0] = '\0';
-    strncat(tryscript, str, MAXLEN-1);
+#ifdef G_OS_WIN32
+    if (unmangle(fname, tryscript)) return;
+#else
+    strncat(tryscript, fname, MAXLEN-1);
+#endif
     if (addpath(tryscript, &paths, 1) == NULL) {
 	fprintf(stderr, "Couldn't find script '%s'\n", tryscript);
 	exit(EXIT_FAILURE);
@@ -521,15 +528,18 @@ void dummy_output_handler (const gchar *log_domain,
 }
 #endif 
 
-int main (int argc, char *argv[])
-{
-    int opt, err = 0, gui_get_data = 0;
-    char dbname[MAXLEN];
 #ifdef DND
     FILE *dp;
+#endif
+
+int main (int argc, char *argv[])
+{
+    int err = 0, gui_get_data = 0;
+    char dbname[MAXLEN];
+#ifdef DND
     int i;
 
-    dp = fopen("c:\\userdata\\gretl\\debug.txt", "w");
+    dp = fopen("c:\\userdata\\debug.txt", "w");
     if (dp == NULL) exit(EXIT_FAILURE);
     for (i=0; i<argc; i++)
 	fprintf(dp, "argv[%d] = '%s'\n", i, argv[i]);
@@ -569,8 +579,13 @@ int main (int argc, char *argv[])
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
+#ifdef DND
+    fprintf(dp, "About to parse arguments if argc > 1\n");
+    fflush(dp);
+#endif
     if (argc > 1) {
-	opt = parseopt(argv[1]);
+	int opt = parseopt(argv[1]);
+
 	switch (opt) {
 	case OPT_HELP:
 	    gui_usage();
@@ -605,6 +620,12 @@ int main (int argc, char *argv[])
 	}
     } else 
 	gui_get_data = 1;
+
+#ifdef DND
+    fprintf(dp, "Parsed args: gui_get_data = %d\n",
+	    opt, gui_get_data);
+    fflush(dp);
+#endif
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
@@ -645,12 +666,25 @@ int main (int argc, char *argv[])
 	int ftype;
 	PRN *prn; 
 
+#ifdef DND
+	fprintf(dp, "About to try to get file\n");
+	fflush(dp);
+#endif
 	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
 	paths.datfile[0] = '\0';
+#ifdef G_OS_WIN32
+	if (unmangle(argv[1], paths.datfile)) 
+	    exit(EXIT_FAILURE);
+#else
 	strncat(paths.datfile, argv[1], MAXLEN-1);
+#endif
 	ftype = detect_filetype(paths.datfile, &paths, prn);
+#ifdef DND
+	fprintf(dp, "detect_filetype: got ftype = %d\n", ftype);
+	fflush(dp);
+#endif
 	switch (ftype) {
 	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
@@ -689,6 +723,10 @@ int main (int argc, char *argv[])
 	}
 	gretl_print_destroy(prn);
     }
+#ifdef DND
+	fprintf(dp, "About to create GUI; err = %d\n", err);
+	fflush(dp);
+#endif
 
     /* create the GUI */
     gretl_tips = gtk_tooltips_new();
@@ -1663,7 +1701,10 @@ drag_data_received  (GtkWidget *widget,
     gchar *dfname = data->data;
     char *suff = NULL;
 
-    fprintf(stderr, "received dragdata '%s'", dfname);
+#ifdef DND
+    fprintf(dp, "received dragdata '%s'; info = %d\n", dfname, info);
+    fflush(dp);
+#endif
 
     /* ignore the wrong sort of data */
     if (dfname == NULL || strlen(dfname) <= 5 || 
@@ -1758,4 +1799,17 @@ static void auto_store (void)
     else
 	file_selector("Save data file", SAVE_DATA, NULL);	
 }
+
+/* ........................................................... */
+
+#ifdef G_OS_WIN32
+static int unmangle (const char *dosname, char *longname)
+{
+    int err = GetLongPathName(dosname, longname, MAXLEN);
+
+    if (err > 0 && err <= MAXLEN) err = 0;
+    else err = 1;
+    return err;
+}
+#endif
 

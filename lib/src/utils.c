@@ -1113,12 +1113,20 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 
     sprintf(ppaths->datadir, "%s\\data\\", ppaths->gretldir);
     sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
-    
+
+#ifdef OS_WIN32
+    if (gui) {
+	sprintf(ppaths->helpfile, "%s\\gretl_hlp.txt", ppaths->gretldir);
+	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli_hlp.txt", ppaths->gretldir);
+    } else 
+	sprintf(ppaths->helpfile, "%s\\gretlcli_hlp.txt", ppaths->gretldir);
+#else    
     if (gui) {
 	sprintf(ppaths->helpfile, "%s\\gretl.hlp", ppaths->gretldir);
 	sprintf(ppaths->cmd_helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
     } else 
 	sprintf(ppaths->helpfile, "%s\\gretlcli.hlp", ppaths->gretldir);
+#endif
 
     if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
 	strcat(ppaths->userdir, SLASHSTR);

@@ -2171,8 +2171,10 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     char teststr[5];
     FILE *fp;
 
-    /* might be a script file? */
-    if (n > 4 && !strcmp(fname + n - 4, ".inp")) 
+    /* might be a script file? (watch out for DOS-mangled names) */
+    if (n > 4 && (!strcmp(fname + n - 4, ".inp") ||
+		  !strcmp(fname + n - 4, ".INP") ||
+		  !strcmp(fname + n - 4, ".GRE"))) 
 	return GRETL_SCRIPT;
     if (n > 6 && !strcmp(fname + n - 6, ".gretl")) 
 	return GRETL_SCRIPT;    

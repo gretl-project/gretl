@@ -2906,10 +2906,13 @@ int open_plugin (const char *plugin, void **handle)
     char pluginpath[MAXLEN];
 
 #ifdef G_OS_WIN32
-    sprintf(pluginpath, "%s.dll", plugin);
+    sprintf(pluginpath, "%s\\%s.dll", paths.gretldir, plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) {
-	errbox("Couldn't load plugin");
+	char buf[MAXLEN];
+
+	sprintf(buf, "Couldn't load plugin %s", pluginpath);
+	errbox(buf);
 	return 1;
     }
 #else
@@ -2917,8 +2920,9 @@ int open_plugin (const char *plugin, void **handle)
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
 	errbox(dlerror());
+	fprintf(stderr, "Failed to load plugin: %s\n", pluginpath);
 	return 1;
-    }
+    } 
 #endif 
     return 0;
 }
