@@ -22,10 +22,9 @@
 
 #include "gretl.h"
 #include "session.h"
+#include "boxplots.h"
 
 extern void do_save_graph (const char *fname, const char *savestr);
-extern int ps_print_plots (const char *fname, int flag, gpointer data);
-extern int plot_to_xpm (const char *fname, gpointer data);
 #ifdef GNUPLOT_PNG
 extern void save_this_graph (GPT_SPEC *plot, const char *fname);
 #endif

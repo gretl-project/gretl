@@ -43,4 +43,6 @@ void set_sample_dialog (gpointer p, guint u, GtkWidget *w);
 
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w);
 
+GtkWidget *standard_button (int code);
+
 #endif /* DIALOGS_H */

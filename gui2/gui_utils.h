@@ -1,7 +1,45 @@
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ */
+
 #ifndef GUI_UTILS_H
 #define GUI_UTILS_H
 
-/* functions follow */
+#if GTK_MAJOR_VERSION < 2
+
+enum {
+    GTK_STOCK_OK,
+    GTK_STOCK_CANCEL,
+    GTK_STOCK_CLOSE,
+    GTK_STOCK_APPLY,
+    GTK_STOCK_HELP
+};
+
+#define G_OBJECT(o)              GTK_OBJECT(o)
+#define g_object_set_data(o,s,d) gtk_object_set_data(o,s,d)
+#define g_object_get_data(o,s)   gtk_object_get_data(o,s)
+#define gtk_radio_button_get_group(b) gtk_radio_button_group(b)
+
+#else
+
+#define standard_button(s) gtk_button_new_from_stock(s)
+
+#endif
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
 void window_print (windata_t *mydata, guint u, GtkWidget *widget);

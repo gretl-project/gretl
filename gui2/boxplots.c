@@ -22,10 +22,15 @@
 #include "gretl.h"
 #include "session.h"
 #include "boxplots.h"
-#include "gtkplot-lite.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+#endif
+
+#ifdef OLD_GTK
+#include <gtkextra/gtkextra.h>
+#else
+#include "gtkplot-lite.h"
 #endif
 
 typedef struct {
@@ -67,9 +72,11 @@ static double scalepos = 75.0; /* was 60 */
 static char boxfont[64] = "Helvetica";
 static int boxfontsize = 12;
 
+#ifndef OLD_GTK
 /* from gtkextra's gtkplotps.c (modified) */
 extern void psleave (GtkPlotPC *pc);
-extern gboolean psinit (GtkPlotPC *pc); 
+extern gboolean psinit (GtkPlotPC *pc);
+#endif
 
 static int five_numbers (gpointer data);
 static int dump_boxplot (PLOTGROUP *grp);
@@ -89,7 +96,11 @@ configure_event (GtkWidget *widget, GdkEventConfigure *event, gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
 
     if (grp->pixmap) {
+#ifndef OLD_GTK
 	g_object_unref(G_OBJECT(grp->pixmap));
+#else
+	gdk_pixmap_unref(grp->pixmap);
+#endif
     }
 
     grp->pixmap = gdk_pixmap_new(widget->window,
@@ -156,7 +167,11 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 static gint box_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
+#ifndef OLD_GTK
     gpointer ptr = g_object_get_data(G_OBJECT(w), "group");
+#else
+    gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "group");
+#endif
     PLOTGROUP *grp = (PLOTGROUP *) ptr;
 
     if (!strcmp(item, _("Five-number summary"))) {
@@ -226,14 +241,22 @@ static GtkWidget *build_menu (PLOTGROUP *grp)
 	if (grp->saved && !strcmp(items[i], "Save to session as icon")) {
 	    i++;
 	    continue;
-	}	
-        item = gtk_menu_item_new_with_label(_(items[i]));
+	}
+	item = gtk_menu_item_new_with_label(_(items[i]));
+#ifndef OLD_GTK	
         g_signal_connect(G_OBJECT(item), "activate",
 			 G_CALLBACK(box_popup_activated),
 			 _(items[i]));
 	g_object_set_data(G_OBJECT(item), "group", grp);
-        gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+#else
+        gtk_signal_connect(GTK_OBJECT(item), "activate",
+                           (GtkSignalFunc) box_popup_activated,
+                           _(items[i]));
+	gtk_object_set_data(GTK_OBJECT(item), "group", grp);
+        gtk_menu_append(GTK_MENU(menu), item);
+#endif
+	gtk_widget_show(item);
 	i++;
     }
     return menu;
@@ -276,6 +299,7 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 				 just,
 				 text);
     } else {
+#ifndef OLD_GTK
 	PangoContext *context;
 	PangoLayout *pl;
 	int width, height;
@@ -295,6 +319,27 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 
 	gdk_draw_layout (pixmap, gc, x, y, pl);
 	g_object_unref (G_OBJECT(pl));
+#else
+	GdkRectangle rect; 
+	size_t len = strlen(text);
+	int cw = gdk_char_width(fixed_font, 'X');
+	
+	if (just == GTK_JUSTIFY_CENTER) {
+	    x -= len * cw / 2.0;
+	}
+	else if (just == GTK_JUSTIFY_RIGHT) {
+	    int ch = gdk_char_height(fixed_font, '1');
+
+	    y += (double) ch / 2.0;
+	    x -= len * cw;
+	}
+	rect.x = x;
+	rect.y = y;
+	rect.width = 80;
+	rect.height = 10;	
+	gdk_draw_string (pixmap, fixed_font, gc, x, y, text);
+	gtk_widget_draw (area, &rect);
+#endif
     }
 }
 
@@ -307,7 +352,18 @@ draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
     if (pc != NULL) {
 	gtk_plot_pc_draw_line (pc, points[0], points[1], points[2], points[3]); 
     } else {
+#ifndef OLD_GTK
 	gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
+#else
+	GdkRectangle rect;
+
+	rect.x = points[0];
+	rect.y = points[1];
+	rect.width = points[2] - points[1] + 1;
+	rect.height = points[3] - points[1] + 1;
+	gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
+	gtk_widget_draw (area, &rect);
+#endif
     }
 }
 
@@ -321,8 +377,19 @@ draw_outlier (double x, double y,
     if (pc != NULL) {
 	gtk_plot_pc_draw_circle (pc, FALSE, x, y, 8);
     } else {
+#ifndef OLD_GTK
 	gdk_draw_line (pixmap, gc, x - 4, y - 4, x + 4, y + 4);
 	gdk_draw_line (pixmap, gc, x - 4, y + 4, x + 4, y - 4);
+#else
+	GdkRectangle rect;
+
+	rect.x = x - 4;
+	rect.y = y - 4;
+	rect.width = rect.height = 8;
+	gdk_draw_line (pixmap, gc, rect.x, rect.y, x + 4, y + 4);
+	gdk_draw_line (pixmap, gc, rect.x, y + 4, x + 4, rect.y);
+	gtk_widget_draw (area, &rect);	
+#endif
     }
 }
 
@@ -418,6 +485,9 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double nameoff = headroom / 4.0;
     GdkGC *gc = NULL;
     /* GdkGC *whitegc = NULL; */
+#ifdef OLD_GTK
+    GdkRectangle rect;
+#endif
 
     if (pc == NULL) {
 	gc = style->fg_gc[GTK_STATE_NORMAL];
@@ -459,6 +529,12 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 					boxwidth,
 					lq - uq);
 	else {
+#ifdef OLD_GTK
+	    rect.x = plot->xbase;
+	    rect.y = uq;
+	    rect.width = boxwidth;
+	    rect.height = uq - lq; 
+#endif
 	    gdk_draw_rectangle (pixmap, 
 				gc, 
 				FALSE, /* filled ? */
@@ -466,6 +542,9 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 				uq, 
 				boxwidth, 
 				lq - uq);
+#ifdef OLD_GTK
+	    gtk_widget_draw (area, &rect);
+#endif
 	}
     } else { /* draw notched boxes */
 	if (pc != NULL) {
@@ -490,6 +569,13 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	} else {
 	    GdkPoint points[10];
 
+#ifdef OLD_GTK
+	    rect.x = plot->xbase;
+	    rect.y = uq;
+	    rect.width = boxwidth;
+	    rect.height = uq - lq; 
+#endif
+
 	    points[0].x = points[6].x = points[7].x = points[9].x = 
 		plot->xbase;
 	    points[0].y = points[1].y = uq;
@@ -507,6 +593,9 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 			      FALSE, /* filled ? */
 			      points,
 			      10);
+#ifdef OLD_GTK
+	    gtk_widget_draw (area, &rect);
+#endif
 	}
     }
 
@@ -596,7 +685,11 @@ destroy_boxplots (GtkWidget *w, gpointer data)
     }
     free(grp->plots);
     free(grp->numbers);
+#ifndef OLD_GTK
     g_object_unref(G_OBJECT(grp->pixmap));
+#else
+    gdk_pixmap_unref(grp->pixmap);
+#endif
     free(grp);
 }
 
@@ -607,7 +700,11 @@ make_area (PLOTGROUP *grp)
 {
     grp->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(grp->window), _("gretl: boxplots"));
+#ifndef OLD_GTK
     gtk_window_set_resizable(GTK_WINDOW(grp->window), FALSE);
+#else
+    gtk_window_set_policy(GTK_WINDOW(grp->window), FALSE, FALSE, FALSE);
+#endif
 
     /* Create the drawing area */
     grp->area = gtk_drawing_area_new ();
@@ -618,6 +715,7 @@ make_area (PLOTGROUP *grp)
     
     gtk_widget_set_sensitive(grp->area, TRUE);
 
+#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(grp->area), "configure_event",
 		     G_CALLBACK(configure_event), grp);
 
@@ -635,6 +733,26 @@ make_area (PLOTGROUP *grp)
 
     gtk_widget_set_size_request (GTK_WIDGET(grp->area),
 				 grp->width, grp->height); 
+#else
+    gtk_signal_connect(GTK_OBJECT(grp->area), "configure_event",
+		       GTK_SIGNAL_FUNC(configure_event), grp);
+
+    gtk_signal_connect(GTK_OBJECT(grp->area), "expose_event",
+		       GTK_SIGNAL_FUNC(expose_event), grp);
+
+    gtk_signal_connect(GTK_OBJECT(grp->window), "button_press_event", 
+		       GTK_SIGNAL_FUNC(box_popup), grp);
+
+    gtk_signal_connect(GTK_OBJECT(grp->window), "key_press_event", 
+		       GTK_SIGNAL_FUNC(box_key_handler), grp);
+
+    gtk_signal_connect(GTK_OBJECT(grp->window), "destroy",
+		       GTK_SIGNAL_FUNC(destroy_boxplots), grp);
+
+    gtk_drawing_area_size (GTK_DRAWING_AREA(grp->area), 
+			   grp->width, grp->height); 
+#endif
+
     gtk_widget_show (grp->area);
 
     gtk_container_add(GTK_CONTAINER(grp->window), grp->area);
@@ -784,6 +902,14 @@ median_interval (double *x, int n, double *low, double *high)
 
 /* ............................................................. */
 
+#ifdef OLD_GTK
+/* At this point we need to borrow a few functions from gtkplotps.c,
+   which is part of gtkextra.  These functions are declared as
+   static in that context, but we want direct access to them. */
+
+#include "plotps.c"
+#endif
+
 int ps_print_plots (const char *fname, int flag, gpointer data) 
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
@@ -811,7 +937,11 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 	ps->page_height = pscale * grp->height;
     }
 
-    if (!psinit (GTK_PLOT_PC(ps))) return 1;
+#ifndef OLD_GTK
+    if (!psinit(GTK_PLOT_PC(ps))) return 1;
+#else
+    if (!psinit(ps)) return 1;
+#endif
     gtk_psfont_init();
 
     for (i=0; i<grp->nplots; i++)
@@ -822,7 +952,11 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     
     gtk_boxplot_yscale (grp, &ps->pc);
 
-    psleave (GTK_PLOT_PC(ps));
+#ifndef OLD_GTK
+    psleave(GTK_PLOT_PC(ps));
+#else
+    psleave(ps);
+#endif
     gtk_object_destroy(GTK_OBJECT(ps));
     gtk_psfont_unref();
 
@@ -985,7 +1119,6 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     read_boxrc(plotgrp);
 
     if (plotgrp->show_outliers) {
-	/* should outliers be shown separately? */
 	for (i=0; i<plotgrp->nplots; i++) {
 	    n = ztox(list[i+1], x, *pZ, pdinfo);
 	    qsort(x, n, sizeof *x, compare_doubles);
@@ -1197,7 +1330,11 @@ int plot_to_xpm (const char *fname, gpointer data)
 	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
     }
 
+#ifndef OLD_GTK
     g_object_unref(G_OBJECT(image));
+#else
+    gdk_image_destroy(image);
+#endif
 
     fclose(fp);
 

@@ -1851,11 +1851,7 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 #endif
     gtk_widget_show (button);
 
-#ifndef OLD_GTK
     group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
-#endif
     button = gtk_radio_button_new_with_label (group, _("Annual"));
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -1987,11 +1983,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 #endif
     gtk_widget_show (button);
 
-#ifndef OLD_GTK
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
-#endif
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -2008,11 +2000,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 #endif
     gtk_widget_show (button);
 
-#ifndef OLD_GTK
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
-#endif
     button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -2029,11 +2017,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 #endif
     gtk_widget_show (button);
 
-#ifndef OLD_GTK
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-#else
-    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
-#endif
     button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -2051,11 +2035,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_widget_show (button);
 
     /* Create the "OK" button */
-#ifndef OLD_GTK
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_OK);
-#else
-    tempwid = gtk_button_new_with_label ("OK");
-#endif
+    tempwid = standard_button(GTK_STOCK_OK);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -2072,11 +2052,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_widget_show (tempwid);
 
     /* Create the "Cancel" button */
-#ifndef OLD_GTK
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-#else
-    tempwid = gtk_button_new_with_label (_("Cancel"));
-#endif
+    tempwid = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -2096,11 +2072,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     gtk_widget_show (tempwid);
 
     /* Create a "Help" button */
-#ifndef OLD_GTK
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_HELP);
-#else
-    tempwid = gtk_button_new_with_label (_("Help"));
-#endif
+    tempwid = standard_button(GTK_STOCK_HELP);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);

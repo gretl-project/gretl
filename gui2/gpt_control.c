@@ -222,41 +222,6 @@ static int get_png_bounds_info (png_bounds_t *bounds);
 
 /* ........................................................... */
 
-#ifdef OLD_GTK
-
-enum {
-    GTK_STOCK_OK,
-    GTK_STOCK_CANCEL,
-    GTK_STOCK_CLOSE,
-    GTK_STOCK_APPLY,
-    GTK_STOCK_HELP
-};
-
-static GtkWidget *standard_button (int code)
-{
-    const char *button_strings[] = {
-	N_("OK"),
-	N_("Cancel"),
-	N_("Close"),
-	N_("Apply"),
-	N_("Help")
-    };
-
-    return gtk_button_new_with_label(_(button_strings[code]));
-}
-
-#define G_OBJECT(o)              GTK_OBJECT(o)
-#define g_object_set_data(o,s,d) gtk_object_set_data(o,s,d)
-#define g_object_get_data(o,s)   gtk_object_get_data(o,s)
-
-#else
-
-#define standard_button(s) gtk_button_new_from_stock(s)
-
-#endif /* gtk versions */
-
-/* ........................................................... */
-
 static void terminate_plot_positioning (png_plot_t *plot)
 {
     plot->status_flags ^= PLOT_POSITIONING;
