@@ -28,6 +28,8 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key,
 gint console_mouse_handler (GtkWidget *w, GdkEventButton *event,
 			    gpointer p);
 
+void console_record_sample (const DATAINFO *pdinfo);
+
 #if 0
 gint console_click_handler (GtkWidget *w, GdkEventButton *event,
 			    gpointer p);

@@ -183,6 +183,48 @@ static void console_scroll_to_end (GtkTextBuffer *buf,
 
 #endif
 
+enum {
+    SAMPLE_RECORD,
+    SAMPLE_CHECK
+};
+
+static int console_sample (const DATAINFO *pdinfo, int code)
+{
+    static int pd, t1, t2, ts;
+    static double sd0;
+
+    int ret = 0;
+
+    if (code == SAMPLE_RECORD) {
+	pd = pdinfo->pd;
+	t1 = pdinfo->t1;
+	t2 = pdinfo->t2;
+	ts = pdinfo->time_series;
+	sd0 = pdinfo->sd0;
+    }
+    else if (code == SAMPLE_CHECK) {
+	if (pdinfo->pd != pd ||
+	    pdinfo->t1 != t1 ||
+	    pdinfo->t2 != t2 ||
+	    pdinfo->time_series != ts ||
+	    pdinfo->sd0 != sd0) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
+}
+
+void console_record_sample (const DATAINFO *pdinfo)
+{
+    console_sample(pdinfo, SAMPLE_RECORD);
+}
+
+static int sample_changed (const DATAINFO *pdinfo)
+{
+    return console_sample(pdinfo, SAMPLE_CHECK);
+}
+
 static void console_exec (void)
 {
     static int redirected;
@@ -225,6 +267,8 @@ static void console_exec (void)
     strncat(execline, cbuf, MAXLEN - 1);
     g_free(cbuf);
     cbuf = NULL;
+
+    console_record_sample(datainfo);
 
     push_history_line(execline);    
     gui_exec_line(execline, NULL, &loopstack, &looprun, console_prn, 
@@ -284,9 +328,14 @@ static void console_exec (void)
     console_scroll_to_end();
 #endif
 
-    /* update variable listing in main window */
+    /* update variable listing in main window if needed */
     if (datainfo->v != oldv || !strncmp(execline, "rename", 6)) {
 	populate_varlist();
+    }
+
+    /* update sample info and options if needed */
+    if (sample_changed(datainfo)) {
+	set_sample_label(datainfo);
     }
 }
 
@@ -504,7 +553,7 @@ gint console_key_handler (GtkWidget *w, GdkEventKey *key, gpointer d)
     return FALSE;
 }
 
-#else /* gtk versions */
+#else /* alternate gtk versions */
 
 static void replace_command_line (int cw, const char *repl)
 {

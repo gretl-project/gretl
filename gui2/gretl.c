@@ -1347,10 +1347,11 @@ void set_sample_label (DATAINFO *pdinfo)
 	    strcpy(pdstr, _("Unknown")); break;
 	}
     } 
-    else if (dataset_is_panel(pdinfo)) 
+    else if (dataset_is_panel(pdinfo)) {
 	strcpy(pdstr, _("Panel"));
-    else 
+    } else {
 	strcpy(pdstr, _("Undated"));
+    }
 
     panel_menu_state(dataset_is_panel(pdinfo));
     time_series_menu_state(dataset_is_time_series(pdinfo));
@@ -1392,6 +1393,8 @@ void set_sample_label (DATAINFO *pdinfo)
     
     if (data_status & MODIFIED_DATA)
 	build_main_popups();
+
+    console_record_sample(datainfo);
 }
 
 /* ......................................................... */
