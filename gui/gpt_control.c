@@ -876,6 +876,108 @@ static void get_gpt_data (char *line, double *x, double *y)
 
 /* ........................................................... */
 
+static int cant_edit (const char *line)
+{
+    if (strncmp(line, "# mult", 6) == 0) {
+	errbox(_("Sorry, can't edit multiple scatterplots"));
+	return 1;
+    }
+    if (strncmp(line, "# CUSUM", 7) == 0) {
+	errbox(_("Sorry, can't edit CUSUM plots"));
+	return 1;
+    }
+    if (strncmp(line, "# sampl", 7) == 0) {
+	errbox(_("Sorry, can't edit sampling distribution plots"));
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static int plotspec_init (GPT_SPEC *plot)
+{
+    int i;
+
+    if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL)
+	return 1;
+    for (i=0; i<4; i++) plot->titles[i][0] = 0;
+    plot->xtics[0] = 0;
+    plot->mxtics[0] = 0;
+    plot->fname[0] = 0;
+    strcpy(plot->keyspec, "left top");
+    for (i=0; i<3; i++) {
+	strcpy(plot->range[i][0], "*");
+	strcpy(plot->range[i][1], "*");
+	plot->literal[i] = NULL;
+    }
+    plot->y2axis = 0;
+    plot->code = GNUPLOT;
+    plot->ts = 0;
+    plot->fp = NULL;
+    plot->data = NULL;
+    return 0;
+}
+
+/* ........................................................... */
+
+static int parse_set_line (GPT_SPEC *plot, const char *line,
+			   int *i)
+{
+    char set_thing[12], setting[MAXLEN], range[32];
+    size_t n, j;
+
+    if (sscanf(line + 4, "%11s", set_thing) != 1) {
+	errbox(_("Failed to parse gnuplot file"));
+	fprintf(stderr, "plotfile line: '%s'\n", line);
+	return 1;
+    }
+    if (strcmp(set_thing, "y2tics") == 0) {
+	plot->y2axis = 1;
+	return 0;
+    }
+
+    n = strlen(set_thing);
+    strcpy(setting, line + 4 + n);
+    top_n_tail(setting);
+
+    if (strstr(set_thing, "range")) {
+	strcpy(range, setting + 1);
+	n = strlen(range);
+	for (j=0; j<n; j++) {
+	    if (range[j] == ':') {
+		range[j] = 0;
+		strcpy(plot->range[*i][0], range);
+		break;
+	    }
+	}
+	strcpy(range, strchr(setting, ':') + 1);
+	delchar(']', range);
+	strcpy(plot->range[*i][1], range);
+	*i += 1;
+    }	  
+    else if (strcmp(set_thing, "title") == 0) 
+	strcpy(plot->titles[0], setting);
+    else if (strcmp(set_thing, "xlabel") == 0)
+	strcpy(plot->titles[1], setting);
+    else if (strcmp(set_thing, "ylabel") == 0)
+	strcpy(plot->titles[2], setting);
+    else if (strcmp(set_thing, "y2label") == 0)
+	strcpy(plot->titles[3], setting);
+    else if (strcmp(set_thing, "key") == 0)
+	strcpy(plot->keyspec, setting);
+    else if (strcmp(set_thing, "nokey") == 0)
+	strcpy(plot->keyspec, setting);
+    else if (strcmp(set_thing, "xtics") == 0) 
+	safecpy(plot->xtics, setting, 15);
+    else if (strcmp(set_thing, "mxtics") == 0) 
+	safecpy(plot->mxtics, setting, 3);
+
+    return 0;
+}
+
+/* ........................................................... */
+
 int read_plotfile (GPT_SPEC *plot, char *fname)
     /* read in plot struct from gnuplot command file.
        This is _not_ a general parser for gnuplot files; it is
@@ -883,48 +985,25 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 {
     int i, j, t, n, done;
     char line[MAXLEN], *tmp;
-    char set_thing[12], setting[MAXLEN], range[32];
-    double *tmpy;
+    double *tmpy = NULL;
     size_t diff;
     FILE *fp;
 
-    /* initialize the struct */
-    if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL)
-	return 1;
-    for (i=0; i<4; i++) plot->titles[i][0] = 0;
-    strcpy(plot->keyspec, "left top");
-    strcpy(plot->xtics, "");
-    strcpy(plot->mxtics, "");
-    for (i=0; i<3; i++) {
-	strcpy(plot->range[i][0], "*");
-	strcpy(plot->range[i][1], "*");
-    }
-    plot->literal[0] = NULL;
-    plot->code = GNUPLOT;
+    if (plotspec_init(plot)) return 1;
 
-    /* open the file */
+    /* open the plot file */
     fp = fopen(fname, "r");
     if (fp == NULL) {
 	errbox(_("Couldn't open graph file"));
 	return 1;
     }
     
-    /* first get the "set" lines */
+    /* first get the preamble and "set" lines */
     i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (strncmp(line, "# mult", 6) == 0) {
-	    errbox(_("Sorry, can't edit multiple scatterplots"));
-	    goto plot_bailout;
-	}
-	if (strncmp(line, "# CUSUM", 7) == 0) {
-	    errbox(_("Sorry, can't edit CUSUM plots"));
-	    goto plot_bailout;
-	}
-	if (strncmp(line, "# sampl", 7) == 0) {
-	    errbox(_("Sorry, can't edit sampling distribution plots"));
-	    goto plot_bailout;
-	}
-	if (strncmp(line, "# timeseries", 12) == 0) {
+	if (cant_edit(line)) goto plot_bailout;
+	if (strncmp(line, "# timeseries", 12) == 0){
+	    plot->ts = 1;
 	    continue;
 	}
 	if (strncmp(line, "# freq", 6) == 0 ||
@@ -948,53 +1027,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    plot->code = FCASTERR;
 	    continue;
 	}
-	if (strncmp(line, "set ", 4)) 
-	    break;
-	/* we've got a "set" line */
-	if (sscanf(line + 4, "%11s", set_thing) != 1) {
-	    errbox(_("Failed to parse gnuplot file"));
-	    fprintf(stderr, "plotfile line: '%s'\n", line);
-	    goto plot_bailout;
-	}
-	if (strcmp(set_thing, "y2tics") == 0) {
-	    plot->y2axis = 1;
-	    continue;
-	}
-	n = strlen(set_thing);
-	strcpy(setting, line + 4 + n);
-	top_n_tail(setting);
-	if (strstr(set_thing, "range")) {
-	    strcpy(range, setting + 1);
-	    n = strlen(range);
-	    for (j=0; j<n; j++) {
-		if (range[j] == ':') {
-		    range[j] = 0;
-		    strcpy(plot->range[i][0], range);
-		    break;
-		}
-	    }
-	    strcpy(range, strchr(setting, ':') + 1);
-	    delchar(']', range);
-	    strcpy(plot->range[i][1], range);
-	    i++;
-	}	  
-	else if (strcmp(set_thing, "title") == 0) 
-	    strcpy(plot->titles[0], setting);
-	else if (strcmp(set_thing, "xlabel") == 0)
-	    strcpy(plot->titles[1], setting);
-	else if (strcmp(set_thing, "ylabel") == 0)
-	    strcpy(plot->titles[2], setting);
-	else if (strcmp(set_thing, "y2label") == 0)
-	    strcpy(plot->titles[3], setting);
-	else if (strcmp(set_thing, "key") == 0)
-	    strcpy(plot->keyspec, setting);
-	else if (strcmp(set_thing, "nokey") == 0)
-	    strcpy(plot->keyspec, setting);
-	else if (strcmp(set_thing, "xtics") == 0) 
-	    safecpy(plot->xtics, setting, 15);
-	else if (strcmp(set_thing, "mxtics") == 0) 
-	    safecpy(plot->mxtics, setting, 3);
-    } /* end of "set" lines */
+	if (strncmp(line, "set ", 4)) break;
+	if (parse_set_line(plot, line, &i)) goto plot_bailout;
+    } 
 
     for (i=0; i<4; i++) {
 	if (plot->titles[i][0] != 0)
@@ -1037,11 +1072,10 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    }
 	}
 
+	plot->lines[i].yaxis = 1;
 	tmp = strstr(line, "axes");
-	if (tmp != NULL) {
-	    if (tmp[8] == '2') plot->lines[i].yaxis = 2;
-	    else plot->lines[i].yaxis = 1;
-	} else plot->lines[i].yaxis = 1;
+	if (tmp != NULL && strlen(tmp) > 8 && tmp[8] == '2')
+	    plot->lines[i].yaxis = 2;
 
 	tmp = strstr(line, "title"); 
 	if (tmp != NULL) {
@@ -1101,8 +1135,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     if (open_gnuplot_pipe(&paths, plot)) {
 	errbox(_("gnuplot command failed"));
 	goto plot_bailout;
-    }
-    else {
+    } else {
 	strcpy(plot->fname, fname); 
 	gnuplot_dialog(plot);
     } 
@@ -1111,6 +1144,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 
  plot_bailout:
     free(plot->lines);
+    for (i=1; i<4; i++) 
+	if (plot->literal[i] != NULL) 
+	    free(plot->literal[i]);
     fclose(fp);
     return 1;
 }

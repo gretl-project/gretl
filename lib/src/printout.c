@@ -31,11 +31,11 @@
 static void print_float_10 (const double x, PRN *prn);
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			const int c, PRN *prn);
-static void _depvarstats (const MODEL *pmod, PRN *prn);
-static int _essline (const MODEL *pmod, PRN *prn, int wt);
-static void _rsqline (const MODEL *pmod, PRN *prn);
-static int _Fline (const MODEL *pmod, PRN *prn);
-static void _dwline (const MODEL *pmod, PRN *prn);
+static void depvarstats (const MODEL *pmod, PRN *prn);
+static int essline (const MODEL *pmod, PRN *prn, int wt);
+static void rsqline (const MODEL *pmod, PRN *prn);
+static int Fline (const MODEL *pmod, PRN *prn);
+static void dwline (const MODEL *pmod, PRN *prn);
 static int print_discrete_stats (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 PRN *prn);
@@ -60,7 +60,7 @@ static void noconst (PRN *prn)
 
 /* ......................................................... */ 
 
-static void _depvarstats (const MODEL *pmod, PRN *prn)
+static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     pprintf(prn, _("Mean of dep. var. %17.3f  S.D. of dep. variable %17.3f\n"), 
 	    pmod->ybar, pmod->sdy);
@@ -127,7 +127,7 @@ void printxx (const double xx, char *str, const int ci)
 
 /* ......................................................... */ 
 
-static int _essline (const MODEL *pmod, PRN *prn, int wt)
+static int essline (const MODEL *pmod, PRN *prn, int wt)
 {
     if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
 	pprintf(prn, _("Error sum of squares (%g) is not > 0\n\n"), 
@@ -147,7 +147,7 @@ static int _essline (const MODEL *pmod, PRN *prn, int wt)
 
 /* ......................................................... */ 
 
-static void _rsqline (const MODEL *pmod, PRN *prn)
+static void rsqline (const MODEL *pmod, PRN *prn)
 {
     double xx = pmod->rsq;
 
@@ -165,7 +165,7 @@ static void _rsqline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static int _Fline (const MODEL *pmod, PRN *prn)
+static int Fline (const MODEL *pmod, PRN *prn)
 {
     char tmp[32];
 
@@ -184,7 +184,7 @@ static int _Fline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static void _dwline (const MODEL *pmod, PRN *prn)
+static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (na(pmod->dw))
     pprintf(prn, _("Durbin-Watson stat. %15s  First-order autocorr. "
@@ -237,8 +237,8 @@ static int _pmax (const MODEL *pmod)
 
 /* ......................................................... */ 
 
-static void _pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			PRN *prn)
+static void pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
+		       PRN *prn)
 {
     int k = pmod->ncoeff - pmod->ifc;
 
@@ -338,19 +338,19 @@ void print_model_confints (const MODEL *pmod, const DATAINFO *pdinfo,
 const char *aux_string (int aux)
 {
     if (aux == AUX_SQ)
-	return _("Auxiliary regression for non-linearity test "
+	return N_("Auxiliary regression for non-linearity test "
 		 "(squared terms)");
     else if (aux == AUX_LOG)
-	return _("Auxiliary regression for non-linearity test "
+	return N_("Auxiliary regression for non-linearity test "
 		 "(log terms)");
     else if (aux == AUX_WHITE)
-	return _("White's test for heteroskedasticity");
+	return N_("White's test for heteroskedasticity");
     else if (aux == AUX_CHOW)
-	return _("Augmented regression for Chow test");
+	return N_("Augmented regression for Chow test");
     else if (aux == AUX_COINT)
-	return _("Cointegrating regression - ");
+	return N_("Cointegrating regression - ");
     else if (aux == AUX_ADF)
-	return _("Augmented Dickey-Fuller regression");
+	return N_("Augmented Dickey-Fuller regression");
     else return "";
 }
 
@@ -358,18 +358,18 @@ const char *aux_string (int aux)
 
 const char *estimator_string (int ci)
 {
-    if (ci == OLS || ci == VAR) return _("OLS");
-    else if (ci == WLS) return _("WLS"); 
-    else if (ci == ARCH) return _("WLS (ARCH)");
-    else if (ci == CORC) return _("Cochrane-Orcutt");
-    else if (ci == HILU) return _("Hildreth-Lu");
-    else if (ci == TSLS) return _("TSLS");
-    else if (ci == HSK) return _("Heteroskedasticity");
-    else if (ci == AR) return _("AR");
-    else if (ci == HCCM) return _("HCCM");
-    else if (ci == PROBIT) return _("Probit");
-    else if (ci == LOGIT) return _("Logit");
-    else if (ci == POOLED) return _("Pooled OLS");
+    if (ci == OLS || ci == VAR) return N_("OLS");
+    else if (ci == WLS) return N_("WLS"); 
+    else if (ci == ARCH) return N_("WLS (ARCH)");
+    else if (ci == CORC) return N_("Cochrane-Orcutt");
+    else if (ci == HILU) return N_("Hildreth-Lu");
+    else if (ci == TSLS) return N_("TSLS");
+    else if (ci == HSK) return N_("Heteroskedasticity");
+    else if (ci == AR) return N_("AR");
+    else if (ci == HCCM) return N_("HCCM");
+    else if (ci == PROBIT) return N_("Probit");
+    else if (ci == LOGIT) return N_("Logit");
+    else if (ci == POOLED) return N_("Pooled OLS");
     else return "";
 }
 
@@ -428,7 +428,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     case AUX_CHOW:
     case AUX_COINT:
     case AUX_ADF:
-	pprintf(prn, "\n%s\n", aux_string(pmod->aux));
+	pprintf(prn, "\n%s\n", _(aux_string(pmod->aux)));
 	break;
     case AUX_AR:
 	pprintf(prn, _("\nTest for "));
@@ -451,7 +451,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    estimator_string(pmod->ci), pmod->nobs, startdate, enddate);
+	    _(estimator_string(pmod->ci)), pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
 	pprintf(prn, _("Dependent variable: uhat"));
     else pprintf(prn, _("Dependent variable: %s\n"), 
@@ -486,14 +486,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	return gotnan;
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
-	_rsqline(pmod, prn);
+	rsqline(pmod, prn);
 	return gotnan;
     }
 
     if (!pmod->ifc) noconst(prn);
     
     if (pmod->aux == AUX_WHITE) {
-	_rsqline(pmod, prn);
+	rsqline(pmod, prn);
 	pprintf(prn, _("\nTest statistic: TR^2 = %f,\n"), 
 		pmod->rsq * pmod->nobs);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
@@ -503,29 +503,29 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     }
 
     if (pmod->aux == AUX_AR) {
-	_rsqline(pmod, prn);
+	rsqline(pmod, prn);
 	return gotnan;
     }
 
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
 	|| pmod->ci == HCCM || pmod->ci == POOLED ||
 	(pmod->ci == WLS && pmod->wt_dummy)) {
-	_depvarstats(pmod, prn);
-	if (_essline(pmod, prn, 0)) return gotnan;
-	_rsqline(pmod, prn);
-	if (_Fline(pmod, prn)) gotnan = 1;
+	depvarstats(pmod, prn);
+	if (essline(pmod, prn, 0)) return gotnan;
+	rsqline(pmod, prn);
+	if (Fline(pmod, prn)) gotnan = 1;
 	if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
 	    if (pmod->ldepvar) dhline(pmod, prn);
-	    else _dwline(pmod, prn);
+	    else dwline(pmod, prn);
 	}
 	/* FIXME -- check output below */
-	if (pmod->ci == HCCM || pmod->ci == TSLS) _dwline(pmod, prn);
+	if (pmod->ci == HCCM || pmod->ci == TSLS) dwline(pmod, prn);
 	if (pmod->ci == TSLS) pprintf(prn, _("\n"
 	       "R-squared is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\n"));
 	print_aicetc(pmod, prn);
-	_pmax_line(pmod, pdinfo, prn);
+	pmax_line(pmod, pdinfo, prn);
     }
     else if ((pmod->ci == WLS && !(pmod->wt_dummy)) || 
 	     pmod->ci == HSK || pmod->ci == ARCH) {
@@ -533,30 +533,30 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	       "R-squared is suppressed as it is not meaningful.  The "
 	       "F-statistic tests\nthe hypothesis that all parameters "
 	       "including the constant term are zero.\n\n"));
-	if (_essline(pmod, prn, 1)) return gotnan;
-	if (_Fline(pmod, prn)) gotnan = 1;
-	_dwline(pmod, prn);
+	if (essline(pmod, prn, 1)) return gotnan;
+	if (Fline(pmod, prn)) gotnan = 1;
+	dwline(pmod, prn);
 	pprintf(prn, _("\nStatistics based on the original data:\n\n"
 	       "R-squared is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\n\n"));
-	_depvarstats(pmod, prn);
-	if (_essline(pmod, prn, 0)) return gotnan;
-	_rsqline(pmod, prn); 
+	depvarstats(pmod, prn);
+	if (essline(pmod, prn, 0)) return gotnan;
+	rsqline(pmod, prn); 
 	print_aicetc(pmod, prn);
-	_pmax_line(pmod, pdinfo, prn);
+	pmax_line(pmod, pdinfo, prn);
     }
     else if (pmod->ci == CORC || pmod->ci == HILU) {
 	pprintf(prn, _("Statistics based on the rho-differenced data:\n\n"
 	       "R-squared is computed as the square of the correlation "
 	       "between observed and\nfitted values of the dependent "
 	       "variable.\n\n"));	
-	if (_essline(pmod, prn, 0)) return gotnan;
-	_rsqline(pmod, prn);
-	if (_Fline(pmod, prn)) gotnan = 1;
-	_dwline(pmod, prn);
+	if (essline(pmod, prn, 0)) return gotnan;
+	rsqline(pmod, prn);
+	if (Fline(pmod, prn)) gotnan = 1;
+	dwline(pmod, prn);
 	print_aicetc(pmod, prn);
-	_pmax_line(pmod, pdinfo, prn);
+	pmax_line(pmod, pdinfo, prn);
     }
     print_model_tests(pmod, prn);
 
@@ -565,8 +565,8 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 /* ........................................................... */
 
-void _print_add (const COMPARE *add, const int *addvars, 
-		 const DATAINFO *pdinfo, const int aux_code, PRN *prn)
+void gretl_print_add (const COMPARE *add, const int *addvars, 
+		      const DATAINFO *pdinfo, const int aux_code, PRN *prn)
 {
     int i;
     char spc[3];
@@ -613,8 +613,8 @@ void _print_add (const COMPARE *add, const int *addvars,
 
 /* ........................................................... */
 
-void _print_omit (const COMPARE *omit, const int *omitvars, 
-		  const DATAINFO *pdinfo, PRN *prn)
+void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
+		       const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
 
@@ -1757,10 +1757,10 @@ void _print_ar (MODEL *pmod, PRN *prn)
            "(R-squared is computed as the square of the correlation "
            "between observed and\nfitted values of the dependent "
            "variable):\n\n"));
-    if (_essline(pmod, prn, 0)) return;
-    _rsqline(pmod, prn);
-    _Fline(pmod, prn);
-    _dwline(pmod, prn);
+    if (essline(pmod, prn, 0)) return;
+    rsqline(pmod, prn);
+    Fline(pmod, prn);
+    dwline(pmod, prn);
     print_aicetc(pmod, prn); 
 }
 

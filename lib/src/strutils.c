@@ -481,3 +481,18 @@ char *safecpy (char *targ, const char *src, int n)
     targ[n] = 0;
     return targ;
 }
+
+/**
+ * doing_nls:
+ *
+ * Returns: 1 if NLS translation is in effect, 0 otherwise.
+ *
+ */
+
+int doing_nls (void)
+{
+#ifdef ENABLE_NLS
+    if (strcmp("/_File", _("/_File"))) return 1;
+#endif
+    return 0;
+}

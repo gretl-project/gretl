@@ -28,11 +28,11 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo);
 
-void _print_add (const COMPARE *add, const int *addvars, 
-		 const DATAINFO *pdinfo, const int aux_code, PRN *prn);
+void gretl_print_add (const COMPARE *add, const int *addvars, 
+		      const DATAINFO *pdinfo, const int aux_code, PRN *prn);
 
-void _print_omit (const COMPARE *omit, const int *omitvars, 
-		  const DATAINFO *pdinfo, PRN *prn);
+void gretl_print_omit (const COMPARE *omit, const int *omitvars, 
+		       const DATAINFO *pdinfo, PRN *prn);
 
 void _graphyzx (const int *list, const double *zy1, const double *zy2, 
 		const double *zx, int n, const char *yname, 

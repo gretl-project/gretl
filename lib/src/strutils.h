@@ -60,4 +60,6 @@ int pprintf (PRN *prn, const char *template, ...);
 
 char *safecpy (char *targ, const char *src, int n);
 
+int doing_nls (void);
+
 #endif /* STRUTILS_H */

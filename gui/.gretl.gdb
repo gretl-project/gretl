@@ -1,2 +1,2 @@
-set args data4-3 
+set args data3-6 
 run

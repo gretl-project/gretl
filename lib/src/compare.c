@@ -406,10 +406,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 	if (addvars != NULL) {
 	    _difflist(new->list, orig->list, addvars);
-	    _print_add(&add, addvars, pdinfo, aux_code, prn);
+	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn);
 	} else {
 	    add.dfn = newlist[0] - orig->list[0];
-	    _print_add(&add, tmplist, pdinfo, aux_code, prn);
+	    gretl_print_add(&add, tmplist, pdinfo, aux_code, prn);
 	}
 
 	*model_count += 1;
@@ -523,7 +523,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	if (orig->ci != AR && orig->ci != ARCH) 
 	    printmodel(new, pdinfo, prn); 
 	_difflist(orig->list, new->list, omitvars);
-	_print_omit(&omit, omitvars, pdinfo, prn);     
+	gretl_print_omit(&omit, omitvars, pdinfo, prn);     
 
 	*model_count += 1;
 	free(tmplist);
