@@ -2,7 +2,7 @@
 
   <chapter id="nlschap"><title>Nonlinear least squares</title>
 
-  <sect1 id="nls-intro"><title>Introduction</title>
+  <sect1 id="nls-intro"><title>Introduction and examples</title>
 
     <para>
       As of version 1.0.9, <application>gretl</application> supports
@@ -15,10 +15,6 @@
       function with respect to each of the parameters.  The tolerance
       (criterion for terminating the iterative estimation procedure)
       can be set using the <command>genr</command> command.</para>
-
-  </sect1>
-
-  <sect1 id="func-spec"><title>Examples of function specification</title>
 
     <para>The syntax for specifying the function to be estimated is
     the same as for the <command>genr</command> command.  Here are two
@@ -35,7 +31,8 @@
 	</programlisting>
     </example>
 
-    <example id="nls-ects"><title>From Russell Davidson</title>
+    <example id="nls-ects"><title>Nonlinear function from Russell
+	Davidson</title>
 	<programlisting>
 	  nls y = alpha + beta * x1 + (1/beta) * x2
 	  deriv alpha = 1
@@ -118,8 +115,9 @@
       advisable to supply those derivatives as shown in the examples
       above.  If that is not possible,
       <application>gretl</application> will compute approximate
-      numerical derivatives.  The convergence properties of the NLS
-      algorithm may not be so good in this case.</para>
+      numerical derivatives.  The properties of the NLS
+      algorithm may not be so good in this case (see 
+      <xref linkend="nls-accuracy"/>).</para>
 
     <para>If analytical derivatives are supplied, they are checked for
       consistency with the given nonlinear function.  If the
@@ -149,8 +147,8 @@
       is that the relative error in the sum of squares, and/or the
       relative error between the the coefficient vector and the
       solution, is estimated to be no larger than some small value.
-      This <quote>small value</quote> is by default the square root of
-      the machine precision, but it can be set with the
+      This <quote>small value</quote> is by default the machine
+      precision to the power 3/4, but it can be set with the
       <command>genr</command> command using the special variable
       <varname>toler</varname>.  For example</para>
 
@@ -197,6 +195,167 @@
 	estimates shown in <application>gretl</application>
 	<emphasis>do</emphasis> use a degrees of freedom
 	correction.</para>
+
+  </sect1>
+
+  <sect1 id="nls-accuracy"><title>Numerical accuracy</title>
+
+    <para><xref linkend="tab-nls"/> shows the results of running the
+      <application>gretl</application> NLS procedure on the 27
+      Statistical Reference Datasets made available by the U.S.
+      National Institute of Standards and Technology (NIST) for
+      testing nonlinear regression software.<footnote><para>For a
+	  discussion of <application>gretl</application>'s accuracy in
+	  the estimation of linear models, see <xref
+	    linkend="app-accuracy"/>.</para>
+      </footnote> For each dataset, two sets of starting values for
+      the parameters are given in the test files, so the full test
+      comprises 54 runs.  Two full tests were performed, one using all
+      analytical derivatives and one using all numerical
+      approximations. In each case the default tolerance was
+      used.<footnote><para>The data shown in the table were gathered
+	  from a pre-release build of <application>gretl</application>
+	  version 1.0.9, compiled with <application>gcc</application>
+	  3.3, linked against <application>glibc</application> 2.3.2,
+	  and run under Linux on an i686 PC (IBM ThinkPad
+	  A21m).</para>
+      </footnote></para>
+
+    <para>Out of the 54 runs, <application>gretl</application> failed
+      to produce a solution in 4 cases when using analytical
+      derivatives, and in 7 cases when using numeric approximation. Of
+      the four failures in analytical derivatives mode, two were due
+      to non-convergence of the Levenberg&ndash;Marquandt algorithm
+      after the maximum number of iterations (on
+      <filename>MGH09</filename> and <filename>Bennett5</filename>,
+      both described by NIST as of <quote>Higher difficulty</quote>)
+      and two were due to generation of range errors (out-of-bounds
+      floating point values) when computing the Jacobian (on
+      <filename>BoxBOD</filename> and <filename>MGH17</filename>,
+      described as of <quote>Higher difficulty</quote> and
+      <quote>Average difficulty</quote> respectively).  The additional
+      failures in numerical approximation mode were on
+      <filename>MGH10</filename> (<quote>Higher difficulty</quote>,
+      maximum number of iterations reached) and
+      <filename>Lanczos1</filename> (<quote>Average
+	difficulty</quote>, excessive collinearity in the
+      Gauss&ndash;Newton regression for computing the standard
+      errors).</para>
+
+    <para>The table gives information on several aspects of the tests:
+      the number of outright failures, the average number of
+      iterations taken to produce a solution and two sorts of measure
+      of the accuracy of the estimates for both the parameters and the
+      standard errors of the parameters.</para>
+
+    <para>For each of the 54 runs in each mode, if the run produced a
+      solution the parameter estimates obtained by
+      <application>gretl</application> were compared with the NIST
+      certified values.  We define the <quote>minimum correct
+	figures</quote> for a given run as the number of significant
+      figures to which the <emphasis>least accurate</emphasis>
+      <application>gretl</application> estimate agreed with the
+      certified value, for that run. The table shows both the average
+      and the worst case value of this variable across all the runs
+      that produced a solution.  The same information is shown for the
+      estimated standard errors.</para>
+      
+    <para>
+      The second measure of accuracy shown is the percentage of cases,
+      taking into account all parameters from all successful runs, in
+      which the <application>gretl</application> estimate agreed with
+      the certified value to at least the 6 significant figures which
+      are printed by default in the <application>gretl</application>
+      regression output.</para>
+
+    <table id="tab-nls" frame="none">
+      <title>Nonlinear regression: the NIST tests</title>
+      <tgroup cols="3">
+        <thead>
+          <row>
+            <entry>&nbsp;</entry>
+	    <entry>Analytical derivatives</entry>
+	    <entry>Numerical derivatives</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+	    <entry>Failures in 54 tests</entry>
+	    <entry>4</entry>
+	    <entry>7</entry>
+	  </row>
+          <row>
+	    <entry>Average iterations</entry>
+	    <entry>32</entry>
+	    <entry>120</entry>
+	  </row>
+          <row>
+	    <entry>Avg. of min. correct figures, parameters</entry>
+	    <entry>7.960</entry>
+	    <entry>6.809</entry>
+	  </row>
+          <row>
+	    <entry>Worst of min. correct figures, parameters</entry>
+	    <entry>4</entry>
+	    <entry>3</entry>
+	  </row>
+          <row>
+	    <entry>Avg. of min. correct figures, standard
+	      errors</entry>
+	    <entry>7.760</entry>
+	    <entry>5.702</entry>
+	  </row>
+          <row>
+	    <entry>Worst of min. correct figures, standard
+	      errors</entry>
+	    <entry>5</entry>
+	    <entry>2</entry>
+	  </row>
+          <row>
+	    <entry>Percent correct to at least 6 figures,
+	      parameters</entry>
+	    <entry>96.5</entry>
+	    <entry>91.5</entry>
+	  </row>
+          <row>
+	    <entry>Percent correct to at least 6 figures, standard
+	      errors</entry>
+	    <entry>92.5</entry>
+	    <entry>77.3</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para>The worst case parameter estimate using analytical
+      derivatives occurred on the <filename>ENSO</filename> dataset.
+      On the test machine this estimate was improved from 4 to 6
+      correct figures by tightening the convergence tolerance to
+      1.0e&minus;14.  The worst case parameter estimate using
+      numerical derivatives (3 digits correct for one of the
+      <filename>Bennett5</filename> parameters) could not be improved
+      in this way.</para>
+
+    <para>As regards the worst case standard error estimates, the
+      poorest figure using analytical derivatives (on the
+      <filename>ENSO</filename> dataset again) was improved from 5 to
+      6 correct figures by setting a tolerance of 1.0e&minus;13.  The
+      worst standard error estimate using numerical derivatives (on
+      the <filename>Lanczos3</filename> dataset) was improved from 2
+      to 3 figures at a tolerance of 1.0e&minus;13.
+      </para>
+
+    <para>Note the overall superiority of analytical derivatives: on
+      average solutions to the test problems were obtained with
+      substantially fewer iterations and the results were more
+      accurate (most notably for the estimated standard errors).  Note
+      also that the six-digit results printed by
+      <application>gretl</application> are not 100 percent reliable
+      for difficult nonlinear problems (in particular when using
+      numerical derivatives).  Having registered this caveat, the
+      percentage of cases where the results were good to six digits or
+      better seems high enough to justify their printing in this
+      form.</para>
 
   </sect1>
 

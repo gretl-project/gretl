@@ -2886,6 +2886,22 @@ static double genr_corr (const char *str, double ***pZ,
 
 /* ...................................................... */
 
+static int get_nls_param_number (const MODEL *pmod, 
+				 const char *vname)
+{
+    int i;
+
+    if (pmod->params == NULL) return 0;
+
+    for (i=0; i<=pmod->ncoeff; i++) {
+	if (!strcmp(vname, pmod->params[i])) return i + 1;
+    }
+
+    return 0;
+}
+
+/* ...................................................... */
+
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod)
 {
@@ -2910,8 +2926,13 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     v2 = varindex(pdinfo, v2str);
     if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
     /* check model list */
-    v1l = ismatch(v1, pmod->list);
-    v2l = ismatch(v2, pmod->list);
+    if (pmod->ci == NLS) {
+	v1l = get_nls_param_number(pmod, v1str);
+	v2l = get_nls_param_number(pmod, v2str);
+    } else {
+	v1l = ismatch(v1, pmod->list);
+	v2l = ismatch(v2, pmod->list);
+    }
     if (!v1l || !v2l) return NADBL;
     /* model vcv matrix */
     if (pmod->vcv == NULL && makevcv(pmod)) return NADBL;

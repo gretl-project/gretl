@@ -314,6 +314,20 @@ static void add_stats_to_model (MODEL *pmod)
     pmod->adjrsq = NADBL;
 }
 
+static int add_std_errs_to_model (MODEL *pmod)
+{
+    int i, k;
+
+    if (pmod->vcv == NULL && makevcv(pmod)) return E_ALLOC;
+
+    for (i=1; i<=pmod->ncoeff; i++) {
+	k = ijton(i, i, pmod->ncoeff);
+	pmod->sderr[i] = sqrt(pmod->vcv[k]);
+    }
+
+    return 0;
+}
+
 static void add_coeffs_to_model (MODEL *pmod, double *coeff)
 {
     int i;
@@ -433,17 +447,23 @@ static MODEL GNR (double *fvec, double *fjac)
 	gnr.errcode = E_DATA;
     }
 
-    if (gnr.errcode) {
-	for (i=1; i<=gnr.ncoeff; i++) 
-	    gnr.sderr[i] = NADBL;
+    if (gnr.errcode == 0) {
+	add_stats_to_model(&gnr);
+	if (add_std_errs_to_model(&gnr)) {
+	    gnr.errcode = E_ALLOC;
+	}
     }
 
-    add_coeffs_to_model(&gnr, nlspec.coeff);
-    add_param_names_to_model(&gnr);
-    add_fit_resid_to_model(&gnr, fvec);
-    gnr.list[1] = nlspec.depvar;
-    gnr.correct = iters; /* this is being "borrowed" */
-    gnr.chisq = nlspec.tol; /* ditto */
+    if (gnr.errcode == 0) {
+	_aicetc(&gnr);
+	gnr.ci = NLS;
+	add_coeffs_to_model(&gnr, nlspec.coeff);
+	add_param_names_to_model(&gnr);
+	add_fit_resid_to_model(&gnr, fvec);
+	gnr.list[1] = nlspec.depvar;
+	gnr.correct = iters; /* this is being "borrowed" */
+	gnr.chisq = nlspec.tol; /* ditto */
+    }
 
     nlspec.t1 = t1;
     nlspec.t2 = t2;
@@ -897,12 +917,6 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	    nlsmod.errcode = E_UNSPEC;
 	}
     }
-
-    if (!err) {
-	add_stats_to_model(&nlsmod);  
-	_aicetc(&nlsmod);
-	nlsmod.ci = NLS;
-    } 
 
     free(fvec);
     free(fjac);
