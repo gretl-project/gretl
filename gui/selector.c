@@ -328,7 +328,7 @@ static int add_to_cmdlist (selector *sr, const char *add)
 static void construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
-    gchar numstr[6], grvar[6];
+    gchar numstr[8], endbit[12] = {0};
 
     sr->error = 0;
 
@@ -343,7 +343,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->code == WLS) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
-	if (str == NULL || !strlen(str)) {
+	if (str == NULL || *str == '\0') {
 	    errbox(_("You must select a weight variable"));
 	    sr->error = 1;
 	} else {
@@ -351,8 +351,14 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    sprintf(numstr, "%d ", i);
 	    add_to_cmdlist(sr, numstr);
 	}
-    }
-    else if (sr->code == AR) {
+    } else if (sr->code == POISSON) {
+	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+
+	if (str != NULL && *str != '\0') {
+	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->extra)));
+	    sprintf(endbit, " ; %d", i);
+	}
+    } else if (sr->code == AR) {
 	gchar *lags;
 
 	lags = gtk_entry_get_text(GTK_ENTRY(sr->extra));
@@ -363,16 +369,14 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    add_to_cmdlist(sr, lags);
 	    add_to_cmdlist(sr, " ; ");
 	}
-    }
-    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
+    } else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
 	GtkAdjustment *adj;
  
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
 	i = (gint) adj->value;
 	sprintf(numstr, "%d ", i);
 	add_to_cmdlist(sr, numstr);
-    }
-    else if (sr->code == ARMA || sr->code == GARCH) {
+    } else if (sr->code == ARMA || sr->code == GARCH) {
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
@@ -386,8 +390,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	add_to_cmdlist(sr, numstr);
 
 	add_to_cmdlist(sr, " ; ");
-    }
-    else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
+    } else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
 	if (str == NULL || !strlen(str)) {
@@ -410,7 +413,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
 	    if (sr->code == GR_XY || sr->code == GR_IMP) {
-		sprintf(grvar, " %d", i);
+		sprintf(endbit, " %d", i);
 	    } else {
 		sprintf(numstr, "%d", i);
 		add_to_cmdlist(sr, numstr);
@@ -492,8 +495,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (sr->code == GR_XY || sr->code == GR_IMP)
-	add_to_cmdlist(sr, grvar);
+    if (endbit[0] != '\0') {
+	add_to_cmdlist(sr, endbit);
+    }
 
     if (sr->code == SCATTERS) {
 	GtkWidget *active_item = GTK_OPTION_MENU(scatters_menu)->menu_item;
@@ -503,8 +507,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (sr->error) 
+    if (sr->error) {
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
+    }
 }
 
 static void destroy_selector (GtkWidget *w, selector *sr) 
@@ -537,6 +542,8 @@ static char *est_str (int cmdnum)
 	return N_("Tobit");
     case LOGISTIC:
 	return N_("Logistic");
+    case POISSON:
+	return N_("Poisson");
     case POOLED:
 	return N_("Pooled OLS");
     case WLS:
@@ -570,6 +577,8 @@ static char *extra_string (int cmdnum)
     switch (cmdnum) {
     case WLS:
 	return N_("Weight variable");
+    case POISSON:
+	return N_("Offset variable");
     case TSLS:
 	return N_("Instruments");
     case AR:
@@ -898,19 +907,19 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) 
+    if (sr->code == WLS || sr->code == POISSON ||
+	sr->code == GR_DUMMY || sr->code == GR_3D) {
 	extra_var_box (sr, right_vbox);
-    else if (sr->code == COINT || sr->code == COINT2)
+    } else if (sr->code == COINT || sr->code == COINT2) {
 	lag_order_spin (sr, right_vbox);
-    else if (sr->code == TSLS)
+    } else if (sr->code == TSLS) {
 	auxiliary_varlist_box (sr, right_vbox);
-    else if (sr->code == AR) {
+    } else if (sr->code == AR) {
 	sr->extra = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra); 
-    }
-    else if (sr->code == VAR) {
+    } else if (sr->code == VAR) {
 	lag_order_spin (sr, right_vbox);
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
@@ -1251,7 +1260,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
-	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
+	cmdcode == POISSON || cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }
     

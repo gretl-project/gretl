@@ -111,6 +111,8 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
 	}
     }
 
+    targ->sigma = sqrt(targ->ess / targ->dfd);
+
     for (i=0; i<targ->ncoeff; i++) {
 	targ->sderr[i] = src->sderr[i] / sigma;
     }
@@ -126,7 +128,6 @@ transcribe_poisson_results (MODEL *targ, MODEL *src, const double *y,
     /* mask invalid statistics */
     targ->rsq = NADBL;
     targ->adjrsq = NADBL;
-    targ->sigma = NADBL;
     targ->fstt = NADBL;
 
     /* make and correct the variance matrix */

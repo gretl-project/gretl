@@ -34,6 +34,10 @@
 
 #define AR_MODEL(c) (c == AR || c == CORC || c == PWE || c == HILU)
 
+#define ML_ESTIMATOR(c) (c ==  ARMA || c == GARCH || c == POISSON || \
+                         c == LOGIT || c == PROBIT || c == TOBIT)
+
+#define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)
 
 MODEL *gretl_model_new (void);
 

@@ -137,7 +137,9 @@ enum stat_codes {
     TR2,
     DF,
     SIGMA,
-    LNL
+    LNL,
+    AIC,
+    BIC
 };
 
 enum exec_codes {

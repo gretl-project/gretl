@@ -182,8 +182,6 @@ enum gretl_cmd_codes {
                         c == VIF || \
                         c == VARTEST)
 
-#define LIMDEP(c) (c == LOGIT || c == PROBIT || c == TOBIT)
-
 int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);

@@ -1817,6 +1817,7 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
     fr->t1 = pmod->t1;
     fr->t2 = pmod->t2;
+    fr->real_nobs = pmod->nobs;
 
     for (t=fr->t1; t<=fr->t2; t++) {
 	ft = t - fr->t1;
@@ -2402,6 +2403,7 @@ FITRESID *fit_resid_new (int n, int errs)
     fr->t1 = 0;
     fr->t2 = 0;
     fr->nobs = 0;
+    fr->real_nobs = 0;
 
     if (n == 0) {
 	fr->actual = NULL;

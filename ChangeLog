@@ -32,6 +32,8 @@ version 1.3.3
   a set of variables; also available in GUI via right-click
   popup menu when more than one variable is selected in the
   main window
+- genr command: $nvars gives the number of variables in the
+  dataset
 
 01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking

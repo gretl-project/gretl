@@ -1808,12 +1808,14 @@
 	last regression.</para>
 
       <para>
-	Two <quote>internal</quote> dataset variables are available:
+	Three <quote>internal</quote> dataset variables are available:
 	<lit>$nobs</lit> holds the number of observations in the
 	current sample range (which may or may not equal the value of
 	<lit>$T</lit>, the number of observations used in estimating
-	the last model), and <lit>$pd</lit> holds the frequency or
-	periodicity of the data (e.g. 4 for quarterly data).</para>
+	the last model); <lit>$nvars</lit> holds the number of
+	variables in the dataset (including the constant); and
+	<lit>$pd</lit> holds the frequency or periodicity of the data
+	(e.g. 4 for quarterly data).</para>
 
       <para>Two special internal scalars, <lit>$test</lit> and
 	<lit>$pvalue</lit>, hold respectively the value and the

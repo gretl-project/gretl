@@ -150,7 +150,7 @@ add_or_omit_compare (const MODEL *pmodA, const MODEL *pmodB, int add)
     return cmp;
 }
 
-/* reconstitute full varlist for WLS and AR models */
+/* reconstitute full varlist for WLS, POISSON and AR models */
 
 static int *
 full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
@@ -158,18 +158,23 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
     int i, len, pos = 0;
     int *flist = NULL;
 
-    if (pmod->ci != WLS && pmod->ci != AR) 
+    if (pmod->ci != WLS && pmod->ci != POISSON && pmod->ci != AR) {
 	return NULL;
+    }
 
     if (pmod->ci == WLS) { 
 	len = inlist[0] + 2;
+    } else if (pmod->ci == POISSON) {
+	len = inlist[0] + 3;
     } else {
 	pos = pmod->arinfo->arlist[0] + 1;
 	len = pos + inlist[0] + 2;
     }
 
     flist = malloc(len * sizeof *flist);
-    if (flist == NULL) return NULL;
+    if (flist == NULL) {
+	return NULL;
+    }
 
     if (pmod->ci == WLS) { 
 	flist[0] = len - 1;
@@ -177,8 +182,16 @@ full_model_list (const MODEL *pmod, const int *inlist, int *ppos)
 	for (i=1; i<=inlist[0]; i++) {
 	    flist[i+1] = inlist[i];
 	}
-    }
-    else if (pmod->ci == AR) {
+    } else if (pmod->ci == POISSON) {
+	int offvar = gretl_model_get_int(pmod, "offset_var");
+
+	flist[0] = len - 1;
+	for (i=1; i<=inlist[0]; i++) {
+	    flist[i] = inlist[i];
+	}
+	flist[flist[0] - 1] = LISTSEP;
+	flist[flist[0]] = offvar;
+    } else if (pmod->ci == AR) {
 	flist[0] = len - 2;
 	for (i=1; i<pos; i++) {
 	    flist[i] = pmod->arinfo->arlist[i];
@@ -223,7 +236,8 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	/* panel model with per-unit weights */
 	lsqopt |= OPT_W;
 	repci = POOLED;
-    } else if (orig->ci == WLS || orig->ci == AR) {
+    } else if (orig->ci == WLS || orig->ci == AR || 
+	       (orig->ci == POISSON && gretl_model_get_int(orig, "offset_var"))) {
 	int *full_list = full_model_list(orig, list, &pos);
 
 	free(list);
@@ -251,11 +265,11 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     case TOBIT:
 	rep = tobit_model(list, pZ, pdinfo, NULL);
 	break;
-    case POISSON:
-	rep = poisson_model(list, pZ, pdinfo, NULL);
-	break;
     case LAD:
 	rep = lad(list, pZ, pdinfo);
+	break;
+    case POISSON:
+	rep = poisson_model(list, pZ, pdinfo, NULL);
 	break;
     case LOGISTIC: 
 	{

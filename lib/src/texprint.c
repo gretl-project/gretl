@@ -439,8 +439,17 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     double tstat;
     char tmp[48];
     int i, nc = pmod->ncoeff;
-    int split = (nc > MAXCOEFF);
+    int split = 0, offvar = 0;
     int cchars = 0, ccount = 0;
+
+    if (pmod->ci == POISSON) {
+	offvar = gretl_model_get_int(pmod, "offset_var");
+	if (offvar > 0) {
+	    nc++;
+	}
+    }
+
+    split = (nc > MAXCOEFF);
 
     if (standalone) {
 	gretl_tex_preamble(prn, 1);
@@ -456,24 +465,36 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* dependent variable */
     *tmp = '\0';
-    if (pmod->ci == ARMA || pmod->ci == GARCH) {
+    if (pmod->ci == POISSON) {
+	char vname[24];
+
+	tex_escape(vname, pdinfo->varname[pmod->list[1]]);
+	sprintf(tmp, "log(%s)", vname);
+    } else if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     }
+
     pprintf(prn, "\\widehat{\\rm %s} %s= \n", tmp, (split? "&" : ""));
 
-    if (pmod->ci == GARCH) 
+    if (pmod->ci == GARCH) {
 	nc -= (1 + pmod->list[1] + pmod->list[2]);
+    }
 
     /* coefficients times indep vars */
     for (i=0; i<nc; i++) {
-	tstat = pmod->coeff[i] / pmod->sderr[i];
-	pprintf(prn, "%s\\underset{(%.3f)}{", 
-		(pmod->coeff[i] < 0.0)? "-" :
-		(i > 0)? "+" : "", tstat);
-	tex_print_float(pmod->coeff[i], prn);
-	pputc(prn, '}');
+	if (offvar > 0 && i == nc - 1) {
+	    pputc(prn, '+');
+	    tex_print_float(1.0, prn);
+	} else {
+	    tstat = pmod->coeff[i] / pmod->sderr[i];
+	    pprintf(prn, "%s\\underset{(%.3f)}{", 
+		    (pmod->coeff[i] < 0.0)? "-" :
+		    (i > 0)? "+" : "", tstat);
+	    tex_print_float(pmod->coeff[i], prn);
+	    pputc(prn, '}');
+	}
 	if (i > 0 || pmod->ifc == 0) {
 	    pputs(prn, "\\,");
 	    if (pmod->ci == ARMA) {
@@ -484,6 +505,10 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 		cchars += strlen(pmod->params[i+1]);
 		tex_garch_coeff_name(tmp, pmod->params[i+1], 1);
 		pputs(prn, tmp);
+	    } else if (offvar > 0 && i == nc - 1) {
+		cchars += strlen(pdinfo->varname[offvar]);
+		tex_escape(tmp, pdinfo->varname[offvar]);
+		pprintf(prn, "\\mbox{%s}", tmp);
 	    } else {
 		cchars += strlen(pdinfo->varname[pmod->list[i+2]]);
 		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);

@@ -110,6 +110,7 @@ enum retrieve {
     R_BIC,       /* Bayesian info criterion, last model */
     R_TRSQ,      /* T * R-squared, last model */
     R_NOBS,      /* number of observations in current sample range */
+    R_NVARS,     /* number of variables in dataset (including the constant) */
     R_PD,        /* periodicity of dataset */
     R_TEST_STAT, /* test statistic from last explicit test performed */
     R_TEST_PVAL  /* p-value from last explicit test performed */
@@ -3068,7 +3069,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
 	    if (!na(z[t])) i++;
 	}
 	return (double) i;
-    }	
+    } 
 
     tmp = malloc((t2 - t1 + 1) * sizeof *tmp);
     if (tmp == NULL) {
@@ -3551,6 +3552,8 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 	x = (double) (pdinfo->t2 - pdinfo->t1 + 1);
     } else if (idx == R_PD) {
 	x = (double) pdinfo->pd;
+    } else if (idx == R_NVARS) {
+	x = (double) pdinfo->v;
     }
 
     return x;
@@ -3731,6 +3734,9 @@ static int dataset_var_index (const char *s)
     }
     if (!strcmp(test, "$pd")) {
 	return R_PD;
+    }
+    if (!strcmp(test, "$nvars")) {
+	return R_NVARS;
     }
 
     return 0;

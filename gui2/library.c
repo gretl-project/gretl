@@ -2197,7 +2197,9 @@ void do_model (GtkWidget *widget, gpointer p)
     GRETL_VAR *var = NULL;
     selector *sr = (selector *) p;  
 
-    if (selector_error(sr)) return;
+    if (selector_error(sr)) {
+	return;
+    }
 
     action = selector_code(sr);
     strcpy(estimator, gretl_command_word(action));
@@ -2215,7 +2217,10 @@ void do_model (GtkWidget *widget, gpointer p)
 #endif
 
     *modelgenr = '\0';
-    if (check_model_cmd(line, modelgenr)) return;
+
+    if (check_model_cmd(line, modelgenr)) {
+	return;
+    }
 
     echo_cmd(&cmd, datainfo, line, 0, 1, 0, NULL);
     if (cmd.ci == VARDUP) {
@@ -2223,7 +2228,9 @@ void do_model (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    if (bufopen(&prn)) return;
+    if (bufopen(&prn)) {
+	return;
+    }
 
     if (action != VAR) {
 	pmod = gretl_model_new();
@@ -3364,6 +3371,20 @@ void add_model_stat (MODEL *pmod, int which)
 	Z[i][0] = pmod->lnL;
 	strcpy(statname, "$lnl");
 	break;	
+    case AIC:
+	sprintf(vname, "aic_%d", pmod->ID);
+	sprintf(vlabel, _("Akaike Information Criterion from model %d"), 
+		pmod->ID);
+	Z[i][0] = pmod->criterion[C_AIC];
+	strcpy(statname, "$aic");
+	break;
+    case BIC:
+	sprintf(vname, "bic_%d", pmod->ID);
+	sprintf(vlabel, _("Bayesian Information Criterion from model %d"), 
+		pmod->ID);
+	Z[i][0] = pmod->criterion[C_BIC];
+	strcpy(statname, "$bic");
+	break;
     }
 
     strcpy(datainfo->varname[i], make_varname_unique(vname, i, datainfo));

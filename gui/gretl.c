@@ -444,6 +444,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL },
     { N_("/Model/To_bit..."), NULL, model_callback, TOBIT, NULL },
     { "/Model/sep5",  NULL, NULL, 0, "<Separator>" },
+    { N_("/Model/Poi_sson..."), NULL, model_callback, POISSON, NULL },
     { N_("/Model/Lo_gistic..."), NULL, model_callback, LOGISTIC, NULL },
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL },
     { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL },

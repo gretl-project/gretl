@@ -136,8 +136,7 @@ static GtkWidget *var_list_box_new (GtkBox *box, selector *sr, int which)
 	g_signal_connect (G_OBJECT(view), "button_press_event",
 			  G_CALLBACK(dblclick_varlist_row),
 			  sr);
-    }
-    else if (which == SR_RIGHTVARS || which == SR_AUXVARS) { 
+    } else if (which == SR_RIGHTVARS || which == SR_AUXVARS) { 
 	/* lists of selected items */
 	g_signal_connect (G_OBJECT(view), "button_press_event",
 			  G_CALLBACK(set_active_var),
@@ -521,30 +520,39 @@ static void reverse_list (char *list)
     free(tmp);
 }
 
+enum cmdlist_codes {
+    ADD_NOW,
+    ADD_AT_END
+};
+
 static int add_to_cmdlist (selector *sr, const char *add)
 {
     int n = strlen(sr->cmdlist);
     char *cmdlist = NULL;
+    int err = 0;
 
     if (n % MAXLEN > MAXLEN - 32) {
 	int blocks = 2 + n / MAXLEN;
 
 	cmdlist = realloc(sr->cmdlist, blocks * MAXLEN);
 	if (cmdlist == NULL) {
-	    return 1;
+	    err = 1;
+	} else {
+	    sr->cmdlist = cmdlist;
 	}
-	sr->cmdlist = cmdlist;
     }
 
-    strcat(sr->cmdlist, add);
+    if (!err) {
+	strcat(sr->cmdlist, add);
+    }
 
-    return 0;
+    return err;
 }
 
 static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 {
     gint i = 0, rows = 0;
-    gchar numstr[6], grvar[6];
+    gchar numstr[8], endbit[12] = {0};
     GtkTreeModel *model;
     GtkTreeIter iter;
 
@@ -565,13 +573,20 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->code == WLS) {
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
-	if (str == NULL || !strlen(str)) {
+	if (str == NULL || *str == '\0') {
 	    errbox(_("You must select a weight variable"));
 	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
 	    sprintf(numstr, "%d ", i);
 	    add_to_cmdlist(sr, numstr);
+	}
+    } else if (sr->code == POISSON) {
+	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
+
+	if (str != NULL && *str != '\0') {
+	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->extra), "data"));
+	    sprintf(endbit, " ; %d", i);
 	}
     } else if (sr->code == AR) {
 	const gchar *lags;
@@ -627,7 +642,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->depvar), "data"));
 	    if (sr->code == GR_XY || sr->code == GR_IMP) {
-		sprintf(grvar, " %d", i);
+		sprintf(endbit, " %d", i);
 	    } else {
 		sprintf(numstr, "%d", i);
 		add_to_cmdlist(sr, numstr);
@@ -725,8 +740,8 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	}
     }
 
-    if (sr->code == GR_XY || sr->code == GR_IMP) {
-	add_to_cmdlist(sr, grvar);
+    if (endbit[0] != '\0') {
+	add_to_cmdlist(sr, endbit);
     }
 
     if (sr->code == SCATTERS && 
@@ -797,6 +812,8 @@ static char *est_str (int cmdnum)
 	return N_("Tobit");
     case LOGISTIC:
 	return N_("Logistic");
+    case POISSON:
+	return N_("Poisson");
     case POOLED:
 	return N_("Pooled OLS");
     case WLS:
@@ -830,6 +847,8 @@ static char *extra_string (int cmdnum)
     switch (cmdnum) {
     case WLS:
 	return N_("Weight variable");
+    case POISSON:
+	return N_("Offset variable");
     case TSLS:
 	return N_("Instruments");
     case AR:
@@ -1104,22 +1123,19 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) { 
-	extra_var_box (sr, right_vbox);
-    }
-    else if (sr->code == COINT || sr->code == COINT2) {
-	lag_order_spin (sr, right_vbox);
-    }
-    else if (sr->code == TSLS) {
-	auxiliary_varlist_box (sr, right_vbox);
-    }
-    else if (sr->code == AR) {
+    if (sr->code == WLS || sr->code == POISSON ||
+	sr->code == GR_DUMMY || sr->code == GR_3D) { 
+	extra_var_box(sr, right_vbox);
+    } else if (sr->code == COINT || sr->code == COINT2) {
+	lag_order_spin(sr, right_vbox);
+    } else if (sr->code == TSLS) {
+	auxiliary_varlist_box(sr, right_vbox);
+    } else if (sr->code == AR) {
 	sr->extra = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
 			   FALSE, TRUE, 0);
 	gtk_widget_show(sr->extra); 
-    }
-    else if (sr->code == VAR) {
+    } else if (sr->code == VAR) {
 	lag_order_spin (sr, right_vbox);
 	tmp = gtk_hseparator_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, FALSE, 0);
@@ -1153,7 +1169,7 @@ static void selector_init (selector *sr, guint code, const char *title)
     
     if (MODEL_CODE(code) && datainfo->v > 10) {
 	dlgheight = 400;
-    } else if (code == WLS || code == AR) {
+    } else if (code == WLS || code == POISSON || code == AR) {
 	dlgheight = 350;
     } else if (code == TSLS) {
 	dlgheight = 400;
@@ -1473,7 +1489,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 || 
-	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
+	cmdcode == POISSON || cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
     }
     

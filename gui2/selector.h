@@ -25,13 +25,13 @@
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == MPOLS || c == LAD || \
-                       c == LOGISTIC || c == TOBIT || c == PWE)
+                       c == LOGISTIC || c == TOBIT || c == PWE || c == POISSON)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
                        c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == LAD || c == LOGISTIC || \
-                       c == TOBIT || c == PWE)
+                       c == TOBIT || c == PWE || c == POISSON)
 #endif
 
 #define COINT_CODE(c) (c == COINT || c == COINT2)

@@ -558,7 +558,7 @@ void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
     pputs(prn, I_("Model estimation range:"));
     pprintf(prn, " %s--%s", date1, date2);
 
-    pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
+    pprintf(prn, " ($n$ = %d)\\\\\n", fr->real_nobs); 
 
     pprintf(prn, I_("Standard error of residuals = %g"), fr->sigma);
     pputs(prn, "\n\\end{raggedright}\n");
@@ -578,7 +578,7 @@ void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 
     pputs(prn, "{\\rtf1\\par\n\\qc ");
     pputs(prn, I_("Model estimation range:")); 
-    pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->nobs);
+    pprintf(prn, " %s - %s (n = %d)\\par\n", date1, date2, fr->real_nobs);
 
     sprintf(tmp, I_("Standard error of residuals = %g"), 
 	    fr->sigma);

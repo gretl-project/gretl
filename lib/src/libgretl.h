@@ -367,6 +367,7 @@ struct FITRESID_ {
     int df;
     int t1, t2;
     int nobs;
+    int real_nobs;
     int err;
     char depvar[VNAMELEN];
 };

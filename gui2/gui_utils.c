@@ -2463,9 +2463,7 @@ static void adjust_model_menu_state (windata_t *vwin, const MODEL *pmod)
     if (pmod->ci == LAD) {
 	fcast_menu_off(vwin->ifac);
 	vcv_menu_off(vwin->ifac);
-    }
-
-    else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
+    } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	fcast_menu_off(vwin->ifac);
 	confint_menu_off(vwin->ifac);
 	if (pmod->ci == ARMA && arma_by_x12a(pmod)) {
@@ -2552,6 +2550,13 @@ static GtkItemFactoryEntry lnl_data_item = {
     model_stat_callback, LNL, NULL, GNULL 
 };
 
+static GtkItemFactoryEntry criteria_items[] = {
+    { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
+      model_stat_callback, AIC, NULL, GNULL },
+    { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
+      model_stat_callback, BIC, NULL, GNULL }
+};
+
 static GtkItemFactoryEntry garch_data_item = {
     N_("/Model data/Add to data set/predicted error variance"), NULL, 
     fit_resid_callback, GENR_H, NULL, GNULL 
@@ -2595,6 +2600,13 @@ static GtkItemFactoryEntry lnl_data_item = {
     model_stat_callback, LNL, NULL
 };
 
+static GtkItemFactoryEntry criteria_items[] = {
+    { N_("/Model data/Add to data set/Akaike Information Criterion"), NULL, 
+      model_stat_callback, AIC, NULL },
+    { N_("/Model data/Add to data set/Bayesian Information Criterion"), NULL, 
+      model_stat_callback, BIC, NULL }
+};
+
 static GtkItemFactoryEntry garch_data_item = {
     N_("/Model data/Add to data set/predicted error variance"), NULL, 
     fit_resid_callback, GENR_H, NULL
@@ -2628,8 +2640,7 @@ static void add_model_dataset_items (windata_t *vwin)
 	}
     }
 
-    if (pmod->ci != TOBIT && pmod->ci != LAD && pmod->ci != GARCH &&
-	!(LIMDEP(pmod->ci)) && !na(pmod->rsq)) {
+    if (!ML_ESTIMATOR(pmod->ci) && pmod->ci != LAD && !na(pmod->rsq)) {
 	n = sizeof r_squared_items / sizeof r_squared_items[0];
 	for (i=0; i<n; i++) {
 	    gtk_item_factory_create_item(vwin->ifac, &r_squared_items[i], 
@@ -2637,8 +2648,13 @@ static void add_model_dataset_items (windata_t *vwin)
 	}
     }
 
-    if (LIMDEP(pmod->ci) || pmod->ci == ARMA || pmod->ci == GARCH) {
+    if (ML_ESTIMATOR(pmod->ci)) {
 	gtk_item_factory_create_item(vwin->ifac, &lnl_data_item, vwin, 1);
+    }
+
+    n = sizeof criteria_items / sizeof criteria_items[0];
+    for (i=0; i<n; i++) {
+	gtk_item_factory_create_item(vwin->ifac, &criteria_items[i], vwin, 1);
     }
 
     if (pmod->ci == GARCH) {
