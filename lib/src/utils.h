@@ -58,7 +58,18 @@ enum flagvals {
  * Attempt to determine whether a data set contains time series
  * data (1) or not (0).
  */
-#define dataset_is_time_series(p) (p->time_series == 1)
+#define dataset_is_time_series(p) (p->time_series == TIME_SERIES)
+
+/**
+ * dataset_is_daily:
+ * @p: pointer to data information struct.
+ *
+ * Attempt to determine whether a data set contains daily time series
+ * data (1) or not (0).
+ */
+#define dataset_is_daily(p) (p->time_series == TIME_SERIES \
+                             && (p->pd == 5 || p->pd == 7))
+
 /**
  * dataset_is_panel:
  * @p: pointer to data information struct.
@@ -66,7 +77,9 @@ enum flagvals {
  * Attempt to determine whether a data set contains panel
  * data (1) or not (0).
  */
-#define dataset_is_panel(p) (p->time_series == 2 || p->time_series == 3)
+#define dataset_is_panel(p) (p->time_series == STACKED_TIME_SERIES \
+                            || p->time_series == STACKED_CROSS_SECTION)
+
 
 #include <float.h>
 #define floateq(x, y) (fabs((x) - (y)) < DBL_EPSILON)

@@ -43,7 +43,9 @@ static int xmlfile (const char *fname);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
-
+static char *wkdays[] = {
+    "mon", "tue", "wed", "thu", "fri", "sat", "sun"    
+};
 
 /**
  * free_Z:
@@ -609,8 +611,9 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     if (pdinfo->sd0 >= 2.0) 
         pdinfo->time_series = TIME_SERIES; /* actual time series? */
-    else if (pdinfo->sd0 > 1.0)
+    else if (pdinfo->sd0 > 1.0) {
 	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
+    }
     else pdinfo->time_series = 0;
 
     pdinfo->bin = 0;
@@ -689,6 +692,18 @@ static int check_date (const char *date)
     return 0;
 }
 
+/* .......................................................... */
+
+static int dayindex (char *day)
+{
+    int i;
+
+    for (i=0; i<7; i++) 
+	if (!strcmp(day, wkdays[i])) 
+	    return i + 1;
+    return 0;
+}
+
 /**
  * dateton:
  * @date: string representation of date for processing.
@@ -742,7 +757,10 @@ int dateton (const char *date, const int pd, const char *startdate)
     safecpy(startmajstr, startdate, dotpos2);
     startmaj = atoi(startmajstr);
     strcpy(startminstr, startdate + dotpos2 + 1);
-    startmin = atoi(startminstr);
+    if (isdigit(startminstr[0]))
+	startmin = atoi(startminstr);
+    else /* daily data */
+	startmin = dayindex(startminstr);
     n = pd * (maj - startmaj);
     n += min - startmin;
    
@@ -764,14 +782,21 @@ void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
 /* print to datestr the calendar representation of nt */
 {
     double xn;
-    int n;
 
     xn = date(nt, pdinfo->pd, pdinfo->sd0);
+
     if (pdinfo->pd == 1) {
-        n = (int) xn;
+        int n = (int) xn;
+
         sprintf(datestr, "%d", n);
     }
-    else if (pdinfo->pd < 10) sprintf(datestr, "%.1f", xn);
+    else if (dataset_is_daily(pdinfo)) {
+	int day = 10 * xn - ((int) xn * 10);
+
+	sprintf(datestr, "%d.%s", (int) xn, wkdays[day-1]);
+    }
+    else if (pdinfo->pd < 10) 
+	sprintf(datestr, "%.1f", xn);
     else sprintf(datestr, "%.2f", xn);
 }
 
@@ -1070,7 +1095,6 @@ int write_data (const char *fname, const int *list,
     }
     else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
-	int idate;
 	double xdate;
 	char comma[2];
 	
@@ -1088,9 +1112,8 @@ int write_data (const char *fname, const int *list,
 		fprintf(fp, "%s%s", pdinfo->S[t], comma);
 	    else {
 		xdate = date(t, pdinfo->pd, pdinfo->sd0);
-		idate = (int) xdate;
 		if (pdinfo->pd == 1) 
-		    fprintf(fp, "\"%d\"%s", idate, comma);
+		    fprintf(fp, "\"%d\"%s", (int) xdate, comma);
 		else if (pdinfo->pd < 10) 
 		    fprintf(fp, "\"%.1f\"%s", xdate, comma);
 		else fprintf(fp, "\"%.2f\"%s", xdate, comma);

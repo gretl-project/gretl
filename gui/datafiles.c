@@ -672,6 +672,55 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_main();
 }
 
+/* .................................................................. */
+
+struct ts_pd {
+    int pd;
+    char *label;
+};
+
+void time_series_dialog (gpointer data, guint u, GtkWidget *w)
+{
+    char msg[80];
+    char *label = NULL;
+    int i;
+    struct ts_pd ok_pd[] = {
+	{  1, "annual" },
+	{  4, "quarterly" },
+	{ 12, "monthly" },
+	{ 52, "weekly" },
+	{  5, "daily" },
+	{  7, "daily" },
+	{ 24, "hourly" },
+	{  0, NULL }
+    };
+	
+    for (i=0; ok_pd[i].pd != 0; i++) { 
+	if (datainfo->pd == ok_pd[i].pd) {
+	    label = ok_pd[i].label;
+	    break;
+	}
+    }
+
+    if (label != NULL) {
+	int resp;
+
+	sprintf(msg, "Do you want to register the current data set\n"
+		"as %s data?", label);
+	resp = yes_no_dialog("gretl: time series data", msg, 0);
+	if (resp == YES_BUTTON) {
+	    if (!(datainfo->time_series == TIME_SERIES))
+		data_status |= MODIFIED_DATA;
+	    datainfo->time_series = TIME_SERIES;
+	    set_sample_label(datainfo);
+	}
+    } else {
+	sprintf(msg, "The current data frequency, %d, is not recognized\n"
+		"as a valid time-series frequency", datainfo->pd);
+	errbox(msg);
+    }
+}
+
 
 
 

@@ -629,22 +629,20 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 
     /* adjust data info struct */
     pdinfo->pd = pd;
-    strcpy(pdinfo->stobs, stobs);
     pdinfo->sd0 = atof(stobs);
+    ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
 
     if (opt == OPT_S) pdinfo->time_series = STACKED_TIME_SERIES;
     else if (opt == OPT_C) pdinfo->time_series = STACKED_CROSS_SECTION;
-    else if (pdinfo->sd0 >= 2.0) 
-        pdinfo->time_series = TIME_SERIES; /* actual time series? */
-    else if (pdinfo->sd0 > 1.0) 
-	pdinfo->time_series = STACKED_TIME_SERIES; /* panel data? */
+    else if (pdinfo->sd0 >= 1.0) 
+        pdinfo->time_series = TIME_SERIES; /* but might be panel? */
     else pdinfo->time_series = 0;
 
     /* and report */
     fprintf(stderr, "setting data frequency = %d\n", pd);
-    fprintf(stderr, "data range: %s - %s\n", stobs, endobs);
+    fprintf(stderr, "data range: %s - %s\n", pdinfo->stobs, pdinfo->endobs);
     return 0;
 }
 
@@ -1602,7 +1600,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     double **fZ;
     DATAINFO fdatainfo;
     MODEL fmod; 
-    int *list, orig_v, idate, ft1, ft2, v1, err = 0;
+    int *list, orig_v, ft1, ft2, v1, err = 0;
     int i, j, k, t, nfcast, fn, fv;
     double xdate, tval, maxerr, *yhat, *sderr, *depvar;
     char t1str[8], t2str[8];
@@ -1745,10 +1743,18 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	    pprintf(prn, "%8s ", pdinfo->S[t]); 
 	} else {
 	    xdate = date(t + ft1, pdinfo->pd, pdinfo->sd0);
-	    idate = (int) xdate;
-	    if (pdinfo->pd == 1) pprintf(prn, "%4d ", idate);
-	    else if (pdinfo->pd < 10) pprintf(prn, "%8.1f ", xdate);
-	    else pprintf(prn, "%8.2f ", xdate);
+	    if (dataset_is_daily(pdinfo)) {
+		char datestr[9];
+
+		ntodate(datestr, t, pdinfo);
+		pprintf(prn, "%8s ", datestr);
+	    }
+	    if (pdinfo->pd == 1) 
+		pprintf(prn, "%4d ", (int) xdate);
+	    else if (pdinfo->pd < 10) 
+		pprintf(prn, "%8.1f ", xdate);
+	    else 
+		pprintf(prn, "%8.2f ", xdate);
 	}
 	_printxs(depvar[t], 15, PRINT, prn);
 	_printxs(yhat[t], 15, PRINT, prn);

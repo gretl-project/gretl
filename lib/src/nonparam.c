@@ -50,7 +50,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     double xx, yy, *sx, *sy, *rx, *ry, *tmp;
     double xdate, rsum, avg, z = 0;
     int i, j, vx, vy, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int idate, rcount;
+    int rcount;
     size_t nn;
 
     if (list[0] != 2) {
@@ -172,10 +172,18 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 		pprintf(prn, "%8s ", pdinfo->S[t]); 
 	    } else {
 		xdate = date(t, pdinfo->pd, pdinfo->sd0);
-		idate = (int) xdate;
-		if (pdinfo->pd == 1) pprintf(prn, "%4d ", idate);
-		else if (pdinfo->pd < 10) pprintf(prn, "%8.1f ", xdate);
-		else pprintf(prn, "%8.2f ", xdate);
+		if (dataset_is_daily(pdinfo)) {
+		    char datestr[9];
+		    
+		    ntodate(datestr, t, pdinfo);
+		    pprintf(prn, "%8s ", datestr);
+		}
+		else if (pdinfo->pd == 1) 
+		    pprintf(prn, "%4d ", (int) xdate);
+		else if (pdinfo->pd < 10) 
+		    pprintf(prn, "%8.1f ", xdate);
+		else 
+		    pprintf(prn, "%8.2f ", xdate);
 	    }
 	    xx = Z[vx][t];
 	    yy = Z[vy][t];

@@ -214,10 +214,16 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;
 
+#ifdef notdef
     if (datainfo->sd0 >= 2.0) 
         datainfo->time_series = TIME_SERIES; 
     else if (datainfo->sd0 > 1.0)
 	datainfo->time_series = STACKED_TIME_SERIES; /* panel data? */
+    else datainfo->time_series = 0;
+#endif
+
+    if (datainfo->sd0 >= 1.0) 
+        datainfo->time_series = TIME_SERIES; 
     else datainfo->time_series = 0;
 
     strcpy(datainfo->varname[1], firstvar);
@@ -232,26 +238,33 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
     windata_t *wdata = NULL;
     char obsstr[28];
 
+    datainfo->pd = pd_code;
+
     switch (pd_code) {
     case 0:
 	datainfo->pd = 1;
 	strcpy(obsstr, "1 50 newvar");
 	break;
     case 1:
-	datainfo->pd = 1;       
 	strcpy(obsstr, "1950 2001 newvar");
 	break;
     case 4:
-	datainfo->pd = 4;   
 	strcpy(obsstr, "1950.1 2001.4 newvar");
 	break;
+    case 5:
+	strcpy(obsstr, "1.1 10.5 newvar");
+	break;
+    case 7:
+	strcpy(obsstr, "1.1 10.7 newvar");
+	break;
     case 12:
-	datainfo->pd = 12;         
 	strcpy(obsstr, "1950.01 2001.12 newvar");
 	break;
     case 24:
-	datainfo->pd = 24;       
 	strcpy(obsstr, "0.01 0.24 newvar");
+	break;
+    case 52:
+	strcpy(obsstr, "1950.01 2001.52 newvar");
 	break;
     }
     edit_dialog ("gretl: create data set", 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="data10-2" frequency="24" startobs="1.01" endobs="31.24" type="stacked-time-series">
+<gretldata name="data10-2" frequency="24" startobs="1.01" endobs="31.24" type="time-series">
 <description>
 DATA10-2: Hourly load and temperature data for an electric company
     in the Northwest region of the U.S. for the period Jan 1, 1992

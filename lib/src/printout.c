@@ -1483,7 +1483,7 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
 	       int pause, int byobs, PRN *prn)
 {
-    int idate, l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
+    int l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;
     int gui, isconst; 
     int *pmax = NULL; 
@@ -1575,13 +1575,20 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 		    sprintf(line, "%8s ", pdinfo->S[t]);
 		} else {
 		    xdate = date(t, pd, sd0);
-		    idate = (int) xdate;
-		    if (pd == 1) 
-			sprintf(line, "%4d ", idate);
-		    else if (pd < 10) 
+		    if (pd == 1) {
+			sprintf(line, "%4d ", (int) xdate);
+		    } 
+		    else if (dataset_is_daily(pdinfo)) {
+			char datestr[9];
+			
+			ntodate(datestr, t, pdinfo);
+			sprintf(line, "%8s ", datestr);
+		    }
+		    else if (pd < 10) {
 			sprintf(line, "%8.1f ", xdate);
-		    else 
+		    } else {
 			sprintf(line, "%8.2f ", xdate);
+		    }
 		} /* end print obs marker */
 		for (v=v1; v<=v2; v++) {
 		    xx = (*pZ)[list[v]][t];
@@ -1627,7 +1634,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 int print_fit_resid (const MODEL *pmod, double ***pZ, 
 		     DATAINFO *pdinfo, PRN *prn)
 {
-    int pmax, idate, depvar, t, nfit, ast = 0;
+    int pmax, depvar, t, nfit, ast = 0;
     int pd = pdinfo->pd, t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
     double xx, xdate, sd0 = pdinfo->sd0;
     char fcastline[32];
@@ -1652,10 +1659,18 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 	    pprintf(prn, "%8s ", pdinfo->S[t]); 
 	} else {
 	    xdate = date(t, pd, sd0);
-	    idate = (int) xdate;
-	    if (pd == 1) pprintf(prn, "%4d ", idate);
-	    else if (pd < 10) pprintf(prn, "%8.1f ", xdate);
-	    else pprintf(prn, "%8.2f ", xdate);
+	    if (dataset_is_daily(pdinfo)) {
+		char datestr[9];
+
+		ntodate(datestr, t, pdinfo);
+		pprintf(prn, "%8s ", datestr);
+	    }
+	    else if (pd == 1) 
+		pprintf(prn, "%4d ", (int) xdate);
+	    else if (pd < 10) 
+		pprintf(prn, "%8.1f ", xdate);
+	    else 
+		pprintf(prn, "%8.2f ", xdate);
 	}
 #ifdef notdef
  	for (i=1; i<4; i++) {

@@ -55,6 +55,7 @@ extern void free_command_stack (void);
 extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
+extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -229,9 +230,17 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Create data set/time-series/quarterly", 
       NULL, newdata_dialog, 4, NULL },    
     { "/File/_Create data set/time-series/monthly", 
-      NULL, newdata_dialog, 12, NULL },    
+      NULL, newdata_dialog, 12, NULL }, 
     { "/File/_Create data set/time-series/undated", 
-      NULL, newdata_dialog, 0, NULL },    
+      NULL, newdata_dialog, 0, NULL }, 
+    { "/File/_Create data set/time-series/high frequency/weekly", 
+      NULL, newdata_dialog, 52, NULL }, 
+    { "/File/_Create data set/time-series/high frequency/daily (5-day week)", 
+      NULL, newdata_dialog, 5, NULL }, 
+    { "/File/_Create data set/time-series/high frequency/daily (7-day week)", 
+      NULL, newdata_dialog, 7, NULL }, 
+    { "/File/_Create data set/time-series/high frequency/hourly", 
+      NULL, newdata_dialog, 24, NULL }, 
     { "/File/_Create data set/cross-sectional", 
       NULL, newdata_dialog, 0, NULL }, 
 #ifdef notdef  
@@ -333,19 +342,25 @@ GtkItemFactoryEntry data_items[] = {
     { "/_Sample", NULL, NULL, 0, "<Branch>" },
     { "/Sample/_Set range...", NULL, gretl_callback, SMPL, NULL },
     { "/Sample/_Restore full range", NULL, restore_sample, 1, NULL },
+    { "/Sample/sep1", NULL, NULL, 0, "<Separator>" },    
     { "/Sample/Set _frequency, startobs...", NULL, gretl_callback, 
       SETOBS, NULL },
+    { "/Sample/sep2", NULL, NULL, 0, "<Separator>" },   
     { "/Sample/_Define, based on dummy...", NULL, gretl_callback, 
       SMPLDUM, NULL },
     { "/Sample/_Restrict, based on criterion...", NULL, gretl_callback, 
       SMPLBOOL, NULL },
+    { "/Sample/sep3", NULL, NULL, 0, "<Separator>" },  
     { "/Sample/Drop all obs with _missing values", NULL, bool_subsample, 
       0, NULL },
     { "/Sample/_Count missing values", NULL, count_missing, 0, NULL },
     { "/Sample/Set missing _value code...", NULL, gretl_callback, 
       GSETMISS, NULL },
+    { "/Sample/sep4", NULL, NULL, 0, "<Separator>" },  
     { "/Sample/_Add case markers...", NULL, gretl_callback, MARKERS, NULL },
-    { "/Sample/_Panel structure...", NULL, gui_set_panel_structure, 0, NULL },
+    { "/Sample/sep5", NULL, NULL, 0, "<Separator>" },
+    { "/Sample/_Interpret as time series...", NULL, time_series_dialog, 0, NULL },
+    { "/Sample/Interpret as _panel...", NULL, gui_set_panel_structure, 0, NULL },
     { "/_Variable", NULL, NULL, 0, "<Branch>" },
     { "/Variable/_Display values", NULL, display_var, 0, NULL },
     { "/Variable/_Summary statistics", NULL, do_menu_op, 
@@ -821,7 +836,6 @@ void panel_menu_state (gboolean s)
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/Model/Pooled OLS (panel)...", s);
 	flip(mdata->ifac, "/Data/Add variables/panel dummies", s);
-	flip(mdata->ifac, "/Sample/Panel structure...", s);
     }
 }
 
@@ -929,21 +943,38 @@ void set_sample_label (DATAINFO *pdinfo)
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
 
-    switch (pdinfo->pd) {
-    case 4:
-	strcpy(pdstr, "Quarterly"); break;
-    case 12:
-	strcpy(pdstr, "Monthly"); break;
-    case 24:
-	strcpy(pdstr, "Hourly"); break;
-    default:
-	if (dataset_is_time_series(pdinfo)) strcpy(pdstr, "Annual");
-	else if (dataset_is_panel(pdinfo)) strcpy(pdstr, "Panel");
-	else strcpy(pdstr, "Undated");
-	break;	
-    }
+    if (dataset_is_time_series(pdinfo)) {
+	switch (pdinfo->pd) {
+	case 1:
+	    strcpy(pdstr, "Annual"); break;
+	case 4:
+	    strcpy(pdstr, "Quarterly"); break;
+	case 12:
+	    strcpy(pdstr, "Monthly"); break;
+	case 24:
+	    strcpy(pdstr, "Hourly"); break;
+	case 52:
+	    strcpy(pdstr, "Weekly"); break;
+	case 5:
+	    strcpy(pdstr, "Daily"); break;
+	case 7:
+	    strcpy(pdstr, "Daily"); break;
+	default:
+	    strcpy(pdstr, "Unknown"); break;
+	}
+    } 
+    else if (dataset_is_panel(pdinfo)) 
+	strcpy(pdstr, "Panel");
+    else 
+	strcpy(pdstr, "Undated");
 
     panel_menu_state(dataset_is_panel(pdinfo));
+
+    flip(mdata->ifac, "/Sample/Interpret as time series...", 
+	 !(dataset_is_time_series(pdinfo)));
+
+    flip(mdata->ifac, "/Sample/Interpret as panel...", 
+	 !(pdinfo->pd == 1));
 
     sprintf(labeltxt, "%s: Full range %s - %s; current sample"
 	    " %s - %s", pdstr, pdinfo->stobs, pdinfo->endobs,
