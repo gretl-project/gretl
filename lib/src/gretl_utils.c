@@ -2273,7 +2273,7 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     } else {
 	pprintf(prn, _("Panel structure set to %s\n"),
-		(pdinfo->time_series = STACKED_CROSS_SECTION)? 
+		(pdinfo->time_series == STACKED_CROSS_SECTION)? 
 		_("stacked cross sections") : _("stacked time series"));
 	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
 		nunits, T);

@@ -691,7 +691,11 @@ int main (int argc, char *argv[])
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
     g_log_set_handler ("Gdk",
-		       G_LOG_LEVEL_WARNING,
+		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		       (GLogFunc) dummy_output_handler,
+		       NULL);
+    g_log_set_handler ("GLib",
+		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
     ws_startup(); 

@@ -10,7 +10,7 @@ extradir = ../gui2/gtkextra-lite
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2
+CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2 -mieee-fp
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 DLLTOOL = $(MGW_PREFIX)-dlltool
@@ -112,7 +112,7 @@ $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES)
 	$(CC) -mwindows -s -o $@ $^ $(LIBS) $(GUI_LIBS) $(ZLIB_LIB)
 
 $(CHECKER): $(CHECKSRC)
-	$(CC) -s -I../lib/src -o $@ $^ $(LIBS) $(ZLIB_LIB)
+	$(CC) -s -I. -I../lib/src -DOS_WIN32 -o $@ $^ $(LIBS) $(ZLIB_LIB)
 
 $(CLIOBJ): $(CLI_SRC) 
 

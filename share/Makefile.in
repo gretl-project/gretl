@@ -30,7 +30,8 @@ install-strip: install
 
 install_datafiles:
 	for f in data/d* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/data ; done 
+	$(INSTALL_DATA) $$f $(gretldir)/data ; done
+	$(INSTALL_DATA) data/longley.gdt $(gretldir)/data 
 	for f in data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
 

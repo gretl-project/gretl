@@ -189,10 +189,9 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 	return TRUE;
     }
 
-#ifdef notdef /* FIXME: check on this */
     gtk_widget_destroy(grp->popup);
     grp->popup = NULL;
-#endif
+
     return TRUE;
 }
 
@@ -1298,8 +1297,9 @@ static void get_bool_from_line (const char *line, BOXPLOT *plt)
 {
     char boolstr[128];
 
-    if (sscanf(line, "%*d varname = %*s %127s", boolstr) == 1) 
+    if (sscanf(line, "%*d varname = %*s %127s", boolstr) == 1) {
 	plt->bool = g_strdup(boolstr);
+    }
 }
 
 int retrieve_boxplot (const char *fname)
@@ -1460,11 +1460,14 @@ static int prepare_boxplots_line (char *line)
     while (1) {
 	p = strchr(line, '(');
 	if (p == NULL) break;
+
 	q = strchr(p, ')');
 	if (q == NULL) return 1;
+
 	len = q - p + 1;
 	tmp = malloc(len + 1);
 	if (tmp == NULL) return 1;
+
 	*tmp = 0;
 	strncat(tmp, p, len + 1);
 	delchar(' ', tmp);

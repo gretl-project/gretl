@@ -250,7 +250,15 @@ int read_nist_file (const char *fname,
     mp_results *certvals = NULL;
     int i, t, npoly = 0;
 
+#ifdef OS_WIN32
+    char fullname[32];
+
+    sprintf(fullname, "nist\\%s", fname);
+    fp = fopen(fullname, "r");
+#else
     fp = fopen(fname, "r");
+#endif
+
     if (fp == NULL) {
 	fprintf(stderr, "Couldn't open %s\n", fname);
 	return 1;

@@ -51,6 +51,7 @@ mkdir -p windist/gretl/scripts
 mkdir -p windist/gretl/db
 mkdir -p windist/gretl/user
 mkdir -p windist/gretl/plugins
+mkdir -p windist/gretl/nist
 mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
@@ -59,6 +60,7 @@ mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
 add_file gretlw32.exe gretl/gretlw32.exe
+add_file nisttest.exe gretl/nisttest.exe
 
 # home-made dynamic libs
 for f in dlls/*.dll ; do
@@ -125,6 +127,11 @@ for lang in es fr ; do
   add_file mo/$lang.mo gretl/locale/$lang/LC_MESSAGES/gretl.mo
   add_file $GTK2MO/$lang/LC_MESSAGES/glib20.mo gretl/lib/locale/$lang/LC_MESSAGES/glib20.mo
   add_file $GTK2MO/$lang/LC_MESSAGES/gtk20.mo gretl/lib/locale/$lang/LC_MESSAGES/gtk20.mo
+done
+
+# NIST test data
+for f in ${TOPDIR}/tests/*.dat ; do
+   add_file $f gretl/nist/`basename $f`
 done
 
 # misc files
