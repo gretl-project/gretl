@@ -48,6 +48,7 @@ int do_fcp (const int *list, const double **Z,
     double *b;
     double oldc, yy, sigma;
     int info, iters = 0;
+    int maxlag;
     
     int i, p, q, ynum;
 
@@ -56,12 +57,13 @@ int do_fcp (const int *list, const double **Z,
     ncoeff = 1;
 
     t2 = pdinfo->t2;
-    t1 = 0;
-    nobs = t2 - t1 + 1;
+    nobs = t2 + 1;
 
     p = list[1];
     q = list[2];
     ynum = list[4];
+    maxlag = (p > q)? p : q;
+    t1 = maxlag;
 
     yobs = malloc(nobs * sizeof *yobs);
     ydet = malloc(nobs * sizeof *ydet);
