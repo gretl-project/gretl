@@ -52,19 +52,20 @@ static void print_panel_coeff (MODEL *pmod, MODEL *panelmod,
 static double group_means_variance (MODEL *pmod, 
 				    double **Z, DATAINFO *pdinfo,
 				    double ***groupZ, DATAINFO **ginfo,
-				    int nunits, int T, int effT) 
+				    int nunits, int effn, int *unit_obs,
+				    int T, int effT) 
 {
-    int i, j, k, t, start, *list;
+    int i, j, k, t, s, start, *list;
     double xx;
     MODEL meanmod;
 
 #ifdef PDEBUG
     fprintf(stderr, "group_means_variance: creating dataset\n"
 	    " nvar=%d, nobs=%d, *groupZ=%p\n", pmod->list[0],
-	    nunits, (void *) *groupZ);
+	    effn, (void *) *groupZ);
 #endif
 
-    *ginfo = create_new_dataset(groupZ, pmod->list[0], nunits, 0);
+    *ginfo = create_new_dataset(groupZ, pmod->list[0], effn, 0);
     if (*ginfo == NULL) {
 	return NADBL;
     }
@@ -90,28 +91,38 @@ static double group_means_variance (MODEL *pmod,
 	}
 	list[j] = k;
 	start = 0;
+	s = 0;
 	for (i=0; i<nunits; i++) { 
 	    /* the observations */
+	    if (unit_obs != NULL && unit_obs[i] == 0) {
+		if (pdinfo->time_series == STACKED_TIME_SERIES) {
+		    start += T;
+		} else {
+		    start++;
+		}
+		continue;
+	    }
 	    xx = 0.0;
 	    if (pdinfo->time_series == STACKED_TIME_SERIES) {
 		for (t=start; t<start+T; t++) {
-		    if (!na(Z[pmod->list[j]][t])) {
+		    if (!na(pmod->uhat[t])) {
 			xx += Z[pmod->list[j]][t];
 		    }
 		}
 		start += T;
 	    } else {
 		for (t=start; t<pdinfo->n; t += nunits) {
-		    if (!na(Z[pmod->list[j]][t])) {
+		    if (!na(pmod->uhat[t])) {
 			xx += Z[pmod->list[j]][t];
 		    }
 		}
 		start++;
 	    }
-	    (*groupZ)[k][i] = xx / (double) effT;
+	    (*groupZ)[k][s] = xx / (double) effT;
 #ifdef PDEBUG
 	    fprintf(stderr, "Set groupZ[%d][%d] = %g\n", k, i, (*groupZ)[k][i]);
 #endif
+	    s++;
 	}
 	k++;
     }
@@ -122,6 +133,7 @@ static double group_means_variance (MODEL *pmod,
 #endif
 
     meanmod = lsq(list, groupZ, *ginfo, OLS, OPT_A, 0.0);
+
 #ifdef PDEBUG
     fprintf(stderr, "gmv: lsq errcode was %d\n", meanmod.errcode);
     fprintf(stderr, "meanmod.sigma = %g\n", meanmod.sigma);
@@ -135,6 +147,7 @@ static double group_means_variance (MODEL *pmod,
 
     clear_model(&meanmod);
     free(list);
+
 #ifdef PDEBUG
     fprintf(stderr, "gmv: done freeing stuff\n");
 #endif
@@ -345,7 +358,8 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 /* .................................................................. */
 
 static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
-			   double **groupZ, double theta, int nunits, int T, 
+			   double **groupZ, double theta, 
+			   int nunits, int T, 
 			   hausman_t *haus, PRN *prn)
 {
     double **reZ;
@@ -353,6 +367,10 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     MODEL remod;
     int *relist;
     int i, j, k, t, err = 0;
+
+    /* FIXME: this does not work with missing obs in middle of
+       sample range, even if a balanced panel is preserved
+    */
 
     reinfo = create_new_dataset(&reZ, pmod->list[0], pdinfo->n, 0);
     if (reinfo == NULL) {
@@ -436,8 +454,8 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 /* .................................................................. */
 
 static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo, 
-			     int nunits, int T, int effT, 
-			     PRN *prn)
+			     int nunits, int *unit_obs,
+			     int T, int effT, PRN *prn)
 {
     double *ubar, LM, eprime = 0.0;
     int i, t, start = 0;
@@ -467,6 +485,7 @@ static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 	ubar[i] /= (double) effT; 
 	eprime += ubar[i] * ubar[i];
     }
+
 #ifdef PDEBUG
     fprintf(stderr,  "breusch_pagan: found ubars\n");
 #endif
@@ -475,6 +494,9 @@ static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 		 "units:\n\n"));
 
     for (i=0; i<nunits; i++) {
+	if (unit_obs != NULL && unit_obs[i] == 0) {
+	    continue;
+	}
 	pprintf(prn, _(" unit %2d: %13.5g\n"), i + 1, ubar[i]);
     }
 
@@ -634,6 +656,19 @@ int n_included_units (const MODEL *pmod, const DATAINFO *pdinfo,
     return ninc;
 }
 
+static int effective_T (int *unit_obs, int nunits)
+{
+    int i, effT = 0;
+
+    for (i=0; i<nunits; i++) {
+	if (unit_obs[i] > effT) {
+	    effT = unit_obs[i];
+	}
+    }
+
+    return effT;
+}
+
 /* .................................................................. */
 
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
@@ -659,16 +694,17 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-#ifdef ALLOW_UNBALANCED
+#if 1 || defined(ALLOW_UNBALANCED)
     if (pmod->missmask != NULL) {
-	int i;
-
 	unit_obs = malloc(nunits * sizeof *unit_obs);
 	if (unit_obs == NULL) {
 	    return E_ALLOC;
 	}
 	effn = n_included_units(pmod, pdinfo, unit_obs);
 	fprintf(stderr, "number of units included = %d\n", effn);
+	effT = effective_T(unit_obs, nunits);
+    } else {
+	effn = nunits;
 	effT = T;
     }
 #else
@@ -702,14 +738,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, &haus, prn);
 
 #ifdef PDEBUG
-    fprintf(stderr, "panel_diagnostics: LSDV gave %g\n", var2);
+    fprintf(stderr, "panel_diagnostics: LSDV gave variance = %g\n", var2);
 #endif
 
-    if (unit_obs != NULL) {
-	return 1;
-    }
-
-    breusch_pagan_LM(pmod, pdinfo, nunits, T, effT, prn);
+    breusch_pagan_LM(pmod, pdinfo, nunits, unit_obs, T, effT, prn);
 
 #ifdef PDEBUG
     fprintf(stderr, "panel_diagnostics: done breusch_pagan_LM()\n");
@@ -717,7 +749,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     
     if (effn > pmod->ncoeff && !na(var2)) {
 	var1 = group_means_variance(pmod, *pZ, pdinfo, &groupZ, &ginfo, 
-				    nunits, T, effT);
+				    nunits, effn, unit_obs, T, effT);
 	if (na(var1)) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {

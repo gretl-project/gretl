@@ -734,7 +734,6 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	    maj = atoi(stobs);
 	    strcpy(endbit, stobs + pos + 1);
 	    min = atoi(endbit);
-	    fprintf(stderr, "set_obs: maj=%d, min=%d\n", maj, min);
 	    if (min < 0 || min > pd) {
 		sprintf(gretl_errmsg, 
 			_("starting obs '%s' is incompatible with frequency"), 
@@ -742,7 +741,6 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 		return 1;
 	    }
 	    real_format_obs(stobs, maj, min, pd, '.');
-	    fprintf(stderr, "stobs = '%s'\n", stobs);
 	}
     }
 

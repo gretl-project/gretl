@@ -64,7 +64,8 @@ static double rhohat (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, int n, double **Z);
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
 static void tsls_omitzero (int *list, double **Z, int t1, int t2);
-static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
+static int depvar_zero (int t1, int t2, int yno, int nwt, 
+			const double **Z);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
 /* end private protos */
@@ -349,7 +350,8 @@ lsq_check_for_missing_obs (MODEL *pmod, gretlopt opts,
 	reject_missing = 1;
     } 
 
-    if (opts & OPT_M) {
+    /* FIXME: relax for POOLED when ready */
+    if ((opts & OPT_M) || pmod->ci == POOLED) {
 	reject_missing = 1;
     }
 
@@ -513,7 +515,7 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }       
 
     /* check for zero dependent var */
-    if (zerror(mdl.t1, mdl.t2, yno, mdl.nwt, pZ)) {  
+    if (depvar_zero(mdl.t1, mdl.t2, yno, mdl.nwt, (const double **) *pZ)) {  
         mdl.errcode = E_ZERO;
         goto lsq_abort; 
     } 
@@ -1441,7 +1443,9 @@ static int hilu_plot (double *ssr, double *rho, int n)
     FILE *fp;
     int i;
 
-    if (gnuplot_init(PLOT_REGULAR, &fp)) return E_FOPEN; 
+    if (gnuplot_init(PLOT_REGULAR, &fp)) {
+	return E_FOPEN; 
+    }
 
     fputs("# hildreth-lu\n", fp);
     fputs("set xlabel 'rho'\n", fp);
@@ -1453,15 +1457,18 @@ static int hilu_plot (double *ssr, double *rho, int n)
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
 #endif
+
     for (i=0; i<n; i++) {
 	fprintf(fp, "%g %g\n", rho[i], ssr[i]);
     }
     fputs("e\n", fp);
+
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
     fclose(fp);
+
     gnuplot_make_graph();
 
     return 0;
@@ -2867,8 +2874,8 @@ MODEL ar_func (int *list, int pos, double ***pZ,
 
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 {
-    int t = 0, v, lv, offset, wtzero = 0, drop = 0;
-    double xx = 0.;
+    int v, lv, offset, drop = 0;
+    double xx = 0.0;
     char vnamebit[20];
 
     offset = (pmod->ci == WLS)? 3 : 2;
@@ -2888,6 +2895,8 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
     }
 
     if (pmod->nwt) {
+	int t, wtzero;
+
 	for (v=offset; v<=pmod->list[0]; v++) {
 	    lv = pmod->list[v];
 	    wtzero = 1;
@@ -2927,28 +2936,27 @@ static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 
 /* ...........................................................*/
 
-static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
+static int depvar_zero (int t1, int t2, int yno, int nwt,
+			const double **Z)
 {
-    double xx, yy;
-    int t;
+    double y;
+    int t, ret = 1;
 
-    xx = gretl_mean(t1, t2, (*pZ)[yno]);
-    yy = gretl_stddev(t1, t2, (*pZ)[yno]);
-
-    if (floateq(xx, 0.0) && floateq(yy, 0.0)) return 1;
-
-    if (nwt) {
-	xx = 0.0;
-	for (t=t1; t<=t2; t++) {
-	    xx = (*pZ)[nwt][t] * (*pZ)[yno][t];
-	    if (floatneq(xx, 0.0)) {
-		return 0;
-	    }
+    for (t=t1; t<=t2; t++) {
+	y = Z[yno][t];
+	if (na(y)) {
+	    continue;
 	}
-	return 1;
+	if (nwt) {
+	    y *= Z[nwt][t];
+	}
+	if (y != 0.0) {
+	    ret = 0;
+	    break;
+	}
     }
 
-    return 0;
+    return ret;
 }
 
 /* lagdepvar: attempt to detect presence of a lagged dependent
