@@ -1622,7 +1622,7 @@ static char *unspace (char *s)
 {
     size_t i, n = strlen(s);
 
-    for (i=n-1; i>0; i--) { 
+    for (i=n-1; i>=0; i--) { 
 	if (s[i] == ' ') s[i] = '\0';
 	else break;
     }
@@ -1636,7 +1636,7 @@ static int parse_varline (char *line,
 			  int v, int *realv,
 			  DATAINFO *binfo, print_t *prn)
 {
-    char tmp[8];
+    char tmp[21];
 
     strncpy(binfo->varname[*realv], line+11, 8);
     binfo->varname[*realv][8] = '\0';
@@ -1660,6 +1660,13 @@ static int parse_varline (char *line,
     strncpy(tmp, line+62, 2);
     tmp[2] = '\0';
     pprintf(prn, "decimal places %d\n", atoi(tmp));
+    tmp[0] = '\0';
+    strncpy(tmp, line+64, 20);
+    tmp[20] = '\0';
+    unspace(tmp);
+    if (strlen(tmp))
+	pprintf(prn, "   Warning: coded variable (format '%s' in BOX file)\n", 
+		tmp);
     strncpy(binfo->label[*realv], line+87, 99);
     binfo->label[*realv][99] = '\0';
     unspace(binfo->label[*realv]);
