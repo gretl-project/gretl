@@ -83,8 +83,9 @@ void font_selector (void);
 
 void text_copy (gpointer data, guint all, GtkWidget *widget);
 
-void yes_no_dialog (char *diagtxt, char *infotxt, int erase, 
-		    int num, ...);
+void yes_no_dialog (char *title, char *msg, int cancel, 
+		    void (*yes_func)(), gpointer yesptr,
+		    void (*no_func)(), gpointer noptr);
 
 void make_menu_item (gchar *label, GtkWidget *menu,
 		     GtkSignalFunc func, gpointer data);

@@ -76,7 +76,7 @@ static int work_done (void)
 
 /* three versions here: gnome, win32 and plain gtk */
 
-#if defined(USE_GNOME) || defined(G_OS_WIN32)
+#if defined(USE_GNOMEB) || defined(G_OS_WIN32)
 
 /* ......................................................... */
 
@@ -88,7 +88,7 @@ static void save_data_callback (void)
 
 #endif /* common code for gnome and win32 */
 
-#ifdef USE_GNOME
+#ifdef USE_GNOMEB
 
 /* ......................................................... */
 
@@ -255,7 +255,6 @@ gint exit_check (GtkWidget *widget, gpointer data)
 
 static void save_data_callback (GtkWidget *widget, dialog_t *ddata)
 {
-    gtk_main_quit();
     gtk_widget_destroy(ddata->dialog);
     file_save(NULL, SAVE_DATA, NULL);
     if (data_file_open == 2) data_file_open = 1;
@@ -268,12 +267,9 @@ static void ready_to_go (GtkWidget *widget, dialog_t *ddata)
     int *getout = (int *) ddata->data;
 
     *getout = 1;
-    gtk_main_quit(); /* release from modal yes_no_dialog() */
 }
 
 /* ......................................................... */
-
-/* FIXME: need to deal with Cancel, now that yes_no is modal */
 
 static gint data_dont_quit (void) 
 {
@@ -281,10 +277,9 @@ static gint data_dont_quit (void)
     
     yes_no_dialog ("Save data set?", 
 		   "Do you want to save changes you have\n"
-		   "made to the current data set?", 1, 3,
-		   "Yes", save_data_callback, NULL, 
-		   "No", ready_to_go, &getout,
-		   "Cancel", NULL, NULL);
+		   "made to the current data set?", 1,
+		   save_data_callback, NULL, 
+		   ready_to_go, &getout);
 
     return !getout;
 }
@@ -297,10 +292,9 @@ static gint dont_quit (void)
     
     yes_no_dialog ("Save session?", 
 		   "Do you want to save the commands and\n"
-		   "output from this gretl session?", 1, 3,
-		   "Yes", save_session_callback, NULL, 
-		   "No", ready_to_go, &getout, 
-		   "Cancel", NULL, NULL);
+		   "output from this gretl session?", 1,
+		   save_session_callback, NULL, 
+		   ready_to_go, &getout);
 
     return !getout;
 }

@@ -398,11 +398,7 @@ int delete_session_model (GtkWidget *w, gpointer data)
     MODEL *junk, **ppmod;
     int i, j;
 
-    gtk_main_quit(); /* release yes_no_dialog() */
-
-    if (data == NULL) {
-	return 0;
-    }
+    if (data == NULL) return 0; 
 
     myd = (dialog_t *) data;
     myobject = (gui_obj *) myd->data;
@@ -917,9 +913,9 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	sprintf(text,"Really delete '%s'?", myobject->name);
 	if (myobject->sort == 'm') {
 	yes_no_dialog ("gretl: delete", 
-		       text, 1, 2,
-		       "Yes", delete_session_model, myobject, 
-		       "No", delete_session_model, NULL);
+		       text, 0,
+		       delete_session_model, myobject, 
+		       delete_session_model, NULL);
 	}
     }
     else if (strcmp(item, "Rename") == 0) {
