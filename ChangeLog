@@ -3,6 +3,7 @@ version 0.992
   as a regular gretlcli command, "critical"
 - add sanity checks for regression commands and ADF test
 - add importer plugins for Gnumeric and Excel workbooks
+- add "Append data" menu item
 
 03/20/2002 version 0.991
 - fix several "out of bounds" bugs kindly reported by Tavis Barr

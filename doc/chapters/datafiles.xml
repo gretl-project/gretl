@@ -29,6 +29,14 @@
 	  a CSV file, see
 	  <xref linkend="scratch"/>.</para>
       </listitem>
+      <listitem><para>Worksheets in the format of either MS
+	  <application>Excel</application> or
+	  <application>Gnumeric</application>. These are also brought
+	  in using <application>gretl</application>'s <quote>File,
+	    Open Data, Import</quote> menu.  The requirements for such
+	  files are given in 
+	  <xref linkend="scratch"/>.</para>
+      </listitem>
       <listitem><para>BOX1 format data.  Large amounts of micro data
 	  are available (for free) in this format via the <ulink
 	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data 
@@ -40,7 +48,7 @@
 
     </itemizedlist>
 
-    <para>When you import data from either of these two formats,
+    <para>When you import data from the CSV or BOX formats,
       <application>gretl</application> opens a
       <quote>diagnostic</quote> window, reporting on its progress in
       reading the data.  If you encounter a problem with ill-formatted
@@ -110,8 +118,8 @@
 
     <para>There are four ways to do this: (1) Use your favorite
       spreadsheet to establish the data file, save it in Comma
-      Separated Values format, then use
-      <application>gretl</application>'s <quote>Import CSV</quote>
+      Separated Values format if necessary, then use
+      <application>gretl</application>'s <quote>Import</quote>
       option. (2) Use <application>gretl</application>'s built-in
       spreadsheet. (3) Select data series from a suitable database.
       (4) Use your favorite text editor or other software tools to
@@ -124,12 +132,11 @@
       <para>This may be a good choice if you're comfortable with a
 	particular spreadsheet.  If you take this option, please pay
 	attention to the specification of what your spreadsheet should
-	look like before you save it in CSV format.
-	<application>gretl</application> expects a file that has (a)
-	valid variable names on the first row and (b) a rectangular
-	block of data beneath. A valid variable name is of 8
-	characters maximum; starts with a letter; and contains nothing
-	but letters, numbers and the underscore character,
+	look like. <application>gretl</application> expects a file
+	that has (a) valid variable names on the first row and (b) a
+	rectangular block of data beneath. A valid variable name is of
+	8 characters maximum; starts with a letter; and contains
+	nothing but letters, numbers and the underscore character,
 	<literal>_</literal>.  Optionally the first column may contain
 	strings such as dates (8 characters maximum).  Such a column
 	should be headed <quote><command>obs</command></quote> or
@@ -138,7 +145,16 @@
 	  one</emphasis> non-data row at the top of the file.
       </para>
 
-      <para>If you use a spreadsheet to prepare your data you're able
+      <para>In the case of an import from CSV, the format described
+	above must be respected exactly.  In the case of an import
+	from an <application>Excel</application> or
+	<application>Gnumeric</application> worksheet you have
+	slightly more freedom: you can select the starting row and
+	column for the import, hence skipping any <quote>extra</quote>
+	rows or columns.  Within the area selected for importing,
+	however, the above rules apply.</para>
+
+      <para>If you use a spreadsheet to prepare your data you are able
 	to carry out various transformations of the <quote>raw</quote>
 	data with ease (adding things up, taking percentages or
 	whatever): note, however, that you can also do this sort of
@@ -149,9 +165,9 @@
 
       <para>You may wish to establish a
 	<application>gretl</application> data set piece by piece, via
-	incremental importation of CSV data.  This is supported as
-	follows. When you have a datafile open already, and then
-	select the menu item <quote>File, Open data, import
+	incremental importation of data from other sources.  This is
+	supported as follows. When you have a datafile open already,
+	and then select the menu item <quote>File, Open data, import
 	  CSV&hellip;</quote> the program checks for conformability
 	between the existing data set and the new import.  If the data
 	frequency, starting observation and ending observation all

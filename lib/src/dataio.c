@@ -1734,6 +1734,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	   pdinfo->n = tnew;
 	   ntodate(pdinfo->endobs, tnew - 1, pdinfo);
 	   pdinfo->t2 = pdinfo->n - 1;
+	   MSG(prn, _("Data appended OK"), gui);
        }
    }
 

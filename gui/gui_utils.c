@@ -568,9 +568,14 @@ void register_data (const char *fname, int record)
     } 
 }
 
+#define APPENDING(action) (action == APPEND_CSV || \
+                           action == APPEND_GNUMERIC || \
+                           action == APPEND_EXCEL)
+
 /* ........................................................... */
 
-static void get_worksheet_data (const char *fname, int datatype)
+static void get_worksheet_data (const char *fname, int datatype,
+				int append)
 {
     int err;
     void *handle;
@@ -604,10 +609,15 @@ static void get_worksheet_data (const char *fname, int datatype)
 	return;
     }
 
-    data_status |= IMPORT_DATA;
-    strcpy(paths.datfile, fname);
-
-    register_data(fname, 1);
+    if (append) {
+	infobox("Data appended OK");
+	data_status |= MODIFIED_DATA;
+	register_data(fname, 0);
+    } else {
+	data_status |= IMPORT_DATA;
+	strcpy(paths.datfile, fname);
+	register_data(fname, 1);
+    }
 }
 
 /* ........................................................... */
@@ -623,6 +633,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     gint datatype, err;
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
+    int append = APPENDING(code);
 
     if (data != NULL) {    
 	if (w == NULL) { /* not coming from edit_dialog */
@@ -650,19 +661,18 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }
 
     /* destroy the current data set, etc., unless we're explicitly appending */
-    if (code != APPEND_CSV && code != APPEND_GNUMERIC && code != APPEND_EXCEL)
-	close_session();
+    if (!append) close_session();
 
     if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL) {
-	get_worksheet_data(trydatfile, datatype);
+	get_worksheet_data(trydatfile, datatype, append);
 	return;
     }
     else if (datatype == GRETL_CSV_DATA) {
-	do_open_csv_box(trydatfile, OPEN_CSV);
+	do_open_csv_box(trydatfile, OPEN_CSV, append);
 	return;
     }
     else if (datatype == GRETL_BOX_DATA) {
-	do_open_csv_box(trydatfile, OPEN_BOX);
+	do_open_csv_box(trydatfile, OPEN_BOX, 0);
 	return;
     }
     else { /* native data */

@@ -65,6 +65,16 @@ then
 gnome_prefix=${withval}
 fi,)
 
+AC_ARG_WITH(libole2,
+[  --with-libole2   Use installed libole2 [default=auto]],
+if test "x${withval}" = "xno"
+then
+tryole=no
+else
+tryole=yes
+fi,
+tryole=yes)
+
 AC_PROG_CC
 AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -126,16 +136,19 @@ if test x"${XMLCONF}" != x ; then
   AC_SUBST(XML_LIBS)
 fi
 
-dnl See if gnome libole2 is available
-AC_MSG_CHECKING(for libole2)
+dnl See if gnome libole2 is available?
 OLE_LIBS=
-OLE_CFLAGS=`gnome-config --cflags libole2 2>/dev/null`
-OLE_LIBS=`gnome-config --libs libole2 2>/dev/null`
-if test x"${OLE_CFLAGS}" = "x" ; then
-   AC_MSG_RESULT(no)
-   OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H"
-else
-   AC_MSG_RESULT(yes)
+OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H"
+if test x"${tryole}" != xno ; then
+  AC_MSG_CHECKING(for libole2)
+  OLE_CFLAGS=`gnome-config --cflags libole2 2>/dev/null`
+  OLE_LIBS=`gnome-config --libs libole2 2>/dev/null`
+  if test x"${OLE_CFLAGS}" = "x" ; then
+     AC_MSG_RESULT(no)
+     OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H"
+  else
+     AC_MSG_RESULT(yes)
+  fi
 fi
 AC_SUBST(OLE_CFLAGS)
 AC_SUBST(OLE_LIBS)

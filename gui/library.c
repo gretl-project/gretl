@@ -2877,7 +2877,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 
 /* ........................................................... */
 
-void do_open_csv_box (char *fname, int code)
+void do_open_csv_box (char *fname, int code, int append)
 {
     int err;
     PRN *prn;
@@ -2899,7 +2899,7 @@ void do_open_csv_box (char *fname, int code)
     data_status |= IMPORT_DATA;
     strcpy(paths.datfile, fname);
 
-    register_data(fname, 1);
+    register_data(fname, !append);
 }
 
 /* ........................................................... */

@@ -869,8 +869,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	    prn.fp = NULL;
 	    prn.buf = errtext;
-	    if (merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1))
-		err = 1;
+	    err = merge_data(pZ, pdinfo, newZ, newinfo, &prn, 1);
 	}
 #endif /* STANDALONE */
     }
