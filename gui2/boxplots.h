@@ -41,6 +41,8 @@ int augment_boxplot_count (void);
 
 void zero_boxplot_count (void);
 
+const char *get_boxplots_string (void);
+
 #endif /* BOXPLOTS_H */
 
 

@@ -2885,7 +2885,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
     }
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
-	context_help(NULL, GINT_TO_POINTER(RANGE_MEAN));
+	context_help(NULL, GINT_TO_POINTER(RMPLOT));
     }
 #ifndef OLD_GTK
     else if (!strcmp(item, _("Clear data labels"))) { 

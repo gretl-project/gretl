@@ -5,6 +5,7 @@ version 1.3.0
   the report)
 - add facility for nesting loops and fix some loop bugs
 - fix some bugs in LaTeX equation display
+- fix some breakage in online help system (e.g. for boxplots)
 - add support for Latin 2 characters in gnuplot graphs
 - add support for compacting daily data to weekly or monthly
 - add support for daily data with a 6-day week
@@ -24,6 +25,7 @@ version 1.3.0
 - add the Anscombe Quartet to the gretl data files
 - on Windows, make EMF graphs respect the user's choice of
   plotting colors (required a modification to gnuplot)
+- add option to save graphs in EMF format
 - various minor gui fixes and enhancements
 - update Windows version to gtk 2.4.9
 - start adding user-defined functions

@@ -199,7 +199,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     }
 #endif
     else if (!strcmp(item, _("Help"))) {
-	context_help (NULL, GINT_TO_POINTER(BXPLOT));
+	context_help(NULL, GINT_TO_POINTER(BXPLOT));
     }
     else if (!strcmp(item, _("Close"))) { 
 	gtk_widget_destroy(grp->popup);
@@ -1061,7 +1061,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     plotgrp->saved = 0;
 
     plotgrp->nplots = list[0];
-    plotgrp->plots = mymalloc (plotgrp->nplots * sizeof(BOXPLOT));
+    plotgrp->plots = mymalloc(plotgrp->nplots * sizeof *plotgrp->plots);
     if (plotgrp->plots == NULL) {
 	free(plotgrp);
 	free(x);
@@ -1623,32 +1623,55 @@ static int special_varcount (const char *s)
 
 /* remove extra spaces around operators in boxplots line */
 
-static char *delete_spaces_in_parens (const char *line)
+static char *boxplots_fix_parentheses (const char *line)
 {
     char *s, *p;
     int inparen = 0;
+    int i, flen, len = strlen(line);
 
-    s = malloc(strlen(line) + 1);
+    /* make room to insert space before parens, if needed */
+    flen = len;
+    for (i=0; i<len; i++) {
+	if (i > 0 && line[i] == '(' && line[i-1] != ' ') {
+	    flen++;
+	}
+    }
+
+    s = malloc(flen + 1);
     if (s == NULL) return NULL;
 
     p = s;
-
-    while (*line) {
-	if (*line == '(') inparen = 1;
-	if (*line == ')') {
-	    if (inparen == 1) inparen = 0;
-	    else {
+    for (i=0; i<len; i++) {
+	if (line[i] == '(') {
+	    if (i > 0 && line[i-1] != ' ') {
+		*p++ = ' ';
+	    }
+	    inparen = 1;
+	}
+	if (line[i] == ')') {
+	    if (inparen == 1) {
+		inparen = 0;
+	    } else {
 		free(s);
 		return NULL;
 	    }
 	}
-	if (inparen && *line == ' ') ;
-	else *p++ = *line;
-	line++;
+	if (inparen && line[i] == ' ') ;
+	else *p++ = line[i];
     }
 
     *p = 0;
+
     return s;
+}
+
+#define BPSTRLEN 128
+
+static char boxplots_string[BPSTRLEN];
+
+const char *get_boxplots_string (void)
+{
+    return boxplots_string;
 }
 
 int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
@@ -1662,7 +1685,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     if (!strncmp(str, "boxplots ", 9)) str += 9;
     else if (!strncmp(str, "boxplot ", 8)) str += 8;
 
-    s = delete_spaces_in_parens(str);
+    s = boxplots_fix_parentheses(str);
     if (s == NULL) return 1;
 
     nvars = special_varcount(s);
@@ -1678,11 +1701,17 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    for (i=0; i<nvars; i++) bools[i] = NULL;
+    for (i=0; i<nvars; i++) {
+	bools[i] = NULL;
+    }
 
     list[0] = nvars;
     i = 0;
     nbool = 0;
+
+    /* record the command string */
+    *boxplots_string = '\0';
+    strncat(boxplots_string, s, BPSTRLEN - 1);
 
     while (!err && (tok = strtok((i)? NULL : s, " "))) {
 	if (tok[0] == '(') {
@@ -1717,8 +1746,6 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
     }
-
-    free(s);
 
     /* now we add nbool new variables, with ID numbers origv,
        origv + 1, and so on.  These are the original variables
@@ -1756,14 +1783,17 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!err) 
+    if (!err) {
 	err = boxplots(list, bools, pZ, pdinfo, notches);
+    } 
     
     free(list);
     free(bools); /* the bool[i]s are now attached to the plots */
+    free(s);
 
-    if (nbool) 
+    if (nbool) {
 	dataset_drop_vars(nbool, pZ, pdinfo);
+    }
     
     return err;
 }

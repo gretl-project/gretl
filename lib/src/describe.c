@@ -742,16 +742,20 @@ static int roundup_mod (int i, double x)
 static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 {
     double xx, tstat, **tmpZ = NULL;
-    DATAINFO tmpdinfo;
+    DATAINFO *tmpdinfo;
     MODEL tmp;
     int t, err = 0, list[4];
 
-    tmpdinfo.vector = NULL;
-    tmpdinfo.n = n;
-    tmpdinfo.v = 3;
-    tmpdinfo.pd = 1;
-    if (start_new_Z(&tmpZ, &tmpdinfo, 1))
+    tmpdinfo = datainfo_new();
+    if (tmpdinfo == NULL) {
 	return 1;
+    }
+
+    tmpdinfo->n = n;
+    tmpdinfo->v = 3;
+    if (start_new_Z(&tmpZ, tmpdinfo, 1)) {
+	return 1;
+    }
 
     /* Test from Geweke and Porter-Hudak, as set out in
        Greene, Econometric Analysis 4e, p. 787 */
@@ -768,7 +772,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     list[2] = 0;
     list[3] = 2;
 
-    tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, OPT_A, 0);
+    tmp = lsq(list, &tmpZ, tmpdinfo, OLS, OPT_A, 0);
 
     if (!tmp.errcode) {
 	tstat = -tmp.coeff[1] / tmp.sderr[1];
@@ -784,8 +788,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     }
 
     clear_model(&tmp);
-    free_Z(tmpZ, &tmpdinfo);
-    clear_datainfo(&tmpdinfo, CLEAR_FULL);
+    free_Z(tmpZ, tmpdinfo);
+    clear_datainfo(tmpdinfo, CLEAR_FULL);
+    free(tmpdinfo);
 
     return err;
 }

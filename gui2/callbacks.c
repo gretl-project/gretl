@@ -605,6 +605,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(query, _("Specify variables to plot:"));
 	okfunc = do_box_graph;
 	varclick = VARCLICK_INSERT_NAME;
+	strcpy(defstr, get_boxplots_string());
 	break;	
     case NLS:
 	strcpy(title, _("gretl: nonlinear least squares"));

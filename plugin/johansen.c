@@ -22,8 +22,6 @@
 #include "gretl_matrix.h"
 #include "gretl_matrix_private.h"
 
-#define COINT_VEC
-
 /* 
    Critical values for Johansen's likelihood ratio tests
    are computed using J. Doornik's gamma approximation
@@ -316,13 +314,11 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	err = gretl_matrix_multiply(TmpL, TmpR, M);
     }
 
-    if (err) goto eigenvals_bailout;
+    if (err) {
+	goto eigenvals_bailout;
+    }
 
-#ifdef COINT_VEC
     eigvals = gretl_general_matrix_eigenvals(M, TmpR);
-#else
-    eigvals = gretl_general_matrix_eigenvals(M, NULL);
-#endif
 
     if (eigvals != NULL) {
 	int i;
@@ -368,14 +364,13 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
 	}
 	pputc(prn, '\n');
 
-#ifdef COINT_VEC
 	gretl_matrix_free(Svv);
 	Svv = j_matrix_from_array(Y, k, k);
 	if (Svv != NULL) {
+	    /* tmpR holds the eigenvectors */
 	    johansen_normalize(TmpR, Svv, 0);
 	}
 	print_coint_vecs(evals, TmpR, 1, prn);
-#endif
 
 	free(eigvals);
 	free(evals);

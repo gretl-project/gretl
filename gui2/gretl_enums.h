@@ -34,7 +34,6 @@ enum extra_cmds {
     H_TEST,
     TRAMO,
     X12A,
-    RANGE_MEAN,
     VIEW_SERIES,
     VIEW_SCALAR,
     VIEW_MODEL,

@@ -998,8 +998,9 @@ void edit_info_state (gboolean s)
     flip(mdata->ifac, "/Data/Edit info", s);
 }
 
-void remove_markers_state (gboolean s)
+void add_remove_markers_state (gboolean s)
 {
+    flip(mdata->ifac, "/Sample/Add case markers...", !s);
     flip(mdata->ifac, "/Sample/Remove case markers", s);
 }
 
@@ -1020,7 +1021,7 @@ void main_menubar_state (gboolean s)
 
     if (s) {
 	edit_info_state(!(data_status & BOOK_DATA));
-	remove_markers_state(datainfo->S != NULL);
+	add_remove_markers_state(datainfo->S != NULL);
     }
 }
 

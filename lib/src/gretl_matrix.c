@@ -833,8 +833,6 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
  * 
  */
 
-#define SIMPLE_MATH
-
 int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 			       const gretl_matrix *b, int bflag,
 			       gretl_matrix *c)
@@ -844,14 +842,8 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     int rrows, rcols;
     const int atr = (aflag == GRETL_MOD_TRANSPOSE);
     const int btr = (bflag == GRETL_MOD_TRANSPOSE);
-#ifdef SIMPLE_MATH
     int aidx, bidx;
     double targ;
-#else
-    const double *a_row, *a_col;
-    const double *b_row, *b_col;
-    double *c_row, *c_col;
-#endif    
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
@@ -880,10 +872,6 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-#ifdef SIMPLE_MATH
-    /* This version represents the math quite clearly, but seems to be
-       wasteful of multiplications. 
-    */
     for (i=0; i<lrows; i++) {
 	for (j=0; j<rcols; j++) {
 	    targ = 0.0;
@@ -895,61 +883,6 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	    c->val[mdx(c,i,j)] = targ;
 	}
     }
-#else
-    /* This is an attempt at optimization: it uses pointer addition to
-       avoid multiplications wherever possible, in the course of
-       finding the addresses of the terms to be multiplied.  I
-       expected it to be faster, but in testing to date it is actually
-       slower.  Hmm.
-    */
-
-    /* initialize row and column pointers */
-    c_row = c->val;
-    a_col = a_row = a->val;
-    b_col = b_row = b->val;
-
-    for (i=0; i < c->rows; i++) {
-
-	c_col = c_row;
-
-	for (j=0; j < c->cols; j++) {
-
-	    if (atr) a_row = a_col;
-	    else a_col = a_row;
-
-	    if (btr) b_col = b_row;
-	    else b_row = b_col;
-
-	    *c_col = 0.0;
-	    for (k=0; k<lcols; k++) {
-
-		*c_col += ((atr)? *a_row : *a_col) * ((btr)? *b_col : *b_row);
-
-		if (atr) a_row++;
-		else a_col += a->rows;
-
-		if (btr) b_col += b->rows;
-		else b_row++;
-	    }
-
-	    c_col += c->rows;
-
-	    if (btr) b_row++;
-	    else b_col += b->rows;
-	}
-
-	/* start new row of product matrix */
-	c_row++;
-
-	/* move to new row of LH matrix */
-	if (atr) a_col += a->rows;
-	else a_row++;
-
-	/* re-initialize pointer to RH matrix */
-	if (btr) b_row = b->val;
-	else b_col = b->val;
-    }
-#endif
 
     return GRETL_MATRIX_OK;
 }
@@ -1273,12 +1206,6 @@ int gretl_invert_symmetric_matrix (gretl_matrix *a)
     return err;
 }
 
-static void transcribe_eigenvectors(double *vi, gretl_matrix *ev, int n)
-{
-    free(ev->val);
-    ev->val = vi;
-}
-
 /**
  * gretl_general_matrix_eigenvals:
  * @m: matrix to operate on.
@@ -1302,14 +1229,8 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     integer one = 1;
     integer nvr = n;
     char jvl = 'N', jvr = 'V';
-    int vecs = (ev != NULL);
-    double *work;
+    double *work, *work2;
     double *wr = NULL, *wi = NULL, *vr = NULL;
-
-    if (!vecs) {
-	jvr = 'N';
-	nvr = 1;
-    }
 
     work = malloc(sizeof *work);
     if (work == NULL) {
@@ -1319,20 +1240,15 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     wr = malloc(n * sizeof *wr);
     wi = malloc(n * sizeof *wi);
     if (wr == NULL || wi == NULL) {
-	free(work);
-	free(wr);
-	free(wi);
-	return NULL;
+	goto bailout;
     }
 
-    if (vecs) {
-	vr = malloc(n * n * sizeof *vr);
-	if (vr == NULL) {
-	    free(work);
-	    free(wr);
-	    free(wi);
-	    return NULL;
-	}
+    if (ev != NULL) {
+	/* eigenvectors wanted */
+	vr = ev->val;
+    } else {
+	jvr = 'N';
+	nvr = 1;
     }	
 
     lwork = -1; /* find optimal workspace size */
@@ -1341,38 +1257,35 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
-	free(work);
-	free(wr);
-	free(wi);
-	free(vr);
-	return NULL;
+	goto bailout;
     }	
 
     lwork = (integer) work[0];
 
-    work = realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
-	free(wr);
-	free(wi);
-	free(vr);
-	return NULL;
-    } 
+    work2 = realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	goto bailout;
+    } else {
+	work = work2;
+    }
 
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, NULL, 
 	   &one, vr, &nvr, work, &lwork, &info);
 
     if (info != 0) {
-	free(wr);
-	wr = NULL;
-	free(vr);
-    } else if (vecs) {
-	transcribe_eigenvectors(vr, ev, n);
-    }
+	goto bailout;
+    } 
 
     free(wi);
     free(work);
 
     return wr;
+
+ bailout:
+    free(work);
+    free(wr);
+    free(wi);
+    return NULL;    
 }
 
 /**
@@ -1397,13 +1310,10 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
     integer info;
     integer lwork;
 
-    double *work;
+    double *work, *work2;
     double *w;
 
-    char jobz, uplo = 'U'; 
-
-    if (eigenvecs) jobz = 'V';
-    else jobz = 'N';
+    char uplo = 'U', jobz = (eigenvecs)? 'V' : 'N';
 
     work = malloc(sizeof *work);
     if (work == NULL) {
@@ -1429,11 +1339,14 @@ gretl_symmetric_matrix_eigenvals (gretl_matrix *m, int eigenvecs)
 
     lwork = (integer) work[0];
 
-    work = realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
+    work2 = realloc(work, lwork * sizeof *work);
+    if (work2 == NULL) {
+	free(work);
 	free(w);
 	return NULL;
-    }    
+    } else {
+	work = work2;
+    }
 
     dsyev_(&jobz, &uplo, &n, m->val, &n, 
 	   w, work, &lwork, &info);

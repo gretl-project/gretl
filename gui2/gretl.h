@@ -129,7 +129,7 @@ void panel_menu_state (gboolean s);
 
 void edit_info_state (gboolean s);
 
-void remove_markers_state (gboolean s);
+void add_remove_markers_state (gboolean s);
 
 void populate_varlist (void);
 

@@ -998,7 +998,7 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 	close_dialog(ddata);
 	infobox(_("Case markers added"));
 	mark_dataset_as_modified();
-	remove_markers_state(TRUE);
+	add_remove_markers_state(TRUE);
     }
 }
 
@@ -1007,7 +1007,7 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
     destroy_dataset_markers(datainfo);
     infobox(_("Case markers removed"));
     mark_dataset_as_modified();
-    remove_markers_state(FALSE);
+    add_remove_markers_state(FALSE);
 }
 
 /* ........................................................... */
@@ -2817,7 +2817,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	register_graph();
     }
 
-    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, 
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RMPLOT, 
 		NULL);
 }
 

@@ -106,10 +106,10 @@ static struct gui_help_item gui_help_items[] = {
     { GR_PLOT,    "graphing" },
     { GR_XY,      "graphing" },
     { GR_DUMMY,   "factorized" },
+    { BXPLOT,     "boxplots" },
     { GR_BOX,     "boxplots" },
     { GR_NBOX,    "boxplots" },
     { GR_3D,      "3-D" },
-    { RANGE_MEAN, "range-mean" },
     { ONLINE,     "online" },
     { MARKERS,    "markers" },
     { EXPORT,     "export" },
@@ -146,9 +146,11 @@ static int extra_command_number (const char *s)
 {
     int i;
 
-    for (i=1; gui_help_items[i].code > 0; i++)
-	if (!strcmp(s, gui_help_items[i].string))
+    for (i=1; gui_help_items[i].code > 0; i++) {
+	if (!strcmp(s, gui_help_items[i].string)) {
 	    return gui_help_items[i].code;
+	}
+    }
 
     return -1;
 }
@@ -159,9 +161,11 @@ static char *help_string_from_cmd (int cmd)
 {
     int i;
 
-    for (i=1; gui_help_items[i].code > 0; i++)
-	if (cmd == gui_help_items[i].code)
+    for (i=1; gui_help_items[i].code > 0; i++) {
+	if (cmd == gui_help_items[i].code) {
 	    return gui_help_items[i].string;
+	}
+    }
 
     return NULL;    
 }
@@ -599,10 +603,13 @@ static char *get_gui_help_string (int pos)
 {
     int i, j;
 
-    for (i=0; gui_heads[i] != NULL; i++) 
-	for (j=0; j<(gui_heads[i])->ntopics; j++)
-	    if (pos == (gui_heads[i])->pos[j])
+    for (i=0; gui_heads[i] != NULL; i++) { 
+	for (j=0; j<(gui_heads[i])->ntopics; j++) {
+	    if (pos == (gui_heads[i])->pos[j]) {
 		return help_string_from_cmd((gui_heads[i])->topics[j]);
+	    }
+	}
+    }
 
     return NULL;
 }
@@ -780,26 +787,35 @@ void context_help (GtkWidget *widget, gpointer data)
     int pos = 0;
 
     for (i=0; gui_heads[i] != NULL; i++) {
-	for (j=0; j<(gui_heads[i])->ntopics; j++)
-	    if (help_code == (gui_heads[i])->topics[j])
+	for (j=0; j<(gui_heads[i])->ntopics; j++) {
+	    if (help_code == (gui_heads[i])->topics[j]) {
 		pos = (gui_heads[i])->pos[j];
+		break;
+	    }
+	}
+	if (pos > 0) break;
     }
 
-    /* fallback */
-    if (!pos) {
+    /* special for gui-specific help items */
+    if (pos == 0) {
 	char *helpstr = help_string_from_cmd(help_code);
-	int altcode;
 
 	if (helpstr != NULL) {
-	    altcode = extra_command_number(helpstr);
-	    for (i=0; gui_heads[i] != NULL; i++)
-		for (j=0; j<(gui_heads[i])->ntopics; j++)
-		    if (altcode == (gui_heads[i])->topics[j])
+	    int altcode = extra_command_number(helpstr);
+
+	    for (i=0; gui_heads[i] != NULL; i++) {
+		for (j=0; j<(gui_heads[i])->ntopics; j++) {
+		    if (altcode == (gui_heads[i])->topics[j]) {
 			pos = (gui_heads[i])->pos[j];
+			break;
+		    }
+		}
+		if (pos > 0) break;
+	    }
 	}
     }
 
-    if (!pos) {
+    if (pos == 0) {
 	dummy_call();
     } else {
 	do_gui_help(NULL, pos, NULL);
@@ -879,10 +895,13 @@ static int pos_from_cmd (int cmd)
 {
     int i, j;
 
-    for (i=0; cli_heads[i] != NULL; i++)
-	for (j=0; j<(cli_heads[i])->ntopics; j++)
-	    if (cmd == (cli_heads[i])->topics[j])
+    for (i=0; cli_heads[i] != NULL; i++) {
+	for (j=0; j<(cli_heads[i])->ntopics; j++) {
+	    if (cmd == (cli_heads[i])->topics[j]) {
 		return (cli_heads[i])->pos[j];
+	    }
+	}
+    }
 
     return 0;
 }
