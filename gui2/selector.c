@@ -566,7 +566,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
-	    xlist = realloc(xlist, (rows + 1) * sizeof(int));
+	    xlist = realloc(xlist, (rows + 1) * sizeof *xlist);
 	    if (xlist != NULL) xlist[0] = rows;
 	}
     }
@@ -593,7 +593,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	gtk_tree_model_get_iter_first (model, &iter);
 	rows = varlist_row_count(sr->extra);
 	if (rows > 0) {
-	    instlist = realloc(instlist, (rows + 1) * sizeof(int));
+	    instlist = realloc(instlist, (rows + 1) * sizeof *instlist);
 	    if (instlist != NULL) instlist[0] = rows;
 	    strcat(sr->cmdlist, " ;");
 	    for (i=0; i<rows; i++) {
@@ -1027,7 +1027,7 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     GtkListStore *store;
     GtkTreeIter iter;
     selector *sr;
-    char topstr[48];
+    gchar *topstr;
     int i;
 
     if (open_dialog != NULL) {
@@ -1041,17 +1041,17 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     selector_init(sr, cmdcode, title);
 
     if (MODEL_CODE(cmdcode))
-	strcpy(topstr, _(est_str(cmdcode)));
+	topstr = _(est_str(cmdcode));
     else if (cmdcode == GR_XY)
-	strcpy(topstr, _("XY scatterplot"));
+	topstr = _("XY scatterplot");
     else if (cmdcode == GR_IMP)
-	strcpy(topstr, _("plot with impulses"));
+	topstr = _("plot with impulses");
     else if (cmdcode == SCATTERS)
-	strcpy(topstr, _("multiple scatterplots"));
+	topstr = _("multiple scatterplots");
     else if (cmdcode == GR_DUMMY)
-	strcpy(topstr, _("factorized plot"));
+	topstr = _("factorized plot");
     else
-	strcpy(topstr, "fixme need string");
+	topstr = "fixme need string";
 
     tmp = gtk_label_new(topstr);
     gtk_box_pack_start(GTK_BOX(sr->vbox), tmp, FALSE, FALSE, 5);
@@ -1367,7 +1367,6 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     build_selector_buttons (sr, okfunc);
 
     gtk_widget_show(sr->dlg);
-    /* gtk_main(); */
 }
 
 struct list_maker {
