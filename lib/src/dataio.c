@@ -82,7 +82,8 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	pdinfo->S = NULL;
 	pdinfo->markers = 0;
     } 
-    /* if this is not a sub-sample datainfo, free varnames and labels */
+
+    /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
     if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
 	    for (i=0; i<pdinfo->v; i++) 

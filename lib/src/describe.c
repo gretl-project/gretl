@@ -465,6 +465,13 @@ int corrgram (const int varno, const int order, double ***pZ,
 
 static int roundup_half (int i)
 {
+    return (int) ceil((double) i / 2.0);
+}
+
+#ifdef notdef
+/* Not sure what I was doing here 8-/ */
+static int old_roundup_half (int i)
+{
     int j;
 
     j = 10 * (int) ((i / 2) / 10.0 + .5);
@@ -472,6 +479,7 @@ static int roundup_half (int i)
     else if (j - i / 2 > 5) j-= 5;
     return j;
 }
+#endif
 
 /* ...................................................... */
 
@@ -482,7 +490,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     MODEL tmp;
     int t, err = 0, list[4];
 
-    tmpdinfo.S = NULL;
+    tmpdinfo.vector = NULL;
     tmpdinfo.n = n;
     tmpdinfo.v = 3;
     tmpdinfo.pd = 1;
@@ -492,9 +500,9 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     
     for (t=0; t<n; t++) {
 	tmpZ[0][t] = 1.0;
-	tmpZ[0][n + t] = log(hhat[t]);
+	tmpZ[1][t] = log(hhat[t]);
 	xx = sin(omega[t] / 2);
-	tmpZ[0][2*n + t] = log(4 * xx * xx);
+	tmpZ[2][t] = log(4 * xx * xx);
     }
 
     list[0] = 3;
@@ -514,8 +522,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     } else err = tmp.errcode;
 
     clear_model(&tmp, NULL, NULL, &tmpdinfo);
-    free(tmpZ[0]);
-    free(tmpZ);
+    free_Z(tmpZ, &tmpdinfo);
     clear_datainfo(&tmpdinfo, CLEAR_FULL);
 
     return err;

@@ -1753,6 +1753,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     fdatainfo.varname = NULL;
     fdatainfo.label = NULL;
     fdatainfo.S = NULL;
+    fdatainfo.vector = NULL;
+    fdatainfo.descrip = NULL;
 
     /* start new list */
     list[0] = fv;
@@ -1899,7 +1901,8 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	    }
 	} else plotvar(pZ, pdinfo, "index");
 	err = plot_fcast_errs(nfcast, &(*pZ)[pdinfo->v - 1][ft1], 
-			      depvar, yhat, sderr, pdinfo->varname[v1], ppaths);
+			      depvar, yhat, sderr, pdinfo->varname[v1], 
+			      ppaths);
     }
 
     clear_model(&fmod, NULL, NULL, &fdatainfo);

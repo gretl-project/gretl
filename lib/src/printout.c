@@ -1736,7 +1736,7 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 	    pprintf(prn, "\n");
 	} else {
 	    xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
-	    if (fabs(xx) > 2.5 * pmod->sigma) ast = 1;
+	    ast = (fabs(xx) > 2.5 * pmod->sigma);
 	    pprintf(prn, "%12.*f%12.*f%12.*f%s\n", 
 		    pmax, (*pZ)[depvar][t],
 		    pmax, (*pZ)[nfit][t], pmax, xx,

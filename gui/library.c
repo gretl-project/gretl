@@ -1232,6 +1232,8 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
+    register_graph();
+
     view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, NULL);    
 }
 

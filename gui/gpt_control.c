@@ -1542,7 +1542,7 @@ static int get_plot_yrange (png_plot_t *plot)
 {
     FILE *fpin, *fpout;
     char line[MAXLEN];
-    int err = 0;
+    int err = 0, x2axis = 0;
 
     fpin = fopen(plot->spec->fname, "r");
     if (fpin == NULL) return 1;
@@ -1560,6 +1560,7 @@ static int get_plot_yrange (png_plot_t *plot)
 	else if (strstr(line, "set output")) 
 	    fputs("set output 'gptdumb.txt'\n", fpout);
 	else fputs(line, fpout);
+	if (strstr(line, "x2range")) x2axis = 1;
     }
 
     fclose(fpin);
@@ -1578,15 +1579,23 @@ static int get_plot_yrange (png_plot_t *plot)
 	if (fpin == NULL) return 1;
 
 	/* read the y-axis min and max from the ascii graph */
-	while (i<16 && fgets(line, MAXLEN-1, fpin)) 
+	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
 	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
+	}
 
 	fclose(fpin);
 	remove("gptdumb.txt");
 
-	if (i > 2 && y[0] > y[i-2]) {
-	    plot->ymin = y[i-2];
-	    plot->ymax = y[0];
+	if (x2axis) {
+	    if (i > 3 && y[1] > y[i-2]) {
+		plot->ymin = y[i-2];
+		plot->ymax = y[1];
+	    }
+	} else {	
+	    if (i > 2 && y[0] > y[i-2]) {
+		plot->ymin = y[i-2];
+		plot->ymax = y[0];
+	    }
 	}
     }
     
