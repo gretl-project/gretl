@@ -238,7 +238,7 @@ int set_sample_dummy (const char *line,
     /* create or reuse "hidden" dummy to record sub-sample */
     subnum = varindex(oldinfo, "subdum");
     if (subnum == oldinfo->v) {
-	if (_grow_Z(1, oldZ, oldinfo)) return E_ALLOC;
+	if (dataset_add_vars(1, oldZ, oldinfo)) return E_ALLOC;
 	strcpy(oldinfo->varname[subnum], "subdum");
 	strcpy(oldinfo->label[subnum], "automatic sub-sampling dummy");
     }
@@ -456,7 +456,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
     /* and data info struct */
     *subinfo = *datainfo;
     *datainfo = *fullinfo;
-    clear_datainfo(*subinfo, 1);
+    clear_datainfo(*subinfo, CLEAR_SUBSAMPLE);
 
     free(*subinfo);
     *subinfo = NULL;

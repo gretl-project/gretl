@@ -153,4 +153,6 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn);
 
 int balanced_panel (const DATAINFO *pdinfo);
 
+double get_xvalue (int i, double **Z, const DATAINFO *pdinfo);
+
 #endif /* UTILS_H */

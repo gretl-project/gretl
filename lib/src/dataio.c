@@ -66,14 +66,13 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 /**
  * clear_datainfo:
  * @pdinfo: data information struct.
- * @subsample: 1 if @pdinfo relates to a sub-sample of a full data set,
- * 0 otherwise.
+ * @code: either CLEAR_FULL or CLEAR_SUBSAMPLE.
  *
  * Free the allocated content of a data information struct.
  * 
  */
 
-void clear_datainfo (DATAINFO *pdinfo, int subsample)
+void clear_datainfo (DATAINFO *pdinfo, int code)
 {
     int i;
 
@@ -85,7 +84,7 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample)
 	pdinfo->markers = 0;
     } 
     /* if this is not a sub-sample datainfo, free varnames and labels */
-    if (!subsample) {
+    if (code == CLEAR_FULL) {
 	if (pdinfo->varname != NULL) {
 	    for (i=0; i<pdinfo->v; i++) 
 		free(pdinfo->varname[i]); 
@@ -663,7 +662,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     varname_error:
     fclose(fp);
-    clear_datainfo(pdinfo, 0);
+    clear_datainfo(pdinfo, CLEAR_FULL);
     return E_DATA;
 }
 
@@ -1405,7 +1404,7 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     }
 
     /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, 0);
+    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     /* read data header file */
     err = readhdr(hdrfile, pdinfo);
@@ -1489,7 +1488,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn) 
 {
     /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, 0);
+    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     /* dummy up the data info */
     pdinfo->n = length;
@@ -1643,7 +1642,7 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
     int i, t, newvars = pcinfo->v, oldvars = pdinfo->v;
 
     pprintf(prn, "Attempting data merge...\n");
-    if (_grow_Z(newvars - 1, pZ, pdinfo)) {
+    if (dataset_add_vars(newvars - 1, pZ, pdinfo)) {
 	pprintf(prn, "   Out of memory.\n");
 	return E_ALLOC;
     }
@@ -1653,7 +1652,7 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
 	strcpy(pdinfo->varname[oldvars+i-1], pcinfo->varname[i]);
     }  
     free_Z(*csvZ, pcinfo);
-    clear_datainfo(pcinfo, 0);
+    clear_datainfo(pcinfo, CLEAR_FULL);
     pprintf(prn, "   OK, I think.\n");
     return 0;
 }
@@ -1817,7 +1816,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     line = malloc(maxlen + 1);
     if (line == NULL) {
 	fclose(fp);
-	clear_datainfo(csvinfo, 0);
+	clear_datainfo(csvinfo, CLEAR_FULL);
 	return E_ALLOC;
     }
 
@@ -1842,7 +1841,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    pprintf(prn, msg);
 	    fclose(fp);
 	    free(line);
-	    clear_datainfo(csvinfo, 0);
+	    clear_datainfo(csvinfo, CLEAR_FULL);
 	    return 1;
 	}
 	if (k == 1 && skipvar) {
@@ -2948,7 +2947,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    fprintf(stderr, "%s %ld bytes of data...\n", 
 		    (is_gzipped(fname))? "Uncompressing" : "Reading",
 		    fsz);
-	    progress = fsz;
+	    if (gui) progress = fsz;
     }
 
     doc = xmlParseFile(fname);
@@ -2958,7 +2957,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     }
 
     /* clear any existing data info */
-    if (data_status) clear_datainfo(pdinfo, 0);
+    if (data_status) clear_datainfo(pdinfo, CLEAR_FULL);
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {

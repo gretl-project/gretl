@@ -281,7 +281,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
     }
 
     clear_model(&tmp, NULL, NULL, pdinfo);
-    _shrink_Z(pdinfo->v - v, pZ, pdinfo);
+    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
 
@@ -518,7 +518,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     clear_model(&tmp, NULL, NULL, &tmpdinfo);
     free(tmpZ[0]);
     free(tmpZ);
-    clear_datainfo(&tmpdinfo, 0);
+    clear_datainfo(&tmpdinfo, CLEAR_FULL);
 
     return err;
 }

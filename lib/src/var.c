@@ -32,7 +32,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo)
     index = varindex(pdinfo, "time");
     if (index < v) return index;
     
-    if (_grow_Z(1, pZ, pdinfo)) return 999;
+    if (dataset_add_vars(1, pZ, pdinfo)) return 999;
 
     for (t=0; t<n; t++) (*pZ)[v][t] = (double) t+1;
     strcpy(pdinfo->varname[v], "time");
@@ -74,7 +74,7 @@ static int diffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
@@ -112,7 +112,7 @@ static int ldiffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
@@ -451,7 +451,7 @@ int coint (const int order, const LIST list, double ***pZ,
 
     /* add residuals from cointegrating regression to data set */
     n = pdinfo->n;
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     nv = pdinfo->v - 1;
     for (t=0; t<coint_model.t1; t++)
 	(*pZ)[nv][t] = NADBL;
@@ -475,7 +475,7 @@ int coint (const int order, const LIST list, double ***pZ,
     /* clean up and get out */
     clear_model(&coint_model, NULL, NULL, pdinfo);
     free(cointlist);
-    _shrink_Z(1, pZ, pdinfo);
+    dataset_drop_vars(1, pZ, pdinfo);
     return 0;
 }
 
@@ -627,7 +627,7 @@ int adf_test (const int order, const int varno, double ***pZ,
 
     free(adflist);
     free(shortlist);
-    _shrink_Z(pdinfo->v - orig_nvars, pZ, pdinfo);
+    dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
     return 0;
 }
 
@@ -646,7 +646,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
     
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     strcpy(pdinfo->varname[v], "Z_t");
 
     malist[0] = 3;
@@ -703,7 +703,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	   
     clear_model(&mamod, NULL, NULL, pdinfo);
 
-    _shrink_Z(1, pZ, pdinfo);
+    dataset_drop_vars(1, pZ, pdinfo);
 
     return 0;
 }

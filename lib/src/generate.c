@@ -585,6 +585,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 
     /* impose operator hierarchy. Needs more testing */
     if (parenthesize(s)) { 
+	fprintf(stderr, "genr: parenthesize failed\n");
 	genr.errcode = E_ALLOC;
 	_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 	return genr;
@@ -1553,7 +1554,7 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     double xx;
 
     if (ndummies == 1) return E_PDWRONG;
-    if (_grow_Z(ndummies, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(ndummies, pZ, pdinfo)) return E_ALLOC;
 
     mm = (pdinfo->pd < 10)? 10 : 100;
     for (vi=1; vi<=ndummies; vi++) {
@@ -1600,7 +1601,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
     if (nudum == 1) return E_PDWRONG;
 
     ndum = ntdum + nudum;
-    if (_grow_Z(ndum, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(ndum, pZ, pdinfo)) return E_ALLOC;
 
     /* first generate the frequency-based dummies */
     mm = (pdinfo->pd < 10)? 10 : 100;
@@ -1676,7 +1677,7 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     float rm;
 
     if ((vi = varindex(pdinfo, period)) < v) return 0;
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     strcpy(pdinfo->varname[vi], period);
 
     y1 = (int) pdinfo->sd0;
@@ -1743,7 +1744,10 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
      check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    /* can't do lags of a scalar */
+    if (!pdinfo->vector[iv]) return 1;
+
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     for (t=0; t<lag; t++) (*pZ)[v][t] = NADBL;
@@ -1850,7 +1854,7 @@ static int _createvar (double *xxvec, char *snew, char *sleft,
     sprintf(ss, "q#$%d", ssnum); 
     mv = varindex(pdinfo, ss);
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     strcpy(pdinfo->varname[mv], ss);
     if (scalar) {
@@ -1874,7 +1878,7 @@ static void _genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 {
     int s = pdinfo->v - nv;
 
-    if (s > 0) _shrink_Z(s, pZ, pdinfo);
+    if (s > 0) dataset_drop_vars(s, pZ, pdinfo);
     if (mystack != NULL) free(mystack);
     if (mvec != NULL) free(mvec);
     if (genr != NULL) free(genr->xvec);
@@ -1901,7 +1905,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
     double xx;
     char s[32];
 
-    if (_grow_Z(l0, pZ, pdinfo)) return -1;
+    if (dataset_add_vars(l0, pZ, pdinfo)) return -1;
 
     j = 0;
     for (i=1; i<=list[0]; i++) {
@@ -1954,7 +1958,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* shrink Z if warranted (not all vars logged) */
-    if (j < l0) _shrink_Z(l0 - j, pZ, pdinfo);
+    if (j < l0) dataset_drop_vars(l0 - j, pZ, pdinfo);
 
     if (j == 0) j = -1;
     return j;
@@ -2060,7 +2064,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 /*      fprintf(stderr, "xpxgenr: maxterms = %d\n", maxterms);   */
 /*      printlist(list);   */
 
-    if (_grow_Z(maxterms, pZ, pdinfo)) return -1;
+    if (dataset_add_vars(maxterms, pZ, pdinfo)) return -1;
 
     terms = 0;
     for (i=1; i<=l0; i++) {
@@ -2125,7 +2129,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (terms < maxterms) 
-	_shrink_Z(maxterms - terms, pZ, pdinfo);
+	dataset_drop_vars(maxterms - terms, pZ, pdinfo);
     return terms;
 }
 
@@ -2170,7 +2174,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 		    free(rhot);
 		    return E_UNKVAR;
 		}
-		rhot[p] = (*pZ)[nv][pdinfo->t1];
+		rhot[p] = get_xvalue(nv, *pZ, pdinfo);
 	    } else {
 		rhot[p] = atof(parmbit);
 	    }
@@ -2178,7 +2182,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    if (_grow_Z(list[0], pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(list[0], pZ, pdinfo)) return E_ALLOC;
 
     for (i=1; i<=list[0]; i++) {
 	j = list[i];
@@ -2367,7 +2371,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 {
     int f, i, t, t1, t2, m, nv, pv, *isconst;
     char varname[32], tmpstr[128], parm[9], **toks;
-    double xx, *a;
+    double xx, yy, *a;
 
     f = _count_fields(cmd);
     m = f - 4;
@@ -2417,18 +2421,18 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		free(toks);
 		return 1;
 	    } else {
-		isconst[i] = 0;
+		isconst[i] = !pdinfo->vector[pv];
 		/*  fprintf(fp, "param[%d] is a variable, %d\n", i, pv); */ 
-		a[i] = (double) pv;
+		a[i] = (isconst[i])? (*pZ)[pv][0] : (double) pv;
 	    }
-	}
-	else {
+	} else {
 	    a[i] = atof(parm);
 	    /*  fprintf(fp, "param[%d] is a constant = %f\n", i, a[i]); */ 
 	}
     }
 
     if (t1 < m - 1) t1 = m - 1;
+
     for (t=t1; t<=t2; t++) {
 	xx = 0.;
 	for (i=0; i<m; i++) {
@@ -2437,12 +2441,13 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 		else xx += a[i] * (*pZ)[nv][t-i];
 	    } else {
 		pv = (int) a[i];
-		if (na((*pZ)[pv][t])) {
+		yy = (*pZ)[pv][t];
+		if (na(yy)) {
 		    xx = NADBL;
 		    break;
 		}
-		if (i == 0) xx += (*pZ)[pv][t];
-		else xx += (*pZ)[pv][t] * (*pZ)[nv][t-i];
+		if (i == 0) xx += yy;
+		else xx += yy * (*pZ)[nv][t-i];
 	    }
 	}
 	(*pZ)[nv][t] = xx;
@@ -2471,7 +2476,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	if (v == pdinfo->v) return E_UNKVAR; 
     }
 
-    if (_grow_Z(l0, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(l0, pZ, pdinfo)) return E_ALLOC;
     slen = strlen(sfx);
 
     /* fill out values */
@@ -2485,10 +2490,14 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 		continue;
 	    }
 	    if (v) {
-		if (na((*pZ)[v][t]))
-		    (*pZ)[nv][t] = NADBL;
-		else (*pZ)[nv][t] = (*pZ)[v][t] * (*pZ)[lv][t];
-	    } else (*pZ)[nv][t] = m * (*pZ)[lv][t];
+		double yy = 
+		    (pdinfo->vector[v])? 
+		    (*pZ)[v][t] : (*pZ)[v][0];
+
+		if (na(yy)) (*pZ)[nv][t] = NADBL;
+		else (*pZ)[nv][t] = yy * (*pZ)[lv][t];
+	    } else 
+		(*pZ)[nv][t] = m * (*pZ)[lv][t];
 	}
 	/* do names and labels */
 	strcpy(tmp, pdinfo->varname[lv]);
@@ -2527,7 +2536,7 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     char vname[9], vlabel[MAXLABEL];
     int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     i = pdinfo->v - 1;
     n = pdinfo->n;

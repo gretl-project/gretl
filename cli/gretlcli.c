@@ -446,7 +446,7 @@ int main (int argc, char *argv[])
     free(command.param);
     if (data_status) free_datainfo(datainfo);
     if (fullinfo != NULL) {
-	clear_datainfo(fullinfo, 1);
+	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
 	free(fullinfo);
     }
     if (runfile_open && fb != NULL) fclose (fb);

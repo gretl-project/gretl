@@ -80,7 +80,7 @@ static double group_means_variance (MODEL *pmod,
 
     list = malloc((pmod->list[0] + 1) * sizeof *list);
     if (list == NULL) {
-	clear_datainfo(*ginfo, 0);
+	clear_datainfo(*ginfo, CLEAR_FULL);
 	free(*ginfo);
 	return NADBL;
     }
@@ -412,7 +412,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     relist = malloc((pmod->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
 	free_Z(reZ, reinfo);
-	clear_datainfo(reinfo, 0);
+	clear_datainfo(reinfo, CLEAR_FULL);
 	free(reinfo);
 	return E_ALLOC;
     }
@@ -465,7 +465,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
     clear_model(&remod, NULL, NULL, NULL);
     free_Z(reZ, reinfo);
-    clear_datainfo(reinfo, 0);
+    clear_datainfo(reinfo, CLEAR_FULL);
     free(reinfo);
     free(relist);    
 
@@ -609,7 +609,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    do_hausman_test(&haus, prn);
 	}
 	free_Z(groupZ, ginfo);
-	clear_datainfo(ginfo, 0);
+	clear_datainfo(ginfo, CLEAR_FULL);
 	free(ginfo);
 	free(haus.bdiff);
 	free(haus.sigma);

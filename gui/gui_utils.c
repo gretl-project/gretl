@@ -739,18 +739,14 @@ void save_session (char *fname)
     mkfilelist(2, fname);
 
     /* save session notes, if any */
-    sprintf(tmp, "%ssession.Notes", savedir);
-    fp = fopen(tmp, "r"); 
-    if (fp != NULL) {
-	char test[5];
-
-	if (fgets(test, 4, fp)) { /* don't save empty notes */
+    if (session.notes != NULL && strlen(session.notes)) {
+	switch_ext(fname2, fname, "Notes");
+	fp = fopen(fname2, "w");
+	if (fp != NULL) {
+	    fprintf(fp, "%s", session.notes);
 	    fclose(fp);
-	    switch_ext(fname2, fname, "Notes");
-	    copyfile(tmp, fname2);
-	} else 
-	    fclose(fp);
-	remove(tmp);
+	} else
+	    errbox("Couldn't write session notes file");
     }
 
     /* save output */
@@ -1155,13 +1151,23 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     char **pbuf = (char **) mydata->data;
 
     text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
-    if (text != NULL && strlen(text) > 0) {
-	free(*pbuf); 
-	*pbuf = text;
+    if (text == NULL || !strlen(text)) {
+	errbox("Buffer is empty");
+	g_free(text);
+	return;
+    }
+
+    /* swap the edited text into the buffer */
+    free(*pbuf); 
+    *pbuf = text;
+
+    if (mydata->role == EDIT_HEADER) {
 	infobox("Data info saved");
 	data_status |= MODIFIED_DATA;
-    } else if (strlen(text))
-	g_free(text);
+    } 
+    else if (mydata->role == EDIT_NOTES) {
+	infobox("Notes saved");
+    }
 }
 
 /* ........................................................... */
@@ -1286,13 +1292,13 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
 	switch (i) {
 	case 0:
 	    toolxpm = save_xpm;	    
-	    if (vwin->role == EDIT_BUFFER) 
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
 		toolfunc = buf_edit_save;
 	    else
 		toolfunc = file_viewer_save;
 	    break;
 	case 1:
-	    if (vwin->role != EDIT_NOTES && vwin->role != EDIT_BUFFER) {
+	    if (vwin->role != EDIT_HEADER && vwin->role != EDIT_NOTES) {
 		toolxpm = save_as_xpm;
 		toolfunc = file_save_callback;
 	    } else
@@ -1659,7 +1665,8 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
 /* ........................................................... */
 
-windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title) 
+windata_t *edit_buffer (char **pbuf, int hsize, int vsize, 
+			char *title, int role) 
 {
     GtkWidget *dialog, *table;
     GtkWidget *vscrollbar; 
@@ -1669,7 +1676,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
 	return NULL;
     windata_init(vwin);
     vwin->data = pbuf;
-    vwin->role = EDIT_BUFFER;
+    vwin->role = role;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;

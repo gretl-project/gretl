@@ -1267,9 +1267,6 @@ int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
     char *vector;
     int i, n = pdinfo->n, v = pdinfo->v;    
 
-/*      printf("grow_Z: n = %d, v = %d, newvars = %d\n", n, v, newvars);  */
-/*      printf("Z size wanted: %d\n", (v + newvars) * n * sizeof(double));  */
-
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
     if (newZ == NULL) return E_ALLOC;
     for (i=0; i<newvars; i++) {
@@ -1284,17 +1281,17 @@ int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
     for (i=0; i<newvars; i++) {
 	pdinfo->varname[v+i] = malloc(9);
 	if (pdinfo->varname[v+i] == NULL) return E_ALLOC;
-	strcpy(pdinfo->varname[v+i], "");
+	pdinfo->varname[v+i][0] = '\0';
     }
 
     if (pdinfo->label != NULL) {
 	label = realloc(pdinfo->label, (v + newvars) * sizeof(char *));
 	if (label == NULL) return E_ALLOC;
 	else pdinfo->label = label;
-	for (i = 0; i<newvars; i++) {
+	for (i=0; i<newvars; i++) {
 	    pdinfo->label[v+i] = malloc(MAXLABEL);
 	    if (pdinfo->label[v+i] == NULL) return E_ALLOC;
-	    strcpy(pdinfo->label[v+i], "");
+	    pdinfo->label[v+i][0] = '\0';
 	}
     }
 
@@ -1521,7 +1518,7 @@ int _forecast (int t1, const int t2, const int nv,
     int v, t;
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
-	       pmod->ci == HILU)? 1: 0;
+	       pmod->ci == HILU)? 1 : 0;
     if (ARMODEL) {
 	maxlag = pmod->arlist[pmod->arlist[0]];
 	if (t1 < maxlag) t1 = maxlag; 
@@ -1536,7 +1533,7 @@ int _forecast (int t1, const int t2, const int nv,
 		xx = (*pZ)[nv][t-pmod->arlist[k]];
 		if (na(xx)) {
 		    (*pZ)[nv][t] = NADBL;
-		    goto ENDIT;
+		    goto endit;
 		}
 	    }
 	    zz = zz + xx * zr;
@@ -1556,7 +1553,7 @@ int _forecast (int t1, const int t2, const int nv,
 	    zz = zz + xx * pmod->coeff[v];
 	}
 	(*pZ)[nv][t] = zz;
-    ENDIT:  ;
+    endit:  ;
     }
     return 0;
 }
@@ -1793,7 +1790,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     free(yhat);
     free(sderr);
     free(depvar);
-    clear_datainfo(&fdatainfo, 0);
+    clear_datainfo(&fdatainfo, CLEAR_FULL);
 
     return err;
 }
@@ -2032,6 +2029,16 @@ int balanced_panel (const DATAINFO *pdinfo)
         return 0;
 
     return 1;
+}
+
+/* ........................................................... */
+
+double get_xvalue (int i, double **Z, const DATAINFO *pdinfo)
+{
+    if (pdinfo->vector[i])
+	return Z[i][pdinfo->t1];
+    else
+	return Z[i][0];	
 }
 
 

@@ -135,7 +135,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* make room for special expected value */
-    if (_grow_Z(1, pZ, pdinfo)) {
+    if (dataset_add_vars(1, pZ, pdinfo)) {
 	free(xbar);
 	dmod.errcode = E_ALLOC;
 	return dmod;
@@ -145,7 +145,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
-	(void) _shrink_Z(1, pZ, pdinfo);
+	(void) dataset_drop_vars(1, pZ, pdinfo);
 	free(xbar);
 	return dmod;
     }
@@ -183,14 +183,14 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	clear_model(&dmod, NULL, NULL, NULL);
 	dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
-	    (void) _shrink_Z(1, pZ, pdinfo);
+	    (void) dataset_drop_vars(1, pZ, pdinfo);
 	    free(xbar);
 	    return dmod;
 	}
     }
     /* put back original dependent variable */
     dmod.list[1] = depvar;
-    _shrink_Z(1, pZ, pdinfo);
+    dataset_drop_vars(1, pZ, pdinfo);
     dmod.lnL = _logit_probit_llhood((*pZ)[depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ, n);
     dmod.ci = opt;

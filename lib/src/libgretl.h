@@ -198,6 +198,7 @@ typedef struct {
     int ngraphs;
     MODEL **models;
     GRAPHT **graphs;
+    char *notes;
 } SESSION; 
 
 typedef struct {

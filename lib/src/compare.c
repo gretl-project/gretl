@@ -358,7 +358,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	int df = 0;
 
 	/* grow data set to accommodate new dependent var */
-	if (_grow_Z(1, pZ, pdinfo)) {
+	if (dataset_add_vars(1, pZ, pdinfo)) {
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<n; t++)
@@ -391,7 +391,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    } /* ! aux.errcode */
 	    clear_model(&aux, NULL, NULL, pdinfo);
 	    /* shrink for uhat */
-	    _shrink_Z(1, pZ, pdinfo);
+	    dataset_drop_vars(1, pZ, pdinfo);
 	    pdinfo->extra = 0;
 	}
     }
@@ -418,7 +418,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
 	/* trash any extra variables generated (squares, logs) */
 	if (pdinfo->v > orig_nvar)
-	    _shrink_Z(pdinfo->v - orig_nvar, pZ, pdinfo);
+	    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
     }
 
     /* put back into pdinfo what was there on input */
@@ -573,7 +573,7 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	newlist[0] = pmod->list[0] + pdinfo->pd;
 	for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
 
-	if (_grow_Z(1, pZ, pdinfo)) {
+	if (dataset_add_vars(1, pZ, pdinfo)) {
 	    k = 0;
 	    err = E_ALLOC;
 	}
@@ -638,7 +638,7 @@ int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     free(newlist);
-    _shrink_Z(k, pZ, pdinfo); 
+    dataset_drop_vars(k, pZ, pdinfo); 
     clear_model(&aux, NULL, NULL, pdinfo); 
     exchange_smpl(pmod, pdinfo);
 
@@ -691,7 +691,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	   and interaction terms. */
 	if (pmod->ifc == 0) newvars += 1;
 
-	if (_grow_Z(newvars, pZ, pdinfo)) {
+	if (dataset_add_vars(newvars, pZ, pdinfo)) {
 	    newvars = 0;
 	    err = E_ALLOC;
 	} else {
@@ -754,7 +754,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     }
 
     /* clean up extra variables */
-    _shrink_Z(newvars, pZ, pdinfo);
+    dataset_drop_vars(newvars, pZ, pdinfo);
     free(chowlist);
 
     exchange_smpl(pmod, pdinfo);    

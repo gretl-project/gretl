@@ -244,7 +244,7 @@ void clear_data (int full)
     }
     restore_sample(NULL, 0, NULL);
     if (Z != NULL) free_Z(Z, datainfo); 
-    clear_datainfo(datainfo, 0);
+    clear_datainfo(datainfo, CLEAR_FULL);
     Z = NULL;
     fullZ = NULL;
     clear_clist(mdata->listbox);

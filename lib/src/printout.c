@@ -1343,7 +1343,9 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 
 /* ........................................................... */
 
-#undef PRN_DEBUG
+/* #define PRN_DEBUG */
+
+#define SMAX 6  /* stipulated max. signif. digits */
 
 static int get_signif (double *x, int n)
      /* return either (a) the number of significant digits in
@@ -1352,13 +1354,14 @@ static int get_signif (double *x, int n)
 {
     static char numstr[48];
     int i, j, s, smax = 0;
-    int globalsmax = 6; /* stipulated max. signif. digits */
     int lead, leadmax = 0, leadmin = 99;
     double xx;
+    int allfrac = 1;
 
     for (i=0; i<n; i++) {
 	if (na(x[i])) continue;
 	xx = fabs(x[i]);
+	if (xx >= 1.0) allfrac = 0;
 	sprintf(numstr, "%.12f", xx);
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: numstr = '%s'\n", numstr);
@@ -1381,15 +1384,23 @@ static int get_signif (double *x, int n)
 	if (lead > leadmax) leadmax = lead;
 	if (lead < leadmin) leadmin = lead;
     }
-    if (smax > globalsmax) smax = globalsmax;
-    if ((leadmin < leadmax) && (leadmax < smax)) 
-	smax = -1 * (smax - leadmax); /* # of decimal places */
-    else if (leadmax == smax)
-	smax = 0;
-    else if (leadmax == 0)
-	smax = -1 * (smax - 1);
+    if (smax > SMAX) smax = SMAX;
+    if ((leadmin < leadmax) && (leadmax < smax)) {
 #ifdef PRN_DEBUG
-	fprintf(stderr, "get_signif: returning smax = %d\n", smax);
+	fprintf(stderr, "get_signif: setting smax = -(%d - %d)\n", 
+		smax, leadmax);
+#endif	
+	smax = -1 * (smax - leadmax); /* # of decimal places */
+    } else if (leadmax == smax) {
+	smax = 0;
+    } else if (leadmax == 0 && !allfrac) {
+#ifdef PRN_DEBUG
+	fprintf(stderr, "get_signif: setting smax = -(%d - 1)\n", smax);
+#endif
+	smax = -1 * (smax - 1);
+    } 
+#ifdef PRN_DEBUG
+    fprintf(stderr, "get_signif: returning smax = %d\n", smax);
 #endif
     return smax;
 }
@@ -1431,13 +1442,13 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 #endif
 	    sprintf(numstr, "%.*G", signif, x);
 	} else if (z >= .10) {
-	    /* was if (!get_leading_zeros(x)) */
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%df\n", l, signif, signif-l);
 #endif
 	    sprintf(numstr, "%.*f", signif - l, x);
 	} else {
+	    if (signif > 4) signif = 4;
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
 		    "printing with %%.%dG\n", l, signif, signif);

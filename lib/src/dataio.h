@@ -40,6 +40,11 @@ typedef enum {
     GRETL_UNRECOGNIZED    /* none of the above */
 } gretl_filetypes;
 
+typedef enum {
+    CLEAR_FULL,
+    CLEAR_SUBSAMPLE
+} clear_codes;
+
 #define free_datainfo(p) clear_datainfo(p, 0); free(p);
 
 /* functions follow */

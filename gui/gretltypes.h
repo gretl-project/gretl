@@ -53,7 +53,7 @@ enum extra_cmds {
     VIEW_SCRIPT,
     SCRIPT_OUT,
     CONSOLE,
-    EDIT_BUFFER,
+    EDIT_HEADER,
     EDIT_SCRIPT,
     EDIT_NOTES,
     CLI_HELP,

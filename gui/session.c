@@ -20,6 +20,8 @@
 /* session.c for gretl */
 
 #include "gretl.h"
+#include <sys/stat.h>
+#include <unistd.h>
 
 #ifndef G_OS_WIN32
 # include <gtkextra/gtkextra.h>
@@ -164,26 +166,10 @@ char *space_to_score (char *str)
 
 /* .................................................................. */
 
-extern GtkItemFactoryEntry edit_items[]; /* gui_utils.c */
-
 static void edit_session_notes (void)
 {
-    FILE *fp;
-    char notesfile[MAXLEN], savedir[MAXLEN];
-
-    get_default_dir(savedir);
-
-    if (session_file_open && scriptfile[0]) 
-	switch_ext(notesfile, scriptfile, "Notes");
-    else 
-	sprintf(notesfile, "%ssession.Notes", savedir);
-
-    fp = fopen(notesfile, "a");
-    if (fp != NULL) {
-	fclose(fp);
-	view_file(notesfile, 1, 0, 78, 370, EDIT_NOTES, edit_items);
-    } else 
-	errbox("Couldn't open session notes");
+    edit_buffer(&session.notes, 80, 400, "gretl: session notes",
+		EDIT_NOTES);
 }
 
 /* ........................................................... */
@@ -294,6 +280,7 @@ void session_init (void)
 {
     session.models = NULL;
     session.graphs = NULL;
+    session.notes = NULL;
     session.nmodels = 0;
     session.ngraphs = 0;
     session.name[0] = '\0';
@@ -349,6 +336,29 @@ void do_open_session (GtkWidget *w, gpointer data)
 
     endbit(session.name, scriptfile, 0);
 
+    /* pick up session notes, if any */
+    if (1) {
+	char notesfile[MAXLEN];
+	struct stat buf;
+
+	switch_ext(notesfile, scriptfile, "Notes");
+	if (stat(notesfile, &buf) == 0 && (fp = fopen(notesfile, "r"))) { 
+	    char notesline[MAXLEN];
+
+	    /* read into buffer */
+	    session.notes = mymalloc(buf.st_size + 1);
+	    if (session.notes == NULL) {
+		fclose(fp);
+		return;
+	    }
+	    session.notes[0] = '\0';
+	    while (fgets(notesline, MAXLEN-1, fp)) {
+		strcat(session.notes, notesline);
+	    } 
+	    fclose(fp);
+	}
+    }
+
     /* trash the practice files window that launched the query? */
     if (fwin) gtk_widget_destroy(fwin->w);    
 
@@ -396,14 +406,18 @@ void free_session (void)
 	for (i=0; i<session.nmodels; i++) 
 	    free_model(session.models[i]);
 	free(session.models);
+	session.models = NULL;
     }
     if (session.graphs) {
 	free(session.graphs);
+	session.graphs = NULL;
+    }
+    if (session.notes) {
+	free(session.notes);
+	session.notes = NULL;
     }
     session.nmodels = 0;
-    session.models = NULL;
     session.ngraphs = 0;
-    session.graphs = NULL;
     session.name[0] = '\0';
 }
 

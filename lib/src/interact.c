@@ -501,13 +501,15 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    return;
 	}
 
-	if (command->ci != PRINT && command->ci != STORE
-	    && !pdinfo->vector[command->list[j]]) {
-	    command->errcode = 1;
-	    sprintf(gretl_errmsg, 
-		    "variable %s is a scalar", field);
-	    free(remainder);
-	    return;
+	/* check command->list for scalars */
+	if (!ar && command->ci != PRINT && command->ci != STORE) {
+	    if (!pdinfo->vector[command->list[j]]) {
+		command->errcode = 1;
+		sprintf(gretl_errmsg, 
+			"variable %s is a scalar", field);
+		free(remainder);
+		return;
+	    }
 	}
 
 	n += strlen(field) + 1;
@@ -636,7 +638,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) essstr[0]) && 
 	(i = varindex(pdinfo, essstr)) < pdinfo->v) 
-	    ess = (*pZ)[i][pdinfo->t1];
+	    ess = get_xvalue(i, *pZ, pdinfo);
     else if (isdigit(essstr[0])) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
@@ -645,7 +647,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) Tstr[0]) &&
 	(i = varindex(pdinfo, Tstr)) < pdinfo->v) 
-	    T = (int) (*pZ)[i][pdinfo->t1];
+	    T = (int) get_xvalue(i, *pZ, pdinfo);
     else if (isdigit(Tstr[0])) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
@@ -654,7 +656,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) kstr[0]) &&
 	(i = varindex(pdinfo, kstr)) < pdinfo->v) 
-	    k = (int) (*pZ)[i][pdinfo->t1];
+	    k = (int) get_xvalue(i, *pZ, pdinfo);
     else if (isdigit(kstr[0])) k = atoi(kstr);
     else return 1;
     if (k < 0) {
@@ -696,7 +698,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     varname[8] = 0;
     vi = varindex(pdinfo, varname);
 
-    if (vi >= pdinfo->v && _grow_Z(1, pZ, pdinfo)) return -1 * E_ALLOC;
+    if (vi >= pdinfo->v && dataset_add_vars(1, pZ, pdinfo)) return -1 * E_ALLOC;
 
     strcpy(pdinfo->varname[vi], varname);
     strcpy(pdinfo->label[vi], "predicted values");
@@ -720,7 +722,7 @@ int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 
     /* is the new variable an addition to data set? */
     if (v >= pdinfo->v) {
-	if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 	strcpy(pdinfo->varname[v], genr->varname);
     } else 
 	if (!pdinfo->vector[v]) old_scalar = 1;

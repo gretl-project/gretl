@@ -22,9 +22,6 @@
 #ifndef GRETL_INTERNAL_H
 #define GRETL_INTERNAL_H
 
-#define _grow_Z(n, p1, p2) dataset_add_vars((n), p1, p2)
-#define _shrink_Z(n, p1, p2) dataset_drop_vars((n), p1, p2)
-
 int _laggenr (const int iv, const int lag, const int opt, double ***pZ, 
 	      DATAINFO *pdinfo);
 

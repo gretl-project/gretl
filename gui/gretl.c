@@ -762,7 +762,7 @@ int main (int argc, char *argv[])
     if (command.param != NULL) free(command.param);
     if (data_status) free_datainfo(datainfo);
     if (fullinfo) {
-	clear_datainfo(fullinfo, 1);
+	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
 	free(fullinfo);
     }
 

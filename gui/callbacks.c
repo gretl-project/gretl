@@ -194,7 +194,8 @@ void edit_header (gpointer data, guint unused, GtkWidget *widget)
     if (data_status & BOOK_DATA)
 	errbox("You don't have permission to do this");
     else 
-	edit_buffer(&datainfo->descrip, 80, 400, "gretl: edit data info");
+	edit_buffer(&datainfo->descrip, 80, 400, "gretl: edit data info",
+		    EDIT_HEADER);
 }
 
 /* ........................................................... */

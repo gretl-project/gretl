@@ -1093,7 +1093,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 /*      printf("newlist:\n"); */
 /*      printlist(newlist);  */
     /* newlist[0] holds the number of new vars to create */
-    if (_grow_Z(newlist[0], pZ, pdinfo)) {
+    if (dataset_add_vars(newlist[0], pZ, pdinfo)) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
@@ -1115,7 +1115,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 	if (tsls.errcode) {
 	    free(list1); free(list2);
 	    free(s1list); free(s2list);
-	    _shrink_Z(newlist[0], pZ, pdinfo);
+	    dataset_drop_vars(newlist[0], pZ, pdinfo);
 	    free(newlist);
 	    return tsls;
 	}
@@ -1140,7 +1140,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     if (tsls.errcode) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
-	_shrink_Z(newlist[0], pZ, pdinfo);
+	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
 	return tsls;
     }
@@ -1151,7 +1151,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     if (yhat == NULL) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
-	_shrink_Z(newlist[0], pZ, pdinfo);
+	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
 	tsls.errcode = E_ALLOC;
 	return tsls;
@@ -1177,7 +1177,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	clear_model(&tsls, NULL, NULL, pdinfo);
-	_shrink_Z(newlist[0], pZ, pdinfo);
+	dataset_drop_vars(newlist[0], pZ, pdinfo);
 	free(newlist);
 	free(yhat);
 	tsls.errcode = E_ALLOC;
@@ -1210,7 +1210,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     free(list1); free(list2);
     free(s1list); free(s2list);
     free(yhat); 
-    _shrink_Z(newlist[0], pZ, pdinfo);
+    dataset_drop_vars(newlist[0], pZ, pdinfo);
     free(newlist);
     return tsls;
 }
@@ -1229,7 +1229,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
     _init_model(&aux, pdinfo);
 
-    if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     /* add uhat1 to data set temporarily */
     for (t=pmod->t1; t<=pmod->t2; t++)
@@ -1271,7 +1271,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	    (*pZ)[v][t] = aux.yhat[t]; 
 	shrink = pdinfo->v - v - 1;
     }
-    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
     clear_model(&aux, NULL, NULL, pdinfo);
     free(tmplist);
@@ -1353,7 +1353,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
-    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
     free(hsklist);
     free(uhat1);
     return hsk;
@@ -1506,7 +1506,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     ncoeff = pmod->list[0] - 1;
 
     /* make space in data set */
-    if (_grow_Z(1, pZ, pdinfo)) err = E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) err = E_ALLOC;
 
     if (!err) {
 	/* get residuals, square and add to data set */
@@ -1581,7 +1581,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     clear_model(&white, NULL, NULL, pdinfo);
     shrink = pdinfo->v - v;
-    if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
+    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
 
     free(tmplist);
     free(list);
@@ -1654,7 +1654,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     }
 
     /* make room for the uhat terms and transformed data */
-    if (_grow_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
+    if (dataset_add_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
 	free(reglist);
 	ar.errcode = E_ALLOC;
 	return ar;
@@ -1777,8 +1777,8 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
     _print_ar(&ar, prn);
 
-    /*  _shrink_Z(rholist[0] + reglist[0], pZ, pdinfo); */
-    _shrink_Z(arlist[0] + 1 + reglist[0], pZ, pdinfo);
+    /*  dataset_drop_vars(rholist[0] + reglist[0], pZ, pdinfo); */
+    dataset_drop_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo);
     free(reglist);
     free(reglist2);
     free(rholist);
@@ -2041,7 +2041,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	/* allocate workspace */
-	if (_grow_Z(order + 1, pZ, pdinfo) || 
+	if (dataset_add_vars(order + 1, pZ, pdinfo) || 
 	    (arlist = malloc((order + 3) * sizeof *arlist)) == NULL) {
 	    err = archmod.errcode = E_ALLOC;
 	}
@@ -2137,7 +2137,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
-    _shrink_Z(order + 1, pZ, pdinfo); 
+    dataset_drop_vars(order + 1, pZ, pdinfo); 
     return archmod;
 }
 

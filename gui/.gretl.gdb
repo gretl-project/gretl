@@ -1,2 +1,2 @@
-set args -r hospitals.inp
+set args  
 run
