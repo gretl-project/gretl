@@ -258,16 +258,16 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
-int named_graph_aleady_present (const char *grname)
+static int look_up_graph_by_name (const char *grname)
 {
     int i;
 
     for (i=0; i<session.ngraphs; i++) {
 	if (strcmp(grname, (session.graphs[i])->name) == 0) {
-	    return 1;
+	    return i;
 	}
     }
-    return 0;
+    return -1;
 }
 
 /* .................................................................. */
@@ -275,36 +275,45 @@ int named_graph_aleady_present (const char *grname)
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code)
 {
-    int i = session.ngraphs;
+    int replace = 0;
+    int i = look_up_graph_by_name(grname);
 
-    if (session.ngraphs) {
-	session.graphs = myrealloc(session.graphs, 
-				   (i + 1) * sizeof *session.graphs);
+    if (i >= 0) {
+	replace = 1;
+	strcpy((session.graphs[i])->fname, fname);	
+	(session.graphs[i])->ID = plot_count++;
     } else {
-	session.graphs = mymalloc(sizeof *session.graphs);
+	i = session.ngraphs;
+
+	if (session.ngraphs) {
+	    session.graphs = myrealloc(session.graphs, 
+				       (i + 1) * sizeof *session.graphs);
+	} else {
+	    session.graphs = mymalloc(sizeof *session.graphs);
+	}
+
+	if (session.graphs == NULL) return ADD_GRAPH_FAIL;
+
+	session.graphs[i] = mymalloc(sizeof **session.graphs);
+	if (session.graphs[i] == NULL) return ADD_GRAPH_FAIL;
+
+	(session.graphs[i])->sort = code;
+
+	strcpy((session.graphs[i])->fname, fname);
+	strcpy((session.graphs[i])->name, grname);
+	(session.graphs[i])->ID = plot_count++;
+	session.ngraphs += 1;
     }
-
-    if (session.graphs == NULL) return E_ALLOC;
-
-    session.graphs[i] = mymalloc(sizeof **session.graphs);
-    if (session.graphs[i] == NULL) return E_ALLOC;
-
-    (session.graphs[i])->sort = code;
-
-    strcpy((session.graphs[i])->fname, fname);
-    strcpy((session.graphs[i])->name, grname);
-    (session.graphs[i])->ID = plot_count++;
-    session.ngraphs += 1;
     
     session_changed(1);
 
-    if (icon_list != NULL) {
+    if (icon_list != NULL && !replace) {
 	session_add_icon(session.graphs[i], 
 			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
 			 ICON_ADD_SINGLE);
     }
 
-    return 0;
+    return (replace)? ADD_GRAPH_REPLACE : ADD_GRAPH_OK;
 }
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
@@ -360,7 +369,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
     err = real_add_graph_to_session(pltname, grname, code);
 
-    if (!err) {
+    if (err != ADD_GRAPH_FAIL) {
 	infobox(_("Graph saved"));
     }
 }

@@ -184,6 +184,8 @@ int copyfile (const char *src, const char *dest)
     FILE *srcfd, *destfd;
     char buf[8192];
     size_t n;
+
+    if (!strcmp(src, dest)) return 1;
    
     if ((srcfd = fopen(src, "rb")) == NULL) {
 	sprintf(errtext, _("Couldn't open %s"), src);
@@ -199,8 +201,10 @@ int copyfile (const char *src, const char *dest)
     while ((n = fread(buf, 1, sizeof buf, srcfd)) > 0) {
 	fwrite(buf, 1, n, destfd);
     }
+
     fclose(srcfd);
     fclose(destfd);
+
     return 0;
 }
 

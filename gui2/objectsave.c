@@ -116,9 +116,13 @@ static void get_word_and_command (const char *s, char *word,
 	s++; len++;
     }
 
+#if 0
+    fprintf(stderr, "s='%s', len=%d\n", s, len);
+#endif
+
     /* is an object command embedded? */
     d = dotpos(p);
-    if (d < strlen(p)) {
+    if (d < s - p) {
 	strncat(cmd, p + d + 1, len - d - 1);
 	len -= (len - d);
     }
@@ -142,8 +146,11 @@ static int parse_object_request (const char *line,
     char sort = 0;
     int action;
 
-    /* get object name (if any) and dot element */
+    /* get object name (if any) and dot param */
     get_word_and_command(line, word, param);
+
+    /* if no dot param, nothing doing */
+    if (*param == 0) return OBJ_NONE;
 
     /* see if the object name actually belongs to an object */
     *pptr = get_session_object_by_name(word, &sort);
@@ -200,12 +207,6 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 
     if (*cmd->savename == 0) return 0;
 
-    if (named_graph_aleady_present(cmd->savename)) {
-	pprintf(prn, _("%s: there's already a graph of this name\n"), 
-		cmd->savename);	
-	return 1;
-    }
-
     get_default_dir(savedir);
 
     tmp = g_strdup(cmd->savename);
@@ -216,10 +217,18 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
     if (code == GRETL_GNUPLOT_GRAPH) {
 	err = copyfile(fname, plotfile);
 	if (!err) {
-	    err = real_add_graph_to_session(plotfile, cmd->savename, code);
-	    if (!err) {
+	    int ret;
+
+	    ret = real_add_graph_to_session(plotfile, cmd->savename, code);
+	    if (ret == ADD_GRAPH_FAIL) {
+		err = 1;
+	    } else {
 		remove(fname);
-		pprintf(prn, _("%s saved\n"), cmd->savename);
+		if (ret == ADD_GRAPH_REPLACE) {
+		    pprintf(prn, _("%s replaced\n"), cmd->savename);
+		} else {
+		    pprintf(prn, _("%s saved\n"), cmd->savename);
+		}
 	    }
 	}
     }
@@ -260,6 +269,7 @@ int saved_object_action (const char *line,
     } 
 
     else if (action == OBJ_GRAPH_FREE) {
+	/* FIXME */
 	fprintf(stderr, "Got request to delete graph\n");
     }
 

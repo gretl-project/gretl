@@ -33,9 +33,13 @@ enum {
     SAVE_RENAME
 };
 
-void session_menu_state (gboolean s);
+enum {
+    ADD_GRAPH_OK,
+    ADD_GRAPH_REPLACE,
+    ADD_GRAPH_FAIL
+};
 
-int named_graph_aleady_present (const char *grname);
+void session_menu_state (gboolean s);
 
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code);

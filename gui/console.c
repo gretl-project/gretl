@@ -164,9 +164,9 @@ static void console_exec (void)
 
     strncpy(execline, c_line, MAXLEN - 1);
     g_free(c_line);
+    push_history_line(execline);
     gui_exec_line(execline, NULL, &loopstack, &looprun, 
 		  prn, CONSOLE_EXEC, NULL);
-    push_history_line(execline);
 
     /* put results into console window */
     gtk_text_freeze(GTK_TEXT(console_view));
