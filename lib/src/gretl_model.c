@@ -20,7 +20,7 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 
-/* .......................................................... */
+#undef MODEL_DEBUG
 
 struct _model_data_item {
     char *key;
@@ -54,6 +54,22 @@ static model_data_item *create_data_item (const char *key, void *ptr, size_t siz
     return item;
 }
 
+/**
+ * gretl_model_set_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string for data, used in retrieval.
+ * @ptr: data-pointer to be attached to model.
+ * @size: size of data in bytes.
+ *
+ * Attaches data to a model: the data can be retrieved later using
+ * gretl_model_get_data().  Note that the data are not "physically"
+ * copied to the model; simply, the pointer is recorded.  The 
+ * size is needed in case the model is copied.  The data pointer
+ * will be freed when the model is cleared, with #clear_model().
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
 {
     model_data_item **items;
@@ -73,6 +89,18 @@ int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size)
 
     return 0;
 }
+
+/**
+ * gretl_model_set_int:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @val: integer value to set.
+ *
+ * Records an integer value on a model: the value can be retrieved 
+ * later using #gretl_model_get_int().  
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
 
 int gretl_model_set_int (MODEL *pmod, const char *key, int val)
 {
@@ -97,6 +125,18 @@ int gretl_model_set_int (MODEL *pmod, const char *key, int val)
     return err;
 }
 
+/**
+ * gretl_model_set_double:
+ * @pmod: pointer to #MODEL.
+ * @key: key string, used in retrieval.
+ * @val: double-precision value to set.
+ *
+ * Records a floating-point value on a model: the value can be 
+ * retrieved later using #gretl_model_get_double().  
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
+
 int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 {
     double *valp;
@@ -120,6 +160,14 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
     return err;
 }
 
+/**
+ * gretl_model_get_data:
+ * @pmod: pointer to #MODEL.
+ * @key: key string.
+ *
+ * Returns: the data pointer identified by @key, or %NULL on failure.
+ */
+
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
 {
     int i;
@@ -132,6 +180,14 @@ void *gretl_model_get_data (const MODEL *pmod, const char *key)
 
     return NULL;
 }
+
+/**
+ * gretl_model_get_int:
+ * @pmod: pointer to #MODEL.
+ * @key: key string.
+ *
+ * Returns: the integer value identified by @key, or 0 on failure.
+ */
 
 int gretl_model_get_int (const MODEL *pmod, const char *key)
 {
@@ -147,6 +203,15 @@ int gretl_model_get_int (const MODEL *pmod, const char *key)
 
     return 0;
 }
+
+/**
+ * gretl_model_get_double:
+ * @pmod: pointer to #MODEL.
+ * @key: key string.
+ *
+ * Returns: the double-precision value identified by @key, or 
+ * #NADBL on failure.
+ */
 
 double gretl_model_get_double (const MODEL *pmod, const char *key)
 {
@@ -223,6 +288,16 @@ static void gretl_model_init_pointers (MODEL *pmod)
     pmod->data_items = NULL;
 }
 
+/**
+ * gretl_model_init:
+ * @pmod: pointer to #MODEL.
+ * @pdinfo: pointer to dataset information (or %NULL).
+ *
+ * Initializes a gretl #MODEL, including setting its pointer members
+ * to %NULL.  If @pdinfo is not %NULL, sets the start and end of the
+ * model's sample to the current dataset values.
+ */
+
 void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
 {
     int i;
@@ -255,9 +330,10 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
 
 /**
  * gretl_model_new:
- * @pdinfo: pointer to data information struct.
+ * @pdinfo: pointer to data information struct (or %NULL).
  * 
- * Allocates memory for a gretl MODEL struct and initializes the struct.
+ * Allocates memory for a gretl MODEL struct and initializes the struct,
+ * using #gretl_model_init().
  *
  * Returns: pointer to #MODEL (or NULL if allocation fails).
  */
@@ -270,7 +346,14 @@ MODEL *gretl_model_new (const DATAINFO *pdinfo)
     return pmod;
 }
 
-/* ........................................................... */
+/**
+ * exchange_smpl:
+ * @pmod: pointer to #MODEL.
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Swaps the starting and ending values for the data sample
+ * between @pmod and @pdinfo.
+ */
 
 void exchange_smpl (MODEL *pmod, DATAINFO *pdinfo)
 {
@@ -294,7 +377,7 @@ static void clear_ar_info (MODEL *pmod)
     pmod->arinfo = NULL;
 }
 
-#if 0
+#ifdef MODEL_DEBUG
 
 static void 
 debug_print_model_info (const MODEL *pmod, const char *msg)
@@ -323,14 +406,22 @@ debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->tests, (void *) pmod->data);
 }
 
-#endif
+#endif /* MODEL_DEBUG */
 
-/* .......................................................... */
+/**
+ * clear_model:
+ * @pmod: pointer to #MODEL.
+ * @pdinfo: pointer to dataset information (or %NULL).
+ *
+ * Clears a gretl #MODEL, freeing all allocated storage and setting
+ * pointer members to %NULL.  Also frees any data pointers attached
+ * via #gretl_model_set_data().
+ */
 
 void clear_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
     if (pmod != NULL) {
-#if 0
+#ifdef MODEL_DEBUG
 	debug_print_model_info(pmod, "Doing clear_model");
 #endif
 	if (pmod->list) free(pmod->list);
@@ -528,7 +619,17 @@ static int copy_model_data_items (MODEL *targ, const MODEL *src)
     return err;
 }
 
-/* ........................................................... */
+/**
+ * copy_model:
+ * @targ: pointer to #MODEL to copy to.
+ * @src: pointer to #MODEL to copy from.
+ * @pdinfo: pointer to dataset information.
+ *
+ * Does a deep copy of @src to @targ.  That is, @targ ends up with
+ * its own allocated copies of all the pointer members of @src.
+ *
+ * Returns: 0 on success, 1 on failure.
+ */
 
 int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 {
@@ -592,7 +693,15 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * swap_models:
+ * @targ: pointer to pointer to #MODEL.
+ * @src: pointer to pointer to #MODEL.
+ *
+ * Swaps the model pointers.
+ *
+ * Returns: 0 on success.
+ */
 
 int swap_models (MODEL **targ, MODEL **src)
 {
@@ -603,7 +712,16 @@ int swap_models (MODEL **targ, MODEL **src)
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * command_ok_for_model:
+ * @test_ci:  index of command to be tested.
+ * @model_ci: command index of a gretl #MODEL (for example,
+ * OLS, HCCM or CORC).
+ *
+ * Returns: 1 if the model-related command in question is
+ * meaningful and acceptable in the context of the specific
+ * sort of model indentified by @model_ci, otherwise 0.
+ */
 
 int command_ok_for_model (int test_ci, int model_ci)
 {
@@ -656,6 +774,14 @@ int command_ok_for_model (int test_ci, int model_ci)
 
     return ok;
 }
+
+/**
+ * model_ci_from_modelspec:
+ * @spec: pointer to model specification.
+ *
+ * Returns: the command index (e.g. OLS, CORC) associated
+ * with the model specification.
+ */
 
 int model_ci_from_modelspec (MODELSPEC *spec)
 {

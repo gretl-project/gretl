@@ -55,7 +55,10 @@
       <xsl:text>#&#10;</xsl:text>
       <xsl:value-of select="@name"/>
       <xsl:text>&#10;@</xsl:text>
-      <xsl:value-of select="@section"/>      
+      <xsl:value-of select="@section"/>
+      <xsl:if test="not(usage)">
+        <xsl:call-template name="nl"/>
+      </xsl:if>
     </xsl:otherwise>
   </xsl:choose>
   <xsl:apply-templates/>

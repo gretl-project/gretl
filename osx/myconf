@@ -1,0 +1,7 @@
+export CFLAGS="-O2 -I/sw/include -DOSX_PKG"
+export LDFLAGS=-L/sw/lib
+export CPPFLAGS=$CFLAGS
+export PKG_CONFIG_PATH="/sw/lib/pkgconfig"
+
+./configure --prefix=/Users/allin/dist/Gretl_Folder
+
