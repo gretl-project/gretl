@@ -2239,6 +2239,8 @@ void do_model (GtkWidget *widget, gpointer p)
     GRETL_VAR *var = NULL;
     selector *sr = (selector *) p;  
 
+    if (selector_error(sr)) return;
+
     action = selector_code(sr);
     strcpy(estimator, gretl_command_word(action));
 

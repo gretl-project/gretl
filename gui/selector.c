@@ -1617,3 +1617,8 @@ unsigned long selector_get_opts (const selector *sr)
 {
     return sr->opts;
 }
+
+int selector_error (const selector *sr)
+{
+    return sr->error;
+}

@@ -62,4 +62,6 @@ gpointer selector_get_data (const selector *sr);
 
 unsigned long selector_get_opts (const selector *sr);
 
+int selector_error (const selector *sr);
+
 #endif /* SELECTOR_H */
