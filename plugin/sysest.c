@@ -22,6 +22,8 @@
 #include "gretl_matrix_private.h"
 #include "system.h"
 
+#undef SDEBUG
+
 /* fiml.c */
 extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 
 			gretl_matrix *sigma, DATAINFO *pdinfo, 
@@ -314,65 +316,133 @@ print_fiml_overidentification_test (const gretl_equation_system *sys,
     }
 }
 
-#if 0
 static int three_stage_overid_test (gretl_equation_system *sys, 
 				    const gretl_matrix *sigma,
+				    const double **Z,
 				    int t1)
 {
     const int *exlist = system_get_instr_vars(sys);
+    const int *list;
     int nx = exlist[0];
     int m = system_n_equations(sys);
-    gretl_matrix *W = NULL;
+    int T = system_n_obs(sys);
+    int df = nx * m;
+
+    const MODEL *pmod;
+    const double *e, *Wi, *Wj;
+
     gretl_matrix *WTW = NULL;
     gretl_matrix *eW = NULL;
-    double X2;
-    int i, j, t;
+    gretl_matrix *tmp = NULL;
 
-    W = gretl_matrix_alloc(T, nx);
-    if (W == NULL) return 1;
+    double x, X2;
+    int i, j, t;
+    int err = 0;
+
+    for (i=0; i<m; i++) {
+	list = system_get_list(sys, i);
+	df -= list[0] - 1;
+    }
+
+    if (df <= 0) return 1;
 
     WTW = gretl_matrix_alloc(nx, nx);
-    if (WTW == NULL) {
-	gretl_matrix_free(W);
-	return 1;
-    }
-
     eW = gretl_matrix_alloc(m, nx);
-    if (eW == NULL) {
-	gretl_matrix_free(W);
-	gretl_matrix_free(WTW);
-	return 1;
+    tmp = gretl_matrix_alloc(m, nx);
+
+    if (WTW == NULL || eW == NULL || tmp == NULL) {
+	err = E_ALLOC;
+	goto bailout;
     }
 
-    /* set up matrix of instruments */
+    /* construct W-transpose W */
     for (i=0; i<nx; i++) {
-	for (t=0; t<T; t++) {
-	    gretl_matrix_set(W, t, i, Z[exlist[i+1]][t + t1]);
+	Wi = Z[exlist[i+1]] + t1;
+	for (j=i; j<nx; j++) {
+	    Wj = Z[exlist[j+1]] + t1;
+	    x = 0.0;
+	    for (t=0; t<T; t++) {
+		x += Wi[t] * Wj[t];
+	    }
+	    gretl_matrix_set(WTW, i, j, x);
+	    if (i != j) {
+		gretl_matrix_set(WTW, j, i, x);
+	    }
 	}
     }
 
-    gretl_matrix_multiply_mod(W, GRETL_MOD_TRANSPOSE,
-			      W, GRETL_MOD_NONE,
-			      WTW);
+#if SDEBUG
+    gretl_matrix_print(WTW, "WTW", NULL);
+#endif
 
     err = gretl_invert_symmetric_matrix(WTW);
+    if (err) goto bailout;
 
-    X2 = 0;
+#if SDEBUG
+    gretl_matrix_print(WTW, "WTW-inv", NULL);
+#endif
+
+    /* set up vectors of 3SLS residuals times W */
     for (i=0; i<m; i++) {
-	/* form nx-vector eW, per equation */
-	
-	for (j=0; j<m; j++) {
-	    X2 += XX;
+	pmod = system_get_model(sys, i);
+	e = pmod->uhat + t1;
+	for (j=0; j<nx; j++) {
+	    Wj = Z[exlist[j+1]] + t1;
+	    x = 0.0;
+	    for (t=0; t<T; t++) {
+		x += e[t] * Wj[t];
+	    }
+	    gretl_matrix_set(eW, i, j, x);
 	}
     }
 
-    gretl_matrix_free(W);
+#if SDEBUG
+    gretl_matrix_print(eW, "eW", NULL);
+#endif
+
+    /* multiply these vectors into (WTW)^{-1} */
+    for (i=0; i<m; i++) {
+	for (j=0; j<nx; j++) {
+	    x = 0.0;
+	    for (t=0; t<nx; t++) {
+		x += gretl_matrix_get(eW, i, t) * 
+		    gretl_matrix_get(WTW, t, j);
+	    }
+	    gretl_matrix_set(tmp, i, j, x);
+	}
+    }   
+
+#if SDEBUG
+    gretl_matrix_print(tmp, "tmp", NULL);
+#endif
+
+    /* cumulate the Chi-square value */
+    X2 = 0.0;
+    for (i=0; i<m; i++) {
+	for (j=0; j<m; j++) {
+	    x = 0.0;
+	    for (t=0; t<nx; t++) {
+		x += gretl_matrix_get(tmp, i, t) * 
+		    gretl_matrix_get(eW, j, t); /* transposed */
+	    }
+	    X2 += gretl_matrix_get(sigma, i, j) * x;
+	}
+    }
+
+    /* check this, and if it's OK, add to the printout in the right
+       place 
+    */
+    fprintf(stderr, "Hansen-Sargan: Chi-square(%d) = %g (p-value %g)\n", 
+	    df, X2, chisq(X2, df));
+
+ bailout:
+
     gretl_matrix_free(WTW);
     gretl_matrix_free(eW);
+    gretl_matrix_free(tmp);
 
-    return 0;
+    return err;
 }
-#endif
 
 static int basic_system_allocate (int systype, int m, int T, int mk,
 				  MODEL ***models,
@@ -654,6 +724,12 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     */
     calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
 			       y, m, mk);
+
+    if (systype == THREESLS) {
+	system_attach_models(sys, models);
+	three_stage_overid_test(sys, sigma, (const double **) *pZ, t1);
+	system_unattach_models(sys);
+    }
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
 

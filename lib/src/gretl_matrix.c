@@ -947,6 +947,29 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
     return m;
 }
 
+static int 
+matrix_multiply_self_transpose (const gretl_matrix *a,
+				gretl_matrix *c)
+{
+    register int i, j, k;
+    int nc = a->cols;
+    int nr = a->rows;
+    double targ;
+
+    for (i=0; i<nc; i++) {
+	for (j=i; j<nc; j++) {
+	    targ = 0.0;
+	    for (k=0; k<nr; k++) {
+		targ += a->val[mdxtr(a,i,k)] * a->val[mdx(a,k,j)];
+	    }
+	    c->val[mdx(c,i,j)] = targ;
+	    c->val[mdx(c,j,i)] = targ;
+	}
+    } 
+
+    return GRETL_MATRIX_OK;
+}
+
 /**
  * gretl_matrix_multiply_mod:
  * @a: left-hand matrix.
@@ -981,6 +1004,10 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	fprintf(stderr, "a = %p, b = %p, c = %p\n", 
 		(void *) a, (void *) b, (void *) c);
 	return GRETL_MATRIX_ERR;
+    }
+
+    if (a == b && atr && !btr) {
+	return matrix_multiply_self_transpose(a, c);
     }
 
     lrows = (atr)? a->cols : a->rows;
@@ -1037,16 +1064,22 @@ double gretl_matrix_dot_product (const gretl_matrix *a, int aflag,
 {
     gretl_matrix *c;
     double ret = NADBL;
+    int my_err;
 
     c = gretl_matrix_alloc(1, 1);
     if (c == NULL) {
-	*err = GRETL_MATRIX_ERR;
+	if (err != NULL) {
+	    *err = GRETL_MATRIX_ERR;
+	}
 	return ret;
     }
 
-    *err = gretl_matrix_multiply_mod(a, aflag, b, bflag, c);
-    if (*err == GRETL_MATRIX_OK) {
+    my_err = gretl_matrix_multiply_mod(a, aflag, b, bflag, c);
+
+    if (my_err == GRETL_MATRIX_OK) {
 	ret = c->val[0];
+    } else if (err != NULL) {
+	*err = my_err;
     }
 	
     gretl_matrix_free(c);
