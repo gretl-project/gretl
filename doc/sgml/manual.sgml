@@ -57,21 +57,17 @@
 
     <para>
       <application>gretl</application> is an econometrics package,
-      built around a shared library which may be accessed using a
-      command-line client program
-      (<application>gretlcli</application>) or a graphical user
-      interface (<application>gretl</application>). If you don't know
-      what econometrics is but have some interest in the software
-      anyway, please take a look at <xref linkend="app-a"/>.
+      including a shared library, a command-line client program and a
+      graphical user interface. If you don't know what econometrics is
+      but have some interest in the software anyway, please take a
+      look at <xref linkend="app-a"/>.
     </para>
 
     <sect1 id="features"><title>Features at a glance</title>
 
       <variablelist>
 	<varlistentry><term>User-friendly</term>
-	  <listitem>
-	    <para>
-	      <application>gretl</application> offers an intuitive
+	  <listitem><para><application>gretl</application> offers an intuitive
 	      user interface; it is very easy to get up and running
 	      with econometric analysis. Thanks to its association
 	      with Ramanathan's <citetitle>Introductory
@@ -81,39 +77,28 @@
 	  </listitem>
 	</varlistentry>  
 	<varlistentry><term>Flexible</term>
-	  <listitem>
-	    <para>
-	      You can choose your preferred point on the spectrum from
+	  <listitem><para>You can choose your preferred point on the spectrum from
 	      interactive point-and-click to batch processing, and can
-	      easily combine these approaches.
-	    </para>
+	      easily combine these approaches.</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry><term>Cross-platform</term>
-	  <listitem>
-	    <para>
-	      <application>gretl</application>'s home platform is
+	  <listitem><para><application>gretl</application>'s home platform is
 	      Linux, but it is also available for MS Windows.  I have
 	      compiled it on AIX and it should work on any unix-like
 	      system that has the appropriate basic libraries (see
-	      <xref linkend="app-b"/>).
-	    </para>
+	      <xref linkend="app-b"/>).</para>
 	  </listitem>
 	</varlistentry>  
 	<varlistentry><term>Open source</term>
-	  <listitem>
-	    <para>
-	      The full source code for
+	  <listitem><para>The full source code for
 	      <application>gretl</application> is available to anyone
 	      who wants to critique it, patch it, or extend it.  The
-	      author welcomes any bug reports.
-	    </para>
+	      author welcomes any bug reports.</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry><term>Reasonably sophisticated</term>
-	  <listitem>
-	    <para>
-	      <application>gretl</application> offers a full range of
+	  <listitem><para><application>gretl</application> offers a full range of
 	      least-squares based estimators, including Two-Stage
 	      Least Squares.  It also offers (binomial) logit and
 	      probit estimation, and has a loop construct for running
@@ -124,19 +109,15 @@
 	      data to the formats of (<ulink
 		url="http://www.r-project.org">GNU R</ulink>) and
 	      (<ulink url="www.octave.org">GNU Octave</ulink>) for
-	      further custom processing (see <xref linkend="app-c"/>).
-	    </para>
+	      further analysis (see <xref linkend="app-c"/>).</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry><term>Internet ready</term>
-	  <listitem>
-	    <para>
-	      <application>gretl</application> can access and fetch
+	  <listitem><para><application>gretl</application> can access and fetch
 	      databases from a server at Wake Forest University.  The
 	      MS Windows version comes with an updater program which
 	      will detect when a new version is available and offer
-	      the option of auto-updating.
-	    </para>
+	      the option of auto-updating.</para>
 	  </listitem>
 	</varlistentry>
       </variablelist>
@@ -151,7 +132,7 @@
 	kind enough to provide me with the source code for his program
 	<application>ESL</application> (<quote>Econometrics Software
 	  Library</quote>), which I ported to Linux, and since then I
-	have been collaborating with him on updating and extending the
+	have collaborated with him on updating and extending the
 	program.  For the <application>gretl</application> project I
 	have made extensive changes to the original
 	<application>ESL</application> code.  New econometric
@@ -200,8 +181,7 @@
       <orderedlist>
 	<listitem><para>Download the latest
 	    <application>gretl</application> source package from
-	    <ulink url="http://ricardo.ecn.wfu.edu/gretl">Wake Forest
-	      University</ulink>.
+	    <ulink url="http://gretl.sourceforge.net/">SourceForge</ulink>.
 	  </para></listitem>
 	
 	<listitem><para>Unzip and untar the package.  On a system with
@@ -210,7 +190,7 @@
 	    <command>N</command> with the specific version number of
 	    the file you downloaded at step 1).</para></listitem>
 	<listitem><para>Change directory to the gretl source directory
-	    created at step 2 (e.g. <filename>gretl-0.70</filename>).
+	    created at step 2 (e.g. <filename>gretl-0.97</filename>).
 	    </para></listitem>  
 	<listitem><para>The basic routine is then 
 
@@ -284,21 +264,6 @@
 
   <chapter id="getting-started"><title>Getting started</title>
 
-    <para>
-      Assuming the package has been successfully installed, starting
-      from scratch is probably easiest with the graphical interface,
-      <application>gretl</application>.<footnote><para>For convenience I
-      will refer to the graphical client program simply as
-      <application>gretl</application> in this manual.  Note, however,
-      that the specific name of the program differs according to the
-      computer platform.  On unix-like systems it is called
-      <filename>gretl_x11</filename> while on MS Windows it is
-      <filename>gretlw32.exe</filename>. On unix-like systems a
-      wrapper script named <filename>gretl</filename> is also
-      installed.</para>
-      </footnote>
-    </para>
-
     <para>This introduction is mostly angled towards the graphical
       client program; please see <xref linkend="cmdref"/> and
       <xref linkend="cli"/>  below for details on the command-line
@@ -308,9 +273,18 @@
     <para>
       You can supply the name of a data file to open as an argument to
       <application>gretl</application>, but for the moment let's not
-      do that: just fire up the program.  You should see a main window
-      (which will hold information on the data set but which is at
-      first blank) and various menus, some of them disabled at first.
+      do that: just fire up the program.<footnote><para>For
+	  convenience I will refer to the graphical client program
+	  simply as <application>gretl</application> in this manual.
+	  Note, however, that the specific name of the program differs
+	  according to the computer platform.  On unix-like systems it
+	  is called <filename>gretl_x11</filename> while on MS Windows
+	  it is <filename>gretlw32.exe</filename>. On unix-like
+	  systems a wrapper script named <filename>gretl</filename> is
+	  also installed.</para></footnote> You should see a main
+      window (which will hold information on the data set but which is
+      at first blank) and various menus, some of them disabled at
+      first.
     </para>
 
     <para>
@@ -396,7 +370,7 @@
 	window.</para></tip>
 
     <para> Thus, continuing the example of
-      <filename>data3-6</filename>, the entry <command>2 0 3</command>
+      <filename>data3-6</filename>, the entry <command>1 0 2</command>
       (or equivalently <command>Ct 0 Yt</command>) specifies a
       regression of consumption (dependent) on income and a constant.
     </para>
@@ -404,7 +378,7 @@
     <para> You can specify a lagged value of an existing variable
       without explicitly adding this to the data set first.  Thus a
       variant on the above estimation command which includes the first
-      lag of income on the right-hand side would be <command>2 0 3
+      lag of income on the right-hand side would be <command>1 0 2
 	Yt(-1)</command> The lag is selected using a negative integer
       enclosed in parentheses. Note that in this context the name, not
       the number, of the variable in question must be used.
@@ -1348,7 +1322,7 @@
 	    set</quote>.</para>
     </sect2>
 
-    <sect2><title>Built-in spreadsheet</title>
+    <sect2><title>Using the built-in spreadsheet</title>
       <para>Under <application>gretl</application>'s <quote>File,
 	  Create data set</quote> menu you can choose the sort of data
 	set you want to establish (e.g. quarterly time series,
@@ -1985,7 +1959,7 @@
   </sect1>
   </chapter>
 
-  <chapter id="optarg"><title>Otions, arguments and path-searching</title>
+  <chapter id="optarg"><title>Options, arguments and path-searching</title>
   
 
   <sect1 id="optarg1"><title><application>gretl</application></title>

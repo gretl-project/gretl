@@ -82,7 +82,7 @@
 (define (BULLSIZE m lvl)
   (let ((md (case-fold-down m)))
     (case md
-          (("bullet") (MSIZE m lvl 1.0 1.0))
+          (("bullet") (MSIZE m lvl 1.0 0.8))
           (("box") (MSIZE m lvl 0.9 0.72))
           (("checkbox") (MSIZE m lvl 0.9 0.72))
           (("check") (MSIZE m lvl 1.0 1.0))
@@ -91,6 +91,18 @@
           (("none") (MSIZE m lvl 1.0 1.0))
           (else (MSIZE m lvl 1.0 1.0)))))
 
+(element (varlistentry term)
+    (make paragraph
+          space-before: (if (first-sibling?)
+                            %block-sep%
+                            0pt)
+          keep-with-next?: #t
+          first-line-start-indent: 0pt
+          start-indent: 0pt
+          font-posture: 'italic
+          (process-children)))
+
+ 
 ;; These elements appear in this order on the title page of a book.
 (define (book-titlepage-recto-elements)
   (list
