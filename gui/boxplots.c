@@ -22,7 +22,7 @@
 #include "gretl.h"
 #include <gtkextra/gtkextra.h>
 
-extern GdkColor red, blue;
+GdkColor black, white;
 
 typedef struct {
     double median;
@@ -85,38 +85,32 @@ setup_text (GtkWidget *area, GdkGC *gc, GtkPlotPC *pc, char *text,
 	    double x, double y, unsigned just)
 {
     GdkRectangle rect; 
-    size_t len = strlen(text);
-    int cw = gdk_char_width(fixed_font, 'X');
-
-    if (just == GTK_ANCHOR_N) {
-	x -= len * cw / 2.0;
-    }
-    else if (just == GTK_ANCHOR_E) {
-	int ch = gdk_char_height(fixed_font, '1');
-
-	y += ch / 2.0;
-	x -= len * cw;
-    }
+    size_t len;
+    int cw;
 
     if (pc != NULL) {
-	GdkGCValues vals;
-
-	gdk_gc_get_values(gc, &vals);
 	gtk_plot_pc_draw_string (pc,
-				 x, y,
+				 x, y + 4, /* alignment bodge */
 				 0,
-				 &blue,
-				 &red,
+				 &black, &white,
 				 FALSE,
-				 0,
-				 0,
-				 0,
-				 0,
-				 "Courier",
-				 10,
-				 GTK_JUSTIFY_LEFT,
+				 0, 0, 0, 0,
+				 "Courier", 11,
+				 just,
 				 text);
     } else {
+	len = strlen(text);
+	cw = gdk_char_width(fixed_font, 'X');
+
+	if (just == GTK_JUSTIFY_CENTER) {
+	    x -= len * cw / 2.0;
+	}
+	else if (just == GTK_JUSTIFY_RIGHT) {
+	    int ch = gdk_char_height(fixed_font, '1');
+
+	    y += ch / 2.0;
+	    x -= len * cw;
+	}
 	rect.x = x;
 	rect.y = y;
 	rect.width = 80;
@@ -133,14 +127,13 @@ draw_line (double *points, GtkWidget *area, GdkGC *gc, GtkPlotPC *pc)
 {
     GdkRectangle rect; 
 
-    rect.x = points[0];
-    rect.y = points[1];
-    rect.width = points[2] - points[1] + 1;
-    rect.height = points[3] - points[1] + 1;
-
     if (pc != NULL) {
 	gtk_plot_pc_draw_line (pc, points[0], points[1], points[2], points[3]); 
     } else {
+	rect.x = points[0];
+	rect.y = points[1];
+	rect.width = points[2] - points[1] + 1;
+	rect.height = points[3] - points[1] + 1;
 	gdk_draw_line (pixmap, gc, points[0], points[1], points[2], points[3]);
 	gtk_widget_draw (area, &rect);
     }
@@ -223,12 +216,12 @@ gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style, GtkPlotPC *pc,
     
     /* mark max and min values on scale */
     sprintf(numstr, "%.4g", gmax);
-    setup_text(area, gc, pc, numstr, scalepos - 10, top, GTK_ANCHOR_E);
+    setup_text(area, gc, pc, numstr, scalepos - 10, top, GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", gmin);
-    setup_text (area, gc, pc, numstr, scalepos - 10, bottom, GTK_ANCHOR_E);
+    setup_text (area, gc, pc, numstr, scalepos - 10, bottom, GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", (gmax + gmin) / 2.0);
     setup_text (area, gc, pc, numstr, scalepos - 10, 
-		top + (bottom - top) / 2.0, GTK_ANCHOR_E);
+		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 }
 
 /* ............................................................. */
@@ -261,7 +254,7 @@ gtk_area_boxplot (BOXPLOT *plot, double gmax, double gmin,
 
     if (pc != NULL) 
 	gtk_plot_pc_draw_rectangle (pc,
-				    TRUE,
+				    FALSE,
 				    plot->xbase, uq,
 				    plot->boxwidth,
 				    lq - uq);
@@ -308,7 +301,7 @@ gtk_area_boxplot (BOXPLOT *plot, double gmax, double gmin,
 
     /* write name of variable beneath */
     setup_text (area, gc, pc, plot->varname, xcenter, 
-		winheight * (1.0 - headroom/4.0), GTK_ANCHOR_N);
+		winheight * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
 }
 
 /* ............................................................. */
@@ -623,9 +616,9 @@ static int ps_print_plots (BOXPLOT **plotgrp, int nplots,
 
     for (i=0; i<nplots; i++)
 	gtk_area_boxplot (plotgrp[i], gmax, gmin, NULL, 
-			  style, &(ps->pc), winheight);
+			  style, &ps->pc, winheight);
     
-    gtk_boxplot_yscale(NULL, style, &(ps->pc), gmax, gmin, winheight);
+    gtk_boxplot_yscale(NULL, style, &ps->pc, gmax, gmin, winheight);
 
     psleave(ps);
     gtk_object_destroy(GTK_OBJECT(ps));
@@ -684,6 +677,9 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     gtk_boxplot_yscale(area, boxwin->style, NULL, gmax, gmin, winheight);
 
     /* just testing -- needs to be put on a menu or something */
+    gdk_color_white (gdk_colormap_get_system(), &white);
+    gdk_color_black (gdk_colormap_get_system(), &black);
+
     ps_print_plots (plotgrp, nplots, winwidth, winheight, 
 		    gmax, gmin, boxwin->style);
 
