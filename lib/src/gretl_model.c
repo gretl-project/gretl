@@ -294,7 +294,10 @@ static void clear_ar_info (MODEL *pmod)
     pmod->arinfo = NULL;
 }
 
-void debug_print_model_info (const MODEL *pmod, const char *msg)
+#if 0
+
+static void 
+debug_print_model_info (const MODEL *pmod, const char *msg)
 {
     fprintf(stderr, "%s:\n"
 	    " pmod = %p\n"
@@ -319,6 +322,8 @@ void debug_print_model_info (const MODEL *pmod, const char *msg)
 	    (void *) pmod->params, (void *) pmod->arinfo, 
 	    (void *) pmod->tests, (void *) pmod->data);
 }
+
+#endif
 
 /* .......................................................... */
 
