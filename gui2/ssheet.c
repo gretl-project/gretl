@@ -437,27 +437,17 @@ static gboolean update_selected (GtkTreeSelection *selection, spreadsheet *sheet
     gtk_tree_view_get_cursor(view, &path, &column);
 
     if (path && column) {
-	const gchar *col_label;
-
-	col_label = gtk_tree_view_column_get_title(column);
-
-	if (col_label != NULL) {
-	    GtkTreeModel *model;
-	    GtkTreeIter iter;
-	    gchar loctxt[32];
-	    gchar *row_label;
+	GtkTreeModel *model;
+	GtkTreeIter iter;
+	gchar *row_label;
 	    
-	    model = gtk_tree_view_get_model(view);
-	    gtk_tree_model_get_iter(model, &iter, path);
-	    gtk_tree_model_get(model, &iter, 0, &row_label, -1);
-	    sprintf(loctxt, " %s: %s", col_label, row_label);
-	    g_free(row_label);
-	    gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
-	    gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), sheet->cid, loctxt);
-
-	    gtk_tree_view_set_cursor(view, path, column, TRUE);
-	}
-
+	model = gtk_tree_view_get_model(view);
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_model_get(model, &iter, 0, &row_label, -1);
+	gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
+	gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), 
+			   sheet->cid, row_label);
+	g_free(row_label);
 	gtk_tree_path_free(path);
     }
 
@@ -677,7 +667,7 @@ static gint get_obs_col_width (void)
 {
     static gint width;
 
-    if (width == 0) width = get_string_width("0000:000");
+    if (width == 0) width = get_string_width("XXXXXXXXX");
     return width;
 }
 
@@ -686,14 +676,6 @@ static gint get_data_col_width (void)
     static gint width;
 
     if (width == 0) width = get_string_width("000000.000000");
-    return width;
-}
-
-static gint get_locator_width (void)
-{
-    static gint width;
-
-    if (width == 0) width = get_string_width("XXXXXXXX: 0000:00");
     return width;
 }
 
@@ -778,7 +760,8 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     column = gtk_tree_view_column_new_with_attributes (NULL,
 						       renderer,
 						       "text", 0, 
-						       "editable", sheet->totcols - 2,
+						       "editable", 
+						       sheet->totcols - 2,
 						       NULL);
     gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
     set_up_sheet_column(column, width);
@@ -795,8 +778,10 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 	datacell = datacell_new(store, colnum);
 	column = gtk_tree_view_column_new_with_attributes (datainfo->varname[i],
 							   datacell,
-							   "text", colnum, 
-							   "editable", sheet->totcols - 1,
+							   "text", 
+							   colnum, 
+							   "editable", 
+							   sheet->totcols - 1,
 							   NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	set_up_sheet_column(column, width);
@@ -806,8 +791,10 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     for (i=0; i<sheet->padcols; i++) {
 	column = gtk_tree_view_column_new_with_attributes (NULL,
 							   renderer,
-							   "text", i + sheet->datacols + 1,
-							   "editable", sheet->totcols - 2,
+							   "text", 
+							   i + sheet->datacols + 1,
+							   "editable", 
+							   sheet->totcols - 2,
 							   NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	set_up_sheet_column(column, width);
@@ -817,8 +804,6 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
     gtk_tree_selection_set_mode(select, GTK_SELECTION_SINGLE);
 
-    /* FIXME: the locator should be updated on movement or click, not
-       just on change of selection */
     g_signal_connect (G_OBJECT(select), "changed",
 		      G_CALLBACK(update_selected), sheet);
 
@@ -910,7 +895,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_widget_show(status_box);
 
     sheet->locator = gtk_statusbar_new(); 
-    gtk_widget_set_size_request(sheet->locator, get_locator_width(), 20);
+    gtk_widget_set_size_request(sheet->locator, get_obs_col_width(), 20);
     gtk_statusbar_set_has_resize_grip(GTK_STATUSBAR(sheet->locator), FALSE);
     sheet->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR(sheet->locator), 
 					       "current row and column");
