@@ -345,7 +345,7 @@ static int nls_spec_start (const char *nlfunc, const DATAINFO *dinfo)
     int v;
 
     /* do we already have an nls specification under way? */
-    if (nlspec.nparam > 0) return E_PARSE;
+    if (nlspec.nlfunc != NULL) return E_PARSE;
 
     if (strncmp(nlfunc, "nls ", 4) == 0) 
 	p = nlfunc + 4;

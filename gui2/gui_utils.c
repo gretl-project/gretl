@@ -1856,7 +1856,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	varstart = (i==0)? 1 : 2;
 
 	/* put the indep vars on the menu list */
-	for (j=varstart; j<=pmod->list[0]; j++) {
+	for (j=varstart; pmod->ci != NLS && j<=pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;
 	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
 		continue;

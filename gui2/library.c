@@ -55,7 +55,7 @@ int gui_exec_line (char *line,
 		   const char *myname); 
 
 /* private functions */
-static void finish_genr (MODEL *pmod, dialog_t *ddata);
+static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
 static char *bufgets (char *s, int size, const char *buf);
 
@@ -1826,6 +1826,12 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
 #endif /* ENABLE_GMP */
 
+static int do_nls_genr (void)
+{
+    if (check_cmd(line) || cmd_init(line)) return 1;
+    return finish_genr(NULL, NULL);
+}
+
 /* ........................................................... */
 
 void do_nls_model (GtkWidget *widget, dialog_t *ddata)
@@ -1840,7 +1846,11 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     if (blank_entry(buf, ddata)) return;
 
     bufgets(NULL, 0, buf);
-    while (bufgets(line, MAXLEN-1, buf)) {
+    while (bufgets(line, MAXLEN-1, buf && !err)) {
+	if (!started && !strncmp(line, "genr", 4)) {
+	    err = do_nls_genr();
+	    continue;
+	}
 	if (!started && strncmp(line, "nls", 3)) {
 	    char tmp[MAXLEN];
 	    
@@ -2227,9 +2237,9 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 
 /* ........................................................... */
 
-static void finish_genr (MODEL *pmod, dialog_t *ddata)
+static int finish_genr (MODEL *pmod, dialog_t *ddata)
 {
-    int err;
+    int err = 0;
 
     if (pmod != NULL) {
 	err = generate(&Z, datainfo, line, model_count, 
@@ -2244,10 +2254,12 @@ static void finish_genr (MODEL *pmod, dialog_t *ddata)
 	free(cmd_stack[n_cmds-1]);
 	n_cmds--;
     } else {
-	close_dialog(ddata);
+	if (ddata != NULL) close_dialog(ddata);
 	populate_varlist();
 	mark_dataset_as_modified();
     }
+
+    return err;
 }
 
 /* ........................................................... */
