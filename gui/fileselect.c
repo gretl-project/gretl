@@ -71,6 +71,7 @@ static struct extmap action_map[] = {
     {OPEN_CSV, ".csv"},
     {APPEND_CSV, ".csv"},
     {OPEN_ASCII, ".txt"},
+    {APPEND_ASCII, ".txt"},
     {OPEN_BOX, ".box"},
     {OPEN_GNUMERIC, ".gnumeric"},
     {APPEND_GNUMERIC, ".gnumeric"},
@@ -286,7 +287,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	return;
     }
     else if (action == APPEND_CSV || action == APPEND_GNUMERIC || 
-	     action == APPEND_EXCEL) {
+	     action == APPEND_EXCEL || action == APPEND_ASCII) {
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs)); 
 	do_open_data(NULL, NULL, action);

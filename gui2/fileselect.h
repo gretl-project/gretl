@@ -17,7 +17,8 @@
 
 #define APPEND_DATA_ACTION(i) (i == APPEND_CSV || \
                                i == APPEND_GNUMERIC || \
-                               i == APPEND_EXCEL)
+                               i == APPEND_EXCEL || \
+                               i == APPEND_ASCII)
 
 #define SAVE_TEX_ACTION(i) (i == SAVE_TEX_TAB || \
                             i == SAVE_TEX_EQ || \

@@ -145,6 +145,7 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     switch (code) {
     case OPEN_DATA:
     case OPEN_ASCII:
+    case APPEND_ASCII:
 	file_selector(_("Open data file"), code, NULL);
 	break;
     case OPEN_CSV:

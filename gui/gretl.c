@@ -204,6 +204,7 @@ GtkItemFactoryEntry data_items[] = {
     /* File, Append data */
     { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
+    { N_("/File/Append data/from ASCII..."), NULL, open_data, APPEND_ASCII, NULL },
     { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
       APPEND_GNUMERIC, NULL },
     { N_("/File/Append data/from Excel..."), NULL, open_data, 

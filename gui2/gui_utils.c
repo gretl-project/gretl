@@ -571,7 +571,8 @@ void register_data (const char *fname, const char *user_fname,
 
 #define APPENDING(action) (action == APPEND_CSV || \
                            action == APPEND_GNUMERIC || \
-                           action == APPEND_EXCEL)
+                           action == APPEND_EXCEL ||
+                           action == APPEND_ASCII)
 
 /* ........................................................... */
 
@@ -662,7 +663,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	}
     }
 
-    if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII) {
+    if (code == OPEN_CSV || code == APPEND_CSV || code == OPEN_ASCII ||
+	code == APPEND_ASCII) {
 	datatype = GRETL_CSV_DATA;
     }
     else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {

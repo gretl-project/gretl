@@ -163,6 +163,7 @@ enum file_ops {
     OPEN_CSV,
     APPEND_CSV,
     OPEN_ASCII,
+    APPEND_ASCII,
     OPEN_BOX,
     OPEN_GNUMERIC,
     APPEND_GNUMERIC,
