@@ -21,7 +21,7 @@ function process_gnuplot {
 # create the gretl installer
 function inno_compile {
     echo "Building gretl installer executable in `pwd`"
-    wine "$INNO_EXE" ./gretl.iss 2>/dev/null
+    wine "$INNO_EXE" ./gretl.iss 2>errlog
     mv Output/setup.exe Output/gretl_install.exe
 }
 
