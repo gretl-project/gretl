@@ -101,7 +101,7 @@ int get_native_db_data (const char *dbbase, SERIESINFO *sinfo,
 	strcat(dbbin, ".bin");
     }
 
-    fp = fopen(db_name, "rb");
+    fp = fopen(dbbin, "rb");
     if (fp == NULL) return 1;
     
     fseek(fp, (long) sinfo->offset, SEEK_SET);

@@ -4531,21 +4531,25 @@ int gui_exec_line (char *line,
 	if (data_status & HAVE_DATA)
 	    close_session();
 	check = detect_filetype(datfile, &paths, prn);
-	if (check == GRETL_CSV_DATA)
+	if (check == GRETL_CSV_DATA) {
 	    err = import_csv(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_BOX_DATA)
+	} else if (check == GRETL_BOX_DATA) {
 	    err = import_box(&Z, datainfo, datfile, prn);
-	else if (check == GRETL_XML_DATA)
+	} else if (check == GRETL_XML_DATA) {
 	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn, 0);
-	else
+	} else if (check == GRETL_NATIVE_DB || check == GRETL_RATS_DB) {
+	    set_db_name(datfile);
+	} else {
 	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
+	}
 	if (err) {
 	    gui_errmsg(err);
 	    break;
 	}
 	strncpy(paths.datfile, datfile, MAXLEN-1);
-	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA)
+	if (check == GRETL_CSV_DATA || check == GRETL_BOX_DATA) {
 	    data_status |= IMPORT_DATA;
+	}
 	register_data(paths.datfile, (exec_code != REBUILD_EXEC));
 	varlist(datainfo, prn);
 	paths.currdir[0] = '\0'; 
