@@ -39,242 +39,245 @@ static void substitute_dollar_i (char *str)
     }
 }
 
-static int loop_exec_line (LOOPSET **plp, int lround, int cmdnum, PRN *prn)
-     /* special version of command executor for loop construct */
+static int loop_exec (LOOPSET *main_loop, PRN *prn)
 {
-    int i, m;
-    char linecpy[MAXLEN];
-    static MODEL *tmpmodel;
-    GRETLSUMMARY *summ;
-    LOOPSET *loop = *plp;
+    int lround = 0;
     int err = 0;
+
+    if (main_loop->ncmds == 0) {
+	pprintf(prn, _("No commands in loop\n"));
+	return 0;
+    }
 
     gretl_set_text_pause(0);
 
-    strcpy(linecpy, loop->lines[cmdnum]);
+    while (!err && loop_condition(lround, main_loop, Z, datainfo)) {
+	int j;
 
-    err = catchflags(linecpy, &cmd.opt);
-    if (err) {
-	errmsg(err, prn);
-	return 1;
-    }
+	if (main_loop->type == FOR_LOOP && !echo_off) {
+	    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
+	}
 
-    substitute_dollar_i(linecpy);
+	for (j=0; !err && j<main_loop->ncmds; j++) {
+	    char linecpy[MAXLINE];
+	    static MODEL *tmpmodel;
+	    LOOPSET *loop = main_loop;
 
-    getcmd(linecpy, datainfo, &cmd, &ignore, &Z, NULL);
+	    strcpy(linecpy, loop->lines[j]);
 
-    if (cmd.ci < 0) return 0;
+	    err = catchflags(linecpy, &cmd.opt);
+	    if (err) {
+		break;
+	    }
 
-    if (cmd.errcode) {
-	errmsg(cmd.errcode, prn);
-	return 1;
-    }
+	    substitute_dollar_i(linecpy);
 
-    if (!echo_off && loop->type == FOR_LOOP) {
-	echo_cmd(&cmd, datainfo, linecpy, 0, 1, prn);
-    }
+	    getcmd(linecpy, datainfo, &cmd, &ignore, &Z, NULL);
 
-#if 0
-    fprintf(stderr, "loop_exec_line: linecpy='%s'\n", linecpy);
-    debug_print_model_info(models[0], "models[0]");
-#endif
+	    if (cmd.ci < 0) continue;
 
-    switch (cmd.ci) {
+	    if (cmd.errcode) {
+		err = cmd.errcode;
+		break;
+	    }
 
-    case GENR:
-	err = generate(&Z, datainfo, linecpy, tmpmodel);
-	break;
+	    if (!echo_off && loop->type == FOR_LOOP) {
+		echo_cmd(&cmd, datainfo, linecpy, 0, 1, prn);
+	    }
 
-    case SIM:
-	err = simulate(linecpy, &Z, datainfo);
-	break;	
+	    switch (cmd.ci) {
 
-    case OLS:
-    case WLS:
-    case LAD:
-    case HSK:
-    case HCCM:
-	/* if this is the first time round the loop, allocate space
-	   for each loop model */
-	if (lround == 0 && loop->type != FOR_LOOP) {
-	    loop->nmod += 1;
-	    if (loop->type != COUNT_LOOP) { /* a conditional loop */
-		if (loop->models == NULL) {
-		    loop->models = malloc(sizeof(MODEL *));
+	    case GENR:
+		err = generate(&Z, datainfo, linecpy, tmpmodel);
+		break;
+
+	    case SIM:
+		err = simulate(linecpy, &Z, datainfo);
+		break;	
+
+	    case OLS:
+	    case WLS:
+	    case LAD:
+	    case HSK:
+	    case HCCM:
+		/* if this is the first time round the loop, allocate space
+		   for each loop model */
+		if (lround == 0 && loop->type != FOR_LOOP) {
+		    err = add_loop_model(loop, j);
+		    if (err) {
+			break;
+		    }
+		} /* end of basic round 0 setup */
+
+		/* estimate the model called for */
+		clear_model(models[0]);
+
+		if (cmd.ci == OLS || cmd.ci == WLS) {
+		    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
+		} else if (cmd.ci == LAD) {
+		    *models[0] = lad(cmd.list, &Z, datainfo);
+		} else if (cmd.ci == HSK) {
+		    *models[0] = hsk_func(cmd.list, &Z, datainfo);
+		} else if (cmd.ci == HCCM) {
+		    *models[0] = hccm_func(cmd.list, &Z, datainfo);
+		}
+
+		if ((err = (models[0])->errcode)) {
+		    break;
+		}
+
+		if (loop->type == FOR_LOOP) {
+		    (models[0])->ID = lround + 1;
+		    printmodel(models[0], datainfo, cmd.opt, prn); 
+		    tmpmodel = models[0];
+		} else if (loop->type != COUNT_LOOP) { /* conditional loop */
+		    /* deal with model estimate for "while" loop */
+		    int m = get_modnum_by_cmdnum(loop, j);
+
+		    swap_models(&models[0], &loop->models[m]);
+		    (loop->models[m])->ID = j;
+		    tmpmodel = loop->models[m];
+		    model_count_minus();
+		} else { 
+		    /* looping a fixed number of times */
+		    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
+						       models[0], j)) { 
+			gretl_errmsg_set(_("Failed to initialize model for loop\n"));
+			err = 1;
+			break;
+		    } else if (update_loop_model(loop, j, models[0])) {
+			gretl_errmsg_set(_("Failed to add results to loop model\n"));
+			err = 1;
+			break;
+		    }
+		    tmpmodel = models[0];
+		}
+		break;
+
+	    case PRINT:
+		if (cmd.param[0] != '\0') {
+		    simple_commands(&cmd, linecpy, &Z, datainfo, &paths, prn);
+		    break;
+		}
+		if (loop->type != COUNT_LOOP) {
+		    printdata(cmd.list, &Z, datainfo, cmd.opt, prn);
+		    break;
+		}
+		if (lround == 0) {
+		    if ((err = add_loop_print(loop, cmd.list, j))) {
+			break;
+		    }
+		}
+		if (update_loop_print(loop, j, cmd.list, &Z, datainfo)) {
+		    gretl_errmsg_set(_("Failed to add values to print loop\n"));
+		    err = 1;
+		}
+		break;
+
+	    case PRINTF:
+		err = do_printf(linecpy, &Z, datainfo, models[0], prn);
+		break;
+
+	    case SMPL:
+		if (cmd.opt) {
+		    if (restore_full_sample(&subZ, &fullZ, &Z,
+					    &subinfo, &fullinfo, 
+					    &datainfo, cmd.opt)) {
+			err = 1;
+			break;
+		    }
+		    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
+			err = E_ALLOC;
+			break;
+		    }
+		    if (restrict_sample(linecpy, &Z, &subZ, datainfo, 
+					subinfo, cmd.list, cmd.opt)) {
+			err = 1;
+			break;
+		    }
+		    fullZ = Z;
+		    fullinfo = datainfo;
+		    datainfo = subinfo;
+		    Z = subZ;
 		} else {
-		    loop->models = realloc(loop->models, loop->nmod 
-					   * sizeof(MODEL *));
+		    /* FIXME */
+		    gretl_errmsg_set(_("loop: only the '-o' and '-r' forms of the smpl "
+				       " command may be used.\n"));  
+		    err = 1;
 		}
-		if (loop->models == NULL) return 1;
+		break;
 
-		loop->models[loop->nmod - 1] = gretl_model_new();
-		if (loop->models[loop->nmod - 1] == NULL) {
-		    return 1;
-		}
-		(loop->models[loop->nmod - 1])->ID = cmdnum;
-	    } else { /* loop a fixed number of times */
-		if (loop->lmodels == NULL) {
-		    loop->lmodels = malloc(sizeof *loop->lmodels);
+	    case STORE:
+		if (lround == 0) {
+		    loop->nstore = cmd.list[0];
+		    if (loop_store_init(loop, cmd.param, cmd.list, datainfo)) {
+			err = 1;
+		    }
 		} else {
-		    loop->lmodels = realloc(loop->lmodels, loop->nmod
-					    * sizeof *loop->lmodels);
-		}
-		if (loop->lmodels == NULL) return 1;
-	    }
-	} /* end of basic round 0 setup */
+		    int i;
 
-	/* estimate the model called for */
-	clear_model(models[0]);
+		    for (i=0; i<cmd.list[0]; i++) {
+			if (datainfo->vector[cmd.list[i+1]]) { 
+			    loop->storeval[i * loop->ntimes + lround] = 
+				Z[cmd.list[i+1]][datainfo->t1 + 1];
+			} else {
+			    loop->storeval[i * loop->ntimes + lround] = 
+				Z[cmd.list[i+1]][0];
+			}
+		    }
+		}	
+		break;
 
-	if (cmd.ci == OLS || cmd.ci == WLS) {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
-	} else if (cmd.ci == LAD) {
-	    *models[0] = lad(cmd.list, &Z, datainfo);
-	} else if (cmd.ci == HSK) {
-	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
-	} else if (cmd.ci == HCCM) {
-	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
-	}
+	    case PVALUE:
+		batch_pvalue(loop->lines[j], Z, datainfo, prn);
+		break;
 
-	if ((models[0])->errcode) {
-	    errmsg((models[0])->errcode, prn);
-	    return 1;
-	}
+	    case SUMMARY:
+		if (loop->type == COUNT_LOOP) {
+		    gretl_errmsg_set( _("The summary command is not available in "
+					"this sort of loop.\n"));
+		    err = 1;
+		} else {
+		    GRETLSUMMARY *summ;
 
-	if (loop->type == FOR_LOOP) {
-	    (models[0])->ID = lround + 1;
-	    printmodel(models[0], datainfo, cmd.opt, prn); 
-	    tmpmodel = models[0];
-	} else if (loop->type != COUNT_LOOP) { /* conditional loop */
-	    /* deal with model estimate for "while" loop */
-	    m = get_modnum_by_cmdnum(loop, cmdnum);
-	    swap_models(&models[0], &loop->models[m]);
-	    (loop->models[m])->ID = cmdnum;
-	    tmpmodel = loop->models[m];
-	    model_count_minus();
-	} else { 
-	    /* looping a fixed number of times */
-	    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
-					       models[0], cmdnum)) { 
-		pputs(prn, _("Failed to initialize model for loop\n"));
-		return 1;
-	    } else if (update_loop_model(loop, cmdnum, models[0])) { 
-		pputs(prn, _("Failed to add results to loop model\n"));
-		return 1;
-	    }
-	    tmpmodel = models[0];
-	}
-	break;
+		    summ = summary(cmd.list, &Z, datainfo, prn);
+		    if (summ == NULL) {
+			gretl_errmsg_set(_("generation of summary stats failed\n"));
+			err = 1;
+		    } else {
+			print_summary(summ, datainfo, prn);
+			free_summary(summ);
+		    }
+		}	    
+		break; 
 
-    case PRINT:
-	if (strlen(cmd.param)) {
-	    simple_commands(&cmd, linecpy, &Z, datainfo, &paths, prn);
-	    break;
-	}
-	if (loop->type != COUNT_LOOP) {
-	    printdata(cmd.list, &Z, datainfo, cmd.opt, prn);
-	    break;
-	}
-	if (lround == 0) {
-	    loop->nprn += 1;
-	    if (loop->prns == NULL) 
-		loop->prns = malloc(sizeof *loop->prns);
-	    else 
-		loop->prns = realloc(loop->prns, (loop->nprn) * sizeof *loop->prns);
-	    if (loop_print_init(&loop->prns[loop->nprn-1], 
-				cmd.list, cmdnum)) { 
-		pputs(prn, _("Failed to initalize print struct for loop\n"));
-		return 1;
-	    }
-	}
-	if (update_loop_print(loop, cmdnum, cmd.list, &Z, datainfo)) {
-	    pputs(prn, _("Failed to add values to print loop\n"));
-	    return 1;
-	}
-	break;
+	    default: 
+		/* not reachable */
+		pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
+			linecpy);
+		err = 1;
+		break;
 
-    case PRINTF:
-	err = do_printf(linecpy, &Z, datainfo, models[0], prn);
-	break;
-
-    case SMPL:
-	/* FIXME returns in here */
-	if (cmd.opt) {
-	    if (restore_full_sample(&subZ, &fullZ, &Z,
-				    &subinfo, &fullinfo, 
-				    &datainfo, cmd.opt)) {
-		pprintf(prn, "%s\n", get_gretl_errmsg());
-		return 1;
-	    }
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
-		pputs(prn, _("Out of memory\n"));
-		return 1;
-	    }
-	    if (restrict_sample(linecpy, &Z, &subZ, datainfo, 
-				subinfo, cmd.list, cmd.opt)) {
-		pprintf(prn, "%s\n", get_gretl_errmsg());
-		return 1;
-	    }
-	    fullZ = Z;
-	    fullinfo = datainfo;
-	    datainfo = subinfo;
-	    Z = subZ;
-	} else {
-	    pputs(prn, _("loop: only the '-o' and '-r' forms of the smpl "
-			 " command may be used.\n"));
-	    return 1;
-	}
-	break;
-
-    case STORE:
-	if (lround == 0) {
-	    loop->nstore = cmd.list[0];
-	    if (loop_store_init(loop, cmd.param, cmd.list, datainfo)) {
-		return 1;
-	    }
-	}
-	for (i=0; i<cmd.list[0]; i++) {
-	    if (datainfo->vector[cmd.list[i+1]]) { 
-		loop->storeval[i * loop->ntimes + lround] = 
-		    Z[cmd.list[i+1]][datainfo->t1 + 1];
-	    } else {
-		loop->storeval[i * loop->ntimes + lround] = 
-		    Z[cmd.list[i+1]][0];
-	    }
-	}	
-	break;
-
-    case PVALUE:
-	batch_pvalue(loop->lines[cmdnum], Z, datainfo, prn);
-	break;
-
-    case SUMMARY:
-	if (loop->type == COUNT_LOOP) {
-	    pputs(prn, _("The summary command is not available in "
-			 "this sort of loop.\n"));
-	    return 1;
-	}
-	summ = summary(cmd.list, &Z, datainfo, prn);
-	if (summ == NULL) {
-	    pputs(prn, _("generation of summary stats failed\n"));
-	} else {
-	    print_summary(summ, datainfo, prn);
-	    free_summary(summ);
-	}	    
-	break; 
-
-    default: 
-	/* not reachable */
-	pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
-		linecpy);
-	return 1;
-	break;
-
-    }
+	    } /* end switch on command number */
+	} /* end list of commands within loop */
+    } /* end iterations of loop */
 
     if (err) {
-	errmsg(err, prn);
+	print_gretl_errmsg(prn);
+    } else if (main_loop->err) {
+	print_gretl_errmsg(prn);
+	err = main_loop->err;
     }
+
+    if (!err && lround > 0) {
+	if (main_loop->type != FOR_LOOP) {
+	    print_loop_results(main_loop, datainfo, prn, &paths); 
+	}
+    } 
+
+    main_loop = gretl_loop_terminate(main_loop);
+
+    clear(line, MAXLINE);
 
     return err;
 }

@@ -54,8 +54,7 @@ extern char tramodir[];
 
 /* ../cli/common.c */
 static int data_option (gretlopt flag);
-static int loop_exec_line (LOOPSET **plp, int lround, 
-			   int cmdnum, PRN *prn);
+static int loop_exec (LOOPSET *loop, PRN *prn);
 
 /* private functions */
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
@@ -4537,8 +4536,7 @@ int execute_script (const char *runfile, const char *buf,
     FILE *fb = NULL;
     char tmp[MAXLEN];
     int loopstack = 0, looprun = 0;
-    int exec_err = 0, aborted = 0;
-    int i, j = 0;
+    int exec_err = 0;
     LOOPSET *loop = NULL;
 
 #if 0
@@ -4581,37 +4579,12 @@ int execute_script (const char *runfile, const char *buf,
     *cmd.cmd = '\0';
 
     while (strcmp(cmd.cmd, "quit")) {
-	if (looprun) { /* Are we doing a Monte Carlo simulation? */
-	    if (loop->ncmds == 0) {
-		pprintf(prn, _("No commands in loop\n"));
-		looprun = 0;
-		continue;
-	    }
-	    i = 0;
-	    while (!aborted && loop_condition(i, loop, Z, datainfo)) {
-		if (loop->type == FOR_LOOP && !echo_off) {
-		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
-		}
-		for (j=0; j<loop->ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn)) {
-			pprintf(prn, _("Error in command loop: aborting\n"));
-			aborted = 1;
-			break;
-		    }
-		}
-		i++;
-	    }
-	    if (loop->err) {
-		pprintf(prn, "\n%s\n", get_gretl_errmsg());
-	    }	    
-	    if (!aborted && i > 0 && loop->type != FOR_LOOP) {
-		print_loop_results(loop, datainfo, prn, &paths);
-	    }
-	    loop = gretl_loop_terminate(loop, &looprun);
-	    if (aborted) {
+	if (looprun) { 
+	    if (loop_exec(loop, prn)) {
 		return 1;
 	    }
-	} else { /* not looprun */
+	    looprun = 0;
+	} else { 
 	    int bslash;
 
 	    *line = '\0';
@@ -4639,6 +4612,7 @@ int execute_script (const char *runfile, const char *buf,
 		    compress_spaces(line);
 		}		
 	    }
+
 	    if (!exec_err) {
 		if (!strncmp(line, "noecho", 6)) echo_off = 1;
 		if (strncmp(line, "(* saved objects:", 17) == 0) { 
@@ -4651,13 +4625,14 @@ int execute_script (const char *runfile, const char *buf,
 					 &looprun, prn, exec_code, 
 					 runfile);
 	    }
+
 	    if (exec_err) {
 		pprintf(prn, _("\nError executing script: halting\n"));
 		pprintf(prn, "> %s\n", tmp);
 		return 1;
 	    }
-	} /* end alternative to Monte Carlo stuff */
-    } /* end while() */
+	} /* end non-loop command processor */
+    } /* end while command != quit */
 
  endwhile:
 

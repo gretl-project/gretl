@@ -103,7 +103,7 @@ int ok_in_loop (int ci, const LOOPSET *loop);
 LOOPSET *parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 			 DATAINFO *pdinfo, const double **Z);
 
-LOOPSET *gretl_loop_terminate (LOOPSET *loop, int *looprun);
+LOOPSET *gretl_loop_terminate (LOOPSET *loop);
 
 int loop_condition (int k, LOOPSET *loop, 
 		    double **Z, DATAINFO *pdinfo); 
@@ -128,6 +128,10 @@ void print_loop_results (LOOPSET *loop,
 
 int add_to_loop (LOOPSET *loop, char *line, int ci, 
 		 gretlopt oflags);
+
+int add_loop_model (LOOPSET *loop, int cmdnum);
+
+int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum);
 
 void get_cmd_ci (const char *line, CMD *command);
 

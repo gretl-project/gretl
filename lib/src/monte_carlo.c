@@ -368,7 +368,7 @@ int loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-LOOPSET *gretl_loop_terminate (LOOPSET *loop, int *looprun)
+LOOPSET *gretl_loop_terminate (LOOPSET *loop)
 {
     LOOPSET *nextloop = loop->parent;
 
@@ -378,9 +378,7 @@ LOOPSET *gretl_loop_terminate (LOOPSET *loop, int *looprun)
     /* free loop struct pointer itself */
     free(loop);
 
-    if (nextloop == NULL) {
-	*looprun = 0;
-    }
+    /* FIXME: do more */
 
     return nextloop;
 }
@@ -652,6 +650,41 @@ int loop_store_init (LOOPSET *loop, const char *fname,
     return 1;
 }
 
+int add_loop_model (LOOPSET *loop, int cmdnum)
+{
+    int err = 0;
+    int nm = loop->nmod + 1;
+
+    loop->nmod += 1;
+
+    if (loop->type != COUNT_LOOP) { 
+	/* a conditional loop */
+	loop->models = realloc(loop->models, nm * sizeof(MODEL *));
+	if (loop->models == NULL) {
+	    err = 1;
+	} else {
+	    loop->models[loop->nmod] = gretl_model_new();
+	    if (loop->models[loop->nmod] == NULL) {
+		err = 1;
+	    } else {
+		(loop->models[loop->nmod])->ID = cmdnum;
+	    }
+	}
+    } else { 
+	/* looping a fixed number of times */
+	loop->lmodels = realloc(loop->lmodels, nm * sizeof *loop->lmodels);
+	if (loop->lmodels == NULL) {
+	    err = 1;
+	}
+    }
+
+    if (!err) {
+	loop->nmod += 1;
+    }
+
+    return err;
+}
+
 /**
  * update_loop_model:
  * @loop: pointer to loop struct.
@@ -700,6 +733,31 @@ int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 #endif
 
     return 0;
+}
+
+int add_loop_print (LOOPSET *loop, const LIST list, int cmdnum)
+{
+    LOOP_PRINT *prns;
+    int np = loop->nprn + 1;
+    int err = 0;
+
+    prns = realloc(loop->prns, np * sizeof *prns);
+    if (prns == NULL) {
+	return 1;
+    }
+
+    loop->prns = prns;
+
+    if (loop_print_init(&loop->prns[loop->nprn], list, cmdnum)) { 
+	strcpy(gretl_errmsg, _("Failed to initalize print struct for loop\n"));
+	err = 1;
+    }
+
+    if (!err) {
+	loop->nprn += 1;
+    }
+
+    return err;
 }
 
 /**

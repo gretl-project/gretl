@@ -47,8 +47,6 @@ extern char *rl_gets (char **line_read, int loop);
 extern void initialize_readline (void);
 #endif /* HAVE_READLINE */
 
-#define MAXLINE 1024
-
 char prefix[MAXLEN];
 char runfile[MAXLEN];
 char cmdfile[MAXLEN];
@@ -66,7 +64,6 @@ DATAINFO *fullinfo;           /* convenience pointer */
 FREQDIST *freq;               /* struct for freq distributions */
 CMD cmd;                      /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
-LOOPSET *loop;                /* struct for monte carlo loop */
 PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
@@ -88,9 +85,8 @@ char *line_read;
 gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
-void exec_line (char *line, PRN *prn); 
-static int loop_exec_line (LOOPSET **plp, const int round, 
-			   const int cmdnum, PRN *prn);
+void exec_line (char *line, LOOPSET *loop, PRN *prn); 
+static int loop_exec (LOOPSET *loop, PRN *prn);
 
 void usage(void)
 {
@@ -288,9 +284,10 @@ int clear_data (void)
 int main (int argc, char *argv[])
 {
     int cont = 0, cli_get_data = 0;
-    int cmd_overflow = 0, aborted = 0;
+    int cmd_overflow = 0;
     char filearg[MAXLEN];
     char tmp[MAXLINE];
+    LOOPSET *loop = NULL;
     PRN *prn;
 
 #ifdef WIN32
@@ -475,7 +472,7 @@ int main (int argc, char *argv[])
 
     if (batch || runit) {
 	sprintf(line, "run %s\n", runfile);
-	exec_line(line, prn);
+	exec_line(line, loop, prn);
     }
 
     /* should we stop immediately on error, in batch mode? */
@@ -490,41 +487,11 @@ int main (int argc, char *argv[])
 	if (err && batch && errfatal) gretl_abort(linecopy);
 
 	if (looprun) { 
-	    if (loop->ncmds == 0) {
-		printf(_("No commands in loop\n"));
-		looprun = errfatal = 0;
-		continue;
-	    }
-	    i = 0;
-	    while (!aborted && loop_condition(i, loop, Z, datainfo)) {
-		if (loop->type == FOR_LOOP && !echo_off) {
-		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
-		}
-		for (j=0; j<loop->ncmds; j++) {
-		    if (loop_exec_line(&loop, i, j, prn)) {
-			printf(_("Error in command loop: aborting\n"));
-			aborted = 1;
-			break;
-		    }
-		}
-		i++;
-	    }
-	    if (loop->err) {
-		pprintf(prn, "\n%s\n", get_gretl_errmsg());
-	    }
-	    if (!aborted && i > 0) {
-		if (loop->type != FOR_LOOP) {
-		    print_loop_results(loop, datainfo, prn, &paths); 
-		}
-		errfatal = 0;
-	    } 
-	    loop = gretl_loop_terminate(loop, &looprun);
-	    clear(line, MAXLINE);
-	    if (aborted) {
+	    if (loop_exec(loop, prn)) {
 		return 1;
 	    }
-	}
-	else { /* not looprun */
+	    looprun = errfatal = 0;
+	} else { 
 #ifdef HAVE_READLINE
 	    if (!runit && !batch) { /* normal interactive use */
 		rl_gets(&line_read, (loopstack)? 1 : 0);
@@ -540,7 +507,7 @@ int main (int argc, char *argv[])
 	    }
 	    file_get_line();
 #endif /* HAVE_READLINE */
-	} /* end of not looprun branch */
+	} 
 
 	if (strncmp(line, "quit", 4)) {
 	    /* allow for backslash continuation of lines */
@@ -571,7 +538,7 @@ int main (int argc, char *argv[])
 	    break;
 	} else {
 	    strcpy(linecopy, line);
-	    exec_line(line, prn);
+	    exec_line(line, loop, prn);
 	}
     } /* end of get commands loop */
 
@@ -621,7 +588,7 @@ static void printf_strip (char *s)
     printf("%s\n", s);
 }
 
-void exec_line (char *line, PRN *prn) 
+void exec_line (char *line, LOOPSET *loop, PRN *prn) 
 {
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
