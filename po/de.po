@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretll-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2005-01-04 06:35+0100\n"
+"PO-Revision-Date: 2005-01-04 19:28+0100\n"
 "Last-Translator: Markus Hahn <markus.hahn@rub.de>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
@@ -432,7 +432,7 @@ msgstr "Variable %s ist ein Skalar"
 #: lib/src/compat.c:804
 #, c-format
 msgid "For 'sim', the variable must already exist"
-msgstr ""
+msgstr "Für 'sim' muss die Variable bereits existieren"
 
 #: lib/src/compat.c:806
 #, fuzzy, c-format
@@ -714,6 +714,8 @@ msgid ""
 "\n"
 "Reading "
 msgstr ""
+"\n"
+"Lese"
 
 #: lib/src/dataio.c:2166
 msgid "time-series"
@@ -1325,7 +1327,7 @@ msgstr ""
 #: lib/src/describe.c:705
 #, c-format
 msgid "Autocorrelation function for %s"
-msgstr ""
+msgstr "Autokorrelationsfunktion für %s"
 
 #: lib/src/describe.c:717
 #, c-format
@@ -1415,7 +1417,7 @@ msgstr ""
 #: lib/src/describe.c:1032
 #, c-format
 msgid "Spectrum of %s"
-msgstr ""
+msgstr "Spektrum of %s"
 
 #: lib/src/describe.c:1035
 #, c-format
@@ -1911,7 +1913,7 @@ msgstr ""
 #: lib/src/generate.c:1756
 #: lib/src/generate.c:1765
 msgid "math function"
-msgstr ""
+msgstr "math. Funktion"
 
 #: lib/src/generate.c:2011
 #, c-format
@@ -2013,28 +2015,28 @@ msgstr ""
 #: lib/src/generate.c:3660
 #, c-format
 msgid "= 1 if quarter = %d, 0 otherwise"
-msgstr ""
+msgstr "= 1 wenn Quartal = %d, 0 sonst"
 
 #: lib/src/generate.c:3666
-#, c-format
+#, fuzzy, c-format
 msgid "= 1 if month is %s, 0 otherwise"
-msgstr ""
+msgstr "= 1 wenn Monat %s ist, 0 sonst"
 
 #: lib/src/generate.c:3676
-#, c-format
+#, fuzzy, c-format
 msgid "%s = 1 if period is %d, 0 otherwise"
-msgstr ""
+msgstr "%s = 1 wenn Periode %d ist, 0 sonst"
 
 #: lib/src/generate.c:3781
 #: lib/src/generate.c:3815
-#, c-format
+#, fuzzy, c-format
 msgid "%s = 1 if %s is %d, 0 otherwise"
-msgstr ""
+msgstr "%s = 1 wenn %s %d ist, 0 sonst"
 
 #: lib/src/generate.c:3782
 #: lib/src/generate.c:3816
 msgid "unit"
-msgstr ""
+msgstr "Einheit"
 
 #: lib/src/generate.c:3782
 #: lib/src/generate.c:3816
@@ -2175,7 +2177,7 @@ msgstr "Chi-Quadrat(2) = %.3f, p-Wert %.5f"
 
 #: lib/src/graphing.c:1517
 msgid "Test statistic for gamma"
-msgstr ""
+msgstr "Teststatistik für Gamma"
 
 #: lib/src/graphing.c:1519
 #, c-format
@@ -2184,7 +2186,7 @@ msgstr ""
 
 #: lib/src/graphing.c:1546
 msgid "Frequency distribution for"
-msgstr ""
+msgstr "Häufigkeitsverteilung für"
 
 #: lib/src/graphing.c:1632
 msgid "95 percent confidence interval"
@@ -2192,7 +2194,7 @@ msgstr "95-Prozent-Konfidenzintervall"
 
 #: lib/src/graphing.c:1701
 msgid "+- sqrt(h(t))"
-msgstr ""
+msgstr "+- sqrt(h(t))"
 
 #: lib/src/graphing.c:2164
 #, c-format
@@ -2261,15 +2263,16 @@ msgstr "Befehl für diesen Schätzer nicht verfügbar"
 
 #: lib/src/gretl_errors.c:44
 msgid "Evaluation of genr expression failed"
-msgstr ""
+msgstr "Auswertung des genr-Ausrucks fehlgeschlagen"
 
 #: lib/src/gretl_errors.c:45
 msgid "Unrecognized term in genr formula"
 msgstr ""
 
 #: lib/src/gretl_errors.c:46
+#, fuzzy
 msgid "Unspecified error -- FIXME"
-msgstr ""
+msgstr "Unspezifizierter Fehler -- FIXME"
 
 #: lib/src/gretl_errors.c:47
 msgid "Syntax error in genr formula"
@@ -3722,7 +3725,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1749
 msgid "simulation data written"
-msgstr ""
+msgstr "Simulationsdaten geschrieben"
 
 #: lib/src/monte_carlo.c:1875
 #, c-format
@@ -3731,7 +3734,7 @@ msgstr ""
 
 #: lib/src/monte_carlo.c:1980
 msgid "No commands in loop\n"
-msgstr ""
+msgstr "Keine Befehle in Schleife\n"
 
 #: lib/src/monte_carlo.c:2117
 msgid "Failed to initialize model for loop\n"
@@ -3762,7 +3765,7 @@ msgstr ""
 
 #: lib/src/nls.c:473
 msgid "In Gauss-Newton Regression:\n"
-msgstr ""
+msgstr "In Gauss-Newton Regression:\n"
 
 #: lib/src/nls.c:479
 msgid "Failed to calculate Jacobian"
@@ -3772,7 +3775,7 @@ msgstr ""
 #: lib/src/nls.c:901
 #: lib/src/nls.c:925
 msgid "No regression function has been specified"
-msgstr ""
+msgstr "Es wurde keine Regressionfunktion spezifiziert"
 
 #: lib/src/nls.c:713
 msgid "NLS: The supplied derivatives seem to be incorrect"
@@ -3813,11 +3816,11 @@ msgstr ""
 #: lib/src/nls.c:958
 #, c-format
 msgid "Tolerance = %g\n"
-msgstr ""
+msgstr "Toleranz = %g\n"
 
 #: lib/src/nonparam.c:252
 msgid "spearman command requires two variables\n"
-msgstr ""
+msgstr "spearman-Befehl erfordert zwei Variablen\n"
 
 #: lib/src/nonparam.c:269
 #, c-format
@@ -3825,11 +3828,13 @@ msgid ""
 "\n"
 "For the variables '%s' and '%s'\n"
 msgstr ""
+"\n"
+"Für die Variablen '%s' und '%s'\n"
 
 #: lib/src/nonparam.c:271
 #, c-format
 msgid "Spearman's rank correlation coefficient (rho) = %f\n"
-msgstr ""
+msgstr "Spearmans Rangkorrelationskoeffizient (Rho) = %f\n"
 
 #: lib/src/nonparam.c:274
 #, c-format
@@ -3844,16 +3849,16 @@ msgstr ""
 #: lib/src/nonparam.c:281
 #, c-format
 msgid "significant at the %g%% level (one-tailed)\n"
-msgstr ""
+msgstr "signifikant bei einem Niveau von %g%% (einseitig)\n"
 
 #: lib/src/nonparam.c:284
 #, no-c-format
 msgid "not significant at the 10% level\n"
-msgstr ""
+msgstr "nicht signifikant bei einem Niveau von 10%\n"
 
 #: lib/src/nonparam.c:287
 msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
-msgstr ""
+msgstr "Sample ist zu klein, um einen auf der Normalverteilung basierenden p-Wert zu berechnen\n"
 
 #: lib/src/nonparam.c:294
 #: lib/src/printout.c:699
@@ -3898,36 +3903,36 @@ msgstr ""
 #: lib/src/plugins.c:204
 #, c-format
 msgid "Couldn't load plugin %s"
-msgstr ""
+msgstr "Plug-in %s konnte nicht geladen werden"
 
 #: lib/src/plugins.c:211
 #, c-format
 msgid "Failed to load plugin: %s"
-msgstr ""
+msgstr "Laden des Plug-ins %s fehlgeschlagen"
 
 #: lib/src/plugins.c:226
 #: lib/src/plugins.c:252
 msgid "Couldn't load plugin function"
-msgstr ""
+msgstr "Konnte Plug-in-Funktion nicht laden"
 
 #: lib/src/printout.c:64
 msgid "COVARIANCE MATRIX OF REGRESSION COEFFICIENTS"
-msgstr ""
+msgstr "KOVARIANZMATRIX DER REGRESSIONSKOEFFIZIENTEN"
 
 #: lib/src/printout.c:78
 #: lib/src/printout.c:130
 msgid "Current session"
-msgstr ""
+msgstr "Aktuelle Session"
 
 #: lib/src/printout.c:89
 #: lib/src/printout.c:129
 #, c-format
 msgid "gretl version %s\n"
-msgstr ""
+msgstr "gretl-Version %s\n"
 
 #: lib/src/printout.c:90
 msgid "Copyright Ramu Ramanathan and Allin Cottrell"
-msgstr ""
+msgstr "Copyright Ramu Ramanathan und Allin Cottrell"
 
 #: lib/src/printout.c:91
 msgid "This is free software with ABSOLUTELY NO WARRANTY"
@@ -3936,11 +3941,11 @@ msgstr ""
 #: lib/src/printout.c:103
 #, c-format
 msgid "gretl: gui client for gretl version %s,\n"
-msgstr ""
+msgstr "gretl: Gui-Client für gretl-Version %s,\n"
 
 #: lib/src/printout.c:104
 msgid "copyright Allin Cottrell.\n"
-msgstr ""
+msgstr "Copyright Allin Cottrell.\n"
 
 #: lib/src/printout.c:105
 msgid "This is free software with ABSOLUTELY NO WARRANTY.\n"
@@ -3959,14 +3964,17 @@ msgid ""
 "Pairwise correlation coefficients:\n"
 "\n"
 msgstr ""
+"\n"
+"Paarweise Korrelationskoeffizienten\n"
+"\n"
 
 #: lib/src/printout.c:232
 msgid "Test for null hypothesis of normal distribution"
-msgstr ""
+msgstr "Test für Nullhypothese auf Normalverteilung"
 
 #: lib/src/printout.c:238
 msgid "Test for null hypothesis of gamma distribution"
-msgstr ""
+msgstr "Test für Nullhypothese auf Gamma-Verteilung"
 
 #: lib/src/printout.c:259
 #, c-format
@@ -3991,20 +3999,20 @@ msgstr ""
 #: lib/src/printout.c:339
 #, c-format
 msgid "Full data set: %d observations\n"
-msgstr ""
+msgstr "Voller Datensatz: %d Beobachtungen\n"
 
 #: lib/src/printout.c:330
 #, c-format
 msgid "Current sample: %d observations\n"
-msgstr ""
+msgstr "Aktuelles Sample: %d Beobachtungen\n"
 
 #: lib/src/printout.c:341
 msgid "Full data range"
-msgstr ""
+msgstr "Voller Datenbereich"
 
 #: lib/src/printout.c:345
 msgid "Current sample"
-msgstr ""
+msgstr "Aktuelles Sample"
 
 #: lib/src/printout.c:562
 msgid ""
@@ -4026,17 +4034,17 @@ msgstr ""
 #: lib/src/printout.c:697
 #, c-format
 msgid "Standard error of residuals = %f\n"
-msgstr ""
+msgstr "Standardfehler der Residuen = %f\n"
 
 #: lib/src/printout.c:704
 #: gui2/guiprint_common.c:607
 msgid "residuals"
-msgstr ""
+msgstr "Residuen"
 
 #: lib/src/printout.c:1110
 #, c-format
 msgid "Varname: %s\n"
-msgstr ""
+msgstr "Varname: %s\n"
 
 #: lib/src/printout.c:1233
 msgid "Note: * denotes a residual in excess of 2.5 standard errors\n"
@@ -4045,7 +4053,7 @@ msgstr ""
 #: lib/src/printout.c:1255
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
-msgstr ""
+msgstr "Für 95%%-Konfidenzintervalle, t(%d, .025) = %.3f\n"
 
 #: lib/src/printout.c:1259
 #: gui2/guiprint_common.c:740
@@ -4055,12 +4063,12 @@ msgstr ""
 
 #: lib/src/printout.c:1260
 msgid " std. error"
-msgstr ""
+msgstr "Std. Fehler"
 
 #: lib/src/printout.c:1261
 #, c-format
 msgid "   95%% confidence interval\n"
-msgstr ""
+msgstr "   95%%-Konfidenzintervall\n"
 
 #: lib/src/printout.c:1394
 #, c-format
@@ -4162,6 +4170,8 @@ msgid ""
 "\n"
 "Error computing gamma distribution\n"
 msgstr ""
+"\n"
+"Fehler bei der Berechnung der Gamma-Verteilung\n"
 
 #: lib/src/pvalues.c:386
 #, c-format
@@ -4247,6 +4257,8 @@ msgid ""
 "\n"
 "Enter the mean: "
 msgstr ""
+"\n"
+"Mittelwert eingeben:"
 
 #: lib/src/pvalues.c:548
 #, c-format
@@ -4254,6 +4266,8 @@ msgid ""
 "\n"
 "Enter the variance: "
 msgstr ""
+"\n"
+"Varianz eingeben:"
 
 #: lib/src/pvalues.c:555
 #, c-format
@@ -4272,11 +4286,11 @@ msgstr ""
 #: lib/src/pvalues.c:674
 #: lib/src/pvalues.c:803
 msgid "Invalid degrees of freedom\n"
-msgstr ""
+msgstr "Ungültiger Freiheitsgrad\n"
 
 #: lib/src/pvalues.c:678
 msgid "Invalid sample size\n"
-msgstr ""
+msgstr "Ungültige Sample-Größe\n"
 
 #: lib/src/pvalues.c:719
 #: gui2/calculator.c:250
@@ -4296,7 +4310,7 @@ msgstr ""
 #: gui/gretl.c:159
 #: gui2/gretl.c:197
 msgid "/File/_Open data"
-msgstr ""
+msgstr "/Datei/Öffne Daten"
 
 #: lib/src/strutils.c:1059
 #, c-format
@@ -4310,7 +4324,7 @@ msgstr ""
 #: lib/src/subsample.c:283
 #, c-format
 msgid "Variable '%s' not defined"
-msgstr ""
+msgstr "Variable '%s' ist nicht definiert"
 
 #: lib/src/subsample.c:329
 #, c-format
@@ -4328,7 +4342,7 @@ msgstr ""
 #: lib/src/subsample.c:721
 #, c-format
 msgid "'%s' is not a dummy variable"
-msgstr ""
+msgstr "'%s' ist keine Dummyvariable"
 
 #: lib/src/subsample.c:723
 #: lib/src/subsample.c:726
@@ -4338,7 +4352,7 @@ msgstr ""
 #: lib/src/subsample.c:728
 #: lib/src/subsample.c:733
 msgid "No observations were dropped!"
-msgstr ""
+msgstr "Keine Beobachtungen wurden ausgelassen!"
 
 #: lib/src/subsample.c:879
 msgid "error in new starting obs"
@@ -4362,7 +4376,7 @@ msgstr ""
 #: lib/src/subsample.c:1149
 #: lib/src/subsample.c:1166
 msgid "missing values"
-msgstr ""
+msgstr "fehlende Werte"
 
 #: lib/src/subsample.c:1155
 #, c-format
@@ -4378,19 +4392,19 @@ msgstr ""
 
 #: lib/src/system.c:104
 msgid "SUR"
-msgstr ""
+msgstr "SUR"
 
 #: lib/src/system.c:105
 msgid "3SLS"
-msgstr ""
+msgstr "3SLS"
 
 #: lib/src/system.c:106
 msgid "FIML"
-msgstr ""
+msgstr "FIML"
 
 #: lib/src/system.c:107
 msgid "LIML"
-msgstr ""
+msgstr "LIML"
 
 #: lib/src/system.c:114
 msgid "Seemingly Unrelated Regressions"
@@ -4462,22 +4476,22 @@ msgstr ""
 #: lib/src/transforms.c:79
 #, c-format
 msgid "= first difference of %s"
-msgstr ""
+msgstr "= erste Differenzen von %s"
 
 #: lib/src/transforms.c:81
 #, c-format
 msgid "= log difference of %s"
-msgstr ""
+msgstr "= log-Differenzen von %s"
 
 #: lib/src/transforms.c:83
 #, c-format
 msgid "= log of %s"
-msgstr ""
+msgstr "= log von %s"
 
 #: lib/src/transforms.c:85
 #, c-format
 msgid "= %s squared"
-msgstr ""
+msgstr "= %s quadriert"
 
 #: lib/src/transforms.c:221
 #, c-format
@@ -4500,7 +4514,7 @@ msgstr ""
 #: lib/src/var.c:664
 #: lib/src/var.c:675
 msgid "continued"
-msgstr ""
+msgstr "fortgesetzt"
 
 #: lib/src/var.c:658
 #: lib/src/var.c:669
@@ -4513,7 +4527,7 @@ msgstr ""
 #: gui2/guiprint_common.c:740
 #: gui2/guiprint_common.c:792
 msgid "std. error"
-msgstr ""
+msgstr "Std. Fehler"
 
 #: lib/src/var.c:786
 msgid "squared time trend variable"
@@ -4582,24 +4596,24 @@ msgstr ""
 #: lib/src/var.c:1652
 #: gui2/library.c:705
 msgid "test without constant"
-msgstr ""
+msgstr "Test ohne Konstante"
 
 #: lib/src/var.c:1653
 msgid "test with constant"
-msgstr ""
+msgstr "Test mit Konstante"
 
 #: lib/src/var.c:1654
 #: gui2/library.c:707
 msgid "with constant and trend"
-msgstr ""
+msgstr "mit Konstante und Trend"
 
 #: lib/src/var.c:1655
 msgid "with constant and quadratic trend"
-msgstr ""
+msgstr "mit Konstante und quadratischen Trend"
 
 #: lib/src/var.c:1746
 msgid "asymptotic p-value"
-msgstr ""
+msgstr "asymptotischer p-Wert"
 
 #: lib/src/var.c:1752
 #, c-format
@@ -4614,11 +4628,13 @@ msgid ""
 "\n"
 "Dickey-Fuller tests for %s\n"
 msgstr ""
+"\n"
+"Dickey-Fuller-Tests für %s\n"
 
 #: lib/src/var.c:1758
 #, c-format
 msgid "sample size %d\n"
-msgstr ""
+msgstr "Sample-Größe %d\n"
 
 #: lib/src/var.c:1759
 msgid "unit-root null hypothesis: a = 1"
@@ -4626,11 +4642,11 @@ msgstr ""
 
 #: lib/src/var.c:1766
 msgid "model"
-msgstr ""
+msgstr "Model"
 
 #: lib/src/var.c:1772
 msgid "estimated value of (a - 1)"
-msgstr ""
+msgstr "geschätzer Wert für (a - 1)"
 
 #: lib/src/var.c:1792
 msgid "P-values based on MacKinnon (JAE, 1996)\n"
@@ -4651,14 +4667,17 @@ msgid ""
 "KPSS test for %s %s\n"
 "\n"
 msgstr ""
+"\n"
+"KPSS-Test für %s %s\n"
+"\n"
 
 #: lib/src/var.c:1930
 msgid "(including trend)"
-msgstr ""
+msgstr "(inklusive Trend)"
 
 #: lib/src/var.c:1930
 msgid "(without trend)"
-msgstr ""
+msgstr "(ohne Trend)"
 
 #: lib/src/var.c:1932
 #, c-format
@@ -4668,7 +4687,7 @@ msgstr ""
 #: lib/src/var.c:1938
 #: lib/src/var.c:1940
 msgid "Critical values"
-msgstr ""
+msgstr "Kritische Werte"
 
 #: lib/src/var.c:2079
 msgid "Sample variance-covariance matrices for residuals"
@@ -4684,19 +4703,19 @@ msgstr ""
 
 #: lib/src/var.c:2092
 msgid "Cross-products"
-msgstr ""
+msgstr "Kreuzprodukte"
 
 #: lib/src/var.c:2245
 msgid "Johansen test"
-msgstr ""
+msgstr "Johansen-Test"
 
 #: lib/src/var.c:2246
 msgid "Number of equations"
-msgstr ""
+msgstr "Anzahl Gleichungen"
 
 #: lib/src/var.c:2247
 msgid "Estimation period"
-msgstr ""
+msgstr "Schätzperiode"
 
 #: lib/src/var.c:2273
 msgid "Error checking for time trends"
@@ -4709,14 +4728,14 @@ msgstr ""
 #: lib/src/var.c:2339
 #, c-format
 msgid "p-value %f"
-msgstr ""
+msgstr "p-Wert %f"
 
 #: lib/src/var.c:2344
 #: lib/src/var.c:2354
 #: lib/src/var.c:2358
 #, c-format
 msgid "p-value %f\n"
-msgstr ""
+msgstr "p-Wert %f\n"
 
 #: lib/src/var.c:2390
 #: gui/selector.c:553
@@ -4794,11 +4813,11 @@ msgstr ""
 #: gui/gretl.c:655
 #: gui2/gretl.c:797
 msgid "data information"
-msgstr ""
+msgstr "Dateninformation"
 
 #: cli/gretlcli.c:453
 msgid "command line"
-msgstr ""
+msgstr "Befehlszeile"
 
 #: cli/gretlcli.c:469
 #, c-format
@@ -4827,7 +4846,7 @@ msgstr ""
 #: gui2/library.c:5132
 #, c-format
 msgid "You must open a data file first\n"
-msgstr ""
+msgstr "Sie müssen zuerst eine Datendatei öffnen\n"
 
 #: cli/gretlcli.c:736
 #: gui2/library.c:5177
