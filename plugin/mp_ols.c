@@ -116,7 +116,7 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 	if (mpZ[i] != NULL) {
 	    j = 0;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		mpf_init_set_d(mpZ[i][j++], Z[pmod->list[i+1]][t]);
+		mpf_init_set_d (mpZ[i][j++], Z[pmod->list[i+1]][t]);
 	    }
 	    strcpy (pmod->varname[i], pdinfo->varname[pmod->list[i+1]]);
 	    pmod->list[i+1] = i;
@@ -214,7 +214,7 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
 int mplsq (const LIST list, double **Z, DATAINFO *pdinfo) 
 {
     int l0, i;
-    mpf_t **mpZ;
+    mpf_t **mpZ = NULL;
     XPXXPY xpxxpy;
     MPMODEL model;
 

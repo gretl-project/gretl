@@ -57,6 +57,7 @@ extern void open_named_db_clist (char *dbname);
 extern void open_named_remote_clist (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
+extern void do_mp_ols (void);
 
 /* functions private to gretl.c */
 static void make_toolbar (GtkWidget *w, GtkWidget *box);
@@ -311,6 +312,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
     { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
     { N_("/Utilities/Test statistic calculator"), NULL, stats_calculator, 2, NULL },
+    { N_("/Utilities/MPOLS"), NULL, do_mp_ols, 0, NULL },
     { N_("/Utilities/sep"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Gretl console"), NULL, console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },

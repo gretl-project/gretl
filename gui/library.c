@@ -1524,6 +1524,34 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
+/* testing */
+void do_mp_ols (void)
+{
+    void *handle;
+    int (*mplsq)(const int *, double **, DATAINFO *);
+    int err;
+
+    if (gui_open_plugin("mp_ols", &handle)) return;
+    mplsq = get_plugin_function("mplsq", handle);
+
+    if (mplsq == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(handle);
+	return;
+    } else {
+	int *mylist = malloc(4 * sizeof *mylist);
+	
+	mylist[0] = 3;
+	mylist[1] = 1;
+	mylist[2] = 0;
+	mylist[2] = 2;
+	err = mplsq (mylist, Z, datainfo);
+	free(mylist);
+    }
+}
+
+/* ........................................................... */
+
 static void do_chow_cusum (gpointer data, int code)
 {
     windata_t *mydata;
