@@ -21,7 +21,8 @@
 
 #include "gretl.h"
 #ifdef G_OS_WIN32 
-#include "../lib/src/version.h"
+# include "../lib/src/version.h"
+# include "build.h"
 #else 
 extern const char *version_string;
 #endif
@@ -567,7 +568,10 @@ void about_dialog (gpointer data)
 	gtk_widget_show (tempwid);
     }
     tempstr = g_strdup_printf ("gretl, version %s\n"
-			       "Copyright (C) 2000 Allin Cottrell "
+#ifdef G_OS_WIN32
+			       BUILD_DATE
+#endif
+			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
 			       "http://gretl.sourceforge.net/",
 			       version_string);

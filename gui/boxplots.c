@@ -43,40 +43,41 @@ typedef struct {
     double boxwidth;
     double gmax, gmin;
     GtkWidget *window, *area, *popup;
+    GdkPixmap *pixmap;
 } PLOTGROUP;
 
 double headroom = 0.24;
 double scalepos = 60.0;
-
-/* Backing pixmap for drawing area */
-static GdkPixmap *pixmap = NULL;
 
 extern void file_selector (char *msg, char *startdir, int action, 
                            gpointer data);
 
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
-static void plot_to_xpm (gpointer data);
 
 #ifdef G_OS_WIN32
 static int cb_copy_image (gpointer data);
+#else
+int plot_to_xpm (const char *fname, gpointer data);
 #endif
 
 /* ............................................................. */
 
 /* Create a new backing pixmap of the appropriate size */
 static gint
-configure_event (GtkWidget *widget, GdkEventConfigure *event)
+configure_event (GtkWidget *widget, GdkEventConfigure *event, gpointer data)
 {
-    if (pixmap)
-	gdk_pixmap_unref(pixmap);
+    PLOTGROUP *grp = (PLOTGROUP *) data;
 
-    pixmap = gdk_pixmap_new(widget->window,
-			    widget->allocation.width,
-			    widget->allocation.height,
-			    -1);
+    if (grp->pixmap)
+	gdk_pixmap_unref(grp->pixmap);
 
-    gdk_draw_rectangle (pixmap,
+    grp->pixmap = gdk_pixmap_new(widget->window,
+				 widget->allocation.width,
+				 widget->allocation.height,
+				 -1);
+
+    gdk_draw_rectangle (grp->pixmap,
 			widget->style->white_gc,
 			TRUE,
 			0, 0,
@@ -90,11 +91,13 @@ configure_event (GtkWidget *widget, GdkEventConfigure *event)
 
 /* Redraw the screen from the backing pixmap */
 static gint
-expose_event (GtkWidget *widget, GdkEventExpose *event)
+expose_event (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+
     gdk_draw_pixmap(widget->window,
-		    widget->style->fg_gc[GTK_WIDGET_STATE(widget)],
-		    pixmap,
+		    widget->style->fg_gc[GTK_STATE_NORMAL],
+		    grp->pixmap,
 		    event->area.x, event->area.y,
 		    event->area.x, event->area.y,
 		    event->area.width, event->area.height);
@@ -117,9 +120,16 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
     }
-    else if (key->keyval == GDK_b) {  
-	plot_to_xpm(data);
+#ifdef G_OS_WIN32
+    else if (key->keyval == GDK_c) {  
+	cb_copy_image(data);
     }
+#else
+    else if (key->keyval == GDK_c) { 
+        file_selector("Save boxplot file", paths.userdir, 
+                      SAVE_BOXPLOT_XPM, data);	
+    }
+#endif
     return TRUE;
 }
 
@@ -141,7 +151,11 @@ static gint popup_activated (GtkWidget *w, gpointer data)
                       SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
     else if (!strcmp(item, "Copy to clipboard"))
-	cb_copy_image(data);
+	cb_copy_image(ptr);
+#else
+    else if (!strcmp(item, "Save as XPM..."))
+        file_selector("Save boxplot file", paths.userdir, 
+                      SAVE_BOXPLOT_XPM, ptr);
 #endif
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);
@@ -166,6 +180,8 @@ static GtkWidget *build_menu (gpointer data)
         "Save as PS...",
 #ifdef G_OS_WIN32
 	"Copy to clipboard",
+#else
+	"Save as XPM...",
 #endif	
         "Close",
 	NULL
@@ -205,7 +221,8 @@ static gint box_popup (GtkWidget *widget, GdkEventButton *event,
 /* ............................................................. */
 
 static void
-setup_text (GtkWidget *area, GdkGC *gc, GtkPlotPC *pc, char *text, 
+setup_text (GtkWidget *area, GdkPixmap *pixmap,
+	    GdkGC *gc, GtkPlotPC *pc, char *text, 
 	    double x, double y, unsigned just)
 {
     if (pc != NULL) {
@@ -249,7 +266,8 @@ setup_text (GtkWidget *area, GdkGC *gc, GtkPlotPC *pc, char *text,
 /* ............................................................. */
 
 static void 
-draw_line (double *points, GtkWidget *area, GdkGC *gc, GtkPlotPC *pc)
+draw_line (double *points, GtkWidget *area, GdkPixmap *pixmap,
+	   GdkGC *gc, GtkPlotPC *pc)
 {
     if (pc != NULL) {
 	gtk_plot_pc_draw_line (pc, points[0], points[1], points[2], points[3]); 
@@ -307,41 +325,42 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     char numstr[16];
     GdkGC *gc = NULL;
 
-    if (pc == NULL) gc = grp->window->style->bg_gc[GTK_STATE_SELECTED];
+    if (pc == NULL) gc = grp->window->style->fg_gc[GTK_STATE_NORMAL];
+    /* gc = grp->window->style->bg_gc[GTK_STATE_SELECTED]; */
 
     /* draw vertical line */
     points[0] = points[2] = scalepos;
     points[1] = top;
     points[3] = bottom;
-    draw_line (points, grp->area, gc, pc);
+    draw_line (points, grp->area, grp->pixmap, gc, pc);
 
     /* draw backticks top and bottom */
     points[2] = points[0] - 5;
     points[1] = points[3] = top;
-    draw_line (points, grp->area, gc, pc);
+    draw_line (points, grp->area, grp->pixmap, gc, pc);
     points[1] = points[3] = bottom;
-    draw_line (points, grp->area, gc, pc);
+    draw_line (points, grp->area, grp->pixmap, gc, pc);
 
     /* draw backtick at middle */
     points[1] = points[3] = top + (bottom - top) / 2.0;
-    draw_line (points, grp->area, gc, pc);
+    draw_line (points, grp->area, grp->pixmap, gc, pc);
     
     /* mark max and min values on scale */
     sprintf(numstr, "%.4g", grp->gmax);
-    setup_text (grp->area, gc, pc, numstr, scalepos - 10, top, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, top, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", grp->gmin);
-    setup_text (grp->area, gc, pc, numstr, scalepos - 10, bottom, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, bottom, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", (grp->gmax + grp->gmin) / 2.0);
-    setup_text (grp->area, gc, pc, numstr, scalepos - 10, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 }
 
 /* ............................................................. */
 
 static void 
-gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, 
+gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 		  GtkStyle *style, GtkPlotPC *pc,
 		  int height, double boxwidth, 
 		  double gmax, double gmin)
@@ -353,11 +372,12 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area,
     double median, uq, lq, maxval, minval;
     GdkRectangle rect;
     GdkGC *gc = NULL;
-    GdkGC *whitegc = NULL;
+    /* GdkGC *whitegc = NULL; */
 
     if (pc == NULL) {
-	gc = style->bg_gc[GTK_STATE_SELECTED];
-	whitegc = style->fg_gc[GTK_STATE_SELECTED];
+	gc = style->fg_gc[GTK_STATE_NORMAL];
+	/* gc = style->bg_gc[GTK_STATE_SELECTED]; */
+	/* whitegc = style->fg_gc[GTK_STATE_SELECTED]; */
     }
 
     median = ybase + (gmax - plot->median) * scale;
@@ -380,7 +400,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area,
 	rect.height = uq - lq; 	
 	gdk_draw_rectangle (pixmap, 
 			    gc, 
-			    TRUE, /* filled ? */
+			    FALSE, /* filled ? */
 			    plot->xbase, 
 			    uq, 
 			    boxwidth, 
@@ -392,34 +412,34 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area,
     points[0] = plot->xbase;
     points[1] = points[3] = median;
     points[2] = plot->xbase + boxwidth;
-    draw_line(points, area, whitegc, pc);
+    draw_line(points, area, pixmap, gc, pc); /* was whitegc */
 
     /* draw line to maximum value */
     points[0] = points[2] = xcenter;
     points[1] = maxval;
     points[3] = uq;
-    draw_line(points, area, gc, pc);
+    draw_line(points, area, pixmap, gc, pc);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = maxval;
-    draw_line(points, area, gc, pc);
+    draw_line(points, area, pixmap, gc, pc);
 
     /* draw line to minimum value */
     points[0] = points[2] = xcenter;
     points[1] = lq;
     points[3] = minval;
-    draw_line(points, area, gc, pc);
+    draw_line(points, area, pixmap, gc, pc);
 
     /* plus a little crossbar */
     points[0] = xcenter - 5.0;
     points[2] = xcenter + 5.0;
     points[1] = points[3] = minval;
-    draw_line(points, area, gc, pc);
+    draw_line(points, area, pixmap, gc, pc);
 
     /* write name of variable beneath */
-    setup_text (area, gc, pc, plot->varname, xcenter, 
+    setup_text (area, pixmap, gc, pc, plot->varname, xcenter, 
 		height * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
 }
 
@@ -431,6 +451,7 @@ destroy_boxplots (GtkWidget *w, gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
 
     free(grp->plots);
+    gdk_pixmap_unref(grp->pixmap);
     free(grp);
 }
 
@@ -452,10 +473,10 @@ make_area (PLOTGROUP *grp)
     gtk_widget_set_sensitive(grp->area, TRUE);
 
     gtk_signal_connect(GTK_OBJECT(grp->area), "configure_event",
-		       GTK_SIGNAL_FUNC(configure_event), NULL);
+		       GTK_SIGNAL_FUNC(configure_event), grp);
 
     gtk_signal_connect(GTK_OBJECT(grp->area), "expose_event",
-		       GTK_SIGNAL_FUNC(expose_event), NULL);
+		       GTK_SIGNAL_FUNC(expose_event), grp);
 
     gtk_signal_connect(GTK_OBJECT(grp->area), "button_press_event", 
 		       GTK_SIGNAL_FUNC(box_popup), grp);
@@ -550,7 +571,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
 
     for (i=0; i<grp->nplots; i++)
 	gtk_area_boxplot (&grp->plots[i], 
-			  NULL, NULL, &ps->pc, 
+			  NULL, NULL, NULL, &ps->pc, 
 			  grp->height, grp->boxwidth, 
 			  grp->gmax, grp->gmin);
     
@@ -599,7 +620,7 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
-    int width = 600, height = 450;
+    int width = 600, height = 448;
 
     x = mymalloc(n * sizeof *x);
     if (x == NULL) return 1;
@@ -632,66 +653,26 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
 
     plotgrp->height = height;
     plotgrp->width = width;
+    plotgrp->popup = NULL;
+    plotgrp->pixmap = NULL;
     place_plots (plotgrp);
 
     if (make_area(plotgrp) == NULL) return 1;
-    plotgrp->popup = NULL;
     gtk_widget_show(plotgrp->window);
 
     for (i=0; i<plotgrp->nplots; i++)
 	gtk_area_boxplot (&plotgrp->plots[i], 
-			  plotgrp->area, plotgrp->window->style, NULL, 
+			  plotgrp->area, plotgrp->pixmap,
+			  plotgrp->window->style, NULL, 
 			  height, plotgrp->boxwidth, 
 			  plotgrp->gmax, plotgrp->gmin);
     
     gtk_boxplot_yscale(plotgrp, NULL);
-
+    
     return 0;
 }
 
-static void plot_to_xpm (gpointer data)
-{    
-    PLOTGROUP *grp = (PLOTGROUP *) data;
-    GdkImage *image;
-    int i, j;
-    guint32 pixel, white_pixel;
-    FILE *fp;
-    
-    fp = fopen("boxtest.xpm", "w");
-    if (fp == NULL) {
-	errbox ("Couldn't open XPM file for writing");
-	return;
-    }
-
-    fprintf(fp, "/* XPM */\n"
-	    "static char *boxplot[] = {\n"
-	    "/* width height ncolors chars_per_pixel */\n"
-	    "\"%d %d 2 1\",\n"
-	    "/* colors */\n"
-	    "\"  c white\",\n"
-	    "\". c black\",\n"
-	    "/* pixels */\n", grp->width, grp->height);
-
-    image = gdk_image_get (grp->area->window, 0, 0, 
-			   grp->width, grp->height);
-
-    white_pixel = pow(2, image->depth) - 1;
-
-    for (i=0; i<grp->height; i++) {
-	fprintf(fp, "\"");
-	for (j=0; j<grp->width; j++) {
-	    pixel = gdk_image_get_pixel(image, j, i);
-	    if (pixel == white_pixel) fprintf(fp, " ");
-	    else fprintf(fp, ".");
-	}
-	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
-    }
-
-    gdk_image_destroy(image);
-    
-    fclose(fp);
-
-}
+/* copy functions */
 
 #ifdef G_OS_WIN32
 
@@ -702,50 +683,71 @@ static int cb_copy_image (gpointer data)
     int i, j;
     guint32 pixel, white_pixel;
     
-    int nSizeDIB = 0;
+    int dibsize = 0;
+    int palsize = sizeof(RGBQUAD) * 2;
 
     HANDLE hDIB;
     BOOL bRet;
+    BITMAPINFOHEADER *pInfo;
 
-    image = gdk_image_get(grp->area->window, 0, 0, 
+    image = gdk_image_get(grp->pixmap, 0, 0, 
 			  grp->width, grp->height);
 
     white_pixel = pow(2, image->depth) - 1;
 
     /* allocate room for DIB */
-    nSizeDIB = grp->width * grp->height + sizeof (BITMAPINFOHEADER);
-  
-    hDIB = GlobalAlloc (GMEM_MOVEABLE | GMEM_DDESHARE, nSizeDIB);
+    dibsize = palsize + (grp->width / 8) * grp->height
+        + sizeof (BITMAPINFOHEADER);
+
+    hDIB = GlobalAlloc (GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
     if (NULL == hDIB) {
 	    errbox ("Failed to allocate DIB");
-	    bRet = FALSE;
+	    return FALSE;
     }
 
     /* fill header info */
+    bRet = FALSE;
+    pInfo = GlobalLock (hDIB);
+    if (pInfo) {
+	pInfo->biSize   = sizeof(BITMAPINFOHEADER);
+	pInfo->biWidth  = grp->width;
+	pInfo->biHeight = -grp->height; /* top-down */
+	pInfo->biPlanes = 1;
+	pInfo->biBitCount = 1;
+	pInfo->biCompression = BI_RGB; /* none */
+	pInfo->biSizeImage = 0; /* not calculated/needed */
+	pInfo->biXPelsPerMeter =
+	    pInfo->biYPelsPerMeter = 0;
+	/* color map size */
+	pInfo->biClrUsed = 2;
+	pInfo->biClrImportant = 0; /* all */
+          
+	GlobalUnlock (hDIB);
+	bRet = TRUE;
+    } else 
+	errbox("Failed to lock DIB Header");
+
+    /* fill color map */
     if (bRet) {
-	BITMAPINFOHEADER *pInfo;
+	char *pBmp;
       
 	bRet = FALSE;
-	pInfo = GlobalLock (hDIB);
-	if (pInfo) {
-	    pInfo->biSize   = sizeof(BITMAPINFOHEADER);
-	    pInfo->biWidth  = grp->width;
-	    pInfo->biHeight = -grp->height; /* top-down */
-	    pInfo->biPlanes = 1;
-	    pInfo->biBitCount = 1;
-	    pInfo->biCompression = BI_RGB; /* none */
-	    pInfo->biSizeImage = 0; /* not calculated/needed */
-	    pInfo->biXPelsPerMeter =
-		pInfo->biYPelsPerMeter = 0;
-	    /* color map size */
-	    pInfo->biClrUsed = 0;
-	    pInfo->biClrImportant = 0; /* all */
-          
-	    GlobalUnlock (hDIB);
+	pBmp = GlobalLock (hDIB);
+	if (pBmp) {
+	    RGBQUAD *pPal;
+
+	    pPal = (RGBQUAD*)(pBmp + sizeof(BITMAPINFOHEADER));
+
+	    pPal[0].rgbReserved = pPal[1].rgbReserved = 0;
+	    pPal[0].rgbRed = pPal[0].rgbGreen = pPal[0].rgbBlue = 0;
+	    pPal[1].rgbRed = pPal[1].rgbGreen = pPal[1].rgbBlue = 255;
+	  
 	    bRet = TRUE;
-	} else
-	    errbox("Failed to lock DIB Header");
-    }
+	    GlobalUnlock (hDIB);
+	} 
+	else
+	    errbox ("Failed to lock DIB Palette");
+    } 
   
     /* copy data to DIB */
     if (bRet) {
@@ -753,25 +755,33 @@ static int cb_copy_image (gpointer data)
       
 	bRet = FALSE;
 	pData = GlobalLock (hDIB);
-      
+
 	if (pData) {
-
+	    int x, y, bits[8];
+	    unsigned char ch;
+	    
 	    /* calculate real offset */
-	    pData += sizeof(BITMAPINFOHEADER);
+	    pData += (sizeof(BITMAPINFOHEADER) + palsize);
 
-	    for (i=0; i<grp->height; i++) {
-		for (j=0; j<grp->width; j++) {
-		    pixel = gdk_image_get_pixel(image, j, i);
-		    if (pixel == white_pixel) *pData++ = 0;
-		    else *pData++ = 1;
+	    /* FIXME: are the bits, and the rows, in the right order? */
+	    j = 0;
+	    for (y=0; y<grp->height; y++) {
+		i = 0; ch = 0;
+		for (x=0; x<grp->width; x++) {
+		    pixel = gdk_image_get_pixel(image, x, y);
+		    if (pixel == white_pixel) bits[i] = 0;
+		    else bits[i] = 1;
+		    ch |= (bits[i] << i);
+		    if ((x + 1) % 8 == 0) {
+			pData[j++] = ch;
+			i = 0;
+			ch = 0;
+		    }
 		}
-	    }	    
-          
+	    }
 	    bRet = TRUE;
-          
 	    GlobalUnlock (hDIB);
-	} /* (pData) */
-	else
+	} else 
 	    errbox("Failed to lock DIB Data");
     } /* copy data to DIB */
   
@@ -803,4 +813,72 @@ static int cb_copy_image (gpointer data)
     return bRet;
 } 
 
-#endif /* G_OS_WIN32 */
+#else /* end G_OS_WIN32 */
+
+int plot_to_xpm (const char *fname, gpointer data)
+{    
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+    GdkImage *image;
+    int i, j;
+    guint32 pixel, white_pixel;
+    FILE *fp;
+    
+    fp = fopen(fname, "w");
+    if (fp == NULL) {
+	errbox ("Couldn't open XPM file for writing");
+	return 1;
+    }
+
+    fprintf(fp, "/* XPM */\n"
+	    "static char *boxplot[] = {\n"
+	    "/* width height ncolors chars_per_pixel */\n"
+	    "\"%d %d 2 1\",\n"
+	    "/* colors */\n"
+	    "\"  c white\",\n"
+	    "\". c black\",\n"
+	    "/* pixels */\n", grp->width, grp->height);
+
+
+    image = gdk_image_get (grp->pixmap, 0, 0, 
+			   grp->width, grp->height);
+
+    white_pixel = pow(2, image->depth) - 1;
+
+    for (i=0; i<grp->height; i++) {
+	fprintf(fp, "\"");
+	for (j=0; j<grp->width; j++) {
+	    pixel = gdk_image_get_pixel(image, j, i);
+	    if (pixel == white_pixel) fprintf(fp, " ");
+	    else fprintf(fp, ".");
+	}
+	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
+    }
+
+    if (1) {
+	int x, y, ch, bits[8];
+
+	for (y=0; y<grp->height; y++) {
+	    i = 0; ch = 0;
+	    for (x=0; x<grp->width; x++) {
+		pixel = gdk_image_get_pixel(image, x, y);
+		if (pixel == white_pixel) bits[i] = 0;
+		else bits[i] = 1;
+		ch |= bits[i] << i;
+		if (x && x % 8 == 0) {
+		    fprintf(stderr, "%d ", ch);
+		    i = 0;
+		    ch = 0;
+		}
+	    }
+	    fprintf(stderr, "\n");
+	}
+    }
+
+    gdk_image_destroy(image);
+
+    fclose(fp);
+
+    return 0;
+}
+
+#endif 

@@ -28,6 +28,7 @@ extern GtkItemFactoryEntry sample_script_items[];
 extern char remember_dir[MAXLEN];
 extern void do_save_graph (const char *fname, const char *savestr);
 extern int ps_print_plots (const char *fname, int flag, gpointer data);
+extern int plot_to_xpm (const char *fname, gpointer data);
 
 struct extmap {
     int action;
@@ -47,6 +48,7 @@ static struct extmap action_map[] = {
     {SAVE_GP_CMDS, "*.gp"},
     {SAVE_BOXPLOT_EPS, "*.eps"},
     {SAVE_BOXPLOT_PS, "*.ps"},
+    {SAVE_BOXPLOT_XPM, "*.xpm"},
     {EXPORT_CSV, "*.csv"},
     {EXPORT_R, "*.R"},
     {EXPORT_R_ALT, "*.R"},
@@ -464,6 +466,13 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	if (!err) infobox("boxplots saved");
 	else errbox("boxplot save failed");
     }
+    else if (action == SAVE_BOXPLOT_XPM) {
+	int err;
+
+	err = plot_to_xpm(fname, gtk_object_get_data(GTK_OBJECT(fs), "graph"));
+	if (!err) infobox("boxplots saved");
+	else errbox("boxplot save failed");
+    }
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
 	
@@ -520,11 +529,15 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
 
     /* special cases */
+
     if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH
-	|| action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) 
+	|| action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS ||
+	action == SAVE_BOXPLOT_XPM) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
+
     else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+
     else if (action == SAVE_DATA && paths.datfile[0] &&
 	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {
 	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
