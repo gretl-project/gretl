@@ -1236,7 +1236,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
 
-    /* popup menu? */
+    /* want popup menu? */
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
 	/* vwin->w is the gtktext widget */
