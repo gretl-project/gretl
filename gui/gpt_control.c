@@ -194,7 +194,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
     int i, tbl_len;
     GList *keypos = NULL;
 
-    char *key_positions[6] = {
+    gchar *key_positions[] = {
 	"left top",
 	"right top",
 	"left bottom",
@@ -262,8 +262,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *plot)
     GtkWidget *tempwid, *box, *tbl;
     int i, tbl_len;
     GList *termtype = NULL;
-
-    char *terminal_types[5] = {
+    gchar *terminal_types[] = {
 	"postscript",
 	"fig",
 	"latex",
@@ -425,7 +424,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 				  yaxiscombo[i], 2, 3, tbl_len-1, tbl_len);
 	gtk_combo_set_popdown_strings(GTK_COMBO(yaxiscombo[i]), yaxis_loc); 
 	gtk_entry_set_text (GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry), 
-			    (plot->lines[i].yaxis == 1)? "left": "right");  
+			    (plot->lines[i].yaxis == 1)? "left" : "right");  
 	gtk_widget_show (yaxiscombo[i]);	
     }
 }
@@ -490,7 +489,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 			      tempwid, 0, 1, tbl_len-3, tbl_len-2);
     gtk_widget_show(tempwid);
     axis_range[axis].isauto = 
-	gtk_radio_button_new_with_label(NULL, "auto axis range");
+	gtk_radio_button_new_with_label(NULL, _("auto axis range"));
     gtk_signal_connect(GTK_OBJECT(axis_range[axis].isauto), "clicked",
 		       GTK_SIGNAL_FUNC(flip_manual_range), 
 		       GINT_TO_POINTER(axis_range[axis].ID));
@@ -504,7 +503,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 	gtk_radio_button_new_with_label(gtk_radio_button_group 
 					(GTK_RADIO_BUTTON 
 					 (axis_range[axis].isauto)),
-					"manual range:"); 
+					_("manual range:")); 
     gtk_signal_connect(GTK_OBJECT(manual), "clicked",
 		       GTK_SIGNAL_FUNC(flip_manual_range), 
 		       GINT_TO_POINTER(axis_range[axis].ID));
@@ -514,7 +513,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 
     /* axis range min. entry */
     tbl_len++;
-    tempwid = gtk_label_new("minimum");
+    tempwid = gtk_label_new(_("minimum"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(tempwid);
@@ -530,7 +529,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *plot, gint axis)
 
     /* axis range max. entry */
     tbl_len++;
-    tempwid = gtk_label_new("maximum");
+    tempwid = gtk_label_new(_("maximum"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(tempwid);
@@ -754,11 +753,13 @@ void gpt_save_dialog (void)
     gint tbl_len;
     GList *termtype = NULL;
     int i;
-    char *ttypes[] = {"postscript", 
-		      "fig", 
-		      "latex", 
-		      "png",
-		      "plot commands"};
+    gchar *ttypes[] = {
+	"postscript", 
+	"fig", 
+	"latex", 
+	"png",
+	"plot commands"
+    };
 
     if (dialog != NULL) {
 	gdk_window_raise(dialog->window);
@@ -789,7 +790,7 @@ void gpt_save_dialog (void)
 		       tbl, FALSE, FALSE, 0);
     gtk_widget_show(tbl);
 
-    tempwid = gtk_label_new("output type");
+    tempwid = gtk_label_new(_("output type"));
     gtk_table_attach_defaults(GTK_TABLE (tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(tempwid);
