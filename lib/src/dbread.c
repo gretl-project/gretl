@@ -1114,6 +1114,11 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	/* free up temp stuff */
 	free(dbZ[1]);
 	free(dbZ);
+
+	if (!err) {
+	    pprintf(prn, _("Series imported OK"));
+	    pputs(prn, "\n");
+	}
     }
     
     return err;
@@ -1193,7 +1198,7 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    return 1;
 	}
 	if (compact_method == COMPACT_NONE) {
-	    strcpy(gretl_errmsg, _("FIXME string needed"));
+	    strcpy(gretl_errmsg, _("You must specify a compaction method"));
 	    dataset_drop_vars(1, pZ, pdinfo);
 	    return 1;
 	}
