@@ -672,6 +672,8 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     int do_graph = !batch;
     FILE *fq = NULL;
 
+    *gretl_errmsg = 0;
+
     list[0] = 1;
     list[1] = varno;
     _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);

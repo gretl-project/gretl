@@ -467,7 +467,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline CLI_LIBS RL_OBJ new_readline INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -11854,7 +11854,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_f2c_c_sqrt" >&5
 echo "${ECHO_T}$ac_cv_lib_f2c_c_sqrt" >&6
 if test $ac_cv_lib_f2c_c_sqrt = yes; then
-  FLIB="f2c"
+  FLIB="-lf2c"
 else
   FLIB="none"
 fi
@@ -11915,7 +11915,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_lib_g2c_c_sqrt" >&5
 echo "${ECHO_T}$ac_cv_lib_g2c_c_sqrt" >&6
 if test $ac_cv_lib_g2c_c_sqrt = yes; then
-  FLIB="g2c"
+  FLIB="-lg2c"
 else
   FLIB="none"
 fi
@@ -11929,7 +11929,7 @@ fi
 echo $ECHO_N "checking for LAPACK... $ECHO_C" >&6
 
   LAPACK_CFLAGS="-I$lapack_config_prefix/include -I./plugin"
-  LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas -l$FLIB"
+  LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
 
   ac_save_LIBS="$LIBS"
   CFLAGS="$CFLAGS $LAPACK_CFLAGS"
@@ -12055,6 +12055,7 @@ rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
      LAPACK_LIBS=""
      :
   fi
+
 
 
   rm -f conf.lapacktest
@@ -15197,6 +15198,7 @@ s,@GMP_CFLAGS@,$GMP_CFLAGS,;t t
 s,@GMP_LIBS@,$GMP_LIBS,;t t
 s,@LAPACK_CFLAGS@,$LAPACK_CFLAGS,;t t
 s,@LAPACK_LIBS@,$LAPACK_LIBS,;t t
+s,@FLIB@,$FLIB,;t t
 s,@GNUPLOT@,$GNUPLOT,;t t
 s,@LATEX@,$LATEX,;t t
 s,@PKG_CONFIG@,$PKG_CONFIG,;t t

@@ -146,3 +146,19 @@ char *get_gretl_msg (void)
     if (gretl_msg[0] == 0) return NULL;
     return gretl_msg;
 }
+
+/**
+ * gretl_errmsg_set_default:
+ * @str: the default message
+ *
+ * If gretl_errmsg is currently blank, copy the given string into
+ * the message space.
+ * 
+ */
+
+void gretl_errmsg_set_default (const char *str)
+{
+    if (*gretl_errmsg == 0) {
+	strncat(gretl_errmsg, str, ERRLEN - 1);
+    }
+}

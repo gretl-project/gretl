@@ -1,0 +1,17 @@
+# Elements of Wilkinson's (1985) "Statistics Quiz"
+open nasty.gdt
+gnuplot HUGE TINY
+# compute basic stats for all vars
+summary
+# correlation matrix: all defined entries should be 1.0
+corr
+# regression, regular and multiple precision (exact fit)
+ols BIG X const
+mpols BIG X const
+# "The program should not complain"
+ols X X const
+# Should complain of singularity...
+ols X BIG LITTLE const
+# Ought to fail...
+ols ZERO X const
+

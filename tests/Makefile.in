@@ -4,6 +4,7 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 have_gtk = @have_gtk@
 GMP_LIBS = @GMP_LIBS@
+FLIB = @FLIB@
 
 ifeq ($(CC),)
   CC = gcc
@@ -30,10 +31,10 @@ nistcheck: nistcheck.o
 	../libtool --mode=link $(CC) -o $@ $< $(LIBGRETL)
 
 randcheck: diehard mtrand
-	./mtrand && diehard
+	./mtrand && ./diehard
 
 diehard: diehard.c
-	$(CC) -o $@ $< -lf2c -lm
+	$(CC) -o $@ $< $(FLIB) -lm
 
 mtrand: mtrand.o
 	../libtool --mode=link $(CC) -o $@ $< $(RAND_LIBS)

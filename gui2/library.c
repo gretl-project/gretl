@@ -2415,7 +2415,8 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
 
     err = periodogram(command.list[1], &Z, datainfo, &paths, 0, opt, prn);
     if (err) {
-	errbox(_("Periodogram command failed"));
+	gretl_errmsg_set_default(_("Periodogram command failed"));
+	gui_errmsg(1);
 	gretl_print_destroy(prn);
 	return;
     }
