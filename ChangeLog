@@ -1,4 +1,4 @@
-version 1.2.5
+4/03/2004 version 1.2.5
 - fix problem with acf and pacf calculations
 - add Prais-Winsten estimator for AR1 models ("pwe" command)
 - fix bugs in gretl "graph page"
@@ -17,6 +17,9 @@ version 1.2.5
   the "startobs" field
 - saving text files: try to improve handling of CR/LF
 - minor fixes to model printing
+- gnuplot fix: make copy-and-paste into Microsoft applications
+  work again (this was broken by an MS security update of April
+  13, 2004)
 
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables

@@ -223,7 +223,7 @@ int restrict_sample (const char *line,
     double xx, *dum = NULL;
     char **S = NULL, dumv[VNAMELEN];
     int subnum = 0, dumnum = 0;
-    int i, t, st, sn, n = oldinfo->n;
+    int i, t, st, sn = 0, n = oldinfo->n;
     int opt = SUBSAMPLE_UNKNOWN;
 
     *gretl_errmsg = '\0';
@@ -246,7 +246,6 @@ int restrict_sample (const char *line,
     if (opt == SUBSAMPLE_DROP_MISSING) {
 	dum = malloc(n * sizeof *dum);
 	if (dum == NULL) return E_ALLOC;
-	sn = 0;
     }
 
     if (opt == SUBSAMPLE_DROP_MISSING && list != NULL) {   

@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 1.0.6\n"
-"POT-Creation-Date: 2004-04-30 07:55-0400\n"
+"POT-Creation-Date: 2004-05-03 13:53-0400\n"
 "PO-Revision-Date: 2003-03-22 21:18+0900\n"
 "Last-Translator: Masayuki Hatta <mhatta@po.airs.net>\n"
 "Language-Team: Japanese <translation-team-ja@lists.sourceforge.net>\n"
@@ -195,7 +195,7 @@ msgstr ""
 msgid "Out of memory!"
 msgstr ""
 
-#: lib/src/compare.c:1866 lib/src/compare.c:1886 lib/src/pvalues.c:601
+#: lib/src/compare.c:1866 lib/src/compare.c:1886 lib/src/pvalues.c:603
 msgid "Invalid input\n"
 msgstr ""
 
@@ -1445,13 +1445,13 @@ msgstr ""
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr ""
 
-#: lib/src/estimate.c:3109 lib/src/pvalues.c:636
+#: lib/src/estimate.c:3109 lib/src/pvalues.c:638
 msgid "Couldn't load plugin function\n"
 msgstr ""
 
 #: lib/src/generate.c:323 lib/src/interact.c:1521 lib/src/nls.c:104
-#: lib/src/nls.c:532 lib/src/nls.c:582 lib/src/pvalues.c:202
-#: lib/src/pvalues.c:225 lib/src/pvalues.c:251
+#: lib/src/nls.c:532 lib/src/nls.c:582 lib/src/pvalues.c:204
+#: lib/src/pvalues.c:227 lib/src/pvalues.c:253
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr ""
@@ -1812,11 +1812,11 @@ msgstr ""
 msgid "Actual and fitted %s versus %s"
 msgstr ""
 
-#: lib/src/graphing.c:1128 lib/src/pvalues.c:277 lib/src/pvalues.c:295
+#: lib/src/graphing.c:1128 lib/src/pvalues.c:279 lib/src/pvalues.c:297
 msgid "left"
 msgstr ""
 
-#: lib/src/graphing.c:1133 lib/src/pvalues.c:277 lib/src/pvalues.c:295
+#: lib/src/graphing.c:1133 lib/src/pvalues.c:279 lib/src/pvalues.c:297
 msgid "right"
 msgstr ""
 
@@ -3386,82 +3386,82 @@ msgid ""
 "Enter x value (value < 0 will exit menu): "
 msgstr ""
 
-#: lib/src/pvalues.c:244
+#: lib/src/pvalues.c:246
 msgid ""
 "\n"
 "statistic has missing value code\n"
 msgstr ""
 
-#: lib/src/pvalues.c:273 lib/src/pvalues.c:291 lib/src/pvalues.c:311
-#: lib/src/pvalues.c:328
+#: lib/src/pvalues.c:275 lib/src/pvalues.c:293 lib/src/pvalues.c:313
+#: lib/src/pvalues.c:330
 msgid ""
 "\n"
 "p-value calculation failed\n"
 msgstr ""
 
-#: lib/src/pvalues.c:276
+#: lib/src/pvalues.c:278
 #, c-format
 msgid ""
 "\n"
 "Standard normal: area to the %s of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:279 lib/src/pvalues.c:297
+#: lib/src/pvalues.c:281 lib/src/pvalues.c:299
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:286
+#: lib/src/pvalues.c:288
 msgid ""
 "\n"
 "pvalue for t: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:294
+#: lib/src/pvalues.c:296
 #, c-format
 msgid ""
 "\n"
 "t(%d): area to the %s of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:306
+#: lib/src/pvalues.c:308
 msgid ""
 "\n"
 "pvalue for chi-square: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:314
+#: lib/src/pvalues.c:316
 #, c-format
 msgid ""
 "\n"
 "Chi-square(%d): area to the right of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:316 lib/src/pvalues.c:333
+#: lib/src/pvalues.c:318 lib/src/pvalues.c:335
 #, c-format
 msgid "(to the left: %g)\n"
 msgstr ""
 
-#: lib/src/pvalues.c:323
+#: lib/src/pvalues.c:325
 msgid ""
 "\n"
 "pvalue for F: missing parameter\n"
 msgstr ""
 
-#: lib/src/pvalues.c:331
+#: lib/src/pvalues.c:333
 #, c-format
 msgid ""
 "\n"
 "F(%d, %d): area to the right of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:341
+#: lib/src/pvalues.c:343
 msgid ""
 "\n"
 "Error computing gamma distribution\n"
 msgstr ""
 
-#: lib/src/pvalues.c:343
+#: lib/src/pvalues.c:345
 #, c-format
 msgid ""
 "\n"
@@ -3469,13 +3469,13 @@ msgid ""
 " area to the right of %g = %g\n"
 msgstr ""
 
-#: lib/src/pvalues.c:350
+#: lib/src/pvalues.c:352
 msgid ""
 "\n"
 "unrecognized pvalue code\n"
 msgstr ""
 
-#: lib/src/pvalues.c:374
+#: lib/src/pvalues.c:376
 msgid ""
 "\n"
 "\n"
@@ -3489,96 +3489,96 @@ msgid ""
 "1, 2, 3, 4, or 5): "
 msgstr ""
 
-#: lib/src/pvalues.c:408
+#: lib/src/pvalues.c:410
 msgid ""
 "\n"
 "invalid choice"
 msgstr ""
 
-#: lib/src/pvalues.c:412
+#: lib/src/pvalues.c:414
 msgid ""
 "\n"
 "Do you want to continue with more pvalues (y or n)? "
 msgstr ""
 
-#: lib/src/pvalues.c:429
+#: lib/src/pvalues.c:431
 #, c-format
 msgid ""
 "\n"
 "For the standard normal, area (one-tail) to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:449
+#: lib/src/pvalues.c:451
 #, c-format
 msgid ""
 "\n"
 "For Student's t(%d), area (one-tail) to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:468
+#: lib/src/pvalues.c:470
 #, c-format
 msgid ""
 "\n"
 "For Chi-square(%d), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:480
+#: lib/src/pvalues.c:482
 msgid " for the numerator "
 msgstr ""
 
-#: lib/src/pvalues.c:483
+#: lib/src/pvalues.c:485
 msgid " for the denominator "
 msgstr ""
 
-#: lib/src/pvalues.c:490
+#: lib/src/pvalues.c:492
 #, c-format
 msgid ""
 "\n"
 "For F(%d, %d), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:502
+#: lib/src/pvalues.c:504
 msgid ""
 "\n"
 "Enter the mean: "
 msgstr ""
 
-#: lib/src/pvalues.c:505
+#: lib/src/pvalues.c:507
 msgid ""
 "\n"
 "Enter the variance: "
 msgstr ""
 
-#: lib/src/pvalues.c:512
+#: lib/src/pvalues.c:514
 #, c-format
 msgid ""
 "\n"
 "For Gamma (mean %g, variance %g), area to the right of %g is "
 msgstr ""
 
-#: lib/src/pvalues.c:533
+#: lib/src/pvalues.c:535
 #, c-format
 msgid ""
 "\n"
 "Enter d.f.%s(value <= 0 will exit menu): "
 msgstr ""
 
-#: lib/src/pvalues.c:606
+#: lib/src/pvalues.c:608
 msgid "Invalid degrees of freedom\n"
 msgstr ""
 
-#: lib/src/pvalues.c:610
+#: lib/src/pvalues.c:612
 msgid "Invalid sample size\n"
 msgstr ""
 
-#: lib/src/pvalues.c:651 gui2/calculator.c:219
+#: lib/src/pvalues.c:653 gui2/calculator.c:219
 #, c-format
 msgid ""
 "Approximate critical values of F(%d, %d)\n"
 "\n"
 msgstr ""
 
-#: lib/src/pvalues.c:653 gui2/calculator.c:221
+#: lib/src/pvalues.c:655 gui2/calculator.c:221
 #, c-format
 msgid " 10%% in right tail %.2f\n"
 msgstr ""

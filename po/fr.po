@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
-"POT-Creation-Date: 2004-04-30 07:55-0400\n"
+"POT-Creation-Date: 2004-05-03 13:53-0400\n"
 "PO-Revision-Date: 2004-05-02 10:24-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -209,7 +209,7 @@ msgstr "Échec d'analyse de la commande mp_ols\n"
 msgid "Out of memory!"
 msgstr "Mémoire épuisée!"
 
-#: lib/src/compare.c:1866 lib/src/compare.c:1886 lib/src/pvalues.c:601
+#: lib/src/compare.c:1866 lib/src/compare.c:1886 lib/src/pvalues.c:603
 msgid "Invalid input\n"
 msgstr "Entrée invalide\n"
 
@@ -1560,13 +1560,13 @@ msgstr "Estimation pondérée non complétée"
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr "L'effet ARCH est significatif au seuil de 10 pourcent"
 
-#: lib/src/estimate.c:3109 lib/src/pvalues.c:636
+#: lib/src/estimate.c:3109 lib/src/pvalues.c:638
 msgid "Couldn't load plugin function\n"
 msgstr "Ne peut charger la fonction du plugin\n"
 
 #: lib/src/generate.c:323 lib/src/interact.c:1521 lib/src/nls.c:104
-#: lib/src/nls.c:532 lib/src/nls.c:582 lib/src/pvalues.c:202
-#: lib/src/pvalues.c:225 lib/src/pvalues.c:251
+#: lib/src/nls.c:532 lib/src/nls.c:582 lib/src/pvalues.c:204
+#: lib/src/pvalues.c:227 lib/src/pvalues.c:253
 #, c-format
 msgid "Unknown variable '%s'"
 msgstr "variable inconnue: « %s »"
@@ -1941,11 +1941,11 @@ msgstr "Actuel et ajusté %s"
 msgid "Actual and fitted %s versus %s"
 msgstr "Actuel et ajusté %s versus %s"
 
-#: lib/src/graphing.c:1128 lib/src/pvalues.c:277 lib/src/pvalues.c:295
+#: lib/src/graphing.c:1128 lib/src/pvalues.c:279 lib/src/pvalues.c:297
 msgid "left"
 msgstr "gauche"
 
-#: lib/src/graphing.c:1133 lib/src/pvalues.c:277 lib/src/pvalues.c:295
+#: lib/src/graphing.c:1133 lib/src/pvalues.c:279 lib/src/pvalues.c:297
 msgid "right"
 msgstr "droite"
 
@@ -3628,7 +3628,7 @@ msgstr ""
 "\n"
 "Entrer la valeur de x (une valeur < 0 provoque le retourn au menu): "
 
-#: lib/src/pvalues.c:244
+#: lib/src/pvalues.c:246
 msgid ""
 "\n"
 "statistic has missing value code\n"
@@ -3636,8 +3636,8 @@ msgstr ""
 "\n"
 "statistiques a un code de valeur manquant\n"
 
-#: lib/src/pvalues.c:273 lib/src/pvalues.c:291 lib/src/pvalues.c:311
-#: lib/src/pvalues.c:328
+#: lib/src/pvalues.c:275 lib/src/pvalues.c:293 lib/src/pvalues.c:313
+#: lib/src/pvalues.c:330
 msgid ""
 "\n"
 "p-value calculation failed\n"
@@ -3645,7 +3645,7 @@ msgstr ""
 "\n"
 "échec du calcul de la valeur de P\n"
 
-#: lib/src/pvalues.c:276
+#: lib/src/pvalues.c:278
 #, c-format
 msgid ""
 "\n"
@@ -3654,12 +3654,12 @@ msgstr ""
 "\n"
 "Normale standard: aire à la %s de %g = %g\n"
 
-#: lib/src/pvalues.c:279 lib/src/pvalues.c:297
+#: lib/src/pvalues.c:281 lib/src/pvalues.c:299
 #, c-format
 msgid "(two-tailed value = %g; complement = %g)\n"
 msgstr "(valeur bilatérale = %g; complément = %g)\n"
 
-#: lib/src/pvalues.c:286
+#: lib/src/pvalues.c:288
 msgid ""
 "\n"
 "pvalue for t: missing parameter\n"
@@ -3667,7 +3667,7 @@ msgstr ""
 "\n"
 "valeur de P pour t: paramètre manquan\n"
 
-#: lib/src/pvalues.c:294
+#: lib/src/pvalues.c:296
 #, c-format
 msgid ""
 "\n"
@@ -3676,7 +3676,7 @@ msgstr ""
 "\n"
 "t (%d): aire à la %s de %g = %g\n"
 
-#: lib/src/pvalues.c:306
+#: lib/src/pvalues.c:308
 msgid ""
 "\n"
 "pvalue for chi-square: missing parameter\n"
@@ -3684,7 +3684,7 @@ msgstr ""
 "\n"
 "valeur de P pour Khi-deux: paramètre manquant\n"
 
-#: lib/src/pvalues.c:314
+#: lib/src/pvalues.c:316
 #, c-format
 msgid ""
 "\n"
@@ -3693,12 +3693,12 @@ msgstr ""
 "\n"
 "Khi-deux(%d): aire à la droite de %g = %g\n"
 
-#: lib/src/pvalues.c:316 lib/src/pvalues.c:333
+#: lib/src/pvalues.c:318 lib/src/pvalues.c:335
 #, c-format
 msgid "(to the left: %g)\n"
 msgstr "(à la gauche: %g)\n"
 
-#: lib/src/pvalues.c:323
+#: lib/src/pvalues.c:325
 msgid ""
 "\n"
 "pvalue for F: missing parameter\n"
@@ -3706,7 +3706,7 @@ msgstr ""
 "\n"
 "valeur de P pour F: paramètre manquant\n"
 
-#: lib/src/pvalues.c:331
+#: lib/src/pvalues.c:333
 #, c-format
 msgid ""
 "\n"
@@ -3715,7 +3715,7 @@ msgstr ""
 "\n"
 "F (%d, %d): aira à la droite de %g = %g\n"
 
-#: lib/src/pvalues.c:341
+#: lib/src/pvalues.c:343
 msgid ""
 "\n"
 "Error computing gamma distribution\n"
@@ -3723,7 +3723,7 @@ msgstr ""
 "\n"
 "Erreur de calcul de la distribution gamma\n"
 
-#: lib/src/pvalues.c:343
+#: lib/src/pvalues.c:345
 #, c-format
 msgid ""
 "\n"
@@ -3734,7 +3734,7 @@ msgstr ""
 "Gamma (moyenne %g, variance %g, forme %g, échelle %g):\n"
 " aire à la droite de %f = %g\n"
 
-#: lib/src/pvalues.c:350
+#: lib/src/pvalues.c:352
 msgid ""
 "\n"
 "unrecognized pvalue code\n"
@@ -3742,7 +3742,7 @@ msgstr ""
 "\n"
 "code de la valeur p non reconnu\n"
 
-#: lib/src/pvalues.c:374
+#: lib/src/pvalues.c:376
 msgid ""
 "\n"
 "\n"
@@ -3767,7 +3767,7 @@ msgstr ""
 "menu, ou\n"
 "1, 2, 3, 4, or 5): "
 
-#: lib/src/pvalues.c:408
+#: lib/src/pvalues.c:410
 msgid ""
 "\n"
 "invalid choice"
@@ -3775,7 +3775,7 @@ msgstr ""
 "\n"
 "choix invalide"
 
-#: lib/src/pvalues.c:412
+#: lib/src/pvalues.c:414
 msgid ""
 "\n"
 "Do you want to continue with more pvalues (y or n)? "
@@ -3783,7 +3783,7 @@ msgstr ""
 "\n"
 "Désirez-vous contienuer avec plus de valeurs p (y pour oui ou n pour non)? "
 
-#: lib/src/pvalues.c:429
+#: lib/src/pvalues.c:431
 #, c-format
 msgid ""
 "\n"
@@ -3792,7 +3792,7 @@ msgstr ""
 "\n"
 "Pour la normale standard, aire (unilatéral) à la droite de %g est "
 
-#: lib/src/pvalues.c:449
+#: lib/src/pvalues.c:451
 #, c-format
 msgid ""
 "\n"
@@ -3801,7 +3801,7 @@ msgstr ""
 "\n"
 "Pour le t de Student (%d), aire (unilatéral) à droite de %g est "
 
-#: lib/src/pvalues.c:468
+#: lib/src/pvalues.c:470
 #, c-format
 msgid ""
 "\n"
@@ -3810,15 +3810,15 @@ msgstr ""
 "\n"
 "Pour le Khi-deux(%d), aire à la droite de %g est "
 
-#: lib/src/pvalues.c:480
+#: lib/src/pvalues.c:482
 msgid " for the numerator "
 msgstr " pour le numérateur"
 
-#: lib/src/pvalues.c:483
+#: lib/src/pvalues.c:485
 msgid " for the denominator "
 msgstr " pour le dénominateur "
 
-#: lib/src/pvalues.c:490
+#: lib/src/pvalues.c:492
 #, c-format
 msgid ""
 "\n"
@@ -3827,7 +3827,7 @@ msgstr ""
 "\n"
 "Pour F(%d, %d), aire à la droite de %g est "
 
-#: lib/src/pvalues.c:502
+#: lib/src/pvalues.c:504
 msgid ""
 "\n"
 "Enter the mean: "
@@ -3835,7 +3835,7 @@ msgstr ""
 "\n"
 "Entrer la moyenne: "
 
-#: lib/src/pvalues.c:505
+#: lib/src/pvalues.c:507
 msgid ""
 "\n"
 "Enter the variance: "
@@ -3843,7 +3843,7 @@ msgstr ""
 "\n"
 "Entrer la variance: "
 
-#: lib/src/pvalues.c:512
+#: lib/src/pvalues.c:514
 #, c-format
 msgid ""
 "\n"
@@ -3852,7 +3852,7 @@ msgstr ""
 "\n"
 "Pour Gamma (moyenne %g, variance %g), aire à la droite de %g est "
 
-#: lib/src/pvalues.c:533
+#: lib/src/pvalues.c:535
 #, c-format
 msgid ""
 "\n"
@@ -3861,15 +3861,15 @@ msgstr ""
 "\n"
 "Entrer d.f.%s(une valeur <= 0 provoque le retour au menu): "
 
-#: lib/src/pvalues.c:606
+#: lib/src/pvalues.c:608
 msgid "Invalid degrees of freedom\n"
 msgstr "Degré de liberté invalide\n"
 
-#: lib/src/pvalues.c:610
+#: lib/src/pvalues.c:612
 msgid "Invalid sample size\n"
 msgstr "Taille d'échantillon invalide\n"
 
-#: lib/src/pvalues.c:651 gui2/calculator.c:219
+#: lib/src/pvalues.c:653 gui2/calculator.c:219
 #, c-format
 msgid ""
 "Approximate critical values of F(%d, %d)\n"
@@ -3878,7 +3878,7 @@ msgstr ""
 "Valeurs critiques approximées de F(%d, %d)\n"
 "\n"
 
-#: lib/src/pvalues.c:653 gui2/calculator.c:221
+#: lib/src/pvalues.c:655 gui2/calculator.c:221
 #, c-format
 msgid " 10%% in right tail %.2f\n"
 msgstr " 10%% unilatéral droit %.2f\n"

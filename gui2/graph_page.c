@@ -92,7 +92,9 @@ static void graph_page_init (void)
 
 static void doctop (int otype, FILE *fp)
 {
-    fprintf(fp, "\\documentclass%s{article}\n", (in_usa)? "" : "[a4paper]");
+    int letter = in_usa();
+
+    fprintf(fp, "\\documentclass%s{article}\n", (letter)? "" : "[a4paper]");
     fprintf(fp, "\\usepackage[%s]{graphicx}\n", 
 	    (otype == PS_OUTPUT)? "dvips" : "pdftex");
 }
