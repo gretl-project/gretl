@@ -174,6 +174,20 @@ static void add_var_on_right (gint i, selector *sr)
     }
 }
 
+static void add_all_to_right_callback (GtkWidget *w, selector *sr)
+{
+    GList *mylist;
+
+    if (!GTK_IS_CLIST(sr->varlist) ||
+	!GTK_IS_CLIST(sr->rightvars)) return;
+
+    gtk_clist_select_all(GTK_CLIST(sr->varlist));
+    mylist = GTK_CLIST(sr->varlist)->selection;
+
+    if (mylist != NULL) 
+	g_list_foreach(mylist, (GFunc) add_var_on_right, sr);
+}
+
 static void add_to_right_callback (GtkWidget *w, selector *sr)
 {
     GList *mylist;
@@ -1253,6 +1267,14 @@ void simple_selection (const char *title, const char *oktxt,
     gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
                         GTK_SIGNAL_FUNC(add_to_right_callback), sr);
     gtk_widget_show(tmp);
+
+    if (p == NULL) {
+	tmp = gtk_button_new_with_label (_("All ->"));
+	gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
+	gtk_signal_connect (GTK_OBJECT(tmp), "clicked", 
+			    GTK_SIGNAL_FUNC(add_all_to_right_callback), sr);
+	gtk_widget_show(tmp);
+    }
     
     tmp = gtk_button_new_with_label (_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);

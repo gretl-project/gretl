@@ -326,6 +326,20 @@ static void add_instrument_callback (GtkWidget *w, selector *sr)
 					 sr);
 }
 
+static void add_all_to_right_callback (GtkWidget *w, selector *sr)
+{
+    GtkTreeSelection *selection;
+
+    if (!GTK_IS_TREE_VIEW(sr->varlist)) return;
+
+    selection = gtk_tree_view_get_selection (GTK_TREE_VIEW(sr->varlist));
+    gtk_tree_selection_select_all(selection);
+    gtk_tree_selection_selected_foreach (selection, 
+					 (GtkTreeSelectionForeachFunc) 
+					 add_to_right,
+					 sr);
+}
+
 static void add_to_right_callback (GtkWidget *w, selector *sr)
 {
     GtkTreeSelection *selection;
@@ -1060,8 +1074,9 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_container_set_border_width(GTK_CONTAINER(sr->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(sr->action_area), 5);
     gtk_box_set_homogeneous(GTK_BOX(sr->action_area), TRUE);
-
+#if 0
     gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
+#endif
 }    
 
 static void 
@@ -1444,6 +1459,15 @@ void simple_selection (const char *title, void (*okfunc)(), guint cmdcode,
     g_signal_connect (G_OBJECT(tmp), "clicked", 
 		      G_CALLBACK(add_to_right_callback), sr);
     gtk_widget_show(tmp);
+
+    if (p == NULL) {
+	/* data save action */
+	tmp = gtk_button_new_with_label (_("All ->"));
+	gtk_box_pack_start(GTK_BOX(mid_vbox), tmp, TRUE, FALSE, 0);
+	g_signal_connect (G_OBJECT(tmp), "clicked", 
+			  G_CALLBACK(add_all_to_right_callback), sr);
+	gtk_widget_show(tmp);
+    }
     
     remove_button = gtk_button_new_with_label (_("<- Remove"));
     gtk_box_pack_start(GTK_BOX(mid_vbox), remove_button, TRUE, FALSE, 0);
