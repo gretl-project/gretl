@@ -59,6 +59,10 @@ hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp
 	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp
 
+# Validate the commands "master" XML file against libgretl
+check: validate 
+	./validate $(topsrc)/doc/commands/gretl_commands.xml
+
 docclean:
 	 rm -f skeleton.xml cmdlist.* guilist.txt
 

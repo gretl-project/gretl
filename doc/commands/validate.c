@@ -5,7 +5,7 @@
    Allin Cottrell, Feb 2004.
 */
 
-#include <gretl/libgretl.h>
+#include "libgretl.h"
 
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
@@ -18,7 +18,7 @@
 #define ROOTNODE "commandlist"
 #define UTF const xmlChar *
 
-const char *reffile = "gretl_commands.xml";
+char reffile[FILENAME_MAX];
 
 typedef struct _cmdlist cmdlist;
 typedef struct _command command;
@@ -403,10 +403,18 @@ void free_cmdlist (cmdlist *clist)
     free(clist->cmds);
 }
 
-int main (void)
+int main (int argc, char **argv)
 {
     cmdlist clist;
     int err;
+
+    if (argc != 2) {
+	fprintf(stderr, "Please supply one argument: the name of a "
+		"file to verify\n");
+	exit(EXIT_FAILURE);
+    }
+
+    strcpy(reffile, argv[1]);
 
     cmdlist_init(&clist);
 

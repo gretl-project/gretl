@@ -49,7 +49,8 @@
 	     <keyword>fcast</keyword> 
 	     <keyword>fcasterr</keyword>
 	     <keyword>fit</keyword> 
-	     <keyword>freq</keyword>     
+	     <keyword>freq</keyword>
+             <keyword>garch</keyword>    
 	     <keyword>genr</keyword>     
 	     <keyword>gnuplot</keyword>  
 	     <keyword>graph</keyword> 
@@ -146,7 +147,8 @@
 	     <keyword>sum</keyword>
              <keyword>nobs</keyword> 
 	     <keyword>normal</keyword>
-	     <keyword>uniform</keyword> 
+	     <keyword>uniform</keyword>
+             <keyword>resample</keyword>
 	     <keyword>stderr</keyword>
 	     <keyword>cum</keyword>
 	     <keyword>missing</keyword>
