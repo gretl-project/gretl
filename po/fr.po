@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-22 14:35-0500\n"
+"POT-Creation-Date: 2004-12-22 17:28-0500\n"
 "PO-Revision-Date: 2004-11-04 10:59-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -3614,28 +3614,28 @@ msgstr "cote Z = %f, avec une valeur de P unilatéral %f\n"
 msgid "significant at the %g%% level (one-tailed)\n"
 msgstr "significatif au seuil de 1 pourcent"
 
-#: lib/src/nonparam.c:283
-#, fuzzy, c-format
+#: lib/src/nonparam.c:284
+#, fuzzy, no-c-format
 msgid "not significant at the 10% level\n"
 msgstr "non significatif au seuil de 10 pourcent"
 
-#: lib/src/nonparam.c:286
+#: lib/src/nonparam.c:287
 msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "Échantillon trop petit pour calculer la valeur de P basé sur une "
 "distribution normale\n"
 
-#: lib/src/nonparam.c:293 lib/src/printout.c:699 gui2/guiprint_common.c:739
+#: lib/src/nonparam.c:294 lib/src/printout.c:699 gui2/guiprint_common.c:739
 #: gui2/guiprint_common.c:791
 msgid "Obs"
 msgstr "Obs"
 
-#: lib/src/nonparam.c:294 lib/src/nonparam.c:295
+#: lib/src/nonparam.c:295 lib/src/nonparam.c:296
 msgid "rank"
 msgstr "rang"
 
-#: lib/src/nonparam.c:486
+#: lib/src/nonparam.c:487
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
@@ -3643,7 +3643,7 @@ msgstr ""
 "\n"
 "Données insuffisantes pour faire un test\n"
 
-#: lib/src/nonparam.c:501
+#: lib/src/nonparam.c:502
 #, c-format
 msgid ""
 "\n"
@@ -3652,12 +3652,12 @@ msgstr ""
 "\n"
 "Nombre de passes (R) dans la variables « %s » =%d\n"
 
-#: lib/src/nonparam.c:503
+#: lib/src/nonparam.c:504
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr "Sous l'hypothèse nulle de la variabilité aléatoire, R suit N(%f, %f)\n"
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:506
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr "cote Z = %f, avec une valeur de P bilatérale %f\n"

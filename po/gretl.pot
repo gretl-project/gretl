@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-22 14:35-0500\n"
+"POT-Creation-Date: 2004-12-22 17:28-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3384,44 +3384,44 @@ msgstr ""
 msgid "significant at the %g%% level (one-tailed)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:283
-#, c-format
+#: lib/src/nonparam.c:284
+#, no-c-format
 msgid "not significant at the 10% level\n"
 msgstr ""
 
-#: lib/src/nonparam.c:286
+#: lib/src/nonparam.c:287
 msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
-#: lib/src/nonparam.c:293 lib/src/printout.c:699 gui2/guiprint_common.c:739
+#: lib/src/nonparam.c:294 lib/src/printout.c:699 gui2/guiprint_common.c:739
 #: gui2/guiprint_common.c:791
 msgid "Obs"
 msgstr ""
 
-#: lib/src/nonparam.c:294 lib/src/nonparam.c:295
+#: lib/src/nonparam.c:295 lib/src/nonparam.c:296
 msgid "rank"
 msgstr ""
 
-#: lib/src/nonparam.c:486
+#: lib/src/nonparam.c:487
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
 msgstr ""
 
-#: lib/src/nonparam.c:501
+#: lib/src/nonparam.c:502
 #, c-format
 msgid ""
 "\n"
 "Number of runs (R) in the variable '%s' = %d\n"
 msgstr ""
 
-#: lib/src/nonparam.c:503
+#: lib/src/nonparam.c:504
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:506
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr ""

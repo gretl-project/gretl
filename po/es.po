@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-22 14:35-0500\n"
+"POT-Creation-Date: 2004-12-22 17:28-0500\n"
 "PO-Revision-Date: 2004-11-02 10:10+0100\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -3617,28 +3617,28 @@ msgstr "valor z = %f, con valor p %f a una cola\n"
 msgid "significant at the %g%% level (one-tailed)\n"
 msgstr ""
 
-#: lib/src/nonparam.c:283
-#, fuzzy, c-format
+#: lib/src/nonparam.c:284
+#, fuzzy, no-c-format
 msgid "not significant at the 10% level\n"
 msgstr "* indica significativo al nivel del 10 por ciento"
 
-#: lib/src/nonparam.c:286
+#: lib/src/nonparam.c:287
 msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 "La muestra es demasiado pequeña para calcular un valor p basado en la "
 "distribución normal\n"
 
-#: lib/src/nonparam.c:293 lib/src/printout.c:699 gui2/guiprint_common.c:739
+#: lib/src/nonparam.c:294 lib/src/printout.c:699 gui2/guiprint_common.c:739
 #: gui2/guiprint_common.c:791
 msgid "Obs"
 msgstr "Obs."
 
-#: lib/src/nonparam.c:294 lib/src/nonparam.c:295
+#: lib/src/nonparam.c:295 lib/src/nonparam.c:296
 msgid "rank"
 msgstr "rango"
 
-#: lib/src/nonparam.c:486
+#: lib/src/nonparam.c:487
 msgid ""
 "\n"
 "Insufficient data for runs test\n"
@@ -3646,7 +3646,7 @@ msgstr ""
 "\n"
 "Datos insuficientes para el contraste de rachas\n"
 
-#: lib/src/nonparam.c:501
+#: lib/src/nonparam.c:502
 #, c-format
 msgid ""
 "\n"
@@ -3655,13 +3655,13 @@ msgstr ""
 "\n"
 "Número de rachas (R) en la variable '%s' = %d\n"
 
-#: lib/src/nonparam.c:503
+#: lib/src/nonparam.c:504
 #, c-format
 msgid "Under the null hypothesis of randomness, R follows N(%f, %f)\n"
 msgstr ""
 "Bajo la hipótesis nula de aleatoriedad, R sigue una distribución N(%f, %f)\n"
 
-#: lib/src/nonparam.c:505
+#: lib/src/nonparam.c:506
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
 msgstr "valor z = %f, con valor p %f a dos colas\n"

@@ -280,6 +280,7 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 	if (pval < 1.0) {
 	    pprintf(prn, _("significant at the %g%% level (one-tailed)\n"), 100.0 * pval);
 	} else {
+	    /* xgettext:no-c-format */
 	    pputs(prn, _("not significant at the 10% level\n"));
 	}
     } else {
