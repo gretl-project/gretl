@@ -1,0 +1,160 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>Data for gretl</title>
+<LINK REL=STYLESHEET TYPE="text/css" 
+HREF="./css-gretl.html">
+</head>
+
+<body>
+<p>[<a href="./gretl_italiano.html">pagina principale</a>]</p>
+
+<center>
+<h1>Data and script collections</h1>
+</center>
+
+<p>Se si usa gretl in ambito didattico, può essere interessante creare
+una raccolta di file di dati o script relativi al proprio corso, in modo
+che gli studenti possano accedervi facilmente. Questa funzionalità è presente
+in gretl a partire dalla versione 1.2.1.</p>
+
+<p>È possibile fare in modo che una raccolta personalizzata di file di
+dati appaia tra le opzioni del menù "File, Apri dati, file di esempio",
+o quando si fa clic sull'icona a froma di cartella sulla barra degli
+strumenti di gretl.</p>
+
+<p>Allo stesso modo, è possibile creare delle raccolte personalizzate
+di script che l'utente può eseguire usando il comando del menù
+"File, Apre file comandi, file di esempio".</p>
+
+<p>Quando viene selezionato uno dei due comandi del menù visti sopra, gretl
+cerca delle raccolte di dati nei posti seguenti: la directory
+"di sistema" di gretl per i file di dati, la directory di
+sistema dei file di comandi, la directory utente e tutte le loro
+sotto-directory di primo livello. I valori predefiniti per i nomi di
+queste directory sono i seguenti:</p>
+
+<center>
+<table>
+<tr><th>Posizione</th><th>Linux</th><th>Windows</th></tr>
+<tr><td><p>Directory di sistema per i dati</p></td>
+  <td><kbd>/usr/share/gretl/data</kbd></td>
+    <td><kbd>c:\userdata\gretl\data</kbd></tr>
+<tr><td><p>Directory di sistema per i file di comandi</p></td>
+  <td><kbd>/usr/share/gretl/scripts</kbd></td>
+    <td><kbd>c:\userdata\gretl\scripts</kbd></tr>
+<tr><td><p>Directory utente</p></td>
+  <td><kbd>/home/nomeutente/gretl</kbd></td>
+    <td><kbd>c:\userdata\gretl\user</kbd></tr>
+</table>
+</center>
+
+<p>Le raccolte trovate verranno aggiunte all'elenco dei file disponibili. In
+che formato deve essere una raccolta per essere riconosciuta? Può trattarsi di
+un insieme di file di dati di gretl in fromato XML (con l'estensione
+<kbd>.gdt</kbd>) o di un insieme di file di comandi (con l'estensione
+<kbd>.inp</kbd>), in entrambi i casi accompagnati da un "file principale" o
+catalogo.  La distribuzione di gretl contiene vari esempi di file di catalogo,
+ad esempio il file <kbd>descriptions</kbd> nella sottodirectory "misc" della
+directory dati di gretl e il file <kbd>ps_descriptions</kbd> nella
+sottodirectory "misc" della directory dei file di comandi.
+</p> 
+
+<p>Se si intende aggiungere una propria raccolta, occorrerà creare dei file di
+catalogo, chiamati "descriptions" per i file di dati, e "ps_descriptions" per i
+file di comandi, nelle rispettive directory (ad es.
+<kbd>/usr/share/gretl/data/mydata</kbd> o
+<kbd>c:\userdata\gretl\data\mydata</kbd>).</p>
+
+<p>La sintassi dei file di catalogo (che sono file di testo) è semplice; ecco
+ad esempio le prime righe del catalogo della raccolta di file di dati "misc"
+inclusa nella distribuzione di gretl:</p>
+
+<pre>
+ # Gretl: various illustrative datafiles
+ "arma","artificial data for ARMA script example"
+ "ects_nls","Nonlinear least squares example"
+ "hamilton","Prices and exchange rate, U.S. and Italy"
+</pre>
+
+
+<p>
+  La prima riga, che deve iniziare con un carattere cancelletto,
+  contiene un nome breve, qui "Gretl", che comparirà
+  come etichetta identificativa per questa raccolta nella finestra
+  di selezione dei dati, seguito da una virgola e da una descrizione
+  breve della raccolta (opzionale).</p>
+
+<p>Le righe seguenti contengono due elementi, separati da una
+  virgola e racchiusi tra virgolette doppie. Il primo è il nome del
+  file di dati (escludendo l'estensione ".gdt"),
+  mentre il secondo è una breve descrizione del contenuto del file
+  di dati. Dovrebbe esserci una riga come questa per ogni file di
+  dati della raccolta.</p>
+
+<p>I file di catalogo per le raccolte di file di comandi sono
+  molto simili a quelli visti, tranne per il fatto che ogni riga del
+  file contiene tre campi: il nome del file (senza l'estensione
+  <kbd>.inp</kbd>), una breve descrizione del significato
+  econometrico della serie di comandi contenuti nel file e una breve
+  descrizione dei dati usati. Ecco un altro esempio: le prime righe
+  del catalogo della raccolta di file di comandi "misc"
+  inclusa nella distribuzione di gretl:</p>
+
+<pre>
+  # Gretl: various sample scripts
+  "arma.inp","ARMA modeling","artificial data"
+  "ects_nls","Nonlinear least squares (Davidson)","artificial data"
+  "leverage","Influential observations","artificial data"
+  "longley","Multicollinearity","US employment"
+</pre>
+
+<p>La procedura per creare la propria raccolta di dati e renderla
+  disponibile agli utenti è la seguente:</p>
+
+<ol>
+
+  <li><p>Assemblare i dati, nel formato più comodo.</p>
+
+  <li><p>Convertire i dati in formato gretl e salvarli come file
+      gdt. Probabilmente il modo più semplice
+      consiste nell'importare i dati nel programma come testo
+      semplice, CSV o formato foglio elettronico (MS Excel o
+      Gnumeric) e quindi salvarli. Può essere utile aggiungere delle
+      descrizioni delle singole variabili (usando il comando
+      "Variabile, Modifica attributi") e delle
+      informazioni sulle fonti dei dati (usando il comando
+      "Dati, Modifica descrizione").</p>
+
+  <li><p>Scrivere un file di catalogo per la raccolta,
+  usando un editor di testi.</p>
+
+  <li><p>Copiare i file di dati e il file di catalogo in
+  una sottodirectory della directory dei dati (o utente) di
+  gretl.</p>
+
+  <li><p>Se la raccolta deve essere distribuita ad altri
+  utenti, creare un pacchetto contenente i file di dati e il
+  catalogo, ad esempio sotto forma di file zip.</p>
+
+</ol>
+
+<p>Se la raccolta creata non contiene dati proprietari, siete incoraggiati
+  a inviarla in modo che venga resa disponibile a tutti gli
+  utenti di gretl come pacchetto dati opzionale.</p> 
+
+<p>
+<address>
+Allin Cottrell <a
+href="mailto:cottrell@wfu.edu">&lt;cottrell@wfu.edu&gt;</a></address>
+<br>
+Luglio, 2004
+</p>
+
+</body>
+</html>
+
+
+
+
+
+
