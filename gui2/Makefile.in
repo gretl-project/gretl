@@ -25,7 +25,7 @@ GDK_PIXBUF_LIBS = @GDK_PIXBUF_LIBS@
 USE_NLS = @USE_NLS@
 INETLIB = @INETLIB@
 
-GTK_EXTRA_CFLAGS = -I./gtkextra-lite
+GTK_EXTRA_CFLAGS = -I$(topsrc)/gui2/gtkextra-lite
 GTK_EXTRA_LIB = -L./gtkextra-lite -lgtkextra-lite
 
 ifeq ($(CC),)
