@@ -903,27 +903,116 @@ static int evaluate_genr (GENERATE *genr)
 
 /* ...................................................... */
 
-static int insert_ghost_zero (char *full, char *pos)
+/* insert right paren at the end of the numeric portion of
+   the given string.
+*/
+
+static int insert_right_paren (char *s)
+{
+    char *rt;
+    char *ins;
+
+    errno = 0;
+
+    strtod(s, &rt);
+    
+    if (errno == ERANGE) {
+	/* bad fp value: give up, and pass the buck */
+	return 0;
+    }
+
+    if (!strcmp(s, rt)) {
+	/* no fp conversion: crawl forward to end of atom? */
+	while (*s && !op_level(*s)) s++;
+	ins = s;
+    }  else if (*rt != '\0') {
+	/* partial fp conversion: put paren at end of numeric part */
+	ins = rt;
+    } else {
+	/* full fp conversion */
+	ins = s + strlen(s);
+    }
+
+    /* gotcha: next is '^' operator, with precedence > unary minus */
+    if (*(ins + 1) == '^' || (*(ins + 1) == '*' && *(ins + 2) == '*')) {
+	while (*ins && !op_level(*ins)) ins++;
+    }
+
+    if (*ins == '\0') {
+	*ins = ')';
+	*(ins + 1) = '\0';
+    } else {
+	char *p = ins;
+
+	memmove(ins + 1, ins, strlen(ins) + 1);
+	*p = ')';
+    }
+	
+    return 0;
+}
+
+/* insert a "ghost" zero before a unary minus, and if need be
+   insert a pair of parentheses around the negative value
+*/
+
+static int insert_ghost_zero (char *full, char *pos, int *np)
 {
     int fulln = strlen(full);
     int posn = strlen(pos);
     char *ins = pos;
+    int err = 0;
 
-    if (fulln + 1 >= MAXLEN) return 1;
+    if (pos - full > 0 && *(pos - 1) != '(') {
+	*np = 1;
+    } else {
+	*np = 0;
+    }
+
+    /* do we have space to make the insertion? */
+    if (fulln + (2 * (*np)) >= MAXLEN) return 1;
 
     /* move material right */
-    memmove(pos + 1, pos, posn + 1);
-    *ins = '0';
+    memmove(pos + 1 + *np, pos, posn + 1);
+
+    if (*np) {
+	*ins = '(';
+	*(ins + 1) = '0';
+	err = insert_right_paren(ins + 2);
+    } else {
+	*ins = '0';
+    }
+
+    return err;
+}
+
+static int unary_op_context (char *start, char *p)
+{
+    int pos = p - start;
+
+    /* given: there is a '-' or '+' at *p */
+
+    /* plus/minus at start of formula, or directly preceded
+       by another operator: must be plain unary */
+    if (pos == 0 || op_level(*(p-1))) 
+	return 1;
+
+    /* plus/minus preceded _only_ by left paren: unary */
+    if (pos == 1 && *start == '(') 
+	return 1;
+
+    /* plus/minus preceded by left paren, preceded by operator,
+       again unary */
+    if (pos >= 2 && *(p-1) == '(' && op_level(*(p-2)))
+	return 1;
+
+    /* plus/minus may be part of a lead/lag specification */
 
     return 0;
 }
 
-#define unary_minus(c) (c == 0 || op_level(c) || c == '(')
-
 static int catch_special_operators (char *s)
 {
     char *p = s;
-    int cbak = 0;
     int rcomp;
     int err = 0;
 
@@ -946,17 +1035,16 @@ static int catch_special_operators (char *s)
 	    *s = '^';
 	    rcomp = '*';
 	}
-	else if (*s == '-' && unary_minus(cbak)) {
-	    err = insert_ghost_zero(p, s);
-	    s++;
+	else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
+	    int np; /* "need (to insert) parentheses" ? */
+
+	    err = insert_ghost_zero(p, s, &np);
+	    s += 1 + np;
 	}
 
 	if (rcomp) {
-	    cbak = rcomp;
 	    *(++s) = ' ';
-	} else {
-	    cbak = *s;
-	}
+	} 
 
 	s++;
     }
@@ -1174,16 +1262,18 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
     q = p = s;
 
-    /* allow for the possibility that the token is a plain 
-       number in scientific notation */
+    /* whole expression is valid numeric? */
     if (numeric_string(s)) {
 	DPRINTF(("got a constant numeric token\n"));
-	goto numeric_case;
-    }
-	    
+	goto numeric_case; 
+    }  
+
     while (*p) {
+	DPRINTF(("math_tokenize: inner loop '%s'\n", p));
+
 	if (*p == '(') inparen++;
 	else if (*p == ')') inparen--;
+
 	if (inparen < 0) {
 	    DPRINTF(("error: inparen < 0: '%s'\n", s));
 	    return E_UNBAL;
@@ -1194,12 +1284,18 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 		fprintf(stderr, "genr error: token too long: '%s'\n", q);
 		return 1;
 	    }
+	    /* found a break point: ship out the left-hand term */
 	    if (p - q > 0) {
 		*tok = '\0';
 		strncat(tok, q, p - q);
 		stack_op_and_token(tok, genr, level);
 		q = p;
 	    }
+	    /* ... and peek at the right-hand term */
+	    if (numeric_string(p)) {
+		DPRINTF(("got a constant numeric token\n"));
+		goto numeric_case;
+	    }	    
 	}
 	p++;
     }
@@ -1502,32 +1598,27 @@ int gretl_is_reserved (const char *str)
     return 0;
 }
 
-/* .........................................................    */
+/* ........................................................... */
 
-static int getword (char *word, char *str, char c)
-     /* Scans string str for char c, gets word to the left of it as
-	"word" and deletes word from str.
-	Returns number of chars deleted, or -1 if no occurrence of c, 
-	or 0 if reserved word is used. 
-     */
+static int split_genr_formula (char *lhs, char *s)
 {
-    int i;
+    char *p = strchr(s, '=');
 
-    i = haschar(c, str);
-    if (i == -1) return -1;
+    *lhs = '\0';
 
-    *word = '\0';
-    strncat(word, str, i);
-    gretl_delete(str, 0, ++i);
+    if (p == NULL) return -1;
 
-    if (!strcmp(word, "__subdum") || !strcmp(word, "__iftest")) {
-	/* we'll let these "internals" through */
-	;
-    } else if (gretl_is_reserved(word)) {
-	i = 0;
+    *p = '\0';
+    strncat(lhs, s, VNAMELEN - 1);
+
+    if (gretl_is_reserved(lhs)) {
+	return 0;
     }
 
-    return i;
+    p++;
+    memmove(s, p, strlen(p) + 1);
+
+    return 1;
 }
 
 /* ........................................................... */
@@ -1663,35 +1754,29 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 {
     int i;
     char s[MAXLEN], genrs[MAXLEN];
-    char newvar[32];
+    char newvar[VNAMELEN];
     int oldv = pdinfo->v;
     GENERATE genr;
 #ifdef GENR_DEBUG
     genatom *atom;
 #endif
 
-    *gretl_errmsg = '\0';
+    *gretl_errmsg = *s = *genrs = '\0';
 
     genr_init(&genr, pZ, pdinfo, pmod);
 
-    *s = *genrs = '\0';
     get_genr_formula(s, line, &genr);
     delchar('\n', s);
+    delchar(' ', s);
     strcpy(genrs, s);
 
-    if ((genr.err = catch_special_operators(s))) {
-	return genr.err;
-    }
-
-    delchar(' ', s);
+    DPRINTF(("\n*** starting genr, s='%s'\n", s)); 
 
 #ifdef ENABLE_NLS
     if (',' == get_local_decpoint())
 	fix_decimal_commas(s);
 #endif
 
-    DPRINTF(("\n*** starting genr, s='%s'\n", s));
- 
     if (strcmp(s, "dummy") == 0) {
 	genr.err = dummy(pZ, pdinfo);
 	if (!genr.err)
@@ -1719,18 +1804,16 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	return genr.err;
     }
 
-    *newvar = '\0';
+    /* split into lhs = rhs */
+    i = split_genr_formula(newvar, s);
     
-    /* get equation newvar = s, where s is expression */
-    i = getword(newvar, s, '=');
+    DPRINTF(("after split, newvar='%s', s='%s'\n", newvar, s));
 
     if (i > 0) {
 	if (*newvar == '\0') {
 	    genr.err = E_NOVAR;
 	    goto genr_return;
 	}
-
-	gretl_trunc(newvar, VNAMELEN - 1);
 
 	if (strncmp(newvar, "$nl", 3) && 
 	    strncmp(newvar, "__", 2) && 
@@ -1757,6 +1840,15 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    goto genr_return;
 	}
     }
+
+    /* pre-process special operators */
+    if ((genr.err = catch_special_operators(s))) {
+	return genr.err;
+    }
+    /* remove any spaces this introduced */
+    delchar(' ', s);
+
+    DPRINTF(("after catch_special_operators: s='%s'\n", s));
 
     /* basic memory allocation */
     if ((genr.xvec = malloc(pdinfo->n * sizeof *genr.xvec)) == NULL) {
