@@ -19,7 +19,6 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
-#include "gretl_matrix_private.h"
 #include "system.h"
 
 #define LDEBUG 0
@@ -217,7 +216,6 @@ static int liml_do_equation (gretl_equation_system *sys, int eq,
 
     /* degrees of freedom for over-identification test:
        total exog vars minus number of params in equation.
-       FIXME: handle case of idf = 0.
     */
     idf = exlist[0] - (list[0] - 1);
     
