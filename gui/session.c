@@ -70,7 +70,8 @@ GtkItemFactoryEntry gp_edit_items[] = {
     { "/File/Send to _gnuplot", NULL, gp_to_gnuplot, 0, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 int session_file_open = 0;
@@ -902,7 +903,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
 
 	    view_file(graph->fname, 1, 0, 78, 400, "gretl: plot commands",
-		      gp_edit_items, sizeof gp_edit_items);
+		      gp_edit_items);
 	}
     }   
     else if (strcmp(item, "Delete") == 0) {

@@ -32,7 +32,7 @@ extern gint populate_dbfilelist (windata_t *ddata);
 extern int retrieve_url (int opt, const char *dbase, const char *series,
 			 int filesave, char **saver, char *errbuf);
 extern GtkWidget *log_menubar;
-extern GtkItemFactoryEntry sample_script_items[6];
+extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
 static int file_sel_open = 0;
@@ -169,8 +169,7 @@ static void browse_header (GtkWidget *w, gpointer data)
     }
     fclose(fp);
 
-    view_buffer(&prn, 80, 300, "gretl: data header", 
-		INFO, NULL, 0);
+    view_buffer(&prn, 80, 300, "gretl: data header", INFO, NULL);
 }
 
 /* ........................................................... */
@@ -217,8 +216,7 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 
     mkfilelist(3, scriptfile);
 
-    view_file(scriptfile, 1, 0, 78, 370, title, 
-	      sample_script_items, sizeof sample_script_items);
+    view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
 } 
 
 /* ........................................................... */

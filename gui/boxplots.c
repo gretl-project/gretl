@@ -41,6 +41,7 @@ typedef struct {
     int winwidth, winheight;
     double boxwidth;
     double gmax, gmin;
+    GtkWidget *window, *area, *popup;
 } PLOTGROUP;
 
 double headroom = 0.24;
@@ -53,7 +54,8 @@ extern void file_selector (char *msg, char *startdir, int action,
                            gpointer data);
 
 int ps_print_plots (const char *fname, gpointer data);
-
+static int five_numbers (gpointer data);
+ 
 /* ............................................................. */
 
 /* Create a new backing pixmap of the appropriate size */
@@ -106,9 +108,77 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
         file_selector("Save boxplot file", paths.userdir, 
                       SAVE_BOXPLOT, data);
     }
-    else if (key->keyval == GDK_p) {  /* temporary, for testing */
-	ps_print_plots("foo.eps", data);
+    else if (key->keyval == GDK_p) {  
+	five_numbers(data);
     }
+    return TRUE;
+}
+
+/* ........................................................... */
+
+static gint popup_activated (GtkWidget *w, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "group");
+    PLOTGROUP *grp = (PLOTGROUP *) ptr;
+
+    if (!strcmp(item, "Five-number summary")) 
+        five_numbers(grp);
+    else if (!strcmp(item, "Save as EPS...")) 
+        file_selector("Save boxplot file", paths.userdir, 
+                      SAVE_BOXPLOT, ptr);
+    else if (!strcmp(item, "Close")) { 
+	gtk_widget_destroy(grp->popup);
+	grp->popup = NULL;
+        gtk_widget_destroy(grp->window);
+	return TRUE;
+    }
+
+    gtk_widget_destroy(grp->popup);
+    grp->popup = NULL;
+    return TRUE;
+}
+
+/* ........................................................... */
+
+static GtkWidget *build_menu (gpointer data)
+{
+    GtkWidget *menu, *item;    
+    static char *items[] = {
+        "Five-number summary",
+        "Save as EPS...",
+        "Close",
+	NULL
+    };
+    int i = 0;
+
+    menu = gtk_menu_new();
+
+    while (items[i]) {
+        item = gtk_menu_item_new_with_label(items[i]);
+        gtk_signal_connect(GTK_OBJECT(item), "activate",
+                           (GtkSignalFunc) popup_activated,
+                           items[i]);
+	gtk_object_set_data(GTK_OBJECT(item), "group", data);
+        GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
+        gtk_widget_show(item);
+        gtk_menu_append(GTK_MENU(menu), item);
+	i++;
+    }
+    return menu;
+}
+
+/* ........................................................... */
+
+static gint box_popup (GtkWidget *widget, GdkEventButton *event, 
+		       gpointer data)
+{
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+
+    if (grp->popup) g_free(grp->popup);
+    grp->popup = build_menu(data);
+    gtk_menu_popup(GTK_MENU(grp->popup), NULL, NULL, NULL, NULL,
+		   event->button, event->time);
     return TRUE;
 }
 
@@ -209,41 +279,42 @@ place_plots (PLOTGROUP *plotgrp)
 /* ............................................................. */
 
 static void 
-gtk_boxplot_yscale (GtkWidget *area, GtkStyle *style, GtkPlotPC *pc,
-		    int winheight, double gmax, double gmin)
+gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 {
     double points[4];
-    double top = (headroom / 2.0) * winheight;
-    double bottom = (1.0 - headroom / 2.0) * winheight;
+    double top = (headroom / 2.0) * grp->winheight;
+    double bottom = (1.0 - headroom / 2.0) * grp->winheight;
     char numstr[16];
     GdkGC *gc = NULL;
 
-    if (pc == NULL) gc = style->bg_gc[GTK_STATE_SELECTED];
+    if (pc == NULL) gc = grp->window->style->bg_gc[GTK_STATE_SELECTED];
 
     /* draw vertical line */
     points[0] = points[2] = scalepos;
     points[1] = top;
     points[3] = bottom;
-    draw_line (points, area, gc, pc);
+    draw_line (points, grp->area, gc, pc);
 
     /* draw backticks top and bottom */
     points[2] = points[0] - 5;
     points[1] = points[3] = top;
-    draw_line (points, area, gc, pc);
+    draw_line (points, grp->area, gc, pc);
     points[1] = points[3] = bottom;
-    draw_line (points, area, gc, pc);
+    draw_line (points, grp->area, gc, pc);
 
     /* draw backtick at middle */
     points[1] = points[3] = top + (bottom - top) / 2.0;
-    draw_line (points, area, gc, pc);
+    draw_line (points, grp->area, gc, pc);
     
     /* mark max and min values on scale */
-    sprintf(numstr, "%.4g", gmax);
-    setup_text (area, gc, pc, numstr, scalepos - 10, top, GTK_JUSTIFY_RIGHT);
-    sprintf(numstr, "%.4g", gmin);
-    setup_text (area, gc, pc, numstr, scalepos - 10, bottom, GTK_JUSTIFY_RIGHT);
-    sprintf(numstr, "%.4g", (gmax + gmin) / 2.0);
-    setup_text (area, gc, pc, numstr, scalepos - 10, 
+    sprintf(numstr, "%.4g", grp->gmax);
+    setup_text (grp->area, gc, pc, numstr, scalepos - 10, top, 
+		GTK_JUSTIFY_RIGHT);
+    sprintf(numstr, "%.4g", grp->gmin);
+    setup_text (grp->area, gc, pc, numstr, scalepos - 10, bottom, 
+		GTK_JUSTIFY_RIGHT);
+    sprintf(numstr, "%.4g", (grp->gmax + grp->gmin) / 2.0);
+    setup_text (grp->area, gc, pc, numstr, scalepos - 10, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 }
 
@@ -346,34 +417,42 @@ destroy_boxplots (GtkWidget *w, gpointer data)
 /* ............................................................. */
 
 static GtkWidget *
-make_area (GtkWidget **area, PLOTGROUP *plotgrp, int winwidth, int winheight)
+make_area (PLOTGROUP *grp)
 {
-    GtkWidget *boxwin;
-
-    boxwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(boxwin), "gretl: boxplots");
+    grp->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(grp->window), "gretl: boxplots");
 
     /* Create the drawing area */
-    *area = gtk_drawing_area_new ();
+    grp->area = gtk_drawing_area_new ();
 
-    gtk_signal_connect(GTK_OBJECT(*area), "configure_event",
+    gtk_widget_set_events (grp->area, GDK_EXPOSURE_MASK
+			   | GDK_LEAVE_NOTIFY_MASK
+			   | GDK_BUTTON_PRESS_MASK);
+    
+    gtk_widget_set_sensitive(grp->area, TRUE);
+
+    gtk_signal_connect(GTK_OBJECT(grp->area), "configure_event",
 		       GTK_SIGNAL_FUNC(configure_event), NULL);
 
-    gtk_signal_connect(GTK_OBJECT(*area), "expose_event",
+    gtk_signal_connect(GTK_OBJECT(grp->area), "expose_event",
 		       GTK_SIGNAL_FUNC(expose_event), NULL);
 
-    gtk_signal_connect(GTK_OBJECT(boxwin), "key_press_event", 
-		       GTK_SIGNAL_FUNC(box_key_handler), plotgrp);
+    gtk_signal_connect(GTK_OBJECT(grp->area), "button_press_event", 
+		       GTK_SIGNAL_FUNC(box_popup), grp);
 
-    gtk_signal_connect(GTK_OBJECT(boxwin), "destroy",
-		       GTK_SIGNAL_FUNC (destroy_boxplots), plotgrp);
+    gtk_signal_connect(GTK_OBJECT(grp->window), "key_press_event", 
+		       GTK_SIGNAL_FUNC(box_key_handler), grp);
 
-    gtk_drawing_area_size (GTK_DRAWING_AREA(*area), winwidth, winheight); 
-    gtk_widget_show (*area);
+    gtk_signal_connect(GTK_OBJECT(grp->window), "destroy",
+		       GTK_SIGNAL_FUNC(destroy_boxplots), grp);
 
-    gtk_container_add(GTK_CONTAINER(boxwin), *area);
+    gtk_drawing_area_size (GTK_DRAWING_AREA(grp->area), 
+			   grp->winwidth, grp->winheight); 
+    gtk_widget_show (grp->area);
 
-    return boxwin;
+    gtk_container_add(GTK_CONTAINER(grp->window), grp->area);
+
+    return grp->window;
 }
 
 /* ............................................................. */
@@ -447,13 +526,40 @@ int ps_print_plots (const char *fname, gpointer data)
 			  grp->winheight, grp->boxwidth, 
 			  grp->gmax, grp->gmin);
     
-    gtk_boxplot_yscale (NULL, NULL, &ps->pc, 
-			grp->winheight,
-			grp->gmax, grp->gmin); 
+    gtk_boxplot_yscale (grp, &ps->pc);
 
     psleave (ps);
     gtk_object_destroy(GTK_OBJECT(ps));
     gtk_psfont_unref();
+
+    return 0;
+}
+
+/* ............................................................. */
+
+static int
+five_numbers (gpointer data) 
+{
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+    int i;
+    print_t prn;
+    extern GtkItemFactoryEntry view_items[];
+
+    if (bufopen(&prn)) return 1;
+
+    pprintf(&prn, "Five-number summar%s\n\n"
+	    "%22s%12s%12s%12s%12s\n",
+	    (grp->nplots > 1)? "ies" : "y",
+	    "minimum", "Q1", "median", "Q3", "maxmimum");
+
+    for (i=0; i<grp->nplots; i++) {
+	pprintf(&prn, "%-10s%12g%12g%12g%12g%12g\n",
+		grp->plots[i].varname, grp->plots[i].min, 
+		grp->plots[i].lq, grp->plots[i].median,
+		grp->plots[i].uq, grp->plots[i].max);
+    }
+    (void) view_buffer(&prn, 78, 240, "gretl: 5 numbers", BXPLOT,
+                       view_items);
 
     return 0;
 }
@@ -465,7 +571,6 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
-    GtkWidget *boxwin, *area;
     int winwidth = 600, winheight = 450;
 
     x = mymalloc(n * sizeof *x);
@@ -501,17 +606,17 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     plotgrp->winwidth = winwidth;
     place_plots (plotgrp);
 
-    boxwin = make_area(&area, plotgrp, winwidth, winheight);
-    gtk_widget_show(boxwin);
+    if (make_area(plotgrp) == NULL) return 1;
+    plotgrp->popup = NULL;
+    gtk_widget_show(plotgrp->window);
 
     for (i=0; i<plotgrp->nplots; i++)
 	gtk_area_boxplot (&plotgrp->plots[i], 
-			  area, boxwin->style, NULL, 
+			  plotgrp->area, plotgrp->window->style, NULL, 
 			  winheight, plotgrp->boxwidth, 
 			  plotgrp->gmax, plotgrp->gmin);
     
-    gtk_boxplot_yscale(area, boxwin->style, NULL, 
-		       winheight, plotgrp->gmax, plotgrp->gmin);
+    gtk_boxplot_yscale(plotgrp, NULL);
 
     return 0;
 }

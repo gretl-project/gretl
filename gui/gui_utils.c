@@ -81,7 +81,7 @@ static void cancel_find (GtkWidget *widget, gpointer data);
 static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
 				gpointer data);
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkItemFactoryEntry items[], int msize);
+				GtkItemFactoryEntry items[]);
 static GtkWidget *find_window = NULL;
 static GtkWidget *find_entry;
 static char *needle;
@@ -187,7 +187,8 @@ GtkItemFactoryEntry model_items[] = {
     { "/LaTeX/view tabular", NULL, view_latex, 0, NULL },
     { "/LaTeX/view equation", NULL, view_latex, 1, NULL },
     { "/LaTeX/save tabular", NULL, file_save, SAVE_TEX_TAB, NULL },
-    { "/LaTeX/save equation", NULL, file_save, SAVE_TEX_EQ, NULL }
+    { "/LaTeX/save equation", NULL, file_save, SAVE_TEX_EQ, NULL },
+    { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry help_items[] = {
@@ -219,11 +220,13 @@ GtkItemFactoryEntry help_items[] = {
     { "/Topics/Hypothesis tests/Chow test", NULL, do_help, CHOW, NULL },
     { "/Topics/Hypothesis tests/Cointegration test", NULL, do_help, 
       COINT, NULL },
-    { "/_Find", NULL, menu_find, 0, NULL }
+    { "/_Find", NULL, menu_find, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry script_help_items[] = {
-    { "/_Find", NULL, menu_find, 0, NULL }
+    { "/_Find", NULL, menu_find, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL}
 };
 
 /* ........................................................... */
@@ -649,12 +652,11 @@ void helpwin (gpointer data, guint script, GtkWidget *widget)
     if (script) {
 	help_length = script_help_length;
 	view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
-		  "gretl: command syntax help", 
-		  script_help_items, sizeof script_help_items);
+		  "gretl: command syntax help", script_help_items);
     } else {
 	help_length = gui_help_length;
 	view_file(paths.helpfile, 0, 0, 77, 400, "gretl: help", 
-		  help_items, sizeof help_items);
+		  help_items);
     }
 }
 
@@ -837,7 +839,7 @@ void free_windata (GtkWidget *w, gpointer data)
 
 windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
 			char *title, int action,
-			GtkItemFactoryEntry menu_items[], int msize) 
+			GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *close, *table;
     GtkWidget *vscrollbar; 
@@ -866,7 +868,7 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 #endif
 
     if (menu_items != NULL) {
-	set_up_viewer_menu(dialog, vwin, menu_items, msize);
+	set_up_viewer_menu(dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
@@ -932,7 +934,7 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 
 int view_file (char *filename, int editable, int del_file, 
 	       int hsize, int vsize, char *title, 
-	       GtkItemFactoryEntry menu_items[], int msize) 
+	       GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *close, *save = NULL, *table;
     GtkWidget *vscrollbar; 
@@ -978,7 +980,7 @@ int view_file (char *filename, int editable, int del_file,
 #endif
 
     if (menu_items != NULL) {
-	set_up_viewer_menu(dialog, vwin, menu_items, msize);
+	set_up_viewer_menu(dialog, vwin, menu_items);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
@@ -1159,10 +1161,12 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
 /* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkItemFactoryEntry items[], int msize)
+				GtkItemFactoryEntry items[])
 {
     GtkAccelGroup *accel;
-    gint n_items = msize / sizeof items[0];
+    gint n_items = 0;
+
+    while (items[n_items].path != NULL) n_items++;
 
     accel = gtk_accel_group_new();
     vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
@@ -1369,7 +1373,7 @@ int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize,
 			     NULL);
 #endif
 
-    set_up_viewer_menu(dialog, vwin, model_items, sizeof model_items);
+    set_up_viewer_menu(dialog, vwin, model_items);
     /* add menu of indep vars, against which to plot resid */
     add_vars_to_plot_menu(vwin);
     add_dummies_to_plot_menu(vwin);

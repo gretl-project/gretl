@@ -235,7 +235,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 	prnclose(&prn);
 	return;
     }
-    view_buffer(&prn, 80, 300, "gretl: data info", INFO, NULL, 0);
+    view_buffer(&prn, 80, 300, "gretl: data info", INFO, NULL);
 }
 
 /* ........................................................... */
@@ -243,7 +243,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 void edit_header (gpointer data, guint save, GtkWidget *widget)
 {
     view_file(paths.hdrfile, 1, 0, 80, 300, "gretl: edit header", 
-	      NULL, 0);
+	      NULL);
 }
 
 /* ........................................................... */

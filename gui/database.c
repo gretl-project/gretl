@@ -133,7 +133,8 @@ GtkItemFactoryEntry db_items[] = {
     { "/_Series/_Display", NULL, gui_get_series, DB_DISPLAY, NULL},
     { "/_Series/_Graph", NULL, gui_get_series, DB_GRAPH, NULL },
     { "/_Series/_Import", NULL, gui_get_series, DB_IMPORT, NULL },
-    { "/_Find", NULL, menu_find, 1, NULL }
+    { "/_Find", NULL, menu_find, 1, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 
@@ -249,7 +250,7 @@ static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
     printdata(NULL, dbZ, dbdinfo, 1, 1, &prn);
 
     view_buffer(&prn, 36, 350, "gretl: display database series", PRINT,
-		NULL, 0); 
+		NULL); 
 }
 
 /* ........................................................... */
@@ -468,9 +469,11 @@ static void build_db_menu (windata_t *dbdat)
 /* ........................................................... */
 
 static void set_up_db_menu (GtkWidget *window, windata_t *dbdat, 
-			    GtkItemFactoryEntry items[], int msize)
+			    GtkItemFactoryEntry items[])
 {
-    gint n_items = msize / sizeof items[0];
+    gint n_items = 0;
+
+    while (items[n_items].path != NULL) n_items++;
 
     dbdat->ifac = gtk_item_factory_new (GTK_TYPE_MENU_BAR, "<main>", 
 					NULL);
@@ -516,7 +519,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbdat->w), main_vbox);
 
-    set_up_db_menu(dbdat->w, dbdat, db_items, sizeof db_items);
+    set_up_db_menu(dbdat->w, dbdat, db_items);
     build_db_menu(dbdat);  /* popup */
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbdat->mbar, FALSE, TRUE, 0);

@@ -288,7 +288,7 @@ static GtkWidget *build_menu (GtkWidget *sheet)
 
     for (i=0; i<(sizeof items / sizeof items[0]); i++) {
         item = gtk_menu_item_new_with_label(items[i]);
-        gtk_signal_connect(GTK_OBJECT(item),"activate",
+        gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) popup_activated,
                            items[i]);
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);

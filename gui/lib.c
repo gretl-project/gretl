@@ -59,7 +59,8 @@ GtkItemFactoryEntry log_items[] = {
     { "/File/_Run", NULL, do_run_script, SESSION_EXEC, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry console_items[] = {
@@ -67,7 +68,8 @@ GtkItemFactoryEntry console_items[] = {
     { "/File/Save _As...", NULL, file_save, SAVE_CONSOLE, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry script_items[] = {
@@ -77,7 +79,8 @@ GtkItemFactoryEntry script_items[] = {
     { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry sample_script_items[] = {
@@ -86,7 +89,8 @@ GtkItemFactoryEntry sample_script_items[] = {
     { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry script_out_items[] = {
@@ -94,13 +98,15 @@ GtkItemFactoryEntry script_out_items[] = {
     { "/File/Save _As...", NULL, file_save, SAVE_OUTPUT, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 GtkItemFactoryEntry view_items[] = {
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL }
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { NULL, NULL, NULL, 0, NULL }
 };
 
 const char *CANTDO = "Can't do this: no model has been estimated yet\n";
@@ -621,8 +627,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
     if (err) gui_errmsg(err, errtext);
 
-    vwin = view_buffer(&prn, hsize, vsize, title, action,
-		       view_items, sizeof view_items);
+    vwin = view_buffer(&prn, hsize, vsize, title, action, view_items);
 
     if (vwin && (action == SUMMARY || action == VAR_SUMMARY)) {
 	vwin->data = summ;
@@ -736,8 +741,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     else if (ddata->code == CORRGM) 
 	graphmenu_state(TRUE);
 
-    view_buffer(&prn, hsize, vsize, title, ddata->code,
-		view_items, sizeof view_items);
+    view_buffer(&prn, hsize, vsize, title, ddata->code, view_items);
 }
 
 /* ........................................................... */
@@ -751,8 +755,7 @@ void view_log (void)
 
     if (dump_cmd_stack(fname)) return;
 
-    view_file(fname, 1, 0, 78, 370, "gretl: command log", 
-	      log_items, sizeof log_items);
+    view_file(fname, 1, 0, 78, 370, "gretl: command log", log_items);
 }
 
 /* ........................................................... */
@@ -773,8 +776,7 @@ void console (void)
     }
     pprintf(&prn, "? ");
     prnclose(&prn);
-    view_file(fname, 1, 0, 78, 400, "gretl console", 
-	      console_items, sizeof console_items);
+    view_file(fname, 1, 0, 78, 400, "gretl console", console_items);
     gtk_text_set_point(GTK_TEXT(console_view), 2);
 }
 
@@ -1049,7 +1051,7 @@ void count_missing (void)
     if (bufopen(&prn)) return;
     if (count_missing_values(&Z, datainfo, &prn)) {
 	view_buffer(&prn, 77, 300, "gretl: missing values info", 
-		    SMPL, view_items, sizeof view_items);
+		    SMPL, view_items);
     } else {
 	infobox("No missing data values");
 	prnclose(&prn);
@@ -1098,7 +1100,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	return;
     }
 
-    view_buffer(&prn, 78, 350, "gretl: forecasts", FCAST, NULL, 0);    
+    view_buffer(&prn, 78, 350, "gretl: forecasts", FCAST, NULL);    
 }
 
 /* ........................................................... */
@@ -1277,8 +1279,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
 
-    view_buffer(&prn, 77, 400, title, LMTEST, 
-		view_items, sizeof view_items); 
+    view_buffer(&prn, 77, 400, title, LMTEST, view_items); 
 }
 
 /* ........................................................... */
@@ -1328,7 +1329,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     view_buffer(&prn, 77, 400, "gretl: panel model diagnostics", 
-		PANEL, view_items, sizeof view_items);
+		PANEL, view_items);
 }
 
 /* ........................................................... */
@@ -1385,7 +1386,7 @@ static void do_chow_cusum (gpointer data, int code)
 
     view_buffer(&prn, 77, 400, (code == CHOW)?
 		"gretl: Chow test output": "gretl: CUSUM test output",
-		code, view_items, sizeof view_items);
+		code, view_items);
 }
 
 /* ........................................................... */
@@ -1446,8 +1447,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     }
     clear_model(models[1], NULL, NULL);
 
-    view_buffer(&prn, 78, 400, "gretl: ARCH test", ARCH,
-		view_items, sizeof view_items);
+    view_buffer(&prn, 78, 400, "gretl: ARCH test", ARCH, view_items);
 }
 
 /* ........................................................... */
@@ -1913,7 +1913,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     free_freq(freq);
 
     view_buffer(&prn, 77, 300, "gretl: residual dist.", TESTUHAT,
-		NULL, 0);
+		NULL);
 }
 
 /* ........................................................... */
@@ -1977,7 +1977,7 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     }
     graphmenu_state(TRUE);
 
-    view_buffer(&prn, 60, 400, "gretl: periodogram", PERGM, NULL, 0);
+    view_buffer(&prn, 60, 400, "gretl: periodogram", PERGM, NULL);
 }
 
 /* ........................................................... */
@@ -1993,7 +1993,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
     print_model_confints(pmod, datainfo, &prn);
 
     view_buffer(&prn, 77, 300, "gretl: coefficient confidence intervals", 
-		CONFINT, view_items, sizeof view_items);
+		CONFINT, view_items);
 }
 
 /* ........................................................... */
@@ -2010,7 +2010,7 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     else outcovmx(pmod, datainfo, 1, &prn); 
 
     view_buffer(&prn, 77, 300, "gretl: coefficient covariances", 
-		COVAR, view_items, sizeof view_items);
+		COVAR, view_items);
 }
 
 /* ......................................................... */
@@ -2306,7 +2306,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	}
 	err = printdata(NULL, &Z, datainfo, 1, 1, &prn);
 	prnclose(&prn);
-	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL, 0);
+	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
     } else { /* use buffer */
 	if (bufopen(&prn)) return;
 
@@ -2316,7 +2316,7 @@ void display_data (gpointer data, guint u, GtkWidget *widget)
 	    prnclose(&prn);
 	    return;
 	}
-	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL, 0);
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL);
     }
 }
 
@@ -2355,7 +2355,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 	}
 	printdata(prcmd.list, &Z, datainfo, 1, 1, &prn);
 	prnclose(&prn);
-	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL, 0);
+	view_file(fname, 0, 1, 77, 350, "gretl: display data", NULL);
     } else { /* use buffer */
 	int err;
 
@@ -2366,7 +2366,7 @@ void display_selected (GtkWidget *widget, dialog_t *ddata)
 	    prnclose(&prn);
 	    return;
 	}
-	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL, 0);
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL);
     }
     free(prcmd.list);
     free(prcmd.param);
@@ -2388,8 +2388,7 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	errbox("Failed to generate fitted values");
 	prnclose(&prn);
     } else 
-	view_buffer(&prn, 77, 350, "gretl: display data", PRINT,
-		    NULL, 0);    
+	view_buffer(&prn, 77, 350, "gretl: display data", PRINT, NULL);    
 }
 
 /* ........................................................... */
@@ -2534,7 +2533,7 @@ void display_var (void)
     list[1] = mdata->active_var;
     if (bufopen(&prn)) return;
     printdata(list, &Z, datainfo, 1, 1, &prn);
-    view_buffer(&prn, 24, 350, "gretl: display data", PRINT, NULL, 0);    
+    view_buffer(&prn, 24, 350, "gretl: display data", PRINT, NULL);    
 }
 
 /* ........................................................... */
@@ -2581,8 +2580,7 @@ static void do_run_script (gpointer data, guint code, GtkWidget *w)
     prnclose(&prn);
     refresh_data();
 
-    view_file(fname, 1, 1, 77, 450, "gretl: script output", 
-	      script_out_items, sizeof script_out_items);
+    view_file(fname, 1, 1, 77, 450, "gretl: script output", script_out_items);
 }
 
 /* ........................................................... */
@@ -2612,11 +2610,9 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
     strncat(title, endbit(tmp, scriptfile, 0), 40);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) 
-	view_file(scriptfile, 1, 0, 78, 370, title, 
-		  script_items, sizeof script_items);
+	view_file(scriptfile, 1, 0, 78, 370, title, script_items);
     else 
-	view_file(scriptfile, 1, 0, 78, 370, title, 
-		  sample_script_items, sizeof sample_script_items);
+	view_file(scriptfile, 1, 0, 78, 370, title, sample_script_items);
 }
 
 /* ........................................................... */
@@ -2632,7 +2628,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
     strcpy(scriptfile, fname);
     
     view_file(scriptfile, 1, 0, 77, 350, "gretl: command script", 
-	      script_items, sizeof script_items);
+	      script_items);
 }
 
 /* ........................................................... */
@@ -2652,7 +2648,7 @@ void do_open_csv_box (char *fname, int code)
 
     sprintf(buf, "gretl: import %s data", 
 	    (code == OPEN_BOX)? "BOX" : "CSV");
-    view_buffer(&prn, 77, 350, buf, IMPORT, NULL, 0); 
+    view_buffer(&prn, 77, 350, buf, IMPORT, NULL); 
 
     if (err) return;
 
@@ -3683,8 +3679,7 @@ void view_script_default (void)
 {
     if (dump_cmd_stack(cmdfile)) return;
 
-    view_file(cmdfile, 0, 0, 77, 350, "gretl: command script", 
-	      NULL, 0);
+    view_file(cmdfile, 0, 0, 77, 350, "gretl: command script", NULL);
 }
 
 #include "../cli/common.c"
