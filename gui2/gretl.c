@@ -1809,6 +1809,8 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
 
     if (dataset_is_time_series(datainfo)) {
+	fputs("vnum <- as.double(R.version$major) + (as.double(R.version$minor) / 10.0)\n", fp);
+	fputs("if (vnum > 1.89) library(stats) else library(ts)\n", fp);
 #ifdef G_OS_WIN32
 	fprintf(fp, "source(\"%s\", echo=TRUE)\n", 
 		slash_convert(Rdata, FROM_BACKSLASH));
