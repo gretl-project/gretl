@@ -428,35 +428,20 @@ static int add_data_column (spreadsheet *sheet)
     GtkListStore *old_store, *new_store;
     GtkTreeIter old_iter, new_iter;
     gint i, row, newcol;
-    int totcols = sheet->totcols;
 
     /* This is relatively complex because, so far as I can tell, you can't
        append or insert additional columns in a GtkListStore: we have to
        create a whole new liststore and copy the old info across.
     */
 
-#ifdef SSDEBUG
-    fprintf(stderr, "add_data_column: totcols=%d\n", totcols);
-#endif    
-
-    totcols++;
-
     /* make an expanded column types list */
-    types = mymalloc(totcols * sizeof *types);
+    types = mymalloc((sheet->totcols + 1) * sizeof *types);
     if (types == NULL) {
 	return 1;
     }
 
     sheet->datacols += 1;
-    sheet->totcols = totcols;
-
-#ifdef SSDEBUG
-    fprintf(stderr, "add_data_column: now sheet->totcols=%d,"
-	    " sheet->datacols=%d\n", sheet->totcols, sheet->datacols);
-    if (sheet->totcols < sheet->datacols + 1) {
-	fprintf(stderr, "PROBLEM: sheet->totcols < sheet->datacols + 1\n");
-    }
-#endif 
+    sheet->totcols += 1;
 
     /* configure the types */
     for (i=0; i<sheet->totcols; i++) {
