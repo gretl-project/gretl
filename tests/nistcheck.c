@@ -770,8 +770,19 @@ int run_gretl_comparison (const char *datname,
     }
 
     if (verbose) {
+	int i;
+
 	model->ID = ++modelnum;
 	printmodel(model, dinfo, prn);
+
+	if (model->ifc) {
+	    printf(" gretl coefficient[0] = %#.9g\n", 
+		   model->coeff[model->ncoeff]);
+	}
+	for (i=1; i<=model->ncoeff - model->ifc; i++) {
+	    printf(" gretl coefficient[%d] = %#.9g\n", i, 
+		   model->coeff[i]);
+	}
     }
 
     /* special treatment when there's no intercept */
