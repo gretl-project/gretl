@@ -96,7 +96,7 @@
 	  <application>gretl</application>-related
 	  files.</para></listitem>
       <listitem><para>The command to launch GNU R (see 
-	  <xref linkend="app-c"/>).</para></listitem>
+	  <xref linkend="app-advanced"/>).</para></listitem>
       <listitem><para>The directory in which to start looking for
 	  native <application>gretl</application>
 	  databases.</para></listitem>

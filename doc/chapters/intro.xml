@@ -5,7 +5,7 @@
       including a shared library, a command-line client program and a
       graphical user interface. If you don't know what econometrics is
       but have some interest in the software anyway, please take a
-      look at <xref linkend="app-a"/>.
+      look at <xref linkend="app-crash"/>.
     </para>
 
     <sect1 id="features"><title>Features at a glance</title>
@@ -32,7 +32,7 @@
 	      Linux, but it is also available for MS Windows.  I have
 	      compiled it on AIX and it should work on any unix-like
 	      system that has the appropriate basic libraries (see
-	      <xref linkend="app-b"/>).</para>
+	      <xref linkend="app-technote"/>).</para>
 	  </listitem>
 	</varlistentry>  
 	<varlistentry><term>Open source</term>
@@ -54,7 +54,7 @@
 	      data to the formats of (<ulink
 		url="http://www.r-project.org/">GNU R</ulink>) and
 	      (<ulink url="http://www.octave.org/">GNU Octave</ulink>) for
-	      further analysis (see <xref linkend="app-c"/>).</para>
+	      further analysis (see <xref linkend="app-advanced"/>).</para>
 	  </listitem>
 	</varlistentry>
 	<varlistentry><term>Internet ready</term>
@@ -95,7 +95,7 @@
 
       <para>I have benefitted greatly from the work of numerous
 	developers of open-source software: for specifics please see
-	<xref linkend="app-b"/> to this manual.</para>
+	<xref linkend="app-technote"/> to this manual.</para>
 
       <para>My thanks are due to Richard Stallman of the Free Software
 	Foundation, for his support of free software in general and
@@ -155,7 +155,7 @@
 	    <filename>/usr</filename> tree.  In the event that a
 	    required library is not found on your system, so that the
 	    configure process fails, please take a look at <xref
-	    linkend="app-b"/> of this manual.
+	    linkend="app-technote"/> of this manual.
 	  </para>
 	</listitem>
       </orderedlist>

@@ -172,7 +172,7 @@
     </itemizedlist>
 
     <para>Also under the Session menu is an option to launch a GNU R
-      session.  R is a separate program (see <xref linkend="app-c"/>):
+      session.  R is a separate program (see <xref linkend="app-advanced"/>):
       if R is not installed on your computer this menu item will not
       accomplish anything.  This is a convenience function for anyone
       wishing to carry out further statistical analyses not available

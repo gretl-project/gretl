@@ -31,7 +31,7 @@
 	      Write out the current data set in Comma Separated Values
 	      (CSV) format, or the formats of GNU R or GNU Octave. See
 	      <xref linkend="datafiles"/> and also <xref
-		linkend="app-c"/>.</para></listitem>
+		linkend="app-advanced"/>.</para></listitem>
 	  <listitem><para><guimenuitem>Clear data set</guimenuitem>:
 	      Clear the current data set out of memory.  Generally you
 	      don't have to do this (since opening a new data file
@@ -107,7 +107,7 @@
 	  <application>R</application> (if it is installed on your
 	  system), and load a copy of the data set currently open in
 	  <application>gretl</application>.  See
-	  <xref linkend="app-c"/>.
+	  <xref linkend="app-advanced"/>.
 	</para></listitem>
     </itemizedlist>
   </listitem>

@@ -17,7 +17,7 @@
       If <application>gretlcli</application> is linked to the
       <application>readline</application> library (this is
       automatically the case in the MS Windows version; also see
-      <xref linkend="app-b"/>), the command line is recallable and
+      <xref linkend="app-technote"/>), the command line is recallable and
       editable, and offers command completion.  You can use the Up and
       Down arrow keys to cycle through previously typed commands.  On
       a given command line, you can use the arrow keys to move around,
