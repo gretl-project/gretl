@@ -13,7 +13,7 @@ VERSION=`grep const ./lib/src/version.h | sed -e 's/^.*"\(.*\)";$/\1/'`
 LIBGRETL_CURRENT=`grep LIBGRETL_CURRENT ./lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_REVISION=`grep LIBGRETL_REVISION ./lib/src/version.h | awk '{ print $NF }'`
 LIBGRETL_AGE=`grep LIBGRETL_AGE ./lib/src/version.h | awk '{ print $NF }'`
-LIBVERSION="$LIBGRETL_CURRENT.$LIBGRETL_REVISION.$LIBGRETL_AGE"
+LIBVERSION="$LIBGRETL_CURRENT.$LIBGRETL_AGE.$LIBGRETL_REVISION"
 
 AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE")
 AC_DEFINE_UNQUOTED(VERSION, "$VERSION")
