@@ -776,6 +776,60 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     return 0;
 }
 
+static int allocate_sigmas (double ***X, double ***Y, double ***Z, int k)
+{
+    int i, j;
+    double **Svv, **Suu, **Suv;
+
+    Svv = malloc(k * sizeof *Svv);
+    Suu = malloc(k * sizeof *Suu);
+    Suv = malloc(k * sizeof *Suv);
+
+    if (Svv == NULL || Suu == NULL || Suv == NULL) return 1;
+
+    for (i=0; i<k; i++) {
+	Svv[i] = malloc(k * sizeof **Svv);
+	Suu[i] = malloc(k * sizeof **Suu);
+	Suv[i] = malloc(k * sizeof **Suv);
+	if (Svv[i] == NULL || Suu[i] == NULL || Suv[i] == NULL) {
+	    free(Svv);
+	    free(Suu);
+	    free(Suv);
+	    return 1;
+	}
+	for (j=0; j<k; j++) {
+	    Svv[i][j] = 0.0;
+	    Suu[i][j] = 0.0;
+	    Suv[i][j] = 0.0;
+	}
+    }
+
+    *X = Svv;
+    *Y = Suu;
+    *Z = Suv;
+
+    return 0;
+}
+
+static void scatter_product (double **v, double **u, double **X, int T, int k)
+{
+    int i, j, t;
+
+    for (t=0; t<T; t++) {
+	for (i=0; i<k; i++) {
+	    for (j=0; j<k; j++) {
+		X[i][j] += v[i][t] * u[j][t];
+	    }
+	}
+    }
+
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
+	    X[i][j] /= (double) T;
+	}
+    }
+}
+
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   PRN *prn)
 {
@@ -812,6 +866,24 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	char date[9];
+	int k = resids.m / 2;
+	int T = resids.t2 - resids.t1 + 1;
+	double **Svv, **Suu, **Suv;
+	double **u, **v;
+
+	allocate_sigmas(&Svv, &Suu, &Suv, k);
+
+	u = malloc(k * sizeof *u);
+	v = malloc(k * sizeof *v);
+
+	for (i=0; i<k; i++) {
+	    v[i] = &(resids.uhat[i][resids.t1]);
+	    u[i] = &(resids.uhat[i + k][resids.t1]);
+	}
+
+	scatter_product(v, v, Svv, T, k);
+	scatter_product(u, u, Suu, T, k);
+	scatter_product(u, v, Suv, T, k);
 
 	for (i=0; i<resids.m; i++) {
 	    pprintf(prn, "Residuals from VAR model %d\n", i);
@@ -831,3 +903,5 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
+
+
