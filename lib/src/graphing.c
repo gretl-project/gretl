@@ -1632,7 +1632,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     PATHS *ppaths)
+		     int time_series, PATHS *ppaths)
 {
     FILE *fp = NULL;
     double xmin, xmax, xrange;
@@ -1648,6 +1648,11 @@ int plot_fcast_errs (int n, const double *obs,
     xmax += xrange * .025;
     fprintf(fp, "set xrange [%.8g:%.8g]\n", xmin, xmax);
     fputs("set missing \"?\"\n", fp);
+    if (!time_series) {
+	fputs("set xtics 1\n", fp);
+    } else {
+	fprintf(fp, "# timeseries %d\n", time_series);
+    }
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"

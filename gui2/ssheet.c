@@ -68,6 +68,9 @@ static int check_atof (const char *numstr)
 
     errno = 0;
 
+    /* accept blank entries */
+    if (*numstr == '\0') return 0;
+
     (void) strtod(numstr, &test);
 
     if (strcmp(numstr, test) == 0) {
@@ -96,7 +99,7 @@ static int check_atof (const char *numstr)
 
 /* .................................................................. */
 
-static void sheet_cell_edited (GtkCellRendererText *cell,
+static gint sheet_cell_edited (GtkCellRendererText *cell,
 			       const gchar *path_string,
 			       const gchar *new_text,
 			       gpointer data)
@@ -118,6 +121,8 @@ static void sheet_cell_edited (GtkCellRendererText *cell,
 			   GPOINTER_TO_INT(column), new_text, -1);
 	gtk_tree_path_free(path);
     }
+
+    return FALSE;
 }
 
 /* .................................................................. */
@@ -195,7 +200,8 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 
     if (sheet->point == SHEET_AT_END) {
 	gtk_list_store_append(store, &iter);
-    } else if (sheet->point == SHEET_AT_POINT) {
+    } 
+    else if (sheet->point == SHEET_AT_POINT) {
 	GtkTreePath *path;
 	GtkTreeViewColumn *column;
 
@@ -204,7 +210,8 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 	pointpath = gtk_tree_path_get_indices(path)[0];
 	gtk_list_store_insert(store, &iter, pointpath);
 	gtk_tree_path_free(path);
-    } else return;
+    } 
+    else return;
 
     sheet->datarows += 1;
 

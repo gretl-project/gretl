@@ -30,6 +30,7 @@
 # include <io.h>
 #else
 # include <unistd.h>
+# include <sys/stat.h>
 #endif
 
 #include "session.h"
@@ -3768,6 +3769,12 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     int dot, err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+#ifdef G_OS_WIN32
+    static char latex_path[MAXLEN];
+    char *texshort = NULL;
+#else
+    struct stat sbuf;
+#endif
 
     if (pmod->errcode == E_NAN) {
 	errbox(_("Sorry, can't format this model"));
@@ -3792,38 +3799,41 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     strncat(texbase, texfile, dot);     
 
 #ifdef G_OS_WIN32
-    {
-	static char latex_path[MAXLEN];
-	char *texshort = strrchr(texbase, SLASH) + 1;
+    if (*latex_path == 0 && get_latex_path(latex_path)) {
+	DWORD dw = GetLastError();
+	win_show_error(dw);
+	return;
+    }
 
-	if (*latex_path == 0 && get_latex_path(latex_path)) {
+    texshort = strrchr(texbase, SLASH) + 1;
+    if (texshort == NULL) {
+	errbox(_("Failed to process TeX file"));
+	return;
+    }
+
+    sprintf(tmp, "\"%s\" %s", latex_path, texshort);
+    if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
+	return;
+    } else {
+	sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
+	if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
 	    DWORD dw = GetLastError();
 	    win_show_error(dw);
-	    return;
-	}
-
-	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED, CREATE_NEW_CONSOLE)) {
-	    return;
-	} else {
-	    sprintf(tmp, "\"%s\" \"%s.dvi\"", viewdvi, texbase);
-	    if (WinExec(tmp, SW_SHOWNORMAL) < 32) {
-		DWORD dw = GetLastError();
-		win_show_error(dw);
-	    }	
-	}
+	}	
     }
 #else
     sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
 	    paths.userdir, texbase);
-    err = system(tmp);
-    if (err) 
+    system(tmp);
+    sprintf(tmp, "%s.dvi", texbase);
+    if (stat(tmp, &sbuf)) {
 	errbox(_("Failed to process TeX file"));
-    else 
+    } else {
 	gretl_fork(viewdvi, texbase);
-#endif
+    }
+#endif /* G_OS_WIN32 */
 
-    remove(texfile);
+    err = remove(texfile);
 #ifdef KILL_DVI_FILE
     sleep(2); /* let forked xdvi get the DVI file */
     sprintf(tmp, "%s.dvi", texbase);

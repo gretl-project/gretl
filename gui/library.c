@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "session.h"
 #include "selector.h"
@@ -3857,6 +3858,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     int dot, err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+    struct stat sbuf;
 
     if (pmod->errcode == E_NAN) {
 	errbox("Sorry, can't format this model");
@@ -3877,14 +3879,17 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 
     dot = dotpos(texfile);
     *texbase = 0;
-    strncat(texbase, texfile, dot);     
+    strncat(texbase, texfile, dot);   
 
-    sprintf(tmp, "cd %s && latex %s", paths.userdir, texbase);
-    err = system(tmp);
-    if (err) 
-	errbox("Failed to run latex");
-    else 
+    sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
+	    paths.userdir, texbase);
+    system(tmp);
+    sprintf(tmp, "%s.dvi", texbase);
+    if (stat(tmp, &sbuf)) {
+	errbox(_("Failed to process TeX file"));
+    } else {
 	gretl_fork(viewdvi, texbase);
+    }
 
     remove(texfile);
 #ifdef KILL_DVI_FILE
@@ -3982,8 +3987,10 @@ int execute_script (const char *runfile, const char *buf,
 	/* check that the file has something in it */
 	cont = 0;
 	while (fgets(tmp, MAXLEN-1, fb)) {
-	    if (strlen(tmp)) {
-		for (i=0; i<strlen(tmp); i++) {
+	    int n = strlen(tmp);
+
+	    if (n > 0) {
+		for (i=0; i<n; i++) {
 		    if (!isspace(tmp[i])) {
 			cont = 1;
 			break;

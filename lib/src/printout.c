@@ -1329,6 +1329,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
     int pv, err = 0;
     int t;
     double *maxerr;
+    int time_series = (pdinfo->time_series == TIME_SERIES);
 
     maxerr = malloc(fr->nobs * sizeof *maxerr);
     if (maxerr == NULL) return E_ALLOC;
@@ -1354,8 +1355,8 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	pputs(prn, "\n");
     }
 
-    if (plot) {
-	if (pdinfo->time_series == TIME_SERIES) {
+    if (plot && fr->nobs > 3) {
+	if (time_series) {
 	    switch (pdinfo->pd) {
 	    case 1:
 		pv = plotvar(pZ, pdinfo, "annual");
@@ -1382,6 +1383,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	    err = plot_fcast_errs(fr->nobs, &(*pZ)[pv][fr->t1], 
 				  fr->actual, fr->fitted, maxerr, 
 				  fr->depvar, 
+				  (time_series)? pdinfo->pd : 0,
 				  ppaths);
 	}
     }

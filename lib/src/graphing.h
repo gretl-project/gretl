@@ -155,7 +155,7 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
 int plot_fcast_errs (int n, const double *obs, 
 		     const double *depvar, const double *yhat, 
 		     const double *maxerr, const char *varname, 
-		     PATHS *ppaths);
+		     int time_series, PATHS *ppaths);
 
 int is_auto_ols_string (const char *s);
 

@@ -1924,94 +1924,79 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
     fr->t2 = t2;
     fr->nobs = pmod->nobs;
 
-    /* should delete the fitted value from *pZ? */
+    /* should we delete the fitted value from *pZ? */
 
     return fr;
 }
 
 /* ........................................................... */
 
-static int adjust_t1_for_missing (const MODEL *pmod,
-				  const double **Z,
-				  const DATAINFO *pdinfo)
+static void fcast_adjust_t1_t2 (const MODEL *pmod,
+				const double **Z,
+				int *t1, int *t2)
 {
-    int i, t, t1 = pdinfo->t1;
+    int i, t;
+    int my_t1 = *t1, my_t2 = *t2;
+    int imin = (pmod->ifc)? 3 : 2;
     int miss;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+    for (t=*t1; t<=*t2; t++) {
 	miss = 0;
-	for (i=1; i<=pmod->list[0]; i++) {
+	for (i=imin; i<=pmod->list[0]; i++) {
 	    if (na(Z[pmod->list[i]][t])) {
 		miss = 1;
 		break;
 	    }
 	}
-	if (miss) t1++;
+	if (miss) my_t1++;
 	else break;
     }
 
-    return t1;
-}
-
-/* ........................................................... */
-
-static int adjust_t2_for_missing (const MODEL *pmod,
-				  const double **Z,
-				  const DATAINFO *pdinfo)
-{
-    int i, t, t2 = pdinfo->t2;
-    int miss;
-
-    for (t=pdinfo->t2; t>0; t--) {
+    for (t=*t2; t>0; t--) {
 	miss = 0;
-	for (i=1; i<=pmod->list[0]; i++) {
+	for (i=imin; i<=pmod->list[0]; i++) {
 	    if (na(Z[pmod->list[i]][t])) {
 		miss = 1;
 		break;
 	    }
 	}
-	if (miss) t2--;
+	if (miss) my_t2--;
 	else break;
     }
 
-    return t2;
+    *t1 = my_t1;
+    *t2 = my_t2;
 }
 
-/* ........................................................... */
+/* 
+   Below: the method for generating forecasts and prediction errors
+   that is presented in Wooldridge's Introductory Econometrics,
+   Chapter 6.
+*/
 
 FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
-			       double ***pZ, DATAINFO *pdinfo, PRN *prn)
-     /* use Salkever's method to generate forecasts plus forecast
-	variances -- FIXME ifc = 0, and methods other than OLS */
+			       double ***pZ, DATAINFO *pdinfo, 
+			       PRN *prn)
 {
     double **fZ = NULL;
-    DATAINFO fdatainfo;
+    DATAINFO *finfo = NULL;
     MODEL fmod; 
     FITRESID *fr;
     int *list = NULL;
-    int orig_v, ft1, ft2, v1;
-    int i, j, k, t, nfcast, fn, fv;
-    int real_t1 = pdinfo->t1;
-    int real_t2 = pdinfo->t2;
+    int ft1, ft2;
+    int i, j, k, t, nfcast, n_est, nv;
+    int yno = pmod->list[1];
     char t1str[9], t2str[9];
-
-    /* Note, Sat Oct 4 21:48:57 EDT 2003: I need to read Salkever and
-       get this properly organized.  There can be problems if there
-       are missing values at the beginning of the dataset, and I
-       don't think the _model_ sample period is respected.  Plus, can
-       this routine produce forecasts and standard errors out of
-       sample?  (I guess so, but how, exactly?)
-    */
 
     fr = fit_resid_new(0, 1); 
     if (fr == NULL) return NULL;
 
-    if (pmod->ci != OLS || !pmod->ifc) {
+    if (pmod->ci != OLS) {
 	fr->err = E_OLSONLY;
 	return fr;
     }
 
-    /* temporary bodge (subsampled) */
+    /* bodge (rejected in case of subsampled data) */
     if (pmod->data != NULL) {
 	fr->err = E_DATA;
 	return fr;
@@ -2025,177 +2010,107 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 
     ft1 = dateton(t1str, pdinfo);
     ft2 = dateton(t2str, pdinfo);
-    if (ft1 < 0 || ft2 < 0 || ft2 < ft1) {
+    if (ft1 < 0 || ft2 < 0 || ft2 <= ft1) {
 	fr->err = E_OBS;
 	return fr;
     }
 
-    orig_v = pmod->list[0];
-    v1 = pmod->list[1];
+    /* move endpoints if there are missing vals for the
+       independent variables */
+    fcast_adjust_t1_t2(pmod, (const double **) *pZ, &ft1, &ft2);
 
-    /* this is dodgy, in relation to what comes below */
-
-    real_t1 = adjust_t1_for_missing(pmod, (const double **) *pZ, pdinfo);
-    if (real_t1 > ft1) ft1 = real_t1;
-
-    real_t2 = adjust_t2_for_missing(pmod, (const double **) *pZ, pdinfo);
-    if (real_t2 < ft2) ft2 = real_t2;
-
+    /* number of obs for which forecasts will be generated */
     nfcast = ft2 - ft1 + 1;
-
-    /* sanity check */
-    if (nfcast > 1024) {
-	fr->err = E_DATA; /* requires > 16MB RAM for fZ */
-	return fr;
-    }
 
     if (allocate_fit_resid_arrays(fr, nfcast, 1)) {
 	fr->err = E_ALLOC;
 	return fr;
     }
 
-    fn = fdatainfo.n = nfcast + real_t2 + 1; /* Is this right? */
-    fv = fdatainfo.v = nfcast + orig_v;
+    nv = pmod->list[0];
+    if (!pmod->ifc) nv++;
+    n_est = pmod->t2 - pmod->t1 + 1;
 
-    fZ = malloc(fv * sizeof *fZ);
-    if (fZ == NULL) {
+    finfo = create_new_dataset(&fZ, nv, n_est, 0);
+    if (finfo == NULL) {
 	fr->err = E_ALLOC;
 	return fr;
     }
+    finfo->extra = 1;
 
-    for (i=0; i<fv; i++) {
-	fZ[i] = malloc(fn * sizeof **fZ);
-	if (fZ[i] == NULL) {
-	    int k;
-
-	    for (k=0; k<i; k++) free(fZ[k]);
-	    free(fZ);
-	    fr->err = E_ALLOC;
-	    return fr;
-	}
+    /* insert depvar at position 1 */
+    for (t=0; t<finfo->n; t++) {
+	fZ[1][t] = (*pZ)[yno][t + pmod->t1];
     }
 
-    strcpy(fdatainfo.stobs, pdinfo->stobs);
-    fdatainfo.t1 = 0; /* real_t1?? pmod->t1?? */
-    fdatainfo.pd = pdinfo->pd;
-    fdatainfo.sd0 = pdinfo->sd0;
-    fdatainfo.time_series = pdinfo->time_series;
-    fdatainfo.t2 = fn - 1;
-    fdatainfo.varname = NULL;
-    fdatainfo.varinfo = NULL;
-    fdatainfo.S = NULL;
-    fdatainfo.vector = NULL;
-    fdatainfo.descrip = NULL;
-
     /* create new list */
-    list = malloc((fv + 1) * sizeof *list);
+
+    list = malloc((finfo->v + 1) * sizeof *list);
     if (list == NULL) {
 	fr->err = E_ALLOC;
 	goto fcast_bailout;
     }
 
-    list[0] = fv;
-    k = 1;
-    for (i=1; i<=list[0]; i++) {
-	if (i == 2 && pmod->ifc) list[i] = 0;
-	else list[i] = k++;
+    list[0] = finfo->v;
+    list[1] = 1;
+    list[2] = 0;
+    for (i=3; i<=list[0]; i++) {
+	list[i] = i - 1;
     }
 
-    /* set new data matrix to zero */
-    for (i=1; i<fv; i++) {
-	for (t=0; t<fn; t++) {
-	    fZ[i][t] = 0.0;
-	}
-    }
+    _init_model(&fmod, finfo);
 
-    /* insert const at pos. 0 */
-    for (t=0; t<fn; t++) {
-	fZ[0][t] = 1.0;
-    }
+    /* loop across the observations for which we want forecasts
+       and standard errors */
 
-    /* insert orig model vars into fZ: 
-       FIXME timing and sample */
-    k = 1;
-    for (i=1; i<=orig_v; i++) {
-	if (i > 1 && pmod->list[i] == 0) continue;
-	for (t=0; t<=real_t2; t++) {
-	    fZ[k][t] = (*pZ)[pmod->list[i]][t];
-	}
-	if (i == 1) {
-	    k++;
-	    continue;
-	}
-	for (t=real_t2+1; t<fn; t++) {
-	    fZ[k][t] = (*pZ)[pmod->list[i]][t - (real_t2+1) + ft1];
-	}
-	k++;
-    }
+#ifdef FCAST_DEBUG
+    printf("get_fcast_with_errs: ft1=%d, ft2=%d, pmod->t1=%d, pmod->t2=%d\n",
+	   ft1, ft2, pmod->t1, pmod->t2);
+#endif
 
-    /* insert -I section */
-    for (i=orig_v; i<fv; i++) {
-	k = orig_v - i;
-	for (t=real_t2+1; t<fn; t++) {
-	    j = real_t2 + 1 - t;
-	    if (k == j) fZ[i][t] = -1.0;
-	}
-    }
-
-    _init_model(&fmod, &fdatainfo);
-    fdatainfo.extra = 1;
-    fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
-    if (fmod.errcode) {
-	fprintf(stderr, I_("forecasting model failed in fcast_with_errs()\n"));
-	fr->err = fmod.errcode;
-	clear_model(&fmod, &fdatainfo);
-	goto fcast_bailout;
-    }
-
-    /* find the fitted values */
-    t = 0; 
-    for (i=orig_v-1; i<fv-1; i++) {
-	/* fr->fitted is only as long as the number of forecasts,
-	   rather than being the full length of the data set */
-	fr->fitted[t] = fmod.coeff[i];
-	t++;
-    }    
-
-    /* and the variances */
-    if (makevcv(&fmod)) {
-	fr->err = E_ALLOC;
-	clear_model(&fmod, &fdatainfo);
-	goto fcast_bailout;
-    }
-
-    t = k = 0;
-    for (i=1; i<fv; i++) {
-	for (j=1; j<fv; j++) {
-	    if (j < i) continue;
-	    if (j == i && i < fv && i > orig_v - 1) {
-		fr->sderr[t] = sqrt(fmod.vcv[k]);
-		t++;
+    for (k=0; k<nfcast; k++) {
+	/* form modified indep vars: original data minus the values
+	   to be used for the forecast */
+	for (i=3; i<=list[0]; i++) {
+	    j = (pmod->ifc)? pmod->list[i] : pmod->list[i-1];
+	    for (t=0; t<finfo->n; t++) {
+		fZ[i-1][t] = (*pZ)[j][t + pmod->t1] 
+		    - (*pZ)[j][k + ft1]; 
 	    }
-	    k++;
 	}
-    } 
-
-    for (t=0; t<nfcast; t++) {
-	fr->actual[t] = (*pZ)[v1][ft1 + t];
+	clear_model(&fmod, finfo);
+	fmod = lsq(list, &fZ, finfo, OLS, 1, 0.0);
+	if (fmod.errcode) {
+	    fr->err = fmod.errcode;
+	    clear_model(&fmod, finfo);
+	    goto fcast_bailout;
+	}
+	fr->fitted[k] = fmod.coeff[0];
+	/* what exactly do we want here? */
+#ifdef GIVE_SDERR_OF_EXPECTED_Y
+	fr->sderr[k] = fmod.sderr[0];
+#else
+	fr->sderr[k] = sqrt(fmod.sderr[0] * fmod.sderr[0] + 
+			    fmod.sigma * fmod.sigma);
+#endif
+	fr->actual[k] = (*pZ)[pmod->list[1]][k + ft1];
     }
+
+    clear_model(&fmod, finfo);
 
     fr->tval = tcrit95(pmod->dfd);
-    strcpy(fr->depvar, pdinfo->varname[v1]);
+    strcpy(fr->depvar, pdinfo->varname[yno]);
 
     fr->t1 = ft1;
     fr->t2 = ft2;
     fr->nobs = ft2 - ft1 + 1;
     fr->df = pmod->dfd;
 
-    clear_model(&fmod, &fdatainfo);
-
  fcast_bailout:
-    free_Z(fZ, &fdatainfo);
+    free_Z(fZ, finfo);
     free(list);
-    clear_datainfo(&fdatainfo, CLEAR_FULL);
+    clear_datainfo(finfo, CLEAR_FULL);
+    free(finfo);
 
     return fr;
 }
@@ -2298,7 +2213,7 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
     if (pmod->subdum != NULL) {
 	int t;
 
-	spec->subdum = malloc(fullinfo->n * sizeof(double));
+	spec->subdum = malloc(fullinfo->n * sizeof *spec->subdum);
 	if (spec->subdum == NULL) return 1;
 	for (t=0; t<fullinfo->n; t++)
 	    spec->subdum[t] = pmod->subdum[t];
@@ -2320,7 +2235,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     prn.fp = NULL;
     prn.buf = NULL;
 
-    command.list = malloc(sizeof(int));
+    command.list = malloc(sizeof *command.list);
     command.param = malloc(1);
     if (command.list == NULL || command.param == NULL) 
 	return 1;
@@ -2338,8 +2253,9 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case HILU:
 	err = hilu_corc(&rho, command.list, pZ, pdinfo, 
 			NULL, 1, command.ci, &prn);
-	if (!err)
+	if (!err) {
 	    *tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, rho);
+	}
 	break;
     case HCCM:
 	*tmpmod = hccm_func(command.list, pZ, pdinfo);
@@ -2408,11 +2324,13 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
     else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
         char Tstr[8];
 
-        if (sscanf(pdinfo->endobs, "%[^:]:%d", Tstr, nunits) != 2)
+        if (sscanf(pdinfo->endobs, "%[^:]:%d", Tstr, nunits) != 2) {
             err = 1;
-        else 
+        } else { 
             *T = atoi(Tstr);
-    } else err = 1;
+	}
+    } 
+    else err = 1;
 
     return err;
 }
@@ -2431,10 +2349,11 @@ int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    if (flag == 'c') 
+    if (flag == 'c') {
 	pdinfo->time_series = STACKED_CROSS_SECTION;
-    else 
+    } else {
 	pdinfo->time_series = STACKED_TIME_SERIES;
+    }
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
 	pputs(prn, _("Failed to set panel structure\n"));
@@ -2447,6 +2366,7 @@ int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
 	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
 		nunits, T);
     }
+
     return 0;
 }
 
@@ -2472,10 +2392,11 @@ int balanced_panel (const DATAINFO *pdinfo)
 
 double get_xvalue (int i, double **Z, const DATAINFO *pdinfo)
 {
-    if (pdinfo->vector[i])
+    if (pdinfo->vector[i]) {
 	return Z[i][pdinfo->t1];
-    else
-	return Z[i][0];	
+    } else {
+	return Z[i][0];
+    }	
 }
 
 /* ........................................................... */
