@@ -1900,11 +1900,11 @@ static char *slash_convert (char *str, int which)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-init-file --no-restore-data";
+    const char *supp1 = "--no-init-file";
+    const char *supp2 = "--no-restore-data";
     FILE *fp;
-#ifdef G_OS_WIN32
-    char renv[MAXLEN];
-#else
+    int enverr;
+#ifndef G_OS_WIN32
     int i;
     char *s0, *s1, *s2;
     pid_t pid;
@@ -1923,15 +1923,15 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
 
 #ifdef G_OS_WIN32
-    sprintf(renv, "R_PROFILE=%s", Rprofile);
-    renv[strlen(renv) + 1] = '\0'; /* add an extra nul-terminator */
+    enverr = ! SetEnvironmentVariable("R_PROFILE", Rprofile);
 #else
-    if (setenv("R_PROFILE", Rprofile, 1)) {
+    enverr = setenv("R_PROFILE", Rprofile, 1);
+#endif
+    if (enverr) {
 	errbox(_("Couldn't set R_PROFILE environment variable"));
 	fclose(fp);
 	return;
-    } 
-#endif
+    } 	
 
     build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store \"%s\" -r", Rdata); 
@@ -1975,8 +1975,8 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     fclose(fp);
 
 #ifdef G_OS_WIN32
-    sprintf(line, "\"%s\" %s", Rcommand, suppress);
-    create_child_process(line, renv);
+    sprintf(line, "\"%s\" %s %s", Rcommand, supp1, supp2);
+    create_child_process(line, NULL);
 #else
     s0 = mymalloc(64);
     s1 = mymalloc(32);
@@ -2000,11 +2000,11 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	return;
     } else if (pid == 0) {  
 	if (i == 1) {
-	    execlp(s0, s0, suppress, NULL);
+	    execlp(s0, s0, supp1, supp2, NULL);
 	} else if (i == 2) {
-	    execlp(s0, s0, s1, suppress, NULL);
+	    execlp(s0, s0, s1, supp1, supp2, NULL);
 	} else if (i == 3) {
-	    execlp(s0, s0, s1, s2, suppress, NULL);
+	    execlp(s0, s0, s1, s2, supp1, supp2, NULL);
 	}
 	perror("execlp");
 	_exit(EXIT_FAILURE);
