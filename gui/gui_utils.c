@@ -806,23 +806,22 @@ void do_help (gpointer data, guint code, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void update_header (GtkWidget *widget, gpointer data)
+void file_viewer_save (GtkWidget *widget, gpointer data)
 {
-    gchar *newhdr;
+    gchar *text;
     FILE *fp;
-    int err1, err2;
+    windata_t *mydata = (windata_t *) data;
 
-    fp = fopen(paths.hdrfile, "w");
+    fp = fopen(mydata->fname, "w");
     if (fp == NULL) {
-	errbox("Can't open header file for writing");
+	errbox("Can't open file for writing");
 	return;
+    } else {
+	text = gtk_editable_get_chars (GTK_EDITABLE(mydata->w), 0, -1);
+	fprintf(fp, "%s", text);
+	fclose(fp);
+	g_free(text);
     }
-    newhdr = gtk_editable_get_chars (GTK_EDITABLE(data), 0, -1);
-    err1 = fprintf(fp, "%s", newhdr);
-    err2 = fclose(fp);
-    if (err1 == 0 || err2) errbox("Failed to write header file");
-    else infobox("Edited header saved OK");
-    g_free(newhdr);
 } 
 
 /* .................................................................. */
@@ -1045,17 +1044,14 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	strcpy(fle, filename);
     }
 
-    /* add a "save" button for editing hdr file */
-    if (strncmp(title, "gretl: edit", 11) == 0)  {
+    /* add a "save" button for editable files */
+    if (editable && !console)  {
 	save = gtk_button_new_with_label("Save");
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 			   save, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(save), "clicked", 
-			   GTK_SIGNAL_FUNC(update_header), 
-			   (gpointer) vwin->w); 
-	gtk_signal_connect_after(GTK_OBJECT(save), "clicked", 
-			   GTK_SIGNAL_FUNC(delete_file_viewer), 
-			   (gpointer) dialog);
+			   GTK_SIGNAL_FUNC(file_viewer_save), 
+			   vwin);
 	gtk_widget_show(save);
     }
 

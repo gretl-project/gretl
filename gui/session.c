@@ -42,7 +42,6 @@
 
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
-static void save_notes (gpointer data, guint i, GtkWidget *w);
 
 /* "session" struct and "errtext" are globals */
 
@@ -86,15 +85,6 @@ GtkItemFactoryEntry gp_edit_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
-GtkItemFactoryEntry notes_items[] = {
-    { "/_File", NULL, NULL, 0, "<Branch>" }, 
-    { "/File/_Save", NULL, save_notes, 0, NULL },
-    { "/_Edit", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-
 static int session_file_open;
 
 static GtkWidget *iconview;
@@ -110,15 +100,6 @@ static GtkWidget *addgraph;
 
 extern int read_plotfile (GPT_SPEC *plot, char *fname);
 extern void show_spreadsheet (char *dataspec);
-
-#ifdef notdef
-/* gtkextra functions */
-extern void
-gtk_icon_list_set_editable (GtkIconList *iconlist, gboolean editable);
-extern void
-gtk_icon_list_set_text_space (GtkIconList *iconlist, guint spacing);
-/* end gtkextra functions */
-#endif
 
 /* private functions */
 static void session_build_popups (void);
@@ -193,38 +174,9 @@ static void edit_session_notes (void)
     if (fp != NULL) {
 	fclose(fp);
 	view_file(notesfile, 1, 0, 78, 370, 
-		  "gretl: session notes", notes_items);
+		  "gretl: session notes", NULL);
     } else 
 	errbox("Couldn't open session notes");
-}
-
-/* ........................................................... */
-
-static void save_notes (gpointer data, guint i, GtkWidget *w)
-{
-    FILE *fp;
-    char notesfile[MAXLEN];
-
-    if (session_file_open && scriptfile[0]) 
-	switch_ext(notesfile, scriptfile, "Notes");
-    else 
-	sprintf(notesfile, "%ssession.Notes", paths.userdir);
-
-    fp = fopen(notesfile, "w");
-
-    if (fp == NULL) {
-	errbox("Couldn't open notes file for writing");
-	return;
-    } else {
-	windata_t *mydata = (windata_t *) data;
-	gchar *savestuff;
-
-	savestuff = 
-	    gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
-	fprintf(fp, "%s", savestuff);
-	g_free(savestuff); 
-	fclose(fp);
-    }
 }
 
 /* ........................................................... */
@@ -446,38 +398,59 @@ void print_session (void)
 
 /* ........................................................... */
 
-int delete_session_model (GtkWidget *w, gpointer data)
+static int delete_session_object (gui_obj *obj)
 {
-    dialog_t *myd;
-    gui_obj *myobject;
-    MODEL *junk, **ppmod;
     int i, j;
 
-    if (data == NULL) return 0; 
+    if (obj == NULL) return 0; 
 
-    myd = (dialog_t *) data;
-    myobject = (gui_obj *) myd->data;
-    junk = (MODEL *) myobject->data;
+    if (obj->sort == 'm') { /* a model */
+	MODEL **ppmod, *junk = (MODEL *) obj->data;
 
-    /* special case: only one model currently */
-    if (session.nmodels == 1) {
-	free_model(session.models[0]);
-    } else {
-	ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
-	if (session.nmodels > 1 && ppmod == NULL) {
-	    return 1;
+	/* special case: only one model currently */
+	if (session.nmodels == 1) {
+	    free_model(session.models[0]);
+	} else {
+	    ppmod = mymalloc((session.nmodels - 1) * sizeof(MODEL *));
+	    if (session.nmodels > 1 && ppmod == NULL) {
+		return 1;
+	    }
+	    j = 0;
+	    for (i=0; i<session.nmodels; i++) {
+		if ((session.models[i])->ID != junk->ID) 
+		    ppmod[j++] = session.models[i];
+		else 
+		    free_model(session.models[i]);
+	    }
+	    free(session.models);
+	    session.models = ppmod;
 	}
-	j = 0;
-	for (i=0; i<session.nmodels; i++) {
-	    if ((session.models[i])->ID != junk->ID) 
-		ppmod[j++] = session.models[i];
-	    else 
-		free_model(session.models[i]);
-	}
-	free(session.models);
-	session.models = ppmod;
+	session.nmodels -= 1;
     }
-    session.nmodels -= 1;
+    else if (obj->sort == 'g') { /* a graph */    
+	GRAPHT **ppgr, *junk = (GRAPHT *) obj->data;
+
+	/* special case: only one graph currently */
+	if (session.ngraphs == 1) {
+	    free_graph(session.graphs[0]);
+	} else {
+	    ppgr = mymalloc((session.ngraphs - 1) * sizeof(GRAPHT *));
+	    if (session.ngraphs > 1 && ppgr == NULL) {
+		return 1;
+	    }
+	    j = 0;
+	    for (i=0; i<session.ngraphs; i++) {
+		if ((session.graphs[i])->ID != junk->ID) 
+		    ppgr[j++] = session.graphs[i];
+		else 
+		    free_graph(session.graphs[i]);
+	    }
+	    free(session.graphs);
+	    session.graphs = ppgr;
+	}
+	session.ngraphs -= 1;
+    }
+
     gtk_icon_list_remove(GTK_ICON_LIST(slist), active_icon);
     return 0;
 }
@@ -681,6 +654,7 @@ void view_session (void)
     gchar title[80];
 
     if (iconview != NULL) {
+	gdk_window_show(iconview->window);
 	gdk_window_raise(iconview->window);
 	return;
     }
@@ -1019,11 +993,11 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	}
     }   
     else if (strcmp(item, "Delete") == 0) {
-	gchar text[100];
-	sprintf(text,"Really delete '%s'?", myobject->name);
-	if (myobject->sort == 'm') {
-	    if (!yes_no_dialog("gretl: delete", text, 0)) 
-		delete_session_model(NULL, myobject);
+	gchar msg[64];
+
+	sprintf(msg, "Really delete %s?", myobject->name);
+	if (!yes_no_dialog("gretl: delete", msg, 0)) {
+	    delete_session_object(myobject);
 	}
     }
 }

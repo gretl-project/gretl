@@ -69,6 +69,8 @@ void windata_init (windata_t *mydata);
 
 void free_windata (GtkWidget *w, gpointer data);
 
+void file_viewer_save (GtkWidget *widget, gpointer data);
+
 windata_t *view_buffer (print_t *prn, int hsize, int vsize, 
 			char *title, int action,
 			GtkItemFactoryEntry menu_items[]);
