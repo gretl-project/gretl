@@ -770,9 +770,11 @@
 	    <function>mean</function> (arithmetic mean),
 	    <function>median</function>, <function>var</function>
 	    (variance) <function>sd</function> (standard deviation),
-	    <function>sum</function>, <function>cov</function>
-	    (covariance), <function>corr</function> (correlation
-	    coefficient), <function>pvalue</function></para>
+	    <function>sst</function> (sum of squared deviations from
+	    the mean), <function>sum</function>,
+	    <function>cov</function> (covariance),
+	    <function>corr</function> (correlation coefficient),
+	    <function>pvalue</function></para>
 	</listitem>
 	<listitem><para>Time-series functions:
 	    <function>lag</function>, <function>lead</function>,

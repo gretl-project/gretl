@@ -76,6 +76,8 @@ double _esl_stddev (int t1, int t2, const double *x);
 
 double _esl_variance (int t1, int t2, const double *x);
 
+double _esl_sst (int t1, int t2, const double *x);
+
 void _aicetc (MODEL *pmod);
 
 void _criteria (const double ess, int nobs, int ncoeff, 

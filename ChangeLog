@@ -1,3 +1,7 @@
+version 1.0.4
+- add sst() function in genr for Total Sum of Squares of a 
+  variable
+
 02/04/03 version 1.0.3
 - Add PNG graphs to win32 version, and standardize on PNG graphs for
   all display including graph editing

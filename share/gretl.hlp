@@ -269,7 +269,8 @@ log is a synonym), sin, sqrt.
 
 Statistical functions: mean (arithmetic mean), median, var (variance), sd
 (standard deviation), sum, cov (covariance), corr (correlation coefficient),
-min (minimum), max (maximum).
+min (minimum), max (maximum) and sst (sum of squared deviations from the
+mean).
 
 Time-series functions: lag, lead, diff (first difference), ldiff
 (log-difference, or first difference of natural logs).  Miscellaneous: cum

@@ -430,6 +430,26 @@ double _esl_variance (int t1, int t2, const double *x)
     else return NADBL;
 }
 
+/* .............................................................  */
+
+double _esl_sst (int t1, int t2, const double *x)
+{
+    register int i;
+    double sumsq, xx, xbar;
+
+    if (t2 - t1 + 1 == 0) return NADBL;
+    xbar = _esl_mean(t1, t2, x);
+    if (na(xbar)) return NADBL;
+    sumsq = 0.0;
+    for (i=t1; i<=t2; i++) {
+	if (!na(x[i])) {
+	    xx = x[i] - xbar;
+	    sumsq += xx*xx;
+	} 
+    }
+    return sumsq;
+}
+
 /**
  * printlist:
  * @list: array of integers.

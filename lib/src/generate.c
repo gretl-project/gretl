@@ -101,7 +101,8 @@ enum transformations {
     T_MEDIAN,
     T_ZEROMISS,
     T_PVALUE,
-    T_MPOW
+    T_MPOW,
+    T_SST
 };
 
 enum retrieve {
@@ -159,6 +160,7 @@ static char *math[] = {
     "zeromiss",
     "pvalue",
     "mpow",
+    "sst",
     NULL
 };
 
@@ -173,7 +175,7 @@ static char operators[] = {
 #define SCALAR_SCOPE(t) (t == T_MEAN || t == T_SD || t == T_SUM || \
                          t == T_CORR || t == T_COV || \
                          t == T_VAR || t == T_MEDIAN || t == T_MIN || \
-                         t == T_MAX)
+                         t == T_SST || t == T_MAX)
 
 /* ...................................................... */
 
@@ -1293,6 +1295,7 @@ static int domath (double *xvec, const double *mvec, int nt,
     case T_SUM:
     case T_SD:
     case T_VAR:
+    case T_SST:
     case T_MEDIAN:
     case T_MIN:
     case T_MAX:
@@ -1319,6 +1322,9 @@ static int domath (double *xvec, const double *mvec, int nt,
 	}
 	else if (nt == T_VAR) {
 	    xx = _esl_variance(0, i, x);
+	}
+	else if (nt == T_SST) {
+	    xx = _esl_sst(0, i, x);
 	}
 	else if (nt == T_MEDIAN) {
 	    xx = gretl_median(x, i+1);
