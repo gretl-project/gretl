@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-04-01 11:52-0500\n"
+"POT-Creation-Date: 2003-04-03 08:38-0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -63,10 +63,10 @@ msgid "Couldn't access panel plugin\n"
 msgstr ""
 
 #: lib/src/compare.c:814 lib/src/compare.c:1266 lib/src/compare.c:1333
-#: lib/src/estimate.c:2714 lib/src/estimate.c:2721 lib/src/generate.c:2650
+#: lib/src/estimate.c:2723 lib/src/estimate.c:2730 lib/src/generate.c:2650
 #: lib/src/generate.c:2689 lib/src/graphing.c:1549 lib/src/pvalues.c:598
-#: lib/src/system.c:194 lib/src/system.c:201 lib/src/var.c:961
-#: lib/src/var.c:968
+#: lib/src/system.c:194 lib/src/system.c:201 lib/src/var.c:966
+#: lib/src/var.c:973
 msgid "Couldn't load plugin function\n"
 msgstr ""
 
@@ -86,7 +86,7 @@ msgstr ""
 
 #: lib/src/compare.c:892 lib/src/compare.c:897 lib/src/modelprint.c:527
 #: lib/src/modelprint.c:1047 lib/src/modelprint.c:1056
-#: lib/src/modelprint.c:1576 lib/src/modelprint.c:1595 lib/src/printout.c:175
+#: lib/src/modelprint.c:1585 lib/src/modelprint.c:1604 lib/src/printout.c:175
 #: lib/src/printout.c:187 lib/src/printout.c:232 lib/src/printout.c:244
 #: lib/src/printout.c:360 plugin/panel_data.c:779
 msgid "Chi-square"
@@ -203,7 +203,7 @@ msgstr ""
 msgid "Sum of coefficients"
 msgstr ""
 
-#: lib/src/compare.c:1517 lib/src/modelprint.c:1707 plugin/mp_ols.c:374
+#: lib/src/compare.c:1517 lib/src/modelprint.c:1716 plugin/mp_ols.c:374
 msgid "Standard error"
 msgstr ""
 
@@ -368,7 +368,7 @@ msgstr ""
 msgid "daily"
 msgstr ""
 
-#: lib/src/dataio.c:1312 lib/src/modelprint.c:1368 lib/src/modelprint.c:1446
+#: lib/src/dataio.c:1312 lib/src/modelprint.c:1377 lib/src/modelprint.c:1455
 msgid "unknown"
 msgstr ""
 
@@ -1038,14 +1038,14 @@ msgid "Fractional integration test failed"
 msgstr ""
 
 #: lib/src/describe.c:841 lib/src/describe.c:842 lib/src/describe.c:854
-#: lib/src/describe.c:855 lib/src/estimate.c:2267 lib/src/estimate.c:2268
+#: lib/src/describe.c:855 lib/src/estimate.c:2276 lib/src/estimate.c:2277
 #: lib/src/modelprint.c:257 lib/src/modelprint.c:267 lib/src/modelprint.c:282
-#: lib/src/modelprint.c:1283 lib/src/modelprint.c:1346
-#: lib/src/modelprint.c:1356 lib/src/modelprint.c:1379
-#: lib/src/modelprint.c:1426 lib/src/modelprint.c:1433
-#: lib/src/modelprint.c:1434 lib/src/modelprint.c:1435
-#: lib/src/modelprint.c:1457 lib/src/modelprint.c:1650
-#: lib/src/modelprint.c:1692 lib/src/printout.c:301 lib/src/printout.c:496
+#: lib/src/modelprint.c:1292 lib/src/modelprint.c:1355
+#: lib/src/modelprint.c:1365 lib/src/modelprint.c:1388
+#: lib/src/modelprint.c:1435 lib/src/modelprint.c:1442
+#: lib/src/modelprint.c:1443 lib/src/modelprint.c:1444
+#: lib/src/modelprint.c:1466 lib/src/modelprint.c:1659
+#: lib/src/modelprint.c:1701 lib/src/printout.c:301 lib/src/printout.c:496
 #: lib/src/printout.c:504 lib/src/printout.c:576 lib/src/printout.c:577
 #: lib/src/texprint.c:133 lib/src/texprint.c:134 gui/guiprint.c:234
 #: gui/guiprint.c:236 gui/guiprint.c:337 gui/guiprint.c:339 gui/guiprint.c:444
@@ -1428,119 +1428,119 @@ msgstr ""
 msgid "Warning: data matrix close to singularity!"
 msgstr ""
 
-#: lib/src/estimate.c:1289 lib/src/estimate.c:1358 lib/src/estimate.c:1398
+#: lib/src/estimate.c:1289 lib/src/estimate.c:1358 lib/src/estimate.c:1407
 msgid "ESS"
 msgstr ""
 
-#: lib/src/estimate.c:1378
+#: lib/src/estimate.c:1387
 #, c-format
 msgid ""
 "\n"
 "\n"
-"ESS is minimum for rho = %.3f\n"
-"\n"
-msgstr ""
-
-#: lib/src/estimate.c:1385
-msgid ""
-"\n"
-"Fine-tune rho using the CORC procedure...\n"
+"ESS is minimum for rho = %.2f\n"
 "\n"
 msgstr ""
 
 #: lib/src/estimate.c:1394
 msgid ""
 "\n"
+"Fine-tune rho using the CORC procedure...\n"
+"\n"
+msgstr ""
+
+#: lib/src/estimate.c:1403
+msgid ""
+"\n"
 "Performing iterative calculation of rho...\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1398
+#: lib/src/estimate.c:1407
 msgid "ITER"
 msgstr ""
 
-#: lib/src/estimate.c:1419
+#: lib/src/estimate.c:1428
 #, c-format
 msgid ""
 "                final %11.5f\n"
 "\n"
 msgstr ""
 
-#: lib/src/estimate.c:1490
+#: lib/src/estimate.c:1499
 #, c-format
 msgid ""
 "Order condition for identification is not satisfied.\n"
 "varlist 2 needs at least %d more variable(s) not in varlist1."
 msgstr ""
 
-#: lib/src/estimate.c:1506
+#: lib/src/estimate.c:1515
 msgid "Constant term is in varlist1 but not in varlist2"
 msgstr ""
 
-#: lib/src/estimate.c:1676 lib/src/estimate.c:2053
+#: lib/src/estimate.c:1685 lib/src/estimate.c:2062
 msgid "generation of squares failed\n"
 msgstr ""
 
-#: lib/src/estimate.c:2080
+#: lib/src/estimate.c:2089
 msgid "didn't add to list\n"
 msgstr ""
 
-#: lib/src/estimate.c:2100 lib/src/modelprint.c:428
+#: lib/src/estimate.c:2109 lib/src/modelprint.c:428
 msgid "White's test for heteroskedasticity"
 msgstr ""
 
-#: lib/src/estimate.c:2101
+#: lib/src/estimate.c:2110
 msgid "heteroskedasticity not present"
 msgstr ""
 
-#: lib/src/estimate.c:2214
+#: lib/src/estimate.c:2223
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr ""
 
-#: lib/src/estimate.c:2367
+#: lib/src/estimate.c:2376
 #, c-format
 msgid "weighted %s "
 msgstr ""
 
-#: lib/src/estimate.c:2373
+#: lib/src/estimate.c:2382
 msgid "omitted because all obs are zero."
 msgstr ""
 
-#: lib/src/estimate.c:2572
+#: lib/src/estimate.c:2581
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr ""
 
-#: lib/src/estimate.c:2624
+#: lib/src/estimate.c:2633
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr ""
 
-#: lib/src/estimate.c:2631
+#: lib/src/estimate.c:2640
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr ""
 
-#: lib/src/estimate.c:2633
+#: lib/src/estimate.c:2642
 msgid "no ARCH effect is present"
 msgstr ""
 
-#: lib/src/estimate.c:2640
+#: lib/src/estimate.c:2649
 #, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
 "Area to the right of LM = %f  "
 msgstr ""
 
-#: lib/src/estimate.c:2644
+#: lib/src/estimate.c:2653
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr ""
 
-#: lib/src/estimate.c:2645
+#: lib/src/estimate.c:2654
 msgid "Weighted estimation not done"
 msgstr ""
 
-#: lib/src/estimate.c:2648
+#: lib/src/estimate.c:2657
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr ""
 
@@ -2124,58 +2124,58 @@ msgstr ""
 msgid "Try again later"
 msgstr ""
 
-#: lib/src/interact.c:1017
+#: lib/src/interact.c:1019
 #, c-format
 msgid ""
 "\n"
 "var number %d duplicated in the command list.\n"
 msgstr ""
 
-#: lib/src/interact.c:1047
+#: lib/src/interact.c:1049
 msgid "Listing labels for variables:\n"
 msgstr ""
 
-#: lib/src/interact.c:1084
+#: lib/src/interact.c:1086
 msgid "adf: lag order must be given first\n"
 msgstr ""
 
-#: lib/src/interact.c:1109
+#: lib/src/interact.c:1111
 msgid "Error in generating correlation matrix\n"
 msgstr ""
 
-#: lib/src/interact.c:1114
+#: lib/src/interact.c:1116
 msgid "Couldn't allocate memory for correlation matrix.\n"
 msgstr ""
 
-#: lib/src/interact.c:1122
+#: lib/src/interact.c:1124
 msgid "Error in computing model selection criteria.\n"
 msgstr ""
 
-#: lib/src/interact.c:1132
+#: lib/src/interact.c:1134
 msgid "Error adding first differences of variables.\n"
 msgstr ""
 
-#: lib/src/interact.c:1139
+#: lib/src/interact.c:1141
 msgid "Error adding log differences of variables.\n"
 msgstr ""
 
-#: lib/src/interact.c:1146
+#: lib/src/interact.c:1148
 msgid "Error adding lags of variables.\n"
 msgstr ""
 
-#: lib/src/interact.c:1153
+#: lib/src/interact.c:1155
 msgid "Error adding logs of variables.\n"
 msgstr ""
 
-#: lib/src/interact.c:1177
+#: lib/src/interact.c:1179
 msgid "This command requires one variable.\n"
 msgstr ""
 
-#: lib/src/interact.c:1189
+#: lib/src/interact.c:1191
 msgid "No data information is available.\n"
 msgstr ""
 
-#: lib/src/interact.c:1211 cli/common.c:271
+#: lib/src/interact.c:1213 cli/common.c:271
 msgid "generation of summary stats failed\n"
 msgstr ""
 
@@ -2209,11 +2209,11 @@ msgstr ""
 msgid "Standard error of residuals"
 msgstr ""
 
-#: lib/src/modelprint.c:147 lib/src/modelprint.c:1715 plugin/mp_ols.c:385
+#: lib/src/modelprint.c:147 lib/src/modelprint.c:1724 plugin/mp_ols.c:385
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:150 lib/src/modelprint.c:1719 plugin/mp_ols.c:390
+#: lib/src/modelprint.c:150 lib/src/modelprint.c:1728 plugin/mp_ols.c:390
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -2244,8 +2244,8 @@ msgid ""
 msgstr ""
 
 #: lib/src/modelprint.c:216 lib/src/modelprint.c:219 lib/src/modelprint.c:870
-#: lib/src/modelprint.c:897 lib/src/modelprint.c:1577
-#: lib/src/modelprint.c:1596 lib/src/modelprint.c:1621 plugin/johansen.c:107
+#: lib/src/modelprint.c:897 lib/src/modelprint.c:1586
+#: lib/src/modelprint.c:1605 lib/src/modelprint.c:1630 plugin/johansen.c:107
 #: plugin/johansen.c:110 plugin/johansen.c:113 plugin/johansen.c:116
 msgid "p-value"
 msgstr ""
@@ -2433,7 +2433,7 @@ msgid "%s estimates using %d observations"
 msgstr ""
 
 #: lib/src/modelprint.c:752 lib/src/modelprint.c:757 lib/src/modelprint.c:762
-#: lib/src/modelprint.c:768 lib/src/modelprint.c:1769 gui/selector.c:536
+#: lib/src/modelprint.c:768 lib/src/modelprint.c:1778 gui/selector.c:536
 #: gui2/selector.c:764 plugin/mp_ols.c:418
 msgid "Dependent variable"
 msgstr ""
@@ -2509,68 +2509,68 @@ msgstr ""
 msgid "Statistics based on the rho-differenced data"
 msgstr ""
 
-#: lib/src/modelprint.c:1264
+#: lib/src/modelprint.c:1273
 msgid "MODEL SELECTION STATISTICS"
 msgstr ""
 
-#: lib/src/modelprint.c:1532
+#: lib/src/modelprint.c:1541
 msgid "Estimates of the AR coefficients"
 msgstr ""
 
-#: lib/src/modelprint.c:1543
+#: lib/src/modelprint.c:1552
 msgid "Sum of AR coefficients"
 msgstr ""
 
-#: lib/src/modelprint.c:1566 lib/src/modelprint.c:1585
-#: lib/src/modelprint.c:1608
+#: lib/src/modelprint.c:1575 lib/src/modelprint.c:1594
+#: lib/src/modelprint.c:1617
 msgid "Mean of"
 msgstr ""
 
-#: lib/src/modelprint.c:1568 lib/src/modelprint.c:1587
+#: lib/src/modelprint.c:1577 lib/src/modelprint.c:1596
 msgid "Number of cases 'correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:1570 lib/src/modelprint.c:1589
-#: lib/src/modelprint.c:1613
+#: lib/src/modelprint.c:1579 lib/src/modelprint.c:1598
+#: lib/src/modelprint.c:1622
 msgid "at mean of independent vars"
 msgstr ""
 
-#: lib/src/modelprint.c:1572 lib/src/modelprint.c:1591
-#: lib/src/modelprint.c:1616
+#: lib/src/modelprint.c:1581 lib/src/modelprint.c:1600
+#: lib/src/modelprint.c:1625
 msgid "Log-likelihood"
 msgstr ""
 
-#: lib/src/modelprint.c:1576 lib/src/modelprint.c:1595
-#: lib/src/modelprint.c:1620 plugin/johansen.c:187 plugin/johansen.c:193
+#: lib/src/modelprint.c:1585 lib/src/modelprint.c:1604
+#: lib/src/modelprint.c:1629 plugin/johansen.c:187 plugin/johansen.c:193
 msgid "Likelihood ratio test"
 msgstr ""
 
-#: lib/src/modelprint.c:1584 lib/src/modelprint.c:1605
+#: lib/src/modelprint.c:1593 lib/src/modelprint.c:1614
 msgid "Evaluated at the mean"
 msgstr ""
 
-#: lib/src/modelprint.c:1611
+#: lib/src/modelprint.c:1620
 msgid "Number of cases `correctly predicted'"
 msgstr ""
 
-#: lib/src/modelprint.c:1634
+#: lib/src/modelprint.c:1643
 msgid "Model selection statistics"
 msgstr ""
 
-#: lib/src/modelprint.c:1665
+#: lib/src/modelprint.c:1674
 msgid "Model Selection Statistics"
 msgstr ""
 
-#: lib/src/modelprint.c:1711 plugin/mp_ols.c:380
+#: lib/src/modelprint.c:1720 plugin/mp_ols.c:380
 msgid "Error Sum of Squares"
 msgstr ""
 
-#: lib/src/modelprint.c:1766 plugin/mp_ols.c:415
+#: lib/src/modelprint.c:1775 plugin/mp_ols.c:415
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1772 plugin/mp_ols.c:421
+#: lib/src/modelprint.c:1781 plugin/mp_ols.c:421
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
 msgstr ""
 
@@ -3311,7 +3311,17 @@ msgstr ""
 msgid "All vars, lag %-6d "
 msgstr ""
 
-#: lib/src/var.c:526
+#: lib/src/var.c:493
+#, c-format
+msgid "Step %d: testing for a unit root in %s\n"
+msgstr ""
+
+#: lib/src/var.c:509
+#, c-format
+msgid "Step %d: cointegration\n"
+msgstr ""
+
+#: lib/src/var.c:531
 msgid ""
 "\n"
 "There is evidence for a cointegrating relationship if:\n"
@@ -3323,31 +3333,31 @@ msgid ""
 "read from the usual statistical tables.)\n"
 msgstr ""
 
-#: lib/src/var.c:616 lib/src/var.c:631
+#: lib/src/var.c:621 lib/src/var.c:636
 msgid "significance level unknown"
 msgstr ""
 
-#: lib/src/var.c:619 lib/src/var.c:634
+#: lib/src/var.c:624 lib/src/var.c:639
 msgid "significant at the 1 percent level"
 msgstr ""
 
-#: lib/src/var.c:621 lib/src/var.c:636
+#: lib/src/var.c:626 lib/src/var.c:641
 msgid "significant at the 2.5 percent level"
 msgstr ""
 
-#: lib/src/var.c:623 lib/src/var.c:638
+#: lib/src/var.c:628 lib/src/var.c:643
 msgid "significant at the 5 percent level"
 msgstr ""
 
-#: lib/src/var.c:625 lib/src/var.c:640
+#: lib/src/var.c:630 lib/src/var.c:645
 msgid "significant at the 10 percent level"
 msgstr ""
 
-#: lib/src/var.c:627 lib/src/var.c:642
+#: lib/src/var.c:632 lib/src/var.c:647
 msgid "not significant at the 10 percent level"
 msgstr ""
 
-#: lib/src/var.c:646
+#: lib/src/var.c:651
 #, c-format
 msgid ""
 "\n"
@@ -3360,73 +3370,73 @@ msgid ""
 "   %s\n"
 msgstr ""
 
-#: lib/src/var.c:701
+#: lib/src/var.c:706
 msgid "unknown pvalue"
 msgstr ""
 
-#: lib/src/var.c:703
+#: lib/src/var.c:708
 msgid "pvalue < .01"
 msgstr ""
 
-#: lib/src/var.c:704
+#: lib/src/var.c:709
 msgid ".025 > pvalue > .01"
 msgstr ""
 
-#: lib/src/var.c:705
+#: lib/src/var.c:710
 msgid ".05 > pvalue > .025"
 msgstr ""
 
-#: lib/src/var.c:706
+#: lib/src/var.c:711
 msgid ".10 > pvalue > .05"
 msgstr ""
 
-#: lib/src/var.c:707
+#: lib/src/var.c:712
 msgid "pvalue > .10"
 msgstr ""
 
-#: lib/src/var.c:710
+#: lib/src/var.c:715
 #, c-format
 msgid ""
 "Augmented Dickey-Fuller test on %s:\n"
 "   F(2, %d) = %f, with %s\n"
 msgstr ""
 
-#: lib/src/var.c:712
+#: lib/src/var.c:717
 #, c-format
 msgid ""
 "The null hypothesis is that %s has a unit root, i.e. the parameters on\n"
 "the time trend and %s are both zero.\n"
 msgstr ""
 
-#: lib/src/var.c:923
+#: lib/src/var.c:928
 msgid "Sample variance-covariance matrices for residuals"
 msgstr ""
 
-#: lib/src/var.c:928
+#: lib/src/var.c:933
 msgid "VAR system in first differences"
 msgstr ""
 
-#: lib/src/var.c:932
+#: lib/src/var.c:937
 msgid "System with levels as dependent variable"
 msgstr ""
 
-#: lib/src/var.c:936
+#: lib/src/var.c:941
 msgid "Cross-products"
 msgstr ""
 
-#: lib/src/var.c:1073
+#: lib/src/var.c:1078
 msgid "Johansen test"
 msgstr ""
 
-#: lib/src/var.c:1074
+#: lib/src/var.c:1079
 msgid "Number of equations"
 msgstr ""
 
-#: lib/src/var.c:1075
+#: lib/src/var.c:1080
 msgid "Estimation period"
 msgstr ""
 
-#: lib/src/var.c:1100
+#: lib/src/var.c:1105
 msgid "Error checking for time trends"
 msgstr ""
 
