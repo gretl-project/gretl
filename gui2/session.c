@@ -1335,7 +1335,7 @@ void view_session (void)
     g_signal_connect(G_OBJECT(iconview), "destroy",
 		     G_CALLBACK(session_view_free), NULL);
     g_signal_connect(G_OBJECT(iconview), "key_press_event",
-		     G_CALLBACK(catch_key), 
+		     G_CALLBACK(catch_view_key), 
 		     (gpointer) iconview);
 
     session_build_popups();

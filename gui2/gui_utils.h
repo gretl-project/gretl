@@ -25,7 +25,7 @@ void delete_model (GtkWidget *widget, gpointer data);
 
 void delete_widget (GtkWidget *widget, gpointer data);
 
-gint catch_key (GtkWidget *w, GdkEventKey *key);
+gint catch_view_key (GtkWidget *w, GdkEventKey *key);
 
 void *mymalloc (size_t size); 
 

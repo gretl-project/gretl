@@ -358,7 +358,7 @@ void delete_widget (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-gint catch_key (GtkWidget *w, GdkEventKey *key)
+gint catch_view_key (GtkWidget *w, GdkEventKey *key)
 {
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
@@ -366,8 +366,9 @@ gint catch_key (GtkWidget *w, GdkEventKey *key)
     else if (key->keyval == GDK_s) {
 	windata_t *vwin = g_object_get_data(G_OBJECT(w), "ddata");
 
-	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL)
+	if (Z != NULL && vwin != NULL && vwin->role == VIEW_MODEL) {
 	    remember_model(vwin, 1, NULL);
+	}
     }
     return FALSE;
 }
@@ -400,7 +401,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     else if (mods & GDK_CONTROL_MASK) {
 	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
-	    if (vwin->role == EDIT_HEADER) {
+	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		buf_edit_save(NULL, vwin);
 	    } else {
 		file_viewer_save(NULL, vwin);
@@ -411,8 +412,9 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
 		resp = query_save_script(NULL, NULL, vwin);
 		if (!resp) gtk_widget_destroy(vwin->dialog);
-	    } else 
+	    } else { 
 		gtk_widget_destroy(w);
+	    }
 	}
     }
     return FALSE;
@@ -1300,7 +1302,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gretl_print_destroy(prn);
     
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_key), vwin->dialog);
+		     G_CALLBACK(catch_view_key), vwin->dialog);
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button), vwin->w);
@@ -1439,7 +1441,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* catch some keystrokes */
     if (!editable) {
 	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-			 G_CALLBACK(catch_key), vwin->dialog);
+			 G_CALLBACK(catch_view_key), vwin->dialog);
     } else {
 	g_object_set_data(G_OBJECT(vwin->dialog), "vwin", vwin);
 	g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
@@ -1556,7 +1558,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     /* attach shortcuts */
     g_object_set_data(G_OBJECT(vwin->dialog), "ddata", vwin);
     g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
-		     G_CALLBACK(catch_key), vwin->dialog);
+		     G_CALLBACK(catch_view_key), vwin->dialog);
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button), vwin->w);
