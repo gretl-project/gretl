@@ -5933,6 +5933,7 @@
 	which is the simple linear regression model</para> 
 
 	<informalequation>
+        <graphic fileref="linreg"/>
 	<texmath>
 	  $$y_t = \alpha + \beta x_t + \epsilon_t$$
 	</texmath>
