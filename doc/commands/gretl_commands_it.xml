@@ -1772,6 +1772,13 @@
         modello) e <lit>$pd</lit>, che contiene la frequenza o la periodicità
         dei dati (ad esempio 4 per dati trimestrali).</para>
 
+      <para>Due scalari speciali interni, <lit>$test</lit> e
+       <lit>$pvalue</lit>, contengono rispettivamente il valore e il
+       p-value della statistica test che è stata generata dall'ultimo
+       comando di test eseguito esplicitamente (ad es. <lit>chow</lit>).
+       Si veda <manref targ="chap-genr"/> per i dettagli.
+      </para>
+
       <para>La variabile <lit>t</lit> serve da indice per le osservazioni.
 	Ad esempio, <lit>genr dum = (t=15)</lit> crea una variabile dummy
 	che vale 1 per l'osservazione 15 e 0 altrove. La variabile
@@ -4263,13 +4270,14 @@
 	 b[3,4] + 2*b[3,5] = 1
 	end restrict</code>
 
-      <para>Nel casdo dell'equazione singola, i vincoli sono valutati attraverso
-      un test F di Wald, usando la matrice di covarianza dei coefficienti del
-      modello in questione. Nel caso del sistema, vengono presentati i risultati
-      completi della stima del sistema soggetto ai vincoli; la statistica test
-      dipende dallo stimatore scelto (un test del rapporto di verosimiglianza
-      nel caso di un sistema stimato con un metodo di massima verosimiglianza, o
-      altrimenti un test F asintotico).
+      <para>Nel casdo dell'equazione singola, i vincoli sono valutati
+      attraverso un test <mathvar>F</mathvar> di Wald, usando la matrice di
+      covarianza dei coefficienti del modello in questione. Nel caso del
+      sistema, vengono presentati i risultati completi della stima del sistema
+      soggetto ai vincoli; la statistica test dipende dallo stimatore scelto
+      (un test del rapporto di verosimiglianza nel caso di un sistema stimato
+      con un metodo di massima verosimiglianza, o altrimenti un test
+      <mathvar>F</mathvar> asintotico).
        </para>
 
     </description>
@@ -4563,6 +4571,15 @@
 	    Usa la decomposizione QR invece di quella di Cholesky nel
             calcolo delle stime OLS.</cell>
 	</row>
+        <row>
+          <cell><lit>seed</lit></cell>
+          <cell>valore: un intero senza segno. Imposta il seme per il
+            generatore di numeri pseudo-casuali. Di solito il seme viene
+            impostato a partire dall'ora di sistema, ma se si intende
+            generare sequenze ripetibili di numeri casuali occorre impostare
+            il seme manualmente.
+          </cell>
+        </row>
 	<row>
 	  <cell><lit>hac_lag</lit></cell>
 	  <cell>Valori: <lit>nw1</lit> (valore predefinito) o
@@ -4625,6 +4642,21 @@
           100 per i dati annuali, 1600 per i dati trimestrali e così
           via.</cell>
 	</row>
+        <row>
+          <cell><lit>bkbp_limits</lit></cell>
+          <cell>Valori: due interi, il secondo maggiore del primo
+           (i valori predefiniti sono 8 e 32). Imposta i limiti di
+           frequenza per il filtro passa-banda di Baxter&ndash;King
+           (si veda la funzione <lit>bkfilt</lit> nel comando <cmd>genr</cmd>).
+         </cell>
+        </row>
+        <row>
+          <cell><lit>bkbp_k</lit></cell>
+          <cell>Valori: un intero (il valore predefinito è 8). Imposta
+            l'ordine di approssimazione per il filtro passa-banda di
+            Baxter&ndash;King.
+          </cell>
+        </row>
       </table>
 
     </description>
