@@ -39,6 +39,10 @@ struct dialog_t_ {
     gretlopt opt;
 };
 
+/* was NOT on for gtk2: needs checking */
+
+#define EDIT_DIALOG_BLOCKS 1 
+
 /* ........................................................... */
 
 static GtkWidget *open_dialog;
@@ -59,7 +63,7 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
 {
     dialog_t *ddata = (dialog_t *) data;
 
-#ifdef OLD_GTK
+#if EDIT_DIALOG_BLOCKS
     gtk_main_quit();
 #endif
 
@@ -496,7 +500,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
     gtk_widget_show(d->dialog); 
 
-#ifdef OLD_GTK
+#if EDIT_DIALOG_BLOCKS
     gtk_main();
 #endif
 } 
@@ -1474,12 +1478,7 @@ void varinfo_dialog (int varnum, int full)
 		       vset->name_entry, FALSE, FALSE, 0);
     gtk_entry_set_editable(GTK_ENTRY(vset->name_entry), canedit);
     gtk_widget_show(vset->name_entry); 
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(vset->name_entry), "activate", 
-		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
-#else
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
-#endif
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1505,12 +1504,7 @@ void varinfo_dialog (int varnum, int full)
 		       VARLABEL(datainfo, varnum));
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
     gtk_widget_show(vset->label_entry);
-#ifdef OLD_GTK
-    gtk_signal_connect(GTK_OBJECT(vset->label_entry), "activate", 
-		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
-#else
     gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
-#endif
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1537,12 +1531,7 @@ void varinfo_dialog (int varnum, int full)
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->display_name_entry, FALSE, FALSE, 0);
 	gtk_widget_show(vset->display_name_entry); 
-#ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(vset->display_name_entry), "activate", 
-			   GTK_SIGNAL_FUNC(really_set_variable_info), vset);
-#else
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
-#endif
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
@@ -1639,11 +1628,13 @@ struct range_setting {
     GtkWidget *startspin;
     GtkWidget *endspin;
     GtkWidget *combo;
+    gpointer p;
 };
 
 static void free_rsetting (GtkWidget *w, struct range_setting *rset)
 {
     free(rset);
+    gtk_main_quit();
 }
 
 static gboolean
@@ -1652,6 +1643,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
     int err;
 
     if (rset->opt & OPT_O) {
+	/* sampling using a dummy var */
 	const gchar *buf;
 	char dumv[VNAMELEN];
 
@@ -1667,6 +1659,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	    gtk_widget_destroy(rset->dlg);
 	} 
     } else if (rset->opt & OPT_N) {
+	/* random subsample */
 	int subn;
 
 #ifdef OLD_GTK
@@ -1695,14 +1688,26 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	s2 = gtk_entry_get_text(GTK_ENTRY(button));
 	t2 = (int) obs_button_get_value(button); 
 
+	if (rset->opt & OPT_C) {
+	    /* creating a new dataset */
+	    gchar **obsstr = (gchar **) rset->p;
+
+	    if (obsstr != NULL) {
+		*obsstr = g_strdup_printf("%s %s", s1, s2);
+	    }
+	    gtk_widget_destroy(rset->dlg);
+	    return TRUE;
+	} 
+
 	if (t1 != datainfo->t1 || t2 != datainfo->t2) {
 	    sprintf(line, "smpl %s %s", s1, s2);
 	    if (verify_and_record_command(line)) {
 		return TRUE;
 	    }
 	    err = set_sample(line, datainfo);
-	    if (err) gui_errmsg(err);
-	    else {
+	    if (err) {
+		gui_errmsg(err);
+	    } else {
 		gtk_widget_destroy(rset->dlg);
 		set_sample_label(datainfo);
 		restore_sample_state(TRUE);
@@ -1774,7 +1779,7 @@ static int default_randsize (void)
     }
 }
 
-static struct range_setting *rset_new (guint code)
+static struct range_setting *rset_new (guint code, gpointer p)
 {
     struct range_setting *rset;
 
@@ -1785,6 +1790,8 @@ static struct range_setting *rset_new (guint code)
 	rset->opt = OPT_O;
     } else if (code == SMPLRAND) {
 	rset->opt = OPT_N;
+    } else if (code == CREATE_DATASET) {
+	rset->opt = OPT_C;
     } else {
 	rset->opt = OPT_NONE;
     }
@@ -1793,6 +1800,8 @@ static struct range_setting *rset_new (guint code)
     rset->combo = NULL;
     rset->startspin = rset->endspin = NULL;
     rset->obslabel = NULL;
+
+    rset->p = p;
 
     return rset;
 }
@@ -1803,7 +1812,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     struct range_setting *rset;
     char obstext[32];
 
-    rset = rset_new(u);
+    rset = rset_new(u, p);
     if (rset == NULL) return;
     
     g_signal_connect(G_OBJECT(rset->dlg), "destroy", 
@@ -1874,7 +1883,8 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	/* pack the spinner apparatus */
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
-    } else { /* plain SMPL */
+    } else { 
+	/* either plain SMPL, CREATE_DATASET */
 	GtkWidget *vbox;
 	GtkObject *adj;
 
@@ -1923,7 +1933,7 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 			   rset->obslabel, FALSE, FALSE, 5);
     }
 
-    if (u == SMPL) {
+    if (u == SMPL || u == CREATE_DATASET) {
 	g_object_set_data(G_OBJECT(rset->startspin), "rset", rset);
 	g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
     }
@@ -1943,6 +1953,8 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     cancel_delete_button(GTK_DIALOG(rset->dlg)->action_area, rset->dlg);
 
     gtk_widget_show_all(rset->dlg);
+
+    gtk_main();
 }
 
 static GList *compose_var_selection_list (const int *list)
@@ -3347,20 +3359,13 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
     } 
 }
 
-static void dw_compute_ts_info (DATAINFO *dwinfo)
+void compute_default_ts_info (DATAINFO *dwinfo, int newdata)
 {
 #if DWDEBUG
     char obsstr[OBSLEN];
 
     fprintf(stderr, "dw_compute_ts_info() called\n");
 #endif
-
-    /* we do this only in case of time series */
-    if (dwinfo->structure != TIME_SERIES) {
-	return;
-    }
-
-    dwinfo->t1 = 0;
 
     if (dwinfo->pd == 1) {
 	strcpy(dwinfo->stobs, "1700");
@@ -3390,7 +3395,10 @@ static void dw_compute_ts_info (DATAINFO *dwinfo)
 	dwinfo->t1 = 12000;
     }
 
-    if (datainfo->structure == TIME_SERIES && datainfo->pd == dwinfo->pd) {
+    if (newdata) {
+	dwinfo->t2 = dwinfo->t1 + 49;
+    } else if (datainfo->structure == TIME_SERIES && 
+	       datainfo->pd == dwinfo->pd) {
 	/* make the current start the default */
 	dwinfo->t1 = dateton(datainfo->stobs, dwinfo);
     }
@@ -3431,8 +3439,8 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
     gtk_widget_show(label);
     gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
 
-    if (step == DW_STARTING_OBS) {
-	dw_compute_ts_info(dwinfo);
+    if (step == DW_STARTING_OBS && dwinfo->structure == TIME_SERIES) {
+	compute_default_ts_info(dwinfo, 0);
 	spinmin = 0;
 	spinmax = dwinfo->n - 1;
 	spinstart = dwinfo->t1;
@@ -3442,7 +3450,7 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
 	spinstart = spinmin;
     }
 
-    /* FIXME step size? */
+    /* appropriate step size? */
     adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
 			     1, 10, 1);
     g_signal_connect(G_OBJECT(adj), "value-changed", 
@@ -3453,6 +3461,8 @@ static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
     } else {
 	dwspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
     }
+
+    gtk_entry_set_activates_default(GTK_ENTRY(dwspin), TRUE);
 
     gtk_box_pack_start(GTK_BOX(hbox), dwspin, TRUE, FALSE, 0);
     gtk_widget_show(dwspin);

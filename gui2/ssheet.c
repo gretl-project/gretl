@@ -393,6 +393,21 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
     }
 }
 
+static void name_first_var (GtkWidget *widget, dialog_t *ddata) 
+{
+    DATAINFO *pdinfo = (DATAINFO *) dialog_data_get_data(ddata);
+    const gchar *buf;
+
+    buf = dialog_data_get_text(ddata);
+
+    if (buf == NULL || validate_varname(buf)) return;
+
+    pdinfo->varname[1][0] = 0;
+    strncat(pdinfo->varname[1], buf, VNAMELEN - 1);
+
+    close_dialog(ddata);
+}
+
 /* ........................................................... */
 
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
@@ -419,6 +434,15 @@ static void name_var_dialog (spreadsheet *sheet)
 		 _("Enter name for new variable\n"
 		   "(max. 8 characters)"),
 		 NULL, name_new_var, sheet, 
+		 0, 0);
+}
+
+static void first_var_dialog (DATAINFO *pdinfo) 
+{
+    edit_dialog (_("gretl: name variable"), 
+		 _("Enter name for new variable\n"
+		   "(max. 8 characters)"),
+		 NULL, name_first_var, pdinfo, 
 		 0, 0);
 }
 
@@ -1252,6 +1276,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
     if (pdinfo == NULL && datainfo->v == 1) {
 	errbox(_("Please add a variable to the dataset first"));
 	return;
+    }
+
+    if (pdinfo != NULL && pdinfo->v == 2 &&
+	!strcmp(pdinfo->varname[1], "@tmp")) {
+	first_var_dialog(pdinfo);
     }
 
     sheetwidth = get_obs_col_width() + 6 * get_data_col_width() + 14;

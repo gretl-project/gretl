@@ -317,6 +317,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 5);
+    gtk_container_add(GTK_CONTAINER(w), vbox);
 
     /* selection of starting column and row */
     label = gtk_label_new(_("Start import at:"));
@@ -351,23 +352,24 @@ static void wsheet_menu (wbook *book, int multisheet)
     g_signal_connect (c_adj, "value_changed",
 		      G_CALLBACK (update_column_label), label);
 
-
     /* choose the worksheet (if applicable) */
     if (multisheet) {
 	add_sheets_list(vbox, book);
     }
 
     hbox = gtk_hbox_new (TRUE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
     tmp = gtk_button_new_from_stock(GTK_STOCK_OK);
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
     g_signal_connect_swapped (G_OBJECT (tmp), "clicked", 
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
+    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default(tmp);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, 0);
     g_signal_connect (G_OBJECT (tmp), "clicked", 
@@ -376,8 +378,8 @@ static void wsheet_menu (wbook *book, int multisheet)
 			      G_CALLBACK (gtk_widget_destroy), 
 			      G_OBJECT (w));
 
-    gtk_container_add(GTK_CONTAINER(vbox), hbox);
-    gtk_container_add(GTK_CONTAINER(w), vbox);
+    gtk_entry_set_activates_default(GTK_ENTRY(book->colspin), TRUE);
+    gtk_entry_set_activates_default(GTK_ENTRY(book->rowspin), TRUE);
 
     gtk_widget_show_all(w);
 
@@ -439,6 +441,15 @@ void wbook_get_row_offset (GtkWidget *w, wbook *book)
 	(GTK_SPIN_BUTTON(book->rowspin)) - 1;
 }
 
+static gint entry_activate (GtkWidget *w, GdkEventKey *key, gpointer p)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(w);
+
+    gtk_window_activate_default(GTK_WINDOW(top));
+
+    return FALSE;
+}
+
 static void wsheet_menu (wbook *book, int multisheet)
 {
     GtkWidget *w, *tmp, *frame;
@@ -454,6 +465,7 @@ static void wsheet_menu (wbook *book, int multisheet)
 
     vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
+    gtk_container_add(GTK_CONTAINER(w), vbox);    
 
     /* selection of starting column and row */
     tmp = gtk_label_new(_("Start import at:"));
@@ -468,15 +480,19 @@ static void wsheet_menu (wbook *book, int multisheet)
     book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(c_adj), 1, 0);
     gtk_signal_connect (c_adj, "value_changed",
 			GTK_SIGNAL_FUNC (wbook_get_col_offset), book);
+    gtk_signal_connect(GTK_OBJECT(book->colspin), "activate", 
+		       GTK_SIGNAL_FUNC(entry_activate), NULL);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
 
     /* starting row spinner */
     tmp = gtk_label_new("row:");
-    r_adj = gtk_adjustment_new(1, 1, 25, 1, 1, 1);
+    r_adj = gtk_adjustment_new(1, 1, 256, 1, 1, 1);
     book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(r_adj), 1, 0);
     gtk_signal_connect (r_adj, "value_changed",
 			GTK_SIGNAL_FUNC (wbook_get_row_offset), book);
+    gtk_signal_connect(GTK_OBJECT(book->rowspin), "activate", 
+		       GTK_SIGNAL_FUNC(entry_activate), NULL);
     gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
     gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
 
@@ -502,6 +518,8 @@ static void wsheet_menu (wbook *book, int multisheet)
     }
 
     hbox = gtk_hbox_new (TRUE, 5);
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);
+
     tmp = gtk_button_new_with_label("OK");
     GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
@@ -512,7 +530,6 @@ static void wsheet_menu (wbook *book, int multisheet)
     gtk_widget_grab_default (tmp);
 
     tmp = gtk_button_new_with_label("Cancel");
-    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (hbox), 
                         tmp, TRUE, TRUE, FALSE);
     gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
@@ -521,11 +538,8 @@ static void wsheet_menu (wbook *book, int multisheet)
                                GTK_SIGNAL_FUNC (gtk_widget_destroy), 
                                GTK_OBJECT (w));
 
-    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);
-
-    gtk_container_add(GTK_CONTAINER(w), vbox);
-
     gtk_widget_show_all(w);
+
     gtk_main();
 }
 

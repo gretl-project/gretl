@@ -720,163 +720,43 @@ static void fix_obsstr (char *str)
     }
 }
 
-static void prep_spreadsheet (GtkWidget *widget, dialog_t *ddata)
+/* ........................................................... */
+
+static int prep_spreadsheet (const char *dataspec)
 {
-    const gchar *buf;
-    char dataspec[32];
-    char *test, stobs[OBSLEN], endobs[OBSLEN], firstvar[VNAMELEN];
-    double sd0, ed0;
+    char stobs[OBSLEN], endobs[OBSLEN];
+    int t1, t2;
 
-    buf = dialog_data_get_text(ddata);
-    if (buf == NULL) return;
-
-    strncpy(dataspec, buf, 31);
-
-    /* check validity of dataspec */
-    if (sscanf(dataspec, "%10s %10s %8s", stobs, endobs, firstvar) != 3) {
+    if (sscanf(dataspec, "%10s %10s", stobs, endobs) != 2) {
 	errbox(_("Insufficient dataset information supplied"));
-	return;
+	return 1;
     }
 
-    if (datainfo->pd == 5 || datainfo->pd == 6 || datainfo->pd == 7 ||
-	datainfo->pd == 52) {
-	/* calendar data: special */
-	int err = 0;
-	sd0 = (double) get_epoch_day(stobs); 
-	ed0 = (double) get_epoch_day(endobs);
-
-	/* FIXME weekly: check that we have Mondays */
-
-	if (sd0 < 0) {
-	    err = 1;
-	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
-	}
-	if (!err && ed0 < 0) {
-	    err = 1;
-	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
-	}
-	if (err) {
-	    errbox(errtext);
-	    return;
-	}
-    } else { 
-	fix_obsstr(stobs);
-	fix_obsstr(endobs);
-
-	sd0 = strtod(stobs, &test);
-	if (!strcmp(stobs, test) || *test != 0 || sd0 < 0) {
-	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
-	    errbox(errtext);
-	    return;
-	}
-
-	ed0 = strtod(endobs, &test);
-	if (!strcmp(endobs, test) || *test != 0 || ed0 < 0) {
-	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
-	    errbox(errtext);
-	    return;
-	}
-    }
-
-    if (sd0 > ed0) {
-	sprintf(errtext, _("Empty data range '%s - %s'"), stobs, endobs);
-	errbox(errtext);
-	return;
-    }
-
-    colonize_obs(stobs);
-    colonize_obs(endobs);
-
-    if (datainfo->pd == 999) { /* panel */
-	char unit[8], period[8];
-
-	/* try to infer structure from ending obs */
-	if (sscanf(endobs, "%[^:]:%s", unit, period) == 2) { 
-	    datainfo->pd = atoi(period);
-	    fprintf(stderr, I_("Setting data frequency = %d\n"), datainfo->pd);
-	} else {
-	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
-	    errbox(errtext);
-	    return;	    
-	}
-    }    
-
-    if (datainfo->pd == 1) {
-	size_t i, n;
-	
-	n = strlen(stobs);
-	for (i=0; i<n; i++) {
-	    if (!isdigit((unsigned char) stobs[i])) {
-		sprintf(errtext, _("Invalid starting observation '%s'\n"
-				   "for data frequency 1"), stobs);
-		errbox(errtext);
-		return;
-	    }
-	}
-	n = strlen(endobs);
-	for (i=0; i<n; i++) {
-	    if (!isdigit((unsigned char) endobs[i])) {
-		sprintf(errtext, _("Invalid ending observation '%s'\n"
-				   "for data frequency 1"), endobs);
-		errbox(errtext);
-		return;
-	    }
-	}	
-    } else if (datainfo->pd != 5 && 
-	       datainfo->pd != 6 && 
-	       datainfo->pd != 7 &&
-	       datainfo->pd != 52) { 
-	char year[8], subper[8];
-
-	if (sscanf(stobs, "%[^:]:%s", year, subper) != 2 ||
-	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
-	    (datainfo->pd < 10 && strlen(subper) != 1) ||
-	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
-	    sprintf(errtext, _("Invalid starting observation '%s'\n"
-			       "for data frequency %d"), stobs, datainfo->pd);
-	    errbox(errtext);
-	    return;
-	}
-	if (sscanf(endobs, "%[^:]:%s", year, subper) != 2 ||
-	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
-	    (datainfo->pd < 10 && strlen(subper) != 1) ||
-	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
-	    sprintf(errtext, _("Invalid ending observation '%s'\n"
-			       "for data frequency %d"), endobs, datainfo->pd);
-	    errbox(errtext);
-	    return;
-	}	    
-    }
-
-    close_dialog(ddata);
+    t1 = dateton(stobs, datainfo);
+    t2 = dateton(endobs, datainfo);
 
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
-    datainfo->sd0 = sd0;
-    
-    /* prevent dateton() from giving an error due to endobs > n */
-    datainfo->n = -1; 
-    datainfo->n = dateton(datainfo->endobs, datainfo) + 1; 
 
-    if (datainfo->n <= 0) {
-	errbox("Got zero-length data series");
-	return;
-    }
+    datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
+
+    datainfo->n = t2 - t1 + 1;
+    datainfo->t1 = 0;
+    datainfo->t2 = datainfo->n - 1;
 
     datainfo->v = 2;
     start_new_Z(&Z, datainfo, 0);
     datainfo->markers = 0;
 
-    strcpy(datainfo->varname[1], firstvar);
+    strcpy(datainfo->varname[1], "@tmp"); 
 
     show_spreadsheet(datainfo);
-}
 
-/* ........................................................... */
+    return 0;
+}
 
 void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget) 
 {
-    windata_t *wdata = NULL;
     gchar *obsstr = NULL;
 
     if (pd_code == 0) {
@@ -887,59 +767,15 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget)
 	datainfo->pd = pd_code;
     }
 
-    switch (pd_code) {
-    case 0:
-	datainfo->pd = 1;
-	obsstr = g_strdup_printf("1 50 %s", _("newvar"));
-	break;
-    case 1:
-	obsstr = g_strdup_printf("1950 2001 %s", _("newvar"));
-	break;
-    case 4:
-	obsstr = g_strdup_printf("1950:1 2001:4 %s", _("newvar"));
-	break;
-    case 5:
-    case 6:
-    case 7:
-	obsstr = g_strdup_printf("99/01/18 01/03/31 %s", _("newvar"));
-	break;
-    case 12:
-	obsstr = g_strdup_printf("1950:01 2001:12 %s", _("newvar"));
-	break;
-    case 24:
-	obsstr = g_strdup_printf("1:01 1:24 %s", _("newvar"));
-	break;
-    case 52:
-	obsstr = g_strdup_printf("99/01/01 01/12/24 %s", _("newvar"));
-	break;
+    compute_default_ts_info(datainfo, 1);
+
+    sample_range_dialog(&obsstr, CREATE_DATASET, NULL);
+
+    if (obsstr != NULL) {
+	prep_spreadsheet(obsstr);
+	g_free(obsstr);
     }
-
-    edit_dialog (_("gretl: create data set"), 
-		 _("Enter start and end obs for new data set\n"
-		   "and name of first var to add:"), 
-		 obsstr, prep_spreadsheet, wdata, 
-		 0, 0);
-
-    g_free(obsstr);
 }
-
-#if 0
-void start_panel_callback (gpointer data, guint u, GtkWidget *widget) 
-{
-    windata_t *wdata = NULL;
-
-    datainfo->pd = 999;
-
-    edit_dialog (_("gretl: create panel data set"), 
-		 _("Enter starting and ending observations and\n"
-		   "the name of the first variable to add.\n"
-		   "The example below is suitable for 20 units\n"
-		   "observed over 10 periods"), 
-		 "1:01 10:20 newvar", 
-		 prep_spreadsheet, wdata, 
-		 0, 0);
-}
-#endif
 
 void do_nistcheck (gpointer p, guint v, GtkWidget *w)
 {

@@ -73,6 +73,8 @@ int checks_dialog (const char *title, const char **opts,
 		   const char *spintext, int spinmax,
 		   int helpcode);
 
+void compute_default_ts_info (DATAINFO *dwinfo, int newdata);
+
 void data_structure_wizard (gpointer p, guint u, GtkWidget *w);
 
 #ifdef OLD_GTK

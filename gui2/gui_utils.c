@@ -600,8 +600,7 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 	    } else {
 		file_viewer_save(NULL, vwin);
 	    }
-	} 
-	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && CONTENT_IS_CHANGED(vwin)) {
 		gint resp;
 
@@ -635,8 +634,9 @@ static int set_or_get_audio_stop (int set, int val)
 
 static int should_stop_talking (void)
 {
-    while (gtk_events_pending())
+    while (gtk_events_pending()) {
 	gtk_main_iteration();
+    }
 
     return set_or_get_audio_stop(0, 0);
 }
@@ -684,11 +684,9 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 
     if (key->keyval == GDK_q) { 
         gtk_widget_destroy(w);
-    }
-    else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
+    } else if (key->keyval == GDK_s && Z != NULL && vwin->role == VIEW_MODEL) {
 	remember_model(vwin, 1, NULL);
-    }
-    else if (key->keyval == GDK_w) {
+    } else if (key->keyval == GDK_w) {
 	GdkModifierType mods;
 
 	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
@@ -700,8 +698,7 @@ static gint catch_viewer_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     else if (key->keyval == GDK_a) {
 	audio_render_window(vwin, AUDIO_TEXT);
-    }
-    else if (key->keyval == GDK_x) {
+    } else if (key->keyval == GDK_x) {
 	audio_render_window(NULL, AUDIO_TEXT);
     }
 #endif
@@ -3410,3 +3407,22 @@ void startR (const char *Rcommand)
 }
 
 #endif /* ! G_OS_WIN32 */
+
+#ifdef OLD_GTK /* for forwards compatibility */
+
+static gint entry_activate (GtkWidget *w, GdkEventKey *key, gpointer p)
+{
+    GtkWidget *top = gtk_widget_get_toplevel(w);
+
+    gtk_window_activate_default(GTK_WINDOW(top));
+
+    return FALSE;
+}
+
+void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting)
+{
+    gtk_signal_connect(GTK_OBJECT(entry), "activate", 
+		       GTK_SIGNAL_FUNC(entry_activate), NULL);
+}
+
+#endif /* old GTK */

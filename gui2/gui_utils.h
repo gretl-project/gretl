@@ -22,6 +22,8 @@
 
 #ifdef OLD_GTK
 
+/* various forward-compatibility bodges for GTK+ 1.2 */
+
 enum {
     GTK_STOCK_OK,
     GTK_STOCK_CANCEL,
@@ -38,6 +40,8 @@ enum {
 # define G_CALLBACK(f)                  GTK_SIGNAL_FUNC(f)
 # define g_signal_connect(o,s,f,p)      gtk_signal_connect(o,s,f,p)
 # define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
+
+void gtk_entry_set_activates_default (GtkEntry *entry, gboolean setting);
 
 #else
 
