@@ -102,8 +102,8 @@ print "Name: \"{group}\\gretl updater\"; Filename: \"{app}\\gretl_updater.exe\"\
 
 print "\n[Registry]\n";
 print "; Start \"gretl\" keys under HKEY_CURRENT_USER and HKEY_CLASSES_ROOT.\n"; 
-print "Root: HKCR; Subkey: \"Software\\gretl\"\n"; 
-print "Root: HKCU; Subkey: \"Software\\gretl\"\n";
+print "Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n"; 
+print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
