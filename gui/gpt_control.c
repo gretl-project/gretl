@@ -1114,7 +1114,9 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 typedef struct png_plot_t {
     GtkWidget *window, *area, *popup, *status;
     GPT_SPEC *spec;
+#ifdef GPT_TRIAL
     double xmin, xmax;
+#endif
 } png_plot_t;
 
 /* Size of drawing area */
@@ -1127,9 +1129,7 @@ extern void gnome_print_graph (const char *fname);
 
 /* experimental drawing stuff */
 
-/* #define DRAWING 1 */
-
-#ifdef DRAWING
+#ifdef GPT_TRIAL
 
 /* Draw a rectangle on the screen */
 static void
@@ -1161,8 +1161,6 @@ button_press_event (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-#endif /* end experimental drawing */
-
 double data_x (png_plot_t *plot, int x)
 {
     return plot->xmin + ((double) x - 58.0) / (620.0 - 58.0) *
@@ -1193,6 +1191,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
   
     return TRUE;
 }
+
+#endif /* GPT_TRIAL */
 
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
@@ -1321,6 +1321,8 @@ static void plot_quit (GtkWidget *w, png_plot_t *plot)
     free(plot);
 }
 
+#ifdef GPT_TRIAL
+
 static int get_xrange (png_plot_t *plot)
 {
     FILE *fp;
@@ -1338,13 +1340,18 @@ static int get_xrange (png_plot_t *plot)
     return 0;
 }
 
+#endif
+
 int gnuplot_show_png (char *plotfile)
 {
-    GtkWidget *w, *vbox;
+    GtkWidget *w;
     GdkPixmap *dbuf_pixmap = NULL; 
     GtkWidget *drawing_area;
     png_plot_t *plot;
+#ifdef GPT_TRIAL
     int plot_has_xrange;
+    GtkWidget *vbox;
+#endif
 
     plot = mymalloc(sizeof *plot);
     if (plot == NULL) return 1;
@@ -1356,21 +1363,22 @@ int gnuplot_show_png (char *plotfile)
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);
 
+#ifdef GPT_TRIAL
     /* parse this file for x range */
     plot_has_xrange = get_xrange(plot);
+#endif
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(w), "gretl: gnuplot graph"); 
     plot->window = w;
 
+#ifdef GPT_TRIAL
     vbox = gtk_vbox_new(FALSE, 0);
-
-    /* Restrict window resizing to size of drawing buffer */
-#ifdef notdef
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+#else
     gtk_widget_set_usize(GTK_WIDGET(w), WIDTH, HEIGHT);
     gtk_window_set_policy(GTK_WINDOW(w), TRUE, FALSE, FALSE);
 #endif
-    gtk_container_add(GTK_CONTAINER(w), vbox);
 
     gtk_signal_connect(GTK_OBJECT(w), "destroy",
 		       GTK_SIGNAL_FUNC(plot_quit), plot);
@@ -1390,22 +1398,24 @@ int gnuplot_show_png (char *plotfile)
     gtk_signal_connect(GTK_OBJECT(drawing_area), "button_press_event", 
                        GTK_SIGNAL_FUNC(plot_popup), plot);
 
+#ifdef GPT_TRIAL
     plot->status = NULL;
     if (plot_has_xrange) {
 	plot->status = gtk_statusbar_new();
 	gtk_signal_connect (GTK_OBJECT (drawing_area), "motion_notify_event",
 			    (GtkSignalFunc) motion_notify_event, plot);
     }
+#endif
 
-#ifdef notdef
     gtk_container_add(GTK_CONTAINER(w), drawing_area);
+#ifdef GPT_TRIAL
     if (plot->status != NULL)
 	gtk_container_add(GTK_CONTAINER(w), plot->status);
-#endif
 
     gtk_box_pack_start(GTK_BOX(vbox), drawing_area, FALSE, FALSE, 0);
     if (plot->status != NULL)
 	gtk_box_pack_start(GTK_BOX(vbox), plot->status, FALSE, FALSE, 0);
+#endif
 
     gtk_widget_show_all(w);
 
