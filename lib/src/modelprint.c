@@ -236,6 +236,19 @@ static void print_f_pval_str (double pval, PRN *prn)
 
 static void Fline (const MODEL *pmod, PRN *prn)
 {
+    if (pmod->ifc && pmod->ncoeff == 2) {
+	if (PLAIN_FORMAT(prn->format)) {
+	    pprintf(prn, "  %s = %d\n", _("Degrees of freedom"), pmod->dfd);
+	}
+	else if (TEX_FORMAT(prn->format)) {
+	    pprintf(prn, "%s & %d \\\\\n", I_("Degrees of freedom"), pmod->dfd);
+	}
+	else if (RTF_FORMAT(prn->format)) {
+	    pprintf(prn, RTFTAB "%s = %d\n", I_("Degrees of freedom"), pmod->dfd);
+	}
+	return;
+    }
+
     if (PLAIN_FORMAT(prn->format)) {
 	char tmp[32];
 
