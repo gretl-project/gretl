@@ -8,6 +8,7 @@
 <!ELEMENT gretldata (description?, variables, observations)>
 <!ATTLIST gretldata
    name         NMTOKEN #IMPLIED
+   encoding     NMTOKEN #IMPLIED
    frequency    CDATA #IMPLIED
    startobs     CDATA #IMPLIED
    endobs       CDATA #IMPLIED

@@ -628,21 +628,12 @@ static char *copy_unicode_string (unsigned char **src)
 
 static char *convert8to7 (const unsigned char *s, int count) 
 {
-    char *p, *dest;
-    int i, j;
+    char *dest;
 
     dest = malloc(VNAMELEN);
-    if (dest == NULL) return NULL;
-    memset(dest, 0, VNAMELEN);
-
-    p = dest;
-    j = 0;
-    for (i=0; i<count && j<VNAMELEN-1; i++) {
-	if ((isalnum(s[i]) || ispunct(s[i])) && s[i] < 128) {
-	    *p++ = s[i];
-	    j++;
-	}
-    }
+    *dest = '\0';
+    strncat(dest, s, VNAMELEN - 1);
+    iso_to_ascii(dest);
 
     if (*dest == '\0') {
 	strcpy(dest, "varname");

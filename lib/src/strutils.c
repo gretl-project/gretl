@@ -896,6 +896,73 @@ void unescape_url (char *url)
     url[x] = '\0';
 }
 
+char *iso_to_ascii (char *s)
+{
+    char *tmp, *p, *q;
+    int n = strlen(s);
+
+    tmp = malloc(n + 1);
+    if (tmp == NULL) return NULL;
+
+    p = tmp;
+    q = s;
+    
+    while (*q) {
+	unsigned char c = *q;
+
+	if (c >= 32 && c <= 126) {
+	    *p++ = c;
+	} else if (c >= 192 && c <= 198) {
+	    *p++ = 'A';
+	} else if (c == 199) {
+	    *p++ = 'C';
+	} else if (c >= 200 && c <= 203) {
+	    *p++ = 'E';
+	} else if (c >= 204 && c <= 207) {
+	    *p++ = 'I';
+	} else if (c == 208) {
+	    *p++ = 'D';
+	} else if (c == 209) {
+	    *p++ = 'N';
+	} else if (c >= 210 && c <= 214) {
+	    *p++ = 'O';
+	} else if (c == 216) {
+	    *p++ = 'O';
+	} else if (c >= 217 && c <= 220) {
+	    *p++ = 'U';
+	} else if (c == 221) {
+	    *p++ = 'Y';
+	} else if (c >= 224 && c <= 230) {
+	    *p++ = 'a';
+	} else if (c == 231) {
+	    *p++ = 'c';
+	} else if (c >= 232 && c <= 235) {
+	    *p++ = 'e';
+	} else if (c >= 236 && c <= 239) {
+	    *p++ = 'i';
+	} else if (c == 240) {
+	    *p++ = 'd';
+	} else if (c == 241) {
+	    *p++ = 'n';
+	} else if (c >= 242 && c <= 246) {
+	    *p++ = 'o';
+	} else if (c == 248) {
+	    *p++ = 'o';
+	} else if (c >= 249 && c <= 252) {
+	    *p++ = 'u';
+	} else if (c == 253) {
+	    *p++ = 'y';
+	}
+	q++;
+    }
+
+    *p = '\0';
+    strcpy(s, tmp);
+    free(tmp);
+
+    return s;
+}
+
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo) 
 {
     int i, j, conflict;

@@ -2899,6 +2899,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		if (isdigit(*csvstr)) {
 		    numcount++;
 		} else {
+		    iso_to_ascii(csvinfo->varname[nv]);
 		    if (check_varname(csvinfo->varname[nv])) {
 			pprintf(prn, "%s\n", gretl_errmsg);
 			*gretl_errmsg = '\0';
@@ -2962,6 +2963,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    if (k == 0 && (blank_1 || obs_1)) {
 		csvinfo->S[t][0] = 0;
 		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
+		iso_to_ascii(csvinfo->S[t]);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
 		if (process_csv_obs(csvstr, nv, t, csvZ, &st, prn)) {
