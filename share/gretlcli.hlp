@@ -3,7 +3,6 @@ add
 @Tests
 Usage:          add varlist 
 Examples:       add 5 7 9	          add xx yy zz
-Option:         --vcv (print covariance matrix) 
 
 The variables in varlist are added to the previous model and the new model
 estimated.  If more than one variable is added, then the F statistic for the
@@ -1380,7 +1379,7 @@ Set the values of certain program parameters.  The given value remains in
 force for the duration of the gretl session unless it is changed by a further
 call to "set".  The parameters that can be set in this way are enumerated
 below.  Note that the settings of "hac_lag" and "hc_version" are used when
-the "-r" or "--robust" option is given to the ols command.
+the "--robust" option is given to the ols command.
 
 1. set echo [ off | on* ]     suppress or resume the echoing of commands in
                               gretl's output
@@ -1391,8 +1390,8 @@ the "-r" or "--robust" option is given to the ols command.
 3. set hac_lag [ nw1* | nw2 | integer ]  
 
 Set the maximum lag value, p, used when calculating HAC (Heteroskedasticity
-and Autocorrelation Consistent) standard errors using the Newey-West approach
-(for time series data). "nw1" and "nw2" represent two variant automatic
+and Autocorrelation Consistent) standard errors using the Newey-West approach,
+for time series data. "nw1" and "nw2" represent two variant automatic
 calculations based on the sample size, T.
 
    nw1:   p = 0.75 * T^(1/3) 
@@ -1501,11 +1500,11 @@ consistent with the periodicity of the data.  In the second form, the "+i" and
 "-j" (where i and j are integers) are taken as offsets relative to the
 existing sample range.  In the third form, dummyvar must be an indicator
 variable with values 0 or 1: the sample will be restricted to those
-observations where the indicator value is 1.  The fourth form, smpl -o, drops
-all observations for which values of one or more variables are missing.  The
-fifth form, using the "--restrict" option, restricts the sample to cases
-satisfying the given boolean expression.  The last form, "smpl full", restores
-the full data range.
+observations where the indicator value is 1.  The fourth form, "smpl
+--no-missing", drops all observations for which values of one or more
+variables are missing.  The fifth form, using the "--restrict" option,
+restricts the sample to cases satisfying the given boolean expression.  The
+last form, "smpl full", restores the full data range.
 
     smpl 3 10                  for data with periodicity 1
     smpl 1950 1990             for annual data with periodicity 1	
@@ -1584,7 +1583,7 @@ changed by specifying an option, as follows:
 	       as a matrix named 'X', with one variable per column.
 
   --traditional data saved in "traditional" gretl format, as in Ramanathan's 
-                ESL, (ascii data file plus a header file).
+                ESL (ascii data file plus a header file).
 
 These flags are also retained for backward compatibility:
 
