@@ -93,14 +93,17 @@ static int get_subdir (const char *topdir, int first, char *fname)
 	    dir = NULL;
 	    return -1;
 	} else {
-	    if (strcmp(dirent->d_name, ".") == 0 ||
-		strcmp(dirent->d_name, "..") == 0) return 0;
+	    if (!strcmp(dirent->d_name, ".") || !strcmp(dirent->d_name, "..")) {
+		return 0;
+	    }
 	    strcpy(fname, topdir);
 	    strcat(fname, dirent->d_name);
 	    if ((try = opendir(fname)) != NULL) {
 		closedir(try);
 		return 1;
-	    } else return 0;
+	    } else {
+		return 0;
+	    }
 	}
     }
 
@@ -109,35 +112,35 @@ static int get_subdir (const char *topdir, int first, char *fname)
 
 /* .......................................................... */
 
-static char *search_dir (char *filename, const char *topdir, 
+static char *search_dir (char *fname, const char *topdir, 
 			 int recurse)
 {
     FILE *test;
     int got = 0;
-    char origfile[MAXLEN], trypath[MAXLEN];
+    char orig[MAXLEN], trypath[MAXLEN];
 
-    strcpy(origfile, filename);
+    strcpy(orig, fname);
 
-    if (path_append(filename, topdir) == 0) {
+    if (path_append(fname, topdir) == 0) {
 #ifdef PATH_DEBUG
-	fprintf(stderr, I_("Trying %s\n"), filename);
+	fprintf(stderr, I_("Trying %s\n"), fname);
 #endif
-	test = fopen(filename, "r");
+	test = fopen(fname, "r");
 	if (test != NULL) {
 	    fclose(test);
-	    return filename;
+	    return fname;
 	}
 	if (recurse && get_subdir(topdir, 1, trypath) > 0) {
 	    while ((got = get_subdir(topdir, 0, trypath)) >= 0) {
-		strcpy(filename, origfile);
-		if (got && path_append(filename, trypath) == 0) {
+		strcpy(fname, orig);
+		if (got && path_append(fname, trypath) == 0) {
 #ifdef PATH_DEBUG
-		    fprintf(stderr, I_("Trying %s\n"), filename);
+		    fprintf(stderr, I_("Trying %s\n"), fname);
 #endif
-		    test = fopen(filename, "r");
+		    test = fopen(fname, "r");
 		    if (test != NULL) {
 			fclose(test);
-			return filename;
+			return fname;
 		    }		    
 		}
 	    }
@@ -163,7 +166,7 @@ static char *search_dir (char *filename, const char *topdir,
 char *addpath (char *fname, PATHS *ppaths, int script)
 {
     char orig[MAXLEN];
-    char *thisdir, *tmp = fname;
+    char *tmp = fname;
     FILE *test;
 
     strcpy(orig, fname);
@@ -176,8 +179,9 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 #ifdef WIN32
 	if (fname[1] == ':') return fname;
 #endif
-	if (fname[0] != SLASH && (thisdir = malloc(MAXLEN)) != NULL) {
-	    int i = 0;
+	if (*fname != SLASH) {
+	    char thisdir[MAXLEN];
+	    int offset = 0;
 
 	    if (getcwd(thisdir, MAXLEN-1) != NULL) {
 #ifdef WIN32		
@@ -186,41 +190,45 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 		if (strstr(fname, thisdir) == NULL) {
 		    strcpy(fname, thisdir);
 		    strcat(fname, SLASHSTR);
-		    if (orig[0] == '.' && orig[1] == SLASH &&
-			strlen(orig) > 2) i = 2;
-		    strcat(fname, orig + i);
+		    if (*orig == '.' && orig[1] == SLASH && strlen(orig) > 2) {
+			offset = 2;
+		    }
+		    strcat(fname, orig + offset);
 		}
 	    }
-	    free(thisdir);
 	} /* end conversion to absolute path */
 	return fname;
     } else {  
-	/* not able to open file as given */
-	if (fname[0] == '.' || fname[0] == SLASH) {
+	/* not able to open file as given: if the path was absolute, fail */
+	if (*fname == '.' || *fname == SLASH) {
 	    return NULL;
 	}
+#ifdef WIN32
+	if (fname[1] == ':') return NULL;
+#endif
     }
 
     /* try looking where script was found */
-    if (ppaths->currdir[0]) {
-	if ((fname = search_dir(fname, ppaths->currdir, 0))) 
+    if (*ppaths->currdir) {
+	if ((fname = search_dir(fname, ppaths->currdir, 0))) {
 	    return fname;
+	}
     }
 
     fname = tmp;
     strcpy(fname, orig);
 
-    if (!script) {
-	/* if it's a data file, try system data dir (and recurse) */
-	if ((fname = search_dir(fname, ppaths->datadir, 1))) { 
-	    return fname;
-	}
-    } else {
+    if (script) {
 	/* for a script, try system script dir (and recurse) */
 	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) { 
 	    return fname;
 	}
-    }
+    } else {
+	/* for a data file, try system data dir (and recurse) */
+	if ((fname = search_dir(fname, ppaths->datadir, 1))) { 
+	    return fname;
+	}
+    } 
 
     /* or try looking in user's dir (and recurse) */
     fname = tmp;
@@ -239,30 +247,29 @@ static int get_quoted_filename (const char *line, char *fname)
 {
     char *p;
     int quote = '"';
+    int ret = 0;
 
     p = strchr(line, quote);
     if (p == NULL) {
 	quote = '\'';
 	p = strchr(line, quote);
-	if (p == NULL) return 0;
     }
 
     if (p != NULL) {
 	char *q = strrchr(line, quote);
 
-	if (q == NULL) return 0;
-	else {
+	if (q != NULL) {
 	    size_t len = q - p;
 
 	    if (len > 0) {
 		*fname = 0;
 		strncat(fname, p+1, len-1);
-	    } else
-		return 0;
+		ret = 1;
+	    } 
 	}
     }
 
-    return 1;
+    return ret;
 }
 
 /**
@@ -283,7 +290,7 @@ static int get_quoted_filename (const char *line, char *fname)
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
 		 int setpath, int script)
 {
-    int spos, n;
+    char *fullname;
 
     /* get the initial filename off the command line */
     if (get_quoted_filename(line, fname)) return 0; 
@@ -291,19 +298,21 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
     if (sscanf(line, "%*s %s", fname) != 1) return 1;
 
     /* try a basic path search on this filename */
-    addpath(fname, ppaths, script);
+    fullname = addpath(fname, ppaths, script);
 
-    if (addpath != NULL && setpath) {
-	ppaths->currdir[0] = '.';
-	ppaths->currdir[1] = SLASH;
-	ppaths->currdir[2] = '\0';
-	spos = slashpos(fname);
+    if (fullname != NULL && setpath) {
+	int n, spos = slashpos(fname);
+
 	if (spos) {
 	    strncpy(ppaths->currdir, fname, (size_t) spos);
 	    n = strlen(ppaths->currdir);
 	    ppaths->currdir[n] = SLASH;
 	    ppaths->currdir[n+1] = '\0';
-	}
+	} else {
+	    ppaths->currdir[0] = '.';
+	    ppaths->currdir[1] = SLASH;
+	    ppaths->currdir[2] = '\0';
+	}	    
     }
 
     if (dir != NULL) {  /* dir is static, declared outside of funcs */
@@ -341,7 +350,7 @@ static char *internal_path_stuff (int code, const char *path)
 	} else {
 	    sprintf(gretl_lib_path, "%s/lib/gretl%s", path, sfx);
 	}
-#endif
+#endif /* WIN32 */
 	return NULL;
     } 
     else if (code == 0) {
