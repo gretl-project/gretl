@@ -962,8 +962,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 				   spreadsheet *sheet)
 {
     if (key->keyval == GDK_Tab) {
-	/* FIXME: translate this to Down or Right? */
-	return TRUE;
+	key->keyval = GDK_Right;
     }
 
     if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
@@ -982,7 +981,47 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
 		return TRUE;
 	    }
 	}
+    } 
+
+#if 0
+    else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||
+	key->keyval == GDK_minus) {
+	GtkTreePath *path = NULL;
+	GtkTreeViewColumn *column;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), &path, &column);
+
+	if (path != NULL && column != NULL) {
+	    GtkCellEditable *editable;
+	    gchar *pathstr = gtk_tree_path_to_string(path);
+	    gint newcol = 
+		GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+
+	    if (newcol == 0) {
+		/* not a data column */
+		gtk_tree_path_free(path);
+		return TRUE;
+	    }
+
+	    fprintf(stderr, "tree path = '%s'\n", pathstr);
+	    gtk_tree_view_column_focus_cell(column, sheet->datacell);
+
+	    /* start editing */
+	    editable = gtk_cell_renderer_start_editing(sheet->datacell,
+						       NULL,
+						       NULL,
+						       pathstr,
+						       NULL, NULL, 0);
+	    g_free(pathstr);
+	    fprintf(stderr, "editable = %p\n", (void *) editable);
+	    fprintf(stderr, "entry text: '%s'\n",
+		    gtk_entry_get_text(GTK_ENTRY(editable)));
+	    gtk_widget_grab_focus(GTK_WIDGET(editable));
+	    gtk_entry_set_text(GTK_ENTRY(editable), "foo");
+	    gtk_tree_path_free(path);
+	}
     }
+#endif
 
     return FALSE;
 }

@@ -1485,6 +1485,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (is_discrete) {
 	print_discrete_statistics(pmod, pdinfo, prn);
+	/* AIC, BIC? */
 	goto close_format;
     }
 
@@ -2198,7 +2199,6 @@ static void print_discrete_statistics (const MODEL *pmod,
     double model_chisq = gretl_model_get_double(pmod, "chisq");
 
     if (PLAIN_FORMAT(prn->format)) {
-	/* pputc(prn, '\n'); */
 	pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
 		pdinfo->varname[pmod->list[1]], pmod->ybar);
 	pprintf(prn, "  %s = %d (%.1f%%)\n", _("Number of cases 'correctly predicted'"), 

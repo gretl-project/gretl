@@ -439,7 +439,7 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod.sdy = fbx;
     gretl_model_set_int(&dmod, "correct", n_correct);
 
-    mle_aic_bic(&dmod, 1); /* FIXME: check the "1" here */
+    mle_aic_bic(&dmod, 0);
 
     dmod.ID = model_count_plus();
 
