@@ -1033,7 +1033,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    fputs("# frequency plot\n", fp);
+    fputs("# frequency plot ", fp);
 
     if (dist) {
 	double propn, plotmin = 0.0, plotmax = 0.0;
@@ -1048,6 +1048,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 
 	if (dist == NORMAL) {
 	    char chilbl[80];
+
+	    fputs("(against normal)\n", fp);
 
 	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
@@ -1068,6 +1070,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	}
 	else if (dist == GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
+
+	    fputs("(against gamma)\n", fp);
 	
 	    /* scale param = variance/mean */
 	    beta = var / freq->xbar;
@@ -1093,7 +1097,9 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	fputs("set key right top\n", fp);
 	fputs("plot \\\n", fp);
 
-    } else { /* not dist */
+    } else { /* plain frequency plot */
+	fputs("(simple)\n", fp);
+
 	lambda = 1.0 / freq->n;
 	fputs("set nokey\n", fp);
 	fprintf(fp, "set xlabel '%s %s'\n", 
@@ -1291,9 +1297,24 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	fputs("set y2tics\n", fp);
     }
 
-    if (spec->code == FREQ || spec->code == PERGM) { 
-	if (spec->code == FREQ) {
-	    fputs("# frequency plot\n", fp);
+    /* in case of plots that are editable (see gui client), it is
+       important to re-write the comment string that identifies the
+       sort of graph, so that it will be recognized by type when
+       it is redisplayed */
+
+    if (spec->code == PLOT_FORECAST) {
+	fputs("# forecasts with 95 pc conf. interval\n", fp);
+    }
+    else if (spec->code == PLOT_FREQ_SIMPLE) {
+	fputs("# frequency plot (simple)\n", fp); 
+    }
+    else if (spec->code == PLOT_FREQ_NORMAL || 
+	     spec->code == PLOT_FREQ_GAMMA ||
+	     spec->code == PLOT_PERIODOGRAM) { 
+	if (spec->code == PLOT_FREQ_NORMAL) {
+	    fputs("# frequency plot (against normal)\n", fp); 
+	} else if (spec->code == PLOT_FREQ_GAMMA) {
+	    fputs("# frequency plot (against gamma)\n", fp); 
 	} else {
 	    fputs("# periodogram\n", fp);
 	}

@@ -74,31 +74,30 @@ struct gpt_titles_t gpt_titles[] = {
 
 typedef enum {
     PLOT_SAVED          = 1 << 0,
-    PLOT_RANGE_MEAN     = 1 << 1,
-    PLOT_HAS_CONTROLLER = 1 << 3,
-    PLOT_ZOOMED         = 1 << 4,
-    PLOT_ZOOMING        = 1 << 5,
-    PLOT_NO_LABELS      = 1 << 6,
-    PLOT_PNG_COORDS     = 1 << 7
+    PLOT_HAS_CONTROLLER = 1 << 1,
+    PLOT_ZOOMED         = 1 << 2,
+    PLOT_ZOOMING        = 1 << 3,
+    PLOT_NO_LABELS      = 1 << 4,
+    PLOT_PNG_COORDS     = 1 << 5,
+    PLOT_DONT_ZOOM      = 1 << 6    
 } plot_flags;
 
 typedef enum {
     PLOT_TITLE          = 1 << 0,
     PLOT_XLABEL         = 1 << 1,
-    PLOT_YLABEL         = 1 << 3,
-    PLOT_Y2AXIS         = 1 << 4,
-    PLOT_Y2LABEL        = 1 << 5,
-    PLOT_LABELS_UP      = 1 << 6,
-    PLOT_DONT_ZOOM      = 1 << 7
+    PLOT_YLABEL         = 1 << 2,
+    PLOT_Y2AXIS         = 1 << 2,
+    PLOT_Y2LABEL        = 1 << 4,
+    PLOT_LABELS_UP      = 1 << 5
 } plot_format_flags;
 
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
-#define plot_is_range_mean(p)   (p->flags & PLOT_RANGE_MEAN)
 #define plot_has_controller(p)  (p->flags & PLOT_HAS_CONTROLLER)
 #define plot_is_zoomed(p)       (p->flags & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->flags & PLOT_ZOOMING)
 #define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
 #define plot_has_png_coords(p)  (p->flags & PLOT_PNG_COORDS)
+#define plot_not_zoomable(p)    (p->flags & PLOT_DONT_ZOOM)
 
 #define plot_has_title(p)       (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
@@ -106,7 +105,8 @@ typedef enum {
 #define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
 #define plot_has_y2label(p)     (p->format & PLOT_Y2LABEL)
 #define plot_has_data_labels(p) (p->format & PLOT_LABELS_UP)
-#define plot_not_zoomable(p)    (p->format & PLOT_DONT_ZOOM)
+
+#define plot_is_range_mean(p)   (p->spec->code == PLOT_RANGE_MEAN)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -1218,6 +1218,45 @@ static void get_gpt_data (char *line, double *x, double *y)
 
 /* ........................................................... */
 
+static int cant_zoom (const char *line)
+{
+    if (strncmp(line, "# multi", 7) == 0) {
+	/* multiple scatterplots */
+	return 1;
+    }
+    if (strncmp(line, "# CUSUM", 7) == 0) {
+	/* graph from CUSUM test */
+	return 1;
+    }
+    if (strncmp(line, "# frequ", 7) == 0) {
+	/* frequency distribution plot */
+	return 1;
+    }
+    if (strncmp(line, "# sampl", 7) == 0) {
+	/* sampling distribution graph (stats calculator) */
+	return 1;
+    }
+    if (strncmp(line, "# corre", 7) == 0) {
+	/* correlogram */
+	return 1;
+    }
+    if (strncmp(line, "# perio", 7) == 0) {
+	/* periodogram */
+	return 1;
+    }
+    if (strncmp(line, "# range", 7) == 0) {
+	/* range-mean plot */
+	return 1;
+    }
+    if (strstr(line, "no auto-parse")) {
+	/* general prohibition on gui plot editing */
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
 static int cant_edit (const char *line)
 {
     if (strncmp(line, "# mult", 6) == 0) {
@@ -1254,6 +1293,15 @@ static GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
+    for (i=0; i<6; i++) {
+	spec->lines[i].varnum = 0;
+	spec->lines[i].title[0] = 0;
+	spec->lines[i].formula[0] = 0;
+	spec->lines[i].style[0] = 0;
+	spec->lines[i].scale[0] = 0;
+	spec->lines[i].yaxis = 1;
+    }
+
     for (i=0; i<4; i++) {
 	spec->titles[i][0] = 0;
 	spec->literal[i] = NULL;
@@ -1270,7 +1318,7 @@ static GPT_SPEC *plotspec_new (void)
     }
 
     spec->y2axis = 0;
-    spec->code = GNUPLOT;
+    spec->code = PLOT_REGULAR;
     spec->ts = 0;
     spec->fp = NULL;
     spec->data = NULL;
@@ -1459,23 +1507,34 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	if (strncmp(line, "# freq", 6) == 0 ||
 	    strncmp(line, "# peri", 6) == 0) {
 	    /* special cases */
-	    if (line[2] == 'f') spec->code = FREQ;
-	    else spec->code = PERGM;
-	    for (j=0; j<4; j++) {
-		spec->literal[j] = mymalloc(MAXLEN);
-		if (spec->literal[j] == NULL) return 1;
-		if (!fgets(spec->literal[j], MAXLEN - 1, fp)) {
-		    errbox(_("Plot file is corrupted"));
-		    free(spec->literal[j]);
-		    spec->literal[j] = NULL;
-		    goto plot_bailout;
+	    if (line[2] == 'f') {
+		if (strstr(line, "normal")) {
+		    spec->code = PLOT_FREQ_NORMAL;
+		} else if (strstr(line, "gamma")) {
+		    spec->code = PLOT_FREQ_GAMMA;
+		} else {
+		    spec->code = PLOT_FREQ_SIMPLE;
 		}
-		top_n_tail(spec->literal[j]);
+	    }
+	    else spec->code = PLOT_PERIODOGRAM;
+	    if (spec->code != PLOT_FREQ_SIMPLE) {
+		/* grab special plot lines */
+		for (j=0; j<4; j++) {
+		    spec->literal[j] = mymalloc(MAXLEN);
+		    if (spec->literal[j] == NULL) return 1;
+		    if (!fgets(spec->literal[j], MAXLEN - 1, fp)) {
+			errbox(_("Plot file is corrupted"));
+			free(spec->literal[j]);
+			spec->literal[j] = NULL;
+			goto plot_bailout;
+		    }
+		    top_n_tail(spec->literal[j]);
+		}
 	    }
 	    continue;
 	}
 	if (strncmp(line, "# forecast", 10) == 0) {
-	    spec->code = FCASTERR;
+	    spec->code = PLOT_FORECAST;
 	    continue;
 	}
 	/* ignore an unknown comment line */
@@ -2616,7 +2675,7 @@ static int get_plot_ranges (png_plot_t *plot)
 #endif
     while (fgets(line, MAXLEN-1, fp)) {
 	if (strstr(line, "# range-mean")) {
-	    plot->flags |= PLOT_RANGE_MEAN;
+	    plot->spec->code = PLOT_RANGE_MEAN;
 	}
 	else if (sscanf(line, "set xrange [%lf:%lf]", 
 			&plot->xmin, &plot->xmax) == 2) { 
@@ -2636,9 +2695,8 @@ static int get_plot_ranges (png_plot_t *plot)
 		plot->format |= PLOT_Y2LABEL;
 	    } else if (!strncmp(line, "set y2ti", 8)) {
 		plot->format |= PLOT_Y2AXIS;
-	    } else if (!strncmp(line, "# freq", 6) ||
-		       !strncmp(line, "# peri", 6)) {
-		plot->format |= PLOT_DONT_ZOOM;
+	    } else if (cant_zoom(line)) {
+		plot->flags |= PLOT_DONT_ZOOM;
 	    }
 	}
 	if (!strncmp(line, "plot ", 5)) break;

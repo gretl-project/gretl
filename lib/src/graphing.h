@@ -60,6 +60,21 @@ typedef enum {
     GAMMA
 } dist_codes;
 
+typedef enum {
+    PLOT_REGULAR = 0,
+    PLOT_SAMPLING_DIST,
+    PLOT_FORECAST,
+    PLOT_FREQ_SIMPLE,
+    PLOT_FREQ_NORMAL,
+    PLOT_FREQ_GAMMA,
+    PLOT_PERIODOGRAM,
+    PLOT_CORRELOGRAM,
+    PLOT_CUSUM,
+    PLOT_MULTI_SCATTER,
+    PLOT_TRI_GRAPH,
+    PLOT_RANGE_MEAN
+} plot_type_codes;
+    
 #define GRETL_GUI(p) (p->binbase[0] && p->ratsbase[0] && p->dbhost_ip[0])
 
 /* functions follow */
