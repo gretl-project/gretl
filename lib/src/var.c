@@ -998,7 +998,7 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 static int real_var (int order, const LIST inlist, 
 		     double ***pZ, DATAINFO *pdinfo,
 		     GRETL_VAR **pvar, struct var_resids *resids, 
-		     PRN *prn, char flags)
+		     PRN *prn, gretlopt opts, char flags)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -1146,7 +1146,7 @@ static int real_var (int order, const LIST inlist,
 	varlist[1] = depvars[i];
 
 	/* run an OLS regression for the current dependent var */
-	*pmod = lsq(varlist, pZ, pdinfo, VAR, OPT_D | OPT_A, 0.0);
+	*pmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_D | OPT_A), 0.0);
 	pmod->aux = VAR;
 	pmod->ID = i + 1;
 
@@ -1179,7 +1179,7 @@ static int real_var (int order, const LIST inlist,
 	if (resids != NULL) {
 	    /* estimate equations for Johansen test too (use var_model) */
 	    varlist[1] = resids->levels_list[i + 1]; 
-	    var_model = lsq(varlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+	    var_model = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
 		var_model.aux = VAR;
 		printmodel(&var_model, pdinfo, prn);
@@ -1208,7 +1208,7 @@ static int real_var (int order, const LIST inlist,
 		}
 		pprintf(prn, _("All lags of %-8s "), 
 			pdinfo->varname[depvars[j]]);
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 		F = ((var_model.ess - essu) / order) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
@@ -1231,7 +1231,7 @@ static int real_var (int order, const LIST inlist,
 		    shortlist[l] = varlist[varlist[0]-end];
 		    end++;
 		}
-		var_model = lsq(shortlist, pZ, pdinfo, VAR, OPT_A, 0.0);
+		var_model = lsq(shortlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 		F = ((var_model.ess - essu) / neqns) / (essu / dfd);
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
@@ -1304,9 +1304,10 @@ static int real_var (int order, const LIST inlist,
  */
 
 int simple_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		int pause, PRN *prn)
+		int pause, gretlopt opts, PRN *prn)
 {
     char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
+    PRN *myprn;
 
 #if 1
     flags |= VAR_IMPULSE_RESPONSES;
@@ -1316,18 +1317,21 @@ int simple_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	flags |= VAR_PRINT_PAUSE;
     }
 
-    return real_var(order, list, pZ, pdinfo, NULL, NULL, prn, flags);
+    if (opts & OPT_Q) myprn = NULL;
+    else myprn = prn;
+
+    return real_var(order, list, pZ, pdinfo, NULL, NULL, myprn, opts, flags);
 }
 
 /* "full" version returns pointer to VAR struct */
 
 GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn)
+		     gretlopt opts, PRN *prn)
 {
     GRETL_VAR *var = NULL;
     int err;
 
-    err = real_var(order, list, pZ, pdinfo, &var, NULL, prn,
+    err = real_var(order, list, pZ, pdinfo, &var, NULL, prn, opts, 
 		   VAR_PRINT_MODELS | VAR_DO_FTESTS | 
 		   VAR_IMPULSE_RESPONSES | VAR_SAVE);
     if (err) {
@@ -1850,7 +1854,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t1 += (order + 1);
     /* Check Hamilton: what if order for test = 1? */
     err = real_var(order - 1, varlist, pZ, pdinfo, 
-		   NULL, &resids, varprn, flags); 
+		   NULL, &resids, varprn, OPT_NONE, flags); 
     
     if (!verbose) {
 	gretl_print_destroy(varprn);

@@ -1662,7 +1662,7 @@ void exec_line (char *line, PRN *prn)
     case VAR:
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, !batch, 
-			 (cmd.opt & OPT_Q)? NULL : prn);
+			 cmd.opt, prn);
 	break;
 
     case VARDUP:

@@ -102,7 +102,8 @@ struct gretl_option gretl_opts[] = {
     { TOBIT,    OPT_V, "verbose" },
     { TSLS,     OPT_R, "robust" },  
     { TSLS,     OPT_S, "save" },
-    { VAR,      OPT_Q, "quiet" },    
+    { VAR,      OPT_Q, "quiet" },  
+    { VAR,      OPT_R, "robust" },  
     { 0,        0L,    NULL }
 };
 

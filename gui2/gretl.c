@@ -77,7 +77,7 @@ static void build_main_popups (void);
 static gint var_popup_click (GtkWidget *widget, gpointer data);
 static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
 				    gpointer data);
-static int tree_view_selection_count (GtkTreeSelection *select);
+static int selection_count (GtkTreeSelection *select, int *row);
 
 static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
@@ -1130,7 +1130,7 @@ void compact_data_state (gboolean s)
 static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 {
     if (mdata->ifac != NULL) {
-	int selcount = tree_view_selection_count(select);
+	int selcount = selection_count(select, NULL);
 
 	flip(mdata->ifac, "/Variable", (selcount == 1));
 	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
@@ -1152,12 +1152,27 @@ static gint catch_mdata_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 #endif
 
-    if (key->keyval == GDK_e) {
-	varinfo_dialog(mdata->active_var, 1);
-    } 
-    else if (key->keyval == GDK_t) {
-	do_graph_var(mdata->active_var);
-    } 
+    if (key->keyval == GDK_e || key->keyval == GDK_t) {
+	int selcount, row;
+
+	selcount = 
+	    selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox)),
+			    &row);
+	if (selcount == 1 && row != 0) {
+	    gchar *varnum;
+
+	    tree_view_get_string(GTK_TREE_VIEW(mdata->listbox), row, 0, &varnum);
+	    mdata->active_var = atoi(varnum);
+	    g_free(varnum);
+
+	    if (key->keyval == GDK_e) {
+		varinfo_dialog(mdata->active_var, 1);
+	    } 
+	    else if (key->keyval == GDK_t) {
+		do_graph_var(mdata->active_var);
+	    } 
+	}
+    }
 
     return FALSE;
 }
@@ -2312,13 +2327,20 @@ static void auto_store (void)
 
 /* ........................................................... */
 
+static void get_selection_row (GtkTreeModel *model, GtkTreePath *path,
+			      GtkTreeIter *iter, int *row)
+{
+    gint *indices = gtk_tree_path_get_indices(path);
+    *row = indices[0];
+}
+
 static void count_selections (GtkTreeModel *model, GtkTreePath *path,
 			      GtkTreeIter *iter, int *selcount)
 {
     *selcount += 1;
 }
 
-static int tree_view_selection_count (GtkTreeSelection *select)
+static int selection_count (GtkTreeSelection *select, int *row)
 {
     int selcount = 0;
 
@@ -2328,6 +2350,14 @@ static int tree_view_selection_count (GtkTreeSelection *select)
 					     count_selections,
 					     &selcount);
     }
+    
+    if (row != NULL && selcount == 1) {
+	gtk_tree_selection_selected_foreach (select, 
+					     (GtkTreeSelectionForeachFunc) 
+					     get_selection_row,
+					     row);	
+    }
+
     return selcount;
 }
 
@@ -2339,7 +2369,7 @@ static gboolean main_popup_handler (GtkWidget *widget, GdkEvent *event,
     int selcount;
 
     selcount = 
-	tree_view_selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(widget)));
+	selection_count(gtk_tree_view_get_selection(GTK_TREE_VIEW(widget)), NULL);
 
     if (selcount == 0) return FALSE;
 

@@ -30,11 +30,11 @@ int list_ldiffgenr (const LIST list,
 
 int simple_var (int order, const LIST list, 
 		double ***pZ, DATAINFO *pdinfo,
-		int pause, PRN *prn);
+		int pause, gretlopt opts, PRN *prn);
 
 GRETL_VAR *full_var (int order, const LIST list, 
 		     double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn);
+		     gretlopt opts, PRN *prn);
 
 void gretl_var_free (GRETL_VAR *var);
 

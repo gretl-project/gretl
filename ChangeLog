@@ -25,6 +25,8 @@
   context of the genr command
 - add a new "smpl" option: "smpl 100 --random" selects 100
   observations from the dataset at random
+- allow the "--robust" option to the "var" command
+- fix for effect of Up/Down keys in main gretl window
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

@@ -2390,8 +2390,9 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case VAR:
 	/* requires special treatment: doesn't return model */
+	/* FIXME: allow "robust" option via GUI? */
 	sscanf(buf, "%d", &order);
-	var = full_var(order, cmd.list, &Z, datainfo, prn);
+	var = full_var(order, cmd.list, &Z, datainfo, OPT_NONE, prn);
 	if (var == NULL) {
 	    ; /* error message */
 	} else {
@@ -6090,7 +6091,7 @@ int gui_exec_line (char *line,
     case VAR:
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, 0, 
-			 (cmd.opt & OPT_Q)? NULL : outprn);
+			 cmd.opt, outprn);
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}

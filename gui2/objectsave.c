@@ -247,7 +247,8 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     if (*cmd->savename == 0) return 0;
 
-    var = full_var(atoi(cmd->param), cmd->list, pZ, pdinfo, NULL);
+    /* FIXME allow "robust" option? */
+    var = full_var(atoi(cmd->param), cmd->list, pZ, pdinfo, OPT_NONE, NULL);
 
     if (var == NULL) {
 	err = E_ALLOC;
