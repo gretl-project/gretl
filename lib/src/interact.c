@@ -262,7 +262,7 @@ static void get_savename (char *s, CMD *cmd)
     }
 }
 
-static void get_gnuplot_block (char *line, CMD *command)
+static void grab_gnuplot_literal_block (char *line, CMD *command)
 {
     char *p = strchr(line, '{');
     char *bl = NULL;
@@ -381,7 +381,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* gnuplot command can have a block of stuff to pass literally
        to gnuplot */
     if (command->ci == GNUPLOT) {
-	get_gnuplot_block(line, command);
+	grab_gnuplot_literal_block(line, command);
     }
 
     /* fix lines that contain a semicolon right after a var */

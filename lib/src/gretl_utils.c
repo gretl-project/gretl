@@ -1082,7 +1082,7 @@ int catchflag (char *line, int *oflag)
     if (n < 2) return 0;
 
     /* to enable reading of trad. esl input files */
-    if (line[n-2] == ';') {
+    if (line[n-2] == ';' && isspace(line[n-1])) {
 	line[n-2] = '\0';
 	n = strlen(line);
     } else if (line[n-1] == ';') {
