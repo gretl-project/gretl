@@ -846,13 +846,15 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 
 	if (hstat.len == hstat.contlen)
 	    return RETROK;
-	else if (hstat.res == 0) { /* No read error */
+	else if (hstat.res == 0) { 
+	    /* No read error */
 	    if (hstat.contlen == -1)  
 		return RETROK;
 	    else	
 		continue;
 	}
-	else {		          /* now hstat.res can only be -1 */
+	else {		          
+	    /* now hstat.res can only be -1 */
 	    if (hstat.contlen == -1)
 		continue;
 	}

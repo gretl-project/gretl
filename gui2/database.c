@@ -219,7 +219,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 #endif
     
     if ((getbuf = mymalloc(8192)) == NULL) return 1;
-    clear(getbuf, 8192);
+    memset(getbuf, 0, 8192);
 
     update_statusline(dbdat, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -591,7 +591,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     GtkWidget *main_vbox;
     char *titlestr;
     windata_t *dbwin;
-    int db_width = 700, db_height = 320;
+    int db_width = 700, db_height = 420;
     int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
@@ -1415,7 +1415,7 @@ void open_named_remote_db_list (char *dbname)
     int err;
 
     if ((getbuf = mymalloc(8192)) == NULL) return;
-    clear(getbuf, 8192);
+    memset(getbuf, 0, 8192);
     err = retrieve_url(GRAB_IDX, dbname, NULL, 0, &getbuf, errbuf);
 
     if (err) {
@@ -1450,7 +1450,7 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
 			 win->active_var, 0, &fname);
     
     if ((getbuf = mymalloc(8192)) == NULL) return;
-    clear(getbuf, 8192);
+    memset(getbuf, 0, 8192);
     update_statusline(win, _("Retrieving data..."));
     errbuf[0] = '\0';
     err = retrieve_url(GRAB_IDX, fname, NULL, 0, &getbuf, errbuf);
@@ -1477,11 +1477,38 @@ void open_remote_db_list (GtkWidget *w, gpointer data)
 #define BUFSIZE 8192
 #define INFOLEN 100
 
+static int parse_db_header (const char *buf, size_t *idxlen, 
+			    size_t *datalen, size_t *cblen)
+{
+    char *p;
+
+    *cblen = 0;
+
+    /* length of index file (required) */
+    if (sscanf(buf, "%u", idxlen) != 1) return 1;
+
+    /* length of data (required under "new" system) */
+    p = strchr(buf, '\n');
+    if (p == NULL) return 1;
+    p++; 
+    if (sscanf(p, "%u", datalen) != 1) return 1;
+
+    /* length of codebook (optional) */
+    p = strchr(p, '\n');
+    if (p == NULL) return 0;
+    p++;
+    if (sscanf(p, "%u", cblen) != 1) {
+	*cblen = 0;
+    }
+
+    return 0;
+}
+
 static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 {
-    FILE *fidx, *fbin;
-    size_t idxlen, bytesleft, bgot;
-    char idxname[MAXLEN], binname[MAXLEN];
+    FILE *fidx, *fbin, *fcb;
+    size_t idxlen, datalen, cblen, bytesleft, bgot;
+    char idxname[MAXLEN], binname[MAXLEN], cbname[MAXLEN];
     char gzbuf[BUFSIZE];
     gzFile fgz;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -1492,6 +1519,7 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 
     switch_ext(idxname, ggzname, "idx");
     switch_ext(binname, ggzname, "bin");
+    switch_ext(cbname, ggzname, "cb");
 
     fgz = gzopen(ggzname, "rb");
     if (fgz == NULL) {
@@ -1511,14 +1539,31 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
         sprintf(errbuf, _("Couldn't open %s for writing\n"), binname);
         return 1;
     }
+    fcb = fopen(cbname, "wb");
+    if (fcb == NULL) {
+	gzclose(fgz);
+	fclose(fidx);
+	fclose(fbin);
+	sprintf(errbuf, _("Couldn't open %s for writing\n"), cbname);
+	return 1;
+    } 
 
     memset(gzbuf, BUFSIZE, 0);
     gzread(fgz, gzbuf, INFOLEN);
-    idxlen = (size_t) atoi(gzbuf);
+
+    if (parse_db_header(gzbuf, &idxlen, &datalen, &cblen)) {
+	fputs("Error reading info buffer: failed to get byte counts\n",
+	      stderr);
+	gzclose(fgz);
+	fclose(fidx);
+	fclose(fbin);
+	fclose(fcb);
+	return 1;
+    }
 
     bytesleft = idxlen;
     while (bytesleft > 0) {
-	memset(gzbuf, BUFSIZE, 0);
+	memset(gzbuf, 0, BUFSIZE);
 	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
 	if (bgot <= 0) break;
 	bytesleft -= bgot;
@@ -1526,7 +1571,8 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     }
     fclose(fidx);
 
-    while (1) {
+    bytesleft = datalen;
+    while (bytesleft > 0) {
 #if G_BYTE_ORDER == G_BIG_ENDIAN
         if ((bgot = gzread(fgz, gzbuf, sizeof(long) + sizeof(short))) > 0) {
 	    /* read "netfloats" and write floats */
@@ -1535,17 +1581,33 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 	    memcpy(&(nf.exp), gzbuf + offset, sizeof(short));
 	    val = retrieve_float(nf);
 	    fwrite(&val, sizeof(float), 1, fbin);
+	    bytesleft -= sizeof(dbnumber);
 	} else break;
 #else
-	clear(gzbuf, BUFSIZE);
-	if ((bgot = gzread(fgz, gzbuf, BUFSIZE)) > 0)
-	    fwrite(gzbuf, 1, bgot, fbin);
-	else break;
+	memset(gzbuf, 0, BUFSIZE);
+	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	if (bgot <= 0) break;
+	bytesleft -= bgot;
+	fwrite(gzbuf, 1, bgot, fbin);
 #endif
+    }
+
+    bytesleft = cblen;
+    while (bytesleft > 0) {
+	memset(gzbuf, 0, BUFSIZE);
+	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	if (bgot <= 0) break;
+	bytesleft -= bgot;
+	fwrite(gzbuf, 1, bgot, fcb);
     }
 
     gzclose(fgz);
     fclose(fbin);
+    fclose(fcb);
+
+    if (cblen == 0) {
+	remove(cbname);
+    }
 
     remove(ggzname);
 
