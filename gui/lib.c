@@ -364,22 +364,33 @@ static gint model_cmd_init (char *line, int ID)
     print_t *echo;
     size_t len;
 
+    /* FIXME -- this makes a real mess if you try to add a test
+       to a model that was saved as part of a session, then
+       reopened after the session was reopened */
+
+#ifdef CMD_DEBUG
     fprintf(stderr, "model_cmd_init:\nID=%d, m=%d, old_model_count=%d\n"
 	   "line='%s'\n", ID, m, old_model_count, line);
+#endif
 
     if (!going) {/* starting from scratch? */
 	model_cmds = mymalloc(sizeof *model_cmds);
-	printf("starting from scratch: mallocing model_cmds\n");
+#ifdef CMD_DEBUG
+	fprintf(stderr, "starting from scratch: mallocing model_cmds\n");
+#endif
     }
     if (m > old_model_count) { /* a new model? */
 	model_cmds = realloc(model_cmds, (m + 1) * sizeof *model_cmds);
-	printf("m > old_model_count: reallocing model_cmds\n");
+#ifdef CMD_DEBUG
+	fprintf(stderr, "m > old_model_count: reallocing model_cmds\n");
+#endif
     }
 
     if (model_cmds == NULL) 
 	return 1;
 
     if (!going || m > old_model_count) { /* start a model cmd stack */
+	if (m < 0) m = 0;
 	model_cmds[m] = mymalloc(sizeof(char *));
 	printf("starting a new stack, model_cmds[%d]\n", m);
     } else {/* grow the existing model cmd stack */
@@ -389,7 +400,6 @@ static gint model_cmd_init (char *line, int ID)
     }
     if (model_cmds[m] == NULL) return 1;
     
-/*      fprintf(stderr, "model_cmd_init: opening buffer\n"); */
     if (bufopen(&echo)) return 1;
     echo_cmd(&command, datainfo, line, 0, 1, oflag, echo);
 
