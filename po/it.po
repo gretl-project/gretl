@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-04 15:11-0500\n"
-"PO-Revision-Date: 2005-01-04 14:55+0100\n"
+"PO-Revision-Date: 2005-01-05 00:20+0100\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -2848,9 +2848,8 @@ msgid "LR over-identification test"
 msgstr "Test LR di sovra-identificazione"
 
 #: lib/src/modelprint.c:276
-#, fuzzy
 msgid "Equation is just identified"
-msgstr "Sistema di equazioni"
+msgstr "L'equazione è esattamente identificata"
 
 #: lib/src/modelprint.c:293 lib/src/modelprint.c:300 lib/src/modelprint.c:301
 msgid "Sum of absolute residuals"
@@ -11230,9 +11229,8 @@ msgid "log determinant"
 msgstr "log determinante"
 
 #: plugin/sysest.c:79
-#, fuzzy
 msgid "Breusch-Pagan test for diagonal covariance matrix"
-msgstr "Errore nella generazione della matrice di covarianza"
+msgstr "Test Breusch-Pagan per la matrice di covarianza diagonale"
 
 #: plugin/sysest.c:412
 #, c-format
