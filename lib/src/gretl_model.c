@@ -311,10 +311,13 @@ void debug_print_model_info (const MODEL *pmod, const char *msg)
 	    " pmod->arinfo = %p\n"
 	    " pmod->tests = %p\n"
 	    " pmod->data = %p\n", msg,
-	    pmod, pmod->list, pmod->subdum, pmod->coeff,
-	    pmod->sderr, pmod->yhat, pmod->uhat, pmod->xpx,
-	    pmod->vcv, pmod->name, pmod->params, pmod->arinfo, 
-	    pmod->tests, pmod->data);
+	    (void *) pmod, (void *) pmod->list, 
+	    (void *) pmod->subdum, (void *) pmod->coeff,
+	    (void *) pmod->sderr, (void *) pmod->yhat, 
+	    (void *) pmod->uhat, (void *) pmod->xpx,
+	    (void *) pmod->vcv, (void *) pmod->name, 
+	    (void *) pmod->params, (void *) pmod->arinfo, 
+	    (void *) pmod->tests, (void *) pmod->data);
 }
 
 /* .......................................................... */
