@@ -1,3 +1,11 @@
+version 0.995
+- fix bug in Create Dataset: undated data appeared as "annual"
+- add descriptive report on dataset to Data menu
+- fix bug in writing Utilities/R session: R data set was being
+  written in wrong (CSV) format
+- fix bug: datafile name was not being cleared on Close Session
+- refinements to Makefiles: don't expand CFLAGS multiple times
+
 04/21/2002 version 0.994
 - fix bugs in win32 copy to clipboard
 - fix RTF printing of correlation matrix
