@@ -36,7 +36,7 @@ genr ut1 = ut(-1)
 smpl 1942 ;
 ols ut const govt longdef lpres lelect lreagan lopp lhdem lsdem lww2 \
  lkwar lvwar lkrus lgorb lsalt ut1
-genr LM = $nobs*$rsq
+genr LM = $trsq
 pvalue X 1 LM
 smpl 1941 ;
 (* mixed Hilu-Corc estimation of the general model *)

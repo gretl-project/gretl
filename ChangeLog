@@ -1,6 +1,12 @@
+version 0.994
+- fix bug in genr (generating a scalar when data set is sub-
+  sampled)
+- fix bug: editing periodogram graph using GUI
+
 04/15/2002 version 0.993
 - add option to specify lag order in autocorrelation test;
   also add Box-Pierce and Ljung-Box stats to test output
+- fix brokenness in Excel importer on win32
 - fixes to setmiss command (console and script modes)
 - enable pop-up menu for all gnuplot graphs under Linux/unix;
   also add facility to print graphs directly under gnome,

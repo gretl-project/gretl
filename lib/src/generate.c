@@ -19,7 +19,7 @@
 
 /* generate.c for gretl */
 
-/* #define GENR_DEBUG */
+#define GENR_DEBUG
 
 #include "libgretl.h"
 #include "internal.h"
@@ -36,7 +36,7 @@ static int _getxvec (char *ss, double *xxvec,
 		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod, int *scalar);
 static int _scanb (const char *ss, char *word);
-static char _strtype (char *ss, const DATAINFO *pdinfo);
+static int _strtype (char *ss, const DATAINFO *pdinfo);
 static int _whichtrans (const char *ss);
 static int _normal_dist (double *a, const int t1, const int t2); 
 static void _uniform (double *a, const int t1, const int t2);
@@ -90,6 +90,20 @@ enum transformations {
     T_MEDIAN,
     T_ZEROMISS,
     T_PVALUE
+};
+
+enum retrieve {
+    R_ESS = 1,
+    R_NOBS,
+    R_RSQ,
+    R_SIGMA,
+    R_DF,
+    R_LNL,
+    R_TRSQ,
+    R_NUMERIC,
+    R_MATH,
+    R_VARNAME,
+    R_UNKNOWN
 };
 
 enum composites {
@@ -496,7 +510,8 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
     char *indx1, *indx2, s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
     char sexpr[MAXLEN], snew[MAXLEN], word[16], s1[MAXLEN];
     char newvar[16], genrs[160];
-    char op0, op1, type2;
+    int type2;
+    char op0, op1;
     register int i;
     double xx, *mystack = NULL, *mvec = NULL;
     GENERATE genr;
@@ -507,7 +522,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
     */
 
     genr.errcode = 0;
-    genr.scalar = 0;
+    genr.scalar = 1;
     gretl_errmsg[0] = '\0';
     genr.msg[0] = genr.label[0] = '\0';
     if ((genr.xvec = malloc(n * sizeof(double))) == NULL) {
@@ -610,9 +625,11 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 	return genr;
     }
 
+    for (i=0; i<n; i++) mvec[i] = genr.xvec[i] = 0.;
+
     while ((ls = strlen(s)) > 0) {
 #ifdef GENR_DEBUG
-	fprintf(stderr, "s='%s'\n", s);
+	fprintf(stderr, "s='%s', zeroing mvec, xvec\n", s);
 #endif
 	for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i] = 0.;
 	indx1 = strrchr(s, '('); /* point to last '('  */
@@ -648,8 +665,8 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		return genr;
             }
 #ifdef GENR_DEBUG
-	    printf("_getvar: op1 = %d, s = \"%s\"\n", op1, s);
-	    printf("genr.xvec[1] = %f\n", genr.xvec[1]);
+	    fprintf(stderr, "_getvar: op1 = %d, s = \"%s\"\n", op1, s);
+	    fprintf(stderr, "genr.xvec[1] = %f\n", genr.xvec[1]);
 #endif
             if (_cstack(mystack, genr.xvec, op0, pdinfo)) {
 		genr.errcode = E_UNSPEC; 
@@ -719,7 +736,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		}
                 strcpy(s, snew);
             } else  {
-		/* there is a math fn or lag/lead in form of (  */
+		/* there is a math function or lag/lead in form of (  */
                 nvtmp++;
                 if (nvtmp > 20) {
 		    genr.errcode = E_NEST;
@@ -732,7 +749,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 
 		switch (type2) {
 
-		case 'v':    /* name of variable */
+		case R_VARNAME:    
 		    if ( !(_isnumber(sexpr)))  {
 			genr.errcode = E_NOTINTG;
 			_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -745,12 +762,13 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 				"can't do lags/leads"), pdinfo->varname[vi]);
 			_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			return genr;
-		    }
+		    } 
+		    genr.scalar = 0;
 		    _lag(sexpr, vi, mvec, *pZ, pdinfo);
 		    for (i=t1; i<=t2; i++) genr.xvec[i] = mvec[i];
 		    break;
 
-		case 't':    /* "math" label */
+		case R_MATH:    
 		    nt = _whichtrans(word);
 		    if (nt == T_RHO) {
 			if (!(_isnumber(sexpr))) {
@@ -781,7 +799,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			}
 			for (i=0; i<n; i++) 
 			    genr.xvec[i] = pmod->rhot[vi];
-			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_NORMAL) {
@@ -806,7 +823,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
-			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_CORR) {
@@ -818,7 +834,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
-			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_VCV) {
@@ -830,7 +845,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
-			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_PVALUE) {
@@ -842,7 +856,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			} else 
 			    for (i=0; i<n; i++)
 				genr.xvec[i] = xx;
-			genr.scalar = 1;
 			break;
 		    }
 		    if (nt == T_COEFF || nt == T_STDERR) {
@@ -874,10 +887,6 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 			    return genr;
 			}
-#ifdef GENR_DEBUG
-			fprintf(stderr, "setting scalar=1\n");
-#endif
-			genr.scalar = 1;
 			break;
 		    } else {
 			ig = _evalexp(sexpr, mvec, genr.xvec, 
@@ -897,7 +906,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			break;
 		    }
 
-		case 'u': genr.errcode = E_CASEU;
+		case R_UNKNOWN: genr.errcode = E_CASEU;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 		    return genr;
 
@@ -912,7 +921,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
                 }  /* end of switch on type2 */
 
                 lword = strlen(word);
-                strcpy(sleft+nleft1-lword, "\0");
+                strcpy(sleft + nleft1 - lword, "\0");
                 strcpy(sright, indx2);
 		/* create temp var */
 		ig = _createvar(genr.xvec, snew, sleft, sright, 
@@ -1072,6 +1081,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    }
 	    else if (xx <= 0.0) return E_LOGS;
 	    xxvec[t] = log(xx);
+	    fprintf(stderr, "T_LN: set xxvec[%d]=%g\n", t, xxvec[t]);
 	}
 	break;
 
@@ -1160,7 +1170,6 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	    for (t=t1; t<=t2; t++) xxvec[t] = x[t-t1];
 	} else {
 	    for (t=0; t<pdinfo->n; t++) xxvec[t] = xx;
-	    *scalar = 1; 
 	}
 
 	free(x);
@@ -1283,32 +1292,32 @@ static int check_modelstat (const MODEL *pmod, int type1)
 {
     if (pmod == NULL || pmod->list == NULL) {
 	switch (type1) {
-	case 'e':
+	case R_ESS:
 	    strcpy(gretl_errmsg, 
 		   _("No $ess (error sum of squares) value is available"));
 	    return 1;
 	    break;
-	case 'r':
+	case R_RSQ:
 	    strcpy(gretl_errmsg, 
 		   _("No $rsq (R-squared) value is available"));
 	    return 1;
 	    break;
-	case 'q':
+	case R_TRSQ:
 	    strcpy(gretl_errmsg, 
 		   _("No $trsq (T*R-squared) value is available"));
 	    return 1;
 	    break;
-	case 'd':
+	case R_DF:
 	    strcpy(gretl_errmsg, 
 		   _("No $df (degrees of freedom) value is available"));
 	    return 1;
 	    break;
-	case 's':
+	case R_SIGMA:
 	    strcpy(gretl_errmsg, 
 		   _("No $sigma (std. err. of model) value is available"));
 	    return 1;
 	    break;
-	case 'l':
+	case R_LNL:
 	    strcpy(gretl_errmsg, 
 		   _("No $lnl (log-likelihood) value is available"));
 	    return 1;
@@ -1319,7 +1328,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
 	}
     }
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
-	type1 == 'l') {
+	type1 == R_LNL) {
 	strcpy(gretl_errmsg, 
 	       _("$lnl (log-likelihood) is not available for the last model"));
 	return 1;
@@ -1334,7 +1343,7 @@ static int _getxvec (char *ss, double *xxvec,
 		     const MODEL *pmod, int *scalar)
      /* calculate and return the xxvec vector of values */
 {
-    char type1;
+    int type1;
     int v1, n = pdinfo->n;
     register int i;
     double value;
@@ -1343,60 +1352,54 @@ static int _getxvec (char *ss, double *xxvec,
 
     if (check_modelstat(pmod, type1)) return 1;
     if (pmod && (pmod->ci == LOGIT || pmod->ci == PROBIT) &&
-	(type1 == 'r' || type1 == 'e' || type1 == 's' || type1 == 'q')) 
+	(type1 == R_RSQ || type1 == R_ESS || type1 == R_SIGMA || 
+	 type1 == R_TRSQ)) 
 	return E_BADSTAT;
 
     switch (type1) {  
 
-    case 'e':
+    case R_ESS:
 	for (i=0; i<n; i++) xxvec[i] = pmod->ess;
-	*scalar = 1;
 	break;
 
-    case 'o':
+    case R_NOBS:
 	for (i=0; i<n; i++) {
 	    if (pmod->list) xxvec[i] = (double) pmod->nobs;
 	    else xxvec[i] = (double) (pdinfo->t2 - pdinfo->t1 + 1);
 	}
-	*scalar = 1;
 	break;
 
-    case 'r':
+    case R_RSQ:
 	for (i=0; i<n; i++) xxvec[i] = pmod->rsq;
-	*scalar = 1;
 	break;
 
-    case 'l':
+    case R_LNL:
 	for (i=0; i<n; i++) xxvec[i] = pmod->lnL;
-	*scalar = 1;
 	break;
 
-    case 's':
+    case R_SIGMA:
 	if (pmod->nwt) 
 	    for (i=0; i<n; i++) xxvec[i] = pmod->sigma_wt;
 	else 
 	    for (i=0; i<n; i++) xxvec[i] = pmod->sigma;
-	*scalar = 1;
 	break;
 
-    case 'q':
+    case R_TRSQ:
 	for (i=0; i<n; i++) xxvec[i] = pmod->nobs * pmod->rsq;
-	*scalar = 1;
 	break;
 
-    case 'd':
+    case R_DF:
 	for (i=0; i<n; i++) xxvec[i] = (double) pmod->dfd;
-	*scalar = 1;
 	break;
 
-    case 'n':
+    case R_NUMERIC:
 	value = atof(ss);
 	for (i=0; i<n; i++) xxvec[i] = value; 
 	break;
 
-    case 'v':
+    case R_VARNAME:
 	v1 = varindex(pdinfo, ss);
-	if (v1 == UHATNUM) {
+	if (v1 == UHATNUM) { /* model residual */
 	    if (pmod->uhat == NULL) return 1;
 	    if (pmod->t2 - pmod->t1 + 1 > n ||
 		model_sample_issue(pmod, NULL, Z, pdinfo)) {
@@ -1413,11 +1416,13 @@ static int _getxvec (char *ss, double *xxvec,
 		for (i=pmod->t1; i<=pmod->t2; i++) xxvec[i] = pmod->uhat[i]; 
 		for (i=pmod->t2 + 1; i<n; i++) xxvec[i] = NADBL;
 	    }
+	    *scalar = 0;
 	}
-	else if (v1 == INDEXNUM) {
+	else if (v1 == INDEXNUM) { /* internal index variable */
 	    int k = genr_scalar_index(0, 0);
 
 	    for (i=0; i<n; i++) xxvec[i] = (double) k;
+	    *scalar = 0;
 	}
 	else if (v1 == TNUM) { /* auto trend/index */
 	    if (pdinfo->time_series && pdinfo->pd == 1) /* annual */ 
@@ -1432,7 +1437,9 @@ static int _getxvec (char *ss, double *xxvec,
 		}
 	    } else
 		for (i=0; i<n; i++) xxvec[i] = (double) (i + 1);
-	} else {
+	    *scalar = 0;
+	} 
+	else { /* a regular variable */
 	    for (i=0; i<n; i++) 
 		xxvec[i] = (pdinfo->vector[v1])? Z[v1][i] : Z[v1][0];
 	    if (pdinfo->vector[v1]) {
@@ -1444,7 +1451,7 @@ static int _getxvec (char *ss, double *xxvec,
 	}
 	break;
 
-    case 'u':  return 1;
+    case R_UNKNOWN:  return 1;
 
     default:
 	if (strlen(ss) != 0) {
@@ -1522,50 +1529,50 @@ static int _scanb (const char *ss, char *word)
 
 /* ......................................................   */
 
-static char _strtype (char *ss, const DATAINFO *pdinfo)
-/*  checks whether ss is a number, variable name or transformation  
-    returns 'n' for no., 'v' for var, 't' for trans and '0' for none
-*/
+static int _strtype (char *ss, const DATAINFO *pdinfo)
+     /*  checks whether ss is a number, variable name or transformation */
 {
     int i;
 
     if (ss[0] == '$') {
         lower(ss);
         if (strcmp(ss, "$ess") == 0)  
-	    return 'e';
+	    return R_ESS;
         if (strcmp(ss, "$nobs") == 0) 
-	    return 'o';
+	    return R_NOBS;
         if (strcmp(ss, "$rsq") == 0)  
-	    return 'r';
+	    return R_RSQ;
 	if (strcmp(ss, "$sigma") == 0)  
-	    return 's';
+	    return R_SIGMA;
         if (strcmp(ss, "$df") == 0)   
-	    return 'd';
+	    return R_DF;
         if (strcmp(ss, "$lnl") == 0)   
-	    return 'l';
+	    return R_LNL;
         if (strcmp(ss, "$nrsq") == 0 || strcmp(ss, "$trsq") == 0) 
-	    return 'q';
+	    return R_TRSQ;
     }
 
     if (_isnumber(ss)) {
         i = strlen(ss) - 1;
         if (ss[i] == 'e') { 
 	    sprintf(gretl_errmsg, _("Scientific notation not allowed for numbers"));
-            return 'u';
+            return R_UNKNOWN;
         }
-        else return 'n';
+        else return R_NUMERIC;
     }
 
     for (i=0; ; i++)  {
 	if (math[i] == NULL) break;
-        if (strcmp(ss, math[i]) == 0) return 't';
+        if (strcmp(ss, math[i]) == 0) return R_MATH;
     }
 
     i = varindex(pdinfo, ss);
     if (i < pdinfo->v || i == UHATNUM || i == TNUM ||
-	i == INDEXNUM) return 'v'; 
+	i == INDEXNUM) {
+	return R_VARNAME; 
+    }
 
-    return '\0';
+    return 0;
 }
 
 /* ........................................................  */
