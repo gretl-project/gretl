@@ -629,9 +629,9 @@ void write_rc (void)
 	    gnome_config_set_string(gpath, rc_vars[i].var);
 	i++;
     }
-    printfilelist(1, NULL); /* data files */
-    printfilelist(2, NULL); /* session files */
-    printfilelist(3, NULL); /* script files */    
+    printfilelist(FILE_LIST_DATA, NULL);
+    printfilelist(FILE_LIST_SESSION, NULL);
+    printfilelist(FILE_LIST_SCRIPT, NULL);
     gnome_config_sync();
     set_paths(&paths, 0, 1);
 }
@@ -723,9 +723,9 @@ void write_rc (void)
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
 	i++;
     }
-    printfilelist(1, rc); /* data files */
-    printfilelist(2, rc); /* session files */
-    printfilelist(3, rc); /* script files */
+    printfilelist(FILE_LIST_DATA, rc); /* data files */
+    printfilelist(FILE_LIST_SESSION, rc); /* session files */
+    printfilelist(FILE_LIST_SCRIPT, rc); /* script files */
     fclose(rc);
     set_paths(&paths, 0, 1);
 }
@@ -914,9 +914,9 @@ void mkfilelist (int filetype, const char *fname)
     char **filep;
     int i, match = -1;
 
-    if (filetype == 1) filep = datap;
-    else if (filetype == 2) filep = sessionp;
-    else if (filetype == 3) filep = scriptp;
+    if (filetype == FILE_LIST_DATA) filep = datap;
+    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
+    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
     else return;
 
     /* see if this file is already on the list */
@@ -966,9 +966,9 @@ void delete_from_filelist (int filetype, const char *fname)
     char **filep;
     int i, match = -1;
 
-    if (filetype == 1) filep = datap;
-    else if (filetype == 2) filep = sessionp;
-    else if (filetype == 3) filep = scriptp;
+    if (filetype == FILE_LIST_DATA) filep = datap;
+    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
+    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
     else return;
 
     /* save pointers to current order */
@@ -1035,14 +1035,16 @@ static void printfilelist (int filetype, FILE *fp)
     int i;
     char **filep;
     char gpath[MAXLEN];
-    static char *section[] = {"recent data files",
-			      "recent session files",
-			      "recent script files"};
+    static char *section[] = {
+	"recent data files",
+	"recent session files",
+	"recent script files"
+    };
 
     switch (filetype) {
-    case 1: filep = datap; break;
-    case 2: filep = sessionp; break;
-    case 3: filep = scriptp; break;
+    case FILE_LIST_DATA: filep = datap; break;
+    case FILE_LIST_SESSION: filep = sessionp; break;
+    case FILE_LIST_SCRIPT: filep = scriptp; break;
     default: return;
     }
 
@@ -1059,13 +1061,13 @@ static void printfilelist (int filetype, FILE *fp)
     int i;
     char **filep;
 
-    if (filetype == 1) {
+    if (filetype == FILE_LIST_DATA) {
 	fprintf(fp, "recent data files:\n");
 	filep = datap;
-    } else if (filetype == 2) {
+    } else if (filetype == FILE_LIST_SESSION) {
 	fprintf(fp, "recent session files:\n");
 	filep = sessionp;
-    } else if (filetype == 3) {
+    } else if (filetype == FILE_LIST_SCRIPT) {
 	fprintf(fp, "recent script files:\n");
 	filep = scriptp;
     } else 
@@ -1130,13 +1132,13 @@ void add_files_to_menu (int filetype)
 
     fileitem.path = NULL;
 
-    if (filetype == 1) {
+    if (filetype == FILE_LIST_DATA) {
 	callfunc = set_data_from_filelist;
 	filep = datap;
-    } else if (filetype == 2) {
+    } else if (filetype == FILE_LIST_SESSION) {
 	callfunc = set_session_from_filelist;
 	filep = sessionp;
-    } else if (filetype == 3) {
+    } else if (filetype == FILE_LIST_SCRIPT) {
 	callfunc = set_script_from_filelist;
 	filep = scriptp;
     }

@@ -741,9 +741,9 @@ void write_rc (void)
 
     g_object_unref(G_OBJECT(client));
 
-    printfilelist(1, NULL); /* data files */
-    printfilelist(2, NULL); /* session files */
-    printfilelist(3, NULL); /* script files */    
+    printfilelist(FILE_LIST_DATA, NULL);
+    printfilelist(FILE_LIST_SESSION, NULL); 
+    printfilelist(FILE_LIST_SCRIPT, NULL);
 
     set_paths(&paths, 0, 1);
 }
@@ -850,16 +850,19 @@ void write_rc (void)
 	if (rc_vars[i].type == 'B') {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    write_reg_val(HKEY_CURRENT_USER, "gretl", rc_vars[i].key, val);
-	} else
+	} else {
 	    write_reg_val((rc_vars[i].type == 'R')? 
 			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, rc_vars[i].var);
+	}
 	i++;
     }
-    printfilelist(1, NULL); /* data files */
-    printfilelist(2, NULL); /* session files */
-    printfilelist(3, NULL); /* script files */
+
+    printfilelist(FILE_LIST_DATA, NULL); 
+    printfilelist(FILE_LIST_SESSION, NULL);
+    printfilelist(FILE_LIST_SCRIPT, NULL);
+
     set_paths(&paths, 0, 1);
 }
 
@@ -933,20 +936,25 @@ void write_rc (void)
 	errbox(_("Couldn't open config file for writing"));
 	return;
     }
+
     fprintf(rc, "# old-style gretl config file (not used by gnome version)\n");
+
     i = 0;
     while (rc_vars[i].var != NULL) {
 	fprintf(rc, "# %s\n", rc_vars[i].description);
 	if (rc_vars[i].type == 'B') {
 	    boolvar_to_str(rc_vars[i].var, val);
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
-	} else
+	} else {
 	    fprintf(rc, "%s = %s\n", rc_vars[i].key, (char *) rc_vars[i].var);
+	}
 	i++;
     }
-    printfilelist(1, rc); /* data files */
-    printfilelist(2, rc); /* session files */
-    printfilelist(3, rc); /* script files */
+
+    printfilelist(FILE_LIST_DATA, rc);
+    printfilelist(FILE_LIST_SESSION, rc);
+    printfilelist(FILE_LIST_SCRIPT, rc);
+
     fclose(rc);
     set_paths(&paths, 0, 1);
 }
@@ -975,10 +983,11 @@ static void read_rc (void)
 	    chopstr(linevar); 
 	    for (j=0; rc_vars[j].key != NULL; j++) {
 		if (!strcmp(key, rc_vars[j].key)) {
-		    if (rc_vars[j].type == 'B')
+		    if (rc_vars[j].type == 'B') {
 			str_to_boolvar(linevar, rc_vars[j].var);
-		    else
+		    } else {
 			strcpy(rc_vars[j].var, linevar);
+		    }
 		}
 	    }
 	}
@@ -991,6 +1000,7 @@ static void read_rc (void)
 	sessionlist[i][0] = 0;
 	scriptlist[i][0] = 0;
     }
+
     if (gotrecent || (fgets(line, MAXLEN, rc) != NULL && 
 		      strncmp(line, "recent data files:", 18) == 0)) {
 	i = 0;
@@ -1002,6 +1012,7 @@ static void read_rc (void)
 		strcpy(datalist[i++], line);
 	}
     }
+
     if (strncmp(line, "recent session files:", 21) == 0) {
 	i = 0;
 	while (fgets(line, MAXLEN, rc) && i<MAXRECENT) {
@@ -1012,6 +1023,7 @@ static void read_rc (void)
 		strcpy(sessionlist[i++], line);
 	}
     }
+
     if (strncmp(line, "recent script files:", 20) == 0) {
 	i = 0;
 	while (fgets(line, MAXLEN, rc) && i<MAXRECENT) {
@@ -1156,9 +1168,9 @@ void mkfilelist (int filetype, const char *fname)
     char **filep;
     int i, match = -1;
 
-    if (filetype == 1) filep = datap;
-    else if (filetype == 2) filep = sessionp;
-    else if (filetype == 3) filep = scriptp;
+    if (filetype == FILE_LIST_DATA) filep = datap;
+    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
+    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
     else return;
 
     /* see if this file is already on the list */
@@ -1210,9 +1222,9 @@ void delete_from_filelist (int filetype, const char *fname)
     char **filep;
     int i, match = -1;
 
-    if (filetype == 1) filep = datap;
-    else if (filetype == 2) filep = sessionp;
-    else if (filetype == 3) filep = scriptp;
+    if (filetype == FILE_LIST_DATA) filep = datap;
+    else if (filetype == FILE_LIST_SESSION) filep = sessionp;
+    else if (filetype == FILE_LIST_SCRIPT) filep = scriptp;
     else return;
 
     /* save pointers to current order */
@@ -1288,9 +1300,9 @@ static void printfilelist (int filetype, FILE *fp)
     };
 
     switch (filetype) {
-    case 1: filep = datap; break;
-    case 2: filep = sessionp; break;
-    case 3: filep = scriptp; break;
+    case FILE_LIST_DATA: filep = datap; break;
+    case FILE_LIST_SESSION: filep = sessionp; break;
+    case FILE_LIST_SCRIPT: filep = scriptp; break;
     default: return;
     }
 
@@ -1325,9 +1337,9 @@ static void printfilelist (int filetype, FILE *fp)
     };
 
     switch (filetype) {
-    case 1: filep = datap; break;
-    case 2: filep = sessionp; break;
-    case 3: filep = scriptp; break;
+    case FILE_LIST_DATA: filep = datap; break;
+    case FILE_LIST_SESSION: filep = sessionp; break;
+    case FILE_LIST_SCRIPT: filep = scriptp; break;
     default: return;
     }
 
@@ -1344,13 +1356,13 @@ static void printfilelist (int filetype, FILE *fp)
     int i;
     char **filep;
 
-    if (filetype == 1) {
+    if (filetype == FILE_LIST_DATA) {
 	fprintf(fp, "recent data files:\n");
 	filep = datap;
-    } else if (filetype == 2) {
+    } else if (filetype == FILE_LIST_SESSION) {
 	fprintf(fp, "recent session files:\n");
 	filep = sessionp;
-    } else if (filetype == 3) {
+    } else if (filetype == FILE_LIST_SCRIPT) {
 	fprintf(fp, "recent script files:\n");
 	filep = scriptp;
     } else 
@@ -1415,13 +1427,13 @@ void add_files_to_menu (int filetype)
 
     fileitem.path = NULL;
 
-    if (filetype == 1) {
+    if (filetype == FILE_LIST_DATA) {
 	callfunc = set_data_from_filelist;
 	filep = datap;
-    } else if (filetype == 2) {
+    } else if (filetype == FILE_LIST_SESSION) {
 	callfunc = set_session_from_filelist;
 	filep = sessionp;
-    } else if (filetype == 3) {
+    } else if (filetype == FILE_LIST_SCRIPT) {
 	callfunc = set_script_from_filelist;
 	filep = scriptp;
     }

@@ -3204,8 +3204,8 @@ void do_open_script (void)
     if (ret == -1) {
 	sprintf(errtext, _("Couldn't open %s"), tryscript);
 	errbox(errtext);
-	delete_from_filelist(2, tryscript);
-	delete_from_filelist(3, tryscript);
+	delete_from_filelist(FILE_LIST_SESSION, tryscript);
+	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
     }
     else if (ret > 0) {
@@ -3214,7 +3214,7 @@ void do_open_script (void)
     }
 
     /* or just an "ordinary" script */
-    mkfilelist(3, scriptfile);
+    mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
     if (strncmp(scriptfile, paths.scriptdir, n)) 
 	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT, script_items);
@@ -3377,7 +3377,7 @@ int do_store (char *mydatfile, int opt, int overwrite)
     }
 
     if (opt != OPT_M && opt != OPT_R && opt != OPT_R_ALT) {
-	mkfilelist(1, mydatfile);
+	mkfilelist(FILE_LIST_DATA, mydatfile);
     }
 
     msg = g_strdup_printf(_("%s written OK"), mydatfile);

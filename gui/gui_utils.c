@@ -482,7 +482,7 @@ void register_data (const char *fname, int record)
 
     /* record opening of data file in command log */
     if (record && fname != NULL) {
-	mkfilelist(1, fname);
+	mkfilelist(FILE_LIST_DATA, fname);
 	sprintf(datacmd, "open %s", fname);
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
@@ -617,7 +617,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 
     if (err) {
 	gui_errmsg(err);
-	delete_from_filelist(1, trydatfile);
+	delete_from_filelist(FILE_LIST_DATA, trydatfile);
 	return;
     }	
 
@@ -769,7 +769,7 @@ void save_session (char *fname)
     strcat(msg, (spos)? fname2 + spos + 1 : fname2);
     infobox(msg);
 
-    mkfilelist(2, fname);
+    mkfilelist(FILE_LIST_SESSION, fname);
     session_saved = 1;
     session_changed(0);
 

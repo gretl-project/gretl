@@ -82,8 +82,8 @@ static int popup_connected;
 int *default_list = NULL;
 
 GtkTargetEntry gretl_drag_targets[] = {
-    { "text/uri-list", 0, 1 },
-    { "STRING", 0, GDK_TARGET_STRING }    
+    { "text/uri-list", 0, GRETL_FILENAME },
+    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    
 };
 
 static void  
@@ -723,9 +723,9 @@ int main (int argc, char *argv[])
     clip_init(mdata->w);
 
     allocate_fileptrs();
-    add_files_to_menu(1);
-    add_files_to_menu(2);
-    add_files_to_menu(3);
+    add_files_to_menu(FILE_LIST_DATA);
+    add_files_to_menu(FILE_LIST_SESSION);
+    add_files_to_menu(FILE_LIST_SCRIPT);
 #ifndef GNUPLOT_PNG
     graphmenu_state(FALSE);
 #endif
@@ -1822,7 +1822,17 @@ drag_data_received  (GtkWidget *widget,
     char *suff = NULL, tmp[MAXLEN];
     int pos, skip = 5;
 
-    if (data != NULL && data->type == GDK_SELECTION_TYPE_INTEGER) {
+#if 0
+    if (info == GRETL_POINTER) {
+	fprintf(stderr, "drag data: info = GRETL_POINTER\n");
+    }
+    if (info == GRETL_FILENAME) {
+	fprintf(stderr, "drag data: info = GRETL_FILENAME\n");
+    }
+#endif
+
+    if (info == GRETL_POINTER && data != NULL && 
+	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	import_db_series(*(void **) data->data);
 	return;
     }
@@ -1831,16 +1841,17 @@ drag_data_received  (GtkWidget *widget,
     if (data == NULL || (dfname = data->data) == NULL || 
 	strlen(dfname) <= 5 || strncmp(dfname, "file:", 5))
 	return;
-
-    if (strncmp(dfname, "file://", 7)) skip = 7;
+    
+    if (strncmp(dfname, "file://", 7) == 0) skip = 7;
 
     /* there may be multiple files: we ignore all but the first */
-    tmp[0] ='\0';
+    *tmp = 0;
     if ((pos = haschar('\r', dfname)) > 0 || 
 	(pos = haschar('\n', dfname) > 0)) {
 	strncat(tmp, dfname + skip, pos - skip);
-    } else
+    } else {
 	strcat(tmp, dfname + skip);
+    }
 
     suff = strrchr(tmp, '.');
     if (suff && (!strncmp(suff, ".gretl", 6) || 
@@ -1848,6 +1859,7 @@ drag_data_received  (GtkWidget *widget,
 		 !strncmp(suff, ".GRE", 4) ||
 		 !strncmp(suff, ".INP", 4))) {
 	strcpy(tryscript, tmp);
+	fprintf(stderr, "tryscript='%s'\n", tryscript);
 	verify_open_session(NULL);
     } else {
 	strcpy(trydatfile, tmp);

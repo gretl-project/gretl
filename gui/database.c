@@ -702,12 +702,24 @@ static char *start_trim (char *s)
     return p;
 }
 
+/* ........................................................... */
+
 static void db_drag_series (GtkWidget *w, GdkDragContext *context,
 			    GtkSelectionData *sel, guint info, guint t,
 			    windata_t *dbwin)
 {
     gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
-			   (void *) &dbwin, sizeof dbwin);
+			   (const guchar *) &dbwin, sizeof dbwin);
+}
+
+static void db_drag_connect (windata_t *dbwin)
+{
+    gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
+			&gretl_drag_targets[GRETL_POINTER], 
+			1, GDK_ACTION_COPY);
+    gtk_signal_connect(GTK_OBJECT(dbwin->listbox), "drag_data_get",
+		       GTK_SIGNAL_FUNC(db_drag_series),
+		       dbwin);
 }
 
 /* ........................................................... */
@@ -720,7 +732,6 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
     size_t n;
     int err = 0;
     gint i;
-    extern GtkTargetEntry gretl_drag_targets[]; /* gretl.c */
 
     strcpy(dbidx, dbwin->fname);
     strcat(dbidx, ".idx");
@@ -761,13 +772,9 @@ static int populate_series_list (windata_t *dbwin, PATHS *ppaths)
     fclose(fp);
     dbwin->active_var = 0;
     gtk_clist_select_row 
-	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1); 
+	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);
 
-    gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
-			gretl_drag_targets, 2, GDK_ACTION_COPY);
-    gtk_signal_connect(GTK_OBJECT(dbwin->listbox), "drag_data_get",
-		       GTK_SIGNAL_FUNC(db_drag_series),
-		       dbwin);
+    db_drag_connect(dbwin);
 			
     return 0;
 }
@@ -808,6 +815,9 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 	}
 	i++;
     }
+
+    db_drag_connect(dbwin);
+
     return 0;
 }
 
@@ -821,15 +831,18 @@ static int rats_populate_series_list (windata_t *dbwin)
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
-    } else {
-	/* extract catalog from RATS file */
-	read_RATSBase(dbwin->listbox, fp);
-	fclose(fp);
-	dbwin->active_var = 0;
-	gtk_clist_select_row 
-	    (GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
-	return 0;
     }
+
+    /* extract catalog from RATS file */
+    read_RATSBase(dbwin->listbox, fp);
+    fclose(fp);
+    dbwin->active_var = 0;
+    gtk_clist_select_row 
+	(GTK_CLIST (dbwin->listbox), dbwin->active_var, 1);  
+
+    db_drag_connect(dbwin);
+
+    return 0;
 }
 
 /* ......................................................... */

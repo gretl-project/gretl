@@ -50,6 +50,12 @@ enum {
     ICON_ADD_SINGLE
 };
 
+enum {
+    SAVEFILE_SESSION,
+    SAVEFILE_SCRIPT,
+    SAVEFILE_ERROR
+};
+
 /* from gui_utils.c */
 extern void winstack_init (void);
 extern void winstack_destroy (void);
@@ -377,6 +383,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     dialog_t *d = NULL;
     windata_t *fwin = NULL;
     FILE *fp;
+    int status;
 
     if (data != NULL) {    
 	if (w == NULL) /* not coming from edit_dialog */
@@ -397,8 +404,8 @@ void do_open_session (GtkWidget *w, gpointer data)
 	errbuf = g_strdup_printf(_("Couldn't open %s\n"), tryscript);
 	errbox(errbuf);
 	g_free(errbuf);
-	delete_from_filelist(2, tryscript);
-	delete_from_filelist(3, tryscript);
+	delete_from_filelist(FILE_LIST_SESSION, tryscript);
+	delete_from_filelist(FILE_LIST_SCRIPT, tryscript);
 	return;
     }
 
@@ -408,17 +415,22 @@ void do_open_session (GtkWidget *w, gpointer data)
 
     fprintf(stderr, I_("\nReading session file %s\n"), scriptfile);
 
-    if (parse_savefile(scriptfile, &session, &rebuild)) 
+    status = parse_savefile(scriptfile, &session, &rebuild);
+    if (status == SAVEFILE_ERROR) return;
+    if (status == SAVEFILE_SCRIPT) {
+	do_open_script(NULL, NULL);
 	return;
+    }
+
     if (recreate_session(scriptfile, &session, &rebuild)) 
 	return;
 
-    mkfilelist(2, scriptfile);
+    mkfilelist(FILE_LIST_SESSION, scriptfile);
 
     endbit(session.name, scriptfile, 0);
 
     /* pick up session notes, if any */
-    if (1) {
+    if (status == SAVEFILE_SESSION) {
 	char notesfile[MAXLEN];
 	struct stat buf;
 
@@ -621,7 +633,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     int id, i, j, k, n;
 
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
+    if (fp == NULL) return SAVEFILE_ERROR;
 
     /* find saved objects */
     k = 0;
@@ -633,12 +645,12 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     }
     if (!k) { /* no saved objects: just a regular script */
 	fclose(fp);
-	return 1;
+	return SAVEFILE_SCRIPT;
     }
 
     if (rebuild_init(rebuild)) {
 	errbox(_("Out of memory!"));
-	return 1;
+	return SAVEFILE_ERROR;
     }
 
 #ifdef SESSION_DEBUG
@@ -652,7 +664,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	if (sscanf(line, "%6s %d", object, &id) != 2) {
 	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
-	    return 1;
+	    return SAVEFILE_ERROR;
 	}
 	if (OBJECT_IS_MODEL(object)) {
 	    rebuild->nmodels += 1;
@@ -671,7 +683,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 		    rebuild->model_name == NULL ||
 		    rebuild->model_name[i] == NULL) {
 		    fclose(fp);
-		    return 1;
+		    return SAVEFILE_ERROR;
 		}
 	    }
 	    rebuild->model_ID[i] = id;
@@ -703,12 +715,12 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    }
 	    if (psession->graphs == NULL) {
 		fclose(fp);
-		return 1;
+		return SAVEFILE_ERROR;
 	    }
 	    psession->graphs[k] = mymalloc(sizeof(GRAPHT));
 	    if (psession->graphs[k] == NULL) {
 		fclose(fp);
-		return 1;
+		return SAVEFILE_ERROR;
 	    }
 
 	    strcpy((psession->graphs[k])->name, grname);
@@ -728,14 +740,15 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	} else {
 	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
-	    return 1;
+	    return SAVEFILE_ERROR;
 	}
     }
 #ifdef SESSION_DEBUG
     fprintf(stderr, "psession->ngraphs = %d\n", psession->ngraphs);
 #endif
     fclose(fp);
-    return 0;
+
+    return SAVEFILE_SESSION;
 }
 
 /* ........................................................... */

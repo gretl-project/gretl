@@ -34,6 +34,10 @@
 #include <netinet/in.h>
 #endif
 
+static GtkTargetEntry db_drag_target[] = {
+    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    
+};
+
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
@@ -105,9 +109,9 @@ typedef struct {
 
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
-static int populate_series_list (windata_t *dbdat, PATHS *ppaths);
-static int populate_remote_series_list (windata_t *dbdat, char *buf);
-static int rats_populate_series_list (windata_t *dbdat);
+static int populate_series_list (windata_t *dbwin, PATHS *ppaths);
+static int populate_remote_series_list (windata_t *dbwin, char *buf);
+static int rats_populate_series_list (windata_t *dbwin);
 static SERIESINFO *get_series_info (windata_t *ddata, int action);
 static int read_RATSBase (GtkWidget *widget, FILE *fp);
 static int get_rats_data (const char *fname, const int series_number,
@@ -206,11 +210,11 @@ float retrieve_float (netfloat nf)
 
 /* ........................................................... */
 
-static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo, 
+static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
 			       double ***pZ)
 {
     char *getbuf, errbuf[80], numstr[16];
-    char *dbbase = dbdat->fname;
+    char *dbbase = dbwin->fname;
     int t, err, n = sinfo->nobs;
     dbnumber val;
     size_t offset;
@@ -221,7 +225,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
     if ((getbuf = mymalloc(8192)) == NULL) return 1;
     memset(getbuf, 0, 8192);
 
-    update_statusline(dbdat, _("Retrieving data..."));
+    update_statusline(dbwin, _("Retrieving data..."));
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
 		       errbuf);
@@ -235,9 +239,9 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 	    if (errbuf[strlen(errbuf)-1] == '\n') {
 		errbuf[strlen(errbuf)-1] = 0;
 	    }
-	    update_statusline(dbdat, errbuf);
+	    update_statusline(dbwin, errbuf);
 	} else {
-	    update_statusline(dbdat, _("Error retrieving data from server"));
+	    update_statusline(dbwin, _("Error retrieving data from server"));
 	}
 	free(getbuf);
 	return err;
@@ -261,7 +265,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         (*pZ)[1][t] = atof(numstr);
     }
 
-    update_statusline(dbdat, "OK");
+    update_statusline(dbwin, "OK");
     free(getbuf);
 
     return 0;
@@ -321,7 +325,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
-static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
+static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
     double *xvec;
@@ -399,12 +403,12 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	/* time series data? */
 	set_time_series(datainfo);
 	start_new_Z(&Z, datainfo, 0);
-	if (dbdat->role == NATIVE_SERIES) 
-	    err = get_db_data(dbdat->fname, sinfo, &Z);
-	else if (dbdat->role == REMOTE_SERIES)
-	    err = get_remote_db_data(dbdat, sinfo, &Z);
-	else if (dbdat->role == RATS_SERIES)
-	    err = get_rats_data(dbdat->fname, dbdat->active_var + 1,
+	if (dbwin->role == NATIVE_SERIES) 
+	    err = get_db_data(dbwin->fname, sinfo, &Z);
+	else if (dbwin->role == REMOTE_SERIES)
+	    err = get_remote_db_data(dbwin, sinfo, &Z);
+	else if (dbwin->role == RATS_SERIES)
+	    err = get_rats_data(dbwin->fname, dbwin->active_var + 1,
 				sinfo, &Z);
 	if (err) {
 	    errbox(_("Couldn't access binary data"));
@@ -422,32 +426,37 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 
 /* ........................................................... */
 
-static void gui_display_series (GtkWidget *w, windata_t *dbdat)
+static void gui_display_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_DISPLAY, NULL);
+    gui_get_series(dbwin, DB_DISPLAY, NULL);
 }
 
-static void gui_graph_series (GtkWidget *w, windata_t *dbdat)
+static void gui_graph_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_GRAPH, NULL);
+    gui_get_series(dbwin, DB_GRAPH, NULL);
 }
 
-static void gui_import_series (GtkWidget *w, windata_t *dbdat)
+static void gui_import_series (GtkWidget *w, windata_t *dbwin)
 {
-    gui_get_series(dbdat, DB_IMPORT, NULL);
+    gui_get_series(dbwin, DB_IMPORT, NULL);
+}
+
+void import_db_series (windata_t *dbwin)
+{
+    gui_get_series(dbwin, DB_IMPORT, NULL);
 }
 
 /* ........................................................... */
 
 void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 {
-    windata_t *dbdat = (windata_t *) data;
-    int err = 0, dbcode = dbdat->role;
+    windata_t *dbwin = (windata_t *) data;
+    int err = 0, dbcode = dbwin->role;
     DATAINFO *dbdinfo;
     SERIESINFO *sinfo;
     double **dbZ = NULL;
 
-    sinfo = get_series_info(dbdat, dbcode);
+    sinfo = get_series_info(dbwin, dbcode);
     if (sinfo == NULL) return;
 
     dbdinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
@@ -468,11 +477,11 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     set_time_series(dbdinfo);
 
     if (dbcode == NATIVE_SERIES) 
-	err = get_db_data(dbdat->fname, sinfo, &dbZ);
+	err = get_db_data(dbwin->fname, sinfo, &dbZ);
     else if (dbcode == REMOTE_SERIES) 
-	err = get_remote_db_data(dbdat, sinfo, &dbZ);
+	err = get_remote_db_data(dbwin, sinfo, &dbZ);
     else if (dbcode == RATS_SERIES)
-	err = get_rats_data(dbdat->fname, dbdat->active_var + 1, 
+	err = get_rats_data(dbwin->fname, dbwin->active_var + 1, 
 			    sinfo, &dbZ);
 
     if (err && dbcode != REMOTE_SERIES) {
@@ -488,7 +497,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     else if (action == DB_GRAPH) 
 	graph_dbdata(&dbZ, dbdinfo);
     else if (action == DB_IMPORT) 
-	add_dbdata(dbdat, &dbZ, sinfo);
+	add_dbdata(dbwin, &dbZ, sinfo);
 
     free_Z(dbZ, dbdinfo);
     free_datainfo(dbdinfo);
@@ -497,12 +506,12 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-static void db_view_codebook (GtkWidget *w, windata_t *dbdat)
+static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
 {
     char cbname[MAXLEN];
     extern GtkItemFactoryEntry view_items[];
 
-    strcpy(cbname, dbdat->fname);
+    strcpy(cbname, dbwin->fname);
     strcat(cbname, ".cb");
     
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK, view_items);
@@ -510,9 +519,9 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbdat)
 
 /* ........................................................... */
 
-static void db_menu_find (GtkWidget *w, windata_t *dbdat)
+static void db_menu_find (GtkWidget *w, windata_t *dbwin)
 {
-    menu_find(dbdat, 1, NULL);
+    menu_find(dbwin, 1, NULL);
 }
 
 /* ........................................................... */
@@ -739,6 +748,25 @@ static int my_utf_validate (char *s)
 
 /* ........................................................... */
 
+static void db_drag_series (GtkWidget *w, GdkDragContext *context,
+			    GtkSelectionData *sel, guint info, guint t,
+			    windata_t *dbwin)
+{
+    gtk_selection_data_set(sel, GDK_SELECTION_TYPE_INTEGER, 8, 
+			   (const guchar *) &dbwin, sizeof dbwin);
+}
+
+static void db_drag_connect (windata_t *dbwin)
+{
+    gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
+			db_drag_target, 1, GDK_ACTION_COPY);
+    gtk_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
+		       G_CALLBACK(db_drag_series),
+		       dbwin);
+}
+
+/* ........................................................... */
+
 static int populate_series_list (windata_t *win, PATHS *ppaths)
 {
     GtkListStore *store;
@@ -793,6 +821,8 @@ static int populate_series_list (windata_t *win, PATHS *ppaths)
 
     fclose(fp);
 
+    db_drag_connect(dbwin);
+
     return 0;
 }
 
@@ -836,6 +866,8 @@ static int populate_remote_series_list (windata_t *win, char *buf)
 			    2, row[2], -1);
     }
 
+    db_drag_connect(dbwin);
+
     return 0;
 }
 
@@ -849,13 +881,16 @@ static int rats_populate_series_list (windata_t *win)
     if (fp == NULL) {
 	errbox(_("Couldn't open RATS data file"));
 	return 1;
-    } else {
-	/* extract catalog from RATS file */
-	read_RATSBase(win->listbox, fp);
-	fclose(fp);
-	win->active_var = 0;
-	return 0;
     }
+
+    /* extract catalog from RATS file */
+    read_RATSBase(win->listbox, fp);
+    fclose(fp);
+    win->active_var = 0;
+
+    db_drag_connect(dbwin);
+
+    return 0;
 }
 
 /* ......................................................... */

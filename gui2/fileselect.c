@@ -234,7 +234,7 @@ static void save_editable_content (int action, const char *fname,
     
     if (action == SAVE_SCRIPT) {
 	strcpy(scriptfile, fname);
-	mkfilelist(3, scriptfile);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	vwin->active_var = 0; /* zero out "changed" flag */
 	script_set_title(vwin, fname);
     }
@@ -266,7 +266,7 @@ static void filesel_open_script (const char *fname)
     if (view_file(tryscript, 1, 0, 78, 370, EDIT_SCRIPT, 
 		  script_items) != NULL) {
 	strcpy(scriptfile, tryscript);
-	mkfilelist(3, scriptfile);
+	mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 	spos = slashpos(scriptfile);
 	if (spos) {
 	    paths.currdir[0] = 0;

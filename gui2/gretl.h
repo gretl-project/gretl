@@ -95,6 +95,7 @@ extern char viewdvi[MAXSTR];
 /* global GUI equipment */
 extern windata_t *mdata;
 extern PangoFontDescription *fixed_font;
+extern GtkTargetEntry gretl_drag_targets[];
 
 enum extra_cmds {
     RENAME = NC,
@@ -256,6 +257,17 @@ enum data_status {
     MODIFIED_DATA = 1 << 5
 };
 
+enum drag_types {
+    GRETL_FILENAME,
+    GRETL_POINTER
+};
+
+enum file_lists {
+    FILE_LIST_DATA = 1,
+    FILE_LIST_SESSION,
+    FILE_LIST_SCRIPT,
+};
+
 /* functions follow */
 
 #ifndef G_OS_WIN32
@@ -289,6 +301,7 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
+void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
 void gpt_save_dialog (void);
 

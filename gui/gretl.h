@@ -90,6 +90,7 @@ extern char viewdvi[MAXSTR];
 /* global GUI equipment */
 extern windata_t *mdata;
 extern GdkFont *fixed_font;
+extern GtkTargetEntry gretl_drag_targets[];
 
 enum extra_cmds {
     RENAME = NC,
@@ -248,6 +249,17 @@ enum data_status {
     IMPORT_DATA   = 1 << 3,
     GUI_DATA      = 1 << 4,
     MODIFIED_DATA = 1 << 5
+};
+
+enum drag_types {
+    GRETL_FILENAME,
+    GRETL_POINTER
+};
+
+enum file_lists {
+    FILE_LIST_DATA = 1,
+    FILE_LIST_SESSION,
+    FILE_LIST_SCRIPT,
 };
 
 /* functions follow */
