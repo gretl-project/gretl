@@ -1082,7 +1082,7 @@ void populate_varlist (void)
 	gtk_list_store_set (store, &iter, 
 			    0, id, 
 			    1, datainfo->varname[i],
-			    2, datainfo->label[i],
+			    2, VARLABEL(datainfo, i),
 			    3, FALSE, /* (i > 0)? TRUE : FALSE */
 			    -1);
     }    

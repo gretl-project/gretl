@@ -1536,8 +1536,8 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
-    char **label;
     char *vector;
+    VARINFO **varinfo;
     int i, n = pdinfo->n, v = pdinfo->v;    
 
     newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
@@ -1548,7 +1548,7 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
     }
     *pZ = newZ;
 
-    varname = realloc(pdinfo->varname, (v + newvars) * sizeof(char *));
+    varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
     for (i=0; i<newvars; i++) {
@@ -1557,14 +1557,14 @@ int dataset_add_vars (int newvars, double ***pZ, DATAINFO *pdinfo)
 	pdinfo->varname[v+i][0] = '\0';
     }
 
-    if (pdinfo->label != NULL) {
-	label = realloc(pdinfo->label, (v + newvars) * sizeof(char *));
-	if (label == NULL) return E_ALLOC;
-	else pdinfo->label = label;
+    if (pdinfo->varinfo != NULL) {
+	varinfo = realloc(pdinfo->varinfo, (v + newvars) * sizeof *varinfo);
+	if (varinfo == NULL) return E_ALLOC;
+	else pdinfo->varinfo = varinfo;
 	for (i=0; i<newvars; i++) {
-	    pdinfo->label[v+i] = malloc(MAXLABEL);
-	    if (pdinfo->label[v+i] == NULL) return E_ALLOC;
-	    pdinfo->label[v+i][0] = '\0';
+	    pdinfo->varinfo[v+i] = malloc(sizeof **varinfo);
+	    if (pdinfo->varinfo[v+i] == NULL) return E_ALLOC;
+	    gretl_varinfo_init(pdinfo->varinfo[v+i]);
 	}
     }
 
@@ -1584,8 +1584,8 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
-    char **label;
     char *vector;
+    VARINFO **varinfo;
     int n = pdinfo->n, v = pdinfo->v;    
 
     newZ = realloc(*pZ, (v + 1) * sizeof *newZ);  
@@ -1594,20 +1594,20 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
     if (newZ[v] == NULL) return E_ALLOC;
     *pZ = newZ;
 
-    varname = realloc(pdinfo->varname, (v + 1) * sizeof(char *));
+    varname = realloc(pdinfo->varname, (v + 1) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
     pdinfo->varname[v] = malloc(9);
     if (pdinfo->varname[v] == NULL) return E_ALLOC;
     pdinfo->varname[v][0] = '\0';
 
-    if (pdinfo->label != NULL) {
-	label = realloc(pdinfo->label, (v + 1) * sizeof(char *));
-	if (label == NULL) return E_ALLOC;
-	else pdinfo->label = label;
-	pdinfo->label[v] = malloc(MAXLABEL);
-	if (pdinfo->label[v] == NULL) return E_ALLOC;
-	pdinfo->label[v][0] = '\0';
+    if (pdinfo->varinfo != NULL) {
+	varinfo = realloc(pdinfo->varinfo, (v + 1) * sizeof *varinfo);
+	if (varinfo == NULL) return E_ALLOC;
+	else pdinfo->varinfo = varinfo;
+	pdinfo->varinfo[v] = malloc(sizeof **varinfo);
+	if (pdinfo->varinfo[v] == NULL) return E_ALLOC;
+	gretl_varinfo_init(pdinfo->varinfo[v]);
     }
 
     vector = realloc(pdinfo->vector, (v + 1));
@@ -1625,32 +1625,32 @@ int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
-    char **label;
     char *vector;
+    VARINFO **varinfo;
     int i, v = pdinfo->v; 
 
     free(pdinfo->varname[varno]);
-    if (pdinfo->label[varno] != NULL) 
-	free(pdinfo->label[varno]);
+    if (pdinfo->varinfo[varno] != NULL) 
+	free(pdinfo->varinfo[varno]);
     free((*pZ)[varno]);
 
     for (i=varno; i<v-1; i++) {
 	pdinfo->varname[i] = pdinfo->varname[i+1];
-	pdinfo->label[i] = pdinfo->label[i+1];
+	pdinfo->varinfo[i] = pdinfo->varinfo[i+1];
 	(*pZ)[i] = (*pZ)[i+1];
     }
 
-    varname = realloc(pdinfo->varname, (v-1) * sizeof(char *));
+    varname = realloc(pdinfo->varname, (v-1) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
 
-    vector = realloc(pdinfo->vector, (v-1));
+    vector = realloc(pdinfo->vector, (v-1) * sizeof *vector);
     if (vector == NULL) return E_ALLOC;
     else pdinfo->vector = vector;
 
-    label = realloc(pdinfo->label, (v-1) * sizeof(char *));
-    if (label == NULL) return E_ALLOC;
-    else pdinfo->label = label;
+    varinfo = realloc(pdinfo->varinfo, (v-1) * sizeof *varinfo);
+    if (varinfo == NULL) return E_ALLOC;
+    else pdinfo->varinfo = varinfo;
 
     newZ = realloc(*pZ, (v-1) * sizeof *newZ); 
     if (newZ == NULL) return E_ALLOC;
@@ -1667,15 +1667,15 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
     char **varname;
-    char **label;
     char *vector;
+    VARINFO **varinfo;
     int i, v = pdinfo->v;   
 
     if (delvars <= 0) return 0;
 
     for (i=v-delvars; i<v; i++) {
 	if (pdinfo->varname[i] != NULL) free(pdinfo->varname[i]);
-	if (pdinfo->label[i] != NULL) free(pdinfo->label[i]);
+	if (pdinfo->varinfo[i] != NULL) free(pdinfo->varinfo[i]);
 	if ((*pZ)[i] != NULL) free((*pZ)[i]);
     }
 
@@ -1683,17 +1683,17 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
     if (newZ == NULL) return E_ALLOC;
     else *pZ = newZ;
         
-    varname = realloc(pdinfo->varname, (v - delvars) * sizeof(char *));
+    varname = realloc(pdinfo->varname, (v - delvars) * sizeof *varname);
     if (varname == NULL) return E_ALLOC;
     else pdinfo->varname = varname;
 
-    vector = realloc(pdinfo->vector, (v - delvars));
+    vector = realloc(pdinfo->vector, (v - delvars) * sizeof *vector);
     if (vector == NULL) return E_ALLOC;
     else pdinfo->vector = vector;
 
-    label = realloc(pdinfo->label, (v - delvars) * sizeof(char *));
-    if (label == NULL) return E_ALLOC;
-    else pdinfo->label = label;
+    varinfo = realloc(pdinfo->varinfo, (v - delvars) * sizeof *varinfo);
+    if (varinfo == NULL) return E_ALLOC;
+    else pdinfo->varinfo = varinfo;
 
     pdinfo->v -= delvars;
     return 0;
@@ -2025,7 +2025,7 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fdatainfo.time_series = pdinfo->time_series;
     fdatainfo.t2 = fn - 1;
     fdatainfo.varname = NULL;
-    fdatainfo.label = NULL;
+    fdatainfo.varinfo = NULL;
     fdatainfo.S = NULL;
     fdatainfo.vector = NULL;
     fdatainfo.descrip = NULL;

@@ -49,7 +49,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo)
 
     for (t=0; t<n; t++) (*pZ)[v][t] = (double) t+1;
     strcpy(pdinfo->varname[v], "time");
-    strcpy(pdinfo->label[v], _("time trend variable"));
+    strcpy(VARLABEL(pdinfo, v), _("time trend variable"));
 	    
     return index;
 }
@@ -105,7 +105,7 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
     }
 
     strcpy(pdinfo->varname[v], s);
-    sprintf(pdinfo->label[v], _("%s = first difference of %s"),
+    sprintf(VARLABEL(pdinfo, v), _("%s = first difference of %s"),
 	    pdinfo->varname[v], pdinfo->varname[iv]);
 	    
     return 0;
@@ -147,7 +147,7 @@ static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
     }
 
     strcpy(pdinfo->varname[v], s);
-    sprintf(pdinfo->label[v], _("%s = log difference of %s"),
+    sprintf(VARLABEL(pdinfo, v), _("%s = log difference of %s"),
 	    pdinfo->varname[v], pdinfo->varname[iv]);
 	    
     return 0;

@@ -607,7 +607,7 @@ void exec_line (char *line, PRN *prn)
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
-    case GRAPH: case PLOT:
+    case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
@@ -615,6 +615,7 @@ void exec_line (char *line, PRN *prn)
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      !batch, oflag, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case ADD:
@@ -1418,7 +1419,7 @@ void exec_line (char *line, PRN *prn)
 
 	if (fullZ != NULL) {
 	    fullinfo->varname = datainfo->varname;
-	    fullinfo->label = datainfo->label;
+	    fullinfo->varinfo = datainfo->varinfo;
 	    attach_subsample_to_model(models[0], &fullZ, fullinfo);
 	}
 	save_model_spec(models[0], &modelspec[m-1], fullinfo);

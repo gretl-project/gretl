@@ -575,7 +575,7 @@ static gint stack_model (int gui)
 	    modelspec[m+1].subdum = NULL;
 	    if (fullZ != NULL) {
 		fullinfo->varname = datainfo->varname;
-		fullinfo->label = datainfo->label;
+		fullinfo->varinfo = datainfo->varinfo;
 		fullinfo->vector = datainfo->vector;
 		attach_subsample_to_model(models[0], &fullZ, fullinfo);
 	    }
@@ -1443,7 +1443,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
 
@@ -2069,7 +2069,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
     
@@ -2211,7 +2211,7 @@ void do_model (GtkWidget *widget, gpointer p)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
     
@@ -2532,9 +2532,9 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
-    
-    strncpy(datainfo->label[mdata->active_var], buf, MAXLABEL-1);
-    datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
+
+    *VARLABEL(datainfo, mdata->active_var) = 0;
+    strncat(VARLABEL(datainfo, mdata->active_var), buf, MAXLABEL-1);
     populate_main_varlist();
     data_status |= MODIFIED_DATA; 
 }
@@ -3084,7 +3084,7 @@ void add_model_stat (MODEL *pmod, const int which)
     }
 
     strcpy(datainfo->varname[i], vname);
-    strcpy(datainfo->label[i], vlabel);
+    strcpy(VARLABEL(datainfo, i), vlabel);
     populate_main_varlist();
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
@@ -4270,7 +4270,7 @@ static int gui_exec_line (char *line,
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
-    case GRAPH: case PLOT:
+    case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
@@ -4278,6 +4278,7 @@ static int gui_exec_line (char *line,
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      0, oflag, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case ADD:

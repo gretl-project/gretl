@@ -187,6 +187,7 @@ static int aliased (char *cmd)
 	               c == FCAST || \
 	               c == FCASTERR || \
 	               c == FIT || \
+ 	               c == LABEL || \
  	               c == LABELS || \
     	               c == INFO || \
 	               c == CRITERIA || \
@@ -542,7 +543,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    } else { 
 			command->list[j] = pdinfo->v - 1;
 			if (cmds) {
-			    pprintf(cmds, "genr %s\n", pdinfo->label[pdinfo->v - 1]);
+			    pprintf(cmds, "genr %s\n", VARLABEL(pdinfo, pdinfo->v - 1));
 			}
 			n += strlen(field) + 1;
 			continue; 
@@ -854,7 +855,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	return -1 * E_ALLOC;
 
     strcpy(pdinfo->varname[vi], varname);
-    strcpy(pdinfo->label[vi], _("predicted values"));
+    strcpy(VARLABEL(pdinfo, vi), _("predicted values"));
 
     for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
 
@@ -1093,15 +1094,103 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 
 /* .......................................................... */
 
-static void showlabels (const DATAINFO *pdinfo)
+static const char *flag_present (const char *s, char f)
+{
+    int quoted = 0;
+    int gotdash = 0;
+
+    while (*s) {
+	if (*s == '"') quoted = !quoted;
+	if (!quoted) {
+	    if (*s == '-') gotdash = 1;
+	    else if (gotdash && *s == f && *(s+1)) {
+		s++;
+		while (*s) {
+		    if (isspace(*s)) s++;
+		    else break;
+		}
+		if (*s == '"' && *(s+1)) return s + 1;
+	    }
+	    else gotdash = 0;
+	}
+	s++;
+    }
+
+    return NULL;
+}
+
+static char *get_flag_field  (const char *s, char f)
+{
+    const char *p;
+    char *ret = NULL;
+
+    if ((p = flag_present(s, f)) != NULL) {
+	const char *q = p;
+	size_t len = 0;
+
+	while (*q) {
+	    if (*q == '"') break;
+	    q++;
+	    len++;
+	}
+
+	ret = malloc(len + 1);
+	if (ret != NULL) {
+	    *ret = 0;
+	    strncat(ret, p, len);
+	}
+    }
+
+    return ret;
+}
+
+/* .......................................................... */
+
+static int make_var_label (const char *line, const DATAINFO *pdinfo, 
+			   PRN *prn)
+{
+    char *p;
+    char vname[9];
+    int v;
+
+    if (pdinfo->varinfo == NULL) return 1;
+
+    if (sscanf(line, "label %8s", vname) != 1) return E_PARSE;
+
+    v = varindex(pdinfo, vname);
+    if (v == pdinfo->v) {
+	sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
+	return E_UNKVAR;
+    }
+
+    p = get_flag_field(line + 6, 'd');
+    if (p != NULL) {
+	*VARLABEL(pdinfo, v) = 0;
+	strncat(VARLABEL(pdinfo, v), p, MAXLABEL - 1);
+	free(p);
+    }
+
+    p = get_flag_field(line + 6, 'n');
+    if (p != NULL) {
+	*DISPLAYNAME(pdinfo, v) = 0;
+	strncat(DISPLAYNAME(pdinfo, v), p, MAXDISP - 1);
+	free(p);
+    }  
+
+    return 0;
+}
+
+/* .......................................................... */
+
+static void showlabels (const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
 
-    printf(_("Listing labels for variables:\n"));
+    pprintf(prn, _("Listing labels for variables:\n"));
     for (i=0; i<pdinfo->v; i++) {
-	if (strlen(pdinfo->label[i]) > 2) {
-	    printf("%3d) %-10s %s\n", i, 
-		   pdinfo->varname[i], pdinfo->label[i]);
+	if (strlen(VARLABEL(pdinfo, i)) > 2) {
+	    pprintf(prn, "%3d) %-10s %s\n", i, 
+		    pdinfo->varname[i], VARLABEL(pdinfo, i));
 	}
     }
 }
@@ -1139,7 +1228,6 @@ int simple_commands (CMD *cmd, const char *line,
 	}
 	order = atoi(cmd->param);
 	err = adf_test(order, cmd->list[1], pZ, datainfo, prn);
-	if (err) errmsg(err, prn);
 	break;
 
     case COINT:
@@ -1150,9 +1238,6 @@ int simple_commands (CMD *cmd, const char *line,
     case COINT2:
 	order = atoi(cmd->param);
 	err = johansen_test(order, cmd->list, pZ, datainfo, oflag, prn);
-	if (err && *gretl_errmsg) {
-	    pprintf(prn, "%s\n", gretl_errmsg);
-	}
 	break;
 
     case CORR:
@@ -1213,8 +1298,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case MULTIPLY:
 	err = _multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
-	if (err) errmsg(err, prn);
-	else varlist(datainfo, prn);
+	if (!err) varlist(datainfo, prn);
 	break;
 
     case GRAPH:
@@ -1231,7 +1315,6 @@ int simple_commands (CMD *cmd, const char *line,
 	    err = 1;
 	} else {
 	    err = rmplot(cmd->list, *pZ, datainfo, prn, paths);
-	    if (err) errmsg(err, prn);
 	}
 	break;
 
@@ -1242,8 +1325,12 @@ int simple_commands (CMD *cmd, const char *line,
 	    pputs(prn, _("No data information is available.\n"));
 	break;
 
+    case LABEL:
+	err = make_var_label(line, datainfo, prn);
+	break;
+
     case LABELS:
-	showlabels(datainfo);
+	showlabels(datainfo, prn);
 	break;
 
     case VARLIST:
@@ -1270,12 +1357,10 @@ int simple_commands (CMD *cmd, const char *line,
 
     case MEANTEST:
 	err = means_test(cmd->list, *pZ, datainfo, oflag, prn);
-	if (err) errmsg(err, prn);
 	break;	
 
     case VARTEST:
 	err = vars_test(cmd->list, *pZ, datainfo, prn);
-	if (err) errmsg(err, prn);
 	break;
 
     case RUNS:

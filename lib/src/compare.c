@@ -149,8 +149,8 @@ static int _justreplaced (int i, const DATAINFO *pdinfo,
     int j, repl = 0;
 
     for (j=1; j<=list[0]; j++) {
-	if (strncmp(pdinfo->label[list[j]], _("Replaced"), 8) == 0 &&
-	    sscanf(pdinfo->label[list[j]], "%*s %*s %*s %d", &repl) == 1)
+	if (strncmp(VARLABEL(pdinfo, list[j]), _("Replaced"), 8) == 0 &&
+	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1)
 	if (repl >= i) return 1;
     }
     return 0; 
@@ -975,7 +975,7 @@ int autocorr_test (MODEL *pmod, int order,
 	for (t = pmod->t1; t<= pmod->t2; t++)
 	    (*pZ)[v][t] = pmod->uhat[t];
 	strcpy(pdinfo->varname[v], "uhat");
-	strcpy(pdinfo->label[v], _("residual"));
+	strcpy(VARLABEL(pdinfo, v), _("residual"));
 	/* then lags of same */
 	for (i=1; i<=order; i++) {
 	    if (_laggenr(v, i, 1, pZ, pdinfo)) {
@@ -1113,7 +1113,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	for (t=0; t<n; t++) 
 	    (*pZ)[v][t] = (double) (t > split); 
 	strcpy(pdinfo->varname[v], "splitdum");
-	strcpy(pdinfo->label[v], _("dummy variable for Chow test"));
+	strcpy(VARLABEL(pdinfo, v), _("dummy variable for Chow test"));
 	chowlist[pmod->list[0] + 1] = v;
 
 	/* and the interaction terms */
@@ -1125,7 +1125,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    _esl_trunc(s, 5);
 	    strcpy(pdinfo->varname[v+i], "sd_");
 	    strcat(pdinfo->varname[v+i], s);
-	    sprintf(pdinfo->label[v+i], "splitdum * %s", 
+	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", 
 		    pdinfo->varname[pmod->list[1+i]]);
 	    chowlist[pmod->list[0]+1+i] = v+i;
 	}

@@ -1,3 +1,9 @@
+version 1.1.0
+- Extend DATAINFO structure -- allow specification of "display
+  names" for variables (these are shown in graphs)
+- Provide "label" command for setting the description and/or
+  display name for a variable
+
 05/26/03 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-
   Marquandt algorithm from minpack, with either analytical or

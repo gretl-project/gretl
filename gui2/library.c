@@ -588,7 +588,7 @@ static gint stack_model (int gui)
 	    modelspec[m+1].subdum = NULL;
 	    if (fullZ != NULL) {
 		fullinfo->varname = datainfo->varname;
-		fullinfo->label = datainfo->label;
+		fullinfo->varinfo = datainfo->varinfo;
 		fullinfo->vector = datainfo->vector;
 		attach_subsample_to_model(models[0], &fullZ, fullinfo);
 	    }
@@ -1278,7 +1278,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
 
@@ -1905,7 +1905,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
     
@@ -2048,7 +2048,7 @@ void do_model (GtkWidget *widget, gpointer p)
     /* record sub-sample info (if any) with the model */
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
-	fullinfo->label = datainfo->label;	
+	fullinfo->varinfo = datainfo->varinfo;	
 	attach_subsample_to_model(pmod, &fullZ, fullinfo);
     }
     
@@ -2869,7 +2869,7 @@ void add_model_stat (MODEL *pmod, const int which)
     }
 
     strcpy(datainfo->varname[i], vname);
-    strcpy(datainfo->label[i], vlabel);
+    strcpy(VARLABEL(datainfo, i), vlabel);
     populate_varlist();
     check_cmd(cmdstr);
     model_cmd_init(cmdstr, pmod->ID);
@@ -4098,7 +4098,7 @@ int gui_exec_line (char *line,
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
-    case GRAPH: case PLOT:
+    case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:
@@ -4106,6 +4106,7 @@ int gui_exec_line (char *line,
     case RUNS: case SPEARMAN:
 	err = simple_commands(&command, line, &Z, datainfo, &paths,
 			      0, oflag, prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case ADD:

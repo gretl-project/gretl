@@ -298,7 +298,7 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
     }
 
     strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
-    strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+    strcpy(VARLABEL(targinfo, targv), VARLABEL(srcinfo, srcv));
 }
 
 static void clear_tramo_files (const char *tpath, const char *varname)
@@ -372,11 +372,11 @@ static int add_series_from_file (const char *fname, int code,
 
     /* copy varname and label into place */
     strcpy(pdinfo->varname[v], varname);
-    sprintf(pdinfo->label[v], _(tx_descrip_formats[code]), pdinfo->varname[0]);
+    sprintf(VARLABEL(pdinfo, v), _(tx_descrip_formats[code]), pdinfo->varname[0]);
     if (opt == TRAMO_SEATS) {
-	strcat(pdinfo->label[v], " (TRAMO/SEATS)");
+	strcat(VARLABEL(pdinfo, v), " (TRAMO/SEATS)");
     } else {
-	strcat(pdinfo->label[v], " (X-12-ARIMA)");
+	strcat(VARLABEL(pdinfo, v), " (X-12-ARIMA)");
     }	
 
     for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;

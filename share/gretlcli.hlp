@@ -614,6 +614,16 @@ current datafile.  This information must be enclosed between "(*" and "*)",
 these markers being placed on separate lines.
 
 #
+label
+@Dataset
+Usage:          label varname -d "Descriptive string" -n "display name"
+
+Sets the descriptive label for the given variable (if the -d flag is given,
+followed by a string in double quotes) and/or the display name for the
+variable (if the -n flag is given, followed by a quoted string).  If a variable
+has a display name, this is used when generating graphs.
+
+#
 labels
 @Dataset
 Usage:          labels

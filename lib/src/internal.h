@@ -110,4 +110,6 @@ int vars_identical (const double *x, const double *y, int n);
 
 int math_word (const char *s);
 
+void gretl_varinfo_init (VARINFO *vinfo);
+
 #endif /* GRETL_INTERNAL_H */

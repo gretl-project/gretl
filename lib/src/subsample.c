@@ -236,7 +236,7 @@ int set_sample_dummy (const char *line,
     if (subnum == oldinfo->v) {
 	if (dataset_add_vars(1, oldZ, oldinfo)) return E_ALLOC;
 	strcpy(oldinfo->varname[subnum], "subdum");
-	strcpy(oldinfo->label[subnum], _("automatic sub-sampling dummy"));
+	strcpy(VARLABEL(oldinfo, subnum), _("automatic sub-sampling dummy"));
     }
 
     for (t=0; t<n; t++) {
@@ -258,7 +258,7 @@ int set_sample_dummy (const char *line,
 
     /* link varnames and descriptions (not dependent on series length) */
     newinfo->varname = oldinfo->varname;
-    newinfo->label = oldinfo->label;
+    newinfo->varinfo = oldinfo->varinfo;
     newinfo->descrip = oldinfo->descrip;
     newinfo->vector = oldinfo->vector;
 
@@ -440,7 +440,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* reattach the malloc'd elements, which might have moved */
     (*fullinfo)->varname = (*subinfo)->varname;
-    (*fullinfo)->label = (*subinfo)->label;
+    (*fullinfo)->varinfo = (*subinfo)->varinfo;
     (*fullinfo)->vector = (*subinfo)->vector;
     (*fullinfo)->descrip = (*subinfo)->descrip;    
 

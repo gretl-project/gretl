@@ -452,7 +452,7 @@ static void get_data_from_sheet (void)
 	for (i=0; i<newvars; i++) { 
 	    strcpy(datainfo->varname[i+oldv], 
 		   sheet->column[i+oldv-1].button.label);
-	    strcpy(datainfo->label[i+oldv], "");
+	    strcpy(VARLABEL(datainfo, i + oldv), "");
 	}
     }
     for (i=0; i<datainfo->v-1; i++) {

@@ -65,6 +65,7 @@
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
 #define MAXLEN   512  /* max length of "long" strings */
 #define ERRLEN   256  /* max length of libgretl error messages */
+#define MAXDISP   16  /* max length of "display names" for variables */
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846
@@ -119,8 +120,35 @@ typedef enum {
 
 typedef int *LIST;  
 
+typedef struct _VARINFO VARINFO;
+typedef struct _DATAINFO DATAINFO;
+typedef struct _PATHS PATHS;
+typedef struct _GRETLTEST GRETLTEST;
+typedef struct _GRETLSUMMARY GRETLSUMMARY;
+typedef struct _CORRMAT CORRMAT;
+typedef struct _SAMPLE SAMPLE;
+typedef struct _ARINFO ARINFO;
+typedef struct _MODEL MODEL;
+typedef struct _MODELSPEC MODELSPEC;
+typedef struct _GRAPHT GRAPHT;
+typedef struct _SESSION SESSION;
+typedef struct _SESSIONBUILD SESSIONBUILD;
+typedef struct _PRN PRN;
+typedef struct _FITRESID FITRESID;
+typedef struct _CONFINT CONFINT;
+typedef struct _VCV VCV;
+
+typedef struct _mp_results mp_results;
+
+
+/* information on individual variable */
+struct _VARINFO {
+    char label[MAXLABEL];
+    char display_name[MAXDISP];
+};
+
 /* information on data set */
-typedef struct { 
+struct _DATAINFO { 
     int v;              /* number of variables */
     int n;              /* number of observations */
     int pd;             /* periodicity or frequency of data */
@@ -131,7 +159,7 @@ typedef struct {
     char stobs[9];      /* string representation of starting obs (date) */
     char endobs[9];     /* string representation of ending obs */
     char **varname;     /* array of names of variables */
-    char **label;       /* array of descriptive labels for vars */
+    VARINFO **varinfo;  /* array of specific info on vars */
     char markers;       /* whether (1) or not (0) the data file has
 			   observation markers */
     char delim;         /* default delimiter for "CSV" files */
@@ -142,9 +170,9 @@ typedef struct {
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */
     void *data;         /* all-purpose pointer */
-} DATAINFO;
+};
 
-typedef struct {
+struct _PATHS {
     char currdir[MAXLEN];
     char userdir[MAXLEN];
     char gretldir[MAXLEN];
@@ -158,9 +186,9 @@ typedef struct {
     char ratsbase[MAXLEN];
     char gnuplot[MAXLEN];
     char dbhost_ip[16];
-} PATHS;
+};
 
-typedef struct {
+struct _GRETLTEST {
     char type[72];
     char h_0[64];
     char param[9];
@@ -168,33 +196,33 @@ typedef struct {
     int dfn, dfd;
     double value;
     double pvalue;
-} GRETLTEST;
+};
 
-typedef struct {
+struct _GRETLSUMMARY {
     int n;
     int *list;
     double *xskew, *xkurt, *xmedian, *coeff, *sderr, *xpx, *xpy;
-} GRETLSUMMARY;
+};
 
-typedef struct {
+struct _CORRMAT {
     int n, t1, t2;
     int *list;
     double *xpx;
-} CORRMAT;
+};
 
-typedef struct {
+struct _SAMPLE {
     int t1;
     int t2;
-} SAMPLE;
+};
 
-typedef struct {
+struct _ARINFO {
     int *arlist;                /* list of autoreg lags */
     double *rho;                /* array of autoreg. coeffs. */
     double *sderr;              /* and their standard errors */
-} ARINFO;
+};
 
 /* struct to hold model results */
-typedef struct {
+struct _MODEL {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
@@ -246,43 +274,43 @@ typedef struct {
     int ntests;
     GRETLTEST *tests;
     void *data;                  /* pointer for use in re. missing data */
-} MODEL;
+};
 
-typedef struct {
+struct _MODELSPEC {
     char *cmd;
     double *subdum;
-} MODELSPEC;
+};
 
-typedef struct {
+struct _GRAPHT {
     int ID;
     int sort;
     char name[24];
     char fname[MAXLEN];
-} GRAPHT; 
+}; 
 
-typedef struct {
+struct _SESSION {
     char name[32];
     int nmodels;
     int ngraphs;
     MODEL **models;
     GRAPHT **graphs;
     char *notes;
-} SESSION; 
+};
 
-typedef struct {
+struct _SESSIONBUILD {
     int nmodels;
     int *model_ID;
     char **model_name;
-} SESSIONBUILD;
+};
 
-typedef struct {
+struct _PRN {
     FILE *fp;
     char *buf;
     size_t bufsize;
     int format;
-} PRN;
+};
 
-typedef struct {
+struct _mp_results {
     int ncoeff;
     int t1, t2, ifc;
     int dfn, dfd;
@@ -294,9 +322,9 @@ typedef struct {
     double ess;
     double rsq, adjrsq;
     double fstt;
-} mp_results;
+};
 
-typedef struct {
+struct _FITRESID {
     double *actual;
     double *fitted;
     double *sderr;
@@ -307,21 +335,24 @@ typedef struct {
     int t1, t2;
     int nobs;
     char depvar[9];
-} FITRESID;
+};
 
-typedef struct {
+struct _CONFINT {
     int *list;
     double *coeff;
     double *maxerr;
     int df;
     int ifc;
-} CONFINT;
+};
 
-typedef struct {
+struct _VCV {
     int ci;
     int *list;
     double *vec;
-} VCV;
+};
+
+#define VARLABEL(p,i)  ((p->varinfo[i])->label)
+#define DISPLAYNAME(p,i)  ((p->varinfo[i])->display_name)
 
 #include "gretl_commands.h"
 #include "gretl_errors.h"

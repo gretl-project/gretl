@@ -26,10 +26,11 @@
 <!-- Allows the name to be the only entry -->
 <!ELEMENT variable ( #PCDATA )>
 <!ATTLIST variable
-    name       NMTOKEN #IMPLIED
-    label      CDATA   #IMPLIED
-    role       CDATA   #IMPLIED
-    value      CDATA   #IMPLIED
+    name        NMTOKEN #IMPLIED
+    label       CDATA   #IMPLIED
+    displayname CDATA   #IMPLIED
+    role        CDATA   #IMPLIED
+    value       CDATA   #IMPLIED
 >
 
 <!ELEMENT observations ( obs )+>

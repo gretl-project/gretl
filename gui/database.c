@@ -366,7 +366,7 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	}
 	/* common stuff for adding a var */
 	strcpy(datainfo->varname[v-1], sinfo->varname);
-	strcpy(datainfo->label[v-1], sinfo->descrip);
+	strcpy(VARLABEL(datainfo, v-1), sinfo->descrip);
 	get_padding(sinfo, datainfo, &pad1, &pad2);
 
 	if (pad1 > 0) {
@@ -413,7 +413,7 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	    return;
 	} else {
 	    strcpy(datainfo->varname[1], sinfo->varname);
-	    strcpy(datainfo->label[1], sinfo->descrip);	
+	    strcpy(VARLABEL(datainfo, 1), sinfo->descrip);	
 	    data_status |= (GUI_DATA|MODIFIED_DATA);
 	}
     }
@@ -486,7 +486,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 	return;
     } 
     strcpy(dbdinfo->varname[1], sinfo->varname);
-    strcpy(dbdinfo->label[1], sinfo->descrip);
+    strcpy(VARLABEL(dbdinfo, 1), sinfo->descrip);
 
     if (action == DB_DISPLAY) 
 	display_dbdata(&dbZ, dbdinfo);

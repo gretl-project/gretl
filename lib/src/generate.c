@@ -24,13 +24,15 @@
 #include "libgretl.h"
 #include "internal.h"
 
-typedef struct {
+typedef struct _GENERATE GENERATE;
+
+struct _GENERATE {
     double *xvec;
     int varnum;
     char varname[9];
     char label[MAXLABEL];
     int scalar; 
-} GENERATE;
+};
 
 static int cstack (double *xstack, double *xvec, char op, 
 		   const DATAINFO *pdinfo, int expand);
@@ -1089,12 +1091,12 @@ static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
     } else 
 	if (!pdinfo->vector[v]) old_scalar = 1;
 
-    strcpy(pdinfo->label[v], genr->label);
+    strcpy(VARLABEL(pdinfo, v), genr->label);
     pdinfo->vector[v] = !genr->scalar;
     xx = genr->xvec[pdinfo->t1];
 
     if (genr->scalar) {
-	strcat(pdinfo->label[v], _(" (scalar)"));
+	strcat(VARLABEL(pdinfo, v), _(" (scalar)"));
 	(*pZ)[v] = realloc((*pZ)[v], sizeof ***pZ);
 	(*pZ)[v][0] = xx;
     } else {
@@ -2091,20 +2093,20 @@ int dummy (double ***pZ, DATAINFO *pdinfo)
     for (vi=1; vi<=ndummies; vi++) {
 	if (pdinfo->pd == 4 && pdinfo->time_series == TIME_SERIES) {
 	    sprintf(word, "dq%d", vi);
-	    sprintf(pdinfo->label[nvar+vi-1], _("= 1 if quarter = %d, "
-						"0 otherwise"), vi);
+	    sprintf(VARLABEL(pdinfo, nvar+vi-1), _("= 1 if quarter = %d, "
+						   "0 otherwise"), vi);
 	} 
 	else if (pdinfo->pd == 12 && pdinfo->time_series == TIME_SERIES) {
 	    char mname[8];
 
 	    get_month_name(mname, vi);
 	    sprintf(word, "d%s", mname);
-	    sprintf(pdinfo->label[nvar+vi-1], _("= 1 if month is %s, "
-						"0 otherwise"), mname);
+	    sprintf(VARLABEL(pdinfo, nvar+vi-1), _("= 1 if month is %s, "
+						   "0 otherwise"), mname);
 	} else {
 	    sprintf(word, "dummy_%d", vi);
-	    sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if period is %d, "
-						"0 otherwise"), word, vi);
+	    sprintf(VARLABEL(pdinfo, nvar+vi-1), _("%s = 1 if period is %d, "
+						   "0 otherwise"), word, vi);
 	}
 	strcpy(pdinfo->varname[nvar+vi-1], word);
 
@@ -2155,8 +2157,8 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
 	if (opt) sprintf(word, "du_%d", vi);
         else sprintf(word, "dt_%d", vi);
 	strcpy(pdinfo->varname[nvar+vi-1], word);
-	sprintf(pdinfo->label[nvar+vi-1], _("%s = 1 if %s is %d, "
-					    "0 otherwise"), word, 
+	sprintf(VARLABEL(pdinfo, nvar+vi-1), _("%s = 1 if %s is %d, "
+					       "0 otherwise"), word, 
 		(opt)? _("unit"): _("period"), vi);
         for (t=0; t<pdinfo->n; t++) {
             xx = date(t, pdinfo->pd, pdinfo->sd0);
@@ -2171,8 +2173,8 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
 	if (opt) sprintf(word, "dt_%d", vi);
         else sprintf(word, "du_%d", vi);
 	strcpy(pdinfo->varname[nvar+ntdum+vi-1], word);
-	sprintf(pdinfo->label[nvar+ntdum+vi-1], _("%s = 1 if %s is %d, "
-						  "0 otherwise"), word, 
+	sprintf(VARLABEL(pdinfo, nvar+ntdum+vi-1), _("%s = 1 if %s is %d, "
+						     "0 otherwise"), word, 
 		(opt)? _("period"): _("unit"), vi);
         for (t=0; t<pdinfo->n; t++) 
 	    (*pZ)[nvar+ntdum+vi-1][t] = 0.0;
@@ -2198,11 +2200,11 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
     if (time) {
 	strcpy(genr->varname, "time");
 	strcpy(pdinfo->varname[i], "time");
-	strcpy(pdinfo->label[i], _("time trend variable"));
+	strcpy(VARLABEL(pdinfo, i), _("time trend variable"));
     } else {
 	strcpy(genr->varname, "index");
 	strcpy(pdinfo->varname[i], "index");
-	strcpy(pdinfo->label[i], _("data index variable"));
+	strcpy(VARLABEL(pdinfo, i), _("data index variable"));
     }
 
     for (t=0; t<n; t++) (*pZ)[i][t] = (double) (t + 1);
@@ -2239,34 +2241,34 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 
     switch(period[0]) {
     case 'a':
-	strcpy(pdinfo->label[vi], _("annual plotting variable")); 
+	strcpy(VARLABEL(pdinfo, vi), _("annual plotting variable")); 
 	for (t=0; t<n; t++) 
 	    (*pZ)[vi][t] = (double) (t + atoi(pdinfo->stobs));
 	break;
     case 'q':
-	strcpy(pdinfo->label[vi], _("quarterly plotting variable"));
+	strcpy(VARLABEL(pdinfo, vi), _("quarterly plotting variable"));
 	(*pZ)[vi][0] = y1 + (10.0 * rm - 1.0)/4.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + .25;
 	break;
     case 'm':
-	strcpy(pdinfo->label[vi], _("monthly plotting variable"));
+	strcpy(VARLABEL(pdinfo, vi), _("monthly plotting variable"));
 	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/12.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/12.0);
 	break;
     case 'h':
-	strcpy(pdinfo->label[vi], _("hourly plotting variable"));
+	strcpy(VARLABEL(pdinfo, vi), _("hourly plotting variable"));
 	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/24.0;
 	for (t=1; t<n; t++) 
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/24.0);
 	break; 
     case 'i':
-	strcpy(pdinfo->label[vi], _("index variable"));
+	strcpy(VARLABEL(pdinfo, vi), _("index variable"));
 	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     case 't':
-	strcpy(pdinfo->label[vi], _("time trend variable"));
+	strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));
 	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     default:
@@ -2308,7 +2310,7 @@ int _laggenr (int iv, int lag, int opt, double ***pZ,
     strcpy(pdinfo->varname[v], s);
 
     if (opt) { 
-	sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
+	sprintf(VARLABEL(pdinfo, v), "%s = %s(-%d)", s, 
 		pdinfo->varname[iv], lag);
     }
 
@@ -2476,7 +2478,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    strcpy(pdinfo->varname[nvar+j], s);
 	    strcat(s, _(" = log of "));
 	    strcat(s, pdinfo->varname[v]);
-	    strcpy(pdinfo->label[nvar+j], s);
+	    strcpy(VARLABEL(pdinfo, nvar+j), s);
 	    check = varindex(pdinfo, pdinfo->varname[j]);
 	    if (check < nvar) {
 		if (pdinfo->vector[check]) {
@@ -2627,7 +2629,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 			continue;
 		}
 	    }
-	    sprintf(pdinfo->label[v+terms], _("%s = %s squared"), s,
+	    sprintf(VARLABEL(pdinfo, v+terms), _("%s = %s squared"), s,
 		    pdinfo->varname[li]);  
 	    terms++;
 	}
@@ -2655,7 +2657,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 		_esl_trunc(s1, 4);
 		strcat(s, s1);
 		strcpy(pdinfo->varname[v+terms], s);
-		sprintf(pdinfo->label[v+terms], _("%s = %s times %s"),
+		sprintf(VARLABEL(pdinfo, v+terms), _("%s = %s times %s"),
 			s, pdinfo->varname[li], pdinfo->varname[lj]);
 		terms++;
 	    }
@@ -2726,7 +2728,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 	_esl_trunc(s, 7);
 	strcat(s, "#");
 	strcpy(pdinfo->varname[v+i-1], s);
-	sprintf(pdinfo->label[v+i-1], _("%s = rho-differenced %s"), 
+	sprintf(VARLABEL(pdinfo, v+i-1), _("%s = rho-differenced %s"), 
 		pdinfo->varname[v+i-1], pdinfo->varname[j]);
 	/* fill out values */
 	for (t=0; t<n; t++) (*pZ)[v+i-1][t] = NADBL;
@@ -3152,11 +3154,11 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	strcat(tmp, sfx);
 	strcpy(pdinfo->varname[nv], tmp);
 	if (v) 
-	    sprintf(pdinfo->label[nv], "%s = %s * %s",
+	    sprintf(VARLABEL(pdinfo, nv), "%s = %s * %s",
 		    pdinfo->varname[nv], pdinfo->varname[v], 
 		    pdinfo->varname[lv]); 
 	else 
-	    sprintf(pdinfo->label[nv], "%s = %g * %s",
+	    sprintf(VARLABEL(pdinfo, nv), "%s = %g * %s",
 		    pdinfo->varname[nv], m, pdinfo->varname[lv]); 
     }
 
@@ -3214,7 +3216,7 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     strcpy(pdinfo->varname[i], vname);
 
     if (!undo) 
-	strcpy(pdinfo->label[i], vlabel);
+	strcpy(VARLABEL(pdinfo, i), vlabel);
 
     return 0;
 }

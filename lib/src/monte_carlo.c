@@ -452,7 +452,7 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
 	ploop->storelbl[i] = malloc(MAXLABEL);
 	if (ploop->storelbl[i] == NULL) goto cleanup;
 
-	strcpy(ploop->storelbl[i], pdinfo->label[list[i+1]]);
+	strcpy(ploop->storelbl[i], VARLABEL(pdinfo, list[i+1]));
 	if ((p = strstr(ploop->storelbl[i], "(scalar)"))) {
 	    *p = 0;
 	}

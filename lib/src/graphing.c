@@ -658,6 +658,16 @@ static void print_gnuplot_literal_lines (const char *s, FILE *fp)
     }
 }
 
+static const char *get_series_name (const DATAINFO *pdinfo, int v)
+{
+    if (pdinfo->varinfo != NULL && pdinfo->varinfo[v] != NULL
+	&& *DISPLAYNAME(pdinfo, v)) {
+	return DISPLAYNAME(pdinfo, v);
+    } else {
+	return pdinfo->varname[v];
+    }
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
@@ -729,9 +739,9 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	if (lo > 2 && lo < 7) tscale = 1;
     } else {
 	if (opt == OPT_Z || opt == OPT_RESIDZ) {
-	    strcpy(xlabel, pdinfo->varname[list[2]]); 
+	    strcpy(xlabel, get_series_name(pdinfo, list[2])); 
 	} else {
-	    strcpy(xlabel, pdinfo->varname[list[lo]]);
+	    strcpy(xlabel, get_series_name(pdinfo, list[lo]));
 	}
 	ts_plot = 0;
     }
@@ -802,10 +812,10 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	/* only two variables */
 	if (ols_ok) {
 	    if (opt == OPT_FA) {
-		make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[1]], 
-			    pdinfo->varname[list[2]]);
+		make_gtitle(fq, GTITLE_AFV, get_series_name(pdinfo, list[1]), 
+			    get_series_name(pdinfo, list[2]));
 	    } else {
-		make_gtitle(fq, GTITLE_VLS, pdinfo->varname[list[1]], 
+		make_gtitle(fq, GTITLE_VLS, get_series_name(pdinfo, list[1]), 
 			    xlabel);
 	    }
 	}
@@ -814,7 +824,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	    fputs("set nokey\n", fq);
 	} else {
-	    fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[1]]);
+	    fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[1]));
 	    fputs("set nokey\n", fq);
 	}
     } else if (opt == OPT_RESIDZ) {
@@ -824,12 +834,12 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     } else if (opt == OPT_FA) {
 	if (list[3] == pdinfo->v - 1) {
 	    /* x var is just time or index */
-	    make_gtitle(fq, GTITLE_AF, pdinfo->varname[list[2]], NULL);
+	    make_gtitle(fq, GTITLE_AF, get_series_name(pdinfo, list[2]), NULL);
 	} else {
-	    make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[2]], 
-			pdinfo->varname[list[3]]);
+	    make_gtitle(fq, GTITLE_AFV, get_series_name(pdinfo, list[2]), 
+			get_series_name(pdinfo, list[3]));
 	}
-	fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[2]]);
+	fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[2]));
 	fputs("set key left top\n", fq);	
     } else {
 	fputs("set key left top\n", fq);
@@ -899,11 +909,11 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	for (i=1; i<lo; i++) {
 	    if (i != oddman) {
 		fprintf(fq, "'-' using 1:($2) axes x1y1 title '%s (%s)' %s",
-			pdinfo->varname[list[i]], I_("left"),
+			get_series_name(pdinfo, list[i]), I_("left"),
 			(pdist)? "w impulses" : "w lines");
 	    } else {
 		fprintf(fq, "'-' using 1:($2) axes x1y2 title '%s (%s)' %s",
-			pdinfo->varname[list[i]], I_("right"),
+			get_series_name(pdinfo, list[i]), I_("right"),
 			(pdist)? "w impulses" : "w lines");
 	    }
 	    if (i == lo - 1) fputc('\n', fq);
@@ -913,11 +923,11 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	/* FIXME OPT_Z with time series? */
 	fputs("plot \\\n", fq);
 	if (opt == OPT_Z) {
-	    strcpy(s1, pdinfo->varname[list[1]]);
+	    strcpy(s1, get_series_name(pdinfo, list[1]));
 	} else {
-	    strcpy(s1, "residual");
+	    strcpy(s1, I_("residual"));
 	}
-	strcpy(s2, pdinfo->varname[list[3]]);
+	strcpy(s2, get_series_name(pdinfo, list[3]));
 	fprintf(fq, " '-' using 1:($2) title '%s (%s=1)', \\\n", s1, s2);
 	fprintf(fq, " '-' using 1:($2) title '%s (%s=0)'\n", s1, s2);
     } else {
@@ -927,7 +937,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		if (i == 1) strcpy(s1, I_("fitted"));
 		else strcpy(s1, I_("actual"));
 	    } else {
-		strcpy(s1, pdinfo->varname[list[i]]);
+		strcpy(s1, get_series_name(pdinfo, list[1]));
 	    }
 	    if (!pdist) { 
 		withstring[0] = '\0';

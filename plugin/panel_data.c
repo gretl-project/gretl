@@ -634,10 +634,10 @@ static void panel_copy_var (double **targZ, DATAINFO *targinfo, int targv,
 
     if (srcv == -1) {
 	strcpy(targinfo->varname[targv], "uhat");
-	strcpy(targinfo->label[targv], _("residual"));
+	strcpy(VARLABEL(targinfo, targv), _("residual"));
     } else {
 	strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
-	strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+	strcpy(VARLABEL(targinfo, targv), VARLABEL(srcinfo, srcv));
     }
 }
 
@@ -662,7 +662,7 @@ static void panel_lag (double **tmpZ, DATAINFO *tmpinfo,
     }
 
     sprintf(tmpinfo->varname[v], "uhat_%d", lag);
-    tmpinfo->label[v][0] = 0;
+    *VARLABEL(tmpinfo, v) = 0;
 }
 
 /* - do some sanity checks

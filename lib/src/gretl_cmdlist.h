@@ -63,6 +63,7 @@ char *gretl_commands[] = {
     "if",
     "import",
     "info", 
+    "label",
     "labels",
     "lad",
     "lags",    

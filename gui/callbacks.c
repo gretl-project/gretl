@@ -519,8 +519,9 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, _("gretl: edit label"));
 	sprintf(query, _("Edit label for variable number %d (%s):"),
 		v, datainfo->varname[v]);
-	if (strlen(datainfo->label[v]) > 2) 
-	    strcpy(defstr, datainfo->label[v]);
+	if (strlen(VARLABEL(datainfo, v)) > 2) {
+	    strcpy(defstr, VARLABEL(datainfo, v));
+	}
 	okfunc = do_edit_label;
 	break;
     case VSETMISS:

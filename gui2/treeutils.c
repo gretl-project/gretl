@@ -139,8 +139,8 @@ static int listbox_rename_var (const gchar *newname, gint varnum)
 
 static void listbox_edit_label (const gchar *newlabel, gint varnum) 
 {
-    datainfo->label[varnum][0] = 0;
-    strncat(datainfo->label[varnum], newlabel, MAXLABEL-1);
+    *VARLABEL(datainfo, varnum) = 0;
+    strncat(VARLABEL(datainfo, varnum), newlabel, MAXLABEL-1);
     data_status |= MODIFIED_DATA; 
     set_sample_label(datainfo);
 }

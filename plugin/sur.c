@@ -197,7 +197,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	    Z[*pj][t] = pmod->uhat[t];
 	}
 	sprintf(pdinfo->varname[*pj], "uhat_s%02d", i + 1);
-	sprintf(pdinfo->label[*pj], _("SUR residual, equation %d"), 
+	sprintf(VARLABEL(pdinfo, *pj), _("SUR residual, equation %d"), 
 		i + 1);
 	*pj += 1;
     }
@@ -206,7 +206,7 @@ static void add_results_to_dataset (gretl_equation_system *sys,
 	    Z[*pj][t] = pmod->yhat[t];
 	}	
 	sprintf(pdinfo->varname[*pj], "yhat_s%02d", i + 1);
-	sprintf(pdinfo->label[*pj], _("SUR fitted value, equation %d"), 
+	sprintf(VARLABEL(pdinfo, *pj), _("SUR fitted value, equation %d"), 
 		i + 1);
 	*pj += 1;
     }

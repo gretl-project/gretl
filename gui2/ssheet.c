@@ -493,7 +493,7 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	    column = gtk_tree_view_get_column(view, orig_cols + 1 + i);
 	    newname = gtk_tree_view_column_get_title(column);
 	    strcpy(datainfo->varname[i + oldv], newname);
-	    strcpy(datainfo->label[i + oldv], "");
+	    strcpy(VARLABEL(datainfo, i + oldv), "");
 	}
     }
 

@@ -99,11 +99,11 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    free(pdinfo->varname);
 	    pdinfo->varname = NULL;
 	}
-	if (pdinfo->label != NULL) {
+	if (pdinfo->varinfo != NULL) {
 	    for (i=0; i<pdinfo->v; i++) 
-		free(pdinfo->label[i]); 
-	    free(pdinfo->label);
-	    pdinfo->label = NULL;
+		free(pdinfo->varinfo[i]); 
+	    free(pdinfo->varinfo);
+	    pdinfo->varinfo = NULL;
 	}
 	if (pdinfo->descrip) {
 	    free(pdinfo->descrip);
@@ -213,27 +213,38 @@ static int dataset_allocate_markers (DATAINFO *pdinfo)
 
 /* ................................................. */
 
+void gretl_varinfo_init (VARINFO *vinfo)
+{
+    vinfo->label[0] = 0;
+    vinfo->display_name[0] = 0;
+}
+
+/* ................................................. */
+
 static int dataset_allocate_varnames (DATAINFO *pdinfo)
 {
     int i, v = pdinfo->v;
     
-    pdinfo->varname = malloc(v * sizeof(char *));
-    pdinfo->label = malloc(v * sizeof(char *));
-    pdinfo->vector = malloc(v);
+    pdinfo->varname = malloc(v * sizeof *pdinfo->varname);
+    pdinfo->varinfo = malloc(v * sizeof *pdinfo->varinfo);
+    pdinfo->vector = malloc(v * sizeof *pdinfo->vector);
+
     if (pdinfo->varname == NULL || 
-	pdinfo->label == NULL ||
+	pdinfo->varinfo == NULL ||
 	pdinfo->vector == NULL) return 1;
+
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(9);
 	if (pdinfo->varname[i] == NULL) return 1;
 	pdinfo->varname[i][0] = '\0';
-	pdinfo->label[i] = malloc(MAXLABEL);
-	if (pdinfo->label[i] == NULL) return 1;
-	pdinfo->label[i][0] = '\0';
+	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
+	if (pdinfo->varinfo[i] == NULL) return 1;
+	gretl_varinfo_init(pdinfo->varinfo[i]);
 	pdinfo->vector[i] = 1;
     }
+
     strcpy(pdinfo->varname[0], "const");
-    strcpy(pdinfo->label[0], _("auto-generated constant"));
+    strcpy(VARLABEL(pdinfo, 0), _("auto-generated constant"));
     return 0;
 }
 
@@ -275,7 +286,7 @@ DATAINFO *datainfo_new (void)
     dinfo->stobs[0] = '\0';
     dinfo->endobs[0] = '\0';
     dinfo->varname = NULL;
-    dinfo->label = NULL;    
+    dinfo->varinfo = NULL;    
     dinfo->markers = 0;  
     dinfo->delim = ',';
     dinfo->decpoint = '.';
@@ -355,10 +366,10 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 
     if (resample) {
 	pdinfo->varname = NULL;
-	pdinfo->label = NULL;
-    } else {
-	if (dataset_allocate_varnames(pdinfo))
-	    return 1;
+	pdinfo->varinfo = NULL;
+    } 
+    else if (dataset_allocate_varnames(pdinfo)) {
+	return 1;
     }
 
     pdinfo->S = NULL;
@@ -1346,7 +1357,7 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     pprintf(prn, "%s:\n\n", _("Listing of variables"));
 
     for (i=1; i<pdinfo->v; i++) {
-	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], pdinfo->label[i]);
+	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], VARLABEL(pdinfo, i));
     }
 
     return 0;
@@ -1404,8 +1415,9 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
             return E_ALLOC;
         }
 	v = varindex(pdinfo, varname);
-	if (v < pdinfo->v) strcpy(pdinfo->label[v], label);
-	else {
+	if (v < pdinfo->v) {
+	    strcpy(VARLABEL(pdinfo, v), label);
+	} else {
 	    fprintf(stderr, _("extraneous label for var '%s'\n"), varname);
 	}
     }
@@ -1424,7 +1436,7 @@ static int writelbl (const char *lblfile, const int *list,
 
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) continue;
-	if (strlen(pdinfo->label[list[i]]) > 2) {
+	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
 	    lblcount++;
 	    break;
 	}
@@ -1437,9 +1449,10 @@ static int writelbl (const char *lblfile, const int *list,
     /* spit out varnames and labels (if filled out) */
     for (i=1; i<=list[0]; i++) {
 	if (list[i] == 0) continue;
-	if (strlen(pdinfo->label[list[i]]) > 2) 
+	if (strlen(VARLABEL(pdinfo, list[i])) > 2) {
 	    fprintf(fp, "%s %s\n", pdinfo->varname[list[i]],
-		    pdinfo->label[list[i]]);
+		    VARLABEL(pdinfo, list[i]));
+	}
     }    
     if (fp != NULL) fclose(fp);
     return 0;
@@ -2580,10 +2593,10 @@ int import_box (double ***pZ, DATAINFO *pdinfo,
 	    if (strlen(tmp))
 		pprintf(prn, _("   Warning: coded variable (format '%s' "
 			"in BOX file)\n"), tmp);
-	    strncpy(boxinfo->label[realv], line+87, 99);
-	    boxinfo->label[realv][99] = '\0';
-	    unspace(boxinfo->label[realv]);
-	    pprintf(prn, _("   definition: '%s'\n"), boxinfo->label[realv]);
+	    *VARLABEL(boxinfo, realv) = 0;
+	    strncat(VARLABEL(boxinfo, realv), line+87, 99);
+	    unspace(VARLABEL(boxinfo, realv));
+	    pprintf(prn, _("   definition: '%s'\n"), VARLABEL(boxinfo, realv));
 	    realv++;
 	    v++;
 	    break;
@@ -2998,18 +3011,27 @@ static int write_xmldata (const char *fname, const int *list,
 			 pmax[i-1], Z[list[i]][0]);
 	    }
 	}
-	if (pdinfo->label[list[i]][0]) {
-	    xmlbuf = gretl_xml_encode(pdinfo->label[list[i]]);
+	if (*VARLABEL(pdinfo, list[i])) {
+	    xmlbuf = gretl_xml_encode(VARLABEL(pdinfo, list[i]));
 	    if (xmlbuf == NULL) return 1;
 	    else {
-		if (opt) gzprintf(fz, "\n label=\"%s\"/>\n", xmlbuf);
-		else fprintf(fp, "\n label=\"%s\"/>\n", xmlbuf);
+		if (opt) gzprintf(fz, "\n label=\"%s\"\n", xmlbuf);
+		else fprintf(fp, "\n label=\"%s\"\n", xmlbuf);
 		free(xmlbuf);
 	    }
-	} else {
-	    if (opt) gzputs(fz, "/>\n");
-	    else fputs("/>\n", fp);
-	}
+	} 
+	if (*DISPLAYNAME(pdinfo, list[i])) {
+	    xmlbuf = gretl_xml_encode(DISPLAYNAME(pdinfo, list[i]));
+	    if (xmlbuf == NULL) return 1;
+	    else {
+		if (opt) gzprintf(fz, "\n displayname=\"%s\"\n", xmlbuf);
+		else fprintf(fp, "\n displayname=\"%s\"\n", xmlbuf);
+		free(xmlbuf);
+	    }
+	} 
+	if (opt) gzputs(fz, "/>\n");
+	else fputs("/>\n", fp);
+
     }
     if (opt) gzputs(fz, "</variables>\n");
     else fputs("</variables>\n", fp);
@@ -3139,8 +3161,14 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
 	    if (tmp) {
-		pdinfo->label[i][0] = 0;
-		strncat(pdinfo->label[i], tmp, MAXLABEL-1);
+		*VARLABEL(pdinfo, i) = 0;
+		strncat(VARLABEL(pdinfo, i), tmp, MAXLABEL-1);
+		free(tmp);
+	    }
+	    tmp = xmlGetProp(cur, (UTF) "displayname");
+	    if (tmp) {
+		*DISPLAYNAME(pdinfo, i) = 0;
+		strncat(DISPLAYNAME(pdinfo, i), tmp, MAXDISP-1);
 		free(tmp);
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "role");

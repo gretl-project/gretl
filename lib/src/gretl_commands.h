@@ -61,6 +61,7 @@ typedef enum {
     IF,
     IMPORT,
     INFO,
+    LABEL,
     LABELS, 
     LAD,
     LAGS,    
