@@ -47,32 +47,35 @@ Copyright 2000 by Stephen L. Moshier
 
 double expx2 (double x, int sign)
 {
-  double u, u1, m, f;
+    double u, u1, m, f;
 
-  x = fabs (x);
-  if (sign < 0)
-    x = -x;
+    x = fabs(x);
 
-  /* Represent x as an exact multiple of M plus a residual.
-     M is a power of 2 chosen so that exp(m * m) does not overflow
-     or underflow and so that |x - m| is small.  */
-  m = MINV * floor(M * x + 0.5);
-  f = x - m;
-
-  /* x^2 = m^2 + 2mf + f^2 */
-  u = m * m;
-  u1 = 2 * m * f  +  f * f;
-
-  if (sign < 0)
-    {
-      u = -u;
-      u1 = -u1;
+    if (sign < 0) {
+	x = -x;
     }
 
-  if ((u+u1) > MAXLOG)
-    return (INFINITY);
+    /* Represent x as an exact multiple of M plus a residual.
+       M is a power of 2 chosen so that exp(m * m) does not overflow
+       or underflow and so that |x - m| is small.  */
+    m = MINV * floor(M * x + 0.5);
+    f = x - m;
 
-  /* u is exact, u1 is small.  */
-  u = exp(u) * exp(u1);
-  return(u);
+    /* x^2 = m^2 + 2mf + f^2 */
+    u = m * m;
+    u1 = 2 * m * f + f * f;
+
+    if (sign < 0) {
+	u = -u;
+	u1 = -u1;
+    }
+
+    if ((u+u1) > MAXLOG) {
+	return INFINITY;
+    }
+
+    /* u is exact, u1 is small.  */
+    u = exp(u) * exp(u1);
+
+    return u;
 }

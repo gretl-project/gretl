@@ -23,13 +23,19 @@ double ndtri (double);                   /* ndtri.c */
 double p1evl (double, double *, int);      /* polevl.c */
 double polevl (double, double *, int);     /* polevl.c */
 
-#ifdef INFINITIES
+#ifndef INFINITY
 extern double INFINITY;
+#endif
+
+#ifdef INFINITIES
 int isfinite (double);
 #endif
 
-#ifdef NANS
+#ifndef NAN
 extern double NAN;
+#endif
+
+#ifdef NANS
 int isnan (double);
 #endif
  
