@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-01-03 14:41-0500\n"
-"PO-Revision-Date: 2005-02-07 23:00+0100\n"
+"PO-Revision-Date: 2005-02-16 23:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -1376,7 +1376,7 @@ msgstr "Maksymalna"
 
 #: lib/src/describe.c:1183
 msgid "Standard deviation"
-msgstr "Odchylenie Standardowe"
+msgstr "Odchylenie standardowe"
 
 #: lib/src/describe.c:1184 gui2/guiprint_common.c:150
 #: gui2/guiprint_common.c:254
@@ -2705,10 +2705,10 @@ msgid ""
 " values of the dependent variable.\n"
 "\n"
 msgstr ""
-"Model nie zawiera sta³ej (const).\n"
-" F is calculated as in Sect. 4.4 of Ramanathan's Introductory Econometrics.\n"
-" R-squared is the square of the correlation between the\n"
-" observed and fitted values of the dependent variable.\n"
+" Uwaga. Model nie zawiera sta³ej (const). Statystyka F wyznaczana jest wed³ug\n"
+" wzorów z podrozdzia³u 4.4 w pracy Ramanathan 'Introductory Econometrics'.\n"
+" R-kwadrat jest kwadratem wspó³czynnika korelacji pomiêdzy\n"
+" warto¶ciami empirycznymi a wyrównanymi zmiennej zale¿nej.\n"
 "\n"
 
 #: lib/src/modelprint.c:80 lib/src/modelprint.c:92 lib/src/modelprint.c:97
@@ -3103,7 +3103,7 @@ msgstr "Zmienna wagowa jest zmienn± 0-1, efektywnych obserwacji jest"
 
 #: lib/src/modelprint.c:1202
 msgid "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
-msgstr "      ZMIENNA         PARAMETR     B£¡D STANDARDOWY   T-STUD      NACHYLENIE\n"
+msgstr "      Zmienna      Wspó³czynnik     B³±d stand.   Statystyka t    Nachylenie\n"
 
 #: lib/src/modelprint.c:1205
 msgid "(at mean)"
@@ -3114,13 +3114,15 @@ msgid ""
 "      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
+"      Parametr     Ocena parametru   B³±d stand.    Statystyka t      P-value\n"
+"\n"
 
 #: lib/src/modelprint.c:1210
 msgid ""
 "      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
-"       ZMIENNA       PARAMETR       B£¡D STANDARDOWY   T-STUD     p-value   \n"
+"       Zmienna     Wspó³czynnik     B³±d stand.    Statystyka t       P-value\n"
 "\n"
 
 #: lib/src/modelprint.c:1219
@@ -3129,7 +3131,7 @@ msgstr "Parametr"
 
 #: lib/src/modelprint.c:1220
 msgid "Estimate"
-msgstr ""
+msgstr "Estymator"
 
 #: lib/src/modelprint.c:1223 gui2/guiprint_common.c:863
 #: gui2/guiprint_common.c:920
@@ -3138,7 +3140,7 @@ msgstr "Wspó³czynnik"
 
 #: lib/src/modelprint.c:1243
 msgid "Std.\\ Error"
-msgstr ""
+msgstr "B³±d\\ stand."
 
 #: lib/src/modelprint.c:1244
 msgid "$t$-statistic"
@@ -3161,6 +3163,8 @@ msgid ""
 "R-squared is computed as the square of the correlation between observed and\n"
 "fitted values of the dependent variable"
 msgstr ""
+"R-kwadrat jest wyzanczane jako kwadrat wsp. korelacji pomiêdzy\n"
+"obserwacjami a wart¶ciami wyrównanymi dla zmiennej zale¿nej"
 
 #: lib/src/modelprint.c:1387 lib/src/modelprint.c:1391
 #: lib/src/modelprint.c:1395
@@ -3286,7 +3290,7 @@ msgstr "Wysoka precyzja estymacji metod± KMNK dla %d obserwacji %s-%s\n"
 
 #: lib/src/modelprint.c:2392
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
-msgstr "     ZMIENNE           PARAMETRY               BLAD STANDARDOWY\n"
+msgstr "       Zmienna        Wspó³czynnik            B³±d standardowy\n"
 
 #: lib/src/modelspec.c:229 lib/src/modelspec.c:230
 msgid "dataset is subsampled, model is not\n"
@@ -3394,7 +3398,7 @@ msgstr "  Zmienna     ¶rednia      odch.stand.\n"
 #: lib/src/monte_carlo.c:1738
 #, c-format
 msgid "printing %d values of variables to %s\n"
-msgstr ""
+msgstr "drukuje %d warto¶ci zmiennych do %s\n"
 
 #: lib/src/monte_carlo.c:1749
 msgid "simulation data written"
@@ -3411,15 +3415,15 @@ msgstr "Brak poleceñ dla pêtli\n"
 
 #: lib/src/monte_carlo.c:2117
 msgid "Failed to initialize model for loop\n"
-msgstr ""
+msgstr "B³±d inicjalizacji modelu dla polecenia 'loop'\n"
 
 #: lib/src/monte_carlo.c:2121
 msgid "Failed to add results to loop model\n"
-msgstr ""
+msgstr "B³±d w dodawaniu rezultatów polecenia 'loop'\n"
 
 #: lib/src/monte_carlo.c:2150
 msgid "Failed to add values to print loop\n"
-msgstr ""
+msgstr "B³±d w dodaniu warto¶ci do druku w poleceniu 'loop'\n"
 
 #: lib/src/monte_carlo.c:2210
 #, c-format
@@ -3436,11 +3440,11 @@ msgstr "Znajduj± siê brakuj±ce dane w próbie"
 
 #: lib/src/nls.c:417
 msgid "Perfect fit achieved\n"
-msgstr ""
+msgstr "Ca³kowite dopasowanie osi±gniête\n"
 
 #: lib/src/nls.c:473
 msgid "In Gauss-Newton Regression:\n"
-msgstr ""
+msgstr "W równaniu regresji Gaussa-Newtona:\n"
 
 #: lib/src/nls.c:479
 msgid "Failed to calculate Jacobian"
@@ -3626,7 +3630,7 @@ msgid ""
 "      VARIABLE      COEFFICIENT      95% CONFIDENCE INTERVAL\n"
 "\n"
 msgstr ""
-"      ZMIENNA      WSPÓ£CZYNNIKI     95% PRZEDZIA£ UFNOSCI\n"
+"      Zmienna      Wspó³czynnik      95% Przedzia³ ufno¶ci\n"
 "\n"
 
 #: lib/src/printout.c:201
@@ -3727,7 +3731,7 @@ msgstr "Obja¶nienie: * oznacza resztê przekraczajac± 2.5 raza b³±d standardowy r
 #: lib/src/printout.c:1255
 #, c-format
 msgid " For 95%% confidence intervals, t(%d, .025) = %.3f\n"
-msgstr "Dla 95%% przedzia³u ufno¶ci, t(%d, .025) = %.3f\n"
+msgstr " Dla 95%% przedzia³u ufno¶ci, t(%d, .025) = %.3f\n"
 
 #: lib/src/printout.c:1259 gui2/guiprint_common.c:740
 #: gui2/guiprint_common.c:791
@@ -3878,7 +3882,7 @@ msgid ""
 "unrecognized pvalue code\n"
 msgstr ""
 "\n"
-"Nierozpoznany b³±d pvalue\n"
+"nierozpoznany b³±d pvalue\n"
 
 #: lib/src/pvalues.c:417
 #, c-format
@@ -3951,11 +3955,11 @@ msgstr ""
 
 #: lib/src/pvalues.c:523
 msgid " for the numerator "
-msgstr "dla licznika "
+msgstr " dla licznika "
 
 #: lib/src/pvalues.c:526
 msgid " for the denominator "
-msgstr "dla mianownika "
+msgstr " dla mianownika "
 
 #: lib/src/pvalues.c:533
 #, c-format
@@ -4022,16 +4026,16 @@ msgstr ""
 #: lib/src/pvalues.c:721 gui2/calculator.c:252
 #, c-format
 msgid " 10%% in right tail %.2f\n"
-msgstr " 10%% obszar z prawej %.2f\n"
+msgstr " 10%%obszar z prawej %.2f\n"
 
 #: lib/src/strutils.c:710 gui/gretl.c:159 gui2/gretl.c:197
 msgid "/File/_Open data"
-msgstr "/File/_Otwórz dane"
+msgstr "/Plik/_Otwórz dane"
 
 #: lib/src/strutils.c:1059
 #, c-format
 msgid "out of memory in XML encoding"
-msgstr ""
+msgstr "B³ad pamiêci w kodowaniu XML"
 
 #: lib/src/subsample.c:243
 msgid "Missing values found when applying criterion"
@@ -4586,7 +4590,7 @@ msgstr "Niemo¿liwe otwarcie pliku tex do zapisu\n"
 #: cli/gretlcli.c:1043 gui2/library.c:5529
 #, c-format
 msgid "Model printed to %s\n"
-msgstr ""
+msgstr "Wydrukowano model do %s\n"
 
 #: cli/gretlcli.c:1052 cli/gretlcli.c:1071 gui2/library.c:5538
 #, c-format
@@ -5586,11 +5590,11 @@ msgstr ""
 
 #: gui/gretl.c:659 gui/gretl.c:666 gui2/gretl.c:802 gui2/gretl.c:809
 msgid "models"
-msgstr ""
+msgstr "modele"
 
 #: gui/gretl.c:744
 msgid "colors"
-msgstr ""
+msgstr "kolory"
 
 #: gui/gretl.c:748 gui2/gretl.c:899
 msgid "GUI"
@@ -9090,7 +9094,7 @@ msgstr "gretl: model %d"
 
 #: gui2/library.c:1286
 msgid "gretl: LM test "
-msgstr "gretl: test LM (mno¿nika Lagrange'a)"
+msgstr "gretl: test LM "
 
 #: gui2/library.c:1297
 msgid "(heteroskedasticity)"
@@ -9158,7 +9162,7 @@ msgstr "gretl: wektorowa autoregresja"
 
 #: gui2/library.c:2256
 msgid "Sorry, not implemented yet!"
-msgstr "Sorry, nie jest jeszcze zainmplemetowany!!!"
+msgstr "Sorry, nie jest jeszcze zainmplemetowany(a)!!!"
 
 #: gui2/library.c:2337
 msgid "gretl: ARMA"
@@ -9181,12 +9185,16 @@ msgid ""
 "Specification is malformed\n"
 "Should be like \"foo 1 2.5\""
 msgstr ""
+"Specyfikacja ¼le okre¶lona\n"
+"powinna byæ typu \"foo 1 2.5\""
 
 #: gui2/library.c:2450
 msgid ""
 "Specification is malformed\n"
 "Should be like \"foo 0 10\""
 msgstr ""
+"Specyfikacja ¼le okre¶lona\n"
+"powinna byæ typu \"foo 0 10\""
 
 #: gui2/library.c:2455
 msgid "Can't have a negative standard deviation!"
@@ -9291,6 +9299,8 @@ msgid ""
 "Data set is not recognized as a panel.\n"
 "Please use \"Sample/Set frequency, startobs\"."
 msgstr ""
+"Dane musz± byæ zdefiniowane jako panelowe.\n"
+"Proszê u¿yæ polecenia \"Próba/Struktura danych...\"."
 
 #: gui2/library.c:3049
 msgid "Error generating time trend"
@@ -9847,7 +9857,7 @@ msgstr "Wybór->"
 
 #: gui2/selector.c:1474
 msgid "Variables to test"
-msgstr "Zmienne do tetu"
+msgstr "Zmienne do testu"
 
 #: gui2/selector.c:1596
 msgid "Select variables to save"
@@ -10816,7 +10826,7 @@ msgstr "Analiza g³ównych sk³adowych"
 
 #: plugin/pca.c:233
 msgid "Eigenanalysis of the Correlation Matrix"
-msgstr "Macierz korelacji wartoœci w³asnych"
+msgstr "Macierz korelacji warto¶ci w³asnych"
 
 #: plugin/pca.c:235
 msgid "Component  Eigenvalue  Proportion   Cumulative\n"

@@ -20,7 +20,6 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
-#include "../cephes/libprob.h"
 
 #undef PDEBUG 
 
@@ -64,19 +63,20 @@ static int is_count_variable (const double *x, int t1, int t2)
 static double poisson_ll (const double *y, const double *mu, 
 			  int t1, int t2)
 {
-    int t;
     double loglik = 0.0;
-    double mt, lmt, yt, lytfact, llt;
+    double ytfact, llt;
+    int t;
 
     for (t=t1; t<=t2; t++) {
 	if (na(y[t]) || na(mu[t])) {
 	    continue;
 	}
-	mt = mu[t];
-	lmt = log(mt);
-	yt = y[t];
-	lytfact = log(cephes_gamma(1.0 + yt));
-	llt = (-mt + yt*lmt - lytfact);
+	ytfact = x_factorial(y[t]);
+	if (na(ytfact)) {
+	    loglik = NADBL;
+	    break;
+	}
+	llt = (-mu[t] + y[t] * log(mu[t]) - log(ytfact));
 	loglik += llt;
     }  
 

@@ -37,6 +37,36 @@ static void getdf (const char *str);
 const char negval[] = N_("\nEnter x value (value < 0 will exit menu): "); 
 
 /**
+ * x_factorial:
+ * @x: input value.
+ * 
+ * Returns: the factorial of int(x), cast to a double, or
+ * NADBL on failure.
+ *
+ */
+
+double x_factorial (double x)
+{
+    double fact;
+    int n = x;
+
+    if (x < 0.0) {
+	fact = NADBL;
+    } else if (x > 12.0) {
+	fact = cephes_gamma(1.0 + x);
+    } else if (n == 0) {
+	fact = 1.0;
+    } else {
+	fact = n;
+	while (--n > 1) {
+	    fact *= n;
+	}
+    }
+
+    return fact;
+}
+
+/**
  * tcrit95:
  * @df: degrees of freedom.
  * 

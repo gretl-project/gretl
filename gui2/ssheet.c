@@ -1253,6 +1253,13 @@ void show_spreadsheet (DATAINFO *pdinfo)
     int sheetwidth;
     int err = 0;
 
+#ifdef G_OS_WIN32
+    if (pdinfo == NULL && datainfo->v > 1600) {
+	errbox(_("Sorry, can't edit more than 1600 rows"));
+	return;
+    }    
+#endif
+
     if (sheet != NULL) {
 	gdk_window_raise(sheet->win->window);
 	return;
