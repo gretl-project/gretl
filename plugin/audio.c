@@ -47,6 +47,13 @@
 extern cst_voice *register_cmu_us_kal (void);
 #endif
 
+#ifdef G_OS_WIN32
+# define COBJMACROS
+# define _UNICODE
+# include <tchar.h>
+# include <sapi/sapi.h>
+#endif
+
 const char *track_hdr = "MTrk";
 
 enum dataset_comments {
@@ -585,7 +592,7 @@ static void min_max (const double *x, double *min, double *max,
     }
 }
 
-#ifdef HAVE_FLITE
+#if defined(HAVE_FLITE)
 static void speak_dataset_comments (const dataset *dset)
 {
     int i;
@@ -601,6 +608,33 @@ static void speak_dataset_comments (const dataset *dset)
 	}
     }
 }
+#elif defined(G_OS_WIN32)
+static void speak_dataset_comments (const dataset *dset)
+{
+    int i;
+    ISpVoice *v = NULL;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    if (!SUCCEEDED(hr)) {
+        fprintf(stderr, "CoInitialize failed\n");
+        return;
+    }
+
+    hr = CoCreateInstance(&CLSID_SpVoice, 
+                          NULL, 
+                          CLSCTX_ALL, 
+                          &IID_ISpVoice, 
+                          (void **) &v);
+    if (SUCCEEDED(hr)) {
+	for (i=0; i<N_COMMENTS; i++) {
+	    if (dset->comments[i] != NULL) {
+		ISpVoice_Speak(v, _T(dset->comments[i]), 0, NULL);
+	    }
+	}
+        ISpVoice_Release(v);
+    } 
+}
 #endif
 
 static void print_dataset_comments (const dataset *dset)
@@ -613,7 +647,7 @@ static void print_dataset_comments (const dataset *dset)
 	}
     }
 
-#ifdef HAVE_FLITE
+#if defined(HAVE_FLITE) || defined(G_OS_WIN32)
     speak_dataset_comments(dset);
 #endif
 }
@@ -623,6 +657,10 @@ static void audio_graph_error (const char *msg)
 #ifdef HAVE_FLITE
     cst_voice *v;
 #endif
+#ifdef G_OS_WIN32
+    ISpVoice *v = NULL;
+    HRESULT hr;
+#endif    
 
     fprintf(stderr, "%s\n", msg);
 
@@ -631,6 +669,20 @@ static void audio_graph_error (const char *msg)
 
     v = register_cmu_us_kal();
     flite_text_to_speech(msg, v, "play");
+#endif
+#ifdef G_OS_WIN32
+    hr = CoInitialize(NULL);
+    if (!SUCCEEDED(hr)) return;
+
+    hr = CoCreateInstance(&CLSID_SpVoice, 
+                          NULL, 
+                          CLSCTX_ALL, 
+                          &IID_ISpVoice, 
+                          (void **) &v);
+    if (SUCCEEDED(hr)) {
+	ISpVoice_Speak(v, _T(msg), 0, NULL);
+        ISpVoice_Release(v);
+    } 
 #endif
 }
 
@@ -748,7 +800,12 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
 static int audio_fork (const char *fname)
 {
-    ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW);
+    int err = 0; 
+    
+    if ((long) ShellExecute(NULL, "open", fname, NULL, NULL, SW_SHOW) < 32)
+	err = 1;
+
+    return err;
 }
 
 #elif defined(GLIB2)

@@ -309,7 +309,7 @@ plugins/garch.dll: garch.o fcp.o dllinit.o
 
 plugins/audio.dll: audio.o midi_utils.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) 
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lole32 -lsapi 
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
