@@ -38,6 +38,7 @@ enum {
     STACK_DEPEND,
     STACK_POP_CHILDREN,
     STACK_EAT_CHILDREN,
+    STACK_PEEK_CHILDREN,
     STACK_BOOKMARK,
     STACK_RESUME,
     STACK_SCALAR_CHECK,
@@ -144,15 +145,21 @@ static void real_stack_set_parentage (genatom **atoms, int n)
     int i, j, level;
 
     for (i=n-1; i>=0; i--) {
+	DPRINTF(("checking for children: looking at atom %d\n", i));
 	if (must_know_children((atoms[i])->func)) {
 	    level = (atoms[i])->level;
+	    DPRINTF((" got candidate (atom %d, level %d)...\n", i, level));
 	    for (j=i-1; j>=0; j--) {
+		DPRINTF(("  looking at atom %d\n", j));
 		if ((atoms[j])->level > level) {
-		    DPRINTF(("marking atom %d as parent of atom %d\n",
+		    DPRINTF(("    marking atom %d as parent of atom %d\n",
 			    i, j));
 		    (atoms[j])->parent = atoms[i];
-		} 
-		else break;
+		} else {
+		    DPRINTF(("    not a child, breaking\n"));
+		    j++;
+		    break;
+		}
 	    }
 	    i = j;
 	}
@@ -195,6 +202,13 @@ static genatom *atom_stack (genatom *atom, int op)
 		break;
 	    }
 	}
+    } else if (op == STACK_PEEK_CHILDREN && atom != NULL) {
+	for (j=0; j<n_atoms; j++) {
+	    if ((atoms[j])->parent == atom) {
+		ret = atoms[j];
+		break;
+	    }
+	}	
     } else if (op == STACK_EAT_CHILDREN && atom != NULL) {
 	int ndel = real_stack_eat_children(atom, atoms, n_atoms);
 
@@ -228,6 +242,11 @@ genatom *pop_atom (void)
 genatom *pop_child_atom (genatom *atom)
 {
     return atom_stack(atom, STACK_POP_CHILDREN);
+}
+
+genatom *peek_child_atom (genatom *atom)
+{
+    return atom_stack(atom, STACK_PEEK_CHILDREN);
 }
 
 void reset_atom_stack (void)

@@ -663,6 +663,11 @@ static double *eval_compound_arg (GENERATE *genr,
     genatom *atom;
     double *xtmp;
 
+    if (peek_child_atom(this_atom) == NULL) {
+	genr->err = E_SYNTAX;
+	return NULL;
+    }
+
     xtmp = malloc(genr->pdinfo->n * sizeof *xtmp);
     if (xtmp == NULL) {
 	genr->err = E_ALLOC;
@@ -741,6 +746,12 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
     free(x);
 
     if (genr->err) return genr->err;
+
+#ifdef GENR_DEBUG
+    fprintf(stderr, "add_statistic_to_genr:\n atom->func = %d (%s), val = %g, "
+	    "now atom->scalar = 1\n", atom->func, get_func_word(atom->func),
+	    y);
+#endif
 
     atom->val = y;
     atom->scalar = 1;

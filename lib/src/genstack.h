@@ -20,6 +20,8 @@
 #ifndef GENSTACK_H
 #define GENSTACK_H
 
+/* #define GENR_DEBUG */
+
 #ifdef GENR_DEBUG
 void dprintf (const char *format, ...);
 # define DPRINTF(x) dprintf x
@@ -95,6 +97,7 @@ enum transformations {
 int push_atom (genatom *atom);
 genatom *pop_atom (void);
 genatom *pop_child_atom (genatom *atom);
+genatom *peek_child_atom (genatom *atom);
 void reset_atom_stack (void);
 void destroy_atom_stack (void);
 void atom_stack_set_parentage (void);

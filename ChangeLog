@@ -1,3 +1,7 @@
+version 1.2.3
+- Fix bug: genr was broken for some special cases of
+  repeated function calls
+
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")
 - Fix brokenness in RTF printing/copying of ARMA models
