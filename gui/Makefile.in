@@ -108,7 +108,7 @@ install-strip: $(PROG) installdirs $(query_install_gnome)
 	$(INSTALL_DATA) ../COPYING $(gretldir)
 
 install-exec: $(PROG) installdirs 
-	../libtool $(INSTALL_PROGRAM) -s $(PROG) $(bindir)/$(PROG)
+	../libtool $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
 
 install-gnome: $(PROG) installdirs
 	$(tooldir)/mkinstalldirs $(gpixmaps)
