@@ -64,7 +64,7 @@ static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_menu (void);
 static gint popup_activated (GtkWidget *widget, gpointer data);
-static void check_for_pwt (void);
+static void check_for_extra_data (void);
 static void set_up_main_menu (void);
 static void startR (gpointer p, guint opt, GtkWidget *w);
 static void Rcleanup (void);
@@ -795,7 +795,7 @@ int main (int argc, char *argv[])
     restore_sample_state(FALSE);
     menubar_state(FALSE);
 			  
-    check_for_pwt();
+    check_for_extra_data();
 
     if (!gui_get_data)
 	register_data(paths.datfile, 1);
@@ -1352,27 +1352,55 @@ static GtkWidget *build_var_menu (void)
 
 /* ........................................................... */
 
-static void check_for_pwt (void)
+static void check_for_extra_data (void)
 {
     DIR *dir;
-    char pwtdir[MAXLEN];
+    char extradir[MAXLEN];
     extern char pwtpath[MAXLEN]; /* datafiles.c */
+    extern char woolpath[MAXLEN]; /* fileselect.c */
+    int gotpwt = 0, gotwool = 0;
 
-    sprintf(pwtdir, "%spwt56", paths.datadir); /* try at system level */
-    if ((dir = opendir(pwtdir)) != NULL) {
+    /* first check for Penn World Table */
+    sprintf(extradir, "%spwt56", paths.datadir); /* try at system level */
+    if ((dir = opendir(extradir)) != NULL) {
 	closedir(dir);
-	sprintf(pwtpath, "%s%c", pwtdir, SLASH);
-	return;
-    }
-    sprintf(pwtdir, "%spwt56", paths.userdir); /* and at user level */
-    if ((dir = opendir(pwtdir)) != NULL) {
-	closedir(dir);
-	sprintf(pwtpath, "%s%c", pwtdir, SLASH);
-	return;
+	sprintf(pwtpath, "%s%c", extradir, SLASH);
+	gotpwt = 1;
+    } else {
+	sprintf(extradir, "%spwt56", paths.userdir); /* and at user level */
+	if ((dir = opendir(extradir)) != NULL) {
+	    closedir(dir);
+	    sprintf(pwtpath, "%s%c", extradir, SLASH);
+	    gotpwt = 1; 
+	}
     }
 
-    flip (mdata->ifac, "/File/Open data/sample file/Penn World Table...", FALSE);
-    flip (mdata->ifac, "/File/Open command file/practice file/Penn World Table...", FALSE);
+    if (!gotpwt) {
+	flip (mdata->ifac, "/File/Open data/sample file/Penn World Table...", 
+	      FALSE);
+	flip (mdata->ifac, "/File/Open command file/practice file/Penn World Table...", 
+	      FALSE);
+    }
+
+    /* then check for Wooldridge data */
+    sprintf(extradir, "%swooldridge", paths.datadir); /* try at system level */
+    if ((dir = opendir(extradir)) != NULL) {
+	closedir(dir);
+	sprintf(woolpath, "%s%c", extradir, SLASH);
+	gotwool = 1;
+    } else {
+	sprintf(extradir, "%swooldridge", paths.userdir); /* and at user level */
+	if ((dir = opendir(extradir)) != NULL) {
+	    closedir(dir);
+	    sprintf(woolpath, "%s%c", extradir, SLASH);
+	    gotwool = 1;
+	}
+    }
+
+    if (!gotwool) {
+	flip (mdata->ifac, "/File/Open data/sample file/Wooldridge...", 
+	      FALSE);
+    }
 }
 
 /* ........................................................... */

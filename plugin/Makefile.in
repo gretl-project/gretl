@@ -66,7 +66,7 @@ excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
 
 des_import.so: des_import.lo 
-	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) -lz
 
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)

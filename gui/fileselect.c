@@ -33,6 +33,7 @@ extern void save_this_graph (GPT_SPEC *plot, const char *fname);
 
 extern int olddat; /* gui_utils.c */
 
+char woolpath[MAXLEN];
 static char remember_dir[MAXLEN];
 
 struct extmap {
@@ -235,7 +236,7 @@ static void save_editable_content (int action, const char *fname,
 static void set_startdir (int action, char *startdir)
 {
     if (action == OPEN_DES) {
-	sprintf(startdir, "%swooldridge/", paths.datadir);
+	strcpy(startdir, woolpath);
     } else {
 	if (*remember_dir != '\0')
 	    strcpy(startdir, remember_dir);

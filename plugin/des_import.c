@@ -26,6 +26,7 @@
 #endif
 
 #include "libgretl.h"
+#include <zlib.h>
 
 /* #define VERBOSE 1 */
 
@@ -267,7 +268,8 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
 		if (!des_ignore(i, des)) {
 		    v2++;
 		    strcpy(dinfo->varname[v2], varname);
-		    strcpy(dinfo->label[v2], p);
+		    dinfo->label[v2][0] = 0;
+		    strncat(dinfo->label[v2], p, MAXLABEL - 1);
 		} else 
 		    printf("ignoring variable '%s'\n", varname);
 	    }
@@ -283,6 +285,7 @@ static int read_des (const char *fname, DESINFO *des, double ***pZ,
     return err;
 }
 
+#ifdef OLDCODE
 static int read_raw (const char *fname, DESINFO *des,
 		     DATAINFO *pdinfo, double **Z,
 		     char *errbuf)
@@ -347,7 +350,94 @@ static int read_raw (const char *fname, DESINFO *des,
     fclose(fp);
     return err;
 }
+#endif
 
+static int gz_get_value (gzFile fz, char *value)
+{
+    char buf[2];
+    int r, started = 0;
+
+    *value = 0;
+
+    while ((r = gzread(fz, buf, 1)) > 0) {
+	if (isspace((unsigned char) *buf)) {
+	    if (started) break;
+	    else continue;
+	} else {
+	    started = 1;
+	    buf[1] = 0;
+	    strcat(value, buf);
+	}
+    }
+
+    if (*value) return 1;
+    else return 0;
+}
+
+static int read_gz_raw (const char *fname, DESINFO *des,
+			DATAINFO *pdinfo, double **Z,
+			char *errbuf)
+{
+    gzFile fz = NULL;
+    int i, t, des_i;
+    char value[16];
+    int err = 0;
+    int literal = 0, litcol = 0;
+
+    fz = gzopen(fname, "rb");
+    if (fz == NULL) return 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	des_i = 1;
+	for (i=1; i<pdinfo->v; i++) {
+	    while (1) {
+		if (des_ignore(des_i, des)) {
+		    gz_get_value(fz, value);
+#ifdef VVERBOSE
+		    fprintf(stderr, "ignoring data(%d,%d) '%s'\n", 
+			    des_i, t, value);
+#endif	
+		    des_i++;
+		} else break;
+	    }
+	    if (gz_get_value(fz, value) != 1) {
+		sprintf(errbuf, "scan fail on data[%d][%d]", i, t);
+		err = 1;
+	    } else {
+#ifdef VVERBOSE
+		fprintf(stderr, "got data[%d][%d] = '%s'\n", i, t, value);
+#endif
+		if (*value == '"') {
+		    literal = 1;
+		    if (i > litcol) litcol = i;
+		}
+		else {
+		    if (strcmp(value, ".") == 0) {
+#ifdef VVERBOSE
+			fprintf(stderr, "got a missing value\n"); 
+#endif
+			Z[i][t] = NADBL;
+		    } else {
+			Z[i][t] = atof(value);
+		    }
+		}
+	    }
+	    if (err) break;
+	    des_i++;
+	}
+	if (err) break;
+    }
+
+    if (literal)
+	sprintf(errbuf, "Data file contains non-numeric entries");
+
+    if (litcol)
+	sprintf(errbuf, "%s: found literal data in col %d",
+		fname, litcol + 1);
+
+    gzclose(fz);
+    return err;
+}
 
 int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		  char *errbuf)
@@ -376,8 +466,8 @@ int des_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	newinfo->time_series = des.ts;
     }
 
-    switch_ext(rawfile, fname, "raw");
-    err = read_raw(rawfile, &des, newinfo, newZ, errbuf);
+    switch_ext(rawfile, fname, "raw.gz");
+    err = read_gz_raw(rawfile, &des, newinfo, newZ, errbuf);
     if (err) {
 	sprintf(errbuf, "Problem reading %s", rawfile);
 	return 1;
