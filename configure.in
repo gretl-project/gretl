@@ -36,7 +36,7 @@ have_gtk="no"
 have_gnome="no"
 have_gtkextra="no"
 have_gmp="no"
-have_gsl="no"
+have_lapack="no"
 seek_inet_addr="no"
 png_graphics="yes"
 png_comments="yes"
@@ -288,6 +288,13 @@ if test x"${try_gmp}" != xno ; then
 fi
 
 dnl
+dnl See if LAPACK is available
+dnl
+if test x"${try_lapack}" != xno ; then
+  AM_PATH_LAPACK(, have_lapack="yes")
+fi
+
+dnl
 dnl Check for gnuplot, and its PNG capacity
 dnl
 AC_DEFUN(AC_PROG_GNUPLOT,
@@ -359,16 +366,6 @@ fi
 dnl if the above succeeds, check separately for glib 2.0 flags
 if test "$have_gtk" = "2.0" ; then
     PKG_CHECK_MODULES(GLIB, glib-2.0,,,)
-fi
-
-dnl and while we're at it, try for GSL
-if test "$try_gtk2" = "yes" ; then
-    PKG_CHECK_MODULES(GSL, gsl,
-      have_gsl="yes",
-      have_gsl="no"      
-    )
-else
-    AM_PATH_GSL(1.0,have_gsl="yes",have_gsl="no")
 fi
 
 dnl Or fall back on GTK 1.2
@@ -581,7 +578,7 @@ Configuration:
   Use PNG for gnuplot graphs:             ${gnuplot_png}
   Use LaTeX for typesetting output:       ${have_latex}
   Gnu Multiple Precision support:         ${have_gmp}
-  Gnu Scientific Library support:         ${have_gsl}
+  LAPACK support:                         ${have_lapack}
   Build with GTK version:                 ${have_gtk}
   Use installed libole2:                  ${have_libole2}
   Use installed gtkextra:		  ${have_gtkextra}
