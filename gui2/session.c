@@ -484,8 +484,9 @@ void verify_clear_data (void)
 			   0) != GRETL_YES) {
             return;
 	}
-	close_session();
     }
+    close_session();
+}
 
 /* ........................................................... */
 

@@ -3269,7 +3269,7 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-static void maybe_restore_full_data (void)
+static int maybe_restore_full_data (void)
 {
     if (mdata->ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(mdata->ifac, 
