@@ -484,6 +484,11 @@ void compress_spaces (char *s)
 
     if (s == NULL || *s == 0) return;
 
+    if (strchr(s, '"') != NULL) {
+	/* don't mess with literals */
+	return;
+    }
+
     p = s;
     while (*s) {
 	if (*s == '\t') *s = ' '; /* trash tabs */
