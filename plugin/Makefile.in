@@ -36,8 +36,9 @@ PLUGINS = stats_tables.so panel_data.so progress_bar.so \
 	gnumeric_import.so excel_import.so
 
 ifeq ($(OLE_LIBS),)
-  query-ms-ole.lo="ms-ole.lo"
+  query-ms-ole.lo=ms-ole.lo
   vpath %.c libole2
+  vpath %.h libole2
 endif
 
 all: $(PLUGINS)

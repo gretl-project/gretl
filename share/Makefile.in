@@ -18,6 +18,8 @@ install: installdirs install_datafiles install_scripts
 	$(INSTALL_DATA) bcih/bcih.bin $(gretldir)/db/bcih.bin
 	$(INSTALL_DATA) bcih/bcih.idx $(gretldir)/db/bcih.idx
 
+install-strip: install
+
 install_datafiles:
 	for f in data/d* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data ; done 

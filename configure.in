@@ -127,11 +127,15 @@ if test x"${XMLCONF}" != x ; then
 fi
 
 dnl See if gnome libole2 is available
+AC_MSG_CHECKING(for libole2)
 OLE_LIBS=
 OLE_CFLAGS=`gnome-config --cflags libole2 2>/dev/null`
 OLE_LIBS=`gnome-config --libs libole2 2>/dev/null`
 if test x"${OLE_CFLAGS}" = "x" ; then
-   OLE_CFLAGS=-I.. -DHAVE_UNISTD_H
+   AC_MSG_RESULT(no)
+   OLE_CFLAGS="-I. -I.. -DHAVE_UNISTD_H"
+else
+   AC_MSG_RESULT(yes)
 fi
 AC_SUBST(OLE_CFLAGS)
 AC_SUBST(OLE_LIBS)
