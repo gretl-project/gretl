@@ -1982,7 +1982,7 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
 	flip(mwin->ifac, "/Model data/Define new variable...", s);
 	infobox(get_gretl_errmsg());
-	return FALSE;
+	return;
     }
 #endif
 

@@ -82,11 +82,16 @@ override CFLAGS += $(GRETLINC) $(GTK_CFLAGS) $(GMP_CFLAGS) $(XML_CFLAGS) \
 
 %.lo: %.c
 	$(COMPILE) $< 
-	$(CC) $(CFLAGS) -M -MT $*.lo $< >$*.d 
+	$(CC) $(CFLAGS) -MM -MT $*.lo $< > .deps/$*.d 
 
 all: $(PLUGINS)
 
--include $(SRCS:.c=.d)
+$(PLUGINS): dep.stamp 
+
+dep.stamp:
+	mkdir -p .deps && touch dep.stamp
+
+-include .deps/*.d
 
 stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
@@ -144,8 +149,8 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(plugindir)
 
 clean:
-	rm -f *.o *.d *.lo *.la core 
-	rm -rf .libs
+	rm -f *.lo *.la dep.stamp
+	rm -rf .libs .deps
 
 distclean: clean
 	rm -f Makefile

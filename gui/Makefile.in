@@ -60,7 +60,8 @@ ifeq ($(USE_NLS),yes)
   DEFS = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) \
+	$(GDK_PIXBUF_CFLAGS) $(DEFS)
 override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 # Directories
@@ -87,13 +88,15 @@ OBJS = $(SRCS:.c=.o)
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
-	$(CC) -MM -MG -I.. -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< \
-	> $*.d 2>/dev/null
+	$(CC) $(CFLAGS) -MM  $< > .deps/$*.d 
 
-$(PROG): $(query_gtkextra_lib) $(OBJS) 
+$(PROG): dep.stamp $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
--include $(OBJS:.o=.d)
+dep.stamp:
+	mkdir -p .deps && touch dep.stamp
+
+-include .deps/*.d
 
 .PHONY:
 
@@ -123,8 +126,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)
 
 clean:
-	rm -f *.o *.d $(PROG) core
-	rm -rf .libs
+	rm -f *.o $(PROG) dep.stamp
+	rm -rf .libs .deps
 	make -C gtkextra-lite clean
 
 distclean: clean

@@ -46,12 +46,15 @@ LIBTOOL = ../libtool
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
-	$(CC) -MM -MG -I$(libsrc) $(DEFS) $< >$*.d 
+	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(CLI): $(OBJS)
-	../libtool --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(READLINE_LIBS) 
+$(CLI): dep.stamp $(OBJS)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(GRETLLIB) $(READLINE_LIBS) 
 
--include gretlcli.d
+dep.stamp:
+	mkdir -p .deps && touch dep.stamp
+
+-include .deps/*.d
 
 .PHONY :
 
@@ -65,8 +68,8 @@ installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(bindir)
 
 clean:
-	rm -f *.o *.d $(CLI) core 
-	rm -rf ./.libs
+	rm -f *.o $(CLI) dep.stamp
+	rm -rf .libs .deps
 
 distclean: clean
 	rm -f Makefile debug

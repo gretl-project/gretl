@@ -44,7 +44,8 @@ ifeq ($(LN),)
   LN = ln -sf
 endif
 ifeq ($(have_gnome),2.0)
-  LIBS = $(GNOME_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-1.0.la
+  LIBS = $(GNOME_LIBS) $(GTKSOURCEVIEW_LIBS) $(GTK_EXTRA_LIB) \
+	../lib/libgretl-1.0.la
   GUI_CFLAGS = $(GNOME_CFLAGS) $(GTKSOURCEVIEW_CFLAGS) $(GTK_EXTRA_CFLAGS)
   query_install_gnome = install-gnome
   GNOMEDEF = -DGNOME_DISABLE_DEPRECATED -DDATADIR=\"$(gnome_prefix)/share\"
@@ -65,7 +66,8 @@ endif
 
 DEFS = $(NLSDEF) $(GNOMEDEF)
 
-override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) \
+	$(GDK_PIXBUF_CFLAGS) $(DEFS)
 override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 GUI_CFLAGS += -DGTK_DISABLE_DEPRECATED
@@ -101,9 +103,9 @@ GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $<
-	$(CC) -MM -MG -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< > $*.d 2>/dev/null
+	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
+$(PROG): dep.stamp $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB)
 
 $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
@@ -112,7 +114,10 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
 
--include $(OBJS:.o=.d)
+dep.stamp:
+	mkdir -p .deps && touch dep.stamp
+
+-include .deps/*.d
 
 .PHONY:
 
@@ -142,8 +147,8 @@ installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir)
 
 clean:
-	rm -f *.o *.d $(PROG) core
-	rm -rf .libs
+	rm -f *.o $(PROG) dep.stamp
+	rm -rf .libs .deps
 	make -C gtkextra-lite clean
 
 distclean: clean
