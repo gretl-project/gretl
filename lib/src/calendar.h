@@ -35,6 +35,10 @@ int day_ends_month (int d, int m, int y, int wkdays);
 
 int get_days_in_month (int mon, int yr, int wkdays);
 
+int days_in_month_before (int yr, int mon, int day, int wkdays);
+
+int days_in_month_after (int yr, int mon, int day, int wkdays);
+
 int daily_obs_number (const char *date, const DATAINFO *pdinfo);
 
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);

@@ -1369,7 +1369,7 @@ static void
 get_daily_compact_params (int default_method, 
 			  int *any_eop, int *any_sop,
 			  int *all_same,
-			  DATAINFO *pdinfo)
+			  const DATAINFO *pdinfo)
 {
     int i, n_not_eop = 0, n_not_sop = 0;
 
@@ -1458,13 +1458,32 @@ static int get_obs_maj_min (const char *obs, int *maj, int *min)
     return (np == 2);
 }
 
-static int get_n_ok_months (DATAINFO *pdinfo, int default_method,
+static int get_daily_offset (const DATAINFO *pdinfo,
+			     int y, int m, int d, 
+			     int skip)
+{
+    int ret = 0;
+
+    if (skip) {
+	/* moving to start of next month: offset = no. of
+	   observations in the first month */
+	ret = days_in_month_after(y, m, d, pdinfo->pd) + 1;
+    } else {
+	/* offset = no. of obs missing at start of first month */
+	ret = days_in_month_before(y, m, d, pdinfo->pd);
+    }
+
+    return ret;
+}
+
+static int get_n_ok_months (const DATAINFO *pdinfo, int default_method,
 			    int *startyr, int *startmon,
-			    int *endyr, int *endmon)
+			    int *endyr, int *endmon,
+			    int *offset, int *p_any_eop)
 {
     int y1, m1, d1, y2, m2, d2;
     int any_eop, any_sop, all_same;
-    int nm = -1;
+    int skip = 0, nm = -1;
 
     if (sscanf(pdinfo->stobs, "%d/%d/%d", &y1, &m1, &d1) != 3) {
 	return -1;
@@ -1497,6 +1516,7 @@ static int get_n_ok_months (DATAINFO *pdinfo, int default_method,
 	} else {
 	    *startmon += 1;
 	}
+	skip = 1;
 	nm--;
     }
 
@@ -1510,13 +1530,17 @@ static int get_n_ok_months (DATAINFO *pdinfo, int default_method,
 	nm--;
     }
 
+    *offset = get_daily_offset(pdinfo, y1, m1, d1, skip);
+    *p_any_eop = any_eop;
+
     return nm;
 }
 
 static double *
 daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 			 int i, int default_method, int nm,
-			 int yr, int mon)
+			 int yr, int mon, int offset, 
+			 int any_eop)
 {
     int method = COMPACT_METHOD(pdinfo, i);
     double *x;
@@ -1542,17 +1566,26 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
        to skip forward to the right starting point. */
 
     mdbak = 0;
-    sopt = eopt = 0; /* FIXME?? */
+    sopt = offset;
+    eopt = offset - 1;
 
     for (t=0; t<nm; t++) {
 	int mdays = get_days_in_month(mon, yr, pdinfo->pd);
 
-	if (method == COMPACT_SOP) {
-	    sopt += mdbak;
+	sopt += mdbak;
+	eopt += mdays;
+
+	if (t == 0 && offset > 0 && any_eop &&
+	    method != COMPACT_EOP) {
+	    x[t] = NADBL;
+	} else if (method == COMPACT_SOP) {
 	    x[t] = Z[i][sopt];
 	} else if (method == COMPACT_EOP) {
-	    eopt += (mdays - 1); /* FIXME?? */
-	    x[t] = Z[i][eopt];
+	    if (eopt >= pdinfo->n) {
+		x[t] = NADBL;
+	    } else {
+		x[t] = Z[i][eopt];
+	    }
 	} else {
 	    /* sum or average */
 	    int mt, dayt;
@@ -1560,7 +1593,7 @@ daily_series_to_monthly (double **Z, DATAINFO *pdinfo,
 	    x[t] = 0.0;
 	    for (mt=0; mt<mdays; mt++) {
 		dayt = sopt + mt;
-		if (na(Z[i][dayt])) {
+		if (dayt >= pdinfo->n || na(Z[i][dayt])) {
 		    x[t] = NADBL;
 		    break;
 		} else {
@@ -1589,10 +1622,11 @@ static int dataset_to_monthly (double **Z, DATAINFO *pdinfo,
 			       int default_method)
 {
     int nm, startyr, startmon, endyr, endmon;
+    int offset, any_eop;
     int i, err = 0;
 
     nm = get_n_ok_months(pdinfo, default_method, &startyr, &startmon,
-			 &endyr, &endmon);
+			 &endyr, &endmon, &offset, &any_eop);
 
     if (nm <= 0) {
 	gretl_errmsg_set(_("Compacted dataset would be empty"));
@@ -1606,7 +1640,8 @@ static int dataset_to_monthly (double **Z, DATAINFO *pdinfo,
 	    }
 	    x = daily_series_to_monthly(Z, pdinfo, i,
 					default_method, nm,
-					startyr, startmon);
+					startyr, startmon, 
+					offset, any_eop);
 	    if (x == NULL) {
 		err = E_ALLOC;
 	    } else {

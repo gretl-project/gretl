@@ -317,7 +317,8 @@ int day_starts_month (int d, int m, int y, int wkdays)
 int day_ends_month (int d, int m, int y, int wkdays)
 {
     int ret = 0;
-    int dm = days_in_month[leap_year(y)][m];
+    int leap = (m == 2)? leap_year(y) : 0;
+    int dm = days_in_month[leap][m];
 
     if (wkdays == 7) {
 	ret = (d == dm);
@@ -348,7 +349,8 @@ int day_ends_month (int d, int m, int y, int wkdays)
 int get_days_in_month (int mon, int yr, int wkdays)
 {
     int ret = 0;
-    int dm = days_in_month[leap_year(yr)][mon];
+    int leap = (mon == 2)? leap_year(yr) : 0;
+    int dm = days_in_month[leap][mon];
 
     if (wkdays == 7) {
 	ret = dm;
@@ -362,6 +364,44 @@ int get_days_in_month (int mon, int yr, int wkdays)
     }
 
     return ret;
+}
+
+int days_in_month_before (int yr, int mon, int day, int wkdays)
+{
+    int ret = 0;
+
+    if (wkdays == 7) {
+	ret = day - 1;
+    } else {
+	int i, wd;
+
+	for (i=1; i<day; i++) {
+	    wd = day_of_week_from_ymd(yr, mon, i);
+	    if (wd != 0 && wd != 6) ret++;
+	}
+    }
+
+    return ret;    
+}
+
+int days_in_month_after (int yr, int mon, int day, int wkdays)
+{
+    int ret = 0;
+    int leap = (mon == 2)? leap_year(yr) : 0;
+    int dm = days_in_month[leap][mon];
+
+    if (wkdays == 7) {
+	ret = dm - day;
+    } else {
+	int i, wd;
+
+	for (i=dm; i>day; i--) {
+	    wd = day_of_week_from_ymd(yr, mon, i);
+	    if (wd != 0 && wd != 6) ret++;
+	}
+    }
+
+    return ret;    
 }
 
 /* The following functions have nothing to do with the "cal" program,
