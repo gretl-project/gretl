@@ -1752,7 +1752,6 @@ static int real_adf_test (int varno, int order, int niv,
     int order_max = 0;
     int *list;
     int *biglist = NULL;
-    char pvstr[48];
     double DFt = NADBL;
     double pv = NADBL;
     char mask[4] = {0};
@@ -1879,41 +1878,45 @@ static int real_adf_test (int varno, int order, int niv,
 				   (order > 0)? 0 : dfmod.nobs, 
 				   niv, itv);
 
-	if (na(pv)) {
-	    sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
-	} else {
-	    sprintf(pvstr, "%s %.4g", 
-		    (order > 0)? _("asymptotic p-value") : _("p-value"), 
-		    pv);
-	} 
+	if (!(opt & OPT_Q)) {
+	    char pvstr[48];
 
-	if (!blurb_done) {
-	    if (order > 0) {
-		pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
-			order, pdinfo->varname[varno]);
+	    if (na(pv)) {
+		sprintf(pvstr, "%s %s", _("p-value"), _("unknown"));
 	    } else {
-		pprintf(prn, _("\nDickey-Fuller tests for %s\n"),
-			pdinfo->varname[varno]);
+		sprintf(pvstr, "%s %.4g", 
+			(order > 0)? _("asymptotic p-value") : _("p-value"), 
+			pv);
+	    } 
+
+	    if (!blurb_done) {
+		if (order > 0) {
+		    pprintf(prn, _("\nAugmented Dickey-Fuller tests, order %d, for %s\n"),
+			    order, pdinfo->varname[varno]);
+		} else {
+		    pprintf(prn, _("\nDickey-Fuller tests for %s\n"),
+			    pdinfo->varname[varno]);
+		}
+		pprintf(prn, _("sample size %d\n"), dfmod.nobs);
+		pputs(prn, _("unit-root null hypothesis: a = 1"));
+		pputs(prn, "\n\n");
+		blurb_done = 1;
 	    }
-	    pprintf(prn, _("sample size %d\n"), dfmod.nobs);
-	    pputs(prn, _("unit-root null hypothesis: a = 1"));
-	    pputs(prn, "\n\n");
-	    blurb_done = 1;
+
+	    pprintf(prn, "   %s\n", _(teststrs[i]));
+
+	    if (cointcode == 0) {
+		pprintf(prn, "   %s: %s\n", _("model"), 
+			(order > 0)? aug_models[i] : models[i]);
+	    }
+
+	    pprintf(prn, "   %s: %g\n"
+		    "   %s: t = %g\n"
+		    "   %s\n",
+		    _("estimated value of (a - 1)"), dfmod.coeff[dfnum],
+		    _("test statistic"), DFt,
+		    pvstr);	
 	}
-
-	pprintf(prn, "   %s\n", _(teststrs[i]));
-
-	if (cointcode == 0) {
-	    pprintf(prn, "   %s: %s\n", _("model"), 
-		    (order > 0)? aug_models[i] : models[i]);
-	}
-
-	pprintf(prn, "   %s: %g\n"
-		"   %s: t = %g\n"
-		"   %s\n",
-		_("estimated value of (a - 1)"), dfmod.coeff[dfnum],
-		_("test statistic"), DFt,
-		pvstr);	
 
 	if (opt & OPT_V) {
 	    /* verbose */
@@ -1923,7 +1926,7 @@ static int real_adf_test (int varno, int order, int niv,
 		gretl_model_set_double(&dfmod, "dfpval", pv);
 	    }
 	    printmodel(&dfmod, pdinfo, OPT_NONE, prn);
-	} else {
+	} else if (!(opt & OPT_Q)) {
 	    pputc(prn, '\n');
 	}
 
@@ -1934,7 +1937,7 @@ static int real_adf_test (int varno, int order, int niv,
 	if (cointcode == 0) {
 	    record_test_result(DFt, pv, "Dickey-Fuller");
 	}
-	if (cointcode >= 0) {
+	if (cointcode >= 0 && !(opt & OPT_Q)) {
 	    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
 	}	
     }
@@ -2074,6 +2077,7 @@ int kpss_test (int order, int varno, double ***pZ,
     }
 
     s2 /= T;
+    teststat = cumsum2 / (s2 * T * T);
 
     if (opt & OPT_V) {
 	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2);
@@ -2081,20 +2085,21 @@ int kpss_test (int order, int varno, double ***pZ,
 		cumsum2);
     }
 
-    pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
-	    (hastrend)? _("(including trend)") : _("(without trend)"));
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("\nKPSS test for %s %s\n\n"), pdinfo->varname[varno],
+		(hastrend)? _("(including trend)") : _("(without trend)"));
 
-    pprintf(prn, _("Lag truncation parameter = %d\n"), order);
+	pprintf(prn, _("Lag truncation parameter = %d\n"), order);
 
-    teststat = cumsum2 / (s2 * T * T);
-    pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
+	pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
 
-    pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
+	pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
 
-    if (hastrend) {
-	pprintf(prn, "%s: 0.119\t0.146\t0.176\t0.216\n\n", _("Critical values"));
-    } else {
-	pprintf(prn, "%s: 0.347\t0.463\t0.574\t0.739\n\n", _("Critical values"));
+	if (hastrend) {
+	    pprintf(prn, "%s: 0.119\t0.146\t0.176\t0.216\n\n", _("Critical values"));
+	} else {
+	    pprintf(prn, "%s: 0.347\t0.463\t0.574\t0.739\n\n", _("Critical values"));
+	}
     }
 
     record_test_result(teststat, NADBL, "KPSS");
