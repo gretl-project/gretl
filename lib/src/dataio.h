@@ -80,6 +80,8 @@ DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 
 void clear_datainfo (DATAINFO *pdinfo, int code);
 
+char **allocate_case_markers (int n);
+
 void destroy_dataset_markers (DATAINFO *pdinfo);
 
 int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);

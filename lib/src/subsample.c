@@ -135,40 +135,6 @@ int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
     return err;
 }
 
-/* allocate_case_markers:
- * @n: number of observations.
- *
- * Allocate storage for a set of @n case markers or observation
- * labels.
- * 
- * Returns: pointer to storage, or %NULL if allocation fails.
- */
-
-char **allocate_case_markers (int n)
-{
-    char **S;
-    int t;
-
-    S = malloc(n * sizeof *S);
-    if (S == NULL) return NULL;
-
-    for (t=0; t<n; t++) {
-	S[t] = malloc(OBSLEN);
-	if (S[t] == NULL) {
-	    int j;
-
-	    for (j=0; j<t; j++) {
-		free(S[j]);
-	    }
-	    free(S);
-	    return NULL;
-	}
-	S[t][0] = '\0';
-    }
-
-    return S;
-}
-
 /* .......................................................... */
 
 static double *get_old_mask (double **Z, const DATAINFO *pdinfo)
