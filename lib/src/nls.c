@@ -24,7 +24,13 @@
 #include "libgretl.h" 
 #include "internal.h"
 #include "../../plugin/f2c.h"
+#include "../../plugin/clapack_double.h"
 #include "../../minpack/minpack.h"  
+
+enum {
+    NUMERIC_DERIVS,
+    ANALYTIC_DERIVS
+} nls_modes;
 
 typedef struct _nls_spec nls_spec;
 typedef struct _nls_term nls_term;
@@ -36,6 +42,7 @@ struct _nls_term {
 };
 
 struct _nls_spec {
+    int mode;           /* derivatives: numeric or analytic */
     int depvar;         /* ID number of dependent variable */
     char *nlfunc;       /* string representation of regression function */
     int nparam;         /* number of parameters to be estimated */
@@ -101,12 +108,13 @@ static int add_term_from_nlfunc (const char *vname)
 	return E_ALLOC;
     }
 
+    nlspec.terms = terms;
     nlspec.coeff = coeff;
 
     terms[nt-1].varnum = v;
     strcpy(terms[nt-1].name, vname);
+    terms[nt-1].deriv = NULL;
     nlspec.coeff[nt-1] = (*pZ)[v][0];
-    nlspec.terms = terms;
     nlspec.nparam += 1;
 	
     return 0;
@@ -350,6 +358,7 @@ static MODEL GNR (double *fvec, double *fjac)
     MODEL gnr;
     int i, j, t;
     int t1 = nlspec.t1, t2 = nlspec.t2;
+    int T = t2 - t1 + 1;
     int err = 0;
 
     nlspec.t1 = 0;
@@ -383,16 +392,15 @@ static MODEL GNR (double *fvec, double *fjac)
 		else nZ[i][t] = fvec[j++];
 	    }
 	} else {
-	    get_deriv(i-1, nZ[i]);
-#if 0
-	    j = T * (i - 1);
-	    for (t=0; t<pdinfo->n; t++) {
-		if (t < t1 || t > t2) nZ[i][t] = NADBL;
-		else nZ[i][t] = fjac[j++];
-		fprintf(stderr, "Set nZ[%d][%d] = %g\n",
-			i, t, nZ[i][t]); 
+	    if (nlspec.mode == ANALYTIC_DERIVS) {
+		get_deriv(i-1, nZ[i]);
+	    } else {
+		j = T * (i - 1);
+		for (t=0; t<pdinfo->n; t++) {
+		    if (t < t1 || t > t2) nZ[i][t] = NADBL;
+		    else nZ[i][t] = fjac[j++];
+		}
 	    }
-#endif	    
 	}
     }
 
@@ -516,6 +524,7 @@ static int nls_spec_add_term (const char *line, const double **Z,
     if (!err) {
 	nlspec.terms = terms;
 	nlspec.nparam += 1;
+	nlspec.mode = ANALYTIC_DERIVS;
     }
 	
     return err;
@@ -549,6 +558,7 @@ static void clear_nls_spec (void)
     free(nlspec.coeff);
     nlspec.coeff = NULL;
 
+    nlspec.mode = NUMERIC_DERIVS;
     nlspec.nparam = 0;
     nlspec.depvar = 0;
     nlspec.iters = 0;
@@ -616,12 +626,12 @@ static int check_derivs (integer m, integer n, double *x,
     return zerocount;
 }
 
-static int lm_calculate (double *fvec, double *fjac, double toler)
+static int lm_calculate (double *fvec, double *fjac)
 {
     integer info, lwa;
     integer m, n, ldfjac;
     integer *ipvt;
-    doublereal tol;
+    doublereal tol = 0.0001;
     doublereal *wa;
     int err = 0;
 
@@ -629,7 +639,6 @@ static int lm_calculate (double *fvec, double *fjac, double toler)
     n = nlspec.nparam;             /* number of parameters */
     lwa = 5 * n + m;               /* work array size */
     ldfjac = m;                    /* leading dimension of fjac array */
-    tol = toler;                   /* tolerance for convergence */
 
     wa = malloc(lwa * sizeof *wa);
     ipvt = malloc(n * sizeof *ipvt);
@@ -678,6 +687,28 @@ static int lm_calculate (double *fvec, double *fjac, double toler)
     free(ipvt);
 
     return err;    
+}
+
+static int fjac_invert (double *ap)
+{
+    char uplo = 'U';
+    char diag = 'N';
+    integer info = 0;
+    integer n;
+    int i, np = nlspec.nparam;
+
+    n = (np * (np + 1)) / 2;
+    
+    dtptri_(&uplo, &diag, &n, ap, &info);
+
+    fprintf(stderr, "dtptri: info = %d\n", (int) info);
+
+    for (i=0; i<n; i++) {
+	fprintf(stderr, "ap[%d] = %g\n", i, ap[i]);
+	fprintf(stderr, "root ap[%d] = %g\n", i, sqrt(ap[i]));
+    }
+
+    return 0;
 }
 
 /*
@@ -775,13 +806,11 @@ static int lm_approximate (double *fvec, double *fjac)
 
     if (1) {
 	int i;
-	for (i=0; i<n; i++) {
-	    fprintf(stderr, "qtf[%d] = %g\n", i, qtf[i]);
-	    fprintf(stderr, "fvec[%d] = %g\n", i, fvec[i]);
-	}
+
 	for (i=0; i<n*m; i++) {
 	    fprintf(stderr, "fjac[%d] = %g\n", i, fjac[i]);
-	}	
+	}
+	fjac_invert(fjac);
     }
 
  nls_cleanup:
@@ -800,9 +829,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 {
     MODEL nlsmod;
     double *fvec, *fjac;
-    double toler = 0.0001; /* make this configurable */
     int origv = maininfo->v;
-    int numderiv = 0;
     int err = 0;
 
     _init_model(&nlsmod, maininfo);
@@ -818,10 +845,10 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     pdinfo = maininfo;
     prn = mainprn; 
 
-    if (nlspec.nparam == 0) {
-	numderiv = 1;
+    if (nlspec.mode == NUMERIC_DERIVS) {
 	err = get_params_from_nlfunc();
 	if (err) {
+	    clear_nls_spec();
 	    nlsmod.errcode = E_PARSE;
 	    return nlsmod;
 	}
@@ -835,14 +862,11 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     }   
 
     fvec = malloc(pdinfo->n * sizeof *fvec);
-    if (fvec == NULL) {
-	nlsmod.errcode = E_ALLOC;
-	return nlsmod;
-    }
-
     fjac = malloc(pdinfo->n * nlspec.nparam * sizeof *fvec);
-    if (fjac == NULL) {
+    if (fvec == NULL || fjac == NULL) {
 	free(fvec);
+	free(fjac);
+	clear_nls_spec();
 	nlsmod.errcode = E_ALLOC;
 	return nlsmod;
     }
@@ -850,12 +874,12 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     nlsmod.errcode = err = check_for_missing_vals();
 
     if (!err) {
-	if (numderiv) {
+	if (nlspec.mode == NUMERIC_DERIVS) {
 	    pprintf(prn, _("Using numerical derivatives\n"));
 	    err = lm_approximate(fvec, fjac);
 	} else {
 	    pprintf(prn, _("Using analytical derivatives\n"));
-	    err = lm_calculate(fvec, fjac, toler);
+	    err = lm_calculate(fvec, fjac);
 	}
     }
 
