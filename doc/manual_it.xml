@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-"/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.3//EN"
+"/usr/share/sgml/docbook-xml-4.3/docbookx.dtd" [
 
 <!ENTITY version "1.0.8">
 <!ENTITY latex "LaTeX">
