@@ -614,7 +614,7 @@ void about_dialog (gpointer data)
     tempstr = g_strdup_printf ("gretl, version %s\n"
 			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/\n",
+			       "http://gretl.sourceforge.net/\n%s",
 			       version_string, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
