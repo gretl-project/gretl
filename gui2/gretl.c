@@ -709,10 +709,10 @@ int main (int argc, char *argv[])
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc(_("startup"));
 
-    tryscript[0] = '\0';
-    scriptfile[0] = '\0';
-    paths.datfile[0] = '\0';
-    dbname[0] = '\0';
+    *tryscript = '\0';
+    *scriptfile = '\0';
+    *paths.datfile = '\0';
+    *dbname = '\0';
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME

@@ -1305,6 +1305,8 @@ void show_paths (PATHS *ppaths)
 
 int set_paths (PATHS *ppaths, int defaults, int gui)
 {
+    char envstr[MAXLEN];
+
     if (defaults) {
 	char *home;
 
@@ -1348,6 +1350,10 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 #else
     *ppaths->plotfile = '\0';
 #endif
+
+    sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%s\\share\\gtksourceview-1.0"
+	    "\\language-specs", ppaths->gretldir);
+    putenv(envstr);
 
     internal_path_stuff (1, ppaths->gretldir);
 

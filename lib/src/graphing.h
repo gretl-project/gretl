@@ -75,6 +75,7 @@ typedef struct {
     char mxtics[4];            /* minor tics */
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
     int nlines;                /* number of lines */
+    int n_y_series;            /* number of actual y-axis data series (not formulae) */
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */

@@ -1791,6 +1791,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->ptr = NULL;
     spec->edit = 0;
     spec->nlines = 0;
+    spec->n_y_series = 0;
 
     spec->termtype[0] = 0;
     spec->t1 = spec->t2 = 0;
@@ -2200,6 +2201,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
     }
 
+    /* Below: read the data from the plot.  There may be more
+       than one y series.  
+    */
+
     j = 1;
     t = 0;
     n = 0;
@@ -2223,6 +2228,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
 	t++;
     }
+
+    spec->n_y_series = j - 1;
 
     /* put "tmpy" in as last data column */
     for (t=0; t<n; t++) {
@@ -2440,7 +2447,9 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     }
 
     data_x = &plot->spec->data[0];
-    data_y = &plot->spec->data[plot_n];
+    /* there's an ambiguity here: in case of more than one y series,
+       what do we want to use as "data_y"? */
+    data_y = &plot->spec->data[plot->spec->n_y_series * plot_n];
 
     /* try to find the best-matching data point */
     for (t=0; t<plot_n; t++) {
@@ -2453,13 +2462,6 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 	    best_match = t;
 	}
     }
-
-#ifndef G_OS_WIN32
-    /* unset the labeled flag for other points */
-    for (t=0; t<plot_n; t++) {
-	if (t != best_match) plot->labeled[t] = 0;
-    }
-#endif
 
     /* if the point is already labeled, skip */
     if (plot->labeled[best_match]) return;

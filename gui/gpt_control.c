@@ -1642,6 +1642,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->nlabels = 0;
     spec->ptr = NULL;
     spec->nlines = 0;
+    spec->n_y_series = 0;
 
     spec->termtype[0] = 0;
     spec->t1 = spec->t2 = 0;
@@ -2074,6 +2075,8 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	t++;
     }
 
+    spec->n_y_series = j - 1;
+
     /* put "tmpy" in as last data column */
     for (t=0; t<n; t++) {
 	spec->data[n + t] = tmpy[t];
@@ -2289,7 +2292,7 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     }
 
     data_x = &plot->spec->data[0];
-    data_y = &plot->spec->data[plot_n];
+    data_y = &plot->spec->data[plot->spec->n_y_series * plot_n];
 
     /* try to find the best-matching data point */
     for (t=0; t<plot_n; t++) {
