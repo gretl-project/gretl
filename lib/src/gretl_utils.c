@@ -1348,11 +1348,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     if (ppaths->userdir[strlen(ppaths->userdir) - 1] != SLASH)
 	strcat(ppaths->userdir, "\\");
 
-#if 0
-    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
-#else
     *ppaths->plotfile = '\0';
-#endif
 
     sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%s\\share\\gtksourceview-1.0"
 	    "\\language-specs", ppaths->gretldir);
@@ -1414,11 +1410,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
 
-#if 0
-    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
-#else
     *ppaths->plotfile = '\0';
-#endif
 
     internal_path_stuff (1, ppaths->gretldir);
 

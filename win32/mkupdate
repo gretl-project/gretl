@@ -32,13 +32,11 @@ find ~/stats/esl/win32/runtime/misc-dll -newer ~/gretl_marker >> update.files
 
    cat MANIFEST.copy | sed s+'^gretl/'++ > update.tarlist
 
-4. Make a new dist, to get all updated files into windist/gretl.
+4. Make a new dist, make an update tar package, and ship to ricardo
 
-5. Make an update tar package:
-
-   cd windist/gretl
-   tar cvzfT wgretl_update.tgz ../../update.tarlist
-
-6. Ship to ricardo:
-
+   make dist
+   cd windist/gretl && tar cvzfT wgretl_update.tgz ../../update.tarlist
    scp wgretl_update.tgz cottrell@ricardo:./www-home/gretl/cgi-bin/updater
+
+5. Go to ricardo and check things out.  If it's all OK, move the
+   update archive up a dir, to cgi-bin

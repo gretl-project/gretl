@@ -3306,8 +3306,8 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 #ifdef G_OS_WIN32
 	gchar *cmdline;
 
-	g_strdup_printf(cmdline, "\"%s\" \"%s\" -", paths.gnuplot,
-			paths.plotfile);
+	cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
+				  paths.plotfile);
 	create_child_process(cmdline, NULL);
 	g_free(cmdline);
 #else

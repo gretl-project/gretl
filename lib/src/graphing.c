@@ -1293,13 +1293,17 @@ int gnuplot_3d (LIST list, const char *literal,
 
 	_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
 	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
-	
+
 	_init_model(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
+	    double uadj = (umax - umin) * 0.02;
+	    double vadj = (vmax - vmin) * 0.02;
+
 	    sprintf(surface, "[u=%g:%g] [v=%g:%g] "
 		    "%g+(%g)*u+(%g)*v title '', ", 
-		    umin, umax, vmin, vmax,
+		    umin - uadj, umax + uadj, 
+		    vmin - vadj, vmax + vadj,
 		    plotmod.coeff[0], plotmod.coeff[1],
 		    plotmod.coeff[2]);
 	} 
