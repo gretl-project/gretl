@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.999\n"
 "POT-Creation-Date: 2002-07-23 08:47-0400\n"
-"PO-Revision-Date: 2002-07-23 10:28+0200\n"
+"PO-Revision-Date: 2002-07-23 16:54-0400\n"
 "Last-Translator: \n"
 "Language-Team:  <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -3521,7 +3521,7 @@ msgstr "gretlcli_hlp.txt"
 
 #: lib/src/utils.c:1346 lib/src/utils.c:1349
 msgid "gretlcli.hlp"
-msgstr "gretlcli.hlp"
+msgstr "gretlcli.hlp.es"
 
 #: lib/src/utils.c:1851
 msgid "forecasting model failed in fcast_with_errs()\n"
