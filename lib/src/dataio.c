@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
+#include "gretl_string_table.h"
 
 #include <zlib.h>
 #include <ctype.h>
@@ -2625,6 +2626,36 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
+static int process_csv_obs (const char *str, int i, int k, int t, 
+			    double **Z, gretl_string_table **pst,
+			    PRN *prn)
+{
+    int err = 0;
+
+    if (csv_missval(str, k, t+1, prn)) {
+	Z[i][t] = NADBL;
+    } else {
+	if (check_atof(str)) {
+	    int ix;
+
+	    if (*pst == NULL) {
+		*pst = gretl_string_table_new();
+	    }
+	    if ((ix = gretl_string_table_index(*pst, str, k, prn)) > 0) {
+		Z[i][t] = (double) ix;
+	    } else {
+		pprintf(prn, "%s\n", gretl_errmsg);
+		*gretl_errmsg = '\0';
+		err = 1;
+	    }
+	} else {
+	    Z[i][t] = atof(str);
+	}
+    }
+
+    return err;
+}
+
 /**
  * import_csv:
  * @pZ: pointer to data set.
@@ -2661,6 +2692,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     char delim = '\t';
     int numcount, auto_name_vars = 0;
     char *missvec = NULL;
+    gretl_string_table *st = NULL;
 
     if (*ppdinfo != NULL) delim = (*ppdinfo)->delim;
 
@@ -2876,16 +2908,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
-		if (csv_missval(csvstr, k, t+1, prn)) {
-		    csvZ[nv][t] = NADBL;
-		} else {
-		    if (check_atof(csvstr)) {
-			pprintf(prn, "%s\n", gretl_errmsg);
-			*gretl_errmsg = '\0';
-			goto csv_bailout;
-		    } else {
-			csvZ[nv][t] = atof(csvstr);
-		    }
+		if (process_csv_obs(csvstr, nv, k, t, csvZ, &st, prn)) {
+		    goto csv_bailout;
 		}
 	    }
 	}
@@ -2896,6 +2920,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
+
+    gretl_string_table_destroy(st);
 
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;
