@@ -47,7 +47,7 @@ typedef struct {
 
 typedef struct {
     int nplots;
-    int numbers;
+    char *numbers;
     BOXPLOT *plots;
     int width, height;
     double boxwidth;
@@ -410,7 +410,7 @@ static void
 gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 		  GtkStyle *style, GtkPlotPC *pc,
 		  int height, double boxwidth, 
-		  double gmax, double gmin, int numbers)
+		  double gmax, double gmin, char *numbers)
 {
     double points[4];
     double ybase = height * headroom / 2.0;
@@ -534,13 +534,13 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	char numstr[9];
 	double x = xcenter + .55 * boxwidth;
 
-	sprintf(numstr, "%4.3g", plot->uq);
+	sprintf(numstr, numbers, plot->uq);
 	setup_text (area, pixmap, gc, pc, numstr, 
 		    x, uq, GTK_JUSTIFY_LEFT);
-	sprintf(numstr, "%4.3g", plot->median);
+	sprintf(numstr, numbers, plot->median);
 	setup_text (area, pixmap, gc, pc, numstr, 
 		    x, median, GTK_JUSTIFY_LEFT);
-	sprintf(numstr, "%4.3g", plot->lq);
+	sprintf(numstr, numbers, plot->lq);
 	setup_text (area, pixmap, gc, pc, numstr, 
 		    x, lq, GTK_JUSTIFY_LEFT);	
     }
@@ -957,7 +957,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 
     plotgrp->height = height;
     plotgrp->width = width;
-    plotgrp->numbers = 0;
+    plotgrp->numbers = NULL;
 
     read_boxrc(plotgrp);
 
@@ -1208,8 +1208,10 @@ static void read_boxrc (PLOTGROUP *grp)
 		else if (!strcmp(key, "height") && atoi(val) > 0) 
 		    grp->height = atoi(val);
 		else if (!strcmp(key, "numbers") && 
-			 !strcmp(val, "true")) 
-		    grp->numbers = 1;
+			 (grp->numbers = malloc(8))) {
+		    strncpy(grp->numbers, val, 7);
+		    grp->numbers[7] = '\0';
+		}
 	    }
 	}
 	fclose (fp);

@@ -111,7 +111,14 @@ max = 4.0
 min = 0
 width = 400
 height = 448
-numbers = true
+numbers = %3.2f
+
+On the last line, the value associated with "numbers" is a "printf" format
+string as in the C programming language; if specified, this controls the
+printing of the median and quartiles next to the boxplot, if no "numbers"
+entry is given these values are not printed.  In the example, the values
+will be printed to a width of 3 digits, with 2 digits of precision following
+the decimal point.
 
 Not all of the options need be specified, and the order doesn't matter.  Lines
 not matching the pattern "key = value" are ignored, as are lines that begin
