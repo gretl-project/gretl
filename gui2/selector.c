@@ -365,6 +365,7 @@ static void remove_from_right_callback (GtkWidget *w, gpointer data)
 
     /* get to the last row */
     if (gtk_tree_model_get_iter_first(model, &iter)) {
+	last = iter;
 	while (gtk_tree_model_iter_next(model, &iter)) last = iter;
     } else return;
     
@@ -433,12 +434,15 @@ static void clear_vars (GtkWidget *w, selector *sr)
     selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(sr->varlist));
     gtk_tree_selection_unselect_all(selection);
 
-    if (sr->depvar != NULL) 
+    if (sr->depvar != NULL) {
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-    if (sr->code == GR_DUMMY || sr->code == GR_3D)
+    }
+
+    if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
-    else
+    } else {
 	clear_varlist(sr->rightvars);
+    }
 
     if (MODEL_CODE(sr->code)) {
 	GtkTreeModel *model = 
@@ -685,6 +689,13 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 static void maybe_delete_dialog (GtkWidget *widget, selector *sr)
 {
     if (open_dialog != NULL && !sr->error) {
+	gtk_widget_destroy(sr->dlg);
+    }
+}
+
+static void cancel_selector (GtkWidget *widget, selector *sr)
+{
+    if (open_dialog != NULL) {
 	gtk_widget_destroy(sr->dlg);
     }
 }
@@ -1009,12 +1020,15 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) 
+    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) { 
 	extra_var_box (sr, right_vbox);
-    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2)
+    }
+    else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2) {
 	lag_order_spin (sr, right_vbox);
-    else if (sr->code == TSLS)
+    }
+    else if (sr->code == TSLS) {
 	tsls_box (sr, right_vbox);
+    }
     else if (sr->code == AR) {
 	sr->extra = gtk_entry_new();
 	gtk_box_pack_start(GTK_BOX(right_vbox), sr->extra, 
@@ -1121,7 +1135,7 @@ build_selector_buttons (selector *sr, void (*okfunc)())
     GTK_WIDGET_SET_FLAGS(tmp, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(sr->action_area), tmp, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked",
-		     G_CALLBACK(maybe_delete_dialog), sr);
+		     G_CALLBACK(cancel_selector), sr);
     gtk_widget_show(tmp);
 
     if (sr->code != PRINT && !SAVE_DATA_ACTION(sr->code)) {
@@ -1213,13 +1227,15 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 || 
-	cmdcode == GR_DUMMY || cmdcode == GR_3D) 
+	cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	build_mid_section(sr, right_vbox);
+    }
     
     if (cmdcode == GR_DUMMY) {
 	/* special case: choose dummy var for factorized plot */
 	dummy_box(sr, right_vbox);
     } else if (cmdcode == GR_3D) {
+	/* special case: choose Z axis variable */
 	zvar_box(sr, right_vbox);
     } else { 
 	/* all other uses: scrollable list of vars */

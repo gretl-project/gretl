@@ -37,7 +37,7 @@ find ~/stats/esl/win32/runtime/misc-dll -newer ~/gretl_marker >> update.files
 5. Make an update tar package:
 
    cd windist/gretl
-   tar cvzfT wgretl_update.tgz /path/to/update.tarlist
+   tar cvzfT wgretl_update.tgz ../../update.tarlist
 
 6. Ship to ricardo:
 

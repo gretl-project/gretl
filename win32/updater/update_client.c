@@ -158,7 +158,8 @@ time_t get_time_from_stamp_file (const char *fname)
 
 int main (int argc, char *argv[])
 {
-    int i, err = 0;
+    int i, err = 0, tarerr = 0, remerr = 0;
+    int unpack_ok = 0;
     char *getbuf = NULL;
     char *line, fname[48], errbuf[256], infobuf[80];
     const char *testfile = "gretl.stamp";
@@ -218,8 +219,9 @@ int main (int argc, char *argv[])
 		listerr(errbuf, fname);
 		return 1;
 	    }
-	    untgz(fname);
-	    remove(fname);
+	    tarerr = untgz(fname);
+	    remerr = remove(fname);
+	    if (!err && !tarerr && !remerr) unpack_ok = 1;
 	}
     }
 
@@ -235,7 +237,6 @@ int main (int argc, char *argv[])
 	if (getbuf) 
 	    infobox(getbuf);
 	free(getbuf);
-	return 0;
     }
     
     else if (strcmp(argv[1], "-f") == 0) { /* get a specified file */
@@ -245,9 +246,14 @@ int main (int argc, char *argv[])
 	    listerr(errbuf, fname);
 	    return 1;
 	}
-	untgz(fname);
-	remove(fname);
-	return 0;
+	tarerr = untgz(fname);
+	remerr = remove(fname);
+	if (!err && !tarerr && !remerr) unpack_ok = 1;
+    }
+
+    if (unpack_ok) {
+	sprintf(infobuf, "Successfully unpacked %s", fname);
+	infobox(infobuf);
     }
 
     return err;

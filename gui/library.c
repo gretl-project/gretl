@@ -3404,6 +3404,8 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 
     if (check_cmd(line)) return;
 
+    if (command.list[0] != 3) return;
+
     err = gnuplot_3d(command.list, NULL, &Z, datainfo,
 		     &paths, &plot_count, GP_GUI);
 

@@ -421,6 +421,23 @@ To find out more about gnuplot, see http://ricardo.ecn.wfu.edu/gnuplot.html or
 http://www.gnuplot.info.
 
 #
+3-D plots
+@Graphs
+generating 3-D plots
+
+This feature works best if you have gnuplot 3.8 or higher installed.  In that
+case you can manipulate the 3-D plot with the mouse (rotate it, and expand or
+shrink the axes).
+
+In composing a 3-D plot, note that the Z-axis will be shown as the vertical
+axis.  Thus if you have some dependent variable that you think may be
+influenced by two independent variables, you should put the dependent variable
+on the Z-axis, and the independent variable on the X and Y axes.  
+
+Unlike most other gretl graphs, 3-D plots are controlled by gnuplot rather
+than gretl itself.  The gretl graph-editing menu is not available.
+
+#
 hccm
 @Estimation
 Heteroskedasticity Consistent Covariance Matrix

@@ -80,6 +80,7 @@ static struct gui_help_item gui_help_items[] = {
     { GR_DUMMY,   "factorized" },
     { GR_BOX,     "boxplots" },
     { GR_NBOX,    "boxplots" },
+    { GR_3D,      "3-D" },
     { RANGE_MEAN, "range-mean" },
     { ONLINE,     "online" },
     { MARKERS,    "markers" },

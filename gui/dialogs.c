@@ -501,8 +501,8 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
     cancel_d->all_buttons = d->all_buttons;
 
     gtk_widget_show (d->dialog); 
-    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
 #if 0
+    gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(mdata->w));
     window_set_die_with_main (d->dialog); 
 #endif
     gtk_main();

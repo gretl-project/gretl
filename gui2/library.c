@@ -3291,7 +3291,9 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s", buf);
 
-    if (check_cmd(line)) return;
+    if (check_cmd(line) || command.list[0] != 3) {
+	return;
+    }
 
     err = gnuplot_3d(command.list, NULL, &Z, datainfo,
 		     &paths, &plot_count, GP_GUI);
@@ -3318,8 +3320,11 @@ void do_splot_from_selector (GtkWidget *widget, gpointer p)
 	    perror("fork");
 	    return;
 	} else if (pid == 0) {
-	    execlp("xterm", "xterm", "-e", paths.gnuplot, 
-		   paths.plotfile, "-", NULL);
+	    execlp("xterm", "xterm", "+sb", "+ls",
+		   "-geometry", "40x4", "-title",
+		   "gnuplot: type q to quit",
+		   "-e", paths.gnuplot, paths.plotfile, "-", 
+		   NULL);
 	    perror("execlp");
 	    _exit(EXIT_FAILURE);
 	}
