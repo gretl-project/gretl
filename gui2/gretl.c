@@ -529,6 +529,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Model/_Two-Stage Least Squares..."), NULL, model_callback, TSLS, NULL, GNULL },
     { N_("/Model/_Logit..."), NULL, model_callback, LOGIT, NULL, GNULL },
     { N_("/Model/_Probit..."), NULL, model_callback, PROBIT, NULL, GNULL },
+    { N_("/Model/Tobit..."), NULL, model_callback, TOBIT, NULL, GNULL },
     { N_("/Model/Logistic..."), NULL, model_callback, LOGISTIC, NULL, GNULL },
     { N_("/Model/Least _Absolute Deviation..."), NULL, model_callback, LAD, NULL, GNULL },
     { N_("/Model/_Rank correlation..."), NULL, gretl_callback, SPEARMAN, NULL, GNULL },

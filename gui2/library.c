@@ -2329,6 +2329,11 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = model_output(pmod, prn);
 	break;
 
+    case TOBIT:
+	*pmod = tobit_model(cmd.list, &Z, datainfo);
+	err = model_output(pmod, prn);
+	break;
+
     case LOGISTIC:
 	delete_selection_dialog(sr);
 	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
@@ -2950,7 +2955,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
 }
-#endif
+#endif /* HAVE_TRAMO || HAVE_X12A */
 
 /* ........................................................... */
 

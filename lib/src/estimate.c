@@ -3068,3 +3068,36 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 
     return lmod;
 }
+
+/**
+ * tobit_model:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ *
+ * Estimate the model given in @list using Tobit.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL tmod;
+    void *handle;
+    MODEL (* tobit_estimate) (int *, double ***, DATAINFO *);
+
+    *gretl_errmsg = '\0';
+
+    tobit_estimate = get_plugin_function("tobit_estimate", &handle);
+    if (tobit_estimate == NULL) {
+	gretl_model_init(&tmod, NULL);
+	tmod.errcode = E_FOPEN;
+	return tmod;
+    }
+
+    tmod = (*tobit_estimate) (list, pZ, pdinfo);
+
+    close_plugin(handle);
+
+    return tmod;
+}

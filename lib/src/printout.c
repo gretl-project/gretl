@@ -542,9 +542,8 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
 
     if (pmod->ci == TSLS) {
 	k = 2;
-	while (pmod->list[k++] != LISTSEP) {
-	    nbetas++;
-	}
+	nbetas = 0;
+	while (pmod->list[k++] != LISTSEP) nbetas++;
     } else {
 	nbetas = pmod->list[0] - 1;
     }
@@ -558,6 +557,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     }
 
     if (pmod->vcv == NULL) {
+	fprintf(stderr, "pmod->vcv is NULL; making VCV now\n");
 	if (makevcv(pmod)) return E_ALLOC;
     }
 
@@ -573,8 +573,12 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
 static void outxx (const double xx, int ci, PRN *prn)
 {
     if (isnan(xx) || na(xx)) { 
+	if (ci == CORR) {
 	    pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), 
 		    _("undefined"));
+	} else {
+	    pputs(prn, "              ");
+	}
     }
 	
     else if (ci == CORR) {

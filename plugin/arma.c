@@ -727,6 +727,13 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	armod.errcode = E_NOCONV;
     } else {
 	cmplx *roots;
+	int qr_bak = get_use_qr();
+
+	/* run OPG once more using QR, to get VCV matrix */
+	clear_model(&armod, NULL);
+	set_use_qr(1);
+	armod = lsq(alist, &aZ, ainfo, OLS, OPT_A, 0.0);
+	set_use_qr(qr_bak);
 
 	armod.lnL = ll; 
 	rewrite_arma_model_stats(&armod, coeff, list, y, e, pdinfo);

@@ -88,15 +88,16 @@ Usage:          arma p q ; depvar
                 arma p q ; depvar --verbose
 Example:        ar 1 1 ; y 
 Options:        --x-12-arima (use X-12-ARIMA for estimates)
-                --verbose (show details of iterations)
+                --verbose    (show details of iterations)
+                --vcv        (print covariance matrix)
 
 Estimates a univariate ARMA (Autoregressive, Moving Average) model.  The
 integer values p and q represent the AR and MA orders respectively.
 
 The default is to use the "native" gretl ARMA function; the --x-12-arima
 option calls for use of X-12-ARIMA instead (this will work only if the
-X-12-ARIMA package is installed).  The --verbose and --x-12-arima options may
-be combined.
+X-12-ARIMA package is installed).  The various options may be combined, except
+that --vcv will not work with --x-12-arima.
 
 The native gretl ARMA algorithm uses conditional maximum likelihood.  For
 details, please see the gretl manual.

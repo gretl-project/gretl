@@ -2225,6 +2225,28 @@ static int check_modelstat (const MODEL *pmod, int idx)
     return 0;
 }
 
+static int arma_model_stat_pos (const char *s, const MODEL *pmod)
+{
+    int p = -1;
+
+    if (_isnumber(s)) {
+	p = atoi(s) - 1;
+	if (p >= pmod->ncoeff) p = -1;
+	return p;
+    } else if (pmod->params != NULL) {
+	int i;
+
+	for (i=1; i<=pmod->ncoeff; i++) {
+	    if (!strcmp(s, pmod->params[i])) {
+		p = i - 1;
+		break;
+	    }
+	}
+    }
+
+    return p;
+}
+
 static double 
 get_model_data_element (const char *s, GENERATE *genr,
 			MODEL *pmod, int idx)
@@ -2268,19 +2290,28 @@ get_model_data_element (const char *s, GENERATE *genr,
 	    return NADBL;
 	}
 
-	lv = _isnumber(s)? atoi(s) : varindex(genr->pdinfo, s);
-	vi = listpos(lv, pmod->list);
+	if (pmod->ci == ARMA) {
+	    vi = arma_model_stat_pos(s, pmod);
+	    if (vi < 0) {
+		genr->err = E_INVARG;
+		return NADBL;
+	    }
+	} else {
+	    lv = _isnumber(s)? atoi(s) : varindex(genr->pdinfo, s);
+	    vi = listpos(lv, pmod->list);
 
-	if (vi == 1) vi = 0;
-	if (!vi) {
-	    genr->err = E_INVARG;
-	    return NADBL;
+	    if (vi < 2) {
+		genr->err = E_INVARG;
+		return NADBL;
+	    } else {
+		vi -= 2;
+	    }
 	}
 
 	if (idx == T_COEFF && pmod->coeff != NULL) { 
-	    x = pmod->coeff[vi-2];
+	    x = pmod->coeff[vi];
 	} else if (pmod->sderr != NULL) {
-	    x = pmod->sderr[vi-2];
+	    x = pmod->sderr[vi];
 	} else {
 	    genr->err = E_INVARG;
 	}
@@ -3402,8 +3433,8 @@ static double genr_corr (const char *str, double ***pZ,
 
 /* ...................................................... */
 
-static int get_nls_param_number (const MODEL *pmod, 
-				 const char *vname)
+static int get_model_param_number (const MODEL *pmod, 
+				   const char *vname)
 {
     int i;
 
@@ -3421,7 +3452,8 @@ static int get_nls_param_number (const MODEL *pmod,
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod)
 {
-    int i, j, k, n, nv, p, v1, v2, v1l, v2l;
+    int v1 = 0, v2 = 0;
+    int i, j, k, n, p, v1l, v2l;
     char v1str[VNAMELEN], v2str[VNAMELEN];
 
     if (pmod == NULL || pmod->list == NULL) return NADBL;
@@ -3442,33 +3474,38 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     v2str[i] = '\0';
 
     /* are they valid? */
-    v1 = varindex(pdinfo, v1str);
-    v2 = varindex(pdinfo, v2str);
-    if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
+    if (pmod->ci != NLS && pmod->ci != ARMA) {
+	v1 = varindex(pdinfo, v1str);
+	v2 = varindex(pdinfo, v2str);
+	if (v1 >= pdinfo->v || v2 >= pdinfo->v) return NADBL;
+    }
 
     /* check model list */
-    if (pmod->ci == NLS) {
-	v1l = get_nls_param_number(pmod, v1str);
-	v2l = get_nls_param_number(pmod, v2str);
+    if (pmod->ci == NLS || pmod->ci == ARMA) {
+	v1l = get_model_param_number(pmod, v1str);
+	v2l = get_model_param_number(pmod, v2str);
     } else {
 	v1l = listpos(v1, pmod->list);
 	v2l = listpos(v2, pmod->list);
     }
-    if (!v1l || !v2l) return NADBL;
+
+    if (v1l == 0 || v2l == 0) return NADBL;
+
+    v1l -= 2;
+    v2l -= 2;
 
     /* make model vcv matrix if need be */
     if (pmod->vcv == NULL && makevcv(pmod)) return NADBL;
 
     /* now find the right entry */
-    nv = pmod->list[0];
     if (v1l > v2l) {
 	k = v1l;
 	v1l = v2l;
 	v2l = k;
     }
     k = 0;
-    for (i=2; i<=nv; i++) {
-	for (j=2; j<=nv; j++) {
+    for (i=0; i<pmod->ncoeff; i++) {
+	for (j=0; j<pmod->ncoeff; j++) {
 	    if (j < i) continue;
 	    if (i == v1l && j == v2l) return pmod->vcv[k];
 	    k++;

@@ -146,7 +146,7 @@ struct plugin_function plugin_functions[] = {
     { "tobit_model",       P_TOBIT },
 
     /* sentinel */
-    { NULL, 0 },
+    { NULL, 0 }
 };
 
 static const char *get_plugin_name_for_function (const char *func)

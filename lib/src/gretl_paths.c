@@ -24,6 +24,13 @@
 #include <dirent.h>
 #include <unistd.h>
 
+#ifndef WIN32
+# include <glib.h>
+# if GLIB_CHECK_VERSION(2,0,0)
+#  define GLIB2
+# endif /* GLIB_CHECK_VERSION */
+#endif /* ! WIN32 */
+
 static DIR *dir;
 
 /* .......................................................... */

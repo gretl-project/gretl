@@ -76,6 +76,7 @@ int parse_set_line (const char *line, int *echo_off)
     }
 	    
     else if (nw == 2) {
+	/* set echo on/off */
 	if (!strcmp(setobj, "echo")) {
 	    if (!strcmp(setarg, "off")) {
 		*echo_off = 1;
@@ -87,6 +88,7 @@ int parse_set_line (const char *line, int *echo_off)
 	    } 
 	}
 	else if (!strcmp(setobj, "hac_lag")) {
+	    /* set max lag for HAC estimation */
 	    if (!strcmp(setarg, "nw1")) {
 		robust_opts.auto_lag = AUTO_LAG_STOCK_WATSON;
 		robust_opts.user_lag = 0;
@@ -98,15 +100,12 @@ int parse_set_line (const char *line, int *echo_off)
 		err = 0;
 	    }
 	    else if (isdigit(*setarg)) {
-		int p = atoi(setarg);
-
-		if (p >= 0) {
-		    robust_opts.user_lag = p;
-		    err = 0;
-		} 
+		robust_opts.user_lag = atoi(setarg);
+		err = 0;
 	    }
 	}
 	else if (!strcmp(setobj, "hc_version")) {
+	    /* set HCCM variant */
 	    if (!strcmp(setarg, "0") || !strcmp(setarg, "1") ||
 		!strcmp(setarg, "2") || !strcmp(setarg, "3")) {
 		robust_opts.hc_version = atoi(setarg);
@@ -114,6 +113,7 @@ int parse_set_line (const char *line, int *echo_off)
 	    }
 	}
 	else if (!strcmp(setobj, "qr")) {
+	    /* switch QR vs Cholesky decomposition */
 	    if (!strcmp(setarg, "on")) {
 		use_qr = 1;
 		err = 0;
@@ -123,6 +123,13 @@ int parse_set_line (const char *line, int *echo_off)
 		err = 0;
 	    }
 	}
+	else if (!strcmp(setobj, "seed")) {
+	    /* seed for PRNG */
+	    if (isdigit(*setarg)) {
+		gretl_rand_set_seed(atoi(setarg));
+		err = 0;
+	    }
+	}	
     }
 		    
     return err;

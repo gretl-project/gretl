@@ -27,6 +27,8 @@ version 1.2.3
   the working dataset
 - Fix bug: set the frequency and starting observation could
   fail when the local decimal point is not '.'
+- Fix: make the genr functions "coeff()", "stderr()" and 
+  "vcv()" work to retrieve statistics from ARMA models
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

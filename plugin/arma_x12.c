@@ -375,11 +375,9 @@ static int get_roots (const char *fname, MODEL *pmod, int nr)
     return err;
 }
 
-/* The problem below is that X12ARIMA does not give the full covariance
-   matrix: it gives it only for the ARMA terms, and not for the
-   constant.  This creates problems for the printing of the matrix,
-   since the gretl code is written on the assumption that the full
-   vcv matrix is present.  This could perhaps be changed.
+/* Note: X12ARIMA does not give the full covariance matrix: it gives
+   it only for the ARMA terms, and not for the constant.  Also the
+   signs of off-diagonal elements are hard to disentangle.
 */
 
 #if 0
@@ -404,17 +402,22 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
     setlocale(LC_NUMERIC, "C");
 #endif 
 
-    j = k = 0;
+    for (i=0; i<nt; i++) {
+	pmod->vcv[i] = NADBL;
+    }
+
+    j = 1;
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "Nonseas", 7)) {
 	    char *p = line + strcspn(line, "+-");
 
-	    for (i=0; i<nc; i++) {
+	    for (i=1; i<nc; i++) {
 		sscanf(p, "%22s", valstr);
 		p += 22;
 		if (i >= j) {
 		    x = atof(valstr);
-		    pmod->vcv[k++] = x;
+		    k = ijton(i + 1, j + 1, nc);
+		    pmod->vcv[k] = x;
 		}
 	    }
 	    j++;
@@ -424,10 +427,6 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
-
-    for (i=0; i<nt; i++) {
-	fprintf(stderr, "vcv[%d] = %g\n", i, pmod->vcv[i]);
-    }
 
     fclose(fp);
 
@@ -605,7 +604,7 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
 #if 0
     if (!err) {
 	sprintf(fname, "%s.acm", path);
-	err = get_x12a_vcv(fname, pmod, nc - 1);
+	err = get_x12a_vcv(fname, pmod, nc);
     }
 #endif
 
