@@ -709,7 +709,7 @@ static int consistent_date_labels (int row_offset)
 	}
 	x = atof(test);
 	if (t == tstart) pdbak = pd;
-	else { /* t > 1 */
+	else { 
 	    if (pd != pdbak) {
 		fprintf(stderr, " no: got inconsistent data frequencies %d and %d\n",
 			pdbak, pd);
