@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+
 #include <zlib.h>
 #include <ctype.h>
 #include <time.h>
@@ -54,6 +55,12 @@ extern void check_for_console (PRN *prn);
 extern void console_off (void);
 
 #define PROGRESS_BAR "progress_bar"
+
+enum {
+    NO_MARKERS = 0,
+    REGULAR_MARKERS,
+    DAILY_DATE_STRINGS
+};
 
 /**
  * free_Z:
@@ -92,7 +99,7 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	   free(pdinfo->S[i]); 
 	free(pdinfo->S);
 	pdinfo->S = NULL;
-	pdinfo->markers = 0;
+	pdinfo->markers = NO_MARKERS;
     } 
 
     /* if this is not a sub-sample datainfo, free varnames, labels, etc. */
@@ -321,7 +328,7 @@ DATAINFO *datainfo_new (void)
     *dinfo->endobs = '\0';
     dinfo->varname = NULL;
     dinfo->varinfo = NULL;    
-    dinfo->markers = 0;  
+    dinfo->markers = NO_MARKERS;  
     dinfo->delim = ',';
     dinfo->decpoint = '.';
     dinfo->S = NULL;
@@ -411,7 +418,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     }
 
     pdinfo->S = NULL;
-    pdinfo->markers = 0;
+    pdinfo->markers = NO_MARKERS;
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     pdinfo->data = NULL;
@@ -742,7 +749,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     pdinfo->extra = 0;      
 
     pdinfo->bin = 0;
-    pdinfo->markers = 0;
+    pdinfo->markers = NO_MARKERS;
 
     if (fscanf(fp, "%5s %7s", byobs, option) == 2) {
 	if (strcmp(option, "SINGLE") == 0)
@@ -799,7 +806,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     return E_DATA;
 }
 
-/* .......................................................... */
+/* ................................................ */
 
 static int check_date (const char *date)
 {
@@ -842,7 +849,16 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     int startmaj, startmin;
 
     if (dated_daily_data(pdinfo)) {
-	return daily_obs_number(date, pdinfo);
+	if (pdinfo->markers && pdinfo->S != NULL) {
+	    for (i=0; i<pdinfo->n; i++) {
+		if (!strcmp(date, pdinfo->S[i])) {
+		    return i;
+		}
+	    }
+	    return -1;
+	} else {
+	    return daily_obs_number(date, pdinfo);
+	}
     }
 
     if (check_date(date)) {
@@ -916,7 +932,11 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
     decpoint = get_local_decpoint();
 
     if (dated_daily_data(pdinfo)) {
-	daily_date_string(datestr, t, pdinfo);
+	if (pdinfo->markers && pdinfo->S != NULL) {
+	    strcpy(datestr, pdinfo->S[t]);
+	} else {
+	    daily_date_string(datestr, t, pdinfo);
+	}
 	return datestr;
     }
 
@@ -1815,7 +1835,7 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     if (dataset_allocate_varnames(pdinfo)) return E_ALLOC;
 
     /* no observation markers */
-    pdinfo->markers = 0;
+    pdinfo->markers = NO_MARKERS;
     pdinfo->S = NULL; 
 
     /* no descriptive comments */
@@ -1841,40 +1861,148 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-static int check_daily_dates (DATAINFO *pdinfo)
+/* .......................................................... */
+
+#ifdef PAD_DAILY_DATA
+
+static int daily_data_resize (double ***pZ, DATAINFO *pdinfo, 
+			      char *missvec)
 {
-    int n, t;
+    int i, j, t;
+    double **tmp;
+
+    tmp = malloc(pdinfo->v * sizeof *tmp);
+    if (tmp == NULL) return 1;
+
+    for (i=0; i<pdinfo->v; i++) {
+	tmp[i] = malloc(pdinfo->n * sizeof **tmp);
+	if (tmp[i] == NULL) {
+	    for (j=0; j<i; j++) {
+		free(tmp[j]);
+	    }
+	    free(tmp);
+	    return 1;
+	}
+    }
+
+    j = 0;
+    for (t=0; t<pdinfo->n; t++) {
+	int missing = missvec[t];
+
+	tmp[0][t] = 1.0;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (missing) tmp[i][t] = NADBL;
+	    else tmp[i][t] = (*pZ)[i][j];
+	}
+	if (!missing) j++;
+    }
+
+    free_Z(*pZ, pdinfo);
+    *pZ = tmp;
+
+    ntodate(pdinfo->stobs, 0, pdinfo);
+    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+    pdinfo->t2 = pdinfo->n - 1;
+
+    return 0;
+}
+
+#endif /* PAD_DAILY_DATA */
+
+static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
+{
+    int fulln = 0, n, t;
     int pd = pdinfo->pd;
     double sd0 = pdinfo->sd0;
-    long ed;
-    int err = 0;
+    long ed1, ed2;
+    int nmiss = 0, err = 0;
+    char *missvec = NULL;
     
-    pdinfo->pd = 5; /* try it */
+    pdinfo->pd = 5; /* let's try it */
     pdinfo->time_series = TIME_SERIES;
 
-    ed = get_epoch_day(pdinfo->S[0]);
-    if (ed < 0) err = 1;
-    else pdinfo->sd0 = ed;    
+    ed1 = get_epoch_day(pdinfo->S[0]);
+    if (ed1 < 0) err = 1;
+
+    if (!err) {
+	ed2 = get_epoch_day(pdinfo->S[pdinfo->n - 1]);
+	if (ed2 <= ed1) err = 1;
+	else pdinfo->sd0 = ed1;
+    }
+
+    if (!err) {
+	int n1 = daily_obs_number(pdinfo->S[0], pdinfo);
+	int n2 = daily_obs_number(pdinfo->S[pdinfo->n - 1], pdinfo);
+
+	fulln = n2 - n1 + 1;
+	if (pdinfo->n > fulln) {
+	    pdinfo->pd = 7;
+	    /* FIXME need to do more here */
+	} else {
+	    nmiss = fulln - pdinfo->n;
+	    fprintf(stderr, "Observations: %d; days in sample: %d\n", 
+		    pdinfo->n, fulln);
+	    fprintf(stderr, "Missing daily observations: %d\n", nmiss);
+	}
+    }
+
+#ifdef PAD_DAILY_DATA
+    if (!err && nmiss > 0) {
+	missvec = malloc(fulln * sizeof *missvec);
+	if (missvec == NULL) err = 1;
+	else {
+	    for (t=0; t<fulln; t++) {
+		missvec[t] = 1;
+	    }
+	}
+    }
+#endif
 
     for (t=0; t<pdinfo->n && !err; t++) {
-	n = dateton(pdinfo->S[t], pdinfo);
-	if (n < 0) err = 1;
-	fprintf(stderr, "'%s': t = %d, n = %d\n",
-		pdinfo->S[t], t, n);
+	n = daily_obs_number(pdinfo->S[t], pdinfo);
+	if (n < t) {
+	    fprintf(stderr, "Error: n = %d < t = %d\n", n, t);
+	    err = 1;
+	} 
+	else if (n > fulln - 1) {
+	    fprintf(stderr, "Error: n = %d >= fulln = %d\n", n, fulln);
+	    err = 1;
+	}
+#ifdef PAD_DAILY_DATA 
+	else {
+	    missvec[n] = 0;
+	}
+#endif
     }
 
     if (err) {
 	pdinfo->pd = pd;
 	pdinfo->sd0 = sd0;
 	pdinfo->time_series = 0;
+	if (missvec) free(missvec);
+    } else if (pmiss != NULL && missvec != NULL) {
+	*pmiss = missvec;
+	for (t=0; t<pdinfo->n; t++) {
+	    free(pdinfo->S[t]);
+	}
+	free(pdinfo->S);
+	pdinfo->S = NULL;
+	pdinfo->markers = NO_MARKERS;
+	pdinfo->n = fulln;
+    } else {
+	strcpy(pdinfo->stobs, pdinfo->S[0]);
+	strcpy(pdinfo->endobs, pdinfo->S[pdinfo->n - 1]);
+	pdinfo->t2 = pdinfo->n - 1;
+	if (nmiss > 0) pdinfo->markers = DAILY_DATE_STRINGS;
     }
 
-    return err;
+    if (!err) return pdinfo->pd;
+    else return -1;
 }
 
 /* ......................................................... */
 
-static int test_label (DATAINFO *pdinfo, PRN *prn)
+static int test_label (DATAINFO *pdinfo, char **missvec, PRN *prn)
      /* attempt to parse csv row labels as dates.  Return -1 if
 	this doesn't work out, 0 if the labels seem to be just
 	integer observation numbers, else return the inferred data
@@ -1898,12 +2026,6 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     if (strcmp(lbl1, "1") == 0 && strcmp(lbl2, endobs) == 0)
 	return 0;
 
-    if (n1 > 8) {
-	pputs(prn, M_("   label strings too long for dates?\n"));
-	pdinfo->pd = 1;
-	pdinfo->sd0 = 1.0;
-	return -1;
-    }
     if (n1 != n2) {
 	pputs(prn, M_("   label strings can't be consistent dates\n"));
 	return -1;
@@ -1924,11 +2046,11 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		day1 > 0 && day1 < 32 &&
 		day2 > 0 && day2 < 32) {
 		/* looks promising for calendar dates */
-		fprintf(stderr, "Might be daily dates\n");
-		check_daily_dates(pdinfo);
+		return check_daily_dates(pdinfo, missvec);
 	    }
+	} else {
+	    return -1;
 	}
-	return -1; /* not ready to handle yet */
     }
 
     else if (n1 >= 4) {
@@ -2386,6 +2508,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	"array of data.\n");
     char delim = (*ppdinfo)->delim;
     int numcount, auto_name_vars = 0;
+    char *missvec = NULL;
 
     check_for_console(prn);
 
@@ -2479,7 +2602,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
 
     if (blank_1 || obs_1) {
-	csvinfo->markers = 1;
+	csvinfo->markers = REGULAR_MARKERS;
 	if (dataset_allocate_markers(csvinfo)) {
 	    pputs(prn, M_("Out of memory\n"));
 	    goto csv_bailout;
@@ -2618,24 +2741,36 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;
-    if (blank_1 || obs_1) markertest = test_label(csvinfo, prn);
-    if ((blank_1 || obs_1) && (markertest > 0)) {
+    if (blank_1 || obs_1) {
+	markertest = test_label(csvinfo, &missvec, prn);
+    }
+    if (markertest > 0) {
 	pputs(prn, M_("taking date information from row labels\n\n"));
     } else {
 	pputs(prn, M_("treating these as undated data\n\n"));
 	dataset_dates_defaults(csvinfo);
-    }	
+    }
+
+#ifdef PAD_DAILY_DATA
+    if (missvec != NULL) {
+	daily_data_resize(&csvZ, csvinfo, missvec);
+	free(missvec);
+    }
+#endif
 
     if (csvinfo->pd != 1 || strcmp(csvinfo->stobs, "1")) 
         csvinfo->time_series = TIME_SERIES;
 
     /* If there were observation labels and they were not interpretable
        as dates, and they weren't simply "1, 2, 3, ...", then they 
-       should probably be preserved. */
+       should probably be preserved; otherwise discard them. */
 
-    if (csvinfo->S != NULL && markertest >= 0) {
-	csvinfo->markers = 0;
-	for (i=0; i<csvinfo->n; i++) free(csvinfo->S[i]);
+    if (csvinfo->S != NULL && markertest >= 0 && 
+	csvinfo->markers != DAILY_DATE_STRINGS) {
+	csvinfo->markers = NO_MARKERS;
+	for (i=0; i<csvinfo->n; i++) {
+	    free(csvinfo->S[i]);
+	}
 	free(csvinfo->S);
 	csvinfo->S = NULL;
     }
@@ -2720,7 +2855,7 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 	free(pdinfo->S);
     }
     pdinfo->S = S;
-    pdinfo->markers = 1;
+    pdinfo->markers = REGULAR_MARKERS;
     return 0;
 }
 
@@ -3615,7 +3750,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     tmp = xmlGetProp(node, (UTF) "labels");
     if (tmp) {
 	if (!strcmp(tmp, "true")) {
-	    pdinfo->markers = 1;
+	    pdinfo->markers = REGULAR_MARKERS;
 	    if (dataset_allocate_markers(pdinfo)) {
 		sprintf(gretl_errmsg, "Out of memory");
 		return 1;
