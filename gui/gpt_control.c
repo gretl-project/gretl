@@ -627,7 +627,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	if (gpt_titles[i].tab == 0) {
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
-	    tempwid = gtk_label_new(gpt_titles[i].description);
+	    tempwid = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_misc_set_alignment(GTK_MISC (tempwid), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);
@@ -1078,7 +1078,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
             
-	    tempwid = gtk_label_new(gpt_titles[i].description);
+	    tempwid = gtk_label_new(_(gpt_titles[i].description));
 	    gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);

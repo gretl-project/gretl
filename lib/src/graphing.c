@@ -29,8 +29,6 @@
 # include <windows.h>
 #endif
 
-#define USE_BARS
-
 /* pvalues.c */
 extern double gamma_dist (double s1, double s2, double x, int control);
 
@@ -462,6 +460,12 @@ int gnuplot_has_ttf (void)
     return 1;
 }
 
+static int gnuplot_has_filledcurve (void)
+{
+    /* and we know it does filledcurve */
+    return 1;
+}
+
 #else
 
 static int old_gnuplot_png (void)
@@ -487,6 +491,20 @@ int gnuplot_has_ttf (void)
 	char cmd[512];
 
 	sprintf(cmd, "echo \"set term png font arial 8\" | %s 2>/dev/null",
+		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
+	t = system(cmd);
+    }
+    return !t;
+}
+
+static int gnuplot_has_filledcurve (void)
+{
+    static int t = -1; 
+
+    if (t == -1) {
+	char cmd[512];
+
+	sprintf(cmd, "echo \"set data style filledcurve\" | %s 2>/dev/null",
 		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
 	t = system(cmd);
     }
@@ -1352,6 +1370,32 @@ int gnuplot_3d (LIST list, const char *literal,
     return 0;
 }
 
+/* ........................................................... */
+
+static int gnuplot_bars_sane (FREQDIST *freq, int dist, double lambda,
+			      double plotmin, double plotmax, 
+			      double barwidth, double barskip)
+{
+    int i;
+
+    for (i=0; i<freq->numbins; i++) { 
+	double x1, x2;
+
+	x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
+	x2 = (i == freq->numbins - 1)? 
+	    freq->endpt[i] + barwidth : freq->endpt[i+1];
+
+	if (dist) {
+	    if (x1 < plotmin) x1 = plotmin;
+	    if (x2 > plotmax) x2 = plotmax;
+	}
+
+	if (x1 + barskip >= x2 - barskip) return 0;
+    }
+
+    return 1;
+}
+
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1372,10 +1416,9 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     char withstring[32];
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth = freq->endpt[K-1] - freq->endpt[K-2];
-#ifdef USE_BARS
     double barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
-#endif
     int plottype = PLOT_FREQ_SIMPLE;
+    int use_bars = gnuplot_has_filledcurve();
 
     if (dist == NORMAL) plottype = PLOT_FREQ_NORMAL;
     else if (dist == GAMMA) plottype = PLOT_FREQ_GAMMA;
@@ -1451,7 +1494,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    plotmax = freq->xbar + 4.0 * freq->sdx;
 	}
 
-	/* adjust max if needed */
+	/* adjust min, max if needed */
+	if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
 	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
 
 	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
@@ -1472,12 +1516,20 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	return 1;
     }
 
+    if (use_bars) {
+	/* this won't work for "weird" distributions */
+	if (!gnuplot_bars_sane(freq, dist, lambda, plotmin, plotmax,
+			       barwidth, barskip)) {
+	    use_bars = 0;
+	}
+    }
+
     /* plot instructions */
-#ifdef USE_BARS
-    strcat(withstring, "w filledcurve");
-#else
-    strcat(withstring, "w impulses");
-#endif
+    if (use_bars) {
+	strcat(withstring, "w filledcurve");
+    } else {
+	strcat(withstring, "w impulses");
+    }
 
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstring);
@@ -1495,30 +1547,33 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     }
 
     /* send sample data inline */
-#ifdef USE_BARS
-    /* construct solid histogram bars? */
-    for (i=0; i<K; i++) { 
-	double y = lambda * freq->f[i];
-	double x1, x2;
 
-	x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
-	x2 = (i == K-1)? freq->endpt[i] + barwidth : freq->endpt[i+1];
+    if (use_bars) {
+	/* construct solid histogram bars */
+	for (i=0; i<K; i++) { 
+	    double y = lambda * freq->f[i];
+	    double x1, x2;
 
-	if (dist) {
-	    if (x1 < plotmin) x1 = plotmin;
-	    if (x2 > plotmax) x2 = plotmax;
+	    x1 = (i == 0)? freq->endpt[i+1] - barwidth : freq->endpt[i];
+	    x2 = (i == K-1)? freq->endpt[i] + barwidth : freq->endpt[i+1];
+
+	    if (dist) {
+		if (x1 < plotmin) x1 = plotmin;
+		if (x2 > plotmax) x2 = plotmax;
+	    }
+
+	    fprintf(fp, "%.8g 0.0\n", x1 + barskip);
+	    fprintf(fp, "%.8g %.8g\n", x1 + barskip, y);
+	    fprintf(fp, "%.8g %.8g\n", x2 - barskip, y);
+	    fprintf(fp, "%.8g 0\n", x2 - barskip);
 	}
+    } else {
+	/* plot with impulses */
+	for (i=0; i<K; i++) { 
+	    fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
+	}
+    }
 
-	fprintf(fp, "%.8g 0.0\n", x1 + barskip);
-	fprintf(fp, "%.8g %.8g\n", x1 + barskip, y);
-	fprintf(fp, "%.8g %.8g\n", x2 - barskip, y);
-	fprintf(fp, "%.8g 0\n", x2 - barskip);
-    }
-#else /* not USE_BARS: use impulses */
-    for (i=0; i<K; i++) { 
-	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
-    }
-#endif
     fputs("e\n", fp);
 
 #ifdef ENABLE_NLS

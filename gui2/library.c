@@ -3022,6 +3022,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
     int ig = 0;
     CMD prcmd;
     int width = 78;
+    int n = datainfo->t2 - datainfo->t1 + 1;
 
     /* We use a local "CMD" here, since we don't want to record the
        printing of a variable or variables as part of the command
@@ -3029,7 +3030,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
        program.
     */
 
-    prcmd.list = malloc(sizeof(int));
+    prcmd.list = malloc(sizeof *prcmd.list);
     prcmd.param = malloc(1);
     if (prcmd.list == NULL || prcmd.param == NULL) {
 	errbox(_("Out of memory!"));
@@ -3056,7 +3057,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    if (prcmd.list[0] * datainfo->n > MAXDISPLAY) { /* use disk file */
+    if (prcmd.list[0] * n > MAXDISPLAY) { /* use disk file */
 	char fname[MAXLEN];
 
 	if (!user_fopen("data_display_tmp", fname, &prn)) return;
@@ -3379,24 +3380,39 @@ void display_var (void)
     windata_t *vwin;
     int height = 350;
     int vec = 1;
+    int n = datainfo->t2 - datainfo->t1 + 1;
 
     list[0] = 1;
     list[1] = mdata->active_var;
-
-    if (bufopen(&prn)) return;
-
-    printdata(list, &Z, datainfo, 0, OPT_O, prn);
 
     if (!datainfo->vector[list[1]]) {
 	vec = 0;
 	height = 80;
     }
 
-    vwin = view_buffer(prn, 28, height, 
-		       datainfo->varname[list[1]], VIEW_SERIES, 
-		       (vec)? series_view_items : scalar_view_items); 
+    if (n > MAXDISPLAY) { /* use disk file */
+	char fname[MAXLEN];
 
-    series_view_connect(vwin, list[1]);
+	if (!user_fopen("data_display_tmp", fname, &prn)) return;
+
+	printdata(list, &Z, datainfo, 0, OPT_O, prn);
+	gretl_print_destroy(prn);
+	view_file(fname, 0, 1, 28, height, VIEW_DATA, view_items);
+    } else { /* use buffer */
+	int err;
+
+	if (bufopen(&prn)) return;
+	err = printdata(list, &Z, datainfo, 0, OPT_O, prn);
+	if (err) {
+	    errbox(_("Out of memory in display buffer"));
+	    gretl_print_destroy(prn);
+	    return;
+	}
+	vwin = view_buffer(prn, 28, height, 
+			   datainfo->varname[list[1]], VIEW_SERIES, 
+			   (vec)? series_view_items : scalar_view_items); 
+	series_view_connect(vwin, list[1]);
+    }
 }
 
 /* ........................................................... */
