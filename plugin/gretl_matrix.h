@@ -17,22 +17,25 @@
  *
  */
 
+#ifndef GRETL_MATRIX_H
+#define GRETL_MATRIX_H
+
 #include "f2c.h"
 #include "clapack_double.h"
 
 /* #define LDEBUG 1 */
 
-enum {
+enum gretl_matrix_errors {
     GRETL_MATRIX_OK = 0,
     GRETL_MATRIX_NOMEM,
     GRETL_MATRIX_NON_CONFORM,
     GRETL_MATRIX_RANGE
-} gretl_matrix_errors;
+};
 
-enum {
+enum gretl_matrix_mods {
     GRETL_MOD_NONE = 0,
     GRETL_MOD_TRANSPOSE = 1
-} gretl_matrix_mods;
+};
 
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
@@ -78,3 +81,5 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b);
 int gretl_invert_general_matrix (gretl_matrix *m);
 
 double *gretl_general_matrix_eigenvals (gretl_matrix *m);
+
+#endif /* GRETL_MATRIX_H */

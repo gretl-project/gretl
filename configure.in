@@ -294,7 +294,7 @@ dnl Apple will be different
 dnl
 LAPACK_CFLAGS="-I$(srcdir)/plugin"
 case $host_os in
-  *apple*) LAPACK_LIBS="-framework veclib"
+  *darwin*) LAPACK_LIBS="-framework veclib"
   ;; 
 esac
 AM_PATH_LAPACK(, have_lapack="yes")
