@@ -1731,7 +1731,8 @@ static int real_adf_test (int varno, int order, int niv,
     int *list;
     int *biglist = NULL;
     char pvstr[48];
-    double DFt, pv;
+    double DFt = NADBL;
+    double pv = NADBL;
     char mask[4] = {0};
     int i, itv;
     int err = 0;
@@ -1907,8 +1908,13 @@ static int real_adf_test (int varno, int order, int niv,
 	clear_model(&dfmod);
     }
 
-    if (!err && cointcode >= 0) {
-	pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
+    if (!err) {
+	if (cointcode == 0) {
+	    record_test_result(DFt, pv, "Dickey-Fuller");
+	}
+	if (cointcode >= 0) {
+	    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
+	}	
     }
 
  bailout:
@@ -1970,6 +1976,7 @@ int kpss_test (int order, int varno, double ***pZ,
     int hastrend = 0;
     double s2 = 0.0;
     double cumsum = 0.0, cumsum2 = 0.0;
+    double teststat;
     double *autocov;
     double et;
 
@@ -2056,7 +2063,9 @@ int kpss_test (int order, int varno, double ***pZ,
 	    (hastrend)? _("(including trend)") : _("(without trend)"));
 
     pprintf(prn, _("Lag truncation parameter = %d\n"), order);
-    pprintf(prn, "%s = %g\n\n", _("Test statistic"), cumsum2 / (s2 * T * T));
+
+    teststat = cumsum2 / (s2 * T * T);
+    pprintf(prn, "%s = %g\n\n", _("Test statistic"), teststat);
 
     pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
 
@@ -2065,6 +2074,8 @@ int kpss_test (int order, int varno, double ***pZ,
     } else {
 	pprintf(prn, "%s: 0.347\t0.463\t0.574\t0.739\n\n", _("Critical values"));
     }
+
+    record_test_result(teststat, NADBL, "KPSS");
 
     clear_model(&KPSSmod);
 

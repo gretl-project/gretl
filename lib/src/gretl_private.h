@@ -125,6 +125,12 @@ char *get_month_name (char *mname, int m);
 
 int gretl_function_stack_depth (void);
 
+void record_test_result (double teststat, double pval, const char *blurb);
+
+double get_last_test_statistic (char *blurb);
+
+double get_last_pvalue (char *blurb);
+
 /* init and cleanup functions */
 
 void gretl_cmd_free (CMD *cmd);

@@ -6,6 +6,8 @@ version 1.3.2
   to the next
 - Help files: include menu-path information in the GUI help file as
   well as the script commands help
+- Provide a mechanism for retrieving the value and/or p-value from
+  the last statistical test performed
 
 01/19/2005 version 1.3.1
 - Add new dataset structure "wizard" in place of the old dialogs

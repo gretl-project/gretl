@@ -2682,8 +2682,13 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
+	double TR2, pval;
+
 	white.aux = AUX_WHITE;
 	printmodel(&white, pdinfo, OPT_NONE, prn);
+
+	TR2 = white.rsq * white.nobs;
+	pval = chisq(TR2, white.ncoeff - 1);
 
 	if (test != NULL) {
 	    gretl_test_init(test);
@@ -2691,9 +2696,11 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    strcpy(test->h_0, N_("heteroskedasticity not present"));
 	    test->teststat = GRETL_TEST_TR2;
 	    test->dfn = white.ncoeff - 1;
-	    test->value = white.rsq * white.nobs;
-	    test->pvalue = chisq(test->value, test->dfn);
+	    test->value = TR2;
+	    test->pvalue = pval;
 	}
+
+	record_test_result(TR2, pval, "White's");
     }
 
     clear_model(&white);
@@ -3184,7 +3191,9 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	/* print results */
 	archmod.aux = AUX_ARCH;
 	archmod.order = order;
+
 	printmodel(&archmod, pdinfo, OPT_NONE, prn);
+
 	pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
 		archmod.nobs, archmod.rsq);
 	LM = archmod.nobs * archmod.rsq;
@@ -3200,6 +3209,8 @@ MODEL arch (int order, int *list, double ***pZ, DATAINFO *pdinfo,
 	    test->value = LM;
 	    test->pvalue = xx;
 	}
+
+	record_test_result(LM, xx, "ARCH");
 
 	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "
 		"(%d)\nArea to the right of LM = %f  "), LM, order, xx);

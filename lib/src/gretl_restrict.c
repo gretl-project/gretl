@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "gretl_private.h"
 #include "system.h"
 #include "gretl_restrict.h"
 
@@ -696,7 +697,7 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     gretl_vector *b = NULL;
     gretl_vector *br = NULL;
     gretl_matrix *Rv = NULL;
-    double F;
+    double F, pval;
     int err, robust, freeRv = 1;
 
     *gretl_errmsg = '\0';
@@ -783,13 +784,17 @@ static int test_restriction_set (gretl_restriction_set *rset, PRN *prn)
     }
 
     F /= rset->k;
+    pval = fdist(F, rset->k, rset->pmod->dfd);
+
     robust = gretl_model_get_int(rset->pmod, "robust");
+
     pprintf(prn, "\n%s: %s(%d, %d) = %g, ", _("Test statistic"), 
 	    (robust)? _("Robust F"): "F",
 	    rset->k, rset->pmod->dfd, F);
-    pprintf(prn, _("with p-value = %g\n"), 
-	    fdist(F, rset->k, rset->pmod->dfd));
+    pprintf(prn, _("with p-value = %g\n"), pval);
     pputc(prn, '\n');
+
+    record_test_result(F, pval, "restriction");
 
  bailout:
 

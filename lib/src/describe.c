@@ -1667,6 +1667,8 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
     if (pval > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
 
+    record_test_result(t, pval, "difference of means");
+
     free(x);
     free(y);
 
@@ -1689,7 +1691,8 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn)
 {
-    double m, skew, kurt, s1, s2, var1, var2, F;
+    double m, skew, kurt, s1, s2, var1, var2;
+    double F, pval;
     double *x = NULL, *y = NULL;
     int dfn, dfd, n1, n2, n = pdinfo->n;
 
@@ -1726,14 +1729,18 @@ int vars_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	dfd = n1 - 1;
     }
 
+    pval = fdist(F, dfn, dfd);
+
     pputs(prn, _("\nEquality of variances test\n\n"));
     pprintf(prn, _("   Ratio of sample variances = %g\n"), F);
     pprintf(prn, "   %s: %s\n", _("Null hypothesis"), 
 	    _("The two population variances are equal"));
     pprintf(prn, "   %s: F(%d,%d) = %g\n", _("Test statistic"), dfn, dfd, F);
-    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), fdist(F, dfn, dfd));
+    pprintf(prn, _("   p-value (two-tailed) = %g\n\n"), pval);
     if (fdist(F, dfn, dfd) > .10)
 	pputs(prn, _("   The difference is not statistically significant.\n\n"));
+
+    record_test_result(F, pval, "difference of variances");
 
     free(x);
     free(y);

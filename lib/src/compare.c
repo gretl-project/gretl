@@ -44,6 +44,7 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 		     const DATAINFO *pdinfo, PRN *prn,
 		     gretlopt opt)
 {
+    double pval = NADBL;
     int i;
 
     if (cmp->ci == LAD) {
@@ -63,11 +64,12 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
 	    pprintf(prn, "    %s\n", pdinfo->varname[diffvars[i]]);	
 	}
 	if (!na(cmp->F)) {
+	    pval = fdist(cmp->F, cmp->dfn, cmp->dfd);
 	    pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		    (cmp->robust)? _("Robust F") : "F",
 		    cmp->dfn, cmp->dfd, cmp->F);
-	    pprintf(prn, _("with p-value = %g\n"), 
-		    fdist(cmp->F, cmp->dfn, cmp->dfd));	    
+	    pprintf(prn, _("with p-value = %g\n"), pval);
+	    record_test_result(cmp->F, pval, (cmp->cmd == OMIT)? "omit" : "add");
 	} 
     } else if (LIMDEP(cmp->ci) && cmp->dfn > 0 && diffvars[0] > 0) {
         pputs(prn, _("\n  Null hypothesis: the regression parameters are "
@@ -77,8 +79,9 @@ gretl_print_compare (const struct COMPARE *cmp, const int *diffvars,
         }
 	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
 		_("Chi-square"), cmp->dfn, cmp->chisq);
-	pprintf(prn, _("with p-value = %g\n\n"), 
-		chisq(cmp->chisq, cmp->dfn));
+	pval = chisq(cmp->chisq, cmp->dfn);
+	pprintf(prn, _("with p-value = %g\n\n"), pval);
+	record_test_result(cmp->chisq, pval, (cmp->cmd == OMIT)? "omit" : "add");
 	return;
     } 
 
@@ -315,13 +318,14 @@ real_nonlinearity_test (const MODEL *pmod, int *list,
     } else {
 	double trsq = aux.rsq * aux.nobs;
 	int df = list[0] - pmod->list[0];
+	double pval = chisq(trsq, df);
 
 	aux.aux = aux_code;
 	printmodel(&aux, pdinfo, opt, prn);
 
 	pprintf(prn, "\n%s: TR^2 = %g,\n", _("Test statistic"), trsq);
 	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
-		df, trsq, chisq(trsq, df));
+		df, trsq, pval);
 
 	if (test != NULL) {
 	    gretl_test_init(test);
@@ -334,6 +338,8 @@ real_nonlinearity_test (const MODEL *pmod, int *list,
 	    test->value = trsq;
 	    test->pvalue = chisq(trsq, df);
 	}
+
+	record_test_result(trsq, pval, "non-linearity");
     } 
 
     clear_model(&aux);
@@ -836,13 +842,16 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (!err) {
+	double pval;
+
 	aux.aux = AUX_RESET;
 	printmodel(&aux, pdinfo, OPT_NONE, prn);
 	RF = ((pmod->ess - aux.ess) / 2) / (aux.ess / aux.dfd);
+	pval = fdist(RF, 2, aux.dfd);
 
 	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
-		2, aux.dfd, RF, fdist(RF, 2, aux.dfd));
+		2, aux.dfd, RF, pval);
 
 	if (test != NULL) {
 	    gretl_test_init(test);
@@ -854,6 +863,8 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    test->value = RF;
 	    test->pvalue = fdist(RF, test->dfn, test->dfd);
 	}
+
+	record_test_result(RF, pval, "RESET");
     }
 
     free(newlist);
@@ -1096,7 +1107,9 @@ int autocorr_test (MODEL *pmod, int order,
 	    (aux.nobs - pmod->ncoeff - order)/order; 
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
+
 	pval = fdist(LMF, order, aux.nobs - pmod->ncoeff - order);
+
 	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		order, aux.nobs - pmod->ncoeff - order, LMF, pval);
 
@@ -1121,8 +1134,10 @@ int autocorr_test (MODEL *pmod, int order,
 	    test->dfn = order;
 	    test->dfd = aux.nobs - pmod->ncoeff - order;
 	    test->value = LMF;
-	    test->pvalue = fdist(LMF, test->dfn, test->dfd);
+	    test->pvalue = pval;
 	}
+
+	record_test_result(LMF, pval, "autocorrelation");
     }
 
     free(newlist);
@@ -1237,14 +1252,16 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);
 	} else {
+	    double pval;
+
 	    chow_mod.aux = AUX_CHOW;
 	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
 	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
 		(chow_mod.ess * newvars);
+	    pval = fdist(F, newvars, chow_mod.dfd);
 	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"
 		    "  F(%d, %d) = %f with p-value %f\n\n"), chowdate,
-		    newvars, chow_mod.dfd, F, 
-		    fdist(F, newvars, chow_mod.dfd)); 
+		    newvars, chow_mod.dfd, F, pval);
 
 	    if (test != NULL) {
 		gretl_test_init(test);
@@ -1256,8 +1273,10 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		test->dfn = newvars;
 		test->dfd = chow_mod.dfd;
 		test->value = F;
-		test->pvalue = fdist(F, newvars, chow_mod.dfd);
+		test->pvalue = pval;
 	    }
+
+	    record_test_result(F, pval, "Chow");
 	}
 	clear_model(&chow_mod);
     }
@@ -1382,10 +1401,13 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     }
 
     if (!err) {
+	double pval = NADBL;
+
 	wbar /= T - K;
 	pprintf(prn, "\n%s\n\n",
 		_("CUSUM test for stability of parameters"));
 	pprintf(prn, _("mean of scaled residuals = %g\n"), wbar);
+
 	sigma = 0;
 	for (j=0; j<n_est; j++) {
 	    xx = (cresid[j] - wbar);
@@ -1403,7 +1425,9 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     
 	for (j=0; j<n_est; j++) {
 	    W[j] = 0.0;
-	    for (i=0; i<=j; i++) W[j] += cresid[i];
+	    for (i=0; i<=j; i++) {
+		W[j] += cresid[i];
+	    }
 	    W[j] /= sigma;
 	    t = pmod->t1 + K + j;
 	    ntodate(cumdate, t, pdinfo);
@@ -1411,9 +1435,11 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    pprintf(prn, " %s %9.3f %s\n", cumdate, W[j],
 		    (fabs(W[j]) > xx + (j+1)*yy)? "*" : "");
 	}
+
 	hct = (sqrt((double) (T-K)) * wbar) / sigma;
+	pval = tprob(hct, T-K-1);
 	pprintf(prn, _("\nHarvey-Collier t(%d) = %g with p-value %.4g\n\n"), 
-		T-K-1, hct, tprob(hct, T-K-1));
+		T-K-1, hct, pval);
 
 	if (test != NULL) {
 	    gretl_test_init(test);
@@ -1422,8 +1448,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    test->teststat = GRETL_TEST_HARVEY_COLLIER;
 	    test->dfn = T-K-1;
 	    test->value = hct;
-	    test->pvalue = tprob(hct, T-K-1);
+	    test->pvalue = pval;
 	}
+
+	record_test_result(hct, pval, "Harvey-Collier");
 
 #ifdef ENABLE_NLS
         setlocale(LC_NUMERIC, "C");
@@ -1924,15 +1952,16 @@ int sum_test (const int *sumvars, MODEL *pmod,
 	    pprintf(prn, "\n   %s = %g\n", _("Sum of coefficients"), 
 		    summod.coeff[testcoeff - 2]);
 	    if (!na(summod.sderr[testcoeff - 2])) {
-		double tval;
+		double tval, pval;
 
 		pprintf(prn, "   %s = %g\n", _("Standard error"),
 			summod.sderr[testcoeff - 2]);
 		tval = summod.coeff[testcoeff - 2] / 
 		    summod.sderr[testcoeff - 2];
+		pval = tprob(tval, summod.dfd);
 		pprintf(prn, "   t(%d) = %g ", summod.dfd, tval);
-		pprintf(prn, _("with p-value = %g\n"), 
-			tprob(tval, summod.dfd));
+		pprintf(prn, _("with p-value = %g\n"), pval);
+		record_test_result(tval, pval, "sum");
 	    }
 	}
     }

@@ -65,6 +65,7 @@ static double get_obs_value (const char *s, const double **Z,
 static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
+static int test_stat_index (const char *s);
 static int op_level (int c);
 
 static double *get_model_series (const DATAINFO *pdinfo,
@@ -81,6 +82,7 @@ static double get_model_data_element (const char *s, GENERATE *genr,
 				      MODEL *pmod, int idx);
 static double get_model_scalar_stat (const MODEL *pmod, int idx, int *err);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
+static double get_test_stat_value (char *label, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
 static double evaluate_missval_func (double arg, int fn);
 static double evaluate_bivariate_statistic (const char *s, 
@@ -107,7 +109,9 @@ enum retrieve {
     R_BIC,
     R_TRSQ,
     R_NOBS,
-    R_PD
+    R_PD,
+    R_TEST_STAT,
+    R_TEST_PVAL
 };
 
 enum special_ops {
@@ -596,6 +600,11 @@ static genatom *parse_token (const char *s, char op,
 	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
 		     s, i));
 	    val = get_dataset_statistic(genr->pdinfo, i);
+	    scalar = 1;
+	} else if ((i = test_stat_index(s)) > 0) {
+	    DPRINTF(("recognized '%s' as test-related var, index #%d\n", 
+		     s, i));
+	    val = get_test_stat_value(genr->label, i);
 	    scalar = 1;
 	} else {
 	    genr->err = E_UNKVAR;
@@ -2127,10 +2136,45 @@ make_genr_varname (GENERATE *genr, const char *vname)
     }
 }
 
+static void substitute_in_genrs (char *genrs, char *src)
+{
+    const char *targ[] = {
+	"$pvalue",
+	"$test",
+	NULL
+    };
+    int i, slen = 0;
+    char *p;
+
+    for (i=0; targ[i] != NULL; i++) {
+	if ((p = strstr(genrs, targ[i])) != NULL) {
+	    slen = strlen(targ[i]);
+	    break;
+	}
+    }
+
+    if (slen > 0) {
+	int srclen = strlen(src);
+	
+	if (strlen(genrs) + srclen < MAXLEN) {
+	    int tail = strlen(p) + 1;
+
+	    *p = ' ';
+	    memmove(p + srclen, p, tail);
+	    memcpy(p, src, srclen);
+	}
+    }
+}
+
 static void 
 make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 {
+    char tmp[64] = {0};
     int llen = 0;
+
+    if (*genr->label != '\0') {
+	sprintf(tmp, "%.63s", genr->label);
+    }
 
     if (vname != NULL) {
 	if (!strncmp(vname, "$nl", 3) || 
@@ -2145,6 +2189,11 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 		llen = 48;
 	    }
 	}
+    }
+
+    if (*tmp != '\0') {
+	*genr->label = '\0';
+	substitute_in_genrs(genrs, tmp);
     }
 
     if (strlen(genrs) > MAXLABEL - 1 - llen) {
@@ -3489,15 +3538,25 @@ static double get_dataset_statistic (DATAINFO *pdinfo, int idx)
 
     if (pdinfo == NULL) return x;
 
-    switch (idx) {
-    case R_NOBS:
+    if (idx == R_NOBS) {
 	x = (double) (pdinfo->t2 - pdinfo->t1 + 1);
-	break;
-    case R_PD:
+    } else if (idx == R_PD) {
 	x = (double) pdinfo->pd;
-	break;
-    default:
-	break;
+    }
+
+    return x;
+}
+
+/* ...........................................................*/
+
+static double get_test_stat_value (char *label, int idx)
+{
+    double x = NADBL;
+
+    if (idx == R_TEST_PVAL) {
+	x = get_last_pvalue(label);
+    } else if (idx == R_TEST_STAT) {
+	x = get_last_test_statistic(label);
     }
 
     return x;
@@ -3664,6 +3723,22 @@ static int dataset_var_index (const char *s)
     if (!strcmp(test, "$pd")) {
 	return R_PD;
     }
+
+    return 0;
+}
+
+static int test_stat_index (const char *s)
+{
+    char test[USER_VLEN];
+
+    *test = '\0';
+    strncat(test, s, USER_VLEN - 1);
+    lower(test);
+
+    if (!strcmp(test, "$pvalue"))  
+	return R_TEST_PVAL;
+    if (!strcmp(test, "$test")) 
+	return R_TEST_STAT;
 
     return 0;
 }

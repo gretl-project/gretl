@@ -466,7 +466,8 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
     int nn, runs = 1;
-    double xx, *x, mean, sd, z;
+    double xx, *x, mean, sd;
+    double z, pval;
 
     nn = t2 - t1 + 1;
     x = malloc(nn * sizeof *x);
@@ -498,13 +499,15 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
     mean = (1 + nn / 2.0);
     sd = sqrt((double) n - 1) / 2.0;
     z = fabs((runs - mean) / sd);
+    pval = 2.0 * normal(z);
 
     pprintf(prn, _("\nNumber of runs (R) in the variable '%s' = %d\n"), 
 	    pdinfo->varname[varno], runs);
     pprintf(prn, _("Under the null hypothesis of randomness, R "
 	    "follows N(%f, %f)\n"), mean, sd);
-    pprintf(prn, _("z-score = %f, with two-tailed p-value %f\n"), z, 
-	    2.0 * normal(z));  
+    pprintf(prn, _("z-score = %f, with two-tailed p-value %f\n"), z, pval);
+
+    record_test_result(z, pval, "runs");
   
     free(x);
 

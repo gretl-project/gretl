@@ -2643,3 +2643,59 @@ void libgretl_cleanup (CMD *cmd)
 	}
     }
 }
+
+/* record hypothesis test results */
+
+enum {
+    SET_TEST_STAT,
+    GET_TEST_STAT,
+    GET_TEST_PVAL
+};
+
+static double
+record_or_get_test_result (double teststat, double pval, char *blurb,
+			   int code)
+{
+    static double val = NADBL;
+    static double pv = NADBL;
+    static char info[128] = {0};
+
+    double ret = NADBL;
+
+    if (code == SET_TEST_STAT) {
+	val = teststat;
+	pv = pval;
+	if (blurb != NULL) {
+	    strcpy(info, blurb);
+	} else {
+	    *info = '\0';
+	}
+    } else if (code == GET_TEST_STAT) {
+	if (blurb != NULL) {
+	    strcpy(blurb, info);
+	}
+	ret = val;
+    } else if (code == GET_TEST_PVAL) {
+	if (blurb != NULL) {
+	    strcpy(blurb, info);
+	}
+	ret = pv;
+    }
+	
+    return ret;
+}
+
+void record_test_result (double teststat, double pval, const char *blurb)
+{
+    record_or_get_test_result(teststat, pval, blurb, SET_TEST_STAT);
+}
+
+double get_last_test_statistic (char *blurb)
+{
+    return record_or_get_test_result(0, 0, blurb, GET_TEST_STAT);
+}
+
+double get_last_pvalue (char *blurb)
+{
+    return record_or_get_test_result(0, 0, blurb, GET_TEST_PVAL);
+}
