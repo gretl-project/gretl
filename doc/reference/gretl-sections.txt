@@ -16,6 +16,7 @@ omit_test
 autocorr_test
 chow_test
 cusum_test
+hausman_test
 </SECTION>
 
 <SECTION>
@@ -41,7 +42,9 @@ get_xmldata
 get_xml_description
 add_case_markers
 detect_filetype
+check_varname
 get_precision
+data_report
 </SECTION>
 
 <SECTION>
@@ -82,6 +85,7 @@ get_errmsg
 errmsg
 get_gretl_errno
 get_gretl_errmsg
+get_gretl_msg
 </SECTION>
 
 <SECTION>
@@ -100,7 +104,6 @@ makevcv
 <SECTION>
 <FILE>generate</FILE>
 genr_numbers
-GENERATE
 LAGVAR
 generate
 dummy
@@ -140,7 +143,6 @@ CMD
 getcmd
 help
 fcast
-add_new_var
 parseopt
 shell
 echo_cmd
@@ -269,6 +271,7 @@ tex_escape
 free_model
 dataset_is_time_series
 dataset_is_panel
+dated_daily_data
 floateq
 floatneq
 floatgt
@@ -292,7 +295,10 @@ copylist
 grow_nobs
 dataset_add_vars
 dataset_drop_vars
+get_panel_structure
+balanced_panel
 hidden_var
+set_miss
 copy_model
 swap_models
 fcast_with_errs

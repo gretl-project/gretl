@@ -107,6 +107,8 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
+int check_varname (const char *varname);
+
 int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn, int gui); 
 

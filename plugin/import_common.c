@@ -30,6 +30,12 @@ static void set_all_missing (double **Z, DATAINFO *pdinfo)
 
 #endif
 
+static void invalid_varname (char *errbuf)
+{
+    strcpy(errbuf, get_gretl_errmsg());
+    strcat(errbuf, _("\nPlease rename this variable and try again"));
+}
+
 static int label_is_date (char *str)
 {
     size_t len = strlen(str);

@@ -3,4 +3,4 @@ open greene18_2.gdt
 genr yt = log(Y/P)
 genr d_yt = diff(yt)
 (* Dickey-Fuller tests *)
-adf yt 1
+adf 1 yt

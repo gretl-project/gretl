@@ -1457,8 +1457,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
     if (list == NULL || bools == NULL) 
 	err = 1;
 
-    for (i=0; i<nvars; i++)
-	bools[i] = NULL;
+    for (i=0; i<nvars; i++) bools[i] = NULL;
 
     list[0] = nvars;
     i = 0;
@@ -1480,8 +1479,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		    errbox(errtext);
 		    err = 1;
 		}
-	    }
-	    else if (isalpha(tok[0])) {
+	    } else if (isalpha(tok[0])) {
 		v = varindex(pdinfo, tok);
 		if (v < origv) list[++i] = v;
 		else {
@@ -1504,8 +1502,9 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
        conditions */
 
     k = origv;
+    nbool = 0;
     for (i=1; i<=list[0] && !err; i++) {
-	if (bools[i-1] != NULL) { /* FIXME new genr */
+	if (bools[i-1] != NULL) {
 	    int t, err;
 	    char formula[80];
 	    
@@ -1524,6 +1523,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		}
 		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
 		list[i] = k++;
+		nbool++;
 	    }
 	}
     }
@@ -1532,8 +1532,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	err = boxplots(list, bools, pZ, pdinfo, notches);
     
     free(list);
-    for (i=0; i<nvars; i++) 
-	if (bools[i]) free(bools[i]);
+    for (i=0; i<nvars; i++) if (bools[i]) free(bools[i]);
     free(bools);
 
     if (nbool) 

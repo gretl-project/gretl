@@ -1005,6 +1005,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
  * @pmod: pointer to model to be tested.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @ppaths: information on relevant paths.
  * @prn: gretl printing struct.
  *
  * Tests the given pooled model for fixed and random effects.

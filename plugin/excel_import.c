@@ -61,6 +61,13 @@ char *errbuf;
 #define EXCEL_IMPORTER
 #include "import_common.c"
 
+enum {
+    VARNAMES_OK = 0,
+    VARNAMES_NULL,
+    VARNAMES_NOTSTR,
+    VARNAMES_INVALID
+} varname_errors;
+
 static char *format_double (char *rec, int offset) 
 {	
     static char buffer[128];
@@ -639,9 +646,10 @@ static int first_col_strings (wbook *book)
     return 1;
 }
 
-static int got_varnames (wbook *book, int ncols, int skip)
+static int got_valid_varnames (wbook *book, int ncols, int skip)
 {
     int i, t = book->row_offset;
+    char *test;
 
     for (i=skip+book->col_offset; i<ncols; i++) { 
 	if (rowptr[t].cells[i] == NULL) {
@@ -649,12 +657,14 @@ static int got_varnames (wbook *book, int ncols, int skip)
 	    fprintf(stderr, "got_varnames: rowptr[%d].cells[%d] is NULL\n",
 		    t, i);
 #endif
-	    return -1;
+	    return VARNAMES_NULL;
 	}
 	if (!IS_STRING(rowptr[t].cells[i]))
-	    return 0;
+	    return VARNAMES_NOTSTR;
+	test = rowptr[t].cells[i] + 1;
+	if (check_varname(test)) return VARNAMES_INVALID;
     }
-    return 1;
+    return VARNAMES_OK;
 }
 
 static int data_block (wbook *book, int ncols, int skip)
@@ -752,12 +762,15 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
 	label_strings = first_col_strings(&book);
 
-	if (got_varnames(&book, ncols, label_strings) != 1) {
+	err = got_valid_varnames(&book, ncols, label_strings);
+	if (err == VARNAMES_NULL || err == VARNAMES_NOTSTR) {
 	    sprintf(errbuf, _("One or more variable names are missing.\n"));
 	    strcat(errbuf, _(adjust_rc));
-	    err = 1;
-	    goto getout; 
 	}
+	else if (err == VARNAMES_INVALID) {
+	    invalid_varname(errbuf);
+	}
+	if (err) goto getout; 
 
 	if (!data_block(&book, ncols, label_strings)) {
 	    sprintf(errbuf, _("Expected numeric data, found string.\n"));

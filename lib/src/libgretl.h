@@ -29,16 +29,20 @@
 # include "config.h"
 #endif
 
-#define _(String) gettext (String)
 #ifndef __GNOME_I18N_H__
-# define N_(String) gettext_noop (String)
-#endif
-
-#include "gettext.h"
+# ifdef ENABLE_NLS
+#  include "gettext.h"
+#  define _(String) gettext (String)
+#  define N_(String) gettext_noop (String)
+# else
+#  define _(String) String
+#  define N_(String) String
+# endif /* ENABLE_NLS */
+#endif /* __GNOME_I18N_H__ */
 
 #define MAXLABEL 128  /* maximum length of decsriptive labels for variables */
-#define MAXLEN 512    /* max length of "long" strings */
-#define ERRLEN 256    /* max length of libgretl error messages */
+#define MAXLEN   512  /* max length of "long" strings */
+#define ERRLEN   256  /* max length of libgretl error messages */
 
 #ifndef M_PI
 # define M_PI 3.14159265358979323846

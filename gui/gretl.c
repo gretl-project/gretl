@@ -1655,7 +1655,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
     };
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
-    gchar *toolstr;
+    const char *toolstr;
 
     cmap = gdk_colormap_get_system();
     toolbar_box = gtk_handle_box_new();

@@ -61,7 +61,7 @@ depend:
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d depend; done
 
 distdepend:
-	for d in $(SUBDIRS) ; do $(MAKE) -C $$d distdepend; done	
+	- for d in $(SUBDIRS) ; do $(MAKE) -C $$d distdepend 2>/dev/null; done	
 
 dist: distdepend	
 	./tools/makedist

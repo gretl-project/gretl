@@ -215,7 +215,7 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 			err = 1;
 		    }
 		}
-		else if (! err && i_real >= 1 && t_real == 0 && 
+		else if (!err && i_real >= 1 && t_real == 0 && 
 			 !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
 		    sprintf(errbuf, _("Expected to find a variable name"));
@@ -232,8 +232,13 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 			toprows[t_real] = leftcols[i_real] = 0;
 		    }
 		    else if (vtype == VALUE_STRING) {
-			if (t_real == 0)
+			if (t_real == 0) {
 			    strncat(sheet->varname[i_real], tmp, 8);
+			    if (check_varname(sheet->varname[i_real])) {
+				invalid_varname(errbuf);
+				err = 1;
+			    }
+			}
 			toprows[t_real] = leftcols[i_real] = 1;
 		    }
 		    free(tmp);

@@ -144,12 +144,6 @@ lib/src/compare.h,289
 } aux_codes;aux_codes36,1595
 } COMPARE;COMPARE49,2138
 
-lib/src/daily.c,105
-char *missobs_vector 3,29
-int undo_repack_missing 25,481
-int repack_missing 60,1322
-int main 97,2162
-
 lib/src/dataio.c,1949
 #define QUOTE 32,1022
 static char STARTCOMMENT[45,1539
@@ -385,112 +379,112 @@ MODEL arch 2116,58171
 
 lib/src/estimate.h,0
 
-lib/src/generate.c,2780
+lib/src/generate.c,2779
 } GENERATE;GENERATE33,1017
-enum transformations transformations72,2759
-    T_LOG 73,2782
-    T_EXP,74,2798
-    T_SIN,75,2810
-    T_COS,76,2822
-    T_DIFF,77,2834
-    T_LDIFF,78,2846
-    T_MEAN,79,2860
-    T_SD,80,2873
-    T_SORT,81,2884
-    T_INT,82,2897
-    T_LN,83,2909
-    T_COEFF,84,2920
-    T_ABS,85,2933
-    T_RHO,86,2945
-    T_SQRT,87,2957
-    T_SUM,88,2970
-    T_NORMAL,89,2982
-    T_UNIFORM,90,2997
-    T_STDERR,91,3013
-    T_CUM,92,3027
-    T_MISSING,93,3039
-    T_MISSZERO,94,3054
-    T_CORR,95,3070
-    T_VCV,96,3082
-    T_VAR,97,3093
-    T_COV,98,3104
-    T_MEDIAN,99,3115
-    T_ZEROMISS,100,3129
-    T_PVALUE101,3145
-enum retrieve retrieve104,3162
-    R_ESS 105,3178
-    R_NOBS,106,3193
-    R_T,107,3205
-    R_RSQ,108,3214
-    R_SIGMA,109,3225
-    R_DF,110,3238
-    R_LNL,111,3248
-    R_TRSQ,112,3259
-    R_NUMERIC,113,3271
-    R_MATH,114,3286
-    R_VARNAME,115,3298
-    R_UNKNOWN116,3313
-enum composites composites119,3331
-    NEQ 120,3349
-    GEQ,121,3363
-    LEQ122,3372
-static char *math[125,3384
-static char operators[158,3794
-#define LEVELS 164,3915
-#define SCALAR_SCOPE(SCALAR_SCOPE166,3933
-static int is_operator 172,4175
-static void catch_double_symbols 183,4373
-static int op_level 207,4795
-static void count_ops 228,5210
-static int insert_paren 236,5371
-static int paren_state 249,5678
-static int parenthesize 266,6020
-int _identical 351,7701
-static void otheruse 364,7986
-int _reserved 372,8230
-static void copy 428,9620
-static int getword 441,9928
-static void get_genr_formula 465,10578
-int genr_scalar_index 489,11232
-int generate 519,12095
-static int add_new_var 943,24351
-static void expand_vec 983,25493
-static int cstack 1001,25856
-static int panel_missing 1138,29272
-static int domath 1150,29526
-static int evalexp 1367,34073
-static void getvar 1410,35249
-static int check_modelstat 1438,35972
-static int getxvec 1487,37206
-static void get_lag 1620,40511
-static int scanb 1669,41720
-static int strtype 1702,42419
-static int whichtrans 1752,43665
-int dummy 1774,44088
-int paneldum 1813,45190
-static int genrtime 1865,46912
-int plotvar 1902,47887
-int _laggenr 1954,49364
-static int normal_dist 1993,50345
-static void uniform 2009,50715
-void varlist 2028,51073
-int varindex 2053,51630
-static int createvar 2072,52125
-static void genrfree 2110,53130
-int logs 2133,53730
-int lags 2207,55631
-int _parse_lagvar 2229,56173
-int xpxgenr 2285,57671
-int rhodiff 2381,60413
-static double genr_cov 2453,62291
-static double genr_corr 2484,63110
-static double genr_vcv 2514,63924
-static void genr_msg 2563,65206
-static int ismatch 2573,65506
-static void varerror 2584,65717
-int simulate 2602,66395
-int _multiply 2697,68664
-int genr_fit_resid 2766,70397
+enum transformations transformations72,2773
+    T_LOG 73,2796
+    T_EXP,74,2812
+    T_SIN,75,2824
+    T_COS,76,2836
+    T_DIFF,77,2848
+    T_LDIFF,78,2860
+    T_MEAN,79,2874
+    T_SD,80,2887
+    T_SORT,81,2898
+    T_INT,82,2911
+    T_LN,83,2923
+    T_COEFF,84,2934
+    T_ABS,85,2947
+    T_RHO,86,2959
+    T_SQRT,87,2971
+    T_SUM,88,2984
+    T_NORMAL,89,2996
+    T_UNIFORM,90,3011
+    T_STDERR,91,3027
+    T_CUM,92,3041
+    T_MISSING,93,3053
+    T_MISSZERO,94,3068
+    T_CORR,95,3084
+    T_VCV,96,3096
+    T_VAR,97,3107
+    T_COV,98,3118
+    T_MEDIAN,99,3129
+    T_ZEROMISS,100,3143
+    T_PVALUE101,3159
+enum retrieve retrieve104,3176
+    R_ESS 105,3192
+    R_NOBS,106,3207
+    R_T,107,3219
+    R_RSQ,108,3228
+    R_SIGMA,109,3239
+    R_DF,110,3252
+    R_LNL,111,3262
+    R_TRSQ,112,3273
+    R_NUMERIC,113,3285
+    R_MATH,114,3300
+    R_VARNAME,115,3312
+    R_UNKNOWN116,3327
+enum composites composites119,3345
+    NEQ 120,3363
+    GEQ,121,3377
+    LEQ122,3386
+static char *math[125,3398
+static char operators[158,3808
+#define LEVELS 164,3929
+#define SCALAR_SCOPE(SCALAR_SCOPE166,3947
+static int is_operator 172,4189
+static void catch_double_symbols 183,4387
+static int op_level 207,4809
+static void count_ops 228,5224
+static int insert_paren 236,5385
+static int paren_state 249,5692
+static int parenthesize 266,6034
+int _identical 351,7715
+static void otheruse 364,8000
+int _reserved 372,8244
+static void copy 428,9634
+static int getword 441,9942
+static void get_genr_formula 465,10592
+int genr_scalar_index 489,11246
+int generate 519,12109
+static int add_new_var 939,24306
+static void expand_vec 979,25448
+static int cstack 997,25811
+static int panel_missing 1134,29227
+static int domath 1146,29481
+static int evalexp 1363,34028
+static void getvar 1407,35239
+static int check_modelstat 1435,35962
+static int getxvec 1484,37196
+static void get_lag 1617,40501
+static int scanb 1666,41710
+static int strtype 1699,42409
+static int whichtrans 1749,43655
+int dummy 1771,44078
+int paneldum 1810,45180
+static int genrtime 1864,46908
+int plotvar 1905,47963
+int _laggenr 1957,49440
+static int normal_dist 1996,50421
+static void uniform 2012,50791
+void varlist 2031,51149
+int varindex 2056,51706
+static int createvar 2075,52201
+static void genrfree 2113,53206
+int logs 2136,53806
+int lags 2210,55707
+int _parse_lagvar 2232,56249
+int xpxgenr 2288,57747
+int rhodiff 2384,60489
+static double genr_cov 2456,62367
+static double genr_corr 2487,63186
+static double genr_vcv 2517,64000
+static void genr_msg 2566,65282
+static int ismatch 2576,65582
+static void varerror 2587,65793
+int simulate 2605,66471
+int _multiply 2700,68740
+int genr_fit_resid 2769,70473
 
 lib/src/generate.h,198
 #define GENERATE_H21,879
@@ -581,46 +575,46 @@ enum option_codes option_codes35,1063
 lib/src/internal.h,32
 #define GRETL_INTERNAL_H23,949
 
-lib/src/libgretl.h,1093
+lib/src/libgretl.h,1096
 #define LIBGRETL_H21,879
-#define _(_32,1025
-# define N_(N_34,1085
-#define MAXLABEL 39,1157
-#define MAXLEN 40,1236
-#define ERRLEN 41,1293
-# define M_PI 44,1373
-    GRETL_PRINT_STDOUT,48,1433
-    GRETL_PRINT_STDERR,49,1457
-    GRETL_PRINT_FILE,50,1481
-    GRETL_PRINT_BUFFER,51,1503
-    GRETL_PRINT_NULL52,1527
-} prn_codes;prn_codes53,1548
-    TIME_SERIES 56,1577
-    STACKED_TIME_SERIES,57,1598
-    STACKED_CROSS_SECTION58,1623
-} ts_codes;ts_codes59,1649
-    GENR_RESID,62,1677
-    GENR_FITTED,63,1693
-    GENR_RESID264,1710
-} auto_genr;auto_genr65,1726
-    SP_NONE,68,1755
-    SP_LOAD_INIT,69,1769
-    SP_SAVE_INIT,70,1787
-    SP_FINISH 71,1805
-} progress_flags;progress_flags72,1820
-typedef int *LIST;LIST74,1839
-} DATAINFO;DATAINFO96,2916
-} PATHS;PATHS115,3343
-} GRETLTEST;GRETLTEST122,3451
-} GRETLSUMMARY;GRETLSUMMARY128,3573
-} CORRMAT;CORRMAT134,3658
-} SAMPLE;SAMPLE139,3711
-} MODEL;MODEL194,6776
-} MODELSPEC;MODELSPEC199,6838
-} GRAPHT;GRAPHT205,6924
-} SESSION;SESSION214,7064
-} SESSIONBUILD;SESSIONBUILD220,7153
-} PRN;PRN226,7236
+#  define _(_36,1099
+#  define N_(N_37,1126
+#define MAXLABEL 41,1210
+#define MAXLEN 42,1289
+#define ERRLEN 43,1346
+# define M_PI 46,1426
+    GRETL_PRINT_STDOUT,50,1486
+    GRETL_PRINT_STDERR,51,1510
+    GRETL_PRINT_FILE,52,1534
+    GRETL_PRINT_BUFFER,53,1556
+    GRETL_PRINT_NULL54,1580
+} prn_codes;prn_codes55,1601
+    TIME_SERIES 58,1630
+    STACKED_TIME_SERIES,59,1651
+    STACKED_CROSS_SECTION60,1676
+} ts_codes;ts_codes61,1702
+    GENR_RESID,64,1730
+    GENR_FITTED,65,1746
+    GENR_RESID266,1763
+} auto_genr;auto_genr67,1779
+    SP_NONE,70,1808
+    SP_LOAD_INIT,71,1822
+    SP_SAVE_INIT,72,1840
+    SP_FINISH 73,1858
+} progress_flags;progress_flags74,1873
+typedef int *LIST;LIST76,1892
+} DATAINFO;DATAINFO98,2969
+} PATHS;PATHS117,3396
+} GRETLTEST;GRETLTEST124,3504
+} GRETLSUMMARY;GRETLSUMMARY130,3626
+} CORRMAT;CORRMAT136,3711
+} SAMPLE;SAMPLE141,3764
+} MODEL;MODEL196,6829
+} MODELSPEC;MODELSPEC201,6891
+} GRAPHT;GRAPHT207,6977
+} SESSION;SESSION216,7117
+} SESSIONBUILD;SESSIONBUILD222,7206
+} PRN;PRN228,7289
 
 lib/src/monte_carlo.c,826
 enum inequalities inequalities27,908
@@ -1448,13 +1442,13 @@ static void gretl_pdf 1608,50846
 static void xy_graph 1618,51068
 static void go_session 1626,51215
 static void make_toolbar 1636,51409
-void set_wm_icon 1739,53898
-drag_data_received 1750,54142
-special_selection_get 1800,55383
-static void clip_init 1841,56340
-static void auto_store 1863,57042
-static int old_windows 1884,57545
-static int unmangle 1908,58165
+void set_wm_icon 1739,53903
+drag_data_received 1750,54147
+special_selection_get 1800,55388
+static void clip_init 1841,56345
+static void auto_store 1863,57047
+static int old_windows 1884,57550
+static int unmangle 1908,58170
 
 gui/gretl.h,3521
 #define GRETL_H23,833
@@ -2579,40 +2573,44 @@ typedef enum { MS_BIFF_F_S_NONE,79,2194
 #define BIFF_RECALCID	321,13617
 #define BIFF_UNKNOWN_1	322,13666
 
-plugin/excel_import.c,1127
+plugin/excel_import.c,1243
 char *errbuf;57,1661
 #define EXCEL_IMPORTER61,1700
-static char *format_double 64,1751
-static int process_sheet 83,2169
-struct rowdescr rowdescr174,4210
-char **sst;179,4270
-int sstsize 180,4282
-int codepage 181,4312
-struct rowdescr *rowptr 182,4347
-char **saved_reference 183,4379
-int startrow 184,4410
-static double get_le_double 186,4442
-#define MS_OLE_GET_GUINT32(MS_OLE_GET_GUINT32217,5309
-static double biff_get_rk 222,5610
-    enum eType eType225,5684
-	eIEEE 226,5701
-	eIEEE = 0, eIEEEx100 226,5701
-	eIEEE = 0, eIEEEx100 = 1, eInt 226,5701
-	eIEEE = 0, eIEEEx100 = 1, eInt = 2, eIntx100 226,5701
-static int process_item 258,6371
-static char *mark_string 456,10869
-static char *copy_unicode_string 469,11089
-static char *convert8to7 502,12007
-static char *convert16to7 518,12279
-static int allocate 535,12572
-static int getshort 562,13384
-static void free_sheet 568,13569
-#define IS_STRING(IS_STRING600,14179
-static int consistent_date_labels 602,14215
-static int first_col_strings 625,14649
-static int got_varnames 642,15033
-static int data_block 660,15411
-int excel_get_data 671,15647
+    VARNAMES_OK 65,1758
+    VARNAMES_NULL,66,1779
+    VARNAMES_NOTSTR,67,1798
+    VARNAMES_INVALID68,1819
+static char *format_double 71,1859
+static int process_sheet 90,2277
+struct rowdescr rowdescr181,4318
+char **sst;186,4378
+int sstsize 187,4390
+int codepage 188,4420
+struct rowdescr *rowptr 189,4455
+char **saved_reference 190,4487
+int startrow 191,4518
+static double get_le_double 193,4550
+#define MS_OLE_GET_GUINT32(MS_OLE_GET_GUINT32224,5417
+static double biff_get_rk 229,5718
+    enum eType eType232,5792
+	eIEEE 233,5809
+	eIEEE = 0, eIEEEx100 233,5809
+	eIEEE = 0, eIEEEx100 = 1, eInt 233,5809
+	eIEEE = 0, eIEEEx100 = 1, eInt = 2, eIntx100 233,5809
+static int process_item 265,6479
+static char *mark_string 463,10977
+static char *copy_unicode_string 476,11197
+static char *convert8to7 509,12115
+static char *convert16to7 525,12387
+static int allocate 542,12680
+static int getshort 569,13492
+static void free_sheet 575,13677
+#define IS_STRING(IS_STRING607,14287
+static int consistent_date_labels 609,14323
+static int first_col_strings 632,14757
+static int got_valid_varnames 649,15141
+static int data_block 670,15659
+int excel_get_data 681,15895
 
 plugin/gnumeric_import.c,769
 #define UTF 33,995
@@ -2632,27 +2630,28 @@ static void wsheet_print_info 89,2077
 #define VTYPE_IS_NUMERIC(VTYPE_IS_NUMERIC119,2950
 static int wsheet_allocate 124,3107
 int wsheet_parse_cells 154,3915
-static int wsheet_get_data 268,6587
-static int wbook_record_name 357,8575
-static int wbook_get_info 368,8861
-int wsheet_setup 428,10127
-static int wsheet_labels_complete 444,10484
-static int consistent_date_labels 455,10698
-int wbook_get_data 476,11172
+static int wsheet_get_data 273,6696
+static int wbook_record_name 362,8684
+static int wbook_get_info 373,8970
+int wsheet_setup 433,10236
+static int wsheet_labels_complete 449,10593
+static int consistent_date_labels 460,10807
+int wbook_get_data 481,11281
 
-plugin/import_common.c,418
+plugin/import_common.c,455
 static void set_all_missing 22,811
-static int label_is_date 33,981
-static int obs_column 59,1591
-static void wbook_print_info 74,1870
-static void wbook_free 90,2277
-static void wbook_init 100,2453
-void wsheet_menu_select_row 110,2654
-void wsheet_menu_make_list 117,2808
-void wsheet_menu_cancel 132,3132
-void wbook_get_col_offset 138,3222
-void wbook_get_row_offset 145,3384
-static void wsheet_menu 151,3538
+static void invalid_varname 33,981
+static int label_is_date 39,1139
+static int obs_column 65,1749
+static void wbook_print_info 80,2028
+static void wbook_free 96,2435
+static void wbook_init 106,2611
+void wsheet_menu_select_row 116,2812
+void wsheet_menu_make_list 123,2966
+void wsheet_menu_cancel 138,3290
+void wbook_get_col_offset 144,3380
+void wbook_get_row_offset 151,3542
+static void wsheet_menu 157,3696
 
 plugin/importer.h,47
 } wbook;wbook27,951

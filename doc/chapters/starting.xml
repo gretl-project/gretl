@@ -105,27 +105,20 @@
   </figure>
 
   <para>
-    To select the dependent variable, highlight the variable you
-    want in the list on the left and either click the
-    <quote>Choose</quote> button that points to the Dependent variable
-    slot or double-click on the variable.  If you check the <quote>Set
-      as default</quote> box this variable will be pre-selected as
-    dependent when you next open the model dialog box. To select
-    independent variables, highlight them on the left and click the
+    To select the dependent variable, highlight the variable you want
+    in the list on the left and click the <quote>Choose</quote> button
+    that points to the Dependent variable slot.  If you check the
+    <quote>Set as default</quote> box this variable will be
+    pre-selected as dependent when you next open the model dialog box.
+    Shortcut: double-clicking on a variable on the left selects it as
+    dependent and also sets it as the default. To select independent
+    variables, highlight them on the left and click the
     <quote>Add</quote> button (or click the right mouse button over
     the highlighted variable).  To select several variable in the list
     box, drag the mouse over them; to select several non-contiguous
     variables, hold down the <literal>Ctrl</literal> key and click on
     the variables you want.
   </para>
-
-  <figure id="fig-selector" float="1" pgwide="1">
-    <title>Model specification dialog</title>
-    <screenshot>
-      <screeninfo>Model specification dialog</screeninfo>
-      <graphic fileref="figures/selector" align="center"/>
-    </screenshot>
-  </figure>
 
   <para>To run a regression with consumption as the dependent variable
     and income as independent, click <varname>Ct</varname> into the
@@ -163,22 +156,30 @@
       Previewing requires that you have a functioning &tex; system on
       your computer.</para> 
 
-    <para>If you want to import <application>gretl</application>
-      output into an editor or word processor there are two main
-      options.  You can simply copy and paste from an output window
-      (using its <guimenuitem>Edit</guimenuitem> menu) to the target
-      program, or you can save the output to a file then import the
-      file into the target program.  When you finish a
+    <para>To import <application>gretl</application> output into a
+      word processor, you may copy and paste from an output window,
+      using its <guimenuitem>Edit</guimenuitem> menu, to the target
+      program.  Many (not all) <application>gretl</application>
+      windows offer the option of copying in RTF or &latex; format. If
+      you are pasting into a word processor, RTF may be a good option
+      because the tabular formatting of the output is preserved.
+      Alternatively, you can save the output to a (plain text) file
+      then import the file into the target program.  When you finish a
       <application>gretl</application> session you are given the
       option of saving all the output from the session to a single
       file.</para>
 
-    <tip><para>When inserting <application>gretl</application> output
-	into a word processor, select a monospaced or typewriter-style
-	font (e.g. Courier) to preserve the output's tabular
-	formatting.  Select a small font (10-point Courier should do)
-	to prevent the output lines from being broken in the wrong
-	place.</para>
+    <para>Note that on the <application>gnome</application> desktop
+      and under MS Windows, the <guimenuitem>File</guimenuitem> menu
+      includes a command to send the output directly to a
+      printer.</para>
+
+    <tip><para>When pasting or importing plain text
+	<application>gretl</application> output into a word processor,
+	select a monospaced or typewriter-style font (e.g. Courier) to
+	preserve the output's tabular formatting.  Select a small font
+	(10-point Courier should do) to prevent the output lines from
+	being broken in the wrong place.</para>
     </tip>
 
   </sect1>

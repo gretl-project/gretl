@@ -586,6 +586,7 @@ static int real_setmiss (double missval, int varno,
  * set_miss:
  * @LIST: list of variables to process.
  * @param: string with specification of value to treat as missing.
+ * @Z: data matrix.
  * @pdinfo: pointer to data information struct.
  * @PRN: pointer to printing struct.
  * 
@@ -1096,7 +1097,14 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     gretl_errmsg[0] = '\0';
 }
 
-/* ........................................................... */
+/**
+ * gretl_model_new:
+ * @pdinfo: pointer to data information struct.
+ * 
+ * Allocates memory for a gretl MODEL struct and initializes the struct.
+ *
+ * Returns: pointer to #MODEL (or NULL if allocation fails).
+ */
 
 MODEL *gretl_model_new (DATAINFO *pdinfo)
 {

@@ -1385,7 +1385,8 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 	/* don't expand real, vector variables */
 	expand = genr->scalar;
 	v = varindex(pdinfo, ss);
-	if (v == UHATNUM || (v < pdinfo->v && pdinfo->vector[v])) expand = 0;
+	if (v == UHATNUM || v == TNUM || v == INDEXNUM ||
+	    (v < pdinfo->v && pdinfo->vector[v])) expand = 0;
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
 	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);

@@ -1,4 +1,18 @@
 <SECTION>
+<FILE>gettext</FILE>
+gettext
+dgettext
+dcgettext
+ngettext
+dngettext
+dcngettext
+textdomain
+bindtextdomain
+bind_textdomain_codeset
+gettext_noop
+</SECTION>
+
+<SECTION>
 <FILE>cmdlist</FILE>
 </SECTION>
 
@@ -36,6 +50,7 @@ ntodate
 get_info
 get_precision
 write_data
+data_report
 is_gzipped
 has_gz_suffix
 gz_switch_ext
@@ -46,6 +61,7 @@ import_csv
 import_box
 add_case_markers
 detect_filetype
+check_varname
 get_xmldata
 get_xml_description
 open_plugin
@@ -91,6 +107,7 @@ get_errmsg
 errmsg
 get_gretl_errno
 get_gretl_errmsg
+get_gretl_msg
 </SECTION>
 
 <SECTION>
@@ -109,7 +126,6 @@ makevcv
 <SECTION>
 <FILE>generate</FILE>
 genr_numbers
-GENERATE
 LAGVAR
 generate
 dummy
@@ -152,7 +168,6 @@ getcmd
 command_number
 help
 fcast
-add_new_var
 parseopt
 shell
 echo_cmd
@@ -161,15 +176,18 @@ simple_commands
 
 <SECTION>
 <FILE>internal</FILE>
+gretl_print_add
+gretl_print_omit
 </SECTION>
 
 <SECTION>
 <FILE>libgretl</FILE>
+_
+N_
 MAXLABEL
 MAXLEN
 ERRLEN
 M_PI
-_
 prn_codes
 ts_codes
 auto_genr
@@ -272,6 +290,7 @@ top_n_tail
 compress_spaces
 pprintf
 safecpy
+doing_nls
 </SECTION>
 
 <SECTION>
