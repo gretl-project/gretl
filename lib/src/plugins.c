@@ -50,7 +50,8 @@ enum {
     P_TOBIT,
     P_GARCH,
     P_AUDIO,
-    P_URCDIST
+    P_URCDIST,
+    P_KERNEL
 } plugin_codes;
 
 struct plugin_info {
@@ -89,7 +90,8 @@ struct plugin_info plugins[] = {
     { P_TOBIT,           "tobit" },
     { P_GARCH,           "garch" },
     { P_AUDIO,           "audio" },
-    { P_URCDIST,         "urcdist" }
+    { P_URCDIST,         "urcdist" },
+    { P_KERNEL,          "kernel" },
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -164,6 +166,9 @@ struct plugin_function plugin_functions[] = {
 
     /* MacKinnon Dickey-Fuller p-values */
     { "mackinnon_pvalue",  P_URCDIST },
+
+    /* kernel density estimation */
+    { "kernel_density",    P_KERNEL },
 
     /* sentinel */
     { NULL, 0 }

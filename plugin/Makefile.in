@@ -57,16 +57,53 @@ else
   GRETL_LIBOLE2_CFLAGS := -I$(topsrc)/plugin $(shell glib-config --cflags)
 endif  
 
-SRCS = excel_import.c gnumeric_import.c import_common.c \
-	johansen.c lad.c longname.c mp_ols.c panel_data.c pca.c progress_bar.c \
-	range-mean.c stats_tables.c sysest.c tramo_options.c tramo-x12a.c \
-	workbook.c nistcheck.c arma.c arma_x12.c logistic.c tobit.c garch.c \
-	vif.c urcdist.c
+SRCS = excel_import.c \
+	gnumeric_import.c \
+	import_common.c \
+	johansen.c \
+	kernel.c \
+	lad.c \
+	longname.c \
+	mp_ols.c \
+	panel_data.c \
+	pca.c \
+	progress_bar.c \
+	range-mean.c \
+	stats_tables.c \
+	sysest.c \
+	tramo_options.c \
+	tramo-x12a.c \
+	workbook.c \
+	nistcheck.c \
+	arma.c \
+	arma_x12.c \
+	logistic.c \
+	tobit.c \
+	garch.c \
+	urcdist.c \
+	vif.c 
 
-PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
-	progress_bar.la gnumeric_import.la excel_import.la \
-	johansen.la sysest.la leverage.la pca.la nistcheck.la arma.la \
-	arma_x12.la logistic.la tobit.la garch.la vif.la urcdist.la $(TXPLUGIN)
+PLUGINS = arma.la \
+	arma_x12.la \
+	excel_import.la \
+	garch.la \
+	gnumeric_import.la \
+	johansen.la \
+	kernel.la \
+	lad.la \
+	leverage.la \
+	logistic.la \
+	nistcheck.la \
+	panel_data.la \
+	pca.la \
+	progress_bar.la \
+	range-mean.la \
+	stats_tables.la \
+	sysest.la \
+	tobit.la \
+	urcdist.la \
+	vif.la \
+	$(TXPLUGIN)
 
 ifeq ($(have_gmp),yes)
   PLUGINS += mp_ols.la
@@ -119,6 +156,9 @@ range-mean.la: range-mean.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 lad.la: lad.lo
+	$(LINK) -o $@ $< $(GRETLLIB)
+
+kernel.la: kernel.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
 
 vif.la: vif.lo

@@ -61,6 +61,7 @@ enum extra_cmds {
     LMTEST_WHITE,
     LMTEST_BG,
     LMTEST_GROUPWISE,
+    KERNEL_DENSITY,
     GUI_CMD_MAX
 };
 

@@ -204,8 +204,8 @@ GtkItemFactoryEntry data_items[] = {
       RATS_DB, NULL },
     { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/File/Browse databases/on database _server"), NULL, display_files, 
-
       REMOTE_DB, NULL },
+
     /* File, Create dataset */
     { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Create data set/time-series"), NULL, NULL, 0, "<Branch>" },
@@ -401,6 +401,7 @@ GtkItemFactoryEntry data_items[] = {
       NORMAL, NULL },
     { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
       GAMMA, NULL },
+    { N_("/Variable/Estimated density plot..."), NULL, do_kernel, 0, NULL },
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Variable/_Time series plot"), NULL, ts_plot_var, 0, NULL },

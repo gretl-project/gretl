@@ -2063,12 +2063,12 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 
 #ifdef OLD_GTK
 static GtkWidget *
-gtk_spin_button_new_with_range (int a, int b, int c)
+gtk_spin_button_new_with_range (double lo, double hi, double val)
 {
     GtkAdjustment *adj;
     GtkWidget *sb;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(c, a, b, 1, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(val, lo, hi, step, 1, 0);
     sb = gtk_spin_button_new(adj, 0, 0);
 
     return sb;
@@ -2651,7 +2651,7 @@ static void set_radio_opt (GtkWidget *w, int *opt)
 }
 
 int radio_dialog (const char *title, const char **opts, 
-		  int nopts, int deflt)
+		  int nopts, int deflt, int helpcode)
 {
     GtkWidget *dialog;
     GtkWidget *button;
@@ -2671,6 +2671,7 @@ int radio_dialog (const char *title, const char **opts,
 			button, TRUE, TRUE, 0);
     if (deflt == 0) {
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	ret = 0;
     }
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_radio_opt), &ret);
@@ -2686,6 +2687,7 @@ int radio_dialog (const char *title, const char **opts,
 			    button, TRUE, TRUE, 0);
 	if (deflt == i) {
 	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+	    ret = i;
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_radio_opt), &ret);
@@ -2704,6 +2706,130 @@ int radio_dialog (const char *title, const char **opts,
 
     /* Create the "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* Create a "Help" button? */
+    if (helpcode) {
+	context_help_button(GTK_DIALOG(dialog)->action_area, helpcode);
+    }
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+
+    return ret;
+}
+
+static void set_bw_manual (GtkWidget *w, GtkWidget **wp)
+{
+    int s = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+
+    gtk_widget_set_sensitive(*wp, (s != 0));
+}
+
+int density_dialog (int vnum, double *bw)
+{
+    GtkWidget *dialog;
+    GtkWidget *button;
+    GtkWidget *hbox;
+    GtkWidget *tempwid;
+    GtkWidget *bwspin;
+    GSList *group;
+    int ret = 0;
+
+    dialog = simple_dialog_new(_("density estimation options"));
+
+    no_resize(dialog);
+
+    g_signal_connect(G_OBJECT(dialog), "destroy", 
+		     G_CALLBACK(dialog_unblock), NULL);
+
+    /* kernel option buttons */
+
+    button = gtk_radio_button_new_with_label(NULL, _("Gaussian kernel"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG(dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_radio_opt), &ret);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(0));
+    gtk_widget_show(button);
+
+    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, _("Epanechnikov kernel"));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_radio_opt), &ret);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(1));
+    gtk_widget_show(button);
+
+    /* separator */
+
+    tempwid = gtk_hseparator_new();
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       tempwid, TRUE, TRUE, 0);
+    gtk_widget_show(tempwid);    
+
+    /* bandwidth options */
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       hbox, TRUE, TRUE, 0);
+    gtk_widget_show(hbox);
+
+    tempwid = gtk_label_new(_("bandwidth:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 0);
+    gtk_widget_show(tempwid);
+
+    button = gtk_radio_button_new_with_label(NULL, _("automatic (Silverman)"));
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
+
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bw_manual), &bwspin);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(0));
+    gtk_widget_show(button);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       hbox, TRUE, TRUE, 0);
+    gtk_widget_show(hbox);
+
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
+    button = gtk_radio_button_new_with_label(group, _("manual"));
+    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_bw_manual), &bwspin);
+    g_object_set_data(G_OBJECT(button), "action", 
+		      GINT_TO_POINTER(1));
+    gtk_widget_show(button);
+
+    /* bandwidth spinner */
+    
+    bwspin = gtk_spin_button_new_with_range(0, 4, 1);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(bwspin), 1);
+    gtk_box_pack_start(GTK_BOX(hbox), bwspin, TRUE, TRUE, 0);
+    gtk_widget_show(bwspin);
+    gtk_widget_set_sensitive(bwspin, FALSE);
+
+    /* "OK" button */
+    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
+    g_signal_connect(G_OBJECT(tempwid), "clicked", 
+		     G_CALLBACK(delete_widget), 
+		     dialog);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show(tempwid);
+
+    /* "Cancel" button */
+    cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
+
+    /* "Help" button */
+    context_help_button(GTK_DIALOG(dialog)->action_area, KERNEL_DENSITY);
 
     gtk_widget_show(dialog);
 

@@ -434,15 +434,17 @@ static int add_series_from_file (const char *fname, int code,
 	int gotit = 0;
 
 	/* this is a bit of a pest: under some configurations, tramo/seats
-	   outputs a series "irfin", but sometimes that is not created, but
+	   outputs a series "irfin"; sometimes that is not created, but
 	   we do get an "irreg".  So if we can't find the one, try looking
 	   for the other.
 	*/
-	if (opt == TRAMO_SEATS && code == D13) { /* irregular, try the alternate */
+	if (opt == TRAMO_SEATS && code == D13) { 
 	    sprintf(sfname, "%s%cgraph%cseries%c%s", fname, SLASH, SLASH, SLASH,
 		    tramo_series_strings[code + 1]);
 	    fp = fopen(sfname, "r");
-	    if (fp != NULL) gotit = 1;
+	    if (fp != NULL) {
+		gotit = 1;
+	    }
 	    tramo_got_irfin = 0;
 	}
 	if (!gotit) {
@@ -472,7 +474,9 @@ static int add_series_from_file (const char *fname, int code,
 	strcat(VARLABEL(pdinfo, v), " (X-12-ARIMA)");
     }	
 
-    for (t=0; t<pdinfo->n; t++) Z[v][t] = NADBL;
+    for (t=0; t<pdinfo->n; t++) {
+	Z[v][t] = NADBL;
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -496,7 +500,9 @@ static int add_series_from_file (const char *fname, int code,
     } else {
 	/* grab the data from the x12arima file */
 	while (fgets(line, 127, fp)) {
-	    if (*line == 'd' || *line == '-') continue;
+	    if (*line == 'd' || *line == '-') {
+		continue;
+	    }
 	    if (sscanf(line, "%d %lf", &d, &x) != 2) {
 		err = 1; 
 		break;

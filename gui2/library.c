@@ -1512,9 +1512,7 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 			   LEVERAGE, m); 
 	set_model_id_on_window(vwin->dialog, pmod->ID);
 
-#if 1
 	make_and_display_graph();
-#endif
 
 	strcpy(line, "leverage");
 	model_command_init(line, &cmd, pmod->ID);
@@ -1556,6 +1554,61 @@ void do_vif (gpointer data, guint u, GtkWidget *w)
     } else {
 	errbox(_("Command failed"));
     }
+}
+
+static int reject_scalar (int vnum)
+{
+    if (!datainfo->vector[vnum]) {
+	sprintf(errtext, _("variable %s is a scalar"), 
+		datainfo->varname[vnum]);
+	errbox(errtext);
+	return 1;
+    }
+
+    return 0;
+}
+
+void do_kernel (gpointer data, guint u, GtkWidget *w)
+{
+    void *handle;
+    int (*kernel_density) (int, const double **, const DATAINFO *,
+			   double, gretlopt);
+    const char *kernel_opts[] = {
+	N_("Gaussian kernel"),
+	N_("Epanechnikov kernel")
+    };
+    gretlopt opt = OPT_NONE;
+    double bw = NADBL;
+    int err;
+
+    if (reject_scalar(mdata->active_var)) {
+	return;
+    }
+
+    err = density_dialog(mdata->active_var, &bw);
+    if (err < 0) {
+	return;
+    }
+
+    if (err > 0) {
+	opt |= OPT_O;
+    }
+
+    kernel_density = gui_get_plugin_function("kernel_density", 
+					     &handle);
+    if (kernel_density == NULL) {
+	return;
+    }
+
+    err = (*kernel_density)(mdata->active_var, (const double **) Z, 
+			    datainfo, bw, opt);
+    close_plugin(handle);
+
+    if (err) {
+	errbox(_("Command failed"));
+    } else {
+	make_and_display_graph();
+    } 
 }
 
 /* ........................................................... */
@@ -2848,6 +2901,10 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     int (*range_mean_graph) (int, double **, const DATAINFO *, 
 			     PRN *, PATHS *);
     PRN *prn;
+
+    if (reject_scalar(mdata->active_var)) {
+	return;
+    }
 
     range_mean_graph = gui_get_plugin_function("range_mean_graph", 
 					       &handle);

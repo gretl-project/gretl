@@ -29,26 +29,16 @@ static int cholesky_decomp (double *xpx, int nv);
 
 /* .......................................................... */
 
-static double _norm_pdf (const double xx)
+static double logit (double x)
 {
-    return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * xx * xx);
+    return 1.0 / (1.0 + exp(-x));
 }
 
-static double _norm_cdf (const double xx)
+static double logit_pdf (double x)
 {
-    return 1.0 - normal(xx);
-}
+    double z = exp(-x);
 
-static double _logit (double xx)
-{
-    return 1.0 / (1.0 + exp(-xx));
-}
-
-static double _logit_pdf (double xx)
-{
-    double zz = exp(-xx);
-
-    return zz / ((1.0 + zz) * (1.0 + zz));
+    return z / ((1.0 + z) * (1.0 + z));
 }
 
 /* .......................................................... */
@@ -90,9 +80,9 @@ logit_probit_llhood (const double *y, const MODEL *pmod, int opt)
 	}
 	q = 2.0 * y[t] - 1.0;
 	if (opt == LOGIT) {
-	    lnL += log(_logit(q * pmod->yhat[t]));
+	    lnL += log(logit(q * pmod->yhat[t]));
 	} else {
-	    lnL += log(_norm_cdf(q * pmod->yhat[t]));
+	    lnL += log(normal_cdf(q * pmod->yhat[t]));
 	}
     }
 
@@ -176,9 +166,9 @@ static double *hess_wts (MODEL *pmod, double **Z, int opt)
 	    bx += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
 	if (opt == LOGIT) {
-	    w[tm] = -1.0 * _logit(bx) * (1.0 - _logit(bx));
+	    w[tm] = -1.0 * logit(bx) * (1.0 - logit(bx));
 	} else {
-	    xx = (q * _norm_pdf(q * bx)) / _norm_cdf(q * bx);
+	    xx = (q * normal_pdf(q * bx)) / normal_cdf(q * bx);
 	    w[tm] = -xx * (xx + bx);
 	}
     }
@@ -326,11 +316,11 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
 	    xx = dmod.yhat[t];
 	    if (!na(dmod.yhat[t])) {
 		if (opt == LOGIT) {
-		    fx = _logit_pdf(xx);
-		    Fx = _logit(xx);
+		    fx = logit_pdf(xx);
+		    Fx = logit(xx);
 		} else {
-		    fx = _norm_pdf(xx);
-		    Fx = _norm_cdf(xx);
+		    fx = normal_pdf(xx);
+		    Fx = normal_cdf(xx);
 		}
 		if (floateq((*pZ)[depvar][t], 0.0)) {
 		    xx -= fx / (1.0 - Fx);
@@ -411,9 +401,9 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     free(xbar);
 
     if (opt == LOGIT) {
-	fbx = _logit_pdf(xx);
+	fbx = logit_pdf(xx);
     } else {
-	fbx = _norm_pdf(xx);
+	fbx = normal_pdf(xx);
     }
 
     if (add_slopes_to_model(&dmod, fbx)) {
