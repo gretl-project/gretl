@@ -89,10 +89,9 @@ PROBHDR = mconf.h
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MO = mo/es.mo
-HELP = doc/gretl.chm
 
 # targets begin
-all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(HELP)
+all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -123,14 +122,11 @@ $(UPDATER):
 $(MO):
 	make -C mo
 
-$(HELP):
-	make -C doc
-
 dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
 
-dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(HELP) $(UPDATER)
+dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(UPDATER)
 	./mkwindist 
 
 topclean:
