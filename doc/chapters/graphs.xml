@@ -128,6 +128,18 @@ outliers = true
 	value</quote> are ignored, as are lines that begin with the
       hash mark, <literal>#</literal>.</para>
 
+    <para>After each variable specified in the boxplot command, a
+      parenthesized boolean expression may be added, to limit the
+      sample for the variable in question.  A space must be inserted
+      between the variable name or number and the expression.  Suppose
+      you have salary figures for men and women, and you have a dummy
+      variable <literal>GENDER</literal> with value 1 for men and 0
+      for women.  In that case you could draw comparative boxplots
+      with the following line in the boxplots dialog:</para>
+    <programlisting>
+      salary (GENDER=1) salary (GENDER=0)
+    </programlisting>
+
   </sect1>
 
   </chapter>

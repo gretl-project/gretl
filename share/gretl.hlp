@@ -127,6 +127,15 @@ Not all of the options need be specified, and the order doesn't matter.  Lines
 not matching the pattern "key = value" are ignored, as are lines that begin
 with the hash mark, #.
 
+After each variable specified in the boxplot command, a parenthesized boolean
+expression may be added, to limit the sample for the variable in question.  A
+space must be inserted between the variable name or number and the expression.
+Suppose you have salary figures for men and women, and you have a dummy
+variable GENDER with value 1 for men and 0 for women.  In that case you could
+draw comparative boxplots with the following line in the boxplots dialog:
+
+  salary (GENDER=1) salary (GENDER=0)
+
 #
 chow
 Chow test for structural homogeneity

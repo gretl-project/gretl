@@ -8,6 +8,9 @@ version 0.981
   sample
 - add "native" printing of window contents under win32 and
   gnome
+- enhance boxplots command, allowing for boolean expressions
+  to limit the sample for individual plots in a comparative
+  group of plots
 
 02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for

@@ -3279,7 +3279,10 @@ static int gui_exec_line (char *line,
     case BXPLOT:
 	if (exec_code == REBUILD_EXEC || exec_code == SAVE_SESSION_EXEC) 
 	    break;
-	err = boxplots (command.list, NULL, &Z, datainfo, (oflag != 0));
+	if (command.nolist) 
+	    err = boolean_boxplots(line, &Z, datainfo, (oflag != 0));
+	else
+	    err = boxplots(command.list, NULL, &Z, datainfo, (oflag != 0));
 	break;
 
     case CHOW:

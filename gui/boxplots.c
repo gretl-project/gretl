@@ -920,11 +920,9 @@ int boxplots (int *list, char **bools, double **pZ, const DATAINFO *pdinfo,
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
 	n = ztox(list[i+1], x, *pZ, pdinfo);
 	if (n < 2) {
-	    char s[63];
-
-	    sprintf(s, "Dropping %s: inadequate observations for boxplot",
+	    sprintf(errtext, "Dropping %s: insufficient observations",
 		    pdinfo->varname[list[i+1]]);
-	    errbox(s);
+	    errbox(errtext);
 	    list_exclude(i+1, list);
 	    if (list[0] == 0) {
 		free(plotgrp->plots);
@@ -1420,14 +1418,17 @@ static int special_varcount (const char *s)
 int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo, 
 		      int notches)
 {
-    int i, k, nvars, nbool, err = 0;
+    int i, k, v, nvars, nbool, err = 0;
     int n = pdinfo->n, origv = pdinfo->v;
     char *tok, *s = NULL, **bools = NULL;
     int *list = NULL;
 
+    if (!strncmp(str, "boxplots ", 9)) str += 9;
+    else if (!strncmp(str, "boxplot ", 8)) str += 8;
+
     s = malloc(strlen(str) + 1);
     if (s == NULL) return 1;
-    strcpy(s, str);    
+    strcpy(s, str);  
 
     nvars = special_varcount(s);
     if (nvars == 0) {
@@ -1451,31 +1452,36 @@ int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo,
 	    if (i) {
 		bools[i-1] = malloc(strlen(tok) + 1);
 		strcpy(bools[i-1], tok);
-		fprintf(stderr, "allocated and copied to bools[%d]\n", i-1);
 		nbool++;
 	    } else
 		err = 1;
 	} else {
 	    if (isdigit(tok[0])) { 
-		list[++i] = atoi(tok);
-	    }
-	    else if (isalpha(tok[0])) {
-		int v = varindex(pdinfo, tok);
-
+		v = atoi(tok);
 		if (v < origv) list[++i] = v;
 		else {
-		    fprintf(stderr, "got invalid varname '%s'\n", tok);
+		    sprintf(errtext, "got invalid variable number %d", v);
+		    errbox(errtext);
+		    err = 1;
+		}
+	    }
+	    else if (isalpha(tok[0])) {
+		v = varindex(pdinfo, tok);
+		if (v < origv) list[++i] = v;
+		else {
+		    sprintf(errtext, "got invalid varname '%s'", tok);
+		    errbox(errtext);
 		    err = 1;
 		}
 	    } else {
-		fprintf(stderr, "got invalid field '%s'\n", tok);
+		sprintf(errtext, "got invalid field '%s'", tok);
+		errbox(errtext);
 		err = 1; 
 	    }
 	}
     }
     free(s);
 
-    fprintf(stderr, "adding %d new variables\n", nbool);
     if (dataset_add_vars(nbool, pZ, pdinfo)) {
 	err = 1;
 	nbool = 0;
@@ -1496,6 +1502,7 @@ int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo,
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
 	    genr = generate(pZ, pdinfo, formula, 0, NULL, 0);
 	    if (genr.errcode) {
+		errbox("boxplots: generation of dummy variable failed");
 		fprintf(stderr, "%s\n", get_gretl_errmsg());
 		err = 1;
 	    } else {
@@ -1512,22 +1519,16 @@ int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo,
 	}
     }
 
-    if (!err) printlist(list, "final boxplot list");
-    
-    if (!err) {
-	fprintf(stderr, "doing boxplots\n");
+    if (!err) 
 	err = boxplots(list, bools, pZ, pdinfo, notches);
-    }
     
     free(list);
     for (i=0; i<nvars; i++) 
 	if (bools[i]) free(bools[i]);
     free(bools);
 
-    if (nbool) {
-	fprintf(stderr, "shrinking dataset by %d variables\n", nbool);
+    if (nbool) 
 	dataset_drop_vars(nbool, pZ, pdinfo);
-    }
     
     return err;
 }

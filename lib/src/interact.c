@@ -254,6 +254,13 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
+    /* boxplots can be special: boolean conditions embedded in
+       the list, which have to be parsed separately */
+    if (command->ci == BXPLOT && strchr(line, '(')) {
+	command->nolist = 1;
+	return;
+    }
+
     /* fix lines that contain a semicolon right after a var */
     for (i=0; i<linelen-1; i++) {
 	if (isalnum((unsigned char) line[i]) && line[i+1] == ';') {

@@ -97,7 +97,7 @@ void winprint (char *fullbuf, char *selbuf)
     PRINTDLG pdlg;
     int printok, line, page;
     LOGFONT lfont;
-    HFONT fixed_font, *old_font;
+    HFONT fixed_font;
     DOCINFO di;
     TEXTMETRIC lptm;
     int px, x, y, incr, page_lines = 47;
@@ -133,12 +133,11 @@ void winprint (char *fullbuf, char *selbuf)
     lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN; 
     lstrcpy(lfont.lfFaceName, "Courier New");
     fixed_font = CreateFontIndirect(&lfont);
-    old_font = SelectObject(dc, &fixed_font); 
+    SelectObject(dc, fixed_font); 
 
     incr = 120;
-    if (GetTextMetrics(dc, &lptm)) {
+    if (GetTextMetrics(dc, &lptm)) 
 	incr = lptm.tmHeight * 1.2;
-    }
         
     /* Initialize print document details */
     memset(&di, 0, sizeof(DOCINFO));
@@ -156,7 +155,7 @@ void winprint (char *fullbuf, char *selbuf)
     time_string(hdrstart);
     while (*p && printok) { /* pages loop */
 	StartPage(dc);
-	SelectObject(dc, &fixed_font);
+	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
 	sprintf(hdr, "%s, page %d", hdrstart, page++);
@@ -178,7 +177,6 @@ void winprint (char *fullbuf, char *selbuf)
     else
         AbortDoc(dc);
 
-    SelectObject(dc, old_font);
     DeleteObject(fixed_font);
     DeleteDC(dc);
     GlobalFree(pdlg.hDevMode);

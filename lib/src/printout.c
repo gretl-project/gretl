@@ -774,6 +774,19 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 
 /* ......................................................... */ 
 
+static void fix_exponent (char *s)
+{
+    char *p;
+    int k;
+
+    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
+	if (sscanf(p + 1, "%d", &k) == 1)
+	    sprintf(p + 1, "0%d", k);
+    }
+}
+
+/* ......................................................... */ 
+
 static void print_float_10 (const double x, PRN *prn)
 {
     int pad;
@@ -787,15 +800,12 @@ static void print_float_10 (const double x, PRN *prn)
 	return;
     }
     if (fabs(xx) >= 1000000) {
-#ifdef OS_WIN32 /* win32 seems to print a 3-digit exponent */
-	if (xx < 0.0) sprintf(numstr, "%.3g", xx);
-	else sprintf(numstr, "%.4g", xx);
-#else
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
-#endif
 	pad = (10 - strlen(numstr));
 	if (pad > 0) _bufspace(pad, prn);
+	else if (pad < 0)
+	    fix_exponent(numstr);
 	pprintf(prn, "%s", numstr);
 	return;
     }
@@ -808,15 +818,12 @@ static void print_float_10 (const double x, PRN *prn)
 	return;
     }
     if (fabs(xx) < .00001) {
-#ifdef OS_WIN32
-	if (xx < 0.0) sprintf(numstr, "%.3g", xx);
-	else sprintf(numstr, "%.4g", xx);
-#else
 	if (xx < 0.0) sprintf(numstr, "%.4g", xx);
 	else sprintf(numstr, "%.5g", xx);
-#endif
 	pad = (10 - strlen(numstr));
 	if (pad > 0) _bufspace(pad, prn);
+	else if (pad < 0)
+	    fix_exponent(numstr);
 	pprintf(prn, "%s", numstr);
 	return;
     } 
