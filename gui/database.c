@@ -322,18 +322,15 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
-	    data_compact_dialog(sinfo->pd, datainfo->pd, 
-				&compact_method);
+	    data_compact_dialog(sinfo->pd, datainfo->pd, &compact_method);
 	    if (!compact_method) {
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) 
-		mon_to_quart(&xvec, (*dbZ)[1], sinfo,
-			     compact_method);
+		mon_to_quart(&xvec, (*dbZ)[1], sinfo, compact_method);
 	    else if (datainfo->pd == 1) 
-		to_annual(&xvec, (*dbZ)[1], sinfo,
-			  compact_method);
+		to_annual(&xvec, (*dbZ)[1], sinfo, compact_method);
 	} else {  /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
 	    for (t=0; t<sinfo->nobs; t++) 
