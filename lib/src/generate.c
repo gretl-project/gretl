@@ -120,7 +120,7 @@ struct genr_func {
 };
 
 struct genr_func funcs[] = {
-    { T_LOG, "log" }, 
+    { T_LOG,     "log" }, 
     { T_EXP,     "exp" }, 
     { T_SIN,     "sin" }, 
     { T_COS,     "cos" }, 
@@ -155,6 +155,7 @@ struct genr_func funcs[] = {
     { T_MEDIAN,  "median" },
     { T_ZEROMISS, "zeromiss" },
     { T_PVALUE,  "pvalue" },
+    { T_OBSNUM,  "obsnum" },
     { T_MPOW,    "mpow" },
 #ifdef HAVE_MPFR
     { T_MLOG,    "mlog" },
@@ -404,10 +405,6 @@ static genatom *parse_token (const char *s, char op,
 		scalar = 1;
 	    }
 	}
-	else if (*s == '"') {
-	    /* observation label: basis for dummy series */
-	    val = obs_num(s, genr->pdinfo);
-	}
     }
 
     else if (*s == '$') {
@@ -434,8 +431,20 @@ static genatom *parse_token (const char *s, char op,
     else if (_isnumber(s)) {
 	val = dot_atof(s);
 	scalar = 1;
-    } else {
-	DPRINTF(("dead end after _isnumber, s='%s'\n", s));
+    }
+
+    else if (*s == '"') {
+	/* observation label? (basis for dummy series) */
+	val = obs_num(s, genr->pdinfo);
+	if (val > 0) {
+	    func = T_OBSNUM;
+	} else{
+	    genr->err = E_SYNTAX;
+	}
+    }
+
+    else {
+	DPRINTF(("dead end in parse_token, s='%s'\n", s));
 	genr->err = E_SYNTAX;
     }
 
@@ -530,6 +539,11 @@ static double eval_atom (genatom *atom, GENERATE *genr, int t,
 	    x = evaluate_missval_func(a, atom->func);
 	    DPRINTF(("evaluated missval func %d: %g -> %g\n", 
 		     atom->func, a, x));
+	}
+	else if (atom->func == T_OBSNUM) {
+	    x = (t + 1 == atom->val)? atom->val : 0.0;
+	    DPRINTF(("evaluated obsnum at t=%d, returning %g\n",
+		     t, x));
 	}
 	else if (atom->func == T_IDENTITY) {
 	    DPRINTF(("identity func: passed along %g\n", a));

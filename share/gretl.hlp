@@ -1046,11 +1046,10 @@ sampling
 
 Select a sub-sample of the current data set.
 
-If you choose "Sample/Define based on dummy..." you need to supply the name of
-a dummy (indicator) variable, which should have the values 0 or 1 at each
+If you choose "Sample/Define based on dummy..." you are prompted to select a
+dummy (indicator) variable, which must have the values 0 or 1 at each
 observation.  The sample will be restricted to observations for which the
-dummy's value is 1.  (Clicking on a variable's line in the main data window
-will insert that variable's name into the dialog box.)
+dummy's value is 1.
 
 If you choose "Sample/Restrict based on criterion..." you need to supply a
 Boolean (logical) expression, of the same sort that you would use to define a
