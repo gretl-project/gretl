@@ -12,7 +12,7 @@
 #include <gretl/libgretl.h>
 
 #define MAXCOEFF   12
-#define MAX_DIGITS 10
+#define MAX_DIGITS 15
 #define MIN_DIGITS  1
 #define CHECK_DIGITS 6
 
