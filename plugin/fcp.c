@@ -939,7 +939,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
        impiega la varianza noncondizionata calcolata dai residui.
     */
 
-    for (k = 1; k <= nbeta; k++) { /* FIXME date index?? */
+    for (k = 1; k <= nbeta; k++) { /* FIXME index?? */
 	for (i = 0; i < nvparm; ++i) {
 	    dhdp[nc+i][t1-k] = 0.0;
 	    if (H != NULL) { /* hessian only */
@@ -1110,7 +1110,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 
     if (code == VCV_IM) {
 	for (t = t1; t <= t2; ++t) {
-	    /* parte relativa ai coefficienti (eq. 23 pag. 316) 
+	    /* parte relativa ai coefficienti (eq. 23 p. 316) 
 	       si ricorda che si prende il valore atteso e restano solo i primi
 	       due termini 
 	    */

@@ -53,7 +53,6 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
-static void print_garch_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
@@ -1303,7 +1302,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci == GARCH) {
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	print_garch_stats(pmod, prn);
+	print_arma_stats(pmod, prn);
 	print_middle_table_end(prn);
 	goto close_format;
     }    
@@ -1556,10 +1555,8 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
-    } else if (pmod->ci == NLS || pmod->ci == ARMA) {
+    } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	strcpy(varname, pmod->params[c-1]);
-    } else if (pmod->ci == GARCH) {
-	strcpy(varname, pmod->params[c]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
@@ -1966,22 +1963,6 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 		I_("Censored observations"), cenpc);
 	tex_dcolumn_double(pmod->sigma, xstr);
 	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
-	tex_dcolumn_double(pmod->lnL, xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-    }
-}
-
-static void print_garch_stats (const MODEL *pmod, PRN *prn)
-{
-    if (PLAIN_FORMAT(prn->format)) {
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-    }
-    else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-    }
-    else if (TEX_FORMAT(prn->format)) {
-	char xstr[32];
-
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
     }

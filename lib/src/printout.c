@@ -542,7 +542,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
     if (pmod->ci == TSLS) {
 	k = 2;
 	while (pmod->list[k++] != LISTSEP) nbeta++;
-    } else if (pmod->ci == ARMA) {
+    } else if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	nbeta = 1 + pmod->list[1] + pmod->list[2] + pmod->list[0] - 4;
     } else {
 	nbeta = pmod->list[0] - 1;
@@ -649,6 +649,7 @@ void text_print_matrix (const double *rr, const int *list,
     int lo, ljnf, nf, li2, p, k, m, index, ij2, lineno = 0;
     int nls = (pmod != NULL && pmod->ci == NLS);
     int arma = (pmod != NULL && pmod->ci == ARMA);
+    int garch = (pmod != NULL && pmod->ci == GARCH);
     char s[16];
     enum { FIELDS = 5 };
     
@@ -666,7 +667,7 @@ void text_print_matrix (const double *rr, const int *list,
 
 	/* print the varname headings */
 	for (j=1; j<=p; ++j)  {
-	    if (nls || arma) {
+	    if (nls || arma || garch) {
 		ljnf = j + nf;
 		strcpy(s, pmod->params[ljnf]);
 	    } else {
@@ -687,7 +688,8 @@ void text_print_matrix (const double *rr, const int *list,
 		index = ijton(j, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls || arma)? j : list[j]);
+	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
+		    j : list[j]);
 	}
 
 	/* print upper triangular part of matrix */
@@ -700,7 +702,8 @@ void text_print_matrix (const double *rr, const int *list,
 		index = ijton(ij2, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
 	    }
-	    pprintf(prn, "   (%d\n", (nls || arma)? ij2 : list[ij2]);
+	    pprintf(prn, "   (%d\n", (nls || arma || garch)? 
+		    ij2 : list[ij2]);
 	}
 	pputc(prn, '\n');
     }

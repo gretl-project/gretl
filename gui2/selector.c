@@ -1207,21 +1207,24 @@ static void build_pq_spinners (selector *sr)
 static void 
 build_selector_switches (selector *sr) 
 {
-    GtkWidget *hbox, *tmp = NULL;
+    GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS) {
+    if (sr->code == OLS || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(robust_callback), sr);
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
 
+	gtk_box_pack_start(GTK_BOX(sr->vbox), hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
     }
-    else if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
+
+    if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(verbose_callback), sr);
-    }
-
-    if (tmp != NULL) {
 	hbox = gtk_hbox_new(FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
 	gtk_widget_show(tmp);

@@ -2147,7 +2147,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     set_up_viewer_menu(vwin->dialog, vwin, model_items);
     add_vars_to_plot_menu(vwin);
-    if (pmod->ci != ARMA && pmod->ci != NLS) {
+    if (pmod->ci != ARMA && pmod->ci != GARCH && pmod->ci != NLS) {
 	add_dummies_to_plot_menu(vwin);
     }
 #ifndef OLD_GTK
@@ -2189,7 +2189,8 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 #endif
     gretl_print_destroy(prn);
 
-    if (pmod->ci != NLS && pmod->ci != ARMA && pmod->ci != TSLS) {
+    if (pmod->ci != NLS && pmod->ci != ARMA && pmod->ci != TSLS
+	&& pmod->ci != GARCH) {
 	copylist(&default_list, pmod->list);
     }
 
@@ -2398,6 +2399,11 @@ static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/LaTeX", s);
 }
 
+static void normality_test_state (GtkItemFactory *ifac, gboolean s)
+{
+    flip(ifac, "/Tests/normality of residual", s);
+}
+
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/File/Save to session as icon", s);
@@ -2471,6 +2477,11 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 		arma_x12_menu_mod(vwin);
 	    }
 	}
+	else if (pmod->ci == GARCH) {
+	    arma_menu_mod(vwin->ifac);
+	    normality_test_state(vwin->ifac, FALSE);
+	    model_ml_menu_state(vwin->ifac, TRUE);
+	}
 
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
@@ -2514,7 +2525,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	g_free(varitem.path);
 
-	if (pmod->ci == ARMA || pmod->ci == NLS) continue;
+	if (pmod->ci == ARMA || pmod->ci == NLS || pmod->ci == GARCH) 
+	    continue;
 
 	varstart = (i == 0)? 1 : 2;
 

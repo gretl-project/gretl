@@ -29,8 +29,8 @@
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
 {
-    int p = list[1];
-    int q = list[2];
+    int q = list[1];
+    int p = list[2];
     int r = list[0] - 4;
     int i, j, np = 3 + p + q + r;
 
@@ -63,15 +63,17 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 
     j = 2;
     for (i=0; i<r; i++) {
-	strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
+	if (pmod->list[5+i] > 0) {
+	    strcpy(pmod->params[j++], pdinfo->varname[pmod->list[5+i]]);
+	}
     }
 
     strcpy(pmod->params[j++], "alpha(0)");
 
-    for (i=0; i<p; i++) {
+    for (i=0; i<q; i++) {
 	sprintf(pmod->params[j++], "alpha(%d)", i + 1);
     }
-    for (i=0; i<q; i++) {
+    for (i=0; i<p; i++) {
 	sprintf(pmod->params[j++], "beta(%d)", i + 1);
     }
 }
@@ -127,7 +129,12 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     }
 
     pmod->sigma = NADBL;
-    
+    pmod->adjrsq = NADBL; 
+    pmod->fstt = NADBL;
+
+    pmod->criterion[C_AIC] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
+    pmod->criterion[C_BIC] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
+
     pmod->ci = GARCH;
     
     add_garch_varnames(pmod, pdinfo, list);
@@ -140,16 +147,15 @@ static int make_garch_dataset (const int *list, double **Z,
 			       double **py, double ***pX)
 {
     double *y = NULL, **X = NULL;
-    int i, k, t;
+    int i, k = 0, t;
     int xnum, ynum = list[4];
-
-    if (nx > 0) k = 5;
-    else k = 0;
 
     /* If pad > 0 we have to create a newly allocated, padded
        dataset.  Otherwise we can use a virtual dataset, made
        up of pointers into the original dataset, Z. 
     */
+
+    printlist(list, "for make_garch_dataset");
 
     if (pad > 0) {
 	y = malloc(bign * sizeof *y);
@@ -184,6 +190,7 @@ static int make_garch_dataset (const int *list, double **Z,
 		}
 	    } else {
 		y[t] = Z[ynum][t-pad];
+		if (nx > 0) k = 5;
 		for (i=0; i<nx; i++) {
 		    xnum = list[k++]; 
 		    if (xnum == 0) xnum = list[k++];
@@ -195,6 +202,7 @@ static int make_garch_dataset (const int *list, double **Z,
     } else {
 	/* build virtual dataset */
 	*py = Z[ynum];
+	if (nx > 0) k = 5;
 	for (i=0; i<nx; i++) {
 	    xnum = list[k++]; 
 	    if (xnum == 0) xnum = list[k++];
@@ -218,8 +226,8 @@ int do_fcp (const int *list, double **Z,
 {
     int t1 = pmod->t1, t2 = pmod->t2;
     int ncoeff = pmod->ncoeff;
-    int p = list[1];
-    int q = list[2];
+    int q = list[1];
+    int p = list[2];
     double *y = NULL;
     double **X = NULL;
     double *yhat = NULL, *amax = NULL; 
@@ -288,8 +296,8 @@ int do_fcp (const int *list, double **Z,
     }
 
     amax[0] = pmod->sigma * pmod->sigma;
-    amax[1] = p;
-    amax[2] = q; 
+    amax[1] = q;
+    amax[2] = p; 
     for (i=0; i<p+q; i++) {
 	/* initial alpha, beta values */
 	amax[3+i] = 0.1;
@@ -313,11 +321,11 @@ int do_fcp (const int *list, double **Z,
 	}
 	pputc(prn, '\n');
 
+	pmod->lnL = amax[0];
 	write_garch_stats(pmod, (const double **) Z, pdinfo, list, 
 			  amax, nparam, pad, res);
 	make_packed_vcv(pmod, vcv, nparam);
 	gretl_model_set_int(pmod, "iters", iters);
-	pmod->lnL = amax[0];
     }
 
  bailout:

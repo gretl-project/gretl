@@ -167,8 +167,6 @@ static void tex_garch_coeff_name (char *targ, const char *src,
     char vname[VNAMELEN], vnesc[16];
     int lag;
 
-    fprintf(stderr, "tex_garch_coeff_name: looking at '%s'\n", src);
-
     if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
 	if (!inmath) {
 	    sprintf(targ, "$\\%s_%d$", vname, lag);
@@ -248,7 +246,7 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     } else if (pmod->ci == ARMA) {
 	tex_arma_coeff_name(tmp, pmod->params[c-1], 0);
     } else if (pmod->ci == GARCH) {
-	tex_garch_coeff_name(tmp, pmod->params[c], 0);
+	tex_garch_coeff_name(tmp, pmod->params[c-1], 0);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }
@@ -381,21 +379,29 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     pputs(prn, " \\notag \\\\\n");
 
     if (pmod->ci == GARCH) {
-	int p = pmod->list[1];
-	int q = pmod->list[2];
+	int q = pmod->list[1];
+	int p = pmod->list[2];
 	int r = pmod->list[0] - 4;
 
-	pprintf(prn, "\\alpha_0 = \\underset{(%.3f)}{%g} ", 
-		pmod->coeff[r] / pmod->sderr[r], pmod->coeff[r]);
-	if (p > 0) pputs(prn, "\\quad ");
-	for (i=1; i<=p; i++) {
-	    pprintf(prn, "\\alpha_%d = \\underset{(%.3f)}{%g} ", i, 
-		    pmod->coeff[r+i] / pmod->sderr[r+i], pmod->coeff[r+i]);
-	}
-	if (q > 0) pputs(prn, "\\quad ");
+	tstat = pmod->coeff[r] / pmod->sderr[r];
+	pprintf(prn, "\\hat{\\sigma}^2_t = \\underset{(%.3f)}{%g} ", 
+		tstat, pmod->coeff[r]);
+
 	for (i=1; i<=q; i++) {
-	    pprintf(prn, "\\beta_%d = \\underset{(%.3f)}{%g} ", i, 
-		    pmod->coeff[p+r+i] / pmod->sderr[p+r+i], pmod->coeff[p+r+i]);
+	    tstat = pmod->coeff[r+i] / pmod->sderr[r+i];
+	    pprintf(prn, "%s\\underset{(%.3f)}{", 
+		    (pmod->coeff[r+i] < 0.0)? "-" : "+", tstat);
+	    tex_print_float(pmod->coeff[r+i], prn);
+	    pputs(prn, "}\\,");
+	    pprintf(prn, "\\varepsilon^2_{t-%d}", i);
+	}
+	for (i=1; i<=p; i++) {
+	    tstat = pmod->coeff[q+r+i] / pmod->sderr[q+r+i];
+	    pprintf(prn, "%s\\underset{(%.3f)}{", 
+		    (pmod->coeff[q+r+i] < 0.0)? "-" : "+", tstat);
+	    tex_print_float(pmod->coeff[q+r+i], prn);
+	    pputs(prn, "}\\,");
+	    pprintf(prn, "\\sigma^2_{t-%d}", i);
 	}
 	pputs(prn, "\\notag \\\\\n");
     }	    
@@ -420,9 +426,11 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    pprintf(prn, "\\quad F(%d,%d) = %s ", 
 		    pmod->dfn, pmod->dfd, tmp);
 	}
-	sprintf(tmp, "%.5g", pmod->sigma);
-	tex_modify_exponent(tmp);
-	pprintf(prn, "\\quad \\hat{\\sigma} = %s", tmp);
+	if (!na(pmod->sigma)) {
+	    sprintf(tmp, "%.5g", pmod->sigma);
+	    tex_modify_exponent(tmp);
+	    pprintf(prn, "\\quad \\hat{\\sigma} = %s", tmp);
+	}
 	if (!na(gretl_model_get_double(pmod, "rho_in"))) {
 	    double r = gretl_model_get_double(pmod, "rho_in");
 
