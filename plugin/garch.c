@@ -100,10 +100,11 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np)
 static int write_garch_stats (MODEL *pmod, const double **Z,
 			      const DATAINFO *pdinfo,
 			      const int *list, const double *theta, 
-			      int nparam, int pad, const double *res)
+			      int nparam, int pad, const double *res,
+			      const double *h)
 {
     int err = 0;
-    double *coeff, *sderr;
+    double *coeff, *sderr, *garch_h;
     int i, ynum = list[4];
 
     coeff = realloc(pmod->coeff, nparam * sizeof *pmod->coeff);
@@ -138,6 +139,20 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     pmod->ci = GARCH;
     
     add_garch_varnames(pmod, pdinfo, list);
+
+    /* add predicted error variance to model */
+    garch_h = malloc(pdinfo->n * sizeof *garch_h);
+    if (garch_h != NULL) {
+	for (i=0; i<pdinfo->n; i++) {
+	    if (i < pmod->t1 || i > pmod->t2) {
+		garch_h[i] = NADBL;
+	    } else {
+		garch_h[i] = h[i+pad];
+	    }
+	}
+	gretl_model_set_data(pmod, "garch_h", garch_h, 
+			     pdinfo->n * sizeof *garch_h);
+    }
 
     return err;
 }
@@ -228,6 +243,7 @@ int do_fcp (const int *list, double **Z,
     int q = list[2];
     double *y = NULL;
     double **X = NULL;
+    double *h = NULL;
     double *yhat = NULL, *amax = NULL; 
     double *res = NULL, *res2 = NULL;
     double *coeff = NULL, *b = NULL;
@@ -256,8 +272,10 @@ int do_fcp (const int *list, double **Z,
     yhat = malloc(bign * sizeof *yhat);
     res2 = malloc(bign * sizeof *res2);
     res = malloc(bign * sizeof *res);
+    h = malloc(bign * sizeof *h);
     amax = malloc(bign * sizeof *amax);
-    if (yhat == NULL || res2 == NULL || res == NULL || amax == NULL) {
+    if (yhat == NULL || res2 == NULL || res == NULL || 
+	amax == NULL || h == NULL) {
 	err = E_ALLOC;
 	goto bailout;
     }
@@ -304,7 +322,7 @@ int do_fcp (const int *list, double **Z,
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, 
 			 yhat, coeff, ncoeff, 
-			 vcv, res2, res, y, 
+			 vcv, res2, res, h, y, 
 			 amax, b, &iters, prn, robust);
 
     if (err != 0) {
@@ -320,7 +338,7 @@ int do_fcp (const int *list, double **Z,
 
 	pmod->lnL = amax[0];
 	write_garch_stats(pmod, (const double **) Z, pdinfo, list, 
-			  amax, nparam, pad, res);
+			  amax, nparam, pad, res, h);
 	make_packed_vcv(pmod, vcv, nparam);
 	gretl_model_set_int(pmod, "iters", iters);
     }
@@ -330,6 +348,7 @@ int do_fcp (const int *list, double **Z,
     free(yhat);
     free(res2);
     free(res);
+    free(h);
     free(amax);    
     free(coeff);
     free(b);

@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include <errno.h>
+#include <time.h>
 
 #if defined(ENABLE_NLS) && defined(USE_GTK2)
 #include <glib.h>

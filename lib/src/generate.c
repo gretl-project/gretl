@@ -23,7 +23,16 @@
 #include "internal.h"
 #include "genstack.h"
 
+#include <time.h>
 #include <errno.h>
+
+enum {
+    HNUM = INDEXNUM + 1,
+    UHATNUM,
+    YHATNUM,
+    TNUM,
+    OBSBOOLNUM
+} genr_numbers;
 
 typedef struct _GENERATE GENERATE;
 
@@ -71,7 +80,8 @@ static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
 static int math_tokenize (char *s, GENERATE *genr, int level);
 static double get_obs_value (const char *s, double **Z, 
 			     const DATAINFO *pdinfo);
-static int model_variable_index (const char *s);
+static int model_scalar_stat_index (const char *s);
+static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
 
 static double *get_model_series (double **Z, const DATAINFO *pdinfo,
@@ -86,7 +96,7 @@ static double get_tnum (const DATAINFO *pdinfo, int t);
 static double evaluate_statistic (double *z, GENERATE *genr, int fn);
 static double get_model_data_element (const char *s, GENERATE *genr,
 				      MODEL *pmod, int idx);
-static double get_model_statistic (const MODEL *pmod, int idx, int *err);
+static double get_model_scalar_stat (const MODEL *pmod, int idx, int *err);
 static double get_dataset_statistic (DATAINFO *pdinfo, int idx);
 static double evaluate_math_function (double arg, int fn, int *err);
 static double evaluate_missval_func (double arg, int fn);
@@ -437,23 +447,24 @@ static genatom *parse_token (const char *s, char op,
     }
 
     else if (*s == '$') {
-	int i = model_variable_index(s);
+	int i;
 
-	if (i > 0) {
+	if ((i = model_scalar_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
 		    s, i));
-	    val = get_model_statistic(genr->pmod, i, &genr->err);
+	    val = get_model_scalar_stat(genr->pmod, i, &genr->err);
+	    scalar = 1;
+	} else if ((i = model_vector_index(s)) > 0) { 
+	    DPRINTF(("recognized '%s' as model vector, index #%d\n", 
+		    s, i));
+	    v = i;
+	} else if ((i = dataset_var_index(s)) > 0) {
+	    DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
+		     s, i));
+	    val = get_dataset_statistic(genr->pdinfo, i);
 	    scalar = 1;
 	} else {
-	    i = dataset_var_index(s);
-	    if (i > 0) {
-		DPRINTF(("recognized '%s' as dataset var, index #%d\n", 
-			s, i));
-		val = get_dataset_statistic(genr->pdinfo, i);
-		scalar = 1;
-	    } else {
 		genr->err = E_UNKVAR;
-	    }
 	}
     }
 
@@ -781,7 +792,9 @@ static int evaluate_genr (GENERATE *genr)
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
 	}
-	if (atom->varnum == UHATNUM || atom->varnum == YHATNUM) {
+	if (atom->varnum == UHATNUM || 
+	    atom->varnum == YHATNUM ||
+	    atom->varnum == HNUM) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
@@ -2239,7 +2252,6 @@ static int check_modelstat (const MODEL *pmod, int idx)
 	    strcpy(gretl_errmsg, 
 		   _("No $aic (Akaike Information Criterion) value is available"));
 	    return 1;
-
 	default:
 	    return 0;
 	}
@@ -2359,7 +2371,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 /* retrieve scalar statistic from model */
 
 static double 
-get_model_statistic (const MODEL *pmod, int idx, int *err)
+get_model_scalar_stat (const MODEL *pmod, int idx, int *err)
 {
     double x = NADBL;
 
@@ -2460,22 +2472,33 @@ static double *get_model_series (double **Z, const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v)
 {
     int t, t2, n = pdinfo->n;
-    double *x;
+    double *x, *garch_h = NULL;
 
-    if (pmod == NULL || (v != UHATNUM && v != YHATNUM))
+    if (pmod == NULL || (v != UHATNUM && v != YHATNUM && v != HNUM))
 	return NULL;
 
     if (pmod->t2 - pmod->t1 + 1 > n ||
 	model_sample_issue(pmod, NULL, Z, pdinfo)) {
-	strcpy(gretl_errmsg, (v == UHATNUM)? 
+	strcpy(gretl_errmsg, 
+	       (v == UHATNUM)? 
 	       _("Can't retrieve uhat: data set has changed") :
-	       _("Can't retrieve yhat: data set has changed"));
+	       (v == YHATNUM)?
+	       _("Can't retrieve yhat: data set has changed") :
+	       _("Can't retrieve ht: data set has changed"));
 	return NULL;
     }   
 
     if ((v == UHATNUM && pmod->uhat == NULL) ||
 	(v == YHATNUM && pmod->yhat == NULL)) {
 	return NULL;
+    }
+
+    if (v == HNUM) {
+	garch_h = gretl_model_get_data(pmod, "garch_h");
+	if (garch_h == NULL) {
+	    strcpy(gretl_errmsg, _("Can't retrieve error variance"));
+	    return NULL;
+	}
     }
 
     x = malloc(pdinfo->n * sizeof *x);
@@ -2485,14 +2508,17 @@ static double *get_model_series (double **Z, const DATAINFO *pdinfo,
 	t2 = pmod->t2 + get_misscount(pmod);
     } else {
 	t2 = pmod->t2;
-    }    
-
-    for (t=0; t<pmod->t1; t++) x[t] = NADBL;
-    for (t=pmod->t1; t<=t2; t++) {
-	x[t] = (v == UHATNUM)? pmod->uhat[t] : pmod->yhat[t];
     }
-    for (t=t2+1; t<n; t++) x[t] = NADBL;
-	    
+
+    for (t=0; t<n; t++) {
+	if (t < pmod->t1 || t > pmod->t2) {
+	    x[t] = NADBL;
+	} else {
+	    if (v == UHATNUM) x[t] = pmod->uhat[t];
+	    else if (v == YHATNUM) x[t] = pmod->yhat[t];
+	    else if (v == HNUM) x[t] = garch_h[t];
+	}
+    }
 	    
     return x;
 }
@@ -2627,7 +2653,7 @@ static int dataset_var_index (const char *s)
     return 0;
 }
 
-static int model_variable_index (const char *s)
+static int model_scalar_stat_index (const char *s)
 {
     char test[VNAMELEN];
 
@@ -2652,6 +2678,26 @@ static int model_variable_index (const char *s)
     if (!strcmp(test, "$nrsq") || 
 	!strcmp(test, "$trsq")) 
 	return R_TRSQ;
+
+    return 0;
+}
+
+/* ........................................................  */
+
+static int model_vector_index (const char *s)
+{
+    char test[VNAMELEN];
+
+    *test = '\0';
+    strncat(test, s, VNAMELEN - 1);
+    lower(test);
+
+    if (!strcmp(test, "$uhat"))  
+	return UHATNUM;
+    if (!strcmp(test, "$yhat")) 
+	return YHATNUM;
+    if (!strcmp(test, "$h"))
+	return HNUM;
 
     return 0;
 }

@@ -116,18 +116,15 @@ static double **allocate_2d_array (int k, int T)
     return A;
 }
 
-static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
+static int vs_allocate (double ***pdhdp, double ***pg, 
 			double **pparam, double **paux3, double **psvc5,
 			double **pc, double **paux, double **pvc5,
 			double **pparpre, double ***ppartrc,
 			int np, int nrc, int T, int nll)
 {
-    double *h = NULL, *param = NULL, *aux3 = NULL, *svc5 = NULL;
+    double *param = NULL, *aux3 = NULL, *svc5 = NULL;
     double *c = NULL, *aux = NULL, *vc5 = NULL, *parpre = NULL;
     double **D = NULL, **G = NULL, **P = NULL;
-
-    h = malloc(T * sizeof *h);
-    if (h == NULL) return 1;
 
     param = malloc(np * sizeof *param);
     aux3 = malloc(np * sizeof *aux3);
@@ -166,7 +163,6 @@ static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
 
     *pdhdp = D;
     *pg = G;
-    *ph = h;
     *pparam = param;
     *paux3 = aux3;
     *psvc5 = svc5;
@@ -180,7 +176,6 @@ static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
 
  bailout:
 
-    free(h);
     free(param);
     free(aux3);
     free(svc5);
@@ -196,14 +191,13 @@ static int vs_allocate (double ***pdhdp, double ***pg, double **ph,
 }
 
 static void vs_free (double **dhdp, int np, double **g, int nrc, 
-		     double *h, double *param, double *aux3, double *svc5,
+		     double *param, double *aux3, double *svc5,
 		     double *c, double *aux, double *vcv,
 		     double *parpre, double **partrc)
 {
     free_2d_array(dhdp, np);
     free_2d_array(g, nrc);
     free_2d_array(partrc, np);
-    free(h);
     free(param);
     free(aux3);
     free(svc5);
@@ -494,7 +488,7 @@ make_garch_vcv (int t1, int t2,
 int garch_estimate (int t1, int t2, int nobs, 
 		    const double **X, int nx, double *yhat, 
 		    double *coeff, int nc, double *vcv, 
-		    double *res2, double *res,
+		    double *res2, double *res, double *h,
 		    const double *y, double *amax, double *b, 
 		    int *iters, PRN *prn, int robust)
 {
@@ -512,7 +506,7 @@ int garch_estimate (int t1, int t2, int nobs,
     double ll, s_2, a0, s_1;
 
     double *param = NULL, *aux3 = NULL, *svc5 = NULL;
-    double *h = NULL, **dhdp = NULL, **g = NULL;
+    double **dhdp = NULL, **g = NULL;
     double *c = NULL, *aux = NULL;
     double *parpre, **partrc;
     double *vc5 = NULL;
@@ -526,7 +520,7 @@ int garch_estimate (int t1, int t2, int nobs,
     nparam = nc + 1 + q + p;
     global_np = nparam;
 
-    if (vs_allocate(&dhdp, &g, &h, &param, &aux3, &svc5, 
+    if (vs_allocate(&dhdp, &g, &param, &aux3, &svc5, 
 		    &c, &aux, &vc5, &parpre, &partrc,
 		    nparam, nc, nobs, NLL)) {
 	pprintf(prn, "Out of memory\n");
@@ -754,7 +748,7 @@ int garch_estimate (int t1, int t2, int nobs,
     }
 
  L999:
-    vs_free(dhdp, nparam, g, nc, h, param, aux3, svc5, c, aux, vc5,
+    vs_free(dhdp, nparam, g, nc, param, aux3, svc5, c, aux, vc5,
 	    parpre, partrc);
 
     return err;

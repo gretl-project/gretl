@@ -22,6 +22,8 @@
 
 #include "libgretl.h" 
 #include "internal.h"
+
+#include <time.h>
 #include <unistd.h>
 
 enum inequalities {

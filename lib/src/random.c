@@ -20,6 +20,7 @@
 /* random.c for gretl */
 
 #include "libgretl.h"
+#include <time.h>
 
 #ifdef USE_GTK2
 # define HAVE_G_RAND

@@ -20,18 +20,8 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
-#include <time.h>
+#define INDEXNUM 996
 
-typedef enum {
-    UHATNUM = 998,
-    YHATNUM = 999,
-    TNUM,
-    INDEXNUM,
-    OBSBOOLNUM
-} genr_numbers;
-
-/* functions follow */
- 
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, int model_count, 
 	      MODEL *pmod, unsigned long oflag);
