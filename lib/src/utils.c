@@ -1273,7 +1273,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     sprintf(ppaths->scriptdir, "%s\\scripts\\", ppaths->gretldir);
 
     if (gui) {
-	sprintf(ppaths->helpfile, "%s\\gretl_hlp.txt", ppaths->gretldir);
+	sprintf(ppaths->helpfile, "%s\\%s", ppaths->gretldir,
+		_("gretl_hlp.txt"));
 	sprintf(ppaths->cmd_helpfile, "%s\\%s", ppaths->gretldir,
 		_("gretlcli_hlp.txt"));
     } else 
@@ -1341,7 +1342,8 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
     sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
     
     if (gui) {
-	sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
+	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir,
+		_("gretl.hlp"));
 	sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir,
 		_("gretlcli.hlp"));
     } else
