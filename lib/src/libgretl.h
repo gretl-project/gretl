@@ -33,6 +33,8 @@
 # define M_PI 3.14159265358979323846
 #endif
 
+#define _(String) String
+
 typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
