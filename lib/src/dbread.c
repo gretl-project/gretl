@@ -1227,7 +1227,8 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 	    return 1;
 	}
 	if (compact_method == COMPACT_NONE) {
-	    strcpy(gretl_errmsg, _("You must specify a compaction method"));
+	    sprintf(gretl_errmsg, _("%s: you must specify a compaction method"), 
+		    sinfo->varname);
 	    if (new) dataset_drop_vars(1, pZ, pdinfo);
 	    return 1;
 	}

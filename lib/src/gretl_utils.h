@@ -33,11 +33,7 @@ enum flagvals {
     OPT_T,     /* write traditional (ESL-style) data */
     OPT_L,
     OPT_Z,     /* write gzipped data */
-    OPT_FA,
-    OPT_RESID,
     OPT_R_ALT, /* write data in alternate Gnu R format */
-    OPT_FAZ,
-    OPT_RESIDZ
 };
 
 /**

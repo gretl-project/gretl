@@ -197,6 +197,17 @@ void file_get_line (void)
     }
 }
 
+unsigned char gp_flags (int batch, int opt)
+{
+    unsigned char flags = 0;
+    
+    if (batch) flags |= GP_BATCH;
+    if (opt == OPT_M) flags |= GP_IMPULSES;
+    if (opt == OPT_Z) flags |= GP_DUMMY;
+
+    return flags;
+}
+
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
@@ -886,7 +897,7 @@ void exec_line (char *line, PRN *prn)
 	    command.list[3] = varindex(datainfo, "time");
 	    lines[0] = 1;
 	    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
-			  &paths, &plot_count, batch, 0, 0);
+			  &paths, &plot_count, gp_flags(batch, 0));
 	    if (err) pputs(prn, _("gnuplot command failed\n"));
 	}
 	break;
@@ -928,12 +939,12 @@ void exec_line (char *line, PRN *prn)
 	}
 	if (oflag == OPT_M || oflag == OPT_Z) { 
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
-			  &paths, &plot_count, batch, 0, oflag);
+			  &paths, &plot_count, gp_flags(batch, oflag));
 	} else {
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, command.param, 
 			  &Z, datainfo, &paths, &plot_count, 
-			  batch, 0, 0);
+			  gp_flags(batch, 0));
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	break;

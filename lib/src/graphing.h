@@ -21,6 +21,23 @@
 
 #include <stdio.h>
 
+enum gnuplot_flags {
+    GP_IMPULSES = 1 << 0,  /* use impulses for plotting */
+    GP_RESIDS   = 1 << 1,  /* doing residual plot */
+    GP_FA       = 1 << 2,  /* doing fitted/actual plot */
+    GP_DUMMY    = 1 << 3,  /* using a dummy for separation */
+    GP_BATCH    = 1 << 4,  /* working in batch mode */
+    GP_GUI      = 1 << 5,  /* called from GUI context */
+    GP_OLS_OMIT = 1 << 6   /* Don't draw fitted line on graph */
+};
+
+enum gptspec_flags {
+    GPTSPEC_TS         = 1 << 0,
+    GPTSPEC_Y2AXIS     = 1 << 1,
+    GPTSPEC_AUTO_OLS   = 1 << 2,
+    GPTSPEC_OLS_HIDDEN = 1 << 3
+}; 
+
 #define MAXTITLE 80
 #define MAX_PLOT_LABELS 2
 
@@ -48,6 +65,7 @@ typedef struct {
     char fname[MAXLEN];        /* for gui purposes */
     int edit;                  /* 1 for editing existing plot */
     int code;                  /* to deal with FREQ, FCASTERR... */
+    unsigned char flags;       /* bitwise OR of options (gptspec_flags) */
     int t1, t2;                /* starting and ending obs */
     char titles[4][MAXTITLE];  /* main, x, y, y2 */
     char range[3][2][12];      /* axis range specifiers */
@@ -55,8 +73,6 @@ typedef struct {
     char xtics[16];            /* x-axis tic marks */
     char mxtics[4];            /* minor tics */
     char termtype[MAXTITLE];   /* gnuplot "term" setting */
-    int ts;                    /* time-series plot? (1 or 0) */ 
-    int y2axis;                /* use second y axis? (1 or 0) */
     int list[8];               /* list of variables */
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
@@ -107,7 +123,7 @@ int gnuplot_display (const PATHS *ppaths);
 
 int gnuplot (LIST list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
-	     int *plot_count, int batch, int gui, int opt);
+	     int *plot_count, unsigned char flags);
 
 int multi_scatters (const LIST list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 

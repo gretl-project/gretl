@@ -1122,15 +1122,13 @@ static const char *comp_int_to_string (int i)
 
 void varinfo_dialog (int varnum)
 {
-    GtkWidget *tempwid, *hbox, *menu;
+    GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
-    int i;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
 
     vset->varnum = varnum;
-
     vset->dlg = gtk_dialog_new();
 
     g_signal_connect (G_OBJECT(vset->dlg), "destroy", 
@@ -1205,7 +1203,10 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(hbox); 
 
     /* read/set compaction method? */
-    if (dataset_is_time_series(datainfo)) {    
+    if (dataset_is_time_series(datainfo)) {  
+	GtkWidget *menu;
+	int i;
+
 	hbox = gtk_hbox_new(FALSE, 0);
 	tempwid = gtk_label_new (_("compaction method (for reducing frequency):"));
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);

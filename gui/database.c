@@ -184,7 +184,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     lines[0] = 1;
     list[0] = 2; list[1] = 1; list[2] = 2;
     err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
-		  &paths, &plot_count, 0, 1, 0);
+		  &paths, &plot_count, GP_GUI);
 
     if (err < 0) {
 	errbox(_("gnuplot command failed"));
@@ -1508,7 +1508,8 @@ static void data_compact_dialog (int spd, int *target_pd,
     GtkWidget *tempwid;
     GSList *group;
     int show_pd_buttons = 0;
-    char labelstr[64];
+    int all_vars = 0;
+    gchar *labelstr;
 
     d = malloc(sizeof *d);
     if (d == NULL) return;
@@ -1526,17 +1527,18 @@ static void data_compact_dialog (int spd, int *target_pd,
 
     if (*target_pd != 0) {
 	/* importing series from database */
-	sprintf(labelstr, _("You are adding a %s series to %s dataset"),
-		(spd == 4)? _("quarterly") : _("monthly"),
-		(*target_pd == 4)? _("a quarterly"): _("an annual"));
+	labelstr = g_strdup_printf(_("You are adding a %s series to %s dataset"),
+				   (spd == 4)? _("quarterly") : _("monthly"),
+				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
     } else {
 	/* compacting whole data set */
+	all_vars = 1;
 	if (spd == 4) {
 	    *target_pd = 1;
-	    strcpy(labelstr, _("Compact quarterly data to annual"));
+	    labelstr = g_strdup(_("Compact quarterly data to annual"));
 	} else {
 	    /* source data are monthly */
-	    strcpy(labelstr, _("Compact monthly data to:"));
+	    labelstr = g_strdup(_("Compact monthly data to:"));
 	    show_pd_buttons = 1;
 	    *target_pd = 4;
 	}
@@ -1559,9 +1561,11 @@ static void data_compact_dialog (int spd, int *target_pd,
 			cancel_d);
 
     tempwid = gtk_label_new(labelstr);
+    g_free(labelstr);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show(tempwid);
+    
 
     if (show_pd_buttons) pd_buttons(d, target_pd);
 
@@ -1717,7 +1721,7 @@ static void
 get_global_compact_params (int cfac, int startper, int endper,
 			   int oldn, int default_method, 
 			   int *min_startskip, int *max_n,
-			   int *any_eop)
+			   int *any_eop, int *all_same)
 {
     int i, startskip, n, cm;
     int n_not_eop = 0;
@@ -1732,6 +1736,7 @@ get_global_compact_params (int cfac, int startper, int endper,
 	    if (cm != default_method && cm != COMPACT_NONE) {
 		get_startskip_etc(cfac, startper, endper, oldn, 
 				  cm, &startskip, &n);
+		*all_same = 0;
 		if (cm == COMPACT_EOP) *any_eop = 1;
 		else n_not_eop++;
 	    }
@@ -1751,7 +1756,7 @@ void compact_data_set (void)
     int cfac;
     int startper, endper;
     int startyr;
-    int any_eop;
+    int any_eop, all_same;
     int min_startskip = 0;
     int i, err = 0;
     int default_method = COMPACT_AVG;
@@ -1785,8 +1790,9 @@ void compact_data_set (void)
     min_startskip = oldpd;
     newn = 0;
     any_eop = 0;
+    all_same = 1;
     get_global_compact_params(cfac, startper, endper, oldn, default_method,
-			      &min_startskip, &newn, &any_eop);
+			      &min_startskip, &newn, &any_eop, &all_same);
     if (newn == 0) {
 	errbox(_("Compacted dataset would be empty"));
 	return;
@@ -1819,19 +1825,21 @@ void compact_data_set (void)
     for (i=0; i<datainfo->v && err == 0; i++) {
 	if (datainfo->vector[i]) {
 	    int this_method = default_method;
-	    int startskip;
+	    int startskip = min_startskip;
 
-	    if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
-		this_method = COMPACT_METHOD(datainfo, i);
-	    }
+	    if (!all_same) {
+		if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
+		    this_method = COMPACT_METHOD(datainfo, i);
+		}
 
-	    startskip = cfac - (startper % cfac) + 1;
-	    startskip = startskip % cfac;
-	    if (this_method == COMPACT_EOP) {
-		if (startskip > 0) {
-		    startskip--;
-		} else {
-		    startskip = cfac - 1;
+		startskip = cfac - (startper % cfac) + 1;
+		startskip = startskip % cfac;
+		if (this_method == COMPACT_EOP) {
+		    if (startskip > 0) {
+			startskip--;
+		    } else {
+			startskip = cfac - 1;
+		    }
 		}
 	    }
 

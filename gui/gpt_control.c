@@ -56,6 +56,7 @@ GtkWidget *labelpos[MAX_PLOT_LABELS];
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
+static GtkWidget *no_ols_check;
 
 GtkWidget *filesavebutton;
 
@@ -86,7 +87,7 @@ typedef enum {
     PLOT_XLABEL         = 1 << 1,
     PLOT_YLABEL         = 1 << 3,
     PLOT_Y2AXIS         = 1 << 4,
-    PLOT_Y2LABEL        = 1 << 5
+    PLOT_Y2LABEL        = 1 << 5,
 } plot_format_flags;
 
 typedef enum {
@@ -253,7 +254,7 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
 #ifdef GNUPLOT_PNG
 
-static int add_or_remove_png_term (const char *fname, int add)
+static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 {
     FILE *fsrc, *ftmp;
     char tmp[MAXLEN], fline[MAXLEN];
@@ -283,9 +284,16 @@ static int add_or_remove_png_term (const char *fname, int add)
     }
 
     while (fgets(fline, MAXLEN-1, fsrc)) {
-	if (add || (strncmp(fline, "set term", 8) && 
-	    strncmp(fline, "set output", 10))) {
+	if (add) {
 	    fputs(fline, ftmp);
+	} else {
+	    int printit = 1;
+
+	    if (!strncmp(fline, "set term", 8)) printit = 0;
+	    else if (!strncmp(fline, "set output", 10)) printit = 0;
+	    else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
+		     && strstr(fline, "automatic OLS")) printit = 0;
+	    if (printit) fputs(fline, ftmp);
 	}
     }
 
@@ -297,12 +305,12 @@ static int add_or_remove_png_term (const char *fname, int add)
 
 static int add_png_term_to_plotfile (const char *fname)
 {
-    return add_or_remove_png_term(fname, 1);
+    return add_or_remove_png_term(fname, 1, NULL);
 }
 
-int remove_png_term_from_plotfile (const char *fname)
+int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec)
 {
-    return add_or_remove_png_term(fname, 0);
+    return add_or_remove_png_term(fname, 0, spec);
 }
 
 void mark_plot_as_saved (GPT_SPEC *spec)
@@ -377,18 +385,20 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     widget_to_str(GTK_COMBO(keycombo)->entry, spec->keyspec, 
 		  sizeof spec->keyspec);
 
-    spec->y2axis = 0;
+    spec->flags ^= GPTSPEC_Y2AXIS;
     for (i=0; i<numlines; i++) {
 	spec->lines[i].yaxis = 1;
 	yaxis = 
 	    gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(yaxiscombo[i])->entry));
 	if (yaxis != NULL && strlen(yaxis) && !strcmp(yaxis, "right"))
 	    spec->lines[i].yaxis = 2;	
-	if (spec->lines[i].yaxis == 2) spec->y2axis = 1;
+	if (spec->lines[i].yaxis == 2) {
+	    spec->flags |= GPTSPEC_Y2AXIS;
+	}
     }
 
     if (spec->code == PLOT_REGULAR) {
-	k = (spec->y2axis)? 3 : 2;
+	k = (spec->flags & GPTSPEC_Y2AXIS)? 3 : 2;
 	for (i=0; i<k; i++) {
 	    if (axis_range[i].isauto != NULL) {
 		if (GTK_TOGGLE_BUTTON (axis_range[i].isauto)->active) {
@@ -426,7 +436,15 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	opt = GPOINTER_TO_INT(gtk_object_get_data
 			      (GTK_OBJECT(active_item), "option"));
 	strcpy(spec->text_labels[i].just, just_int_to_string(opt));
-    }    
+    } 
+
+    if (no_ols_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(no_ols_check)->active) {
+	    spec->flags |= GPTSPEC_OLS_HIDDEN;
+	} else {
+	    spec->flags ^= GPTSPEC_OLS_HIDDEN;
+	}
+    }   
 
 #ifndef GNUPLOT_PNG
     if (spec->edit == 2 || spec->edit == 3) {  /* silent update */
@@ -529,6 +547,8 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    gpt_titles[i].widget = tempwid;
 	}
     }
+
+    /* specify position of plot key or legend */
     tbl_len++;
     tempwid = gtk_label_new(_("key position"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -541,6 +561,17 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     gtk_combo_set_popdown_strings(GTK_COMBO(keycombo), keypos); 
     gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(keycombo)->entry), spec->keyspec);
     gtk_widget_show (keycombo);	
+
+    /* give option of removing an auto-fitted line */
+    if (spec->flags & GPTSPEC_AUTO_OLS) { 
+	tbl_len++;
+	no_ols_check = gtk_check_button_new_with_label(_("Hide fitted line"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  no_ols_check, 0, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(no_ols_check);
+    } else {
+	no_ols_check = NULL;
+    }
 }
 
 /* ........................................................... */
@@ -615,7 +646,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
     numlines = spec->list[0] - 1;
 
-    if (spec->ts) {
+    if (spec->flags & GPTSPEC_TS) {
 	plot_types = g_list_append(plot_types, "lines");
 	plot_types = g_list_append(plot_types, "points");
     } else {
@@ -997,7 +1028,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_main(notebook, spec);
     gpt_tab_XY(notebook, spec, 0);
     gpt_tab_XY(notebook, spec, 1);
-    if (spec->y2axis) gpt_tab_XY(notebook, spec, 2);
+    if (spec->flags & GPTSPEC_Y2AXIS) gpt_tab_XY(notebook, spec, 2);
     gpt_tab_lines(notebook, spec); 
     gpt_tab_labels(notebook, spec);
     gpt_tab_output(notebook, spec);
@@ -1410,9 +1441,8 @@ static GPT_SPEC *plotspec_new (void)
 	strcpy(spec->range[i][1], "*");
     }
 
-    spec->y2axis = 0;
     spec->code = PLOT_REGULAR;
-    spec->ts = 0;
+    spec->flags = 0;
     spec->fp = NULL;
     spec->data = NULL;
     spec->labels = NULL;
@@ -1521,7 +1551,7 @@ static int parse_set_line (GPT_SPEC *spec, const char *line,
 	return 1;
     }
     if (strcmp(set_thing, "y2tics") == 0) {
-	spec->y2axis = 1;
+	spec->flags |= GPTSPEC_Y2AXIS;
 	return 0;
     }
 
@@ -1678,7 +1708,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     while ((got = fgets(line, MAXLEN - 1, fp))) {
 	if (cant_edit(line)) goto plot_bailout;
 	if (strncmp(line, "# timeseries", 12) == 0) {
-	    spec->ts = 1;
+	    spec->flags |= GPTSPEC_TS;
 	    continue;
 	}
 	if (strncmp(line, "# freq", 6) == 0 ||
@@ -1712,6 +1742,10 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	}
 	if (strncmp(line, "# forecast", 10) == 0) {
 	    spec->code = FCASTERR;
+	    continue;
+	}
+	if (strstr(line, "automatic OLS")) {
+	    spec->flags |= GPTSPEC_AUTO_OLS;
 	    continue;
 	}
 	/* ignore an unknown comment line */
@@ -2145,7 +2179,7 @@ static void set_plot_format_flags (png_plot_t *plot)
     if (!string_is_blank(plot->spec->titles[3])) {
 	plot->format |= PLOT_Y2LABEL;
     }
-    if (plot->spec->y2axis) {
+    if (plot->spec->flags & GPTSPEC_Y2AXIS) {
 	plot->format |= PLOT_Y2AXIS;
     }
 }
@@ -2804,7 +2838,7 @@ static int get_plot_ranges (png_plot_t *plot)
 		plot->format |= PLOT_Y2AXIS;
 	    } else if (cant_zoom(line)) {
 		plot->flags |= PLOT_DONT_ZOOM;
-	    }
+	    } 
 	}
 	if (!strncmp(line, "plot ", 5)) break;
     }

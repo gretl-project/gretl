@@ -26,7 +26,7 @@ void start_editing_session_graph (const char *fname);
 
 #ifdef GNUPLOT_PNG
 void mark_plot_as_saved (GPT_SPEC *spec);
-int remove_png_term_from_plotfile (const char *fname);
+int remove_png_term_from_plotfile (const char *fname, GPT_SPEC *spec);
 void save_this_graph (GPT_SPEC *spec, const char *fname);
 void display_session_graph_png (const char *fname);
 int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved);

@@ -352,6 +352,7 @@ static GtkWidget *text_edit_new (int *hsize)
     return tbuf;
 }
 
+#if 0
 static void trash_dialog (GtkWidget *w, gpointer p)
 {
     gtk_widget_destroy(GTK_WIDGET(p));
@@ -362,6 +363,7 @@ static void window_set_die_with_main (GtkWidget *w)
     gtk_signal_connect(GTK_OBJECT(mdata->w), "destroy",
 		       GTK_SIGNAL_FUNC(trash_dialog), w);
 }
+#endif
 
 /* ........................................................... */
 
@@ -1180,7 +1182,6 @@ void varinfo_dialog (int varnum)
 {
     GtkWidget *tempwid, *hbox;
     struct varinfo_settings *vset;
-    int i;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
@@ -1253,8 +1254,10 @@ void varinfo_dialog (int varnum)
     gtk_widget_show(hbox); 
 
     /* read/set compaction method? */
-    if (dataset_is_time_series(datainfo)) {
+    if (dataset_is_time_series(datainfo)) {  
 	GtkWidget *menu;
+	GtkWidget *child;
+	int i;
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	tempwid = gtk_label_new (_("compaction method (for reducing frequency):"));
@@ -1267,20 +1270,22 @@ void varinfo_dialog (int varnum)
 	vset->compaction_menu = gtk_option_menu_new();
 	menu = gtk_menu_new();
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
-	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
-	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
-	    gtk_object_set_data(GTK_OBJECT(tempwid), "option",
+	    child = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+	    gtk_object_set_data(GTK_OBJECT(child), "option",
 				GINT_TO_POINTER(i));
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
 	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
-				    COMPACT_METHOD(datainfo, varnum));  
-	fprintf(stderr, "set_history: %d\n", COMPACT_METHOD(datainfo, varnum));
+				    COMPACT_METHOD(datainfo, varnum));    
 
 	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_container_add(GTK_CONTAINER(hbox), vset->compaction_menu);
+#if 0
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->compaction_menu, FALSE, FALSE, 0);
-	gtk_widget_show_all(vset->compaction_menu);
+#endif
+	gtk_widget_show_all(vset->compaction_menu); 
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 0);

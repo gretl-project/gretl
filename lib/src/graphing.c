@@ -33,6 +33,8 @@ extern double _gammadist (double s1, double s2, double x, int control);
 
 static char gnuplot_path[MAXLEN];
 
+static const char *auto_ols_string = "# plot includes automatic OLS line\n";
+
 /* ........................................................ */
 
 static int printvars (FILE *fp, int t, const int *list, double **Z,
@@ -691,10 +693,7 @@ static const char *get_series_name (const DATAINFO *pdinfo, int v)
  * @pdinfo: data information struct.
  * @ppaths: path information struct.
  * @plot_count: pointer to count of graphs drawn so far.
- * @batch: if non-zero, the plot commands will be saved to file instead
- * of being sent to gnuplot.
- * @gui: should be non-zero if called from GUI client program.
- * @opt:
+ * @flags: bitwise OR of zero or more options from #gnuplot_flags
  *
  * Writes a gnuplot plot file to display the values of the
  * variables in @list and calls gnuplot to make the graph.
@@ -705,7 +704,7 @@ static const char *get_series_name (const DATAINFO *pdinfo, int v)
 
 int gnuplot (LIST list, const int *lines, const char *literal,
 	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
-	     int *plot_count, int batch, int gui, int opt)
+	     int *plot_count, unsigned char flags)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
@@ -720,20 +719,20 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
 
-    if (opt == OPT_M || lines == NULL) {
+    if ((flags & GP_IMPULSES) || lines == NULL) {
 	strcpy(withstring, "w i");
 	pdist = 1;
     }
 
     *depvar = 0;
-    if (opt == OPT_RESID || opt == OPT_RESIDZ) {
+    if (flags & GP_RESIDS) {
 	/* a hack to get the name of the dependent variable into
 	   the graph */
 	strcpy(depvar, pdinfo->varname[list[lo]]);
 	lo--;
     }
 
-    if (batch) {  
+    if (flags & GP_BATCH) {  
 	if (*ppaths->plotfile == 0) {
 	    *plot_count += 1; 
 	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
@@ -753,7 +752,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	strcpy(xlabel, I_("Observation"));
 	if (lo > 2 && lo < 7) tscale = 1;
     } else {
-	if (opt == OPT_Z || opt == OPT_RESIDZ) {
+	if (flags & GP_DUMMY) {
 	    strcpy(xlabel, get_series_name(pdinfo, list[2])); 
 	} else {
 	    strcpy(xlabel, get_series_name(pdinfo, list[lo]));
@@ -768,7 +767,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     }
 
     /* add a simple regression line if appropriate */
-    if (!pdist && lo == 2 && ts_plot == 0) {
+    if (!pdist && !(flags & GP_OLS_OMIT) && lo == 2 && ts_plot == 0) {
 	MODEL plotmod;
 
 	tmplist[0] = 3;
@@ -781,7 +780,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    /* is the fit significant? or is it a fitted-actual
 	       graph from a simple regression? */
 	    b = plotmod.coeff[1];
-	    if (opt == OPT_FA ||
+	    if ((flags & GP_FA) ||
 		tprob(b / plotmod.sderr[1], plotmod.dfd) < .10) {
 		ols_ok = 1;
 		a = plotmod.coeff[0];
@@ -795,7 +794,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     if (t2 == t1) return -999;
     npoints = t2 - t1 + 1;
 
-    if (opt == OPT_Z || opt == OPT_RESIDZ) { /* separation by dummy variable */
+    if (flags & GP_DUMMY) { /* separation by dummy variable */
 	if (lo != 3) return -1;
 	if (factorized_vars(pZ, t1, t2, &yvar1, &yvar2, list[1], list[3])) {
 	    fclose(fq);
@@ -826,7 +825,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     if (lo == 2) {
 	/* only two variables */
 	if (ols_ok) {
-	    if (opt == OPT_FA) {
+	    fputs(auto_ols_string, fq);
+	    if (flags & GP_FA) {
 		make_gtitle(fq, GTITLE_AFV, get_series_name(pdinfo, list[1]), 
 			    get_series_name(pdinfo, list[2]));
 	    } else {
@@ -834,7 +834,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 			    xlabel);
 	    }
 	}
-	if (opt == OPT_RESID) {
+	if (flags & GP_RESIDS && !(flags & GP_DUMMY)) { 
 	    make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	    fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	    fputs("set nokey\n", fq);
@@ -842,11 +842,11 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[1]));
 	    fputs("set nokey\n", fq);
 	}
-    } else if (opt == OPT_RESIDZ) {
+    } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
 	make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	fputs("set key left top\n", fq);
-    } else if (opt == OPT_FA) {
+    } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) {
 	    /* x var is just time or index */
 	    make_gtitle(fq, GTITLE_AF, get_series_name(pdinfo, list[2]), NULL);
@@ -864,7 +864,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? 
+    xvar = (flags & GP_DUMMY)? 
 	list[lo - 1] : list[lo];
 
     if (isdummy((*pZ)[xvar], t1, t2)) {
@@ -934,10 +934,10 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    if (i == lo - 1) fputc('\n', fq);
 	    else fputs(" , \\\n", fq);
 	}
-    } else if (opt == OPT_Z || opt == OPT_RESIDZ) { 
-	/* FIXME OPT_Z with time series? */
+    } else if (flags & GP_DUMMY) { 
+	/* FIXME GP_DUMMY with time series? */
 	fputs("plot \\\n", fq);
-	if (opt == OPT_Z) {
+	if (!(flags & GP_RESIDS)) {
 	    strcpy(s1, get_series_name(pdinfo, list[1]));
 	} else {
 	    strcpy(s1, I_("residual"));
@@ -948,7 +948,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     } else {
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++)  {
-	    if (opt == OPT_FA) {
+	    if (flags & GP_FA) {
 		if (i == 1) strcpy(s1, I_("fitted"));
 		else strcpy(s1, I_("actual"));
 	    } else {
@@ -956,7 +956,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    }
 	    if (!pdist) { 
 		withstring[0] = '\0';
-		if ((gui)? lines[i-1] : lines[0]) {
+		if ((flags & GP_GUI)? lines[i-1] : lines[0]) {
 		    strcpy(withstring, "w lines");
 		}
 	    }
@@ -973,12 +973,12 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     }
 
     /* multi impulse plot? calculate offset for lines */
-    if (opt == OPT_M && list[lo] > 2) {
+    if ((flags & GP_IMPULSES) && list[lo] > 2) {
 	offset = 0.10 * xrange / npoints;
     }
 
     /* supply the data to gnuplot inline */
-    if (opt == OPT_Z || opt == OPT_RESIDZ) {
+    if (flags & GP_DUMMY) {
 	double xx, yy;
 
 	for (i=0; i<2; i++) {
@@ -1015,7 +1015,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		    label = pdinfo->S[t];
 		}
 		t_miss = printvars(fq, t, tmplist, *pZ, label, xoff);
-		if (gui && miss == 0) {
+		if ((flags & GP_GUI) && miss == 0) {
 		    miss = t_miss;
 		}
 	    }
@@ -1032,7 +1032,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 #endif
     fclose(fq);
 
-    if (!batch) {
+    if (!(flags & GP_BATCH)) {
 	if (gnuplot_display(ppaths)) miss = -1;
     }
     return miss;
@@ -1399,7 +1399,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     if (!string_is_blank(spec->titles[2])) {
 	fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
     }
-    if (spec->y2axis && !string_is_blank(spec->titles[3])) {
+    if ((spec->flags & GPTSPEC_Y2AXIS) && !string_is_blank(spec->titles[3])) {
 	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 
@@ -1420,7 +1420,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	fprintf(fp, "set key %s\n", spec->keyspec);
     }
 
-    k = (spec->y2axis)? 3: 2;
+    k = (spec->flags & GPTSPEC_Y2AXIS)? 3: 2;
     for (i=0; i<k; i++) {
 	fprintf(fp, "set %srange [%s:%s]\n",
 		(i==0)? "x" : (i==1)? "y" : "y2",
@@ -1436,7 +1436,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     /* using two y axes? */
-    if (spec->y2axis) {
+    if (spec->flags & GPTSPEC_Y2AXIS) {
 	fputs("set ytics nomirror\n", fp);
 	fputs("set y2tics\n", fp);
     }
@@ -1469,6 +1469,13 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    fprintf(fp, "%s\n", spec->literal[i]);
 	}
     } 
+
+    if (spec->flags & GPTSPEC_AUTO_OLS) {
+	fputs(auto_ols_string, fp);
+	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && lo > 2) {
+	    lo--;
+	}
+    }
 
     fputs("plot \\\n", fp);
 

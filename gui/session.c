@@ -339,7 +339,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	if (copyfile(plot->fname, pltname)) {
 	    return;
 	} 
-	if (remove_png_term_from_plotfile(pltname)) {
+	if (remove_png_term_from_plotfile(pltname, plot)) {
 	    errbox(_("Failed to copy graph file"));
 	    return;
 	}
@@ -1909,7 +1909,7 @@ static gint object_popup_activated (GtkWidget *widget, gpointer data)
 	    GRAPHT *graph = (GRAPHT *) obj->data;
 
 #ifdef GNUPLOT_PNG
-	    remove_png_term_from_plotfile(graph->fname);
+	    remove_png_term_from_plotfile(graph->fname, NULL);
 #endif
 	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, 
 		      (obj->sort == 'g')? gp_edit_items : 
