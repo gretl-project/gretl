@@ -228,6 +228,63 @@ void gretl_matrix_zero (gretl_matrix *m)
     for (i=0; i<n; i++) m->val[i] = 0.0;
 }
 
+static int gretl_matrix_zero_triangle (gretl_matrix *m, char t)
+{
+    int i, j;
+
+    if (m == NULL || m->val == NULL || m->packed) 
+	return GRETL_MATRIX_ERR;
+
+    if (m->rows != m->cols)
+	return GRETL_MATRIX_NON_CONFORM;
+
+    if (t == 'U') {
+	for (i=0; i<m->rows-1; i++) {
+	    for (j=i+1; j<m->cols; j++) {
+		m->val[mdx(m, i, j)] = 0.0;
+	    }
+	}
+    } else {
+	for (i=1; i<m->rows; i++) {
+	    for (j=0; j<i; j++) {
+		m->val[mdx(m, i, j)] = 0.0;
+	    }
+	}
+    }
+
+    return GRETL_MATRIX_OK;
+}
+
+/**
+ * gretl_matrix_zero_upper:
+ * @m: square matrix to operate on.
+ *
+ * Sets the elements of @m outside of the lower triangle to zero.
+ * 
+ * Returns: GRETL_MATRIX_OK on success, non-zero error code otherwise.
+ * 
+ */
+
+int gretl_matrix_zero_upper (gretl_matrix *m)
+{
+    return gretl_matrix_zero_triangle(m, 'U');
+}
+
+/**
+ * gretl_matrix_zero_lower:
+ * @m: square matrix to operate on.
+ *
+ * Sets the elements of @m outside of the upper triangle to zero.
+ * 
+ * Returns: GRETL_MATRIX_OK on success, non-zero error code otherwise.
+ * 
+ */
+
+int gretl_matrix_zero_lower (gretl_matrix *m)
+{
+    return gretl_matrix_zero_triangle(m, 'L');
+}
+
 /**
  * gretl_matrix_multiply_by_scalar:
  * @m: matrix to operate on.
@@ -348,6 +405,37 @@ gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src)
     }
     
     for (i=0; i<n; i++) targ->val[i] += src->val[i];
+
+    return GRETL_MATRIX_OK;
+}
+
+/**
+ * gretl_square_matrix_transpose:
+ * @m: square matrix to operate on.
+ *
+ * Transposes the matrix @m.
+ *
+ * Returns: GRETL_MATRIX_OK on success, non-zero error code otherwise.
+ */
+
+int gretl_square_matrix_transpose (gretl_matrix *m)
+{
+    int i, j;
+    double x;
+
+    if (m->rows != m->cols) {
+	fputs("gretl_square_matrix_transpose: matrix must be square\n", 
+	      stderr);
+	return GRETL_MATRIX_ERR;
+    }
+
+    for (i=0; i<m->rows-1; i++) {
+	for (j=i+1; j<m->rows; j++) {
+	    x = m->val[mdx(m, i, j)];
+	    m->val[mdx(m, i, j)] = m->val[mdx(m, j, i)];
+	    m->val[mdx(m, j, i)] = x;
+	}
+    }
 
     return GRETL_MATRIX_OK;
 }

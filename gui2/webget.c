@@ -822,13 +822,15 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 
     switch (err) {
     case HOSTERR:
-	sprintf(conn->errbuf, "%s: %s\n", conn->host, herrmsg(h_errno));
+	if (*conn->host != '\0') {
+	    sprintf(conn->errbuf, "%s: %s\n", conn->host, herrmsg(h_errno));
+	} else {
+	    sprintf(conn->errbuf, "%s\n", herrmsg(h_errno));
+	}
 	return HOSTERR;
-	break;
     case CONSOCKERR:
 	sprintf(conn->errbuf, "socket: %s\n", strerror(errno));
 	return CONSOCKERR;
-	break;
     case CONREFUSED:
 	sprintf(conn->errbuf, "Connection to %s:%hu refused\n", 
 		conn->host, conn->port);
@@ -838,7 +840,6 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	sprintf(conn->errbuf, "connect: %s\n", strerror(errno));
 	close(sock);
 	return CONERROR;
-	break;
     case NOCONERROR:
 	break;
     default:
@@ -1148,13 +1149,9 @@ static uerr_t http_loop (struct urlinfo *u, int *dt, struct urlinfo *proxy)
 	    continue;
 	    break;
 	case HOSTERR: case CONREFUSED: case PROXERR: case AUTHFAILED:
-	    FREEHSTAT(hstat);
-	    return err;
-	    break;
 	case FWRITEERR: case FOPENERR: case RETRCANCELED:
 	    FREEHSTAT(hstat);
 	    return err;
-	    break;
 	case RETRFINISHED:
 	    break;
 	default:

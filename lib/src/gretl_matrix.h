@@ -59,6 +59,10 @@ gretl_matrix *gretl_matrix_from_2d_array (const double **X,
 
 void gretl_matrix_zero (gretl_matrix *m);
 
+int gretl_matrix_zero_upper (gretl_matrix *m);
+
+int gretl_matrix_zero_lower (gretl_matrix *m);
+
 void gretl_matrix_multiply_by_scalar (gretl_matrix *m, double x);
 
 void gretl_matrix_divide_by_scalar (gretl_matrix *m, double x);
@@ -79,6 +83,8 @@ int gretl_matrix_set (gretl_matrix *m, int i, int j, double x);
 int gretl_vector_set (gretl_vector *v, int i, double x);
 
 int gretl_matrix_add_to (gretl_matrix *targ, const gretl_matrix *src);
+
+int gretl_square_matrix_transpose (gretl_matrix *m);
 
 int gretl_matrix_add_self_transpose (gretl_matrix *m);
 
