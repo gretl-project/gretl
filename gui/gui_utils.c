@@ -22,12 +22,9 @@
 #include "gretl.h"
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dlfcn.h>
 
 #include "guiprint.h"
-
-#ifdef G_OS_WIN32
-# include <windows.h>
-#endif
 
 char *storelist = NULL;
 
@@ -60,7 +57,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
     { N_("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
     { N_("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#if defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -139,7 +136,7 @@ GtkItemFactoryEntry model_items[] = {
 };
 
 GtkItemFactoryEntry edit_items[] = {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#if defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif    
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
@@ -882,7 +879,7 @@ void free_windata (GtkWidget *w, gpointer data)
     }
 }
 
-#if defined(G_OS_WIN32) || defined(USE_GNOME) 
+#if defined(USE_GNOME) 
 static void window_print_callback (GtkWidget *w, windata_t *vwin)
 {
     window_print(vwin, 0, w);
@@ -911,7 +908,7 @@ static void script_changed (GtkWidget *w, windata_t *vwin)
 
 #include "../pixmaps/save.xpm"
 #include "../pixmaps/saveas.xpm"
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#if defined(USE_GNOME)
 # include "../pixmaps/print.xpm"
 #endif
 #include "../pixmaps/exec_small.xpm"
@@ -960,7 +957,7 @@ static void make_viewbar (windata_t *vwin)
     int save_as_ok = (vwin->role != EDIT_HEADER && 
 		      vwin->role != EDIT_NOTES);
 
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#if defined(USE_GNOME)
     int print_ok = 1;
 #else
     int print_ok = 0;
@@ -997,7 +994,7 @@ static void make_viewbar (windata_t *vwin)
 	    break;
 	case 2:
 	    if (print_ok) {
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#if defined(USE_GNOME)
 		toolxpm = print_xpm;
 		toolfunc = window_print_callback;
 #endif
@@ -1146,11 +1143,9 @@ static void viewer_box_config (windata_t *vwin)
     vwin->vbox = gtk_vbox_new(FALSE, 1);
     gtk_container_border_width (GTK_CONTAINER(vwin->vbox), 5);
     gtk_box_set_spacing (GTK_BOX(vwin->vbox), 5);
-#ifndef G_OS_WIN32
     gtk_signal_connect_after(GTK_OBJECT(vwin->dialog), "realize", 
                              GTK_SIGNAL_FUNC(set_wm_icon), 
                              NULL);
-#endif
     gtk_container_add (GTK_CONTAINER(vwin->dialog), vwin->vbox);
 }
 
@@ -1876,28 +1871,6 @@ static void msgbox (const char *msg, int err)
 	msg);
 }
 
-#elif defined(G_OS_WIN32)
-
-static void msgbox (const char *msg, int err)
-{
-    gchar *trmsg = NULL;
-
-    if (nls_on) {
-	gint wrote;
-
-	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
-    } 
-
-    if (err) 
-	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
-		   MB_OK | MB_ICONERROR);
-    else
-	MessageBox(NULL, (nls_on)? trmsg : msg, "gretl", 
-		   MB_OK | MB_ICONINFORMATION);
-
-    if (nls_on) g_free(trmsg);
-}
-
 #else /* plain GTK */
 
 static void msgbox (const char *msg, int err) 
@@ -2025,11 +1998,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    prn_to_clipboard(prn);
 	} else { /* RTF */
 	    rtfprint_summary(summ, datainfo, prn);
-#ifdef G_OS_WIN32
-	    win_copy_text(prn, COPY_RTF);
-#else
 	    prn_to_clipboard(prn);
-#endif
 	}
 	gretl_print_destroy(prn);
 	return;
@@ -2046,11 +2015,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	} 
 	else { /* RTF */
 	    rtfprint_corrmat(corr, datainfo, prn);
-#ifdef G_OS_WIN32
-	    win_copy_text(prn, COPY_RTF);
-#else
 	    prn_to_clipboard(prn);
-#endif
 	}
 	gretl_print_destroy(prn);
 	return;
@@ -2090,11 +2055,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	textprn.fp = NULL;
 	textprn.buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
-# ifdef G_OS_WIN32
-	win_copy_text(&textprn, COPY_TEXT);	
-# else
 	prn_to_clipboard(&textprn);
-# endif /* G_OS_WIN32 */
 	g_free(textprn.buf);
     } else { /* COPY_SELECTION */
 	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
@@ -2103,7 +2064,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 /* .................................................................. */
 
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
+#if defined (USE_GNOME)
 
 void window_print (windata_t *vwin, guint u, GtkWidget *widget) 
 {
@@ -2179,27 +2140,12 @@ void make_menu_item (gchar *label, GtkWidget *menu,
 
 /* .................................................................. */
 
-#ifndef G_OS_WIN32
-# include <dlfcn.h>
-#endif
-
 int gui_open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
     strcpy(pluginpath, fetch_gretl_lib_path());
 
-#ifdef G_OS_WIN32
-    append_dir(pluginpath, "plugins");
-    strcat(pluginpath, plugin);
-    strcat(pluginpath, ".dll");
-    *handle = LoadLibrary(pluginpath);
-    if (*handle == NULL) {
-        sprintf(errtext, _("Couldn't load plugin %s"), pluginpath);
-        errbox(errtext);
-        return 1;
-    }
-#else
     strcat(pluginpath, plugin);
     strcat(pluginpath, ".so");
     *handle = dlopen(pluginpath, RTLD_LAZY);
@@ -2208,7 +2154,6 @@ int gui_open_plugin (const char *plugin, void **handle)
         errbox(errtext);
         return 1;
     } 
-#endif 
     return 0;
 }
 

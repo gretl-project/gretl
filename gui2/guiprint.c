@@ -149,8 +149,11 @@ void winprint (char *fullbuf, char *selbuf)
     DOCINFO di;
     TEXTMETRIC lptm;
     int px, x, y, incr, page_lines = 47;
-    char *p, hdrstart[48], hdr[70];
+    gchar *printbuf, hdrstart[48], hdr[70];
     size_t len;
+#ifdef ENABLE_NLS
+    gsize bytes;
+#endif
 
     memset(&pdlg, 0, sizeof(pdlg));
     pdlg.lStructSize = sizeof(pdlg);
@@ -184,8 +187,9 @@ void winprint (char *fullbuf, char *selbuf)
     SelectObject(dc, fixed_font); 
 
     incr = 120;
-    if (GetTextMetrics(dc, &lptm)) 
+    if (GetTextMetrics(dc, &lptm)) {
 	incr = lptm.tmHeight * 1.2;
+    }
         
     /* Initialize print document details */
     memset(&di, 0, sizeof(DOCINFO));
@@ -194,9 +198,19 @@ void winprint (char *fullbuf, char *selbuf)
     
     printok = StartDoc(dc, &di);
 
-    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) 
-	p = selbuf;
-    else p = fullbuf;
+#ifdef ENABLE_NLS
+    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
+	printbuf = g_locale_from_utf8(selbuf, -1, NULL, &bytes, NULL);
+    } else {
+	printbuf = g_locale_from_utf8(fullbuf, -1, NULL, &bytes, NULL);
+    }
+#else
+    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) {
+	printbuf = selbuf;
+    } else {
+	printbuf = fullbuf;
+    }
+#endif
 
     page = 1;
     x = px / 2; /* attempt at left margin */
@@ -206,14 +220,14 @@ void winprint (char *fullbuf, char *selbuf)
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
-	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
-	TextOut(dc, x, px/8, hdr, strlen(hdr));
+	sprintf(hdr, I_("%s, page %d"), hdrstart, page++);
+	TextOut(dc, x, px / 8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
 	while (*p && line < page_lines) { /* lines loop */
-	    len = strcspn(p, "\n");
-	    TextOut(dc, x, y, p, len);
-	    p += len + 1;
+	    len = strcspn(printbuf, "\n");
+	    TextOut(dc, x, y, printbuf, len);
+	    printbuf += len + 1;
 	    y += incr; /* line spacing */
 	    line++;
 	}
@@ -230,6 +244,10 @@ void winprint (char *fullbuf, char *selbuf)
     DeleteDC(dc);
     GlobalFree(pdlg.hDevMode);
     GlobalFree(pdlg.hDevNames);
+
+#ifdef ENABLE_NLS
+    g_free(printbuf);
+#endif
 
     free(fullbuf); /* was allocated by gtk_editable_get_chars() */
     if (selbuf) {
@@ -282,7 +300,7 @@ void winprint (char *fullbuf, char *selbuf)
 
     font = gnome_font_find_closest("Courier", 10);
     font_name = gnome_font_get_name (font);
-    g_print ("Found font: %s\n", font_name);
+    /* g_print ("Found font: %s\n", font_name); */
 
     gnome_print_setfont(gpc, font);
     gnome_print_setrgbcolor(gpc, 0, 0, 0);
@@ -343,12 +361,13 @@ print_image_from_pixbuf (GnomePrintContext *gpc, GdkPixbuf *pixbuf)
     height    = gdk_pixbuf_get_height (pixbuf);
     width     = gdk_pixbuf_get_width (pixbuf);
         
-    if (has_alpha)
+    if (has_alpha) {
 	gnome_print_rgbaimage (gpc, (char *)raw_image, width, height, 
 			       rowstride);
-    else
+    } else {
 	gnome_print_rgbimage (gpc, (char *)raw_image, width, height, 
 			      rowstride);
+    }
 }
 
 

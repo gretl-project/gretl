@@ -22,94 +22,13 @@
 
 #include "gretl.h"
 
-#ifdef G_OS_WIN32
-# include <windows.h>
-#endif
-
 static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
                          PRN *prn);
 
-#ifdef G_OS_WIN32
+#if defined(USE_GNOME)
 
-static char *dosify_buffer (const char *buf)
-{
-    int nlines = 0;
-    char *targ, *q;
-    const char *p;
-
-    p = buf;
-    while (*p) {
-	if (*p++ == '\n') nlines++;
-    }
-
-    targ = malloc(strlen(buf) + nlines + 1);
-    if (targ == NULL) return NULL;
-
-    p = buf;
-    q = targ;
-    while (*p) {
-	if (*p == '\n') {
-	    *q++ = '\r';
-	    *q++ = '\n';
-	} else {
-	    *q++ = *p;
-	}
-	p++;
-    } 
-    *q = 0;
-
-    return targ;
-}
-
-/* win32 only: copy text to clipboard for pasting into Word */
-int win_copy_text (PRN *prn, int format)
-{
-    HGLOBAL winclip;
-    char *ptr, *winbuf;
-    unsigned rtf_format;
-    size_t len;
-    gchar *tr = NULL;
-
-    if (format == COPY_RTF) {
-	rtf_format = RegisterClipboardFormat("Rich Text Format");
-    } else {
-	rtf_format = CF_TEXT;
-    }
-
-    if (prn->buf == NULL) return 0;
-
-    if (!OpenClipboard(NULL)) return 1;
-
-    EmptyClipboard();
-
-    if (nls_on) {
-	gint wrote;
-
-	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &wrote, NULL);
-    }
-    
-    winbuf = dosify_buffer((nls_on)? tr : prn->buf);
-    len = strlen(winbuf);
-        
-    winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
-    ptr = (char *) GlobalLock(winclip);
-
-    memcpy(ptr, winbuf, len + 1);
-    if (nls_on) g_free(tr);
-    free(winbuf);
-
-    GlobalUnlock(winclip);
-
-    SetClipboardData(rtf_format, winclip);
-
-    CloseClipboard();
-
-    return 0;
-}
-
-#endif
-
-#if defined(G_OS_WIN32) || defined(USE_GNOME)
+#include <libgnomeprint/gnome-print.h>
+#include <libgnomeprint/gnome-printer-dialog.h>
 
 static void time_string (char *s)
 {
@@ -118,112 +37,6 @@ static void time_string (char *s)
     sprintf(s, _("gretl output %s"), ctime(&prntime));
     s[strlen(s)-1] = '\0';
 }
-
-#endif
-
-/* Windows only: print using Windows spooler */
-#if defined(G_OS_WIN32)
-
-void winprint (char *fullbuf, char *selbuf)
-{
-    HDC dc;
-    PRINTDLG pdlg;
-    int printok, line, page;
-    LOGFONT lfont;
-    HFONT fixed_font;
-    DOCINFO di;
-    TEXTMETRIC lptm;
-    int px, x, y, incr, page_lines = 47;
-    char *p, hdrstart[48], hdr[70];
-    size_t len;
-
-    memset(&pdlg, 0, sizeof(pdlg));
-    pdlg.lStructSize = sizeof(pdlg);
-    pdlg.Flags = PD_RETURNDC | PD_NOPAGENUMS;
-    PrintDlg(&pdlg);
-    dc = pdlg.hDC;
-    
-    /* use Textmappingmode, that's easiest to map the fontsize */
-    SetMapMode(dc, MM_TEXT);
-
-    /* logical pixels per inch */
-    px = GetDeviceCaps(dc, LOGPIXELSY);
-    
-    /* setup font specifics */
-    /* first param to MulDiv is supposed to be point size */
-    lfont.lfHeight = -MulDiv(10, px, 72); /* this is broken! */
-    lfont.lfWidth = 0;
-    lfont.lfEscapement = 0;
-    lfont.lfOrientation = 0;
-    lfont.lfWeight = FW_NORMAL;
-    lfont.lfItalic = 0;
-    lfont.lfUnderline = 0;
-    lfont.lfStrikeOut = 0;
-    lfont.lfCharSet = ANSI_CHARSET;
-    lfont.lfOutPrecision = OUT_DEVICE_PRECIS;
-    lfont.lfClipPrecision = CLIP_DEFAULT_PRECIS;
-    lfont.lfQuality = DEFAULT_QUALITY;
-    lfont.lfPitchAndFamily = VARIABLE_PITCH | FF_MODERN; 
-    lstrcpy(lfont.lfFaceName, "Courier New");
-    fixed_font = CreateFontIndirect(&lfont);
-    SelectObject(dc, fixed_font); 
-
-    incr = 120;
-    if (GetTextMetrics(dc, &lptm)) 
-	incr = lptm.tmHeight * 1.2;
-        
-    /* Initialize print document details */
-    memset(&di, 0, sizeof(DOCINFO));
-    di.cbSize = sizeof(DOCINFO);
-    di.lpszDocName = "gretl";
-    
-    printok = StartDoc(dc, &di);
-
-    if (selbuf != NULL && (pdlg.Flags & PD_SELECTION)) 
-	p = selbuf;
-    else p = fullbuf;
-
-    page = 1;
-    x = px / 2; /* attempt at left margin */
-    time_string(hdrstart);
-    while (*p && printok) { /* pages loop */
-	StartPage(dc);
-	SelectObject(dc, fixed_font);
-	SetMapMode(dc, MM_TEXT);
-	/* make simple header */
-	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
-	TextOut(dc, x, px/8, hdr, strlen(hdr));
-	line = 0;
-	y = px/2;
-	while (*p && line < page_lines) { /* lines loop */
-	    len = strcspn(p, "\n");
-	    TextOut(dc, x, y, p, len);
-	    p += len + 1;
-	    y += incr; /* line spacing */
-	    line++;
-	}
-	printok = (EndPage(dc) > 0);
-    }
-    
-    if (printok)
-        EndDoc(dc);
-    else
-        AbortDoc(dc);
-
-    DeleteObject(fixed_font);
-    DeleteDC(dc);
-    GlobalFree(pdlg.hDevMode);
-    GlobalFree(pdlg.hDevNames);
-
-    free(fullbuf); /* was allocated by gtk_editable_get_chars() */
-    if (selbuf)
-	free(selbuf);
-}
-
-#elif defined(USE_GNOME)
-
-#include <libgnomeprint/gnome-print.h>
-#include <libgnomeprint/gnome-printer-dialog.h>
 
 void winprint (char *fullbuf, char *selbuf)
 {
@@ -334,7 +147,7 @@ void gnome_print_graph (const char *fname)
     gtk_object_unref(GTK_OBJECT(printer));
 }
 
-#endif /* G_OS_WIN32, USE_GNOME */
+#endif /* USE_GNOME */
 
 void model_to_rtf (MODEL *pmod)
 {
@@ -344,11 +157,8 @@ void model_to_rtf (MODEL *pmod)
     
     r_printmodel(pmod, datainfo, prn);
 
-#ifdef G_OS_WIN32
-    win_copy_text(prn, COPY_RTF);
-#else
     prn_to_clipboard(prn);
-#endif
+
     gretl_print_destroy(prn);
 }
 
