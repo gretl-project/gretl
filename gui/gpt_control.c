@@ -292,7 +292,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	    if (!strncmp(fline, "set term", 8)) printit = 0;
 	    else if (!strncmp(fline, "set output", 10)) printit = 0;
 	    else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
-		     && is_auto_ols_string(line)) printit = 0;
+		     && is_auto_ols_string(fline)) printit = 0;
 	    if (printit) fputs(fline, ftmp);
 	}
     }
