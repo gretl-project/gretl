@@ -752,14 +752,13 @@ double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev)
     integer nvr = n;
     char jvl = 'N', jvr = 'V';
     int vecs = (ev != NULL);
+    double *work;
+    double *wr = NULL, *wi = NULL, *vr = NULL;
 
     if (!vecs) {
 	jvr = 'N';
 	nvr = 1;
     }
-
-    double *work;
-    double *wr = NULL, *wi = NULL, *vr = NULL;
 
     work = malloc(sizeof *work);
     if (work == NULL) {

@@ -25697,23 +25697,23 @@ fi
   else
      PKG_CONFIG_MIN_VERSION=0.9.0
      if $PKG_CONFIG --atleast-pkgconfig-version $PKG_CONFIG_MIN_VERSION; then
-        echo "$as_me:$LINENO: checking for libxslt >= 1.0.30" >&5
-echo $ECHO_N "checking for libxslt >= 1.0.30... $ECHO_C" >&6
+        echo "$as_me:$LINENO: checking for libxslt >= 1.0.15" >&5
+echo $ECHO_N "checking for libxslt >= 1.0.15... $ECHO_C" >&6
 
-        if $PKG_CONFIG --exists "libxslt >= 1.0.30" ; then
+        if $PKG_CONFIG --exists "libxslt >= 1.0.15" ; then
             echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
             succeeded=yes
 
             echo "$as_me:$LINENO: checking XSLT_CFLAGS" >&5
 echo $ECHO_N "checking XSLT_CFLAGS... $ECHO_C" >&6
-            XSLT_CFLAGS=`$PKG_CONFIG --cflags "libxslt >= 1.0.30"`
+            XSLT_CFLAGS=`$PKG_CONFIG --cflags "libxslt >= 1.0.15"`
             echo "$as_me:$LINENO: result: $XSLT_CFLAGS" >&5
 echo "${ECHO_T}$XSLT_CFLAGS" >&6
 
             echo "$as_me:$LINENO: checking XSLT_LIBS" >&5
 echo $ECHO_N "checking XSLT_LIBS... $ECHO_C" >&6
-            XSLT_LIBS=`$PKG_CONFIG --libs "libxslt >= 1.0.30"`
+            XSLT_LIBS=`$PKG_CONFIG --libs "libxslt >= 1.0.15"`
             echo "$as_me:$LINENO: result: $XSLT_LIBS" >&5
 echo "${ECHO_T}$XSLT_LIBS" >&6
         else
@@ -25721,7 +25721,7 @@ echo "${ECHO_T}$XSLT_LIBS" >&6
             XSLT_LIBS=""
             ## If we have a custom action on failure, don't print errors, but
             ## do set a variable so people can do so.
-            XSLT_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libxslt >= 1.0.30"`
+            XSLT_PKG_ERRORS=`$PKG_CONFIG --errors-to-stdout --print-errors "libxslt >= 1.0.15"`
 
         fi
 

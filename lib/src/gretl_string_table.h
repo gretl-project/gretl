@@ -25,8 +25,10 @@ typedef struct _gretl_string_table gretl_string_table;
 gretl_string_table *gretl_string_table_new (void);
 
 int gretl_string_table_index (gretl_string_table *st, const char *s, int col,
-			      PRN *prn);
+			      int addcol, PRN *prn);
 
 void gretl_string_table_print (gretl_string_table *st, PRN *prn);
+
+void gretl_string_table_destroy (gretl_string_table *st);
 
 #endif /* GRETL_STRING_TABLE_H */

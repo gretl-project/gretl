@@ -51,7 +51,8 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 # full manual, cmdlist.xml
 docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans --docbook $(topsrc)/doc/commands/gretl_commands.xml && \
-	cp cmdlist.xml $(topsrc)/doc/chapters/cmdlist.xml
+	cp cmdlist.xml $(topsrc)/doc/chapters/cmdlist.xml && \
+	rm cmdlist.xml
 
 # Generate "online" help file, gretlcli.hlp and gretl.hlp
 hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl

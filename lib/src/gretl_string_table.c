@@ -110,10 +110,12 @@ gretl_string_table_add_column (gretl_string_table *st, int colnum)
 
 int 
 gretl_string_table_index (gretl_string_table *st, const char *s, int col,
-			  PRN *prn)
+			  int addcol, PRN *prn)
 {
     col_table *ct = NULL;
     int i, idx = -1;
+
+    if (st == NULL) return idx;
 
     for (i=0; i<st->n_cols; i++) {
 	if ((st->cols[i])->idx == col) {
@@ -125,8 +127,8 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
     if (ct != NULL) {
 	/* there's a table for this column already */
 	idx = col_table_get_index(ct, s);
-    } else {
-	/* no table for this column yet */
+    } else if (addcol) {
+	/* no table for this column yet: start one now */
 	ct = gretl_string_table_add_column(st, col);
 	if (ct != NULL) {
 	    pprintf(prn, M_("variable %d: translating from strings to code numbers\n"), 
@@ -154,7 +156,7 @@ static void col_table_destroy (col_table *ct)
     free(ct);
 }
 
-static void gretl_string_table_destroy (gretl_string_table *st)
+void gretl_string_table_destroy (gretl_string_table *st)
 {
     int i;
 

@@ -1,4 +1,4 @@
-version 1.2.4
+3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables
 - Add GARCH models, using Fiorentini-Calzolari-Panattoni approach
   (Journal of Applied Econometrics, 1996)

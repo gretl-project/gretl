@@ -1033,7 +1033,9 @@
 	Specifies an equation within a system of equations (see 
 	<cmdref targ="system"/>).  The syntax for specifying an
 	equation is the same as that for, e.g., 
-	<cmdref targ="ols"/>.
+	<cmdref targ="ols"/> (except for a Three-Stage Least Squares
+	system, in which the syntax is the same as for <cmdref
+	  targ="tsls"/>).
       </para>
     </description>
 
@@ -4528,20 +4530,21 @@
       <examples>
         <example>system type=sur</example>
 	<example>system type=sur save=resids</example>
-	<example>system type=sur save=resids,fitted</example>
+	<example>system type=3sls save=resids,fitted</example>
       </examples>
     </usage>
 
     <description>
       <para>
-	Starts a system of equations.  At present the only type of
-	system supported is <cmd>sur</cmd> (Seemingly Unrelated
-	Regressions).  In the optional <cmd>save=</cmd> field of the
-	command you can specify whether to save the residuals
-	(<cmd>resids</cmd>) and/or the fitted values
-	(<cmd>fitted</cmd>).  The system must contain at least two
-	equations specified using the <cmd>equation</cmd> command, and
-	it must be terminated with the line <cmd>end system</cmd>.
+	Starts a system of equations.  At present two types of system
+	are supported: <cmd>sur</cmd> (Seemingly Unrelated
+	Regressions) and <cmd>3sls</cmd> (Three-Stage Least Squares).
+	In the optional <cmd>save=</cmd> field of the command you can
+	specify whether to save the residuals (<cmd>resids</cmd>)
+	and/or the fitted values (<cmd>fitted</cmd>).  The system must
+	contain at least two equations specified using the
+	<cmd>equation</cmd> command, and it must be terminated with
+	the line <cmd>end system</cmd>.
       </para>
     </description>
 

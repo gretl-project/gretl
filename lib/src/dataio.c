@@ -33,6 +33,7 @@
 
 #define QUOTE                  '\''
 #define SCALAR_DIGITS           12
+#define CSVSTRLEN               72
 
 #define IS_DATE_SEP(c) (c == '.' || c == ':' || c == ',')
 
@@ -2457,23 +2458,30 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
    file.  It also checks for extraneous binary data (the file is 
    supposed to be plain text), and checks whether the 'delim'
    character is present in the file, on a non-comment line (where
-   a comment line is one that starts with '#').
+   a comment line is one that starts with '#').  Finally, checks
+   whether the file has a trailing comma on every line.
 */
 
 static int get_max_line_length (FILE *fp, char delim, int *gotdelim, 
-				int *gottab, PRN *prn)
+				int *gottab, int *trail, PRN *prn)
 {
-    int c, cc = 0;
+    int c, cbak = 0, cc = 0;
     int comment = 0, maxlen = 0;
+
+    *trail = 1;
 
     while (1) {
 	c = fgetc(fp);
 	if (c == '\n') {
 	    if (cc > maxlen) maxlen = cc;
 	    cc = 0;
+	    if (cbak != 0 && cbak != ',') {
+		*trail = 0;
+	    }
 	    continue;
 	}
 	if (c == EOF) break;
+	cbak = c;
 	if (!isspace((unsigned char) c) && !isprint((unsigned char) c) &&
 	    !(c == CTRLZ)) {
 	    pprintf(prn, M_("Binary data (%d) encountered: this is not a valid "
@@ -2491,7 +2499,9 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
 
     if (maxlen == 0) {
 	pprintf(prn, M_("Data file is empty\n"));
-    }	
+    } else if (*trail) {
+	pprintf(prn, M_("Data file has trailing commas\n"));
+    }
 
     return maxlen;
 }
@@ -2508,7 +2518,7 @@ static int count_csv_fields (const char *line, char delim)
 	cbak = *p;
 	p++;
 #if 1
-	/* Problem: this should be read as a implicit "NA"? */
+	/* Problem: (when) should trailing delimiter be read as implicit "NA"? */
 	if (*p == '\0' && cbak == delim && cbak != ',') {
 	    nf--;
 	}
@@ -2518,7 +2528,7 @@ static int count_csv_fields (const char *line, char delim)
     return nf + 1;
 }
 
-static void compress_csv_line (char *line, char delim)
+static void compress_csv_line (char *line, char delim, int trail)
 {
     int n = strlen(line);
     char *p = line + n - 1;
@@ -2535,6 +2545,14 @@ static void compress_csv_line (char *line, char delim)
 	compress_spaces(line);
     }
     delchar('"', line);
+
+    if (trail) {
+	/* chop trailing comma */
+	n = strlen(line);
+	if (n > 0) {
+	    line[n-1] = '\0';
+	}
+    }
 }
 
 static void check_first_field (const char *line, char delim, 
@@ -2573,7 +2591,7 @@ static void check_first_field (const char *line, char delim,
                  strcmp(s, ".") == 0 || \
                  strncmp(s, "-999", 4) == 0)
 
-static int csv_missval (const char *str, int k, int t, PRN *prn)
+static int csv_missval (const char *str, int i, int t, PRN *prn)
 {
     int miss = 0;
 
@@ -2581,7 +2599,7 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
 	if (t < 500) {
 	    pprintf(prn, M_("   the cell for variable %d, obs %d "
 			    "is empty: treating as missing value\n"), 
-		    k, t);
+		    i, t);
 	}
 	miss = 1;
     }
@@ -2589,7 +2607,7 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
     if (ISNA(str)) {
 	if (t < 500) {
 	    pprintf(prn, M_("   warning: missing value for variable "
-			    "%d, obs %d\n"), k, t);
+			    "%d, obs %d\n"), i, t);
 	}
 	miss = 1;
     }
@@ -2626,25 +2644,44 @@ static int dataset_add_obs (double ***pZ, DATAINFO *pdinfo)
     return 0;
 }
 
-static int process_csv_obs (const char *str, int i, int k, int t, 
+static int blank_so_far (double *x, int obs)
+{
+    int t;
+
+    for (t=0; t<obs; t++) {
+	if (!na(x[t])) return 0;
+    }
+
+    return 1;
+}
+
+static int process_csv_obs (const char *str, int i, int t, 
 			    double **Z, gretl_string_table **pst,
 			    PRN *prn)
 {
     int err = 0;
 
-    if (csv_missval(str, k, t+1, prn)) {
+    if (csv_missval(str, i, t+1, prn)) {
 	Z[i][t] = NADBL;
     } else {
 	if (check_atof(str)) {
-	    int ix;
+	    int ix = 0;
+	    int addcol = 0;
 
-	    if (*pst == NULL) {
+	    if (t == 0 && *pst == NULL) {
 		*pst = gretl_string_table_new();
 	    }
-	    if ((ix = gretl_string_table_index(*pst, str, k, prn)) > 0) {
+	    if (blank_so_far(Z[i], t)) {
+		addcol = 1;
+	    }
+	    if (*pst != NULL) {
+		ix = gretl_string_table_index(*pst, str, i, addcol, prn);
+	    }
+	    if (ix > 0) {
 		Z[i][t] = (double) ix;
 	    } else {
-		pprintf(prn, "%s\n", gretl_errmsg);
+		pprintf(prn, M_("At variable %d, observation %d:\n"), i, t+1);
+		pprintf(prn, " %s\n", gretl_errmsg);
 		*gretl_errmsg = '\0';
 		err = 1;
 	    }
@@ -2675,8 +2712,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 {
     int ncols, chkcols;
     int gotdata = 0, gotdelim = 0, gottab = 0, markertest = -1;
-    int i, k, t, blank_1 = 0, obs_1 = 0, maxlen;
-    char csvstr[32];
+    int i, k, t, blank_1 = 0, obs_1 = 0, trail, maxlen;
+    char csvstr[CSVSTRLEN];
     FILE *fp = NULL;
     DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
@@ -2716,8 +2753,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     pprintf(prn, "%s %s...\n", M_("parsing"), fname);
 
-    /* get line length, also check for binary data */
-    maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, prn);    
+    /* get line length, also check for binary data, etc. */
+    maxlen = get_max_line_length(fp, delim, &gotdelim, &gottab, &trail, prn);    
     if (maxlen <= 0) {
 	goto csv_bailout;
     }
@@ -2728,6 +2765,8 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
     pprintf(prn, M_("using delimiter '%c'\n"), delim);
     pprintf(prn, M_("   longest line: %d characters\n"), maxlen + 1);
+
+    if (trail && delim != ',') trail = 0;
 
     /* create buffer to hold lines */
     line = malloc(maxlen + 1);
@@ -2746,7 +2785,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	/* skip blank lines */
 	if (string_is_blank(line)) continue;
 	csvinfo->n += 1;
-	compress_csv_line(line, delim);
+	compress_csv_line(line, delim, trail);
 	if (!gotdata) {
 	    /* scrutinize first "real" line */
 	    check_first_field(line, delim, &blank_1, &obs_1, prn);
@@ -2811,7 +2850,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	if (string_is_blank(line)) continue;
 	else break;
     }
-    compress_csv_line(line, delim);    
+    compress_csv_line(line, delim, trail);    
 
     p = line;
     if (delim == ' ' && *p == ' ') p++;
@@ -2823,7 +2862,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 	i = 0;
 	while (*p && *p != delim) {
-	    if (i < 31) csvstr[i++] = *p;
+	    if (i < CSVSTRLEN - 1) csvstr[i++] = *p;
 	    p++;
 	}
 	if (*p == delim) p++;
@@ -2887,14 +2926,14 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 
 	if (*line == '#') continue;
 	if (string_is_blank(line)) continue;
-	compress_csv_line(line, delim);
+	compress_csv_line(line, delim, trail);
 	p = line;
 	if (delim == ' ' && *p == ' ') p++;
 
 	for (k=0; k<ncols; k++) {
 	    i = 0;
 	    while (*p && *p != delim) {
-		if (i < 31) csvstr[i++] = *p;
+		if (i < CSVSTRLEN - 1) csvstr[i++] = *p;
 		else {
 		    pprintf(prn, M_("warning: truncating data at row %d, column %d\n"),
 			    t+1, k+1);
@@ -2908,7 +2947,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		strncat(csvinfo->S[t], csvstr, OBSLEN - 1);
 	    } else {
 		nv = (blank_1 || obs_1)? k : k + 1;
-		if (process_csv_obs(csvstr, nv, k, t, csvZ, &st, prn)) {
+		if (process_csv_obs(csvstr, nv, t, csvZ, &st, prn)) {
 		    goto csv_bailout;
 		}
 	    }
@@ -2988,6 +3027,10 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     if (line != NULL) free(line);
     if (csvinfo != NULL) 
 	clear_datainfo(csvinfo, CLEAR_FULL);
+
+    if (st != NULL) {
+	gretl_string_table_destroy(st);
+    }
 
     console_off();
 

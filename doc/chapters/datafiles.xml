@@ -172,8 +172,14 @@
 	  <para>Data values: these should constitute a rectangular
 	    block, with one variable per column (and one observation
 	    per row).  The number of variables (data columns) must
-	    match the number of variable names given. See also
-	    <xref linkend="missing-data"/>.  
+	    match the number of variable names given. See also <xref
+	    linkend="missing-data"/>.  Numeric data are expected, but
+	    in the case of importing from ASCII/CSV, the program
+	    offers limited handling of character (string) data: if a
+	    given column contains character data only, consecutive
+	    numeric codes are substituted for the strings, and once
+	    the import is complete a table is printed showing the
+	    correspondence between the strings and the codes.
 	  </para>
 	</listitem>
 	<listitem>
