@@ -205,7 +205,7 @@ int ijton (int i, int j, int nrows);
 
 int ztox (int i, double *px, const double **Z, const DATAINFO *pdinfo);
 
-int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);
+int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T);
 
 int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
 

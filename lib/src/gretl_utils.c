@@ -2175,7 +2175,7 @@ int guess_panel_structure (double **Z, DATAINFO *pdinfo)
    T = number pf time-periods per cross-sectional unit
 */
 
-int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
+int get_panel_structure (const DATAINFO *pdinfo, int *nunits, int *T)
 {
     int err = 0;
 

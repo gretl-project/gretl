@@ -31,26 +31,26 @@ enum vcv_ops {
     VCV_SUBTRACT
 };
 
-typedef struct hausman_t_ hausman_t;
 typedef struct diagnostics_t_ diagnostics_t;
 
-struct hausman_t_ {
-    int nbeta;
-    double sigma_e;
-    double H;
-    double *bdiff;
-    double *sigma;
-};
-
 struct diagnostics_t_ {
-    int nunits;
-    int effn;
-    int T;
-    int effT;
-    int *unit_obs;
-    char *varying;
-    int *vlist;
-    gretlopt opt;
+    int nunits;           /* total cross-section units */
+    int effn;             /* effective (included) cross-section units */
+    int T;                /* times-series length of panel */
+    int effT;             /* effective times-series length */
+    int *unit_obs;        /* array of number of observations per x-sect unit */
+    char *varying;        /* array to record properties of pooled-model regressors */
+    int *vlist;           /* list of time-varying variables from pooled model */
+    gretlopt opt;         /* the option flags passed into the diagnostics function */
+    int nbeta;            /* number of slope coeffs for Hausman test */
+    double sigma_e;       /* fixed-effects standard error */
+    double H;             /* Hausman test statistic */
+    double *bdiff;        /* array of coefficient differences */
+    double *sigma;        /* Hausman covariance matrix */
+    double fe_var;        /* fixed-effects error variance */
+    double gm_var;        /* group means error variance */
+    double theta;         /* GLS weighting coefficient */
+    const MODEL *pooled;  /* reference model (pooled OLS) */
 };
 
 struct {
@@ -70,7 +70,7 @@ panel_index_init (const DATAINFO *pdinfo, int nunits, int T)
 }
 
 static int 
-varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   diagnostics_t *diag);
 
 #define panel_index(i,t) ((panidx.ts)? (i * panidx.T + t + panidx.offset) : \
@@ -78,22 +78,8 @@ varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-static void haus_init (hausman_t *haus)
-{
-    haus->nbeta = 0;
-    haus->sigma_e = NADBL;
-    haus->H = NADBL;
-    haus->bdiff = NULL;
-    haus->sigma = NULL;
-}
-
-static void haus_free (hausman_t *haus)
-{
-    free(haus->bdiff);
-    free(haus->sigma);
-}
-
-static void diagnostics_init (diagnostics_t *diag, gretlopt opt)
+static void 
+diagnostics_init (diagnostics_t *diag, const MODEL *pmod, gretlopt opt)
 {
     diag->nunits = 0;
     diag->effn = 0;
@@ -103,6 +89,14 @@ static void diagnostics_init (diagnostics_t *diag, gretlopt opt)
     diag->varying = NULL;
     diag->vlist = NULL;
     diag->opt = opt;
+
+    diag->nbeta = 0;
+    diag->sigma_e = NADBL;
+    diag->H = NADBL;
+    diag->bdiff = NULL;
+    diag->sigma = NULL;
+    
+    diag->pooled = pmod;
 }
 
 static void diag_free (diagnostics_t *diag)
@@ -110,6 +104,11 @@ static void diag_free (diagnostics_t *diag)
     free(diag->unit_obs);
     free(diag->varying);
     free(diag->vlist);
+
+    free(diag->bdiff);
+    free(diag->sigma);
+    
+    diag->pooled = NULL;
 }
 
 /* test variable number v against the (possibly reduced) regression
@@ -135,24 +134,24 @@ static int var_is_varying (const int *list, int v)
 }
 
 static int 
-haus_alloc (hausman_t *haus, const int *vlist)
+haus_alloc (diagnostics_t *diag)
 {
-    int nbeta = vlist[0] - 2;
+    int nbeta = diag->vlist[0] - 2;
     int nsigma = (nbeta * nbeta + nbeta) / 2;
 
-    haus->nbeta = nbeta;
+    diag->nbeta = nbeta;
 
     /* array to hold differences between coefficient estimates */
-    haus->bdiff = malloc(nbeta * sizeof *haus->bdiff);
-    if (haus->bdiff == NULL) {
+    diag->bdiff = malloc(nbeta * sizeof *diag->bdiff);
+    if (diag->bdiff == NULL) {
 	return E_ALLOC;
     }
 
     /* array to hold covariance matrix */
-    haus->sigma = malloc(nsigma * sizeof *haus->sigma);
-    if (haus->sigma == NULL) {
-	free(haus->bdiff);
-	haus->bdiff = NULL;
+    diag->sigma = malloc(nsigma * sizeof *diag->sigma);
+    if (diag->sigma == NULL) {
+	free(diag->bdiff);
+	diag->bdiff = NULL;
 	return E_ALLOC; 
     }
 
@@ -182,8 +181,8 @@ static void print_panel_coeff (const MODEL *pmod,
    are subtracted */
 
 static DATAINFO *
-within_groups_dataset (const MODEL *pmod, const double **Z, 
-		       double ***wZ, diagnostics_t *diag)
+within_groups_dataset (const double **Z, double ***wZ, 
+		       diagnostics_t *diag)
 {
     DATAINFO *winfo;
     int i, j, k;
@@ -191,10 +190,10 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 
 #if PDEBUG
     fprintf(stderr, "within_groups_dataset: nvar=%d, nobs=%d, *wZ=%p\n", 
-	    diag->vlist[0], pmod->nobs, (void *) *wZ);
+	    diag->vlist[0], diag->pooled->nobs, (void *) *wZ);
 #endif
 
-    winfo = create_new_dataset(wZ, diag->vlist[0], pmod->nobs, 0);
+    winfo = create_new_dataset(wZ, diag->vlist[0], diag->pooled->nobs, 0);
     if (winfo == NULL) {
 	return NULL;
     }
@@ -223,7 +222,7 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 
 	    for (t=0; t<diag->T; t++) {
 		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
+		if (!na(diag->pooled->uhat[bigt])) {
 		    xbar += Z[diag->vlist[j]][bigt];
 		}
 	    }
@@ -235,7 +234,7 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 #endif
 	    for (t=0; t<diag->T; t++) {
 		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
+		if (!na(diag->pooled->uhat[bigt])) {
 		    (*wZ)[k][bigt] = Z[diag->vlist[j]][bigt] - xbar;
 		}
 #if PDEBUG > 1
@@ -251,9 +250,9 @@ within_groups_dataset (const MODEL *pmod, const double **Z,
 /* construct a mini-dataset containing the group means */
 
 static DATAINFO *
-group_means_dataset (const MODEL *pmod, 
+group_means_dataset (diagnostics_t *diag,
 		     const double **Z, const DATAINFO *pdinfo,
-		     double ***gZ, diagnostics_t *diag)
+		     double ***gZ)
 {
     DATAINFO *ginfo;
     int i, j, k;
@@ -261,19 +260,19 @@ group_means_dataset (const MODEL *pmod,
 
 #if PDEBUG
     fprintf(stderr, "group_means_dataset: nvar=%d, nobs=%d, *gZ=%p\n", 
-	    pmod->list[0], diag->effn, (void *) *gZ);
+	    diag->pooled->list[0], diag->effn, (void *) *gZ);
 #endif
 
-    ginfo = create_new_dataset(gZ, pmod->list[0], diag->effn, 0);
+    ginfo = create_new_dataset(gZ, diag->pooled->list[0], diag->effn, 0);
     if (ginfo == NULL) {
 	return NULL;
     }
 
     k = 1;
-    for (j=1; j<=pmod->list[0]; j++) { 
+    for (j=1; j<=diag->pooled->list[0]; j++) { 
 	int s = 0;
 
-	if (pmod->list[j] == 0) {
+	if (diag->pooled->list[j] == 0) {
 	    continue;
 	}
 
@@ -286,8 +285,8 @@ group_means_dataset (const MODEL *pmod,
 	    }
 	    for (t=0; t<diag->T; t++) {
 		bigt = panel_index(i, t);
-		if (!na(pmod->uhat[bigt])) {
-		    xx += Z[pmod->list[j]][bigt];
+		if (!na(diag->pooled->uhat[bigt])) {
+		    xx += Z[diag->pooled->list[j]][bigt];
 		}
 	    }
 	    (*gZ)[k][s] = xx / (double) Ti;
@@ -302,41 +301,43 @@ group_means_dataset (const MODEL *pmod,
     return ginfo;
 }
 
-/* calculate the group means regression and return its error variance */
+/* calculate the group means regression and its error variance */
 
-static double 
-group_means_variance (const MODEL *pmod, double ***gZ, DATAINFO *ginfo)
+static int
+group_means_variance (diagnostics_t *diag, double ***gZ, DATAINFO *ginfo)
 {
     MODEL gmmod;
-    double gmvar = NADBL;
     int *gmlist;
     int i, j;
+    int err = 0;
 
-    gmlist = malloc((pmod->list[0] + 1) * sizeof *gmlist);
+    gmlist = malloc((diag->pooled->list[0] + 1) * sizeof *gmlist);
     if (gmlist == NULL) {
-	return NADBL;
+	return E_ALLOC;
     }
 
-    gmlist[0] = pmod->list[0];
+    gmlist[0] = diag->pooled->list[0];
     j = 1;
     for (i=1; i<=gmlist[0]; i++) { 
-	if (pmod->list[i] == 0) {
+	if (diag->pooled->list[i] == 0) {
 	    gmlist[i] = 0;
 	} else {
 	    gmlist[i] = j++;
 	}
     }
 
-    gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A, 0.0);
+    gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A | OPT_Z, 0.0);
 
     if (gmmod.errcode == 0) {
-	gmvar = gmmod.sigma * gmmod.sigma;
+	diag->gm_var = gmmod.sigma * gmmod.sigma;
+    } else {
+	err = gmmod.errcode;
     }
 
     clear_model(&gmmod);
     free(gmlist);
 
-    return gmvar;
+    return err;
 }
 
 /* op is VCV_SUBTRACT for the random effects model.  With the fixed
@@ -365,21 +366,20 @@ vcv_skip (const MODEL *pmod, int i, const diagnostics_t *diag, int op)
    slopes with respect time-varying variables */
 
 static void 
-vcv_slopes (hausman_t *haus, const diagnostics_t *diag, 
-	    const MODEL *pmod, int op)
+vcv_slopes (diagnostics_t *diag, const MODEL *pmod, int op)
 {
     int idx, i, j;
     int mj, mi = 0;
     int k = 0;
 
-    for (i=0; i<haus->nbeta; i++) {
+    for (i=0; i<diag->nbeta; i++) {
 	if (vcv_skip(pmod, mi, diag, op)) {
 	    i--;
 	    mi++;
 	    continue;
 	}
 	mj = mi;
-	for (j=i; j<haus->nbeta; j++) {
+	for (j=i; j<diag->nbeta; j++) {
 	    if (vcv_skip(pmod, mj, diag, op)) {
 		j--;
 		mj++;
@@ -392,9 +392,9 @@ vcv_slopes (hausman_t *haus, const diagnostics_t *diag,
 		    k, idx, mi, mj, pmod->vcv[idx]);
 #endif
 	    if (op == VCV_SUBTRACT) {
-		haus->sigma[k++] -= pmod->vcv[idx];
+		diag->sigma[k++] -= pmod->vcv[idx];
 	    } else {
-		haus->sigma[k++] = pmod->vcv[idx];
+		diag->sigma[k++] = pmod->vcv[idx];
 	    }
 	    mj++;
 	}
@@ -404,18 +404,20 @@ vcv_slopes (hausman_t *haus, const diagnostics_t *diag,
 
 /* calculate Hausman test statistic */
 
-static int bXb (hausman_t *haus)
+static int bXb (diagnostics_t *diag)
 {
     char uplo = 'L'; 
     integer nrhs = 1;
-    integer n = haus->nbeta;
+    integer n = diag->nbeta;
     integer ldb = n;
     integer info = 0;
     integer *ipiv;
     double *x;
     int i;
 
-    /* make a copy of haus->bdiff first */
+    diag->H = NADBL;
+
+    /* make a copy of diag->bdiff first */
     x = malloc(n * sizeof *x);
     if (x == NULL) {
 	return E_ALLOC;
@@ -427,21 +429,21 @@ static int bXb (hausman_t *haus)
 	return E_ALLOC;
     }
 
-    for (i=0; i<haus->nbeta; i++) {
-	x[i] = haus->bdiff[i];
+    for (i=0; i<diag->nbeta; i++) {
+	x[i] = diag->bdiff[i];
     }
 
     /* solve for X-inverse * b */
-    dspsv_(&uplo, &n, &nrhs, haus->sigma, ipiv, x, &ldb, &info);
+    dspsv_(&uplo, &n, &nrhs, diag->sigma, ipiv, x, &ldb, &info);
 
     if (info > 0) {
 	fprintf(stderr, "Hausman sigma matrix is singular\n");
     } else if (info < 0) {
 	fprintf(stderr, "Illegal entry in Hausman sigma matrix\n");
     } else {
-	haus->H = 0.0;
-	for (i=0; i<haus->nbeta; i++) {
-	    haus->H += x[i] * haus->bdiff[i];
+	diag->H = 0.0;
+	for (i=0; i<diag->nbeta; i++) {
+	    diag->H += x[i] * diag->bdiff[i];
 	}
     }
 
@@ -458,9 +460,8 @@ static int bXb (hausman_t *haus)
 */
 
 static MODEL
-fixed_effects_model (const MODEL *pmod, 
-		     double ***pZ, DATAINFO *pdinfo,
-		     diagnostics_t *diag, int *usedum)
+fixed_effects_model (diagnostics_t *diag, double ***pZ, DATAINFO *pdinfo,
+		     int *usedum)
 {
     int i, t, oldv = pdinfo->v;
     int dvlen, ndum = 0;
@@ -504,7 +505,7 @@ fixed_effects_model (const MODEL *pmod,
 	    return lsdv;
 	}	
 
-	winfo = within_groups_dataset(pmod, (const double **) *pZ, &wZ, diag);
+	winfo = within_groups_dataset((const double **) *pZ, &wZ, diag);
 	if (winfo == NULL) {
 	    free(felist);
 	    lsdv.errcode = E_ALLOC;
@@ -626,36 +627,33 @@ fixed_effects_model (const MODEL *pmod,
 /* drive the calculation of the fixed effects regression, print the
    results, and return the error variance */
 
-static double 
-fixed_effects_variance (const MODEL *pmod, 
+static int
+fixed_effects_variance (diagnostics_t *diag,
 			double ***pZ, DATAINFO *pdinfo,
-			diagnostics_t *diag, hausman_t *haus, 
 			PRN *prn)
 {
     MODEL lsdv;
-    double var = NADBL;
     int usedum = 0;
+    int err = 0;
 
-    lsdv = fixed_effects_model(pmod, pZ, pdinfo, diag, &usedum);
+    lsdv = fixed_effects_model(diag, pZ, pdinfo, &usedum);
 
     if (lsdv.errcode) {
 	pputs(prn, _("Error estimating fixed effects model\n"));
 	errmsg(lsdv.errcode, prn);
+	err = lsdv.errcode;
     } else {
 	int i, j, k;
 	int ndum;
 	double F;
 
-	var = lsdv.sigma * lsdv.sigma;
+	diag->fe_var = lsdv.sigma * lsdv.sigma;
 
 #if PDEBUG
 	fprintf(stderr, "f.e. variance, lsdv.ncoeff=%d, var=%g, "
-		"list[0]=%d, haus=%p\n", lsdv.ncoeff, var,
-		list[0], (void *) haus);
-	if (haus != NULL) {
-	    fprintf(stderr, "haus->bdiff = %p, haus->sigma = %p\n",
-		    haus->bdiff, haus->sigma);
-	}
+		"list[0]=%d\n", lsdv.ncoeff, var, diag->list[0]);
+	fprintf(stderr, "haus->bdiff = %p, haus->sigma = %p\n",
+		diag->bdiff, diag->sigma);
 #endif
 
 	ndum = lsdv.list[0] - diag->vlist[0];
@@ -681,8 +679,8 @@ fixed_effects_variance (const MODEL *pmod,
 
 	    j = (usedum)? i : i - 1;
 	    print_panel_coeff(&lsdv, pdinfo->varname[vi], j, prn);
-	    if (haus != NULL) {
-		haus->bdiff[k++] = lsdv.coeff[j];
+	    if (diag->bdiff != NULL) {
+		diag->bdiff[k++] = lsdv.coeff[j];
 	    }
 	}
 
@@ -717,7 +715,7 @@ fixed_effects_variance (const MODEL *pmod,
 	}
 
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
-		lsdv.ess, lsdv.nobs, diag->vlist[0] - 1 + ndum, var);
+		lsdv.ess, lsdv.nobs, diag->vlist[0] - 1 + ndum, diag->fe_var);
 
 	if (usedum) {
 	    pputs(prn, _("Joint significance of unit dummy variables:\n"));
@@ -725,7 +723,7 @@ fixed_effects_variance (const MODEL *pmod,
 	    pprintf(prn, _("Joint significance of differing group means:\n"));
 	}
 
-	F = (pmod->ess - lsdv.ess) * lsdv.dfd / (lsdv.ess * ndum);
+	F = (diag->pooled->ess - lsdv.ess) * lsdv.dfd / (lsdv.ess * ndum);
 	pprintf(prn, " F(%d, %d) = %g %s %g\n", ndum, lsdv.dfd, F, 
 		_("with p-value"), fdist(F, ndum, lsdv.dfd));
 
@@ -733,25 +731,23 @@ fixed_effects_variance (const MODEL *pmod,
 		     "the pooled OLS model\nis adequate, in favor of the fixed "
 		     "effects alternative.)\n\n"));
 
-	if (haus != NULL) {
+	if (diag->sigma != NULL) {
 	    makevcv(&lsdv);
-	    haus->sigma_e = lsdv.sigma;
-	    vcv_slopes(haus, diag, &lsdv, VCV_INIT);
+	    diag->sigma_e = lsdv.sigma;
+	    vcv_slopes(diag, &lsdv, VCV_INIT);
 	}
     }
 
     clear_model(&lsdv);
 
-    return var;
+    return err;
 }
 
 /* calculate the random effects regression and print the results */
 
-static int random_effects (const MODEL *pmod, 
+static int random_effects (diagnostics_t *diag, 
 			   const double **Z, DATAINFO *pdinfo, 
-			   const double **gZ, double theta, 
-			   diagnostics_t *diag, hausman_t *haus, 
-			   PRN *prn)
+			   const double **gZ, PRN *prn)
 {
     double **reZ;
     DATAINFO *reinfo;
@@ -762,13 +758,13 @@ static int random_effects (const MODEL *pmod,
     int err = 0;
 
     /* regression list */
-    relist = malloc((pmod->list[0] + 1) * sizeof *relist);
+    relist = malloc((diag->pooled->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
 	return E_ALLOC;
     }
 
     /* special transformed dataset */
-    reinfo = create_new_dataset(&reZ, pmod->list[0], re_n, 0);
+    reinfo = create_new_dataset(&reZ, diag->pooled->list[0], re_n, 0);
     if (reinfo == NULL) {
 	free(relist);
 	return E_ALLOC;
@@ -779,18 +775,18 @@ static int random_effects (const MODEL *pmod,
 	    diag->T, diag->effn, diag->T * diag->effn);
 #endif
 
-    relist[0] = pmod->list[0];
+    relist[0] = diag->pooled->list[0];
 
     /* create transformed variables: original data minus theta
        times the appropriate group mean */
 
     k = 1;
     for (j=1; j<=relist[0]; j++) {
-	const double *xj = Z[pmod->list[j]];
+	const double *xj = Z[diag->pooled->list[j]];
 	const double *gm = gZ[k];
 	int bigt, rt, u = 0;
 
-	if (pmod->list[j] == 0) {
+	if (diag->pooled->list[j] == 0) {
 	    relist[j] = 0;
 	    continue;
 	}
@@ -808,10 +804,10 @@ static int random_effects (const MODEL *pmod,
 		} else {
 		    rt = t * diag->effn + u;
 		}
-		if (na(pmod->uhat[bigt])) {
+		if (na(diag->pooled->uhat[bigt])) {
 		    reZ[k][rt] = NADBL;
 		} else {
-		    reZ[k][rt] = xj[bigt] - theta * gm[u];
+		    reZ[k][rt] = xj[bigt] - diag->theta * gm[u];
 		}
 	    }
 	    u++;
@@ -820,7 +816,7 @@ static int random_effects (const MODEL *pmod,
     }
 
     for (t=0; t<re_n; t++) {
-	reZ[0][t] -= theta;
+	reZ[0][t] -= diag->theta;
     }
 
     remod = lsq(relist, &reZ, reinfo, OLS, OPT_A | OPT_Z, 0.0);
@@ -837,15 +833,15 @@ static int random_effects (const MODEL *pmod,
 
 	k = 0;
 	for (i=0; i<remod.ncoeff; i++) {
-	    int vi = pmod->list[i+2];
+	    int vi = diag->pooled->list[i+2];
 
 	    print_panel_coeff(&remod, pdinfo->varname[vi], i, prn);
-	    if (var_is_varying(diag->vlist, vi)) {
-		haus->bdiff[k++] -= remod.coeff[i];
+	    if (diag->bdiff != NULL && var_is_varying(diag->vlist, vi)) {
+		diag->bdiff[k++] -= remod.coeff[i];
 	    }
 	}
 	makevcv(&remod);
-	vcv_slopes(haus, diag, &remod, VCV_SUBTRACT);
+	vcv_slopes(diag, &remod, VCV_SUBTRACT);
     }
 
     clear_model(&remod);
@@ -882,8 +878,8 @@ unit_error_variances (double *uvar, const MODEL *pmod, const DATAINFO *pdinfo,
     }
 }
 
-static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo, 
-			     diagnostics_t *diag, PRN *prn)
+static int 
+breusch_pagan_LM (diagnostics_t *diag, const DATAINFO *pdinfo, PRN *prn)
 {
     double LM, eprime = 0.0;
     int i, t;
@@ -900,7 +896,7 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 	}
 
 	for (t=0; t<diag->T; t++) {
-	    u = pmod->uhat[panel_index(i, t)];
+	    u = diag->pooled->uhat[panel_index(i, t)];
 	    if (!na(u)) {
 		ubar += u;
 	    }
@@ -912,8 +908,8 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* FIXME unbalanced panels */
 
-    LM = (double) pmod->nobs / (2.0 * (diag->effT - 1.0)) * 
-	pow((diag->effT * diag->effT * eprime / pmod->ess) - 1.0, 2);
+    LM = (double) diag->pooled->nobs / (2.0 * (diag->effT - 1.0)) * 
+	pow((diag->effT * diag->effT * eprime / diag->pooled->ess) - 1.0, 2);
 
     pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
 		   " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
@@ -928,35 +924,35 @@ static int breusch_pagan_LM (const MODEL *pmod, const DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-static int do_hausman_test (hausman_t *haus, PRN *prn)
+static int do_hausman_test (diagnostics_t *diag, PRN *prn)
 {
 #if PDEBUG
-    int i, ns = haus->nbeta;
+    int i, ns = diag->nbeta;
     int nterms = (ns * ns + ns) / 2;
 
     for (i=0; i<ns; i++) {
- 	fprintf(stderr, "b%d_FE - beta%d_RE = %g\n", i, i, haus->bdiff[i]);
+ 	fprintf(stderr, "b%d_FE - beta%d_RE = %g\n", i, i, diag->bdiff[i]);
     }
     fputc('\n', stderr);
 
     for (i=0; i<nterms; i++) {
- 	fprintf(stderr, "vcv_diff[%d] = %g\n", i, haus->sigma[i]);
+ 	fprintf(stderr, "vcv_diff[%d] = %g\n", i, diag->sigma[i]);
     }
 #endif
 
-    if (bXb(haus)) { 
+    if (bXb(diag)) { 
 	pputs(prn, _("Error attempting to invert vcv difference matrix\n"));
 	return 1;
     }
 
-    if (na(haus->H)) {
+    if (na(diag->H)) {
 	pputs(prn, _("\nHausman test matrix is not positive definite (this "
 		     "result may be treated as\n\"fail to reject\" the random effects "
 		     "specification).\n"));
     } else {
 	pprintf(prn, _("\nHausman test statistic:\n"
 		       " H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
-		haus->H, haus->nbeta, haus->H, chisq(haus->H, haus->nbeta));
+		diag->H, diag->nbeta, diag->H, chisq(diag->H, diag->nbeta));
 	pputs(prn, _("(A low p-value counts against the null hypothesis that "
 		     "the random effects\nmodel is consistent, in favor of the fixed "
 		     "effects model.)\n"));
@@ -1052,18 +1048,45 @@ static int diag_set_varying (diagnostics_t *diag, const MODEL *pmod)
     return 0;
 }
 
+static int 
+diagnostics_setup (diagnostics_t *diag, const MODEL *pmod,
+		   const DATAINFO *pdinfo, gretlopt opt)
+{
+    int err = 0;
+
+    diagnostics_init(diag, pmod, opt);
+
+    if (get_panel_structure(pdinfo, &diag->nunits, &diag->T)) {
+	err = E_DATA;
+    } 
+
+    if (!err) {
+	panel_index_init(pdinfo, diag->nunits, diag->T);
+    }
+    
+    if (!err) {
+	diag->unit_obs = malloc(diag->nunits * sizeof *diag->unit_obs);
+	if (diag->unit_obs == NULL) {
+	    err = E_ALLOC;
+	} 
+    }
+
+    if (!err) {
+	diag->effn = n_included_units(pmod, pdinfo, diag->unit_obs);
+	diag->effT = effective_T(diag->unit_obs, diag->nunits);
+    }
+
+    return err;
+}
+
 /* .................................................................. */
 
 int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		       gretlopt opt, PRN *prn)
 {
     int unbal = gretl_model_get_int(pmod, "unbalanced");
-    int xdf;
-    double fe_var;
     diagnostics_t diag;
-    hausman_t haus;
-    hausman_t *hptr;
-    int err = 0;
+    int xdf, err = 0;
 
 #if PDEBUG
     fputs("\n*** Starting panel_diagnostics ***\n", stderr);
@@ -1075,32 +1098,19 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    diagnostics_init(&diag, opt);
+    err = diagnostics_setup(&diag, pmod, pdinfo, opt);
+    if (err) {
+	goto bailout;
+    }   
 
-    if (get_panel_structure(pdinfo, &diag.nunits, &diag.T)) {
-	return E_DATA;
-    }
-
-    panel_index_init(pdinfo, diag.nunits, diag.T);
-
-    haus_init(&haus);
-
-    diag.unit_obs = malloc(diag.nunits * sizeof *diag.unit_obs);
-    if (diag.unit_obs == NULL) {
-	return E_ALLOC;
-    }
-
-    diag.effn = n_included_units(pmod, pdinfo, diag.unit_obs);
     if (diag.effn < diag.nunits) {
 	fprintf(stderr, "number of units included = %d\n", diag.effn);
     }
 
-    diag.effT = effective_T(diag.unit_obs, diag.nunits);
-
     /* figure out which of the original regressors are time-varying,
        or unit-varying as the case may be 
     */
-    err = varying_vars_list(pmod, (const double **) *pZ, pdinfo, &diag);
+    err = varying_vars_list((const double **) *pZ, pdinfo, &diag);
     if (err) {
 	goto bailout;
     }
@@ -1120,16 +1130,11 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     /* can we do the Hausman test or not? */
     if (!unbal && xdf > 0) {
-	err = haus_alloc(&haus, diag.vlist);
+	err = haus_alloc(&diag);
 	if (err) {
 	    goto bailout;
 	}
-	hptr = &haus;
-    } else {
-	/* not if the panel is unbalanced, or if we can't run
-	   a group means regression */
-	hptr = NULL;
-    }
+    } 
 
     if (!unbal) {
 	pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
@@ -1138,7 +1143,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		diag.effn, diag.effT);
     }
 
-    fe_var = fixed_effects_variance(pmod, pZ, pdinfo, &diag, hptr, prn);
+    err = fixed_effects_variance(&diag, pZ, pdinfo, prn);
+    if (err) {
+	goto bailout;
+    }
 
     if (unbal) {
 	pprintf(prn, "Omitting random effects model since "
@@ -1146,7 +1154,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
-    breusch_pagan_LM(pmod, pdinfo, &diag, prn);
+    breusch_pagan_LM(&diag, pdinfo, prn);
 
     if (xdf <= 0) {
 	pprintf(prn, "Omitting group means regression: "
@@ -1154,29 +1162,26 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
     
-    if (xdf > 0 && !na(fe_var)) {
+    if (xdf > 0 && !na(diag.fe_var)) {
 	double **gZ = NULL;
 	DATAINFO *ginfo;
-	double gm_var = NADBL;
 
-	ginfo = group_means_dataset(pmod, (const double **) *pZ,
-				    pdinfo, &gZ, &diag);
+	ginfo = group_means_dataset(&diag, (const double **) *pZ,
+				    pdinfo, &gZ);
 
 	if (ginfo != NULL) {
-	    gm_var = group_means_variance(pmod, &gZ, ginfo);
+	    err = group_means_variance(&diag, &gZ, ginfo);
 	}
 
-	if (na(gm_var)) { 
+	if (err) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
-	    double theta = 1.0 - sqrt(fe_var / (diag.effT * gm_var));
-
 	    pprintf(prn, _("Residual variance for group means "
-			   "regression: %g\n\n"), gm_var);    
-	    random_effects(pmod, (const double **) *pZ, pdinfo, 
-			   (const double **) gZ, theta, &diag,
-			   &haus, prn);
-	    do_hausman_test(&haus, prn);
+			   "regression: %g\n\n"), diag.gm_var);    
+	    diag.theta = 1.0 - sqrt(diag.fe_var / (diag.effT * diag.gm_var));
+	    random_effects(&diag, (const double **) *pZ, pdinfo, 
+			   (const double **) gZ, prn);
+	    do_hausman_test(&diag, prn);
 	}
 
 	if (ginfo != NULL) {
@@ -1188,7 +1193,6 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
  bailout:
 
-    haus_free(&haus);
     diag_free(&diag);
 
     return err;
@@ -1864,24 +1868,24 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 }
 
 static int 
-varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
+varying_vars_list (const double **Z, const DATAINFO *pdinfo,
 		   diagnostics_t *diag)
 {
     int i, j, k, t;
     int bigt;
 
-    diag->vlist = malloc((pmod->list[0] + 1) * sizeof *diag->vlist);
+    diag->vlist = malloc((diag->pooled->list[0] + 1) * sizeof *diag->vlist);
     if (diag->vlist == NULL) {
 	return E_ALLOC;
     }
 
     diag->vlist[0] = 1;
-    diag->vlist[1] = pmod->list[1];
+    diag->vlist[1] = diag->pooled->list[1];
 
     k = 2;
 
-    for (j=2; j<=pmod->list[0]; j++) {
-	int vj = pmod->list[j];
+    for (j=2; j<=diag->pooled->list[0]; j++) {
+	int vj = diag->pooled->list[j];
 	int varies = 0;
 
 	if (vj == 0) {
@@ -1901,7 +1905,7 @@ varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 			continue;
 		    }
 		    bigt = panel_index(i, t);
-		    if (na(pmod->uhat[bigt])) {
+		    if (na(diag->pooled->uhat[bigt])) {
 			continue;
 		    }
 		    if (!started) {
@@ -1925,7 +1929,7 @@ varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
 
 		for (t=0; t<diag->T; t++) {
 		    bigt = panel_index(i, t);
-		    if (na(pmod->uhat[bigt])) {
+		    if (na(diag->pooled->uhat[bigt])) {
 			continue;
 		    }
 		    if (!started) {
@@ -1951,7 +1955,7 @@ varying_vars_list (const MODEL *pmod, const double **Z, const DATAINFO *pdinfo,
     }
 
 #if PDEBUG
-    printlist(pmod->list, "original regressors");
+    printlist(diag->pooled->list, "original regressors");
     printlist(diag->vlist, "varying regressors");
 #endif
 
