@@ -408,7 +408,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 		    _("with p-value"), (pmod->tests[i]).pvalue);
 	}
     }
-    else if (prn->format = GRETL_PRINT_FORMAT_RTF) {
+    else if (RTF_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
 	    pprintf(prn, "\\par \\ql %s -\\par\n"
 		    " %s: %s\\par\n"
@@ -556,6 +556,11 @@ static void model_format_start (PRN *prn)
 #define RTF_COEFF_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
                        "\\cellx7500\\cellx8000\n\\intbl"
+
+#define RTF_SELST_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
+                       "\\cellx1333\\cellx2666\\cellx4000\\cellx5333" \
+                       "\\cellx6666\\cellx8000\n\\intbl"
+
 
 static void print_coeff_table_start (PRN *prn)
 {
@@ -1093,7 +1098,7 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
     if (pmod->dfd == 0) return;
 
     pprintf(prn, "\\par %s\\par\n\n", I_("Model Selection Statistics"));
-    pprintf(prn, "{" SELST_ROW
+    pprintf(prn, "{" RTF_SELST_ROW
 	    " \\ql SGMASQ\\cell"
 	    " \\qr %#g\\cell"
 	    " \\ql AIC\\cell"
@@ -1101,7 +1106,7 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 	    " \\ql FPE\\cell"
 	    " \\qr %#g\\cell"
 	    " \\intbl \\row\n"
-	    SELST_ROW
+	    RTF_SELST_ROW
 	    " \\ql HQ\\cell"
 	    " \\qr %#g\\cell"
 	    " \\ql SCHWARZ\\cell"
@@ -1109,7 +1114,7 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 	    " \\ql SHIBATA\\cell"
 	    " \\qr %#g\\cell"
 	    " \\intbl \\row\n"
-	    SELST_ROW
+	    RTF_SELST_ROW
 	    " \\ql GCV\\cell"
 	    " \\qr %#g\\cell"
 	    " \\ql RICE\\cell",
