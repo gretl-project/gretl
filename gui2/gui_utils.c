@@ -48,6 +48,7 @@ static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
+static void buf_edit_save (GtkWidget *widget, gpointer data);
 
 extern void do_coeff_intervals (gpointer data, guint i, GtkWidget *w);
 extern void save_plot (char *fname, GPT_SPEC *plot);
@@ -398,9 +399,13 @@ static gint catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
     }
 
     else if (mods & GDK_CONTROL_MASK) {
-	if (gdk_keyval_to_upper(key->keyval) == GDK_S) 
-	    file_viewer_save(NULL, vwin);
-	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
+	if (gdk_keyval_to_upper(key->keyval) == GDK_S) { 
+	    if (vwin->role == EDIT_HEADER) {
+		buf_edit_save(NULL, vwin);
+	    } else {
+		file_viewer_save(NULL, vwin);
+	    }
+	} else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) {
 	    if (vwin->role == EDIT_SCRIPT && SCRIPT_IS_CHANGED(vwin)) {
 		gint resp;
 
@@ -798,6 +803,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     if (vwin->role == EDIT_HEADER) {
 	infobox(_("Data info saved"));
 	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
     } 
     else if (vwin->role == EDIT_NOTES) {
 	infobox(_("Notes saved"));
@@ -949,10 +955,11 @@ static void make_viewbar (windata_t *vwin)
 	case 0:
 	    if (edit_ok && vwin->role != SCRIPT_OUT) {
 		stockicon = GTK_STOCK_SAVE;
-		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
+		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) {
 		    toolfunc = buf_edit_save;
-		else
+		} else {
 		    toolfunc = file_viewer_save;
+		}
 	    } else
 		toolfunc = NULL;
 	    break;
@@ -1492,6 +1499,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
 
     g_signal_connect(G_OBJECT(vwin->w), "button_press_event", 
 		     G_CALLBACK(catch_button), vwin->w);
+    g_signal_connect(G_OBJECT(vwin->dialog), "key_press_event", 
+		     G_CALLBACK(catch_edit_key), vwin);	
 
     /* clean up when dialog is destroyed */
     g_signal_connect(G_OBJECT(vwin->dialog), "destroy", 

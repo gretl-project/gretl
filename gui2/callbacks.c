@@ -282,11 +282,12 @@ void print_report (gpointer data, guint unused, GtkWidget *widget)
 
 void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
-    if (data_status & BOOK_DATA)
+    if (data_status & BOOK_DATA) {
 	errbox(_("You don't have permission to do this"));
-    else 
+    } else { 
 	edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
 		    EDIT_HEADER);
+    }
 }
 
 /* ........................................................... */

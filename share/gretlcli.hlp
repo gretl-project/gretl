@@ -1099,6 +1099,7 @@ Usage:         smpl startobs endobs
                smpl -o dummyvar
                smpl -o
                smpl -r <boolean expression>
+	       smpl full
 
 Resets the sample range.  In the first form startobs and endobs must be
 consistent with the periodicity of the data.  In the second form, dummyvar
@@ -1106,7 +1107,9 @@ must be an indicator variable with values 0 or 1: the sample will be
 restricted to those observations where the indicator value is 1.  The third
 form, smpl -o, drops all observations for which values of one or more
 variables are missing.  The fourth form, using the -r flag, restricts the
-sample to cases satisfying the given expression.
+sample to cases satisfying the given expression.  The last form, "smpl full",
+restores the full data range.
+
 
     smpl 3 10                for data with periodicity 1
     smpl 1950 1990           for annual data with periodicity 1	
