@@ -2386,7 +2386,7 @@ void do_x12a_arma (int v, int ar, int ma, int verbose)
     char fname[MAXLEN];
     int (*write_x12_arma)(int *, const double **, DATAINFO *, 
 			  PATHS *, const char *, const char *,
-			  char *);
+			  char *, int);
 
     list[0] = 4;
     list[1] = ar;
@@ -2401,7 +2401,7 @@ void do_x12a_arma (int v, int ar, int ma, int verbose)
     }    
 
     err = write_x12_arma(list, (const double **) Z, datainfo,
-			 &paths, x12a, x12adir, fname);
+			 &paths, x12a, x12adir, fname, verbose);
     
     close_plugin(handle);
 

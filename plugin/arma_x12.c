@@ -106,9 +106,128 @@ static int tramo_x12a_spawn (const char *workdir, const char *fmt, ...)
 
 #endif
 
+static int x12_date_to_n (const char *s, const DATAINFO *pdinfo)
+{
+    char date[12];
+
+    *date = 0;
+    strncat(date, s, 4);
+    strcat(date, ":");
+    strncat(date, s + 4, 4);
+
+    return dateton(date, pdinfo);
+}
+
+static int get_estimates (const char *fname, int nc,
+			  double *coeff, double *sderr)
+{
+    FILE *fp;
+    char line[129];
+    double b, se;
+    int i, start = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return 1;
+
+    i = 1;
+    while (fgets(line, sizeof line, fp) && i < nc) {
+	if (*line == '-') {
+	    start = 1;
+	    continue;
+	}
+	if (start && sscanf(line, "%*s %*s %*s %*s %lf %lf", &b, &se) == 2) {
+	    coeff[i] = b;
+	    sderr[i] = se;
+	    i++;
+	}
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
+{
+    FILE *fp;
+    char line[64], date[9];
+    double x, *uhat;
+    int t, start = 0, nobs = 0;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return NULL;
+
+    uhat = malloc(pdinfo->n * sizeof *uhat);
+    if (uhat == NULL) return NULL;
+
+    for (t=0; t<pdinfo->n; t++) uhat[t] = NADBL;
+
+    while (fgets(line, sizeof line, fp)) {
+	if (*line == '-') {
+	    start = 1;
+	    continue;
+	}
+	if (start && sscanf(line, "%s %lf", date, &x) == 2) {
+	    t = x12_date_to_n(date, pdinfo);
+	    if (t >= 0 && t < pdinfo->n) {
+		uhat[t] = x;
+		nobs++;
+	    }
+	}
+    }
+
+    fclose(fp);
+
+    if (nobs == 0) {
+	free(uhat);
+	uhat = NULL;
+    }
+
+    return uhat;
+}
+
+static int 
+populate_arma_model (const char *path, const DATAINFO *pdinfo,
+		     int nc)
+{
+    double *uhat, *coeff, *sderr;
+    char fname[MAXLEN];
+    int err = 0;
+
+    sprintf(fname, "%s.rsd", path);
+    uhat = get_uhat(fname, pdinfo);
+    if (uhat == NULL) return 1;
+
+    coeff = malloc(nc * sizeof *coeff);
+    sderr = malloc(nc * sizeof *sderr);
+    if (coeff == NULL || sderr == NULL) {
+	free(coeff);
+	free(uhat);
+	return 1;
+    }
+
+    coeff[0] = sderr[0] = 0.0;
+    sprintf(fname, "%s.est", path);
+    err = get_estimates(fname, nc, coeff, sderr);
+
+    if (err) {
+	fprintf(stderr, "problem getting model info\n");
+    } else {
+	int i;
+
+	fprintf(stderr, "Got model info\n");
+	fprintf(stderr, "first resid = %g\n", uhat[0]);
+	for (i=1; i<nc; i++) {
+	    fprintf(stderr, "coeff[%d]=%g (%g)\n", i, coeff[i], sderr[i]);
+	}
+    }
+
+    return err;
+}
+
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo, 
-			   int depvar, int p, int q) 
+			   int depvar, int p, int q, int verbose) 
 {
     double x;
     FILE *fp;
@@ -148,8 +267,12 @@ static int write_spc_file (const char *fname,
     fputs(" )\n}\n", fp);
 
     fprintf(fp, "arima{\nmodel = (%d 0 %d)(0 0 0)\n}\n", p, q);
-    fputs("estimate{\nprint = (acm itr lkf lks mdl est rts rcm)\n}\n", fp);
-    /* adding 'rsd' gives print of residuals */
+    if (verbose) {
+	fputs("estimate{\nprint = (acm itr lkf lks mdl est rts rcm)\n", fp);
+    } else {
+	fputs("estimate{\nprint = (acm lkf lks mdl est rts rcm)\n", fp);
+    }
+    fputs("save = (rsd est lks acm)\n}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -181,7 +304,7 @@ static int check_arma_list (const int *list)
 int write_x12_arma (int *list, const double **Z, 
 		    const DATAINFO *pdinfo, PATHS *paths, 
 		    const char *prog, const char *workdir,
-		    char *fname)
+		    char *fname, int verbose)
 {
     int err = 0;
     char varname[VNAMELEN];
@@ -211,7 +334,7 @@ int write_x12_arma (int *list, const double **Z,
 
     /* write out an .spc file */
     sprintf(fname, "%s%c%s.spc", workdir, SLASH, varname);
-    write_spc_file(fname, Z, pdinfo, depvar, p, q);
+    write_spc_file(fname, Z, pdinfo, depvar, p, q, verbose);
 
     /* run the program */
 #if defined(WIN32)
@@ -227,7 +350,11 @@ int write_x12_arma (int *list, const double **Z,
 #endif
 
     if (!err) {
+	char path[MAXLEN];
+
 	sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
+	sprintf(path, "%s%c%s", workdir, SLASH, varname); 
+	err = populate_arma_model(path, pdinfo, p + q + 1);
     }
 
     return err;
