@@ -160,7 +160,11 @@ static void tex_arma_coeff_name (char *targ, const char *src)
     int lag;
 
     if (sscanf(src, "%[^(](-%d)", vname, &lag) == 2) {
-	tex_escape(vnesc, vname);
+	if (!strcmp(vname, "e")) {
+	    strcpy(vnesc, "$\\varepsilon$");
+	} else {
+	    tex_escape(vnesc, vname);
+	}
 	sprintf(targ, "%s$_{t-%d}$", vnesc, lag);
     } else {
 	tex_escape(vnesc, src);
