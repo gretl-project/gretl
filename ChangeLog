@@ -1,7 +1,7 @@
 version 1.3.0
 - update Windows version to gtk 2.4.7
 - add facility for extra information file for a database
-  (sources, expension of abbreviations, etc) TODO!!
+  (sources, expension of abbreviations, etc)
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)
 - slight improvement to main window treeview focusing in

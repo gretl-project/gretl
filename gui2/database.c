@@ -469,10 +469,25 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
-static void 
-codebook_callback_wrapper (gpointer p, guint v, GtkWidget *w)
+static void db_view_infobook (GtkWidget *w, windata_t *dbwin)
 {
-    db_view_codebook(w, p);
+    char infname[MAXLEN];
+
+    strcpy(infname, dbwin->fname);
+    strcat(infname, ".inf");
+    
+    view_file(infname, 0, 0, 78, 350, VIEW_CODEBOOK);
+}
+
+static void 
+book_callback_wrapper (gpointer p, guint v, GtkWidget *w)
+{
+    if (v == 0) {
+	db_view_codebook(w, p);
+    } 
+    else if (v == 1) {
+	db_view_infobook(w, p);
+    }
 }
 
 /* ........................................................... */
@@ -484,7 +499,7 @@ static void db_menu_find (GtkWidget *w, windata_t *dbwin)
 
 /* ........................................................... */
 
-static void build_db_popup (windata_t *win, int cb)
+static void build_db_popup (windata_t *win, int cb, int info)
 {
 #ifndef OLD_GTK /* ?? */    
     if (win->popup != NULL) return;
@@ -529,24 +544,43 @@ static void build_db_popup (windata_t *win, int cb)
 #endif
 		       win);
     }
+    if (info) {
+	add_popup_item(_("Info"), win->popup, 
+#ifndef OLD_GTK
+		       G_CALLBACK(db_view_infobook), 
+#else
+		       db_view_infobook,
+#endif
+		       win);
+    }
 }
 
 /* ........................................................... */
 
-static void add_codebook_to_menu (windata_t *vwin)
+static void add_book_to_menu (windata_t *vwin, int cb, int info)
 {
     GtkItemFactoryEntry item;
-    const gchar *mpath = N_("/_Codebook");
+    const gchar *mpaths[] = {
+	N_("/_Codebook"),
+	N_("/_Info")
+    };
+    int i;
 
-    item.callback = codebook_callback_wrapper;
-    item.callback_action = 0;
+    item.accelerator = NULL; 
     item.item_type = NULL;
-    item.path = g_strdup(_(mpath));
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-    g_free(item.path);
+    item.callback = book_callback_wrapper;
+
+    for (i=0; i<2; i++) {
+	if (i == 0 && !cb) continue;
+	if (i == 1 && !info) continue;
+	item.callback_action = i;
+	item.path = g_strdup(_(mpaths[i]));
+	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+	g_free(item.path);
+    }
 }
 
-static void set_up_db_menu (windata_t *win, int cb)
+static void set_up_db_menu (windata_t *win, int cb, int info)
 {
 #ifndef OLD_GTK
     GtkItemFactoryEntry db_items[] = {
@@ -572,8 +606,8 @@ static void set_up_db_menu (windata_t *win, int cb)
     gtk_item_factory_create_items(win->ifac, n_items, db_items, win);
     win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
 
-    if (cb) {
-	add_codebook_to_menu(win);
+    if (cb || info) {
+	add_book_to_menu(win, cb, info);
     }
 }
 
@@ -595,18 +629,30 @@ static void destroy_db_win (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static int db_has_codebook (const char *fname)
+static void test_db_books (const char *fname, int *cb, int *info)
 {
-    char cbname[MAXLEN];
+    char testname[MAXLEN];
     FILE *fp;
 
-    strcpy(cbname, fname);
-    strcat(cbname, ".cb");
-    
-    fp = fopen(cbname, "r");
-    if (fp == NULL) return 0;
-    fclose(fp);
-    return 1;
+    strcpy(testname, fname);
+    strcat(testname, ".cb");
+    fp = fopen(testname, "r");
+    if (fp == NULL) {
+	*cb = 0;
+    } else {
+	*cb = 1;
+	fclose(fp);
+    }
+
+    strcpy(testname, fname);
+    strcat(testname, ".inf");
+    fp = fopen(testname, "r");
+    if (fp == NULL) {
+	*info = 0;
+    } else {
+	*info = 1;
+	fclose(fp);
+    }
 }
 
 /* ........................................................... */
@@ -639,7 +685,8 @@ static int display_db_series_list (int action, char *fname, char *buf)
     char *titlestr;
     windata_t *dbwin;
     int db_width = 700, db_height = 420;
-    int cb, err = 0;
+    int cb = 0, info = 0;
+    int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
     if (dbwin == NULL) return 1;
@@ -678,9 +725,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
-    cb = db_has_codebook(fname);
-    set_up_db_menu(dbwin, cb);
-    build_db_popup(dbwin, cb);
+    test_db_books(fname, &cb, &info);
+    set_up_db_menu(dbwin, cb, info);
+    build_db_popup(dbwin, cb, info);
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show (dbwin->mbar);
