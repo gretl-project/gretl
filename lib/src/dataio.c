@@ -45,6 +45,32 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
+#ifdef ENABLE_NLS
+static void charsub (char *str, char find, char repl)
+{
+    char *p = str;
+
+    while (*p) {
+	if (*p == find) *p = repl;
+	p++;
+    }
+}
+#endif
+
+static double atod (char *s, DATAINFO *pdinfo)
+{
+#ifdef ENABLE_NLS
+    static int local_decpoint;
+
+    if (local_decpoint == 0) local_decpoint = _get_local_decpoint();
+
+    if (local_decpoint != pdinfo->decpoint) {
+	charsub(s, pdinfo->decpoint, local_decpoint);
+    }
+#endif
+    return atof(s);
+}
+
 /**
  * free_Z:
  * @Z: data matrix.
@@ -119,6 +145,7 @@ static void dataset_dates_defaults (DATAINFO *pdinfo)
     pdinfo->pd = 1;
     pdinfo->time_series = 0;
     pdinfo->extra = 0; 
+    pdinfo->decpoint = '.';
 }
 
 /* ......................................................... */
@@ -258,6 +285,7 @@ DATAINFO *datainfo_new (void)
     dinfo->label = NULL;    
     dinfo->markers = 0;  
     dinfo->delim = ',';
+    dinfo->decpoint = '.';
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
@@ -2680,7 +2708,11 @@ static int write_xmldata (const char *fname, const int *list,
     long sz = 0L;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
-    
+    char decpoint = '.';
+
+#ifdef ENABLE_NLS
+    decpoint = _get_local_decpoint();
+#endif
 
     err = 0;
     if (opt) {
@@ -2735,16 +2767,16 @@ static int write_xmldata (const char *fname, const int *list,
     if (opt) {
 	gzprintf(fz, "<?xml version=\"1.0\"?>\n"
 		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		 "<gretldata name=\"%s\" frequency=\"%d\" "
+		 "<gretldata name=\"%s\" frequency=\"%d\" decpoint=\"%c\" "
 		 "startobs=\"%s\" endobs=\"%s\" ", 
-		 datname, pdinfo->pd, startdate, enddate);
+		 datname, pdinfo->pd, decpoint, startdate, enddate);
 
     } else {
 	fprintf(fp, "<?xml version=\"1.0\"?>\n"
 		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-		"<gretldata name=\"%s\" frequency=\"%d\" "
+		"<gretldata name=\"%s\" frequency=\"%d\" decpoint=\"%c\" "
 		"startobs=\"%s\" endobs=\"%s\" ", 
-		datname, pdinfo->pd, startdate, enddate);
+		datname, pdinfo->pd, decpoint, startdate, enddate);
     }
 
     switch (pdinfo->time_series) {
@@ -2934,7 +2966,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		    char *val = xmlGetProp(cur, (UTF) "value");
 		    
 		    if (val) {
-			double xx = atof(val);
+			double xx = atod(val, pdinfo);
 
 			free(val);
 			(*pZ)[i] = malloc(sizeof ***pZ);
@@ -2960,6 +2992,15 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
     int i;
     double x;
+#ifdef ENABLE_NLS
+    static int local_decpoint;
+
+    if (local_decpoint == 0) local_decpoint = _get_local_decpoint();
+
+    if (local_decpoint != pdinfo->decpoint) {
+	charsub(s, pdinfo->decpoint, local_decpoint);
+    }
+#endif
 
     for (i=1; i<pdinfo->v; i++) {
 	if (!pdinfo->vector[i]) continue;
@@ -2970,7 +3011,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	    return 1;
 	}
 	Z[i][t] = x;
-	s = strpbrk(s, " ,\t\n\r");
+	s = strpbrk(s, " \t\n\r");
     }
     return 0;
 }
@@ -3188,6 +3229,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
 	free(tmp);
     }
+
     pdinfo->pd = 1;
     tmp = xmlGetProp(cur, (UTF) "frequency");
     if (tmp) {
@@ -3202,6 +3244,20 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	free(tmp);
     }
 
+    pdinfo->decpoint = '.';
+    tmp = xmlGetProp(cur, (UTF) "decpoint");
+    if (tmp) {
+	char dec;
+	
+	if (sscanf(tmp, "%c", &dec) == 1) 
+	    pdinfo->decpoint = dec;
+	else {
+	    strcpy(gretl_errmsg, _("Failed to recognize decimal point character"));
+	    return 1;
+	}
+	free(tmp);
+    }    
+
     strcpy(pdinfo->stobs, "1");
     tmp = xmlGetProp(cur, (UTF) "startobs");
     if (tmp) {
@@ -3214,7 +3270,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    double x;
 
 	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
-	    else pdinfo->sd0 = atof(tmp);
+	    else pdinfo->sd0 = atod(tmp, pdinfo);
 	}
 	if (err) {
 	    strcpy(gretl_errmsg, _("Failed to parse startobs"));

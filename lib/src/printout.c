@@ -1451,6 +1451,11 @@ static int get_signif (double *x, int n)
     int lead, leadmax = 0, leadmin = 99;
     double xx;
     int allfrac = 1;
+    char decpoint = '.';
+
+#ifdef ENABLE_NLS
+    decpoint = _get_local_decpoint();
+#endif
 
     for (i=0; i<n; i++) {
 	if (na(x[i])) continue;
@@ -1463,7 +1468,7 @@ static int get_signif (double *x, int n)
 	s = strlen(numstr) - 1;
 	for (j=s; j>0; j--) {
 	    if (numstr[j] == '0') s--;
-	    else if (numstr[j] == '.') {
+	    else if (numstr[j] == decpoint) {
 		if (xx < 10000) break;
 		else continue;
 	    }
@@ -1475,7 +1480,7 @@ static int get_signif (double *x, int n)
 #endif
 	lead = 0;
 	for (j=0; j<=s; j++) {
-	    if (xx >= 1.0 && numstr[j] != '.') lead++;
+	    if (xx >= 1.0 && numstr[j] != decpoint) lead++;
 	    else break;
 	}
 	if (lead > leadmax) leadmax = lead;

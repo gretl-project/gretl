@@ -98,7 +98,9 @@ typedef struct {
     char markers;       /* whether (1) or not (0) the data file has
 			   observation markers */
     char delim;         /* default delimiter for "CSV" files */
-    char time_series;
+    char time_series;   /* bit field to record time-series/panel nature
+			   of the data set */
+    char decpoint;      /* character used to represent decimal point */
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */

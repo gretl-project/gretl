@@ -158,7 +158,7 @@ int _isnumber (const char *str)
     char c;
 
     c = str[0];
-    if (c != '+' && c !='-' && c !='.' && !isdigit((unsigned char) c))
+    if (c != '+' && c !='-' && c != '.' && !isdigit((unsigned char) c))
         return 0;
     for (i=1; i<=n-1; i++) {
         c = str[i];
@@ -503,3 +503,13 @@ int doing_nls (void)
     return 0;
 #endif
 }
+
+#ifdef ENABLE_NLS
+int _get_local_decpoint (void)
+{
+    struct lconv *lc;
+
+    lc = localeconv();
+    return *lc->decimal_point;
+}
+#endif
