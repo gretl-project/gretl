@@ -10,7 +10,7 @@ pdf: $(DOC).tex jadetex.cfg lucidabr.tex
 
 $(DOC).tex: $(DOC).sgml $(DSL) $(MATHSS) titlepage.dsl
 	jade -t tex -d $(DSL)\#print $(DOC).sgml
-	./unescape_math.pl $(DOC).tex
+	# ./unescape_math.pl $(DOC).tex
 
 html: $(DOC).sgml db2html $(DSL) $(HMATHSS) pix
 	./db2html $(DOC).sgml
