@@ -1480,6 +1480,7 @@ void restore_sample (void)
 	gui_errmsg(err);
 	return;
     }
+    restore_sample_state(FALSE);
 }
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
