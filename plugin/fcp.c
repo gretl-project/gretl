@@ -8,7 +8,7 @@
 #define FDEBUG
 
 #define TMAX 3009
-#define NPMAX  4   /* was 13 */
+#define NPMAX  5   /* was 13 */
 #define RCMAX  7
 #define NLL   50
 #define ABNUM  4
@@ -814,11 +814,20 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
 
     /* ora si riempie la matinf */
 
+#if 0
     for (i = 0; i < nparam; ++i) {
 	for (j = 0; j < nparam; ++j) {
 	    vc5[nix(i,j)] = 0.0;
 	}
     }
+#else
+    for (i = 0; i < NPMAX; ++i) {
+	for (j = 0; j < NPMAX; ++j) {
+	    vc5[nix(i,j)] = 0.0;
+	}
+    }
+#endif
+    
 
     for (t = t1; t <= t2; ++t) {
 
@@ -1380,7 +1389,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 	}
 	for (i = 0; i < nc; ++i) {
 	    for (j = 0; j < nvparm; ++j) {
-		H[i][nc+j][t+1] = 0.;
+		H[i][nc+j][t+1] = 0.0; /* should this be t? */
 	    }
 	}
     }
@@ -1553,6 +1562,7 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 	for (k = 1; k <= nbeta; ++k) { 
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nvparm; ++j) {
+		    /* possible uninitialized data */
 		    H[i][nc+j][0] += H[i][nc+j][k] * beta[k-1];
 #ifdef FFDEBUG
 		    if (t==t1 || t==t2) {
@@ -1604,9 +1614,9 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
 	    }
 	    for (k = 1; k <= nbeta; ++k) {
 		for (i = 0; i < nvparm; ++i) {
-		    for (j = 0; j < nvparm; ++j) {
-			H[nc+i][nc+j][0] +=  
-			    H[nc+i][nc+j][k] * beta[k-1];
+		    for (j = 0; j < nvparm; ++j) { 
+			/* FIXME uninitialized data */
+			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
 		    }
 		}
 	    }

@@ -157,7 +157,7 @@ int do_fcp (const int *list, const double **Z,
 
 #if 1
 	for (i=1; i<=nparam; i++) {
-	    pprintf(prn, "param[%d]: %#14.6g (%#.6g)\n", amax[i], amax[i+nparam]);
+	    pprintf(prn, "param[%d]: %#14.6g (%#.6g)\n", i, amax[i], amax[i+nparam]);
 	}
 
 #else
