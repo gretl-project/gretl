@@ -23,7 +23,12 @@
 #define STRUTILS_H
 
 #include "generate.h"
-#include "config.h"
+
+#ifdef OS_WIN32
+# include "winconfig.h"
+#else
+# include "../../config.h"
+#endif
 
 #ifdef OS_WIN32
 #define SLASH '\\'
