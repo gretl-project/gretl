@@ -97,7 +97,7 @@ OBJS = $(SRCS:.c=.o)
 	$(CC) -c $(CFLAGS) $<
 	$(CC) $(CFLAGS) -MM $< > .deps/$*.d 
 
-$(PROG): .deps $(query_gtkextra_lib) linksrc $(OBJS) 
+$(PROG): .deps $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
 .deps:
@@ -106,10 +106,6 @@ $(PROG): .deps $(query_gtkextra_lib) linksrc $(OBJS)
 -include .deps/*.d
 
 .PHONY:
-
-linksrc:
-	cd $(topsrc)/gui && for f in $(COMMONSRC) ; do \
-	  rm -f $$f && $(LN_S) ../gui2/$$f . ; done
 
 gtkextra-lib: 
 	rm -f ./gtkextra && $(LN_S) ./gtkextra-lite ./gtkextra
