@@ -953,7 +953,10 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    if (fq != NULL) fclose(fq);
 	    return E_ALLOC;
 	}
-	*xlabel = 0;
+	*xlabel = '\0';
+    } else if (auto_plot_var(pdinfo->varname[list[lo]])) {
+	ts_plot = 1;
+	*xlabel = '\0';
     } else {
 	if (flags & GP_DUMMY) {
 	    strcpy(xlabel, get_series_name(pdinfo, list[2])); 
@@ -961,13 +964,6 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	    strcpy(xlabel, get_series_name(pdinfo, list[lo]));
 	}
 	ts_plot = 0;
-    }
-
-    if (!strcmp(pdinfo->varname[list[lo]], "qtrs") ||
-	!strcmp(pdinfo->varname[list[lo]], "months") ||
-	!strcmp(pdinfo->varname[list[lo]], "decdate")) {
-	ts_plot = 1;
-	*xlabel = 0;
     }
 
     /* add a simple regression line if appropriate */
