@@ -187,6 +187,28 @@ static int unmangle (const char *dosname, char *longname);
 
 #endif /* G_OS_WIN32 */
 
+static void gnuplot_gtk_test (void)
+{
+    FILE *fp;
+    pid_t pid;
+
+    fp = fopen("gnuplot_test", "w");
+    fprintf(fp, "gtkfunc \"Just testing\" %p\n", dummy_call);
+    fprintf(fp, "plot sin(x)\n");
+    fclose(fp);
+
+    pid = fork();
+    if (pid == -1) {
+        errbox(_("Couldn't fork"));
+        perror("fork");
+        return;
+    } else if (pid == 0) {  
+        execlp("gnuplot_gtk", "gnuplot_gtk", "gnuplot_test", NULL);
+        perror("execlp");
+        _exit(EXIT_FAILURE);
+    }
+}
+
 GtkItemFactoryEntry data_items[] = {
     { _("/_File"), NULL, NULL, 0, "<Branch>" },
     { _("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
@@ -306,6 +328,8 @@ GtkItemFactoryEntry data_items[] = {
       NULL, graph_dialog, GR_BOX, NULL },
     { _("/Data/_Graph specified vars/Notched boxplots..."), 
       NULL, graph_dialog, GR_NBOX, NULL },
+    { _("/Data/gnuplot gtk test"), 
+      NULL, gnuplot_gtk_test, 0, NULL },
     { _("/Data/sep2"), NULL, NULL, 0, "<Separator>" },
     { _("/Data/_Read info"), NULL, open_info, 0, NULL },
     { _("/Data/Edit _info"), NULL, edit_header, 0, NULL },
