@@ -97,7 +97,7 @@
 	  (for stacked time series) or
 	  <literal>--cross-section</literal> (for stacked
 	  cross-sections).  If no option is given, stacked time series
-	  is assumed.  The <quote>interpret an panel</quote> menu item
+	  is assumed.  The <quote>interpret as panel</quote> menu item
 	  brings up a dialog box where you select stacked time series
 	  or stacked cross-sections.</para>
 	</listitem>

@@ -99,7 +99,7 @@
 	In the latter case the variables are evaluated once, when the
 	loop is set up.  In addition, with time series data you can
 	give the starting and ending values in the form of dates, as
-	in<command>loop i=1950:1..1999:4</command>.
+	in <command>loop i=1950:1..1999:4</command>.
       </para>
 
     </sect2>
@@ -120,7 +120,7 @@
       <para><command>loop for (r=0.01; r<.991; r+=.01)</command></para>
 
       <para>In this example the variable <varname>r</varname> will
-	take on the values 0.01, 0.02, &hellip;, 0.99 across the 100
+	take on the values 0.01, 0.02, &hellip;, 0.99 across the 99
 	iterations.  Note that due to the finite precision of floating
 	point arithmetic on computers it may be necessary to use a
 	continuation condition such as the above,

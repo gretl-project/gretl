@@ -53,12 +53,12 @@
 
     <para>
       If you select a row in this window and click on
-      <quote>Info</quote> this pops open the the <quote>header
-	file</quote> for the data set in question, which tells you
-      something about the source and definition of the variables.  If
-      you find a file that is of interest, you may open it by clicking
-      on <quote>Open</quote>, or just double-clicking on the file
-      name. For the moment let's open <filename>data3-6</filename>.
+      <quote>Info</quote> this opens a window showing information on
+      the data set in question (for example, on the sources and
+      definitions of the variables).  If you find a file that is of
+      interest, you may open it by clicking on <quote>Open</quote>, or
+      just double-clicking on the file name. For the moment let's open
+      <filename>data3-6</filename>.
     </para>
 
     <tip>

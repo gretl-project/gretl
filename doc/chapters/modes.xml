@@ -219,7 +219,7 @@
 	menu, you should see the basic default set of icons: these
 	give you quick access to the command script
 	(<quote>Session</quote>), information on the data set (if
-	any), correlation matrix (<quote>Corrmat</quote>) and
+	any), correlation matrix (<quote>Correlations</quote>) and
 	descriptive summary statistics (<quote>Summary</quote>). All
 	of these are activated by double-clicking the relevant icon.
 	The <quote>Data set</quote> icon is a little more complex:

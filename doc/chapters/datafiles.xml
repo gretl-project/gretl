@@ -334,7 +334,8 @@
       <para>
 	<application>gretl</application> has no problem compacting
 	data series of relatively high frequency (e.g. monthly) to a
-	lower frequency (e.g. quarterly): this is done by averaging.
+	lower frequency (e.g. quarterly): you are given a choice of
+	method (average, sum, start of period, or end of period).
 	But it has no way of converting lower frequency data to
 	higher.  Therefore if you want to import series of various
 	different frequencies from a database into

@@ -133,7 +133,7 @@
 	    you save data from <application>gretl</application>, if
 	    there is any descriptive information to be saved.  Such
 	    information can be added under the <quote>Variable, Edit
-	      label</quote> menu item.
+	      attributes</quote> menu item.
 	  </para>
 	</listitem>
       </orderedlist>

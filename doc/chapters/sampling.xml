@@ -84,7 +84,7 @@
 
       <programlisting>
 	smpl gender=0 --restrict</programlisting> to this effect.  Or
-      suppose we want to restrict the sample to repondents with
+      suppose we want to restrict the sample to respondents with
       incomes over $50,000.  Then we could use</para>
 
       <programlisting>
@@ -206,7 +206,7 @@
       you use the item <quote>Sample, Restrict based on
 	criterion</quote>, and the dataset is already sub-sampled, you
       are given the option of preserving or replacing the current
-      restriction.  Replacinging the current restriction means, in
+      restriction.  Replacing the current restriction means, in
       effect, invoking the <literal>replace</literal> option described
       above (<xref linkend="sample-restrict"/>).
     </para>

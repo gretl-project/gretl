@@ -253,14 +253,10 @@
     <application>gretl</application> calls gnuplot for graphing. You
     can find gnuplot at <ulink
       url="http://www.gnuplot.info/">gnuplot.info</ulink>.  As of this
-    writing the most recent official release is 3.7.3 (of December,
-    2002).  If you are comfortable compiling source code I would
-    recommend installing gnuplot 3.8j0 or higher (source package
-    available from <ulink
-      url="http://sourceforge.net/projects/gnuplot/">sourceforge.net/projects/gnuplot</ulink>.
+    writing the most recent official release is 4.0 (of April, 2004).
     The MS Windows version of <application>gretl</application> comes
-    with a Windows version gnuplot 3.8j0; the gretl website also
-    offers an rpm of gnuplot 3.8j0 for x86 Linux systems.
+    with a Windows version gnuplot 4.0; the gretl website also offers
+    an rpm of gnuplot 3.8j0 for x86 Linux systems.
   </para>
 
   <para>
@@ -320,7 +316,7 @@
     review editor for the journal.<footnote><para>This review has
     since been published; see Baiocchi and Distaso (2003).</para>
     </footnote> and I am grateful to Baiocchi and
-    Disasto for their careful examination of the program, which
+    Distaso for their careful examination of the program, which
     prompted the following modifications.</para>
 
   <orderedlist>

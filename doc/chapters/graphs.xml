@@ -123,7 +123,7 @@
 	Windows you can copy it to the clipboard as a bitmap.  The
 	menu also gives you the option of opening a summary window
 	which displays five-number summaries (minimum, first quartile,
-	median, third quartile, maxmimum), plus a confidence interval
+	median, third quartile, maximum), plus a confidence interval
 	for the median if the <quote>notched</quote> option was
 	chosen.
       </para>

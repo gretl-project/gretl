@@ -79,7 +79,7 @@
       specified database.  If the database files (the
       <filename>.bin</filename> file and its accompanying
       <filename>.idx</filename> file &mdash; see <xref
-	linkend="dbase"/>) is not in the default system database
+	linkend="dbase"/>) are not in the default system database
       directory, you must specify the full path.
     </para>
 
