@@ -1491,6 +1491,8 @@ static gint var_popup_click (GtkWidget *widget, gpointer data)
 	mdata_edit(NULL, RENAME, NULL);
     else if (!strcmp(item, _("Edit label")))  
 	mdata_edit(NULL, RELABEL, NULL);
+    else if (!strcmp(item, _("View/edit attributes")))  
+	varinfo_dialog(mdata->active_var);
     else if (!strcmp(item, _("Delete"))) 
 	delete_var_by_id(mdata->active_var);
     else if (!strcmp(item, _("Simulate..."))) 
@@ -1516,6 +1518,7 @@ static void build_var_popup (windata_t *win)
 	N_("Runs test"),
 	N_("Rename"),
 	N_("Edit label"),
+	N_("View/edit attributes"),
 	N_("Delete"),
 	N_("Simulate..."),
 	N_("Define new variable...")

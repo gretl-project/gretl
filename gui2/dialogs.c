@@ -87,7 +87,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     char *test, stobs[9], endobs[9], firstvar[9];
     double sd0, ed0;
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (data->edit));
+    edttext = gtk_entry_get_text(GTK_ENTRY(data->edit));
     strncpy(dataspec, edttext, 31);
     if (dataspec[0] == '\0') return;
 
@@ -1041,4 +1041,109 @@ void delimiter_dialog (void)
     gtk_widget_show (dialog);
 
     gtk_main();
+}
+
+struct varinfo_settings {
+    GtkWidget *name_entry;
+    GtkWidget *label_entry;
+    GtkWidget *display_name_entry;
+    int varnum;
+};
+
+static void really_set_variable_info (GtkWidget *w, 
+				      struct varinfo_settings *vset)
+{
+    fprintf(stderr, "Got request to set var info for var %d\n", 
+	    vset->varnum);
+
+    fprintf(stderr, "name: '%s'\n", 
+	    gtk_entry_get_text(GTK_ENTRY(vset->name_entry)));
+    fprintf(stderr, "description: '%s'\n", 
+	    gtk_entry_get_text(GTK_ENTRY(vset->label_entry)));
+    fprintf(stderr, "display name: '%s'\n", 
+	    gtk_entry_get_text(GTK_ENTRY(vset->display_name_entry)));
+
+    free(vset);
+}
+
+void varinfo_dialog (int varnum)
+{
+    GtkWidget *dialog, *tempwid, *hbox;
+    struct varinfo_settings *vset;
+
+    vset = mymalloc(sizeof *vset);
+    if (vset == NULL) return;
+
+    vset->varnum = varnum;
+
+    dialog = gtk_dialog_new();
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: variable information"));
+    /* gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE); */
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+    /* read/set name of variable */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("name:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+
+    vset->name_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
+		       datainfo->varname[varnum]);
+    gtk_box_pack_start(GTK_BOX(hbox), vset->name_entry, TRUE, TRUE, 5);
+    gtk_widget_show(vset->name_entry); 
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox);  
+    
+    /* read/set descriptive string */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("description:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+
+    vset->label_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
+		       VARLABEL(datainfo, varnum));
+    gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 5);
+    gtk_widget_show(vset->label_entry); 
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* read/set display name */
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("display name:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+
+    vset->display_name_entry = gtk_entry_new();
+    gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
+		       DISPLAYNAME(datainfo, varnum));
+    gtk_box_pack_start(GTK_BOX(hbox), vset->display_name_entry, TRUE, TRUE, 5);
+    gtk_widget_show(vset->display_name_entry); 
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* Create the "OK" button */
+    tempwid = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(really_set_variable_info), vset);
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK (delete_widget), 
+		      dialog);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show (dialog);
 }
