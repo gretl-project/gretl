@@ -306,8 +306,8 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
 	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
 	    else if (!strcmp(statname, "lnlkhd")) pmod->lnL = x;
-	    else if (!strcmp(statname, "aic")) pmod->criterion[0] = x;
-	    else if (!strcmp(statname, "bic")) pmod->criterion[1] = x;
+	    else if (!strcmp(statname, "aic")) pmod->criterion[1] = x;
+	    else if (!strcmp(statname, "bic")) pmod->criterion[4] = x;
 	}
     }
 

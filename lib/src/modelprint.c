@@ -53,7 +53,8 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
-static void print_ll_stats (const MODEL *pmod, PRN *prn);
+static void print_arma_stats (const MODEL *pmod, PRN *prn);
+static void print_arma_roots (const MODEL *pmod, PRN *prn);
 
 /* ......................................................... */ 
 
@@ -122,21 +123,20 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 		GRETL_DIGITS, wt? pmod->ess_wt : pmod->ess);
 	pprintf(prn, "  %s = %.*g\n", _("Standard error of residuals"), 
 		GRETL_DIGITS, wt? pmod->sigma_wt : pmod->sigma);
-	return 0;
     }
 
-    if (RTF_FORMAT(prn->format)) {
+    else if (RTF_FORMAT(prn->format)) {
 	if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
 	    char tmp[128];
 
 	    sprintf(tmp, I_("Error sum of squares (%g) is not > 0"), 
-		    (wt)? pmod->ess_wt : pmod->ess), 
-		pprintf(prn, "\\par \\ql %s\\par\n\n", tmp);
+		    (wt)? pmod->ess_wt : pmod->ess); 
+	    pprintf(prn, "\\par \\ql %s\\par\n\n", tmp);
 	    return 1;
 	}
 
 	if (pmod->ci == ARMA) {
-	    pprintf(prn, "%s = %g\n", I_("Mean of residuals"), 
+	    pprintf(prn, RTFTAB "%s = %g\n", I_("Mean of residuals"), 
 		    gretl_model_get_double(pmod, "mean_error"));
 	}
 
@@ -144,10 +144,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 		wt? pmod->ess_wt : pmod->ess);
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Standard error of residuals"), 
 		wt? pmod->sigma_wt : pmod->sigma);
-	return 0;
     }
 
-    if (TEX_FORMAT(prn->format)) {
+    else if (TEX_FORMAT(prn->format)) {
 	char x1str[32], x2str[32];
 
 	if (pmod->ci == ARMA) {
@@ -161,7 +160,6 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
 		I_("Sum of squared residuals"), x1str,
 		I_("Standard error of residuals"), x2str);
-	return 0;
     }
 
     return 0;
@@ -944,11 +942,15 @@ static void model_format_start (PRN *prn)
 
 #define RTF_DISCRETE_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
                        "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
-                       "cellx8000\n\\intbl"
+                       "\\cellx8000\n\\intbl"
 
 #define RTF_SELST_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                        "\\cellx1333\\cellx2666\\cellx4000\\cellx5333" \
                        "\\cellx6666\\cellx8000\n\\intbl"
+
+#define RTF_ROOT_ROW   "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
+                       "\\cellx500\\cellx1500\\cellx2900\\cellx4300" \
+                       "\\cellx5700\\cellx7100\n\\intbl"
 
 
 static void print_coeff_table_start (const MODEL *pmod, PRN *prn, int discrete)
@@ -1306,11 +1308,11 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	    }
 	}
 
-	if (pmod->ci == ARMA && !na(pmod->lnL)) {
-	    print_ll_stats(pmod, prn);
-	}
+	if (pmod->ci == ARMA) print_arma_stats(pmod, prn);
 
 	print_middle_table_end(prn);
+
+	if (pmod->ci == ARMA) print_arma_roots(pmod, prn);
 
 	if (pmod->ci == TSLS && PLAIN_FORMAT(prn->format)) {
 	    r_squared_message(prn);
@@ -1588,18 +1590,20 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     int do_pval = (pmod->ci != LOGIT && pmod->ci != PROBIT);
     char varname[12];
 
-    /* special treatment for ARCH model coefficients */
+
+    /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
-    } else if (pmod->ci == NLS) {
+    } else if (pmod->ci == NLS || pmod->ci == ARMA) {
 	strcpy(varname, pmod->params[c-1]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
-    }    
+    }
 
     pputs(prn, RTF_COEFF_ROW);
 
-    pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", pmod->list[c], 
+    pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", 
+	    ((pmod->ci == ARMA)? c - 1 : pmod->list[c]), 
 	    varname);
 
     if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
@@ -1756,74 +1760,142 @@ const char *roots_hdr = N_("                        Real  Imaginary"
 const char *root_fmt = "%8s%3d%17.4f%11.4f%11.4f%11.4f\n";
 const char *roots_sep = "  -----------------------------------------"
                         "------------------";
-static void print_ll_stats (const MODEL *pmod, PRN *prn)
+
+static void print_arma_roots (const MODEL *pmod, PRN *prn)
+{
+    cmplx *roots = gretl_model_get_data(pmod, "roots");
+
+    if (roots != NULL) {
+	int p = pmod->list[1];
+	int q = pmod->list[2];
+	int i;
+	double mod, fr;
+
+	if (PLAIN_FORMAT(prn->format)) {
+	    pprintf(prn, "\n%s\n%s\n", _(roots_hdr), roots_sep);
+	} else if (TEX_FORMAT(prn->format)) {
+	    pputs(prn, "\n\\vspace{1em}\n\n");
+	    pputs(prn, "\\begin{tabular}{llrrrrr}\n");
+	    pprintf(prn, "& & & %s & %s & %s & %s \\\\ \\hline\n", 
+		    I_("Real"), I_("Imaginary"), I_("Modulus"), I_("Frequency"));
+	} else if (RTF_FORMAT(prn->format)) {
+	    pputs(prn, "\n\\par\n{" RTF_ROOT_ROW);
+	    pprintf(prn, "\\qr \\cell \\qc \\cell"
+		    " \\qc {\\i %s}\\cell"
+		    " \\qc {\\i %s}\\cell"
+		    " \\qc {\\i %s}\\cell"
+		    " \\qc {\\i %s}\\cell \\intbl \\row\n",
+		    I_("Real"), I_("Imaginary"), I_("Modulus"), I_("Frequency"));
+	}
+
+	if (p > 0) {
+	    if (PLAIN_FORMAT(prn->format)) {
+		pprintf(prn, "  %s\n", _("AR"));
+	    } else if (TEX_FORMAT(prn->format)) {
+		pprintf(prn, "%s \\\\ \n", I_("AR"));
+	    } else if (RTF_FORMAT(prn->format)) {
+		pputs(prn, RTF_ROOT_ROW);
+		pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
+			"\\ql\\cell \\intbl \\row\n", I_("AR"));
+	    }
+	    for (i=0; i<p; i++) {
+		if (roots[i].i != 0) {
+		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+		    mod = sqrt(mod);
+		} else {
+		    mod = fabs(roots[i].r);
+		}
+		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		if (PLAIN_FORMAT(prn->format)) {
+		    pprintf(prn, root_fmt, _("Root"), i + 1, 
+			    roots[i].r, roots[i].i, mod, fr);
+		} else if (TEX_FORMAT(prn->format)) {
+		    pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
+			    I_("Root"), i + 1, roots[i].r, roots[i].i, mod, fr);
+		    if (i == p - 1 && q == 0) pputs(prn, "\\hline\n");
+		    else pputc(prn, '\n');
+		} else if (RTF_FORMAT(prn->format)) {
+		    pputs(prn, RTF_ROOT_ROW);
+		    pprintf(prn, "\\ql \\cell \\ql %s %d \\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell \\intbl \\row\n",
+			    I_("Root"), i + 1, roots[i].r, roots[i].i, mod, fr);
+		}
+	    }
+	} 
+
+	if (q > 0) {
+	    if (PLAIN_FORMAT(prn->format)) {
+		pprintf(prn, "  %s\n", _("MA"));
+	    } else if (TEX_FORMAT(prn->format)) {
+		pprintf(prn, "%s \\\\ \n", I_("MA"));
+	    } else if (RTF_FORMAT(prn->format)) {
+		pputs(prn, RTF_ROOT_ROW);
+		pprintf(prn, "\\ql %s\\cell\\ql \\cell\\ql \\cell\\ql \\cell\\ql \\cell"
+			"\\ql\\cell \\intbl \\row\n", I_("MA"));
+	    }
+	    for (i=p; i<p+q; i++) {
+		if (roots[i].i != 0) {
+		    mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
+		    mod = sqrt(mod);
+		} else {
+		    mod = fabs(roots[i].r);
+		}
+		fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
+		if (PLAIN_FORMAT(prn->format)) {
+		    pprintf(prn, root_fmt, _("Root"), i - p + 1, 
+			    roots[i].r, roots[i].i, mod, fr);
+		} else if (TEX_FORMAT(prn->format)) {
+		    pprintf(prn, "& %s & %d & $%.4f$ & $%.4f$ & $%.4f$ & $%.4f$ \\\\ ",
+			    I_("Root"), i - p + 1, roots[i].r, roots[i].i, mod, fr);
+		    if (i == p + q - 1) pputs(prn, "\\hline\n");
+		    else pputc(prn, '\n');
+		} else if (RTF_FORMAT(prn->format)) {
+		    pputs(prn, RTF_ROOT_ROW);
+		    pprintf(prn, "\\ql \\cell \\ql %s %d \\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell"
+			    " \\qr %.4f\\cell \\intbl \\row\n",
+			    I_("Root"), i - p + 1, roots[i].r, roots[i].i, mod, fr);
+		}
+	    }
+	}
+
+	if (PLAIN_FORMAT(prn->format)) {
+	    pprintf(prn, "%s\n\n", roots_sep);
+	} else if (TEX_FORMAT(prn->format)) {
+	    pputs(prn, "\\end{tabular}\n");
+	} else if (RTF_FORMAT(prn->format)) {
+	    pputs(prn, "}\n");
+	}
+    }
+}
+
+static void print_arma_stats (const MODEL *pmod, PRN *prn)
 {
     if (PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
-	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[0]);
-	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[1]);
+	pprintf(prn, "  %s = %.3f\n", _("AIC"), pmod->criterion[1]);
+	pprintf(prn, "  %s = %.3f\n", _("BIC"), pmod->criterion[4]);
     }
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "\\par %s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
-	pprintf(prn, "\\par %s = %.3f\n", I_("AIC"), pmod->criterion[0]);
-	pprintf(prn, "\\par %s = %.3f\n", I_("BIC"), pmod->criterion[1]);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("AIC"), pmod->criterion[1]);
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("BIC"), pmod->criterion[4]);
     }
     else if (TEX_FORMAT(prn->format)) {
 	char xstr[32];
 
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
-	tex_dcolumn_double(pmod->criterion[0], xstr);
-	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
 	tex_dcolumn_double(pmod->criterion[1], xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("AIC"), xstr);
+	tex_dcolumn_double(pmod->criterion[4], xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("BIC"), xstr);
     }
-
-    if (PLAIN_FORMAT(prn->format) && pmod->ci == ARMA) {
-	cmplx *roots = gretl_model_get_data(pmod, "roots");
-
-	if (roots != NULL) {
-	    int p = pmod->list[1];
-	    int q = pmod->list[2];
-	    int i;
-	    double mod, fr;
-
-	    pprintf(prn, "\n%s\n%s\n", _(roots_hdr), roots_sep);
-
-	    if (p > 0) {
-		pprintf(prn, "  %s\n", _("AR"));
-		for (i=0; i<p; i++) {
-		    if (roots[i].i != 0) {
-			mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-			mod = sqrt(mod);
-		    } else {
-			mod = fabs(roots[i].r);
-		    }
-		    fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
-		    pprintf(prn, root_fmt, _("Root"), i + 1, 
-			    roots[i].r, roots[i].i, mod, fr);
-		}
-	    } 
-
-	    if (q > 0) {
-		pprintf(prn, "  %s\n", _("MA"));
-		for (i=p; i<p+q; i++) {
-		    if (roots[i].i != 0) {
-			mod = roots[i].r * roots[i].r + roots[i].i * roots[i].i;
-			mod = sqrt(mod);
-		    } else {
-			mod = fabs(roots[i].r);
-		    }
-		    fr = atan2(roots[i].i, roots[i].r) / (2.0 * M_PI);
-		    pprintf(prn, root_fmt, _("Root"), i - p + 1, 
-			    roots[i].r, roots[i].i, mod, fr);
-		}
-	    }
-
-	    pprintf(prn, "%s\n", roots_sep);
-
-	} /* roots != NULL */
-    } /* plain text && ARMA */
 }
 
 static void print_discrete_statistics (const MODEL *pmod, 

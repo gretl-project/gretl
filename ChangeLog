@@ -1,3 +1,9 @@
+version 1.2.2
+- Make AIC retrievable via genr ("genr foo = $aic")
+- Fix brokenness in RTF printing/copying of ARMA models
+- Add calculation of modulus and frequency for ARMA roots,
+  and add printing of these to LaTeX and RTF output
+
 1/22/2004 version 1.2.1
 - Add Cristian Rigamonti's Italian translation
 - More flexible and general support for collections of data

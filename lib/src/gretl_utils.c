@@ -540,7 +540,16 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
     return 0;
 }
 
-/* ....................................................... */
+/*
+  criterion[0] = SGMASQ (Sigma squared)
+  criterion[1] = AIC (Akaike Information Criterion)
+  criterion[2] = FPE (Final prediction Error)
+  criterion[3] = HQ (Hannan-Quinn)
+  criterion[4] = SCHWARZ (Schwarz Bayesian)
+  criterion[5] = SHIBATA
+  criterion[6] = GCV
+  criterion[7] = RICE  
+*/
 
 void gretl_aic_etc (MODEL *pmod)
 /*
@@ -1520,7 +1529,7 @@ void gretl_model_init (MODEL *pmod, const DATAINFO *pdinfo)
     *gretl_msg = '\0';
     
     for (i=0; i<8; i++) {
-	pmod->criterion[i] = 0.0;
+	pmod->criterion[i] = NADBL;
     }
 
     model_data_items_init(pmod);

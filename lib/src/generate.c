@@ -103,6 +103,7 @@ enum retrieve {
     R_SIGMA,
     R_DF,
     R_LNL,
+    R_AIC,
     R_TRSQ,
     R_NOBS,
     R_PD
@@ -2177,6 +2178,11 @@ static int check_modelstat (const MODEL *pmod, int idx)
 	    strcpy(gretl_errmsg, 
 		   _("No $lnl (log-likelihood) value is available"));
 	    return 1;
+	case R_AIC:
+	    strcpy(gretl_errmsg, 
+		   _("No $aic (Akaike Information Criterion) value is available"));
+	    return 1;
+
 	default:
 	    return 0;
 	}
@@ -2188,6 +2194,12 @@ static int check_modelstat (const MODEL *pmod, int idx)
 	       _("$lnl (log-likelihood) is not available for the last model"));
 	return 1;
     }
+
+    if (pmod != NULL && idx == R_AIC && na(pmod->criterion[1])) {
+	strcpy(gretl_errmsg, 
+	       _("No $aic (Akaike Information Criterion) value is available"));
+	return 1;
+    }	
 
     return 0;
 }
@@ -2289,6 +2301,9 @@ get_model_statistic (const MODEL *pmod, int idx, int *err)
 	break;
     case R_LNL:
 	x = pmod->lnL;
+	break;
+    case R_AIC:
+	x = pmod->criterion[1];
 	break;
     case R_SIGMA:
 	if (pmod->nwt) x = pmod->sigma_wt;
@@ -2522,6 +2537,8 @@ static int model_variable_index (const char *s)
 	return R_DF;
     if (!strcmp(test, "$lnl"))   
 	return R_LNL;
+    if (!strcmp(test, "$aic"))   
+	return R_AIC;
     if (!strcmp(test, "$nrsq") || 
 	!strcmp(test, "$trsq")) 
 	return R_TRSQ;

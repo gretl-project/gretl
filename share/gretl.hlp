@@ -369,6 +369,7 @@ be used in transformations, as follows:
   $df          degrees of freedom
   $trsq        TR^2 (sample size times R-squared)
   $sigma       standard error of residuals
+  $aic         Akaike Information Criterion
   $lnl         log-likelihood (logit and probit models)
   coeff(var)   estimated coefficient for var
   stderr(var)  estimated std. error for var

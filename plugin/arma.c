@@ -350,9 +350,9 @@ static void rewrite_arma_model_stats (MODEL *pmod, const double *coeff,
     }
 
     /* AIC, as per X-12-ARIMA */
-    pmod->criterion[0] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
+    pmod->criterion[1] = -2.0 * pmod->lnL + 2.0 * (pmod->ncoeff + 1);
     /* BIC, as per X-12-ARIMA */
-    pmod->criterion[1] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
+    pmod->criterion[4] = -2.0 * pmod->lnL + (pmod->ncoeff + 1) * log(pmod->nobs);
 }
 
 static int check_arma_list (const int *list)

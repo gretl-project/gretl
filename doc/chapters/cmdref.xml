@@ -1173,6 +1173,11 @@
 		  </entry>
 		</row>
 		<row>
+		  <entry><varname>$aic</varname></entry>
+		  <entry>Akaike Information Criterion
+		  </entry>
+		</row>
+		<row>
 		  <entry><varname>$lnl</varname></entry>
 		  <entry>log-likelihood (logit and probit models)
 		  </entry>
