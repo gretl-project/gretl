@@ -484,8 +484,10 @@ static const char *aux_string (int aux, int format)
 
 /* ......................................................... */
 
-const char *estimator_string (int ci, int format)
+const char *estimator_string (const MODEL *pmod, int format)
 {
+    int ci = pmod->ci;
+
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS) return N_("WLS"); 
     else if (ci == ARCH) return N_("WLS (ARCH)");
@@ -499,7 +501,6 @@ const char *estimator_string (int ci, int format)
     else if (ci == TOBIT) return N_("Tobit");
     else if (ci == POOLED) return N_("Pooled OLS");
     else if (ci == NLS) return N_("NLS");
-    else if (ci == ARMA) return N_("ARMA");
     else if (ci == LOGISTIC) return N_("Logistic");
     else if (ci == CORC) {
 	if (TEX_FORMAT(format)) return N_("Cochrane--Orcutt");
@@ -508,6 +509,13 @@ const char *estimator_string (int ci, int format)
     else if (ci == HILU) {
 	if (TEX_FORMAT(format)) return N_("Hildreth--Lu");
 	else return N_("Hildreth-Lu");
+    }
+    else if (ci == ARMA) {
+	if (pmod->list[0] > 4) {
+	    return N_("ARMAX");
+	} else {
+	    return "ARMA";
+	}
     }
 
     else return "";
@@ -831,13 +839,13 @@ static void print_model_heading (const MODEL *pmod,
 	pprintf(prn, (utf)?
 		_("%s estimates using the %d observations %s%s%s") :
 		I_("%s estimates using the %d observations %s%s%s"),
-		_(estimator_string(pmod->ci, prn->format)), 
+		_(estimator_string(pmod, prn->format)), 
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
     } else {
 	pprintf(prn, (utf)?
 		_("%s estimates using %d observations") :
 		I_("%s estimates using %d observations"),
-		_(estimator_string(pmod->ci, prn->format)), 
+		_(estimator_string(pmod, prn->format)), 
 		pmod->nobs);
     }
 

@@ -294,7 +294,7 @@ static int model_list_empty (void)
     return (real_n_models == 0);
 }
 
-static int common_estimator (void)
+static int common_estimator (const MODEL **pmod)
 {
     int i, ci0 = -1;
 
@@ -302,6 +302,7 @@ static int common_estimator (void)
 	if (model_list[i] == NULL) continue;
 	if (ci0 == -1) {
 	    ci0 = (model_list[i])->ci;
+	    *pmod = model_list[i];
 	} else {
 	    if ((model_list[i])->ci != ci0) return 0;
 	}
@@ -345,14 +346,17 @@ static void center_in_field (const char *s, int width, PRN *prn)
     }
 }
 
-static const char *short_estimator_string (int ci, int format)
+static const char *short_estimator_string (const MODEL *pmod, 
+					   int format)
 {
+    int ci = pmod->ci;
+
     if (ci == HSK) return N_("HSK");
     else if (ci == CORC) return N_("CORC");
     else if (ci == HILU) return N_("HILU");
     else if (ci == ARCH) return N_("ARCH");
     else if (ci == POOLED) return N_("OLS");
-    else return estimator_string(ci, format);
+    else return estimator_string(pmod, format);
 }
 
 static const char *get_asts (double pval)
@@ -636,6 +640,7 @@ int display_model_table (int gui)
     int j, ci;
     int binary = 0;
     int winwidth = 78;
+    const MODEL *exemplar;
     PRN *prn;
 
     if (model_list_empty()) {
@@ -650,12 +655,12 @@ int display_model_table (int gui)
 	return 1;
     }
 
-    ci = common_estimator();
+    ci = common_estimator(&exemplar);
 
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, _("%s estimates"), 
-		_(estimator_string(ci, prn->format)));
+		_(estimator_string(exemplar, prn->format)));
 	pputc(prn, '\n');
     }
 
@@ -680,7 +685,7 @@ int display_model_table (int gui)
 	for (j=0; j<model_list_len; j++) {
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
-		   _(short_estimator_string((model_list[j])->ci,
+		   _(short_estimator_string(model_list[j],
 					    prn->format)));
 	    center_in_field(est, 12, prn);
 	}
@@ -714,6 +719,7 @@ int tex_print_model_table (int view)
     int j, ci;
     int binary = 0;
     char tmp[16];
+    const MODEL *exemplar;
     PRN *prn;
 
     if (model_list_empty()) {
@@ -727,7 +733,7 @@ int tex_print_model_table (int view)
 
     prn->format = GRETL_PRINT_FORMAT_TEX;
 
-    ci = common_estimator();
+    ci = common_estimator(&exemplar);
 
     if (view) {
 	pputs(prn, "\\documentclass[11pt]{article}\n");
@@ -745,7 +751,7 @@ int tex_print_model_table (int view)
     if (ci > 0) {
 	/* all models use same estimation procedure */
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn->format)));
+		I_(estimator_string(exemplar, prn->format)));
 	pputs(prn, "\\\\\n");
     }
 
@@ -776,8 +782,8 @@ int tex_print_model_table (int view)
 	for (j=0; j<model_list_len; j++) {
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
-		   I_(short_estimator_string((model_list[j])->ci,
-					    prn->format)));
+		   I_(short_estimator_string(model_list[j],
+					     prn->format)));
 	    pprintf(prn, " & %s ", est);
 	}
 	pputs(prn, "\\\\ ");
@@ -834,6 +840,7 @@ int rtf_print_model_table (void)
 {
     int j, ci;
     int binary = 0;
+    const MODEL *exemplar;
     PRN *prn;
 
     if (model_list_empty()) {
@@ -847,7 +854,7 @@ int rtf_print_model_table (void)
 
     prn->format = GRETL_PRINT_FORMAT_RTF;
 
-    ci = common_estimator();
+    ci = common_estimator(&exemplar);
 
     pputs(prn, "{\\rtf1\n");
 
@@ -855,7 +862,7 @@ int rtf_print_model_table (void)
 	/* all models use same estimation procedure */
 	pputs(prn, "\\par \\qc ");
 	pprintf(prn, I_("%s estimates"), 
-		I_(estimator_string(ci, prn->format)));
+		I_(estimator_string(exemplar, prn->format)));
 	pputc(prn, '\n');
     }
 
@@ -884,8 +891,8 @@ int rtf_print_model_table (void)
 	for (j=0; j<model_list_len; j++) {
 	    if (model_list[j] == NULL) continue;
 	    strcpy(est, 
-		   I_(short_estimator_string((model_list[j])->ci,
-					    prn->format)));
+		   I_(short_estimator_string(model_list[j],
+					     prn->format)));
 	    pprintf(prn, "\\qc %s\\cell ", est);
 	}
 	pputs(prn, "\\intbl \\row\n");
