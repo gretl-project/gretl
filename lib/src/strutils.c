@@ -326,13 +326,38 @@ char *gretl_strdup (const char *src)
 {
     char *targ = malloc(strlen(src) + 1);
 
-    if (src != NULL) {
+    if (targ != NULL) {
         strcpy(targ, src);
     }
 
     return targ;
 }
 
+/**
+ * gretl_strndup:
+ * @src: the string to be copied.
+ * @n: the maximum number of characters to copy.
+ *
+ * Returns: an allocated copy of at most @n characters from 
+ * @src, or NULL on error.
+ */
+
+char *gretl_strndup (const char *src, size_t n)
+{
+    int len = strlen(src);
+
+    if (len > n) {
+	len = n;
+    }
+
+    targ = malloc(len + 1);
+    if (targ != NULL) {
+	*targ = '\0';
+	strncat(targ, src, len);
+    }
+
+    return targ;
+}
 
 /**
  * gretl_trunc:

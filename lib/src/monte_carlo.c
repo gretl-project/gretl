@@ -1757,21 +1757,28 @@ void get_cmd_ci (const char *line, CMD *command)
     }    
 } 
 
-static void substitute_dollar_i (char *str, int index)
+static int substitute_dollar_i (char *str, int index)
 {
     char *p;
+    int err = 0;
 
     while ((p = strstr(str, "$i")) != NULL) {
 	char ins[8];
 	char *q;
 
 	q = malloc(strlen(p));
+	if (q == NULL) {
+	    err = 1;
+	    break;
+	}
 	strcpy(q, p + 2);
 	sprintf(ins, "%d", index);
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
 	free(q);	
     }
+
+    return err;
 }
 
 static void top_of_loop (LOOPSET *loop, double **Z)
@@ -1844,7 +1851,10 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    substitute_dollar_i(linecpy, loop->index);
+	    err = substitute_dollar_i(linecpy, loop->index);
+	    if (err) {
+		break;
+	    }	    
 
 	    getcmd(linecpy, pdinfo, &cmd, &ignore, pZ, NULL);
 

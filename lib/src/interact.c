@@ -228,6 +228,7 @@ static int aliased (char *cmd)
 	               c == GENR || \
                        c == SET || \
                        c == PRINTF || \
+                       c == FUNC || \
                        c == OUTFILE)
 
 /* ........................................................... */
