@@ -27,7 +27,7 @@ enum {
     GRETL_SYS_VCV_GEOMEAN  = 1 << 3,
     GRETL_SYS_SAVE_VCV     = 1 << 4,
     GRETL_SYS_RESTRICT     = 1 << 5
-} equation_system_flags;
+};
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
