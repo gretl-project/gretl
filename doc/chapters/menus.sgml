@@ -1,0 +1,271 @@
+<?PSGML NOFILL programlisting example informalequation>
+
+  <chapter id="menus"><title>The main window menus</title>
+
+    <para>
+      Reading left to right along the main window's menu bar, we find
+      the File, Utilities, Session, Data, Sample, Variable, Model and
+      Help menus.
+    </para>
+
+    <graphic fileref="figures/menubar.png" align="center"/>
+
+    <itemizedlist>
+
+      <listitem><para><guimenu>File menu</guimenu></para>
+	<itemizedlist mark="dash">
+	  <listitem><para><guimenuitem>Open data</guimenuitem>: Open a
+	      native <application>gretl</application> data file or
+	      import from other formats.  See <xref
+		linkend="datafiles"/>.</para></listitem>
+	  <listitem><para><guimenuitem>Clear data set</guimenuitem>:
+	      Clear the current data set out of memory.  Generally you
+	      don't have to do this (since opening a new data file
+	      automatically clears the old one) but sometimes it's
+	      useful (see <xref
+		linkend="scratch"/>).</para></listitem>
+	  <listitem><para><guimenuitem>Browse databases</guimenuitem>:
+	      See <xref linkend="dbase"/> and
+	      <xref linkend="scratch"/>.</para></listitem>
+	  <listitem><para><guimenuitem>Save data</guimenuitem> and
+	      <guimenuitem>Export data</guimenuitem>: Write out the
+	      current data set in native format, in Comma Separated
+	      Values (CSV) format, or the formats of GNU R or GNU
+	      Octave.  See <xref linkend="datafiles"/> and also <xref
+		linkend="app-c"/>.</para></listitem>
+	  <listitem><para><guimenuitem>Create data set</guimenuitem>:
+	      Initialize the built-in spreadsheet for entering data
+	      manually.  See <xref
+		linkend="scratch"/>.</para></listitem>
+	  <listitem><para><guimenuitem>Save last graph</guimenuitem>:
+	      Just as it says.</para></listitem>
+	  <listitem><para><guimenuitem>View command log</guimenuitem>:
+	      Open a window containing a record of the commands
+	      executed so far.</para></listitem>
+	  <listitem><para><guimenuitem>Open command
+		file</guimenuitem>: Open a file of
+	      <application>gretl</application> commands, either one
+	      you have created yourself or one of the practice files
+	      supplied with the package.  If you want to create a
+	      command file from scratch use the next item,
+	      <guimenuitem>New command
+		file</guimenuitem>.</para></listitem>
+	  <listitem><para><guimenuitem>Preferences</guimenuitem>: Set
+	      the paths to various files
+	      <application>gretl</application> needs to access. Choose
+	      the font in which gretl displays text output.  Select or
+	      unselect <quote>expert mode</quote>. (If this mode is
+	      selected various warning messages are suppressed.)
+	      Activate or suppress <application>gretl</application>'s
+	      messaging about the availability of program updates.
+	      Configure or turn on/off the main-window
+	      toolbar.</para></listitem>
+  <listitem><para><guimenuitem>Exit</guimenuitem>: Quit the program.
+      If expert mode is not selected you'll be prompted to save any
+      unsaved work.</para></listitem>
+	</itemizedlist>
+      </listitem>
+
+  <listitem><para><guimenu>Utilities menu</guimenu></para>
+    <itemizedlist mark="dash">
+      <listitem><para><guimenuitem>Statistical tables</guimenuitem>:
+	  Look up critical values for commonly used distributions
+	  (normal or Gaussian, <emphasis>t</emphasis>, &chisq;,
+	  <emphasis>F</emphasis> and
+	  Durbin&ndash;Watson).</para></listitem>
+      <listitem><para><guimenuitem>p-value finder</guimenuitem>: Open
+	  a window which enables you to look up p-values from the
+	  Gaussian, <emphasis>t</emphasis>, &chisq;,
+	  <emphasis>F</emphasis> or gamma distributions. See also the
+	  <command>pvalue</command> command in <xref
+	    linkend="cmdref"/>.</para></listitem>
+      <listitem><para><guimenuitem>Test statistic
+	    calculator</guimenuitem>: Calculate test statistics and
+	  p-values for a range of common hypothesis tests (population
+	  mean, variance and proportion; difference of means,
+	  variances and proportions).  The relevant sample statistics
+	  must be already available for entry into the dialog box. For
+	  some simple tests that take as input data series rather than
+	  pre-computed sample statistics, see <quote>Difference of
+	    means</quote> and <quote>Difference of variances</quote>
+	  under the Data menu.</para></listitem>
+      <listitem><para><guimenuitem>Gretl console</guimenuitem>: Open a
+	  <quote>console</quote> window into which you can type
+	  commands as you would using the command-line program,
+	  <application>gretlcli</application> (as opposed to using
+	  point-and-click). See <xref linkend="cmdref"/>.
+	</para></listitem> 
+      <listitem><para><guimenuitem>Start Gnu R</guimenuitem>: Start
+	  <application>R</application> (if it is installed on your
+	  system), and load a copy of the data set currently open in
+	  <application>gretl</application>.  See
+	  <xref linkend="app-c"/>.
+	</para></listitem>
+    </itemizedlist>
+  </listitem>
+
+
+  <listitem><para><guimenu>Session menu</guimenu> This is discussed
+      separately below. Please see <xref linkend="session"/>.
+    </para></listitem>
+
+  <listitem><para><guimenu>Data menu</guimenu></para>
+    <itemizedlist mark="dash">
+      <listitem><para><guimenuitem>Display values</guimenuitem>: pops
+	  up a window with a simple (not editable) printout of the
+	  values of the variables (either all of them or a selected
+	  subset).</para></listitem>
+      <listitem><para><guimenuitem>Edit values</guimenuitem>: pops up
+	  a spreadsheet window where you can make changes, add new
+	  variables, and extend the number of observations.  (The data
+	  matrix must remain rectangular, with the same number of
+	  observations for each series.)</para></listitem>
+      <listitem><para><guimenuitem>Graph specified vars</guimenuitem>:
+	  Gives a choice between a time series plot, a regular
+	  X&ndash;Y scatter plot, an X&ndash;Y plot using impulses
+	  (vertical bars), an X&ndash;Y plot <quote>with factor
+	    separation</quote> (i.e. with the points colored
+	  differently depending to the value of a given dummy
+	  variable) and boxplots.  Serves up a dialog box where you
+	  specify the variables to graph.  The simplest way to fill
+	  out the dialog entry is to refer to the variables by their
+	  ID numbers (shown in the leftmost column of the main data
+	  window). Thus, having chosen the scatter plot option, an
+	  entry of <quote>2 3</quote> will plot variable number 2
+	  (here, consumption) against variable number 3 (income). The
+	  last referenced variable will be on the
+	  <emphasis>x</emphasis> axis.  Gnuplot is used to render the
+	  graph (except for the boxplots option).</para></listitem>
+      <listitem><para><guimenuitem>Multiple
+	    scatterplots</guimenuitem>: Show a collection of (at most
+	  six) pairwise plots, with either a given variable on the
+	  <emphasis>y</emphasis> axis plotted against several
+	  different variables on the <emphasis>x</emphasis> axis, or
+	  several <emphasis>y</emphasis> variables plotted against a
+	  given <emphasis>x</emphasis>. May be useful for exploratory
+	  data analysis.</para></listitem>
+      <listitem><para><guimenuitem>Read info</guimenuitem>,
+	  <guimenuitem>Edit header</guimenuitem>: <quote>Read
+	    info</quote> just displays the header file information for
+	  the current data file; <quote>Edit header</quote> allows you
+	  to make changes to it (if you have permission to do
+	  so).</para></listitem>
+      <listitem><para><guimenuitem>Summary statistics</guimenuitem>:
+	  shows a fairly full set of descriptive statistics for all
+	  variables in the data set.</para></listitem>
+      <listitem><para><guimenuitem>Correlation matrix</guimenuitem>:
+	  shows the pairwise correlation coefficients for the
+	  variables in the data set.</para></listitem>
+      <listitem><para><guimenuitem>Difference of means</guimenuitem>:
+	  calculates the <emphasis>t</emphasis> statistic for the null
+	  hypothesis that the population means are equal for two
+	  selected variables and shows its p-value.</para></listitem>
+      <listitem><para><guimenuitem>Difference of
+	    variances</guimenuitem>: calculates the
+	  <emphasis>F</emphasis> statistic for the null hypothesis
+	  that the population variances are equal for two selected
+	  variables and shows its p-value.</para></listitem>
+      <listitem><para><guimenuitem>Add variables</guimenuitem> gives a
+	  sub-menu of standard transformations of variables (logs,
+	  lags, squares, etc.) that you may wish to add to the data
+	  set. Also gives the option of adding random variables, and
+	  (for time-series data) adding seasonal dummy variables (e.g.
+	  quarterly dummy variables for quarterly data). Includes an
+	  item for seeding the program's pseudo-random number
+	  generator.</para></listitem>
+      <listitem><para><guimenuitem>Refresh window</guimenuitem>
+	  Sometimes <application>gretl</application> commands generate
+	  new variables.  The <quote>refresh</quote> item ensures that
+	  the listing of variables visible in the main data window is
+	  in sync with the program's internal state.</para></listitem>
+    </itemizedlist>
+  </listitem>
+
+  <listitem><para><guimenu>Sample menu</guimenu></para>
+    <itemizedlist mark="dash">
+      <listitem><para><guimenuitem>Set range</guimenuitem>: Select a
+	  different starting and/or ending point for the current
+	  sample, within the range of data available.</para>
+      </listitem>
+      <listitem><para><guimenuitem>Restore full range</guimenuitem>:
+	  self-explanatory.</para></listitem>
+      <listitem><para><guimenuitem>Set frequency,
+	    startobs</guimenuitem>: Impose a particular interpretation
+	  of the data in terms of frequency and starting point.  This
+	  is primarily intended for use with panel data; see <xref
+	    linkend="panel"/>.</para>
+      </listitem> <listitem><para><guimenuitem>Define, based on
+	    dummy</guimenuitem>: Given a dummy (indicator) variable
+	  with values 0 or 1, this drops from the current sample all
+	  observations for which the dummy variable has value
+	  0.</para></listitem>
+      <listitem><para><guimenuitem>Restrict, based on
+	    criterion</guimenuitem>: Similar to the item above, except
+	  that you don't need a pre-defined variable: you supply a
+	  Boolean expression (e.g. <literal>sqft &gt; 1400</literal>)
+	  and the sample is restricted to observations satisfying that
+	  condition. See the help for <command>genr</command> in <xref
+	    linkend="cmdref"/> for details on the Boolean operators
+	  that can be used.</para></listitem>
+      <listitem><para><guimenuitem>Drop all obs with missing
+	    values</guimenuitem>: Drop from the current sample all
+	  observations for which at least one variable has a missing
+	  value (see <xref linkend="missing-data"/>.
+	</para></listitem> <listitem><para><guimenuitem>Count missing
+	    values</guimenuitem>: Give a report on observations where
+	  data values are missing. May be useful in examining a panel
+	  data set, where it's quite common to encounter missing
+	  values.</para></listitem>
+      <listitem><para><guimenuitem>Add case markers</guimenuitem>
+	  Prompts for the name of a text file containing <quote>case
+	    markers</quote> (short strings identifying the individual
+	  observations) and adds this information to the data set. See
+	  <xref
+	    linkend="datafiles"/>.  </para></listitem>
+    </itemizedlist>
+  </listitem>
+
+  <listitem><para><guimenu>Variable menu</guimenu> Most items under
+      here operate on a single variable at a time.  The
+      <quote>active</quote> variable is set by highlighting it
+      (clicking on its row) in the main data window.  Most options
+      will be self-explanatory.  Note that you can rename a variable,
+      and can edit its descriptive label. You can also <quote>Define a
+	new variable</quote> via a formula (e.g. involving some
+      function of one or more existing variables). For the syntax of
+      such formulae, look at the online help for <quote>Generate
+	variable syntax</quote> or see the <command>genr</command>
+      command in 
+	  <xref linkend="cmdref"/>. One simple example:
+	  <programlisting> 
+	    foo = x1 * x2</programlisting> will create a new variable
+      <varname>foo</varname> as the product of the existing variables
+      <varname>x1</varname> and <varname>x2</varname>.  In these
+      formulae, variables must be referenced by name, not
+      number.</para></listitem> 
+
+  <listitem><para><guimenu>Model menu</guimenu> This is introduced in
+      <xref linkend="getting-started"/>. For details on the various
+      estimators offered under this menu please consult
+	  <xref linkend="estimators"/> and <xref
+	linkend="cmdref"/> below, and/or the online help under
+    <quote>Help, Estimation</quote>.</para></listitem>
+
+  <listitem><para><guimenu>Help menu</guimenu>  Please use this as
+      needed! It gives details on the syntax required in various
+      dialog entries.</para></listitem>   
+
+    </itemizedlist>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-default-dtd-file:"../manual.ced"
+sgml-parent-document:("../manual.sgml" "book" "chapter")
+End:
+-->
+  
+  
+  

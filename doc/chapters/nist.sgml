@@ -1,0 +1,228 @@
+  <chapter id="nist"><title>Assessing program accuracy: the NIST
+      datasets</title>
+
+    <para>
+      The U.S. National Institute of Standards and Technology (NIST)
+      publishes a set of statistical reference datasets.  The object
+      of this project is to <quote>improve the accuracy of statistical
+	software by providing reference datasets with certified
+	computational results that enable the objective evaluation of
+	statistical software</quote>.</para>
+
+    <para>As of May 2000 the website for the project can be found
+      at:</para>
+
+    <para><ulink
+	url="http://www.nist.gov/itl/div898/strd/general/main.html">
+	<literal>http://www.nist.gov/itl/div898/strd/general/main.html</literal></ulink></para>
+
+    <para>while the datasets are at</para>
+
+    <para><ulink
+	url="http://www.nist.gov/itl/div898/strd/general/dataarchive.html"> 
+	<literal>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</literal></ulink></para>
+
+    <para>For testing <application>gretl</application> I have made use
+      of the datasets pertaining to Linear Regression and Univariate
+      Summary Statistics (the others deal with ANOVA and nonlinear
+      regression).</para>
+
+    <para>I quote from the NIST text <quote>Certification Method &amp;
+	Definitions</quote> regarding their certified computational
+      results (emphasis added):</para>
+
+    <blockquote>
+      <para>For all datasets, multiple precision calculations
+	(accurate to 500 digits) were made using the preprocessor and
+	FORTRAN subroutine package of Bailey (1995, available from
+	NETLIB). Data were read in exactly as multiple precision
+	numbers and all calculations were made with this very high
+	precision. The results were output in multiple precision, and
+	only then rounded to fifteen significant digits.
+	<emphasis>These multiple precision results are an
+	  idealization. They represent what would be achieved if
+	  calculations were made without roundoff or other
+	  errors.</emphasis> Any typical numerical algorithm (i.e.
+	not implemented in multiple precision) will introduce
+	computational inaccuracies, and will produce results which
+	differ slightly from these certified values.</para>
+    </blockquote>
+
+    <para>It is not to be expected that results obtained from ordinary
+      statistical packages will agree exactly with NIST's multiple
+      precision benchmark figures.  But the benchmark provides a very
+      useful test for egregious errors and imprecision.</para>  
+
+    <para>In <xref linkend="tab-linreg"/> below, <quote>OK</quote>
+      means that <application>gretl</application>'s output
+      agrees &mdash; to the precision given by the program, which is
+      less than the 15 significant digits given by NIST &mdash; with the
+      certified values for all the NIST statistics, which include
+      regression coefficients and standard errors, sum of squared
+      residuals or error sum of squares (ESS), standard error of
+      residuals, <emphasis>F</emphasis> statistic and &rsqu;.</para>
+
+    <table id="tab-linreg" frame="none">
+      <title>NIST linear regression tests</title>
+      <tgroup cols="3"><colspec colnum="1" colwidth="&cmdcol;"/>
+	<thead>
+	  <row>
+	    <entry>Dataset</entry>
+	    <entry>Model</entry>
+	    <entry>Performance</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry>Norris</entry>
+	    <entry>Simple linear regression</entry>
+	    <entry>OK</entry></row>
+	  <row><entry>Pontius</entry>
+	    <entry>Quadratic</entry>
+	    <entry>OK</entry>
+	  </row>
+	  <row><entry>NoInt1</entry>
+	    <entry>Simple regression, no intercept </entry>
+	    <entry>OK (but see text)</entry>
+	  </row>
+	  <row><entry>NoInt2</entry>
+	    <entry>Simple regression,
+	      no intercept </entry>
+	    <entry>OK (but see text)</entry>
+	  </row>
+	  <row><entry>Filip</entry>
+	    <entry>10th degree polynomial </entry>
+	    <entry>Complains of excessive multicollinearity, no
+	      estimates produced</entry></row>
+	  <row>
+	    <entry>Longley</entry>
+	    <entry>Multiple regression,
+	      six independent variables 
+	    </entry><entry>OK</entry></row>
+	  <row>
+	    <entry>Wampler1</entry>
+	    <entry>5th degree polynomial
+	    </entry><entry>OK</entry></row>
+	  <row>
+	    <entry>Wampler2</entry>
+	    <entry>5th degree polynomial
+	    </entry><entry>OK</entry></row>
+	  <row>
+	    <entry>Wampler3</entry>
+	    <entry>5th degree polynomial
+	    </entry><entry>OK</entry></row>
+	  <row>
+	    <entry>Wampler4</entry>
+	    <entry>5th degree polynomial
+	    </entry><entry>OK</entry></row>
+	  <row>
+	    <entry>Wampler5</entry>
+	    <entry>5th degree polynomial
+	     </entry><entry>OK</entry></row>
+	</tbody>
+      </tgroup>
+    </table>
+
+
+    <para>As can be seen from the table,
+      <application>gretl</application> does a good job of tracking the
+      certified results. (Total run time for the tests was 0.195
+      seconds on a 333MHz i686 machine running GNU/Linux.)  With the
+      <filename>Filip</filename> data set, where the model is 
+      <informalequation>
+	<alt>
+	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
+	  +\beta_{10}x^{10}_t+\epsilon\]
+	</alt>
+	<graphic fileref="figures/poly.png"/>
+      </informalequation>
+      <application>gretl</application> refuses to produce estimates
+      due to a high degree of multicollinearity (the popular
+      commercial econometrics program <citetitle>Eviews
+	3.1</citetitle> also baulks at this regression).  Other than
+      that, the program produces accurate coefficient estimates in all
+      cases.</para>
+
+    <para>In the <filename>NoInt1</filename> and
+      <filename>NoInt2</filename> datasets there is a methodological
+      disagreement over the calculation of the coefficient of
+      determination, &rsqu;, where the regression does not have an
+      intercept. <application>gretl</application> reports the square
+      of the correlation coefficient between the fitted and actual
+      values of the dependent variable in this case, while the NIST
+      figure is 
+      <informalequation>
+      <alt> 
+	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
+      </alt>
+	  <graphic fileref="figures/nistr2.png"/>  
+      </informalequation>
+      There is no universal agreement among statisticians on the
+      <quote>correct</quote> formula (see for instance the discussion
+      in Ramanathan, 2002, pp. 163&ndash;4). <citetitle>Eviews
+	3.1</citetitle> produces a different figure again (which has a
+      negative value for the <filename>NoInt</filename> test files).
+      The figure chosen by NIST was obtained for these regressions
+      using the command</para>
+
+    <para><command> genr r2alt = 1 - $ess/sum(y * y)
+    </command></para>
+
+    <para>and the numbers thus obtained were in agreement with the
+      certified values, up to <application>gretl</application>'s
+      precision.</para>
+
+    <para>
+      As for the univariate summary statistics, the certified
+      values given by NIST are for the sample mean, sample standard
+      deviation and sample lag-1 autocorrelation coefficient.  NIST
+      note that the latter statistic <quote>may have several
+	definitions</quote>. The certified value is computed as 
+
+      <informalequation>
+	<alt>
+	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
+                     {\sum^T_{t=1}(y_t - \bar{y})^2}\]
+	</alt>
+	<graphic fileref="figures/nistr1.png"/>
+      </informalequation>
+      
+      while <application>gretl</application>
+      gives the correlation coefficient between 
+      <emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>
+      and
+      <emphasis>y</emphasis><subscript><emphasis>t</emphasis>&minus;1</subscript>.
+      For the purposes of comparison, the NIST figure was computed
+      within <application>gretl</application> as follows:</para>
+
+    <programlisting>
+      genr y1 = y(-1) 
+      genr ybar = mean(y) 
+      genr devy = y - ybar genr
+      devy1 = y1 - ybar 
+      genr ssy = sum(devy * devy) 
+      smpl 2 ; 
+      genr ssyy1 = sum(devy * devy1) 
+      genr rnist = ssyy1 / ssy</programlisting>
+
+    <para>The figure <varname>rnist</varname> was then compared with the
+      certified value.
+    </para>
+
+    <para>With this modification, all the summary statistics were in
+      agreement (to the precision given by
+      <application>gretl</application>) for all datasets
+      (<filename>PiDigits</filename>, <filename>Lottery</filename>,
+      <filename>Lew</filename>, <filename>Mavro</filename>,
+      <filename>Michelso</filename>, <filename>NumAcc1</filename>,
+      <filename>NumAcc2</filename>, <filename>NumAcc3</filename> and
+      <filename>NumAcc4</filename>).</para>
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-parent-document:("../manual.sgml" "book" "chapter")
+End:
+-->

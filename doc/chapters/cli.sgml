@@ -1,0 +1,137 @@
+  <chapter id="cli"><title>The command line interface</title>
+
+    <para>
+      The <application>gretl</application> package includes the
+      command-line program <application>gretlcli</application>.  This
+      is essentially an updated version of Ramu Ramanathan's
+      <application>ESL</application>.  On unix-like systems it can be
+      run from the console, or in an xterm (or similar).  Under MS
+      Windows it can be run in a <quote>DOS box</quote>.
+      <application>gretlcli</application> has its own help file, which
+      may be accessed by typing <quote>help</quote> at the prompt. It
+      can be run in batch mode, sending outout directly to a file (see
+      <xref linkend="optarg2"/> above).
+    </para>
+
+    <para>
+      If <application>gretlcli</application> is linked to the
+      <application>readline</application> library (this is
+      automatically the case in the MS Windows version; also see
+      <xref linkend="app-b"/>), the command line is recallable and
+      editable, and offers command completion.  You can use the Up and
+      Down arrow keys to cycle through previously typed commands.  On
+      a given command line, you can use the arrow keys to move around,
+      in conjunction with Emacs editing
+      keystokes.<footnote><para>Actually, the key bindings shown below
+	  are only the defaults; they can be customized.  See the
+	  <ulink
+	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">readline 
+	    manual</ulink>.</para>
+      </footnote> The most common of these are:
+    </para>
+
+      <informaltable frame="none">
+      <tgroup cols="2">
+	<thead>
+	  <row>
+	    <entry>Keystroke</entry>
+	    <entry>Effect</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry><literal>Ctrl-a</literal></entry>
+	    <entry>go to start of line</entry>
+	  </row>
+	  <row>
+	    <entry><literal>Ctrl-e</literal></entry>
+	    <entry>go to end of line</entry>
+	  </row>
+	  <row>
+	    <entry><literal>Ctrl-d</literal></entry>
+	    <entry>delete character to right</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+      </informaltable>
+
+    <para>
+      where <quote><literal>Ctrl-a</literal></quote> means press the
+      <quote><literal>a</literal></quote> key while the
+      <quote><literal>Ctrl</literal></quote> key is also depressed.
+      Thus if you want to change something at the beginning of a
+      command, you <emphasis>don't</emphasis> have to backspace over
+      the whole line, erasing as you go.  Just hop to the start and
+      add or delete characters.
+    </para>
+
+    <para>If you type the first letters of a command name then press
+      the Tab key, readline will attempt to complete the command name
+      for you.  If there's a unique completion it will be put in place
+      automatically.  If there's more than one completion, pressing
+      Tab a second time brings up a list.</para>
+
+    <sect1 id="cli-syntax"><title>Changes from ESL</title>
+
+      <para>Command scripts developed for Ramanathan's original
+	<application>ESL</application> should be usable with
+	<application>gretlcli</application> with few or no changes:
+	the only things to watch for are multi-line commands and the
+	<command>freq</command> command.
+      </para>
+
+      <itemizedlist>
+	<listitem>
+	  <para>In <application>ESL</application>, a semicolon is used
+	    as a terminator for many commands.  I decided to remove
+	    this in <application>gretlcli</application>. Semicolons
+	    are simply ignored, apart from a few special cases where
+	    they have a definite meaning: as a separator for two lists
+	    in the <command>ar</command> and <command>tsls</command>
+	    commands, and as a marker for an unchanged starting or
+	    ending observation in the <command>smpl</command> command.
+	    In <application>ESL</application> semicolon termination
+	    gives the possibility of breaking long commands over more
+	    than one line; in <application>gretlcli</application> this
+	    is done by putting a trailing backslash
+	    <literal>\</literal> at the end of a line that is to be
+	    continued.
+	  </para>
+	</listitem>
+	<listitem>
+	  <para>With <command>freq</command>, you can't at
+	  present specify user-defined ranges as
+	  in <application>ESL</application>.  A &chisq; test for
+	  normality has been added to the output of this command.
+	  </para>
+	</listitem>
+      </itemizedlist>
+
+      <para>
+	Note also that the command-line syntax for running a batch job
+	is simplified. For <application>ESL</application> you typed,
+	e.g. 
+	<programlisting> 
+	  esl -b datafile &lt; inputfile &gt; outputfile</programlisting> 
+	while for <application>gretlcli</application> you type: 
+	<programlisting>
+	  gretlcli -b inputfile &gt; outputfile</programlisting> 
+	The
+	inputfile is treated as a program argument; it should specify
+	a datafile to use internally, using the syntax <command>open
+	  datafile</command>  or the special comment <literal>(*
+	  !</literal> <replaceable>datafile</replaceable>
+	<literal>*)</literal>
+      </para>
+
+    </sect1>
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-default-dtd-file:"../manual.ced"
+sgml-parent-document:("../manual.sgml" "book" "chapter")
+End:
+-->
+

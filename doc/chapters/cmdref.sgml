@@ -1,4 +1,7 @@
 
+<?PSGML NOFILL programlisting example informalequation>
+
+
   <chapter id="cmdref"><title>Command Reference</title>
 
     <sect1 id="cmd-intro"><title>Introduction</title>
@@ -882,7 +885,7 @@
 		</row>
 		<row>
 		  <entry><varname>$trsq</varname></entry>
-		  <entry><emphasis>T</emphasis>&rsq; (sample size times &rsqu;)
+		  <entry><emphasis>T</emphasis>&rsqu; (sample size times &rsqu;)
 		  </entry>
 		</row>
 		<row>
@@ -3014,7 +3017,8 @@ linkend="looping"/> for details.
 
 <!-- Keep this comment at the end of the file
 Local variables:
+sgml-default-dtd-file:"../manual.ced"
 mode: sgml
-sgml-parent-document:("manual.sgml" "book" "chapter")
+sgml-parent-document:("../manual.sgml" "book" "chapter")
 End:
 -->

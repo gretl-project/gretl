@@ -6,17 +6,20 @@
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
 <!ENTITY chisq SYSTEM "chisqu.def">
-<!ENTITY intro SYSTEM "intro.sgml">
-<!ENTITY starting SYSTEM "getting_started.sgml">
-<!ENTITY menus SYSTEM "menus.sgml">
-<!ENTITY modes SYSTEM "modes.sgml">
-<!ENTITY datafiles SYSTEM "datafiles.sgml">
-<!ENTITY panel SYSTEM "panel.sgml">
-<!ENTITY graphs SYSTEM "graphs.sgml">
-<!ENTITY looping SYSTEM "looping.sgml">
-<!ENTITY optarg SYSTEM "optarg.sgml">
-<!ENTITY cmdref SYSTEM "cmdref.sgml">
-<!ENTITY trouble SYSTEM "trouble.sgml">
+<!ENTITY intro SYSTEM "chapters/intro.sgml">
+<!ENTITY starting SYSTEM "chapters/starting.sgml">
+<!ENTITY menus SYSTEM "chapters/menus.sgml">
+<!ENTITY modes SYSTEM "chapters/modes.sgml">
+<!ENTITY datafiles SYSTEM "chapters/datafiles.sgml">
+<!ENTITY panel SYSTEM "chapters/panel.sgml">
+<!ENTITY graphs SYSTEM "chapters/graphs.sgml">
+<!ENTITY looping SYSTEM "chapters/looping.sgml">
+<!ENTITY optarg SYSTEM "chapters/optarg.sgml">
+<!ENTITY cmdref SYSTEM "chapters/cmdref.sgml">
+<!ENTITY trouble SYSTEM "chapters/trouble.sgml">
+<!ENTITY cli SYSTEM "chapters/cli.sgml">
+<!ENTITY nist SYSTEM "chapters/nist.sgml">
+<!ENTITY appendices SYSTEM "chapters/appendices.sgml">
 ]>
 
 <!-- =============Document Header ============================= -->
@@ -27,7 +30,8 @@
 
   <bookinfo>
 
-    <subtitle>Gnu Regression, Econometrics and Time-series Library</subtitle>
+    <subtitle>Gnu Regression, Econometrics and Time-series
+      Library</subtitle>
 
     <author>
       <firstname>Allin</firstname>
@@ -45,977 +49,97 @@
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>October, 2001</date>
+    <date>January, 2002</date>
 
     <legalnotice id="legalnotice">
       <para>Permission is granted to copy, distribute and/or modify
-	this document under the terms of the <ulink
+  this document under the terms of the <ulink
 	  url="gnome-help:fdl" type="help"><citetitle>GNU Free
-	    Documentation License</citetitle></ulink>, Version 1.1 or
+      Documentation License</citetitle></ulink>, Version 1.1 or
 	any later version published by the Free Software Foundation.
       </para>
     </legalnotice>
 
-    <releaseinfo>
-      This is version 0.1 of the Gretl manual.
-    </releaseinfo>
+  <releaseinfo>
+    This is version 0.2 of the Gretl manual.
+  </releaseinfo>
 
   </bookinfo>
 
   &intro;
-  &getting_started;
+  &starting;
   &menus;
   &modes;
   &datafiles;
   &panel;
   &graphs;
   &looping;
-  &optarg1;
+  &optarg;
   &cmdref;
   &trouble;
-
-  <chapter id="cli"><title>The command line interface</title>
-
-    <para>
-      The <application>gretl</application> package includes the
-      command-line program <application>gretlcli</application>.  This
-      is essentially an updated version of Ramu Ramanathan's
-      <application>ESL</application>.  On unix-like systems it can be
-      run from the console, or in an xterm (or similar).  Under MS
-      Windows it can be run in a <quote>DOS box</quote>.
-      <application>gretlcli</application> has its own help file, which
-      may be accessed by typing <quote>help</quote> at the prompt. It
-      can be run in batch mode, sending outout directly to a file (see
-      <xref linkend="optarg2"/> above).
-    </para>
-
-    <para>
-      If <application>gretlcli</application> is linked to the
-      <application>readline</application> library (this is
-      automatically the case in the MS Windows version; also see
-      <xref linkend="app-b"/>), the command line is recallable and
-      editable, and offers command completion.  You can use the Up and
-      Down arrow keys to cycle through previously typed commands.  On
-      a given command line, you can use the arrow keys to move around,
-      in conjunction with Emacs editing
-      keystokes.<footnote><para>Actually, the key bindings shown below
-	  are only the defaults; they can be customized.  See the
-	  <ulink
-	    url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">readline 
-	    manual</ulink>.</para>
-      </footnote> The most common of these are:
-    </para>
-
-      <informaltable frame="none">
-      <tgroup cols="2">
-	<thead>
-	  <row>
-	    <entry>Keystroke</entry>
-	    <entry>Effect</entry>
-	  </row>
-	</thead>
-	<tbody>
-	  <row>
-	    <entry><literal>Ctrl-a</literal></entry>
-	    <entry>go to start of line</entry>
-	  </row>
-	  <row>
-	    <entry><literal>Ctrl-e</literal></entry>
-	    <entry>go to end of line</entry>
-	  </row>
-	  <row>
-	    <entry><literal>Ctrl-d</literal></entry>
-	    <entry>delete character to right</entry>
-	  </row>
-	</tbody>
-      </tgroup>
-      </informaltable>
-
-    <para>
-      where <quote><literal>Ctrl-a</literal></quote> means press the
-      <quote><literal>a</literal></quote> key while the
-      <quote><literal>Ctrl</literal></quote> key is also depressed.
-      Thus if you want to change something at the beginning of a
-      command, you <emphasis>don't</emphasis> have to backspace over
-      the whole line, erasing as you go.  Just hop to the start and
-      add or delete characters.
-    </para>
-
-    <para>If you type the first letters of a command name then press
-      the Tab key, readline will attempt to complete the command name
-      for you.  If there's a unique completion it will be put in place
-      automatically.  If there's more than one completion, pressing
-      Tab a second time brings up a list.</para>
-
-    <sect1 id="cli-syntax"><title>Changes from ESL</title>
-
-      <para>Command scripts developed for Ramanathan's original
-	<application>ESL</application> should be usable with
-	<application>gretlcli</application> with few or no changes:
-	the only things to watch for are multi-line commands and the
-	<command>freq</command> command.
-      </para>
-
-      <itemizedlist>
-	<listitem>
-	  <para>In <application>ESL</application>, a semicolon is used
-	    as a terminator for many commands.  I decided to remove
-	    this in <application>gretlcli</application>. Semicolons
-	    are simply ignored, apart from a few special cases where
-	    they have a definite meaning: as a separator for two lists
-	    in the <command>ar</command> and <command>tsls</command>
-	    commands, and as a marker for an unchanged starting or
-	    ending observation in the <command>smpl</command> command.
-	    In <application>ESL</application> semicolon termination
-	    gives the possibility of breaking long commands over more
-	    than one line; in <application>gretlcli</application> this
-	    is done by putting a trailing backslash
-	    <literal>\</literal> at the end of a line that is to be
-	    continued.
-	  </para>
-	</listitem>
-	<listitem>
-	  <para>With <command>freq</command>, you can't at
-	  present specify user-defined ranges as
-	  in <application>ESL</application>.  A &chisq; test for
-	  normality has been added to the output of this command.
-	  </para>
-	</listitem>
-      </itemizedlist>
-
-      <para>
-	Note also that the command-line syntax for running a batch job
-	is simplified. For <application>ESL</application> you typed,
-	e.g. 
-	<programlisting> 
-	  esl -b datafile &lt; inputfile &gt; outputfile</programlisting> 
-	while for <application>gretlcli</application> you type: 
-	<programlisting>
-	  gretlcli -b inputfile &gt; outputfile</programlisting> 
-	The
-	inputfile is treated as a program argument; it should specify
-	a datafile to use internally, using the syntax <command>open
-	  datafile</command>  or the special comment <literal>(*
-	  !</literal> <replaceable>datafile</replaceable>
-	<literal>*)</literal>
-      </para>
-
-    </sect1>
-  </chapter>
-
-  <chapter id="nist"><title>Assessing program accuracy: the NIST
-      datasets</title>
-
-    <para>
-      The U.S. National Institute of Standards and Technology (NIST)
-      publishes a set of statistical reference datasets.  The object
-      of this project is to <quote>improve the accuracy of statistical
-	software by providing reference datasets with certified
-	computational results that enable the objective evaluation of
-	statistical software</quote>.</para>
-
-    <para>As of May 2000 the website for the project can be found
-      at:</para>
-
-    <para><ulink
-	url="http://www.nist.gov/itl/div898/strd/general/main.html">
-	<literal>http://www.nist.gov/itl/div898/strd/general/main.html</literal></ulink></para>
-
-    <para>while the datasets are at</para>
-
-    <para><ulink
-	url="http://www.nist.gov/itl/div898/strd/general/dataarchive.html"> 
-	<literal>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</literal></ulink></para>
-
-    <para>For testing <application>gretl</application> I have made use
-      of the datasets pertaining to Linear Regression and Univariate
-      Summary Statistics (the others deal with ANOVA and nonlinear
-      regression).</para>
-
-    <para>I quote from the NIST text <quote>Certification Method &amp;
-	Definitions</quote> regarding their certified computational
-      results (emphasis added):</para>
-
-    <blockquote>
-      <para>For all datasets, multiple precision calculations
-	(accurate to 500 digits) were made using the preprocessor and
-	FORTRAN subroutine package of Bailey (1995, available from
-	NETLIB). Data were read in exactly as multiple precision
-	numbers and all calculations were made with this very high
-	precision. The results were output in multiple precision, and
-	only then rounded to fifteen significant digits.
-	<emphasis>These multiple precision results are an
-	  idealization. They represent what would be achieved if
-	  calculations were made without roundoff or other
-	  errors.</emphasis> Any typical numerical algorithm (i.e.
-	not implemented in multiple precision) will introduce
-	computational inaccuracies, and will produce results which
-	differ slightly from these certified values.</para>
-    </blockquote>
-
-    <para>It is not to be expected that results obtained from ordinary
-      statistical packages will agree exactly with NIST's multiple
-      precision benchmark figures.  But the benchmark provides a very
-      useful test for egregious errors and imprecision.</para>  
-
-    <para>In <xref linkend="tab-linreg"/> below, <quote>OK</quote>
-      means that <application>gretl</application>'s output
-      agrees &mdash; to the precision given by the program, which is
-      less than the 15 significant digits given by NIST &mdash; with the
-      certified values for all the NIST statistics, which include
-      regression coefficients and standard errors, sum of squared
-      residuals or error sum of squares (ESS), standard error of
-      residuals, <emphasis>F</emphasis> statistic and &rsqu;.</para>
-
-    <table id="tab-linreg" frame="none">
-      <title>NIST linear regression tests</title>
-      <tgroup cols="3"><colspec colnum="1" colwidth="&cmdcol;"/>
-	<thead>
-	  <row>
-	    <entry>Dataset</entry>
-	    <entry>Model</entry>
-	    <entry>Performance</entry>
-	  </row>
-	</thead>
-	<tbody>
-	  <row>
-	    <entry>Norris</entry>
-	    <entry>Simple linear regression</entry>
-	    <entry>OK</entry></row>
-	  <row><entry>Pontius</entry>
-	    <entry>Quadratic</entry>
-	    <entry>OK</entry>
-	  </row>
-	  <row><entry>NoInt1</entry>
-	    <entry>Simple regression, no intercept </entry>
-	    <entry>OK (but see text)</entry>
-	  </row>
-	  <row><entry>NoInt2</entry>
-	    <entry>Simple regression,
-	      no intercept </entry>
-	    <entry>OK (but see text)</entry>
-	  </row>
-	  <row><entry>Filip</entry>
-	    <entry>10th degree polynomial </entry>
-	    <entry>Complains of excessive multicollinearity, no
-	      estimates produced</entry></row>
-	  <row>
-	    <entry>Longley</entry>
-	    <entry>Multiple regression,
-	      six independent variables 
-	    </entry><entry>OK</entry></row>
-	  <row>
-	    <entry>Wampler1</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
-	  <row>
-	    <entry>Wampler2</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
-	  <row>
-	    <entry>Wampler3</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
-	  <row>
-	    <entry>Wampler4</entry>
-	    <entry>5th degree polynomial
-	    </entry><entry>OK</entry></row>
-	  <row>
-	    <entry>Wampler5</entry>
-	    <entry>5th degree polynomial
-	     </entry><entry>OK</entry></row>
-	</tbody>
-      </tgroup>
-    </table>
-
-
-    <para>As can be seen from the table,
-      <application>gretl</application> does a good job of tracking the
-      certified results. (Total run time for the tests was 0.195
-      seconds on a 333MHz i686 machine running GNU/Linux.)  With the
-      <filename>Filip</filename> data set, where the model is 
-      <informalequation>
-	<alt>
-	  \[y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
-	  +\beta_{10}x^{10}_t+\epsilon\]
-	</alt>
-	<graphic fileref="figures/poly.png"/>
-      </informalequation>
-      <application>gretl</application> refuses to produce estimates
-      due to a high degree of multicollinearity (the popular
-      commercial econometrics program <citetitle>Eviews
-	3.1</citetitle> also baulks at this regression).  Other than
-      that, the program produces accurate coefficient estimates in all
-      cases.</para>
-
-    <para>In the <filename>NoInt1</filename> and
-      <filename>NoInt2</filename> datasets there is a methodological
-      disagreement over the calculation of the coefficient of
-      determination, &rsqu;, where the regression does not have an
-      intercept. <application>gretl</application> reports the square
-      of the correlation coefficient between the fitted and actual
-      values of the dependent variable in this case, while the NIST
-      figure is 
-      <informalequation>
-      <alt> 
-	\[R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}\] 
-      </alt>
-	  <graphic fileref="figures/nistr2.png"/>  
-      </informalequation>
-      There is no universal agreement among statisticians on the
-      <quote>correct</quote> formula (see for instance the discussion
-      in Ramanathan, 2002, pp. 163&ndash;4). <citetitle>Eviews
-	3.1</citetitle> produces a different figure again (which has a
-      negative value for the <filename>NoInt</filename> test files).
-      The figure chosen by NIST was obtained for these regressions
-      using the command</para>
-
-    <para><command> genr r2alt = 1 - $ess/sum(y * y)
-    </command></para>
-
-    <para>and the numbers thus obtained were in agreement with the
-      certified values, up to <application>gretl</application>'s
-      precision.</para>
-
-    <para>
-      As for the univariate summary statistics, the certified
-      values given by NIST are for the sample mean, sample standard
-      deviation and sample lag-1 autocorrelation coefficient.  NIST
-      note that the latter statistic <quote>may have several
-	definitions</quote>. The certified value is computed as 
-
-      <informalequation>
-	<alt>
-	  \[r_1=\frac{\sum^T_{t=2}(y_t-\bar{y})(y_{t-1}-\bar{y})} 
-                     {\sum^T_{t=1}(y_t - \bar{y})^2}\]
-	</alt>
-	<graphic fileref="figures/nistr1.png"/>
-      </informalequation>
-      
-      while <application>gretl</application>
-      gives the correlation coefficient between 
-      <emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>
-      and
-      <emphasis>y</emphasis><subscript><emphasis>t</emphasis>&minus;1</subscript>.
-      For the purposes of comparison, the NIST figure was computed
-      within <application>gretl</application> as follows:</para>
-
-    <programlisting>
-      genr y1 = y(-1) 
-      genr ybar = mean(y) 
-      genr devy = y - ybar genr
-      devy1 = y1 - ybar 
-      genr ssy = sum(devy * devy) 
-      smpl 2 ; 
-      genr ssyy1 = sum(devy * devy1) 
-      genr rnist = ssyy1 / ssy</programlisting>
-
-    <para>The figure <varname>rnist</varname> was then compared with the
-      certified value.
-    </para>
-
-    <para>With this modification, all the summary statistics were in
-      agreement (to the precision given by
-      <application>gretl</application>) for all datasets
-      (<filename>PiDigits</filename>, <filename>Lottery</filename>,
-      <filename>Lew</filename>, <filename>Mavro</filename>,
-      <filename>Michelso</filename>, <filename>NumAcc1</filename>,
-      <filename>NumAcc2</filename>, <filename>NumAcc3</filename> and
-      <filename>NumAcc4</filename>).</para>
-
-  </chapter>
-
-  <appendix id="app-a"><title>Crash course in econometrics</title>
-
-    <section id="metrics-intro"><title>Introduction</title>
-
-      <para> This highly condensed discussion is no substitute for a
-	proper training in econometrics, but hopefully it may serve to
-	orient people without an econometrics background who
-	nonetheless have some interest in experimenting with
-	<application>gretl</application>, or even hacking on it (dream
-	on!).
-      </para>
-
-      <para>
-	The substance of econometrics is the quantification of
-	relationships between economic variables using statistical
-	methods.  The larger purposes served by this work include
-	forecasting, policy analysis, and the assessment or refinement
-	of economic theories.
-      </para>
-
-      <para>
-	Much of econometrics is based on the classical statistical
-	paradigm of sampling theory. Econometric relationships are
-	generally represented as stochastic equations, the simplest of
-	which is the simple linear regression model</para> 
-
-	<informalequation>
-	<alt>
-	  \[y_t = \alpha + \beta x_t + \epsilon_t\]
-	</alt>
-	<graphic fileref="figures/linreg.png"/>
-        </informalequation>
-	      
-	<para>This model represents the <emphasis>dependent
-	  variable</emphasis>, <emphasis>y</emphasis>, at observation
-	<emphasis>t</emphasis>, as a linear function (with intercept
-	&alpha; and slope &beta;) of a single <emphasis>independent
-	  variable</emphasis>,
-	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
-	plus a random <quote>error</quote> or
-	<quote>disturbance</quote> term
-	&epsi;<subscript><emphasis>t</emphasis></subscript>. The random
-	term may be thought of as summing up various influences on
-	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
-	not specified in the equation, or as reflecting inherently
-	stochastic behavior in <emphasis>y</emphasis>, or in various
-	other ways. The task of econometric estimation is to provide
-	estimates of the parameters &alpha; and &beta; (and the
-	variance, &sigma;<superscript>2</superscript>, of the error
-	term), given some actual data on <emphasis>x</emphasis> and
-	<emphasis>y</emphasis>.</para> 
-
-    </section>
-
-    <section id="metrics-ols"><title>Least Squares</title>
-
-      <para>Provided that the distribution of &epsi; satisfies
-	certain conditions (it has a mean or expected value of zero;
-	it has a constant variance; it is uncorrelated across
-	observations; it is uncorrelated with the independent
-	variable, <emphasis>x</emphasis>), the Gauss&ndash;Markov
-	Theorem tells us that optimal estimates of the regression
-	parameters are delivered by the method of <emphasis>least
-	  squares</emphasis>.
-      </para>
-
-      <para>
-	Let the least-squares estimates of &alpha; and &beta; be
-	denoted by <emphasis>a</emphasis> and <emphasis>b</emphasis>:
-	we then represent the equation <quote>fitted</quote> via least
-	squares as 
-
-	<informalequation>
-	  <alt>
-	    \[\hat{y}_t = a + b x_t\]
-	  </alt>
-	  <graphic fileref="figures/yhat.png"/>
-	</informalequation> 
-
-	We define the regression <quote>residual</quote> as 
-
-	<informalequation>
-	  <alt>
-	    \[\hat{\epsilon}_t = y_t - \hat{y}_t\]
-	  </alt>
-	  <graphic fileref="figures/resid.png"/>
-	</informalequation> 
-
-	the difference between actual
-	<emphasis>y</emphasis> at observation <emphasis>t</emphasis>
-	and the <quote>fitted</quote> or predicted value (which lies
-	on the least-squares regression line). The least squares
-	method consists in finding the specific coefficient values
-	<emphasis>a</emphasis> and <emphasis>b</emphasis> which
-	produce the smallest possible sum of squared residuals.
-	Provided the equation in view is indeed linear, this is just
-	an exercise in the differential calculus. The sum of squared
-	residuals (or estimated errors), ESS, is a function of
-	<emphasis>a</emphasis> and <emphasis>b</emphasis> (and the
-	data).  One takes the partial derivatives of ESS with respect
-	to both <emphasis>a</emphasis> and <emphasis>b</emphasis> and
-	sets them to zero, then solves the resulting two equations for
-	the implied <emphasis>a</emphasis> and <emphasis>b</emphasis>
-	values. The same principle extends to higher-dimensional
-	systems.</para>
-
-    </section>
-
-    <section id="pop-and-sample"><title>Population and sample</title>
-
-      <para>On the classical sampling paradigm, the actual observed
-	data
-	(<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
-	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>) 
-	from any given period are conceived as a particular sample
-	<emphasis>realization</emphasis> of the (potentially infinite)
-	<emphasis>population</emphasis> of
-	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
-	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
-	pairs that could have been observed, given different possible
-	<quote>drawings</quote> from the distribution of the error
-	term, &epsi;<subscript><emphasis>t</emphasis></subscript>, in
-	each sub-period.  Application of the least-squares method
-	guarantees the <quote>best fit</quote> (in a well-defined
-	sense) to any given set of sample data, but data from any
-	finite sample may be more or less unrepresentative of the
-	larger population from which they are drawn.
-      </para>
-
-      <para>
-	One sort of question of interest in econometrics is: Given
-	that the conditions of optimality of the least-squares
-	estimates are satisfied, how much confidence can one have that
-	the coefficients derived via least squares lie within a
-	specified distance of the <quote>true</quote> underlying
-	parameters that characterize the data-generating process (DGP)
-	itself?  This is the issue of <quote>confidence
-	  intervals.</quote>  As a rough rule of thumb, a 95 percent
-	confidence interval for a parameter can be constructed as the
-	point estimate plus-or-minus two standard errors: that is
-	(again, roughly) one can have 95 percent confidence that a
-	given coefficient estimate is within 2 standard errors of the
-	corresponding unknown parameter. Standard errors for
-	coefficient estimates are reported routinely within
-	<application>gretl</application>.
-      </para>
-
-      <para>
-	One is also interested in hypothesis tests: For instance,
-	given a certain non-zero value for a least-squares regression
-	coefficient, how confident can we be that the corresponding
-	unknown parameter is non-zero? It's always possible that even
-	if <emphasis>x</emphasis> and <emphasis>y</emphasis> are
-	<quote>truly</quote> statistically independent, one derives a
-	non-zero correlation between observations of these variables
-	in a finite sample by the <quote>luck of the draw.</quote> The
-	larger the sample, and the larger the (absolute value of the)
-	sample correlation, presumably the smaller the probability
-	that this correlation could be a <quote>luck of the
-	draw</quote> phenomenon.
-      </para>
-
-      <para>
-	So-called <quote>p-values</quote> for hypothesis tests
-	(reported in various contexts within
-	<application>gretl</application>) address this issue: the
-	p-value is the probability of observing a sample effect of the
-	given, observed magnitude or greater, conditional on there
-	being no real effect at the population level.  Thus a small
-	p-value counts against the Null Hypothesis (no real effect).
-	If the p-value for a given coefficient estimate is less than
-	&alpha; one says that the coefficient is <quote>statistically
-	  significant</quote> at the &alpha; level (e.g. a
-	coefficient with a p-value &lt; .05 is significant at the 5
-	percent level).</para> 
-
-    </section>
-
-    <section id="metrics-pathol"><title>Regression pathologies</title> 
-
-      <para>Two other questions of interest in econometrics are:  How
-	can we tell if the conditions for optimality of the least
-	squares estimates are <emphasis>not</emphasis> satisfied?  And if it
-	appears these conditions are violated, what better
-	alternatives to least squares are available?
-	<application>gretl</application> offers a battery of tests and
-	alternative estimators. The tests are available under the
-	menus in the model window after running a regression; the
-	alternative estimators are under the Model menu in the main
-	window, while details on their use are in the online help
-	file. I can't hope to teach much about these topics here.
-	Please consult, for instance, Ramanathan (2002) or, for a
-	comprehensive treatment, Greene (2000).  Ruud (2000) is also a
-	rather comprehensive resource.</para>
-
-    </section>
-
-    <section id="linearity"><title>Linearity: how restrictive?</title>
-
-
-      <para>As mentioned above, the least squares regression routines
-	in <application>gretl</application> presuppose a linear model.
-	This is not quite as restrictive as it may seem.  We require
-	an equation that is linear in its
-	<emphasis>parameters</emphasis>, but this does not necessarily
-	mean that it is linear in the variables of interest.  For
-	example, all of the following equations represent nonlinear
-	relationships between <emphasis>y</emphasis> and
-	<emphasis>x</emphasis> that can readily be estimated using OLS
-	or similar:
-
-	<informalequation>
-	<alt>
-         \begin{eqnarray*}
-	  y_t &=& \alpha + \beta(1/x_t) + \epsilon_t\\
-	  y_t &=& \alpha + \beta x_t + \gamma x^2_t + \epsilon_t\\
-	  y_t &=& \alpha + \beta \log x_t + \epsilon_t\\
-	  \log y_t &=& \alpha + \beta \log x_t + \epsilon_t
-         \end{eqnarray*}
-	</alt>
-	<graphic fileref="figures/nonlin.png"/>
-	</informalequation>
-
-	Of course there are nonlinear relationships that cannot
-	be reduced to linearity by this sort of change of variables:
-	OLS cannot deal with these; more complex estimators are
-	required. Of these additional estimators,
-	<application>gretl</application> offers only the logit and
-	probit models for a binomial dependent variable (but see also
-	<xref linkend="ils"/> above for the use of iterated least
-	squares in estimating nonlinear models).  As mentioned above,
-	<application>gretl</application> can be complemented by GNU R
-	or GNU Octave for further analysis of nonlinear relationships.
-      </para>
-    </section>
-
-  </appendix>
-
-  <appendix id="app-b"><title>Technical notes</title>
-
-    <para>
-      <application>Gretl</application> is written in the C programming
-      language.  I have abided as far as possible by the ISO/ANSI C
-      Standard (C89), although the graphical user interface and some
-      other components necessarily make use of platform-specific
-      extensions.
-    </para>
-
-    <para>
-      <application>gretl</application> is being developed under Linux.
-      The shared library and command-line client should compile and
-      run on any platform that supports ISO/ANSI C and has the zlib
-      compression library installed. The homepage for zlib can be
-      found at <ulink
-	url="http://www.info-zip.org/pub/infozip/zlib/">info-zip.org</ulink>. 
-      If the GNU readline library is found on the host system this
-      will be used for <application>gretcli</application>, providing a
-      much enhanced editable command line. See the <ulink
-	url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">readline 
-	homepage</ulink>.
-    </para>
-
-    <para> The graphical client program should compile and run on any
-      system that, in addition to the above requirements, offers GTK
-      version 1.2.3 or higher (see <ulink
-	url="http://www.gtk.org/">gtk.org</ulink>).
-    </para>
-
-    <para>
-      <application>gretl</application> calls gnuplot for graphing. You
-      can find gnuplot at <ulink
-	url="http://www.gnuplot.org/">gnuplot.org</ulink>.  As of this
-      writing the curent version is 3.7.1.
-    </para>
-
-    <para>
-      Some features of <application>gretl</application> (the built-in
-      spreadsheet, the <quote>session</quote> icon window, some file
-      selection dialogs) make use of Adrian Feguin's
-      <application>gtkextra</application> library. You can find
-      gtkextra at <ulink
-	url="http://gtkextra.sourceforge.net/">gtkextra.sourceforge.net</ulink>. 
-    </para>
-
-    <para>
-      A binary version of the program is available for the Microsoft
-      Windows platform (32-bit version, i.e. Windows 95 or higher).
-      This version was cross-compiled under Linux using mingw (the GNU
-      C compiler, <application>gcc</application>, ported for use with
-      win32) and linked against the Microsoft C library,
-      <filename>msvcrt.dll</filename>.  It uses Tor Lillqvist's port
-      of GTK to win32. The (free, open-source) Windows installer
-      program is courtesy of Jordan Russell (<ulink
-      url="http://www.jrsoftware.org/">jrsoftware.org</ulink>).
-    </para>
-
-    <para>I'm hopeful that some users with coding skills may consider
-      <application>gretl</application> sufficiently interesting to be
-      worth improving and extending.  To date I have not attempted to
-      document the libgretl API (other than via the header files
-      you'll find in the <filename>lib/src</filename> subdirectory of
-      the source package).  But I welcome email on this subject and if
-      there's sufficient interest I'll put some time into
-      documentation. 
-    </para>
-
-  </appendix>
-
-    <appendix id="app-c"><title>Advanced econometric analysis
-	with free software</title>
-
-      <para>As mentioned in the main text,
-	<application>gretl</application> offers a reasonably full
-	selection of least-squares based estimators, plus a few
-	additional estimators sych as (binomial) logit and probit.
-	Advanced users may, however, find
-	<application>gretl</application>'s menu of statistical
-	routines restrictive.</para>
-
-      <para>No doubt some advanced users will prefer to write their
-	own statistical code in a fundamental computer language such
-	as C, C++ or Fortran.  Another option is to use a relatively
-	high-level language that offers easy matrix manipulation and
-	that already has numerous statistical routines built in, or
-	available as add-on packages. If the latter option sounds
-	attractive, and you are interested in using free, open source
-	software, I would recommend taking a look at either GNU R
-	(<ulink url="http://www.r-project.org/">r-project.org</ulink>)
-	or (<ulink url="http://www.octave.org/">GNU Octave</ulink>).
-	These programs are very close to the commercial programs S and
-	Matlab respectively. 
-      </para>
-
-      <para>
-	Also as mentioned above, <application>gretl</application>
-	offers the facility of exporting data in the formats of both
-	Octave and R.  In the case of Octave, the
-	<application>gretl</application> data set is saved thus: the
-	first variable listed for export is treated as the dependent
-	variable and is saved as a vector, <varname>y</varname>, while
-	the remaining variables are saved jointly as a matrix,
-	<varname>X</varname>. You can pull the <varname>X</varname>
-	matrix apart if you wish, once the data are loaded in Octave.
-	See the Octave manual for details. As for R, the exported data
-	file preserves any time series structure that is apparent to
-	<application>gretl</application>. The series are saved as
-	individual structures. The data should be brought into R using
-	the <command>source()</command> command.
-      </para>
-
-      <para>
-	Of these two programs, R is perhaps more likely to be of
-	immediate interest to econometricians since it offers more in
-	the way of statistical routines (e.g. generalized linear
-	models, maximum likelihood estimation, time series methods).
-	I have therefore supplied <application>gretl</application>
-	with a convenience function for moving data quickly into R.
-	Under <application>gretl</application>'s Session menu, you
-	will find the entry <quote>Start GNU R</quote>.  This writes
-	out an R version of the current
-	<application>gretl</application> data set
-	(<filename>Rdata.tmp</filename>, in the user's gretl
-	directory), and sources it into a new R session. A few details
-	on this follow.
-      </para>
-
-      <para>
-	First, the data are brought into R by writing a temporary
-	version of <filename>.Rprofile</filename> in the current
-	working directory.  (If such a file exists it is referenced by
-	R at startup.)  In case you already have a personal
-	<filename>.Rprofile</filename> in place, the original file is
-	temporarily moved to <filename>.Rprofile.gretltmp</filename>,
-	and on exit from <application>gretl</application> it is
-	restored.  (If anyone can suggest a cleaner way of doing this
-	I'd be happy to hear of it.)
-      </para>
-
-      <para>
-	Second, the particular way R is invoked depends on the
-	internal <application>gretl</application> variable
-	<varname>Rcommand</varname>, whose value may be set under the
-	File, Preferences menu.  The default command is
-	<command>RGui.exe</command> under MS Windows. Under X it is
-	either <command>R --gui=gnome</command> if an installation of
-	the Gnome desktop (<ulink
-	  url="http://www.gnome.org/">gnome.org</ulink>) was detected
-	at compile time, or <command>xterm -e R</command> if Gnome was
-	not found. Please note that at most three
-	space-separated elements in this command string will be
-	processed; any extra elements are ignored.
-      </para>
-
-  </appendix>
-
-  <appendix id="app-d"><title>Listing of URLs</title>
-
-<para>Below is a listing of the full URLs of websites mentioned in the
-      text, in their order of appearance.</para>
-
-<variablelist>
-
-<varlistentry><term>GNU R homepage</term>
- <listitem><para><ulink url="http://www.r-project.org/">
-  <literal>http://www.r-project.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GNU Octave homepage</term>
- <listitem><para><ulink url="http://www.octave.org/">
-  <literal>http://www.octave.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gretl homepage</term>
- <listitem><para><ulink url="http://gretl.sourceforge.net/">
-  <literal>http://gretl.sourceforge.net/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Census Bureau, Data Extraction Service</term>
- <listitem><para><ulink url="http://www.census.gov/ftp/pub/DES/www/welcome.html">
-  <literal>http://www.census.gov/ftp/pub/DES/www/welcome.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gretl data page</term>
- <listitem><para><ulink url="http://ricardo.ecn.wfu.edu/gretl/gretl_data.html">
-  <literal>http://ricardo.ecn.wfu.edu/gretl/gretl_data.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Estima (RATS)</term>
- <listitem><para><ulink url="http://www.estima.com/">
-  <literal>http://www.estima.com/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Penn World Table</term>
- <listitem><para><ulink url="http://pwt.econ.upenn.edu/">
-  <literal>http://pwt.econ.upenn.edu/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gnuplot homepage</term>
- <listitem><para><ulink url="http://www.gnuplot.org/">
-  <literal>http://www.gnuplot.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gnuplot online manual</term>
- <listitem><para><ulink url="http://ricardo.ecn.wfu.edu/gnuplot.html">
-  <literal>http://ricardo.ecn.wfu.edu/gnuplot.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GNU Readline manual</term>
- <listitem><para><ulink url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">
-  <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>NIST regression test main page</term>
- <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/main.html">
-  <literal>http://www.nist.gov/itl/div898/strd/general/main.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>NIST data page</term>
- <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/dataarchive.html">
-  <literal>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>InfoZip homepage</term>
- <listitem><para><ulink url="http://www.info-zip.org/pub/infozip/zlib/">
-  <literal>http://www.info-zip.org/pub/infozip/zlib/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GNU Readline homepage</term>
- <listitem><para><ulink url="http://cnswww.cns.cwru.edu/~chet/readline/rltop.html">
-  <literal>http://cnswww.cns.cwru.edu/~chet/readline/rltop.html</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GTK+ homepage</term>
- <listitem><para><ulink url="http://www.gtk.org/">
-  <literal>http://www.gtk.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gtkextra homepage</term>
- <listitem><para><ulink url="http://gtkextra.sourceforge.net/">
-  <literal>http://gtkextra.sourceforge.net/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Mingw (gcc for win32) homepage</term>
- <listitem><para><ulink url="http://www.mingw.org/">
-  <literal>http://www.mingw.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GTK+ port for win32</term>
- <listitem><para><ulink url="http://user.sgic.fi/~tml/gimp/win32/">
-  <literal>http://user.sgic.fi/~tml/gimp/win32/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>JRSoftware</term>
- <listitem><para><ulink url="http://www.jrsoftware.org/">
-  <literal>http://www.jrsoftware.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>Gnome desktop homepage</term>
- <listitem><para><ulink url="http://www.gnome.org/">
-  <literal>http://www.gnome.org/</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-<varlistentry><term>GNU R manual</term>
- <listitem><para><ulink url="http://cran.r-project.org/doc/manuals/R-intro.pdf">
-  <literal>http://cran.r-project.org/doc/manuals/R-intro.pdf</literal></ulink></para>
- </listitem>
-</varlistentry>
-
-    </variablelist>
-
-  </appendix>
-
-    <bibliography>
-
-      <bibliomixed>
-	<bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
-	  (1958) <title>A Note on the Generation of Random Normal
-	    Deviates</title>,</bibliomset> <bibliomset
-	  relation='journal'> <title>Annals of Mathematical
-	    Statistics</title>, 29, pp. 610&ndash;11. </bibliomset>
-      </bibliomixed>
-
-      <bibliomixed>
-	Greene, William H. (2000) <title>Econometric Analysis</title>,
-	4th edition, Upper Saddle River, NJ: Prentice-Hall. 
-      </bibliomixed>
-
-      <bibliomixed>
-      <bibliomset relation='article'>Kiviet, J. F. (1986)
-	<title>On the rigour of some misspecification tests for
-	modelling dynamic relationships</title>,</bibliomset>
-      <bibliomset relation='journal'><title>Review of Economic
-	Studies</title>, 53, pp. 241&ndash;261.</bibliomset>
-     </bibliomixed>
-
-      <bibliomixed>
-	<bibliomset relation='article'>MacKinnon, J. G. and White, H.
-	  (1985) <title>Some Heteroskedasticity-Consistent Covariance
-	    Matrix Estimators with Improved Finite Sample
-	    Properties</title>, </bibliomset> <bibliomset
-	  relation='journal'> <title>Journal of Econometrics</title>,
-	  29, pp. 305&ndash;25. </bibliomset>
-      </bibliomixed>
-
-      <bibliomixed>
-	R Core Development Team (2000) <title>An Introduction to
-	  R</title>, version 1.1.1, <!-- <ulink
-	url="http://cran.r-project.org/doc/manuals/R-intro.pdf"></ulink>. 
-	-->
-      </bibliomixed>
-
-      <bibliomixed>
-	Ramanathan, Ramu (2002) <title>Introductory Econometrics with
-	  Applications</title>, 5th edition, Fort Worth: Harcourt.
-      </bibliomixed>
-
-      <bibliomixed>Ruud, Paul A. (2000) <title>An Introduction to
-	  Classical Econometric Theory</title>, New York and Oxford:
-	Oxford University Press.
-      </bibliomixed>
-
-      <bibliomixed>
-	<bibliomset relation='article'> Salkever, D. (1976) <title>The
-	    Use of Dummy Variables to Compute Predictions, Prediction
-	    Errors, and Confidence Intervals</title>, </bibliomset>
-	<bibliomset relation='journal'> <title>Journal of
-	    Econometrics</title>, 4, <artpagenums>pp.
-	    393&ndash;7</artpagenums>. </bibliomset>
-      </bibliomixed> 
-
-    </bibliography>
+  &cli;
+  &nist;
+  &appendices;
+
+  <bibliography>
+
+    <bibliomixed>
+      <bibliomset relation='article'>Box, G. E. P. and Muller, M. E.
+	(1958) <title>A Note on the Generation of Random Normal
+	  Deviates</title>,</bibliomset> <bibliomset
+	relation='journal'> <title>Annals of Mathematical
+	  Statistics</title>, 29, pp. 610&ndash;11. </bibliomset>
+    </bibliomixed>
+
+    <bibliomixed>
+      Greene, William H. (2000) <title>Econometric Analysis</title>,
+      4th edition, Upper Saddle River, NJ: Prentice-Hall. 
+    </bibliomixed>
+
+    <bibliomixed>
+      <bibliomset relation='article'>Kiviet, J. F. (1986) <title>On
+	  the Rigour of Some Misspecification Tests for Modelling
+	  Dynamic Relationships</title>,</bibliomset> <bibliomset
+	relation='journal'><title>Review of Economic Studies</title>,
+	53, pp. 241&ndash;261.</bibliomset>
+    </bibliomixed>
+
+    <bibliomixed>
+      <bibliomset relation='article'>MacKinnon, J. G. and White, H.
+	(1985) <title>Some Heteroskedasticity-Consistent Covariance
+	  Matrix Estimators with Improved Finite Sample
+	  Properties</title>, </bibliomset> <bibliomset
+	relation='journal'> <title>Journal of Econometrics</title>,
+	29, pp. 305&ndash;25. </bibliomset>
+    </bibliomixed>
+
+    <bibliomixed>
+      R Core Development Team (2000) <title>An Introduction to
+	R</title>, version 1.1.1, <!-- <ulink
+      url="http://cran.r-project.org/doc/manuals/R-intro.pdf"></ulink>. 
+      -->
+    </bibliomixed>
+
+    <bibliomixed>
+      Ramanathan, Ramu (2002) <title>Introductory Econometrics with
+	Applications</title>, 5th edition, Fort Worth: Harcourt.
+    </bibliomixed>
+
+    <bibliomixed>Ruud, Paul A. (2000) <title>An Introduction to
+	Classical Econometric Theory</title>, New York and Oxford:
+      Oxford University Press.
+    </bibliomixed>
+
+    <bibliomixed>
+      <bibliomset relation='article'> Salkever, D. (1976) <title>The
+	  Use of Dummy Variables to Compute Predictions, Prediction
+	  Errors, and Confidence Intervals</title>, </bibliomset>
+      <bibliomset relation='journal'> <title>Journal of
+	  Econometrics</title>, 4, <artpagenums>pp.
+	  393&ndash;7</artpagenums>. </bibliomset>
+    </bibliomixed> 
+
+  </bibliography>
 
 </book>
 

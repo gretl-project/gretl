@@ -504,6 +504,6 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 mode: sgml
-sgml-parent-document:("manual.sgml" "book" "chapter")
+sgml-parent-document:("../manual.sgml" "book" "chapter")
 End:
 -->
