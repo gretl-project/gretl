@@ -21,31 +21,31 @@
 
 #include <stdio.h>
 
-enum aux_codes {
-    NONE,
-    AUX_SQ,
-    AUX_LOG,
-    AUX_CHOW,
-    AUX_ADD,
-    AUX_AR,
-    AUX_WHITE,
-    AUX_COINT,
-    AUX_ARCH,
-    AUX_ADF,
-    AUX_OMIT
-};
+typedef enum {
+    NONE,      /* not an auxiliary regression */
+    AUX_SQ,    /* aux. regression for nonlinearity (squared terms) */
+    AUX_LOG,   /* aux. regression for nonlinearity (log terms) */
+    AUX_CHOW,  /* aux. regression for Chow test */
+    AUX_ADD,   /* aux. regression for adding variables */
+    AUX_AR,    /* aux. regression for autocorrelation test */
+    AUX_WHITE, /* aux. regression for heteroskedasticity (White's test) */
+    AUX_COINT, /* aux. regression for cointegreation test */
+    AUX_ARCH,  /* aux. regression for ARCH test */
+    AUX_ADF,   /* aux. regression for augmented Dickey-Fuller test */
+    AUX_OMIT   /* aux. regression for omitting variables */
+} aux_codes;
 
 typedef struct {
     int m1;        /* ID for first model */
     int m2;        /* ID for second model */
     int ols;       /* was the first model estimated via OLS? */
     int discrete;  /* logit or probit model? */
-    int dfn;
-    int dfd;
-    double F;
-    double chisq;
-    double trsq;
-    int score;
+    int dfn;       /* numerator degrees of freedom */
+    int dfd;       /* denominator degrees of freedom */ 
+    double F;      /* F test statistic */
+    double chisq;  /* Chi-square test statistic */
+    double trsq;   /* T*R^2 test statistic */
+    int score;     /* "cases correct" for discrete models */
 } COMPARE;
 
 /* functions follow */
@@ -56,10 +56,10 @@ int auxreg (int *addvars,
 	    const int aux_code, 
 	    print_t *prn, GRETLTEST *test);
 
-int handle_omit (int *omitvars, MODEL *orig, MODEL *new, 
-		 int *model_count, 
-		 double **pZ, DATAINFO *pdinfo, 
-		 print_t *prn);
+int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+	       int *model_count, 
+	       double **pZ, DATAINFO *pdinfo, 
+	       print_t *prn);
 
 int autocorr_test (MODEL *pmod, 
 		   double **pZ, DATAINFO *pdinfo, 
@@ -67,11 +67,10 @@ int autocorr_test (MODEL *pmod,
 
 int chow_test (const char *line, MODEL *pmod, 
 	       double **pZ, DATAINFO *pdinfo, 
-	       print_t *prn, char *msg, 
-	       GRETLTEST *test);
+	       print_t *prn, GRETLTEST *test);
 
 int cusum_test (MODEL *pmod, 
 		double **pZ, DATAINFO *pdinfo, 
-		print_t *prn, char *msg, 
+		print_t *prn, 
 		const PATHS *ppaths, 
 		GRETLTEST *test);

@@ -20,7 +20,7 @@
 #ifndef COMMANDS_H
 #define COMMANDS_H
 
-enum cmd_codes {
+typedef enum {
     SEMIC,    
     ADD,
     ADDTO,
@@ -95,7 +95,7 @@ enum cmd_codes {
     VARTEST,
     WLS,
     NC
-};
+} cmd_codes;
 
 extern char *commands[];  /* see cmdlist.h */
 

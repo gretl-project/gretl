@@ -35,9 +35,17 @@ static double obs_float (const DATAINFO *pdinfo, const int end);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
-/* ......................................................... */
+/**
+ * clear_datainfo:
+ * @pdinfo: data information struct.
+ * @subsample: 1 if @pdinfo relates to a sub-sample of a full data set,
+ * 0 otherwise.
+ *
+ * Free the allocated content of a data information struct.
+ * 
+ */
 
-void clear_datainfo (DATAINFO *pdinfo, int resample)
+void clear_datainfo (DATAINFO *pdinfo, int subsample)
 {
     int i;
 
@@ -47,9 +55,8 @@ void clear_datainfo (DATAINFO *pdinfo, int resample)
 	free(pdinfo->S);
 	pdinfo->S = NULL;
     } 
-    /* if this is a sub-sample datainfo, leave the varnames
-       and labels alone */
-    if (!resample) {
+    /* if this is not a sub-sample datainfo, free varnames and labels */
+    if (!subsample) {
 	if (pdinfo->varname != NULL) {
 	    for (i=0; i<pdinfo->v; i++) 
 		free(pdinfo->varname[i]); 
@@ -163,12 +170,25 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     return 0;
 }
 
-/* ................................................. */
+/**
+ * create_new_dataset:
+ * @pZ: pointer to data matrix.
+ * @nvar: number of variables.
+ * @nobs: number of observations per variable 
+ * @markers: 1 if there are case markers for the observations, 0
+ * otherwise.
+ *
+ * Create a new data information struct corresponding to a given
+ * data matrix.
+ * 
+ * Returns: pointer to data information struct, or NULL on error.
+ *
+ */
 
-DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
-			      int nvar,     /* number of variables */
-			      int nobs,     /* observations per variable */
-			      int markers   /* case markers or not? */
+DATAINFO *create_new_dataset (double **pZ,  
+			      int nvar,
+			      int nobs,
+			      int markers
 			      )
 {
     DATAINFO *pdinfo;
@@ -194,7 +214,18 @@ DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
     return pdinfo;
 }
 
-/* ................................................. */
+/**
+ * start_new_Z:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @resample: 1 if we're sub-sampling from a full data set, 0 otherwise.
+ *
+ * Initialize data matrix (add the constant) and the data information
+ * struct.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ *
+ */
 
 int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample)
 {
@@ -373,7 +404,16 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z,
     return 0;
 }
 
-/* ................................................ */
+/**
+ * check_varname:
+ * @varname: putative name for variable.
+ * @msg: buffer for error messages.
+ * 
+ * Check a variable name for legality.
+ * 
+ * Returns: 0 if name is OK, 1 if not.
+ *
+ */
 
 int check_varname (const char *varname, char *msg)
 {
@@ -533,14 +573,23 @@ static int check_date (const char *date, char *msg)
     return 0;
 }
 
-/* .......................................................... */
+/**
+ * dateton:
+ * @date: string representation of date for processing.
+ * @pd: periodicity or frequency of data.
+ * @startdate: string representing starting date.
+ * @msg: buffer for error messages.
+ * 
+ * Given a "current" date string, a periodicity, and a starting
+ * date string, returns the observation number corresponding to
+ * the current date string, counting from zero.
+ * 
+ * Returns: integer observation number.
+ *
+ */
 
 int dateton (const char *date, const int pd, const char *startdate,
 	     char *msg) 
-/* given a "current" date string, a periodicity, and a starting 
-   date string, returns the observation number corresponding to 
-   the current date string, counting from zero.
-*/
 {
     int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
     char majstr[5], minstr[3];
@@ -571,7 +620,8 @@ int dateton (const char *date, const int pd, const char *startdate,
 	}
     }
     if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-        sprintf(msg, "date strings inconsistent");
+	if (msg != NULL)
+	    sprintf(msg, "date strings inconsistent");
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
@@ -587,7 +637,16 @@ int dateton (const char *date, const int pd, const char *startdate,
     return n;
 }
 
-/* ........................................................  */
+/**
+ * ntodate:
+ * @datestr: string to which date is to be printed.
+ * @nt: an observation number (zero-based).
+ * @pdinfo: data information struct.
+ * 
+ * print to @datestr the calendar representation of observation
+ * number nt.
+ * 
+ */
 
 void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
 /* print to datestr the calendar representation of nt */
@@ -620,7 +679,18 @@ static int blank_check (FILE *fp)
     return deflt;
 }
 
-/* .......................................................... */
+/**
+ * get_info:
+ * @hdrfile: name of data header file
+ * @prn: gretl printing struct.
+ * 
+ * print to @prn the informative comments contained in the given
+ * data file (if any).
+ * 
+ * Returns: 0 on successful completion, non-zero on error or if there
+ * are no informative comments.
+ * 
+ */
 
 int get_info (const char *hdrfile, print_t *prn)
 {      
@@ -675,8 +745,8 @@ static int writehdr (const char *hdrfile, const int *list,
     char *comment_buf = NULL;
     char startdate[8], enddate[8];
 
-    if (opt == OPT_S) bin = 1;
-    else if (opt == OPT_O) bin = 2;
+    if (opt == GRETL_DATA_FLOAT) bin = 1;
+    else if (opt == GRETL_DATA_DOUBLE) bin = 2;
 
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
@@ -755,7 +825,20 @@ int get_precision (double *x, int n)
     return pmax;
 }
 
-/* ................................................. */
+/**
+ * write_data:
+ * @fname: name of file to write.
+ * @list: list of variables to write.
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ * @opt: code for format in which to write the data (see #data_options).
+ * 
+ * Write out a data file containing the values of the given set
+ * of variables.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ * 
+ */
 
 int write_data (const char *fname, const int *list, 
 		double *Z, const DATAINFO *pdinfo, int opt)
@@ -768,13 +851,15 @@ int write_data (const char *fname, const int *list,
 
     strcpy(datfile, fname);
 
-    if (opt == OPT_Z && !has_gz_suffix(datfile))
+    if (opt == GRETL_DATA_GZIPPED && !has_gz_suffix(datfile))
 	strcat(datfile, ".gz");
 
-    if (opt == OPT_R && pdinfo->time_series == 1) opt = OPT_R_ALT;
+    if (opt == GRETL_DATA_R && pdinfo->time_series == 1) 
+	opt = GRETL_DATA_R_ALT;
 
     /* write header and label files if not exporting to other formats */
-    if (opt != OPT_R && opt != OPT_R_ALT && opt != OPT_C && opt != OPT_M) {
+    if (opt != GRETL_DATA_R && opt != GRETL_DATA_R_ALT && 
+	opt != GRETL_DATA_CSV && opt != GRETL_DATA_OCTAVE) {
 	if (!has_gz_suffix(datfile)) {
 	    switch_ext(hdrfile, datfile, "hdr");
 	    switch_ext(lblfile, datfile, "lbl");
@@ -793,13 +878,13 @@ int write_data (const char *fname, const int *list,
     }
 
     /* open files, other than for gzipped output */
-    if (opt == OPT_S || opt == OPT_O) 
+    if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) 
 	fp = fopen(datfile, "wb");
-    else if (opt != OPT_Z) 
+    else if (opt != GRETL_DATA_GZIPPED) 
 	fp = fopen(datfile, "w");
-    if (opt != OPT_Z && fp == NULL) return 1;
+    if (opt != GRETL_DATA_GZIPPED && fp == NULL) return 1;
 
-    if (opt == OPT_S) { /* single-precision binary */
+    if (opt == GRETL_DATA_FLOAT) { /* single-precision binary */
 	float x;
 
 	for (i=1; i<=l0; i++) {
@@ -809,13 +894,13 @@ int write_data (const char *fname, const int *list,
 	    }
 	}
     }
-    else if (opt == OPT_O) { /* double-precision binary */
+    else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
 	for (i=1; i<=l0; i++) 
 	    fwrite(&Z(list[i], 0), sizeof(double), n, fp);
     }
 
-    if (opt == OPT_Z || opt == OPT_C || opt == OPT_M || 
-	opt == OPT_R || opt == 0) { 
+    if (opt == GRETL_DATA_GZIPPED || opt == GRETL_DATA_CSV || 
+	opt == GRETL_DATA_OCTAVE || GRETL_DATA_R || opt == 0) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
@@ -823,7 +908,7 @@ int write_data (const char *fname, const int *list,
 	    pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
     }
 
-    if (opt == OPT_Z) { /* compressed ASCII */
+    if (opt == GRETL_DATA_GZIPPED) { /* compressed ASCII */
 	gzFile fgz;
 
 	fgz = gzopen(datfile, "wb");
@@ -856,17 +941,17 @@ int write_data (const char *fname, const int *list,
 	}
 	fputs("\n", fp);
     }
-    else if (opt == OPT_C || opt == OPT_R) { 
+    else if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_R) { 
 	/* export CSV or GNU R (dataframe) */
 	int idate;
 	double xdate;
 	char comma[2];
 	
-	if (opt == OPT_C) strcpy(comma, ",");
+	if (opt == GRETL_DATA_CSV) strcpy(comma, ",");
 	else strcpy(comma, " ");
 
 	/* variable names */
-	if (opt == OPT_C) fprintf(fp, "obs,");
+	if (opt == GRETL_DATA_CSV) fprintf(fp, "obs,");
 	for (i=1; i<l0; i++) 
 	    fprintf(fp, "%s%s", pdinfo->varname[list[i]], comma);
 	fprintf(fp, "%s\n", pdinfo->varname[list[l0]]);
@@ -895,7 +980,7 @@ int write_data (const char *fname, const int *list,
 	}
 	fputs("\n", fp);
     }
-    else if (opt == OPT_R_ALT) { /* export GNU R (structure) */
+    else if (opt == GRETL_DATA_R_ALT) { /* export GNU R (structure) */
 	for (i=1; i<=l0; i++) {
 	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[list[i]]);
 	    fprintf(fp, "structure(c(");
@@ -916,7 +1001,7 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, ")\n");
 	}
     }
-    else if (opt == OPT_M) { /* export GNU Octave */
+    else if (opt == GRETL_DATA_OCTAVE) { /* export GNU Octave */
 	/* write out info on dependent variable */
 	fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
 		pdinfo->varname[list[1]], n);

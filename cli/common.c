@@ -207,3 +207,23 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     }
     return 0;
 }
+
+static int data_option (int flag)
+{
+    switch (flag) {
+    case OPT_S:
+	return GRETL_DATA_FLOAT;
+    case OPT_O:
+	return GRETL_DATA_DOUBLE;
+    case OPT_M:
+	return GRETL_DATA_OCTAVE;
+    case OPT_C:
+	return GRETL_DATA_CSV;
+    case OPT_R:
+	return GRETL_DATA_R;
+    case OPT_Z:
+	return GRETL_DATA_GZIPPED;
+    default:
+	return 0;
+    }
+}

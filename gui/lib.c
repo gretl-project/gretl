@@ -24,7 +24,7 @@
 # include "../lib/src/cmdlist.h"
 #endif
 
-#define CMD_DEBUG
+/* #define CMD_DEBUG */
 
 #include "htmlprint.h"
 
@@ -34,6 +34,7 @@ extern double *subZ;
 extern double *fullZ;
 
 /* ../cli/common.c */
+static int data_option (int flag);
 extern int loop_exec_line (LOOPSET *plp, const int round, 
 			   const int cmdnum, print_t *prn);
 /* boxplots.c */
@@ -1165,8 +1166,8 @@ void do_add_omit (GtkWidget *widget, dialog_t *ddata)
         err = auxreg(command.list, orig, pmod, &model_count, 
                      &Z, datainfo, AUX_ADD, prn, NULL);
     else 
-        err = handle_omit(command.list, orig, pmod, &model_count, 
-                          &Z, datainfo, prn);
+        err = omit_test(command.list, orig, pmod, &model_count, 
+			&Z, datainfo, prn);
 
     if (err) {
         gui_errmsg(err, NULL);
@@ -1395,11 +1396,9 @@ static void do_chow_cusum (gpointer data, int code)
     if (bufopen(&prn)) return;
 
     if (code == CHOW)
-	err = chow_test(line, pmod, &Z, datainfo, prn, errtext, 
-			&test);
+	err = chow_test(line, pmod, &Z, datainfo, prn, &test);
     else
-	err = cusum_test(pmod, &Z, datainfo, prn, errtext, 
-			 &paths, &test);
+	err = cusum_test(pmod, &Z, datainfo, prn, &paths, &test);
     if (err) {
 	gui_errmsg(err, errtext);
 	gretl_print_destroy(prn);
@@ -2722,7 +2721,7 @@ void do_store (char *mydatfile, const int opt)
 	}
     }
 
-    if (write_data(mydatfile, command.list, Z, datainfo, opt)) {
+    if (write_data(mydatfile, command.list, Z, datainfo, data_option(opt))) {
 	errbox("Write of data file failed");
 	return;
     }
@@ -3083,8 +3082,8 @@ static int gui_exec_line (char *line,
 	    err = auxreg(command.list, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
 	else
-	    err = handle_omit(command.list, models[0], models[1],
-			      &model_count, &Z, datainfo, prn);
+	    err = omit_test(command.list, models[0], models[1],
+			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, NULL, prn);
 	    clear_model(models[1], NULL, NULL);
@@ -3113,8 +3112,8 @@ static int gui_exec_line (char *line,
 	    err = auxreg(command.list, &tmpmod, models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
 	else
-	    err = handle_omit(command.list, &tmpmod, models[1],
-			      &model_count, &Z, datainfo, prn);
+	    err = omit_test(command.list, &tmpmod, models[1],
+			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, NULL, prn);
 	    clear_model(models[1], NULL, NULL);
@@ -3162,7 +3161,7 @@ static int gui_exec_line (char *line,
 
     case CHOW:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = chow_test(line, models[0], &Z, datainfo, prn, errtext, ptest);
+	err = chow_test(line, models[0], &Z, datainfo, prn, ptest);
 	if (err) errmsg(err, errtext, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);
@@ -3170,7 +3169,7 @@ static int gui_exec_line (char *line,
 
     case CUSUM:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = cusum_test(models[0], &Z, datainfo, prn, errtext, 
+	err = cusum_test(models[0], &Z, datainfo, prn, 
 			 &paths, ptest);
 	if (err) errmsg(err, errtext, prn);
 	else if (rebuild) 
@@ -3655,7 +3654,7 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	if (write_data(command.param, command.list, 
-		       Z, datainfo, oflag)) {
+		       Z, datainfo, data_option(oflag))) {
 	    pprintf(prn, "write of data file failed.\n");
 	    err = 1;
 	    break;

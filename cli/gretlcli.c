@@ -467,6 +467,8 @@ int main (int argc, char *argv[])
     return 0;
 }
 
+static int data_option (int flag);
+
 void exec_line (char *line, print_t *prn) 
 {
     int check, nulldata_n;
@@ -546,8 +548,8 @@ void exec_line (char *line, print_t *prn)
 	    err = auxreg(command.list, models[0], models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
 	else
-	    err = handle_omit(command.list, models[0], models[1],
-			      &model_count, &Z, datainfo, prn);
+	    err = omit_test(command.list, models[0], models[1],
+			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, NULL, prn);
 	    clear_model(models[1], NULL, NULL);
@@ -576,8 +578,8 @@ void exec_line (char *line, print_t *prn)
 	    err = auxreg(command.list, &tmpmod, models[1], &model_count, 
 			 &Z, datainfo, AUX_ADD, prn, NULL);
 	else
-	    err = handle_omit(command.list, &tmpmod, models[1],
-			      &model_count, &Z, datainfo, prn);
+	    err = omit_test(command.list, &tmpmod, models[1],
+			    &model_count, &Z, datainfo, prn);
 	if (err) {
 	    errmsg(err, NULL, prn);
 	    clear_model(models[1], NULL, NULL);
@@ -617,13 +619,13 @@ void exec_line (char *line, print_t *prn)
 
     case CHOW:
         if ((err = model_test_start(0, prn, 1))) break;
-	err = chow_test(line, models[0], &Z, datainfo, prn, errtext, NULL);
+	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);
 	if (err) errmsg(err, errtext, prn);
 	break;
 
     case CUSUM:
 	if ((err = model_test_start(0, prn, 1))) break;
-	err = cusum_test(models[0], &Z, datainfo, prn, errtext, &paths, NULL);
+	err = cusum_test(models[0], &Z, datainfo, prn, &paths, NULL);
 	if (err) errmsg(err, errtext, prn);
 	break;
 
@@ -1135,7 +1137,8 @@ void exec_line (char *line, print_t *prn)
 	    pprintf(prn, "store: no filename given.\n");
 	    break;
 	}
-	if (write_data(command.param, command.list, Z, datainfo, oflag)) {
+	if (write_data(command.param, command.list, Z, datainfo, 
+		       data_option(oflag))) {
 	    fprintf(stderr, "write of data file failed.\n");
 	    break;
 	}

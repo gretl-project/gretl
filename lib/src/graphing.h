@@ -52,10 +52,10 @@ typedef struct {
     double *data;              /* data to plot */
 } GPT_SPEC;
 
-enum dist_codes {
+typedef enum {
     NORMAL = 1,
     GAMMA
-};
+} dist_codes;
 
 /* functions follow */
  

@@ -50,7 +50,7 @@ MODEL ar_func (int *list, const int pos,
 	       double **pZ, DATAINFO *pdinfo, 
 	       int *model_count, print_t *prn);
 
-MODEL arch (int order, int *inlist, 
+MODEL arch (int order, int *list, 
 	    double **pZ, DATAINFO *pdinfo, 
 	    int *model_count, print_t *prn, 
 	    GRETLTEST *test);

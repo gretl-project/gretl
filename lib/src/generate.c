@@ -439,7 +439,21 @@ int genr_scalar_index (int opt, int put)
     return i;
 }
 
-/* ............................................................ */
+/**
+ * genr_func:
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @line: command line fr parsing.
+ * @model_count: count of models estimated so far.
+ * @pmod: pointer to a model, or NULL.
+ * @oflag: option flag (relates to generation of dummy variables).
+ *
+ * Generates a new variable, usually via some transformation of
+ * existing variables, or by retrieving an internal variable associated
+ * with the estimation of a model (@pmod).
+ * 
+ * Returns: a #GENERATE struct.
+ */
 
 GENERATE genr_func (double **pZ, DATAINFO *pdinfo, 
 		    const char *line, const int model_count, 

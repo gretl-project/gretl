@@ -20,6 +20,16 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef enum {
+    GRETL_DATA_FLOAT = 1, /* single-precision binary data */
+    GRETL_DATA_DOUBLE,    /* double-precision binary data */
+    GRETL_DATA_OCTAVE,    /* data in Gnu Octave format */
+    GRETL_DATA_CSV,       /* data in Comma Separated Values format */
+    GRETL_DATA_R,         /* data in Gnu R format */
+    GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
+    GRETL_DATA_GZIPPED    /* write gzipped data */
+} data_options;
+
 #define free_datainfo(p) clear_datainfo(p, 0); free(p);
 
 /* functions follow */
@@ -30,7 +40,7 @@ DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
 			      int markers   /* case markers or not? */
 			      );
 
-void clear_datainfo (DATAINFO *pdinfo, int resample);
+void clear_datainfo (DATAINFO *pdinfo, int subsample);
 
 int start_new_Z (double **pZ, DATAINFO *pdinfo, 
 		 int resample);

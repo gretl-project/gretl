@@ -224,7 +224,23 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
     return omit;
 }	    
 
-/* ........................................................... */
+/**
+ * auxreg:
+ * @addvars: list of variables to add to original model (or NULL)
+ * @orig: pointer to original model.
+ * @new: pointer to new (modified) model.
+ * @model_count: count of models estimated so far.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @aux_code: code indicating what sort of aux regression to run.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Run an auxiliary regression, in order to test a given set of added
+ * variables, or to test for non-linearity (squares, logs).
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count, 
 	    double **pZ, DATAINFO *pdinfo, const int aux_code, 
@@ -395,11 +411,25 @@ int auxreg (int *addvars, MODEL *orig, MODEL *new, int *model_count,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * omit_test:
+ * @omitvars: list of variables to omit from original model.
+ * @orig: pointer to original model.
+ * @new: pointer to new (modified) model.
+ * @model_count: count of models estimated so far.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Re-estimate a given model after removing a list of 
+ * specified variables.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
-int handle_omit (int *omitvars, MODEL *orig, MODEL *new, 
-		 int *model_count, double **pZ, DATAINFO *pdinfo, 
-		 print_t *prn)
+int omit_test (int *omitvars, MODEL *orig, MODEL *new, 
+	       int *model_count, double **pZ, DATAINFO *pdinfo, 
+	       print_t *prn)
 {
     COMPARE omit;             /* Comparison struct for two models */
     int *tmplist, m = *model_count, check, err, pos = 0;
@@ -482,7 +512,19 @@ int handle_omit (int *omitvars, MODEL *orig, MODEL *new,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * autocorr_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Tests the given model for autocorrelation of order equal to
+ * the frequency of the data. Gives TR^2 and LMF test statistics.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
 		   print_t *prn, GRETLTEST *test)
@@ -567,11 +609,22 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * chow_test:
+ * @line: command line for parsing.
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Tests the given model for structural stability (Chow test).
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int chow_test (const char *line, MODEL *pmod, double **pZ,
-	       DATAINFO *pdinfo, print_t *prn, char *msg, 
-	       GRETLTEST *test)
+	       DATAINFO *pdinfo, print_t *prn, GRETLTEST *test)
 {
     int *chowlist;
     int newvars = pmod->list[0] - 1;
@@ -587,7 +640,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 
     if (sscanf(line, "%*s %7s", chowdate) != 1) 
 	return E_PARSE;
-    split = dateton(chowdate, pdinfo->pd, pdinfo->stobs, msg) - 1;
+    split = dateton(chowdate, pdinfo->pd, pdinfo->stobs, NULL) - 1;
     if (split <= 0 || split >= pdinfo->n) 
 	return E_SPLIT;
 
@@ -686,10 +739,22 @@ static double vprime_M_v (double *v, double *M, int n)
     return val;
 }
 
-/* ........................................................... */
+/**
+ * cusum_test:
+ * @pmod: pointer to model to be tested.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @ppaths: path information struct.
+ * @test: hypothesis test results struct.
+ *
+ * Tests the given model for parameter stability (CUSUM test).
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, print_t *prn, 
-		char *msg, const PATHS *ppaths, GRETLTEST *test)
+		const PATHS *ppaths, GRETLTEST *test)
 {
     int err = 0, n_est, i, j, t;
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;

@@ -33,20 +33,13 @@
 # define M_PI 3.14159265358979323846
 #endif
 
-enum format_codes {
-    TEXT,
-    LATEX,
-    HTML,
-    RTF
-};
-
-enum prn_codes {
+typedef enum {
     GRETL_PRINT_STDOUT,
     GRETL_PRINT_STDERR,
     GRETL_PRINT_FILE,
     GRETL_PRINT_BUFFER,
     GRETL_PRINT_NULL
-};
+} prn_codes;
 
 /* information on data set */
 typedef struct { 

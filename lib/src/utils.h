@@ -25,16 +25,16 @@
 #include <stdio.h>
 
 enum flagvals {
-    OPT_O = 1,
-    OPT_M,
-    OPT_C,
-    OPT_R,
-    OPT_S,
+    OPT_O = 1, /* write double-precision binary data */
+    OPT_M,     /* write data in Gnu Octave format */
+    OPT_C,     /* write data in Comma Separated Values format */
+    OPT_R,     /* write data in Gnu R format */
+    OPT_S,     /* write single-precision binary data */
     OPT_L,
-    OPT_Z,
+    OPT_Z,     /* write gzipped data */
     OPT_FA,
     OPT_RESID,
-    OPT_R_ALT,
+    OPT_R_ALT, /* write data in alternate Gnu R format */
     OPT_FAZ,
     OPT_RESIDZ
 };

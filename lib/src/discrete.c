@@ -93,7 +93,20 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
     return lnL;
 }
 
-/* .......................................................... */
+/**
+ * logit_probit:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: option flag: If = LOGIT, perform logit regression, otherwise
+ * perform probit regression.
+ *
+ * Computes estimates of the discrete model specified by @list,
+ * using an estimator determined by the value of @opt.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
 
 MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
      /* EM algorithm, see Ruud */
@@ -115,7 +128,7 @@ MODEL logit_probit (int *list, double **pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* allocate space for means of indep vars */
-    xbar = malloc((list[0] - 1) * sizeof(double));
+    xbar = malloc((list[0] - 1) * sizeof *xbar);
     if (xbar == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;

@@ -21,13 +21,24 @@
 
 #include "libgretl.h"
 
-/* ........................................................... */
+/**
+ * get_errmsg:
+ * @errcode: gretl error code (see #error_codes).
+ * @errtext: pre-allocated string or NULL.
+ * @prn: gretl printing struct.
+ *
+ * Print an error message, given an error code number.  The message
+ * is printed to the string variable errtext, if it is non-NULL,
+ * or otherwise to the printing struct @prn.
+ * 
+ * Returns: the error text string, or NULL if @errtext is NULL.
+ */
 
-char *get_errmsg (const int code, char *errtext, print_t *prn)
+char *get_errmsg (const int errcode, char *errtext, print_t *prn)
 {
     char tmpstr[MAXLEN];
 
-    switch (code) {
+    switch (errcode) {
 
     case E_DATA:
 	strcpy(tmpstr, "Data error.");
@@ -192,7 +203,7 @@ char *get_errmsg (const int code, char *errtext, print_t *prn)
 	break;
     default:
 	strcpy(tmpstr, "Unclassified error");
-	fprintf(stderr, "Numeric error code = %d\n", code); 
+	fprintf(stderr, "Numeric error code = %d\n", errcode); 
 	break;
     }
     if (errtext == NULL) {
@@ -204,7 +215,16 @@ char *get_errmsg (const int code, char *errtext, print_t *prn)
     }
 }
 
-/* ........................................................... */
+/**
+ * errmsg:
+ * @errcode: gretl error code (see #error_codes).
+ * @msg: pre-allocated string, or NULL.
+ * @prn: gretl printing struct.
+ *
+ * Print an error message looked up from a given an error code number, 
+ * or a supplied error message.  
+ * 
+ */
 
 void errmsg (const int errcode, const char *msg, print_t *prn)
 {

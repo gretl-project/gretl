@@ -21,7 +21,7 @@
 
 #include <stdio.h>
 
-enum error_codes {
+typedef enum {
     E_DATA = 2,
     E_SINGULAR,
     E_DF,
@@ -77,11 +77,11 @@ enum error_codes {
     E_MISS,
     E_BADSTAT,
     E_NOMERGE
-}; 
+} error_codes; 
 
 /* functions follow */
  
-char *get_errmsg (const int code, char *errtext, print_t *prn);
+char *get_errmsg (const int errcode, char *errtext, print_t *prn);
 
 void errmsg (const int errcode, const char *msg, print_t *prn);
 

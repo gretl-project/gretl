@@ -96,7 +96,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
  * Computes least squares estimates of the model specified by @list,
  * using an estimator determined by the value of @ci.
  * 
- * Returns: a MODEL struct, containing the estimates.
+ * Returns: a #MODEL struct, containing the estimates.
  */
 
 MODEL lsq (int *list, double *Z, DATAINFO *pdinfo, 
@@ -893,7 +893,22 @@ static void _dropwt (int *list)
     }
 }
 
-/* ....................................................... */
+/**
+ * hilu_corc:
+ * @toprho: pointer to receive final rho value.
+ * @list: dependent variable plus list of regressors.
+ * @Z: data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu.
+ * @prn: gretl printing struct
+ *
+ * Estimate the model given in @list using either the Cochrane-Orcutt
+ * procedure or Hildreth-Lu (for first-order serial correlation).
+ * Print a trace of the search for the appropriate quasi-differencing
+ * coefficient, rho.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int hilu_corc (double *toprho, int *list, double *Z, DATAINFO *pdinfo, 
 	       const int opt, print_t *prn)
@@ -999,7 +1014,19 @@ static void _autores (const int i, double *Z, const int n,
     }
 }
 
-/* ........................................................ */
+/**
+ * tsls_func:
+ * @list: dependent variable plus list of regressors.
+ * @pos: position in the list for the separator between list
+ *   of variables and list of instruments.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ *
+ * Estimate the model given in @list by means of Two-Stage Least
+ * Squares.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL tsls_func (const int *list, const int pos, double **pZ, 
 		 DATAINFO *pdinfo)
@@ -1251,7 +1278,17 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     return check;
 }
 
-/* ........................................................ */
+/**
+ * hsk_func:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ *
+ * Estimate the model given in @list using a correction for
+ * heteroskedasticity.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
 {
@@ -1321,10 +1358,20 @@ MODEL hsk_func (int *list, double **pZ, DATAINFO *pdinfo)
     return hsk;
 }
 
-/* ........................................................ */
+/**
+ * hccm_func:
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ *
+ * Estimate the model given in @list using OLS, compute
+ * heteroskedasticity-consistent covariance matrix using the
+ * McKinnon-White procedure, and report standard errors using this matrix.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL hccm_func (int *list, double **pZ, DATAINFO *pdinfo)
-     /* McKinnon-White consistent covariance matrix estimator */
 {
     int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
     double xx, *st, *uhat1, **p;
@@ -1427,7 +1474,19 @@ MODEL hccm_func (int *list, double **pZ, DATAINFO *pdinfo)
     return hccm;
 }
 
-/* ........................................................ */
+/**
+ * whites_test:
+ * @pmod: #MODEL struct.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Runs White's test for heteroskedasticity on the given model,
+ * putting the results into @test.
+ * 
+ * Returns: 0 on successful completion, error code on error.
+ */
 
 int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
 		 print_t *prn, GRETLTEST *test)
@@ -1510,7 +1569,21 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
-/* ....................................................... */
+/**
+ * ar_func:
+ * @list: dependent variable plus list of regressors and list of lags.
+ * @pos: position in list of separator between independent variables and
+ * list of lags.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @model_count: count of models estimated so far.
+ * @prn: gretl printing struct.
+ *
+ * Estimate the model given in @list using the generalized 
+ * Cochrane-Orcutt procedure for autoregressive errors.
+ * 
+ * Returns: #MODEL struct containing the results.
+ */
 
 MODEL ar_func (int *list, const int pos, double **pZ, 
 	       DATAINFO *pdinfo, int *model_count, print_t *prn)
@@ -1914,7 +1987,23 @@ static double _wt_dummy_stddev (const MODEL *pmod, const double *Z,
     else return NADBL;
 }
 
-/* .............................................................  */
+/**
+ * arch:
+ * @order: lag order for ARCH process.
+ * @list: dependent variable plus list of regressors.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @model_count: count of models estimated so far.
+ * @prn: gretl printing struct.
+ * @test: hypothesis test results struct.
+ *
+ * Estimate the model given in @list via OLS, and test for Auto-
+ * Regressive Conditional Heteroskedasticity.  If the latter is
+ * significant, re-restimate the model using weighted least
+ * squares.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
 
 MODEL arch (int order, int *list, double **pZ, DATAINFO *pdinfo, 
 	    int *model_count, print_t *prn, GRETLTEST *test)

@@ -97,6 +97,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	    return 1;
 	}
     }
+
     /* or try parsing as a for loop */
     else if (sscanf(line, "loop for %[^= ] = %d..%d", lvar, &start, &end) == 3) {
 	if (strcmp(lvar, "i")) {
@@ -116,6 +117,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	ploop->ntimes = end;
 	return 0;
     }
+
     /* or just as a simple count loop */
     else if (sscanf(line, "loop %d", &n) == 1) {
 	ploop->ntimes = n;
