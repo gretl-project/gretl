@@ -2898,12 +2898,13 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-#if 0
-    if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
-	errbox(_("This analysis is applicable only to seasonal time series"));
-	return;
+    if (opt != TRAMO) {
+	/* we'll let tramo handle annual data */
+	if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
+	    errbox(_("This analysis is applicable only to seasonal time series"));
+	    return;
+	}
     }
-#endif
 
     write_tx_data = gui_get_plugin_function("write_tx_data", 
 					    &handle);

@@ -113,13 +113,13 @@ void cli_read_registry (char *callname, PATHS *ppaths)
 	read_reg_val(HKEY_CURRENT_USER, "gretl", "gretldir", ppaths->gretldir);
     }
     if (ppaths->gretldir[0] == '\0') {
-	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl", drive);
+	sprintf(ppaths->gretldir, "%c:\\userdata\\gretl\\", drive);
     }
 
     ppaths->userdir[0] = '\0';
     read_reg_val(HKEY_CURRENT_USER, "gretl", "userdir", ppaths->userdir);
     if (ppaths->userdir[0] == '\0') {
-	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user", drive);
+	sprintf(ppaths->userdir, "%c:\\userdata\\gretl\\user\\", drive);
     }
 
     ppaths->gnuplot[0] = '\0';
@@ -129,7 +129,7 @@ void cli_read_registry (char *callname, PATHS *ppaths)
     }
     if (ppaths->gnuplot[0] == '\0') {
 	sprintf(ppaths->gnuplot, 
-		"%c:\\userdata\\gnuplot\\wgnuplot.exe", drive);
+		"%c:\\userdata\\gretl\\wgnuplot.exe", drive);
     }
 
     ppaths->binbase[0] = '\0';
