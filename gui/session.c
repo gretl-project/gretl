@@ -1104,7 +1104,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
 
-	    read_plotfile(graph->fname, NULL);
+	    start_editing_session_graph(graph->fname);
 	}
     } 
     else if (strcmp(item, _("Edit plot commands")) == 0) {
