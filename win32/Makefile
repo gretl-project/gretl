@@ -20,7 +20,7 @@ GTKLIBS = -L$(imports) -lglib-2.0.dll -lgtk.dll -lgdk.dll
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
 GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
-GRETLLIB = -L./libgretl -lgretl -L$(imports) -lintl.dll
+GRETLLIB = -L$(imports) -lgretl -lintl.dll
 PIXBUFLIB = -L$(imports) -lgdk-pixbuf -lpng -lz.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 
@@ -125,7 +125,6 @@ $(MO):
 dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
-	mkdir -p libgretl
 
 dist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin $(UPDATER)
 	./mkwindist 
@@ -134,7 +133,7 @@ topclean:
 	rm -f *.o *.exe
 
 clean:
-	rm -f *.o *.def $(CLIPROG) $(GUIPROG) dlls/libgretl.dll libgretl/* 
+	rm -f *.o *.def $(CLIPROG) $(GUIPROG) dlls/libgretl.dll
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
@@ -151,20 +150,17 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 
 dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
-	--output-def libgretl/libgretl.def \
-	--implib libgretl/libgretl.a \
+	--output-def libgretl.def --implib $(imports)/libgretl.a \
 	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
-	--output-def $(<:.o=.def) \
-	--implib $(imports)/libprob.a \
+	--output-def libprob.def --implib $(imports)/libprob.a \
 	-o $@ $^ 
 
 dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
-	--output-def $(imports)/libgtkextra-lite.def \
-	--implib $(imports)/libgtkextra-lite.a \
+	--output-def libgtkextra-lite.def --implib $(imports)/libgtkextra-lite.a \
 	-o $@ $^ $(GTKLIBS)
 
 dlls/stats_tables.dll: stats_tables.o dllinit.o 
