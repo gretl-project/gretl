@@ -531,9 +531,9 @@ int corrgram (int varno, int order, double ***pZ,
 	    pdinfo->varname[varno]);
     fprintf(fq, "set xrange [0:%d]\n", m + 1);
     fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 w impulses title '', \\\n"
-	    "%g lt 2 title '%s', \\\n"
-	    "%g lt 2 title ''\n", pm, 
+	    "'-' using 1:2 notitle w impulses, \\\n"
+	    "%g title '%s' lt 2, \\\n"
+	    "%g notitle lt 2\n", pm, 
 	    "+- 1.96/T^0.5",
 	    -pm);
     for (l=1; l<=m; l++) {
@@ -547,12 +547,11 @@ int corrgram (int varno, int order, double ***pZ,
 	    pdinfo->varname[varno]);
     fprintf(fq, "set xrange [0:%d]\n", maxlag + 1);
     fprintf(fq, "plot \\\n"
-	    "'-' using 1:2 w impulses title '', \\\n"
-	    "%g lt 2 title '%s', \\\n"
-	    "%g lt 2 title ''\n", pm,
+	    "'-' using 1:2 notitle w impulses, \\\n"
+	    "%g title '%s' lt 2, \\\n"
+	    "%g notitle lt 2\n", pm,
 	    "+- 1.96/T^0.5",
 	    -pm);
-    fputs("plot '-' using 1:2 w impulses\n", fq);
     for (l=1; l<=maxlag; l++) {
 	fprintf(fq, "%g %g\n", l + .1, pacf[l-1]);
     }

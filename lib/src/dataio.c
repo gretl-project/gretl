@@ -695,6 +695,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     pdinfo->bin = 0;
     pdinfo->markers = 0;
+
     if (fscanf(fp, "%5s %7s", byobs, option) == 2) {
 	if (strcmp(option, "SINGLE") == 0)
 	    pdinfo->bin = 1;
@@ -710,12 +711,14 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	}
     }
+
     if (!panel && fscanf(fp, "%6s", option) == 1) {
 	if (strcmp(option, "PANEL2") == 0)
 	    pdinfo->time_series = STACKED_TIME_SERIES;
 	else if (strcmp(option, "PANEL3") == 0)
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
     }
+
     if (fp != NULL) fclose(fp);
 
     /* last pass, to pick up comments */

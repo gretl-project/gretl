@@ -31,6 +31,8 @@
 extern double _gamma_func (double x);
 extern double _gammadist (double s1, double s2, double x, int control);
 
+static char gnuplot_path[MAXLEN];
+
 /* ........................................................ */
 
 static int printvars (FILE *fp, int t, const int *list, double **Z,
@@ -451,7 +453,11 @@ static int old_gnuplot (void)
     static int c = -1; 
 
     if (c == -1) {
-	c = system("echo \"set term png color\" | `which gnuplot` 2>/dev/null");
+	char cmd[512];
+
+	sprintf(cmd, "echo \"set term png color\" | %s 2>/dev/null",
+		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
+	c = system(cmd);
     }
     return !c;
 }
@@ -495,7 +501,9 @@ const char *get_gretl_png_term_line (void)
 	strcat(png_term_line, 
 	       " xffffff x000000 x202020 xff0000 x0000ff x00ff00");
 #else
-	if (!old_gnuplot()) {
+	if (old_gnuplot()) {
+	    strcat(png_term_line, " color"); 
+	} else {
 	    strcat(png_term_line, 
 		   " xffffff x000000 x202020 xff0000 x0000ff x00ff00"); 
 	}
@@ -523,6 +531,10 @@ const char *get_gretl_png_term_line (void)
 int gnuplot_init (PATHS *ppaths, FILE **fpp)
 {
 #ifdef GNUPLOT_PNG
+    if (*gnuplot_path == 0) {
+	strcpy(gnuplot_path, ppaths->gnuplot);
+    }
+
     if (GRETL_GUI(ppaths)) {
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
 	if (mktemp(ppaths->plotfile) == NULL) return 1;
