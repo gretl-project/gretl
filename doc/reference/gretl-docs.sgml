@@ -1,4 +1,4 @@
-<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 <!ENTITY gretl-bhhh-max SYSTEM "sgml/bhhh_max.sgml">
 <!ENTITY gretl-calendar SYSTEM "sgml/calendar.sgml">
 <!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">
@@ -35,51 +35,110 @@
 <!ENTITY gretl-texprint SYSTEM "sgml/texprint.sgml">
 <!ENTITY gretl-var SYSTEM "sgml/var.sgml">
 ]>
-<article id="index">
-  <articleinfo>
+<book id="index">
+  <bookinfo>
     <title>Libgretl Reference Manual</title>
-  </articleinfo>
+    <releaseinfo>for gretl 1.2.8</releaseinfo>
+  </bookinfo>
   
-<!--    <sect1><title>gretl and libgretl</title> -->
+  <chapter id="gretl">
+    <title>Gretl Overview</title>
 
-  <para>Gretl stands for Gnu Regression, Econometrics and Time-Series
-  Library.  The libgretl library is free software released under the GNU
-  General Public License.  This document describes the libgretl API.
-  It is at an early stage, and is incomplete.</para>    
+    <para>Gretl stands for Gnu Regression, Econometrics and
+      Time-Series Library.  The libgretl library is free software
+      released under the GNU General Public License.  This document
+      describes the libgretl API. It is at an early stage, and is
+      incomplete.</para>
+  </chapter>
 
-    &gretl-bhhh-max;
-    &gretl-calendar;    
-    &gretl-compare;
-    &gretl-dataio;
-    &gretl-dbread;
-    &gretl-describe;
-    &gretl-discrete;
+  <chapter id="datastuff">
+    <title>Data input and output</title>
+    &gretl-dataio;  
+    &gretl-dbread; 
+    &gretl-gretl-string-table;  
+  </chapter>
+
+  <chapter id="estimation">
+    <title>Estimation</title>    
     &gretl-estimate;
+    &gretl-discrete;   
+    &gretl-nonparam; 
+    &gretl-gretl-model;
+    &gretl-system;   
+    &gretl-var;   
+    &gretl-bhhh-max;
+  </chapter>
+
+  <chapter id="tests">
+    <title>Descriptive statistics and tests</title> 
+    &gretl-describe; 
+    &gretl-compare;
+  </chapter>
+
+  <chapter id="data-manipulation">
+    <title>Working with the data set</title>
+    &gretl-calendar;   
     &gretl-generate;
-    &gretl-graphing;
-	&gretl-gretl-commands;
-    &gretl-gretl-errors;
-    &gretl-gretl-matrix;
-	&gretl-gretl-model;
-	&gretl-gretl-paths;
-	&gretl-gretl-string-table;
-    &gretl-gretl-utils;
-    &gretl-gretl-win32;
-    &gretl-interact;
-    &gretl-libgretl;
-	&gretl-libset;
-    &gretl-modelprint;
-    &gretl-monte-carlo;
-    &gretl-nonparam;
-    &gretl-options;
-    &gretl-plugins;
-    &gretl-printout;
-    &gretl-pvalues;
-    &gretl-random;
-    &gretl-strutils;
     &gretl-subsample;
-    &gretl-system;
+  </chapter>
+
+  <chapter id="printing">
+    <title>Printing</title>
+    &gretl-printout;  
+    &gretl-modelprint;
     &gretl-texprint;
-    &gretl-var;
-    <!-- </sect1> -->
-</article>
+  </chapter>
+
+  <chapter id="ch-graphing">
+    <title>Graphing and plotting</title>
+    &gretl-graphing;   
+  </chapter>
+
+  <chapter id="ch-gretl-matrix">
+    <title>Matrix manipulation</title>
+    &gretl-gretl-matrix;   
+  </chapter>
+
+  <chapter id="ch-gretl-paths">
+    <title>Handling paths</title>
+    &gretl-gretl-paths;   
+  </chapter>
+
+  <chapter id="ch-interact">
+    <title>User interaction, options and errors</title>
+    &gretl-gretl-commands; 
+    &gretl-interact;   
+    &gretl-libset;
+    &gretl-options;
+    &gretl-gretl-errors; 
+  </chapter>
+
+  <chapter id="ch-libgretl">
+    <title>Main definitions and structs</title>
+    &gretl-libgretl;   
+  </chapter>
+
+  <chapter id="ch-monte-carlo">
+    <title>Simulation and loops</title>
+    &gretl-monte-carlo; 
+    &gretl-random; 
+  </chapter>
+
+  <chapter id="ch-plugins">
+    <title>Driver for gretl plugins</title>
+    &gretl-plugins;   
+  </chapter>
+
+  <chapter id="ch-pvalues">
+    <title>P-values, probability distributions, etc.</title>
+    &gretl-pvalues;   
+  </chapter>
+
+  <chapter id="utils">
+    <title>Utilities</title>
+    &gretl-gretl-utils;
+    &gretl-strutils; 
+    &gretl-gretl-win32;
+  </chapter>
+
+</book>

@@ -714,7 +714,6 @@ gretl_var_free
 gretl_var_free_unnamed
 coint
 adf_test
-ma_model
 johansen_test
 gretl_var_get_impulse_responses
 gretl_var_print_impulse_response
