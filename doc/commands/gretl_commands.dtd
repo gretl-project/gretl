@@ -4,6 +4,8 @@
 
 <!ENTITY ndash  "&#8211;">
 <!ENTITY lgr    "&#0955;">
+<!ENTITY mu     "&#0956;">
+<!ENTITY sigma  "&#0963;">
 <!ENTITY hellip "&#8230;">
 <!ENTITY mdash  "&#8212;">
 <!ENTITY latex  "LaTeX">
@@ -28,12 +30,13 @@
                  Transformations | Utilities | Unknown) "Unknown"
 >
 
-<!ELEMENT usage (arguments?, options?, examples?)>
+<!ELEMENT usage (arguments?, altforms?, options?, examples?)>
 
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>
-<!ELEMENT description  (para | code | ilist)*>
+<!ELEMENT altforms     (altform)+>
+<!ELEMENT description  (para | code | ilist | table)*>
 <!ELEMENT option-notes (para)+>
 <!ELEMENT addendum     (para)+>
 <!ELEMENT gui-access   (menu-path, other-access?)>
@@ -46,6 +49,8 @@
     flag CDATA #IMPLIED
 >
 
+<!ELEMENT altform (#PCDATA | repl | lit)*>
+
 <!ELEMENT option   (flag, effect)>
 <!ELEMENT example  (#PCDATA)>
 
@@ -56,7 +61,7 @@
 <!ELEMENT other-access (#PCDATA)>
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
-                literal | emphasis | book | quote | filename |
+                lit | emphasis | book | quote | filename |
                 function | manref | cmdref| tabref | cmd)*>
 
 <!ELEMENT code (#PCDATA)>
@@ -93,18 +98,25 @@
 
 <!ELEMENT table (row)+>
 <!ELEMENT row (cell)+>
-<!ELEMENT cell (#PCDATA | literal | repl | emphasis)*>
+<!ELEMENT cell (#PCDATA | lit | repl | emphasis | 
+                mathvar | equation | book | quote)*>
 <!ATTLIST table
-   lwidth   CDATA #REQUIRED
-   rwidth   CDATA #REQUIRED
+   lwidth   CDATA #IMPLIED
+   rwidth   CDATA #IMPLIED
+   id       CDATA #IMPLIED
+   title    CDATA #IMPLIED
+>
+
+<!ATTLIST row
+   head   (true | false) "false"
 >
 
 <!ELEMENT repl     (#PCDATA)>
 <!ELEMENT program  (#PCDATA)>
-<!ELEMENT literal  (#PCDATA)>
+<!ELEMENT lit      (#PCDATA)>
 <!ELEMENT emphasis (#PCDATA)>
 <!ELEMENT book     (#PCDATA)>
-<!ELEMENT quote    (#PCDATA | literal)*>
+<!ELEMENT quote    (#PCDATA | lit)*>
 <!ELEMENT filename (#PCDATA)>
 <!ELEMENT function (#PCDATA)>
 <!ELEMENT cmd      (#PCDATA)>

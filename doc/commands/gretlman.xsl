@@ -57,6 +57,21 @@
 <xsl:if test="(@optional)"><literal>] </literal></xsl:if>
 </xsl:template>
 
+<xsl:template match="altform">
+  <row>
+    <xsl:choose>
+      <xsl:when test="position() = 1">
+        <entry>Alternate forms:</entry>
+      </xsl:when>
+      <xsl:otherwise>
+        <entry/>
+      </xsl:otherwise>
+    </xsl:choose>
+    <entry><xsl:apply-templates/></entry>
+  </row>
+  <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
 <xsl:template match="option">
   <row>
     <xsl:choose>
@@ -121,7 +136,7 @@
   <application><xsl:apply-templates/></application>
 </xsl:template>
 
-<xsl:template match="literal">
+<xsl:template match="lit">
   <literal><xsl:apply-templates/></literal>
 </xsl:template>
 
@@ -220,15 +235,31 @@
 </xsl:template>
 
 <xsl:template match="table">
-  <informaltable role="cmd" frame="none">
-    <tgroup cols="2">
-      <colspec colwidth="{@lwidth}"/>
-      <colspec colwidth="{@rwidth}"/>
-      <tbody>
-        <xsl:apply-templates/>
-      </tbody>
-    </tgroup>
-  </informaltable>
+  <xsl:choose>
+    <xsl:when test="@id">
+      <table id="{@id}" frame="none">
+        <title>"{@title}"</title>
+        <tgroup cols="2">
+          <tbody>
+            <xsl:apply-templates/>
+          </tbody>
+        </tgroup>
+      </table>
+    </xsl:when>
+    <xsl:otherwise>
+      <informaltable role="cmd" frame="none">
+        <tgroup cols="2">
+          <xsl:if test="@lwidth and @rwidth">
+            <colspec colwidth="{@lwidth}"/>
+            <colspec colwidth="{@rwidth}"/>
+          </xsl:if>
+          <tbody>
+            <xsl:apply-templates/>
+          </tbody>
+        </tgroup>
+      </informaltable>
+    </xsl:otherwise>
+  </xsl:choose>
 </xsl:template>
 
 <xsl:template match="row">

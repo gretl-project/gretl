@@ -13,10 +13,11 @@
 #include <ctype.h>
 
 #define MAXLEN 78     /* length at which lines will wrap */
-#define LISTINDENT 2  /* indent for list items */
+#define INDENT  2     /* indent for list items, table rows */
+#define COLSEP  2     /* separation between table columns */
+
 
 struct table_row {
-    char *row;
     char *cells[2];
 };
 
@@ -31,7 +32,9 @@ struct utf_stuff replacers[] = {
     { "&gt;", ">" }, 
     { "&lt;", "<" }, 
     { "&#x3BB;", "lambda" }, /* &lgr; */
-    { "&#x2026;", "..." },    /* &hellip; */
+    { "&#x3BC;", "mu" },     /* &mu; */
+    { "&#x3C3;", "sigma" },  /* &sigma; */    
+    { "&#x2026;", "..." },   /* &hellip; */
     { NULL, NULL }
 };
 
@@ -102,7 +105,18 @@ static int blank_string (const char *s)
 }
 
 /* remove white space from the end of a string */
-static void trim (char *s)
+static void trim_trailing_space (char *s)
+{
+    int i, n = strlen(s);
+
+    for (i=n-1; i>0; i--) {
+	if (s[i] == ' ') {
+	    s[i] = '\0';
+	} else break;
+    }
+}
+
+static void trim_to_length (char *s)
 {
     int i, n = strlen(s);
 
@@ -122,7 +136,7 @@ static int format_buf (char *buf, int inlist)
     char *p, *q, line[80];
     int i, n, out, maxline = MAXLEN;
 
-    if (inlist) maxline -= LISTINDENT;
+    if (inlist) maxline -= INDENT;
 
     compress_spaces(buf);
     n = strlen(buf);
@@ -133,12 +147,12 @@ static int format_buf (char *buf, int inlist)
 	*line = 0;
 	q = p;
 	strncat(line, p, maxline);
-	trim(line);
+	trim_to_length(line);
 	out += strlen(line);
 	p = q + strlen(line);
 	if (!blank_string(line)) {
 	    if (inlist) {
-		for (i=0; i<LISTINDENT; i++) putchar(' ');
+		for (i=0; i<INDENT; i++) putchar(' ');
 	    } 
 	    printf("%s\n", (*line == ' ')? line + 1 : line);
 	}
@@ -149,20 +163,23 @@ static int format_buf (char *buf, int inlist)
     return 0;
 }
 
-static int analyse_row (struct table_row *trow, int *lmax, int *rmax)
+static int analyse_row (struct table_row *trow, char *row,
+			int *lmax, int *rmax)
 {
     char *p, *cell;
     size_t len;
     int j;
 
-    p = trow->row;
+    p = row;
     for (j=0; j<2; j++) {
 	p = strstr(p, "[CELL]");
 	if (p == NULL) return 1;
 	cell = p + strlen("[CELL]");
+	trow->cells[j] = cell;
 	p = strstr(cell, "[/CELL]");
 	if (p == NULL) return 1;
 	len = p - cell - 1;
+	*p++ = 0;
 	if (j == 0) {
 	    if (len > *lmax) *lmax = len;
 	} else {
@@ -173,11 +190,93 @@ static int analyse_row (struct table_row *trow, int *lmax, int *rmax)
     return 0;
 }
 
+static int back_up (char *s, int maxwid)
+{
+    int i, n = strlen(s);
+
+    if (n <= maxwid) return n;
+
+    for (i=n-1; i>0; i--) {
+	if (isspace(s[i])) {
+	    break;
+	} else {
+	    s[i] = '\0';
+	}
+    }
+
+    return strlen(s);
+}
+
+static void print_right_cell (const char *s, int start, int width)
+{
+    int n = strlen(s);
+    int i, first = 1;
+    char chunk[MAXLEN];
+    const char *p = s;
+    
+    if (n <= width) {
+	printf("%s\n", s);
+    } else {
+	/* need to break the text */
+	while (n > 0) {
+	    int done;
+	    char *q;
+
+	    *chunk = 0;
+	    strncat(chunk, p, width + 1);
+	    done = back_up(chunk, width);
+	    p += done;
+	    n -= done;
+	    if (first) {
+		first = 0;
+	    } else {
+		for (i=0; i<start; i++) putchar(' ');
+	    }
+	    q = chunk;
+	    while (isspace(*q)) q++;
+	    printf("%s\n", q);
+	}
+    }
+}
+
+static void print_table (struct table_row *rows, int nrows,
+			 int wl, int wr)
+{
+    int i, j;
+    int startcol, rcellwid;
+    char *cp0, *cp1;
+
+    startcol = INDENT + wl + COLSEP;
+    rcellwid = MAXLEN - startcol;
+
+    for (i=0; i<nrows; i++) {
+
+	trim_trailing_space(rows[i].cells[0]);
+	compress_spaces(rows[i].cells[0]);
+
+	trim_trailing_space(rows[i].cells[1]);
+	compress_spaces(rows[i].cells[1]);
+
+	cp0 = rows[i].cells[0];
+	cp1 = rows[i].cells[1];
+
+	if (isspace(*cp0)) cp0++;
+	if (isspace(*cp1)) cp1++;
+
+	for (j=0; j<INDENT; j++) putchar(' ');
+
+	printf("%-*s", wl, cp0);
+	for (j=0; j<COLSEP; j++) putchar(' ');
+	print_right_cell(cp1, startcol, rcellwid);
+    }
+
+    putchar('\n');
+}
+
 static int process_table (char *buf, int inlist)
 {
-    struct table_rows *trows;
-    char line[128];
-    char *p;
+    struct table_row *rows;
+    char *p, *row;
     int i, nrows = 0;
     int lmax = 0, rmax = 0;
 
@@ -189,8 +288,6 @@ static int process_table (char *buf, int inlist)
 	nrows++;
     }
 
-    printf("found a table with %d rows\n", nrows);
-    
     rows = malloc(nrows * sizeof *rows);
     if (rows == NULL) return 1;
 
@@ -200,17 +297,21 @@ static int process_table (char *buf, int inlist)
 	p = strstr(p, "[ROW]");
 	if (p == NULL) break;
 	p += strlen("[ROW]");
-	trows[i].row = p;
+	row = p;
 	p = strstr(p, "[/ROW]");
 	if (p == NULL) return 1;
 	*(p - 1) = 0;
 	p += strlen("[/ROW]");
-	printf("** row[%d] = '%s'\n", i, trows[i].row);
-	analyse_row(&trows[i], &lmax, &rmax);
+	analyse_row(&rows[i], row, &lmax, &rmax);
 	i++;
     } 
 
+#if 0
     printf("** TABLE lcol max = %d, rcol max = %d **\n", lmax, rmax);
+#endif
+    print_table(rows, nrows, lmax, rmax);
+
+    free(rows);
 	
     return 0;
 }
@@ -231,7 +332,6 @@ void strip_marker (char *s, const char *targ)
 int process_para (char *s, char *inbuf, int k)
 {
     char line[128];
-    char tabbuf[8096];
     const char *starts[] = { "[PARA]", "[LISTPARA]", "[TABLE]" };
     const char *stops[] = { "[/PARA]", "[/LISTPARA]", "[/TABLE]" };
     char *p, *buf;
@@ -246,13 +346,10 @@ int process_para (char *s, char *inbuf, int k)
     strcat(buf, line);
 
     /* one-liner? */
-    if ((p = strstr(line, stops[k]))) {
+    if ((p = strstr(buf, stops[k]))) {
 	strip_marker(p, stops[k]);
     } else {	
 	while (!done && fgets(line, sizeof line, stdin)) {
-	    if ((p = strstr(line, starts[2]))) {
-		process_para(line, tabbuf, 2);
-	    }
 	    if ((p = strstr(line, stops[k]))) {
 		strip_marker(p, stops[k]);
 		done = 1;

@@ -70,6 +70,27 @@
 <!-- <xsl:text>&#xa;</xsl:text> -->
 </xsl:template>
 
+<xsl:template match="altforms">
+  <xsl:text>&#xa;</xsl:text>
+  <xsl:text>Alternate forms:  </xsl:text>
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="altform">
+  <xsl:if test="position() > 1">
+    <xsl:text>&#xa;                  </xsl:text>
+  </xsl:if> 
+  <xsl:apply-templates/>
+</xsl:template>
+
+<xsl:template match="option|example">
+  <xsl:if test="position() > 1">
+    <xsl:text>&#xa;            </xsl:text>
+  </xsl:if> 
+  <xsl:apply-templates/>
+<!-- <xsl:text>&#xa;</xsl:text> -->
+</xsl:template>
+
 <xsl:template match="examples">
   <xsl:text>&#xa;</xsl:text>
   <xsl:choose>
@@ -107,10 +128,8 @@
   <xsl:apply-templates/>
 </xsl:template>
 
-<xsl:template match="literal">
-  <xsl:text>"</xsl:text>
+<xsl:template match="lit">
   <xsl:apply-templates/>
-  <xsl:text>"</xsl:text>
 </xsl:template>
 
 <xsl:template match="mathvar">

@@ -8,15 +8,15 @@ XML_LIBS = `pkg-config --libs libxml-2.0 libxslt`
 GRETL_CFLAGS = `gretl-config --cflags`
 GRETL_LIBS = `gretl-config --libs`
 
-progs: formatter skeleton reflow
+progs: xsltrans skeleton reflow
 
-formatter: formatter.c 
+xsltrans: xsltrans.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
 skeleton: skeleton.c
 	$(CC) $(GRETL_CFLAGS) -o $@ $^ $(GRETL_LIBS)
 
-reflow: dolines.c
+reflow: reflow.c
 	$(CC) -o $@ $^ 
 
 # test generation of XML skeleton from libgretl info:
@@ -24,20 +24,22 @@ reflow: dolines.c
 skeleton.xml: skeleton gretl_commands.dtd
 	./skeleton > $@
 
-# test validity of skeleton.xml, and ability of formatter
+# test validity of skeleton.xml, and ability of xsltrans
 # to generate (incomplete, as yet) formatted output (text and XML)
-test: skeleton.xml formatter gretlman.xsl gretltxt.xsl
-	xmllint --valid --noout $< && ./formatter skeleton.xml
+test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
+	xmllint --valid --noout $< && ./xsltrans skeleton.xml
 
-# work in progress: format and reflow the English command reference
-sample: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
-	./formatter inprogress.xml
-	./reflow < commands.txt > commands.hlp # && rm commands.txt
+# Generate docbook XML for the command-reference section of the 
+# full manual
+docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
+	./xsltrans gretl_commands.xml && \
+	cat cmdlist.xml | fgrep -v '<?x' > ../chapters/cmdlist.xml
 
-chapter: formatter reflow inprogress.xml gretlman.xsl gretltxt.xsl
-	./formatter inprogress.xml && \
-	cat commands.xml | fgrep -v '<?x' > ../chapters/cmdlist.xml
+# Generate script commands help file
+hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
+	./xsltrans gretl_commands.xml && \
+	./reflow < cmdlist.txt > gretlcli.hlp
 
 clean:
-	rm -f formatter skeleton reflow skeleton.xml commands.txt \
-	commands.xml commands.hlp *~
+	rm -f xsltrans skeleton reflow skeleton.xml cmdlist.txt \
+	cmdlist.xml gretlcli.hlp *~

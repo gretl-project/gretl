@@ -62,7 +62,7 @@ int apply_xslt (xmlDocPtr doc)
 	if (result == NULL) {
 	    err = 1;
 	} else {
-	    fp = fopen("commands.xml", "w");
+	    fp = fopen("cmdlist.xml", "w");
 	    if (fp == NULL) {
 		err = 1;
 	    } else {
@@ -83,7 +83,7 @@ int apply_xslt (xmlDocPtr doc)
 	if (result == NULL) {
 	    err = 1;
 	} else {
-	    fp = fopen("commands.txt", "w");
+	    fp = fopen("cmdlist.txt", "w");
 	    if (fp == NULL) {
 		err = 1;
 	    } else {

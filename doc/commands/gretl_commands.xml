@@ -2,6 +2,8 @@
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
 <commandlist language="english">
 
+<?PSGML NOFILL code altforms altform menu-path other-access?>
+
   <command name="add" section="Tests">
 
     <usage>
@@ -25,13 +27,13 @@
 	Must be invoked after an estimation command.  The variables in
 	<repl>varlist</repl> are added to the previous model and the
 	new model estimated.  If more than one variable is added, the
-	<mathvar>F</mathvar> statistic for the added variables will
-	be printed (for the OLS procedure only) along with its
-	p-value.  A p-value below 0.05 means that the coefficients are
-	jointly significant at the 5 percent level. A number of
-	internal variables may be retrieved using the <cmd>genr</cmd>
-	command, provided <cmd>genr</cmd> is invoked directly after
-	this command.
+	<mathvar>F</mathvar> statistic for the added variables will be
+	printed (for the OLS procedure only) along with its p-value.
+	A p-value below 0.05 means that the coefficients are jointly
+	significant at the 5 percent level. A number of internal
+	variables may be retrieved using the <cmd>genr</cmd> command,
+	provided <cmd>genr</cmd> is invoked directly after this
+	command.
       </para>
     </description>
 
@@ -55,11 +57,11 @@
 
     <description>
       <para>
-	Works like the <cmd>add</cmd> command, except that you
-	specify a previous model (using its ID number, which is
-	printed at the start of the model output) to take as the base
-	for adding variables.  The example above adds variables number
-	5, 7 and 9 to Model 2.
+	Works like the <cmd>add</cmd> command, except that you specify
+	a previous model (using its ID number, which is printed at the
+	start of the model output) to take as the base for adding
+	variables.  The example above adds variables number 5, 7 and 9
+	to Model 2.
       </para>
     </description>
 
@@ -85,30 +87,28 @@
       <para>
 	  Computes statistics for two Dickey&ndash;Fuller tests.  In
 	each case the null hypothesis is that the variable in question
-	exhibits a unit root. The first is a
-	<mathvar>t</mathvar>-test based on the model 
+	exhibits a unit root. The first is a <mathvar>t</mathvar>-test
+	based on the model 
 	  <equation status="display"
 	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
 	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
-	  graphic="adf1"/>
-	  The null hypothesis is that
-	<mathvar>g</mathvar> = 0. The second (augmented) test
-	proceeds by estimating an unrestricted regression (with
-	regressors a constant, a time trend, the first lag of the
-	variable, and <repl>order</repl> lags of the
-	first difference) and a restricted version (dropping the time
-	trend and the first lag).  The test statistic is
+	  graphic="adf1"/> The null hypothesis is that
+	<mathvar>g</mathvar> = 0. The second (augmented) test proceeds
+	by estimating an unrestricted regression (with regressors a
+	constant, a time trend, the first lag of the variable, and
+	<repl>order</repl> lags of the first difference) and a
+	restricted version (dropping the time trend and the first
+	lag).  The test statistic is
 	  <equation status="display"
 	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
 	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
-	  graphic="adf2"/>
-	  where <mathvar>T</mathvar> is the
-	sample size, <mathvar>k</mathvar> the number of parameters
-	in the unrestricted model, and the subscripts
-	<mathvar>u</mathvar> and <mathvar>r</mathvar> denote the
-	unrestricted and restricted models respectively. Note that the
-	critical values for these statistics are not the usual ones; a
-	p-value range is printed, when it can be determined.
+	  graphic="adf2"/> where <mathvar>T</mathvar> is the sample
+	size, <mathvar>k</mathvar> the number of parameters in the
+	unrestricted model, and the subscripts <mathvar>u</mathvar>
+	and <mathvar>r</mathvar> denote the unrestricted and
+	restricted models respectively. Note that the critical values
+	for these statistics are not the usual ones; a p-value range
+	is printed, when it can be determined.
       </para>
     </description>
 
@@ -136,23 +136,20 @@
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
 	Ramanathan). Iteration is terminated when successive error
 	sums of squares do not differ by more than 0.005 percent or
-	after 20 iterations. <repl>lags</repl> is a list
-	of lags in the residuals, terminated by a semicolon. In the
-	above example, the error term is specified as 
+	after 20 iterations. <repl>lags</repl> is a list of lags in
+	the residuals, terminated by a semicolon. In the above
+	example, the error term is specified as 
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
 	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
-	  graphic="corc"/>
-	where <repl>depvar</repl> is the
-	dependent variable and <repl>indepvars</repl> is
-	the list of independent variables.  Residuals of the
-	transformed regression are stored under the name
-	<literal>uhat</literal>, which can be retrieved by
-	<cmd>genr</cmd>.  A number of other internal variables
-	may be retrieved using the <cmd>genr</cmd> command,
-	provided <cmd>genr</cmd> is invoked after this
-	command.
+	  graphic="corc"/> where <repl>depvar</repl> is the dependent
+	variable and <repl>indepvars</repl> is the list of independent
+	variables.  Residuals of the transformed regression are stored
+	under the name <lit>uhat</lit>, which can be retrieved by
+	<cmd>genr</cmd>.  A number of other internal variables may be
+	retrieved using the <cmd>genr</cmd> command, provided
+	<cmd>genr</cmd> is invoked after this command.
       </para>
     </description>
 
@@ -179,13 +176,12 @@
       <para>
 	Tests the model for ARCH (Autoregressive Conditional
 	Heteroskedasticity) of the lag order specified in
-	<repl>order</repl>, which must be an integer. If
-	the LM test statistic has p-value below 0.10, then ARCH
-	estimation is also carried out.  If the predicted variance of
-	any observation in the auxiliary regression is not positive,
-	then the corresponding squared residual is used instead.
-	Weighted least square estimation is then performed on the
-	original model.
+	<repl>order</repl>, which must be an integer. If the LM test
+	statistic has p-value below 0.10, then ARCH estimation is also
+	carried out.  If the predicted variance of any observation in
+	the auxiliary regression is not positive, then the
+	corresponding squared residual is used instead. Weighted least
+	square estimation is then performed on the original model.
       </para>
     </description>
 
@@ -205,22 +201,22 @@
       </arguments>
       <options>
         <option>
-        <flag>--native</flag>
-        <effect>Use native plugin (default)</effect>
+	  <flag>--native</flag>
+	  <effect>Use native plugin (default)</effect>
         </option>
         <option>
-        <flag>--x-12-arima</flag>
-        <effect>use X-12-ARIMA for estimation</effect>
+	  <flag>--x-12-arima</flag>
+	  <effect>use X-12-ARIMA for estimation</effect>
         </option>
 	<option>
-        <flag>--verbose</flag>
-        <effect>print details of iterations</effect>
+	  <flag>--verbose</flag>
+	  <effect>print details of iterations</effect>
         </option>
         <option>
-        <flag>--vcv</flag>
-        <effect>print covariance matrix</effect>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
         </option>
-       </options>
+      </options>
       <examples>
         <example>arma 1 2 ; y</example>
 	<example>arma 2 2 ; y --verbose</example>
@@ -230,17 +226,15 @@
     <description>
       <para>
 	Estimates a univariate ARMA (Autoregressive, Moving Average)
-	model.  The integer values <repl>p</repl> and
-	<repl>q</repl> represent the AR and MA orders
-	respectively. 
+	model.  The integer values <repl>p</repl> and <repl>q</repl>
+	represent the AR and MA orders respectively. 
       </para>
 
       <para>The default is to use the <quote>native</quote> gretl ARMA
-	function; the <literal>--x-12-arima</literal> flag calls for
-	use of the <program>X-12-ARIMA</program> program
-	instead (this will work only if the
-	<program>X-12-ARIMA</program> package for gretl is
-	installed).  
+	function; the <lit>--x-12-arima</lit> flag calls for use of
+	the <program>X-12-ARIMA</program> program instead (this will
+	work only if the <program>X-12-ARIMA</program> package for
+	gretl is installed).  
       </para>
 
       <para>The options given above may be combined, except that the
@@ -262,18 +256,16 @@
 	  <equation status="display" 
 	  tex="\[\mbox{AIC}=-2L+2k\]"
 	  ascii="AIC = -2L + 2k"
-	  graphic="aic"/>
-	  where <mathvar>L</mathvar> is the
-	log-likelihood and <mathvar>k</mathvar> is the total number
-	of parameters estimated. The <quote>frequency</quote> figure
-	  printed in connection with AR and MA roots is the &lgr;
-	  value that solves
+	  graphic="aic"/> where <mathvar>L</mathvar> is the
+	log-likelihood and <mathvar>k</mathvar> is the total number of
+	parameters estimated. The <quote>frequency</quote> figure
+	printed in connection with AR and MA roots is the &lgr; value
+	that solves
 	  <equation status="display" 
 	  tex="\[z=re^{i2\pi\lambda}\]"
 	  ascii="z = r * exp(i*2*pi*lambda)"
-	  graphic="lambda"/>
-	  where <mathvar>z</mathvar> is the root
-	  in question and <mathvar>r</mathvar> is its modulus.
+	  graphic="lambda"/> where <mathvar>z</mathvar> is the root in
+	question and <mathvar>r</mathvar> is its modulus.
       </para>
     </description>
 
@@ -325,16 +317,15 @@
     <description>
       <para>
 	Must follow an OLS regression.  Creates a dummy variable which
-	equals 1 from the split point specified by
-	<repl>obs</repl> to the end of the sample, 0
-	otherwise, and also creates interaction terms between this
-	dummy and the original independent variables.  An augmented
-	regression is run including these terms and an
-	<mathvar>F</mathvar> statistic is calculated, taking the
-	augmented regression as the unrestricted and the original as
-	restricted.  This statistic is appropriate for testing the
-	null hypothesis of no structural break at the given split
-	point.
+	equals 1 from the split point specified by <repl>obs</repl> to
+	the end of the sample, 0 otherwise, and also creates
+	interaction terms between this dummy and the original
+	independent variables.  An augmented regression is run
+	including these terms and an <mathvar>F</mathvar> statistic is
+	calculated, taking the augmented regression as the
+	unrestricted and the original as restricted.  This statistic
+	is appropriate for testing the null hypothesis of no
+	structural break at the given split point.
       </para>
     </description>
 
@@ -358,10 +349,9 @@
     <description>
       <para>
 	Must follow an regression.  Calculates the sum of the
-	coefficients on the variables in the
-	<repl>indepvars</repl> list.  Prints this sum
-	along with its standard error and the p-value for the null
-	hypothesis that the sum is zero.
+	coefficients on the variables in the <repl>indepvars</repl>
+	list.  Prints this sum along with its standard error and the
+	p-value for the null hypothesis that the sum is zero.
       </para>
     </description>
 
@@ -414,10 +404,10 @@
       </arguments>
       <options>
         <option>
-        <flag>--verbose</flag>
-        <effect>print details of auxiliary regressions</effect>
+	  <flag>--verbose</flag>
+	  <effect>print details of auxiliary regressions</effect>
         </option>
-       </options>
+      </options>
       <examples>
         <example>coint2 2 y x</example>
 	<example>coint2 4 y x1 x2 --verbose</example>
@@ -461,16 +451,15 @@
       <para>
 	Computes parameter estimates using the Cochrane&ndash;Orcutt
 	iterative procedure (see Section 9.4 of Ramanathan) with
-	<repl>depvar</repl> as the dependent variable
-	and <repl>indepvars</repl> as the list of
-	independent variables.  Iteration is terminated when
-	successive estimates of the autocorrelation coefficient do not
-	differ by more than 0.001 or after 20 iterations.  Residuals
-	of this transformed regression are stored under the name
-	<literal>uhat</literal>.  Various internal variables may be
-	retrieved using the <cmd>genr</cmd> command, provided
-	<cmd>genr</cmd> is invoked immediately after this
-	command.
+	<repl>depvar</repl> as the dependent variable and
+	<repl>indepvars</repl> as the list of independent variables.
+	Iteration is terminated when successive estimates of the
+	autocorrelation coefficient do not differ by more than 0.001
+	or after 20 iterations.  Residuals of this transformed
+	regression are stored under the name <lit>uhat</lit>.  Various
+	internal variables may be retrieved using the <cmd>genr</cmd>
+	command, provided <cmd>genr</cmd> is invoked immediately after
+	this command.
       </para>
     </description>
 
@@ -494,9 +483,8 @@
     <description>
       <para>
 	Prints the pairwise correlation coefficients for the variables
-	in <repl>varlist</repl>, or for all variables in
-	the data set if <repl>varlist</repl> is not
-	given.
+	in <repl>varlist</repl>, or for all variables in the data set
+	if <repl>varlist</repl> is not given.
       </para>
     </description>
 
@@ -522,17 +510,15 @@
     <description>
       <para>
 	Prints the values of the autocorrelation function for the
-	<repl>variable</repl> specified (either by name
-	or number).  See Ramanathan, Section 11.7.  It is thus
+	<repl>variable</repl> specified (either by name or number).
+	See Ramanathan, Section 11.7.  It is thus
 	<equation status="inline" 
 	  tex="$\rho(u_t, u_{t-s})$"
 	  ascii="rho(u(t), u(t-s))"
-	  graphic="autocorr"/>
-	where
-	<mathvar>u<sub>t</sub></mathvar> 
+	  graphic="autocorr"/> where <mathvar>u<sub>t</sub></mathvar>
 	is the <mathvar>t</mathvar>th observation of the variable
-	<mathvar>u</mathvar> and <mathvar>s</mathvar> is the
-	number of lags.
+	<mathvar>u</mathvar> and <mathvar>s</mathvar> is the number of
+	lags.
       </para>
 
       <para>
@@ -546,10 +532,10 @@
       </para>
 
       <para>
-	If an (optional) integer <repl>maxlag</repl>
-	value is supplied the length of the correlogram is limited to
-	at most that number of lags, otherwise the length is
-	determined automatically.
+	If an (optional) integer <repl>maxlag</repl> value is supplied
+	the length of the correlogram is limited to at most that
+	number of lags, otherwise the length is determined
+	automatically.
       </para>
     </description>
 
@@ -576,12 +562,12 @@
     <description>
       <para>
 	Computes the model selection statistics (see Ramanathan,
-	Section 4.3), given <repl>ess</repl> (error sum
-	of squares), the number of observations
-	(<mathvar>T</mathvar>), and the number of coefficients
-	(<mathvar>k</mathvar>). <mathvar>T</mathvar>,
-	<mathvar>k</mathvar>, and <repl>ess</repl> may
-	be numerical values or names of previously defined variables.
+	Section 4.3), given <repl>ess</repl> (error sum of squares),
+	the number of observations (<mathvar>T</mathvar>), and the
+	number of coefficients (<mathvar>k</mathvar>).
+	<mathvar>T</mathvar>, <mathvar>k</mathvar>, and
+	<repl>ess</repl> may be numerical values or names of
+	previously defined variables.
       </para>
     </description>
 
@@ -607,20 +593,18 @@
     </usage>
 
     <description>
-      <para>If <repl>dist</repl> is
-	<literal>t</literal>, <literal>X</literal> or
-	<literal>F</literal>, prints out the critical values for the
-	student's <mathvar>t</mathvar>, chi-square or
-	<mathvar>F</mathvar> distribution respectively, for the
-	common significance levels and using the specified degrees of
-	freedom, given as <repl>param1</repl> for t and
-	chi-square, or <repl>param1</repl> and
-	<repl>param2</repl> for <mathvar>F</mathvar>.
-	If <repl>dist</repl> is <literal>d</literal>,
+      <para>If <repl>dist</repl> is <lit>t</lit>, <lit>X</lit> or
+	<lit>F</lit>, prints out the critical values for the student's
+	<mathvar>t</mathvar>, chi-square or <mathvar>F</mathvar>
+	distribution respectively, for the common significance levels
+	and using the specified degrees of freedom, given as
+	<repl>param1</repl> for t and chi-square, or
+	<repl>param1</repl> and <repl>param2</repl> for
+	<mathvar>F</mathvar>. If <repl>dist</repl> is <lit>d</lit>,
 	prints the upper and lower values of the Durbin-Watson
 	statistic at 5 percent significance, for the given number of
-	observations, <repl>param1</repl>, and for the
-	range of 1 to 5 explanatory variables.
+	observations, <repl>param1</repl>, and for the range of 1 to 5
+	explanatory variables.
       </para>
     </description>
 
@@ -642,13 +626,13 @@
 	prediction of the dependent variable at observation at
 	observation <mathvar>k</mathvar> + 1; the second uses the
 	first <mathvar>k</mathvar> + 1 observations and generates a
-	prediction for observation <mathvar>k</mathvar> + 2, and so
-	on (where <mathvar>k</mathvar> is the number of parameters
-	in the original model).  The cumulated sum of the scaled
-	forecast errors is printed and graphed.  The null hypothesis
-	of parameter stability is rejected at the 5 percent
-	significance level if the cumulated sum strays outside of the
-	95 percent confidence band.
+	prediction for observation <mathvar>k</mathvar> + 2, and so on
+	(where <mathvar>k</mathvar> is the number of parameters in the
+	original model).  The cumulated sum of the scaled forecast
+	errors is printed and graphed.  The null hypothesis of
+	parameter stability is rejected at the 5 percent significance
+	level if the cumulated sum strays outside of the 95 percent
+	confidence band.
       </para>
 
       <para>
@@ -674,13 +658,12 @@
     </usage>
 
     <description>
-      <para>Reads the variables in <repl>varlist</repl>
-	from a database (gretl or RATS 4.0), which must have been
-	opened previously using the <cmd>open</cmd> command.
-	In addition, a data frequency and sample range must be
-	established using the the <cmd>setobs</cmd> and
-	<cmd>smpl</cmd> commands prior to using this command.
-	Here is a full example:</para>
+      <para>Reads the variables in <repl>varlist</repl> from a
+	database (gretl or RATS 4.0), which must have been opened
+	previously using the <cmd>open</cmd> command. In addition, a
+	data frequency and sample range must be established using the
+	the <cmd>setobs</cmd> and <cmd>smpl</cmd> commands prior to
+	using this command. Here is a full example:</para>
 
       <code>
 	open macrodat.rat
@@ -692,15 +675,15 @@
 	<filename>macrodat.rat</filename>, establish a quarterly data
 	set starting in the first quarter of 1959 and ending in the
 	fourth quarter of 1999, and then import the series named
-	<literal>GDP_JP</literal> and
-	<literal>GDP_UK</literal>.</para>
+	<lit>GDP_JP</lit> and <lit>GDP_UK</lit>.</para>
 
       <para>If the series to be read are of higher frequency than the
 	working data set, you must specify a compaction method as
 	below:</para>
 
       <code>
-	data (compact=average) LHUR PUNEW</code>
+	data (compact=average) 
+	LHUR PUNEW</code>
 
       <para>The four available compaction methods are
 	<quote>average</quote> (takes the mean of the high frequency
@@ -730,9 +713,9 @@
 	confirmation is asked, and any variables with higher ID
 	numbers will be re-numbered.</para>
 
-      <para>If no <repl>varlist</repl> is given with
-	this command, it deletes the last (highest numbered) variable
-	from the dataset.</para>
+      <para>If no <repl>varlist</repl> is given with this command, it
+	deletes the last (highest numbered) variable from the
+	dataset.</para>
     </description>
 
     <gui-access>
@@ -751,12 +734,11 @@
 
     <description>
       <para>
-	The first difference of each variable in
-	<repl>varlist</repl> is obtained and the result
-	stored in a new variable with the prefix
-	<literal>d_</literal>.  Thus <cmd>diff x y</cmd>
-	creates the new variables <literal>d_x = x(t) -
-	  x(t-1)</literal> and <literal>d_y = y(t) - y(t-1)</literal>.
+	The first difference of each variable in <repl>varlist</repl>
+	is obtained and the result stored in a new variable with the
+	prefix <lit>d_</lit>.  Thus <cmd>diff x y</cmd> creates the
+	new variables <lit>d_x = x(t) - x(t-1)</lit> and <lit>d_y =
+	  y(t) - y(t-1)</lit>.
       </para>
     </description>
 
@@ -777,8 +759,8 @@
 
     <description>
       <para>
-	Ends a block of commands of some sort.  For example,
-	<cmd>end system</cmd> terminates an equation system.
+	Ends a block of commands of some sort.  For example, <cmd>end
+	  system</cmd> terminates an equation system.
       </para>
     </description>
 
@@ -809,27 +791,27 @@
       </arguments>
       <options>
         <option>
-        <flag>--complete</flag>
-        <effect>Create a complete document</effect>
+	  <flag>--complete</flag>
+	  <effect>Create a complete document</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
-     <para>
+      <para>
 	Must follow the estimation of a model.  Prints the estimated
 	model in the form of a &latex; equation.  If a filename is
-	specified using the <literal>-f</literal> flag output goes to
-	that file, otherwise it goes to a file with a name of the form
-	<filename>equation_N.tex</filename>, where
-	<literal>N</literal> is the number of models estimated to date
-	in the current session.  See also <cmdref targ="tabprint"/>.
+	specified using the <lit>-f</lit> flag output goes to that
+	file, otherwise it goes to a file with a name of the form
+	<filename>equation_N.tex</filename>, where <lit>N</lit> is the
+	number of models estimated to date in the current session.
+	See also <cmdref targ="tabprint"/>.
       </para>
 
       <para>
-	If the <literal>--complete</literal> flag is given the &latex;
-	file is a complete document, ready for processing; otherwise
-	it must be included in a document.
+	If the <lit>--complete</lit> flag is given the &latex; file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
       </para>
     </description>
 
@@ -854,8 +836,8 @@
     <description>
       <para>
 	Specifies an equation within a system of equations (see 
-	<cmdref targ="system"/>).  The syntax for specifying
-	an equation is the same as that for, e.g., 
+	<cmdref targ="system"/>).  The syntax for specifying an
+	equation is the same as that for, e.g., 
 	<cmdref targ="ols"/>.
       </para>
     </description>
@@ -879,16 +861,14 @@
       <para>
 	Must follow an estimation command.  Forecasts are generated
 	for the specified range (or the largest possible range if no
-	<repl>startobs</repl> and
-	<repl>endobs</repl> are given) and the values
-	saved as <repl>newvarname</repl>, which can be
+	<repl>startobs</repl> and <repl>endobs</repl> are given) and
+	the values saved as <repl>newvarname</repl>, which can be
 	printed, graphed, or plotted. The right-hand side variables
 	are those in the original model.  There is no provision to
 	substitute other variables.  If an autoregressive error
-	process is specified (for <cmd>hilu</cmd>,
-	<cmd>corc</cmd>, and <cmd>ar</cmd>) the
-	forecast is conditional one step ahead and incorporates the
-	error process.
+	process is specified (for <cmd>hilu</cmd>, <cmd>corc</cmd>,
+	and <cmd>ar</cmd>) the forecast is conditional one step ahead
+	and incorporates the error process.
       </para>
     </description>
 
@@ -907,10 +887,10 @@
       </arguments>
       <options>
         <option>
-        <flag>--plot</flag>
-        <effect>display graph</effect>
+	  <flag>--plot</flag>
+	  <effect>display graph</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
@@ -935,12 +915,12 @@
   <command name="fit" section="Prediction">
 
     <description>
-     <para>
+      <para>
 	Must follow an estimation command.  Generates fitted values,
-	in a series called <literal>autofit</literal>, for the current
-	sample, based on the last regression.  In the case of
-	time-series models, also pops up a graph of fitted and
-	actual values of the dependent variable against time.
+	in a series called <lit>autofit</lit>, for the current sample,
+	based on the last regression.  In the case of time-series
+	models, also pops up a graph of fitted and actual values of
+	the dependent variable against time.
       </para>
     </description>
 
@@ -955,7 +935,7 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Prints the frequency distribution for <repl>var</repl> (given
 	by name or number) along with the Doornik chi-square test for
 	normality. In interactive mode a graph of the distribution is
@@ -979,50 +959,45 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Creates new variables, usually through transformations of
-	existing variables. See also <cmd>diff</cmd>,
-	<cmd>logs</cmd>, <cmd>lags</cmd>,
-	<cmd>ldiff</cmd>, <cmd>multiply</cmd> and
+	existing variables. See also <cmd>diff</cmd>, <cmd>logs</cmd>,
+	<cmd>lags</cmd>, <cmd>ldiff</cmd>, <cmd>multiply</cmd> and
 	<cmd>square</cmd> for shortcuts.
       </para>
 
       <para>
 	Supported <emphasis>arithmetical operators</emphasis> are, in
-	order of precedence: <literal>^</literal> (exponentiation);
-	<literal>*</literal>, <literal>/</literal> and
-	<literal>%</literal> (modulus or remainder);
-	<literal>+</literal> and <literal>-</literal>. 
+	order of precedence: <lit>^</lit> (exponentiation);
+	<lit>*</lit>, <lit>/</lit> and <lit>%</lit> (modulus or
+	remainder); <lit>+</lit> and <lit>-</lit>. 
       </para>
 
       <para>
 	The available <emphasis>Boolean operators</emphasis> are
-	(again, in order of precedence): <literal>!</literal>
-	(negation), <literal>&amp;</literal> (logical AND),
-	<literal>|</literal> (logical OR), <literal>&gt;</literal>,
-	<literal>&lt;</literal>, <literal>=</literal>,
-	<literal>&gt;=</literal> (greater than or equal),
-	<literal>&lt;=</literal> (less than or equal) and
-	<literal>!=</literal> (not equal).  The Boolean operators can
-	be used in constructing dummy variables: for instance
-	<literal>(x > 10)</literal> returns 1 if <literal>x</literal>
+	(again, in order of precedence): <lit>!</lit> (negation),
+	<lit>&amp;</lit> (logical AND), <lit>|</lit> (logical OR),
+	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
+	<lit>&gt;=</lit> (greater than or equal), <lit>&lt;=</lit>
+	(less than or equal) and <lit>!=</lit> (not equal).  The
+	Boolean operators can be used in constructing dummy variables:
+	for instance <lit>(x > 10)</lit> returns 1 if <lit>x</lit>
 	&gt; 10, 0 otherwise. Supported <emphasis>functions</emphasis>
 	fall into these groups:
       </para>
 
       <ilist>
-	<li><para>Standard math functions:
-	    <function>abs</function>, <function>cos</function>,
-	    <function>exp</function>, <function>int</function>
-	    (integer part), <function>ln</function> (natural log:
+	<li><para>Standard math functions: <function>abs</function>,
+	    <function>cos</function>, <function>exp</function>,
+	    <function>int</function> (integer part),
+	    <function>ln</function> (natural log:
 	    <function>log</function> is a synonym),
 	    <function>sin</function>,
 	    <function>sqrt</function>.</para>
 	</li>
-	<li><para>Statistical functions:
-	    <function>max</function> (maximum value in a series),
-	    <function>min</function> (minimum),
-	    <function>mean</function> (arithmetic mean),
+	<li><para>Statistical functions: <function>max</function>
+	    (maximum value in a series), <function>min</function>
+	    (minimum), <function>mean</function> (arithmetic mean),
 	    <function>median</function>, <function>var</function>
 	    (variance) <function>sd</function> (standard deviation),
 	    <function>sst</function> (sum of squared deviations from
@@ -1031,23 +1006,21 @@
 	    <function>corr</function> (correlation coefficient),
 	    <function>pvalue</function>.</para>
 	</li>
-	<li><para>Time-series functions:
-	    <function>diff</function> (first difference),
-	    <function>ldiff</function> (log-difference, or first
-	    difference of natural logs).  To generate lags of a
-	    variable <literal>x</literal>, use the syntax
-	    <cmd>x(-N)</cmd>, where <literal>N</literal>
-	    represents the desired lag length; to generate leads, use
+	<li><para>Time-series functions: <function>diff</function>
+	    (first difference), <function>ldiff</function>
+	    (log-difference, or first difference of natural logs).  To
+	    generate lags of a variable <lit>x</lit>, use the syntax
+	    <cmd>x(-N)</cmd>, where <lit>N</lit> represents the
+	    desired lag length; to generate leads, use
 	    <cmd>x(+N)</cmd>;</para>
 	</li>
-	<li><para>Miscellaneous: <function>cum</function>
-	    (cumulate), <function>sort</function>,
-	    <function>uniform</function>, <function>normal</function>,
-	    <function>misszero</function> (replace the missing
-	    observation code in a given series with zeros),
-	    <cmd>zeromiss</cmd> (the inverse operation to
-	    <cmd>misszero</cmd>), <function>nobs</function>
-	    (return the number of valid observations in a given data
+	<li><para>Miscellaneous: <function>cum</function> (cumulate),
+	    <function>sort</function>, <function>uniform</function>,
+	    <function>normal</function>, <function>misszero</function>
+	    (replace the missing observation code in a given series
+	    with zeros), <cmd>zeromiss</cmd> (the inverse operation to
+	    <cmd>misszero</cmd>), <function>nobs</function> (return
+	    the number of valid observations in a given data
 	    series).</para>
 	</li>
       </ilist> 
@@ -1058,46 +1031,43 @@
 	<function>pvalue</function>, <function>uniform</function> and
 	<function>normal</function> take as their single argument
 	either the name of a variable (note that you can't refer to
-	variables by their ID numbers in a <cmd>genr</cmd>
-	command) or a composite expression that evaluates to a
-	variable (e.g. <literal>ln((x1+x2)/2)</literal>).
-	<function>cov</function> and <function>corr</function> both
-	require two arguments, and return respectively the covariance
-	and the correlation coefficient between two named variables.
-	The <function>pvalue</function> function takes the same
-	arguments as the <cmd>pvalue</cmd> command (see
-	below), but in this context commas should be placed between
-	the arguments. <function>uniform()</function> and
+	variables by their ID numbers in a <cmd>genr</cmd> command) or
+	a composite expression that evaluates to a variable (e.g.
+	<lit>ln((x1+x2)/2)</lit>). <function>cov</function> and
+	<function>corr</function> both require two arguments, and
+	return respectively the covariance and the correlation
+	coefficient between two named variables. The
+	<function>pvalue</function> function takes the same arguments
+	as the <cmd>pvalue</cmd> command (see below), but in this
+	context commas should be placed between the arguments.
+	<function>uniform()</function> and
 	<function>normal()</function>, which do not take arguments,
 	return pseudo-random series drawn from the uniform (0&ndash;1)
 	and standard normal distributions respectively (see also the
-	<cmd>seed</cmd> command).  Uniform series are
-	generated using the C library function
-	<function>rand()</function>; for normal series the method of
-	Box and Muller (1958) is used.</para>
+	<cmd>seed</cmd> command).  Uniform series are generated using
+	the C library function <function>rand()</function>; for normal
+	series the method of Box and Muller (1958) is used.</para>
 
       <para>Besides the operators and functions just noted there are
 	some special uses of <cmd>genr</cmd>:
       </para>
 
       <ilist>
-	<li><para><cmd>genr time</cmd> creates a time
-	    trend variable (1,2,3,&hellip;) called
-	    <cmd>time</cmd>. <cmd>genr index</cmd>
-	    does the same thing except that the variable is called
-	    <literal>index</literal>.</para>
+	<li><para><cmd>genr time</cmd> creates a time trend variable
+	    (1,2,3,&hellip;) called <cmd>time</cmd>. <cmd>genr
+	      index</cmd> does the same thing except that the variable
+	    is called <lit>index</lit>.</para>
 	</li>
-	<li><para><cmd>genr dummy</cmd> creates dummy
-	    variables up to the periodicity of the data.  E.g. in the
-	    case of quarterly data (periodicity 4), the program
-	    creates <literal>dummy_1</literal> = 1 for first quarter
-	    and 0 in other quarters, <literal>dummy_2</literal> = 1
-	    for the second quarter and 0 in other quarters, and so
-	    on.</para>
+	<li><para><cmd>genr dummy</cmd> creates dummy variables up to
+	    the periodicity of the data.  E.g. in the case of
+	    quarterly data (periodicity 4), the program creates
+	    <lit>dummy_1</lit> = 1 for first quarter and 0 in other
+	    quarters, <lit>dummy_2</lit> = 1 for the second quarter
+	    and 0 in other quarters, and so on.</para>
 	</li>
-	<li><para><cmd>genr paneldum</cmd> creates a set
-	    of special dummy variables for use with a panel data set
-	    &mdash; see <cmdref targ="panel"/>.</para>
+	<li><para><cmd>genr paneldum</cmd> creates a set of special
+	    dummy variables for use with a panel data set &mdash; see
+	    <cmdref targ="panel"/>.</para>
 	</li>
 	<li><para>Various internal variables defined in the course of
 	    running a regression can be retrieved using
@@ -1105,40 +1075,40 @@
 
 	  <table lwidth="100pt" rwidth="300pt">
 	    <row> 
-	      <cell><literal>$ess</literal></cell>
+	      <cell><lit>$ess</lit></cell>
 	      <cell>error sum of squares</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$rsq</literal></cell> 
+	      <cell><lit>$rsq</lit></cell> 
 	      <cell>unadjusted <emphasis>R</emphasis>-squared</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$T</literal></cell> 
+	      <cell><lit>$T</lit></cell> 
 	      <cell>number of observations used </cell> 
 	    </row> 
 	    <row> 
-	      <cell><literal>$df</literal></cell>
+	      <cell><lit>$df</lit></cell>
 	      <cell>degrees of freedom</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$trsq</literal></cell>
+	      <cell><lit>$trsq</lit></cell>
 	      <cell><emphasis>TR</emphasis>-squared (sample size times
 		<emphasis>R</emphasis>-squared)</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$sigma</literal></cell> 
+	      <cell><lit>$sigma</lit></cell> 
 	      <cell>standard error of residuals</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$aic</literal></cell> 
+	      <cell><lit>$aic</lit></cell> 
 	      <cell>Akaike Information Criterion</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$lnl</literal></cell> 
+	      <cell><lit>$lnl</lit></cell> 
 	      <cell>log-likelihood (logit and probit models)</cell> 
 	    </row> 
 	    <row>
-	      <cell><literal>$sigma</literal></cell> 
+	      <cell><lit>$sigma</lit></cell> 
 	      <cell>standard error of residuals</cell> 
 	    </row> 
 	    <row>
@@ -1170,66 +1140,159 @@
 
       <para>
 	<emphasis>Note</emphasis>: In the command-line program,
-	<cmd>genr</cmd> commands that retrieve model-related
-	data always reference the model that was estimated most
-	recently.  This is also true in the GUI program, if one uses
-	<cmd>genr</cmd> in the <quote>gretl console</quote> or
-	enters a formula using the <quote>Define new variable</quote>
-	option under the Variable menu in the main window.  With the
-	GUI, however, you have the option of retrieving data from any
-	model currently displayed in a window (whether or not it's the
-	most recent model).  You do this under the <quote>Model
+	<cmd>genr</cmd> commands that retrieve model-related data
+	always reference the model that was estimated most recently.
+	This is also true in the GUI program, if one uses
+	<cmd>genr</cmd> in the <quote>gretl console</quote> or enters
+	a formula using the <quote>Define new variable</quote> option
+	under the Variable menu in the main window.  With the GUI,
+	however, you have the option of retrieving data from any model
+	currently displayed in a window (whether or not it's the most
+	recent model).  You do this under the <quote>Model
 	  data</quote> menu in the model's window.</para>
 
-      <para>The internal series <literal>uhat</literal> and
-	<literal>yhat</literal> hold, respectively, the residuals and
-	fitted values from the last regression.</para>
+      <para>The internal series <lit>uhat</lit> and <lit>yhat</lit>
+	hold, respectively, the residuals and fitted values from the
+	last regression.</para>
 
       <para>
 	Three other <quote>internal</quote> variables are available:
-	<literal>$nobs</literal> holds the number of observations in
-	the current sample range (note that this may or may not equal
-	the value of <literal>$T</literal>, the number of observations
-	used in estimating the last model).  The variable
-	<literal>t</literal> serves as an index of the observations.
-	Thus for instance <literal>genr dum = (t=15)</literal> will
-	generate a dummy variable that has value 1 for observation 15,
-	0 otherwise.  The variable <literal>$pd</literal> holds the
-	frequency or periodicity of the data (e.g. 4 for quarterly
-	data).</para>
+	<lit>$nobs</lit> holds the number of observations in the
+	current sample range (note that this may or may not equal the
+	value of <lit>$T</lit>, the number of observations used in
+	estimating the last model).  The variable <lit>t</lit> serves
+	as an index of the observations. Thus for instance <lit>genr
+	  dum = (t=15)</lit> will generate a dummy variable that has
+	value 1 for observation 15, 0 otherwise.  The variable
+	<lit>$pd</lit> holds the frequency or periodicity of the data
+	(e.g. 4 for quarterly data).</para>
 
-<!--	
       <para>
 	<tabref targ="tab-genr"/> gives several examples of uses of
 	<cmd>genr</cmd> with explanatory notes; here are a
 	couple of tips on dummy variables:
       </para>
--->
 
       <ilist>
-	<li><para>Suppose <literal>x</literal> is coded with
-	    values 1, 2, or 3 and you want three dummy variables,
-	    <literal>d1</literal> = 1 if <literal>x</literal> = 1, 0
-	    otherwise, <literal>d2</literal> = 1 if
-	    <literal>x</literal> = 2, and so on.  To create these, use
-	    the commands:</para>
+	<li><para>Suppose <lit>x</lit> is coded with values 1, 2, or 3
+	    and you want three dummy variables, <lit>d1</lit> = 1 if
+	    <lit>x</lit> = 1, 0 otherwise, <lit>d2</lit> = 1 if
+	    <lit>x</lit> = 2, and so on.  To create these, use the
+	    commands:</para>
 
-	    <code>
-	      genr d1 = (x=1)
-	      genr d2 = (x=2)
-	      genr d3 = (x=3)</code>
+	  <code>
+	    genr d1 = (x=1)
+	    genr d2 = (x=2)
+	    genr d3 = (x=3)</code>
 	</li>
 
-	<li><para>To create <literal>z</literal> =
-	    <literal>max(x,y)</literal> do</para>
+	<li><para>To create <lit>z</lit> = <lit>max(x,y)</lit>
+	    do</para>
 
-	   <code>
-	      genr d = x&gt;y
-	      genr z = (x*d)+(y*(1-d))</code>
+	  <code>
+	    genr d = x&gt;y
+	    genr z = (x*d)+(y*(1-d))</code>
 	</li>
       </ilist>
 
-      <!-- include big table -->
+      <table id="tab-genr" title="Examples of use of genr command">
+	<row head="true">
+	  <cell>Command</cell>
+	  <cell>Comment</cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = x1^3</lit></cell>
+	  <cell><lit>x1</lit> cubed</cell>
+	</row>          
+	<row>
+	  <cell><lit>genr y = ln((x1+x2)/x3)</lit></cell>
+	  <cell></cell>
+	</row>
+	<row>
+	  <cell><lit>genr z = x&gt;y</lit></cell>
+	  <cell>sets <lit>z(t)</lit> to 1 if <lit>x(t) &gt; y(t)</lit>
+	    else to 0</cell>
+	</row> 
+	<row>
+	  <cell><lit>genr y = x(-2)</lit></cell>
+	  <cell><lit>x</lit> lagged 2 periods</cell>
+	</row>     
+	<row>
+	  <cell><lit>genr y = x(2)</lit></cell>
+	  <cell><lit>x</lit> led 2 periods</cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = diff(x)</lit></cell>
+	  <cell><lit>y(t) = x(t) - x(t-1)</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = ldiff(x)</lit></cell>
+	  <cell><lit>y(t) = log x(t) - log x(t-1)</lit>, the
+	    instantaneous rate of growth of <lit>x</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = sort(x)</lit></cell>
+	  <cell>sorts <lit>x</lit> in increasing order and stores in
+	    <lit>y</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = -sort(-x)</lit></cell>
+	  <cell>sort <lit>x</lit> in decreasing order</cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = int(x)</lit></cell>
+	  <cell>truncate <lit>x</lit> and store its integer value as
+	    <lit>y</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = abs(x)</lit></cell>
+	  <cell>store the absolute values of <lit>x</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = sum(x)</lit></cell>
+	  <cell>sum <lit>x</lit> values excluding missing &minus;999
+	    entries</cell>
+	</row>
+	<row>
+	  <cell><lit>genr y = cum(x)</lit></cell>
+	  <cell>cumulation: 
+		<equation status="inline"
+		  tex="$y_t = \sum_{\tau=1}^t x_{\tau}$"
+		  ascii="y(t) = the sum from s=1 to s=t of x(s)"
+		  graphic="cumulate"/>
+	  </cell>
+	</row>
+	<row>
+	  <cell><lit>genr aa = $ess</lit></cell>
+	  <cell>set <lit>aa</lit> equal to the Error Sum of Squares
+	    from last regression</cell>
+	</row>
+	<row>
+	  <cell><lit>genr x = coeff(sqft)</lit></cell>
+	  <cell>grab the estimated coefficient on the variable
+	    <lit>sqft</lit> from the last regression</cell>
+	</row>
+	<row>
+	  <cell><lit>genr rho4 = rho(4)</lit></cell>
+	  <cell>grab the 4th-order autoregressive coefficient from the
+	    last model (presumes an <lit>ar</lit> model)</cell>
+	</row>
+	<row>
+	  <cell><lit>genr cvx1x2 = vcv(x1, x2)</lit></cell>
+	  <cell>grab the estimated coefficient covariance of vars
+	    <lit>x1</lit> and <lit>x2</lit> from the last model</cell>
+	</row>
+	<row>
+	  <cell><lit>genr foo = uniform()</lit></cell>
+	  <cell>uniform pseudo-random variable in range
+	    0&ndash;1</cell>
+	</row>
+	<row>
+	  <cell><lit>genr bar = 3 * normal()</lit></cell>
+	  <cell>normal pseudo-random variable, &mu; = 0, &sigma; =
+	    3</cell>
+	</row>
+      </table>
 
     </description>
 
@@ -1250,22 +1313,22 @@
       </arguments>
       <options>
         <option>
-        <flag>--with-lines</flag>
-        <effect>use lines, not points</effect>
+	  <flag>--with-lines</flag>
+	  <effect>use lines, not points</effect>
         </option>
         <option>
-        <flag>--with-impulses</flag>
-        <effect>use vertical lines</effect>
+	  <flag>--with-impulses</flag>
+	  <effect>use vertical lines</effect>
         </option>
         <option>
-        <flag>--suppress-fitted</flag>
-        <effect>don't show least squares fit</effect>
+	  <flag>--suppress-fitted</flag>
+	  <effect>don't show least squares fit</effect>
         </option>
         <option>
-        <flag>--dummy</flag>
-        <effect>see below</effect>
+	  <flag>--dummy</flag>
+	  <effect>see below</effect>
         </option>
-       </options>
+      </options>
       <examples>
         <example>gnuplot y1 y2 x</example>
         <example>gnuplot x time --with-lines</example>
@@ -1274,28 +1337,27 @@
     </usage>
 
     <description>
-      <para>Without the <literal>--dummy</literal> option, the
+      <para>Without the <lit>--dummy</lit> option, the
 	<repl>yvars</repl> are graphed against <repl>xvar</repl>. With
-	<literal>--dummy</literal>, <repl>yvar</repl> is graphed
-	against <repl>xvar</repl> with the points shown in different
-	colors depending on whether the value of <repl>dumvar</repl>
-	is 1 or 0.</para>
+	<lit>--dummy</lit>, <repl>yvar</repl> is graphed against
+	<repl>xvar</repl> with the points shown in different colors
+	depending on whether the value of <repl>dumvar</repl> is 1 or
+	0.</para>
 
-     <para>
-	The <literal>time</literal> variable behaves specially: if it
-	does not already exist then it will be generated
-	automatically.
+      <para>
+	The <lit>time</lit> variable behaves specially: if it does not
+	already exist then it will be generated automatically.
       </para>
 
       <para>
 	In interactive mode the result is piped to gnuplot for
 	display.  In batch mode a plot file named
 	<filename>gpttmp01.plt</filename> is written.  (With
-	subsequent uses of <cmd>gnuplot</cmd> similar files
-	are created, with the number in the file name incremented.)
-	The plots can be generated later using the command
-	<cmd>gnuplot gpttmp.plt</cmd>.  (Under MS Windows,
-	start <program>wgnuplot</program> and open the file
+	subsequent uses of <cmd>gnuplot</cmd> similar files are
+	created, with the number in the file name incremented.) The
+	plots can be generated later using the command <cmd>gnuplot
+	  gpttmp.plt</cmd>.  (Under MS Windows, start
+	<program>wgnuplot</program> and open the file
 	<filename>gpttmp01.plt</filename>.)
       </para>
 
@@ -1311,15 +1373,14 @@
       </para>
 
       <para>
-	<literal>{ set title 'My Title'; set yrange [0:1000]; }</literal>
+	<lit>{ set title 'My Title'; set yrange [0:1000]; }</lit>
       </para>
 
     </description>
 
     <gui-access>
       <menu-path>/Data/Graph specified vars</menu-path>
-      <other-access>Main window pop-up menu, graph button on
-	toolbar</other-access>
+      <other-access>Main window pop-up menu, graph button on toolbar</other-access>
     </gui-access>
 
   </command>
@@ -1333,20 +1394,19 @@
       </arguments>
       <options>
         <option>
-        <flag>--tall</flag>
-        <effect>use 40 rows</effect>
+	  <flag>--tall</flag>
+	  <effect>use 40 rows</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
-     <para>
-	ASCII graphics.  The <repl>yvars</repl> (which
-	may be given by name or number) are  graphed against
-	<repl>xvar</repl> using ASCII symbols. The
-	<literal>--tall</literal> flag will produce a graph with 40
-	rows and 60 columns. Without it, the graph will be 20 by 60
-	(for screen output).  See also <cmdref targ="gnuplot"/>.
+      <para>
+	ASCII graphics.  The <repl>yvars</repl> (which may be given by
+	name or number) are  graphed against <repl>xvar</repl> using
+	ASCII symbols. The <lit>--tall</lit> flag will produce a graph
+	with 40 rows and 60 columns. Without it, the graph will be 20
+	by 60 (for screen output).  See also <cmdref targ="gnuplot"/>.
       </para>
     </description>
 
@@ -1357,26 +1417,25 @@
     <description>
       <para>
 	This test is available only after estimating a model using the
-	<cmd>pooled</cmd> command (see also
-	<cmd>panel</cmd> and <cmd>setobs</cmd>).  It
-	tests the simple pooled model against the principal
-	alternatives, the fixed effects and random effects
-	models.</para>
+	<cmd>pooled</cmd> command (see also <cmd>panel</cmd> and
+	<cmd>setobs</cmd>).  It tests the simple pooled model against
+	the principal alternatives, the fixed effects and random
+	effects models.</para>
 
       <para>
 	The fixed effects model adds a dummy variable for all but one
 	of the cross-sectional units, allowing the intercept of the
 	regression to vary across the units.  An
-	<mathvar>F</mathvar>-test for the joint significance of
-	these dummies is presented.  The random effects model
-	decomposes the residual variance into two parts, one part
-	specific to the cross-sectional unit and the other specific to
-	the particular observation.  (This estimator can be computed
-	only if the number of cross-sectional units in the data set
-	exceeds the number of parameters to be estimated.) The
-	Breusch&ndash;Pagan LM statistic tests the null hypothesis
-	(that the pooled OLS estimator is adequate) against the random
-	effects alternative.</para>
+	<mathvar>F</mathvar>-test for the joint significance of these
+	dummies is presented.  The random effects model decomposes the
+	residual variance into two parts, one part specific to the
+	cross-sectional unit and the other specific to the particular
+	observation.  (This estimator can be computed only if the
+	number of cross-sectional units in the data set exceeds the
+	number of parameters to be estimated.) The Breusch&ndash;Pagan
+	LM statistic tests the null hypothesis (that the pooled OLS
+	estimator is adequate) against the random effects
+	alternative.</para>
 
       <para>
 	The pooled OLS model may be rejected against both of the
@@ -1415,7 +1474,7 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Presents OLS estimates with the heteroskedasticity consistent
 	covariance matrix estimates for the standard errors of
 	regression coefficients using MacKinnon and White (1985)
@@ -1433,7 +1492,7 @@
   <command name="help" section="Utilities">
 
     <description>
-     <para>
+      <para>
 	Gives a list of available commands. <cmd>help</cmd>
 	<repl>command</repl> describes <repl>command</repl> (e.g.
 	<cmd>help smpl</cmd>).  You can type <cmd>man</cmd> instead of
@@ -1463,7 +1522,7 @@
     </usage>
 
     <description>
-     <para>Computes parameter estimates using the Hildreth&ndash;Lu
+      <para>Computes parameter estimates using the Hildreth&ndash;Lu
 	search procedure (fine-tuned by the CORC procedure) with
 	<repl>depvar</repl> as the dependent variable and
 	<repl>indepvars</repl> as the list of independent variables.
@@ -1496,7 +1555,7 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Prints heteroskedasticity-corrected estimates (see Ramanathan,
 	ch. 8) and associated statistics.  The auxiliary regression
 	predicts the log of the square of residuals (using squares of
@@ -1520,16 +1579,16 @@
 
       <code>
 	if condition
-           commands
+	  commands
         else
-           commands
+	  commands
 	endif
       </code>
 
-     <para><repl>condition</repl> must be a Boolean expression, for
+      <para><repl>condition</repl> must be a Boolean expression, for
 	the syntax of which see <cmdref targ="genr"/>.  The
-	<cmd>else</cmd> block is optional; <literal>if</literal>
-	&hellip; <literal>endif</literal> blocks may be nested.</para>
+	<cmd>else</cmd> block is optional; <lit>if</lit> &hellip;
+	<lit>endif</lit> blocks may be nested.</para>
     </description>
 
   </command>
@@ -1542,14 +1601,14 @@
       </arguments>
       <options>
         <option>
-        <flag>--box1</flag>
-        <effect>BOX1 data</effect>
+	  <flag>--box1</flag>
+	  <effect>BOX1 data</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
-     <para>
+      <para>
 	Brings in data from a comma-separated values (CSV) format
 	file, such as can easily be written from a spreadsheet
 	program.  The file should have variable names on the first
@@ -1560,9 +1619,9 @@
       </para>
 
       <para>
-	With the <literal>--box1</literal> flag, reads a data file in
-	BOX1 format, as can be obtained using the Data Extraction
-	Service of the US Bureau of the Census.
+	With the <lit>--box1</lit> flag, reads a data file in BOX1
+	format, as can be obtained using the Data Extraction Service
+	of the US Bureau of the Census.
       </para>
     </description>
 
@@ -1575,9 +1634,9 @@
   <command name="info" section="Dataset">
 
     <description>
-     <para>
-      Prints out any supplementary information stored with the current
-      datafile.
+      <para>
+	Prints out any supplementary information stored with the
+	current datafile.
       </para>
     </description>
 
@@ -1602,12 +1661,12 @@
     </usage>
 
     <description>
-     <para>Sets the descriptive label for the given variable (if the
-	<literal>-d</literal> flag is given, followed by a string in
-	double quotes) and/or the <quote>display name</quote> for the
-	variable (if the <literal>-n</literal> flag is given, followed
-	by a quoted string).  If a variable has a display name, this
-	is used when generating graphs.</para>
+      <para>Sets the descriptive label for the given variable (if the
+	<lit>-d</lit> flag is given, followed by a string in double
+	quotes) and/or the <quote>display name</quote> for the
+	variable (if the <lit>-n</lit> flag is given, followed by a
+	quoted string).  If a variable has a display name, this is
+	used when generating graphs.</para>
     </description>
 
     <gui-access>
@@ -1620,10 +1679,10 @@
   <command name="labels" section="Dataset">
 
     <description>
-     <para>
+      <para>
 	Prints out the informative labels for any variables that have
-	been generated using <cmd>genr</cmd>, and any labels
-	added to the data set via the GUI.
+	been generated using <cmd>genr</cmd>, and any labels added to
+	the data set via the GUI.
       </para>
     </description>
 
@@ -1664,17 +1723,16 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Creates new variables which are lagged values of each of the
 	variables in <repl>varlist</repl>.  The number of lagged
 	variables equals the periodicity. For example, if the
 	periodicity is 4 (quarterly), the command <cmd>lags x y</cmd>
-	creates <literal>x_1</literal> = <literal>x(t-1)</literal>,
-	<literal>x_2</literal> = <literal>x(t-2)</literal>,
-	<literal>x_3</literal> = <literal>x(t-3)</literal> and
-	<literal>x_4</literal> <literal>x(t-4)</literal>. Similarly
-	for <literal>y</literal>. These variables must be referred to
-	in the exact form, that is, with the underscore.
+	creates <lit>x_1</lit> = <lit>x(t-1)</lit>, <lit>x_2</lit> =
+	<lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit> and
+	<lit>x_4</lit> <lit>x(t-4)</lit>. Similarly for <lit>y</lit>.
+	These variables must be referred to in the exact form, that
+	is, with the underscore.
       </para>
     </description>
 
@@ -1696,13 +1754,12 @@
       <para>
 	The first difference of the natural log of each variable in
 	<repl>varlist</repl> is obtained and the result stored in a
-	new variable with the prefix <literal>ld_</literal>.  Thus
-	<cmd>ldiff x y</cmd> creates the new variables
-	<literal>ld_x</literal> =
+	new variable with the prefix <lit>ld_</lit>.  Thus <cmd>ldiff
+	  x y</cmd> creates the new variables <lit>ld_x</lit> =
 	  <equation status="inline" 
 	  tex="$\ln(x_t) - \ln(x_{t-1})$"
 	  ascii="ln[x(t)] - ln[x(t-1)]"
-	  graphic="ldx"/> and <literal>ld_y</literal> =
+	  graphic="ldx"/> and <lit>ld_y</lit> =
 	  <equation status="inline" 
 	  tex="$\ln(y_t) - \ln(y_{t-1})$"
 	  ascii="ln[y(t)] - ln[y(t-1)]"
@@ -1767,9 +1824,9 @@
 	alone has been added); the studentized residual is obtained by
 	dividing the predicted residual by its standard error.</para>
 
-      <para>If the <literal>--save</literal> flag is given with this
-	command, then the leverage, influence and DFFITS values are
-	added to the current data set.</para>
+      <para>If the <lit>--save</lit> flag is given with this command,
+	then the leverage, influence and DFFITS values are added to
+	the current data set.</para>
     </description>
 
     <gui-access>
@@ -1783,26 +1840,26 @@
     <usage>
       <options>
         <option>
-        <flag>--logs</flag>
-        <effect>non-linearity, logs</effect>
+	  <flag>--logs</flag>
+	  <effect>non-linearity, logs</effect>
         </option>
         <option>
-        <flag>--autocorr</flag>
-        <effect>serial correlation</effect>
+	  <flag>--autocorr</flag>
+	  <effect>serial correlation</effect>
         </option>
         <option>
-        <flag>--squares</flag>
-        <effect>non-linearity, squares</effect>
+	  <flag>--squares</flag>
+	  <effect>non-linearity, squares</effect>
         </option>
         <option>
-        <flag>--white</flag>
-        <effect>heteroskedasticity (White's test)</effect>
+	  <flag>--white</flag>
+	  <effect>heteroskedasticity (White's test)</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
-     <para>
+      <para>
 	Must immediately follow an <cmd>ols</cmd> command. Carries out
 	some combination of the following: Lagrange Multiplier tests
 	for nonlinearity (logs and squares), White's test for
@@ -1849,7 +1906,7 @@
 	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
 	  ascii="log(y/(ymax - y))"
 	  graphic="logistic1"/>
-	  </para>
+      </para>
 
       <para>The dependent variable must be strictly positive.  If it
 	is a decimal fraction, between 0 and 1, the default is to use
@@ -1858,10 +1915,9 @@
 	variable is a percentage, between 0 and 100, the default
 	<mathvar>y<super>*</super></mathvar> is 100.  If you wish to
 	set a different maximum, use the optional
-	<literal>ymax=</literal><repl>value</repl> syntax following
-	the list of regressors.  The supplied value must be greater
-	than all of the observed values of the dependent
-	variable.</para>
+	<lit>ymax=</lit><repl>value</repl> syntax following the list
+	of regressors.  The supplied value must be greater than all of
+	the observed values of the dependent variable.</para>
 
       <para>The fitted values and residuals from the regression are
 	automatically transformed using 	  
@@ -1901,16 +1957,16 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Binomial logit regression. The dependent variable should be a
 	binary variable.  Maximum likelihood estimates of the
-	coefficients on <repl>indepvars</repl> are
-	obtained via the EM or Expectation&ndash;Maximization method
-	(see Ruud, 2000, Chapter 27).  As the model is nonlinear the
-	slopes depend on the values of the independent variables: the
-	reported slopes are evaluated at the means of those variables.
-	The chi-square statistic tests the null hypothesis that all
-	coefficients are zero apart from the constant.
+	coefficients on <repl>indepvars</repl> are obtained via the EM
+	or Expectation&ndash;Maximization method (see Ruud, 2000,
+	Chapter 27).  As the model is nonlinear the slopes depend on
+	the values of the independent variables: the reported slopes
+	are evaluated at the means of those variables. The chi-square
+	statistic tests the null hypothesis that all coefficients are
+	zero apart from the constant.
       </para>
 
       <para>
@@ -1918,11 +1974,10 @@
 	the dependent variable is the proportion of cases having a
 	certain characteristic, at each observation, rather than a 1
 	or 0 variable indicating whether the characteristic is present
-	or not) you should not use the <cmd>logit</cmd>
-	command, but rather construct the logit variable (e.g.
-	<cmd>genr lgt_p = log(p/(1 - p))</cmd>) and use this
-	as the dependent variable in an OLS regression.  See
-	Ramanathan, Chapter 12.
+	or not) you should not use the <cmd>logit</cmd> command, but
+	rather construct the logit variable (e.g. <cmd>genr lgt_p =
+	  log(p/(1 - p))</cmd>) and use this as the dependent variable
+	in an OLS regression.  See Ramanathan, Chapter 12.
       </para>
     </description>
 
@@ -1941,14 +1996,13 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	The natural log of each of the variables in
 	<repl>varlist</repl> is obtained and the result stored in a
-	new variable with the prefix <literal>l_</literal> which is
+	new variable with the prefix <lit>l_</lit> which is
 	<quote>el</quote> underscore.  <cmd>logs x y</cmd> creates the
-	new variables <literal>l_x</literal> =
-	ln(<literal>x</literal>) and <literal>l_y</literal> =
-	ln(<literal>y</literal>).
+	new variables <lit>l_x</lit> = ln(<lit>x</lit>) and
+	<lit>l_y</lit> = ln(<lit>y</lit>).
       </para>
     </description>
 
@@ -1975,13 +2029,12 @@
       <para>The parameter <repl>control</repl> must take one of three
 	forms, as shown in the examples: an integer number of times to
 	repeat the commands within the loop;
-	<quote><literal>while</literal></quote> plus a numerical
-	condition; or <quote><literal>for</literal></quote> plus a
-	range of values for the internal index variable
-	<literal>i</literal>.
+	<quote><lit>while</lit></quote> plus a numerical condition; or
+	<quote><lit>for</lit></quote> plus a range of values for the
+	internal index variable <lit>i</lit>.
       </para>
 
-     <para>This command opens a special mode in which the program
+      <para>This command opens a special mode in which the program
 	accepts commands to be executed repeatedly.  Within a loop,
 	only certain commands can be used: <cmd>genr</cmd>,
 	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
@@ -2007,10 +2060,10 @@
       </arguments>
       <options>
         <option>
-        <flag>--unequal-vars</flag>
-        <effect>assume variances are unequal</effect>
+	  <flag>--unequal-vars</flag>
+	  <effect>assume variances are unequal</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
@@ -2020,10 +2073,10 @@
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
 	its p-value. By default the statistic is computed on the
 	assumption that the variances are equal for the two variables;
-	with the <literal>--unequal-vars</literal> flag the variances
-	are assumed to be unequal. (The flag will make a difference
-	only if there are different numbers of non-missing
-	observations for the two variables.)
+	with the <lit>--unequal-vars</lit> flag the variances are
+	assumed to be unequal. (The flag will make a difference only
+	if there are different numbers of non-missing observations for
+	the two variables.)
       </para>
     </description>
 
@@ -2081,16 +2134,15 @@
       <para>
 	To estimate a polynomial fit, using multiple precision
 	arithmetic to generate the required powers of the independent
-	variable, use the form, e.g. <cmd>mpols y 0 x ; 2 3
-	  4</cmd> This does a regression of <literal>y</literal>
-	on <literal>x</literal>, <literal>x</literal> squared,
-	<literal>x</literal> cubed and <literal>x</literal> to the
-	fourth power.  That is, the numbers (which must be positive
-	integers) to the right of the semicolon specify the powers of
-	<literal>x</literal> to be used.  If more than one independent
-	variable is specified, the last variable before the semicolon
-	is taken to be the one that should be raised to various
-	powers.
+	variable, use the form, e.g. <cmd>mpols y 0 x ; 2 3 4</cmd>
+	This does a regression of <lit>y</lit> on <lit>x</lit>,
+	<lit>x</lit> squared, <lit>x</lit> cubed and <lit>x</lit> to
+	the fourth power.  That is, the numbers (which must be
+	positive integers) to the right of the semicolon specify the
+	powers of <lit>x</lit> to be used.  If more than one
+	independent variable is specified, the last variable before
+	the semicolon is taken to be the one that should be raised to
+	various powers.
       </para>
     </description>
 
@@ -2116,25 +2168,24 @@
 
     <description>
       <para>
-	The variables in <repl>varlist</repl>
-	(referenced by name or number) are multiplied by
-	<repl>x</repl>, which may be either a numerical
-	value or the name of a variable already defined. The products
-	are named with the specified <repl>suffix</repl>
+	The variables in <repl>varlist</repl> (referenced by name or
+	number) are multiplied by <repl>x</repl>, which may be either
+	a numerical value or the name of a variable already defined.
+	The products are named with the specified <repl>suffix</repl>
 	(maximum 3 characters). The original variable names are
 	truncated first if need be. For instance, suppose you want to
 	create per capita versions of certain variables, and you have
-	the variable <literal>pop</literal> (population).  A suitable
-	set of commands is then:</para>
+	the variable <lit>pop</lit> (population).  A suitable set of
+	commands is then:</para>
       
       <code>
 	genr invpop = 1/pop
 	multiply invpop pc income</code>
 
-      <para>which will create <literal>incomepc</literal> as the
-	product of <literal>income</literal> and
-	<literal>invpop</literal>, and <literal>expendpc</literal> as
-	<literal>expend</literal> times <literal>invpop</literal>.
+      <para>which will create <lit>incomepc</lit> as the product of
+	<lit>income</lit> and <lit>invpop</lit>, and
+	<lit>expendpc</lit> as <lit>expend</lit> times
+	<lit>invpop</lit>.
       </para>
     </description>
 
@@ -2155,19 +2206,19 @@
 	modified version of the Levenberg&ndash;Marquandt algorithm.
 	The user must supply a function specification.  The parameters
 	of this function must be declared and given starting values
-	(using the <cmd>genr</cmd> command) prior to
-	estimation. Optionally, the user may specify the derivatives
-	of the regression function with respect to each of the
-	parameters; if analytical derivatives are not supplied, a
-	numerical approximation to the Jacobian is computed.</para>
+	(using the <cmd>genr</cmd> command) prior to estimation.
+	Optionally, the user may specify the derivatives of the
+	regression function with respect to each of the parameters; if
+	analytical derivatives are not supplied, a numerical
+	approximation to the Jacobian is computed.</para>
 
       <para>
 	It is easiest to show what is required by example.  The
 	following is a complete script to estimate the nonlinear
 	consumption function set out in William Greene's
-	<book>Econometric Analysis</book>, in chapter 11 of
-	the 4th edition, or chapter 9 of the 5th.  (The numbers to the
-	left of the lines are for reference and are not part of the
+	<book>Econometric Analysis</book>, in chapter 11 of the 4th
+	edition, or chapter 9 of the 5th.  (The numbers to the left of
+	the lines are for reference and are not part of the
 	commands.)</para>
 
       <code>
@@ -2193,20 +2244,19 @@
 
       <para>
 	The actual NLS commands occupy lines 6 to 10. On line 6 the
-	<cmd>nls</cmd> command is given: a dependent variable
-	is specified, followed by an equals sign, followed by a
-	function specification.  The syntax for the expression on the
-	right is the same as that for the <cmd>genr</cmd>
-	command.  The next three lines specify the derivatives of the
-	regression function with respect to each of the parameters in
-	turn.  Each line begins with the keyword
-	<cmd>deriv</cmd>, gives the name of a parameter, an
-	equals sign, and an expression whereby the derivative can be
-	calculated (again, the syntax here is the same as for
-	<cmd>genr</cmd>). These <cmd>deriv</cmd> lines
-	are optional, but it is recommended that you supply them if
-	possible. Line 10, <cmd>end nls</cmd>, completes the
-	command and calls for estimation.</para>
+	<cmd>nls</cmd> command is given: a dependent variable is
+	specified, followed by an equals sign, followed by a function
+	specification.  The syntax for the expression on the right is
+	the same as that for the <cmd>genr</cmd> command.  The next
+	three lines specify the derivatives of the regression function
+	with respect to each of the parameters in turn.  Each line
+	begins with the keyword <cmd>deriv</cmd>, gives the name of a
+	parameter, an equals sign, and an expression whereby the
+	derivative can be calculated (again, the syntax here is the
+	same as for <cmd>genr</cmd>). These <cmd>deriv</cmd> lines are
+	optional, but it is recommended that you supply them if
+	possible. Line 10, <cmd>end nls</cmd>, completes the command
+	and calls for estimation.</para>
 
       <para>For further details on NLS estimation please see
 	<manref targ="nlschap"/>.</para>
@@ -2230,7 +2280,7 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Establishes a <quote>blank</quote> data set, containing only a
 	constant and an index variable, with periodicity 1 and the
 	specified number of observations. This may be used for
@@ -2258,18 +2308,18 @@
       </arguments>
       <options>
         <option>
-        <flag>--vcv</flag>
-        <effect>print covariance matrix</effect>
+	  <flag>--vcv</flag>
+	  <effect>print covariance matrix</effect>
         </option>
         <option>
-        <flag>--robust</flag>
-        <effect>robust standard errors</effect>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
         </option>
         <option>
-        <flag>--quiet</flag>
-        <effect>suppress printing of results</effect>
+	  <flag>--quiet</flag>
+	  <effect>suppress printing of results</effect>
         </option>
-       </options>
+      </options>
       <examples>
         <example>ols 1 0 2 4 6 7</example>
 	<example>ols y 0 x1 x2 x3 --vcv</example>
@@ -2280,23 +2330,22 @@
     <description>
       <para>
         Computes ordinary least squares (OLS) estimates with
-        <repl>depvar</repl> as the dependent variable and
-        <repl>indepvars</repl> as the list of independent variables.
+	<repl>depvar</repl> as the dependent variable and
+	<repl>indepvars</repl> as the list of independent variables.
       </para>
 
       <para>Variables may be specified by name or number; use the
-        number zero for a constant term. The program also prints the
-        p-values for <mathvar>t</mathvar> (two-tailed) and
-        <mathvar>F</mathvar>-statistics.  A p-value below 0.01
-        indicates significance at the 1 percent level and is denoted
-        by <literal>***</literal>. <literal>**</literal> indicates
-        significance between 1 and 5 percent and <literal>*</literal>
-        indicates significance between 5 and 10 percent levels. Model
-        selection statistics (described in Ramanathan, Section 4.3)
-        are also printed. Various internal variables may be retrieved
-        using the <cmd>genr</cmd> command, provided
-        <cmd>genr</cmd> is invoked immediately after this
-        command.
+	number zero for a constant term. The program also prints the
+	p-values for <mathvar>t</mathvar> (two-tailed) and
+	<mathvar>F</mathvar>-statistics.  A p-value below 0.01
+	indicates significance at the 1 percent level and is denoted
+	by <lit>***</lit>. <lit>**</lit> indicates significance
+	between 1 and 5 percent and <lit>*</lit> indicates
+	significance between 5 and 10 percent levels. Model selection
+	statistics (described in Ramanathan, Section 4.3) are also
+	printed. Various internal variables may be retrieved using the
+	<cmd>genr</cmd> command, provided <cmd>genr</cmd> is invoked
+	immediately after this command.
       </para>
     </description>
 
@@ -2325,15 +2374,15 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	This command must be invoked after an estimation command. The
-	variables in <repl>varlist</repl> are omitted
-	from the previous model and the new model estimated. If more
-	than one variable is omitted, the Wald
-	<mathvar>F</mathvar>-statistic for the omitted variables
-	will be printed along with its p-value (for the OLS procedure
-	only).  A p-value below 0.05 means that the coefficients are
-	jointly significant at the 5 percent level.
+	variables in <repl>varlist</repl> are omitted from the
+	previous model and the new model estimated. If more than one
+	variable is omitted, the Wald <mathvar>F</mathvar>-statistic
+	for the omitted variables will be printed along with its
+	p-value (for the OLS procedure only).  A p-value below 0.05
+	means that the coefficients are jointly significant at the 5
+	percent level.
       </para>
     </description>
 
@@ -2356,11 +2405,11 @@
     </usage>
 
     <description>
-     <para>Works like the <cmd>omit</cmd> command, except
-	that you specify a previous model (using its ID number, which
-	is printed at the start of the model output) to take as the
-	base for omitting variables.  The example above omits
-	variables number 5, 7 and 9 from Model 2.
+      <para>Works like the <cmd>omit</cmd> command, except that you
+	specify a previous model (using its ID number, which is
+	printed at the start of the model output) to take as the base
+	for omitting variables.  The example above omits variables
+	number 5, 7 and 9 from Model 2.
       </para>
     </description>
 
@@ -2388,15 +2437,14 @@
       <para>
 	This command can also be used to open a database (gretl or
 	RATS 4.0) for reading, in which case it should be followed by
-	the <cmdref targ="data"/> command to extract particular
-	series from the database.
+	the <cmdref targ="data"/> command to extract particular series
+	from the database.
       </para>
     </description>
 
     <gui-access>
       <menu-path>/File/Open data</menu-path>
-      <other-access>Drag a data file into gretl (MS Windows or
-	Gnome)</other-access>
+      <other-access>Drag a data file into gretl (MS Windows or Gnome)</other-access>
     </gui-access>
 
   </command>
@@ -2410,18 +2458,18 @@
       </arguments>
       <options>
         <option>
-        <flag>--append</flag>
-        <effect>append to file</effect>
+	  <flag>--append</flag>
+	  <effect>append to file</effect>
         </option>
         <option>
-        <flag>--close</flag>
-        <effect>close file</effect>
+	  <flag>--close</flag>
+	  <effect>close file</effect>
         </option>
         <option>
-        <flag>--write</flag>
-        <effect>overwrite file</effect>
+	  <flag>--write</flag>
+	  <effect>overwrite file</effect>
         </option>
-       </options>
+      </options>
       <examples>
         <example>outfile --write regress.txt</example>
         <example>outfile --close</example>
@@ -2429,22 +2477,22 @@
     </usage>
 
     <description>
-	<para>Diverts output to <repl>filename</repl>, until further
-	notice.  Use the flag <literal>--append</literal> to append
-	output to an existing file, or <literal>--write</literal> to
-	start a new file (or overwrite an existing one).  Only one
-	file can be opened in this way at any given time.</para>
+      <para>Diverts output to <repl>filename</repl>, until further
+	notice.  Use the flag <lit>--append</lit> to append output to
+	an existing file, or <lit>--write</lit> to start a new file
+	(or overwrite an existing one).  Only one file can be opened
+	in this way at any given time.</para>
 
-      <para>The <literal>--close</literal> flag is used to close an
-	output file that was previously opened as above.  Output will
-	then revert to the default stream.</para>
+      <para>The <lit>--close</lit> flag is used to close an output
+	file that was previously opened as above.  Output will then
+	revert to the default stream.</para>
 
       <para>In the first example above, the file
 	<filename>regress.txt</filename> is opened for writing, and in
 	the second example it is closed.  This would make sense as a
 	sequence only if some commands were issued before the
-	<literal>--close</literal>.  For example if an <cmd>ols</cmd>
-	command intervened, its output would go to
+	<lit>--close</lit>.  For example if an <cmd>ols</cmd> command
+	intervened, its output would go to
 	<filename>regress.txt</filename> rather than the
 	screen.</para>
     </description>
@@ -2456,25 +2504,25 @@
     <usage>
       <options>
         <option>
-        <flag>--cross-section</flag>
-        <effect>stacked cross sections</effect>
+	  <flag>--cross-section</flag>
+	  <effect>stacked cross sections</effect>
         </option>
         <option>
-        <flag>--time-series</flag>
-        <effect>stacked time series</effect>
+	  <flag>--time-series</flag>
+	  <effect>stacked time series</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
       <para>Request that the current data set be interpreted as a
 	panel (pooled cross section and time series).  By default, or
-	with the <literal>--time-series</literal> flag, the data set
-	is taken to be in the form of stacked time series (successive
-	blocks of data contain time series for each cross-sectional
-	unit).  With the <literal>--cross-section</literal> flag, the
-	data set is read as stacked cross-sections (successive blocks
-	contain cross sections for each time period).  See also
+	with the <lit>--time-series</lit> flag, the data set is taken
+	to be in the form of stacked time series (successive blocks of
+	data contain time series for each cross-sectional unit).  With
+	the <lit>--cross-section</lit> flag, the data set is read as
+	stacked cross-sections (successive blocks contain cross
+	sections for each time period).  See also
 	<cmdref targ="setobs"/>.
       </para>
     </description>
@@ -2493,35 +2541,34 @@
       </arguments>
       <options>
         <option>
-        <flag>--save-all</flag>
-        <effect>Save all components</effect>
+	  <flag>--save-all</flag>
+	  <effect>Save all components</effect>
         </option>
         <option>
-        <flag>--save</flag>
-        <effect>Save major components</effect>
+	  <flag>--save</flag>
+	  <effect>Save major components</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
-     <para>Rudimentary Principal Components Analysis.  Prints the
+      <para>Rudimentary Principal Components Analysis.  Prints the
 	eigenvalues of the correlation matrix for the variables in
 	<repl>varlist</repl> along with the proportion of the joint
 	variance accounted for by each component.  Also prints the
 	corresponding eigenvectors (<quote>component
 	  loadings</quote>).</para>  
 
-      <para>If the <literal>--save</literal> flag is given, components
-	with eigenvalues greater than 1.0 are saved to the dataset as
-	variables, with names <literal>PC1</literal>,
-	<literal>PC2</literal> and so on.  These artificial variables
-	are formed as the sum of (component loading) times
-	(standardized <literal>Xi</literal>), where
-	<literal>Xi</literal> denotes the <mathvar>i</mathvar>th
-	variable in <repl>varlist</repl>.</para>
+      <para>If the <lit>--save</lit> flag is given, components with
+	eigenvalues greater than 1.0 are saved to the dataset as
+	variables, with names <lit>PC1</lit>, <lit>PC2</lit> and so
+	on.  These artificial variables are formed as the sum of
+	(component loading) times (standardized <lit>Xi</lit>), where
+	<lit>Xi</lit> denotes the <mathvar>i</mathvar>th variable in
+	<repl>varlist</repl>.</para>
 
-      <para>If the <literal>--save-all</literal> flag is given, all of
-	the components are saved as described above.</para> 
+      <para>If the <lit>--save-all</lit> flag is given, all of the
+	components are saved as described above.</para> 
     </description>
 
     <gui-access>
@@ -2538,18 +2585,18 @@
       </arguments>
       <options>
         <option>
-        <flag>--bartlett</flag>
-        <effect>use Bartlett lag window</effect>
+	  <flag>--bartlett</flag>
+	  <effect>use Bartlett lag window</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
       <para>
 	Computes and displays (and if not in batch mode, graphs) the
 	spectrum of the specified variable.  Without the
-	<literal>--bartlett</literal> flag the sample periodogram is
-	given; with the flag a Bartlett lag window of length 2 root
+	<lit>--bartlett</lit> flag the sample periodogram is given;
+	with the flag a Bartlett lag window of length 2 root
 	<mathvar>T</mathvar> (where <mathvar>T</mathvar> is the sample
 	size) is used in estimating the spectrum (see Chapter 18 of
 	Greene's <book>Econometric Analysis</book>). When the sample
@@ -2562,8 +2609,7 @@
 
     <gui-access>
       <menu-path>/Variable/spectrum</menu-path>
-      <other-access>Main window pop-up menu (single
-	selection)</other-access>
+      <other-access>Main window pop-up menu (single selection)</other-access>
     </gui-access>
 
   </command>
@@ -2576,10 +2622,10 @@
       </arguments>
       <options>
         <option>
-        <flag>--one-scale</flag>
-        <effect>force a single scale</effect>
+	  <flag>--one-scale</flag>
+	  <effect>force a single scale</effect>
         </option>
-       </options>
+      </options>
     </usage>
 
     <description>
@@ -2644,16 +2690,17 @@
 	If <repl>varlist</repl> is given, prints the values of the
 	specified variables; if no list is given, prints the values of
 	all variables in the current data file. If the
-	<literal>--byobs</literal> flag is given the data are printed
-	by observation, otherwise they are printed by variable.  If
-	the <literal>--ten</literal> flag is given the data are
-	printed by variable to 10 significant digits.
+	<lit>--byobs</lit> flag is given the data are printed by
+	observation, otherwise they are printed by variable.  If the
+	<lit>--ten</lit> flag is given the data are printed by
+	variable to 10 significant digits.
       </para>
 
       <para>
 	If the argument to <cmd>print</cmd> is a literal string (which
-	must start with a double-quote, <literal>"</literal>), the
-	string is printed as is.  See also <cmdref targ="printf"/>.</para>
+	must start with a double-quote, <lit>"</lit>), the string is
+	printed as is.  See also <cmdref
+	  targ="printf"/>.</para>
     </description>
 
     <gui-access>
@@ -2674,13 +2721,13 @@
     <description>
       <para>
 	Prints scalar values under the control of a format string
-	(providing a small subset of the <literal>printf()</literal>
-	statement in the C programming language). Recognized formats
-	are <literal>%g</literal> and <literal>%f</literal>, in each
-	case with the various modifiers available in C.  Examples: the
-	format <literal>%.10g</literal> prints a value to 10
-	significant figures; <literal>%12.6f</literal> prints a value
-	to 6 decimal places, with a width of 12 characters.</para>  
+	(providing a small subset of the <lit>printf()</lit> statement
+	in the C programming language). Recognized formats are
+	<lit>%g</lit> and <lit>%f</lit>, in each case with the various
+	modifiers available in C.  Examples: the format
+	<lit>%.10g</lit> prints a value to 10 significant figures;
+	<lit>%12.6f</lit> prints a value to 6 decimal places, with a
+	width of 12 characters.</para>  
 
       <para>The format string itself must be enclosed in double
 	quotes.  The values to be printed must follow the format
@@ -2699,11 +2746,10 @@
 
       <para>
 	The maximum length of a format string is 127 characters.  The
-	escape sequences <literal>\n</literal> (newline),
-	<literal>\t</literal> (tab), <literal>\v</literal> (vertical
-	tab) and <literal>\\</literal> (literal backslash) are
-	recognized.  To print a literal percent sign, use
-	<literal>%%</literal>.</para>
+	escape sequences <lit>\n</lit> (newline), <lit>\t</lit> (tab),
+	<lit>\v</lit> (vertical tab) and <lit>\\</lit> (literal
+	backslash) are recognized.  To print a literal percent sign,
+	use <lit>%%</lit>.</para>
     </description>
 
   </command>
@@ -2724,16 +2770,16 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Probit regression. The dependent variable should be a binary
 	variable. Maximum likelihood estimates of the coefficients on
-	<repl>indepvars</repl> are obtained via iterated
-	least squares (the EM or Expectation&ndash;Maximization
-	method).  As the model is nonlinear the slopes depend on the
-	values of the independent variables: the reported slopes are
-	evaluated at the means of those variables.  The chi-square
-	statistic tests the null hypothesis that all coefficients are
-	zero apart from the constant.
+	<repl>indepvars</repl> are obtained via iterated least squares
+	(the EM or Expectation&ndash;Maximization method).  As the
+	model is nonlinear the slopes depend on the values of the
+	independent variables: the reported slopes are evaluated at
+	the means of those variables.  The chi-square statistic tests
+	the null hypothesis that all coefficients are zero apart from
+	the constant.
       </para>
 
       <para>
@@ -2768,14 +2814,14 @@
     <description>
       <para>
 	Computes the area to the right of <repl>xval</repl> in the
-	specified distribution (<literal>z</literal> for Gaussian,
-	<literal>t</literal> for Student's <mathvar>t</mathvar>,
-	<literal>X</literal> for chi-square, <literal>F</literal> for
-	<mathvar>F</mathvar> and <literal>G</literal> for gamma).  For
-	the <mathvar>t</mathvar> and chi-square distributions the
-	degrees of freedom must be given; for <mathvar>F</mathvar>
-	numerator and denominator degrees of freedom are required; and
-	for gamma the mean and variance are needed.
+	specified distribution (<lit>z</lit> for Gaussian,
+	<lit>t</lit> for Student's <mathvar>t</mathvar>, <lit>X</lit>
+	for chi-square, <lit>F</lit> for <mathvar>F</mathvar> and
+	<lit>G</lit> for gamma).  For the <mathvar>t</mathvar> and
+	chi-square distributions the degrees of freedom must be given;
+	for <mathvar>F</mathvar> numerator and denominator degrees of
+	freedom are required; and for gamma the mean and variance are
+	needed.
       </para>
     </description>
 
@@ -2860,18 +2906,16 @@
     </usage>
 
     <description>
-     <para>
+      <para>
 	Creates rho-differenced counterparts of the variables (given
-	by number or by name) in <repl>varlist</repl>
-	and adds them to the data set, using the suffix
-	<literal>#</literal> for the new variables. Given variable
-	<literal>v1</literal> in <repl>varlist</repl>,
-	and entries <literal>r1</literal> and <literal>r2</literal> in
-	<repl>rholist</repl>, <literal>v1# = v1(t) -
-	  r1*v1(t-1) - r2*v1(t-2)</literal> is created. The
-	<repl>rholist</repl> entries can be given as
-	numerical values or as the names of variables previously
-	defined.
+	by number or by name) in <repl>varlist</repl> and adds them to
+	the data set, using the suffix <lit>#</lit> for the new
+	variables. Given variable <lit>v1</lit> in
+	<repl>varlist</repl>, and entries <lit>r1</lit> and
+	<lit>r2</lit> in <repl>rholist</repl>, <lit>v1# = v1(t) -
+	  r1*v1(t-1) - r2*v1(t-2)</lit> is created. The
+	<repl>rholist</repl> entries can be given as numerical values
+	or as the names of variables previously defined.
       </para>
     </description>
 
@@ -2957,7 +3001,7 @@
 	Carries out the nonparametric <quote>runs</quote> test for
 	randomness of the specified variable.  If you want to test for
 	randomness of deviations from the median, for a variable named
-	<literal>x1</literal> with a non-zero median, you can do the
+	<lit>x1</lit> with a non-zero median, you can do the
 	following:</para>
 
       <code>
@@ -3013,42 +3057,99 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>variable</argument>
+        <argument>value</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Set the values of various program parameters.  The given value
+	remains in force for the duration of the gretl session unless
+	it is changed by a further call to <cmd>set</cmd>.  The
+	parameters that can be set in this way are enumerated below.
+	Note that the settings of <lit>hac_lag</lit> and
+	<lit>hc_version</lit> are used when the <lit>--robust</lit>
+	option is given to the <cmd>ols</cmd> command. 
+      </para>
+
+      <table lwidth="60pt" rwidth="400pt">
+	<row>
+	  <cell>echo</cell>
+	  <cell>values: <lit>off</lit> or <lit>on</lit> (the default).
+	    Suppress or resume the echoing of commands in gretl's
+	    output.</cell>
+	</row>
+	<row>
+	  <cell>qr</cell>
+	  <cell>values: <lit>on</lit> or <lit>off</lit> (the default).
+	    Use QR rather than Cholesky decomposition in calculating
+	    OLS estimates.</cell>
+	</row>
+	<row>
+	  <cell>hac_lag</cell>
+	  <cell>values: <lit>nw1</lit> (the default) or
+	    <lit>nw2</lit>, or an integer.  Sets the maximum lag
+	    value, <mathvar>p</mathvar>, used when calculating HAC
+	    (Heteroskedasticity and Autocorrelation Consistent)
+	    standard errors using the Newey-West approach, for time
+	    series data. <lit>nw1</lit> and <lit>nw2</lit> represent
+	    two variant automatic calculations based on the sample
+	    size, <mathvar>T</mathvar>: for nw1, 
+	  <equation status="inline"
+	    tex="p = 0.75 \times T^{1/3}\]"
+	    ascii="p = 0.75 * T^(1/3)"
+	    graphic="nw1"/>,
+	    and for nw2, 
+	  <equation status="inline"
+	    tex="p = 4 \times (T/100)^{2/9}\]"
+	    ascii="p = 4 * (T/100)^(2/9)"
+	    graphic="nw2"/>.	  
+	  </cell>
+	</row>
+	<row>
+	  <cell>hc_version</cell>
+	  <cell>values: 0 (the default), 1, 2 or 3. Sets the variant
+	    used when calculating Heteroskedasticity Consistent
+	    standard errors with cross-sectional data.  The options
+	    correspond to the HC0, HC1, HC2 and HC3 discussed by
+	    Davidson and MacKinnon in <book>Econometric Theory and
+	      Methods</book>, chapter 5.  HC0 produces what are
+	    usually called <quote>White's standard
+	      errors</quote>.</cell>
+	</row>
+      </table>
+
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
-
   </command>
 
   <command name="setobs" section="Dataset">
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>periodicity</argument>
+        <argument>startobs</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>setobs 4 1990:1</example>
+        <example>ssetobs 12 1978:03</example>
+        <example>setobs 20 1:01</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Force the program to interpret the current data set as time
+	series or panel, when the data have been read in as simple
+	undated series.  <repl>periodicity</repl> must be an integer;
+	<repl>startobs</repl> is a string representing the date or
+	panel ID of the first observation. See also <cmdref
+	  targ="panel"/>.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Sample/Set frequency, startobs</menu-path>
     </gui-access>
 
   </command>
@@ -3057,20 +3158,33 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>value</argument>
+        <argument optional="true">varlist</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>setmiss -1</example>
+        <example>setmiss 100 x2</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Get the program to interpret some specific numerical data
+	value (the first parameter to the command) as a code for
+	<quote>missing</quote>, in the case of imported data.  If this
+	value is the only parameter, as in the first example above,
+	the interpretation will be applied to all series in the data
+	set.  If <repl>value</repl> is followed by a list of
+	variables, by name or number, the interpretation is confined
+	to the specified variable(s). Thus in the second example the
+	data value 100 is interpreted as a code for
+	<quote>missing</quote>, but only for the variable
+	<lit>x2</lit>.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Sample/Set missing value code</menu-path>
     </gui-access>
 
   </command>
@@ -3079,21 +3193,21 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>shellcommand</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>! ls -al</example>
+	<example>! notepad</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	A <cmd>!</cmd> at the beginning of a command line is
+	interpreted as an escape to the user's shell.  Thus arbitrary
+	shell commands can be executed from within the program.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -3101,56 +3215,98 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument optional="true">startobs endobs</argument>
+	<argument>varname</argument>
+	<argument>a0 a1 a2 &hellip;</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>sim 1979.2 1983.1 y 0 0.9</example>
+	<example>sim 15 25 y 10 0.8 x</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
-    </description>
+    <description>
+      <para>
+	Simulates values for <repl>varname</repl> for the current
+	sample range, or for the range <repl>startobs</repl> through
+	<repl>endobs</repl> if these optional arguments are given. The
+	variable <repl>y</repl> must have been defined earlier with
+	appropriate initial values. The formula used is <lit>y(t) =
+	  a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + &hellip;</lit> The
+	<lit>ai(t)</lit> may be either numerical constants or variable
+	names previously defined; these terms may be prefixed with a
+	minus sign.
+      </para>
 
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
+      <para>This command is deprecated.  You should use <cmdref
+	  targ="genr"/> instead.</para>
+    </description>
 
   </command>
 
   <command name="smpl" section="Dataset">
 
+    <!-- don't break the lines below or the text version will get messed
+    up -->
+
     <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <options>
-        <option>
-        <flag>--dummy</flag>
-        <effect>.</effect>
-        </option>
-        <option>
-        <flag>--no-missing</flag>
-        <effect>.</effect>
-        </option>
-        <option>
-        <flag>--restrict</flag>
-        <effect>.</effect>
-        </option>
-       </options>
+      <altforms>
+	<altform><lit>smpl</lit> <repl>startobs endobs</repl></altform>
+	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
+	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
+	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing</lit></altform>
+	<altform><lit>smpl full</lit></altform>
+      </altforms>
       <examples>
-        <example>.</example>
+        <example>smpl 3 10</example>
+	<example>smpl 1960:2 1982:4</example>
+	<example>smpl +1 -1</example>
+	<example>smpl x > 3000 --restrict</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Resets the sample range.  The new range can be defined in
+	several ways.  In the first alternate form (and the first two
+	examples) above, <repl>startobs</repl> and <repl>endobs</repl>
+	must be consistent with the periodicity of the data.  Either
+	one may be replaced by a semicolon to leave the value
+	unchanged.  In the second form, the integers <repl>i</repl>
+	and <repl>j</repl> (which may be positive or negative, and
+	should be signed) are taken as offsets relative to the
+	existing sample range. In the third form <repl>dummyvar</repl>
+	must be an indicator variable with values 0 or 1 at each
+	observation; the sample will be restricted to observations
+	where the value is 1. The fourth form, using
+	<lit>--restrict</lit>, restricts the sample to observations
+	that satisfy the given Boolean condition. The fifth form drops
+	all observations for which values of one or more variables are
+	missing.  The final form, <lit>smpl full</lit>, restores the
+	full data range.
+      </para>
+
+      <para>The internal variable <lit>obs</lit> may be used with the
+	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude
+	particular observations from the sample.  For example,
+	<lit>smpl obs!=4 --restrict</lit> will drop just the fourth
+	observation. If the data points are identified by labels,
+	<lit>smpl obs!="USA" --restrict</lit> will drop the
+	observation with label <quote>USA</quote>.</para>
+
+      <para>
+	One point should be noted about the <lit>--dummy</lit> and
+	<lit>--restrict</lit> forms of <lit>smpl</lit>: Any
+	<quote>structural</quote> information in the data file
+	(regarding the time series or panel nature of the data) is
+	lost when this command is issued.  You may reimpose structure
+	with <cmdref targ="setobs"/> command.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Sample</menu-path>
     </gui-access>
 
   </command>
@@ -3159,26 +3315,39 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>x</argument>
+        <argument>y</argument>
       </arguments>
       <options>
         <option>
-        <flag>--verbose</flag>
-        <effect>.</effect>
+	  <flag>--verbose</flag>
+	  <effect>print ranked data</effect>
         </option>
-       </options>
-      <examples>
-        <example>.</example>
-      </examples>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Prints Spearman's rank correlation coefficient for the two
+	variables <mathvar>x</mathvar> and <mathvar>y</mathvar>. The
+	variables do not have to be ranked manually in advance; the
+	function takes care of this.
+      </para>
+
+      <para>
+	The automatic ranking is from largest to smallest (i.e. the
+	largest data value gets rank 1).  If you need to invert this
+	ranking, create a new variable which is the negative of the
+	original first.  For example:
+      </para>
+
+      <code>
+	genr altx = -x
+	spearman altx y</code>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Rank correlation</menu-path>
     </gui-access>
 
   </command>
@@ -3187,26 +3356,31 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>varlist</argument>
       </arguments>
       <options>
         <option>
-        <flag>--cross</flag>
-        <effect>.</effect>
+	  <flag>--cross</flag>
+	  <effect>generate cross-products as well as squares</effect>
         </option>
-       </options>
-      <examples>
-        <example>.</example>
-      </examples>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Generates new variables which are squares of the variables in
+	<repl>varlist</repl> (plus cross-products if the
+	<lit>--cross</lit> option is given).  For example, <cmd>square
+	  x y</cmd> will generate <lit>sq_x</lit> = <lit>x</lit>
+	squared, <lit>sq_y</lit> = <lit>y</lit> squared and
+	(optionally) <lit>x_y</lit> = <lit>x</lit> times <lit>y</lit>.
+	If a particular variable is a dummy variable it is not squared
+	because we will get the same variable.  
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Add variables/squares of variables</menu-path>
     </gui-access>
 
   </command>
@@ -3215,42 +3389,61 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>datafile</argument>
+        <argument optional="true">varlist</argument>
       </arguments>
       <options>
         <option>
-        <flag>--csv</flag>
-        <effect>.</effect>
+	  <flag>--csv</flag>
+	  <effect>use CSV format</effect>
         </option>
         <option>
-        <flag>--gnu-octave</flag>
-        <effect>.</effect>
+	  <flag>--gnu-octave</flag>
+	  <effect>use GNU Octave format</effect>
         </option>
         <option>
-        <flag>--gnu-R</flag>
-        <effect>.</effect>
+	  <flag>--gnu-R</flag>
+	  <effect>use GNU R format</effect>
         </option>
         <option>
-        <flag>--traditional</flag>
-        <effect>.</effect>
+	  <flag>--traditional</flag>
+	  <effect>use traditional ESL format</effect>
         </option>
         <option>
-        <flag>--gzipped</flag>
-        <effect>.</effect>
+	  <flag>--gzipped</flag>
+	  <effect>apply gzip compression</effect>
         </option>
-       </options>
-      <examples>
-        <example>.</example>
-      </examples>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Saves either the entire dataset or, if a <repl>varlist</repl>
+	is supplied, a specified subset of the variables in the
+	current dataset, to the file given by
+	<repl>datafile</repl>.</para>
+
+      <para>
+	By default the data are saved in <quote>native</quote> gretl
+	format, but the option flags permit saving in any of five
+	additional formats.  CSV (Comma-Separated Values) data may be
+	read into spreadsheet programs, and can also be manipulated
+	using a text editor.  The <program>Octave</program> and
+	<program>R</program> formats are designed for use with the
+	respective programs.  Gzip compression may be useful for large
+	datasets.  See <manref targ="datafiles"/> for details on the
+	various formats.</para>
+
+      <para>
+	Note that any scalar variables will not be saved
+	automatically: if you wish to save scalars you must explicitly
+	list them in <repl>varlist</repl>.
+      </para>  
+	
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/File/Save data; /File/Export data</menu-path>
     </gui-access>
 
   </command>
@@ -3259,20 +3452,24 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument optional="true">varlist</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Print summary statistics for the variables in
+	<repl>varlist</repl>, or for all the variables in the data set
+	if <repl>varlist</repl> is omitted. Output consists of the
+	mean, standard deviation (sd), coefficient of variation (=
+	sd/mean), median, minimum, maximum, skewness coefficient, and
+	excess kurtosis.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Summary statistics</menu-path>
+      <other-access>Main window pop-up menu</other-access>
     </gui-access>
 
   </command>
@@ -3281,21 +3478,28 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>type</argument>
+        <argument>savevars</argument>
       </arguments>
       <examples>
-        <example>.</example>
+        <example>system type=sur</example>
+	<example>system type=sur save=resids</example>
+	<example>system type=sur save=resids,fitted</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Starts a system of equations.  At present the only type of
+	system supported is <cmd>sur</cmd> (Seemingly Unrelated
+	Regressions).  In the optional <cmd>save=</cmd> field of the
+	command you can specify whether to save the residuals
+	(<cmd>resids</cmd>) and/or the fitted values
+	(<cmd>fitted</cmd>).  The system must contain at least two
+	equations specified using the <cmd>equation</cmd> command, and
+	it must be terminated with the line <cmd>end system</cmd>.
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -3303,48 +3507,53 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument optional="true">-f filename</argument>
       </arguments>
       <options>
         <option>
-        <flag>--complete</flag>
-        <effect>.</effect>
+	  <flag>--complete</flag>
+	  <effect>Create a complete document</effect>
         </option>
-       </options>
-      <examples>
-        <example>.</example>
-      </examples>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Must follow the estimation of a model.  Prints the estimated
+	model in the form of a &latex; table.  If a filename is
+	specified using the <lit>-f</lit> flag output goes to that
+	file, otherwise it goes to a file with a name of the form
+	<filename>model_N.tex</filename>, where <lit>N</lit> is the
+	number of models estimated to date in the current session. See
+	also <cmdref targ="eqnprint"/>.
+      </para>
+
+      <para>
+	If the <lit>--complete</lit> flag is given the &latex; file is
+	a complete document, ready for processing; otherwise it must
+	be included in a document.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /LaTeX</menu-path>
     </gui-access>
 
   </command>
 
   <command name="testuhat" section="Tests">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Must follow a model estimation command.  Gives the frequency
+	distribution for the residual from the model along with a
+	chi-square test for normality, based on the procedure
+	suggested by Doornik and Hansen (1984).
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>Model window, /Tests/normality of residual</menu-path>
     </gui-access>
 
   </command>
@@ -3353,26 +3562,30 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
       <options>
         <option>
-        <flag>--verbose</flag>
-        <effect>.</effect>
+	  <flag>--verbose</flag>
+	  <effect>print covariance matrix</effect>
         </option>
-       </options>
-      <examples>
-        <example>.</example>
-      </examples>
+      </options>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>Estimates a Tobit model.  This model may be appropriate
+	when the dependent variable is <quote>truncated</quote>.  For
+	example, positive and zero values of purchases of durable
+	goods on the part of individual households are observed, and
+	no negative values, yet decisions on such purchases may be
+	thought of as outcomes of an underlying, unobserved
+	disposition to purchase that may be negative in some cases.
+	FIXME reference to Green.</para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Tobit</menu-path>
     </gui-access>
 
   </command>
@@ -3381,20 +3594,42 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>depvar</argument>
+        <argument>indepvars</argument>
+	<argument separated="true">instruments</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options>      
       <examples>
-        <example>.</example>
+        <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Computes two-stage least squares (TSLS) estimates:
+	<repl>depvar</repl> is the dependent variable,
+	<repl>indepvars</repl> is the list of independent variables
+	(including right-hand side endogenous variables) in the
+	structural equation for which TSLS estimates are needed; and
+	<repl>instruments</repl> is the combined list of exogenous and
+	predetermined variables in all the equations. If the
+	<repl>instruments</repl> list is not at least as long as
+	<repl>indepvars</repl>, the model is not identified.</para>
+
+      <para>
+	In the above example, the <lit>y</lit>s are the endogenous
+	variables and the <lit>x</lit>s are the exogenous and
+	predetermined variables.  
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Two-Stage least Squares</menu-path>
     </gui-access>
 
   </command>
@@ -3403,49 +3638,72 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>order</argument>
+        <argument>varlist</argument>
+	<argument separated="true">detlist</argument>
       </arguments>
       <options>
         <option>
-        <flag>--quiet</flag>
-        <effect>.</effect>
+	  <flag>--quiet</flag>
+	  <effect>don't print impulse responses</effect>
         </option>
-       </options>
+      </options>
       <examples>
-        <example>.</example>
+        <example>var 4 x1 x2 x3 ; const time</example>
       </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Sets up and estimates (using OLS) a vector autoregression
+	(VAR).  The first argument specifies the lag order, then
+	follows the setup for the first equation.  Don't include lags
+	among the elements of <repl>varlist</repl> &mdash; they will
+	be added automatically.  The semi-colon separates the
+	stochastic variables, for which <repl>order</repl> lags will
+	be included, from deterministic terms in <repl>detlist</repl>,
+	such as the constant, a time trend, and dummy
+	variables.</para>
+
+      <para>
+	In fact, gretl is able to recognize the more common
+	deterministic variables (constant, time trend, dummy variables
+	with no values other than 0 and 1) as such, so these do not
+	have to placed after the semi-colon.  More complex
+	deterministic variables (e.g. a time trend interacted with a
+	dummy variable) must be put after the semi-colon.</para>
+
+      <para>
+	A separate regression is run for each variable in varlist.
+	Output for each equation includes <mathvar>F</mathvar>-tests
+	for zero restrictions on all lags of each of the variables; an
+	<mathvar>F</mathvar>-test for the significance of the maximum
+	lag; forecast variance decompositions; and impulse response
+	functions.</para>
+
+      <para>
+	The variance decompositions and impulse responses are based on
+	the Cholesky decomposition of the contemporaneous covariance
+	matrix, and in this context the order in which the
+	(stochastic) variables are given matters.  The first variable
+	in the list is assumed to be <quote>most exogenous</quote>
+	within-period.</para> 
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Vector autoregression</menu-path>
     </gui-access>
 
   </command>
 
   <command name="varlist" section="Dataset">
 
-    <usage>
-      <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
-      </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
-    </usage>
-
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Prints a listing of variables currently available.
+	<cmd>list</cmd> and <cmd>ls</cmd> are synonyms.  
+      </para>
     </description>
-
-    <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
-    </gui-access>
 
   </command>
 
@@ -3453,20 +3711,22 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>var1</argument>
+        <argument>var2</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Calculates the <mathvar>F</mathvar> statistic for the null
+	hypothesis that the population variances for the variables
+	<repl>var1</repl> and <repl>var2</repl> are equal, and shows
+	its p-value.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Data/Difference of variances</menu-path>
     </gui-access>
 
   </command>
@@ -3475,20 +3735,34 @@
 
     <usage>
       <arguments>
-        <argument>.</argument>
-        <argument>.</argument>
+        <argument>weightvar</argument>
+        <argument>depvar</argument>
+	<argument>indepvars</argument>
       </arguments>
-      <examples>
-        <example>.</example>
-      </examples>
+      <options>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>print covariance matrix</effect>
+        </option>
+      </options> 
     </usage>
 
-    <description><para>Description goes here.</para>
+    <description>
+      <para>
+	Computes weighted least squares estimates using
+	<repl>weightvar</repl> as the weight, <repl>depvar</repl> as
+	the dependent variable and <repl>indepvars</repl> as the list
+	of independent variables.  More specifically, an OLS
+	regression is run on <repl>weightvar</repl> <lit>*</lit>
+	<repl>depvar</repl> against <repl>weight</repl> <lit>*</lit>
+	<repl>indepvars</repl>. If the <repl>weightvar</repl> is a
+	dummy variable, this is equivalent to eliminating all
+	observations with the number zero for <repl>weightvar</repl>.
+      </para>
     </description>
 
     <gui-access>
-      <menu-path>.</menu-path>
-      <other-access>.</other-access>
+      <menu-path>/Model/Weighted Least Squares</menu-path>
     </gui-access>
 
   </command>
