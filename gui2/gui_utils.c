@@ -3242,40 +3242,6 @@ void *gui_get_plugin_function (const char *funcname,
     return func;
 }
 
-/* .................................................................. */
-
-int build_path (const char *dir, const char *fname, char *path, 
-		const char *ext)
-{
-    size_t len;
-    *path = 0;
-
-    if (dir == NULL || fname == NULL || path == NULL) return 1;
-
-    strcat(path, dir);
-    len = strlen(path);
-    if (len == 0) return 1;
-
-    /* strip a trailing single dot */
-    if (len > 1 && path[len-1] == '.' && 
-	(path[len-2] == '/' || path[len-2] == '\\')) {
-	    path[len-1] = '\0';
-    }
-
-    if (path[len-1] == '/' || path[len-1] == '\\') {
-        /* dir is already properly terminated */
-        strcat(path, fname);
-    } else {
-        /* otherwise put a separator in */
-        strcat(path, SLASHSTR);
-        strcat(path, fname);
-    }
-
-    if (ext != NULL) strcat(path, ext);
-
-    return 0;
-}
-
 char *double_underscores (char *targ, const char *src)
 {
     char *p = targ;

@@ -39,4 +39,6 @@ void gretl_win32_init (const char *progname);
 
 const char *get_network_cfg_filename (void);
 
+void win32_make_user_dirs (void);
+
 #endif /* GRETLWIN32_H */

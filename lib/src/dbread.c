@@ -940,13 +940,11 @@ int set_db_name (const char *fname, int filetype, const PATHS *ppaths,
 	/* try looking a bit more */
 	if (filetype == GRETL_NATIVE_DB && 
 	    strstr(db_name, ppaths->binbase) == NULL) {
-	    strcpy(db_name, ppaths->binbase);
-	    strcat(db_name, fname);
+	    build_path(ppaths->binbase, fname, db_name, NULL);
 	}
 	else if (filetype == GRETL_RATS_DB && 
 		 strstr(db_name, ppaths->ratsbase) == NULL) {
-	    strcpy(db_name, ppaths->ratsbase);
-	    strcat(db_name, fname);
+	    build_path(ppaths->ratsbase, fname, db_name, NULL);
 	}
 	fp = fopen(db_name, "rb");
     }

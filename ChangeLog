@@ -9,6 +9,9 @@ version 1.2.1
 - Fix bugs with displaying a TSLS model in the GUI program
 - Fix bug in display of actual, fitted and residuals in GUI
   program
+- Fix occasional bug in copying data to clipboard as CSV
+- Add a mechanism for configuring gretl as a networked
+  application under Windows
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

@@ -20,7 +20,7 @@
 /*  printout.c - simple text print routines for some gretl structs */ 
 
 #include "libgretl.h"
-#include "internal.h"
+#include "internal.h" 
 #include "version.h"
 #include <stdarg.h>
 #include <time.h>

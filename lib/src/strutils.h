@@ -102,4 +102,7 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
 
 char *append_dir (char *fname, const char *dir);
 
+int build_path (const char *dir, const char *fname, char *path, 
+		const char *ext);
+
 #endif /* STRUTILS_H */

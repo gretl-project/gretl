@@ -117,9 +117,6 @@ void get_stats_table (void);
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle);
 
-int build_path (const char *dir, const char *fname, char *path, 
-		const char *ext);
-
 int prn_to_clipboard (PRN *prn, int copycode);
 
 int get_worksheet_data (const char *fname, int datatype, int append);

@@ -118,10 +118,10 @@ print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
 print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n";
-print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"gretldir\"; ValueData: \"{app}\"\n"; 
-print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"gnuplot\"; ValueData: \"{app}\\wgnuplot.exe\"\n";
+print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"Rcommand\"; ValueData: \"RGui.exe\"\n";
+print "Root: HKCR; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"viewdvi\"; ValueData: \"windvi.exe\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"userdir\"; ValueData: \"{app}\\user\\\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
@@ -131,22 +131,30 @@ print "\"binbase\"; ValueData: \"{app}\\db\\\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"ratsbase\"; ValueData: \"f:\\\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"dbhost_ip\"; ValueData: \"152.17.150.2\"\n";   
+print "\"dbhost_ip\"; ValueData: \"152.17.150.2\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"fontspec\"; ValueData: \"Courier New 10\"\n";
+print "\"dbproxy\"; ValueData: \"\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"Rcommand\"; ValueData: \"RGui.exe\"\n";
+print "\"useproxy\"; ValueData: \"false\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"updater\"; ValueData: \"false\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"calculator\"; ValueData: \"calc.exe\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"editor\"; ValueData: \"c:\\Program Files\\Microsoft Office\\Office\\winword.exe\"\n";   
+print "\"toolbar\"; ValueData: \"true\"\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"toolbar\"; ValueData: \"true\"\n";   
+print "\"Fixed_font\"; ValueData: \"Courier New 10\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"Png_font\"; ValueData: \"verdana 8\"\n";   
-
+print "\"App_font\"; ValueData: \"tahoma 8\"\n";   
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"Png_font\"; ValueData: \"verdana 8\"\n"; 
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"Gp_colors\"; ValueData: \"\"\n";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"DataPage\"; ValueData: \"Ramanathan\"\n";
+print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
+print "\"ScriptPage\"; ValueData: \"Ramanathan\"\n";
+ 
 # Establish file associations
 
 # first for data files...

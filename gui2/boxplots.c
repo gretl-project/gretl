@@ -507,7 +507,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 	minval = ybase + (gmax - plot->outliers->rmin) * scale;
     }
 	
-    if (plot->conf[0] != -999.0) { /* confidence intervals defined */
+    if (!na(plot->conf[0])) { /* confidence intervals defined */
 	if (plot->conf[1] > plot->uq) {
 	    confhi = uq;
 	} else {
@@ -649,7 +649,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     /* draw outliers, if any */
     if (plot->outliers != NULL) {
 	int i;
-	double y, ybak = -999.0;
+	double y, ybak = NADBL;
 
 	for (i=0; i<plot->outliers->n; i++) {
 	    /* fprintf(stderr, "outlier: %g\n", plot->outliers->vals[i]); */
@@ -974,7 +974,7 @@ five_numbers (gpointer data)
 
     if (bufopen(&prn)) return 1;
 
-    if (grp->plots[0].conf[0] == -999.0) { /* no confidence intervals */
+    if (na(grp->plots[0].conf[0])) { /* no confidence intervals */
 	pprintf(prn, "%s\n\n%20s%10s%10s%10s%10s\n",
 		_("Five-number summary"), 
 		"min", "Q1", _("median"), "Q3", "max");
@@ -1098,10 +1098,10 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 				&plotgrp->plots[i].conf[1])) {
 		errbox (_("Couldn't obtain confidence interval"));
 		plotgrp->plots[i].conf[0] = 
-		    plotgrp->plots[i].conf[1] = -999.0;
+		    plotgrp->plots[i].conf[1] = NADBL;
 	    }
 	} else {
-	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = -999.0;
+	    plotgrp->plots[i].conf[0] = plotgrp->plots[i].conf[1] = NADBL;
 	}
 	strcpy(plotgrp->plots[i].varname, pdinfo->varname[list[i+1]]);
 	if (bools) { 
@@ -1347,7 +1347,7 @@ static void read_boxrc (PLOTGROUP *grp)
 {
     FILE *fp;
 
-    grp->gmax = grp->gmin = -999.0;
+    grp->gmax = grp->gmin = NADBL;
 
     fp = fopen(".boxplotrc", "r");
     if (fp == NULL) {
@@ -1400,8 +1400,8 @@ static void read_boxrc (PLOTGROUP *grp)
 	fclose (fp);
     }
 
-    if (grp->gmax == -999.0) grp->gmax = grp->plots[0].max;
-    if (grp->gmin == -999.0) grp->gmin = grp->plots[0].min;
+    if (na(grp->gmax)) grp->gmax = grp->plots[0].max;
+    if (na(grp->gmin)) grp->gmin = grp->plots[0].min;
 }
 
 static int dump_boxplot (PLOTGROUP *grp)

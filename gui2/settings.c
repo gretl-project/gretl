@@ -419,7 +419,7 @@ static void set_tramo_x12a_dirs (void)
 
 #  ifdef HAVE_TRAMO 
     set_tramo_ok(check_for_prog(tramo));
-    if (*tramodir == 0) {
+    if (*tramodir == '\0') {
 	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
 #  endif
@@ -1162,22 +1162,18 @@ void write_rc (void)
 			  rc_vars[i].key, 
 			  val);
 	} else {
-	    int err = 0;
-
 	    if (rc_vars[i].type == ROOTSET) {
-		err = write_reg_val(HKEY_CLASSES_ROOT, 
-				    get_reg_base(rc_vars[i].key),
-				    rc_vars[i].key, 
-				    rc_vars[i].var);
-	    }
-	    if (rc_vars[i].type != ROOTSET || err) {
+		write_reg_val(HKEY_CLASSES_ROOT, 
+			      get_reg_base(rc_vars[i].key),
+			      rc_vars[i].key, 
+			      rc_vars[i].var);
+	    } else {
 		write_reg_val(HKEY_CURRENT_USER, 
 			      get_reg_base(rc_vars[i].key),
 			      rc_vars[i].key, 
 			      rc_vars[i].var);
 	    }
 	}
-	i++;
     }
 
     printfilelist(FILE_LIST_DATA, NULL); 
@@ -1191,6 +1187,7 @@ static int get_network_settings (void)
 {
     const char *inifile;
     FILE *fp;
+    int gotini = 0;
 
     inifile = get_network_cfg_filename();
 
@@ -1199,27 +1196,37 @@ static int get_network_settings (void)
 	char line[MAXLEN], key[32], linevar[MAXLEN];
 
 	while (fgets(line, MAXLEN, fp)) {
-	    if (line[0] == '#') continue;
-	    if (sscanf(line, "%s", key) == 1) {
-		strcpy(linevar, line + strlen(key) + 3); 
+	    int gotvar = 0;
+	    char *p = line;
+
+	    while (isspace(*p)) p++;
+
+	    if (*p == '#') continue;
+	    if (sscanf(p, "%31s", key) == 1) {
+		strcpy(linevar, p + strlen(key) + 3); 
 		chopstr(linevar); 
+		gotvar = 0;
 		for (j=0; rc_vars[j].key != NULL; j++) {
 		    if (!strcmp(key, rc_vars[j].key)) {
 			if (rc_vars[j].type == BOOLSET) {
 			    str_to_boolvar(linevar, rc_vars[j].var);
 			} else {
-			    strcpy(rc_vars[j].var, linevar);
+			    char *var = (char *) rc_vars[j].var;
+
+			    *var = '\0';
+			    strncat(var, linevar, rc_vars[j].len - 1);
 			}
 			rc_vars[j].type |= FIXSET;
-			break;
+			gotvar = gotini = 1;
 		    }
+		    if (gotvar) break;
 		}
 	    }
 	}
 	fclose(fp);
     }
 
-    return 0;
+    return gotini;
 }
 
 void read_rc (void) 
@@ -1227,33 +1234,41 @@ void read_rc (void)
     int i = 0;
     char rpath[MAXSTR], value[MAXSTR];
 
-    /* experiment */
-    get_network_settings();
+    if (get_network_settings() && *paths.userdir != '\0') {
+	win32_make_user_dirs();
+	for (i=0; rc_vars[i].key != NULL; i++) {
+	    if (rc_vars[i].var == tramodir ||
+		rc_vars[i].var == paths.x12adir) {
+		rc_vars[i].type |= FIXSET;
+	    }
+	}
+    } 
 
     for (i=0; rc_vars[i].key != NULL; i++) {
 	int err = 0;
 
-	if (rc_vars[i].type & FIXSET) continue;
+	if (rc_vars[i].type & FIXSET) {
+	    continue;
+	}
 
 	if (rc_vars[i].type == ROOTSET) {
 	    err = read_reg_val (HKEY_CLASSES_ROOT, 
 				get_reg_base(rc_vars[i].key),
 				rc_vars[i].key, 
 				value);
-	}
-
-	if (rc_vars[i].type != ROOTSET || err) {
+	} else {
 	    err = read_reg_val (HKEY_CURRENT_USER, 
 				get_reg_base(rc_vars[i].key),
 				rc_vars[i].key, 
 				value);
 	}
 	    
-	if (!err) {
+	if (!err && *value != '\0') {
 	    if (rc_vars[i].type == BOOLSET) {
 		str_to_boolvar(value, rc_vars[i].var);
 	    } else {
-		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+		strncpy((char *) rc_vars[i].var, value, 
+			rc_vars[i].len - 1);
 	    }
 	}
     }

@@ -267,7 +267,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 	xbar = summ->coeff[v];
 	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
-	else xcv = -999;
+	else xcv = NADBL;
 	printftex(std, prn, 0);
 	printftex(xcv, prn, 0);
 	printftex(summ->xskew[v], prn, 0);
@@ -639,7 +639,7 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
 	    if (ast) anyast = 1;
-	    if (fr->pmax != 999) {
+	    if (fr->pmax != PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%13.*f & %13.*f & %13.*f & %s \\\\\n", 
 			fr->pmax, fr->actual[t],
 			fr->pmax, fr->fitted[t], fr->pmax, xx,
@@ -1021,7 +1021,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 		Z[list[i]][t] : Z[list[i]][0];
 	    if (na(xx)) {
 		pputs(prn, "NA");
-	    } else if (pmax[i-1] == 999) {
+	    } else if (pmax[i-1] == PMAX_NOT_AVAILABLE) {
 		pprintf(prn, "%.10g", xx);
 	    } else {
 		pprintf(prn, "%.*f", pmax[i-1], xx);

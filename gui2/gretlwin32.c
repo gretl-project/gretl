@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "gretlwin32.h"
+#include <dirent.h>
 
 #define HUSH_RUNTIME_WARNINGS
 
@@ -278,14 +279,13 @@ const char *get_network_cfg_filename (void)
 
 static int set_network_cfg_filename (const char *prog)
 {
-    gchar *msg;
     const char *p;
     int n;
 
     *inifile = '\0';
     
-    n = strlen(prog) - 1;
-    p = prog + n;
+    n = strlen(prog);
+    p = prog + n - 1;
     while (p - prog >= 0) {
 	if (*p == '\\' || *p == '/') {
 	    strncpy(inifile, prog, n - strlen(p));
@@ -294,10 +294,6 @@ static int set_network_cfg_filename (const char *prog)
 	}
 	p--;
     }
-
-    msg = g_strdup_printf("inifile = '%s'", inifile);
-    infobox(msg);
-    g_free(msg);	
 
     return 0;
 }
@@ -315,3 +311,67 @@ void gretl_win32_init (const char *progname)
     ws_startup(); 
     atexit(write_rc);
 }
+
+static int win_mkdir (const char *path)
+{
+    DIR *test;
+    int done;
+
+    test = opendir(path);
+    if (test != NULL) {
+	closedir(test);
+	return 0;
+    }
+
+    done = CreateDirectory(path, NULL);
+    
+    return !done;
+}
+
+void win32_make_user_dirs (void)
+{
+    char dirname[MAXLEN];
+    extern char *tramodir;
+    size_t n;
+
+    strcpy(dirname, paths.userdir);
+    n = strlen(dirname);
+
+    if (n > 0 && (dirname[n-1] == '\\' || dirname[n-1] == '/')) {
+	dirname[n-1] = '\0';
+    }
+
+    if (win_mkdir(dirname)) {
+	gchar *msg;
+
+	msg = g_strdup_printf("Couldn't open or create gretl "
+			      "user directory\n%s", paths.userdir);
+	errbox(msg);
+	g_free(msg);
+	return;
+    }
+
+    build_path(paths.userdir, "x12arima", paths.x12adir, NULL);
+    win_mkdir(paths.x12adir);
+
+    build_path(paths.userdir, "tramo", tramodir, NULL);
+    if (win_mkdir(tramodir)) return;
+
+    sprintf(dirname, "%s\\output", tramodir);
+    win_mkdir(dirname);
+
+    sprintf(dirname, "%s\\graph", tramodir);
+    if (win_mkdir(dirname)) return;
+
+    sprintf(dirname, "%s\\graph\\acf", tramodir);
+    win_mkdir(dirname);
+    sprintf(dirname, "%s\\graph\\filters", tramodir);
+    win_mkdir(dirname);
+    sprintf(dirname, "%s\\graph\\forecast", tramodir);
+    win_mkdir(dirname);
+    sprintf(dirname, "%s\\graph\\series", tramodir);
+    win_mkdir(dirname);
+    sprintf(dirname, "%s\\graph\\spectra", tramodir);
+    win_mkdir(dirname);
+}
+

@@ -365,11 +365,14 @@ void _shiftleft (char *str, size_t move)
 
 void chopstr (char *str)
 {
-    int i = (int) strspn(str, " ");
+    int i = strspn(str, " ");
 
     _shiftleft(str, i);
+
     for (i = strlen(str) - 1; i >= 0; i--) {
-	if (isspace((unsigned char) str[i])) str[i] = '\0';
+	if (isspace((unsigned char) str[i]) || str[i] == '\r') {
+	    str[i] = '\0';
+	}
 	else break;
     }
 }
@@ -827,6 +830,38 @@ char *append_dir (char *fname, const char *dir)
     strcat(fname, SLASHSTR);
 
     return fname;
+}
+
+int build_path (const char *dir, const char *fname, char *path, 
+		const char *ext)
+{
+    size_t len;
+
+    if (dir == NULL || fname == NULL || path == NULL) return 1;
+
+    *path = '\0';
+    strcat(path, dir);
+    len = strlen(path);
+    if (len == 0) return 1;
+
+    /* strip a trailing single dot */
+    if (len > 1 && path[len-1] == '.' && 
+	(path[len-2] == '/' || path[len-2] == '\\')) {
+	    path[len-1] = '\0';
+    }
+
+    if (path[len-1] == '/' || path[len-1] == '\\') {
+        /* dir is already properly terminated */
+        strcat(path, fname);
+    } else {
+        /* otherwise put a separator in */
+        strcat(path, SLASHSTR);
+        strcat(path, fname);
+    }
+
+    if (ext != NULL) strcat(path, ext);
+
+    return 0;
 }
 
 
