@@ -94,6 +94,7 @@ enum file_ops {
     OPEN_CSV,
     OPEN_BOX,
     OPEN_GNUMERIC,
+    OPEN_EXCEL,
     OPEN_SESSION,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,

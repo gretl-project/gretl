@@ -570,26 +570,37 @@ void register_data (const char *fname, int record)
 
 /* ........................................................... */
 
-static void do_open_gnumeric (const char *fname)
+static void get_worksheet_data (const char *fname, int datatype)
 {
     int err;
     void *handle;
-    int (*gbook_get_data)(const char*, double ***, DATAINFO *, char *);
+    int (*sheet_get_data)(const char*, double ***, DATAINFO *, char *);
 
-    if (gui_open_plugin("gnumeric_import", &handle)) return;
-    gbook_get_data = get_plugin_function("gbook_get_data", handle);
-    if (gbook_get_data == NULL) {
+    if (datatype == GRETL_GNUMERIC) {
+	if (gui_open_plugin("gnumeric_import", &handle)) return;
+	sheet_get_data = get_plugin_function("gbook_get_data", handle);
+    }
+    else if (datatype == GRETL_EXCEL) {
+	if (gui_open_plugin("excel_import", &handle)) return;
+	sheet_get_data = get_plugin_function("excel_get_data", handle);
+    }
+    else {
+	errbox("Unrecognized data type");
+	return;
+    }
+
+    if (sheet_get_data == NULL) {
         errbox(_("Couldn't load plugin function"));
         close_plugin(handle);
         return;
     }
 
-    err = (*gbook_get_data)(fname, &Z, datainfo, errtext);
+    err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
     if (err) {
 	if (strlen(errtext)) errbox(errtext);
-	else errbox("Failed to import gnumeruc data");
+	else errbox("Failed to import spreadsheet data");
 	return;
     }
 
@@ -631,8 +642,8 @@ void do_open_data (GtkWidget *w, gpointer data)
     /* will this work right? */
     close_session();
 
-    if (datatype == GRETL_GNUMERIC) {
-	do_open_gnumeric(trydatfile);
+    if (datatype == GRETL_GNUMERIC || datatype == GRETL_EXCEL) {
+	get_worksheet_data(trydatfile, datatype);
 	return;
     }
     else if (datatype == GRETL_CSV_DATA) {

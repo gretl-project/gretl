@@ -11,6 +11,7 @@
 #include <string.h>
 #include <time.h>
 #include <glib.h>
+#include "libgretl.h"
 #include "xltypes.h"
 
 static void print_sheet (void);
@@ -564,9 +565,10 @@ static void print_value (char *value)
     } else {
 	fputs(ptr, stdout);
     }
-}    
+}  
 
-int get_excel_data (const char *fname)
+int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
+		    char *errbuf)
 {
     FILE *fp;
 
@@ -576,3 +578,17 @@ int get_excel_data (const char *fname)
     return 0;
 }  
 
+#ifdef notdef
+int main (int argc, char *argv[])
+{
+    char *filename;
+    int i, err;
+ 
+    for (i=1; i<argc; i++) {
+	filename = argv[i];
+	err = excel_get_data(filename, NULL, NULL, NULL);
+    }	
+
+    return 0;
+}
+#endif

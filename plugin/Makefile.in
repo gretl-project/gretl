@@ -24,7 +24,7 @@ share = $(prefix)/share/gretl
 libsrc = $(topsrc)/lib/src
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
-	gnumeric_import.so excel_import.o
+	gnumeric_import.so excel_import.so
 
 CFLAGS += `gtk-config --cflags` $(XML_CFLAGS) -I$(libsrc) -fPIC -DPIC
 LIBS = ../lib/libgretl.la `gtk-config --libs` $(XML_LIBS)

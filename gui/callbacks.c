@@ -107,9 +107,14 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 	file_selector(_("Open BOX file"), code, NULL);
 	break;
     case OPEN_GNUMERIC:
-	file_selector(_("Open gnumeric file"), code, NULL);
+	file_selector(_("Open Gnumeric file"), code, NULL);
 	break;
-
+    case OPEN_EXCEL:
+	file_selector(_("Open Excel file"), code, NULL);
+	break;
+    default:
+	errbox("Unrecognized data code");
+	break;
     }
 }
 

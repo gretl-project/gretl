@@ -64,6 +64,7 @@ static struct extmap action_map[] = {
     {OPEN_CSV,  ".csv"},
     {OPEN_BOX, ".box"},
     {OPEN_GNUMERIC, ".gnumeric"},
+    {OPEN_EXCEL, ".xls"},
     {OP_MAX, NULL}
 };
 
@@ -246,7 +247,8 @@ static const char *get_filter (int action, gpointer data)
 	{OPEN_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
 	{OPEN_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
 	{OPEN_BOX, _("BOX data files (*.box)\0*.box\0all files\0*\0")},
-	{OPEN_GNUMERIC, _("gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")}
+	{OPEN_GNUMERIC, _("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
+	{OPEN_EXCEL, _("Excel files (*.xls)\0*.xls\0all files\0*\0")}
     };
 
     if (olddat && is_data_action(action)) 
@@ -325,7 +327,7 @@ void file_selector (char *msg, int action, gpointer data)
     strncpy(remember_dir, fname, slashpos(fname));
 
     if (action == OPEN_DATA || action == OPEN_CSV || 
-	action == OPEN_BOX || action == OPEN_GNUMERIC) {
+	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
 	strcpy(trydatfile, fname);
 	verify_open_data(NULL);
     }
@@ -463,7 +465,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     strcpy(remember_dir, path);
 
     if (action == OPEN_DATA || action == OPEN_CSV || 
-	action == OPEN_BOX || action == OPEN_GNUMERIC) {
+	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs));  
 	verify_open_data(NULL);
