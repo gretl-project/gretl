@@ -1798,30 +1798,39 @@ void tsls_free_data (const MODEL *pmod)
 }
 
 /*
-  tsls_match: determines which variables in list1, when compared to
-  all predetermined and exogenous variables in list2, need to have a
-  reduced form ols regression run on them.  Returns the newlist of
-  dependent variables so that a reduced form ols regression can be run
-  on each of them.
+  tsls_match: determines which variables in the list of regressors,
+  reglist, when compared to all predetermined and exogenous variables
+  in instlist, need to have a reduced form ols regression run on them.
+  Populates replist with the variables that need to be replaced by
+  first-stage fitted values.
 */
 
-static int tsls_match (const int *list1, const int *list2, int *newlist)
+static int 
+tsls_match (const int *reglist, const int *instlist, int *replist)
 {
-    int i, j, m, index = 0;
-    int lo = list1[0], l2o = list2[0];
+    int i, j, m, idx = 0;
+    int nreg = reglist[0], ninst = instlist[0];
 
-    for (i=2; i<=lo; i++) {     
+    for (i=2; i<=nreg; i++) {     
 	m = 0;
-	for (j=1; j<=l2o; j++) {
-	    if (list1[i] == list2[j]) j = l2o + 1;
-	    else m++;
-	    if (m == l2o) {
-		if (list1[i] == 0) return 1;
-		newlist[++index] = list1[i];
+	for (j=1; j<=ninst; j++) {
+	    if (reglist[i] == instlist[j]) {
+		j = ninst + 1;
+	    } else {
+		m++;
+	    }
+	    if (m == ninst) {
+		if (reglist[i] == 0) {
+		    strcpy(gretl_errmsg, 
+			   _("Constant term is in varlist1 but not in varlist2"));
+		    return 1;
+		}
+		replist[++idx] = reglist[i];
 	    }
 	}
-    }  
-    newlist[0] = index;
+    }
+  
+    replist[0] = idx;
 
     return 0;
 }
@@ -1830,7 +1839,7 @@ static int tsls_match (const int *list1, const int *list2, int *newlist)
  * tsls_func:
  * @list: dependent variable plus list of regressors.
  * @pos_in: position in the list for the separator between list
- *   of variables and list of instruments.
+ *   of variables and list of instruments (or 0 if unknown).
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: may contain OPT_R for robust VCV, OPT_S to save second-
@@ -1846,133 +1855,145 @@ static int tsls_match (const int *list1, const int *list2, int *newlist)
 MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
-    int i, j, t, v, ncoeff;
+    int i, t, ncoeff;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int *list1 = NULL, *list2 = NULL, *newlist = NULL;
+    int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
-    int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
-    int nv, nxpx, pos, addvars = 0;
+    int pos, nelem, orig_nvar = pdinfo->v;
     MODEL tsls;
-    double xx;
-    double *yhat = NULL;
-#ifdef TSLS_NO_MISSING
-    int missv, misst = 0;
-#endif
 
+    /* pos: position in list of the separator element between
+       dep. var. plus regressors and the list of instruments
+    */    
     if (pos_in > 0) {
 	pos = pos_in;
     } else {
 	pos = get_pos(list);
     }
 
+    /* initialize model (in case we bail out early on error) */
     gretl_model_init(&tsls);
+
     *gretl_errmsg = '\0';
 
-#ifdef TSLS_NO_MISSING
-    missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			(const double **) *pZ, &misst);
-    if (missv) {
-	sprintf(gretl_errmsg, _("Missing value encountered for "
-				"variable %d, obs %d"), missv, misst);
-	tsls.errcode = E_DATA;
-	goto tsls_bailout;
-    }
-#else
+    /* adjust sample range for missing observations */
     adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			(const double **) *pZ, NULL); 
-#endif
+		(const double **) *pZ, NULL); 
 
-    list1 = malloc(pos * sizeof *list1);
-    list2 = malloc((list[0] - pos + 1) * sizeof *list2);
+    /* 
+       reglist: list of regressors
+       instlist: list of instruments
+       s1list: regression list for first-stage regressions
+       s2list: regression list for second-state regression
+       replist: list of vars to be replaced by fitted values
+                for the second-stage regression.
+    */
+    reglist = malloc(pos * sizeof *reglist);
+    instlist = malloc((list[0] - pos + 1) * sizeof *instlist);
     s1list = malloc((list[0] - pos + 2) * sizeof *s1list);
     s2list = malloc(pos * sizeof *s2list);
-    newlist = malloc(pos * sizeof *newlist);
+    replist = malloc(pos * sizeof *replist);
 
-    if (list1 == NULL || list2 == NULL || s1list == NULL ||
-	s2list == NULL || newlist == NULL) {
+    if (reglist == NULL || instlist == NULL || s1list == NULL ||
+	s2list == NULL || replist == NULL) {
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
+    }
+
+    /* set up list of regressors: first portion of input list */
+    reglist[0] = pos - 1;
+    for (i=1; i<pos; i++) {
+	reglist[i] = list[i];
+    }    
+
+    /* compose list of instruments: second portion of input list */
+    instlist[0] = list[0] - pos;
+    for (i=1; i<=instlist[0]; i++) {
+	instlist[i] = list[i + pos];
     }	
 
-    list1[0] = pos - 1;
-    for (i=1; i<pos; i++) {
-	list1[i] = list[i];
-    }
+    /* drop any vars that are all zero, and reshuffle the constant
+       into first position among the independent vars 
+    */
+    tsls_omitzero(reglist, *pZ, pdinfo->t1, pdinfo->t2);
+    rearrange_list(reglist);
+    tsls_omitzero(instlist, *pZ, pdinfo->t1, pdinfo->t2);
 
-    tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
-    rearrange_list(list1);
-
+    /* initial composition of second-stage regression list (will be
+       modified below) 
+    */
     for (i=0; i<pos; i++) {
-	s2list[i] = list1[i];
+	s2list[i] = reglist[i];
     }
 
-    list2[0] = list[0] - pos;
-    for (i=1; i<=list2[0]; i++) {
-	list2[i] = list[i + pos];
-    }
-
-    tsls_omitzero(list2, *pZ, pdinfo->t1, pdinfo->t2);
-
-    ncoeff = list2[0];
-    if (ncoeff < list1[0] - 1) {
+    /* here ncoeff denotes the number of coeffs in the first stage */
+    ncoeff = instlist[0];
+    if (ncoeff < reglist[0] - 1) {
         sprintf(gretl_errmsg, 
 		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1."), list1[0] - 1 - ncoeff);
+		"varlist1."), reglist[0] - 1 - ncoeff);
 	tsls.errcode = E_UNSPEC; 
 	goto tsls_bailout;
     }
 
-    /* now determine which fitted vals to obtain */
-    if (tsls_match(list1, list2, newlist)) {
-	strcpy(gretl_errmsg, 
-	       _("Constant term is in varlist1 but not in varlist2"));
+    /* determine the list of variables (replist) for which we need to
+       obtain fitted values in the first stage */
+    if (tsls_match(reglist, instlist, replist)) {
 	tsls.errcode = E_UNSPEC;
 	goto tsls_bailout;
     }
 
-    /* newlist[0] holds the number of new vars to create */
-    if (dataset_add_vars(newlist[0], pZ, pdinfo)) {
+    /* replist[0] now holds the number of new vars (first stage fitted
+       values) to create */
+    if (dataset_add_vars(replist[0], pZ, pdinfo)) {
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
-    } else {
-	addvars = newlist[0];
-    }
+    } 
 
-    /* deal with the variables for which instruments are needed */
-    for (i=1; i<=newlist[0]; i++) { 
-	yno = newlist[i];
-        s1list[0] = ncoeff + 1;
-        s1list[1] = yno;
+    /* common setup for first-stage regressions: regressors are copied
+       from instlist */
+    s1list[0] = ncoeff + 1;
+    for (i=2; i<=s1list[0]; i++) {
+	s1list[i] = instlist[i-1];
+    }    
 
-        for (v=2; v<=s1list[0]; v++) {
-	    s1list[v] = list2[v-1];
-	}
+    /* 
+       deal with the variables for which instruments are needed: cycle
+       through the list of variables to be instrumented (replist), run
+       the first stage regression, and add the fitted values into the
+       data matrix Z
+    */
+    for (i=1; i<=replist[0]; i++) { 
+	int newv = orig_nvar + i - 1;
+	int j;
 
-	/* run first-stage regression */
+	/* select the dependent variable */
+        s1list[1] = replist[i];
+
+	/* run the first-stage regression */
 	clear_model(&tsls);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
 	}
 
-        /* grab fitted values and stick into Z */
-	for (j=2; j<=list1[0]; j++) {
-	    if (list1[j] == newlist[i]) {
-		s2list[j] = orig_nvar + i - 1;
+	/* write the fitted values into data matrix, Z */
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[newv][t] = tsls.yhat[t];
+	}
+
+	/* give the fitted series the same name as the original */
+	strcpy(pdinfo->varname[newv], pdinfo->varname[replist[i]]);
+
+	/* substitute the newly created var into the right place in the
+	   second-stage regression list */
+	for (j=2; j<=s2list[0]; j++) {
+	    if (s2list[j] == replist[i]) {
+		s2list[j] = newv;
 		break;
 	    }
 	}
-
-	for (t=0; t<n; t++) {
-	    if (t >= tsls.t1 && t <= tsls.t2) {
-		(*pZ)[orig_nvar+i-1][t] = tsls.yhat[t];
-	    } else {
-		(*pZ)[orig_nvar+i-1][t] = NADBL;
-	    }
-	}
-
-	strcpy(pdinfo->varname[orig_nvar+i-1], pdinfo->varname[newlist[i]]);
     } 
 
     /* second-stage regression */
@@ -1982,41 +2003,38 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	goto tsls_bailout;
     }
 
-    /* special: need to use the original RHS vars to compute residuals 
-       and associated statistics */
-    yhat = malloc(n * sizeof *yhat);
-    if (yhat == NULL) {
-	tsls.errcode = E_ALLOC;
-	goto tsls_bailout;
-    }
+    /* special: we need to use the original RHS vars to compute
+       residuals and associated statistics */
 
     tsls.ess = 0.0;
     for (t=tsls.t1; t<=tsls.t2; t++) {
+	double xx = 0.0;
+
 	if (model_missing(&tsls, t)) {
-	    yhat[t] = NADBL;
 	    continue;
 	}
-	xx = 0.0;
 	for (i=0; i<tsls.ncoeff; i++) {
-	    xx += tsls.coeff[i] * (*pZ)[list1[i+2]][t];
+	    xx += tsls.coeff[i] * (*pZ)[reglist[i+2]][t];
 	}
-	yhat[t] = xx; 
+	tsls.yhat[t] = xx; 
 	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
 	tsls.ess += tsls.uhat[t] * tsls.uhat[t];
     }
 
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess / tsls.dfd) : 0.0;
 
+    /* computation of covariance matrix of parameter estimates */
+
     if (opt & OPT_R) {
+	/* robust standard errors called for */
 	qr_tsls_vcv(&tsls, (const double **) *pZ, opt);
     } else {
 	double *xpx = NULL, *xpy = NULL, *diag = NULL;
+	int nxpx = tsls.ncoeff * (tsls.ncoeff + 1) / 2;
 
-	nv = s2list[0] - 1;
-	nxpx = nv * (nv + 1) / 2;
 	xpx = malloc(nxpx * sizeof *xpx);
 	xpy = malloc((s2list[0] + 1) * sizeof *xpy);
-	diag = malloc((s2list[0] - 1) * sizeof *diag);
+	diag = malloc(tsls.ncoeff * sizeof *diag);
 
 	if (xpy == NULL || xpx == NULL || diag == NULL) {
 	    free(xpx);
@@ -2029,8 +2047,8 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0, 0,
 		    xpx, xpy, tsls.missmask);
 
-	cholbeta(xpx, xpy, NULL, NULL, nv);    
-	diaginv(xpx, xpy, diag, nv);
+	cholbeta(xpx, xpy, NULL, NULL, tsls.ncoeff);    
+	diaginv(xpx, xpy, diag, tsls.ncoeff);
 
 	for (i=0; i<tsls.ncoeff; i++) {
 	    tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
@@ -2041,64 +2059,69 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	free(xpy);
     }
 
+    /* computation of additional statistics (R^2, F, etc.) */
+
     tsls.rsq = corrrsq(tsls.t2 - tsls.t1 + 1, 
 		       &(*pZ)[tsls.list[1]][tsls.t1], 
-		       yhat + tsls.t1);
+		       tsls.yhat + tsls.t1);
     tsls.adjrsq = 
 	1.0 - ((1.0 - tsls.rsq) * (tsls.nobs - 1.0) / tsls.dfd);
     tsls.fstt = tsls.rsq * tsls.dfd / (tsls.dfn * (1.0 - tsls.rsq));
     gretl_aic_etc(&tsls);
 
     if (tsls.missmask == NULL) {
+	/* no missing obs within sample range */
 	tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
 	tsls.dw = dwstat(0, &tsls, *pZ);
     } else {
 	tsls.rho = tsls.dw = NADBL;
     }
 
+    /* set command code on the model */
     tsls.ci = TSLS;
 
-    /* put the full list (possibly purged of zero elements) back in place */
-    tsls.list = realloc(tsls.list, 
-			(list1[0] + list2[0] + 2) * sizeof *tsls.list);
+    /* write the full tsls list (regressors plus instruments, possibly
+       purged of zero elements) into the model for future reference 
+    */
+    nelem = reglist[0] + instlist[0];
+    tsls.list = realloc(tsls.list, (nelem + 2) * sizeof *tsls.list);
     if (tsls.list == NULL) {
 	tsls.errcode = E_ALLOC;
     } else {
-	tsls.list[0] = list1[0] + list2[0] + 1;
-	j = 1;
-	for (i=1; i<=list1[0]; i++) {
-	    tsls.list[j++] = list1[i];
+	int j = 1;
+
+	tsls.list[0] = nelem + 1;
+	for (i=1; i<=reglist[0]; i++) {
+	    tsls.list[j++] = reglist[i];
 	}
 	tsls.list[j++] = LISTSEP;
-	for (i=1; i<=list2[0]; i++) {
-	    tsls.list[j++] = list2[i];
+	for (i=1; i<=instlist[0]; i++) {
+	    tsls.list[j++] = instlist[i];
 	}
-    }
-
-    /* put the yhats into the model */
-    for (t=tsls.t1; t<=tsls.t2; t++) {
-	tsls.yhat[t] = yhat[t];
     }
 
  tsls_bailout:
 
-    free(list1); 
-    free(list2);
+    free(reglist); 
+    free(instlist);
     free(s1list); 
     free(s2list);
-    free(yhat); 
 
+    /* save first-stage fitted values, if wanted */
     if ((opt & OPT_S) && tsls.errcode == 0) {
-	tsls_save_data(&tsls, newlist, *pZ, pdinfo);
-    } 
-	
-    dataset_drop_vars(addvars, pZ, pdinfo);
-    free(newlist);
+	tsls_save_data(&tsls, replist, *pZ, pdinfo);
+    }
+
+    free(replist);
+
+    /* delete first-stage fitted values from dataset */
+    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     if (tsls.errcode) {
 	model_count_minus();
     }
 
+    /* restore original sample range */
     pdinfo->t1 = t1;
     pdinfo->t2 = t2;
 
