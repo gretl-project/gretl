@@ -119,7 +119,7 @@
     <para>GARCH estimation in <application>gretl</application> is
       based on code deposited in the archive of the <citetitle>Journal
 	of Applied Econometrics</citetitle> by Professors Fiorentini,
-      Calzolari and Pannatoni, and the code to generate
+      Calzolari and Panattoni, and the code to generate
       <emphasis>p</emphasis>-values for Dickey Fuller tests is due to
       James MacKinnon.  In each case I am grateful to the authors for
       permission to use their work.
