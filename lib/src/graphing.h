@@ -51,6 +51,7 @@ typedef struct {
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */
     char **labels;             /* data-point labels (not always present) */
+    int nlabels;               /* number of labels */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 

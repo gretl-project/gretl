@@ -72,7 +72,8 @@ typedef enum {
     PLOT_RANGE_MEAN     = 1 << 1,
     PLOT_HAS_CONTROLLER = 1 << 3,
     PLOT_ZOOMED         = 1 << 4,
-    PLOT_ZOOMING        = 1 << 5
+    PLOT_ZOOMING        = 1 << 5,
+    PLOT_NO_LABELS      = 1 << 6
 } plot_flags;
 
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
@@ -80,6 +81,7 @@ typedef enum {
 #define plot_has_controller(p)  (p->flags & PLOT_HAS_CONTROLLER)
 #define plot_is_zoomed(p)       (p->flags & PLOT_ZOOMED)
 #define plot_is_zooming(p)      (p->flags & PLOT_ZOOMING)
+#define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -1176,6 +1178,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->fp = NULL;
     spec->data = NULL;
     spec->labels = NULL;
+    spec->nlabels = 0;
     spec->ptr = NULL;
 
     spec->termtype[0] = 0;
@@ -1272,10 +1275,12 @@ static int allocate_plotspec_labels (GPT_SPEC *spec)
 	spec->labels[i] = malloc(9);
 	if (spec->labels[i] == NULL) {
 	    free(spec->labels);
+	    spec->nlabels = 0;
 	    return 1;
 	}
 	spec->labels[i][0] = 0;
     }
+    spec->nlabels = datainfo->n;
     return 0;
 }
 
@@ -1477,6 +1482,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
 	for (i=0; i<datainfo->n; i++) free(spec->labels[i]);
 	free(spec->labels);
 	spec->labels = NULL;
+	spec->nlabels = 0;
     }
 
     fclose(fp);
@@ -1697,7 +1703,10 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     }
 
     /* no labels to show */
-    if (plot->spec->labels == NULL) return;
+    if (plot->spec->labels == NULL) {
+	plot->flags |= PLOT_NO_LABELS;
+	return;
+    }
 
     plot_n = plot->spec->t2 - plot->spec->t1 + 1;
 
@@ -1756,8 +1765,8 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
 
-	/* FIXME: restrict to (single) scatter plots */
-	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250) {
+	if (datainfo->markers && datainfo->t2 - datainfo->t1 < 250 &&
+	    !(plot_has_no_labels(plot))) {
 	    identify_point(plot, x, y, data_x, data_y);
 	}
 
