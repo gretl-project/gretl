@@ -263,15 +263,18 @@ dnl Check for GTK 2.0, if appropriate
 dnl
 orig_CFLAGS=$CFLAGS
 if test "$try_gtk2" = "yes" ; then
-    PKG_CHECK_MODULES(GTK, gtk+-2.0)
-    CFLAGS="$CFLAGS $GTK_CFLAGS"
-    LIBS="$LIBS $GTK_LIBS"
-    have_gtk="2.0"
-    gretlbin="gretl2"
-    AC_DEFINE(USE_GTK2)
-    AC_SUBST(gretlbin)
-else
+    PKG_CHECK_MODULES(GTK, gtk+-2.0,
+      CFLAGS="$CFLAGS $GTK_CFLAGS"
+      LIBS="$LIBS $GTK_LIBS"
+      have_gtk="2.0"
+      gretlbin="gretl2"
+      AC_DEFINE(USE_GTK2),
+      have_gtk="no"      
+    )
+fi
+
 dnl Or fall back on GTK 1.2
+if test "$have_gtk" = "no" ; then
    AM_PATH_GTK(1.2.3,have_gtk="1.2",have_gtk="no")
    if test "${have_gtk}" = "no" ; then
       exit
@@ -283,65 +286,82 @@ dnl Or fall back on GTK 1.2
        exit
    fi
    gretlbin="gretl"
-   AC_SUBST(have_gtk)
-   AC_SUBST(gretlbin)
 fi
+
+dnl record the results of the above tests
+AC_SUBST(have_gtk)
+AC_SUBST(gretlbin)
 
 dnl
 dnl Should we try to use an installed version of libole2?
 dnl
-if test x"${try_ole}" != "xno" ; then
-    if test "$have_gtk" = "2.0" ; then
-        PKG_CHECK_MODULES(LIBOLE2, libole2-2.0)
+if test ${try_ole} = yes && test ${have_gtk} = "2.0" ; then
+    PKG_CHECK_MODULES(LIBOLE2, libole2-2.0,
         AC_SUBST(LIBOLE_CFLAGS)
         AC_SUBST(LIBOLE_LIBS)
-    else
-        AM_PATH_LIBOLE2(0.2.4)
-    fi
+        have_libole2="yes",
+        have_libole2="no"
+    )
+fi
+if test ${try_ole} = yes && test ${have_gtk} = "1.2" ; then
+    AM_PATH_LIBOLE2(0.2.4,
+        have_libole2="yes",
+        have_libole2="no"
+    )
 fi
 
 dnl
 dnl Check for system PNG support
 dnl
-if test x"${png_graphics}" = xyes ; then
-   if test "$have_gtk" = "2.0" ; then
-       PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,,
-       echo
-       echo "* gretl wants the gdk-pixbuf library for PNG graphs."
-       echo "* You can turn off this dependency by configuring with the "
-       echo "* option --disable-png-graphics"
-       exit) 
-       AC_SUBST(GDK_PIXBUF_CFLAGS)
-       AC_SUBST(GDK_PIXBUF_LIBS) 
-   else
-       AM_PATH_GDK_PIXBUF(,,
-       echo
-       echo "* gretl wants the gdk-pixbuf library for PNG graphs."
-       echo "* You can turn off this dependency by configuring with the "
-       echo "* option --disable-png-graphics"
-      exit) 
-   fi        
+if test ${png_graphics} = yes && test ${have_gtk} = "2.0" ; then
+    PKG_CHECK_MODULES(GDK_PIXBUF, gdk-pixbuf-2.0 >= 0.7.0,
+        pixbuf_failed="no"
+        AC_SUBST(GDK_PIXBUF_CFLAGS)
+        AC_SUBST(GDK_PIXBUF_LIBS), 
+	pixbuf_failed="yes"
+   )
+fi
+if test ${png_graphics} = yes && test ${have_gtk} = "1.2" ; then
+    AM_PATH_GDK_PIXBUF(,
+        pixbuf_failed="no",
+        pixbuf_failed="yes"
+    )
+fi
+
+if test ${png_graphics} = yes && test ${pixbuf_failed} = yes ; then
+    echo "* gretl wants but did not find the gdk-pixbuf library for PNG graphs."
+    echo "* You can turn off this dependency by configuring with the option"
+    echo "* --disable-png-graphics"
+    exit
 fi
 
 dnl
-dnl Check for gnome and libxml, if we haven't been told not to
+dnl Check for gnome, if we haven't been told not to
 dnl
 if test "$try_gnome" = "yes" ; then
+dnl If we have gtk 2.0, test for gnome 2.0
     if test "$have_gtk" = "2.0" ; then
-       PKG_CHECK_MODULES(GNOME, 
-       libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0, AC_DEFINE(USE_GNOME))
-       have_gnome="2.0"
-       gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
-       PKG_CHECK_MODULES(XML, libxml-2.0)
+        PKG_CHECK_MODULES(GNOME, libgnomeui-2.0 libgnomeprint-2.0 libgnomeprintui-2.0, 
+           AC_DEFINE(USE_GNOME)
+           have_gnome="2.0"
+           if test "${gnome_prefix}" = "NA" ; then
+               gnome_prefix=`pkg-config --variable=prefix libgnome-2.0`
+           fi,
+           have_gnome="no"
+        )
+        if test "$have_gnome" = "2.0" ; then
+            PKG_CHECK_MODULES(XML, libxml-2.0)
+        fi 
     else
+dnl Still trying for gnome, but we don't have gtk 2.0 so test for gnome 1.4  
        AC_DEFUN(AC_PROG_GNOME,
        [AC_CHECK_PROG(GNOME,gnome-config,yes)])
 
        AC_PROG_GNOME
        GNOME_CFLAGS=''
        GNOME_LIBS=''
-       test x"${GNOME}" = xyes && AC_DEFINE(USE_GNOME)
        if test x"${GNOME}" = xyes ; then
+           AC_DEFINE(USE_GNOME)
            have_gnome="1.4"
            if test "${gnome_prefix}" = "NA" ; then
                gnome_prefix="`gnome-config --prefix`"
@@ -351,15 +371,11 @@ if test "$try_gnome" = "yes" ; then
            XML_CFLAGS=`gnome-config --cflags xml`
            XML_LIBS=`gnome-config --libs xml`
        fi
-       AC_SUBST(XML_CFLAGS)
-       AC_SUBST(XML_LIBS)
     fi
     AC_SUBST(have_gnome)
     AC_SUBST(gnome_prefix)
     AC_SUBST(GNOME_CFLAGS)
     AC_SUBST(GNOME_LIBS)
-    AC_SUBST(XML_CFLAGS)
-    AC_SUBST(XML_LIBS)
 fi
 dnl End of gnome check
 
@@ -373,10 +389,12 @@ if test x"${XML_LIBS}" = x ; then
   if test x"${XMLCONF}" != x ; then
     XML_CFLAGS=`$XMLCONF --cflags`
     XML_LIBS=`$XMLCONF --libs`
-    AC_SUBST(XML_CFLAGS)
-    AC_SUBST(XML_LIBS)
   fi
 fi
+
+dnl record results on libxml
+AC_SUBST(XML_CFLAGS)
+AC_SUBST(XML_LIBS)
 
 dnl Determine installation prefix
 if test "${prefix}" = "NONE" ; then
@@ -428,6 +446,7 @@ Configuration:
   Use LaTeX for typesetting output:     ${have_latex}
   Gnu Multiple Precision support:       ${have_gmp}
   Build with GTK version:               ${have_gtk}
+  Use installed libole2:                ${have_libole2}
   Build with gnome support:             ${have_gnome}
   Gnome installation prefix:            ${gnome_prefix}
 

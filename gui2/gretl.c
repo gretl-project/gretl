@@ -107,7 +107,6 @@ drag_data_received  (GtkWidget          *widget,
 
 #ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
-static GnomeProgram *gretl;
 
 static const struct poptOption options[] = {
     {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -645,6 +644,9 @@ int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
+#ifdef USE_GNOME
+    GnomeProgram *program;
+#endif
 
 #ifdef ENABLE_NLS
     nls_init();
@@ -659,13 +661,13 @@ int main (int argc, char *argv[])
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
-    gretl2 = gnome_program_init ("gretl", version_string,
-				 LIBGNOMEUI_MODULE, argc, argv,
-				 GNOME_PARAM_POPT_TABLE, options,
-				 GNOME_PARAM_HUMAN_READABLE_NAME,
-				 _("The GNOME 2.0 econometrics package"),
-				 GNOME_PARAM_APP_DATADIR, DATADIR,
-				 GNOME_PARAM_NONE);
+    program = gnome_program_init ("gretl", version_string,
+				  LIBGNOMEUI_MODULE, argc, argv,
+				  GNOME_PARAM_POPT_TABLE, options,
+				  GNOME_PARAM_HUMAN_READABLE_NAME,
+				  _("The GNOME 2.0 econometrics package"),
+				  GNOME_PARAM_APP_DATADIR, DATADIR,
+				  GNOME_PARAM_NONE);
 #else
     gtk_init(&argc, &argv);
 #endif

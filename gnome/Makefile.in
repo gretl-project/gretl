@@ -1,4 +1,5 @@
 tooldir = ../tools
+docdir = ../doc
 
 INSTALL = @INSTALL@
 gnome_prefix = @gnome_prefix@
@@ -8,9 +9,11 @@ ifeq ($(INSTALL_DATA),)
 endif
 
 ifeq ($(have_gnome),2.0)
-gretl_desktop = gretl2.desktop
+  gretl_desktop = gretl2.desktop
+  install_help = install-help-2
 else
-gretl_desktop = gretl.desktop
+  gretl_desktop = gretl.desktop
+  install_help = install-help-1
 endif
 
 desktopdir = $(gnome_prefix)/share/applications
@@ -18,23 +21,39 @@ mimedir = $(gnome_prefix)/share/mime-info
 gpixmaps = $(gnome_prefix)/share/pixmaps/gretl
 ghelpdir = $(gnome_prefix)/share/gnome/help/gretl
 
-install: 
+install: install-images install-misc install-help-dirs $(install_help)
+
+install-images:
 	$(tooldir)/mkinstalldirs $(gpixmaps)
 	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gpixmaps)
 	$(INSTALL_DATA) gretl.png $(gpixmaps)
 	$(INSTALL_DATA) gnome-*.png $(gpixmaps)
+
+install-misc:
 	$(tooldir)/mkinstalldirs $(desktopdir)
 	$(INSTALL_DATA) $(gretl_desktop) $(desktopdir)/gretl.desktop
 	$(tooldir)/mkinstalldirs $(mimedir)
 	$(INSTALL_DATA) gretl.mime $(mimedir)
 	$(INSTALL_DATA) gretl.keys $(mimedir)
+
+install-help-dirs:
 	$(tooldir)/mkinstalldirs $(ghelpdir)
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/figures
 	$(tooldir)/mkinstalldirs $(ghelpdir)/C/chapters
+
+install-help-2:
 	cat $(docdir)/manual.xml | sed s+fileref=\"figures/[^\"]*+\&.png+g \
 	  > $(ghelpdir)/C/gretl.xml
 	for f in $(docdir)/chapters/*.xml ; do \
 	  cat $$f | sed s+fileref=\"figures/[^\"]*+\&.png+g > \
 	  $(ghelpdir)/C/chapters/`basename $$f` ; done
 	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
+
+install-help-1:
+        $(INSTALL_DATA) topic.dat $(ghelpdir)/C
+        $(INSTALL_DATA) $(docdir)/manual-html/*.html $(ghelpdir)/C
+        $(INSTALL_DATA) $(docdir)/manual-html/*.css $(ghelpdir)/C
+        $(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
+
+
