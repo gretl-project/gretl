@@ -26,6 +26,16 @@
 
 #include "fcp.h"
 
+#undef GARCH_INIT_BY_ARMA
+
+#ifdef GARCH_INIT_BY_ARMA
+struct {
+    double omega;
+    double alpha;
+    double beta;
+} arma_coeffs;
+#endif
+
 static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 				const int *list)
 {
@@ -344,13 +354,31 @@ int do_fcp (const int *list, double **Z, double scale,
 	b[i] = 0.0;
     }
 
-    amax[0] = pmod->sigma * pmod->sigma;
     amax[1] = q;
     amax[2] = p; 
+
+    /* initialize variance coefficients */
+
+#ifdef GARCH_INIT_BY_ARMA
+    if (p == 1 && q == 1) {
+	fprintf(stderr, "Initializing coefficients from ARMA:\n"
+		" omega = %g, alpha = %g, beta = %g\n",
+		arma_coeffs.omega, arma_coeffs.alpha, arma_coeffs.beta);
+	amax[0] = arma_coeffs.omega;
+	amax[3] = arma_coeffs.alpha;
+	amax[4] = arma_coeffs.beta;
+    } else {
+	amax[0] = pmod->sigma * pmod->sigma;
+	for (i=0; i<p+q; i++) {
+	    amax[3+i] = 0.1;
+	}
+    }
+#else
+    amax[0] = pmod->sigma * pmod->sigma;
     for (i=0; i<p+q; i++) {
-	/* initial alpha, beta values */
 	amax[3+i] = 0.1;
     }
+#endif
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
 			 (const double **) X, nx, yhat, coeff, ncoeff, 
@@ -413,6 +441,88 @@ int do_fcp (const int *list, double **Z, double scale,
     return err;
 }
 
+#ifdef GARCH_INIT_BY_ARMA
+
+static int 
+add_uhat_squared (const MODEL *pmod, double scale,
+		  double ***pZ, DATAINFO *pdinfo)
+{
+    int t, v = pdinfo->v;
+
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    for (t=0; t<pdinfo->n; t++) {
+	double u = pmod->uhat[t];
+
+	if (na(u)) {
+	    (*pZ)[v][t] = NADBL;
+	} else {
+	    u /= scale;
+	    (*pZ)[v][t] = u * u;
+	}
+    }
+
+    strcpy(pdinfo->varname[v], "uhat2");
+
+    return 0;
+}
+
+static int 
+garch_init_by_arma (const MODEL *pmod, const int *garchlist, 
+		    double scale, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL amod;
+    int v = pdinfo->v;
+    int *list = NULL;
+    int err = 0;
+
+    /* set to common defaults */
+    arma_coeffs.omega = pmod->sigma * pmod->sigma;
+    arma_coeffs.alpha = 0.1;
+    arma_coeffs.beta = 0.1;
+
+    /* for now we'll try this only for GARCH(1,1) */
+    if (garchlist[1] != 1 || garchlist[2] != 1) {
+	return 0;
+    }
+
+    /* add OLS uhat squared to dataset */
+    if (add_uhat_squared(pmod, scale, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
+    list = copylist(garchlist);
+    if (list == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    /* dep var is squared OLS residual */
+    list[4] = v;
+
+    amod = arma(list, (const double **) *pZ, pdinfo, NULL);
+    if (amod.errcode) {
+	err = amod.errcode;
+	goto bailout;
+    } else {
+	model_count_minus();
+	arma_coeffs.omega = amod.coeff[0];
+	arma_coeffs.alpha = amod.coeff[1] + amod.coeff[2];
+	arma_coeffs.beta = -amod.coeff[2];
+    }
+
+ bailout:
+
+    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo);
+    free(list);
+
+    return err;
+}
+
+#endif /* GARCH_INIT_BY_ARMA */
+
 /* sanity/dimension check */
 
 static int *get_garch_list (const int *list, int *err)
@@ -469,7 +579,9 @@ static int *make_ols_list (const int *list)
     int i;
 
     olist = malloc((list[0] - 2) * sizeof *olist);
-    if (olist == NULL) return NULL;
+    if (olist == NULL) {
+	return NULL;
+    }
 
     olist[0] = list[0] - 3;
     for (i=4; i<=list[0]; i++) {
@@ -543,6 +655,13 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	model.ess /= scale * scale;
 	model.sigma = 1.0;
     } 
+#endif /* alternative scalings */
+
+#ifdef GARCH_INIT_BY_ARMA
+    if (!err) {
+	err = garch_init_by_arma(&model, list, scale, 
+				 pZ, pdinfo);
+    }
 #endif
 
     if (!err) {

@@ -314,67 +314,107 @@ int spearman (const int *list, const double **Z, const DATAINFO *pdinfo,
 
 #undef LOCKE_DEBUG
 
-double lockes_test (const double *x, const DATAINFO *pdinfo)
+static int randomize_doubles (const void *a, const void *b)
+{
+    return gretl_rand_int_max(8096) - 4097;
+}
+
+/* put sample into random order */
+
+static double *locke_shuffle (const double *x, int *n)
+{
+    double *sx;
+    int i, m = *n;
+
+    sx = malloc(m * sizeof *sx);
+    if (sx == NULL) {
+	return NULL;
+    }
+
+    /* check for missing and negative values as we go */
+
+    m = 0;
+    for (i=0; i<*n; i++) {
+	if (na(x[i])) {
+	    continue;
+	} else if (x[i] < 0.0) {
+	    m = 0;
+	    break;
+	} else {
+	    sx[m++] = x[i];
+	}
+    }
+
+    if (m == 0) {
+	free(sx);
+	return NULL;
+    }
+
+    m = 2 * m / 2;
+
+    qsort(sx, m, sizeof *sx, randomize_doubles);
+
+    *n = m;
+
+    return sx;
+}
+
+/* Charles Locke's nonparametric test for whether an empirical
+   distribution is gamma.  See C. Locke, "A Test for the Composite
+   Hypothesis that a Population has a Gamma Distribution,"
+   Commun. Statis.-Theor. Meth. A5(4), 351-364 (1976).
+
+   See also Shapiro and Chen, Journal of Quality Technology 33(1),
+   Jan 2001.
+*/
+
+double lockes_test (const double *x, int t1, int t2)
 {
     double rho, sd, pval;
-    double *u, *v;
-    int i, t, m, n = 0;
+    double *sx, *u = NULL, *v = NULL;
+    int i, t, m = t2 - t1 + 1;
 
-    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	if (!na(x[t])) {
-	    n++;
-	}
-	if (x[t] < 0.0) {
-	    return NADBL;
-	}
+    sx = locke_shuffle(x + t1, &m);
+
+    if (sx == NULL) {
+	return NADBL;
     }
 
-    if (n % 2 > 0) {
-	n--;
-    }
-
-    m = n / 2;
+    m /= 2;
 	
     u = malloc(m * sizeof *u);
-    if (u == NULL) {
-	return NADBL;
-    }
-
     v = malloc(m * sizeof *v);
-    if (v == NULL) {
+    if (u == NULL || v == NULL) {
 	free(u);
+	free(v);
+	free(sx);
 	return NADBL;
     }
 
-    i = 0;
-    for (t=pdinfo->t1; t<pdinfo->t2 && i < m; ) {
-	int k = 1;
-
-	if (na(x[t])) {
-	    continue;
+    t = 0;
+    for (i=0; i<m; i++) {
+	u[i] = sx[t] + sx[t+1];
+	v[i] = sx[t] / sx[t+1];
+	if (sx[t+1] / sx[t] > v[i]) {
+	    v[i] = sx[t+1] / sx[t];
 	}
-	while (na(x[t+k])) {
-	    k++;
-	}
-	u[i] = x[t] + x[t+k];
-	v[i] = x[t] / x[t+k];
-	if (x[t+k] / x[t] > v[i]) {
-	    v[i] = x[t+k] / x[t];
-	}
-#ifdef LOCKE_DEBUG
-	fprintf(stderr, "u[%d] = %g, v[%d] = %g, using x[%d] and x[%d]\n",
-		i, u[i], i, v[i], t, t + k);
+#if LOCKE_DEBUG
+	fprintf(stderr, "u[%d] = %g, v[%d] = %g, using sx[%d] and sx[%d]\n",
+		i, u[i], i, v[i], t, t + 1);
 #endif
-	t += k + 1;
-	i++;
+	t += 2;
     }
 
     spearman_rho(u, v, m, &rho, &sd, &pval, NULL, NULL, NULL);
 
-#ifdef LOCKE_DEBUG
+#if LOCKE_DEBUG
     fprintf(stderr, "Spearman's rho = %f, sd = %g, z = %g, pval = %g\n",
 	    rho, sd, rho / sd, pval);
 #endif    
+
+    free(u);
+    free(v);
+    free(sx);
 
     return rho / sd;
 }
@@ -411,7 +451,7 @@ int runs_test (int varno, const double **Z, const DATAINFO *pdinfo,
 	if (na(xx)) {
 	    continue;
 	}
-	else x[nn++] = xx;
+	x[nn++] = xx;
     } 
 
     if (nn <= 1) {

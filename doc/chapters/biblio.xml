@@ -90,6 +90,15 @@
   </bibliomixed>
 
   <bibliomixed>
+    <bibliomset relation='article'>Locke, C. (1976) <title>A Test for
+	the Composite Hypothesis that a Population has a Gamma
+	Distribution</title>, </bibliomset> <bibliomset
+      relation='journal'> <title>Communications in Statistics &mdash;
+	Theory and Methods</title>, A5(4), pp. 351&ndash;364.
+    </bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
     <bibliomset relation='article'>MacKinnon, J. G. (1996)
       <title>Numerical Distribution Functions for Unit Root and
 	Cointegration Tests</title>,</bibliomset> <bibliomset
@@ -145,11 +154,24 @@
   </bibliomixed>
 
   <bibliomixed>
-    <bibliomset relation='article'> Salkever, D. (1976) <title>The Use
+    <bibliomset relation='article'>Salkever, D. (1976) <title>The Use
 	of Dummy Variables to Compute Predictions, Prediction Errors,
-	and Confidence Intervals</title>, </bibliomset> <bibliomset
+	and Confidence Intervals</title>,
+    </bibliomset> 
+    <bibliomset
       relation='journal'> <title>Journal of Econometrics</title>, 4,
-      <artpagenums>pp. 393&ndash;7</artpagenums>. </bibliomset>
+      <artpagenums>pp. 393&ndash;7</artpagenums>. 
+    </bibliomset>
+  </bibliomixed> 
+
+  <bibliomixed>
+    <bibliomset relation='article'>Shapiro, S. and Chen, L. (2001)
+      <title>Composite Tests for the Gamma Distribution</title>,
+    </bibliomset> 
+    <bibliomset relation='journal'><title>Journal of
+	Quality Technology</title>, 33, <artpagenums>pp.
+	47&ndash;59</artpagenums>.
+    </bibliomset>
   </bibliomixed> 
 
   <bibliomixed>Stock, James H. and Watson, Mark W. (2003)

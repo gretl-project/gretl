@@ -225,6 +225,23 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
     pputc(prn, '\n');
 }
 
+static void print_freq_test (const FREQDIST *freq, PRN *prn)
+{
+    if (freq->dist == NORMAL) {
+	pprintf(prn, "\n%s:\n", 
+		_("Test for null hypothesis of normal distribution"));
+	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
+		_("Chi-square"), freq->test, 
+		_("with p-value"), chisq(freq->test, 2));
+    } else if (freq->dist == GAMMA) {
+	pprintf(prn, "\n%s:\n", 
+		_("Test for null hypothesis of gamma distribution"));
+	pprintf(prn, "z = %.3f %s %.5f\n", 
+		freq->test, 
+		_("with p-value"), 2.0 * normal(fabs(freq->test)));
+    }	    
+}
+
 /**
  * print_freq:
  * @freq: gretl frequency distribution struct.
@@ -242,6 +259,13 @@ void print_freq (const FREQDIST *freq, PRN *prn)
     pprintf(prn, _("\nFrequency distribution for %s, obs %d-%d "
 		   "(%d valid observations)\n"),
 	    freq->varname, freq->t1 + 1, freq->t2 + 1, freq->n);
+
+    if (freq->numbins == 0) {
+	if (!na(freq->test)) {
+	    print_freq_test(freq, prn);
+	}
+	return;
+    } 
 
     pprintf(prn, _("number of bins = %d, mean = %g, sd = %g\n"), 
 	    freq->numbins, freq->xbar, freq->sdx);
@@ -282,19 +306,7 @@ void print_freq (const FREQDIST *freq, PRN *prn)
     }
 
     if (!na(freq->test)) {
-	if (freq->dist == NORMAL) {
-	    pprintf(prn, "\n%s:\n", 
-		    _("Test for null hypothesis of normal distribution"));
-	    pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
-		    _("Chi-square"), freq->test, 
-		    _("with p-value"), chisq(freq->test, 2));
-	} else if (freq->dist == GAMMA) {
-	    pprintf(prn, "\n%s:\n", 
-		    _("Test for null hypothesis of gamma distribution"));
-	    pprintf(prn, "z = %.3f %s %.5f\n", 
-		    freq->test, 
-		    _("with p-value"), 2.0 * normal(fabs(freq->test)));
-	}	    
+	print_freq_test(freq, prn);
     }
 }
 

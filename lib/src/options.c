@@ -61,6 +61,7 @@ struct gretl_option gretl_opts[] = {
     { TABPRINT, OPT_O, "complete" },
     { FCASTERR, OPT_O, "plot" },
     { FREQ,     OPT_O, "gamma" },
+    { FREQ,     OPT_Q, "quiet" },
     { GARCH,    OPT_R, "robust" },
     { GARCH,    OPT_V, "verbose" },
     { GNUPLOT,  OPT_O, "with-lines" },

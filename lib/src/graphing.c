@@ -1271,12 +1271,18 @@ int plot_freq (FREQDIST *freq, int dist)
     int i, K = freq->numbins;
     char withstring[32] = {0};
     double plotmin = 0.0, plotmax = 0.0;
-    double barwidth = freq->endpt[K-1] - freq->endpt[K-2];
-    double barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
+    double barwidth, barskip;
     int plottype = PLOT_FREQ_SIMPLE;
     int use_boxes = 1;
 
-    if (freq->numbins > 16) {
+    if (K == 0) {
+	return 1;
+    }
+
+    barwidth = freq->endpt[K-1] - freq->endpt[K-2];
+    barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
+
+    if (K > 16) {
 	barskip /= 2.0;
     }
 
@@ -1416,13 +1422,13 @@ int plot_freq (FREQDIST *freq, int dist)
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s , \\\n"
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
-		"title 'N(%.4f,%.4f)' w lines\n",
+		"title 'N(%.5g,%.5g)' w lines\n",
 		freq->varname, withstring, freq->xbar, freq->sdx);
     } else if (dist == GAMMA) {
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(exp(lgamma(alpha))*(beta**alpha)) "
-		"title 'gamma(%.4f,%.4f)' w lines\n",
+		"title 'gamma(%.5g,%.5g)' w lines\n",
 		freq->varname, withstring, alpha, beta); 
     }
 

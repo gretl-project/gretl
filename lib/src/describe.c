@@ -344,6 +344,26 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 
     gretl_minmax(pdinfo->t1, pdinfo->t2, x, &xmin, &xmax);
     range = xmax - xmin;
+
+    /* calculate test stat for distribution */
+    if (freq->n > 7) {
+	if (opt & OPT_O) {
+	    freq->test = lockes_test(x, pdinfo->t1, pdinfo->t2);
+	    freq->dist = GAMMA;
+	} else {
+	    freq->test = doornik_chisq(skew, kurt, freq->n); 
+	    freq->dist = NORMAL;
+	}
+    } else {
+	freq->test = NADBL;
+	freq->dist = 0;
+    }
+
+    /* if the histogram is not wanted, we're done */
+    if (opt & OPT_Q) {
+	freq->numbins = 0;
+	return freq;
+    }
     
     if (n < 16) {
 	nbins = 5; 
@@ -411,19 +431,6 @@ FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo,
 	}
     }
 
-    if (freq->n > 7) {
-	if (opt & OPT_O) {
-	    freq->test = lockes_test(x, pdinfo);
-	    freq->dist = GAMMA;
-	} else {
-	    freq->test = doornik_chisq(skew, kurt, freq->n); 
-	    freq->dist = NORMAL;
-	}
-    } else {
-	freq->test = NADBL;
-	freq->dist = 0;
-    }
-
     return freq;
 }
 
@@ -440,7 +447,7 @@ int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     print_freq(freq, prn); 
 
-    if (graph) {
+    if (graph && !(opt & OPT_Q)) {
 	if (plot_freq(freq, (opt)? GAMMA : NORMAL)) {
 	    pputs(prn, _("gnuplot command failed\n"));
 	}
