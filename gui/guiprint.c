@@ -1234,6 +1234,8 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
                 Z[list[i]][t] : Z[list[i]][0];
             if (na(xx)) {
                 pputs(prn, "NA");
+	    } else if (pmax[i-1] == 999) {
+		pprintf(prn, "%.10g", xx);
             } else {
                 pprintf(prn, "%.*f", pmax[i-1], xx);
             }

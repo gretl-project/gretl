@@ -1027,8 +1027,13 @@ int get_precision (double *x, int n)
     char *s, numstr[48];
 
     for (i=0; i<n; i++) {
-	p = 6;
 	if (na(x[i])) continue;
+	/* escape clause: numbers are too big or too small for
+	   this treatment */
+	if (x[i] < 1.0e-6 || x[i] > 1.0e+8) {
+	    return 999;
+	}
+	p = 6;
 	sprintf(numstr, "%f", x[i]);
 	s = numstr + strlen(numstr) - 1;
 	while (*s-- == '0') p--;
@@ -1157,12 +1162,17 @@ int write_data (const char *fname, const int *list,
 	    if (pdinfo->markers && pdinfo->S != NULL) 
 		fprintf(fp, "%s ", pdinfo->S[t]);
 	    for (i=1; i<=l0; i++) {
-		if (na(Z[list[i]][t]))
+		if (na(Z[list[i]][t])) {
 		    fprintf(fp, "-999 ");
-		else 
+		} else if (pmax[i-1] == 999) {
+		    fprintf(fp, "%.10g ", 
+			    (pdinfo->vector[list[i]])? 
+			    Z[list[i]][t] : Z[list[i]][0]);
+		} else {
 		    fprintf(fp, "%.*f ", pmax[i-1], 
 			    (pdinfo->vector[list[i]])? 
 			    Z[list[i]][t] : Z[list[i]][0]);
+		}
 	    }
 	    fputs("\n", fp);
 	}
@@ -1193,10 +1203,13 @@ int write_data (const char *fname, const int *list,
 	    for (i=1; i<=l0; i++) { 
 		xx = (pdinfo->vector[list[i]])? 
 		    Z[list[i]][t] : Z[list[i]][0];
-		if (na(xx))
+		if (na(xx)) {
 		    fprintf(fp, "NA");
-		else
+		} else if (pmax[i-1] == 999) {
+		    fprintf(fp, "%.10g", xx);;
+		} else {
 		    fprintf(fp, "%.*f", pmax[i-1], xx);
+		}
 		if (i < l0) fputc(delim, fp);
 		else fputc('\n', fp);
 	    }
@@ -1230,19 +1243,28 @@ int write_data (const char *fname, const int *list,
 	fprintf(fp, "# name: %s\n# type: matrix\n# rows: %d\n# columns: 1\n", 
 		pdinfo->varname[list[1]], n);
 	/* write out column of values of dep. var. */
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	    fprintf(fp, "%.*f\n", pmax[0], 
-		    (pdinfo->vector[list[i]])? 
-		    Z[list[1]][t] : Z[list[1]][0]);
+	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
+	    if (pmax[0] == 999) {
+		fprintf(fp, "%.10g\n", Z[list[1]][t]);
+	    } else {
+		fprintf(fp, "%.*f\n", pmax[0], 
+			(pdinfo->vector[list[i]])? 
+			Z[list[1]][t] : Z[list[1]][0]);
+	    }
+	}
 	/* write out info for indep vars matrix */
 	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
 		n, list[0] - 1);
 	/* write out indep. var. matrix */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=2; i<=list[0]; i++) {
-		fprintf(fp, "%.*f ", pmax[i-1], 
-			(pdinfo->vector[list[i]])? 
-			Z[list[i]][t] : Z[list[i]][0]);
+		if (pmax[i-1] == 999) {
+		    fprintf(fp, "%.10g ", Z[list[i]][t]);
+		} else {
+		    fprintf(fp, "%.*f ", pmax[i-1], 
+			    (pdinfo->vector[list[i]])? 
+			    Z[list[i]][t] : Z[list[i]][0]);
+		}
 	    }
 	    fputc('\n', fp);
 	}
@@ -2935,8 +2957,20 @@ static int write_xmldata (const char *fname, const int *list,
 		if (opt) gzputs(fz, "NA ");
 		else fputs("NA ", fp);
 	    } else {
-		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
-		else fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
+		if (opt) {
+		    if (pmax[i-1] == 999) {
+			gzprintf(fz, "%.10g ", Z[list[i]][t]);
+		    } else {
+			gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
+		    }
+		}
+		else {
+		    if (pmax[i-1] == 999) {
+			fprintf(fp, "%.10g ", Z[list[i]][t]);
+		    } else {
+			fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
+		    }
+		}
 	    }
 	}
 	if (opt) gzputs(fz, "</obs>\n");
