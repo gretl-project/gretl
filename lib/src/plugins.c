@@ -143,7 +143,7 @@ struct plugin_function plugin_functions[] = {
     { "arma_model",        P_ARMA },
     { "arma_x12_model",    P_ARMA_X12 },
     { "logistic_estimate", P_LOGISTIC },
-    { "tobit_model",       P_TOBIT },
+    { "tobit_estimate",    P_TOBIT },
 
     /* sentinel */
     { NULL, 0 }

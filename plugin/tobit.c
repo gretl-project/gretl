@@ -23,6 +23,7 @@
 # include <gretl/libgretl.h>
 #else
 # include "libgretl.h"
+# include "internal.h"
 #endif
 
 /* #define DEBUG */
@@ -35,34 +36,55 @@ struct _tobit_info {
     double ll;
     double ll2;
     double *theta;
+    double *delta;
+    double *deltmp;
     double *ystar;
     double *P;
     double *e;
     double *f;
 };
 
-static int tobit_allocate (tobit_info *tobit)
+static int tobit_init (tobit_info *tobit, const MODEL *pmod)
 {
-    int err = 0;
+    int i, k, err = 0;
+
+    tobit->n = pmod->nobs;
+    k = tobit->k = pmod->ncoeff;    
 
     tobit->theta = NULL;
     tobit->P = tobit->e = tobit->f = tobit->ystar = NULL;
 
     tobit->theta = malloc((tobit->k + 1) * sizeof *tobit->theta);
+    tobit->delta = malloc((tobit->k + 1) * sizeof *tobit->delta);
+    tobit->deltmp = malloc((tobit->k + 1) * sizeof *tobit->deltmp);
     tobit->P = malloc(tobit->n * sizeof *tobit->P);
     tobit->e = malloc(tobit->n * sizeof *tobit->e);
     tobit->f = malloc(tobit->n * sizeof *tobit->f);
     tobit->ystar = malloc(tobit->n * sizeof *tobit->ystar);
 
     if (tobit->P == NULL || tobit->e == NULL || tobit->f == NULL ||
-	tobit->ystar == NULL || tobit->theta == NULL) {
+	tobit->ystar == NULL || tobit->theta == NULL || 
+	tobit->delta == NULL || tobit->deltmp == NULL) {
 	err = 1;
 	free(tobit->P);
 	free(tobit->e);
 	free(tobit->f);
 	free(tobit->ystar);
 	free(tobit->theta);
+	free(tobit->delta);
+	free(tobit->deltmp);
     }
+
+    /* initialize beta from the OLS coefficients */
+    for (i=0; i<k; i++) {
+	tobit->theta[i] = pmod->coeff[i];
+#ifdef DEBUG
+	fprintf(stderr, "initial OLS beta[%d] = %#.5g\n", i, pmod->coeff[i]);
+#endif
+    }
+
+    /* initialize variance */
+    tobit->theta[k] = 1.0;
 
     return err;
 }
@@ -74,6 +96,8 @@ static void tobit_free (tobit_info *tobit)
     free(tobit->f);
     free(tobit->ystar);
     free(tobit->theta);
+    free(tobit->delta);
+    free(tobit->deltmp);
 }
 
 static int tobit_ll (double *theta, const double **X, double **Z, tobit_info *tobit, 
@@ -205,6 +229,8 @@ static int *make_tobit_list (int k)
     return list;
 }
 
+#ifdef STANDALONE
+
 static void print_iter_info (double *theta, int m, double ll)
 {
     int i;
@@ -233,17 +259,90 @@ static void print_tobit_stats (double *beta, int k, double sigma,
     printf("Log-likelihood = %#g\n", ll);    
 }
 
-static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo, 
-		     tobit_info *tobit, MODEL *pmod)
+#else
+
+static int make_vcv (MODEL *pmod, gretl_matrix *v)
+{
+    const int nv = pmod->ncoeff;
+    const int nterms = nv * (nv + 1) / 2;
+    double x;
+    int i, j, k;
+
+    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) return 1;  
+
+    for (i=0; i<nv; i++) {
+	for (j=0; j<=i; j++) {
+	    k = ijton(i+1, j+1, nv);
+	    x = gretl_matrix_get(v, i, j);
+	    pmod->vcv[k] = x;
+	}
+    }
+
+    return 0;
+}
+
+static int write_tobit_stats (MODEL *pmod, tobit_info *tobit, const double *y,
+			      double sigma, gretl_matrix *VCV)
+{
+    int i, t;
+    int offset = pmod->t1;
+
+    for (i=0; i<tobit->k; i++) {
+	pmod->coeff[i] = tobit->theta[i];
+	pmod->sderr[i] = sqrt(gretl_matrix_get(VCV, i, i));
+    }
+
+    pmod->sigma = sigma;
+    pmod->lnL = tobit->ll;
+
+    pmod->ess = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	pmod->yhat[t] = tobit->ystar[t - offset];
+	pmod->uhat[t] = y[t - offset] - pmod->yhat[t];
+	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
+    }
+
+    if (pmod->tss > pmod->ess) {
+	pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / 
+	    (pmod->dfn * pmod->ess);
+    } else {
+	pmod->fstt = NADBL;
+    }
+
+    pmod->rsq = pmod->adjrsq = NADBL;
+
+    if (pmod->tss > 0) {
+	pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
+	if (pmod->dfd > 0) {
+	    double den = pmod->tss * pmod->dfd;
+
+	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
+	}
+    }
+
+    make_vcv(pmod, VCV);
+
+    gretl_aic_etc(pmod);
+
+    pmod->ci = TOBIT;
+
+    return 0;
+}
+
+#endif /* STANDALONE */
+
+static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod)
 {
     MODEL tmod;
+    tobit_info tobit;
 
     double **tZ = NULL;
     DATAINFO *tinfo = NULL;
 
     const double **X;
     int *tlist = NULL;
-    double *beta = NULL, *delta = NULL, *deltmp = NULL;
+    double *beta = NULL;
     double sigma;
     int i, j, k;
     int err = 0;
@@ -260,39 +359,14 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
     double convcrit = 1.0e20;
     double stepsize = 0.25;
 
-    /* run initial OLS */
-    *pmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (pmod->errcode) {
-	err = 1;
-	goto bailout;
-    }
-
-    tobit->n = pmod->nobs;
-    tobit->k = k = pmod->ncoeff;
-
-    err = tobit_allocate(tobit);
+    err = tobit_init(&tobit, pmod);
     if (err) return 1;
 
-    delta = malloc((k + 1) * sizeof *delta);
-    deltmp = malloc((k + 1) * sizeof *deltmp);
-    if (delta == NULL || deltmp == NULL) {
-	err = 1;
-	goto bailout;
-    }
-
-    beta = tobit->theta;   /* point beta at the start of the theta array */
-    tobit->theta[k] = 1.0; /* initialize variance */
-
-    /* initialize beta from OLS */
-    for (i=0; i<k; i++) {
-	beta[i] = pmod->coeff[i];
-#ifdef DEBUG
-	fprintf(stderr, "initial OLS beta[%d] = %#.5g\n", i, beta[i]);
-#endif
-    }
+    k = tobit.k;
+    beta = tobit.theta;   /* point beta at the start of the theta array */
 
     /* set of pointers into original data */
-    X = make_tobit_X(pmod, (const double **) *pZ);
+    X = make_tobit_X(pmod, Z);
     if (X == NULL) {
 	err = 1;
 	goto bailout;
@@ -300,7 +374,7 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
 
     /* create a temp dataset for the OPG regression: 
        k+1 vars plus constant */    
-    tinfo = create_new_dataset(&tZ, k + 2, tobit->n, 0);
+    tinfo = create_new_dataset(&tZ, k + 2, tobit.n, 0);
     if (tinfo == NULL) {
 	err = 1;
 	goto bailout;
@@ -318,7 +392,7 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
     while (convcrit > small) {
 
 	/* compute loglikelihood and score matrix */
-	tobit_ll(tobit->theta, X, tZ, tobit, 1); 
+	tobit_ll(tobit.theta, X, tZ, &tobit, 1); 
 
 	/* BHHH via OPG regression (OPT_A -> "this is an auxiliary regression") */
 	tmod = lsq(tlist, &tZ, tinfo, OLS, OPT_A, 0.0);
@@ -327,23 +401,23 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
 #ifdef DEBUG
 	    printf("OPG coeff[%d] = %g\n", i, tmod.coeff[i]);
 #endif
-	    delta[i] = tmod.coeff[i] * stepsize;
-	    deltmp[i] = tobit->theta[i] + delta[i];
+	    tobit.delta[i] = tmod.coeff[i] * stepsize;
+	    tobit.deltmp[i] = tobit.theta[i] + tobit.delta[i];
 	} 
 	
 	clear_model(&tmod, NULL);
 
 	/* see if we've gone up... (0 -> don't compute score) */
-	tobit_ll(deltmp, X, tZ, tobit, 0); 
+	tobit_ll(tobit.deltmp, X, tZ, &tobit, 0); 
 
-	while (tobit->ll2 < tobit->ll && stepsize > smallstep) { 
+	while (tobit.ll2 < tobit.ll && stepsize > smallstep) { 
 	    /* ...if not, halve steplength, as with ARMA models */
 	    stepsize *= 0.5;
 	    for (i=0; i<=k; i++) {
-		delta[i] *= 0.5;
-		deltmp[i] = tobit->theta[i] + delta[i];
+		tobit.delta[i] *= 0.5;
+		tobit.deltmp[i] = tobit.theta[i] + tobit.delta[i];
 	    }
-	    tobit_ll(deltmp, X, tZ, tobit, 0);
+	    tobit_ll(tobit.deltmp, X, tZ, &tobit, 0);
 	}
 
 	/* double the steplength? */
@@ -351,16 +425,18 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
 
 	/* actually update parameter estimates */
 	for (i=0; i<=k; i++) {
-	    tobit->theta[i] += delta[i];
+	    tobit.theta[i] += tobit.delta[i];
 	}  
-                   
-	print_iter_info(tobit->theta, k+1, tobit->ll);
 
-	convcrit = tobit->ll2 - tobit->ll;                 
+#ifdef STANDALONE                   
+	print_iter_info(tobit.theta, k+1, tobit.ll);
+#endif
+
+	convcrit = tobit.ll2 - tobit.ll;                 
     }
 
     /* recover estimate of variance */
-    sigma = 1.0 / tobit->theta[k]; 
+    sigma = 1.0 / tobit.theta[k]; 
 
     /* recover slope estimates */
     for (i=0; i<k; i++) {
@@ -368,24 +444,24 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get estimate of variance matrix for Olsen parameters */
-    G = gretl_matrix_from_2d_array((const double **) tZ + 1, tobit->n, tobit->k + 1);
+    G = gretl_matrix_from_2d_array((const double **) tZ + 1, tobit.n, tobit.k + 1);
     VCV = gretl_matrix_vcv(G);
     gretl_invert_symmetric_matrix(VCV);
-    gretl_matrix_divide_by_scalar(VCV, tobit->n);
+    gretl_matrix_divide_by_scalar(VCV, tobit.n);
     gretl_matrix_free(G);
 
     /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
-    J = gretl_matrix_alloc(tobit->k + 1, tobit->k + 1);
+    J = gretl_matrix_alloc(tobit.k + 1, tobit.k + 1);
     gretl_matrix_zero(J);
-    for (i=0; i<=tobit->k; i++) {
-	for (j=0; j<=tobit->k; j++) {
-	    if (i == j && i < tobit->k) {
+    for (i=0; i<=tobit.k; i++) {
+	for (j=0; j<=tobit.k; j++) {
+	    if (i == j && i < tobit.k) {
 		/* upper left diagonal component */
 		gretl_matrix_set(J, i, j, sigma);
-	    } else if (j == tobit->k && i < j) {
+	    } else if (j == tobit.k && i < j) {
 		/* right-hand column */
 		gretl_matrix_set(J, i, j, -sigma * beta[i]);
-	    } else if (j == tobit->k && i == j) {
+	    } else if (j == tobit.k && i == j) {
 		/* bottom right-hand element */
 		gretl_matrix_set(J, i, j, -sigma * sigma);
 	    }
@@ -393,7 +469,7 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* VCV matrix transformation */
-    tmp = gretl_matrix_alloc(tobit->k + 1, tobit->k + 1);
+    tmp = gretl_matrix_alloc(tobit.k + 1, tobit.k + 1);
     gretl_matrix_multiply(J, VCV, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      J, GRETL_MOD_TRANSPOSE,
@@ -401,24 +477,44 @@ static int do_tobit (int *list, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix_free(tmp);
     gretl_matrix_free(J);
 
-    print_tobit_stats(beta, k, sigma, VCV, tobit->ll);
-
-    /* now write stats into pmod, for the caller */
+#ifdef STANDALONE
+    print_tobit_stats(beta, k, sigma, VCV, tobit.ll);
+#else
+    write_tobit_stats(pmod, &tobit, X[1], sigma, VCV);
+#endif
 
     gretl_matrix_free(VCV);
 
  bailout:
 
-    free(delta);
-    free(deltmp);
-    free(list);
+    free(tlist);
     free_Z(tZ, tinfo);
     free_datainfo(tinfo);
+    tobit_free(&tobit);
+    free(X);
 
     return err;
 }
 
 #ifdef STANDALONE
+
+static int *make_list (int k)
+{
+    int *list;
+    int i;
+
+    list = malloc((k + 1) * sizeof *list);
+    if (list == NULL) return NULL;
+
+    list[0] = k;
+    list[1] = 1;
+    list[2] = 0;
+    for (i=3; i<=list[0]; i++) list[i] = i - 1;
+
+    printlist(list, "input list");
+
+    return list;
+}
 
 static double 
 censored_frac (const double *y, const DATAINFO *pdinfo)
@@ -435,14 +531,12 @@ int main (int argc, char *argv[])
 {
     MODEL model;
     const char *datafile;
-    int i, err;
+    int err;
     int *list;
 
     /* basic dataset apparatus */
     DATAINFO *pdinfo = NULL;
     double **Z = NULL;
-
-    tobit_info tobit;
 
     /* print libgretl version */
     lib_logo();
@@ -460,25 +554,27 @@ int main (int argc, char *argv[])
     printf("Perc. of censored observations = %.3f\n", 
 	   censored_frac(Z[1], pdinfo));
 
-    list = malloc((pdinfo->v + 1) * sizeof *list);
+    list = make_list(pdinfo->v);
     if (list == NULL) exit(EXIT_FAILURE);
-    list[0] = pdinfo->v;
-    list[1] = 1;
-    list[2] = 0;
-    for (i=3; i<=list[0]; i++) list[i] = i - 1;
 
-    printlist(list, "input list");
+    /* run initial OLS */
+    model = lsq(list, &Z, pdinfo, OLS, OPT_A, 0.0);
+    if (model.errcode) {
+	err = 1;
+	goto bailout;
+    }    
 
     /* do the actual analysis */
-    err = do_tobit(list, &Z, pdinfo, &tobit, &model); 
+    err = do_tobit((const double **) Z, pdinfo, &model); 
 
     /* clean up (not really needed in a standalone program, but
        necessary to avoid memory leaks when this whole function is
        embedded in a larger program).
     */
 
+ bailout:
+
     free(list);
-    tobit_free(&tobit);
     free_Z(Z, pdinfo);
     free_datainfo(pdinfo);
 
@@ -490,14 +586,15 @@ int main (int argc, char *argv[])
 MODEL tobit_estimate (int *list, double ***pZ, DATAINFO *pdinfo) 
 {
     MODEL model;
-    tobit_info tobit;
-    int err;
 
-    err = do_tobit(list, pZ, pdinfo, &tobit, &model); 
+    /* run initial OLS */
+    model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (model.errcode) {
+	return model;
+    }    
 
-    tobit_free(&tobit);
-
-    /* to be written!! */
+    /* do the actual analysis */
+    do_tobit((const double **) *pZ, pdinfo, &model); 
 
     return model;
 }

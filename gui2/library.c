@@ -5590,11 +5590,14 @@ int gui_exec_line (char *line,
     case LOGISTIC:
     case LOGIT:
     case PROBIT:
+    case TOBIT:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	if (cmd.ci == LOGIT || cmd.ci == PROBIT) {
 	    *models[0] = logit_probit(cmd.list, &Z, datainfo, cmd.ci);
-	} else {
+	} else if (cmd.ci == LOGISTIC) {
 	    *models[0] = logistic_model(cmd.list, &Z, datainfo, cmd.param);
+	} else {
+	    *models[0] = tobit_model(cmd.list, &Z, datainfo);
 	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
