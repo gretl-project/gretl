@@ -2,23 +2,23 @@
 
   <chapter id="cmdref"><title>Command Reference</title>
 
-    <sect1 id="cmd-intro"><title>Introduction</title>
+  <sect1 id="cmd-intro"><title>Introduction</title>
     <para>
-	The commands defined below may be executed in the command-line
-	client program.  They may also be placed in a
-	<quote>script</quote> file for execution in the GUI, or
-	entered using the latter's <quote>console mode</quote>.  In
-	most cases the syntax given below also applies when you are
-	presented with a line to type in a dialog box in the GUI (but
-	see also <application>gretl</application>'s online help),
-	except that you should <emphasis>not</emphasis> type the
-	initial command word &mdash; it is implicit from the context.
-	One other difference is that you should not type the
-	<command>-o</command> flag for regression commands in GUI
-	dialog boxes: there is a menu item for displaying the
-	coefficient variance&ndash;covariance matrix (which is the
-	effect of <command>-o</command> in regression commands).
-      </para>
+      The commands defined below may be executed in the command-line
+      client program.  They may also be placed in a
+      <quote>script</quote> file for execution in the GUI, or entered
+      using the latter's <quote>console mode</quote>.  In most cases
+      the syntax given below also applies when you are presented with
+      a line to type in a dialog box in the GUI (but see also
+      <application>gretl</application>'s online help), except that you
+      should <emphasis>not</emphasis> type the initial command word
+      &mdash; it is implicit from the context. One other difference is
+      that you should not type the <command>-o</command> flag for
+      regression commands in GUI dialog boxes: there is a menu item
+      for displaying the coefficient variance&ndash;covariance matrix
+      (which is the effect of <command>-o</command> in regression
+      commands).
+    </para>
 
     <para>
       The following conventions are used below:</para>
@@ -26,15 +26,15 @@
     <itemizedlist>
 
       <listitem><para>
-	  A <literal>typewriter font</literal> is used for material that you
-	  would type directly, and also for internal names of
+	  A <literal>typewriter font</literal> is used for material
+	  that you would type directly, and also for internal names of
 	  variables.
 	</para></listitem>
 
       <listitem><para>Terms in <replaceable>italics</replaceable> are
-	    place-holders: you should substitute something specific,
-	    e.g. you might type <varname>income</varname> in place of
-	    the generic <replaceable>xvar</replaceable>.
+	  place-holders: you should substitute something specific,
+	  e.g. you might type <varname>income</varname> in place of
+	  the generic <replaceable>xvar</replaceable>.
 	</para></listitem>
 
       <listitem><para><literal>[ -o ]</literal> means that the flag
@@ -54,14 +54,13 @@
     </itemizedlist>
 
     <para>
-      Section and Chapter references below are to Ramanathan
-      (2002).
+      Section and Chapter references below are to Ramanathan (2002).
     </para>
 
-    </sect1>
+  </sect1>
 
-    <sect1 id="cmd-cmd">
-      <title>gretl commands</title>
+  <sect1 id="cmd-cmd">
+    <title>gretl commands</title>
 
     <sect2 id="add"><title>add</title>
 
@@ -69,10 +68,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>add</command>
-		<replaceable>varlist</replaceable> 
-		&opto;
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable> &opto;
 	      </entry>
 	    </row>
 	    <row>
@@ -91,14 +88,14 @@
 
       <para>
 	Must be invoked after an estimation command.  The variables in
-	<replaceable>varlist</replaceable> are added to the
-	previous model and the new model estimated.  If more than one
-	variable is added, the <emphasis>F</emphasis> statistic
-	for the added variables will be printed (for the OLS procedure
-	only) along with its p-value.  A p-value below 0.05
-	means that the coefficients are jointly significant at the 5
-	percent level. A number of internal variables may be retrieved
-	using the <command>genr</command> command, provided
+	<replaceable>varlist</replaceable> are added to the previous
+	model and the new model estimated.  If more than one variable
+	is added, the <emphasis>F</emphasis> statistic for the added
+	variables will be printed (for the OLS procedure only) along
+	with its p-value.  A p-value below 0.05 means that the
+	coefficients are jointly significant at the 5 percent level. A
+	number of internal variables may be retrieved using the
+	<command>genr</command> command, provided
 	<command>genr</command> is invoked directly after this
 	command. The <literal>-o</literal> flag causes the coefficient
 	variance&ndash;covariance matrix to be printed.
@@ -112,9 +109,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>addto</command> 
-		<replaceable>modelID varlist</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>modelID varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -142,9 +138,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>adf</command> 
-		<replaceable>order varname</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>order varname</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -157,32 +152,31 @@
       </informaltable>
 
       <para>
-	  Computes statistics for two Dickey-Fuller tests.  In each
-	  case the null hypothesis is that the variable in question
-	  exhibits a unit root. The first is a
-	  <emphasis>t</emphasis>-test based on the model 
+	  Computes statistics for two Dickey&ndash;Fuller tests.  In
+	each case the null hypothesis is that the variable in question
+	exhibits a unit root. The first is a
+	<emphasis>t</emphasis>-test based on the model 
 	  <informalequation>
-	    <alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt>
-		<graphic fileref="figures/adf1"/>
-	  </informalequation>
-	  The null hypothesis is that
-	  <emphasis>g</emphasis> = 0. The second (augmented) test
-	  proceeds by estimating an unrestricted regression (with
-	  regressors a constant, a time trend, the first lag of the
-	  variable, and <replaceable>order</replaceable> lags of the
-	  first difference) and a restricted version (dropping the
-	  time trend and the first lag).  The test statistic is
+	  <alt role="tex">\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]</alt>
+	  <graphic fileref="figures/adf1"/>
+	  </informalequation> The null hypothesis is that
+	<emphasis>g</emphasis> = 0. The second (augmented) test
+	proceeds by estimating an unrestricted regression (with
+	regressors a constant, a time trend, the first lag of the
+	variable, and <replaceable>order</replaceable> lags of the
+	first difference) and a restricted version (dropping the time
+	trend and the first lag).  The test statistic is
 	  <informalequation>
-	    <alt role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt>
-		<graphic fileref="figures/adf2"/>
-	  </informalequation>
-	  where <emphasis>T</emphasis> is the sample size,
-	  <emphasis>k</emphasis> the number of parameters in the
-	  unrestricted model, and the subscripts
-	  <emphasis>u</emphasis> and <emphasis>r</emphasis> denote the
-	  unrestricted and restricted models respectively. Note that
-	  the critical values for these statistics are not the usual
-	  ones; a p-value range is printed, when it can be determined.
+	  <alt
+	    role="tex">\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]</alt>
+	  <graphic fileref="figures/adf2"/>
+	  </informalequation> where <emphasis>T</emphasis> is the
+	sample size, <emphasis>k</emphasis> the number of parameters
+	in the unrestricted model, and the subscripts
+	<emphasis>u</emphasis> and <emphasis>r</emphasis> denote the
+	unrestricted and restricted models respectively. Note that the
+	critical values for these statistics are not the usual ones; a
+	p-value range is printed, when it can be determined.
       </para>
     </sect2>	
 
@@ -192,12 +186,10 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>ar</command>
-		<replaceable>lags</replaceable>
-		<literal>;</literal>
-		<replaceable>depvar indepvars</replaceable> 
-		&opto; 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>lags</replaceable>
+		<literal>;</literal> <replaceable>depvar
+		  indepvars</replaceable> &opto; 
 	      </entry>
 	    </row>
 	    <row>
@@ -212,26 +204,26 @@
       <para>
 	Computes parameter estimates using the generalized
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
-	Ramanathan). Iteration is terminated when successive error sums
-	of squares do not differ by more than 0.005 percent or after 20
-	iterations. <replaceable>lags</replaceable> is
-	a list of lags in the residuals, terminated by a semicolon. In
-	the above example, the error term is specified as 
+	Ramanathan). Iteration is terminated when successive error
+	sums of squares do not differ by more than 0.005 percent or
+	after 20 iterations. <replaceable>lags</replaceable> is a list
+	of lags in the residuals, terminated by a semicolon. In the
+	above example, the error term is specified as 
 	<informalequation>
-	  <alt role="tex">\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
-	    e_t\]</alt>
+	  <alt role="tex">\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
+	    \rho_4 u_{t-4} + e_t\]</alt>
 	  <graphic fileref="figures/corc"/>
-	</informalequation>
-	<replaceable>depvar</replaceable> is the dependent variable
-	and <replaceable>indepvars</replaceable> is the list of
-	independent variables.  If the <literal>-o</literal> flag
-	is given, the covariance matrix of regression coefficients
-	is printed. Residuals of the transformed regression are
-	stored under the name <varname>uhat</varname>, which can be
-	retrieved by <command>genr</command>.  A number of other
-	internal variables may be retrieved using the
-	<command>genr</command> command, provided
-	<command>genr</command> is invoked after this command.
+	</informalequation> <replaceable>depvar</replaceable> is the
+	dependent variable and <replaceable>indepvars</replaceable> is
+	the list of independent variables.  If the
+	<literal>-o</literal> flag is given, the covariance matrix of
+	regression coefficients is printed. Residuals of the
+	transformed regression are stored under the name
+	<varname>uhat</varname>, which can be retrieved by
+	<command>genr</command>.  A number of other internal variables
+	may be retrieved using the <command>genr</command> command,
+	provided <command>genr</command> is invoked after this
+	command.
       </para>
 
     </sect2>
@@ -242,9 +234,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>arch</command> 
-		<replaceable>order depvar indepvars</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>order depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -258,20 +249,20 @@
       </informaltable>
 
       <para>
-	Tests the model for ARCH (Autoregressive
-	Conditional Heteroskedasticity) of the lag order specified in
-	<replaceable>order</replaceable>, which must be an integer.
-	If the LM test statistic has p-value below 0.10, then ARCH
+	Tests the model for ARCH (Autoregressive Conditional
+	Heteroskedasticity) of the lag order specified in
+	<replaceable>order</replaceable>, which must be an integer. If
+	the LM test statistic has p-value below 0.10, then ARCH
 	estimation is also carried out.  If the predicted variance of
 	any observation in the auxiliary regression is not positive,
 	then the corresponding 
 	<inlineequation>
 	  <alt role="tex">$\hat{u}^2$</alt>
 	  <graphic align="center" fileref="figures/uhatsq"/>
-        </inlineequation> is used instead. Weighted
-	least square estimation is then performed on the original
-	model. The flag <literal>-o</literal> calls for the coefficient
-	covariance matrix.
+        </inlineequation> is used instead. Weighted least square
+	estimation is then performed on the original model. The flag
+	<literal>-o</literal> calls for the coefficient covariance
+	matrix.
 	
       </para>
 
@@ -283,9 +274,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>chow</command>
-		<replaceable>obs</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>obs</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -324,9 +314,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>coint</command> 
-		<replaceable>order depvar indepvar</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>order depvar indepvar</replaceable>
 	      </entry>
 	    </row>
 	    <row><entry>Examples:</entry>
@@ -361,9 +350,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>corc</command>
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -413,9 +401,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>corr</command>
-		[ <replaceable>varlist</replaceable> ]
+	      <entry>Argument:</entry>
+	      <entry>[ <replaceable>varlist</replaceable> ]
 	      </entry>
 	    </row>
 	    <row>
@@ -433,11 +420,10 @@
       </informaltable>
 
       <para>
-	If no <replaceable>varlist</replaceable> is given, prints
-	pairwise correlation coefficients for all variables in the
-	data set.  <command>corr</command>
-	<replaceable>varlist</replaceable> prints the correlation
-	coefficients for the variables in the given list.
+	Prints the pairwise correlation coefficients for the variables
+	in <replaceable>varlist</replaceable>, or for all variables in
+	the data set if <replaceable>varlist</replaceable> is not
+	given.
       </para>
 
     </sect2>
@@ -449,10 +435,9 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>corrgm</command>
-		<replaceable>variable</replaceable> 
-		[ <replaceable>maxlag</replaceable> ]
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>variable</replaceable> [
+		<replaceable>maxlag</replaceable> ]
 	      </entry>
 	    </row>
 	  </tbody>
@@ -466,10 +451,11 @@
 	<inlineequation>
 	  <alt role="tex">$\rho(u_t, u_{t-s})$</alt>
 	  <graphic align="center" fileref="figures/autocorr"/>
-	</inlineequation> where 
-	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
-	<emphasis>t</emphasis>th observation of the variable 
-	<emphasis>u</emphasis> and <emphasis>s</emphasis> is the number of lags.
+	</inlineequation> where
+	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> 
+	is the <emphasis>t</emphasis>th observation of the variable
+	<emphasis>u</emphasis> and <emphasis>s</emphasis> is the
+	number of lags.
       </para>
 
       <para>
@@ -478,7 +464,7 @@
 	  the correlogram and prints the Box-Pierce
 	  <emphasis>Q</emphasis> statistic for testing the null
 	  hypothesis that the series is <quote>white noise</quote>.
-	  This is asymptotically distributed as &chisq; with degrees
+	This is asymptotically distributed as &chisq; with degrees
 	  of freedom equal to the number of lags used.
       </para>
 
@@ -497,9 +483,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>criteria</command> 
-		<replaceable>ess T k</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>ess T k</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -570,9 +555,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>diff</command>
-		<replaceable>varlist</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -617,9 +601,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>fcast</command>
-		[ <replaceable>startobs endobs</replaceable> ]
+	      <entry>Argument:</entry>
+	      <entry>[ <replaceable>startobs endobs</replaceable> ]
 		<replaceable>newvarname</replaceable>
 	      </entry>
 	    </row>
@@ -660,9 +643,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>fcasterr</command> 
-		<replaceable>startobs endobs</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>startobs endobs</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
@@ -704,9 +686,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>freq</command>
-		<replaceable>var</replaceable> 
+	      <entry>Argument:</entry>
+	      <entry><replaceable>var</replaceable> 
 	      </entry>
 	    </row>
 	  </tbody>
@@ -731,9 +712,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>genr</command> 
-		<replaceable>newvar</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>newvar</replaceable>
 		  = <replaceable>formula</replaceable>
 	      </entry>
 	    </row>
@@ -1090,9 +1070,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>gnuplot</command>
-		<replaceable>yvars xvar</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>yvars xvar</replaceable>
 		<literal>[ -o | -m ]</literal>
 	      </entry>
 	    </row>
@@ -1150,9 +1129,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>graph</command>
-		<replaceable>var1 var2</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>var1 var2</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1189,9 +1167,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage</entry>
-	      <entry><command>hccm</command>
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>  
 	    </row>
@@ -1229,9 +1206,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>hilu</command>
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1269,9 +1245,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>hsk</command> 
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1300,15 +1275,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>import</command>
-		<replaceable>csvfile</replaceable>
-	      </entry>
-	    </row>
-	    <row>
-	      <entry></entry>
-	      <entry><command>import -o</command>
-		<replaceable>boxfile</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>filename</replaceable> &opto;
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1363,9 +1331,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>lags</command>
-		<replaceable>varlist</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1393,9 +1360,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>ldiff</command>
-		<replaceable>varlist</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1425,25 +1391,12 @@
 
     <sect2 id="lmtest"><title>lmtest</title>
 
-      <informaltable frame="none">
-	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
-	  <tbody>
-	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>lmtest</command> 
-		&opto;
-	      </entry>
-	    </row>
-	  </tbody>
-	</tgroup>
-      </informaltable>
-
       <para>
 	Must immediately follow an <command>ols</command>
 	command. Prints the Lagrange multiplier test statistics (and
 	associated p-values) for nonlinearity and heteroskedasticity
 	(White's test) or, if the <literal>-o</literal> flag is
-	present, the LMF test statistic for serial correlation up to
+	given, the LMF test statistic for serial correlation up to
 	the periodicity (see Kiviet, 1986).  The corresponding
 	auxiliary regression coefficients are also printed out.  See
 	Ramanathan, Chapters 7, 8, and 9 for details. Only the squared
@@ -1460,9 +1413,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>logit</command>
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1477,7 +1429,7 @@
 	  (see Ruud, 2000, ch. 27).  As the model is nonlinear the
 	  slopes depend on the values of the independent variables:
 	  the reported slopes are evaluated at the means of those
-	  variables. The &chisq; statistic
+	variables. The &chisq; statistic
 	  tests the null hypothesis that all coefficients are zero
 	  apart from the constant.
       </para>
@@ -1502,9 +1454,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>logs</command>
-		<replaceable>varlist</replaceable>
+	      <entry>Agument:</entry>
+	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1588,9 +1539,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>meantest</command>
-		<replaceable>var1 var2</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>var1 var2</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1619,9 +1569,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>multiply</command> 
-		<replaceable>x suffix varlist</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>x suffix varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -1665,9 +1614,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>nulldata</command>
-		<replaceable>series_length</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>series_length</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -1699,9 +1647,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>ols</command>
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1758,9 +1705,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>omit</command>
-		<replaceable>varlist</replaceable> 
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
@@ -1802,9 +1748,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>omitfrom</command> 
-		<replaceable>modelID varlist</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>modelID varlist</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -1831,9 +1776,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>open</command>
-		<replaceable>datafile</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>datafile</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -1855,9 +1799,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>pergm</command>
-		<replaceable>varname</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varname</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -1932,9 +1875,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>print</command>
-		[ <replaceable>varlist</replaceable> ]
+	      <entry>Argument:</entry>
+	      <entry>[ <replaceable>varlist</replaceable> ]
 		&opto;
 	      </entry>
 	    </row>	    <row>
@@ -1969,9 +1911,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>probit</command> 
-		<replaceable>depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2078,9 +2019,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>rhodiff</command>
-		<replaceable>rholist</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>rholist</replaceable> 
 		<literal>;</literal>
 		<replaceable>varlist</replaceable>
 	      </entry>
@@ -2122,9 +2062,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>run</command>
-		<replaceable>inputfile</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>inputfile</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2144,9 +2083,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>runs</command>
-		<replaceable>varname</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varname</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2171,9 +2109,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>scatters</command>
-		<replaceable>yvar</replaceable> 
+	      <entry>Argument:</entry>
+	      <entry><replaceable>yvar</replaceable> 
 		<literal>;</literal>
 		<replaceable>xvarlist</replaceable>
 	      </entry>
@@ -2224,9 +2161,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>seed</command>
-		<replaceable>integer</replaceable> 
+	      <entry>Argument:</entry>
+	      <entry><replaceable>integer</replaceable> 
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2251,9 +2187,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>setobs</command>
-		<replaceable>periodicity startobs</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>periodicity startobs</replaceable> 
 	      </entry>
 	    </row>
 	    <row>
@@ -2316,9 +2251,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>sim</command> 
-		<replaceable>startobs
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>startobs
 		endobs y a0 a1 a2</replaceable> 
 		&hellip;
 	      </entry>
@@ -2365,9 +2299,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>smpl</command> 
-		<replaceable>startobs endobs</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>startobs endobs</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -2477,9 +2410,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>spearman</command>
-		<replaceable>x y</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>x y</replaceable> 
 		&opto;
 	      </entry>
 	    </row>
@@ -2515,9 +2447,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>square</command>
-		<replaceable>x y</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -2526,15 +2457,16 @@
       </informaltable>
 
       <para>
-	  Generates new variables which are squares and cross products
-	  of selected variables (<literal>-o</literal> will create the
-	  cross products).  For the above example, new variables
-	  created will be <varname>sq_x</varname> =
-	  <varname>x</varname> squared, <varname>sq_y</varname> =
-	  <varname>y</varname> squared and <varname>x_y</varname> =
-	  <varname>x</varname> times <varname>y</varname>.  If a
-	  particular variable is a dummy variable it is not squared
-	  because we will get the same variable.  
+	Generates new variables which are squares and cross products
+	of the variables in <replaceable>varlist</replaceable>
+	(<literal>-o</literal> will create the cross products).  For
+	example <command>square x y</command> will generate
+	<varname>sq_x</varname> = <varname>x</varname> squared,
+	<varname>sq_y</varname> = <varname>y</varname> squared and
+	<varname>x_y</varname> = <varname>x</varname> times
+	<varname>y</varname>.  If a particular variable is a dummy
+	variable it is not squared because we will get the same
+	variable.  
       </para>
 
     </sect2>
@@ -2545,9 +2477,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>store</command>
-		<replaceable>datafile</replaceable>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>datafile</replaceable>
 		[ <replaceable>varlist</replaceable> ]
 		[ <replaceable>flag</replaceable> ] 
 	      </entry>
@@ -2635,9 +2566,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>summary</command>
-		[ <replaceable>varlist</replaceable> ]
+	      <entry>Argument:</entry>
+	      <entry>[ <replaceable>varlist</replaceable> ]
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2685,9 +2615,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage: </entry>
-	      <entry><command>tsls</command> 
-		<replaceable>depvar varlist1</replaceable> 
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar varlist1</replaceable> 
 		<literal>;</literal>
 		<replaceable>varlist2</replaceable> 
 		&opto;
@@ -2732,9 +2661,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>var</command> 
-		<replaceable>order depvar indepvar</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>order depvar indepvar</replaceable>
 	      </entry>
 	    </row>
 	    <row>
@@ -2782,9 +2710,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>vartest</command>
-		<replaceable>var1 var2</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>var1 var2</replaceable>
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2807,9 +2734,8 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Usage:</entry>
-	      <entry><command>wls</command>
-		<replaceable>weightvar depvar indepvars</replaceable>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>weightvar depvar indepvars</replaceable>
 		&opto;
 	      </entry>
 	    </row>
@@ -2839,7 +2765,7 @@
 
     </sect2>
 
-    </sect1>
+  </sect1>
 
   <sect1 id="estimators"><title>Estimators and tests: summary</title>
 

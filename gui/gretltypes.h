@@ -46,6 +46,8 @@ enum extra_cmds {
     COVAR,
     STAT_TABLE,
     H_TEST,
+    VIEW_MODEL,
+    EDIT_BUFFER,
     CMD_LAST
 };
 

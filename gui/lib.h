@@ -162,5 +162,7 @@ int execute_script (const char *runfile,
 		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code);
 
+void text_replace (windata_t *mydata, guint u, GtkWidget *widget);
+
 #endif /* LIB_H */
 

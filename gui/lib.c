@@ -52,7 +52,6 @@ static void console_exec (void);
 static void finish_genr (MODEL *pmod);
 static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
-static void text_replace (windata_t *mydata, guint u, GtkWidget *w);
 static gint stack_model (int gui);
 
 int replay;                 /* shared, to indicate whether we're just
@@ -79,7 +78,6 @@ GtkItemFactoryEntry console_items[] = {
 
 GtkItemFactoryEntry script_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" }, 
-    { "/File/_Save", NULL, auto_save_script, 0, NULL },
     { "/File/Save _As...", NULL, file_save, SAVE_SCRIPT, NULL },
     { "/File/_Run", NULL, do_run_script, SCRIPT_EXEC, NULL },
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
@@ -3937,7 +3935,7 @@ static void replace_string_dialog (struct search_replace *s)
 
 /* ........................................................... */
 
-static void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
+void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 {
     gchar *buf;
     int count = 0;

@@ -256,6 +256,17 @@ GtkItemFactoryEntry script_help_items[] = {
     { NULL, NULL, NULL, 0, NULL}
 };
 
+GtkItemFactoryEntry edit_items[] = {
+    { "/_File", NULL, NULL, 0, "<Branch>" }, 
+    { "/File/Save _As...", NULL, file_save, SAVE_SCRIPT, NULL },
+    { "/_Edit", NULL, NULL, 0, "<Branch>" },
+    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
+    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { "/Edit/_Paste", NULL, text_paste, 0, NULL },
+    { "/Edit/_Replace...", NULL, text_replace, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
 /* ........................................................... */
 
 void load_fixed_font (void)
@@ -1087,7 +1098,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
     gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
 
-    if (editable)
+    if (editable) 
 	gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
     else 
 	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
@@ -1104,6 +1115,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		     GTK_FILL | GTK_EXPAND, GTK_FILL | GTK_EXPAND | 
 		     GTK_SHRINK, 0, 0);
     gtk_widget_show(vwin->w);
+
 
     vscrollbar = gtk_vscrollbar_new (GTK_TEXT (vwin->w)->vadj);
     gtk_table_attach (GTK_TABLE (table), 
@@ -1139,14 +1151,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		       GTK_SIGNAL_FUNC(delete_file_viewer), 
 		       (gpointer) dialog);
     gtk_widget_show(close);
-
-    /* set the font for this window */
-    {
-	GtkStyle *style = gtk_style_new();
-	gdk_font_unref(style->font);
-	style->font = fixed_font;
-	gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
-    }
 
     /* insert the file text */
     memset(tempstr, 0, sizeof tempstr);
@@ -1195,6 +1199,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
 	return NULL;
     windata_init(vwin);
     vwin->data = pbuf;
+    vwin->action = EDIT_BUFFER;
 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
@@ -1212,6 +1217,12 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
 			     GTK_SIGNAL_FUNC(set_wm_icon), 
 			     NULL);
 #endif
+
+    /* add a menu bar */
+    set_up_viewer_menu(dialog, vwin, edit_items);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
+		       vwin->mbar, FALSE, TRUE, 0);
+    gtk_widget_show(vwin->mbar);
 
     table = gtk_table_new(1, 2, FALSE);
     gtk_widget_set_usize(table, 500, 400);
@@ -1360,7 +1371,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	return;
     }
 
-    if (vwin->data) {  /* FIXME? what if "data" is not ptr to model? */
+    if (vwin->action == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
 
 	if (pmod->ci == POOLED) 
@@ -1536,6 +1547,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     hsize += 48;
 
     vwin->data = pmod;
+    vwin->action = VIEW_MODEL;
     dialog = gtk_dialog_new();
     gtk_widget_set_usize (dialog, hsize, vsize);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
@@ -1553,6 +1565,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 #endif
 
     set_up_viewer_menu(dialog, vwin, model_items);
+
     /* add menu of indep vars, against which to plot resid */
     add_vars_to_plot_menu(vwin);
     add_dummies_to_plot_menu(vwin);
@@ -1596,7 +1609,6 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
 		    NULL, NULL, prn->buf, 
 		    strlen(prn->buf));
-    /*      fprintf(stderr, "view_model: freeing model buffer\n"); */
     gretl_print_destroy(prn);
 
     copylist(&default_list, pmod->list);
