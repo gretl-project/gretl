@@ -357,7 +357,7 @@ int auto_lag_ok (const char *s, int *lnum,
 	return 0;
     }
 
-    if (nlags > 1 && expand_command_list(cmd, nlags - 1)) {
+    if (nlags > 1 && expand_command_list(cmd, nlags)) {
 	return 0;
     }
 
