@@ -750,7 +750,7 @@ const char *print_time (const time_t *timep)
 
     local = localtime(timep);
 
-    strftime(timestr, 47, "%c", local);
+    strftime(timestr, 47, "%Y/%m/%d %H:%M", local);
 
     return timestr;
 }

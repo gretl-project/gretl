@@ -25,6 +25,10 @@
 
 #if defined(USE_GNOME)
 
+#include <unistd.h>
+#include <pwd.h>
+#include <sys/types.h>
+
 #include <libgnomeprint/gnome-print.h>
 #include <libgnomeprint/gnome-printer-dialog.h>
 
@@ -32,12 +36,43 @@
 
 static GdkPixbuf *png_mono_pixbuf (const char *fname);
 
-static void time_string (char *s)
+gchar *user_string (void)
 {
+    uid_t uid = getuid();
+    struct passwd *pwd;
+    const gchar *username, *realname;
+    gchar *ret = NULL;
+
+    pwd = getpwuid(uid);
+
+    username = pwd->pw_name;
+    realname = pwd->pw_gecos;
+
+    if (username != NULL && *username != '\0' && 
+	realname != NULL && *realname != '\0') {
+	ret = g_strdup_printf("%s %s (%s)", _("for"), username, realname);
+    } else if (username != NULL && *username != '\0') {
+	ret = g_strdup_printf("%s %s", _("for"), username);
+    }
+
+    return ret;
+}
+
+static char *header_string (void)
+{
+    gchar *hdr, *ustr;
     time_t prntime = time(NULL);
-    
-    sprintf(s, _("gretl output %s"), ctime(&prntime));
-    s[strlen(s)-1] = '\0';
+
+    ustr = user_string();
+    if (ustr != NULL) {
+	hdr = g_strdup_printf("%s %s %s", _("gretl output"), ustr,
+			      print_time(&prntime));
+	g_free(ustr);
+    } else {
+	hdr = g_strdup_printf("%s %s", _("gretl output"), print_time(&prntime));
+    }
+
+    return hdr;
 }
 
 void winprint (char *fullbuf, char *selbuf)
@@ -45,7 +80,8 @@ void winprint (char *fullbuf, char *selbuf)
     GnomePrinter *printer;
     GnomePrintContext *pc;    
     GnomeFont *font;
-    char *p, linebuf[90], hdrstart[48], hdr[70];
+    gchar *hdrstart;
+    char *p, linebuf[90], hdr[90];
     int page_lines = 47;
     int x, y, line, page;
     size_t len;
@@ -68,12 +104,11 @@ void winprint (char *fullbuf, char *selbuf)
     gnome_print_setfont(pc, font);
     gnome_print_setrgbcolor(pc, 0, 0, 0);
 
-    time_string(hdrstart);
     if (selbuf != NULL) p = selbuf;
     else p = fullbuf;
     page = 1;
     x = 72;
-    time_string(hdrstart);
+    hdrstart = header_string();
     while (*p) { /* pages loop */
 	line = 0;
 	y = 756;
@@ -95,6 +130,8 @@ void winprint (char *fullbuf, char *selbuf)
 	}
 	gnome_print_showpage(pc);
     }
+
+    g_free(hdrstart);
 
     /* clean up */
     gnome_print_context_close(pc);

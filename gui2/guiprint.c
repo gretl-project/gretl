@@ -132,26 +132,55 @@ int win_copy_buf (char *buf, int format, size_t buflen)
 
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
 
-static void time_string (char *s)
+gchar *user_string (void)
 {
+    const gchar *username, *realname;
+    gchar *ret = NULL;
+
+    username = g_get_user_name();
+    realname = g_get_real_name();
+
+    if (username != NULL && *username != '\0' &&
+	realname != NULL && *realname != '\0') {
+	ret = g_strdup_printf("%s %s (%s)", _("for"), username, realname);
+    } else if (username != NULL && *username != '\0') {
+	ret = g_strdup_printf("%s %s", _("for"), username);
+    }
+
+    return ret;
+}
+
+static char *header_string (void)
+{
+    gchar *hdr, *ustr;
 #if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
     gchar *trans;
     gsize wrote;
 #endif
     time_t prntime = time(NULL);
-    
-    sprintf(s, "%s %s", _("gretl output"), print_time(&prntime));
+
+    ustr = user_string();
+    if (ustr != NULL) {
+	hdr = g_strdup_printf("%s %s %s", _("gretl output"), ustr,
+			      print_time(&prntime));
+	g_free(ustr);
+    } else {
+	hdr = g_strdup_printf("%s %s", _("gretl output"), print_time(&prntime));
+    }
 
 #if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
-    trans = g_locale_to_utf8(s, -1, NULL, &wrote, NULL);
-    strcpy(s, trans);
-    g_free(trans);
-#endif    
+    trans = g_locale_to_utf8(hdr, -1, NULL, &wrote, NULL);
+    g_free(hdr);
+    hdr = trans;
+#endif  
+
+    return hdr;
 }
 
 #endif
 
 /* Windows only: print using Windows spooler */
+
 #if defined(G_OS_WIN32)
 
 void winprint (char *fullbuf, char *selbuf)
@@ -164,7 +193,7 @@ void winprint (char *fullbuf, char *selbuf)
     DOCINFO di;
     TEXTMETRIC lptm;
     int px, x, y, incr, page_lines = 47;
-    gchar *printbuf, hdrstart[48], hdr[70];
+    gchar *printbuf, *hdrstart, hdr[90];
     size_t len;
 #ifdef ENABLE_NLS
     gsize bytes;
@@ -239,7 +268,7 @@ void winprint (char *fullbuf, char *selbuf)
 
     page = 1;
     x = px / 2; /* attempt at left margin */
-    time_string(hdrstart);
+    hdrstart = header_string();
     while (*printbuf && printok) { /* pages loop */
 	StartPage(dc);
 	SelectObject(dc, fixed_font);
@@ -258,6 +287,8 @@ void winprint (char *fullbuf, char *selbuf)
 	}
 	printok = (EndPage(dc) > 0);
     }
+
+    g_free(hdrstart);
     
     if (printok) {
         EndDoc(dc);
@@ -458,7 +489,8 @@ void winprint (char *fullbuf, char *selbuf)
     gint response;
     gboolean preview = FALSE;
     GnomeFont *font = NULL;
-    char *p, linebuf[90], hdrstart[48], hdr[70];
+    gchar *hdrstart;
+    char *p, linebuf[90], hdr[90];
     int page_lines = 47;
     int x, y, line, page;
     size_t len;
@@ -494,12 +526,11 @@ void winprint (char *fullbuf, char *selbuf)
     gnome_print_setfont(gpc, font);
     /* gnome_print_setrgbcolor(gpc, 0, 0, 0); */
 
-    time_string(hdrstart);
     if (selbuf != NULL) p = selbuf;
     else p = fullbuf;
     page = 1;
     x = 72;
-    time_string(hdrstart);
+    hdrstart = header_string();
     while (*p) { /* pages loop */
 	line = 0;
 	y = 756;
@@ -523,6 +554,8 @@ void winprint (char *fullbuf, char *selbuf)
 	}
 	gnome_print_showpage(gpc);
     }
+
+    g_free(hdrstart);
 
     gnome_print_job_close(job);
 
