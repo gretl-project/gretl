@@ -49,6 +49,7 @@ int do_fcp (const int *list, const double **Z,
     double oldc, yy, sigma;
     int info, iters = 0;
     int maxlag;
+    int nobsmod;
     
     int i, p, q, ynum;
 
@@ -56,32 +57,34 @@ int do_fcp (const int *list, const double **Z,
     nx = 0;
     ncoeff = 1;
 
-    t2 = pdinfo->t2;
-    nobs = t2 + 1;
-
     p = list[1];
     q = list[2];
     ynum = list[4];
-    maxlag = (p > q)? p : q;
-    t1 = maxlag;
+    /* maxlag = (p > q)? p : q; */
+    maxlag = 0;
 
-    yobs = malloc(nobs * sizeof *yobs);
-    ydet = malloc(nobs * sizeof *ydet);
-    ystoc = malloc(nobs * sizeof *ystoc);
+    t1 = 0; 
+    t2 = pdinfo->t2;
+    nobs = t2 + 1;
+    nobsmod = nobs + maxlag;
 
-    res2 = malloc(nobs * sizeof *res2);
+    yobs = malloc(nobsmod * sizeof *yobs);
+    ydet = malloc(nobsmod * sizeof *ydet);
+    ystoc = malloc(nobsmod * sizeof *ystoc);
+
+    res2 = malloc(nobsmod * sizeof *res2);
     for (i=0; i<nobs; i++) {
 	res2[i] = 0.0;
     }
 
-    res = malloc(nobs * sizeof *res);
+    res = malloc(nobsmod * sizeof *res);
     for (i=0; i<nobs; i++) {
 	res[i] = 0.0;
     }    
 
     sigma = oldc = yy = 0.0;
 
-    amax = malloc(nobs * sizeof *amax);
+    amax = malloc(nobsmod * sizeof *amax);
     for (i=0; i<nobs; i++) {
 	amax[i] = 0.0;
     }
@@ -104,7 +107,7 @@ int do_fcp (const int *list, const double **Z,
 	X = NULL;
     }
 
-    for (i=0; i<nobs; i++) {
+    for (i=maxlag; i<nobsmod; i++) {
 	ystoc[i] = ydet[i] = yobs[i] = Z[ynum][i];
     }
 
@@ -113,7 +116,7 @@ int do_fcp (const int *list, const double **Z,
 
     /* initialize elements of alpha, beta such that 
        alpha_0/(1 - alpha_1 - beta_1) = unconditional
-       variance of y (????)
+       variance of y (?)
     */
     amax[0] = _esl_variance(0, nobs - 1, Z[ynum]);
     amax[1] = p;
@@ -123,11 +126,12 @@ int do_fcp (const int *list, const double **Z,
 	amax[3+i] = 0.1;
     }
 
-    /* Need to set t1 high enough to allow for lags */
+    /* Need to set t1 high enough to allow for lags? */
 
-    vsanal_(t1, t2, yobs, nobs, (const double **) X, nx, ydet, &yy, 
+    vsanal_(t1, t2, yobs + maxlag, nobs, (const double **) X, nx, 
+	    ydet + maxlag, &yy, 
 	    coeff, ncoeff, 
-	    &oldc, vc, res2, res, &sigma, ystoc, 
+	    &oldc, vc, res2 + maxlag, res + maxlag, &sigma, ystoc + maxlag, 
 	    amax, b, &iters, &info, prn);
 
     if (info != 0) {
