@@ -133,6 +133,8 @@ int save_model_copy (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
 
 void clear_model (MODEL *pmod, DATAINFO *pdinfo);
 
+void debug_print_model_info (const MODEL *pmod, const char *msg);
+
 void show_paths (PATHS *ppaths);
 
 int set_paths (PATHS *ppaths, int defaults, int gui);

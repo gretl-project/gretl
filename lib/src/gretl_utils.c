@@ -1219,11 +1219,37 @@ static void clear_ar_info (MODEL *pmod)
     pmod->arinfo = NULL;
 }
 
+void debug_print_model_info (const MODEL *pmod, const char *msg)
+{
+    fprintf(stderr, "%s:\n"
+	    " pmod = %p\n"
+	    " pmod->list = %p\n"
+	    " pmod->subdum = %p\n"
+	    " pmod->coeff = %p\n"
+	    " pmod->sderr = %p\n"
+	    " pmod->yhat = %p\n"
+	    " pmod->uhat = %p\n"
+	    " pmod->xpx = %p\n"
+	    " pmod->vcv = %p\n"
+	    " pmod->name = %p\n"
+	    " pmod->arinfo = %p\n"
+	    " pmod->slope = %p\n"
+	    " pmod->tests = %p\n"
+	    " pmod->data = %p\n", msg,
+	    pmod, pmod->list, pmod->subdum, pmod->coeff,
+	    pmod->sderr, pmod->yhat, pmod->uhat, pmod->xpx,
+	    pmod->vcv, pmod->name, pmod->arinfo, pmod->slope,
+	    pmod->tests, pmod->data);
+}
+
 /* .......................................................... */
 
 void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 {
     if (pmod != NULL) {
+#if 0
+	debug_print_model_info(pmod, "Doing clear_model");
+#endif
 	if (pmod->list) free(pmod->list);
 	if (pmod->subdum) free(pmod->subdum);
 	if (pmod->coeff) free(pmod->coeff);
@@ -1446,10 +1472,13 @@ int copylist (int **target, const int *src)
 
     if (src == NULL) return 1;
     n = src[0];
+
     if (*target != NULL) free(*target);
-    *target = malloc((n + 2) * sizeof(int));
+    *target = malloc((n + 2) * sizeof *target);
     if (*target == NULL) return 1;
+
     for (i=0; i<=n; i++) (*target)[i] = src[i];
+
     return 0;
 }
 

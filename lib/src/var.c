@@ -923,14 +923,15 @@ grab_eigenvals (const double **X, const double **Y, const double **Z,
 }
 
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		   PRN *prn)
+		   int verbose, PRN *prn)
 {
-    PRN *varprn;
+    PRN *varprn = NULL;
     struct var_resids resids;
     char flags;
     int err = 0;
     int i, j;
     int orig_t1 = pdinfo->t1;
+    int orig_v = pdinfo->v;
     int *varlist;
     int hasconst = 0;
 
@@ -966,23 +967,21 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	varlist[varlist[0]] = 0;
     }
 
-    /* estimate VAR and other equations */
-    varprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
-#if 1
-    flags = VAR_PRINT_MODELS;
-#else
-    flags = 0;
-#endif
+    if (verbose) {
+	flags = VAR_PRINT_MODELS;
+	varprn = prn;
+    } else {
+	flags = 0;
+	varprn = gretl_print_new(GRETL_PRINT_NULL, NULL);
+    }
 
-#if 0
+    /* FIXME? */
     pdinfo->t1 += (order + 1);
-    err = real_var(order - 1, varlist, pZ, pdinfo, prn, &resids, flags); 
-    /* or use varprn */
-#else
-    pdinfo->t1 += (order + 1);
-    err = real_var(order - 1, varlist, pZ, pdinfo, prn, &resids, flags); 
-#endif
-    gretl_print_destroy(varprn);
+    err = real_var(order - 1, varlist, pZ, pdinfo, varprn, &resids, flags); 
+    
+    if (!verbose) {
+	gretl_print_destroy(varprn);
+    }
 
     if (!err) {
 	int k = resids.m / 2;
@@ -1020,9 +1019,11 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		ntodate(stobs, resids.t1, pdinfo), 
 		ntodate(endobs, resids.t2, pdinfo), T);
 
-	print_sigmas((const double **) Suu, 
-		     (const double **) Svv, 
-		     (const double **) Suv, k, prn);
+	if (verbose) {
+	    print_sigmas((const double **) Suu, 
+			 (const double **) Svv, 
+			 (const double **) Suv, k, prn);
+	}
 
 #ifdef JOHANSEN_DEBUG
 	for (i=0; i<resids.m; i++) {
@@ -1044,7 +1045,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 			     (const double **) Suv, k, evals);
 
 	if (!err) {
-	    pprintf(prn, "%s\n\n", _("Johansen eigenvalues"));
+	    pprintf(prn, "\n%s\n\n", _("Ordered eigenvalues for trace test:"));
 	    for (i=0; i<k; i++) {
 		pprintf(prn, "lambda %d = ", i + 1);
 		gretl_print_fullwidth_double(evals[i], GRETL_DIGITS, prn);
@@ -1078,6 +1079,8 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     free(varlist);
 
     pdinfo->t1 = orig_t1;
+
+    dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
 
     return err;
 }

@@ -3135,7 +3135,7 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     char *runfile = NULL, fname[MAXLEN];
     int err;
 
-#ifdef notdef
+#if 0
     fprintf(stderr, "do_run_script(): data=%p, code=%d, w=%p\n",
 	    (void *) data, code, (void *) w);
 #endif
@@ -3160,8 +3160,10 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	}
 
 	text_set_cursor(mydata->w, GDK_WATCH);
+
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
+
 	text_set_cursor(mydata->w, 0);
     } else {
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
@@ -3547,7 +3549,12 @@ int execute_script (const char *runfile, const char *buf,
     char tmp[MAXLEN];
     LOOPSET loop;            /* struct for monte carlo loop */
 
-    if (runfile != NULL) { /* we'll get commands from file */
+#if 0
+    debug_print_model_info(models[0], "Start of execute_script, models[0]");
+#endif
+
+    if (runfile != NULL) { 
+	/* we'll get commands from file */
 	int content = 0;
 
 	fb = fopen(runfile, "r");
@@ -3574,7 +3581,8 @@ int execute_script (const char *runfile, const char *buf,
 	    errbox(_("No commands to execute"));
 	    return -1;
 	}
-    } else { /* no runfile, commands from buffer */
+    } else { 
+	/* no runfile, commands from buffer */
 	if (buf == NULL || !strlen(buf)) {
 	    errbox(_("No commands to execute"));
 	    return -1;	
@@ -3637,19 +3645,23 @@ int execute_script (const char *runfile, const char *buf,
 	    looprun = 0;
 	    monte_carlo_free(&loop);
 	    if (j == MAXLOOP) return 1;
-	} else { /* end if Monte Carlo stuff */
+	} else { 
+	    /* end if Monte Carlo stuff */
 	    int bslash;
 
-	    line[0] = '\0';
+	    *line = 0;
 	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
-		(fb == NULL && bufgets(line, MAXLEN, buf) == NULL)) 
+		(fb == NULL && bufgets(line, MAXLEN, buf) == NULL)) {
 		goto endwhile;
+	    }
+
 	    while ((bslash = top_n_tail(line))) {
+		/* handle backslash-continued lines */
 		*tmp = '\0';
 		if (fb) {
-		    fgets(tmp, MAXLEN-1, fb);
+		    fgets(tmp, MAXLEN - 1, fb);
 		} else {
-		    bufgets(tmp, MAXLEN-1, buf); 
+		    bufgets(tmp, MAXLEN - 1, buf); 
 		}
 		if (strlen(line) + strlen(tmp) > MAXLEN - 1) {
 		    pprintf(prn, _("Maximum length of command line "
@@ -3668,10 +3680,11 @@ int execute_script (const char *runfile, const char *buf,
 		else if (!echo_off) {
 		    if ((line[0] == '(' && line[1] == '*') ||
 			(line[strlen(line)-1] == ')' && 
-			 line[strlen(line)-2] == '*')) 
+			 line[strlen(line)-2] == '*')) {
 			pprintf(prn, "\n%s\n", line);
-		    else 
+		    } else {
 			pprintf(prn, "\n? %s\n", line);	
+		    }
 		}
 		oflag = 0;
 		strcpy(tmp, line);
@@ -3686,12 +3699,16 @@ int execute_script (const char *runfile, const char *buf,
 	    }
 	} /* end alternative to Monte Carlo stuff */
     } /* end while() */
+
  endwhile:
+
     if (fb) fclose(fb);
+
     if (psession && rebuild) {
 	/* recreating a gretl session */
 	save_model_copy(&models[0], psession, rebuild, datainfo);
     }
+
     return 0;
 }
 
@@ -3791,8 +3808,8 @@ int gui_exec_line (char *line,
 #endif
 
     /* parse the command line */
-    strncpy(linecopy, line, 1023);
-    linecopy[1023] = '\0';
+    *linecopy = 0;
+    strncat(linecopy, line, 1023);
     catchflag(line, &oflag);
 
     /* but if we're stacking commands for a loop, parse "lightly" */
@@ -3836,7 +3853,18 @@ int gui_exec_line (char *line,
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } else {
-            if (!echo_off) echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
+            if (!echo_off) {
+#if 0
+		fprintf(stderr, "Before echo, line='%s'\n", line);
+		debug_print_model_info(models[0], "models[0]");
+#endif
+		echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
+#if 0
+		fprintf(stderr, "After echo, line='%s'\n", line);
+		debug_print_model_info(models[0], "models[0]");
+#endif
+
+	    }
             if (command.ci != ENDLOOP) {
                 if (add_to_loop(plp, line, command.ci, oflag)) {
                     pprintf(prn, _("Failed to add command to loop stack\n"));
@@ -3855,18 +3883,18 @@ int gui_exec_line (char *line,
     if (rebuild) cmd_init(line);
 
 #ifdef notdef
-     if (is_model_ref_cmd(command.ci)) {
+    if (is_model_ref_cmd(command.ci)) {
  	if (model_sample_issue(models[0], &Z, datainfo)) {
  	    pprintf(prn, _("Can't do: the current data set is different from "
- 		   "the one on which\nthe reference model was estimated\n"));
+			   "the one on which\nthe reference model was estimated\n"));
  	    return 1;
  	}
-     }
+    }
 #endif
 
-     switch (command.ci) {
+    switch (command.ci) {
 
-     case ADF: case COINT: case COINT2:
+    case ADF: case COINT: case COINT2:
     case CORR:
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
@@ -3940,7 +3968,7 @@ int gui_exec_line (char *line,
 	else
 	    clear_model(models[0], datainfo); 
 	*models[0] = ar_func(command.list, atoi(command.param), &Z, 
-			    datainfo, &model_count, prn);
+			     datainfo, &model_count, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
@@ -4046,7 +4074,7 @@ int gui_exec_line (char *line,
     case DELEET:
 	if (fullZ != NULL) {
 	    pprintf(prn, _("Can't delete last variable when in sub-sample"
-		    " mode\n"));
+			   " mode\n"));
 	    break;
 	}
 	if (datainfo->v <= 1 || dataset_drop_vars(1, &Z, datainfo)) 
@@ -4069,7 +4097,7 @@ int gui_exec_line (char *line,
     case ENDLOOP:
 	if (*plstack != 1) {
 	    pprintf(prn, _("You can't end a loop here, "
-		    "you haven't started one\n"));
+			   "you haven't started one\n"));
 	    break;
 	}
 	*plstack = 0;
@@ -4251,9 +4279,9 @@ int gui_exec_line (char *line,
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, _("You should now use the \"print\" command "
-		    "to verify the data\n"));
+			   "to verify the data\n"));
             pprintf(prn, _("If they are OK, use the  \"store\" command "
-		    "to save them in gretl format\n"));
+			   "to save them in gretl format\n"));
         }
         break;
 
@@ -4345,7 +4373,7 @@ int gui_exec_line (char *line,
     case LOOP:
 	if (plp == NULL) {
 	    pprintf(prn, _("Sorry, Monte Carlo loops not available "
-		    "in this mode\n"));
+			   "in this mode\n"));
 	    break;
 	}
 	if ((err = parse_loopline(line, plp, datainfo))) {
@@ -4567,7 +4595,7 @@ int gui_exec_line (char *line,
 	pprintf(prn, _("Data written OK.\n"));
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
 	    pprintf(prn, _("Warning: case markers not saved in "
-		    "binary datafile\n"));
+			   "binary datafile\n"));
 	break;
 
     case SYSTEM:
@@ -4604,7 +4632,7 @@ int gui_exec_line (char *line,
 	else
 	    clear_model(models[0], datainfo); 
 	*models[0] = tsls_func(command.list, atoi(command.param), 
-			      &Z, datainfo);
+			       &Z, datainfo);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
 	    break;
@@ -4628,7 +4656,7 @@ int gui_exec_line (char *line,
 
     default:
 	pprintf(prn, _("Sorry, the %s command is not yet implemented "
-		"in libgretl\n"), command.cmd);
+		       "in libgretl\n"), command.cmd);
 	break;
     } /* end of command switch */
 

@@ -21,6 +21,15 @@
 
 #define MAXLOOP 10000 /* bodge to prevent runaways */
 
+#if defined(ENABLE_GMP)
+#include <gmp.h>
+typedef mpf_t bigval;
+#elif defined(HAVE_LONG_DOUBLE)
+typedef long double bigval;
+#else
+typedef double bigval;
+#endif
+
 typedef enum {
     COUNT_LOOP,
     WHILE_LOOP,
@@ -39,12 +48,13 @@ typedef enum {
 typedef struct {
     int ID;
     int *list;
-    long double *sum;
-    long double *ssq;
+    bigval *sum;
+    bigval *ssq;
 } LOOP_PRINT;   
 
 typedef struct {
     int ID;                      /* ID number for model */
+    int ci;                      /* command index for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
@@ -52,10 +62,10 @@ typedef struct {
     int *list;                   /* list of variables by ID number */
     int ifc;                     /* = 1 if the equation includes a constant,
                                     else = 0 */
-    long double *sum_coeff;      /* sums of coefficient estimates */
-    long double *ssq_coeff;      /* sums of squares of coeff estimates */
-    long double *sum_sderr;      /* sums of estimated std. errors */
-    long double *ssq_sderr;      /* sums of squares of estd std. errs */
+    bigval *sum_coeff;      /* sums of coefficient estimates */
+    bigval *ssq_coeff;      /* sums of squares of coeff estimates */
+    bigval *sum_sderr;      /* sums of estimated std. errors */
+    bigval *ssq_sderr;      /* sums of squares of estd std. errs */
 } LOOP_MODEL;
 
 typedef struct {

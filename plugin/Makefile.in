@@ -206,18 +206,6 @@ gnumeric_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
 gnumeric_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
 gnumeric_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h
 gnumeric_import.lo: ../lib/src/system.h importer.h import_common.c
-gretl_gsl_bak.lo: ../lib/src/libgretl.h ../lib/src/commands.h
-gretl_gsl_bak.lo: ../lib/src/errors.h ../lib/src/estimate.h
-gretl_gsl_bak.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
-gretl_gsl_bak.lo: ../lib/src/compare.h ../lib/src/pvalues.h
-gretl_gsl_bak.lo: ../lib/src/dataio.h ../lib/src/strutils.h
-gretl_gsl_bak.lo: ../lib/src/describe.h ../lib/src/printout.h
-gretl_gsl_bak.lo: ../lib/src/modelprint.h ../lib/src/texprint.h
-gretl_gsl_bak.lo: ../lib/src/var.h ../lib/src/interact.h
-gretl_gsl_bak.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
-gretl_gsl_bak.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
-gretl_gsl_bak.lo: ../lib/src/subsample.h ../lib/src/calendar.h
-gretl_gsl_bak.lo: ../lib/src/system.h
 gretl_matrix.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 gretl_matrix.lo: ../lib/src/errors.h ../lib/src/estimate.h
 gretl_matrix.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h
@@ -229,6 +217,7 @@ gretl_matrix.lo: ../lib/src/var.h ../lib/src/interact.h ../lib/src/graphing.h
 gretl_matrix.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 gretl_matrix.lo: ../lib/src/discrete.h ../lib/src/subsample.h
 gretl_matrix.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h
+gretl_matrix.lo: f2c.h clapack_double.h
 johansen.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 johansen.lo: ../lib/src/estimate.h ../lib/src/generate.h
 johansen.lo: ../lib/src/gretl_utils.h ../lib/src/compare.h
@@ -238,7 +227,8 @@ johansen.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
 johansen.lo: ../lib/src/interact.h ../lib/src/graphing.h
 johansen.lo: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
 johansen.lo: ../lib/src/discrete.h ../lib/src/subsample.h
-johansen.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h
+johansen.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h f2c.h
+johansen.lo: clapack_double.h
 lad.lo: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
 lad.lo: ../lib/src/estimate.h ../lib/src/generate.h ../lib/src/gretl_utils.h
 lad.lo: ../lib/src/compare.h ../lib/src/pvalues.h ../lib/src/dataio.h
@@ -307,7 +297,8 @@ sur.lo: ../lib/src/strutils.h ../lib/src/describe.h ../lib/src/printout.h
 sur.lo: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
 sur.lo: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/monte_carlo.h
 sur.lo: ../lib/src/nonparam.h ../lib/src/discrete.h ../lib/src/subsample.h
-sur.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h
+sur.lo: ../lib/src/calendar.h ../lib/src/system.h gretl_matrix.h f2c.h
+sur.lo: clapack_double.h
 tramo_options.lo: ../lib/src/libgretl.h ../lib/src/commands.h
 tramo_options.lo: ../lib/src/errors.h ../lib/src/estimate.h
 tramo_options.lo: ../lib/src/generate.h ../lib/src/gretl_utils.h

@@ -5352,6 +5352,9 @@ main ()
      GMP_LIBS=""
      ifelse([$3], , :, [$3])
   fi
+  if test "$GMP_CFLAGS" = "-I/include" ; then 
+     GMP_CFLAGS=""
+  fi
   AC_SUBST(GMP_CFLAGS)
   AC_SUBST(GMP_LIBS)
   rm -f conf.gmptest

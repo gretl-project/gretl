@@ -32,7 +32,9 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     strcpy(linecpy, plp->lines[cmdnum]);
     catchflag(linecpy, &oflag);
     getcmd(linecpy, datainfo, &command, &ignore, &Z, cmds);
+
     if (command.ci < 0) return 0;
+
     if (command.errcode) {
 	errmsg(command.errcode, prn);
 	return 1;
@@ -41,6 +43,12 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     if (!echo_off && plp->type == FOR_LOOP) {
 	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
     }
+
+#if 0
+    fprintf(stderr, "loop_exec_line: linecpy='%s'\n", linecpy);
+    debug_print_model_info(models[0], "models[0]");
+    if ((models[0])->xpx != NULL) exit(EXIT_FAILURE);
+#endif
 
     switch (command.ci) {
 
@@ -62,38 +70,59 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break;	
 
     case OLS:
+    case LAD:
+    case HSK:
+    case HCCM:
 	/* if this is the first time round the loop, allocate space
 	   for each loop model */
 	if (round == 0) {
 	    plp->nmod += 1;
 	    if (plp->type != COUNT_LOOP) { /* a conditional loop */
-		if (plp->models == NULL) 
+		if (plp->models == NULL) {
 		    plp->models = malloc(sizeof(MODEL *));
-		else 
+		} else {
 		    plp->models = realloc(plp->models, plp->nmod 
 					    * sizeof(MODEL *));
-		if (plp->models == NULL) 
-		    return 1;
+		}
+		if (plp->models == NULL) return 1;
+
 		plp->models[plp->nmod - 1] = gretl_model_new(datainfo);
-		if (plp->models[plp->nmod - 1] == NULL)
+		if (plp->models[plp->nmod - 1] == NULL) {
 		    return 1;
+		}
 		(plp->models[plp->nmod - 1])->ID = cmdnum;
 	    } else { /* loop a fixed number of times */
-		if (plp->lmodels == NULL) 
+		if (plp->lmodels == NULL) {
 		    plp->lmodels = malloc(sizeof(LOOP_MODEL));
-		else 
+		} else {
 		    plp->lmodels = realloc(plp->lmodels, plp->nmod
 					     * sizeof(LOOP_MODEL));
+		}
 		if (plp->lmodels == NULL) return 1;
 	    }
 	} /* end of basic round 0 setup */
+
 	/* estimate the model called for */
 	clear_model(models[0], NULL);
-	*models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
+
+	if (command.ci == OLS) {
+	    *models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
+	}
+	else if (command.ci == LAD) {
+	    *models[0] = lad(command.list, &Z, datainfo);
+	}
+	else if (command.ci == HSK) {
+	    *models[0] = hsk_func(command.list, &Z, datainfo);
+	}
+	else if (command.ci == HCCM) {
+	    *models[0] = hccm_func(command.list, &Z, datainfo);
+	}
+
 	if ((models[0])->errcode) {
 	    errmsg((models[0])->errcode, prn);
 	    return 1;
 	}
+
 	if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
@@ -186,12 +215,13 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	}
 	for (i=0; i<command.list[0]; i++) {
-	    if (datainfo->vector[command.list[i+1]]) 
+	    if (datainfo->vector[command.list[i+1]]) { 
 		plp->storeval[i*plp->ntimes + round] = 
 		    Z[command.list[i+1]][datainfo->t1 + 1];
-	    else
+	    } else {
 		plp->storeval[i*plp->ntimes + round] = 
 		    Z[command.list[i+1]][0];
+	    }
 	}	
 	break;
 
@@ -206,9 +236,9 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    return 1;
 	}
 	summ = summary(command.list, &Z, datainfo, prn);
-	if (summ == NULL)
+	if (summ == NULL) {
 	    pputs(prn, _("generation of summary stats failed\n"));
-	else {
+	} else {
 	    print_summary(summ, datainfo, 0, prn);
 	    free_summary(summ);
 	}	    

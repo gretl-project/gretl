@@ -32,15 +32,15 @@ enum inequalities {
 extern int genr_scalar_index (int opt, int put);
 
 static int monte_carlo_init (LOOPSET *ploop);
-static void _free_loop_model (LOOP_MODEL *plmod);
-static void _free_loop_print (LOOP_PRINT *pprn);
-static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
+static void free_loop_model (LOOP_MODEL *plmod);
+static void free_loop_print (LOOP_PRINT *pprn);
+static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			       const DATAINFO *pdinfo, PRN *prn);
-static void _print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
+static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
 			       int c, int n, PRN *prn);
-static void _print_loop_prn (LOOP_PRINT *pprn, int n,
+static void print_loop_prn (LOOP_PRINT *pprn, int n,
 			     const DATAINFO *pdinfo, PRN *prn);
-static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
+static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 			      char *loopstorefile);
 static int get_prnnum_by_id (LOOPSET *ploop, int id);
 
@@ -55,6 +55,9 @@ static int get_prnnum_by_id (LOOPSET *ploop, int id);
 int ok_in_loop (int ci)
 {
     if (ci == OLS || 
+	ci == LAD ||
+	ci == HSK ||
+	ci == HCCM ||
 	ci == GENR ||
 	ci == STORE ||
 	ci == PRINT ||
@@ -234,8 +237,8 @@ static int monte_carlo_init (LOOPSET *ploop)
     ploop->nstore = 0;
     ploop->next_model = 0;
     ploop->next_print = 0;
-    ploop->lines = malloc(32 * sizeof(char *)); 
-    ploop->ci = malloc(32 * sizeof(int));
+    ploop->lines = malloc(32 * sizeof *ploop->lines); 
+    ploop->ci = malloc(32 * sizeof *ploop->ci);
     ploop->models = NULL;
     ploop->lmodels = NULL;
     ploop->prns = NULL;
@@ -264,7 +267,7 @@ void monte_carlo_free (LOOPSET *ploop)
 	free(ploop->ci);
     if (ploop->lmodels) {
 	for (i=0; i<ploop->nmod; i++) 
-	    _free_loop_model(&ploop->lmodels[i]);
+	    free_loop_model(&ploop->lmodels[i]);
 	free(ploop->lmodels);
 	ploop->lmodels = NULL;
     }
@@ -278,7 +281,7 @@ void monte_carlo_free (LOOPSET *ploop)
     }    
     if (ploop->prns) {
 	for (i=0; i<ploop->nprn; i++) 
-	    _free_loop_print(&ploop->prns[i]);
+	    free_loop_print(&ploop->prns[i]);
 	free(ploop->prns);
 	ploop->prns = NULL;
     }
@@ -318,25 +321,40 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
 {
     int i, ncoeff = pmod->ncoeff;
 
-    plmod->sum_coeff = malloc((ncoeff + 1) * sizeof(long double));
+    plmod->sum_coeff = malloc((ncoeff + 1) * sizeof *plmod->sum_coeff);
     if (plmod->sum_coeff == NULL) return 1;
-    plmod->ssq_coeff = malloc((ncoeff + 1) * sizeof(long double));
+
+    plmod->ssq_coeff = malloc((ncoeff + 1) * sizeof *plmod->ssq_coeff);
     if (plmod->ssq_coeff == NULL) goto cleanup;
-    plmod->sum_sderr = malloc((ncoeff + 1) * sizeof(long double));
+
+    plmod->sum_sderr = malloc((ncoeff + 1) * sizeof *plmod->sum_sderr);
     if (plmod->sum_sderr == NULL) goto cleanup;
-    plmod->ssq_sderr = malloc((ncoeff + 1) * sizeof(long double));
+
+    plmod->ssq_sderr = malloc((ncoeff + 1) * sizeof *plmod->ssq_sderr);
     if (plmod->ssq_sderr == NULL) goto cleanup;
+
+    plmod->list = NULL;
+    copylist(&plmod->list, pmod->list);
+    if (plmod->list == NULL) goto cleanup;
+
     for (i=0; i<=ncoeff; i++) {
-	plmod->sum_coeff[i] = plmod->ssq_coeff[i] = 0;
-	plmod->sum_sderr[i] = plmod->ssq_sderr[i] = 0;
+#ifdef ENABLE_GMP
+	mpf_init(plmod->sum_coeff[i]);
+	mpf_init(plmod->ssq_coeff[i]);
+	mpf_init(plmod->sum_sderr[i]);
+	mpf_init(plmod->ssq_sderr[i]);
+#else
+	plmod->sum_coeff[i] = plmod->ssq_coeff[i] = 0.0;
+	plmod->sum_sderr[i] = plmod->ssq_sderr[i] = 0.0;
+#endif
     }
+
     plmod->ncoeff = ncoeff;
     plmod->t1 = pmod->t1;
     plmod->t2 = pmod->t2;
     plmod->nobs = pmod->nobs;
-    plmod->list = NULL;
-    copylist(&plmod->list, pmod->list);
     plmod->ID = id;
+    plmod->ci = pmod->ci;
     return 0;
 
  cleanup:
@@ -362,16 +380,29 @@ int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
     int i;
 
     pprn->list = NULL;
+
     copylist(&pprn->list, list);
     if (pprn->list == NULL) return 1;
-    pprn->sum = malloc(list[0] * sizeof(long double));
+
+    pprn->sum = malloc(list[0] * sizeof *pprn->sum);
     if (pprn->sum == NULL) goto cleanup;
-    pprn->ssq = malloc(list[0] * sizeof(long double));
+
+    pprn->ssq = malloc(list[0] * sizeof *pprn->ssq);
     if (pprn->ssq == NULL) goto cleanup;
-    for (i=0; i<list[0]; i++) 
-	pprn->sum[i] = pprn->ssq[i] = 0;
+
+    for (i=0; i<list[0]; i++) { 
+#ifdef ENABLE_GMP
+	mpf_init(pprn->sum[i]);
+	mpf_init(pprn->ssq[i]);
+#else
+	pprn->sum[i] = pprn->ssq[i] = 0.0;
+#endif
+    }
+
     pprn->ID = id;
+
     return 0;
+
  cleanup:
     free(pprn->list);
     free(pprn->sum);
@@ -392,23 +423,34 @@ int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
 
 int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
 {
-    int i, tot;
+    int i, tot = list[0] * ploop->ntimes;
 
-    ploop->storename = malloc(list[0] * sizeof(char *));
+    ploop->storename = malloc(list[0] * sizeof *ploop->storename);
     if (ploop->storename == NULL) return 1;
-    ploop->storelbl = malloc(list[0] * sizeof(char *));
+
+    ploop->storelbl = malloc(list[0] * sizeof *ploop->storelbl);
     if (ploop->storelbl == NULL) goto cleanup;
-    tot = list[0] * ploop->ntimes;
-    ploop->storeval = malloc(tot * sizeof(double));
+
+    ploop->storeval = malloc(tot * sizeof *ploop->storeval);
     if (ploop->storeval == NULL) goto cleanup;
+
     for (i=0; i<list[0]; i++) {
+	char *p;
+
 	ploop->storename[i] = malloc(9);
 	if (ploop->storename[i] == NULL) goto cleanup;
+
 	strcpy(ploop->storename[i], pdinfo->varname[list[i+1]]);
+
 	ploop->storelbl[i] = malloc(MAXLABEL);
 	if (ploop->storelbl[i] == NULL) goto cleanup;
+
 	strcpy(ploop->storelbl[i], pdinfo->label[list[i+1]]);
+	if ((p = strstr(ploop->storelbl[i], "(scalar)"))) {
+	    *p = 0;
+	}
     }
+
     return 0;
  cleanup:
     free(ploop->storename);
@@ -433,14 +475,37 @@ int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
 {
     int j, i = get_modnum_by_cmdnum(ploop, cmdnum);
     LOOP_MODEL *plmod;
+#ifdef ENABLE_GMP
+    mpf_t m;
+
+    mpf_init(m);
+#endif
 
     plmod = &ploop->lmodels[i];
+
     for (j=1; j<=pmod->ncoeff; j++) {
+#ifdef ENABLE_GMP
+	mpf_set_d(m, pmod->coeff[j]);
+	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m);
+	mpf_mul(m, m, m);
+	mpf_add(plmod->ssq_coeff[j], plmod->ssq_coeff[j], m);
+
+	mpf_set_d(m, pmod->sderr[j]);
+	mpf_add(plmod->sum_sderr[j], plmod->sum_sderr[j], m);
+	mpf_mul(m, m, m);
+	mpf_add(plmod->ssq_sderr[j], plmod->ssq_sderr[j], m);
+#else
 	plmod->sum_coeff[j] += pmod->coeff[j];
 	plmod->ssq_coeff[j] += pmod->coeff[j] * pmod->coeff[j];
 	plmod->sum_sderr[j] += pmod->sderr[j];
 	plmod->ssq_sderr[j] += pmod->sderr[j] * pmod->sderr[j];
+#endif
     }
+
+#ifdef ENABLE_GMP
+    mpf_clear(m);
+#endif
+
     return 0;
 }
 
@@ -465,13 +530,30 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
 {
     int j, t, i = get_prnnum_by_id(ploop, cmdnum);
     LOOP_PRINT *pprn = &ploop->prns[i];
+#ifdef ENABLE_GMP
+    mpf_t m;
+
+    mpf_init(m);
+#endif
     
     for (j=1; j<=list[0]; j++) {
 	if (pdinfo->vector[list[j]]) t = pdinfo->t1;
 	else t = 0;
+#ifdef ENABLE_GMP
+	mpf_set_d(m, (*pZ)[list[j]][t]); 
+	mpf_add(pprn->sum[j-1], pprn->sum[j-1], m);
+	mpf_mul(m, m, m);
+	mpf_add(pprn->ssq[j-1], pprn->ssq[j-1], m);
+#else
 	pprn->sum[j-1] += (*pZ)[list[j]][t];
 	pprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
+#endif
     }
+
+#ifdef ENABLE_GMP
+    mpf_clear(m);
+#endif
+
     return 0;
 }
 
@@ -503,44 +585,60 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 	if (ploop->lvar) {
 	    if (ploop->ci[i] == OLS) {
 		pmod = ploop->models[ploop->next_model];
+
 		*model_count += 1;
 		pmod->ID = *model_count;
+
 		/* std. errors are asymptotic; degrees of freedom
 		 correction is not wanted */
 		if (pmod->vcv) free(pmod->vcv);
 		pmod->vcv = NULL;
-		pmod->sigma = sqrt((1.0/pmod->nobs) * pmod->ess);
+
+		pmod->sigma = sqrt((1.0 / pmod->nobs) * pmod->ess);
 		makevcv(pmod);
-		for (j=1; j<=pmod->ncoeff; j++)
+		for (j=1; j<=pmod->ncoeff; j++) {
 		    pmod->sderr[j] *= 
 			sqrt((double) pmod->dfd /(double) pmod->nobs);
+		}
 		printmodel(pmod, pdinfo, prn);
-		if (pmod->correct) /* -o flag was given */
+		if (pmod->correct) {
+		    /* -o flag was given */
 		    outcovmx(pmod, pdinfo, 0, prn);
+		}
 		ploop->next_model += 1;	    
 		continue;
 	    }
 	}
 	if (ploop->ci[i] == OLS) {
-	    _print_loop_model(&ploop->lmodels[ploop->next_model], 
+	    print_loop_model(&ploop->lmodels[ploop->next_model], 
 			     ploop->ntimes, pdinfo, prn);
 	    ploop->next_model += 1;
 	}
 	else if (ploop->ci[i] == PRINT) {
-	    _print_loop_prn(&ploop->prns[ploop->next_print], 
+	    print_loop_prn(&ploop->prns[ploop->next_print], 
 			   ploop->ntimes, pdinfo, prn);
 	    ploop->next_print += 1;
 	}
 	else if (ploop->ci[i] == STORE) {
-	    _print_loop_store(ploop, prn, ppaths, loopstorefile);
+	    print_loop_store(ploop, prn, ppaths, loopstorefile);
 	}
     }
 }
 
 /* ......................................................  */
 
-static void _free_loop_model (LOOP_MODEL *plmod)
+static void free_loop_model (LOOP_MODEL *plmod)
 {
+#ifdef ENABLE_GMP
+    int i;
+
+    for (i=0; i<=plmod->ncoeff; i++) {
+	mpf_clear(plmod->sum_coeff[i]);
+	mpf_clear(plmod->sum_sderr[i]);
+	mpf_clear(plmod->ssq_coeff[i]);
+	mpf_clear(plmod->ssq_sderr[i]);
+    }
+#endif
     free(plmod->sum_coeff);
     free(plmod->sum_sderr);
     free(plmod->ssq_coeff);
@@ -550,11 +648,19 @@ static void _free_loop_model (LOOP_MODEL *plmod)
 
 /* ......................................................  */
 
-static void _free_loop_print (LOOP_PRINT *pprn)
+static void free_loop_print (LOOP_PRINT *pprn)
 {
-    free(pprn->list);
+#ifdef ENABLE_GMP
+    int i;
+
+    for (i=0; i<pprn->list[0]; i++) {
+	mpf_clear(pprn->sum[i]);
+	mpf_clear(pprn->ssq[i]);
+    }
+#endif
     free(pprn->sum);
     free(pprn->ssq);
+    free(pprn->list);    
 }
 
 /**
@@ -575,27 +681,54 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
     int i = ploop->ncmds;
 
     ploop->ncmds += 1;
+
     ploop->lines[i] = malloc(MAXLEN);
     if (ploop->lines[i] == NULL) return E_ALLOC;
+
     top_n_tail(line);
-    if (ci == PRINT && ploop->type != COUNT_LOOP)
+
+    if (ci == PRINT && ploop->type != COUNT_LOOP) {
 	ploop->ci[i] = 0;
-    else
+    } else {
 	ploop->ci[i] = ci;
+    }
+
     strncpy(ploop->lines[i], line, MAXLEN - 4);
+
     if (opt) {
 	char flagstr[4];
 
 	sprintf(flagstr, " -%c", getflag(opt));
 	strcat(ploop->lines[i], flagstr);
     }
+
     return 0;
 }
 
 /* ......................................................... */ 
 
-static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
-			       const DATAINFO *pdinfo, PRN *prn)
+static const char *estimator_string (int ci)
+{
+    if (ci == OLS || ci == VAR) return N_("OLS");
+    else if (ci == WLS) return N_("WLS"); 
+    else if (ci == ARCH) return N_("WLS (ARCH)");
+    else if (ci == TSLS) return N_("TSLS");
+    else if (ci == HSK) return N_("Heteroskedasticity-corrected");
+    else if (ci == AR) return N_("AR");
+    else if (ci == LAD) return N_("LAD");
+    else if (ci == HCCM) return N_("HCCM");
+    else if (ci == PROBIT) return N_("Probit");
+    else if (ci == LOGIT) return N_("Logit");
+    else if (ci == POOLED) return N_("Pooled OLS");
+    else if (ci == CORC) return N_("Cochrane-Orcutt");
+    else if (ci == HILU) return N_("Hildreth-Lu");
+    else return "";
+}
+
+/* ......................................................... */ 
+
+static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
+			      const DATAINFO *pdinfo, PRN *prn)
 {
     int i, nc = plmod->ncoeff;
     char startdate[9], enddate[9];
@@ -604,8 +737,9 @@ static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
     ntodate(startdate, t1, pdinfo);
     ntodate(enddate, t2, pdinfo);
 
-    pprintf(prn, _("OLS estimates using the %d observations %s-%s\n"),
-	   t2-t1+1, startdate, enddate);
+    pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
+	    _(estimator_string(plmod->ci)), t2 - t1 + 1, 
+	    startdate, enddate);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 
 	   pdinfo->varname[plmod->list[1]]);
@@ -616,58 +750,131 @@ static void _print_loop_model (LOOP_MODEL *plmod, int loopnum,
 	    "      estimated      estimated\n"
 	    "      Variable     coefficients   coefficients   std. errors"
 	    "    std. errors\n\n"));
-    for (i=1;i<=nc; i++) 
-	_print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
-    pputs(prn, "\n");
-}
 
-/* ......................................................... */ 
-
-static void _print_loop_coeff (const DATAINFO *pdinfo, 
-			       const LOOP_MODEL *plmod, 
-			       int c, int n, PRN *prn)
-{
-    long double m1, m2, var1, var2, sd1, sd2;
-
-    m1 = plmod->sum_coeff[c] / n;
-    m1 = plmod->sum_coeff[c] / n;
-    var1 = (plmod->ssq_coeff[c] - n * m1 * m1) / n;
-    sd1 = (var1 < 0)? 0 : sqrt((double) var1);
-    m2 = plmod->sum_sderr[c] / n;
-    var2 = (plmod->ssq_sderr[c] - n * m2 * m2) / n;
-    sd2 = (var2 < 0)? 0 : sqrt((double) var2);
-
-    pprintf(prn, " %3d) %8s ", plmod->list[c+1], 
-	   pdinfo->varname[plmod->list[c+1]]);
-    pprintf(prn, "%14f %14f %14f %14f\n", (double) m1, (double) sd1, 
-	    (double) m2, (double) sd2);
-}
-
-/* ......................................................... */ 
-
-static void _print_loop_prn (LOOP_PRINT *pprn, int n,
-			     const DATAINFO *pdinfo, PRN *prn)
-{
-    int i;
-    long double mean, var, sd;
-
-    if (pprn == NULL) return;
-
-    pputs(prn, _("   Variable     mean         std. dev.\n"));
-    for (i=1; i<=pprn->list[0]; i++) {
-	mean = pprn->sum[i-1] / n;
-	var = (pprn->ssq[i-1] - n * mean * mean) / n;
-	sd = (var < 0)? 0 : sqrt((double) var);
-	pprintf(prn, " %8s ", pdinfo->varname[pprn->list[i]]);
-	pprintf(prn, "%14f %14f\n", (double) mean, (double) sd);
+    for (i=1; i<=nc; i++) {
+	print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
     }
     pputs(prn, "\n");
 }
 
 /* ......................................................... */ 
 
-static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
-			      char *loopstorefile)
+static void print_loop_coeff (const DATAINFO *pdinfo, 
+			      const LOOP_MODEL *plmod, 
+			      int c, int n, PRN *prn)
+{
+#ifdef ENABLE_GMP
+    bigval c1, c2, m, sd1, sd2;
+
+    mpf_init(c1);
+    mpf_init(c2);
+    mpf_init(m);
+    mpf_init(sd1);
+    mpf_init(sd2);
+
+    mpf_div_ui(c1, plmod->sum_coeff[c], (unsigned long) n);
+    mpf_mul(m, c1, c1);
+    mpf_mul_ui(m, m, (unsigned long) n);
+    mpf_sub(m, plmod->ssq_coeff[c], m);
+    mpf_div_ui(sd1, m, (unsigned long) n);
+    if (mpf_cmp_d(sd1, 0.0) > 0) {
+	mpf_sqrt(sd1, sd1);
+    } else {
+	mpf_set_d(sd1, 0.0);
+    }
+
+    mpf_div_ui(c2, plmod->sum_sderr[c], (unsigned long) n);
+    mpf_mul(m, c2, c2);
+    mpf_mul_ui(m, m, (unsigned long) n);
+    mpf_sub(m, plmod->ssq_sderr[c], m);
+    mpf_div_ui(sd2, m, (unsigned long) n);
+    if (mpf_cmp_d(sd2, 0.0) > 0) {
+	mpf_sqrt(sd2, sd2);
+    } else {
+	mpf_set_d(sd2, 0.0);
+    }
+
+    pprintf(prn, " %3d) %8s ", plmod->list[c+1], 
+	   pdinfo->varname[plmod->list[c+1]]);
+
+    pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
+	    mpf_get_d(c2), mpf_get_d(sd2));
+
+    mpf_clear(c1);
+    mpf_clear(c2);
+    mpf_clear(m);
+    mpf_clear(sd1);
+    mpf_clear(sd2);
+#else /* non-GMP */
+    bigval m1, m2, var1, var2, sd1, sd2;
+    
+    m1 = plmod->sum_coeff[c] / n;
+    var1 = (plmod->ssq_coeff[c] - n * m1 * m1) / n;
+    sd1 = (var1 <= 0.0)? 0.0 : sqrt((double) var1);
+
+    m2 = plmod->sum_sderr[c] / n;
+    var2 = (plmod->ssq_sderr[c] - n * m2 * m2) / n;
+    sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
+
+    pprintf(prn, " %3d) %8s ", plmod->list[c+1], 
+	   pdinfo->varname[plmod->list[c+1]]);
+
+    pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
+	    (double) m2, (double) sd2);
+#endif
+}
+
+/* ......................................................... */ 
+
+static void print_loop_prn (LOOP_PRINT *pprn, int n,
+			    const DATAINFO *pdinfo, PRN *prn)
+{
+    int i;
+    bigval mean, m, sd;
+
+    if (pprn == NULL) return;
+
+    pputs(prn, _("   Variable     mean         std. dev.\n"));
+
+#ifdef ENABLE_GMP
+    mpf_init(mean);
+    mpf_init(m);
+    mpf_init(sd);
+    
+    for (i=1; i<=pprn->list[0]; i++) {
+	mpf_div_ui(mean, pprn->sum[i-1], (unsigned long) n);
+	mpf_mul(m, mean, mean);
+	mpf_mul_ui(m, m, (unsigned long) n);
+	mpf_sub(sd, pprn->ssq[i-1], m);
+	mpf_div_ui(sd, sd, (unsigned long) n);
+	if (mpf_cmp_d(sd, 0.0) > 0) {
+	    mpf_sqrt(sd, sd);
+	} else {
+	    mpf_set_d(sd, 0.0);
+	}
+	pprintf(prn, " %8s ", pdinfo->varname[pprn->list[i]]);
+	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
+    }
+
+    mpf_clear(mean);
+    mpf_clear(m);
+    mpf_clear(sd);
+#else
+    for (i=1; i<=pprn->list[0]; i++) {
+	mean = pprn->sum[i-1] / n;
+	m = (pprn->ssq[i-1] - n * mean * mean) / n;
+	sd = (m < 0)? 0 : sqrt((double) m);
+	pprintf(prn, " %8s ", pdinfo->varname[pprn->list[i]]);
+	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
+    }
+#endif
+    pputs(prn, "\n");
+}
+
+/* ......................................................... */ 
+
+static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
+			     char *loopstorefile)
 {
     int i, t, dot;
     FILE *fd;
@@ -677,43 +884,51 @@ static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     /* organize filenames */
     sprintf(datfile, "%s%s", ppaths->userdir, loopstorefile);
     dot = dotpos(datfile);
-    clear(prefix, MAXLEN);
-    strncpy(prefix, datfile, dot);
-    clear(hdrfile, MAXLEN); 
+
+    *prefix = 0;
+    strncat(prefix, datfile, dot);
     sprintf(hdrfile, "%s.hdr", prefix);
-    clear(lblfile, MAXLEN);
     sprintf(lblfile, "%s.lbl", prefix);
 
     /* print to header file */
     writetime = time(NULL);
     fd = fopen(hdrfile, "w");
     if (fd == NULL) return 1;
+
     pprintf(prn, _("printing data header info to %s\n"), hdrfile);
     fprintf(fd, "(*\n %s %s\n*)\n", _("simulation data written"), 
 	    print_time(&writetime));
+
     for (i=0; i<ploop->nstore; i++) {
 	fprintf(fd, "%s ", ploop->storename[i]);
     }
+
     fprintf(fd, ";\n1 1 %d\nBYOBS\n", ploop->ntimes);
     fclose(fd);
 
     /* print to label file */
     fd = fopen(lblfile, "w");
     if (fd == NULL) return 1;
-    for (i=0; i<ploop->nstore; i++)
+
+    for (i=0; i<ploop->nstore; i++) {
 	fprintf(fd, "%s %s\n", ploop->storename[i], ploop->storelbl[i]);
+    }
     fclose(fd);
 
     /* print to data file */
     fd = fopen(datfile, "w");    
     if (fd == NULL) return 1;
+
     pprintf(prn, _("printing %d values of variables to %s\n"), 
 	    ploop->ntimes, datfile);
+
     for (t=0; t<ploop->ntimes; t++) {
-	for (i=0; i<ploop->nstore; i++) 
-	    fprintf(fd, "%f ", ploop->storeval[ploop->ntimes*i + t]);
-	fprintf(fd, "\n");
+	for (i=0; i<ploop->nstore; i++) {
+	    fprintf(fd, "%g ", ploop->storeval[ploop->ntimes*i + t]);
+	}
+	fputc('\n', fd);
     }
+
     fclose(fd);
     return 0;
 }
@@ -724,8 +939,9 @@ static int get_prnnum_by_id (LOOPSET *ploop, int id)
 {
     int i;
 
-    for (i=0; i<ploop->nprn; i++) 
+    for (i=0; i<ploop->nprn; i++) {
 	if (ploop->prns[i].ID == id) return i;
+    }
     return -1;
 }
 

@@ -369,6 +369,7 @@ int main (int argc, char *argv[])
 
     models[0] = gretl_model_new(datainfo);
     models[1] = gretl_model_new(datainfo);
+
     if (models[0] == NULL || models[1] == NULL) 
 	noalloc("models"); 
     

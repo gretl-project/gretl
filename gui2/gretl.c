@@ -767,9 +767,11 @@ int main (int argc, char *argv[])
     /* allocate memory for models */
     models = malloc(3 * sizeof *models);
     if (models == NULL) noalloc(_("models")); 
+
     models[0] = gretl_model_new(datainfo);
     models[1] = gretl_model_new(datainfo);
     models[2] = gretl_model_new(datainfo);
+
     if (models[0] == NULL || models[1] == NULL || models[2] == NULL) 
 	noalloc(_("models")); 
 

@@ -173,7 +173,7 @@ DLLWRAP_FLAGS = --as=$(AS) --export-all --driver-name $(CC) -s
 dlls/libgretl.dll: $(LIBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \
 	--output-def libgretl.def --implib $(imports)/libgretl.a \
-	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lmingwex $(GLIBLIB)
+	-o $@ $^ -lm -L$(imports) -lxml -lz.dll -lintl.dll -lprob -lgmp -lmingwex $(GLIBLIB)
 
 dlls/libprob.dll: $(PROBOBJ) dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) \

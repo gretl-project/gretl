@@ -948,7 +948,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
        gui "store" in the command script; we'll record it, but
        commented out.
     */
-    if (gui && pcmd->ci == STORE) {
+    if (0 && gui && pcmd->ci == STORE) {  /* FIXME monte carlo loop */
 	pprintf(prn, "# store '%s'", pcmd->param);
 	if (oflag) { 
 	    pprintf(prn, " -%c", getflag(oflag));
@@ -1096,7 +1096,7 @@ int simple_commands (CMD *cmd, const char *line,
 
     case COINT2:
 	order = atoi(cmd->param);
-	err = johansen_test(order, cmd->list, pZ, datainfo, prn);
+	err = johansen_test(order, cmd->list, pZ, datainfo, oflag, prn);
 	break;
 
     case CORR:
