@@ -369,7 +369,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
-static int _pmax (const MODEL *pmod)
+static int least_signif_coeff (const MODEL *pmod)
 {
     int i, k = 0;
     double tstat, tmin = 4.0;
@@ -397,7 +397,7 @@ static void pval_max_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 	if (k < 2) return;
 
-	if ((k = _pmax(pmod))) {
+	if ((k = least_signif_coeff(pmod))) {
 	    char tmp[128];
 
 	    if (PLAIN_FORMAT(prn->format)) {
@@ -1393,7 +1393,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     _bufspace(2, prn);
 
     /* print coeff value if well-defined */
-    if (isnan(pmod->coeff[c-1])) {
+    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17), _("undefined"));
 	gotnan = 1;
     } else {
@@ -1403,7 +1403,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     _bufspace(2, prn);
 
     /* get out if std error is undefined */
-    if (isnan(pmod->sderr[c-1])) {
+    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
 	pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 16), _("undefined"));
 	return 1;
     }
@@ -1413,7 +1413,11 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* std error is well-defined, but is it positive? */
     if (pmod->sderr[c-1] > 0.) {
 	t = pmod->coeff[c-1] / pmod->sderr[c-1];
-	pprintf(prn, " %7.3f", t);
+	if (t >= 1000.0) {
+	    pprintf(prn, " %#7.2G", t);
+	} else {
+	    pprintf(prn, " %7.3f", t);
+	}
 	if (pmod->aux == AUX_ADF) {
 	    do_pval = 0;
 	    pprintf(prn, "%*s", UTF_WIDTH(_("unknown"), 12), _("unknown"));
@@ -1480,14 +1484,14 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", pmod->list[c], 
 	    varname);
 
-    if (isnan(pmod->coeff[c-1])) {
+    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	gotnan = 1;
     } else {
 	rtf_print_double(pmod->coeff[c-1], prn);
     }
 
-    if (isnan(pmod->sderr[c-1])) {
+    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));

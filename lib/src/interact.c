@@ -839,7 +839,14 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 	t2 = pdinfo->t2;
     }
 
-    if (!isalpha((unsigned char) varname[0])) return -1;
+    if (!isalpha((unsigned char) varname[0])) {
+        sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
+               "(first must be alphabetical)"), varname[0]);
+	return -1;
+    }
+
+    if (_reserved(varname)) return -1;
+
     varname[8] = 0;
     vi = varindex(pdinfo, varname);
 

@@ -2159,8 +2159,9 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "lad", 3)  ||
 	!strncmp(line, "omit", 4) ||
 	!strncmp(line, "tsls", 4) ||
-	!strncmp(line, "logit", 5)    ||
-	!strncmp(line, "probit", 6)   ||
+	!strncmp(line, "logit", 5)  ||
+	!strncmp(line, "probit", 6) ||
+	!strncmp(line, "end nls", 7) ||
 	!strncmp(line, "ar", 2))
 	return 1;
     return 0;

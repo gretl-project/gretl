@@ -1,4 +1,4 @@
-version 1.0.9
+05/26/03 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-
   Marquandt algorithm from minpack, with either analytical or
   numerical derivatives)
@@ -6,7 +6,7 @@ version 1.0.9
   the gretl main window
 - Add a new means of grabbing fitted values from a regression:
   "genr newname = yhat" (parallels "uhat")
-- Updates to manual
+- Updates to manual (includes details on new nls command)
 - Spanish version: provide access to English help files as well
   as Spanish
 - Add rudimentary scripting capacity to gnuplot command (can

@@ -444,7 +444,7 @@ static int xpxxpy_func (const int *list, int t1, int t2,
 
     xpy[0] = xpy[l0] = 0.0;
 
-    if (rho) {
+    if (rho != 0.0) {
 	for (t=t1+1; t<=t2; t++) {
 	    xx = Z[yno][t] - rho * Z[yno][t-1];
 	    xpy[0] += xx;
@@ -464,7 +464,7 @@ static int xpxxpy_func (const int *list, int t1, int t2,
         xpy[l0] += xx * xx;
     }
 
-    if (floateq(xpy[l0], 0.0)) {
+    if (xpy[l0] <= 0.0) {
          return yno; 
     }    
     m = 0;
@@ -1008,7 +1008,7 @@ int makevcv (MODEL *pmod)
     nm1 = nv - 1;
     mst = kk = idxpx = (nv * nv + nv)/2;
 
-    pmod->vcv = malloc((mst + 1) * sizeof(double));
+    pmod->vcv = malloc((mst + 1) * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) return E_ALLOC;
 
     for (i=0; i<=nm1; i++) {

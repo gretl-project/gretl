@@ -34,7 +34,7 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
     /* no subsample currently in force */
     if (fullZ == NULL) return 0;
 
-    pmod->subdum = malloc(n * sizeof(double));
+    pmod->subdum = malloc(n * sizeof *pmod->subdum);
     if (pmod->subdum == NULL) return E_ALLOC;
 
     i = varindex(fullinfo, "subdum");

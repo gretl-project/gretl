@@ -30,12 +30,12 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 all: $(DOC).pdf $(ALTDOC).pdf html chm # thumbs altthumbs
 
 $(DOC).pdf: $(DOC).tex jadetex.cfg lucidabr.tex
-	if [ ! -f $(DOC).log ] ; then pdfjadetex $(DOC) ; fi
+	pdfjadetex $(DOC)
 	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
 	-grep undefined $(DOC).log >/dev/null && pdfjadetex $(DOC)
 
 $(ALTDOC).pdf: $(ALTDOC).tex jadetex.cfg lucidabr.tex
-	if [ ! -f $(ALTDOC).log ] ; then pdfjadetex $(ALTDOC) ; fi
+	pdfjadetex $(ALTDOC)
 	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
 	-grep undefined $(ALTDOC).log >/dev/null && pdfjadetex $(ALTDOC)
 
@@ -46,9 +46,11 @@ pdftest: $(TESTDOC).tex jadetex.cfg
 
 thumbs: $(SRC) $(CHAPTERS)
 	thumbpdf $(DOC)
+	pdfjadetex $(DOC)
         
 altthumbs: $(ALTSRC) $(CHAPTERS)
 	thumbpdf $(ALTDOC)
+	pdfjadetex $(ALTDOC)
 
 $(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
 	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $(SRC)

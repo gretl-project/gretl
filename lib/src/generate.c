@@ -651,39 +651,39 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	err = dummy(pZ, pdinfo);
 	if (!err)
 	    strcpy(gretl_msg, _("Periodic dummy variables generated.\n"));
-	goto genr_return;
+	return err;
     }
     else if (strcmp(s, "paneldum") == 0) {
 	err = paneldum(pZ, pdinfo, oflag);
 	if (!err)
 	    strcpy(gretl_msg, _("Panel dummy variables generated.\n"));
-	goto genr_return;
+	return err;
     }
     else if (strcmp(s, "index") == 0) { 
 	err = genrtime(pZ, pdinfo, &genr, 0);
 	if (!err) genr_msg(&genr, nv);
-	goto genr_return;
+	return err;
     }
     else if (strcmp(s, "time") == 0) {
 	err = genrtime(pZ, pdinfo, &genr, 1);
 	if (!err) genr_msg(&genr, nv);
-	goto genr_return;
+	return err;
     }
     else if (strncmp(s, "toler=", 6) == 0) {
 	err = gentoler(s + 6);
-	goto genr_return;
+	return err;
     }
 
-    if ((genr.xvec = malloc(n * sizeof(double))) == NULL) {
+    if ((genr.xvec = malloc(n * sizeof *genr.xvec)) == NULL) {
 	err = E_ALLOC;
 	goto genr_return;
     }
 
-    if ((mstack = malloc(n * sizeof(double))) == NULL) {
+    if ((mstack = malloc(n * sizeof *mstack)) == NULL) {
 	err = E_ALLOC;
 	goto genr_return;
     } 
-    if ((mvec = malloc(n * sizeof(double))) == NULL) {
+    if ((mvec = malloc(n * sizeof *mvec)) == NULL) {
 	err = E_ALLOC;
 	goto genr_return;
     } 

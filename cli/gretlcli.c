@@ -815,7 +815,8 @@ void exec_line (char *line, PRN *prn)
 
     case EQNPRINT:
     case TABPRINT:
-	if ((err = model_test_start(0, prn, 1))) break;
+	if ((err = model_test_start(0, prn, (command.ci == EQNPRINT)))) 
+	    break;
 	if (command.ci == EQNPRINT)
 	    err = eqnprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);
@@ -1399,7 +1400,8 @@ void exec_line (char *line, PRN *prn)
 	break;
     }
 
-    if (is_model_cmd(command.cmd) && !err) {
+    if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7)) 
+	&& !err) { 
 	int m = model_count;
 
 	if (modelspec == NULL) 
@@ -1410,8 +1412,10 @@ void exec_line (char *line, PRN *prn)
 
 	modelspec[m-1].cmd = malloc(MAXLEN);
 	modelspec[m-1].subdum = NULL;
+
 	modelspec[m].cmd = NULL;
 	modelspec[m].subdum = NULL;
+
 	if (fullZ != NULL) {
 	    fullinfo->varname = datainfo->varname;
 	    fullinfo->label = datainfo->label;

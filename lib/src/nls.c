@@ -322,7 +322,9 @@ static int add_std_errs_to_model (MODEL *pmod)
 
     for (i=1; i<=pmod->ncoeff; i++) {
 	k = ijton(i, i, pmod->ncoeff);
-	pmod->sderr[i] = sqrt(pmod->vcv[k]);
+	if (pmod->vcv[k] == 0.0) pmod->sderr[i] = 0.0;
+	else if (pmod->vcv[k] > 0.0) pmod->sderr[i] = sqrt(pmod->vcv[k]);
+	else pmod->sderr[i] = NADBL;
     }
 
     return 0;

@@ -578,14 +578,21 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 
 static void outxx (const double xx, int ci, PRN *prn)
 {
-    if (ci == CORR) {
-	if (na(xx)) pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), 
-			    _("undefined"));
-	else pprintf(prn, " %13.4f", xx);
-    } else {
-	if (xx > -0.001 && xx < 0.001)
+    if (isnan(xx) || na(xx)) { 
+	    pprintf(prn, " %*s", UTF_WIDTH(_("undefined"), 13), 
+		    _("undefined"));
+    }
+	
+    else if (ci == CORR) {
+	pprintf(prn, " %13.4f", xx);
+    }
+
+    else {
+	if (xx > -0.001 && xx < 0.001) {
 	    pprintf(prn, " %13e", xx);
-	else pprintf(prn, " %13g", xx);
+	} else {
+	    pprintf(prn, " %13g", xx);
+	}
     }
 }
 

@@ -154,16 +154,24 @@ static int tex_greek_param (char *targ, const char *src)
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int c, PRN *prn)
 {
-    char tmp[16], coeff[32], sderr[32], tratio[64], pval[64];
+    char tmp[16], coeff[64], sderr[64], tratio[64], pval[64];
 
-    if (pmod->sderr[c-1] > 0.0) {
+    if (isnan(pmod->coeff[c-1]) || na(pmod->coeff[c-1])) {
+	sprintf(coeff, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    } else {
+	tex_dcolumn_double(pmod->coeff[c-1], coeff);
+    }
+
+    if (isnan(pmod->sderr[c-1]) || na(pmod->sderr[c-1])) {
+	sprintf(sderr, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    } else {
+	tex_dcolumn_double(pmod->sderr[c-1], sderr);
 	sprintf(tratio, "%.4f", pmod->coeff[c-1] / pmod->sderr[c-1]);
 	sprintf(pval, "%.4f", tprob(pmod->coeff[c-1] / pmod->sderr[c-1], 
 				    pmod->dfd));
-    } else {
-	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
-    }
+    }    
 
     *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
@@ -176,9 +184,6 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }
 	
-    tex_dcolumn_double(pmod->coeff[c-1], coeff);
-    tex_dcolumn_double(pmod->sderr[c-1], sderr);
-
     if (pmod->ci != LOGIT && pmod->ci != PROBIT) {
 	pprintf(prn, "%s &\n"
 		"  %s &\n"

@@ -167,7 +167,7 @@
       Specifically, the following <application>minpack</application>
       functions are called:</para>
 
-    <informaltable>
+    <informaltable frame="none">
       <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	<tbody>
 	  <row>
@@ -273,7 +273,16 @@
       certified value, for that run. The table shows both the average
       and the worst case value of this variable across all the runs
       that produced a solution.  The same information is shown for the
-      estimated standard errors.</para>
+      estimated standard errors.<footnote><para>For the standard
+	  errors, I excluded one outlier from the statistics shown in the
+	  table, namely <filename>Lanczos1</filename>.  This is an odd
+	  case, using generated data with an almost-exact fit: the
+	  standard errors are 9 or 10 orders of magnitude smaller than
+	  the coefficients.  In this instance
+	  <application>gretl</application> could reproduce the
+	  certified standard errors to only 3 figures (analytical
+	  derivatives) and 2 figures (numerical derivatives).</para>
+      </footnote></para>
       
     <para>
       The second measure of accuracy shown is the percentage of cases,
@@ -296,47 +305,47 @@
         <tbody>
           <row>
 	    <entry>Failures in 54 tests</entry>
-	    <entry>4</entry>
-	    <entry>5</entry>
+	    <entry align="center">4</entry>
+	    <entry align="center">5</entry>
 	  </row>
           <row>
 	    <entry>Average iterations</entry>
-	    <entry>32</entry>
-	    <entry>127</entry>
+	    <entry align="center">32</entry>
+	    <entry align="center">127</entry>
 	  </row>
           <row>
 	    <entry>Avg. of min. correct figures, parameters</entry>
-	    <entry>8.120</entry>
-	    <entry>6.980</entry>
+	    <entry align="center">8.120</entry>
+	    <entry align="center">6.980</entry>
 	  </row>
           <row>
 	    <entry>Worst of min. correct figures, parameters</entry>
-	    <entry>4</entry>
-	    <entry>3</entry>
+	    <entry align="center">4</entry>
+	    <entry align="center">3</entry>
 	  </row>
           <row>
 	    <entry>Avg. of min. correct figures, standard
 	      errors</entry>
-	    <entry>8.500</entry>
-	    <entry>6.204</entry>
+	    <entry align="center">8.000</entry>
+	    <entry align="center">5.673</entry>
 	  </row>
           <row>
 	    <entry>Worst of min. correct figures, standard
 	      errors</entry>
-	    <entry>5</entry>
-	    <entry>2</entry>
+	    <entry align="center">5</entry>
+	    <entry align="center">2</entry>
 	  </row>
           <row>
 	    <entry>Percent correct to at least 6 figures,
 	      parameters</entry>
-	    <entry>96.5</entry>
-	    <entry>91.9</entry>
+	    <entry align="center">96.5</entry>
+	    <entry align="center">91.9</entry>
 	  </row>
           <row>
 	    <entry>Percent correct to at least 6 figures, standard
 	      errors</entry>
-	    <entry>97.8</entry>
-	    <entry>78.5</entry>
+	    <entry align="center">97.7</entry>
+	    <entry align="center">77.3</entry>
 	  </row>
 	</tbody>
       </tgroup>

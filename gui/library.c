@@ -4511,7 +4511,8 @@ static int gui_exec_line (char *line,
 	    pprintf(prn, _("Couldn't format model\n"));
 	    break;
 	}
-	if ((err = script_model_test(0, prn, 1))) break;
+	if ((err = script_model_test(0, prn, (command.ci == EQNPRINT)))) 
+	    break;
 	if (command.ci == EQNPRINT)
 	    err = eqnprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);
@@ -5077,8 +5078,10 @@ static int gui_exec_line (char *line,
 	}
     }
 
-    if (is_model_cmd(command.cmd) && !err) 
+    if ((is_model_cmd(command.cmd) || !strncmp(line, "end nls", 7))
+	&& !err) {
 	err = stack_model(0);
+    }
 		
     if (err) return 1;
     else return 0;
