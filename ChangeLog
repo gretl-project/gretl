@@ -13,6 +13,8 @@ version 1.0.6
   data under a different name in non-English versions on Linux
 - add new commands, "system" (supports SUR) and "coint2" 
   (Johansen trace test for cointegration)
+- add robust LM test for use with add/omit variables in relation
+  to a model estimated using hccm
 
 02/20/03 version 1.0.5
 - fix missing translations; fix build of rpm
