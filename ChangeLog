@@ -1,3 +1,7 @@
+version 0.996
+- closing a session clears the selector dialog presets
+
+
 05/15/2002 version 0.995
 - Raise library version to 13.0.0
 - numerous small updates to facilitate internationalization

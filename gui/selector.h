@@ -37,6 +37,8 @@ typedef struct {
     gpointer data;
 } selector;
 
+void clear_selector (void);
+
 void selection_dialog (const char *title, const char *oktxt, 
 		       void (*okfunc)(), guint cmdcode);
 

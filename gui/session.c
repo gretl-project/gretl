@@ -20,6 +20,7 @@
 /* session.c for gretl */
 
 #include "gretl.h"
+#include "selector.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -427,6 +428,7 @@ void close_session (void)
 	gtk_widget_destroy(iconview);
     session_changed(0);
     winstack_destroy();
+    clear_selector();
 }
 
 /* ........................................................... */

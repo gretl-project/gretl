@@ -28,6 +28,15 @@ static int default_var;
 static int *xlist;
 static int *instlist;
 
+void clear_selector (void)
+{
+    default_var = 0;
+    free(xlist);
+    xlist = NULL;
+    free(instlist);
+    instlist = NULL;
+}
+
 static gint list_sorter (gconstpointer a, gconstpointer b)
 {
     return GPOINTER_TO_INT(b) - GPOINTER_TO_INT(a);
