@@ -17,8 +17,7 @@ LIBOLE2_CFLAGS = @LIBOLE2_CFLAGS@
 LIBOLE2_LIBS = @LIBOLE2_LIBS@
 GMP_CFLAGS = @GMP_CFLAGS@
 GMP_LIBS = @GMP_LIBS@
-GSL_CFLAGS = @GSL_CFLAGS@
-GSL_LIBS = @GSL_LIBS@
+LAPACK_LIBS = @LAPACK_LIBS@
 HAVE_X12A = @HAVE_X12A@
 HAVE_TRAMO = @HAVE_TRAMO@
 
@@ -55,8 +54,10 @@ ifdef GMP_LIBS
   PLUGINS += mp_ols.so
 endif
 
-ifdef GSL_LIBS
-  PLUGINS += gretl_gsl.so
+ifdef LAPACK_LIBS
+  PLUGINS += sur.so
+  PLUGINS += johansen.so
+  LAPACK_CFLAGS = -I.
 endif
 
 ifeq ($(HAVE_TRAMO),1)
@@ -102,8 +103,11 @@ excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
 
-gretl_gsl.so: gretl_gsl.lo
-	$(LINK) -o $@ $< $(GRETLLIB) $(GSL_LIBS)
+johansen.so: johansen.lo gretl_matrix.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+sur.so: sur.lo gretl_matrix.lo
+	$(LINK) -o $@ $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 stats_tables.lo: stats_tables.c
 	$(COMPILE) $(GRETLINC) $< 
@@ -141,8 +145,14 @@ ms-ole.lo: ms-ole.c ms-ole.h
 mp_ols.lo: mp_ols.c
 	$(COMPILE) $(GRETLINC) $(GMP_CFLAGS) $<
 
-gretl_gsl.lo: gretl_gsl.c
-	$(COMPILE) $(GRETLINC) $(GSL_CFLAGS) $<
+gretl_matrix.lo: gretl_matrix.c
+	$(COMPILE) $(GRETLINC) $(LAPACK_CFLAGS) $<
+
+johansen.lo: johansen.c
+	$(COMPILE) $(GRETLINC) $<
+
+sur.lo: sur.c
+	$(COMPILE) $(GRETLINC) $<
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

@@ -899,9 +899,9 @@ grab_eigenvals (const double **X, const double **Y, const double **Z,
 		     int, double *);
     int err = 0;
     
-    if (open_plugin("gretl_gsl", &handle)) {
+    if (open_plugin("johansen", &handle)) {
         err = 1;
-        strcpy(gretl_errmsg, _("Couldn't access GSL plugin"));
+        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
         goto system_bailout;
     }
 
@@ -1045,7 +1045,7 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 #endif
 
-	/* now get GSL to find the eigenvalues (put into v) */
+	/* now get LAPACK to find the eigenvalues (put into v) */
 	evals = malloc(k * sizeof *evals);
 	err = grab_eigenvals((const double **) Suu, 
 			     (const double **) Svv, 

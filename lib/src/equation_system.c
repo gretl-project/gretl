@@ -166,9 +166,9 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	goto system_bailout;
     }
 
-    if (open_plugin("gretl_gsl", &handle)) {
+    if (open_plugin("sur", &handle)) {
 	err = 1;
-	strcpy(gretl_errmsg, _("Couldn't access GSL plugin"));
+	strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
 	goto system_bailout;
     }
 
