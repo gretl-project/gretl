@@ -1,12 +1,11 @@
-<!DOCTYPE book SYSTEM "/usr/share/sgml/docbook-4.1/docbook.dtd"[
-<!ENTITY % texmath SYSTEM "./dbtexmath.dtd">
+<!DOCTYPE book PUBLIC "-//UNREGISTERED//DTD DocBook TeXMath Module V0.1//EN"
+                      "dbtexmath.dtd"[
 <!ENTITY version "0.96">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
 <!ENTITY cmdcol "82pt">
 <!ENTITY rsqu "<emphasis>R</emphasis><superscript>2</superscript>">
-%texmath;
 ]>
 
 <!-- =============Document Header ============================= -->
