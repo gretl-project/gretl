@@ -134,7 +134,7 @@ typedef struct
 #define UNK 1
 
 /* If you define UNK, then be sure to set BIGENDIAN properly. */
-#ifdef FLOAT_WORDS_BIGENDIAN
+#ifdef WORDS_BIGENDIAN
 #define BIGENDIAN 1
 /* #else */
 /* #define BIGENDIAN 0 */

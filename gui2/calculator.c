@@ -274,7 +274,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	    return;
 	}
 	xx /= val; 
-	sprintf(cmd, "pvalue 1 %f", xx);
+	sprintf(cmd, "pvalue 1 %g", xx);
 	break;
     case 1: /* t */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
@@ -298,7 +298,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	    return;
 	}
 	xx /= val; 
-	sprintf(cmd, "pvalue 2 %d %f", df, xx);
+	sprintf(cmd, "pvalue 2 %d %g", df, xx);
 	break;
 
     case 2: /* chi-square */

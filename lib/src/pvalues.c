@@ -128,6 +128,11 @@ double normal (double x)
     return 1.0 - ndtr(x);
 }
 
+static double pval_normal (double x)
+{
+    return ndtr(x);
+}
+
 /**
  * batch_pvalue:
  * @str: the command line, which should be of one of the following forms:
@@ -222,14 +227,14 @@ double batch_pvalue (const char *str,
     case 'z':
     case 'n':
 	tmp = xval;
-	if (xval < 0.0) tmp = -1.0 * xval;
-	xx = normal(tmp);
+	if (xval > 0.0) tmp = -tmp;
+	xx = pval_normal(tmp);
 	if (xx < 0) {
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}	
 	pprintf(prn, _("\nStandard normal: area to the %s "
-		"of %f = %.4g\n"), (xval > 0)? _("right"): _("left"), 
+		"of %g = %.4g\n"), (xval > 0)? _("right"): _("left"), 
 		xval, xx);
 	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
 		2.0 * xx, 1.0 - 2.0 * xx);
@@ -246,7 +251,7 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nt(%d): area to the %s of %f = %.4g\n"), 
+	pprintf(prn, _("\nt(%d): area to the %s of %g = %.4g\n"), 
 		df1, (xval > 0)? _("right"): _("left"),
 		xval, 0.5 * xx);
 	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
@@ -266,7 +271,7 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nChi-square(%d): area to the right of %f = %.4g\n"), 
+	pprintf(prn, _("\nChi-square(%d): area to the right of %g = %.4g\n"), 
 		df1, xval, xx);
 	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
 	return xx;
@@ -283,7 +288,7 @@ double batch_pvalue (const char *str,
 	    pputs(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, _("\nF(%d, %d): area to the right of %f = %.4g\n"), 
+	pprintf(prn, _("\nF(%d, %d): area to the right of %g = %.4g\n"), 
 		df1, df2, xval, xx);
 	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
 	return xx;
