@@ -3048,11 +3048,21 @@ static int write_xmldata (const char *fname, const int *list,
 	}
 	if (!pdinfo->vector[list[i]]) {
 	    if (opt) { 
-		gzprintf(fz, "\n role=\"scalar\" value=\"%.*g\"",
-			 pmax[i-1], Z[list[i]][0]);
+		if (pmax[i-1] == 999) {
+		    gzprintf(fz, "\n role=\"scalar\" value=\"%.10g\"",
+			     Z[list[i]][0]);
+		} else {
+		    gzprintf(fz, "\n role=\"scalar\" value=\"%.*g\"",
+			     pmax[i-1], Z[list[i]][0]);
+		}
 	    } else {
-		fprintf(fp, "\n role=\"scalar\" value=\"%.*g\"",
-			 pmax[i-1], Z[list[i]][0]);
+		if (pmax[i-1] == 999) {
+		    fprintf(fp, "\n role=\"scalar\" value=\"%.10g\"",
+			    Z[list[i]][0]);
+		} else {
+		    fprintf(fp, "\n role=\"scalar\" value=\"%.*g\"",
+			    pmax[i-1], Z[list[i]][0]);
+		}
 	    }
 	}
 	if (*VARLABEL(pdinfo, list[i])) {

@@ -1,3 +1,6 @@
+version 1.1.1
+- Fix "pmax" bug in printing of actual, fitted and residuals
+
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display
   names" for variables (these are shown in graphs)

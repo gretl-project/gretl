@@ -1273,12 +1273,20 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	    xx = fr->actual[t] - fr->fitted[t];
 	    ast = (fabs(xx) > 2.5 * fr->sigma);
 	    if (ast) anyast = 1;
-	    pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
-		    fr->pmax, fr->actual[t],
-		    fr->pmax, fr->fitted[t], fr->pmax, xx,
-		    (ast)? " *" : "");
+	    if (fr->pmax != 999) {
+		pprintf(prn, "%13.*f%13.*f%13.*f%s\n", 
+			fr->pmax, fr->actual[t],
+			fr->pmax, fr->fitted[t], fr->pmax, xx,
+			(ast)? " *" : "");
+	    } else {
+		pprintf(prn, "%13g%13g%13g%s\n", 
+			fr->actual[t],
+			fr->fitted[t], xx,
+			(ast)? " *" : "");
+	    }
 	}
     }
+
     pputs(prn, "\n");
     if (anyast) pputs(prn, _("Note: * denotes a residual in excess of "
 			       "2.5 standard errors\n"));

@@ -700,6 +700,7 @@ int main (int argc, char *argv[])
     tryscript[0] = '\0';
     scriptfile[0] = '\0';
     paths.datfile[0] = '\0';
+    dbname[0] = '\0';
 
     /* Initialize gnome or GTK */
 #ifdef USE_GNOME
