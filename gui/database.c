@@ -664,7 +664,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     gtk_signal_connect (GTK_OBJECT(closebutton), "clicked", 
 			GTK_SIGNAL_FUNC(delete_widget), dbwin->w);
 
-    gtk_signal_connect (GTK_OBJECT(view), "key_press_event",
+    gtk_signal_connect (GTK_OBJECT(dbwin->w), "key_press_event",
 			GTK_SIGNAL_FUNC(catch_listbox_key),
 			dbwin);
 
