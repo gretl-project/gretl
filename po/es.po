@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.999\n"
 "POT-Creation-Date: 2002-08-07 15:47-0400\n"
-"PO-Revision-Date: 2002-08-07 15:56-0400\n"
+"PO-Revision-Date: 2002-08-11 13:31-0400\n"
 "Last-Translator: \n"
 "Language-Team:  <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -4744,7 +4744,7 @@ msgstr "Abrir fichero Excel"
 
 #: gui/callbacks.c:122
 msgid "Open Wooldridge file"
-msgstr "Abrir"
+msgstr "Abrir fichero de Wooldridge"
 
 #: gui/callbacks.c:135
 msgid "Open script file"
@@ -6006,7 +6006,7 @@ msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
 
 #: gui/gretl.c:209
 msgid "/File/Open data/sample file/Wooldridge..."
-msgstr "Fichero Abrir."
+msgstr "/Archivo/Abrir datos/archivo de muestra/Wooldridge..."
 
 #: gui/gretl.c:211
 msgid "/File/Open data/sample file/Penn World Table..."
