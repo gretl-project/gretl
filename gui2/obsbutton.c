@@ -1052,14 +1052,23 @@ obs_button_default_input (ObsButton *obs_button,
 	return FALSE;
 }
 
+extern gboolean update_obs_label (GtkEditable *entry, gpointer data);
+
 static gint
 obs_button_default_output (ObsButton *obs_button)
 {
     gchar buf[9];
+    gpointer data;
+
     ntodate(buf, (int) obs_button->adjustment->value, datainfo);
 
     if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
 	gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
+
+    data = g_object_get_data(G_OBJECT(obs_button), "rset");
+    if (data != NULL) {
+	update_obs_label(NULL, data);
+    }
 
     return FALSE;
 }
@@ -1204,7 +1213,6 @@ obs_button_get_shadow_type (ObsButton *spin_button)
 void 
 obs_button_update (ObsButton *obs_button)
 {
-    
     gdouble val;
     gint error = 0;
     gint return_val;
@@ -1221,9 +1229,9 @@ obs_button_update (ObsButton *obs_button)
     else if (val > obs_button->adjustment->upper)
 	val = obs_button->adjustment->upper;
 
-    if (fabs (val - obs_button->adjustment->value) > EPSILON)
+    if (fabs(val - obs_button->adjustment->value) > EPSILON) {
 	gtk_adjustment_set_value (obs_button->adjustment, val);
-    else {
+    } else {
 	obs_button_default_output (obs_button);
     }
 }

@@ -871,19 +871,32 @@ obs_button_timer (ObsButton *obs_button)
   return retval;
 }
 
+extern gboolean update_obs_label (GtkEditable *entry, gpointer data);
+
+static void default_output (ObsButton *obs_button)
+{
+    char buf[9];
+    gpointer data;
+
+    ntodate(buf, (int) obs_button->adjustment->value, datainfo);
+
+    if (strcmp (buf, gtk_entry_get_text(GTK_ENTRY(obs_button)))) {
+	gtk_entry_set_text(GTK_ENTRY(obs_button), buf);
+	data = gtk_object_get_data(GTK_OBJECT(obs_button), "rset");
+	if (data != NULL) {
+	    update_obs_label(NULL, data);
+	}
+    }
+}
+
 static void
 obs_button_value_changed (GtkAdjustment *adjustment,
 			  ObsButton *obs_button)
 {
-  char buf[9];
-
   g_return_if_fail (adjustment != NULL);
   g_return_if_fail (GTK_IS_ADJUSTMENT (adjustment));
 
-  ntodate(buf, (int) obs_button->adjustment->value, datainfo);
-  
-  if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
-      gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
+  default_output(obs_button);
 
   obs_button_draw_arrow (obs_button, GTK_ARROW_UP);
   obs_button_draw_arrow (obs_button, GTK_ARROW_DOWN);
@@ -1018,11 +1031,7 @@ obs_button_update (ObsButton *obs_button)
     if (fabs (val - obs_button->adjustment->value) > EPSILON)
 	gtk_adjustment_set_value (obs_button->adjustment, val);
     else {
-	char buf[9];
-
-	ntodate(buf, (int) obs_button->adjustment->value, datainfo);
-	if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
-	    gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
+	default_output(obs_button);
     }
 }
 
@@ -1156,19 +1165,13 @@ void
 obs_button_set_value (ObsButton *obs_button, 
 		      gfloat         value)
 {
-  g_return_if_fail (obs_button != NULL);
-  g_return_if_fail (GTK_IS_OBS_BUTTON (obs_button));
+    g_return_if_fail (obs_button != NULL);
+    g_return_if_fail (GTK_IS_OBS_BUTTON (obs_button));
 
-  if (fabs (value - obs_button->adjustment->value) > EPSILON)
-    gtk_adjustment_set_value (obs_button->adjustment, value);
-  else
-    {
-      char buf[9];
-
-      ntodate(buf, (int) obs_button->adjustment->value, datainfo);
-      if (strcmp (buf, gtk_entry_get_text (GTK_ENTRY (obs_button))))
-        gtk_entry_set_text (GTK_ENTRY (obs_button), buf);
-    }
+    if (fabs (value - obs_button->adjustment->value) > EPSILON)
+	gtk_adjustment_set_value (obs_button->adjustment, value);
+    else
+	default_output(obs_button);
 }
 
 gfloat

@@ -1436,38 +1436,9 @@ void varinfo_dialog (int varnum, int full)
 
 /* apparatus for setting sample range */
 
-enum {
-    GET_WIDTH,
-    GET_HEIGHT
-};
-
-static int char_size (int which)
-{
-    static int cw = 0;
-    static int ch = 0;
-    int *k;
-
-    k = (which == GET_WIDTH)? &cw : &ch;
-
-    if (*k == 0) {
-	GtkStyle *style = gtk_rc_get_style(mdata->w);
-
-	if (style != NULL && style->font != NULL) {
-	    if (which == GET_WIDTH) {
-		cw = gdk_char_width(style->font, 'x');
-	    } else {
-		ch = gdk_char_height(style->font, 'X');
-	    }
-	} else {
-	    *k = (which == GET_WIDTH)? 10 : 20;
-	}
-    }
-
-    return *k;
-}
-
 struct range_setting {
     GtkWidget *dlg;
+    GtkWidget *obslabel;
     GtkWidget *startspin;
     GtkWidget *endspin;
     GtkWidget *combo;
@@ -1553,10 +1524,40 @@ static GList *get_dummy_list (int *thisdum)
     return dumlist;
 }
 
+gboolean update_obs_label (GtkEditable *entry, gpointer data)
+{
+    struct range_setting *rset = (struct range_setting *) data;
+    char obstext[32];
+    int nobs = 0;
+
+    if (entry != NULL) {
+	const gchar *vname = gtk_entry_get_text(GTK_ENTRY(entry));
+
+	if (*vname != '\0') {
+	    int v = varindex(datainfo, vname);
+
+	    nobs = isdummy(Z[v], 0, datainfo->n - 1);
+	}
+    } else {
+	int t1 = (int) obs_button_get_value(OBS_BUTTON(rset->startspin));
+	int t2 = (int) obs_button_get_value(OBS_BUTTON(rset->endspin));
+
+	nobs = t2 - t1 + 1;  
+    }
+    
+    if (nobs > 0) {
+	sprintf(obstext, _("Observations: %d"), nobs);  
+	gtk_label_set_text(GTK_LABEL(rset->obslabel), obstext); 
+    }   
+
+    return FALSE;
+}
+
 void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tempwid, *hbox;
     struct range_setting *rset;
+    char obstext[32];
 
     rset = mymalloc(sizeof *rset);
     if (rset == NULL) return;
@@ -1600,9 +1601,10 @@ void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
 			       datainfo->varname[mdata->active_var]);
 	}
-	gtk_widget_set_usize(GTK_COMBO(rset->combo)->entry, 
-			     8 * char_size(GET_WIDTH), 2 + char_size(GET_HEIGHT));
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
+	gtk_signal_connect(GTK_OBJECT(GTK_COMBO(rset->combo)->entry), "changed",
+			   GTK_SIGNAL_FUNC(update_obs_label), rset);
+
 	hbox = gtk_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
@@ -1649,7 +1651,21 @@ void set_sample_dialog (gpointer p, guint u, GtkWidget *w)
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
     }
-    
+
+    /* label showing number of observations */
+    sprintf(obstext, _("Observations: %d"), datainfo->t2 - datainfo->t1 + 1);
+    rset->obslabel = gtk_label_new(obstext);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       rset->obslabel, FALSE, FALSE, 5);
+
+    if (rset->combo == NULL) {
+	gtk_object_set_data(GTK_OBJECT(rset->startspin), "rset", rset);
+	gtk_object_set_data(GTK_OBJECT(rset->endspin), "rset", rset);
+    } else {
+	update_obs_label(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry),
+			 rset);
+    }
+   
     /* Create the "OK" button */
     tempwid = gtk_button_new_with_label (_("OK"));
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
