@@ -1180,20 +1180,42 @@ void write_rc (void)
 
 static int get_network_settings (void)
 {
+    char inifile[FILENAME_MAX];
     LPWSTR *args;
     int nargs;
     gchar *msg;
+
+    *inifile = '\0';
 
     args = CommandLineToArgvW("", &nargs);
     if (args == NULL) {
 	errbox("get_network_settings: args = NULL");
     } else {
 	gchar *msg;
+	const char *prog, *p;
+	int n;
     
 	msg = g_strdup_printf("get_network_settings: args[0] = '%s',"
-			  "nargs = %d", args[0], nargs);
+			      "nargs = %d", args[0], nargs);
 	infobox(msg);
 	g_free(msg);
+
+	prog = args[0];
+	n = strlen(prog) - 1;
+	p = prog + n;
+	while (p - prog >= 0) {
+	    if (*p == '\\' || *p == '/') {
+		strncpy(inifile, prog, n - strlen(p));
+		strcat(inifile, "\\gretl.rc");
+		break;
+	    }
+	    p--;
+	}
+
+	msg = g_strdup_printf("inifile = '%s'", inifile);
+	infobox(msg);
+	g_free(msg);	
+
 	GlobalFree(args);
     }
 
@@ -1206,7 +1228,7 @@ void read_rc (void)
     char rpath[MAXSTR], value[MAXSTR];
     int err;
 
-    /* experiment*/
+    /* experiment */
     get_network_settings();
 
     while (rc_vars[i].key != NULL) {
