@@ -134,6 +134,10 @@ int multi_scatters (const LIST list, int pos,
 		    PATHS *ppaths, int *plot_count, 
 		    unsigned char flags);
 
+int gnuplot_3d (LIST list, const char *literal,
+		double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+		int *plot_count, unsigned char flags);
+
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp);

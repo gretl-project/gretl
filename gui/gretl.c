@@ -337,6 +337,8 @@ GtkItemFactoryEntry data_items[] = {
       NULL, gretl_callback, GR_BOX, NULL },
     { N_("/Data/Graph specified vars/Notched boxplots..."), 
       NULL, gretl_callback, GR_NBOX, NULL },
+    { N_("/Data/Graph specified vars/3D plot..."), 
+      NULL, selector_callback, GR_3D, NULL },
     { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL},
     { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>" },

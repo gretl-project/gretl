@@ -3275,6 +3275,60 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
+#ifndef G_OS_WIN32
+# include <signal.h>
+#endif
+
+void do_splot_from_selector (GtkWidget *widget, gpointer p)
+{
+    selector *sr = (selector *) p;
+    char *buf;
+    gint err;
+
+    buf = sr->cmdlist;
+    if (*buf == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "gnuplot %s", buf);
+
+    if (check_cmd(line)) return;
+
+    err = gnuplot_3d(command.list, NULL, &Z, datainfo,
+		     &paths, &plot_count, GP_GUI);
+
+    if (err == -999) {
+	errbox(_("No data were available to graph"));
+    } else if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+#ifdef G_OS_WIN32
+	gchar *cmdline;
+
+	g_strdup_printf(cmdline, "\"%s\" \"%s\" -", paths.gnuplot,
+			paths.plotfile);
+	create_child_process(cmdline, NULL);
+	g_free(cmdline);
+#else
+	pid_t pid;
+
+	signal(SIGCHLD, SIG_IGN);
+	pid = fork();
+	if (pid == -1) {
+	    errbox(_("Couldn't fork"));
+	    perror("fork");
+	    return;
+	} else if (pid == 0) {
+	    execlp("xterm", "xterm", "-e", paths.gnuplot, 
+		   paths.plotfile, "-", NULL);
+	    perror("execlp");
+	    _exit(EXIT_FAILURE);
+	}
+#endif
+    }
+}
+
+/* ........................................................... */
+
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 {
     char *liststr;

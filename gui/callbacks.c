@@ -370,7 +370,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
     }
 
     if (action == GR_XY || action == GR_IMP || action == GR_DUMMY
-	|| action == SCATTERS) {
+	|| action == SCATTERS || action == GR_3D) {
 	switch (action) {
 	case GR_XY:
 	case GR_IMP:
@@ -381,6 +381,9 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 	    break;
 	case SCATTERS:
 	    okfunc = do_scatters;
+	    break;
+	case GR_3D:
+	    okfunc = do_splot_from_selector;
 	    break;
 	default:
 	    return;

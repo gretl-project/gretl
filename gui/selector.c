@@ -234,7 +234,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
     gtk_clist_unselect_all(GTK_CLIST(sr->varlist));
     if (sr->depvar != NULL) 
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-    if (sr->code == GR_DUMMY)
+    if (sr->code == GR_DUMMY || sr->code == GR_3D)
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
     else
 	gtk_clist_clear(GTK_CLIST(sr->rightvars));
@@ -249,6 +249,7 @@ static void topslot_empty (int code)
 {
     switch (code) {
     case GR_XY:
+    case GR_3D:
     case GR_IMP:
 	errbox(_("You must select an X-axis variable"));
 	break;
@@ -293,7 +294,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     if (sr->cmdlist == NULL) return;
     sr->cmdlist[0] = 0;
 
-    if (sr->code != GR_DUMMY)
+    if (sr->code != GR_DUMMY && sr->code != GR_3D)
 	rows = GTK_CLIST(sr->rightvars)->rows;
 
     /* first deal with content of "extra" widget */
@@ -329,7 +330,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	sprintf(numstr, "%d ", i);
 	strcat(sr->cmdlist, numstr);
     }
-    else if (sr->code == GR_DUMMY) {
+    else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
 	if (str == NULL || !strlen(str)) {
@@ -351,9 +352,9 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->depvar)));
-	    if (sr->code == GR_XY || sr->code == GR_IMP)
+	    if (sr->code == GR_XY || sr->code == GR_IMP) {
 		sprintf(grvar, " %d", i);
-	    else {
+	    } else {
 		sprintf(numstr, "%d", i);
 		strcat(sr->cmdlist, numstr);
 	    }
@@ -372,11 +373,15 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 
     if (sr->code == SCATTERS) strcat(sr->cmdlist, ";");
 
-    if (sr->code == GR_DUMMY) { /* special case */
+    if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special cases */
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
 
-	if (str == NULL || !strlen(str)) {
-	    errbox(_("You must select a factor variable"));
+	if (str == NULL || !*str) {
+	    if (sr->code == GR_3D) {
+		errbox(_("You must select a Z-axis variable"));
+	    } else {
+		errbox(_("You must select a factor variable"));
+	    }	    
 	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(gtk_object_get_user_data(GTK_OBJECT(sr->rightvars)));
@@ -499,6 +504,7 @@ static char *extra_string (int cmdnum)
     case AR:
 	return N_("List of AR lags");
     case GR_DUMMY:
+    case GR_3D:
 	return N_("Y-axis variable");
     default:
 	return NULL;
@@ -793,7 +799,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == GR_DUMMY) 
+    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) 
 	extra_var_box (sr, right_vbox);
     else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2)
 	lag_order_spin (sr, right_vbox);
@@ -924,6 +930,8 @@ void selection_dialog (const char *title, const char *oktxt,
 	strcpy(topstr, _("XY scatterplot"));
     else if (cmdcode == GR_IMP)
 	strcpy(topstr, _("plot with impulses"));
+    else if (cmdcode == GR_3D)
+	strcpy(topstr, _("3D plot"));
     else if (cmdcode == SCATTERS)
 	strcpy(topstr, _("multiple scatterplots"));
     else if (cmdcode == GR_DUMMY)
@@ -982,13 +990,13 @@ void selection_dialog (const char *title, const char *oktxt,
 	build_depvar_section(sr, right_vbox);
     /* graphs: top right -> x-axis variable */
     else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	     || cmdcode == SCATTERS)
+	     || cmdcode == SCATTERS || cmdcode == GR_3D)
 	build_x_axis_section(sr, right_vbox);
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 ||
-	cmdcode == GR_DUMMY) 
+	cmdcode == GR_DUMMY || cmdcode == GR_3D) 
 	build_mid_section(sr, right_vbox);
     
     /* lower right: selected (independent) variables */
@@ -1000,6 +1008,8 @@ void selection_dialog (const char *title, const char *oktxt,
 	scatters_label = tmp = gtk_label_new(_("X-axis variables"));
     } else if (cmdcode == GR_DUMMY) {
 	tmp = gtk_label_new(_("Factor (dummy)"));
+    } else if (cmdcode == GR_3D) {
+	tmp = gtk_label_new(_("Z-axis variable"));
     }
     
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
@@ -1007,7 +1017,7 @@ void selection_dialog (const char *title, const char *oktxt,
 
     indepvar_hbox = gtk_hbox_new(FALSE, 5);
 
-    if (cmdcode == GR_DUMMY) {
+    if (cmdcode == GR_DUMMY || cmdcode == GR_3D) {
 	dummy_box(sr, indepvar_hbox);
     } else { /* all other uses: scrollable list of vars */
 

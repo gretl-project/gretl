@@ -162,6 +162,8 @@ void do_scatters (GtkWidget *widget, gpointer p);
 
 void do_graph_from_selector (GtkWidget *widget, gpointer p);
 
+void do_splot_from_selector (GtkWidget *widget, gpointer p);
+
 void plot_from_selection (gpointer data, guint action, GtkWidget *widget);
 
 void do_box_graph (GtkWidget *widget, gpointer p);

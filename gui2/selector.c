@@ -435,7 +435,7 @@ static void clear_vars (GtkWidget *w, selector *sr)
 
     if (sr->depvar != NULL) 
 	gtk_entry_set_text(GTK_ENTRY(sr->depvar), "");
-    if (sr->code == GR_DUMMY)
+    if (sr->code == GR_DUMMY || sr->code == GR_3D)
 	gtk_entry_set_text(GTK_ENTRY(sr->rightvars), "");
     else
 	clear_varlist(sr->rightvars);
@@ -456,6 +456,7 @@ static void topslot_empty (int code)
 {
     switch (code) {
     case GR_XY:
+    case GR_3D:
     case GR_IMP:
 	errbox(_("You must select an X-axis variable"));
 	break;
@@ -517,7 +518,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 
     sr->cmdlist[0] = 0;
 
-    if (sr->code != GR_DUMMY) {
+    if (sr->code != GR_DUMMY && sr->code != GR_3D) {
 	rows = varlist_row_count(sr->rightvars);
     }
 
@@ -554,7 +555,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	sprintf(numstr, "%d ", i);
 	strcat(sr->cmdlist, numstr);
     }
-    else if (sr->code == GR_DUMMY) {
+    else if (sr->code == GR_DUMMY || sr->code == GR_3D) {
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->extra));
 
 	if (str == NULL || !strlen(str)) {
@@ -597,11 +598,15 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	strcat(sr->cmdlist, ";");
     }
 
-    if (sr->code == GR_DUMMY) { /* special case */
+    if (sr->code == GR_DUMMY || sr->code == GR_3D) { /* special case */
 	const gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->rightvars));
 
-	if (str == NULL || !strlen(str)) {
-	    errbox(_("You must select a factor variable"));
+	if (str == NULL || !*str) {
+	    if (sr->code == GR_3D) {
+		errbox(_("You must select a Z-axis variable"));
+	    } else {
+		errbox(_("You must select a factor variable"));
+	    }
 	    sr->error = 1;
 	} else {
 	    i = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(sr->rightvars), 
@@ -745,6 +750,7 @@ static char *extra_string (int cmdnum)
     case AR:
 	return N_("List of AR lags");
     case GR_DUMMY:
+    case GR_3D:
 	return N_("Y-axis variable");
     default:
 	return NULL;
@@ -924,6 +930,13 @@ static void dummy_box (selector *sr, GtkWidget *vbox)
 						  set_factor_callback);
 }
 
+static void zvar_box (selector *sr, GtkWidget *vbox)
+{
+    sr->rightvars = entry_with_label_and_chooser (sr, vbox,
+						  _("Z-axis variable"), 0,
+						  set_factor_callback);
+}
+
 static void extra_var_box (selector *sr, GtkWidget *vbox)
 {
     sr->extra = entry_with_label_and_chooser (sr, vbox,
@@ -996,7 +1009,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 	gtk_widget_show(tmp);
     }	
 
-    if (sr->code == WLS || sr->code == GR_DUMMY) 
+    if (sr->code == WLS || sr->code == GR_DUMMY || sr->code == GR_3D) 
 	extra_var_box (sr, right_vbox);
     else if (sr->code == VAR || sr->code == COINT || sr->code == COINT2)
 	lag_order_spin (sr, right_vbox);
@@ -1149,6 +1162,8 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	topstr = _("XY scatterplot");
     else if (cmdcode == GR_IMP)
 	topstr = _("plot with impulses");
+    else if (cmdcode == GR_3D)
+	topstr = _("3D plot");
     else if (cmdcode == SCATTERS)
 	topstr = _("multiple scatterplots");
     else if (cmdcode == GR_DUMMY)
@@ -1191,19 +1206,21 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 
     /* graphs: top right -> x-axis variable */
     else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == GR_DUMMY
-	     || cmdcode == SCATTERS) {
+	     || cmdcode == SCATTERS || cmdcode == GR_3D) {
 	build_x_axis_section(sr, right_vbox);
     }
 
     /* middle right: used for some estimators and factored plot */
     if (cmdcode == WLS || cmdcode == AR || cmdcode == TSLS || 
 	cmdcode == VAR || cmdcode == COINT || cmdcode == COINT2 || 
-	cmdcode == GR_DUMMY) 
+	cmdcode == GR_DUMMY || cmdcode == GR_3D) 
 	build_mid_section(sr, right_vbox);
     
     if (cmdcode == GR_DUMMY) {
 	/* special case: choose dummy var for factorized plot */
 	dummy_box(sr, right_vbox);
+    } else if (cmdcode == GR_3D) {
+	zvar_box(sr, right_vbox);
     } else { 
 	/* all other uses: scrollable list of vars */
 	GtkWidget *remove;

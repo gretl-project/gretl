@@ -113,6 +113,7 @@ enum extra_cmds {
     GR_DUMMY,
     GR_BOX,
     GR_NBOX,
+    GR_3D,
     COMPACT,
     COEFFINT,
     COVAR,

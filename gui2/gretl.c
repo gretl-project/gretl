@@ -426,6 +426,8 @@ GtkItemFactoryEntry data_items[] = {
       NULL, gretl_callback, GR_BOX, NULL, GNULL },
     { N_("/Data/Graph specified vars/Notched boxplots..."), 
       NULL, gretl_callback, GR_NBOX, NULL, GNULL },
+    { N_("/Data/Graph specified vars/3D plot..."), 
+      NULL, selector_callback, GR_3D, NULL, GNULL },
     { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL, GNULL },
     { N_("/Data/sep2"), NULL, NULL, 0, "<Separator>", NULL },
@@ -1778,7 +1780,7 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 
 #ifdef G_OS_WIN32
 
-static int create_child_process (char *prog, char *env) 
+int create_child_process (char *prog, char *env) 
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 

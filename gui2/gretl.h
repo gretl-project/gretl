@@ -125,6 +125,7 @@ enum extra_cmds {
     GR_DUMMY,
     GR_BOX,
     GR_NBOX,
+    GR_3D,
     COMPACT,
     COEFFINT,
     COVAR,
@@ -340,6 +341,9 @@ int proxy_init (const char *dbproxy);
 
 #ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data);
+#else
+int create_child_process (char *prog, char *env);
 #endif
+
 
 #endif /* GRETL_H */

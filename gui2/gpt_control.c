@@ -96,7 +96,7 @@ typedef enum {
     PLOT_TITLE          = 1 << 0,
     PLOT_XLABEL         = 1 << 1,
     PLOT_YLABEL         = 1 << 2,
-    PLOT_Y2AXIS         = 1 << 2,
+    PLOT_Y2AXIS         = 1 << 3,
     PLOT_Y2LABEL        = 1 << 4,
     PLOT_LABELS_UP      = 1 << 5,
 } plot_format_flags;

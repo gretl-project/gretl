@@ -1239,6 +1239,72 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     return err;
 }
 
+int gnuplot_3d (LIST list, const char *literal,
+		double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+		int *plot_count, unsigned char flags)
+{
+    FILE *fq = NULL;
+    int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
+    int miss = 0;
+    int npoints, tmplist[4];
+
+    if (lo != 3) {
+	fprintf(stderr, "gnuplot_3d needs three variables (only)\n");
+	return -1;
+    }
+
+    sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
+    fq = fopen(ppaths->plotfile, "w");
+    if (fq == NULL) {
+	return E_FOPEN;
+    }
+
+    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
+    /* if resulting sample range is empty, complain */
+    if (t2 == t1) return -999;
+    npoints = t2 - t1 + 1;
+
+    fprintf(fq, "set xlabel '%s'\n", get_series_name(pdinfo, list[2]));
+    fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[1]));
+    fprintf(fq, "set zlabel '%s'\n", get_series_name(pdinfo, list[3]));
+    fputs("set missing \"?\"\n", fq);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    if (literal != NULL && *literal != 0) {
+	print_gnuplot_literal_lines(literal, fq);
+    }
+
+    fputs("splot '-' title ''\n", fq);
+
+    /* supply the data to gnuplot inline */
+    tmplist[0] = 3;
+    tmplist[1] = list[2];
+    tmplist[2] = list[1];
+    tmplist[3] = list[3];
+    for (t=t1; t<=t2; t++) {
+	int t_miss;
+	const char *label = NULL;
+
+	if (pdinfo->markers) label = pdinfo->S[t];
+	t_miss = printvars(fq, t, tmplist, *pZ, label, 0.0);
+	if ((flags & GP_GUI) && miss == 0) {
+	    miss = t_miss;
+	}
+    }	
+    fputs("e\n", fq);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fq);
+
+    return miss;
+}
+
 /**
  * plot_freq:
  * @freq: frequency distribution struct.

@@ -88,9 +88,10 @@ typedef enum {
 typedef enum {
     PLOT_TITLE          = 1 << 0,
     PLOT_XLABEL         = 1 << 1,
-    PLOT_YLABEL         = 1 << 3,
-    PLOT_Y2AXIS         = 1 << 4,
-    PLOT_Y2LABEL        = 1 << 5,
+    PLOT_YLABEL         = 1 << 2,
+    PLOT_Y2AXIS         = 1 << 3,
+    PLOT_Y2LABEL        = 1 << 4,
+    PLOT_LABELS_UP      = 1 << 5,
 } plot_format_flags;
 
 typedef enum {
@@ -2277,7 +2278,7 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
     double min_xdist, min_ydist;
     int best_match = -1;
     int t, plot_n;
-    const double *data_x, *data_y;
+    const double *data_x, *data_y = NULL;
 
     if (!PLOTSPEC_DETAILS_IN_MEMORY(plot->spec)) {
 	if (read_plotspec_from_file(plot->spec)) return;
