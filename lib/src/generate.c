@@ -69,8 +69,6 @@ static void varerror (const char *ss);
 static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr, int time);
 static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr);
 
-extern double esl_median (const double *zx, const int n);
-
 enum transformations {
     T_LOG = 1, 
     T_EXP, 
@@ -1323,8 +1321,7 @@ static int domath (double *xvec, const double *mvec, int nt,
 	    xx = _esl_variance(0, i, x);
 	}
 	else if (nt == T_MEDIAN) {
-	    qsort(x, i+1, sizeof(double), _compare_doubles);
-	    xx = esl_median(x, i+1);
+	    xx = gretl_median(x, i+1);
 	}
 	else if (nt == T_MIN || nt == T_MAX) {
 	    double min, max;

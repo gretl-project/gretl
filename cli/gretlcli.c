@@ -578,7 +578,7 @@ void exec_line (char *line, PRN *prn)
     case CRITERIA: case CRITICAL:
     case DIFF: case LDIFF: case LAGS: case LOGS:
     case MULTIPLY:
-    case GRAPH: case PLOT:
+    case GRAPH: case PLOT: case RMPLOT:
     case INFO: case LABELS: case VARLIST:
     case PRINT:
     case SUMMARY:

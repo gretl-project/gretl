@@ -86,6 +86,7 @@ char *commands[] = {
     "pvalue",  
     "quit",    
     "rhodiff", 
+    "rmplot",
     "run",
     "runs",
     "scatters",

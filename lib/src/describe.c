@@ -43,22 +43,34 @@ static int missvals (double *x, int n)
 }
 
 /**
- * esl_median:
- * @zx: data series (which should be pre-sorted).
+ * gretl_median:
+ * @x: data series.
  * @n: length of the series.
  *
  * Returns: the median value of the given series.
  *
  */
 
-double esl_median (const double *zx, int n)
+double gretl_median (const double *x, int n)
 {
-    double xx;
-    int n2, n2p;
+    double *sx, med;
+    int t, n2, n2p;
+
+    sx = malloc(n * sizeof *sx);
+    if (sx == NULL) return NADBL;
+
+    for (t=0; t<n; t++) {
+	sx[t] = x[t];
+    }
+
+    qsort(sx, n, sizeof *sx, _compare_doubles); 
 
     n2p = (n2 = n/2) + 1;
-    xx = (n % 2)? zx[n2p - 1] : 0.5 * (zx[n2 - 1] + zx[n2p - 1]);
-    return xx;
+    med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[n2 - 1] + sx[n2p - 1]);
+
+    free(sx);
+
+    return med;
 }
 
 /* ........................................................... */
@@ -1010,9 +1022,11 @@ GRETLSUMMARY *summary (LIST list,
 	summ->sderr[v] = std;
 	summ->xskew[v] = skew;
 	summ->xkurt[v] = kurt;
-	qsort(x, summ->n, sizeof *x, _compare_doubles); 
-	if (summ->n > 1) summ->xmedian[v] = esl_median(x, summ->n);
-	else summ->xmedian[v] = x[1];
+	if (summ->n > 1) {
+	    summ->xmedian[v] = gretl_median(x, summ->n);
+	} else {
+	    summ->xmedian[v] = x[1];
+	}
     }
 
     copylist(&tmp, list);

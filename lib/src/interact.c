@@ -1119,6 +1119,16 @@ int simple_commands (CMD *cmd, const char *line,
 	plot(cmd->list, *pZ, datainfo, oflag, pause, prn);
 	break;
 
+    case RMPLOT:
+	if (cmd->list[0] != 1) {
+	    pprintf(prn, _("This command requires one variable.\n"));
+	    err = 1;
+	} else {
+	    err = rmplot(cmd->list, *pZ, datainfo, prn, paths);
+	    if (err) errmsg(err, prn);
+	}
+	break;
+
     case INFO:
 	if (datainfo->descrip != NULL) 
 	    pprintf(prn, "%s\n", datainfo->descrip);

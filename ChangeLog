@@ -1,5 +1,6 @@
 version 1.0pre1
-- add range-mean graph option to GUI Variable menu
+- add range-mean graph option to GUI Variable menu, and
+  as new command "rmplot"
 - add retrievable variable $pd = data periodicity
 - add min() and max() functions to the functions available 
   for use with the "genr" command

@@ -92,6 +92,8 @@ void free_plot (GPT_SPEC *plot);
 
 int termtype_to_termstr (char *termtype, char *termstr);
 
+int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
+	    PATHS *ppaths);
 
 
 

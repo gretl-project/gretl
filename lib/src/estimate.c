@@ -2305,7 +2305,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
     double x, cdiff = 1.0, *last_coeff = NULL;
-    double residsum;
+    double residsum, medresid, *absuhat = NULL;
     int i, t, index, iter = 0, err = 0;
     int wtnum, *wlist = NULL;
     MODEL lad_model;
@@ -2347,23 +2347,34 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
     lad_model = lsq(list, pZ, pdinfo, OLS, 0, 0.0);
 
     if ((err = lad_model.errcode)) {
-	free(wlist);
-	free(last_coeff);
-	return lad_model;
+	goto lad_bailout;
+    }
+
+    absuhat = malloc(lad_model.nobs * sizeof *absuhat); 
+    if (absuhat == NULL) {
+	lad_model.errcode = E_ALLOC;
+	goto lad_bailout;
     }
 
     while (cdiff > 0.0001 && iter++ < 20) {
+	double u;
 
-	for (t=0; t<pdinfo->n; t++) {
-	    if (na(lad_model.uhat[t])) {
-		(*pZ)[wtnum][t] = NADBL;
+	for (t=lad_model.t1; t<=lad_model.t2; t++) {
+	    absuhat[t-lad_model.t1] = fabs(lad_model.uhat[t]);
+	}
+
+	medresid = gretl_median(absuhat, lad_model.nobs);
+	if (na(medresid)) {
+	    lad_model.errcode = E_ALLOC;
+	    goto lad_bailout;
+	}
+
+	for (t=lad_model.t1; t<=lad_model.t2; t++) {
+	    u = fabs(lad_model.uhat[t]);
+	    if (fabs(u) > medresid) {
+		(*pZ)[wtnum][t] = medresid / fabs(u);
 	    } else {
-		/* bodge here !! */
-		if (fabs(lad_model.uhat[t]) < .000001) {
-		    (*pZ)[wtnum][t] = 1000000;
-		} else {
-		    (*pZ)[wtnum][t] = 1.0 / (fabs(lad_model.uhat[t]));
-		}
+		(*pZ)[wtnum][t] = 1.0;
 	    }
 	}
 
@@ -2429,11 +2440,14 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	lad_model.sderr[i] = sqrt(lad_model.vcv[index]);
     }
 
+    lad_bailout:
+
     /* trash the special weight variable */
     dataset_drop_vars(1, pZ, pdinfo);
 
     free(wlist);
     free(last_coeff);
+    free(absuhat);
 
     return lad_model;
 }

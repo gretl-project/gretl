@@ -76,3 +76,5 @@ int vars_test (LIST list,
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 			int pause, PRN *prn);
+
+double gretl_median (const double *x, int n);

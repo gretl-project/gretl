@@ -84,6 +84,7 @@ typedef enum {
     PVALUE,  
     QUIT,    
     RHODIFF, 
+    RMPLOT,
     RUN,
     RUNS,
     SCATTERS,
