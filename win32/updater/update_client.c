@@ -22,23 +22,6 @@ int logit;
 
 #define MAXLEN 512
 
-#ifdef WIN32
-static void switch_cursor (int cursor)
-{
-    HANDLE h;
-
-    h = LoadImage(0, 
-		  MAKEINTRESOURCE(cursor), 
-		  IMAGE_CURSOR, 
-		  0, 0, 
-		  LR_DEFAULTSIZE);
-
-    if (h != NULL) {
-	SetCursor(h);
-    }
-}
-#endif
-
 static void getout (int err)
 {
     if (logit) {
@@ -52,6 +35,48 @@ static void getout (int err)
 }
 
 #ifdef WIN32
+
+static char *get_size_string (const char *s)
+{
+    static char sizestr[32] = "";
+    size_t fsize;
+
+    if (sscanf(s, "%*s %u", &fsize) == 1) {
+	if (fsize > 1024 * 1024) {
+	    sprintf(sizestr, " (%.1f MB)", (double) fsize / (1024. * 1024.));
+	} else if (fsize >= 10 * 1024) {
+	    sprintf(sizestr, " (%.1f KB)", (double) fsize / 1024.);
+	} else {
+	    sprintf(sizestr, " (%u bytes)", fsize);
+	}
+    }
+    return sizestr;
+}
+
+static void switch_cursor (int cursor)
+{
+    HANDLE h;
+
+    h = LoadImage(0, 
+		  MAKEINTRESOURCE(cursor), 
+		  IMAGE_CURSOR, 
+		  0, 0, 
+		  LR_DEFAULTSIZE | LR_SHARED);
+
+    if (h != NULL) {
+	SetCursor(h);
+    }
+}
+
+static int yes_no_dialog (const char *msg)
+{
+    int ret;
+
+    ret = MessageBox(NULL, msg, "gretl updater", 
+		     MB_YESNO | MB_ICONQUESTION);
+    return ret;
+}
+
 static int msgbox (const char *msg, int err)
 {
     int ret;
@@ -64,7 +89,9 @@ static int msgbox (const char *msg, int err)
 
     return ret;
 }
-#else
+
+#else /* ! WIN32 */
+
 static int msgbox (const char *msg, int err)
 {
     if (err) { 
@@ -75,7 +102,8 @@ static int msgbox (const char *msg, int err)
 
     return 0;
 }
-#endif
+
+#endif /* WIN32 */
 
 int errbox (const char *msg) 
 {
@@ -309,10 +337,15 @@ int main (int argc, char *argv[])
 		    fputs("no new files on server\n", flg);
 		}
 		break;
+	    } else {
+		int resp;
+
+		sprintf(infobuf, "An update file is available%s.\n"
+			"Get it now?", get_size_string(line));
+		resp = yes_no_dialog(infobuf);
+		if (resp != IDYES) break;
 	    }
 
-	    sprintf(infobuf, "getting '%s'", fname);
-	    infobox(infobuf);
 	    if (logit) {
 		fprintf(flg, "trying to get '%s'\n", fname);
 	    }

@@ -795,6 +795,14 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     double *yvar1 = NULL, *yvar2 = NULL;
     int xvar, miss = 0, ols_ok = 0, tmplist[4];
     int npoints;
+#ifdef OS_WIN32
+    /* gnuplot 3.7.3 won't accept "height" here */
+    const char *keystring = 
+	"set key left top height 1 width 1 box\n";
+#else
+    const char *keystring = 
+	"set key left top width 1 box\n";
+#endif
 
     *withstring = 0;
 
@@ -941,7 +949,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     } else if ((flags & GP_RESIDS) && (flags & GP_DUMMY)) { 
 	make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
-	fputs("set key left top height 1 width 1 box\n", fq);
+	fputs(keystring, fq);
     } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) { 
 	    /* x var is just time or index: is this always right? */
@@ -951,9 +959,9 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 			get_series_name(pdinfo, list[3]));
 	}
 	fprintf(fq, "set ylabel '%s'\n", get_series_name(pdinfo, list[2]));
-	fputs("set key left top height 1 width 1 box\n", fq);	
+	fputs(keystring, fq);	
     } else {
-	fputs("set key left top height 1 width 1 box\n", fq);
+	fputs(keystring, fq);
     }
 
 #ifdef ENABLE_NLS

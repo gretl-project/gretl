@@ -1715,7 +1715,9 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     struct urlinfo *u;
     struct urlinfo *proxy = NULL; 
     int dt;
-    const char *cgi = "/gretl/cgi-bin/gretldata.cgi";
+    const char *datacgi = "/gretl/cgi-bin/gretldata.cgi";
+    const char *updatecgi = "/gretl/cgi-bin/gretl_update.cgi";
+    const char *cgi;
     size_t fnlen = 0L;
 
     if (use_proxy && gretlproxy.host != NULL) {
@@ -1725,6 +1727,9 @@ retrieve_url (int opt, const char *fname, const char *dbseries,
     if (fname != NULL) {
 	fnlen = strlen(fname);
     }
+
+    if (opt == GRAB_FILE) cgi = updatecgi;
+    else cgi = datacgi;
 
     u = newurl();
     u->proto = URLHTTP;
