@@ -39,6 +39,7 @@ extern GtkTooltips *gretl_tips;
 extern int session_saved;
 extern GtkWidget *mysheet;
 extern GtkWidget *toolbar_box;
+extern GdkColor red, blue;
 extern char *space_to_score (char *str);
 
 extern int want_toolbar;
@@ -463,27 +464,51 @@ void catch_key (GtkWidget *w, GdkEventKey *key)
 
 /* ........................................................... */
 
-void catch_ctrl_key (GtkWidget *w, GdkEventKey *key)
+void catch_edit_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
 {
     GdkModifierType mods;
-    windata_t *vwin;
 
     gdk_window_get_pointer(w->window, NULL, NULL, &mods);
-    if (key->keyval == GDK_F1) {
-	vwin = gtk_object_get_data(GTK_OBJECT(w), "vwin");
-	if (vwin != NULL)
-	    edit_script_help(NULL, vwin);
-    }
+
+    if (key->keyval == GDK_F1 && vwin->role == EDIT_SCRIPT) 
+	edit_script_help(NULL, vwin);
 
     else if (mods & GDK_CONTROL_MASK) {
-	if (gdk_keyval_to_upper(key->keyval) == GDK_S) {
-	    vwin = gtk_object_get_data(GTK_OBJECT(w), "vwin");
-	    if (vwin != NULL)
-		file_viewer_save(NULL, vwin);
-	}
+	if (gdk_keyval_to_upper(key->keyval) == GDK_S) 
+	    file_viewer_save(NULL, vwin);
 	else if (gdk_keyval_to_upper(key->keyval) == GDK_Q) 
 	    gtk_widget_destroy(w);
     }
+
+#ifdef notyet
+    /* pick out some stuff that shouldn't be captured */
+    if (mods > GDK_SHIFT_MASK || 
+	key->keyval < GDK_space || 
+	key->keyval > GDK_asciitilde) {
+	return;
+    } else {  /* colorize comments */
+	int cw = gdk_char_width(fixed_font, 'x'); 
+	int currpos, xpos;
+	gchar *starter, out[2];
+
+	currpos = GTK_EDITABLE(vwin->w)->current_pos;
+	xpos = GTK_TEXT(vwin->w)->cursor_pos_x / cw; 
+	starter = gtk_editable_get_chars(GTK_EDITABLE(vwin->w),
+					 currpos - xpos, currpos - xpos + 1);
+	sprintf(out, "%c", key->keyval);
+	key->keyval = GDK_VoidSymbol;
+
+	if ((starter != NULL && starter[0] == '#') || out[0] == '#') {
+	    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			    &blue, NULL, out, 1);
+	} else {
+	    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			    NULL, NULL, out, 1);
+	}
+	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "key-press-event");
+	if (starter != NULL) g_free(starter);
+    }
+#endif
 }
 
 /* ........................................................... */
@@ -1494,7 +1519,6 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		      GtkItemFactoryEntry menu_items[]) 
 {
     GtkWidget *dialog, *table, *vscrollbar; 
-    extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
     char tempstr[MAXSTR], *fle = NULL;
     FILE *fd = NULL;
@@ -1648,7 +1672,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     } else {
 	gtk_object_set_data(GTK_OBJECT(dialog), "vwin", vwin);
 	gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
-			   GTK_SIGNAL_FUNC(catch_ctrl_key), dialog);	
+			   GTK_SIGNAL_FUNC(catch_edit_key), vwin);	
     }    
 
     /* clean up when dialog is destroyed */
