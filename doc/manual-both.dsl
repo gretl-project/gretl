@@ -198,12 +198,14 @@
   ;; The space after a title is calculated by multiplying the font size used
   ;; in the title by the '%head-after-factor%'.  Default 0.5
   0.2)
-
+  
 (define %block-sep% 
   ;; The '%block-sep%' is the vertical distance between
   ;; block elements (figures, tables, etc.)
   ;; Default (* %para-sep% 2.0)
-  (* %para-sep% 1.5))
+  (display-space (* %bf-size% 0.75)
+     min: (* %bf-size% 0.5)
+	 max: (* %bf-size% 1.5)))
   
 (define ($informal-object$ #!optional (rule-before? #f) (rule-after? #f))
   (make display-group
