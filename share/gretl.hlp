@@ -672,9 +672,10 @@ nls
 @Estimation
 
 Performs Nonlinear Least Squares estimation using a modified version of the
-Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  The user
-must supply a function specification and expressions for the derivatives with
-respect to each of the parameters.  
+Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  You must
+supply a function specification; it is recommended that you also supply
+expressions for the derivatives of this function with respect to each of the
+parameters if possible.
 
 Suppose we have a data set with variables C and Y (e.g. greene11_3.gdt) and we
 wish to estimate a nonlinear consumption function of the form
@@ -682,7 +683,9 @@ wish to estimate a nonlinear consumption function of the form
                          C = alpha + beta * Y^gamma
 
 The parameters alpha, beta and gamma must first be added to the dataset and
-given initial values (using the genr command or via menu choices).
+given initial values.  This can be done using the genr command or via menu
+choices.  Appropriate "genr" lines may be typed into the NLS specification
+window prior to the function specification.
 
 In the Nonlinear Least Squares specification window we type the following
 lines:
@@ -694,7 +697,15 @@ deriv gamma = beta * Y^gamma * log(Y)
 
 The first line specifies the regression function, and the next three lines
 supply the derivatives of that function with respect to each of the parameters
-in turn.
+in turn.  If the "deriv" lines are not given, a numerical approximation to the
+Jacobian is computed.
+
+If the parameters alpha, beta and gamma were not previously declared we could
+preface the above lines with something like the following:
+
+genr alpha = 1
+genr beta = 1
+genr gamma = 1
 
 #
 nulldata

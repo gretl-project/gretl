@@ -833,9 +833,12 @@ nls
 
 Performs Nonlinear Least Squares estimation using a modified version of the
 Levenberg-Marquandt algorithm (as in the MINPACK function lmder).  The user
-must supply a function specification and expressions for the derivatives with
-respect to each of the parameters.  These parameters must be declared and
-given starting values (using the genr command) prior to estimation.  
+must supply a function specification.  The parameters of this function must be
+declared and given starting values (using the genr command) prior to
+estimation.  Optionally, the user may specify the derivatives of the
+regression function with respect to each of the parameters; if analytical
+derivatives are not supplied, a numerical approximation to the Jacobian is
+computed.  
 
 It is easiest to show what is required by example.  The following is a
 complete script to estimate the nonlinear consumption function set out in
@@ -867,7 +870,8 @@ the same as that for the genr command.  The next three lines specify the
 derivatives of the regression function with respect to each of the parameters
 in turn.  Each line begins with the keyword "deriv", gives the name of a
 parameter, an equals sign, and an expression whereby the derivative can be
-calculated (again, the syntax here is the same as for "genr").
+calculated (again, the syntax here is the same as for "genr").  These "deriv"
+lines are optional, but it is recommended that you supply them if possible.
 
 Line 10, "end nls", completes the command and calls for estimation.
 
