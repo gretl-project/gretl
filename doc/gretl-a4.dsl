@@ -8,7 +8,6 @@
 <![%print;[
 <!ENTITY docbook.dsl SYSTEM "/usr/share/sgml/docbook-dsssl-1.74b/print/docbook.dsl" CDATA dsssl>
 ]]>
-<!ENTITY htmlmath.dsl SYSTEM "HTMLMath.dsl">
 <!ENTITY texmath.dsl SYSTEM "TeXMath.dsl">
 <!ENTITY titlepage.dsl SYSTEM "titlepage.dsl">
 ]>
@@ -22,7 +21,7 @@
 
 ;; customize the print stylesheet
 
-;; (define %paper-type% "A4")
+(define %paper-type% "A4")
 
 (define %generate-article-toc% 
   ;; Should a Table of Contents be produced for Articles?
@@ -154,7 +153,7 @@
   ;; Identifies the default extension for admonition graphics. This allows
   ;; backends to select different images (e.g., EPS for print, PNG for
   ;; PDF, etc.)
-  "png")
+  ".png")
   
 (define %graphic-extensions% 
   ;; List of graphic filename extensions
@@ -305,60 +304,6 @@
 &titlepage.dsl;
 
 ;; end of print stylesheet customization
-
-</style-specification-body>
-</style-specification>
-
-<style-specification id="html" use="docbook">
-<style-specification-body> 
-
-;; customize the html stylesheet
-
-;; This specifies the HTML extension to put on output files.
-(define %html-ext% ".html")
-
-;; Name for the root HTML document (default "book1")
-(define %root-filename% "index")
-
-(define %graphic-extensions% 
-  ;; List of graphic filename extensions
-  '("png" "gif"))
-
-(define %graphic-default-extension% 
-  ;; Default extension for graphic FILEREFs
-  "png")  
-
-(element application ($mono-seq$))
-(element command ($mono-seq$))
-
-;; chop out "bodge" empty paras inserted to correct JadeTeX's
-;; bad page-breaking
-(define ($paragraph$ #!optional (para-wrapper "P"))
-  (if (and (attribute-string (normalize "role"))
-           (equal? (attribute-string (normalize "role")) "bodge"))
-      (empty-sosofo)
-      (let ((footnotes (select-elements (descendants (current-node)) 
-                                    (normalize "footnote")))
-        (tgroup (have-ancestor? (normalize "tgroup"))))
-    (make sequence
-      (make element gi: para-wrapper
-            attributes: (append
-                         (if %default-quadding%
-                             (list (list "ALIGN" %default-quadding%))
-                             '()))
-            (process-children))
-      (if (or %footnotes-at-end% tgroup (node-list-empty? footnotes))
-          (empty-sosofo)
-          (make element gi: "BLOCKQUOTE"
-                attributes: (list
-                             (list "CLASS" "FOOTNOTES"))
-                (with-mode footnote-mode
-                  (process-node-list footnotes))))))
-        ))
-
-&htmlmath.dsl;
-
-;; end of html stylesheet customization
 
 </style-specification-body>
 </style-specification>

@@ -5,6 +5,8 @@
 
 <xsl:param name="suppress.navigation" select="0"/>
 
+<xsl:param name="graphic.default.extension"/>
+
 </xsl:stylesheet>
 
 
