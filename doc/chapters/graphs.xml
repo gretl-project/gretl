@@ -99,7 +99,7 @@
 
   </sect1>
 
-    <sect1 id="boxplots"><title>Boxplots</title>
+    <sect1 id="sect-boxplots"><title>Boxplots</title>
 
       <para>Boxplots are not generated using gnuplot, but rather by
 	<application>gretl</application> itself.</para>
