@@ -1,7 +1,8 @@
 #! /bin/sh
 
 # DB_STYLESHEET=/usr/lib/sgml/stylesheets/cygnus-both.dsl
-DB_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.72/html/docbook.dsl
+# DB_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.72/html/docbook.dsl
+DB_STYLESHEET=../gretl_htmlmath.dsl
 HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.72/frames/docbook.css
 ADMON_GRAPHICS=/usr/lib/sgml/stylesheets/nwalsh-modular/images/*.gif
 XMLDECL=/opt/jade/share/xml.dcl
