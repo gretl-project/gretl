@@ -443,7 +443,7 @@ void about_dialog (gpointer data)
     }
 
     about = gnome_about_new ("gretl", version_string,
-			     "(C) 2000-2002 Allin Cottrell",
+			     "(C) 2000-2003 Allin Cottrell",
 			     _("An econometrics program for the gnome desktop "
 			       "issued under the GNU General Public License.  "
 			       "http://gretl.sourceforge.net/"),

@@ -302,7 +302,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/_Session"), NULL, NULL, 0, "<Branch>" },
     { N_("/Session/_Icon view"), NULL, view_session, 0, NULL },
 #ifndef GNUPLOT_PNG
-    { N_("/Session/_Add last graph"), NULL, add_graph_to_session, 0, NULL },
+    { N_("/Session/_Add last graph"), NULL, add_graph_to_session, 
+      GRETL_GNUPLOT_GRAPH, NULL },
 #endif
     { N_("/Session/sep0"), NULL, NULL, 0, "<Separator>" },
     { N_("/Session/_Open..."), NULL, open_script, OPEN_SESSION, NULL },

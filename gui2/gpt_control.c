@@ -2071,7 +2071,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
         file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
     }
     else if (!strcmp(item, _("Save to session as icon"))) { 
-	add_graph_to_session(plot->spec, 0, NULL);
+	add_graph_to_session(plot->spec, GRETL_GNUPLOT_GRAPH, NULL);
     }
     else if (plot_is_range_mean(plot) && !strcmp(item, _("Help"))) { 
 	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));

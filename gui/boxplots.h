@@ -20,6 +20,8 @@
 #ifndef BOXPLOTS_H
 #define BOXPLOTS_H
 
+extern char boxplottmp[MAXLEN];
+
 int boxplots (int *list, char **bools, 
 	      double ***pZ, const DATAINFO *pdinfo, 
 	      int notches);
@@ -28,6 +30,10 @@ int boolean_boxplots (const char *str, double ***pZ,
 		      DATAINFO *pdinfo, int notches);
 
 int retrieve_boxplot (const char *fname);
+
+int augment_boxplot_count (void);
+
+void zero_boxplot_count (void);
 
 #endif /* BOXPLOTS_H */
 

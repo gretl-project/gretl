@@ -23,6 +23,7 @@
 #include "selector.h"
 #include "gpt_control.h"
 #include "guiprint.h"
+#include "boxplots.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -188,11 +189,11 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 {
     char grname[12], pltname[MAXLEN], savedir[MAXLEN];
     int i = session.ngraphs;
-    static int boxplot_count;
+    int boxplot_count;
 
     get_default_dir(savedir);
 
-    if (code == 0) { /* gnuplot graph */
+    if (code == GRETL_GNUPLOT_GRAPH) { 
 #ifdef GNUPLOT_PNG
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 #endif
@@ -215,15 +216,17 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 	} 
 	remove(paths.plotfile);
 #endif
-    } else { /* gretl boxplot */
-	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count + 1);
-	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count + 1);
-	boxplot_count++;
-	if (copyfile("boxdump.tmp", pltname)) {
-	    errbox(_("Failed to copy boxplot file"));
+    } else if (code == GRETL_BOXPLOT) {
+	boxplot_count = augment_boxplot_count();
+	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count);
+	sprintf(grname, "%s %d", _("Boxplot"), boxplot_count);
+	if (copyfile(boxplottmp, pltname)) {
 	    return;
-	}
-	remove("boxdump.tmp"); 
+	} 
+	remove(boxplottmp);
+    } else {
+	errbox("bad code in add_graph_to_session");
+	return;
     }	
 
     /* write graph into session struct */
@@ -251,7 +254,8 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     if (iconview == NULL) {
 	infobox(_("Graph saved"));
     } else {
-	session_add_object(session.graphs[i], (code == 0)? 'g' : 'b');
+	session_add_object(session.graphs[i], 
+			   (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b');
     }
 }
 
@@ -429,6 +433,8 @@ void close_session (void)
     session_changed(0);
     winstack_destroy();
     clear_selector();
+    plot_count = 0;
+    zero_boxplot_count();
 }
 
 /* ........................................................... */
@@ -581,7 +587,56 @@ int saved_objects (char *fname)
     return saves;
 }
 
-/* ........................................................... */
+static int check_session_graph (const char *line, 
+				char **name, char **fname)
+{
+    char *p;
+    size_t len, lenmin = 24;
+    FILE *fp;
+
+    p = strchr(line, '"') + 1;
+    if (p == NULL) {
+	errbox(_("Warning: session file is corrupted"));
+	return 1;
+    }
+    len = strcspn(p, "\"");
+
+    if (len + 1 < lenmin) lenmin = len + 1;
+
+    *name = malloc(lenmin);
+    **name = 0;
+    strncat(*name, p, lenmin - 1);
+
+    p = strchr(p, '"') + 1; 
+    if (p == NULL) {
+	errbox(_("Warning: session file is corrupted"));
+	free(*name);
+	return 1;
+    }
+
+    *fname = g_strdup(p);
+    top_n_tail(*fname);
+
+    fp = fopen(*fname, "r");
+    if (fp == NULL) {
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Warning: couldn't open graph file %s"), *fname);
+	errbox(msg);
+	g_free(msg);		      
+	free(*name);
+	free(*fname);
+	return 1;
+    }
+
+    fclose(fp);
+
+    return 0;
+}
+
+#define OBJECT_IS_MODEL(object) (strcmp(object, "model") == 0)
+#define OBJECT_IS_GRAPH(object) (strcmp(object, "graph") == 0)
+#define OBJECT_IS_PLOT(object) (strcmp(object, "plot") == 0)
 
 int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 {
@@ -618,12 +673,14 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     k = 0; /* graphs */
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "*)", 2) == 0) break;
+
 	if (sscanf(line, "%6s %d", object, &id) != 2) {
 	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
 	    return SAVEFILE_ERROR;
 	}
-	if (strcmp(object, "model") == 0) {
+
+	if (OBJECT_IS_MODEL(object)) {
 	    rebuild->nmodels += 1;
 #ifdef SESSION_DEBUG
 	    fprintf(stderr, "got a model to rebuild (%d)\n"
@@ -656,14 +713,20 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    i++;
 	    continue;
 	}
-	if (!strcmp(object, "graph") || !strcmp(object, "plot")) {
+
+	if (OBJECT_IS_GRAPH(object) || OBJECT_IS_PLOT(object)) {
+	    char *grname, *grfilename;
+
+	    if (check_session_graph(line, &grname, &grfilename)) {
+		continue;
+	    }
 	    psession->ngraphs += 1;
 	    if (k > 0) {
 		psession->graphs = myrealloc(psession->graphs,
 					     psession->ngraphs * 
-					     sizeof(GRAPHT *));
+					     sizeof *psession->graphs);
 	    } else {
-		psession->graphs = mymalloc(sizeof(GRAPHT *));
+		psession->graphs = mymalloc(sizeof *psession->graphs);
 	    }
 	    if (psession->graphs == NULL) {
 		fclose(fp);
@@ -674,23 +737,24 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 		fclose(fp);
 		return SAVEFILE_ERROR;
 	    }
-	    tmp = strchr(line, '"') + 1;
-	    strncpy((psession->graphs[k])->name, tmp, 23);
-	    (psession->graphs[k])->name[23] = '\0';
-	    n = strlen((psession->graphs[k])->name);
-	    for (j=n-1; j>0; j--) {
-		if ((psession->graphs[k])->name[j] == '"') {
-		    (psession->graphs[k])->name[j] = '\0';
-		    break;
-		}
-	    }
-	    n = haschar('"', tmp);
-	    strcpy((psession->graphs[k])->fname, tmp + n + 1);
-	    top_n_tail((psession->graphs[k])->fname);
+
+	    strcpy((psession->graphs[k])->name, grname);
+	    strcpy((psession->graphs[k])->fname, grfilename);
+	    free(grname);
+	    free(grfilename);
+
 #ifdef SESSION_DEBUG
 	    fprintf(stderr, "got graph: '%s'\n", (psession->graphs[k])->fname);
 #endif
 	    (psession->graphs[k])->ID = plot_count++;
+
+	    if (OBJECT_IS_PLOT(object)) {
+		(psession->graphs[k])->sort = GRETL_BOXPLOT;
+		augment_boxplot_count();
+	    } else {
+		(psession->graphs[k])->sort = GRETL_GNUPLOT_GRAPH;
+	    }
+	    
 	    k++;
 	    continue;
 	} else {
@@ -1048,7 +1112,7 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Save As...")) == 0) 
 	save_session_callback(NULL, 1, NULL);
     else if (strcmp(item, _("Add last graph")) == 0)
-	add_graph_to_session(NULL, 0, NULL);
+	add_graph_to_session(NULL, GRETL_GNUPLOT_GRAPH, NULL);
 }
 
 /* ........................................................... */

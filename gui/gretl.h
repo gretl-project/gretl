@@ -263,6 +263,11 @@ enum file_lists {
     FILE_LIST_SCRIPT,
 };
 
+enum graph_types {
+    GRETL_GNUPLOT_GRAPH,
+    GRETL_BOXPLOT
+};
+
 /* functions follow */
 
 void gretl_fork (const char *prog, const char *arg);

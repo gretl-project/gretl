@@ -1658,14 +1658,22 @@
 	  on which the previous model was estimated.  Displays the
 	  residual (<emphasis>u</emphasis>) for each observation along
 	  with its leverage and a measure of its influence on the
-	  estimates, <emphasis>uh/(1 - h)</emphasis>.
-	  <quote>Leverage points</quote> for which the value of
-	  <emphasis>h</emphasis> exceeds <emphasis>2k/n</emphasis>
-	  (where <emphasis>k</emphasis> is the number of parameters
-	  being estmated and <emphasis>n</emphasis> is the sample
-	  size) are flagged with an asterisk.  For details on the
-	  concepts of leverage and influence see Davidson and
-	  MacKinnon (1993, Chapter 2).
+	  estimates, 
+	  <inlineequation>
+	    <alt role="tex">$uh/(1 - h)$</alt>
+	    <inlinemediaobject>
+	      <imageobject>
+		<imagedata align="center" fileref="figures/influence"/>
+	      </imageobject>
+	    </inlinemediaobject>
+	  </inlineequation>.  <quote>Leverage points</quote> for which
+	  the value of <emphasis>h</emphasis> exceeds
+	  2<emphasis>k</emphasis>/<emphasis>n</emphasis> (where
+	  <emphasis>k</emphasis> is the number of parameters being
+	  estmated and <emphasis>n</emphasis> is the sample size) are
+	  flagged with an asterisk.  For details on the concepts of
+	  leverage and influence see Davidson and MacKinnon (1993,
+	  Chapter 2).
 	</para>
 
       </sect2>
@@ -1674,16 +1682,20 @@
 
 	<para>
 	  Must immediately follow an <command>ols</command> command.
-	  Prints the Lagrange multiplier test statistics (and
+	  Prints the Lagrange Multiplier test statistics (and
 	  associated p-values) for nonlinearity and heteroskedasticity
 	  (White's test) or, if the <literal>-o</literal> flag is
 	  given, the LMF test statistic for serial correlation up to
 	  the periodicity (see Kiviet, 1986).  The corresponding
 	  auxiliary regression coefficients are also printed out.  See
-	  Ramanathan, Chapters 7, 8, and 9 for details. Only the
-	  squared independent variables are used and not their cross
-	  products. (If the internal creation of squares causes exact
-	  multicollinearity, LM test statistics cannot be obtained.)
+	  Ramanathan, Chapters 7, 8, and 9 for details. In the case of
+	  White's test, only the squared independent variables are
+	  used and not their cross products.  In the case of the
+	  autocorrelation test, if the p-value of the LMF statistic is
+	  less than 0.05 then serial correlation-robust standard
+	  errors are calculated and displayed.  For details on the
+	  calculation of these standard errors see Wooldridge (2002,
+	  Chapter 12).
 	</para>
 
       </sect2>

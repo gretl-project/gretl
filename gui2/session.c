@@ -43,7 +43,7 @@
 #include "../pixmaps/rhohat.xpm"
 #include "../pixmaps/summary.xpm"
 
-/* #define SESSION_DEBUG */
+#define SESSION_DEBUG 
 
 enum {
     ICON_ADD_BATCH,
@@ -171,9 +171,9 @@ static gboolean session_icon_click (GtkWidget *widget,
 static int rebuild_init (SESSIONBUILD *rebuild)
 {
     rebuild->nmodels = 0;
-    rebuild->model_ID = malloc(sizeof(int));
+    rebuild->model_ID = malloc(sizeof *rebuild->model_ID);
     if (rebuild->model_ID == NULL) return 1;
-    rebuild->model_name = malloc(sizeof(char *));
+    rebuild->model_name = malloc(sizeof *rebuild->model_name);
     if (rebuild->model_name == NULL) return 1;
     rebuild->model_name[0] = malloc(64);
     if (rebuild->model_name[0] == NULL) return 1;
@@ -229,7 +229,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
     get_default_dir(savedir);
 
-    if (code == GRETL_GNUPLOT_GRAPH) { /* gnuplot graph */
+    if (code == GRETL_GNUPLOT_GRAPH) {
 #ifdef GNUPLOT_PNG
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
@@ -294,7 +294,8 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     infobox(_("Graph saved"));
 
     if (icon_list != NULL) {
-	session_add_icon(session.graphs[i], (code == 0)? 'g' : 'b',
+	session_add_icon(session.graphs[i], 
+			 (code == GRETL_GNUPLOT_GRAPH)? 'g' : 'b',
 			 ICON_ADD_SINGLE);
     }
 
@@ -661,11 +662,13 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     k = 0; /* graphs */
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "*)", 2) == 0) break;
+
 	if (sscanf(line, "%6s %d", object, &id) != 2) {
 	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
 	    return SAVEFILE_ERROR;
 	}
+
 	if (OBJECT_IS_MODEL(object)) {
 	    rebuild->nmodels += 1;
 #ifdef SESSION_DEBUG
@@ -699,6 +702,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    i++;
 	    continue;
 	}
+
 	if (OBJECT_IS_GRAPH(object) || OBJECT_IS_PLOT(object)) {
 	    char *grname, *grfilename;
 
@@ -709,9 +713,9 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    if (k > 0) {
 		psession->graphs = myrealloc(psession->graphs,
 					     psession->ngraphs * 
-					     sizeof(GRAPHT *));
+					     sizeof *psession->graphs);
 	    } else {
-		psession->graphs = mymalloc(sizeof(GRAPHT *));
+		psession->graphs = mymalloc(sizeof *psession->graphs);
 	    }
 	    if (psession->graphs == NULL) {
 		fclose(fp);
@@ -733,7 +737,12 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 #endif
 	    (psession->graphs[k])->ID = plot_count++;
 
-	    if (OBJECT_IS_PLOT(object)) augment_boxplot_count();
+	    if (OBJECT_IS_PLOT(object)) {
+		(psession->graphs[k])->sort = GRETL_BOXPLOT;
+		augment_boxplot_count();
+	    } else {
+		(psession->graphs[k])->sort = GRETL_GNUPLOT_GRAPH;
+	    }
 	    
 	    k++;
 	    continue;
@@ -1299,13 +1308,15 @@ static void add_all_icons (void)
 #endif
 	session_add_icon(session.models[i], 'm', ICON_ADD_BATCH);
     }
+
     for (i=0; i<session.ngraphs; i++) {
 #ifdef SESSION_DEBUG
 	fprintf(stderr, "adding session.graphs[%d] to view\n", i);
+	fprintf(stderr, "this graph is of sort %d\n", (session.graphs[i])->sort);
 #endif
 	/* distinguish gnuplot graphs from gretl boxplots */
 	session_add_icon(session.graphs[i], 
-			 ((session.graphs[i])->sort == 1)? 'b' : 'g',
+			 ((session.graphs[i])->sort == GRETL_BOXPLOT)? 'b' : 'g',
 			 ICON_ADD_BATCH);
     }
 
@@ -1666,9 +1677,15 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     obj = active_object;
 
     if (strcmp(item, _("Display")) == 0) {
-	if (obj->sort == 'm') open_gui_model(obj);
-	else if (obj->sort == 'g') open_gui_graph(obj);
-	else if (obj->sort == 'b') open_boxplot(obj);
+	if (obj->sort == 'm') {
+	    open_gui_model(obj);
+	}
+	else if (obj->sort == 'g') {
+	    open_gui_graph(obj);
+	}
+	else if (obj->sort == 'b') {
+	    open_boxplot(obj);
+	}
     } 
 #ifndef GNUPLOT_PNG
     else if (strcmp(item, _("Edit using GUI")) == 0) {

@@ -463,7 +463,7 @@ void about_dialog (gpointer data)
 #endif 
 
     dlg = gnome_about_new("gretl", version_string,
-			  "(c) 2000-2002 Allin Cottrell", 
+			  "(c) 2000-2003 Allin Cottrell", 
 			  authors, (comment != NULL)? comment : _(blurb),
 			  gnome_pixmap_file("gretl-logo.xpm") 
 			  );

@@ -20,6 +20,7 @@ version 1.0.8
 - Autocorrelation test: add calculation and display of serial
   correlation-robust standard errors, if significant at the 5
   per cent level
+- Fix brokenness in saving boxplots to session file
 
 04/09/03 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey

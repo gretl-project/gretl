@@ -785,7 +785,8 @@ void save_session (char *fname)
 	    }
 	}
 	fprintf(fp, "%s %d \"%s\" %s\n", 
-		((session.graphs[i])->name[0] == 'G')? "graph" : "plot",
+		((session.graphs[i])->sort == GRETL_BOXPLOT)?
+		"plot" : "graph",
 		(session.graphs[i])->ID, 
 		(session.graphs[i])->name, 
 		(session.graphs[i])->fname);

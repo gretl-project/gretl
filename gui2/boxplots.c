@@ -527,7 +527,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
 
 
     /* insert numerical values for median and quartiles? */
-    if (numbers) {
+    if (numbers != NULL) {
 	char numstr[12];
 	double x = xcenter + .55 * boxwidth;
 
@@ -1215,28 +1215,33 @@ static void read_boxrc (PLOTGROUP *grp)
 	    if (sscanf(line, "%17s = %31s", key, val) == 2) {
 		key[17] = '\0';
 		val[31] = '\0';
-		if (!strcmp(key, "max")) 
+		if (!strcmp(key, "max")) { 
 		    grp->gmax = atof(val);
-		else if (!strcmp(key, "min")) 
+		}
+		else if (!strcmp(key, "min")) { 
 		    grp->gmin = atof(val);
+		}
 		else if (!strcmp(key, "font")) { 
 		    strncpy(boxfont, val, 63);
 		    boxfont[63] = '\0';
 		}
-		else if (!strcmp(key, "fontsize")) 
+		else if (!strcmp(key, "fontsize")) {
 		    boxfontsize = atoi(val);
-		else if (!strcmp(key, "width") && atoi(val) > 0) 
+		}
+		else if (!strcmp(key, "width") && atoi(val) > 0) {
 		    grp->width = atoi(val);
-		else if (!strcmp(key, "height") && atoi(val) > 0) 
+		}
+		else if (!strcmp(key, "height") && atoi(val) > 0) { 
 		    grp->height = atoi(val);
+		}
 		else if (!strcmp(key, "numbers") && 
 			 (grp->numbers = malloc(8))) {
-		    strncpy(grp->numbers, val, 7);
-		    grp->numbers[7] = '\0';
+		    grp->numbers[0] = 0;
+		    strncat(grp->numbers, val, 7);
 		}
-		else if (!strcmp(key, "outliers") &&
-			 !strcmp(val, "true"))
+		else if (!strcmp(key, "outliers") && !strcmp(val, "true")) {
 		    grp->show_outliers = 1;
+		}
 	    }
 	}
 	fclose (fp);
@@ -1270,16 +1275,16 @@ static int dump_boxplot (PLOTGROUP *grp)
     fprintf(fp, "numbers = %s\n", (grp->numbers == NULL)? 
 	    "NULL" : grp->numbers);
     fprintf(fp, "width height = %d %d\n", grp->width, grp->height);
-    fprintf(fp, "boxwidth = %f\n", grp->boxwidth);
-    fprintf(fp, "gmax gmin = %f %f\n", grp->gmax, grp->gmin);
+    fprintf(fp, "boxwidth = %g\n", grp->boxwidth);
+    fprintf(fp, "gmax gmin = %g %g\n", grp->gmax, grp->gmin);
 
     for (i=0; i<grp->nplots; i++) {
 	plt = &grp->plots[i];
-	fprintf(fp, "%d median = %f\n", i, plt->median);
-	fprintf(fp, "%d conf = %f %f\n", i, plt->conf[0], plt->conf[1]);
-	fprintf(fp, "%d quartiles = %f %f\n", i, plt->uq, plt->lq);
-	fprintf(fp, "%d maxmin = %f %f\n", i, plt->max, plt->min);
-	fprintf(fp, "%d xbase = %f\n", i, plt->xbase);
+	fprintf(fp, "%d median = %g\n", i, plt->median);
+	fprintf(fp, "%d conf = %g %g\n", i, plt->conf[0], plt->conf[1]);
+	fprintf(fp, "%d quartiles = %g %g\n", i, plt->uq, plt->lq);
+	fprintf(fp, "%d maxmin = %g %g\n", i, plt->max, plt->min);
+	fprintf(fp, "%d xbase = %g\n", i, plt->xbase);
 	fprintf(fp, "%d varname = %s", i, plt->varname);
 	if (plt->bool != NULL) {
 	    fprintf(fp, " %s\n", plt->bool);
@@ -1290,10 +1295,10 @@ static int dump_boxplot (PLOTGROUP *grp)
 	    int j;
 
 	    fprintf(fp, "%d n_outliers = %d\n", i, plt->outliers->n);
-	    fprintf(fp, "%d rmax rmin = %f %f\n", i, 
+	    fprintf(fp, "%d rmax rmin = %g %g\n", i, 
 		    plt->outliers->rmax, plt->outliers->rmin);
 	    for (j=0; j<plt->outliers->n; j++) 
-		fprintf(fp, "%d vals %f\n", i, plt->outliers->vals[j]); 
+		fprintf(fp, "%d vals %g\n", i, plt->outliers->vals[j]); 
 	} else
 	    fprintf(fp, "%d n_outliers = 0\n", i);
 	
@@ -1360,7 +1365,7 @@ int retrieve_boxplot (const char *fname)
 	    strcpy(grp->numbers, numstr);
     }
 
-    grp->plots = malloc(grp->nplots * sizeof(BOXPLOT));
+    grp->plots = malloc(grp->nplots * sizeof *grp->plots);
     if (grp->plots == NULL) {
 	free(grp);
 	fclose(fp);

@@ -268,6 +268,11 @@ enum file_lists {
     FILE_LIST_SCRIPT,
 };
 
+enum graph_types {
+    GRETL_GNUPLOT_GRAPH,
+    GRETL_BOXPLOT
+};
+
 /* functions follow */
 
 #ifndef G_OS_WIN32

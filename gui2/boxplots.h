@@ -20,11 +20,6 @@
 #ifndef BOXPLOTS_H
 #define BOXPLOTS_H
 
-enum {
-    GRETL_GNUPLOT_GRAPH,
-    GRETL_BOXPLOT
-};
-
 extern char boxplottmp[MAXLEN];
 
 int boxplots (int *list, char **bools, 

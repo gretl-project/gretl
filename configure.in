@@ -205,16 +205,6 @@ else
 fi,
 try_gmp=yes)
 
-AC_ARG_WITH(lapack,
-[  --with-lapack   Use LAPACK [default=auto]],
-if test "x${withval}" = "xno"
-then
-  try_lapack=no
-else
-  try_lapack=yes
-fi,
-try_lapack=yes)
-
 AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -299,11 +289,9 @@ if test x"${try_gmp}" != xno ; then
 fi
 
 dnl
-dnl See if LAPACK is available
+dnl Check for LAPACK 
 dnl
-if test x"${try_lapack}" != xno ; then
-  AM_PATH_LAPACK(, have_lapack="yes")
-fi
+AM_PATH_LAPACK(, have_lapack="yes")
 
 dnl
 dnl Check for gnuplot, and its PNG capacity
@@ -582,6 +570,12 @@ elif test x"${XML_LIBS}" = x ; then
 echo "
 Please install libxml and then reconfigure gretl.
 libxml is available from http://xmlsoft.org/
+"
+
+elif test "${have_lapack}" = "no" ; then
+echo "
+Please install lapack and then reconfigure gretl.
+Lapack is available from http://www.netlib.org/lapack/
 "
 
 else
