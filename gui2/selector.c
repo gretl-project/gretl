@@ -1156,13 +1156,13 @@ build_selector_switches (selector *sr)
 
     if (sr->code == OLS) {
 	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
-	g_signal_connect(GTK_OBJECT(tmp), "toggled",
+	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(robust_callback), sr);
 
     }
     else if (sr->code == TOBIT) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
-	g_signal_connect(GTK_OBJECT(tmp), "toggled",
+	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(verbose_callback), sr);
     }
 

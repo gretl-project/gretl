@@ -887,6 +887,52 @@ static void selector_init (selector *sr, guint code, const char *title)
     gtk_window_set_position(GTK_WINDOW(sr->dlg), GTK_WIN_POS_MOUSE);
 }
 
+static void robust_callback (GtkWidget *w,  selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts |= OPT_R;
+    } else {
+	sr->opts &= ~OPT_R;
+    }
+}
+
+static void verbose_callback (GtkWidget *w,  selector *sr)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	sr->opts |= OPT_V;
+    } else {
+	sr->opts &= ~OPT_V;
+    }
+}
+
+static void 
+build_selector_switches (selector *sr) 
+{
+    GtkWidget *hbox, *tmp = NULL;
+
+    if (sr->code == OLS) {
+	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
+	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
+			   GTK_SIGNAL_FUNC(robust_callback), sr);
+
+    }
+    else if (sr->code == TOBIT) {
+	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
+	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
+			   GTK_SIGNAL_FUNC(verbose_callback), sr);
+    }
+
+    if (tmp != NULL) {
+	hbox = gtk_hbox_new(FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(hbox), tmp, TRUE, TRUE, 0);
+	gtk_widget_show(tmp);
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox),
+			   hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
+    }
+} 
+
 static void 
 build_selector_buttons (selector *sr, void (*okfunc)())
 {
@@ -1125,6 +1171,11 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(sr->dlg)->vbox), 
 		       big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
+
+    /* toggle switches for some cases */
+    if (WANT_TOGGLES(sr->code)) {
+	build_selector_switches(sr);
+    }
 
     /* buttons: "OK", Clear, Cancel, Help */
     build_selector_buttons(sr, okfunc);
