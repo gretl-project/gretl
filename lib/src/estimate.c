@@ -2125,7 +2125,8 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
-#if 1
+#ifdef AR_BY_NLS /* not quite ready yet */
+
 static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count, 
 		  PRN *prn)
 {
@@ -2138,6 +2139,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     MODEL armod;
 
     arlist = malloc((arvars + 1) * sizeof *arlist);
+
     if (arlist == NULL) {
 	armod.errcode = E_ALLOC;
 	return armod;
@@ -2153,9 +2155,14 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 
     /* run initial OLS */
     armod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+    if (armod.errcode) goto ar1_bailout;
+
     ifc = armod.ifc;
     ess = armod.ess;
-    rho = armod.rho; /* is this a good idea? */
+    /* is this a good idea? */
+#if 0
+    rho = armod.rho; 
+#endif
 
     /* form regression list for NLS */
     arlist[0] = arvars;
@@ -2165,7 +2172,8 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     }
     arlist[arvars] = v + list[0];
 
-    pdinfo->t1 = 1; /* FIXME */
+    /* first obs will not be usable */
+    (*pZ)[v+1][0] = NADBL;
 
     pprintf(prn, "\n%s\n\n", _("Nonlinear least squares"));
 
@@ -2224,10 +2232,7 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 
 	/* (re-)estimate linearized model */
 	armod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
-	if (armod.errcode) {
-	    fprintf(stderr, "ERROR estimating armod\n");
-	    break;
-	}
+	if (armod.errcode) break;
 
 	/* essdiff = fabs(ess - armod.ess) / ess; */
 	essdiff = fabs(rho - armod.coeff[list[0]]) / rho;
@@ -2235,19 +2240,21 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	if (++j > 20) break;
     }
 
-    /* printmodel(&armod, pdinfo, prn); */
+    if (armod.errcode) goto ar1_bailout;
 
     for (i=0; i<=list[0]; i++) {
 	armod.list[i] = list[i];
     }
     armod.ncoeff -= 1;
     armod.ifc = ifc;
+    if (ifc) armod.dfn -= 1;
     *model_count += 1;
     armod.ID = *model_count;
     armod.ci = AR;
 
     if (ar_info_init(&armod, 2)) {
 	armod.errcode = E_ALLOC;
+	goto ar1_bailout;
     } else {
 	armod.arinfo->arlist[0] = 1;
 	armod.arinfo->arlist[1] = 1;
@@ -2255,12 +2262,48 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	armod.arinfo->sderr[1] = armod.sderr[list[0]];
     }
 
+    /* special computation of additional stats */
+    if (armod.errcode == 0) {
+	double tss = 0.0;
+	int nobs = armod.t2 - armod.t1 + 1;
+
+	armod.ybar = _esl_mean(armod.t1, armod.t2, (*pZ)[list[1]]);
+	armod.sdy = _esl_stddev(armod.t1, armod.t2, (*pZ)[list[1]]);
+
+	for (t=armod.t1; t<=armod.t2; t++) {
+	    double y = (*pZ)[list[1]][t];
+
+	    tss += (y - armod.ybar) * (y - armod.ybar);
+	}
+	armod.fstt = armod.dfd * (tss - armod.ess) / (armod.dfn * armod.ess);
+	if (tss > 0) {
+	    armod.rsq = 1.0 - (armod.ess / tss);
+	    if (armod.dfd > 0) {
+		double den = tss * armod.dfd;
+
+		armod.adjrsq = 1.0 - (armod.ess * (nobs-1)/den);
+		if (!armod.ifc) {  
+		    armod.rsq = corrrsq(nobs, &((*pZ)[list[1]][armod.t1]), 
+					armod.yhat + armod.t1);
+		    armod.adjrsq = 
+			1.0 - ((1.0 - armod.rsq)*(nobs - 1)/armod.dfd);
+		}
+	    }
+	}
+	_aicetc(&armod);
+    }
+
     printmodel(&armod, pdinfo, prn);
+
+ ar1_bailout:
     dataset_drop_vars(arvars, pZ, pdinfo);
+    free(arlist);
+    free(list);
 
     return armod;
 }
-#endif
+
+#endif /* AR_BY_NLS */
 
 /**
  * ar_func:
@@ -2318,7 +2361,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     if (_hasconst(reglist)) rearrange_list(reglist);
 
-#if 1
+#ifdef AR_BY_NLS /* not ready yet */
     if (arlist[0] == 1 && arlist[1] == 1) {
 	free(arlist);
 	free(reglist2);

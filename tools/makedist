@@ -15,11 +15,15 @@ cd ${topdir} && date > share/gretl.stamp
 
 # make the archive and remove the dist dir
 cd $parent 
-echo "making archive..." 
+echo "making archive..."
+cp gretl/gui2/model_table.c gretl/gui
+cp gretl/gui2/model_table.h gretl/gui 
 mv gretl gretl-${version}
 rm -f $tarfile 
 tar cvyfX $tarfile tar_exclude gretl-${version}
 mv gretl-${version} gretl
+rm gretl/gui/model_table.c
+rm gretl/gui/model_table.h
 
 # scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/
 # scp gretl/doc/manual-a4.pdf allin@gretl.sourceforge.net:~/www/

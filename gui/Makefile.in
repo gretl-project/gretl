@@ -95,12 +95,6 @@ OBJS = $(SRCS:.c=.o)
 $(PROG): $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
-$(topsrc)/gui/model_table.c:
-	$(LN_S) `pwd`/$(topsrc)/gui2/model_table.c $@
-
-$(topsrc)/gui/model_table.h:
-	$(LN_S) `pwd`/$(topsrc)/gui2/model_table.h $@
-
 -include $(OBJS:.o=.d)
 
 .PHONY:
@@ -137,3 +131,4 @@ clean:
 
 distclean: clean
 	rm -f Makefile debug
+
