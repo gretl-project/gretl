@@ -333,9 +333,15 @@ static int get_int_value (const char *s, const DATAINFO *pdinfo,
     return ret;
 }
 
+const char *ok_ichars = "ijklm";
+
+int loop_index_char (int c)
+{
+    return (strchr(ok_ichars, c) != NULL);
+}
+
 static int bad_ichar (char c)
 {
-    const char *ok_ichars = "ijklm";
     int err = 0;
 
     if (strchr(ok_ichars, c) == NULL) {
@@ -409,6 +415,8 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	    loop->type = INDEX_LOOP;
 	}
 	loop->ichar = ichar;
+	/* set up internal variable for genr */
+	genr_scalar_index(ichar, 1, loop->initval);
     }
 
     return err;
@@ -2061,6 +2069,8 @@ static void top_of_loop (LOOPSET *loop, double **Z)
 
     if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
+    } else if (indexed_loop(loop)) {
+	genr_scalar_index(loop->ichar, 1, loop->initval);
     }
 }
 
@@ -2393,6 +2403,10 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	loop->iter += 1;
 
+	if (indexed_loop(loop)) {
+	    genr_scalar_index(loop->ichar, 2, 1);
+	}
+
     } /* end iterations of loop */
 
     if (err) {
@@ -2427,6 +2441,8 @@ int loop_exec (LOOPSET *loop, char *line,
     }
 }
 
+#define IFDEBUG 0
+
 /* if-then stuff - conditional execution */
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
@@ -2434,21 +2450,33 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo)
     char formula[MAXLEN];
     int err, ret = -1;
 
-#ifdef LOOP_DEBUG
-    printf("if_eval: line = '%s'\n", line);
+#if IFDEBUG
+    fprintf(stderr, "if_eval: line = '%s'\n", line);
 #endif
 
     /* + 2 below to omit "if" */
     sprintf(formula, "__iftest=%s", line + 2);
+
     err = generate(pZ, pdinfo, formula, NULL);
+
     if (!err) {
 	int v = varindex(pdinfo, "iftest");
 	
 	if (v < pdinfo->v) {
-	    ret = (*pZ)[v][0];
+	    double val = (*pZ)[v][0];
+
+	    if (na(val)) {
+		sprintf(gretl_errmsg, _("indeterminate condition for 'if'"));
+	    } else {
+		ret = (int) val;
+	    }
 	    dataset_drop_vars(1, pZ, pdinfo);
 	}
     }
+
+#if IFDEBUG
+    fprintf(stderr, "if_eval: returning %d\n", ret);
+#endif
 
     return ret;
 }
@@ -2464,8 +2492,7 @@ int ifstate (int code)
 
     if (code == RELAX) {
 	indent = 0;
-    }
-    else if (code == SET_FALSE || code == SET_TRUE) {
+    } else if (code == SET_FALSE || code == SET_TRUE) {
 	indent++;
 	if (indent >= IF_DEPTH) {
 	    fprintf(stderr, "if depth (%d) exceeded\n", IF_DEPTH);
@@ -2474,16 +2501,14 @@ int ifstate (int code)
 	T[indent] = (code == SET_TRUE);
 	got_if[indent] = 1;
 	got_else[indent] = 0;
-    }
-    else if (code == SET_ELSE) {
+    } else if (code == SET_ELSE) {
 	if (got_else[indent] || !got_if[indent]) {
 	    sprintf(gretl_errmsg, "Unmatched \"else\"");
 	    return 1; 
 	}
 	T[indent] = !T[indent];
 	got_else[indent] = 1;
-    }
-    else if (code == SET_ENDIF) {
+    } else if (code == SET_ENDIF) {
 	if (!got_if[indent] || indent == 0) {
 	    sprintf(gretl_errmsg, "Unmatched \"endif\"");
 	    return 1; 
@@ -2491,8 +2516,7 @@ int ifstate (int code)
 	got_if[indent] = 0;
 	got_else[indent] = 0;
 	indent--;
-    }
-    else if (code == IS_FALSE) {
+    } else if (code == IS_FALSE) {
 	int i;
 
 	for (i=1; i<=indent; i++) {

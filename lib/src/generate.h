@@ -20,8 +20,6 @@
 #ifndef GENERATE_H
 #define GENERATE_H
 
-#define INDEXNUM 996
-
 int generate (double ***pZ, DATAINFO *pdinfo, 
 	      const char *line, MODEL *pmod); 
 
@@ -51,6 +49,8 @@ int genr_fit_resid (const MODEL *pmod,
 int get_generated_value (const char *argv, double *val,
 			 double ***pZ, DATAINFO *pdinfo,
 			 MODEL *pmod, int t);
+
+int genr_scalar_index (int c, int opt, int put);
 
 #endif /* GENERATE_H */
 

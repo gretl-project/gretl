@@ -53,4 +53,6 @@ int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
 
 int ifstate (int code);
 
+int loop_index_char (int c);
+
 #endif /* MONTE_CARLO_H */

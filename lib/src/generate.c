@@ -30,12 +30,15 @@
 #include <errno.h>
 
 enum {
-    HNUM = INDEXNUM + 1,
+    HNUM = 2000,
     UHATNUM,
     YHATNUM,
     TNUM,
-    OBSBOOLNUM
+    OBSBOOLNUM,
+    INDEXNUM
 } genr_numbers;
+
+#define N_INDICES 5
 
 static double calc_xy (double x, double y, char op, int t, int *err);
 
@@ -92,7 +95,6 @@ static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err);
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
-static int genr_scalar_index (int opt, int put);
 static int real_varindex (const DATAINFO *pdinfo, 
 			  const char *varname, 
 			  int local);
@@ -477,6 +479,8 @@ static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
     return err;
 }
 
+#define internal_index_var(v) (v >= INDEXNUM && v < INDEXNUM + N_INDICES)
+
 static genatom *parse_token (const char *s, char op,
 			     GENERATE *genr, int level)
 {
@@ -502,8 +506,8 @@ static genatom *parse_token (const char *s, char op,
 		    DPRINTF(("recognized var '%s' (#%d)\n", s, v));
 		}
 
-		if (v == INDEXNUM) { /* internal index variable */
-		    int k = genr_scalar_index(0, 0);
+		if (internal_index_var(v)) { 
+		    int k = genr_scalar_index(*s, 0, 0);
 
 		    val = k;
 		    scalar = 1;
@@ -2106,6 +2110,7 @@ static void get_genr_formula (char *formula, const char *line,
 
 /**
  * genr_scalar_index:
+ * @c: character represting a particular index (i to m).
  * @opt: If opt = 1, set the value of the (static) index, using
  * the value of @put.  If opt = 2, increment the static index by
  * the value of @put.
@@ -2117,18 +2122,30 @@ static void get_genr_formula (char *formula, const char *line,
  * Returns: the new value of the index.
  */
 
-int genr_scalar_index (int opt, int put)
+int genr_scalar_index (int c, int opt, int put)
 {
     /* opt = 1, set index (using "put")
        opt = 2, increment index value
-       Refers to an "internal" variable named "i",
-       available in genr commands, and with ID number 1001
+       Refers to an "internal" variable named "i", "j", ... "m"
+       available in genr commands, and with ID number INDEXNUM+
     */
-    static int i;
+    static int idx[N_INDICES];
+    int i = 0;
 
-    if (opt == 1) i = put;
-    else if (opt == 2) i += put;
-    return i;
+    if (c == 'i') i = 0;
+    else if (c == 'j') i = 1;
+    else if (c == 'k') i = 2;
+    else if (c == 'l') i = 3;
+    else if (c == 'm') i = 4;
+    else return -1;
+
+    if (opt == 1) {
+	idx[i] = put;
+    } else if (opt == 2) {
+	idx[i] += put;
+    }
+
+    return idx[i];
 }
 
 static int gentoler (const char *s)
@@ -4431,7 +4448,7 @@ real_varindex (const DATAINFO *pdinfo, const char *varname, int local)
     }
 
     /* FIXME: should we allow "$i", "$t", "$obs" ?? */
-    if (!strcmp(check, "i")) {
+    if (strlen(check) == 1 && loop_index_char(*check)) {
 	return INDEXNUM;
     }
     if (!strcmp(check, "t")) {

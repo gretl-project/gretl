@@ -447,7 +447,8 @@ file_selector_process_result (const char *in_fname, int action, gpointer data)
 	FILE *fp = fopen(fname, "r");
 
 	if (fp == NULL) {
-	    errbox(_("Couldn't open the specified file"));
+	    sprintf(errtext, _("Couldn't open %s"), fname);
+	    errbox(errtext);
 	    return;
 	} else {
 	    fclose(fp);
