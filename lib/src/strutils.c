@@ -54,8 +54,11 @@ int dotpos (const char *str)
 
 int slashpos (const char *str)
 { 
-    int i, n = strlen(str);
+    size_t i, n;
 
+    if (str == NULL) return 0;
+
+    n = strlen(str);
     for (i=n-1; i>0; i--) 
 	if (str[i] == SLASH) return i;
     return 0;    

@@ -473,12 +473,15 @@ static void get_runfile (char *str)
     tryscript[0] = '\0';
     strncat(tryscript, str, MAXLEN-1);
     if (addpath(tryscript, &paths, 1) == NULL) {
-	fprintf(stderr, "Couldn't find script \"%s\"\n", tryscript);
+	fprintf(stderr, "Couldn't find script '%s'\n", tryscript);
 	exit(EXIT_FAILURE);
     } else {
 	fprintf(stderr, "%s found\n", tryscript);
 	i = slashpos(tryscript);
-	if (i) strncpy(paths.currdir, tryscript, i);
+	if (i) {
+	    paths.currdir[0] = '\0';
+	    strncat(paths.currdir, tryscript, i);
+	}
 	strcat(paths.currdir, SLASHSTR);
     }
 }
@@ -520,11 +523,7 @@ int main (int argc, char *argv[])
 {
     int opt, err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
-#ifdef G_OS_WIN32
-    char callname[MAXLEN];
 
-    strcpy(callname, argv[0]);
-#endif
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc("startup");
 
@@ -592,7 +591,8 @@ int main (int argc, char *argv[])
 	    /* let's suppose the argument is a data file */
 	    break;
 	}
-    } else gui_get_data = 1;
+    } else 
+	gui_get_data = 1;
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
@@ -631,28 +631,30 @@ int main (int argc, char *argv[])
     /* get the data file, if specified on the command line */
     if (!(gui_get_data)) {
 	int ftype;
-	PRN prn;
+	PRN *prn; 
 
-	prn.fp = stderr;
-	clear(paths.datfile, MAXLEN);
-	strcpy(paths.datfile, argv[1]);
-	ftype = detect_filetype(paths.datfile, &paths, &prn);
+	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
+	if (prn == NULL) 
+	    exit(EXIT_FAILURE);
+	paths.datfile[0] = '\0';
+	strncat(paths.datfile, argv[1], MAXLEN-1);
+	ftype = detect_filetype(paths.datfile, &paths, prn);
 	switch (ftype) {
 	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
-			   &prn);
+			   prn);
 	    break;
 	case GRETL_XML_DATA:
 	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, data_status, 
-			      &prn);
+			      prn);
 	    break;
 	case GRETL_CSV_DATA:
-	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
+	    err = import_csv(&Z, datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_BOX_DATA:
-	    err = import_box(&Z, datainfo, paths.datfile, &prn);
+	    err = import_box(&Z, datainfo, paths.datfile, prn);
 	    break;
 	case GRETL_SCRIPT:
 	    gui_get_data = 1;
@@ -662,8 +664,8 @@ int main (int argc, char *argv[])
 	}
 	if (ftype != GRETL_SCRIPT) {
 	    if (err) {
-		errmsg(err, &prn);
-		return EXIT_FAILURE;
+		errmsg(err, prn);
+		exit(EXIT_FAILURE);
 	    }
 	    data_status = HAVE_DATA;
 	    /* FIXME need more here? */
@@ -673,6 +675,7 @@ int main (int argc, char *argv[])
 	    check_cmd(line);
 	    cmd_init(line);
 	}
+	gretl_print_destroy(prn);
     }
 
     /* create the GUI */

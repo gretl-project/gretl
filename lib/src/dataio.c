@@ -1272,7 +1272,8 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	int found = 0;
 
 	/* try using the .gdt suffix? */
-	strcpy(tryfile, datfile);
+	tryfile[0] = '\0';
+	strncat(tryfile, datfile, MAXLEN-1);
 	try_gdt(tryfile); 
 	found = (addpath(tryfile, ppaths, 0) != NULL);
 	if (found) add_gdt = 1;
