@@ -53,6 +53,8 @@ enum loop_types {
     FOR_LOOP
 };
 
+#define indexed_loop(l) (l->type == INDEX_LOOP || l->type == DATED_LOOP)
+
 typedef struct {
     int ID;
     int *list;
@@ -355,7 +357,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 	loop->initval = nstart;
 	loop->lvar = 0;
 	loop->rvar = 0;
-	loop->ntimes = nend;
+	loop->ntimes = nend - nstart + 1; 
 	if (dated) {
 	    loop->type = DATED_LOOP;
 	} else {
@@ -732,12 +734,11 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
     }
 
     /* a loop indexed by 'i' */
-    else if (loop->type == INDEX_LOOP || 
-	     loop->type == DATED_LOOP) {  
+    else if (indexed_loop(loop)) {
 	if (k > 0) {
 	    loop->index += 1;
 	}
-	if (loop->index <= loop->ntimes) {
+	if (loop->index < loop->ntimes) {
 	    cont = 1;
 	}
     } 
@@ -1787,6 +1788,7 @@ static int substitute_dollar_i (char *str, const LOOPSET *loop,
 				const DATAINFO *pdinfo)
 {
     char *p;
+    int i = loop->initval + loop->index;
     int err = 0;
 
     while ((p = strstr(str, "$i")) != NULL) {
@@ -1800,9 +1802,9 @@ static int substitute_dollar_i (char *str, const LOOPSET *loop,
 	}
 	strcpy(q, p + 2);
 	if (loop->type == INDEX_LOOP) {
-	    sprintf(ins, "%d", loop->index);
+	    sprintf(ins, "%d", i);
 	} else {
-	    ntodate(ins, loop->index, pdinfo);
+	    ntodate(ins, i, pdinfo);
 	}
 	strcpy(p, ins);
 	strcpy(p + strlen(ins), q);
@@ -1830,10 +1832,26 @@ loop_add_storevals (const int *list, LOOPSET *loop, int lround,
 
 static void top_of_loop (LOOPSET *loop, double **Z)
 {
-    if (loop->type == INDEX_LOOP || loop->type == DATED_LOOP) {
-	loop->index = loop->initval;
+    if (indexed_loop(loop)) {
+	loop->index = 0;
     } else if (loop->type == FOR_LOOP) {
 	Z[loop->lvar][0] = loop->initval;
+    }
+}
+
+static void 
+print_loop_progress (const LOOPSET *loop, const DATAINFO *pdinfo,
+		     PRN *prn)
+{
+    int i = loop->initval + loop->index;
+
+    if (loop->type == INDEX_LOOP) {
+	pprintf(prn, "loop: i = %d\n\n", i);
+    } else if (loop->type == DATED_LOOP) {
+	char obs[OBSLEN];
+
+	ntodate(obs, i, pdinfo);
+	pprintf(prn, "loop: i = %s\n\n", obs);
     }
 }
 
@@ -1880,15 +1898,8 @@ int loop_exec (LOOPSET *loop, char *line,
 	fprintf(stderr, "top of loop: lround = %d\n", lround);
 #endif
 
-	if (!(*echo_off)) {
-	    if (loop->type == INDEX_LOOP) {
-		pprintf(prn, "loop: i = %d\n\n", loop->index);
-	    } else if (loop->type == DATED_LOOP) {
-		char obs[OBSLEN];
-
-		ntodate(obs, loop->index, *ppdinfo);
-		pprintf(prn, "loop: i = %s\n\n", obs);
-	    }
+	if (!(*echo_off) && indexed_loop(loop)) {
+	    print_loop_progress(loop, *ppdinfo, prn);
 	}
 
 	for (j=0; !err && j<loop->ncmds; j++) {
@@ -1904,7 +1915,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 	    }
 
-	    if (loop->type == INDEX_LOOP || loop->type == DATED_LOOP) {
+	    if (indexed_loop(loop)) {
 		err = substitute_dollar_i(linecpy, loop, *ppdinfo);
 		if (err) {
 		    break;
@@ -1917,16 +1928,21 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    getcmd(linecpy, pdinfo, &cmd, &ignore, pZ, NULL);
 
-	    if (cmd.ci < 0) continue;
+	    if (cmd.ci < 0) {
+		continue;
+	    }
 
 	    if (cmd.errcode) {
 		err = cmd.errcode;
 		break;
 	    }
 
-	    if (!(*echo_off) && 
-		(loop->type == INDEX_LOOP || loop->type == DATED_LOOP)) {
-		echo_cmd(&cmd, pdinfo, linecpy, 0, 1, 0, prn);
+	    if (!(*echo_off) && indexed_loop(loop)) {
+		if (cmd.ci == ENDLOOP) {
+		    pputc(prn, '\n');
+		} else {
+		    echo_cmd(&cmd, pdinfo, linecpy, 0, 1, 0, prn);
+		}
 	    }
 
 	    switch (cmd.ci) {
@@ -1947,6 +1963,9 @@ int loop_exec (LOOPSET *loop, char *line,
 
 	    case GENR:
 		err = generate(pZ, pdinfo, linecpy, lastmod);
+		if (!(*echo_off) && !err) { 
+		    print_gretl_msg(prn);
+		}
 		break;
 
 	    case SIM:
@@ -2055,7 +2074,7 @@ int loop_exec (LOOPSET *loop, char *line,
 
 		if (err) {
 		    errmsg(err, prn);
-		} else {
+		} else if (1 || !(*echo_off)) {
 		    print_smpl(*ppdinfo, get_full_length_n(), prn);
 		}
 		break;
