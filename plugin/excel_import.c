@@ -60,7 +60,12 @@ char *errbuf;
 /* #define FULL_EDEBUG 1 */
 
 #define EXCEL_IMPORTER
-#include "import_common.c"
+
+#ifdef GRETL2
+# include "import_common-2.c"
+#else
+# include "import_common.c"
+#endif
 
 enum {
     VARNAMES_OK = 0,

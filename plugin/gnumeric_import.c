@@ -46,7 +46,11 @@ typedef enum {
 
 char *errbuf;
 
-#include "import_common.c"
+#ifdef GRETL2
+# include "import_common-2.c"
+#else
+# include "import_common.c"
+#endif
 
 static void wsheet_init (wsheet *sheet)
 {

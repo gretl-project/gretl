@@ -47,6 +47,11 @@ static int xmlfile (const char *fname);
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
 
+#ifdef GRETL2
+#define PROGRESS_BAR "progress_bar-2"
+#else
+#define PROGRESS_BAR "progress_bar"
+#endif
 
 static double atod (char *s, const DATAINFO *pdinfo)
 {
@@ -2801,7 +2806,7 @@ static int write_xmldata (const char *fname, const int *list,
     } else sz = 0L;
 
     if (sz) {
-	if (open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	if (open_plugin(ppaths, PROGRESS_BAR, &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
@@ -3087,7 +3092,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     int (*show_progress) (long, long, int) = NULL;
 
     if (progress) {
-	if (open_plugin(ppaths, "progress_bar", &handle) == 0) {
+	if (open_plugin(ppaths, PROGRESS_BAR, &handle) == 0) {
 	    show_progress = 
 		get_plugin_function("show_progress", handle);
 	    if (show_progress == NULL) {
