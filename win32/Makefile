@@ -11,7 +11,7 @@ plugindir = ../plugin
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields
+CC = $(MGW_PREFIX)-gcc -Wall -O2 -mms-bitfields -DWIN32
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 
@@ -163,11 +163,8 @@ dirs:
 dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(UPDATER)
 	./mkwindist 
 
-topclean:
-	rm -f *.o *.exe
-
 clean:
-	rm -f *.o *.d *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
+	rm -f *.o *.d *.def *.exe $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
 	rm -f dlls/libgtkextra-lite.dll $(imports)/*.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h

@@ -335,7 +335,7 @@ static char *full_path (const char *s1, const char *s2)
 {
     static char fpath[FILENAME_MAX];
 
-    sprintf(fpath, "%s/%s", s1, s2);
+    sprintf(fpath, "%s%c%s", s1, SLASH, s2);
     return fpath;
 }
 

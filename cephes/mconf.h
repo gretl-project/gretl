@@ -66,7 +66,7 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 
 
 
-#ifdef WIN32
+#ifdef _WIN32
 # include "winconfig.h"
 #else
 # include "config.h"
@@ -81,14 +81,14 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 /* Constant definitions for math error conditions
  */
 
-#ifndef _WIN32
+#if !defined(DOMAIN)
 #define DOMAIN		1	/* argument domain error */
 #define SING		2	/* argument singularity */
 #define OVERFLOW	3	/* overflow range error */
 #define UNDERFLOW	4	/* underflow range error */
 #define TLOSS		5	/* total loss of precision */
 #define PLOSS		6	/* partial loss of precision */
-#endif
+#endif 
 
 #define EDOM		33
 #define ERANGE		34
@@ -157,7 +157,7 @@ typedef struct
 
 /* Define to ask for support of numbers that are Not-a-Number,
    else undefine.  This may automatically define INFINITIES in some files. */
-#ifndef WIN32
+#ifndef _WIN32
 /* # define NANS 1 */
 #endif
 

@@ -498,20 +498,6 @@ static char *make_winfilter (int action, gpointer data)
     return start;
 }
 
-static int has_native_data_suffix (const char *fname)
-{
-    size_t n;
-
-    if (fname == NULL || *fname == '\0') return 0;
-
-    n = strlen(fname);
-    if (n > 4) {
-	if (!strcmp(fname + n - 4, (olddat)? ".dat" : ".gdt")) return 1;
-    }
-
-    return 0;
-}
-
 /* ........................................................... */
 
 void file_selector (const char *msg, int action, gpointer data) 
