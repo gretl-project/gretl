@@ -108,7 +108,7 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	for f in manual.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd manual.chm && \
 	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
-	tex.math.in.alt=latex && $(HHC) gretl.hhp
+	"tex.math.in.alt=latex" && $(HHC) gretl.hhp
 
 chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml 
 	mkdir -p manual_it.chm/figures
@@ -116,8 +116,8 @@ chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml
 	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd manual_it.chm && \
 	$(SAXON) ../$(topdoc)/manual_it.xml ../$(topdoc)/gretlhlp.xsl \
-	tex.math.in.alt=latex lang=it htmlhelp.hhp="gretl_it.hhp" \
-	htmlhelp.chm="gretl_it.chm" && $(HHC) gretl_it.hhp
+	"tex.math.in.alt=latex" "lang=it" "htmlhelp.hhp=gretl_it.hhp" \
+	"htmlhelp.chm=gretl_it.chm" && $(HHC) gretl_it.hhp
 
 clean:
 	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex manual_it.tex
