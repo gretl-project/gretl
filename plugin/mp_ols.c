@@ -214,14 +214,60 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->errcode = 0;
 }
 
+static void fix_exponent (char *s)
+{
+    char *p;
+    int k;
+
+    if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
+        if (sscanf(p + 1, "%d", &k) == 1)
+            sprintf(p + 1, "0%d", k);
+    }
+}
+
+static void print_float_28 (double x, PRN *prn)
+{
+    char numstr[48], final[48];
+    char *p;
+    int i, tmp, forept = 0;
+    char decpoint = '.';
+
+#ifdef ENABLE_NLS
+    decpoint = get_local_decpoint();
+#endif
+
+    sprintf(numstr, "%#.*G", 12, x);
+    fix_exponent(numstr);
+
+    p = strchr(numstr, decpoint);
+    if (p != NULL) forept = p - numstr;
+    tmp = 12 - forept;
+    *final = 0;
+    for (i=0; i<tmp; i++) strcat(final, " ");
+
+    tmp = strlen(numstr) - 1;
+    if (numstr[tmp] == decpoint) numstr[tmp] = 0;
+
+    strcat(final, numstr);
+
+    tmp = 28 - strlen(final);
+    for (i=0; i<tmp; i++) strcat(final, " ");
+
+    pprintf(prn, "%s", final);
+}
+
+
 static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
 			    int c, PRN *prn)
 {
     double xx = mpf_get_d (pmod->coeff[c-1]);
     double yy = mpf_get_d (pmod->sderr[c-1]);
 
-    pprintf(prn, " %3d) %8s %20.12g %20.12g\n", pmod->varlist[c], 
-	    pdinfo->varname[pmod->varlist[c]], xx, yy);
+    pprintf(prn, " %3d) %8s ", pmod->varlist[c], 
+	    pdinfo->varname[pmod->varlist[c]]);
+    print_float_28(xx, prn);
+    print_float_28(yy, prn);
+    pprintf(prn, "\n");
 }
 
 static void other_stats (const MPMODEL *pmod, PRN *prn)
@@ -233,16 +279,30 @@ static void other_stats (const MPMODEL *pmod, PRN *prn)
     if (doing_nls()) len = 36;
     
     xx = mpf_get_d (pmod->sigma);
-    pprintf(prn, "%-*s%20.12g\n", len, _("Standard error"), xx);
+    pprintf(prn, "%-*s", len, _("Standard error"));
+    print_float_28(xx, prn);
+    pprintf(prn, "\n");
+
     xx = mpf_get_d (pmod->ess);
-    pprintf(prn, "%-*s%20.12g\n", len, _("Error Sum of Squares"), xx);
+    pprintf(prn, "%-*s", len, _("Error Sum of Squares"));
+    print_float_28(xx, prn);
+    pprintf(prn, "\n");
+
     xx = mpf_get_d (pmod->rsq);
-    pprintf(prn, "%-*s%20.12g\n", len, _("Unadjusted R-squared"), xx);
+    pprintf(prn, "%-*s", len, _("Unadjusted R-squared"));
+    print_float_28(xx, prn);
+    pprintf(prn, "\n");
+
     xx = mpf_get_d (pmod->adjrsq);
-    pprintf(prn, "%-*s%20.12g\n", len, _("Adjusted R-squared"), xx);
+    pprintf(prn, "%-*s", len, _("Adjusted R-squared"));
+    print_float_28(xx, prn);
+    pprintf(prn, "\n");
+
     xx = mpf_get_d (pmod->fstt);
     sprintf(fstr, "F(%d, %d)", pmod->dfn, pmod->dfd);
-    pprintf(prn, "%-*s%20.12g\n", len, fstr, xx);
+    pprintf(prn, "%-*s", len, fstr);
+    print_float_28(xx, prn);
+    pprintf(prn, "\n");
 }
 
 static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
@@ -260,7 +320,8 @@ static int print_mp_ols (const MPMODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, _("Dependent variable: %s\n\n"), 
 		 pdinfo->varname[pmod->varlist[1]]);
 
-    pprintf(prn, _("      VARIABLE         COEFFICIENT          STD. ERROR\n"));
+    pprintf(prn, _("      VARIABLE         COEFFICIENT          "
+		   "        STD. ERROR\n"));
 
     if (pmod->ifc) {
 	print_mp_coeff(pmod, pdinfo, ncoeff, prn);

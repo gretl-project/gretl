@@ -2560,7 +2560,7 @@ int open_plugin (const PATHS *ppaths, const char *plugin, void **handle)
     char pluginpath[MAXLEN];
 
 #ifdef OS_WIN32
-    sprintf(pluginpath, "%s\\%s.dll", ppaths->gretldir, plugin);
+    sprintf(pluginpath, "%s\\plugins\\%s.dll", ppaths->gretldir, plugin);
     *handle = LoadLibrary(pluginpath);
     if (*handle == NULL) return 1;
 #else
