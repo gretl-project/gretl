@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
 
+<!-- sample file for proposed generic XML representation of gretl
+     command reference -->
+
 <commandlist language="english"> 
 
   <command name="ols" xref="ols" section="Estimation">
