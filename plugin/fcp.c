@@ -1,66 +1,78 @@
-/* fsrc/vsgarcmx.f -- translated by f2c (version 20030306).
-   You must link the resulting object file with the libraries:
-	-lf2c -lm   (in that order)
+/* 
+    Provenenace info goes here
 */
 
 #include "libgretl.h"
 #include "fcp.h"
+
+#define TMAX 3009
+#define NPMAX 13
+#define RCMAX  7
+#define NLL   50
+#define ABNUM  4
+
+#define npidx(i,j) ((i) + NPMAX * (j))
+#define gidx(i,j) ((i) + RCMAX * (j))
+#define hidx(i,j,k) ((i) + (j) * NPMAX + (t) * NPMAX - 183)
 
 /* private functions */
 
 static int gj_invert(double *g, int ig, int n, 
 		     double *aux, int *ier);
 
-static int vsmode_(double *y, double *x, int nexo, 
-		   int iread, int i, double *yl,
-		   double *u, double *a, double *z__,
-		   int ncoeff);
+static int vsmode_(double *y, const double **X, int nexo, 
+		   int nobs, int i, double *yl,
+		   double *a, double *z__);
 
 static int ols_(int t1, int t2, double *yobs,
-		int iread, double *xobs, int nexo, double *umc,
-		double *yy, double *c__, int ncoeff, double *oldc,
+		int nobs, const double **X, int nexo, 
+		double *yy, double *c, int ncoeff, double *oldc,
 		double *vc, double *ystoc, double *amax, double *aux,
-		double *b, int *ncoefb, double *g);
+		double *b, double *g);
 
-static  double valunc_(double *c__, int ncoeff, double *res2, 
-		       double *res, double *ydet, double *yobs, 
-		       double *ystoc, double *xobs, int iread, 
-		       int nexo, double *umc, int t1, 
-		       int t2, double *param, 
-		       double *b, int *ncoefb, double *alfa0, 
-		       double *alfa, double *beta, int nalfa, 
-		       int nbeta, double *ht);
+static  
+double garch_ll (double *c, int ncoeff, double *res2, 
+		 double *res, double *ydet, double *yobs, 
+		 double *ystoc, const double **X, int nobs, 
+		 int nexo, int t1, int t2, double *param, 
+		 double *b, double *alfa0, 
+		 double *alfa, double *beta, int nalfa, 
+		 int nbeta, double *ht);
 
+#if 0
 static int sig_(int t1, int t2, double *yobs,
-		int iread, double *umc, double *xobs, int nexo,
-		double *yy, double *c__, int ncoeff, double *res,
-		double *sigma, double *ystoc, double *b, int *ncoefb,
+		int nobs, const double **X, int nexo,
+		double *yy, double *c, int ncoeff, double *res,
+		double *sigma, double *ystoc, double *b, 
 		double *alfa0, double *alfa, double *beta, int nalfa,
 		int nbeta);
+#endif
 
-static int check_(double *param, int ncoeff, int nparam);
+static int check_ht (double *param, int nparam);
 
-static int garcim_(int t1, int t2, double *yobs,
-		   int iread, double *xobs, int nexo, double *umc,
-		   double *ydet, double *c__, int ncoeff, double *res2,
+static int 
+garch_info_matrix (int t1, int t2, double *yobs,
+		   int nobs, const double **X, int nexo, 
+		   double *ydet, double *c, int ncoeff, double *res2,
 		   double *res, double *ystoc, double *toler, 
 		   int *ivolta, double *vc5, int *ih, double *g,
 		   double *pp, double *aux3, double *param, int nparam,
-		   double *b, int *ncoefb, double *alfa0, double *alfa,
+		   double *b, double *alfa0, double *alfa,
 		   double *beta, int nalfa, int nbeta, double *ht,
 		   double *dhtdp, double *zt);
 
-static int garcfh_(int t1, int t2, double *yobs,
-		   int iread, double *xobs, int nexo, double *umc,
-		   double *ydet, double *c__, int ncoeff, double *res2,
-		   double *res, double *ystoc, double *toler, int *izo,
-		   int *ivolta, double *vc5, int *ih, double *g,
-		   double *pp, double *aux3, double *param, int nparam,
-		   double *b, int *ncoefb, double *alfa0, double *alfa,
-		   double *beta, int nalfa, int nbeta, double *ht,
-		   double *dhtdp, double *zt);
+static int 
+garch_full_hessian (int t1, int t2, double *yobs,
+		    int nobs, const double **X, int nexo, 
+		    double *ydet, double *c, int ncoeff, double *res2,
+		    double *res, double *ystoc, double *toler, int *izo,
+		    int *ivolta, double *vc5, int *ih, double *g,
+		    double *pp, double *aux3, double *param, int nparam,
+		    double *b, double *alfa0, double *alfa,
+		    double *beta, int nalfa, int nbeta, double *ht,
+		    double *dhtdp, double *zt);
 
-static int vsrstr_(double *c__, int ncoeff, double *b, int *ncoefb);
+static void vsrstr_(const double *c, int ncoeff, double *b);
 
 #define log10e 0.43429448190325182765
 
@@ -69,90 +81,60 @@ static double d_lg10 (double x)
     return log10e * log(x);
 }
 
-/* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI */
-/* Journal of APPLIED ECONOMETRICS, 1996 */
+/* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
+   Journal of APPLIED ECONOMETRICS, 1996 
 
-/* mixed gradient algorithm */
+   mixed gradient algorithm
 
-/* garch(p,q) estimates of a linear equation */
-/* SEE BOLLERSLEV, JOE 31(1986),307-327. */
+   garch(p,q) estimates of a linear equation 
+   SEE BOLLERSLEV, JOE 31(1986),307-327. 
 
-/* rimember to put enough lagged observations in the data file */
-/* (at least =max(p,q)) to have residuals at time 0, -1, etc. */
+   ? remember to put enough lagged observations in the data file 
+   (at least = max(p,q)) to have residuals at time 0, -1, etc. 
+*/
 
-/* *********************************************************************** */
-/* maximum dimension (if not enough, enlarge using 'change global', */
-/* OR REDUCE TO SAVE STORAGE REQUIREMENTS) */
 /* NUMBER OF EXOGENOUS VARIABLES                                 =  0005 */
 /* SAMPLE (OR SIMULATION) PERIOD INCLUDING LAGGED INITIAL OBSERV.=003009 */
 /* NUMBER OF REGRESSION COEFFICIENTS                             =  0007 */
 /* NUMBER OF PARAMETERS (COEFF.+ALFAS+BETAS)                     =  0013 */
-/* *********************************************************************** */
 
-/* VC = matr di comodo che serve al calcolo --- inoltre si usa come */
-/*      inversa della mat. di cov. dei soli coeff. per la mat. di inf. */
-/* VC5= matrice di informazione. */
-/* VC8= inversa della mat. di cov. dei soli coeff. per l'fulhessiano */
-/* VC9= fulhessian of unconcentrated log-lik. (nparam,nparam). */
-/* VC10=matrix as in white (1982,p.....), computed using the complete */
-/*      inverse of VC9 and the full VC6 matrix. */
-/*      consistent and robust. */
-/* dhtdp sono le derivate di ht rispetto a tutti i parametri */
+/*
+  VC = matr di comodo che serve al calcolo --- inoltre si usa come
+       inversa della mat. di cov. dei soli coeff. per la mat. di inf.
+  VC5= matrice di informazione. 
+  VC8= inversa della mat. di cov. dei soli coeff. per l'fulhessiano 
+  VC9= fulhessian of unconcentrated log-lik. (nparam,nparam). 
+  VC10=matrix as in white (1982,p.....), computed using the complete 
+       inverse of VC9 and the full VC6 matrix. 
+       consistent and robust. 
 
-int vsanal_(int t1, int t2, double *yobs,
-	    int iread, double *xobs, int nexo, 
-	    double *umc, double *ydet, double *yy, 
-	    double *coeff, int ncoeff, double *d__, double *oldc,
+       dhtdp sono le derivate di ht rispetto a tutti i parametri 
+*/
+
+int vsanal_(int t1, int t2, double *yobs, int nobs, 
+	    const double **X, int nx, double *ydet, double *yy, 
+	    double *coeff, int ncoeff, double *oldc,
 	    double *vc, double *res2, double *res, double *sigma,
-	    double *ystoc, double *amax, 
-	    double *b, int *ncoefb, int *iters, int *info,
-	    PRN *prn)
+	    double *ystoc, double *amax, double *b, 
+	    int *iters, int *info, PRN *prn)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff, 
-	    d_dim1, d_offset, vc_dim1, vc_offset, 
-	    i1, i2;
-    double d__1;
+    double c[RCMAX], g[RCMAX * TMAX];
+    int i, j, ih;
+    double ht[TMAX], vc5[NPMAX * NPMAX], aux[RCMAX];
+    double zt[6];   /* max alpha + beta */
+    double pp[141]; /* matrix inversion workspace */
+    int izo, nzo, nzo1;
+    double aux3[NPMAX], svc5[NPMAX];
+    double alfin[ABNUM], alfa[ABNUM], beta[ABNUM];
+    double d__1, fu, s_2, alfa0, s_1, alin0;
+    int nalfa, nbeta, nparam;
+    int ivolta, ivolt2;
+    double param[NPMAX], betin[ABNUM], dhtdp[NPMAX * TMAX], sderr[NPMAX];
+    double pappo, toler1, toler2, toler3;
+    double flikel[NLL];
+    double reldis, rellog, tollog, sumgra, totdis; 
+    double parpre[NPMAX], partrc[NPMAX * NLL];
 
-    /* Local variables */
-    static double c__[7], g[21063]	/* was [7][3009] */;
-    static int i, j, ih, ik;
-    static double fu, ht[3009], pp[141], zt[6], vc5[169]	/* was [13][
-	    13] */, aux[7];
-    static int izo, nzo;
-    static double aux3[13], svc5[13];
-    static int nzo1;
-    static double alfa[4], beta[4];
-    static int maxc;
-    static double sdue, alfa0, suno, alin0;
-    static int nalfa;
-    static double alfin[4];
-    static int nbeta;
-    static double param[13], betin[4], dhtdp[39117]	/* was [13][3009] */, 
-	    sderr[13], pappo, toler1, toler2, toler3;
-    static int ivolt2;
-    static double flikel[50];
-    static int nparam;
-    static double reldis, rellog;
-    static double parpre[13], partrc[650]	/* was [13][50] */;
-    static int ivolta;
-    static double tollog, sumgra, totdis;
-
-/*     The first row of AMAX contains the initial values */
-/*     of the parameters on entry */
-
-    /* Parameter adjustments */
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    vc_dim1 = ncoeff;
-    vc_offset = 1 + vc_dim1;
-    vc -= vc_offset;
-    d_dim1 = 1;
-    d_offset = 1 + d_dim1;
-    d__ -= d_offset;
-
-    /* Function Body */
     alin0 = amax[0];
     nalfa = (int) amax[1];
     nbeta = (int) amax[2];
@@ -163,42 +145,39 @@ int vsanal_(int t1, int t2, double *yobs,
 	fprintf(stderr, "read initial alpha[%d] = %g\n", i, alfin[i]);
     }
 
-    i1 = nbeta;
     for (i = 0; i < nbeta; ++i) {
 	betin[i] = amax[3 + nalfa + i];
 	fprintf(stderr, "read initial beta[%d] = %g\n", i, betin[i]);
     }
 
-    /* CLEAR the error code */
+    /* clear the error code */
     *info = 0;
 
     /* number of parameters of unconcentrated likelihood */
     nparam = ncoeff + 1 + nalfa + nbeta;
-    if (nexo <= 5 && iread <= 3009 && ncoeff <= 7 && nparam <= 13 
-        && (nparam * nparam + nparam) / 2 <= 141) {
-	goto L2;
-    }
-    *info = 1;
-    goto L999;
 
-L2:
+    if (nx > 5 || nobs > TMAX || ncoeff > RCMAX || nparam > NPMAX 
+        || (nparam * nparam + nparam) / 2 > 141) {
+	*info = 1;
+	return 1;
+    }
+
     /* experimental optimal choice for toler1 on model vsser2 */
     toler1 = .05;
     toler2 = 1e-8;
     toler3 = 1e-9;
     tollog = d_lg10(toler2);
 
-    for (ik = 0; ik < ncoeff; ++ik) {
-	c__[ik] = coeff[ik];
+    for (i = 0; i < ncoeff; ++i) {
+	c[i] = coeff[i];
     }
 
-    for (ik = 1; ik <= nparam; ++ik) {
-	svc5[ik - 1] = 0.0;
+    for (i = 0; i < nparam; ++i) {
+	svc5[i] = 0.0;
     }
 
-    /* sul 486 la due riga seguenti danno errore in compilazione. tolte. */
-    for (i = 1; i <= 50; ++i) {
-	flikel[i - 1] = 0.0;
+    for (i = 0; i < NLL; ++i) {
+	flikel[i] = 0.0;
     }
 
     for (i = 0; i < ncoeff; ++i) {
@@ -206,512 +185,384 @@ L2:
     }
 
     param[ncoeff] = alin0;
-    if (nalfa <= 0) {
-	goto L260;
+    for (i = 0; i < nalfa; ++i) {
+	param[ncoeff + i] = alfin[i];
     }
 
-    for (i = 1; i <= nalfa; ++i) {
-	param[ncoeff + 1 + i - 1] = alfin[i - 1];
+    for (i = 0; i < nbeta; ++i) {
+	param[ncoeff + nalfa + i] = betin[i];
     }
 
-L260:
-    if (nbeta <= 0) {
-	goto L262;
-    }
+    /* to generate historical values */
 
-    for (i = 1; i <= nbeta; ++i) {
-	param[ncoeff + 1 + nalfa + i - 1] = betin[i - 1];
-    }
+    /* this is only to calculate matrix of regressors (g) */
+    ols_(t1, t2, yobs, nobs, X, nx, yy, c, ncoeff, oldc, 
+	 vc, ystoc, amax, aux, b, g);
 
-L262:
-/* number of iterations using fulhessian or amemiya's matrix 
-    the variable appearing on the left hand side must be Y(1) 
-*/
-    maxc = ncoeff;
-    vsrstr_(c__, ncoeff, b, ncoefb);
-
-/* dimensions control */
-    if (maxc > 7) {
-	goto L99;
-    }
-
-/* if everything is ok: */
-    goto L1;
-L99:
-    *info = 1;
-    goto L999;
-L1:
-    ivolta = 0;
-    ivolt2 = 0;
-
-/* to generate historical values */
-
-/* this is only to calculate matrix of regressors (g) */
-    ols_(t1, t2, yobs, iread, &xobs[xoff], 
-	 nexo, umc, yy, c__, ncoeff, oldc, 
-	 &vc[vc_offset], ystoc, amax, aux, 
-	 b, ncoefb, g);
-
-    *umc = 0.0;
-
-/* iterative estimation */
+    /* iterative estimation */
 
     ivolta = 0;
     nzo = 0;
+
     for (izo = 1; izo <= 100; ++izo) {
 	ih = 0;
 
-/*      IF(IZO.GT.50)IH=1 */
-/* IF NOT ENOUGH, FOR ITERATIONS WITH INFORMATION'S MATRIX, */
-/* REPLACE WITH DO 8765 IZO=1,300 */
-/* COMPUTE RESIDUALS FOR COVARIANCE MATRIX */
-
-/* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	fu = valunc_(c__, ncoeff, res2, res, ydet,
-		yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-		t2, param, b, ncoefb, &alfa0, alfa, beta,
+	fu = garch_ll(c, ncoeff, res2, res, ydet,
+		yobs, ystoc, X, nobs, nx, t1, 
+		t2, param, b, &alfa0, alfa, beta,
 		nalfa, nbeta, ht);
-/*      WRITE(6,7500)FU */
-/* 7500  FORMAT(' LOG-LIKELIHOOD=',G15.6,/) */
-	++nzo;
-	if (nzo > 50) {
-	    nzo = 50;
+
+	fprintf(stderr, "iteration %d: Log-likelihood = %g\n", izo, fu);
+
+	if (++nzo > NLL) {
+	    nzo = NLL;
 	}
 	flikel[nzo - 1] = fu;
-/* store previous coefficients */
-	i1 = nparam;
-	for (i = 1; i <= i1; ++i) {
-	    parpre[i - 1] = param[i - 1];
-	    partrc[i + nzo * 13 - 14] = param[i - 1];
+	
+	/* store previous coefficients */
+	for (i = 0; i < nparam; ++i) {
+	    parpre[i] = param[i];
+	    partrc[npidx(i,nzo-1)] = param[i]; /* FIXME */
 	}
-/* i parametri sono passati dentro 'param' */
-	garcim_(t1, t2, yobs, iread, &xobs[
-		xoff], nexo, umc, ydet, c__, 
-		ncoeff, res2, res, ystoc,
-		&toler1, &ivolta, vc5, &ih, g, pp, aux3, 
-		param, nparam, b, ncoefb, &alfa0, alfa, beta, nalfa,
-		nbeta, ht, dhtdp, zt);
 
-/* if relative euclidean distance is used as converg. */
-	suno = 0.0;
-	sdue = 0.0;
-	i1 = nparam;
-	for (i = 1; i <= i1; ++i) {
-	    suno += parpre[i - 1] * parpre[i - 1];
-	    pappo = param[i - 1] - parpre[i - 1];
-	    sdue += pappo * pappo;
+	garch_info_matrix(t1, t2, yobs, nobs, X, nx, ydet, c, 
+			  ncoeff, res2, res, ystoc,
+			  &toler1, &ivolta, vc5, &ih, g, pp, aux3, 
+			  param, nparam, b, &alfa0, alfa, beta, nalfa,
+			  nbeta, ht, dhtdp, zt);
+
+	/* if relative euclidean distance is used as converg. */
+	s_1 = s_2 = 0.0;
+	for (i = 0; i < nparam; ++i) {
+	    s_1 += parpre[i] * parpre[i];
+	    pappo = param[i] - parpre[i];
+	    s_2 += pappo * pappo;
 	}
-	if (suno == 0.0) {
-	    suno = 1e-10;
+
+	if (s_1 == 0.0) {
+	    s_1 = 1e-10;
 	}
-	if (sdue / suno > toler1 * toler1) {
-	    goto L8765;
+
+	if (s_2 / s_1 <= toler1 * toler1) {
+	    break;
 	}
-/* ********************************************************************* */
-	goto L8766;
-L8765:
-	;
     }
-L8766:
 
-/* L222: */
-/* fulhessian and search */
+    /* fulhessian and search */
     ivolt2 = 0;
+    nzo1 = 0;
+
     for (izo = 1; izo <= 100; ++izo) {
 	ih = 0;
-/*      IF(IZO.GT.50)IH=1 */
-/* if not enough, for iterations with full hessian matrix, */
-/* REPLACE WITH DO 6765 IZO=1,300 */
-/* compute residuals for covariance matrix */
 
-/* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
+	/* compute residuals for covariance matrix */
+	fu = garch_ll(c, ncoeff, res2, res, ydet,
+		     yobs, ystoc, X, nobs, nx, t1, 
+		     t2, param, b, &alfa0, alfa, beta, 
+		     nalfa, nbeta, ht);
 
-	fu = valunc_(c__, ncoeff, res2, res, ydet,
-		yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-		t2, param, b, ncoefb, &alfa0, alfa, beta, 
-		nalfa, nbeta, ht);
-/*      WRITE(6,7500)FU */
-	++nzo;
-	if (nzo > 50) {
-	    nzo = 50;
+	if (++nzo > NLL) {
+	    nzo = NLL;
 	}
 	flikel[nzo - 1] = fu;
-/* STORE PREVIOUS COEFFICIENTS */
-	i1 = nparam;
-	for (i = 1; i <= i1; ++i) {
-	    parpre[i - 1] = param[i - 1];
-/* L301: */
-	    partrc[i + nzo * 13 - 14] = param[i - 1];
-	}
-/* *******I PARAMETRI SONO PASSATI DENTRO 'PARAM' *********************** */
-	garcfh_(t1, t2, yobs, iread, &xobs[
-		xoff], nexo, umc, ydet, c__, 
-		ncoeff, res2, res, ystoc,
-		&toler2, &nzo, &ivolt2, vc5, &ih, g, pp, aux3, 
-		param, nparam, b, ncoefb, &alfa0, alfa, beta, nalfa,
-		nbeta, ht, dhtdp, zt);
 
-/* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-	suno = 0.0;
-	sdue = 0.0;
-	i1 = nparam;
-	for (i = 1; i <= i1; ++i) {
-	    suno += parpre[i - 1] * parpre[i - 1];
-	    pappo = param[i - 1] - parpre[i - 1];
-	    sdue += pappo * pappo;
+	/* store previous coefficients */
+	for (i = 0; i < nparam; ++i) {
+	    parpre[i] = param[i];
+	    partrc[npidx(i,nzo-1)] = param[i]; 
 	}
-	if (suno == 0.0) {
-	    suno = 1e-10;
+
+	garch_full_hessian(t1, t2, yobs, nobs, X, nx, ydet, c, ncoeff, 
+			   res2, res, ystoc, &toler2, &nzo, &ivolt2, vc5, &ih, g, 
+			   pp, aux3, param, nparam, b, &alfa0, alfa, beta, 
+			   nalfa, nbeta, ht, dhtdp, zt);
+
+	/* if relative euclidean distance is used as converg. */
+	s_1 = 0.0;
+	s_2 = 0.0;
+
+	for (i = 0; i < nparam; ++i) {
+	    s_1 += parpre[i] * parpre[i];
+	    pappo = param[i] - parpre[i];
+	    s_2 += pappo * pappo;
 	}
-	if (sdue / suno > toler2 * toler2) {
-	    goto L6765;
+
+	if (s_1 == 0.0) {
+	    s_1 = 1e-10;
 	}
-/* ********************************************************************* */
+
+	if (s_2 / s_1 > toler2 * toler2) {
+	    continue;
+	}
+
 	sumgra = 0.0;
-	i1 = nparam;
-	for (i = 1; i <= i1; ++i) {
-	    sumgra += aux3[i - 1] * aux3[i - 1];
+	for (i = 0; i < nparam; ++i) {
+	    sumgra += aux3[i] * aux3[i];
 	}
-	if (sumgra < 1e-4) {
-	    goto L511;
+
+	if (sumgra >= 1.0e-4) {
+	    fprintf(stderr, "Sum of gradients = %g\n", (double) sumgra);
+	    *info = 2;
+	    return 1;
 	}
-	fprintf(stderr, "Sum of gradients = %g\n", (double) sumgra);
-	*info = 2;
-	goto L999;
-L511:
-/*      WRITE(6,221)NZO,TOLER2 */
-/* 221   FORMAT(' FULL HESS. CONVERG. REACHED, ITER=',I3,'; TOLER2=',G15.6) */
+
+	fprintf(stderr, "Full Hessian convergence at iteration %d, tol = %g\n",
+		nzo, toler2);
+
 	*iters = nzo;
 	amax[0] = toler2;
-/*      WRITE(6,8900)NZO */
-	i1 = nzo;
-	for (i = 1; i <= i1; ++i) {
-	    fprintf(stderr, " %g\n", flikel[i - 1]);
+
+	for (i = 0; i < nzo; ++i) {
+	    fprintf(stderr, " %g\n", flikel[i]);
 	}
-/* 8900  FORMAT(I5) */
+
 	tollog = 0.0;
 	totdis = 0.0;
-	i1 = nparam;
-	for (j = 1; j <= i1; ++j) {
+
+	for (j = 0; j < nparam; ++j) {
 	    /* Computing 2nd power */
-	    d__1 = param[j - 1] - partrc[j - 1];
+	    d__1 = param[j] - partrc[j];
 	    totdis += d__1 * d__1;
 	}
+
 	totdis = sqrt(totdis);
-	i1 = nzo;
-	for (i = 1; i <= i1; ++i) {
-/* ********************************************************************* */
-/* IF EUCLEDEAN DISTANCE OR DISTANCE IN LOG-LIKEL. IS USED */
-	    sdue = 0.0;
-	    i2 = nparam;
-	    for (j = 1; j <= i2; ++j) {
+
+	for (i = 0; i < nzo; ++i) {
+	    /* if euclidean distance or distance in log-likel. is used */
+	    s_2 = 0.0;
+	    for (j = 0; j < nparam; ++j) {
 		/* Computing 2nd power */
-		d__1 = param[j - 1] - partrc[j + i * 13 - 14];
-		sdue += d__1 * d__1;
+		d__1 = param[j] - partrc[npidx(j,i)];
+		s_2 += d__1 * d__1;
 	    }
-	    sdue = sqrt(sdue);
+
+	    s_2 = sqrt(s_2);
 	    reldis = 0.0;
+
 	    if (totdis != 0.0) {
-		reldis = sdue / totdis;
+		reldis = s_2 / totdis;
 	    }
-/* ********************************************************************* */
+
 	    rellog = tollog;
+
 	    if (reldis != 0.0) {
 		rellog = reldis;
 	    }
 	}
-	nzo1 = nzo + 1;
-	if (nzo1 > 50) {
-	    goto L8767;
+
+	if (++nzo1 > NLL) {
+	    goto L6766;
 	}
-L8767:
-	goto L6766;
-L6765:
-	;
     }
+
     *info = 3;
-    goto L999;
 
 L6766:
 
-    /* si mette provvisorio, nel programma serio ci vuole la covart */
-    for (i = 0; i < nparam; ++i) {
-	int j = i + 1;
-
-	sderr[i] = 0.0;
-	if (vc5[j + j * 13 - 14] > 0.0) {
-	    sderr[i] = sqrt(vc5[j + j * 13 - 14]);
+    if (*info == 0) {
+	/* si mette provvisorio, nel programma serio ci vuole la covart */
+	for (i = 0; i < nparam; ++i) {
+	    sderr[i] = 0.0;
+	    if (vc5[npidx(i,i)] > 0.0) {
+		sderr[i] = sqrt(vc5[npidx(i,i)]);
+	    }
+	    amax[i] = param[i];
+	    amax[i + nparam] = sderr[i];
 	}
-	amax[i] = param[i];
-	amax[i + nparam] = sderr[i];
     }
 
-L999:
     return 0;
-} /* vsanal_ */
+} 
 
 
 /* subroutine for ols estimation */
 
-int ols_(int t1, int t2, double *yobs, 
-	 int iread, double *xobs, int nexo, 
-	 double *umc, double *yy, double *c__, 
-	 int ncoeff, double *oldc, double *vc, double *ystoc, 
-	 double *amax, double *aux, double *b, int *ncoefb, 
-	 double *g)
+int ols_ (int t1, int t2, double *yobs, int nobs, const double **X, int nx, 
+	  double *yy, double *c, int ncoeff, double *oldc, 
+	  double *vc, double *ystoc, double *amax, double *aux, double *b, 
+	  double *g)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff, vc_dim1, vc_offset, i1;
+    double d__[RCMAX];
+    int i, j, t, ier;
+    double deltc;
+    int iexpl;
+    double derivo, relinc = 0.5;
+    
+    vsrstr_(c, ncoeff, b);
 
-    /* Local variables */
-    static double d__[7];
-    static int i, j, ic, nc, nab, ier;
-    static double deltc;
-    static int iexpl;
-    static double relinc, derivo;
-
-    /* Parameter adjustments */
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    --aux;
-    vc_dim1 = ncoeff;
-    vc_offset = 1 + vc_dim1;
-    vc -= vc_offset;
-    --c__;
-    g -= 8;
-
-    /* Function Body */
-    relinc = .5;
-    vsrstr_(&c__[1], ncoeff, b, ncoefb);
-    i1 = t2;
-    for (ic = t1; ic <= i1; ++ic) {
-	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
-		ic, yobs, umc, b, 
-		&amax[ic-1], *ncoefb);
+    for (t = t1; t <= t2; ++t) {
+	vsmode_(&ystoc[t], X, nx, nobs, t, yobs, b, &amax[t]);
     }
 
-    for (i = 1; i <= ncoeff; ++i) {
+    for (i = 0; i < ncoeff; ++i) {
 	aux[i] = 0.0;
-	for (j = 1; j <= ncoeff; ++j) {
-	    vc[i + j * vc_dim1] = 0.0;
+	for (j = 0; j < ncoeff; ++j) {
+	    vc[i + j * ncoeff] = 0.0;
 	}
     }
 
-    for (ic = t1; ic <= t2; ++ic) {
-	for (iexpl = 1; iexpl <= ncoeff; ++iexpl) {
-	    oldc[1] = c__[iexpl];
+    for (t = t1; t <= t2; ++t) {
+	for (iexpl = 0; iexpl < ncoeff; ++iexpl) {
+	    *oldc = c[iexpl];
 	    deltc = relinc;
-	    if (oldc[1] != 0.0) {
-		deltc = oldc[1] * relinc;
+	    if (*oldc != 0.0) {
+		deltc = *oldc * relinc;
 	    }
-	    c__[iexpl] = oldc[1] + deltc;
-	    vsrstr_(&c__[1], ncoeff, b, ncoefb);
-	    vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, 
-		    iread, ic, yobs, umc, b, yy, 
-		    *ncoefb);
-	    deltc = c__[iexpl] - *oldc;
-	    derivo = (*yy - amax[ic-1]) / deltc;
-	    c__[iexpl] = *oldc;
-	    g[iexpl + ic * 7] = derivo;
+	    c[iexpl] = *oldc + deltc;
+	    vsrstr_(c, ncoeff, b);
+	    vsmode_(&ystoc[t], X, nx, nobs, t, yobs, b, yy);
+	    deltc = c[iexpl] - *oldc;
+	    derivo = (*yy - amax[t]) / deltc;
+	    c[iexpl] = *oldc;
+	    g[gidx(iexpl,t)] = derivo;
 	}
-	vsrstr_(&c__[1], ncoeff, b, ncoefb);
+	vsrstr_(c, ncoeff, b);
 
 	/* cumulates all the w'z into diagonal blocks of vc */
 	/* and w'y into elements of aux */
 
-	for (i = 1; i <= ncoeff; ++i) {
-	    aux[i] += g[i + ic * 7] * ystoc[ic-1];
-	    for (j = 1; j <= ncoeff; ++j) {
-		vc[i + j * vc_dim1] += g[i + ic * 7] * g[j + ic * 7];
+	for (i = 0; i < ncoeff; ++i) {
+	    aux[i] += g[gidx(i,t)] * ystoc[t-1];
+	    for (j = 0; j < ncoeff; ++j) {
+		vc[i + j * ncoeff] += g[gidx(i,t)] * g[gidx(j,t)];
 	    }
 	}
     }
-    nab = 0;
-    nc = ncoeff;
-    gj_invert(&vc[vc_offset], ncoeff, ncoeff, d__, &ier);
+
+    gj_invert(vc, ncoeff, ncoeff, d__, &ier);
+
     if (ier == 0) {
-	goto L3;
-    }
-    fprintf(stderr, "OLS: matrix is singular\n"
-	    "Iteration invalid for this equation, "
-	    "initial coefficients are unchanged\n");
+	/* compute coefficients */
+	for (i = 0; i < ncoeff; ++i) {
+	    c[i] = 0.0;
+	}
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < ncoeff; ++j) {
+		c[i] += vc[i + j * ncoeff] * aux[j];
+	    }
+	}
+	vsrstr_(c, ncoeff, b);
+    } else {
+	fputs("OLS: matrix is singular, initial coefficients are unchanged\n",
+	      stderr);
 
-    for (i = 1; i <= nc; ++i) {
-	for (j = 1; j <= nc; ++j) {
-	    vc[i + j * vc_dim1] = 0.0;
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < ncoeff; ++j) {
+		vc[i + j * ncoeff] = 0.0;
+	    }
 	}
     }
-    goto L99;
-L3:
 
-    /* computes coefficients */
-    for (i = 1; i <= ncoeff; ++i) {
-	c__[i] = 0.0;
-    }
-    for (i = 1; i <= ncoeff; ++i) {
-	for (j = 1; j <= ncoeff; ++j) {
-	    c__[i] += vc[i + j * vc_dim1] * aux[j];
-	}
-    }
-    vsrstr_(&c__[1], ncoeff, b, ncoefb);
-
-L99:
     return 0;
-} /* ols_ */
+} 
 
 
 /* compute matrix of residuals (res) and their covariance matrix (sigma) */
 
 /* compute the log-likelihood function */
 /* i parametri sono passati nel vettore param(nparam). */
-/* alfa0, alfa e beta vengono ricavati dal vettore param in valunc */
+/* alfa0, alfa e beta vengono ricavati dal vettore param in garch_ll */
 /* res, res2 e ht devono essere calcolati dentro valunc */
 /* res2 contiene i residui al quadrato */
 
-double valunc_(double *c__, int ncoeff, double *res2, 
-	       double *res, double *ydet, double *yobs, 
-	       double *ystoc, double *xobs, int iread, int nexo,
-	       double *umc, int t1, int t2, 
-	       double *param, double *b, int *ncoefb, 
-	       double *alfa0, double *alfa, double *beta, int nalfa,
-	       int nbeta, double *ht)
+static double 
+garch_ll (double *c, int ncoeff, double *res2, 
+	  double *res, double *ydet, double *yobs, 
+	  double *ystoc, const double **X, int nobs, int nx,
+	  int t1, int t2, double *param, double *b,  
+	  double *alfa0, double *alfa, double *beta, int nalfa,
+	  int nbeta, double *ht)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff, i1;
-    double ret_val;
+    int i, t;
+#if 0
+    int istat1, istat2, indiet;
+#endif
+    double uncvar, ll;
 
-    /* Local variables */
-    static int i, istat1, istat2, ic, iculo, indiet;
-    static double uncvar;
-
-    /* Parameter adjustments */
-    --c__;
-    --ht;
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    --param;
-    --alfa;
-    --beta;
-
-    /* Function Body */
-    i1 = ncoeff;
-    for (i = 1; i <= i1; ++i) {
-	c__[i] = param[i];
+    for (i = 0; i < ncoeff; ++i) {
+	c[i] = param[i];
     }
-    *alfa0 = param[ncoeff + 1];
-    if (nalfa <= 0) {
-	goto L660;
-    }
-    i1 = nalfa;
-    for (i = 1; i <= i1; ++i) {
+
+    *alfa0 = param[ncoeff];
+
+    for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[ncoeff + 1 + i];
     }
-L660:
-    if (nbeta <= 0) {
-	goto L662;
+
+    for (i = 0; i < nbeta; ++i) {
+	beta[i] = param[ncoeff + nalfa + 1 + i];
     }
-    i1 = nbeta;
-    for (i = 1; i <= i1; ++i) {
-	beta[i] = param[ncoeff + 1 + nalfa + i];
-    }
-L662:
 
     /* calcola residui ecc. nel periodo vero di stima */
-    vsrstr_(&c__[1], ncoeff, b, ncoefb);
+    vsrstr_(c, ncoeff, b);
 
-    for (ic = t1; ic <= t2; ++ic) {
-	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
-		ic, yobs, umc, b, &ydet[ic-1], *ncoefb);
+    for (t = t1; t <= t2; ++t) {
+	vsmode_(&ystoc[t], X, nx, nobs, t, yobs, b, &ydet[t]);
     }
 
-    for (ic = t1-1; ic < t2; ++ic) {
-	res[ic] = ystoc[ic] - ydet[ic];
-	res2[ic] = res[ic] * res[ic];
+    uncvar = 0.0;
+    for (t = t1; t <= t2; ++t) {
+	res[t] = ystoc[t] - ydet[t];
+	res2[t] = res[t] * res[t];
+	uncvar += res2[t];
     }
+    uncvar /= (t2 - t1 + 1);
 
-/* come valore iniziale (ai tempi 0, -1, -2, ecc.) */
-/* del residuo al quadrato e di ht si impiega la varianza noncondizionata */
-/* calcolata dal campione. */
-/* come valore iniziale dei residui si usa zero. */
+    /* come valore iniziale (ai tempi 0, -1, -2, ecc.) del residuo al
+       quadrato e di ht si impiega la varianza noncondizionata
+       calcolata dal campione; come valore iniziale dei residui si usa
+       zero.
+    */
 
-    indiet = nalfa;
-    uncvar = 0.;
-    for (ic = t1-1; ic < t2; ++ic) {
-	uncvar += res2[ic];
-    }
-    iculo = t2 - t1 + 1;
-    uncvar /= iculo;
-    if (nbeta > nalfa) {
-	indiet = nbeta;
-    }
+#if 0 
+    indiet = (nbeta > nalfa)? nbeta : nalfa;
     istat1 = t1 - indiet;
     istat2 = t1 - 1;
-    for (ic = istat1; ic <= istat2; ++ic) { /* FIXME!! */
-	res[ic] = 0.0;
-	res2[ic] = uncvar;
-	ht[ic] = uncvar;
+    for (t = istat1; t <= istat2; ++t) { 
+	res[t] = 0.0;
+	res2[t] = uncvar;
+	ht[t] = uncvar;
     }
-    for (ic = t1; ic <= t2; ++ic) {
-	ht[ic] = *alfa0;
-	if (nalfa <= 0) {
-	    goto L270;
+#endif
+
+    for (t = t1; t <= t2; ++t) {
+	ht[t] = *alfa0;
+
+	for (i = 0; i < nalfa; ++i) {
+	    ht[t] += res2[t] * alfa[i];
 	}
-	for (i = 1; i <= nalfa; ++i) {
-	    ht[ic] += res2[ic - i] * alfa[i];
+
+	for (i = 0; i < nbeta; ++i) {
+	    ht[t] += ht[t] * beta[i];
 	}
-L270:
-	if (nbeta <= 0) {
-	    goto L272;
-	}
-	for (i = 1; i <= nbeta; ++i) {
-	    ht[ic] += ht[ic - i] * beta[i];
-	}
-L272:
-/* ARBITRARIO */
-	if (ht[ic] <= 0.0) {
-	    ht[ic] = 1.0e-7;
-	}
+
+	/* arbitrario */
+	if (ht[t] <= 0.0) ht[t] = 1.0e-7;
     }
 
-    ret_val = 0.0;
-    for (ic = t1; ic <= t2; ++ic) {
-	ret_val -= log(ht[ic]) * .5f - res2[ic-1] * .5 / ht[ic] - .9189385332056725;
+    ll = 0.0;
+    for (t = t1; t <= t2; ++t) {
+	ll -= log(ht[t]) * .5 - res2[t] * .5 / ht[t] - .9189385332056725;
     }
 
-    return ret_val;
-} /* valunc_ */
+    return ll;
+} 
 
-
+#if 0
 /* compute matrix of residuals (res) and their covariance matrix (sigma) */
 
-int sig_(int t1, int t2, double *yobs, 
-	 int iread, double *umc, double *xobs, 
-	 int nexo, double *yy, double *c__, 
-	 int ncoeff, double *res, double *sigma, double *
-	 ystoc, double *b, int *ncoefb, double *alfa0, double *
-	 alfa, double *beta, int nalfa, int nbeta)
+int sig_ (int t1, int t2, double *yobs, int nobs, 
+	  const double **X, int nx, double *yy, double *c, 
+	  int ncoeff, double *res, double *sigma, double *ystoc, 
+	  double *b, double *alfa0, 
+	  double *alfa, double *beta, int nalfa, int nbeta)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff;
-
-    /* Local variables */
     static int i, k, ic;
 
-    /* Parameter adjustments */
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    --c__;
-    --alfa;
-    --beta;
+    vsrstr_(c, ncoeff, b);
 
-    /* Function Body */
-    vsrstr_(&c__[1], ncoeff, b, ncoefb);
     for (ic = t1; ic <= t2; ++ic) {
-	vsmode_(&ystoc[ic-1], &xobs[xoff], nexo, iread, 
-		ic, yobs, umc, b, yy, *ncoefb);
+	vsmode_(&ystoc[ic-1], X, nx, nobs, ic, yobs, b, yy);
 	res[ic-1] = ystoc[ic-1] - *yy;
     }
 
@@ -723,453 +574,332 @@ int sig_(int t1, int t2, double *yobs,
     *sigma /= t2 - t1 + 1;
 
     /* e mette a xxxx gli altri alfa e beta */
-    if (nalfa <= 0) {
-	goto L1;
-    }
-
-    for (i = 1; i <= nalfa; ++i) {
+    for (i = 0; i < nalfa; ++i) {
 	alfa[i] = .15 / nalfa;
     }
-L1:
-    if (nbeta > 0) {
-	goto L6;
-    }
-    for (i = 1; i <= nalfa; ++i) {
+
+    for (i = 0; i < nalfa; ++i) {
 	alfa[i] = .70 / nalfa;
     }
-    if (nbeta <= 0) {
-	goto L3;
-    }
-L6:
-    for (i = 1; i <= nbeta; ++i) {
+
+    for (i = 0; i < nbeta; ++i) {
 	beta[i] = .55 / nbeta;
     }
-L3:
+
     *alfa0 = *sigma * .30;
 
     /* si noti che somme di alfa' piu somme di beta e' sempre uguale 0.7 */
     return 0;
-} /* sig_ */
+} 
+#endif
 
-
-
-/* ****** MATRICE DI INFORMAZIONE */
-
-/* ****** I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
-/* ****** C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
-
-/* ********************HESSTOBI******************************************* */
-
-int check_(double *param, int ncoeff, int nparam)
+int check_ht (double *param, int nparam)
 {
-    static int i;
-    static double sum;
-    static int iculo, nvparm;
+    /*
+     This routine checks that the values of the parameters of the
+     conditional variance ht are in the set of the admissible values.
+     If alfa0 is less or equal than zero it is set to 0.0000001.  If
+     alfa and beta are less than zero they are set to zero; also if
+     the sum of alfa and beta is greater than 1.0 alfa and beta are
+     normalized (divided by sum).
+    */
 
-/*     THIS ROUTINE CONTROLL THAT THE VALUES OF THE PARAMETERS OF THE */
-/*     CONDITIONAL VARIANCE HT ARE IN THE SET OF THE ADMISSIBLE VALUES */
-/*     IF ALFA0 IS LESS OR EQUAL THAN ZERO IT IS SET TO 0.0000001 */
-/*     IF ALFA AND BETA ARE LESS THAN ZERO THEY ARE SET TO ZERO */
-/*     ALSO THE SUM OF ALFA AND BETA IS CONTROLLED AND IF IT IS BIGGER */
-/*     THAN ONE THE ALFA AND BETA ARE NORMALIZED (DIVIDED BY SUM) */
+    int i;
+    double sum = 0.;
 
-    /* Parameter adjustments */
-    --param;
-
-    /* Function Body */
-    nvparm = nparam - ncoeff;
-    sum = 0.;
-
-    if (param[ncoeff + 1] <= 0.) {
-	param[ncoeff + 1] = 1.0e-7;
+    if (param[0] <= 0.) {
+	param[0] = 1.0e-7;
     }
-    if (nvparm <= 1) {
-	goto L2;
-    }
-    iculo = nvparm - 1;
-    for (i = 1; i <= iculo; ++i) {
-	if (param[ncoeff + 1 + i] < 0.) {
-	    param[ncoeff + 1 + i] = 0.0;
+
+    for (i = 1; i < nparam; ++i) {
+	if (param[i] < 0.) {
+	    param[i] = 0.0;
 	}
-	sum += param[ncoeff + 1 + i];
+	sum += param[i];
     }
-L2:
-    if (sum <= 1.0) {
-	goto L4;
+
+    if (sum > 1.0) {
+	for (i = 1; i < nparam; ++i) {
+	    param[i] /= sum;
+	}
     }
-    for (i = 1; i <= iculo; ++i) {
-	param[ncoeff + 1 + i] /= sum;
-    }
-L4:
+
     return 0;
-} /* check_ */
+} 
 
 
-/* MATRICE DI INFORMAZIONE DIAGONALE A BLOCCHI */
+/* matrice di informazione diagonale a blocchi */
 
-/* I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
-/* C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
+/* i parametri sono passati dentro il vettore param */
+/* c, alfa e beta si ricavano all'inizio da param */
 
-int garcim_(int t1, int t2, double *
-	    yobs, int iread, double *xobs, int nexo, 
-	    double *umc, double *ydet, double *c__, 
-	    int ncoeff, double *res2, double *res, double *ystoc,
-	    double *toler, int *ivolta, double *vc5, 
-	    int *ih, double *g, double *pp, double *aux3, 
-	    double *param, int nparam, double *b, int *ncoefb, 
-	    double *alfa0, double *alfa, double *beta, int nalfa,
-	    int nbeta, double *ht, double *dhtdp, double *zt)
+static int 
+garch_info_matrix (int t1, int t2, double *yobs, int nobs, 
+		   const double **X, int nx, double *ydet, double *c, 
+		   int ncoeff, double *res2, double *res, double *ystoc,
+		   double *toler, int *ivolta, double *vc5, 
+		   int *ih, double *g, double *pp, double *aux3, 
+		   double *param, int nparam, double *b,  
+		   double *alfa0, double *alfa, double *beta, int nalfa,
+		   int nbeta, double *ht, double *dhtdp, double *zt)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff, 
-	i1, i2, i3;
-    double d__1;
+    int i, j, t;
+    double d__1, d0, d1, d2, f2, d3;
+    int istat1, istat2;
+    double f3, d12, d31, d23, dd;
+    double di, gg[NPMAX], ff, dm;
+    double ds;
+    int iv;
+    double a1s, a2s, a3s;
+    int it1, it2, it3, it4, it5;
+    double dac;
+    double d12s, dub, d23s, d31s;
+    int isp, ier5;
+    double bigd, s_2;
+    int nexp;
+    double step[NPMAX], stre, rsuh, s_1, asum2[RCMAX], r2suh;
+    double cappa;
+    int ncall, n;
+    double r2suh3;
+    int nvparm, indiet;
+    double oldstp = 9.0e+39;
+    double f1 = 0.0, fs = 0.0;
 
-    /* Local variables */
-    static int i, j;
-    static double d0, d1, d2, f1, f2, d3;
-    static int istat1, istat2;
-    static double f3, d12, d31, d23, dd;
-    static int ic;
-    static double di, gg[13], ff, dm;
-    static int nc;
-    static double ds, fs;
-    static int iv;
-    static double a1s, a2s, a3s;
-    static int it1, it2, it3, it4, it5;
-    static double dac;
-    static int nab;
-    static double d12s, dub, d23s, d31s;
-    static int ieq, isp, ier5;
-    static double bigd, sdue;
-    static int nexp;
-    static double step[13], stre, rsuh, suno, asum2[7], r2suh;
-    static double cappa;
-    static int ncall, iculo;
-    static double r2suh3;
-    static int nvparm, ncoef1, indiet;
-    static double oldstp;
-
-    /* Parameter adjustments */
-    --ht;
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    --c__;
-    vc5 -= 14;
-    g -= 8;
-    --pp;
-    --param;
-    --aux3;
-    --alfa;
-    --beta;
-    dhtdp -= 14;
-    --zt;
-
-    /* Function Body */
     iv = 0;
     it1 = 0;
     it2 = 0;
     it3 = 0;
     it4 = 0;
     it5 = 0;
-    oldstp = 9e39;
     nvparm = nalfa + nbeta + 1;
-    ncoef1 = ncoeff + 1;
 
     ++(*ivolta);
-    i1 = ncoeff;
-    for (i = 1; i <= i1; ++i) {
-	c__[i] = param[i];
+
+    for (i = 0; i < ncoeff; ++i) {
+	c[i] = param[i];
     }
-    *alfa0 = param[ncoeff + 1];
-    if (nalfa <= 0) {
-	goto L660;
-    }
-    i1 = nalfa;
-    for (i = 1; i <= i1; ++i) {
+
+    *alfa0 = param[ncoeff];
+
+    for (i = 0; i < nalfa; ++i) {
 	alfa[i] = param[ncoeff + 1 + i];
     }
-L660:
-    if (nbeta <= 0) {
-	goto L662;
-    }
-    i1 = nbeta;
-    for (i = 1; i <= i1; ++i) {
+
+    for (i = 0; i < nbeta; ++i) {
 	beta[i] = param[ncoeff + 1 + nalfa + i];
     }
-L662:
 
-/* INIZIO DEL CALCOLO DI DHTDP */
-/* PARTE RELATIVA AI PARAMETRI ALFA E BETA */
-/* SI COMINCIA CALCOLANDO LE DERIVATE DEI VALORI INIZIALI */
-/* AVENDO SCELTO COME VAL. INIZIALI LA VARIANZA NONCONDIZIONATA */
-/* COME VALORE INIZIALE (AI TEMPI 0, -1, -2, ECC.) */
-/* DI HT SI IMPIEGA LA VARIANZA NONCONDIZIONATA */
-/* CALCOLATA DAI RESIDUI. */
+    /* inizio del calcolo di dhtdp parte relativa ai parametri alfa e
+       beta si comincia calcolando le derivate dei valori iniziali
+       avendo scelto come val. iniziali la varianza noncondizionata
+       come valore iniziale (ai tempi 0, -1, -2, ecc.)  di ht si
+       impiega la varianza noncondizionata calcolata dai residui.
+    */
 
-    if (nbeta <= 0) {
-	goto L121;
-    }
-    i1 = nbeta;
-    for (ic = 1; ic <= i1; ++ic) {
-	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + (t1 - ic) * 13] = 0.;
+#if 0 /* pre-sample */
+    for (t = 0; t < nbeta; ++t) {
+	for (i = 0; i < nvparm; ++i) {
+	    dhtdp[ncoeff + i + (t1 - t) * NPMAX] = 0.;
 	}
     }
-L121:
+#endif
 
-/* COSTRUZIONE MATRICE DHTDP, PARTE RELATIVA A ALFA E BETA (EQ.21) */
+    /* costruzione matrice dhtdp, parte relativa a alfa e beta (eq. 21) */
 
-    i1 = t2;
-    for (ic = t1; ic <= i1; ++ic) {
+    for (t = t1; t <= t2; ++t) {
 
-/* SI RIEMPIE ZT AL TEMPO IC (PAG.315) */
+	/* si riempie zt al tempo t (p. 315) */
+	
+	/* FIXME requires that prior values are available */
 
-	zt[1] = 1.0;
-	if (nalfa <= 0) {
-	    goto L270;
-	}
-	i2 = nalfa;
-	for (i = 1; i <= i2; ++i) {
-	    zt[i + 1] = res2[(ic - i)];
-	}
-L270:
-	if (nbeta <= 0) {
-	    goto L272;
-	}
-	i2 = nbeta;
-	for (i = 1; i <= i2; ++i) {
-	    zt[nalfa + 1 + i] = ht[ic - i];
-	}
-L272:
+	zt[0] = 1.0;
 
-/*  SI RIEMPIE DHTDP AL TEMPO IC */
-/*  LA PARTE RELATIVA AI PARAMETRI ALFA E BETA (EQ.21 PAG.316) */
+	for (i = 1; i <= nalfa; ++i) {
+	    zt[i] = res2[t - i];
+	}
 
-	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + ic * 13] = 0.0;
+	for (i = 1; i <= nbeta; ++i) {
+	    zt[nalfa + i] = ht[t - i];
 	}
-	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + ic * 13] += zt[i];
+
+	/*  si riempie dhtdp al tempo t la parte relativa ai parametri 
+	    alfa e beta (eq. 21 p. 316) */
+
+	for (i = 0; i < nvparm; ++i) {
+	    dhtdp[npidx(ncoeff+i, t)] = zt[i];
 	}
-	if (nbeta <= 0) {
-	    goto L7;
-	}
-	for (i = 1; i <= nvparm; ++i) {
-	    i3 = nbeta;
-	    for (j = 1; j <= i3; ++j) {
-		dhtdp[ncoeff + i + ic * 13] += 
-		    dhtdp[ncoeff + i + (ic - j) * 13] * beta[j];
+
+	for (i = 0; i < nvparm; ++i) {
+	    for (j = 0; j < nbeta; ++j) {
+		dhtdp[npidx(ncoeff+i, t)] += dhtdp[npidx(ncoeff+i, t-j)] * beta[j];
 	    }
 	}
-L7:
-	;
     }
 
-/* COSTRUZIONE MATRICE DHTDP, PARTE RELATIVA AI COEFFICIENTI (EQ.24) */
-/* COME VALORI INIZIALI (TEMPO 0, -1, ECC.) DELLE DERIVATE DI HT */
-/* RISPETTO AI COEFFICIENTI SI PRENDE ZERO. */
-/* COME VALORI INIZIALI DEI RESIDUI SI PRENDE ZERO */
-/* (GIA' FATTO DENTRO VALUNC) */
+    /* costruzione matrice dhtdp, parte relativa ai coefficienti
+       (eq.24) come valori iniziali (tempo 0, -1, ecc.) delle derivate
+       di ht rispetto ai coefficienti si prende zero.  come valori
+       iniziali dei residui si prende zero (gia' fatto dentro valunc)
+    */
 
+#if 0
     indiet = nalfa;
     if (nbeta > nalfa) {
 	indiet = nbeta;
     }
     istat1 = t1 - indiet;
     istat2 = t1 - 1;
-    iculo = t2 - t1 + 1;
-    i1 = istat2;
-    for (ic = istat1; ic <= i1; ++ic) {
-	i3 = ncoeff;
-	for (i = 1; i <= i3; ++i) {
+    n = t2 - t1 + 1;
+
+    for (t = istat1; t <= istat2; ++t) {
+	for (i = 1; i <= ncoeff; ++i) {
 	    asum2[i - 1] = 0.0;
-	    i2 = t2;
-	    for (isp = t1; isp <= i2; ++isp) {
-		asum2[i - 1] -= res[isp-1] * 2.0 * g[i + isp * 7];
+	    for (isp = t1; isp <= t2; ++isp) {
+		asum2[i - 1] -= res[isp-1] * 2.0 * g[gidx(i,isp)];
 	    }
-	    asum2[i - 1] /= iculo;
-	    dhtdp[i + ic * 13] = asum2[i - 1];
+	    asum2[i - 1] /= n;
+	    dhtdp[i + t * NPMAX] = asum2[i - 1];
 	}
     }
-    i3 = t2;
-    for (ic = t1; ic <= i3; ++ic) {
-	i1 = ncoeff;
-	for (i = 1; i <= i1; ++i) {
-	    dhtdp[i + ic * 13] = 0.0;
+#endif
+
+    for (t = t1; t <= t2; ++t) {
+
+	for (i = 0; i < ncoeff; ++i) {
+	    dhtdp[npidx(i,t)] = 0.0;
 	}
-	if (nalfa <= 0) {
-	    goto L15;
-	}
-	i1 = ncoeff;
-	for (i = 1; i <= i1; ++i) {
-	    i2 = nalfa;
-	    for (j = 1; j <= i2; ++j) {
-		if (ic - nalfa < t1) {
-		    goto L376;
+
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < nalfa; ++j) {
+		if (t - nalfa < t1) {
+		    dhtdp[npidx(i,t)] += alfa[j] * asum2[i];
+		} else {
+		    dhtdp[npidx(i,t)] -= alfa[j] * 2.0 * g[gidx(i,t-j)] * res[(t - j)];
 		}
-		dhtdp[i + ic * 13] -= alfa[j] * 2.0 * g[i + (ic - j) * 7] 
-			* res[(ic - j)];
-		goto L12;
-L376:
-		dhtdp[i + ic * 13] += alfa[j] * asum2[i - 1];
-L12:
-		;
 	    }
 	}
-L15:
-	if (nbeta <= 0) {
-	    goto L13;
-	}
-	i2 = ncoeff;
-	for (i = 1; i <= i2; ++i) {
-	    i1 = nbeta;
-	    for (j = 1; j <= i1; ++j) {
-		dhtdp[i + ic * 13] += dhtdp[i + (ic - j) * 13] * beta[j];
+
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < nbeta; ++j) {
+		dhtdp[npidx(i,t)] += dhtdp[npidx(i,t-j)] * beta[j];
 	    }
 	}
-L13:
-	;
     }
 
-/*  SI INIZIA IL CALCOLO DEL GRADIENTE AUX3 */
+    /* si inizia il calcolo del gradiente aux3 */
 
-
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
+    for (i = 0; i < nparam; ++i) {
 	aux3[i] = 0.0;
     }
-    i3 = t2;
-    for (ic = t1; ic <= i3; ++ic) {
 
-/*  PRIMA PARTE RELATIVA AI COEFFICIENTI (EQ. 22 PAG. 316) ERR. DI */
-/*  STAMPA NEL SECONDO TERMINE C'E' UN *HT INVECE DI /HT */
-	rsuh = res[ic-1] / ht[ic];
-	r2suh = rsuh * res[ic-1];
-	i1 = ncoeff;
-	for (i = 1; i <= i1; ++i) {
-	    aux3[i] = aux3[i] + rsuh * g[i + ic * 7] + .5 / ht[ic] * 
-		    dhtdp[i + ic * 13] * (r2suh - 1.0);
+    for (t = t1; t <= t2; ++t) {
+
+	/* prima parte relativa ai coefficienti (eq. 22 pag. 316) err. di 
+	   stampa nel secondo termine c'e' un *ht invece di /ht 
+	*/
+	rsuh = res[t] / ht[t];
+	r2suh = rsuh * res[t];
+
+	for (i = 0; i < ncoeff; ++i) {
+	    aux3[i] = aux3[i] + rsuh * g[gidx(i,t)] + .5 / ht[t] * 
+		dhtdp[npidx(i,t)] * (r2suh - 1.0);
 	}
 
-/* SECONDA PARTE RELATIVA AD ALFA E BETA (EQ. 19 PAG. 315) */
-
-	for (i = 1; i <= nvparm; ++i) {
-	    aux3[ncoeff + i] += .5 / ht[ic] * dhtdp[ncoeff + i + ic * 
-		    13] * (r2suh - 1.0);
-	}
-    }
-
-/*     ORA SI RIEMPIE LA MATINF */
-
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	i1 = nparam;
-	for (j = 1; j <= i1; ++j) {
-	    vc5[i + j * 13] = 0.0;
+	/* seconda parte relativa ad alfa e beta (eq. 19 pag. 315) */
+	for (i = 0; i < nvparm; ++i) {
+	    aux3[ncoeff + i] += .5 / ht[t] * dhtdp[npidx(i,t)] * (r2suh - 1.0);
 	}
     }
 
-    i1 = t2;
-    for (ic = t1; ic <= i1; ++ic) {
-	rsuh = res[ic-1] / ht[ic];
-	r2suh = rsuh * res[ic-1];
-	r2suh3 = r2suh / (ht[ic] * ht[ic]);
+    /* ora si riempie la matinf */
 
-/*  PARTE RELATIVA AI COEFFICIENTI (EQ. 23 PAG. 316) */
-/*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTANO SOLO I PRIMI */
-/*  DUE TERMINI */
+    for (i = 0; i < nparam; ++i) {
+	for (j = 0; j < nparam; ++j) {
+	    vc5[npidx(i,j)] = 0.0;
+	}
+    }
 
-	i3 = ncoeff;
-	for (i = 1; i <= i3; ++i) {
-	    i2 = ncoeff;
-	    for (j = 1; j <= i2; ++j) {
-		vc5[i + j * 13] = vc5[i + j * 13] - g[i + ic * 7] * g[j 
-			+ ic * 7] / ht[ic] - dhtdp[i + ic * 13] * .5 * 
-			dhtdp[j + ic * 13] / (ht[ic] * ht[ic]);
+    for (t = t1; t <= t2; ++t) {
+	rsuh = res[t] / ht[t];
+	r2suh = rsuh * res[t];
+	r2suh3 = r2suh / (ht[t] * ht[t]);
+
+	/* parte relativa ai coefficienti (eq. 23 pag. 316) 
+	   si ricorda che si prende il valore atteso e restano solo i primi
+	   due termini 
+	*/
+
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < ncoeff; ++j) {
+		vc5[npidx(i,j)] += -g[gidx(i,t)] * g[gidx(j,t)] / ht[t] 
+		    - dhtdp[npidx(i,t)] * .5 * dhtdp[npidx(j,t)] / (ht[t] * ht[t]);
 	    }
 	}
 
-/*  PARTE RELATIVA AD ALFA E BETA  (EQ. 20 PAG. 315) */
-/*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTA SOLO IL SECONDO */
-/*  TERMINE */
+	/* parte relativa ad alfa e beta  (eq. 20 pag. 315) 
+	   si ricorda che si prende il valore atteso e resta solo il secondo 
+	   termine 
+	*/
 
-	i2 = nparam;
-	for (i = ncoef1; i <= i2; ++i) {
-	    i3 = nparam;
-	    for (j = ncoef1; j <= i3; ++j) {
-		vc5[i + j * 13] -= dhtdp[i + ic * 13] * .5f * dhtdp[j + 
-			ic * 13] / (ht[ic] * ht[ic]);
+	for (i = ncoeff; i < nparam; ++i) {
+	    for (j = ncoeff; j < nparam; ++j) {
+		vc5[npidx(i,j)] -= dhtdp[npidx(i,t)] * 
+		    .5 * dhtdp[npidx(j,t)] / (ht[t] * ht[t]);
 	    }
 	}
     }
-/* ********************************************************************* */
-/* ADESSO SI INVERTE LA MATINF */
-/* ********************************************************************* */
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-/* L690: */
-    }
-    gj_invert(&vc5[14], 13, nparam, &pp[1], &ier5);
+
+    /* adesso si inverte la matinf */
+
+    gj_invert(&vc5[NPMAX+1], NPMAX, nparam, &pp[1], &ier5);
     if (ier5 != 0) {
 	fprintf(stderr, "gj_invert failed\n");
     }
-/*      DO 690 I=1,NPARAM */
-/* 690   WRITE(6,5000)(VC5(I,J),J=1,NPARAM) */
-/* L5000: */
-/*      WRITE(6,3300) */
-/* L3300: */
-/*      WRITE(6,3301)(AUX3(I),I=1,NPARAM) */
-/* L3301: */
-/* ********************************************************************** */
-/* ADESSO SI COMINCIA CON LE ITERAZIONI */
-/* ********************************************************************** */
-/* CALCOLARE LO STEP PER I NUOVI COEFFICENTI */
-    sdue = 0.0;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	gg[i - 1] = param[i];
-	step[i - 1] = 0.0;
-	i3 = nparam;
-	for (j = 1; j <= i3; ++j) {
-	    step[i - 1] -= vc5[i + j * 13] * aux3[j];
+
+    /* adesso si comincia con le iterazioni */
+
+    /* calcolare lo step per i nuovi coefficenti */
+    s_2 = 0.0;
+    for (i = 0; i < nparam; ++i) {
+	gg[i] = param[i];
+	step[i] = 0.0;
+	for (j = 0; j < nparam; ++j) {
+	    step[i] -= vc5[npidx(i,j)] * aux3[j];
 	}
-	sdue += step[i - 1] * step[i - 1];
+	s_2 += step[i] * step[i];
     }
 
-/* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-    suno = 0.0;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	suno += param[i] * param[i];
+    /* if relative euclidean distance is used as converg. */
+    s_1 = 0.0;
+    for (i = 1; i <= nparam; ++i) {
+	s_1 += param[i] * param[i];
     }
-    if (suno == 0.0) {
-	suno = 1e-10;
+    if (s_1 == 0.0) {
+	s_1 = 1e-10;
     }
-    stre = sdue / suno;
+    stre = s_2 / s_1;
 
     if (*ih == 0) {
 	goto L5656;
     }
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * 1.0;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i];
     }
-    check_(&param[1], ncoeff, nparam);
+    check_ht(param + ncoeff, nvparm);
     goto L299;
-L5656:
-    sdue = sqrt(sdue);
+
+ L5656:
+    s_2 = sqrt(s_2);
     stre = sqrt(stre);
 
-    oldstp = sdue;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	step[i - 1] /= sdue;
+    oldstp = s_2;
+    for (i = 0; i < nparam; ++i) {
+	step[i] /= s_2;
     }
-/*      CALL CTIME (IV,IT) */
+
     it4 += iv;
-    ds = sdue;
+    ds = s_2;
     if (stre <= *toler) {
 	goto L496;
     }
@@ -1179,138 +909,150 @@ L5656:
     if (nexp > 5) {
 	nexp = 5;
     }
+
     cappa = pow(2.0, nexp);
-    d0 = sdue;
+    d0 = s_2;
     d0 /= cappa;
     dac = d0 * .001f;
     dub = d0 * 4.f;
-/* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
+
+    /* print d0, dac, dub? */
+
     if (*ivolta == 1) {
-	f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-		ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-		t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-		&beta[1], nalfa, nbeta, &ht[1]);
+	f1 = -garch_ll(c, ncoeff, res2, res, 
+		       ydet, yobs, ystoc, X, nobs, nx, t1, 
+		       t2, param, b, alfa0, alfa, 
+		       beta, nalfa, nbeta, ht);
     }
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d0;
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d0;
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f2 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    f2 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     if (f2 > f1) {
 	goto L307;
     }
+
     d1 = 0.0;
     d2 = d0;
     d3 = d0 + d0;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d3;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d3;
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    /* print params? */
+
+    f3 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     goto L325;
-L307:
+
+ L307:
+
     d1 = -d0;
     d2 = 0.0;
     d3 = d0;
     f3 = f2;
     f2 = f1;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d1;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d1;
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
-L325:
+    check_ht(param + ncoeff, nvparm);
+
+    /* print params? */
+
+    f1 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
+
+ L325:
     d23 = d2 - d3;
     d31 = d3 - d1;
     d12 = d1 - d2;
     di = d23 * f1 + d31 * f2 + d12 * f3;
     bigd = di * -2.0 / (d23 * d31 * d12);
+
     if (bigd > 0.0) {
 	goto L400;
     }
     if (f3 <= f1) {
 	goto L341;
     }
-L329:
+
+ L329:
     d3 = d2;
     f3 = f2;
     d2 = d1;
     f2 = f1;
     d1 -= dub;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + d1 * step[i - 1];
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + d1 * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-		  ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-		  t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-		  &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    /* print param values? */
+
+    f1 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
     goto L325;
-L341:
+
+ L341:
     d1 = d2;
     f1 = f2;
     d2 = d3;
     f2 = f3;
     d3 += dub;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + d3 * step[i - 1];
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + d3 * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &
-	    xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    /* print param values? */
+
+    f3 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
     goto L325;
-L400:
+
+ L400:
     d23s = d23 * (d2 + d3);
     d31s = d31 * (d3 + d1);
     d12s = d12 * (d1 + d2);
-    ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5f / di;
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * ds;
+    ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5 / di;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * ds;
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
-    fs = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &
-	    xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    /* print param values? */
+
+    fs = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -1333,7 +1075,8 @@ L400:
     if (ds > d3 + dub) {
 	goto L341;
     }
-L422:
+
+ L422:
     if (a1s < dac || a2s < dac || a3s < dac) {
 	goto L490;
     }
@@ -1343,17 +1086,20 @@ L422:
     d1 = ds;
     f1 = fs;
     goto L459;
-L434:
+
+ L434:
     if (f2 < f3 || f2 < f1) {
 	goto L447;
     }
     d2 = ds;
     f2 = fs;
     goto L459;
-L447:
+
+ L447:
     d3 = ds;
     f3 = fs;
-L459:
+
+ L459:
     if (d2 <= d3) {
 	goto L463;
     }
@@ -1363,7 +1109,8 @@ L459:
     f2 = f3;
     d3 = dd;
     f3 = ff;
-L463:
+
+ L463:
     if (d1 <= d2) {
 	goto L325;
     }
@@ -1374,628 +1121,458 @@ L463:
     d2 = dd;
     f2 = ff;
     goto L459;
-L490:
+
+ L490:
     if (fs <= f1) {
 	goto L491;
     }
     fs = f1;
     ds = d1;
-L491:
+
+ L491:
     if (fs <= f2) {
 	goto L492;
     }
     fs = f2;
     ds = d2;
-L492:
+
+ L492:
     if (fs <= f3) {
 	goto L496;
     }
     fs = f3;
     ds = d3;
-L496:
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	param[i] = gg[i - 1] + ds * step[i - 1];
+
+ L496:
+    for (i = 0; i <nparam; ++i) {
+	param[i] = gg[i] + ds * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
+    check_ht(param + ncoeff, nvparm);
     f1 = fs;
     fs = -fs;
     it5 += iv;
-    if (*ivolta != *ivolta) {
-	goto L133;
-    }
 
-L133:
-    nab = 0;
-    if (nab == 0) {
-	goto L299;
-    }
-    i1 = 1;
-    for (ieq = 1; ieq <= i1; ++ieq) {
-/*      IDPNDN=NAM(IEQ) */
-/*      NC=ICOEFF(IEQ) */
+ L299:
+    /* si cambia il segno alla matrice */
 
-	nab += nc;
-    }
-L299:
-
-/* SI CAMBIA IL SEGNO ALLA MATRICE */
-
-    i1 = nparam;
-    for (i = 1; i <= i1; ++i) {
-	i3 = nparam;
-	for (j = 1; j <= i3; ++j) {
-	    vc5[i + j * 13] = -vc5[i + j * 13];
+    for (i = 0; i < nparam; ++i) {
+	for (j = 0; j < nparam; ++j) {
+	    vc5[npidx(i,j)] *= -1.0;
 	}
     }
 
     return 0;
-} /* garcim_ */
+} /* garch_info_matrix */
 
 
-/* *********************************************************************** */
-/* ******           MATRICE HESSIANA PIENA PER LE STIME GARCH */
-/* ******           E' CHIAMATA DA: VSGARCH FORTRAN */
-/* ****** */
-/* ******  I PARAMETRI SONO PASSATI DENTRO IL VETTORE PARAM */
-/* ******  C, ALFA E BETA SI RICAVANO ALL'INIZIO DA PARAM */
-/* ****** */
-/* ****** */
-/* *********************************************************************** */
+/*  i parametri sono passati dentro il vettore param c, alfa e beta 
+    si ricavano all'inizio da param */
 
-int garcfh_(int t1, int t2, double *
-	    yobs, int iread, double *xobs, int nexo, 
-	    double *umc, double *ydet, double *c__, 
-	    int ncoeff, double *res2, double *res, double *ystoc,
-	    double *toler, int *izo, int *ivolta, double *vc5, 
-	    int *ih, double *g, double *pp, double *aux3, 
-	    double *param, int nparam, double *b, int *ncoefb, 
-	    double *alfa0, double *alfa, double *beta, int nalfa,
-	    int nbeta, double *ht, double *dhtdp, double *zt)
+static int 
+garch_full_hessian (int t1, int t2, double *yobs, int nobs, 
+		    const double **X, int nx, double *ydet, double *c, 
+		    int ncoeff, double *res2, double *res, double *ystoc,
+		    double *toler, int *izo, int *ivolta, double *vc5, 
+		    int *ih, double *g, double *pp, double *aux3, 
+		    double *param, int nparam, double *b, 
+		    double *alfa0, double *alfa, double *beta, int nalfa,
+		    int nbeta, double *ht, double *dhtdp, double *zt)
 {
-    /* System generated locals */
-    int xobs_dim1, xoff, 
-	res_dim1, i1, i2, i3, i4;
-    double d__1;
+    int i, j, k, t;
+    double d__1, d0, d1, d2, f2, d3;
+    int istat1, istat2;
+    double f3, d12, d31, d23, dd, di, ff;
+    int ic;
+    double gg[NPMAX], step[NPMAX];
+    int ii;
+    double dm;
+    double ds;
+    int iv;
+    double a1s, a2s, a3s;
+    int it1, it2, it3, it4, it5;
+    double dac;
+    double d12s, dub, d23s, d31s;
+    int ieq, isp, ier5;
+    double bigd, s_2;
+    int nexp;
+    double stre, rsuh, s_1, asum2[RCMAX], r2suh, usuh2;
+    double cappa;
+    int ncall, n;
+    double r2suh3;
+    int nvparm;
+    double dhdpdp[NPMAX * NPMAX * ABNUM];
+    int indiet;
+    double f1 = 0.0, fs = 0.0;
+    double oldstp = 9.0e+39;
 
-    /* Local variables */
-    static int i, j, k;
-    static double d0, d1, d2, f1, f2, d3;
-    static int istat1, istat2;
-    static double f3, d12, d31, d23, dd;
-    static int ic;
-    static double di, gg[13], ff;
-    static int ii;
-    static double dm;
-    static int nc;
-    static double ds, fs;
-    static int iv;
-    static double a1s, a2s, a3s;
-    static int it1, it2, it3, it4, it5;
-    static double dac;
-    static int nab;
-    static double d12s, dub, d23s, d31s;
-    static int ieq, isp, ier5;
-    static double bigd, sdue;
-    static int nexp;
-    static double step[13], stre, rsuh, suno, asum2[7], r2suh, usuh2;
-    static double cappa;
-    static int ncall, iculo;
-    static double r2suh3;
-    static int nvparm, ncoef1;
-    static double dhdpdp[676]	/* was [13][13][4] */;
-    static int indiet;
-    static double oldstp;
-
-    /* Parameter adjustments */
-    --ht;
-    xobs_dim1 = nexo;
-    xoff = 1 + xobs_dim1;
-    xobs -= xoff;
-    --c__;
-    vc5 -= 14;
-    g -= 8;
-    --pp;
-    --param;
-    --aux3;
-    --alfa;
-    --beta;
-    dhtdp -= 14;
-    --zt;
-
-    /* Function Body */
     iv = 0;
-/*      IF(IVOLTA.GT.0)GO TO 1011 */
     it1 = 0;
     it2 = 0;
     it3 = 0;
     it4 = 0;
     it5 = 0;
-    oldstp = 9e39;
     nvparm = nalfa + nbeta + 1;
-    ncoef1 = ncoeff + 1;
 
     ++(*ivolta);
-/*     IF (IVOLTA.GT.11) STOP */
-    i1 = ncoeff;
-    for (i = 1; i <= i1; ++i) {
-	c__[i] = param[i];
+
+    for (i = 1; i <= ncoeff; ++i) {
+	c[i] = param[i];
     }
     *alfa0 = param[ncoeff + 1];
-    if (nalfa <= 0) {
-	goto L660;
-    }
-    i1 = nalfa;
-    for (i = 1; i <= i1; ++i) {
+
+    for (i = 1; i <= nalfa; ++i) {
 	alfa[i] = param[ncoeff + 1 + i];
     }
-L660:
-    if (nbeta <= 0) {
-	goto L662;
-    }
-    i1 = nbeta;
-    for (i = 1; i <= i1; ++i) {
+
+    for (i = 1; i <= nbeta; ++i) {
 	beta[i] = param[ncoeff + 1 + nalfa + i];
     }
-L662:
 
-/* INIZIO DEL CALCOLO DI DHTDP E DHDPDP */
-/* PARTE RELATIVA AI PARAMETRI ALFA E BETA */
-/* SI COMINCIA CALCOLANDO LE DERIVATE DEI VALORI INIZIALI */
-/* AVENDO SCELTO COME VAL. INIZIALI LA VARIANZA NONCONDIZIONATA */
-/* COME VALORE INIZIALE (AI TEMPI 0, -1, -2, ECC.) */
-/* DI HT SI IMPIEGA LA VARIANZA NONCONDIZIONATA */
-/* CALCOLATA DAI RESIDUI. */
+    /* 
+       Inizio del calcolo di dhtdp e dhdpdp parte relativa ai parametri
+       alfa e beta. Si comincia calcolando le derivate dei valori iniziali
+       avendo scelto come val. iniziali la varianza noncondizionata. Come
+       valore iniziale (ai tempi 0, -1, -2, ecc.) di ht si impiega la
+       varianza noncondizionata calcolata dai residui.
+    */
 
-    if (nbeta <= 0) {
-	goto L121;
-    }
-    i1 = nbeta;
-    for (ic = 1; ic <= i1; ++ic) {
-	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + (t1 - ic) * 13] = 0.;
-	    for (j = 1; j <= nvparm; ++j) {
-		dhdpdp[ncoeff + i + (ncoeff + j + (ic) * 13) * 13 - 183] = 0.;
+    for (t = 0; t < nbeta; ++t) {
+	for (i = 0; i < nvparm; ++i) {
+	    dhtdp[npidx(ncoeff+i,  t1 - t)] = 0.;
+	    for (j = 0; j < nvparm; ++j) {
+		dhdpdp[hidx(ncoeff+i, ncoeff+j, t)] = 0.0;
 	    }
 	}
     }
-L121:
 
-/* costruzione matrice dhtdp, parte relativa a alfa e beta (eq. 21) */
+    /* costruzione matrice dhtdp, parte relativa a alfa e beta (eq. 21) */
 
-    i1 = t2;
-    for (ic = t1; ic <= i1; ++ic) {
+    for (t = t1; t <= t2; ++t) {
 
-/* si riempie zt al tempo ic (pag. 315) */
+	/* si riempie zt al tempo t (pag. 315) */
 
 	zt[1] = 1.0;
-	if (nalfa <= 0) {
-	    goto L270;
-	}
-	i2 = nalfa;
-	for (i = 1; i <= i2; ++i) {
-	    zt[i + 1] = res2[ic - i];
-	}
-L270:
-	if (nbeta <= 0) {
-	    goto L272;
-	}
-	i2 = nbeta;
-	for (i = 1; i <= i2; ++i) {
-	    zt[nalfa + 1 + i] = ht[ic - i];
-	}
-L272:
 
-/*  SI RIEMPIE DHTDP AL TEMPO IC */
-/*  LA PARTE RELATIVA AI PARAMETRI ALFA E BETA (EQ.21 PAG.316) */
+	for (i = 1; i <= nalfa; ++i) {
+	    zt[i + 1] = res2[t - i];
+	}
+
+	for (i = 1; i <= nbeta; ++i) {
+	    zt[nalfa + 1 + i] = ht[t - i];
+	}
+
+	/*  si riempie dhtdp al tempo t la parte relativa ai parametri 
+	    alfa e beta (eq. 21 p. 316) */
 
 	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + ic * 13] = 0.0;
+	    dhtdp[npidx(ncoeff+i,t)] = zt[i];
 	}
-	for (i = 1; i <= nvparm; ++i) {
-	    dhtdp[ncoeff + i + ic * 13] += zt[i];
-	}
-	if (nbeta <= 0) {
-	    goto L7;
-	}
+
 	for (i = 1; i <= nvparm; ++i) {
 	    for (j = 1; j <= nbeta; ++j) {
-		dhtdp[ncoeff + i + ic * 13] += dhtdp[ncoeff + i + (ic - 
-			j) * 13] * beta[j];
+		dhtdp[npidx(ncoeff+i, t)] += dhtdp[npidx(ncoeff+j, t)] * beta[j];
 	    }
 	}
-L7:
-	;
     }
 
-/* COSTRUZIONE MATRICE DHTDP, PARTE RELATIVA AI COEFFICIENTI (EQ.24) */
-/* COME VALORI INIZIALI (TEMPO 0, -1, ECC.) DELLE DERIVATE DI HT */
-/* RISPETTO AI COEFFICIENTI SI PRENDE DER DI UNCVAR RISPETTO AI COEFF */
-/* COME VALORI INIZIALI DEI RESIDUI SI PRENDE ZERO */
-/* (GIA' FATTO DENTRO VALUNC) */
-/* COSTRUZIONE DELLA MATRICE DHDPDP INIZIALE */
+    /* 
+       costruzione matrice dhtdp, parte relativa ai coefficienti
+       (eq.24) come valori iniziali (tempo 0, -1, ecc.) delle derivate
+       di ht rispetto ai coefficienti si prende der di uncvar rispetto
+       ai coeff come valori iniziali dei residui si prende zero (gia'
+       fatto dentro valunc) costruzione della matrice dhdpdp iniziale
+    */
 
-    indiet = nalfa;
-    if (nbeta > nalfa) {
-	indiet = nbeta;
-    }
+    n = t2 - t1 + 1;
+    indiet = (nbeta > nalfa)? nbeta : nalfa;
+#if 0
     istat1 = t1 - indiet;
     istat2 = t1 - 1;
-    iculo = t2 - t1 + 1;
-    i1 = istat2;
-    for (ic = istat1; ic <= i1; ++ic) {
-	i3 = ncoeff;
-	for (i = 1; i <= i3; ++i) {
-	    asum2[i - 1] = 0.0;
-	    i2 = t2;
-	    for (isp = t1; isp <= i2; ++isp) {
-		asum2[i - 1] -= res[isp-1] * 2.0 * g[i + isp * 7];
+
+    for (t = istat1; t <= istat2; ++t) {
+	for (i = 0; i < ncoeff; ++i) {
+	    asum2[i] = 0.0;
+	    for (isp = t1; isp <= t2; ++isp) {
+		asum2[i] -= res[isp] * 2.0 * g[gidx(i,isp)];
 	    }
-	    asum2[i - 1] /= iculo;
-	    dhtdp[i + ic * 13] = asum2[i - 1];
+	    asum2[i] /= n;
+	    dhtdp[i + t * NPMAX] = asum2[i];
 	}
     }
+#endif
 
-/*  i valori iniziali di dhdpdp sono 2/t x'x */
-/*  e zero per i blocchi fuori diagonale */
+    /*  i valori iniziali di dhdpdp sono 2/t x'x e zero per i blocchi 
+	fuori diagonale */
 
-    i3 = indiet;
-    for (ic = 1; ic <= i3; ++ic) {
-	i1 = ncoeff;
-	for (i = 1; i <= i1; ++i) {
-	    i2 = ncoeff;
-	    for (j = 1; j <= i2; ++j) {
-		dhdpdp[i + (j + (ic) * 13) * 13 - 183] = 0.;
+    for (t = 1; t <= indiet; ++t) {
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < ncoeff; ++j) {
+		dhdpdp[hidx(i,j,t)] = 0.;
 	    }
 	}
-	i2 = t2;
-	for (isp = t1; isp <= i2; ++isp) {
-	    i1 = ncoeff;
-	    for (i = 1; i <= i1; ++i) {
-		i4 = ncoeff;
-		for (j = 1; j <= i4; ++j) {
-		    dhdpdp[i + (j + (ic) * 13) * 13 - 183] += g[i + 
-			    isp * 7] * g[j + isp * 7] * 2.0 / iculo;
+	for (isp = t1; isp <= t2; ++isp) {
+	    for (i = 1; i <= ncoeff; ++i) {
+		for (j = 1; j <= ncoeff; ++j) {
+		    dhdpdp[hidx(i,j,t)] += g[gidx(i,isp)] * g[gidx(j,isp)] * 2.0 / n;
 		}
 	    }
 	}
-	i2 = ncoeff;
-	for (i = 1; i <= i2; ++i) {
+	for (i = 1; i <= ncoeff; ++i) {
 	    for (j = 1; j <= nvparm; ++j) {
-		dhdpdp[i + (ncoeff + j + (ic) * 13) * 13 - 183] = 0.;
+		dhdpdp[hidx(i,j,t)] = 0.;
 	    }
 	}
     }
-    i3 = t2;
-    for (ic = t1; ic <= i3; ++ic) {
-	i2 = ncoeff;
-	for (i = 1; i <= i2; ++i) {
-	    dhtdp[i + ic * 13] = 0.0;
+
+    for (t = t1; t <= t2; ++t) {
+	for (i = 1; i <= ncoeff; ++i) {
+	    dhtdp[npidx(i,t)] = 0.0;
 	}
-	if (nalfa <= 0) {
-	    goto L15;
-	}
-	i2 = ncoeff;
-	for (i = 1; i <= i2; ++i) {
-	    i4 = nalfa;
-	    for (j = 1; j <= i4; ++j) {
-		if (ic - nalfa < t1) {
-		    goto L376;
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < nalfa; ++j) {
+		if (t - nalfa < t1) {
+		    dhtdp[npidx(i,t)] += alfa[j] * asum2[i];
+		} else {
+		    dhtdp[i + t * NPMAX] -= 
+			alfa[j] * 2.0 * g[gidx(i,t-j)] * res[t - j];
 		}
-		dhtdp[i + ic * 13] -= 
-		    alfa[j] * 2.0 * g[i + (ic - j) * 7] * res[ic - j];
-		goto L12;
-L376:
-		dhtdp[i + ic * 13] += alfa[j] * asum2[i - 1];
-L12:
-		;
 	    }
 	}
-L15:
-	if (nbeta <= 0) {
-	    goto L13;
-	}
-	i4 = ncoeff;
-	for (i = 1; i <= i4; ++i) {
-	    i2 = nbeta;
-	    for (j = 1; j <= i2; ++j) {
-		dhtdp[i + ic * 13] += dhtdp[i + (ic - j) * 13] * beta[j];
+
+	for (i = 0; i < ncoeff; ++i) {
+	    for (j = 0; j < nbeta; ++j) {
+		dhtdp[npidx(i,t)] += dhtdp[npidx(i,t-j)] * beta[j];
 	    }
 	}
-L13:
-	;
     }
 
-/*  si inizia il calcolo del gradiente aux3 */
+    /*  si inizia il calcolo del gradiente aux3 */
 
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
+    for (i = 1; i <= nparam; ++i) {
 	aux3[i] = 0.0;
     }
-    i3 = t2;
-    for (ic = t1; ic <= i3; ++ic) {
 
-/*  prima parte relativa ai coefficienti (eq. 22 pag. 316) err. di stampa */
-/*  nel secondo termine c'e' un *ht invece di /ht */
-	rsuh = res[ic-1] / ht[ic];
-	r2suh = rsuh * res[ic-1];
-	i2 = ncoeff;
-	for (i = 1; i <= i2; ++i) {
-	    aux3[i] = aux3[i] + rsuh * g[i + ic * 7] + .5f / ht[ic] * 
-		    dhtdp[i + ic * 13] * (r2suh - 1.0);
+    for (t = t1; t <= t2; ++t) {
+
+	/*  prima parte relativa ai coefficienti (eq. 22, p. 316) err. di 
+	    stampa nel secondo termine c'e' un *ht invece di /ht 
+	*/
+	rsuh = res[t-1] / ht[t];
+	r2suh = rsuh * res[t-1];
+	for (i = 1; i <= ncoeff; ++i) {
+	    aux3[i] = aux3[i] + rsuh * g[gidx(i,t)] + .5 / ht[t] * 
+		dhtdp[npidx(i,t)] * (r2suh - 1.0);
 	}
 
-/* SECONDA PARTE RELATIVA AD ALFA E BETA (EQ. 19 PAG. 315) */
+	/* seconda parte relativa ad alfa e beta (eq. 19,  p. 315) */
 
-	for (i = 1; i <= nvparm; ++i) {
-	    aux3[ncoeff + i] += .5f / ht[ic] * dhtdp[ncoeff + i + ic * 
-		    13] * (r2suh - 1.0);
-	}
-    }
-
-/*     ORA SI RIEMPIE LA HESS */
-
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	i2 = nparam;
-	for (j = 1; j <= i2; ++j) {
-	    vc5[i + j * 13] = 0.0;
+	for (i = 0; i < nvparm; ++i) {
+	    aux3[ncoeff + i] += .5 / ht[t] * dhtdp[npidx(ncoeff+i, t)] * (r2suh - 1.0);
 	}
     }
 
-    i2 = t2;
-    for (ic = t1; ic <= i2; ++ic) {
-	rsuh = res[ic-1] / ht[ic];
-	r2suh = rsuh * res[ic-1];
-	r2suh3 = r2suh / (ht[ic] * ht[ic]);
-	usuh2 = 1.0 / (ht[ic] * ht[ic]);
-	i3 = nparam;
-	for (i = 1; i <= i3; ++i) {
-	    i4 = nparam;
-	    for (j = 1; j <= i4; ++j) {
-		dhdpdp[i + (j + 13) * 13 - 183] = 0.0;
+    /* ora si riempie la hess */
+
+    for (i = 0; i < nparam; ++i) {
+	for (j = 0; j < nparam; ++j) {
+	    vc5[npidx(i,j)] = 0.0;
+	}
+    }
+
+    for (t = t1; t <= t2; ++t) {
+
+	rsuh = res[t] / ht[t];
+	r2suh = rsuh * res[t];
+	r2suh3 = r2suh / (ht[t] * ht[t]);
+	usuh2 = 1.0 / (ht[t] * ht[t]);
+
+	for (i = 0; i < nparam; ++i) {
+	    for (j = 0; j < nparam; ++j) {
+		dhdpdp[hidx(i,j,0)] = 0.0; /* FIXME? */
 	    }
 	}
+
 	if (indiet <= 0) {
 	    goto L90;
 	}
-	i4 = nalfa;
-	for (ii = 1; ii <= i4; ++ii) {
-	    i3 = ncoeff;
-	    for (i = 1; i <= i3; ++i) {
-		i1 = ncoeff;
-		for (j = 1; j <= i1; ++j) {
-		    if (ic - nalfa < t1) {
-			goto L377;
+
+	for (ii = 0; ii < nalfa; ++ii) {
+	    for (i = 0; i < ncoeff; ++i) {
+		for (j = 0; j < ncoeff; ++j) {
+		    if (t - nalfa < t1) {
+			dhdpdp[hidx(i,j,0)] += dhdpdp[hidx(i,j+nalfa,0)] * alfa[ii];
+		    } else {
+			dhdpdp[hidx(i,j,0)] += g[gidx(i,t-ii)] * 2.0 * g[gidx(j,t-ii)] 
+			    * alfa[ii];
 		    }
-		    dhdpdp[i + (j + 13) * 13 - 183] += 
-			g[i + (ic - ii) * 7] * 2.0 * g[j + (ic - ii) * 7] * alfa[ii];
-		    goto L92;
-L377:
-		    dhdpdp[i + (j + 13) * 13 - 183] += 
-			dhdpdp[i + (j + (nalfa + 1) * 13) * 13 - 183] * alfa[ii];
-L92:
-		    ;
 		}
 	    }
 	}
-	i4 = nbeta;
-	for (ii = 1; ii <= i4; ++ii) {
-	    i1 = ncoeff;
-	    for (i = 1; i <= i1; ++i) {
-		i3 = ncoeff;
-		for (j = 1; j <= i3; ++j) {
-		    dhdpdp[i + (j + 13) * 13 - 183] += 
-			dhdpdp[i + (j + (ii + 1) * 13) * 13 - 183] * beta[ii];
+
+	for (ii = 0; ii < nbeta; ++ii) {
+	    for (i = 0; i < ncoeff; ++i) {
+		for (j = 0; j < ncoeff; ++j) {
+		    dhdpdp[hidx(i,j,0)] += dhdpdp[hidx(i,j+ii,0)] * beta[ii];
 		}
 	    }
 	}
-	i4 = ncoeff;
-	for (i = 1; i <= i4; ++i) {
-	    i3 = nalfa;
-	    for (ii = 1; ii <= i3; ++ii) {
-		if (ic - nalfa < t1) {
-		    goto L477;
+
+	for (i = 0; i < ncoeff; ++i) {
+	    for (ii = 0; ii < nalfa; ++ii) {
+		if (t - nalfa < t1) {
+		    dhdpdp[hidx(i,ncoeff+ii,0)] += asum2[i - 1];
+		} else {
+		    dhdpdp[hidx(i,ncoeff+ii,0)] -= g[gidx(i,t-ii)] * 2 * res[t - ii];
 		}
-		dhdpdp[i + (ncoeff + 1 + ii + 13) * 13 - 183] -= 
-		    g[i + (ic - ii) * 7] * 2 * res[ic - ii];
-		goto L214;
-L477:
-		dhdpdp[i + (ncoeff + 1 + ii + 13) * 13 - 183] += asum2[i - 1];
-L214:
-		;
 	    }
 	    for (ii = 1; ii <= nbeta; ++ii) {
-		dhdpdp[i + (ncoeff + 1 + nalfa + ii + 13) * 13 - 183] += 
-			dhtdp[i + (ic - ii) * 13];
+		dhdpdp[hidx(i, ncoeff+1, nalfa+ii)] += dhtdp[npidx(i,t - ii)];
 	    }
 	}
+
 	for (ii = 1; ii <= nbeta; ++ii) {
 	    for (i = 1; i <= ncoeff; ++i) {
 		for (j = 1; j <= nvparm; ++j) {
-		    dhdpdp[i + (ncoeff + j + 13) * 13 - 183] += 
-			dhdpdp[i + (ncoeff + j + (ii + 1) * 13) * 13 - 183] * beta[ii];
+		    dhdpdp[hidx(i,ncoeff+j,0)] += dhdpdp[hidx(i,ncoeff+j,ii)] * beta[ii];
 		}
 	    }
 	}
-L90:
+    L90:
 
-/*  PARTE RELATIVA AI COEFFICIENTI (EQ. 23 PAG. 316) */
-/*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTANO SOLO I PRIMI */
-/*  DUE TERMINI */
+	/*  parte relativa ai coefficienti (eq. 23 pag. 316) 
+	    si ricorda che si prende il valore atteso e restano solo i primi 
+	    due termini 
+	*/
 	for (i = 1; i <= ncoeff; ++i) {
 	    for (j = 1; j <= ncoeff; ++j) {
-		vc5[i + j * 13] = vc5[i + j * 13] - g[i + ic * 7] * g[j 
-			+ ic * 7] / ht[ic] - r2suh3 * .5f * dhtdp[i + ic * 
-			13] * dhtdp[j + ic * 13] - rsuh * g[j + ic * 7] * 
-			dhtdp[i + ic * 13] / ht[ic] - rsuh * g[i + ic * 7]
-			 * dhtdp[j + ic * 13] / ht[ic] + (r2suh - 1.0) * .5f *
-			 (dhdpdp[i + (j + 13) * 13 - 183] / ht[ic] - dhtdp[
-			i + ic * 13] * dhtdp[j + ic * 13] / (ht[ic] * ht[ic]
-			));
+		vc5[npidx(i,j)] -= - g[gidx(i,t)] * g[gidx(j,t)] / ht[t] - r2suh3 * 
+		    .5 * dhtdp[npidx(i,t)] * dhtdp[npidx(j,t)] - rsuh * g[gidx(j,t)] * 
+		    dhtdp[npidx(i,t)] / ht[t] - rsuh * g[gidx(i,t)]
+		    * dhtdp[npidx(j,t)] / ht[t] + (r2suh - 1.0) * .5 *
+		    (dhdpdp[hidx(i,j,0)] / ht[t] - dhtdp[npidx(i,t)] * 
+		     dhtdp[npidx(j,t)] / (ht[t] * ht[t]));
 	    }
 	}
 
-/*  PARTE RELATIVA AD ALFA E BETA  (EQ. 20 PAG. 315) */
-/*  SI RICORDA CHE SI PRENDE IL VALORE ATTESO E RESTA SOLO IL SECONDO */
-/*  TERMINE */
+	/*  parte relativa ad alfa e beta  (eq. 20 pag. 315) 
+	    si ricorda che si prende il valore atteso e resta solo il secondo 
+	    termine 
+	*/
 
+	/*  calcolo di dhdpdp al tempo t che va' nel posto 1 del terzo indice */
 
-/*  CALCOLO DI DHDPDP AL TEMPO IC CHE VA' NEL POSTO 1 DEL TERZO INDICE */
-
-	if (nbeta <= 0) {
-	    goto L80;
-	}
-
-	for (i = 1; i <= nvparm; ++i) {
-	    i4 = nbeta;
-	    for (j = 1; j <= i4; ++j) {
-		dhdpdp[ncoeff + i + (ncoeff + nalfa + 1 + j + 13) * 13 - 
-			183] += dhtdp[ncoeff + i + (ic - j) * 13];
+	if (nbeta > 0) {
+	    for (i = 1; i <= nvparm; ++i) {
+		for (j = 1; j <= nbeta; ++j) {
+		    dhdpdp[hidx(ncoeff+i,ncoeff+j,nalfa)] += dhtdp[npidx(ncoeff+i,t-j)];
+		}
 	    }
-	}
-	for (i = 1; i <= nbeta; ++i) {
-	    i4 = nvparm;
-	    for (j = 1; j <= i4; ++j) {
-		dhdpdp[ncoeff + nalfa + 1 + i + (ncoeff + j + 13) * 13 - 
-			183] += dhtdp[ncoeff + j + (ic - i) * 13];
+	    for (i = 1; i <= nbeta; ++i) {
+		for (j = 1; j <= nvparm; ++j) {
+		    dhdpdp[hidx(ncoeff+nalfa,i,ncoeff + j)] += dhtdp[npidx(ncoeff+j,t-i)];
+		}
 	    }
-	}
-	for (ii = 1; ii <= nbeta; ++ii) {
-	    i4 = nvparm;
-	    for (i = 1; i <= i4; ++i) {
-		i1 = nvparm;
-		for (j = 1; j <= i1; ++j) {
-		    dhdpdp[ncoeff + i + (ncoeff + j + 13) * 13 - 183] += 
-			    beta[ii] * dhdpdp[ncoeff + i + (ncoeff + j + (
-			    ii + 1) * 13) * 13 - 183];
+	    for (ii = 1; ii <= nbeta; ++ii) {
+		for (i = 1; i <= nvparm; ++i) {
+		    for (j = 1; j <= nvparm; ++j) {
+			dhdpdp[hidx(ncoeff+i,ncoeff+j,0)] += beta[ii] * 
+			    dhdpdp[hidx(ncoeff+i,ncoeff+j,ii)];
+		    }
 		}
 	    }
 	}
-L80:
-	i3 = nparam;
-	for (i = ncoef1; i <= i3; ++i) {
-	    i1 = nparam;
-	    for (j = ncoef1; j <= i1; ++j) {
-		vc5[i + j * 13] = vc5[i + j * 13] + usuh2 * .5f * dhtdp[
-			i + ic * 13] * dhtdp[j + ic * 13] - r2suh3 * dhtdp[
-			i + ic * 13] * dhtdp[j + ic * 13] + (r2suh - 1.0) * 
-			.5f / ht[ic] * dhdpdp[i + (j + 13) * 13 - 183];
+
+	for (i = ncoeff; i <= nparam; ++i) {
+	    for (j = ncoeff; j <= nparam; ++j) {
+		vc5[npidx(i,j)] += usuh2 * .5 * dhtdp[npidx(i,t)] * dhtdp[npidx(j,t)] 
+		    - r2suh3 * dhtdp[npidx(i,t)] * dhtdp[npidx(j,t)] 
+		    + (r2suh - 1.0) * .5 / ht[t] * dhdpdp[hidx(i,j,0)];
 	    }
 	}
 
+	/*  parte mista in alto destra */
 
-
-/*  PARTE MISTA IN ALTO DESTRA */
-
-
-	i1 = ncoeff;
-	for (i = 1; i <= i1; ++i) {
-	    i3 = nvparm;
-	    for (j = 1; j <= i3; ++j) {
-		vc5[i + (ncoeff + j) * 13] = vc5[i + (ncoeff + j) * 13] 
-			- g[i + ic * 7] * rsuh * dhtdp[ncoeff + j + ic * 
-			13] / ht[ic] - (r2suh - 1.0) * .5f * dhtdp[ncoeff + 
-			j + ic * 13] * dhtdp[i + ic * 13] / (ht[ic] * ht[ic]
-			) + (r2suh - 1.0) * .5f * dhdpdp[i + (ncoeff + j + 
-			13) * 13 - 183] / ht[ic] - r2suh * .5f * usuh2 * 
-			dhtdp[i + ic * 13] * dhtdp[ncoeff + j + ic * 13];
+	for (i = 1; i <= ncoeff; ++i) {
+	    for (j = 1; j <= nvparm; ++j) {
+		vc5[npidx(i,j*ncoeff)] -= -g[gidx(i,t)] * rsuh 
+		    * dhtdp[npidx(ncoeff+j,t)] / ht[t] - (r2suh - 1.0) 
+		    * .5 * dhtdp[npidx(ncoeff+j,t)] 
+		    * dhtdp[npidx(i,t)] / (ht[t] * ht[t]) 
+		    + (r2suh - 1.0) * .5 * dhdpdp[hidx(i,ncoeff+j,0)] / ht[t] 
+		    - r2suh * .5 * usuh2 * dhtdp[npidx(i,t)] * dhtdp[npidx(ncoeff+j,t)];
 	    }
 	}
 
-/* PRIMA DI USCIRE DAL TEMPO T=IC, SI RISISTEMA LA DHDPDP */
+	/* prima di uscire dal tempo t=t, si risistema la dhdpdp */
 
-	if (indiet <= 0) {
-	    goto L190;
-	}
-	i3 = indiet;
-	for (ii = 1; ii <= i3; ++ii) {
-	    i1 = nparam;
-	    for (i = 1; i <= i1; ++i) {
-		i4 = nparam;
-		for (j = 1; j <= i4; ++j) {
-		    dhdpdp[i + (j + (indiet + 2 - ii) * 13) * 13 - 183] = 
-			    dhdpdp[i + (j + (indiet + 1 - ii) * 13) * 13 - 
-			    183];
+	for (ii = 1; ii <= indiet; ++ii) {
+	    for (i = 1; i <= nparam; ++i) {
+		for (j = 1; j <= nparam; ++j) {
+		    dhdpdp[hidx(i,j,idiet+2-ii)] = dhdpdp[hidx(i,j,idiet+1-ii)];
 		}
 	    }
 	}
-L190:
-	;
     }
 
-/*  IL DO 25 SUL TEMPO E' FINITO E ALLORA SI RIEMPIE LA PARTE */
-/*  MISTA IN BASSO A SINISTRA */
+    /*  il do 25 sul tempo e' finito e allora si riempie la parte 
+	mista in basso a sinistra 
+    */
 
-    i2 = ncoeff;
-    for (i = 1; i <= i2; ++i) {
-	i3 = nvparm;
-	for (j = 1; j <= i3; ++j) {
-	    vc5[ncoeff + j + i * 13] = vc5[i + (ncoeff + j) * 13];
+    for (i = 1; i <= ncoeff; ++i) {
+	for (j = 1; j <= nvparm; ++j) {
+	    vc5[npidx(ncoeff*j,i)] = vc5[npidx(i,ncoeff*j)];
 	}
     }
 
 
-/* ********************************************************************* */
-/* ADESSO SI INVERTE LA HESS */
-/* ********************************************************************* */
+    /* adesso si inverte la hess */
 
-    gj_invert(&vc5[14], 13, nparam, &pp[1], &ier5);
+    gj_invert(&vc5[NPMAX+1], NPMAX, nparam, &pp[1], &ier5);
     if (ier5 != 0) {
 	fprintf(stderr, "gj_invert failed\n");
     }
 
-/* ********************************************************************** */
-/* ADESSO SI COMINCIA CON LE ITERAZIONI */
-/* ********************************************************************** */
-/* CALCOLARE LO STEP PER I NUOVI COEFFICENTI */
-    sdue = 0.0;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	gg[i - 1] = param[i];
-	step[i - 1] = 0.0;
-	i2 = nparam;
-	for (j = 1; j <= i2; ++j) {
-	    step[i - 1] -= vc5[i + j * 13] * aux3[j];
+    /* adesso si comincia con le iterazioni */
+
+    /* calcolare lo step per i nuovi coefficenti */
+    s_2 = 0.0;
+    for (i = 0; i < nparam; ++i) {
+	gg[i] = param[i];
+	step[i] = 0.0;
+	for (j = 0; j < nparam; ++j) {
+	    step[i] -= vc5[npidx(i,j)] * aux3[j];
 	}
-	sdue += step[i - 1] * step[i - 1];
+	s_2 += step[i] * step[i];
     }
-/* ********************************************************************* */
-/* IF RELATIVE EUCLIDEAN DISTANCE IS USED AS CONVERG. */
-    suno = 0.0;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	suno += param[i] * param[i];
+
+    /* if relative euclidean distance is used as converg. */
+    s_1 = 0.0;
+    for (i = 0; i < nparam; ++i) {
+	s_1 += param[i] * param[i];
     }
-    if (suno == 0.0) {
-	suno = 1e-10;
-    }
-    stre = sdue / suno;
-/* ********************************************************************* */
+    if (s_1 == 0.0) s_1 = 1e-10;
+    stre = s_2 / s_1;
+
     if (*ih == 0) {
 	goto L5656;
     }
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * 1.0;
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i];
     }
-    check_(&param[1], ncoeff, nparam);
-/*      WRITE(6,7700) */
-/* 7700  FORMAT(' PARAM DENTRO HESS DOPO STEP') */
-/*      WRITE(6,102)(PARAM(I),I=1,NPARAM) */
+    check_ht(param + ncoeff, nvparm);
+
     goto L299;
-L5656:
-    sdue = sqrt(sdue);
+ L5656:
+    s_2 = sqrt(s_2);
     stre = sqrt(stre);
 
-    oldstp = sdue;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	step[i - 1] /= sdue;
+    oldstp = s_2;
+    for (i = 0; i < nparam; ++i) {
+	step[i] /= s_2;
     }
-/*      CALL CTIME (IV,IT) */
+
     it4 += iv;
-    ds = sdue;
+    ds = s_2;
     if (stre <= *toler) {
 	goto L496;
     }
@@ -2005,60 +1582,66 @@ L5656:
     if (nexp > 5) {
 	nexp = 5;
     }
+
     cappa = pow(2.0, nexp);
-    d0 = sdue;
+    d0 = s_2;
     d0 /= cappa;
     dac = d0 * .001f;
     dub = d0 * 4.f;
-/* 604   FORMAT(' D0,DAC,DUB =',3G16.8/) */
+
     if (*ivolta == 1) {
-	f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-		ydet, yobs, ystoc, &
-		xobs[xoff], iread, nexo, umc, t1, 
-		t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-                &beta[1], nalfa, nbeta, &ht[1]);
+	f1 = -garch_ll(c, ncoeff, res2, res, 
+		       ydet, yobs, ystoc, X, nobs, nx, t1, 
+		       t2, param, b, alfa0, alfa, 
+		       beta, nalfa, nbeta, ht);
     }
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d0;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d0;
     }
-    check_(&param[1], ncoeff, nparam);
-    f2 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    f2 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     if (f2 > f1) {
 	goto L307;
     }
+
     d1 = 0.0;
     d2 = d0;
     d3 = d0 + d0;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d3;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d3;
     }
-    check_(&param[1], ncoeff, nparam);
-    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    f3 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
     goto L325;
-L307:
+
+ L307:
     d1 = -d0;
     d2 = 0.0;
     d3 = d0;
     f3 = f2;
     f2 = f1;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * d1;
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + step[i] * d1;
     }
-    check_(&param[1], ncoeff, nparam);
-    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
-L325:
+    check_ht(param + ncoeff, nvparm);
+
+    f1 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
+
+ L325:
     d23 = d2 - d3;
     d31 = d3 - d1;
     d12 = d1 - d2;
@@ -2070,60 +1653,68 @@ L325:
     if (f3 <= f1) {
 	goto L341;
     }
-L329:
+
+ L329:
     d3 = d2;
     f3 = f2;
     d2 = d1;
     f2 = f1;
     d1 -= dub;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + d1 * step[i - 1];
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + d1 * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
-    f1 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    f1 = -garch_ll(c, ncoeff, res2, res, ydet, yobs, ystoc, X, nobs, 
+		   nx, t1, t2, param, b, alfa0, alfa, beta, 
+		   nalfa, nbeta, ht);
+
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
     goto L325;
-L341:
+
+ L341:
     d1 = d2;
     f1 = f2;
     d2 = d3;
     f2 = f3;
     d3 += dub;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + d3 * step[i - 1];
+
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + d3 * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
-    f3 = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    f3 = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
+
     ++ncall;
     if (ncall > 100) {
 	goto L490;
     }
     goto L325;
-L400:
+
+ L400:
     d23s = d23 * (d2 + d3);
     d31s = d31 * (d3 + d1);
     d12s = d12 * (d1 + d2);
-    ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5f / di;
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + step[i - 1] * ds;
+    ds = (d23s * f1 + d31s * f2 + d12s * f3) * .5 / di;
+
+    for (i = 0; i < nparam; ++i) {
+	param[0] = gg[i] + step[i] * ds;
     }
-    check_(&param[1], ncoeff, nparam);
-    fs = -valunc_(&c__[1], ncoeff, res2, res, 
-	    ydet, yobs, ystoc, &xobs[xoff], iread, nexo, umc, t1, 
-	    t2, &param[1], b, ncoefb, alfa0, &alfa[1], 
-            &beta[1], nalfa, nbeta, &ht[1]);
+    check_ht(param + ncoeff, nvparm);
+
+    fs = -garch_ll(c, ncoeff, res2, res, 
+		   ydet, yobs, ystoc, X, nobs, nx, t1, 
+		   t2, param, b, alfa0, alfa, 
+		   beta, nalfa, nbeta, ht);
+
     ++ncall;
     if (ncall > 100) {
 	goto L490;
@@ -2146,7 +1737,8 @@ L400:
     if (ds > d3 + dub) {
 	goto L341;
     }
-L422:
+
+ L422:
     if (a1s < dac || a2s < dac || a3s < dac) {
 	goto L490;
     }
@@ -2156,17 +1748,20 @@ L422:
     d1 = ds;
     f1 = fs;
     goto L459;
-L434:
+
+ L434:
     if (f2 < f3 || f2 < f1) {
 	goto L447;
     }
     d2 = ds;
     f2 = fs;
     goto L459;
-L447:
+
+ L447:
     d3 = ds;
     f3 = fs;
-L459:
+
+ L459:
     if (d2 <= d3) {
 	goto L463;
     }
@@ -2176,7 +1771,7 @@ L459:
     f2 = f3;
     d3 = dd;
     f3 = ff;
-L463:
+ L463:
     if (d1 <= d2) {
 	goto L325;
     }
@@ -2187,101 +1782,65 @@ L463:
     d2 = dd;
     f2 = ff;
     goto L459;
-L490:
+ L490:
     if (fs <= f1) {
 	goto L491;
     }
     fs = f1;
     ds = d1;
-L491:
+ L491:
     if (fs <= f2) {
 	goto L492;
     }
     fs = f2;
     ds = d2;
-L492:
+ L492:
     if (fs <= f3) {
 	goto L496;
     }
     fs = f3;
     ds = d3;
-L496:
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	param[i] = gg[i - 1] + ds * step[i - 1];
+
+ L496:
+    for (i = 0; i < nparam; ++i) {
+	param[i] = gg[i] + ds * step[i];
     }
-    check_(&param[1], ncoeff, nparam);
+
+    check_ht(param + ncoeff, nvparm);
+
     f1 = fs;
     fs = -fs;
     it5 += iv;
-    if (*ivolta != *ivolta) {
-	goto L133;
-    }
 
-L133:
-    nab = 0;
-    if (nab == 0) {
+    if (*ivolta != *ivolta) {
 	goto L299;
     }
-    i3 = 1;
-    for (ieq = 1; ieq <= i3; ++ieq) {
-/*      IDPNDN=NAM(IEQ) */
-/*      NC=ICOEFF(IEQ) */
-	fprintf(stderr, "EQUATION %d, stage %d\n", (int) ieq,
-		(int) *izo);
-/*      WRITE(6,135)IDPNDN */
-	fputs("initial coefficients\n", stderr);
-	i2 = nc;
-	for (i = 1; i <= i2; ++i) {
-	    fprintf(stderr, " %g\n", gg[nab + i - 1]);
-	}
-/*      WRITE(6,1204)INRES(IEQ),NFRES(IEQ) */
-	fputs("computed coefficients\n", stderr);
-	i2 = nc;
-	for (k = 1; k <= i2; ++k) {
-	    fprintf(stderr, " %g\n", c__[nab + k]);
-	}
-	nab += nc;
-    }
-L299:
 
-/* SI CAMBIA IL SEGNO ALLA MATRICE */
-
-    i3 = nparam;
-    for (i = 1; i <= i3; ++i) {
-	i2 = nparam;
-	for (j = 1; j <= i2; ++j) {
-	    vc5[i + j * 13] = -vc5[i + j * 13];
+ L299:
+    /* si cambia il segno alla matrice */
+    for (i = 0; i < nparam; ++i) {
+	for (j = 0; j < nparam; ++j) {
+	    vc5[npidx(i,j)] *= -1.0;
 	}
     }
 
     return 0;
-} /* garcfh_ */
+} /* garch_full_hessian */
 
-/* Standard for models with no restrictions on */
-/* the structural coefficients, such as distributed lags, */
-/* or restrictions on the sum (Cobb-Douglas), etc. */
-/* The first time must return only the value of NCOEFB. */
 
-int vsrstr_(double *c__, int ncoeff, double *b, int *ncoefb)
+/* Standard for models with no restrictions on the structural 
+   coefficients, such as distributed lags, or restrictions on 
+   the sum (Cobb-Douglas), etc.
+*/
+
+static void vsrstr_(const double *c, int ncoeff, double *b)
 {
-    static int ivolta = 0;
     int i;
 
-    /* Parameter adjustments */
-    --c__;
-    
-    if (ivolta == 0) {
-	*ncoefb = ncoeff;
-	ivolta = 1;
-    } else {
-	for (i = 0; i < ncoeff; ++i) {
-	    b[i] = c__[i+1];
-	}
+    for (i = 0; i < ncoeff; ++i) {
+	b[i] = c[i];
     }
-
-    return 0;
-} /* vsrstr_ */
+} 
 
 
 /*     *** DMIG ******** VERSION 1, MODIFICATION LEVEL 0 *** DKO10215 *** */
@@ -2294,20 +1853,17 @@ int vsrstr_(double *c__, int ncoeff, double *b, int *ncoefb)
 /*     *                                                                * */
 /*     ****************************************************************** */
 
-static int gj_invert(double *g, int ig, int n, double *aux, int *ier)
+static int gj_invert (double *g, int ig, int n, double *aux, int *ier)
 {
-    /* System generated locals */
-    int i1, i2, i3;
+    int i__1, i__2, i__3;
     double d__1;
-
-    /* Local variables */
-    static double d__;
-    static int i, j, k;
-    static double s;
-    static int jc, kc, ij;
-    static double gm;
-    static int jk, kk, ik, kj, ir, kr, icg, idg, ing, irg, ipiv, inder, 
-	icpiv, irpiv, kporin;
+    double d__;
+    int i__, j, k;
+    double s;
+    int jc, kc, ij;
+    double gm;
+    int jk, kk, ik, kj, ir, kr, icg, idg;
+    int ing, irg, ipiv, inder, icpiv, irpiv, kporin = 0;
 
 /* MODIFICA PANATTONI (TOLTO L'EQUIVALENCE) */
     /* Parameter adjustments */
@@ -2336,7 +1892,7 @@ L2:
     }
 L3:
     *ier = 1;
-    irg = -ig;
+    irg = -(ig);
     icg = ing;
     if (ig + n <= 0) {
 	goto L5;
@@ -2354,12 +1910,12 @@ L4:
 L5:
     idg = irg + icg;
     ir = 1;
-    i1 = n;
-    for (i = 1; i <= i1; ++i) {
+    i__1 = n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
 	s = (d__1 = g[ir], fabs(d__1));
 	jc = ir;
-	i2 = n;
-	for (j = 2; j <= i2; ++j) {
+	i__2 = n;
+	for (j = 2; j <= i__2; ++j) {
 	    jc += icg;
 	    d__ = (d__1 = g[jc], fabs(d__1));
 	    if (d__ - s <= 0.) {
@@ -2372,14 +1928,15 @@ L6:
 L7:
 	    ;
 	}
-	aux[i] = s;
+	aux[i__] = s;
+/* L8: */
 	ir += irg;
     }
     kc = 1;
     kk = 1;
     kr = 1;
-    i1 = n;
-    for (k = 1; k <= i1; ++k) {
+    i__1 = n;
+    for (k = 1; k <= i__1; ++k) {
 /* CORREZIONE PORINELLI (FEB.1985) */
 	kporin = k;
 	ipiv = k;
@@ -2419,12 +1976,13 @@ L14:
 	aux[ipiv] = aux[k];
 	irpiv = irg * (ipiv - 1) + 1;
 	ir = kr;
-	i2 = n;
-	for (i = 1; i <= i2; ++i) {
+	i__2 = n;
+	for (i__ = 1; i__ <= i__2; ++i__) {
 	    s = g[irpiv];
 	    g[irpiv] = g[ir];
 	    g[ir] = s;
 	    ir += icg;
+/* L15: */
 	    irpiv += icg;
 	}
 L16:
@@ -2442,9 +2000,9 @@ L18:
 	d__ = 1. / d__;
 	ik = kc;
 	ir = 1;
-	i2 = n;
-	for (i = 1; i <= i2; ++i) {
-	    if (i - k != 0) {
+	i__2 = n;
+	for (i__ = 1; i__ <= i__2; ++i__) {
+	    if (i__ - k != 0) {
 		goto L19;
 	    } else {
 		goto L21;
@@ -2453,26 +2011,30 @@ L19:
 	    s = -d__ * g[ik];
 	    ij = ir;
 	    kj = kr;
-	    i3 = n;
-	    for (j = 1; j <= i3; ++j) {
+	    i__3 = n;
+	    for (j = 1; j <= i__3; ++j) {
 		g[ij] += s * g[kj];
 		ij += icg;
+/* L20: */
 		kj += icg;
 	    }
 	    g[ik] = s;
 L21:
 	    ir += irg;
+/* L22: */
 	    ik += irg;
 	}
 	kj = kr;
-	i2 = n;
-	for (j = 1; j <= i2; ++j) {
+	i__2 = n;
+	for (j = 1; j <= i__2; ++j) {
 	    g[kj] *= d__;
+/* L23: */
 	    kj += icg;
 	}
 	g[kk] = d__;
 	kk += idg;
 	kr += irg;
+/* L24: */
 	kc += icg;
     }
 
@@ -2498,12 +2060,13 @@ L26:
 L27:
     icpiv = icg * (ipiv - 1) + 1;
     ik = kc;
-    i1 = n;
-    for (i = 1; i <= i1; ++i) {
+    i__1 = n;
+    for (i__ = 1; i__ <= i__1; ++i__) {
 	s = g[ik];
 	g[ik] = g[icpiv];
 	g[icpiv] = s;
 	icpiv += irg;
+/* L28: */
 	ik += irg;
     }
     goto L25;
@@ -2524,31 +2087,15 @@ L32:
     return 0;
 } /* gj_invert */
 
-/* Model: Bollerslev and Ghysels */
-
-int vsmode_(double *y, double *x, int nexo, 
-	    int iread, int i, double *yl,
-	    double *u, double *a, double *z,
-	    int ncoeff)
+int vsmode_(double *y, const double **X, int nx, int nobs, int t, 
+	    double *yl, double *a, double *z)
 {
-    /* System generated locals */
-    int x_dim1, x_offset, yl_dim1, yl_offset, j;
+    int j;
 
-    /* Parameter adjustments */
-    x_dim1 = nexo;
-    x_offset = 1 + x_dim1;
-    x -= x_offset;
-    yl_dim1 = 1;
-    yl_offset = 1 + yl_dim1;
-    yl -= yl_offset;
-    --y;
-    --u;
-    --a;
+    *z = a[0];
 
-    *z = a[1] + u[1];
-
-    for (j = 0; j < nexo; j++) {
-	*z += a[j + 2] * x[i * x_dim1 + j + 2];
+    for (j = 0; j < nx; j++) {
+	*z += a[j + 1] * X[j][t];
     }
 
     return 0;

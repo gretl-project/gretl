@@ -37,27 +37,27 @@ int do_fcp (const int *list, const double **Z,
 	    const DATAINFO *pdinfo, PRN *prn)
 {
     int t1, t2;
-    double *yobs, *xobs;
-    int nexo, nobs;
+    double *yobs, **X;
+    int nx, nobs;
     double *ydet;
-    int ncoeff, ncoefb;
-    double *coeff, *d;
+    int ncoeff;
+    double *coeff;
     double *vc, *res, *res2;
     double *ystoc;
     double *amax;
     double *b;
-    double oldc, yy, umc, sigma;
+    double oldc, yy, sigma;
     int info, iters = 0;
     
     int i, p, q, ynum;
 
     /* FIXME: how exactly should these be set? */
-    nexo = 0;
+    nx = 0;
     ncoeff = 1;
-    ncoefb = 1;
 
-    t2 = nobs = pdinfo->t2 - pdinfo->t1 + 1;
-    t1 = 1;
+    t2 = pdinfo->t2;
+    t1 = 0;
+    nobs = t2 - t1 + 1;
 
     p = list[1];
     q = list[2];
@@ -77,7 +77,7 @@ int do_fcp (const int *list, const double **Z,
 	res[i] = 0.0;
     }    
 
-    sigma = umc = oldc = yy = 0.0;
+    sigma = oldc = yy = 0.0;
 
     amax = malloc(nobs * sizeof *amax);
     for (i=0; i<nobs; i++) {
@@ -90,17 +90,16 @@ int do_fcp (const int *list, const double **Z,
 	coeff[i] = b[i] = 0.0;
     }    
 
-    d = malloc((ncoeff + 1) * sizeof *d);
-    vc = malloc((ncoeff * ncoeff + 1) * sizeof *vc);
-    for (i=1; i<=ncoeff; i++) {
-	d[i] = vc[i] = 0.0;
+    vc = malloc((ncoeff * ncoeff) * sizeof *vc);
+    for (i=0; i<ncoeff; i++) {
+	vc[i] = 0.0;
     } 
 
-    if (nexo > 0) {
-	xobs = malloc((nobs * nexo + 1) * sizeof *xobs);
-	/* now fill in exog var values */
+    if (nx > 0) {
+	X = malloc(nx * sizeof *X);
+	/* FIXME */
     } else {
-	xobs = malloc((nobs + 1) * sizeof *xobs);
+	X = NULL;
     }
 
     for (i=0; i<nobs; i++) {
@@ -122,11 +121,12 @@ int do_fcp (const int *list, const double **Z,
 	amax[3+i] = 0.1;
     }
 
-    vsanal_(t1, t2, yobs, nobs,
-	    &xobs[1], nexo, &umc, ydet, 
-	    &yy, coeff, ncoeff, &d[1], &oldc, 
-	    &vc[1], res2, res, &sigma, ystoc, 
-	    amax, b, &ncoefb, &iters, &info, prn);
+    /* Need to set t1 high enough to allow for lags */
+
+    vsanal_(t1, t2, yobs, nobs, (const double **) X, nx, ydet, &yy, 
+	    coeff, ncoeff, 
+	    &oldc, vc, res2, res, &sigma, ystoc, 
+	    amax, b, &iters, &info, prn);
 
     if (info != 0) {
 	fprintf(stderr, "vsanal returned with info = %d\n", info);
@@ -140,7 +140,7 @@ int do_fcp (const int *list, const double **Z,
 	pprintf(prn, "Convergence reached, with tolerance = %g\n", 
 	       amax[0]);
 	pputs(prn, "\nRegression coefficient estimates:\n");
-	for (i=1; i<=1+nexo; i++) {
+	for (i=1; i<=1+nx; i++) {
 	    pprintf(prn, "    A[%d]: %#14.6g (%#.6g)\n", i, amax[i],
 		   amax[i+ncoeff]);
 	}
@@ -160,10 +160,9 @@ int do_fcp (const int *list, const double **Z,
     }
 
     free(yobs);
-    free(xobs);
+    free(X); /* FIXME */
     free(ydet);
     free(coeff);
-    free(d);
     free(vc);
     free(res2);
     free(res);
@@ -199,5 +198,3 @@ MODEL garch_model (int *list, const double **Z, DATAINFO *pdinfo,
     model.errcode = 1; /* bodge for now */
     return model;
 }
-
-
