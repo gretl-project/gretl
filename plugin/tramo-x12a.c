@@ -711,7 +711,8 @@ int write_tx_data (char *fname, int varnum,
 	sprintf(cmd, "\"%s\" %s -r -p -q", prog, varname);
 	err = win_fork_prog(cmd, workdir);
 #else
-	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", workdir, prog, varname);
+	sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", 
+		workdir, prog, varname);
 	err = system(cmd);
 #endif
     } else { /* TRAMO */
