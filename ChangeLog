@@ -18,7 +18,10 @@ version 1.0.7
 - Add drag and drop of data series from a database window into
   the main gretl window (i.e. into the current data set)
 - Add general time-series data compaction function (under Sample
-  menu): needs more testing
+  menu)
+- Fix various memory-usage bugs revealed by port to Mac OS X
+- Fix installation of bcih database so that it works on big-
+  endian machines too
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting

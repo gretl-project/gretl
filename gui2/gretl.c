@@ -118,7 +118,7 @@ static const struct poptOption options[] = {
      N_("open a database on startup"), "DATABASE"},
     {"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
      N_("open a remote (web) database on startup"), "REMOTE_DB"},
-    {NULL, '\0', 0, NULL, 0}
+    {NULL, '\0', 0, NULL, 0, NULL, NULL}
 };
 #endif /* USE_GNOME */
 
