@@ -118,10 +118,25 @@
 	    <entry>First-order autocorrelation</entry>
 	  </row>
 	  <row>
+	    <entry>Prais&ndash;Winsten (<command>pwe</command>)</entry>
+	    <entry>First-order autocorrelation</entry>
+	  </row>
+	  <row>
 	    <entry>Autoregressive Estimation
 	      (<command>ar</command>)</entry>
 	    <entry>Higher-order autocorrelation
 	      (generalized Cochrane&ndash;Orcutt)</entry>
+	  </row>
+	  <row>
+	    <entry>ARMAX
+	      (<command>arma</command>)</entry>
+	    <entry>Time-series model with ARMA error</entry>
+	  </row>
+	  <row>
+	    <entry>GARCH
+	      (<command>garch</command>)</entry>
+	    <entry>Generalized Autoregressive Conditional
+	      Heteroskedasticity</entry>
 	  </row>
 	  <row>
 	    <entry>Vector Autoregression
@@ -154,6 +169,17 @@
 	      (<command>probit</command>)</entry>
 	    <entry>Binary dependent variable (normal
 	      distribution)</entry>
+	  </row>
+	  <row>
+	    <entry>Tobit
+	      (<command>tobit</command>)</entry>
+	    <entry>Truncated dependent variable</entry>
+	  </row>
+	  <row>
+	    <entry>Logistic
+	      (<command>logistic</command>)</entry>
+	    <entry>OLS, with logistic transformation of dependent
+	      variable</entry>
 	  </row>
 	  <row>
 	    <entry>Least Absolute Deviation
@@ -202,6 +228,10 @@
 	  <row>
 	    <entry>Add variables (<emphasis>F</emphasis>-test if OLS)</entry>
 	    <entry><command>add</command></entry>
+	  </row>
+	  <row>
+	    <entry>Sum of coefficients (<emphasis>t</emphasis>-test if OLS)</entry>
+	    <entry><command>coeffsum</command></entry>
 	  </row>
 	  <row>
 	    <entry>Nonlinearity (squares)</entry>

@@ -2819,7 +2819,7 @@ static void start_editing_png_plot (png_plot_t *plot)
 static void audio_render_plot (png_plot_t *plot)
 {
     void *handle;
-    int (*midi_play_graph) (const char *, const char *);
+    int (*midi_play_graph) (const char *, const char *, const char *);
 
     if (plot_not_editable(plot)) {
 	return;
@@ -2831,7 +2831,7 @@ static void audio_render_plot (png_plot_t *plot)
         return;
     }
 
-    (*midi_play_graph) (plot->spec->fname, paths.userdir);
+    (*midi_play_graph) (plot->spec->fname, paths.userdir, midiplayer);
 
     close_plugin(handle);
 }

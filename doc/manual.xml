@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
 "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
-<!ENTITY version "1.0.4">
+<!ENTITY version "1.0.6">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
@@ -48,11 +48,11 @@
     <graphic fileref="figures/gretl-logo"/>
     
     <copyright>
-      <year>2001&ndash;2003</year>
+      <year>2001&ndash;2004</year>
       <holder>Allin Cottrell</holder>
     </copyright>
 
-    <date>October, 2003</date>
+    <date>May, 2004</date>
 
     <legalnotice id="legalnotice">
       <para>Permission is granted to copy, distribute and/or modify
@@ -65,7 +65,7 @@
     </legalnotice>
 
     <releaseinfo>
-      This is version 1.0.5 of the Gretl manual.
+      This is version 1.0.6 of the Gretl manual.
     </releaseinfo>
 
   </bookinfo>

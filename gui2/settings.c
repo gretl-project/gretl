@@ -119,6 +119,10 @@ int wimp;
 static int lcnumeric = 1;
 #endif
 
+#ifdef HAVE_AUDIO
+char midiplayer[MAXSTR];
+#endif
+
 enum {
     ROOTSET = 1 << 0,
     USERSET = 1 << 1,
@@ -175,6 +179,10 @@ RCVARS rc_vars[] = {
 #ifndef G_OS_WIN32
     {"viewps", N_("Command to view postscript files"), NULL, viewps, 
      ROOTSET, MAXSTR, 3, NULL},
+#endif
+#ifdef HAVE_AUDIO
+    {"midiplayer", N_("Program to play MIDI files"), NULL, midiplayer, 
+     USERSET, MAXSTR, 3, NULL},
 #endif
     {"calculator", N_("Calculator"), NULL, calculator, USERSET, MAXSTR, 3, NULL},
 #ifdef SELECT_EDITOR

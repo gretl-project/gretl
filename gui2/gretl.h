@@ -101,6 +101,9 @@ extern int wimp;
 #endif
 extern char viewdvi[MAXSTR];
 extern char viewps[MAXSTR];
+#ifdef HAVE_AUDIO
+extern char midiplayer[MAXSTR];
+#endif
 
 /* global GUI equipment */
 extern windata_t *mdata;

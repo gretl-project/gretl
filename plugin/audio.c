@@ -915,7 +915,7 @@ static int play_dataset (midi_spec *spec, midi_track *track,
 
 #if defined(G_OS_WIN32)
 
-static int midi_fork (const char *fname)
+static int midi_fork (const char *fname, const char *midiplayer)
 {
     int err = 0; 
     
@@ -927,14 +927,19 @@ static int midi_fork (const char *fname)
 
 #else /* non-Windows versions */
 
-static char **get_midi_args (int *argc, const char *fname)
+static char **get_midi_args (int *argc, const char *fname,
+			     const char *midiplayer)
 {
     char **argv = NULL;
-    char *midi_env;
+    const char *midistr;
 
-    midi_env = getenv("GRETL_MIDI_PLAYER");
-
-    if (midi_env == NULL) {
+    if (midiplayer != NULL && *midiplayer != '\0') {
+	midistr = midiplayer;
+    } else {
+	midistr = (const char *) getenv("GRETL_MIDI_PLAYER");
+    }
+	
+    if (midistr == NULL || *midistr == '\0') {
 	*argc = 3;
 
 	argv = malloc((*argc + 1) * sizeof *argv);
@@ -945,7 +950,7 @@ static char **get_midi_args (int *argc, const char *fname)
 	argv[2] = g_strdup(fname);
 	argv[3] = NULL;
     } else {
-	char *tmp = g_strdup(midi_env);
+	char *tmp = g_strdup(midistr);
 	char *s = tmp;
 	int i, ntoks = 1;
 
@@ -962,10 +967,16 @@ static char **get_midi_args (int *argc, const char *fname)
 	    return NULL;
 	}
 
-	argv[0] = g_strdup(strtok(tmp, " "));
-	for (i=1; i<ntoks; i++) {
-	    argv[i] = g_strdup(strtok(NULL, " "));
+	if (ntoks > 1) {
+	    argv[0] = g_strdup(strtok(tmp, " "));
+	    for (i=1; i<ntoks; i++) {
+		argv[i] = g_strdup(strtok(NULL, " "));
+	    }
+	} else {
+	    argv[0] = g_strdup(tmp);
+	    i = 1;
 	}
+	
 	argv[i++] = g_strdup(fname);
 	argv[i] = NULL;
 	g_free(tmp);
@@ -1025,12 +1036,12 @@ static int real_midi_fork (char **argv)
 
 # endif
 
-static int midi_fork (const char *fname)
+static int midi_fork (const char *fname, const char *midiplayer)
 {
     int i, err, argc;
     char **argv;
 
-    argv = get_midi_args(&argc, fname);
+    argv = get_midi_args(&argc, fname, midiplayer);
     if (argv == NULL) return 1;
 
     err = real_midi_fork(argv);
@@ -1045,7 +1056,8 @@ static int midi_fork (const char *fname)
 
 #endif
 
-int midi_play_graph (const char *fname, const char *userdir)
+int midi_play_graph (const char *fname, const char *userdir,
+		     const char *midiplayer)
 {
     char outname[FILENAME_MAX];
     midi_spec spec;
@@ -1077,7 +1089,7 @@ int midi_play_graph (const char *fname, const char *userdir)
 
     fclose(spec.fp);
 
-    midi_fork(outname);
+    midi_fork(outname, midiplayer);
 
     return 0;
 }
