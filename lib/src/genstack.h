@@ -94,6 +94,7 @@ enum transformations {
     T_CNORM,
     T_RESAMPLE,
     T_HPFILT,
+    T_BKFILT,
 #ifdef HAVE_MPFR
     T_MLOG,
 #endif

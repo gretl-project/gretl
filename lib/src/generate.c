@@ -165,6 +165,7 @@ struct genr_func funcs[] = {
     { T_CNORM,    "cnorm" },
     { T_RESAMPLE, "resample" },
     { T_HPFILT,   "hpfilt" },    
+    { T_BKFILT,   "bkfilt" },    
 #ifdef HAVE_MPFR
     { T_MLOG,     "mlog" },
 #endif
@@ -953,7 +954,8 @@ static int evaluate_genr (GENERATE *genr)
 	}
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		 atom->func == T_CUM || atom->func == T_SORT ||
-		 atom->func == T_RESAMPLE || atom->func == T_HPFILT) {
+		 atom->func == T_RESAMPLE || atom->func == T_HPFILT ||
+		 atom->func == T_BKFILT) {
 	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
 	    atom_stack_resume(genr);
@@ -2609,16 +2611,17 @@ int series_adjust_t1t2 (const double *x, int *t1, int *t2)
     return 0;
 }
 
+/*
+  Hodrick-Prescott filter: adapted from the original FORTRAN code
+  by E. Prescott. Very few changes.
+
+  Parameters:
+  x: vector of original data
+  hp: pointer to a T-vector, returns Hodrick-Prescott "cycle"
+*/
+
 static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 {
-    /*
-      Hodrick-Prescott filter: adapted from the original FORTRAN code
-      by E. Prescott. Very few changes.
-
-      Parameters:
-      x: vector of original data
-      hp: pointer to a T-vector, returns Hodrick-Prescott "cycle"
-    */
     int i, t, T, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int err = 0;
     double v00 = 1.0, v11 = 1.0, v01 = 0.0;
@@ -2764,6 +2767,78 @@ static int hp_filter (const double *x, double *hp, const DATAINFO *pdinfo)
 	free(V[i]);
     }
     free(V);
+
+    return err;
+}
+
+/*
+  Baxter & King bandpass filter
+
+  Parameters:
+  y: vector of original data
+  bk: pointer to a T-vector, returns filtered series
+*/
+
+static int bkbp_filter (const double *y, double *bk, const DATAINFO *pdinfo)
+{
+    int i, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int err = 0;
+
+    /*
+      minPer, maxPer: threshold periodicities for business cycle
+      k: order of the approximation
+      
+      these are fixed for now, should be made user-adjustable
+    */
+
+    int minPer = 8;
+    int maxPer = 32;
+    int k = 12;
+
+    double a[13];
+    double avg_a;
+
+    double omubar = 2.0 * M_PI / minPer;
+    double omlbar = 2.0 * M_PI / maxPer;
+    
+    /* first we compute the coefficients */
+
+    a[0] = (omubar - omlbar) / M_PI;
+    avg_a = a[0];
+
+    for (i=1; i<=k; i++) {
+	a[i] = (sin(i * omubar) - sin(i * omlbar)) / (i * M_PI);
+	avg_a += 2 * a[i];
+    }
+
+    avg_a = avg_a / (2 * k + 1);
+
+    for (i=0; i<=k; i++) {
+	a[i] -= avg_a;
+#if 0
+	fprintf(stderr, "a[%d] = %#9.6g\n", i, a[i]);
+#endif
+    }
+
+    /* now we filter the series */
+
+    /* skip the first k observations */
+    for (t=t1; t<t1+k; t++) {
+	bk[t] = NADBL;
+    }
+
+    /* process the middle */
+    for (t=t1+k; t<t2-k; t++) {
+	bk[t] = a[0] * y[t];
+	for (i=1; i<=k; i++) {
+	    bk[t] += a[i] * (y[t-i] + y[t+i]);
+	}
+    }
+
+    /* skip the last k observations */
+    for (t=t2-k; t<=t2; t++) {
+	bk[t] = NADBL;
+    }
 
     return err;
 }
@@ -3064,6 +3139,10 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
     else if (fn == T_HPFILT) { 
 	*err = hp_filter(mvec, x, pdinfo);	
+    }
+
+    else if (fn == T_BKFILT) { 
+	*err = bkbp_filter(mvec, x, pdinfo);	
     }
 
     return x;

@@ -1593,7 +1593,8 @@
 	    (resample a series with replacement, for bootstrap
 	    purposes), <func>hpfilt</func> (Hodrick&ndash;Prescott
 	    filter: this function returns the <quote>cycle</quote>
-	    component of the series).</para>
+	    component of the series), <func>bkfilt</func>
+	    (Baxter&ndash;King bandpass filter).</para>
 	</li>
 	<li><para>Time-series functions: <func>diff</func> (first
 	    difference), <func>ldiff</func> (log-difference, or first
