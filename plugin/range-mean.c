@@ -122,7 +122,7 @@ int range_mean_graph (int varnum, double **Z, DATAINFO *pdinfo,
     int k, t, m, nsamp, err = 0;
     int start, end, extra, len;
     double mean, range, tpval, *yhat = NULL;
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     int t1, t2;
 
     t1 = pdinfo->t1;

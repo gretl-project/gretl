@@ -29,7 +29,7 @@ typedef struct _GENERATE GENERATE;
 struct _GENERATE {
     double *xvec;
     int varnum;
-    char varname[9];
+    char varname[VNAMELEN];
     char label[MAXLABEL];
     int scalar; 
 };
@@ -494,7 +494,7 @@ int _reserved (const char *str)
 
 static const char *set_or_get_obs_marker (const char *s, int opt)
 {
-    static char obsstr[9];
+    static char obsstr[OBSLEN];
 
     if (opt == OBS_SET) {
 	size_t n;
@@ -766,7 +766,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    err = E_NOVAR;
 	    goto genr_return;
 	}
-	_esl_trunc(newvar, 8);
+	_esl_trunc(newvar, VNAMELEN - 1);
 	if (!isalpha((unsigned char) newvar[0]) &&
 	    strncmp(newvar, "$nls", 4)) {
 	    err = E_NOTALPH;
@@ -1352,7 +1352,7 @@ static int cstack (double *mstack, double *xvec, char op,
 
 int panel_unit_first_obs (int t, const DATAINFO *pdinfo)
 {
-    char *p, obs[9];
+    char *p, obs[OBSLEN];
 
     ntodate(obs, t, pdinfo);
     p = strchr(obs, ':');
@@ -1769,7 +1769,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
 static double get_obs_value (const char *s, double **Z, 
 			     const DATAINFO *pdinfo)
 {
-    char vname[9], obs[9];
+    char vname[VNAMELEN], obs[OBSLEN];
 
     if (sscanf(s, "%8[^[][%8[^]]]", vname, obs) != 2) {
 	return NADBL;
@@ -2003,7 +2003,7 @@ static void get_lag (int v, int lag, double *lagvec, double **Z,
 
     /* post-process missing panel values */
     if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	char *p, obs[9];
+	char *p, obs[OBSLEN];
 	int j;
 
 	for (t=t1; t<=pdinfo->t2; t++) {
@@ -2079,7 +2079,7 @@ static int varname_plus_obs (const char *ss, const DATAINFO *pdinfo)
     if (strchr(ss, '[') == NULL || strchr(ss, ']') == NULL) {
 	return 0;
     } else {
-	char vname[9], obs[9];
+	char vname[VNAMELEN], obs[OBSLEN];
 
 	if (sscanf(ss, "%8[^[][%8[^]]]", vname, obs) != 2) {
 	    return 0;
@@ -2715,7 +2715,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     int check, i, j, t, li, lj, l0 = list[0];
     int maxterms, terms, n = pdinfo->n, v = pdinfo->v;
     double zi, zj;
-    char s[12], s1[9];
+    char s[12], s1[VNAMELEN];
 
     /* maximum number of terms if none are "bad" */
     if (opt) maxterms = (l0*l0 + l0)/2;
@@ -2806,7 +2806,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, maxlag, p, t, t1, nv, v = pdinfo->v, n = pdinfo->n;
-    char s[64], parmbit[9];
+    char s[64], parmbit[VNAMELEN];
     double xx, *rhot;
 
 #ifdef GENR_DEBUG
@@ -2888,7 +2888,7 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
 {
     int err, v;
     unsigned pwr;
-    char vname[9];
+    char vname[VNAMELEN];
     void *handle = NULL;
     int (*mp_raise) (const double *, double *, int, unsigned);
     
@@ -2928,7 +2928,7 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 		      DATAINFO *pdinfo)
 {
     int err, v;
-    char vname[9];
+    char vname[VNAMELEN];
     void *handle = NULL;
     int (*mp_log) (const double *, double *, int);
     
@@ -2969,7 +2969,7 @@ static double genr_cov (const char *str, double ***pZ,
 			const DATAINFO *pdinfo)
 {
     int i, n, n2, p, v1, v2;
-    char v1str[9], v2str[9];
+    char v1str[VNAMELEN], v2str[VNAMELEN];
 
     n = strlen(str);
     if (n > 17) return NADBL;
@@ -3005,7 +3005,7 @@ static double genr_corr (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo)
 {
     int i, n, n2, p, v1, v2;
-    char v1str[9], v2str[9];
+    char v1str[VNAMELEN], v2str[VNAMELEN];
 
     n = strlen(str);
     if (n > 17) return NADBL;
@@ -3056,7 +3056,7 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
 			MODEL *pmod)
 {
     int i, j, k, n, n2, nv, p, v1, v2, v1l, v2l;
-    char v1str[9], v2str[9];
+    char v1str[VNAMELEN], v2str[VNAMELEN];
 
     if (pmod == NULL || pmod->list == NULL) return NADBL;
 
@@ -3158,7 +3158,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
      /* for "sim" command */
 {
     int f, i, t, t1, t2, m, nv, pv;
-    char varname[9], parm[16], tmpstr[MAXLEN];
+    char varname[VNAMELEN], parm[16], tmpstr[MAXLEN];
     char *isconst = NULL, **toks = NULL;
     double xx, yy, *a = NULL;
     int vtok = 2, err = 0;
@@ -3290,7 +3290,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
     int i, t, v = 0, nv, n = pdinfo->n, lv, l0 = list[0];
     int slen;
     double m = 0;
-    char tmp[9];
+    char tmp[VNAMELEN];
 
     /* parse s */
     if (isdigit((unsigned char) *s)) m = dot_atof(s);
@@ -3356,7 +3356,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
-    char vname[9], vlabel[MAXLABEL];
+    char vname[VNAMELEN], vlabel[MAXLABEL];
     int i, n, t, t1 = pmod->t1, t2 = pmod->t2;
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;

@@ -40,7 +40,7 @@ GtkWidget *active_edit_text = NULL;
 void selectrow (GtkCList *clist, gint row, gint column, 
 	        GdkEventButton *event, gpointer data) 
 {
-    gchar *numstr, *edttext, addvar[9];
+    gchar *numstr, *edttext, addvar[VNAMELEN];
     windata_t *mydata = (windata_t *) data;
 
     if (mydata == mdata) { /* main window */
@@ -297,7 +297,7 @@ static int model_dates_check (windata_t *mydata)
 void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
@@ -431,7 +431,7 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;

@@ -2316,13 +2316,13 @@ void infobox (const char *msg)
 int validate_varname (const char *varname)
 {
     int i, n = strlen(varname);
-    char namebit[9];
+    char namebit[VNAMELEN];
     unsigned char c;
 
     *namebit = 0;
     
-    if (n > 8) {
-	strncat(namebit, varname, 8);
+    if (n > VNAMELEN - 1) {
+	strncat(namebit, varname, VNAMELEN - 1);
 	sprintf(errtext, _("Variable name %s... is too long\n"
 	       "(the max is 8 characters)"), namebit);
 	errbox(errtext);

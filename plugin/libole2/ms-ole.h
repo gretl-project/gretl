@@ -20,8 +20,8 @@
 # ifdef notdef
 	typedef unsigned long mode_t;
 	typedef /* signed */ long off_t;
-# endif
 	typedef size_t ssize_t;
+# endif
 	typedef /* unsigned */ long caddr_t;
 #endif
 

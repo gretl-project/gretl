@@ -1142,7 +1142,7 @@ static char *boxplot_str (GRAPHT *graph)
 
     fp = fopen(graph->fname, "r");
     if (fp != NULL) {
-	char vname[9], line[48];
+	char vname[VNAMELEN], line[48];
 
 	str = malloc (MAXLEN);
 	if (str == NULL) return NULL;

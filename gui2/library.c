@@ -1258,7 +1258,7 @@ void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
-    char pdstr[8], stobs[9];
+    char pdstr[8], stobs[OBSLEN];
     unsigned char oflag;
     int err;
 
@@ -2285,7 +2285,7 @@ void do_model (GtkWidget *widget, gpointer p)
 void do_sim (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
-    char varname[9], info[24];
+    char varname[VNAMELEN], info[24];
     int err;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
@@ -2385,7 +2385,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *ddata)
 void do_random (GtkWidget *widget, dialog_t *ddata) 
 {
     const gchar *buf;
-    char tmp[32], vname[9];
+    char tmp[32], vname[VNAMELEN];
     double f1, f2;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
@@ -3118,7 +3118,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
 void add_model_stat (MODEL *pmod, const int which)
 {
-    char vname[9], vlabel[MAXLABEL], cmdstr[MAXLEN];
+    char vname[VNAMELEN], vlabel[MAXLABEL], cmdstr[MAXLEN];
     char statname[8];
     int i, n;
 

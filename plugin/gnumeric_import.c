@@ -20,6 +20,7 @@
 #include <gtk/gtk.h>
 
 #include "libgretl.h"
+
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include "importer.h"
@@ -128,14 +129,14 @@ static int wsheet_allocate (wsheet *sheet, int cols, int rows)
 
     sheet->varname = malloc(cols * sizeof *(sheet->varname));
     for (i=0; i<cols; i++) {
-	sheet->varname[i] = malloc(9 * sizeof **(sheet->varname));
+	sheet->varname[i] = malloc(VNAMELEN * sizeof **(sheet->varname));
 	if (sheet->varname[i] == NULL) return 1;
 	sheet->varname[i][0] = '\0';
     }
 
     sheet->label = malloc(rows * sizeof *(sheet->label));
     for (t=0; t<rows; t++) {
-	sheet->label[t] = malloc(9 * sizeof **(sheet->label));
+	sheet->label[t] = malloc(VNAMELEN * sizeof **(sheet->label));
 	if (sheet->label[t] == NULL) return 1;
 	sheet->label[t][0] = '\0';
     }

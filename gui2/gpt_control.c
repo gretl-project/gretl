@@ -1980,9 +1980,11 @@ static int chop_comma (char *str)
 static int get_gpt_label (const char *line, char *label)
 {
     const char *p = strchr(line, '#');
+    char format[6];
 
     if (p != NULL) {
-	sscanf(p + 1, "%8s", label);
+	sprintf(format, "%%%ds", OBSLEN - 1);
+	sscanf(p + 1, format, label);
 	return 0;
     }
     return 1;
@@ -2319,7 +2321,7 @@ static int allocate_plotspec_labels (GPT_SPEC *spec, int plot_n)
 	return 1;
     }
     for (i=0; i<plot_n; i++) {
-	spec->labels[i] = malloc(9);
+	spec->labels[i] = malloc(OBSLEN);
 	if (spec->labels[i] == NULL) {
 	    free(spec->labels);
 	    spec->nlabels = 0;
@@ -2336,7 +2338,7 @@ static int allocate_plotspec_labels (GPT_SPEC *spec, int plot_n)
 static int get_plot_n (FILE *fp, int *got_labels)
 {
     int n = 0, started = -1;
-    char line[MAXLEN], label[9];
+    char line[MAXLEN], label[OBSLEN];
     char *p;
 
     *got_labels = 0;

@@ -355,7 +355,7 @@ static int model_dates_check (windata_t *mydata)
 void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
@@ -498,12 +498,12 @@ static void maybe_insert_varname (char *s)
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[64], query[MAXLABEL], defstr[MAXLEN];
-    char startdate[9], enddate[9];
+    char startdate[OBSLEN], enddate[OBSLEN];
     void (*okfunc)() = NULL;
     guint varclick = VARCLICK_NONE;
     windata_t *mydata = (windata_t *) data;
 
-    defstr[0] = '\0';
+    *defstr = '\0';
 
     switch (action) {
     case SMPLBOOL:

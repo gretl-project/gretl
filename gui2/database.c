@@ -1800,7 +1800,7 @@ void compact_data_set (void)
     int min_startskip = 0;
     int i, err = 0;
     int default_method = COMPACT_AVG;
-    char stobs[9], *p;
+    char stobs[OBSLEN], *p;
 
     if (maybe_restore_full_data(COMPACT)) return;
 

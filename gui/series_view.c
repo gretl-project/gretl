@@ -22,7 +22,7 @@
 #include "gretl.h"
 
 typedef struct {
-    char label[9];
+    char label[OBSLEN];
     double val;
 } data_point_t;    
 
@@ -149,20 +149,26 @@ static void series_view_print (windata_t *vwin)
 	pprintf(prn, "\n     Obs ");
 	pprintf(prn, "%13s\n\n", datainfo->varname[sview->varnum]);
 	for (t=0; t<sview->npoints; t++) {
-	    if (sview->format == 'G') {
-		pprintf(prn, "%8s %#13.*g\n", sview->points[t].label,
+	    if (na(sview->points[t].val)) {
+		pprintf(prn, "%*s\n", OBSLEN - 1, sview->points[t].label);
+	    } else if (sview->format == 'G') {
+		pprintf(prn, "%*s %#13.*g\n", OBSLEN - 1, 
+			sview->points[t].label,
 			sview->digits, sview->points[t].val);
 	    } else {
-		pprintf(prn, "%8s %13.*f\n", sview->points[t].label,
+		pprintf(prn, "%*s %13.*f\n", OBSLEN - 1, 
+			sview->points[t].label,
 			sview->digits, sview->points[t].val);
 	    }
 	}
     } else {
 	if (sview->format == 'G') {
-	    pprintf(prn, "\n%8s = %#13.*g", datainfo->varname[sview->varnum], 
+	    pprintf(prn, "\n%*s = %#13.*g", OBSLEN - 1, 
+		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	} else {
-	    pprintf(prn, "\n%8s = %13.*fg", datainfo->varname[sview->varnum], 
+	    pprintf(prn, "\n%*s = %13.*fg", OBSLEN - 1, 
+		    datainfo->varname[sview->varnum], 
 		    sview->digits, Z[sview->varnum][0]);
 	}
     }

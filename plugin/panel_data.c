@@ -42,7 +42,7 @@ static void print_panel_coeff (MODEL *pmod, MODEL *panelmod,
     char numstr[18];
 
     sprintf(numstr, "(%.5g)", panelmod->sderr[i]);
-    pprintf(prn, "%9s: %14.5g %15s\n", 
+    pprintf(prn, "%*s: %14.5g %15s\n", VNAMELEN,
 	    pdinfo->varname[pmod->list[i+2]],
 	    panelmod->coeff[i], numstr);
 }
@@ -271,13 +271,13 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 	for (i=0; i<nunits; i++) {
 	    /* print per-unit intercept estimates */
-	    char dumstr[9];
+	    char dumstr[VNAMELEN];
 	    double x;
 
 	    if (i == nunits - 1) x = lsdv.coeff[0];
 	    else x = lsdv.coeff[i + pmod->list[0] - 1] + lsdv.coeff[0];
 	    sprintf(dumstr, "a_%d", i + 1);
-	    pprintf(prn, "%9s: %14.4g\n", dumstr, x);
+	    pprintf(prn, "%*s: %14.4g\n", VNAMELEN, dumstr, x);
 	}
 
 	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
@@ -752,7 +752,7 @@ int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
 	markers = malloc(pdinfo->n * sizeof *markers);
 	if (markers != NULL) {
 	    for (t=0; t<pdinfo->n; t++) {
-		markers[t] = malloc(9);
+		markers[t] = malloc(OBSLEN);
 		if (markers[t] == NULL) {
 		    free(markers);
 		    markers = NULL;

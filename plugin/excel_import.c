@@ -527,15 +527,15 @@ static char *copy_unicode_string (char **src)
 
 static char *convert8to7 (char *src, int count) 
 {
-    char *p, *dest = malloc(9);
+    char *p, *dest = malloc(VNAMELEN);
     int i, j = 0;
     unsigned char u;
 
     if (dest == NULL) return NULL;
-    memset(dest, 0, 9);
+    memset(dest, 0, VNAMELEN);
     p = dest;
 
-    for (i=0; i<count && j<8; i++) {
+    for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = (unsigned char) src[i];
 #ifdef EDEBUG
 	fprintf(stderr, "convert8to7: src[%d] = %u\n", i, u);
@@ -558,14 +558,14 @@ static char *convert8to7 (char *src, int count)
 
 static char *convert16to7 (char *src, int count) 
 {
-    char *p, *s = src, *dest = malloc(9);
+    char *p, *s = src, *dest = malloc(VNAMELEN);
     int i, j = 0, u;
 
     if (dest == NULL) return NULL;
-    memset(dest, 0, 9);
+    memset(dest, 0, VNAMELEN);
     p = dest;
 
-    for (i=0; i<count && j<8; i++) {
+    for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = getshort(s, 0);
 	s += 2;
 	if (isalnum(u) && u < 128) {

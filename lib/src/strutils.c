@@ -601,7 +601,7 @@ int get_local_decpoint (void)
 
 double obs_str_to_double (const char *obs)
 {
-    char tmp[9];
+    char tmp[OBSLEN];
     static int decpoint;
 
     if (decpoint == 0) decpoint = get_local_decpoint();

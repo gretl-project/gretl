@@ -96,7 +96,7 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn)
 {
-    char date1[9], date2[9], tmp[128];
+    char date1[OBSLEN], date2[OBSLEN], tmp[128];
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv;
 
@@ -200,7 +200,7 @@ void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn)
 {
-    char date1[9], date2[9], vname[16], tmp[128];
+    char date1[OBSLEN], date2[OBSLEN], vname[16], tmp[128];
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv;
     char pt = get_local_decpoint();
@@ -345,7 +345,7 @@ rtfprint_matrix (const double *vec, const int *list,
     enum { FIELDS = 5 };
 
     if (ci == CORR) {
-	char date1[9], date2[9];
+	char date1[OBSLEN], date2[OBSLEN];
 
 	ntodate(date1, t1, pdinfo);
 	ntodate(date2, t2, pdinfo);
@@ -449,7 +449,7 @@ texprint_matrix (const double *vec, const int *list,
     lo = list[0];
 
     if (ci == CORR) {
-	char date1[9], date2[9];
+	char date1[OBSLEN], date2[OBSLEN];
 
 	ntodate(date1, t1, pdinfo);
 	ntodate(date2, t2, pdinfo);
@@ -558,7 +558,7 @@ static
 void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
 			 PRN *prn)
 {
-    char date1[9], date2[9]; 
+    char date1[OBSLEN], date2[OBSLEN]; 
 
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
@@ -583,7 +583,7 @@ static
 void rtf_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
 			 PRN *prn)
 {
-    char date1[9], date2[9]; 
+    char date1[OBSLEN], date2[OBSLEN]; 
     char tmp[128];
 
     ntodate(date1, fr->t1, pdinfo);
@@ -972,7 +972,7 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
     int tsamp = datainfo->t2 - datainfo->t1 + 1;
     char delim = datainfo->delim;
     double xx;
-    char tmp[9];
+    char tmp[OBSLEN];
 
     if (l0 == 0) return 1;
 

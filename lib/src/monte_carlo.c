@@ -442,7 +442,7 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
     for (i=0; i<list[0]; i++) {
 	char *p;
 
-	ploop->storename[i] = malloc(9);
+	ploop->storename[i] = malloc(VNAMELEN);
 	if (ploop->storename[i] == NULL) goto cleanup;
 
 	strcpy(ploop->storename[i], pdinfo->varname[list[i+1]]);

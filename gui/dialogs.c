@@ -83,7 +83,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 {
     gchar *edttext;
     char dataspec[32];
-    char *test, stobs[9], endobs[9], firstvar[9];
+    char *test, stobs[OBSLEN], endobs[OBSLEN], firstvar[VNAMELEN];
     double sd0, ed0;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (data->edit));
@@ -1463,7 +1463,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
     if (rset->combo != NULL) {
 	/* setting from dummy variable */
 	const gchar *buf;
-	char dumv[9];
+	char dumv[VNAMELEN];
 
 	buf = gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry));
 

@@ -2739,7 +2739,7 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
    lagged var in the list; otherwise return 0 */
 {
     int i, t;
-    char depvar[9], othervar[9];
+    char depvar[VNAMELEN], othervar[VNAMELEN];
     char *p;
 
     /* this may be an auxiliary regression */

@@ -42,6 +42,7 @@ version 1.2.0
 - Add a "lite" version of gtksourceview to the gtk2 source package
 - Add recognition of dated daily data in importing from ASCII:
   dates must be like 89/12/31, i.e. YY/MM/DD
+- Update to gcc-3.3.1 and mingw-runtime-3.2 for Windows build
 
 10/31/2003 version 1.1.6
 - Test release for Fedora (Linux) packaging

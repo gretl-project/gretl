@@ -358,7 +358,7 @@ obs_button_size_request (GtkWidget      *widget,
     cw = gdk_char_width(fixed_font, 'x');
 
     width = MIN_OBS_BUTTON_WIDTH;
-    max_string_len = 9;
+    max_string_len = OBSLEN;
     string_len = strlen(datainfo->endobs) + 1;
     w = MIN (string_len, max_string_len) * cw;
     width = MAX (width, w);  
@@ -875,7 +875,7 @@ extern gboolean update_obs_label (GtkEditable *entry, gpointer data);
 
 static void default_output (ObsButton *obs_button)
 {
-    char buf[9];
+    char buf[OBSLEN];
     gpointer data;
 
     ntodate(buf, (int) obs_button->adjustment->value, datainfo);
