@@ -110,6 +110,7 @@ done
 add_file ${TOPDIR}/COPYING gretl/COPYING
 add_file ${TOPDIR}/pixmaps/gretl-logo.xpm gretl/gretl-logo.xpm
 add_file ${TOPDIR}/doc/manual.chm/gretl.chm gretl/gretl.chm
+add_file ${TOPDIR}/doc/manual_it.chm/gretl_it.chm gretl/gretl_it.chm
 add_file /home/cottrell/stats/esl/es/gretl_es.chm gretl/gretl_es.chm
 
 # user readme file

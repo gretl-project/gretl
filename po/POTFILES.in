@@ -6,11 +6,14 @@ lib/src/dbread.c
 lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
+lib/src/foo.c
 lib/src/generate.c
 lib/src/genstack.c
 lib/src/graphing.c
 lib/src/gretl_commands.c
 lib/src/gretl_errors.c
+lib/src/gretl_func.c
+lib/src/gretl_list.c
 lib/src/gretl_matrix.c
 lib/src/gretl_model.c
 lib/src/gretl_paths.c
@@ -37,7 +40,6 @@ lib/src/subsample.c
 lib/src/system.c
 lib/src/texprint.c
 lib/src/var.c
-cli/common.c
 cli/complete.c
 cli/gretlcli.c
 gui/gretl.c
@@ -105,4 +107,5 @@ plugin/sysest.c
 plugin/tobit.c
 plugin/tramo_options.c
 plugin/tramo-x12a.c
+plugin/vif.c
 plugin/workbook.c
