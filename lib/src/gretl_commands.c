@@ -75,6 +75,7 @@ static struct gretl_cmd gretl_cmds[] = {
     { IF,       "if" },
     { IMPORT,   "import" },
     { INFO,     "info" }, 
+    { KPSS,     "kpss" },
     { LABEL,    "label" },
     { LABELS,   "labels" },
     { LAD,      "lad" },

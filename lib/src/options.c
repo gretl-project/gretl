@@ -71,6 +71,8 @@ struct gretl_option gretl_opts[] = {
     { GNUPLOT,  OPT_Z, "dummy" },
     { GRAPH,    OPT_O, "tall" },
     { IMPORT,   OPT_O, "box1" },
+    { KPSS,     OPT_T, "trend" },
+    { KPSS,     OPT_V, "verbose" },
     { LEVERAGE, OPT_O, "save" },
     { LMTEST,   OPT_L, "logs" },
     { LMTEST,   OPT_M, "autocorr" },

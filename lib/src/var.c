@@ -1665,6 +1665,123 @@ int adf_test (int order, int varno, double ***pZ,
     return real_adf_test(varno, order, 1, pZ, pdinfo, opt, 0, prn);
 }
 
+/**
+ * kpss_test:
+ * @order: window size for Bartlett smoothing.
+ * @varno: ID number of the variable to test.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: data information struct.
+ * @opt: option flag.
+ * @prn: gretl printing struct.
+ *
+ * Carries out and prints the results of the KPSS test for 
+ * stationarity.
+ *
+ * Returns: 0 on successful completion, non-zero on error.
+ *
+ */
+
+int kpss_test (int order, int varno, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
+{
+    MODEL KPSSmod;
+    int list[4];
+    int hastrend = 0;
+    double s2 = 0.0;
+    double cumsum = 0.0, cumsum2 = 0.0;
+    double *autocov;
+    double et;
+
+    int i, t;
+    int t1, t2, T;
+
+    /* sanity check */
+    if (order <= 0 || varno <= 0 || varno >= pdinfo->v) {
+	return 1;
+    }
+
+    if (opt & OPT_T) {
+	hastrend = 1;
+    }
+
+    list[0] = (2 + hastrend);
+    list[1] = varno;
+    list[2] = 0;
+    if (hastrend) {
+	list[3] = gettrend(pZ, pdinfo, 0);
+    }
+
+    KPSSmod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+    if (KPSSmod.errcode) {
+	return KPSSmod.errcode;
+    }
+
+    t1 = KPSSmod.t1;
+    t2 = KPSSmod.t2;
+    T = KPSSmod.nobs;
+
+    if (opt & OPT_V) {
+	printmodel(&KPSSmod, pdinfo, OPT_NONE, prn);
+    }
+  
+    autocov = malloc(order * sizeof *autocov);
+    if (autocov == NULL) {
+	return E_ALLOC;
+    }
+  
+    for (i=0; i<order; i++) {
+	autocov[i] = 0.0;
+    }
+
+    for (t=t1; t<=t2; t++) {
+	et = KPSSmod.uhat[t];
+	if (na(et)) {
+	    continue;
+	}
+	cumsum += et;
+	cumsum2 += cumsum * cumsum;
+	s2 += et * et;
+	for (i=0; i<order; i++) {
+	    if (t - i - 1 >= t1) {
+		autocov[i] += et * KPSSmod.uhat[t-i-1];
+	    }
+	}
+#ifdef KPSS_DEBUG
+	fprintf(stderr, "%d: %#12.4g %#12.4g %#12.4g %#12.4g \n", 
+		t, et, KPSSmod.uhat[t-1], s2, cumsum2);
+#endif
+    }
+
+    for (i=0; i<order; i++) {
+	double wt = 2.0 * (1.0 - ((double) (i + 1)) / (order + 1));
+
+	s2 += wt * autocov[i];
+    }
+
+
+    if (opt & OPT_V) {
+	pprintf(prn, "  %s: %g\n", _("Robust estimate of variance"), s2 / T);
+	pprintf(prn, "  %s: %g\n", _("Sum of squares of cumulated residuals"), 
+		cumsum2);
+    }
+  
+    pprintf(prn, "\n%s: %g \n\n", _("  KPSS test"), cumsum2 / (s2 * T));
+
+    pprintf(prn, "		    10%%\t   5%%\t 2.5%%\t   1%%\n");
+
+    if (hastrend) {
+	pprintf(prn, "%s: 0.119\t0.146\t0.176\t0.216\n\n", _("Critical values"));
+    } else {
+	pprintf(prn, "%s: 0.347\t0.463\t0.574\t0.739\n\n", _("Critical values"));
+    }
+
+    clear_model(&KPSSmod);
+
+    free(autocov);
+
+    return 0;
+}
+
 static int 
 has_time_trend (const int *varlist, double ***pZ, DATAINFO *pdinfo)
 {

@@ -878,6 +878,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     */
     if ((command->ci == STORE && !spacename) ||
 	command->ci == ADF ||
+	command->ci == KPSS ||
 	command->ci == ARCH ||
 	command->ci == COINT ||
 	command->ci == COINT2 ||
@@ -2066,6 +2067,15 @@ int simple_commands (CMD *cmd, const char *line,
 	if (err) 
 	    pputs(prn, _("Error adding first differences of variables.\n"));
 	else varlist(datainfo, prn);
+	break;
+
+    case KPSS:
+	if (!isdigit((unsigned char) *cmd->param)) {
+	    pputs(prn, _("kpss: lag order must be given first\n"));
+	    break;
+	}
+	order = atoi(cmd->param);
+	err = kpss_test(order, cmd->list[1], pZ, datainfo, cmd->opt, prn);
 	break;
 
     case LDIFF:

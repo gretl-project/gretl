@@ -2686,7 +2686,6 @@ static void plot_dummy_call (gpointer data, guint v, GtkWidget *widget)
 
 static void add_dummies_to_plot_menu (windata_t *vwin)
 {
-    int i, dums = 0;
     GtkItemFactoryEntry dumitem;
     MODEL *pmod = vwin->data;
     const gchar *mpath[] = {
@@ -2695,22 +2694,25 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     };
     gchar *radiopath = NULL;
     char tmp[16];
+    int i, done_branch = 0;
 
     dumitem.path = NULL;
     dumitem.accelerator = NULL; 
 
     /* put the dummy independent vars on the menu list */
-    for (i=2; i<pmod->list[0]; i++) {
+    for (i=2; i<=pmod->list[0]; i++) {
 
-	if (pmod->list[i] == 0) continue;
-	if (pmod->list[i] == LISTSEP) break;
+	if (pmod->list[i] == LISTSEP) {
+	    break;
+	}
 
-	if (!isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
+	if (pmod->list[i] == 0 ||
+	    !isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
 	    continue;
 	}
 
-	if (!dums) { /* add separator, branch and "none" */
-	    /* separator */
+	if (!done_branch) {
+	    /* add separator */
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
@@ -2718,20 +2720,21 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    g_free(dumitem.path);
 
-	    /* menu branch */
+	    /* add menu branch */
 	    dumitem.item_type = "<Branch>";
 	    dumitem.path = g_strdup(_(mpath[1]));
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    g_free(dumitem.path);
 
-	    /* "none" option */
+	    /* add "none" option */
 	    dumitem.callback = plot_dummy_call;
 	    dumitem.item_type = "<RadioItem>";
 	    dumitem.path = g_strdup_printf(_("%s/none"), mpath[1]);
 	    radiopath = g_strdup(dumitem.path);
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    g_free(dumitem.path);
-	    dums = 1;
+
+	    done_branch = 1;
 	} 
 
 	dumitem.callback_action = pmod->list[i]; 

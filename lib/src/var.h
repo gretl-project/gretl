@@ -45,9 +45,12 @@ int coint (int order, const int *list,
 	   double ***pZ, DATAINFO *pdinfo, 
 	   PRN *prn);
 
-int adf_test (int order, const int varno, 
+int adf_test (int order, int varno, 
 	      double ***pZ, DATAINFO *pdinfo, 
 	      gretlopt opt, PRN *prn);
+
+int kpss_test (int order, int varno, double ***pZ,
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn);
 
 int johansen_test (int order, const int *list, 
 		   double ***pZ, DATAINFO *pdinfo,

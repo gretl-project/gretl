@@ -66,6 +66,7 @@ enum gretl_cmd_codes {
     IF,
     IMPORT,
     INFO,
+    KPSS,
     LABEL,
     LABELS, 
     LAD,
@@ -155,6 +156,7 @@ enum gretl_cmd_codes {
                         c == FREQ || \
                         c == GRAPH || \
                         c == HAUSMAN || \
+                        c == KPSS || \
                         c == LEVERAGE || \
                         c == LMTEST || \
                         c == MEANTEST || \
