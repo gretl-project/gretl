@@ -402,8 +402,15 @@ static void make_ts_comment (const char *line, dataset *dset)
     case 4:
 	pdstr = "Quarterly";
 	break;
+    case 5:
+    case 7:
+	pdstr = "Daily";
+	break;
     case 12:
 	pdstr = "Monthly";
+	break;
+    case 24:
+	pdstr = "Hourly";
 	break;
     default:
 	break;
