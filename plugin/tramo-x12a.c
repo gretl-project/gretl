@@ -742,7 +742,7 @@ int write_tx_data (char *fname, int varnum,
 	if (opt == X12A) {
 	    sprintf(fname, "%s%c%s.out", workdir, SLASH, varname); 
 	} else {
-	    sprintf(fname, "%s%coutput%c%s.OUT", workdir, SLASH, SLASH, varname);
+	    sprintf(fname, "%s%coutput%c%s.out", workdir, SLASH, SLASH, varname);
 	} 
 
 	/* save vars locally if needed; graph if wanted */

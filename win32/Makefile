@@ -78,7 +78,7 @@ CHECKSRC = nistcheck.c
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
-	calculator.c fileselect.c guiprint.c boxplots.c \
+	calculator.c fileselect.c guiprint.c boxplots.c series_view.c \
 	selector.c settings.c helpfiles.c treeutils.c console.c 
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
 	webget.h guiprint.h selector.h settings.h helpfiles.h \
