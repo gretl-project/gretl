@@ -32,7 +32,7 @@ int read_reg_val (HKEY tree, char *keyname, char *keyval)
 
     if (RegOpenKeyEx(
                      tree,                        /* handle to open key */
-                     "gretl",                     /* subkey name */
+                     "Software\\gretl",           /* subkey name */
                      0,                           /* reserved */
                      KEY_READ,                    /* access mask */
                      &regkey                      /* key handle */
@@ -66,7 +66,7 @@ int write_reg_val (HKEY tree, char *keyname, char *keyval)
 
     if (RegCreateKeyEx(
                        tree,
-                       "gretl",
+                       "Software\\gretl",
                        0,
                        NULL, 
                        REG_OPTION_NON_VOLATILE,
