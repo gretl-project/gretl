@@ -1,0 +1,553 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="cmdref"><title>Command Reference</title>
+
+  <sect1 id="cmd-intro"><title>Introduction</title>
+    <para>
+      The commands defined below may be executed in the command-line
+      client program.  They may also be placed in a
+      <quote>script</quote> file for execution in the GUI, or entered
+      using the latter's <quote>console mode</quote>.  In most cases
+      the syntax given below also applies when you are presented with
+      a line to type in a dialog box in the GUI (but see also
+      <application>gretl</application>'s online help), except that you
+      should <emphasis>not</emphasis> type the initial command word
+      &mdash; it is implicit from the context. One other difference is
+      that some commands support option flags, but you cannot enter
+      these in GUI dialog boxes; generally there are menu items which
+      achieve the same effect.</para>
+
+    <para>The option flags shown below are in <quote>long
+	form</quote>, with a somewhat mnemonic term preceded by two
+      dashes.  There are also corresponding short forms: these are
+      shown in <xref linkend="tab-options"/>.
+    </para>
+
+    <para>
+      The following conventions are used below:
+    </para>
+
+    <itemizedlist>
+
+      <listitem><para>
+	  A <literal>typewriter font</literal> is used for material
+	  that you would type directly, and also for internal names of
+	  variables.
+	</para></listitem>
+
+      <listitem><para>Terms in <replaceable>italics</replaceable> are
+	  place-holders: you should substitute something specific,
+	  e.g. you might type <varname>income</varname> in place of
+	  the generic <replaceable>xvar</replaceable>.
+	</para></listitem>
+
+      <listitem><para><literal>The construction [</literal>
+	  <replaceable>arg</replaceable> <literal>]</literal> means
+	  that the argument <replaceable>arg</replaceable> is
+	  optional: you may supply it or not (but in any case don't
+	  type the brackets).
+	</para></listitem>
+
+      <listitem><para>The phrase <quote>estimation command</quote>
+	  means a command that generates estimates for a given model,
+	  for example <command>ols</command>, <command>ar</command> or
+	  <command>wls</command>.
+	</para></listitem>
+
+    </itemizedlist>
+
+    <para>
+      Section and Chapter references below are to Ramanathan (2002).
+    </para>
+
+  </sect1>
+
+  <sect1 id="cmd-cmd">
+    <title>gretl commands</title>
+
+  &cmdlist;
+  
+  </sect1>
+
+  <sect1 id="estimators"><title>Estimators and tests: summary</title>
+
+    <para><xref linkend="tab-estim"/> shows the estimators available
+      under the Model menu in <application>gretl</application>'s main
+      window.  The corresponding script command (if there is one
+      available) is shown in parentheses.  For details consult the
+      command's entry in <xref linkend="cmdref"/>.</para>
+
+    <table id="tab-estim" frame="none">
+      <title>Estimators</title>
+      <tgroup cols="2">
+	<thead>
+	  <row>
+	    <entry>Estimator</entry>
+	    <entry>Comment</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry>Ordinary Least Squares
+	      (<command>ols</command>)</entry>
+	    <entry>The workhorse estimator</entry>
+	  </row>
+	  <row>
+	    <entry>Weighted Least Squares
+	      (<command>wls</command>)</entry>
+	    <entry>Heteroskedasticity, exclusion of selected
+	      observations</entry>
+	  </row>
+	  <row>
+	    <entry>HCCM (<command>hccm</command>)</entry>
+	    <entry>Heteroskedasticity corrected covariance
+	      matrix</entry>
+	  </row>
+	  <row>
+	    <entry>Heteroskedasticity corrected
+	      (<command>hsk</command>)</entry>
+	    <entry>Weighted Least Squares based on predicted error
+	      variance</entry>
+	  </row>
+	  <row>
+	    <entry>Cochrane&ndash;Orcutt (<command>corc</command>)</entry>
+	    <entry>First-order autocorrelation</entry>
+	  </row>
+	  <row>
+	    <entry>Hildreth&ndash;Lu (<command>hilu</command>)</entry>
+	    <entry>First-order autocorrelation</entry>
+	  </row>
+	  <row>
+	    <entry>Autoregressive Estimation
+	      (<command>ar</command>)</entry>
+	    <entry>Higher-order autocorrelation
+	      (generalized Cochrane&ndash;Orcutt)</entry>
+	  </row>
+	  <row>
+	    <entry>Vector Autoregression
+	      (<command>var</command>)</entry>
+	    <entry>Systems of time-series equations</entry>
+	  </row>
+	  <row>
+	    <entry>Cointegration test
+	      (<command>coint</command>)</entry>
+	    <entry>Long-run relationships between series</entry>
+	  </row>
+	  <row>
+	    <entry>Two-Stage Least Squares
+	      (<command>tsls</command>)</entry>
+	    <entry>Simultaneous equations</entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinear Least Squares
+	      (<command>nls</command>)</entry>
+	    <entry>Nonlinear models</entry>
+	  </row>
+	  <row>
+	    <entry>Logit
+	      (<command>logit</command>)</entry>
+	    <entry>Binary dependent variable (logistic
+	      distribution)</entry>
+	  </row>
+	  <row>
+	    <entry>Probit
+	      (<command>probit</command>)</entry>
+	    <entry>Binary dependent variable (normal
+	      distribution)</entry>
+	  </row>
+	  <row>
+	    <entry>Least Absolute Deviation
+	      (<command>lad</command>)</entry>
+	    <entry>Alternative to Least Squares</entry>
+	  </row>
+	  <row>
+	    <entry>Rank Correlation
+	      (<command>spearman</command>)</entry>
+	    <entry>Correlation with ordinal data</entry>
+	  </row>
+	  <row>
+	    <entry>Pooled OLS (<command>pooled</command>)</entry>
+	    <entry>OLS estimation for pooled cross-section, time
+	      series data</entry>
+	  </row>
+	  <row>
+	    <entry>Multiple precision OLS (<command>mpols</command>)</entry>
+	    <entry>OLS estimation using multiple precision
+	      arithmetic</entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para role="bodge">&nbsp;</para>
+    <para role="bodge">&nbsp;</para>
+
+    <para><xref linkend="tab-tests"/> shows the tests that are available
+      under the Tests menu in a model window, after estimation.</para>
+
+    <table id="tab-tests" frame="none">
+      <title>Tests for models</title>
+      <tgroup cols="2">
+	<thead>
+	  <row>
+	    <entry>Test</entry>
+	    <entry>Corresponding command</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry>Omit variables (<emphasis>F</emphasis>-test if OLS)</entry>
+	    <entry><command>omit</command></entry>
+	  </row>
+	  <row>
+	    <entry>Add variables (<emphasis>F</emphasis>-test if OLS)</entry>
+	    <entry><command>add</command></entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinearity (squares)</entry>
+	    <entry><command>lmtest</command></entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinearity (logs)</entry>
+	    <entry><command>lmtest</command></entry>
+	  </row>
+	  <row>
+	    <entry>Nonlinearity (Ramsey's RESET)</entry>
+	    <entry><command>reset</command></entry>
+	  </row>
+	  <row>
+	    <entry>Heteroskedasticity (White's test)</entry>
+	    <entry><command>lmtest</command></entry>
+	  </row>
+	  <row>
+	    <entry>Influential observations</entry>
+	    <entry><command>leverage</command></entry>
+	  </row>
+	  <row>
+	    <entry>Autocorrelation up to the data frequency</entry>
+	    <entry><command>lmtest -o</command></entry>
+	  </row>
+	  <row>
+	    <entry>Chow (structural break)</entry>
+	    <entry><command>chow</command></entry>
+	  </row>
+	  <row>
+	    <entry>CUSUM (parameter stability)</entry>
+	    <entry><command>cusum</command></entry>
+	  </row>
+	  <row>
+	    <entry>ARCH (conditional heteroskedasticity)</entry>
+	    <entry><command>arch</command></entry>
+	  </row>
+	  <row>
+	    <entry>Normality of residual</entry>
+	    <entry><command>testuhat</command></entry>
+	  </row>
+	  <row>
+	    <entry>Panel diagnostics</entry>
+	    <entry><command>hausman</command></entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+    <para><xref linkend="tab-options"/> shows the correspondence
+      between the long-form option flags used in the command reference
+      above and the short versions.</para>
+
+    <table id="tab-options" frame="none">
+      <title>Long- and short-form options</title>
+      <tgroup cols="4">
+	<colspec colwidth="75pt"/>
+	<colspec colwidth="105pt"/>
+	<colspec colwidth="190pt"/>
+	<colspec colwidth="75pt"/>
+	<thead>
+	  <row>
+	    <entry>Command</entry>
+	    <entry>Option</entry>
+	    <entry>Effect</entry>
+	    <entry>Short form</entry>
+	  </row>
+	</thead>
+	<tbody>
+	  <row>
+	    <entry><command>arma</command></entry>
+	    <entry><literal>--x-12-arima</literal></entry>
+	    <entry>estimate with X-12-ARIMA</entry>
+	    <entry><literal>-x</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print iteration details</entry>
+	    <entry><literal>-v</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>coint2</command></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print details of VARs</entry>
+	    <entry><literal>-v</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>eqnprint, tabprint</command></entry>
+	    <entry><literal>--complete</literal></entry>
+	    <entry>complete TeX document</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>fcasterr</command></entry>
+	    <entry><literal>--plot</literal></entry>
+	    <entry>show graph</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>gnuplot</command></entry>
+	    <entry><literal>--with-lines</literal></entry>
+	    <entry>plot with lines</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--with-impulses</literal></entry>
+	    <entry>plot with impulses</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--suppress-fitted</literal></entry>
+	    <entry>don't show fitted line</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--dummy</literal></entry>
+	    <entry>factor separation</entry>
+	    <entry><literal>-z</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>import</command></entry>
+	    <entry><literal>--box1</literal></entry>
+	    <entry>import BOX1 data</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>leverage</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save values to dataset</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>lmtest</command></entry>
+	    <entry><literal>--logs</literal></entry>
+	    <entry>non-linearity (logs)</entry>
+	    <entry><literal>-l</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--squares</literal></entry>
+	    <entry>non-linearity (squares)</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--white</literal></entry>
+	    <entry>White's test (heteroskedasticity)</entry>
+	    <entry><literal>-w</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--autocorr</literal></entry>
+	    <entry>serial correlation</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>meantest</command></entry>
+	    <entry><literal>--unequal-vars</literal></entry>
+	    <entry>assume unequal variances</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>leverage</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save values to dataset</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>ols</command></entry>
+	    <entry><literal>--robust</literal></entry>
+	    <entry>robust standard errors</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--vcv</literal></entry>
+	    <entry>print covariance matrix</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--quiet</literal></entry>
+	    <entry>don't print results</entry>
+	    <entry><literal>-q</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>outfile</command></entry>
+	    <entry><literal>--write</literal></entry>
+	    <entry>open file for writing</entry>
+	    <entry><literal>-w</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--append</literal></entry>
+	    <entry>append to existing file</entry>
+	    <entry><literal>-a</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--close</literal></entry>
+	    <entry>close file</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>panel</command></entry>
+	    <entry><literal>--time-series</literal></entry>
+	    <entry>stacked time series</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--cross-section</literal></entry>
+	    <entry>stacked cross-sections</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>pca</command></entry>
+	    <entry><literal>--save</literal></entry>
+	    <entry>save useful eigenvectors</entry>
+	    <entry><literal>-s</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--save-all</literal></entry>
+	    <entry>save all eigenvectors</entry>
+	    <entry><literal>-a</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>pergm</command></entry>
+	    <entry><literal>--bartlett</literal></entry>
+	    <entry>use Bartlett lag window</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>plot</command></entry>
+	    <entry><literal>--one-scale</literal></entry>
+	    <entry>don't scale variables</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>print</command></entry>
+	    <entry><literal>--byobs</literal></entry>
+	    <entry>variables in columns</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--ten</literal></entry>
+	    <entry>use 10 significant figures</entry>
+	    <entry><literal>-t</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>smpl</command></entry>
+	    <entry><literal>--dummy</literal></entry>
+	    <entry>restrict using dummy var</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--no-missing</literal></entry>
+	    <entry>only complete observations</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--restrict</literal></entry>
+	    <entry>use boolean criterion</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>spearman</command></entry>
+	    <entry><literal>--verbose</literal></entry>
+	    <entry>print original, ranked data</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>square</command></entry>
+	    <entry><literal>--cross</literal></entry>
+	    <entry>generate cross-products</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>store</command></entry>
+	    <entry><literal>--cross</literal></entry>
+	    <entry>generate cross-products</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>store</command></entry>
+	    <entry><literal>--csv</literal></entry>
+	    <entry>comma-separated values</entry>
+	    <entry><literal>-c</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--traditional</literal></entry>
+	    <entry>traditional ESL format</entry>
+	    <entry><literal>-t</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gnu-octave</literal></entry>
+	    <entry>GNU Octave format</entry>
+	    <entry><literal>-m</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gnu-R</literal></entry>
+	    <entry>GNU R format</entry>
+	    <entry><literal>-r</literal></entry>
+	  </row>
+	  <row>
+	    <entry></entry>
+	    <entry><literal>--gzipped</literal></entry>
+	    <entry>gzip compression</entry>
+	    <entry><literal>-z</literal></entry>
+	  </row>
+	  <row>
+	    <entry><command>var</command></entry>
+	    <entry><literal>--quiet</literal></entry>
+	    <entry>don't print all results</entry>
+	    <entry><literal>-q</literal></entry>
+	  </row>
+	  <row>
+	    <entry>Model commands</entry>
+	    <entry><literal>--vcv</literal></entry>
+	    <entry>print covariance matrix</entry>
+	    <entry><literal>-o</literal></entry>
+	  </row>
+	</tbody>
+      </tgroup>
+    </table>
+
+  </sect1>	
+
+  </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../cmdbook.xml" "book" "chapter")
+End:
+-->
+

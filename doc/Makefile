@@ -93,7 +93,7 @@ clean:
 	rm -rf manual.html manual.chm
 
 texclean:
-	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex
+	rm -f *.aux *.log *.out *.pdf manual.tex manual-a4.tex cmdbook.tex
 
 install: 
 	cp manual.pdf manual-a4.pdf $(WEBDIR)

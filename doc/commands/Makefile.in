@@ -16,6 +16,10 @@ VPATH = $(topsrc)/doc/commands
 
 LIBTOOL = ../../libtool
 
+CMDSDIR = $(topsrc)/doc/commands
+CHAPDIR = $(topsrc)/doc/chapters
+SHAREDIR = $(topsrc)/share
+
 progs: xsltrans skeleton reflow validate
 
 xsltrans: xsltrans.c 
@@ -49,27 +53,33 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 
 # Generate docbook XML for the command-reference section of the 
 # full manual, cmdlist.xml
-docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
-	./xsltrans --docbook $(topsrc)/doc/commands/gretl_commands.xml && \
-	cp cmdlist.xml $(topsrc)/doc/chapters/cmdlist.xml && \
+docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretlman.xsl
+	./xsltrans --docbook $(CMDSDIR)/gretl_commands.xml && \
+	cp cmdlist.xml $(CHAPDIR)/cmdlist.xml && \
 	rm cmdlist.xml
 
+# Generate docbook XML for a standalone command-reference
+docbook-standalone: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(CMDSDIR)/gretlman.xsl
+	./xsltrans --docbook-standalone $(CMDSDIR)/gretl_commands_it.xml && \
+	cp cmdlist_standalone.xml $(CHAPDIR)/cmdlist_standalone.xml && \
+	rm cmdlist_standalone.xml
+
 # Generate "online" help file, gretlcli.hlp and gretl.hlp
-hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl
-	./xsltrans --hlp $(topsrc)/doc/commands/gretl_commands.xml && \
-	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp
-	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp
-	./xsltrans --hlp $(topsrc)/doc/commands/gretl_commands_it.xml && \
-	./reflow < cmdlist.txt > $(topsrc)/share/gretlcli.hlp.it
-	./reflow < guilist.txt > $(topsrc)/share/gretl.hlp.it
+hlp: xsltrans reflow $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretltxt.xsl
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp
+	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.it
+	./reflow < guilist.txt > $(SHAREDIR)/share/gretl.hlp.it
 
 # Validate the commands "master" XML files against libgretl
 check: validate 
-	./validate $(topsrc)/doc/commands/gretl_commands.xml
-	./validate $(topsrc)/doc/commands/gretl_commands_it.xml
+	./validate $(CMDSDIR)/gretl_commands.xml
+	./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:
-	 rm -f skeleton.xml cmdlist.* guilist.txt
+	 rm -f skeleton.xml cmdlist.* cmdlist_standalone.* guilist.txt
 
 clean: docclean
 	rm -f xsltrans skeleton reflow validate *.o
