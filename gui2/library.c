@@ -26,6 +26,7 @@
 #include "gretl_restrict.h"
 #include "gretl_func.h"
 #include "modelspec.h"
+#include "menustate.h"
 
 #ifdef G_OS_WIN32 
 # include <io.h>

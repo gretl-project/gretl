@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "filelists.h"
 #include "webget.h"
+#include "toolbar.h"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -53,11 +54,7 @@ extern const char *version_string;
 char rcfile[MAXLEN];
 #endif
 
-extern GtkWidget *toolbar_box;
-
 extern int want_toolbar;
-extern char calculator[MAXSTR];
-extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
 
@@ -189,10 +186,6 @@ RCVARS rc_vars[] = {
 #endif
     { "calculator", N_("Calculator"), NULL, calculator, 
       USERSET, MAXSTR, 3, NULL },
-#ifdef SELECT_EDITOR
-    { "editor", N_("Editor"), NULL, editor, 
-      USERSET, MAXSTR, 3, NULL },
-#endif
 #ifdef HAVE_X12A
     { "x12a", N_("path to x12arima"), NULL, paths.x12a, 
       ROOTSET, MAXSTR, 3, NULL },
@@ -918,7 +911,6 @@ static void set_gp_colors (void)
 static void apply_changes (GtkWidget *widget, gpointer data) 
 {
     const gchar *tempstr;
-    extern void show_toolbar (void);
     int i = 0;
 
     for (i=0; rc_vars[i].key != NULL; i++) {
@@ -939,12 +931,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     
     write_rc();
 
-    if (toolbar_box == NULL && want_toolbar)
-	show_toolbar();
-    else if (toolbar_box != NULL && !want_toolbar) {
-	gtk_widget_destroy(toolbar_box);
-	toolbar_box = NULL;
-    }
+    show_or_hide_toolbar(want_toolbar);
 
     set_use_qr(useqr);
 

@@ -24,6 +24,7 @@ for f in \
   gpt_control.c gpt_control.h \
   gui_utils.c gui_utils.h guiprint.h \
   helpfiles.c helpfiles.h \
+  menustate.c menustate.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   series_view.c series_view.h \
@@ -32,6 +33,7 @@ for f in \
   settings.c settings.h \
   ssheet.h \
   textutil.c textutil.h \
+  toolbar.c toolbar.h \
   webget.c webget.h \
   library.c library.h ; do
     rm -f $f

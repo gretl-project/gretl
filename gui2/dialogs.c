@@ -24,6 +24,7 @@
 #include "obsbutton.h"
 #include "textbuf.h"
 #include "textutil.h"
+#include "menustate.h"
 
 GtkWidget *active_edit_id;
 GtkWidget *active_edit_name;

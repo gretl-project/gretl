@@ -99,6 +99,7 @@ SRCS = about.c \
 	gui_utils.c \
 	helpfiles.c \
 	library.c \
+	menustate.c \
 	model_table.c \
 	obsbutton.c \
 	objectsave.c \
@@ -109,6 +110,7 @@ SRCS = about.c \
 	ssheet.c \
 	textbuf.c \
 	textutil.c \
+	toolbar.c \
 	webget.c 
 
 OBJS = $(SRCS:.c=.o)

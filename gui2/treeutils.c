@@ -66,23 +66,21 @@ static void update_dialogs_from_varclick (int active_var)
 	const gchar *edttext;
 	gchar addvar[9];
 
-	edttext = gtk_entry_get_text (GTK_ENTRY(active_edit_id));
+	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_id));
 	if (*edttext != '\0') {
 	    sprintf(addvar, " %d", active_var);
 	} else {
 	    sprintf(addvar, "%d", active_var);
 	}
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_id), addvar);
-    }
-    else if (active_edit_name != NULL) {
+    } else if (active_edit_name != NULL) {
 	const gchar *edttext;
 
-	edttext = gtk_entry_get_text (GTK_ENTRY(active_edit_name));
+	edttext = gtk_entry_get_text(GTK_ENTRY(active_edit_name));
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), 
 				 datainfo->varname[active_var]);
 	my_gtk_entry_append_text(GTK_ENTRY(active_edit_name), " ");
-    }
-    else if (active_edit_text != NULL) {
+    } else if (active_edit_text != NULL) {
 	GtkTextBuffer *tbuf;
 
 	tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(active_edit_text));

@@ -179,6 +179,7 @@ GUISRC = about.c \
 	gui_utils.c \
 	helpfiles.c \
 	library.c \
+	menustate.c \
 	model_table.c \
 	objectsave.c \
 	obsbutton.c \
@@ -189,6 +190,7 @@ GUISRC = about.c \
 	ssheet.c \
 	textbuf.c \
 	textutil.c \
+	toolbar.c \
 	treeutils.c \
 	webget.c
 

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "console.h"
+#include "menustate.h"
 
 static GtkWidget *console_view;
 static PRN *console_prn;

@@ -26,6 +26,7 @@
 #include "database.h"
 #include "filelists.h"
 #include "webget.h"
+#include "menustate.h"
 
 #if !GLIB_CHECK_VERSION(2,0,0)
 # define OLD_GTK

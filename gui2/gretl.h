@@ -97,6 +97,7 @@ extern int updater;
 #ifdef G_OS_WIN32
 extern int wimp;
 #endif
+extern char calculator[MAXSTR];
 extern char viewdvi[MAXSTR];
 extern char viewps[MAXSTR];
 #if defined(HAVE_AUDIO) && !defined(G_OS_WIN32)
@@ -119,35 +120,11 @@ extern PangoFontDescription *fixed_font;
 #ifndef WIN32
 int gretl_fork (const char *prog, const char *arg);
 #endif
- 
-void main_menubar_state (gboolean s);
 
-void time_series_menu_state (gboolean s);
-
-void panel_menu_state (gboolean s);
-
-void ts_or_panel_menu_state (gboolean s);
-
-void edit_info_state (gboolean s);
-
-void add_remove_markers_state (gboolean s);
-
+int mdata_selection_count (void);
 void populate_varlist (void);
-
 void clear_varlist (GtkWidget *widget);
-
-void clear_sample_label (void);
-
-void set_sample_label (DATAINFO *pdinfo);
-
-void restore_sample_state (gboolean s); 
-
 int restore_sample (gretlopt opt);
-
-void refresh_data (void);
-
-gint main_popup (GtkWidget *widget, GdkEventButton *event, 
-		 gpointer data);
 
 /* functions defined in files other than gretl.c */
 
@@ -156,7 +133,6 @@ void file_selector (const char *msg, int action, gpointer data);
 void gui_get_series (gpointer data, guint bci_code, GtkWidget *widget);
 void import_db_series (windata_t *dbwin);
 void display_files (gpointer data, guint code, GtkWidget *widget);
-void gpt_save_dialog (void);
 void stats_calculator (gpointer data, guint code, GtkWidget *widget);
 
 #ifndef WIN32

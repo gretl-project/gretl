@@ -26,6 +26,8 @@
 
 #include "fcp.h"
 
+#undef VPARM_DEBUG
+
 #define VPARM_MAX 6    /* max number of variance parameters */
 
 double vparm_init[VPARM_MAX];
@@ -355,7 +357,7 @@ int do_fcp (const int *list, double **Z, double scale,
     /* initialize variance parameters */
     amax[0] = vparm_init[0];
     for (i=0; i<p+q; i++) {
-	amax[3+i] = vparm_init[i+1];
+	amax[i+3] = vparm_init[i+1];
     }
 
     err = garch_estimate(t1 + pad, t2 + pad, bign, 
@@ -465,9 +467,11 @@ garchpar_from_armapar (const double *armapar, int q, int p)
     int mo = q;
     int i;
 
+#ifdef VPARM_DEBUG
     for (i=0; i<1+ao+mo; i++) {
 	fprintf(stderr, "armapar[%d] = %#12.6g\n", i, armapar[i]);
     }
+#endif
 
     for (i=1; i<=p; i++) {
 	x = 0.0;
@@ -487,7 +491,9 @@ garchpar_from_armapar (const double *armapar, int q, int p)
 	sum_ab += vparm_init[p+i];
     }
 
+#ifdef VPARM_DEBUG
     fprintf(stderr, "sum_ab = %#12.6g\n", sum_ab);
+#endif
 
     if (sum_ab > 0.999999) {
 	for (i=1; i<=p+q; i++) {
@@ -496,11 +502,7 @@ garchpar_from_armapar (const double *armapar, int q, int p)
 	sum_ab = 0.999999;
     }
 
-#if 0
-    vparm_init[0] = armapar[0] / (1.0 - sum_ab);
-#else
     vparm_init[0] = armapar[0];
-#endif
 }
 
 static int 
@@ -542,7 +544,6 @@ garch_init_by_arma (const MODEL *pmod, const int *garchlist,
 	int i;
 
 	model_count_minus();
-
 	garchpar_from_armapar(amod.coeff, q, p);
 
 	for (i=0; i<q+p+1; i++) {
@@ -700,7 +701,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (opt & OPT_A) {
-	/* try initializing params via ARMA */
+	/* "--arma-init": try initializing params via ARMA */
 	err = garch_init_by_arma(&model, list, scale, 
 				 pZ, pdinfo);
     }

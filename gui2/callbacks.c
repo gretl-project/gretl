@@ -153,7 +153,7 @@ gboolean listbox_drag (GtkWidget *listbox, GdkEventMotion *event,
     return FALSE;
 }
 
-#else /* now an old gtk function */
+#else /* now comes an old gtk function */
 
 void selectrow (GtkCList *clist, gint row, gint column, 
 	        GdkEventButton *event, gpointer data) 
@@ -176,20 +176,12 @@ void selectrow (GtkCList *clist, gint row, gint column,
 	    sprintf(addvar, "%d", win->active_var);
 	}
 	gtk_entry_append_text(GTK_ENTRY (active_edit_id), addvar);
-    }
-    else if (active_edit_name != NULL) {
+    } else if (active_edit_name != NULL) {
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_name));
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), 
 			      datainfo->varname[win->active_var]);
 	gtk_entry_append_text(GTK_ENTRY (active_edit_name), " ");
     }
-# if 0
-    else if (active_edit_text != NULL) {
-	gtk_text_insert (GTK_TEXT (active_edit_text), fixed_font, 
-			 NULL, NULL, datainfo->varname[win->active_var],
-			 strlen(datainfo->varname[win->active_var]));
-    }
-# endif
 
     /* response to double-click */
     if (event != NULL && event->type == GDK_2BUTTON_PRESS 
