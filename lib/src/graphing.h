@@ -124,6 +124,8 @@ int graph (const LIST list,
 
 const char *get_gretl_png_term_line (const PATHS *ppaths, int plottype);
 
+const char *get_timevar_name (DATAINFO *pdinfo);
+
 int gnuplot_init (PATHS *ppaths, int plottype, FILE **fpp);
 
 int gnuplot_display (const PATHS *ppaths);

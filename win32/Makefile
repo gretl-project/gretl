@@ -73,6 +73,7 @@ PLUGINSRC = \
 	workbook.c \
 	logistic.c \
 	tobit.c \
+	fcp.c \
 	garch.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
@@ -302,7 +303,7 @@ plugins/tobit.dll: tobit.o dllinit.o
 
 plugins/garch.dll: garch.o fcp.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) -lf2c
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

@@ -737,14 +737,19 @@ int set_obs (char *line, DATAINFO *pdinfo, unsigned long opt)
 	p++;
     }
 
-    /* special case: dated daily data */
-    if ((pd == 5 || pd == 7) && strstr(stobs, "/")) {
-	ed0 = get_epoch_day(stobs);
-	if (ed0 < 0) {
-	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
-	    return 1;
+    /* special case: daily data (dated or undated) */
+    if ((pd == 5 || pd == 7) && (strstr(stobs, "/") || !strcmp(stobs, "1"))) {
+	if (strcmp(stobs, "1")) {
+	    /* dated */
+	    ed0 = get_epoch_day(stobs);
+	    if (ed0 < 0) {
+		sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
+		return 1;
+	    }
+	    else pdinfo->sd0 = (double) ed0;
+	} else {
+	    pdinfo->sd0 = 1.0;
 	}
-	else pdinfo->sd0 = (double) ed0;
     } else {
 	/* is stobs acceptable? */
 	len = strlen(stobs);

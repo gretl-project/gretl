@@ -37,6 +37,8 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget);
 
 void text_undo (windata_t *vwin, guint u, GtkWidget *widget);
 
+void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn);
+
 void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
 			      int role);
 

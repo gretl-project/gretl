@@ -868,6 +868,11 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	} else {
 	    return daily_obs_number(date, pdinfo);
 	}
+    } else if (dataset_is_daily(pdinfo)) {
+	/* undated daily data */
+	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
+	    return i - 1;
+	}
     }
 
     if (check_date(date)) {
@@ -941,6 +946,10 @@ static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
 	    strcpy(tmp, datestr);
 	    strcpy(datestr, tmp + 2);
 	}
+	return datestr;
+    } else if (dataset_is_daily(pdinfo)) {
+	/* undated daily data */
+	sprintf(datestr, "%d", t + 1);
 	return datestr;
     }
 
@@ -1756,7 +1765,10 @@ int gretl_get_data (double ***pZ, DATAINFO **ppdinfo, char *datfile, PATHS *ppat
 		found = 1;
 	    }
 	}
-	if (!found) return E_FOPEN;
+	if (!found) {
+	    sprintf(gretl_errmsg, _("Couldn't open file %s"),  datfile);
+	    return E_FOPEN;
+	}
 	else strcpy(datfile, tryfile);
     }
 
@@ -4052,10 +4064,14 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
 	colon_to_point(obstr);
 	
 	if (dataset_is_daily(tmpdinfo)) {
-	    long ed = get_epoch_day(tmp);
+	    if (!strcmp(tmp, "1")) { /* undated */
+		tmpdinfo->sd0 = 1.0;
+	    } else {
+		long ed = get_epoch_day(tmp);
 
-	    if (ed < 0) err = 1;
-	    else tmpdinfo->sd0 = ed;
+		if (ed < 0) err = 1;
+		else tmpdinfo->sd0 = ed;
+	    }
 	} else {
 	    double x;
 
@@ -4077,7 +4093,7 @@ int get_xmldata (double ***pZ, DATAINFO **ppdinfo, char *fname,
     *tmpdinfo->endobs = '\0';
     tmp = xmlGetProp(cur, (UTF) "endobs");
     if (tmp) {
-	if (dataset_is_daily(tmpdinfo)) {
+	if (dataset_is_daily(tmpdinfo) && tmpdinfo->sd0 > 1.0) {
 	    long ed = get_epoch_day(tmp);
 
 	    if (ed < 0) err = 1;

@@ -13,6 +13,9 @@ ols LHUR const d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
 LHUR_1 LHUR_2 LHUR_3 LHUR_4
 # Test for Granger causality of unemployment by inflation
 omit d_infl_1 d_infl_2 d_infl_3 d_infl_4
+# GARCH model
+garch 1 1 ; d_infl const d_infl_1 d_infl_2 d_infl_3 d_infl_4 \
+ LHUR_1 LHUR_2 LHUR_3 LHUR_4 --robust
 
 
 

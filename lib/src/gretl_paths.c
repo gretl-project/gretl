@@ -103,6 +103,7 @@ static int get_subdir (const char *topdir, int first, char *fname)
 	    } else return 0;
 	}
     }
+
     return 1;
 }
 
@@ -126,8 +127,7 @@ static char *search_dir (char *filename, const char *topdir,
 	    fclose(test);
 	    return filename;
 	}
-	if (!recurse) return NULL;
-	if (get_subdir(topdir, 1, trypath) > 0) {
+	if (recurse && get_subdir(topdir, 1, trypath) > 0) {
 	    while ((got = get_subdir(topdir, 0, trypath)) >= 0) {
 		strcpy(filename, origfile);
 		if (got && path_append(filename, trypath) == 0) {
@@ -143,6 +143,7 @@ static char *search_dir (char *filename, const char *topdir,
 	    }
 	}
     }
+
     return NULL;
 }
 
@@ -195,8 +196,9 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 	return fname;
     } else {  
 	/* not able to open file as given */
-	if (fname[0] == '.' || fname[0] == SLASH)
+	if (fname[0] == '.' || fname[0] == SLASH) {
 	    return NULL;
+	}
     }
 
     /* try looking where script was found */
@@ -207,21 +209,25 @@ char *addpath (char *fname, PATHS *ppaths, int script)
 
     fname = tmp;
     strcpy(fname, orig);
+
     if (!script) {
-	/* if it's a data file we want, try system data dir */
-	if ((fname = search_dir(fname, ppaths->datadir, 1))) 
+	/* if it's a data file, try system data dir (and recurse) */
+	if ((fname = search_dir(fname, ppaths->datadir, 1))) { 
 	    return fname;
+	}
     } else {
-	/* for a script, try system script dir */
-	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) 
+	/* for a script, try system script dir (and recurse) */
+	if ((fname = search_dir(fname, ppaths->scriptdir, 1))) { 
 	    return fname;
+	}
     }
 
-    /* try looking in user's dir */
+    /* or try looking in user's dir (and recurse) */
     fname = tmp;
     strcpy(fname, orig);
-    if ((fname = search_dir(fname, ppaths->userdir, 1))) 
+    if ((fname = search_dir(fname, ppaths->userdir, 1))) { 
 	return fname;
+    }
 
     fname = tmp;
     strcpy(fname, orig);

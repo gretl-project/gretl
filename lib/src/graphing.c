@@ -195,27 +195,22 @@ static void prntdate (int nt, int n,
 
 /* ........................................................... */
 
-static void get_timevar (DATAINFO *pdinfo, char *timevar)
+const char *get_timevar_name (DATAINFO *pdinfo)
 {
     if (!dataset_is_time_series(pdinfo)) {
-	strcpy(timevar, "index");
-	return;
-    }
-
-    switch (pdinfo->pd) {
-    case 1: 
-	strcpy(timevar, "annual"); break;
-    case 4: 
-	strcpy(timevar, "qtrs"); break;
-    case 12: 
-	strcpy(timevar, "months"); break;
-    case 24: 
-	strcpy(timevar, "hrs"); break;
-    case 5:
-    case 7:
-	strcpy(timevar, "decdate"); break;
-    default:
-	break;
+	return "index";
+    } else if (pdinfo->pd == 1) {
+	return "annual";
+    } else if (pdinfo->pd == 4) {
+	return "qtrs";
+    } else if (pdinfo->pd == 12) {
+	return "months";
+    } else if (pdinfo->pd == 24) {
+	return "hrs";
+    } else if (dated_daily_data(pdinfo)) {
+	return "decdate";
+    } else {
+	return "time";
     }
 }
 
@@ -951,9 +946,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     if (!strcmp(pdinfo->varname[list[lo]], "time")) {
 	int pv;
 
-	get_timevar(pdinfo, s2);
-	pv = plotvar(pZ, pdinfo, s2);
-
+	pv = plotvar(pZ, pdinfo, get_timevar_name(pdinfo));
 	if (pv > 0) {
 	    list[lo] = pv;
 	} else {

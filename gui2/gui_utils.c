@@ -1663,6 +1663,30 @@ static void viewer_box_config (windata_t *vwin)
 
 /* ........................................................... */
 
+static void view_buffer_insert_text (windata_t *vwin, PRN *prn)
+{
+#ifndef OLD_GTK
+    GtkTextBuffer *tbuf;
+
+    tbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    if (vwin->role == SCRIPT_OUT) {
+	text_buffer_insert_colorized_buffer(tbuf, prn);
+    } else {
+	gtk_text_buffer_set_text(tbuf, prn->buf, -1);
+    }
+#else
+    if (vwin->role == SCRIPT_OUT) {
+	text_buffer_insert_colorized_buffer(vwin->w, prn);
+    } else {
+	gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
+			NULL, NULL, prn->buf, 
+			strlen(prn->buf));
+    }
+#endif
+}
+
+/* ........................................................... */
+
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
 			gpointer data) 
@@ -1673,7 +1697,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 #endif
     windata_t *vwin;
 
-    vwin = common_viewer_new(role, title, data, 1);
+    vwin = common_viewer_new(role, 
+			     (title != NULL)? title : make_viewer_title(role, NULL), 
+			     data, 
+			     1);
     if (vwin == NULL) return NULL;
 
 #ifdef OLD_GTK
@@ -1730,13 +1757,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_widget_show(close);
 
     /* insert and then free the text buffer */
-#ifndef OLD_GTK
-    gtk_text_buffer_set_text(tbuf, prn->buf, -1);
-#else
-    gtk_text_insert(GTK_TEXT(vwin->w), fixed_font, 
-		    NULL, NULL, prn->buf, 
-		    strlen(prn->buf));
-#endif
+    view_buffer_insert_text(vwin, prn);
     gretl_print_destroy(prn);
 
 #ifndef OLD_GTK    
@@ -2240,10 +2261,12 @@ static void auto_save_script (windata_t *vwin)
     FILE *fp;
     char msg[MAXLEN];
     gchar *savestuff;
+    int unsaved = 0;
 
     if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	file_save(vwin, SAVE_SCRIPT, NULL);
 	strcpy(vwin->fname, scriptfile);
+	unsaved = 1;
     }
 
     if ((fp = fopen(vwin->fname, "w")) == NULL) {
@@ -2261,7 +2284,10 @@ static void auto_save_script (windata_t *vwin)
     g_free(savestuff); 
     fclose(fp);
 
-    infobox(_("script saved"));
+    if (!unsaved) {
+	infobox(_("script saved"));
+    }
+
     MARK_CONTENT_SAVED(vwin);
 }
 

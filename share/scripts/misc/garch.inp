@@ -1,0 +1,4 @@
+# Bollerslev and Ghysels GARCH example
+open b-g.dat
+garch 1 1 ; Y --vcv
+

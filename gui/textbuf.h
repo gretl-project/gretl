@@ -34,6 +34,8 @@ void create_text (windata_t *vwin, int hsize, int vsize,
 
 void text_table_setup (windata_t *vwin);
 
+void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn);
+
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role);
 
 #endif /* TEXTBUF_H */

@@ -62,7 +62,6 @@ int gui_exec_line (char *line,
 /* private functions */
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
 static gint stack_model (int gui);
-static char *bufgets (char *s, int size, const char *buf);
 #ifndef G_OS_WIN32
 static int get_terminal (char *s);
 #endif
@@ -3132,15 +3131,21 @@ void add_time (gpointer data, guint index, GtkWidget *widget)
     int pv;
 
     clear(line, MAXLEN);
-    if (index) sprintf(line, "genr index");
-    else sprintf(line, "genr time");
+    if (index) {
+	sprintf(line, "genr index");
+    } else {
+	sprintf(line, "genr time");
+    }
+
     if (verify_and_record_command(line)) return;
 
     pv = plotvar(&Z, datainfo, (index)? "index" : "time");
-    if (pv < 0) 
+    if (pv < 0) {
 	errbox((index)? _("Error generating index variable") : 
 	       _("Error generating time trend"));
-    else populate_varlist();
+    } else {
+	populate_varlist();
+    }
 }
 
 /* ......................................................... */
@@ -3401,7 +3406,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else {    /* plot against obs index or time */
 	int pv;
 
-	pv = plotvar(gZ, ginfo, (ts)? "time" : "index");
+	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
 	    dataset_drop_vars(1, gZ, ginfo);
@@ -3482,7 +3487,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	int ts = dataset_is_time_series(ginfo);
 	int pv;
 
-	pv = plotvar(gZ, ginfo, (ts)? "time" : "index");
+	pv = plotvar(gZ, ginfo, get_timevar_name(ginfo));
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
 	    dataset_drop_vars(1, gZ, ginfo);
@@ -4051,18 +4056,25 @@ void display_var (void)
 
 /* ........................................................... */
 
+#define PGRAB
+#undef SCRIPT_TO_FILE
+
 void do_run_script (gpointer data, guint code, GtkWidget *w)
 {
     PRN *prn;
-    char *runfile = NULL, fname[MAXLEN];
+    char *runfile = NULL;
+#ifdef SCRIPT_TO_FILE
+    char fname[MAXLEN];
+#endif
     int err;
 
-#if 0
-    fprintf(stderr, "do_run_script(): data=%p, code=%d, w=%p\n",
-	    (void *) data, code, (void *) w);
-#endif
-
+#ifdef SCRIPT_TO_FILE
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
+#else
+    if (bufopen(&prn)) {
+	return ;
+    }
+#endif
 
     if (code == SCRIPT_EXEC) {
 	runfile = scriptfile;
@@ -4074,7 +4086,9 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (data != NULL) { 
 	/* get commands from file view buffer */
+#ifdef PGRAB
 	GdkCursor *plswait;
+#endif
 	windata_t *mydata = (windata_t *) data;
 	gchar *buf;
 
@@ -4091,32 +4105,40 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	    return;
 	}
 
-	plswait = gdk_cursor_new(GDK_WATCH);
 #ifdef PGRAB
+	plswait = gdk_cursor_new(GDK_WATCH);
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK | GDK_BUTTON_PRESS_MASK |
 			 GDK_BUTTON_RELEASE_MASK,
 			 NULL, plswait,
 			 GDK_CURRENT_TIME); 
-#endif
 	gdk_cursor_destroy(plswait);
+#endif
 
 	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
 
+#ifdef PGRAB
 	gdk_pointer_ungrab(GDK_CURRENT_TIME);
+#endif
     } else {
 	/* get commands from file */
 	err = execute_script(runfile, NULL, prn, code);
     }
 
+#ifdef SCRIPT_TO_FILE
     gretl_print_destroy(prn);
+#endif
 
     if (err == -1) return;
 
     refresh_data();
 
+#ifdef SCRIPT_TO_FILE
     view_file(fname, 1, 1, 78, 450, SCRIPT_OUT);
+#else
+    view_buffer(prn, 78, 450, NULL, SCRIPT_OUT, NULL);
+#endif
 
     /* re-establish command echo */
     echo_off = 0;
@@ -4591,7 +4613,7 @@ void do_save_tex (char *fname, int code, MODEL *pmod)
 
 /* ........................................................... */
 
-static char *bufgets (char *s, int size, const char *buf)
+char *bufgets (char *s, int size, const char *buf)
 {
     int i;
     static const char *p;
@@ -4620,8 +4642,10 @@ static char *bufgets (char *s, int size, const char *buf)
 	    break;
 	}
     }
+
     /* advance the buffer pointer */
     p += i + (p[i] != 0);
+
     return s;
 }
 

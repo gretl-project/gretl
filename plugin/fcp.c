@@ -937,7 +937,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 #endif
     }
 
-    /* Begin computation of dhtdp wrt the parameters alfa and beta; we
+    /* Begin computation of dhtdp wrt the variance parameters; we
        start computing derivatives of starting values; for ht starting
        values are obtained from the unconditional variance of the
        residuals.
@@ -975,10 +975,10 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* Build matrix dhtdp, block for coefficients (eq. 13). We use 0
-       as starting value (time 0, -1, etc.) for the derivatives of ht
-       wrt the coefficients; we also use 0 as starting values for the
-       residuals.
+    /* Build matrix dhtdp, block for regression coefficients
+       (eq. 13). We use 0 as starting value (time 0, -1, etc.) for the
+       derivatives of ht wrt the coefficients; we also use 0 as
+       starting values for the residuals.
     */
 
     /* building blocks for pre-sample terms */
@@ -1049,7 +1049,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
 
 	/* 
-	   Second part, relative to alfa and beta (eq. 6, p. 401) 
+	   Second part, relative to variance parameters (eq. 6, p. 401) 
 	*/
 	for (i = 0; i < nvparm; ++i) {
 	    int nci = nc + i;
@@ -1413,7 +1413,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(2) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(1) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -1438,7 +1438,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(3) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(2) = %.9g\n", i, param[i]);
     }
 #endif    
 
@@ -1461,7 +1461,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(4) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(3) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -1497,7 +1497,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(5) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(4) = %.9g\n", i, param[i]);
     }
 #endif 
 
@@ -1524,7 +1524,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(6) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(5) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1550,7 +1550,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(7) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(6) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1655,7 +1655,7 @@ garch_info_matrix (int t1, int t2,
 
 #ifdef FDEBUG
     for (i=0; i<nparam; i++) {
-	fprintf(stderr, "param[%d] in matinf(8) = %.9g\n", i, param[i]);
+	fprintf(stderr, "param[%d] in matinf(7) = %.9g\n", i, param[i]);
     }
 #endif
 
@@ -1749,9 +1749,7 @@ garch_full_hessian (int t1, int t2,
 	return 1;
     } 
 
-    /* Unsure about 3rd dimension of dhdpdp.  I think it must 
-       be: max(p,q) + 1 
-    */
+    /* 3rd dimension of dhdpdp is max(p,q) + 1 */
     H = allocate_dhdpdp(nparam, p, q); 
     if (H == NULL) {
 	free(gg);
@@ -1777,7 +1775,7 @@ garch_full_hessian (int t1, int t2,
 	fprintf(stderr, "matrix inversion failed\n");
     }
 
-    /* starting iterations here */
+    /* Start iteration here */
 
     /* calculate the step for the new coefficients */
     s_2 = 0.0;

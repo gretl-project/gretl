@@ -104,6 +104,38 @@ void text_table_setup (windata_t *vwin)
 
 /* ........................................................... */
 
+void text_buffer_insert_colorized_buffer (GtkWidget *w, PRN *prn)
+{
+    void *colptr = NULL, *nextcolor = NULL;
+    char readbuf[MAXSTR];
+
+    bufgets(NULL, 0, prn->buf);
+
+    while (bufgets(readbuf, sizeof readbuf, prn->buf)) {
+
+	if (ends_with_backslash(readbuf)) {
+	    nextcolor = &blue;
+	} else {
+	    nextcolor = NULL;
+	}
+
+	if (*readbuf == '#' || *readbuf == '?') {
+	    colptr = &blue;
+	} 
+
+	gtk_text_insert(GTK_TEXT(w), fixed_font, 
+			colptr, NULL, readbuf, strlen(readbuf));
+
+	/* bufgets strips newlines */
+	gtk_text_insert(GTK_TEXT(w), fixed_font, 
+			NULL, NULL, "\n", 1);
+
+	colptr = nextcolor;
+    }
+}
+
+/* ........................................................... */
+
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 {
     void *colptr = NULL, *nextcolor = NULL;

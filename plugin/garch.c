@@ -356,10 +356,10 @@ int do_fcp (const int *list, double **Z,
 
 /* sanity/dimension check */
 
-static int check_garch_list (const int *list)
+static int check_garch_list (int *list)
 {
-    int p = list[1], q = list[2];
-    int err = 0;
+    int i, p = list[1], q = list[2];
+    int err = 0, ifc = 0;
 
     /* rule out pure AR in variance */
     if (p > 0 && q == 0) {
@@ -373,6 +373,21 @@ static int check_garch_list (const int *list)
 	err = 1;
     }
 
+    /* insert constant if not present */
+    for (i=4; i<=list[0]; i++) {
+	if (list[i] == 0) ifc = 1;
+    }
+    if (!ifc) {
+	int *mylist = realloc(list, (list[0] + 2) * sizeof *list);
+
+	if (mylist == NULL) err = E_ALLOC;
+	else {
+	    list = mylist;
+	    list[0] += 1;
+	    list[list[0]] = 0;
+	}
+    }
+
     return err;
 }
 
@@ -381,21 +396,14 @@ static int check_garch_list (const int *list)
 static int *make_ols_list (const int *list)
 {
     int *olist;
-    int i, ifc = 0;
+    int i;
 
-    olist = malloc((list[0] - 1) * sizeof *olist);
+    olist = malloc((list[0] - 2) * sizeof *olist);
     if (olist == NULL) return NULL;
 
     olist[0] = list[0] - 3;
     for (i=4; i<=list[0]; i++) {
 	olist[i-3] = list[i];
-	if (list[i] == 0) ifc = 1;
-    }
-
-    /* add the constant, if not present */
-    if (!ifc) {
-	olist[0] += 1;
-	olist[olist[0]] = 0;
     }
 
     return olist;

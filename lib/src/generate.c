@@ -2778,6 +2778,7 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
     if (i == v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     }
+
     if (time) {
 	strcpy(genr->varname, "time");
 	strcpy(pdinfo->varname[i], "time");
@@ -2814,7 +2815,9 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     float rm;
 
     vi = varindex(pdinfo, period);
-    if (vi < pdinfo->v) return vi;
+    if (vi < pdinfo->v) {
+	return vi;
+    }
 
     if (dataset_add_vars(1, pZ, pdinfo)) return -1;
 
@@ -2823,7 +2826,7 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     y1 = (int) pdinfo->sd0;
     rm = pdinfo->sd0 - y1;
 
-    switch(period[0]) {
+    switch (period[0]) {
     case 'a':
 	strcpy(VARLABEL(pdinfo, vi), _("annual plotting variable")); 
 	for (t=0; t<n; t++) 

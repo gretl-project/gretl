@@ -344,6 +344,43 @@ static gchar *my_utf_string (char *t)
     return s;
 }
 
+void text_buffer_insert_colorized_buffer (GtkTextBuffer *tbuf, PRN *prn)
+{
+    GtkTextIter iter;    
+    int thiscolor, nextcolor;
+    char readbuf[MAXSTR];
+
+    thiscolor = PLAIN_TEXT;
+    gtk_text_buffer_get_iter_at_offset(tbuf, &iter, 0);
+    bufgets(NULL, 0, prn->buf);
+
+    while (bufgets(readbuf, sizeof readbuf, prn->buf)) {
+
+	if (ends_with_backslash(readbuf)) {
+	    nextcolor = BLUE_TEXT;
+	} else {
+	    nextcolor = PLAIN_TEXT;
+	}
+
+	if (*readbuf == '#' || *readbuf == '?') {
+	    thiscolor = BLUE_TEXT;
+	} 
+
+	if (thiscolor == BLUE_TEXT) {
+	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
+						      readbuf, -1,
+						      "bluetext", NULL);
+	} else {
+	    gtk_text_buffer_insert(tbuf, &iter, readbuf, -1);
+	}
+
+	/* bufgets strips newlines */
+	gtk_text_buffer_insert(tbuf, &iter, "\n", 1);
+
+	thiscolor = nextcolor;
+    }
+}
+
 void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname, 
 			      int role)
 {
