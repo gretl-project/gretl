@@ -476,7 +476,7 @@ int gnuplot_has_ttf (void)
     if (t == -1) {
 	char cmd[512];
 
-	sprintf(cmd, "echo \"set term png font arial\" | %s 2>/dev/null",
+	sprintf(cmd, "echo \"set term png font arial 8\" | %s 2>/dev/null",
 		(*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
 	t = system(cmd);
     }
