@@ -182,7 +182,7 @@ int sstsize = 0, sstnext = 0;
 int codepage = 1251; /* default */
 struct rowdescr *rowptr = NULL;
 char **saved_reference = NULL;
-int startrow = 0, lastrow = 0;
+int lastrow = 0; 
 
 static double get_le_double (const void *p)
 {
@@ -268,6 +268,17 @@ static double biff_get_rk (const unsigned char *ptr)
 static int process_item (int rectype, int reclen, char *rec, wbook *book,
 			 PRN *prn) 
 {
+    struct rowdescr *prow = NULL;
+    int row = 0, col = 0;
+
+    if (rectype == LABEL || rectype == CONSTANT_STRING || 
+	rectype == NUMBER || rectype == RK || rectype == MULRK || 
+	rectype == FORMULA) {
+	row = getshort(rec, 0);
+	col = getshort(rec, 2);
+	if (negerr(row, col)) return 1;
+    }
+
     switch (rectype) {
     case SST: {
 	char *ptr = rec + 8;
@@ -309,15 +320,9 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }			   
     case LABEL: {
-	struct rowdescr *prow;
-	int row = getshort(rec, 0);
-	int col = getshort(rec, 2);
-	int len;
-
-	if (negerr(row, col)) return 1;
+	int len = getshort(rec, 6);
 
 	saved_reference = NULL;
-	len = getshort(rec, 6);
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got LABEL, row=%d, col=%d\n", row, col);
@@ -328,12 +333,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }     
     case CONSTANT_STRING: {
-	struct rowdescr *prow;
-	int row = getshort(rec, 0); 
-	int col = getshort(rec, 2);
 	int string_no = getshort(rec, 6);
-
-	if (negerr(row, col)) return 1;
 
 #ifdef EDEBUG
 	fprintf(stderr, "Got CONSTANT_STRING, row=%d, col=%d\n", row, col);
@@ -361,12 +361,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case NUMBER: {
-	struct rowdescr *prow;
-	int row = getshort(rec, 0) - startrow; 
-	int col = getshort(rec, 2);
 	double v;
-
-	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
 
@@ -380,13 +375,8 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case RK: {
-	struct rowdescr *prow;
-	int row = getshort(rec, 0) - startrow;
-	int col = getshort(rec, 2);
 	double v;
 	char tmp[32];
-
-	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
 
@@ -401,13 +391,8 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case MULRK: {
-	struct rowdescr *prow;
-	int row = getshort(rec, 0) - startrow; 
-	int col = getshort(rec, 2);
 	double v;
 	int i, ncols;
-
-	if (negerr(row, col)) return 1;
 
 	saved_reference = NULL;
 	ncols = (reclen - 6)/ 6;
@@ -430,12 +415,6 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	break;
     }
     case FORMULA: { 
-	struct rowdescr *prow;
-	int row = getshort(rec, 0) - startrow;
-	int col = getshort(rec, 2);
-
-	if (negerr(row, col)) return 1;
-
 	saved_reference = NULL;
 
 #ifdef EDEBUG
@@ -465,7 +444,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 
 	    if (isnan(x)) {
 		fprintf(stderr, "Got a NaN\n");
-		prow->cells[col][0] = '\0';
+		prow->cells[col] = g_strdup("-999.0");
 	    } else {
 		prow->cells[col] = g_strdup_printf("%.10g", x);
 	    }
