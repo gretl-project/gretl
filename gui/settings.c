@@ -42,7 +42,7 @@ extern char dbproxy[21];
 #ifdef TRAMO_X12
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
-extern char x12[MAXSTR];
+extern char x12a[MAXSTR];
 extern char x12adir[MAXSTR];
 #endif
 

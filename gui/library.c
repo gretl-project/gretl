@@ -2434,11 +2434,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-    if (bufopen(&prn)) {
-	close_plugin(handle);
-	return; 
-    }
-
+    *fname = 0;
     if (opt == TRAMO) {
 	err = write_ts_data (fname, mdata->active_var, &Z, datainfo, 
 			     &paths, &graph, tramo, tramodir);
@@ -2452,13 +2448,12 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     if (err) {
 	errbox((opt == TRAMO)? _("TRAMO command failed") : 
 	       _("X-12-ARIMA command failed"));
-	gretl_print_destroy(prn);
 	return;
-    }
+    } else {
+	if (*fname == 0) return;
+    }	
 
-    view_file (fname, 0, 0, opt? 120 : 84, 500, 
-	       (opt == TRAMO)? _("gretl: TRAMO analysis") :
-	       _("gretl: X-12-ARIMA analysis"),
+    view_file (fname, 0, 0, (opt == TRAMO)? 120 : 84, 500, 
 	       TRAMO_X12A, view_items);
 
     if (graph) {
@@ -2467,8 +2462,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     if (datainfo->v > oldv) {
-	populate_varlist();
-	mark_dataset_as_modified();
+	populate_clist(mdata->listbox, datainfo);
+	data_status |= MODIFIED_DATA;
+	set_sample_label(datainfo);
     }
 }
 #endif

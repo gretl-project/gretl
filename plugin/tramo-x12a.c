@@ -43,14 +43,64 @@ typedef struct {
     GtkWidget *dialog;
     opt_info opt[4];
     int savevars;
+#if GTK_MAJOR_VERSION == 1
+    int ret;
+#endif
 } x12a_request;
 
-#if GTK_MAJOR_VERSION >= 2
+#ifdef G_OS_WIN32
+static int win_fork_prog (char *cmdline, const char *dir)
+{
+    int child;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi; 
+
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_SHOWMINIMIZED;
+
+    ZeroMemory(&pi, sizeof(pi));    
+
+    /* zero return means failure */
+    child = CreateProcess(NULL, cmdline, 
+                          NULL, NULL, FALSE,
+                          CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
+                          NULL, dir,
+                          &si, &pi);
+    if (!child) {
+        win_show_error();
+        return 1;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);    
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return 0;
+}
+#endif
+
+#if GTK_MAJOR_VERSION == 1
+static void x12a_dialog_ok (GtkWidget *w, x12a_request *request)
+{
+    request->ret = 1;
+    gtk_widget_hide(request->dialog);
+    gtk_main_quit();
+}
+
+static void x12a_dialog_cancel (GtkWidget *w, x12a_request *request)
+{
+    gtk_widget_hide(request->dialog);
+    gtk_main_quit();
+}
+#endif
 
 static int x12a_dialog (x12a_request *request)
 {
     GtkWidget *vbox, *tmp;
-    gint ret;
+#if GTK_MAJOR_VERSION >= 2
+    gint ret = 0;
 
     request->dialog = gtk_dialog_new_with_buttons ("X-12-ARIMA",
 					  NULL,
@@ -61,6 +111,10 @@ static int x12a_dialog (x12a_request *request)
 					  GTK_STOCK_CANCEL,
 					  GTK_RESPONSE_REJECT,
 					  NULL);
+#else
+    request->dialog = gtk_dialog_new();
+    gtk_window_set_title (GTK_WINDOW(request->dialog), "X-12-ARIMA");
+#endif
 
     tmp = gtk_label_new ("Save to data set");
     gtk_widget_show(tmp);
@@ -99,14 +153,38 @@ static int x12a_dialog (x12a_request *request)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(request->dialog)->vbox),
 		       vbox, FALSE, FALSE, 5);
 
+#if GTK_MAJOR_VERSION >= 2
     ret = gtk_dialog_run (GTK_DIALOG(request->dialog));
+    if (ret == GTK_RESPONSE_ACCEPT) ret = 1;
+    else ret = 0;
+    return ret;
+#else /* GTK 1.N */
+    request->ret = 0;
 
-    if (ret == GTK_RESPONSE_ACCEPT) return 1;
+    /* Create an "OK" button */
+    tmp = gtk_button_new_with_label (_("OK"));
+    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
+                        tmp, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+                       GTK_SIGNAL_FUNC(x12a_dialog_ok), request);
+    gtk_widget_grab_default (tmp);
+    gtk_widget_show (tmp);
 
-    return 0;
-}
+    /* Create a "Cancel" button */
+    tmp = gtk_button_new_with_label (_(" Cancel "));
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (request->dialog)->action_area), 
+                        tmp, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+                       GTK_SIGNAL_FUNC(x12a_dialog_cancel), request);
+    gtk_widget_show (tmp);
 
+    gtk_widget_show (request->dialog);
+    gtk_main();
+
+    return request->ret;
 #endif
+}
 
 int write_tramo_data (char *fname, int varnum, 
 		      double ***pZ, DATAINFO *pdinfo, 
@@ -174,15 +252,15 @@ int write_tramo_data (char *fname, int varnum,
 	fclose(fp);
     }
 
-    /* testing */
-#ifdef notdef
-    sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null && mv seats.itr serie && ./seats -OF %s", 
+#ifdef notdef /* testing */
+    sprintf(cmd, "cd %s && ./tramo -i %s >/dev/null && "
+	    "mv seats.itr serie && ./seats -OF %s", 
 	    tramodir, varname, varname);
 #endif
-#ifdef OS_WIN32 /* FIXME */
-    /* get into tramodir first */
+
+#ifdef OS_WIN32 
     sprintf(cmd, "\"%s\" -i %s", tramo, varname);
-    WinExec(cmd, SW_SHOWMINIMIZED);
+    win_fork_prog(cmd, tramodir);
 #else
     sprintf(cmd, "cd \"%s\" && \"%s\" -i %s >/dev/null", tramodir, tramo, varname);
     system(cmd);
@@ -190,7 +268,8 @@ int write_tramo_data (char *fname, int varnum,
 
     strcpy(tmp, pdinfo->varname[varnum]);
     lower(tmp);
-    sprintf(fname, "%s%coutput%c%s.out", tramodir, SLASH, SLASH, varname); /* .OUT for seats */
+    sprintf(fname, "%s%coutput%c%s.out", tramodir, SLASH, SLASH, varname); 
+    /* N.B. ".OUT" for seats */
 
     return 0;
 }
@@ -525,9 +604,14 @@ int write_x12a_data (char *fname, int varnum,
     sprintf(fname, "%s%c%s.spc", x12adir, SLASH, varname);
     write_spc_file(fname, *pZ, pdinfo, varnum, varlist, &request);
 
-    /* run the x12a program -- FIXME win32 */
+    /* run the x12a program */
+#ifdef G_OS_WIN32
+    sprintf(cmd, "\"%s\" %s -r -p -q", x12a, varname);
+    err = win_fork_prog(cmd, x12adir);
+#else
     sprintf(cmd, "cd \"%s\" && \"%s\" %s -r -p -q >/dev/null", x12adir, x12a, varname);
     err = system(cmd);
+#endif
     
     if (!err) {
 	sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 
