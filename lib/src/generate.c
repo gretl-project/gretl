@@ -933,53 +933,57 @@ static int insert_right_paren (char *s)
 	ins = s + strlen(s);
     }
 
-    /* gotcha: next is '^' operator, with precedence > unary minus */
-    if (*(ins + 1) == '^' || (*(ins + 1) == '*' && *(ins + 2) == '*')) {
-	while (*ins && !op_level(*ins)) ins++;
+    s = ins;
+
+    /* gotcha: next is '^' operator, with precedence > unary op? */
+    if (*(s + 1) == '^' || (*(s + 1) == '*' && *(s + 2) == '*')) {
+	while (*s && !op_level(*s)) s++;
     }
 
-    if (*ins == '\0') {
-	*ins = ')';
-	*(ins + 1) = '\0';
+    if (*s == '\0') {
+	*s = ')';
+	*(s + 1) = '\0';
     } else {
-	char *p = ins;
+	char *p = s;
 
-	memmove(ins + 1, ins, strlen(ins) + 1);
+	memmove(s + 1, s, strlen(s) + 1);
 	*p = ')';
     }
 	
     return 0;
 }
 
-/* insert a "ghost" zero before a unary minus, and if need be
-   insert a pair of parentheses around the negative value
+/* insert a "ghost" zero before a unary operator, and if need
+   be insert a pair of parentheses around the value
 */
 
-static int insert_ghost_zero (char *full, char *pos, int *np)
+static int insert_ghost_zero (char *start, char *p, int *np)
 {
-    int fulln = strlen(full);
-    int posn = strlen(pos);
-    char *ins = pos;
+    int n = strlen(start);
+    int pn = strlen(p);
+    char *ins = p;
     int err = 0;
 
-    if (pos - full > 0 && *(pos - 1) != '(') {
+    if (p - start > 0 && *(p - 1) != '(') {
 	*np = 1;
     } else {
 	*np = 0;
     }
 
     /* do we have space to make the insertion? */
-    if (fulln + (2 * (*np)) >= MAXLEN) return 1;
+    if (n + (2 * (*np)) >= MAXLEN) return 1;
 
     /* move material right */
-    memmove(pos + 1 + *np, pos, posn + 1);
+    memmove(p + 1 + *np, p, pn + 1);
+
+    p = ins;
 
     if (*np) {
-	*ins = '(';
-	*(ins + 1) = '0';
-	err = insert_right_paren(ins + 2);
+	*p = '(';
+	*(p + 1) = '0';
+	err = insert_right_paren(p + 2);
     } else {
-	*ins = '0';
+	*p = '0';
     }
 
     return err;
@@ -1013,27 +1017,24 @@ static int unary_op_context (char *start, char *p)
 static int catch_special_operators (char *s)
 {
     char *p = s;
-    int rcomp;
     int err = 0;
 
     while (*s) {
-	rcomp = 0;
-
 	if (*s == '!' && *(s+1) == '=') {
 	    *s = NEQ;
-	    rcomp = '=';
+	    *(++s) = ' ';
 	}
 	else if (*s == '>' && *(s+1) == '=') {
 	    *s = GEQ;
-	    rcomp = '=';
+	    *(++s) = ' ';
 	}
 	else if (*s == '<' && *(s+1) == '=') {
 	    *s = LEQ;
-	    rcomp = '=';
+	    *(++s) = ' ';
 	}
 	else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
-	    rcomp = '*';
+	    *(++s) = ' ';
 	}
 	else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
 	    int np; /* "need (to insert) parentheses" ? */
@@ -1041,11 +1042,6 @@ static int catch_special_operators (char *s)
 	    err = insert_ghost_zero(p, s, &np);
 	    s += 1 + np;
 	}
-
-	if (rcomp) {
-	    *(++s) = ' ';
-	} 
-
 	s++;
     }
 
