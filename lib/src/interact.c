@@ -666,6 +666,13 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     return;
 }
 
+static void nl_strip (char *line)
+{
+    int n = strlen(line);
+
+    if (line[n-1] == '\n') line[n-1] = 0;
+}
+
 /**
  * help:
  * @cmd: the command on which help is wanted.
@@ -683,7 +690,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 int help (const char *cmd, const char *helpfile, PRN *prn)
 {
     FILE *fq;
-    char line[MAXLEN], tmp[MAXLEN], cmdcopy[9];
+    char line[MAXLEN], cmdcopy[9];
     int i, ok;
 
     if (cmd == NULL) {
@@ -693,14 +700,13 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	    if (i%8 == 0) pputs(prn, "\n");
 	    else pputs(prn, " ");
 	}
-	pputs(prn, "\n");
-	pputs(prn, _("\nFor help on a specific command, type: help cmdname"));
+	pputs(prn, _("\n\nFor help on a specific command, type: help cmdname"));
 	pputs(prn, _(" (e.g. help smpl)\n"));
 	return 0;
     }
 
-    strncpy(cmdcopy, cmd, 8);
-    cmdcopy[8] = '\0';
+    *cmdcopy = 0;
+    strncat(cmdcopy, cmd, 8);
 
     ok = 0;
     for (i=1; i<NC; i++) {
@@ -717,6 +723,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	    }
 	}
     }
+
     if (!ok) {
 	pprintf(prn, _("\"%s\" is not a gretl command.\n"), cmd);
 	return 1;
@@ -727,31 +734,27 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 	return 1;
     } 
 
+    ok = 0;
     while (fgets(line, MAXLEN, fq) != NULL) {
-	delchar('\n', line);
-	ok = !strcmp(cmdcopy, line);
-	if (!ok) continue;
-	pputs(prn, "\n");
-	do {
-	    if (fgets(tmp, MAXLEN, fq) == NULL) {
-		fclose(fq);
-		return 0;
+	nl_strip(line);
+	if (strcmp(cmdcopy, line) == 0) {
+	    ok = 1;
+	    pputs(prn, "\n");
+	    while (fgets(line, MAXLEN, fq)) {
+		if (*line == '#') break;
+		nl_strip(line);
+		if (*line != '@') {
+		    pprintf(prn, "%s\n", line);
+		}		
 	    }
-	    delchar('\n', tmp);
-	    i = strcmp(tmp, "#");
-	    if (!i) {
-		fclose(fq);
-		return 0;
-	    }
-	    if (*tmp != '@')
-		pprintf(prn, "%s\n", tmp);
-	} while (i);
-	if (ok) {
-	    fclose(fq);
-	    return 0;
+	    break;
 	}
     }
-    pprintf(prn, _("%s: sorry, no help available.\n"), cmd);
+
+    if (!ok) {
+	pprintf(prn, _("%s: sorry, no help available.\n"), cmd);
+    }
+
     fclose(fq);
     return 0;
 }
@@ -768,33 +771,37 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     if (sscanf(line, "%s %s %s %s", cmd, essstr, Tstr, kstr) != 4) {
 	return 1;
     }
-    if (isalpha((unsigned char) essstr[0]) && 
+
+    if (isalpha((unsigned char) *essstr) && 
 	(i = varindex(pdinfo, essstr)) < pdinfo->v) 
 	    ess = get_xvalue(i, *pZ, pdinfo);
-    else if (isdigit(essstr[0])) ess = atof(essstr);
+    else if (isdigit(*essstr)) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
 	pputs(prn, _("ess: negative value is out of bounds.\n"));
 	return 1;
     }
-    if (isalpha((unsigned char) Tstr[0]) &&
+
+    if (isalpha((unsigned char) *Tstr) &&
 	(i = varindex(pdinfo, Tstr)) < pdinfo->v) 
 	    T = (int) get_xvalue(i, *pZ, pdinfo);
-    else if (isdigit(Tstr[0])) T = atoi(Tstr);
+    else if (isdigit(*Tstr)) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
 	pputs(prn, _("T: negative value is out of bounds.\n"));
 	return 1;
     }
-    if (isalpha((unsigned char) kstr[0]) &&
+
+    if (isalpha((unsigned char) *kstr) &&
 	(i = varindex(pdinfo, kstr)) < pdinfo->v) 
 	    k = (int) get_xvalue(i, *pZ, pdinfo);
-    else if (isdigit(kstr[0])) k = atoi(kstr);
+    else if (isdigit(*kstr)) k = atoi(kstr);
     else return 1;
     if (k < 0) {
 	pputs(prn, _("k: negative value is out of bounds.\n"));
 	return 1;
-    }    
+    }   
+ 
     _criteria(ess, T, k, prn);
 
     return 0;
@@ -874,6 +881,7 @@ static int _full_list (const DATAINFO *pdinfo, CMD *command)
 
     command->list = realloc(command->list, pdinfo->v * sizeof(int));
     if (command->list == NULL) return E_ALLOC;
+
     for (i=1; i<pdinfo->v; i++) {
 	if (hidden_var(i, pdinfo)) continue;
 	if (pdinfo->vector[i] == 0) continue;
@@ -924,6 +932,7 @@ int shell (const char *arg)
 
     old1 = signal (SIGINT, SIG_IGN);
     old2 = signal (SIGQUIT, SIG_IGN);
+
     if ((pid = fork()) == 0) {
 	for (pid = 3; pid < 20; pid++)
 	    (void) close(pid);
@@ -952,9 +961,12 @@ int shell (const char *arg)
 	perror(theshell);
 	return 1;
     }
+
     if (pid > 0) while (wait(NULL) != pid);
+
     (void) signal(SIGINT, old1);
     (void) signal(SIGQUIT, old2);
+
     if (pid == -1) {
 	perror(_("Try again later"));
     }
