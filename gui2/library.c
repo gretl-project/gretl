@@ -1229,8 +1229,11 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
     strcpy(pmod->tests[nt].type, test->type);
     strcpy(pmod->tests[nt].h_0, test->h_0);
-    strcpy(pmod->tests[nt].teststat, test->teststat);
-    strcpy(pmod->tests[nt].pvalue, test->pvalue);
+    pmod->tests[nt].teststat = test->teststat;
+    pmod->tests[nt].value = test->value;
+    pmod->tests[nt].dfn = test->dfn;
+    pmod->tests[nt].dfd = test->dfd;
+    pmod->tests[nt].pvalue = test->pvalue;
 
     pmod->ntests += 1;
 
@@ -1241,22 +1244,31 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
-    gchar *tempstr;
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
-    GtkTextIter iter;
 
-    if (w == NULL) return;
+    if (w == NULL) {
+	return;
+    } else {
+	GtkTextIter iter;
+	char test_str[64], pval_str[64];
+	gchar *tempstr;
 
-    tempstr = g_strdup_printf(_("%s -\n"
-			      "  Null hypothesis: %s\n"
-			      "  Test statistic: %s\n"
-			      "  with p-value = %s\n\n"),
-			      test->type, test->h_0, 
-			      test->teststat, test->pvalue);
+	get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
+	get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
 
-    gtk_text_buffer_get_end_iter(buf, &iter);
-    gtk_text_buffer_insert(buf, &iter, tempstr, -1);
-    g_free(tempstr);
+	tempstr = g_strdup_printf("%s -\n"
+				  "  %s: %s\n"
+				  "  %s: %s\n"
+				  "  %s = %s\n\n",
+				  _(test->type), 
+				  _("Null hypothesis"), _(test->h_0), 
+				  _("Test statistic"), test_str, 
+				  _("with p-value"), pval_str);
+
+	gtk_text_buffer_get_end_iter(buf, &iter);
+	gtk_text_buffer_insert(buf, &iter, tempstr, -1);
+	g_free(tempstr);
+    }
 }
 
 /* ........................................................... */
@@ -2062,8 +2074,10 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
 {
     strcpy(test->type, _("Test for normality of residual"));
     strcpy(test->h_0, _("error is normally distributed"));
-    sprintf(test->teststat, _("Chi-squared(2) = %.3f"), freq->chisqu);
-    sprintf(test->pvalue, "%f", chisq(freq->chisqu, 2));
+    test->teststat = GRETL_TEST_CHISQ;
+    test->value = freq->chisqu;
+    test->dfn = 2;
+    test->pvalue = chisq(freq->chisqu, 2);
 }
 
 /* ........................................................... */

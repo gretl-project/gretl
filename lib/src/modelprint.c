@@ -106,9 +106,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
-	pprintf(prn, "  %s = %#g\n", _("Error Sum of Squares"), 
+	pprintf(prn, "  %s = %#g\n", _("Sum of squared residuals"), 
 		wt? pmod->ess_wt : pmod->ess);
-	pprintf(prn, "  %s = %#g\n", _("Standard error"), 
+	pprintf(prn, "  %s = %#g\n", _("Standard error of residuals"), 
 		wt? pmod->sigma_wt : pmod->sigma);
 	return 0;
     }
@@ -123,9 +123,9 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	    return 1;
 	}
 
-	pprintf(prn, "\\par  %s = %#g\n", I_("Error Sum of Squares"), 
+	pprintf(prn, "\\par  %s = %#g\n", I_("Sum of squared residuals"), 
 		wt? pmod->ess_wt : pmod->ess);
-	pprintf(prn, "\\par  %s = %#g\n", I_("Standard error"), 
+	pprintf(prn, "\\par  %s = %#g\n", I_("Standard error of residuals"), 
 		wt? pmod->sigma_wt : pmod->sigma);
 	return 0;
     }
@@ -230,7 +230,7 @@ static void dwline (const MODEL *pmod, PRN *prn)
 	if (!na(pmod->dw)) {
 	    pprintf(prn, "  %s = %#g\n", _("Durbin-Watson statistic"), 
 		    pmod->dw);
-	    pprintf(prn, "  %s = %#g\n", _("1st-order autocorrelation coeff."), 
+	    pprintf(prn, "  %s = %#g\n", _("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
 	return;
@@ -250,7 +250,7 @@ static void dwline (const MODEL *pmod, PRN *prn)
 	if (!na(pmod->dw)) {
 	    pprintf(prn, "\\par  %s = %#g\n", I_("Durbin-Watson statistic"), 
 		    pmod->dw);
-	    pprintf(prn, "\\par  %s = %#g\n", I_("1st-order autocorrelation coeff."), 
+	    pprintf(prn, "\\par  %s = %#g\n", I_("First-order autocorrelation coeff."), 
 		    pmod->rho);
 	} 
 	return;
@@ -407,33 +407,128 @@ static const char *estimator_string (int ci, int format)
 
 /* ......................................................... */
 
+void get_test_stat_string (GRETLTEST *test, char *str, int format)
+{
+    int tex = TEX_FORMAT(format);
+
+    switch (test->teststat) {
+    case GRETL_TEST_TR2:
+	if (tex) sprintf(str, "$TR^2$ = %g", test->value);
+	else sprintf(str, "TR^2 = %g", test->value);
+	break;
+    case GRETL_TEST_F:
+	if (tex) 
+	    sprintf(str, "$F(%d, %d)$ = %g", test->dfn, test->dfd, test->value);
+	else 
+	    sprintf(str, "F(%d, %d) = %g", test->dfn, test->dfd, test->value);
+	break;
+    case GRETL_TEST_LMF:
+	sprintf(str, "LMF = %g", test->value);
+	break;
+    case GRETL_TEST_HARVEY_COLLIER:
+	if (tex)
+	    sprintf(str, "Harvey--Collier $t(%d)$ = %g", test->dfn, test->value);
+	else
+	    sprintf(str, "Harvey-Collier t(%d) = %g", test->dfn, test->value);
+	break;
+    default:
+	*str = 0;
+    }
+}
+
+void get_test_pval_string (GRETLTEST *test, char *str, int format)
+{
+    int tex = TEX_FORMAT(format);
+
+    switch (test->teststat) {
+    case GRETL_TEST_TR2:
+	if (tex) sprintf(str, "$P$($\\chi^2(%d) >$ %g) = %g", 
+			 test->dfn, test->value, test->pvalue);
+	else sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
+		     test->dfn, test->value, test->pvalue);
+	break;
+    case GRETL_TEST_F:
+	if (tex) 
+	    sprintf(str, "$P$($F(%d, %d) >$ %g)$ = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	else 
+	    sprintf(str, "P(F(%d, %d) > %g) = %g", 
+		    test->dfn, test->dfd, test->value, test->pvalue);
+	break;
+    case GRETL_TEST_LMF:
+	if (tex) 
+	    sprintf(str, "$P$($\\chi^2(%d) >$ > %g) = %g", 
+		    test->dfn, test->value, test->pvalue);
+	else
+	    sprintf(str, "P(Chi-Square(%d) > %g) = %g", 
+		    test->dfn, test->value, test->pvalue);
+	break;
+    case GRETL_TEST_HARVEY_COLLIER:
+	if (tex)
+	    sprintf(str, "$P$($t(%d) >$ %g)  = %g", 
+		    test->dfn, test->value, test->pvalue);
+	else
+	    sprintf(str, "P(t(%d) > %g) = %g", 
+		    test->dfn, test->value, test->pvalue);
+	break;
+    default:
+	*str = 0;
+    }
+}
+
+/* ......................................................... */
+
 static void print_model_tests (const MODEL *pmod, PRN *prn)
 {
     int i;
+    char test_str[64], pval_str[64];
 
     if (PLAIN_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
+	    get_test_stat_string(&pmod->tests[i], test_str, prn->format);
+	    get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
 	    pprintf(prn, "%s -\n"
 		    "  %s: %s\n"
 		    "  %s: %s\n"
 		    "  %s = %s\n\n",
 		    (pmod->tests[i]).type, 
 		    _("Null hypothesis"), (pmod->tests[i]).h_0, 
-		    _("Test statistic"), (pmod->tests[i]).teststat, 
-		    _("with p-value"), (pmod->tests[i]).pvalue);
+		    _("Test statistic"), test_str, 
+		    _("with p-value"), pval_str);
+	}
+    }
+
+    else if (TEX_FORMAT(prn->format)) {
+	if (pmod->ntests > 0) {
+	    pprintf(prn, "\\vspace{1em}\n\\begin{raggedright}\n");
+	    for (i=0; i<pmod->ntests; i++) {
+		get_test_stat_string(&pmod->tests[i], test_str, prn->format);
+		get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
+		pprintf(prn, "%s --\\\\\n"
+			"\\quad %s: %s\\\\\n"
+			"\\quad %s: %s\\\\\n"
+			"\\quad %s = %s\\\\\n",
+			(pmod->tests[i]).type, 
+			I_("Null hypothesis"), (pmod->tests[i]).h_0, 
+			I_("Test statistic"), test_str, 
+			I_("with p-value"), pval_str);
+	    }
+	    pprintf(prn, "\\end{raggedright}\n");
 	}
     }
 
     else if (RTF_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
+	    get_test_stat_string(&pmod->tests[i], test_str, prn->format);
+	    get_test_pval_string(&pmod->tests[i], pval_str, prn->format);
 	    pprintf(prn, "\\par \\ql %s -\\par\n"
 		    " %s: %s\\par\n"
 		    " %s: %s\\par\n"
 		    " %s = %s\\par\n\n",
 		    (pmod->tests[i]).type, 
 		    I_("Null hypothesis"), (pmod->tests[i]).h_0,
-		    I_("Test statistic"), (pmod->tests[i]).teststat, 
-		    I_("with p-value"), (pmod->tests[i]).pvalue);
+		    I_("Test statistic"), test_str, 
+		    I_("with p-value"), pval_str);
 	}
     }
 }
@@ -727,6 +822,44 @@ static void print_middle_table_end (PRN *prn)
     }
 }
 
+static void r_squared_message (PRN *prn)
+{
+    pprintf(prn, "\n%s.\n",    
+	    _("R-squared is computed as the square of the correlation "
+	      "between observed and\nfitted values of the dependent variable"));
+}
+
+static void weighted_stats_message (PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "%s:\n\n", _("Statistics based on the weighted data"));
+    } else {
+	pprintf(prn, "%s:\n\n", I_("Statistics based on the weighted data"));	
+    }
+}
+
+static void original_stats_message (PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "\n%s:\n\n", _("Statistics based on the original data"));
+    } else {
+	pprintf(prn, "\n%s:\n\n", I_("Statistics based on the original data"));
+    }
+}
+
+static void rho_differenced_stats_message (PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {    
+	pprintf(prn, "%s:\n\n", _("Statistics based on the rho-differenced data"));
+    } else if (TEX_FORMAT(prn->format)) {
+	pprintf(prn, "\\vspace{1em}\n%s\n\n", 
+		I_("Statistics based on the rho-differenced data"));
+    } else { /* RTF */
+	pprintf(prn, "\\par\n%s\n\n", 
+		I_("Statistics based on the rho-differenced data"));
+    }	
+}
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -789,7 +922,10 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	if (essline(pmod, prn, 0)) return gotnan;
+	if (essline(pmod, prn, 0)) {
+	    print_middle_table_end(prn);
+	    goto close_format;
+	}
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
 	if (pmod->ci == OLS || (pmod->ci == WLS && pmod->wt_dummy)) {
@@ -800,56 +936,56 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	if (pmod->ci == HCCM || pmod->ci == TSLS) dwline(pmod, prn);
 	print_middle_table_end(prn);
 
-	if (pmod->ci == TSLS && PLAIN_FORMAT(prn->format)) pprintf(prn, _("\n"
-	       "R-squared is computed as the square of the correlation "
-	       "between observed and\nfitted values of the dependent "
-	       "variable.\n"));
-
-	if (PLAIN_FORMAT(prn->format)) print_aicetc(pmod, prn);
-	else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
-	else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
-	pmax_line(pmod, pdinfo, prn);
+	if (pmod->ci == TSLS && PLAIN_FORMAT(prn->format)) {
+	    r_squared_message(prn);
+	}
     }
 
     else if (pmod->ci == HSK || pmod->ci == ARCH ||
 	     (pmod->ci == WLS && pmod->wt_dummy == 0)) {
 
-	pprintf(prn, "%s:\n\n", _("Statistics based on the weighted data"));
+	weighted_stats_message(prn);
 	print_middle_table_start(prn);
-	if (essline(pmod, prn, 1)) goto close_format;
+	if (essline(pmod, prn, 1)) {
+	    print_middle_table_end(prn);
+	    goto close_format;
+	}
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
 	dwline(pmod, prn);
 	print_middle_table_end(prn);
 
-	pprintf(prn, "\n%s:\n\n", _("\nStatistics based on the original data")); 
+	original_stats_message(prn);
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
-	if (essline(pmod, prn, 0)) goto close_format;
+	if (essline(pmod, prn, 0)) {
+	    print_middle_table_end(prn);
+	    goto close_format;
+	}
 	print_middle_table_end(prn);
-
-	print_aicetc(pmod, prn);
-	pmax_line(pmod, pdinfo, prn);
     }
 
     else if (pmod->ci == AR || pmod->ci == CORC || pmod->ci == HILU) {
 
-	pprintf(prn, _("Statistics based on the rho-differenced data\n"
-	       "(R-squared is computed as the square of the correlation "
-	       "between observed and\nfitted values of the dependent "
-	       "variable):\n\n"));
+	rho_differenced_stats_message(prn);
 
 	print_middle_table_start(prn);
-	if (essline(pmod, prn, 0)) goto close_format;
+	if (essline(pmod, prn, 0)) {
+	    print_middle_table_end(prn);
+	    goto close_format;
+	}
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
 	dwline(pmod, prn);
 	print_middle_table_end(prn);
-
-	print_aicetc(pmod, prn);
-	pmax_line(pmod, pdinfo, prn);
     }
 
+    if (PLAIN_FORMAT(prn->format)) print_aicetc(pmod, prn);
+    else if (TEX_FORMAT(prn->format)) tex_print_aicetc(pmod, prn);
+    else if (RTF_FORMAT(prn->format)) rtf_print_aicetc(pmod, prn);
+
+    pmax_line(pmod, pdinfo, prn);
+    
     print_model_tests(pmod, prn);
 
  close_format:

@@ -98,6 +98,14 @@ typedef enum {
     SP_FINISH 
 } progress_flags;
 
+typedef enum {
+    GRETL_TEST_CHISQ,
+    GRETL_TEST_TR2,
+    GRETL_TEST_F,
+    GRETL_TEST_LMF,
+    GRETL_TEST_HARVEY_COLLIER
+} test_stats;
+
 typedef int *LIST;  
 
 /* information on data set */
@@ -147,8 +155,10 @@ typedef struct {
 typedef struct {
     char type[72];
     char h_0[64];
-    char teststat[48];
-    char pvalue[48];
+    unsigned char teststat;
+    int dfn, dfd;
+    double value;
+    double pvalue;
 } GRETLTEST;
 
 typedef struct {
@@ -218,7 +228,8 @@ typedef struct {
 				    order autocorrelation coefficient */
     double rho_in;               /* the rho value input into the 
 				    regression (e.g. CORC) */
-    ARINFO *arinfo;             /* struct to hold special info for autoregressive model */ 
+    ARINFO *arinfo;              /* struct to hold special info for 
+				    autoregressive model */ 
     double *slope;               /* for nonlinear models */
     int errcode;                 /* Error code in case of failure */
     char *name;

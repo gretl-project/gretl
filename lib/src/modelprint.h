@@ -19,6 +19,9 @@
 
 /* modelprint.h for gretl */
 
-int printmodel (const MODEL *pmod, 
-		const DATAINFO *pdinfo, 
-		PRN *prn);
+int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn);
+
+void get_test_stat_string (GRETLTEST *test, char *str, int format);
+
+void get_test_pval_string (GRETLTEST *test, char *str, int format);
+

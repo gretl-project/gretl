@@ -1716,10 +1716,10 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (test != NULL) {
 	    strcpy(test->type, _("White's test for heteroskedasticity"));
 	    strcpy(test->h_0, _("heteroskedasticity not present"));
-	    sprintf(test->teststat, "TR^2 = %f", white.rsq * white.nobs);
-	    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
-		    white.ncoeff - 1, white.rsq * white.nobs, 
-		    chisq(white.rsq * white.nobs, white.ncoeff - 1));
+	    test->teststat = GRETL_TEST_TR2;
+	    test->dfn = white.ncoeff - 1;
+	    test->value = white.rsq * white.nobs;
+	    test->pvalue = chisq(test->value, test->dfn);
 	}
     }
 
@@ -2236,9 +2236,10 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	if (test != NULL) {
 	    sprintf(test->type, _("Test for ARCH of order %d"), order);
 	    strcpy(test->h_0, _("no ARCH effect is present"));
-	    sprintf(test->teststat, "TR^2 = %f", LM);
-	    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
-		    order, LM, xx);
+	    test->teststat = GRETL_TEST_TR2;
+	    test->dfn = order;
+	    test->value = LM;
+	    test->pvalue = xx;
 	}
 
 	pprintf(prn, _("LM test statistic (%f) is distributed as Chi-square "

@@ -1,5 +1,6 @@
 lib/src/calendar.c
 lib/src/compare.c
+lib/src/daily.c
 lib/src/dataio.c
 lib/src/describe.c
 lib/src/discrete.c
@@ -9,6 +10,7 @@ lib/src/generate.c
 lib/src/graphing.c
 lib/src/gretl_utils.c
 lib/src/interact.c
+lib/src/modelprint.c
 lib/src/monte_carlo.c
 lib/src/nonparam.c
 lib/src/printout.c
@@ -33,7 +35,6 @@ gui/gretl.c
 gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
-gui/htmlprint.c
 gui/library.c
 gui/plotps.c
 gui/selector.c
@@ -56,7 +57,6 @@ gui2/gtkfontselhack.c
 gui2/guiprint.c
 gui2/gui_utils.c
 gui2/helpfiles.c
-gui2/htmlprint.c
 gui2/library.c
 gui2/selector.c
 gui2/session.c
@@ -67,6 +67,7 @@ gui2/webget.c
 plugin/des_import.c
 plugin/excel_import.c
 plugin/gnumeric_import.c
+plugin/ignore.c
 plugin/import_common-2.c
 plugin/import_common.c
 plugin/longname.c

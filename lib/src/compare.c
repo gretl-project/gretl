@@ -384,9 +384,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    sprintf(test->type, _("Non-linearity test (%s)"),
 			    (aux_code == AUX_SQ)? _("squares") : _("logs"));
 		    strcpy(test->h_0, _("relationship is linear"));
-		    sprintf(test->teststat, "TR^2 = %f", trsq);
-		    sprintf(test->pvalue, _("prob(Chi-square(%d) > %f) = %f"), 
-			    df, trsq, chisq(trsq, df));
+		    test->teststat = GRETL_TEST_TR2;
+		    test->dfn = df;
+		    test->value = trsq;
+		    test->pvalue = chisq(trsq, df);
 		}
 	    } /* ! aux.errcode */
 	    clear_model(&aux, pdinfo);
@@ -668,33 +669,33 @@ int autocorr_test (MODEL *pmod, int order,
 	    (aux.nobs - pmod->ncoeff - order)/order; 
 
 	pprintf(prn, "\n%s: LMF = %f,\n", _("Test statistic"), LMF);
-	pprintf(prn, _("with p-value = prob(F(%d,%d) > %g) = %.3g\n"), 
+	pprintf(prn, "%s = P(F(%d,%d) > %g) = %.3g\n", _("with p-value"), 
 		order, aux.nobs - pmod->ncoeff - order, LMF,
 		fdist(LMF, order, aux.nobs - pmod->ncoeff - order));
 
 	pprintf(prn, "\n%s: TR^2 = %f,\n", 
 		_("Alternative statistic"), trsq);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %.3g\n\n"), 
-		order, trsq, chisq(trsq, order));
+	pprintf(prn, "%s = P(%s(%d) > %g) = %.3g\n\n", 	_("with p-value"), 
+		_("Chi-square"), order, trsq, chisq(trsq, order));
 
 	/* add Box-Pierce Q and Ljung-Box Q' */
 	if (box_pierce(v, order, *pZ, pdinfo, &bp, &lb) == 0) {
-	    pprintf(prn, "Box-Pierce Q = %g with p-value = "
-		    "P(Chi-square(%d) > %g) = %.3g\n", bp, order,
+	    pprintf(prn, "Box-Pierce Q = %g %s = P(%s(%d) > %g) = %.3g\n", 
+		    bp, _("with p-value"), _("Chi-square"), order,
 		    bp, chisq(bp, order));
-	    pprintf(prn, "Ljung-Box Q' = %g with p-value = "
-		    "P(Chi-square(%d) > %g) = %.3g\n", lb, order,
+	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
+		    lb, _("with p-value"), _("Chi-square"), order,
 		    lb, chisq(lb, order));
 	}
 
 	if (test != NULL) {
 	    strcpy(test->type, _("LM test for autocorrelation"));
 	    sprintf(test->h_0, _("no autocorrelation up to order %d"), order);
-	    sprintf(test->teststat, "LMF = %f", trsq);
-	    sprintf(test->pvalue, _("prob(F(%d,%d) > %g) = %.3g"), order, 
-		    aux.nobs - pmod->ncoeff - order, LMF,
-		    fdist(LMF, order, 
-			  aux.nobs - pmod->ncoeff - order));	
+	    test->teststat = GRETL_TEST_LMF;
+	    test->dfn = order;
+	    test->dfd = aux.nobs - pmod->ncoeff - order;
+	    test->value = LMF;
+	    test->pvalue = fdist(LMF, test->dfn, test->dfd);
 	}
     }
 
@@ -806,9 +807,11 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		sprintf(test->type, _("Chow test for structural break at "
 			"observation %s"), chowdate);
 		strcpy(test->h_0, _("no structural break"));
-		sprintf(test->teststat, "F(%d, %d) = %f", 
-			newvars, chow_mod.dfd, F);
-		sprintf(test->pvalue, "%f", fdist(F, newvars, chow_mod.dfd));
+		test->teststat = GRETL_TEST_F;
+		test->dfn = newvars;
+		test->dfd = chow_mod.dfd;
+		test->value = F;
+		test->pvalue = fdist(F, newvars, chow_mod.dfd);
 	    }
 	}
 	clear_model(&chow_mod, pdinfo);
@@ -962,8 +965,10 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	if (test != NULL) {
 	    strcpy(test->type, _("CUSUM test for parameter stability"));
 	    strcpy(test->h_0, _("no change in parameters"));
-	    sprintf(test->teststat, "Harvey-Collier t(%d) = %g", T-K-1, hct);
-	    sprintf(test->pvalue, "%f", tprob(hct, T-K-1));
+	    test->teststat = GRETL_TEST_HARVEY_COLLIER;
+	    test->dfn = T-K-1;
+	    test->value = hct;
+	    test->pvalue = tprob(hct, T-K-1);
 	}
 
 	/* plot with 95% confidence bands, if not batch mode */
