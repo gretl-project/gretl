@@ -5239,12 +5239,6 @@ AC_ARG_WITH(gmp-prefix,[  --with-gmp-prefix=PFX   Prefix where GMP is installed 
   GMP_CFLAGS="-I$gmp_config_prefix/include"
   GMP_LIBS="-L$gmp_config_prefix/lib -lgmp"
 
-dnl  glib_config_major_version=`$GLIB_CONFIG $glib_config_args --version | \
-dnl         sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\1/'`
-dnl  glib_config_minor_version=`$GLIB_CONFIG $glib_config_args --version | \
-dnl         sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\2/'`
-dnl  glib_config_micro_version=`$GLIB_CONFIG $glib_config_args --version | \
-dnl         sed 's/\([[0-9]]*\).\([[0-9]]*\).\([[0-9]]*\)/\3/'`
   ac_save_CFLAGS="$CFLAGS"
   ac_save_LIBS="$LIBS"
   CFLAGS="$CFLAGS $GMP_CFLAGS"
@@ -5354,6 +5348,9 @@ main ()
   fi
   if test "$GMP_CFLAGS" = "-I/include" ; then 
      GMP_CFLAGS=""
+  fi
+  if test "$GMP_LIBS" = "-L/lib -lgmp" ; then 
+     GMP_LIBS="-lgmp"
   fi
   AC_SUBST(GMP_CFLAGS)
   AC_SUBST(GMP_LIBS)

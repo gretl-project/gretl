@@ -1,0 +1,56 @@
+%define name	gretl
+%define ver @VERSION@
+%define rel     1rh73
+%define prefix /usr
+
+Summary: econometrics package
+Name: %{name}
+Version: %{ver}
+Release: %{rel}
+Copyright: GPL
+Group: X11/Scientific Applications
+Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl-%{ver}.tar.bz2
+BuildRoot: /var/tmp/gretl
+Packager: Allin Cottrell <cottrell@wfu.edu>
+URL: http://gretl.sourceforge.net/
+Vendor: Allin Cottrell <cottrell@wfu.edu>
+Docdir: %{prefix}/share/doc
+Requires: gtk+ >= 1.2.3
+
+%description
+
+gretl is a free econometrics package. It comprises a shared library,
+a command-line client and a gui client that uses GTK.  gretl offers
+several least-squares based estimators.  Besides reading data files
+in its own format it also reads RATS 4 databases.  It has a built-in
+spreadsheet for editing data, and uses gnuplot for graphing.  It can
+output regression results in LaTeX format.
+
+%prep
+%setup -q
+
+%build
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%prefix --without-gnome \
+--without-gtk2 --without-libole2 --without-gtkextra 
+make
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make prefix=$RPM_BUILD_ROOT%{prefix} install
+ 
+%post
+/sbin/ldconfig
+ 
+%clean
+rm -rf $RPM_BUILD_ROOT
+ 
+%files
+%doc COPYING README INSTALL 
+%{prefix}/lib/lib*
+%{prefix}/lib/gretl/*
+%{prefix}/bin/gretlcli
+%{prefix}/bin/gretl_x11
+%{prefix}/bin/gretl
+%{prefix}/share/gretl/*
+%{prefix}/share/locale/*
+%{prefix}/share/man/*

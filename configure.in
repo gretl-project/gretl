@@ -205,6 +205,16 @@ else
 fi,
 try_gmp=yes)
 
+AC_ARG_WITH(lapack,
+[  --with-lapack   Use LAPACK [default=auto]],
+if test "x${withval}" = "xno"
+then
+  try_lapack=no
+else
+  try_lapack=yes
+fi,
+try_lapack=yes)
+
 AC_PROG_CC
 dnl AC_CANONICAL_HOST
 AC_DEFINE_UNQUOTED(OS_TYPE, "$host_os")
@@ -554,6 +564,7 @@ po/Makefile.in
 share/Makefile
 tests/Makefile
 extra/Makefile
+redhat/gretl.spec
 ])
 
 if test "${have_zlib}" = "no" ; then
