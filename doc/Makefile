@@ -76,7 +76,7 @@ manual-a4.tex: manual-a4.xml $(CHAPTERS) $(ALTDSL) $(MATHSS) \
 manual_it.tex: manual_it.xml $(CHAPTERS_IT) $(ALTDSL) $(MATHSS) \
 	$(TITLESS) $(CMDLIST_IT) jadetex.cfg.it lucidabr.tex
 	rm -f jadetex.cfg && ln -s jadetex.cfg.it jadetex.cfg
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
 manual-a4.xml: manual.xml
