@@ -25,6 +25,7 @@ version 1.0.8
   data with multiple/variable spaces between columns
 - Fix bug in range-mean graph when there are missing values at
   the start of the data range
+- Fix bug in pacf calculation and plot for long lag lengths
 - Add experimental "model table" in session icon view (not submitted
   for translation yet)
 

@@ -737,7 +737,7 @@ static void rtf_print_model_table (void)
 					   "McFadden's pseudo-R{\\super 2}"));
     }
 
-    pputs(prn, "}\n");
+    pputs(prn, "\\par\n}\n");
 
     prn_to_clipboard(prn, COPY_RTF);
 }
