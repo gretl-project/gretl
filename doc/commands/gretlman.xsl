@@ -13,8 +13,22 @@
 
 <xsl:template name="gettext">
   <xsl:param name="key"/>
-  <xsl:value-of
+  <xsl:variable name="phrase"
     select="$phrases/phrase[@key=$key and @lang=$lang]"/>
+  <xsl:choose>
+    <xsl:when test="$phrase">
+      <xsl:value-of select="$phrase"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:message terminate="yes">
+        <xsl:text>** Error: no phrase with key = '</xsl:text>
+        <xsl:value-of select="$key"/>
+        <xsl:text>' found for lang '</xsl:text>
+        <xsl:value-of select="$lang"/>
+        <xsl:text>'.</xsl:text>
+      </xsl:message>
+    </xsl:otherwise>
+  </xsl:choose>  
 </xsl:template>
 
 <xsl:template match="commandlist"> 
