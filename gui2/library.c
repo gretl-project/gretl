@@ -704,17 +704,15 @@ static gint stack_model (int gui)
 
     /* record the way this model was estimated (GUI or not) */
     if (model_origin == NULL) {
-	fprintf(stderr, "model_origin is NULL, mallocing 1\n");
 	model_origin = malloc(sizeof *model_origin);
     } else {
-	fprintf(stderr, "model_origin non-NULL, mallocing %d\n", model_count);
 	model_origin = myrealloc(model_origin, 
 				 model_count * sizeof *model_origin);
     }
     if (model_origin == NULL) return 1;
 
     last_model = (gui == 1)? 'g' : 's';
-    fprintf(stderr, "setting model_origin[%d] = '%c'\n", model_count - 1, last_model);
+
     model_origin[model_count - 1] = last_model;
 
     if (!gui) { /* Model estimated via console or script: unlike a gui
@@ -723,16 +721,12 @@ static gint stack_model (int gui)
 		   if we want to be able to refer back to them later we
 		   need to record their specification */
 	if (modelspec == NULL) {
-	    fprintf(stderr, "modelspec is NULL, mallocing 2\n");
 	    modelspec = mymalloc(2 * sizeof *modelspec);
 	} else {
-	    fprintf(stderr, "modespec non-NULL, reallocing at %d\n", m+2);
 	    modelspec = myrealloc(modelspec, (m+2) * sizeof *modelspec);
 	}
 	if (modelspec == NULL) return 1;
 	else {
-	    fprintf(stderr, "m=%d, mallocing modelspec[%d], NULLing modelspec[%d]\n",
-		    m, m, m+1);
 	    modelspec[m].cmd = mymalloc(MAXLEN);
 	    modelspec[m].subdum = NULL;
 	    modelspec[m+1].cmd = NULL;
@@ -4751,6 +4745,20 @@ int execute_script (const char *runfile, const char *buf,
 
 /* ........................................................... */
 
+static int get_modelspec_number (int m)
+{
+    int i, j = -1;
+    
+    for (i=0; i<model_count; i++) {
+	if (model_origin[i] == 's') j++;
+	if (i == m) return j;
+    }
+
+    return -1;
+}
+
+/* ........................................................... */
+
 static int script_model_test (int id, PRN *prn, int ols_only)
 {
     /* need to work in terms of modelspec here, _not_ model_count */
@@ -4761,6 +4769,7 @@ static int script_model_test (int id, PRN *prn, int ols_only)
 	pprintf(prn, _("Can't do this: no model has been estimated yet\n"));
 	return 1;
     }
+
     if (id > model_count) { 
 	pprintf(prn, _("Can't do this: there is no model %d\n"), id);
 	return 1;
@@ -4769,33 +4778,38 @@ static int script_model_test (int id, PRN *prn, int ols_only)
     /* ID == 0 -> no model specified -> look for last script model */
     if (modelspec != NULL && id == 0) {
 	m = model_count - 1;
-	fprintf(stderr, "script_model_test m = model_count - 1 = %d\n", m);
 	while (m) { 
-	    fprintf(stderr, "checking model_origin[%d]\n", m);
 	    if (model_origin[m] == 's') break;
 	    m--;
 	}
     }
+
     if (modelspec == NULL || model_origin[m] == 'g') {
 	pprintf(prn, _("Sorry, can't do this.\nTo operate on a model estimated "
 		"via the graphical interface, please use the\nmenu items in "
 		"the model window.\n"));
 	return 1;
     } 
-    if (ols_only && modelspec[m].cmd == NULL) {
-	fprintf(stderr, "BANG!\n");
+
+    m = get_modelspec_number(m);
+    if (m < 0) {
+	fprintf(stderr, "Something bad has gone wrong\n");
+	return 1;
     }
+
     if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
 	pprintf(prn, _("This command is only available for OLS models "
 		"at present\n"));
 	return 1;
     }
+
     if (model_sample_issue(NULL, &modelspec[m], (fullZ == NULL)? Z : fullZ, 
 			   (fullZ == NULL)? datainfo : fullinfo)) {
 	pprintf(prn, _("Can't do: the current data set is different from "
 		"the one on which\nthe reference model was estimated\n"));
 	return 1;
     }
+
     return 0;
 }
 
@@ -4870,7 +4884,6 @@ int gui_exec_line (char *line,
 	    bufopen(&genprn);
 	    getcmd(line, datainfo, &cmd, &ignore, &Z, genprn);
 	    if (genprn->buf[0] != '\0') {
-		fprintf(stderr, "Adding to command stack: '%s'\n", genprn->buf);
 		add_command_to_stack(genprn->buf);
 	    }
 	    gretl_print_destroy(genprn);
@@ -5805,12 +5818,10 @@ int gui_exec_line (char *line,
 
     /* log the specific command? */
     if (exec_code == CONSOLE_EXEC && !err) {
-	fprintf(stderr, "console_exec: doing cmd_init on '%s'\n", line);
 	cmd_init(line);
     }
 
     if ((is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)) && !err) {
-	fprintf(stderr, "doing stack_model\n");
 	err = stack_model(0);
 	if (*cmd.savename != '\0') {
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
