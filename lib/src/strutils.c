@@ -209,8 +209,8 @@ char *switch_ext (char *targ, const char *src, char *ext)
 
 int get_base (char *targ, const char *src, char c)
      /* Puts into targ the portion of src up to and
-   including the last occurrence of char.  Returns 1
-   if c is not found, 0 otherwise. */
+	including the last occurrence of char.  Returns 1
+	if c is found, 0 otherwise. */
 {
     int i, n = strlen(src);
 	
@@ -218,11 +218,10 @@ int get_base (char *targ, const char *src, char c)
 	if (src[i] == c) {
 	    strncpy(targ, src, i+1);
 	    targ[i+1] = '\0';
-	    return 0;
+	    return 1;
 	}
     }
-    targ = NULL;
-    return 1;
+    return 0;
 }
 
 /* ................................................. */

@@ -28,7 +28,10 @@
 # include <windows.h>
 #endif
 
+#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 char rcfile[MAXLEN];
+#endif
+
 char *storelist = NULL;
 
 static GtkWidget *help_view = NULL;
@@ -100,24 +103,26 @@ typedef struct {
          *description; /* How the field will show up in the options dialog */
     char *var;         /* string variable */
     char type;         /* 'C' for string, 'I' for integer */
+    int len;           /* storage size for string variable */
     short tab;         /* which tab (if any) does the item fall under? */
     GtkWidget *widget;
 } RCVARS;
 
 RCVARS rc_vars[] = {
-    {"gretldir", "Main gretl directory", paths.gretldir, 'C', 1, NULL},
-    {"userdir", "User's gretl directory", paths.userdir, 'C', 1, NULL},
-    {"Rcommand", "Command to launch GNU R", Rcommand, 'C', 1, NULL},
-    {"expert", "Expert mode (no warnings)", expert, 'I', 1, NULL},
-    {"updater", "Tell me about gretl updates", updater, 'I', 1, NULL},
-    {"binbase", "gretl database directory", paths.binbase, 'C', 2, NULL},
-    {"ratsbase", "RATS data directory", paths.ratsbase, 'C', 2, NULL},
-    {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'C', 2, NULL},
-    {"calculator", "Calculator", calculator, 'C', 3, NULL},
-    {"editor", "Editor", editor, 'C', 3, NULL},
-    {"toolbar", "Show gretl toolbar", want_toolbar, 'I', 3, NULL},
-    {"fontspec", "Fixed font", fontspec, 'C', 0, NULL},
-    {"", "", NULL, 0, 0, NULL},    
+    {"gretldir", "Main gretl directory", paths.gretldir, 'C', MAXLEN, 1, NULL},
+    {"userdir", "User's gretl directory", paths.userdir, 'C', MAXLEN, 1, NULL},
+    {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'C', MAXLEN, 1, NULL},
+    {"Rcommand", "Command to launch GNU R", Rcommand, 'C', MAXSTR, 1, NULL},
+    {"expert", "Expert mode (no warnings)", expert, 'I', 6, 1, NULL},
+    {"updater", "Tell me about gretl updates", updater, 'I', 6, 1, NULL},
+    {"binbase", "gretl database directory", paths.binbase, 'C', MAXLEN, 2, NULL},
+    {"ratsbase", "RATS data directory", paths.ratsbase, 'C', MAXLEN, 2, NULL},
+    {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'C', 16, 2, NULL},
+    {"calculator", "Calculator", calculator, 'C', MAXSTR, 3, NULL},
+    {"editor", "Editor", editor, 'C', MAXSTR, 3, NULL},
+    {"toolbar", "Show gretl toolbar", want_toolbar, 'I', 6, 3, NULL},
+    {"fontspec", "Fixed font", fontspec, 'C', MAXLEN, 0, NULL},
+    {NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
 GtkItemFactoryEntry model_items[] = {
@@ -183,7 +188,7 @@ GtkItemFactoryEntry model_items[] = {
     { "/LaTeX/view tabular", NULL, view_latex, 0, NULL },
     { "/LaTeX/view equation", NULL, view_latex, 1, NULL },
     { "/LaTeX/save tabular", NULL, file_save, SAVE_TEX_TAB, NULL },
-    { "/LaTeX/save equation", NULL, file_save, SAVE_TEX_EQ, NULL },
+    { "/LaTeX/save equation", NULL, file_save, SAVE_TEX_EQ, NULL }
 };
 
 GtkItemFactoryEntry help_items[] = {
@@ -288,6 +293,7 @@ void append_dir (char *fname, const char *dir)
 
 /* ........................................................... */
 
+#if !defined(G_OS_WIN32) && !defined(USE_GNOME)
 void set_rcfile (void) 
 {
     char *tmp;
@@ -297,6 +303,14 @@ void set_rcfile (void)
     strcat(rcfile, "/.gretlrc");
     read_rc(); 
 }
+#endif
+
+#ifdef USE_GNOME
+void set_rcfile (void)
+{
+    read_rc();
+}
+#endif
 
 /* ........................................................... */
 
@@ -1532,9 +1546,9 @@ static void msgbox (const char *msg, int err)
 static void msgbox (const char *msg, int err)
 {
     if (err) 
-	MessageBox(NULL, (LPCTSTR)msg, "Error", MB_OK | MB_ICONERROR);
+	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONERROR);
     else
-	MessageBox(NULL, (LPCTSTR)msg, "Info", MB_OK | MB_ICONINFORMATION);
+	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
 }
 
 #else /* win32 */
@@ -1693,7 +1707,7 @@ void options_dialog (gpointer data)
 static void make_prefs_tab (GtkWidget *notebook, int tab) 
 {
     GtkWidget *tempwid, *box, *inttbl, *chartbl;
-    int num, tbl_len, tbl_num, tbl_col;
+    int i, tbl_len, tbl_num, tbl_col;
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 10);
@@ -1722,23 +1736,23 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_box_pack_start (GTK_BOX (box), inttbl, FALSE, FALSE, 0);
     gtk_widget_show (inttbl);
 
-    num = 0;
-    while (rc_vars[num].var != NULL) {
-	if (rc_vars[num].tab == tab) {
-	    if (rc_vars[num].type == 'I') {
+    i = 0;
+    while (rc_vars[i].key != NULL) {
+	if (rc_vars[i].tab == tab) {
+	    if (rc_vars[i].type == 'I') {
 		tempwid = gtk_check_button_new_with_label 
-		    (rc_vars[num].description);
+		    (rc_vars[i].description);
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num, tbl_num + 1);
-		if (strcmp(rc_vars[num].var, "true") == 0)
+		if (strcmp(rc_vars[i].var, "true") == 0)
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
 		else
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), FALSE);
 		gtk_widget_show (tempwid);
-		rc_vars[num].widget = tempwid;
+		rc_vars[i].widget = tempwid;
 		tbl_col++;
 		if (tbl_col == 2) {
 		    tbl_col = 0;
@@ -1748,7 +1762,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } else {
 		tbl_len++;
 		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);
-		tempwid = gtk_label_new (rc_vars[num].description);
+		tempwid = gtk_label_new (rc_vars[i].description);
 		gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
 		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
 					   tempwid, 0, 1, tbl_len-1, tbl_len);
@@ -1757,12 +1771,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		tempwid = gtk_entry_new ();
 		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
 					   tempwid, 1, 2, tbl_len-1, tbl_len);
-		gtk_entry_set_text (GTK_ENTRY (tempwid), rc_vars[num].var);
+		gtk_entry_set_text (GTK_ENTRY (tempwid), rc_vars[i].var);
 		gtk_widget_show (tempwid);
-		rc_vars[num].widget = tempwid;
+		rc_vars[i].widget = tempwid;
 	    } 
 	}
-	num++;
+	i++;
     }
 }
 
@@ -1774,7 +1788,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
     extern void show_toolbar (void);
     int i = 0;
 
-    while (rc_vars[i].var != NULL) {
+    while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].widget != NULL) {
 	    if (rc_vars[i].type == 'I') {
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active)
@@ -1785,7 +1799,7 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 		tempstr = gtk_entry_get_text
 		    (GTK_ENTRY(rc_vars[i].widget));
 		if (tempstr != NULL && strlen(tempstr)) 
-		    strncpy(rc_vars[i].var, tempstr, MAXSTR - 1);
+		    strncpy(rc_vars[i].var, tempstr, rc_vars[i].len - 1);
 	    }
 	}
 	i++;
@@ -1805,11 +1819,10 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 
 void write_rc (void) 
 {
-    int i;
     char sectkey[96];
+    int i = 0;
 
-    i = 0;
-    while (rc_vars[i].var != NULL) {
+    while (rc_vars[i].key != NULL) {
 	sprintf(sectkey, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
 	gnome_config_set_string(sectkey, rc_vars[i].var);
 	i++;
@@ -1824,15 +1837,17 @@ void write_rc (void)
 static void read_rc (void) 
 {
     int i = 0;
-    char *gpath, *value = NULL;
+    gchar *value = NULL;
+    char gpath[MAXLEN];
 
-    while (rc_vars[i].var != NULL) {
-	gpath = g_strdup_printf("/gretl/%s/%s", 
-				rc_vars[i].description, 
-				rc_vars[i].key);
-	if ((value = gnome_config_get_string(gpath))) 
+    while (rc_vars[i].key != NULL) {
+	sprintf(gpath, "/gretl/%s/%s", 
+		rc_vars[i].description, 
+		rc_vars[i].key);
+	if ((value = gnome_config_get_string(gpath)) != NULL) {
 	    strcpy(rc_vars[i].var, value);
-	g_free(gpath);
+	    g_free(value);
+	}
 	i++;
     }
 
@@ -1844,25 +1859,28 @@ static void read_rc (void)
     }
     /* get recent file lists */
     for (i=0; i<MAXRECENT; i++) {
-	gpath =  g_strdup_printf("/gretl/recent data files/%d", i);
-	if ((value = gnome_config_get_string(gpath))) 
+	sprintf(gpath, "/gretl/recent data files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
 	    strcpy(datalist[i], value);
-	g_free(gpath);
-	if (value == NULL) break;
+	    g_free(value);
+	}
+	else break;
     }    
     for (i=0; i<MAXRECENT; i++) {
-	gpath = g_strdup_printf("/gretl/recent session files/%d", i);
-	if ((value = gnome_config_get_string(gpath))) 
+	sprintf(gpath, "/gretl/recent session files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
 	    strcpy(sessionlist[i], value);
-	g_free(gpath);
-	if (value == NULL) break;
+	    g_free(value);
+	}
+	else break;
     } 
     for (i=0; i<MAXRECENT; i++) {
-	gpath = g_strdup_printf("/gretl/recent script files/%d", i);
-	if ((value = gnome_config_get_string(gpath))) 
+	sprintf(gpath, "/gretl/recent script files/%d", i);
+	if ((value = gnome_config_get_string(gpath)) != NULL) { 
 	    strcpy(scriptlist[i], value);
-	g_free(gpath);
-	if (value == NULL) break;
+	    g_free(value);
+	}
+	else break;
     }
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 }
@@ -2417,6 +2435,7 @@ void mkfilelist (int filetype, const char *fname)
 	    }
 	}
     } 
+
     /* set first pointer to new file */
     filep[0] = filep[match];
 
@@ -2466,25 +2485,22 @@ static void gnome_printfilelist (int filetype)
 {
     int i;
     char **filep;
-    char *gpath, section[24];
+    char gpath[MAXLEN];
+    static char *section[] = {"recent data files",
+			      "recent session files",
+			      "recent script files"};
 
-    if (filetype == 1) {
-	strcpy(section, "recent data files");
-	filep = datap;
-    } else if (filetype == 2) {
-	strcpy(section, "recent session files");
-	filep = sessionp;
-    } else if (filetype == 3) {
-	strcpy(section, "recent script files");
-	filep = scriptp;
-    } else 
-	return;
+    switch (filetype) {
+    case 1: filep = datap; break;
+    case 2: filep = sessionp; break;
+    case 3: filep = scriptp; break;
+    default: return;
+    }
 
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i][0]) { 
-	    gpath = g_strdup_printf("/gretl/%s/%d", section, i);
+	    sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
 	    gnome_config_set_string(gpath, filep[i]);
-	    g_free(gpath);
 	} else break;
     }
 }
@@ -2496,25 +2512,22 @@ static void win_printfilelist (int filetype)
 {
     int i;
     char **filep;
-    char *rpath, section[24];
+    char rpath[MAXLEN];
+    static char *section[] = {"recent data files",
+			      "recent session files",
+			      "recent script files"};
 
-    if (filetype == 1) {
-	strcpy(section, "recent data files");
-	filep = datap;
-    } else if (filetype == 2) {
-	strcpy(section, "recent session files");
-	filep = sessionp;
-    } else if (filetype == 3) {
-	strcpy(section, "recent script files");
-	filep = scriptp;
-    } else 
-	return;
+    switch (filetype) {
+    case 1: filep = datap; break;
+    case 2: filep = sessionp; break;
+    case 3: filep = scriptp; break;
+    default: return;
+    }
 
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i][0]) { 
-	    rpath = g_strdup_printf("%s\\%d", section, i);
+	    sprintf(rpath, "%s\\%d", section[filetype - 1], i);
 	    write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
-	    g_free(rpath);
 	} else break;
     }
 }

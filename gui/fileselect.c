@@ -498,7 +498,7 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 
 	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
 			   fname);
-	if (get_base(startd, paths.datfile, SLASH) == 0) {
+	if (get_base(startd, paths.datfile, SLASH) == 1) {
 	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
 	    gotdir = 1;
 	}
@@ -514,101 +514,5 @@ void file_selector (char *msg, char *startdir, int action, gpointer data)
 
     gtk_widget_show(filesel);
 }
-
-/* The following For gtkextra 0.99.15 */
-
-#ifdef notdef
-
-static void show_tree (GtkWidget *widget, gpointer data)
-{
-    GtkWidget *filesel = (GtkWidget *) data;
-
-    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(filesel), TRUE); 
-}
-
-static void hide_tree (GtkWidget *widget, gpointer data)
-{
-    GtkWidget *filesel = (GtkWidget *) data;
-
-    gtk_icon_file_selection_show_tree(GTK_ICON_FILESEL(filesel), FALSE); 
-}
-
-/* ........................................................... */
-
-void new_file_selector (char *msg, char *startdir, int action, gpointer data) 
-{
-    GtkWidget *filesel, *box;
-    GtkWidget *show_button, *hide_button;
-    int gotdir = 0;
-
-    filesel = gtk_icon_file_selection_new(msg);
-
-    if (strstr(startdir, "/."))
-	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
-
-    gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
-
-    gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), 
-				       get_filters(action, data));
-
-
-    box = gtk_hbox_new(FALSE, 1);
-    gtk_box_pack_start(GTK_BOX(GTK_BIN(filesel)->child), box, TRUE, TRUE, 0);
-    gtk_widget_show(box);
-
-    show_button = gtk_button_new_with_label("Show Tree");
-    gtk_box_pack_start(GTK_BOX(box), show_button, TRUE, TRUE, 0);
-    gtk_widget_show(show_button);
-
-    hide_button = gtk_button_new_with_label("Hide Tree");
-    gtk_box_pack_start(GTK_BOX(box), hide_button, TRUE, TRUE, 0);
-    gtk_widget_show(hide_button);
-
-    gtk_signal_connect (GTK_OBJECT (GTK_ICON_FILESEL(filesel)->ok_button), 
-			"clicked",
-			GTK_SIGNAL_FUNC (filesel_callback), filesel);
-
-    gtk_signal_connect (GTK_OBJECT (show_button), "clicked",
-			GTK_SIGNAL_FUNC (show_tree), NULL);
-
-    gtk_signal_connect (GTK_OBJECT (hide_button), "clicked",
-			GTK_SIGNAL_FUNC (hide_tree), NULL);
-
-
-    if (action > END_OPEN) /* a file save action */
-	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
-
-    /* special cases */
-    if (action == SAVE_GNUPLOT || action == SAVE_LAST_GRAPH) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
-    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
-    else if (action == SAVE_HTML) 
-	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
-    else if (action == SAVE_DATA && paths.datfile[0] &&
-	!strcmp(paths.datfile + strlen(paths.datfile) - 4, ".dat")) {
-	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
-	char startd[MAXLEN];
-
-	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
-			   fname);
-	if (get_base(startd, paths.datfile, SLASH) == 0) {
-	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
-	    gotdir = 1;
-	}
-    }
-
-    if (!gotdir)
-	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
-
-    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
-					 (filesel)->cancel_button),
-			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
-			      GTK_OBJECT (filesel));
-
-    gtk_widget_show(filesel);
-}
-
-#endif /* bracketed code for gtkextra >= 0.99.15 */
 
 #endif /* end of non-MS Windows code */

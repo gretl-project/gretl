@@ -1040,8 +1040,10 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 
     sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
 
-    get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH);
-    strcat(ppaths->pgnuplot, "pgnuplot.exe");
+    if (get_base(ppaths->pgnuplot, ppaths->gnuplot, SLASH))
+	strcat(ppaths->pgnuplot, "pgnuplot.exe");
+    else
+	strcpy(ppaths->pgnuplot, "pgnuplot.exe");	
 
     return 0;
 }
