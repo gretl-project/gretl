@@ -65,6 +65,7 @@ static struct gui_help_item gui_help_items[] = {
     { GR_DUMMY,   "factorized" },
     { GR_BOX,     "boxplots" },
     { GR_NBOX,    "boxplots" },
+    { RANGE_MEAN, "range-mean" },
     { ONLINE,     "online" },
     { MARKERS,    "markers" },
     { EXPORT,     "export" },

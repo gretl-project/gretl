@@ -1199,6 +1199,7 @@ typedef struct png_plot_t {
     int pd;
     int title;
     guint cid;
+    int range_mean;
     zoom_t *zoom;
 } png_plot_t;
 
@@ -1360,6 +1361,9 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_last_graph(plot->spec, 0, NULL);
     }
+    else if (plot->range_mean && !strcmp(item, _("Help"))) { 
+	context_help (NULL, GINT_TO_POINTER(RANGE_MEAN));
+    }
     else if (!strcmp(item, _("Zoom..."))) { 
 	GdkCursor* cursor;
 
@@ -1400,6 +1404,7 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 #ifdef USE_GNOME
 	N_("Print..."),
 #endif
+	N_("Help"),
         N_("Close"),
         NULL
     };
@@ -1413,14 +1418,20 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 
     menu = gtk_menu_new();
 
-    if (plot->zoom->zoomed)
+    if (plot->zoom->zoomed) {
 	plot_items = zoomed_items;
-    else
+    } else {
 	plot_items = regular_items;
+    }
 
     while (plot_items[i]) {
 	if (plot->statusbar == NULL &&
 	    !strcmp(plot_items[i], "Zoom...")) {
+	    i++;
+	    continue;
+	}
+	if (plot->range_mean == 0 &&
+	    !strcmp(plot_items[i], "Help")) {
 	    i++;
 	    continue;
 	}
@@ -1721,13 +1732,17 @@ static int get_plot_ranges (png_plot_t *plot)
     setlocale(LC_NUMERIC, "C");
 #endif
     while (fgets(line, MAXLEN-1, fp)) {
+	if (strstr(line, "# range-mean")) {
+	    plot->range_mean = 1;
+	}
 	if (sscanf(line, "set xrange [%lf:%lf]", 
-		   &plot->xmin, &plot->xmax) == 2) 
+		   &plot->xmin, &plot->xmax) == 2) { 
 	    got_x = 1;
-	else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) 
+	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
 	    got_pd = 1;
-	else if (!strncmp(line, "set title", 9)) 
-	    plot->title = 1;	
+	} else if (!strncmp(line, "set title", 9)) {
+	    plot->title = 1;
+	}	
 	if (!strncmp(line, "plot ", 5)) break;
     }
 #ifdef ENABLE_NLS
@@ -1772,6 +1787,8 @@ int gnuplot_show_png (const char *plotfile)
     if (plot->zoom == NULL) return 1;
     plot->zoom->active = 0;
     plot->zoom->zoomed = 0;
+
+    plot->range_mean = 0;
 
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);

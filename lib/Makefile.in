@@ -54,17 +54,18 @@ SRCS = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
 	interact.c graphing.c monte_carlo.c nonparam.c discrete.c \
 	subsample.c calendar.c
 HDRS = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
-	compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
-	version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
-	nonparam.h discrete.h subsample.h calendar.h internal.h
+	compare.h dataio.h generate.h strutils.h describe.h printout.h \
+	modelprint.h version.h texprint.h var.h interact.h graphing.h \
+	monte_carlo.h nonparam.h discrete.h subsample.h calendar.h internal.h \
+	../cephes/libprob.h
 CEPHES_SRC = bdtr.c chdtr.c expx2.c gdtr.c incbet.c nbdtr.c pdtr.c unity.c \
 	btdtr.c const.c fdtr.c igam.c incbi.c ndtr.c polevl.c \
 	chbevl.c drand.c gamma.c igami.c mtherr.c ndtri.c stdtr.c
 
 OBJS = $(SRCS:.c=.o)
 LOBJS = $(SRCS:.c=.lo)
-CEPHES_OBJ = $(CEPHES_SRC:c=.o)
-CEPHES_LOBJ = $(CEPHES_SRC:c=.lo)
+CEPHES_OBJ = $(CEPHES_SRC:.c=.o)
+CEPHES_LOBJ = $(CEPHES_SRC:.c=.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
@@ -89,6 +90,7 @@ install-strip: $(LIBGRETL) install-data
 
 install-data: installdirs $(INSTALL_CFG)
 	$(INSTALL_DATA) $(srcdir)/*.h $(includedir)
+	$(INSTALL_DATA) ../cephes/libprob.h $(includedir)
 
 install-cfg-old: ../gretl-config
 	$(INSTALL_PROGRAM) ../gretl-config $(bindir)

@@ -48,7 +48,8 @@ GUIPROG = gretlw32.exe
 UPDATER = gretl_updater.exe
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar-2.dll plugins/gnumeric_import-2.dll \
-	plugins/excel_import-2.dll plugins/des_import.dll plugins/mp_ols.dll
+	plugins/excel_import-2.dll plugins/des_import.dll plugins/mp_ols.dll \
+	plugins/range-mean.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -173,6 +174,10 @@ dlls/libgtkextra-lite.dll: $(EXTRAOBJ) dllinit.o
 	-o $@ $^ $(GTKLIBS)
 
 plugins/stats_tables.dll: stats_tables.o dllinit.o 
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/range-mean.dll: range-mean.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
 

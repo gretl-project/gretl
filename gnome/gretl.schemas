@@ -28,6 +28,17 @@
     </schema>
 
     <schema>
+      <key>/schemas/apps/gretl/tramodir</key>
+      <applyto>/apps/gretl/tramodir</applyto>
+      <owner>gretl</owner>
+      <type>string</type>
+      <locale name="C">
+        <short>TRAMO/SEATS directory</short>
+        <long>Directory containing TRAMO/SEATS binaries</long>
+      </locale>
+    </schema>
+
+    <schema>
       <key>/schemas/apps/gretl/binbase</key>
       <applyto>/apps/gretl/binbase</applyto>
       <owner>gretl</owner>

@@ -429,7 +429,6 @@ gnome/Makefile
 gnome/gretl.keys 
 cli/Makefile 
 lib/Makefile 
-cephes/Makefile
 plugin/Makefile
 po/Makefile.in 
 share/Makefile

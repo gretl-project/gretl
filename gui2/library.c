@@ -2169,6 +2169,10 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
+#ifndef G_OS_WIN32
+
+extern char tramodir[];
+
 void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
@@ -2176,11 +2180,19 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
     GError *error = NULL;
     void *handle;
     int (*write_tramo_data) (char *, int, double **, const DATAINFO *, 
-			     PATHS *);
+			     const char *);
     PRN *prn;
     char fname[MAXLEN];
 
-    /* FIXME: screen out scalars and non-seasonal data */
+    if (!datainfo->vector[mdata->active_var]) {
+	errbox(_("Can't do this analysis on a scalar"));
+	return;
+    }
+
+    if (datainfo->pd == 1 || !dataset_is_time_series(datainfo)) {
+	errbox(_("This analysis is applicable only to seasonal time series"));
+	return;
+    }
 
     if (gui_open_plugin("tramo-seats", &handle)) return;
     write_tramo_data = get_plugin_function("write_tramo_data", handle);
@@ -2196,7 +2208,9 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    err = write_tramo_data (fname, mdata->active_var, Z, datainfo, &paths);
+    fprintf(stderr, "passing tramodir='%s'\n", tramodir);
+
+    err = write_tramo_data (fname, mdata->active_var, Z, datainfo, tramodir);
 
     close_plugin(handle);
 
@@ -2220,6 +2234,7 @@ void do_tramo (gpointer data, guint opt, GtkWidget *widget)
 
     view_buffer(prn, 120, 500, _("gretl: TRAMO analysis"), TRAMO, NULL);
 }
+#endif
 
 /* ........................................................... */
 
@@ -2255,8 +2270,7 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 	register_graph();
     }
 
-    /* FIXME TRAMO */
-    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), TRAMO, NULL);
+    view_buffer(prn, 60, 350, _("gretl: range-mean statistics"), RANGE_MEAN, NULL);
 }
 
 /* ........................................................... */

@@ -157,6 +157,7 @@ char viewdvi[MAXSTR] = "windvi.exe";
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
+char tramodir[MAXSTR] = "";
 # ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;
@@ -474,7 +475,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
       ADF, NULL },
+#ifndef G_OS_WIN32
     { N_("/Variable/TRAMO analysis"), NULL, do_tramo, 0, NULL }, 
+#endif
     { N_("/Variable/Range-mean graph"), NULL, do_range_mean, 0, NULL }, 
     { N_("/Variable/Runs test"), NULL, do_menu_op, RUNS, NULL }, 
     { N_("/Variable/sep2"), NULL, NULL, 0, "<Separator>" },

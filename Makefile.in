@@ -29,8 +29,8 @@ export
 
 tooldir = $(topsrc)/tools
 
-SUBDIRS = cephes lib cli $(GUIDIR) plugin po
-ALLSUBDIRS = cephes lib cli gui gui2 plugin po tests
+SUBDIRS = lib cli $(GUIDIR) plugin po
+ALLSUBDIRS = lib cli gui gui2 plugin po tests
 
 .PHONY :
 
@@ -75,7 +75,7 @@ distclean: clean
 	rm -f config.log config.cache config.status config.h 
 	rm -f gretl_sh gretl-config gretl2_sh gretl2.pc
 	rm -f libtool Makefile lib/Makefile cli/Makefile gui/Makefile \
-	share/Makefile plugin/Makefile cephes/Makefile
+	share/Makefile plugin/Makefile 
 	rm -rf win32/dlls win32/import-libs win32/gtkextra-lib win32/plugins
 
 check:
