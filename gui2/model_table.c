@@ -70,6 +70,7 @@ static int model_already_listed (const MODEL *pmod)
     int i;
 
     for (i=0; i<model_list_len; i++) {
+	if (model_list[i] == NULL) continue;
 	if (pmod == model_list[i]) return 1;
     }
 
@@ -241,14 +242,15 @@ static int model_list_empty (void)
 
 static int common_estimator (void)
 {
-    int i, ci0;
-
-    ci0 = (model_list[0])->ci;
-
-    if (model_list_len == 1) return ci0;
+    int i, ci0 = -1;
 
     for (i=1; i<model_list_len; i++) {
-	if ((model_list[i])->ci != ci0) return 0;
+	if (model_list[i] == NULL) continue;
+	if (ci0 == -1) {
+	    ci0 = (model_list[i])->ci;
+	} else {
+	    if ((model_list[i])->ci != ci0) return 0;
+	}
     }  
 
     return ci0;
@@ -256,16 +258,17 @@ static int common_estimator (void)
 
 static int common_df (void)
 {
-    int i, dfn0, dfd0;
-
-    if (model_list_len == 1) return 1;
-
-    dfn0 = (model_list[0])->dfn;
-    dfd0 = (model_list[0])->dfd;
+    int i, dfn0 = -1, dfd0 = -1;
 
     for (i=1; i<model_list_len; i++) {
-	if ((model_list[i])->dfn != dfn0) return 0;
-	if ((model_list[i])->dfd != dfd0) return 0;
+	if (model_list[i] == NULL) continue;
+	if (dfn0 == -1) {
+	    dfn0 = (model_list[i])->dfn;
+	    dfd0 = (model_list[i])->dfd;
+	} else {
+	    if ((model_list[i])->dfn != dfn0) return 0;
+	    if ((model_list[i])->dfd != dfd0) return 0;
+	}
     }  
 
     return 1;
