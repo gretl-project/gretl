@@ -1,4 +1,4 @@
-version 0.99
+02/27/2002 version 0.99
 - add option for HTTP proxy when contacting gretl data server
 - fix bugs in drag and drop under Windows
 - fix crashing bug when trying to save a data file with over

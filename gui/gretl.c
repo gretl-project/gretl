@@ -392,45 +392,15 @@ GtkItemFactoryEntry data_items[] = {
     { "/Model/_Rank correlation...", NULL, gretl_callback, SPEARMAN, NULL },
     { "/Model/_Pooled OLS (panel)...", NULL, model_callback, POOLED, NULL },
     { "/_Help", NULL, NULL, 0, "<LastBranch>" },
-    { "/Help/All _commands", NULL, help_show, 0, NULL },
+    { "/Help/_GUI commands", NULL, do_gui_help, 0, NULL },
+    { "/Help/_Script commands syntax", NULL, do_script_help, 1, NULL },
     { "/Help/sep1", NULL, NULL, 0, "<Separator>" },
-    { "/Help/Generate variable syntax", NULL, do_help, GENR, NULL },
-    { "/Help/sep2", NULL, NULL, 0, "<Separator>" },
-    { "/Help/Graphing", NULL, do_help, GNUPLOT, NULL },
-    { "/Help/sep3", NULL, NULL, 0, "<Separator>" },
-    { "/Help/_Estimation/_Ordinary Least Squares", NULL, do_help, OLS, NULL },
-    { "/Help/_Estimation/_Weighted Least Squares", NULL, do_help, WLS, NULL },
-    { "/Help/_Estimation/HCC_M", NULL, do_help, HCCM, NULL },
-    { "/Help/_Estimation/H_eteroskedasticity", NULL, do_help, HSK, NULL },
-    { "/Help/_Estimation/_Cochrane-Orcutt", NULL, do_help, CORC, NULL },
-    { "/Help/_Estimation/_Hildreth-Lu", NULL, do_help, HILU, NULL },
-    { "/Help/_Estimation/_Autoregressive estimation", NULL, do_help, 
-      AR, NULL },   
-    { "/Help/_Estimation/_Vector Autoregression", NULL, do_help, VAR, NULL },
-    { "/Help/_Estimation/_Two-Stage Least Squares", 
-      NULL, do_help, TSLS, NULL }, 
-    { "/Help/_Estimation/_Logit", NULL, do_help, LOGIT, NULL }, 
-    { "/Help/_Estimation/_Probit", NULL, do_help, PROBIT, NULL }, 
-    { "/Help/_Estimation/_Rank Correlation", NULL, do_help, SPEARMAN, NULL },
-    { "/Help/_Estimation/Pooled OLS (panel)", NULL, do_help, POOLED, NULL },  
-    { "/Help/sep4", NULL, NULL, 0, "<Separator>" },
-    { "/Help/_Hypothesis tests/_omit variables", NULL, do_help, OMIT, NULL },
-    { "/Help/Hypothesis tests/_add variables", NULL, do_help, ADD, NULL },
-    { "/Help/Hypothesis tests/_LM test", NULL, do_help, LMTEST, NULL },
-    { "/Help/Hypothesis tests/_Dickey-Fuller test", 
-      NULL, do_help, ADF, NULL },
-    { "/Help/Hypothesis tests/_Chow test", NULL, do_help, CHOW, NULL },
-    { "/Help/Hypothesis tests/Cointe_gration test", NULL, do_help, COINT, NULL },
-    { "/Help/Hypothesis tests/_Panel diagnostics", NULL, do_help, POOLED, NULL },
-    { "/Help/sep5", NULL, NULL, 0, "<Separator>" },
-    { "/Help/Online databases", NULL, do_help, ONLINE, NULL },
-    { "/Help/sep6", NULL, NULL, 0, "<Separator>" },
-    { "/Help/_Script commands syntax", NULL, help_show, 1, NULL },
-    { "/Help/sep7", NULL, NULL, 0, "<Separator>" },
 #if defined(USE_GNOME)
     { "/Help/Manual in HTML", NULL, gnome_help, 0, NULL },
+    { "/Help/sep2", NULL, NULL, 0, "<Separator>" },
 #elif defined(G_OS_WIN32)
     { "/Help/Manual in HTML", NULL, win_help, 0, NULL },
+    { "/Help/sep2", NULL, NULL, 0, "<Separator>" },
 #endif
     { "/Help/_About gretl", NULL, about_dialog, 0, NULL }
 };
@@ -1640,7 +1610,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;    
 	case 6:
 	    toolxpm = mini_manual_xpm;
-	    toolfunc = help_show;
+	    toolfunc = do_gui_help;
 	    break;
 	case 7:
 	    toolxpm = mini_plot_xpm;

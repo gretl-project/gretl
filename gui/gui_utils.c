@@ -59,8 +59,20 @@ static char datalist[MAXRECENT][MAXSTR], *datap[MAXRECENT];
 static char sessionlist[MAXRECENT][MAXSTR], *sessionp[MAXRECENT];
 static char scriptlist[MAXRECENT][MAXSTR], *scriptp[MAXRECENT];
 
-/* helpfile vars */
+/* helpfile stuff */
+struct help_head_t {
+    char *name;
+    int *topics;
+    int *pos;
+    int ntopics;
+};
+struct gui_help_string {
+    int pos;
+    char string[16];
+};
 static int help_length, gui_help_length, script_help_length;
+static struct help_head_t **cli_heads, **gui_heads;
+static struct gui_help_string **gui_help_strings;
 
 /* searching stuff */
 static int look_for_string (char *haystack, char *needle, int nStart);
@@ -227,40 +239,12 @@ GtkItemFactoryEntry model_items[] = {
 
 GtkItemFactoryEntry help_items[] = {
     { "/_Topics", NULL, NULL, 0, "<Branch>" },    
-    { "/Topics/Generate variable syntax", NULL, do_help, GENR, NULL },
-    { "/Topics/sep1", NULL, NULL, 0, "<Separator>" },
-    { "/Topics/Graphing", NULL, do_help, GNUPLOT, NULL },
-    { "/Topics/sep2", NULL, NULL, 0, "<Separator>" },
-    { "/Topics/Estimation/Ordinary Least Squares", 
-      NULL, do_help, OLS, NULL },
-    { "/Topics/Estimation/Weighted Least Squares", 
-      NULL, do_help, WLS, NULL },
-    { "/Topics/Estimation/Cochrane-Orcutt", NULL, do_help, CORC, NULL },
-    { "/Topics/Estimation/HCCM", NULL, do_help, HCCM, NULL },
-    { "/Topics/Estimation/Hildreth-Lu", NULL, do_help, HILU, NULL },
-    { "/Topics/Estimation/Heteroskedasticity", NULL, do_help, HSK, NULL },
-    { "/Topics/Estimation/Autoregressive estimation", NULL, do_help, AR, NULL },
-    { "/Topics/Estimation/Vector Autoregression", NULL, do_help, VAR, NULL },
-    { "/Topics/Estimation/Two-Stage Least Squares", NULL, do_help, TSLS, NULL }, 
-    { "/Topics/Estimation/_Logit", NULL, do_help, LOGIT, NULL }, 
-    { "/Topics/Estimation/_Probit", NULL, do_help, PROBIT, NULL }, 
-    { "/Topics/Estimation/_Rank Correlation", NULL, do_help, SPEARMAN, NULL },
-    { "/Topics/Estimation/Pooled OLS (panel)", NULL, do_help, POOLED, NULL }, 
-    { "/Topics/sep3", NULL, NULL, 0, "<Separator>" },
-    { "/Topics/Hypothesis tests/omit variables", NULL, do_help, OMIT, NULL },
-    { "/Topics/Hypothesis tests/add variables", NULL, do_help, ADD, NULL },
-    { "/Topics/Hypothesis tests/LM test", NULL, do_help, LMTEST, NULL },
-    { "/Topics/Hypothesis tests/Dickey-Fuller test", 
-      NULL, do_help, ADF, NULL },
-    { "/Topics/Hypothesis tests/Chow test", NULL, do_help, CHOW, NULL },
-    { "/Topics/Hypothesis tests/Cointegration test", NULL, do_help, 
-      COINT, NULL },
-    { "/Topics/Hypothesis tests/_Panel diagnostics", NULL, do_help, POOLED, NULL },
     { "/_Find", NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry script_help_items[] = {
+    { "/_Topics", NULL, NULL, 0, "<Branch>" },
     { "/_Find", NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
@@ -736,26 +720,200 @@ void save_session (char *fname)
 
 /* ......................................................... */
 
-void helpfile_init (void)
+static int extra_command_number (const char *s)
+{
+    if (!strcmp(s, "graphing")) return GR_PLOT;
+    if (!strcmp(s, "factorized")) return GR_DUMMY;
+    if (!strcmp(s, "boxplots")) return GR_BOX;
+    if (!strcmp(s, "online")) return ONLINE;
+    if (!strcmp(s, "markers")) return MARKERS;
+    if (!strcmp(s, "export")) return EXPORT;
+    if (!strcmp(s, "export")) return EXPORT;
+    if (!strcmp(s, "sampling")) return SMPLBOOL;
+    if (!strcmp(s, "panel")) return PANEL;
+    if (!strcmp(s, "compact")) return COMPACT;
+    return 0;
+}
+
+/* ......................................................... */
+
+static int real_helpfile_init (int cli)
 {
     FILE *fp;
-    char testline[MAXLEN];
+    char *helpfile;
+    struct help_head_t **heads = NULL;
+    char testline[MAXLEN], topicword[32];
+    int i, g, pos, match, nheads = 0, topic = 0;
+    int length = 0, memfail = 0;
 
-    fp = fopen(paths.helpfile, "r");
-    if (fp != NULL) { 
-	while (fgets(testline, MAXLEN-1, fp)) gui_help_length++;
-	fclose(fp);
-    } else fprintf(stderr, "help file %s is not accessible\n", 
-		   paths.helpfile);
+    helpfile = (cli)? paths.cmd_helpfile : paths.helpfile;
 
-    fp = fopen(paths.cmd_helpfile, "r");
-    if (fp != NULL) { 
-	while (fgets(testline, MAXLEN-1, fp)) script_help_length++;
-	fclose(fp);
-    } else fprintf(stderr, "help file %s is not accessible\n", 
-		   paths.cmd_helpfile);
+    /* first pass: find length and number of topics */
+    fp = fopen(helpfile, "r");
+    if (fp == NULL) {
+	fprintf(stderr, "help file %s is not accessible\n", helpfile);
+	return -1;
+    }
 
+    while (!memfail && fgets(testline, MAXLEN-1, fp)) {
+	if (*testline == '@') {
+	    chopstr(testline);
+	    match = 0;
+	    for (i=0; i<nheads; i++) {
+		if (!strcmp(testline + 1, (heads[i])->name)) {
+		    match = 1;
+		    (heads[i])->ntopics += 1;
+		    break;
+		}
+	    }
+	    if (!match) {
+		heads = realloc(heads, (nheads + 2) * sizeof *heads);
+		if (heads != NULL) { 
+		    heads[nheads] = malloc(sizeof **heads);
+		    if (heads[nheads] != NULL) {
+			(heads[nheads])->name = malloc(strlen(testline));
+			if ((heads[nheads])->name != NULL) {
+			    strcpy((heads[nheads])->name, testline + 1);
+			    (heads[nheads])->ntopics = 1;
+			    nheads++;
+			} else memfail = 1;
+		    } else memfail = 1;
+		} else memfail = 1;
+	    }
+	} else length++;
+    }
+    fclose(fp);
+
+    if (memfail) return -1;
+
+    for (i=0; i<nheads; i++) {
+	(heads[i])->topics = malloc((heads[i])->ntopics * sizeof(int));
+	if ((heads[i])->topics == NULL) memfail = 1;
+	(heads[i])->pos = malloc((heads[i])->ntopics * sizeof(int));
+	if ((heads[i])->pos == NULL) memfail = 1; 
+	(heads[i])->ntopics = 0;
+    }
+    heads[i] = NULL;
+
+    if (memfail) return -1;
+
+    /* second pass, assemble the topic list */
+    fp = fopen(helpfile, "r");
+    i = 0;
+    pos = 0;
+    g = 0;
+    while (!memfail && fgets(testline, MAXLEN-1, fp)) {
+	if (topic == 1) 
+	    sscanf(testline, "%31s", topicword);
+	if (*testline == '@') {
+	    chopstr(testline);
+	    match = -1;
+	    for (i=0; i<nheads; i++) {
+		if (!strcmp(testline + 1, (heads[i])->name)) {
+		    match = i;
+		    break;
+		}
+	    }
+	    if (match >= 0) {
+		int t, m = (heads[match])->ntopics;
+
+		t = command_number(topicword);
+		if (t) (heads[match])->topics[m] = t;
+		else (heads[match])->topics[m] = 
+			 extra_command_number(topicword);
+		if (t == 0) {
+		    gui_help_strings = realloc(gui_help_strings, 
+					       (g+2) * sizeof *gui_help_strings);
+		    if (gui_help_strings != NULL) {
+			gui_help_strings[g] = malloc(sizeof **gui_help_strings);
+			if (gui_help_strings[g] != NULL) {
+			    strcpy((gui_help_strings[g])->string, topicword);
+			    (gui_help_strings[g])->pos = pos - 1;
+			    g++;
+			} else memfail = 1;
+		    } else memfail = 1;
+		}
+		(heads[match])->pos[m] = pos - 1;
+		(heads[match])->ntopics += 1;
+	    }		
+	} else pos++;
+	if (*testline == '#') topic = 1;
+	else topic = 0;
+    }
+    fclose(fp);
+
+    if (g) gui_help_strings[g] = NULL;
+
+    if (cli) cli_heads = heads;
+    else gui_heads = heads;
+
+    return length;
+}
+
+/* ......................................................... */
+
+void helpfile_init (void)
+{
+    gui_help_length = real_helpfile_init(0);
+    script_help_length = real_helpfile_init(1);
     help_length = gui_help_length;
+}
+
+/* ......................................................... */
+
+static char *get_gui_help_string (int pos)
+{
+    int i;
+
+    for (i=0; gui_help_strings[i] != NULL; i++) {
+	if ((gui_help_strings[i])->pos == pos)
+	    return (gui_help_strings[i])->string;
+    }
+    return NULL;
+}
+
+/* ........................................................... */
+
+static void add_help_topics (windata_t *hwin, int script)
+{
+    int i, j;
+    GtkItemFactoryEntry helpitem;
+    gchar *mpath = "/_Topics";
+    struct help_head_t **heads = (script)? cli_heads : gui_heads;
+
+    helpitem.path = NULL;
+
+    /* See if there are any topics to add */
+    if (heads == NULL) return;
+
+    /* put the topics under the menu heading */
+    for (i=0; heads[i] != NULL; i++) {
+	if (helpitem.path == NULL)
+	    helpitem.path = mymalloc(80);
+	helpitem.accelerator = NULL;
+	helpitem.callback_action = 0; 
+	helpitem.item_type = "<Branch>";
+	sprintf(helpitem.path, "%s/%s", mpath, (heads[i])->name);
+	helpitem.callback = NULL; 
+	gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
+	for (j=0; j<(heads[i])->ntopics; j++) {
+	    helpitem.accelerator = NULL;
+	    helpitem.callback_action = (heads[i])->pos[j]; 
+	    helpitem.item_type = NULL;
+	    if ((heads[i])->topics[j] < NC) {
+		sprintf(helpitem.path, "%s/%s/%s", 
+			mpath, (heads[i])->name, 
+			commands[(heads[i])->topics[j]]);
+	    } else {
+		sprintf(helpitem.path, "%s/%s/%s", 
+			mpath, (heads[i])->name, 
+			get_gui_help_string((heads[i])->pos[j]));
+	    }
+	    helpitem.callback = (script)? do_script_help : do_gui_help; 
+	    gtk_item_factory_create_item(hwin->ifac, &helpitem, NULL, 1);
+	}
+    }
+    free(helpitem.path);
 }
 
 /* ........................................................... */
@@ -768,44 +926,14 @@ static windata_t *helpwin (int script)
 	help_length = script_help_length;
 	vwin = view_file(paths.cmd_helpfile, 0, 0, 77, 400, 
 			 CLI_HELP, script_help_items);
+	add_help_topics(vwin, 1);
     } else {
 	help_length = gui_help_length;
 	vwin = view_file(paths.helpfile, 0, 0, 77, 400, 
 			 HELP, help_items);
+	add_help_topics(vwin, 0);
     }
     return vwin;
-}
-
-/* ........................................................... */
-
-static int help_index (const char *str, int cli)
-{
-    gchar helpline[84];
-    gchar word[32];
-    int found = 0, pos = 0;
-    FILE *fp;
-
-    if (cli)
-	fp = fopen(paths.cmd_helpfile, "r");
-    else
-	fp = fopen(paths.helpfile, "r");
-
-    if (fp == NULL) return -1;
-
-    while (!found && fgets(helpline, 83, fp)) {
-	if (*helpline == '#') {
-	    fgets(helpline, 12, fp);
-	    if (sscanf(helpline, "%s", word) == 1 && 
-		!strcmp(word, str)) {
-		found = 1;
-	    } else pos++;
-	}
-	pos++;
-    }
-    fclose(fp);
-
-    if (!found) return -1;
-    return pos - 1;
 }
 
 /* ........................................................... */
@@ -829,19 +957,28 @@ void datafile_find (GtkWidget *widget, gpointer data)
 
 void context_help (GtkWidget *widget, gpointer data)
 {
-    int help_code = GPOINTER_TO_INT(data);
+    int i, j, help_code = GPOINTER_TO_INT(data);
+    int pos = 0;
 
-    do_help(NULL, (guint) help_code, NULL);
+    for (i=0; gui_heads[i] != NULL; i++) {
+	for (j=0; j<(gui_heads[i])->ntopics; j++)
+	    if (help_code == (gui_heads[i])->topics[j])
+		pos = (gui_heads[i])->pos[j];
+    }
+    do_gui_help(NULL, pos, NULL);
 }
 
 /* ........................................................... */
 
-void help_show (gpointer data, guint cli, GtkWidget *widget)
+static void real_do_help (guint pos, int cli)
 {
-    if (help_view == NULL) {
-	windata_t *vwin = helpwin(cli);
+    double frac;
+    gfloat adj;
 
-	if (vwin != NULL) help_view = vwin->w;
+    if (help_view == NULL) {
+	windata_t *hwin = helpwin(cli);
+
+	if (hwin != NULL) help_view = hwin->w;
 	gtk_signal_connect(GTK_OBJECT(help_view), "destroy",
 			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
 			   &help_view);	
@@ -849,69 +986,39 @@ void help_show (gpointer data, guint cli, GtkWidget *widget)
 	gdk_window_show(help_view->parent->window);
 	gdk_window_raise(help_view->parent->window);
     }
+    
+    frac = (double) pos * (double) GTK_TEXT(help_view)->vadj->upper;
+    frac /= (double) help_length;
+    adj = 0.999 * frac;
 
-    if (cli > 1) 
-	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
-				 (gfloat) cli * 
-				 GTK_TEXT(help_view)->vadj->upper / 
-				 script_help_length);
-    else
-	gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 0.0);
-} 
+    gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, adj);
+}
 
 /* ........................................................... */
 
-void do_help (gpointer data, guint code, GtkWidget *widget) 
+void do_gui_help (gpointer data, guint pos, GtkWidget *widget) 
 {
-    int pos = 0;
-    char cmdstr[12];
+    real_do_help(pos, 0);
+}
 
-    if (code == MEANTEST2) code = MEANTEST;
-    else if (code == MODEL_GENR) code = GENR;
+/* ........................................................... */
 
-    if (code == GR_PLOT || code == GR_XY || code == GNUPLOT)
-	strcpy(cmdstr, "graphing");
-    else if (code == GR_DUMMY)
-	strcpy(cmdstr, "factorized");
-    else if (code == GR_BOX || code == GR_NBOX)
-	strcpy(cmdstr, "boxplots");
-    else if (code == ONLINE)
-	strcpy(cmdstr, "online");
-    else if (code == MARKERS)
-	strcpy(cmdstr, "markers");
-    else if (code == EXPORT)
-	strcpy(cmdstr, "export");
-    else if (code == SMPLBOOL || code == SMPLDUM)
-	strcpy(cmdstr, "sampling");
-    else if (code == PANEL) 
-	strcpy(cmdstr, "panel");
-    else if (code == COMPACT) 
-	strcpy(cmdstr, "compact");
-    else if (code < NC)
-	strcpy(cmdstr, commands[code]);
-    else
-	pos = -1;
+void do_script_help (gpointer data, guint pos, GtkWidget *widget) 
+{
+    real_do_help(pos, 1);
+}
 
-    if (!pos) pos = help_index(cmdstr, 0);
-    if (pos == -1) {
-	errbox("Sorry, no help is available on this topic");
-	return;
-    }
-    if (help_view == NULL) {
-	windata_t *vwin = helpwin(0);
+/* ........................................................... */
 
-	if (vwin != NULL) help_view = vwin->w;
-	gtk_signal_connect(GTK_OBJECT(help_view), "destroy",
-			   GTK_SIGNAL_FUNC(gtk_widget_destroyed),
-			   &help_view);	
-    } else {
-	gdk_window_show(help_view->parent->window);
-	gdk_window_raise(help_view->parent->window);
-    }
+static int pos_from_cmd (int cmd)
+{
+    int i, j;
 
-    gtk_adjustment_set_value(GTK_TEXT(help_view)->vadj, 
-			     (gfloat) pos * 
-			     GTK_TEXT(help_view)->vadj->upper / help_length);
+    for (i=0; cli_heads[i] != NULL; i++)
+	for (j=0; j<(cli_heads[i])->ntopics; j++)
+	    if (cmd == (cli_heads[i])->topics[j])
+		return (cli_heads[i])->pos[j];
+    return 0;
 }
 
 /* ........................................................... */
@@ -938,13 +1045,10 @@ static void edit_script_help (GtkWidget *widget, gpointer data)
 	    while (*q && !isspace(*q)) q++;
 	*word = '\0';
 	strncat(word, p, (q - p > 8)? 8 : q - p);
-	pos = help_index(word, 1);
-	if (pos > 0) 
-	    help_show(NULL, pos, NULL);
-	else
-	    help_show(NULL, 1, NULL);
+	pos = pos_from_cmd(command_number(word));
+	real_do_help(pos, 1);
     } else
-	help_show(NULL, 1, NULL);
+	real_do_help(0, 1);
 
     g_free(text);
 }
@@ -1407,6 +1511,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* insert the file text */
     memset(tempstr, 0, sizeof tempstr);
     while (fgets(tempstr, sizeof tempstr - 1, fd)) {
+	if (tempstr[0] == '@') continue;
 	if (tempstr[0] == '?') 
 	    colptr = (role == CONSOLE)? &red : &blue;
 	if (tempstr[0] == '#') {

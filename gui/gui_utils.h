@@ -67,9 +67,9 @@ void close_window (gpointer data, guint win_code, GtkWidget *widget);
 
 void context_help (GtkWidget *widget, gpointer data);
 
-void help_show (gpointer data, guint cli, GtkWidget *widget);
+void do_gui_help (gpointer data, guint pos, GtkWidget *widget);
 
-void do_help (gpointer data, guint help_code, GtkWidget *widget);
+void do_script_help (gpointer data, guint pos, GtkWidget *widget);
 
 void windata_init (windata_t *mydata);
 

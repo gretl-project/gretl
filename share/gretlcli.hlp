@@ -1,5 +1,6 @@
 #
 add
+@Tests
 Usage:          add varlist 
 Examples:       add 5 7 9	          add xx yy zz 
 The variables in varlist are added to the previous model and the new model
@@ -12,6 +13,7 @@ this command.  Type help genr for more details on this.
 
 #
 addto
+@Tests
 Usage:          addto model_ID varlist 
 Example:        addto 2 5 7 9	
 Works like the "add" command, except that you specify a previous model (using
@@ -21,6 +23,7 @@ and 9 to Model 2.
 
 #
 adf
+@Tests
 Usage:	        adf order varname
 Example:        adf 2 x1
 Computes statistics for two Dickey-Fuller tests.  In each case the null
@@ -42,6 +45,7 @@ ones.
 
 #
 ar
+@Estimation
 Usage:          ar lags ; depvar indepvar      or
                 ar lags ; -o depvar indepvar     
 Example:        ar 1 3 4 ; y 0 x1 x2 x3 
@@ -64,6 +68,7 @@ immediately after this command.  Type help genr for more details on this.
 
 #
 arch
+@Tests
 Usage:          arch lag depvar indepvar    
 Examples:       arch 4 1 0 2 4 6 7      or  arch 4 y 0 x1 x2 x3 x4 
 This command tests the model for ARCH of the order specified in "lag", which 
@@ -75,6 +80,7 @@ estimation is then performed on the original model.
 
 #
 chow
+@Tests
 Usage:         chow obs
 Examples:      chow 25
                chow 1988.1
@@ -89,6 +95,7 @@ break at the given split point.
 
 #
 coint
+@Tests
 Usage:	        coint order depvar indepvar
 Examples:       coint 2 y x
                 coint 4 y x1 x2
@@ -101,6 +108,7 @@ statistics can be referred to the usual statistical tables.
 
 #
 corc
+@Estimation
 Usage:          corc depvar indepvar       or   corc -o depvar indepvar 
 Examples:       corc 1 0 2 4 6 7                corc -o 1 0 2 4 6 7 
                 corc y 0 x1 x2 x3               corc -o y 0 x1 x2 x3 
@@ -119,6 +127,7 @@ immediately after this command.  Type help genr for more details on this.
 
 #
 corr
+@Statistics
 Usage:         corr 
                corr varlist
 corr prints correlation coefficients for all pairs of variables in the data
@@ -127,6 +136,7 @@ correlation coefficients for the listed variables.
 
 #
 corrgm
+@Statistics
 Usage:          corrgm varname or varnumber 
                 corrgm varname or varnumber maxlag
 Prints the values of the autocorrelation function for the variable specified
@@ -144,6 +154,7 @@ automatically.
 
 #
 criteria
+@Utilities
 Usage:          criteria ess T k        e.g. criteria 23.45 45 8
 Computes the model selection statistics (see Section 4.4 of Ramanathan),
 given ess (error sum of squares), the number of observations (T), and the
@@ -152,6 +163,7 @@ of previously defined variables.
 
 #
 critical
+@Utilities
 Usage:          critical t df           e.g. critical t 20
                 critical X df           e.g. critical X 5
                 critical F dfn dfd      e.g. critical F 3 37
@@ -161,6 +173,7 @@ F), for the specified degrees of freedom, at the common significance levels.
 
 #
 cusum
+@Tests
 Usage:          cusum
 Must follow the estimation of a model via OLS.  Performs the CUSUM test for
 parameter stability.  A series of (scaled) one-step ahead forecast errors is
@@ -179,6 +192,7 @@ details.
 
 #
 delete
+@Dataset
 Usage:          delete
 Removes the last (highest numbered) variable from the current data set.  Use
 with caution: no confirmation is asked.  Can be useful for getting rid of
@@ -187,6 +201,7 @@ last variable.
 
 #
 diff
+@Transformations
 Usage:          diff varlist 
 The first difference of each variable in varlist is obtained and the 
 result stored in a new variable with the prefix "d_".  Thus "diff x y" 
@@ -194,10 +209,12 @@ creates the new variables d_x = x(t) - x(t-1) and d_y = y(t) - y(t-1).
 
 #
 endloop
+@Programming
 Terminates a simulation loop.  See "loop".
 
 # 
 eqnprint
+@Printing
 Usage:          eqnprint
                 eqnprint -o
 Must follow the estimation of a model via OLS.  Prints the estimated model
@@ -211,6 +228,7 @@ for processing; otherwise it must be included in a document.
 
 #
 fcast
+@Prediction
 Usage:          fcast startobs endobs newvarname
                 fcast newvarname
 Example:        fcast fitted 
@@ -225,6 +243,7 @@ process.
 
 #
 fcasterr
+@Prediction
 Usage:          fcasterr startobs endobs
                 fcasterr startobs endobs -o
 After estimating an OLS model which includes a constant and at least
@@ -236,6 +255,7 @@ is given the results will also be displayed using gnuplot.
 
 #
 fit
+@Prediction
 Usage:		fit
 The fit command (which must follow an estimation command) is a shortcut
 for the fcast command.  It generates fitted values, in a series called
@@ -246,6 +266,7 @@ for gnuplot was compiled in).
 
 #
 freq
+@Statistics
 Usage:          freq varname (or varno) 
 Prints the frequency distribution for varname or varno; the results of a
 Chi-square test for normality are also reported.  The statistic for
@@ -260,6 +281,7 @@ In interactive mode a gnuplot graph of the distribution is generated.
 
 #
 genr
+@Dataset
 Usage:          genr newvarname = formula
 Creates new variables, usually through transformations of existing
 variables. See also diff, logs, lags, ldiff, multiply and square for
@@ -362,6 +384,7 @@ genr d3 = (x=3).
 
 #
 gnuplot
+@Graphs
 Usage:          gnuplot yvar1 xvar [ flag ]
                 gnuplot yvar1 yvar2 xvar [ flag ]
 		gnuplot yvar xvar dummy -z
@@ -384,6 +407,7 @@ gpttmp<n>.plt".
 
 #
 graph
+@Graphs
 Usage:          graph var1 var2 
                 graph -o var1 var2 
                 graph var1 var2 var3 
@@ -396,6 +420,7 @@ against time.
 
 #
 hccm
+@Estimation
 Usage:          hccm depvar indepvar      
             or  hccm -o depvar indepvar 
 Presents OLS estimates with the heteroscedasticity consistent covariance 
@@ -404,11 +429,13 @@ the MacKinnon-White "jacknife" procedure.
 
 #
 help
+@Utilities
 help                 gives a list of esl commands
 help commandname     describes commandname (e.g. help smpl)
 
 #
 hilu
+@Estimation
 Usage:          hilu depvar indepvar       or   hilu -o depvar indepvar 
 Examples:       hilu 1 0 2 4 6 7                hilu -o 1 0 2 4 6 7 
                 hilu y 0 x1 x2 x3               hilu -o y 0 x1 x2 x3 
@@ -427,6 +454,7 @@ for more details on this.
 
 #
 hsk
+@Estimation
 Usage:          hsk depvar indepvar 	   
             or  hsk -o depvar indepvar 
 Prints heteroscedasticity corrected estimates and associated statistics.  
@@ -440,6 +468,7 @@ on this.
 
 #
 import
+@Dataset
 Usage:          import csv_file
                 import -o box_file
 Without the -o flag, brings in data from a comma-separated values (CSV) format
@@ -453,6 +482,7 @@ the Data Extraction Service of the US Bureau of the Census.
 
 #
 info
+@Dataset
 Usage:          info
 Prints out any information contained in the header file corresponding
 to the current datafile.  This information must be enclosed between
@@ -460,12 +490,14 @@ to the current datafile.  This information must be enclosed between
 
 #
 labels
+@Dataset
 Usage:          labels
 Prints out the informative labels for any variables that have been
 generated using the "genr" command. 
 
 #
 lags
+@Transformations
 Usage:          lags varlist 
 Creates new variables which are lagged values of each of the variables in 
 varlist.  The number of lagged variables equals the periodicity.  For
@@ -476,6 +508,7 @@ with the underscore.
 
 #
 ldiff
+@Transformations
 Usage:          ldiff varlist 
 The first difference of the natural log of each variable in varlist is 
 obtained and the result stored in a new variable with the prefix "ld_".  
@@ -485,6 +518,7 @@ Thus "ldiff x y" creates the new variables
 
 #
 lmtest
+@Tests
 Usage:          lmtest
                 lmtest -o 
 Must immediately follow an ols command.  Prints the Lagrange multiplier test
@@ -499,6 +533,7 @@ statistics cannot be obtained.
 
 #
 logit
+@Estimation
 Usage:          logit depvar indepvars
 Logit regression. The dependent variable should be a binary variable.  Maximum
 likelihood estimates of the coefficients on indepvars are obtained via
@@ -510,6 +545,7 @@ zero apart from the constant.
 
 #
 logs
+@Transformations
 Usage:          logs varlist 
 The natural log of each of the variables in varlist is obtained and the 
 result stored in a new variable with the prefix l_ which is "el" underscore.
@@ -517,6 +553,7 @@ Thus, "logs x y" creates the new variables l_x = ln(x) and l_y = ln(y).
 
 #
 loop
+@Programming
 Usage:          loop number_of_times
                 loop while condition
 		loop for i=start..end
@@ -573,6 +610,7 @@ Example of loop code (Monte Carlo):
 
 #
 meantest
+@Tests
 Usage:          meantest x1 x2
                 meantest x1 x2 -o
 Calculates the t statistic for the null hypothesis that the population means
@@ -584,6 +622,7 @@ of non-missing observations for the two variables.)
    
 #
 multiply
+@Transformations
 Usage:          multiply x suffix vars
 Examples:       multiply invpop pc 3 4 5 6
                 multiply 1000 big x1 x2 x3
@@ -602,6 +641,7 @@ which will create incomepc = income * invpop, expendpc = expend * invpop.
 
 #
 nulldata
+@Dataset
 Usage:          nulldata series_length
 Example:        nulldata 100 
 Establishes a "blank" data set, containing only a constant, with
@@ -613,6 +653,7 @@ the data set.  The nulldata command may be useful in conjunction with
 
 #
 ols
+@Estimation
 Usage:          ols depvar indepvar       or     ols -o depvar indepvar 
 Examples:       ols 1 0 2 4 6 7                  ols -o 1 0 2 4 6 7  
                 ols y 0 x1 x2 x3                 ols -o y 0 x1 x2 x3  
@@ -631,6 +672,7 @@ help genr for more details on this.
 
 #
 omit
+@Tests
 Usage:          omit varlist 
 Examples:       omit 5 7 9           
 		omit xx yy zz 
@@ -646,6 +688,7 @@ genr for more details on this.
 
 #
 omitfrom
+@Tests
 Usage:          omitfrom model_ID varlist 
 Example:        omitfrom 2 5 7 9           
 Works like the "omit" command, except that you specify a previous model (using
@@ -655,6 +698,7 @@ the base for omitting variables.  The example above omits variables number 5,
 
 #
 open
+@Dataset
 Usage:          open datafile
 Opens a data file.  If a data file is already open, it is replaced by the
 newly opened one.  The program will try to detect the format of the data file
@@ -662,6 +706,7 @@ newly opened one.  The program will try to detect the format of the data file
 
 #
 pergm
+@Statistics
 Usage:          pergm varname 
                 pergm varname -o
 Computes and displays (and if not in batch mode, graphs) the spectrum of the
@@ -674,6 +719,7 @@ integration order is zero.
 
 #
 plot
+@Graphs
 Usage:          plot x1       plot x1 x2 
                 plot 3 7      plot -o x1 x2
 Plots data values for specified variables, for the range of observations
@@ -685,6 +731,7 @@ be used only if the variables have approximately the same range of values
 
 #
 print
+@Printing
 Prints the values of the specified variables for the current stobs-endobs 
 range.
 
@@ -697,6 +744,7 @@ are printed in consecutive blocks.
 
 #
 probit
+@Estimation
 Usage:          probit depvar indepvars
 Probit regression. The dependent variable should be a binary variable.
 Maximum likelihood estimates of the coefficients on indepvars are obtained via
@@ -708,6 +756,7 @@ zero apart from the constant.
 
 #
 pvalue
+@Utilities
 Usage interactively:     pvalue 
 Usage in batch mode (or gretl console mode):
      Normal distribution:     pvalue 1 xvalue
@@ -721,11 +770,13 @@ for the denominator.
 
 #
 quit
+@Utilities
 Exit from esl. ('q' is a shortcut; 'x' exits without a prompt to save
 output.)
 
 #
 rhodiff
+@Transformations
 Usage:         rhodiff rholist ; varlist
 Examples:      rhodiff .65 ; 2 3 4
                rhodiff r1 r2 ; x1 x2 x3
@@ -740,13 +791,15 @@ names of variables previously defined.
 
 #
 run
+@Programming
 Usage:          run inputfile
 If the file "inputfile" contains esl commands, this command (invoked
 from within esl) will execute them one by one.  This is a useful way of
 executing batch commands within an interactive session.
 
 # 
-runs 
+runs
+@Tests 
 Usage:          runs varname 
 Carries out the nonparametric runs test for randomness of the specified
 variable.  If you want to test for randomness of deviations from the median,
@@ -757,6 +810,7 @@ runs signx1
 
 #
 scatters
+@Graphs
 Usage:          scatters yvar ; xvarlist    or
 		scatters yvarlist ; xvar
 Examples:       scatters 1 ; 2 3 4 5
@@ -771,6 +825,7 @@ will be ignored.
 
 #
 seed
+@Programming
 Usage:          seed integer
 Sets the seed for the pseudo-random number generator for the uniform() and
 normal() functions (see the genr command).  By default the seed is set
@@ -780,6 +835,7 @@ set the seed manually.
 
 #
 setobs
+@Dataset
 Usage:          setobs periodicity startobs
 Examples:       setobs 4 1990.1
                 setobs 12 1978.03
@@ -791,6 +847,7 @@ representing the date or panel ID of the first observation.
 
 #
 shell
+@Utilities
 Usage:		! [shell command]
 A "!" at the beginning of an ESL command line is interpreted as an escape
 to the user's shell.  Thus arbitrary shell commands can be excuted from
@@ -798,6 +855,7 @@ within ESL.
 
 #
 sim
+@Dataset
 Usage:          sim stobs endobs y a0 a1 a2 ...
 Simulates values for y for the periods stobs through endobs.  The variable y 
 must have been defined earlier with appropriate initial values.  Also stobs 
@@ -814,6 +872,7 @@ Examples:
 
 #
 smpl
+@Dataset
 Usage:         smpl startobs endobs
                smpl -o dummyvar
                smpl -o
@@ -843,6 +902,7 @@ reimpose structure with the "setobs" command.
 
 #
 spearman
+@Statistics
 Usage:          spearman x y
                 spearman x y -o
 Prints Spearman's rank correlation coefficient for the two variables x and y.
@@ -859,6 +919,7 @@ is the negative of the original first.  For example:
 
 #
 square
+@Transformations
 Usage:          square x y       or     square -o x y 
 Generates new variables which are squares and cross products of selected 
 variables (-o will create the cross products).  For the above example, new 
@@ -868,6 +929,7 @@ because we will get the same variable.
 
 #
 store
+@Dataset
 Usages:          store filename flag              
                  store filename flag varlist 
 Examples:        store mydata.gdt
@@ -896,6 +958,7 @@ Possible values of the optional "flag" are as follows:
 
 #
 summary
+@Statistics
 summary            prints summary statistics for all variables in the file
 summary 3 7 9      prints summary statistics for variable numbers 3, 7, and 9
 summary x y z      prints summary statistics for the variables x, y, and z
@@ -905,6 +968,7 @@ kurtosis.
 
 #
 tabprint
+@Printing
 Usage:          tabprint
                 tabprint -o
 Must follow the estimation of a model via OLS.  Prints the estimated model
@@ -918,12 +982,14 @@ for processing; otherwise it must be included in a document.
 
 #
 testuhat
+@Tests
 Usage:          testuhat
 Must follow a model estimation command.  Gives the frequency distribution for
 the residual from the model along with a chi-square test for normality.
 
 #
 tsls
+@Estimation
 Usage:          tsls depvar varlist1 ; varlist2       [-o is optional]
 Example:        tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6 
 This command computes two-stage least squares (tsls) estimates of parameters.
@@ -940,6 +1006,7 @@ command.  Type help genr for more details on this.
 
 #
 var
+@Estimation
 Usage:          var order depvar indepvar
 Examples:       var 4 x1 const time x2 x3
                 var 3 1 0 2 3 4
@@ -954,18 +1021,21 @@ variables, and an F-test for the maximum lag.
 
 # 
 varlist
+@Dataset
 Usage:          varlist
 Prints a complete list of variables currently defined. "list" and "ls" are
 synonyms.
 
 #
 vartest
+@Tests
 Usage:          vartest x1 x2
 Calculates the F statistic for the null hypothesis that the population
 variances for the variables x1 and x2 are equal, and shows its p-value.
 	
 #
 wls
+@Estimation
 Usage:          wls weightvar depvar indepvar            [-o optional]
 Weighted least squares estimates are obtained using weightvar as the weight,
 depvar as the dependent variable and indepvar as the list of independent

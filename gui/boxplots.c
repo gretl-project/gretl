@@ -169,7 +169,7 @@ static gint popup_activated (GtkWidget *w, gpointer data)
         file_selector("Save boxplot file", SAVE_BOXPLOT_XPM, ptr);
 #endif
     else if (!strcmp(item, "Help"))
-	do_help (NULL, GR_BOX, NULL);
+	context_help (NULL, GINT_TO_POINTER(GR_BOX));
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);
 	grp->popup = NULL;

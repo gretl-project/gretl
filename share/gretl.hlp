@@ -1,5 +1,6 @@
 #
 add
+@Tests
 Add variables to a model and test for their significance
 
 This command needs a list of variables, referenced by their names or numbers
@@ -13,6 +14,7 @@ coefficients are jointly significant at the 5 percent level.
 
 #
 adf
+@Tests
 Augmented Dickey-Fuller test
 
 This command needs an integer lag order.
@@ -39,6 +41,7 @@ ones.
 
 #
 ar
+@Estimation
 Generalized Cochrane-Orcutt (autoregressive) estimation
 
 This command needs two lists: first a list of lags of the residual to
@@ -61,6 +64,7 @@ variables separated by spaces.  Use the number zero for a constant term.
 
 #
 arch
+@Tests
 Test for ARCH (Autoregressive Conditional Heteroskedasticity)
 
 This command needs an integer lag order.
@@ -73,6 +77,7 @@ square estimation is then performed on the original model.
 
 #
 boxplots
+@Graphs
 Exploratory data analysis
 
 These plots (after Tukey and Chambers) display the distribution of a variable.
@@ -138,6 +143,7 @@ draw comparative boxplots with the following line in the boxplots dialog:
 
 #
 chow
+@Tests
 Chow test for structural homogeneity
 
 This command need an obervation number (or date, with dated data).
@@ -152,6 +158,7 @@ null hypothesis of no structural break at the given split point.
 
 #
 coint
+@Tests
 Cointegration test
 
 This command needs an integer lag order, followed by the ID number or name of
@@ -167,6 +174,7 @@ statistics can be referred to the usual statistical tables.)
 
 #
 compact
+@Dataset
 Writing data to a lower frequency
 
 When you add to a dataset a series that is of higher frequency, it is
@@ -189,6 +197,7 @@ options for the compacting:
 
 #
 corc
+@Estimation
 Cochrane-Orcutt model
 
 This command needs a list of variables, by name or number, separated by
@@ -211,6 +220,7 @@ currently in effect.
 
 #
 diff
+@Transformations
 
 The first difference of each variable in the given list is obtained and the
 result stored in a new variable with the prefix "d_".  Thus for instance the
@@ -218,6 +228,7 @@ new variables d_x = x(t) - x(t-1).
 
 #
 export
+@Dataset
 Export data from gretl to other formats.  
 
 You may export data in Comma-Separated Values (CSV) format: such data may be
@@ -230,6 +241,7 @@ http://www.r-project.org/ and http://www.octave.org/
 
 #
 factorized plot
+@Graphs
 
 This command requires the names or numbers of three variables, the last of
 which must be a dummy variable (values 1 or 0).  The first variable is plotted
@@ -244,6 +256,7 @@ in one color and those for women in another (with a legend to identify them).
 
 #
 genr
+@Transformations
 Generate a new variable 
 Usage:          newvarname = transformation
 
@@ -331,6 +344,7 @@ create these, use the formulas d1 = (x=1), d2 = (x=2), and d3 = (x=3).
 
 #
 graphing
+@Graphs
 generating plots of various kinds
 
 Gretl calls a separate program, namely gnuplot, to generate graphs.  Gnuplot
@@ -359,6 +373,7 @@ http://ricardo.ecn.wfu.edu/gnuplot.html or www.gnuplot.org.
 
 #
 hccm
+@Estimation
 Heteroskedasticity Consistent Covariance Matrix
 
 This command runs a regression where the coefficients are estimated via the
@@ -368,6 +383,7 @@ namely using the MacKinnon-White "jackknife" procedure.
 
 #
 hilu
+@Estimation
 Hildreth-Lu model
 
 This command needs a list of variables, by name or number, separated by
@@ -382,6 +398,7 @@ is performed for the observation range stobs+1 endobs currently in effect.
 
 #
 hsk
+@Estimation
 Heteroskedasticity-corrected estimates
 
 This procedure needs a list of variables, by name or number, separated by
@@ -399,6 +416,7 @@ fitted values from the auxiliary regression.
 
 #
 lags
+@Transformations
 
 Creates new variables which are lagged values of each of the variables in the
 list supplied.  The number of lagged counterparts to each of the listed
@@ -409,6 +427,7 @@ x(t-3) and x_4 = x(t-4).
 
 #
 ldiff
+@Transformations
 
 The first difference of the natural log of each variable in the supplied list
 is obtained and the result stored in a new variable with the prefix "ld_".
@@ -417,6 +436,7 @@ Thus for instance the new variable ld_x = ln[x(t)] - ln[x(t-1)].
 #
 logit
 Logit regression
+@Estimation
 
 This command needs a list of variables, by name or number, separated by
 spaces.
@@ -431,6 +451,7 @@ zero apart from the constant.
 
 #
 logs
+@Transformations
 
 The natural log of each of the variables in the supplied list is obtained and
 the result stored in a new variable with the prefix l_ which is "el"
@@ -438,6 +459,7 @@ underscore.  Thus for instance the new variable l_x = ln(x).
 
 #
 loop
+@Programming
 repeated commands
 
 Usage:          loop number_of_times
@@ -496,6 +518,7 @@ Example of loop code (Monte Carlo):
    
 #
 lmtest
+@Tests
 Lagrange Multiplier test
 
 Under this heading fall several hypothesis tests.  What they have in common is
@@ -511,6 +534,7 @@ hypothesis should be rejected.
 
 #
 markers
+@Dataset
 Add case markers to data set
 
 This command needs the name of a file containing "case markers", that is,
@@ -524,6 +548,7 @@ gretl's Data menu.
 
 #
 meantest
+@Tests
 
 Calculates the t statistic for the null hypothesis that the population means
 are equal for two selected variables, and shows its p-value.  The command may
@@ -534,6 +559,7 @@ variables.)
 
 #
 nulldata
+@Dataset
 
 Establishes a "blank" data set, containing only a constant, with periodicity 1
 and the specified number of observations.  This may be used for simulation
@@ -543,6 +569,7 @@ nulldata command may be useful in conjunction with "loop".
 
 #
 ols
+@Estimation
 Ordinary Least Squares model
 
 This command needs a list of variables, by name or number, separated by
@@ -564,6 +591,7 @@ printed.
 
 #
 omit
+@Tests
 Omit variables from a model and test for their joint significance
 
 This command needs a list of variables, referenced by their names or numbers
@@ -577,6 +605,7 @@ significant at the 5 percent level.
 
 #
 online databases
+@Dataset
 Access databases via the internet
 
 gretl is able to access databases at the gretl website, at Wake Forest
@@ -614,6 +643,7 @@ which chunks of gretl code are borrowed.)
 
 #
 panel
+@Dataset
 Set panel data structure
 
 The two options here are "stacked time series" and "stacked cross sections".
@@ -637,6 +667,7 @@ be recorded in the data file and you won't have to set it again.
 
 #
 pooled
+@Estimation
 Pooled OLS estimation
 
 This command is for use with panel data.  To take advantage of it, you should
@@ -681,6 +712,7 @@ For a rigorous discussion of this topic, see Greene's Econometric Analysis
 
 #
 probit
+@Estimation
 Probit regression
 
 This command needs a list of variables, by name or number, separated by
@@ -696,6 +728,7 @@ coefficients are zero apart from the constant.
 
 #
 rhodiff
+@Transformations
 Usage:         rhodiff rho varlist
 Example:       rhodiff .65 2 3 4
 
@@ -705,6 +738,7 @@ list, rd_v1 = v1(t) - rho*v1(t-1) is created.
 
 #
 scatters
+@Graphs
 Multiple pairwise scatter plots
 
 This command wants list input in one or other of these forms:
@@ -722,6 +756,7 @@ six; any extra variable in the list will be ignored.
 
 #
 seed
+@Programming
 Initialize the random number generator
 
 Requires an integer as input.  Sets the seed for the pseudo-random number
@@ -732,6 +767,7 @@ pseudo-random numbers you need to set the seed manually.
 
 #
 setobs
+@Dataset
 Set data frequency and starting observation
 
 Use this commmand to force the program to interpret the current data set as
@@ -747,6 +783,7 @@ Examples of valid input:
 
 #
 sim
+@Dataset
 Put simulated values into a variable
 
 This command requires a starting observation, an ending observation, the name
@@ -771,6 +808,7 @@ will generate, from obs 15 to 25:
 
 #
 sampling
+@Dataset
 
 Select a sub-sample of the current data set.
 
@@ -801,6 +839,7 @@ observation, see "smpl" below.
 
 #
 smpl
+@Dataset
 
 Reset the sample range by specifying a starting and ending observation
 (Sample/Set range...).  Use this mechanism for sub-sampling with time-series
@@ -810,6 +849,7 @@ consistent with the frequency of the data, e.g. "1985.1" for quarterly data or
 
 #
 spearman
+@Statistics
 
 Prints Spearman's rank correlation coefficient for a specified pair of
 variables.  The variables do not have to be ranked manually in advance; the
@@ -824,6 +864,7 @@ is the negative of the original first.  For example:
 
 #
 square
+@Transformations
 
 Generates new variables which are the squares of the variables in the given
 list.  The new variables are named with the prefix "sq_", so for instance the
@@ -831,6 +872,7 @@ new variable sq_x = x squared.
 
 #
 store
+@Dataset
 
 Save a gretl dataset.  There are two options for the format of the saved
 data.  
@@ -841,6 +883,7 @@ data.
 
 #
 tsls
+@Estimation
 Two-Stage Least Squares
 
 This command requires two lists of variables (by name or number).  The
@@ -864,6 +907,7 @@ should be referenced in both lists.
 
 #
 var
+@Estimation
 Vector Autoregression
 
 This command takes a list: the first (integer) entry is the lag order of the
@@ -883,12 +927,14 @@ variables, and an F-test for the maximum lag.
 
 #
 vartest
+@Tests
 
 Calculates the F statistic for the null hypothesis that the population
 variances for the two selected variables are equal, and shows its p-value.
 
 #
 wls
+@Estimation
 Weighted Least Squares model
 
 This command needs a list of variables, by name or number, separated by
