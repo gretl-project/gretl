@@ -74,7 +74,7 @@ void tex_dcolumn_double (double xx, char *numstr)
 
     sprintf(numstr, "%#.*g", GRETL_DIGITS, xx);
 
-    if (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT) {
+    if (a != 0.0 && (a >= UPPER_F_LIMIT || a < LOWER_F_LIMIT)) {
 	int expon;
 	char *p, exponstr[8];
 
@@ -113,8 +113,16 @@ static void tex_make_cname (const char *orig, char *cname)
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		     int c, PRN *prn)
 {
-    char tmp[16], coeff[32], sderr[32];
-    double t_ratio = pmod->coeff[c-1] / pmod->sderr[c-1];
+    char tmp[16], coeff[32], sderr[32], tratio[64], pval[64];
+
+    if (pmod->sderr[c-1] > 0.0) {
+	sprintf(tratio, "%.4f", pmod->coeff[c-1] / pmod->sderr[c-1]);
+	sprintf(pval, "%.4f", tprob(pmod->coeff[c-1] / pmod->sderr[c-1], 
+				    pmod->dfd));
+    } else {
+	sprintf(tratio, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+	sprintf(pval, "\\multicolumn{1}{c}{\\rm %s}", I_("undefined"));
+    }
 
     *tmp = 0;
     if (pmod->aux == AUX_ARCH) {
@@ -130,13 +138,13 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
 		"    %s &\n"
-		"      %.4f &\n"
-		"        %.4f \\\\\n",  
+		"      %s &\n"
+		"        %s \\\\\n",  
 		tmp,
 		coeff,
 		sderr,
-		t_ratio,
-		tprob(t_ratio, pmod->dfd));	
+		tratio,
+		pval);	
     } else { /* LOGIT, PROBIT */
 	char slope[32];
 
@@ -146,12 +154,12 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, "%s &\n"
 		"  %s &\n"
 		"    %s &\n"
-		"      %.4f &\n"
+		"      %s &\n"
 		"        %s \\\\\n",  
 		tmp,
 		coeff,
 		sderr,
-		t_ratio,
+		tratio,
 		(pmod->list[c])? slope : "");
     }
 

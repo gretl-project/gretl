@@ -2082,9 +2082,10 @@ int _laggenr (int iv, int lag, int opt, double ***pZ,
 
     strcpy(pdinfo->varname[v], s);
 
-    if (opt) 
+    if (opt) { 
 	sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
 		pdinfo->varname[iv], lag);
+    }
 
     return 0;
 }
@@ -2776,9 +2777,18 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* name of var to simulate */
-    strcpy(varname, toks[2]);
-    _esl_trunc(varname, 8);
+    *varname = 0;
+    strncat(varname, toks[2], 8);
     nv = varindex(pdinfo, varname);
+
+    if (nv > 0 && nv < pdinfo->v && pdinfo->vector[nv] == 0) {
+	sprintf(gretl_errmsg, _("variable %s is a scalar"), 
+		pdinfo->varname[nv]);
+	free(a);
+	free(toks);
+	return 1;
+    }
+		
     if (nv == 0 || nv >= pdinfo->v) {
 	sprintf(gretl_errmsg, (nv)? _("For 'sim', the variable must already "
 				      "exist") :

@@ -240,7 +240,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 	sprintf(tmp, "%s (%d, %d)", _("F-statistic"), pmod->dfn, pmod->dfd);
 	if (na(pmod->fstt)) {
-	    pprintf(prn, "  %s = %s", tmp, _("undefined"));
+	    pprintf(prn, "  %s %s\n", tmp, _("undefined"));
 	} else {
 	    pprintf(prn, "  %s = %g", tmp, pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
@@ -248,11 +248,16 @@ static void Fline (const MODEL *pmod, PRN *prn)
     }
 
     else if (TEX_FORMAT(prn->format)) {
-	char x1str[32];
+	if (na(pmod->fstt)) {
+	    pprintf(prn, "$F(%d, %d)$ & \\multicolumn{1}{c}{\\rm %s} \\\\\n", pmod->dfn, pmod->dfd,
+		    I_("undefined"));
+	} else {
+	    char x1str[32];
 
-	tex_dcolumn_double(pmod->fstt, x1str);
-	pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
-	print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	    tex_dcolumn_double(pmod->fstt, x1str);
+	    pprintf(prn, "$F(%d, %d)$ & %s \\\\\n", pmod->dfn, pmod->dfd, x1str);
+	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
+	}
     }
 
     else if (RTF_FORMAT(prn->format)) {
@@ -260,7 +265,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
 
 	sprintf(tmp, "%s (%d, %d)", I_("F-statistic"), pmod->dfn, pmod->dfd);
 	if (na(pmod->fstt)) {
-	    pprintf(prn, RTFTAB "%s = %s", tmp, I_("undefined"));
+	    pprintf(prn, RTFTAB "%s %s\n", tmp, I_("undefined"));
 	} else {
 	    pprintf(prn, RTFTAB "%s = %g", tmp, pmod->fstt);
 	    print_f_pval_str(fdist(pmod->fstt, pmod->dfn, pmod->dfd), prn);
@@ -309,7 +314,7 @@ static void dhline (const MODEL *pmod, PRN *prn)
 
     sderr = pmod->sderr[i-1];
 
-    if ((T * sderr * sderr) >= 1.0) return;
+    if (pmod->ess <= 0.0 || (T * sderr * sderr) >= 1.0) return;
 
     h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
 
@@ -328,7 +333,6 @@ static void dhline (const MODEL *pmod, PRN *prn)
     else if (RTF_FORMAT(prn->format)) {
 	char tmp[128];
 
-	h = pmod->rho * sqrt(T/(1 - T * sderr * sderr));
 	sprintf(tmp, I_("Durbin's h stat. %g  First-order autocorr. coeff %g"), 
 		h, pmod->rho);
 	pprintf(prn, RTFTAB "%s\n", tmp);
@@ -1577,11 +1581,16 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 	    "\\textsc{hq}      & %#g & "
 	    "\\textsc{schwarz} & %#g & "  
 	    "\\textsc{shibata} & %#g \\\\\n"
-	    "\\textsc{gcv}     & %#g & "  
-	    "\\textsc{rice}    & %#g\n",
+	    "\\textsc{gcv}     & %#g & ",  
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
-	    pmod->criterion[6], pmod->criterion[7]);
+	    pmod->criterion[6]);
+
+    if (pmod->criterion[7] > 0.0) 
+	pprintf(prn, "\\textsc{rice}    & %#g\n", pmod->criterion[7]);
+    else
+	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
+    
     pprintf(prn, "\\end{tabular*}\n\n");
 }
 
@@ -1620,8 +1629,7 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 	    pmod->criterion[2], pmod->criterion[3], 
 	    pmod->criterion[4], pmod->criterion[5], pmod->criterion[6]);
     if (pmod->criterion[7] > 0.0) 
-	pprintf(prn, " \\qc %#g\\cell", 
-		pmod->criterion[7]);
+	pprintf(prn, " \\qc %#g\\cell", pmod->criterion[7]);
     else
 	pprintf(prn, " \\qc %s\\cell", I_("undefined"));
     pprintf(prn, " \\qr \\cell \\qr \\cell");

@@ -395,9 +395,9 @@ static void fix_exponent (char *s)
    zeros.  The following function checks for this and lops it
    off if need be. */
 
-static void cut_extra_zero (char *numstr, char decpoint, int digits)
+static void old_cut_extra_zero (char *numstr, char decpoint, int digits)
 {
-    char *p, tmp[16];
+    char *p, tmp[32];
 
     *tmp = decpoint;
     memset(tmp + 1, '0', digits);
@@ -406,6 +406,21 @@ static void cut_extra_zero (char *numstr, char decpoint, int digits)
     if ((p = strstr(numstr, tmp))) {
 	tmp[digits] = '\0';
 	strcpy(p, tmp);
+    }
+}
+
+static void cut_extra_zero (char *numstr, char decpoint, int digits)
+{
+    char *p;
+
+    if ((p = strchr(numstr, 'E'))) return;
+
+    if ((p = strchr(numstr, decpoint))) {
+	size_t len = strlen(numstr);
+
+	if (len > digits + 1 + (*numstr == '0')) {
+	    numstr[len - 2] = 0;
+	}
     }
 }
 
@@ -428,6 +443,7 @@ void gretl_print_fullwidth_double (double x, int digits, PRN *prn)
 #endif
 
     sprintf(numstr, "%#.*G", digits, x);
+
     fix_exponent(numstr);
 
     p = strchr(numstr, decpoint);

@@ -59,6 +59,7 @@ int ok_in_loop (int ci)
 	ci == STORE ||
 	ci == PRINT ||
 	ci == PVALUE ||
+	ci == SIM ||
 	ci == SMPL ||
 	ci == SUMMARY ||
 	ci == IF ||

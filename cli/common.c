@@ -38,8 +38,9 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	return 1;
     }
 
-    if (!echo_off && plp->type == FOR_LOOP)
+    if (!echo_off && plp->type == FOR_LOOP) {
 	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
+    }
 
     switch (command.ci) {
 
@@ -51,6 +52,14 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    return 1;
 	} 
 	break;
+
+    case SIM:
+	err = simulate(linecpy, &Z, datainfo);
+	if (err) {
+	    errmsg(err, prn);
+	    return 1;
+	}
+	break;	
 
     case OLS:
 	/* if this is the first time round the loop, allocate space

@@ -485,7 +485,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		   the second lag of varname: in this case auto-
 		   generate the lag variable. */
 		if (_parse_lagvar(field, &lagvar, pdinfo)) {
-		    if (_laggenr(lagvar.varnum, lagvar.lag, 0, pZ, pdinfo)) {
+		    if (_laggenr(lagvar.varnum, lagvar.lag, 1, pZ, pdinfo)) {
 			command->errcode = 1;
 			sprintf(gretl_errmsg, 
 				_("generation of lag variable failed"));
@@ -493,9 +493,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 			return;
 		    } else { 
 			command->list[j] = pdinfo->v - 1;
-			if (cmds) 
-			    pprintf(cmds, "genr %s\n", 
-				    pdinfo->label[pdinfo->v - 1]);
+			if (cmds) {
+			    pprintf(cmds, "genr %s\n", pdinfo->label[pdinfo->v - 1]);
+			}
 			n += strlen(field) + 1;
 			continue; 
 		    }
