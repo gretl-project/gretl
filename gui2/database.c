@@ -34,10 +34,6 @@
 #include <netinet/in.h>
 #endif
 
-static GtkTargetEntry db_drag_target[] = {
-    { "db_pointer", GTK_TARGET_SAME_APP, GRETL_POINTER }    
-};
-
 #define RECNUM long
 #define NAMELENGTH 16
 #define RATSCOMMENTLENGTH 80
@@ -759,7 +755,8 @@ static void db_drag_series (GtkWidget *w, GdkDragContext *context,
 static void db_drag_connect (windata_t *dbwin)
 {
     gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
-			db_drag_target, 1, GDK_ACTION_COPY);
+			&gretl_drag_targets[GRETL_POINTER],
+			1, GDK_ACTION_COPY);
     gtk_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
 		       G_CALLBACK(db_drag_series),
 		       dbwin);
