@@ -8,8 +8,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.996\n"
-"POT-Creation-Date: 2002-05-30 11:55-0400\n"
-"PO-Revision-Date: 2002-05-30 12:05-0400\n"
+"POT-Creation-Date: 2002-05-30 13:17-0400\n"
+"PO-Revision-Date: 2002-05-30 13:20-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -1092,7 +1092,7 @@ msgstr "Espectro"
 #: lib/src/describe.c:640
 #, c-format
 msgid "Bartlett window, length %d"
-msgstr ""
+msgstr "Ventana de Bartlett, %d"
 
 #: lib/src/describe.c:649
 #, fuzzy, c-format
@@ -1107,11 +1107,13 @@ msgid "Number of observations = %d\n"
 msgstr "Número de observaciones = %d\n"
 
 #: lib/src/describe.c:652
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Using Bartlett lag window, length %d\n"
 "\n"
 msgstr ""
+"Usando ventana de Bartlett, %d\n"
+"\n"
 
 #: lib/src/describe.c:653
 msgid ""
@@ -2010,7 +2012,15 @@ msgstr ""
 msgid "Observation"
 msgstr "Observación"
 
-#: lib/src/graphing.c:765 lib/src/printout.c:1363
+#: lib/src/graphing.c:743 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+msgid "left"
+msgstr "izquierda"
+
+#: lib/src/graphing.c:747 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+msgid "right"
+msgstr "derecha"
+
+#: lib/src/graphing.c:765 lib/src/graphing.c:1080 lib/src/printout.c:1363
 msgid "fitted"
 msgstr "ajustado"
 
@@ -2018,23 +2028,23 @@ msgstr "ajustado"
 msgid "actual"
 msgstr "actual"
 
-#: lib/src/graphing.c:783
-#, c-format
-msgid "%f + %f*x title 'least squares fit' w lines\n"
-msgstr "%f + %f*x title 'ajuste mínimo cuadrático' w lines\n"
+#: lib/src/graphing.c:784
+msgid "least squares fit"
+msgstr "ajuste mínimo cuadrático"
 
-#: lib/src/graphing.c:989
-msgid "set label 'Test statistic for normality:' at graph .05, graph .9\n"
-msgstr ""
-"set label 'Estadístico de contraste de normalidad:' at graph .05, graph .9\n"
+#: lib/src/graphing.c:992
+msgid "Test statistic for normality"
+msgstr "Contraste de normalidad"
 
-#: lib/src/graphing.c:991
+#: lib/src/graphing.c:993
 #, c-format
-msgid ""
-"set label 'Chi-squared(2) = %.3f, pvalue %.5f' at graph .05, graph .85\n"
-msgstr ""
-"set label 'Chi-cuadrado(2) = %.3f, valor p %.5f' en gráfico .05, "
-"gráfico .85\n"
+msgid "Chi-squared(2) = %.3f, pvalue %.5f"
+msgstr "Chi-cuadrado(2)= %.3f valor-p %.5f"
+
+#: lib/src/graphing.c:1080
+#, c-format
+msgid "95%% confidence interval"
+msgstr "Intervalo de confianza 95%%"
 
 #: lib/src/interact.c:286
 #, c-format
@@ -3105,14 +3115,6 @@ msgid ""
 msgstr ""
 "\n"
 "Normal standard: area a la %s de %f = %.4g\n"
-
-#: lib/src/pvalues.c:363 lib/src/pvalues.c:381
-msgid "right"
-msgstr "derecha"
-
-#: lib/src/pvalues.c:363 lib/src/pvalues.c:381
-msgid "left"
-msgstr "izquierda"
 
 #: lib/src/pvalues.c:365 lib/src/pvalues.c:383
 #, c-format
@@ -4428,7 +4430,7 @@ msgstr "Guardar histórico de instrucciones"
 msgid "Save command script"
 msgstr "Guardar guión de instrucciones"
 
-#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1912
+#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1911
 msgid "Save data file"
 msgstr "Guardar fichero de datos"
 
@@ -5645,7 +5647,7 @@ msgstr "/Archivo/Abrir datos/archivo de muestra/Ramanathan..."
 msgid "/File/Open data/sample file/Greene..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
 
-#: gui/gretl.c:209 gui/gretl.c:1370
+#: gui/gretl.c:209 gui/gretl.c:1369
 msgid "/File/Open data/sample file/Penn World Table..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Tabla mundial de Penn..."
 
@@ -5856,7 +5858,7 @@ msgstr ""
 msgid "/File/Open command file/practice file/Greene..."
 msgstr "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Greene..."
 
-#: gui/gretl.c:298 gui/gretl.c:1374
+#: gui/gretl.c:298 gui/gretl.c:1373
 msgid "/File/Open command file/practice file/Penn World Table..."
 msgstr ""
 "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Tabla mundial de "
@@ -6471,7 +6473,7 @@ msgstr "GUI"
 msgid "main window"
 msgstr "ventana principal"
 
-#: gui/gretl.c:985 gui/gretl.c:1188
+#: gui/gretl.c:985 gui/gretl.c:1187
 msgid " No datafile loaded "
 msgstr " No se ha cargado ningún fichero de datos "
 
@@ -6484,112 +6486,112 @@ msgstr "%s: Rango completo %s - %s; muestra actual %s - %s"
 msgid " Unsaved data "
 msgstr " Datos no guardados"
 
-#: gui/gretl.c:1126
+#: gui/gretl.c:1125
 msgid "ID #"
 msgstr "ID #"
 
-#: gui/gretl.c:1127
+#: gui/gretl.c:1126
 msgid "Variable name"
 msgstr "Nombre de variable"
 
-#: gui/gretl.c:1128
+#: gui/gretl.c:1127
 msgid "Descriptive label"
 msgstr "Etiqueta descriptiva"
 
-#: gui/gretl.c:1149
+#: gui/gretl.c:1148
 msgid "Econometrics program"
 msgstr "Programa econométrico"
 
-#: gui/gretl.c:1278 gui/gretl.c:1314
+#: gui/gretl.c:1277 gui/gretl.c:1313
 msgid "Display values"
 msgstr "Mostrar valores"
 
-#: gui/gretl.c:1279 gui/gretl.c:1315
+#: gui/gretl.c:1278 gui/gretl.c:1314
 msgid "Descriptive statistics"
 msgstr "Estadísticos descriptivos"
 
-#: gui/gretl.c:1281 gui/gretl.c:1316
+#: gui/gretl.c:1280 gui/gretl.c:1315
 msgid "Time series plot"
 msgstr "Gráfico de series temporales"
 
-#: gui/gretl.c:1282 gui/gretl.c:1317
+#: gui/gretl.c:1281 gui/gretl.c:1316
 msgid "Frequency distribution"
 msgstr "Distribución de frecuencias"
 
-#: gui/gretl.c:1284 gui/gretl.c:1318
+#: gui/gretl.c:1283 gui/gretl.c:1317
 msgid "Frequency plot"
 msgstr "Gráfico de frecuencias"
 
-#: gui/gretl.c:1285 gui/gretl.c:1319
+#: gui/gretl.c:1284 gui/gretl.c:1318
 msgid "Boxplot"
 msgstr "Gráfico de cajas"
 
-#: gui/gretl.c:1287 gui/gretl.c:1320
+#: gui/gretl.c:1286 gui/gretl.c:1319
 msgid "Correlogram"
 msgstr "Correlograma"
 
-#: gui/gretl.c:1289 gui/gretl.c:1321
+#: gui/gretl.c:1288 gui/gretl.c:1320
 msgid "Spectrum"
 msgstr "Espectro"
 
-#: gui/gretl.c:1291 gui/gretl.c:1322
+#: gui/gretl.c:1290 gui/gretl.c:1321
 msgid "Dickey-Fuller test"
 msgstr "Contraste de Dickey-Fuller"
 
-#: gui/gretl.c:1293 gui/gretl.c:1323
+#: gui/gretl.c:1292 gui/gretl.c:1322
 msgid "Runs test"
 msgstr "Contraste de rachas"
 
-#: gui/gretl.c:1295 gui/gretl.c:1324
+#: gui/gretl.c:1294 gui/gretl.c:1323
 msgid "Rename"
 msgstr "Renombrar"
 
-#: gui/gretl.c:1297 gui/gretl.c:1325
+#: gui/gretl.c:1296 gui/gretl.c:1324
 msgid "Edit label"
 msgstr "Editar etiqueta"
 
-#: gui/gretl.c:1299 gui/gretl.c:1326 gui/session.c:57 gui/session.c:64
+#: gui/gretl.c:1298 gui/gretl.c:1325 gui/session.c:57 gui/session.c:64
 #: gui/session.c:1110
 msgid "Delete"
 msgstr "Borrar"
 
-#: gui/gretl.c:1301 gui/gretl.c:1327
+#: gui/gretl.c:1300 gui/gretl.c:1326
 msgid "Simulate..."
 msgstr "Simular..."
 
-#: gui/gretl.c:1303 gui/gretl.c:1328
+#: gui/gretl.c:1302 gui/gretl.c:1327
 msgid "Define new variable..."
 msgstr "Definir nueva variable"
 
-#: gui/gretl.c:1392
+#: gui/gretl.c:1391
 msgid "Full sample range restored"
 msgstr "Restaurado el rango muestral completo"
 
-#: gui/gretl.c:1437 gui/gretl.c:1520
+#: gui/gretl.c:1436 gui/gretl.c:1519
 msgid "Couldn't fork"
 msgstr "No se pudo bifurcar"
 
-#: gui/gretl.c:1465 gui/gretl.c:1658 gui/gretl.c:1666
+#: gui/gretl.c:1464 gui/gretl.c:1657 gui/gretl.c:1665
 msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
-#: gui/gretl.c:1473
+#: gui/gretl.c:1472
 msgid "Couldn't move existing .Rprofile out of the way"
 msgstr "No se pudo mover el fichero .Rprofile existente a otro lugar"
 
-#: gui/gretl.c:1479
+#: gui/gretl.c:1478
 msgid "Couldn't write R startup file"
 msgstr "No se pudo escribir fichero de inicio R"
 
-#: gui/gretl.c:1486
+#: gui/gretl.c:1485
 msgid "Write of R data file failed"
 msgstr "Falló la escritura del fichero de datos R"
 
-#: gui/gretl.c:1511
+#: gui/gretl.c:1510
 msgid "No command was supplied to start R"
 msgstr "No se suministró orden para iniciar R"
 
-#: gui/gretl.c:1553
+#: gui/gretl.c:1552
 msgid ""
 "Error restoring .Rprofile from\n"
 "the temporary copy, .Rprofile.gretltmp"
@@ -6597,47 +6599,47 @@ msgstr ""
 "Error recuperando .Rprofile desde\n"
 "la copia temporal, .Rprofile.gretltmp"
 
-#: gui/gretl.c:1647
+#: gui/gretl.c:1646
 msgid "Failed to open URL"
 msgstr "Fallo al abrir URL"
 
-#: gui/gretl.c:1679
+#: gui/gretl.c:1678
 msgid "launch calculator"
 msgstr "Lanzar calculadora"
 
-#: gui/gretl.c:1680
+#: gui/gretl.c:1679
 msgid "launch editor"
 msgstr "lanzar editor"
 
-#: gui/gretl.c:1681
+#: gui/gretl.c:1680
 msgid "open gretl console"
 msgstr "abrir consola gretl"
 
-#: gui/gretl.c:1682
+#: gui/gretl.c:1681
 msgid "session icon view"
 msgstr "vista de iconos de sesión"
 
-#: gui/gretl.c:1683
+#: gui/gretl.c:1682
 msgid "gretl website"
 msgstr "sitio web de gretl"
 
-#: gui/gretl.c:1684
+#: gui/gretl.c:1683
 msgid "gretl manual (PDF)"
 msgstr "manual de gretl (PDF)"
 
-#: gui/gretl.c:1685
+#: gui/gretl.c:1684
 msgid "show help"
 msgstr "mostrar ayuda"
 
-#: gui/gretl.c:1686
+#: gui/gretl.c:1685
 msgid "X-Y graph"
 msgstr "gráfico X-Y"
 
-#: gui/gretl.c:1687
+#: gui/gretl.c:1686
 msgid "Capture last graph for editing"
 msgstr "Coger último gráfico para edición"
 
-#: gui/gretl.c:1688
+#: gui/gretl.c:1687
 msgid "open dataset"
 msgstr "abrir conjunto de datos"
 
@@ -9043,6 +9045,21 @@ msgstr "      VARIABLE         COEFICIENTE           DESV.TÍP.\n"
 #: plugin/mp_ols.c:504
 msgid "Error sum of squares is not > 0"
 msgstr "La suma de cuadrados de los residuos no es > 0"
+
+#, fuzzy
+#~ msgid "%f + %f*x title '%s' w lines\n"
+#~ msgstr "%f + %f*x title 'ajuste mínimo cuadrático' w lines\n"
+
+#~ msgid "set label 'Test statistic for normality:' at graph .05, graph .9\n"
+#~ msgstr ""
+#~ "set label 'Estadístico de contraste de normalidad:' at graph .05, "
+#~ "graph .9\n"
+
+#~ msgid ""
+#~ "set label 'Chi-squared(2) = %.3f, pvalue %.5f' at graph .05, graph .85\n"
+#~ msgstr ""
+#~ "set label 'Chi-cuadrado(2) = %.3f, valor p %.5f' en gráfico .05, "
+#~ "gráfico .85\n"
 
 #~ msgid ""
 #~ " (to lag %d):\n"

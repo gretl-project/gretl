@@ -1052,11 +1052,10 @@ void set_sample_label (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
-#ifdef G_OS_WIN32
+#ifdef USE_WINFONT
 
 #define NAME_BUFFER_LEN 32
-
-#define FONT_DEBUG
+#undef FONT_DEBUG
 
 static int get_windows_font (char *fontspec)
 {
@@ -1105,7 +1104,11 @@ static int get_windows_font (char *fontspec)
 
 	ReleaseDC(0, screen);
 	DeleteDC(h_dc);
-	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-*-*-*-*", name, pix_height);
+
+	/* sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-*-*-*-*", 
+	   name, pix_height); */
+	sprintf(fontspec, "-*-%s-medium-r-normal-*-%d-*-*-*-*-*-*-*",
+		name, pix_height);
 #ifdef FONT_DEBUG
 	fprintf(fp, "scaleY=%g, tm.tmHeight=%ld, pix_height=%d\n"
 		"fontspec: %s\n", scaleY, tm.tmHeight, pix_height,
@@ -1115,7 +1118,7 @@ static int get_windows_font (char *fontspec)
 	return 0;
     }
 }
-#endif
+#endif /* USE_WINFONT */
 
 /* ......................................................... */
 
@@ -1132,7 +1135,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     int listbox_label_width = 400;
     int listbox_data_width = 500;
     int listbox_file_height = 300;
-#ifdef G_OS_WIN32
+#ifdef USE_WINFONT
     GtkStyle *style;
     char winfont[128];
 #endif
@@ -1151,7 +1154,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
-#ifdef G_OS_WIN32
+#ifdef USE_WINFONT
     style = gtk_widget_get_style(mdata->w);
     if (get_windows_font(winfont) == 0) style->font = gdk_font_load(winfont);
     if (style->font) gtk_widget_set_style(mdata->w, style);

@@ -780,8 +780,8 @@ int gnuplot (LIST list, const int *lines,
 	setlocale(LC_NUMERIC, "C");
 #endif
     if (ols_ok) 
-	fprintf(fq, _("%f + %f*x title '%s' w lines\n"),
-		a, b, _("least squares fit"));
+	fprintf(fq, "%f + %f*x title '%s' w lines\n", a, b, 
+		_("least squares fit"));
 
     /* supply the data to gnuplot inline */
     if (opt == OPT_Z || opt == OPT_RESIDZ) {

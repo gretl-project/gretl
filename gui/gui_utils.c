@@ -2798,10 +2798,10 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 static void set_lcnumeric (void)
 {
     if (lcnumeric) {
-	setenv("LC_NUMERIC", "", 1);
+	putenv("LC_NUMERIC=");
 	setlocale(LC_NUMERIC, "");
     } else {
-	setenv("LC_NUMERIC", "C", 1);
+	putenv("LC_NUMERIC=C");
 	setlocale(LC_NUMERIC, "C");
     }
     reset_local_decpoint();
