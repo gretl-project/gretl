@@ -173,6 +173,7 @@ GUISRC = about.c \
 	database.c \
 	datafiles.c \
 	dialogs.c \
+	dlgutils.h \
 	filelists.c \
 	fileselect.c \
 	gpt_control.c \

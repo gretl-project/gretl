@@ -123,6 +123,7 @@ static struct gui_help_item gui_help_items[] = {
     { GRAPHPAGE ,     "graphpag" },
     { SETSEED,        "seed" },
     { KERNEL_DENSITY, "density" },
+    { HCCME,          "hccme" },
     { -1,          NULL },
 };
 

@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "dlgutils.h"
 
 static int default_var;
 static int *xlist;

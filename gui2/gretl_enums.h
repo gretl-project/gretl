@@ -63,6 +63,7 @@ enum extra_cmds {
     LMTEST_GROUPWISE,
     KERNEL_DENSITY,
     CREATE_DATASET,
+    HCCME,
     GUI_CMD_MAX
 };
 

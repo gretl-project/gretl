@@ -130,8 +130,6 @@ static int parse_hc_variant (const char *s)
 {
     int err = 1;
 
-    fprintf(stderr, "parse_hc_variant: got '%s'\n", s);
-
     if (!strcmp(s, "0") || !strcmp(s, "1") ||
 	!strcmp(s, "2") || !strcmp(s, "3")) {
 	robust_opts.hc_version = atoi(s);
@@ -154,9 +152,6 @@ static int parse_hc_variant (const char *s)
 	    }
 	}
     }
-
-    fprintf(stderr, "parse_hc_variant: variant=%d, err=%d\n",
-	    robust_opts.hc_version, err);
 
     return err;
 }

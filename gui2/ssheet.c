@@ -20,6 +20,8 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "ssheet.h"
+#include "dlgutils.h"
+
 #include <errno.h>
 #include <ctype.h>
 #include <float.h>

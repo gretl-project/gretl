@@ -1319,7 +1319,9 @@ static int contains_no_operator (const char *s)
 	if (op_level(*s)) return 0;
     }
     return 1;
-}	
+}
+
+#define TOKENIZE_LEVEL_MAX 256	
 
 static int stack_op_and_token (char *s, GENERATE *genr, int level)
 {
@@ -1330,7 +1332,12 @@ static int stack_op_and_token (char *s, GENERATE *genr, int level)
 
     *tok = '\0';
 
-    DPRINTF(("stack_op_and_token: looking at '%s'\n", s));
+    DPRINTF(("stack_op_and_token, level %d: looking at '%s'\n", level, s));
+
+    if (level > TOKENIZE_LEVEL_MAX) {
+	genr->err = E_PARSE;
+	return genr->err;
+    }
 
     if (n > 0) last = s[n-1];
 
@@ -1409,21 +1416,10 @@ static int strip_wrapper_parens (char *s)
     return strip;
 }
 
-#ifdef OLD_CODE
-static int valid_var (const DATAINFO *pdinfo, const char *s)
-{
-    int v = varindex(pdinfo, s);
-
-    if (v < pdinfo->v || MODEL_VAR_INDEX(v)) {
-	return 1;
-    }
-
-    return 0;
-}
-#endif
-
 static int math_tokenize (char *s, GENERATE *genr, int level)
 {
+    static char prev[TOKLEN];
+    static int oldlevel;
     char tok[TOKLEN];
     const char *q, *p;
     int inparen = 0;
@@ -1434,28 +1430,26 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	s++;
     }
 
-    DPRINTF(("math_tokenize: looking at '%s'\n", s));
+    DPRINTF(("math_tokenize, level %d: looking at '%s'\n", level, s));
 
     q = p = s;
 
-#ifdef OLD_CODE
-    /* whole expression is valid numeric? */
-    if (numeric_string(s)) {
-	DPRINTF(("math_tokenize: got a constant numeric token\n"));
-	goto atomic_case; 
-    }  
+    if (level > TOKENIZE_LEVEL_MAX) {
+	genr->err = E_PARSE;
+	return genr->err;
+    }
 
-    /* whole expression is valid variable name? */
-    if (valid_var(genr->pdinfo, s)) {
-	DPRINTF(("math_tokenize: got a valid variable\n"));
-	goto atomic_case; 
-    } 
-#else
     if (token_is_atomic(s, genr)) {
 	DPRINTF(("math_tokenize: string is atomic token\n"));
 	goto atomic_case; 
-    } 
-#endif
+    } else if (!strcmp(prev, s) && level == oldlevel + 1) {
+	DPRINTF(("math_tokenize: going round in circles\n"));
+	genr->err = E_PARSE;
+	return genr->err;
+    }
+
+    *prev = 0;
+    strncat(prev, s, TOKLEN - 1);
 
     while (*p) {
 	DPRINTF(("math_tokenize: inner loop '%s'\n", p));
@@ -1477,6 +1471,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	    if (p - q > 0) {
 		*tok = '\0';
 		strncat(tok, q, p - q);
+		oldlevel = level;
 		stack_op_and_token(tok, genr, level);
 		q = p;
 	    }
@@ -1502,6 +1497,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	    return 1;
 	}
 	strcpy(tok, q);
+	oldlevel = level;
 	genr->err = stack_op_and_token(tok, genr, level);
     }
 

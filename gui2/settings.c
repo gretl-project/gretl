@@ -23,6 +23,7 @@
 #include "filelists.h"
 #include "webget.h"
 #include "toolbar.h"
+#include "dlgutils.h"
 
 #include "libset.h"
 
@@ -956,6 +957,25 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    }
 	} 
     } 
+
+    if (tab == 5) {
+	/* we need a help button */
+	GtkWidget *hb = gtk_hbox_new(FALSE, 0);
+
+	w = gtk_label_new("");
+	gtk_box_pack_start(GTK_BOX(hb), w, TRUE, TRUE, 0);
+	gtk_widget_show(w);
+
+	w = standard_button(GTK_STOCK_HELP);
+	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
+	g_signal_connect(G_OBJECT(w), "clicked", 
+			 G_CALLBACK(context_help), 
+			 GINT_TO_POINTER(0));
+	gtk_widget_show(w);
+
+	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);
+	gtk_widget_show(hb);
+    }
 }
 
 /* .................................................................. */

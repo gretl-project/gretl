@@ -2560,6 +2560,7 @@ static int jackknife_vcv (MODEL *pmod, const double **Z)
 	pmod->fstt = robust_omit_F(NULL, pmod);
     }
 
+    gretl_model_set_int(pmod, "robust", 1);
     gretl_model_set_int(pmod, "hc", 1);
     gretl_model_set_int(pmod, "hc_version", 4);
 

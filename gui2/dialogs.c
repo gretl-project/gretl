@@ -155,7 +155,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    int ret;
    struct yes_no_data yesdata, nodata, canceldata;
 
-   dialog = gtk_dialog_new();
+   dialog = gretl_dialog_new(title);
 
    yesdata.dialog = nodata.dialog = canceldata.dialog 
        = dialog;
@@ -164,49 +164,47 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    nodata.button = GRETL_NO;
    canceldata.button = GRETL_CANCEL;
    
-   gtk_grab_add (dialog);
-   gtk_window_set_title (GTK_WINDOW (dialog), title);
+   gtk_grab_add(dialog);
+
    dialog_set_no_resize(dialog);
    set_dialog_border_widths(dialog);
    
-   gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->action_area), 15);
-   gtk_box_set_homogeneous (GTK_BOX (GTK_DIALOG (dialog)->action_area), TRUE);
-   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
-
-   tempwid = gtk_label_new (msg);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), tempwid, 
-		       TRUE, TRUE, FALSE);
+   tempwid = gtk_label_new(msg);
+   gtk_box_pack_start(GTK_BOX(GTK_DIALOG (dialog)->vbox), tempwid, 
+		      TRUE, TRUE, FALSE);
    gtk_widget_show(tempwid);
 
    /* "Yes" button */
-   tempwid = gtk_button_new_with_label (_("Yes"));
-   GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-		       tempwid, TRUE, TRUE, TRUE);  
-   gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC (yes_no_callback), &yesdata);
-   gtk_widget_grab_default (tempwid);
-   gtk_widget_show (tempwid);
+   tempwid = gtk_button_new_with_label(_("Yes"));
+   GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+   gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+		      tempwid, TRUE, TRUE, TRUE);  
+   gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
+		      GTK_SIGNAL_FUNC(yes_no_callback), &yesdata);
+   gtk_widget_grab_default(tempwid);
+   gtk_widget_show(tempwid);
 
    /* "No" button */
-   tempwid = gtk_button_new_with_label (_("No"));
-   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-		       tempwid, TRUE, TRUE, TRUE); 
-   gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC (yes_no_callback), &nodata);
-   gtk_widget_show (tempwid);
+   tempwid = gtk_button_new_with_label(_("No"));
+   GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+   gtk_box_pack_start(GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+		      tempwid, TRUE, TRUE, TRUE); 
+   gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
+		      GTK_SIGNAL_FUNC(yes_no_callback), &nodata);
+   gtk_widget_show(tempwid);
 
    /* Cancel button -- if wanted */
    if (cancel) {
-       tempwid = gtk_button_new_with_label (_("Cancel"));
-       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-			   tempwid, TRUE, TRUE, TRUE); 
-       gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			   GTK_SIGNAL_FUNC (yes_no_callback), &canceldata);
-       gtk_widget_show (tempwid);
+       tempwid = gtk_button_new_with_label(_("Cancel"));
+       GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
+       gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
+			  tempwid, TRUE, TRUE, TRUE); 
+       gtk_signal_connect(GTK_OBJECT(tempwid), "clicked", 
+			  GTK_SIGNAL_FUNC(yes_no_callback), &canceldata);
+       gtk_widget_show(tempwid);
    }
 
-   gtk_widget_show (dialog);
+   gtk_widget_show(dialog);
 
    gtk_main();
 
@@ -357,56 +355,53 @@ void delimiter_dialog (void)
     csvptr->decpoint = '.';
     csvptr->point_button = NULL;
 
-    dialog = gtk_dialog_new();
+    dialog = gretl_dialog_new(_("gretl: data delimiter"));
 
-    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: data delimiter"));
     dialog_set_no_resize(dialog);
     set_dialog_border_widths(dialog);
-
-    gtk_window_set_position(GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(destroy_delim_dialog), csvptr);
 
-    myvbox = gtk_vbox_new (FALSE, 5);
+    myvbox = gtk_vbox_new(FALSE, 5);
 
     hbox = gtk_hbox_new(FALSE, 5);
-    tempwid = gtk_label_new (_("separator for data columns:"));
-    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    tempwid = gtk_label_new(_("separator for data columns:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
     gtk_widget_show(tempwid);
-    gtk_box_pack_start (GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
+    gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);    
 
     /* comma separator */
-    button = gtk_radio_button_new_with_label (NULL, _("comma (,)"));
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+    button = gtk_radio_button_new_with_label(NULL, _("comma (,)"));
+    gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == ',')
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(','));
-    gtk_widget_show (button);
+    gtk_widget_show(button);
 
     /* space separator */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("space"));
     csvptr->space_button = button;
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == ' ')
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(' '));  
-    gtk_widget_show (button);
+    gtk_widget_show(button);
 
     /* tab separator */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     button = gtk_radio_button_new_with_label(group, _("tab"));
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == '\t') {
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
     }
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
@@ -421,18 +416,18 @@ void delimiter_dialog (void)
 	vbox_add_hsep(myvbox);
 
 	hbox = gtk_hbox_new(FALSE, 5);
-	tempwid = gtk_label_new (_("decimal point character:"));
-	gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+	tempwid = gtk_label_new(_("decimal point character:"));
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
 	gtk_widget_show(tempwid);
-	gtk_box_pack_start (GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(myvbox), hbox, TRUE, TRUE, 5);
 	gtk_widget_show(hbox);    
 
 	/* period decpoint */
-	button = gtk_radio_button_new_with_label (NULL, _("period (.)"));
+	button = gtk_radio_button_new_with_label(NULL, _("period (.)"));
 	csvptr->point_button = button;
-	gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
 	if (csvptr->decpoint == '.') {
-	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
@@ -441,11 +436,11 @@ void delimiter_dialog (void)
 	gtk_widget_show(button);
 
 	/* comma decpoint */
-	decgroup = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+	decgroup = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 	button = gtk_radio_button_new_with_label(decgroup, _("comma (,)"));
-	gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
 	if (csvptr->decpoint == ',') {
-	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), TRUE);
 	}
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
@@ -457,7 +452,7 @@ void delimiter_dialog (void)
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), myvbox, TRUE, TRUE, 5);
-    gtk_widget_show (hbox);
+    gtk_widget_show(hbox);
 
     gtk_widget_show(myvbox);
 
@@ -465,7 +460,7 @@ void delimiter_dialog (void)
     gtk_widget_show(hbox);
 
     /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG (dialog)->action_area);
+    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_csv_stuff), csvptr);
     g_signal_connect(G_OBJECT(tempwid), "clicked", 
@@ -553,7 +548,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
     gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
-    gtk_widget_show (button);   
+    gtk_widget_show(button);   
 
     /* RTF option */
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
@@ -563,7 +558,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
 		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
     gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
-    gtk_widget_show (button);
+    gtk_widget_show(button);
 
     /* plain text option */
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
@@ -592,7 +587,7 @@ void copy_format_dialog (windata_t *vwin, int unused)
     gtk_widget_show(tempwid);
 
     /* "Cancel" button */
-    cancel_delete_button(GTK_DIALOG (dialog)->action_area, dialog);
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
 
     gtk_widget_show(dialog);
 
@@ -601,11 +596,54 @@ void copy_format_dialog (windata_t *vwin, int unused)
 
 #else /* gtk 2 version follows */
 
+static GtkWidget *
+TeX_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		 gboolean dflt)
+{
+    GtkWidget *button;
+
+    button = gtk_radio_button_new_with_label(group, "LaTeX");
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), dflt);
+    gtk_widget_show(button); 
+
+    return button;
+}  
+
+static GtkWidget *
+RTF_copy_button (GSList *group, GtkWidget *vbox, struct format_info *finfo,
+		 int multicopy, gboolean dflt)
+{
+    GtkWidget *button;
+
+#ifdef G_OS_WIN32
+    button = gtk_radio_button_new_with_label(group, "RTF (MS Word)");
+#else
+    button = gtk_radio_button_new_with_label(group, "RTF");
+#endif
+    gtk_box_pack_start(GTK_BOX(vbox), button, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(set_copy_format), finfo);
+    if (multicopy) {
+	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));  
+    } else {
+	g_object_set_data(G_OBJECT(button), "format", 
+			  GINT_TO_POINTER(COPY_TEXT_AS_RTF));
+    }
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(button), dflt);
+    gtk_widget_show(button);
+
+    return button;
+}
+
 void copy_format_dialog (windata_t *vwin, int multicopy)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
     GtkWidget *myvbox;
-    GSList *group;
+    GSList *group = NULL;
     struct format_info *finfo;
 
     finfo = mymalloc(sizeof *finfo);
@@ -648,67 +686,30 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 # ifdef G_OS_WIN32
 
     /* RTF option */
-    button = gtk_radio_button_new_with_label(NULL, "RTF (MS Word)");
-    gtk_box_pack_start(GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    if (multicopy) {
-	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));  
-    } else {
-	g_object_set_data(G_OBJECT(button), "format", 
-			  GINT_TO_POINTER(COPY_TEXT_AS_RTF));
-    }
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-    gtk_widget_show(button);
+    button = RTF_copy_button(group, myvbox, finfo, multicopy, TRUE);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
     /* LaTeX option? */
     if (multicopy) {
-	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-	button = gtk_radio_button_new_with_label(group, "LaTeX");
-	gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_copy_format), finfo);
-	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));  
-	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
-	gtk_widget_show(button);
+	button = TeX_copy_button(group, myvbox, finfo, FALSE);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
 # else /* not MS Windows: reverse the first two options */
 
     /* LaTeX option? */
     if (multicopy) {
-	button = gtk_radio_button_new_with_label(NULL, "LaTeX");
-	gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-	g_signal_connect(G_OBJECT(button), "clicked",
-			 G_CALLBACK(set_copy_format), finfo);
-	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));
-	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-	gtk_widget_show (button);   
+	button = TeX_copy_button(group, myvbox, finfo, TRUE);
+	group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
     }
 
     /* RTF option */
-    if (multicopy) {
-	group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-	button = gtk_radio_button_new_with_label(group, "RTF");
-    } else {
-	button = gtk_radio_button_new_with_label(NULL, "RTF");
-    }	
-    gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_copy_format), finfo);
-    if (multicopy) {
-	g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));   
-    } else {
-	g_object_set_data(G_OBJECT(button), "format", 
-			  GINT_TO_POINTER(COPY_TEXT_AS_RTF)); 
-    }
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), FALSE);
-    gtk_widget_show(button);
+    button = RTF_copy_button(group, myvbox, finfo, multicopy, FALSE);
+    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
 
 # endif /* G_OS_WIN32 */
 
     /* plain text option */
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("plain text"));
     gtk_box_pack_start (GTK_BOX(myvbox), button, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -730,15 +731,15 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    /* Create the "OK" button */
-    tempwid = ok_button(GTK_DIALOG (dialog)->action_area);
+    /* "OK" button */
+    tempwid = ok_button(GTK_DIALOG(dialog)->action_area);
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(copy_with_format_callback), finfo);
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
 
-    /* "Cancel" button */
-    cancel_delete_button(GTK_DIALOG (dialog)->action_area, dialog);
+    /* and "Cancel" button */
+    cancel_delete_button(GTK_DIALOG(dialog)->action_area, dialog);
 
     gtk_widget_show(dialog);
 
@@ -2474,27 +2475,6 @@ void infobox (const char *msg)
 {
     msgbox(msg, 0);
 }
-
-/* ........................................................... */
-
-#ifdef OLD_GTK
-
-GtkWidget *standard_button (int code)
-{
-    const char *button_strings[] = {
-	N_("OK"),
-	N_("Cancel"),
-	N_("Close"),
-	N_("Apply"),
-	N_("Help"),
-	N_("Forward"),
-	N_("Back")
-    };
-
-    return gtk_button_new_with_label(_(button_strings[code]));
-}
-
-#endif
 
 /* --------------  Dataset structure "wizard" ---------------- */
 

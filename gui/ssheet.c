@@ -18,12 +18,15 @@
  */
 
 #include "gretl.h"
+
 #include <errno.h>
 #include <ctype.h>
+
 #include <gtkextra/gtksheet.h>
 #include <gtkextra/gtkitementry.h>
 
 #include "ssheet.h"
+#include "dlgutils.h"
 
 #define DEFAULT_PRECISION 6
 #define DEFAULT_SPACE 8

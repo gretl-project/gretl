@@ -266,6 +266,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 	if (gretl_model_get_int(orig, "robust")) {
 	    lsqopt |= OPT_R;
 	}
+	if (gretl_model_get_int(orig, "hc_version") == 4) {
+	    repci = HCCM;
+	}
 	rep = lsq(list, pZ, pdinfo, repci, lsqopt, rho);
 	break;
     }
@@ -686,7 +689,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 
 	    gretl_list_diff(omitvars, orig->list, new->list);
 
-	    if (gretl_model_get_int(orig, "robust") || orig->ci == HCCM) {
+	    if (gretl_model_get_int(orig, "robust")) {
 		cmp.F = robust_omit_F(omitvars, orig);
 	    }
 

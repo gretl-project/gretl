@@ -61,9 +61,10 @@ void dialog_data_set_opt (dialog_t *ddata, gretlopt opt);
 
 gpointer dialog_data_get_data (dialog_t *ddata);
 
-GtkWidget *dialog_data_get_vbox (dialog_t *ddata);
-
 void close_dialog (dialog_t *ddata);
 
+#ifdef OLD_GTK
+GtkWidget *standard_button (int code);
+#endif
 
 #endif /* DLGUTILS_H */

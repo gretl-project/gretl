@@ -61,6 +61,7 @@ static PRN *prn;
 static nls_spec nlspec;
 integer one = 1;
 double toler;
+int genr_err;
 
 static void print_iter_ess (void)
 {
@@ -73,7 +74,6 @@ static void print_iter_ess (void)
 static int nls_auto_gen (int i)
 {
     char formula[MAXLEN];
-    int err;
 
     if (i == 0) {
 	sprintf(formula, "$nl_y = %s", nlspec.nlfunc);
@@ -81,13 +81,15 @@ static int nls_auto_gen (int i)
 	sprintf(formula, "$nl_x%d = %s", i, nlspec.terms[i-1].deriv);
     }
 
-    err = generate(pZ, pdinfo, formula, NULL);
+    genr_err = generate(pZ, pdinfo, formula, NULL);
 
-    if (err) {
-	errmsg(err, prn);
+#if 0
+    if (genr_err) {
+	errmsg(genr_err, prn);
     }
+#endif
 
-    return err;
+    return genr_err;
 }
 
 static int add_term_from_nlfunc (const char *vname)
@@ -890,6 +892,8 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     int origv = maininfo->v;
     int err = 0;
 
+    genr_err = 0;
+
     gretl_model_init(&nlsmod);
     gretl_model_smpl_init(&nlsmod, maininfo);
 
@@ -926,6 +930,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 
     fvec = malloc(pdinfo->n * sizeof *fvec);
     fjac = malloc(pdinfo->n * nlspec.nparam * sizeof *fvec);
+
     if (fvec == NULL || fjac == NULL) {
 	free(fvec);
 	free(fjac);
@@ -957,7 +962,11 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	nlsmod = GNR(fvec, fjac);
     } else {
 	if (nlsmod.errcode == 0) { 
-	    nlsmod.errcode = E_UNSPEC;
+	    if (genr_err != 0) {
+		nlsmod.errcode = genr_err;
+	    } else {
+		nlsmod.errcode = E_NOCONV;
+	    }
 	}
     }
 

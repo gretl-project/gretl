@@ -22,14 +22,33 @@
 #include "gretl.h"
 #include "textbuf.h"
 
-
 /* Various buttons, usable in several sorts of dialogs */
+
+#ifdef OLD_GTK
+
+GtkWidget *standard_button (int code)
+{
+    const char *button_strings[] = {
+	N_("OK"),
+	N_("Cancel"),
+	N_("Close"),
+	N_("Apply"),
+	N_("Help"),
+	N_("Forward"),
+	N_("Back")
+    };
+
+    return gtk_button_new_with_label(_(button_strings[code]));
+}
+
+#endif
 
 GtkWidget *context_help_button (GtkWidget *hbox, int cmdcode)
 {
     GtkWidget *w;
 
     w = standard_button(GTK_STOCK_HELP);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(context_help), 
@@ -44,6 +63,7 @@ GtkWidget *cancel_delete_button (GtkWidget *hbox, GtkWidget *targ)
     GtkWidget *w;
 
     w = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(delete_widget), 
@@ -64,6 +84,7 @@ GtkWidget *cancel_options_button (GtkWidget *hbox, GtkWidget *targ,
     GtkWidget *w;
 
     w = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS(w, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(w), "clicked", 
 		     G_CALLBACK(opt_invalid), 
@@ -282,11 +303,6 @@ void dialog_data_set_opt (dialog_t *ddata, gretlopt opt)
 gpointer dialog_data_get_data (dialog_t *ddata)
 {
     return ddata->data;
-}
-
-GtkWidget *dialog_data_get_vbox (dialog_t *ddata)
-{
-    return GTK_DIALOG(ddata->dialog)->vbox;
 }
 
 static void dialog_table_setup (dialog_t *dlg, int hsize)

@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "selector.h"
 #include "treeutils.h"
+#include "dlgutils.h"
 
 enum {
     SR_VARLIST,

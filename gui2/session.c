@@ -31,6 +31,7 @@
 #include "textbuf.h"
 #include "cmdstack.h"
 #include "filelists.h"
+#include "dlgutils.h"
 
 #include "var.h"
 

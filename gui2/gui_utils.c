@@ -35,6 +35,7 @@
 #include "cmdstack.h"
 #include "filelists.h"
 #include "menustate.h"
+#include "dlgutils.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>

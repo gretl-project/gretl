@@ -2029,8 +2029,14 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     if (buf == NULL) return;
 
     bufgets(NULL, 0, buf);
+
     while (bufgets(line, MAXLEN-1, buf) && !err) {
-	if (string_is_blank(line)) continue;
+	if (string_is_blank(line)) {
+	    continue;
+	}
+	if (started && !strncmp(line, "end nls", 7)) {
+	    break;
+	}
 	if (!started && !strncmp(line, "genr", 4)) {
 	    err = do_nls_genr();
 	    continue;
@@ -2044,8 +2050,11 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	}
 	err = nls_parse_line(line, (const double **) Z, datainfo);
 	started = 1;
-	if (err) gui_errmsg(err);
-	else err = cmd_init(line);
+	if (err) {
+	    gui_errmsg(err);
+	} else {
+	    err = cmd_init(line);
+	}
     }
 
     g_free(buf);
@@ -2081,8 +2090,9 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     }
 
     /* make copy of most recent model */
-    if (copy_model(models[2], pmod, datainfo))
+    if (copy_model(models[2], pmod, datainfo)) {
 	errbox(_("Out of memory copying model"));
+    }
 
     /* record sub-sample info (if any) with the model */
     attach_subsample_to_model(pmod, datainfo);

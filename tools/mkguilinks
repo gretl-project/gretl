@@ -10,34 +10,36 @@ fi
 
 cd ${TOPSRC}/gui && \
 for f in \
-  gretl.h gretltypes.h gretl_enums.h \
-  about.c boxplots.c boxplots.h \
+  gretl.h gretltypes.h gretl_enums.h guiprint.h \
+  selector.h ssheet.h \
+  about.c \
+  boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
   cmdstack.c cmdstack.h \
-  console.c console.h dialogs.c \
+  console.c console.h \
   database.c database.h \
   datafiles.c datafiles.h \
+  dialogs.c dialogs.h \
+  dlgutils.c dlgutils.h \
   filelists.c filelists.h \
   fileselect.c dialogs.h \
   graph_page.c graph_page.h \
   gpt_control.c gpt_control.h \
-  gui_utils.c gui_utils.h guiprint.h \
+  gui_utils.c gui_utils.h \
   helpfiles.c helpfiles.h \
+  library.c library.h \
   menustate.c menustate.h \
   model_table.c model_table.h \
   objectsave.c objectsave.h \
   series_view.c series_view.h \
   session.c session.h \
-  selector.h \
   settings.c settings.h \
-  ssheet.h \
   textutil.c textutil.h \
   toolbar.c toolbar.h \
-  webget.c webget.h \
-  library.c library.h ; do
-    rm -f $f
-    ln -s ${GUI2DIR}/$f $f
+  webget.c webget.h ; do
+     rm -f $f
+     ln -s ${GUI2DIR}/$f $f
 done
 cd $BUILDDIR
 

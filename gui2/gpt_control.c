@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "gpt_control.h"
 #include "session.h"
+#include "dlgutils.h"
 #include "../pixmaps/mouse.xpm"
 
 #undef POINTS_DEBUG

@@ -25,6 +25,7 @@
 #define NLOOKUPENTRY 4
 
 #include "gretl.h"
+#include "dlgutils.h"
 #include <ctype.h>
 
 #ifdef G_OS_WIN32
