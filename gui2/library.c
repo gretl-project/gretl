@@ -4089,6 +4089,13 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
+    if (cmd.list[0] > MAX_PLOT_LINES + 1) {
+	sprintf(errtext, _("Too many series in plot: maximum is %d"),
+		MAX_PLOT_LINES);
+	errbox(errtext);
+	return;
+    }
+
     lines = mymalloc((cmd.list[0] - 1) * sizeof *lines);
     if (lines == NULL) {
 	return;

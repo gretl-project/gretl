@@ -45,6 +45,7 @@ enum gptspec_flags {
 
 #define MAXTITLE 128
 #define MAX_PLOT_LABELS 3
+#define MAX_PLOT_LINES 8
 
 typedef struct {
     int varnum;            /* ID number of variable to plot */

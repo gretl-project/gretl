@@ -885,6 +885,12 @@ int gnuplot (int *list, const int *lines, const char *literal,
 
     *gretl_errmsg = '\0';
 
+    if (list[0] > MAX_PLOT_LINES + 1) {
+	sprintf(gretl_errmsg, _("Too many series in plot: maximum is %d"),
+		MAX_PLOT_LINES);
+	return E_DATA;
+    }
+
 #ifdef WIN32
     /* only gnuplot 3.8 or higher will accept "height" here */
     strcpy(keystr, "set key left top height 1 width 1 box\n");

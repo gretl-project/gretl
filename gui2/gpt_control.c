@@ -630,12 +630,14 @@ static GPT_SPEC *plotspec_new (void)
 	return NULL;
     }
 
-    if ((spec->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL) {
+    spec->lines = mymalloc(MAX_PLOT_LINES * sizeof *spec->lines);
+
+    if (spec->lines == NULL) {
 	free(spec);
 	return NULL;
     }
 
-    for (i=0; i<6; i++) {
+    for (i=0; i<MAX_PLOT_LINES; i++) {
 	spec->lines[i].varnum = 0;
 	spec->lines[i].title[0] = 0;
 	spec->lines[i].formula[0] = 0;
@@ -1075,7 +1077,7 @@ static int read_plotspec_from_file (GPT_SPEC *spec)
     spec->nlines = i + 1; /* i is a zero-based index */
 
     /* free any unused lines */
-    if (spec->nlines < 6) {
+    if (spec->nlines < MAX_PLOT_LINES) {
 	spec->lines = myrealloc(spec->lines, 
 				spec->nlines * sizeof *spec->lines);
     }
