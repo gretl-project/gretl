@@ -521,6 +521,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	for (t=0; t<model.ncoeff; t++) {
 	    model.coeff[t] *= scale;
 	}
+	/* model.sigma *= scale; */
     } 
 #endif
 
