@@ -1189,6 +1189,8 @@ static const char *data_save_title (int code)
         return _("Save R data file");
     case EXPORT_OCTAVE:
         return _("Save octave data file");
+    case COPY_CSV:
+        return N_("Select variables to copy");
     default:
         return _("Save data file");
     }
@@ -1208,12 +1210,15 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 
     storelist = g_strdup(sr->cmdlist);
 
-    file_selector(data_save_title(sr->code), sr->code, NULL);
+    if (sr->code != COPY_CSV) {
+        file_selector(data_save_title(sr->code), sr->code, NULL);
+    }
 }
 
 void data_save_selection_wrapper (int file_code)
 {
-    simple_selection(_("Save data"), _("OK"), 
-		     data_save_selection_callback, file_code, 
+    simple_selection((file_code == COPY_CSV)? 
+                     _("Copy data") : _("Save data"), _("Apply"),
+                     data_save_selection_callback, file_code, 
                      NULL);
 }

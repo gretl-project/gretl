@@ -336,12 +336,15 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
+#if 0
 void add_omit_callback (gpointer data, guint action, GtkWidget *widget)
 {
     windata_t *vwin = (windata_t *) data;
 
-    simple_selection ("gretl: model tests", "Apply", do_add_omit, action, vwin);
+    simple_selection ("gretl: model tests", "Apply", 
+		      do_add_omit, action, vwin);
 }
+#endif
 
 /* ........................................................... */
 

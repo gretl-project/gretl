@@ -791,7 +791,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_lines(notebook, spec); 
     gpt_tab_output(notebook, spec);
 
-    tempwid = gtk_button_new_with_label (_("Redraw"));
+    tempwid = gtk_button_new_with_label (_("Apply"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
                         tempwid, TRUE, TRUE, 0);

@@ -78,4 +78,6 @@ void rtfprint_vcv (const VCV *vcv,
 
 void augment_copy_menu (windata_t *vwin);
 
+int csv_to_clipboard (void);
+
 #endif /* GUIPRINT_H */
