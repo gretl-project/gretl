@@ -36,23 +36,6 @@ enum {
     OBSBOOLNUM
 } genr_numbers;
 
-typedef struct _GENERATE GENERATE;
-
-struct _GENERATE {
-    int err;
-    char save;
-    char scalar; 
-    double *xvec;
-    int varnum;
-    char varname[VNAMELEN];
-    char label[MAXLABEL];
-    int tmpv;
-    double **tmpZ;
-    DATAINFO *pdinfo;
-    double ***pZ;
-    MODEL *pmod;
-};
-
 static double calc_xy (double x, double y, char op, int t);
 
 static void genrfree (GENERATE *genr);
@@ -109,7 +92,7 @@ static double evaluate_pvalue (const char *s, const double **Z,
 			       const DATAINFO *pdinfo, int *err);
 static double evaluate_critval (const char *s, const double **Z,
 				const DATAINFO *pdinfo, int *err);
-
+static int genr_scalar_index (int opt, int put);
 
 enum retrieve {
     R_ESS = 1,
@@ -219,6 +202,7 @@ static const char *get_func_word (int fnum);
 
 #define MAXTERMS  64
 #define TOKLEN   128
+#define ARGLEN    64
 
 /* ...................................................... */
 
@@ -237,6 +221,9 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
     genr->pdinfo = pdinfo;
     genr->pZ = pZ;
     genr->pmod = pmod;
+    genr->aset = NULL;
+
+    reset_calc_stack(genr);
 }
 
 /* ...................................................... */
@@ -244,7 +231,7 @@ static void genr_init (GENERATE *genr, double ***pZ, DATAINFO *pdinfo,
 static genatom *make_atom (int scalar, int varnum,
 			   int lag, double val,
 			   int func, char op, char *str,
-			   int level)
+			   int level, atomset *aset)
 {
     genatom *atom;
 
@@ -264,6 +251,7 @@ static genatom *make_atom (int scalar, int varnum,
     strncat(atom->str, str, ATOMLEN - 1);
 
     atom->parent = NULL;
+    atom->aset = aset;
     atom->popped = 0;
 
     return atom;
@@ -361,7 +349,86 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
     return v;
 }
 
-static int get_arg_string (char *str, const char *s)
+/* also used in do_printf function */
+
+int get_generated_value (const char *argv, double *val,
+			 double ***pZ, DATAINFO *pdinfo,
+			 MODEL *pmod, int t)
+{
+    char *genline = malloc(strlen(argv) + 12);
+    int err = 0;
+
+    if (genline == NULL) {
+	err = E_ALLOC;
+    } else {
+	sprintf(genline, "genr argv=%s", argv);
+#ifdef GENR_DEBUG
+	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
+#endif
+	err = generate(pZ, pdinfo, genline, pmod);
+	free(genline);
+	if (!err) {
+	    int v = pdinfo->v - 1;
+
+	    if (pdinfo->vector[v]) {
+		*val = (*pZ)[v][0];
+	    } else {
+		*val = (*pZ)[v][t];
+	    }
+	    err = dataset_drop_vars(1, pZ, pdinfo);
+	}
+    }
+
+    return err;
+}
+
+static int evaluate_function_args (char *s, GENERATE *genr)
+{
+    char *tmp = gretl_strdup(s);
+    char *st, *arg;
+    double vals[3];
+    int i, nf;
+    int err = 0;
+
+    if (tmp == NULL) return 1;
+
+    st = strtok(tmp, ",");
+    if (st == NULL) {
+	free(tmp);
+	return 1;
+    }
+
+    nf = 0;
+    for (i=0; i<3 && !err; i++) {
+	arg = strtok(NULL, ",");
+	if (arg == NULL) break;
+	if (numeric_string(arg)) {
+	    vals[i] = dot_atof(arg);
+	} else {
+	    err = get_generated_value(arg, &vals[i], genr->pZ, 
+				      genr->pdinfo, genr->pmod, 
+				      0);
+	}
+	nf++;
+    }
+
+    if (!err) {
+	char numstr[24];
+
+	*s = '\0';
+	strcat(s, st);
+	for (i=0; i<nf; i++) {
+	    sprintf(numstr, ",%.10g", vals[i]);
+	    strcat(s, numstr);
+	}
+    }
+
+    free(tmp);
+	
+    return err;
+}
+
+static int get_arg_string (char *str, const char *s, int func, GENERATE *genr)
 {
     const char *p = strchr(s, '(');
     int n = strlen(p) - 2;
@@ -371,8 +438,15 @@ static int get_arg_string (char *str, const char *s)
 
     DPRINTF(("get_arg_string: looking at '%s'\n", s));
 
-    if (n < 0 || n > ATOMLEN - 1) err = 1;
-    else strncat(str, p + 1, n);
+    if (n < 0 || n > ARGLEN - 1) {
+	err = 1;
+    } else {
+	strncat(str, p + 1, n);
+    }
+
+    if (func == T_PVALUE || func == T_CRIT) {
+	err = evaluate_function_args(str, genr);
+    }
 
     DPRINTF(("get_arg_string: got '%s'\n", str));
 
@@ -385,7 +459,7 @@ static genatom *parse_token (const char *s, char op,
     int v = -1;
     int scalar = 0, lag = 0, func = 0;
     double val = 0.0;
-    char str[ATOMLEN] = {0};
+    char str[ARGLEN] = {0};
 
     DPRINTF(("parse_token: looking at '%s'\n", s));
 
@@ -428,7 +502,7 @@ static genatom *parse_token (const char *s, char op,
 			 get_func_word(func)));
 		if (MP_MATH(func) || func == T_PVALUE || func == T_CRIT ||
 		    BIVARIATE_STAT(func) || MODEL_DATA_ELEMENT(func)) {
-		    genr->err = get_arg_string(str, s);
+		    genr->err = get_arg_string(str, s, func, genr);
 		} 
 		if (func == T_PVALUE) {
 		    if (!genr->err) {
@@ -539,7 +613,8 @@ static genatom *parse_token (const char *s, char op,
 
     if (genr->err) return NULL;
 
-    return make_atom(scalar, v, lag, val, func, op, str, level);
+    return make_atom(scalar, v, lag, val, func, op, str, 
+		     level, genr->aset);
 }
 
 static double get_lag_at_obs (int v, int tmp, int lag, 
@@ -747,7 +822,7 @@ static double *eval_compound_arg (GENERATE *genr,
 	double xbak = 0.0, x = 0.0;
 	int level = 0;
 
-	reset_atom_stack();
+	reset_atom_stack(genr);
 
 	while ((atom = pop_child_atom(this_atom))) {
 	    double y = eval_atom(atom, genr, t, x);
@@ -757,19 +832,19 @@ static double *eval_compound_arg (GENERATE *genr,
 		x = NADBL;
 	    } else {
 		if (atom->level < level) {
-		    x = calc_pop();
+		    x = calc_pop(genr);
 		}
 		x = calc_xy(x, y, atom->op, t);
 	    }
 	    if (atom->level > level) { 
-		genr->err = calc_push(xbak);
+		genr->err = calc_push(xbak, genr);
 	    }
 	    level = atom->level;
 	    xbak = x;
 	}
 
 	if (genr->err) break;
-	reset_calc_stack();
+	reset_calc_stack(genr);
 	xtmp[t] = x;
     }
 
@@ -780,7 +855,7 @@ static int add_tmp_series_to_genr (GENERATE *genr, genatom *atom)
 {
     double *x, *y;
 
-    atom_stack_set_parentage();
+    atom_stack_set_parentage(genr);
 
     /* evaluate possibly compound arg */
     x = eval_compound_arg(genr, atom);
@@ -806,7 +881,7 @@ static int add_statistic_to_genr (GENERATE *genr, genatom *atom)
 {
     double *x, y;
 
-    atom_stack_set_parentage();
+    atom_stack_set_parentage(genr);
 
     x = eval_compound_arg(genr, atom);
     if (x == NULL) return genr->err;
@@ -838,8 +913,8 @@ static int evaluate_genr (GENERATE *genr)
     genatom *atom;
 
     /* pre-processing of certain sorts of terms */
-    reset_atom_stack();
-    while (!genr->err && (atom = pop_atom())) {
+    reset_atom_stack(genr);
+    while (!genr->err && (atom = pop_atom(genr))) {
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
 	}
@@ -853,14 +928,14 @@ static int evaluate_genr (GENERATE *genr)
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
 		 atom->func == T_CUM || atom->func == T_SORT ||
 		 atom->func == T_RESAMPLE || atom->func == T_HPFILT) {
-	    atom_stack_bookmark();
+	    atom_stack_bookmark(genr);
 	    genr->err = add_tmp_series_to_genr(genr, atom);
-	    atom_stack_resume();
+	    atom_stack_resume(genr);
 	}
 	else if (UNIVARIATE_STAT(atom->func)) {
-	    atom_stack_bookmark();
+	    atom_stack_bookmark(genr);
 	    genr->err = add_statistic_to_genr(genr, atom);
-	    atom_stack_resume();
+	    atom_stack_resume(genr);
 	}
 	else if (MP_MATH(atom->func)) {
 	    genr->err = add_mp_series_to_genr(genr, atom);
@@ -869,7 +944,7 @@ static int evaluate_genr (GENERATE *genr)
 
     if (genr->err) return genr->err;
 
-    genr->scalar = atom_stack_check_for_scalar();
+    genr->scalar = atom_stack_check_for_scalar(genr);
     DPRINTF(("evaluate_genr: check for scalar, result = %d\n", genr->scalar));
 
     if (genr->scalar) {
@@ -887,9 +962,9 @@ static int evaluate_genr (GENERATE *genr)
 	double xbak = 0.0, x = 0.0;
 	int level = 0, npush = 0, npop = 0;
 
-	reset_atom_stack();
+	reset_atom_stack(genr);
 
-	while ((atom = pop_atom())) {
+	while ((atom = pop_atom(genr))) {
 	    double y = eval_atom(atom, genr, t, x);
 
 	    if (genr->err) break;
@@ -898,7 +973,7 @@ static int evaluate_genr (GENERATE *genr)
 		x = NADBL;
 	    } else {
 		if (atom->level < level) { 
-		    x = calc_pop();
+		    x = calc_pop(genr);
 		    npop++;
 		    DPRINTF(("popped %g\n", x));
 		}
@@ -907,11 +982,11 @@ static int evaluate_genr (GENERATE *genr)
 	    if (atom->level > level) {
 		int pad = atom->level - level - 1;
 
-		genr->err = calc_push(xbak);
+		genr->err = calc_push(xbak, genr);
 		npush++;
 		DPRINTF(("pushed %g at level %d\n", xbak, level));
 		while (pad--) {
-		    genr->err = calc_push(0);
+		    genr->err = calc_push(0, genr);
 		    DPRINTF(("pushed 0 at level %d\n", level));
 		    npush++;
 		}
@@ -927,7 +1002,7 @@ static int evaluate_genr (GENERATE *genr)
 	    genr->err = 1;
 	}
 
-	reset_calc_stack();
+	reset_calc_stack(genr);
 
 	if (genr->err) break;
 
@@ -1708,16 +1783,18 @@ static int split_genr_formula (char *lhs, char *s)
 	    /* got "equals", but no rhs */
 	    err = E_SYNTAX;
 	} else {
-	    /* should we warn if lhs name is truncated? */
 	    int len = strlen(s);
 
-	    op = s[len - 1];
-	    if (op_level(op) == 2 || op_level(op) == 3) {
-		s[len - 1] = '\0';
-	    } else {
-		op = 0;
+	    if (len > 1) {
+		int l = op_level(s[len - 1]);
+		
+		if (l == 2 || l == 3) {
+		    op = s[len - 1];
+		    s[len - 1] = '\0';
+		}
 	    }
 
+	    /* should we warn if lhs name is truncated? */
 	    strncat(lhs, s, VNAMELEN - 1);
 
 	    if (gretl_is_reserved(lhs)) {
@@ -2015,11 +2092,15 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
     DPRINTF(("after parenthesize: s='%s'\n", s));
 
-    genr.err = math_tokenize(s, &genr, 0);
+    genr.err = attach_atomset(&genr);
+
+    if (!genr.err) {
+	genr.err = math_tokenize(s, &genr, 0);
+    }
 
 #ifdef GENR_DEBUG
     i = 0;
-    while ((atom = pop_atom())) {
+    while ((atom = pop_atom(&genr))) {
 	fprintf(stderr, "*** atom %d ***\n", i++);
 	print_atom(atom);
     }
@@ -2029,8 +2110,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	evaluate_genr(&genr);
     }
 
-    destroy_atom_stack();
-    reset_calc_stack();
+    destroy_atom_stack(&genr);
+    reset_calc_stack(&genr);
 
  genr_return:
 
@@ -2755,6 +2836,8 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 
 	n = rt2 - rt1 + 1;
 	if (n <= 1) {
+	    *err = E_DATA;
+	    free(x);
 	    return NULL;
 	}
 

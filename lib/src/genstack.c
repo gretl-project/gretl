@@ -28,6 +28,7 @@
 # include "winconfig.h"
 #endif
 
+#include "libgretl.h"
 #include "genstack.h"
 
 enum {
@@ -43,6 +44,13 @@ enum {
     STACK_RESUME,
     STACK_SCALAR_CHECK,
     STACK_DESTROY
+};
+
+struct atomset_ {
+    genatom **atoms;
+    int n_atoms;
+    int n_popped;
+    int bookmark;
 };
 
 #define must_know_children(f) (f == T_NOBS || f == T_MEAN || f == T_SUM || \
@@ -167,179 +175,203 @@ static void real_stack_set_parentage (genatom **atoms, int n)
     }
 }
 
-static genatom *atom_stack (genatom *atom, int op)
+/* below: ths static stuff is a big problem if genr is
+   called within aa genr. 
+*/
+
+static genatom *atom_stack (genatom *atom, atomset *aset, int op)
 {
-    static genatom **atoms;
-    static int n_atoms;
-    static int n_popped;
-    static int bookmark;
     genatom *ret = NULL;
     int j;
 
     if (op == STACK_PUSH && atom != NULL) {
-	atoms = realloc(atoms, (n_atoms + 1) * sizeof *atoms);
+	genatom **atoms = 
+	    realloc(aset->atoms, (aset->n_atoms + 1) * sizeof *atoms);
+
 	if (atoms != NULL) {
-	    atoms[n_atoms++] = atom;
+	    aset->atoms = atoms;
+	    aset->atoms[aset->n_atoms] = atom;
+	    aset->n_atoms += 1;
 	    ret = atom;
 	}
     } else if (op == STACK_POP) {
-	if (n_popped < n_atoms) {
-	    ret = atoms[n_popped++];
+	if (aset->n_popped < aset->n_atoms) {
+	    ret = aset->atoms[aset->n_popped];
+	    aset->n_popped += 1;
 	}
     } else if (op == STACK_RESET) {
-	for (j=0; j<n_atoms; j++) (atoms[j])->popped = 0;
-	n_popped = 0;
+	for (j=0; j<aset->n_atoms; j++) {
+	    (aset->atoms[j])->popped = 0;
+	}
+	aset->n_popped = 0;
     } else if (op == STACK_DESTROY) {
-	for (j=0; j<n_atoms; j++) free(atoms[j]);
-	free(atoms);
-	atoms = NULL;
-	n_atoms = 0;
-	n_popped = 0;
+	for (j=0; j<aset->n_atoms; j++) {
+	    free(aset->atoms[j]);
+	}
+	free(aset->atoms);
+	aset->atoms = NULL;
+	aset->n_atoms = 0;
+	aset->n_popped = 0;
     } else if (op == STACK_POP_CHILDREN && atom != NULL) {
-	for (j=0; j<n_atoms; j++) {
-	    if ((atoms[j])->parent == atom && !(atoms[j])->popped) {
-		ret = atoms[j];
-		(atoms[j])->popped = 1;
+	for (j=0; j<aset->n_atoms; j++) {
+	    if ((aset->atoms[j])->parent == atom && !(aset->atoms[j])->popped) {
+		ret = aset->atoms[j];
+		(aset->atoms[j])->popped = 1;
 		break;
 	    }
 	}
     } else if (op == STACK_PEEK_CHILDREN && atom != NULL) {
-	for (j=0; j<n_atoms; j++) {
-	    if ((atoms[j])->parent == atom) {
-		ret = atoms[j];
+	for (j=0; j<aset->n_atoms; j++) {
+	    if ((aset->atoms[j])->parent == atom) {
+		ret = aset->atoms[j];
 		break;
 	    }
 	}	
     } else if (op == STACK_EAT_CHILDREN && atom != NULL) {
-	int ndel = real_stack_eat_children(atom, atoms, n_atoms);
+	int ndel = real_stack_eat_children(atom, aset->atoms, aset->n_atoms);
 
-	n_atoms -= ndel;
-	bookmark -= ndel; /* is this always right? */
+	aset->n_atoms -= ndel;
+	aset->bookmark -= ndel; /* is this always right? */
     } else if (op == STACK_DEPEND) {
-	real_stack_set_parentage(atoms, n_atoms);
+	real_stack_set_parentage(aset->atoms, aset->n_atoms);
     } else if (op == STACK_BOOKMARK) {
-	bookmark = n_popped;
+	aset->bookmark = aset->n_popped;
     } else if (op == STACK_RESUME) {
-	n_popped = bookmark;
+	aset->n_popped = aset->bookmark;
     } else if (op == STACK_SCALAR_CHECK) {
-	if (real_check_for_scalar_result(atoms, n_atoms)) {
-	    ret = atoms[0];
+	if (real_check_for_scalar_result(aset->atoms, aset->n_atoms)) {
+	    ret = aset->atoms[0];
 	}
     }
 
     return ret;
 }
 
-int push_atom (genatom *atom)
+int attach_atomset (GENERATE *genr)
 {
-    return (atom_stack(atom, STACK_PUSH) == NULL);
+    atomset *aset = malloc(sizeof *aset);
+
+    if (aset == NULL) return 1;
+    
+    aset->atoms = NULL;
+    aset->n_atoms = 0;
+    aset->n_popped = 0;
+    aset->bookmark = 0;
+
+    genr->aset = aset;
+
+    return 0;
 }
 
-genatom *pop_atom (void)
+int push_atom (genatom *atom)
 {
-    return atom_stack(NULL, STACK_POP);
+    return (atom_stack(atom, atom->aset, STACK_PUSH) == NULL);
+}
+
+genatom *pop_atom (GENERATE *genr)
+{
+    return atom_stack(NULL, genr->aset, STACK_POP);
 }
 
 genatom *pop_child_atom (genatom *atom)
 {
-    return atom_stack(atom, STACK_POP_CHILDREN);
+    return atom_stack(atom, atom->aset, STACK_POP_CHILDREN);
 }
 
 genatom *peek_child_atom (genatom *atom)
 {
-    return atom_stack(atom, STACK_PEEK_CHILDREN);
+    return atom_stack(atom, atom->aset, STACK_PEEK_CHILDREN);
 }
 
-void reset_atom_stack (void)
+void reset_atom_stack (GENERATE *genr)
 {
-    atom_stack(NULL, STACK_RESET);
+    atom_stack(NULL, genr->aset, STACK_RESET);
 }
 
-void destroy_atom_stack (void)
+void destroy_atom_stack (GENERATE *genr)
 {
-    atom_stack(NULL, STACK_DESTROY);
+    if (genr->aset == NULL) return;
+
+    atom_stack(NULL, genr->aset, STACK_DESTROY);
+    free(genr->aset);
+    genr->aset = NULL;
 }
 
-void atom_stack_set_parentage (void)
+void atom_stack_set_parentage (GENERATE *genr)
 {
-    atom_stack(NULL, STACK_DEPEND);
+    atom_stack(NULL, genr->aset, STACK_DEPEND);
 }
 
 void atom_eat_children (genatom *atom)
 {
-    atom_stack(atom, STACK_EAT_CHILDREN);
+    atom_stack(atom, atom->aset, STACK_EAT_CHILDREN);
 }
 
-void atom_stack_bookmark (void)
+void atom_stack_bookmark (GENERATE *genr)
 {
-    atom_stack(NULL, STACK_BOOKMARK);
+    atom_stack(NULL, genr->aset, STACK_BOOKMARK);
 }
 
-void atom_stack_resume (void)
+void atom_stack_resume (GENERATE *genr)
 {
-    atom_stack(NULL, STACK_RESUME);
+    atom_stack(NULL, genr->aset, STACK_RESUME);
 }
 
-int atom_stack_check_for_scalar (void)
+int atom_stack_check_for_scalar (GENERATE *genr)
 {
-    return (atom_stack(NULL, STACK_SCALAR_CHECK) != NULL);
+    return (atom_stack(NULL, genr->aset, STACK_SCALAR_CHECK) != NULL);
 }
 
-#define STACKSIZE 32
-
-static double calc_stack (double val, int op, int *err)
+static double calc_stack (double val, int op, GENERATE *genr)
 {
-    static double valstack[STACKSIZE]; /* how big should this be? */
-    static int nvals;
+    double *valstack = genr->valstack;
     int i;
     double x = 0.0;
 
     if (op == STACK_PUSH) {
-	if (nvals == STACKSIZE - 1) {
+	if (genr->nvals == VALSTACK_SIZE - 1) {
 	    fprintf(stderr, "genr: stack depth exceeded\n");
-	    *err = 1;
+	    genr->err = 1;
 	    return x;
 	} else {
-	    for (i=nvals; i>0; i--) {
+	    for (i=genr->nvals; i>0; i--) {
 		valstack[i] = valstack[i-1];
 	    }
 	    valstack[0] = val;
-	    nvals++;
+	    genr->nvals += 1;
 	}
     }
-    else if (op == STACK_POP && nvals > 0) {
+    else if (op == STACK_POP && genr->nvals > 0) {
 	x = valstack[0];
-	for (i=0; i<STACKSIZE-1; i++) {
+	for (i=0; i<VALSTACK_SIZE-1; i++) {
 	    valstack[i] = valstack[i+1];
 	}
-	nvals--;
+	genr->nvals -= 1;
     }
     else if (op == STACK_RESET) {
-	for (i=0; i<STACKSIZE; i++) {
+	for (i=0; i<VALSTACK_SIZE; i++) {
 	    valstack[i] = 0.0;
 	}
-	nvals = 0;
+	genr->nvals = 0;
     }
 
     return x;
 }
 
-int calc_push (double x)
+int calc_push (double x, GENERATE *genr)
 {
-    int err = 0;
-
-    calc_stack(x, STACK_PUSH, &err);
-    return err;
+    calc_stack(x, STACK_PUSH, genr);
+    return genr->err;
 }
 
-double calc_pop (void)
+double calc_pop (GENERATE *genr)
 {
-    return calc_stack(0., STACK_POP, NULL);
+    return calc_stack(0., STACK_POP, genr);
 }
 
-void reset_calc_stack (void)
+void reset_calc_stack (GENERATE *genr)
 {
-    calc_stack(0., STACK_RESET, NULL);
+    calc_stack(0., STACK_RESET, genr);
 }
 
 #ifdef GENR_DEBUG

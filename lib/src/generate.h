@@ -60,7 +60,9 @@ int genr_fit_resid (MODEL *pmod,
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);
 
-int genr_scalar_index (int opt, int put);
+int get_generated_value (const char *argv, double *val,
+			 double ***pZ, DATAINFO *pdinfo,
+			 MODEL *pmod, int t);
 
 #endif /* GENERATE_H */
 

@@ -31,9 +31,10 @@ void dprintf (const char *format, ...);
 
 #define ATOMLEN 32  /* length of auxiliary string in genr atom */
 
-typedef struct _genatom genatom;
+typedef struct genatom_ genatom;
+typedef struct atomset_ atomset;
 
-struct _genatom {
+struct genatom_ {
     char level;
     char scalar;
     int varnum;
@@ -45,6 +46,7 @@ struct _genatom {
     char popped;
     char str[ATOMLEN];
     genatom *parent;
+    atomset *aset;
 };
 
 /* below: matches funcs[] in generate.c */
@@ -98,20 +100,43 @@ enum transformations {
     T_IDENTITY
 };
 
+#define VALSTACK_SIZE 32
+
+typedef struct _GENERATE GENERATE;
+
+struct _GENERATE {
+    int err;
+    char save;
+    char scalar; 
+    double *xvec;
+    int varnum;
+    char varname[VNAMELEN];
+    char label[MAXLABEL];
+    int tmpv;
+    double **tmpZ;
+    DATAINFO *pdinfo;
+    double ***pZ;
+    MODEL *pmod;
+    atomset *aset;
+    double valstack[VALSTACK_SIZE];
+    int nvals;
+};
+
+int attach_atomset (GENERATE *genr);
 int push_atom (genatom *atom);
-genatom *pop_atom (void);
+genatom *pop_atom (GENERATE *genr);
 genatom *pop_child_atom (genatom *atom);
 genatom *peek_child_atom (genatom *atom);
-void reset_atom_stack (void);
-void destroy_atom_stack (void);
-void atom_stack_set_parentage (void);
+void reset_atom_stack (GENERATE *genr);
+void destroy_atom_stack (GENERATE *genr);
+void atom_stack_set_parentage (GENERATE *genr);
 void atom_eat_children (genatom *atom);
-void atom_stack_bookmark (void);
-void atom_stack_resume (void);
-int atom_stack_check_for_scalar (void);
+void atom_stack_bookmark (GENERATE *genr);
+void atom_stack_resume (GENERATE *genr);
+int atom_stack_check_for_scalar (GENERATE *genr);
 
-int calc_push (double x);
-double calc_pop (void);
-void reset_calc_stack (void);
+int calc_push (double x, GENERATE *genr);
+double calc_pop (GENERATE *genr);
+void reset_calc_stack (GENERATE *genr);
 
 #endif /* GENSTACK_H */

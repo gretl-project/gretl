@@ -1872,7 +1872,7 @@ static int print_arg (const char **pfmt, double val,
 	fmt[2] = '\0';
 	n = 2;
     } else {
-	sscanf(*pfmt + 1, "%14[^gfs]", fmt + 1);
+	sscanf(*pfmt + 1, "%14[^gfsd]", fmt + 1);
 	n = strlen(fmt);
 	fc = *(*pfmt + n);
 	fmt[n] = fc;
@@ -1947,37 +1947,6 @@ static int output_format_only (const char *s, PRN *prn)
 	    pputc(prn, *s);
 	}
 	s++;
-    }
-
-    return err;
-}
-
-static int get_generated_value (const char *argv, double *val,
-				double ***pZ, DATAINFO *pdinfo,
-				MODEL *pmod, int t)
-{
-    char *genline = malloc(strlen(argv) + 12);
-    int err = 0;
-
-    if (genline == NULL) {
-	err = E_ALLOC;
-    } else {
-	sprintf(genline, "genr argv=%s", argv);
-#ifdef PRINTF_DEBUG
-	fprintf(stderr, "get_generated_value: trying '%s'\n", genline);
-#endif
-	err = generate(pZ, pdinfo, genline, pmod);
-	free(genline);
-	if (!err) {
-	    int v = pdinfo->v - 1;
-
-	    if (pdinfo->vector[v]) {
-		*val = (*pZ)[v][0];
-	    } else {
-		*val = (*pZ)[v][t];
-	    }
-	    err = dataset_drop_vars(1, pZ, pdinfo);
-	}
     }
 
     return err;
@@ -2086,7 +2055,13 @@ static int real_do_printf (const char *line, double ***pZ,
 	argv = get_arg((i > 0)? NULL : str);
 	chopstr(argv);
 
-	if (!strcmp(argv, "marker")) {
+#ifdef PRINTF_DEBUG
+	fprintf(stderr, "do_printf: processing argv[%d] '%s'\n", i, argv);	
+#endif
+
+	if (numeric_string(argv)) {
+	    vals[i] = atof(argv);
+	} else if (!strcmp(argv, "marker")) {
 	    if (markerpos >= 0 || pdinfo->S == NULL) {
 		err = 1;
 	    } else {
@@ -2108,6 +2083,12 @@ static int real_do_printf (const char *line, double ***pZ,
 					  pmod, t);
 	    }
 	}
+
+#ifdef PRINTF_DEBUG
+	fprintf(stderr, " after processing arg, vals[%d] = %g, err = %d\n", 
+		i, vals[i], err);	
+#endif
+
 	if (err) {
 	    goto printf_bailout;
 	}

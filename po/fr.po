@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.1\n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-07-22 10:57-0400\n"
+"PO-Revision-Date: 2004-09-13 09:31-0400\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2380,14 +2380,12 @@ msgid "starting obs '%s' is invalid"
 msgstr "observation de départ « %s » est invalide"
 
 #: lib/src/gretl_utils.c:798
-#, fuzzy
 msgid "starting obs must contain a ':' with frequency > 1"
-msgstr "observation de départ doit contenir un '.' avec une fréquence > 1"
+msgstr "observation de départ doit contenir un ':' avec une fréquence > 1"
 
 #: lib/src/gretl_utils.c:803
-#, fuzzy
 msgid "no ':' allowed in starting obs with frequency 1"
-msgstr "aucun '.' permis dans l'observation de départ avec une fréquence de 1"
+msgstr "aucun ':' n'est permis dans l'observation de départ avec une fréquence de 1"
 
 #: lib/src/gretl_utils.c:814
 #, c-format
@@ -5361,9 +5359,8 @@ msgid "/Sample/_Add case markers..."
 msgstr "/Échantillon/_Ajouter des marqueurs de cas..."
 
 #: gui/gretl.c:403 gui2/gretl.c:479
-#, fuzzy
 msgid "/Sample/Remove case _markers"
-msgstr "/Échantillon/_Ajouter des marqueurs de cas..."
+msgstr "/Échantillon/Enlever les marqueurs de cas"
 
 #: gui/gretl.c:404 gui2/gretl.c:480
 msgid "/Sample/sep5"
@@ -5733,14 +5730,14 @@ msgid "Undated"
 msgstr "Non daté"
 
 #: gui/gretl.c:1187 gui2/gretl.c:1377
-#, fuzzy, c-format
+#, c-format
 msgid "%s: Full range %s - %s"
-msgstr "%s étendue complète %s - %s; échantillon courant %s - %s"
+msgstr "%s: étendue complète %s - %s"
 
 #: gui/gretl.c:1196 gui2/gretl.c:1386
 #, c-format
 msgid "%s; sample %s - %s"
-msgstr ""
+msgstr "%s; échantillon %s - %s"
 
 #: gui/gretl.c:1218 gui2/gretl.c:1409
 msgid " Unsaved data "
@@ -7462,16 +7459,15 @@ msgstr "/_Trouver"
 
 #: gui2/database.c:546 gui2/helpfiles.c:71 gui2/helpfiles.c:86
 msgid "/Find/_Find in window"
-msgstr ""
+msgstr "/Trouver/_Trouver dans la fenêtre"
 
 #: gui2/database.c:547 gui2/database.c:557
 msgid "/_Codebook"
 msgstr "/_Livre de codes"
 
 #: gui2/database.c:548
-#, fuzzy
 msgid "/Codebook/_Open"
-msgstr "/_Livre de codes"
+msgstr "/Livre de codes/_Ouvrir"
 
 #: gui2/database.c:697 gui2/datafiles.c:1012
 msgid "Network status: OK"
@@ -7859,15 +7855,15 @@ msgstr "Utilisation de X-12-ARIMA"
 
 #: gui2/dialogs.c:2442
 msgid "Week starts on Monday"
-msgstr ""
+msgstr "Semaine débutant le lundi"
 
 #: gui2/dialogs.c:2462
 msgid "Week starts on Sunday"
-msgstr ""
+msgstr "Semaine débutant le dimanche"
 
 #: gui2/dialogs.c:2496
 msgid "Default method:"
-msgstr ""
+msgstr "Méthode par défaut:"
 
 #: gui2/dialogs.c:2502
 msgid "Compact by averaging"
@@ -7911,14 +7907,12 @@ msgid "Compact monthly data to:"
 msgstr "Compacter les données mensuelles en:"
 
 #: gui2/dialogs.c:2641
-#, fuzzy
 msgid "Compact daily data to:"
-msgstr "Compacter les données trimestrielles en annuelles"
+msgstr "Compacter les données journalières en:"
 
 #: gui2/dialogs.c:2644
-#, fuzzy
 msgid "Compact daily data to weekly"
-msgstr "Compacter les données trimestrielles en annuelles"
+msgstr "Compacter les données journalières en hebdomadaires"
 
 #: gui2/dialogs.c:2783
 msgid "gretl error"
@@ -9317,9 +9311,8 @@ msgid "Case markers added"
 msgstr "Marqueurs de cas ajoutés"
 
 #: gui2/library.c:1015
-#, fuzzy
 msgid "Case markers removed"
-msgstr "Marqueurs de cas ajoutés"
+msgstr "Marqueurs de cas enlevés"
 
 #: gui2/library.c:1042 gui2/library.c:3470
 msgid "Failed to generate fitted values"

@@ -155,6 +155,23 @@ double normal_pdf (double x)
     return (1.0 / sqrt(2.0 * M_PI)) * exp(-0.5 * x * x);
 }
 
+static double get_number_or_val (const char *s, 
+				 const double **Z,
+				 const DATAINFO *pdinfo)
+{
+    if (numeric_string(s)) {
+	return dot_atof(s);
+    } else {
+	int v = varindex(pdinfo, s);
+
+	if (v > 0 && v < pdinfo->v && !pdinfo->vector[v]) {
+	    return Z[v][0];
+	}
+    } 
+
+    return NADBL;
+}
+
 /**
  * batch_pvalue:
  * @str: the command line, which should be of one of the following forms:
@@ -269,12 +286,15 @@ double batch_pvalue (const char *str,
 	    err = 1;
 	}
     } else {
-	if (*fstr && check_atof(fstr)) err = 1;
-	else xval = atof(fstr);
+	if (*fstr && check_atof(fstr)) {
+	    err = 1;
+	} else {
+	    xval = atof(fstr);
+	}
     }
 
     if (err) {
-	pprintf(prn, "%s\n", gretl_errmsg);
+	print_gretl_errmsg(prn);
 	return NADBL;
     }
 
@@ -710,44 +730,28 @@ int print_critical (const char *line, PRN *prn)
     return 0;
 }
 
-static double get_number_or_val (const char *s, 
-				 const double **Z,
-				 const DATAINFO *pdinfo)
-{
-    if (numeric_string(s)) {
-	return dot_atof(s);
-    } else {
-	int v = varindex(pdinfo, s);
-
-	if (v > 0 && v < pdinfo->v && !pdinfo->vector[v]) {
-	    return Z[v][0];
-	}
-    } 
-
-    return NADBL;
-}
-
 static int parse_genr_critical_input (const char *str, 
 				      const double **Z, 
 				      const DATAINFO *pdinfo,
 				      int *i, int *dfn, int *dfd, 
-				      double *x)
+				      double *a)
 {
     char dfnstr[VNAMELEN], dfdstr[VNAMELEN];
-    char xstr[VNAMELEN];
+    char astr[VNAMELEN];
     double val;
     *i = -1;
 
-    dfnstr[0] = dfdstr[0] = xstr[0] = '\0';
+    dfnstr[0] = dfdstr[0] = astr[0] = '\0';
 
-    if (sscanf(str, "F,%8[^,],%8[^,],%8s", dfnstr, dfdstr, xstr) == 3) {
+    if (sscanf(str, "F,%8[^,],%8[^,],%8s", dfnstr, dfdstr, astr) == 3) {
 	*i = 3;
-    } else if (sscanf(str, "X,%8[^,],%8s", dfnstr, xstr) == 2) {
+    } else if (sscanf(str, "X,%8[^,],%8s", dfnstr, astr) == 2) {
 	*i = 2;
-    } else if (sscanf(str, "t,%8[^,],%8s", dfnstr, xstr) == 2) {
+    } else if (sscanf(str, "t,%8[^,],%8s", dfnstr, astr) == 2) {
 	*i = 1;
-    } else if (sscanf(str, "N,%8s", xstr) == 1) {
+    } else if (sscanf(str, "N,%8s", astr) == 1) {
 	*i = 0;
+	*dfn = 500;
     }
 
     if (*i == -1) return 1;
@@ -768,9 +772,9 @@ static int parse_genr_critical_input (const char *str,
 	    *dfd = val;
 	}
     }
-    if (xstr[0] != '\0') {
-	*x = get_number_or_val(xstr, Z, pdinfo);
-	if (na(*x) || *x < 0.0) {
+    if (astr[0] != '\0') {
+	*a = get_number_or_val(astr, Z, pdinfo);
+	if (na(*a) || *a < 0.0) {
 	    *i = -1;
 	}
     }
@@ -781,11 +785,11 @@ static int parse_genr_critical_input (const char *str,
 double genr_get_critical (const char *line, const double **Z, 
 			  const DATAINFO *pdinfo)
 {
-    double x, ret = NADBL;
+    double alpha, ret = NADBL;
     int st, dfn = -1, dfd = -1;
 
     if (parse_genr_critical_input(line, Z, pdinfo,
-				  &st, &dfn, &dfd, &x)) {
+				  &st, &dfn, &dfd, &alpha)) {
 	return NADBL;
     }
 
@@ -795,17 +799,15 @@ double genr_get_critical (const char *line, const double **Z,
     }
 
     if (st == 3) {
-	ret = f_crit_a(x, dfn, dfd);
+	ret = f_crit_a(alpha, dfn, dfd);
     } else if (st == 2) {
-	ret = chi_crit_a(x, dfn);
-    } else if (st == 1) {
-	ret = sqrt(f_crit_a(2.0 * x, 1, dfn));
+	ret = chi_crit_a(alpha, dfn);
     } else {
-	ret = sqrt(f_crit_a(2.0 * x, 1, 500));
-    }
+	ret = sqrt(f_crit_a(2.0 * alpha, 1, dfn));
+    } 
 
     if (ret < 0) {
-	return NADBL;
+	ret = NADBL;
     }
 
     return ret;

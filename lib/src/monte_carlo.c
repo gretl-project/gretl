@@ -296,6 +296,22 @@ static int parse_as_while_loop (LOOPSET *loop,
     return err;
 }
 
+static int get_int_value (const char *s, const DATAINFO *pdinfo,
+			  const double **Z, int *err)
+{
+    int v, ret = 0;
+
+    if (numeric_string(s)) {
+	ret = atoi(s);
+    } else if ((v = ok_loop_var(pdinfo, s)) > 0) {
+	ret = Z[v][0];
+    } else {
+	*err = 1;
+    }
+
+    return ret;
+}
+
 static int parse_as_indexed_loop (LOOPSET *loop,
 				  const DATAINFO *pdinfo,
 				  const double **Z,
@@ -304,7 +320,7 @@ static int parse_as_indexed_loop (LOOPSET *loop,
 				  const char *end)
 {
     int nstart = 0, nend = 0;
-    int v, err = 0;
+    int err = 0;
 
     if (strcmp(lvar, "i")) {
 	sprintf(gretl_errmsg, 
@@ -314,23 +330,11 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     }
 
     if (!err) {
-	if (numeric_string(start)) {
-	    nstart = atoi(start);
-	} else if ((v = ok_loop_var(pdinfo, start)) > 0) {
-	    nstart = Z[v][0];
-	} else {
-	    err = 1;
-	}
+	nstart = get_int_value(start, pdinfo, Z, &err);
     }
 
     if (!err) {
-	if (numeric_string(end)) {
-	    nend = atoi(end);
-	} else if ((v = ok_loop_var(pdinfo, end)) > 0) {
-	    nend = Z[v][0];
-	} else {
-	    err = 1;
-	}
+	nend = get_int_value(end, pdinfo, Z, &err);
     }
 
     if (!err && nend <= nstart) {
@@ -351,41 +355,23 @@ static int parse_as_indexed_loop (LOOPSET *loop,
     return err;
 }
 
-static int parse_as_simple_count_loop (LOOPSET *loop, int n)
+static int parse_as_count_loop (LOOPSET *loop, 
+				const DATAINFO *pdinfo,
+				const double **Z,
+				const char *lvar)
 {
-    int err = 0;
+    int nt, err = 0;
 
-    if (n <= 0) {
+    nt = get_int_value(lvar, pdinfo, Z, &err);
+
+    if (!err && nt <= 0) {
 	strcpy(gretl_errmsg, _("Loop count must be positive."));
 	err = 1;
-    } else {
-	loop->ntimes = n;
-	loop->type = COUNT_LOOP;
     }
 
-    return err;
-}
-
-static int parse_as_named_count_loop (LOOPSET *loop, 
-				      const DATAINFO *pdinfo,
-				      const double **Z,
-				      const char *lvar)
-{
-    int v = ok_loop_var(pdinfo, lvar);
-    int err = 0;
-
-    if (v == 0) {
-	err = 1;
-    } else {
-	int n = Z[v][0];
-
-	if (n <= 0) {
-	    strcpy(gretl_errmsg, _("Loop count must be positive."));
-	    err = 1;
-	} else {
-	    loop->ntimes = n;
-	    loop->type = COUNT_LOOP;
-	}
+    if (!err) {
+	loop->ntimes = nt;
+	loop->type = COUNT_LOOP;
     }
 
     return err;
@@ -449,9 +435,14 @@ test_forloop_element (const char *s, LOOPSET *loop,
 		    loop->incr = x;
 		}
 	    } else if (i == 1) {
+		/* middle term in "for (;;)" stuff */
 		v = ok_loop_var(pdinfo, rhs);
 		if (v > 0) {
+#if 1
+		    loop->rvar = v;
+#else
 		    loop->rval = (*pZ)[v][0];
+#endif
 		} else {
 		    err = 1;
 		}
@@ -503,6 +494,7 @@ parse_as_full_for_loop (LOOPSET *loop,
 	    char *forbits[3];
 	    int i = 0;
 
+	    /* make compressed copy of string */
 	    p++;
 	    while (*p) {
 		if (*p == ')') break;
@@ -513,6 +505,7 @@ parse_as_full_for_loop (LOOPSET *loop,
 	    }
 	    forstr[i] = '\0';
 
+	    /* split terms separated by ';' */
 	    for (i=0; i<3; i++) {
 		forbits[i] = strtok((i == 0)? forstr : NULL, ";");
 		err = test_forloop_element(forbits[i], loop, 
@@ -550,7 +543,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 {
     LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[VNAMELEN];
-    int n, err = 0;
+    int err = 0;
 
 #ifdef LOOP_DEBUG
     printf("parse_loopline: ploop = %p, loopstack = %d\n",
@@ -584,11 +577,6 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 
     *gretl_errmsg = '\0';
     
-    err = prepare_loop_for_action(loop);
-    if (err) {
-	goto bailout;
-    }
-
     if (sscanf(line, "loop while %[^ <>=]%[ <>=] %s", lvar, op, rvar) == 3) {
 	err = parse_as_while_loop(loop, pdinfo, lvar, rvar, op);
     }
@@ -602,14 +590,9 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = parse_as_full_for_loop(loop, pdinfo, pZ, line);
     }
 
-    else if (sscanf(line, "loop %d", &n) == 1) {
-	err = parse_as_simple_count_loop(loop, n);
-    }
-
     else if (sscanf(line, "loop %8s", lvar) == 1) {
-	err = parse_as_named_count_loop(loop, pdinfo, 
-					(const double **) *pZ, 
-					lvar);
+	err = parse_as_count_loop(loop, pdinfo, (const double **) *pZ, 
+				  lvar);
     }
 
     /* out of options, complain */
@@ -623,10 +606,15 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = 1;
     }
 
- bailout:
+    if (!err) {
+	/* allocates loop->lines, loop->ci */
+	err = prepare_loop_for_action(loop);
+    }
 
     if (err) {
 	if (loop != ploop) {
+	    free(loop->lines);
+	    free(loop->ci);
 	    free(loop);
 	}
 	loop = NULL;
@@ -636,7 +624,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 }
 
 #define DEFAULT_MAX_ITER 250
-#define MAX_FOR_TIMES  10000
+#define MAX_FOR_TIMES  100000
 
 static int get_max_iters (void)
 {
@@ -659,6 +647,7 @@ static int loop_count_too_high (LOOPSET *loop)
     loop->ntimes += 1;
 
     if (loop->type == FOR_LOOP) {
+	/* FIXME */
 	if (loop->ntimes >= MAX_FOR_TIMES) {
 	    sprintf(gretl_errmsg, _("Reached maximum interations, %d"),
 		    MAX_FOR_TIMES);
@@ -722,7 +711,7 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	}
     }
 
-    /* a 'for' indexed loop */
+    /* a loop indexed by 'i' */
     else if (loop->type == INDEX_LOOP) {  
 	if (k > 0) {
 	    loop->index += 1;
@@ -740,14 +729,17 @@ loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 	    cont = 0;
 	}
 	
-	/* an inequality between variables */
+	/* inequality between variables */
 	else if (loop->rvar > 0) {
+	    if (loop->type == FOR_LOOP && k > 0) {
+		Z[loop->lvar][0] += loop->incr;
+	    }
 	    cont = eval_numeric_condition(loop->ineq,
 					  Z[loop->lvar][0],
 					  Z[loop->rvar][0]);
 	} 
 
-	/* inequality between a var and a number */
+	/* inequality between var and constant */
 	else if (loop->lvar > 0) {
 	    if (loop->type == FOR_LOOP && k > 0) {
 		Z[loop->lvar][0] += loop->incr;
@@ -1892,14 +1884,14 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case LAD:
 	    case HSK:
 	    case HCCM:
-		/* if this is the first time round the loop, allocate space
+		/* if this is the first time round, allocate space
 		   for each loop model */
 		if (lround == 0 && loop->type != INDEX_LOOP) {
 		    err = add_loop_model(loop, j);
 		    if (err) {
 			break;
 		    }
-		} /* end of basic round 0 setup */
+		} 
 
 		/* estimate the model called for */
 		clear_model(models[0]);
@@ -2047,8 +2039,8 @@ int loop_exec (LOOPSET *loop, char *line,
 		err = 1;
 		break;
 
-	    } /* end switch on command number */
-	} /* end list of commands within loop */
+	    } /* end switch on specific command number */
+	} /* end execution of commands within loop */
 
 	lround++;
 
