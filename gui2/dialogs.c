@@ -1633,6 +1633,7 @@ void varinfo_dialog (int varnum, int full)
 /* apparatus for setting sample range */
 
 struct range_setting {
+    gretlopt opt;
     GtkWidget *dlg;
     GtkWidget *obslabel;
     GtkWidget *startspin;
@@ -1650,8 +1651,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
     int err;
 
-    if (rset->combo != NULL) {
-	/* setting from dummy variable */
+    if (rset->opt == SMPLDUM) {
 	const gchar *buf;
 	char dumv[VNAMELEN];
 
@@ -1661,7 +1661,20 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 
 	sprintf(line, "smpl %s --dummy", dumv);
 	if (verify_and_record_command(line)) return TRUE;
+
 	err = bool_subsample(OPT_O);
+	if (!err) {
+	    gtk_widget_destroy(rset->dlg);
+	} 
+    } else if (rset->opt == SMPLRAND) {
+	int subn;
+
+	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
+
+	sprintf(line, "smpl %d --random", subn);
+	if (verify_and_record_command(line)) return TRUE;
+
+	err = bool_subsample(OPT_N);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
@@ -1743,6 +1756,15 @@ gboolean update_obs_label (GtkEditable *entry, gpointer data)
     return FALSE;
 }
 
+static int default_randsize (void)
+{
+    if (datainfo->n > 1000) {
+	return datainfo->n / 10;
+    } else {
+	return datainfo->n / 2;
+    }
+}
+
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tempwid, *hbox;
@@ -1753,6 +1775,10 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     if (rset == NULL) return;
     
     rset->dlg = gtk_dialog_new();
+    rset->opt = u;
+    rset->combo = NULL;
+    rset->startspin = rset->endspin = NULL;
+    rset->obslabel = NULL;
 
 #ifdef OLD_GTK
     gtk_signal_connect (GTK_OBJECT(rset->dlg), "destroy", 
@@ -1769,8 +1795,6 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     if (u == SMPLDUM) {
 	GList *dumlist;
 	int thisdum = 0;
-
-	rset->startspin = rset->endspin = NULL;
 
 	dumlist = get_dummy_list(&thisdum);
 
@@ -1809,11 +1833,30 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
+    } else if (u == SMPLRAND) {
+	gchar *labtxt;
+	GtkObject *adj;
+
+	hbox = gtk_hbox_new(FALSE, 5);
+
+	labtxt = g_strdup_printf(_("Number of observations to select (max %d)"),
+				 datainfo->n - 1);
+
+	/* spinner for number of obs */
+	tempwid = gtk_label_new(labtxt);
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+	adj = gtk_adjustment_new(default_randsize(), 
+				 1, datainfo->n - 1,
+				 1, 1, 1);
+	rset->startspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), rset->startspin, FALSE, FALSE, 0);
+
+	/* pack the spinner apparatus */
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 5);
     } else { /* plain SMPL */
 	GtkWidget *vbox;
 	GtkObject *adj;
-
-	rset->combo = NULL;
 
 	hbox = gtk_hbox_new(TRUE, 5);
 
@@ -1852,16 +1895,20 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 			   hbox, FALSE, FALSE, 5);
     }
 
-    /* label showing number of observations */
-    sprintf(obstext, _("Observations: %d"), datainfo->t2 - datainfo->t1 + 1);
-    rset->obslabel = gtk_label_new(obstext);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
-		       rset->obslabel, FALSE, FALSE, 5);
+    if (u != SMPLRAND) {
+	/* label showing number of observations */
+	sprintf(obstext, _("Observations: %d"), datainfo->t2 - datainfo->t1 + 1);
+	rset->obslabel = gtk_label_new(obstext);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+			   rset->obslabel, FALSE, FALSE, 5);
+    }
 
-    if (rset->combo == NULL) {
+    if (u == SMPL) {
 	g_object_set_data(G_OBJECT(rset->startspin), "rset", rset);
 	g_object_set_data(G_OBJECT(rset->endspin), "rset", rset);
-    } else {
+    }
+
+    if (u == SMPLDUM) {
 	update_obs_label(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry),
 			 rset);
     }

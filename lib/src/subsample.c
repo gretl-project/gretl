@@ -662,14 +662,16 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* simple case: merely a change of start or end of sample */
     if (*subZ == NULL) {
-        (*datainfo)->t1 = 0;
-        (*datainfo)->t2 = (*datainfo)->n - 1;
+	if (!opt && OPT_C) {
+	    (*datainfo)->t1 = 0;
+	    (*datainfo)->t2 = (*datainfo)->n - 1;
+	}
         return 0;
     }
 
     if (fullinfo == NULL || *fullinfo == NULL) return 1;
 
-    /* reset n to full series length */
+    /* set n to full series length */
     n = (*fullinfo)->n;
 
     /* in case any new vars added, try to merge them in */

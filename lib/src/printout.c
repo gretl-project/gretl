@@ -196,8 +196,7 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		spc, add->score);
 	if (add->score == 1) {
 	    pputs(prn, _("has improved.\n"));
-	}
-	else {
+	} else {
 	    pputs(prn, _("have improved.\n\n"));
 	}
     }
@@ -619,6 +618,8 @@ static void outxx (const double xx, int ci, PRN *prn)
 	pprintf(prn, "%14s", numstr);
     }
 }
+
+/* ......................................................... */ 
 
 int takenotes (int quit_opt)
 {

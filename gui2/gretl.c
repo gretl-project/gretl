@@ -467,6 +467,7 @@ GtkItemFactoryEntry data_items[] = {
       SMPLDUM, NULL, GNULL },
     { N_("/Sample/_Restrict, based on criterion..."), NULL, gretl_callback, 
       SMPLBOOL, NULL, GNULL },
+    { N_("/Sample/R_andom sub-sample..."), NULL, sample_range_dialog, SMPLRAND, NULL, GNULL },
     { N_("/Sample/sep3"), NULL, NULL, 0, "<Separator>", NULL },  
     { N_("/Sample/Drop all obs with _missing values"), NULL, drop_all_missing, 
       0, NULL, GNULL },

@@ -846,6 +846,7 @@ int bool_subsample (gretlopt opt)
      /* OPT_M  drop all obs with missing data values 
 	OPT_O  sample using dummy variable
 	OPT_R  sample using boolean expression
+	OPT_N  random sub-sample
 	OPT_C  cumulate restrictions
      */
 {

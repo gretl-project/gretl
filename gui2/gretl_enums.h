@@ -7,6 +7,7 @@ enum extra_cmds {
     GSETMISS,
     SMPLDUM,
     SMPLBOOL,
+    SMPLRAND,
     SETSEED,
     MARKERS,
     STORE_MODEL,
