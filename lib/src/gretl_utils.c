@@ -1918,7 +1918,7 @@ int _full_model_list (MODEL *pmod, int **plist)
 FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ, 
 			 DATAINFO *pdinfo)
 {
-    int depvar, t, nfit;
+    int depvar, t, nfit = 0;
     int t1 = pmod->t1, t2 = pmod->t2, n = pdinfo->n;
     char fcastline[32];
     FITRESID *fr;
