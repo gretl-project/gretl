@@ -2717,6 +2717,9 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 		gtk_file_selection_get_filename(GTK_FILE_SELECTION (fs)), 
 		MAXLEN-1);
 	gtk_widget_destroy(GTK_WIDGET (fs)); 
+    } else {
+	if (!strlen(scriptfile))
+	    strcpy(scriptfile, tryscript);
     }
 
     /* is this a "session" file? */

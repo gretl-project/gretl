@@ -398,8 +398,10 @@ void file_selector (char *msg, int action, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
-	if (action == SAVE_SCRIPT)
+	if (action == SAVE_SCRIPT) {
 	    strcpy(scriptfile, fname);
+	    mkfilelist(3, scriptfile);
+	}
     }
 }
 
@@ -540,8 +542,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
-	if (action == SAVE_SCRIPT)
+	if (action == SAVE_SCRIPT) {
 	    strcpy(scriptfile, fname);
+	    mkfilelist(3, scriptfile);
+	}
     }
     gtk_widget_destroy(GTK_WIDGET(fs));    
 }
