@@ -685,9 +685,9 @@ static void print_model_heading (const MODEL *pmod,
 	break;
     case AUX_AR:
 	if (utf) { 	
-	    pprintf(prn, "\n%s ", _("Breusch-Pagan test for"));
+	    pprintf(prn, "\n%s ", _("Breusch-Godfrey test for"));
 	} else {
-	    pprintf(prn, "\n%s ", I_("Breusch-Pagan test for"));
+	    pprintf(prn, "\n%s ", I_("Breusch-Godfrey test for"));
 	} 
 	if (pmod->order > 1) {
 	    pprintf(prn, "%s %d\n", (utf)? _("autocorrelation up to order") :

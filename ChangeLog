@@ -1,3 +1,7 @@
+version 1.0.7
+- Correct the attribution of autocorrelation test (Breusch-Godfrey
+  rather than Breusch-Pagan)
+
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting
 - fix for correlogram graph (was incompatible with older gnuplot)
