@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "calendar.h"
 #include "internal.h"
 #include <zlib.h>
 #include <ctype.h>
@@ -782,6 +783,11 @@ void ntodate (char *datestr, const int nt, const DATAINFO *pdinfo)
 /* print to datestr the calendar representation of nt */
 {
     double xn;
+
+    if (dataset_is_daily(pdinfo) && pdinfo->sd0 > 60000) {
+	daily_date_string(datestr, nt, pdinfo);
+	return;
+    }
 
     xn = date(nt, pdinfo->pd, pdinfo->sd0);
 

@@ -69,14 +69,14 @@ typedef struct {
     int pd;             /* periodicity or frequency of data */
     int bin;            /* data file is binary? (1 or 0) */
     int extra;
-    double sd0;         /* float representation of stobs */    
+    double sd0;         /* float representation of stobs */
     int t1, t2;         /* start and end of current sample */
     char stobs[9];      /* string representation of starting obs (date) */
     char endobs[9];     /* string representation of ending obs */
     char **varname;     /* array of names of variables */
     char **label;       /* array of descriptive labels for vars */
-    short markers;
-    short time_series;
+    char markers;
+    char time_series;
     char **S;           /* to hold observation markers */
     char *descrip;      /* to hold info on data sources etc. */
     unsigned char *vector; /* hold info on vars: vector versus scalar */

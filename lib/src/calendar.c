@@ -39,8 +39,7 @@
    notice.  Allin Cottrell, March 2002.
 */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include "libgretl.h"
 
 /* leap year -- account for gregorian reformation in 1752 */
 #define	leap_year(yr) \
@@ -69,7 +68,7 @@ int week1stday = 0; /* 1 for Monday, 0 for Sunday */
 #define	SATURDAY 		6		/* 1 Jan 1 was a Saturday */
 #define	NUMBER_MISSING_DAYS 	11		/* 11 day correction */
 
-int day_in_year (int day, int month, int year)
+static int day_in_year (int day, int month, int year)
 {
     int i, leap;
 
@@ -79,7 +78,7 @@ int day_in_year (int day, int month, int year)
     return day;
 }
 
-int day_in_week (int day, int month, int year)
+static int day_in_week (int day, int month, int year)
 {
     long temp;
 
@@ -111,16 +110,16 @@ static int t_to_epoch_day (int t, long start)
     return start + t + (2 * wkends);
 }
 
-void daily_date_string (char *str, long dstart, int t, int pd)
+void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 {
     int rem, yr;
     int add, day, mo = 0, modays = 0;
     long yrstart, dfind;
 
-    if (pd == 7) 
-	dfind = dstart + t;
+    if (pdinfo->pd == 7) 
+	dfind = (long) pdinfo->sd0 + t;
     else
-	dfind = t_to_epoch_day(t, dstart);
+	dfind = t_to_epoch_day(t, (long) pdinfo->sd0);
 
     yr = 1 + (double) dfind / 365.248;
     
@@ -154,21 +153,3 @@ void get_date_from_x (double x)
     printf("%02d/%02d/%02d\n", yr, mo, day);
 }
 
-int main (void)
-{
-    long ed;
-    char str[9], ds[9];
-    int i;
-
-    strcpy(str, "54/09/10");
-    printf("trying date %s\n", str);
-    ed = get_epoch_day(str);
-    printf("got epoch day = %ld\n", ed);
-
-    for (i=0; i<40; i++) {
-	daily_date_string(ds, ed, i, 5);
-	printf("t=%d, date %s\n", i, ds);
-    }
-    
-    return 0;
-}

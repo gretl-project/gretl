@@ -25,6 +25,7 @@
 # include "../../config.h"
 #endif
 #include "libgretl.h"
+#include "calendar.h"
 #include "internal.h"
 #include <dirent.h>
 #include <unistd.h>
@@ -574,6 +575,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 {
     int pd, pos, i, len, dc = 0, bad = 0;
     char stobs[9], endobs[9], endbit[7];
+    long ed0 = 0L;
 
     gretl_errmsg[0] = '\0';
 
@@ -589,48 +591,58 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 	return 1;
     }
 
-    /* is stobs acceptable? */
-    len = strlen(stobs);
-    for (i=0; i<len; i++) {
-	if (stobs[i] != '.' && !isdigit((unsigned char) stobs[i])) {
-	    bad = 1;
-	    break;
+    /* special case: dated daily data */
+    if (pd == 5 || pd == 7 && strstr(stobs, "/")) {
+	ed0 = get_epoch_day(stobs);
+	if (ed0 > 0) pdinfo->sd0 = ed0;
+	else ed0 = 0;
+    } else {
+	/* is stobs acceptable? */
+	len = strlen(stobs);
+	for (i=0; i<len; i++) {
+	    if (stobs[i] != '.' && !isdigit((unsigned char) stobs[i])) {
+		bad = 1;
+		break;
+	    }
+	    if (stobs[i] == '.') dc++;
 	}
-	if (stobs[i] == '.') dc++;
-    }
-    if (bad || dc > 1) {
-	sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
-	return 1;
-    }
-    pos = dotpos(stobs);
-    if (pd > 1 && pos == len) {
-	strcpy(gretl_errmsg, "starting obs must contain a '.' with frequency > 1");
-	return 1;
-    }
-    if (pd == 1 && pos < len) {
-	strcpy(gretl_errmsg, "no '.' allowed in starting obs with frequency 1");
-	return 1;
-    }    
-    if ((pd > 1 && pd < 10 && strlen(stobs + pos) != 2) ||
-	(pd >= 10 && pd < 100 && strlen(stobs + pos) != 3)) {
-	sprintf(gretl_errmsg, "starting obs '%s' is incompatible with frequency", 
-		stobs);
-	return 1;
-    }
-    if (pd > 1) {
-	strcpy(endbit, stobs + pos + 1);
-	dc = atoi(endbit);
-	if (dc < 0 || dc > pd) {
-	    sprintf(gretl_errmsg, 
-		    "starting obs '%s' is incompatible with frequency", 
-		    stobs);
+	if (bad || dc > 1) {
+	    sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
 	    return 1;
-	}	    
+	}
+	pos = dotpos(stobs);
+	if (pd > 1 && pos == len) {
+	    strcpy(gretl_errmsg, "starting obs must contain a '.' with "
+		   "frequency > 1");
+	    return 1;
+	}
+	if (pd == 1 && pos < len) {
+	    strcpy(gretl_errmsg, "no '.' allowed in starting obs with "
+		   "frequency 1");
+	    return 1;
+	}    
+	if ((pd > 1 && pd < 10 && strlen(stobs + pos) != 2) ||
+	    (pd >= 10 && pd < 100 && strlen(stobs + pos) != 3)) {
+	    sprintf(gretl_errmsg, "starting obs '%s' is incompatible with "
+		    "frequency", stobs);
+	    return 1;
+	}
+	if (pd > 1) {
+	    strcpy(endbit, stobs + pos + 1);
+	    dc = atoi(endbit);
+	    if (dc < 0 || dc > pd) {
+		sprintf(gretl_errmsg, 
+			"starting obs '%s' is incompatible with frequency", 
+			stobs);
+		return 1;
+	    }	    
+	}
     }
 
     /* adjust data info struct */
     pdinfo->pd = pd;
-    pdinfo->sd0 = atof(stobs);
+    if (ed0 == 0L) 
+	pdinfo->sd0 = atof(stobs);
     ntodate(pdinfo->stobs, 0, pdinfo);
     ntodate(endobs, pdinfo->n - 1, pdinfo);
     strcpy(pdinfo->endobs, endobs);
