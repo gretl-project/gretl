@@ -505,7 +505,7 @@ static genatom *parse_token (const char *s, char op,
 		}
 
 		if (v == INDEXNUM) { 
-		    int k = loop_scalar_index(*s, 0, 0);
+		    int k = loop_scalar_read(*s);
 
 		    val = k;
 		    scalar = 1;

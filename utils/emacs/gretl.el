@@ -143,6 +143,9 @@ parenthetical grouping.")
 		 (mapconcat 'identity gretl-keywords "\\|")
 		 "\\)\\>")
 	 'font-lock-keyword-face)
+   ;; Fontify all option flags.
+   (cons "[ \t]--[-a-z]+\\>"
+	 'font-lock-constant-face)
    ;; Fontify all command words.
    (cons (concat "\\<\\("
 		 (mapconcat 'identity gretl-command-words "\\|")

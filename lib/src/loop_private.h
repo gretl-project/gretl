@@ -33,7 +33,7 @@ enum ifcodes {
     RELAX
 };
 
-int loop_scalar_index (int c, int opt, int put);
+int loop_scalar_read (int c);
 
 int is_active_index_loop_char (int c);
 
