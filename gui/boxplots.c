@@ -600,6 +600,7 @@ destroy_boxplots (GtkWidget *w, gpointer data)
     for (i=0; i<grp->nplots; i++)  
 	free(grp->plots[i].outliers);
     free(grp->plots);
+    free(grp->numbers);
     gdk_pixmap_unref(grp->pixmap);
     free(grp);
 }
