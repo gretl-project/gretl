@@ -346,7 +346,10 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	strcpy(datainfo->endobs, sinfo->endobs);
 	datainfo->sd0 = atof(datainfo->stobs);
 	datainfo->n = sinfo->nobs;
-	datainfo->v = 2;	
+	datainfo->v = 2;
+	/* time series data? */
+	if (datainfo->pd != 1 || strcmp(datainfo->stobs, "1")) 
+	    datainfo->time_series = TIME_SERIES;
 	start_new_Z(&Z, datainfo, 0);
 	if (dbdat->role == NATIVE_SERIES) 
 	    err = get_db_data(dbdat->fname, sinfo, &Z);
