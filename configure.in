@@ -394,17 +394,21 @@ AC_ARG_ENABLE(gtkextratest, [  --disable-gtkextratest       Do not try to compil
      fi
   fi
 
-  AC_PATH_PROG(GTK_EXTRA_CONFIG, gtkextra-config, no)
-  min_gtkextra_version=ifelse([$1], ,0.99.15,$1)
+ AC_PATH_PROG(GTK_EXTRA_CONFIG, gtkextra-config, no)
+  min_gtkextra_version=ifelse([$1], ,0.99.12,$1)
   AC_MSG_CHECKING(for GTKEXTRA - version >= $min_gtkextra_version)
   no_gtkextra=""
   if test "$GTK_EXTRA_CONFIG" = "no" ; then
     no_gtkextra=yes
     AC_MSG_RESULT(no)
-    echo
-    echo "* You need the gtkextra library to compile gretl."
-    echo "* You can get this from gtkextra.sourceforge.net. 
-    exit
+    if test -d gui/gtkextra ; then
+       echo "* Will try using the gretl gtkextra addon package instead"
+    else
+       echo
+       echo "* You need the gtkextra library to compile gretl."
+       echo "* You can get this from gtkextra.sourceforge.net"
+       exit
+    fi
   else
     have_gtkextra=yes
     # AC_MSG_RESULT(yes)
@@ -484,10 +488,14 @@ main ()
   AC_SUBST(GTK_EXTRA_LIBS)
 ])
 
-AM_PATH_GTKEXTRA(0.99.15, ,echo "Bad version")
+AM_PATH_GTKEXTRA(0.99.15)
 AC_SUBST(have_gtkextra)
 
 # end of "build_gui" conditionality
+fi
+
+if test "${have_gtkextra}" = "no" ; then
+   exit
 fi
 
 if test "${prefix}" = "NONE" ; then
