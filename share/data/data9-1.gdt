@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="data9-1" frequency="1" startobs="1" endobs="30" type="cross-section">
+<gretldata name="data9-1" frequency="12" startobs="1951:03" endobs="1953:08" type="time-series">
 <description>
 DATA9-1: Data for the demand for ice cream
     Source: Hildreth-Lu paper, Table D16, page 73

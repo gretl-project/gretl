@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="data9-10" frequency="1" startobs="1" endobs="69" type="cross-section">
+<gretldata name="data9-10" frequency="52" startobs="1991:01" endobs="1992:17" type="time-series">
 <description>
 DATA9-10: STORE SALES OF A DEL MAR SUPERMARKET
          Data compiled by James McMillen
