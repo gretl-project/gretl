@@ -4,9 +4,7 @@
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-  <command name="add" section="Tests">
-
-    <label>Add variables to a model and test for their significance</label>
+  <command name="add" section="Tests" label="Add variables">
 
     <usage>
       <arguments>
@@ -78,9 +76,7 @@
 
   </command>
 
-  <command name="adf" section="Tests">
-
-    <label>Augmented Dickey-Fuller test</label>
+  <command name="adf" section="Tests" label="Augmented Dickey-Fuller test">
 
     <usage>
       <arguments>
@@ -128,9 +124,7 @@
 
   </command>
 
-  <command name="ar" section="Estimation">
-
-    <label>Generalized Cochrane-Orcutt (autoregressive) estimation</label>
+  <command name="ar" section="Estimation" label="Autoregressive estimation">
 
     <usage>
       <arguments>
@@ -187,9 +181,7 @@
 
   </command>
 
-  <command name="arch" section="Tests">
-
-    <label>Test for ARCH (Autoregressive Conditional Heteroskedasticity)</label>
+  <command name="arch" section="Tests" label="ARCH test">
 
     <usage>
       <arguments>
@@ -225,9 +217,7 @@
 
   </command>
 
-  <command name="arma" section="Estimation">
-
-    <label>Univariate ARMA model</label>
+  <command name="arma" section="Estimation" label="ARMA model">
 
     <usage>
       <arguments>
@@ -311,9 +301,7 @@
 
   </command>
 
-  <command name="boxplot" section="Graphs">
-
-    <label>Boxplots</label>
+  <command name="boxplot" section="Graphs" label="Boxplots">
 
     <usage>
       <arguments>
@@ -376,9 +364,7 @@
 
   </command>
 
-  <command name="chow" section="Tests">
-
-    <label>Chow test for structural homogeneity</label>
+  <command name="chow" section="Tests" label="Chow test">
 
     <usage>
       <arguments>
@@ -414,9 +400,7 @@
 
   </command>
 
-  <command name="coeffsum" section="Tests">
-
-    <label>Test for the sum of specified coefficients</label>
+  <command name="coeffsum" section="Tests" label="Sum of coefficients">
 
     <usage>
       <arguments>
@@ -455,9 +439,8 @@
 
   </command>
 
-  <command name="coint" section="Tests">
-
-    <label>Engle-Granger cointegration test</label>
+  <command name="coint" section="Tests" 
+    label="Engle-Granger cointegration test">
 
     <usage>
       <arguments>
@@ -489,9 +472,7 @@
 
   </command>
 
-  <command name="coint2" section="Tests">
-
-    <label>Johansen cointegration test</label>
+  <command name="coint2" section="Tests" label="Johansen cointegration test">
 
     <usage>
       <arguments>
@@ -545,9 +526,8 @@
 
   </command>
 
-  <command name="compact" section="Dataset" context="gui">
-
-    <label>Compact: writing data to a lower frequency</label>
+  <command name="compact" section="Dataset" context="gui"
+    label="Compact data">
 
     <description>
 
@@ -598,9 +578,7 @@
     </description>
   </command>
 
-  <command name="corc" section="Estimation">
-
-    <label>Cochrane-Orcutt estimation</label>
+  <command name="corc" section="Estimation" label="Cochrane-Orcutt estimation">
 
     <usage>
       <arguments>
@@ -660,9 +638,7 @@
 
   </command>
 
-  <command name="corrgm" section="Statistics">
-
-    <label>Correlogram</label>
+  <command name="corrgm" section="Statistics" label="Correlogram">
 
     <usage>
       <arguments>
@@ -776,9 +752,7 @@
 
   </command>
 
-  <command name="cusum" section="Tests">
-
-    <label>CUSUM test</label>
+  <command name="cusum" section="Tests" label="CUSUM test">
 
     <description>
       <para>
@@ -889,9 +863,8 @@
 
   </command>
 
-  <command name="dialog" section="Estimation" context="gui">
-
-    <label>Dialog box for model specification</label>
+  <command name="dialog" section="Estimation" context="gui"
+    label="Model dialog box">
 
     <description>
       <para>To select the dependent variable, highlight a variable in
@@ -915,8 +888,6 @@
   </command>
 
   <command name="diff" section="Transformations" context="cli">
-
-    <label>First differences</label>
 
     <usage>
       <arguments>
@@ -1036,8 +1007,8 @@
 
   </command>
 
-  <command name="export" section="Dataset" context="gui">
-    <label>Export data from gretl to other formats</label>
+  <command name="export" section="Dataset" context="gui"
+    label="Export data">
 
     <description>
       <para>You may export data in Comma-Separated Values (CSV)
@@ -1052,9 +1023,8 @@
     </description>
   </command>
 
-  <command name="factorized" section="Graphs" context="gui">
-
-    <label>Plot with a dummy variable</label>
+  <command name="factorized" section="Graphs" context="gui"
+    label="Factorized plot">
 
     <description>
       <para>This command requires the selection of three variables,
@@ -1111,9 +1081,8 @@
 
   </command>
 
-  <command name="fcasterr" section="Prediction">
-
-    <label>Forecasts with confidence intervals</label>
+  <command name="fcasterr" section="Prediction"
+    label="Forecasts with confidence intervals">
 
     <usage>
       <arguments>
@@ -1189,9 +1158,8 @@
 
   </command>
 
-  <command name="genr" section="Dataset">
-
-    <label>Generate a new variable</label>
+  <command name="genr" section="Dataset"
+    label="Generate a new variable">
 
     <usage>
       <arguments>
@@ -1674,9 +1642,8 @@
 
   </command>
 
-  <command name="graphing" section="Graphs" context="gui">
-
-    <label>Generating plots of various kinds</label>
+  <command name="graphing" section="Graphs" context="gui"
+    label="Graphing">
 
     <description>
 
@@ -1753,9 +1720,8 @@
 
   </command>
 
-  <command name="graphpag" section="Graphs" context="gui">
-
-    <label>Gretl graph page</label>
+  <command name="graphpag" section="Graphs" context="gui"
+    label="Gretl graph page">
 
     <description>
 
@@ -1783,9 +1749,8 @@
 
   </command>
 
-  <command name="3-D" section="Graphs" context="gui">
-
-    <label>3-dimensional plots</label>
+  <command name="3-D" section="Graphs" context="gui"
+    label="3-dimensional plots">
 
     <description>
       <para>This feature works best if you have gnuplot 3.8 or higher
@@ -1806,9 +1771,8 @@
     </description>
   </command>
     
-  <command name="hausman" section="Tests">
-
-    <label>Hausman test (panel diagnostics)</label>
+  <command name="hausman" section="Tests"
+    label="Hausman test (panel diagnostics)">
 
     <description>
       <para>
@@ -1854,9 +1818,7 @@
 
   </command>
 
-  <command name="hccm" section="Estimation">
-
-    <label>Heteroskedasticity Consistent Covariance Matrix</label>
+  <command name="hccm" section="Estimation" label="HCCM estimation">
 
     <usage>
       <arguments>
@@ -1873,11 +1835,12 @@
 
     <description>
       <para>
-	This command runs a regression where the coefficients are
-	estimated via the standard OLS procedure, but the standard
-	errors of the coefficient estimates are computed in a manner
-	that is robust in the face of heteroskedasticity, namely using
-	the MacKinnon-White <quote>jackknife</quote> procedure.
+	Heteroskedasticity-Consistent Covariance Matrix: this command
+	runs a regression where the coefficients are estimated via the
+	standard OLS procedure, but the standard errors of the
+	coefficient estimates are computed in a manner that is robust
+	in the face of heteroskedasticity, namely using the
+	MacKinnon-White <quote>jackknife</quote> procedure.
       </para>
     </description>
 
@@ -1904,9 +1867,7 @@
 
   </command>
 
-  <command name="hilu" section="Estimation">
-
-    <label>Hildreth-Lu estimation</label>
+  <command name="hilu" section="Estimation" label="Hildreth-Lu estimation">
 
     <usage>
       <arguments>
@@ -1937,9 +1898,8 @@
 
   </command>
 
-  <command name="hsk" section="Estimation">
-
-    <label>Heteroskedasticity-corrected estimates</label>
+  <command name="hsk" section="Estimation"
+    label="Heteroskedasticity-corrected estimates">
 
     <usage>
       <arguments>
@@ -2061,9 +2021,7 @@
 
   </command>
 
-  <command name="label" section="Dataset">
-
-    <label>Edit attributes of variable</label>
+  <command name="label" section="Dataset" label="Edit attributes of variable">
 
     <usage>
       <arguments>
@@ -2131,9 +2089,8 @@
 
   </command>
 
-  <command name="lad" section="Estimation">
-
-    <label>Least Absolute Deviation estimation</label>
+  <command name="lad" section="Estimation"
+    label="Least Absolute Deviation estimation">
 
     <usage>
       <arguments>
@@ -2160,8 +2117,6 @@
   </command>
 
   <command name="lags" section="Transformations" context="cli">
-
-    <label>Lags of variables</label>
 
     <usage>
       <arguments>
@@ -2190,8 +2145,6 @@
   </command>
 
   <command name="ldiff" section="Transformations" context="cli">
-
-    <label>Log differences</label>
 
     <usage>
       <arguments>
@@ -2222,9 +2175,8 @@
 
   </command>
 
-  <command name="leverage" section="Tests">
-
-    <label>Test for influential observations</label>
+  <command name="leverage" section="Tests"
+    label="Influential observations">
 
     <usage>
       <options>
@@ -2292,9 +2244,7 @@
 
   </command>
 
-  <command name="lmtest" section="Tests">
-
-    <label>LM tests</label>
+  <command name="lmtest" section="Tests" label="LM tests">
 
     <usage>
       <options>
@@ -2361,9 +2311,8 @@
 
   </command>
 
-  <command name="logistic" section="Estimation">
-
-    <label>Logistic regression</label>
+  <command name="logistic" section="Estimation"
+    label="Logistic regression">
 
     <usage>
       <arguments>
@@ -2436,9 +2385,8 @@
 
   </command>
 
-  <command name="logit" section="Estimation">
-
-    <label>Logit regression</label>
+  <command name="logit" section="Estimation"
+    label="Logit regression">
 
     <usage>
       <arguments>
@@ -2485,8 +2433,6 @@
   </command>
 
   <command name="logs" section="Transformations" context="cli">
-
-    <label>Natural logs</label>
 
     <usage>
       <arguments>
@@ -2550,9 +2496,8 @@
 
   </command>
 
-  <command name="markers" section="Dataset" context="gui">
-
-    <label>Add case markers to data set</label>
+  <command name="markers" section="Dataset" context="gui"
+    label="Add case markers">
 
     <description>
       <para>
@@ -2569,9 +2514,8 @@
     </description>
   </command>
 
-  <command name="meantest" section="Tests">
-
-    <label>Difference of means</label>
+  <command name="meantest" section="Tests"
+    label="Difference of means">
 
     <usage>
       <arguments>
@@ -2614,9 +2558,8 @@
 
   </command>
 
-  <command name="missing" section="Dataset" context="gui">
-
-    <label>Missing data values</label>
+  <command name="missing" section="Dataset" context="gui"
+    label="Missing data values">
 
     <description>
       <para>Set a numerical value that will be interpreted as
@@ -2635,9 +2578,8 @@
     </description>
   </command>
 
-  <command name="modeltab" section="Utilities">
-
-    <label>The model table</label>
+  <command name="modeltab" section="Utilities"
+    label="The model table">
 
     <usage>
       <arguments>
@@ -2726,9 +2668,8 @@
 
   </command>
 
-  <command name="mpols" section="Estimation">
-
-    <label>Multiple-precision OLS</label>
+  <command name="mpols" section="Estimation"
+    label="Multiple-precision OLS">
 
     <usage>
       <arguments>
@@ -2805,9 +2746,8 @@
 
   </command>
 
-  <command name="nls" section="Estimation">
-
-    <label>Nonlinear Least Squares</label>
+  <command name="nls" section="Estimation"
+    label="Nonlinear Least Squares">
 
     <usage>
       <arguments>
@@ -2956,9 +2896,8 @@
     </description>
   </command>
 
-  <command name="nulldata" section="Dataset">
-
-    <label>Creating a blank dataset</label>
+  <command name="nulldata" section="Dataset"
+    label="Creating a blank dataset">
 
     <usage>
       <arguments>
@@ -2989,9 +2928,8 @@
 
   </command>
 
-  <command name="ols" section="Estimation">
-
-    <label>Ordinary Least Squares estimation</label>
+  <command name="ols" section="Estimation"
+    label="Ordinary Least Squares">
 
     <usage>
       <arguments>
@@ -3061,9 +2999,7 @@
 
   </command>
 
-  <command name="omit" section="Tests">
-
-    <label>Omit variables and test for joint significance</label>
+  <command name="omit" section="Tests" label="Omit variables">
 
     <usage>
       <arguments>
@@ -3125,9 +3061,8 @@
 
   </command>
 
-  <command name="online" section="Dataset" context="gui">
-
-    <label>Access databases via the internet</label>
+  <command name="online" section="Dataset" context="gui"
+    label="Access online databases">
 
     <description>
       <para>
@@ -3253,9 +3188,8 @@
 
   </command>
 
-  <command name="panel" section="Dataset">
-
-    <label>Register panel data structure</label>
+  <command name="panel" section="Dataset"
+    label="Panel data structure">
 
     <usage>
       <options>
@@ -3324,9 +3258,8 @@
 
   </command>
 
-  <command name="pca" section="Statistics">
-
-    <label>Principal Components Analysis</label>
+  <command name="pca" section="Statistics"
+    label="Principal Components Analysis">
 
     <usage>
       <arguments>
@@ -3370,9 +3303,8 @@
 
   </command>
 
-  <command name="pergm" section="Statistics">
-
-    <label>Periodogram</label>
+  <command name="pergm" section="Statistics"
+    label="Periodogram">
 
     <usage>
       <arguments>
@@ -3438,9 +3370,8 @@
 
   </command>
 
-  <command name="pooled" section="Estimation">
-
-    <label>Pooled OLS</label>
+  <command name="pooled" section="Estimation"
+    label="Pooled OLS">
 
     <usage>
       <arguments>
@@ -3560,9 +3491,8 @@
 
   </command>
 
-  <command name="probit" section="Estimation">
-
-    <label>Probit model</label>
+  <command name="probit" section="Estimation"
+    label="Probit model">
 
     <usage>
       <arguments>
@@ -3681,9 +3611,8 @@
 
   </command>
 
-  <command name="reset" section="Tests">
-
-    <label>Ramsey's RESET</label>
+  <command name="reset" section="Tests"
+    label="Ramsey's RESET">
 
     <description>
       <para>
@@ -3731,9 +3660,8 @@
 
   </command>
 
-  <command name="rmplot" section="Graphs">
-
-    <label>Range-mean plot</label>
+  <command name="rmplot" section="Graphs"
+    label="Range-mean plot">
 
     <usage>
       <arguments>
@@ -3800,9 +3728,7 @@
 
   </command>
 
-  <command name="runs" section="Tests">
-
-    <label>Runs test</label>
+  <command name="runs" section="Tests" label="Runs test">
 
     <usage>
       <arguments>
@@ -3830,9 +3756,8 @@
 
   </command>
 
-  <command name="scatters" section="Graphs">
-
-    <label>Multiple scatterplots</label>
+  <command name="scatters" section="Graphs"
+    label="Multiple scatterplots">
 
     <usage>
       <arguments>
@@ -3884,8 +3809,9 @@
     </description>
   </command>
 
-  <command name="seed" section="Programming" context="gui">
-    <label>Initialize the random number generator</label>
+  <command name="seed" section="Programming" context="gui"
+    label="Random seed">
+
     <description>
       <para>Requires an integer as input.  Sets the seed for the
 	pseudo-random number generator used by the random uniform and
@@ -3967,9 +3893,8 @@
     </description>
   </command>
 
-  <command name="setobs" section="Dataset">
-
-    <label>Set frequency and starting observation</label>
+  <command name="setobs" section="Dataset"
+    label="Frequency and starting observation">
 
     <usage>
       <arguments>
@@ -4034,9 +3959,8 @@
 
   </command>
 
-  <command name="setmiss" section="Dataset">
-
-    <label>Missing value code</label>
+  <command name="setmiss" section="Dataset"
+    label="Missing value code">
 
     <usage>
       <arguments>
@@ -4109,9 +4033,8 @@
 
   </command>
 
-  <command name="sim" section="Dataset">
-
-    <label>Simulation</label>
+  <command name="sim" section="Dataset"
+    label="Simulation">
 
     <usage>
       <arguments>
@@ -4223,9 +4146,8 @@
 
   </command>
 
-  <command name="spearman" section="Statistics">
-
-    <label>Spearmans's rank correlation</label>
+  <command name="spearman" section="Statistics"
+    label="Spearmans's rank correlation">
 
     <usage>
       <arguments>
@@ -4273,8 +4195,6 @@
 
   <command name="square" section="Transformations" context="cli">
 
-    <label>Squares and cross-products</label>
-
     <usage>
       <arguments>
         <argument>varlist</argument>
@@ -4306,9 +4226,8 @@
 
   </command>
 
-  <command name="store" section="Dataset">
-
-    <label>Saving data</label>
+  <command name="store" section="Dataset"
+    label="Saving data">
 
     <usage>
       <arguments>
@@ -4464,9 +4383,8 @@
 
   </command>
 
-  <command name="testuhat" section="Tests" context="cli">
-
-    <label>Normality of residual</label>
+  <command name="testuhat" section="Tests" context="cli"
+    label="Normality of residual">
 
     <description>
       <para>
@@ -4483,9 +4401,7 @@
 
   </command>
 
-  <command name="tobit" section="Estimation">
-
-    <label>Tobit model</label>
+  <command name="tobit" section="Estimation" label="Tobit model">
 
     <usage>
       <arguments>
@@ -4522,9 +4438,8 @@
 
   </command>
 
-  <command name="tsls" section="Estimation">
-
-    <label>Two-Stage Least Squares</label>
+  <command name="tsls" section="Estimation"
+    label="Two-Stage Least Squares">
 
     <usage>
       <arguments>
@@ -4580,9 +4495,8 @@
 
   </command>
 
-  <command name="var" section="Estimation">
-
-    <label>Vector Autoregression</label>
+  <command name="var" section="Estimation"
+    label="Vector Autoregression">
 
     <usage>
       <arguments>
@@ -4689,9 +4603,8 @@
 
   </command>
 
-  <command name="vartest" section="Tests">
-
-    <label>Difference of variances</label>
+  <command name="vartest" section="Tests"
+    label="Difference of variances">
 
     <usage>
       <arguments>
@@ -4720,9 +4633,8 @@
 
   </command>
 
-  <command name="wls" section="Estimation">
-
-    <label>Weighted Least Squares</label>
+  <command name="wls" section="Estimation"
+    label="Weighted Least Squares">
 
     <usage>
       <arguments>

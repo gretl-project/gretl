@@ -20,7 +20,7 @@
 <!-- The description is the only element that is absolutely
      required of a command -->
 
-<!ELEMENT command (label?, usage?, description+, gui-access?)>
+<!ELEMENT command (usage?, description+, gui-access?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
@@ -29,6 +29,7 @@
                  Obsolete | Transformations | Utilities | 
                  Unknown) "Unknown"
    context      (cli | gui | both) "both"
+   label        CDATA #IMPLIED
 >
 
 <!ATTLIST description
@@ -37,7 +38,6 @@
 
 <!ELEMENT usage (arguments?, altforms?, options?, examples?)>
 
-<!ELEMENT label        (#PCDATA)>
 <!ELEMENT arguments    (argument)+>
 <!ELEMENT options      (option)+>
 <!ELEMENT examples     (example)+>

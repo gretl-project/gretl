@@ -107,26 +107,21 @@ process_usage (xmlDocPtr doc, xmlNodePtr node, command *cmd)
     return 0;
 }
 
-static int check_for_label (xmlDocPtr doc, xmlNodePtr node)
+static int check_for_label (xmlNodePtr node)
 {
-    xmlNodePtr cur;
-    int err = 1;
+    char *tmp;
+    int err = 0;
 
-    cur = node->xmlChildrenNode;
-    while (cur != NULL) {
-        if (!xmlStrcmp(cur->name, (UTF) "label")) {
-	    err = 0;
-	    break;
-	}
-	cur = cur->next;
-    }
-
-    if (err) {
+    tmp = xmlGetProp(node, (UTF) "label");
+    if (tmp == NULL) {
 	char *name = xmlGetProp(node, (UTF) "name");
 
 	printf("'%s': command is on gui list but has no gui label\n",
 	       name);
 	free(name);
+	err = 1;
+    } else {
+	free(tmp);
     }
 
     return err;
@@ -149,7 +144,7 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
 
     tmp = xmlGetProp(node, (UTF) "context");
     if (tmp == NULL || strcmp(tmp, "cli")) {
-	check_for_label(doc, node);
+	check_for_label(node);
     }
     if (tmp != NULL && !strcmp(tmp, "gui")) {
 	free(tmp);

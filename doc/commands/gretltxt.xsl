@@ -17,10 +17,23 @@
   <xsl:if test="position() > 1">
     <xsl:call-template name="nl"/>
   </xsl:if>
-  <xsl:text>#&#10;</xsl:text>
-  <xsl:value-of select="@name"/>
-  <xsl:text>&#10;@</xsl:text>
-  <xsl:value-of select="@section"/>
+  <xsl:choose>
+    <xsl:when test="$hlp='gui'">
+      <xsl:text># </xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text> </xsl:text>
+      <xsl:value-of select="@section"/>
+      <xsl:text> "</xsl:text>
+      <xsl:value-of select="@label"/>
+      <xsl:text>"&#10;</xsl:text>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>#&#10;</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>&#10;@</xsl:text>
+      <xsl:value-of select="@section"/>      
+    </xsl:otherwise>
+  </xsl:choose>
   <xsl:apply-templates/>
   <xsl:call-template name="dnl"/>
   <xsl:if test="(not(@context) and $hlp='gui')">
@@ -287,14 +300,6 @@ Other access: <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="footnote"/>
-
-<xsl:template match="label">
-  <xsl:if test="$hlp='gui'">
-    <xsl:call-template name="nl"/>
-    <xsl:apply-templates/>
-    <xsl:call-template name="nl"/>
-  </xsl:if>
-</xsl:template>
 
 <xsl:template name="nl">
   <xsl:text>&#10;</xsl:text>  

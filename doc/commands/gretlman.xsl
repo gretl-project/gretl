@@ -300,8 +300,6 @@
   <entry><xsl:apply-templates/></entry>
 </xsl:template>
 
-<xsl:template match="label"/>
-
 <xsl:template name="nl">
   <xsl:text>&#10;</xsl:text>  
 </xsl:template>

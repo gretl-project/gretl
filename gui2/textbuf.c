@@ -350,7 +350,7 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
     FILE *fp;
     GtkTextIter iter;    
     int thiscolor, nextcolor;
-    char readbuf[MAXSTR], *chunk;
+    char readbuf[MAXSTR], *chunk, *p;
     int started = 0;
     int newhelp = 0;
 
@@ -363,48 +363,46 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
     memset(readbuf, 0, sizeof readbuf);
 
+    if (role == GUI_HELP) {
+	newhelp = new_style_gui_help(fp);
+    }
+
     while (fgets(readbuf, sizeof readbuf, fp)) {
 #ifdef ENABLE_NLS
 	chunk = my_utf_string(readbuf);
 #else
 	chunk = readbuf;
 #endif
+	if (*chunk == '@') continue;
+
+	p = chunk;
 
 	nextcolor = PLAIN_TEXT;
 	
-	if (role == GUI_HELP && newhelp && *chunk == '#') {
-	    fgets(readbuf, sizeof readbuf, fp); /* discard line */
-	    fgets(readbuf, sizeof readbuf, fp); /* discard line */
-	    fgets(readbuf, sizeof readbuf, fp); /* get label */
-#ifdef ENABLE_NLS
-	    chunk = my_utf_string(readbuf);
-#else
-	    chunk = readbuf;
-#endif
-	    if (!started) {
+	if (role == GUI_HELP && newhelp && *p == '#') {
+	    if (started) {
 		gtk_text_buffer_insert(tbuf, &iter, "\n", -1);
+	    } else {
 		started = 1;
 	    }
+	    p = strrchr(chunk, '"');
+	    if (p) *p = ' ';
+	    p = strchr(chunk, '"');
+	    if (p) p++;
+	    else p = chunk;
 	    thiscolor = RED_TEXT;
 	}
 
-	if (*chunk == '@') {
-	    if (!started && !strncmp(chunk, "@new-style", 10)) {
-		newhelp = 1;
-	    }
-	    continue;
-	}
-
-	if (role == SCRIPT_OUT && ends_with_backslash(chunk)) {
+	if (role == SCRIPT_OUT && ends_with_backslash(p)) {
 	    nextcolor = BLUE_TEXT;
 	}
 
-	if (*chunk == '?') {
+	if (*p == '?') {
 	    thiscolor = (role == CONSOLE)? RED_TEXT : BLUE_TEXT;
 	} 
-	else if (*chunk == '#') {
+	else if (*p == '#') {
 	    if (help_role(role)) {
-		*chunk = ' ';
+		*p = ' ';
 		nextcolor = RED_TEXT;
 	    } else {
 		thiscolor = BLUE_TEXT;
@@ -413,16 +411,16 @@ void text_buffer_insert_file (GtkTextBuffer *tbuf, const char *fname,
 
 	switch (thiscolor) {
 	case PLAIN_TEXT:
-	    gtk_text_buffer_insert(tbuf, &iter, chunk, -1);
+	    gtk_text_buffer_insert(tbuf, &iter, p, -1);
 	    break;
 	case BLUE_TEXT:
 	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      chunk, -1,
+						      p, -1,
 						      "bluetext", NULL);
 	    break;
 	case RED_TEXT:
 	    gtk_text_buffer_insert_with_tags_by_name (tbuf, &iter,
-						      chunk, -1,
+						      p, -1,
 						      "redtext", NULL);
 	    break;
 	}

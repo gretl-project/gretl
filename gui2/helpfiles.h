@@ -18,6 +18,8 @@ void menu_find (gpointer data, guint dbfind, GtkWidget *widget);
 
 void text_find_callback (GtkWidget *w, gpointer data);
 
+int new_style_gui_help (FILE *fp);
+
 #ifdef OLD_GTK
 void colorize_tooltips (GtkTooltips *tip);
 #endif

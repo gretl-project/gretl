@@ -107,7 +107,7 @@ void text_table_setup (windata_t *vwin)
 int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 {
     void *colptr = NULL, *nextcolor = NULL;
-    char buf[MAXSTR];
+    char *p, buf[MAXSTR];
     FILE *fp;
     int started = 0;
     int newhelp = 0;
@@ -117,39 +117,42 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 
     memset(buf, 0, sizeof buf);
 
+    if (role == GUI_HELP) {
+	newhelp = new_style_gui_help(fp);
+    }
+
     while (fgets(buf, sizeof buf, fp)) {
 
+	if (*buf == '@') continue;
+
+	p = buf;
 	nextcolor = NULL;
 
-	if (role == GUI_HELP && newhelp && *buf == '#') {
-	    fgets(buf, sizeof buf, fp); /* discard line */
-	    fgets(buf, sizeof buf, fp); /* discard line */
-	    fgets(buf, sizeof buf, fp); /* get label */
-	    if (!started) {
+	if (role == GUI_HELP && newhelp && *p == '#') {
+	    if (started) {
 		gtk_text_insert(GTK_TEXT(w), fixed_font, 
 				NULL, NULL, "\n", 1);
+	    } else {
 		started = 1;
 	    }
+	    p = strrchr(buf, '"');
+	    if (p) *p = ' ';
+	    p = strchr(buf, '"');
+	    if (p) p++;
+	    else p = buf;
 	    colptr = &red;
-	}
-
-	if (*buf == '@') {
-	    if (!started && !strncmp(buf, "@new-style", 10)) {
-		newhelp = 1;
-	    }
-	    continue;
 	}
 
 	if (role == SCRIPT_OUT && ends_with_backslash(buf)) {
 	    nextcolor = &blue;
 	}	
 
-	if (*buf == '?') {
+	if (*p == '?') {
 	    colptr = (role == CONSOLE)? &red : &blue;
 	}
-	else if (*buf == '#') {
+	else if (*p == '#') {
 	    if (help_role(role)) {
-		buf[0] = ' ';
+		*p = ' ';
 		nextcolor = &red;
 	    } else {
 		colptr = &blue;
@@ -157,8 +160,8 @@ int text_buffer_insert_file (GtkWidget *w, const char *filename, int role)
 	} 
 
 	gtk_text_insert(GTK_TEXT(w), fixed_font, 
-			colptr, NULL, buf, 
-			strlen(buf));
+			colptr, NULL, p, 
+			strlen(p));
 
 	colptr = nextcolor;
 	memset(buf, 0, sizeof buf);
