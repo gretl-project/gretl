@@ -79,8 +79,6 @@ int bool_subsample (gretlopt opt);
 
 void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 
-void do_setobs (GtkWidget *widget, dialog_t *ddata);
-
 void drop_all_missing (gpointer data, guint opt, GtkWidget *w);
 
 void count_missing (void);

@@ -225,10 +225,12 @@ static void
 init_datainfo_from_sinfo (DATAINFO *pdinfo, SERIESINFO *sinfo)
 {
     pdinfo->pd = sinfo->pd;
+
     strcpy(pdinfo->stobs, sinfo->stobs);
     strcpy(pdinfo->endobs, sinfo->endobs);
     colonize_obs(pdinfo->stobs);
     colonize_obs(pdinfo->endobs);
+
     pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
     pdinfo->n = sinfo->nobs;
     pdinfo->v = 2;
@@ -502,40 +504,20 @@ static void build_db_popup (windata_t *win, int cb)
     win->popup = gtk_menu_new();
 
     add_popup_item(_("Display"), win->popup, 
-#ifndef OLD_GTK
 		   G_CALLBACK(gui_display_series), 
-#else
-		   gui_display_series,
-#endif
 		   win);
     add_popup_item(_("Graph"), win->popup, 
-#ifndef OLD_GTK
 		   G_CALLBACK(gui_graph_series), 
-#else
-		   gui_graph_series,
-#endif
 		   win);
     add_popup_item(_("Import"), win->popup, 
-#ifndef OLD_GTK
 		   G_CALLBACK(gui_import_series), 
-#else
-		   gui_import_series,
-#endif
 		   win);
     add_popup_item(_("Find..."), win->popup, 
-#ifndef OLD_GTK
 		   G_CALLBACK(db_menu_find), 
-#else
-		   db_menu_find,
-#endif
 		   win);
     if (cb) {
 	add_popup_item(_("Codebook"), win->popup, 
-#ifndef OLD_GTK
 		       G_CALLBACK(db_view_codebook), 
-#else
-		       db_view_codebook,
-#endif
 		       win);
     }
 }
@@ -708,12 +690,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
 
     closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect (G_OBJECT(closebutton), "clicked", 
 		      G_CALLBACK(delete_widget), dbwin->w);
-#else
-    gtk_signal_connect (GTK_OBJECT(closebutton), "clicked", 
-			GTK_SIGNAL_FUNC(delete_widget), dbwin->w);
+#ifdef OLD_GTK
     gtk_signal_connect (GTK_OBJECT(dbwin->w), "key_press_event",
 			GTK_SIGNAL_FUNC(catch_listbox_key),
 			dbwin);
@@ -824,15 +803,10 @@ static void db_drag_connect (windata_t *dbwin)
     gtk_drag_source_set(dbwin->listbox, GDK_BUTTON1_MASK,
 			&gretl_drag_targets[GRETL_POINTER],
 			1, GDK_ACTION_COPY);
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(dbwin->listbox), "drag_data_get",
 		     G_CALLBACK(db_drag_series),
 		     dbwin);
-#else
-    gtk_signal_connect(GTK_OBJECT(dbwin->listbox), "drag_data_get",
-		       GTK_SIGNAL_FUNC(db_drag_series),
-		       dbwin);
-#endif
 }
 
 /* ........................................................... */

@@ -886,21 +886,12 @@ static void build_datafiles_popup (windata_t *win)
 
     win->popup = gtk_menu_new();
 
-#ifndef OLD_GTK
     add_popup_item(_("Info"), win->popup, 
 		   G_CALLBACK(display_datafile_info), 
 		   win);
     add_popup_item(_("Open"), win->popup, 
 		   G_CALLBACK(browser_open_data), 
 		   win);
-#else
-    add_popup_item(_("Info"), win->popup, 
-		   GTK_SIGNAL_FUNC(display_datafile_info), 
-		   win);
-    add_popup_item(_("Open"), win->popup, 
-		   GTK_SIGNAL_FUNC(browser_open_data), 
-		   win);
-#endif
 }
 
 /* ........................................................... */
@@ -938,15 +929,10 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
     fdata->role = code;
     fdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#ifndef OLD_GTK
     g_signal_connect (G_OBJECT (fdata->w), "destroy",
 		      G_CALLBACK (free_browser),
 		      fdata);
-#else
-    gtk_signal_connect (GTK_OBJECT (fdata->w), "destroy",
-			GTK_SIGNAL_FUNC (free_browser),
-			fdata);
-#endif
+
     set_browser_status(fdata, BROWSER_BUSY);
 
     switch (code) {
@@ -993,15 +979,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 	build_datafiles_popup(fdata);
 
 	while ((coll = pop_data_collection())) {
-#ifndef OLD_GTK
 	    g_signal_connect (G_OBJECT(coll->page), "button_press_event",
 			      G_CALLBACK(popup_menu_handler), 
 			      (gpointer) fdata->popup);
-#else
-	    gtk_signal_connect (GTK_OBJECT(coll->page), "button_press_event",
-				GTK_SIGNAL_FUNC(popup_menu_handler), 
-				(gpointer) fdata->popup);
-#endif
 	}
 	reset_data_stack();
     }
@@ -1023,59 +1003,35 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     openbutton = gtk_button_new_with_label 
 	((code == REMOTE_DB)? _("Get series listing") : _("Open"));
     gtk_box_pack_start (GTK_BOX (button_box), openbutton, FALSE, TRUE, 0);
-#ifndef OLD_GTK
+
     g_signal_connect(G_OBJECT(openbutton), "clicked",
 		     G_CALLBACK(browse_func), fdata);
     if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) {
        	g_signal_connect(G_OBJECT(openbutton), "clicked", 
 			 G_CALLBACK(delete_widget), fdata->w); 
     }
-#else
-    gtk_signal_connect(GTK_OBJECT(openbutton), "clicked",
-		       GTK_SIGNAL_FUNC(browse_func), fdata);
-    if (code != NATIVE_DB && code != RATS_DB && code != REMOTE_DB) 
-       	gtk_signal_connect(GTK_OBJECT(openbutton), "clicked", 
-	GTK_SIGNAL_FUNC(delete_widget), fdata->w); 
-#endif
 
     if (code == TEXTBOOK_DATA || code == REMOTE_DB) {
 	midbutton = gtk_button_new_with_label 
 	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(midbutton), "clicked",
 			 (code == REMOTE_DB)?
 			 G_CALLBACK(grab_remote_db) :
 			 G_CALLBACK(display_datafile_info), fdata);
-#else
-	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
-			   (code == REMOTE_DB)?
-			   GTK_SIGNAL_FUNC(grab_remote_db) :
-			   GTK_SIGNAL_FUNC(display_datafile_info), fdata);
-#endif
     }
 
     if (code == TEXTBOOK_DATA) {
 	midbutton = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
-#ifndef OLD_GTK
 	g_signal_connect(G_OBJECT(midbutton), "clicked",
 			 G_CALLBACK(datafile_find), fdata);
-#else
-	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
-			   GTK_SIGNAL_FUNC(datafile_find), fdata);	
-#endif	
     }
 
     closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (button_box), closebutton, FALSE, TRUE, 0);
-#ifndef OLD_GTK
     g_signal_connect(G_OBJECT(closebutton), "clicked",
 		     G_CALLBACK(delete_widget), fdata->w);
-#else
-    gtk_signal_connect(GTK_OBJECT(closebutton), "clicked",
-		       GTK_SIGNAL_FUNC(delete_widget), fdata->w);
-#endif
 
     /* put stuff into list box(es) */
     if (code == TEXTBOOK_DATA || code == PS_FILES) {
@@ -1322,11 +1278,8 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
     char winnum[3];
     gpointer p;
 
-#ifndef OLD_GTK
     p = g_object_get_data(G_OBJECT(notebook), "browse_ptr");
-#else
-    p = gtk_object_get_data(GTK_OBJECT(notebook), "browse_ptr");
-#endif
+
     if (p == NULL) return;
     else {
 	GtkWidget *w = *(GtkWidget **) p;
@@ -1335,11 +1288,8 @@ switch_file_page_callback (GtkNotebook *notebook, GtkNotebookPage *page,
     }
 
     sprintf(winnum, "%d", (int) page_num);
-#ifndef OLD_GTK
+
     fdata->listbox = g_object_get_data(G_OBJECT(notebook), winnum);
-#else
-    fdata->listbox = gtk_object_get_data(GTK_OBJECT(notebook), winnum);
-#endif
 }
 
 /* below: Construct a set of notebook pages for either
@@ -1379,32 +1329,19 @@ static GtkWidget *files_notebook (windata_t *fdata, int code)
 	gtk_notebook_append_page(GTK_NOTEBOOK(notebook), listpage, label);
 	coll->page = fdata->listbox;
 	sprintf(winnum, "%d", j);
-#ifndef OLD_GTK
 	g_object_set_data(G_OBJECT(notebook), winnum, coll->page);
 	g_object_set_data(G_OBJECT(coll->page), "coll", coll);
-#else
-	gtk_object_set_data(GTK_OBJECT(notebook), winnum, coll->page);
-	gtk_object_set_data(GTK_OBJECT(coll->page), "coll", coll);
-#endif
 	j++;
     }
     
     if (code == TEXTBOOK_DATA) reset_data_stack();
     else reset_ps_stack();
 
-#ifndef OLD_GTK
     g_object_set_data(G_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
 		      get_browser_ptr(fdata->role));
     g_signal_connect(G_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
 		     G_CALLBACK(switch_file_page_callback),
 		     fdata);
-#else
-    gtk_object_set_data(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "browse_ptr",
-			get_browser_ptr(fdata->role));
-    gtk_signal_connect(GTK_OBJECT(GTK_NOTEBOOK(notebook)), "switch-page",
-		       GTK_SIGNAL_FUNC(switch_file_page_callback),
-		       fdata);
-#endif
 
     gtk_widget_show(notebook);
 

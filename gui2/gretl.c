@@ -423,9 +423,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>", NULL },
     { N_("/Sample/_Set range..."), NULL, sample_range_dialog, SMPL, NULL, GNULL },
     { N_("/Sample/_Restore full range"), NULL, restore_sample_callback, 1, NULL, GNULL },
-    { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>", NULL },    
-    { N_("/Sample/Set _frequency, startobs..."), NULL, gretl_callback, 
-      SETOBS, NULL, GNULL },
+    { N_("/Sample/sep1"), NULL, NULL, 0, "<Separator>", NULL }, 
+    { N_("/Sample/Dataset structure..."), NULL, data_structure_wizard, 0, NULL, GNULL },
     { N_("/Sample/Compact data..."), NULL, do_compact_data_set, 0, NULL, GNULL },
     { N_("/Sample/sep2"), NULL, NULL, 0, "<Separator>", NULL },   
     { N_("/Sample/_Define, based on dummy..."), NULL, sample_range_dialog, 
@@ -443,7 +442,6 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/_Add case markers..."), NULL, gretl_callback, MARKERS, NULL, GNULL },
     { N_("/Sample/Remove case _markers"), NULL, do_remove_markers, 0, NULL, GNULL },
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>", NULL },
-    { N_("/Sample/Dataset structure..."), NULL, data_structure_wizard, 0, NULL, GNULL },
     { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL, GNULL },
 
     /* Variable menu */

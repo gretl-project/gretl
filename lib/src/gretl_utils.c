@@ -635,7 +635,8 @@ char *format_obs (char *obs, int maj, int min, int pd)
  * set_obs:
  * @line: command line.
  * @pdinfo: data information struct.
- * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section.
+ * @opt: OPT_S for stacked time-series, OPT_C for stacked cross-section,
+ * OPT_T for time series.
  * 
  * Impose a time-series or panel interpretation on a data set.
  *
@@ -645,7 +646,7 @@ char *format_obs (char *obs, int maj, int min, int pd)
 int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 {
     int pd, i, len, bad = 0;
-    char stobs[OBSLEN], endobs[OBSLEN], endbit[7], *p;
+    char stobs[OBSLEN], endbit[7], *p;
     long ed0 = 0L;
 
     *gretl_errmsg = '\0';
@@ -746,8 +747,10 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	pdinfo->structure = STACKED_TIME_SERIES;
     } else if (opt == OPT_C) {
 	pdinfo->structure = STACKED_CROSS_SECTION;
+    } else if (opt == OPT_T) {
+	pdinfo->structure = TIME_SERIES;
     } else if (pdinfo->sd0 >= 1.0) {
-        pdinfo->structure = TIME_SERIES; /* but might be panel? */
+        pdinfo->structure = TIME_SERIES; /* guessing; might be panel? */
     } else {
 	pdinfo->structure = CROSS_SECTION;
     }
@@ -760,8 +763,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     ntodate_full(pdinfo->stobs, 0, pdinfo); 
-    ntodate_full(endobs, pdinfo->n - 1, pdinfo);
-    strcpy(pdinfo->endobs, endobs);
+    ntodate_full(pdinfo->endobs, pdinfo->n - 1, pdinfo);
 
     return 0;
 }

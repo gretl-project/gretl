@@ -520,12 +520,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_samplebool;
 	varclick = VARCLICK_INSERT_NAME;
 	break;
-    case SETOBS:
-	strcpy(title, _("gretl: set data frequency"));
-	strcpy(query, _("Enter integer frequency and\n"
-	       "starting observation string:"));
-	okfunc = do_setobs;
-	break;
     case SETSEED:
 	strcpy(title, _("gretl: random variables"));
 	strcpy(query, _("Enter integer seed for\n"

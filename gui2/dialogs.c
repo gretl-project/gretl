@@ -102,7 +102,7 @@ void close_dialog (dialog_t *ddata)
 /* ........................................................... */
 
 static GtkWidget *
-simple_dialog_new (const char *title)
+gretl_dialog_new (const char *title)
 {
     GtkWidget *d;
 
@@ -191,7 +191,7 @@ static void set_dialog_border_widths (GtkWidget *dlg)
 				   (GTK_DIALOG(dlg)->action_area), w2);
 #endif
 
-    gtk_box_set_spacing (GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
+    gtk_box_set_spacing(GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
 }
 
 /* ........................................................... */
@@ -2575,7 +2575,7 @@ int radio_dialog (const char *title, const char **opts,
     GSList *group = NULL;
     int i, ret = -1;
 
-    dialog = simple_dialog_new(title);
+    dialog = gretl_dialog_new(title);
 
     no_resize(dialog);
 
@@ -2653,7 +2653,7 @@ int density_dialog (int vnum, double *bw)
     GSList *group;
     int ret = 0;
 
-    dialog = simple_dialog_new(_("density estimation options"));
+    dialog = gretl_dialog_new(_("density estimation options"));
 
     no_resize(dialog);
 
@@ -2792,7 +2792,7 @@ int checks_dialog (const char *title, const char **opts,
     GtkWidget *tempwid;
     int i, ret = 0;
 
-    dialog = simple_dialog_new(title);
+    dialog = gretl_dialog_new(title);
 
     no_resize(dialog);
 
@@ -3020,10 +3020,10 @@ static const char *wizcode_string (int code)
 	N_("Structure of dataset"),
 	N_("Time series frequency"),
 	N_("Days in week"),
-	N_("Starting observation"),
+	N_("Starting observation:"),
 	N_("Panel data organization"),
-	N_("Number of cross-sectional units"),
-	N_("Confirm dataset structure")
+	N_("Number of cross-sectional units:"),
+	N_("Confirm dataset structure:")
     };
 
     if (code <= DW_CONFIRM) {
@@ -3049,32 +3049,115 @@ static void dwinfo_init (DATAINFO *dwinfo)
     strcpy(dwinfo->endobs, datainfo->endobs);
 }
 
-static void 
+/* for balanced panel checking */
+
+static int least_factor (int n)
+{
+    int flim = n;
+    int prime = 1;
+    int factor;
+    
+    if (n % 2 == 0) {
+	return 2;
+    }
+
+    for (factor = 3; factor < flim; factor += 2) {
+	if (n % factor == 0) {
+	    prime = 0;
+	    break;
+	} else {
+	    flim = n / factor;
+	}
+    }
+
+    return (prime)? 1 : factor;
+}
+
+static int panel_possible (void)
+{
+    int ok = 1;
+
+    if (least_factor(datainfo->n) == 1) {
+	ok = 0;
+	sprintf(errtext, _("Panel datasets must be balanced, but\n"
+		"the number of observations (%d) is a prime number."),
+		datainfo->n);
+	errbox(errtext);
+    } 
+
+    return ok;
+}
+
+static int test_for_unbalanced (const DATAINFO *dwinfo)
+{
+    int err = 0;
+
+    if (datainfo->n % dwinfo->t1 != 0) {
+	sprintf(errtext, _("Panel datasets must be balanced.\n"
+		"The number of observations (%d) is not a multiple\n"
+		"of the number of units (%d)."), datainfo->n,
+		dwinfo->t1);
+	errbox(errtext);
+	err = 1;
+    }
+
+    return err;
+}
+
+static int
 datawiz_make_changes (DATAINFO *dwinfo)
 {
-    ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+    char setline[32];
+    gretlopt opt = OPT_NONE;
+    int err = 0;
 
+    /* preliminaries */
+    if (dwinfo->structure == TIME_SERIES) {
+	ntodate_full(dwinfo->stobs, dwinfo->t1, dwinfo);
+    } else if (dataset_is_panel(dwinfo)) {
+	if (test_for_unbalanced(dwinfo)) {
+	    return 1;
+	}
+    }
+
+    /* check for nothing to be done */
     if (dwinfo->structure == datainfo->structure &&
 	dwinfo->pd == datainfo->pd &&
 	strcmp(dwinfo->stobs, datainfo->stobs) == 0) {
 	infobox("No changes were made");
-    } else {
-	fprintf(stderr, "New data structure: pd=%d, structure=%d, "
-		"starting obs = '%s'\n", dwinfo->pd, dwinfo->structure,
-		dwinfo->stobs);
-
-#if 0 /* activate this when all is ready */
-	datainfo->pd = dwinfo->pd;
-	datainfo->structure = dwinfo->structure;
-	strcpy(datainfo->stobs, dwinfo->stobs);
-
-	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);	
-	ntodate_full(datainfo->endobs, datainfo->n - 1, datainfo);
-
-	data_status |= MODIFIED_DATA;
-	set_sample_label(datainfo);
-#endif
+	return 0;
     }
+
+    /* handle panel structure */
+    if (dataset_is_panel(dwinfo)) {
+	int nunits = dwinfo->t1;
+	int nperiods = datainfo->n / nunits;
+
+	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? 
+	    nperiods : nunits;
+	strcpy(dwinfo->stobs, "1.1");
+    }
+
+    sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
+
+    if (dwinfo->structure == TIME_SERIES || 
+	dwinfo->structure == TIME_SERIES_SPECIAL) {
+	opt = OPT_T;
+    } else if (dwinfo->structure == STACKED_TIME_SERIES) {
+	opt = OPT_S;
+    } else if (dwinfo->structure == STACKED_CROSS_SECTION) {
+	opt = OPT_C;
+    }
+
+    err = set_obs(setline, datainfo, opt);
+
+    if (err) {
+	errbox(get_gretl_errmsg());
+    } else {
+	mark_dataset_as_modified();
+    }
+
+    return err;
 }
 
 struct freq_info {
@@ -3117,59 +3200,49 @@ static int radio_default (DATAINFO *dwinfo, int code)
     return 0;
 }
 
-static const char *datawiz_pd_str (int pd)
+static int datawiz_i_to_setval (int step, int i)
 {
-    int i;
+    int setval;
 
-    for (i=0; i<7; i++) {
-	if (pd == ts_info[i].pd) {
-	    return ts_info[i].label;
-	}
+    if (step == DW_TS_FREQUENCY) {
+	setval = (i < 7)? ts_info[i].pd : 0;
+    } else if (step == DW_WEEK_DAYS) {
+	setval = i + 5;
+    } else if (step == DW_PANEL_MODE) {
+	setval = (i < 2)? pan_info[i].code : 0;
+    } else {
+	setval = i;
     }
-    return "";
+
+    return setval;
 }
 
-static const char *datawiz_pantype_str (int code)
-{
-    int i;
-
-    for (i=0; i<2; i++) {
-	if (code == pan_info[i].code) {
-	    return pan_info[i].label;
-	}
-    }
-    return "";
-}
-
-static int datawiz_i_to_pd (int i)
-{
-    return (i < 7)? ts_info[i].pd : 0;
-}
-
-static int datawiz_i_to_daily_pd (int i)
-{
-    return i + 5;
-}
-
-static int datawiz_i_to_panel (int i)
-{
-    return (i < 2)? pan_info[i].code : 0;
-} 
-
-static const char *datawiz_radio_strings (int wizcode, int i)
+static const char *datawiz_radio_strings (int wizcode, int idx)
 {
     if (wizcode == DW_SET_TYPE) {
-	if (i == 0) return N_("Cross-sectional");
-	if (i == 1) return N_("Time series");
-	if (i == 2) return N_("Panel");
+	if (idx == 0) return N_("Cross-sectional");
+	if (idx == 1) return N_("Time series");
+	if (idx == 2) return N_("Panel");
     } else if (wizcode == DW_WEEK_DAYS) {
-	if (i == 5) return N_("5 days in week");
-	if (i == 6) return N_("6 days in week");
-	if (i == 7) return N_("7 days in week");
+	if (idx == 5) return N_("5 days in week");
+	if (idx == 6) return N_("6 days in week");
+	if (idx == 7) return N_("7 days in week");
     } else if (wizcode == DW_TS_FREQUENCY) {
-	return datawiz_pd_str(i);
+	int j;
+
+	for (j=0; j<7; j++) {
+	    if (idx == ts_info[j].pd) {
+		return ts_info[j].label;
+	    }
+	}
     } else if (wizcode == DW_PANEL_MODE) {  
-	return datawiz_pantype_str(i);
+	int j;
+
+	for (j=0; j<2; j++) {
+	    if (idx == pan_info[j].code) {
+		return pan_info[j].label;
+	    }
+	}
     }
 
     return "";
@@ -3179,11 +3252,6 @@ static void datawiz_set_radio_opt (GtkWidget *w, int *setvar)
 {
     int val = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
 
-#if DWDEBUG
-    fprintf(stderr, "  dw_set_radio_opt: var = %p, setting val = %d\n",
-	    (void *) setvar, val);
-#endif
-    
     *setvar = val;
 }
 
@@ -3191,21 +3259,6 @@ static void set_back_code (GtkWidget *w, int *ret)
 {
     *ret = DW_BACK;
 }
-
-#if DWDEBUG
-static const char *step_string (int step)
-{
-    if (step == DW_SET_TYPE) return "DW_SET_TYPE";
-    if (step == DW_TS_FREQUENCY) return "DW_TS_FREQUENCY";
-    if (step == DW_WEEK_DAYS) return "DW_WEEK_DAYS";
-    if (step == DW_STARTING_OBS) return "DW_STARTING_OBS";
-    if (step == DW_PANEL_MODE) return "DW_PANEL_MODE";
-    if (step == DW_PANEL_SIZE) return "DW_PANEL_SIZE";
-    if (step == DW_CONFIRM) return "DW_CONFIRM";
-    if (step == DW_DONE) return "DW_DONE";    
-    return "MISSING";
-}
-#endif
 
 struct ts_pd {
     int pd;
@@ -3227,7 +3280,7 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
     };
 
     if (dwinfo->structure == CROSS_SECTION) {
-	sprintf(ctxt, "cross-sectional data, observations 1 to %d\n",
+	sprintf(ctxt, _("%s, observations 1 to %d"), _("cross-sectional data"), 
 		datainfo->n);
     } else if (dwinfo->structure == TIME_SERIES) {
 	char stobs[OBSLEN];
@@ -3256,22 +3309,25 @@ static void make_confirmation_text (char *ctxt, DATAINFO *dwinfo)
 	    ntodate_full(endobs, lastobs, dwinfo);
 	    sprintf(ctxt, "%s, %s to %s", tslabel, stobs, endobs);
 	} else {
-	    sprintf(ctxt, "%s, observations 1 to %d", tslabel,
+	    sprintf(ctxt, _("%s, observations 1 to %d"), tslabel,
 		datainfo->n);
 	}
-    } else if (dwinfo->structure == STACKED_TIME_SERIES) {
-	sprintf(ctxt, "panel data (stacked time series)\nobservations 1 to %d",
-		datainfo->n);
-    } else if (dwinfo->structure == STACKED_CROSS_SECTION) {
-	sprintf(ctxt, "panel data (stacked cross sections)\nobservations 1 to %d",
-		datainfo->n);
+    } else if (dataset_is_panel(dwinfo)) {
+	int nunits = dwinfo->t1;
+	int nperiods = datainfo->n / nunits;
+
+	sprintf(ctxt, _("panel data (%s)\n"
+		"%d cross-sectional units observed over %d periods"),
+		(dwinfo->structure == STACKED_TIME_SERIES)? 
+		_("stacked time series") : _("stacked cross sections"),
+		nunits, nperiods);
     } else if (dwinfo->structure == TIME_SERIES_SPECIAL) {
-	sprintf(ctxt, "time-series data, observations 1 to %d",
+	sprintf(ctxt, _("time-series data, observations 1 to %d"),
 		datainfo->n);
     }	
 }
 
-/* we're doing this only in case of time series */
+/* we do this only in case of time series */
 
 static void dw_compute_datainfo (DATAINFO *dwinfo)
 {
@@ -3322,40 +3378,56 @@ static void dw_compute_datainfo (DATAINFO *dwinfo)
 
 static void dw_set_t1 (GtkWidget *w, DATAINFO *dwinfo)
 {
+    /* in case of panel data, "t1" is being borrowed to represent the
+       number of cross-sectional units
+    */
     dwinfo->t1 = (int) GTK_ADJUSTMENT(w)->value;
 }
 
-static GtkWidget *dwiz_stobs_spinner (GtkWidget *dialog, DATAINFO *dwinfo)
+static void dwiz_spinner (GtkWidget *dialog, DATAINFO *dwinfo, int step)
 {
     GtkObject *adj;
     GtkWidget *hbox;
     GtkWidget *label;
-    GtkWidget *startspin;
+    GtkWidget *dwspin;
+    int spinmin, spinmax, spinstart;
 
-    dw_compute_datainfo(dwinfo);
+    hbox = gtk_hbox_new(FALSE, 5);
 
-    hbox = gtk_hbox_new(TRUE, 5);
-
-    label = gtk_label_new(_("Starting observation:"));
+    label = gtk_label_new(_(wizcode_string(step)));
     gtk_widget_show(label);
-    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), label, TRUE, FALSE, 0);
+
+    if (step == DW_STARTING_OBS) {
+	dw_compute_datainfo(dwinfo);
+	spinmin = 0;
+	spinmax = dwinfo->n - 1;
+	spinstart = dwinfo->t1;
+    } else {
+	spinmin = least_factor(datainfo->n);
+	spinmax = datainfo->n / 2;
+	spinstart = spinmin;
+    }
 
     /* FIXME step size? */
-    adj = gtk_adjustment_new(dwinfo->t1, 
-			     0, dwinfo->n - 1,
+    adj = gtk_adjustment_new(spinstart, spinmin, spinmax,
 			     1, 1, 1);
     g_signal_connect(G_OBJECT(adj), "value-changed", 
 		     G_CALLBACK(dw_set_t1), dwinfo);
 
-    startspin = obs_button_new(GTK_ADJUSTMENT(adj), dwinfo);
-    gtk_box_pack_start(GTK_BOX(hbox), startspin, FALSE, FALSE, 0);
-    gtk_widget_show(startspin);
+    if (step == DW_STARTING_OBS) {
+	dwspin = obs_button_new(GTK_ADJUSTMENT(adj), dwinfo);
+    } else {
+	dwspin = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 0);
+    }
+
+    gtk_box_pack_start(GTK_BOX(hbox), dwspin, TRUE, FALSE, 0);
+    gtk_widget_show(dwspin);
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, 
 		       FALSE, FALSE, 5);
-    gtk_widget_show(hbox);
 
-    return startspin;
+    gtk_widget_show(hbox);
 }
 
 static int datawiz_dialog (int step, DATAINFO *dwinfo)
@@ -3370,14 +3442,15 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     int *setint = NULL;
     int i, ret = DW_FORWARD;
 
-#if DWDEBUG
-    fprintf(stderr, "\n** datawiz_dlg: step=%s, pd=%d, structure=%d, deflt=%d\n",
-	    step_string(step), dwinfo->pd, dwinfo->structure, deflt);
-#endif
+    if (step == DW_CONFIRM && dataset_is_panel(dwinfo) &&
+	test_for_unbalanced(dwinfo)) {
+	return DW_BACK;
+    }
 
-    dialog = simple_dialog_new(_("Data structure wizard"));
+    dialog = gretl_dialog_new(_("Data structure wizard"));
 
     no_resize(dialog);
+    set_dialog_border_widths(dialog);
 
     g_signal_connect(G_OBJECT(dialog), "destroy", 
 		     G_CALLBACK(dialog_unblock), NULL);
@@ -3399,30 +3472,17 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     } 
 
     /* top label */
-    if (step != DW_STARTING_OBS) {
+    if (step != DW_STARTING_OBS && step != DW_PANEL_SIZE) {
 	tempwid = gtk_label_new(_(wizcode_string(step)));
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			   tempwid, TRUE, TRUE, 0);
+			   tempwid, TRUE, TRUE, 5);
 	gtk_widget_show(tempwid);
     }
 
     /* radio options? */
     for (i=0; i<nopts; i++) {
 
-	if (step == DW_TS_FREQUENCY) {
-	    setval = datawiz_i_to_pd(i);
-	} else if (step == DW_WEEK_DAYS) {
-	    setval = datawiz_i_to_daily_pd(i);
-	} else if (step == DW_PANEL_MODE) {
-	    setval = datawiz_i_to_panel(i);
-	} else {
-	    setval = i;
-	}
-
-#if DWDEBUG
-	fprintf(stderr, " making button: i=%d, setval=%d, deflt=%d\n",
-		i, setval, deflt);
-#endif
+	setval = datawiz_i_to_setval(step, i);
 
 	if (button != NULL) {
 	    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
@@ -3447,18 +3507,11 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	gtk_widget_show(button);
     }
 
-    /* starting observation selection? */
-    if (step == DW_STARTING_OBS) {
-	dwiz_stobs_spinner(dialog, dwinfo);
-    }
-
-    /* panel size selection? */
-    if (step == DW_PANEL_SIZE) {
-	/* FIXME write real code for this situation!! */
-	tempwid = gtk_label_new("panel size selection goes here");
-	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			   tempwid, TRUE, TRUE, 0);
-	gtk_widget_show(tempwid);
+    /* spinner to select starting obs (time series), or number of
+       cross sectional units (panel)
+    */
+    if (step == DW_STARTING_OBS || step == DW_PANEL_SIZE) {
+	dwiz_spinner(dialog, dwinfo, step);
     }
 
     /* confirming? */
@@ -3468,7 +3521,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 	make_confirmation_text(ctxt, dwinfo);
 	tempwid = gtk_label_new(ctxt);
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-			   tempwid, TRUE, TRUE, 0);
+			   tempwid, TRUE, TRUE, 5);
 	gtk_widget_show(tempwid);
     }    
 
@@ -3496,7 +3549,7 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
 
-    /* Create the "Cancel" button */
+    /* "Cancel" button */
     cancel_options_button(GTK_DIALOG(dialog)->action_area, dialog, &ret);
 
     gtk_widget_show(dialog);
@@ -3507,16 +3560,6 @@ static int datawiz_dialog (int step, DATAINFO *dwinfo)
 
     return ret;
 }
-
-#if DWDEBUG
-static const char *ret_string (int ret)
-{
-    if (ret == DW_CANCEL) return "DW_CANCEL";
-    if (ret == DW_FORWARD) return "DW_FORWARD";
-    if (ret == DW_BACK) return "DW_BACK";
-    return "MISSING_STRING";
-}
-#endif
 
 /* take the user through a series of dialogs, to define the
    structure of the data set
@@ -3541,10 +3584,6 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 
 	ret = datawiz_dialog(step, dwinfo);
 
-#if DWDEBUG
-	fprintf(stderr, "wizard: got ret = %s\n", ret_string(ret));
-#endif
-
 	switch (ret) {
 
 	case DW_CANCEL:
@@ -3559,7 +3598,12 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		    step = DW_TS_FREQUENCY;
 		} else if (dwinfo->structure == STACKED_TIME_SERIES ||
 			   dwinfo->structure == STACKED_CROSS_SECTION) {
-		    step = DW_PANEL_MODE;
+		    if (!panel_possible()) {
+			step = DW_DONE;
+			ret = DW_CANCEL;
+		    } else {
+			step = DW_PANEL_MODE;
+		    }
 		} else {
 		    step = DW_CONFIRM;
 		}		
