@@ -282,7 +282,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     if (dbdinfo->pd == 12) strcpy(pd, "months");
     else if (dbdinfo->pd == 4) strcpy(pd, "qtrs");
-    else if (dbdinfo->pd == 5) strcpy(pd, "days");
+    /* else if (dbdinfo->pd == 5) strcpy(pd, "days"); */
     else strcpy(pd, "time");
     plotvar(dbZ, dbdinfo, pd);
 
@@ -290,11 +290,17 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     list[0] = 2; list[1] = 1; list[2] = 2;
     err = gnuplot(list, lines, dbZ, dbdinfo,
 		  &paths, &plot_count, 0, 1, 0);
-    if (err) {
-        if (err > 0) infobox(_("There were missing observations"));
-	else errbox(_("gnuplot command failed"));
+
+    if (err < 0) {
+	errbox(_("gnuplot command failed"));
+	return;
     }
-    else register_graph();
+
+    if (err > 0) {
+	infobox(_("There were missing observations"));
+    }    
+
+    register_graph();
 }
 
 /* ........................................................... */

@@ -26,9 +26,6 @@
 
 #include "gretl.h"
 #include <ctype.h>
-#ifdef G_OS_WIN32
-# include <windows.h>
-#endif
 
 typedef struct {
     GtkWidget *entry[NTESTENTRY];
@@ -87,19 +84,30 @@ static int printnum (char *dest, const char *s, int d)
 static double getval (const char *s, PRN *prn, int pos)
      /* if pos != 0, value must be positive or it is invalid */ 
 {
-    double x;
+    double x = NADBL;
+    char *test;
 
     if (s == NULL || strlen(s) == 0) {
-	errbox(_("Incomplete entry for hypothesis test"));
-	gretl_print_destroy(prn);
-	return NADBL;
+	errbox(_("Incomplete entry"));
+    } else {
+	x = strtod(s, &test);
+
+	if (strcmp(s, test) == 0 || *test != '\0') {
+	    errbox(_("Invalid entry"));
+	    x = NADBL;
+	}
+
+	if (pos && x <= 0.0) {
+	    errbox(_("Invalid entry"));
+	    x = NADBL;
+	} 
     }
-    x = atof(s);
-    if (pos && x <= 0.0) {
-	errbox(_("Invalid entry for hypothesis test"));
-	return NADBL;
-    } else
-	return x;
+
+    if (x == NADBL && prn != NULL) {
+	gretl_print_destroy(prn);
+    }
+
+    return x;
 }
 
 /* ........................................................... */
@@ -235,11 +243,15 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     switch (i) {
     case 0: /* normal */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	xx = atof(tmp); /* value */
+	xx = getval(tmp, NULL, 0); /* value */
+	if (na(xx)) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
-	xx -= atof(tmp); /* mean */
+	zz = getval(tmp, NULL, 0); /* mean */
+	if (na(zz)) return;
+	xx -= zz;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
-	val = atof(tmp); /* std. deviation */
+	val = getval(tmp, NULL, 0); /* std. deviation */
+	if (na(val)) return;
 	if (val <= 0) {
 	    errbox(_("Invalid standard deviation"));
 	    return;
@@ -249,17 +261,21 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	break;
     case 1: /* t */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	df= atoi(tmp);   /* df */
+	df = atoi(tmp);   /* df */
 	if (df <= 0) {
 	    errbox(_("Invalid degrees of freedom"));
 	    return;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
-	xx = atof(tmp); /* value */
+	xx = getval(tmp, NULL, 0); /* value */
+	if (na(xx)) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
-	xx -= atof(tmp); /* mean */
+	zz = getval(tmp, NULL, 0); /* mean */
+	if (na(zz)) return;
+	xx -= zz;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[3]));
-	val = atof(tmp); /* std. deviation */
+	val = getval(tmp, NULL, 0); /* std. deviation */
+	if (na(val)) return;
 	if (val <= 0) {
 	    errbox(_("Invalid standard deviation"));
 	    return;
@@ -301,9 +317,11 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     default:
 	break;
     }
+
     if (bufopen(&prn)) return;
     batch_pvalue(cmd, Z, datainfo, prn);
     view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, view_items);
+    return;
 }
 
 /* ........................................................... */
@@ -423,9 +441,6 @@ static void htest_graph (int dist, double x, int df1, int df2)
     setlocale(LC_NUMERIC, "");
 #endif
 
-#ifdef G_OS_WIN32
-    fprintf(fp, "pause -1\n");
-#endif
     if (fp) fclose(fp);
 
     if (gnuplot_display(&paths)) {
