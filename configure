@@ -786,7 +786,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --disable-nls           do not use Native Language Support
+  --enable-nls            use (experimental) Native Language Support
   --enable-gui		  Enable gui default=yes
   --enable-png-graphs     Enable PNG graph support default=auto
   --enable-static=PKGS  build static libraries default=no
@@ -2338,7 +2338,7 @@ if test "${enable_nls+set}" = set; then
   enableval="$enable_nls"
   USE_NLS=$enableval
 else
-  USE_NLS=yes
+  USE_NLS=no
 fi;
   echo "$as_me:2343: result: $USE_NLS" >&5
 echo "${ECHO_T}$USE_NLS" >&6

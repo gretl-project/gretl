@@ -1,4 +1,5 @@
-version 0.995
+05/13/2002 version 0.995
+- Raise library version to 13.0.0
 - numerous small updates to facilitate internationalization
 - give the user a choice of delimiters (comma, space or tab)
   when importing or exporting "CSV" data
@@ -15,6 +16,8 @@ version 0.995
 - bugfix: unitialized data in cointegration test with constant
 - add new, improved dialog box for specifying models, etc.
 - remove all system() calls on win32
+- switch to a more "standard" (I think) presentation of WLS
+  statistics
 
 04/21/2002 version 0.994
 - fix bugs in win32 copy to clipboard

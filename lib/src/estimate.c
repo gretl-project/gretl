@@ -42,42 +42,37 @@ typedef struct {
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			const int c, PRN *prn);
-
-static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2, 
-			    double **Z, const int nwt, const double rho);
-static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		      const int n, const double rho);
-static CHOLBETA _cholbeta (XPXXPY xpxxpy);
-static void _diaginv (XPXXPY xpxxpy, double *diag);
-static double _dwstat (int order, MODEL *pmod, double **Z);
-static double _corrrsq (const int nobs, const double *y, 
-			const double *yhat);
-static double _rhohat (int order, const int t1, const int t2, 
-		       const double *uhat);
-static double _altrho (const int order, const int t1, const int t2, 
-		       const double *uhat);
-static int _hatvar (MODEL *pmod, double **Z);
-static void _dropwt (int *list);
-static void _autores (const int i, double **Z, const MODEL *pmod, 
-		      double *uhat);
-static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
-			  DATAINFO *pdinfo);
-static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo, 
-		       double **Z);
-static void _tsls_omitzero (int *list, double **Z, 
-			    const int t1, const int t2);
-static void _rearrange (int *list);
-static int _zerror (const int t1, const int t2, const int yno,
-		    const int nwt, double ***pZ);
-static int _lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		       double ***pZ);
-static int _tsls_match (const int *list1, const int *list2, int *newlist);
-static double _wt_dummy_mean (const MODEL *pmod, double **Z); 
-static double _wt_dummy_stddev (const MODEL *pmod, double **Z);
-
 extern int _addtolist (const int *oldlist, const int *addvars, 
 		       int **pnewlist, const DATAINFO *pdinfo, 
 		       const int model_count);
+
+/* private function prototypes */
+static XPXXPY xpxxpy_func (const int *list, int t1, int t2, 
+			   double **Z, int nwt, double rho);
+static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
+		     int n, const double rho);
+static CHOLBETA cholbeta (XPXXPY xpxxpy);
+static void diaginv (XPXXPY xpxxpy, double *diag);
+static double dwstat (int order, MODEL *pmod, double **Z);
+static double corrrsq (int nobs, const double *y, const double *yhat);
+static double rhohat (int order, int t1, int t2, const double *uhat);
+static double altrho (int order, int t1, int t2, const double *uhat);
+static int hatvar (MODEL *pmod, double **Z);
+static void dropwt (int *list);
+static void autores (int i, double **Z, const MODEL *pmod, double *uhat);
+static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
+			 DATAINFO *pdinfo);
+static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
+static void tsls_omitzero (int *list, double **Z, int t1, int t2);
+static void rearrange (int *list);
+static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
+static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
+		       double ***pZ);
+static int tsls_match (const int *list1, const int *list2, int *newlist);
+static double wt_dummy_mean (const MODEL *pmod, double **Z); 
+static double wt_dummy_stddev (const MODEL *pmod, double **Z);
+/* end private protos */
+
 
 static int reorganize_uhat_yhat (MODEL *pmod) 
 {
@@ -208,7 +203,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     t1 = model.t1; 
     t2 = model.t2; 
 
-    if (ci == WLS) _dropwt(model.list);
+    if (ci == WLS) dropwt(model.list);
     yno = model.list[1];
     
     /* check for availability of data */
@@ -224,21 +219,21 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }       
 
     /* check for zero dependent var */
-    if (_zerror(t1, t2, yno, nwt, pZ)) {  
+    if (zerror(t1, t2, yno, nwt, pZ)) {  
         model.errcode = E_ZERO;
         return model; 
     } 
 
     /* drop any vars that are all zero and repack the list */
-    _omitzero(&model, pdinfo, *pZ);
+    omitzero(&model, pdinfo, *pZ);
 
     /* see if the regressor list contains a constant (ID 0) */
     model.ifc = ifc = _hasconst(model.list);
     /* if so, move it to the last place */
-    if (ifc) _rearrange(model.list);
+    if (ifc) rearrange(model.list);
 
     /* check for presence of lagged dependent variable */
-    model.ldepvar = _lagdepvar(model.list, pdinfo, pZ);
+    model.ldepvar = lagdepvar(model.list, pdinfo, pZ);
 
     l0 = model.list[0];  /* holds 1 + number of coeffs */
     model.ncoeff = l0 - 1; 
@@ -254,17 +249,17 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* calculate regression results */
-    xpxxpy = _xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho);
+    xpxxpy = xpxxpy_func(model.list, t1, t2, *pZ, nwt, rho);
     model.tss = xpxxpy.xpy[l0];
 
-    _regress(&model, xpxxpy, *pZ, n, rho);
+    regress(&model, xpxxpy, *pZ, n, rho);
     free(xpxxpy.xpy);
     if (model.errcode) return model;
 
     /* get the mean and sd of depvar and make available */
     if (model.ci == WLS && model.wt_dummy) {
-	model.ybar = _wt_dummy_mean(&model, *pZ);
-	model.sdy = _wt_dummy_stddev(&model, *pZ);
+	model.ybar = wt_dummy_mean(&model, *pZ);
+	model.sdy = wt_dummy_stddev(&model, *pZ);
     } else {
 	model.ybar = _esl_mean(t1, t2, (*pZ)[yno]);
 	model.sdy = _esl_stddev(t1, t2, (*pZ)[yno]);
@@ -297,7 +292,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    model.yhat[t] = (*pZ)[yno][t] - xx;
 	}
 	model.rsq = 
-	    _corrrsq(t2-t1, &(*pZ)[yno][t1+1], model.yhat + t1+1);
+	    corrrsq(t2-t1, &(*pZ)[yno][t1+1], model.yhat + t1+1);
     	model.adjrsq = 
            1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
     }
@@ -329,8 +324,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     /* if opt = 1, compute residuals and rhohat */
     if (opt) {
 	order = (ci == CORC || ci == HILU)? 1 : 0;
-	model.rho = _rhohat(order, t1, t2, model.uhat);
-	model.dw = _dwstat(order, &model, *pZ);
+	model.rho = rhohat(order, t1, t2, model.uhat);
+	model.dw = dwstat(order, &model, *pZ);
     }
 
     /* Generate model selection statistics */
@@ -351,8 +346,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2, 
-			    double **Z, const int nwt, const double rho)
+static XPXXPY xpxxpy_func (const int *list, int t1, int t2, 
+			   double **Z, int nwt, double rho)
 /*
         This function forms the X'X matrix and X'y vector
         - if rho is non-zero transforms data first
@@ -474,11 +469,11 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
 
 /* .......................................................... */
 
-static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
-		      const int n, const double rho)
+static void regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
+		     int n, const double rho)
 /*
         This function takes xpx, the X'X matrix ouput
-        by _xpxxpy_func(), and xpy, which is X'y, and
+        by xpxxpy_func(), and xpy, which is X'y, and
         computes ols estimates and associated statistics.
 
         n = no. of observations per series in data set
@@ -493,9 +488,9 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 {
     int t, v, nobs, nv, yno, nwt = pmod->nwt;
     int t1 = pmod->t1, t2 = pmod->t2;
-    double *diag, *altyhat, ysum, ypy, zz, ess, rss, tss;
+    double *diag, ysum, ypy, zz, ess, rss, tss;
     double den = 0.0, sgmasq = 0.0;
-    CHOLBETA cholbeta;
+    CHOLBETA cb;
 
     nv = xpxxpy.nv;
     yno = pmod->list[1];
@@ -529,15 +524,15 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     }
 
     /*  Choleski-decompose X'X and find the coefficients */
-    cholbeta = _cholbeta(xpxxpy);
-    pmod->coeff = cholbeta.coeff;
-    pmod->xpx = cholbeta.xpxxpy.xpx;
+    cb = cholbeta(xpxxpy);
+    pmod->coeff = cb.coeff;
+    pmod->xpx = cb.xpxxpy.xpx;
 
-    if (cholbeta.errcode) {
+    if (cb.errcode) {
         pmod->errcode = E_ALLOC;
         return;
     }   
-    rss = cholbeta.rss;
+    rss = cb.rss;
     if (rss == -1.0) { 
         pmod->errcode = E_SINGULAR;
         return; 
@@ -567,14 +562,14 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
        return;
     }       
 
-    _hatvar(pmod, Z); 
+    hatvar(pmod, Z); 
     if (pmod->errcode) return;
 
     pmod->rsq = 1 - (ess/tss);
     if (pmod->dfd > 0) {
 	pmod->adjrsq = 1 - (ess * (nobs-1)/den);
 	if (!pmod->ifc) {  
-	    pmod->rsq = _corrrsq(nobs, &Z[yno][t1], pmod->yhat + t1);
+	    pmod->rsq = corrrsq(nobs, &Z[yno][t1], pmod->yhat + t1);
 	    pmod->adjrsq = 
 		1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
 	}
@@ -587,9 +582,11 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
     if (sgmasq <= 0.0 || pmod->dfd == 0) pmod->fstt = NADBL;
     else pmod->fstt = (rss - zz * pmod->ifc)/(sgmasq * pmod->dfn);
 
-    /* special treatment for weighted least squares */
+    /* special treatment for weighted least squares (Ramanathan) */
+#ifdef RAMANATHAN
     if (nwt && !(pmod->wt_dummy)) {
 	int wobs = nobs;
+	double *altyhat;
 
 	altyhat = malloc(n * sizeof(double));
 	zz = 0.0;
@@ -603,20 +600,48 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 		altyhat[t] = pmod->yhat[t] / Z[nwt][t];
 	    }
 	}
-	pmod->dfn += 1; 
+	pmod->dfn += 1;
 	pmod->fstt = (zz * pmod->dfd)/(pmod->dfn * ess);
-	pmod->rsq = _corrrsq(nobs, &Z[yno][pmod->t1], altyhat + pmod->t1);
+	pmod->rsq = corrrsq(nobs, &Z[yno][pmod->t1], altyhat + pmod->t1);
 	pmod->adjrsq = 
            1 - ((1 - pmod->rsq)*(wobs - 1)/pmod->dfd);
 	free(altyhat);
     }
+#else
+    /* alternative calculation of WLS stats, in agreement with GNU R */
+    if (nwt && !(pmod->wt_dummy)) {
+	int wobs = nobs;
+	double w2, wmean = 0.0, wsum = 0.0;
+
+	for (t=pmod->t1; t<=pmod->t2; t++) { 
+	    if (Z[nwt][t] == 0) {
+		wobs--;
+		pmod->dfd -= 1;
+	    } else {
+		w2 = Z[nwt][t] * Z[nwt][t];
+		wmean += w2 * Z[yno][t];
+		wsum += w2;
+	    }
+	}
+	wmean /= wsum;
+	zz = 0.0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    if (Z[nwt][t] == 0) continue;
+	    w2 = Z[nwt][t] * Z[nwt][t]; 
+	    zz += w2 * (Z[yno][t] - wmean) * (Z[yno][t] - wmean);
+	}
+	pmod->fstt = ((zz - ess) * pmod->dfd)/(pmod->dfn * ess);
+	pmod->rsq = (1 - (ess/zz));
+	pmod->adjrsq = 1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
+    }
+#endif /* RAMANATHAN */
 
     diag = malloc((nv+1) * sizeof *diag); 
     if (diag == NULL) {
 	pmod->errcode = E_ALLOC;
 	return;
     }
-    _diaginv(xpxxpy, diag);
+    diaginv(xpxxpy, diag);
     for (v=1; v <= nv; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
@@ -627,7 +652,7 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z,
 
 /* .......................................................... */
 
-static CHOLBETA _cholbeta (XPXXPY xpxxpy)
+static CHOLBETA cholbeta (XPXXPY xpxxpy)
 /*
   This function does an inplace Choleski decomposition of xpx
   (lower triangular matrix stacked in columns) and then
@@ -640,18 +665,18 @@ static CHOLBETA _cholbeta (XPXXPY xpxxpy)
 {
     int nm1, i, j, k, kk, l, jm1, nv;
     double e, d, d1, test, xx;
-    CHOLBETA cholbeta;
+    CHOLBETA cb;
 
     nv = xpxxpy.nv; 
-    cholbeta.errcode = 0; 
+    cb.errcode = 0; 
 
-    if ((cholbeta.coeff = malloc((nv + 1) * sizeof(double))) == NULL) {
-        cholbeta.errcode = E_ALLOC;
-        return cholbeta;
+    if ((cb.coeff = malloc((nv + 1) * sizeof(double))) == NULL) {
+        cb.errcode = E_ALLOC;
+        return cb;
     }
-    for (j=0; j<nv+1; j++) cholbeta.coeff[j] = 0.0;
+    for (j=0; j<nv+1; j++) cb.coeff[j] = 0.0;
 
-    cholbeta.xpxxpy = xpxxpy;
+    cb.xpxxpy = xpxxpy;
 
     nm1 = nv - 1;
     e = 1/sqrt(xpxxpy.xpx[1]);
@@ -673,8 +698,8 @@ static CHOLBETA _cholbeta (XPXXPY xpxxpy)
         }
         test = xpxxpy.xpx[kk] - d;
         if (test <= TINY) {
-           cholbeta.rss = -1.0; 
-           return cholbeta;
+           cb.rss = -1.0; 
+           return cb;
         }   
         e = 1/sqrt(test);
         xpxxpy.xpx[kk] = e;
@@ -697,23 +722,23 @@ static CHOLBETA _cholbeta (XPXXPY xpxxpy)
     for(j=1; j<=nv; j++) {
         d += xpxxpy.xpy[j] * xpxxpy.xpy[j];
     }
-    cholbeta.rss = d;
-    cholbeta.coeff[nv] = xpxxpy.xpy[nv] * xpxxpy.xpx[kk];
+    cb.rss = d;
+    cb.coeff[nv] = xpxxpy.xpy[nv] * xpxxpy.xpx[kk];
     for(j=nm1; j>=1; j--) {
         d = xpxxpy.xpy[j];
         for (i=nv; i>=j+1; i--) {
             kk--;
-            d = d - cholbeta.coeff[i] * xpxxpy.xpx[kk];
+            d = d - cb.coeff[i] * xpxxpy.xpx[kk];
         }
         kk--;
-        cholbeta.coeff[j] = d * xpxxpy.xpx[kk];
+        cb.coeff[j] = d * xpxxpy.xpx[kk];
     }    
-    return cholbeta; 
+    return cb; 
 }
 
 /* ...............................................................    */
 
-static void _diaginv (XPXXPY xpxxpy, double *diag)
+static void diaginv (XPXXPY xpxxpy, double *diag)
 /*
         Solves for the diagonal elements of the X'X inverse matrix.
 
@@ -838,7 +863,7 @@ int makevcv (MODEL *pmod)
 
 /* ............................................................... */
 
-static double _dwstat (int order, MODEL *pmod, double **Z)
+static double dwstat (int order, MODEL *pmod, double **Z)
 /*  computes durbin-watson statistic
     opt is the order of autoregression, 0 for OLS and WLS
 */
@@ -863,8 +888,7 @@ static double _dwstat (int order, MODEL *pmod, double **Z)
 
 /* ......................................................  */
 
-static double _rhohat (int order, const int t1, const int t2, 
-		       const double *uhat)
+static double rhohat (int order, int t1, int t2, const double *uhat)
 /*  computes first order serial correlation coefficient
     order is the order of autoregression, 0 for OLS.
 */
@@ -884,15 +908,14 @@ static double _rhohat (int order, const int t1, const int t2,
     if (floateq(xx, 0.0)) return NADBL;
     rho = uu1/xx;
     if (rho > 1.0 || rho < -1.0) {
-	rho = _altrho(order, t1, t2, uhat);
+	rho = altrho(order, t1, t2, uhat);
     }
     return rho;
 }
 
 /* .........................................................   */
 
-static double _altrho (const int order, const int t1, const int t2, 
-		       const double *uhat)
+static double altrho (const int order, int t1, int t2, const double *uhat)
 /* alternative calculation of rho */
 {
     double *ut, *ut1;    
@@ -920,8 +943,7 @@ static double _altrho (const int order, const int t1, const int t2,
 
 /* ........................................................... */
 
-static double _corrrsq (const int nobs, const double *y, 
-			const double *yhat)
+static double corrrsq (int nobs, const double *y, const double *yhat)
 /* finds alternative R^2 value when there's no intercept */
 {
     double xx;
@@ -932,7 +954,7 @@ static double _corrrsq (const int nobs, const double *y,
 
 /* ........................................................... */
 
-static int _hatvar (MODEL *pmod, double **Z)
+static int hatvar (MODEL *pmod, double **Z)
 /* finds fitted values and residuals */
 {
     int yno, xno, i, t, nwt = pmod->nwt;
@@ -955,7 +977,7 @@ static int _hatvar (MODEL *pmod, double **Z)
 
 /* ........................................................... */
 
-static void _dropwt (int *list)
+static void dropwt (int *list)
 /* drop the weight var from the list of regressors (WLS) */
 {
     int i;
@@ -1055,8 +1077,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
 	corc_model.dw = 1 - rho;
-	_autores(corc_model.list[1], *pZ, &corc_model, uhat);
-	rho = _rhohat(1, corc_model.t1, corc_model.t2, uhat);
+	autores(corc_model.list[1], *pZ, &corc_model, uhat);
+	rho = rhohat(1, corc_model.t1, corc_model.t2, uhat);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
 	if (iter == 20) break;
@@ -1071,8 +1093,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static void _autores (const int i, double **Z, const MODEL *pmod, 
-		      double *uhat)
+static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
 {
     int t, v;
     double xx;
@@ -1107,7 +1128,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
     MODEL tsls;
     XPXXPY xpxxpy;
-    CHOLBETA cholbeta;
+    CHOLBETA cb;
     double xx, *diag, *yhat;
 
     /*  printf("tsls list:\n"); */
@@ -1127,8 +1148,8 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 
     list1[0] = pos - 1;
     for (i=1; i<pos; i++) list1[i] = list[i];
-    _tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
-    _rearrange(list1);
+    tsls_omitzero(list1, *pZ, pdinfo->t1, pdinfo->t2);
+    rearrange(list1);
     for (i=0; i<pos; i++) s2list[i] = list1[i];
     list2[0] = list[0] - pos;
     for (i=1; i<=list2[0]; i++) list2[i] = list[i+pos];
@@ -1151,7 +1172,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     }
 
     /* now determine which fitted vals to obtain */
-    if (_tsls_match(list1, list2, newlist)) {
+    if (tsls_match(list1, list2, newlist)) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
@@ -1242,7 +1263,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
     }
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
 
-    xpxxpy = _xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0);
+    xpxxpy = xpxxpy_func(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0);
     diag = malloc((xpxxpy.nv + 1) * sizeof(double));
     if (diag == NULL) {
 	free(list1); free(list2);
@@ -1254,23 +1275,23 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 	tsls.errcode = E_ALLOC;
 	return tsls;
     }
-    cholbeta = _cholbeta(xpxxpy);    
-    _diaginv(cholbeta.xpxxpy, diag);
+    cb = cholbeta(xpxxpy);    
+    diaginv(cb.xpxxpy, diag);
     for (i=1; i<=tsls.ncoeff; i++) 
 	tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
     if (diag != NULL) free(diag); 
-    if (cholbeta.xpxxpy.xpx != NULL) free(cholbeta.xpxxpy.xpx);
-    if (cholbeta.xpxxpy.xpy != NULL) free(cholbeta.xpxxpy.xpy);
-    if (cholbeta.coeff != NULL) free(cholbeta.coeff);
+    if (cb.xpxxpy.xpx != NULL) free(cb.xpxxpy.xpx);
+    if (cb.xpxxpy.xpy != NULL) free(cb.xpxxpy.xpy);
+    if (cb.coeff != NULL) free(cb.coeff);
 
-    tsls.rsq = _corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
+    tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 			yhat + tsls.t1);
     tsls.adjrsq = 
 	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
     tsls.fstt = tsls.rsq*tsls.dfd/(tsls.dfn*(1-tsls.rsq));
     _aicetc(&tsls);
-    tsls.rho = _rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
-    tsls.dw = _dwstat(0, &tsls, *pZ);
+    tsls.rho = rhohat(0, tsls.t1, tsls.t2, tsls.uhat);
+    tsls.dw = dwstat(0, &tsls, *pZ);
 
     tsls.ci = TSLS;
     /* put the original list back */
@@ -1288,8 +1309,8 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
 
 /* ........................................................ */
 
-static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
-			  DATAINFO *pdinfo)
+static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
+			 DATAINFO *pdinfo)
      /* feed in a uhat series -- this func finds the fitted values
 	for the series using an aux. regression with squares, and
 	adds that series to the data set */
@@ -1375,7 +1396,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     lo = list[0];         /* number of vars in original list */
     yno = list[1];        /* ID number of original dependent variable */
     ncoeff = list[0] - 1;
-    _rearrange(list);
+    rearrange(list);
 
     hsk = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (hsk.errcode) return hsk;
@@ -1393,7 +1414,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     /* run auxiliary regression */
-    err = _get_aux_uhat(&hsk, uhat1, pZ, pdinfo);
+    err = get_aux_uhat(&hsk, uhat1, pZ, pdinfo);
     if (err) {
 	hsk.errcode = err;
 	free(uhat1);
@@ -1481,7 +1502,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     ncoeff = list[0] - 1;
-    _rearrange(list);
+    rearrange(list);
 
     /* run a regular OLS */
     hccm = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
@@ -1708,9 +1729,9 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
     /*  printf("reglist:\n"); printlist(reglist); */
 
     if (_hasconst(reglist)) 
-	_rearrange(reglist);
+	rearrange(reglist);
     if (_hasconst(reglist2)) 
-	_rearrange(reglist2);
+	rearrange(reglist2);
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -1734,7 +1755,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	return ar;
     }
 
-    /*  _rearrange(reglist); */ 
+    /*  rearrange(reglist); */ 
     yno = reglist[1];
     /* first pass: estimate model via OLS */
     ar = lsq(reglist, pZ, pdinfo, OLS, 0, 0.0);
@@ -1836,7 +1857,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
     for (t=t1; t<=t2; t++) 
 	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
-    ar.rsq = _corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
+    ar.rsq = corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
     ar.adjrsq = 
 	1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
     /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
@@ -1846,8 +1867,8 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     _aicetc(&ar);
-    ar.dw = _dwstat(p, &ar, *pZ);
-    ar.rho = _rhohat(p, ar.t1, ar.t2, ar.uhat);
+    ar.dw = dwstat(p, &ar, *pZ);
+    ar.rho = rhohat(p, ar.t1, ar.t2, ar.uhat);
 
     _print_ar(&ar, prn);
 
@@ -1871,8 +1892,7 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
 /* ..........................................................  */
 
-static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo, 
-		       double **Z)
+static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 /* From 2 to end of list, omits variables with all zero observations
    and packs the rest of them */
 {
@@ -1914,7 +1934,7 @@ static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo,
 
 /* .........................................................   */
 
-static void _tsls_omitzero (int *list, double **Z, const int t1, const int t2)
+static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 {
     int v, lv;
 
@@ -1927,7 +1947,7 @@ static void _tsls_omitzero (int *list, double **Z, const int t1, const int t2)
 
 /* .........................................................   */
 
-static void _rearrange (int *list)
+static void rearrange (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
    move it to the last position
 */
@@ -1946,8 +1966,7 @@ static void _rearrange (int *list)
 
 /* ...........................................................*/
 
-static int _zerror (const int t1, const int t2, const int yno,
-		    const int nwt, double ***pZ)
+static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
 {
     double xx, yy;
     int t;
@@ -1969,8 +1988,8 @@ static int _zerror (const int t1, const int t2, const int yno,
 
 /* .......................................................... */
 
-static int _lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		       double ***pZ)
+static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
+		      double ***pZ)
 /* attempt to detect presence of a lagged dependent variable
    among the regressors -- if found, return the position of this
    lagged var in the list; otherwise return 0 */
@@ -2000,7 +2019,7 @@ static int _lagdepvar (const int *list, const DATAINFO *pdinfo,
 
 /* ............................................................ */
 
-static int _tsls_match (const int *list1, const int *list2, int *newlist)
+static int tsls_match (const int *list1, const int *list2, int *newlist)
 /*
   Determines which variables in list1, when compared to all
   predetermined and exogenous variables in list2, need to have a
@@ -2028,7 +2047,7 @@ static int _tsls_match (const int *list1, const int *list2, int *newlist)
 
 /* ............................................................  */
 
-static double _wt_dummy_mean (const MODEL *pmod, double **Z) 
+static double wt_dummy_mean (const MODEL *pmod, double **Z) 
 /* returns mean of dependent variable in WLS model w. dummy weight */
 {
     int m = pmod->nobs, yno = pmod->list[1];
@@ -2050,7 +2069,7 @@ static double _wt_dummy_mean (const MODEL *pmod, double **Z)
 
 /* .............................................................  */
 
-static double _wt_dummy_stddev (const MODEL *pmod, double **Z) 
+static double wt_dummy_stddev (const MODEL *pmod, double **Z) 
 /*  returns standard deviation of dep. var. in WLS model
     with a dummy variable for weight.
 */
@@ -2060,7 +2079,7 @@ static double _wt_dummy_stddev (const MODEL *pmod, double **Z)
     double sumsq, xx, xbar;
 
     if (m == 0) return NADBL;
-    xbar = _wt_dummy_mean(pmod, Z);
+    xbar = wt_dummy_mean(pmod, Z);
     if (na(xbar)) return NADBL;
     sumsq = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {

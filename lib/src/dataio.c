@@ -2022,8 +2022,8 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    strcpy(csvinfo->varname[k], varname);
 	} 
 	if (k == csvinfo->v - 1) break;
-	if ((k) && j == 8 && line[i] != ',') 
-	    while (line[i+1] != ',') i++;
+	if ((k) && j == 8 && line[i] != delim) 
+	    while (line[i+1] != delim) i++;
     }
 
     pprintf(prn, _("scanning for row labels and data...\n"));
