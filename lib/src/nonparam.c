@@ -30,7 +30,19 @@ static int inverse_compare_doubles (const void *a, const void *b)
     return (*da < *db) - (*da > *db);
 }
 
-/* ........................................................... */
+/**
+ * spearman:
+ * @list: list of variables to process.
+ * @Z: data matrix.
+ * @pdinfo: information on the data set.
+ * @opt: if non-zero, print both the "raw" and the ranked data.
+ * @prn: gretl printing struct.
+ *
+ * Calculates and prints Spearman's rank correlation coefficient for the two
+ * variables specified in the @list.
+ * 
+ * Returns: 0 on successful completion, 1 on error.
+ */
 
 int spearman (const int *list, const double *Z, const DATAINFO *pdinfo, 
 	      const int opt, print_t *prn)
@@ -185,7 +197,18 @@ int spearman (const int *list, const double *Z, const DATAINFO *pdinfo,
     return 0;
 }
 
-/* ........................................................... */
+/**
+ * runs_test:
+ * @list: in place 1 is the ID number of the variable to process.
+ * @Z: data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Performs, and prints the results of, the runs test for randomness
+ * for the variable specified in @list.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ */
 
 int runs_test (const int *list, const double *Z, const DATAINFO *pdinfo, 
 	       print_t *prn)

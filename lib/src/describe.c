@@ -97,7 +97,13 @@ static void moments (const int t1, const int t2, const double *zx,
     } else *skew = *kurt = NADBL;
 }
 
-/* ........................................................ */
+/**
+ * free_freq:
+ * @freq: gretl frequency distrbution struct
+ *
+ * Frees all malloced elements of the struct.
+ *
+ */
 
 void free_freq (FREQDIST *freq)
 {
@@ -107,16 +113,24 @@ void free_freq (FREQDIST *freq)
     free(freq);
 }
 
-/* ........................................................ */
+/**
+ * freq_func:
+ * @pZ: pointer to data matrix (or NULL)
+ * @pdinfo: information on the data set.
+ * @zz: if pZ is NULL, data vector.
+ * @nzz: if pZ is NULL, length of vector zz.
+ * @varname: name of variable to process.
+ * @params: degrees of freedom loss (generally = 1 unless we're dealing
+ * with the residual from a regression)
+ *
+ * Calculates the frequency distribution for the named variable.
+ *
+ * Returns: struct containing the distribution.
+ *
+ */
 
 FREQDIST *freq_func (double **pZ, const DATAINFO *pdinfo, double *zz,
 		     const int nzz, const char *varname, const int params)
-     /* generates frequency distribution:
-	params is the "degrees of freedom loss", which will
-	genrally be 1 unless dealing with a regression residual. 
-        if pZ is NULL, use the passed-in data zz, otherwise look
-        up the variable by name and find its values in pZ.
-     */
 {
     FREQDIST *freq;
     double *x = NULL;
@@ -283,12 +297,26 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
     return err;
 }
 
-/* ...................................................... */
+/**
+ * corrgram:
+ * @list: in place 1, contains ID number of variable to process.
+ * @order: integer order for autocorrelation function.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @ppaths: struct containing path information.
+ * @batch: should = 1 if we're in batch mode, 0 if interactive.
+ * @prn: gretl printing struct.
+ *
+ * Computes autocorrelation function and plots the correlogram for
+ * the variable specified in @list.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ *
+ */
 
 int corrgram (const int *list, const int order, double **pZ, 
 	      DATAINFO *pdinfo, const PATHS *ppaths, 
 	      const int batch, print_t *prn)
-/* computes values of autocorrelation function and plots correlogram */
 {
     double *x, *y, *acf, *xl, box;
     double *pacf = NULL;
@@ -500,12 +528,25 @@ static int fract_int (int n, double *hhat, double *omega, print_t *prn)
     return err;
 }
 
-/* ...................................................... */
+/**
+ * periodogram:
+ * @list: in place 1, contains ID number of variable to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @ppaths: struct containing path information.
+ * @batch: should = 1 if we're in batch mode, 0 if interactive.
+ * @opt: if non-zero, use Bartlett lag window for periodogram.
+ * @prn: gretl printing struct.
+ *
+ * Computes and displays the periodogram for the variable specified in @list.
+ *
+ * Returns: 0 on successful completion, error code on error.
+ *
+ */
 
 int periodogram (const int *list, double **pZ, const DATAINFO *pdinfo, 
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, print_t *prn)
-/* compute and display periodogram */
 {
     double *autocov, *omega, *hhat;
     double xx, yy, varx, w;
@@ -669,7 +710,16 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     }
 }
 
-/* ............................................................. */
+/**
+ * print_summary:
+ * @summ: gretl summary statistics struct.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ * @batch: should = 1 if we're in batch mode, 0 if interactive.
+ *
+ * Print the summary statistics for a given variable.
+ *
+ */
 
 void print_summary (GRETLSUMMARY *summ,
 		    const DATAINFO *pdinfo,
@@ -731,7 +781,13 @@ void print_summary (GRETLSUMMARY *summ,
     pprintf(prn, "\n");
 }
 
-/* ............................................................. */
+/**
+ * free_summary:
+ * @summ: gretl summary statistics struct
+ *
+ * Frees all malloced elements of the struct.
+ *
+ */
 
 void free_summary (GRETLSUMMARY *summ)
 {
@@ -746,7 +802,18 @@ void free_summary (GRETLSUMMARY *summ)
     free(summ);
 }
 
-/* ............................................................. */
+/**
+ * summary:
+ * @list: list of variables to process.
+ * @pZ: pointer to data matrix.
+ * @pdinfo: information on the data set.
+ * @prn: gretl printing struct.
+ *
+ * Calculates descriptive summary statistics for the specified variables.
+ *
+ * Returns: struct containing the summary statistics.
+ *
+ */
 
 GRETLSUMMARY *summary (int *list, 
 		       double **pZ, const DATAINFO *pdinfo,
