@@ -36,7 +36,8 @@ enum {
     VAR_PRINT_MODELS =      1 << 0,
     VAR_DO_FTESTS    =      1 << 1,
     VAR_PRINT_PAUSE  =      1 << 2,
-    VAR_IMPULSE_RESPONSES = 1 << 3
+    VAR_IMPULSE_RESPONSES = 1 << 3,
+    VAR_SAVE =              1 << 4
 } var_flags;
 
 /* ...................................................................  */
@@ -53,7 +54,9 @@ static void pad_var_coeff_matrix (GRETL_VAR *var)
     }
 }
 
-int gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo)
+static int 
+gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo,
+		char flags)
 {
     int i, j, err = 0;
     int rows = neqns * order;
@@ -64,6 +67,7 @@ int gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo
     var->E = NULL;
     var->C = NULL;
     var->models = NULL;
+    var->Fvals = NULL;
 
     if (neqns > 0) {
 	var->A = gretl_matrix_alloc(rows, rows);
@@ -106,6 +110,16 @@ int gretl_var_init (GRETL_VAR *var, int neqns, int order, const DATAINFO *pdinfo
 	}
     } 
 
+    if (!err && (flags & VAR_SAVE)) {
+	int m = neqns * neqns;
+	
+	if (order > 1) m += neqns;
+#ifdef VAR_DEBUG
+	fprintf(stderr, "var->Fvals: allocating %d terms\n", m);
+#endif
+	var->Fvals = malloc(m  * sizeof *var->Fvals);
+    }
+
     return err;
 }
 
@@ -116,6 +130,8 @@ void gretl_var_free (GRETL_VAR *var, const DATAINFO *pdinfo)
     gretl_matrix_free(var->A);
     gretl_matrix_free(var->E);
     gretl_matrix_free(var->C);
+
+    free(var->Fvals);
 
     if (var->models != NULL) {
 	for (i=0; i<var->neqns; i++) {
@@ -128,14 +144,15 @@ void gretl_var_free (GRETL_VAR *var, const DATAINFO *pdinfo)
     free(var);
 }
 
-GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo)
+GRETL_VAR *gretl_var_new (int neqns, int order, const DATAINFO *pdinfo,
+			  char flags)
 {
     GRETL_VAR *var;
 
     var = malloc(sizeof *var);
     if (var == NULL) return NULL;
 
-    if (gretl_var_init(var, neqns, order, pdinfo)) {
+    if (gretl_var_init(var, neqns, order, pdinfo, flags)) {
 	free(var);
 	return NULL;
     } 
@@ -208,7 +225,7 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
-				  int periods, DATAINFO *pdinfo, 
+				  int periods, const DATAINFO *pdinfo, 
 				  PRN *prn)
 {
     int i, t;
@@ -573,8 +590,10 @@ static int add_model_data_to_var (GRETL_VAR *var, const MODEL *pmod, int k)
 
 /* ...................................................................  */
 
-static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
-		     PRN *prn, struct var_resids *resids, char flags)
+static int real_var (int order, const LIST list, 
+		     double ***pZ, DATAINFO *pdinfo,
+		     GRETL_VAR **pvar, struct var_resids *resids, 
+		     PRN *prn, char flags)
 {
     /* construct the respective lists by adding the appropriate
        number of lags ("order") to the variables in list 
@@ -593,7 +612,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
        Run the regressions and print the results.
     */
 
-    int i, j, index, l, listlen, end, neqns = 0;
+    int i, j, index, k, l, listlen, end, neqns = 0;
     int *varlist = NULL, *depvars = NULL, *shortlist = NULL;
     char *detlist = NULL;
     int t1, t2, oldt1, oldt2, dfd = 0;
@@ -601,6 +620,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     double essu = 0.0, F = 0.0;
     MODEL var_model;
     GRETL_VAR *var = NULL;
+    int save = (flags & VAR_SAVE);
     int err = 0;
 
     oldt1 = pdinfo->t1;
@@ -671,11 +691,14 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t2 = t2;
 
     if (flags & VAR_IMPULSE_RESPONSES) {
-	var = gretl_var_new(neqns, order, pdinfo);
+	var = gretl_var_new(neqns, order, pdinfo, flags);
 	if (var == NULL) {
 	    err = E_ALLOC;
 	    goto var_bailout;
-	}	    
+	}
+	if (save && var->Fvals == NULL) {
+	    save = 0;
+	}
     } 
 
     /* even in case of VAR_IMPULSE_RESPONSES this may be used */
@@ -697,6 +720,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* run the several regressions */
+    k = 0;
     for (i=0; i<neqns; i++) {
 	MODEL *pmod;
 
@@ -775,6 +799,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
+		if (save) var->Fvals[k++] = F;
 	    }
 
 	    if (order > 1) {
@@ -797,6 +822,7 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&var_model, pdinfo);
 		pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 		pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
+		if (save) var->Fvals[k++] = F;
 	    }
 
 	    pputs(prn, "\n");
@@ -834,7 +860,11 @@ static int real_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		fprintf(stderr, "failed: gretl_var_do_error_decomp\n");
 	    }
 	}
-	gretl_var_free(var, pdinfo);
+	if ((flags & VAR_SAVE) && pvar != NULL) {
+	    *pvar = var;
+	} else {
+	    gretl_var_free(var, pdinfo);
+	}
     }
 
     return err;
@@ -860,15 +890,34 @@ int var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 {
     char flags = VAR_PRINT_MODELS | VAR_DO_FTESTS;
 
-#ifdef notyet
-    flags != VAR_IMPULSE_RESPONSES;
+#if 1
+    flags |= VAR_IMPULSE_RESPONSES;
 #endif
 
     if (pause) {
 	flags |= VAR_PRINT_PAUSE;
     }
 
-    return real_var(order, list, pZ, pdinfo, prn, NULL, flags);
+    return real_var(order, list, pZ, pdinfo, NULL, NULL, prn, flags);
+}
+
+/* "full" version returns pointer to VAR struct */
+
+GRETL_VAR *full_var (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
+		     PRN *prn)
+{
+    GRETL_VAR *var = NULL;
+    int err;
+
+    err = real_var(order, list, pZ, pdinfo, &var, NULL, prn,
+		   VAR_PRINT_MODELS | VAR_DO_FTESTS | 
+		   VAR_IMPULSE_RESPONSES | VAR_SAVE);
+    if (err) {
+	gretl_var_free(var, pdinfo);
+	return NULL;
+    } else {
+	return var;
+    }
 }
 
 /**
@@ -1470,7 +1519,8 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     /* FIXME? */
     pdinfo->t1 += (order + 1);
     /* Check Hamilton: what if order for test = 1? */
-    err = real_var(order - 1, varlist, pZ, pdinfo, varprn, &resids, flags); 
+    err = real_var(order - 1, varlist, pZ, pdinfo, 
+		   NULL, &resids, varprn, flags); 
     
     if (!verbose) {
 	gretl_print_destroy(varprn);
@@ -1563,3 +1613,44 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+int print_var (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
+{
+    int i, j, k, v;
+    int dfd = (var->models[0])->dfd;
+
+    pprintf(prn, _("\nVAR system, lag order %d\n\n"), var->order);
+
+    k = 0;
+    for (i=0; i<var->neqns; i++) {
+	printmodel(var->models[i], pdinfo, prn);
+
+	if (var->Fvals == NULL) continue;
+
+	pputs(prn, _("\nF-tests of zero restrictions:\n\n"));
+
+	for (j=0; j<var->neqns; j++) {
+	    v = (var->models[j])->list[1];
+	    pprintf(prn, _("All lags of %-8s "), pdinfo->varname[v]);
+	    pprintf(prn, "F(%d, %d) = %f, ", var->order, dfd, var->Fvals[k]);
+	    pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->order, dfd));
+	    k++;
+	}
+
+	if (var->order > 1) {
+	    pprintf(prn, _("All vars, lag %-6d "), var->order);
+	    pprintf(prn, "F(%d, %d) = %f, ", var->neqns, dfd, var->Fvals[k]);
+	    pprintf(prn, _("p-value %f\n"), fdist(var->Fvals[k], var->neqns, dfd)); 
+	    k++;
+	}
+
+	pputs(prn, "\n");
+    }
+
+    pputs(prn, "\n");
+
+    for (i=0; i<var->neqns; i++) {
+	gretl_var_print_impulse_response(var, i, 0, pdinfo, prn);
+    }
+
+    return 0;
+}

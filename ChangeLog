@@ -18,6 +18,7 @@
   terms such as trend and dummies from the other variables in 
   the regression list; add Durbin-Watson statistic to model 
   printouts
+- Improvements to data-editing spreadsheet in gtk-2.0 version
 - minor fixes to the build process
 - minor updates to gtk-1.2 GUI (make more consistent with the
   gtk-2.0 version)

@@ -18,40 +18,29 @@
  */
 
 #include "gretl.h"
+#include "treeutils.h"
 #include "ssheet.h"
 #include <errno.h>
 #include <ctype.h>
 
-#define CELL_WIDTH 12
-#define CELL_MAXLEN 23
+/* #define SSDEBUG */
 
-typedef struct _spreadsheet spreadsheet;
-typedef struct _sheet_cell sheet_cell;
+#define SHEET_PRECISION 10
 
-struct _spreadsheet {
-    GtkWidget *table;
+typedef struct {
+    GtkWidget *view;
     GtkWidget *win;
     GtkWidget *locator;
     GtkWidget *popup;
-    GtkWidget **col_labels;
-    GtkWidget **row_labels;
-    sheet_cell ***cells;
-    sheet_cell *active_cell;
+    GtkCellRenderer *dumbcell;
+    GtkCellRenderer *datacell;
     gchar location[20];
-    gint cols, rows;
+    gint datacols, datarows;
+    gint padcols, totcols;
     gint n_scalars;
     guint cid;
     guint point;
-};
-
-struct _sheet_cell {
-    int row;
-    int col;
-    double value;
-    char text[CELL_MAXLEN + 1];
-    GtkWidget *entry;
-    spreadsheet *sheet;
-};
+} spreadsheet;
 
 enum {
     SHEET_AT_END,
@@ -61,11 +50,9 @@ enum {
 static void sheet_add_var_callback (gpointer data, guint code, GtkWidget *w);
 static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w);
 static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet);
+static void set_up_sheet_column (GtkTreeViewColumn *column, gint width);
 static gint get_data_col_width (void);
-static void set_locator_label (spreadsheet *sheet, int row, int col);
-#if 0
 static void add_data_column (spreadsheet *sheet);
-#endif
 
 static GtkItemFactoryEntry sheet_items[] = {
     { N_("/_Observation"), NULL, NULL, 0, "<Branch>", GNULL },
@@ -78,390 +65,225 @@ static GtkItemFactoryEntry sheet_items[] = {
 
 static int sheet_modified;
 
-const char *sheet_cell_format = "%12g";
-
-static int get_char_from_key (int key)
-{
-    if (key >= GDK_0 && key <= GDK_9) {
-	return '0' + key - GDK_0;
-    }
-    
-    if (key >= GDK_KP_0 && key <= GDK_KP_9) {
-	return '0' + key - GDK_KP_0;
-    }
-
-    if (key == GDK_minus || key == GDK_KP_Subtract) {
-	return '-';
-    }
-
-    /* add decimal point here */
-
-    return '\0';
-}
-
-static int start_editing_cell (sheet_cell *cell, int keyval)
-{
-    gtk_editable_set_editable(GTK_EDITABLE(cell->entry), TRUE);
-
-    if (gtk_editable_get_position(GTK_EDITABLE(cell->entry)) > 0) {
-	return 0;
-    } else {
-	int c = get_char_from_key(keyval);
-	char start[2];
-
-	sprintf(start, "%c", c);
-	gtk_entry_set_text(GTK_ENTRY(cell->entry), start);
-	gtk_editable_set_position(GTK_EDITABLE(cell->entry), -1);
-	return 1;
-    }
-}
-
-static int finish_editing_cell (sheet_cell *cell)
-{
-    GtkWidget *w = cell->entry;
-    const gchar *txt = gtk_entry_get_text(GTK_ENTRY(w));
-    double val;
-
-    val = atof(txt);
-
-    if (val != cell->value) {
-	sheet_modified = 1;
-    }
-    cell->value = val;
-    sprintf(cell->text, sheet_cell_format, cell->value);
-    gtk_entry_set_text(GTK_ENTRY(w), cell->text);
-    gtk_editable_set_editable(GTK_EDITABLE(cell->entry), FALSE);
-
-    return 0;
-}
-
-static void abort_editing_cell (sheet_cell *cell)
-{
-    sprintf(cell->text, sheet_cell_format, cell->value);
-    gtk_entry_set_text(GTK_ENTRY(cell->entry), cell->text);
-}
-
-static void sheet_move_one_cell (sheet_cell *cell, int key)
-{
-    int i = cell->row;
-    int j = cell->col;
-
-    if (key == GDK_Down || key == GDK_Return) {
-	if (++i < cell->sheet->rows) {
-	    gtk_widget_grab_focus((cell->sheet->cells[j][i])->entry);
-	}
-    }
-
-    if (key == GDK_Right) {
-	if (++j < cell->sheet->cols) {
-	    gtk_widget_grab_focus((cell->sheet->cells[j][i])->entry);
-	}
-    }
-
-    if (key == GDK_Left) {
-	if (--j >= 0) {
-	    gtk_widget_grab_focus((cell->sheet->cells[j][i])->entry);
-	}
-    }
-
-    if (key == GDK_Up) {
-	if (--i >= 0) {
-	    gtk_widget_grab_focus((cell->sheet->cells[j][i])->entry);
-	}
-    }	
-}
-
-static int deactivate_cell (sheet_cell *cell)
-{
-    if (cell != NULL) {
-	if (gtk_editable_get_editable(GTK_EDITABLE(cell->entry))) {
-	    if (finish_editing_cell(cell)) return 1;
-	}
-	gtk_entry_set_has_frame(GTK_ENTRY(cell->entry), FALSE);
-	gtk_editable_set_editable(GTK_EDITABLE(cell->entry), FALSE);
-    }
-    return 0;
-}
-
-static void set_active_cell (sheet_cell *cell)
-{
-    if (cell != cell->sheet->active_cell) {
-	if (deactivate_cell(cell->sheet->active_cell)) return; 
-	cell->sheet->active_cell = cell;
-	gtk_entry_set_has_frame(GTK_ENTRY(cell->entry), TRUE);
-	gtk_editable_set_position(GTK_EDITABLE(cell->entry), 0);
-	set_locator_label(cell->sheet, cell->row, cell->col);
-    }
-}
-
-static gint cell_key_press (GtkWidget *widget,
-			    GdkEventKey *key,
-			    sheet_cell *cell)
-{
-    if (key->keyval == GDK_Return || key->keyval == GDK_Up ||
-	key->keyval == GDK_Down) {
-	int err = 0;
-
-	if (gtk_editable_get_editable(GTK_EDITABLE(cell->entry))) {
-	    err = finish_editing_cell(cell);
-	}
-
-	if (!err) {
-	    sheet_move_one_cell(cell, key->keyval);
-	}
-
-	return TRUE;
-    }
-
-    if (gtk_editable_get_editable(GTK_EDITABLE(cell->entry))) {
-	if (key->keyval == GDK_Escape) {
-	    abort_editing_cell(cell);
-	} 
-	/* let the editing proceed */
-	return FALSE;
-    }
-
-    if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
-	sheet_move_one_cell(cell, key->keyval);
-	return TRUE;
-    }
-
-    return start_editing_cell(cell, key->keyval);
-}
-
-static void sheet_cell_set_value (spreadsheet *sheet, 
-				  int row, int col, double val)
-{
-    sheet_cell *cell = sheet->cells[col][row];
-
-    cell->value = val;
-    if (cell->value == NADBL) {
-	strcpy(cell->text, "NA");
-	gtk_entry_set_text(GTK_ENTRY(cell->entry), "");
-    } else {
-	sprintf(cell->text, sheet_cell_format, cell->value);
-	gtk_entry_set_text(GTK_ENTRY(cell->entry), cell->text);
-    }
-}
-
-static sheet_cell *sheet_cell_new (spreadsheet *sheet, 
-				   int row, int col)
-{
-    sheet_cell *cell;
-
-    cell = malloc(sizeof *cell);
-    if (cell == NULL) return NULL;
-
-    cell->row = row;
-    cell->col = col;
-
-    cell->entry = gtk_entry_new();
-    gtk_entry_set_max_length(GTK_ENTRY(cell->entry), CELL_MAXLEN);
-    gtk_entry_set_has_frame(GTK_ENTRY(cell->entry), FALSE);
-    gtk_editable_set_editable(GTK_EDITABLE(cell->entry), FALSE);
-    gtk_entry_set_width_chars(GTK_ENTRY(cell->entry), CELL_WIDTH);
-
-    cell->sheet = sheet;
-
-    g_signal_connect(G_OBJECT(cell->entry), "key-press-event",
-		     G_CALLBACK(cell_key_press), cell);
-
-    return cell;
-}
-
-static void destroy_sheet (GtkWidget *widget, spreadsheet **psheet)
-{
-    spreadsheet *sheet = *psheet;
-    int i, j;
-
-    if (sheet->popup != NULL) {
-	gtk_widget_destroy(sheet->popup);
-    }
-
-    if (sheet->cells != NULL) {
-	for (j=0; j<sheet->cols; j++) {
-	    if (sheet->cells[j] != NULL) {
-		for (i=0; i<sheet->rows; i++) {
-		    free(sheet->cells[j][i]);
-		}
-		free(sheet->cells[j]);
-	    }
-	}
-	free(sheet->cells);
-	sheet->cells = NULL;
-    }
-
-    free(sheet);
-    *psheet = NULL;
-}
-
-static gint click_cell (GtkWidget *entry,
-			GdkEventButton *event,
-			sheet_cell *cell)
-{
-    if (cell != cell->sheet->active_cell) {
-	set_active_cell(cell);
-	gtk_widget_grab_focus(cell->entry);
-	return TRUE;
-    }
-    return FALSE;
-}
-
-static gint focus_in_cell (GtkWidget *widget,
-			   GdkEventFocus *event,
-			   sheet_cell *cell)
-{
-    set_active_cell(cell);
-    
-    return 0;
-}
-
-static spreadsheet *sheet_new (int rows, int cols, int nscalars)
-{
-    spreadsheet *sheet;
-    int i, j;
-
-    sheet = malloc(sizeof *sheet);
-    if (sheet == NULL) return NULL;
-
-    sheet->rows = rows;
-    sheet->cols = cols;
-    sheet->n_scalars = nscalars;
-
-    sheet->col_labels = NULL;
-    sheet->row_labels = NULL;
-
-    sheet->cells = malloc(cols * sizeof *sheet->cells);
-    if (sheet->cells == NULL) {
-	free(sheet);
-	return NULL;
-    }
-
-    for (j=0; j<cols; j++) {
-	sheet->cells[j] = malloc(rows * sizeof **sheet->cells);
-	if (sheet->cells[j] == NULL) {
-	    for (i=0; i<j; i++) {
-		free(sheet->cells[i]);
-	    }
-	    free(sheet->cells);
-	    free(sheet);
-	    return NULL;
-	} 
-	for (i=0; i<rows; i++) {
-	    sheet->cells[j][i] = sheet_cell_new(sheet, i, j); 
-	    if (sheet->cells[j][i] == NULL) {
-		;
-	    }
-	}
-    }
-
-    sheet->col_labels = malloc(cols * sizeof *sheet->col_labels);
-    if (sheet->col_labels == NULL) {
-	destroy_sheet(NULL, &sheet);
-	return NULL;
-    }
-    for (j=0; j<cols; j++) {
-	sheet->col_labels[j] = gtk_label_new("");
-    }
-
-    sheet->row_labels = malloc(rows * sizeof *sheet->row_labels);
-    if (sheet->row_labels == NULL) {
-	destroy_sheet(NULL, &sheet);
-	return NULL;
-    }
-    for (i=0; i<rows; i++) {
-	sheet->row_labels[i] = gtk_label_new("");
-    }    
-
-    sheet->table = gtk_table_new(rows + 1, cols + 1, TRUE);
-    if (sheet->table == NULL) {
-	destroy_sheet(NULL, &sheet);
-	return NULL;
-    }  
-
-    /* attach all cells and labels to table */
-    for (i=0; i<rows; i++) {
-	gtk_table_attach(GTK_TABLE(sheet->table), 
-			 sheet->row_labels[i], 
-			 0, 1, i+1, i+2,
-			 0, 0, 0, 0);
-	for (j=0; j<cols; j++) {
-	    gtk_table_attach(GTK_TABLE(sheet->table), 
-			     (sheet->cells[j][i])->entry, 
-			     j+1, j+2, i+1, i+2,
-			     0, 0, 0, 0);
-	    g_signal_connect(G_OBJECT((sheet->cells[j][i])->entry),
-			     "button-press-event", 
-			     G_CALLBACK(click_cell), sheet->cells[j][i]);
-	    g_signal_connect(G_OBJECT((sheet->cells[j][i])->entry),
-			     "focus-in-event", 
-			     G_CALLBACK(focus_in_cell), sheet->cells[j][i]);
-
-	}
-    } 
-
-    for (j=0; j<cols; j++) {
-	gtk_table_attach(GTK_TABLE(sheet->table), 
-			 sheet->col_labels[j], 
-			 j+1, j+2, 0, 1,
-			 0, 0, 0, 0);
-    }
-
-    sheet->win = NULL;
-    sheet->locator = NULL;
-    sheet->popup = NULL;
-    sheet->active_cell = NULL;
-    sheet->cid = 0;
-
-    return sheet;
-}
-
-static void label_sheet_column (spreadsheet *sheet, int col,
-				const char *str)
-{
-    gtk_label_set_text(GTK_LABEL(sheet->col_labels[col]), str);
-}
-
-static void label_sheet_row (spreadsheet *sheet, int row,
-			     const char *str)
-{
-    gtk_label_set_text(GTK_LABEL(sheet->row_labels[row]), str);
-}
-
-const gchar *sheet_get_column_label (spreadsheet *sheet, int col)
-{
-    return gtk_label_get_text(GTK_LABEL(sheet->col_labels[col]));
-}
-
-const gchar *sheet_get_row_label (spreadsheet *sheet, int row)
-{
-    return gtk_label_get_text(GTK_LABEL(sheet->row_labels[row]));
-}
-
 /* .................................................................. */
 
-static void set_locator_label (spreadsheet *sheet, int row, int col)
+static void set_locator_label (spreadsheet *sheet, GtkTreePath *path,
+			       GtkTreeViewColumn *column)
 {
-    const char *col_label;
-    const char *row_label;
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view));
+    GtkTreeIter iter;
+    gchar *row_label;
+    const gchar *col_label;
 
-    col_label = gtk_label_get_text(GTK_LABEL(sheet->col_labels[col]));
-    row_label = gtk_label_get_text(GTK_LABEL(sheet->row_labels[row]));
-    
+    gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, 0, &row_label, -1);
+    col_label = gtk_tree_view_column_get_title(column);
     sprintf(sheet->location, "%s, %s", col_label, row_label);
     gtk_statusbar_pop(GTK_STATUSBAR(sheet->locator), sheet->cid);
     gtk_statusbar_push(GTK_STATUSBAR(sheet->locator), 
 		       sheet->cid, sheet->location);
+    g_free(row_label);
 }
+
+/* .................................................................. */
+
+static void move_to_next_cell (spreadsheet *sheet, GtkTreePath *path,
+			       GtkTreeViewColumn *column)
+{
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    gint nextrow;
+
+    nextrow = gtk_tree_path_get_indices(path)[0] + 1;
+
+    if (nextrow < sheet->datarows) {
+	GtkTreePath *newpath;
+	gchar pstr[8];
+
+	sprintf(pstr, "%d", nextrow);
+	newpath = gtk_tree_path_new_from_string(pstr);
+	if (newpath != NULL) {
+	    gtk_tree_view_set_cursor(view, newpath, column, FALSE);
+	    set_locator_label(sheet, newpath, column);
+	    gtk_tree_path_free(newpath);
+	}
+    }
+}
+
+/* .................................................................. */
+
+static gint sheet_cell_edited (GtkCellRendererText *cell,
+			       const gchar *path_string,
+			       const gchar *new_text,
+			       spreadsheet *sheet)
+{
+    if (check_atof(new_text)) {
+	errbox(get_gretl_errmsg());
+    } else {
+	GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+	GtkTreeModel *model = gtk_tree_view_get_model(view);
+	GtkTreeViewColumn *column;
+	GtkTreePath *path;
+	GtkTreeIter iter;
+	gchar *old_text;
+	gint colnum;
+
+	gtk_tree_view_get_cursor(view, NULL, &column);
+	colnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+	path = gtk_tree_path_new_from_string (path_string);
+	gtk_tree_model_get_iter(model, &iter, path);
+	gtk_tree_model_get(model, &iter, colnum, &old_text, -1);
+
+	if (strcmp(old_text, new_text)) {
+	    gtk_list_store_set(GTK_LIST_STORE(model), &iter, 
+			       colnum, new_text, -1);
+	    sheet_modified = 1;
+	}
+	move_to_next_cell(sheet, path, column);
+	gtk_tree_path_free(path);
+	g_free(old_text);
+    }
+
+    return FALSE;
+}
+
+/* .................................................................. */
 
 static void real_add_new_var (spreadsheet *sheet, const char *varname)
 {
-    return;
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view); 
+    GtkTreeModel *model;
+    GtkTreeViewColumn *column;
+    GList *collist = NULL;
+    gint i, oldcols, cols;
+
+    oldcols = sheet->totcols;
+
+    add_data_column(sheet);
+
+    if (sheet->totcols == oldcols) {
+	column = gtk_tree_view_get_column(view, sheet->datacols);
+	gtk_tree_view_remove_column(view, column);
+    }
+
+    column = gtk_tree_view_column_new();
+    gtk_tree_view_column_set_title(column, varname);
+    cols = gtk_tree_view_insert_column(view, column, sheet->datacols);
+	
+    set_up_sheet_column(column, get_data_col_width()); 
+
+    model = gtk_tree_view_get_model(view);
+
+    collist = gtk_tree_view_get_columns(view);
+
+    for (i=0; i<sheet->totcols-2; i++) {
+	column = GTK_TREE_VIEW_COLUMN(collist->data);
+	gtk_tree_view_column_clear(column);
+
+	if (i > 0 && i <= sheet->datacols) {
+	    gtk_tree_view_column_pack_start(column, sheet->datacell, TRUE);
+	    gtk_tree_view_column_set_attributes (column,
+						 sheet->datacell,
+						 "text", i, 
+						 "editable", sheet->totcols - 1, 
+						 NULL);
+	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
+	} else { /* non-data cells */
+	    gtk_tree_view_column_pack_start(column, sheet->dumbcell, TRUE);
+	    gtk_tree_view_column_set_attributes (column,
+						 sheet->dumbcell,
+						 "text", i, 
+						 "editable", sheet->totcols - 2,
+						 NULL);
+	    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(0));
+	}
+	collist = collist->next;
+    }
+
+    if (collist) g_list_free(collist);
+
+    sheet_modified = 1;
 }
 
-static void real_add_new_obs (spreadsheet *sheet, const char *marker)
+/* .................................................................. */
+
+static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 {
-    return;
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    gint pointpath = 0;
+    GtkListStore *store;
+    GtkTreeIter iter;
+    gchar rowlabel[10];
+    gint i;
+
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+
+    if (sheet->point == SHEET_AT_END) {
+	gtk_list_store_append(store, &iter);
+    } 
+    else if (sheet->point == SHEET_AT_POINT) {
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+
+	gtk_tree_view_get_cursor(view, &path, &column);
+	gtk_tree_model_get_iter(GTK_TREE_MODEL(store), &iter, path);
+	pointpath = gtk_tree_path_get_indices(path)[0];
+	gtk_list_store_insert(store, &iter, pointpath);
+	gtk_tree_path_free(path);
+    } 
+    else return;
+
+    sheet->datarows += 1;
+
+    if (datainfo->markers) {
+	gtk_list_store_set(store, &iter, 0, obsname, -1);
+    } else if (sheet->point == SHEET_AT_END) {
+	ntodate(rowlabel, sheet->datarows - 1, datainfo);
+	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
+    }
+
+    for (i=1; i<=sheet->datacols; i++) {
+	gtk_list_store_set(store, &iter, i, "", -1);
+    }
+
+    for (i=1; i<=sheet->padcols; i++) {
+	gtk_list_store_set(store, &iter, sheet->datacols + i, "", -1);
+    }
+
+    gtk_list_store_set(store, &iter, 
+		       sheet->totcols - 2, FALSE, 
+		       sheet->totcols - 1, TRUE,
+		       -1);
+
+    if (sheet->point == SHEET_AT_POINT && !datainfo->markers) {
+	for (i=pointpath; i<sheet->datarows; i++) {
+	    ntodate(rowlabel, i, datainfo);
+	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
+	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+	}
+    } 
+
+    if (sheet->point == SHEET_AT_END) {
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+	GtkAdjustment *adj;
+	gchar *pathstr;
+	gdouble adjval;
+
+	pathstr = g_strdup_printf("%d", sheet->datarows - 1);
+	path = gtk_tree_path_new_from_string(pathstr);
+	column = gtk_tree_view_get_column(view, 1);
+	gtk_tree_view_set_cursor(view, path, column, FALSE);
+	adj = 
+	    gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(gtk_widget_get_ancestor
+								    (GTK_WIDGET(view),
+								     GTK_TYPE_BIN)));
+	adjval = gtk_adjustment_get_value(adj);
+	gtk_adjustment_set_value (adj, adjval + 30); /* why is this hack needed? */
+	gtk_tree_path_free(path);
+	g_free(pathstr);
+    }
+
+    sheet_modified = 1;
 }
 
 /* ........................................................... */
@@ -526,6 +348,82 @@ static void new_case_dialog (spreadsheet *sheet)
 
 /* ........................................................... */
 
+static void add_data_column (spreadsheet *sheet)
+{
+    GType *types;
+    GtkListStore *old_store, *new_store;
+    GtkTreeIter old_iter, new_iter;
+    gint i, row, newcolnum;
+
+    /* This is relatively complex because, so far as I can tell, you can't
+       append or insert additional columns in a GtkListStore: we have to
+       create a new liststore and copy the old info across.
+    */
+
+    sheet->datacols += 1;
+
+    if (sheet->padcols > 0) sheet->padcols -= 1;
+    else sheet->totcols += 1;
+
+    /* make an expanded column types list */
+    types = mymalloc(sheet->totcols * sizeof *types);
+
+    /* configure the types */
+    types[0] = G_TYPE_STRING;
+    for (i=1; i<=sheet->datacols; i++) types[i] = G_TYPE_STRING;
+    for (i=0; i<sheet->padcols; i++) types[sheet->datacols+1+i] = G_TYPE_STRING;
+    for (i=sheet->totcols-2; i<=sheet->totcols-1; i++) types[i] = G_TYPE_BOOLEAN;
+
+    newcolnum = sheet->datacols;
+
+    old_store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(sheet->view)));
+    new_store = gtk_list_store_newv (sheet->totcols, types);
+    free(types);
+
+    /* go to start of old and new lists */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(old_store), &old_iter);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(new_store), &new_iter);
+
+    /* copy across the old data */
+    for (row=0; row<sheet->datarows; row++) {
+	gchar *str;
+
+	gtk_list_store_append(new_store, &new_iter);
+
+	/* column 0: markers */
+	gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, 0, &str, -1);
+	gtk_list_store_set(new_store, &new_iter, 0, str, -1);
+	g_free(str);
+
+	/* original data values */
+	for (i=1; i<newcolnum; i++) {
+	    gtk_tree_model_get(GTK_TREE_MODEL(old_store), &old_iter, i, &str, -1);
+	    gtk_list_store_set(new_store, &new_iter, i, str, -1);
+	    g_free(str);
+	}
+
+	/* new data values blank */
+	gtk_list_store_set(new_store, &new_iter, newcolnum, "", -1);
+
+	/* any padding cols */
+	for (i=1; i<=sheet->padcols; i++) {
+	    gtk_list_store_set(new_store, &new_iter, newcolnum + i, "", -1);
+	}	
+
+	/* editable flags */
+	gtk_list_store_set(new_store, &new_iter, 
+			   sheet->totcols - 2, FALSE, 
+			   sheet->totcols - 1, TRUE, -1);
+
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(old_store), &old_iter);
+    }    
+
+    gtk_tree_view_set_model(GTK_TREE_VIEW(sheet->view), GTK_TREE_MODEL(new_store));
+    g_object_unref(G_OBJECT(new_store));
+}
+
+/* ........................................................... */
+
 static void sheet_add_var_callback (gpointer data, guint u, GtkWidget *w)
 {
     spreadsheet *sheet = (spreadsheet *) data;
@@ -584,17 +482,64 @@ static void build_sheet_popup (GtkWidget **popup, spreadsheet *sheet)
 		   sheet);
 }
 
+/* ......................................................... */
+
+static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
+{
+    GtkTreePath *path;
+    GtkTreeViewColumn *column;
+    static gint oldrow, oldcol;
+
+    /* this is connected to the "cursor-changed" signal */
+
+#ifdef SSDEBUG
+    fprintf(stderr, "update_cell_position:\n");
+#endif
+
+    gtk_tree_view_get_cursor(view, &path, &column);
+
+    if (path && column) {
+	gint newrow = gtk_tree_path_get_indices(path)[0];
+	gint newcol = 
+	    GPOINTER_TO_INT(g_object_get_data(G_OBJECT(column), "colnum"));
+
+	if (newrow != oldrow || newcol != oldcol) {
+#ifdef SSDEBUG
+	    fprintf(stderr, " activating cell(%d, %d)\n", newrow, newcol);
+#endif
+	    set_locator_label(sheet, path, column);
+	    oldrow = newrow;
+	    oldcol = newcol;
+	    gtk_tree_view_set_cursor(view, path, column, 
+				     FALSE); /* start editing? */
+	} else {
+#ifdef SSDEBUG
+	   fprintf(stderr, " still in cell(%d, %d)\n", oldrow, oldcol); 
+#endif
+	}
+	gtk_tree_path_free(path);
+    }
+
+    return TRUE;
+}
+
 /* ........................................................... */
 
 static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 {
     gint i, t, n = datainfo->n, oldv = datainfo->v; 
     gint orig_cols, newvars, newobs, missobs = 0;
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeIter iter;
+    GtkTreeViewColumn *column;
+    GtkTreeModel *model;
     gint colnum;
 
-    newobs = sheet->rows - n;
+    newobs = sheet->datarows - n;
     orig_cols = datainfo->v - 1 - sheet->n_scalars;
-    newvars = sheet->cols - orig_cols;
+    newvars = sheet->datacols - orig_cols;
+
+    model = gtk_tree_view_get_model(view);
 
     if (newobs > 0) {
 	if (grow_nobs(newobs, &Z, datainfo)) {
@@ -612,7 +557,8 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 	for (i=0; i<newvars; i++) { 
 	    const gchar *newname;
 
-	    newname = sheet_get_column_label(sheet, orig_cols + 1 + i); /* FIXME? */
+	    column = gtk_tree_view_get_column(view, orig_cols + 1 + i);
+	    newname = gtk_tree_view_column_get_title(column);
 	    strcpy(datainfo->varname[i + oldv], newname);
 	    strcpy(VARLABEL(datainfo, i + oldv), "");
 	}
@@ -622,14 +568,31 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
     for (i=1; i<datainfo->v; i++) {
 	if (datainfo->vector[i] == 0) continue;
 	colnum++;
+	gtk_tree_model_get_iter_first(model, &iter);	
 	for (t=0; t<n; t++) {
-	    Z[i][t] = (sheet->cells[colnum][t])->value;
+	    gchar *numstr;
+
+	    gtk_tree_model_get(model, &iter, colnum, &numstr, -1);
+	    if (*numstr) {
+		Z[i][t] = atof(numstr); 
+	    } else {
+		Z[i][t] = NADBL;
+		missobs = 1;
+	    }
+	    g_free(numstr);
+	    gtk_tree_model_iter_next(model, &iter);
 	}
     }
 
     if (datainfo->markers && datainfo->S != NULL) {
+	gtk_tree_model_get_iter_first(model, &iter);
 	for (t=0; t<n; t++) {
-	    strcpy(datainfo->S[t], sheet_get_row_label(sheet, t));
+	    gchar *marker;
+
+	    gtk_tree_model_get(model, &iter, 0, &marker, -1);
+	    strcpy(datainfo->S[t], marker);
+	    g_free(marker);
+	    gtk_tree_model_iter_next(model, &iter);
 	}
     }
 
@@ -647,64 +610,90 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 
 /* ........................................................... */
 
-static void add_data_to_sheet (spreadsheet *sheet)
+static void select_first_editable_cell (spreadsheet *sheet)
 {
-    char rowlabel[9];
-    int i, t, colnum;
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreePath *path;
+    GtkTreeViewColumn *column;
 
-    /* insert the variable names */
-    colnum = 0;
-    for (i=1; i<datainfo->v; i++) {
-	if (datainfo->vector[i] == 0) continue;
-	label_sheet_column(sheet, colnum, datainfo->varname[i]);
-	colnum++;
-    }
+    path = gtk_tree_path_new_from_string("0");
+    column = gtk_tree_view_get_column(view, 1);
+    gtk_tree_view_set_cursor(view, path, column, FALSE);
+    set_locator_label(sheet, path, column);
 
-    /* insert observation marker column */
-    for (t=0; t<sheet->rows; t++) {
-	if (datainfo->markers) {
-	    strcpy(rowlabel, datainfo->S[t]);
-	} else {
-	    ntodate(rowlabel, t, datainfo);
-	}
-	label_sheet_row(sheet, t, rowlabel);
-    }
-
-    /* insert the data values */
-    for (t=0; t<sheet->rows; t++) {
-	colnum = 0;
-	for (i=1; i<datainfo->v; i++) {
-	    /* don't put scalars into the spreadsheet */
-	    if (datainfo->vector[i] == 0) continue;
-	    sheet_cell_set_value(sheet, t, colnum, Z[i][t]);
-	    colnum++;
-	}
-    }
+    gtk_tree_path_free(path);
 }
 
 /* ........................................................... */
 
-static void add_skel_to_sheet (spreadsheet *sheet)
+static void add_data_to_sheet (spreadsheet *sheet, int new)
 {
-    char rowlabel[9];
-    int i, t;
+    gchar rowlabel[10];
+    gint i, t, colnum, n = datainfo->n;
+    GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
+    GtkTreeIter iter;
+    GtkListStore *store;
 
-    /* insert the variable names */
-    for (i=1; i<datainfo->v; i++) {
-	label_sheet_column(sheet, i - 1, datainfo->varname[i]);
-    }
+    store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
 
     /* insert observation markers */
-    for (t=0; t<sheet->rows; t++) {
-	ntodate(rowlabel, t, datainfo);
-	label_sheet_row(sheet, t, rowlabel);
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    for (t=0; t<n; t++) {
+	if (!new && datainfo->markers) {
+	    strcpy(rowlabel, datainfo->S[t]);
+	} else {
+	    ntodate(rowlabel, t, datainfo);
+	}
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }
 
-    /* insert "missing" data values */
-    for (t=0; t<sheet->rows; t++) {
-	for (i=0; i<sheet->cols; i++) {
-	    sheet_cell_set_value(sheet, t, i, NADBL);
+    sheet->datarows = t;
+
+    /* insert data values */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    for (t=0; t<n; t++) {
+	if (new) {
+	    /* insert "missing" values */
+	    for (i=1; i<datainfo->v; i++) {
+		gtk_list_store_set(store, &iter, i, "", -1);
+	    }
+	} else {	
+	    /* insert actual values */
+	    char numstr[32];
+
+	    colnum = 0;
+	    for (i=1; i<datainfo->v; i++) {
+		/* don't put scalars into the spreadsheet */
+		if (datainfo->vector[i] == 0) continue;
+		if (na(Z[i][t])) {
+		    *numstr = '\0';
+		} else {
+		    sprintf(numstr, "%.*g", SHEET_PRECISION, Z[i][t]);
+		}
+		colnum++;
+		gtk_list_store_set(store, &iter, colnum, numstr, -1);
+	    }
 	}
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    }
+
+    /* insert padding cols if needed */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    for (t=0; t<n; t++) {
+	for (i=0; i<sheet->padcols; i++) {
+	    gtk_list_store_set(store, &iter, i + datainfo->v, "", -1);
+	}
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+    }
+
+    /* set the editable flags */
+    gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
+    for (t=0; t<n; t++) {
+	gtk_list_store_set(store, &iter, 
+			   sheet->totcols - 2, FALSE,
+			   sheet->totcols - 1, TRUE, -1);
+	gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     }
 }
 
@@ -749,6 +738,252 @@ static gint get_data_col_width (void)
 
 /* ........................................................... */
 
+static void set_up_sheet_column (GtkTreeViewColumn *column, gint width)
+{
+    gtk_tree_view_column_set_alignment(column, 0.5); /* header centered */
+    gtk_tree_view_column_set_sizing(column, GTK_TREE_VIEW_COLUMN_FIXED);
+    gtk_tree_view_column_set_fixed_width(column, width);
+}
+
+/* ........................................................... */
+
+static void create_sheet_cell_renderers (spreadsheet *sheet)
+{
+    GtkCellRenderer *r;
+
+    r = gtk_cell_renderer_text_new();
+    g_object_set(r, "ypad", 1, NULL);
+    g_object_set(r, "xalign", 1.0, NULL);
+    g_object_set(r, "background", "gray", NULL);
+    sheet->dumbcell = r;
+
+    r = gtk_cell_renderer_text_new();
+    g_object_set(r, "ypad", 1, NULL);
+    g_object_set(r, "xalign", 1.0, NULL);
+    g_signal_connect (G_OBJECT (r), "edited",
+		      G_CALLBACK (sheet_cell_edited), sheet);
+    sheet->datacell = r;
+}
+
+/* Below: prevent cursor movement outside of the data area */
+
+static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key, 
+				   spreadsheet *sheet)
+{
+    if (key->keyval == GDK_Right || key->keyval == GDK_Left) {
+	GtkTreeViewColumn *column;
+	gpointer p;
+
+	gtk_tree_view_get_cursor(GTK_TREE_VIEW(view), NULL, &column);
+	p = g_object_get_data(G_OBJECT(column), "colnum");
+	if (p != NULL) {
+	    int colnum = GPOINTER_TO_INT(p);
+
+	    if (key->keyval == GDK_Left && colnum == 1) {
+		return TRUE;
+	    }
+	    if (key->keyval == GDK_Right && colnum == sheet->datacols) {
+		return TRUE;
+	    }
+	}
+    }
+
+    return FALSE;
+}
+
+static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
+				     spreadsheet *sheet)
+{   
+    GdkModifierType mods; 
+    gint ret = FALSE;
+
+    if (event->type != GDK_BUTTON_PRESS) {
+	return FALSE;
+    }
+
+    gdk_window_get_pointer(view->window, NULL, NULL, &mods);
+    GdkEventButton *bevent = (GdkEventButton *) event;
+
+    if (mods & GDK_BUTTON3_MASK) {
+	gtk_menu_popup (GTK_MENU(sheet->popup), NULL, NULL, NULL, NULL,
+			bevent->button, bevent->time);
+	return TRUE;
+    }	    
+	
+    if (mods & GDK_BUTTON1_MASK) {
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+
+#ifdef SSDEBUG
+	fprintf(stderr, "Got button 1 click\n");
+#endif
+
+	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
+				      (gint) bevent->x, 
+				      (gint) bevent->y,
+				      &path, &column,
+				      NULL, NULL);
+	if (column != NULL) {
+	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
+	    gint colnum = GPOINTER_TO_INT(p);
+
+	    if (colnum == 0) {
+		/* don't respond to a click in a non-data column */
+		ret = TRUE;
+	    } else {
+		/* otherwise start editing on clicking cell */
+		gtk_tree_view_set_cursor(GTK_TREE_VIEW(sheet->view), 
+					 path, column, TRUE);
+		ret = TRUE;
+	    }
+	}
+	gtk_tree_path_free(path);
+    }
+
+    return ret;
+}
+
+/* ........................................................... */
+
+static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
+{
+    GtkListStore *store; 
+    GtkWidget *view;
+    GtkTreeViewColumn *column;
+    GtkTreeSelection *select;
+    GType *types;
+    gint i, width, colnum;
+
+    sheet->datacols = nvars - 1; /* don't show the constant */
+
+    /* we'll drop any scalar variables from the spreadsheet */
+    for (i=1; i<datainfo->v; i++) {
+	if (datainfo->vector[i] == 0) {
+	    sheet->datacols -= 1;
+	    sheet->n_scalars += 1;
+	}
+    }
+
+    if (sheet->datacols < 6) sheet->padcols = 6 - sheet->datacols;
+    else sheet->padcols = 0;
+
+    /* obs, data, padding, boolean cols */
+    sheet->totcols = 1 + sheet->datacols + sheet->padcols + 2;
+
+    types = mymalloc(sheet->totcols * sizeof *types);
+    if (types == NULL) return NULL;
+
+    types[0] = G_TYPE_STRING;                             /* observation marker */
+    for (i=1; i<=sheet->datacols; i++) 
+	types[i] = G_TYPE_STRING;                         /* string rep. of data values */
+    for (i=0; i<sheet->padcols; i++) 
+	types[i + sheet->datacols + 1] = G_TYPE_STRING;   /* padding columns */
+    types[sheet->totcols - 2] = G_TYPE_BOOLEAN;           /* FALSE editable flag */
+    types[sheet->totcols - 1] = G_TYPE_BOOLEAN;           /* TRUE editable flag */
+
+    store = gtk_list_store_newv (sheet->totcols, types);
+    free(types);
+
+    view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(store));
+    g_object_unref(G_OBJECT(store));
+
+    gtk_tree_view_set_rules_hint (GTK_TREE_VIEW(view), TRUE);
+
+    /* build and attach the (two) cell renderers */
+    create_sheet_cell_renderers(sheet);
+
+    /* construct the observation marker column */
+    width = get_obs_col_width();
+    column = gtk_tree_view_column_new_with_attributes (NULL,
+						       sheet->dumbcell,
+						       "text", 0, 
+						       "editable", 
+						       sheet->totcols - 2,
+						       NULL);
+    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+    set_up_sheet_column(column, width);
+    g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(0));
+
+    /* construct the data columns */
+    width = get_data_col_width();
+    colnum = 0;
+    for (i=1; i<nvars; i++) {
+	if (datainfo->vector[i] == 0) continue;
+	colnum++;
+	column = gtk_tree_view_column_new_with_attributes (datainfo->varname[i],
+							   sheet->datacell,
+							   "text", 
+							   colnum, 
+							   "editable", 
+							   sheet->totcols - 1,
+							   NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	set_up_sheet_column(column, width);
+	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));
+    }
+
+    /* add some padding columns if needed */
+    for (i=0; i<sheet->padcols; i++) {
+	column = gtk_tree_view_column_new_with_attributes (NULL,
+							   sheet->dumbcell,
+							   "text", 
+							   i + sheet->datacols + 1,
+							   "editable", 
+							   sheet->totcols - 2,
+							   NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+	set_up_sheet_column(column, width);
+	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(0));
+    }
+
+    /* set the selection property on the tree view */
+    select = gtk_tree_view_get_selection (GTK_TREE_VIEW(view));
+    gtk_tree_selection_set_mode(select, GTK_SELECTION_NONE);
+
+    g_signal_connect (G_OBJECT(view), "cursor-changed",
+		      G_CALLBACK(update_cell_position), sheet);
+    g_signal_connect (G_OBJECT(view), "key_press_event",
+		      G_CALLBACK(catch_spreadsheet_key), sheet);
+
+    return view;
+}
+
+/* ........................................................... */
+
+static void free_spreadsheet (GtkWidget *widget, spreadsheet **psheet) 
+{
+    spreadsheet *sheet = *psheet;
+
+    gtk_widget_destroy(sheet->popup);
+    free(sheet);
+    *psheet = NULL;
+}
+
+/* ........................................................... */
+
+static spreadsheet *sheet_new (void)
+{
+    spreadsheet *sheet;
+
+    sheet = malloc(sizeof *sheet);
+    if (sheet == NULL) return NULL;
+
+    sheet->view = NULL;
+    sheet->win = NULL;
+    sheet->locator = NULL;
+    sheet->popup = NULL;
+    sheet->dumbcell = NULL;
+    sheet->datacell = NULL;
+    sheet->datacols = sheet->datarows = 0;
+    sheet->padcols = sheet->totcols = 0;
+    sheet->n_scalars = 0;
+    sheet->cid = 0;
+
+    return sheet;
+}
+
+/* ........................................................... */
+
 static gint maybe_exit_sheet (GtkWidget *w, spreadsheet *sheet)
 {
     int resp;
@@ -770,19 +1005,6 @@ static gint maybe_exit_sheet (GtkWidget *w, spreadsheet *sheet)
 
 /* ........................................................... */
 
-static int get_n_scalars (const DATAINFO *pdinfo)
-{
-    int i, ns = 0;
-
-    for (i=1; i<pdinfo->v; i++) {
-	if (pdinfo->vector[i] == 0) ns++;
-    }
-
-    return ns;
-}
-
-/* ........................................................... */
-
 void show_spreadsheet (DATAINFO *pdinfo) 
 {
     static spreadsheet *sheet;    
@@ -791,26 +1013,19 @@ void show_spreadsheet (DATAINFO *pdinfo)
     GtkWidget *status_box, *mbar;
     GtkItemFactory *ifac;
     int sheetwidth;
-    int nscalars;
 
     if (sheet != NULL) {
 	gdk_window_raise(sheet->win->window);
 	return;
     }
 
+    sheet = sheet_new();
+    if (sheet == NULL) return;
+
     if (pdinfo == NULL && datainfo->v == 1) {
 	errbox(_("Please add a variable to the dataset first"));
 	return;
     }
-
-    if (pdinfo == NULL) {
-	nscalars = get_n_scalars(datainfo);
-	sheet = sheet_new(datainfo->n, datainfo->v - 1 - nscalars, nscalars);
-    } else {
-	sheet = sheet_new(pdinfo->n, 1, 0);
-    }
-
-    if (sheet == NULL) return;   
 
     sheetwidth = get_obs_col_width() + 6 * get_data_col_width() + 14;
 
@@ -821,6 +1036,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     main_vbox = gtk_vbox_new (FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER(main_vbox), 5); 
     gtk_container_add(GTK_CONTAINER(sheet->win), main_vbox);
+    gtk_widget_show(main_vbox);
 
     /* add menu bar */
     ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
@@ -833,12 +1049,14 @@ void show_spreadsheet (DATAINFO *pdinfo)
 				  sheet_items, sheet);
     mbar = gtk_item_factory_get_widget(ifac, "<main>");
     gtk_box_pack_start(GTK_BOX(main_vbox), mbar, FALSE, FALSE, 0);
+    gtk_widget_show(mbar);
 
     build_sheet_popup(&sheet->popup, sheet);
 
     status_box = gtk_hbox_new(FALSE, 1);
     gtk_container_set_border_width(GTK_CONTAINER(status_box), 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), status_box, FALSE, FALSE, 0);
+    gtk_widget_show(status_box);
 
     sheet->locator = gtk_statusbar_new(); 
     gtk_widget_set_size_request(sheet->locator, 2 * get_obs_col_width(), 20);
@@ -846,44 +1064,56 @@ void show_spreadsheet (DATAINFO *pdinfo)
     sheet->cid = gtk_statusbar_get_context_id (GTK_STATUSBAR(sheet->locator), 
 					       "current row and column");
     gtk_box_pack_start(GTK_BOX(status_box), sheet->locator, FALSE, FALSE, 0);
+    gtk_widget_show(sheet->locator);
 
     scroller = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
                                     GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW(scroller), 
-					 GTK_SHADOW_NONE);
+					 GTK_SHADOW_IN);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), scroller, TRUE, TRUE, 0);
-    gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scroller),
-					  sheet->table);
+    gtk_widget_show(scroller);
+
+    sheet->view = data_sheet_new(sheet, datainfo->n, datainfo->v);
+    gtk_container_add(GTK_CONTAINER(scroller), sheet->view);
+    gtk_widget_show(sheet->view);
 
     /* apply and close buttons */
     button_box = gtk_hbox_new (FALSE, 5);
     gtk_box_set_homogeneous (GTK_BOX (button_box), TRUE);
-    gtk_box_pack_start (GTK_BOX(main_vbox), button_box, FALSE, FALSE, 0);
+    gtk_box_pack_start (GTK_BOX (main_vbox), button_box, FALSE, FALSE, 0);
+    gtk_widget_show(button_box);
 
     g_signal_connect(G_OBJECT(sheet->win), "destroy",
-		     G_CALLBACK(destroy_sheet), &sheet);
+		     G_CALLBACK(free_spreadsheet), &sheet);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_APPLY);
     gtk_box_pack_start (GTK_BOX (button_box), tmp, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(get_data_from_sheet), sheet);
+    gtk_widget_show(tmp);
 
     tmp = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
     gtk_box_pack_start (GTK_BOX (button_box), tmp, TRUE, TRUE, 0);
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(maybe_exit_sheet), sheet);
+    gtk_widget_show(tmp);
+
+    g_signal_connect (G_OBJECT(sheet->view), "button_press_event",
+		      G_CALLBACK(catch_spreadsheet_click),
+		      sheet);
 
     if (pdinfo != NULL) {
-	add_skel_to_sheet(sheet);
+	/* add_skel_to_sheet(sheet); */
+	add_data_to_sheet(sheet, 1);
     } else {
-	add_data_to_sheet(sheet);
+	add_data_to_sheet(sheet, 0);
     }
 
+    select_first_editable_cell(sheet);
     sheet_modified = 0;
 
-    gtk_widget_show_all(sheet->win);
-    set_active_cell(sheet->cells[0][0]);
+    gtk_widget_show(sheet->win);
 }
 

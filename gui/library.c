@@ -2100,6 +2100,7 @@ void do_model (GtkWidget *widget, gpointer p)
     int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
+    GRETL_VAR *var = NULL;
     selector *sr = (selector *) p;  
 
     action = sr->code;
@@ -2182,10 +2183,29 @@ void do_model (GtkWidget *widget, gpointer p)
     case VAR:
 	/* requires special treatment: doesn't return model */
 	sscanf(buf, "%d", &order);
+#if 1
+	var = full_var(order, command.list, &Z, datainfo, prn);
+	if (var == NULL) {
+	    ; /* error message */
+	} else {
+	    windata_t *vwin = 
+		view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+			    VAR, NULL);
+
+	    if (vwin != NULL) vwin->data = var;
+	    if (1) {
+		PRN *varprn = gretl_print_new(GRETL_PRINT_FILE, "foo.out");
+
+		print_var(var, datainfo, varprn);
+		gretl_print_destroy(varprn);
+	    }
+	}
+#else
 	err = var(order, command.list, &Z, datainfo, 0, prn);
 	if (err) errmsg(err, prn);
 	view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
 		    VAR, view_items);
+#endif
 	return;
 
     case LOGIT:

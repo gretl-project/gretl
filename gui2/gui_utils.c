@@ -20,6 +20,7 @@
 /* gui_utils.c for gretl */
 
 #include "gretl.h"
+#include "var.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -991,6 +992,10 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_gretl_mp_results(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
+#if 1
+	else if (vwin->role == VAR) 
+	    gretl_var_free(vwin->data, datainfo);
+#endif
 
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
