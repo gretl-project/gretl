@@ -62,6 +62,11 @@ static char *dataset_items[] = {
     "Export as CSV..."
 };
 
+static char *info_items[] = {
+    "View",
+    "Edit",
+};
+
 static char *session_items[] = {
     "Save",
     "Save As...",
@@ -86,6 +91,7 @@ static GtkWidget *session_popup;
 static GtkWidget *model_popup;
 static GtkWidget *graph_popup;
 static GtkWidget *data_popup;
+static GtkWidget *info_popup;
 static GtkWidget *slist;
 static GList *gobjects;
 static GtkIconListItem *active_icon;
@@ -108,6 +114,7 @@ static void session_build_popups (void);
 static void session_popup_activated (GtkWidget *widget, gpointer data);
 static void object_popup_activated (GtkWidget *widget, gpointer data);
 static void data_popup_activated (GtkWidget *widget, gpointer data);
+static void info_popup_activated (GtkWidget *widget, gpointer data);
 static gui_obj *gui_object_new (GtkIconList *iconlist, gchar *name, int sort);
 static gui_obj *session_add_object (gpointer data, int sort);
 static void open_gui_model (gui_obj *gobj);
@@ -707,22 +714,27 @@ static void set_addgraph_mode (void)
 static void object_popup_show (GtkIconListItem *item, GdkEventButton *event)
 {
     gui_obj *gobj = (gui_obj *) gtk_icon_list_get_link(item);
+    GtkWidget *w = NULL;
 
     active_icon = item;
-    if (gobj->sort == 'm')
-	gtk_menu_popup(GTK_MENU(model_popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
-    else if (gobj->sort == 'g')
-	gtk_menu_popup(GTK_MENU(graph_popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
-    else if (gobj->sort == 'd')
-	gtk_menu_popup(GTK_MENU(data_popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
-    else if (gobj->sort == 's') {
-	set_addgraph_mode();
-	gtk_menu_popup(GTK_MENU(session_popup), NULL, NULL, NULL, NULL,
-		       event->button, event->time);
+
+    switch (gobj->sort) {
+    case 'm': 
+	w = model_popup; break;
+    case 'g': 
+	w = graph_popup; break;
+    case 'd': 
+	w = data_popup; break;
+    case 'i': 
+	w = info_popup; break;
+    case 's': 
+	set_addgraph_mode(); 
+	w = session_popup; break;
+    default: break;
     }
+	
+    gtk_menu_popup(GTK_MENU(w), NULL, NULL, NULL, NULL,
+		   event->button, event->time);
 }
 
 /* ........................................................... */
@@ -752,7 +764,7 @@ void session_open_object (GtkWidget *widget,
 	case 'd':
 	    show_spreadsheet(NULL); break;
 	case 'i':
-	    open_info(NULL, 0 , NULL); break;
+	    open_info(NULL, 0, NULL); break;
 	case 's':
 	    view_script_default(); break;
 	case 'r':
@@ -763,11 +775,12 @@ void session_open_object (GtkWidget *widget,
     }
 
     if (mods & GDK_BUTTON3_MASK && 
-	(gobj->sort == 'm' || 
-	 gobj->sort == 'g' ||
-	 gobj->sort == 'd' ||
-	 gobj->sort == 's'))
-	object_popup_show(item, (GdkEventButton *) event);
+        (gobj->sort == 'm' || 
+         gobj->sort == 'g' ||
+         gobj->sort == 'd' ||
+         gobj->sort == 'i' ||
+         gobj->sort == 's'))
+        object_popup_show(item, (GdkEventButton *) event);
 }
 
 /* ........................................................... */
@@ -835,6 +848,18 @@ static void session_build_popups (void)
 	    gtk_menu_append(GTK_MENU(data_popup),item);
 	}
     }
+
+    if (info_popup == NULL) {
+	info_popup = gtk_menu_new();
+	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
+	    item = gtk_menu_item_new_with_label(info_items[i]);
+	    gtk_signal_connect(GTK_OBJECT(item), "activate",
+			       (GtkSignalFunc) info_popup_activated,
+			       info_items[i]);
+	    gtk_widget_show(item);
+	    gtk_menu_append(GTK_MENU(info_popup),item);
+	}
+    }
 }
 
 /* ........................................................... */
@@ -860,6 +885,18 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
 	save_session_callback(NULL, 1, NULL);
     else if (strcmp(item, "Add last graph") == 0)
 	add_last_graph(NULL, 0, NULL);
+}
+
+/* ........................................................... */
+
+static void info_popup_activated (GtkWidget *widget, gpointer data)
+{
+    gchar *item = (gchar *) data;
+
+    if (strcmp(item, "View") == 0) 
+	open_info(NULL, 0, NULL);
+    else if (strcmp(item, "Edit") == 0) 
+	edit_header(NULL, 0, NULL);
 }
 
 /* ........................................................... */
