@@ -147,9 +147,11 @@ void delchar (int c, char *str)
 {
     int i, j;
 
-    for (i=j=0; str[i] != '\0'; i++)
-	if (str[i] != c)
+    for (i=j=0; str[i] != '\0'; i++) {
+	if (str[i] != c) {
 	    str[j++] = str[i];
+	}
+    }
     str[j] = '\0';
 }
 
@@ -167,29 +169,29 @@ void _delete (char *str, int indx, int count)
 {
     size_t i, n = strlen(str);
 
-    for (i=indx; i<=n-count; ++i) 
+    for (i=indx; i<=n-count; ++i) {
 	str[i] = str[count+i];
+    }
 }
 
 /**
  * haschar:
  * @c: the character to look for.
- * @str: the string to examine.
+ * @s: the string to examine.
  *
- * Returns: the first position of @c in @str, or -1 if @c is not
+ * Returns: the first position of @c in @s, or -1 if @c is not
  * found.
  *
  */
 
-int haschar (char c, const char *str)
+int haschar (char c, const char *s)
 {
     int i = 0;
 
-    while (*str) {
-	if (*str++ == c) return i;
+    while (*s) {
+	if (*s++ == c) return i;
 	i++;
     }
-
     return -1;
 }
 

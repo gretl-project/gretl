@@ -2041,35 +2041,35 @@ static void get_lag (int v, int lag, double *lagvec, double **Z,
 
 /* ......................................................  */
 
-static int scanb (const char *ss, char *word)
+static int scanb (const char *s, char *word)
      /*  scan string right to left for + - * / ^ ( 
-	 ss is string, n is no. of chars in string, return word to
+	 s is string, n is no. of chars in string, return word to
 	 left of operator 
      */
 {
-    int n = strlen(ss);
+    int n = strlen(s);
     int i = n - 1;
 
     *word = '\0';
 
     if (i < 0) return 0;
 
-    if (ss[i] == '(' || ss[i] == '\0' || is_operator(ss[i])) {
-	word[0] = ss[n-1];
+    if (s[i] == '(' || s[i] == '\0' || is_operator(s[i])) {
+	word[0] = s[n-1];
 	word[1] = '\0';
 	return 0;
     }
 
     for (i=n-1; i>=0; i--) {
-	if (ss[i] == '(' || ss[i] == '\0' || is_operator(ss[i])) {
-	    strcpy(word, ss + i + 1);
+	if (s[i] == '(' || s[i] == '\0' || is_operator(s[i])) {
+	    strcpy(word, s + i + 1);
 	    return 1;
 	}
     }
 
     if (i == -1) {
-        strcpy(word, ss);
-        if (*ss == '\0') return 0;
+        strcpy(word, s);
+        if (*s == '\0') return 0;
         else return 1;
     }
 
@@ -2078,18 +2078,18 @@ static int scanb (const char *ss, char *word)
 
 /* ......................................................   */
 
-static int obs_num (const char *ss, const DATAINFO *pdinfo)
+static int obs_num (const char *s, const DATAINFO *pdinfo)
 {
     int t;
 
     if (pdinfo->markers && pdinfo->S != NULL) {
 	for (t=0; t<pdinfo->n; t++) {
-	    if (!strcmp(ss, pdinfo->S[t])) return t + 1;
+	    if (!strcmp(s, pdinfo->S[t])) return t + 1;
 	}
     }
 
     if (pdinfo->time_series == TIME_SERIES) {
-	t = dateton(ss, pdinfo);
+	t = dateton(s, pdinfo);
 	if (t >= 0) return t + 1;
     }
 
