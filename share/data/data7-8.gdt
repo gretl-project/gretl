@@ -5,30 +5,30 @@
 <description>
 DATA7-8:  Cross-country data for economic growth and its determinants.
     Data are from Mankiw, Romer and Weil, QJE 1992
-    grth  = log of change in income 1960-85 (dependent variable)
-    y60   = log of income in 1960
-    inv   = average investment to GNP ratio over 60-85
-    pop   = measure of population growth in logarithms
-    school= measure of percentage population in school
-    dn    = dummy for non oil
-    di    = dummy for industrialised
+    grth  = log of change in income 1960-85
+    y60   = log of income per adult in 1960
+    inv   = log of average ratio of investment to GDP, 1960-85
+    pop   = log of (annual population growth + 0.05)
+    school= percentage of working-age population in school
+    dn    = dummy for non-oil producing countries
+    di    = dummy for industrialized countries
     doecd = dummy for OECD
 </description>
 <variables count="8">
 <variable name="grth"
  label="log of change in income 1960-85"/>
 <variable name="y60"
- label="log of income in 1960"/>
+ label="log of income per adult in 1960"/>
 <variable name="inv"
- label="average investment to GNP ratio over 60-85"/>
+ label="log of average ratio of investment to GDP, 1960-85"/>
 <variable name="pop"
- label="measure of population growth in logarithms"/>
+ label="log of (annual population growth + 0.05)"/>
 <variable name="school"
- label="measure of percentage population in school"/>
+ label="percentage of working-age population in school"/>
 <variable name="dn"
- label="dummy for non oil"/>
+ label="dummy for non-oil producing countries"/>
 <variable name="di"
- label="dummy for industrialised"/>
+ label="dummy for industrialized countries"/>
 <variable name="doecd"
  label="dummy for OECD"/>
 </variables>
