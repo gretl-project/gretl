@@ -1486,6 +1486,20 @@ static void foreach_delete_icons (gui_obj *gobj, gpointer p)
 
 /* apparatus for getting a white background */
 
+static GdkColor *get_white (void)
+{
+    GdkColormap *cmap;
+    static GdkColor *white;
+
+    if (white == NULL) {
+	white = malloc(sizeof *white);
+	cmap = gdk_colormap_get_system();
+	gdk_color_parse("white", white);
+	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
+    }
+    return white;
+}
+
 #ifdef OLD_GTK
 
 static void white_bg_style (GtkWidget *widget, gpointer data)
@@ -1501,35 +1515,7 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
      gtk_rc_style_unref(rc_style);
 }
 
-static void color_white (GtkWidget *w)
-{
-     GtkRcStyle *rc_style;
-     GdkColor color;
-
-     gdk_color_parse("white", &color);
-     rc_style = gtk_rc_style_new();
-     rc_style->bg[GTK_STATE_NORMAL] = color;
-     rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
-
-     gtk_widget_modify_style(w, rc_style);
-     gtk_rc_style_unref(rc_style);
-}
-
 #else
-
-static GdkColor *get_white (void)
-{
-    GdkColormap *cmap;
-    static GdkColor *white;
-
-    if (white == NULL) {
-	white = malloc(sizeof *white);
-	cmap = gdk_colormap_get_system();
-	gdk_color_parse("white", white);
-	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
-    }
-    return white;
-}
 
 static void white_bg_style (GtkWidget *widget, gpointer data)
 {
@@ -2215,28 +2201,41 @@ int print_session_notes (const char *fname)
     return err;
 }
 
+#ifdef OLD_GTK
+
 static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
-				     void *callback)
+				     GtkSignalFunc callback)
 {
     GtkWidget *item;
 
     item = gtk_menu_item_new_with_label(str);
-
-#ifdef OLD_GTK
     gtk_signal_connect(GTK_OBJECT(item), "activate",
-		       GTK_SIGNAL_FUNC(callback),
+		       callback,
 		       str);
-#else
-    g_signal_connect(G_OBJECT(item), "activate",
-		     G_CALLBACK(callback),
-		     str);
-#endif
-
     gtk_widget_show(item);
     gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
 
     return item;
 }
+
+#else 
+
+static GtkWidget *create_popup_item (GtkWidget *popup, char *str, 
+				     GtkCallback callback)
+{
+    GtkWidget *item;
+
+    item = gtk_menu_item_new_with_label(str);
+    g_signal_connect(G_OBJECT(item), "activate",
+		     G_CALLBACK(callback),
+		     str);
+    gtk_widget_show(item);
+    gtk_menu_shell_append(GTK_MENU_SHELL(popup), item);
+
+    return item;
+}
+
+#endif
 
 /* ........................................................... */
 
@@ -2620,7 +2619,7 @@ static char *add_pause_to_plotfile (const char *fname)
 
 #ifdef OLD_GTK
 
-static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     gchar *buf = NULL;
     windata_t *mydata = (windata_t *) data;

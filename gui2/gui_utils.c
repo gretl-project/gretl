@@ -169,13 +169,15 @@ GtkItemFactoryEntry model_items[] = {
 
 GtkItemFactoryEntry var_items[] = {
     { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, 
-      "<StockItem>", GTK_STOCK_SAVE_AS },
+    { N_("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, "<StockItem>", 
+      GTK_STOCK_SAVE_AS },
     { N_("/File/Save to session as icon"), NULL, remember_var, 0, NULL, GNULL },
     { N_("/File/Save as icon and close"), NULL, remember_var, 1, NULL, GNULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Edit/_Copy"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY }
 };
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
@@ -2111,6 +2113,20 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/File/Save as icon and close", s);
 }
 
+static void check_var_menu (GtkWidget *w, GdkEventButton *eb,
+			    windata_t *vwin)
+{
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+
+    if (var != NULL) {
+	const char *name = gretl_var_get_name(var);
+	
+	if (name != NULL && *name != '\0') {
+	    model_save_state(vwin->ifac, FALSE);
+	}
+    }
+}
+
 /* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -2155,6 +2171,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
 	}
+    } else if (vwin->role == VAR) {
+	g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
+			 G_CALLBACK(check_var_menu), vwin);
     }
 }
 
@@ -2169,6 +2188,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	N_("/Graphs/fitted, actual plot")
     };
     MODEL *pmod = vwin->data;
+    char *vname;
 
     for (i=0; i<2; i++) {
 	varitem.accelerator = NULL;
@@ -2195,25 +2215,36 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
 	    varitem.item_type = NULL;
+	    vname = menu_escape_varname(datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
-		g_strdup_printf(_("%s/against %s"), mpath[i],
-				datainfo->varname[pmod->list[j]]);
+		g_strdup_printf(_("%s/against %s"), mpath[i], vname);
+	    if (vname != datainfo->varname[pmod->list[j]]) {
+		free(vname);
+	    }
 	    varitem.callback = (i==0)? resid_plot : fit_actual_plot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
 	}
 
-	/* if the model has two indepdent vars, offer a 3-D fitted
+	/* if the model has two independent vars, offer a 3-D fitted
 	   versus actual plot */
 	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
+	    char *vname2;
+
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = 0;
 	    varitem.item_type = NULL;
+	    vname = menu_escape_varname(datainfo->varname[pmod->list[3]]);
+	    vname2 = menu_escape_varname(datainfo->varname[pmod->list[4]]);
 	    varitem.path =
 		g_strdup_printf(_("%s/against %s and %s"),
-				mpath[i], 
-				datainfo->varname[pmod->list[3]],
-				datainfo->varname[pmod->list[4]]);
+				mpath[i], vname, vname2);
+	    if (vname != datainfo->varname[pmod->list[3]]) {
+		free(vname);
+	    }
+	    if (vname2 != datainfo->varname[pmod->list[4]]) {
+		free(vname2);
+	    }
 	    varitem.callback = fit_actual_splot;
 	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 	    g_free(varitem.path);
@@ -2956,6 +2987,42 @@ int build_path (const char *dir, const char *fname, char *path,
     if (ext != NULL) strcat(path, ext);
 
     return 0;
+}
+
+char *menu_escape_varname (char *vname)
+{
+    int n = 0;
+    char *ret, *p;
+
+    ret = p = vname;
+
+    while (*p) {
+	if (*p == '_') n++;
+	p++;
+    }
+
+    if (n > 0) {
+	ret = malloc(strlen(vname) + 1 + n);
+	if (ret == NULL) {
+	    ret = vname;
+	} else {
+	    char *q = ret;
+
+	    p = vname;
+	    while (*p) {
+		if (*p == '_') {
+		    *q++ = '_';
+		    *q++ = '_';
+		} else {
+		    *q++ = *p;
+		}
+		p++;
+	    }
+	    *q = '\0';
+	}
+    }
+
+    return ret;
 }
 
 

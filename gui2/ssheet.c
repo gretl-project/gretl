@@ -155,6 +155,7 @@ static void real_add_new_var (spreadsheet *sheet, const char *varname)
     GtkTreeViewColumn *column;
     GList *collist = NULL;
     gint i, oldcols, cols;
+    char *vname;
 
     oldcols = sheet->totcols;
 
@@ -166,7 +167,11 @@ static void real_add_new_var (spreadsheet *sheet, const char *varname)
     }
 
     column = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(column, varname);
+
+    vname = menu_escape_varname(varname);
+    gtk_tree_view_column_set_title(column, vname);
+    if (vname != varname) free(vname);
+
     cols = gtk_tree_view_insert_column(view, column, sheet->datacols);
 	
     set_up_sheet_column(column, get_data_col_width()); 
@@ -853,6 +858,7 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     GtkTreeSelection *select;
     GType *types;
     gint i, width, colnum;
+    char *vname;
 
     sheet->datacols = nvars - 1; /* don't show the constant */
 
@@ -910,13 +916,15 @@ static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
     for (i=1; i<nvars; i++) {
 	if (datainfo->vector[i] == 0) continue;
 	colnum++;
-	column = gtk_tree_view_column_new_with_attributes (datainfo->varname[i],
+	vname = menu_escape_varname(datainfo->varname[i]);
+	column = gtk_tree_view_column_new_with_attributes (vname,
 							   sheet->datacell,
 							   "text", 
 							   colnum, 
 							   "editable", 
 							   sheet->totcols - 1,
 							   NULL);
+	if (vname != datainfo->varname[i]) free(vname);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 	set_up_sheet_column(column, width);
 	g_object_set_data(G_OBJECT(column), "colnum", GINT_TO_POINTER(i));

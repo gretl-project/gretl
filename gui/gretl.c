@@ -761,7 +761,7 @@ int main (int argc, char *argv[])
 
     /* opening a script from the command line? */
     if (tryscript[0] != '\0') { 
-	do_open_script(NULL, NULL);
+	do_open_script();
     }
 
     /* check for program updates? */

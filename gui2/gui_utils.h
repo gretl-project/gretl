@@ -97,4 +97,6 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 int get_worksheet_data (const char *fname, int datatype, int append);
 
+char *menu_escape_varname (char *vname);
+
 #endif /* GUI_UTILS_H */

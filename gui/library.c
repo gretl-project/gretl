@@ -297,12 +297,11 @@ void free_command_stack (void)
 
 /* ........................................................... */
 
-void clear_data (int full)
+void clear_data (void)
 {
     extern void clear_clist (GtkWidget *widget);
 
-    if (full) 
-	clear(paths.datfile, MAXLEN);
+    *paths.datfile = '\0';
     restore_sample();
     if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, CLEAR_FULL);
@@ -3853,20 +3852,11 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
 /* ........................................................... */
 
-void do_open_script (GtkWidget *w, GtkFileSelection *fs)
+void do_open_script (void)
 {
     int ret, n = strlen(paths.scriptdir);
 
-    if (fs) {
-	if (isdir(gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs))))
-	    return;
-	strncpy(scriptfile, 
-		gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs)), 
-		MAXLEN-1);
-	gtk_widget_destroy(GTK_WIDGET (fs)); 
-    } else {
-	strcpy(scriptfile, tryscript); /* might cause problems? */
-    }
+    strcpy(scriptfile, tryscript); /* might cause problems? */
 
     /* is this a "session" file? */
     ret = saved_objects(scriptfile);

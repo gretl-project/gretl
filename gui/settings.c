@@ -1145,7 +1145,7 @@ static void set_script_from_filelist (gpointer data, guint i,
 				      GtkWidget *widget)
 {
     strcpy(tryscript, scriptp[i]);
-    do_open_script(NULL, NULL);
+    do_open_script();
 }
 
 /* .................................................................. */

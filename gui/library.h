@@ -182,7 +182,7 @@ void display_var (void);
 
 /* script- and file-related functions */
 
-void do_open_script (GtkWidget *w, GtkFileSelection *fs);
+void do_open_script (void);
 
 void open_info (gpointer data, guint edit, GtkWidget *widget);
 
