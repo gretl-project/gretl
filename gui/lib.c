@@ -36,6 +36,9 @@ extern int loop_exec_line (LOOPSET *plp, const int round,
 extern void restore_sample (gpointer data, int verbose, GtkWidget *w);
 extern void restore_sample_state (gboolean s);
 extern char *endbit (char *dest, char *src, int addscore);
+extern int boxplots (const int *list, 
+		     double **pZ, const DATAINFO *pdinfo, 
+		     int notches);
 
 int ignore = 0;
 char loopstorefile[MAXLEN];
@@ -629,7 +632,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 
     vwin = view_buffer(&prn, hsize, vsize, title, action, view_items);
 
-    if (vwin && (action == SUMMARY || action == VAR_SUMMARY)) {
+    if (vwin && (action == SUMMARY || action == VAR_SUMMARY) && summ) {
 	vwin->data = summ;
     }
     if (vwin && (action == CORR)) {
@@ -2422,6 +2425,19 @@ void do_graph_var (void)
 
 /* ........................................................... */
 
+void do_boxplot_var (void)
+{
+    if (mdata->active_var < 0) return;
+    clear(line, MAXLEN);
+    sprintf(line, "boxplot %s", datainfo->varname[mdata->active_var]);
+    if (check_cmd(line) || cmd_init(line)) return;
+
+    if (boxplots(command.list, &Z, datainfo, 0)) 
+	errbox ("boxplot command failed");
+}
+
+/* ........................................................... */
+
 void do_scatters (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
@@ -2440,10 +2456,6 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata)
 }
 
 /* ........................................................... */
-
-extern int 
-boxplots (const int *list, double **pZ, const DATAINFO *pdinfo, 
-	  int notches);
 
 void do_box_graph (GtkWidget *widget, dialog_t *ddata)
 {

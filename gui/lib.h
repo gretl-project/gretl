@@ -124,6 +124,8 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget);
 
 void do_graph_var (void);
 
+void do_boxplot_var (void);
+
 void do_scatters (GtkWidget *widget, dialog_t *ddata);
 
 void do_graph (GtkWidget *widget, dialog_t *ddata);

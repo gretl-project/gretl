@@ -719,7 +719,7 @@ void free_summary (GRETLSUMMARY *summ)
 
 /* ............................................................. */
 
-GRETLSUMMARY *summary (const int *list, 
+GRETLSUMMARY *summary (int *list, 
 		       double **pZ, const DATAINFO *pdinfo,
 		       print_t *prn) 
 {
@@ -745,10 +745,22 @@ GRETLSUMMARY *summary (const int *list,
     for (v=1; v<=lo; v++)  {
 	x[0] = -999999.0;
 	summ->n = ztox(list[v], x, pdinfo, *pZ);
-	if (summ->n == 0) return NULL;
-	if (summ->n == 1) {
-	    pprintf(prn, "Sample range has only one observation.");
-	    return NULL;
+	if (summ->n < 2) { /* zero or one observations */
+	    if (summ->n == 0)
+		pprintf(prn, "Dropping %s: sample range contains no valid "
+			"observations.\n", pdinfo->varname[list[v]]);
+	    else
+		pprintf(prn, "Dropping %s: sample range has only one "
+			"observation.\n", pdinfo->varname[list[v]]);
+	    list_exclude(v, list);
+	    if (list[0] == 0) {
+		free_summary(summ);
+		return NULL;
+	    } else {
+		lo--;
+		v--;
+		continue;
+	    }
 	}
 	minmax(0, summ->n-1, x, &low, &high);	
 	moments(0, summ->n-1, x, 

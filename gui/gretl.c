@@ -1099,7 +1099,9 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item,"Time series plot") == 0) do_graph_var();
     else if (strcmp(item,"Frequency distribution") == 0) 
 	do_menu_op(NULL, FREQ, NULL);
-    else if (strcmp(item,"Frequency plot") == 0) do_freqplot(NULL, 0, NULL);
+    else if (!strcmp(item,"Frequency plot")) do_freqplot(NULL, 0, NULL);
+    else if (!strcmp(item,"Boxplot"))
+	do_boxplot_var();
     else if (strcmp(item,"Correlogram") == 0) 
 	gretl_callback(NULL, CORRGM, NULL);
     else if (strcmp(item,"Spectrum") == 0) 
@@ -1130,6 +1132,7 @@ static GtkWidget *build_var_menu (void)
 	"Time series plot",
 	"Frequency distribution",
 	"Frequency plot",
+	"Boxplot",
 	"Correlogram",
 	"Spectrum",
 	"Dickey-Fuller test",

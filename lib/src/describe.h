@@ -50,7 +50,7 @@ int periodogram (const int *list,
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, print_t *prn);
 
-GRETLSUMMARY *summary (const int *list, 
+GRETLSUMMARY *summary (int *list, 
 		       double **pZ, const DATAINFO *pdinfo,
 		       print_t *prn);
 
