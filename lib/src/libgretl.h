@@ -102,7 +102,8 @@ enum gretl_print_formats {
 enum ts_codes {
     TIME_SERIES = 1,
     STACKED_TIME_SERIES,
-    STACKED_CROSS_SECTION
+    STACKED_CROSS_SECTION,
+    STRUCTURE_UNKNOWN,
 };
 
 enum auto_genr {

@@ -128,8 +128,6 @@ double gretl_covar (int n, const double *zx, const double *zy)
     return sxy/(nn - 1);
 }
 
-#define PDTON(p) (((p) == 1)? 1 : ((p) < 10)? 10 : 100)
-
 /**
  * date:
  * @nt: observation number (zero-based).
@@ -142,13 +140,18 @@ double gretl_covar (int n, const double *zx, const double *zy)
 double date (int nt, int pd, const double sd0)
 {
     int ysd = (int) sd0, yy, pp, yp;
-    double dd;
+    int p10 = 10;
 
     if (pd == 1) {
-	return ((double) (ysd + nt));  
+	return (double) (ysd + nt);  
     }
 
-    pp = nt % pd + PDTON(pd) * (sd0 - ysd) + .5;
+    pp = pd;
+    while ((pp = pp / 10)) {
+	p10 *= 10;
+    }
+
+    pp = nt % pd + p10 * (sd0 - ysd) + .5;
     if (pp != pd)  {
         yy = ysd + nt/pd  + pp/pd + .5;
         yp = pp % pd;
@@ -157,9 +160,7 @@ double date (int nt, int pd, const double sd0)
         yp = pp;
     }
 
-    dd = (pd < 10)? 0.1 : 0.01;
-
-    return (yy + yp * dd);
+    return yy + (double) yp / p10;
 }
 
 /**
@@ -730,7 +731,9 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* special case: daily data (dated or undated) */
-    if ((pd == 5 || pd == 7) && (strstr(stobs, "/") || !strcmp(stobs, "1"))) {
+    if ((pd == 5 || pd == 7) && 
+	((strstr(stobs, "/") || !strcmp(stobs, "1"))) &&
+	opt != OPT_S && opt != OPT_C) {
 	if (strcmp(stobs, "1")) {
 	    /* dated */
 	    ed0 = get_epoch_day(stobs);
@@ -738,10 +741,12 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 		sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 		return 1;
 	    }
-	    else pdinfo->sd0 = (double) ed0;
+	    pdinfo->sd0 = (double) ed0;
 	} else {
+	    /* undated */
 	    pdinfo->sd0 = 1.0;
 	}
+	pdinfo->time_series = TIME_SERIES;
     } else {
 	int maj = 0, min = 0, dc = 0, pos;
 
@@ -756,17 +761,18 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 		dc++;
 	    }
 	}
+
 	if (bad || dc > 1) {
 	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
 	if (pd > 1 && pos == len) {
-	    strcpy(gretl_errmsg, _("starting obs must contain a '.' with "
+	    strcpy(gretl_errmsg, _("starting obs must contain a ':' with "
 		   "frequency > 1"));
 	    return 1;
 	}
 	if (pd == 1 && pos < len) {
-	    strcpy(gretl_errmsg, _("no '.' allowed in starting obs with "
+	    strcpy(gretl_errmsg, _("no ':' allowed in starting obs with "
 		   "frequency 1"));
 	    return 1;
 	}  
@@ -780,10 +786,11 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 			_("starting obs '%s' is incompatible with frequency"), 
 			stobs);
 		return 1;
-	    }	    
+	    }	 
+
 	    if (pd > 10) {
 		int pdp = pd / 10, minlen = 2;
-		char fmt[12];
+		char fmt[16];
 
 		while ((pdp = pdp / 10)) minlen++;
 		sprintf(fmt, "%%d.%%0%dd", minlen);
@@ -799,13 +806,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 
     if (ed0 == 0L) {
 	pdinfo->sd0 = dot_atof(stobs);
-    } else {
-	pdinfo->time_series = TIME_SERIES;
-    }
-
-    ntodate(pdinfo->stobs, 0, pdinfo);
-    ntodate(endobs, pdinfo->n - 1, pdinfo);
-    strcpy(pdinfo->endobs, endobs);
+    } 
 
     if (opt == OPT_S) {
 	pdinfo->time_series = STACKED_TIME_SERIES;
@@ -816,6 +817,17 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     } else {
 	pdinfo->time_series = 0;
     }
+
+    /* try to catch panels with frequency 5 or 7 */
+    if ((pdinfo->pd == 5 || pdinfo->pd == 7) &&
+	pdinfo->sd0 > 1.0 && pdinfo->sd0 < 2.0 &&
+	opt != OPT_S && opt != OPT_C) {
+	pdinfo->time_series = 0;
+    }
+
+    ntodate(pdinfo->stobs, 0, pdinfo);
+    ntodate(endobs, pdinfo->n - 1, pdinfo);
+    strcpy(pdinfo->endobs, endobs);
 
     return 0;
 }
@@ -1271,6 +1283,7 @@ static void make_stack_label (char *label, char *s)
 	}
     } else {
 	int llen = strlen(p) + 1;
+	char *q = strstr(p + 2, "--");
 
 	len++;
 	*p = '\0';
@@ -1282,15 +1295,40 @@ static void make_stack_label (char *label, char *s)
 	    strcat(label, s);
 	}
 	strcat(label, " -");
-	strcat(label, p + 1);
+	if (q == NULL) {
+	    strcat(label, p + 1);
+	} else {
+	    strncat(label, p + 1, q - p - 1);
+	    strcat(label, " ");
+	    strcat(label, q);
+	}
     }
 }
 
 /* ........................................................... */
 
+static int get_optional_offset (const char *s, int n, int *err)
+{
+    const char *p = strstr(s, "--o");
+    int off = 0;
+
+    if (p != NULL) {
+	if (strncmp(p, "--offset=", 9)) {
+	    *err = E_SYNTAX;
+	} else {
+	    off = atoi(p + 9);
+	    if (off < 0 || off > n - 1) {
+		*err = E_DATA;
+	    }
+	}
+    }
+
+    return off;
+}
+
 static int get_optional_length (const char *s, int n, int *err)
 {
-    const char *p = strstr(s, "--");
+    const char *p = strstr(s, "--l");
     int len = 0;
 
     if (p != NULL) {
@@ -1328,11 +1366,11 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 {
     char vn1[VNAMELEN], vn2[VNAMELEN];
     char format[16];
-    char *scpy;
+    char *p, *scpy;
     int *vnum = NULL;
     double *bigx = NULL;
     int i, v1 = 0, v2 = 0, nv = 0;
-    int maxok, bign, genv;
+    int maxok, offset, bign, genv;
     int err = 0;
 
     scpy = gretl_strdup(s);
@@ -1342,7 +1380,10 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 
     s += 6;
     if (*s == ',') return E_SYNTAX;
-    s[strlen(s) - 1] = '\0';
+
+    p = strrchr(s, ')');
+    if (p == NULL) return E_SYNTAX;
+    *p = '\0';
 
     /* do we have a range of vars? */
     sprintf(format, "%%%d[^.]..%%%ds", VNAMELEN-1, VNAMELEN-1);
@@ -1396,9 +1437,20 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+    /* get offset specified by user? */
+    offset = get_optional_offset(scpy, pdinfo->n, &err);
+    if (err) {
+	goto bailout;
+    }
+
     /* get length specified by user? */
     maxok = get_optional_length(scpy, pdinfo->n, &err);
     if (err) {
+	goto bailout;
+    }
+
+    if (offset + maxok > pdinfo->n) {
+	err = E_DATA;
 	goto bailout;
     }
 
@@ -1426,9 +1478,10 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	if (maxok * nv <= pdinfo->n && pdinfo->n % maxok == 0) {
 	    /* suggests that at least one var has already been stacked */
 	    bign = pdinfo->n;
+	    maxok -= offset;
 	} else {
 	    /* no stacking done: need to expand series length */
-	    bign = nv * pdinfo->n;
+	    bign = nv * (pdinfo->n - offset);
 	    maxok = 0;
 	}
     }
@@ -1448,13 +1501,13 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 
 	if (maxok > 0) {
 	    bigt = maxok * i;
-	    tmax = maxok;
+	    tmax = offset + maxok;
 	} else {
 	    bigt = pdinfo->n * i;
 	    tmax = pdinfo->n;
-	}	    
+	}
 
-	for (t=0; t<tmax; t++) {
+	for (t=offset; t<tmax; t++) {
 	    if (pdinfo->vector[j]) {
 		bigx[bigt++] = (*pZ)[j][t];
 	    } else {
@@ -2011,7 +2064,7 @@ int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 
 /* ........................................................... */
 
-int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
+int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn)
 {
     int nunits, T;
     int old_ts = pdinfo->time_series;
@@ -2023,7 +2076,7 @@ int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn)
 	return 1;
     }
 
-    if (flag == 'c') {
+    if (opt == OPT_C) {
 	pdinfo->time_series = STACKED_CROSS_SECTION;
     } else {
 	pdinfo->time_series = STACKED_TIME_SERIES;

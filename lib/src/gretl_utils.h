@@ -150,7 +150,7 @@ int ztox (int i, double *px,
 
 int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T);
 
-int set_panel_structure (unsigned char flag, DATAINFO *pdinfo, PRN *prn); 
+int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn); 
 
 int balanced_panel (const DATAINFO *pdinfo);
 

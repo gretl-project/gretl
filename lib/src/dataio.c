@@ -969,8 +969,12 @@ static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
 
         sprintf(datestr, "%d", n);
     } else {
-	if (pdinfo->pd < 10) sprintf(datestr, "%.1f", x);
-	else sprintf(datestr, "%.2f", x);
+	int pdp = pdinfo->pd, len = 1;
+	char fmt[8];
+
+	while ((pdp = pdp / 10)) len++;
+	sprintf(fmt, "%%.%df", len);
+	sprintf(datestr, fmt, x);
 	charsub(datestr, decpoint, ':');
     }
     
@@ -1460,12 +1464,16 @@ int write_data (const char *fname, const int *list,
     return 0;
 }
 
-static void type_string (char *str, const DATAINFO *pdinfo)
+static void dataset_type_string (char *str, const DATAINFO *pdinfo)
 {
     if (dataset_is_time_series(pdinfo)) {
 	strcpy(str, _("time series"));
     } else if (dataset_is_panel(pdinfo)) {
         strcpy(str, _("panel"));
+	strcat(str, " (");
+	strcat(str, (pdinfo->time_series == STACKED_TIME_SERIES)? 
+	       _("Stacked time series") : _("Stacked cross sections"));
+	strcat(str, ")");       
     } else {
         strcpy(str, _("undated"));
     }
@@ -1524,7 +1532,7 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 	pprintf(prn, "%s\n\n", pdinfo->descrip);
     }
 
-    type_string(tmp, pdinfo);
+    dataset_type_string(tmp, pdinfo);
     pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
     
     if (dataset_is_time_series(pdinfo)) {

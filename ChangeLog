@@ -1,4 +1,8 @@
 version 1.3.0
+- fix panel data bugs: observation strings were broken for
+  frequency greater than 99, and the "panel" command did not
+  obey the "cross-section" option (thanks to Mihai Nica for
+  the report)
 - update Windows version to gtk 2.4.7
 - fix for SUR systems with differing numbers of regressors
   across equations (thanks to Jack Lucchetti)

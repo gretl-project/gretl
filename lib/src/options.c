@@ -86,6 +86,8 @@ struct gretl_option gretl_opts[] = {
     { PLOT,     OPT_O, "one-scale" },
     { PRINT,    OPT_O, "byobs" },
     { PRINT,    OPT_T, "ten" },
+    { SETOBS,   OPT_C, "stacked-cross-section" },
+    { SETOBS,   OPT_S, "stacked-time-series" },
     { SMPL,     OPT_C, "replace" },    
     { SMPL,     OPT_O, "dummy" },
     { SMPL,     OPT_M, "no-missing" },
