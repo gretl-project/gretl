@@ -21,14 +21,24 @@ CHAPDIR = $(topsrc)/doc/chapters
 SHAREDIR = $(topsrc)/share
 
 CMDSRC = $(CMDSDIR)/gretl_commands.xml \
+	$(CMDSDIR)/gretl_commands_es.xml \
 	$(CMDSDIR)/gretl_commands_it.xml
 
-progs: xsltrans skeleton reflow validate
+MANXSL = $(CMDSDIR)/gretlman.xsl
+HLPXSL = $(CMDSDIR)/gretltxt.xsl
+
+XMLSTRS = $(CMDSDIR)/hlpstrings.xml
+TXTSTRS = $(CMDSDIR)/hlpstrings.txt
+
+progs: xsltrans skeleton reflow hlpstrings validate 
 
 xsltrans: xsltrans.c 
 	$(CC) $(CFLAGS) $(XSLT_CFLAGS) -o $@ $^ $(XSLT_LIBS)
 
 reflow: reflow.c
+	$(CC) $(CFLAGS) -o $@ $^ 
+
+hlpstrings: hlpstrings.c
 	$(CC) $(CFLAGS) -o $@ $^ 
 
 skeleton: skeleton.o
@@ -43,7 +53,6 @@ skeleton.o: skeleton.c
 validate.o: validate.c
 	$(CC) $(CFLAGS) $(XML_CFLAGS) $(GRETLINC) -c $<
 
-
 # test generation of XML skeleton from libgretl info:
 # the skeleton could be used as a template for translation
 skeleton.xml: skeleton gretl_commands.dtd
@@ -56,19 +65,19 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 
 # Generate docbook XML for the command-reference section of the 
 # full manual, cmdlist.xml
-docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretlman.xsl
+docbook: xsltrans $(CMDSDIR)/gretl_commands.xml $(MANXSL) $(XMLSTRS)
 	./xsltrans --docbook $(CMDSDIR)/gretl_commands.xml && \
 	cp cmdlist.xml $(CHAPDIR)/cmdlist.xml && \
 	rm cmdlist.xml
 
 # Generate docbook XML for a standalone command-reference
-docbook-standalone: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(CMDSDIR)/gretlman.xsl
+docbook-standalone: xsltrans $(CMDSDIR)/gretl_commands_it.xml $(MANXSL)
 	./xsltrans --docbook-standalone $(CMDSDIR)/gretl_commands_it.xml && \
 	cp cmdlist_standalone.xml $(CHAPDIR)/cmdlist_standalone_it.xml && \
 	rm cmdlist_standalone.xml
 
-# Generate "online" help file, gretlcli.hlp and gretl.hlp
-hlp: xsltrans reflow $(CMDSRC) $(CMDSDIR)/gretltxt.xsl
+# Generate "online" help files, gretlcli.hlp and gretl.hlp
+hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp
@@ -76,9 +85,13 @@ hlp: xsltrans reflow $(CMDSRC) $(CMDSDIR)/gretltxt.xsl
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.it
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.it
 
+$(XMLSTRS): $(TXTSTRS) hlpstrings
+	./hlpstrings $(TXTSTRS)
+
 # Validate the commands "master" XML files against libgretl
 check: validate 
 	./validate $(CMDSDIR)/gretl_commands.xml
+	./validate $(CMDSDIR)/gretl_commands_es.xml
 	./validate $(CMDSDIR)/gretl_commands_it.xml
 
 docclean:

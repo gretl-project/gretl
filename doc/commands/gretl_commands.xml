@@ -30,11 +30,11 @@
       <para context="cli">
 	Must be invoked after an estimation command.  The variables in
 	<repl>varlist</repl> are added to the previous model and the
-	new model estimated.  If more than one variable is added, the
-	<mathvar>F</mathvar> statistic for the added variables will be
-	printed (for the OLS procedure only) along with its p-value. A
-	p-value below 0.05 means that the coefficients are jointly
-	significant at the 5 percent level. 
+	new model is estimated.  If more than one variable is added,
+	the <mathvar>F</mathvar> statistic for the added variables
+	will be printed (for the OLS procedure only) along with its
+	p-value. A p-value below 0.05 means that the coefficients are
+	jointly significant at the 5 percent level.
       </para>
       <para context="cli">
 	If the <lit>--quiet</lit> option is given the printed results
@@ -832,7 +832,7 @@
 	database (gretl or RATS 4.0), which must have been opened
 	previously using the <cmdref targ="open"/> command. In
 	addition, a data frequency and sample range must be
-	established using the the <cmdref targ="setobs"/> and <cmdref
+	established using the <cmdref targ="setobs"/> and <cmdref
 	  targ="smpl"/> commands
 	prior to using this command. Here is a full example:</para>
 
@@ -3257,7 +3257,7 @@
       <para>
 	Opens a data file.  If a data file is already open, it is
 	replaced by the newly opened one.  The program will try to
-	detect the format of the data file (native, pain text, CSV or
+	detect the format of the data file (native, plain text, CSV or
 	BOX1).
       </para>
 
