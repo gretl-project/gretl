@@ -27,6 +27,7 @@
 # include "pixmaps/gretl.xpm"  /* program icon for X */
 #else
 # include <windows.h> 
+# include "htmlhelp.h"
 #endif
 
 /* pixmaps for gretl toolbar */
@@ -158,6 +159,18 @@ static void gnome_help (void)
     gnome_help_display(NULL, &help_entry);
 }
 #endif /* USE_GNOME */
+
+#ifdef G_OS_WIN32
+static void win_help (void)
+{
+    char hlpfile[MAXLEN];
+
+    sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
+
+    if (!HtmlHelp(NULL, hlpfile, HELP_FINDER, 0)) 
+	errbox("Couldn't access help file");
+}
+#endif
 
 GtkItemFactoryEntry data_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },
@@ -400,8 +413,10 @@ GtkItemFactoryEntry data_items[] = {
     { "/Help/sep6", NULL, NULL, 0, "<Separator>" },
     { "/Help/_Script commands syntax", NULL, help_show, 1, NULL },
     { "/Help/sep7", NULL, NULL, 0, "<Separator>" },
-#ifdef USE_GNOME
+#if defined(USE_GNOME)
     { "/Help/Manual in HTML", NULL, gnome_help, 0, NULL },
+#elif defined(G_OS_WIN32)
+    { "/Help/Manual in HTML", NULL, win_help, 0, NULL },
 #endif
     { "/Help/_About gretl", NULL, about_dialog, 0, NULL }
 };
