@@ -1443,7 +1443,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 	pprintf(prn, "%s = %s\\\\\n", I_("Log-likelihood"), lnlstr);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "%s: $\\chi^2(%d)$ = %.3f (%s %f)\\\\\n",
+	    pprintf(prn, "%s: $\\chi^2_{%d}$ = %.3f (%s %f)\\\\\n",
 		    I_("Likelihood ratio test"), 
 		    i, pmod->chisq, I_("p-value"), chisq(pmod->chisq, i));
 	}
