@@ -139,7 +139,7 @@ gamma_par_asymp (double tracetest, double lmaxtest, int det,
 	tracev = s_mTrace_v_time[det];
 
 	x[0] = sqrt((double) N) / T;
-	x[1] = N / T;
+	x[1] = (double) N / T;
 	x[2] = x[1] * x[1];
 	x[3] = (N == 1) ? 1.0/ T : 0.0;
 	x[4] = (N == 1) ? 1.0 : 0.0;

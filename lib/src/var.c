@@ -23,7 +23,7 @@
 #include "var.h"  
 #include "gretl_private.h"
 
-/* #define VAR_DEBUG */
+#undef VAR_DEBUG 
 
 struct _GRETL_VAR {
     int neqns;         /* number of equations in system */
