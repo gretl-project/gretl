@@ -146,7 +146,7 @@ chow
 @Tests
 Chow test for structural homogeneity
 
-This command need an obervation number (or date, with dated data).
+This command needs an obervation number (or date, with dated data).
 
 Must follow an OLS regression.  Creates a dummy variable which equals 1 from
 the specified split point to the end of the sample, 0 otherwise, and also

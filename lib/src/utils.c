@@ -212,6 +212,11 @@ int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo)
 #ifdef notdef
     fprintf(stderr, "ztox: working on %s\n", pdinfo->varname[i]);
 #endif
+
+    if (!pdinfo->vector[i]) {
+	px[0] = Z[i][0];
+	return 1;
+    }
     
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	xx = Z[i][t];

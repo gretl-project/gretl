@@ -450,12 +450,14 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
 		       const LIST list, double ***pZ, 
-		       const int n, const int t)
+		       const DATAINFO *pdinfo)
 {
-    int j, i = get_prnnum_by_id(ploop, cmdnum);
+    int j, t, i = get_prnnum_by_id(ploop, cmdnum);
     LOOP_PRINT *pprn = &ploop->prns[i];
     
     for (j=1; j<=list[0]; j++) {
+	if (pdinfo->vector[list[j]]) t = pdinfo->t1;
+	else t = 0;
 	pprn->sum[j-1] += (*pZ)[list[j]][t];
 	pprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
     }

@@ -1494,11 +1494,12 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 
     /* screen out any scalars and print them first */
     for (j=1; j<=list[0]; j++) {
-	if (pdinfo->vector[list[j]] == 0) {
+	if (!pdinfo->vector[list[j]]) {
 	    pprintf(prn, "\n%8s = %10g", pdinfo->varname[list[j]], 
 		    (*pZ)[list[j]][0]);
 	    list_exclude(j, list);
-	}
+	    j--;
+	} 
     }
     if (list[0] < l0) {
 	pprintf(prn, "\n");

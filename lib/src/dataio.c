@@ -2544,8 +2544,8 @@ static int write_xmldata (const char *fname, const int *list,
 	for (i=1; i<=list[0]; i++) {
 	    if (!pdinfo->vector[list[i]]) continue;
 	    if (na(Z[list[i]][t])) {
-		if (opt) gzputs(fz, "-999 ");
-		else fputs("-999 ", fp);
+		if (opt) gzputs(fz, "NA ");
+		else fputs("NA ", fp);
 	    } else {
 		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
 		else fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
@@ -2662,13 +2662,13 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
     for (i=1; i<pdinfo->v; i++) {
 	if (!pdinfo->vector[i]) continue;
 	s = strpbrk(s, "01234567890+-NA");
-	if (*s && (sscanf(s, "%lf", &x) != 1)) {
+	if (!strncmp(s, "NA", 2)) x = NADBL;
+	else if (*s && (sscanf(s, "%lf", &x) != 1)) {
 	    sprintf(gretl_errmsg, "failed to parse data values at obs %d", t+1);
 	    return 1;
-	} else {
-	    Z[i][t] = x;
-	    s = strpbrk(s, " ,\t\n\r");
 	}
+	Z[i][t] = x;
+	s = strpbrk(s, " ,\t\n\r");
     }
     return 0;
 }

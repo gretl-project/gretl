@@ -87,7 +87,7 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
 		       const LIST list, double ***pZ, 
-		       const int n, const int t);
+		       const DATAINFO *pdinfo);
 
 void print_loop_results (LOOPSET *ploop, 
 			 const DATAINFO *pdinfo, 

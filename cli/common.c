@@ -130,8 +130,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	    }
 	}
-	if (update_loop_print(plp, cmdnum, command.list, &Z, 
-			      datainfo->n, datainfo->t1)) {
+	if (update_loop_print(plp, cmdnum, command.list, &Z, datainfo)) {
 	    pprintf(prn, "Failed to add values to print loop\n");
 	    return 1;
 	}
@@ -179,8 +178,12 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	}
 	for (i=0; i<command.list[0]; i++) {
-	    plp->storeval[i*plp->ntimes + round] = 
-		Z[command.list[i+1]][datainfo->t1 + 1];
+	    if (datainfo->vector[command.list[i+1]]) 
+		plp->storeval[i*plp->ntimes + round] = 
+		    Z[command.list[i+1]][datainfo->t1 + 1];
+	    else
+		plp->storeval[i*plp->ntimes + round] = 
+		    Z[command.list[i+1]][0];
 	}	
 	break;
 
