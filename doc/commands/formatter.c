@@ -17,7 +17,7 @@
  *
  */
 
-/* formatter for gretl commands info stored as XML */
+/* formatter for gretl commands info stored as "generic" XML */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -40,30 +40,53 @@ int apply_xslt (xmlDocPtr doc)
     xmlDocPtr result;
     const char **params = NULL;
     FILE *fp;
+    int err = 0;
 
     xmlIndentTreeOutput = 1;
 
+    /* make XML output */
     style = xsltParseStylesheetFile("gretlman.xsl");
     if (style == NULL) {
-	return 1;
+	err = 1;
+    } else {
+	result = xsltApplyStylesheet(style, doc, params);
+	if (result == NULL) {
+	    err = 1;
+	} else {
+	    fp = fopen("commands.xml", "w");
+	    if (fp == NULL) {
+		err = 1;
+	    } else {
+		xsltSaveResultToFile(fp, result, style);
+		fclose(fp);
+	    }
+	    xsltFreeStylesheet(style);
+	    xmlFreeDoc(result);
+	}	    
     }
 
-    result = xsltApplyStylesheet(style, doc, params);
-    if (result == NULL) {
-	return 1;
-    }
-
-    fp = fopen("commands.xml", "w");
-    xsltSaveResultToFile(fp, result, style);
-    fclose(fp);
-
+    /* make plain text output */
     style = xsltParseStylesheetFile("gretltxt.xsl");
-    result = xsltApplyStylesheet(style, doc, params);
-    fp = fopen("commands.txt", "w");
-    xsltSaveResultToFile(fp, result, style);
-    fclose(fp);
+    if (style == NULL) {
+	err = 1;
+    } else {
+	result = xsltApplyStylesheet(style, doc, params);
+	if (result == NULL) {
+	    err = 1;
+	} else {
+	    fp = fopen("commands.txt", "w");
+	    if (fp == NULL) {
+		err = 1;
+	    } else {
+		xsltSaveResultToFile(fp, result, style);
+		fclose(fp);
+	    }
+	    xsltFreeStylesheet(style);
+	    xmlFreeDoc(result);
+	}	    
+    }
 
-    return 0;
+    return err;
 }
 
 int parse_commands_data (const char *fname) 
@@ -119,7 +142,7 @@ int main (int argc, char **argv)
 
     fname = argv[1];
 
-    err =  parse_commands_data(fname);
+    err = parse_commands_data(fname);
 
     return err;
 }

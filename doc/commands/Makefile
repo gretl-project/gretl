@@ -8,13 +8,16 @@ GRETL_LIBS = `gretl-config --libs`
 
 XMLDCL = /opt/jade/share/xml.dcl
 
-all: formatter skeleton
+progs: formatter skeleton reflow
 
 formatter: formatter.c 
 	$(CC) $(XML_CFLAGS) -o $@ $^ $(XML_LIBS)
 
 skeleton: skeleton.c
 	$(CC) $(GRETL_CFLAGS) -o $@ $^ $(GRETL_LIBS)
+
+reflow: dolines.c
+	$(CC) -o $@ $^ 
 
 # test generation of XML skeleton from libgretl info
 # the skeleton could be used as a template for translation
@@ -23,9 +26,13 @@ skeleton.xml: skeleton gretl_commands.dtd
 
 # test validity of skeleton.xml, and ability of formatter
 # to generate dummy 'formatted' output (text and XML)
-test: skeleton.xml formatter
+test: skeleton.xml formatter gretlman.xsl gretltxt.xsl
 	xmllint --valid --noout $< && ./formatter skeleton.xml
 
+# a sample: the ols help
+sample: formatter reflow test_command.xml gretlman.xsl gretltxt.xsl
+	./formatter test_command.xml 
+	./reflow < commands.txt > commands.hlp
+
 clean:
-	rm -f formatter skeleton skeleton.xml testprint.txt \
-	trial.xml *~ *.o
+	rm -f formatter skeleton reflow skeleton.xml *~

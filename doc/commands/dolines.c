@@ -1,4 +1,6 @@
-/* doslines.c -- adjust linelengths in text file */
+/* dolines.c -- in text file, reflow paragraphs that have been 
+   tagged with "[PARA]" and "[/PARA]".  Implemented as a filter.
+*/
 	
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,20 +9,37 @@
 
 #define MAXLEN 78
 
+void utf_replace (char *s)
+{
+    char *p;
+
+    while (1) {
+	p = strstr(s, "&#x2013;");
+	if (p == NULL) break;
+	*p = '-';
+	memmove(p+1, p+8, strlen(p+8) + 1);
+    }
+}
+
 void compress_spaces (char *s)
 {
     char *p;
 
     if (s == NULL || *s == 0) return;
 
+    /* replace endashes */
+    utf_replace(s);
+
     p = s;
     while (*s) {
+	/* change tabs and newlines to spaces */
 	if (*s == '\t' || *s == '\n') *s = ' ';
 	s++;
     }
 
     s = p;
     while (*s) {
+	/* replace multiple spaces with single */
         if (*s == ' ') {
             p = s + 1;
             if (*p == 0) break;
@@ -31,6 +50,7 @@ void compress_spaces (char *s)
     }
 }
 
+/* test whether a string is nothing but whitespace */
 static int blank_string (const char *s)
 {
     while (*s) {
@@ -41,6 +61,7 @@ static int blank_string (const char *s)
     return 1;
 }
 
+/* remove white space from the end of a string */
 void trim (char *s)
 {
     int i, n = strlen(s);
@@ -53,6 +74,7 @@ void trim (char *s)
     }
 }
 
+/* reflow a paragraph buffer, with max line length MAXLEN */
 static int format_buf (char *buf)
 {
     char *p, *q, line[80];
@@ -78,30 +100,34 @@ static int format_buf (char *buf)
     return 0;
 }
 
-void strip_marker (char *s, int n)
+void strip_marker (char *s, const char *targ)
 {
-    int i;
+    int i, n = strlen(targ);
 
     for (i=0; i<n; i++) {
 	s[i] = ' ';
     }
 }
 
-int main (int argc, char *argv[])
+int main (void)
 { 
-    char buf[8096];
+    char buf[8096]; 
     char line[128];
     int blank = 0, inpara = 0;
     char *p;
 
     while (fgets(line, sizeof line, stdin)) {
+
+	/* strip out xml declaration */
+	if (!strncmp(line, "<?xml", 5)) continue;
+
 	if ((p = strstr(line, "[PARA]"))) {
-	    strip_marker(p, 6);
+	    strip_marker(p, "[PARA]");
 	    *buf = 0;
 	    inpara = 1;
 	}
 	if ((p = strstr(line, "[/PARA]"))) {
-	    strip_marker(p, 7);
+	    strip_marker(p, "[/PARA]");
 	    strcat(buf, line);
 	    format_buf(buf);
 	    inpara = 0;
@@ -110,6 +136,7 @@ int main (int argc, char *argv[])
 	if (inpara) {
 	    strcat(buf, line);
 	} else {
+	    /* alow only single blank lines in output */
 	    if (blank_string(line)) blank++;
 	    if (blank == 2) {
 		blank = 0;

@@ -1,6 +1,7 @@
 <!--
   DTD for gretl command reference. Allin Cottrell 2004
  -->
+<!ENTITY ndash "&#8211;">
 
 <!ELEMENT commandlist (command)+>
 <!ATTLIST commandlist
@@ -51,24 +52,26 @@
 <!ELEMENT other-access (#PCDATA)>
 
 <!ELEMENT para (#PCDATA | repl | program | mathvar | equation |
-                literal | cmd)*>
+                literal | emphasis | cmd)*>
 
 <!-- stuff that can go into paras -->
 
-<!ELEMENT equation (EMPTY)>
+<!ELEMENT equation EMPTY>
 <!ATTLIST equation
+   status (inline | display) "inline"
    tex     CDATA #REQUIRED
    ascii   CDATA #REQUIRED
    graphic CDATA #REQUIRED
-   status (inline | display) "inline"
 >
-<!ELEMENT repl    (#PCDATA)>
-<!ELEMENT program (#PCDATA)>
-<!ELEMENT literal (#PCDATA)>
-<!ELEMENT cmd     (#PCDATA)>
-<!ELEMENT mathvar (#PCDATA | sub | super)*>
-<!ELEMENT sub     (#PCDATA)>
-<!ELEMENT super   (#PCDATA)>
+
+<!ELEMENT repl     (#PCDATA)>
+<!ELEMENT program  (#PCDATA)>
+<!ELEMENT literal  (#PCDATA)>
+<!ELEMENT emphasis (#PCDATA)>
+<!ELEMENT cmd      (#PCDATA)>
+<!ELEMENT mathvar  (#PCDATA | sub | super)*>
+<!ELEMENT sub      (#PCDATA)>
+<!ELEMENT super    (#PCDATA)>
 
 
 

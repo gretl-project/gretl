@@ -1,4 +1,4 @@
-/* grab command info from gretl, and write skeleton for
+/* grab command info from libgretl, and write skeleton for
    the command reference */
 
 #include <gretl/libgretl.h>

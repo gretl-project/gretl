@@ -2,6 +2,12 @@
 <xsl:stylesheet version="1.0"
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
+<!-- doesn't work as intended
+<xsl:template match = "/">
+<xsl:value-of select = "translate(.,'&#x2013;','-')"/>
+</xsl:template> 
+-->
+
 <xsl:template match="commandlist"> 
  <xsl:apply-templates/> 
 </xsl:template>
@@ -13,11 +19,17 @@
 <xsl:value-of select="@section"/>
 <xsl:text>&#xa;</xsl:text>
 <xsl:apply-templates/>
+<xsl:text>&#xa;</xsl:text>
 </xsl:template>
 
 <xsl:template match="toptable">
 <xsl:apply-templates/>
 <xsl:text>&#xa;</xsl:text>
+</xsl:template>
+
+<xsl:template match="options">
+<xsl:text>&#xa;</xsl:text>
+<xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="option">
@@ -32,11 +44,17 @@ Options:    </xsl:when>
 </xsl:template>
 
 <xsl:template match="arguments">
+<xsl:text>&#xa;</xsl:text>
 Arguments:  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="argument">
 <xsl:apply-templates/><xsl:text> </xsl:text>
+</xsl:template>
+
+<xsl:template match="examples">
+<xsl:text>&#xa;</xsl:text>
+<xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="example">
