@@ -7,6 +7,7 @@ version 1.2.1
 - Make the NIST linear regression test suite available as a
   plugin
 - Add ARMA model to the variable menu (plus "arma" command)
+  (thanks to Jack Lucchetti)
 - Fix bugs with displaying a TSLS model in the GUI program
 - Fix bug in display of actual, fitted and residuals in GUI
   program
@@ -16,6 +17,8 @@ version 1.2.1
 - Small fixes for data importation 
 - Don't overwrite CSV datafiles with gretl format data
 - Add a logistic model command and menu item
+- Fixes for reading of recent RATS databases (thanks to John
+  Frain for a useful bug report)
 
 12/14/2003 version 1.2.0
 - add "rename" command (rename a variable)

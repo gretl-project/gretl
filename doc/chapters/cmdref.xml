@@ -266,6 +266,52 @@
 
     </sect2>
 
+    <sect2 id="arma"><title>arma</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>p q</replaceable>
+	      <literal>;</literal>
+		<replaceable>depvar</replaceable>
+		<literal>[ -v | -n ]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Examples:</entry>
+	      <entry><command>arma 1 2 ; y</command>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><command>arma 2 2 ; y -v</command>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>
+	Estimates a univariate ARMA (Autoregressive, Moving Average)
+	model.  The integer values <replaceable>p</replaceable> and
+	<replaceable>q</replaceable> represent the AR and MA orders
+	respectively.  If the <literal>-v</literal>
+	(<quote>verbose</quote>) flag is given, details of the
+	iterative estimation procedure are shown.
+	</para>
+
+      <para>The default is to call the
+	<application>X-12-ARIMA</application> program for the
+	estimation; the <literal>-n</literal> flag calls for use of
+	the <quote>native</quote> gretl ARMA function instead.  If the
+	<application>X-12-ARIMA</application> package is not installed
+	it may be necessary to use the <literal>-n</literal> flag.
+      </para>
+
+    </sect2>
+
     <sect2 id="chow"><title>chow</title>
 
       <informaltable role="cmd" frame="none">
@@ -277,7 +323,7 @@
 	      </entry>
 	    </row>
 	    <row>
-	      <entry>Examples:  </entry>
+	      <entry>Examples:</entry>
 	      <entry><command>chow 25</command>
 	      </entry>
 	    </row>
@@ -1860,6 +1906,71 @@
 
     </sect2>
 
+    <sect2 id="logistic"><title>logistic</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Arguments:</entry>
+	      <entry><replaceable>depvar indepvars</replaceable>
+		<literal>[
+		  ymax=</literal><replaceable>value</replaceable>
+		<literal>]</literal>
+	      </entry>
+	    </row>
+	    <row>
+	      <entry>Examples:</entry>
+	      <entry><command>logistic y const x</command>  
+	      </entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry><command>logistic y const x ymax=50</command>  
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>
+	Logistic regression: carries out an OLS regression using the
+	logistic transformation of the dependent variable,
+	<informalequation>
+	  <alt role="tex">\[\log\left(\frac{y}{y^*-y}\right)\]</alt>
+	  <graphic fileref="figures/logistic1"/>
+	  </informalequation></para>
+
+      <para>The dependent variable must be strictly positive.  If it
+	is a decimal fraction, between 0 and 1, the default is to use
+	a <emphasis>y</emphasis><superscript>*</superscript>
+	value (the asymptotic maximum of the dependent variable) of 1.
+	If the dependent variable is a percentage, between 0 and 100,
+	the default
+	<emphasis>y</emphasis><superscript>*</superscript> is
+	100.  If you wish to set a different maximum, use the optional
+	<literal>ymax=</literal><replaceable>value</replaceable> syntax
+	following the list of regressors.  The supplied value must be
+	greater than all of the observed values of the dependent
+	variable.</para>
+
+      <para>The fitted values and residuals from the regression are
+	automatically transformed using 	  
+	<informalequation>
+	  <alt role="tex">\[y=\frac{y^*}{1+e^{-x}}\]</alt>
+	  <graphic fileref="figures/logistic2"/>
+	  </informalequation> 
+	where <emphasis>x</emphasis> represents either a fitted value
+	or a residual from the OLS regression using the transformed
+	dependent variable.  The reported values are therefore
+	comparable with the original dependent variable.</para>
+
+      <para>Note that if the dependent variable is binary, you should
+	use the <command>logit</command> command instead.
+      </para>
+
+    </sect2>
+
     <sect2 id="logit"><title>logit</title>
 
       <informaltable role="cmd" frame="none">
@@ -1906,7 +2017,7 @@
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
-	      <entry>Agument:</entry>
+	      <entry>Argument:</entry>
 	      <entry><replaceable>varlist</replaceable>
 	      </entry>
 	    </row>
