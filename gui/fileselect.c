@@ -96,21 +96,23 @@ static char *get_gp_ext (const char *termtype)
 
 static char *get_ext (int action, gpointer data)
 {
-    int i;
     char *s = "*";
 
     if (action == SAVE_GNUPLOT) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
-	return get_gp_ext(plot->termtype);
+	s = get_gp_ext(plot->termtype);
     }
-    if (action == SAVE_LAST_GRAPH) 
-	return get_gp_ext(data);
-    for (i=0; i < sizeof action_map / sizeof *action_map; i++) {
-	if (action == action_map[i].action) {
-	    s = action_map[i].ext;
-	    break;
+    else if (action == SAVE_LAST_GRAPH) 
+	s = get_gp_ext(data);
+    else {
+	for (i=0; i < sizeof map / sizeof *map; i++) {
+	    if (action == map[i].action) {
+		s = map[i].ext;
+		break;
+	    }
 	}
     }
+
     return s;
 }
 
