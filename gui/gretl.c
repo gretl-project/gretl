@@ -441,6 +441,7 @@ GtkItemFactoryEntry data_items[] = {
     { _("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 
+#ifndef G_OS_WIN32
 static void make_userdir (PATHS *ppaths) 
 {
     DIR *test;
@@ -456,6 +457,7 @@ static void make_userdir (PATHS *ppaths)
     } else 
 	closedir(test);
 }
+#endif
 
 static void gui_usage (void)
 {

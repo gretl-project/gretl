@@ -701,6 +701,9 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    book.selected, book.col_offset, book.row_offset);
 #endif
 
+    if (book.selected == -1) 
+	sprintf(errbuf, "Import canceled");
+
     if (err || book.selected == -1) goto getout; 
 
     /* processing for specific worksheet */

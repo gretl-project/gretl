@@ -562,15 +562,24 @@ static GtkWidget *files_window (windata_t *fdata)
 
 /* .................................................................. */
 
-static void really_set_panel_structure (GtkWidget *w, gpointer data)
+static void really_set_panel_code (GtkWidget *w, dialog_t *d)
+{
+    DATAINFO *pdinfo = (DATAINFO *) d->data;
+
+    pdinfo->time_series = d->code;
+    set_sample_label(pdinfo);
+    d->data = NULL;
+}
+
+/* .................................................................. */
+
+static void set_panel_code (GtkWidget *w, dialog_t *d)
 {
     gint i;
 
-    if (GTK_TOGGLE_BUTTON (w)->active) {
-	DATAINFO *pdinfo = (DATAINFO *) data;
+    if (GTK_TOGGLE_BUTTON(w)->active) {
 	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-	if (dataset_is_panel(pdinfo))
-	    pdinfo->time_series = (short) i;
+	d->code = i;
     }
 }
 
@@ -592,11 +601,14 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 	return;
     }
     
-    d->data = cancel_d->data = NULL;
+    d->data = pdinfo;
+    cancel_d->data = NULL;
     cancel_d->all_buttons = d->all_buttons = NULL;
 
     d->dialog = gtk_dialog_new();
     w = d->dialog;
+
+    d->code = (dataset_is_panel(pdinfo))? pdinfo->time_series : STACKED_TIME_SERIES;
 
     gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel data structure"));
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
@@ -617,10 +629,10 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == STACKED_TIME_SERIES)
+    if (d->code == STACKED_TIME_SERIES)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(really_set_panel_structure), pdinfo);
+                       GTK_SIGNAL_FUNC(set_panel_code), d);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER(STACKED_TIME_SERIES));
     gtk_widget_show (button);
@@ -629,10 +641,10 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     button = gtk_radio_button_new_with_label(group, _("Stacked cross sections"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == STACKED_CROSS_SECTION)
+    if (d->code == STACKED_CROSS_SECTION)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(really_set_panel_structure), pdinfo);
+                       GTK_SIGNAL_FUNC(set_panel_code), d);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER(STACKED_CROSS_SECTION));
     gtk_widget_show (button);
@@ -642,6 +654,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+                       GTK_SIGNAL_FUNC(really_set_panel_code), d);
     gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
 			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
 			       GTK_OBJECT (d->dialog));

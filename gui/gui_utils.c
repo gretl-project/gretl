@@ -46,7 +46,6 @@ extern int want_toolbar;
 extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
-extern char viewdvi[MAXSTR];
 extern char dbproxy[21];
 int use_proxy;
 
@@ -627,6 +626,9 @@ static void get_worksheet_data (const char *fname, int datatype,
 
     err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
+
+    if (strlen(errtext) && !strcmp(errtext, "Import canceled"))
+	return;
 
     if (err) {
 	if (strlen(errtext)) errbox(errtext);

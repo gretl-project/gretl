@@ -12,11 +12,15 @@
 #define MS_OLE_H
 
 /* This should be done in glib */
+/* Allin Cottrell modifications here */
 #ifndef _WIN32
 #	include <fcntl.h>	/* for mode_t */
 #else
+# include <sys/types.h>
+# ifdef notdef
 	typedef unsigned long mode_t;
-	typedef /* signed */ long off_t; 
+	typedef /* signed */ long off_t;
+# endif
 	typedef size_t ssize_t;
 	typedef /* unsigned */ long caddr_t;
 #endif
@@ -91,21 +95,10 @@ extern MsOleErr		ms_ole_open_vfs		(MsOle **fs,
 						 const char *path,
 						 gboolean try_mmap,
 						 MsOleSysWrappers *wrappers);
-#define                 ms_ole_create(fs,path)   ms_ole_create_vfs ((fs), (path), TRUE, NULL)
-extern MsOleErr		ms_ole_create_vfs	(MsOle **fs,
-						 const char *path,
-						 int try_mmap,
-						 MsOleSysWrappers *wrappers);
 extern void		ms_ole_destroy		(MsOle **fs);
-extern MsOleErr		ms_ole_unlink		(MsOle *fs,
-						 const char *path);
 extern MsOleErr		ms_ole_directory	(char ***names,
 						 MsOle *fs,
 						 const char *dirpath);
-extern MsOleErr		ms_ole_stat		(MsOleStat *stat,
-						 MsOle *fs,
-						 const char *dirpath,
-						 const char *name);
 
 struct _MsOleStream {
 
@@ -168,18 +161,8 @@ extern MsOleErr		ms_ole_stream_open	(MsOleStream ** const stream,
 						 const char *name,
 						 char mode);
 extern MsOleErr		ms_ole_stream_close	(MsOleStream ** const stream);
-extern MsOleErr		ms_ole_stream_duplicate	(MsOleStream ** const stream_copy,
-						 const MsOleStream *
-						 const stream);
-
-extern void		ms_ole_dump		(guint8 const *ptr,
-						 guint32 len);
-
 extern void		ms_ole_ref		(MsOle *fs);
 extern void		ms_ole_unref		(MsOle *fs);
-extern void		ms_ole_debug		(MsOle *fs,
-						 int magic);
-
 
 
 #endif	/* MS_OLE_H */

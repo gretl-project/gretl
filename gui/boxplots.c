@@ -1021,7 +1021,7 @@ static int cb_copy_image (gpointer data)
 {
     PLOTGROUP *grp = (PLOTGROUP *) data;
     GdkImage *image;
-    int i, j;
+    int i;
     guint32 pixel, white_pixel;
     size_t image_bytes, dibsize, linelen;
     size_t palsize = sizeof(RGBQUAD) * 2;

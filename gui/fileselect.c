@@ -318,7 +318,7 @@ static const char *get_filter (int action, gpointer data)
 void file_selector (char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
-    int retval, gotdir = 0;
+    int retval;
     char fname[MAXLEN], endname[64], startd[MAXLEN];
 
     fname[0] = '\0';

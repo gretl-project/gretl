@@ -22,6 +22,7 @@
 #include "gretl.h"
 #ifdef G_OS_WIN32 
 # include "../lib/src/cmdlist.h"
+# include <io.h>
 #endif
 
 #include "htmlprint.h"
@@ -30,7 +31,6 @@ extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
 extern double **subZ;
 extern double **fullZ;
-extern char *viewdvi;
 
 /* ../cli/common.c */
 static int data_option (int flag);
@@ -2988,10 +2988,16 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 
 void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 {
-    char texfile[MAXLEN], texbase[MAXLEN], tmp[MAXLEN];
+    char texfile[MAXLEN], tmp[MAXLEN];
     int dot, err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+#ifdef G_OS_WIN32
+    FILE *fp;
+    char *texbase;
+#else
+    char texbase[MAXLEN];
+#endif
 
     if (prn_code)
 	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);
@@ -3003,27 +3009,31 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	return;
     }
 
-    dot = dotpos(texfile);
-    clear(texbase, MAXLEN);
-    strncpy(texbase, texfile, dot);
 #ifdef G_OS_WIN32
     chdir(paths.userdir);
+    texbase = strrchr(texfile, SLASH) + 1;
     sprintf(tmp, "latex %s", texbase);
     err = system(tmp);
     if (err) 
 	errbox("Failed to run latex");
     else {
-	sprintf(tmp, "\"%s\" %s", viewdvi, texbase);
-	err = system(tmp);
+	char dvifile[MAXLEN];
+
+	dot = dotpos(texfile);
+	strncpy(dvifile, texfile, dot);
+	sprintf(tmp, "\"%s\" %s.dvi", viewdvi, dvifile);
+	fp = fopen("c:\\userdata\\gretl\\user\\debug3.txt", "w");
+	fprintf(fp, "doing WinExec(%s)\n", tmp);
+	fclose(fp);
+	err = (WinExec(tmp, SW_SHOWNORMAL) < 32);
     }
-    if (err)
-	errbox("Failed to run DVI viewer");
 #else
+    dot = dotpos(texfile);
+    strncpy(texbase, texfile, dot);    
     sprintf(tmp, "cd %s && latex %s && %s %s", paths.userdir,
 	    texbase, viewdvi, texbase);
     err = system(tmp);
     if (err) errbox("Failed to run latex");
-#endif
 
     remove(texfile);
     sprintf(tmp, "%s.dvi", texbase);
@@ -3032,6 +3042,7 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
     remove(tmp);
     sprintf(tmp, "%s.aux", texbase);
     remove(tmp);
+#endif
 }
 
 /* ........................................................... */

@@ -174,6 +174,8 @@ static void edit_session_notes (void)
 
 /* .................................................................. */
 
+#ifdef GNUPLOT_PNG
+
 static int filter_plotfile (const char *src, const char *dest)
 {
     FILE *fs, *fd;
@@ -203,6 +205,8 @@ static int filter_plotfile (const char *src, const char *dest)
     
     return 0;
 }
+
+#endif /* GNUPLOT_PNG */
 
 /* ........................................................... */
 

@@ -1142,11 +1142,12 @@ static size_t get_size (char *buf)
 
 int update_query (void)
 {
-    int err = 0, admin = 0;
+    int err = 0;
     char *getbuf = NULL;
     char errbuf[80];
     char testfile[MAXLEN];
 #ifndef G_OS_WIN32
+    int admin = 0;
     char hometest[MAXLEN];
     FILE *fp;
 #endif
