@@ -78,4 +78,6 @@ char *colonize_obs (char *obs);
 char *iso_gettext (const char *msgid);
 #endif  
 
+const char *print_time (const time_t *timep);
+
 #endif /* STRUTILS_H */

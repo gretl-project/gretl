@@ -688,10 +688,11 @@ static int _print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     fd = fopen(hdrfile, "w");
     if (fd == NULL) return 1;
     pprintf(prn, _("printing data header info to %s\n"), hdrfile);
-    fprintf(fd, _("(*\n simulation data written %s\n*)\n"), 
-	    ctime(&writetime));
-    for (i=0; i<ploop->nstore; i++)
+    fprintf(fd, "(*\n %s %s\n*)\n", _("simulation data written"), 
+	    print_time(&writetime));
+    for (i=0; i<ploop->nstore; i++) {
 	fprintf(fd, "%s ", ploop->storename[i]);
+    }
     fprintf(fd, ";\n1 1 %d\nBYOBS\n", ploop->ntimes);
     fclose(fd);
 

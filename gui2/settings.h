@@ -11,6 +11,8 @@ void write_rc (void);
 
 void mkfilelist (int filetype, const char *newfile);
 
+void init_fileptrs (void);
+
 void delete_from_filelist (int filetype, const char *fname);
 
 void add_files_to_menu (int filetype);

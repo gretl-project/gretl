@@ -1,4 +1,8 @@
 version 1.0rc1
+- fix bugs in saving output to named file, in both gretlcli and
+  gui program
+- fix error in df in sample script ps4-2.inp
+- fix translation of date strings in gretl output
 - linux: move plugins to ${prefix}/lib/gretl
 - gnome 2.0: use gconf apparatus
 - gtk 2.0: fix remove/add toolbar breakage; change

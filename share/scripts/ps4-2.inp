@@ -30,5 +30,6 @@ genr bdiff = b1-b2
 (* retrieve coefficient variances and covariance *)
 genr tmp = vcv(Wt,Wt) + vcv(Pt,Pt) - (2*vcv(Wt,Pt))
 genr den = sqrt(tmp)
+genr tdf = $df
 genr tc = abs(bdiff/den)
-pvalue t 1 tc
+pvalue t tdf tc

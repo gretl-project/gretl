@@ -80,10 +80,19 @@ int win_copy_text (PRN *prn, int format)
 
 static void time_string (char *s)
 {
+#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+    gchar *trans;
+    gsize wrote;
+#endif
     time_t prntime = time(NULL);
     
-    sprintf(s, _("gretl output %s"), ctime(&prntime));
-    s[strlen(s)-1] = '\0';
+    sprintf(s, "%s %s", _("gretl output"), print_time(&prntime));
+
+#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
+    trans = g_locale_to_utf8(s, -1, NULL, &wrote, NULL);
+    strcpy(s, trans);
+    g_free(trans);
+#endif    
 }
 
 #endif

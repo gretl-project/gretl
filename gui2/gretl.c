@@ -51,7 +51,6 @@
 /* functions from other gretl GUI files */
 
 extern void free_modelspec (void);    /* lib.c */
-extern void allocate_fileptrs (void); /* settings.c */
 extern void stats_calculator (gpointer data, guint ttest, GtkWidget *widget);
 extern void bool_subsample (gpointer data, guint dropmiss, GtkWidget *w);
 extern void free_command_stack (void);
@@ -823,7 +822,7 @@ int main (int argc, char *argv[])
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 
-    allocate_fileptrs();
+    init_fileptrs();
     add_files_to_menu(1);
     add_files_to_menu(2);
     add_files_to_menu(3);

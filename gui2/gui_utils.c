@@ -434,9 +434,9 @@ void register_data (const char *fname, int record)
     orig_vars = datainfo->v;
 
     /* set appropriate data_status bits */
-    if (fname == NULL)
+    if (fname == NULL) {
 	data_status |= (GUI_DATA|MODIFIED_DATA);
-    else if (!(data_status & IMPORT_DATA)) {
+    } else if (!(data_status & IMPORT_DATA)) {
 	if (strstr(paths.datfile, paths.datadir) != NULL) 
 	    data_status |= BOOK_DATA;
 	else
@@ -541,17 +541,21 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	}
     }
 
-    if (code == OPEN_CSV || code == APPEND_CSV)
+    if (code == OPEN_CSV || code == APPEND_CSV) {
 	datatype = GRETL_CSV_DATA;
-    if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC)
+    }
+    else if (code == OPEN_GNUMERIC || code == APPEND_GNUMERIC) {
 	datatype = GRETL_GNUMERIC;
-    else if (code == OPEN_EXCEL || code == APPEND_EXCEL)
+    }
+    else if (code == OPEN_EXCEL || code == APPEND_EXCEL) {
 	datatype = GRETL_EXCEL;
-    else if (code == OPEN_BOX)
+    }
+    else if (code == OPEN_BOX) {
 	datatype = GRETL_BOX_DATA;
-    else if (code == OPEN_DES)
+    }
+    else if (code == OPEN_DES) {
         datatype = GRETL_DES_DATA;
-    else {
+    } else {
 	PRN *prn;	
 
 	if (bufopen(&prn)) return;
@@ -595,7 +599,9 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
     }	
 
     /* trash the practice files window that launched the query? */
-    if (fwin != NULL) gtk_widget_destroy(fwin->w); 
+    if (fwin != NULL) {
+	gtk_widget_destroy(fwin->w); 
+    }
 
     strcpy(paths.datfile, trydatfile);
 
@@ -613,10 +619,11 @@ void verify_open_data (gpointer userdata, int code)
 	yes_no_dialog (_("gretl: open data"), 
 		       _("Opening a new data file will automatically\n"
 		       "close the current one.  Any unsaved work\n"
-		       "will be lost.  Proceed to open data file?"), 0))
+			 "will be lost.  Proceed to open data file?"), 0)) {
 	return;
-    else 
+    } else {
 	do_open_data(NULL, userdata, code);
+    }
 }
 
 /* ........................................................... */
@@ -1340,8 +1347,9 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     /* is the file to be deleted after viewing? */
     if (del_file) {
-	if ((fle = mymalloc(strlen(filename) + 1)) == NULL)
+	if ((fle = mymalloc(strlen(filename) + 1)) == NULL) {
 	    return NULL;
+	}
 	strcpy(fle, filename);
     }
 

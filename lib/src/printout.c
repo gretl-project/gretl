@@ -87,7 +87,7 @@ void session_time (FILE *fp)
 {
     time_t runtime = time(NULL);
 
-    fprintf(fp, _("Current session: %s"), ctime(&runtime));
+    fprintf(fp, "%s: %s", _("Current session"), print_time(&runtime));
 }
 
 /**

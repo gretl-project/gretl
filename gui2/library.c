@@ -2824,8 +2824,11 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
-    if (code == SCRIPT_EXEC) runfile = scriptfile;
-    else if (code == SESSION_EXEC) runfile = cmdfile;
+    if (code == SCRIPT_EXEC) {
+	runfile = scriptfile;
+    } else if (code == SESSION_EXEC) {
+	runfile = cmdfile;
+    }
 
     if (data != NULL) { /* get commands from file view buffer */
 	windata_t *mydata = (windata_t *) data;
@@ -2842,8 +2845,9 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
 	text_set_cursor(mydata->w, 0);
-    } else
+    } else {
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
+    }
 
     gretl_print_destroy(prn);
 

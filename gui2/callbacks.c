@@ -178,10 +178,12 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 
 void open_script (gpointer data, guint action, GtkWidget *widget)
 {
-    if (action == OPEN_SCRIPT)
+    if (action == OPEN_SCRIPT) {
 	file_selector(_("Open script file"), action, NULL);
-    else if (action == OPEN_SESSION)
+    }
+    else if (action == OPEN_SESSION) {
 	file_selector(_("Open session file"), action, NULL);
+    }
 }
 
 /* ........................................................... */
@@ -192,10 +194,10 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector(_("Save output file"), SAVE_OUTPUT, mydata->w);
+	file_selector(_("Save output file"), SAVE_OUTPUT, mydata);
 	break;
     case SAVE_CONSOLE:
-	file_selector(_("Save console output"), SAVE_CONSOLE, mydata->w);
+	file_selector(_("Save console output"), SAVE_CONSOLE, mydata);
 	break;
     case SAVE_CMDS: 
 	file_selector(_("Save command log"), SAVE_CMDS, mydata);
@@ -229,7 +231,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	file_selector(_("Save LaTeX file"), file_code, mydata->data);
 	break;
     case SAVE_MODEL:
-	file_selector(_("Save model output"), file_code, mydata->w);
+	file_selector(_("Save model output"), file_code, mydata);
 	break;
     case SAVE_GP_CMDS:
 	file_selector(_("Save gnuplot commands"), file_code, mydata->w);
@@ -248,13 +250,31 @@ void dummy_call (void)
 
 /* ........................................................... */
 
+/* contortions are needed here to get around the fact that the
+   output of strftime (used in print_time()) will not be UTF-8 */
+
 void print_report (gpointer data, guint unused, GtkWidget *widget)
 {
     PRN *prn;
+#ifdef ENABLE_NLS    
+    gchar *utfbuf;
+    gsize wrote;
+#endif  
 
     if (bufopen(&prn)) return;
 
+#ifdef ENABLE_NLS
+    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
+#endif
     data_report (datainfo, &paths, prn);
+#ifdef ENABLE_NLS
+    bind_textdomain_codeset(PACKAGE, "UTF-8");
+    utfbuf = g_locale_to_utf8(prn->buf, -1, NULL, &wrote, NULL);
+    if (utfbuf != NULL) {
+	free(prn->buf);
+	prn->buf = utfbuf;
+    }
+#endif    
     view_buffer(prn, 77, 400, _("gretl: data summary"), 
 		DATA_REPORT, NULL);
 }

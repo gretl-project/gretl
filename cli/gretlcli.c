@@ -1061,9 +1061,10 @@ void exec_line (char *line, PRN *prn)
 	gretl_print_destroy(cmds);
 	if (command.param[0] == 'x') break;
 	printf(_("type a filename to store output (enter to quit): "));
-	*line = '\0';
+	*outfile = '\0';
 	fgets(outfile, MAXLEN-1, stdin); 
-	if (outfile[0] != '\n' && strcmp(outfile, "q\n")) {
+	top_n_tail(outfile);
+	if (strcmp(outfile, "q")) {
 	    printf(_("writing session output to %s%s\n"), 
 		   paths.userdir, outfile);
 #ifdef OS_WIN32

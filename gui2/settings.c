@@ -877,7 +877,7 @@ void font_selector (gpointer data, guint fixed, GtkWidget *widget)
 }
 /* .................................................................. */
 
-void allocate_fileptrs (void)
+void init_fileptrs (void)
 {
     int i;
     
@@ -904,10 +904,11 @@ static void clear_files_list (int filetype, char **filep)
 
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
-		i+1, endbit(tmpname, filep[i], -1));
+		i+1, endbit(tmpname, filep[i], 0));
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
-	if (w != NULL) 
+	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);
+	}
     }
 }
 
@@ -958,7 +959,9 @@ void mkfilelist (int filetype, const char *fname)
     filep[0] = filep[match];
 
     /* rearrange other pointers */
-    for (i=1; i<=match; i++) filep[i] = tmp[i-1];
+    for (i=1; i<=match; i++) {
+	filep[i] = tmp[i-1];
+    }
 
     add_files_to_menu(filetype);
 }
@@ -1189,8 +1192,9 @@ void add_files_to_menu (int filetype)
     else return;
 
     /* See if there are any files to add */
-    if (filep[0][0] == '\0') return;
-    else {
+    if (filep[0][0] == '\0') {
+	return;
+    } else {
 	gchar *itemtype = "<Separator>";
 	GtkWidget *w;
 
@@ -1219,8 +1223,9 @@ void add_files_to_menu (int filetype)
 	    fileitem.callback = callfunc; 
 	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
 	    w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
-	    if (w != NULL)
+	    if (w != NULL) {
 		gtk_tooltips_set_tip(gretl_tips, w, filep[i], NULL);
+	    }
 	} else break;
     }
     free(fileitem.path);

@@ -204,8 +204,9 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	"none"
     };
 
-    for (i=0; i<6; i++)
+    for (i=0; i<6; i++) {
 	keypos = g_list_append(keypos, key_positions[i]);
+    }
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box), 10);
@@ -243,6 +244,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	}
     }
     tbl_len++;
+
     tempwid = gtk_label_new(_("key position"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
@@ -893,9 +895,12 @@ static int plotspec_init (GPT_SPEC *plot)
 {
     int i;
 
-    if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL)
+    if ((plot->lines = mymalloc(6 * sizeof(GPT_LINE))) == NULL) {
 	return 1;
-    for (i=0; i<4; i++) plot->titles[i][0] = 0;
+    }
+    for (i=0; i<4; i++) {
+	plot->titles[i][0] = 0;
+    }
     plot->xtics[0] = 0;
     plot->mxtics[0] = 0;
     plot->fname[0] = 0;
@@ -1028,11 +1033,14 @@ int read_plotfile (GPT_SPEC *plot, const char *fname)
     if (got == NULL) goto plot_bailout;
 
     for (i=0; i<4; i++) {
-	if (plot->titles[i][0] != 0)
+	if (plot->titles[i][0] != 0) {
 	    delchar('\'', plot->titles[i]);
+	}
     }
-    if (plot->keyspec[0] == 0)
+
+    if (plot->keyspec[0] == 0) {
 	strcpy(plot->keyspec, "none");
+    }
 
     /* then get the "plot" lines */
     if (strncmp(line, "plot ", 4) ||

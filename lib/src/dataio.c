@@ -1290,28 +1290,29 @@ static void pd_string (char *str, const DATAINFO *pdinfo)
 
 int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
 {
-    char startdate[9], enddate[9], typestr[32], pdstr[32];
+    char startdate[9], enddate[9], tmp[MAXLEN];
     time_t prntime = time(NULL);
     int i;
 
     ntodate(startdate, 0, pdinfo);
     ntodate(enddate, pdinfo->n - 1, pdinfo);
 
-    pprintf(prn, _("Data file %s\nas of %s\n"), 
-	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"), 
-	    ctime(&prntime));
+    sprintf(tmp, _("Data file %s\nas of"), 
+	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"));
+
+    pprintf(prn, "%s %s\n\n", tmp, print_time(&prntime));
 
     if (pdinfo->descrip != NULL && strlen(pdinfo->descrip)) {
 	pprintf(prn, "%s:\n\n", _("Description"));
 	pprintf(prn, "%s\n\n", pdinfo->descrip);
     }
 
-    type_string(typestr, pdinfo);
-    pprintf(prn, "%s: %s\n", _("Type of data"), typestr);
+    type_string(tmp, pdinfo);
+    pprintf(prn, "%s: %s\n", _("Type of data"), tmp);
     
     if (dataset_is_time_series(pdinfo)) {
-	pd_string(pdstr, pdinfo);
-	pprintf(prn, "%s: %s\n", _("Frequency"), pdstr);
+	pd_string(tmp, pdinfo);
+	pprintf(prn, "%s: %s\n", _("Frequency"), tmp);
     }	
 
     pprintf(prn, "%s: %s - %s (n = %d)\n\n", _("Range"),

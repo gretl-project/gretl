@@ -627,3 +627,15 @@ char *iso_gettext (const char *msgid)
 } 
 #endif  
 
+const char *print_time (const time_t *timep)
+{
+    static char timestr[48];
+    struct tm *local;
+
+    local = localtime(timep);
+
+    strftime(timestr, 47, "%c", local);
+
+    return timestr;
+}
+
