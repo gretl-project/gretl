@@ -47,7 +47,7 @@ enum flagvals {
  * Free allocated content of MODEL then the pointer itself.
  */
 #define free_model(p) if (p != NULL) { \
-                             clear_model(p, NULL, NULL); \
+                             clear_model(p, NULL, NULL, NULL); \
                              free(p); \
                           }
 
@@ -98,9 +98,10 @@ char getflag (int opt);
 
 int catchflag (char *line, int *oflag);
 
-MODEL *gretl_model_new (void);
+MODEL *gretl_model_new (DATAINFO *pdinfo);
 
-int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild);
+int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
+		 DATAINFO *pdinfo);
 
 void show_paths (PATHS *ppaths);
 

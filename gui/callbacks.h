@@ -30,4 +30,6 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget);
 
 void gretl_callback (gpointer data, guint action, GtkWidget *widget);
 
+void model_test_callback (gpointer data, guint action, GtkWidget *widget);
+
 #endif /* CALLBACKS_H */

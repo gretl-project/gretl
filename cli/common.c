@@ -70,7 +70,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 					    * sizeof(MODEL *));
 		if (plp->models == NULL) 
 		    return 1;
-		plp->models[plp->nmod - 1] = gretl_model_new();
+		plp->models[plp->nmod - 1] = gretl_model_new(datainfo);
 		if (plp->models[plp->nmod - 1] == NULL)
 		    return 1;
 		(plp->models[plp->nmod - 1])->ID = cmdnum;
@@ -84,7 +84,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    }
 	} /* end of basic round 0 setup */
 	/* estimate the model called for */
-	clear_model(models[0], NULL, NULL);
+	clear_model(models[0], NULL, NULL, NULL);
 	*models[0] = lsq(command.list, &Z, datainfo, OLS, 1, 0.0);
 	if ((models[0])->errcode) {
 	    errmsg((models[0])->errcode, prn);

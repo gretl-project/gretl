@@ -270,7 +270,7 @@ int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
     double essu, F;
     MODEL var_model;
 
-    _init_model(&var_model);
+    _init_model(&var_model, pdinfo);
 
     if (order < 1) {
 	fprintf(stderr, "Not much point in a zero-order \"VAR\" surely?\n");
@@ -344,7 +344,7 @@ int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
 	/* keep some results for hypothesis testing */
 	essu = var_model.ess;
 	dfd = var_model.dfd;
-	clear_model(&var_model, NULL, NULL);
+	clear_model(&var_model, NULL, NULL, pdinfo);
 	/* now build truncated lists for hyp. tests */
 	shortlist[1] = varlist[1];
 	pprintf(prn, "\nF-tests of zero restrictions:\n\n");
@@ -365,7 +365,7 @@ int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
 	    /*  printlist(shortlist); */
 	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/order)/(essu/dfd);
-	    clear_model(&var_model, NULL, NULL);
+	    clear_model(&var_model, NULL, NULL, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
 	    pprintf(prn, "p-value %f\n", fdist(F, order, dfd));
 	}
@@ -387,7 +387,7 @@ int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
 	    /*  printlist(shortlist); */
 	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/neqns)/(essu/dfd);
-	    clear_model(&var_model, NULL, NULL);
+	    clear_model(&var_model, NULL, NULL, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
 	    pprintf(prn, "p-value %f\n", fdist(F, neqns, dfd)); 
 	}
@@ -428,7 +428,7 @@ int coint (const int order, const LIST list, double **pZ,
     MODEL coint_model;
     int *cointlist;
 
-    _init_model(&coint_model);
+    _init_model(&coint_model, pdinfo);
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
@@ -473,7 +473,7 @@ int coint (const int order, const LIST list, double **pZ,
 	    "cannot be \nread from the usual statistical tables.)\n");
 
     /* clean up and get out */
-    clear_model(&coint_model, NULL, NULL);
+    clear_model(&coint_model, NULL, NULL, pdinfo);
     free(cointlist);
     _shrink_Z(1, pZ, pdinfo);
     return 0;
@@ -520,7 +520,7 @@ int adf_test (const int order, const int varno, double **pZ,
 			      {5.34, 6.25, 7.16, 8.27}}; /* infinity */
     
 
-    _init_model(&adf_model);
+    _init_model(&adf_model, pdinfo);
     k = 3 + order;
     adflist = malloc((5 + order) * sizeof(int));
     shortlist = malloc(k * sizeof(int));
@@ -566,7 +566,7 @@ int adf_test (const int order, const int varno, double **pZ,
 	    "   %s\n",
 	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
-    clear_model(&adf_model, NULL, NULL);
+    clear_model(&adf_model, NULL, NULL, pdinfo);
 
     /* then do ADF test using F-statistic */
     adflist[0] = 4 + order;
@@ -590,7 +590,7 @@ int adf_test (const int order, const int varno, double **pZ,
     printmodel(&adf_model, pdinfo, prn);
     essu = adf_model.ess;
     T = adf_model.nobs;
-    clear_model(&adf_model, NULL, NULL);
+    clear_model(&adf_model, NULL, NULL, pdinfo);
 
     shortlist[0] = adflist[0] - 2;
     shortlist[1] = adflist[1];
@@ -599,7 +599,7 @@ int adf_test (const int order, const int varno, double **pZ,
     /*  printlist(shortlist); */
     adf_model = lsq(shortlist, pZ, pdinfo, OLS, 0, 0.0);
     F = (adf_model.ess - essu) * (T - k)/(2 * essu);
-    clear_model(&adf_model, NULL, NULL);
+    clear_model(&adf_model, NULL, NULL, pdinfo);
 
     row = -1;
     if (T > 500) row = 5;
@@ -653,7 +653,7 @@ int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
     malist[2] = v;       /* new var: moving average of indep var */
     malist[3] = 0;
 
-    _init_model(&mamod);
+    _init_model(&mamod, pdinfo);
 
     a = aopt = 0.0;
     essmin = 0.0;
@@ -667,10 +667,10 @@ int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
 	    /*  printf("newvars[%d] %g %g\n", t, 
 		(*pZ)[v*n + t], (*pZ)[(v+1)*n + t]); */
 	}
-	clear_model(&mamod, NULL, NULL);
+	clear_model(&mamod, NULL, NULL, pdinfo);
 	mamod = lsq(malist, pZ, pdinfo, OLS, 0, 0.0);
 	if ((err = mamod.errcode)) {
-	    clear_model(&mamod, NULL, NULL);
+	    clear_model(&mamod, NULL, NULL, pdinfo);
 	    return err;
 	}	
 	if (step == 1) {
@@ -700,7 +700,7 @@ int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
     pprintf(prn, "slope:    %.4g\n", mamod.coeff[1] / (1 - a));
     pprintf(prn, "adaptive coefficient: %.2f\n", a);
 	   
-    clear_model(&mamod, NULL, NULL);
+    clear_model(&mamod, NULL, NULL, pdinfo);
 
     _shrink_Z(1, pZ, pdinfo);
 

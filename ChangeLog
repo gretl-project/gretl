@@ -1,3 +1,11 @@
+version 0.981
+- add option for HTTP proxy when contacting gretl data server
+- fix bugs in drag and drop under Windows
+- fix crashing bug when trying to save a data file with over
+  (about) 120 variables
+- add sample period check when doing model tests such as add
+  and omit
+
 02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for
   normality of residuals

@@ -96,7 +96,7 @@ int _forecast (int t1, const int t2, const int nv,
 
 int _full_model_list (MODEL *pmod, int **plist);
 
-void _init_model (MODEL *pmod);
+void _init_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 double _tcrit95 (const int df);
 

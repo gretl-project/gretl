@@ -119,7 +119,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     if (ci == HCCM)
 	return hccm_func(list, pZ, pdinfo);
 
-    _init_model(&model);
+    _init_model(&model, pdinfo);
 
     /* preserve a copy of the list supplied, for future reference */
     copylist(&(model.list), list);
@@ -919,7 +919,7 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
     int step, iter = 0, nn = 0, err = 0;
     MODEL corc_model;
 
-    _init_model(&corc_model);
+    _init_model(&corc_model, pdinfo);
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
     if (uhat == NULL) return E_ALLOC;
@@ -931,11 +931,11 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
 	    if (rho < -.995) rho = -0.99;
 	    else if (rho > 0.995) rho = 0.99;
 	    if (step == 2) rho = -.90;
-	    clear_model(&corc_model, NULL, NULL);
+	    clear_model(&corc_model, NULL, NULL, pdinfo);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	    if ((err = corc_model.errcode)) {
 		free(uhat);
-		clear_model(&corc_model, NULL, NULL);
+		clear_model(&corc_model, NULL, NULL, pdinfo);
 		return err;
 	    }
 	    if (step == 1) {
@@ -963,7 +963,7 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
-	    clear_model(&corc_model, NULL, NULL);
+	    clear_model(&corc_model, NULL, NULL, pdinfo);
 	    return err;
 	}
 	rho0 = rho = corc_model.rho;
@@ -974,11 +974,11 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
     while (diff > 0.001) {
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
-	clear_model(&corc_model, NULL, NULL);
+	clear_model(&corc_model, NULL, NULL, pdinfo);
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
 	    free(uhat);
-	    clear_model(&corc_model, NULL, NULL);
+	    clear_model(&corc_model, NULL, NULL, pdinfo);
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
@@ -992,7 +992,7 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
     }
     pprintf(prn, "                final %11.5f\n\n", rho);
     free(uhat);
-    clear_model(&corc_model, NULL, NULL);
+    clear_model(&corc_model, NULL, NULL, pdinfo);
 
     *toprho = rho;
     return 0;
@@ -1043,7 +1043,7 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
     /*  printlist(list); */
     /*  printf("pos = %d\n", pos); */
 
-    _init_model(&tsls);
+    _init_model(&tsls, pdinfo);
 
     if ((newlist = malloc(pos * sizeof(int))) == NULL ||
 	(list1 = malloc(pos * sizeof(int))) == NULL ||
@@ -1110,7 +1110,7 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
 	/* run first-stage regression */
 /*  	printf("running 1st stage:\n"); */
 /*  	printlist(s1list); */
-	clear_model(&tsls, NULL, NULL);
+	clear_model(&tsls, NULL, NULL, pdinfo);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
 	if (tsls.errcode) {
 	    free(list1); free(list2);
@@ -1133,7 +1133,7 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
     } 
 
     /* second-stage regression */
-    clear_model(&tsls, NULL, NULL);
+    clear_model(&tsls, NULL, NULL, pdinfo);
     tsls = lsq(s2list, pZ, pdinfo, OLS, 1, 0.0);
 /*      printf("second stage\n"); */
 /*      printlist(s2list); */
@@ -1176,7 +1176,7 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
     if (diag == NULL) {
 	free(list1); free(list2);
 	free(s1list); free(s2list);
-	clear_model(&tsls, NULL, NULL);
+	clear_model(&tsls, NULL, NULL, pdinfo);
 	_shrink_Z(newlist[0], pZ, pdinfo);
 	free(newlist);
 	free(yhat);
@@ -1227,7 +1227,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     int i, l0 = pmod->list[0], listlen, check, shrink;
     MODEL aux;
 
-    _init_model(&aux);
+    _init_model(&aux, pdinfo);
 
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
@@ -1273,7 +1273,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     }
     if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
 
-    clear_model(&aux, NULL, NULL);
+    clear_model(&aux, NULL, NULL, pdinfo);
     free(tmplist);
     free(list);
     return check;
@@ -1299,7 +1299,7 @@ MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
     int *hsklist;
     MODEL hsk;
 
-    _init_model(&hsk);
+    _init_model(&hsk, pdinfo);
 
     lo = list[0];
     yno = list[1];
@@ -1348,7 +1348,7 @@ MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
     if (hsk.ifc) hsklist[hsklist[0]] = 0;
     hsklist[2] = yno;
 
-    clear_model(&hsk, NULL, NULL);
+    clear_model(&hsk, NULL, NULL, pdinfo);
     hsk = lsq(hsklist, pZ, pdinfo, WLS, 1, 0.0);
     hsk.ci = HSK;
 
@@ -1378,7 +1378,7 @@ MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
     double xx, *st, *uhat1, **p;
     MODEL hccm;
 
-    _init_model(&hccm);
+    _init_model(&hccm, pdinfo);
 
     n = pdinfo->n;
     t1 = pdinfo->t1; t2 = pdinfo->t2;
@@ -1497,7 +1497,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     double zz;
     MODEL white;
 
-    _init_model(&white);
+    _init_model(&white, pdinfo);
 
     lo = pmod->list[0];
     yno = pmod->list[1];
@@ -1542,7 +1542,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     white = lsq(list, pZ, pdinfo, OLS, 0, 0.);
     err = white.errcode;
     if (err) {
-	clear_model(&white, NULL, NULL);
+	clear_model(&white, NULL, NULL, pdinfo);
 	shrink = pdinfo->v - v;
 	if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
 	free(tmplist);
@@ -1561,7 +1561,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 		chisq(white.rsq * white.nobs, white.ncoeff - 1));
     }
 
-    clear_model(&white, NULL, NULL);
+    clear_model(&white, NULL, NULL, pdinfo);
     shrink = pdinfo->v - v;
     if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
     free(tmplist);
@@ -1595,8 +1595,8 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     int *arlist, *reglist, *reglist2, *rholist;
     MODEL ar, rhomod;
 
-    _init_model(&ar);
-    _init_model(&rhomod);
+    _init_model(&ar, pdinfo);
+    _init_model(&rhomod, pdinfo);
 
     if ((arlist = malloc(pos * sizeof(int))) == NULL ||
 	(reglist = malloc((list[0] - pos + 2) * sizeof(int))) == NULL ||
@@ -1677,7 +1677,7 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
 	ryno = vc = v + i;
 
 	/* now estimate the rho terms */
-	if (iter > 1) clear_model(&rhomod, NULL, NULL);
+	if (iter > 1) clear_model(&rhomod, NULL, NULL, pdinfo);
 	rhomod = lsq(rholist, pZ, pdinfo, OLS, 0, 0.0);
 
 	/* and rho-transform the data */
@@ -1699,7 +1699,7 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
 	}
 
 	/* estimate the transformed model */
-	clear_model(&ar, NULL, NULL);
+	clear_model(&ar, NULL, NULL, pdinfo);
 	ar = lsq(reglist2, pZ, pdinfo, OLS, 0, 0.0);
 
         if (iter > 1) diff = 100 * (ar.ess - ess)/ess;
@@ -1773,7 +1773,7 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     ar.arlist = NULL;
     copylist(&(ar.arlist), arlist);
     free(arlist);
-    clear_model(&rhomod, NULL, NULL);
+    clear_model(&rhomod, NULL, NULL, pdinfo);
     return ar;
 }
 
@@ -2014,7 +2014,7 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
     int i, t, nwt;
     double LM, xx;
 
-    _init_model(&archmod);
+    _init_model(&archmod, pdinfo);
 
     /* assess the lag order */
     if (order < 1) {
@@ -2059,7 +2059,7 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
     }
 
     /* run aux. regression */
-    clear_model(&archmod, NULL, NULL);
+    clear_model(&archmod, NULL, NULL, pdinfo);
     archmod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
     if (archmod.errcode) {
 	_shrink_Z(order + 1, pZ, pdinfo);
@@ -2107,7 +2107,7 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
 	    (*pZ)[n*nwt + t] = 1/sqrt(xx);
 	}
 	strcpy(pdinfo->varname[nwt], "1/sigma");
-	clear_model(&archmod, NULL, NULL);
+	clear_model(&archmod, NULL, NULL, pdinfo);
 	archmod = lsq(wlist, pZ, pdinfo, WLS, 1, 0.0);
 	if (model_count != NULL) {
 	    *model_count += 1;

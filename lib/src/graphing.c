@@ -536,7 +536,7 @@ int gnuplot (LIST list, const int *lines,
 	tmplist[1] = list[1];
 	tmplist[2] = list[2];	
 	tmplist[3] = 0;	
-	_init_model(&plotmod);
+	_init_model(&plotmod, pdinfo);
 	plotmod = lsq(tmplist, pZ, pdinfo, OLS, 0, 0.0);
 	if (!plotmod.errcode) {
 	    /* is the fit significant? */
@@ -546,7 +546,7 @@ int gnuplot (LIST list, const int *lines,
 		a = plotmod.coeff[2];
 	    }
 	}
-	clear_model(&plotmod, NULL, NULL);
+	clear_model(&plotmod, NULL, NULL, pdinfo);
     }
 
     _adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);

@@ -117,7 +117,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
-    _init_model(&dmod);
+    _init_model(&dmod, pdinfo);
 
     /* check that depvar is really a dummy */
     if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ, n) == 0) {
@@ -180,7 +180,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
 	if (fabs(dmod.lnL - Lbak) < .000005) break; 
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
-	clear_model(&dmod, NULL, NULL);
+	clear_model(&dmod, NULL, NULL, NULL);
 	dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
 	    (void) _shrink_Z(1, pZ, pdinfo);

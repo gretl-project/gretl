@@ -948,11 +948,15 @@ int _list_dups (const int *list, int ci)
 
 /* .......................................................... */
 
-void _init_model (MODEL *pmod)
+void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
     if (pmod == NULL) return;
     pmod->list = NULL;
     pmod->subdum = NULL;
+    if (pdinfo != NULL) {
+	pmod->smpl.t1 = pdinfo->t1;
+	pmod->smpl.t2 = pdinfo->t2;
+    }
     pmod->coeff = NULL;
     pmod->sderr = NULL;
     pmod->yhat = NULL;
@@ -973,11 +977,11 @@ void _init_model (MODEL *pmod)
 
 /* ........................................................... */
 
-MODEL *gretl_model_new (void)
+MODEL *gretl_model_new (DATAINFO *pdinfo)
 {
     MODEL *pmod = malloc(sizeof *pmod);
 
-    _init_model(pmod);
+    _init_model(pmod, pdinfo);
     return pmod;
 }
 
@@ -985,7 +989,8 @@ MODEL *gretl_model_new (void)
 
 /* ........................................................... */
 
-int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild)
+int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild,
+		     DATAINFO *pdinfo)
 {
     int i = psession->nmodels;
     MODEL *pmod = *ppmod;
@@ -1009,7 +1014,7 @@ int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild)
     tmp = malloc(sizeof *tmp);
     if (tmp == NULL) return 1;
     *ppmod = tmp;
-    _init_model(tmp);
+    _init_model(tmp, pdinfo);
 
 #ifdef SESSION_DEBUG
     fprintf(stderr, "copied '%s' to psession->models[%d]\n" 
@@ -1020,7 +1025,8 @@ int silent_remember (MODEL **ppmod, SESSION *psession, SESSIONBUILD *rebuild)
     
 /* .......................................................... */
 
-int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild)
+int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
+		 DATAINFO *pdinfo)
 {
     int i;
     static int save;
@@ -1046,7 +1052,7 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild)
   		    fprintf(stderr, "Rebuilding saved model %d (%s)\n",  
   			   pmod->ID, rebuild->model_name[i]);
 #endif	 
-		    return silent_remember(ppmod, psession, rebuild);
+		    return silent_remember(ppmod, psession, rebuild, pdinfo);
 		}
 	    }
 	}
@@ -1073,7 +1079,7 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild)
 	}
 	if (pmod->ntests) free(pmod->tests);
     }
-    _init_model(pmod);
+    _init_model(pmod, pdinfo);
 
     return 0;
 }
@@ -1352,7 +1358,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     *targ = *src;
 
     /* now work on pointer members */
-    _init_model(targ);
+    _init_model(targ, pdinfo);
     if ((targ->coeff = copyvec(src->coeff, src->ncoeff + 1)) == NULL)
 	return 1;
     if ((targ->sderr = copyvec(src->sderr, src->ncoeff + 1))  == NULL)  
@@ -1566,12 +1572,12 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     }
 #endif
     
-    _init_model(&fmod);
+    _init_model(&fmod, &fdatainfo);
     fdatainfo.extra = 1;
     fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
     if (fmod.errcode) {
 	err = fmod.errcode;
-	clear_model(&fmod, NULL, NULL);
+	clear_model(&fmod, NULL, NULL, &fdatainfo);
 	free(fZ);
 	free(list);
 	free(yhat);
@@ -1668,7 +1674,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 			      depvar, yhat, sderr, pdinfo->varname[v1], ppaths);
     }
 
-    clear_model(&fmod, NULL, NULL);
+    clear_model(&fmod, NULL, NULL, &fdatainfo);
     free(fZ);
     free(list);
     free(yhat);
@@ -1773,7 +1779,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     getcmd(model_spec, pdinfo, &command, &ignore, pZ, NULL);
 
-    _init_model(tmpmod);
+    _init_model(tmpmod, pdinfo);
 
     switch(command.ci) {
     case AR:
@@ -1809,7 +1815,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
     if (tmpmod->errcode) {
 	err = 1;
-	clear_model(tmpmod, NULL, NULL);
+	clear_model(tmpmod, NULL, NULL, pdinfo);
     }
     if (command.list) free(command.list);
     if (command.param) free(command.param);

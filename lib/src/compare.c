@@ -255,7 +255,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
     if (orig->ci == TSLS) return E_NOTIMP;
 
-    _init_model(&aux);
+    _init_model(&aux, pdinfo);
 
     /* was a specific list of vars to add passed in, or should we
        concoct one? (e.g. "lmtest") */
@@ -333,7 +333,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    err = new->errcode;
 	    free(newlist);
 	    if (addvars == NULL) free(tmplist); 
-	    clear_model(new, NULL, NULL);
+	    clear_model(new, NULL, NULL, pdinfo);
 	    return err; 
 	}
 	++m;
@@ -360,7 +360,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    fprintf(stderr, "auxiliary regression failed\n");
 	    free(newlist);
 	    if (addvars == NULL) free(tmplist); 
-	    clear_model(&aux, NULL, NULL);
+	    clear_model(&aux, NULL, NULL, pdinfo);
 	    _shrink_Z(1, pZ, pdinfo);
 	    return err; 
 	}
@@ -378,7 +378,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    df, trsq, chisq(trsq, df));
 	}
 
-	clear_model(&aux, NULL, NULL);
+	clear_model(&aux, NULL, NULL, pdinfo);
 
 	/* shrink for uhat */
 	_shrink_Z(1, pZ, pdinfo);
@@ -534,7 +534,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     int err, i, k, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF;
 
-    _init_model(&aux);
+    _init_model(&aux, pdinfo);
 
     k = pdinfo->pd + 1;
     newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
@@ -570,7 +570,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     if (err) {
 	errmsg(aux.errcode, prn);
 	free(newlist);
-	clear_model(&aux, NULL, NULL);
+	clear_model(&aux, NULL, NULL, pdinfo);
 	_shrink_Z(k, pZ, pdinfo);
 	return err;
     } 
@@ -604,7 +604,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 
     _shrink_Z(k, pZ, pdinfo);
     free(newlist);
-    clear_model(&aux, NULL, NULL);
+    clear_model(&aux, NULL, NULL, pdinfo);
     return 0;
 }
 
@@ -635,7 +635,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
-    _init_model(&chow_mod);
+    _init_model(&chow_mod, pdinfo);
 
     if (sscanf(line, "%*s %7s", chowdate) != 1) 
 	return E_PARSE;
@@ -696,7 +696,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 		    newvars, chow_mod.dfd, F);
 	    sprintf(test->pvalue, "%f", fdist(F, newvars, chow_mod.dfd));
 	}
-	clear_model(&chow_mod, NULL, NULL);
+	clear_model(&chow_mod, NULL, NULL, pdinfo);
     } 
 
     /* clean up extra variables */
@@ -776,7 +776,7 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn,
 	return E_ALLOC;
     }
 
-    _init_model(&cum_mod);
+    _init_model(&cum_mod, pdinfo);
     /* set sample based on model to be tested */
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t1 + K - 1;
@@ -786,7 +786,7 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn,
 	cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 1, 0.0);
 	if (cum_mod.errcode) {
 	    errmsg(cum_mod.errcode, prn);
-	    clear_model(&cum_mod, NULL, NULL);
+	    clear_model(&cum_mod, NULL, NULL, pdinfo);
 	    free(cresid);
 	    free(W);
 	    free(xvec);
@@ -806,7 +806,7 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn,
 	    cresid[j] /= sqrt(1.0 + xx);
 	    /*  printf("w[%d] = %g\n", t, cresid[j]); */
 	    wbar += cresid[j];
-	    clear_model(&cum_mod, NULL, NULL);
+	    clear_model(&cum_mod, NULL, NULL, pdinfo);
 	    pdinfo->t2 += 1;
 	}
     }

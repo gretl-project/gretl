@@ -114,12 +114,19 @@ typedef struct {
     double *xpx;
 } CORRMAT;
 
+typedef struct {
+    int t1;
+    int t2;
+} SAMPLE;
+
 /* struct to hold model results */
 typedef struct {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
     double *subdum;              /* keep track of sub-sample in force
+                                    when model was estimated */
+    SAMPLE smpl;                 /* numeric start and end of current sample
                                     when model was estimated */
     int ncoeff, dfn, dfd;        /* number of coefficents; degrees of
                                     freedom in numerator and denominator */

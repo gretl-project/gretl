@@ -266,7 +266,7 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 	laglist[i-1] = _lagvarnum(varnum, i, pdinfo); 
     }
 
-    _init_model(&tmp);
+    _init_model(&tmp, pdinfo);
     pdinfo->t1 = t1;
 
     list[1] = varnum;
@@ -277,10 +277,10 @@ static int get_pacf (double *pacf, int *maxlag, const int varnum,
 	tmp = lsq(list, pZ, pdinfo, OLS, 0, 0);
 	if ((err = tmp.errcode)) break;
 	pacf[i-1] = tmp.coeff[i];
-	if (i < *maxlag) clear_model(&tmp, NULL, NULL);
+	if (i < *maxlag) clear_model(&tmp, NULL, NULL, pdinfo);
     }
 
-    clear_model(&tmp, NULL, NULL);
+    clear_model(&tmp, NULL, NULL, pdinfo);
     _shrink_Z(pdinfo->v - v, pZ, pdinfo);
     free(laglist);
     free(list);
@@ -504,7 +504,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
     list[2] = 2;
     list[3] = 0;
 
-    _init_model(&tmp);
+    _init_model(&tmp, &tmpdinfo);
     tmp = lsq(list, &tmpZ, &tmpdinfo, OLS, 0, 0);
 
     if (!tmp.errcode) {
@@ -515,7 +515,7 @@ static int fract_int (int n, double *hhat, double *omega, PRN *prn)
 		tmp.coeff[1], tmp.dfd, tstat, tprob(tstat, tmp.dfd));
     } else err = tmp.errcode;
 
-    clear_model(&tmp, NULL, NULL);
+    clear_model(&tmp, NULL, NULL, &tmpdinfo);
     free(tmpZ);
     clear_datainfo(&tmpdinfo, 0);
 

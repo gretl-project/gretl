@@ -302,6 +302,84 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 
 /* ........................................................... */
 
+static int model_dates_check (windata_t *mydata)
+{
+    MODEL *pmod = (MODEL *) mydata->data;
+
+    if (pmod->smpl.t1 != datainfo->t1 ||
+	pmod->smpl.t2 != datainfo->t2) {
+	errbox("Sorry, can't do: the sample has been reset\nsince this model "
+	       "was estimated");
+	return 1;
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+void model_test_callback (gpointer data, guint action, GtkWidget *widget)
+{
+    char title[36], query[MAXLABEL], defstr[MAXLEN];
+    char startdate[9], enddate[9];
+    void (*okfunc)() = NULL;
+    guint varclick = 0;
+    windata_t *mydata = (windata_t *) data;
+
+    if (model_dates_check(mydata)) return;
+
+    *defstr = '\0';
+
+    switch (action) {
+    case ARCH:
+	strcpy(title, "gretl: ARCH test");
+	strcpy(query, "Lag order for ARCH test:");
+	strcpy(defstr, "1");
+	okfunc = do_arch;
+	break;
+    case CHOW:
+	ntodate(startdate, datainfo->t1, datainfo);
+	ntodate(enddate, datainfo->t2, datainfo);
+	strcpy(title, "gretl: Chow test");
+	sprintf(query, "Enter observation at which\n"
+		"to split the sample\n"
+		"(between %s and %s):", startdate, enddate);
+	okfunc = do_chow;
+	break;
+    case OMIT:
+	strcpy(title, "gretl: omit vars");
+	strcpy(query, "Names (or numbers) of variables to omit:");
+	okfunc = do_add_omit;
+	varclick = 1;
+	break;	
+    case ADD:
+	strcpy(title, "gretl: add vars");
+	strcpy(query, "Names (or numbers) of variables to add:");
+	okfunc = do_add_omit;
+	varclick = 1;
+	break;
+    case FCAST: 
+	strcpy(title, "gretl: forecast");
+	sprintf(query, "Starting obs (min = %s)\n"
+		"and ending obs (max = %s)?", 
+		datainfo->stobs, datainfo->endobs);
+	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
+	okfunc = do_forecast;
+	break;
+    case MODEL_GENR:
+	strcpy(title, "gretl: add var");
+	strcpy(query, "Enter formula for new variable:");
+	okfunc = do_model_genr;
+	varclick = 2;
+	break;
+    }
+
+    edit_dialog(title, query, defstr, 1,
+		" Apply ", okfunc, mydata, 
+		" Cancel ", NULL, NULL, action, varclick);   
+}
+
+/* ........................................................... */
+
 void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 {
     char title[36], query[MAXLABEL], defstr[MAXLEN];
@@ -376,12 +454,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(defstr, "1");
 	okfunc = do_dialog_cmd;
 	break;
-    case ARCH:
-	strcpy(title, "gretl: ARCH test");
-	strcpy(query, "Lag order for ARCH test:");
-	strcpy(defstr, "1");
-	okfunc = do_arch;
-	break;
     case COINT:
 	strcpy(title, "gretl: cointegration test");
 	strcpy(query, "Enter spec. for cointegration test:\n"
@@ -410,35 +482,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	okfunc = do_dialog_cmd;
 	varclick = 1;
 	break;
-    case CHOW:
-	ntodate(startdate, datainfo->t1, datainfo);
-	ntodate(enddate, datainfo->t2, datainfo);
-	strcpy(title, "gretl: Chow test");
-	sprintf(query, "Enter observation at which\n"
-		"to split the sample\n"
-		"(between %s and %s):", startdate, enddate);
-	okfunc = do_chow;
-	break;
-    case OMIT:
-	strcpy(title, "gretl: omit vars");
-	strcpy(query, "Names (or numbers) of variables to omit:");
-	okfunc = do_add_omit;
-	varclick = 1;
-	break;	
-    case ADD:
-	strcpy(title, "gretl: add vars");
-	strcpy(query, "Names (or numbers) of variables to add:");
-	okfunc = do_add_omit;
-	varclick = 1;
-	break;
-    case FCAST: 
-	strcpy(title, "gretl: forecast");
-	sprintf(query, "Starting obs (min = %s)\n"
-		"and ending obs (max = %s)?", 
-		datainfo->stobs, datainfo->endobs);
-	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
-	okfunc = do_forecast;
-	break;
     case PRINT:
 	strcpy(title, "gretl: display vars");
 	strcpy(query, "Enter variable names or numbers:");
@@ -449,12 +492,6 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	strcpy(title, "gretl: add var");
 	strcpy(query, "Enter formula for new variable:");
 	okfunc = do_genr;
-	varclick = 2;
-	break;
-    case MODEL_GENR:
-	strcpy(title, "gretl: add var");
-	strcpy(query, "Enter formula for new variable:");
-	okfunc = do_model_genr;
 	varclick = 2;
 	break;
     case RENAME:
