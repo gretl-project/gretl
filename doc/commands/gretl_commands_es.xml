@@ -1,0 +1,4957 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE commandlist SYSTEM "gretl_commands.dtd">
+<commandlist language="spanish">
+
+<?PSGML NOFILL label code altforms altform menu-path other-access?>
+
+<!-- June 11, 2004: Based on English gretl_commands.xml,
+  CVS version 1.25 -->
+
+  <command name="add" section="Contrastes" label="Añadir variables">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar matriz de covarianzas</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>no muetra las estimaciones del modelo aumentado</effect>
+	</option>
+      </options>
+      <examples>
+        <example>add 5 7 9</example>
+        <example>add xx yy zz</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Debe utilizarse después de una instrucción de estimación.  Las 
+	variables de <repl>listavar</repl> se añaden al modelo anterior y 
+	se estima el nuevo modelo.  Si se añade más de una variable, se presenta 
+	el estadístico <mathvar>F</mathvar> para las variables añadidas (sólo 
+	para el método MCO) junto con su valor-p. Un valor-p inferior a 0.05 
+	indica que los coeficientes son conjuntamente significativos al nivel del 5 por ciento.
+      </para>
+      <para context="cli">
+	Si se usa la opción <lit>--quiet</lit> el resultado que se muestra
+	es sólo el estadístico para el contraste de significación conjunta
+	de las variables añadidas, en los demás casos se presentan también
+	las estimaciones del modelo aumentado. En este último caso, la opción
+	<lit>--vcv</lit> hace que también se presente la matriz de covarianzas
+	de los coeficientes.
+      </para>
+      <para context="gui">
+	Las variables elegidas se añaden al modelo anterior y se estima
+	el nuevo modelo.  Si se añade más de una variable, se mostrará
+	el estadístico <mathvar>F</mathvar> para las variable añadidas
+	(Sólo para el método MCO) y su valor p. Un valor p inferior a 
+	0.05 indica que los coeficientes son conjuntamente significativos 
+	al nivel del 5 por ciento.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Añadir variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="addto" section="Contrastes" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>ID_modelo</argument>
+	<argument>listavar</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>no mostrar las estimaciones del modelo aumentado</effect>
+	</option>
+      </options>
+      <examples>
+        <example>addto 2 5 7 9</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Funciona como la instrucción <cmd>add</cmd>, salvo que Vd. especifica
+	un modelo previo (usando su identificador --ID-- de modelo, que se presenta 
+	al principio de los resultados del modelo) que se toma como base para añadir
+	las variables.  En el ejemplo de arriba se añaden las variables números 5, 7 y 9
+	al Modelo 2.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/añadir variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="adf" section="Contrastes" label="Contraste aumentado de Dickey-Fuller">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>nombre_var</argument>
+      </arguments>
+      <examples>
+        <example>adf 2 x1</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">Esta instrucción n¡requiere un orden de retardos entero.</para>
+      <para>
+          Calcula los estadísticos para dos contrastes de Dickey-Fuller.
+	  En cada caso la hipótesis nula es que la variable seleccionada
+	  presenta una raíz unitaria. El primero es un estadístico
+	  <mathvar>t</mathvar> basado en el modelo 
+	  <equation status="display"
+	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
+	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
+	  graphic="adf1"/> La hipótesis nula es que
+	<mathvar>g</mathvar> = 0. En el segundo contraste (aumentado)
+	se realiza la estimación de una regresión no retringida 
+	(cuyos regresores son una constante, una tendencia temporal, el 
+	primer retardo de la variable y <repl quote="true">orden</repl> retardos
+	de la primera diferencia) y una versión restringida (quitando la 
+	tendencia temporal y el primer retardo).  El estadístico de contraste es
+	  <equation status="display"
+	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
+	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
+	  graphic="adf2"/> donde <mathvar>T</mathvar> es el tamaño de 
+	  la muestra, <mathvar>k</mathvar> el número de parámetros del modelo
+	  no restringido, y los subíndices <mathvar>u</mathvar> y
+	  <mathvar>r</mathvar> denotan el modelo no restringido y el 
+	  restringido respectivamente. Hay que señalar que los valores 
+	  críticos para estos estadísticos no son los habituales; se
+	  muestra el valor p cuando es posible determinarlo.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Contraste aumentado de Dickey-Fuller</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ar" section="Estimación" label="Estimación autorregresiva">
+
+    <usage>
+      <arguments>
+        <argument>retardos</argument>
+	<argument separated="true">vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+      <examples>
+        <example>ar 1 3 4 ; y 0 x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Computa las estimaciones de los parámetros usando el
+      procedimiento iterativo generalizado de Cochrane&ndash;Orcutt
+      (ver Sección 9.5 del libro de Ramanathan). Las iteraciones terminan
+      cuando dos sumas de cuadrados residuales sucesivas no difieren
+      en más del 0.005 por ciento o después de 20 iteraciones.</para>
+
+      <para context="gui">
+	La <quote>lista de retardos AR</quote> especifica la estructura 
+	de la perturbación.  Por ejemplo, la entrada <quote>1 3
+	  4</quote> corresponde al proceso: 
+	<equation status="display" 
+	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
+	    \rho_4 u_{t-4} + e_t\]"
+	  ascii="u(t) = rho1*u(t-1) + rho3+u(t-3) + rho4*u(t-4)"
+	  graphic="arlags"/>
+      </para>
+
+      <para context="cli">
+	<repl quote="true">retardos</repl> es una lista de retardos
+	de los residuos, que termina con un punto y coma. En el ejemplo
+	anterior el término de error se especifica como 
+	<equation status="display" 
+	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
+	    \rho_4 u_{t-4} + e_t\]"
+	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
+	  graphic="arlags"/>
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Estimación autorregresiva</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="arch" section="Contrastes" label="Contraste ARCH">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>vardep</argument>
+	<argument>varindeps</argument>
+      </arguments>
+      <examples>
+        <example>arch 4 y 0 x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">
+	Estainstrucción requiere un número de retardos entero.
+      </para>
+
+      <para>
+      	Contrasta la existencia de ARCH (Autoregressive Conditional
+	Heteroskedasticity -- Heterocedasticidad condicional autorregresiva)
+	del orden especificado, en el modelo. Si el estadístico de 
+	contraste LM tiene un valor p inferior a 0.10, entonces también 
+	se realiza la estimación del modelo ARCH. Si la predicción de 
+	la varianza de cualquier observación, en la regresión auxiliar, 
+	no es positiva entonces se usa en su lugar el correspondiente 
+	residuo al cuadrado. Después se realiza una estimación por 
+	mínimos cuadrados ponderados sobre el modelo original.
+      </para>
+      <para>
+	Ver también <cmdref targ="garch"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/ARCH</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="arma" section="Estimación" label="Modelo ARMA">
+
+    <usage>
+      <arguments>
+        <argument>p</argument>
+	<argument>q</argument>
+	<argument separated="true">vardep</argument>
+	<argument optional="true">varindeps</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--native</flag>
+	  <effect>Usar rutina nativa plugin (por defecto)</effect>
+        </option>
+        <option>
+	  <flag>--x-12-arima</flag>
+	  <effect>usar el programa X-12-ARIMA para realizar la estimación</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>mostrar detalles de las iteraciones</effect>
+        </option>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+        </option>
+      </options>
+      <examples>
+        <example>arma 1 2 ; y</example>
+	<example>arma 2 2 ; y 0 x1 x2 --verbose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+      	Si no se da una lista <repl>varindeps</repl>, estima un
+	modelo ARMA (Autoregressive, Moving Average) univariante.
+	Los valores enteros <repl>p</repl> y <repl>q</repl> 
+	representan los órdenes AR y MA respectivamente. Si se añade
+	una lista <repl>varindeps</repl>, el modelo pasa a ser un ARMAX.
+      </para>
+
+      <para context="gui">
+      	Cuando se elige desde el menú de Variable, estima un modelo
+	ARMA (Autoregressive, Moving Average).  Cuando se elige desde
+	el menú de Modelo (<quote>ARMAX</quote>), estima un modelo
+	ARMAX, es decir, con regresores exógenos adicionales.
+      </para>
+
+      <para>Por defecto se usa la función <quote>nativa</quote> ARMA
+	de gretl; en el caso de un modelo ARMA univariante se puede usar
+	<program>X-12-ARIMA</program> en su lugar (si está instalado
+	el paquete <program>X-12-ARIMA</program> para gretl).
+      </para>
+
+      <para context="cli">La sopciones dadas arriba pueden combinarse,
+      	pero la matriz de covarianzas no está disponible cuando se realiza
+	la estimación mediante <program>X-12-ARIMA</program>.</para>
+
+      <para>El algoritmo ARMA nativo de gretl ha sido, en su mayor parte,
+       creado por Riccardo <quote>Jack</quote> Lucchetti.  Utiliza un 
+       procedimiento de máxima verosimilitud condicional, implementado
+       por medio de la estimación por mínimos cuadrados iterativos de la 
+       regresión del producto externo del gradiente (OPG, outer product 
+       of the gradient regression).  Ver <manref targ="jack-arma"/> para 
+       entender la lógica de este procedimiento. Los coeficientes AR
+       (y los de cualquier regresor adicional) se inicializan por medio 
+       de la estimación por MCO de un AR, y los coeficientes MA se 
+       inicializan asignándoles valor cero.</para>
+
+      <para>El valor del coeficiente AIC para los modelos ARMA se
+	calcula de acuerdo con la definición usada en el programa
+	<program>X-12-ARIMA</program>, es decir
+	  <equation status="display" 
+	  tex="\[\mbox{AIC}=-2L+2k\]"
+	  ascii="AIC = -2L + 2k"
+	  graphic="aic"/> donde <mathvar>L</mathvar> es la
+	log-verosimilitud y <mathvar>k</mathvar> es el número total
+	de parámetros estimados. La <quote>frecuencia</quote> que se 
+	presenta asociada a las raíces AR y MA es el valor &lgr; 
+	que soluciona
+	  <equation status="display" 
+	  tex="\[z=re^{i2\pi\lambda}\]"
+	  ascii="z = r * exp(i*2*pi*lambda)"
+	  graphic="lambda"/> donde <mathvar>z</mathvar> es la raíz en
+	cuestión y <mathvar>r</mathvar> es su módulo.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Modelo ARMA, /Modelo/Serie temporal/ARMAX</menu-path>
+      <other-access>Menú emergente de la ventana principal (selección simple)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="boxplot" section="Gráficos" label="Gráficos de caja">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--notches</flag>
+	  <effect>presenta el intervalo de confianza 90 por ciento para la mediana</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+
+      <para>Estos gráficos (debidos a Tukey y Chambers) muestran la 
+      	distribución de una variable. La caja central recoge
+	el 50 por ciento intermedio de los datos, es decir, está acotada
+	por el primero y tercer cuartiles.  Las <quote>patillas</quote> se 
+	extienden hasta los valores mínimo y máximo.  Se dibuja una línea 
+	a lo largo de la caja en el lugar de la mediana.</para> 
+
+      <para>En el caso de gráficos de caja recortados, el recorte muestra
+      	los límites de un intervalo de aproximadamente el 90 por ciento 
+	de confianza para la mediana. Este intervalo se obtienen por el 
+	método bootstrap.</para>
+
+      <para context="gui">Después de cada variable especificada en la 
+      instrucción boxplot, se puede añadir una expresión booleana entre 
+      paréntesis para limitar la muestra para la variable en cuestión.
+        Debe de insertarse un espacio entre el nombre o número de la 
+	variable y la expresión. Supongamos que usted tiene valores de 
+	los salarios de hombres y mujeres, y tiene una variable ficticia
+	<lit>SEXO</lit> con valor 1 para los hombres y 0 para las mujeres.
+	En este caso usted puede dibujar gráficos de caja comparativos 
+	usando la siguiente línea en el cuadro de diálogo de los 
+	gráficos de caja:</para>
+
+      <para context="cli">Después de cada variable especificada en la 
+      instrucción boxplot, se puede añadir una expresión booleana entre 
+      paréntesis para limitar la muestra para la variable en cuestión.
+       Debe de insertarse un espacio entre el nombre o número de la 
+	variable y la expresión. Supongamos que usted tiene valores de 
+	los salarios de hombres y mujeres, y tiene una variable ficticia
+	<lit>SEXO</lit> con valor 1 para los hombres y 0 para las mujeres.
+	En este caso usted puede dibujar gráficos de caja comparativos 
+	usando la siguiente <repl
+	  quote="true">listavar</repl>:</para>
+
+      <code>
+	salary (GENDER=1) salary (GENDER=0)
+      </code>
+
+      <para>Algunos detalles de los gráficos de caja de gretl pueden 
+      controlarse por medio de un fichero (de texto plano) llamado 
+      <filename>.boxplotrc</filename>.  Para más detalles sobre esto ver
+	<manref targ="sect-boxplots"/>.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Gráficos/Gráficos de caja</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="chow" section="Contrastes" label="Contraste de Chow">
+
+    <usage>
+      <arguments>
+        <argument>obs</argument>
+      </arguments>
+      <examples>
+        <example>chow 25</example>
+        <example>chow 1988:1</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">Esta instrucción requiere un número de observaciones 
+      (o fecha, en el caso de datos con fechas).</para>
+
+      <para>
+      	Primero debe ejecutarse una regresión por MCO. Crea una variable ficticia
+	que es igual a 1 desde el punto de corte especificado en <repl>obs</repl> hasta el final
+	de la muestra y 0 en el resto. También crea los términos de interacción entre
+	esta variable ficticia y las variables independientes originales. Se ejecuta
+	una regresión aumentada incluyendo estos términos y se calcula un estadístico <mathvar>F</mathvar>,
+	tomando la regresión aumentada como 'no restringida' y la original como
+	'restringida'. Este estadístico es adecuado para contrastar la hipótesis nula de
+	que no hay cambio estructural en el punto de ruptura indicado.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Contraste de Chow</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coeffsum" section="Contrastes" label="Suma de coeficientes">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <examples>
+        <example>coeffsum xt xt_1 xr_2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">Esta instrucción requiere una lista de variables,
+	que se elige a partir del conjunto de variables independientes
+	de un modelo dado.</para>
+      <para context="gui">
+      	Calcula la suma de los coeficientes de las variables de la lista 
+	especificada. Presenta la suma junto con su desviación típica y
+	el valor p para la hipótesis nula de que la suma es cero.
+      </para>
+      <para context="cli">
+      	Debe ejecutarse después de una regresión. Calcula la suma
+	de los coeficientes de las variables de la lista <repl>listavar</repl>. 
+	Presenta la suma junto con su desviación típica y
+	el valor p para la hipótesis nula de que la suma es cero. 
+	</para>
+      <para>Hay que señalar la diferencia entre esta instrucción y
+      	<cmdref targ="omit"/>, que contrasta la hipótesis nula de que
+	los coeficientes de un subconjunto de variables independientes
+	son <emphasis>todos</emphasis> iguales a cero zero.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Suma de coeficientes</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coint" section="Contrastes" 
+    label="Contraste de cointegración de Engle-Granger">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>vardep</argument>
+	<argument>varindeps</argument>
+      </arguments>
+      <examples>
+	<example>coint 4 y x1 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      	Contraste de cointegración de Engle&ndash;Granger. Esta instrucción 
+	realiza los contrastes de Dickey&ndash;Fuller aumentados de la
+	hipótesis nula de que cada una de las variables de la lista
+	tiene una raíz unitaria, usando el orden de retardos dado.
+	Se estima la ecuación cointegrante y se realiza un contraste
+	ADF sobre los residuos de esta regresión. También se presenta el
+	estadístico de Durbin&ndash;Watson para la regresión cointegrante.
+	Hay que señalar que ninguno de estos estadísticos de contraste
+	puede compararse con las tablas estadísticas usuales.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Contrates de cointegración/Engle-Granger</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="coint2" section="Contrastes" label="Contraste de cointegración de Johansen">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>vardep</argument>
+	<argument>varindeps</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>mostrar los detalles de las regresiones auxiliares</effect>
+        </option>
+      </options>
+      <examples>
+        <example>coint2 2 y x</example>
+	<example>coint2 4 y x1 x2 --verbose</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      	Realiza el contraste de la traza de Johansen para contrastar
+	cointegración entre las variables de la lista para el orden dado.
+	Los valores cvríticos se computan por medio de la aproximación
+	gamma de J. Doornik (Doornik, 1998). Para detalles sobre este
+	contraste ver el libro de Hamilton, <book>Time Series
+	Analysis</book> (1994), Capítulo 20.
+      </para>
+
+      <para>
+      	Se presenta aquí la siguiente tabla como guía para la
+	interpretación de los resultados ofrecidos por el contraste,
+	para el caso de 3 variables.  <lit>H0</lit> denota la
+	hipótesis nula,	<lit>H1</lit> la hipótesis alternativa y
+	<lit>c</lit> el número de relaciones cointegrantes.</para>
+
+      <code>
+            Rango   Contraste de la traza     Contraste Lmax 
+                          H0     H1              H0     H1
+             ---------------------------------------------------
+              0          c = 0  c = 3          c = 0  c = 1
+              1          c = 1  c = 3          c = 1  c = 2
+              2          c = 2  c = 3          c = 2  c = 3
+             ---------------------------------------------------
+      </code>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Contraste de cointegración/Johansen</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="compact" section="Conjunto de datos" context="gui"
+    label="Compactar datos">
+
+    <description>
+
+      <para>Cuando usted añade a un conjunto de datos una serie
+      que es de una frecuencia mayor, es necesario <quote>compactar</quote>
+      la nueva serie. Por ejemplo, será necesario compactar una serie
+      mensual para encajarla en un conjunto de datos trimestral.</para>  
+
+      <para>Además, es posible que alguna vez usted desee compactar
+      un conjunto de datos completo para transformarlo en datos de 
+      frecuencia más baja (por ejemplo, antes de añadir al conjunto de datos
+      una variable de  frecuencia inferior).</para>
+
+      <para>Se le ofrecen cuatro opciones de compactado:</para>
+
+      <ilist>
+	<li><para>Promediar: el valor que se escribe en el conjunto de datos
+	será la media aritmética de los valores relevantes de la serie. 
+	Por ejemplo, el valor poara el primer trimestre de 1990 será la
+	media de los valores de Enero, Febrero y Marzo de 1990.</para>
+	</li>
+
+	<li><para>Sumar: el valor que se escribe en el conjunto de datos
+	será la suma de los valores de frecuencia mayor relevantes. Por ejemplo,
+	el valor del primer trimestre será la suma de los valores de Enero, 
+	Febrero y Marzo.</para>
+	</li>
+
+	<li><para>Asignar valores de final del periodo: el valor que se escribe 
+	en el conjunto de datos es el último valor relevante de los datos 
+	de frecuencia mayor. Por ejemplo, el valor del primer trimestre de 1990
+	sería el valor de Marzo de 1990.</para>
+	</li>
+
+	<li><para>Asignar valores de inicio del periodo: el valor escrito
+	en el conjunto de datos es el primer valor relevante de los datos de 
+	frecuencia mayor. Por ejemplo, al primer trimestre de 1990 se le asignaría 
+	el valor de Enero de 1990.</para>
+	</li>
+      </ilist>
+
+      <para>Cuando se compacta un conjunto de datos completo, la elección que usted 
+      efectúa en esta caja de diálogo establece el método por defecto. Pero
+      si usted ha establecido un método de compactado para una variable individual
+      (elemento de menú <quote>Variable/Editar atributos</quote>) se usa ese método 
+      en lugar del método por defecto.</para>
+
+    </description>
+  </command>
+
+  <command name="corc" section="Estimación" label="Procedimiento de Cochrane-Orcutt">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+      <examples>
+        <example>corc 1 0 2 4 6 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Computa estimaciones de los parámetros usando el procedimiento 
+      iterativo de Cochrane&ndash;Orcutt (ver Sección 9.4 del libro de
+      Ramanathan). Las iteraciones finalizan cuando dos estimaciones 
+      sucesivas del coeficiente de autocorrelación no difieren en más de
+      0,001 o después de 20 iteraciones.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Cochrane-Orcutt</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="corr" section="Estadística" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">listavar</argument>
+      </arguments>
+      <examples>
+        <example>corr y x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Presenta los coeficientes de correlación por pares para las 
+      variables de <repl>listavar</repl>, o para todas las variables del
+      conjunto de datos, si no se proporciona <repl>listavar</repl>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Matriz de correlación</menu-path>
+      <other-access>Menú emergente de la ventana principal (cuando se hace 
+      selección múltiple)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="corrgm" section="Estadística" label="Correlograma">
+
+    <usage>
+      <arguments>
+        <argument>variable</argument>
+        <argument optional="true">retardo_max</argument>
+      </arguments>
+      <examples>
+        <example>corrgm x 12</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Presenta los valores de la función de autocorrelación para la
+      <repl>variable</repl> especificada (por nombre o por número).
+      Ver Ramanathan, Sección 11.7.  Es por tanto
+	<equation status="inline" 
+	  tex="$\rho(u_t, u_{t-s})$"
+	  ascii="rho(u(t), u(t-s))"
+	  graphic="autocorr"/> donde <mathvar>u<sub>t</sub></mathvar>
+	es la <mathvar>t</mathvar>-ésima observación de la variable
+	<mathvar>u</mathvar> y <mathvar>s</mathvar> es el número de 
+	retardos.
+      </para>
+
+      <para>
+      También se presentan las autocorrelaciones parciales, siendo éstas
+      los coeficientes una vez descontado el efecto de los demás retardos 
+      intervinientes. Esta instrucción también representa el correlograma
+      y muestra el estadístico <mathvar>Q</mathvar> de Box&ndash;Pierce
+      para el contraste de la hipótesis nula de que la serie es 
+      <quote>ruido blanco</quote>. Este se distribuye asintóticamente como 
+      una chi-cuadrado con grados de libertad igual al número de retardos 
+      utilizados.
+      </para>
+
+      <para>
+	Si se especifica un valor para <repl>retardo_max</repl> entonces
+	el tamaño del correlograma se limita como máximo a ese número de 
+	retardos, en los demás casos se determina automáticamente.
+	</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Correlograma</menu-path>
+      <other-access>Menú emergente de la ventana principal (cuando se hace 
+      una selección simple)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="criteria" section="Utilidades" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>scr</argument>
+        <argument>T</argument>
+        <argument>k</argument>
+      </arguments>
+      <examples>
+        <example>criteria 23.45 45 8</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Calcula los estadísticos de selección de modelos (ver Ramanathan,
+	Sección 4.3), dados <repl>scr</repl> (suma de cuadrados de los 
+	residuos), el número de observaciones (<mathvar>T</mathvar>), 
+	y el número de coeficientes (<mathvar>k</mathvar>).
+	<mathvar>T</mathvar>, <mathvar>k</mathvar>, y
+	<repl>scr</repl> pueden ser valores numéricos o nombres de 
+	variables definidas previamente.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="critical" section="Utilidades" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>distrib</argument>
+        <argument>param1</argument>
+	<argument optional="true">param2</argument>
+      </arguments>
+      <examples>
+        <example>critical t 20</example>
+        <example>critical X 5</example>
+        <example>critical F 3 37</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Si <repl>distrib</repl> es <lit>t</lit>, <lit>X</lit> or
+	<lit>F</lit>, presenta los valores críticos para la distribución
+	<mathvar>t</mathvar> de Student, chi-cuadrado o <mathvar>F</mathvar>
+	respectivamente, para los niveles de significación más comunes y usando
+	los grados de libertad especificados, que se dan en <repl>param1</repl> 
+	para la t y chi-cuadrado, o <repl>param1</repl> y 
+	<repl>param2</repl> para la <mathvar>F</mathvar>. 
+	Si <repl>distrib</repl> es <lit>d</lit>, presenta los valores
+	superior e inferior del estadístico de Durbin-Watson al
+	5 por ciento de significación, para el número de observaciones dado en
+	<repl>param1</repl>, y para una rango de 1 a 5 variables explicativas.
+	</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Utilidades/Tablas estadísticas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="cusum" section="Contrastes" label="Contraste CUSUM">
+
+    <description>
+      <para>
+        Debe realizarse después de la estimación de un modelo por MCO. 
+	Realiza el contraste CUSUM de estabilidad de los parámetros.
+	Se obtiene una serie de errores de predición (escalados) un 
+	período hacia adelante al ejecutar una serie de regresiones:
+	la primera regresión utiliza las primeras <mathvar>k</mathvar> 
+	observaciones y se usa para generar una predicción de la variable 
+	dependiente en la observación <mathvar>k</mathvar> + 1; 
+	la segunda utiliza las primeras <mathvar>k</mathvar> + 1 
+	observaciones y genera una predicción para la observación 
+	<mathvar>k</mathvar> + 2, y así sucesivamente (donde 
+	<mathvar>k</mathvar> es el número de parámetros en el modelo 
+	original). Se muestra y se representa graicamente la suma 
+	acumulada de los errores de predicción escalados.  La hipótesis 
+	nula de estabilidad en los parámetros se rechaza al nivel de 
+	significación del 5 por ciento si la suma acumulada se sale de
+	la banda de 95 por ciento de confianza.
+      </para>
+
+      <para>
+	También se presenta el estadístico <mathvar>t</mathvar> de 
+	Harvey&ndash;Collier para contrastar la hipótesis nula de 
+	estabilidad de los parámetros. Para más detalles ver Capítulo 7 
+	del libro de Greene <book>Econometric  Analysis</book>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/CUSUM</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="data" section="Conjunto de datos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>Lee las variables de <repl>listavar</repl> desde una base de 
+      datos (de gretl o RATS 4.0), que debe de haber sido abierta previamente
+      usando la instrucción <cmdref targ="open"/>. Además, se debe de establecer 
+      una frecuencia y un rango muestral para los datos usando las instrucciones
+      <cmdref targ="setobs"/> y <cmdref targ="smpl"/> antes de usar esta orden.
+      He aquí un ejemplo completo:</para>
+
+      <code>
+	open macrodat.rat
+	setobs 4 1959:1
+	smpl ; 1999:4
+	data GDP_JP GDP_UK</code>
+
+      <para>Estas instrucciones abren una base de datos denominada
+	<filename>macrodat.rat</filename>, establecen un conjunto de datos 
+	trimestral que empieza en el primer trimestre de 1959 y acaba en
+	el cuarto trimestre de 1999, y después importan las series denominadas
+	<lit>GDP_JP</lit> y <lit>GDP_UK</lit>.</para>
+
+      <para>Si las series que van a ser leídas son de una frecuencia mayor que el 
+      conjunto de datos actual, se debe especificar un método de compactado
+      como en las siguientes líneas:</para>
+
+      <code>
+	data (compact=average) 
+	LHUR PUNEW</code>
+
+      <para>Los cuatro métodos de compactado disponibles son
+	<quote>average</quote> (promediar: toma la media de las observaciones 
+	de frecuencia mayor), <quote>last</quote> (última: usa la última 
+	observación), <quote>first</quote> y <quote>sum</quote>.
+      </para> 
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Revisar bases de datos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="delete" section="Conjunto de datost" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>Borra las variables de la lista (dadas mediante nombre o número)
+	del conjunto de datos. <emphasis>Debe usarse con precaución</emphasis>: no
+	se pide confirmación, y cualquier variable con número de ID
+	mayor será renumerada.</para>
+
+      <para>Si con esta instrucción no se proporciona una lista <repl>listavar</repl>, 
+       se borra la última variable (la de número ID mayor) del conjunto de datos.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>Menú emergente de la ventana principal (selección simple)</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="dialog" section="Estimación" context="gui"
+    label="Caja de diálogo de Modelo">
+
+    <description>
+      <para>Para seleccionar la variable dependiente, marque una variable
+      en la lista de la izquierda y presione el botón <quote>Elegir-></quote>
+      que apunta a la zona de definición de la variable dependiente.
+      Si usted marca el cuadrado <quote>Selección por defecto</quote>, 
+      la variable indicada será preseleccionada como variable dependiente 
+      cuando se vuelva a abrir de nuevo la caja de diálogo de Modelo.  
+      Atajo: haga doble click sobre una variable de la izquierda para
+      seleccionarla como variable dependiente y establcerla así por defecto.
+      </para>
+
+      <para>Para seleccionar las variables independientes márquelas
+      a la izquierda y presione el botón <quote>Añadir-></quote> (o
+      haga click con el botón derecho del ratón).  Usted puede marcar varias 
+      variables contíguas manteniendo pulsado el botón izquierdo del ratón 
+      y desplazándolo. Puede marcar un grupo de variables no contíguas haciendo 
+      click sobre ellas al mismo tiempo que pulsa la tecla <lit>Ctrl</lit>.
+      </para>
+
+    </description>
+
+  </command>
+
+  <command name="diff" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+      Se obtiene la primera diferencia de cada variable de la lista
+      <repl>listavar</repl> y el resultado se guarda en una nueva variable 
+      cuyo nombre tiene el prefijo <lit>d_</lit>.  Así <cmd>diff x y</cmd> crea
+      las nuevas variables <lit>d_x = x(t) - x(t-1)</lit> y <lit>d_y =
+	  y(t) - y(t-1)</lit>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Añadir variables/Primeras diferencias</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="else" section="Programación" context="cli">
+
+    <description><para>Ver <cmdref targ="if"/>.</para>
+    </description>
+
+  </command>
+
+  <command name="end" section="Programación" context="cli">
+
+    <description>
+      <para>
+      Cierra un bloque de instrucciones de algunos tipos.  
+      Por ejemplo, <cmd>end system</cmd> termina un sistema de ecuaciones (Ver <cmdref targ="system"/>).
+      </para>
+    </description>
+
+  </command>
+
+  <command name="endif" section="Programación" context="cli">
+
+    <description><para>Ver <cmdref targ="if"/>.</para>
+    </description>
+
+  </command>
+
+  <command name="endloop" section="Programming" context="cli">
+
+    <description>
+      <para>
+      Marca el final de un bucle de instrucciones.  Ver <cmdref targ="loop"/>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="eqnprint" section="Presentación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">-f nombre_de_fichero</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--complete</flag>
+	  <effect>Crea un documento completo</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+      Debe ejecutarse después de la estimación de un modelo.
+      Presenta el modelo estimado en formato de ecuación &latex;.
+        Si se especifica un nombre de fichero usando la opción <lit>-f</lit> 
+	la salida va a  ese fichero, en caso contrario va a una fichero
+	cuyo nombre tiene la forma <filename>equation_N.tex</filename>, 
+	donde <lit>N</lit> es el número de modelos estimados hasta el momento
+	en la sesión actual. Ver también <cmdref targ="tabprint"/>.
+      </para>
+
+      <para>
+	Si se aplica la opción <lit>--complete</lit>, el fichero &latex; es
+	un documento completo, listo para ser procesado; en caso contrario deberá
+	incluirse dentro de un documento previamente preparado.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /LaTeX</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="equation" section="Estimación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <examples>
+        <example>equation y x1 x2 x3 const</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Sirve pare especificar una ecuación dentro de un sistema de 
+      ecuaciones (ver <cmdref targ="system"/>).  La sintaxis para
+      especificar una ecuación es la misma que, por ejemplo, la de 
+      MCO (ver <cmdref targ="ols"/>) (excepto para un sistema de Mínimos
+      Cuadrados en Tres Etapas, en el que la sintaxis es como en MC2E
+      --ver <cmdref targ="tsls"/>--).
+      </para>
+    </description>
+
+  </command>
+
+  <command name="export" section="Conjunto de datos" context="gui"
+    label="Exportar datos">
+
+    <description>
+      <para>Se pueden exportar los datos en formato CSV (Comma-Separated Values):
+      estos datos pueden abrirse desde programas de hoja de cálculos y muchos
+      otros programas de aplicaciones.</para>
+
+      <para>También se pueden exportar los datos en los formatos nativos 
+      de GNU R o GNU octave.  Para más información sobre estos programas
+      (que ambos soportan análisis estadísticos avanzados) vea por favor 
+      sus respectivos sitios web, http://www.r-project.org/ y
+	http://www.octave.org/</para>
+    </description>
+  </command>
+
+  <command name="factorized" section="Gráficos" context="gui"
+    label="Gráfico con factor de separación">
+
+    <description>
+      <para>Esta orden requiere la selección de tres variables, de las 
+      cuales la última debe ser una variable ficticia (con valores 1 o 0).
+      La variable Y se representa con respecto a la variable X, con los
+      puntos de datos coloreados de manera diferente dependiendo del valor
+      de la tercera variable.
+      </para>
+
+      <para>Ejemplo: suponga que tenemos datos sobre salarios y nivel de 
+      educación para una muestra de varias personas, también tenemos una
+      variable ficticia con valor 1 para los hombres y 0 para las mujeres
+      (como en el fichero de Ramanathan	<filename>data7-2</filename>).  
+      Un gráfico <quote>con factor de separación</quote> de <lit>SALARIO</lit> 
+      con respecto a <lit>EDUCACION</lit> usando la variable ficticia 
+      <lit>SEXO</lit> como factor, mostrará los puntos de datos para los hombres
+      de un color y los de las mujeres de otro (con una leyenda para poder 
+      identificarlos).</para>
+
+    </description>
+
+  </command>
+  
+
+  <command name="fcast" section="Predicción" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true" >obs_inic obs_fin</argument>
+	<argument>var_ajustada</argument>
+      </arguments>
+      <examples>
+        <example>fcast 1997:1 2001:4 f1</example>
+	<example>fcast fit2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+      Debe ejecutarse después de una instrucción de estimación. Se generan
+      predicciones para el dominio muestral especificado (o el dominio muestral 
+      mayor posible si no se han proporcionado <repl>obs_inic</repl> y 
+      <repl>obs_fin</repl>) y los valores se guardan como <repl>var_ajustada</repl>, 
+      que luego puede mostrarse o representarse gráficamente. Las
+      variables del lado derecho son las del modelo original. No se pueden 
+      sustituir por otras variables. Si se especifica un proceso de error 
+      autorregresivo (para <cmd>hilu</cmd>, <cmd>corc</cmd>,
+      y <cmd>ar</cmd>) la predicción se hace condicionada un paso adelante
+      y tiene en cuenta el proceso del error.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Datos del Modelo/Predicciones con desviaciones típicas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="fcasterr" section="Predicción"
+    label="Predicciones con intervalos de confianza">
+
+    <usage>
+      <arguments>
+        <argument>obs_inic</argument>
+        <argument>obs_fin</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--plot</flag>
+	  <effect>mostrar el gráfico</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Después de estimar un modelo por medio de MCO usted puede usar 
+	esta instrucción para mostrar los valores ajustados para el rango 
+	de observaciones determinado, las desviaciones típicas de estos 
+	valores ajustados y los intervalos de confianza del 95 por ciento.
+	</para>  
+
+      <para>Las desviaciones típicas se calculan de la forma descrita en
+          el Capítulo 6 del libro de Wooldridge <book>Introductory
+	  Econometrics</book>. Estas tienen en cuenta dos fuentes de 
+	  variabilidad: la asociada al valor esperado de la variable 
+	  dependiente condicionado a los valores dados de las variables 
+	  independientes, y la varianza de los residuos de la regresión.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Datos del modelo/Predicciones con desviaciones típicas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="fit" section="Predicción" context="cli">
+
+    <description>
+      <para>
+	Es un atajo a <cmd>fcast</cmd>. Debe de ejecutarse después de una 
+	instrucción de estimación.  Genera los valores ajustados basados 
+	en la última regresión, para la mustra actual, y los guarda en una
+	serie denominada <lit>autofit</lit>. En el caso de modelos de series 
+	temporales también hace emerger un gráfico con los valores originales 
+	y ajustados de la variable dependiente con respecto al tiempo.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="freq" section="Estadística" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>var</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Presenta la distribución de frecuencias de la variable 
+	<repl>var</repl> (que se da por nombre o número); también muestra 
+	los resultados del contraste de normalidad de Doornik&ndash;Hansen. 
+	En modo interactivo, se presenta un gráfico de la distribución.  
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Distribución de frecuencias</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="garch" section="Estimación" label="Modelo GARCH">
+
+    <usage>
+      <arguments>
+        <argument>p</argument>
+	<argument>q</argument>
+	<argument separated="true">vardep</argument>
+	<argument optional="true">varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>Desviaciones típicas robustas</effect>
+        </option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>muestra los detalles de las iteraciones</effect>
+        </option>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>presenta la matriz de covarianzas</effect>
+        </option>
+      </options>
+      <examples>
+        <example>garch 1 1 ; y</example>
+	<example>garch 1 1 ; y 0 x1 x2 --robust</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Estima un modelo GARCH (GARCH = Generalized Autoregressive
+	Conditional Heteroskedasticity), o un modelo univariante o,
+	si se especifican <repl>varindeps</repl>, un modelo que incluye
+	las variables exógenas dadas. Los valoires enteros <repl>p</repl> 
+	y <repl>q</repl> representan los órdenes de retardos en la ecuación 
+	de la varianza condicional.
+	<equation status="display"
+	  tex="\[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
+	  \sum_{j=1}^p \beta_i h_{t-j}\]"
+	  ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) + sum(j=1 to p) b(j)*h(t-j)"
+	  graphic="garch_h"/>
+      </para>
+
+      <para context="gui">
+        Estima un modelo GARCH (GARCH = Generalized Autoregressive
+	Conditional Heteroskedasticity), o un modelo univariante o,
+	si se seleccionan variables independientes, un modelo que 
+	incluye éstas como variables exógenas. La ecuación de la varianza 
+	condicional se muestra a continuación.
+	<equation status="display" tex="\[h_t =
+	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
+	\beta_i h_{t-j}\]" ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) +
+	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
+      </para>
+
+      <para>El algoritmo GARCH de gretl es básicamente el de Fiorentini,
+	Calzolari y Panattoni (1996), y se usa con el amable permiso del 
+	profesor Fiorentini.</para>
+
+      <para context="cli">Con esta instrucción están disponibles varias 
+      variantes de las estimaciones de la matriz de covarianzas de los 
+      coeficientes. Por defecto se usa el Hessiano a no ser que se indique 
+      la opción <lit>--robust</lit>, en cuyo caso se utiliza la matriz de 
+      covarianzas QML (White).  Se pueden especificar otras posibilidades
+      (p.ej. la matriz de información, o el estimador 
+      Bollerslev&ndash;Wooldridge) usando la instrucción <cmdref targ="set"/>.
+      </para>
+
+      <para context="gui">Con esta instrucción están disponibles varias 
+      variantes de las estimaciones de la matriz de covarianzas de los 
+      coeficientes. Por defecto se usa el Hessiano a no ser que se marque 
+      el cuadrado <quote>Desviaciones típicas robustas</quote>, en cuyo caso
+      se utiliza la matriz de covarianzas QML (White). Se pueden especificar 
+      otras posibilidades (p.ej. la matriz de información, o el estimador 
+      Bollerslev&ndash;Wooldridge) usando la instrucción <cmdref targ="set"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/GARCH</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="genr" section="Conjunto de datos"
+    label="Generar una variable nueva">
+
+    <usage>
+      <arguments>
+        <argument>nueva_var</argument>
+        <argument>= fórmula</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Crea variables nuevas, normalmente como transformaciones de
+	variables ya existentes. Ver también <cmdref targ="diff"/>, 
+	<cmdref targ="logs"/>, <cmdref targ="lags"/>, 
+	<cmdref targ="ldiff"/>, <cmdref targ="multiply"/> y
+	<cmdref targ="square"/> como atajos.
+      </para>
+
+      <para>
+        Los <emphasis>operadores aritméticos</emphasis> soportados son,
+	en orden de precedencia: <lit>^</lit> (exponenciación);
+	<lit>*</lit>, <lit>/</lit> y <lit>%</lit> (módulo o
+	resto); <lit>+</lit> y <lit>-</lit>. 
+      </para>
+
+      <para>
+        Los <emphasis>operadores Booleanos</emphasis> disponibles son
+	(de nuevo, en orden de precedencia): <lit>!</lit> (negación),
+	<lit>&amp;</lit> (Y lógico), <lit>|</lit> (O lógico),
+	<lit>&gt;</lit>, <lit>&lt;</lit>, <lit>=</lit>,
+	<lit>&gt;=</lit> (mayor o igual que), <lit>&lt;=</lit>
+	(menor o igual que) y <lit>!=</lit> (distinto que).  
+	Se pueden usar operadores Booleanos para construir variables 
+	ficticias: por ejemplo <lit>(x > 10)</lit> devuelve 1 si <lit>x</lit>
+	&gt; 10, y 0 en otro caso.</para>
+
+      <para>Las <emphasis>funciones</emphasis> se clasifican en:
+      </para>
+
+      <ilist>
+	<li><para>Funcione matemáticas estándar: <func>abs</func>,
+	    <func>cos</func>, <func>exp</func>, <func>int</func>
+	    (parte entera), <func>ln</func> (logaritmo natural:
+	    <func>log</func> es un sinónimo), <func>sin</func>,
+	    <func>sqrt</func>.</para>
+	</li>
+	<li><para>Funciones estadísticas: <func>max</func> (valor máximo 
+	    de una serie), <func>min</func> (mínimo),
+	    <func>mean</func> (media aritmética), <func>median</func>,
+	    <func>var</func> (varianza) <func>sd</func> (desviación típica), 
+	    <func>sst</func> (suma de desviaciones desde la media, al 
+	    cuadrado), <func>sum</func>, <func>cov</func>
+	    (covarianza), <func>corr</func> (coeficiente de correlación),
+	    <func>pvalue</func>, <func>sort</func>, <func>cum</func>
+	    (acumulación, o suma secuencial), <func>resample</func>
+	    (remuestrear una serie con reemplazamiento, con el propósito 
+	    de hacer bootstrap), <func>hpfilt</func> (Filtro de Hodrick&ndash;Prescott: 
+	    esta función devuelve el <quote>componente cíclico</quote>
+	    de la serie).</para>
+	</li>
+	<li><para>Funciones de series temporales: <func>diff</func> (primera
+	    diferencia), <func>ldiff</func> (diferencia logarítmica, o primera
+	    diferencia del logaritmo natural).  Para generar retardos de 
+	    una variable <lit>x</lit>, se usa la sintaxis <cmd>x(-N)</cmd>,
+	    donde <lit>N</lit> representa la longitud deseada del retardo; 
+	    para generar adelantos, se usa <cmd>x(+N)</cmd>.</para>
+	</li>
+	<li><para>Funciones de conjunto de datos: <func>misszero</func> 
+	    (reemplaza los códigos de observación ausente de una serie dada
+	    con ceros), <func>zeromiss</func> (la operación inversa a
+	    <func>misszero</func>), <func>nobs</func> (devuelve el número de 
+	    observaciones válidas de una serie de datos determinada),
+	    <func>missing</func> (para cada observación, devuelve 1 si el
+	    argumento tiene una observación ausente, y 0 en caso contrario).</para>
+	</li>
+	<li><para>Números pseudo-aleatorios: <func>uniform</func>,
+	    <func>normal</func>.</para>
+	</li>
+      </ilist> 
+
+      <para>
+        Todas las funciones de arriba excepto
+	<func>cov</func>, <func>corr</func>, <func>pvalue</func>,
+	<func>uniform</func> y <func>normal</func> toman como único 
+	argumento o el nombre de una variable (nótese que, en una fórmula 
+	<cmd>genr</cmd>, no es posible referirse a las variables por su número de ID) 
+	o una expresión que se evalúa en una variable (p.ej. <lit>ln((x1+x2)/2)</lit>). 
+	<func>cov</func> y <func>corr</func> requieren dos argumentos, y devuelven
+	respectivamente la covarianza y el coeficiente de correlación entre sus
+	argumentos. La función <func>pvalue</func> toma los mismos argumentos
+	que la instrucción <cmdref targ="pvalue"/>, pero en este contexto deben
+	introducirse comas entre los argumentos.
+	<func>uniform()</func> y <func>normal()</func>, que no toman arguamentos,
+	devuelven series de números pseudo-aleatorios extraídos de la distribución
+	uniforme (0&ndash;1) y normal estándar respectivamente (ver también la instrucción
+	<cmdref targ="set"/>, opción <lit>seed</lit>).
+	La series de datos uniformes se generan utilizando el Mersenne
+	Twister;<footnote><para>Ver Matsumoto y
+	    Nishimura (1998).  La implementación la proporciona
+	    <program>glib</program>, si está disponible, o el código C
+	    escrito por Nishimura y Matsumoto.</para></footnote> para
+	series normales se usa el método de Box y Muller (1958),
+	tomando la entrada del Mersenne Twister.</para>
+
+      <para>Además de los operadores y funciones ya mencionados, hay algunos usos 
+      especiales de <cmd>genr</cmd>:
+      </para>
+
+      <ilist>
+	<li><para><cmd>genr time</cmd> crea una variable de tendencia temporal
+	    (1,2,3,&hellip;) llamada <cmd>time</cmd>. <cmd>genr
+	      index</cmd> hace lo mismo, excepto que ahora la variable se denomina
+	    <lit>index</lit>.</para>
+	</li>
+	<li><para><cmd>genr dummy</cmd> crea variables ficticias hasta 
+	    la periodicidad de los datos.  P.ej. en el caso de datos trimestrales
+	    (periodicidad 4), el programa crea
+	    <lit>dummy_1</lit> = 1 para el primer trimestre y 0 en los demás trimestres, 
+	    <lit>dummy_2</lit> = 1 para el segundo trimestre y 0 en los demás, y así 
+	    sucesivamente.</para>
+	</li>
+	<li><para><cmd>genr paneldum</cmd> crea un conjunto de variables 
+	    ficticias especiales para ser usadas con un conjunto de datos de panel &mdash; ver
+	    <cmdref targ="panel"/>.</para>
+	</li>
+	<li><para> Usando <cmd>genr</cmd> se pueden recuperar los valores de algunas 
+	variables internas que se definen al ejecutar una regresión, de la siguiente foprma:</para>
+
+	  <table lwidth="100pt" rwidth="300pt">
+	    <row> 
+	      <cell><lit>$ess</lit></cell>
+	      <cell>suma de cuadrados de los residuos</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$rsq</lit></cell> 
+	      <cell><emphasis>R</emphasis>-cuadrado no corregido</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$T</lit></cell> 
+	      <cell>número de observaciones usadas</cell> 
+	    </row> 
+	    <row> 
+	      <cell><lit>$df</lit></cell>
+	      <cell>grados de libertad</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$trsq</lit></cell>
+	      <cell><emphasis>TR</emphasis>-cuadrado (el tamaño muestral por el
+		<emphasis>R</emphasis>-cuadrado)</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$sigma</lit></cell> 
+	      <cell>desviación típica de los residuos</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$aic</lit></cell> 
+	      <cell>Criterio de información de Akaike</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$lnl</lit></cell> 
+	      <cell>logaritmo de la verosimilitud (donde es aplicable)</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$sigma</lit></cell> 
+	      <cell>desviación típica de los residuos</cell> 
+	    </row> 
+	    <row>
+	      <cell>coeff(<repl>var</repl>)</cell> 
+	      <cell>coeficiente estimado para la variable
+		<repl>var</repl></cell> 
+	    </row> 
+	    <row>
+	      <cell>stderr(<repl>var</repl>)</cell> 
+	      <cell>desviación típica estimada para la variable
+		<repl>var</repl> 
+	      </cell> 
+	    </row> 
+	    <row>
+	      <cell>rho(<repl>i</repl>)</cell>
+	      <cell>coeficiente autorregresivo de <repl>i</repl>-ésimo orden
+		de los residuos</cell> 
+	    </row> 
+	    <row>
+	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
+	      <cell>covarianza entre los coeficientes para las 
+		variables nombradas <repl>x1</repl> y <repl>x2</repl> 
+	      </cell> 
+	    </row>
+	  </table>
+
+	</li>
+      </ilist> 
+
+      <para>
+	<emphasis>Nota</emphasis>: En el programa en línea de instrucciones,
+	las instrucciones <cmd>genr</cmd> que recuperan datos relativos a un 
+	modelo siempre hacen referencia al último modelo estimado. Esto también 
+	es cierto para el programa en modo GUI, si uno usa
+	<cmd>genr</cmd> en la <quote>consola de gretl</quote> o introduce
+	una fórmula usando la opción <quote>Definir nueva variable</quote> 
+	del menú de Variable en la ventana principal.  Sin embargo, con el GUI,
+	usted tiene la posibilidad de recuperar datos de cualquier modelo
+	que actualmente se esté mostrando en una ventana (sea o no el modelo 
+	más reciente). Usted puede hacer esto bajo el menú 
+	<quote>Datos del Modelo</quote> de la ventana del modelo.</para>
+
+      <para>Las series internas <lit>uhat</lit> e <lit>yhat</lit>
+	contienen, respectivamente, los residuos y los valores ajustados de la 
+	última regresión.</para>
+
+      <para>
+        También están disponibles dos variables <quote>internas</quote> 
+	relacionadas con el conjunto de datos actual:
+	<lit>$nobs</lit> contiene el número de observaciones del rango 
+	muestral actual (que puede ser o no igual a <lit>$T</lit>, 
+	el número de observaciones usadas al estimar el último modelo), 
+	y <lit>$pd</lit> contiene la frecuencia o periodicidad  de los 
+	datos (p.ej 4 para datos trimestrales).</para>
+
+      <para>La variable <lit>t</lit> sirve como índice de las
+	observaciones. Por ejemplo <lit>genr dum = (t=15)</lit>
+	generará una variable ficticia que toma valor 1 para la observación
+	15, y 0 en las demás.  La variable <lit>obs</lit> es
+	similar pero más flexible: usted puede usarla para extraer 
+	observaciones particulares por fecha o nombre.  Por ejemplo,
+	<lit>genr d = (obs&gt;1986:4)</lit> o <lit>genr d =
+	  (obs="CA")</lit>. La última forma presupone que las observaciones 
+	tienen etiquetas; la etiqueta debe ponerse entre comillas.</para>
+
+      <para>Pueden utilizarse valores escalares de una serie en el contexto 
+      de una fórmula <lit>genr</lit>, usando la sintaxis
+	<repl>nombre_var</repl><lit>[</lit><repl>obs</repl><lit>]</lit>.
+	El valor <repl>obs</repl> puede darse por número o fecha.
+	Ejemplos: <lit>x[5]</lit>, <lit>CPI[1996:01]</lit>.  Para datos diarios
+	data, se debe de usar la forma <repl>YYYY:MM:DD</repl>, p.ej.
+	<lit>ibm[1970:01:23]</lit>.
+      </para>
+
+      <para>
+	<tabref targ="tab-genr"/> da varios ejemplos de utilizaciones de 
+	<cmd>genr</cmd> con notas explicativas; aquí hay un par de sugerencias
+	sobre variable ficticias:
+      </para>
+
+      <ilist>
+	<li><para>Supongamos que <lit>x</lit> está codificada con los valores 1, 2, o 3
+	    y usted quiere tres variables ficticias, <lit>d1</lit> = 1 si
+	    <lit>x</lit> = 1, 0 en otro caso, <lit>d2</lit> = 1 si
+	    <lit>x</lit> = 2, y así sucesivamente.  Para crearlas, use las 
+	    instrucciones:</para>
+
+	  <code>
+	    genr d1 = (x=1)
+	    genr d2 = (x=2)
+	    genr d3 = (x=3)</code>
+	</li>
+
+	<li><para>Para crear <lit>z</lit> = <lit>max(x,y)</lit>
+	    do</para>
+
+	  <code>
+	    genr d = x&gt;y
+	    genr z = (x*d)+(y*(1-d))</code>
+	</li>
+      </ilist>
+
+      <table id="tab-genr" title="Ejemplos de uso de la instrucción genr"
+	lhead="Fórmula" rhead="Comentario">
+	<row>
+	  <cell><lit>y = x1^3</lit></cell>
+	  <cell><lit>x1</lit> cubed</cell>
+	</row>          
+	<row>
+	  <cell><lit>y = ln((x1+x2)/x3)</lit></cell>
+	  <cell></cell>
+	</row>
+	<row>
+	  <cell><lit>z = x&gt;y</lit></cell>
+	  <cell><lit>z(t)</lit> = 1 si <lit>x(t) &gt; y(t)</lit>,
+	    en otro caso 0</cell>
+	</row> 
+	<row>
+	  <cell><lit>y = x(-2)</lit></cell>
+	  <cell><lit>x</lit> retardada 2 periodos</cell>
+	</row>     
+	<row>
+	  <cell><lit>y = x(2)</lit></cell>
+	  <cell><lit>x</lit> adelantada 2 periodos</cell>
+	</row>
+	<row>
+	  <cell><lit>y = diff(x)</lit></cell>
+	  <cell><lit>y(t) = x(t) - x(t-1)</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>y = ldiff(x)</lit></cell>
+	  <cell><lit>y(t) = log x(t) - log x(t-1)</lit>, la
+	    tasa de crecimiento instantánea de <lit>x</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>y = sort(x)</lit></cell>
+	  <cell>ordena <lit>x</lit> en orden creciente y lo guarda en 
+	    <lit>y</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>y = -sort(-x)</lit></cell>
+	  <cell>ordena <lit>x</lit> en orden decreciente</cell>
+	</row>
+	<row>
+	  <cell><lit>y = int(x)</lit></cell>
+	  <cell>trunca <lit>x</lit> y guarda su valor entero como
+	    <lit>y</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>y = abs(x)</lit></cell>
+	  <cell>guarda los valores absolutos de <lit>x</lit></cell>
+	</row>
+	<row>
+	  <cell><lit>y = sum(x)</lit></cell>
+	  <cell>suma los valores de <lit>x</lit> excluyendo los valores 
+	    ausentes, con entradas &minus;999</cell>
+	</row>
+	<row>
+	  <cell><lit>y = cum(x)</lit></cell>
+	  <cell>acumulación: 
+		<equation status="inline"
+		  tex="$y_t = \sum_{\tau=1}^t x_{\tau}$"
+		  ascii="y(t) = la suma desde s=1 hasta s=t de x(s)"
+		  graphic="cumulate"/>
+	  </cell>
+	</row>
+	<row>
+	  <cell><lit>aa = $ess</lit></cell>
+	  <cell>hace <lit>aa</lit> igual a la suma de cuadrados de 
+	    los residuos de la última regresión</cell>
+	</row>
+	<row>
+	  <cell><lit>x = coeff(sqft)</lit></cell>
+	  <cell>guarda el coeficiente estimado de la variable
+	    <lit>sqft</lit> de la última regresión</cell>
+	</row>
+	<row>
+	  <cell><lit>rho4 = rho(4)</lit></cell>
+	  <cell>guarda el coeficiente autorregresivo de 4º orden del último
+	    modelo (supone un modelo <lit>ar</lit>)</cell>
+	</row>
+	<row>
+	  <cell><lit>cvx1x2 = vcv(x1, x2)</lit></cell>
+	  <cell>guarda la covarianza de los coeficientes estimados de las variables 
+	    <lit>x1</lit> y <lit>x2</lit> del último modelo</cell>
+	</row>
+	<row>
+	  <cell><lit>foo = uniform()</lit></cell>
+	  <cell>variable pseudo-aleatoria uniforme en el rango
+	    0&ndash;1</cell>
+	</row>
+	<row>
+	  <cell><lit>bar = 3 * normal()</lit></cell>
+	  <cell>variable pseudo-aleatoria normal, &mu; = 0, &sigma; =
+	    3</cell>
+	</row>
+	<row>
+	  <cell><lit>samp = !missing(x)</lit></cell>
+	  <cell>= 1 para las observaciones en las que no hay valores 
+	    ausentes de <lit>x</lit>.</cell>
+	</row>
+      </table>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Definir nueva variable</menu-path>
+      <other-access>Menú emergente de la ventana principal</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="gnuplot" section="Gráficos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>yvars</argument>
+        <argument>xvar</argument>
+	<argument optional="true">dumvar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--with-lines</flag>
+	  <effect>usar líneas, no puntos</effect>
+        </option>
+        <option>
+	  <flag>--with-impulses</flag>
+	  <effect>usar líneas verticales</effect>
+        </option>
+        <option>
+	  <flag>--suppress-fitted</flag>
+	  <effect>no mostrar el ajuste mínimo-cuadrático</effect>
+        </option>
+        <option>
+	  <flag>--dummy</flag>
+	  <effect>ver abajo</effect>
+        </option>
+      </options>
+      <examples>
+        <example>gnuplot y1 y2 x</example>
+        <example>gnuplot x time --with-lines</example>
+	<example>gnuplot wages educ gender --dummy</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Sin la opción <lit>--dummy</lit>, las variables
+      	<repl>yvars</repl> se representan contra <repl>xvar</repl>. Con
+	<lit>--dummy</lit>, <repl>yvar</repl> se representa contra
+	<repl>xvar</repl> con los puntos pintados de diferentes colores
+	dependiendo de si el valor de <repl>dumvar</repl> es 1 o
+	0.</para>
+
+      <para>
+	La variable <lit>time</lit> se comporta de manera especial: si no existe, 
+	entonces se generará automáticamente.
+      </para>
+
+      <para>
+        En modo interactivo los resultados se muestran inmediatamente. 
+	En modo batch se escribe un fichero de instrucciones gnuplot con 
+	un nombre que sigue el modelo <filename>gpttmpN.plt</filename>, 
+	empezando con N	= <lit>01</lit>. Los gráficos actuales se pueden generar
+	más tarde usando <program>gnuplot</program> (bajo MS Windows,
+	<program>wgnuplot</program>).
+      </para>
+
+      <para>Hay una nueva opción disponible en esta instrucción: después de
+        la especificación de las variables a representar y las opciones
+	(si se elige alguna), usted puede añadir instrucciones literales 
+	de gnuplot para controlar la apariencia del gráfico (por ejemplo,
+	poner el título del gráfico y/o el rango de los ejes).  Estas 
+	instrucciones deberían incluírse entre paréntesis y cada instrucción 
+	gnuplot debe terminar con un punto y coma. Se puede usar una barra
+	invertida (/) para continuar un conjunto de instrucciones gnuplot 
+	sobre más de una línea. He aquí un ejemplo de la sintaxis:
+      </para>
+
+      <para>
+	<lit>{ set title 'Mi título'; set yrange [0:1000]; }</lit>
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Gráficos</menu-path>
+      <other-access>Menúe emergente de la ventana principal, botón de gráfico de
+      la barra de herramientas</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="graph" section="Gráficos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>yvars</argument>
+        <argument>xvar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--tall</flag>
+	  <effect>usar 40 filas</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Gráficos ASCII. Las variables <repl>yvars</repl> (que pueden 
+	determinarse por nombre o número) se representan con respecto a 
+	<repl>xvar</repl> usando símbolos ASCII. La opción <lit>--tall</lit> 
+	producirá un gráfico con 40 filas y 60 columnas. Sin ella, el gráfico 
+	será de 20 por 60 (para salida por pantalla).  Ver también <cmdref targ="gnuplot"/>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="graphing" section="Gráficos" context="gui"
+    label="Graphing">
+
+    <description>
+
+      <para>Gretl llama a un programa aparte, gnuplot, para generar 
+        los gráficos. Gnuplot es un programa con muchas características 
+	y miles de opciones.  Gretl le proporciona acceso directo,
+	por medio de un interfaz gráfico, a un subconjunto de esas opciones
+	e intenta elegir los valores adecuados por usted; también le permite
+	tomar completamente el control sobre el gráfico, si usted lo desea.
+	</para>
+
+      <para>Cuando se está mostrando un gráfico, usted puede hacer click sobre
+        la ventana del gráfico para que aparezca un menú emergente con las 
+	siguientes opciones:</para>
+
+      <ilist>
+	<li><para>Guardar como postscript: guarda el gráfico en formato
+	    postscript encapsulado (EPS)</para>
+	</li>
+	<li><para>Guardar como PNG: lo guarda en formato PNG (Portable 
+	  Network Graphics)</para>
+	</li>
+	<li><para>Guardar a sesión como icono: el gráfico aparecerá como un icono
+	    cuando usted seleccione <quote>Vista de iconos</quote> desde el 
+	    menú de sesión</para>
+	</li>
+	<li><para>Zoom: le permite seleccionar un área dentro del gráfico para verla
+	    con más detalle</para>
+	</li>
+	<li><para>Imprimir: (sólo en el escritorio Gnome de Linux y en MS Windows)
+	    le permite imprimir el gráfico directamente</para>
+	</li>
+	<li><para>Copiar al portapapeles: (sólo en MS Windows) le permite pegar
+	    el gráfico en aplicaciones Windows tales como MS Word</para>
+	</li>
+	<li><para>Editar: abre un controlador para el gráfico que le permite
+	    ajustar varios aspectos de su apariencia</para>
+	</li>
+	<li><para>Cerrar: cierra la ventana del gráfico</para>
+	</li>
+      </ilist>
+
+      <para>
+        Si Vd. conoce gnuplot y desea tener un control más detallado sobre 
+	la apariencia de un gráfico que el que está disponible por medio del controlador gráfico
+	(opción <quote>Editar</quote> option), usted tiene dos opciones:</para>
+
+      <ilist>
+	<li><para>Una vez que el gráfico se ha guardado como un icono de sesión,
+	    usted puede hacer click con el botón derecho del ratón para que 
+	    aparezca un nuevo menú emergente. Una de las opciones aquí es
+	    <quote>Editar las instrucciones del graficos</quote>, lo cual
+	    abre una ventana de edición que contiene las instrucciones 
+	    actuales de gnuplot. Vd. puede editar esas instrucciones  y 
+	    guardarlas para un procesado futuro o enviarlas a gnuplot
+	    (con el elemento de menú <quote>Archivo/Enviar a gnuplot</quote> en
+	    la ventana de edición de instrucciones de gnuplot).</para>
+	</li>
+	<li><para>Otra manera de guardar las instrucciones del gráfico
+	    (o guardar el gráfico representado en formatos distintos de
+	    EPS o PNG) es usar el elemento <quote>Editar</quote> del menú 
+	    emergente del gráfico para invocar al controlador gráfico, después 
+	    hacer click sobre la solapa <quote>Salida a fichero</quote> 
+	    en el controlador.  Entonces se le presenta un menú con varios formatos
+	    en los que guardar el gráfico.</para>
+	</li>
+      </ilist>
+
+      <para>
+	Para conocer más sobre gnuplot, ver
+	http://ricardo.ecn.wfu.edu/gnuplot.html o
+	http://www.gnuplot.info</para>
+
+    </description>
+
+  </command>
+
+  <command name="graphpag" section="Gráficos" context="gui"
+    label="Página de gráficos de Gretl">
+
+    <description>
+
+      <para>La <quote>página de gráficos</quote> en la ventana de sesión
+        sólo funcionará si Vd. tiene el sistema de proceso de textos &latex; 
+	instalado, y es capaz de generar y ver una salida postscript.</para>
+
+      <para>En la ventana de iconos de sesión, Vd. puede arrastrar hasta ocho
+	gráficos al icono de página de gráficos. Cuando usted hace doble click sobre
+	la página de gráficos (o click con el botón derecho y selecciona <quote>Mostrar</quote>),
+	se formará una página con los gráficos elegidos y se abrirá con su
+	visualizador de postscript. Desde allí usted podrá imprimir la página.
+	</para>
+
+      <para>Para vaciar la página de gráficos, pulse con el botón derecho sobre su icono
+        y seleccione <quote>Vaciar</quote>.</para> 
+
+      <para>En sistemas diferentes de MS Windows, es posible que usted 
+        tenga que ajustar las preferencias de gretl para seleccionar el 
+	programa que usa para ver ficheros postscript. Puede encontrarlas 
+	bajo la solapa <quote>Programas</quote> en la caja de diálogo de 
+	preferencias de gretl (bajo el menú Archivo en la ventana principal).</para>
+
+    </description>
+
+  </command>
+
+  <command name="3-D" section="Gráficos" context="gui"
+    label="Gráficos tridimensionales">
+
+    <description>
+      <para>Este servicio funciona mejor si usted tiene instalado
+        gnuplot 3.8 o superior.  En ese caso Vd. puede manipular el gráfico
+	tridimensional con el ratón (rotarlo y expandir o contraer los ejes).</para>
+
+      <para>Al formar un gráfico 3-D, nótese que se representará como 
+        eje vertical el eje Z.  Así que si usted tiene alguna variable dependiente
+        que cree puede verse influída por dos variables independientes,
+	debería poner la variable dependiente en el eje Z y las variables
+	independientes sobre los ejes X e Y.
+	</para>  
+
+      <para>Al contrario que en la mayoría de los demás gráficos de gretl,
+        los gráficos tridimensionales los controla gnuplot en lugar del 
+	propio gretl. Así que el menú de edición de gráficos de gretl no 
+	está disponible.</para>
+
+    </description>
+  </command>
+    
+  <command name="hausman" section="Contrastes"
+    label="Contraste de Hausman test (diagnósticos de panel)">
+
+    <description>
+      <para>
+        Este contraste sólo está disponible después de haber estimado un 
+	modelo mediante la instrucción <cmdref targ="pooled"/> (ver también
+	<cmd>panel</cmd> y <cmd>setobs</cmd>).  Contrasta el modelo simple 
+	combinado contra sus alternativas principales, el modelo de 
+	efectos fijos y el modelo de efectos aleatorios.</para>
+
+      <para>
+        El modelo de efectos fijos añade una variable ficticia para todas 
+	menos una de las unidades de sección cruzada, permitiendo al
+	intercepto de la regresión variar a través de estas unidades. Se
+	presenta un estadístico <mathvar>F</mathvar> para el contraste de 
+	significación conjunta de estas variables ficticias. El modelo de 
+	efectos aleatorios descompone la varianza residual en dos partes,
+	una parte específica de las unidades de sección cruzada y la otra 
+	específica de cada observación particular.  (Este estimador sólo 
+	puede computarse si el número de unidades de sección cruzada es 
+	mayor que el número de parámetros a estimar.) El estadístico LM
+	de Breusch&ndash;Pagan sirve para contrastar la hipótesis nula
+	(de que el estimador MCO combinado es el adecuado) contra la 
+	alternativa de efectos aleatorios.</para>
+
+      <para>
+        El modelo de MCO combinados puede ser rechazado contra ambas 
+	alternativas, el modelo de efectos fijos y el de efectos aleatorios.
+	Si el error específico de unidad o grupo está incorrelacionado 
+	con las variables independientes, el estimador de efectos aleatorios
+	es más eficiente que el estimador de efectos fijos; en caso contrario
+	el estimador de efectos aleatorios sería inconsistente y sería 
+	preferible el estimador de efectos fijos. La hipótesis nula para el 
+	contraste de Hausman es que el error específico de grupo no está 
+	tan correlacionado (así que es preferible el modelo de efectos 
+	aleatorios).  Un valor p bajo para este contraste es un síntoma en 
+	contra del modelo de efectos aleatorios y a favor del modelo de 
+	efectos fijos.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Diagnósticos de panel</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="hccm" section="Estimación" label="Estimación HCCM">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>presenta la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+	Matriz de covarianzas consistente ante heterocedasticidad: esta 
+	instrucción ejecuta una regresión en la que los coeficientes se 
+	estiman mediante un procedimiento MCO estándar, pero las desviaciones 
+	típicas de los coeficientes estimados se calculan de una manera que es
+	robusta ante heterocedasticidad, en concreto usando el procedimiento
+	<quote>jackknife</quote> de MacKinnon-White.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/HCCM</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="help" section="Utilidades" context="cli">
+
+    <description>
+      <para>
+        Proporciona una lista de las instrucciones disponibles.
+	<cmd>help</cmd>	<repl>instrucción</repl> describe la 
+	<repl>instrucción</repl> (p.ej.	<cmd>help smpl</cmd>).  
+	Vd. puede escribir <cmd>man</cmd> en lugar de <cmd>help</cmd> 
+	si lo desea. 
+      </para> 
+    </description>
+
+    <gui-access>
+      <menu-path>/Ayuda</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="hilu" section="Estimación" label="Estimación de Hildreth-Lu">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>presenta la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>Calcula estimaciones de los parámetros del modelo 
+        especificado usando el procedimiento de búsqueda de Hildreth&ndash;Lu 
+        search procedure (refinado mediante el procedimiento CORC). 
+	Este procedimiento está diseñado para corregir las estimaciones
+	teniendo en cuenta la correlación serial del término de error.
+	La suma de cuadrados de los residuos del modelo transformado se representa
+	con respecto al valor de rho desde &minus;0.99 hasta 0.99.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Hildreth-Lu</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="hsk" section="Estimación"
+    label="Estimaciones corregidas de heterocedasticidad">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>presenta la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Se calcula una regresión por MCO y se guardan los residuos.
+	El logaritmo del cuadrado de los residuos entonces pasa a ser
+	la variable dependiente en una regresión auxiliar, en cuyo 
+	lado derecho están las variables independientes originales
+	más sus cuadrados. Los valores ajustados en la regresión auxiliar
+	se usan entonces para construir una serie de ponderaciones
+	y el modelo original se reestima utilizando mínimos cuadrados 
+	ponderados. El resultado final se presenta en un informe.
+	</para>
+
+      <para>La serie de ponderaciones se forma como
+	<equation status="inline"
+	  tex="$1/\sqrt{e^{y^*}}$"
+	  ascii="1/sqrt(exp(y*))"
+	  graphic="hsk"/>, donde <mathvar>y<super>*</super></mathvar>
+	denota los valores ajustados mediante la regresión auxiliar.
+	</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Corregido de Heterocedasticidad</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="if" section="Programación" context="cli">
+
+    <description>
+      <para>Control de flujo para la ejecución de instrucciones.  La sintaxis es:</para>
+
+      <table lwidth="25pt" rwidth="100pt">
+	<row><cell><lit>if</lit></cell>
+	  <cell><repl>condición</repl></cell>
+	</row>
+	<row><cell></cell><cell><repl>instrucciones1</repl></cell>
+	</row>
+	<row><cell><lit>else</lit></cell><cell></cell>
+	</row>
+	<row><cell></cell><cell><repl>instrucciones2</repl></cell>
+	</row>
+	<row><cell><lit>endif</lit></cell><cell></cell>
+	</row>
+      </table>
+
+      <para><repl>condición</repl> debe ser una expresión Booleana, para su sintaxis
+        ver <cmdref targ="genr"/>.  El bloque <cmd>else</cmd> es opcional; los 
+	bloques <lit>if</lit> &hellip; <lit>endif</lit> pueden estar anidados.</para>
+    </description>
+
+  </command>
+
+  <command name="import" section="Conjunto de datos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>nombre_fichero</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--box1</flag>
+	  <effect>datos BOX1</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Transfiere datos desde un fichero de formato CSV (Comma-separated 
+	values), tal y como los que pueden escribirse fácilmente desde 
+	cualquier programa de hoja de cálculo. El fichero debería de tener 
+	los nombres de las variables en la primera línea y una matriz rectangular 
+	de datos en las restantes.  Las variables deberían estar ordenadas
+	<quote>por observación</quote> (una columna para cada variable;
+	cada fila representa una observación).
+	Ver <manref targ="datafiles"/> para más detalles.
+      </para>
+
+      <para>
+	Con la opción <lit>--box1</lit>, lee u  fichero de formato BOX1, 
+	como los que se obtienen utilizando el Servicio de Extracción de Datos
+	del  US Bureau of the Census.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Abrir datos/importar</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="info" section="Conjunto de datos" context="cli">
+
+    <description>
+      <para>
+        Presenta cualquier información suplemnentaria que se haya
+	guardado con el fichero de datos actual. 
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Leer información</menu-path>
+      <other-access>Ventanas de navegación de datos</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="label" section="Conjunto de datos" label="Editar los atributos de una variable">
+
+    <usage>
+      <arguments>
+        <argument>nombre_var</argument>
+        <argument flag="-d ">descripción</argument>
+        <argument flag="-n ">nombre a mostrar</argument>
+      </arguments>
+      <examples>
+        <example>label x1 -d "Descripción de x1" -n "Nombre en los gráficos"</example>
+      </examples>
+    </usage>
+
+    <description context="cli">
+      <para>Establece la etiqueta descriptiva de la variable determinada
+        (si se da la opción <lit>-d</lit>, seguida de una cadena de caracteres 
+	entre comillas) y/o el <quote>nombre a mostrar</quote> para la variable
+	(si se da la opción <lit>-n</lit>, seguida de una cadena de caracteres 
+	entre comillas).  Si una variable tiene un <quote>nombre a mostrar</quote>,
+	se usará éste al generar los gráficos.
+      </para>
+    </description>
+
+    <description context="gui">
+
+      <para>
+	En esta caja de diálogo Vd. puede:</para>
+
+      <para>* Renombrar una variable.</para>
+
+      <para>* Añadir o editar una descricpción de la variable: esta aparecerá
+	junto al nombre de la variable en la ventana principal de gretl.</para>
+
+      <para>* Añadir o editar el "nombre a mostrar" para la variable. Esta 
+        cadena de caracteres (máximo 19 caracteres) se muestra en lugar del 
+	nombre de la variable cuando la variable se representa en un gráfico.
+	Así, por ejemplo, Vd. puede asociar una cadena más comprensible como 
+	"tipo de interés a tres meses" a una variable que tenga un nombre más críptico
+	como "t3".</para>
+
+      <para>* (En el caso de un conjunto de datos de series temporales) establecer
+        el método de compactado para la variable. Este método será el que se use
+	si usted decide reducir la frecuencia del conjunto de datos, o si usted
+	actualiza la variable importándola desde una base de datos donde la variable
+	esté a una frecuencia mayor que en su conjunto de datos.
+	</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Editar atributos</menu-path>
+      <other-access>Menú emergente de la ventana principal</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="labels" section="Conjunto de datos" context="cli">
+
+    <description>
+      <para>
+        Presenta las etiquetas informativas de cualquier variable que haya
+	sido generada usando la instrucción <cmd>genr</cmd>, y cualquier
+	variable añadida al conjunto de datos por medio del GUI.
+	</para>
+    </description>
+
+  </command>
+
+  <command name="lad" section="Estimación"
+    label="Estimación de mínima desviación absoluta">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Calcula una regresión que minimiza la suma de las desviaciones 
+	absolutas de los valores observados de la variable dependiente 
+	con respecto a los ajustados. La estimaciones de los coeficientes
+	se derivan usando el algoritmo simplex de Barrodale&ndash;Roberts; 
+	se muestra un aviso si la solución no es única. Las desviaciones 
+	típicas se derivan utilizando el procedimiento bootstrap con 
+	500 extracciones.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Mínima devsiación absoluta</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="lags" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Crea variables nuevas que son valores retardados de cada una de 
+	las variables de <repl>listavar</repl>.  El número de variables 
+	retardadas es igual a la periodicidad. Por ejemplo, si la
+	periodicidad es 4 (trimestral), la instrucción <cmd>lags x y</cmd>
+	crea <lit>x_1</lit> = <lit>x(t-1)</lit>, <lit>x_2</lit> =
+	<lit>x(t-2)</lit>, <lit>x_3</lit> = <lit>x(t-3)</lit> y
+	<lit>x_4</lit> = <lit>x(t-4)</lit>. Lo mismo para <lit>y</lit>.
+	Estas variables deben ser referenciadas de manera exacta, es decir,
+	con el carácter de subrayado.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Añadir variables/retardos de las variables seleccionadas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ldiff" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Calcula la primera diferencia del logaritmo natural de cada
+	variable de <repl>listavar</repl> y guarda el resultado en
+	una nueva variable con el prefijo <lit>ld_</lit>.  Así <cmd>ldiff
+	  x y</cmd> crea las nuevas variables <lit>ld_x</lit> =
+	  <equation status="inline" 
+	  tex="$\ln(x_t) - \ln(x_{t-1})$"
+	  ascii="ln[x(t)] - ln[x(t-1)]"
+	  graphic="ldx"/> y <lit>ld_y</lit> =
+	  <equation status="inline" 
+	  tex="$\ln(y_t) - \ln(y_{t-1})$"
+	  ascii="ln[y(t)] - ln[y(t-1)]"
+	  graphic="ldy"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Añadir variables/diferencias de logaritmos de las variables seleccionadas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="leverage" section="Contrastes"
+    label="Observations influyentes">
+
+    <usage>
+      <options>
+        <option>
+	  <flag>--save</flag>
+	  <effect>guardar las variables</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+        <para>
+	Debe ejecutarse inmediatamente después de una instrucción 
+	<cmd>MCO</cmd>. Calcula el apalancamiento (<mathvar>h</mathvar>, 
+	que debe estar entre 0 y 1) para cada punto de datos de la muestra 
+	sobre la que se estimó el último modelo.  Presenta el residuo
+	(<mathvar>u</mathvar>) de cada observación junto a su apalancamiento
+	y una medida de su influencia sibre las estimaciones, 
+	  <equation status="inline" 
+	  tex="$uh/(1 - h)$"
+	  ascii="u*h/(1-h)"
+	  graphic="influence"/>. Los <quote>puntos palanca</quote> para los cuales
+	el valor de <mathvar>h</mathvar> es mayor que 
+	2<mathvar>k</mathvar>/<mathvar>n</mathvar> (donde
+	<mathvar>k</mathvar> es el número de parámetros estimados
+	y <mathvar>n</mathvar> es el tamaño muestral) se marcan con un
+	asterisco. Para más detalles sobre los conceptos de apalancamiento e influencia
+	ver Davidson and MacKinnon (1993, Capítulo 2).
+      </para>
+
+      <para>
+	También se presentan los valores DFFITS: estos son los <quote>residuos
+	studentizados</quote> (residuos predichos divididos por sus 
+	desviaciones típicas) multiplicados por 
+	  <equation status="inline" 
+	  tex="$\sqrt{h/(1 - h)}$"
+	  ascii="sqrt[h/(1 - h)]"
+	  graphic="dffit"/>. Para más detalles sobre residuos studentizados y
+	DFFITS ver el libro de G. S. Maddala, <book>Introduction to
+	  Econometrics</book>, capítulo 12; y también Belsley, Kuh y
+	Welsch (1980).  En resumen, un <quote>residuo predicho</quote>
+	es la diferencia entre el valor observado de la variable dependiente
+	en la observación <mathvar>t</mathvar> y el valor ajustado
+	para la observación <mathvar>t</mathvar> obtenido de una regresión
+	en la que se omite esa observación (o se añade una variable ficticia
+	con valor 1 sólo para la observación  <mathvar>t</mathvar>); 
+	el residuo studentizado se obtiene dividiendo el residuo predicho
+	por su desviación típica.</para>
+
+      <para context="cli">Si con esta instrucción se da la opción <lit>--save</lit>, 
+        entonces los valores del apalancamiento, influencia y DFFITS se añaden
+	al conjunto de datos actual.</para>
+
+      <para context="gui">
+	El icono "+" en la parte de arriba de la ventana del contraste de apalancamiento
+	abre una caja de diálogo que le permite guardar una o más de las variables del
+	contraste al conjunto de datos actual.
+	</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/observaciones influyentes</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="lmtest" section="Contrastes" label="Contrastes LM">
+
+    <usage>
+      <options>
+        <option>
+	  <flag>--logs</flag>
+	  <effect>no linealidad, logaritmos</effect>
+        </option>
+        <option>
+	  <flag>--autocorr</flag>
+	  <effect>correlación serial</effect>
+        </option>
+        <option>
+	  <flag>--squares</flag>
+	  <effect>no linealidad, cuadrados</effect>
+        </option>
+        <option>
+	  <flag>--white</flag>
+	  <effect>heterocedasticidad (Contraste de White)</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description context="gui">
+      <para>
+        Bajo este encabezamiento se agrupan varios contrastes de hipótesis.
+	Lo que tienen en común es que el contraste requiere la estimación 
+	de una regresión auxiliar, en la que la variable dependiente es
+	el residuo de alguna regresión <quote>original</quote>.  Las variables
+	del lado derecho inluyen a las de la regresión original ademas 
+	de algunos términos adicionales. El estadístico de contraste
+	se calcula como (tamaño muestral * R-cuadrado) de la regresión 
+	auxiliar: este se distribuye como una chi-cuadrado con grados de 
+	libertad igual al número de términos adicionales, bajo la hipótesis 
+	nula de que los términos adicionales no tienen poder explicativo
+	sobre lois residuos. Un valor <quote>grande</quote> del estadístico
+	(valor p pequeño) sugiere que esa hipótesis nula debería ser rechazada.
+	
+      </para>
+    </description>
+
+    <description context="cli">
+      <para>
+        Debe ejecutarse justo después de una instrucción <cmd>mco</cmd>. 
+	Realiza alguna combinación de lo siguiente: contrastes de Multiplicador 
+	de Lagrange de no linealidad (logaritmos y cuadrados), contraste de 
+	heterocedasticidad de White, y el contraste LMF de correlación serial
+	hasta el orden de la periodicidad (ver Kiviet, 1986). También se presentan
+	los correspondientes coeficientes de la regresión auxiliar.  Ver
+	Ramanathan, Capítulos 7, 8, y 9 para más detalles. En el,caso del
+	contrastes de White, sólo se usan los cuadrados de las variables independientes
+	y no sus productos cruzados.  En el caso del contraste de autocorrelación,
+	si el valor p del estadístico LMF es menor que 0,05 (y el modelo no se había estimado 
+	originariamente con desviaciones típicas robustas) entonces se calculan
+	y se presentan las desviaciones típicas robustas ante correlación serial.
+	Para detalles sobre el cálculo de estas desviaciones típicas ver 
+	Wooldridge (2002, Capítulo 12).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventan de Modelo, /Contrastes</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="logistic" section="Estimación"
+    label="Regresión logística">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+	<argument optional="true" flag="ymax=">valor</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+      <examples>
+        <example>logistic y const x</example>
+        <example>logistic y const x ymax=50</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Regresión logística: desarrolla una regresión MCO utilizando la 
+	transformación logística de la variable dependiente,
+	<equation status="display" 
+	  tex="\[\log\left(\frac{y}{y^*-y}\right)\]"
+	  ascii="log(y/(ymax - y))"
+	  graphic="logistic1"/>
+      </para>
+
+      <para context="cli">La variable dependiente debe ser estrictamente positiva.
+        Si es una fracción decimal, entre 0 y 1, por defecto se usa
+	un valor <mathvar>y<super>*</super></mathvar> (el máximo asintótico
+	de la variable dependiente) of 1. Si la variable dependiente es un porcentaje,
+	entre 0 y 100, por defecto <mathvar>y<super>*</super></mathvar> es 100.  
+	Si Vd. desea establecer otro valor máximo utilice el parámetro opcional
+	<lit>ymax=</lit><repl>valor</repl> después de la lista de regresores.  
+	El valor proporcionado debe ser mayor que todos los valores observados de 
+	la variable dependiente.
+	</para>
+
+      <para context="gui">La variable dependiente debe ser estrictamente positiva.
+        Si es una fracción decimal, entre 0 y 1, por defecto se usa un valor ymax
+	(el máximo asintótico de la variable dependiente) de 1. Si la
+	variable dependiente es un porcentaje, entre 0 y 100, por defecto el valor 
+	de ymax es 100. Se presenta una caja de diálogo que le permite especificar 
+	un máximo diferente, si usted lo desea. El valor de ymax proporcionado debe 
+	ser mayor que todos los valores observados de la variable dependiente.</para>
+
+      <para>Los valores ajustados y los residuos de la regresión se transforman automáticamente
+      usando  
+	<equation status="display" 
+	  tex="\[y=\frac{y^*}{1+e^{-x}}\]"
+	  ascii="y = ymax / (1 + exp(-x))"
+	  graphic="logistic2"/> donde <mathvar>x</mathvar> representa
+	o un valor ajustado o un residuo de la regresión MCO usando
+	la variable dependiente transformada.  Los valores que se presentan son 
+	así comparables con los valores originales de la variable dependiente.</para>
+
+      <para>Nótese que si la variable dependiente es binaria, en lugar de esto se debería usar
+        la instrucción <cmd>logit</cmd>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Logístico</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="logit" section="Estimación"
+    label="Regresión Logit">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Regresión binomial logit. La variable dependiente debería ser 
+	una variable binaria. Se obtienen las estimaciones
+	máximo-verosímiles de los coeficientes
+	de las variables <repl>varindeps</repl> por medio del
+	método EM (Expectation&ndash;Maximization method, ver
+	Ruud, 2000, Capítulo 27).  Como el modelo no es lineal las pendientes
+	dependen de los valores de las variables independientes: 
+	las poendientes que se presentan se han evaluado en la media 
+	de dichas variables. La hipótesis de que todos los coeficientes, 
+	aparte de la constante, son cero se contrasta mediante el estadístico
+	chi-cuadrado.
+      </para>
+
+      <para>
+        Si Vd. desea utilizar logit para el análisis de proporciones
+	(donde la variable dependiente, para cada observación, es la 
+	proporción de casos que tienen una determinada característica, 
+	en lugar de un 1 o un 0 indicando si la característica está 
+	presente o no) no debería usar la instrucción <cmd>logit</cmd>,
+	sino mejor debería construir la variable logit (p.ej. 
+	<cmd>genr lgt_p =  log(p/(1 - p))</cmd>) y usarla como variable 
+	dependiente en una regresión MCO.  Ver Ramanathan, Capítulo 12.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Logit</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="logs" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Se obtiene el logaritmo natural de cada una de las variables de
+	<repl>listavar</repl> y el resultado se guarda en una nueva variable
+	con el prefijo <lit>l_</lit> que es <quote>ele</quote> y carácter de 
+	subrayadoe.  <cmd>logs x y</cmd> crea las nuevas variables
+	<lit>l_x</lit> = ln(<lit>x</lit>) y <lit>l_y</lit> = ln(<lit>y</lit>).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Añadir variables/logaritmos de las variables seleccionadas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="loop" section="Programación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>control</argument>
+      </arguments>
+      <examples>
+        <example>loop 1000</example>
+        <example>loop while essdiff > .00001</example>
+        <example>loop for i=1991..2000</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>El parámetro <repl quote="true">control</repl> debe tomar una 
+        de las tres formas posibles, tal y como se muestra en los ejemplos:
+	un número de veces entero a repetir las instrucciones del bucle;
+	<quote><lit>while</lit></quote> más una condición numérica; o
+	<quote><lit>for</lit></quote> más un rango de valores para la variable
+	índice interna <lit>i</lit>.
+      </para>
+
+      <para>Esta instrucción abre un modo de ejecución especial
+        en el cual el programa acepta instrucciones a ejecutar
+	repetidamente. Dentro de un bucle sólo se pueden
+	utilizar ciertas instrucciones: <cmd>genr</cmd>,
+	<cmd>ols</cmd>, <cmd>print</cmd>, <cmd>sim</cmd>,
+	<cmd>smpl</cmd>, <cmd>store</cmd> y <cmd>summary</cmd>
+	(store no puede utilizarse dentro de un bucle <quote>while</quote>).  
+	Se sale del modo de introducción de instrucciones de bucle con
+	<cmd>endloop</cmd>: en este punto se ejecutan todas las instrucciones 
+	que están en la cola del bucle.  Los bucles no pueden estar anidados.
+      </para>
+
+      <para>Ver <manref targ="looping"/> para más detalles y ejemplos.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="markers" section="Conjunto de datos" context="gui"
+    label="Añadir marcadores de caja">
+
+    <description>
+      <para>
+        Esta orden requiere el nombre de un fichero que contenga
+	los "marcadores de caja", es decir, pequeñas cadenas de caracteres 
+	para identificar a las observaciones individuales del conjunto de datos.  
+	Estas cadenas de caracteres no deberían tener más de 8 caracteres.  
+	El fichero debería contener un marcador por línea y debería de haber 
+	exactamente tantos marcadores como observaciones haya en el conjunto 
+	de datos. Si se satisfacen estas condiciones y se encuentra el 
+	fichero especificado se añadirán los marcadores de caja; serán visibles
+	cuando usted elija "Mostrar valores" en el menú de Datos de gretl.</para>
+    </description>
+  </command>
+
+  <command name="meantest" section="Contrastes"
+    label="Diferencia de medias">
+
+    <usage>
+      <arguments>
+        <argument>var1</argument>
+        <argument>var2</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--unequal-vars</flag>
+	  <effect>suponer que las varianzas son diferentes</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Calcula el estadístico <mathvar>t</mathvar> para la hipótesis 
+	nula de que las medias poblacionales de las variables 
+	<repl>var1</repl> y <repl>var2</repl> son iguales, y presenta su
+	valor p. Por defecto se calcula el estadístico bajo el supuesto de que 
+	las varianzas de las dos variables son iguales; con la opción 
+	<lit>--unequal-vars</lit> se suponen varianzas distintas. Esto 
+	implicará una diferencia en el estadístico de contraste  sólo si
+	hay un número diferente de valores no ausentes para las dos variables.
+      </para>
+      <para context="gui">
+        Calcula el estadístico t para la hipótesis nula de que las medias 
+	poblacionales de dos variables elegidas son iguales y muestra
+	su valor p. La instrucción puede invocarse con o sin el supuesto de 
+	que las varianzas de las dos variables son iguales (aunque esto 
+	implicará una diferencia en el estadístico de contraste  sólo si
+	hay un número diferente de valores no ausentes para las dos variables).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Diferencia de medias</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="missing" section="Conjunto de datos" context="gui"
+    label="valores ausentes">
+
+    <description>
+      <para>Establece un valor numérico que se interpretará como
+        <quote>ausente</quote> o <quote>no disponible</quote>, o para una
+	serie de datos concreta (en el menú de Variable) o
+	globalmente para el conjunto de datos completo (en el menú de 
+	Muestra).</para> 
+
+      <para>Gretl tiene su propio código interno para los valores ausentes,
+        pero a veces los datos que se importan pueden emplear un código diferente.  
+	Por ejemplo, si una serie particular se codifica de manera que el valor
+	-1 indica <quote>no disponible</quote>, Vd. puede seleccionar
+	<quote>Establecer código de 'valor perdido'</quote> bajo el menú de 
+	Variable y escribir el valor <quote>-1</quote> (sin las comillas).
+	Gretl entonces leerá los -1s como valores ausentes.</para>
+    </description>
+  </command>
+
+  <command name="modeltab" section="Utilidades"
+    label="La tabla de modelos">
+
+    <usage>
+      <arguments>
+        <argument>add</argument>
+        <argument alternate="true">show</argument>
+        <argument alternate="true">free</argument>
+      </arguments>
+    </usage>
+
+    <description context="gui"> 
+      <para>
+        En la investigación econométrica es frecuente estimar varios modelos
+	para una variable dependiente común&mdash;los modelos pueden ser diferentes
+	respecto a las variables independientes que incluyen, o quizás respecto al 
+	estimador utilizado. En esta situación es coveniente presentar los resultados
+	de las regresiones en forma de tabla, donde cada columna contiene los resultados
+	para un modelo dado (estimaciones de los coeficientes y desviaciones típicas),
+	y cada fila contiene las estimaciones dadas por los diferentes modelos
+	para una misma variable.
+	</para>
+
+      <para>Gretl proporciona un método para construir dicha tabla
+        (y copiarla en texto plano, &latex; o formato RTF). Hé aquí cómo hacerlo:
+	</para>
+
+      <nlist>
+	<li><para>1. Estimar un modelo que Vd. desea incluir en la tabla y en la 
+	ventana del modelo, bajo el menú Archivo, seleccionar <quote>Guardar a sesión 
+	como icono</quote> o  <quote>Guardar a sesión como icono y cerrar</quote>.</para>
+	</li>
+
+	<li><para>2. Repetir el paso 1 para los otros modelos que desee 
+	    incluir en la tabla (hasta un total de seis).</para>
+	</li>
+
+	<li><para>3. Cuando haya acabado de estimar los modelos, abra la 
+	    vista de iconos de su sesión gretl (seleccionando <quote>Vista de iconos
+	    </quote> bajo el menú de Sesión en la ventana principal de gretl, 
+	    o pulsando sobre el icono de <quote>vista de iconos de sesión</quote> 
+	    en la barra de herramientas de gretl).</para>
+	</li>
+
+	<li><para>4. En la vista de iconos de sesión hay un icono de nombre
+	    <quote>Tabla de Modelos</quote>. Decida qué modelo desea que aparezca 
+	    en la columna de la izquierda en la Tabla de modelos y añádalo a la 
+	    tabla o arrastrando su icono al icono de la tabla de modelos o pulsando 
+	    con el botón derecho del ratón sobre el icono del modelo y seleccionando
+	    <quote>Añadir a la tabla de modelos</quote> en el menú que entonces surge.
+	    </para>
+	</li>
+
+	<li><para>5. Repetir el paso 4 para los demás modelos que desee incluir en 
+	    la tabla. El segundo modelo elegido aparecerá en la segunda columna desde 
+	    la izquierda, y así sucesivamente.</para>
+	</li>
+
+	<li><para>6. Cuando haya acabado de formar la tabla de modelos,
+	    puede verla haciendo doble click sobre su icono. En el menú Editar
+	    de la ventana que aparece, tiene Vd. la opción de copiar la tabla al 
+	    portapapeles en varios formatos diferentes.</para>
+	</li>
+
+	<li><para>7. Si el orden de los modelos en la tabla no es el que Vd. deseaba
+	    pulse con el botón derecho del ratón sobre el icono de la tabla de modelos
+	    y elija <quote>Vaciar</quote>. Después vuelva al paso 4 anterior e inténtelo
+	    otra vez.</para>
+	</li>
+      </nlist>
+    </description>
+
+    <description context="cli">
+      <para>Sirve para manipular la <quote>tabla de modelos</quote> de gretl. Ver
+	<manref targ="modes"/> para más detalles. Las sub-instrucciones 
+	tienen los isguientes efectos: <cmd>add</cmd> añade el último modelo estimado
+	a la tabla de modelos, si es posible; <cmd>show</cmd> presenta la tabla de modelos
+	en una ventana; y <cmd>free</cmd> vacía la tabla.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de sesión, icono de Tabla de modelos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="mpols" section="Estimación"
+    label="MCO de precisión Múltiple">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Computa las estimaciones MCO para el modelo especificado, usando
+	aritmética de punto flotante con precisión múltiple. Esta instrucción 
+	sólo está disponible si <program>gretl</program> se compila
+	con soporte para la biblioteca Gnu de Precisión Múltiple (GMP).
+      </para>
+
+      <para context="cli">
+        Para estimar un ajuste polinomial usando aritmética de 
+	precisión múltiple para generar las potencias necesarias
+	de la variable independiente use por ejmplo la forma
+	<cmd>mpols y 0 x ; 2 3 4</cmd>. Esto realiza una regresión
+	de  <lit>y</lit> sobre <lit>x</lit>, <lit>x</lit> cuadrado, 
+	<lit>x</lit> al cubo y <lit>x</lit> a la cuarta potencia.
+	Es decir, los números a la derecha del punto y coma 
+	(que deben ser enteros positivos) determinan las potencias 
+	de <lit>x</lit> a utilizar.  Si se especifica más de una variable 
+	independiente, ha de considerarse que la última antes del punto y coma
+	es la variable que va a ser elevada a varias potencias.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/MCO de alta precisión</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="multiply" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>x</argument>
+        <argument>sufijo</argument>
+        <argument>listavar</argument>
+      </arguments>
+      <examples>
+        <example>multiply invpop pc 3 4 5 6</example>
+        <example>multiply 1000 big x1 x2 x3</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Las variables de <repl>listavar</repl> (referenciadas por nombre 
+	o número) se multiplican por <repl>x</repl>, que puede ser un valor 
+	numérico o el nombre de una variable previamente definida.
+	Los productos se nombran con el <repl>sufijo</repl> especificado
+	(máximo 3 caracteres). Si es necesario, se truncan primero los 
+	nombres originales de las variables. Por ejemplo, supongamos
+	que Vd. desea crear las versiones per cápita de ciertas variables, 
+	y tiene la variable <lit>pob</lit> (población).  Un conjunto de 
+	instrucciones adecuado sería:</para>
+      
+      <code>
+	genr invpob = 1/pob
+	multiply invpob pc income</code>
+
+      <para>que creará <lit>incomepc</lit> como el producto de 
+      	<lit>income</lit> y <lit>invpob</lit>, y
+	<lit>expendpc</lit> como <lit>expend</lit> por
+	<lit>invpob</lit>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="nls" section="Estimación"
+    label="Mínimos cuadrados no lineales">
+
+    <usage>
+      <arguments>
+        <argument>función</argument>
+        <argument>derivadas</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description context="gui">
+
+      <para>Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
+        utilizando una vesrión modificada del algoritmo de Levenberg-Marquandt.
+	Usted debe suministrar la especificación de una función; también se 
+	recomienda que, si es posible,  suministre las expresiones de las 
+	derivadas de la función con respecto a cada uno de los parámetros.
+	</para>
+
+      <para>Ejemplo: Supongamos  que tenemos un conjunto de datos con las
+      	variables C e Y (p.ej. greene11_3.gdt) y deseamos estimar una 
+	función de consumo no lineal de la forma
+	<equation status="display"
+	  tex="\[C = \alpha + \beta Y^{\gamma}\]"
+	  ascii="C = alpha + beta * Y^gamma"
+	  graphic="greene_Cfunc"/></para>
+
+      <para>Los parámetros alfa, beta y gamma deben añadirse primero al 
+        conjunto de datos y hay que asignarles unos valores iniciales. Esto
+        puede hacerse usando la instrucción genr o por medio de los menús.
+	Las expresiones <quote>genr</quote> que corresponda pueden escribirse dentro de la 
+	ventana de especificación de MC no lineales antes de la especificación
+	de la función.
+	</para>
+
+      <para>En la ventana de MC no lineales escribiremos las siguientes líneas:</para>
+
+      <code>
+	C = alfa + beta * Y^gamma
+	deriv alfa = 1
+	deriv beta = Y^gamma
+	deriv gamma = beta * Y^gamma * log(Y)
+      </code>
+
+      <para>La primera línea determina la función de regresión y las tres 
+        siguientes líneas proporcionan las derivadas de la función con 
+	respecto a cada uno de los parámetros. Si no se proporcionan las líneas
+	"deriv", se computa una aproximación numérica al Jacobiano.
+      </para>
+
+      <para>Si los parámetros alfa, beta y gamma no se hubieran declarado
+        previamente, podríamos escribir las siguientes líneas justo antes de las 
+	que se han presentado arriba:</para>
+
+      <code>
+	genr alfa = 1
+	genr beta = 1
+	genr gamma = 1
+      </code>
+
+      <para>Para más detalles sobre la estimación por MC. no lineales ver
+	<manref targ="chap-nls"/>.</para>
+
+    </description>
+
+    <description context="cli">
+
+      <para>
+        Desarrolla la estimación por Mínimos Cuadrados No Lineales (NLS)
+        utilizando una vesrión modificada del algoritmo de Levenberg-Marquandt.
+	El usuario debe suministrar la especificación de una función. Los parámetros 
+	de esta función deben ser declarados antes y hay que asignarles unos valores 
+	iniciales (usando la instrucción <cmd>genr</cmd>) antes de la estimación.
+	Opcionalmente, el usuario puede especoficar las derivadas de la función de 
+	regresión con respectyo a cada uno de los parámetros; si nbo se proporcionan
+	las derivadas analíticas se computa una aproximación numérica al Jacobiano.
+	</para>
+
+      <para>
+        Es más sencillo mostrar lo que se necesita con un ejemplo.
+	Lo siguiente es un lote de instrucciones completo para
+	estimar la función de consumo no lineal definida en
+	el libro de William Greene <book>Econometric Analysis</book> 
+	(Capítulo 11 de la 4ª edición inglesa, o Capítulo 9 de la 5ª).  
+	Los números a la izquierda de las líneas son para referencia
+	y no son parte de las instrucciones. Hay que señalar que 
+	la opción <lit>--vcv</lit>, para presentar la matriz de covarianzas 
+	de las estimaciones de los parámetros se escribe junto a la instrucción 
+	final, <lit>end nls</lit>.</para>
+
+      <code>
+	1   open greene11_3.gdt
+	2   ols C 0 Y
+	3   genr alfa = coeff(0)
+	4   genr beta = coeff(Y)
+	5   genr gamma = 1.0
+	6   nls C = alfa + beta * Y^gamma
+	7   deriv alfa = 1
+	8   deriv beta = Y^gamma
+	9   deriv gamma = beta * Y^gamma * log(Y)
+	10  end nls --vcv
+      </code>
+
+      <para>
+        Muchas veces es conveniente inicializar los parámetros haciendo referencia
+	a un modelo lineal relacionado con el actual; esto se realiza aquí
+	en las líneas 2 a 5. A los parámetros alfa, beta y gamma se les 
+	podría asignar cualesquiera valores iniciales  (no necesariamente basados 
+	en un modelo estimado por MCO), aunque la convergencia del procedimiento
+	de MC no lineales no está garantizada para un punto de inicio arbitrario.
+	</para>
+
+      <para>
+        Las instrucciones de MC no lineales actuales ocupan las líneas 6 a 10.
+	En la línea 6 se invoica la instrucción	<cmd>nls</cmd>: 
+	se especifica una variable dependiente seguida de un signo igual y después
+	la especificación de una función. La sintaxis para la expresión de la derecha
+	es la misma que para la instrucción <cmd>genr</cmd>.  Las tres siguientes líneas
+	determinan las derivadas de la función de regresión con respecto a cada 
+	uno de los parámetros. Cada línea comienza con la palabra <cmd>deriv</cmd>, 
+	da el nombre de un parámetro, un signo igual y una expresión por la que se 
+	calcula la derivada (de nuevo, la sintaxis aquí es la misma que para
+	<cmd>genr</cmd>). Estas líneas <cmd>deriv</cmd> son opcionales, pero es 
+	conveniente proporcionarlas, si es posible. La línea 10, <cmd>end nls</cmd>, 
+	completa la instrucción e invoca la estimación.</para>
+
+      <para>Para más detalles sobre la estimación por MC. no lineales ver
+	<manref targ="chap-nls"/>.</para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Mínimos cuadrados no lineales</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="noecho" section="Obsoleta" context="cli">
+    <description>
+      <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
+      </para>
+    </description>
+  </command>
+
+  <command name="nulldata" section="Conjunto de datos"
+    label="Crear un conjunto de datos vacío">
+
+    <usage>
+      <arguments>
+        <argument>largura de la serie</argument>
+      </arguments>
+      <examples>
+        <example>nulldata 500</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Forma un conjunto de datos <quote>vacío</quote>, que
+	contiene sólo una constante y una variable índice, con
+	periodicidad 1 y el número de observaciones especificado.
+	Esto puede usarse para hacer simulaciones: algunas
+	de las instrucciones <cmd>genr</cmd> (p.ej. 
+	<cmd>genr uniform()</cmd>, <cmd>genr normal()</cmd>)
+	generan, desde cero, datos ficticios para rellenar el conjunto 
+	de datos. Esta instrucción puede ser útil también junto a
+	la instrucción <cmd>loop</cmd>.  Ver también la opción 
+	<quote>seed</quote> de la instrucción <cmdref targ="set"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Crear conjunto de datos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="ols" section="Estimación"
+    label="Mínimos Cuadrados Ordinarios">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+        </option>
+        <option>
+	  <flag>--robust</flag>
+	  <effect>desviaciones típicas robustas</effect>
+        </option>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>suprime la presentación de los resusltados</effect>
+        </option>
+      </options>
+      <examples>
+        <example>ols 1 0 2 4 6 7</example>
+	<example>ols y 0 x1 x2 x3 --vcv</example>
+	<example>ols y 0 x1 x2 x3 --quiet</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="gui">
+        Calcula las estimaciones de Mínimos Cuadrados Ordinarios (MCO)
+	para el modelo especificado.
+      </para>
+
+      <para context="cli">
+        Calcula las estimaciones de mínimos cuadrados ordinarios (MCO)
+	con <repl>vardep</repl> como variable dependiente y siendo
+	<repl>varindeps</repl> la lista  de variables independientes.
+	Las variables se pueden determinar por nombre o por su número;
+	hay que usar el número cero para el término constante.
+      </para>
+
+      <para>Además de las estimaciones de los coeficientes y de las 
+        desviaciones típicas, el programa también presenta los valores p
+	de los estadísticos <mathvar>t</mathvar> (a dos colas) y
+	<mathvar>F</mathvar>.  Un valor p inferior a 0,01 indica
+	significatividad al nivel del 1 por ciento y se denota mediante
+	<lit>***</lit>. <lit>**</lit> indica un nivel de significatividad 
+	entre el 1 y 5 por ciento y <lit>*</lit> indica significatividad
+	entre el 5 y 10 por ciento. También se presentan algunos estadísticos 
+	de selección de modelos (se describen en Ramanathan, Sección 4.3).
+	</para>
+
+      <para context="cli">Algunas variables que se definen internamente al ejecutar
+      la instrucción <cmd>ols</cmd>, pueden recuperarse mediante la instrucción 
+      <cmdref targ="genr"/>, teniendo en cuenta que <cmd>genr</cmd> debe invocarse 
+      immediatamente después de la instrucción <cmd>ols</cmd>.
+      </para>
+
+      <para context="cli">Mediante la instrucción <cmdref targ="set"/> puede
+      ajustarse la fórmula específica que se usa para generar las desviaciones 
+      típicas robustas (cuando se da la opción <lit>--robust</lit>).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Mínimos cuadrados ordinarios</menu-path>
+      <other-access>Botón beta con sombrero en la barra de herramientas</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="omit" section="Contrastes" label="Omisión de variables">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>no mostrar las estimaciones del modelo reducido</effect>
+	</option>
+      </options>
+      <examples>
+        <example>omit 5 7 9</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Esta instrucción debe invocarse justo después de una instrucción 
+	de estimación. Las variables seleccionadas se omiten del modelo 
+	anterior y se estima el nuevo modelo. Si se omite más de una variable,
+	se presentará el estadístico <mathvar>F</mathvar> de Wald para las variables
+	omitidas y su valor p (sólo para el método MCO).  Un valor p
+	inferior a 0,05 indica que los coeficientes son conjuntamente significativos
+	al nivel de significación del 5 por ciento.
+      </para>
+      <para context="cli">
+        Si se da la opción <lit>--quiet</lit> el resultado que se muestra 
+	es sólo el contraste de significación conjunta de las variables omitidas,
+	en caso contrario, también se presentan las estimaciones del modelo reducido.
+	En este último caso, la opción <lit>--vcv</lit> hace que también se muestre
+	la matriz de covarianzas de los coeficientes estimados.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>ventana de Modelo, /Contrastes/omitir variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="omitfrom" section="Contrastes" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>ID_modelo</argument>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>no mostrar las estimaciones del modelo reducido</effect>
+	</option>
+      </options>
+      <examples>
+        <example>omitfrom 2 5 7 9</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Funciona igual que <cmdref targ="omit"/>, excepto que aquí Vd. 
+      tiene que especificar un modelo anterior (usando su número ID identificador 
+      de modelo, que se presenta al principio de los resultados del modelo) que
+      se toma como base para omitir las variables.  En el ejemplo de
+      arriba se omiten del Modelo 2 las variables con números  5, 7 y 9.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/omitir variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="online" section="Conjunto de datos" context="gui"
+    label="Bases de datos de acceso en línea">
+
+    <description>
+      <para>
+        Gretl es capaz de acceder a las bases de datos de la Universidad 
+	de Wake Forest (para que esto funcione, su ordenador debe estar 
+	conectado a internet).</para>
+
+      <para>Bajo el menú <quote>Archivo, Revisar bases de datos</quote>,
+	seleccione el elemento <quote>sobre servidor</quote>. Entonces tendría 
+	que aparecer una ventana presentando una lista de bases de datos en
+	formato gretl disponibles en Wake Forest. (Esto puede llevar un tiempo, 
+	dependiendo de dónde se encuentre usted y de la velocidad de su conexión 
+	a internet.) Junto al nombre de la base de datos y su pequeña descripción
+	aparecerá una columna de <quote>estado local</quote>: esto le indica
+	si usted tiene ya la base de datos instalada localmente (en su disco duro)
+	y si es así, si está actualizada con la versión del servidor.
+	</para>
+
+      <para>Si usted tiene una determinada base de datos instalada localmente
+        y está actualizada, no hay ninguna ventaja al acceder a ella por 
+	medio del servidor. Pero para una base de datos que no esté instalada 
+	y actualizada, es posible que usted desee obtener el listado de 
+	las series que contiene: para ello pulse sobre 
+	<quote>Obtener listado de series</quote>. Esto abre una nueva ventana,
+	desde la que Vd. puede ver los valores de una serie determinada, representar
+	esos valores o importarlos al espacio de trabajo de gretl.
+	Estas tareas pueden llevarse a cabo usando el menú <quote>Series</quote>
+	o por medio del menú emergente que aparece cuando usted pulsa con el 
+	botón derecho sobre una serie determinada. También puede buscar a lo 
+	largo del listado la variable que a Vd. le interese (mediante el elemento
+	<quote>Buscar</quote> del menú).
+	</para>
+
+      <para>Si Vd. desea un acceso a los datos más rapido, o si desea acceder
+        a la base de datos estando su ordenador fuera de línea (desconectado 
+	de internet), seleccione la línea que contiene la base de datos que Vd. desea
+	y pulse el botón <quote>Instalar</quote>. esto descargará la base de datos 
+	en formato comprimido, lo descomprimirá y lo instalará en su disco duro.
+	A partir de entonces usted debería encontrarlo bajo el menú
+	<quote>Archivo, Revisar bases de datos, nativa gretl</quote>.
+      </para>
+
+    </description>
+  </command>
+
+  <command name="open" section="Conjunto de datos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>fichero_de_datos</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Abre un fichero de datos. Si ya hay un fichero de datos abierto, 
+	se reemplaza por el que ahora se abre. El programa tratará de detectar
+	el formato del fichero de datos (fromato nativo de gretl, texto plano,
+	CSV o BOX1).
+      </para>
+
+      <para>
+        Esta instrucción también se puede usar para abrir una base de datos
+	(de fromato gretl o RATS 4.0).  En este caso, después debería ejecutarse la instrucción
+	<cmdref targ="data"/> para extraer de ella series determinadas.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Abrir datos</menu-path>
+      <other-access>Arrastrar un fichero de datos sobre gretl (en MS Windows o Gnome)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="outfile" section="Impresión" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>nombre_de_fichero</argument>
+        <argument>opción</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--append</flag>
+	  <effect>añadir a un fichero</effect>
+        </option>
+        <option>
+	  <flag>--close</flag>
+	  <effect>cerrar el fichero</effect>
+        </option>
+        <option>
+	  <flag>--write</flag>
+	  <effect>sobreescribir el fichero</effect>
+        </option>
+      </options>
+      <examples>
+        <example>outfile --write regres.txt</example>
+        <example>outfile --close</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>Envía los resultados a <repl>nombre_de_fichero</repl>, hasta 
+        nuevo aviso.  Use la opción <lit>--append</lit> para añadir los resultados
+	a un fichero ya existente o <lit>--write</lit> para empezar un 
+	nuevo fichero (o sobreescribir uno existente).  De esta forma sólo se puede abrir
+	un fichero en cada momento.</para>
+
+      <para>La opción <lit>--close</lit> se usa para cerrar un fichero de
+        resultados que estuviera abierto previamente. Los resultados se enviarán 
+	entonces a la salida por defecto.</para>
+
+      <para>En el primer ejemplo de arriba, se abre el fichero
+	<filename>regres.txt</filename> para escritura, y en el segundo se 
+	cierra.  Esta secuencia tendría sentido sólo si se ejecutaran algunas 
+	instrucciones antes de <lit>--close</lit>.  Por ejemplo si
+	se invocara una instrucción <cmd>ols</cmd>, sus resultados irían a
+	<filename>regres.txt</filename> en lugar de a la pantalla.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="panel" section="Conjunto de datos"
+    label="Datos de panel">
+
+    <usage>
+      <options>
+        <option>
+	  <flag>--cross-section</flag>
+	  <effect>secciones cruzadas apiladas</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>series temporale apiladas</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para context="gui">
+        Aquí hay dos opciones <quote>series temporales apiladas</quote>
+	y <quote>secciones cruzadas apiladas</quote>. Si Vd. quiere utilizar
+	la instrucción "MC combinados" y sus correspondientes diagnósticos 
+	de panel, Gretl debe conocer cómo están organizados sus datos.
+	</para>
+
+      <para context="gui"><quote>Series temporales apiladas</quote> significa
+        que los bloques en el fichero de datos tienen la estructura de series 
+	temporales para cada una de las unidades de sección cruzada. Por ejemplo,
+	las primeras 10 filas de datos podrían representar los valores de ciertas
+	variables para el país A durante 10 periodos, las siguientes 10 filas
+	los valores para el país B durante los mismos 10 periodos, y así sucesivamente.
+	</para>
+
+      <para context="gui"><quote>Seciones cruzadas apiladas</quote> significa
+        que los bloques del fichero de datos tienen la estructura de secciones 
+	cruzadas para cada uno de los periodos temporales. Por ejemplo,
+	las primeras 6 filas de datos posrían representar los valores de
+	ciertas variables para los países A, ..., F para el año 1970, las 6
+	siguientes filas, los valores para los mismos países en el año 1971, y
+	así sucesivamente.</para>
+
+      <para context="gui">Si Vd. guarda su ficherode datos después de establecer 
+        este atributo, esta información se grabará al fichero y así no
+	tendrá que introducirla de nuevo.
+	</para>  
+
+      <para context="gui">Hay que señalar que este elemento de menú no
+        altera la estructura de su conjunto de datos de panel, sólo fija la 
+        interpretación de esa estructura por parte de gretl. Si desea convertir
+        un panel de datos que actualmente está en forma de secciones cruzadas apiladas
+        a la forma de series temporales apiladas, use el elemento de menú
+	<quote>Reestructurar panel</quote>.
+      </para>
+
+      <para context="cli">Indica que el conjunto de datos actual debe ser interpretado
+        como un panel (combinando secciones cruzadas y series temporales).
+	Por defecto, o usando la opción <lit>--time-series</lit>, se considera que 
+	el conjunto de datos está en la forma de series temporales apiladas
+	(los sucesivos bloques de datos contienen series temporales para
+	cada unidad de sección cruzada).  Con la opción <lit>--cross-section</lit>,
+	elconjunto de datos se lee como secciones cruzadas apiladas
+	(los sucesivos bloques de datos contienen secciones cruzadas para cada
+	periodo temporale).  Ver también
+	<cmdref targ="setobs"/>.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Muestra/Interpretar como panel</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="pca" section="Estadística"
+    label="Análisis de componentes principales">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--save-all</flag>
+	  <effect>guardar todos los componentes</effect>
+        </option>
+        <option>
+	  <flag>--save</flag>
+	  <effect>guardar los componentes más importantes</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>Análisis de componentes principales. Presenta los valores propios
+        de la matriz de correlación de las variables de la lista 
+	<repl>listavar</repl> y la proporción de la varianza conjunta
+	explicada por cada uno de los componentes.  También presenta los
+	vectores propios correspondientes (o <quote>ponderaciones de
+	los componentes</quote>).</para>  
+
+      <para>Si se da la opción <lit>--save</lit>, los componentes con
+        valorres propios mayores que 1,0 se guardan como variables en el 
+	conjunto de datos, con nombres <lit>PC1</lit>, <lit>PC2</lit> y así 
+	sucesivamente.  Estas variables artificiales se forman como 
+	la suma de (ponderaciones de los componentes) por 
+	(<lit>Xi</lit> estandarizadas), donde
+	<lit>Xi</lit> denota la <mathvar>i</mathvar>-ésima variable de la lista
+	<repl>listavar</repl>.</para>
+
+      <para>Si se da la opción <lit>--save-all</lit>, se guardan todos los componentes
+	de la manera que se ha descrito arriba.</para> 
+    </description>
+
+    <gui-access>
+      <menu-path>Menú emergente de la ventana principal (selección múltiple)</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="pergm" section="Estadísticas"
+    label="Periodograma">
+
+    <usage>
+      <arguments>
+        <argument>nombre_var</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--bartlett</flag>
+	  <effect>usar la venatana de retardos de Bartlett</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Calcula y presenta (y si no se ejecuta en modo batch, representa 
+	gráficamente) el espectro de la variable especificada.  
+	Sin la opción <lit>--bartlett</lit> se ofrece el periodograma 
+	muestral; con dicha opción, se utiliza una ventana de retardos de 
+	Bartlett de longitud
+	<equation status="inline"
+	  tex="$2\sqrt{T}$"
+	  ascii="2*sqrt(T)"
+	  graphic="tworootT"/> (donde <mathvar>T</mathvar> es el
+	tamaño muestral) para estimar el espectro (ver Capítulo
+	18 del libro de Greene <book>Econometric Analysis</book>). Cuando 
+	se presenta el periodograma muestral, también se proporciona 
+	un contraste <mathvar>t</mathvar> sobre integración fraccional de la serie
+	(<quote>memoria larga</quote>): la hipótesis nula es que el orden de 
+	integración es cero.
+	</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Espectro</menu-path>
+      <other-access>Menú emergente de la ventana principal (selección simple)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="plot" section="Gráficos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--one-scale</flag>
+	  <effect>forzar una sóla escala</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Representa gráficamente los valores de las variables especificadas,
+	para el rango muestral que esté actualmente activo, utilizando
+	símbolos ASCII. Cada línea indica una observación y los valores se 
+	representan horizontalmente. Por defecto, las variables se cambian a 
+	la escala  más adecuada.  Ver también <cmdref targ="gnuplot"/>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="pooled" section="Estimación"
+    label="MCO combinados">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>Estima un modelo vía MCO (ver <cmdref targ="ols"/> para
+        los detalles sobre su sintaxis), y lo marca como 'combinado' o
+	'modelo de panel', de manera que se hace disponible
+	el contraste de <cmdref targ="hausman"/>.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/MCO combinados (panel)</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="print" section="Impresión" context="cli">
+
+    <usage>
+      <arguments>
+	<argument>listavar</argument>
+	<argument alternate="true">cadena_literal</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--byobs</flag>
+	  <effect>por observaciones</effect>
+	</option>
+	<option>
+	  <flag>--ten</flag>
+	  <effect>usar 10 dígitos significativos</effect>
+	</option>
+      </options>
+      <examples>
+	<example>print x1 x2 --byobs</example>
+	<example>print "Esto es una cadena de caracteres"</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Si se da una lista <repl>listavar</repl>, presenta los valores de
+	las variables especificadas; si no se da ninguna lista, muestra los 
+	valores de todas las variables del conjunto de datos actual. Si se 
+	da la opción <lit>--byobs</lit>, los datos se presentan 'por observación',
+	en caso contrario, se presentan 'por variable'. Si se da la opción
+	<lit>--ten</lit>, los datos se presentan por variable mostrando
+	10 dígitos significativos.
+      </para>
+
+      <para>
+        Si el argumento de la instrucción <cmd>print</cmd> es una cadena literal
+	(que debe comenzar con comillas dobles, <lit>"</lit>), la cadena se 
+	presenta tal y como está. Ver también <cmdref targ="printf"/>.
+	</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Mostrar valores</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="printf" section="Impresión" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>format</argument>
+        <argument>args</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Presenta valores escalares bajo el control de una cadena de 
+	caracteres (proporcionando así un subconjunto de las utilidades de
+	la instrucción <lit>printf()</lit> del lenguaje de programación C). 
+	Los formatos que se reconocen son <lit>%g</lit> y <lit>%f</lit>, en 
+	cada caso con los diferentes modificadores disponibles en C.
+	Ejemplos: el formato
+	<lit>%.10g</lit> presenta un valor con 10 dígitos significativos;
+	<lit>%12.6f</lit> presenta una valor con 6 decimales y con una anchura
+	de 12 caracteres.</para>  
+
+      <para>La propia cadena de caracteres que indica el formato debe de estar incluida
+        entre comillas. Los valores a mostrar deben seguir el formato de la cadena,
+	separados por comas. Estos valores deberían de tener la forma de 
+	(a) nombres de variables del conjunto de datos, o (b) expresiones que 
+	sean válidas para la instrucción <cmd>genr</cmd>. En el siguiente ejemplo se
+	muestran los valores de dos variables más el de una expresión calculada:
+	</para>
+
+      <code>
+	ols 1 0 2 3
+	genr b = coeff(2)
+	genr dt_b = stderr(2)
+	printf "b = %.8g, desviación típica %.8g, t = %.4f\n", b, dt_b, b/dt_b
+      </code>
+
+      <para>
+        La largura máxima de una cadena de formato es de 127 caracteres.
+	Se reconocen las secuencias de escape <lit>\n</lit> (nueva línea), 
+	<lit>\t</lit> (tabulador),
+	<lit>\v</lit> (tabulador vertical) y <lit>\\</lit> (backslash literal).  
+	Para presentar un signo de porcentaje literal use <lit>%%</lit>.
+	</para>
+    </description>
+
+  </command>
+
+  <command name="probit" section="Estimación"
+    label="Modelo Probit">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        La variable dependiente debería ser una variable binaria. Se
+	obtienen las estimaciones máximo-verosímiles de los coeficientes 
+	de las variables <repl>varindeps</repl> por medio de mínimos 
+	cuadrados iterativos (el método EM o Expectation&ndash;Maximization).  
+	Como el modelo no es lineal las pendientes dependen de los valores 
+	de las variables independientes: las pendientes que se presentan
+	están evaluadas en las medias de dichas variables. El estadístico
+	chi-cuadrado sirve para contrastar la hipótesis nula de que todos los 
+	coeficientes, excepto la constante, son cero.
+      </para>
+
+      <para>
+        El análisis Probit de proporciones no está aún implementado
+	en <program>gretl</program>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Probit</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="pvalue" section="Utilidades" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>dist</argument>
+        <argument optional="true">params</argument>
+	<argument>xval</argument>
+      </arguments>
+      <examples>
+        <example>pvalue z zscore</example>
+	<example>pvalue t 25 3.0</example>
+	<example>pvalue X 3 5.6</example>
+	<example>pvalue F 4 58 fval</example>
+	<example>pvalue G xbar varx x</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Calcula el área a la derecha de <repl>xval</repl> en la
+	distribución especificada (<lit>z</lit> para Gaussiana,
+	<lit>t</lit> para la <mathvar>t</mathvar> de Student, <lit>X</lit>
+	para la chi-cuadrado, <lit>F</lit> para la <mathvar>F</mathvar> y
+	<lit>G</lit> para la distribución gamma).  Para las ditribuciones 
+	<mathvar>t</mathvar> y 	chi-cuadrado deben proporcionarse los grados 
+	de libertad; para la <mathvar>F</mathvar> hay que proporcionar los 
+	grados de libertad del numerador y del denominador; y para la distribución
+	gamma se necesitan la media y la varianza.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Utilidades/buscador de valores-p</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="pwe" section="Estimación" label="Estimador de Prais-Winsten">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+	</option>
+      </options>
+      <examples>
+        <example>pwe 1 0 2 4 6 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Calcula estimaciones de los parámetros utilizando el
+	procedimiento de Prais&ndash;Winsten,	un método de Mínimos cuadrados
+	generalizados factibles que está diseñado para tener en cuenta
+	la autocorrelación de primer orden del término de error.
+	El procedimiento es iterativo, igual que <cmdref targ="corc"/>; 
+	la diferencia es que mientras el método de Cochrane&ndash;Orcutt
+	desperdicia la primera observación, el de Prais&ndash;Winsten la 
+	utiliza. Para más detalles, ver por ejemplo el Capítulo 13 del libro 
+	de Greene <book>Econometric Analysis</book> (2000).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Prais-Winsten</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="quit" section="Utilidades" context="cli">
+
+    <description>
+      <para>
+        Sale del programa, dándole a Vd. la opción de guardar
+	las órdenes y resultados de su sesión al salir.
+     </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Salir</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="rename" section="Conjunto de datos" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>var_número</argument>
+        <argument>nuevo_nombre</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>Cambia el nombre de la variable con número de identificación
+        <repl>var_número</repl> a <repl>nuevo_nombre</repl>.  El número
+	<repl>var_número</repl> debe estar entre el 1 y el número de variables 
+	en el conjunto de datos. El nuevo nombre debe tener como máximo 8
+	caracteres, debe empezar con una letra y debe estar formado sólo por
+	letras dígitos y el carácter de subrayado (_).
+	character.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Editar atributos</menu-path>
+      <other-access>Menú emergente de la ventana principal (selección simple)</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="reset" section="Contrastes"
+    label="Ramsey's RESET">
+
+    <description>
+      <para>
+        Debe ejecutarse después de la estimación de un modelo vía MCO.
+	Realiza el contraste de especificación de modelos (no linealidad)
+	RESET de Ramsey. Para ello añade a la regresión el cuadrado 
+	y el cubo de los valores ajustados y calcula el estadístico
+	<mathvar>F</mathvar> para la hipótesis nula de que los parámetros 
+	de las dos variables añadidas son cero.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/Contraste RESET de Ramsey</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="rhodiff" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listarho</argument>
+        <argument separated="true">listavar</argument>
+      </arguments>
+      <examples>
+        <example>rhodiff .65 ; 2 3 4</example>
+        <example>rhodiff r1 r2 ; x1 x2 x3</example>	
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Crea las versiones rho-diferenciadas de las variables (dadas 
+	por nombre o número) de la lista <repl>listavar</repl> y 
+	las añade al conjunto de datos, usando el sufijo <lit>#</lit> 
+	para las nuevas variables. Dada la variable <lit>v1</lit> una
+	variable de <repl>listavar</repl>, y las entradas <lit>r1</lit> y
+	<lit>r2</lit> de <repl>listarho</repl>, se crea <lit>v1# = v1(t) -
+	r1*v1(t-1) - r2*v1(t-2)</lit>. Las entradas de <repl>listarho</repl>
+	pueden darse como valores numéricos o como nombres de variables 
+	definidas previamente.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="rmplot" section="Gráficos"
+    label="Gráfico Rango-Media">
+
+    <usage>
+      <arguments>
+        <argument>nombre_var</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Gráfico Rango&ndash;media plot: esta instrucción crea un sencillo gráfico
+	para ayudar a decidir si una serie temporal,
+	<mathvar>y</mathvar>(t), tiene varianza constante o no. Se toma
+	la muestra completa t=1,...,T y se divide en pequeñas submuestras
+	de tamaño arbitrario <mathvar>k</mathvar>. La primera submuestra se forma
+	con <mathvar>y</mathvar>(1),...,<mathvar>y</mathvar>(k), la segunda con
+	<mathvar>y</mathvar>(k+1), ..., <mathvar>y</mathvar>(2k), y así 
+	sucesivamente. Para cada submuetra se calcula la media muestral y
+	el rango (= el máximo menos el mínimo), y se forma un gráfico
+	con las medias en el eje horizontal y los rangos en el vertical.
+	Así, cada submuestra está representada por un punto en este plano.
+	Si la varianza de la serie es constante, se espera que los rangos de 
+	las submuestras sean independientes de las medias; si vemos que los puntos
+	se distribuyen a lo largo de una línea de creciente, esto sugiere
+	que la varianza de la serie aumenta con la media; si los puntos
+	siguen una línea decreciente esto indica que la varianza disminuye
+	a medida que la media aumenta.
+	</para>
+
+      <para>Además del gráfico, gretl presenta las medias y los rangos 
+        de cada submuestra, el coeficiente para la pendiente en una 
+        regresión MCO de los rangos sobre las medias y el valor p para
+        el contraste de la hipótesis nula de que dicha pendiente es cero.
+        Si el coeficiente de la pendiente es significativo, al nivel de 
+        significación del 10 por ciento, se muestra también en el gráfico 
+        la recta de regresión estimada de los rangos sobre las medias.
+       </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Gráfico rango-media</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="run" section="Programación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>inputfile</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Ejecuta las instrucciones de <repl>inputfile</repl> y devuelve 
+	el control a la línea de instrucciones.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Icono de 'ejecutar' en la ventana de guión de instrucciones</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="runs" section="Contrastes" label="Contraste de rachas">
+
+    <usage>
+      <arguments>
+        <argument>nombre_var</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Realiza el contraste <quote>rachas</quote> (no paramétrico) de 
+	aleatoriedad de la variable especificada. Si Vd. desea contrastar
+	la aleatoriedad de las desviaciones respecto a la mediana, para una
+	variable denominada <lit>x1</lit> con mediana distinta de cero, 
+	puede hacer lo siguiente:</para>
+
+      <code>
+	genr signx1 = x1 - median(x1)
+	runs signx1
+      </code>
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/Contraste de rachas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="sampling" section="Conjunto de datos" context="gui"
+    label="Establecer el rango muestral">
+
+    <description>
+      <para>El menú Muestra ofrece varias maneras de seleccionar una submuestra
+        a partir del conjunto de datos actual.</para>
+
+      <para>
+        Si Vd. elige <quote>Muestra/Sample/Definir, a partir de v. ficticia...</quote>
+	se le indica que seleccione una variable ficticia (indicadora), 
+	que debe tener los valores 0 o 1 para cada observación. La muestra 
+	se restringirá entonces a las observaciones para las cuales la variable
+	ficticia vale 1.
+	</para>
+
+      <para>Si Vd. elige <quote>Muestra/Restringir, a partir de criterio...</quote> 
+        es necesario que Vd. proporcione una expresión Booleana (lógica) del mismo
+	tipo que Vd. usaría para definir una variable ficticia. Por
+	ejemplo, la expresión <quote>sqft >  1400</quote> seleccionará sólo 
+	casos para los que la variable sqft tiene un valor mayor que 1400.
+	Las condiciones pueden estar concatenadas utilizando para ello
+	los operadores lógicos <quote>&amp;</quote>(AND) y <quote>|</quote> (OR), 
+	y puede aplicarse también la negación usando
+	<quote>!</quote> (NOT).</para>
+
+      <para>El elemento de menú <quote>Muestra/Quitar todas las obs. con 
+        valores perdidos</quote> redefine la muestra de manera que se excluyen
+	todas las observaciones para las cuales faltan los valores de una o más 
+	variables  (se dejan sólo los datos completos).
+	</para>  
+
+      <para>Para seleccionar las observaciones para las cuales una variable particular
+        no tiene valores ausentes, use <quote>Muestra/Restringir, a partir de 
+	criterio...</quote> e introduzca la condición Booleana
+	<quote>!missing(nombre_var)</quote> (reemplac
+	<quote>nombre_var</quote> por el nombre de la variable que Vd. 
+	desee usar).
+      </para>  
+
+      <para>Si las observaciones tienen nombre (marcas de caja), Vd. puede
+        remuestrear de manera que se excluya una observación particular,
+	utilizando por ejemplo <quote>obs!="France"</quote> como condición 
+	Booleana.  El nombre de la observación debe estar incluido entre comillas.
+      </para>
+
+      <para>Al definir una muestra a partir de una variable ficticia, una 
+        expresión Booleana o por el criterio de los valores perdidos, hay que señalar que
+        cualquier información <quote>estructural</quote> en el encabezamiento 
+        del fichero de datos (con respecto a la estructura de series temporales o de panel)
+        se pierde. Vd. puede reimponerla de nuevo usando el menú	
+      <quote>Muestra/Establecer frecuencia, observación inicial...</quote>.</para>
+
+    </description>
+  </command>
+
+
+  <command name="scatters" section="Gráficos"
+    label="Gráficos bivariantes múltiples">
+
+    <usage>
+      <arguments>
+        <argument>yvar</argument>
+        <argument separated="true">xlistavar</argument>
+	<argument alternate="true">ylistavar ; xvar</argument>
+      </arguments>
+      <examples>
+        <example>scatters 1 ; 2 3 4 5</example>
+        <example>scatters 1 2 3 4 5 6 ; 7</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Dibuja gráficos bivarianes, de la variable <repl>yvar</repl> con respecto
+	a todas las variables de la lista <repl>xlistavar</repl>, o
+	de todas las variables de la lista <repl>ylistavar</repl> con respecto
+	a <repl>xvar</repl>.  El primer ejemplo de arriba sitúa
+	la variable 1 en el eje <mathvar>y</mathvar> y realiza cuatro 
+	gráficos, el primero con la variable 2 en el eje <mathvar>x</mathvar>, 
+	el segundo con la variable 3 en el eje <mathvar>x</mathvar>, y así
+	sucesivamente.  En el segundo ejemplo se representa cada una de las
+	variables 1,..., 6 con respecto a la variable 7 en el eje <mathvar>x</mathvar>. 
+	Revisar un conjunto de gráficos como estos puede ser útil
+	al realizar análisis exploratorio de datos. El número máximo de gráficos 
+	es seis; cualquier otra variable extra en la lista será ignorada.
+      </para>
+      <para context="gui">
+        Dibuja un conjunto de gráficos por parejas de la variable elegida 
+	del eje <quote>Y</quote> con respecto a cada una de las variables 
+	elegidas del eje <quote>X</quote>. Revisar un conjunto de gráficos 
+	como estos puede ser útil al realizar análisis exploratorio de datos. 
+	El número máximo de gráficos es seis; cualquier otra variable extra 
+	en la lista de variables del eje X será ignorada.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Gráficos bivariantes múltiples</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="seed" section="Obsoleta" context="cli">
+    <description>
+      <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
+      </para>
+    </description>
+  </command>
+
+  <command name="seed" section="Programación" context="gui"
+    label="Semilla aleatoria">
+
+    <description>
+      <para>Requiere como entrada un número entero. Establece la semilla
+        para el generador de números pseudoaleatorios que se utiliza
+	bajo el menú Datos, Añadir variables, Aleatoria normal y Aleatoria 
+	uniforme. Por defecto, la semilla se establece cuando se inicia el 
+	programa usando la hora del sistema. Si Vd. desea obtener secuencias 
+	de números pseudoaleatorios repetibles necesitará determinar la semilla 
+	de forma manual.
+      </para>
+    </description>
+  </command>
+
+  <command name="set" section="Programación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>variable</argument>
+        <argument>valor</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Establece los valores de varios parámetros del programa.
+	Los valores dados permanecen vigentes durante todo el desarrollo 
+	de la sesión de gretl, a no ser que se cambien con una nueva
+	llamada a la instrucción <cmd>set</cmd>.  Los parámetros que pueden 
+	determinarse de esta forma se enumeran abajo. Hay que señalar que 
+	los parámetros de <lit>hac_lag</lit> y <lit>hc_version</lit> se usan
+	cuando se elige la opción <lit>--robust</lit> en la instrucción 
+	<cmd>ols</cmd>. 
+      </para>
+
+      <table lwidth="80pt" rwidth="320pt">
+	<row>
+	  <cell><lit>echo</lit></cell>
+	  <cell>valores: <lit>off</lit> u <lit>on</lit> (por defecto).
+	    Suprime o activa el eco de las instrucciones en la salida de gretl.</cell>
+	</row>
+	<row>
+	  <cell><lit>qr</lit></cell>
+	  <cell>valores: <lit>on</lit> u <lit>off</lit> (por defecto).
+	    Utiliza QR en lugar de la descomposición de Cholesky al 
+	    calcular las estimaciones por MCO.</cell>
+	</row>
+	<row>
+	  <cell><lit>hac_lag</lit></cell>
+	  <cell>valores: <lit>nw1</lit> (por defecto) o
+	    <lit>nw2</lit>, o un entero.  Establece el retardo máximo, 
+	    <mathvar>p</mathvar>, usado al calcular desviaciones típicas 
+	    HAC (Heteroskedasticity and Autocorrelation Consistent) usando 
+	    el método de Newey-West para datos de series temporales. 
+	    <lit>nw1</lit> y <lit>nw2</lit> representan dos 
+	    variantes para el cálculo automático basadas en el 
+	    tamaño muestral, <mathvar>T</mathvar>: para nw1, 
+	  <equation status="inline"
+	    tex="$p = 0.75 \times T^{1/3}$"
+	    ascii="p = 0.75 * T^(1/3)"
+	    graphic="nw1"/>,
+	    y para nw2, 
+	  <equation status="inline"
+	    tex="$p = 4 \times (T/100)^{2/9}$"
+	    ascii="p = 4 * (T/100)^(2/9)"
+	    graphic="nw2"/>.	  
+	  </cell>
+	</row>
+	<row>
+	  <cell><lit>hc_version</lit></cell>
+	  <cell>valores: 0 (por defecto), 1, 2 o 3. Determina la variante
+	    usada al calcular desviaciones típicas consistentes ante 
+	    heterocedasticidad con datos de sección cruzada. Las opciones
+	    corresponden a los valores HC0, HC1, HC2 y HC3 estudiadas por 
+	    Davidson y MacKinnon en <book>Econometric Theory and Methods</book>, 
+	    capítulo 5.  HC0 produce lo que normalmente se llaman 
+	    <quote>desviaciones típicas de White</quote>.</cell>
+	</row>
+	<row>
+	  <cell><lit>garch_vcv</lit></cell>
+	  <cell>valores: <lit>unset</lit>, <lit>hessian</lit>,
+	    <lit>im</lit> (matriz de información) , <lit>op</lit> (matriz de 
+	    productos externos), <lit>qml</lit> (estimador QML),
+	    <lit>bw</lit> (Bollerslev&ndash;Wooldridge). Especifica la variante
+	    que se usará para estimar la matriz de covarianzas de los 
+	    coeficientes para modelos GARCH. Si se da <lit>unset</lit>
+	    (por defecto) entonces se usa el Hessiano a no ser que se dé
+	    también la opción  <quote>robust</quote> para la instrucción 
+	    garch, en cuyo caso se usa QML.</cell>
+	</row>
+	<row>
+	  <cell><lit>hp_lambda</lit></cell>
+	  <cell>valores: <lit>auto</lit> (por defecto), o un valor numérico.  
+	  Determina el parámetro de suavizado para el filtro de
+	  Hodrick&ndash;Prescott (ver la función <lit>hpfilt</lit> bajo
+	  la instrucción <cmd>genr</cmd>).  El valor por defecto es usar
+	  100 veces el cuadrado de la periodicidad, lo cual da
+	  100 para datos anuales, 1600 para trimestrales, y así sucesivamente.</cell>
+	</row>
+      </table>
+
+    </description>
+  </command>
+
+  <command name="setobs" section="Conjunto de datos"
+    label="Frequencia y observación inicial">
+
+    <usage>
+      <arguments>
+        <argument>periodicidad</argument>
+        <argument>obs_inicial</argument>
+      </arguments>
+      <examples>
+        <example>setobs 4 1990:1</example>
+        <example>setobs 12 1978:03</example>
+        <example>setobs 20 1:01</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Fuerza al programa a interpretar el conjunto de datos actual como 
+	serie temporal o como panel, cuando los datos se han leído como
+	series simples sin fechas. La  <repl>periodicidad</repl> debe ser
+	un entero; <repl>obs_inicial</repl> es una cadena de caracteres que 
+	representa la fecha o identificación de panel de la primera observación.
+	Ver también <cmdref targ="panel"/>.
+      </para>
+      <para context="gui">
+        Esta instrucción se usa para forzar al programa a interpretar
+	el conjunto de datos actual como series temporales o como panel,
+	cuando los datos se han leído como series simples sin fechas.
+	Se necesitan dos parámetros: una frecuencia entera y una cadena 
+	de caracteres para la observación inicial (normalmente una fecha).
+	He aquí algunos ejemplos de código válido:</para>
+
+      <table context="gui">
+	<row>
+	  <cell>4 1990:1</cell>
+	  <cell>Interpretar los datos como trimestrales, comenzando en 1990,
+	    Q1</cell>
+	</row>
+	<row>
+	  <cell>12 1978:03</cell>
+	  <cell>Interpretar los datos como mensuales, comenzando en marzo de 1978</cell>
+	</row>
+	<row>
+	  <cell>20 1:01</cell>
+	  <cell>Frequencia 20, empezando en la observación 1.01 (datos de panel)</cell>
+	</row>
+	<row>
+	  <cell>5 1972/01/20</cell>
+	  <cell>Datos diarios (5 días por semana), comenzando el 20 de enero 
+	  de 1972</cell>
+	</row>
+	<row>
+	  <cell>7 2002/01/20</cell>
+	  <cell>Datos diarios (7 días por semana), comenzando el 20 de enero de
+	    2002</cell>
+	</row>
+      </table>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Muestra/Establecer frecuencia, observación inicial</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="setmiss" section="Conjunto de datos"
+    label="Código de valor ausente">
+
+    <usage>
+      <arguments>
+        <argument>valor</argument>
+        <argument optional="true">listavar</argument>
+      </arguments>
+      <examples>
+        <example>setmiss -1</example>
+        <example>setmiss 100 x2</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Hace que el programa interprete algún valor numérico concreto
+	(el primer parámetro de la instrucción) como código para
+	valor <quote>ausente</quote>, en el caso de datos importados.  
+	Si este valor es el único parámetro, como en el primer ejemplo
+	de arriba, la interpretación se aplicará a todas las series del
+	conjunto de datos. Si después de <repl quote="true">valor</repl> 
+	sigue una lista de variables, por nombre o número, la interpretación
+	se restringe a las variables especificadas. Así, en el segundo ejemplo
+	el valor 100 se interpreta como código para <quote>valor ausente</quote>,
+	pero sólo para la variable <lit>x2</lit>.
+      </para>
+      
+      <para context="gui">
+        Determina un valor numérico que se intepretará como "ausente"
+	o "no disponible", o para una serie de datos concreta (bajo el menú
+	de Variable) o globalmente para el conjunto de datos completo 
+	(bajo el menú de Muestra).</para> 
+      
+      <para context="gui">
+        Gretl tiene su cpropio código inetrno para manejar valores ausentes,
+	pero a veces los datos importados emplean un código diferente. Por
+	ejemplo, si una serie particular está codificada de manera que el valor de
+	-1 indica "no disponible", Vd. puede seleccionar "Establecer código de 'valor perdido'"
+	en el menú de Variable y escribir allí el valor "-1" (sin las comillas).
+	Entonces gretl leerá los -1s como observaciones ausentes.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Muestra/Establecer código de 'valor perdido'</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="shell" section="Utilidades" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>instrucción_de_shell</argument>
+      </arguments>
+      <examples>
+        <example>! ls -al</example>
+	<example>! notepad</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Un <cmd>!</cmd> al comienzo de una línea de instrucciones 
+	se interpreta como un escape al shell del usuario.  Así se pueden ejecutar
+	instrucciones de shell arbitrarias desde dentro de <program>gretl</program>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="sim" section="Conjunto de datos"
+    label="Simulación">
+
+    <usage>
+      <arguments>
+        <argument optional="true">obs_inicial obs_final</argument>
+	<argument>nombre_var</argument>
+	<argument>a0 a1 a2 &hellip;</argument>
+      </arguments>
+      <examples>
+        <example>sim 1979.2 1983.1 y 0 0.9</example>
+	<example>sim 15 25 y 10 0.8 x</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Simula valores para <repl>nombre_var</repl> para el rango muestral actual
+	o para el rango <repl>obs_inicial</repl> hasta <repl>obs_final</repl> 
+	si se dan estos argumentos. La variable <repl>y</repl> debe haber sido 
+	definida antes con valores iniciales apropiados. La fórmula
+	utilizada es 
+	<equation status="display"
+	  tex="\[y_t=a_{0t} + a_{1t}y_{t-1} + a_{2t}y_{t-2} + \dots\]"
+	  ascii="y(t) = a0(t) + a1(t)*y(t-1) + a2(t)*y(t-2) + ..."
+	  graphic="simformula"/> 
+	Los términos <lit>ai(t)</lit> pueden ser números constantes o nombres
+	de variables definidas previamente; esos términos pueden ir precedidos 
+	de un signo menos.
+      </para>
+
+      <para>Esta instrucción ya no se recomienda.  En su lugar debería de
+      usarse <cmdref targ="genr"/>.</para>
+    </description>
+
+  </command>
+
+  <command name="smpl" section="Conjunto de datos" context="cli">
+
+    <!-- don't break the lines below or the text version will get messed
+    up -->
+
+    <usage>
+      <altforms>
+	<altform><lit>smpl</lit> <repl>startobs endobs</repl></altform>
+	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
+	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
+	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>listavar</repl> <lit>]</lit></altform>
+	<altform><lit>smpl full</lit></altform>
+      </altforms>
+      <examples>
+        <example>smpl 3 10</example>
+	<example>smpl 1960:2 1982:4</example>
+	<example>smpl +1 -1</example>
+	<example>smpl x > 3000 --restrict</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Cambia el rango muestral. El nuevo rango puede definirse de varias formas.
+	En la primera forma alternativa (y los dos primeros ejemplos) de arriba
+	<repl>startobs</repl> y <repl>endobs</repl> deben ser coherentes con
+	la periodicidad de los datos. Cualquiera de ellos se puede sustituir por un
+	punto y coma para dejar el valor sin cambios. En la segunda forma
+	los enteros <repl>i</repl> y <repl>j</repl> (que pueden ser postivos o negativos
+	y deberían tener signo) se toman como offsets respecto al rango
+	muestral existente. En la tercera forma, <repl>dummyvar</repl> debe
+	ser una variable indicador con valores 0 o 1 en cada observación;
+	la muestra se restringirá a las observaciones en las que el valor es 1.
+	La cuarta forma, usando <lit>--restrict</lit> restringe la muestra a
+	las observaciones que satisfacen la condición Booleana (que se especifica
+	de acuerdo a la sintaxis de la instrucción <cmdref targ="genr"/>).
+      </para>
+
+      <para>Con la opción <lit>--no-missing</lit>, si se especifica
+	<repl>listavar</repl> una observación se quita si y sólo si al menos
+	una de las variables de <repl>listavar</repl> tiene un valor ausente en 
+	esa observación; en los demás casos las observaciones se quitan si
+	<emphasis>cualquier</emphasis> variable tiene un valor ausente.</para>
+
+      <para>La forma final, <lit>smpl full</lit>, restablece el rango muestral completo.
+      </para>
+
+      <para>Puede usarse la variable interna <lit>obs</lit> junto con
+        la opción <lit>--restrict</lit> de <lit>smpl</lit> para excluir
+	observaciones particulares de la muestra. Por ejemplo,
+	<lit>smpl obs!=4 --restrict</lit> quitará sólo la cuarta observación.
+	Si los puntos de datos están identificados con etiquetas,
+	<lit>smpl obs!="USA" --restrict</lit> quitará la observación que tiene
+	la etiqueta <quote>USA</quote>.</para>
+
+      <para>
+        Con respecto a las formas <lit>--dummy</lit>,
+	<lit>--restrict</lit> y <lit>--no-missing</lit> de
+	<lit>smpl</lit>, hay que señalar que cualquier información 
+	<quote>estructural</quote> en el fichero de datos (referente a la estructura 
+	de series temporales o de panel de los datos) se pierde al ejecutar esta
+	orden.  Es posible reimponer la estructura inicial con la instrucción
+	<cmdref targ="setobs"/>.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Muestra</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="spearman" section="Estadística"
+    label="Correlación por rangos de Spearmans">
+
+    <usage>
+      <arguments>
+        <argument>x</argument>
+        <argument>y</argument>
+      </arguments>
+      <options>
+        <option> 
+	  <flag>--verbose</flag>
+	  <effect>mostrar los datos ordenados</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Presenta el coeficiente de rango de correlación para las dos
+	variables <mathvar>x</mathvar> e <mathvar>y</mathvar>. 
+	No es necesario antes ordenar y hacer el ranking de
+        las variables, la función se encarga de ello.
+      </para>
+
+      <para context="gui">
+        Calcula el coeficiente de correlación por rangos de Spearman para un par de
+        variables especificado. No es necesario antes ordenar y hacer el ranking de
+        las variables, la función se encarga de ello.
+	</para>
+
+      <para>
+	El ranking automático es de mayor a menor (es decir, el mayor valor 
+	de los datos obtiene rango 1).  Si Vd. necesita invertir este ranking
+	cree una nueva variable que sea el negativo de la primera original.
+	Por ejemplo:
+      </para>
+
+      <code>
+	genr altx = -x
+	spearman altx y</code>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Correlación por Rangos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="square" section="Transformaciones" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--cross</flag>
+	  <effect>además de los cuadrados genera los productos cruzados</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Genera variables nuevas que son los cuadrados de las variables
+	de la lista <repl>listavar</repl> (más los productos cruzados, si 
+	se da la opción	<lit>--cross</lit>).  Por ejemplo, <cmd>square
+	  x y</cmd> generará <lit>sq_x</lit> = <lit>x</lit>
+	cuadrado, <lit>sq_y</lit> = <lit>y</lit> cuadrado and
+	(optionalmente) <lit>x_y</lit> = <lit>x</lit> por <lit>y</lit>.
+	Si una determinada variable es una variable ficticia, no será elevada al cuadrado,
+	ya que se obtendría lo mismo.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Añadir variables/cuadrados delas variables</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="store" section="Conjunto de datos"
+    label="Guardar datos">
+
+    <usage>
+      <arguments>
+        <argument>fichero_de_datos</argument>
+        <argument optional="true">listavar</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--csv</flag>
+	  <effect>usar formato CSV</effect>
+        </option>
+        <option>
+	  <flag>--gnu-octave</flag>
+	  <effect>usar formato GNU Octave</effect>
+        </option>
+        <option>
+	  <flag>--gnu-R</flag>
+	  <effect>usar formato GNU R</effect>
+        </option>
+        <option>
+	  <flag>--traditional</flag>
+	  <effect>usar el formato tradicional de ESL</effect>
+        </option>
+        <option>
+	  <flag>--gzipped</flag>
+	  <effect>aplicar la compresión mediante gzip</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Guarda el conjunto de datos completo o, si se suministra una lista
+	<repl>listavar</repl>, el subconjunto especificado de variables 
+	del conjunto de datos actual, al fichero dado en
+	<repl>fichero_de_datos</repl>.</para>
+
+      <para>
+        Por defecto los datos se guardan en formato gretl <quote>nativo</quote>,
+	pero las distintas opciones permiten guardarlos en varios 
+	formatos alternativos. Los datos CSV (Comma-Separated Values)
+	pueden ser leídos por programas de hoja de cálculos y también pueden 
+	manipularse mediante un editor de textos. Los formatos de 
+	<program>Octave</program> y <program>R</program> están diseñados
+	para el uso con estos respectivos programas.  La compresión mediante
+	Gzip puede ser útil para grandes conjuntos de datos. Ver 
+	<manref targ="datafiles"/> para detalles sobre los distintos formatos.
+	</para>
+
+      <para>
+	Hay que señalar que las variables escalares no serán guardadas 
+	automáticamente: si Vd. desea guardar escalares debe escribirlas 
+	explícitamente en la lista <repl>listavar</repl>.
+      </para>  
+	
+    </description>
+
+    <gui-access>
+      <menu-path>/Archivo/Guardar datos; /Archivo/Exportar datos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="summary" section="Estadística" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">listavar</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+        Presenta los estadísticos principales de las variables de 
+	la lista <repl>listavar</repl>, o si se omite <repl>listavar</repl>, 
+	de todas las variables del conjunto de datos. Se muestran la media,
+	desviación típica, coeficiente de variación (=
+	dt/media), mediana, mínimo, máximo, coeficiente de asimetría y exceso de
+	curtosis.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Estadísticos principales</menu-path>
+      <other-access>Menú emergente de la ventana principal</other-access>
+    </gui-access>
+
+  </command>
+
+  <command name="system" section="Estimación" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>type</argument>
+        <argument>savevars</argument>
+      </arguments>
+      <examples>
+        <example>system type=sur</example>
+	<example>system type=sur save=resids</example>
+	<example>system type=3sls save=resids,fitted</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+        Da comienzo a un sistema de ecuaciones. Actualmente se soportan dos
+	tipos de sistemas: <cmd>sur</cmd> (Seemingly Unrelated
+	Regressions, ecuaciones de regresión aparentemente no relacionadas) 
+	y <cmd>3sls</cmd> (Three-Stage Least Squares, mínimos cuadrados en 
+	tres etapas). En el campor opcional <cmd>save=</cmd> se puede especificar
+	si guardar los residuos (<cmd>resids</cmd>) y/o los valores ajustados 
+	(<cmd>fitted</cmd>).  El sistemna debe contener al menos dos ecuaciones,
+	que se especifican por medio de la instrucción <cmd>equation</cmd>, 
+	y debe terminarse con la línea <cmd>end system</cmd>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="tabprint" section="Impresión" context="cli">
+
+    <usage>
+      <arguments>
+        <argument optional="true">-f fichero</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--complete</flag>
+	  <effect>Crea un documento completo</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>
+        Debe ejecutarse después de la estimación de un modelo. Presenta
+	el modelo estimado en forma de una tabla de &latex;. Si se especifica 
+	un nombre de fichero por medio de la opción <lit>-f</lit> el resultado
+	va a ese fichero, en caso contrario va a un fichero con un nombre
+	de la forma <filename>model_N.tex</filename>, donde <lit>N</lit> es el
+	número de modelos estimados hasta ese momento en la sesión actual de gretl.
+	Ver también <cmdref targ="eqnprint"/>.
+      </para>
+
+      <para>
+	Si se da la opción <lit>--complete</lit> el fichero &latex; será
+	un documento completo, listo para ser procesado; en caso contrario
+	debería ser incluido en un documento ya formado.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /LaTeX</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="testuhat" section="Contrastes" context="cli"
+    label="Normalidad de los residuos">
+
+    <description>
+      <para>
+        Debe ejecutarse después de una instrucción de estimación. 
+	Da la distribución de frecuencias de los residuos del modelo
+	y un contraste chi-cuadrado de normalidad, basado en el procedimiento
+	propuesto por Doornik y Hansen (1984).
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>Ventana de Modelo, /Contrastes/normalidad de los residuos</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="tobit" section="Estimación" label="Modelo Tobit">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+        </option>
+        <option>
+	  <flag>--verbose</flag>
+	  <effect>mostrar los detalles de las iteraciones</effect>
+        </option>
+      </options>
+    </usage>
+
+    <description>
+      <para>Estima un modelo Tobit. Este modelo puede ser adecuado
+        cuando la variable dependiente es una variable 
+	<quote>truncada</quote>.  Por ejemplo, se observan valores positivos
+	y cero de las compras de bienes duraderos por parte de las familias,
+	pero no valores negativos. Sin embargo las decisiones sobre tales compras
+	pueden considerarse como resultados de una disposición subyacente a la compra
+	que puede ser negativa en algunos casos. Para detalles ver el
+	libro de Greene <book>Econometric Analysis</book>, Capítulo 20.</para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Tobit</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="tsls" section="Estimación"
+    label="Mínimos cuadrados en dos etapas">
+
+    <usage>
+      <arguments>
+        <argument>vardep</argument>
+        <argument>varindeps</argument>
+	<argument separated="true">instrumentos</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+        </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>desviaciones típicas robustas</effect>
+        </option>
+      </options>      
+      <examples>
+        <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para context="cli">
+        Calcula las estimaciones por mínimos cuadrados en dos etapas
+	(MC2E o VI):
+	<repl>vardep</repl> es la variable dependiente,
+	<repl>varindeps</repl> es la lista de variables independientes
+	(incluyendo las variables endógenas del lado derecho) 
+	en la ecuación estructural para la cual se necesitan las estimaciones
+	MC2E; y	<repl>instrumentos</repl> es la lista combinada de variables
+	exógenas y predeterminadas en todas las ecuaciones. Si la lista de
+	<repl>instrumentos</repl> no es al menos tan larga como 
+	<repl>varindeps</repl>, el modelo no está identificado.</para>
+
+      <para context="cli">
+        En el ejemplo de arriba, las <lit>y</lit>s son las
+	variables endógenas y las <lit>x</lit>s son las exógenas y predeterminadas.
+      </para>
+
+      <para context="gui">
+	Esta instrucción necesita la selección de dos listas de variables:
+	las variables independientes del modelo  y una lista de
+	"instrumentos".  La última recoge las variables exógenas
+	y/o predeterminadas que pueden usarse como regresores para
+	obtener valores ajustados para las variables endógenas del lado derecho.
+	</para>
+
+      <para context="gui">Si alguna de las variables del lado derecho del modelo
+        son exógenas, deberían estar incluidas en ambas listas.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Mínimos cuadrados en dos etapas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="var" section="Estimación"
+    label="Autorregresión vectorial">
+
+    <usage>
+      <arguments>
+        <argument>orden</argument>
+        <argument>listavar</argument>
+	<argument separated="true">detlist</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--quiet</flag>
+	  <effect>no mostrar respuestas al impulso etc.</effect>
+        </option>
+      </options>
+      <examples>
+        <example>var 4 x1 x2 x3 ; const time</example>
+      </examples>
+    </usage>
+
+    <description>
+
+      <para context="gui">
+	Este mandato necesita la especificación de:</para>
+
+      <ilist context="gui">
+	<li><para context="gui">- la variable dependiente de la primera
+	    ecuación del sistema VAR;</para>
+	</li>
+
+	<li><para context="gui">- el orden de retardos, es decir, el número
+	    de retardos de cada variable que deberían incluirse en el sistema;
+	    </para>
+	</li>
+
+	<li><para context="gui">- los posibles términos determinísticos
+	    (es decir, la constante, tendencia temporal, variables ficticias 
+	    estacionales, etc); y</para>
+	</li>
+
+	<li><para context="gui">- una lista de variables independientes, cuyos
+	    retardos se incluirán en el lado derecho de las ecuaciones
+	    (nota: no incluir en esta lista variables retardadas
+	    -- serán añadidas automáticamente).</para>
+	</li>
+      </ilist>
+
+      <para context="gui">Se ejecutará una regresión por separado 
+        para cada variable del sistema. La salida de cada ecuación 
+	contiene los contrastes F para restricciones cero de todos los 
+	retardos de cada una de las variables, un contraste F para el 
+	máximo retardo, descomposiciones de la varianza de predicción
+	y funciones impulso respuesta.
+	</para>  
+
+      <para context="cli">
+	Construye y estima (usando MCO) un modelo autorregresivo vectorial (VAR).
+	El primer argumento especifica el orden de retardos, despues va
+	la estructura de la primera ecuación. No hay que incluir retardos entre
+	los elementos de <repl>listavar</repl> &mdash; se añadirán automáticamente.
+	El punto y coma separa las variables estocásticas, para las que se incluirán
+	un número <repl>orden</repl> de retardos, de los terminos determinísticos
+	de <repl>detlist</repl>, tales como la constante, la tendencia temporal y las
+	variables ficticias estacionales.</para>
+
+      <para context="cli">
+        De hecho, gretl es capaz de reconocer las variables determinísticas 
+	más comunes (constante, tendencia temporal, variables ficticias
+	que no tengan más valores que el 0 y el 1), así que estas no es necesario
+	situarlas después del punto y coma.  Variables determinísticas más complejas
+	(p.ej. una tendencia temporal interactuando con una variable ficticia) 
+	deben incluirse después del punto y coma.
+	</para>
+
+      <para context="cli">
+	Se ejecuta una regresión por separado para cada variable
+	de <repl>listavar</repl>. La salida de cada ecuación presenta
+	los contrastes <mathvar>F</mathvar> de restricciones cero de todos 
+	los retardos de cada variable; un contraste <mathvar>F</mathvar>
+	de significatividad del retardo máximo; descomposiciones de la varianza 
+	de predicción y las funciones impulso-respuesta.
+	</para>
+
+      <para>
+	Las descomposiciones de la varianza y las funciones impulso-respuesta
+	se basan en la descomposición de Cholesky de la matriz de covarianzas 
+	contemporánea, y en este contexto el orden en el que se dan las variables
+	(estocásticas) es importante. La primera variable de la lista se supone
+	que es <quote>más exógena</quote> dentro del periodo.</para> 
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Serie temporal/Autorregresión vectorial (VAR)</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="listavar" section="Conjunto de datos" context="cli">
+
+    <description>
+      <para>
+	Presenta un listado de las variables actualmente disponibles.
+	<cmd>list</cmd> y <cmd>ls</cmd> son sinónimos.  
+      </para>
+    </description>
+
+  </command>
+
+  <command name="vartest" section="Contrastes"
+    label="Diferencia de varianzas">
+
+    <usage>
+      <arguments>
+        <argument>var1</argument>
+        <argument>var2</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para context="cli">
+	Calcula el estadístico <mathvar>F</mathvar> para contrastar 
+	la hipótesis nula de que las varianzas poblacionales de las
+	variables <repl>var1</repl> y <repl>var2</repl> son iguales, 
+	y muestra su valor p.
+      </para>
+      <para context="gui">
+	Calcula el estadístico <mathvar>F</mathvar> para contrastar 
+	la hipótesis nula  de que las varianzas poblacionales de las 
+	dos variables seleccionadas son iguales y muestra su valor p.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Datos/Diferencia de varianzas</menu-path>
+    </gui-access>
+
+  </command>
+
+  <command name="wls" section="Estimación"
+    label="Mínimos cuadrados ponderados">
+
+    <usage>
+      <arguments>
+        <argument>wtvar</argument>
+        <argument>vardep</argument>
+	<argument>varindeps</argument>
+      </arguments>
+      <options>
+        <option>
+	  <flag>--vcv</flag>
+	  <effect>mostrar la matriz de covarianzas</effect>
+        </option>
+      </options> 
+    </usage>
+
+    <description>
+      <para context="cli">
+        Calcula las estimaciones de Mínimos cuadrados ponderados usando
+	<repl>wtvar</repl> como variable de ponderaciones, 
+	<repl>vardep</repl> como variable dependiente y
+	<repl>varindeps</repl> como lista de variables independientes.  
+	En concreto, se ejecuta una regresión MCO de 
+	<repl>wtvar</repl> <lit>*</lit> <repl>vardep</repl> contra
+	<repl>wtvar</repl> <lit>*</lit> <repl>varindeps</repl>. Si
+	<repl>wtvar</repl> es una variable ficticia, esto es equivalente a
+	eliminar todas las observaciones en las que <repl>wtvar</repl> 
+	tiene valor cero.
+      </para>
+      <para context="gui">
+        Supongamos que "wtvar" denota la variable seleccionada en la caja
+	"Variable de ponderaciones". Se ejecuta una regresión por MCO
+	en la que la variable dependiente es el producto de wtvar por la 
+	variable dependiente elegida, y las variables independientes
+	también se multiplican por wtvar.  Si wtvar es una variable 
+	ficticia, esto es equivalente a	eliminar todas las observaciones 
+	en las que wtvar toma valor cero.
+      </para>
+    </description>
+
+    <gui-access>
+      <menu-path>/Modelo/Mínimos cuadrados ponderados</menu-path>
+    </gui-access>
+
+  </command>
+
+</commandlist>
+

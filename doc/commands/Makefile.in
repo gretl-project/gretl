@@ -81,6 +81,9 @@ hlp: xsltrans reflow $(CMDSRC) $(HLPXSL) $(XMLSTRS)
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands.xml && \
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp
+	./xsltrans --hlp $(CMDSDIR)/gretl_commands_es.xml && \
+	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.es
+	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.es
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.it
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.it
