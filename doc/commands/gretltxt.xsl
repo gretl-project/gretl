@@ -315,23 +315,19 @@
 </xsl:template>
 
 <xsl:template match="menu-path">
-  <xsl:if test="$hlp='cli'">
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:call-template name="gettext">
-      <xsl:with-param name="key" select="'menupath'"/>
-    </xsl:call-template>
-    <xsl:apply-templates/>
-  </xsl:if>
+  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'menupath'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="other-access">
-  <xsl:if test="$hlp='cli'">
-    <xsl:text>&#xa;</xsl:text>
-    <xsl:call-template name="gettext">
-      <xsl:with-param name="key" select="'otheraccess'"/>
-    </xsl:call-template>
-    <xsl:apply-templates/>
-  </xsl:if>
+  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="gettext">
+    <xsl:with-param name="key" select="'otheraccess'"/>
+  </xsl:call-template>
+  <xsl:apply-templates/>
 </xsl:template>
 
 <xsl:template match="table[not(@context) or @context=$hlp]"> 

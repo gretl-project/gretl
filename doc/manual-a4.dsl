@@ -127,6 +127,7 @@
         (normalize "graphic")
         (normalize "subtitle")
         (normalize "author")
+	(normalize "othercredit")
         (normalize "date")))
 
 ;; These elements appear in this order on the title page of an article.

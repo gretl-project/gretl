@@ -157,17 +157,28 @@
 	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)"
 	  graphic="adf1"/></para>
 
-      <para>
+      <para context="cli">
 	If the lag order, <mathvar>k</mathvar>, is greater than 0,
 	then <mathvar>k</mathvar> lags of the dependent variable are
 	included on the right-hand side of each test
 	regression.</para>
 
-      <para>
+      <para context="cli">
 	If the given lag order is prefaced with a minus sign, it is
 	taken as the maximum lag and the actual lag order used is
 	obtained by testing down.  Let the given order be
 	&minus;<mathvar>k</mathvar>: the testing-down algorithm is
+	then:</para>
+
+      <para context="gui">
+	If the lag order, <mathvar>k</mathvar>, is greater than 0,
+	then <mathvar>k</mathvar> lags of the dependent variable are
+	included on the right-hand side of each test regression,
+	unless the box labeled <quote>test down from maximum
+	  lag</quote> is checked: in that case the selected lag order
+	is taken as a maximum and the actual lag order used is
+	obtained by testing down. Let the selected order be
+	<mathvar>k</mathvar>: the testing-down algorithm is
 	then:</para>
 
       <nlist>
