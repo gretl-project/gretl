@@ -2759,13 +2759,14 @@ void do_boxplot_var (void)
 
 /* ........................................................... */
 
-void do_scatters (GtkWidget *widget, dialog_t *ddata)
+void do_scatters (GtkWidget *widget, gpointer p)
 {
+    selector *sr = (selector *) p;
     char *edttext;
     gint err; 
 
-    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (*edttext == '\0') return;
+    edttext = sr->cmdlist;
+    if (*edttext == 0) return;
 
     clear(line, MAXLEN);
     sprintf(line, "scatters %s", edttext);

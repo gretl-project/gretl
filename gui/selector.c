@@ -58,6 +58,8 @@ static void set_dependent_var (gint i, selector *sr)
 {
     gchar *vnum, *vname;
 
+    if (sr->depvar == NULL) return;
+
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 0, &vnum); 
     gtk_clist_get_text(GTK_CLIST(sr->varlist), i, 1, &vname);
     gtk_entry_set_text(GTK_ENTRY(sr->depvar), vname);
@@ -219,6 +221,7 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	strcat(sr->cmdlist, numstr);
     }
 
+    /* need to deal with XY graph case about here */
     if (sr->depvar != NULL) {
 	gchar *str = gtk_entry_get_text(GTK_ENTRY(sr->depvar));
 
@@ -234,6 +237,8 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
     
     if (sr->default_check != NULL && GTK_TOGGLE_BUTTON(sr->default_check)->active) 
 	default_var = i;
+
+    if (sr->code == SCATTERS) strcat(sr->cmdlist, ";");
 
     if (MODEL_CODE(sr->code)) {
 	if (rows > 0) { 
@@ -371,7 +376,10 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *x_hbox;
 
-    tmp = gtk_label_new("X-axis variable");
+    if (sr->code == SCATTERS)
+	tmp = gtk_label_new("Y-axis variable");
+    else
+	tmp = gtk_label_new("X-axis variable");
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -682,6 +690,10 @@ void selection_dialog (const char *title, const char *oktxt,
 	sprintf(topstr, "%s model", est_str(cmdcode));
     else if (cmdcode == GR_XY)
 	strcpy(topstr, "XY scatterplot");
+    else if (cmdcode == GR_IMP)
+	strcpy(topstr, "plot with impulses");
+    else if (cmdcode == SCATTERS)
+	strcpy(topstr, "multiple scatterplots");
     else
 	strcpy(topstr, "fixme need string");
     tmp = gtk_label_new(topstr);
@@ -713,10 +725,8 @@ void selection_dialog (const char *title, const char *oktxt,
     gtk_clist_set_column_width (GTK_CLIST(sr->varlist), 1, 80);
     gtk_clist_set_selection_mode (GTK_CLIST(sr->varlist),
 				  GTK_SELECTION_EXTENDED);
-    if (MODEL_CODE(cmdcode)) {
-	gtk_signal_connect_after (GTK_OBJECT (sr->varlist), "select_row", 
-				  GTK_SIGNAL_FUNC(dialog_select_row), sr);
-    }
+    gtk_signal_connect_after (GTK_OBJECT (sr->varlist), "select_row", 
+			      GTK_SIGNAL_FUNC(dialog_select_row), sr);
     gtk_signal_connect(GTK_OBJECT(sr->varlist), "button_press_event",
 		       (GtkSignalFunc) dialog_right_click, sr);
     gtk_widget_show(sr->varlist); 
@@ -735,7 +745,7 @@ void selection_dialog (const char *title, const char *oktxt,
     if (MODEL_CODE(cmdcode)) 
 	build_depvar_section(sr, right_vbox);
     /* graphs: top right -> x-axis variable */
-    else if (cmdcode == GR_XY)
+    else if (cmdcode == GR_XY || cmdcode == GR_IMP || cmdcode == SCATTERS)
 	build_x_axis_section(sr, right_vbox);
 
     /* middle right: used for some estimators */
@@ -746,8 +756,11 @@ void selection_dialog (const char *title, const char *oktxt,
     /* lower right: selected (independent) variables */
     if (MODEL_CODE(cmdcode))
 	tmp = gtk_label_new("Independent variables");
-    else if (cmdcode == GR_XY)
+    else if (cmdcode == GR_XY || cmdcode == GR_IMP)
 	tmp = gtk_label_new("Y-axis variables");
+    else if (cmdcode == SCATTERS)
+	tmp = gtk_label_new("X-axis variables");
+    
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 

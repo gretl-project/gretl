@@ -333,7 +333,7 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
 {
     windata_t *wdata = NULL;
     void (*gfunc)() = NULL;
-    char title[32], request[68], tmp[24], numstr[3];
+    char title[32], request[68];
     int i;
 
     switch (code) {
@@ -342,27 +342,11 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
 	strcpy(title, _("gretl: define plot"));
 	strcpy(request, _("Enter 3 var names or nos. (Y, X, factor):"));
 	break;
-    case GR_IMP:
-	gfunc = do_graph;
-	strcpy(title, _("gretl: define impulse plot"));
-	strcpy(request, _("Enter two var names or numbers (Y then X):"));
-	break;
-    case SCATTERS:
-	gfunc = do_scatters;
-	strcpy(title, _("gretl: multiple plots"));
-	strcpy(request, _("yvar ; xvarlist  or  yvarlist ; xvar"));
-	strcpy(tmp, "1 ;");
-	for (i=2; i<8; i++) {
-	    if (i >= datainfo->v - 1) break;
-	    sprintf(numstr, " %d", i);
-	    strcat(tmp, numstr);
-	}
-	break;
     default:
 	break;
 
     }
-    edit_dialog (title, request, (code == SCATTERS)? tmp : NULL, 
+    edit_dialog (title, request, NULL, 
 		 1, _(" Graph "), gfunc, wdata, 
 		 _(" Cancel "), NULL, NULL, code, 1);
 }

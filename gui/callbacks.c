@@ -343,15 +343,22 @@ void selector_callback (gpointer data, guint action, GtkWidget *widget)
 
     if (action == COINT) {
 	selection_dialog (_("gretl: cointegration test"), _("Estimate"), 
-			  do_coint, COINT);
+			  do_coint, action);
 	return;
     }
 
-    if (action == GR_XY) {
+    if (action == GR_XY || action == GR_IMP) {
 	selection_dialog (_("gretl: define graph"), _("Graph"), 
-			  do_graph_from_selector, GR_XY);
+			  do_graph_from_selector, action);
 	return;
     }
+
+    if (action == SCATTERS) {
+	selection_dialog (_("gretl: define graph"), _("Graph"), 
+			  do_scatters, action);
+	return;
+    }
+    
 
     switch (action) {
     case ADD:

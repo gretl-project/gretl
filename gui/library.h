@@ -138,7 +138,7 @@ void do_graph_var (void);
 
 void do_boxplot_var (void);
 
-void do_scatters (GtkWidget *widget, dialog_t *ddata);
+void do_scatters (GtkWidget *widget, gpointer p);
 
 void do_graph (GtkWidget *widget, dialog_t *ddata);
 
