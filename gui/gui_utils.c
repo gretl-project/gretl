@@ -413,7 +413,9 @@ void register_data (const char *fname)
 	sprintf(datacmd, "open %s", fname);
 	check_cmd(datacmd);
 	cmd_init(datacmd); 
-    }   
+    } else { /* created using spreadsheet */
+	data_file_open = 2;
+    }
 }
 
 /* ........................................................... */
@@ -1503,31 +1505,32 @@ void yes_no_dialog (char *diagtxt, char *infotxt, int erase,
    g_list_append(list, ptr);
    va_start (argp, num);
    for (i=0; i<num; i++) {
-      tempstr = va_arg (argp, char *);
-      myfunc = va_arg (argp, func);
-      ptr = va_arg (argp, void *);
-      d = mymalloc(sizeof *d);
-      g_list_append(list, d);
-      d->dialog = dialog;
-      d->data = ptr;
-      d->all_buttons = list;
-      tempwid = gtk_button_new_with_label(tempstr);
-      gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
-			  tempwid, TRUE, TRUE, TRUE);
-      if (myfunc) {
-         gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			     GTK_SIGNAL_FUNC (myfunc), d);
-      }
-      if (erase || !myfunc) {
-         gtk_signal_connect_object (GTK_OBJECT (tempwid), 
-				    "clicked", 
-				    GTK_SIGNAL_FUNC (gtk_widget_destroy), 
-				    (gpointer) d->dialog);
-      }
-      gtk_widget_show (tempwid);
+       tempstr = va_arg (argp, char *);
+       myfunc = va_arg (argp, func);
+       ptr = va_arg (argp, void *);
+       d = mymalloc(sizeof *d);
+       g_list_append(list, d);
+       d->dialog = dialog;
+       d->data = ptr;
+       d->all_buttons = list;
+       tempwid = gtk_button_new_with_label(tempstr);
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+			   tempwid, TRUE, TRUE, TRUE);
+       if (myfunc) {
+	   gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			       GTK_SIGNAL_FUNC (myfunc), d);
+       }
+       if (erase || !myfunc) {
+	   gtk_signal_connect_object (GTK_OBJECT (tempwid), 
+				      "clicked", 
+				      GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+				      (gpointer) d->dialog);
+       }
+       gtk_widget_show (tempwid);
    }
             
    gtk_widget_show (dialog);
+   /* gtk_main(); */
 }
 
 /* ........................................................... */

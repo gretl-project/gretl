@@ -1201,6 +1201,16 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 
 /* ........................................................... */
 
+static int data_work_done (void)
+     /* See whether the data set has been substantively modified,
+	so as to prompt for a save */
+{
+    if (data_file_open == 2) return 1;
+    else return 0;
+}
+
+/* ........................................................... */
+
 static int work_done (void)
      /* See whether user has done any work, to determine whether or
 	not to offer the option of saving commands/output.  Merely
@@ -1231,6 +1241,36 @@ static int work_done (void)
     return work;
 }
 
+/* ........................................................... */
+
+static void save_data_callback (GtkWidget *widget, dialog_t *ddata)
+{
+    gtk_widget_destroy(ddata->dialog);
+    file_save(NULL, SAVE_DATA, NULL);
+    if (data_file_open == 2)
+	data_file_open = 1;
+}
+
+/* ......................................................... */
+
+static gint data_dont_quit (void) 
+{
+    yes_no_dialog ("Exit", 
+		   "Do you want to save changes you have\n"
+		   "made to the current data set?", 1, 3,
+		   "Yes", save_data_callback, NULL, 
+		   "No", gtk_main_quit, NULL,
+		   "Cancel", NULL, NULL);
+    return TRUE;
+}
+
+/* ......................................................... */
+
+static void ready_to_go (void)
+{
+    session_saved = 1;
+}
+
 /* ......................................................... */
 
 static gint dont_quit (void) 
@@ -1239,9 +1279,10 @@ static gint dont_quit (void)
 		   "Do you want to save the commands and\n"
 		   "output from this gretl session?", 1, 3,
 		   "Yes", save_session_callback, NULL, 
-		   "No", gtk_main_quit, NULL,
+		   "No", ready_to_go, NULL, 
 		   "Cancel", NULL, NULL);
-    return TRUE;
+    if (session_saved) return FALSE;
+    else return TRUE;
 }
 
 /* ........................................................... */
@@ -1254,11 +1295,17 @@ static void menu_exit (GtkWidget *widget, gpointer data)
     strcat(fname, "session.inp");
     dump_cmd_stack(fname);
 
-    if (expert[0] == 't' || work_done() == 0 || 
-	session_saved || !dont_quit()) {
-	write_rc();
-	gtk_main_quit();
+    if (expert[0] == 'f' && work_done() && !session_saved
+	&& dont_quit()) {
+	return; /* FIXME: will always return if choose No to save */
     }
+
+    if (expert[0] == 'f' && data_work_done() && data_dont_quit()) {
+	return;
+    }    
+
+    write_rc();
+    gtk_main_quit();
 }
 
 /* ........................................................... */
@@ -1270,13 +1317,19 @@ static gint wm_exit (GtkWidget *widget, gpointer data)
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
     dump_cmd_stack(fname);
-    
-    if (expert[0] == 't' || work_done() == 0 || 
-	session_saved || !dont_quit()) {
-	write_rc();
-	gtk_main_quit();
+
+    if (expert[0] == 'f' && work_done() && !session_saved
+	&& dont_quit()) {
+	return TRUE;
     }
-    return TRUE;
+
+    if (expert[0] == 'f' && data_work_done() && data_dont_quit()) {
+	return TRUE;
+    }
+
+    write_rc();
+    gtk_main_quit();
+    return FALSE; /* rubbish to calm gcc */
 }
 
 /* ........................................................... */

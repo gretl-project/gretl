@@ -1819,7 +1819,10 @@ static void finish_genr (MODEL *pmod)
     } else {
 	if (add_new_var(datainfo, &Z, &genr)) 
 	    errbox("Failed to add new variable");
-	else populate_clist(mdata->listbox, datainfo);
+	else {
+	    populate_clist(mdata->listbox, datainfo);
+	    data_file_open = 2;
+	}
     }
 }
 
@@ -3338,7 +3341,8 @@ static int gui_exec_line (char *line,
         else
             err = import_csv(&Z, datainfo, datfile, prn);
         if (!err) { 
-	    register_data(NULL);
+	    /* register_data(NULL); */
+	    register_data(datfile);
             print_smpl(datainfo, 0, prn);
             varlist(datainfo, prn);
             pprintf(prn, "You should now use the \"print\" command "
@@ -3367,7 +3371,8 @@ static int gui_exec_line (char *line,
 	    gui_errmsg(err, errtext);
 	    break;
 	}
-	register_data(NULL);
+	/* register_data(NULL); */
+	register_data(paths.datfile);
 	varlist(datainfo, prn);
 	paths.currdir[0] = '\0'; 
 	break;
