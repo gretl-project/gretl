@@ -80,6 +80,13 @@ typedef enum {
     PLOT_PNG_COORDS     = 1 << 7
 } plot_flags;
 
+typedef enum {
+    PLOT_TITLE          = 1 << 0,
+    PLOT_XLABEL         = 1 << 1,
+    PLOT_YLABEL         = 1 << 3,
+    PLOT_Y2AXIS         = 1 << 4
+} plot_format_flags;
+
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
 #define plot_is_range_mean(p)   (p->flags & PLOT_RANGE_MEAN)
 #define plot_has_controller(p)  (p->flags & PLOT_HAS_CONTROLLER)
@@ -87,6 +94,11 @@ typedef enum {
 #define plot_is_zooming(p)      (p->flags & PLOT_ZOOMING)
 #define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
 #define plot_png_coords(p)      (p->flags & PLOT_PNG_COORDS)
+
+#define plot_has_title(p)       (p->format & PLOT_TITLE)
+#define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
+#define plot_has_ylabel(p)      (p->format & PLOT_YLABEL)
+#define plot_has_y2axis(p)      (p->format & PLOT_Y2AXIS)
 
 #ifdef GNUPLOT_PNG
 typedef enum {
@@ -119,10 +131,11 @@ typedef struct png_plot_t {
     int pixel_ymin, pixel_ymax;
     int xint, yint;
     int pd;
-    int title;
     guint cid;
     zoom_t *zoom;
-    unsigned char flags;    
+    unsigned char flags; 
+    unsigned char format;
+    char *labeled;
 } png_plot_t;
 
 static void render_pngfile (png_plot_t *plot, int view);
@@ -1266,7 +1279,7 @@ static GPT_SPEC *plotspec_new (void)
 
 /* ........................................................... */
 
-static int parse_set_line (GPT_SPEC *plot, const char *line,
+static int parse_set_line (GPT_SPEC *spec, const char *line,
 			   int *i)
 {
     char set_thing[12], setting[MAXLEN], range[32];
@@ -1280,7 +1293,7 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
 	return 1;
     }
     if (strcmp(set_thing, "y2tics") == 0) {
-	plot->y2axis = 1;
+	spec->y2axis = 1;
 	return 0;
     }
 
@@ -1294,31 +1307,31 @@ static int parse_set_line (GPT_SPEC *plot, const char *line,
 	for (j=0; j<n; j++) {
 	    if (range[j] == ':') {
 		range[j] = 0;
-		strcpy(plot->range[*i][0], range);
+		strcpy(spec->range[*i][0], range);
 		break;
 	    }
 	}
 	strcpy(range, strchr(setting, ':') + 1);
 	delchar(']', range);
-	strcpy(plot->range[*i][1], range);
+	strcpy(spec->range[*i][1], range);
 	*i += 1;
     }	  
     else if (strcmp(set_thing, "title") == 0) 
-	strcpy(plot->titles[0], setting);
+	strcpy(spec->titles[0], setting);
     else if (strcmp(set_thing, "xlabel") == 0)
-	strcpy(plot->titles[1], setting);
+	strcpy(spec->titles[1], setting);
     else if (strcmp(set_thing, "ylabel") == 0)
-	strcpy(plot->titles[2], setting);
+	strcpy(spec->titles[2], setting);
     else if (strcmp(set_thing, "y2label") == 0)
-	strcpy(plot->titles[3], setting);
+	strcpy(spec->titles[3], setting);
     else if (strcmp(set_thing, "key") == 0)
-	strcpy(plot->keyspec, setting);
+	strcpy(spec->keyspec, setting);
     else if (strcmp(set_thing, "nokey") == 0)
-	strcpy(plot->keyspec, "none");
+	strcpy(spec->keyspec, "none");
     else if (strcmp(set_thing, "xtics") == 0) 
-	safecpy(plot->xtics, setting, 15);
+	safecpy(spec->xtics, setting, 15);
     else if (strcmp(set_thing, "mxtics") == 0) 
-	safecpy(plot->mxtics, setting, 3);
+	safecpy(spec->mxtics, setting, 3);
 
     return 0;
 }
@@ -1610,14 +1623,6 @@ void start_editing_session_graph (const char *fname)
 extern void gnome_print_graph (const char *fname);
 #endif
 
-/* very rough screen coordinates of actual plot area of gnuplot PNG graph */
-#define PLOTXMIN 54.0     /* was 52 */
-#define PLOTXMAX 618.0    /* was 620 */
-#define PLOTYMIN 36.0     /* was 32 */
-#define PLOTYMAX 444.0    /* was 446 */
-#define NOTITLE_YMAX 464.0 /* new */
-#define NOTITLE_YMIN 24.0 /* was 13 */
-
 static void get_data_xy (png_plot_t *plot, int x, int y, 
 			 double *data_x, double *data_y)
 {
@@ -1642,29 +1647,8 @@ static void get_data_xy (png_plot_t *plot, int x, int y,
     if (ymin == 0.0 && ymax == 0.0) { /* unknown y range */
 	*data_y = NADBL;
     } else {
-#if 1
-	int plotymin;
-
-	if (plot_png_coords(plot)) {
-	    plotymin = plot->pixel_ymin;
-	} else {
-	    plotymin = (plot->title)? plot->pixel_ymin : NOTITLE_YMIN;
-	}
-
-	*data_y = ymax - ((double) y - plotymin) / 
-	    (plot->pixel_ymax - plotymin) * (ymax - ymin);
-#else
-	int plotymax;
-
-	if (plot_png_coords(PLOT)) {
-	    plotymax = plot->pixel_ymax;
-	} else {
-	    plotymax = (plot->title)? plot->pixel_ymax : NOTITLE_YMAX;
-	}
-
 	*data_y = ymax - ((double) y - plot->pixel_ymin) / 
-	    (plotymax - plot->pixel_ymin) * (ymax - ymin);
-#endif
+	    (plot->pixel_ymax - plot->pixel_ymin) * (ymax - ymin);
     }
 }
 
@@ -1785,6 +1769,13 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 
     plot_n = plot->spec->t2 - plot->spec->t1 + 1;
 
+    /* need array to keep track of which points are labeled */
+    if (plot->labeled == NULL) {
+	plot->labeled = mymalloc(plot_n);
+	if (plot->labeled == NULL) return;
+	memset(plot->labeled, 0, plot_n);
+    }
+
     min_xdist = xrange = plot->xmax - plot->xmin;
     min_ydist = yrange = plot->ymax - plot->ymin;
 
@@ -1803,11 +1794,21 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 	}
     }
 
+    /* unset the labeled flag for other points */
+    for (t=0; t<plot_n; t++) {
+	if (t != best_match) plot->labeled[t] = 0;
+    }
+
+    /* if the point is already labeled, skip */
+    if (plot->labeled[best_match]) return;
+
     /* if the match is good enough, show the label */
     if (best_match >= 0 && min_xdist < TOLDIST * xrange &&
 	min_ydist < TOLDIST * yrange) {
 	write_label_to_plot(plot, plot->spec->labels[best_match],
 			    pixel_x, pixel_y);
+	/* flag the point as labeled already */
+	plot->labeled[best_match] = 1;
     }
 }
 
@@ -1818,13 +1819,6 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     int x, y;
     GdkModifierType state;
     gchar label[32], label_y[16];
-    int ymin;
-
-    if (plot_png_coords(plot)) {
-	ymin = plot->pixel_ymin;
-    } else {
-	ymin = (plot->title)? plot->pixel_ymin : NOTITLE_YMIN;
-    }
 
     if (event->is_hint)
         gdk_window_get_pointer (event->window, &x, &y, &state);
@@ -1836,7 +1830,7 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 
     *label = 0;
     if (x > plot->pixel_xmin && x < plot->pixel_xmax && 
-	y > ymin && y < plot->pixel_ymax) {
+	y > plot->pixel_ymin && y < plot->pixel_ymax) {
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
@@ -1862,6 +1856,33 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
     gtk_label_set_text(GTK_LABEL(plot->cursor_label), label);
   
     return TRUE;
+}
+
+static int isblank (const char *s)
+{
+    while (*s) {
+	if (!isspace((unsigned char) *s)) return 0;
+	s++;
+    }
+    return 1;
+}
+
+static void set_plot_format_flags (png_plot_t *plot)
+{
+    plot->format = 0;
+
+    if (!isblank(plot->spec->titles[0])) {
+	plot->format |= PLOT_TITLE;
+    }
+    if (!isblank(plot->spec->titles[1])) {
+	plot->format |= PLOT_XLABEL;
+    }
+    if (!isblank(plot->spec->titles[2])) {
+	plot->format |= PLOT_YLABEL;
+    }
+    if (plot->spec->y2axis) {
+	plot->format |= PLOT_Y2AXIS;
+    }
 }
 
 static void start_editing_png_plot (png_plot_t *plot)
@@ -2065,12 +2086,15 @@ static int redisplay_edited_png (png_plot_t *plot)
     FILE *fp;
     int err = 0;
 
+    /* open file in which to dump plot specification */
     gnuplot_png_init(plot->spec->fname, &fp);
     if (fp == NULL) return 1;
 
+    /* dump the edited plot details to file */
     print_plotspec_details(plot->spec, fp);
     fclose(fp);
 
+    /* get gnuplot to create a new PNG graph */
     plotcmd = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, 
 			      plot->spec->fname);
 #ifdef G_OS_WIN32
@@ -2085,9 +2109,16 @@ static int redisplay_edited_png (png_plot_t *plot)
 	return 1;
     }
 
-    /* grab (possibly modified) ranges */
+    /* grab (possibly modified) data ranges */
     get_plot_ranges(plot);
 
+    /* destroy the old set of labeled flags for data-points */
+    if (plot->labeled != NULL) {
+	free(plot->labeled);
+	plot->labeled = NULL;
+    }
+
+    /* put the newly created PNG onto the plot canvas */
     render_pngfile(plot, PNG_REDISPLAY);
 
     return 0;
@@ -2297,23 +2328,50 @@ static void render_pngfile (png_plot_t *plot, int view)
 
 static void destroy_png_plot (GtkWidget *w, png_plot_t *plot)
 {
+    /* delete temporary plot source file? */
     if (!plot_is_saved(plot)) {
 	remove(plot->spec->fname);
     }
 
-    /* if the png plot has a controller, we'll
-       destroy it too */
+    /* if the png plot has a controller, destroy it too */
     if (plot_has_controller(plot)) {
 	plot->spec->ptr = NULL;
 	gtk_widget_destroy(gpt_control);
     }
 
-    if (plot->zoom) free(plot->zoom);
-    if (plot->invert_gc) {
+    /* free allocated elements of png_plot struct */
+    if (plot->zoom != NULL) free(plot->zoom);
+    if (plot->labeled != NULL) free(plot->labeled);
+    if (plot->invert_gc != NULL) {
 	gdk_gc_destroy(plot->invert_gc);
     }
 
     free(plot);
+}
+
+static void set_approx_pixel_bounds (png_plot_t *plot, 
+				     int max_num_width)
+{
+    set_plot_format_flags(plot);
+
+    if (plot_has_xlabel(plot)) {
+	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 446;
+    } else {
+	plot->pixel_ymin = PLOT_PIXEL_HEIGHT - 456;
+    }
+
+    if (plot_has_title(plot)) {
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 32;
+    } else {
+	plot->pixel_ymax = PLOT_PIXEL_HEIGHT - 12;
+    }
+
+    plot->pixel_xmin = 25 + 7 * max_num_width;
+    if (plot_has_ylabel(plot)) {
+	plot->pixel_xmin += 11;
+    }
+
+    plot->pixel_xmax = PLOT_PIXEL_WIDTH - 20; /* FIXME Y2-axis */
 }
 
 static int get_dumb_plot_yrange (png_plot_t *plot)
@@ -2322,6 +2380,7 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
     char line[MAXLEN], dumbgp[MAXLEN], dumbtxt[MAXLEN];
     gchar *plotcmd = NULL;
     int err = 0, x2axis = 0;
+    int maxwidth = 0;
 
     fpin = fopen(plot->spec->fname, "r");
     if (fpin == NULL) return 1;
@@ -2363,6 +2422,8 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	return 1;
     } else {
 	double y[16];
+	char numstr[32];
+	int numwidth[16];
 	int i = 0;
 
 	fpin = fopen(dumbtxt, "r");
@@ -2373,7 +2434,11 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 	setlocale(LC_NUMERIC, "C");
 #endif
 	while (i<16 && fgets(line, MAXLEN-1, fpin)) {
-	    if (sscanf(line, "%lf", &(y[i])) == 1) i++;
+	    if (sscanf(line, "%lf", &(y[i])) == 1) {
+		sscanf(line, "%31s", numstr);
+		numwidth[i] = strlen(numstr);
+		i++;
+	    }
 	}
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
@@ -2384,16 +2449,28 @@ static int get_dumb_plot_yrange (png_plot_t *plot)
 
 	if (x2axis) {
 	    if (i > 3 && y[1] > y[i-2]) {
+		int j;
+
 		plot->ymin = y[i-2];
 		plot->ymax = y[1];
+		for (j=1; j<i-2; j++) {
+		    if (numwidth[j] > maxwidth) maxwidth = numwidth[j];
+		}
 	    }
 	} else {	
 	    if (i > 2 && y[0] > y[i-2]) {
+		int j;
+
 		plot->ymin = y[i-2];
 		plot->ymax = y[0];
+		for (j=0; j<i-2; j++) {
+		    if (numwidth[j] > maxwidth) maxwidth = numwidth[j];
+		}
 	    }
 	}
     }
+
+    set_approx_pixel_bounds(plot, maxwidth);
     
     return 0;
 }
@@ -2412,7 +2489,6 @@ static int get_plot_ranges (png_plot_t *plot)
     plot->ymin = plot->ymax = 0.0;   
     plot->xint = plot->yint = 0;
     plot->pd = 0;
-    plot->title = 0;
 
     fp = fopen(plot->spec->fname, "r");
     if (fp == NULL) return 0;
@@ -2430,7 +2506,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	} else if (sscanf(line, "# timeseries %d", &plot->pd) == 1) {
 	    got_pd = 1;
 	} else if (!strncmp(line, "set title", 9)) {
-	    plot->title = 1;
+	    plot->format |= PLOT_TITLE;
 	}	
 	if (!strncmp(line, "plot ", 5)) break;
     }
@@ -2441,10 +2517,10 @@ static int get_plot_ranges (png_plot_t *plot)
     fclose(fp);
 
 #ifdef PNG_COMMENTS
-    /* now try getting coordinate info from PNG file */
+    /* now try getting accurate coordinate info from PNG file */
     coords = get_png_bounds_info(&b);
     if (coords == 0) {
-	/* retrieved accurate coordinates */
+	/* OK: retrieved accurate coordinates */
 	plot->flags |= PLOT_PNG_COORDS;
 	got_x = 1;
 	plot->pixel_xmin = b.xleft;
@@ -2455,36 +2531,17 @@ static int get_plot_ranges (png_plot_t *plot)
 	plot->xmax = b.xmax;
 	plot->ymin = b.ymin;
 	plot->ymax = b.ymax;
-    } else { 
-	/* didn't get accurate coordinates from PNG, so fudge it? */
-	plot->pixel_xmin = PLOTXMIN;
-	plot->pixel_xmax = PLOTXMAX;
-	plot->pixel_ymin = PLOTYMIN;
-	plot->pixel_ymax = PLOTYMAX;
-	/* but don't attempt to show any data-point labels */
-	plot->flags |= PLOT_NO_LABELS;
-    }
-#else
-    plot->pixel_xmin = PLOTXMIN;
-    plot->pixel_xmax = PLOTXMAX;
-    plot->pixel_ymin = PLOTYMIN;
-    plot->pixel_ymax = PLOTYMAX;
-    plot->flags |= PLOT_NO_LABELS;
+    } 
 #endif /* PNG_COMMENTS */
 
     if (got_x) {
-	int ymin;
-
-	if (plot_png_coords(plot)) {
-	    ymin = plot->pixel_ymin;
-	} else {
-	    ymin = (plot->title)? plot->pixel_ymin : NOTITLE_YMIN;
+	if (!plot_png_coords(plot)) {
 	    get_dumb_plot_yrange(plot);
 	}
 
 	if ((plot->xmax - plot->xmin) / (plot->pixel_xmax - plot->pixel_xmin) >= 1.0)
 	    plot->xint = 1;
-	if ((plot->ymax - plot->ymin) / (plot->pixel_ymax - ymin) >= 1.0)
+	if ((plot->ymax - plot->ymin) / (plot->pixel_ymax - plot->pixel_ymin) >= 1.0)
 	    plot->yint = 1;
     }
 
@@ -2512,10 +2569,11 @@ static png_plot_t *png_plot_new (void)
     plot->ymin = plot->ymax = 0.0;
     plot->xint = plot->yint = 0;
     plot->pd = 0;
-    plot->title = 0;
     plot->cid = 0;
     plot->zoom = NULL;
     plot->flags = 0;
+    plot->format = 0;
+    plot->labeled = NULL;
 
     return plot;
 }
@@ -2544,7 +2602,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* make png plot struct accessible via spec */
     plot->spec->ptr = plot;
 
-    plot->zoom = malloc(sizeof *plot->zoom);
+    plot->zoom = mymalloc(sizeof *plot->zoom);
     if (plot->zoom == NULL) return 1;
 
     if (saved) {
@@ -2595,9 +2653,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
                            | GDK_POINTER_MOTION_HINT_MASK);
 
     GTK_WIDGET_SET_FLAGS (plot->canvas, GTK_CAN_FOCUS);
-    /*
-      g_object_set_user_data (G_OBJECT (plot->canvas), (gpointer) plot);
-    */
+
     g_signal_connect(G_OBJECT(plot->canvas), "button_press_event", 
 		     G_CALLBACK(plot_button_press), plot);
 
@@ -2607,7 +2663,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     /* create the contents of the status area */
     if (plot_has_xrange) {
 
-	/*  the cursor label (position indicator) */
+	/* the cursor label (position indicator) */
 	label_frame = gtk_frame_new(NULL);
 	gtk_frame_set_shadow_type(GTK_FRAME(label_frame), GTK_SHADOW_IN);
 
@@ -2615,7 +2671,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 	gtk_container_add(GTK_CONTAINER(label_frame), plot->cursor_label);
 	gtk_widget_show(plot->cursor_label);
 
-	/*  the statusbar  */
+	/* the statusbar */
 	plot->statusbar = gtk_statusbar_new();
 	gtk_widget_set_size_request(plot->statusbar, 1, -1);
 	gtk_container_set_resize_mode(GTK_CONTAINER (plot->statusbar),
@@ -2632,7 +2688,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
     gtk_box_pack_start(GTK_BOX(canvas_hbox), plot->canvas, FALSE, FALSE, 0);
 
-    /*  fill the status area  */
+    /* fill the status area */
     if (plot_has_xrange) {
 	gtk_box_pack_start(GTK_BOX(status_hbox), label_frame, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(status_hbox), plot->statusbar, TRUE, TRUE, 0);
@@ -2658,8 +2714,8 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     gtk_widget_show(vbox);
     gtk_widget_show(plot->shell);       
 
-    /*  set the focus to the canvas area  */
-    gtk_widget_grab_focus (plot->canvas);  
+    /* set the focus to the canvas area */
+    gtk_widget_grab_focus(plot->canvas);  
 
     plot->pixmap = gdk_pixmap_new(plot->shell->window, 
 				  PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT, 

@@ -345,8 +345,7 @@ dialogs.o: ../lib/src/calendar.h ../lib/src/gretl_win32.h
 dialogs.o: ../gui2/gretltypes.h ../gui2/gui_utils.h
 dialogs.o: ../gui2/callbacks.h ../gui2/dialogs.h ../gui2/library.h
 dialogs.o: ../gui2/session.h ../gui2/settings.h ../gui2/helpfiles.h
-dialogs.o: ../gui2/ssheet.h ../lib/src/version.h build.h
-dialogs.o: ../gui2/selector.h
+dialogs.o: ../gui2/ssheet.h ../lib/src/version.h ../gui2/selector.h
 fileselect.o: ../gui2/gretl.h winconfig.h ../lib/src/libgretl.h
 fileselect.o: ../lib/src/commands.h ../lib/src/errors.h
 fileselect.o: ../lib/src/estimate.h ../lib/src/generate.h

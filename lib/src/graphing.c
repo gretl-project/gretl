@@ -815,7 +815,7 @@ int gnuplot (LIST list, const int *lines,
     } 
 
     if (ols_ok) {
-	fprintf(fq, "%f + %f*x title '%s' w lines\n", a, b, 
+	fprintf(fq, "%g + %g*x title '%s' w lines\n", a, b, 
 		I_("least squares fit"));
     }
 
@@ -935,28 +935,28 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
-    fprintf(fp, "# multiple scatterplots\n");
-    fprintf(fp, "set size 1.0,1.0\nset origin 0.0,0.0\n"
-	    "set multiplot\n");
+    fputs("# multiple scatterplots\n", fp);
+    fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
+	  "set multiplot\n", fp);
     fputs("set nokey\n", fp);
     fputs("set noxtics\nset noytics\n", fp);
     for (i=0; i<nplots; i++) {  
 	if (nplots <= 4) {
-	    fprintf(fp, "set size 0.45,0.5\n");
-	    fprintf(fp, "set origin ");
-	    if (i == 0) fprintf(fp, "0.0,0.5\n");
-	    else if (i == 1) fprintf(fp, "0.5,0.5\n");
-	    else if (i == 2) fprintf(fp, "0.0,0.0\n");
-	    else if (i == 3) fprintf(fp, "0.5,0.0\n");
+	    fputs("set size 0.45,0.5\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.5,0.5\n", fp);
+	    else if (i == 2) fputs("0.0,0.0\n", fp);
+	    else if (i == 3) fputs("0.5,0.0\n", fp);
 	} else {
-	    fprintf(fp, "set size 0.31,0.45\n");
-	    fprintf(fp, "set origin ");
-	    if (i == 0) fprintf(fp, "0.0,0.5\n");
-	    else if (i == 1) fprintf(fp, "0.32,0.5\n");
-	    else if (i == 2) fprintf(fp, "0.64,0.5\n");
-	    else if (i == 3) fprintf(fp, "0.0,0.0\n");
-	    else if (i == 4) fprintf(fp, "0.32,0.0\n");
-	    else if (i == 5) fprintf(fp, "0.64,0.0\n");
+	    fputs("set size 0.31,0.45\n", fp);
+	    fputs("set origin ", fp);
+	    if (i == 0) fputs("0.0,0.5\n", fp);
+	    else if (i == 1) fputs("0.32,0.5\n", fp);
+	    else if (i == 2) fputs("0.64,0.5\n", fp);
+	    else if (i == 3) fputs("0.0,0.0\n", fp);
+	    else if (i == 4) fputs("0.32,0.0\n", fp);
+	    else if (i == 5) fputs("0.64,0.0\n", fp);
 	}
 	fprintf(fp, "set xlabel '%s'\n",
 		(yvar)? pdinfo->varname[plotlist[i+1]] :
@@ -964,7 +964,7 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 	fprintf(fp, "set ylabel '%s'\n", 
 		(yvar)? pdinfo->varname[yvar] :
 		pdinfo->varname[plotlist[i+1]]);
-	fprintf(fp, "plot '-' using 1:2\n");
+	fputs("plot '-' using 1:2\n", fp);
 
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "C");
@@ -972,21 +972,21 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    m = (yvar)? plotlist[i+1] : xvar;
 	    xx = (*pZ)[m][t];
-	    if (na(xx)) fprintf(fp, "? ");
-	    else fprintf(fp, "%f ", xx);
+	    if (na(xx)) fputs("? ", fp);
+	    else fprintf(fp, "%g ", xx);
 	    m = (yvar)? yvar : plotlist[i+1];
 	    xx = (*pZ)[m][t];
-	    if (na(xx)) fprintf(fp, "?\n");
-	    else fprintf(fp, "%f\n", xx);
+	    if (na(xx)) fputs("?\n", fp);
+	    else fprintf(fp, "%g\n", xx);
 	}
-	fprintf(fp, "e\n");
+	fputs("e\n", fp);
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
 #endif
     } 
-    fprintf(fp, "set nomultiplot\n");
+    fputs("set nomultiplot\n", fp);
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "\npause -1\n");
+    fputs("\npause -1\n", fp);
 #endif
     fclose(fp);
     err = gnuplot_display(ppaths);
@@ -1018,7 +1018,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    fprintf(fp, "# frequency plot\n");
+    fputs("# frequency plot\n", fp);
 
     if (dist) {
 	double propn, plotmin = 0.0, plotmax = 0.0;
@@ -1037,8 +1037,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
 		normal((freq->endpt[i] - freq->xbar)/freq->sdx);
 	    lambda = 1.0 / (propn * freq->n * sqrt(2 * M_PI) * freq->sdx);
-	    fprintf(fp, "sigma = %f\n", freq->sdx);
-	    fprintf(fp, "mu = %f\n", freq->xbar);
+	    fprintf(fp, "sigma = %g\n", freq->sdx);
+	    fprintf(fp, "mu = %g\n", freq->xbar);
 	    plotmin = freq->xbar - 3.3 * freq->sdx;
 	    if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
 	    plotmax = freq->xbar + 3.3 * freq->sdx;
@@ -1065,8 +1065,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
 		(_gamma_func(alpha) * pow(beta, alpha));
 	    lambda = height/(freq->n * propn);
-	    fprintf(fp, "beta = %f\n", beta);
-	    fprintf(fp, "alpha = %f\n", alpha);
+	    fprintf(fp, "beta = %g\n", beta);
+	    fprintf(fp, "alpha = %g\n", alpha);
 	    plotmin = 0.0;
 	    plotmax = freq->xbar + 4.0 * freq->sdx;
 	}
@@ -1075,19 +1075,19 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
 
 	fprintf(fp, "set xrange [%g:%g]\n", plotmin, plotmax);
-	fprintf(fp, "set key right top\n");
-	fprintf(fp, "plot \\\n");
+	fputs("set key right top\n", fp);
+	fputs("plot \\\n", fp);
 
     } else { /* not dist */
 	lambda = 1.0 / freq->n;
-	fprintf(fp, "set nokey\n");
+	fputs("set nokey\n", fp);
 	fprintf(fp, "set xlabel '%s %s'\n", 
 		I_("Frequency distribution for"), freq->varname);	
     }
 
     /* plot instructions */
     if (!dist) {
-	fprintf(fp, "plot '-' using 1:($2) w impulses\n");
+	fputs("plot '-' using 1:($2) w impulses\n", fp);
     } else if (dist == NORMAL) {
 	fprintf(fp, "(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title 'N(%.4f,%.4f)' w lines , \\\n"
@@ -1102,16 +1102,17 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     }
 
     /* send sample data inline */
-    for (i=0; i<K; i++) 
-	fprintf(fp, "%f %f\n", freq->midpt[i], lambda * freq->f[i]);
-    fprintf(fp, "e\n");
+    for (i=0; i<K; i++) { 
+	fprintf(fp, "%g %g\n", freq->midpt[i], lambda * freq->f[i]);
+    }
+    fputs("e\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fp, "pause -1\n");
+    fputs("pause -1\n", fp);
 #endif
     if (fp) fclose(fp);
     return gnuplot_display(ppaths);
@@ -1129,7 +1130,7 @@ int plot_fcast_errs (int n, const double *obs,
 
     if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
 
-    fprintf(fp, "# forecasts with 95 pc conf. interval\n");
+    fputs("# forecasts with 95 pc conf. interval\n", fp);
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
 	    "'-' using 1:2 title '%s' w lines , \\\n"
@@ -1141,17 +1142,17 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "C");
 #endif
     for (t=0; t<n; t++) {
-	fprintf(fp, "%f %f\n", obs[t], depvar[t]);
+	fprintf(fp, "%g %g\n", obs[t], depvar[t]);
     }
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%f %f\n", obs[t], yhat[t]);
+	fprintf(fp, "%g %g\n", obs[t], yhat[t]);
     }
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%f %f %f\n", obs[t], yhat[t], maxerr[t]);
+	fprintf(fp, "%g %g %g\n", obs[t], yhat[t], maxerr[t]);
     }
-    fprintf(fp, "e\n");
+    fputs("e\n", fp);
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
@@ -1215,6 +1216,17 @@ int termtype_to_termstr (const char *termtype, char *termstr)
 
 /* ........................................................... */
 
+static int isblank (const char *s)
+{
+    while (*s) {
+	if (!isspace((unsigned char) *s)) return 0;
+	s++;
+    }
+    return 1;
+}
+
+/* ........................................................... */
+
 int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 {
     int i, k, t, datlines;
@@ -1222,23 +1234,23 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     int miss = 0;
     double xx;
 
-    if (spec->titles[0][0]) {
+    if (!isblank(spec->titles[0])) {
 	fprintf(fp, "set title '%s'\n", spec->titles[0]);
     }
-    if (spec->titles[1][0]) {
+    if (!isblank(spec->titles[1])) {
 	fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
     }
-    if (spec->titles[2][0]) {
+    if (!isblank(spec->titles[2])) {
 	fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
     }
-    if (spec->y2axis && spec->titles[3][0]) {
+    if (spec->y2axis && !isblank(spec->titles[3])) {
 	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 
-    fprintf(fp, "set xzeroaxis\n");
-    fprintf(fp, "set missing \"?\"\n");
+    fputs("set xzeroaxis\n", fp);
+    fputs("set missing \"?\"\n", fp);
     if (strcmp(spec->keyspec, "none") == 0) {
-	fprintf(fp, "set nokey\n");
+	fputs("set nokey\n", fp);
     } else {
 	fprintf(fp, "set key %s\n", spec->keyspec);
     }
@@ -1251,24 +1263,24 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     }
 
     /* customized xtics? */
-    if (strlen(spec->xtics)) {
+    if (!isblank(spec->xtics)) {
 	fprintf(fp, "set xtics %s\n", spec->xtics);
     }
-    if (strlen(spec->mxtics)) {
+    if (!isblank(spec->mxtics)) {
 	fprintf(fp, "set mxtics %s\n", spec->mxtics);
     }
 
     /* using two y axes? */
     if (spec->y2axis) {
-	fprintf(fp, "set ytics nomirror\n");
-	fprintf(fp, "set y2tics\n");
+	fputs("set ytics nomirror\n", fp);
+	fputs("set y2tics\n", fp);
     }
 
     if (spec->code == FREQ || spec->code == PERGM) { 
 	if (spec->code == FREQ) {
-	    fprintf(fp, "# frequency plot\n");
+	    fputs("# frequency plot\n", fp);
 	} else {
-	    fprintf(fp, "# periodogram\n");
+	    fputs("# periodogram\n", fp);
 	}
 	for (i=0; i<4; i++) {
 	    fprintf(fp, "%s\n", spec->literal[i]);
@@ -1291,9 +1303,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 		spec->lines[i-1].title,
 		spec->lines[i-1].style);
 	if (i == lo - 1) {
-	    fprintf(fp, "\n");
+	    fputc('\n', fp);
 	} else {
-	    fprintf(fp, ", \\\n");
+	    fputs(", \\\n", fp);
 	}
     } 
 
@@ -1314,7 +1326,7 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	    }
 	    xx = spec->data[plotn * i + t - spec->t1];
 	    if (na(xx)) {
-		fprintf(fp, "?");
+		fputc('?', fp);
 		miss = 1;
 	    } else {
 		fprintf(fp, "%g", xx);
@@ -1365,7 +1377,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	    fprintf(fp, "set term %s\n", termstr);
 #ifdef ENABLE_NLS
 	    if (strstr(termstr, "postscript")) {
-		fprintf(fp, "set encoding iso_8859_1\n");
+		fputs("set encoding iso_8859_1\n", fp);
 	    }
 #endif /* ENABLE_NLS */
 	    fprintf(fp, "set output '%s'\n", fname);
@@ -1387,7 +1399,7 @@ int go_gnuplot (GPT_SPEC *spec, char *fname, PATHS *ppaths)
 	int winshow = 0;
 
 	if (fname == NULL) { /* sending plot to screen */
-	    fprintf(fp, "pause -1\n");
+	    fputs("pause -1\n", fp);
 	    winshow = 1;
 	} 
 # endif
