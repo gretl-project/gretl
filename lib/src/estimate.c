@@ -1798,39 +1798,42 @@ void tsls_free_data (const MODEL *pmod)
 }
 
 /*
-  tsls_match: determines which variables in the list of regressors,
-  reglist, when compared to all predetermined and exogenous variables
-  in instlist, need to have a reduced form ols regression run on them.
-  Populates replist with the variables that need to be replaced by
-  first-stage fitted values.
+  tsls_make_replist: determines which variables in reglist, when
+  checked against the predetermined and exogenous vars in instlist,
+  need to be instrumented, and populates replist accordingly
 */
 
 static int 
-tsls_match (const int *reglist, const int *instlist, int *replist)
+tsls_make_replist (const int *reglist, int *instlist, int *replist)
 {
-    int i, j, m, idx = 0;
-    int nreg = reglist[0], ninst = instlist[0];
+    int i, j, k = 0;
+    int endog, fixup = 0;
 
-    for (i=2; i<=nreg; i++) {     
-	m = 0;
-	for (j=1; j<=ninst; j++) {
-	    if (reglist[i] == instlist[j]) {
-		j = ninst + 1;
-	    } else {
-		m++;
-	    }
-	    if (m == ninst) {
-		if (reglist[i] == 0) {
-		    strcpy(gretl_errmsg, 
-			   _("Constant term is in varlist1 but not in varlist2"));
-		    return 1;
-		}
-		replist[++idx] = reglist[i];
+    for (i=2; i<=reglist[0]; i++) {  
+	endog = 1;
+	for (j=1; j<=instlist[0]; j++) {
+	    if (instlist[j] == reglist[i]) {
+		endog = 0;
+		break;
 	    }
 	}
+	if (reglist[i] == 0 && endog) {
+	    /* const is in reglist but not instlist: needs fixing */
+	    fixup = 1;
+	} else if (endog) {
+	    replist[++k] = reglist[i];
+	} 
     }
-  
-    replist[0] = idx;
+
+    replist[0] = k;
+
+    if (fixup) {
+	instlist[0] += 1;
+	for (i=instlist[0]; i>=2; i--) {
+	    instlist[i] = instlist[i - 1];
+	}
+	instlist[1] = 0;
+    }
 
     return 0;
 }
@@ -1855,7 +1858,7 @@ tsls_match (const int *reglist, const int *instlist, int *replist)
 MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
-    int i, t, ncoeff;
+    int i, t;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *reglist = NULL, *instlist = NULL, *replist = NULL;
     int *s1list = NULL, *s2list = NULL;
@@ -1881,16 +1884,16 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		(const double **) *pZ, NULL); 
 
     /* 
-       reglist: list of regressors
+       reglist: dependent var plus list of regressors
        instlist: list of instruments
        s1list: regression list for first-stage regressions
-       s2list: regression list for second-state regression
+       s2list: regression list for second-stage regression
        replist: list of vars to be replaced by fitted values
                 for the second-stage regression.
     */
     reglist = malloc(pos * sizeof *reglist);
-    instlist = malloc((list[0] - pos + 1) * sizeof *instlist);
-    s1list = malloc((list[0] - pos + 2) * sizeof *s1list);
+    instlist = malloc((list[0] - pos + 2) * sizeof *instlist);
+    s1list = malloc((list[0] - pos + 3) * sizeof *s1list);
     s2list = malloc(pos * sizeof *s2list);
     replist = malloc(pos * sizeof *replist);
 
@@ -1900,13 +1903,13 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	goto tsls_bailout;
     }
 
-    /* set up list of regressors: first portion of input list */
+    /* dep. var. plus regressors: first portion of input list */
     reglist[0] = pos - 1;
     for (i=1; i<pos; i++) {
 	reglist[i] = list[i];
     }    
 
-    /* compose list of instruments: second portion of input list */
+    /* set up list of instruments: second portion of input list */
     instlist[0] = list[0] - pos;
     for (i=1; i<=instlist[0]; i++) {
 	instlist[i] = list[i + pos];
@@ -1926,26 +1929,21 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	s2list[i] = reglist[i];
     }
 
-    /* here ncoeff denotes the number of coeffs in the first stage */
-    ncoeff = instlist[0];
-    if (ncoeff < reglist[0] - 1) {
+    /* determine the list of variables (replist) for which we need to
+       obtain fitted values in the first stage */
+    tsls_make_replist(reglist, instlist, replist);
+
+    /* check for order condition */
+    if (instlist[0] < reglist[0] - 1) {
         sprintf(gretl_errmsg, 
 		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1."), reglist[0] - 1 - ncoeff);
+		"varlist1."), reglist[0] - 1 - instlist[0]);
 	tsls.errcode = E_UNSPEC; 
 	goto tsls_bailout;
     }
 
-    /* determine the list of variables (replist) for which we need to
-       obtain fitted values in the first stage */
-    if (tsls_match(reglist, instlist, replist)) {
-	tsls.errcode = E_UNSPEC;
-	goto tsls_bailout;
-    }
-
-    /* replist[0] now holds the number of new vars (first stage fitted
-       values) to create */
+    /* replist[0] holds the number of fitted vars to create */
     if (dataset_add_vars(replist[0], pZ, pdinfo)) {
 	tsls.errcode = E_ALLOC;
 	goto tsls_bailout;
@@ -1953,7 +1951,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     /* common setup for first-stage regressions: regressors are copied
        from instlist */
-    s1list[0] = ncoeff + 1;
+    s1list[0] = instlist[0] + 1;
     for (i=2; i<=s1list[0]; i++) {
 	s1list[i] = instlist[i-1];
     }    
@@ -1972,7 +1970,6 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
         s1list[1] = replist[i];
 
 	/* run the first-stage regression */
-	clear_model(&tsls);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tsls.errcode) {
 	    goto tsls_bailout;
@@ -1982,6 +1979,9 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[newv][t] = tsls.yhat[t];
 	}
+
+	/* free model resources */
+	clear_model(&tsls);
 
 	/* give the fitted series the same name as the original */
 	strcpy(pdinfo->varname[newv], pdinfo->varname[replist[i]]);
@@ -1997,7 +1997,6 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     } 
 
     /* second-stage regression */
-    clear_model(&tsls);
     tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_NONE, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
@@ -2282,8 +2281,12 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     /* get fitted value from last regression and process */
     for (t=hsk.t1; t<=hsk.t2; t++) {
-	zz = (*pZ)[pdinfo->v - 1][t];
-	(*pZ)[pdinfo->v - 1][t] = 1.0 / sqrt(exp(zz));
+	if (na(hsk.uhat[t])) {
+	    (*pZ)[pdinfo->v - 1][t] = NADBL;
+	} else {
+	    zz = (*pZ)[pdinfo->v - 1][t];
+	    (*pZ)[pdinfo->v - 1][t] = 1.0 / sqrt(exp(zz));
+	}
     }    
 
     /* prepare to run weighted least squares */
