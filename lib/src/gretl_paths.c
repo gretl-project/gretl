@@ -639,7 +639,7 @@ int set_paths (PATHS *ppaths, int defaults, int gui)
 	}
 
 	strcpy(ppaths->gnuplot, "gnuplot");
-	*ppaths->pngfont = 0;
+	strcpy(ppaths->pngfont, "Vera 9");
 
 	ppaths->currdir[0] = '\0';	
 

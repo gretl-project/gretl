@@ -910,6 +910,28 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 	return TRUE;
     }
 
+    if (mods & GDK_BUTTON1_MASK) {
+	GdkEventButton *bevent = (GdkEventButton *) event;
+	GtkTreePath *path;
+	GtkTreeViewColumn *column;
+
+	gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(sheet->view),
+				      (gint) bevent->x, 
+				      (gint) bevent->y,
+				      &path, &column,
+				      NULL, NULL);
+	if (column != NULL) {
+	    gpointer p = g_object_get_data(G_OBJECT(column), "colnum");
+	    gint colnum = GPOINTER_TO_INT(p);
+
+	    if (colnum == 0) {
+		/* don't respond to a click in a non-data column */
+		ret = TRUE;
+	    } 
+	}
+	gtk_tree_path_free(path);
+    }
+
     return FALSE;
 }
 
