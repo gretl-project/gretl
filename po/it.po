@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-10-19 00:38+0200\n"
+"PO-Revision-Date: 2004-10-29 14:37+0200\n"
 "Last-Translator: Cristian Rigamonti <cri@linux.it>\n"
 "Language-Team: Italian <tp@lists.linux.it>\n"
 "MIME-Version: 1.0\n"
@@ -1225,9 +1225,8 @@ msgid "%s, using the observations %s - %s"
 msgstr "%s, usando le osservazioni %s - %s"
 
 #: lib/src/describe.c:1033 lib/src/describe.c:1124
-#, fuzzy
 msgid "(missing values will be skipped)"
-msgstr "(i valori mancanti denotati con -999 sono esclusi)"
+msgstr "(i valori mancanti saranno esclusi)"
 
 #: lib/src/describe.c:1046 gui2/guiprint_common.c:129
 #: gui2/guiprint_common.c:236
@@ -9581,9 +9580,9 @@ msgid "Out of memory in display buffer"
 msgstr "Memoria esaurita nel buffer di visualizzazione"
 
 #: gui2/library.c:3593
-#, fuzzy, c-format
+#, c-format
 msgid "Cannot delete %s; variable is in use"
-msgstr "Impossibile cancellare una variabile quando il campione è ridotto\n"
+msgstr "Impossibile cancellare %s; la variabile è in uso"
 
 #: gui2/library.c:3598 gui2/library.c:3606 gui2/session.c:1534
 #, c-format
@@ -9595,14 +9594,12 @@ msgid "gretl: delete"
 msgstr "gretl: cancella"
 
 #: gui2/library.c:3634
-#, fuzzy
 msgid "Cannot delete the specified variables"
-msgstr "Impossibile aprire il file specificato"
+msgstr "Impossibile cancellare le variabili specificate"
 
 #: gui2/library.c:3637
-#, fuzzy
 msgid "Cannot delete all of the specified variables"
-msgstr "Impossibile aprire il file specificato"
+msgstr "Impossibile cancellare tutte le variabili specificate"
 
 #: gui2/library.c:3643
 msgid "Out of memory reorganizing data set"
@@ -11238,140 +11235,3 @@ msgstr ""
 #: plugin/workbook.c:583
 msgid "Unexpected error reading the file\n"
 msgstr "Errore inatteso durante la lettura del file\n"
-
-#~ msgid "Constant term is in varlist1 but not in varlist2"
-#~ msgstr ""
-#~ "Il termine costante è presente nella prima lista di variabili ma non "
-#~ "nella seconda"
-
-#~ msgid ""
-#~ "\n"
-#~ "Full data range: %s - %s (n = %d)\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Intervallo dati completo: %s - %s (n = %d)\n"
-
-#~ msgid "Full data range:"
-#~ msgstr "Intervallo completo dei dati:"
-
-#~ msgid "significance level unknown"
-#~ msgstr "Livello di significatività sconosciuto"
-
-#  Femminile, il soggetto è la statistica test
-#~ msgid "significant at the 1 percent level"
-#~ msgstr "Significativa al livello dell'1 per cento"
-
-#~ msgid "significant at the 2.5 percent level"
-#~ msgstr "Significativa al livello del 2,5 per cento"
-
-#~ msgid "significant at the 5 percent level"
-#~ msgstr "Significativa al livello del 5 per cento"
-
-#~ msgid "significant at the 10 percent level"
-#~ msgstr "Significativa al livello del 10 per cento"
-
-#~ msgid "not significant at the 10 percent level"
-#~ msgstr "Non significativa al livello del 10 per cento"
-
-#~ msgid ""
-#~ "\n"
-#~ "Dickey-Fuller test with constant\n"
-#~ "\n"
-#~ "   model: (1 - L)%s = m + g * %s(-1) + e\n"
-#~ "   unit-root null hypothesis: g = 0\n"
-#~ "   estimated value of g: %f\n"
-#~ "   test statistic: t = %f, with sample size %d\n"
-#~ "   %s\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Test Dickey-Fuller con costante\n"
-#~ "\n"
-#~ "   Modello: (1 - L)%s = m + g * %s(-1) + e\n"
-#~ "   Ipotesi nulla di radice unitaria: g = 0\n"
-#~ "   Valore stimato di g: %f\n"
-#~ "   Statistica test: t = %f, con ampiezza campionaria %d\n"
-#~ "   %s\n"
-
-#~ msgid "unknown pvalue"
-#~ msgstr "p-value sconosciuto"
-
-#~ msgid "pvalue < .01"
-#~ msgstr "p-value < .01"
-
-#~ msgid ".025 > pvalue > .01"
-#~ msgstr ".025 > p-value > .01"
-
-#~ msgid ".05 > pvalue > .025"
-#~ msgstr ".05 > p-value > .025"
-
-#~ msgid ".10 > pvalue > .05"
-#~ msgstr ".10 > p-value > .05"
-
-#~ msgid "pvalue > .10"
-#~ msgstr "p-value > .10"
-
-#~ msgid ""
-#~ "The null hypothesis is that %s has a unit root, i.e. the parameters on\n"
-#~ "the time trend and %s are both zero.\n"
-#~ msgstr ""
-#~ "L'ipotesi nulla è che %s abbia una radice unitaria, ossia che i parametri "
-#~ "del\n"
-#~ "trend temporale e di %s siano entrambi zero.\n"
-
-#~ msgid "adf test"
-#~ msgstr "test adf"
-
-#~ msgid "cointegration test"
-#~ msgstr "test di cointegrazione"
-
-#~ msgid "Couldn't read ADF order"
-#~ msgstr "Impossibile leggere l'ordine ADF"
-
-#~ msgid ""
-#~ "Varname contains illegal character '%c'\n"
-#~ "Use only letters, digits and underscore"
-#~ msgstr ""
-#~ "Il nome della variabile contiene il carattere non valido '%c'.\n"
-#~ "Sono ammessi solo lettere, numeri e trattino basso."
-
-#~ msgid ""
-#~ "Full data set: %d observations\n"
-#~ "Current sample: %d observations\n"
-#~ msgstr ""
-#~ "Dataset completo: %d osservazioni\n"
-#~ "Campione attuale: %d osservazioni\n"
-
-#~ msgid ""
-#~ "loop: only the '-o' and '-r' forms of the smpl  command may be used.\n"
-#~ msgstr ""
-#~ "loop: è possibile usare solo le forme '-o' e '-r' del comando smpl.\n"
-
-#~ msgid "The summary command is not available in this sort of loop.\n"
-#~ msgstr "Il comando summary non è disponibile in questo tipo di loop.\n"
-
-#~ msgid "command list"
-#~ msgstr "lista comandi"
-
-#~ msgid "Error in command loop: aborting\n"
-#~ msgstr "Errore nel loop: abbandono\n"
-
-#~ msgid "Failed to add command to loop stack\n"
-#~ msgstr "Impossibile aggiungere il comando all'elenco del loop\n"
-
-#~ msgid "Data written OK\n"
-#~ msgstr "Dati scritti con successo\n"
-
-#~ msgid "Error saving graph"
-#~ msgstr "Errore nel salvataggio del grafico"
-
-#~ msgid ""
-#~ "This box may contain the name of a TrueType font, such as arial or "
-#~ "verdana, and a size in points.  Leave blank to use the default graph font."
-#~ msgstr ""
-#~ "Questa casella può contenere il nome di un carattere TrueType, come arial "
-#~ "o verdana, e una dimensione in punti.  Lasciare bianco per usare il "
-#~ "carattere predefinito per i grafici."
-
-#~ msgid "Sorry, Monte Carlo loops not available in this mode\n"
-#~ msgstr ""
-#~ "I loop di tipo Monte Carlo non sono disponibili in questa modalità\n"
