@@ -543,7 +543,7 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 int open_mpols_plugin (void **handle)
 {
 #ifdef OS_WIN32
-    *handle = LoadLibrary("..\\plugins\\mp_ols.dll");
+    *handle = LoadLibrary("plugins\\mp_ols.dll");
     if (*handle == NULL) return 1;
 #else 
     *handle = dlopen("../plugin/.libs/mp_ols.so", RTLD_LAZY);

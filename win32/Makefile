@@ -10,7 +10,7 @@ extradir = ../gui2/gtkextra-lite
 imports = ./import-libs
 
 # tools
-CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2 -fno-float-store
+CC = $(MGW_PREFIX)-gcc -fnative-struct -Wall -O2
 AS = $(MGW_PREFIX)-as
 DLLWRAP = $(MGW_PREFIX)-dllwrap
 DLLTOOL = $(MGW_PREFIX)-dlltool

@@ -72,6 +72,14 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
+#ifdef USE_LAPACK
+static int ijtok (int i, int j, int n);
+static void lapack_std_errs (double *xpx, double *sderr, 
+			     double sigma, int nv);
+static int lapack_cholbeta (MODEL *pmod, double *xpy, 
+			    double **Z, int nv);
+#endif
+
 
 static int reorganize_uhat_yhat (MODEL *pmod) 
 {
@@ -546,11 +554,15 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
         sderr = vector of standard errors of regression coefficients
 */
 {
-    int t, v, nobs, yno, nwt = pmod->nwt;
+    int t, nobs, yno, nwt = pmod->nwt;
     int t1 = pmod->t1, t2 = pmod->t2;
-    double *diag, ysum, ypy, zz, ess, rss, tss;
+    double ysum, ypy, zz, ess, tss, rss = 0.0;
     double den = 0.0, sgmasq = 0.0;
     int err = 0;
+#ifndef USE_LAPACK
+    double *diag;
+    int v;
+#endif
 
     yno = pmod->list[1];
 
@@ -587,19 +599,28 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     }
 
     /*  Choleski-decompose X'X and find the coefficients */
+#ifdef USE_LAPACK
+    err = lapack_cholbeta(pmod, xpy, Z, nv);
+#else
     err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, nv);
+#endif
 
     if (err) {
-        pmod->errcode = E_ALLOC;
+        pmod->errcode = err;
         return;
     } 
   
+#ifdef USE_LAPACK
+    ess = pmod->ess;
+    rss = ypy - ess;
+#else
     if (rss == -1.0) { 
         pmod->errcode = E_SINGULAR;
         return; 
     }
 
     pmod->ess = ess = ypy - rss;
+#endif
 
     if (ess < SMALL && ess > (-SMALL)) {
 	pmod->ess = ess = 0.0;
@@ -676,6 +697,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	pmod->adjrsq = 1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
     }
 
+#ifdef USE_LAPACK
+    lapack_std_errs(pmod->xpx, pmod->sderr, pmod->sigma, nv);
+#else
     diag = malloc((nv+1) * sizeof *diag); 
 
     if (diag == NULL) {
@@ -685,16 +709,152 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     diaginv(pmod->xpx, xpy, diag, nv);
 
-    for (v=1; v <= nv; v++) { 
+    for (v=1; v<=nv; v++) { 
        pmod->sderr[v] = pmod->sigma * sqrt(diag[v]); 
     }
 
     free(diag); 
+#endif /* USE_LAPACK */
     
     return;  
 }
 
 /* .......................................................... */
+
+#ifdef USE_LAPACK
+
+#include <gretl_lapack/f2c.h>
+#include <gretl_lapack/clapack.h>
+
+static int ijtok (int i, int j, int n)
+{
+    int s, subt = 0;
+
+    for (s=1; s<=j; s++) subt += s;
+    return i + j * n - subt;
+}
+
+static int make_ess (MODEL *pmod, double **Z)
+{
+    int i, t, yno = pmod->list[1], l0 = pmod->list[0];
+    double yhat, resid;
+
+    pmod->ess = 0.0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	yhat = 0.0;
+	for (i=2; i<=l0; i++) {
+	    yhat += pmod->coeff[i-1] * Z[pmod->list[i]][t];
+	}
+	resid = Z[yno][t] - yhat;
+	pmod->ess = pmod->ess + resid * resid;
+    }
+    return 0;
+}
+
+static int lapack_cholbeta (MODEL *pmod, double *xpy, 
+			    double **Z, int nv)
+{
+    char EQUED, FACT = 'N', UPLO = 'L';
+    integer K = nv;
+    integer INFO, NRHS = 1;
+    int i, nxpx;
+    double *AP, *B;
+    double *AFP = NULL, *S = NULL, *X = NULL, *WORK = NULL;
+    double RCOND, FERR, BERR;
+    integer *IWORK = NULL;
+
+    nxpx = K * (K + 1) / 2;
+
+    AFP = malloc((nxpx + 1) * sizeof *AFP);
+    X = malloc(K * sizeof *X);
+    WORK = malloc(3 * K * sizeof *WORK);
+    IWORK = malloc(K * sizeof *IWORK);
+
+    if (AFP == NULL || X == NULL || WORK == NULL || IWORK == NULL) {
+	free(AFP);
+	free(X);
+	free(WORK);
+	free(IWORK);
+	return E_ALLOC;
+    }
+    
+    AP = pmod->xpx + 1;
+    B = xpy + 1;
+
+    dppsvx_(&FACT, &UPLO, &K, &NRHS, AP, AFP + 1, &EQUED, S, B, &K, 
+	    X, &K, &RCOND, &FERR, &BERR, WORK, IWORK, &INFO);
+
+#ifdef LA_TEST
+    printf("DPPSVX exit code = %d\n", (int) INFO);
+    printf("RCOND = %g\n", RCOND);
+    printf("FERR = %g\n", FERR);
+    printf("BERR = %g\n", BERR);
+#endif
+
+    if (INFO != 0 || FERR > 1.0e-4) {
+	return E_SINGULAR;
+    }
+
+    for (i=1; i<=nv; i++) {
+	pmod->coeff[i] = X[i-1];
+    }
+
+    free(pmod->xpx);
+    pmod->xpx = AFP;
+    free(X);
+    free(WORK);
+    free(IWORK);
+
+    make_ess(pmod, Z);
+    
+    return INFO;
+}
+
+
+static int lapack_cholbeta_orig (MODEL *pmod, double *xpy, 
+				 double **Z, int nv)
+{
+    char UPLO = 'L';
+    integer INFO, NRHS = 1, K = nv;
+    double *AP, *B;
+    int i;
+
+    AP = pmod->xpx + 1;
+    B = xpy + 1;
+
+    /* FIXME: need to bail out if too close to singularity */
+
+    dppsv_(&UPLO, &K, &NRHS, AP, B, &K, &INFO);
+
+    if (INFO != 0) return (int) INFO;
+
+    for (i=1; i<=nv; i++) {
+	pmod->coeff[i] = xpy[i];
+    }
+
+    make_ess(pmod, Z);
+
+    return 0;
+}
+
+static void lapack_std_errs (double *xpx, double *sderr, 
+			     double sigma, int nv)
+{
+    char UPLO = 'L';
+    integer INFO, K = nv;
+    double *AP = xpx + 1;
+    int i, k, m;
+
+    dpptri_(&UPLO, &K, AP, &INFO);
+
+    m = 1;
+    for (i=0; i<nv; i++) {
+	k = ijtok(i, i, nv);
+	sderr[m++] = sigma * sqrt(AP[k]);
+    }    
+}
+
+#endif /* USE_LAPACK */
 
 int cholbeta (double *xpx, double *xpy, 
 	      double *coeff, double *rss,

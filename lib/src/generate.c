@@ -1463,7 +1463,7 @@ static void getvar (char *str, char *word, char *c)
 	  If no occurrence, sets word = str, str = '\0', and c = '\0'.
      */
 {
-    register int i;
+    size_t i;
 
     *word = '\0';
     for (i=0; i<strlen(str); i++)  { 
@@ -1471,7 +1471,7 @@ static void getvar (char *str, char *word, char *c)
 	    str[i] == ')' || is_operator(str[i])) {
 	    *c = str[i];
 	    copy(str, 0, i, word);
-	    _delete(str, 0, i+1);
+	    _delete(str, 0, i + 1);
 	    return;
 	}
     }

@@ -228,7 +228,7 @@ void lower (char *str)
 
 void _esl_trunc (char *str, int n)
 {
-    size_t len = strlen(str);
+    int len = strlen(str);
 
     if (len > n) 
 	_delete(str, n, len - n);  
@@ -372,7 +372,7 @@ int get_base (char *targ, const char *src, char c)
 
 int top_n_tail (char *str)
 {
-    size_t i, len;
+    int i, len;
 
     if (str == NULL || *str == 0 || 
 	*str == '\n' || *str == '\r') return 0;
