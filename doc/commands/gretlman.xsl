@@ -144,6 +144,10 @@
   <emphasis><xsl:apply-templates/></emphasis>
 </xsl:template>
 
+<xsl:template match="emphasis">
+  <emphasis><xsl:apply-templates/></emphasis>
+</xsl:template>
+
 <xsl:template match="super">
   <superscript><xsl:apply-templates/></superscript>
 </xsl:template>

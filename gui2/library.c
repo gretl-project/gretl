@@ -1250,9 +1250,9 @@ int bool_subsample (unsigned long opt)
 	return 1;
 
     if (opt == OPT_M) {
-	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, opt);
+	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, NULL, opt);
     } else {
-	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, opt);
+	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, NULL, opt);
     }
 
     if (err) {
@@ -5798,7 +5798,7 @@ int gui_exec_line (char *line,
 		err = E_ALLOC;
 	    else 
 		err = restrict_sample(line, &Z, &subZ, datainfo, 
-				      subinfo, cmd.opt);
+				      subinfo, cmd.list, cmd.opt);
 	    if (!err) {
 		/* save the full data set for later use */
 		fullZ = Z;

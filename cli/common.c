@@ -245,7 +245,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		return 1;
 	    }
 	    if (restrict_sample(linecpy, &Z, &subZ, datainfo, 
-				subinfo, cmd.opt)) {
+				subinfo, cmd.list, cmd.opt)) {
 		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }

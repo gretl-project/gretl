@@ -313,13 +313,13 @@
     found on the gretl website (follow the link <quote>Numerical
       accuracy</quote>).</para>
 
-  <para>In October 2002 I had a useful exchange with Giovanni Baoicchi
+  <para>In October 2002 I had a useful exchange with Giovanni Baiocchi
     and Walter Distaso, who were writing a review of
     <application>gretl</application> for the <citetitle>Journal of
-      Applied Econonetrics</citetitle>, and James MacKinnon, software
+      Applied Econometrics</citetitle>, and James MacKinnon, software
     review editor for the journal.<footnote><para>This review has
-    since been published; see Baoicchi and Distaso (2003).</para>
-    </footnote> and I am grateful to Baoicchi and
+    since been published; see Baiocchi and Distaso (2003).</para>
+    </footnote> and I am grateful to Baiocchi and
     Disasto for their careful examination of the program, which
     prompted the following modifications.</para>
 
@@ -364,28 +364,23 @@
 
   </orderedlist>
 
-  <para>The current version of the <application>gretl</application>
-    source code package contains a <filename>tests</filename>
-    subdirectory, with a test suite based on the NIST datasets.  This
-    is invoked if you do <command>make check</command> in the top
-    source directory.  You are warned if the numerical accuracy falls
-    short of standard.  Please consult the file
-    <filename>README</filename> in the <filename>tests</filename>
-    directory for details.</para>
-
-  <para>The NIST test suite is also distributed with the MS Windows
-    version of <application>gretl</application>.  You can run the
-    tests by invoking the program
-    <filename>nisttest.exe</filename>.</para> 
+  <para>The current version of <application>gretl</application>
+    includes a <quote>plugin</quote> that runs the NIST linear
+    regression test suite.  You can find this under the
+    <quote>Utilities</quote> menu in the main window.  When you run
+    this test, the introductory text explains the expected result.  If
+    you run this test and see anything other than the expected result,
+    please send a bug report to <literal>cottrell@wfu.edu</literal>.
+  </para>
 
   <para>As mentioned above, all regression statistics are printed to 6
     significant figures in the current version of
     <application>gretl</application> (except when the
     multiple-precision plugin is used, then results are given to 12
     figures).  If you want to examine a particular value more closely,
-    first save it (see <xref linkend="cmd-genr"/>) then print it using 
-    <command>print -t</command> (see <xref linkend="cmdref"/>).  This
-    will show the value to 10 digits.</para>
+    first save it (see <xref linkend="cmd-genr"/>) then print it using
+    <command>print --ten</command> (see <xref linkend="cmdref"/>).
+    This will show the value to 10 digits.</para>
 
 </appendix>
 

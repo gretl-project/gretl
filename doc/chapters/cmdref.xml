@@ -302,12 +302,6 @@
 	    <entry><literal>-o</literal></entry>
 	  </row>
 	  <row>
-	    <entry><command>fcasterr</command></entry>
-	    <entry><literal>--plot</literal></entry>
-	    <entry>show graph</entry>
-	    <entry><literal>-o</literal></entry>
-	  </row>
-	  <row>
 	    <entry><command>gnuplot</command></entry>
 	    <entry><literal>--with-lines</literal></entry>
 	    <entry>plot with lines</entry>

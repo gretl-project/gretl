@@ -33,7 +33,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,
-		     unsigned long oflag);
+		     const int *list, unsigned long oflag);
 
 int set_sample (const char *line, DATAINFO *pdinfo);
 

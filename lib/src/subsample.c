@@ -182,7 +182,7 @@ enum {
 int restrict_sample (const char *line, 
 		     double ***oldZ, double ***newZ,
 		     DATAINFO *oldinfo, DATAINFO *newinfo,
-		     unsigned long oflag)
+		     const int *list, unsigned long oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
 	mask a specified dummy variable; or masking with a specified
@@ -211,10 +211,29 @@ int restrict_sample (const char *line,
 	return 1;
     }
 
-    if (opt == SUBSAMPLE_DROP_MISSING) { 
+    if (opt == SUBSAMPLE_DROP_MISSING) {
 	dum = malloc(n * sizeof *dum);
 	if (dum == NULL) return E_ALLOC;
 	sn = 0;
+    }
+
+    if (opt == SUBSAMPLE_DROP_MISSING && list != NULL) {   
+	for (t=0; t<n; t++) {
+	    int v;
+
+	    dum[t] = 1.0;
+	    for (i=1; i<=list[0]; i++) {
+		v = list[i];
+		if (oldinfo->vector[v] && na((*oldZ)[v][t])) {
+		    dum[t] = 0.;
+		    break;
+		}
+	    }
+	    if (floateq(dum[t], 1.0)) sn++;
+	}
+    }  
+
+    else if (opt == SUBSAMPLE_DROP_MISSING) { 
 	for (t=0; t<n; t++) {
 	    dum[t] = 1.0;
 	    for (i=1; i<oldinfo->v; i++) {

@@ -180,7 +180,6 @@ static int aliased (char *cmd)
 
 #define NO_VARLIST(c) (c == VARLIST || \
 	               c == QUIT || \
-	               c == SMPL || \
 	               c == EQNPRINT || \
 	               c == TABPRINT || \
 	               c == FCAST || \
@@ -516,6 +515,13 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
+    /* smpl can be special: only takes a list in case of OPT_M
+       "--no-missing" */
+    if (command->ci == SMPL && !(command->opt & OPT_M)) {
+	command->nolist = 1;
+	return;
+    }	
+
     /* boxplots can be special: boolean conditions embedded in
        the list, which have to be parsed separately */
     if (command->ci == BXPLOT && strchr(line, '(')) {
@@ -843,6 +849,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == DIFF ||
 	command->ci == LDIFF ||
 	command->ci == SUMMARY ||
+	command->ci == SMPL ||
 	command->ci == PCA ||
 	command->ci == LAGS) {
 	if (command->list[0] == 0) {

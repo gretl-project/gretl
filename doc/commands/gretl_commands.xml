@@ -349,7 +349,7 @@
 
     <description>
       <para>
-	Must follow an regression.  Calculates the sum of the
+	Must follow a regression.  Calculates the sum of the
 	coefficients on the variables in the <repl>indepvars</repl>
 	list.  Prints this sum along with its standard error and the
 	p-value for the null hypothesis that the sum is zero.  Note the
@@ -460,8 +460,7 @@
 	<repl>indepvars</repl> as the list of independent variables.
 	Iteration is terminated when successive estimates of the
 	autocorrelation coefficient do not differ by more than 0.001
-	or after 20 iterations.  Residuals of this transformed
-	regression are stored under the name <lit>uhat</lit>.
+	or after 20 iterations.
       </para>
     </description>
 
@@ -475,7 +474,7 @@
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument optional="true">varlist</argument>
       </arguments>
       <examples>
         <example>corr y x1 x2 x3</example>
@@ -502,7 +501,7 @@
     <usage>
       <arguments>
         <argument>variable</argument>
-        <argument>maxlag</argument>
+        <argument optional="true">maxlag</argument>
       </arguments>
       <examples>
         <example>corrgm x 12</example>
@@ -534,10 +533,9 @@
       </para>
 
       <para>
-	If an (optional) integer <repl>maxlag</repl> value is supplied
-	the length of the correlogram is limited to at most that
-	number of lags, otherwise the length is determined
-	automatically.
+	If a <repl>maxlag</repl> value is specified the length of the
+	correlogram is limited to at most that number of lags,
+	otherwise the length is determined automatically.
       </para>
     </description>
 
@@ -658,10 +656,11 @@
     <description>
       <para>Reads the variables in <repl>varlist</repl> from a
 	database (gretl or RATS 4.0), which must have been opened
-	previously using the <cmd>open</cmd> command. In addition, a
-	data frequency and sample range must be established using the
-	the <cmd>setobs</cmd> and <cmd>smpl</cmd> commands prior to
-	using this command. Here is a full example:</para>
+	previously using the <cmdref targ="open"/> command. In
+	addition, a data frequency and sample range must be
+	established using the the <cmdref targ="setobs"/> and <cmdref
+	  targ="smpl"/> commands
+	prior to using this command. Here is a full example:</para>
 
       <code>
 	open macrodat.rat
@@ -701,7 +700,7 @@
 
     <usage>
       <arguments>
-        <argument>varlist</argument>
+        <argument optional="true">varlist</argument>
       </arguments>
     </usage>
 
@@ -758,7 +757,7 @@
     <description>
       <para>
 	Ends a block of commands of some sort.  For example, <cmd>end
-	  system</cmd> terminates an equation system.
+	  system</cmd> terminates an equation <cmdref targ="system"/>.
       </para>
     </description>
 
@@ -807,7 +806,7 @@
       </para>
 
       <para>
-	If the <lit>--complete</lit> flag is given the &latex; file is
+	If the <lit>--complete</lit> flag is given, the &latex; file is
 	a complete document, ready for processing; otherwise it must
 	be included in a document.
       </para>
@@ -847,7 +846,7 @@
     <usage>
       <arguments>
         <argument optional="true" >startobs endobs</argument>
-	<argument>newvarname</argument>
+	<argument>fitvar</argument>
       </arguments>
       <examples>
         <example>fcast 1997:1 2001:4 f1</example>
@@ -860,7 +859,7 @@
 	Must follow an estimation command.  Forecasts are generated
 	for the specified range (or the largest possible range if no
 	<repl>startobs</repl> and <repl>endobs</repl> are given) and
-	the values saved as <repl>newvarname</repl>, which can be
+	the values saved as <repl>fitvar</repl>, which can be
 	printed, graphed, or plotted. The right-hand side variables
 	are those in the original model.  There is no provision to
 	substitute other variables.  If an autoregressive error
@@ -914,11 +913,12 @@
 
     <description>
       <para>
-	Must follow an estimation command.  Generates fitted values,
-	in a series called <lit>autofit</lit>, for the current sample,
-	based on the last regression.  In the case of time-series
-	models, also pops up a graph of fitted and actual values of
-	the dependent variable against time.
+	A shortcut to <cmd>fcast</cmd>. Must follow an estimation
+	command.  Generates fitted values, in a series called
+	<lit>autofit</lit>, for the current sample, based on the last
+	regression.  In the case of time-series models, also pops up a
+	graph of fitted and actual values of the dependent variable
+	against time.
       </para>
     </description>
 
@@ -935,9 +935,9 @@
     <description>
       <para>
 	Prints the frequency distribution for <repl>var</repl> (given
-	by name or number) along with the Doornik chi-square test for
-	normality. In interactive mode a graph of the distribution is
-	displayed.  
+	by name or number); also shows the results of the
+	Doornik&ndash;Hansen chi-square test for normality. In
+	interactive mode a graph of the distribution is displayed.  
       </para>
     </description>
 
@@ -959,9 +959,9 @@
     <description>
       <para>
 	Creates new variables, usually through transformations of
-	existing variables. See also <cmd>diff</cmd>, <cmd>logs</cmd>,
-	<cmd>lags</cmd>, <cmd>ldiff</cmd>, <cmd>multiply</cmd> and
-	<cmd>square</cmd> for shortcuts.
+	existing variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
+	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref targ="multiply"/> and
+	<cmdref targ="square"/> for shortcuts.
       </para>
 
       <para>
@@ -980,8 +980,10 @@
 	(less than or equal) and <lit>!=</lit> (not equal).  The
 	Boolean operators can be used in constructing dummy variables:
 	for instance <lit>(x > 10)</lit> returns 1 if <lit>x</lit>
-	&gt; 10, 0 otherwise. Supported <emphasis>functions</emphasis>
-	fall into these groups:
+	&gt; 10, 0 otherwise.</para>
+
+      <para>Supported <emphasis>functions</emphasis> fall into these
+	groups:
       </para>
 
       <ilist>
@@ -1027,20 +1029,20 @@
 	<func>uniform</func> and <func>normal</func> take as their
 	single argument either the name of a variable (note that you
 	can't refer to variables by their ID numbers in a
-	<cmd>genr</cmd> command) or a composite expression that
-	evaluates to a variable (e.g. <lit>ln((x1+x2)/2)</lit>).
-	<func>cov</func> and <func>corr</func> both require two
-	arguments, and return respectively the covariance and the
-	correlation coefficient between variables. The
-	<func>pvalue</func> function takes the same arguments as the
-	<cmd>pvalue</cmd> command (see below), but in this context
-	commas should be placed between the arguments.
+	<cmd>genr</cmd> formula) or an expression that evaluates to a
+	variable (e.g. <lit>ln((x1+x2)/2)</lit>). <func>cov</func> and
+	<func>corr</func> both require two arguments, and return
+	respectively the covariance and the correlation coefficient
+	between the arguments. The <func>pvalue</func> function takes
+	the same arguments as the <cmdref targ="pvalue"/> command, but
+	in this context commas should be placed between the arguments.
 	<func>uniform()</func> and <func>normal()</func>, which do not
 	take arguments, return pseudo-random series drawn from the
 	uniform (0&ndash;1) and standard normal distributions
-	respectively (see also the <cmdref targ="set"/> command,
-	<lit>seed</lit> option).  Uniform series are generated using
-	the Mersenne Twister;<footnote><para>See Matsumoto and
+	respectively (see also the
+	<cmdref targ="set"/> command, <lit>seed</lit> option).
+	Uniform series are generated using the Mersenne
+	Twister;<footnote><para>See Matsumoto and
 	    Nishimura (1998).  The implementation is provided by
 	    <program>glib</program>, if available, or by the C code
 	    written by Nishimura and Matsumoto.</para></footnote> for
@@ -1083,7 +1085,7 @@
 	    </row> 
 	    <row>
 	      <cell><lit>$T</lit></cell> 
-	      <cell>number of observations used </cell> 
+	      <cell>number of observations used</cell> 
 	    </row> 
 	    <row> 
 	      <cell><lit>$df</lit></cell>
@@ -1104,7 +1106,7 @@
 	    </row> 
 	    <row>
 	      <cell><lit>$lnl</lit></cell> 
-	      <cell>log-likelihood (logit and probit models)</cell> 
+	      <cell>log-likelihood (where applicable)</cell> 
 	    </row> 
 	    <row>
 	      <cell><lit>$sigma</lit></cell> 
@@ -1127,9 +1129,9 @@
 		for residuals</cell> 
 	    </row> 
 	    <row>
-	      <cell>vcv(<repl>var1</repl>,<repl>var2</repl>)</cell>
+	      <cell>vcv(<repl>x1</repl>,<repl>x2</repl>)</cell>
 	      <cell>covariance between coefficients for named
-		variables <repl>var1</repl> and <repl>var2</repl> 
+		variables <repl>x1</repl> and <repl>x2</repl> 
 	      </cell> 
 	    </row>
 	  </table>
@@ -1163,7 +1165,7 @@
 	periodicity of the data (e.g. 4 for quarterly data).</para>
 
       <para>The variable <lit>t</lit> serves as an index of the
-	observations. Thus for instance <lit>genr dum = (t=15)</lit>
+	observations. For instance <lit>genr dum = (t=15)</lit>
 	will generate a dummy variable that has value 1 for
 	observation 15, 0 otherwise.  The variable <lit>obs</lit> is
 	similar but more flexible: you can use this to pick out
@@ -1222,8 +1224,8 @@
 	</row>
 	<row>
 	  <cell><lit>genr z = x&gt;y</lit></cell>
-	  <cell>sets <lit>z(t)</lit> to 1 if <lit>x(t) &gt; y(t)</lit>
-	    else to 0</cell>
+	  <cell><lit>z(t)</lit> = 1 if <lit>x(t) &gt; y(t)</lit>,
+	    otherwise 0</cell>
 	</row> 
 	<row>
 	  <cell><lit>genr y = x(-2)</lit></cell>
@@ -3264,7 +3266,7 @@
       <para>
 	A <cmd>!</cmd> at the beginning of a command line is
 	interpreted as an escape to the user's shell.  Thus arbitrary
-	shell commands can be executed from within the program.
+	shell commands can be executed from within <program>gretl</program>.
       </para>
     </description>
 
@@ -3317,7 +3319,7 @@
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
-	<altform><lit>smpl</lit> <lit>--no-missing</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>varlist</repl> <lit>]</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <examples>
@@ -3343,10 +3345,19 @@
 	observation; the sample will be restricted to observations
 	where the value is 1. The fourth form, using
 	<lit>--restrict</lit>, restricts the sample to observations
-	that satisfy the given Boolean condition. The fifth form drops
-	all observations for which values of one or more variables are
-	missing.  The final form, <lit>smpl full</lit>, restores the
-	full data range.
+	that satisfy the given Boolean condition (which is specified
+	according to the syntax of the <cmdref targ="genr"/>
+	command).</para>
+
+      <para>With the <lit>--no-missing</lit> form, if
+	<repl>varlist</repl> is specified an observation is dropped if
+	and only if at least one of the variables in
+	<repl>varlist</repl> has a missing value at that observation;
+	otherwise observations are dropped if <emphasis>any</emphasis>
+	variable has a missing value.</para>
+
+      <para>The final form, <lit>smpl full</lit>, restores the full
+	data range.
       </para>
 
       <para>The internal variable <lit>obs</lit> may be used with the
@@ -3363,7 +3374,7 @@
 	<lit>smpl</lit>: Any <quote>structural</quote> information in
 	the data file (regarding the time series or panel nature of
 	the data) is lost when this command is issued.  You may
-	reimpose structure with <cmdref targ="setobs"/> command.
+	reimpose structure with the <cmdref targ="setobs"/> command.
       </para>
     </description>
 

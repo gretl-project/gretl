@@ -1432,7 +1432,7 @@ void exec_line (char *line, PRN *prn)
 		err = E_ALLOC;
 	    } else {
 		err = restrict_sample(line, &Z, &subZ, datainfo, 
-				      subinfo, cmd.opt);
+				      subinfo, cmd.list, cmd.opt);
 	    }
 	    if (!err) {
 		fullZ = Z;
