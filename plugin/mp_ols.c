@@ -545,6 +545,9 @@ static int copy_mp_results (MPMODEL *pmod, DATAINFO *pdinfo,
 	for (i=2; i<=ncoeff; i++) {
 	    get_mp_varname(pmod, pdinfo, i, results->varnames[i]);
 	}
+
+	strcpy(results->varnames[0], pdinfo->varname[pmod->varlist[1]]);
+
 	results->t1 = pmod->t1;
 	results->t2 = pmod->t2;
 	results->ifc = pmod->ifc;

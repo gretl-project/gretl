@@ -1711,8 +1711,9 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
 
+    /* reinstate role == MPOLS below when ready */
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR || vwin->role == MPOLS) {
+	|| vwin->role == CORR) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -1738,7 +1739,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (pmod->name) model_save_state(vwin->ifac, FALSE);
 
 	if (pmod->ci == LAD) lad_menu(vwin->ifac);
-
     }
 }
 
