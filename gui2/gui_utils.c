@@ -3179,7 +3179,13 @@ int build_path (const char *dir, const char *fname, char *path,
     len = strlen(path);
     if (len == 0) return 1;
 
-    if (path[len - 1] == '/' || path[len - 1] == '\\') {
+    /* strip a trailing single dot */
+    if (len > 1 && path[len-1] == '.' && 
+	(path[len-2] == '/' || path[len-2] == '\\')) {
+	    path[len-1] = '\0';
+    }
+
+    if (path[len-1] == '/' || path[len-1] == '\\') {
         /* dir is already properly terminated */
         strcat(path, fname);
     } else {

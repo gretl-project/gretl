@@ -37,10 +37,14 @@ install_datafiles:
 	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(gretldir)/data 
 	for f in $(sharesrc)/data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
+	for f in $(sharesrc)/data/misc/* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/data/misc ; done
 
 install_scripts:
 	for f in $(sharesrc)/scripts/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done
+	for f in $(sharesrc)/scripts/misc/* ; do \
+	$(INSTALL_DATA) $$f $(gretldir)/scripts/misc ; done
 
 install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
@@ -56,7 +60,10 @@ install_help:  $(ES_GUI_HLP) $(ES_CLI_HLP)
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
 	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
-	$(tooldir)/mkinstalldirs $(gretldir)/scripts $(gretldir)/db
+	$(tooldir)/mkinstalldirs $(gretldir)/data/misc
+	$(tooldir)/mkinstalldirs $(gretldir)/scripts
+	$(tooldir)/mkinstalldirs $(gretldir)/scripts/misc 
+	$(tooldir)/mkinstalldirs $(gretldir)/db
 
 $(UTF8_FILES): $(sharesrc)/gretl.hlp.es $(sharesrc)/gretlcli.hlp.es
 	for f in $^ ; do recode l1..utf-8 < $$f > $$f.utf8 ; done

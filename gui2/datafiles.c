@@ -432,6 +432,17 @@ static int build_file_collections (void)
 
 /* ........................................................... */
 
+static char *strip_extension (char *s)
+{
+    char *p = strrchr(s, '.');
+    
+    if (p != NULL && (!strcmp(p, ".gdt") || !strcmp(p, ".inp"))) {
+	*p = '\0';
+    }
+
+    return s;
+}
+
 static int read_file_descriptions (windata_t *win, gpointer p)
 {
     FILE *fp;
@@ -442,13 +453,12 @@ static int read_file_descriptions (windata_t *win, gpointer p)
 #else
     gint i;    
 #endif
-    char line[MAXLEN], *fname;
-    char descrip[80];
+    char line[MAXLEN], *index;
     file_collection *coll = (file_collection *) p;
 
-    fname = full_path(coll->path, coll->descfile);
+    index = full_path(coll->path, coll->descfile);
 
-    fp = fopen(fname, "r");
+    fp = fopen(index, "r");
     if (fp == NULL) return 1;
 
 #ifndef OLD_GTK
@@ -458,43 +468,45 @@ static int read_file_descriptions (windata_t *win, gpointer p)
     i = 0;
 #endif
     
-    while (fgets(line, MAXLEN - 1, fp)) {
+    while (fgets(line, sizeof line, fp)) {
+	char fname[24], descrip[80], data[64];
 
 	if (*line == '#') continue;
-	line[MAXLEN-1] = 0;
 
 	if (win->role == TEXTBOOK_DATA) {
-	    *fname = 0;
-	    *descrip = 0;
-	    if (sscanf(line, " \"%15[^\"]\",\"%79[^\"]\"", 
+	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\"", 
 		       fname, descrip) == 2) {
 #ifdef OLD_GTK
 		gchar *row[2];	
 
-		row[0] = fname;
+		row[0] = strip_extension(fname);
 		row[1] = descrip;
 		gtk_clist_append(GTK_CLIST(win->listbox), row);
 #else
 		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, fname, 1, descrip, -1);
+		gtk_list_store_set(store, &iter, 
+				   0, strip_extension(fname), 
+				   1, descrip, -1);
 #endif
 	    }
-	} else {
-	    /* script files */
-	    gchar *row[3];
+	} else { /* script files */
+	    if (sscanf(line, " \"%23[^\"]\",\"%79[^\"]\",\"%63[^\"]\"", 
+		       fname, descrip, data) == 3) {
+#ifdef OLD_GTK
+		gchar *row[3];
 
-	    row[0] = strtok(line, "\"");
-	    (void) strtok(NULL, "\"");
-	    row[1] = strtok(NULL, "\"");
-	    (void) strtok(NULL, "\"");
-	    row[2] = strtok(NULL, "\"");
-#ifndef OLD_GTK
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, row[0], 
-			       1, row[1], 2, row[2], -1);
+		row[0] = strip_extension(fname);
+		row[1] = descrip;
+		row[2] = data;
+		gtk_clist_append(GTK_CLIST(win->listbox), row);
 #else
-	    gtk_clist_append(GTK_CLIST(win->listbox), row);
+		gtk_list_store_append(store, &iter);
+		gtk_list_store_set(store, &iter, 
+				   0, strip_extension(fname), 
+				   1, descrip, 
+				   2, data, -1);
 #endif
+	    }
 	}
 #ifdef OLD_GTK
 	if (i % 2) {
@@ -549,7 +561,7 @@ static void display_datafile_info (GtkWidget *w, gpointer data)
     prn->buf = get_xml_description(hdrname);
 
     if (prn->buf != NULL) {
-	view_buffer(prn, 80, 300, _("gretl: data header"), INFO, NULL);
+	view_buffer(prn, 80, 320, _("gretl: data header"), INFO, NULL);
     } else {
 	errbox(_("Failed to retrieve description of data"));
 	fprintf(stderr, I_("didn't get description from %s\n"), hdrname);

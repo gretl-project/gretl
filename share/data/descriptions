@@ -1,5 +1,4 @@
-# names and descriptions of datafiles associated with R.
-# Ramanathan's textbook
+# Ramanathan: datasets from Ramanathan's Introductory Econometrics
 "data2-1","SAT scores"
 "data2-2","College and high school GPAs"
 "data2-3","Unemployment, inflation and wages"
@@ -95,7 +94,4 @@
 "data11-1","Full-time nonagricultural workers"
 "data12-1","Individuals applying to UCSD med. school"
 "data13-1","Annual U.S. macroeconomic data"
-"longley","Annual U.S. labor-market data"
-"hamilton","Prices and exchange rate, U.S. and Italy"
-"leverage","Illustrates detection of incorrect data"
-"arma","artificial data for ARMA script example"
+

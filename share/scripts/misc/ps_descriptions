@@ -1,0 +1,8 @@
+# Gretl: various sample scripts
+"arma.inp","ARMA modeling","artificial data"
+"ects_nls","Nonlinear least squares (Davidson)","artificial data"
+"leverage","Influential observations","artificial data"
+"longley","Multicollinearity","US employment"
+"pscoin","Johansen cointegration test","prices & exchange rate"
+"sw_ch12","Augmented Dickey-Fuller test","inflation & unemployment"
+"sw_ch14","Vector autoregression","inflation & unemployment"
