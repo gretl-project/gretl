@@ -470,7 +470,7 @@ static int real_add_model_to_session (MODEL *pmod)
     int nm = session.nmodels; 
 
     models = myrealloc(session.models, (nm + 1) * sizeof *models);
-    if (session.models == NULL) {
+    if (models == NULL) {
 	return 1;
     }
 
@@ -498,7 +498,7 @@ static int real_add_var_to_session (GRETL_VAR *var)
     int nv = session.nvars; 
 
     vars = myrealloc(session.vars, (nv + 1) * sizeof *vars);
-    if (session.vars == NULL) {
+    if (vars == NULL) {
 	return 1;
     }
 
@@ -530,11 +530,12 @@ int real_add_text_to_session (PRN *prn, const char *tname)
 	nt = session.ntexts;
 
 	texts = myrealloc(session.texts, (nt + 1) * sizeof *texts);
-	if (session.texts == NULL) {
+	if (texts == NULL) {
 	    return ADD_OBJECT_FAIL;
 	}
 
 	session.texts = texts;
+
 	session.texts[nt] = mymalloc(sizeof **session.texts);
 	if (session.texts[nt] == NULL) {
 	    return ADD_OBJECT_FAIL;
@@ -598,15 +599,26 @@ void *get_session_object_by_name (const char *name, char *which)
 
 int try_add_model_to_session (MODEL *pmod)
 {
-    if (model_already_saved(pmod)) return 1;
-    if (real_add_model_to_session(pmod)) return 1;
+    if (model_already_saved(pmod)) {
+	return 1;
+    }
+
+    if (real_add_model_to_session(pmod)) {
+	return 1;
+    }
+
     return 0;
 }
 
 int try_add_var_to_session (GRETL_VAR *var)
 {
-    if (var_already_saved(var)) return 1;
-    if (real_add_var_to_session(var)) return 1;
+    if (var_already_saved(var)) {
+	return 1;
+    }
+    if (real_add_var_to_session(var)) {
+	return 1;
+    }
+
     return 0;
 }
 

@@ -953,12 +953,15 @@ int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 	    return E_ALLOC;
 	}
     }
+    
+    if (pdinfo->t2 == pdinfo->n - 1) {
+	pdinfo->t2 = bign - 1;
+    }
 
-    pdinfo->n += newobs;
-    pdinfo->t2 = pdinfo->n - 1;
+    pdinfo->n = bign;
 
     /* does daily data need special handling? */
-    ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
+    ntodate(pdinfo->endobs, bign - 1, pdinfo);
 
     return 0;
 }
@@ -981,7 +984,6 @@ static int real_dataset_add_vars (int newvars, double *x,
 	/* new var is pre-allocated */
 	newZ[v] = x;
     } else {
-	/* need to allocate for new vars(s) */
 	for (i=0; i<newvars; i++) {
 	    newZ[v+i] = malloc(n * sizeof **newZ);
 	    if (newZ[v+i] == NULL) return E_ALLOC;
@@ -991,7 +993,10 @@ static int real_dataset_add_vars (int newvars, double *x,
     *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
+    if (varname == NULL) {
+	return E_ALLOC;
+    }
+
     pdinfo->varname = varname;
 
     for (i=0; i<newvars; i++) {
@@ -1019,7 +1024,10 @@ static int real_dataset_add_vars (int newvars, double *x,
     }
 
     vector = realloc(pdinfo->vector, (v + newvars));
-    if (vector == NULL) return E_ALLOC;
+    if (vector == NULL) {
+	return E_ALLOC;
+    }
+
     pdinfo->vector = vector;
 
     for (i=0; i<newvars; i++) {
@@ -1149,6 +1157,8 @@ static int shrink_dataset_to_size (double ***pZ,
     return 0;
 }
 
+#undef DROPDBG
+
 int dataset_drop_listed_vars (const int *list, double ***pZ, 
 			      DATAINFO *pdinfo, int *renumber)
 {
@@ -1158,6 +1168,12 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
     if (renumber != NULL) {
 	*renumber = 0;
     }
+
+#if DROPDBG
+    printlist(list, "vars to be deleted");
+#endif
+
+    /* free and set to NULL all the vars to be deleted */
 
     for (i=1; i<=list[0]; i++) {
 	v = list[i];
@@ -1172,6 +1188,8 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 	}
     }
 
+    /* rearrange pointers if necessary */
+
     for (v=1; v<vmax; v++) {
 	if ((*pZ)[v] == NULL) {
 	    int gap = 1;
@@ -1183,12 +1201,13 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 		    break;
 		}
 	    }
+
 	    if (i < vmax) {
-		if (renumber != NULL) {
-		    *renumber = 1;
-		}
 		vmax -= gap;
 		for (i=v; i<vmax; i++) {
+		    if (renumber != NULL && !hidden_var(i + gap, pdinfo)) {
+			*renumber = 1;
+		    }
 		    pdinfo->varname[i] = pdinfo->varname[i + gap];
 		    pdinfo->varinfo[i] = pdinfo->varinfo[i + gap];
 		    pdinfo->vector[i] = pdinfo->vector[i + gap];

@@ -3881,6 +3881,17 @@ int genrtime (double ***pZ, DATAINFO *pdinfo, int tm)
     return 0;
 }
 
+static int plotvar_is_full_size (int v, int n, const double *x)
+{
+    int t;
+
+    for (t=0; t<n; t++) {
+	if (na(x[t])) return 0;
+    }
+
+    return 1;
+}
+
 /**
  * plotvar:
  * @pZ: pointer to data matrix.
@@ -3899,11 +3910,14 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     float rm;
 
     vi = varindex(pdinfo, period);
-    if (vi < pdinfo->v) {
-	return vi;
-    }
 
-    if (dataset_add_vars(1, pZ, pdinfo)) return -1;
+    if (vi < pdinfo->v) {
+	if (plotvar_is_full_size(vi, pdinfo->n, (*pZ)[vi])) {
+	    return vi;
+	} 
+    } else if (dataset_add_vars(1, pZ, pdinfo)) {
+	return -1;
+    }
 
     strcpy(pdinfo->varname[vi], period);
 

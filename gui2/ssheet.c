@@ -310,8 +310,7 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 
     if (sheet->point == SHEET_AT_END) {
 	gtk_list_store_append(store, &iter);
-    } 
-    else if (sheet->point == SHEET_AT_POINT) {
+    } else if (sheet->point == SHEET_AT_POINT) {
 	GtkTreePath *path;
 	GtkTreeViewColumn *column;
 
@@ -320,12 +319,13 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 	pointpath = gtk_tree_path_get_indices(path)[0];
 	gtk_list_store_insert(store, &iter, pointpath);
 	gtk_tree_path_free(path);
-    } 
-    else return;
+    } else {
+	return;
+    }
 
     sheet->datarows += 1;
 
-    if (datainfo->markers) {
+    if (datainfo->markers && obsname != NULL) {
 	gtk_list_store_set(store, &iter, 0, obsname, -1);
     } else if (sheet->point == SHEET_AT_END) {
 	get_full_obs_string(rowlabel, sheet->datarows - 1, datainfo);
@@ -551,7 +551,7 @@ static void sheet_add_obs_callback (gpointer data, guint where, GtkWidget *w)
     if (datainfo->markers) {
 	new_case_dialog(sheet);
     } else {
-	real_add_new_obs(sheet, "");
+	real_add_new_obs(sheet, NULL);
     }
 }
 
@@ -647,8 +647,9 @@ static gboolean update_cell_position (GtkTreeView *view, spreadsheet *sheet)
 
 static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 {
-    gint i, t, n = datainfo->n, oldv = datainfo->v; 
-    gint orig_cols, newvars, newobs, missobs = 0;
+    int n = datainfo->n, oldv = datainfo->v;
+    int i, t;
+    int orig_cols, newvars, newobs, missobs = 0;
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
     GtkTreeViewColumn *column;
@@ -686,7 +687,9 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
 
     colnum = 0;
     for (i=1; i<datainfo->v; i++) {
-	if (datainfo->vector[i] == 0) continue;
+	if (datainfo->vector[i] == 0) {
+	    continue;
+	}
 	colnum++;
 	gtk_tree_model_get_iter_first(model, &iter);	
 	for (t=0; t<n; t++) {

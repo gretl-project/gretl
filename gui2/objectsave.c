@@ -219,17 +219,22 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
 {
     int err;
 
-    if ((*ppmod)->errcode) return 1;
-    if (*cmd->savename == 0) return 0;
+    if ((*ppmod)->errcode) {
+	return 1;
+    }
+
+    if (*cmd->savename == 0) {
+	return 0;
+    }
 
     (*ppmod)->name = g_strdup(cmd->savename);
+
     err = try_add_model_to_session(*ppmod);
 
     if (!err) {
 	MODEL *mnew = malloc(sizeof *mnew);
 
 	if (mnew != NULL) {
-	    /* FIXME: is this OK? */
 	    copy_model(mnew, *ppmod, pdinfo);
 	    *ppmod = mnew;
 	    pprintf(prn, _("%s saved\n"), cmd->savename);

@@ -3677,7 +3677,9 @@ void do_graph_var (int varnum)
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s time", datainfo->varname[varnum]);
-    if (verify_and_record_command(line)) return;
+    if (verify_and_record_command(line)) {
+	return;
+    }
 
     lines[0] = 1;
     err = gnuplot(cmd.list, lines, NULL, &Z, datainfo,
