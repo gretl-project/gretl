@@ -160,26 +160,28 @@ static void get_critical (GtkWidget *w, gpointer data)
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
     PRN *prn;
-
-    if (gui_open_plugin("stats_tables", &handle)) return;
+    const char *plugin = "stats_tables";
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
+
     if (bufopen(&prn)) {
-	close_plugin(handle);
 	return;
     }	
 
     switch (i) {
     case 0: /* normal */
-	funp = norm_table = get_plugin_function("norm_lookup", handle);
+	funp = norm_table = gui_get_plugin_function("norm_lookup", plugin,
+						    &handle);
 	break;
     case 1: /* t */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = tcrit = get_plugin_function("t_lookup", handle);
+	funp = tcrit = gui_get_plugin_function("t_lookup", plugin,
+					       &handle);
 	break;
     case 2: /* chi-square */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = chicrit = get_plugin_function("chisq_lookup", handle);
+	funp = chicrit = gui_get_plugin_function("chisq_lookup", plugin,
+						 &handle);
 	break;
     case 3: /* F */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
@@ -187,7 +189,8 @@ static void get_critical (GtkWidget *w, gpointer data)
 	break;
     case 4: /* DW */
 	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = dw = get_plugin_function("dw_lookup", handle);
+	funp = dw = gui_get_plugin_function("dw_lookup", plugin,
+					    &handle);
 	break;
     default:
 	break;
@@ -203,7 +206,6 @@ static void get_critical (GtkWidget *w, gpointer data)
 	err = 1;
     }
     else if (i != 3 && funp == NULL)  {
-	errbox(_("Couldn't load plugin function"));
 	err = 1;
     }
 
@@ -235,11 +237,12 @@ static void get_critical (GtkWidget *w, gpointer data)
 
     close_plugin(handle);
 
-    if (err) 
+    if (err) {
 	gretl_print_destroy(prn);
-    else
+    } else {
 	view_buffer(prn, 77, 300, _("gretl: statistical table"), 
 		    STAT_TABLE, NULL);
+    }
 }
 
 /* ........................................................... */

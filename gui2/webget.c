@@ -1248,12 +1248,11 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
 
-    if (expected > 2 * GRETL_BUFSIZE && 
-	gui_open_plugin("progress_bar", &handle) == 0) {
-	show_progress = get_plugin_function("show_progress", handle);
-	if (show_progress != NULL) {
-	    show = 1;
-	}
+    if (expected > 2 * GRETL_BUFSIZE) {
+	show_progress = gui_get_plugin_function("show_progress", 
+						"progress_bar",
+						&handle);
+	if (show_progress != NULL) show = 1;
     }
 #endif
     if (show) {

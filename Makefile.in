@@ -31,10 +31,13 @@ tooldir = $(topsrc)/tools
 SUBDIRS = lib cli $(GUIDIR) plugin po
 ALLSUBDIRS = lib cli gui gui2 plugin po share tests
 
-.PHONY :
+.PHONY : subdirs $(SUBDIRS) clean installdirs install install-strip \
+install-man tags dist distclean check
 
-all: $(SUBDIRS)
-	for d in $^ ; do $(MAKE) -C $$d ; done
+subdirs: $(SUBDIRS)
+
+$(SUBDIRS):
+	$(MAKE) -C $@
 
 clean:
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d clean; done
@@ -70,7 +73,11 @@ distclean: clean
 check:
 	make -C tests check
 
-
+# dependency for parallel builds
+cli: lib
+$(GUIDIR): lib
+plugin: lib
+tests: lib
 
 
 

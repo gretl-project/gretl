@@ -135,7 +135,7 @@ static unsigned char pca_flag_dialog (void)
     gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
-    /* Only those with eiganvalues > 1.0 */
+    /* Only those with eigenvalues > 1.0 */
     button = gtk_radio_button_new_with_label(NULL, 
 					     _("Components with eigenvalues > 1.0"));
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);

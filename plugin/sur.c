@@ -24,16 +24,18 @@ static void
 print_sur_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 {
     int i, j, jmax;
+    int mcols = gretl_matrix_cols(m);
+    int mrows = gretl_matrix_rows(m);
     double x;
     char numstr[16];
 
-    jmax = (triangle)? 1 : m->cols;
+    jmax = (triangle)? 1 : mcols;
 
-    for (i=0; i<m->rows; i++) {
+    for (i=0; i<mrows; i++) {
 	for (j=0; j<jmax; j++) {
 	    pprintf(prn, "%#10.5g ", gretl_matrix_get(m, i, j));
 	}
-	for (j=jmax; j<m->cols; j++) {
+	for (j=jmax; j<mcols; j++) {
 	    x = gretl_matrix_get(m, i, i) * gretl_matrix_get(m, j, j);
 	    x = sqrt(x);
 	    x = gretl_matrix_get(m, i, j) / x;
@@ -41,7 +43,7 @@ print_sur_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 	    pprintf(prn, "%11s", numstr);
 	}
 	pputs(prn, "\n");
-	if (triangle && jmax < m->cols) jmax++;
+	if (triangle && jmax < mcols) jmax++;
     }
 }
 

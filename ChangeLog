@@ -8,10 +8,12 @@ version 1.2.0
   discarded, not added to the data set as with genr
 - Replace the internal workings of "genr" so that it can
   calculate dynamically (e.g. "genr y = .6*y(-1) + u"),
-  which makes the "sim" command redundant
+  which in effect makes the "sim" command redundant
 - Make principal components analysis available via the GUI
 - Improve formatting of descriptive statistics output when
   only one variable is selected
+- Allow adding of "influence" values (calculated by the
+  "leverage" test) to the data set in the GUI program 
 - When adding a variable to the dataset from a model window,
   give the user a chance to edit the name and description
 - Windows: add option to emulate Windows look (via WIMP)

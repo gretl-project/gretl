@@ -560,17 +560,30 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
 void delete_var_by_id (int id)
 {
+    int list[2];
+    int renumber, resp;
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Really delete %s?"), datainfo->varname[id]);
+    resp = yes_no_dialog(_("gretl: delete"), msg, 0);
+    g_free(msg);
+
+    if (resp != GRETL_YES) return;
+
     sprintf(line, "delete %d", id);
     if (verify_and_record_command(line)) return;
 
-    if (dataset_drop_var(id, &Z, datainfo)) {
+    list[0] = 1;
+    list[1] = id;
+
+    if (dataset_drop_listed_vars(list, &Z, datainfo, & renumber)) {
 	errbox(_("Out of memory reorganizing data set"));
     } else {
 	refresh_data();
-	if (id < datainfo->v) {
+	if (renumber) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
-	/* FIXME: mark dataset as modified? */
+	mark_dataset_as_modified();
     }
 }
 

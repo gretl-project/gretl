@@ -20,6 +20,7 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_matrix.h"
+#include "gretl_matrix_private.h"
 #include "internal.h"
 
 #define QR_RCOND_MIN 1e-15 /* experiment with this? */

@@ -81,7 +81,9 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 
 void get_stats_table (void);
 
-int gui_open_plugin (const char *plugin, void **handle);
+void *gui_get_plugin_function (const char *funcname, 
+			       const char *plugin,
+			       void **handle);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 

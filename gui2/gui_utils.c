@@ -639,12 +639,14 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     int (*sheet_get_data)(const char*, double ***, DATAINFO *, PRN *);
 
     if (datatype == GRETL_GNUMERIC) {
-	if (gui_open_plugin("gnumeric_import", &handle)) return 1;
-	sheet_get_data = get_plugin_function("wbook_get_data", handle);
+	sheet_get_data = gui_get_plugin_function("wbook_get_data",
+						 "gnumeric_import",
+						 &handle);
     }
     else if (datatype == GRETL_EXCEL) {
-	if (gui_open_plugin("excel_import", &handle)) return 1;
-	sheet_get_data = get_plugin_function("excel_get_data", handle);
+	sheet_get_data = gui_get_plugin_function("excel_get_data",
+						 "excel_import",
+						 &handle);
     }
     else {
 	errbox(_("Unrecognized data type"));
@@ -652,8 +654,6 @@ int get_worksheet_data (const char *fname, int datatype, int append)
     }
 
     if (sheet_get_data == NULL) {
-        errbox(_("Couldn't load plugin function"));
-        close_plugin(handle);
         return 1;
     }
 
@@ -1030,6 +1030,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_series_view(vwin->data);
 	else if (vwin->role == VAR) 
 	    gretl_var_free_unnamed(vwin->data);
+	else if (vwin->role == LEVERAGE) 
+	    gretl_matrix_free(vwin->data);
 
 	if (vwin->dialog)
 	    winstack_remove(vwin->dialog);
@@ -1076,7 +1078,7 @@ static void choose_copy_format_callback (GtkWidget *w, windata_t *vwin)
 
 /* ........................................................... */
 
-static void pca_data_callback (GtkWidget *w, windata_t *vwin)
+static void add_pca_data (windata_t *vwin)
 {
     int err, oldv = datainfo->v;
     unsigned char oflag = 'd';
@@ -1090,9 +1092,6 @@ static void pca_data_callback (GtkWidget *w, windata_t *vwin)
     }
 
     if (datainfo->v > oldv) {
-	infobox(_("data added"));
-	populate_varlist();
-
 	/* if data were added, register the command */
 	if (oflag == 'o' || oflag == 'a') {
 	    char listbuf[MAXLEN - 8];
@@ -1104,6 +1103,51 @@ static void pca_data_callback (GtkWidget *w, windata_t *vwin)
 	    }
 	}
     }
+}
+
+static void add_leverage_data (windata_t *vwin)
+{
+    void *handle;
+    int (*leverage_data_dialog) (void);
+    gretl_matrix *m = (gretl_matrix *) vwin->data;
+    int opt, err;
+
+    if (m == NULL) return;
+
+    leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog",
+						   "leverage",
+						   &handle);
+    if (leverage_data_dialog == NULL) return;
+
+    opt = leverage_data_dialog();
+    close_plugin(handle);
+
+    if (opt == 0) return;
+
+    err = add_leverage_values_to_dataset(&Z, datainfo, m, opt);
+    if (err) {
+	gui_errmsg(err);
+    }
+}
+
+/* ........................................................... */
+
+static void add_data_callback (GtkWidget *w, windata_t *vwin)
+{
+    int oldv = datainfo->v;
+
+    if (vwin->role == PCA) {
+	add_pca_data(vwin);
+    }
+    else if (vwin->role == LEVERAGE) {
+	add_leverage_data(vwin);
+    }
+
+    if (datainfo->v > oldv) {
+	infobox(_("data added"));
+	populate_varlist();
+	mark_dataset_as_modified();
+    }	
 }
 
 /* ........................................................... */
@@ -1141,7 +1185,7 @@ static struct viewbar_item viewbar_items[] = {
     { N_("Undo"), GTK_STOCK_UNDO, text_undo_callback, EDIT_ITEM },
     { N_("Help on command"), GTK_STOCK_HELP, activate_script_help, RUN_ITEM },
     { N_("LaTeX"), "STOCK_TEX", modeltable_tex_view, MODELTABLE_ITEM },
-    { N_("Add to dataset..."), GTK_STOCK_ADD, pca_data_callback, ADD_ITEM },
+    { N_("Add to dataset..."), GTK_STOCK_ADD, add_data_callback, ADD_ITEM },
     { N_("Close"), GTK_STOCK_CLOSE, delete_file_viewer, 0 },
     { NULL, NULL, NULL, 0 }};
 
@@ -1202,7 +1246,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-	if (vwin->role != PCA && viewbar_items[i].flag == ADD_ITEM) {
+	if (vwin->role != PCA && vwin->role != LEVERAGE &&
+	    viewbar_items[i].flag == ADD_ITEM) {
 	    continue;
 	}
 
@@ -3079,7 +3124,7 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 # include <dlfcn.h>
 #endif
 
-int gui_open_plugin (const char *plugin, void **handle)
+static int gui_open_plugin (const char *plugin, void **handle)
 {
     char pluginpath[MAXLEN];
 
@@ -3106,6 +3151,24 @@ int gui_open_plugin (const char *plugin, void **handle)
     } 
 #endif 
     return 0;
+}
+
+void *gui_get_plugin_function (const char *funcname, 
+			       const char *plugin,
+			       void **handle)
+{
+    void *func;
+
+    if (gui_open_plugin(plugin, handle)) return NULL;
+
+    func = get_plugin_function(funcname, *handle);
+    if (func == NULL) {
+	errbox(_("Couldn't load plugin function"));
+	close_plugin(*handle);
+	return NULL;
+    }
+
+    return func;
 }
 
 /* .................................................................. */

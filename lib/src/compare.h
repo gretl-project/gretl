@@ -20,6 +20,7 @@
 /* compare.h for gretl */
 
 #include <stdio.h>
+#include "gretl_matrix.h"
 
 typedef enum {
     AUX_NONE,  /* not an auxiliary regression */
@@ -86,7 +87,11 @@ int hausman_test (MODEL *pmod,
 
 int leverage_test (MODEL *pmod, 
 		   double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths);
+		   PRN *prn, PATHS *ppaths, 
+		   unsigned char oflag);
+
+int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
+				    gretl_matrix *m, int opt);
 
 int mp_ols (const LIST list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 

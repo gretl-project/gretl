@@ -19,6 +19,7 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "gretl_matrix_private.h"
 
 static const char *wspace_fail = "gretl_matrix: workspace query failed\n";
 
@@ -51,6 +52,7 @@ static gretl_matrix *real_gretl_matrix_alloc (int rows, int cols,
     m->rows = rows;
     m->cols = cols;
     m->packed = packed;
+    m->t = 0;
 
     return m;
 }
@@ -617,4 +619,29 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
     free(work);
 
     return w;
+}
+
+void gretl_matrix_set_int (gretl_matrix *m, int t)
+{
+    m->t = t;
+}
+
+int gretl_matrix_get_int (const gretl_matrix *m)
+{
+    return m->t;
+}
+
+int gretl_vector_get_length (const gretl_vector *v) 
+{
+    return v->cols;
+}
+
+int gretl_matrix_cols (const gretl_matrix *m)
+{
+    return m->cols;
+}
+
+int gretl_matrix_rows (const gretl_matrix *m)
+{
+    return m->rows;
 }

@@ -1644,12 +1644,10 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 	return;
     }
 
-    if (gui_open_plugin("panel_data", &handle)) return;
-
-    panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
+    panel_diagnostics = gui_get_plugin_function("panel_diagnostics", 
+						"panel_data",
+						&handle);
     if (panel_diagnostics == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
 	return;
     }
 
@@ -1673,17 +1671,15 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    int (*model_leverage) (const MODEL *, double ***, 
-			   DATAINFO *, PRN *, PATHS *);
+    gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
+				     DATAINFO *, PRN *, PATHS *);
     PRN *prn;
-    int err;
+    gretl_matrix *L;
 
-    if (gui_open_plugin("leverage", &handle)) return;
-
-    model_leverage = get_plugin_function("model_leverage", handle);
+    model_leverage = gui_get_plugin_function("model_leverage", 
+					     "leverage",
+					     &handle);
     if (model_leverage == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
 	return;
     }
 
@@ -1692,14 +1688,16 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 	return;
     }	
 	
-    err = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
+    L = (*model_leverage)(pmod, &Z, datainfo, prn, &paths);
     close_plugin(handle);
 
-    if (!err) {
+    if (L != NULL) {
 	view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
-		    VIEW_DATA, NULL); 
+		    LEVERAGE, L); 
 	gnuplot_display(&paths);
 	register_graph();
+    } else {
+	errbox(_("Command failed"));
     }
 }
 
@@ -1845,20 +1843,16 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 				   double **, DATAINFO *, 
 				   PRN *, GRETLTEST *);
 
-	err = gui_open_plugin("panel_data", &handle);
-	if (!err) {
-	    panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
-						      handle);
-	    if (panel_autocorr_test == NULL) {
-		errbox(_("Couldn't load plugin function"));
-		close_plugin(handle);
-		gretl_print_destroy(prn);
-		return;
-	    } else {
-		err = panel_autocorr_test(pmod, order, Z, datainfo,
-					  prn, &test);
-		close_plugin(handle);
-	    }
+	panel_autocorr_test = gui_get_plugin_function("panel_autocorr_test", 
+						      "panel_data",
+						      &handle);
+	if (panel_autocorr_test == NULL) {
+	    gretl_print_destroy(prn);
+	    return;
+	} else {
+	    err = panel_autocorr_test(pmod, order, Z, datainfo,
+				      prn, &test);
+	    close_plugin(handle);
 	}
     } else {
 	err = autocorr_test(pmod, order, &Z, datainfo, prn, &test);
@@ -2001,12 +1995,8 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     if (verify_and_record_command(line) || bufopen(&prn)) return;
 
-    if (gui_open_plugin("mp_ols", &handle)) return;
-    mplsq = get_plugin_function("mplsq", handle);
-
+    mplsq = gui_get_plugin_function("mplsq", "mp_ols", &handle);
     if (mplsq == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
 	return;
     }
 
@@ -2731,12 +2721,10 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return;
     }
 
-    if (gui_open_plugin("tramo-x12a", &handle)) return;
-
-    write_tx_data = get_plugin_function("write_tx_data", handle);
+    write_tx_data = gui_get_plugin_function("write_tx_data", 
+					    "tramo-x12a",
+					    &handle);
     if (write_tx_data == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
 	return;
     }
 
@@ -2800,12 +2788,10 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
 			     PRN *, PATHS *);
     PRN *prn;
 
-    if (gui_open_plugin("range-mean", &handle)) return;
-    range_mean_graph = get_plugin_function("range_mean_graph", handle);
-
+    range_mean_graph = gui_get_plugin_function("range_mean_graph", 
+					       "range-mean",
+					       &handle);
     if (range_mean_graph == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(handle);
 	return;
     }
 
@@ -3041,7 +3027,7 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 
 	if (*datainfo->varname[v] == '\0') {
 	    /* the user canceled */
-	    dataset_drop_var(v, &Z, datainfo);
+	    dataset_drop_vars(1, &Z, datainfo);
 	    return 0;
 	}	
 
@@ -3086,7 +3072,7 @@ int add_var_resid (GRETL_VAR *var, int eqnum)
 
     if (*datainfo->varname[v] == '\0') {
 	/* the user canceled */
-	dataset_drop_var(v, &Z, datainfo);
+	dataset_drop_vars(1, &Z, datainfo);
 	return 0;
     }    
 
@@ -3164,7 +3150,7 @@ void add_model_stat (MODEL *pmod, const int which)
 
     if (*datainfo->varname[i] == '\0') {
 	/* the user canceled */
-	dataset_drop_var(i, &Z, datainfo);
+	dataset_drop_vars(1, &Z, datainfo);
 	return;
     }
 
@@ -3510,10 +3496,10 @@ void delete_selected_vars (void)
 	errbox(_("Out of memory reorganizing data set"));
     } else {
 	refresh_data();
-	/* should mark dataset as modified? */
 	if (renumber) {
 	    infobox(_("Take note: variables have been renumbered"));
 	}
+	mark_dataset_as_modified();
     }
 }
 
@@ -5286,8 +5272,9 @@ int gui_exec_line (char *line,
 
     case LEVERAGE:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = leverage_test(models[0], &Z, datainfo, prn, NULL);
+	err = leverage_test(models[0], &Z, datainfo, prn, NULL, oflag);
 	if (err > 1) errmsg(err, prn);
+	else if (oflag) varlist(datainfo, prn);
 	break;
 
     case LMTEST:

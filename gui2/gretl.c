@@ -2484,9 +2484,9 @@ static int unmangle (const char *dosname, char *longname)
 	void *handle;
 	void (*real_unmangle)(const char *, char *, int, int *); 
 
-	if (gui_open_plugin("longname", &handle)) return 1;
-
-	real_unmangle = get_plugin_function("real_unmangle", handle);
+	real_unmangle = gui_get_plugin_function("real_unmangle", 
+						"longname",
+						&handle);
 	if (real_unmangle == NULL) return 1;
 
 # ifdef WINDEBUG

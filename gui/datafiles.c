@@ -873,21 +873,21 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
 	void *handle;
 	int (*switch_panel_orientation)(double **, DATAINFO *);
 
-	if (gui_open_plugin("panel_data", &handle) == 0) {
-	    switch_panel_orientation = 
-		get_plugin_function("switch_panel_orientation", handle);
-	    if (switch_panel_orientation != NULL) {
-		if (switch_panel_orientation(Z, datainfo)) {
-		    errbox(_("Failed to change panel structure"));
-		} else {
-		    msg = g_strdup_printf(_("Panel structure changed to %s"), 
-					  _("stacked time series"));
-		    infobox(msg);
-		    g_free(msg);
-		    data_status |= MODIFIED_DATA;
-		    set_sample_label(datainfo);
-		}
+	switch_panel_orientation = gui_get_plugin_function("switch_panel_orientation",
+							   "panel_data", &handle);
+	
+	if (switch_panel_orientation != NULL) {
+	    if (switch_panel_orientation(Z, datainfo)) {
+		errbox(_("Failed to change panel structure"));
+	    } else {
+		msg = g_strdup_printf(_("Panel structure changed to %s"), 
+				      _("stacked time series"));
+		infobox(msg);
+		g_free(msg);
+		data_status |= MODIFIED_DATA;
+		set_sample_label(datainfo);
 	    }
+	    close_plugin(handle);
 	}
     }
 }

@@ -1826,7 +1826,7 @@ static int get_generated_value (const char *argv, double *val,
 	free(genline);
 	if (!err) {
 	    *val = (*pZ)[pdinfo->v - 1][0];
-	    err = dataset_drop_var(pdinfo->v - 1, pZ, pdinfo);
+	    err = dataset_drop_vars(1, pZ, pdinfo);
 	}
     }
 

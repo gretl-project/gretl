@@ -1738,52 +1738,7 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
     return 0;
 }
 
-int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
-{
-    double **newZ;
-    char **varname;
-    char *vector;
-    VARINFO **varinfo;
-    int i, v = pdinfo->v; 
-
-    if (varno <= 0 || varno >= v) {
-	return E_DATA;
-    }
-
-    free(pdinfo->varname[varno]);
-    if (pdinfo->varinfo[varno] != NULL) {
-	free(pdinfo->varinfo[varno]);
-    }
-    free((*pZ)[varno]);
-
-    for (i=varno; i<v-1; i++) {
-	pdinfo->varname[i] = pdinfo->varname[i+1];
-	pdinfo->varinfo[i] = pdinfo->varinfo[i+1];
-	(*pZ)[i] = (*pZ)[i+1];
-    }
-
-    varname = realloc(pdinfo->varname, (v-1) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
-    else pdinfo->varname = varname;
-
-    vector = realloc(pdinfo->vector, (v-1) * sizeof *vector);
-    if (vector == NULL) return E_ALLOC;
-    else pdinfo->vector = vector;
-
-    varinfo = realloc(pdinfo->varinfo, (v-1) * sizeof *varinfo);
-    if (varinfo == NULL) return E_ALLOC;
-    else pdinfo->varinfo = varinfo;
-
-    newZ = realloc(*pZ, (v-1) * sizeof *newZ); 
-    if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
-
-    pdinfo->v -= 1;
-
-    return 0;
-}
-
-/* ......................................................  */
+/* drop specified number of variables at the end of the dataset */
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 {

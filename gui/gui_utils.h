@@ -90,7 +90,9 @@ void add_popup_item (gchar *label, GtkWidget *menu,
 
 void get_stats_table (void);
 
-int gui_open_plugin (const char *plugin, void **handle);
+void *gui_get_plugin_function (const char *funcname, 
+			       const char *plugin,
+			       void **handle);
 
 int build_path (const char *dir, const char *fname, char *path, const char *ext);
 

@@ -23,6 +23,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "gretl_matrix.h"
 
 #ifdef WIN32
 # include <windows.h>
@@ -1442,6 +1443,50 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+int add_leverage_values_to_dataset (double ***pZ, DATAINFO *pdinfo,
+				    gretl_matrix *m, int opt)
+{
+    int t1, t2;
+
+    if (dataset_add_vars((opt == 3)? 2 : 1, pZ, pdinfo)) {
+	strcpy(gretl_errmsg, _("Out of memory adding series"));
+	return 1;
+    }
+
+    t1 = gretl_matrix_get_int(m);
+    t2 = t1 + gretl_matrix_rows(m);
+
+    /* add leverage? */
+    if (opt == 1 || opt == 3) {
+	int t, v = pdinfo->v - ((opt == 3)? 2 : 1);
+	int j = 0;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < t1 || t >= t2) (*pZ)[v][t] = NADBL;
+	    else (*pZ)[v][t] = gretl_matrix_get(m, j++, 0);
+	}
+	strcpy(pdinfo->varname[v], "lever");
+	make_varname_unique(pdinfo->varname[v], v, pdinfo);
+	strcpy(VARLABEL(pdinfo, v), "leverage values");
+    }
+
+    /* add influence? */
+    if (opt == 2 || opt == 3) {
+	int t, v = pdinfo->v - 1;
+	int j = 0;
+
+	for (t=0; t<pdinfo->n; t++) {
+	    if (t < t1 || t >= t2) (*pZ)[v][t] = NADBL;
+	    else (*pZ)[v][t] = gretl_matrix_get(m, j++, 1);
+	}	
+	strcpy(pdinfo->varname[v], "influ");
+	make_varname_unique(pdinfo->varname[v], v, pdinfo);
+	strcpy(VARLABEL(pdinfo, v), "influence values");
+    }
+
+    return 0;
+}
+
 /**
  * leverage_test:
  * @pmod: pointer to model to be tested.
@@ -1458,12 +1503,13 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  */
 
 int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
-		   PRN *prn, PATHS *ppaths)
+		   PRN *prn, PATHS *ppaths, unsigned char oflag)
 {
     void *handle;
-    int (*model_leverage) (const MODEL *, double ***, 
-			   const DATAINFO *, PRN *, PATHS *);
-    int err;
+    gretl_matrix *(*model_leverage) (const MODEL *, double ***, 
+				     const DATAINFO *, PRN *, PATHS *);
+    gretl_matrix *m;
+    int err = 0;
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
@@ -1475,7 +1521,16 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = (*model_leverage)(pmod, pZ, pdinfo, prn, ppaths);
+    m = (*model_leverage)(pmod, pZ, pdinfo, prn, ppaths);
+    if (m == NULL) {
+	err = 1;
+    } else {
+	if (oflag) {
+	    err = add_leverage_values_to_dataset(pZ, pdinfo, m, 3);
+	}
+	gretl_matrix_free(m);
+    }
+
     close_plugin(handle);
 
     return err;

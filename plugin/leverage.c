@@ -19,13 +19,175 @@
 
 #include "libgretl.h"
 #include "gretl_matrix.h"
+#include "gretl_matrix_private.h"
 
-/* To do: 
-   - do something about menu item when lapack not available?
-*/
-  
-static int leverage_plot (int n, int tstart, const double *uhat, 
-			  const double *h, double ***pZ, DATAINFO *pdinfo, 
+#include <gtk/gtk.h>
+
+struct flag_info {
+    GtkWidget *dialog;
+    GtkWidget *levcheck;
+    GtkWidget *infcheck;
+    gint *flag;
+};
+
+enum save_flags {
+    SAVE_LEVERAGE =  1 << 0,
+    SAVE_INFLUENCE = 1 << 1
+};
+
+static gboolean destroy_save_dialog (GtkWidget *w, struct flag_info *finfo)
+{
+    free(finfo);
+    gtk_main_quit();
+    return FALSE;
+}
+
+static gboolean update_save_flag (GtkWidget *w, struct flag_info *finfo)
+{
+    if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
+	if (w == finfo->levcheck) *finfo->flag |= SAVE_LEVERAGE;
+	else *finfo->flag |= SAVE_INFLUENCE;
+    } else {
+	if (w == finfo->levcheck) *finfo->flag &= ~SAVE_LEVERAGE;
+	else *finfo->flag &= ~SAVE_INFLUENCE;
+    }
+
+    return FALSE;
+}
+
+static gboolean cancel_set_flag (GtkWidget *w, struct flag_info *finfo)
+{
+    *(finfo->flag) = 0;
+    gtk_widget_destroy(finfo->dialog);
+    return FALSE;
+}
+
+static gboolean save_dialog_finalize (GtkWidget *w, struct flag_info *finfo)
+{
+    gtk_widget_destroy(finfo->dialog);
+    return FALSE;
+}
+
+int leverage_data_dialog (void)
+{
+    struct flag_info *finfo;
+    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *internal_vbox;
+    gint flag = SAVE_LEVERAGE | SAVE_INFLUENCE;
+
+    finfo = malloc(sizeof *finfo);
+    if (finfo == NULL) return 0;
+
+    dialog = gtk_dialog_new();
+
+    finfo->dialog = dialog;
+    finfo->flag = &flag;
+    
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: save data")); 
+#if GTK_MAJOR_VERSION >= 2
+    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
+#endif
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect (G_OBJECT(dialog), "destroy", 
+		      G_CALLBACK(destroy_save_dialog), finfo);
+#else
+    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
+			GTK_SIGNAL_FUNC(destroy_save_dialog), finfo);
+#endif
+
+    internal_vbox = gtk_vbox_new (FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("Variables to save:"));
+    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+    gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* Leverage */
+    button = gtk_check_button_new_with_label(_("leverage"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(update_save_flag), finfo);
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
+#endif   
+    gtk_widget_show (button);
+    finfo->levcheck = button;
+
+    /* Influence */
+    button = gtk_check_button_new_with_label(_("influence"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#if GTK_MAJOR_VERSION >= 2
+    g_signal_connect(G_OBJECT(button), "clicked",
+		     G_CALLBACK(update_save_flag), finfo);
+#else
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(update_save_flag), finfo);
+#endif
+    gtk_widget_show (button);
+    finfo->infcheck = button;
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    gtk_widget_show (internal_vbox);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    /* Create the "OK" button */
+#if GTK_MAJOR_VERSION >= 2
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_OK);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(save_dialog_finalize), finfo);
+#else
+    tempwid = gtk_button_new_with_label(_("OK"));
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(save_dialog_finalize), finfo);
+#endif
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* "Cancel" button */
+#if GTK_MAJOR_VERSION >= 2
+    tempwid = gtk_button_new_from_stock (GTK_STOCK_CANCEL);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(cancel_set_flag), finfo);
+#else
+    tempwid = gtk_button_new_with_label(_("Cancel"));
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(cancel_set_flag), finfo);
+#endif    
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+
+    return flag;
+}
+
+static int leverage_plot (int n, int tstart, gretl_matrix *S,
+			  double ***pZ, DATAINFO *pdinfo, 
 			  PATHS *ppaths)
 {
     FILE *fp = NULL;
@@ -67,11 +229,13 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     fprintf(fp, "set title '%s'\n", I_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
+	double h = gretl_matrix_get(S, t, 0);
+
 	if (timeplot) {
 	    tmod = t + tstart;
-	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], h[t]);
+	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], h);
 	} else { 
-	    fprintf(fp, "%d %g\n", t+tstart+1, h[t]);
+	    fprintf(fp, "%d %g\n", t+tstart+1, h);
 	}
     }
     fputs("e\n", fp);
@@ -83,11 +247,10 @@ static int leverage_plot (int n, int tstart, const double *uhat,
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
     for (t=0; t<n; t++) {
-	double f;
+	double f = gretl_matrix_get(S, t, 1);
 
 	tmod = t + tstart;
-	if (h[t] < 1.0) {
-	    f = uhat[tmod] * h[t] / (1.0 - h[t]);
+	if (!na(f)) {
 	    if (timeplot) {
 		fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], f);
 	    } else {
@@ -121,15 +284,14 @@ static int leverage_plot (int n, int tstart, const double *uhat,
    contiguous.
 */
 
-int model_leverage (const MODEL *pmod, double ***pZ, 
-		    DATAINFO *pdinfo, PRN *prn,
-		    PATHS *ppaths)
+gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ, 
+			      DATAINFO *pdinfo, PRN *prn,
+			      PATHS *ppaths)
 {
     integer info, lwork;
     integer m, n, lda;
-    gretl_matrix *Q;
+    gretl_matrix *Q, *S = NULL;
     doublereal *tau, *work;
-    double *hvec = NULL;
     double lp;
     int i, j, t;
     int err = 0, gotlp = 0;
@@ -189,13 +351,16 @@ int model_leverage (const MODEL *pmod, double ***pZ,
 	goto qr_cleanup;
     }
 
-    if (ppaths != NULL) {
-	hvec = malloc(m * sizeof *hvec);
-	if (hvec == NULL) {
-	    err = 1;
-	    goto qr_cleanup;
-	}
-    }
+    free(tau);
+    tau = NULL;
+    free(work);
+    work = NULL;
+
+    S = gretl_matrix_alloc(m, 2);
+    if (S == NULL) {
+	err = 1;
+	goto qr_cleanup;
+    }	
 
     pputs(prn, "        ");
     pprintf(prn, "%*s", UTF_WIDTH(_("residual"), 16), _("residual"));
@@ -221,13 +386,14 @@ int model_leverage (const MODEL *pmod, double ***pZ,
 	    f = pmod->uhat[tmod] * h / (1.0 - h);
 	    sprintf(fstr, "%15.5g", f);
 	} else {
-	    f = 0.0;
+	    f = NADBL;
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
 	print_obs_marker(tmod, pdinfo, prn);
 	pprintf(prn, "%14.5g %14.3f%s %s\n", pmod->uhat[tmod], h, 
 		(h > lp)? "*" : " ", fstr);
-	if (hvec != NULL) hvec[t] = h;
+	gretl_matrix_set(S, t, 0, h);
+	gretl_matrix_set(S, t, 1, f);
     }
 
     if (gotlp) {
@@ -237,15 +403,17 @@ int model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     if (ppaths != NULL) {
-	leverage_plot(m, pmod->t1, &pmod->uhat[pmod->t1], hvec, 
-		      pZ, pdinfo, ppaths);
-	free(hvec);
+	leverage_plot(m, pmod->t1, S, pZ, pdinfo, ppaths);
     }
 
  qr_cleanup:
-    gretl_matrix_free(Q);
-    free(tau); free(work);
 
-    return err;    
+    if (Q != NULL) gretl_matrix_free(Q);
+    if (tau != NULL) free(tau); 
+    if (work != NULL) free(work);
+
+    if (S != NULL) gretl_matrix_set_int(S, pmod->t1);
+
+    return S;    
 }
 

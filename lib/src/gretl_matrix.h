@@ -41,18 +41,10 @@ enum gretl_matrix_mods {
 typedef struct _gretl_matrix gretl_matrix;
 typedef struct _gretl_matrix gretl_vector;
 
-struct _gretl_matrix {
-    int packed;
-    int rows;
-    int cols;
-    double *val;
-};
-
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 #define gretl_vector_free(v) gretl_matrix_free(v)
 #define gretl_vector_get(v,i) gretl_matrix_get((v),0,(i))
 #define gretl_vector_set(v,i,x) gretl_matrix_set((v),0,(i),(x))
-#define gretl_vector_get_length(v) (v)->cols
 
 
 gretl_matrix *gretl_matrix_alloc (int rows, int cols);
@@ -104,5 +96,15 @@ double *gretl_symmetric_matrix_eigenvals (gretl_matrix *m,
 int gretl_matrix_cholesky_decomp (gretl_matrix *a);
 
 void gretl_matrix_print (gretl_matrix *m, const char *msg, PRN *prn);
+
+void gretl_matrix_set_int (gretl_matrix *m, int t);
+
+int gretl_matrix_get_int (const gretl_matrix *m);
+
+int gretl_vector_get_length (const gretl_vector *v);
+
+int gretl_matrix_cols (const gretl_matrix *m);
+
+int gretl_matrix_rows (const gretl_matrix *m);
 
 #endif /* GRETL_MATRIX_H */
