@@ -180,7 +180,7 @@ static void *get_plugin_handle (const char *plugin)
     handle = dlopen(pluginpath, RTLD_LAZY);
     if (handle == NULL) {
         sprintf(gretl_errmsg, _("Failed to load plugin: %s"), pluginpath);
-	fputs(dlerror(), stderr);
+	fprintf(stderr, "%s\n", dlerror());
     } 
 #endif 
 
@@ -214,7 +214,7 @@ void *get_plugin_function (const char *funcname, void **handle)
 	sprintf(munged, "_%s", funcname);
 	funp = dlsym(*handle, munged);
 	if (funp == NULL) {
-	    fputs(dlerror(), stderr);
+	    fprintf(stderr, "%s\n", dlerror());
 	}
     }
 #endif   
