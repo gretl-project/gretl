@@ -1988,10 +1988,40 @@ int gnuplot_show_png (const char *plotfile)
 
 static void gnuplot_graph_to_clipboard (GPT_SPEC *plot)
 {
-    dummy_call();
+    FILE *fq;
+    PRN *prn;
+    char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
+    const char *emftmp = "gpttmp.emf";
+    int cmds;
+
+    if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
+
+    fq = fopen(plot->fname, "r");
+    if (fq == NULL) {
+	errbox(_("Couldn't access graph info"));
+	gretl_print_destroy(prn);
+	return;
+    }
+ 
+    pprintf(prn, "set term emf\n");
+    pprintf(prn, "set output '%s'\n", emftmp);
+    while (fgets(plotline, MAXLEN-1, fq)) {
+	if (strncmp(plotline, "set term", 8) && 
+	    strncmp(plotline, "set output", 10))
+	    pprintf(prn, "%s", plotline);
+    }
+
+    gretl_print_destroy(prn);
+    fclose(fq);
+    sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
+    if (system(plotcmd)) {
+	errbox(_("Gnuplot error creating graph"));
+    }
+    remove(plottmp);
+    infobox(_("Graph saved"));
 }
 
-#endif
+#endif /* G_OS_WIN32 */
 
 #endif /* GNUPLOT_PNG */
 
