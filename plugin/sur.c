@@ -161,6 +161,7 @@ calculate_sur_coefficients (MODEL **models, double **Z,
     int ncoeff = m * k;
 
     coeff = gretl_vector_alloc(ncoeff);
+    if (coeff == NULL) return 1;
 
     for (i=0; i<ncoeff; i++) {
 	gretl_vector_set(coeff, i, tmp_y[i]);

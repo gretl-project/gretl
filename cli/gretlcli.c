@@ -485,16 +485,21 @@ int main (int argc, char *argv[])
     /* leak check -- try explicitly freeing all memory allocated */
     free_Z(Z, datainfo);
     if (fullZ) free_Z(fullZ, fullinfo);
+
     free_model(models[0]);
     free_model(models[1]);
     free(models);
+
     free(command.list);
     free(command.param);
+
     if (data_status) free_datainfo(datainfo);
+
     if (fullinfo != NULL) {
 	clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
 	free(fullinfo);
     }
+
     if (runfile_open && fb != NULL) fclose (fb);
     free(line);
 

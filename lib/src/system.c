@@ -85,6 +85,7 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
     }
     free(sys->lists);
     sys->lists = NULL;
+    free(sys);
 }
 
 int gretl_equation_system_append (gretl_equation_system *sys, 

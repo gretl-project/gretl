@@ -146,6 +146,8 @@ int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
 
     dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
 
+    free(ipiv);
+
     return info;
 }
 
@@ -285,6 +287,9 @@ int gretl_invert_general_matrix (gretl_matrix *a)
 #ifdef LAPACK_DEBUG
     printf("dgetri: info = %d\n", (int) info);
 #endif
+
+    free(work);
+    free(ipiv);
 
     return info;
 }
