@@ -2742,6 +2742,10 @@ void do_store (char *mydatfile, const int opt)
     msg = g_strdup_printf("%s written OK", mydatfile);
     infobox(msg);
     g_free(msg);
+
+    /* record that data have been saved */
+    if (data_file_open == 2) data_file_open = 1;
+
     return;
 }
 

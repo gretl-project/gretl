@@ -27,6 +27,12 @@
 extern const char *version_string;
 #endif
 
+enum {
+    YES_BUTTON,
+    NO_BUTTON,
+    CANCEL_BUTTON
+} buttons;
+
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
 extern void show_spreadsheet (DATAINFO *pdinfo);
@@ -750,8 +756,8 @@ int yes_no_dialog (char *title, char *message, int cancel)
 	button = MessageBox (NULL, message, title, 
 			     MB_YESNO | MB_ICONQUESTION);	
 
-    if (button == IDYES) return 0;
-    else if (button == IDNO) return 1;
+    if (button == IDYES) return YES_BUTTON;
+    else if (button == IDNO) return NO_BUTTON;
     else return -1;
 }
 
@@ -861,13 +867,12 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	button = yes_no_dialog ("gretl", 		      
 				"Do you want to save the commands and\n"
 				"output from this gretl session?", 1);
-	/* button 0 = YES */
-	if (button == 0) {
+	if (button == YES_BUTTON) {
 	    save_session_callback(NULL, 0, NULL);
 	    return TRUE; /* bodge */
 	}
-	/* button 2 = CANCEL; -1 = wm close */
-	else if (button == 2 || button == -1) return TRUE;
+	/* button -1 = wm close */
+	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
 	/* else button = 1, NO: so fall through */
     }
 
@@ -875,11 +880,11 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	button = yes_no_dialog ("gretl", 
 				"Do you want to save changes you have\n"
 				"made to the current data set?", 1);
-	if (button == 0) {
+	if (button == YES_BUTTON) {
 	    save_data_callback();
 	    return TRUE; 
 	}
-	else if (button == 2 || button == -1) return TRUE;
+	else if (button == CANCEL_BUTTON || button == -1) return TRUE;
     }    
 
     write_rc();
