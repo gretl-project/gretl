@@ -1079,8 +1079,10 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 
     if (add_case_markers(datainfo, fname)) 
 	errbox("Failed to add case markers");
-    else
+    else {
 	infobox("Case markers added");
+	data_file_open = 2; /* indicator for changes made */
+    }
 }
 
 /* ........................................................... */
@@ -1853,6 +1855,7 @@ void do_rename_var (GtkWidget *widget, dialog_t *ddata)
     if (validate_varname(edttext)) return;
     strcpy(datainfo->varname[mdata->active_var], edttext);
     populate_clist(mdata->listbox, datainfo);
+    data_file_open = 2; /* marker for changes made */
 }
 
 /* ........................................................... */
@@ -1868,6 +1871,7 @@ void delete_var (void)
 	return;
     }
     populate_clist(mdata->listbox, datainfo);
+    data_file_open = 2; /* marker for changes made */ 
 }
 
 /* ........................................................... */
@@ -1882,6 +1886,7 @@ void do_edit_label (GtkWidget *widget, dialog_t *ddata)
     strncpy(datainfo->label[mdata->active_var], edttext, MAXLABEL-1);
     datainfo->label[mdata->active_var][MAXLABEL-1] = '\0';
     populate_clist(mdata->listbox, datainfo);
+    data_file_open = 2; /* marker for changes made */
 }
 
 /* ........................................................... */

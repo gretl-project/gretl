@@ -79,6 +79,7 @@ enum transformations {
 	T_UNIFORM, 
 	T_STDERR,
 	T_CUM, 
+	T_MISSING,
 	T_MISSZERO,
 	T_CORR,
 	T_VCV,
@@ -109,6 +110,7 @@ static char *math[] = {
     "uniform", 
     "stderr",
     "cum", 
+    "missing",
     "misszero",
     "corr",
     "vcv",
@@ -1157,6 +1159,12 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 	for (k=t1+1; k<=t2; k++) {
 	    if (na(xmvec[k])) xxvec[k] = xxvec[k-1];
 	    else xxvec[k] = xxvec[k-1] + xmvec[k];
+	}
+	break;
+
+    case T_MISSING:  /* check whether obs is missing or not */
+	for (k=t1; k<=t2; k++) {
+	    xxvec[k] = (na(xmvec[k])) ? 1.0 : 0.0;
 	}
 	break;
 

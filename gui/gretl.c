@@ -72,7 +72,6 @@ int popup_connected;
 int *default_list = NULL;
 
 #ifdef USE_GNOME
-
 static GtkTargetEntry target_table[] = {
         {"text/plain", 0, 0}
 };
@@ -97,8 +96,7 @@ static const struct poptOption options[] = {
 	 N_("open a remote (web) database on startup"), N_("REMOTE_DB")},
 	{NULL, '\0', 0, NULL, 0}
 };
-
-#endif
+#endif /* USE_GNOME */
 
 static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_menu (void);
@@ -175,7 +173,7 @@ static void gnome_help (void)
 
     gnome_help_display(NULL, &help_entry);
 }
-#endif
+#endif /* USE_GNOME */
 
 GtkItemFactoryEntry data_items[] = {
     { "/_File", NULL, NULL, 0, "<Branch>" },
@@ -488,7 +486,7 @@ void dummy_output_handler (const gchar *log_domain,
 {
     return;
 }
-#endif
+#endif 
 
 #ifdef OLD_G_OS_WIN32
 int _stdcall
@@ -534,10 +532,10 @@ int main (int argc, char *argv[])
 		       NULL);
     ws_startup(); 
     atexit(write_rc);
-#else
+#else 
     set_rcfile();
     make_userdir(&paths);
-#endif
+#endif/* G_OS_WIN32 */
 
     if (argc > 1) {
 	opt = parseopt(argv[1]);
@@ -656,18 +654,21 @@ int main (int argc, char *argv[])
     /* create the GUI */
     gretl_tips = gtk_tooltips_new();
     colorize_tooltips(gretl_tips);
+
     /* make red, blue available globally for colorizing text */
     gdk_color_parse("red", &red);
     gdk_color_parse("blue", &blue);
     if (!gdk_color_alloc(gdk_colormap_get_system(), &red) ||
 	!gdk_color_alloc(gdk_colormap_get_system(), &blue)) 
 	noalloc("colors");
+
     /* create main window */
     if ((mdata = mymalloc(sizeof(windata_t))) == NULL)
 	noalloc("GUI");
     if ((dataframe = make_main_window(gui_get_data)) == NULL) 
 	noalloc("main window");
     if (!gui_get_data) set_sample_label(datainfo);
+
     /* enable special copying to clipboard */
     clip_init(mdata->w);
 

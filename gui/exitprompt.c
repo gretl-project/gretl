@@ -83,7 +83,6 @@ static void save_data_callback (void)
 }
 
 #ifdef USE_GNOME
-
 /* ......................................................... */
 
 int yes_no_dialog (char *title, char *message, int cancel)
@@ -92,15 +91,13 @@ int yes_no_dialog (char *title, char *message, int cancel)
     int button;
 
     if (cancel)
-	dialog = gnome_dialog_new (
-				   title,
+	dialog = gnome_dialog_new (title,
 				   GNOME_STOCK_BUTTON_YES,
 				   GNOME_STOCK_BUTTON_NO,
 				   GNOME_STOCK_BUTTON_CANCEL,
 				   NULL);
     else
-	dialog = gnome_dialog_new (
-				   title,
+	dialog = gnome_dialog_new (title,
 				   GNOME_STOCK_BUTTON_YES,
 				   GNOME_STOCK_BUTTON_NO,
 				   NULL);
@@ -252,7 +249,7 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 	/* else button = 1, NO: so fall through */
     }
 
-    if (expert[0] == 'f' && data_work_done()) {
+    if (data_work_done()) {
 	button = yes_no_dialog ("gretl", 
 				"Do you want to save changes you have\n"
 				"made to the current data set?", 1);

@@ -54,6 +54,7 @@ int boxfontsize = 12;
 
 extern void file_selector (char *msg, char *startdir, int action, 
                            gpointer data);
+extern char remember_dir[MAXLEN];
 
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
@@ -117,7 +118,8 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 	gtk_widget_destroy(w);
     }
     else if (key->keyval == GDK_s) {
-        file_selector("Save boxplot file", paths.userdir, 
+        file_selector("Save boxplot file", 
+		      (remember_dir[0])? remember_dir : paths.userdir, 
                       SAVE_BOXPLOT_EPS, data);
     }
     else if (key->keyval == GDK_p) {  
@@ -129,7 +131,8 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     }
 #else
     else if (key->keyval == GDK_c) { 
-        file_selector("Save boxplot file", paths.userdir, 
+        file_selector("Save boxplot file", 
+		      (remember_dir[0])? remember_dir : paths.userdir, 
                       SAVE_BOXPLOT_XPM, data);	
     }
 #endif
@@ -147,17 +150,20 @@ static gint popup_activated (GtkWidget *w, gpointer data)
     if (!strcmp(item, "Five-number summary")) 
         five_numbers(grp);
     else if (!strcmp(item, "Save as EPS...")) 
-        file_selector("Save boxplot file", paths.userdir, 
+        file_selector("Save boxplot file", 
+		      (remember_dir[0])? remember_dir : paths.userdir, 
                       SAVE_BOXPLOT_EPS, ptr);
     else if (!strcmp(item, "Save as PS...")) 
-        file_selector("Save boxplot file", paths.userdir, 
+        file_selector("Save boxplot file", 
+		      (remember_dir[0])? remember_dir : paths.userdir, 
                       SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
     else if (!strcmp(item, "Copy to clipboard"))
 	cb_copy_image(ptr);
 #else
     else if (!strcmp(item, "Save as XPM..."))
-        file_selector("Save boxplot file", paths.userdir, 
+        file_selector("Save boxplot file", 
+		      (remember_dir[0])? remember_dir : paths.userdir, 
                       SAVE_BOXPLOT_XPM, ptr);
 #endif
     else if (!strcmp(item, "Help"))
