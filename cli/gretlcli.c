@@ -413,7 +413,7 @@ int main (int argc, char *argv[])
     }
 
     /* should we stop immediately on error, in batch mode? */
-    errfatal = 0;  /* not for now */
+    errfatal = batch;  /* exit on error in batch mode */
 
     /* main command loop */
     while (strcmp(command.cmd, "quit")) {

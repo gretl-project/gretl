@@ -75,6 +75,8 @@ void free_Z (double **Z, DATAINFO *pdinfo)
 {
     int i;
 
+    if (Z == NULL) return;
+
     for (i=0; i<pdinfo->v; i++)
 	free(Z[i]);
     free(Z);
