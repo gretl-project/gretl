@@ -196,7 +196,24 @@ static void gnome_help (void)
 	g_error_free (error);
     }
 }
-#endif /* USE_GNOME */
+#endif 
+
+#ifdef OSX_BUILD
+static void osx_help (void)
+{
+    char *prefix, *syscmd;
+   
+    prefix = getenv("GTK_EXE_PREFIX");
+    if (prefix == NULL) {
+        errbox("Couldn't find the manual");
+	return;
+    }
+    
+    syscmd = g_strdup_printf("%s/bin/manual.sh", prefix);
+    system(syscmd);
+    g_free(syscmd);
+}
+#endif 
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -535,6 +552,9 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
 #elif defined(G_OS_WIN32)
     { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL, GNULL },
+    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
+#elif defined(OSX_BUILD)
+    { N_("/Help/Manual in PDF"), NULL, osx_help, 0, NULL, GNULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
 #endif
     { N_("/Help/_Check for updates"), NULL, manual_update_query, 0, NULL, GNULL },
