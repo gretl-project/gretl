@@ -1458,32 +1458,31 @@ void add_files_to_menu (int filetype)
 	/* is a separator already in place? */
 	w = gtk_item_factory_get_widget(mdata->ifac, msep[filetype - 1]);
 	if (w == NULL) {
-	    fileitem.path = mymalloc(80);
-	    strcpy(fileitem.path, msep[filetype - 1]);
+	    fileitem.path = g_strdup(msep[filetype - 1]);
 	    fileitem.accelerator = NULL;
 	    fileitem.callback = NULL;
 	    fileitem.callback_action = 0;
 	    fileitem.item_type = itemtype;
 	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
+	    g_free(fileitem.path);
 	}
     }
 
     /* put the files under the menu separator */
     for (i=0; i<MAXRECENT; i++) {
 	if (filep[i][0]) {
-	    if (fileitem.path == NULL) fileitem.path = mymalloc(80);
 	    fileitem.accelerator = NULL;
 	    fileitem.callback_action = i; 
 	    fileitem.item_type = NULL;
-	    sprintf(fileitem.path, "%s/%d. %s", mpath[filetype - 1],
-		    i+1, endbit(tmp, filep[i], 1));
+	    fileitem.path = g_strdup_printf("%s/%d. %s", mpath[filetype - 1],
+					    i+1, endbit(tmp, filep[i], 1));
 	    fileitem.callback = callfunc; 
 	    gtk_item_factory_create_item(mdata->ifac, &fileitem, NULL, 1);
+	    g_free(fileitem.path);
 	    w = gtk_item_factory_get_widget_by_action(mdata->ifac, i);
 	    if (w != NULL) {
 		gretl_tooltips_add(w, filep[i]);
 	    } 
 	} else break;
     }
-    free(fileitem.path);
 }

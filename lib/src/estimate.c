@@ -122,14 +122,14 @@ static int ar_info_init (MODEL *pmod, int nterms)
     pmod->arinfo = malloc(sizeof *pmod->arinfo);
     if (pmod->arinfo == NULL) return 1;
 
-    pmod->arinfo->arlist = malloc(nterms * sizeof(int));
+    pmod->arinfo->arlist = malloc(nterms * sizeof *pmod->arinfo->arlist);
     if (pmod->arinfo->arlist == NULL) {
 	free(pmod->arinfo);
 	pmod->arinfo = NULL;
 	return 1; 
     }
 
-    pmod->arinfo->rho = malloc(nterms * sizeof(double));
+    pmod->arinfo->rho = malloc(nterms * sizeof *pmod->arinfo->rho);
     if (pmod->arinfo->rho == NULL) {
 	free(pmod->arinfo->arlist);
 	free(pmod->arinfo);
@@ -137,7 +137,7 @@ static int ar_info_init (MODEL *pmod, int nterms)
 	return 1; 
     }
 
-    pmod->arinfo->sderr = malloc(nterms * sizeof(double));
+    pmod->arinfo->sderr = malloc(nterms * sizeof *pmod->arinfo->sderr);
     if (pmod->arinfo->sderr == NULL) {
 	free(pmod->arinfo->arlist);
 	free(pmod->arinfo->rho);
@@ -2125,6 +2125,146 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     return err;
 }
 
+#if 1
+static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count, 
+		  PRN *prn)
+{
+    int arvars = list[0] + 1;
+    int i, j, t, v = pdinfo->v;
+    int ifc;
+    int *arlist;
+    double rho = 0.0;
+    double ess, essdiff = 1.0;
+    MODEL armod;
+
+    arlist = malloc((arvars + 1) * sizeof *arlist);
+    if (arlist == NULL) {
+	armod.errcode = E_ALLOC;
+	return armod;
+    }
+
+    if (dataset_add_vars(arvars, pZ, pdinfo)) {
+	free(arlist);
+	armod.errcode = E_ALLOC;
+	return armod;
+    }
+
+    _init_model(&armod, pdinfo);
+
+    /* run initial OLS */
+    armod = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
+    ifc = armod.ifc;
+    ess = armod.ess;
+    rho = armod.rho; /* is this a good idea? */
+
+    /* form regression list for NLS */
+    arlist[0] = arvars;
+    arlist[1] = v; /* the first-numbered new variable */
+    for (i=2; i<list[0]; i++) {
+	arlist[i] = v+i-1;
+    }
+    if (ifc) {
+	arlist[arvars] = v + list[0];
+	arlist[arvars - 1] = v + list[0] - 1;
+    } else {
+	arlist[arvars] = v + list[0] - 1;
+	arlist[arvars - 1] = v + list[0];
+    }
+
+    j = 0;
+    while (essdiff > .00001) {
+	int av = v + 1;
+
+	/* create transformed indep vars */
+	for (i=2; i<=list[0]; i++) {
+	    for (t=1; t<pdinfo->n; t++) {
+		if (na((*pZ)[list[i]][t]) || na((*pZ)[list[i]][t-1])) {
+		    (*pZ)[av][t] = NADBL;
+		} else {	
+		    (*pZ)[av][t] = 
+			(*pZ)[list[i]][t] - rho * (*pZ)[list[i]][t-1];
+		}
+	    }
+	    av++;
+	}
+
+	/* create pseudo-regressor for rho */
+	for (t=1; t<pdinfo->n; t++) {
+	    if (na((*pZ)[list[1]][t-1])) {
+		(*pZ)[av][t] = NADBL;
+	    } else {
+		double x = (*pZ)[list[1]][t-1];
+
+		for (i=2; i<=list[0]; i++) {
+		    x -= armod.coeff[i-1] * (*pZ)[list[i]][t-1];
+		}
+		x *= rho;
+		(*pZ)[av][t] = x;
+	    }
+	}
+
+	/* create artificial dep var */
+	for (t=1; t<pdinfo->n; t++) {
+	    if (na((*pZ)[list[1]][t])) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		double y = (*pZ)[list[1]][t];
+
+		for (i=2; i<=list[0]; i++) {
+		    y -= rho * armod.coeff[i-1] * (*pZ)[list[i]][t-1];
+		}
+		(*pZ)[v][t] = y;
+	    }
+	}
+
+	if (j > 0) {
+	    rho = armod.coeff[(ifc)? arlist[0] - 1 : arlist[0]];
+	    ess = armod.ess;
+	    clear_model(&armod, pdinfo);
+	} 
+
+	pprintf(prn, "iteration %d: SSR = %g, rho = %g\n", j, ess, rho);
+
+	/* (re-)estimate linearized model */
+	armod = lsq(arlist, pZ, pdinfo, OLS, 1, 0.0);
+	if (armod.errcode) {
+	    fprintf(stderr, "ERROR estimating armod\n");
+	    break;
+	}
+
+	essdiff = fabs(ess - armod.ess) / ess;
+
+	if (++j > 20) break;
+    }
+
+    /* printmodel(&armod, pdinfo, prn); */
+
+    for (i=0; i<=list[0]; i++) {
+	armod.list[i] = list[i];
+    }
+    armod.ifc = ifc;
+    *model_count += 1;
+    armod.ID = *model_count;
+    armod.ci = AR;
+
+    if (ar_info_init(&armod, 2)) {
+	armod.errcode = E_ALLOC;
+    } else {
+	int rhonum = (ifc)? arlist[0] - 1 : arlist[0];
+
+	armod.arinfo->arlist[0] = 1;
+	armod.arinfo->arlist[1] = 1;
+	armod.arinfo->rho[1] = armod.coeff[rhonum];
+	armod.arinfo->sderr[1] = armod.sderr[rhonum];
+    }
+
+    printmodel(&armod, pdinfo, prn);
+    dataset_drop_vars(arvars, pZ, pdinfo);
+
+    return armod;
+}
+#endif
+
 /**
  * ar_func:
  * @list: list of lags plus dependent variable and list of regressors.
@@ -2180,6 +2320,15 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /*  printf("reglist:\n"); printlist(reglist); */
 
     if (_hasconst(reglist)) rearrange_list(reglist);
+
+#if 1
+    if (arlist[0] == 1 && arlist[1] == 1) {
+	free(arlist);
+	free(reglist2);
+	free(rholist);
+	return ar1(reglist, pZ, pdinfo, model_count, prn);
+    }
+#endif
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {

@@ -1561,14 +1561,18 @@ static void print_rho_terms (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "\n%s:\n\n", _("Estimates of the AR coefficients"));
     }
 
-    dfd = pmod->dfd + (pmod->ncoeff - pmod->arinfo->arlist[0]);
+    if (pmod->arinfo->arlist[0] > 1) {
+	dfd = pmod->dfd + (pmod->ncoeff - pmod->arinfo->arlist[0]);
+    } else {
+	dfd = pmod->dfd;
+    }
 
     for (i=1; i<=pmod->arinfo->arlist[0]; i++) {
 	print_rho(pmod->arinfo, i, dfd, prn);
 	xx += pmod->arinfo->rho[i]; 
     }
 
-    if (PLAIN_FORMAT(prn->format)) {
+    if (pmod->arinfo->arlist[0] > 1 && PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "\n%s = %#g\n\n", _("Sum of AR coefficients"), xx);
     }
 }

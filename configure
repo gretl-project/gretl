@@ -467,7 +467,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB X12A HAVE_X12A TRAMO HAVE_TRAMO MAKE LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk have_gmp LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS PACKAGE VERSION LIBVERSION SET_MAKE INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA MKINSTALLDIRS MSGFMT GMSGFMT XGETTEXT MSGMERGE CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT build build_cpu build_vendor build_os host host_cpu host_vendor host_os USE_NLS LIBICONV LTLIBICONV INTLLIBS LIBINTL LTLIBINTL POSUB MAKE HAVE_X12A HAVE_TRAMO LN_S ECHO RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP CPP EGREP LIBTOOL have_readline new_readline READLINE_CFLAGS READLINE_LIBS INETLIB have_zlib GMP_CFLAGS GMP_LIBS LAPACK_CFLAGS LAPACK_LIBS FLIB GNUPLOT LATEX PKG_CONFIG GTK_CFLAGS GTK_LIBS GLIB_CFLAGS GLIB_LIBS GTK_CONFIG GTK_EXTRA_CONFIG GTK_EXTRA_CFLAGS GTK_EXTRA_LIBS have_gtk have_gmp LIBOLE2_CFLAGS LIBOLE2_LIBS LIBOLE2_CONFIG PNG_CFLAGS PNG_LIBS GDK_PIXBUF_CFLAGS GDK_PIXBUF_LIBS GDK_PIXBUF_CONFIG GNOME_CFLAGS GNOME_LIBS XML_CFLAGS XML_LIBS GCONFTOOL GCONF_SCHEMA_CONFIG_SOURCE GCONF_SCHEMA_FILE_DIR GNOME have_gnome gnome_prefix XMLCONF LIBOLE_CFLAGS LIBOLE_LIBS LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -1007,8 +1007,6 @@ Optional Features:
   --enable-gui		  Enable gui default=yes
   --enable-png-graphs     Enable PNG graph support default=auto
   --enable-png-comments   Enable reading of PNG comment data default=auto
-  --enable-x-12-arima     X-12-ARIMA support default=auto
-  --enable-tramo-seats    TRAMO/SEATS support default=auto
   --enable-static=PKGS  build static libraries default=no
   --enable-shared=PKGS  build shared libraries default=yes
   --enable-fast-install=PKGS  optimize for fast installation default=yes
@@ -1035,6 +1033,8 @@ Optional Packages:
   --with-libole2   Use installed libole2 default=auto
   --with-gtkextra   Use installed gtkextra default=auto
   --with-gmp   Use Gnu Multiple Precision library default=auto
+  --with-x-12-arima     include X-12-ARIMA support default=yes
+  --with-tramo-seats    include TRAMO/SEATS support default=yes
   --with-pic              try to use only PIC/non-PIC objects default=use both
   --with-readline-prefix=PFX   Prefix where readline is installed (optional)
   --with-gmp-prefix=PFX   Prefix where GMP is installed (optional)
@@ -1534,8 +1534,8 @@ seek_inet_addr="no"
 png_graphics="yes"
 png_comments="yes"
 prefer_xml1="no"
-have_tramo="no"
-have_x12a="no"
+have_tramo="yes"
+have_x12a="yes"
 MAKE="make"
 XML_LIBS=
 
@@ -4096,10 +4096,6 @@ _ACEOF
 
 
 
-
-
-
-
 # Check whether --enable-gui or --disable-gui was given.
 if test "${enable_gui+set}" = set; then
   enableval="$enable_gui"
@@ -4134,122 +4130,6 @@ else
 fi
 fi;
 
-# Check whether --enable-x-12-arima or --disable-x-12-arima was given.
-if test "${enable_x_12_arima+set}" = set; then
-  enableval="$enable_x_12_arima"
-  if test "$enableval" = "yes"
-then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_X12A 1
-_ACEOF
-
-  HAVE_X12A=1
-  have_x12a="yes"
-fi
-else
-  # Extract the first word of "x12a", so it can be a program name with args.
-set dummy x12a; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_X12A+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$X12A"; then
-  ac_cv_prog_X12A="$X12A" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_X12A="yes"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-X12A=$ac_cv_prog_X12A
-if test -n "$X12A"; then
-  echo "$as_me:$LINENO: result: $X12A" >&5
-echo "${ECHO_T}$X12A" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test x"${X12A}" = xyes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_X12A 1
-_ACEOF
-
-  HAVE_X12A=1
-  have_x12a="yes"
-fi
-fi;
-
-
-# Check whether --enable-tramo-seats or --disable-tramo-seats was given.
-if test "${enable_tramo_seats+set}" = set; then
-  enableval="$enable_tramo_seats"
-  if test "$enableval" = "yes"
-then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_TRAMO 1
-_ACEOF
-
-  HAVE_TRAMO=1
-  have_tramo="yes"
-fi
-else
-  # Extract the first word of "tramo", so it can be a program name with args.
-set dummy tramo; ac_word=$2
-echo "$as_me:$LINENO: checking for $ac_word" >&5
-echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_TRAMO+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if test -n "$TRAMO"; then
-  ac_cv_prog_TRAMO="$TRAMO" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-  for ac_exec_ext in '' $ac_executable_extensions; do
-  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_TRAMO="yes"
-    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-done
-
-fi
-fi
-TRAMO=$ac_cv_prog_TRAMO
-if test -n "$TRAMO"; then
-  echo "$as_me:$LINENO: result: $TRAMO" >&5
-echo "${ECHO_T}$TRAMO" >&6
-else
-  echo "$as_me:$LINENO: result: no" >&5
-echo "${ECHO_T}no" >&6
-fi
-
-if test x"${TRAMO}" = xyes ; then
-  cat >>confdefs.h <<\_ACEOF
-#define HAVE_TRAMO 1
-_ACEOF
-
-  HAVE_TRAMO=1
-  have_tramo="yes"
-fi
-fi;
 
 
 
@@ -4372,6 +4252,52 @@ fi
 else
   try_gmp=yes
 fi;
+
+
+# Check whether --with-x-12-arima or --without-x-12-arima was given.
+if test "${with_x_12_arima+set}" = set; then
+  withval="$with_x_12_arima"
+  if test "${withval}" = "no"
+then
+  have_x12a="no"
+else
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_X12A 1
+_ACEOF
+
+  HAVE_X12A=1
+fi
+else
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_X12A 1
+_ACEOF
+
+HAVE_X12A=1
+fi;
+
+
+
+# Check whether --with-tramo-seats or --without-tramo-seats was given.
+if test "${with_tramo_seats+set}" = set; then
+  withval="$with_tramo_seats"
+  if test "$withval" = "no"
+then
+  have_tramo="no"
+else
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_TRAMO 1
+_ACEOF
+
+  HAVE_TRAMO=1
+fi
+else
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_TRAMO 1
+_ACEOF
+
+HAVE_TRAMO=1
+fi;
+
 
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
@@ -6771,7 +6697,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6774 "configure"' > conftest.$ac_ext
+  echo '#line 6700 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7300,7 +7226,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:7303: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:7229: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -9132,7 +9058,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9135 "configure"
+#line 9061 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9230,7 +9156,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9233 "configure"
+#line 9159 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -15600,11 +15526,9 @@ s,@INTLLIBS@,$INTLLIBS,;t t
 s,@LIBINTL@,$LIBINTL,;t t
 s,@LTLIBINTL@,$LTLIBINTL,;t t
 s,@POSUB@,$POSUB,;t t
-s,@X12A@,$X12A,;t t
-s,@HAVE_X12A@,$HAVE_X12A,;t t
-s,@TRAMO@,$TRAMO,;t t
-s,@HAVE_TRAMO@,$HAVE_TRAMO,;t t
 s,@MAKE@,$MAKE,;t t
+s,@HAVE_X12A@,$HAVE_X12A,;t t
+s,@HAVE_TRAMO@,$HAVE_TRAMO,;t t
 s,@LN_S@,$LN_S,;t t
 s,@ECHO@,$ECHO,;t t
 s,@RANLIB@,$RANLIB,;t t
