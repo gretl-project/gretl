@@ -735,8 +735,8 @@ int main (int argc, char *argv[])
     colorize_tooltips(gretl_tips);
 
     /* make red, blue available globally for colorizing text */
-    gdk_color_parse("red", &red);
-    gdk_color_parse("blue", &blue);
+    gdk_color_parse("#ff0000", &red);
+    gdk_color_parse("#0000ff", &blue);
     if (!gdk_color_alloc(gdk_colormap_get_system(), &red) ||
 	!gdk_color_alloc(gdk_colormap_get_system(), &blue)) 
 	noalloc(_("colors"));
