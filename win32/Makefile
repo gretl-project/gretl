@@ -59,11 +59,11 @@ RCOUT   = gretlw32_res.o
 RES2COFF = echo gretlw32_res.o
 
 LIBSRC = estimate.c compare.c gretl_utils.c errors.c pvalues.c dataio.c \
-       generate.c strutils.c describe.c printout.c texprint.c var.c \
+       generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c win32.c monte_carlo.c nonparam.c discrete.c \
        subsample.c calendar.c
 LIBHDR = libgretl.h commands.h estimate.h gretl_utils.h errors.h pvalues.h \
-       compare.h dataio.h generate.h strutils.h describe.h printout.h \
+       compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
        version.h texprint.h var.h interact.h graphing.h monte_carlo.h \
        nonparam.h discrete.h subsample.h calendar.h win32.h
 LIBOBJ = $(LIBSRC:.c=.o)
@@ -73,10 +73,10 @@ CLIOBJ = $(CLISRC:.c=.o)
 
 GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
-	calculator.c fileselect.c htmlprint.c guiprint.c boxplots.c \
+	calculator.c fileselect.c guiprint.c boxplots.c \
 	selector.c settings.c helpfiles.c treeutils.c console.c 
 GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
-	webget.h htmlprint.h guiprint.h selector.h settings.h helpfiles.h \
+	webget.h guiprint.h selector.h settings.h helpfiles.h \
 	treeutils.h
 GUIOBJ = $(GUISRC:.c=.o)
 

@@ -6,7 +6,7 @@ GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp372w32.zip
 
 HOME_WIN32=/home/cottrell/stats/esl/win32
 GTK2DLLS=$HOME_WIN32/dlls/gtk-2.0-dlls.tar.gz
-GTK2MO=$HOME_WIN32/mo/gtk20.mo
+GTK2MO=$HOME_WIN32/mo
 
 INNO_EXE="c:/Userdata/Inno Setup 2/ISCC.exe"
 RECODE=recode
@@ -120,7 +120,8 @@ add_file ${TOPDIR}/share/bcih/bcih.idx gretl/db/bcih.idx
 
 # translations
 add_file mo/es.mo gretl/locale/es/LC_MESSAGES/gretl.mo
-add_file $GTK2MO gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
+add_file $GTKMO/glib20.mo gretl/lib/locale/es/LC_MESSAGES/glib20.mo
+add_file $GTKMO/gtk20.mo gretl/lib/locale/es/LC_MESSAGES/gtk20.mo
 
 # misc files
 add_file gretl_website.url gretl/gretl_website.url
