@@ -842,8 +842,12 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
     int rrows, rcols;
     int atr = (aflag == GRETL_MOD_TRANSPOSE);
     int btr = (bflag == GRETL_MOD_TRANSPOSE);
-    int aidx, bidx;
+    const double *a_row, *a_col;
+    const double *b_row, *b_col;
     double *c_row, *c_col;
+#ifdef PARTIAL_OPT
+    int aidx, bidx;
+#endif
 
     if (a == c || b == c) {
 	fputs("gretl_matrix_multiply:\n product matrix must be "
@@ -872,8 +876,9 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	return GRETL_MATRIX_NON_CONFORM;
     }
 
-#if 0
-    /* this version more clearly represents the math */
+#ifdef SIMPLE_MATH
+    /* This version represents the math quite clearly, but is very
+       wasteful of multiplications. */
     for (i=0; i<lrows; i++) {
 	for (j=0; j<rcols; j++) {
 	    targ = 0.0;
@@ -885,8 +890,11 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	    c->val[mdx(c,i,j)] = targ;
 	}
     }
-#else
-    /* this is an attempt at (partial) optimization */
+#endif
+
+#ifdef PARTIAL_OPT
+    /* This is a partial optimization, using pointers for the
+       product matrix only.  Still fairly easy to follow. */
     c_row = c->val;
     for (i=0; i < c->rows; i++) {
 	c_col = c_row;
@@ -900,6 +908,59 @@ int gretl_matrix_multiply_mod (const gretl_matrix *a, int aflag,
 	    c_col += c->rows;
 	}
 	c_row++;
+    }
+#else
+    /* This is a fuller optimization: it uses pointer addition
+       to avoid multiplications wherever possible.  It is rather
+       hard to follow, but should be much faster for large
+       matrices, I think.
+    */
+
+    /* initialize row and column pointers */
+    c_row = c->val;
+    a_col = a_row = a->val;
+    b_col = b_row = b->val;
+
+    for (i=0; i < c->rows; i++) {
+
+	c_col = c_row;
+
+	for (j=0; j < c->cols; j++) {
+
+	    if (atr) a_row = a_col;
+	    else a_col = a_row;
+
+	    if (btr) b_col = b_row;
+	    else b_row = b_col;
+
+	    *c_col = 0.0;
+	    for (k=0; k<lcols; k++) {
+
+		*c_col += ((atr)? *a_row : *a_col) * ((btr)? *b_col : *b_row);
+
+		if (atr) a_row++;
+		else a_col += a->rows;
+
+		if (btr) b_col += b->rows;
+		else b_row++;
+	    }
+
+	    c_col += c->rows;
+
+	    if (btr) b_row++;
+	    else b_col += b->rows;
+	}
+
+	/* start new row of product matrix */
+	c_row++;
+
+	/* move to new row of LH matrix */
+	if (atr) a_col += a->rows;
+	else a_row++;
+
+	/* re-initialize pointer to RH matrix */
+	if (btr) b_row = b->val;
+	else b_col = b->val;
     }
 #endif
 
