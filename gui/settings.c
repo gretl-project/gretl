@@ -890,15 +890,24 @@ static void clear_files_list (int filetype, char **filep)
     GtkWidget *w;
     char tmpname[MAXSTR];
     gchar itempath[80];
-    int i;
-    const gchar *pathstart[] = {
+    int i, pindex = -1;
+    const gchar *fpath[] = {
 	N_("/File/Open data"), 
-	N_("/Session/Open"),
+	N_("/Session"),
 	N_("/File/Open command file")
     };
 
+    if (filetype == FILE_LIST_DATA) 
+	pindex = 0;
+    else if (filetype == FILE_LIST_SESSION)
+	pindex = 1;
+    else if (filetype == FILE_LIST_SCRIPT)
+	pindex = 2;
+
+    if (pindex == -1) return;
+
     for (i=0; i<MAXRECENT; i++) {
-	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
+	sprintf(itempath, "%s/%d. %s", fpath[pindex],
 		i+1, endbit(tmpname, filep[i], -1));
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) 

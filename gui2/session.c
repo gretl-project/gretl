@@ -43,7 +43,7 @@
 #include "../pixmaps/rhohat.xpm"
 #include "../pixmaps/summary.xpm"
 
-#define SESSION_DEBUG 
+/* #define SESSION_DEBUG */
 
 enum {
     ICON_ADD_BATCH,
