@@ -122,7 +122,9 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
 
     for (i=1; i<=list[0]; i++) {
 	/* no need to check the constant */
-	if (list[i] == 0) continue; 
+	if (list[i] == 0) {
+	    continue; 
+	}
 	allzero = 1;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) { 
 	    if (na(Z[list[i]][t])) {
@@ -130,7 +132,9 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
 			pdinfo->varname[list[i]]);	
 		return 1;
 	    }
-	    if (!floateq(Z[list[i]][t], 0.0)) allzero = 0;
+	    if (!floateq(Z[list[i]][t], 0.0)) {
+		allzero = 0;
+	    }
 	}
 	if (allzero) {
 	    sprintf(errbuf, _("Variable '%s' is all zeros"), 
@@ -591,7 +595,9 @@ int mplsq (const int *list, const int *polylist,
 	model.list = poly_copy_list(list, polylist);
     }
 
-    if (model.list == NULL) return E_ALLOC;
+    if (model.list == NULL) {
+	return E_ALLOC;
+    }
 
     model.polylist = polylist; /* attached for convenience */
 

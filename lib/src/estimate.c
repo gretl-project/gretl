@@ -1683,13 +1683,15 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     char *endog = NULL;
     int addvars = list[0];
     int i, j, k, pos, m, err = 0;
+    size_t esize, Xsize = list[0] * sizeof *X;
 
     pos = get_pos(pmod->list);
     m = pos - 2;
+    esize = m * sizeof *endog;
 
-    X = malloc(list[0] * sizeof *X);
-    
-    endog = malloc(m * sizeof *endog);
+    X = malloc(Xsize);
+    endog = malloc(esize);
+
     if (X == NULL || endog == NULL) {
 	free(X);
 	free(endog);
@@ -1714,8 +1716,8 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     }
 
     /* now attach X and endog to the model */
-    gretl_model_set_data(pmod, "tslsX", X, sizeof X);
-    gretl_model_set_data(pmod, "endog", endog, m);
+    gretl_model_set_data(pmod, "tslsX", X, Xsize);
+    gretl_model_set_data(pmod, "endog", endog, esize);
 
     return err;
 }
@@ -1769,7 +1771,8 @@ void tsls_free_data (const MODEL *pmod)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @opt: may contain OPT_R for robust VCV, OPT_S to save second-
- * stage regressors.
+ * stage regressors (OPT_S is used in context of three-stage least 
+ * squares).
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.
@@ -1781,6 +1784,8 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
     int i, j, t, v, ncoeff;
+    int missv = 0, misst = 0;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *list1 = NULL, *list2 = NULL, *newlist = NULL;
     int *s1list = NULL, *s2list = NULL;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
@@ -1795,9 +1800,17 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 	pos = get_pos(list);
     }
 
+    gretl_model_init(&tsls);
     *gretl_errmsg = '\0';
 
-    gretl_model_init(&tsls);
+    missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
+			(const double **) *pZ, &misst);
+    if (missv) {
+	sprintf(gretl_errmsg, _("Missing value encountered for "
+				"variable %d, obs %d"), missv, misst);
+	tsls.errcode = E_DATA;
+	goto tsls_bailout;
+    }
 
     list1 = malloc(pos * sizeof *list1);
     list2 = malloc((list[0] - pos + 1) * sizeof *list2);
@@ -1999,6 +2012,9 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     if (tsls.errcode) {
 	model_count_minus();
     }
+
+    pdinfo->t1 = t1;
+    pdinfo->t2 = t2;
 
     return tsls;
 }
@@ -3085,17 +3101,16 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int err = 0;
     MODEL lad_model;
     void *handle;
     int (*lad_driver)(MODEL *, double **, DATAINFO *);
 
     /* run an initial OLS to "set the model up" and check for errors.
-       the lad function will overwrite the coefficients etc.
+       the lad_driver function will overwrite the coefficients etc.
     */
     lad_model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 
-    if ((err = lad_model.errcode)) {
+    if (lad_model.errcode) {
         return lad_model;
     }
 

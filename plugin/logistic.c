@@ -162,6 +162,9 @@ static double get_lmax (const double *y, const DATAINFO *pdinfo,
     int t, lmax_auto = 1;
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	if (na(y[t])) {
+	    continue;
+	}
 	if (y[t] <= 0.0) {
 	    gretl_errmsg_set(_("Illegal non-positive value of the "
 			       "dependent variable"));
@@ -178,9 +181,13 @@ static double get_lmax (const double *y, const DATAINFO *pdinfo,
     }	
 
     if (lmax_auto) {
-	if (ymax < 1.0) lmax = 1.0;
-	else if (ymax < 100.0) lmax = 100.0;
-	else lmax = 1.1 * ymax;
+	if (ymax < 1.0) {
+	    lmax = 1.0;
+	} else if (ymax < 100.0) {
+	    lmax = 100.0;
+	} else {
+	    lmax = 1.1 * ymax;
+	}
     } else if (lmax <= ymax) {
 	gretl_errmsg_set(_("Invalid value for the maximum of the "
 			   "dependent variable"));
@@ -198,16 +205,19 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 				 int dv, double lmax)
 {
     int t, v = pdinfo->v;
-    int err;
 
-    err = dataset_add_vars(1, pZ, pdinfo);
-    if (err) return 1;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	return 1;
+    }
 
     for (t=0; t<pdinfo->n; t++) {
 	double p = (*pZ)[dv][t];
 
-	if (na(p)) continue;
-	(*pZ)[v][t] = log(p / (lmax - p));
+	if (na(p)) {
+	    (*pZ)[v][t] = NADBL;
+	} else {
+	    (*pZ)[v][t] = log(p / (lmax - p));
+	}
     }
 
     return 0;
@@ -228,7 +238,9 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
-	if (na(x)) continue;
+	if (na(x)) {
+	    continue;
+	}
 	pmod->yhat[t] = lmax / (1.0 + exp(-x));
 	pmod->uhat[t] = Z[dv][t] - pmod->yhat[t];
 	pmod->ess += pmod->uhat[t] * pmod->uhat[t];
@@ -238,7 +250,10 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
 
     pmod->tss = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	pmod->tss += (Z[dv][t] - pmod->ybar) * (Z[dv][t] - pmod->ybar);
+	x = Z[dv][t];
+	if (!na(x)) {
+	    pmod->tss += (x - pmod->ybar) * (x - pmod->ybar);
+	}
     }
 
     pmod->fstt = pmod->dfd * (pmod->tss - pmod->ess) / (pmod->dfn * pmod->ess);
