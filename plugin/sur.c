@@ -142,19 +142,13 @@ static void sys_resids (MODEL *pmod, const double **Z, gretl_matrix *uhat,
 			int systype)
 {
     int i, t;
-    const double *Xi;
     double fit;
 
     pmod->ess = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	fit = 0.0;
 	for (i=0; i<pmod->ncoeff; i++) {
-	    if (systype == THREESLS) {
-		Xi = tsls_get_Xi(pmod, Z, i);
-	    } else {
-		Xi = Z[pmod->list[i+2]];
-	    }
-	    fit += pmod->coeff[i] * Xi[t];
+	    fit += pmod->coeff[i] * Z[pmod->list[i+2]][t];
 	}
 	pmod->yhat[t] = fit;
 	pmod->uhat[t] = Z[pmod->list[1]][t] - fit;
