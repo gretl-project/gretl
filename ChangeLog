@@ -1,7 +1,11 @@
 version 1.0.7
 - Correct the attribution of autocorrelation test (Breusch-Godfrey
   rather than Breusch-Pagan)
-- Fix bug in reading of remote database info line (Gtk-2.0 version)
+- Fix bug in display of remote database info line (Gtk-2.0 version)
+- Use a finer step-size for Hildreth-Lu search
+- In GUI program, display Hildreth-Lu plot using gnuplot
+- Translate a few more untranslated strings
+- Fix bug in title of residual graph
 
 03/16/03 version 1.0.6
 - minor adjustment to model print output formatting

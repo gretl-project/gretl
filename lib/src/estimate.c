@@ -1274,12 +1274,48 @@ static void dropwt (int *list)
     }
 }
 
+static int hilu_plot (double *ssr, double *rho, int n, 
+		      PATHS *ppaths)
+{
+    FILE *fp;
+    int i;
+
+    if (ppaths == NULL) return 1;
+
+    if (gnuplot_init(ppaths, &fp)) return E_FOPEN; 
+
+    fputs("# hildreth-lu\n", fp);
+    fputs("set xlabel 'rho'\n", fp);
+    fprintf(fp, "set ylabel '%s'\n", _("ESS"));
+    fputs("set nokey\n", fp);
+    fputs("set xrange [-1.0:1.0]\n", fp);
+    fprintf(fp, "plot '-' using 1:2 w impulses\n");
+
+#ifdef ENABLE_NLS
+        setlocale(LC_NUMERIC, "C");
+#endif
+    for (i=0; i<n; i++) {
+	fprintf(fp, "%g %g\n", rho[i], ssr[i]);
+    }
+    fputs("e\n", fp);
+#ifdef ENABLE_NLS
+        setlocale(LC_NUMERIC, "");
+#endif
+
+    fclose(fp);
+    gnuplot_display(ppaths);
+
+    return 0;
+}
+
 /**
  * hilu_corc:
  * @toprho: pointer to receive final rho value.
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @ppaths: pointer to gretl paths info struct
+ * @batch: = 1 if in batch mode
  * @opt: option flag: CORC for Cochrane-Orcutt, HILU for Hildreth-Lu.
  * @prn: gretl printing struct
  *
@@ -1291,11 +1327,12 @@ static void dropwt (int *list)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo, 
+int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
+	       PATHS *ppaths, int batch,
 	       int opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
-    double finalrho = 0, ess = 0, essmin = 0, ssr[22], rh[22]; 
+    double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
     MODEL corc_model;
 
@@ -1305,12 +1342,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     if (uhat == NULL) return E_ALLOC;
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
-	rho = -1.0;
-	diff = 0.1;
-	for (step=1; step<=21; step++) {
-	    if (rho < -.995) rho = -0.99;
-	    else if (rho > 0.995) rho = 0.99;
-	    if (step == 2) rho = -.90;
+	step = 1;
+	for (rho = -0.990; rho < 1.0; rho += .01) {
 	    clear_model(&corc_model, pdinfo);
 	    corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	    if ((err = corc_model.errcode)) {
@@ -1318,27 +1351,38 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		clear_model(&corc_model, pdinfo);
 		return err;
 	    }
+#if 0
 	    if (step == 1) {
-		pputs(prn, "\n RHO       ESS      RHO       ESS      "
-			"RHO       ESS      RHO       ESS     \n");
+		pprintf(prn, "\n RHO       %s      RHO       %s      "
+			"RHO       %s      RHO       %s     \n",
+			_("ESS"), _("ESS"), _("ESS"), _("ESS"));
 	    }
+#endif
 	    ssr[nn] = ess = corc_model.ess;
-	    rh[nn] = rho;
-	    nn++;
-	    pprintf(prn, "%5.2f %10.4g", rho, ess);
-	    if (step%4 == 0) pputs(prn, "\n");
+	    rh[nn++] = rho;
+#if 0
+	    pprintf(prn, "%6.3f %9.4g", rho, ess);
+	    if (step % 4 == 0) pputs(prn, "\n");
 	    else _bufspace(3, prn);
-	    if (step == 1) essmin = ess;
-	    essmin = (ess < essmin)? ess : essmin;
+#endif
+	    if (step == 1) {
+		essmin = ess;
+	    } else {
+		essmin = (ess < essmin)? ess : essmin;
+	    }
 	    if (ess-essmin > -SMALL && ess-essmin < SMALL)
 		finalrho = rho;
-	    if (rho > 0.989) break;
-	    rho = rho + diff;
+	    step++;
 	}					
 	rho0 = rho = finalrho;
-	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
-	_graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
-	pputs(prn, _("\n\nFine-tune rho using the CORC procedure...\n\n")); 
+	pprintf(prn, _("\n\nESS is minimum for rho = %.3f\n\n"), rho);
+	if (batch) {
+	    _graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
+	    pputs(prn, "\n");
+	} else {
+	    hilu_plot(ssr, rh, nn, ppaths);
+	}
+	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { /* Go straight to Cochrane-Orcutt */
 	corc_model = lsq(list, pZ, pdinfo, OLS, 1, rho);
 	if ((err = corc_model.errcode)) {
@@ -1350,7 +1394,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("\nPerforming iterative calculation of rho...\n\n"));
     }
 
-    pputs(prn, "                 ITER       RHO        ESS\n");
+    pprintf(prn, "                 %s       RHO        %s\n",
+	    _("ITER"), _("ESS"));
 
     while (diff > 0.001) {
 	iter++;
@@ -2105,7 +2150,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
-	err = hilu_corc(&xx, reglist, pZ, pdinfo, CORC, prn);
+	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
 	if (err) ar.errcode = err;
 	else ar = lsq(reglist, pZ, pdinfo, CORC, 1, xx);
 	if (model_count != NULL) {

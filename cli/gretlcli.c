@@ -711,7 +711,8 @@ void exec_line (char *line, PRN *prn)
 	
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, command.list, &Z, datainfo, command.ci, prn);
+	err = hilu_corc(&rho, command.list, &Z, datainfo, 
+			NULL, 1, command.ci, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;

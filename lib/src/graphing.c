@@ -652,6 +652,7 @@ int gnuplot (LIST list, const int *lines,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
     int i, j, oddman = 0;
     char s1[9], s2[9], xlabel[12], withstring[8];
+    char depvar[9];
     int tscale = 0;   /* time series scaling needed? */
     int ts_plot = 1;  /* plotting against time on x-axis? */
     int pdist = 0;    /* plotting probability dist. */
@@ -663,6 +664,14 @@ int gnuplot (LIST list, const int *lines,
     if (opt == OPT_M || lines == NULL) {
 	strcpy(withstring, "w i");
 	pdist = 1;
+    }
+
+    *depvar = 0;
+    if (opt == OPT_RESID || opt == OPT_RESIDZ) {
+	/* a hack to get the name of the dependent variable into
+	   the graph */
+	strcpy(depvar, pdinfo->varname[list[lo]]);
+	lo--;
     }
 
     if (batch) {  
@@ -765,7 +774,7 @@ int gnuplot (LIST list, const int *lines,
 	    }
 	}
 	if (opt == OPT_RESID) {
-	    make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
+	    make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	    fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	    fputs("set nokey\n", fq);
 	} else {
@@ -773,7 +782,7 @@ int gnuplot (LIST list, const int *lines,
 	    fputs("set nokey\n", fq);
 	}
     } else if (opt == OPT_RESIDZ) {
-	make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
+	make_gtitle(fq, GTITLE_RESID, depvar, NULL);
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
 	fputs("set key left top\n", fq);
     } else if (opt == OPT_FA) {

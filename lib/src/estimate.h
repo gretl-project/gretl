@@ -28,7 +28,8 @@ MODEL lsq (LIST list,
 	   int ci, int opt, double rho);
 
 int hilu_corc (double *toprho, LIST list, 
-	       double ***pZ, DATAINFO *pdinfo, 
+	       double ***pZ, DATAINFO *pdinfo,
+	       PATHS *ppaths, int batch,
 	       int opt, PRN *prn);
 
 MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo); 

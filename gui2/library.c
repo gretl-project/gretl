@@ -1764,13 +1764,15 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, command.list, &Z, datainfo, action, prn);
+	err = hilu_corc(&rho, command.list, &Z, datainfo, 
+			&paths, 0, action, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
 	}
 	*pmod = lsq(command.list, &Z, datainfo, action, 1, rho);
 	err = model_output(pmod, prn);
+	register_graph();
 	break;
 
     case OLS:
@@ -2681,7 +2683,7 @@ void add_model_stat (MODEL *pmod, const int which)
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv = datainfo->v, plot_list[4], lines[1];
+    int err, origv = datainfo->v, plot_list[5], lines[1];
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
     int ts = dataset_is_time_series(datainfo);
@@ -2690,8 +2692,9 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;
 
-    plot_list[0] = 2;
+    plot_list[0] = 3; /* extra entry to pass depvar name to plot */
     plot_list[1] = datainfo->v - 1; /* last var added */
+    plot_list[3] = pmod->list[1];
 
     strcpy(datainfo->varname[plot_list[1]], _("residual"));
 
@@ -2711,8 +2714,9 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 
     /* plot separated by dummy variable? */
     if (pdum) {
-	plot_list[0] = 3;
+	plot_list[0] = 4;
 	plot_list[3] = pdum;
+	plot_list[4] = pmod->list[1];
     }
 
     /* generate graph */
@@ -4009,7 +4013,8 @@ int gui_exec_line (char *line,
 
     case CORC:
     case HILU:
-	err = hilu_corc(&rho, command.list, &Z, datainfo, command.ci, prn);
+	err = hilu_corc(&rho, command.list, &Z, datainfo, 
+			NULL, 1, command.ci, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;

@@ -2237,7 +2237,7 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     case CORC:
     case HILU:
 	err = hilu_corc(&rho, command.list, pZ, pdinfo, 
-			command.ci, &prn);
+			NULL, 1, command.ci, &prn);
 	if (!err)
 	    *tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, rho);
 	break;

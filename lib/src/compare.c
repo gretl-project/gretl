@@ -395,7 +395,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     if (!err && aux_code == AUX_ADD) {
 	if (orig->ci == CORC || orig->ci == HILU) {
 	    err = hilu_corc(&rho, newlist, pZ, pdinfo, 
-			    orig->ci, prn);
+			    NULL, 1, orig->ci, prn);
 	}
 	else if (orig->ci == WLS || orig->ci == AR) {
 	    pos = _full_model_list(orig, &newlist);
@@ -569,7 +569,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     if (!err) {
 	if (orig->ci == CORC || orig->ci == HILU) {
 	    err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
-			    orig->ci, prn);
+			    NULL, 1, orig->ci, prn);
 	    if (err) {
 		free(tmplist);
 	    }
