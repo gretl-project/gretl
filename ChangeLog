@@ -5,6 +5,7 @@ version 1.2.5
 - fix some translation bugs
 - fix headers for compilation on Mac OS X
 - fix bug in lmtest option handling
+- make Excel importer a little more robust
 
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables

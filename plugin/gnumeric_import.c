@@ -287,10 +287,12 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 
 	if (sheet->text_rows > 1) {
 	    pputs(prn, _("Found an extraneous row of text"));
+	    pputc(prn, '\n');
 	    err = 1;
 	}
 	if (sheet->text_cols > 1) {
 	    pputs(prn, _("Found an extraneous column of text"));
+	    pputc(prn, '\n');
 	    err = 1;
 	}
     }

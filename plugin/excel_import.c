@@ -48,7 +48,7 @@ static char *convert8to7 (char *src, int count);
 static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
-/* #define EDEBUG */
+#define EDEBUG
 /* #define FULL_EDEBUG */
 
 #define EXCEL_IMPORTER
@@ -302,6 +302,10 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	fprintf(stderr, "Got SST: malloced sst at size %d (%d bytes), %p\n", 
 		sstsize, sstsize * sizeof *sst, (void *) sst);
 #endif
+	for (i=0; i<sstsize; i++) {
+	    /* careful: initialize all to NULL */
+	    sst[i] = NULL;
+	}
 	for (i=0; i<sstsize && (ptr - rec)<reclen; i++) {
 	    sst[i] = copy_unicode_string(&ptr);
 	}
@@ -347,7 +351,7 @@ static int process_item (int rectype, int reclen, char *rec, wbook *book,
 	saved_reference = NULL;
 	if (allocate_row_col(row, col, book)) return 1;
 	prow = rowptr + row;
-	if (string_no >= sstsize) {
+	if (string_no < 0 || string_no >= sstsize) {
 	    pprintf(prn, _("String index too large"));
 	} else if (sst[string_no] != NULL) {	
 	    int len = strlen(sst[string_no]);
