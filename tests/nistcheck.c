@@ -794,7 +794,7 @@ int run_gretl_comparison (const char *datname,
 	int i;
 
 	model->ID = ++modelnum;
-	printmodel(model, dinfo, prn);
+	printmodel(model, dinfo, OPT_NONE, prn);
 
 	for (i=0; i<model->ncoeff; i++) {
 	    pprintf(prn, " gretl coefficient[%d] = %#.10g\n", i, 

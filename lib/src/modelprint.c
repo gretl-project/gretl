@@ -1323,6 +1323,7 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
  * printmodel:
  * @pmod: pointer to gretl model.
  * @pdinfo: data information struct.
+ * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
  * Print to @prn the estimates in @pmod plus associated statistics.
@@ -1330,12 +1331,13 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
  * Returns: 0 on success, 1 if some of the values to print were %NaN.
  */
 
-int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
+int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt, 
+		PRN *prn)
 {
     int gotnan = 0;
     int is_discrete = (pmod->ci == PROBIT || pmod->ci == LOGIT);
 
-    if (prn == NULL) return 0;
+    if (prn == NULL || (opt & OPT_Q)) return 0;
 
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);
@@ -1374,7 +1376,6 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	depvarstats(pmod, prn);
 	print_tobit_stats(pmod, prn);
 	print_middle_table_end(prn);
-	print_model_tests(pmod, prn);
 	goto close_format;
     }	
 
@@ -1523,15 +1524,26 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
     if (pmod->ci != ARMA && pmod->ci != NLS) {
 	pval_max_line(pmod, pdinfo, prn);
     }
-    
-    print_model_tests(pmod, prn);
 
  close_format:
+
+    if (pmod->ci != LAD && (opt & OPT_O)) {
+	outcovmx(pmod, pdinfo, prn);
+    }
+
+    if (pmod->ntests > 0) {
+	print_model_tests(pmod, prn);
+    }
+
     if (PLAIN_FORMAT(prn->format) && pmod->aux == AUX_ADF) {
 	print_aicetc(pmod, prn);
     }
     if (!PLAIN_FORMAT(prn->format)) {
 	model_format_end(prn);
+    }
+    
+    if (gotnan) {
+	pmod->errcode = E_NAN;
     }
 
     return gotnan;

@@ -24,17 +24,17 @@
 int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo, 
 			const int standalone, PRN *prn);
 
-int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     const int standalone, PRN *prn);
 
 int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 		      int c, PRN *prn);
 
-int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
+int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      gretlopt oflag);
 
-int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
+int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      gretlopt oflag);
 

@@ -1604,7 +1604,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 int re_estimate (char *model_spec, MODEL *tmpmod, 
 		 double ***pZ, DATAINFO *pdinfo) 
 {
-    CMD command;
+    CMD cmd;
     int err = 0, ignore = 0;
     double rho = 0;
     PRN prn;
@@ -1612,46 +1612,46 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
     prn.fp = NULL;
     prn.buf = NULL;
 
-    command.list = malloc(sizeof *command.list);
-    command.param = malloc(1);
-    if (command.list == NULL || command.param == NULL) 
+    cmd.list = malloc(sizeof *cmd.list);
+    cmd.param = malloc(1);
+    if (cmd.list == NULL || cmd.param == NULL) 
 	return 1;
 
-    getcmd(model_spec, pdinfo, &command, &ignore, pZ, NULL);
+    getcmd(model_spec, pdinfo, &cmd, &ignore, pZ, NULL);
 
     gretl_model_init(tmpmod);
 
-    switch(command.ci) {
+    switch(cmd.ci) {
     case AR:
-	*tmpmod = ar_func(command.list, atoi(command.param), pZ, 
-			  pdinfo, &prn);
+	*tmpmod = ar_func(cmd.list, atoi(cmd.param), pZ, 
+			  pdinfo, OPT_NONE, &prn);
 	break;
     case CORC:
     case HILU:
     case PWE:
-	err = hilu_corc(&rho, command.list, pZ, pdinfo, 
-			NULL, 1, command.ci, &prn);
+	err = hilu_corc(&rho, cmd.list, pZ, pdinfo, 
+			NULL, 1, cmd.ci, &prn);
 	if (!err) {
-	    *tmpmod = lsq(command.list, pZ, pdinfo, command.ci, 0, rho);
+	    *tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, 0, rho);
 	}
 	break;
     case HCCM:
-	*tmpmod = hccm_func(command.list, pZ, pdinfo);
+	*tmpmod = hccm_func(cmd.list, pZ, pdinfo);
 	break;
     case HSK:
-	*tmpmod = hsk_func(command.list, pZ, pdinfo);
+	*tmpmod = hsk_func(cmd.list, pZ, pdinfo);
 	break;
     case LOGIT:
     case PROBIT:
-	*tmpmod = logit_probit(command.list, pZ, pdinfo, command.ci);
+	*tmpmod = logit_probit(cmd.list, pZ, pdinfo, cmd.ci);
 	break;
     case TOBIT:
-	*tmpmod = tobit_model(command.list, pZ, pdinfo, NULL);
+	*tmpmod = tobit_model(cmd.list, pZ, pdinfo, NULL);
 	break;
     case OLS:
     case WLS:
     case POOLED:
-	*tmpmod = lsq(command.list, pZ, pdinfo, command.ci, command.opt, 0.0);
+	*tmpmod = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
 	break;
     case TSLS:
 	break;
@@ -1664,8 +1664,8 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 	clear_model(tmpmod);
     }
 
-    if (command.list) free(command.list);
-    if (command.param) free(command.param);
+    if (cmd.list) free(cmd.list);
+    if (cmd.param) free(cmd.param);
 
     return err;
 }

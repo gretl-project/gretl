@@ -98,7 +98,7 @@ static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
 
     if (bufopen(&prn)) return;
 
-    printmodel(pmod, pdinfo, prn);
+    printmodel(pmod, pdinfo, OPT_NONE, prn);
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
 

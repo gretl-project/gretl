@@ -54,8 +54,8 @@ extern char tramodir[];
 
 /* ../cli/common.c */
 static int data_option (gretlopt flag);
-static int loop_exec_line (LOOPSET *plp, const int round, 
-			   const int cmdnum, PRN *prn);
+static int loop_exec_line (LOOPSET *plp, int lround, 
+			   int cmdnum, PRN *prn);
 
 int gui_exec_line (char *line, 
 		   LOOPSET *plp, int *plstack, int *plrun, 
@@ -1102,10 +1102,10 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 
     if (selector_code(sr) == ADD) { 
         err = auxreg(cmd.list, orig, pmod, 
-                     &Z, datainfo, AUX_ADD, prn, NULL, 0);
+                     &Z, datainfo, AUX_ADD, NULL, OPT_NONE, prn);
     } else {
         err = omit_test(cmd.list, orig, pmod,
-			&Z, datainfo, prn, 0);
+			&Z, datainfo, OPT_NONE, prn);
     }
 
     if (err) {
@@ -1271,7 +1271,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	}
 	clear_model(models[0]);
 	err = auxreg(NULL, pmod, models[0],
-		     &Z, datainfo, aux, prn, &test, 0);
+		     &Z, datainfo, aux, &test, OPT_NONE, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    clear_model(models[0]);
@@ -1649,16 +1649,11 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     clear_model(models[1]);
     exchange_smpl(pmod, datainfo);
     *models[1] = arch(order, pmod->list, &Z, datainfo, 
-		      prn, &test);
-    if ((err = (models[1])->errcode)) 
+		      &test, cmd.opt, prn);
+    if ((err = (models[1])->errcode)) { 
 	errmsg(err, prn);
-    else {
-	if (add_test_to_model(&test, pmod) == 0) {
-	    print_test_to_window(&test, mydata->w);
-	}
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[1], datainfo, prn);
-	}
+    } else if (add_test_to_model(&test, pmod) == 0) {
+	print_test_to_window(&test, mydata->w);
     }
 
     clear_model(models[1]);
@@ -1690,9 +1685,7 @@ static int model_output (MODEL *pmod, PRN *prn)
 {
     if (model_error(pmod)) return 1;
 
-    if (printmodel(pmod, datainfo, prn)) {
-	pmod->errcode = E_NAN; /* some statistics were NAN */
-    }
+    printmodel(pmod, datainfo, OPT_NONE, prn);
 
     return 0;
 }
@@ -1786,6 +1779,8 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
 		MPOLS, mpvals);
 }
+
+#endif /* ENABLE_GMP */
 
 /* ........................................................... */
 
@@ -1881,8 +1876,6 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 }
 
 /* ........................................................... */
-
-#endif /* ENABLE_GMP */
 
 static int do_nls_genr (void)
 {
@@ -2059,7 +2052,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case AR:
 	*pmod = ar_func(cmd.list, atoi(cmd.param), 
-			&Z, datainfo, prn);
+			&Z, datainfo, OPT_NONE, prn);
 	err = model_error(pmod);
 	break;
 
@@ -2095,8 +2088,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	break;
 
     case GARCH:
-	*pmod = garch(cmd.list, &Z, datainfo, 
-		     ((cmd.opt & OPT_V)? prn : NULL), cmd.opt); 
+	*pmod = garch(cmd.list, &Z, datainfo, cmd.opt, prn); 
 	err = model_output(pmod, prn);
 	break;
 
@@ -2754,6 +2746,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
 }
+
 #endif /* HAVE_TRAMO || HAVE_X12A */
 
 /* ........................................................... */
@@ -4065,13 +4058,6 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-/* sub-sampled, not just by moving the starting or ending point */
-
-int dataset_is_restricted (void)
-{
-    return (fullZ != NULL);
-}
-
 static int dataset_is_subsampled (void)
 {
     int ret = 0;
@@ -4086,6 +4072,19 @@ static int dataset_is_subsampled (void)
     }
 
     return ret;
+}
+
+int dataset_is_restricted (void)
+{
+    /* Should we indicate "restricted" if t1 and t2 are reset, or only
+       if a sub-sampling mask is in place?  For now we'll go with the
+       mask option.
+    */
+#if 1
+    return (fullZ != NULL);
+#else
+    return dataset_is_subsampled();
+#endif
 }
 
 /* ........................................................... */
@@ -4867,10 +4866,10 @@ int gui_exec_line (char *line,
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
 	    err = auxreg(cmd.list, models[0], models[1], 
-			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
+			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, outprn);
 	else
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &Z, datainfo, outprn, cmd.opt);
+			    &Z, datainfo, cmd.opt, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1]);
@@ -4881,9 +4880,6 @@ int gui_exec_line (char *line,
 		swap_models(&models[0], &models[1]);
 	    }
 	    clear_model(models[1]);
-	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, outprn);
-	    }
 	}
 	break;	
 
@@ -4902,10 +4898,10 @@ int gui_exec_line (char *line,
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], 
-			 &Z, datainfo, AUX_ADD, outprn, NULL, cmd.opt);
+			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, outprn);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &Z, datainfo, outprn, cmd.opt);
+			    &Z, datainfo, cmd.opt, outprn);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -4916,9 +4912,6 @@ int gui_exec_line (char *line,
 		swap_models(&models[0], &models[1]);
 	    }
 	    clear_model(models[1]);
-	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, outprn);
-	    }
 	}
 	clear_model(&tmpmod);
 	break;
@@ -4926,13 +4919,10 @@ int gui_exec_line (char *line,
     case AR:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, outprn);
+			     datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
-	}
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn);
 	}
 	break;
 
@@ -4940,15 +4930,12 @@ int gui_exec_line (char *line,
 	order = atoi(cmd.param);
 	clear_model(models[1]);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  outprn, ptest);
+			  ptest, cmd.opt, outprn);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]);
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, outprn);
-	    }
 	} else if (rebuild) {
 	    add_test_to_model(ptest, models[0]);
 	}
@@ -4973,24 +4960,17 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}	
-	printmodel(models[0], datainfo, outprn);
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn);
-	}	
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case GARCH:
 	clear_model(models[0]);
-	*models[0] = garch(cmd.list, &Z, datainfo, 
-			   ((cmd.opt & OPT_V)? prn : NULL), cmd.opt);
+	*models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
 	}
-	printmodel(models[0], datainfo, outprn);
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn);
-	}	    
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case BXPLOT:
@@ -5048,11 +5028,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	if (printmodel(models[0], datainfo, outprn))
-	    (models[0])->errcode = E_NAN;
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn);
-	}
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case LAD:
@@ -5062,8 +5038,7 @@ int gui_exec_line (char *line,
             errmsg(err, prn);
             break;
         }
-        printmodel(models[0], datainfo, outprn);
-        /* if (cmd.opt) outcovmx(models[0], datainfo, prn); */
+        printmodel(models[0], datainfo, cmd.opt, outprn);
         break;
 
     case CORRGM:
@@ -5122,10 +5097,7 @@ int gui_exec_line (char *line,
 		break;
 	    }
 	    do_nls = 1;
-	    printmodel(models[0], datainfo, outprn);
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, outprn);
-	    }
+	    printmodel(models[0], datainfo, cmd.opt, outprn);
 	}
 	else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
@@ -5295,32 +5267,29 @@ int gui_exec_line (char *line,
 	break;
 
     case HAUSMAN:
-	if ((err = script_model_test(cmd.ci, 0, prn))) break;
-	err = hausman_test(models[0], &Z, datainfo, outprn);
+	err = script_model_test(cmd.ci, 0, prn);
+	if (!err) {
+	    err = hausman_test(models[0], &Z, datainfo, outprn);
+	}
 	break;
 
     case HCCM:
     case HSK:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	if (cmd.ci == HCCM)
+	if (cmd.ci == HCCM) {
 	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
-	else
+	} else {
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
+	}
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
 	}
-	if (printmodel(models[0], datainfo, outprn))
-	    (models[0])->errcode = E_NAN;
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn);
-	}
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case HELP:
-	if (strlen(cmd.param)) 
-	    help(cmd.param, paths.cmd_helpfile, prn);
-	else help(NULL, paths.cmd_helpfile, prn);
+	help(cmd.param, paths.cmd_helpfile, prn);
 	break;
 
     case IMPORT:
@@ -5410,14 +5379,14 @@ int gui_exec_line (char *line,
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_SQ, outprn, ptest, 0);
+			 &Z, datainfo, AUX_SQ, ptest, OPT_NONE, outprn);
 	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	}
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_LOG, outprn, ptest, 0);
+			 &Z, datainfo, AUX_LOG, ptest, OPT_NONE, outprn);
 	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	}
@@ -5454,11 +5423,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn);
 	    break;
 	}
-	if (printmodel(models[0], datainfo, outprn))
-	    (models[0])->errcode = E_NAN;
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
     case LOOP:
@@ -5522,14 +5487,7 @@ int gui_exec_line (char *line,
 	    errmsg(err, prn); 
 	    break;
 	}
-	if (!(cmd.opt & OPT_Q)) {
-	    if (printmodel(models[0], datainfo, outprn)) {
-		(models[0])->errcode = E_NAN;
-	    }
-	}
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;
 
 #ifdef ENABLE_GMP
@@ -5771,12 +5729,7 @@ int gui_exec_line (char *line,
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	if (printmodel(models[0], datainfo, outprn))
-	    (models[0])->errcode = E_NAN;
-	/* is this OK? */
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, outprn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, outprn);
 	break;		
 
     case VAR:

@@ -66,14 +66,14 @@ typedef struct {
 int auxreg (LIST addvars, 
 	    MODEL *orig, MODEL *new,
 	    double ***pZ, DATAINFO *pdinfo, 
-	    int aux_code, 
-	    PRN *prn, GRETLTEST *test, gretlopt opt);
+	    int aux_code, GRETLTEST *test, 
+	    gretlopt opt, PRN *prn);
 
 double robust_omit_F (const int *list, MODEL *pmod);
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn, gretlopt opt);
+	       gretlopt opt, PRN *prn);
 
 int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		PRN *prn, GRETLTEST *test);

@@ -83,8 +83,6 @@ enum model_selection_criteria {
 #define na(x) (fabs((x) + 999.0) < DBL_EPSILON)
 #define NADBL -999.0
 
-#define want_vcv(o) (o & OPT_O)
-
 /* functions follow */
  
 double date (int nt, int pd, const double sd0);

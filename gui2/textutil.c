@@ -657,11 +657,11 @@ void text_copy (gpointer data, guint how, GtkWidget *w)
 
 	if (how == COPY_RTF) {
 	    prn->format = GRETL_PRINT_FORMAT_RTF;
-	    printmodel(pmod, datainfo, prn);
+	    printmodel(pmod, datainfo, OPT_NONE, prn);
 	}
 	else if (how == COPY_LATEX) {
 	    prn->format = GRETL_PRINT_FORMAT_TEX;
-	    printmodel(pmod, datainfo, prn);
+	    printmodel(pmod, datainfo, OPT_NONE, prn);
 	}
 	else if (how == COPY_LATEX_EQUATION) {
 	    tex_print_equation(pmod, datainfo, 0, prn);

@@ -145,10 +145,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
 	if (plp->type == FOR_LOOP) {
 	    (models[0])->ID = lround + 1;
-	    printmodel(models[0], datainfo, prn); 
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }
+	    printmodel(models[0], datainfo, cmd.opt, prn); 
 	}
 	else if (plp->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */

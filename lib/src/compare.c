@@ -189,10 +189,10 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
     switch (orig->ci) {
 
     case AR:
-	rep = ar_func(list, pos, pZ, pdinfo, prn);
+	rep = ar_func(list, pos, pZ, pdinfo, lsqopt, prn);
 	break;
     case ARCH:
-	rep = arch(orig->order, list, pZ, pdinfo, prn, NULL);
+	rep = arch(orig->order, list, pZ, pdinfo, NULL, lsqopt, prn);
 	break;
     case LOGIT:
     case PROBIT:
@@ -243,9 +243,9 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @aux_code: code indicating what sort of aux regression to run.
- * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
- * @opt: can contain options flags (--quiet).
+ * @opt: can contain options flags (--quiet, --vcv).
+ * @prn: gretl printing struct.
  *
  * Run an auxiliary regression, in order to test a given set of added
  * variables, or to test for non-linearity (squares, logs).
@@ -255,7 +255,7 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
 int auxreg (LIST addvars, MODEL *orig, MODEL *new, 
 	    double ***pZ, DATAINFO *pdinfo, int aux_code, 
-	    PRN *prn, GRETLTEST *test, gretlopt opt)
+	    GRETLTEST *test, gretlopt opt, PRN *prn)
 {
     COMPARE add;  
     MODEL aux;
@@ -372,7 +372,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 		if (addvars == NULL) free(tmplist); 
 	    } else {
 		aux.aux = aux_code;
-		printmodel(&aux, pdinfo, prn);
+		printmodel(&aux, pdinfo, opt, prn);
 		trsq = aux.rsq * aux.nobs;
 
 		if (test != NULL) {
@@ -404,7 +404,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 
 	if (aux_code == AUX_ADD && !(opt & OPT_Q) && 
 	    new->ci != AR && new->ci != ARCH) {
-	    printmodel(new, pdinfo, prn);
+	    printmodel(new, pdinfo, opt, prn);
 	}
 
 	if (addvars != NULL) {
@@ -551,8 +551,8 @@ double robust_omit_F (const int *list, MODEL *pmod)
  * @new: pointer to new (modified) model.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: can contain option flags (--quiet, --vcv).
  * @prn: gretl printing struct.
- * @opt: can contain option flags (--quiet).
  *
  * Re-estimate a given model after removing a list of 
  * specified variables.
@@ -562,7 +562,7 @@ double robust_omit_F (const int *list, MODEL *pmod)
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn, gretlopt opt)
+	       gretlopt opt, PRN *prn)
 {
     COMPARE omit;
     int *tmplist;
@@ -613,7 +613,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	omit = add_or_omit_compare(orig, new, 0);
 
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
-	    printmodel(new, pdinfo, prn); 
+	    printmodel(new, pdinfo, opt, prn); 
 	}
 
 	difflist(orig->list, new->list, omitvars);
@@ -755,7 +755,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	aux.aux = AUX_RESET;
-	printmodel(&aux, pdinfo, prn);
+	printmodel(&aux, pdinfo, OPT_NONE, prn);
 	RF = ((pmod->ess - aux.ess) / 2) / (aux.ess / aux.dfd);
 
 	pprintf(prn, "\n%s: F = %f,\n", _("Test statistic"), RF);
@@ -886,7 +886,7 @@ static int autocorr_standard_errors (MODEL *pmod, double ***pZ,
     pmod->order = g;
 
     /* print original model, showing robust std errors */
-    printmodel(pmod, pdinfo, prn);  
+    printmodel(pmod, pdinfo, OPT_NONE, prn);  
 
     /* reset the original model data */
     pmod->sderr = tmp;
@@ -1004,7 +1004,7 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	aux.aux = AUX_AR;
 	aux.order = order;
-	printmodel(&aux, pdinfo, prn);
+	printmodel(&aux, pdinfo, OPT_NONE, prn);
 	trsq = aux.rsq * aux.nobs;
 	LMF = (aux.rsq/(1.0 - aux.rsq)) * 
 	    (aux.nobs - pmod->ncoeff - order)/order; 
@@ -1144,7 +1144,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    errmsg(err, prn);
 	} else {
 	    chow_mod.aux = AUX_CHOW;
-	    printmodel(&chow_mod, pdinfo, prn);
+	    printmodel(&chow_mod, pdinfo, OPT_NONE, prn);
 	    F = (pmod->ess - chow_mod.ess) * chow_mod.dfd / 
 		(chow_mod.ess * newvars);
 	    pprintf(prn, _("\nChow test for structural break at observation %s:\n"

@@ -1275,7 +1275,7 @@ static int real_var (int order, const LIST inlist,
 	} 
 
 	if (flags & VAR_PRINT_MODELS) {
-	    printmodel(pmod, pdinfo, prn);
+	    printmodel(pmod, pdinfo, OPT_NONE, prn);
 	}
 
 	if (flags & VAR_IMPULSE_RESPONSES) {
@@ -1292,7 +1292,7 @@ static int real_var (int order, const LIST inlist,
 	    jmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	    if (flags & VAR_PRINT_MODELS) {
 		jmod.aux = VAR;
-		printmodel(&jmod, pdinfo, prn);
+		printmodel(&jmod, pdinfo, OPT_NONE, prn);
 	    }
 	    resids->uhat[i + neqns] = jmod.uhat;
 	    jmod.uhat = NULL;
@@ -1460,7 +1460,7 @@ int coint (int order, const LIST list, double ***pZ,
     
     coint_model = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
     coint_model.aux = AUX_COINT;
-    printmodel(&coint_model, pdinfo, prn);
+    printmodel(&coint_model, pdinfo, OPT_NONE, prn);
 
     /* add residuals from cointegrating regression to data set */
     n = pdinfo->n;
@@ -1636,7 +1636,7 @@ int adf_test (int order, int varno, double ***pZ,
     if (adf_model.errcode)
 	return adf_model.errcode;
     adf_model.aux = AUX_ADF;
-    printmodel(&adf_model, pdinfo, prn);
+    printmodel(&adf_model, pdinfo, OPT_NONE, prn);
     essu = adf_model.ess;
     T = adf_model.nobs;
     clear_model(&adf_model);
@@ -2032,7 +2032,7 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
     k = 0;
     for (i=0; i<var->neqns; i++) {
 
-	printmodel(var->models[i], pdinfo, prn);
+	printmodel(var->models[i], pdinfo, OPT_NONE, prn);
 
 	if (var->Fvals == NULL) continue;
 

@@ -466,13 +466,13 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion.
  */
 
-int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo, 
+int tex_print_model (MODEL *pmod, const DATAINFO *pdinfo, 
 		     int standalone, PRN *prn)
 {
     if (standalone) prn->format = GRETL_PRINT_FORMAT_TEX_DOC;
     else prn->format = GRETL_PRINT_FORMAT_TEX;
     
-    return printmodel (pmod, pdinfo, prn);
+    return printmodel (pmod, pdinfo, OPT_NONE, prn);
 }
 
 /**
@@ -490,7 +490,7 @@ int tex_print_model (const MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
+int tabprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      gretlopt oflag)
 {
@@ -519,7 +519,7 @@ int tabprint (const MODEL *pmod, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int eqnprint (const MODEL *pmod, const DATAINFO *pdinfo,
+int eqnprint (MODEL *pmod, const DATAINFO *pdinfo,
 	      const PATHS *ppaths, char *texfile,
 	      gretlopt oflag)
 {

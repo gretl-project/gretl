@@ -721,10 +721,10 @@ void exec_line (char *line, PRN *prn)
 	clear_model(models[1]);
 	if (cmd.ci == ADD || cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, models[0], models[1], 
-			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
+			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, prn);
 	} else {
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &Z, datainfo, prn, cmd.opt);
+			    &Z, datainfo, cmd.opt, prn);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -736,9 +736,6 @@ void exec_line (char *line, PRN *prn)
 		swap_models(&models[0], &models[1]);
 	    } 
 	    clear_model(models[1]);
-	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }
 	}
 	break;	
 
@@ -757,10 +754,10 @@ void exec_line (char *line, PRN *prn)
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO) {
 	    err = auxreg(cmd.list, &tmpmod, models[1], 
-			 &Z, datainfo, AUX_ADD, prn, NULL, cmd.opt);
+			 &Z, datainfo, AUX_ADD, NULL, cmd.opt, prn);
 	} else {
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &Z, datainfo, prn, cmd.opt);
+			    &Z, datainfo, cmd.opt, prn);
 	}
 	if (err) {
 	    errmsg(err, prn);
@@ -771,9 +768,6 @@ void exec_line (char *line, PRN *prn)
 		swap_models(&models[0], &models[1]);
 	    }
 	    clear_model(models[1]);
-	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }
 	}
 	clear_model(&tmpmod);
 	break;
@@ -781,13 +775,10 @@ void exec_line (char *line, PRN *prn)
     case AR:
 	clear_model(models[0]);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, prn);
+			     datainfo, cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
-	}
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn);
 	}
 	break;
 
@@ -795,15 +786,12 @@ void exec_line (char *line, PRN *prn)
 	order = atoi(cmd.param);
 	clear_model(models[1]);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  prn, NULL);
+			  NULL, cmd.opt, prn);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    do_arch = 1;
 	    swap_models(&models[0], &models[1]); 
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }
 	}
 	clear_model(models[1]);
 	break;
@@ -825,24 +813,17 @@ void exec_line (char *line, PRN *prn)
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
-	    printmodel(models[0], datainfo, prn);
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }	    
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}	
 	break;
 
     case GARCH:
 	clear_model(models[0]);
-	*models[0] = garch(cmd.list, &Z, datainfo, 
-			  ((cmd.opt & OPT_V)? prn : NULL), cmd.opt);
+	*models[0] = garch(cmd.list, &Z, datainfo, cmd.opt, prn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	} else {	
-	    printmodel(models[0], datainfo, prn);
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }	    
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}	
 	break;
 
@@ -885,10 +866,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	printmodel(models[0], datainfo, prn); 
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn);
-	}
+	printmodel(models[0], datainfo, cmd.opt, prn); 
 	break;
 
     case LAD:
@@ -898,8 +876,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	printmodel(models[0], datainfo, prn);
-	/* if (cmd.opt) outcovmx(models[0], datainfo, prn); */
+	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case CORRGM:
@@ -956,10 +933,7 @@ void exec_line (char *line, PRN *prn)
 		break;
 	    }
 	    do_nls = 1;
-	    printmodel(models[0], datainfo, prn);
-	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, prn);
-	    }
+	    printmodel(models[0], datainfo, cmd.opt, prn);
 	}
 	else if (!strcmp(cmd.param, "restrict")) {
 	    err = gretl_restriction_set_finalize(rset, prn);
@@ -1122,8 +1096,10 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case HAUSMAN:
-	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	err = hausman_test(models[0], &Z, datainfo, prn);
+	err = model_test_start(cmd.ci, 0, prn);
+	if (!err) {
+	    err = hausman_test(models[0], &Z, datainfo, prn);
+	}
 	break;
 
     case HCCM:
@@ -1138,16 +1114,11 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	printmodel(models[0], datainfo, prn);
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn);
-	}
+	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case HELP:
-	if (strlen(cmd.param)) 
-	    help(cmd.param, paths.helpfile, prn);
-	else help(NULL, paths.helpfile, prn);
+	help(cmd.param, paths.helpfile, prn);
 	break;
 
     case IMPORT:
@@ -1243,7 +1214,7 @@ void exec_line (char *line, PRN *prn)
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    clear_model(models[1]);
 	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_SQ, prn, NULL, 0);
+			 &Z, datainfo, AUX_SQ, NULL, OPT_NONE, prn);
 	    clear_model(models[1]);
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_S) break;
@@ -1252,7 +1223,7 @@ void exec_line (char *line, PRN *prn)
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], 
-			 &Z, datainfo, AUX_LOG, prn, NULL, 0);
+			 &Z, datainfo, AUX_LOG, NULL, OPT_NONE, prn);
 	    clear_model(models[1]); 
 	    if (err) errmsg(err, prn);
 	    if (cmd.opt == OPT_L) break;
@@ -1290,10 +1261,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg(err, prn);
 	    break;
 	}
-	printmodel(models[0], datainfo, prn);
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case LOOP:
@@ -1353,12 +1321,7 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[0]);
 	    break;
 	}
-	if (!(cmd.opt & OPT_Q)) {
-	    printmodel(models[0], datainfo, prn);
-	}
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
 #ifdef ENABLE_GMP
@@ -1521,14 +1484,14 @@ void exec_line (char *line, PRN *prn)
 		datainfo = subinfo;
 		Z = subZ;
 	    }
-	} 
-	else if (strcmp(line, "smpl full") == 0) {
+	} else if (strcmp(line, "smpl full") == 0) {
 	    err = restore_full_sample(&subZ, &fullZ, &Z,
 				      &subinfo, &fullinfo, 
 				      &datainfo, OPT_NONE);
 	} else { 
 	    err = set_sample(line, datainfo);
 	}
+
 	if (err) {
 	    errmsg(err, prn);
 	} else {
@@ -1537,8 +1500,11 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case SQUARE:
-	if (cmd.opt) chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
-	else chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
+	if (cmd.opt) {
+	    chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
+	} else {
+	    chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
+	}
 	if (chk < 0) {
 	    pputs(prn, _("Failed to generate squares\n"));
 	    err = 1;
@@ -1634,10 +1600,7 @@ void exec_line (char *line, PRN *prn)
 	    errmsg((models[0])->errcode, prn);
 	    break;
 	}
-	printmodel(models[0], datainfo, prn);
-	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, prn); 
-	}
+	printmodel(models[0], datainfo, cmd.opt, prn);
 	break;
 
     case VAR:

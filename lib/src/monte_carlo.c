@@ -670,11 +670,10 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		pmod->sderr[j] *= sqrta;
 	    }
 
-	    if (!(opt & OPT_Q)) {
-		printmodel(pmod, pdinfo, prn);
-	    }
+	    printmodel(pmod, pdinfo, opt, prn);
 
-	    if (opt & OPT_O) {
+#if 0
+	    if (opt & OPT_O) { /* FIXME */
 		if (pmod->vcv) {
 		    int nc = pmod->ncoeff;
 		    int nt = nc * (nc + 1) / 2;
@@ -687,6 +686,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		}
 		outcovmx(pmod, pdinfo, prn);
 	    }
+#endif
 
 	    ploop->next_model += 1;	    
 	}

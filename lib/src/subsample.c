@@ -290,6 +290,24 @@ static int make_random_mask (double *mask, double *oldmask, int fulln, int subn)
     return cases;
 }
 
+static int maybe_add_subdum (double ***pZ, DATAINFO *pdinfo, int *subnum)
+{
+    int v = varindex(pdinfo, "subdum");
+
+    if (v == pdinfo->v) {
+	/* variable doesn't exist: create it */
+	if (dataset_add_vars(1, pZ, pdinfo)) {
+	    return 1;
+	}
+	strcpy(pdinfo->varname[v], "subdum");
+	strcpy(VARLABEL(pdinfo, v), _("automatic sub-sampling dummy"));
+    } 
+
+    *subnum = v;
+
+    return 0;
+}
+
 enum {
     SUBSAMPLE_UNKNOWN,
     SUBSAMPLE_DROP_MISSING,
@@ -415,15 +433,9 @@ int restrict_sample (const char *line,
     }
 
     /* create "hidden" dummy to record sub-sample, if need be */
-    subnum = varindex(oldinfo, "subdum");
-    if (subnum == oldinfo->v) {
-	/* variable doesn't exist: create it */
-	if (dataset_add_vars(1, oldZ, oldinfo)) {
-	    free(tmpdum);
-	    return E_ALLOC;
-	}
-	strcpy(oldinfo->varname[subnum], "subdum");
-	strcpy(VARLABEL(oldinfo, subnum), _("automatic sub-sampling dummy"));
+    if (maybe_add_subdum(oldZ, oldinfo, &subnum)) {
+	free(tmpdum);
+	return E_ALLOC;
     } 
 
     /* write the new mask into the "subdum" variable */
@@ -652,6 +664,22 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
 
 /* ........................................................... */
 
+static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
+{
+    int v, t;
+
+    if (maybe_add_subdum(pZ, pdinfo, &v))
+	return 1;
+
+    for (t=0; t<pdinfo->n; t++) {
+	(*pZ)[v][t] = (t < pdinfo->t1 || t > pdinfo->t2)? 0.0 : 1.0;
+    }
+
+    return 0;
+}
+
+/* ........................................................... */
+
 int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
 			 DATAINFO **datainfo, gretlopt opt)
@@ -660,13 +688,21 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     *gretl_errmsg = '\0';
 
-    /* simple case: merely a change of start or end of sample */
+    /* Simple case: merely a change of start or end of sample.
+       But if restrictions are supposed to be cumulated, write a
+       mask to represent the current t1, t2 settings...  Or not?
+       For now we'll not do this, or in other words we implicitly
+       set t1 to 0 and t2 to n in all cases. 
+    */
     if (*subZ == NULL) {
-	if (1 || !(opt && OPT_C)) { /* hmm, not sure about this */
-	    (*datainfo)->t1 = 0;
-	    (*datainfo)->t2 = (*datainfo)->n - 1;
+	if (0 && (opt & OPT_C)) { /* note the "0" */
+	    err = make_smpl_mask(Z, *datainfo);
 	}
-        return 0;
+
+	(*datainfo)->t1 = 0;
+	(*datainfo)->t2 = (*datainfo)->n - 1;
+
+        return err;
     }
 
     if (fullinfo == NULL || *fullinfo == NULL) return 1;

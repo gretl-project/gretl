@@ -1536,7 +1536,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
 #if 0
-	printmodel(&corc_model, pdinfo, prn);
+	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
 #endif
 	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
@@ -2337,7 +2337,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	white.aux = AUX_WHITE;
-	printmodel(&white, pdinfo, prn);
+	printmodel(&white, pdinfo, OPT_NONE, prn);
 
 	if (test != NULL) {
 	    gretl_test_init(test);
@@ -2368,6 +2368,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  * and specification of dependent and independent variables.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: may contain OPT_O to print covariance matrix.
  * @prn: gretl printing struct.
  *
  * Estimate the model given in @list using the generalized 
@@ -2377,7 +2378,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
  */
 
 MODEL ar_func (LIST list, int pos, double ***pZ, 
-	       DATAINFO *pdinfo, PRN *prn)
+	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
     int i, j, t, t1, t2, p, vc, yno, ryno = 0, iter = 0;
@@ -2423,9 +2424,12 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
-	if (err) ar.errcode = err;
-	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_NONE, xx);
-	printmodel(&ar, pdinfo, prn); 
+	if (err) {
+	    ar.errcode = err;
+	} else {
+	    ar = lsq(reglist, pZ, pdinfo, CORC, OPT_NONE, xx);
+	}
+	printmodel(&ar, pdinfo, opt, prn); 
 	free(arlist);
 	free(reglist);
 	free(reglist2);
@@ -2503,17 +2507,29 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	clear_model(&ar);
 	ar = lsq(reglist2, pZ, pdinfo, OLS, OPT_A, 0.0);
 
-        if (iter > 1) diff = 100 * (ar.ess - ess)/ess;
-        if (diff < 0.0) diff = -diff;
+        if (iter > 1) {
+	    diff = 100 * (ar.ess - ess)/ess;
+	}
+        if (diff < 0.0) {
+	    diff = -diff;
+	}
+
 	ess = ar.ess;
 	pprintf(prn, "%16c%3d %20f ", ' ', iter, ess);
-	if (iter > 1) pprintf(prn, "%13.3f\n", diff);
-	else pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 15), 
+
+	if (iter > 1) {
+	    pprintf(prn, "%13.3f\n", diff);
+	} else {
+	    pprintf(prn, "%*s\n", UTF_WIDTH(_("undefined"), 15), 
 		     _("undefined")); 
+	}
+
 	if (iter == 20) break;
     } /* end "ess changing" loop */
 
-    for (i=0; i<=reglist[0]; i++) ar.list[i] = reglist[i];
+    for (i=0; i<=reglist[0]; i++) {
+	ar.list[i] = reglist[i];
+    }
     i = gretl_hasconst(reglist);
     if (i > 1) ar.ifc = 1;
     if (ar.ifc) ar.dfn -= 1;
@@ -2569,7 +2585,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     }
 
     set_model_id(&ar);
-    printmodel(&ar, pdinfo, prn);    
+    printmodel(&ar, pdinfo, opt, prn);    
 
     free(arlist);
     clear_model(&rhomod);
@@ -2794,8 +2810,9 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
  * @list: dependent variable plus list of regressors.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @prn: gretl printing struct.
  * @test: hypothesis test results struct.
+ * @opt: mat contain OPT_O to print covariance matrix.
+ * @prn: gretl printing struct.
  *
  * Estimate the model given in @list via OLS, and test for Auto-
  * Regressive Conditional Heteroskedasticity.  If the latter is
@@ -2806,7 +2823,7 @@ static double wt_dummy_stddev (const MODEL *pmod, double **Z)
  */
 
 MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo, 
-	    PRN *prn, GRETLTEST *test)
+	    GRETLTEST *test, gretlopt opt, PRN *prn)
 {
     MODEL archmod;
     int *wlist = NULL, *arlist = NULL;
@@ -2872,7 +2889,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 	/* print results */
 	archmod.aux = AUX_ARCH;
 	archmod.order = order;
-	printmodel(&archmod, pdinfo, prn);
+	printmodel(&archmod, pdinfo, OPT_NONE, prn);
 	pprintf(prn, _("No of obs. = %d, unadjusted R^2 = %f\n"),
 		archmod.nobs, archmod.rsq);
 	LM = archmod.nobs * archmod.rsq;
@@ -2920,7 +2937,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
 		archmod.ci = ARCH;
 		archmod.order = order;
-		printmodel(&archmod, pdinfo, prn);
+		printmodel(&archmod, pdinfo, opt, prn);
 	    }
 	}
     }
@@ -3138,19 +3155,20 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
  * @list: dependent variable plus arch and garch orders
  * @pZ: pointer to data matrix
  * @pdinfo: information on the data set
- * @PRN: for printing details of iterations (or NULL)
  * @opt: can specify robust standard errors and VCV
+ * @prn: for printing details of iterations (or NULL)
  *
  * Calculate GARCH estimates.
  * 
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
-	     gretlopt opt)
+MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+	     PRN *prn)
 {
     MODEL gmod;
     void *handle;
+    PRN *myprn;
     MODEL (*garch_model) (int *, double ***, DATAINFO *, PRN *,
 			  gretlopt);
 
@@ -3164,7 +3182,13 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	return gmod;
     }
 
-    gmod = (*garch_model) (list, pZ, pdinfo, prn, opt);
+    if (opt & OPT_V) {
+	myprn = prn;
+    } else {
+	myprn = NULL;
+    }
+
+    gmod = (*garch_model) (list, pZ, pdinfo, myprn, opt);
 
     close_plugin(handle);
 

@@ -1080,7 +1080,7 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
     char line[MAXLEN], cmdcopy[9];
     int i, ok;
 
-    if (cmd == NULL) {
+    if (cmd == NULL || *cmd == '\0') {
 	pputs(prn, _("\nValid gretl commands are:\n"));
 	for (i=1; i<NC; i++) {
 	    pprintf(prn, "%-9s", gretl_command_word(i));

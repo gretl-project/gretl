@@ -496,7 +496,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     }
 
     for (i=0; i<m; i++) {
-	printmodel(models[i], pdinfo, prn);
+	printmodel(models[i], pdinfo, OPT_NONE, prn);
 	add_results_to_dataset(sys, models[i], i, &j, *pZ, pdinfo, systype);
 	if (systype == THREESLS || systype == FIML) {
 	    tsls_free_data(models[i]);

@@ -46,8 +46,8 @@ MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo,
 MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn);
 
-MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
-	     gretlopt opt);
+MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, gretlopt opt,
+	     PRN *prn);
 
 const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i);
 
@@ -69,11 +69,11 @@ int whites_test (MODEL *pmod,
 
 MODEL ar_func (LIST list, int pos, 
 	       double ***pZ, DATAINFO *pdinfo, 
-	       PRN *prn);
+	       gretlopt opt, PRN *prn);
 
 MODEL arch (int order, LIST list, 
 	    double ***pZ, DATAINFO *pdinfo, 
-	    PRN *prn, GRETLTEST *test);
+	    GRETLTEST *test, gretlopt opt, PRN *prn);
 
 int makevcv (MODEL *pmod);
 
