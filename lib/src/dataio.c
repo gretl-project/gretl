@@ -236,9 +236,11 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(9);
 	if (pdinfo->varname[i] == NULL) return 1;
+
 	pdinfo->varname[i][0] = '\0';
 	pdinfo->varinfo[i] = malloc(sizeof **pdinfo->varinfo);
 	if (pdinfo->varinfo[i] == NULL) return 1;
+
 	gretl_varinfo_init(pdinfo->varinfo[i]);
 	pdinfo->vector[i] = 1;
     }

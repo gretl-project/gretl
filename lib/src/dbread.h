@@ -34,6 +34,8 @@ enum compaction_methods {
     COMPACT_EOP
 }; 
 
+typedef float dbnumber;
+
 typedef struct _db_table_row db_table_row;
 typedef struct _db_table db_table;
 
@@ -62,12 +64,15 @@ struct _SERIESINFO {
     int undated;
 };
 
+int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z);
+
 db_table *read_rats_db (FILE *fp);
 
 int get_rats_data_by_series_number (const char *fname, 
 				    int series_number,
 				    SERIESINFO *sinfo, 
-				    double ***pZ);
+				    double **Z);
 
 int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 		  int method);

@@ -86,6 +86,35 @@ static int cli_add_db_data (double **dbZ, SERIESINFO *sinfo,
 			    double ***pZ, DATAINFO *pdinfo,
 			    int compact_method);
 
+/* ........................................................... */
+
+int get_native_db_data (const char *dbbase, SERIESINFO *sinfo, 
+			double **Z)
+{
+    char dbbin[MAXLEN], numstr[16];
+    FILE *fp;
+    int t, n = sinfo->nobs;
+    dbnumber val;
+
+    strcpy(dbbin, dbbase);
+    if (strstr(dbbin, ".bin") == NULL) {
+	strcat(dbbin, ".bin");
+    }
+
+    fp = fopen(dbbin, "rb");
+    if (fp == NULL) return 1;
+    
+    fseek(fp, (long) sinfo->offset, SEEK_SET);
+    for (t=0; t<n; t++) {
+	fread(&val, sizeof val, 1, fp);
+	sprintf(numstr, "%g", val);
+	Z[1][t] = atof(numstr);
+    }
+
+    fclose(fp);
+
+    return 0;
+}
 
 /* ........................................................... */
 
@@ -441,7 +470,7 @@ static int get_rats_series_offset_by_number (FILE *fp,
 /* ........................................................... */
 
 static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp, 
-			    double ***pZ)
+			    double **Z)
 /* retrieve the actual data values from the data blocks */
 {
     RATSData rdata;
@@ -462,7 +491,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 		val = NADBL;
 		miss = 1;
 	    }
-	    (*pZ)[1][t] = val;
+	    Z[1][t] = val;
 	    t++;
 	}
     }
@@ -488,7 +517,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 int get_rats_data_by_series_number (const char *fname, 
 				    int series_number,
 				    SERIESINFO *sinfo, 
-				    double ***pZ)
+				    double **Z)
 /* series are numbered from 1 for this function.
    We need to know the specific filename. */
 {
@@ -507,7 +536,7 @@ int get_rats_data_by_series_number (const char *fname,
     
     fseek(fp, (offset - 1) * 256 + 12, SEEK_SET); 
     fread(&first_data, sizeof(RECNUM), 1, fp);
-    if (get_rats_series(first_data, sinfo, fp, pZ)) {
+    if (get_rats_series(first_data, sinfo, fp, Z)) {
 	ret = DB_MISSING_DATA;
     }
 
@@ -577,7 +606,7 @@ get_rats_series_info_by_name (const char *fname,
 static int 
 get_rats_data_by_offset (const char *fname, 
 			 SERIESINFO *sinfo,
-			 double ***pZ)
+			 double **Z)
 {
     FILE *fp;
     int ret = DB_OK;
@@ -585,7 +614,7 @@ get_rats_data_by_offset (const char *fname,
     fp = fopen(fname, "rb");
     if (fp == NULL) return DB_NOT_FOUND;
 
-    if (get_rats_series(sinfo->offset, sinfo, fp, pZ)) {
+    if (get_rats_series(sinfo->offset, sinfo, fp, Z)) {
 	ret = DB_MISSING_DATA;
     }
 
@@ -895,7 +924,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 	return 1;
     }
 
-    err = get_rats_data_by_offset (db_name, &sinfo, &dbZ);
+    err = get_rats_data_by_offset (db_name, &sinfo, dbZ);
 
     if (!err) {
 	err = cli_add_db_data(dbZ, &sinfo, pZ, pdinfo, comp_method);

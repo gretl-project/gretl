@@ -35,8 +35,6 @@
 
 extern GdkColor gray;
 
-typedef float dbnumber;
-
 /* private functions */
 static GtkWidget *database_window (windata_t *ddata);
 static int populate_series_list (windata_t *dbwin, PATHS *ppaths);
@@ -69,33 +67,6 @@ static void set_time_series (DATAINFO *pdinfo)
 	pdinfo->time_series = TIME_SERIES;
 }
 
-/* ........................................................... */
-
-static int get_db_data (const char *dbbase, SERIESINFO *sinfo, double ***pZ)
-{
-    char dbbin[MAXLEN], numstr[16];
-    FILE *fp;
-    int t, n = sinfo->nobs;
-    dbnumber val;
-
-    strcpy(dbbin, dbbase);
-    strcat(dbbin, ".bin");
-    fp = fopen(dbbin, "rb");
-    if (fp == NULL) return 1;
-    
-    fseek(fp, (long) sinfo->offset, SEEK_SET);
-
-    for (t=0; t<n; t++) {
-	fread(&val, sizeof(dbnumber), 1, fp);
-	sprintf(numstr, "%g", val);
-	(*pZ)[1][t] = atof(numstr);
-    }
-
-    fclose(fp);
-
-    return DB_OK;
-}
-
 #if G_BYTE_ORDER == G_BIG_ENDIAN
 typedef struct {
     long frac;
@@ -115,7 +86,7 @@ float retrieve_float (netfloat nf)
 /* ........................................................... */
 
 static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo, 
-			       double ***pZ)
+			       double **Z)
 {
     char *getbuf, errbuf[80], numstr[16];
     char *dbbase = dbwin->fname;
@@ -165,7 +136,7 @@ static int get_remote_db_data (windata_t *dbwin, SERIESINFO *sinfo,
 	offset += sizeof(dbnumber);
 #endif
         sprintf(numstr, "%g", val); 
-        (*pZ)[1][t] = atof(numstr);
+        Z[1][t] = atof(numstr);
     }
 
     update_statusline(dbwin, "OK");
@@ -315,13 +286,13 @@ static void add_dbdata (windata_t *dbwin, double ***dbZ, SERIESINFO *sinfo)
 	start_new_Z(&Z, datainfo, 0);
 
 	if (dbwin->role == NATIVE_SERIES) {
-	    err = get_db_data(dbwin->fname, sinfo, &Z);
+	    err = get_native_db_data(dbwin->fname, sinfo, Z);
 	} else if (dbwin->role == REMOTE_SERIES) {
-	    err = get_remote_db_data(dbwin, sinfo, &Z);
+	    err = get_remote_db_data(dbwin, sinfo, Z);
 	} else if (dbwin->role == RATS_SERIES) {
 	    err = get_rats_data_by_series_number(dbwin->fname, 
 						 dbwin->active_var + 1,
-						 sinfo, &Z);
+						 sinfo, Z);
 	}
 
 	if (err == DB_NOT_FOUND) {
@@ -393,13 +364,13 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     set_time_series(dbdinfo);
 
     if (dbcode == NATIVE_SERIES) {
-	err = get_db_data(dbwin->fname, sinfo, &dbZ);
+	err = get_native_db_data(dbwin->fname, sinfo, dbZ);
     } else if (dbcode == REMOTE_SERIES) { 
-	err = get_remote_db_data(dbwin, sinfo, &dbZ);
+	err = get_remote_db_data(dbwin, sinfo, dbZ);
     } else if (dbcode == RATS_SERIES) {
 	err = get_rats_data_by_series_number(dbwin->fname, 
 					     dbwin->active_var + 1, 
-					     sinfo, &dbZ);
+					     sinfo, dbZ);
     }
 
     if (dbcode == RATS_SERIES && err == DB_MISSING_DATA) {
