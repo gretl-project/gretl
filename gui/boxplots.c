@@ -59,7 +59,7 @@ typedef struct {
 } PLOTGROUP;
 
 double headroom = 0.24;
-double scalepos = 60.0;
+double scalepos = 75.0; /* was 60 */
 char boxfont[64] = "Helvetica";
 int boxfontsize = 12;
 
@@ -378,13 +378,13 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     
     /* mark max and min values on scale */
     sprintf(numstr, "%.4g", grp->gmax);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, top, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, top, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", grp->gmin);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, bottom, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, bottom, 
 		GTK_JUSTIFY_RIGHT);
     sprintf(numstr, "%.4g", (grp->gmax + grp->gmin) / 2.0);
-    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 10, 
+    setup_text (grp->area, grp->pixmap, gc, pc, numstr, scalepos - 8, 
 		top + (bottom - top) / 2.0, GTK_JUSTIFY_RIGHT);
 
     /* special on-screen string for notched plots */
