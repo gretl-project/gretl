@@ -27,9 +27,7 @@
 extern const char *version_string;
 #endif
 
-#ifndef OLD_DIALOGS
-# include "fancy_dialog.h"
-#endif
+#include "selector.h"
 
 extern GtkWidget *active_edit_id;
 extern GtkWidget *active_edit_name;
@@ -323,8 +321,6 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifndef OLD_DIALOGS
-
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 {
     gchar title[26];
@@ -347,54 +343,8 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 	break;
 
     }
-    new_edit_dialog (title, _("Apply"), add_logs_etc, add_code);    
+    selector (title, _("Apply"), add_logs_etc, add_code);    
 }
-
-#else
-
-void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
-{
-    gchar *liststr, number[4], title[26], tmp[64];
-    gint i, len = orig_vars * 3;
-    
-    if ((liststr = mymalloc(len)) == NULL)
-	return;
-    strcpy(liststr, "1 ");
-    for (i=2; i<orig_vars && strlen(liststr) < len - 5; i++) {
-	sprintf(number, "%d ", i);
-	strcat(liststr, number);
-    }
-
-    switch (add_code) {
-    case LOGS:
-	strcpy(tmp, _("Enter ID numbers of variables for logging"));
-	strcpy(title, _("gretl: generate logs"));
-	break;
-    case LAGS:
-	strcpy(tmp, _("Enter ID numbers of variables for lagging"));
-	strcpy(title, _("gretl: generate lags"));
-	break;	
-    case SQUARE:
-	strcpy(tmp, _("Enter ID numbers of variables to square"));
-	strcpy(title, _("gretl: generate squares"));
-	break;
-    case DIFF:
-	strcpy(tmp, _("Enter ID numbers of vars to difference"));
-	strcpy(title, _("gretl: generate differences"));
-	break;
-    case LDIFF:
-	strcpy(tmp, _("Enter ID numbers of vars to log-difference"));
-	strcpy(title, _("gretl: log differences"));
-	break;
-
-    }
-    edit_dialog (title, tmp, liststr, 1,
-		 _("Apply"), add_logs_etc, NULL, 
-		 _(" Cancel "), NULL, NULL, add_code, 1);    
-    free(liststr);
-}
-
-#endif /* OLD_DIALOGS */
 
 /* ........................................................... */
 

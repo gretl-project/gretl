@@ -28,9 +28,7 @@
 #endif
 
 #include "htmlprint.h"
-#ifndef OLD_DIALOGS
-# include "fancy_dialog.h"
-#endif
+#include "selector.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -1715,21 +1713,12 @@ void do_model (GtkWidget *widget, gpointer p)
     int order, err = 0, action;
     double rho;
     MODEL *pmod = NULL;
-#ifdef OLD_DIALOGS
-    dialog_t *ddata = (dialog_t *) p;
-#else
-    new_dialog *ddata = (new_dialog *) p;  
-#endif
+    selector *ddata = (selector *) p;  
 
     action = ddata->code;
-
     strcpy(estimator, commands[action]);
 
-#ifdef OLD_DIALOGS
-    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-#else
     edttext = ddata->cmdlist;    
-#endif
     if (*edttext == '\0') return;
 
     clear(line, MAXLEN);
@@ -2372,17 +2361,9 @@ void add_logs_etc (GtkWidget *widget, gpointer p)
 {
     gint err = 0;
     char *edttext, msg[80];
-#ifdef OLD_DIALOGS
-    dialog_t *ddata = (dialog_t *) p;
-#else
-    new_dialog *ddata = (new_dialog *) p;
-#endif
+    selector *ddata = (selector *) p;
 
-#ifdef OLD_DIALOGS
-    edttext = gtk_entry_get_text(GTK_ENTRY (ddata->edit));
-#else
     edttext = ddata->cmdlist;
-#endif
     if (*edttext == '\0') return;
 
     line[0] = '\0';

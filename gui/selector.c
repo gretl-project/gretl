@@ -17,9 +17,7 @@
  *
  */
 
-/* fancy_dialog.c for gretl */
-
-#ifndef OLD_DIALOGS
+/* selector.c for gretl */
 
 #include "gretl.h"
 #include "fancy_dialog.h"
@@ -28,7 +26,7 @@ static int default_var;
 static int *xlist;
 static int *instlist;
 
-static void set_weight_var (gint i, new_dialog *nd)
+static void set_weight_var (gint i, selector *nd)
 {
     gchar *vnum, *vname;
 
@@ -39,7 +37,7 @@ static void set_weight_var (gint i, new_dialog *nd)
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
-static void select_weight_callback (GtkWidget *w, new_dialog *nd)
+static void select_weight_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->varlist)->selection;
 
@@ -49,7 +47,7 @@ static void select_weight_callback (GtkWidget *w, new_dialog *nd)
     }
 }
 
-static void set_dependent_var (gint i, new_dialog *nd)
+static void set_dependent_var (gint i, selector *nd)
 {
     gchar *vnum, *vname;
 
@@ -60,7 +58,7 @@ static void set_dependent_var (gint i, new_dialog *nd)
 			     GINT_TO_POINTER(atoi(vnum)));
 }
 
-static void select_dependent_callback (GtkWidget *w, new_dialog *nd)
+static void select_dependent_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->varlist)->selection;
 
@@ -70,7 +68,7 @@ static void select_dependent_callback (GtkWidget *w, new_dialog *nd)
     }
 }
 
-static void add_instrument (gint i, new_dialog *nd)
+static void add_instrument (gint i, selector *nd)
 {
     gchar *row[2];
     gint j, rows = GTK_CLIST(nd->extra)->rows;
@@ -92,7 +90,7 @@ static void add_instrument (gint i, new_dialog *nd)
     }
 }
 
-static void add_instrument_callback (GtkWidget *w, new_dialog *nd)
+static void add_instrument_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->varlist)->selection;
 
@@ -100,7 +98,7 @@ static void add_instrument_callback (GtkWidget *w, new_dialog *nd)
 	g_list_foreach(mylist, (GFunc) add_instrument, nd);
 }
 
-static void add_independent_var (gint i, new_dialog *nd)
+static void add_independent_var (gint i, selector *nd)
 {
     gchar *row[2];
     gint j, rows = GTK_CLIST(nd->rightvars)->rows;
@@ -122,7 +120,7 @@ static void add_independent_var (gint i, new_dialog *nd)
     }
 }
 
-static void add_independent_callback (GtkWidget *w, new_dialog *nd)
+static void add_independent_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->varlist)->selection;
 
@@ -130,12 +128,12 @@ static void add_independent_callback (GtkWidget *w, new_dialog *nd)
 	g_list_foreach(mylist, (GFunc) add_independent_var, nd);
 }
 
-static void remove_independent_var (gint i, new_dialog *nd)
+static void remove_independent_var (gint i, selector *nd)
 {
     gtk_clist_remove(GTK_CLIST(nd->rightvars), i);
 }
 
-static void remove_independent_callback (GtkWidget *w, new_dialog *nd)
+static void remove_independent_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->rightvars)->selection;
 
@@ -143,12 +141,12 @@ static void remove_independent_callback (GtkWidget *w, new_dialog *nd)
 	g_list_foreach(mylist, (GFunc) remove_independent_var, nd);
 }
 
-static void remove_instrument (gint i, new_dialog *nd)
+static void remove_instrument (gint i, selector *nd)
 {
     gtk_clist_remove(GTK_CLIST(nd->extra), i);
 }
 
-static void remove_instrument_callback (GtkWidget *w, new_dialog *nd)
+static void remove_instrument_callback (GtkWidget *w, selector *nd)
 {
     GList *mylist = GTK_CLIST(nd->extra)->selection;
 
@@ -156,7 +154,7 @@ static void remove_instrument_callback (GtkWidget *w, new_dialog *nd)
 	g_list_foreach(mylist, (GFunc) remove_instrument, nd);
 }
 
-static void clear_vars (GtkWidget *w, new_dialog *nd)
+static void clear_vars (GtkWidget *w, selector *nd)
 {
     gchar *row[2];
 
@@ -171,7 +169,7 @@ static void clear_vars (GtkWidget *w, new_dialog *nd)
     }
 }
 
-static void construct_cmdlist (GtkWidget *w, new_dialog *nd)
+static void construct_cmdlist (GtkWidget *w, selector *nd)
 {
     gint i = 0, rows = GTK_CLIST(nd->rightvars)->rows;
     gchar numstr[6];
@@ -250,7 +248,7 @@ static void construct_cmdlist (GtkWidget *w, new_dialog *nd)
 	gtk_signal_emit_stop_by_name(GTK_OBJECT(w), "clicked");
 }
 
-static void destroy_new_dialog (GtkWidget *w, new_dialog *nd) 
+static void destroy_selector (GtkWidget *w, selector *nd) 
 {
     gtk_main_quit();
     fprintf(stderr, "done gtk_main_quit(), now freeing nd\n");
@@ -325,7 +323,7 @@ static char *extra_string (int cmdnum)
 
 static void 
 dialog_select_row (GtkCList *clist, gint row, gint column, 
-		   GdkEventButton *event, new_dialog *nd) 
+		   GdkEventButton *event, selector *nd) 
 {
     
     if (event != NULL && event->type == GDK_2BUTTON_PRESS) {
@@ -335,7 +333,7 @@ dialog_select_row (GtkCList *clist, gint row, gint column,
 
 static gint
 remove_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    new_dialog *nd)
+		    selector *nd)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
@@ -350,7 +348,7 @@ remove_right_click (GtkWidget *widget, GdkEventButton *event,
 
 static gint
 dialog_right_click (GtkWidget *widget, GdkEventButton *event, 
-		    new_dialog *nd)
+		    selector *nd)
 {
     GdkWindow *topwin;
     GdkModifierType mods;
@@ -363,7 +361,7 @@ dialog_right_click (GtkWidget *widget, GdkEventButton *event,
     return TRUE;
 }
 
-static void build_depvar_section (new_dialog *nd, GtkWidget *right_vbox)
+static void build_depvar_section (selector *nd, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *depvar_hbox;
 
@@ -405,7 +403,7 @@ static void build_depvar_section (new_dialog *nd, GtkWidget *right_vbox)
     gtk_widget_show(tmp);
 }
 
-static void lag_order_spin (new_dialog *nd, GtkWidget *right_vbox)
+static void lag_order_spin (selector *nd, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
     GtkObject *adj;
@@ -424,7 +422,7 @@ static void lag_order_spin (new_dialog *nd, GtkWidget *right_vbox)
     gtk_widget_show(midhbox); 
 }
 
-static void weight_box (new_dialog *nd, GtkWidget *right_vbox)
+static void weight_box (selector *nd, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox;
 
@@ -443,7 +441,7 @@ static void weight_box (new_dialog *nd, GtkWidget *right_vbox)
     gtk_widget_show(midhbox); 
 }
 
-static void tsls_box (new_dialog *nd, GtkWidget *right_vbox)
+static void tsls_box (selector *nd, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *midhbox, *button_vbox;
     GtkWidget *scroller;
@@ -508,7 +506,7 @@ static void tsls_box (new_dialog *nd, GtkWidget *right_vbox)
     gtk_widget_show(midhbox); 
 }
 
-static void build_mid_section (new_dialog *nd, GtkWidget *right_vbox)
+static void build_mid_section (selector *nd, GtkWidget *right_vbox)
 {
     GtkWidget *tmp;
     char *str = extra_string(nd->code);
@@ -538,7 +536,7 @@ static void build_mid_section (new_dialog *nd, GtkWidget *right_vbox)
     gtk_widget_show(tmp);
 }
 
-static void new_dialog_init (new_dialog *nd)
+static void selector_init (selector *nd)
 {
     nd->dlg = NULL;
     nd->varlist = NULL;
@@ -550,19 +548,19 @@ static void new_dialog_init (new_dialog *nd)
     nd->cmdlist = NULL;
 }
 
-void new_edit_dialog (const char *title, const char *oktxt, 
-		      void (*okfunc)(), guint cmdcode) 
+void selection_dialog (const char *title, const char *oktxt, 
+		       void (*okfunc)(), guint cmdcode) 
 {
     GtkWidget *right_vbox, *tmp;
     GtkWidget *big_hbox, *indepvar_hbox;
     GtkWidget *button_vbox, *scroller;
-    new_dialog *nd;
+    selector *nd;
     char topstr[48];
     int i;
 
     nd = mymalloc(sizeof *nd);
     if (nd == NULL) return;
-    new_dialog_init(nd);
+    selector_init(nd);
 
     nd->code = cmdcode;
 
@@ -570,7 +568,7 @@ void new_edit_dialog (const char *title, const char *oktxt,
     gtk_window_set_title(GTK_WINDOW(nd->dlg), title);
 
     gtk_signal_connect (GTK_OBJECT (nd->dlg), "destroy", 
-			GTK_SIGNAL_FUNC (destroy_new_dialog), 
+			GTK_SIGNAL_FUNC (destroy_selector), 
 			nd);    
 
     gtk_container_border_width 
@@ -767,5 +765,3 @@ void new_edit_dialog (const char *title, const char *oktxt,
     gtk_widget_show(nd->dlg);
     gtk_main();
 }
-
-#endif /* OLD_DIALOGS */

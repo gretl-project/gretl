@@ -248,76 +248,11 @@ void model_stat_callback (gpointer data, guint which, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifndef OLD_DIALOGS
-
 void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
 {
-    new_edit_dialog (_("gretl: specify model"), _("Estimate"), 
-		     do_model, model_code);
+    selector (_("gretl: specify model"), _("Estimate"), 
+	      do_model, model_code);
 }
-
-#else
-
-void model_callback (gpointer data, guint model_code, GtkWidget *widget) 
-{
-    char tempstr[MAXLEN], modelstr[MAXLEN], listnum[6];
-    int i, l0 = 0, *oldlist = NULL;
-
-    if (default_list != NULL) {
-	copylist(&oldlist, default_list);
-	l0 = oldlist[0];
-    }
-
-    switch (model_code) {
-    case OLS:
-    case HCCM:
-    case HSK:
-    case CORC:
-    case HILU:
-    case LOGIT:
-    case PROBIT:
-    case POOLED:
-	sprintf(tempstr, _("Enter specification for %s model:\n"
-		"(depvar indepvars)"), commands[model_code]);
-	break;
-    case WLS:
-	strcpy(tempstr, _("Enter specification for WLS model:\n"
-	       "(wtvar depvar indepvars)"));
-	break;
-    case TSLS:
-	strcpy(tempstr, _("Enter specification for TSLS model:\n"
-	       "<varlist1> ; <varlist2>\n"
-	       "You will probably want to consult the "
-	       "help on tsls first"));
-	break;
-    case AR:
-	strcpy(tempstr, _("Enter specification for AR model:\n"
-	       "<laglist> ; <varlist>\n"
-	       "You will probably want to consult the "
-	       "help on ar first"));
-	break;
-    case VAR:
-	strcpy(tempstr, _("Enter specification for VAR:\n"
-	       "(lag_order depvar indepvars)"));
-	break;
-    }
-
-    if (oldlist != NULL) {
-	sprintf(modelstr, "%d ", oldlist[1]);
-	for (i=2; i<=l0; i++) {
-	    sprintf(listnum, "%d ", oldlist[i]);
-	    strcat(modelstr, listnum);
-	}
-    } else modelstr[0] = '\0';
-
-    edit_dialog (_("gretl: define model"), tempstr,
-		 modelstr, 1,
-		 _("Estimate"), do_model, NULL, 
-		 _(" Cancel "), NULL, NULL, model_code, 1);
-    if (oldlist != NULL) free(oldlist);
-}
-
-#endif /* OLD_DIALOGS */
 
 /* ........................................................... */
 

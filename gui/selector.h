@@ -34,7 +34,7 @@ typedef struct {
     GtkWidget *extra;
     int code;
     char *cmdlist;
-} new_dialog;
+} selector;
 
-void new_edit_dialog (const char *title, const char *oktxt, 
-		      void (*okfunc)(), guint cmdcode);
+void selection_dialog (const char *title, const char *oktxt, 
+		       void (*okfunc)(), guint cmdcode);
