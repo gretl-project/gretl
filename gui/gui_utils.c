@@ -263,12 +263,10 @@ GtkItemFactoryEntry edit_items[] = {
 };
 
 #ifdef ENABLE_NLS
-
 gchar *menu_translate (const gchar *path, gpointer p)
 {
     return (_(path));
 }
-
 #endif
 
 /* ........................................................... */
@@ -639,7 +637,7 @@ static void get_worksheet_data (const char *fname, int datatype,
 	sheet_get_data = get_plugin_function("excel_get_data", handle);
     }
     else {
-	errbox("Unrecognized data type");
+	errbox(_("Unrecognized data type"));
 	return;
     }
 
@@ -657,12 +655,12 @@ static void get_worksheet_data (const char *fname, int datatype,
 
     if (err) {
 	if (strlen(errtext)) errbox(errtext);
-	else errbox("Failed to import spreadsheet data");
+	else errbox(_("Failed to import spreadsheet data"));
 	return;
     }
 
     if (append) {
-	infobox("Data appended OK");
+	infobox(_("Data appended OK"));
 	data_status |= MODIFIED_DATA;
 	register_data(fname, 0);
     } else {
@@ -2486,10 +2484,21 @@ static void msgbox (const char *msg, int err)
 
 static void msgbox (const char *msg, int err)
 {
+    gchar *trmsg = NULL;
+    int nls = doing_nls();
+
+    if (nls) {
+	gint wrote;
+
+	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
+    } 
+
     if (err) 
-	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONERROR);
+	MessageBox(NULL, (nls)? trmsg : msg, "gretl", MB_OK | MB_ICONERROR);
     else
-	MessageBox(NULL, msg, "gretl", MB_OK | MB_ICONINFORMATION);
+	MessageBox(NULL, (nls)? trmsg : msg, "gretl", MB_OK | MB_ICONINFORMATION);
+
+    if (nls) g_free(trmsg);
 }
 
 #else /* plain GTK */
@@ -3884,7 +3893,7 @@ int gui_open_plugin (const char *plugin, void **handle)
     sprintf(pluginpath, "%splugins/%s.so", paths.gretldir, plugin);
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
-	sprintf(errtext, _("Failed to load plugin: %s\n"), pluginpath);
+	sprintf(errtext, _("Failed to load plugin: %s"), pluginpath);
 	errbox(errtext);
 	return 1;
     } 

@@ -51,6 +51,8 @@ int win_copy_text (PRN *prn, int format)
     char *ptr;
     unsigned rtf_format;
     size_t len;
+    int nls = doing_nls();
+    gchar *tr = NULL;
 
     if (format == COPY_RTF) 
 	rtf_format = RegisterClipboardFormat("Rich Text Format");
@@ -63,13 +65,19 @@ int win_copy_text (PRN *prn, int format)
 
     EmptyClipboard();
 
-    len = strlen(prn->buf);
+    if (nls) {
+	gint wrote;
+
+	tr = g_locale_from_utf8 (prn->buf, -1, NULL, &wrote, NULL);
+	len = strlen(tr);
+    } else 
+	len = strlen(prn->buf);
         
     winclip = GlobalAlloc(GMEM_DDESHARE, len + 1);        
-
     ptr = (char *) GlobalLock(winclip);
 
-    memcpy(ptr, prn->buf, len + 1);
+    memcpy(ptr, (nls)? tr : prn->buf, len + 1);
+    if (nls) g_free(tr);
 
     GlobalUnlock(winclip);
 

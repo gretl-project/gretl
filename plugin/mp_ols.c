@@ -45,8 +45,6 @@ typedef struct {
 				    else = 0 */
     mpf_t *coeff;                /* array of coefficient estimates */
     mpf_t *sderr;                /* array of estimated std. errors */
-    mpf_t *uhat;                 /* regression residuals */
-    mpf_t *yhat;                 /* fitted values from regression */
     mpf_t *xpx;
     mpf_t ess, tss;              /* Error and Total Sums of Squares */
     mpf_t sigma;                 /* Standard error of regression */
@@ -61,24 +59,21 @@ typedef struct {
     int ivalue;
     int nv;
     int errcode;
-} XPXXPY;	
+} MPXPXXPY;	
 
 typedef struct {
-    XPXXPY xpxxpy;
+    MPXPXXPY xpxxpy;
     mpf_t *coeff;
     mpf_t rss;
     int errcode;
-} CHOLBETA;
+} MPCHOLBETA;
 
-static XPXXPY xpxxpy_func (const int *list, int n, mpf_t **mpZ);
-static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
-		     char *errbuf);
-static CHOLBETA cholbeta (XPXXPY xpxxpy);
-static void diaginv (XPXXPY xpxxpy, mpf_t *diag);
-static int rearrange (int *list);
-#ifdef notdef
-static int hatvar (MPMODEL *pmod, mpf_t **mpZ);
-#endif
+static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ);
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
+			char *errbuf);
+static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy);
+static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag);
+static int mp_rearrange (int *list);
 
 static void mpf_constants_init (void)
 {
@@ -187,14 +182,6 @@ static void mp_model_free (MPMODEL *pmod)
 	mpf_clear (pmod->sderr[i]);
     free (pmod->sderr);
 
-    for (i=0; i<pmod->nobs; i++) 
-	mpf_clear (pmod->uhat[i]);
-    free (pmod->uhat);
-
-    for (i=0; i<pmod->nobs; i++) 
-	mpf_clear (pmod->yhat[i]);
-    free (pmod->yhat);
-
     for (i=0; i<=(l0-1)*l0/2; i++) 
 	mpf_clear (pmod->xpx[i]);
     free (pmod->xpx);
@@ -217,8 +204,6 @@ static void mp_model_init (MPMODEL *pmod, DATAINFO *pdinfo)
     pmod->ifc = 1;
     pmod->coeff = NULL;
     pmod->sderr = NULL;
-    pmod->uhat = NULL;
-    pmod->yhat = NULL;
     pmod->xpx = NULL;
     mpf_init (pmod->ess);
     mpf_init (pmod->tss);
@@ -315,7 +300,7 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 {
     int l0, i;
     mpf_t **mpZ = NULL;
-    XPXXPY xpxxpy;
+    MPXPXXPY xpxxpy;
     MPMODEL model;
 
     *errbuf = 0;
@@ -333,7 +318,7 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     if (data_problems(model.list, *pZ, pdinfo, errbuf)) return E_DATA;
 
     /* see if the regressor list contains a constant */
-    model.ifc = rearrange(model.list);
+    model.ifc = mp_rearrange(model.list);
 
     /* construct multiple-precision data matrix */
     mpZ = make_mpZ(&model, *pZ, pdinfo);
@@ -354,10 +339,10 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     }
 
     /* calculate regression results */
-    xpxxpy = xpxxpy_func(model.list, model.nobs, mpZ);
+    xpxxpy = mp_xpxxpy_func(model.list, model.nobs, mpZ);
     mpf_set (model.tss, xpxxpy.xpy[l0]);
 
-    regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
+    mp_regress(&model, xpxxpy, mpZ, model.nobs, errbuf);
     for (i=0; i<=l0; i++) mpf_clear (xpxxpy.xpy[i]);
     free(xpxxpy.xpy);
     if (model.errcode) return model.errcode;
@@ -374,11 +359,11 @@ int mplsq (const int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 
 /* .......................................................... */
 
-static XPXXPY xpxxpy_func (const int *list, int n, mpf_t **mpZ)
+static MPXPXXPY mp_xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 {
     int i, j, li, lj, m, l0 = list[0], yno = list[1], t;
     mpf_t xx, yy, z1, z2, tmp;
-    XPXXPY xpxxpy;
+    MPXPXXPY xpxxpy;
 
     i = l0 - 1;
     m = i * (i + 1) / 2;
@@ -447,30 +432,23 @@ static XPXXPY xpxxpy_func (const int *list, int n, mpf_t **mpZ)
 
 /* .......................................................... */
 
-static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
-		     char *errbuf)
+static void mp_regress (MPMODEL *pmod, MPXPXXPY xpxxpy, mpf_t **mpZ, int n,
+			char *errbuf)
 {
     int i, v, nobs, nv, yno;
     mpf_t *diag, ysum, ypy, zz, rss, tss;
     mpf_t den, sgmasq, tmp;
-    CHOLBETA cb;
+    MPCHOLBETA cb;
 
     nv = xpxxpy.nv;
     yno = pmod->list[1];
 
-    if ((pmod->sderr = malloc((nv + 1) * sizeof(mpf_t))) == NULL ||
-	(pmod->yhat = malloc(n * sizeof(mpf_t))) == NULL ||
-	(pmod->uhat = malloc(n * sizeof(mpf_t))) == NULL) {
+    if ((pmod->sderr = malloc((nv + 1) * sizeof(mpf_t))) == NULL) {
         pmod->errcode = E_ALLOC;
         return;
     }
 
     for (i=0; i<nv+1; i++) mpf_init (pmod->sderr[i]);
-
-    for (i=0; i<n; i++) {
-	mpf_init (pmod->yhat[i]);
-	mpf_init (pmod->uhat[i]);
-    }
 
     mpf_init (den);
     mpf_init (sgmasq);
@@ -505,7 +483,7 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
     }
 
     /* Choleski-decompose X'X and find the coefficients */
-    cb = cholbeta(xpxxpy);
+    cb = mp_cholbeta(xpxxpy);
     pmod->coeff = cb.coeff;
     pmod->xpx = cb.xpxxpy.xpx;
 
@@ -544,9 +522,6 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
 	return;
     }       
 
-#ifdef notdef
-    hatvar(pmod, mpZ); 
-#endif
     if (pmod->errcode) return;
 
     mpf_div (tmp, pmod->ess, tss);
@@ -595,7 +570,7 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
 
     for (i=0; i<nv+1; i++) mpf_init (diag[i]);
 
-    diaginv(xpxxpy, diag);
+    mp_diaginv(xpxxpy, diag);
     for (v=1; v<=nv; v++) { 
 	mpf_sqrt (zz, diag[v]);
 	mpf_mul (pmod->sderr[v], pmod->sigma, zz);
@@ -618,11 +593,11 @@ static void regress (MPMODEL *pmod, XPXXPY xpxxpy, mpf_t **mpZ, int n,
 
 /* .......................................................... */
 
-static CHOLBETA cholbeta (XPXXPY xpxxpy)
+static MPCHOLBETA mp_cholbeta (MPXPXXPY xpxxpy)
 {
     int nm1, i, j, k, kk, l, jm1, nv;
     mpf_t e, d, d1, test, xx, tmp;
-    CHOLBETA cb;
+    MPCHOLBETA cb;
 
     nv = xpxxpy.nv; 
     cb.errcode = 0; 
@@ -723,7 +698,7 @@ static CHOLBETA cholbeta (XPXXPY xpxxpy)
 
 /* ...............................................................    */
 
-static void diaginv (XPXXPY xpxxpy, mpf_t *diag)
+static void mp_diaginv (MPXPXXPY xpxxpy, mpf_t *diag)
 {
     int kk = 1, l, m, nstop, k, i, j, nv;
     mpf_t d, e, tmp;
@@ -766,34 +741,9 @@ static void diaginv (XPXXPY xpxxpy, mpf_t *diag)
     mpf_clear (tmp);
 }
 
-/* ........................................................... */
-
-#ifdef notdef
-
-static int hatvar (MPMODEL *pmod, mpf_t **mpZ)
-/* finds fitted values and residuals */
-{
-    int yno, xno, i, t;
-    mpf_t xx;
-
-    yno = pmod->list[1];
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-        for (i=1; i<=pmod->ncoeff; i++) {
-            xno = pmod->list[i+1];
-	    xx = mpZ[xno][t];
-            pmod->yhat[t] += pmod->coeff[i] * xx;
-        }
-	xx = mpZ[yno][t];
-        pmod->uhat[t] = xx - pmod->yhat[t];                
-    }
-    return 0;
-}
-
-#endif
-
 /* .........................................................   */
 
-static int rearrange (int *list)
+static int mp_rearrange (int *list)
 /* checks a list for a constant term (ID # 0), and if present, 
    move it to the last position.  Return 1 if constant found,
    else 0.

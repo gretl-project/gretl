@@ -725,14 +725,30 @@ int yes_no_dialog (char *title, char *message, int cancel)
 
 int yes_no_dialog (char *title, char *message, int cancel)
 {
-    int button;
+    int button, nls = doing_nls();
+    gchar *trtitle = NULL, *trmsg = NULL;
+
+    if (nls) {
+	gint wrote;
+
+	trtitle = g_locale_from_utf8 (title, -1, NULL, &wrote, NULL);
+	trmsg = g_locale_from_utf8 (message, -1, NULL, &wrote, NULL);
+    } else {
+	trtitle = title;
+	trmsg = message;
+    }
 
     if (cancel)
-	button = MessageBox (NULL, message, title, 
+	button = MessageBox (NULL, trmsg, trtitle, 
 			     MB_YESNOCANCEL | MB_ICONQUESTION);
     else
-	button = MessageBox (NULL, message, title, 
-			     MB_YESNO | MB_ICONQUESTION);	
+	button = MessageBox (NULL, trmsg, trtitle, 
+			     MB_YESNO | MB_ICONQUESTION);
+
+    if (nls) {
+	g_free(trtitle);
+	g_free(trmsg);
+    }
 
     if (button == IDYES) return YES_BUTTON;
     else if (button == IDNO) return NO_BUTTON;

@@ -6,10 +6,11 @@ version 0.996
 - Regressions: print warning when data matrix is close to 
   singularity
 - add Gnu Multiple Precision plugin for running multiple
-  precision OLS regressions
+  precision OLS regressions (unix only, so far)
 - Add Spanish translations and make enabling NLS the default
 - Try to fix the win32 GUI font for high-res monitors
 - tweaks to the configure script
+- updates to the help files and manual
 
 05/15/2002 version 0.995
 - Raise library version to 13.0.0

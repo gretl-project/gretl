@@ -237,65 +237,82 @@ static void save_editable_content (int action, const char *fname,
 
 #include <windows.h>
 
-static const char *get_gp_filter (const char *termtype)
-{
-    if (!strcmp(termtype, "postscript")) 
-	return N_("postscript files\0*.eps\0");
-    else if (!strcmp(termtype, "fig")) 
-	return N_("xfig files\0*.fig\0");
-    else if (!strcmp(termtype, "latex")) 
-	return N_("LaTeX files\0*.tex\0");
-    else if (!strcmp(termtype, "png")) 
-	return N_("PNG files\0*.png\0");
-    else if (!strcmp(termtype, "plot commands")) 
-	return N_("gnuplot files\0*.gp\0");
-    else return N_("all files\0*\0");
-}
+struct winfilter {
+    const char *descrip;
+    const char *pat;
+} winfilter;
 
 struct win32_filtermap {
     int action;
-    char *filter;
+    struct winfilter filter;
 };
 
-static const char *get_filter (int action, gpointer data)
+static struct winfilter get_gp_filter (const char *termtype)
+{
+    static struct winfilter gpfilters[] = {
+	{ N_("postscript files (*.eps)"), "*.eps" },
+	{ N_("xfig files (*.fig)"), "*.fig" },
+	{ N_("LaTeX files (*.tex)"), "*.tex" },
+	{ N_("PNG files (*.png)"), "*.png" },
+	{ N_("gnuplot files (*.gp)"), "*.gp" },
+	{ N_("all files (*.*)"), "*.*" }
+    };
+
+    if (!strcmp(termtype, "postscript")) 
+	return gpfilters[0];
+    else if (!strcmp(termtype, "fig")) 
+	return gpfilters[1];
+    else if (!strcmp(termtype, "latex")) 
+	return gpfilters[2];
+    else if (!strcmp(termtype, "png")) 
+	return gpfilters[3];
+    else if (!strcmp(termtype, "plot commands")) 
+	return gpfilters[4];
+    else 
+	return gpfilters[5];
+}
+
+static struct winfilter get_filter (int action, gpointer data)
 {
     int i;
-    char *filter;
+    struct winfilter filter;
     static struct win32_filtermap map[] = {
-	{SAVE_DATA, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_GZDATA, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_BIN1, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_BIN2, N_("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
-	{SAVE_CMDS, N_("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_SCRIPT, N_("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_CONSOLE, N_("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
-	{SAVE_MODEL, N_("text files (*.txt)\0*.txt\0all files\0*\0")},
-	{SAVE_SESSION, N_("session files (*.gretl)\0*.gretl\0all files\0*\0")},
-	{SAVE_BOXPLOT_EPS, N_("postscript files (*.eps)\0*.eps\0all files\0*\0")},
-	{SAVE_BOXPLOT_PS, N_("postscript files (*.ps)\0*.ps\0all files\0*\0")},
-	{SAVE_LAST_GRAPH, N_("all files\0*\0")},
-	{SAVE_GP_CMDS, N_("gnuplot files (*.gp)\0*.gp\0all files\0*\0")},
-	{EXPORT_CSV, N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{EXPORT_R, N_("GNU R files (*.R)\0*.R\0all files\0*\0")},
-	{EXPORT_R_ALT, N_("GNU R files (*.R)\0*.R\0all files\0*\0")},
-	{EXPORT_OCTAVE, N_("GNU Octave files (*.m)\0*.m\0all files\0*\0")},
-	{SAVE_OUTPUT, N_("text files (*.txt)\0*.txt\0all files\0*\0")},
-	{SAVE_TEX_TAB, N_("TeX files (*.tex)\0*.tex\0all files\0*\0")},
-	{SAVE_TEX_EQ, N_("TeX files (*.tex)\0*.tex\0all files\0*\0")},
-	{OPEN_DATA, N_("gretl data files (*.gdt)\0*.gdt*\0all files\0*\0")},
-	{OPEN_SCRIPT, N_("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
-	{OPEN_SESSION, N_("session files (*.gretl)\0*.gretl\0all files\0*\0")},
-	{OPEN_CSV,  N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{APPEND_CSV,  N_("CSV files (*.csv)\0*.csv\0all files\0*\0")},
-	{OPEN_BOX, N_("BOX data files (*.box)\0*.box\0all files\0*\0")},
-	{OPEN_GNUMERIC, N_("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
-	{APPEND_GNUMERIC, N_("Gnumeric files (*.gnumeric)\0*.gnumeric\0all files\0*\0")},
-	{OPEN_EXCEL, N_("Excel files (*.xls)\0*.xls\0all files\0*\0")},
-	{APPEND_EXCEL, N_("Excel files (*.xls)\0*.xls\0all files\0*\0")},
+	{SAVE_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_GZDATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_BIN1, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_BIN2, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{SAVE_CMDS, { N_("gretl command files (*.inp)"), "*.inp" }},
+	{SAVE_SCRIPT, { N_("gretl script files (*.inp)"), "*.inp" }},
+	{SAVE_CONSOLE, { N_("gretl command files (*.inp)"), "*.inp" }},
+	{SAVE_MODEL, { N_("text files (*.txt)"), "*.txt" }},
+	{SAVE_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
+	{SAVE_BOXPLOT_EPS, { N_("postscript files (*.eps)"), "*.eps" }},
+	{SAVE_BOXPLOT_PS, { N_("postscript files (*.ps)"), "*.ps" }},
+	{SAVE_GP_CMDS, { N_("gnuplot files (*.gp)"), "*.gp" }},
+	{EXPORT_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
+	{EXPORT_R, { N_("GNU R files (*.R)"), "*.R" }},
+	{EXPORT_R_ALT, { N_("GNU R files (*.R)"), "*.R" }},
+	{EXPORT_OCTAVE, { N_("GNU Octave files (*.m)"), "*.m" }},
+	{SAVE_OUTPUT, { N_("text files (*.txt)"), "*.txt" }},
+	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX_EQ, { N_("TeX files (*.tex)"), "*.tex" }},
+	{OPEN_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
+	{OPEN_SCRIPT, { N_("gretl script files (*.inp)"), "*.inp" }},
+	{OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
+	{OPEN_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
+	{APPEND_CSV, { N_("CSV files (*.csv)"), "*.csv" }},
+	{OPEN_BOX, { N_("BOX data files (*.box)"), "*.box" }},
+	{OPEN_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
+	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
+	{OPEN_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
+	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
+    };
+    static struct winfilter olddat_filter = {
+	N_("gretl data files (*.dat)"), "*.dat"
     };
 
     if (olddat && is_data_action(action)) 
-	return N_("gretl data files (*.dat)\0*.dat\0all files\0*\0");
+	return olddat_filter;
 
     if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -313,13 +330,49 @@ static const char *get_filter (int action, gpointer data)
     return filter;
 }
 
+static char *make_winfilter (int action, gpointer data)
+{
+    char *p = mymalloc(128);
+    char *start = p;
+    gchar *trf = NULL;
+    int nls = 0;
+    struct winfilter filter;
+
+    if (p == NULL) return NULL;
+
+    filter = get_filter(action, data);
+
+    if (doing_nls()) {
+	gint wrote;
+
+	nls = 1;
+	trf = g_locale_from_utf8 (_(filter.descrip), -1, NULL, &wrote, NULL);
+	strcpy(p, trf);
+    } else strcpy(p, _(filter.descrip));
+
+    p += strlen(p) + 1;
+    strcpy(p, filter.pat);
+    p += strlen(p) + 1;
+    strcpy(p, _("all files (*.*)")); /* ENCODING? */
+    p += strlen(p) + 1;
+    strcpy(p, "*.*");
+    p += strlen(p) + 1;
+    *p = '\0';
+
+    if (nls) g_free(trf);
+
+    return start;
+}
+
 /* ........................................................... */
 
 void file_selector (char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
-    int retval;
+    int retval, nls = 0;
     char fname[MAXLEN], endname[64], startd[MAXLEN];
+    char *filter;
+    gchar *trmsg;
 
     fname[0] = '\0';
     endname[0] = '\0';
@@ -336,6 +389,13 @@ void file_selector (char *msg, int action, gpointer data)
 	get_base(startd, paths.datfile, SLASH);
     }
 
+    if (doing_nls()) {
+	gint wrote;
+
+	nls = 1;
+	trmsg = g_locale_from_utf8 (msg, -1, NULL, &wrote, NULL);
+    } else trmsg = msg;
+
     /* initialize file dialog info struct */
     memset(&of, 0, sizeof of);
 #ifdef OPENFILENAME_SIZE_VERSION_400
@@ -344,7 +404,8 @@ void file_selector (char *msg, int action, gpointer data)
     of.lStructSize = sizeof of;
 #endif
     of.hwndOwner = NULL;
-    of.lpstrFilter = _(get_filter(action, data));
+    filter = make_winfilter(action, data);
+    of.lpstrFilter = filter;
     of.lpstrCustomFilter = NULL;
     of.nFilterIndex = 1;
     of.lpstrFile = fname;
@@ -352,7 +413,7 @@ void file_selector (char *msg, int action, gpointer data)
     of.lpstrFileTitle = endname;
     of.nMaxFileTitle = sizeof endname;
     of.lpstrInitialDir = startd;
-    of.lpstrTitle = msg;
+    of.lpstrTitle = trmsg;
     of.lpstrDefExt = NULL;
     of.Flags = OFN_HIDEREADONLY;
 
@@ -360,6 +421,9 @@ void file_selector (char *msg, int action, gpointer data)
 	retval = GetOpenFileName(&of);
     else  /* a file save action */
 	retval = GetSaveFileName(&of);
+
+    free(filter);
+    if (nls) g_free(trmsg);
 
     if (!retval) {
 	if (CommDlgExtendedError())

@@ -582,7 +582,7 @@ void nls_init (void)
     sprintf(localedir, "%s\\locale", gretldir);
     setlocale (LC_ALL, "");
     bindtextdomain ("gretl", localedir);
-    /* bind_textdomain_codeset ("gretl", "UTF-8"); */
+    bind_textdomain_codeset ("gretl", "UTF-8");
     textdomain ("gretl");  
 }
 # else
@@ -1082,11 +1082,7 @@ static int get_windows_font (char *fontspec)
 
 	ReleaseDC(0, screen);
 	DeleteDC(h_dc);
-	/*
-	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-iso8859-1", name,
-		pix_height);
-	*/
-	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-p-*-*", name, pix_height);
+	sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-*-*-*-*", name, pix_height);
 	return 0;
     }
 }
@@ -1128,10 +1124,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 
 #ifdef G_OS_WIN32
     style = gtk_widget_get_style(mdata->w);
-    if (get_windows_font(winfont) == 0)
-	style->font = gdk_font_load(winfont);
-    else
-	gdk_font_load("-microsoft-tahoma-medium-r-normal--*-100-*-*-*-*-*-*");
+    if (get_windows_font(winfont) == 0) style->font = gdk_font_load(winfont);
     if (style->font) gtk_widget_set_style(mdata->w, style);
 #endif
 
