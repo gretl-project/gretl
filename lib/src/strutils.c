@@ -492,7 +492,14 @@ char *safecpy (char *targ, const char *src, int n)
 int doing_nls (void)
 {
 #ifdef ENABLE_NLS
-    if (strcmp("/_File", _("/_File"))) return 1;
-#endif
+    static int called, nls;
+
+    if (!called) {
+	nls = (strcmp("/_File", _("/_File")) != 0);
+	called = 1;
+    }
+    return nls;
+#else
     return 0;
+#endif
 }
