@@ -25,6 +25,7 @@
 # include <gtkextra/gtkextra.h>
 #else
 # include "gtkextra.h"
+# include <windows.h>
 #endif
 
 typedef struct {
@@ -38,7 +39,7 @@ typedef struct {
 typedef struct {
     int nplots;
     BOXPLOT *plots;
-    int winwidth, winheight;
+    int width, height;
     double boxwidth;
     double gmax, gmin;
     GtkWidget *window, *area, *popup;
@@ -55,9 +56,10 @@ extern void file_selector (char *msg, char *startdir, int action,
 
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
+static void plot_to_xpm (gpointer data);
 
 #ifdef G_OS_WIN32
-static void CopyWndToClipboard (CWnd *pWnd); 
+static int cb_copy_image (gpointer data);
 #endif
 
 /* ............................................................. */
@@ -115,6 +117,9 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
     }
+    else if (key->keyval == GDK_b) {  
+	plot_to_xpm(data);
+    }
     return TRUE;
 }
 
@@ -136,7 +141,7 @@ static gint popup_activated (GtkWidget *w, gpointer data)
                       SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
     else if (!strcmp(item, "Copy to clipboard"))
-	CopyWndToClipboard((CWnd *) grp->area->window);
+	cb_copy_image(data);
 #endif
     else if (!strcmp(item, "Close")) { 
 	gtk_widget_destroy(grp->popup);
@@ -268,8 +273,8 @@ place_plots (PLOTGROUP *plotgrp)
 	and their respective max and min values */
 {
     int i;
-    double start = scalepos + plotgrp->winwidth * (headroom / 2.0);
-    double xrange = (1.0 - headroom) * plotgrp->winwidth - scalepos;
+    double start = scalepos + plotgrp->width * (headroom / 2.0);
+    double xrange = (1.0 - headroom) * plotgrp->width - scalepos;
     double boxwidth = xrange / (2.0 * plotgrp->nplots - 1.0);
 
     plotgrp->boxwidth = boxwidth;
@@ -297,8 +302,8 @@ static void
 gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 {
     double points[4];
-    double top = (headroom / 2.0) * grp->winheight;
-    double bottom = (1.0 - headroom / 2.0) * grp->winheight;
+    double top = (headroom / 2.0) * grp->height;
+    double bottom = (1.0 - headroom / 2.0) * grp->height;
     char numstr[16];
     GdkGC *gc = NULL;
 
@@ -338,13 +343,13 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
 static void 
 gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, 
 		  GtkStyle *style, GtkPlotPC *pc,
-		  int winheight, double boxwidth, 
+		  int height, double boxwidth, 
 		  double gmax, double gmin)
 {
     double points[4];
-    double ybase = winheight * headroom / 2.0;
+    double ybase = height * headroom / 2.0;
     double xcenter = plot->xbase + boxwidth / 2.0;
-    double scale = (1.0 - headroom) * winheight / (gmax - gmin);
+    double scale = (1.0 - headroom) * height / (gmax - gmin);
     double median, uq, lq, maxval, minval;
     GdkRectangle rect;
     GdkGC *gc = NULL;
@@ -415,7 +420,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area,
 
     /* write name of variable beneath */
     setup_text (area, gc, pc, plot->varname, xcenter, 
-		winheight * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
+		height * (1.0 - headroom/4.0), GTK_JUSTIFY_CENTER);
 }
 
 /* ............................................................. */
@@ -462,7 +467,7 @@ make_area (PLOTGROUP *grp)
 		       GTK_SIGNAL_FUNC(destroy_boxplots), grp);
 
     gtk_drawing_area_size (GTK_DRAWING_AREA(grp->area), 
-			   grp->winwidth, grp->winheight); 
+			   grp->width, grp->height); 
     gtk_widget_show (grp->area);
 
     gtk_container_add(GTK_CONTAINER(grp->window), grp->area);
@@ -536,8 +541,8 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     if (ps == NULL) return 1;
 
     if (eps) {
-	ps->page_width = ps->pc.width = pscale * grp->winwidth;
-	ps->page_height = ps->pc.height = pscale * grp->winheight;
+	ps->page_width = ps->pc.width = pscale * grp->width;
+	ps->page_height = ps->pc.height = pscale * grp->height;
     }
 
     if (!psinit (ps)) return 1;
@@ -546,7 +551,7 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     for (i=0; i<grp->nplots; i++)
 	gtk_area_boxplot (&grp->plots[i], 
 			  NULL, NULL, &ps->pc, 
-			  grp->winheight, grp->boxwidth, 
+			  grp->height, grp->boxwidth, 
 			  grp->gmax, grp->gmin);
     
     gtk_boxplot_yscale (grp, &ps->pc);
@@ -594,7 +599,7 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
-    int winwidth = 600, winheight = 450;
+    int width = 600, height = 450;
 
     x = mymalloc(n * sizeof *x);
     if (x == NULL) return 1;
@@ -625,8 +630,8 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     }
     free(x);
 
-    plotgrp->winheight = winheight;
-    plotgrp->winwidth = winwidth;
+    plotgrp->height = height;
+    plotgrp->width = width;
     place_plots (plotgrp);
 
     if (make_area(plotgrp) == NULL) return 1;
@@ -636,7 +641,7 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     for (i=0; i<plotgrp->nplots; i++)
 	gtk_area_boxplot (&plotgrp->plots[i], 
 			  plotgrp->area, plotgrp->window->style, NULL, 
-			  winheight, plotgrp->boxwidth, 
+			  height, plotgrp->boxwidth, 
 			  plotgrp->gmax, plotgrp->gmin);
     
     gtk_boxplot_yscale(plotgrp, NULL);
@@ -644,32 +649,158 @@ int boxplots (const int *list, double **pZ, const DATAINFO *pdinfo)
     return 0;
 }
 
-#ifdef G_OS_WIN32
+static void plot_to_xpm (gpointer data)
+{    
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+    GdkImage *image;
+    int i, j;
+    guint32 pixel, white_pixel;
+    FILE *fp;
+    
+    fp = fopen("boxtest.xpm", "w");
+    if (fp == NULL) {
+	errbox ("Couldn't open XPM file for writing");
+	return;
+    }
 
-static void
-CopyWndToClipboard (CWnd *pWnd)
-{
-    CBitmap bitmap, *pOldBitmap;
-    CClientDC dc(pWnd);
-    CDC memDC;
-    CRect rect;
+    fprintf(fp, "/* XPM */\n"
+	    "static char *boxplot[] = {\n"
+	    "/* width height ncolors chars_per_pixel */\n"
+	    "\"%d %d 2 1\",\n"
+	    "/* colors */\n"
+	    "\"  c white\",\n"
+	    "\". c black\",\n"
+	    "/* pixels */\n", grp->width, grp->height);
 
-    memDC.CreateCompatibleDC(&dc); 
+    image = gdk_image_get (grp->area->window, 0, 0, 
+			   grp->width, grp->height);
 
-    pWnd->GetWindowRect(rect);
+    white_pixel = pow(2, image->depth) - 1;
 
-    bitmap.CreateCompatibleBitmap(&dc, rect.Width(), rect.Height());
-        
-    pOldBitmap = memDC.SelectObject(&bitmap);
-    memDC.BitBlt(0, 0, rect.Width(), rect.Height(), &dc, 0, 0, SRCCOPY); 
+    for (i=0; i<grp->height; i++) {
+	fprintf(fp, "\"");
+	for (j=0; j<grp->width; j++) {
+	    pixel = gdk_image_get_pixel(image, j, i);
+	    if (pixel == white_pixel) fprintf(fp, " ");
+	    else fprintf(fp, ".");
+	}
+	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
+    }
 
-    pWnd->OpenClipboard();
-    EmptyClipboard();
-    SetClipboardData(CF_BITMAP, bitmap.GetSafeHandle());
-    CloseClipboard();
+    gdk_image_destroy(image);
+    
+    fclose(fp);
 
-    memDC.SelectObject(pOldBitmap);
-    bitmap.Detach();
 }
 
-#endif
+#ifdef G_OS_WIN32
+
+static int cb_copy_image (gpointer data)
+{
+    PLOTGROUP *grp = (PLOTGROUP *) data;
+    GdkImage *image;
+    int i, j;
+    guint32 pixel;
+    
+    int nSizeDIB = 0;
+    int nSizeLine = 0; /* DIB lines are 32 bit aligned */
+
+    HANDLE hDIB;
+    BOOL bRet;
+
+    image = gdk_image_get(grp->area->window, 0, 0, 
+			  grp->width, grp->height);
+
+    /* allocate room for DIB */
+    nSizeLine = ((grp->width*3-1)/4+1)*4;
+    nSizeDIB = nSizeLine * grp->height + sizeof (BITMAPINFOHEADER);
+  
+    hDIB = GlobalAlloc (GMEM_MOVEABLE | GMEM_DDESHARE, nSizeDIB);
+    if (NULL == hDIB) {
+	    errbox ("Failed to allocate DIB");
+	    bRet = FALSE;
+    }
+
+    /* fill header info */
+    if (bRet) {
+	BITMAPINFOHEADER *pInfo;
+      
+	bRet = FALSE;
+	pInfo = GlobalLock (hDIB);
+	if (pInfo) {
+	    pInfo->biSize   = sizeof(BITMAPINFOHEADER);
+	    pInfo->biWidth  = grp->width;
+	    pInfo->biHeight = -grp->height; /* top-down */
+	    pInfo->biPlanes = 1;
+	    pInfo->biBitCount = 1;
+	    pInfo->biCompression = BI_RGB; /* none */
+	    pInfo->biSizeImage = 0; /* not calculated/needed */
+	    pInfo->biXPelsPerMeter =
+		pInfo->biYPelsPerMeter = 0;
+	    /* color map size */
+	    pInfo->biClrUsed = 0;
+	    pInfo->biClrImportant = 0; /* all */
+          
+	    GlobalUnlock (hDIB);
+	    bRet = TRUE;
+	} else
+	    errbox("Failed to lock DIB Header");
+    }
+  
+    /* copy data to DIB */
+    if (bRet) {
+	unsigned char *pData;
+      
+	bRet = FALSE;
+	pData = GlobalLock (hDIB);
+      
+	if (pData) {
+
+	    /* calculate real offset */
+	    pData += sizeof(BITMAPINFOHEADER);
+
+	    for (i=0; i<grp->height; i++) {
+		for (j=0; j<grp->width; j++) {
+		    pixel = gdk_image_get_pixel(image, j, i);
+		    if (pixel == white_pixel) *pData++ = 0;
+		    else *pData++ = 1;
+		}
+	    }	    
+          
+	    bRet = TRUE;
+          
+	    GlobalUnlock (hDIB);
+	} /* (pData) */
+	else
+	    errbox("Failed to lock DIB Data");
+    } /* copy data to DIB */
+  
+    /* copy DIB to ClipBoard */
+    if (bRet) {      
+	if (!OpenClipboard (NULL)) {
+	    errbox ("Cannot open the Clipboard!");
+	    bRet = FALSE;
+	} else {
+	    if (bRet && !EmptyClipboard ()) {
+		errbox ("Cannot empty the Clipboard");
+		bRet = FALSE;
+	    }
+	    if (bRet) {
+		if (NULL != SetClipboardData (CF_DIB, hDIB))
+		    hDIB = NULL; /* data now owned by clipboard */
+		else
+		    errbox ("Failed to set clipboard data");
+	    }
+	    if (!CloseClipboard ())
+		errbox ("Failed to close Clipboard");
+	}
+    }
+    /* done */
+    if (hDIB) GlobalFree(hDIB);
+  
+    gdk_image_destroy (image);
+  
+    return bRet;
+} 
+
+#endif /* G_OS_WIN32 */
