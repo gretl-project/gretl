@@ -83,7 +83,7 @@ static void add_arma_varnames (MODEL *pmod, const DATAINFO *pdinfo)
 static int ma_out_of_bounds (int q, const double *ma_coeff)
 {
     double *temp = NULL, *tmp2 = NULL;
-    double re, im;
+    double re, im, rt;
     cmplx *roots = NULL;
     int i, err = 0;
 
@@ -108,7 +108,9 @@ static int ma_out_of_bounds (int q, const double *ma_coeff)
     for (i=0; i<q; i++) {
 	re = roots[i].r;
 	im = roots[i].i;
-	if (re * re + im * im <= 1.0) {
+	rt = re * re + im * im;
+	if (rt > DBL_EPSILON && rt <= 1.0) {
+	    fprintf(stderr, "MA root %d = %g\n", i, rt);
 	    err = 1;
 	    break;
 	}
@@ -126,20 +128,24 @@ static int arma_ll (double *coeff,
 		    model_info *arma,
 		    int do_score)
 {
-    int i, j, t, t2;
-    int n = arma->t2 - arma->t1 + 1;
-    int p = arma->p, q = arma->q, r = arma->r;
+    int i, j, t;
+    int t1 = model_info_get_t1(arma);
+    int t2 = model_info_get_t2(arma);
+    int n = t2 - t1 + 1;
+    int p, q, r;
     const double K = 1.41893853320467274178; /* ln(sqrt(2*pi)) + 0.5 */
     const double *y = X[0];
-    double *e = arma->series[0];
-    double **de = arma->series + 1;
-    const double *ar_coeff = coeff;
-    const double *ma_coeff = coeff + p;
-    const double *reg_coeff = coeff + p + q;
-    double ll;
+    double **series = model_info_get_series(arma);
+    double *e = series[0];
+    double **de = series + 1;
+    const double *ar_coeff, *ma_coeff, *reg_coeff;
+    double ll, s2 = 0.0;
     int err = 0;
 
-    arma->s2 = 0.0;
+    model_info_get_pqr(arma, &p, &q, &r);
+    ar_coeff = coeff;
+    ma_coeff = coeff + p;
+    reg_coeff = coeff + p + q;
 
     if (ma_out_of_bounds(q, ma_coeff)) {
 	fputs("MA estimate(s) out of bounds\n", stderr);
@@ -148,7 +154,7 @@ static int arma_ll (double *coeff,
 
     /* update forecast errors */
 
-    for (t=arma->t1; t<=arma->t2; t++) {
+    for (t=t1; t<=t2; t++) {
 
 	e[t] = y[t] - coeff[0];
 
@@ -157,7 +163,7 @@ static int arma_ll (double *coeff,
 	}
 
 	for (i=1; i<=q; i++) {
-	    if (t - i >= arma->t1) {
+	    if (t - i >= t1) {
 		e[t] -= ma_coeff[i] * e[t-i];
 	    }
 	}
@@ -166,25 +172,21 @@ static int arma_ll (double *coeff,
 	    e[t] -= reg_coeff[i] * X[i][t];
 	}
 
-	arma->s2 += e[t] * e[t];
+	s2 += e[t] * e[t];
     }
 
     /* get error variance and log-likelihood */
 
-    arma->s2 /= (double) (arma->t2 - arma->t1 + 1);
+    s2 /= (double) n;
+    model_info_set_s2(arma, s2);
 
-    ll = -n * (0.5 * log(arma->s2) + K);
-
-    if (do_score) {
-	arma->ll = ll;
-    } else {
-	arma->ll2 = ll;
-    }
+    ll = -n * (0.5 * log(s2) + K);
+    model_info_set_ll(arma, ll, do_score);
 
     if (do_score) {
 	int col, nc = p + q + r + 1;
 
-	for (t=arma->t1; t<=arma->t2; t++) {
+	for (t=t1; t<=t2; t++) {
 
 	    col = 0;
 
@@ -207,10 +209,10 @@ static int arma_ll (double *coeff,
 
 	    /* MA terms (de_m) */
 	    for (j=0; j<q; j++) {
-		col++;
-		t2 = col - p;
-		if (t >= t2) {
-		    de[col][t] = -e[t-t2];
+		int lag = ++col - p;
+
+		if (t >= lag) {
+		    de[col][t] = -e[t-lag];
 		    for (i=1; i<=q; i++) {
 			de[col][t] -= ma_coeff[i] * de[col][t-i];
 		    }
@@ -227,8 +229,8 @@ static int arma_ll (double *coeff,
 	    }	    
 	}
 
-	for (t=arma->t1; t<=arma->t2; t++) {
-	    double x = e[t] / arma->s2;
+	for (t=t1; t<=t2; t++) {
+	    double x = e[t] / s2;
 
 	    for (i=0; i<nc; i++) {
 		Z[i+1][t] = -de[i][t] * x;
@@ -236,7 +238,7 @@ static int arma_ll (double *coeff,
 	}
     }
 
-    if (isnan(arma->ll)) err = 1;
+    if (isnan(ll)) err = 1;
 
     return err;
 }
@@ -254,7 +256,7 @@ static cmplx *arma_roots (int p, int q, const double *coeff)
        returns: the p + q roots (AR part first)
      */
 {
-    int maxlag = (p>q) ? p : q;
+    int maxlag = (p > q)? p : q;
     const double *ar_coeff = coeff;
     const double *ma_coeff = coeff + p;
     double *temp = NULL, *temp2 = NULL;
@@ -292,27 +294,28 @@ static cmplx *arma_roots (int p, int q, const double *coeff)
     return roots;
 }
 
-static void rewrite_arma_model_stats (model_info *arma,
+static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
 				      const int *list, const double *y, 
+				      const double *theta, int nc,
 				      const DATAINFO *pdinfo)
 {
     int i, t;
     int p = list[1], q = list[2], r = list[0] - 4;
-    const double *e = arma->series[0];
-    MODEL *pmod = arma->pmod;
+    double **series = model_info_get_series(arma);
+    const double *e = series[0];
     double mean_error;
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
 
-    pmod->lnL = arma->ll;
+    pmod->lnL = model_info_get_ll(arma);
 
     pmod->dfn = p + q + r;
     pmod->dfd = pmod->nobs - pmod->dfn;
-    pmod->ncoeff = arma->k;
+    pmod->ncoeff = nc;
 
     for (i=0; i<pmod->ncoeff; i++) {
-	pmod->coeff[i] = arma->theta[i];
+	pmod->coeff[i] = theta[i];
     }
 
     copylist(&pmod->list, list);
@@ -563,19 +566,20 @@ static int adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
     return 0;
 }
 
-static void set_up_arma_info (model_info *arma, int t1, int t2,
-			      int p, int q, int r)
+static model_info *
+set_up_arma_info (int t1, int t2, int p, int q, int r)
 {
-    arma->opts = PRESERVE_OPG_MODEL;
-    arma->t1 = t1;
-    arma->t2 = t2;
-    arma->n_series = 2 + p + q + r;
-    arma->k = 1 + p + q + r;
-    arma->p = p;
-    arma->q = q;
-    arma->r = r;
-    arma->s2 = 1.0;
-    arma->tol = 1.0e-6;
+    model_info *arma = model_info_new();
+
+    if (arma == NULL) return NULL;
+
+    model_info_set_opts(arma, PRESERVE_OPG_MODEL);
+    model_info_set_tol(arma, 1.0e-6);
+    model_info_set_pqr(arma, p, q, r);
+    model_info_set_n_series(arma, 2 + p + q + r);
+    model_info_set_t1_t2(arma, t1, t2);
+
+    return arma;
 }
 
 MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo, 
@@ -587,7 +591,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     double *coeff;
     const double **X = NULL;
     MODEL armod;
-    model_info arma;
+    model_info *arma;
 
     gretl_model_init(&armod, NULL);  
 
@@ -619,7 +623,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
-    set_up_arma_info(&arma, arma_t1, arma_t2, p, q, r);
+    arma = set_up_arma_info(arma_t1, arma_t2, p, q, r);
 
     /* initialize the coefficients: AR and regression part by OLS, 
        MA at 0 */
@@ -633,29 +637,33 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 	return armod;
     }
 
-    err = bhhh_max(arma_ll, X, coeff, &arma, prn);
+    err = bhhh_max(arma_ll, X, coeff, arma, prn);
 
     if (err) {
 	armod.errcode = E_NOCONV;
     } else {
+	MODEL *pmod = model_info_capture_OPG_model(arma);
+	double *theta = model_info_get_theta(arma);
 	cmplx *roots;
 
-	rewrite_arma_model_stats(&arma, list, Z[v], pdinfo);
-	armod = *arma.pmod;
+	rewrite_arma_model_stats(pmod, arma, list, Z[v], theta, nc,
+				 pdinfo);
 
 	/* compute and save polynomial roots */
-	roots = arma_roots(p, q, arma.theta);
+	roots = arma_roots(p, q, theta);
 	if (roots != NULL) {
-	    gretl_model_set_data(&armod, "roots", roots,
+	    gretl_model_set_data(pmod, "roots", roots,
 				 (p + q) * sizeof *roots);
 	}
 
-	add_arma_varnames(&armod, pdinfo);
+	add_arma_varnames(pmod, pdinfo);
+
+	armod = *pmod;
     }
 
     free(coeff);
     free(X);
-    model_info_free(&arma);
+    model_info_free(arma);
 
     return armod;
 }

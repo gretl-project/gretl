@@ -69,28 +69,30 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 		     int do_score)
 {
     const double *y = X[1];
-    double *e = tobit->series[0];
-    double *f = tobit->series[1];
-    double *P = tobit->series[2];
-    double *ystar = tobit->series[3];
+    double **series = model_info_get_series(tobit);
+    double *e = series[0];
+    double *f = series[1];
+    double *P = series[2];
+    double *ystar = series[3];
+    int k = model_info_get_k(tobit);
+    int n = model_info_get_n(tobit);
     
-    double siginv = theta[tobit->k-1]; /* inverse of variance */
-    double x, llt;
+    double siginv = theta[k-1]; /* inverse of variance */
+    double ll, llt;
     int i, t;
 
     if (siginv < 0.0) {
 	fprintf(stderr, "tobit_ll: got a negative variance\n");
-	if (!do_score) tobit->ll2 = -1.0e10;
-	tobit->s2 = -1.0;
+	model_info_set_s2(tobit, -1.0);
 	return 1;
     } else {
-	tobit->s2 = 1.0 / siginv;
+	model_info_set_s2(tobit, 1.0 / siginv);
     }
 
     /* calculate ystar, e, f, and P vectors */
-    for (t=0; t<tobit->n; t++) {
+    for (t=0; t<n; t++) {
 	ystar[t] = theta[0];
-	for (i=1; i<tobit->k-1; i++) {
+	for (i=1; i<k-1; i++) {
 	    ystar[t] += theta[i] * X[i+1][t]; /* coeff * orig data */
 	}
 	e[t] = y[t] * siginv - ystar[t];
@@ -99,32 +101,27 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
     }
 
     /* compute loglikelihood for each obs, cumulate into ll */
-    x = 0.0;
-    for (t=0; t<tobit->n; t++) {
+    ll = 0.0;
+    for (t=0; t<n; t++) {
 	if (y[t] == 0.0) {
 	    llt = 1.0 - P[t];
 	} else {
 	    llt = f[t];
 	}
-	x += log(llt);
+	ll += log(llt);
     }
 
-    /* assign ll to the appropriate record */
-    if (do_score) {
-	tobit->ll = x;
-    } else {
-	tobit->ll2 = x;
-    }
+    model_info_set_ll(tobit, ll, do_score);
 
     if (do_score) {
 	int i, gi, xi;
 	double den, tail;
 
-	for (t=0; t<tobit->n; t++) {
+	for (t=0; t<n; t++) {
 	    den = normal_pdf(ystar[t]);
 	    tail = 1.0 - P[t];
 	    
-	    for (i=0; i<tobit->k; i++) {
+	    for (i=0; i<k; i++) {
 
 		/* set the indices into the data arrays */
 		gi = i + 1;
@@ -132,20 +129,19 @@ static int tobit_ll (double *theta, const double **X, double **Z, model_info *to
 
 		if (y[t] == 0.0) {
 		    /* score if y is censored */
-		    if (xi < tobit->k) {
+		    if (xi < k) {
 			Z[gi][t] = -den / tail * X[xi][t];
 		    } else {
 			Z[gi][t] = 0.0;
 		    } 
 		} else {
 		    /* score if y is not censored */
-		    if (xi < tobit->k) {
-			x = X[xi][t];
+		    if (xi < k) {
+			Z[gi][t] = e[t] * X[xi][t];
 		    } else {
-			x = -y[t];
+			Z[gi][t] = e[t] * -y[t];
 		    }
-		    Z[gi][t] = e[t] * x;
-		    if (xi == tobit->k) {
+		    if (xi == k) {
 			Z[gi][t] += 1.0 / siginv;
 		    }
 		}
@@ -259,16 +255,20 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     return 0;
 }
 
-static void tobit_model_info_init (model_info *tobit, int nobs, 
-				   int k, int n_series)
+static model_info *
+tobit_model_info_init (int nobs, int k, int n_series)
 {
-    tobit->opts = FULL_VCV_MATRIX;
-    tobit->t1 = 0;
-    tobit->t2 = nobs - 1;
-    tobit->k = k;
-    tobit->p = tobit->q = tobit->r = 0;
-    tobit->n_series = n_series;
-    tobit->tol = 1.0e-09;
+    model_info *tobit = model_info_new();
+
+    if (tobit == NULL) return NULL;
+
+    model_info_set_opts(tobit, FULL_VCV_MATRIX);
+    model_info_set_tol(tobit, 1.0e-09);
+    model_info_set_k(tobit, k);
+    model_info_set_n_series(tobit, n_series);
+    model_info_set_t1_t2(tobit, 0, nobs - 1);
+
+    return tobit;
 }
 
 /* Main Tobit function */
@@ -277,15 +277,16 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		     PRN *prn)
 {
     const double **X;
-    double *coeff;
-    double sigma;
+    double *coeff, *theta = NULL;
+    double sigma, ll;
     int i, j, k, n;
     int n_series = 4;
     int err = 0;
 
-    model_info tobit;
+    model_info *tobit;
 
     /* for VCV manipulation */
+    gretl_matrix *VCV = NULL;
     gretl_matrix *J = NULL; 
     gretl_matrix *tmp = NULL; 
 
@@ -306,26 +307,29 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
     pmod->coeff = coeff;
     pmod->coeff[k-1] = 1.0;
 
-    tobit_model_info_init(&tobit, pmod->nobs, k, n_series);
+    tobit = tobit_model_info_init(pmod->nobs, k, n_series);
 
     /* call BHHH routine to maximize ll */
-    err = bhhh_max(tobit_ll, X, pmod->coeff, &tobit, prn);
+    err = bhhh_max(tobit_ll, X, pmod->coeff, tobit, prn);
 
     if (err) {
 	goto bailout;
     }
 
+    theta = model_info_get_theta(tobit);
+
     /* recover estimate of variance */
-    sigma = 1.0 / tobit.theta[k-1]; 
+    sigma = 1.0 / theta[k-1]; 
 
     /* recover slope estimates */
     for (i=0; i<k-1; i++) {
-	tobit.theta[i] *= sigma;
+	theta[i] *= sigma;
     }
 
     /* get estimate of variance matrix for Olsen parameters */
-    gretl_invert_symmetric_matrix(tobit.VCV);
-    gretl_matrix_divide_by_scalar(tobit.VCV, n);
+    VCV = model_info_get_VCV(tobit);
+    gretl_invert_symmetric_matrix(VCV);
+    gretl_matrix_divide_by_scalar(VCV, n);
 
     /* Jacobian mat. for transforming VCV from Olsen to slopes + variance */
     J = gretl_matrix_alloc(k, k);
@@ -337,7 +341,7 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 		gretl_matrix_set(J, i, j, sigma);
 	    } else if (j == k-1 && i < j) {
 		/* right-hand column */
-		gretl_matrix_set(J, i, j, -sigma * tobit.theta[i]);
+		gretl_matrix_set(J, i, j, -sigma * theta[i]);
 	    } else if (j == k-1 && i == j) {
 		/* bottom right-hand element */
 		gretl_matrix_set(J, i, j, -sigma * sigma);
@@ -347,19 +351,20 @@ static int do_tobit (const double **Z, DATAINFO *pdinfo, MODEL *pmod,
 
     /* VCV matrix transformation */
     tmp = gretl_matrix_alloc(k, k);
-    gretl_matrix_multiply(J, tobit.VCV, tmp);
+    gretl_matrix_multiply(J, VCV, tmp);
     gretl_matrix_multiply_mod(tmp, GRETL_MOD_NONE,
 			      J, GRETL_MOD_TRANSPOSE,
-			      tobit.VCV);
+			      VCV);
     gretl_matrix_free(tmp);
     gretl_matrix_free(J);
 
-    write_tobit_stats(pmod, tobit.theta, k-1, sigma, tobit.ll, X, tobit.VCV);
+    ll = model_info_get_ll(tobit);
+    write_tobit_stats(pmod, theta, k-1, sigma, ll, X, VCV);
 
  bailout:
 
     free(X);
-    model_info_free(&tobit);
+    model_info_free(tobit);
 
     return err;
 }

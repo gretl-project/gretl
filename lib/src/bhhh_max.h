@@ -24,37 +24,46 @@ enum {
 
 typedef struct _model_info model_info;
 
-struct _model_info {
-
-    /* members that should be set by caller of bhhh_max: */
-
-    int k;              /* number of parameters */
-    int p, q, r;        /* for use with ARMA: AR, MA orders and number of
-                           other regressors */
-    int t1, t2;         /* starting and ending point of sample */
-    int n_series;       /* number of additional series needed in the
-                           likelihood and/or score calculations */
-    double tol;         /* tolerance for convergence */
-    unsigned char opts; /* options from among bhhh_opts */
-
-    /* members set within bhhh_max: */
-
-    int n;            /* length of series */
-    double ll;        /* log-likelihood */
-    double ll2;       /* temporary log-likelihood value */
-    double s2;        /* error variance */
-    int *list;        /* OPG regression list */
-    double *theta;    /* vector of parameters */
-    double **series;  /* additional series */
-
-    /* full VCV matrix from OPG regression, if (opts & FULL_VCV_MATRIX) */
-    gretl_matrix *VCV; 
-
-    /* pointer to OPG model, if (opts & PRESERVE_OPG_MODEL) */
-    MODEL *pmod;
-};
-
 void model_info_free (model_info *model);
+
+model_info *model_info_new (void);
+
+MODEL *model_info_capture_OPG_model (model_info *model);
+
+gretl_matrix *model_info_get_VCV (model_info *model);
+
+double *model_info_get_theta (model_info *model);
+
+int model_info_get_t1 (const model_info *model);
+
+int model_info_get_t2 (const model_info *model);
+
+int model_info_get_n (const model_info *model);
+
+void model_info_get_pqr (const model_info *model, 
+			 int *p, int *q, int *r);
+
+double model_info_get_ll (const model_info *model);
+
+double **model_info_get_series (const model_info *model);
+
+void model_info_set_pqr (model_info *model, int p, int q, int r);
+
+void model_info_set_n_series (model_info *model, int n);
+
+void model_info_set_k (model_info *model, int k);
+
+int model_info_get_k (model_info *model);
+
+void model_info_set_t1_t2 (model_info *model, int t1, int t2);
+
+void model_info_set_opts (model_info *model, unsigned char opts);
+
+void model_info_set_tol (model_info *model, double tol);
+
+void model_info_set_ll (model_info *model, double ll, int do_score);
+
+void model_info_set_s2 (model_info *model, double s2);
 
 int bhhh_max (int (*loglik) (double *, const double **, double **,
 			     model_info *, int), 

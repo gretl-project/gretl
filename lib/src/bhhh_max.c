@@ -24,6 +24,37 @@
 
 /* #define DEBUG */
 
+struct _model_info {
+
+    /* members that may be set by caller of bhhh_max, via accessor
+       functions: */
+
+    int k;              /* number of parameters */
+    int p, q, r;        /* for use with ARMA: AR, MA orders and number of
+                           other regressors.  Otherwise unused. */
+    int t1, t2;         /* starting and ending point of sample */
+    int n_series;       /* number of additional series needed in the
+                           likelihood and/or score calculations */
+    double tol;         /* tolerance for convergence */
+    unsigned char opts; /* options from among bhhh_opts */
+
+    /* members set within bhhh_max: */
+
+    int n;            /* length of series */
+    double ll;        /* log-likelihood */
+    double ll2;       /* test log-likelihood value */
+    double s2;        /* error variance */
+    int *list;        /* OPG regression list */
+    double *theta;    /* vector of parameters */
+    double **series;  /* additional series */
+
+    /* full VCV matrix from OPG regression, if (opts & FULL_VCV_MATRIX) */
+    gretl_matrix *VCV; 
+
+    /* pointer to OPG model, if (opts & PRESERVE_OPG_MODEL) */
+    MODEL *pmod;
+};
+
 #define DEFAULT_MAX_ITER 1000
 
 static int get_maxiter (void)
@@ -44,7 +75,8 @@ static int get_maxiter (void)
  * model_info_free:
  * @model: model info pointer.
  *
- * Frees the dynamically allocated members of @model.
+ * Frees the dynamically allocated members of @model, then
+ * frees @model itself.
  * 
  */
 
@@ -65,6 +97,115 @@ void model_info_free (model_info *model)
     if (model->VCV != NULL) {
 	gretl_matrix_free(model->VCV);
     }
+
+    free(model);
+}
+
+MODEL *model_info_capture_OPG_model (model_info *model)
+{
+    MODEL *pmod = model->pmod;
+
+    model->pmod = NULL;
+    return pmod;
+}
+
+gretl_matrix *model_info_get_VCV (model_info *model)
+{
+    return model->VCV;
+}
+
+double *model_info_get_theta (model_info *model)
+{
+    return model->theta;
+}
+
+int model_info_get_t1 (const model_info *model)
+{
+    return model->t1;
+}
+
+int model_info_get_t2 (const model_info *model)
+{
+    return model->t2;
+}
+
+int model_info_get_n (const model_info *model)
+{
+    return model->n;
+}    
+
+void model_info_get_pqr (const model_info *model, 
+			 int *p, int *q, int *r)
+{
+    *p = model->p;
+    *q = model->q;
+    *r = model->r;
+}
+
+double **model_info_get_series (const model_info *model)
+{
+    return model->series;
+}
+
+
+double model_info_get_ll (const model_info *model)
+{
+    return model->ll;
+}
+
+void model_info_set_ll (model_info *model, double ll, int do_score)
+{
+    if (do_score) {
+	model->ll = ll;
+    } else {
+	model->ll2 = ll;
+    }
+}
+
+void model_info_set_s2 (model_info *model, double s2)
+{
+    model->s2 = s2;
+}
+
+void model_info_set_opts (model_info *model, unsigned char opts)
+{
+    model->opts = opts;
+}
+
+void model_info_set_tol (model_info *model, double tol)
+{
+    model->tol = tol;
+}
+
+void model_info_set_pqr (model_info *model, int p, int q, int r)
+{
+    model->p = p;
+    model->q = q;
+    model->r = r;
+    model->k = p + q + r + 1;
+}
+
+void model_info_set_k (model_info *model, int k)
+{
+    model->k = k;
+    model->p = model->q = model->r = 0;
+}
+
+int model_info_get_k (model_info *model)
+{
+    return model->k;
+}
+
+void model_info_set_n_series (model_info *model, int n)
+{
+    model->n_series = n;
+}
+
+void model_info_set_t1_t2 (model_info *model, int t1, int t2)
+{
+    model->t1 = t1;
+    model->t2 = t2;
+    model->n = t2 + 1;
 }
 
 /* Below: construct the regression list for the OPG regression, with
@@ -97,7 +238,6 @@ static int model_info_init (model_info *model, const double *init_coeff)
     int i, t, k, err = 0;
     int n_series = model->n_series;
 
-    model->n = model->t2 + 1;
     k = model->k;  
 
     model->theta = NULL;
@@ -142,6 +282,14 @@ static int model_info_init (model_info *model, const double *init_coeff)
     model->s2 = 1.0;
 
     return err;
+}
+
+model_info *model_info_new (void)
+{
+    model_info *mi;
+
+    mi = malloc(sizeof *mi);
+    return mi;
 }
 
 static void bhhh_iter_info (int iter, double *theta, int m, double ll,
