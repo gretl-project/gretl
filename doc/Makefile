@@ -87,8 +87,8 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	cp $(topdoc)/figures/*.png htmlhelp/figures
 	for f in htmlhelp/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
 	cd htmlhelp && \
-	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex
-	$(HHC) htmlhelp/gretl.hhp
+	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex && \
+	$(HHC) gretl.hhp
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex $(TESTDOC).tex

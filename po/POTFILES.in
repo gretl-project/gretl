@@ -1,6 +1,7 @@
 lib/src/calendar.c
 lib/src/compare.c
 lib/src/dataio.c
+lib/src/dbread.c
 lib/src/describe.c
 lib/src/discrete.c
 lib/src/estimate.c
@@ -42,7 +43,6 @@ gui/guiprint.c
 gui/gui_utils.c
 gui/helpfiles.c
 gui/library.c
-gui/model_table.c
 gui/objectsave.c
 gui/plotps.c
 gui/selector.c

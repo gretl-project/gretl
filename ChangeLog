@@ -1,4 +1,4 @@
-version 1.1.0
+07/21/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display
   names" for variables (these are shown in graphs)
 - Provide "label" command for setting the description and/or
