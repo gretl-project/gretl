@@ -22,21 +22,22 @@
 
 enum {
     MODEL_ADD_FROM_MENU,
-    MODEL_ADD_BY_DRAG
+    MODEL_ADD_BY_DRAG,
+    MODEL_ADD_BY_CMD
 } model_add_modes;
 
-int start_model_table_list (const MODEL *pmod, int add_mode);
-
-int add_to_model_table_list (const MODEL *pmod, int add_mode);
+int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn);
 
 void remove_from_model_table_list (const MODEL *pmod);
 
-void free_model_table_list (void);
+void free_model_table_list (PRN *prn);
 
-int display_model_table (void);
+int display_model_table (int gui);
 
 void tex_print_model_table (gpointer p, guint view, GtkWidget *w);
 
 void rtf_print_model_table (void);
+
+int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn);
 
 #endif /* MODEL_TABLE_H */

@@ -2314,6 +2314,8 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     if (targ->list == NULL) return 1;
     for (i=0; i<=m; i++) targ->list[i] = src->list[i];    
 
+    targ->ID = src->ID;
+
     return 0;
 }
 

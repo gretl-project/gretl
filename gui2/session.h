@@ -52,6 +52,8 @@ void remember_model (gpointer data, guint close, GtkWidget *widget);
 
 void remember_var (gpointer data, guint close, GtkWidget *widget);
 
+int model_already_saved (const MODEL *pmod);
+
 int try_add_model_to_session (MODEL *pmod);
 
 int try_add_var_to_session (GRETL_VAR *var);

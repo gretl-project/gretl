@@ -376,7 +376,7 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
 /* ........................................................... */
 
-static int model_already_saved (MODEL *pmod)
+int model_already_saved (const MODEL *pmod)
 {
     int i;
 
@@ -805,7 +805,7 @@ void close_session (void)
 {
     clear_data(); /* in gtk1 version: clear_data(1); */
     free_session();
-    free_model_table_list();
+    free_model_table_list(NULL);
 
     session_menu_state(FALSE);
     session_file_open = 0;
@@ -1954,6 +1954,11 @@ static void object_popup_show (gui_obj *gobj, GdkEventButton *event)
 
 /* ........................................................... */
 
+static void display_model_table_wrapper (void)
+{
+    display_model_table(1);
+}
+
 static gboolean session_icon_click (GtkWidget *widget, 
 				    GdkEventButton *event,
 				    gpointer data)
@@ -1996,7 +2001,7 @@ static gboolean session_icon_click (GtkWidget *widget,
 	case 'n':
 	    edit_session_notes(); break;
 	case 't':
-	    display_model_table(); break;
+	    display_model_table_wrapper(); break;
 	case 'r':
 	    do_menu_op(NULL, CORR, NULL); break;
 	case 's':
@@ -2089,7 +2094,7 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    open_gui_text(obj);
 	}
 	if (obj->sort == 't') {
-	    display_model_table();
+	    display_model_table_wrapper();
 	}
 	else if (obj->sort == 'g') {
 	    open_gui_graph(obj);
@@ -2113,12 +2118,13 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
     else if (strcmp(item, _("Add to model table")) == 0) {
 	if (obj->sort == 'm') {
 	    MODEL *pmod = (MODEL *) obj->data;
-	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU);
+	    add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_FROM_MENU,
+				    NULL);
 	}
     }
     else if (strcmp(item, _("Clear table")) == 0) {
 	if (obj->sort == 't') {
-	    free_model_table_list();
+	    free_model_table_list(NULL);
 	}
     }
     else if (obj->sort == 't' && strcmp(item, _("Help")) == 0) {
@@ -2160,7 +2166,7 @@ model_table_data_received (GtkWidget *widget,
 	data->type == GDK_SELECTION_TYPE_INTEGER) {
 	MODEL *pmod = *(MODEL **) data->data;
 
-	add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG);
+	add_to_model_table_list((const MODEL *) pmod, MODEL_ADD_BY_DRAG, NULL);
     }
 }
 

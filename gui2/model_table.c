@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "model_table.h"
+#include "session.h"
 
 static const MODEL **model_list;
 static int model_list_len;
@@ -29,6 +30,15 @@ static int *grand_list;
 static void print_rtf_row_spec (PRN *prn, int tall);
 
 #define MAX_TABLE_MODELS 6
+
+static void mtable_errmsg (char *msg, int gui)
+{
+    if (gui) {
+	errbox(msg);
+    } else {
+	gretl_errmsg_set(msg);
+    }
+}
 
 static int real_model_table_list_length (void)
 {
@@ -41,12 +51,24 @@ static int real_model_table_list_length (void)
     return len;    
 }
 
-static int model_table_too_many (void)
+static int model_table_too_many (int gui)
 {
     if (real_model_table_list_length() == MAX_TABLE_MODELS) {
-	errbox(_("Model table is full"));
+	mtable_errmsg(_("Model table is full"), gui);
 	return 1;
     }
+    return 0;
+}
+
+static int model_already_in_table_by_ID (const MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<model_list_len; i++) {
+	if (model_list[i] == NULL) continue;
+	if (pmod->ID == (model_list[i])->ID) return 1;
+    }
+
     return 0;
 }
 
@@ -58,21 +80,6 @@ static int model_already_in_table (const MODEL *pmod)
 	if (model_list[i] == NULL) continue;
 	if (pmod == model_list[i]) return 1;
     }
-
-    return 0;
-}
-
-int start_model_table_list (const MODEL *pmod, int add_mode)
-{
-    model_list = mymalloc(sizeof *model_list);
-    if (model_list == NULL) return 1;
-
-    model_list_len = 1;
-    model_list[0] = pmod;
-
-    if (add_mode == MODEL_ADD_FROM_MENU) {
-	infobox(_("Model added to table")); 
-    }   
 
     return 0;
 }
@@ -91,76 +98,106 @@ void remove_from_model_table_list (const MODEL *pmod)
     }
 }
 
-int add_to_model_table_list (const MODEL *pmod, int add_mode)
+int add_to_model_table_list (const MODEL *pmod, int add_mode, PRN *prn)
 {
     const MODEL **tmp;
+    int gui = (add_mode != MODEL_ADD_BY_CMD);
 
     /* NLS models won't work */
     if (pmod->ci == NLS) {
-	errbox(_("Sorry, NLS models can't be put in the model table"));
+	mtable_errmsg(_("Sorry, NLS models can't be put in the model table"),
+		      gui);
 	return 1;
     }
 
     /* nor will ARMA */
     if (pmod->ci == ARMA) {
-	errbox(_("Sorry, ARMA models can't be put in the model table"));
+	mtable_errmsg(_("Sorry, ARMA models can't be put in the model table"),
+		      gui);
 	return 1;
     }
 
     /* nor TSLS */
     if (pmod->ci == TSLS) {
-	errbox(_("Sorry, TSLS models can't be put in the model table"));
+	mtable_errmsg(_("Sorry, TSLS models can't be put in the model table"),
+		      gui);
 	return 1;
     }    
 
-    /* check that list is really started */
+    /* is the list is started or not? */
     if (model_list_len == 0) {
-	return start_model_table_list(pmod, add_mode);
+
+	model_list = mymalloc(sizeof *model_list);
+	if (model_list == NULL) return 1;
+	model_list_len = 1;
+
+    } else {
+
+	/* check that the dependent variable is in common */
+	if (pmod->list[1] != (model_list[0])->list[1]) {
+	    mtable_errmsg(_("Can't add model to table -- this model has a "
+			    "different dependent variable"), gui);
+	    return 1;
+	}
+
+	/* check that model is not already on the list */
+	if (gui) {
+	    if (model_already_in_table(pmod)) {
+		mtable_errmsg(_("Model is already included in the table"), 1);
+		return 0;
+	    }
+	} else {
+	    if (model_already_in_table_by_ID(pmod)) {
+		mtable_errmsg(_("Model is already included in the table"), 0);
+		return 1;
+	    }
+	}	
+
+	/* check that the model table is not already full */
+	if (model_table_too_many(gui)) return 1;
+
+	model_list_len++;
+	tmp = myrealloc(model_list, model_list_len * sizeof *model_list);
+	if (tmp == NULL) {
+	    free(model_list);
+	    return 1;
+	}
+
+	model_list = tmp;
     }
 
-    /* check that the dependent variable is in common */
-    if (pmod->list[1] != (model_list[0])->list[1]) {
-	errbox(_("Can't add model to table -- this model has a "
-		 "different dependent variable"));
-	return 1;
+    if (model_already_saved(pmod)) {
+	model_list[model_list_len - 1] = pmod;
+    } else {
+	MODEL *mcopy = gretl_model_new(datainfo);
+
+	if (mcopy == NULL) return E_ALLOC;
+	if (copy_model(mcopy, pmod, datainfo)) return E_ALLOC;
+	model_list[model_list_len - 1] = mcopy;
     }
-
-    /* check that model is not already on the list */
-    if (model_already_in_table(pmod)) {
-	errbox(_("Model is already included in the table"));
-	return 0;
-    }
-
-    /* check that the model table is not already full */
-    if (model_table_too_many()) return 1;
-
-    model_list_len++;
-    tmp = myrealloc(model_list, model_list_len * sizeof *model_list);
-    if (tmp == NULL) {
-	free(model_list);
-	return 1;
-    }
-
-    model_list = tmp;
-    model_list[model_list_len - 1] = pmod;
 
     if (add_mode == MODEL_ADD_FROM_MENU) {
 	infobox(_("Model added to table"));
+    } else if (add_mode == MODEL_ADD_BY_CMD) {
+	pputs(prn, _("Model added to table"));
+	pputc(prn, '\n');
     }
 
     return 0;
 }
 
-void free_model_table_list (void)
+void free_model_table_list (PRN *prn)
 {
     free(model_list);
     model_list = NULL;
     free(grand_list);
     grand_list = NULL;
     model_list_len = 0;
-#if 0
-    infobox(_("Model table cleared"));
-#endif
+    
+    if (prn != NULL) {
+	pputs(prn, _("Model table cleared"));
+	pputc(prn, '\n');
+    }
 }
 
 static int var_is_in_model (int v, const MODEL *pmod)
@@ -511,7 +548,7 @@ static void print_n_r_squared (PRN *prn, int *binary)
     else pputs(prn, "\n\n");
 }
 
-int display_model_table (void)
+int display_model_table (int gui)
 {
     int j, ci;
     int binary = 0;
@@ -519,14 +556,14 @@ int display_model_table (void)
     PRN *prn;
 
     if (model_list_empty()) {
-	errbox(_("The model table is empty"));
+	mtable_errmsg(_("The model table is empty"), gui);
 	return 1;
     }
 
     if (make_grand_varlist()) return 1;
 
     if (bufopen(&prn)) {
-	free_model_table_list();
+	free_model_table_list(NULL);
 	return 1;
     }
 
@@ -596,7 +633,7 @@ void tex_print_model_table (gpointer p, guint view, GtkWidget *w)
     PRN *prn;
 
     if (model_list_empty()) {
-	errbox(_("The model table is empty"));
+	mtable_errmsg(_("The model table is empty"), 1);
 	return;
     }
 
@@ -713,7 +750,7 @@ void rtf_print_model_table (void)
     PRN *prn;
 
     if (model_list_empty()) {
-	errbox(_("The model table is empty"));
+	mtable_errmsg(_("The model table is empty"), 1);
 	return;
     }
 
@@ -786,4 +823,38 @@ void rtf_print_model_table (void)
     pputs(prn, "\\par\n}\n");
 
     prn_to_clipboard(prn, COPY_RTF);
+}
+
+int modeltab_parse_line (const char *line, const MODEL *pmod, PRN *prn)
+{
+    char cmdword[8];
+    int err = 0;
+
+    if (sscanf(line, "%*s %8s", cmdword) != 1) {
+	return E_PARSE;
+    }
+
+    if (!strcmp(cmdword, "add")) {
+	if (pmod == NULL || pmod->ID == 0) {
+	    gretl_errmsg_set(_("No model is available"));
+	    err = 1;
+	} else {
+	    err = add_to_model_table_list(pmod, MODEL_ADD_BY_CMD, prn);
+	}
+    }
+
+    else if (!strcmp(cmdword, "show")) {
+	err = display_model_table(0);
+    }
+
+    else if (!strcmp(cmdword, "free")) {
+	if (model_list_empty()) {
+	    mtable_errmsg(_("The model table is empty"), 0);
+	    err = 1;
+	} else {
+	    free_model_table_list(prn);
+	}
+    }
+
+    return err;
 }

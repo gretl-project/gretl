@@ -209,6 +209,7 @@ static int aliased (char *cmd)
                        c == RESET || \
                        c == SYSTEM || \
                        c == LEVERAGE || \
+                       c == MODELTAB || \
                        c == NLS || \
                        c == DATA || \
 	               c == GENR || \

@@ -75,6 +75,7 @@ typedef enum {
     LOGS,
     LOOP,
     MEANTEST,
+    MODELTAB,
     MPOLS,
     MULTIPLY,
     MVAVG,

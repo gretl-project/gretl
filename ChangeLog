@@ -15,6 +15,8 @@ version 1.2.3
   graphs, these objects appear in the Session icon
   window, and they can be displayed and freed using
   objectname.show, objectname.free
+- Make the model table available via script and gui
+  console (new command "modeltab")
 
 2/2/2004 version 1.2.2
 - Make AIC retrievable via genr ("genr foo = $aic")

@@ -37,6 +37,7 @@
 #include "series_view.h"
 #include "objectsave.h"
 #include "datafiles.h"
+#include "model_table.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -5597,6 +5598,11 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	*plstack = 1; 
+	break;
+
+    case MODELTAB:
+	err = modeltab_parse_line(line, models[0], prn);
+	if (err) errmsg(err, prn);
 	break;
 
     case NLS:
