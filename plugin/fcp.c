@@ -23,7 +23,7 @@
 
    garch(p,q) estimates of a linear equation 
 
-   SEE BOLLERSLEV, JOE 31(1986),307-327. 
+   SEE BOLLERSLEV, JOE 31(1986), 307-327. 
 */
 
 #include "libgretl.h"
@@ -801,7 +801,8 @@ garch_ll (double *c, int nc, double *res2,
 #endif	
     }
 
-    /* Computes residuals etc. over the real estimation period */
+    /* Compute residuals, squared residuals, and unconditional
+       variance over the real estimation period */
     copy_coeff(c, nc, b);
     uncvar = 0.0;
     for (t = t1; t <= t2; ++t) {
@@ -880,7 +881,7 @@ static void check_ht (double *param, int np)
     }
 } 
 
-/* setup for OP matrix, Information Matrix and Hessian */
+/* combined setup for OP matrix, Information Matrix and Hessian */
 
 static int vcv_setup (int t1, int t2, double *c, int nc, 
 		      double *res2, double *res, int *count, 
@@ -953,10 +954,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
     }
 
-    /* Building matrix dhtdp, block relative to alfa and beta (eq. 21) */
-
     for (t = t1; t <= t2; ++t) {
-
 	/* fill in zt at time t (see p. 401) */
 	zt[0] = 1.0;
 	for (i = 1; i <= q; ++i) {
@@ -983,30 +981,26 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
        residuals.
     */
 
+    /* building blocks for pre-sample terms */
+    for (i = 0; i < nc; ++i) {
+	asum2[i] = 0.0;
+	for (t = t1; t <= t2; t++) {
+	    asum2[i] -= res[t] * 2.0 * g[i][t];
+	}
+	asum2[i] /= n; 
+    }   
+
     /* pre-sample range */
     for (t = t1-lag; t < t1; ++t) {
-	int s;
-
 	for (i = 0; i < nc; ++i) {
-	    asum2[i] = 0.0;
-	    for (s = t1; s <= t2; ++s) {
-		asum2[i] -= res[s] * 2.0 * g[i][s];
-	    }
-	    asum2[i] /= n;
-#ifdef FDEBUG
-	    fprintf(stderr, "t=t1-lag=%d-%d=%d; writing to dhdp[%d][%d]\n",
-		    t1, lag, t1-lag, i, t);
-#endif
 	    dhdp[i][t] = asum2[i];
 	}
     }
 
     /* actual sample range */
     for (t = t1; t <= t2; ++t) {
-	for (i = 0; i < nc; ++i) {
+	for (i = 0; i < nc; i++) {
 	    dhdp[i][t] = 0.0;
-	}
-	for (i = 0; i < nc; ++i) {
 	    for (j = 1; j <= q; ++j) {
 		if (t - q < t1) {
 		    dhdp[i][t] += alfa[j-1] * asum2[i];
@@ -1014,41 +1008,13 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 		    dhdp[i][t] -= alfa[j-1] * 2.0 * g[i][t-j] * res[t-j];
 		}
 	    }
-	}
-	for (i = 0; i < nc; ++i) {
 	    for (j = 1; j <= p; ++j) {
 		dhdp[i][t] += dhdp[i][t-j] * beta[j-1];
 	    }
 	}
     }
 
-    /* Initial values in dhdpdp (here, H) are 2/t x'x, and zero for
-       off-diagonal (mixed) blocks. */
-
-    if (H != NULL) {
-	for (k = 0; k < lag; ++k) {
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nc; ++j) {
-		    H[i][j][k+1] = 0.; 
-		}
-	    }
-	    for (t = t1; t <= t2; ++t) {
-		for (i = 0; i < nc; ++i) {
-		    for (j = 0; j < nc; ++j) {
-			H[i][j][k+1] += 2.0 * g[i][t] * g[j][t] / n;
-		    }
-		}
-	    }
-	    for (i = 0; i < nc; ++i) {
-		for (j = 0; j < nvparm; ++j) {
-		    /* mod. by AC: zero _all_ mixed entries */
-		    H[i][nc+j][k+1] = H[nc+j][i][k+1] = 0.0; 
-		}
-	    }
-	}
-    }
-
-    /* Start computation of gradient aux3 */
+    /* Initialize gradient, aux3, and vcv */
     for (i = 0; i < nparam; i++) {
 	aux3[i] = 0.0;
 	for (j = 0; j < nparam; j++) {
@@ -1062,7 +1028,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	double aa, bb;
 
 	/* 
-	   First part, relative to regression coefficients (eq. 22) 
+	   First part, relative to regression coefficients (eq. 10, p. 402) 
  	*/
 	for (i = 0; i < nc; ++i) {
 	    aa = r_h * g[i][t] + .5 / h[t] * dhdp[i][t] * (r2_h - 1.0);
@@ -1083,7 +1049,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	}
 
 	/* 
-	   Second part, relative to alfa and beta (eq. 19) 
+	   Second part, relative to alfa and beta (eq. 6, p. 401) 
 	*/
 	for (i = 0; i < nvparm; ++i) {
 	    int nci = nc + i;
@@ -1105,7 +1071,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	for (t = t1; t <= t2; ++t) {
 	    double ht2 = h[t] * h[t];
 
-	    /* Part relative to the coefficients (eq. 23).
+	    /* Part relative to the coefficients (eq. 30, p. 406).
 	       Since we take the expected value, only the first two terms
 	       remain.
 	    */
@@ -1117,7 +1083,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 		}
 	    }
 
-	    /* Part relative to alfa and beta (eq. 20). 
+	    /* Part relative to the variance parameters (eq. 29, p. 406). 
 	       Since we take the expected value, only the second term
 	       remains.
 	    */
@@ -1134,7 +1100,30 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	return 0;
     }
 
-    /* Now we fill out the Hessian */
+    /* Initial values in dhdpdp (here, "H") are 2/t x'x, and zero for
+       off-diagonal (mixed) blocks. */
+    for (k = 0; k < lag; ++k) {
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nc; ++j) {
+		H[i][j][k+1] = 0.; 
+	    }
+	}
+	for (t = t1; t <= t2; ++t) {
+	    for (i = 0; i < nc; ++i) {
+		for (j = 0; j < nc; ++j) {
+		    H[i][j][k+1] += 2.0 * g[i][t] * g[j][t] / n;
+		}
+	    }
+	}
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nvparm; ++j) {
+		/* mod. by AC: zero _all_ mixed entries */
+		H[i][nc+j][k+1] = H[nc+j][i][k+1] = 0.0; 
+	    }
+	}
+    }
+
+    /* Now we fill out the full Hessian */
 
     for (t = t1; t <= t2; ++t) {
 	double r_h = res[t] / h[t];
@@ -1189,14 +1178,13 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	for (k = 1; k <= p; ++k) { 
 	    for (i = 0; i < nc; ++i) {
 		for (j = 0; j < nvparm; ++j) {
-		    /* possible uninitialized data? */
 		    H[i][nc+j][0] += H[i][nc+j][k] * beta[k-1];
 		}
 	    }
 	}
     L90:
 
-	/* Part relative to the coefficients (eq. 23). 
+	/* Part relative to the coefficients (eq. 15, p. 403). 
 	   Since we take the expected value, only the first two terms
 	   remain.
  	*/
@@ -1204,7 +1192,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    for (j = 0; j < nc; ++j) {
 		vcv[vix(i,j)] = vcv[vix(i,j)] 
 		    - g[i][t] * g[j][t] / h[t] 
-		    - .5* r2_h3 * dhdp[i][t] * dhdp[j][t] 
+		    - .5 * r2_h3 * dhdp[i][t] * dhdp[j][t] 
 		    - (r_h * g[j][t] * dhdp[i][t]) / h[t] 
 		    - (r_h * g[i][t] * dhdp[j][t]) / h[t] 
 		    + 0.5 * (r2_h - 1.0) * 
@@ -1213,14 +1201,10 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    }
 	}
 
-	/* Part relative to alfa and beta (eq. 20). 
+	/* Part relative to the variance parameters (eq. 14, p. 403). 
 	   Since we take the expected value, only the second term
 	   remains.
  	*/
-
-	/*  Computation of dhdpdp at time t: goes to place #1 in the 
-	    third index.
-	*/
 	if (p > 0) {
 	    for (i = 0; i < nvparm; ++i) {
 		for (j = 1; j <= p; ++j) {
@@ -1235,7 +1219,6 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    for (k = 1; k <= p; ++k) {
 		for (i = 0; i < nvparm; ++i) {
 		    for (j = 0; j < nvparm; ++j) { 
-			/* FIXME uninitialized data? */
 			H[nc+i][nc+j][0] += H[nc+i][nc+j][k] * beta[k-1];
 #ifdef FDEBUG
 			if ((t==t1 || t==t2)) {
@@ -1265,7 +1248,7 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	    }
 	}
 
-	/* top-right mixed part */
+	/* top-right mixed part (eq. 17, p. 403) */
 	for (i = 0; i < nc; ++i) {
 	    for (j = 0; j < nvparm; ++j) {
 		vcv[vix(i,nc+j)] = vcv[vix(i,nc+j)]
@@ -1273,6 +1256,8 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 		    - .5 * (r2_h - 1.0) * dhdp[nc+j][t] * dhdp[i][t] / (h[t] * h[t]) 
 		    + .5 * (r2_h - 1.0) * H[i][nc+j][0] / h[t] 
 		    - .5 * r2_h * u_h2 * dhdp[i][t] * dhdp[nc+j][t];
+		/* and bottom left too */
+		vcv[vix(nc+j, i)] = vcv[vix(i, nc+j)];
 	    }
 	}
 
@@ -1280,21 +1265,13 @@ static int vcv_setup (int t1, int t2, double *c, int nc,
 	for (k = 0; k < lag; ++k) { 
 	    for (i = 0; i < nparam; ++i) {
 		for (j = 0; j < nparam; ++j) {
-		    /* FIXME: uninitialized data for some p,q combinations */
 #ifdef FDEBUG
-		    if (t<10) fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
-				      t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
+		    if (t<5) fprintf(stderr, "t=%d: setting H(%d,%d,%d) to H(%d,%d,%d)=%g\n",
+				     t,i,j,lag-k,i,j,lag-k-1, H[i][j][lag-k-1]);
 #endif
 		    H[i][j][lag-k] = H[i][j][lag-k-1];
 		}
 	    }
-	}
-    }
-
-    /*  fill the bottom left mixed part */
-    for (i = 0; i < nc; ++i) {
-	for (j = 0; j < nvparm; ++j) {
-	    vcv[vix(nc+j, i)] = vcv[vix(i, nc+j)];
 	}
     }
 
@@ -2168,3 +2145,4 @@ static int invert (double *g, int dim)
 
     return (int) info;
 }
+

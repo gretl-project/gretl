@@ -308,7 +308,6 @@ int do_fcp (const int *list, double **Z,
 			 amax, b, &iters, prn, robust);
 
     if (err != 0) {
-	fprintf(stderr, "garch_estimate returned %d\n", err);
 	pmod->errcode = err;
     } else {
 	int nparam = ncoeff + p + q + 1;
