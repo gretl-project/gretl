@@ -99,7 +99,7 @@ int _full_model_list (MODEL *pmod, int **plist);
 int _ztoxy (int v1, int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, double **Z);
 
-int _reserved (const char *str);
+int is_reserved (const char *str);
 
 void gretl_test_init (GRETLTEST *test);
 
@@ -123,5 +123,7 @@ int get_hc_version (void);
 int get_use_qr (void);
 
 char *copy_subdum (const char *src, int n);
+
+int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
 #endif /* GRETL_INTERNAL_H */

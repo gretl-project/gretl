@@ -1461,6 +1461,75 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
     }
 }
 
+/* .......................................................... */
+
+static int pack_tsls_vcv (MODEL *pmod, gretl_matrix *v, int robust)
+{
+    const int nv = pmod->ncoeff;
+    const int nterms = nv * (nv + 1) / 2;
+    double x;
+    int i, j, k;
+
+    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) return 1;  
+
+    for (i=0; i<nv; i++) {
+	for (j=0; j<=i; j++) {
+	    k = get_vcv_index(pmod, i, j, nv);
+	    x = gretl_matrix_get(v, i, j);
+	    if (!robust) {
+		x *= pmod->sigma * pmod->sigma;
+		if (j == i) {
+		    pmod->sderr[i] = sqrt(x);
+		}
+	    }
+	    pmod->vcv[k] = x;
+	}
+    }
+
+    return 0;
+}
+
+static int make_tsls_vcv (MODEL *pmod, const double **Z)
+{
+    gretl_matrix *w = NULL, *wpwinv = NULL;
+    int k = pmod->ncoeff;
+    int T = pmod->nobs;
+    int i, j, t;
+    int row, col, xnum;
+    int err = 0;
+
+    w = gretl_matrix_alloc(T, k);
+    wpwinv = gretl_matrix_alloc(k, k);
+    if (w == NULL || wpwinv == NULL) {
+	free(w);
+	free(wpwinv);
+	return E_ALLOC;
+    }
+
+    for (i=2; i<=pmod->list[0]; i++) {
+	col = i - 2;
+	xnum = pmod->list[i];
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    row = t - pmod->t1;
+	    gretl_matrix_set(w, row, col, Z[xnum][t]);
+	}
+    }
+
+    gretl_matrix_multiply_mod(w, GRETL_MOD_TRANSPOSE,
+			      w, GRETL_MOD_NONE,
+			      wpwinv);
+
+    gretl_invert_symmetric_matrix(wpwinv);
+    
+    pack_tsls_vcv(pmod, wpwinv, 0);
+
+    gretl_matrix_free(w);
+    gretl_matrix_free(wpwinv);
+
+    return err;
+}
+
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -1642,6 +1711,9 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     }
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
 
+#if 1
+    make_tsls_vcv(&tsls, (const double **) *pZ);
+#else
     nv = s2list[0] - 1;
     nxpx = nv * (nv + 1) / 2;
     xpx = malloc(nxpx * sizeof *xpx);
@@ -1671,6 +1743,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     free(diag); 
     free(xpx);
     free(xpy);
+#endif
 
     tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 		       yhat + tsls.t1);

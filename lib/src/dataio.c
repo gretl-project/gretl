@@ -650,7 +650,7 @@ int check_varname (const char *varname)
 
     *gretl_errmsg = '\0';
 
-    if (_reserved(varname)) return 1;
+    if (is_reserved(varname)) return 1;
     
     if (!(isalpha((unsigned char) *varname))) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"

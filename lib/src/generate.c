@@ -1377,7 +1377,7 @@ int get_function (const char *s)
 
 /* .......................................................... */
 
-int _reserved (const char *str)
+int is_reserved (const char *str)
 {
     const char *resword[] = {"uhat", "yhat",
 			     "const", "CONST", "pi",
@@ -1458,7 +1458,7 @@ static int getword (char *word, char *str, char c, unsigned long oflag)
     _delete(str, 0, ++i);
 
     if (oflag && !strcmp(word, "subdum")) ;
-    else if (_reserved(word)) i = 0;
+    else if (is_reserved(word)) i = 0;
 
     return i;
 }
@@ -1646,7 +1646,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
 	_esl_trunc(newvar, VNAMELEN - 1);
 
-	if (strncmp(newvar, "$nls", 4) && check_varname(newvar)) {
+	if (strncmp(newvar, "$nls", 4) && !oflag && 
+	    check_varname(newvar)) {
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}

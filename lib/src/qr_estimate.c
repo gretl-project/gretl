@@ -78,7 +78,7 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
     }
 }
 
-static int get_vcv_index (MODEL *pmod, int i, int j, int n)
+int get_vcv_index (MODEL *pmod, int i, int j, int n)
 {
     int k, vi, vj;
 
