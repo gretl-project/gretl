@@ -50,7 +50,8 @@ LIBS = -lm -ldl -L/usr/local/lib -lz $(XML_LIBS) $(GLIB_LIBS) $(GMP_LIBS)
 
 libsrc  = $(topsrc)/lib/src
 cephessrc = $(topsrc)/cephes
-vpath %.c $(libsrc) $(cephessrc)
+VPATH = $(libsrc):$(cephessrc)
+
 libdir = $(prefix)/lib
 includedir = $(prefix)/include/gretl
 
@@ -78,16 +79,23 @@ CEPHES_LOBJ = $(CEPHES_SRC:.c=.lo)
 
 LIBTOOL = $(topsrc)/libtool
 
-override CFLAGS += -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GMP_CFLAGS) -DHAVE_CONFIG_H
+override CFLAGS += -I.. -I$(topsrc) -I$(libsrc) $(XML_CFLAGS) $(GLIB_CFLAGS) $(GMP_CFLAGS) -DHAVE_CONFIG_H
 
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 
 .c.o:        
 	$(COMPILE) $<
 
-$(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_OBJ)
+%.d: %.c
+	set -e; $(CC) -M $(XML_CFLAGS) $(GLIB_CFLAGS) $< \
+	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	[ -s $@ ] || rm -f $@
+
+$(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ) $(CEPHES_LOBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_LOBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 0:6:0
+
+include $(SRCS:.c=.d)
 
 .PHONY: 
 
@@ -112,176 +120,11 @@ installdirs:
 	$(topsrc)/tools/mkinstalldirs $(INSTALLDIRS)
 
 clean:
-	rm -f *.o *.lo $(LIBGRETL) core 
+	rm -f *.o *.lo *.d $(LIBGRETL) core 
 	rm -rf ./.libs
 
 tags:
 	$(MAKE) -C $(topsrc) tags
 
-depend:
-	makedepend -Y src/*.c && \
-	cat Makefile | sed s+^src/++ > Makefile.tmp && \
-	mv Makefile.tmp Makefile
 
-distdepend: depend
-	$(topsrc)/tools/dist_depend.pl
 
-# DO NOT DELETE
-
-calendar.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-calendar.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-calendar.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-calendar.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-calendar.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-calendar.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-compare.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-compare.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-compare.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-compare.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-compare.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-compare.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-compare.o: src/internal.h
-dataio.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-dataio.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-dataio.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-dataio.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-dataio.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-dataio.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-dataio.o: src/internal.h
-describe.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-describe.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-describe.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-describe.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-describe.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-describe.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-describe.o: src/internal.h
-discrete.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-discrete.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-discrete.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-discrete.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-discrete.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-discrete.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-discrete.o: src/internal.h
-errors.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-errors.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-errors.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-errors.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-errors.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-errors.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-estimate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-estimate.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-estimate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-estimate.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-estimate.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-estimate.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-estimate.o: src/internal.h
-generate.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-generate.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-generate.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-generate.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-generate.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-generate.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-generate.o: src/internal.h
-graphing.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-graphing.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-graphing.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-graphing.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-graphing.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-graphing.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-graphing.o: src/internal.h
-gretl_utils.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-gretl_utils.o: src/generate.h src/gretl_utils.h src/compare.h
-gretl_utils.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-gretl_utils.o: src/printout.h src/modelprint.h src/texprint.h src/var.h
-gretl_utils.o: src/interact.h src/graphing.h src/random.h
-gretl_utils.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-gretl_utils.o: src/subsample.h src/calendar.h src/system.h src/internal.h
-gretl_win32.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-gretl_win32.o: src/generate.h src/gretl_utils.h src/compare.h
-gretl_win32.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-gretl_win32.o: src/printout.h src/modelprint.h src/texprint.h src/var.h
-gretl_win32.o: src/interact.h src/graphing.h src/random.h
-gretl_win32.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-gretl_win32.o: src/subsample.h src/calendar.h src/system.h
-interact.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-interact.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-interact.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-interact.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-interact.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-interact.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-interact.o: src/internal.h src/cmdlist.h
-modelprint.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-modelprint.o: src/generate.h src/gretl_utils.h src/compare.h
-modelprint.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-modelprint.o: src/printout.h src/modelprint.h src/texprint.h src/var.h
-modelprint.o: src/interact.h src/graphing.h src/random.h
-modelprint.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-modelprint.o: src/subsample.h src/calendar.h src/system.h src/internal.h
-monte_carlo.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-monte_carlo.o: src/generate.h src/gretl_utils.h src/compare.h
-monte_carlo.o: src/pvalues.h src/dataio.h src/strutils.h src/describe.h
-monte_carlo.o: src/printout.h src/modelprint.h src/texprint.h src/var.h
-monte_carlo.o: src/interact.h src/graphing.h src/random.h
-monte_carlo.o: src/monte_carlo.h src/nonparam.h src/discrete.h
-monte_carlo.o: src/subsample.h src/calendar.h src/system.h src/internal.h
-nonparam.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-nonparam.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-nonparam.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-nonparam.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-nonparam.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-nonparam.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-nonparam.o: src/internal.h
-printout.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-printout.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-printout.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-printout.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-printout.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-printout.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-printout.o: src/internal.h src/version.h
-pvalues.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-pvalues.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-pvalues.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-pvalues.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-pvalues.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-pvalues.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-pvalues.o: ../cephes/libprob.h
-random.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-random.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-random.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-random.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-random.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-random.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-random.o: src/mt19937ar.c
-strutils.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-strutils.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-strutils.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-strutils.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-strutils.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-strutils.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-subsample.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-subsample.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-subsample.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-subsample.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-subsample.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-subsample.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-subsample.o: src/internal.h
-system.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-system.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-system.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-system.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-system.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-system.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-system.o: src/internal.h
-texprint.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-texprint.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-texprint.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-texprint.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-texprint.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-texprint.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-var.o: src/libgretl.h src/commands.h src/errors.h src/estimate.h
-var.o: src/generate.h src/gretl_utils.h src/compare.h src/pvalues.h
-var.o: src/dataio.h src/strutils.h src/describe.h src/printout.h
-var.o: src/modelprint.h src/texprint.h src/var.h src/interact.h
-var.o: src/graphing.h src/random.h src/monte_carlo.h src/nonparam.h
-var.o: src/discrete.h src/subsample.h src/calendar.h src/system.h
-var.o: src/internal.h

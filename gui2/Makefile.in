@@ -1,4 +1,4 @@
-topsrc = @topsrc@
+topsrc = @top_srcdir@
 
 prefix = @prefix@
 exec_prefix = @exec_prefix@
@@ -55,7 +55,9 @@ ifeq ($(USE_NLS),yes)
   NLSDEF = -DLOCALEDIR=\"$(localedir)\"
 endif
 
-override CFLAGS += -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(NLSDEF) $(GNOMEDEF)
+DEFS = $(NLSDEF) $(GNOMEDEF)
+
+override CFLAGS += -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) $(GDK_PIXBUF_CFLAGS) $(DEFS)
 override LIBS += $(PNG_LIBS) $(GDK_PIXBUF_LIBS)
 
 GUI_CFLAGS += -DGTK_DISABLE_DEPRECATED
@@ -76,17 +78,24 @@ PROG  = gretl_x11
 
 vpath %.c $(topsrc)/cli
 
-OBJS = boxplots.o calculator.o callbacks.o console.o database.o \
-	datafiles.o dialogs.o fileselect.o gpt_control.o gretl.o \
-	guiprint.o gui_utils.o helpfiles.o library.o selector.o \
-	series_view.o session.o settings.o ssheet.o treeutils.o \
-	webget.o 
+SRCS = boxplots.c calculator.c callbacks.c console.c database.c \
+	datafiles.c dialogs.c fileselect.c gpt_control.c gretl.c \
+	guiprint.c gui_utils.c helpfiles.c library.c selector.c \
+	series_view.c session.c settings.c ssheet.c treeutils.c \
+	webget.c 
+OBJS = $(SRCS:.c=.o)
 
 HACK_SRC = gtkfontselhack.c
 HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
 GTKEXTRA_LITE = gtkextra-lite/libgtkextra-lite.a
+
+%.d: %.c
+	set -e; $(CC) -M -I.. -I$(libsrc) $(GUI_CFLAGS) $(PNG_CFLAGS) \
+	$(GDK_PIXBUF_CFLAGS) $(DEFS) $< \
+	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
+	[ -s $@ ] || rm -f $@
 
 $(PROG): $(OBJS) $(HACK_OBJ) $(GTKEXTRA_LITE)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(HACK_OBJ) $(LIBS) $(INETLIB)
@@ -96,6 +105,8 @@ $(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
 
 $(GTKEXTRA_LITE): 
 	make -C gtkextra-lite
+
+include $(SRCS:.c=.d)
 
 .PHONY:
 

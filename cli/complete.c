@@ -18,7 +18,7 @@
  */
 
 #ifndef OS_WIN32
-# include "../config.h"
+# include "config.h"
 #endif
 
 #include "libgretl.h"

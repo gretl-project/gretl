@@ -1,5 +1,7 @@
-tooldir = ../tools
-docdir = ../doc
+topsrc = @top_srcdir@
+
+tooldir = $(topsrc)/tools
+docdir = $(topsrc)/doc
 
 INSTALL = @INSTALL@
 gnome_prefix = @gnome_prefix@
@@ -34,15 +36,15 @@ install: install-images install-misc install-help-dirs $(install_help) $(install
 
 install-images:
 	$(tooldir)/mkinstalldirs $(gpixmaps)
-	$(INSTALL_DATA) ../pixmaps/gretl-logo.xpm $(gpixmaps)
-	$(INSTALL_DATA) gretl.png $(gpixmaps)
-	$(INSTALL_DATA) gnome-*.png $(gpixmaps)
+	$(INSTALL_DATA) $(topsrc)/pixmaps/gretl-logo.xpm $(gpixmaps)
+	$(INSTALL_DATA) $(topsrc)/gnome/gretl.png $(gpixmaps)
+	$(INSTALL_DATA) $(topsrc)/gnome/gnome-*.png $(gpixmaps)
 
 install-misc:
 	$(tooldir)/mkinstalldirs $(desktopdir)
-	$(INSTALL_DATA) gretl.desktop $(desktopdir)
+	$(INSTALL_DATA) $(topsrc)/gnome/gretl.desktop $(desktopdir)
 	$(tooldir)/mkinstalldirs $(mimedir)
-	$(INSTALL_DATA) gretl.mime $(mimedir)
+	$(INSTALL_DATA) $(topsrc)/gnome/gretl.mime $(mimedir)
 	$(INSTALL_DATA) gretl.keys $(mimedir)
 
 install-help-dirs:
@@ -61,17 +63,17 @@ install-help-2:
 	make -C $(omfdir) install
 
 install-help-1:
-	$(INSTALL_DATA) topic.dat $(ghelpdir)/C
+	$(INSTALL_DATA) $(topsrc)/gnome/topic.dat $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/manual-html/*.html $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/manual-html/*.css $(ghelpdir)/C
 	$(INSTALL_DATA) $(docdir)/figures/*.png $(ghelpdir)/C/figures
 
 install-gconf-keys:
 	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) \
-	$(GCONFTOOL) --makefile-install-rule ./gretl.schemas
+	$(GCONFTOOL) --makefile-install-rule $(topsrc)/gnome/gretl.schemas
 
 install-gconf-schema-file: gretl.schemas	
 	$(tooldir)/mkinstalldirs $(schemadir)
-	$(INSTALL_DATA) gretl.schemas $(schemadir)
+	$(INSTALL_DATA) $(topsrc)/gnome/gretl.schemas $(schemadir)
 
 

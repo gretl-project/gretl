@@ -1,5 +1,9 @@
+topsrc = @top_srcdir@
+
 CC = @CC@
 prefix = @prefix@
+
+VPATH = $(topsrc)/share/bcih
 
 gretldir = $(prefix)/share/gretl
 INSTALL_DATA = cp -fp
@@ -8,11 +12,11 @@ mkbin: mkbin.c
 	$(CC) -o $@ $<
 
 bcih.bin: mkbin bcih.dat
-	./mkbin 
+	./mkbin $(topsrc)/share/bcih 
 
 install: bcih.bin
 	$(INSTALL_DATA) bcih.bin $(gretldir)/db/bcih.bin
-	$(INSTALL_DATA) bcih.idx $(gretldir)/db/bcih.idx
+	$(INSTALL_DATA) $(topsrc)/share/bcih/bcih.idx $(gretldir)/db/bcih.idx
 
 clean:
 	rm -f mkbin bcih.bin

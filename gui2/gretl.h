@@ -25,7 +25,7 @@
 #ifdef OS_WIN32
 # include "winconfig.h"
 #else
-# include "../config.h"
+# include "config.h"
 # ifdef GTKEXTRA_FILE_SELECTOR
 #   include <gtkextra/gtkiconfilesel.h>
 # endif

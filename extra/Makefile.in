@@ -1,4 +1,8 @@
+topsrc = @top_srcdir@
+
 have_gtk = @have_gtk@
+
+VPATH = $(topsrc)/extra
 
 ifeq ($(have_gtk),2.0)
   CFLAGS = -g -O2 -Wall `pkg-config --cflags gretl`

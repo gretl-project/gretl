@@ -1,4 +1,4 @@
-topsrc = @topsrc@
+topsrc = @top_srcdir@
 
 prefix = @prefix@
 have_gtk = @have_gtk@
@@ -12,40 +12,43 @@ ifeq ($(have_gtk),2.0)
    ES_CLI_HLP = gretlcli.hlp.es.utf8
    UTF8_FILES = $(ES_GUI_HLP) $(ES_CLI_HLP)
 else
-   ES_GUI_HLP = gretl.hlp.es
-   ES_CLI_HLP = gretlcli.hlp.es
+   ES_GUI_HLP = $(topsrc)/share/gretl.hlp.es
+   ES_CLI_HLP = $(topsrc)/share/gretlcli.hlp.es
 endif
+
+sharesrc = $(topsrc)/share
+VPATH = $(sharesrc)
 
 .PHONY :
 
 all: $(UTF8_FILES)
 
 install: installdirs install_datafiles install_scripts install_help
-	$(INSTALL_DATA) gretl.stamp $(gretldir)/gretl.stamp
+	$(INSTALL_DATA) $(topsrc)/share/gretl.stamp $(gretldir)/gretl.stamp
 	make -C bcih install
 
 install-strip: install
 
 install_datafiles:
-	for f in data/*.gdt ; do \
+	for f in $(sharesrc)/data/*.gdt ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data ; done
-	$(INSTALL_DATA) data/descriptions $(gretldir)/data 
-	$(INSTALL_DATA) data/gretldata.dtd $(gretldir)/data 
-	for f in data/greene/* ; do \
+	$(INSTALL_DATA) $(sharesrc)/data/descriptions $(gretldir)/data 
+	$(INSTALL_DATA) $(sharesrc)/data/gretldata.dtd $(gretldir)/data 
+	for f in $(sharesrc)/data/greene/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/data/greene ; done
 
 install_scripts:
-	for f in scripts/* ; do \
+	for f in $(sharesrc)/scripts/* ; do \
 	$(INSTALL_DATA) $$f $(gretldir)/scripts ; done
 
 install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
-	$(INSTALL_DATA) gretl.1 $(prefix)/share/man/man1
+	$(INSTALL_DATA) $(topsrc)/gretl.1 $(prefix)/share/man/man1
 
 install_help:  $(ES_GUI_HLP) $(ES_CLI_HLP)
 	$(tooldir)/mkinstalldirs $(gretldir)
-	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
-	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
+	$(INSTALL_DATA) $(sharesrc)/gretl.hlp $(gretldir)/gretl.hlp
+	$(INSTALL_DATA) $(sharesrc)/gretlcli.hlp $(gretldir)/gretlcli.hlp
 	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretl.hlp.es
 	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 

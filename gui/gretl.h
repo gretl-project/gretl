@@ -22,7 +22,7 @@
 #ifndef GRETL_H
 #define GRETL_H
 
-#include "../config.h"
+#include "config.h"
 #include <gtkextra/gtkiconfilesel.h>
 
 #ifdef USE_GNOME

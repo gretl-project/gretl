@@ -1,4 +1,4 @@
-topsrc = @topsrc@
+topsrc = @top_srcdir@
 
 tooldir = $(topsrc)/tools
 libsrc = $(topsrc)/lib/src
@@ -26,6 +26,8 @@ ifeq ($(havegtk),2.0)
   RAND_LIBS += $(GLIB_LIBS)
 endif
 
+VPATH = $(topsrc)/tests
+
 override CFLAGS += -I$(libsrc) $(DEFINES)
 
 all: nistcheck
@@ -45,28 +47,11 @@ mtrand: mtrand.o
 .PHONY :
 
 check: nistcheck
-	./nistcheck
+	./nistcheck $(topsrc)/tests
 
 clean:
 	rm -f nistcheck diehard mtrand *.o test.out
 	rm -f gretl.32 gretl_rand.txt
 	rm -rf .libs
 
-depend:
-	makedepend -Y../lib/src *.c 
 
-distdepend: depend
-	$(tooldir)/dist_depend.pl
-
-# DO NOT DELETE
-
-nistcheck.o: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
-nistcheck.o: ../lib/src/estimate.h ../lib/src/generate.h
-nistcheck.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
-nistcheck.o: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
-nistcheck.o: ../lib/src/describe.h ../lib/src/printout.h
-nistcheck.o: ../lib/src/modelprint.h ../lib/src/texprint.h ../lib/src/var.h
-nistcheck.o: ../lib/src/interact.h ../lib/src/graphing.h ../lib/src/random.h
-nistcheck.o: ../lib/src/monte_carlo.h ../lib/src/nonparam.h
-nistcheck.o: ../lib/src/discrete.h ../lib/src/subsample.h
-nistcheck.o: ../lib/src/calendar.h ../lib/src/system.h

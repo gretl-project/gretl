@@ -46,6 +46,8 @@
 int verbose;
 int noint;
 
+char datadir[64];
+
 /* special stuff:
 
 Noint1, NoInt2: no intercept, use alternative R^2 calculation   
@@ -255,14 +257,14 @@ int read_nist_file (const char *fname,
     DATAINFO *dinfo = NULL;
     mp_results *certvals = NULL;
     int i, t, npoly = 0;
+    char fullname[128];
 
 #ifdef OS_WIN32
-    char fullname[32];
-
     sprintf(fullname, "nist\\%s", fname);
     fp = fopen(fullname, "r");
 #else
-    fp = fopen(fname, "r");
+    sprintf(fullname, "%s/%s", datadir, fname);
+    fp = fopen(fullname, "r");
 #endif
 
     if (fp == NULL) {
@@ -877,8 +879,17 @@ int main (int argc, char *argv[])
     ntests = sizeof nist_files / sizeof *nist_files;
 
     prog = argv[0];
+
     if (argc == 2 && strcmp(argv[1], "-v") == 0) verbose = 1;
     if (argc == 2 && strcmp(argv[1], "-vv") == 0) verbose = 2;
+
+    strcpy(datadir, ".");
+    if (argc == 2 && argv[1][0] != '-') {
+	strcpy(datadir, argv[1]);
+    }
+    else if (argc == 3) {
+	strcpy(datadir, argv[2]);
+    }
 
     prn = gretl_print_new(GRETL_PRINT_STDOUT, NULL); 
 

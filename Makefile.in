@@ -56,8 +56,8 @@ install-lapack: $(SUBDIRS) installdirs
 	$(MAKE) -C plugin install-lapack
 
 install-man:
-	$(tooldir)/install_man $(tooldir) $(prefix) gretl.1 
-	$(tooldir)/install_man $(tooldir) $(prefix) gretl-config.1
+	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl.1 
+	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl-config.1
 
 tags:
 	etags lib/src/*.[hc] cli/*.[hc] $(GUIDIR)/*.[hc] plugin/*.[hc]
