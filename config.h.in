@@ -35,8 +35,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Multiple precision arithmetic? */
 #undef ENABLE_GMP
 
-/* TRAMO and/or X-12-ARIMA support? */
-#undef TRAMO_X12
+/* X-12-ARIMA support? */
+#undef HAVE_X12A
+
+/* TRAMO/SEATS support? */
+#undef HAVE_TRAMO
 
 /* Define if you want GNU readline support */
 #undef HAVE_READLINE

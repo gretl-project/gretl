@@ -2246,14 +2246,17 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
 /* ........................................................... */
 
-#ifdef TRAMO_X12
-
-# ifndef G_OS_WIN32
+#ifdef HAVE_TRAMO
 extern char tramo[];
 extern char tramodir[];
-# endif
+#endif
+
+#ifdef HAVE_X12A
 extern char x12a[];
 extern char x12adir[];
+#endif
+
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
@@ -2267,7 +2270,24 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 			  PATHS *, int *,
 			  const char *, const char *, char *);
     PRN *prn;
-    char fname[MAXLEN];
+    char fname[MAXLEN] = {0};
+    char *prog = NULL, *workdir = NULL;
+
+    if (opt == TRAMO) {
+#ifdef HAVE_TRAMO
+	prog = tramo;
+	workdir = tramodir;
+#else
+	return;
+#endif
+    } else {
+#ifdef HAVE_X12A
+	prog = x12a;
+	workdir = x12adir;
+#else
+	return;
+#endif
+    }
 
     if (!datainfo->vector[mdata->active_var]) {
 	errbox(_("Can't do this analysis on a scalar"));
@@ -2293,20 +2313,9 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	return; 
     }
 
-    *fname = 0;
-#ifdef G_OS_WIN32
     err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
-			 &paths, &graph, x12a, x12adir, errtext);
-#else
-    if (opt == TRAMO) {
-	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
-			     &paths, &graph, tramo, tramodir, errtext);
-    } else { /* X12A */
-	err = write_tx_data (fname, mdata->active_var, &Z, datainfo, 
-			     &paths, &graph, x12a, x12adir, errtext);
-    }
-#endif
-
+			 &paths, &graph, prog, workdir, errtext);
+    
     close_plugin(handle);
 
     if (err) {
@@ -2335,7 +2344,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     view_buffer(prn, (opt == TRAMO)? 120 : 84, 500, 
 		(opt == TRAMO)? _("gretl: TRAMO analysis") :
 		_("gretl: X-12-ARIMA analysis"),
-		TRAMO_X12A, view_items);
+		opt, view_items);
 
     if (graph) {
 	gnuplot_display(&paths);

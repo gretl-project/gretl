@@ -44,11 +44,12 @@ extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
 
-#ifdef TRAMO_X12
-# ifndef G_OS_WIN32
+#ifdef HAVE_TRAMO
 extern char tramo[MAXSTR];
 extern char tramodir[MAXSTR];
-# endif
+#endif
+
+#ifdef HAVE_X12A
 extern char x12a[MAXSTR];
 extern char x12adir[MAXSTR];
 #endif
@@ -134,17 +135,17 @@ RCVARS rc_vars[] = {
      'U', MAXSTR, 3, NULL},
     {"editor", N_("Editor"), NULL, editor, 
      'U', MAXSTR, 3, NULL},
-#ifdef TRAMO_X12
+#ifdef HAVE_X12A
     {"x12a", N_("path to x12arima"), NULL, x12a, 
      'R', MAXSTR, 3, NULL},
     {"x12adir", N_("X-12-ARIMA working directory"), NULL, x12adir, 
      'R', MAXSTR, 3, NULL},
-# ifndef G_OS_WIN32
+#endif
+#ifdef HAVE_TRAMO
     {"tramo", N_("path to tramo"), NULL, tramo, 
      'R', MAXSTR, 3, NULL},
     {"tramodir", N_("TRAMO working directory"), NULL, tramodir, 
      'R', MAXSTR, 3, NULL},
-# endif
 #endif
     {"binbase", N_("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
@@ -237,24 +238,29 @@ void get_default_dir (char *s)
 
 /* ........................................................... */
 
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
+
 static void set_tramo_x12a_dirs (void)
 {
-#ifndef G_OS_WIN32   
     char cmd[MAXLEN];
 
+#ifdef HAVE_TRAMO 
     if (*tramodir == 0) {
 	build_path(paths.userdir, "tramo", tramodir, NULL);
     }
 #endif
+#ifdef HAVE_X12A
     if (*x12adir == 0) {
 	build_path(paths.userdir, "x12a", x12adir, NULL);
     }
+#endif
 
     /* make directory structure */
 #ifdef G_OS_WIN32
+# ifdef HAVE_X12A
     CreateDirectory(x12adir, NULL);
-# if 0
+# endif
+# ifdef HAVE_TRAMO
     CreateDirectory(tramodir, NULL);
     sprintf(cmd, "%s\\output", tramodir);
     CreateDirectory(cmd, NULL);
@@ -272,7 +278,10 @@ static void set_tramo_x12a_dirs (void)
     CreateDirectory(cmd, NULL);
 # endif
 #else
+# ifdef HAVE_X12A
     sprintf(cmd, "mkdir -p %s", x12adir);
+# endif
+# ifdef HAVE_TRAMO
     system(cmd);
     sprintf(cmd, "mkdir -p %s/output", tramodir);
     system(cmd);
@@ -286,9 +295,10 @@ static void set_tramo_x12a_dirs (void)
     system(cmd);
     sprintf(cmd, "mkdir -p %s/graph/spectra", tramodir);
     system(cmd);
-#endif
+# endif /* HAVE_TRAMO */
+#endif /* not win32 */
 }
-#endif
+#endif /* tramo or x12a */
 
 /* ........................................................... */
 
@@ -704,7 +714,7 @@ static void read_rc (void)
     g_object_unref(G_OBJECT(client));
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
 #ifdef ENABLE_NLS
@@ -781,7 +791,7 @@ void read_rc (void)
     }
 
     set_paths(&paths, 0, 1);
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined (HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
     set_fixed_font();
@@ -895,7 +905,7 @@ static void read_rc (void)
 
     fclose(rc);
     set_paths(&paths, 0, 1);
-#ifdef TRAMO_X12
+#if defined(HAVE_TRAMO) || defined(HAVE_X12A)
     set_tramo_x12a_dirs();
 #endif
 #ifdef ENABLE_NLS

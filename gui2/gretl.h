@@ -125,7 +125,8 @@ enum extra_cmds {
     COVAR,
     STAT_TABLE,
     H_TEST,
-    TRAMO_X12A,
+    TRAMO,
+    X12A,
     RANGE_MEAN,
     VIEW_MODEL,
     VIEW_LOG,
@@ -252,13 +253,6 @@ enum data_status {
     GUI_DATA      = 1 << 4,
     MODIFIED_DATA = 1 << 5
 };
-
-#ifdef TRAMO_X12
-enum tramo_x12_opts {
-    TRAMO,
-    X12A
-};
-#endif
 
 /* functions follow */
 

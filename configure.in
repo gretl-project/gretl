@@ -39,7 +39,8 @@ have_gmp="no"
 seek_inet_addr="no"
 png_graphics="yes"
 prefer_xml1="no"
-want_tramo="no"
+have_tramo="no"
+have_x12a="no"
 MAKE="make"
 XML_LIBS=
 
@@ -67,15 +68,25 @@ else
   gnuplot_png=no
 fi])
 
-AC_ARG_ENABLE(tramo-x12a,
-[  --enable-tramo-x12a     TRAMO and X-12-ARIMA support [default=no]],
+AC_ARG_ENABLE(x-12-arima,
+[  --enable-x-12-arima     X-12-ARIMA support [default=no]],
 [if test "$enableval" = "yes"
 then
-  AC_DEFINE(TRAMO_X12)
-  TRAMO_X12=1
-  want_tramo="yes"
+  AC_DEFINE(HAVE_X12A)
+  HAVE_X12A=1
+  have_x12a="yes"
 fi])
-AC_SUBST(TRAMO_X12)
+AC_SUBST(HAVE_X12A)
+
+AC_ARG_ENABLE(tramo-seats,
+[  --enable-tramo-seats    TRAMO/SEATS support [default=no]],
+[if test "$enableval" = "yes"
+then
+  AC_DEFINE(HAVE_TRAMO)
+  HAVE_TRAMO=1
+  have_tramo="yes"
+fi])
+AC_SUBST(HAVE_TRAMO)
 
 AC_ARG_WITH(gmake,
 [  --with-gmake           Use GNU make explicitly [default=no]],
@@ -495,7 +506,9 @@ Configuration:
   Use installed gtkextra:		  ${have_gtkextra}
   Build with gnome support:               ${have_gnome}
   Gnome installation prefix:              ${gnome_prefix}
-  TRAMO/X-12-ARIMA support (experimental) ${want_tramo}
+  X-12-ARIMA support (experimental)       ${have_x12a}
+  TRAMO/SEATS support (experimental)      ${have_tramo}
+  
 
 Now type '$MAKE' to build gretl.
 "
