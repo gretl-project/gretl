@@ -1605,8 +1605,8 @@ static void data_compact_dialog (int spd, int *target_pd,
 			GINT_TO_POINTER (COMPACT));
     gtk_widget_show (tempwid);
 
-    gtk_widget_show (d->dialog);
-
+    gtk_widget_show(d->dialog);
+    gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
     gtk_main();
 }
 

@@ -346,8 +346,12 @@ series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
 
     gtk_widget_show_all(w);
 
-    gtk_main(); /* block */
+    gtk_window_set_transient_for(GTK_WINDOW(w),
+				 GTK_WINDOW(vwin->dialog));
+    gtk_window_set_modal(GTK_WINDOW(w), TRUE);
 
+    gtk_main(); /* block */
+    
     if (sview->digits > 0) {
 	series_view_print(vwin);
     } else { /* canceled */

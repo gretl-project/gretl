@@ -499,14 +499,15 @@ void file_selector (const char *msg, int action, gpointer data)
     }
 
     gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
-		       gtk_main_quit, NULL);
+                       gtk_main_quit, NULL);
     gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
 					 (filesel)->cancel_button),
 			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
 			      GTK_OBJECT (filesel));
 
     gtk_widget_show(filesel);
-    gtk_main(); /* make file selector modal */
+    gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
+    gtk_main(); 
 }
 
 

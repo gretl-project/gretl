@@ -815,7 +815,8 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 			GINT_TO_POINTER (PANEL));
     gtk_widget_show (tempwid);
 
-    gtk_widget_show (d->dialog);
+    gtk_widget_show(d->dialog);
+    gtk_window_set_modal(GTK_WINDOW(d->dialog), TRUE);
     gtk_main();
 }
 

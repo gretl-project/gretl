@@ -5047,7 +5047,8 @@ static void replace_string_dialog (struct search_replace *s)
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(s->f_entry);
-    gtk_widget_show (s->w);
+    gtk_widget_show(s->w);
+    gtk_window_set_modal(GTK_WINDOW(s->w), TRUE);
     gtk_main();
 }
 

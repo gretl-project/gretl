@@ -1068,6 +1068,7 @@ void selection_dialog (const char *title, const char *oktxt,
     build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
+    gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
     gtk_main();
 }
 
@@ -1291,6 +1292,7 @@ void simple_selection (const char *title, const char *oktxt,
     build_selector_buttons(sr, oktxt, okfunc);
 
     gtk_widget_show(sr->dlg);
+    gtk_window_set_modal(GTK_WINDOW(sr->dlg), TRUE);
     gtk_main();
 }
 
