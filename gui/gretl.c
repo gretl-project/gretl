@@ -1429,9 +1429,9 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
-    if (s0 == NULL || s0 == NULL || s0 == NULL)
+    if (s0 == NULL || s1 == NULL || s2 == NULL)
 	return;
-    s0[0] = s1[0] = s2[0] = 0;
+    *s0 = *s1 = *s2 = '\0';
     i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
     if (i == 0) {
 	errbox(_("No command was supplied to start R"));
