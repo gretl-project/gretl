@@ -214,23 +214,21 @@ unsigned char gp_flags (int batch, unsigned long opt)
 void nls_init (void)
 {
 # ifdef WIN32
-    char gretldir[MAXLEN], localedir[MAXLEN];
+    char gretldir[MAXLEN], LOCALEDIR[MAXLEN];
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretl", "gretldir", gretldir)) {
         return;
     }
-    sprintf(localedir, "%s\\locale", gretldir);
+    sprintf(LOCALEDIR, "%s\\locale", gretldir);
 # endif /* WIN32 */
 
     setlocale (LC_ALL, "");
-# ifdef WIN32
-    bindtextdomain (PACKAGE, localedir);
-    /* bind_textdomain_codeset(PACKAGE, "CP1252"); */
-# else
     bindtextdomain (PACKAGE, LOCALEDIR);
-# endif
     textdomain (PACKAGE); 
     iso_gettext("@CLI_INIT");
+# ifdef WIN32
+    bind_textdomain_codeset (PACKAGE, "CP850");
+# endif
 
     putenv("LC_NUMERIC=");
     setlocale(LC_NUMERIC, "");
