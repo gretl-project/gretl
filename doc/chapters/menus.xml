@@ -225,10 +225,11 @@
 	  values.</para></listitem>
       <listitem><para><guimenuitem>Add case markers</guimenuitem>
 	  Prompts for the name of a text file containing <quote>case
-	    markers</quote> (short strings identifying the individual
+	  markers</quote> (short strings identifying the individual
 	  observations) and adds this information to the data set. See
-	  <xref
-	    linkend="datafiles"/>.  </para></listitem>
+	  <xref linkend="datafiles"/>.</para></listitem>
+      <listitem><para><guimenuitem>Panel structure</guimenuitem>To be
+	  filled in, FIXME.</para></listitem>
     </itemizedlist>
   </listitem>
 

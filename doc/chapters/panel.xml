@@ -89,11 +89,10 @@
       <para>In a panel study you may wish to construct dummy variables
 	of one or both of the following sorts: (a) dummies as unique
 	identifiers for the cross-sectional units, and (b) dummies as
-	unique identifiers of the time periods.  The former can be
-	used, for instance, to allow the intercept of the regression
-	to differ across the units, the latter to allow the intercept
-	to differ across periods. (You will not want to include all of
-	these dummies in a given regression!)</para>
+	unique identifiers of the time periods.  The former may be
+	used to allow the intercept of the regression to differ across
+	the units, the latter to allow the intercept to differ across
+	periods.</para>
 
       <para>You can use two special functions to create such dummies.
 	These are found under the <quote>Data, Add variables</quote>
@@ -212,6 +211,58 @@
 	it using the <command>store</command> command (see <xref
 	  linkend="cmdref"/> below).</para>
     </sect1>
+
+  <sect1 id="pooled"><title>Pooled estimation</title>
+
+    <para>FIXME. This command is for use with panel data.  To take
+      advantage of it, you should specify a model without any dummy
+      variables representing cross-sectional units.  The routine
+      presents estimates for straightforward pooled OLS, which treats
+      cross-sectional and time-series variation at par.  This model
+      may or may not be appropriate.  Under the Tests menu in the
+      model window, you will find an item <quote>panel
+      diagnostics</quote>, which tests pooled OLS against the
+      principal alternatives, the fixed effects and random effects
+      models.</para>
+
+    <para>The fixed effects model adds a dummy variable for all but
+      one of the cross-sectional units, allowing the intercept of the
+      regression to vary across the units.  An F-test for the joint
+      significance of these dummies is presented: if the p-value for
+      this test is small, that counts against the null hypothesis
+      (that the simple pooled model is adequate) and in favor of the
+      fixed effects model.</para>
+
+    <para>The random effects model, on the other hand, decomposes the
+      residual variance into two parts, one part specific to the
+      cross-sectional unit or <quote>group</quote> and the other
+      specific to the particular observation.  (This estimator can be
+      computed only if the panel is <quote>wide</quote> enough, that
+      is, if the number of cross-sectional units in the data set
+      exceeds the number of parameters to be estimated.)  The
+      Breusch&ndash;Pagan LM statistic tests the null hypothesis
+      (again, that the pooled OLS estimator is adequate) against the
+      random effects alternative.</para>
+
+    <para>It is quite possible that the pooled OLS model is rejected
+      against both of the alternatives, fixed effects and random
+      effects. How, then, to assess the relative merits of the two
+      alternative estimators?  The Hausman test (also reported,
+      provided the random effects model can be estimated) addresses
+      this issue.  Provided the unit- or group-specific error is
+      uncorrelated with the independent variables, the random effects
+      estimator is more efficient than the fixed effects estimator;
+      otherwise the random effects estimator is inconsistent, in which
+      case the fixed effects estimator is to be preferred.  The null
+      hypothesis for the Hausman test is that the group-specific error
+      is not so correlated (and therefore the random effects model is
+      preferable).  Thus a low p-value for this tests counts against
+      the random effects model and in favor of fixed effects.</para>
+
+    <para>For a rigorous discussion of this topic, see Greene (XXXX), 
+      chapter 14.</para>
+
+  </sect1>
 
     <sect1 id="PWT"><title>Illustration: the Penn World Table</title>
 

@@ -91,7 +91,7 @@ static int read_data_descriptions (windata_t *fdata)
     if (fdata->action == RAMU_DATA) 
 	sprintf(fname, "%s%s", paths.datadir, "descriptions");
     else if (fdata->action == PWT_DATA)
-	sprintf(fname, "%s%s", pwtpath, "descriptions");
+	sprintf(fname, "%s%s", pwtpath, "pwt_descriptions");
     else if (fdata->action == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");

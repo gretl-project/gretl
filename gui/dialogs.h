@@ -13,6 +13,8 @@ void random_dialog (gpointer data, guint uni, GtkWidget *widget);
 
 void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget);
 
+void start_panel_dialog (gpointer data, guint pd_code, GtkWidget *widget);
+
 void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget);
 
 void graph_dialog (gpointer data, guint controls, GtkWidget *widget); 

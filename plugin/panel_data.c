@@ -31,17 +31,19 @@ typedef struct {
     double *sigma;
 } hausman_t;
 
+/* #define PDEBUG 1 */
+
 /* .................................................................. */
 
 static int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 {
     int err = 0;
 
-    if (pdinfo->time_series == 2) {
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
 	*nunits = pdinfo->n / pdinfo->pd;
 	*T = pdinfo->pd;
     } 
-    else if (pdinfo->time_series == 3) {
+    else if (pdinfo->time_series == STACKED_CROSS_SECTION) {
 	char Tstr[8];
 
 	if (sscanf(pdinfo->endobs, "%[^.].%d", Tstr, nunits) != 2)
@@ -49,6 +51,11 @@ static int get_panel_structure (DATAINFO *pdinfo, int *nunits, int *T)
 	else 
 	    *T = atoi(Tstr);
     } else err = 1;
+
+#ifdef PDEBUG
+    fprintf(stderr, "get_panel_structure: units=%d, periods=%d\n",
+	    *nunits, *T);
+#endif
 
     return err;
 }
@@ -90,8 +97,15 @@ static double group_means_variance (MODEL *pmod,
     MODEL meanmod;
     DATAINFO *ginfo;
 
+#ifdef PDEBUG
+    fprintf(stderr, "group_means_variance: creating dataset\n"
+	    " nvar=%d, nobs=%d, *groupZ=%p\n", pmod->list[0],
+	    nunits, (void *)*groupZ);
+#endif
+
     ginfo = create_new_dataset(groupZ, pmod->list[0], nunits, 0);
     if (ginfo == NULL) return NADBL;
+    ginfo->extra = 1;
 
     list = malloc((pmod->list[0] + 1) * sizeof *list);
     if (list == NULL) {
@@ -99,6 +113,10 @@ static double group_means_variance (MODEL *pmod,
 	free(ginfo);
 	return NADBL;
     }
+
+#ifdef PDEBUG
+    fprintf(stderr, "gmv: *groupZ=%p\n", (void *)*groupZ);
+#endif
 
     list[0] = pmod->list[0];
     list[list[0]] = 0;
@@ -121,13 +139,27 @@ static double group_means_variance (MODEL *pmod,
 	}
     }
 
+#ifdef PDEBUG
+    fprintf(stderr, "group_means_variance: about to run OLS\n");
+    printlist(list, NULL);
+    fprintf(stderr, "*groupZ=%p, ginfo=%p\n", (void *)*groupZ, (void *)ginfo);
+#endif
+
     meanmod = lsq(list, groupZ, ginfo, OLS, 0, 0.0);
+#ifdef PDEBUG
+    fprintf(stderr, "gmv: lsq errcode was %d\n", meanmod.errcode);
+#endif
     if (meanmod.errcode) xx = NADBL;
     else xx = meanmod.sigma * meanmod.sigma;
+
     clear_model(&meanmod, NULL, NULL);
     clear_datainfo(ginfo, 1);
     free(ginfo);
     free(list);
+#ifdef PDEBUG
+    fprintf(stderr, "gmv: done freeing stuff\n");
+#endif
+
     return xx;
 }
 
@@ -325,7 +357,7 @@ static double LSDV (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     for (i=0; i<nunits-1; i++) {
 	for (t=0; t<pdinfo->n; t++) 
 	    (*pZ)[(oldv+i)*pdinfo->n + t] = 0.0;
-	if (pdinfo->time_series == 2) {
+	if (pdinfo->time_series == STACKED_TIME_SERIES) {
 	    for (t=start; t<start+T; t++) 
 		(*pZ)[(oldv+i)*pdinfo->n + t] = 1.0;
 	    start += T;
@@ -341,6 +373,10 @@ static double LSDV (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 	dvlist[i] = pmod->list[i];
     for (i=1; i<nunits; i++) 
 	dvlist[pmod->list[0] + i] = oldv + i - 1;
+
+#ifdef PDEBUG
+    fprintf(stderr, "LSDV: about to run OLS\n");
+#endif
 
     lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
     if (lsdv.errcode) {
@@ -398,6 +434,7 @@ static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo,
 
     reinfo = create_new_dataset(&reZ, pmod->list[0], pdinfo->n, 0);
     if (reinfo == NULL) return E_ALLOC;
+    reinfo->extra = 1;
 
     relist = malloc((pmod->list[0] + 1) * sizeof *relist);
     if (relist == NULL) {
@@ -413,7 +450,7 @@ static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo,
     for (i=1; i<relist[0]; i++) {
 	relist[i] = i;
 	j = 0;
-	if (pdinfo->time_series == 2) { /* stacked time series */
+	if (pdinfo->time_series == STACKED_TIME_SERIES) { 
 	    for (t=0; t<pdinfo->n; t++) {
 		if (t && (t % T == 0)) j++; 
 		reZ[i*reinfo->n + t] = Z[pmod->list[i]*pdinfo->n + t] 
@@ -429,6 +466,10 @@ static int random_effects (MODEL *pmod, double *Z, DATAINFO *pdinfo,
 	}
     }
     for (t=0; t<pdinfo->n; t++) reZ[t] = 1.0 - theta;
+
+#ifdef PDEBUG
+    fprintf(stderr, "random_effects: about to run OLS\n");
+#endif
 
     remod = lsq(relist, &reZ, reinfo, OLS, 0, 0.0);
     if ((err = remod.errcode)) {
@@ -470,7 +511,7 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 
     for (i=0; i<nunits; i++) {
 	ubar[i] = 0.0;
-	if (pdinfo->time_series == 2) {
+	if (pdinfo->time_series == STACKED_TIME_SERIES) {
 	    for (t=start; t<start+T; t++) 
 		ubar[i] += pmod->uhat[t];
 	    start += T;
@@ -482,6 +523,9 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 	ubar[i] /= (double) T;
 	eprime += ubar[i] * ubar[i];
     }
+#ifdef PDEBUG
+    fprintf(stderr,  "breusch_pagan: found ubars\n");
+#endif
 
     pprintf(prn, "\nMeans of pooled OLS residuals for cross-sectional "
 	    "units:\n\n");
@@ -506,15 +550,17 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
 
 static int hausman_test (hausman_t *haus, PRN *prn)
 {
-/*      int i, ns = haus->ns; */
-/*      int nterms = (ns * ns + ns) / 2; */
+#ifdef notdef
+    int i, ns = haus->ns;
+    int nterms = (ns * ns + ns) / 2;
 
-/*      for (i=1; i<=ns; i++)  */
-/*  	pprintf(prn, "b%d_FE - beta%d_RE = %g\n", i, i, haus->bdiff[i]); */
-/*      pprintf(prn, "\n"); */
+    for (i=1; i<=ns; i++)
+ 	pprintf(prn, "b%d_FE - beta%d_RE = %g\n", i, i, haus->bdiff[i]);
+    pprintf(prn, "\n");
 
-/*      for (i=0; i<nterms; i++)  */
-/*  	pprintf(prn, "vcv_diff[%d] = %g\n", i, haus->sigma[i]); */
+    for (i=0; i<nterms; i++)
+ 	pprintf(prn, "vcv_diff[%d] = %g\n", i, haus->sigma[i]);
+#endif
 
     if (haus_invert(haus)) { 
 	pprintf(prn, "Error attempting to invert vcv difference matrix\n");
@@ -543,7 +589,7 @@ int panel_diagnostics (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 {
     int nunits, ns, T;
     double var1, var2, theta;
-    double *groupZ;
+    double *groupZ = NULL;
     hausman_t haus;
 
     if (get_panel_structure(pdinfo, &nunits, &T))
@@ -557,7 +603,6 @@ int panel_diagnostics (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 	if (haus.sigma == NULL) return E_ALLOC; 
     }   
     
-/*      fprintf(stderr, "diagnostics: printing to buffer\n"); */
     pprintf(prn, "      Diagnostics: assuming a balanced panel with %d "
 	    "cross-sectional units\n "
 	    "                        observed over %d periods\n\n", 
@@ -565,7 +610,15 @@ int panel_diagnostics (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 
     var2 = LSDV(pmod, pZ, pdinfo, nunits, T, &haus, prn);
 
+#ifdef PDEBUG
+    fprintf(stderr, "panel_diagnostics: LSDV gave %g\n", var2);
+#endif
+
     breusch_pagan_LM(pmod, pdinfo, nunits, T, prn);
+
+#ifdef PDEBUG
+    fprintf(stderr, "panel_diagnostics: done breusch_pagan_LM()\n");
+#endif
     
     if (nunits > pmod->ncoeff && var2 > 0) {
 	var1 = group_means_variance(pmod, *pZ, pdinfo, &groupZ, nunits, T);
@@ -644,7 +697,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     button = gtk_radio_button_new_with_label (NULL, "Stacked time series");
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == 2)
+    if (pdinfo->time_series == STACKED_TIME_SERIES)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_panel_structure), pdinfo);
@@ -655,7 +708,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     button = gtk_radio_button_new_with_label(group, "Stacked cross sections");
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (pdinfo->time_series == 3)
+    if (pdinfo->time_series == STACKED_CROSS_SECTION)
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
                        GTK_SIGNAL_FUNC(set_panel_structure), pdinfo);

@@ -235,7 +235,8 @@ GtkItemFactoryEntry help_items[] = {
     { "/Topics/Estimation/Two-Stage Least Squares", NULL, do_help, TSLS, NULL }, 
     { "/Topics/Estimation/_Logit", NULL, do_help, LOGIT, NULL }, 
     { "/Topics/Estimation/_Probit", NULL, do_help, PROBIT, NULL }, 
-    { "/Topics/Estimation/_Rank Correlation", NULL, do_help, SPEARMAN, NULL }, 
+    { "/Topics/Estimation/_Rank Correlation", NULL, do_help, SPEARMAN, NULL },
+    { "/Topics/Estimation/Pooled OLS (panel)", NULL, do_help, POOLED, NULL }, 
     { "/Topics/sep3", NULL, NULL, 0, "<Separator>" },
     { "/Topics/Hypothesis tests/omit variables", NULL, do_help, OMIT, NULL },
     { "/Topics/Hypothesis tests/add variables", NULL, do_help, ADD, NULL },
@@ -245,6 +246,7 @@ GtkItemFactoryEntry help_items[] = {
     { "/Topics/Hypothesis tests/Chow test", NULL, do_help, CHOW, NULL },
     { "/Topics/Hypothesis tests/Cointegration test", NULL, do_help, 
       COINT, NULL },
+    { "/Topics/Hypothesis tests/_Panel diagnostics", NULL, do_help, POOLED, NULL },
     { "/_Find", NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };

@@ -639,7 +639,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 
     /* and report */
     fprintf(stderr, "setting data frequency = %d\n", pd);
-    fprintf(stderr, "data range: %s - %s", stobs, endobs);
+    fprintf(stderr, "data range: %s - %s\n", stobs, endobs);
     return 0;
 }
 

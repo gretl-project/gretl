@@ -143,6 +143,21 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	errbox(errtext);
 	return;
     }
+
+    if (datainfo->pd == 999) { /* panel */
+	char unit[8], period[8];
+
+	/* try to infer structure from ending obs */
+	if (sscanf(endobs, "%[^.].%s", unit, period) == 2) { 
+	    datainfo->pd = atoi(period);
+	    fprintf(stderr, "Setting data frequency = %d\n", datainfo->pd);
+	} else {
+	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	    errbox(errtext);
+	    return;	    
+	}
+    }    
+
     if (datainfo->pd == 1) {
 	size_t i, n;
 	
@@ -222,15 +237,15 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 	break;
     case 1:
 	datainfo->pd = 1;       
-	strcpy(obsstr, "1900 1999 newvar");
+	strcpy(obsstr, "1950 2001 newvar");
 	break;
     case 4:
 	datainfo->pd = 4;   
-	strcpy(obsstr, "1900.1 1999.4 newvar");
+	strcpy(obsstr, "1950.1 2001.4 newvar");
 	break;
     case 12:
 	datainfo->pd = 12;         
-	strcpy(obsstr, "1900.01 1999.12 newvar");
+	strcpy(obsstr, "1950.01 2001.12 newvar");
 	break;
     case 24:
 	datainfo->pd = 24;       
@@ -241,6 +256,24 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 		 "Enter start and end obs for new data set\n"
 		 "and name of first var to add:", 
 		 obsstr, 1,
+		 "Apply", prep_spreadsheet, wdata, 
+		 " Cancel ", NULL, NULL, 0, 0);
+}
+
+/* ........................................................... */
+
+void start_panel_dialog (gpointer data, guint u, GtkWidget *widget) 
+{
+    windata_t *wdata = NULL;
+
+    datainfo->pd = 999;
+
+    edit_dialog ("gretl: create panel data set", 
+		 "Enter starting and ending observations and\n"
+		 "the name of the first variable to add.\n"
+		 "The example below is suitable for 20 units\n"
+		 "observed over 10 periods", 
+		 "1.01 10.20 newvar", 1,
 		 "Apply", prep_spreadsheet, wdata, 
 		 " Cancel ", NULL, NULL, 0, 0);
 }

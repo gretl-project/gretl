@@ -1069,7 +1069,7 @@ void do_sampledum (GtkWidget *widget, dialog_t *ddata)
 
 void do_setobs (GtkWidget *widget, dialog_t *ddata)
 {
-    char *edttext, pdstr[8], stobs[8], msg[80];
+    char *edttext, pdstr[8], stobs[8];
     int err, opt;
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
@@ -1084,11 +1084,16 @@ void do_setobs (GtkWidget *widget, dialog_t *ddata)
 
     err = set_obs(line, datainfo, opt);
     if (err) {
-	errbox(msg);
+	errbox(gretl_errmsg);
 	return;
+    } else {
+	char msg[80];
+
+	sprintf(msg, "Set data frequency to %d, starting obs to %s",
+		datainfo->pd, datainfo->stobs);
+	infobox(msg);
+	set_sample_label(datainfo);
     }
-    infobox(msg);
-    set_sample_label(datainfo);
 }
 
 /* ........................................................... */
@@ -1359,6 +1364,24 @@ void set_panel_structure (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
+static int balanced_panel (void)
+{
+    char unit[9], period[9];
+
+    if ((datainfo->t2 - datainfo->t1 + 1) % datainfo->pd)
+	return 0;
+
+    if (sscanf(datainfo->endobs, "%[^.].%s", unit, period) == 2) {
+	if (atoi(period) != datainfo->pd)
+	    return 0;
+    } else 
+	return 0;
+
+    return 1;
+}
+
+/* ........................................................... */
+
 void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 {
     windata_t *mydata = (windata_t *) data;
@@ -1366,6 +1389,13 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     void *handle;
     void (*panel_diagnostics)(MODEL *, double **, DATAINFO *, PRN *);
     PRN *prn;
+
+    if (!balanced_panel()) {
+	errbox("Sorry, can't do this test on an unbalanced panel.\n"
+	       "You need to have the same number of observations\n"
+	       "for each cross-sectional unit");
+	return;
+    }
 
     if (open_plugin("panel_data", &handle)) return;
     panel_diagnostics = get_plugin_function("panel_diagnostics", handle);

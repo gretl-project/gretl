@@ -37,7 +37,7 @@ static int writehdr (const char *hdrfile, const int *list,
 static double obs_float (const DATAINFO *pdinfo, const int end);
 static int write_xmldata (const char *fname, const int *list, 
 			  double *Z, const DATAINFO *pdinfo, int opt);
-
+static int xmlfile (const char *fname);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -61,6 +61,7 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample)
 	   free(pdinfo->S[i]); 
 	free(pdinfo->S);
 	pdinfo->S = NULL;
+	pdinfo->markers = 0;
     } 
     /* if this is not a sub-sample datainfo, free varnames and labels */
     if (!subsample) {
@@ -1219,19 +1220,17 @@ void gz_switch_ext (char *targ, char *src, char *ext)
 
 /* ................................................ */
 
-static int try_gdt (char *fname)
+static void try_gdt (char *fname)
 {
     char *suff;
-    int ret = 0;
 
     if (fname != NULL) {
 	suff = strrchr(fname, '.');
 	if (suff != NULL && !strcmp(suff, ".dat")) {
 	    strcpy(suff, ".gdt");
-	    ret = 1;
-	}
+	} else 
+	    strcat(fname, ".gdt");
     }
-    return ret;
 }
 
 /**
@@ -1257,7 +1256,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     FILE *dat = NULL;
     gzFile fz = NULL;
-    int err, gzsuff = 0;
+    int err, gzsuff = 0, add_gdt = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
     gretl_errmsg[0] = '\0';
@@ -1270,23 +1269,28 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 	char tryfile[MAXLEN];
 	int found = 0;
 
-	if (!gzsuff) { /* maybe the file is gzipped but we 
-			  didn't get the .gz extension? */
+	/* try using the .gdt suffix? */
+	strcpy(tryfile, datfile);
+	try_gdt(tryfile); 
+	found = (addpath(tryfile, ppaths, 0) != NULL);
+	if (found) add_gdt = 1;
+
+	/* or maybe the file is gzipped but lacks a .gz extension? */
+	if (!found && !gzsuff) { 
 	    sprintf(tryfile, "%s.gz", datfile);
 	    if (addpath(tryfile, ppaths, 0) != NULL) {
 		gzsuff = 1;
 		found = 1;
 	    }
 	}
-	
-	if (!found) { /* no -- then try using the .gdt suffix? */
-	    strcpy(tryfile, datfile);
-	    if (try_gdt(tryfile)) 
-		found = (addpath(tryfile, ppaths, 0) != NULL);
-	} 
-	    
 	if (!found) return E_FOPEN;
 	else strcpy(datfile, tryfile);
+    }
+
+    /* catch XML files that have strayed in here? */
+    if (add_gdt && xmlfile(datfile)) {
+	return get_xmldata(pZ, pdinfo, datfile, ppaths, 
+			   data_status, prn);
     }
 	
     if (!gzsuff) {
@@ -2709,6 +2713,7 @@ int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
 	if (sscanf(tmp, "%lf", &x) == 1) {
 	    strncpy(pdinfo->stobs, tmp, 8);
 	    pdinfo->stobs[8] = '\0';
+	    pdinfo->sd0 = atof(pdinfo->stobs);
 	} else {
 	    strcpy(gretl_errmsg, "failed to parse startobs");
 	    return 1;

@@ -2939,6 +2939,12 @@ linkend="looping"/> for details.
 	      (<command>spearman</command>)</entry>
 	    <entry>Correlation with ordinal data</entry>
 	  </row>
+	  <row>
+	    <entry>Pooled OLS (panel)
+	      (<command>pooled</command>)</entry>
+	    <entry>OLS estimation for pooled cross-section, time
+	      series data</entry>
+	  </row>
 	</tbody>
       </tgroup>
     </table>
@@ -2991,6 +2997,10 @@ linkend="looping"/> for details.
 	  <row>
 	    <entry>Normality of residual</entry>
 	    <entry><command>testuhat</command></entry>
+	  </row>
+	  <row>
+	    <entry>Panel diagnostics</entry>
+	    <entry><command>FIXME</command></entry>
 	  </row>
 	</tbody>
       </tgroup>

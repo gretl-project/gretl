@@ -524,6 +524,15 @@ if there are different numbers of non-missing observations for the two
 variables.)
 
 #
+nulldata
+
+Establishes a "blank" data set, containing only a constant, with periodicity 1
+and the specified number of observations.  This may be used for simulation
+purposes: some of the genr commands (e.g. genr uniform(), genr normal(), genr
+time) will generate dummy data from scratch to fill out the data set.  The
+nulldata command may be useful in conjunction with "loop".
+
+#
 ols
 Ordinary Least Squares model
 
@@ -615,7 +624,7 @@ to F for the year 1970, the next 6 rows the values for the same countries in
 1971, and so on.
 
 If you save your data file after setting this attribute, the information will
-be recorded in the data header file and you won't have to set it again.  
+be recorded in the data file and you won't have to set it again.  
 
 #
 pooled

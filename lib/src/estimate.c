@@ -109,10 +109,10 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     XPXXPY xpxxpy;
     MODEL model;
 
-    if (list == NULL) {
+    if (list == NULL || pZ == NULL || pdinfo == NULL) {
 	model.errcode = 1;
         return model;
-    }	
+    }
 
     if (ci == HSK)
 	return hsk_func(list, pZ, pdinfo);
