@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) by Allin Cottrell
+ *  Copyright (c) 2004 by Allin Cottrell
  *
  *   This program is free software; you can redistribute it and/or modify
  *   it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ struct _gretl_string_table {
     col_table **cols;
 };
 
-col_table *col_table_new (void)
+static col_table *col_table_new (int colnum)
 {
     col_table *ct;
 
@@ -42,6 +42,7 @@ col_table *col_table_new (void)
 
     ct->strs = NULL;
     ct->n_strs = 0;
+    ct->idx = colnum;
 
     return ct;
 }
@@ -99,10 +100,9 @@ gretl_string_table_add_column (gretl_string_table *st, int colnum)
     if (cols == NULL) return NULL;
 
     st->cols = cols;
-    cols[n-1] = col_table_new();
+    cols[n-1] = col_table_new(colnum);
     if (cols[n-1] == NULL) return NULL;
 
-    (cols[n-1])->idx = colnum;
     st->n_cols += 1;
 
     return cols[n-1];
@@ -129,7 +129,7 @@ gretl_string_table_index (gretl_string_table *st, const char *s, int col,
 	/* no table for this column yet */
 	ct = gretl_string_table_add_column(st, col);
 	if (ct != NULL) {
-	    pprintf(prn, "variable %d: translating from strings to code numbers\n", 
+	    pprintf(prn, M_("variable %d: translating from strings to code numbers\n"), 
 		    col);
 	}
     }
@@ -154,7 +154,7 @@ static void col_table_destroy (col_table *ct)
     free(ct);
 }
 
-void gretl_string_table_destroy (gretl_string_table *st)
+static void gretl_string_table_destroy (gretl_string_table *st)
 {
     int i;
 
@@ -165,6 +165,24 @@ void gretl_string_table_destroy (gretl_string_table *st)
     }
     free(st->cols);
     free(st);
+}
+
+void gretl_string_table_print (gretl_string_table *st, PRN *prn)
+{
+    int i, j;
+    const col_table *ct;
+
+    if (st == NULL) return;
+
+    for (i=0; i<st->n_cols; i++) {
+	ct = st->cols[i];
+	pprintf(prn, M_("String code table for variable %d:\n"), ct->idx);
+	for (j=0; j<ct->n_strs; j++) {
+	    pprintf(prn, "%3d = '%s'\n", j + 1, ct->strs[j]);
+	}
+    }
+
+    gretl_string_table_destroy(st);
 }
 
 

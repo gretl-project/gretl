@@ -2577,7 +2577,7 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
 {
     int miss = 0;
 
-    if (strlen(str) == 0) {
+    if (*str == '\0') {
 	if (t < 500) {
 	    pprintf(prn, M_("   the cell for variable %d, obs %d "
 			    "is empty: treating as missing value\n"), 
@@ -2921,7 +2921,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     setlocale(LC_NUMERIC, "");
 #endif
 
-    gretl_string_table_destroy(st);
+    if (st != NULL) {
+	gretl_string_table_print(st, prn);
+    }
 
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;

@@ -22,6 +22,10 @@ version 1.2.4
 - Error-checking for new varname in genr
 - Add robust standard errors/VCV for tsls command
 - Allow use of wls command in a loop
+- CSV import: add automatic conversion of string variables
+  to code numbers
+- Add Three-Stage Least Squares (system type=3sls): this is
+  still at the testing stage
 
 2/24/2004 version 1.2.3
 - Add Tobit model command, with a new plugin (thanks to Jack
