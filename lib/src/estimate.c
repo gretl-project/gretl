@@ -71,6 +71,8 @@ static double wt_dummy_mean (const MODEL *pmod, double **Z);
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
 
+/* #define USE_LAPACK */
+
 #ifdef USE_LAPACK
 static int ijtok (int i, int j, int n);
 static void lapack_std_errs (double *xpx, double *sderr, 
@@ -755,8 +757,8 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 #ifdef USE_LAPACK
 
-#include <f2c.h>
-#include <clapack.h>
+#include "../../plugin/f2c.h"
+#include "../../plugin/clapack_double.h"
 
 static int ijtok (int i, int j, int n)
 {
@@ -823,33 +825,6 @@ static int lapack_cholbeta (MODEL *pmod, double *xpy,
     make_ess(pmod, Z);
     
     return INFO;
-}
-
-
-static int lapack_cholbeta_orig (MODEL *pmod, double *xpy, 
-				 double **Z, int nv)
-{
-    char UPLO = 'L';
-    integer INFO, NRHS = 1, K = nv;
-    double *AP, *B;
-    int i;
-
-    AP = pmod->xpx + 1;
-    B = xpy + 1;
-
-    /* FIXME: need to bail out if too close to singularity */
-
-    dppsv_(&UPLO, &K, &NRHS, AP, B, &K, &INFO);
-
-    if (INFO != 0) return (int) INFO;
-
-    for (i=1; i<=nv; i++) {
-	pmod->coeff[i] = xpy[i];
-    }
-
-    make_ess(pmod, Z);
-
-    return 0;
 }
 
 static void lapack_std_errs (double *xpx, double *sderr, 
