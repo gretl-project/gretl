@@ -28,29 +28,9 @@ static int *grand_list;
 
 static void print_rtf_row_spec (PRN *prn, int tall);
 
-#ifdef GNULL
-static void 
-model_table_copy_callback (gpointer p, guint view, GtkWidget *w);
-#endif
-
 #define MAX_TABLE_MODELS 6
 
-#ifdef GNULL /* issue: gtk+-1.2 versus gtk+-2.0 */
-
-GtkItemFactoryEntry model_table_items[] = {
-# ifdef USE_GNOME
-    { N_("/_File"), NULL, NULL, 0, "<Branch>", GNULL },  
-    { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },   
-# endif
-    { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), NULL, model_table_copy_callback, 0, "<StockItem>", 
-      GTK_STOCK_COPY },
-    { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/LaTeX/_View"), NULL, tex_print_model_table, 1, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-
-#else
+#ifndef GNULL
 
 GtkItemFactoryEntry model_table_items[] = {
 # ifdef USE_GNOME
@@ -69,16 +49,6 @@ GtkItemFactoryEntry model_table_items[] = {
 };
 
 #endif /* GNULL */
-
-#ifdef GNULL
-static void 
-model_table_copy_callback (gpointer p, guint view, GtkWidget *w)
-{
-    windata_t *vwin = (windata_t *) p;
-
-    copy_format_dialog(vwin);
-}
-#endif
 
 static int real_model_table_list_length (void)
 {

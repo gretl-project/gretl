@@ -36,6 +36,7 @@ char *storelist = NULL;
 extern int session_saved;
 extern GtkWidget *mysheet;
 extern GdkColor red, blue;
+extern GtkItemFactoryEntry view_items[];
 
 #define SCRIPT_CHANGED(w) w->active_var = 1
 #define SCRIPT_SAVED(w) w->active_var = 0
@@ -1246,20 +1247,29 @@ static void dialog_table_setup (windata_t *vwin)
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,
-			GtkItemFactoryEntry menu_items[]) 
+			gpointer data) 
 {
     GtkWidget *dialog, *close;
+    GtkItemFactoryEntry *menu_items = view_items;
+    gpointer mydata;
     windata_t *vwin;
 
-    vwin = common_viewer_new(role, title, NULL, 1);
+    if (role == VIEW_SERIES || role == VIEW_MODELTABLE) {
+	menu_items = data;
+	mydata = NULL;
+    } else {
+	mydata = data;
+    }
+
+    if (role == VAR) menu_items = var_items;
+
+    vwin = common_viewer_new(role, title, mydata, 1);
     if (vwin == NULL) return NULL;   
 
     create_text(vwin, hsize, vsize, FALSE);
 
     dialog = vwin->dialog;
     viewer_box_config(vwin);
-
-    if (role == VAR) menu_items = var_items;
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(dialog, vwin, menu_items);
@@ -1750,20 +1760,6 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/File/Save as icon and close", s);
 }
 
-static void check_var_menu (GtkWidget *w, GdkEventButton *eb, 
-			    windata_t *vwin)
-{
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-
-    if (var != NULL) {
-	const char *name = gretl_var_get_name(var);
-	
-	if (name != NULL && *name != '\0') {
-	    model_save_state(vwin->ifac, FALSE);
-	}
-    }
-}
-
 /* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -1821,9 +1817,13 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
 	}
-    } else if (vwin->role == VAR) {
-	gtk_signal_connect(GTK_OBJECT(vwin->mbar), "button_press_event", 
-			   GTK_SIGNAL_FUNC(check_var_menu), vwin);
+    } else if (vwin->role == VAR && vwin->data != NULL) {
+	GRETl_VAR *var = (GRETL_VAR *) vwin->data;
+	const char *name = gretl_var_get_name(var);
+
+	if (name != NULL && *name != '\0') {
+	    model_save_state(vwin->ifac, FALSE);
+	}
     }
 }
 

@@ -56,7 +56,7 @@ void free_windata (GtkWidget *w, gpointer data);
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role,
-			GtkItemFactoryEntry menu_items[]);
+			gpointer data);
 
 windata_t *view_file (char *filename, int editable, int del_file, 
 		      int hsize, int vsize, int role, 

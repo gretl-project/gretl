@@ -140,7 +140,6 @@ static void get_critical (GtkWidget *w, gpointer data)
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
     PRN *prn;
-    extern GtkItemFactoryEntry view_items[];
 
     if (gui_open_plugin("stats_tables", &handle)) return;
 
@@ -220,7 +219,7 @@ static void get_critical (GtkWidget *w, gpointer data)
 	gretl_print_destroy(prn);
     else
 	view_buffer(prn, 77, 300, _("gretl: statistical table"), 
-		    STAT_TABLE, view_items);
+		    STAT_TABLE, NULL);
 }
 
 /* ........................................................... */
@@ -233,7 +232,6 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     double val, xx, zz;
     gchar *tmp, cmd[128];
     PRN *prn;
-    extern GtkItemFactoryEntry view_items[];
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(pval[0]->book));
     sprintf(cmd, "pvalue %d ", i+1);
@@ -318,7 +316,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 
     if (bufopen(&prn)) return;
     batch_pvalue(cmd, Z, datainfo, prn);
-    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, view_items);
+    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, NULL);
     return;
 }
 
@@ -457,7 +455,6 @@ static void h_test (GtkWidget *w, gpointer data)
     double x[5], sderr, ts, pv;
     gchar *tmp;
     PRN *prn;
-    extern GtkItemFactoryEntry view_items[];
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(test[0]->book));
     if (bufopen(&prn)) return;
@@ -667,7 +664,7 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     }
     view_buffer(prn, 78, 300, _("gretl: hypothesis test"), H_TEST,
-                view_items);
+                NULL);
 }
 
 /* ........................................................... */

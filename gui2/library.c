@@ -783,7 +783,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     char title[48];
     char *liststr = NULL;
     int err = 0;
-    windata_t *vwin;
     gpointer obj = NULL;
     gint hsize = 78, vsize = 380;
 
@@ -877,11 +876,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     }
     if (err) gui_errmsg(err);
 
-    vwin = view_buffer(prn, hsize, vsize, title, action, NULL);
-
-    if (vwin && 
-	(action == SUMMARY || action == VAR_SUMMARY || action == CORR)) 
-	vwin->data = obj;
+    view_buffer(prn, hsize, vsize, title, action, obj);
 }
 
 /* ........................................................... */
@@ -1317,7 +1312,6 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 void do_forecast (GtkWidget *widget, dialog_t *ddata) 
 {
     windata_t *mydata = ddata->data;
-    windata_t *vwin;
     MODEL *pmod = mydata->data;
     FITRESID *fr;
     const gchar *buf;
@@ -1347,9 +1341,7 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	if (!err) {
 	    register_graph();
 	}
-	vwin = view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, 
-			   NULL);  
-	vwin->data = fr;
+	view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, fr);
     }
 }
 
@@ -1946,7 +1938,6 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
     selector *sr = (selector *) p;
     PRN *prn;
     mp_results *mpvals = NULL;
-    windata_t *vwin = NULL;
 
     action = sr->code;
     strcpy(estimator, gretl_commands[action]);
@@ -1988,10 +1979,8 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     print_mpols_results (mpvals, datainfo, prn);
 
-    vwin = view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
-		       MPOLS, NULL);
-
-    vwin->data = mpvals;
+    view_buffer(prn, 78, 400, _("gretl: high precision estimates"), 
+		MPOLS, mpvals);
 }
 
 #endif /* ENABLE_GMP */
@@ -2182,11 +2171,8 @@ void do_model (GtkWidget *widget, gpointer p)
 	if (var == NULL) {
 	    ; /* error message */
 	} else {
-	    windata_t *vwin = 
-		view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
-			    VAR, NULL);
-
-	    if (vwin != NULL) vwin->data = var;
+	    view_buffer(prn, 78, 450, _("gretl: vector autoregression"), 
+			VAR, var);
 	}
 	return;
 
@@ -2807,7 +2793,6 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
 {
     PRN *prn;
     windata_t *mydata = (windata_t *) data;
-    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
     CONFINT *cf;
 
@@ -2816,10 +2801,9 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
     cf = get_model_confints(pmod);
     if (cf != NULL) {
 	text_print_model_confints(cf, datainfo, prn);
-	vwin = view_buffer(prn, 78, 300, 
-			   _("gretl: coefficient confidence intervals"), 
-			   COEFFINT, NULL);
-	vwin->data = cf;
+	view_buffer(prn, 78, 300, 
+		    _("gretl: coefficient confidence intervals"), 
+		    COEFFINT, cf);
     }
 }
 
@@ -2829,7 +2813,6 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
 {
     PRN *prn;
     windata_t *mydata = (windata_t *) data;
-    windata_t *vwin = NULL;
     MODEL *pmod = (MODEL *) mydata->data;
     VCV *vcv = NULL;
 
@@ -2847,9 +2830,8 @@ void do_outcovmx (gpointer data, guint action, GtkWidget *widget)
     } else {
 	text_print_matrix (vcv->vec, vcv->list, 
 			   pmod, datainfo, 0, prn);
-	vwin = view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
-			   COVAR, NULL);
-	vwin->data = vcv;
+	view_buffer(prn, 78, 300, _("gretl: coefficient covariances"), 
+		    COVAR, vcv);
     }
 }
 
@@ -3354,7 +3336,6 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 {
     PRN *prn;
     windata_t *mydata = (windata_t *) data;
-    windata_t *vwin;
     MODEL *pmod = (MODEL *) mydata->data;
     FITRESID *fr;
 
@@ -3366,9 +3347,8 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
 	gretl_print_destroy(prn);
     } else {
 	text_print_fit_resid(fr, datainfo, prn);
-	vwin = view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
-			   NULL);  
-	vwin->data = fr;
+	view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
+		    fr);  
     }  
 }
 

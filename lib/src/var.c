@@ -247,6 +247,18 @@ static int gretl_var_do_error_decomp (GRETL_VAR *var)
 
 /* ......................................................  */
 
+int gretl_var_get_variable_number (const GRETL_VAR *var, int k)
+{
+    return (var->models[k])->list[1];
+}
+
+int gretl_var_get_n_equations (const GRETL_VAR *var)
+{
+    return var->neqns;
+}
+
+/* ......................................................  */
+
 #define VARS_IN_ROW 4
 
 int 
@@ -283,8 +295,6 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 
     vsrc = (var->models[shock])->list[1];
 
-    /* FIXME: formatting below not very good? */
-
     blockmax = var->neqns / VARS_IN_ROW;
     if (var->neqns % VARS_IN_ROW) blockmax++;
 
@@ -302,16 +312,18 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 	}
 
 	pputs(prn, "period ");
+
 	for (i=0; i<VARS_IN_ROW; i++) {
 	    k = VARS_IN_ROW * block + i;
 	    if (k >= var->neqns) break;
 	    vtarg = (var->models[k])->list[1];
 	    pprintf(prn, "  %8s  ", pdinfo->varname[vtarg]);
 	}
+
 	pputs(prn, "\n\n");
 
 	for (t=0; t<periods && !err; t++) {
-	    pprintf(prn, "  %-3d  ", t);
+	    pprintf(prn, "  %-3d  ", t + 1);
 	    if (t == 0) {
 		/* calculate initial estimated responses */
 		err = gretl_matrix_copy_values(rtmp, var->C);
@@ -338,6 +350,68 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
     if (ctmp != NULL) gretl_matrix_free(ctmp);
 
     return err;
+}
+
+double *
+gretl_var_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
+				 int periods) 
+{
+    int t;
+    int rows = var->neqns * var->order;
+    gretl_matrix *rtmp, *ctmp;
+    double *resp;
+    int err = 0;
+
+    if (shock >= var->neqns) {
+	fprintf(stderr, "Shock variable out of bounds\n");
+	return NULL;
+    }  
+
+    if (targ >= var->neqns) {
+	fprintf(stderr, "Target variable out of bounds\n");
+	return NULL;
+    } 
+
+    if (periods <= 0) {
+	fprintf(stderr, "Invalid number of periods\n");
+	return NULL;
+    }
+
+    resp = malloc(periods * sizeof *resp);
+    if (resp == NULL) return NULL;
+
+    rtmp = gretl_matrix_alloc(rows, var->neqns);
+    if (rtmp == NULL) {
+	free(resp);
+	return NULL;
+    }
+
+    ctmp = gretl_matrix_alloc(rows, var->neqns);
+    if (ctmp == NULL) {
+	free(resp);
+	gretl_matrix_free(rtmp);
+	return NULL;
+    }
+
+    for (t=0; t<periods && !err; t++) {
+	if (t == 0) {
+	    /* calculate initial estimated responses */
+	    err = gretl_matrix_copy_values(rtmp, var->C);
+	} else {
+	    /* calculate further estimated responses */
+	    err = gretl_matrix_multiply(var->A, rtmp, ctmp);
+	    gretl_matrix_copy_values(rtmp, ctmp);
+	}
+
+	if (err) break;
+
+	resp[t] = gretl_matrix_get(rtmp, targ, shock);
+    }
+
+    if (rtmp != NULL) gretl_matrix_free(rtmp);
+    if (ctmp != NULL) gretl_matrix_free(ctmp);
+
+    return resp;
 }
 
 /* ......................................................  */
@@ -1643,6 +1717,8 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {
     int i, j, k, v;
     int dfd = (var->models[0])->dfd;
+
+    if (prn == NULL) return 0;
 
     pprintf(prn, _("\nVAR system, lag order %d\n\n"), var->order);
 

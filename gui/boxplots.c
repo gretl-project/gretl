@@ -829,7 +829,6 @@ five_numbers (gpointer data)
     PLOTGROUP *grp = (PLOTGROUP *) data;
     int i;
     PRN *prn;
-    extern GtkItemFactoryEntry view_items[];
 
     if (bufopen(&prn)) return 1;
 
@@ -891,7 +890,7 @@ five_numbers (gpointer data)
     }
 
     (void) view_buffer(prn, 78, 240, _("gretl: 5 numbers"), BXPLOT,
-                       view_items);
+                       NULL);
 
     return 0;
 }

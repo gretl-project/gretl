@@ -21,6 +21,7 @@
 
 #include "libgretl.h"
 #include "internal.h"
+#include "var.h"
 #include "../../cephes/libprob.h"
 
 #include <unistd.h>
@@ -2133,6 +2134,66 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
     } else {
 	return err;
     }
+}
+
+/* ........................................................... */
+
+int 
+gretl_var_plot_impulse_response (GRETL_VAR *var,
+				 int targ, int shock, int periods,
+				 const DATAINFO *pdinfo,
+				 PATHS *ppaths)
+{
+    FILE *fp = NULL;
+    int vtarg, vshock;
+    double *resp;
+    int t;
+
+    if (periods == 0) {
+	if (pdinfo->pd == 4) periods = 20;
+	else if (pdinfo->pd == 12) periods = 24;
+	else periods = 10;
+    }
+
+    resp = gretl_var_get_impulse_responses(var, targ, shock, periods);
+    if (resp == NULL) return E_ALLOC;
+
+    if (gnuplot_init(ppaths, PLOT_REGULAR, &fp)) return E_FOPEN;
+
+    vtarg = gretl_var_get_variable_number(var, targ);
+    vshock = gretl_var_get_variable_number(var, shock);
+
+    fputs("# impulse response plot\n", fp);
+
+    fputs("set xtics 1\n", fp);
+    fputs("set nokey\n", fp);
+    fprintf(fp, "set xlabel '%s'\n", _("periods"));
+    fprintf(fp, "set title 'response of %s to a shock in %s'\n",
+	    pdinfo->varname[vtarg], pdinfo->varname[vshock]);
+	  
+    fputs("plot \\\n'-' using 1:2 w lines\n", fp);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
+
+    for (t=0; t<periods; t++) {
+	fprintf(fp, "%d %.8g\n", t+1, resp[t]);
+    }
+    fputs("e\n", fp);
+
+    free(resp);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
+
+#if defined(WIN32) && !defined(GNUPLOT_PNG)
+    fputs("pause -1\n", fp);
+#endif
+    fclose(fp);
+
+    return gnuplot_display(ppaths);
 }
 
 /* ........................................................... */

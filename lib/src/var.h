@@ -55,6 +55,10 @@ int johansen_test (int order, const LIST list,
 		   double ***pZ, DATAINFO *pdinfo,
 		   int verbose, PRN *prn);
 
+double *
+gretl_var_get_impulse_responses (GRETL_VAR *var, int targ, int shock,
+				 int periods);
+
 int 
 gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 				  int periods, const DATAINFO *pdinfo, 
@@ -67,6 +71,10 @@ void gretl_var_assign_name (GRETL_VAR *var);
 void gretl_var_assign_specific_name (GRETL_VAR *var, const char *name);
 
 const char *gretl_var_get_name (const GRETL_VAR *var);
+
+int gretl_var_get_variable_number (const GRETL_VAR *var, int k);
+
+int gretl_var_get_n_equations (const GRETL_VAR *var);
 
 #endif /* VAR_H_ */
 

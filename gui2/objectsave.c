@@ -97,14 +97,12 @@ static void show_saved_model (MODEL *pmod, const DATAINFO *pdinfo)
 
 static void show_saved_var (GRETL_VAR *var, const DATAINFO *pdinfo)
 {
-    windata_t *vwin;
     PRN *prn;
 
     if (bufopen(&prn)) return;
 
     gretl_var_print(var, pdinfo, prn);
-    vwin = view_buffer(prn, 78, 450, gretl_var_get_name(var), VAR, NULL);
-    if (vwin != NULL) vwin->data = var;
+    view_buffer(prn, 78, 450, gretl_var_get_name(var), VAR, var);
 }
 
 static void get_word_and_command (const char *s, char *word, 

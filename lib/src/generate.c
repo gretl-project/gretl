@@ -502,7 +502,9 @@ static const char *set_or_get_obs_marker (const char *s, int opt)
 	strncat(obsstr, s + 1, 8);
 	n = strlen(obsstr);
 	if (obsstr[n - 1] == '"') obsstr[n - 1] = 0;
-	fprintf(stderr, "obsstr='%s'\n", obsstr);
+#ifdef GENR_DEBUG
+	fprintf(stderr, "set_or_get_obs_marker: obsstr='%s'\n", obsstr);
+#endif
 	return NULL;
     } else {
 	return obsstr;
@@ -1917,19 +1919,8 @@ static int getxvec (char *s, double *xvec,
 	    if (pdinfo->time_series && pdinfo->pd == 1) {
 		/* annual data: let 't' be the year */ 
 		for (t=0; t<n; t++) xvec[t] = pdinfo->sd0 + t;
-	    }
-#ifdef BROKEN
-	    else if (pdinfo->time_series == TIME_SERIES && 
-		     (pdinfo->pd == 4 || pdinfo->pd == 12)) {
-		char obsstr[9];
-		
-		for (t=0; t<n; t++) {
-		    ntodate(obsstr, t, pdinfo);
-		    xvec[t] = dot_atof(obsstr); /* FIXME !!! */
-		}
-	    } 
-#endif /* BROKEN */
-	    else {
+	    } else {
+		/* let 't' be the 1-based observation number */
 		for (t=0; t<n; t++) xvec[t] = (double) (t + 1);
 	    }
 	    *scalar = 0;

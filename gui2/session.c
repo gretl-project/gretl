@@ -1175,13 +1175,11 @@ static void open_gui_var (gui_obj *gobj)
 { 
     PRN *prn;
     GRETL_VAR *var = (GRETL_VAR *) gobj->data;
-    windata_t *vwin;
 
     if (bufopen(&prn)) return;
 
     gretl_var_print(var, datainfo, prn);
-    vwin = view_buffer(prn, 78, 450, gobj->name, VAR, NULL);
-    if (vwin != NULL) vwin->data = var;
+    view_buffer(prn, 78, 450, gobj->name, VAR, var);
 }
 
 /* ........................................................... */

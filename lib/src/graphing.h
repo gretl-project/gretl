@@ -157,6 +157,12 @@ int plot_fcast_errs (int n, const double *obs,
 		     const double *maxerr, const char *varname, 
 		     int time_series, PATHS *ppaths);
 
+int 
+gretl_var_plot_impulse_response (GRETL_VAR *var,
+				 int targ, int shock, int periods,
+				 const DATAINFO *pdinfo,
+				 PATHS *ppaths);
+
 int is_auto_ols_string (const char *s);
 
 int gnuplot_has_ttf (void);

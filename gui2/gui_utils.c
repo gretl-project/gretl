@@ -67,6 +67,7 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
 static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
+static void add_impulse_responses_to_plot_menu (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
@@ -177,7 +178,8 @@ GtkItemFactoryEntry var_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, "<StockItem>", GTK_STOCK_PRINT },
 #endif
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>", GNULL },
-    { N_("/Edit/_Copy"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY }
+    { N_("/Edit/_Copy"), "", text_copy, COPY_TEXT, "<StockItem>", GTK_STOCK_COPY },
+    { N_("/_Graphs"), NULL, NULL, 0, "<Branch>", GNULL }   
 };
 
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w)
@@ -1527,18 +1529,27 @@ static void cursor_to_top (windata_t *vwin)
 
 windata_t *view_buffer (PRN *prn, int hsize, int vsize, 
 			const char *title, int role, 
-			GtkItemFactoryEntry menu_items[]) 
+			gpointer data) 
 {
     GtkWidget *close;
     GtkTextBuffer *tbuf;
+    GtkItemFactoryEntry *menu_items = NULL;
     windata_t *vwin;
+    gpointer mydata;
 
-    vwin = common_viewer_new(role, title, NULL, 1);
+    if (role == VIEW_SERIES) {
+	menu_items = data;
+	mydata = NULL;
+    } else {
+	mydata = data;
+    }
+
+    if (role == VAR) menu_items = var_items;
+
+    vwin = common_viewer_new(role, title, mydata, 1);
     if (vwin == NULL) return NULL;
 
     viewer_box_config(vwin);
-
-    if (role == VAR) menu_items = var_items;
 
     if (menu_items != NULL) {
 	set_up_viewer_menu(vwin->dialog, vwin, menu_items);
@@ -1547,6 +1558,10 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 	gtk_widget_show(vwin->mbar);
     } else if (role != IMPORT) {
 	make_viewbar(vwin, 1);
+    }
+
+    if (role == VAR) {
+	add_impulse_responses_to_plot_menu(vwin);
     }
 
     create_text (vwin, &tbuf, hsize, vsize, FALSE);
@@ -2113,20 +2128,6 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/File/Save as icon and close", s);
 }
 
-static void check_var_menu (GtkWidget *w, GdkEventButton *eb,
-			    windata_t *vwin)
-{
-    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-
-    if (var != NULL) {
-	const char *name = gretl_var_get_name(var);
-	
-	if (name != NULL && *name != '\0') {
-	    model_save_state(vwin->ifac, FALSE);
-	}
-    }
-}
-
 /* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -2171,9 +2172,13 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	if (dataset_is_panel(datainfo)) {
 	    model_arch_menu_state(vwin->ifac, FALSE);
 	}
-    } else if (vwin->role == VAR) {
-	g_signal_connect(G_OBJECT(vwin->mbar), "button_press_event", 
-			 G_CALLBACK(check_var_menu), vwin);
+    } else if (vwin->role == VAR && vwin->data != NULL) {
+	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+	const char *name = gretl_var_get_name(var);
+
+	if (name != NULL && *name != '\0') {
+	    model_save_state(vwin->ifac, FALSE);
+	}	
     }
 }
 
@@ -2190,10 +2195,11 @@ static void add_vars_to_plot_menu (windata_t *vwin)
     MODEL *pmod = vwin->data;
     char tmp[16];
 
+   varitem.accelerator = NULL; 
+   varitem.item_type = NULL;
+   varitem.callback_action = 0; 
+
     for (i=0; i<2; i++) {
-	varitem.accelerator = NULL;
-	varitem.callback_action = 0; 
-	varitem.item_type = NULL;
 	if (dataset_is_time_series(datainfo)) {
 	    varitem.path = 
 		g_strdup_printf(_("%s/against time"), mpath[i]);
@@ -2212,9 +2218,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    if (pmod->list[j] == 0) continue;
 	    if (!strcmp(datainfo->varname[pmod->list[j]], "time")) 
 		continue;
-	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
-	    varitem.item_type = NULL;
 	    double_underscores(tmp, datainfo->varname[pmod->list[j]]);
 	    varitem.path = 
 		g_strdup_printf(_("%s/against %s"), mpath[i], tmp);
@@ -2223,14 +2227,13 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    g_free(varitem.path);
 	}
 
+	varitem.callback_action = 0;
+
 	/* if the model has two independent vars, offer a 3-D fitted
 	   versus actual plot */
 	if (i == 1 && pmod->ifc && pmod->ncoeff == 3) {
 	    char tmp2[16];
 
-	    varitem.accelerator = NULL;
-	    varitem.callback_action = 0;
-	    varitem.item_type = NULL;
 	    double_underscores(tmp, datainfo->varname[pmod->list[3]]);
 	    double_underscores(tmp2, datainfo->varname[pmod->list[4]]);
 	    varitem.path =
@@ -2267,6 +2270,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     gchar *radiopath = NULL;
     char tmp[16];
 
+    
     dumitem.path = NULL;
 
     /* put the dummy independent vars on the menu list */
@@ -2317,6 +2321,72 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
     free(dumitem.path);
     free(radiopath);
+}
+
+/* ........................................................... */
+
+static void impulse_response_call (gpointer p, guint shock, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    GRETL_VAR *var = (GRETL_VAR *) vwin->data;
+    gint targ;
+    int err;
+
+    targ = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "targ"));
+
+    err = gretl_var_plot_impulse_response(var, targ, shock, 0, datainfo, 
+					  &paths);
+    if (!err) {
+	register_graph();
+    }
+}
+
+static void add_impulse_responses_to_plot_menu (windata_t *vwin)
+{
+    int i, j;
+    GtkItemFactoryEntry varitem;
+    const gchar *gpath = N_("/Graphs");
+    GRETL_VAR *var = vwin->data;
+    int neqns, vtarg, vshock;
+    char tmp[16];
+
+    varitem.accelerator = NULL;
+
+    neqns = gretl_var_get_n_equations(var);
+
+    for (i=0; i<neqns; i++) {
+	char maj[32], min[16];
+
+	/* make branch for target */
+	vtarg = gretl_var_get_variable_number (var, i);
+	double_underscores(tmp, datainfo->varname[vtarg]);
+	sprintf(maj, _("response of %s"), tmp);
+	varitem.path = g_strdup_printf("%s/%s", _(gpath), maj);
+	varitem.callback = NULL;
+	varitem.callback_action = 0;
+	varitem.item_type = "<Branch>";
+	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	g_free(varitem.path);
+
+	varitem.item_type = NULL;
+	
+	for (j=0; j<neqns; j++) {
+	    GtkWidget *w;
+
+	    vshock = gretl_var_get_variable_number(var, j);
+	    varitem.callback_action = j;
+	    double_underscores(tmp, datainfo->varname[vshock]);
+	    sprintf(min, _("to %s"), tmp);
+	    varitem.path = g_strdup_printf("%s/%s/%s", _(gpath), maj, min);
+	    varitem.callback = impulse_response_call;
+	    varitem.callback_action = j;
+	    varitem.item_type = NULL;
+	    gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
+	    w = gtk_item_factory_get_widget(vwin->ifac, varitem.path);
+	    g_object_set_data(G_OBJECT(w), "targ", GINT_TO_POINTER(i));
+	    g_free(varitem.path);
+	}
+    }
 }
 
 /* ........................................................... */
@@ -2998,6 +3068,8 @@ char *double_underscores (char *targ, const char *src)
 
     return targ;
 }
+
+
 
 
 
