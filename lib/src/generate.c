@@ -1117,6 +1117,18 @@ static int cstack (double *xstack, double *xvec, const char op,
 
 /* ........................................................  */
 
+static int panel_missing (int t, const DATAINFO *pdinfo)
+{
+    char *p, obs[9];
+
+    ntodate(obs, t, pdinfo);
+    p = strchr(obs, '.');
+    if (atoi(p + 1) == 1) return 1;
+    return 0;
+}
+
+/* ........................................................  */
+
 static int domath (double *xvec, const double *mvec, const int nt,
 		   const DATAINFO *pdinfo, int *scalar)
      /* do math transformations and return result in xvec */
@@ -1184,8 +1196,16 @@ static int domath (double *xvec, const double *mvec, const int nt,
 
     case T_DIFF:
 	for (t=t1+1; t<=t2; t++) {
+	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
+		panel_missing(t, pdinfo)) {
+		xvec[t] = NADBL;
+		continue;
+	    }
 	    xx = mvec[t];
-	    yy = mvec[t-1];
+	    if (pdinfo->time_series == STACKED_CROSS_SECTION) 
+		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
+	    else 
+		yy = mvec[t-1];
 	    xvec[t] = (na(xx) || na(yy))? NADBL : xx - yy;
 	}
 	xvec[t1] = NADBL;
@@ -1193,8 +1213,16 @@ static int domath (double *xvec, const double *mvec, const int nt,
 
     case T_LDIFF:
 	for (t=t1+1; t<=t2; t++) {
+	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
+		panel_missing(t, pdinfo)) {
+		xvec[t] = NADBL;
+		continue;
+	    }
 	    xx = mvec[t];
-	    yy = mvec[t-1];
+	    if (pdinfo->time_series == STACKED_CROSS_SECTION) 
+		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
+	    else 
+		yy = mvec[t-1];
 	    if (na(xx) || na(yy)) {
 		xvec[t] = NADBL;
 		continue;
@@ -1873,13 +1901,16 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 int _laggenr (const int iv, const int lag, const int opt, double ***pZ, 
 	      DATAINFO *pdinfo)
      /*
-       creates Z[iv][t-lagval] and prints label if opt != 0.
-       aborts if a variable of the same name already exists
+       creates Z[iv][t-lag] and prints label if opt != 0
+       (aborts if a variable of the same name already exists)
      */
 {
     char word[32];
     char s[32];
     int t, t1, n = pdinfo->n, v = pdinfo->v;
+
+    /* can't do lags of a scalar */
+    if (!pdinfo->vector[iv]) return 1;
 
     strcpy(s, pdinfo->varname[iv]);
     if (pdinfo->pd >=10) _esl_trunc(s, 5);
@@ -1891,15 +1922,20 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
        check whether it already exists: if so, get out */
     if (varindex(pdinfo, s) < v) return 0;
 
-    /* can't do lags of a scalar */
-    if (!pdinfo->vector[iv]) return 1;
-
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
     for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     for (t=0; t<lag; t++) (*pZ)[v][t] = NADBL;
     t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
-    if (dated_daily_data(pdinfo)) {
+
+    /* stacked X-section needs rather special handling */
+    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	for (t=t1; t<=pdinfo->t2; t++) { 
+	    if (t - lag * pdinfo->pd < 0) continue;
+	    (*pZ)[v][t] = (*pZ)[iv][t - lag * pdinfo->pd];
+	}
+    }
+    else if (dated_daily_data(pdinfo)) {
 	int lagt;
 
 	for (t=t1; t<=pdinfo->t2; t++) {
@@ -1907,11 +1943,27 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 	    while (lagt >= 0 && na((*pZ)[iv][lagt])) lagt--;
 	    (*pZ)[v][t] = (*pZ)[iv][lagt];
 	}
-    } else {
+    } 
+    else { /* the "standard" time-series case */
 	for (t=t1; t<=pdinfo->t2; t++) 
 	    (*pZ)[v][t] = (*pZ)[iv][t-lag];
     }
+
+    /* post-process missing panel values */
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	char *p, obs[9];
+	int j;
+
+	for (t=t1; t<=pdinfo->t2; t++) {
+	    ntodate(obs, t, pdinfo);
+	    p = strchr(obs, '.');
+	    j = atoi(p + 1);
+	    if (j <= lag) (*pZ)[v][t] = NADBL;
+	}
+    }
+
     strcpy(pdinfo->varname[v], s);
+
     if (opt) 
 	sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
 		pdinfo->varname[iv], lag);
@@ -2138,13 +2190,17 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
      /* generates lag variables for each var in list */
 {
-    int check, l, v, lv, opt = 1;
+    int check, l, v, lv;
+    int maxlag = pdinfo->pd;
+
+    /* play safe with panel data */
+    if (dataset_is_panel(pdinfo)) maxlag = 1;
     
     for (v=1; v<=list[0]; v++) {
 	lv = list[v];
 	if (lv == 0 || !pdinfo->vector[lv]) continue;
-	for (l=1; l<=pdinfo->pd; l++) {
-	    check = _laggenr(lv, l, opt, pZ, pdinfo);
+	for (l=1; l<=maxlag; l++) {
+	    check = _laggenr(lv, l, 1, pZ, pdinfo);
 	    if (check) return 1;
 	}
     }
