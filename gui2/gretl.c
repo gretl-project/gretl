@@ -1586,7 +1586,7 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 
 #ifdef G_OS_WIN32
 
-int create_child_process (char *prog) 
+static int create_child_process (char *prog) 
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 
