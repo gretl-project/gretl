@@ -658,10 +658,7 @@ static void printftex (const double zz, print_t *prn, int endrow)
 
 static void texprint_summary (const int *list, 
 			      const DATAINFO *pdinfo, int n,
-			      double *coeff, double *xmedian,
-			      double *xpx, double *xpy, 
-			      double *sderr, double *xskew, 
-			      double *xkurt,
+			      GRETLSUMMARY *summ,
 			      print_t *prn)
 {
     char date1[9], date2[9];
@@ -690,13 +687,13 @@ static void texprint_summary (const int *list,
 
     for (v=1; v<=lo; v++) {
 	lv = list[v];
-	xbar = coeff[v];
+	xbar =summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
 	printftex(xbar, prn, 0);
-	printftex(xmedian[v], prn, 0);
-	printftex(xpx[v], prn, 0);
-	printftex(xpy[v], prn, 1);
+	printftex(summ->xmedian[v], prn, 0);
+	printftex(summ->xpx[v], prn, 0);
+	printftex(summ->xpy[v], prn, 1);
 	if (v == lo) pprintf(prn, "[10pt]\n\n");
 	else pprintf(prn, "\n");
     }
@@ -707,14 +704,14 @@ static void texprint_summary (const int *list,
 	lv = list[v];
 	if (lo > 1)
 	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	xbar = coeff[v];
-	std = sderr[v];
+	xbar = summ->coeff[v];
+	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = -999;
 	printftex(std, prn, 0);
 	printftex(xcv, prn, 0);
-	printftex(xskew[v], prn, 0);
-	printftex(xkurt[v], prn, 1);
+	printftex(summ->xskew[v], prn, 0);
+	printftex(summ->xkurt[v], prn, 1);
 	pprintf(prn, "\n");
     }
 
@@ -735,10 +732,7 @@ static void texprint_summary (const int *list,
 
 static void rtfprint_summary (const int *list, 
 			      const DATAINFO *pdinfo, int n,
-			      double *coeff, double *xmedian,
-			      double *xpx, double *xpy, 
-			      double *sderr, double *xskew, 
-			      double *xkurt,
+			      GRETLSUMMARY *summ,
 			      print_t *prn)
 {
     char date1[9], date2[9];
@@ -773,13 +767,13 @@ static void rtfprint_summary (const int *list,
 
     for (v=1; v<=lo; v++) {
 	lv = list[v];
-	xbar = coeff[v];
+	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
 	printftex(xbar, prn, 0);
-	printftex(xmedian[v], prn, 0);
-	printftex(xpx[v], prn, 0);
-	printftex(xpy[v], prn, 1);
+	printftex(summ->xmedian[v], prn, 0);
+	printftex(summ->xpx[v], prn, 0);
+	printftex(summ->xpy[v], prn, 1);
 	if (v == lo) pprintf(prn, "[10pt]\n\n");
 	else pprintf(prn, "\n");
     }
@@ -797,14 +791,14 @@ static void rtfprint_summary (const int *list,
 	lv = list[v];
 	if (lo > 1)
 	    pprintf(prn, "%s & ", pdinfo->varname[lv]);
-	xbar = coeff[v];
-	std = sderr[v];
+	xbar = summ->coeff[v];
+	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = -999;
 	printftex(std, prn, 0);
 	printftex(xcv, prn, 0);
-	printftex(xskew[v], prn, 0);
-	printftex(xkurt[v], prn, 1);
+	printftex(summ->xskew[v], prn, 0);
+	printftex(summ->xkurt[v], prn, 1);
 	pprintf(prn, "\n");
     }
 
@@ -815,10 +809,7 @@ static void rtfprint_summary (const int *list,
 
 static void textprint_summary (const int *list, 
 			       const DATAINFO *pdinfo, int n,
-			       double *coeff, double *xmedian,
-			       double *xpx, double *xpy, 
-			       double *sderr, double *xskew, 
-			       double *xkurt,
+			       GRETLSUMMARY *summ,
 			       print_t *prn, int batch)
 {
     double xbar, std, xcv;
@@ -841,14 +832,14 @@ static void textprint_summary (const int *list,
 	_pgbreak(1, &lineno, batch);
 	lineno++;
 	lv = list[v];
-	xbar = coeff[v];
+	xbar = summ->coeff[v];
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
 	else space(2, prn);
 	printf17(xbar, prn);
-	printf17(xmedian[v], prn);
-	printf17(xpx[v], prn);
-	printf17(xpy[v], prn);
+	printf17(summ->xmedian[v], prn);
+	printf17(summ->xpx[v], prn);
+	printf17(summ->xpy[v], prn);
 	pprintf(prn, "\n");
     }
     _pgbreak(lo + 2, &lineno, batch);
@@ -864,17 +855,31 @@ static void textprint_summary (const int *list,
 	if (lo > 1)
 	    pprintf(prn, "%-14s", pdinfo->varname[lv]);
 	else space(2, prn);
-	xbar = coeff[v];
-	std = sderr[v];
+	xbar = summ->coeff[v];
+	std = summ->sderr[v];
 	if (xbar != 0.0) xcv = (xbar > 0)? std/xbar: (-1) * std/xbar;
 	else xcv = -999;
 	printf17(std, prn);
 	printf17(xcv, prn);
-	printf17(xskew[v], prn);
-	printf17(xkurt[v], prn);
+	printf17(summ->xskew[v], prn);
+	printf17(summ->xkurt[v], prn);
 	pprintf(prn, "\n");
     }
     pprintf(prn, "\n");
+}
+
+/* ............................................................. */
+
+void free_summary (GRETLSUMMARY *summ)
+{
+    free(summ->xskew);
+    free(summ->xkurt);
+    free(summ->xmedian);
+    free(summ->coeff);
+    free(summ->sderr);
+    free(summ->xpx);
+    free(summ->xpy); 
+    free(summ->list);
 }
 
 /* ............................................................. */
@@ -883,20 +888,20 @@ int summary (const int *list, double **pZ, const DATAINFO *pdinfo,
 	     const int batch, const int format, print_t *prn)
 {
     int mm, n = 0, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
-    int v, lv;
-    double xbar, std, low, high, skew, kurt,
-	*xskew, *xkurt, *xmedian, *coeff, *sderr, *x, *xpx, *xpy;
+    int v, lv, *tmp;
+    GRETLSUMMARY summ;
+    double xbar, std, low, high, skew, kurt, *x;
 
     lo = list[0];
     mm = lo + 1;
-    if ((xskew = malloc(mm * sizeof *xskew)) == NULL) return E_ALLOC;
-    if ((xkurt = malloc(mm * sizeof *xkurt)) == NULL) return E_ALLOC;
-    if ((xmedian = malloc(mm * sizeof *xmedian)) == NULL) return E_ALLOC;
-    if ((coeff = malloc(mm * sizeof *coeff)) == NULL) return E_ALLOC;
-    if ((sderr = malloc(mm * sizeof *sderr)) == NULL) return E_ALLOC;
+    if ((summ.xskew = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.xkurt = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.xmedian = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.coeff = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.sderr = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.xpx = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
+    if ((summ.xpy = malloc(mm * sizeof(double))) == NULL) return E_ALLOC;
     if ((x = malloc(len * sizeof *x)) == NULL) return E_ALLOC;
-    if ((xpx = malloc(mm * sizeof *xpx)) == NULL) return E_ALLOC;
-    if ((xpy = malloc(mm * sizeof *xpy)) == NULL) return E_ALLOC;
 
     for (v=1; v<=lo; v++)  {
 	lv = list[v];
@@ -910,41 +915,32 @@ int summary (const int *list, double **pZ, const DATAINFO *pdinfo,
 	minmax(0, n-1, x, &low, &high);	
 	moments(0, n-1, x, 
 		&xbar, &std, &skew, &kurt, 1);
-	xpx[v] = low;
-	xpy[v] = high;
-	coeff[v] = xbar;
-	sderr[v] = std;
-	xskew[v] = skew;
-	xkurt[v] = kurt;
+	summ.xpx[v] = low;
+	summ.xpy[v] = high;
+	summ.coeff[v] = xbar;
+	summ.sderr[v] = std;
+	summ.xskew[v] = skew;
+	summ.xkurt[v] = kurt;
 	qsort(x, n, sizeof *x, compare_doubles); 
-	if (n > 1) xmedian[v] = esl_median(x, n);
-	else xmedian[v] = x[1];
+	if (n > 1) summ.xmedian[v] = esl_median(x, n);
+	else summ.xmedian[v] = x[1];
     }
+
+    copylist(&tmp, list);
+    summ.list = tmp;
+    free(x);
 
     if (format == TEXT) {
-	textprint_summary(list, pdinfo, n,
-			  coeff, xmedian, xpx, xpy, sderr,
-			  xskew, xkurt, prn, batch);
+	textprint_summary(list, pdinfo, n, &summ, prn, batch);
     }
     else if (format == LATEX) {
-	texprint_summary(list, pdinfo, n, 
-			 coeff, xmedian, xpx, xpy, sderr,
-			 xskew, xkurt, prn);
+	texprint_summary(list, pdinfo, n, &summ, prn); 
     }
     else if (format == RTF) {
-	rtfprint_summary(list, pdinfo, n, 
-			 coeff, xmedian, xpx, xpy, sderr,
-			 xskew, xkurt, prn);
+	rtfprint_summary(list, pdinfo, n, &summ, prn);
     }
 
-    free(xkurt);
-    free(xmedian);
-    free(xskew);
-    free(coeff);
-    free(sderr);
-    free(x);
-    free(xpx);
-    free(xpy);
+    free_summary(&summ);
 
     return 0;
 }

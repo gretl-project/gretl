@@ -82,6 +82,11 @@ typedef struct {
     char pvalue[48];
 } GRETLTEST;
 
+typedef struct {
+    int *list;
+    double *xskew, *xkurt, *xmedian, *coeff, *sderr, *xpx, *xpy;
+} GRETLSUMMARY;
+
 /* struct to hold model results */
 typedef struct {
     int ID;                      /* ID number for model */
