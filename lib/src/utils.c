@@ -1634,6 +1634,9 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
     if (pmod->ci != OLS || !pmod->ifc) return E_OLSONLY;
 
+    /* temporary bodge */
+    if (pmod->data != NULL) return E_DATA;
+
     /* parse dates */
     if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
 	return E_OBS; 
@@ -1700,12 +1703,14 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	}
     }
 
+#ifdef FCAST_DEBUG
     /* check: print matrix */
     for (t=0; t<fn; t++) {
  	for (i=0; i<fv; i++)
  	    fprintf(stderr, "%.2f ", fZ[i][t]);
  	putc('\n', stderr);
     }
+#endif
     
     _init_model(&fmod, &fdatainfo);
     fdatainfo.extra = 1;
