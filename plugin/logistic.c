@@ -57,7 +57,7 @@ static int make_logistic_depvar (double ***pZ, DATAINFO *pdinfo,
 
 	if (na(p)) continue;
 	if (lmax == LMAX_HUNDRED) p /= 100.0;
-	(*pZ)[v][t] = log((1.0 - p) / p);
+	(*pZ)[v][t] = log(p / (1.0 - p));
     }
 
     return 0;
@@ -76,7 +76,7 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     for (t=0; t<pdinfo->n; t++) {
 	x = pmod->yhat[t];
 	if (na(x)) continue;
-	pmod->yhat[t] = 1.0 / (1.0 + exp(x));
+	pmod->yhat[t] = exp(x) / (1.0 + exp(x));
 	if (lmax == LMAX_HUNDRED) {
 	    pmod->yhat[t] *= 100.0;
 	} 
