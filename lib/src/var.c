@@ -21,6 +21,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
+#include "gretl_list.h"
 #include "gretl_private.h"
 
 /* #define VAR_DEBUG */
@@ -1155,7 +1156,8 @@ static int real_var (int order, const LIST inlist,
 	return 1;
     }
 
-    detlist = malloc((inlist[0] + 1) * sizeof *detlist);
+    listlen = inlist[0] + 1;
+    detlist = malloc(listlen * sizeof *detlist);
     if (detlist == NULL) return E_ALLOC;
 
     list = copylist(inlist);
@@ -1167,15 +1169,13 @@ static int real_var (int order, const LIST inlist,
     /* how long will our list have to be? */
     listlen = get_listlen(list, detlist, order, *pZ, pdinfo);
 
-    varlist = malloc((listlen + 1) * sizeof *varlist);
-    depvars = malloc((listlen + 1) * sizeof *depvars);
-
+    varlist = gretl_list_new(listlen);
+    depvars = gretl_list_new(listlen);
     if (varlist == NULL || depvars == NULL) {
 	err = E_ALLOC;
 	goto var_bailout;
     }
 
-    varlist[0] = listlen;
     idx = 2; /* skip beyond the counter and the dep var */
     end = listlen;
 
