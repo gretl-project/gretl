@@ -113,14 +113,15 @@ static void print_panel_coeff (const MODEL *pmod,
 
 /* .................................................................. */
 
-static double 
-group_means_variance (MODEL *pmod, double **Z, DATAINFO *pdinfo,
-		      double ***groupZ, DATAINFO **ginfo,
-		      int nunits, int effn, int *unit_obs, int T)
+static DATAINFO *
+group_means_dataset (const MODEL *pmod, 
+		     const double **Z, const DATAINFO *pdinfo,
+		     double ***gZ, int nunits, const int *unit_obs, 
+		     int effn, int T)
 {
-    int i, j, k, t, bigt, s, *list;
-    double gvar = NADBL;
-    MODEL meanmod;
+    DATAINFO *ginfo;
+    int i, j, k;
+    int t, bigt;
 
 #ifdef PDEBUG
     fprintf(stderr, "group_means_variance: creating dataset\n"
@@ -128,36 +129,20 @@ group_means_variance (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	    effn, (void *) *groupZ);
 #endif
 
-    *ginfo = create_new_dataset(groupZ, pmod->list[0], effn, 0);
-    if (*ginfo == NULL) {
-	return NADBL;
+    ginfo = create_new_dataset(gZ, pmod->list[0], effn, 0);
+    if (ginfo == NULL) {
+	return NULL;
     }
 
-    list = malloc((pmod->list[0] + 1) * sizeof *list);
-    if (list == NULL) {
-	clear_datainfo(*ginfo, CLEAR_FULL);
-	free(*ginfo);
-	return NADBL;
-    }
-
-#ifdef PDEBUG
-    fprintf(stderr, "gmv: *groupZ=%p\n", (void *) *groupZ);
-#endif
-
-    list[0] = pmod->list[0];
     k = 1;
-    for (j=1; j<=list[0]; j++) { 
-	/* the variables */
+    for (j=1; j<=pmod->list[0]; j++) { 
+	int s = 0;
+
 	if (pmod->list[j] == 0) {
-	    list[j] = 0;
 	    continue;
 	}
 
-	list[j] = k;
-
-	s = 0;
 	for (i=0; i<nunits; i++) { 
-	    /* the observations */
 	    int Ti = unit_obs[i];
 	    double xx = 0.0;
 
@@ -170,39 +155,58 @@ group_means_variance (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		    xx += Z[pmod->list[j]][bigt];
 		}
 	    }
-	    (*groupZ)[k][s] = xx / (double) Ti;
+	    (*gZ)[k][s] = xx / (double) Ti;
 #ifdef PDEBUG
-	    fprintf(stderr, "Set groupZ[%d][%d] = %g\n", k, i, (*groupZ)[k][i]);
+	    fprintf(stderr, "Set gZ[%d][%d] = %g\n", k, i, (*gZ)[k][i]);
 #endif
 	    s++;
 	}
 	k++;
     }
 
-#ifdef PDEBUG
-    fprintf(stderr, "group_means_variance: about to run OLS\n");
-    fprintf(stderr, "*groupZ=%p, ginfo=%p\n", (void *)*groupZ, (void *)*ginfo);
-#endif
+    return ginfo;
+}
 
-    meanmod = lsq(list, groupZ, *ginfo, OLS, OPT_A, 0.0);
+/* .................................................................. */
 
-#ifdef PDEBUG
-    fprintf(stderr, "gmv: lsq errcode was %d\n", meanmod.errcode);
-    fprintf(stderr, "meanmod.sigma = %g\n", meanmod.sigma);
-#endif
+static double 
+group_means_variance (const int *list, double ***gZ, DATAINFO *ginfo)
+{
+    MODEL gmmod;
+    double gmvar = NADBL;
+    int *gmlist;
+    int i, j;
 
-    if (meanmod.errcode == 0) {
-	gvar = meanmod.sigma * meanmod.sigma;
+    gmlist = malloc((list[0] + 1) * sizeof *gmlist);
+    if (gmlist == NULL) {
+	return NADBL;
     }
 
-    clear_model(&meanmod);
-    free(list);
+    gmlist[0] = list[0];
+    j = 1;
+    for (i=1; i<=gmlist[0]; i++) { 
+	if (list[i] == 0) {
+	    gmlist[i] = 0;
+	} else {
+	    gmlist[i] = j++;
+	}
+    }
+
+    gmmod = lsq(gmlist, gZ, ginfo, OLS, OPT_A, 0.0);
 
 #ifdef PDEBUG
-    fprintf(stderr, "gmv: done freeing stuff\n");
+    fprintf(stderr, "gmv: lsq errcode was %d\n", gmmod.errcode);
+    fprintf(stderr, "meanmod.sigma = %g\n", gmmod.sigma);
 #endif
 
-    return gvar;
+    if (gmmod.errcode == 0) {
+	gmvar = gmmod.sigma * gmmod.sigma;
+    }
+
+    clear_model(&gmmod);
+    free(gmlist);
+
+    return gmvar;
 }
 
 /* .................................................................. */
@@ -282,15 +286,16 @@ static int bXb (hausman_t *haus)
 
 #define MINOBS 1
 
-static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
-		    int nunits, int *unit_obs, int T,
-		    hausman_t *haus, PRN *prn) 
+static MODEL
+fixed_effects_model (const int *list, double ***pZ, DATAINFO *pdinfo,
+		     int nunits, int *unit_obs, int T)
 {
     int i, j, t, oldv = pdinfo->v;
     int dvlen, ndum = 0;
     int *dvlist;
-    double var, F;
     MODEL lsdv;
+
+    gretl_model_init(&lsdv);
 
     for (i=0; i<nunits; i++) {
 	if (unit_obs[i] >= MINOBS) {
@@ -298,7 +303,7 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-    dvlen = pmod->list[0] + ndum;
+    dvlen = list[0] + ndum;
     ndum--; 
 
 #ifdef PDEBUG
@@ -310,13 +315,17 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     dvlist = malloc(dvlen * sizeof *dvlist);
     if (dvlist == NULL) {
-	return NADBL;
+	lsdv.errcode = E_ALLOC;
+	return lsdv;
     }
 
     if (dataset_add_vars(ndum, pZ, pdinfo)) {
 	free(dvlist);
-	return NADBL;
+	lsdv.errcode = E_ALLOC;
+	return lsdv;
     }
+
+    /* create the per-unit dummy variables */
 
     j = 0;
     for (i=0; i<nunits; i++) {
@@ -341,14 +350,16 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
+    /* construct the regression list */
+
     dvlist[0] = dvlen - 1;
 
-    for (i=1; i<=pmod->list[0]; i++) {
-	dvlist[i] = pmod->list[i];
+    for (i=1; i<=list[0]; i++) {
+	dvlist[i] = list[i];
     }
 
     for (i=0; i<ndum; i++) {
-	dvlist[pmod->list[0] + i + 1] = oldv + i;
+	dvlist[list[0] + i + 1] = oldv + i;
     }
 
 #ifdef PDEBUG
@@ -361,11 +372,30 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     printmodel(&lsdv, pdinfo, OPT_NONE, prn);
 #endif
 
+    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
+    free(dvlist);
+
+    return lsdv;
+}
+
+static double 
+fixed_effects_variance (const MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
+			int nunits, int *unit_obs, int T,
+			hausman_t *haus, PRN *prn)
+{
+    MODEL lsdv;
+    double var = NADBL;
+
+    lsdv = fixed_effects_model(pmod->list, pZ, pdinfo, 
+			       nunits, unit_obs, T);
+
     if (lsdv.errcode) {
-	var = NADBL;
 	pputs(prn, _("Error estimating fixed effects model\n"));
 	errmsg(lsdv.errcode, prn);
     } else {
+	int i, j, ndum;
+	double F;
+
 	var = lsdv.sigma * lsdv.sigma;
 	pputs(prn, 
 	      _("Fixed effects estimator\n"
@@ -381,7 +411,9 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 
-	pputc(prn, '\n');
+	pputc(prn, '\n');   
+
+	ndum = lsdv.list[0] - pmod->list[0];
 
 	j = 0;
 	for (i=0; i<nunits; i++) {
@@ -421,18 +453,17 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     clear_model(&lsdv);
-    dataset_drop_vars(pdinfo->v - oldv, pZ, pdinfo);
-    free(dvlist);
 
     return var;
 }
 
 /* .................................................................. */
 
-static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo, 
-			   double **groupZ, double theta, 
-			   int nunits, int effn, int *unit_obs, int T, 
-			   hausman_t *haus, PRN *prn)
+static int random_effects (const MODEL *pmod, 
+			   const double **Z, DATAINFO *pdinfo, 
+			   const double **gZ, double theta, 
+			   int nunits, int *unit_obs, int T, 
+			   int effn, hausman_t *haus, PRN *prn)
 {
     double **reZ;
     DATAINFO *reinfo;
@@ -468,7 +499,7 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
     k = 1;
     for (j=1; j<=relist[0]; j++) {
 	const double *xj = Z[pmod->list[j]];
-	double *gm = groupZ[k];
+	const double *gm = gZ[k];
 	int bigt, rt, u = 0;
 
 	if (pmod->list[j] == 0) {
@@ -723,7 +754,7 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     int nunits, ns, T;
     int effn, effT;
     int *unit_obs = NULL;
-    double var1, var2;
+    double fe_var;
     hausman_t haus;
     int err = 0;
 
@@ -774,8 +805,8 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		effn, effT);
     }
 
-    var2 = LSDV(pmod, pZ, pdinfo, nunits, unit_obs, T, 
-		(unbal)? NULL : &haus, prn);
+    fe_var = fixed_effects_variance(pmod, pZ, pdinfo, nunits, unit_obs, T, 
+				    (unbal)? NULL : &haus, prn);
 
 #ifdef PDEBUG
     fprintf(stderr, "panel_diagnostics: LSDV gave variance = %g\n", var2);
@@ -793,28 +824,37 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     fprintf(stderr, "panel_diagnostics: done breusch_pagan_LM()\n");
 #endif
     
-    if (effn > pmod->ncoeff && !na(var2)) {
-	double **groupZ = NULL;
-	DATAINFO *ginfo = NULL;
-	double theta;
-	
-	var1 = group_means_variance(pmod, *pZ, pdinfo, &groupZ, &ginfo, 
-				    nunits, effn, unit_obs, T);
+    if (effn > pmod->ncoeff && !na(fe_var)) {
+	double **gZ = NULL;
+	DATAINFO *ginfo;
+	double gm_var = NADBL;
 
-	if (na(var1)) { 
+	ginfo = group_means_dataset(pmod, (const double **) *pZ,
+				    pdinfo, &gZ, nunits, unit_obs,
+				    effn, T);
+
+	if (ginfo != NULL) {
+	    gm_var = group_means_variance(pmod->list, &gZ, ginfo);
+	}
+
+	if (na(gm_var)) { 
 	    pputs(prn, _("Couldn't estimate group means regression\n"));
 	} else {
+	    double theta = 1.0 - sqrt(fe_var / (effT * gm_var));
+
 	    pprintf(prn, _("Residual variance for group means "
-			   "regression: %g\n\n"), var1);    
-	    theta = 1.0 - sqrt(var2 / (effT * var1));
-	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, 
-			   effn, unit_obs, T, &haus, prn);
+			   "regression: %g\n\n"), gm_var);    
+	    random_effects(pmod, (const double **) *pZ, pdinfo, 
+			   (const double **) gZ, theta, nunits, 
+			   unit_obs, T, effn, &haus, prn);
 	    do_hausman_test(&haus, prn);
 	}
 
-	free_Z(groupZ, ginfo);
-	clear_datainfo(ginfo, CLEAR_FULL);
-	free(ginfo);
+	if (ginfo != NULL) {
+	    free_Z(gZ, ginfo);
+	    clear_datainfo(ginfo, CLEAR_FULL);
+	    free(ginfo);
+	}
     }
 
  bailout:
