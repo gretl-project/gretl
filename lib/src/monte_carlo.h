@@ -47,7 +47,7 @@ int add_to_loop (LOOPSET *loop, char *line, int ci,
 
 void get_cmd_ci (const char *line, CMD *command);
 
-int loop_exec (LOOPSET *loop, 
+int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, PATHS *paths, 
 	       int echo_off, PRN *prn);

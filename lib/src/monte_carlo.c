@@ -1360,7 +1360,7 @@ static void substitute_dollar_i (char *str)
     }
 }
 
-int loop_exec (LOOPSET *loop, 
+int loop_exec (LOOPSET *loop, char *line,
 	       double ***pZ, DATAINFO **ppdinfo, 
 	       MODEL **models, PATHS *paths, 
 	       int echo_off, PRN *prn)
@@ -1603,6 +1603,10 @@ int loop_exec (LOOPSET *loop,
 #if 0
     loop = gretl_loop_terminate(loop);
 #endif
+
+    if (line != NULL) {
+	*line = '\0';
+    }
 
     gretl_cmd_free(&cmd);
 

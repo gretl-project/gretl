@@ -148,7 +148,9 @@ void clear_datainfo (DATAINFO *pdinfo, int code)
 	    free(pdinfo->vector);
 	    pdinfo->vector = NULL;
 	}
-    }
+
+	maybe_free_full_dataset(pdinfo);
+    } 
 }
 
 /* ......................................................... */

@@ -469,7 +469,7 @@ static gint stack_model (MODEL *pmod)
 		     if we want to be able to refer back to them later we
 		     need to record their specification */
 
-	check_dataset_elements(datainfo, models[0]);
+	attach_subsample_to_model(models[0], datainfo);
 
 	err = modelspec_save(models[0], &modelspec);
     }
@@ -1096,7 +1096,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    check_dataset_elements(datainfo, pmod);
+    attach_subsample_to_model(pmod, datainfo);
 
     sprintf(title, _("gretl: model %d"), pmod->ID);
     view_model(prn, pmod, 78, 420, title);
@@ -1922,7 +1922,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    check_dataset_elements(datainfo, pmod);
+    attach_subsample_to_model(pmod, datainfo);
     
     sprintf(title, _("gretl: model %d"), pmod->ID);
 
@@ -2100,7 +2100,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    check_dataset_elements(datainfo, pmod);
+    attach_subsample_to_model(pmod, datainfo);
     
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
@@ -2164,7 +2164,7 @@ void do_arma (int v, int ar, int ma, gretlopt opts)
 	errbox(_("Out of memory copying model"));
 
     /* record sub-sample info (if any) with the model */
-    check_dataset_elements(datainfo, pmod);
+    attach_subsample_to_model(pmod, datainfo);
     
     /* record the fact that the last model was estimated via GUI */
     sprintf(title, _("gretl: model %d"), pmod->ID);
@@ -4518,7 +4518,7 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(cmd.cmd, "quit")) {
 	if (looprun) { 
-	    if (loop_exec(loop, 
+	    if (loop_exec(loop, line, 
 			  &Z, &datainfo,
 			  models, &paths, 
 			  echo_off, prn)) {

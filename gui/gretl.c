@@ -1537,16 +1537,18 @@ static void build_selection_popup (void)
 
 /* ........................................................... */
 
-void restore_sample (gretlopt opt)
+int restore_sample (gretlopt opt)
 {
     int err;
 
     err = restore_full_sample(&Z, &datainfo, opt);
     if (err) {
 	gui_errmsg(err);
-	return;
+    } else {
+	restore_sample_state(FALSE);
     }
-    restore_sample_state(FALSE);
+
+    return err;
 }
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)

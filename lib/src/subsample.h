@@ -24,15 +24,13 @@
 
 /* functions follow */
 
-int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n);
+int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo);
 
 int restrict_sample (const char *line, 
 		     double ***pZ, DATAINFO **ppdinfo,
 		     const int *list, gretlopt oflag);
 
 int complex_subsampled (void);
-
-int check_dataset_elements (DATAINFO *pdinfo, MODEL *pmod);
 
 int get_full_length_n (void);
 

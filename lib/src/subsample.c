@@ -26,6 +26,13 @@
 
 /* private to libgretl */
 
+/* Let the library handle the ugliness of multiple dataset
+   pointers in a "hidden" manner */
+
+static double **fullZ;
+static DATAINFO *fullinfo;
+static DATAINFO *peerinfo;
+
 char *copy_subdum (const char *src, int n)
 {
     char *ret;
@@ -38,6 +45,23 @@ char *copy_subdum (const char *src, int n)
     memcpy(ret, src, n);
 
     return ret;
+}
+
+/* .......................................................... */
+
+void maybe_free_full_dataset (const DATAINFO *pdinfo)
+{
+    if (pdinfo == peerinfo) {
+	if (fullZ != NULL) {
+	    free_Z(fullZ, fullinfo);
+	    fullZ = NULL;
+	}
+	if (fullinfo != NULL) {
+	    clear_datainfo(fullinfo, CLEAR_SUBSAMPLE);
+	    free(fullinfo);
+	    fullinfo = NULL;
+	}
+    }
 }
 
 /* .......................................................... */
@@ -70,7 +94,6 @@ attach_subsample_to_dataset (DATAINFO *subinfo, double ***pZ,
 /* attach_subsample_to_model:
  * @pmod: model to which subsample should be attached.
  * @pdinfo: pointer to current dataset info.
- * @n: 
  *
  * If the dataset is currently subsampled, record the subsample
  * information with the model so that it can be retrieved later.
@@ -79,17 +102,22 @@ attach_subsample_to_dataset (DATAINFO *subinfo, double ***pZ,
  * error code failure.
  */
 
-int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n)
+int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo)
 {
-    if (pdinfo == NULL || pdinfo->subdum == NULL) {
-	/* no subsample currently in force */
-	return 0;
+    int err = 0;
+
+    if (fullZ != NULL) {
+	/* sync in case of any changes */
+	fullinfo->varname = pdinfo->varname;
+	fullinfo->varinfo = pdinfo->varinfo;
+
+	pmod->subdum = copy_subdum(pdinfo->subdum, fullinfo->n);
+	if (pmod->subdum == NULL) {
+	    err = E_ALLOC;
+	}
     }
 
-    pmod->subdum = copy_subdum(pdinfo->subdum, n);
-    if (pmod->subdum == NULL) return E_ALLOC;
-
-    return 0;
+    return err;
 }
 
 /* allocate_case_markers:
@@ -340,19 +368,15 @@ enum {
     SUBSAMPLE_RANDOM
 } subsample_options;
 
-/* Let the library handle the ugliness of multiple dataset
-   pointers in a "hidden" manner */
-
-static double **fullZ;
-static DATAINFO *fullinfo;
-
-static void backup_full_dataset (double ***pZ, DATAINFO **ppdinfo)
+static void backup_full_dataset (double ***pZ, DATAINFO **ppdinfo,
+				 DATAINFO *newinfo)
 {
     fullZ = *pZ;
     fullinfo = *ppdinfo;
+    peerinfo = newinfo;
 }
 
-static int relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
+static void relink_full_dataset (double ***pZ, DATAINFO **ppdinfo)
 {
     *pZ = fullZ;
     *ppdinfo = fullinfo;
@@ -365,19 +389,6 @@ int complex_subsampled (void)
 {
     if (fullZ == NULL) return 0;
     else return 1;
-}
-
-int check_dataset_elements (DATAINFO *pdinfo, MODEL *pmod)
-{
-    if (fullZ != NULL) {
-	/* sync in case of any changes */
-	fullinfo->varname = pdinfo->varname;
-	fullinfo->varinfo = pdinfo->varinfo;
-	attach_subsample_to_model(pmod, pdinfo, fullinfo->n);
-	return 1;
-    }
-
-    return 0;
 }
 
 int get_full_length_n (void)
@@ -595,7 +606,7 @@ int restrict_sample (const char *line,
     if (tmpdum != NULL) free(tmpdum);
 
     /* save state */
-    backup_full_dataset(pZ, ppdinfo);
+    backup_full_dataset(pZ, ppdinfo, subinfo);
 
     /* and switch pointers */
     *pZ = subZ;

@@ -479,12 +479,11 @@ int main (int argc, char *argv[])
 	if (err && batch && errfatal) gretl_abort(linecopy);
 
 	if (looprun) { 
-	    if (loop_exec(loop, &Z, &datainfo,
+	    if (loop_exec(loop, line, &Z, &datainfo,
 			  models, &paths, 
 			  echo_off, prn)) {
 		return 1;
 	    }
-	    line[0] = '\0'; /* FIXME */
 	    looprun = errfatal = 0;
 	} else { 
 #ifdef HAVE_READLINE
@@ -1572,7 +1571,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     if (!err && (is_model_cmd(cmd.cmd) || do_nls || do_arch)
 	&& !is_quiet_model_test(cmd.ci, cmd.opt)) { 
 
-	check_dataset_elements(datainfo, models[0]);
+	attach_subsample_to_model(models[0], datainfo);
 
 #ifdef MSPEC_DEBUG
 	fprintf(stderr, "\ngretlcli: saving spec: model.ID = %d, model_count = %d\n",

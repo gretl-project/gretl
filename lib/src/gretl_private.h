@@ -118,6 +118,8 @@ int get_use_qr (void);
 
 char *copy_subdum (const char *src, int n);
 
+void maybe_free_full_dataset (const DATAINFO *pdinfo);
+
 int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
 int path_append (char *file, const char *path);
