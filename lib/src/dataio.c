@@ -2535,6 +2535,7 @@ static void remove_quoted_commas (char *line)
 
     while (*p) {
 	if (*p == '"') inquote = !inquote;
+	if (inquote && *p == ',') *p = ' ';
 	p++;
     }
 }
@@ -2550,11 +2551,16 @@ static void compress_csv_line (char *line, char delim, int trail)
     }
     if (*p == '\r') *p = '\0';
 
+    if (delim == ',') {
+	remove_quoted_commas(line);
+    }
+
     if (delim != ' ') {
 	delchar(' ', line);
     } else {
 	compress_spaces(line);
     }
+
     delchar('"', line);
 
     if (trail) {
