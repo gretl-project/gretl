@@ -1311,12 +1311,11 @@ extern void delete_var_by_id (int id); /* callbacks.c */
 
 static gint popup_activated (GtkWidget *widget, gpointer data)
 {
-    gchar *item;
+    gchar *item = (gchar *) data;
 
-    item = (gchar *) data;
     if (!strcmp(item, _("Display values"))) 
 	display_var();
-    if (!strcmp(item, _("Descriptive statistics"))) 
+    else if (!strcmp(item, _("Descriptive statistics"))) 
 	do_menu_op(NULL, VAR_SUMMARY, NULL);
     else if (!strcmp(item, _("Time series plot"))) 
 	do_graph_var(mdata->active_var);
@@ -1346,7 +1345,9 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 	gretl_callback(NULL, SIM, NULL);
     else if (!strcmp(item, _("Define new variable..."))) 
 	gretl_callback(NULL, GENR, NULL);
+
     gtk_widget_destroy(mdata->popup);
+
     return TRUE;
 }
 

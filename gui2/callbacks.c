@@ -168,8 +168,11 @@ void selectrow (GtkCList *clist, gint row, gint column,
 
     if (active_edit_id != NULL) {
 	edttext = gtk_entry_get_text (GTK_ENTRY (active_edit_id));
-	if (strlen(edttext)) sprintf(addvar, " %d", win->active_var);
-	else sprintf(addvar, "%d", win->active_var);
+	if (*edttext != '\0') {
+	    sprintf(addvar, " %d", win->active_var);
+	} else {
+	    sprintf(addvar, "%d", win->active_var);
+	}
 	gtk_entry_append_text(GTK_ENTRY (active_edit_id), addvar);
     }
     else if (active_edit_name != NULL) {

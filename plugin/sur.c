@@ -21,7 +21,7 @@
 #include "gretl_matrix.h"
 
 static void 
-print_sur_vcv (const gretl_matrix *m, int triangle, PRN *prn)
+print_system_vcv (const gretl_matrix *m, int triangle, PRN *prn)
 {
     int i, j, jmax;
     int mcols = gretl_matrix_cols(m);
@@ -90,7 +90,7 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e, int m, int T)
 	    for (t=0; t<T; t++) {
 		xx += gretl_matrix_get(e, i, t) * gretl_matrix_get(e, j, t);
 	    }
-	    gretl_matrix_set (sigma, i, j, xx / T);
+	    gretl_matrix_set(sigma, i, j, xx / T);
 	}
     }
 
@@ -100,23 +100,12 @@ gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e, int m, int T)
 static gretl_matrix *
 gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
 {
-    int i, j, t;
-    double xx;
     gretl_matrix *sigma;
 
-    sigma = gretl_matrix_alloc (m, m);
+    sigma = gretl_matrix_alloc(m, m);
+    if (sigma == NULL) return NULL;
 
-    /* construct sigma: s_{ij} = e'_i * e_j / T  */
-    for (i=0; i<m; i++) {
-	for (j=0; j<m; j++) {
-	    xx = 0.0;
-	    for (t=0; t<T; t++) {
-		xx += gretl_matrix_get(e, i, t) * gretl_matrix_get(e, j, t);
-	    }
-	    gretl_matrix_set (sigma, i, j, xx / T);
-	}
-    }
-
+    gls_sigma_from_uhat(sigma, e, m, T);
     gretl_invert_general_matrix(sigma);
 
     return sigma;
@@ -170,7 +159,7 @@ calculate_sur_coefficients (MODEL **models, double **Z,
     }
 
     vcv = gretl_matrix_copy(X);
-    gretl_LU_solve (X, coeff);
+    gretl_LU_solve(X, coeff);
     gretl_invert_general_matrix(vcv); 
 
     for (i=0; i<m; i++) {
@@ -379,7 +368,7 @@ int sur (gretl_equation_system *sys,
 	    _("Cross-equation VCV for residuals"),
 	    _("correlations above the diagonal"));
 
-    print_sur_vcv(sigma, 1, prn);
+    print_system_vcv(sigma, 1, prn);
 
     gretl_matrix_free(X);
     gretl_matrix_free(Xi);
