@@ -2512,47 +2512,6 @@ void add_files_to_menu (int filetype)
     free(fileitem.path);
 }
 
-#ifdef notyet
-
-#include <gmodule.h>
-
-int open_plugin (const char *plugin, void **handle)
-{
-    GModule *mod;
-    char pluginpath[MAXLEN];
-
-    sprintf(pluginpath, "%splugins/%s.so", paths.gretldir, plugin);
-    mod = g_module_open(pluginpath, G_MODULE_BIND_LAZY);
-    if (mod == NULL) {
-	errbox("Couldn't load plugin");
-	return 1;
-    } else {
-	*handle = (void *) mod;
-	return 0;
-    }
-}
-
-void *get_plugin_function (const char *funcname, void *handle)
-{
-    void *funp;
-    gpointer *gp;
-
-    if (g_module_symbol((GModule *) handle, funcname, gp)) {
-	funp = (void *) gp;
-	return funp;
-    } else {
-	errbox("Couldn't access plugin function");
-	return NULL;
-    }	
-}
-
-void close_plugin (void *handle)
-{
-    g_module_close((GModule *) handle);
-}
-
-#endif
-
 /* .................................................................. */
 
 #ifdef G_OS_WIN32
@@ -2616,9 +2575,3 @@ void close_plugin (void *handle)
     dlclose(handle);
 #endif
 }
-
-
-
-
-
-

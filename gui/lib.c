@@ -2465,7 +2465,7 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
 void do_graph (GtkWidget *widget, dialog_t *ddata)
 {
     char *edttext;
-    gint err, lines[1] = {0}; 
+    gint i, err, *lines = NULL;
     gint imp = (ddata->code == GR_IMP);
 
     edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
@@ -2473,11 +2473,17 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s%s", (imp)? "-m " : "", edttext);
-    if (ddata->code == GR_PLOT) {
+    if (ddata->code == GR_PLOT) { 
 	strcat(line, " time");
-	lines[0] = 1;
     }
+
     if (check_cmd(line) || cmd_init(line)) return;
+    lines = mymalloc(command.list[0] - 1);
+    if (lines == NULL) return;
+    for (i=0; i<command.list[0]-1 ; i++) {
+	if (ddata->code == GR_PLOT) lines[i] = 1;
+	else lines[i] = 0;
+    }
 
     if (imp) {
 	err = gnuplot(command.list, NULL, &Z, datainfo,
@@ -2490,6 +2496,7 @@ void do_graph (GtkWidget *widget, dialog_t *ddata)
 	errbox("No data were available to graph");
     else if (err < 0) errbox("gnuplot command failed");
     else graphmenu_state(TRUE);
+    free(lines);
 }
 
 /* ........................................................... */
