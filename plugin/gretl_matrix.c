@@ -48,21 +48,26 @@ struct _gretl_matrix {
     double *val;
 };
 
-/* Note: gretl matrices are stored in column major order, for 
-   compatibility with the Fortran-style matrix storage used by
-   Lapack.
-*/
+static const char *wspace_fail = "Workspace query failed\n";
 
-#define mdx(m,i,j) (j)*(m)->rows+(i)
-#define mdxtr(m,i,j) (i)*(m)->cols+(j)
+#define mdx(a,i,j)   (j)*(a)->rows+i
+#define mdxtr(a,i,j) (i)*(a)->rows+j
 
 #define gretl_vector_alloc(i) gretl_matrix_alloc(1,(i))
 #define gretl_vector_free(v) gretl_matrix_free(v)
 #define gretl_vector_get(v,i) gretl_matrix_get((v),0,(i))
 #define gretl_vector_set(v,i,x) gretl_matrix_set((v),0,(i),(x))
+#define gretl_vector_get_length(v) (v)->cols
 
 
-static const char *wspace_fail = "Workspace query failed\n";
+static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
+			      const gretl_matrix *b, int bflag,
+			      gretl_matrix *c);
+static int invert_general_gretl_matrix (gretl_matrix *m);
+
+
+
+#define LDEBUG 1
 
 static gretl_matrix *gretl_matrix_alloc (int rows, int cols)
 {
@@ -112,73 +117,27 @@ static int gretl_matrix_set (gretl_matrix *m, int i, int j, double x)
     return 0;
 }
 
-static gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
-						 int rows, int cols)
+#ifdef LDEBUG
+static void simple_matrix_print (gretl_matrix *X, int rows, int cols,
+				 PRN *prn)
 {
-    int i, j, p;
-    gretl_matrix *m;
+    int i, j;
 
-    m = gretl_matrix_alloc(rows, cols);
-    if (m == NULL) return m;
+    pprintf(prn, "printing %d x %d matrix...\n", rows, cols);
 
-    p = 0;
-    for (j=0; j<rows; j++) {
-	for (i=0; i<cols; i++) {
-	    m->val[p++] = X[i][j];
+    for (i=0; i<rows; i++) {
+	for (j=0; j<cols; j++) {
+	    pprintf(prn, "%#10.5g ", gretl_matrix_get(X, i, j));
 	}
-    } 
-
-    return m;
-}
-
-static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
-			      const gretl_matrix *b, int bflag,
-			      gretl_matrix *c)
-{
-    int i, j, k;
-    int lrows, lcols;
-    int rrows, rcols;
-    double x, y;
-
-    lrows = (aflag == GRETL_MOD_NONE)? a->rows : a->cols;
-    lcols = (aflag == GRETL_MOD_NONE)? a->cols : a->rows;
-    rrows = (bflag == GRETL_MOD_NONE)? b->rows : b->cols;
-    rcols = (bflag == GRETL_MOD_NONE)? b->cols : b->rows;
-
-    if (lcols != rrows) {
-	return GRETL_MATRIX_NON_CONFORM;
+	pputs(prn, "\n");
     }
-
-    if (c->cols != lcols || c->rows != rrows) {
-	return GRETL_MATRIX_NON_CONFORM;
-    }
-
-    for (i=0; i<rrows; i++) {
-	for (j=0; j<lcols; j++) {
-	    c->val[mdx(c, i, j)] = 0.0;
-	    for (k=0; k<lcols; k++) {
-		x = (aflag == GRETL_MOD_NONE)? 
-		    a->val[mdx(a, i, k)] : a->val[mdxtr(a, i, k)];
-		y = (bflag == GRETL_MOD_NONE)? 
-		    b->val[mdx(b, k, j)] : b->val[mdxtr(b, k, j)];
-		c->val[mdx(c, i, j)] += x * y;
-	    }
-	}
-    }
-
-    return GRETL_MATRIX_OK;
+    pputs(prn, "\n");
 }
+#endif
 
-static int gretl_matmult (const gretl_matrix *a, const gretl_matrix *b,
-			  gretl_matrix *c)
-{
-    return gretl_matmult_mod(a, GRETL_MOD_NONE,
-			     b, GRETL_MOD_NONE,
-			     c);
-}
-
-static void gretl_matrix_print (gretl_matrix *X, int rows, int cols,
-				int triangle, PRN *prn)
+static void gretl_gretl_matrix_print (const gretl_matrix *X, 
+				      int rows, int cols,
+				      int triangle, PRN *prn)
 {
     int i, j, jmax;
     double x;
@@ -233,8 +192,7 @@ static void make_Xi_from_Z (gretl_matrix *X, double **Z, int *list, int T)
 }
 
 static int
-gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e, 
-		     int m, int T)
+gls_sigma_from_uhat (gretl_matrix *sigma, const gretl_matrix *e, int m, int T)
 {
     int i, j, t;
     double xx;
@@ -258,10 +216,9 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
 {
     int i, j, t;
     double xx;
-    gretl_matrix *sigma, *inverse;
+    gretl_matrix *sigma;
 
     sigma = gretl_matrix_alloc (m, m);
-    inverse = gretl_matrix_alloc (m, m);
 
     /* construct sigma: s_{ij} = e'_i * e_j / T  */
     for (i=0; i<m; i++) {
@@ -275,13 +232,13 @@ gls_sigma_inverse_from_uhat (const gretl_matrix *e, int m, int T)
     }
 
 #if 0 /* FIXME */
-    gretl_LU_decomp (sigma, p, &sign);
-    gretl_LU_invert (sigma, p, inverse);
+    gretl_linalg_LU_decomp (sigma, p, &sign);
+    gretl_linalg_LU_invert (sigma, p, inverse);
 #endif
 
-    gretl_matrix_free (sigma);
+    invert_general_gretl_matrix(sigma);
 
-    return inverse;
+    return sigma;
 }
 
 /* m = number of equations 
@@ -325,43 +282,59 @@ static void sur_resids (MODEL *pmod, double **Z, gretl_matrix *uhat)
     /* pmod->rsq = 1.0 - (pmod->ess / pmod->tss); hmm... */
 }
 
+static int gretl_LU_solve (gretl_matrix *a, gretl_vector *b)
+{
+    /* Solves ax = b.  On exit, b is replaced by the solution vector */
+    char trans = 'N';
+    integer info;
+    integer m = a->rows;
+    integer n = a->cols;
+    integer nrhs = 1;
+    integer ldb = gretl_vector_get_length(b);
+    integer *ipiv;
+
+    ipiv = malloc(n * sizeof *ipiv);
+    if (ipiv == NULL) return 1;
+
+    dgetrf_(&m, &n, a->val, &n, ipiv, &info);
+
+    if (info != 0) {
+	free(ipiv);
+	return info;
+    }
+
+    dgetrs_(&trans, &n, &nrhs, a->val, &n, ipiv, b->val, &ldb, &info);
+
+    return info;
+}
+
 static int calculate_coefficients (MODEL **models, double **Z,
 				   gretl_matrix *X, gretl_matrix *uhat,
 				   double *tmp_y, int m, int k)
 {
-    gretl_vector *y;
     gretl_vector *coeff;
-    gretl_matrix *vcv;
     int i, j;
     int ncoeff = m * k;
 
-    y = gretl_vector_alloc (ncoeff);
-    coeff = gretl_vector_alloc (ncoeff);
-    vcv = gretl_matrix_alloc (ncoeff, ncoeff);
+    coeff = gretl_vector_alloc(ncoeff);
 
     for (i=0; i<ncoeff; i++) {
-	gretl_vector_set(y, i, tmp_y[i]);
-	gretl_vector_set(coeff, i, 0.0);
+	gretl_vector_set(coeff, i, tmp_y[i]);
     }
 
-#if 0 /* FIXME */
-    gretl_LU_decomp (X, p, &sign); 
-    gretl_LU_solve (X, p, y, coeff);
-    gretl_LU_invert (X, p, vcv);
-#endif
+    gretl_LU_solve (X, coeff);
+    invert_general_gretl_matrix(X); /* generates VCV */ 
 
     for (i=0; i<m; i++) {
 	for (j=0; j<k; j++) {
 	    (models[i])->coeff[j+1] = gretl_vector_get(coeff, i * k + j);
 	    (models[i])->sderr[j+1] = 
-		sqrt(gretl_matrix_get(vcv, i * k + j, i * k + j));
+		sqrt(gretl_matrix_get(X, i * k + j, i * k + j));
 	}
 	sur_resids(models[i], Z, uhat);
     }
 
-    gretl_vector_free (y);
     gretl_vector_free (coeff);
-    gretl_matrix_free (vcv);
 
     return 0;
 }
@@ -395,9 +368,9 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	if (models[i] == NULL) return E_ALLOC;
     }
 
-    X = gretl_matrix_alloc (bigrows, bigrows);
-    Xi = gretl_matrix_alloc (T, k);
-    Xj = gretl_matrix_alloc (T, k);
+    X = gretl_matrix_alloc(bigrows, bigrows);
+    Xi = gretl_matrix_alloc(T, k);
+    Xj = gretl_matrix_alloc(T, k);
     M = gretl_matrix_alloc(k, k);
     uhat = gretl_matrix_alloc(m, T);
 
@@ -416,7 +389,18 @@ int sur (gretl_equation_system *sys, double ***pZ,
 	}
     }
 
+#ifdef LDEBUG 
+    pprintf(prn, "Initial uhat matrix\n");
+    simple_matrix_print(uhat, m, T, prn);
+#endif
+
     sigma = gls_sigma_inverse_from_uhat (uhat, m, T);
+
+#ifdef LDEBUG 
+    pprintf(prn, "gls sigma inverse matrix\n");
+    simple_matrix_print(sigma, m, T, prn);
+    /* OK so far, it seems */
+#endif
 
     /* Xi = data matrix for equation i, specified in lists[i] */
     for (i=0; i<m; i++) {
@@ -494,7 +478,7 @@ int sur (gretl_equation_system *sys, double ***pZ,
     pputs(prn, "Cross-equation VCV for residuals\n"
 	  "(correlations above the diagonal)\n\n");
 
-    gretl_matrix_print(sigma, m, m, 1, prn);
+    gretl_gretl_matrix_print(sigma, m, m, 1, prn);
 
     gretl_matrix_free(X);
     gretl_matrix_free(Xi);
@@ -509,16 +493,87 @@ int sur (gretl_equation_system *sys, double ***pZ,
     return 0;
 }
 
-static int lapack_invert_gretl_matrix (gretl_matrix *m)
+
+static gretl_matrix *gretl_matrix_from_2d_array (const double **X, 
+						 int rows, int cols)
 {
-    integer n = m->rows;    
+    int i, j, p;
+    gretl_matrix *m;
+
+    m = gretl_matrix_alloc(rows, cols);
+    if (m == NULL) return m;
+
+    p = 0;
+    for (j=0; j<rows; j++) {
+	for (i=0; i<cols; i++) {
+	    m->val[p++] = X[i][j];
+	}
+    } 
+
+    return m;
+}
+
+static int gretl_matmult_mod (const gretl_matrix *a, int aflag,
+			      const gretl_matrix *b, int bflag,
+			      gretl_matrix *c)
+{
+    int i, j, k;
+    double x, y;
+    int lrows, lcols;
+    int rrows, rcols;
+    int atr = (aflag == GRETL_MOD_TRANSPOSE);
+    int btr = (bflag == GRETL_MOD_TRANSPOSE);
+
+    lrows = (atr)? a->cols : a->rows;
+    lcols = (atr)? a->rows : a->cols;
+    rrows = (btr)? b->cols : b->rows;
+    rcols = (btr)? b->rows : b->cols;
+
+    if (lcols != rrows) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (c->cols != lcols || c->rows != rrows) {
+	return GRETL_MATRIX_NON_CONFORM;
+    }
+
+    for (i=0; i<rrows; i++) {
+	for (j=0; j<lcols; j++) {
+	    c->val[mdx(c, i, j)] = 0.0;
+	    for (k=0; k<c->cols; k++) {
+		x = (atr)? a->val[mdxtr(a,i,k)] : a->val[mdx(a,i,k)];
+		y = (btr)? b->val[mdxtr(b,k,j)] : b->val[mdx(b,k,j)];
+		c->val[mdx(c, i, j)] += x * y;
+	    }
+	}
+    }
+
+    return GRETL_MATRIX_OK;
+}
+
+static int gretl_matmult (const gretl_matrix *a, const gretl_matrix *b,
+			  gretl_matrix *c)
+{
+    return gretl_matmult_mod(a, GRETL_MOD_NONE,
+			     b, GRETL_MOD_NONE,
+			     c);
+}
+
+static int invert_general_gretl_matrix (gretl_matrix *a)
+{
+    integer m = a->rows;
+    integer n = a->cols;
     integer info;
     integer lwork;
     integer *ipiv;
+    int lipiv;
 
     double *work;
 
-    ipiv = malloc(n * sizeof *ipiv);
+    if (m <= n) lipiv = m;
+    else lipiv = n;
+
+    ipiv = malloc(lipiv * sizeof *ipiv);
     if (ipiv == NULL) {
 	return 1;
     }
@@ -529,7 +584,7 @@ static int lapack_invert_gretl_matrix (gretl_matrix *m)
 	return 1;
     }    
 
-    dgetrf_(&n, &n, m->val, &n, ipiv, &info);   
+    dgetrf_(&m, &n, a->val, &m, ipiv, &info);   
 
     if (info != 0) {
 	free(ipiv);
@@ -537,7 +592,7 @@ static int lapack_invert_gretl_matrix (gretl_matrix *m)
     }
 
     lwork = -1;
-    dgetri_(&n, m->val, &n, ipiv, work, &lwork, &info);
+    dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
@@ -557,7 +612,7 @@ static int lapack_invert_gretl_matrix (gretl_matrix *m)
 	return 1;
     }  
 
-    dgetri_(&n, m->val, &n, ipiv, work, &lwork, &info);
+    dgetri_(&n, a->val, &n, ipiv, work, &lwork, &info);
 
 #ifdef LAPACK_DEBUG
     printf("dgetri: info = %d\n", (int) info);
@@ -633,20 +688,20 @@ static double *gretl_lapack_eigenvals (gretl_matrix *m)
     return wr;
 }
 
-#if 0
-static void simple_print_gretl_matrix (gretl_matrix *m)
+static void print_gretl_matrix (gretl_matrix *m)
 {
     int i, j;
+    double x;
 
     for (i=0; i<m->rows; i++) {
 	for (j=0; j<m->cols; j++) {
-	   printf("%#13.7g ", gretl_matrix_get(m, i, j));
+	   x = gretl_matrix_get(m, i, j);
+	   printf("%#13.7g ", x);
 	}
 	putchar('\n');
     } 
     putchar('\n');
 }
-#endif
 
 int johansen_eigenvals (const double **X, const double **Y, const double **Z, 
 			int k, double *evals)
@@ -666,16 +721,17 @@ int johansen_eigenvals (const double **X, const double **Y, const double **Z,
     M = gretl_matrix_alloc(k, k);
 
     /* calculate Suu^{-1} Suv */
-    lapack_invert_gretl_matrix(Suu);
+    invert_general_gretl_matrix(Suu);
     gretl_matmult(Suu, Suv, TmpR);
 
     /* calculate Svv^{-1} Suv' */
-    lapack_invert_gretl_matrix(Svv);
+    invert_general_gretl_matrix(Svv);
     gretl_matmult_mod(Svv, GRETL_MOD_NONE,
 		      Suv, GRETL_MOD_TRANSPOSE, 
 		      TmpL);
 
     gretl_matmult(TmpL, TmpR, M);
+
     eigvals = gretl_lapack_eigenvals(M);
 
     if (eigvals != NULL) {
