@@ -68,12 +68,19 @@ static void Lr_chisq (MODEL *pmod, double **Z)
     int t, zeros, ones = 0, m = pmod->nobs;
     double Lr;
     
-    for (t=pmod->t1; t<=pmod->t2; t++) 
+    for (t=pmod->t1; t<=pmod->t2; t++) {
 	if (floateq(Z[pmod->list[1]][t], 1.0)) ones++;
+    }
     zeros = m - ones;
+
     Lr = (double) ones * log((double) ones/ (double) m);
     Lr += (double) zeros * log((double) zeros/(double) m);
+
     pmod->chisq = 2.0 * (pmod->lnL - Lr);
+    
+    /* McFadden pseudo-R^2 */
+    pmod->rsq = 1.0 - pmod->lnL / Lr;
+    pmod->adjrsq = NADBL;
 }
 
 /* .......................................................... */

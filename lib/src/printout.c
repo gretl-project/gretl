@@ -402,11 +402,9 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 static void fix_exponent (char *s)
 {
     char *p;
-    int k;
 
     if ((p = strstr(s, "+00")) || (p = strstr(s, "-00"))) {
-	if (sscanf(p + 1, "%d", &k) == 1)
-	    sprintf(p + 1, "0%d", k);
+	memmove(p+1, p+2, strlen(p+1));
     }
 }
 
@@ -418,9 +416,9 @@ static void fix_exponent (char *s)
 
 static void cut_extra_zero (char *numstr, int digits)
 {
-    char *p = strchr(numstr, 'E');
+    char *p;
 
-    if (p == NULL) {
+    if ((p = strchr(numstr, 'E')) || (p = strchr(numstr, 'e'))) {
 	int s = strspn(numstr, "-.,0");
 	int p = (strchr(numstr + s, '.') || strchr(numstr + s, ','));
 

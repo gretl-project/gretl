@@ -8,7 +8,7 @@ CC = @CC@
 CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 INSTALL = @INSTALL@
-LN = @LN_S@
+LN_S = @LN_S@
 have_readline = @have_readline@
 have_zlib = @have_zlib@
 have_gnome = @have_gnome@
@@ -37,9 +37,6 @@ ifeq ($(INSTALL_PROGRAM),)
 endif
 ifeq ($(INSTALL_DATA),)
   INSTALL_DATA = $(INSTALL) -m 644
-endif
-ifeq ($(LN),)
-  LN = ln -sf
 endif
 
 ifeq ($(GTK_EXTRA_LIBS),)
@@ -95,15 +92,21 @@ OBJS = $(SRCS:.c=.o)
 	$(CC) -MM -MG -I.. -I$(libsrc) $(GTK_EXTRA_CFLAGS) $(DEFS) $< \
 	> $*.d 2>/dev/null
 
-$(PROG): $(query_gtkextra_lib) $(OBJS) 
+$(PROG): srclink $(query_gtkextra_lib) $(OBJS) 
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
 -include $(OBJS:.o=.d)
 
 .PHONY:
 
+srclink:
+	rm -f $(topsrc)/gui/model_table.c && \
+	$(LN_S) `pwd`/$(topsrc)/gui2/model_table.c $(topsrc)/gui/model_table.c
+	rm -f $(topsrc)/gui/model_table.h && \
+	$(LN_S) `pwd`/$(topsrc)/gui2/model_table.h $(topsrc)/gui/model_table.h
+
 gtkextra-lib: 
-	ln -sf ./gtkextra-lite ./gtkextra
+	rm -f ./gtkextra && $(LN_S) ./gtkextra-lite ./gtkextra
 	make -C gtkextra-lite
 
 install: $(PROG) install-data $(query_install_gnome)

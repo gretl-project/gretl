@@ -1252,17 +1252,24 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
 static void print_aicetc_value (double x, PRN *prn)
 {
-    char numstr[16];
+    char *p, dstr[16];
     size_t len;
 
-    sprintf(numstr, "%#11g", x);
-    len = strlen(numstr) - 1;
-    if (numstr[len] == '.' || numstr[len] == ',') {
-	numstr[len] = 0;
-	memmove(numstr + 1, numstr, len + 1);
-	*numstr = ' ';
+    sprintf(dstr, "%#g", x);
+
+    if ((p = strstr(dstr, "+00")) ||
+	(p = strstr(dstr, "-00"))) {
+	memmove(p+1, p+2, strlen(p+2));
+    }    
+
+    len = strlen(dstr) - 1;
+
+    if (dstr[len] == '.' || dstr[len] == ',') {
+	dstr[len] = 0;
+	pprintf(prn, " %10s", dstr);
+    } else {
+	pprintf(prn, "%11s", dstr);
     }
-    pputs(prn, numstr);
 }
 
 static void print_aicetc (const MODEL *pmod, PRN *prn)

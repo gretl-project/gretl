@@ -212,6 +212,23 @@ static int common_estimator (void)
     return ci0;
 }
 
+static int common_df (void)
+{
+    int i, dfn0, dfd0;
+
+    if (model_list_len == 1) return 1;
+
+    dfn0 = (model_list[0])->dfn;
+    dfd0 = (model_list[0])->dfd;
+
+    for (i=1; i<model_list_len; i++) {
+	if ((model_list[i])->dfn != dfn0) return 0;
+	if ((model_list[i])->dfd != dfd0) return 0;
+    }  
+
+    return 1;
+}
+
 static void center_in_field (const char *s, int width, PRN *prn)
 {
     int rem = width - strlen(s);
@@ -242,6 +259,7 @@ static const char *short_estimator_string (int ci, int format)
 int display_model_table (void)
 {
     int i, j, gl0, ci;
+    int same_df;
     const MODEL *pmod;
     PRN *prn;
     char se[16];
@@ -329,7 +347,7 @@ int display_model_table (void)
 	pputs(prn, "\n\n");
     }
 
-    /* print sample sizes, R-bar-squared */
+    /* print sample sizes, R-squared */
     pprintf(prn, "%8s ", _("n"));
     for (j=0; j<model_list_len; j++) {
 	pmod = model_list[j];
@@ -337,11 +355,19 @@ int display_model_table (void)
 	pprintf(prn, "%12d", pmod->nobs);
     }
     pputs(prn, "\n");
-    pprintf(prn, "%s", _("Adj. R**2"));
+
+    same_df = common_df();
+    pprintf(prn, "%9s", (same_df)? _("R-squared") : _("Adj. R**2"));
+
     for (j=0; j<model_list_len; j++) {
 	pmod = model_list[j];
 	if (pmod == NULL) continue;
-	pprintf(prn, "%#12.4g", pmod->adjrsq);
+	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
+	    /* McFadden */
+	    pprintf(prn, "%#12.4g", pmod->rsq);
+	} else {
+	    pprintf(prn, "%#12.4g", (same_df)? pmod->rsq : pmod->adjrsq);
+	}
     }
     pputs(prn, "\n");
 

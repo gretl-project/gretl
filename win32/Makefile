@@ -88,10 +88,6 @@ LIBSRC = estimate.c compare.c gretl_utils.c gretl_errors.c pvalues.c dataio.c \
        generate.c strutils.c describe.c printout.c modelprint.c texprint.c var.c \
        interact.c graphing.c gretl_win32.c monte_carlo.c nonparam.c discrete.c \
        subsample.c calendar.c system.c random.c
-LIBHDR = libgretl.h gretl_commands.h estimate.h gretl_utils.h gretl_errors.h pvalues.h \
-       compare.h dataio.h generate.h strutils.h describe.h printout.h modelprint.h \
-       version.h texprint.h var.h interact.h graphing.h monte_carlo.h random.h \
-       nonparam.h discrete.h subsample.h calendar.h system.h gretl_win32.h
 LIBOBJ = $(LIBSRC:.c=.o)
 
 CLISRC = gretlcli.c complete.c 
@@ -103,23 +99,17 @@ GUISRC = gretl.c library.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c gpt_control.c session.c webget.c \
 	calculator.c fileselect.c guiprint.c boxplots.c series_view.c \
 	selector.c settings.c helpfiles.c treeutils.c console.c model_table.c
-GUIHDR = gretl.h library.h gui_utils.h callbacks.h dialogs.h session.h \
-	webget.h guiprint.h selector.h settings.h helpfiles.h \
-	treeutils.h model_table.h build.h
 GUIOBJ = $(GUISRC:.c=.o)
 
 HACK_SRC = gtkfontselhack.c font_filter.c
-HACK_HDR = gtkfontselhack.h
 HACK_OBJ = gtkfontselhack.o
 
 EXTRASRC = gtkpsfont.c gtkplotpc.c gtkplotps.c
-EXTRAHDR = gtkplot-lite.h gtkplotps.h gtkplotpc.h gtkpsfont.h
 EXTRAOBJ = $(EXTRASRC:.c=.o)
 
 PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 	igam.c igami.c incbet.c incbi.c mtherr.c nbdtr.c ndtr.c ndtri.c pdtr.c \
 	stdtr.c unity.c polevl.c const.c
-PROBHDR = mconf.h
 PROBOBJ = $(PROBSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
@@ -146,18 +136,8 @@ $(GUIPROG): $(GUIOBJ) $(HACK_OBJ) $(WRES)
 $(CHECKER): $(CHECKSRC)
 	$(CC) -s -I. -I../lib/src -DOS_WIN32 -DUSE_GMP -o $@ $^ $(LIBS) $(ZLIB_LIB)
 
-$(CLIOBJ): $(CLI_SRC) 
-
-$(HACK_OBJ): $(HACK_SRC) $(HACK_HDR)
-
 buildstamp:
 	./builddate.pl
-
-$(EXTRAOBJ): $(EXTRAHDR) $(EXTRASRC) 
-
-$(LIBOBJ): $(LIBSRC) $(LIBHDR)
-
-$(PROBOBJ): $(PROBSRC) $(PROBHDR) 
 
 $(WRES): gretlw32.rc 
 	$(RC) $(RCFLAGS) $< $(RCOUT)
@@ -188,10 +168,6 @@ clean:
 	rm -rf windist/gretl windist/gnuplot windist/Output
 	make -C updater clean
 	make -C mo clean
-
-depend:
-	make -f Make.windep depend 2>/dev/null && \
-	../tools/win_depend.pl
 
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll
