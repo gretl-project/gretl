@@ -955,6 +955,17 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
+    case SCATTERS:
+	err = multi_scatters(command.list, atoi(command.param), &Z, 
+			     datainfo, &paths, &plot_count, 
+			     gp_flags(batch, optflag));
+	if (err) {
+	    pputs(prn, _("scatters command failed\n"));
+	} else if (batch) {
+	    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+	}
+	break;
+
     case HAUSMAN:
 	if ((err = model_test_start(0, prn, 0))) break;
 	err = hausman_test(models[0], &Z, datainfo, prn);
@@ -1265,15 +1276,7 @@ void exec_line (char *line, PRN *prn)
 	}
 	break;
 
-    case SCATTERS:
-	if (batch) 
-	    pputs(prn, _("scatters command not available in batch mode\n"));
-	else {
-	    err = multi_scatters(command.list, atoi(command.param), &Z, 
-				 datainfo, &paths);
-	    if (err) pputs(prn, _("scatters command failed\n"));
-	}		
-	break;
+
 
     case SEED:
 	gretl_rand_set_seed(atoi(command.param));
@@ -1299,7 +1302,7 @@ void exec_line (char *line, PRN *prn)
 
     case SHELL:
 #ifdef OS_WIN32
-	fprintf(stderr, _("shell command not implemented in win32\n"));
+	WinExec(line + 1, SW_SHOWNORMAL);
 #else		
 	shell(line + 1);
 #endif

@@ -62,6 +62,7 @@ PLUGINSRC = \
 	longname.c \
 	mp_ols.c \
 	panel_data.c \
+	pca.c \
 	progress_bar.c \
 	range-mean.c \
 	stats_tables.c \
@@ -74,9 +75,10 @@ PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
-	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll plugins/johansen.dll \
+	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
+	plugins/johansen.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
-	plugins/leverage.dll
+	plugins/leverage.dll plugins/pca.dll
 
 WRES    = gretlw32_res.o
 RC      = $(MGW_PREFIX)-windres
@@ -249,6 +251,10 @@ plugins/johansen.dll: johansen.o dllinit.o
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 
 plugins/leverage.dll: leverage.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+plugins/pca.dll: pca.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
 

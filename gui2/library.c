@@ -3212,7 +3212,7 @@ void do_scatters (GtkWidget *widget, gpointer p)
     sprintf(line, "scatters %s", buf);
     if (verify_and_record_command(line)) return;
     err = multi_scatters(command.list, atoi(command.param), &Z, 
-			 datainfo, &paths);
+			 datainfo, &paths, NULL, 0);
     if (err < 0) errbox(_("gnuplot command failed"));
     else register_graph();
 }
@@ -4513,19 +4513,31 @@ int gui_exec_line (char *line,
 	break;
 
     case GNUPLOT:
+    case SCATTERS:
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
 	plotflags = gp_flags((exec_code == SCRIPT_EXEC), oflag);
-	if (oflag == 'm' || oflag == 'z' || oflag == 's') { 
-	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
-			  &paths, &plot_count, plotflags); 
+	
+	if (command.ci == GNUPLOT) {
+	    if (oflag == 'm' || oflag == 'z' || oflag == 's') { 
+		err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
+			      &paths, &plot_count, plotflags); 
+	    } else {
+		lines[0] = (oflag != 0);
+		err = gnuplot(command.list, lines, command.param, 
+			      &Z, datainfo, &paths, &plot_count, plotflags);
+	    }
 	} else {
-	    lines[0] = (oflag != 0);
-	    err = gnuplot(command.list, lines, command.param, 
-			  &Z, datainfo, &paths, &plot_count, plotflags);
+	    /* multiple scatter plots */
+	    err = multi_scatters(command.list, atoi(command.param), &Z, 
+				 datainfo, &paths, &plot_count, plotflags);
 	}
-	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
-	else {
+
+	if (err < 0) {
+	    pputs(prn, (command.ci == GNUPLOT)? 
+		  _("gnuplot command failed\n") :
+		  _("scatters command failed\n"));
+	} else {
 	    if (exec_code == CONSOLE_EXEC && *command.savename == '\0') {
 		register_graph();
 	    } else if (exec_code == SCRIPT_EXEC) {
@@ -4807,22 +4819,6 @@ int gui_exec_line (char *line,
 			     exec_code);
 	break;
 
-    case SCATTERS:
-        if (plp != NULL) {
-	    /* fixme? */
-            pprintf(prn, _("scatters command not available in batch mode\n"));
-        } else {
-            err = multi_scatters(command.list, atoi(command.param), &Z, 
-                                 datainfo, &paths);
-            if (err) pprintf(prn, _("scatters command failed\n"));
-	    else {
-		if (plp == NULL) register_graph();
-		err = maybe_save_graph(&command, paths.plotfile,
-				       GRETL_GNUPLOT_GRAPH, prn);
-	    }
-        }               
-        break;
-
     case SEED:
 	gretl_rand_set_seed(atoi(command.param));
 	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
@@ -4847,15 +4843,11 @@ int gui_exec_line (char *line,
         break;
 
     case SHELL:
-	if (exec_code == CONSOLE_EXEC) {
 #ifdef G_OS_WIN32
-	    WinExec(line + 1, SW_SHOWNORMAL);
+	WinExec(line + 1, SW_SHOWNORMAL);
 #else	
-	    shell(line + 1);
+	shell(line + 1);
 #endif
-	} else {
-	    pprintf(prn, _("shell command not implemented in script mode\n"));
-	}
 	break;
 
     case SIM:

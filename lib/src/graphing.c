@@ -752,9 +752,10 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	lo--;
     }
 
+    /* organize the output */
     if ((flags & GP_FILE) && *ppaths->plotfile) {
 	fq = fopen(ppaths->plotfile, "w");
-    } else if (flags & GP_BATCH) {  
+    } else if ((flags & GP_BATCH) && plot_count != NULL) {  
 	if (*ppaths->plotfile == 0) {
 	    *plot_count += 1; 
 	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
@@ -1088,7 +1089,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
  */
 
 int multi_scatters (const LIST list, int pos, double ***pZ, 
-		    const DATAINFO *pdinfo, PATHS *ppaths)
+		    const DATAINFO *pdinfo, PATHS *ppaths,
+		    int *plot_count, unsigned char flags)
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
     int nplots, m;
@@ -1123,7 +1125,20 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
     if (plotlist[0] > 6) plotlist[0] = 6;
     nplots = plotlist[0];
 
-    if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+    /* organize the output */
+    if ((flags & GP_FILE) && *ppaths->plotfile) {
+	fp = fopen(ppaths->plotfile, "w");
+    } else if ((flags & GP_BATCH) && plot_count != NULL) {  
+	if (*ppaths->plotfile == 0) {
+	    *plot_count += 1; 
+	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
+		    *plot_count);
+	}
+	fp = fopen(ppaths->plotfile, "w");
+	if (fp == NULL) return E_FOPEN;
+    } else {
+	if (gnuplot_init(ppaths, &fp)) return E_FOPEN;
+    }
 
     fputs("# multiple scatterplots\n", fp);
     fputs("set size 1.0,1.0\nset origin 0.0,0.0\n"
@@ -1180,7 +1195,9 @@ int multi_scatters (const LIST list, int pos, double ***pZ,
 #endif
     fclose(fp);
 
-    err = gnuplot_display(ppaths);
+    if (!(flags & GP_BATCH)) {
+	err = gnuplot_display(ppaths);
+    }
 
     free(plotlist);
 

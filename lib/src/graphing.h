@@ -128,7 +128,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
 int multi_scatters (const LIST list, int pos, 
 		    double ***pZ, const DATAINFO *pdinfo, 
-		    PATHS *ppaths);
+		    PATHS *ppaths, int *plot_count, 
+		    unsigned char flags);
 
 int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist);
 

@@ -25,6 +25,7 @@ version 1.1.1
 - Fixes for forecast-with-errors graphs
 - Fixes for "influential observations" test calculations, in
   extreme cases
+- Windows version: update to gtk 2.2.3 runtime
 
 07/23/03 version 1.1.0
 - Extend DATAINFO structure -- allow specification of "display
