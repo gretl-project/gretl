@@ -5,11 +5,14 @@ version 1.1.0
   display name for a variable
 - Add script commands for saving and displaying models and
   graphs 
+- Improvements to the gretl console (command history, etc.)
+- Add the Johansen cointegration test to the gui menus
 - Add option to use QR decomposition instead of Cholesky for
   calculating regression results
 - Fix bug: periodogram command failed in batch mode
 - Make uniform() PRNG generate in the standard range 0-1
   (rather than 1-100, as it was previously)
+- Updates to the Spanish help files
 - Clean-up: remove all wasted array elements
 - Update to libtool 1.5
 

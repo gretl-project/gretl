@@ -1820,7 +1820,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    mpvals = gretl_mp_results_new (command.list[0]);
+    mpvals = gretl_mp_results_new (command.list[0] - 1);
 
     if (mpvals == NULL || allocate_mp_varnames(mpvals)) {
 	errbox(_("Out of memory!"));

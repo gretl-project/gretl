@@ -85,17 +85,6 @@ logit_probit
 </SECTION>
 
 <SECTION>
-<FILE>errors</FILE>
-errmsg
-error_codes
-get_errmsg
-get_gretl_errmsg
-get_gretl_errno
-get_gretl_msg
-gretl_errno
-</SECTION>
-
-<SECTION>
 <FILE>estimate</FILE>
 arch
 ar_func
@@ -142,6 +131,32 @@ multi_scatters
 plot
 plot_freq
 termtype_to_termstr
+</SECTION>
+
+<SECTION>
+<FILE>gretl_errors</FILE>
+errmsg
+error_codes
+get_errmsg
+get_gretl_errmsg
+get_gretl_errno
+get_gretl_msg
+gretl_errno
+</SECTION>
+
+<SECTION>
+<FILE>gretl_matrix</FILE>
+gretl_matrix
+gretl_matrix_alloc
+gretl_matrix_free
+gretl_matmult
+gretl_matmult_mod
+gretl_matrix_copy
+gretl_matrix_get
+gretl_matrix_steal_data
+gretl_invert_general_matrix
+gretl_vector_get
+gretl_LU_solve
 </SECTION>
 
 <SECTION>
@@ -243,8 +258,6 @@ CORRMAT
 MODEL
 MODELSPEC
 GRAPHT
-SESSION
-SESSIONBUILD
 PRN
 </SECTION>
 
@@ -296,7 +309,6 @@ printdata
 print_fit_resid
 printfreq
 print_smpl
-print_white_vcv
 printxx
 session_time
 text_print_fcast_with_errs
@@ -313,6 +325,17 @@ normal
 print_critical
 rhocrit95
 tprob
+</SECTION>
+
+<SECTION>
+<FILE>random</FILE>
+gretl_rand_init
+gretl_rand_free
+gretl_rand_set_seed
+gretl_uniform_dist
+gretl_normal_dist
+gretl_rand_int
+gretl_rand_int_max
 </SECTION>
 
 <SECTION>

@@ -5,10 +5,11 @@
 <!ENTITY gretl-dataio SYSTEM "sgml/dataio.sgml">
 <!ENTITY gretl-describe SYSTEM "sgml/describe.sgml">
 <!ENTITY gretl-discrete SYSTEM "sgml/discrete.sgml">
-<!ENTITY gretl-errors SYSTEM "sgml/errors.sgml">
 <!ENTITY gretl-estimate SYSTEM "sgml/estimate.sgml">
 <!ENTITY gretl-generate SYSTEM "sgml/generate.sgml">
 <!ENTITY gretl-graphing SYSTEM "sgml/graphing.sgml">
+<!ENTITY gretl-gretl-errors SYSTEM "sgml/gretl_errors.sgml">
+<!ENTITY gretl-gretl-matrix SYSTEM "sgml/gretl_matrix.sgml">
 <!ENTITY gretl-gretl-utils SYSTEM "sgml/gretl_utils.sgml">
 <!ENTITY gretl-gretl-win32 SYSTEM "sgml/gretl_win32.sgml">
 <!ENTITY gretl-interact SYSTEM "sgml/interact.sgml">
@@ -18,8 +19,10 @@
 <!ENTITY gretl-nonparam SYSTEM "sgml/nonparam.sgml">
 <!ENTITY gretl-printout SYSTEM "sgml/printout.sgml">
 <!ENTITY gretl-pvalues SYSTEM "sgml/pvalues.sgml">
+<!ENTITY gretl-random SYSTEM "sgml/random.sgml">
 <!ENTITY gretl-strutils SYSTEM "sgml/strutils.sgml">
 <!ENTITY gretl-subsample SYSTEM "sgml/subsample.sgml">
+<!ENTITY gretl-system SYSTEM "sgml/system.sgml">
 <!ENTITY gretl-texprint SYSTEM "sgml/texprint.sgml">
 <!ENTITY gretl-var SYSTEM "sgml/var.sgml">
 ]>
@@ -41,10 +44,11 @@
     &gretl-dataio;
     &gretl-describe;
     &gretl-discrete;
-    &gretl-errors;
     &gretl-estimate;
     &gretl-generate;
     &gretl-graphing;
+    &gretl-gretl-errors;
+    &gretl-gretl-matrix;
     &gretl-gretl-utils;
     &gretl-gretl-win32;
     &gretl-interact;
@@ -54,8 +58,10 @@
     &gretl-nonparam;
     &gretl-printout;
     &gretl-pvalues;
+    &gretl-random;
     &gretl-strutils;
     &gretl-subsample;
+    &gretl-system;
     &gretl-texprint;
     &gretl-var;
     <!-- </sect1> -->

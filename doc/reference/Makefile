@@ -6,15 +6,15 @@ srcdir = .
 LIBTOOL = ../../libtool
 
 # The name of the module.
-DOC_MODULE=gretl
+DOC_MODULE = gretl
 
 # The top-level SGML file. Change it if you want.
-DOC_MAIN_SGML_FILE=$(DOC_MODULE)-docs.sgml
+DOC_MAIN_SGML_FILE = $(DOC_MODULE)-docs.sgml
 
 # The directory containing the source code. Relative to $(srcdir).
 # gtk-doc will search all .c & .h files beneath here for inline comments
 # documenting functions and macros.
-DOC_SOURCE_DIR=../../lib/src
+DOC_SOURCE_DIR = ../../lib/src
 
 # Extra options to supply to gtkdoc-scan.
 SCAN_OPTIONS=
@@ -30,7 +30,7 @@ HFILE_GLOB=
 CFILE_GLOB=
 
 # Header files to ignore when scanning.
-IGNORE_HFILES=
+IGNORE_HFILES = f2c.h
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE).
 content_files =
@@ -43,8 +43,8 @@ extra_files =
 GTKDOC_CFLAGS =
 GTKDOC_LIBS =
 
-GTKDOC_CC=$(LIBTOOL) --mode=compile $(CC)
-GTKDOC_LD=$(LIBTOOL) --mode=link $(CC)
+GTKDOC_CC = $(LIBTOOL) --mode=compile $(CC)
+GTKDOC_LD = $(LIBTOOL) --mode=link $(CC)
 
 # If you need to override some of the declarations, place them in this file
 # and uncomment this line.
@@ -86,7 +86,7 @@ tmpl.stamp: tmpl-build.stamp
 
 #### sgml ####
 
-sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) $(srcdir)/tmpl/*.sgml
+sgml-build.stamp: tmpl.stamp $(CFILE_GLOB) # $(srcdir)/tmpl/*.sgml
 	@echo '*** Building SGML ***'
 	cd $(srcdir) && \
 	gtkdoc-mkdb --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) \

@@ -581,6 +581,25 @@ static int db_has_codebook (const char *fname)
 
 /* ........................................................... */
 
+static gint catch_listbox_key (GtkWidget *w, GdkEventKey *key, windata_t *vwin)
+{
+    if (key->keyval == GDK_q) { 
+	gtk_widget_destroy(vwin->w);
+    }
+    else if (key->keyval == GDK_f) {
+	GdkModifierType mods;
+
+	gdk_window_get_pointer(w->window, NULL, NULL, &mods); 
+	if (mods & GDK_CONTROL_MASK) {
+	    menu_find(vwin, 1, NULL);
+	    return TRUE;
+	}	
+    }
+    return FALSE;
+}
+
+/* ........................................................... */
+
 void display_db_series_list (int action, char *fname, char *buf)
 {
     GtkWidget *frame, *closebutton;
@@ -641,8 +660,13 @@ void display_db_series_list (int action, char *fname, char *buf)
 
     closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
+
     gtk_signal_connect (GTK_OBJECT(closebutton), "clicked", 
 			GTK_SIGNAL_FUNC(delete_widget), dbwin->w);
+
+    gtk_signal_connect (GTK_OBJECT(view), "key_press_event",
+			GTK_SIGNAL_FUNC(catch_listbox_key),
+			dbwin);
 
     if (action == NATIVE_SERIES) { 
 	if (populate_series_list(dbwin, &paths)) 
