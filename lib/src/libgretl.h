@@ -330,6 +330,7 @@ struct _FITRESID {
     int df;
     int t1, t2;
     int nobs;
+    int err;
     char depvar[9];
 };
 

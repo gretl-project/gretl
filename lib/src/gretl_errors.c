@@ -110,8 +110,9 @@ char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 	    strcpy(errtext, _(gretl_error_messages[errcode]));
 	    return errtext;
 	}
-    } else 
+    } else {
 	return NULL;
+    }
 }
 
 /**
@@ -126,9 +127,11 @@ char *get_errmsg (const int errcode, char *errtext, PRN *prn)
 
 void errmsg (const int errcode, PRN *prn)
 {
-    if (gretl_errmsg[0] == '\0') 
+    if (*gretl_errmsg == '\0') {
 	get_errmsg(errcode, NULL, prn);
-    else pprintf(prn, "%s\n", gretl_errmsg);
+    } else {
+	pprintf(prn, "%s\n", gretl_errmsg);
+    }
 }
 
 int get_gretl_errno (void)
@@ -143,7 +146,7 @@ char *get_gretl_errmsg (void)
 
 char *get_gretl_msg (void)
 {
-    if (gretl_msg[0] == 0) return NULL;
+    if (*gretl_msg == '\0') return NULL;
     return gretl_msg;
 }
 
@@ -158,7 +161,7 @@ char *get_gretl_msg (void)
 
 void gretl_errmsg_set_default (const char *str)
 {
-    if (*gretl_errmsg == 0) {
+    if (*gretl_errmsg == '\0') {
 	strncat(gretl_errmsg, str, ERRLEN - 1);
     }
 }

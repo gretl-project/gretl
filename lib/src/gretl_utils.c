@@ -28,6 +28,7 @@
 static DIR *dir;
 
 static int _pdton (int pd);
+static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
 
 /* .......................................................... */
 
@@ -1141,8 +1142,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->ifc = 0;
     pmod->rho_in = 0.0;
     pmod->aux = AUX_NONE;
-    gretl_errmsg[0] = '\0';
-    gretl_msg[0] = '\0';
+    *gretl_msg = '\0';
     
     for (i=0; i<8; i++) {
 	pmod->criterion[i] = 0.0;
@@ -1931,62 +1931,152 @@ FITRESID *get_fit_resid (const MODEL *pmod, double ***pZ,
 
 /* ........................................................... */
 
+static int adjust_t1_for_missing (const MODEL *pmod,
+				  const double **Z,
+				  const DATAINFO *pdinfo)
+{
+    int i, t, t1 = pdinfo->t1;
+    int miss;
+
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	miss = 0;
+	for (i=1; i<=pmod->list[0]; i++) {
+	    if (na(Z[pmod->list[i]][t])) {
+		miss = 1;
+		break;
+	    }
+	}
+	if (miss) t1++;
+	else break;
+    }
+
+    return t1;
+}
+
+/* ........................................................... */
+
+static int adjust_t2_for_missing (const MODEL *pmod,
+				  const double **Z,
+				  const DATAINFO *pdinfo)
+{
+    int i, t, t2 = pdinfo->t2;
+    int miss;
+
+    for (t=pdinfo->t2; t>0; t--) {
+	miss = 0;
+	for (i=1; i<=pmod->list[0]; i++) {
+	    if (na(Z[pmod->list[i]][t])) {
+		miss = 1;
+		break;
+	    }
+	}
+	if (miss) t2--;
+	else break;
+    }
+
+    return t2;
+}
+
+/* ........................................................... */
+
 FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod, 
 			       double ***pZ, DATAINFO *pdinfo, PRN *prn)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
 {
-    double **fZ;
+    double **fZ = NULL;
     DATAINFO fdatainfo;
     MODEL fmod; 
     FITRESID *fr;
-    int *list, orig_v, ft1, ft2, v1, err = 0;
+    int *list = NULL;
+    int orig_v, ft1, ft2, v1;
     int i, j, k, t, nfcast, fn, fv;
+    int real_t1 = pdinfo->t1;
+    int real_t2 = pdinfo->t2;
     char t1str[9], t2str[9];
 
-    if (pmod->ci != OLS || !pmod->ifc) return NULL; /* E_OLSONLY */
+    /* Note, Sat Oct 4 21:48:57 EDT 2003: I need to read Salkever and
+       get this properly organized.  There can be problems if there
+       are missing values at the beginning of the dataset, and I
+       don't think the _model_ sample period is respected.  Plus, can
+       this routine produce forecasts and standard errors out of
+       sample?  (I guess so, but how, exactly?)
+    */
 
-    /* temporary bodge */
-    if (pmod->data != NULL) return NULL; /* E_DATA */
+    fr = fit_resid_new(0, 1); 
+    if (fr == NULL) return NULL;
+
+    if (pmod->ci != OLS || !pmod->ifc) {
+	fr->err = E_OLSONLY;
+	return fr;
+    }
+
+    /* temporary bodge (subsampled) */
+    if (pmod->data != NULL) {
+	fr->err = E_DATA;
+	return fr;
+    }
 
     /* parse dates */
-    if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) 
-	return NULL; /* E_OBS */ 
+    if (sscanf(str, "%*s %8s %8s", t1str, t2str) != 2) {
+	fr->err = E_OBS;
+	return fr;
+    }
 
     ft1 = dateton(t1str, pdinfo);
     ft2 = dateton(t2str, pdinfo);
-    if (ft1 < 0 || ft2 < 0 || ft2 < ft1) return NULL; /* E_OBS */
+    if (ft1 < 0 || ft2 < 0 || ft2 < ft1) {
+	fr->err = E_OBS;
+	return fr;
+    }
 
     orig_v = pmod->list[0];
     v1 = pmod->list[1];
 
-    /* FIXME -- need to handle case where orig. regression was
-       run on a sub-sample */
+    /* this is dodgy, in relation to what comes below */
+
+    real_t1 = adjust_t1_for_missing(pmod, (const double **) *pZ, pdinfo);
+    if (real_t1 > ft1) ft1 = real_t1;
+
+    real_t2 = adjust_t2_for_missing(pmod, (const double **) *pZ, pdinfo);
+    if (real_t2 < ft2) ft2 = real_t2;
 
     nfcast = ft2 - ft1 + 1;
 
     /* sanity check */
-    if (nfcast > 1024) return NULL; /* requires > 16MB RAM for fZ */
+    if (nfcast > 1024) {
+	fr->err = E_DATA; /* requires > 16MB RAM for fZ */
+	return fr;
+    }
 
-    fn = fdatainfo.n = nfcast + pdinfo->t2 + 1;
+    if (allocate_fit_resid_arrays(fr, nfcast, 1)) {
+	fr->err = E_ALLOC;
+	return fr;
+    }
+
+    fn = fdatainfo.n = nfcast + real_t2 + 1; /* Is this right? */
     fv = fdatainfo.v = nfcast + orig_v;
 
     fZ = malloc(fv * sizeof *fZ);
-    if (fZ == NULL) return NULL;
+    if (fZ == NULL) {
+	fr->err = E_ALLOC;
+	return fr;
+    }
 
     for (i=0; i<fv; i++) {
 	fZ[i] = malloc(fn * sizeof **fZ);
-	if (fZ[i] == NULL) return NULL;
+	if (fZ[i] == NULL) {
+	    int k;
+
+	    for (k=0; k<i; k++) free(fZ[k]);
+	    free(fZ);
+	    fr->err = E_ALLOC;
+	    return fr;
+	}
     }
 
-    list = malloc((fv + 1) * sizeof *list);
-    if (list == NULL) return NULL;
-
-    fr = fit_resid_new(nfcast, 1);
-    if (fr == NULL) return NULL;
-
     strcpy(fdatainfo.stobs, pdinfo->stobs);
-    fdatainfo.t1 = pdinfo->t1;
+    fdatainfo.t1 = 0; /* real_t1?? pmod->t1?? */
     fdatainfo.pd = pdinfo->pd;
     fdatainfo.sd0 = pdinfo->sd0;
     fdatainfo.time_series = pdinfo->time_series;
@@ -1998,6 +2088,12 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fdatainfo.descrip = NULL;
 
     /* create new list */
+    list = malloc((fv + 1) * sizeof *list);
+    if (list == NULL) {
+	fr->err = E_ALLOC;
+	goto fcast_bailout;
+    }
+
     list[0] = fv;
     k = 1;
     for (i=1; i<=list[0]; i++) {
@@ -2017,19 +2113,20 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
 	fZ[0][t] = 1.0;
     }
 
-    /* insert orig model vars into fZ */
+    /* insert orig model vars into fZ: 
+       FIXME timing and sample */
     k = 1;
     for (i=1; i<=orig_v; i++) {
 	if (i > 1 && pmod->list[i] == 0) continue;
-	for (t=0; t<=pdinfo->t2; t++) {
+	for (t=0; t<=real_t2; t++) {
 	    fZ[k][t] = (*pZ)[pmod->list[i]][t];
 	}
 	if (i == 1) {
 	    k++;
 	    continue;
 	}
-	for (t=pdinfo->t2+1; t<fn; t++) {
-	    fZ[k][t] = (*pZ)[pmod->list[i]][t - (pdinfo->t2+1) + ft1];
+	for (t=real_t2+1; t<fn; t++) {
+	    fZ[k][t] = (*pZ)[pmod->list[i]][t - (real_t2+1) + ft1];
 	}
 	k++;
     }
@@ -2037,8 +2134,8 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     /* insert -I section */
     for (i=orig_v; i<fv; i++) {
 	k = orig_v - i;
-	for (t=pdinfo->t2+1; t<fn; t++) {
-	    j = pdinfo->t2 + 1 - t;
+	for (t=real_t2+1; t<fn; t++) {
+	    j = real_t2 + 1 - t;
 	    if (k == j) fZ[i][t] = -1.0;
 	}
     }
@@ -2047,24 +2144,27 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fdatainfo.extra = 1;
     fmod = lsq(list, &fZ, &fdatainfo, OLS, 1, 0.0);
     if (fmod.errcode) {
-	err = fmod.errcode;
-	clear_model(&fmod, &fdatainfo);
-	free_Z(fZ, &fdatainfo);
-	free(list);
-	free_fit_resid(fr);
 	fprintf(stderr, I_("forecasting model failed in fcast_with_errs()\n"));
-	return NULL;
+	fr->err = fmod.errcode;
+	clear_model(&fmod, &fdatainfo);
+	goto fcast_bailout;
     }
 
     /* find the fitted values */
-    t = 0;
+    t = 0; 
     for (i=orig_v-1; i<fv-1; i++) {
+	/* fr->fitted is only as long as the number of forecasts,
+	   rather than being the full length of the data set */
 	fr->fitted[t] = fmod.coeff[i];
 	t++;
     }    
 
     /* and the variances */
-    if (makevcv(&fmod)) return NULL; /* E_ALLOC */
+    if (makevcv(&fmod)) {
+	fr->err = E_ALLOC;
+	clear_model(&fmod, &fdatainfo);
+	goto fcast_bailout;
+    }
 
     t = k = 0;
     for (i=1; i<fv; i++) {
@@ -2091,6 +2191,8 @@ FITRESID *get_fcast_with_errs (const char *str, const MODEL *pmod,
     fr->df = pmod->dfd;
 
     clear_model(&fmod, &fdatainfo);
+
+ fcast_bailout:
     free_Z(fZ, &fdatainfo);
     free(list);
     clear_datainfo(&fdatainfo, CLEAR_FULL);
@@ -2108,7 +2210,14 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     int err;
 
     fr = get_fcast_with_errs (str, pmod, pZ, pdinfo, prn);
-    if (fr == NULL) return 1;
+    if (fr == NULL) {
+	return E_ALLOC;
+    } 
+    else if (fr->err) {
+	err = fr->err;
+	free_fit_resid(fr);
+	return err;
+    }
 
     err = text_print_fcast_with_errs (fr, pZ, pdinfo, prn,
 				      ppaths, plot);
@@ -2458,6 +2567,38 @@ mp_results *gretl_mp_results_new (int nc)
 
 /* ........................................................... */
 
+static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs)
+{
+    fr->actual = malloc(n * sizeof *fr->actual);
+    if (fr->actual == NULL) {
+	return 1;
+    }
+
+    fr->fitted = malloc(n * sizeof *fr->fitted);
+    if (fr->fitted == NULL) {
+	free(fr->actual);
+	fr->actual = NULL;
+	return 1;
+    }
+
+    if (errs) {
+	fr->sderr = malloc(n * sizeof *fr->sderr);
+	if (fr->sderr == NULL) {
+	    free(fr->actual);
+	    fr->actual = NULL;
+	    free(fr->fitted);
+	    fr->fitted = NULL;
+	    return 1;
+	}
+    } else {
+	fr->sderr = NULL;
+    }
+
+    return 0;
+}
+
+/* ........................................................... */
+
 FITRESID *fit_resid_new (int n, int errs)
 {
     FITRESID *fr;
@@ -2465,29 +2606,21 @@ FITRESID *fit_resid_new (int n, int errs)
     fr = malloc(sizeof *fr);
     if (fr == NULL) return NULL;
 
-    fr->actual = malloc(n * sizeof *fr->actual);
-    if (fr->actual == NULL) {
-	free(fr);
-	return NULL;
-    }
+    fr->err = 0;
+    fr->t1 = 0;
+    fr->t2 = 0;
+    fr->nobs = 0;
 
-    fr->fitted = malloc(n * sizeof *fr->fitted);
-    if (fr->fitted == NULL) {
-	free(fr->actual);
-	free(fr);
-	return NULL;
-    }
-
-    if (errs) {
-	fr->sderr = malloc(n * sizeof *fr->sderr);
-	if (fr->sderr == NULL) {
-	    free(fr->actual);
-	    free(fr->fitted);
-	    free(fr);
-	    return NULL;
-	}
-    } else {
+    if (n == 0) {
+	fr->actual = NULL;
+	fr->fitted = NULL;
 	fr->sderr = NULL;
+	return fr;
+    }
+
+    if (allocate_fit_resid_arrays(fr, n, errs)) {
+	free(fr);
+	return NULL;
     }
     
     return fr;

@@ -671,6 +671,19 @@ enum {
     GTITLE_AFV
 } graph_titles;
 
+static int auto_plot_var (const char *s)
+{
+    if (strcmp(s, "t") == 0 ||
+	strcmp(s, "annual") == 0 ||
+	strcmp(s, "qtrs") == 0 ||
+	strcmp(s, "months") == 0 ||
+	strcmp(s, "hrs") == 0) {
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
 static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
 {
     char title[128];
@@ -687,7 +700,11 @@ static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
 	sprintf(title, I_("Actual and fitted %s"), n1);
 	break;
     case GTITLE_AFV:
-	sprintf(title, I_("Actual and fitted %s versus %s"), n1, n2);
+	if (auto_plot_var(n2)) {
+	    sprintf(title, I_("Actual and fitted %s"), n1);
+	} else {
+	    sprintf(title, I_("Actual and fitted %s versus %s"), n1, n2);
+	}
 	break;
     default:
 	*title = 0;
@@ -1630,6 +1647,7 @@ int plot_fcast_errs (int n, const double *obs,
     xmin -= xrange * .025;
     xmax += xrange * .025;
     fprintf(fp, "set xrange [%.8g:%.8g]\n", xmin, xmax);
+    fputs("set missing \"?\"\n", fp);
 
     fprintf(fp, "set key left top\n"
 	    "plot \\\n'-' using 1:2 title '%s' w lines , \\\n"
@@ -1642,15 +1660,27 @@ int plot_fcast_errs (int n, const double *obs,
     setlocale(LC_NUMERIC, "C");
 #endif
     for (t=0; t<n; t++) {
-	fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
+	if (na(depvar[t])) {
+	    fprintf(fp, "%.8g ?\n", obs[t]);
+	} else {
+	    fprintf(fp, "%.8g %.8g\n", obs[t], depvar[t]);
+	}
     }
     fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t]);
+	if (na(yhat[t])) {
+	    fprintf(fp, "%.8g ?\n", obs[t]);
+	} else {
+	    fprintf(fp, "%.8g %.8g\n", obs[t], yhat[t]);
+	}
     }
     fputs("e\n", fp);
     for (t=0; t<n; t++) {
-	fprintf(fp, "%.8g %.8g %.8g\n", obs[t], yhat[t], maxerr[t]);
+	if (na(yhat[t]) || na(maxerr[t])) {
+	    fprintf(fp, "%.8g ? ?\n", obs[t]);
+	} else {
+	    fprintf(fp, "%.8g %.8g %.8g\n", obs[t], yhat[t], maxerr[t]);
+	}
     }
     fputs("e\n", fp);
 #ifdef ENABLE_NLS

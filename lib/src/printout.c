@@ -50,6 +50,11 @@ void printxx (const double xx, char *str, int ci)
 {
     int d = 6;
 
+    if (na(xx)) {
+	*str = '\0';
+	return;
+    }
+
     switch (ci) {
     case PRINT:
 	d = 8;  
@@ -825,18 +830,26 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 
 /* ........................................................... */
 
-static void fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
+static void fit_resid_head (const FITRESID *fr, 
+			    int t1, int t2,
+			    const DATAINFO *pdinfo, 
 			    PRN *prn)
 {
     int i;
     char label[16], date1[9], date2[9]; 
+    char fdate1[9], fdate2[9];
+    int nobs = t2 - t1 + 1;
 
     ntodate(date1, fr->t1, pdinfo);
     ntodate(date2, fr->t2, pdinfo);
+    ntodate(fdate1, t1, pdinfo);
+    ntodate(fdate2, t2, pdinfo);
+
     pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
-	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+	    fdate1, fdate2, nobs);
     pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
-    if (fr->nobs == pdinfo->n) pputs(prn, "\n");
+
+    if (fr->nobs == nobs) pputs(prn, "\n");
     else pprintf(prn, " (n = %d)\n", fr->nobs); 
 
     pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
@@ -1255,12 +1268,26 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 {
     int t, anyast = 0;
     int n = pdinfo->n;
+    int t1, t2;
     double xx;
 
-    fit_resid_head(fr, pdinfo, prn); 
-
+    /* adjust the starting and ending points if need be */
     for (t=0; t<n; t++) {
-	if (t == fr->t1 && t) pputs(prn, "\n");
+	if (!na(fr->actual[t]) && !na(fr->fitted[t])) break;
+    }
+    t1 = t;
+
+    for (t=n-1; t>=0; t--) {
+	if (!na(fr->actual[t]) && !na(fr->fitted[t])) break;
+    }
+    t2 = t;  
+
+    if (t2 == t1) return 1;
+
+    fit_resid_head(fr, t1, t2, pdinfo, prn); 
+
+    for (t=t1; t<=t2; t++) {
+	if (t == fr->t1 && t > t1) pputs(prn, "\n");
 	if (t == fr->t2 + 1) pputs(prn, "\n");
 
 	print_obs_marker(t, pdinfo, prn);

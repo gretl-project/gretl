@@ -1006,9 +1006,9 @@ void gui_errmsg (const int errcode)
 {
     char *msg = get_gretl_errmsg();
 
-    if (msg[0] != '\0') 
+    if (*msg != '\0') {
 	errbox(msg);
-    else {
+    } else {
 	msg = get_errmsg(errcode, errtext, NULL);
 	if (msg != NULL)
 	    errbox(msg);
@@ -1214,6 +1214,9 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
 	return;
+    } else if (fr->err) {
+	gui_errmsg(fr->err);
+	free_fit_resid(fr);
     } else {
 	err = text_print_fcast_with_errs (fr, 
 					  &Z, datainfo, prn,

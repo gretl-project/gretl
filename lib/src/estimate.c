@@ -322,7 +322,11 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     double *xpy;
     MODEL mdl;
 
+    *gretl_errmsg = '\0';
+
     if (list == NULL || pZ == NULL || pdinfo == NULL) {
+	fprintf(stderr, "E_DATA: lsq: list = %p, pZ = %p, pdinfo = %p\n",
+		(void *) list, (void *) pZ, (void *) pdinfo);
 	mdl.errcode = E_DATA;
         return mdl;
     }
@@ -337,6 +341,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     _init_model(&mdl, pdinfo);
 
     if (list[0] == 1 || pdinfo->v == 1) {
+	fprintf(stderr, "E_DATA: lsq: list[0] = %d, pdinfo->v = %d\n",
+		list[0], pdinfo->v);
 	mdl.errcode = E_DATA;
         return mdl;
     }
@@ -1318,6 +1324,8 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     int step, iter = 0, nn = 0, err = 0;
     MODEL corc_model;
 
+    *gretl_errmsg = '\0';
+
     _init_model(&corc_model, pdinfo);
 
     uhat = malloc(pdinfo->n * sizeof *uhat);
@@ -1459,6 +1467,8 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
     int nv, nxpx;
     MODEL tsls;
     double xx, *diag, *yhat, *xpx, *xpy;
+
+    *gretl_errmsg = '\0';
 
     _init_model(&tsls, pdinfo);
 
@@ -1739,6 +1749,8 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     int *hsklist;
     MODEL hsk;
 
+    *gretl_errmsg = '\0';
+
     _init_model(&hsk, pdinfo);
 
     lo = list[0];         /* number of vars in original list */
@@ -1887,6 +1899,8 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
     double xx, *st, *uhat1, **p;
     MODEL hccm;
+
+    *gretl_errmsg = '\0';
 
     _init_model(&hccm, pdinfo);
 
@@ -2160,6 +2174,8 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
     double ess, essdiff = 1.0;
     MODEL armod;
 
+    *gretl_errmsg = '\0';
+
     arlist = malloc((arvars + 1) * sizeof *arlist);
 
     if (arlist == NULL) {
@@ -2351,6 +2367,8 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     int err, lag, n = pdinfo->n, v = pdinfo->v;
     int *arlist = NULL, *reglist = NULL, *reglist2 = NULL, *rholist = NULL;
     MODEL ar, rhomod;
+
+    *gretl_errmsg = '\0';
 
     _init_model(&ar, pdinfo);
     _init_model(&rhomod, pdinfo);
@@ -2813,6 +2831,8 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
     int i, t, nwt, nv, n = pdinfo->n;
     double LM, xx;
     int err = 0;
+
+    *gretl_errmsg = '\0';
 
     _init_model(&archmod, pdinfo);
 

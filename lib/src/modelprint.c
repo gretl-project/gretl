@@ -1693,19 +1693,19 @@ static void tex_print_aicetc (const MODEL *pmod, PRN *prn)
 	    "\\begin{tabular*}{\\textwidth}{@{\\extracolsep{\\fill}}lrlrlr}\n",
 	    I_("Model selection statistics"));
     pprintf(prn, 
-	    "\\textsc{sgmasq}  & %#g & "  
-	    "\\textsc{aic}     & %#g & "  
-	    "\\textsc{fpe}     & %#g \\\\\n"
-	    "\\textsc{hq}      & %#g & "
-	    "\\textsc{schwarz} & %#g & "  
-	    "\\textsc{shibata} & %#g \\\\\n"
-	    "\\textsc{gcv}     & %#g & ",  
+	    "\\textsc{sgmasq}  & %g & "  
+	    "\\textsc{aic}     & %g & "  
+	    "\\textsc{fpe}     & %g \\\\\n"
+	    "\\textsc{hq}      & %g & "
+	    "\\textsc{schwarz} & %g & "  
+	    "\\textsc{shibata} & %g \\\\\n"
+	    "\\textsc{gcv}     & %g & ",  
 	    pmod->criterion[0], pmod->criterion[1], pmod->criterion[2],
 	    pmod->criterion[3], pmod->criterion[4], pmod->criterion[5],
 	    pmod->criterion[6]);
 
     if (pmod->criterion[7] > 0.0) 
-	pprintf(prn, "\\textsc{rice}    & %#g\n", pmod->criterion[7]);
+	pprintf(prn, "\\textsc{rice}    & %g\n", pmod->criterion[7]);
     else
 	pprintf(prn, "\\textsc{rice}    & %s\n", I_("undefined"));
     
