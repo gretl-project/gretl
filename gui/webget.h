@@ -148,12 +148,6 @@ struct rbuf
     int internal_dont_touch_this;	/* used by RBUF_READCHAR macro */
 };
 
-typedef struct _ProgressData {
-    GtkWidget *window;
-    GtkWidget *label;
-    GtkWidget *pbar;
-} ProgressData;
-
 #endif /* WEBGET_H */
 
 
