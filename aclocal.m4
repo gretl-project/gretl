@@ -6258,7 +6258,6 @@ AC_ARG_WITH(lapack-prefix,[  --with-lapack-prefix=PFX   Prefix where LAPACK is i
   fi
 
   AC_MSG_CHECKING(for LAPACK)
-  LAPACK_CFLAGS="-I$lapack_config_prefix/include -I$(topsrc)/plugin"
   if test x"${LAPACK_LIBS}" = x ; then  
      LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
   fi

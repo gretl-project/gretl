@@ -8349,8 +8349,9 @@ rm -f conftest*
 
 fi
 
+LAPACK_CFLAGS="-I$(srcdir)/plugin"
 case $host_os in
-  *apple*) LAPACK_LIBS="-framework vecLib"
+  *apple*) LAPACK_LIBS="-framework veclib"
   ;; 
 esac
 # Check whether --with-lapack-prefix or --without-lapack-prefix was given.
@@ -8368,9 +8369,9 @@ fi
 
   if test x"${LAPACK_LIBS}" = x ; then 
      echo $ac_n "checking for libf2c""... $ac_c" 1>&6
-echo "configure:8372: checking for libf2c" >&5
+echo "configure:8373: checking for libf2c" >&5
      echo $ac_n "checking for c_sqrt in -lf2c""... $ac_c" 1>&6
-echo "configure:8374: checking for c_sqrt in -lf2c" >&5
+echo "configure:8375: checking for c_sqrt in -lf2c" >&5
 ac_lib_var=`echo f2c'_'c_sqrt | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -8378,7 +8379,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lf2c  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 8382 "configure"
+#line 8383 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -8389,7 +8390,7 @@ int main() {
 c_sqrt()
 ; return 0; }
 EOF
-if { (eval echo configure:8393: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:8394: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -8412,7 +8413,7 @@ fi
 
      if test $FLIB = "none" ; then
         echo $ac_n "checking for c_sqrt in -lg2c""... $ac_c" 1>&6
-echo "configure:8416: checking for c_sqrt in -lg2c" >&5
+echo "configure:8417: checking for c_sqrt in -lg2c" >&5
 ac_lib_var=`echo g2c'_'c_sqrt | sed 'y%./+-%__p_%'`
 if eval "test \"`echo '$''{'ac_cv_lib_$ac_lib_var'+set}'`\" = set"; then
   echo $ac_n "(cached) $ac_c" 1>&6
@@ -8420,7 +8421,7 @@ else
   ac_save_LIBS="$LIBS"
 LIBS="-lg2c  $LIBS"
 cat > conftest.$ac_ext <<EOF
-#line 8424 "configure"
+#line 8425 "configure"
 #include "confdefs.h"
 /* Override any gcc2 internal prototype to avoid an error.  */
 /* We use char because int might match the return type of a gcc2
@@ -8431,7 +8432,7 @@ int main() {
 c_sqrt()
 ; return 0; }
 EOF
-if { (eval echo configure:8435: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
+if { (eval echo configure:8436: \"$ac_link\") 1>&5; (eval $ac_link) 2>&5; } && test -s conftest${ac_exeext}; then
   rm -rf conftest*
   eval "ac_cv_lib_$ac_lib_var=yes"
 else
@@ -8459,8 +8460,7 @@ fi
   fi
 
   echo $ac_n "checking for LAPACK""... $ac_c" 1>&6
-echo "configure:8463: checking for LAPACK" >&5
-  LAPACK_CFLAGS="-I$lapack_config_prefix/include -I$(topsrc)/plugin"
+echo "configure:8464: checking for LAPACK" >&5
   if test x"${LAPACK_LIBS}" = x ; then  
      LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
   fi
