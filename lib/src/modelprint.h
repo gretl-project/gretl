@@ -19,12 +19,6 @@
 
 /* modelprint.h for gretl */
 
-const char *aux_string (int aux);
-
-const char *estimator_string (int ci, int format);
-
-void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2);
-
 int printmodel (const MODEL *pmod, 
 		const DATAINFO *pdinfo, 
 		PRN *prn);

@@ -26,12 +26,8 @@
 # include <windows.h>
 #endif
 
-static void r_print_double (double x, PRN *prn);
-static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
+static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
 			 PRN *prn);
-static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  PRN *prn);
-
 
 #ifdef G_OS_WIN32
 
@@ -387,64 +383,17 @@ void model_to_rtf (MODEL *pmod)
 
 /* row format specifications for RTF "tables" */
 
-#define COEFF_ROW  "\\trowd \\trqc \\trgaph30\\trleft-30\\trrh262" \
-                   "\\cellx500\\cellx1900\\cellx3300\\cellx4700\\cellx6100" \
-                   "\\cellx7500\\cellx8000\n\\intbl"
-
 #define STATS_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
                    "\\cellx2700\\cellx4000\\cellx6700\\cellx8000\n\\intbl"
 
-#define SELST_ROW  "\\trowd \\trqc \\trgaph60\\trleft-30\\trrh262" \
-                   "\\cellx1333\\cellx2666\\cellx4000\\cellx5333" \
-                   "\\cellx6666\\cellx8000\n\\intbl"
-
-
 /* ......................................................... */ 
 
-static void r_print_double (double xx, PRN *prn)
-{
-    pprintf(prn, " \\qc %#.*g\\cell", GRETL_DIGITS, xx);
-}
-
-/* ......................................................... */ 
-
-static void r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
-			  PRN *prn)
+static int r_printmodel (const MODEL *pmod, const DATAINFO *pdinfo, 
+			 PRN *prn)
 {
     prn->format = GRETL_PRINT_FORMAT_RTF;
     
     return printmodel (pmod, pdinfo, prn);
-}
-
-/* ......................................................... */ 
-
-static int _pmax (const MODEL *pmod)
-{
-    int i, k = 0;
-    double tstat, tmin = 4.0;
-    
-    for (i=1; i <= pmod->ncoeff - pmod->ifc; i++) {
-        tstat = fabs(pmod->coeff[i] / pmod->sderr[i]);
-        if (tstat < tmin) {
-            tmin = tstat;
-            k = i;
-        }
-    }
-    if (tprob(tmin, pmod->dfd) > .10) return pmod->list[k+1];
-    return 0;
-}
-
-/* ......................................................... */ 
-
-static void r_pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
-			 PRN *prn)
-{
-    int k = pmod->ncoeff - pmod->ifc;
-
-    if (k < 2) return;
-    if ((k = _pmax(pmod)))
-        pprintf(prn, "\\par Excluding the constant, p-value was highest "
-                "for variable %d (%s)\\par\n", k, pdinfo->varname[k]);
 }
 
 /* ............................................................. */

@@ -113,17 +113,6 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 	return 0;
     }
 
-    if (TEX_FORMAT(prn->format)) {
-	char x1str[32], x2str[32];
-
-	tex_dcolumn_double(pmod->ess, x1str);
-	tex_dcolumn_double(pmod->sigma, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
-		I_("Sum of squared residuals"), x1str,
-		I_("Standard error of residuals"), x2str);
-	return 0;
-    }
-
     if (RTF_FORMAT(prn->format)) {
 	if ((wt && pmod->ess_wt < 0) || (!wt && pmod->ess < 0)) {
 	    char tmp[128];
@@ -138,6 +127,17 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
 		wt? pmod->ess_wt : pmod->ess);
 	pprintf(prn, "\\par  %s = %#g\n", I_("Standard error"), 
 		wt? pmod->sigma_wt : pmod->sigma);
+	return 0;
+    }
+
+    if (TEX_FORMAT(prn->format)) {
+	char x1str[32], x2str[32];
+
+	tex_dcolumn_double(pmod->ess, x1str);
+	tex_dcolumn_double(pmod->sigma, x2str);
+	pprintf(prn, "%s & %s \\\\\n %s ($\\hat{\\sigma}$) & %s \\\\\n",
+		I_("Sum of squared residuals"), x1str,
+		I_("Standard error of residuals"), x2str);
 	return 0;
     }
 
@@ -157,6 +157,15 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	return;
     }
 
+    if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, "\\par  %s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
+	if (!na(pmod->adjrsq)) {
+	    pprintf(prn, "\\par  %s = %g\n", I_("Adjusted R{\\super 2}"),  
+		    pmod->adjrsq);
+	}	
+	return;
+    }
+
     if (TEX_FORMAT(prn->format)) {  
 	char x1str[32], x2str[32];
 
@@ -165,15 +174,6 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 	pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
 		I_("Unadjusted $R^2$"), x1str, 
 		I_("Adjusted $\\bar{R}^2$"), x2str);
-	return;
-    }
-
-    if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, "\\par  %s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
-	if (!na(pmod->adjrsq)) {
-	    pprintf(prn, "\\par  %s = %g\n", I_("Adjusted R{\\super 2}"),  
-		    pmod->adjrsq);
-	}	
 	return;
     }
 }
@@ -210,7 +210,7 @@ static void Fline (const MODEL *pmod, PRN *prn)
     if (RTF_FORMAT(prn->format)) {
 	char tmp[32];
 
-	sprintf(tmp, I_("F-statistic (%d, %d)"), pmod->dfn, pmod->dfd);
+	sprintf(tmp, "%s (%d, %d)", I_("F-statistic"), pmod->dfn, pmod->dfd);
 	if (na(pmod->fstt)) {
 	    pprintf(prn, "\\par  %s = %s", tmp, I_("undefined"));
 	} else {
@@ -283,15 +283,6 @@ static void dhline (const MODEL *pmod, PRN *prn)
 	return;	
     }
 
-    if (TEX_FORMAT(prn->format)) {
-	char x1str[32];
-
-	tex_dcolumn_double(h, x1str);
-	pprintf(prn, "%s & %s \\\\\n",
-		I_("Durbin's $h$ statistic"), x1str);
-	return;
-    }
-
     if (RTF_FORMAT(prn->format)) {
 	char tmp[128];
 
@@ -303,6 +294,15 @@ static void dhline (const MODEL *pmod, PRN *prn)
 	sprintf(tmp, I_("(Using variable %d for h stat, with T' = %d)"), 
 		pmod->list[i], T);
 	pprintf(prn, "\\par  %s\n", tmp);
+	return;
+    }
+
+    if (TEX_FORMAT(prn->format)) {
+	char x1str[32];
+
+	tex_dcolumn_double(h, x1str);
+	pprintf(prn, "%s & %s \\\\\n",
+		I_("Durbin's $h$ statistic"), x1str);
 	return;
     }
 }
@@ -330,20 +330,33 @@ static int _pmax (const MODEL *pmod)
 static void pmax_line (const MODEL *pmod, const DATAINFO *pdinfo, 
 		       PRN *prn)
 {
-    if (PLAIN_FORMAT(prn->format)) {
+    if (TEX_FORMAT(prn->format)) {
+	return;
+    } else {
 	int k = pmod->ncoeff - pmod->ifc;
 
 	if (k < 2) return;
+
 	if ((k = _pmax(pmod))) {
-	    pprintf(prn, _("Excluding the constant, p-value was highest "
-			   "for variable %d (%s)\n\n"), k, pdinfo->varname[k]);
+	    char tmp[128];
+
+	    if (PLAIN_FORMAT(prn->format)) {
+		sprintf(tmp, _("Excluding the constant, p-value was highest "
+			"for variable %d (%s)"), k, pdinfo->varname[k]);
+		pprintf(prn, "%s\n\n", tmp);
+	    }
+	    else if (RTF_FORMAT(prn->format)) {
+		sprintf(tmp, I_("Excluding the constant, p-value was highest "
+			"for variable %d (%s)"), k, pdinfo->varname[k]);
+		pprintf(prn, "\\par %s\\par\n", tmp);
+	    }
 	}
     }
 }
 
 /* ......................................................... */
 
-const char *aux_string (int aux)
+static const char *aux_string (int aux, int format)
 {
     if (aux == AUX_SQ)
 	return N_("Auxiliary regression for non-linearity test "
@@ -356,9 +369,11 @@ const char *aux_string (int aux)
     else if (aux == AUX_CHOW)
 	return N_("Augmented regression for Chow test");
     else if (aux == AUX_COINT) {
-	return N_("Cointegrating regression - ");
+	if (TEX_FORMAT(format)) return N_("Cointegrating regression -- ");
+	else return N_("Cointegrating regression - ");
     }
     else if (aux == AUX_ADF) {
+	if (TEX_FORMAT(format)) return N_("Augmented Dickey--Fuller regression");
 	return N_("Augmented Dickey-Fuller regression");
     }
     else return "";
@@ -366,7 +381,7 @@ const char *aux_string (int aux)
 
 /* ......................................................... */
 
-const char *estimator_string (int ci, int format)
+static const char *estimator_string (int ci, int format)
 {
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS) return N_("WLS"); 
@@ -408,6 +423,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 		    _("with p-value"), (pmod->tests[i]).pvalue);
 	}
     }
+
     else if (RTF_FORMAT(prn->format)) {
 	for (i=0; i<pmod->ntests; i++) {
 	    pprintf(prn, "\\par \\ql %s -\\par\n"
@@ -424,7 +440,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */
 
-void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2)
+static void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2)
 {
     if (pmod->ci == CORC || pmod->ci == HILU) {
 	*t1 += 1;
@@ -444,6 +460,7 @@ static void print_model_heading (const MODEL *pmod,
     char startdate[9], enddate[9], vname[16];
     int t1 = pmod->t1, t2 = pmod->t2;
     int tex = TEX_FORMAT(prn->format);
+    int utf = PLAIN_FORMAT(prn->format);
 
     modelprint_setup_obs(pmod, &t1, &t2);
 
@@ -457,18 +474,34 @@ static void print_model_heading (const MODEL *pmod,
     case AUX_CHOW:
     case AUX_COINT:
     case AUX_ADF:
-	pprintf(prn, "\n%s\n", _(aux_string(pmod->aux)));
+	if (utf) {
+	    pprintf(prn, "\n%s\n", _(aux_string(pmod->aux, prn->format)));
+	} else if (tex) {
+	    pprintf(prn, "\n%s\n", I_(aux_string(pmod->aux, prn->format)));
+	} else { /* RTF */
+	    pprintf(prn, "%s\\par\n", I_(aux_string(pmod->aux, prn->format)));
+	}
 	break;
     case AUX_AR:
-	pprintf(prn, "\n%s ", _("Breusch-Pagan test for"));
-	if (pmod->order > 1) {
-	    pprintf(prn, "%s %d\n", _("autocorrelation up to order"), pmod->order);
+	if (utf) { 	
+	    pprintf(prn, "\n%s ", _("Breusch-Pagan test for"));
 	} else {
-	    pprintf(prn, "%s\n", _("first-order autocorrelation"));
+	    pprintf(prn, "\n%s ", I_("Breusch-Pagan test for"));
+	} 
+	if (pmod->order > 1) {
+	    pprintf(prn, "%s %d\n", (utf)? _("autocorrelation up to order") :
+		    I_("autocorrelation up to order"), 
+		    pmod->order);
+	} else {
+	    pprintf(prn, "%s\n", (utf)? _("first-order autocorrelation") :
+		    I_("first-order autocorrelation"));
 	}
 	break;	
     case AUX_ARCH:
-	pprintf(prn, "\n%s %d\n", _("Test for ARCH of order"), pmod->order);
+	pprintf(prn, "\n%s %d\n", 
+		(utf)? _("Test for ARCH of order") : 
+		I_("Test for ARCH of order"), 
+		pmod->order);
 	break;	
     case VAR:
 	break;
@@ -478,12 +511,14 @@ static void print_model_heading (const MODEL *pmod,
 	if (pmod->name) {
 	    pprintf(prn, "\n%s:\n", pmod->name);
 	} else {
-	    pprintf(prn, "\n%s %d: ", _("Model"), pmod->ID);
+	    pprintf(prn, "\n%s %d: ", (utf)? _("Model") : I_("Model"), pmod->ID);
 	}
 	break;
     }
 
-    pprintf(prn, _("%s estimates using the %d observations %s%s%s"),
+    pprintf(prn, (utf)?
+	    _("%s estimates using the %d observations %s%s%s") :
+	    I_("%s estimates using the %d observations %s%s%s"),
 	    _(estimator_string(pmod->ci, prn->format)), 
 	    pmod->nobs, startdate, (tex)? "--" : "-", enddate);
 
@@ -497,16 +532,19 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? "$\\hat{u}$" : "uhat");
     }
     else if (pmod->aux == AUX_WHITE) {
-	pprintf(prn, "%s: uhat^2\n", _("Dependent variable"),
+	pprintf(prn, "%s: uhat^2\n", 
+		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
     }
     else if (pmod->aux == AUX_ARCH) {
-	pprintf(prn, "%s: ut^2\n", _("Dependent variable"),
+	pprintf(prn, "%s: ut^2\n", 
+		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     }
     else { /* ordinary dependent variable */
 	if (tex) tex_escape(vname, pdinfo->varname[pmod->list[1]]);
-	pprintf(prn, "%s: %s\n", _("Dependent variable"), 
+	pprintf(prn, "%s: %s\n", 
+		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pdinfo->varname[pmod->list[1]]);
     }
 
@@ -515,7 +553,8 @@ static void print_model_heading (const MODEL *pmod,
 	    tex_escape(vname, pdinfo->varname[pmod->nwt]);
 	    pprintf(prn, "\\\\\n");
 	}
-	pprintf(prn, "%s: %s\n", _("Variable used as weight"), 
+	pprintf(prn, "%s: %s\n", 
+		(utf)? _("Variable used as weight") : I_("Variable used as weight"), 
 		(tex)? vname : pdinfo->varname[pmod->nwt]);
     }
 
@@ -524,7 +563,9 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     if (pmod->wt_dummy) { /* FIXME alt formats */
-	pprintf(prn, "%s %d\n", _("Weight var is a dummy variable, effective obs ="), 
+	pprintf(prn, "%s %d\n", 
+		(utf)? _("Weight var is a dummy variable, effective obs =") :
+		I_("Weight var is a dummy variable, effective obs ="),
 		pmod->nobs);
     }
 
@@ -1133,6 +1174,13 @@ static void rtf_print_aicetc (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
+static void rtf_print_double (double xx, PRN *prn)
+{
+    pprintf(prn, " \\qc %#.*g\\cell", GRETL_DIGITS, xx);
+}
+
+/* ......................................................... */ 
+
 static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			    int c, PRN *prn)
 {
@@ -1145,14 +1193,14 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     if (isnan(pmod->coeff[c-1]))
 	pprintf(prn, " \\qr %s\\cell", I_("undefined"));
     else 
-	r_print_double(pmod->coeff[c-1], prn);
+	rtf_print_double(pmod->coeff[c-1], prn);
     if (isnan(pmod->sderr[c-1])) {
 	pprintf(prn, " \\qr %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qr %s\\cell", I_("undefined"));
 	pprintf(prn, " \\qr %s\\cell", I_("undefined"));
 	pvalue = 999.0;
     } else {
-	r_print_double(pmod->sderr[c-1], prn); 
+	rtf_print_double(pmod->sderr[c-1], prn); 
 	if (pmod->sderr[c-1] > 0.) {
 	    t = pmod->coeff[c-1]/pmod->sderr[c-1];
 	    if (pmod->aux == AUX_ADF) {
@@ -1182,4 +1230,5 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 
     return 0;
 }
+
 
