@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.2\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2005-02-22 11:26-0500\n"
-"PO-Revision-Date: 2005-03-11 8:00+0100\n"
+"PO-Revision-Date: 2005-03-20 18:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -308,6 +308,9 @@ msgid ""
 "\n"
 "%9s, %s\n"
 msgstr ""
+"%7co dla %s i x dla %s (+ oznacza t± sam± warto¶æ)\n"
+"\n"
+"%9s, %s\n"
 
 #: lib/src/compat.c:312
 #, c-format
@@ -316,6 +319,9 @@ msgid ""
 "\n"
 "%8c"
 msgstr ""
+"%25cUwaga: o dla %s\n"
+"\n"
+"%8c"
 
 #: lib/src/compat.c:381
 #, c-format
@@ -323,6 +329,8 @@ msgid ""
 "%17cNOTE: o stands for %s,   x stands for %s\n"
 "%17c+ means %s and %s are equal when scaled\n"
 msgstr ""
+"%17cUwaga: o dla %s,   x dla %s\n"
+"%17c+ oznacza, ¿e %s i %s s± równe w tych skalach\n"
 
 #: lib/src/compat.c:386
 #, c-format
@@ -331,6 +339,9 @@ msgid ""
 "\n"
 "%8c"
 msgstr ""
+"%20c%s i %s s± w tej samej skali\n"
+"\n"
+"%8c"
 
 #: lib/src/compat.c:516
 #, c-format
@@ -1715,7 +1726,7 @@ msgstr "Efekt ARCH jest nieistotny na poziomie 10% b³êdu"
 
 #: lib/src/estimate.c:3532
 msgid "Weighted estimation not done"
-msgstr "Wa¿onej estymacji nie wykonano."
+msgstr "Nie wykonano wa¿onej estymacji"
 
 #: lib/src/estimate.c:3535
 msgid "ARCH effect is significant at the 10 percent level"
@@ -1742,7 +1753,7 @@ msgstr "Nie zdefiniowana zmienna '%s' w poleceniu"
 #: lib/src/generate.c:1697
 #, c-format
 msgid "'%s' refers to a %s and may not be used as a variable name"
-msgstr ""
+msgstr "'%s' odnosi siê do %s i nie mo¿e byæ u¿yty jako nazwa zmiennej"
 
 #: lib/src/generate.c:1764
 msgid "residual vector"
@@ -2720,7 +2731,7 @@ msgstr "Uwaga: opisy przypadków nie mo¿na zapisaæ jako binarny plik danych\n"
 #: lib/src/libset.c:294
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
-msgstr ""
+msgstr "Sta³a startowa do generowania liczb pseudolosowych wynosi: %d\n"
 
 #: lib/src/libset.c:312
 #, c-format
@@ -3461,7 +3472,7 @@ msgid ""
 msgstr ""
 "                 ¶rednia dla    odch. stand.    ¶rednia dla    odch. stand.\n"
 "                estymowanych    estymowanych    estymowanych   estymowanych\n"
-"     Zmienna   wspó³czynników  wspó³czynników   odch. stand.   odch. stand.\n"
+"     Zmienna   wspó³czynników  wspó³czynników   b³êdów stand.  b³êdów stand.\n"
 "\n"
 
 #: lib/src/monte_carlo.c:1960
@@ -3471,7 +3482,7 @@ msgstr "  Zmienna       ¶rednia     odch.stand.\n"
 #: lib/src/monte_carlo.c:2023
 #, c-format
 msgid "printing %d values of variables to %s\n"
-msgstr "drukuje %d warto¶ci zmiennych do %s\n"
+msgstr "zapisuje %d warto¶ci zmiennych do %s\n"
 
 #: lib/src/monte_carlo.c:2034
 msgid "simulation data written"
@@ -10462,7 +10473,7 @@ msgstr "gretl.sourceforge.net"
 
 #: gui2/toolbar.c:192
 msgid "gretl manual (PDF)"
-msgstr "manula gretla (pdf)"
+msgstr "manual gretla (pdf)"
 
 #: gui2/toolbar.c:193
 msgid "show help"
@@ -10482,7 +10493,7 @@ msgstr "okno z przyk³adami"
 
 #: gui2/webget.c:349 gui2/webget.c:355
 msgid "Couldn't find usable socket driver\n"
-msgstr ""
+msgstr "Nie mo¿e znale¶æ przydatnego sterownika\n"
 
 #: gui2/webget.c:799
 msgid "Host not found"
@@ -10520,7 +10531,7 @@ msgid ""
 "http://gretl.sourceforge.net/"
 msgstr ""
 "Nowa wersja gretla dostêpna jest na stronie internetowej:\n"
-"http://gretl.sourceforge.net  i http://www.kufel.torun.pl"
+"http://gretl.sourceforge.net i http://www.kufel.torun.pl"
 
 #: gui2/webget.c:1730
 msgid ""
@@ -10806,11 +10817,11 @@ msgstr "DFFITS"
 
 #: plugin/leverage.c:542
 msgid "('*' indicates a leverage point)"
-msgstr "('*' oznacza wp³ywow¹ obserwacjê - leverage point)"
+msgstr "('*' oznacza wp³ywow± obserwacjê - leverage point)"
 
 #: plugin/leverage.c:544
 msgid "No leverage points were found"
-msgstr "Nie znaleziono wy³ywowych obserwacji (leverage point)"
+msgstr "Nie znaleziono wy³ywowych obserwacji (leverage points)"
 
 #: plugin/logistic.c:50 plugin/logistic.c:192
 msgid "Invalid value for the maximum of the dependent variable"
