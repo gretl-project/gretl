@@ -86,4 +86,6 @@ void get_stats_table (void);
 
 int gui_open_plugin (const char *plugin, void **handle);
 
+int build_path (const char *dir, const char *fname, char *path, const char *ext);
+
 #endif /* GUI_UTILS_H */

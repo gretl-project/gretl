@@ -219,7 +219,17 @@ int getbufline (char *buf, char *line, int init)
 
 void append_dir (char *fname, const char *dir)
 {
-    if (dir != NULL) strcat(fname, dir);
+    size_t len;
+
+    if (dir == NULL) return;
+
+    len = strlen(fname);
+    if (fname[len - 1] == '/' || fname[len - 1] == '\\')
+	strcat(fname, dir);
+    else {
+	strcat(fname, SLASHSTR);
+	strcat(fname, dir);
+    }
     strcat(fname, SLASHSTR);
 }
 
@@ -2188,3 +2198,27 @@ int gui_open_plugin (const char *plugin, void **handle)
     return 0;
 }
 
+int build_path (const char *dir, const char *fname, char *path, const char *ext)
+{
+    size_t len;
+    *path = 0;
+
+    if (dir == NULL || fname == NULL || path == NULL) return 1;
+
+    strcat(path, dir);
+    len = strlen(path);
+    if (len == 0) return 1;
+
+    if (path[len - 1] == '/' || path[len - 1] == '\\') {
+	/* dir is already properly terminated */
+	strcat(path, fname);
+    } else {
+	/* otherwise put a separator in */
+	strcat(path, SLASHSTR);
+	strcat(path, fname);
+    }
+
+    if (ext != NULL) strcat(path, ext);
+
+    return 0;
+}

@@ -1284,11 +1284,10 @@ void open_db_clist (GtkWidget *w, gpointer data)
     n = strlen(fname);
     if (strcmp(fname + n - 4, ".rat") == 0) {
 	action = RATS_SERIES;
-	strcpy(dbfile, paths.ratsbase);
+	build_path(paths.ratsbase, fname, dbfile, NULL);
     } else 
-	strcpy(dbfile, paths.binbase);
+	build_path(paths.binbase, fname, dbfile, NULL);
 
-    strcat(dbfile, fname);
     display_db_series_list(action, dbfile, NULL); 
     /* gtk_widget_destroy(GTK_WIDGET(mydata->w)); */
 }
@@ -1442,9 +1441,9 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     fclose(fbin);
 
     remove(ggzname);
-    sprintf(tmp, "%s%s.idx", paths.binbase, dbname);
+    build_path(paths.binbase, dbname, tmp, ".idx");
     copyfile(idxname, tmp);
-    sprintf(tmp, "%s%s.bin", paths.binbase, dbname);
+    build_path(paths.binbase, dbname, tmp, ".bin");
     copyfile(binname, tmp);
     remove(idxname);
     remove(binname); 
@@ -1468,7 +1467,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 
     if ((ggzname = mymalloc(MAXLEN)) == NULL)
 	return;
-    sprintf(ggzname, "%stmp_%s.ggz", paths.binbase, dbname);
+    build_path(paths.binbase, dbname, ggzname, ".ggz");
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
@@ -1501,21 +1500,20 @@ void grab_remote_db (GtkWidget *w, gpointer data)
 static gchar *get_descrip (char *fname, const PATHS *ppaths)
 {
     FILE *fp;
-    gchar *line;
+    gchar *line, *p;
     char tmp[MAXLEN];
     int n, dot;
 
     if ((line = mymalloc(MAXLEN)) == NULL) return NULL;
-    strcpy(tmp, ppaths->binbase);
-    n = strlen(tmp);
-    dot = dotpos(fname);
-    strncat(tmp, fname, dot);
-    tmp[n + dot] = '\0';
-    strcat(tmp, ".idx");
+
+    build_path(ppaths->binbase, fname, tmp, NULL);
+    if ((p = strrchr(tmp, '.')) strcpy(p, ".idx");
+
     if ((fp = fopen(tmp, "r")) == NULL) {
 	g_free(line);
 	return NULL;
     }
+
     fgets(tmp, 63, fp);
     fclose(fp);
     if (tmp[0] == '#') {
@@ -1531,22 +1529,22 @@ static gchar *get_descrip (char *fname, const PATHS *ppaths)
 
 gint populate_dbfilelist (windata_t *ddata)
 {
-    gchar *fname, *row[2], filter[5], dbdir[MAXLEN];
+    gchar *fname, *dbdir, *row[2], filter[5];
     gint i, n;
     DIR *dir;
     struct dirent *dirent;
 
     if (ddata->role == RATS_DB) {
 	strcpy(filter, ".rat");
-	strcpy(dbdir, paths.ratsbase);
+	dbdir = paths.ratsbase;
     } else {
 	strcpy(filter, ".bin");
-	strcpy(dbdir, paths.binbase);
+	dbdir = paths.binbase;
     }
 
 #ifdef G_OS_WIN32 /* opendir doesn't work on e.g. c:\foo\ */
     if (dbdir[strlen(dbdir) - 1] == '\\') 
-	dbdir[strlen(dbdir) - 1] = '\0';
+        dbdir[strlen(dbdir) - 1] = '\0';
 #endif
 
     if ((dir = opendir(dbdir)) == NULL) {

@@ -549,14 +549,14 @@ static void fix_dbname (char *db)
 {
     FILE *fp;
 
-    if (strstr(db, ".bin") == NULL)
-	strcat(db, ".bin");
+    if (strstr(db, ".bin") == NULL) strcat(db, ".bin");
+
     fp = fopen(db, "r");
     if (fp == NULL && strstr(db, paths.binbase) == NULL) {
 	char tmp[MAXLEN];
 
 	strcpy(tmp, db);
-	sprintf(db, "%s%s", paths.binbase, tmp);
+	build_path(paths.binbase, tmp, db, NULL);
     }
     if (fp != NULL) fclose(fp);
 }
@@ -586,7 +586,7 @@ void nls_init (void)
 
     if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
 	return;
-    sprintf(localedir, "%s\\locale", gretldir);
+    build_path(gretldir, "locale", localedir, NULL);
     setlocale (LC_ALL, "");
     bindtextdomain ("gretl", localedir);
     /* bind_textdomain_codeset ("gretl", "UTF-8"); */
@@ -1071,7 +1071,7 @@ static int get_windows_font (char *fontspec)
     FILE *fp;
     char fname[MAXLEN];
 
-    sprintf(fname, "%sdebug.txt", paths.userdir);
+    build_path(paths.userdir, "debug.txt", fname, NULL);
     fp = fopen(fname, "w");
     if (fp == NULL) return 1;
 #endif
@@ -1357,22 +1357,19 @@ static GtkWidget *build_var_menu (void)
 static void check_for_extra_data (void)
 {
     DIR *dir;
-    char extradir[MAXLEN];
     extern char pwtpath[MAXLEN]; /* datafiles.c */
     extern char woolpath[MAXLEN]; /* fileselect.c */
     int gotpwt = 0, gotwool = 0;
 
     /* first check for Penn World Table */
-    sprintf(extradir, "%spwt56", paths.datadir); /* try at system level */
-    if ((dir = opendir(extradir)) != NULL) {
+    build_path(paths.datadir, "pwt56", pwtpath, NULL); /* try at system level */
+    if ((dir = opendir(pwtpath)) != NULL) {
 	closedir(dir);
-	sprintf(pwtpath, "%s%c", extradir, SLASH);
 	gotpwt = 1;
     } else {
-	sprintf(extradir, "%spwt56", paths.userdir); /* and at user level */
-	if ((dir = opendir(extradir)) != NULL) {
+	build_path(paths.userdir, "pwt56", pwtpath, NULL); /* and at user level */
+	if ((dir = opendir(pwtpath)) != NULL) {
 	    closedir(dir);
-	    sprintf(pwtpath, "%s%c", extradir, SLASH);
 	    gotpwt = 1; 
 	}
     }
@@ -1385,16 +1382,14 @@ static void check_for_extra_data (void)
     }
 
     /* then check for Wooldridge data */
-    sprintf(extradir, "%swooldridge", paths.datadir); /* try at system level */
-    if ((dir = opendir(extradir)) != NULL) {
+    build_path(paths.datadir, "wooldridge", woolpath, NULL); /* try at system level */
+    if ((dir = opendir(woolpath)) != NULL) {
 	closedir(dir);
-	sprintf(woolpath, "%s%c", extradir, SLASH);
 	gotwool = 1;
     } else {
-	sprintf(extradir, "%swooldridge", paths.userdir); /* and at user level */
-	if ((dir = opendir(extradir)) != NULL) {
+	build_path(paths.userdir, "wooldridge", woolpath, NULL); /* and at user level */
+	if ((dir = opendir(woolpath)) != NULL) {
 	    closedir(dir);
-	    sprintf(woolpath, "%s%c", extradir, SLASH);
 	    gotwool = 1;
 	}
     }
@@ -1508,7 +1503,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	errbox(_("Couldn't write R startup file"));
 	return;
     }
-    sprintf(Rdata, "%sRdata.tmp", paths.userdir);
+    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     sprintf(line, "store -r %s", Rdata); 
     if (check_cmd(line) || cmd_init(line) ||
 	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
@@ -1572,7 +1567,7 @@ static void Rcleanup (void)
     FILE *fp;
     char Rdata[MAXLEN];
 
-    sprintf(Rdata, "%sRdata.tmp", paths.userdir);
+    build_path(paths.userdir, "Rdata.tmp", Rdata, NULL);
     remove(Rdata);
 
     fp = fopen(".Rprofile.gretltmp", "r");

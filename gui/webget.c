@@ -1154,11 +1154,7 @@ int update_query (void)
     struct stat fbuf;
     long filedate = 0L;
 
-#ifdef G_OS_WIN32
-    sprintf(testfile, "%s\\gretl.stamp", paths.gretldir);
-#else
-    sprintf(testfile, "%sgretl.stamp", paths.gretldir);
-#endif
+    build_path(paths.gretldir, "gretl.stamp", testfile, NULL);
 
     if (stat(testfile, &fbuf)) {
 	fprintf(stderr, "update_query: couldn't stat testfile '%s'\n", 
@@ -1170,7 +1166,7 @@ int update_query (void)
 	hometest[0] = '\0';
 	if (getuid() != fbuf.st_uid) { 
 	    /* user is not owner of gretl.stamp */
-	    sprintf(hometest, "%s.gretl.stamp", paths.userdir);
+	    build_path(paths.userdir, "gretl.stamp", hometest, NULL);
 	    if (!stat(hometest, &fbuf)) {
 		filedate = fbuf.st_mtime;
 	    }

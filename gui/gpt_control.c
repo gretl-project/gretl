@@ -1439,7 +1439,7 @@ static int make_new_png (png_plot_t *plot, int view)
 	fpin = fopen(plot->spec->fname, "r");
 	if (fpin == NULL) return 1;
 
-	sprintf(fullname, "%szoomplot.gp", paths.userdir);
+	build_path(paths.userdir, "zoomplot.gp", fullname, NULL);
 	fpout = fopen(fullname, "w");
 	if (fpout == NULL) {
 	    fclose(fpin);
@@ -1482,7 +1482,7 @@ static int make_new_png (png_plot_t *plot, int view)
 	return 1;
     }
 
-    sprintf(fullname, "%sgretltmp.png", paths.userdir);
+    build_path(paths.userdir, "gretltmp.png", fullname, NULL);
     render_pngfile(fullname, plot, view);
 
     return 0;
@@ -1627,8 +1627,9 @@ static int get_plot_yrange (png_plot_t *plot)
     fpin = fopen(plot->spec->fname, "r");
     if (fpin == NULL) return 1;
 
-    sprintf(dumbgp, "%sdumbplot.gp", paths.userdir);
-    sprintf(dumbtxt, "%sgptdumb.txt", paths.userdir);
+    build_path(paths.userdir, "dumbplot.gp", dumbgp, NULL);
+    build_path(paths.userdir, "gptdumb.txt", dumbtxt, NULL);
+
     fpout = fopen(dumbgp, "w");
     if (fpout == NULL) {
 	fclose(fpin);
@@ -1885,7 +1886,7 @@ int gnuplot_show_png (char *plotfile)
     gtk_signal_connect(GTK_OBJECT(plot->canvas), "expose_event",
 		       GTK_SIGNAL_FUNC(plot_expose), plot->pixmap);
 
-    sprintf(fullname, "%sgretltmp.png", paths.userdir);
+    build_path(paths.userdir, "gretltmp.png", fullname, NULL);
     render_pngfile(fullname, plot, PNG_START);
 
     return 0;

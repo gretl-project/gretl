@@ -49,12 +49,13 @@ static int read_ps_descriptions (windata_t *fdata)
     char line[MAXLEN], fname[MAXLEN];
     gchar *row[3];
 
-    if (fdata->role == PWT_PS) 
-	sprintf(fname, "%sps_descriptions", pwtpath);
+    if (fdata->role == PWT_PS)
+	build_path(pwtpath, "ps_descriptions", fname, NULL);
     else
-	sprintf(fname, "%s%s", paths.scriptdir,
-		(fdata->role == GREENE_PS)? "wg_ps_descriptions" :
-		"ps_descriptions");
+	build_path(paths.scriptdir, 
+		   (fdata->role == GREENE_PS)? "wg_ps_descriptions" :
+		   "ps_descriptions",
+		   fname, NULL);
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -89,9 +90,9 @@ static int read_data_descriptions (windata_t *fdata)
     gchar *row[2];
 
     if (fdata->role == RAMU_DATA) 
-	sprintf(fname, "%sdescriptions", paths.datadir);
+	build_path(paths.datadir, "descriptions", fname, NULL);
     else if (fdata->role == PWT_DATA)
-	sprintf(fname, "%sdescriptions", pwtpath);
+	build_path(pwtpath, "descriptions", fname, NULL);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
@@ -137,10 +138,10 @@ static void browse_header (GtkWidget *w, gpointer data)
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
 		       0, &fname);
     
-    if (mydata->role == PWT_DATA) 
-	sprintf(hdrname, "%s%s.gdt", pwtpath, fname);
+    if (mydata->role == PWT_DATA)
+	build_path(pwtpath, fname, hdrname, ".gdt"); 
     else if (mydata->role == RAMU_DATA)
-	sprintf(hdrname, "%s%s.gdt", paths.datadir, fname);
+	build_path(paths.datadir, fname, hdrname, ".gdt");
     else if (mydata->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
@@ -165,19 +166,19 @@ static void browse_header (GtkWidget *w, gpointer data)
 void browser_open_data (GtkWidget *w, gpointer data)
 {
     windata_t *mydata = (windata_t *) data;
-    gchar *fname;
+    gchar *datname;
 
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), mydata->active_var, 
-		       0, &fname);
+		       0, &datname);
 
-    if (mydata->role == PWT_DATA) 
-	sprintf(trydatfile, "%s%s.gdt", pwtpath, fname);
+    if (mydata->role == PWT_DATA)
+	build_path(pwtpath, datname, trydatfile, ".gdt");
     else if (mydata->role == RAMU_DATA)  
-	sprintf(trydatfile, "%s%s.gdt", paths.datadir, fname);
+	build_path(paths.datadir, datname, trydatfile, ".gdt");
     else if (mydata->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
-	strcat(trydatfile, fname);
+	strcat(trydatfile, datname);
 	strcat(trydatfile, ".gdt");
     }
 
@@ -195,9 +196,9 @@ void browser_open_ps (GtkWidget *w, gpointer data)
 		       0, &fname);
 
     if (mydata->role == PWT_PS)
-	sprintf(scriptfile, "%s%s.inp", pwtpath, fname);
+	build_path(pwtpath, fname, scriptfile, ".inp");
     else
-	sprintf(scriptfile, "%s%s.inp", paths.scriptdir, fname);
+	build_path(paths.scriptdir, fname, scriptfile, ".inp");
 
     gtk_widget_destroy(GTK_WIDGET(mydata->w));
 
@@ -224,7 +225,7 @@ static void get_local_status (char *fname, char *status, time_t remtime)
     struct stat fbuf;
     int err;
 
-    sprintf(fullname, "%s%s", paths.binbase, fname);
+    build_path(paths.binbase, fname, fullname, NULL)
     if ((err = stat(fullname, &fbuf)) == -1) {
 	if (errno == ENOENT)
 	    strcpy(status, _("Not installed"));

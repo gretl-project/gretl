@@ -470,7 +470,10 @@ void file_selector (char *msg, int action, gpointer data)
 	    strcpy(scriptfile, tryscript);
 	    mkfilelist(3, scriptfile);
 	    spos = slashpos(scriptfile);
-	    if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	    if (spos) {
+		paths.currdir[0] = 0;
+		strncat(paths.currdir, scriptfile, spos + 1);
+	    }
 	}
     }
     else if (action == OPEN_SESSION) {
@@ -601,7 +604,10 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	    strcpy(scriptfile, tryscript);
 	    mkfilelist(3, scriptfile);
 	    spos = slashpos(scriptfile);
-	    if (spos) strncpy(paths.currdir, scriptfile, spos + 1);
+	    if (spos) {
+		paths.currdir[0] = 0;
+		strncat(paths.currdir, scriptfile, spos + 1);
+	    }
 	}
 
     }

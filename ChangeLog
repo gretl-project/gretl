@@ -1,4 +1,6 @@
 version 0.999
+- always show 6 significant figures for coefficient estimates
+  and standard errors in regression output
 - numerous NLS/translation fixes
 - bug fixes for Excel importer
 - reorganization of gui source files

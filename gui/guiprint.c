@@ -291,7 +291,7 @@ void gnome_print_graph (const char *fname)
 	return;
     }
 
-    sprintf(tmp, "%sgretltmp.png", paths.userdir);
+    build_path(paths.userdir, "gretltmp.png", tmp, NULL);
     pbuf = gdk_pixbuf_new_from_file(tmp);
     width = gdk_pixbuf_get_width(pbuf);
     height = gdk_pixbuf_get_height(pbuf);
