@@ -1213,7 +1213,12 @@ void populate_varlist (void)
     gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
     select = gtk_tree_view_get_selection(GTK_TREE_VIEW(mdata->listbox));
     gtk_tree_selection_select_iter(select, &iter);
-    
+
+    if (datainfo->v > 1) {
+	GtkTreePath *path = gtk_tree_path_new_from_string("1");
+
+	gtk_tree_view_set_cursor(GTK_TREE_VIEW(mdata->listbox), path, NULL, FALSE);
+    }
 
     if (!check_connected) {
 	g_signal_connect (G_OBJECT(select), "changed",
