@@ -26,7 +26,7 @@
 #include <math.h>
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+# include "../../config.h"
 #endif
 
 #ifdef OS_WIN32
@@ -46,6 +46,7 @@
 #ifndef __GNOME_I18N_H__
 # ifdef ENABLE_NLS
 #  include "libintl.h"
+#  include "locale.h"
 #  define gettext_noop(String) String
 #  define _(String) gettext (String)
 #  define N_(String) gettext_noop (String)

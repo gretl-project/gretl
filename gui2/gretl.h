@@ -49,6 +49,10 @@
 #include "settings.h"
 #include "helpfiles.h"
 
+#ifdef ENABLE_NLS
+# include "locale.h"
+#endif
+
 #define MAXSTR 255
 
 /* basic global program vars */
