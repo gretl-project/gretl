@@ -30,7 +30,7 @@ struct fiml_system_ {
     gretl_equation_system *sys; /* pointer to "parent" equation system */
     gretl_vector *ydot;     /* stacked gn-vector: dependent variables */
     gretl_matrix *xdot;     /* stacked matrix of indep vars */
-    gretl_matrix *sdot;     /* big kronecker-ized covariance matrix */
+    gretl_matrix *sdot;     /* big kronecker-ized covariance matrix (FIXME: don't store this) */
 };
 
 static int 
@@ -135,6 +135,8 @@ int fiml_driver (gretl_equation_system *sys, const double **Z, const DATAINFO *p
 
     return err;
 }
+
+
 
     
 	

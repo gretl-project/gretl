@@ -894,7 +894,7 @@ int gretl_matrix_get_int (const gretl_matrix *m)
 
 int gretl_vector_get_length (const gretl_vector *v) 
 {
-    return v->cols;
+    return (v->cols > v->rows)? v->cols : v->rows;
 }
 
 int gretl_matrix_cols (const gretl_matrix *m)
@@ -905,4 +905,56 @@ int gretl_matrix_cols (const gretl_matrix *m)
 int gretl_matrix_rows (const gretl_matrix *m)
 {
     return m->rows;
+}
+
+int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
+		      gretl_vector *b)
+{
+    gretl_matrix *XTy = NULL;
+    gretl_matrix *XTX = NULL;
+    int k = X->cols;
+    int err = GRETL_MATRIX_OK;
+
+    if (b->rows != k) {
+	err = GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (!err) {
+	XTy = gretl_matrix_alloc(k, 1);
+	if (XTy == NULL) err = GRETL_MATRIX_NOMEM;
+    }
+
+    if (!err) {
+	XTX = gretl_matrix_alloc(k, k);
+	if (XTX == NULL) err = GRETL_MATRIX_NOMEM;
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					y, GRETL_MOD_NONE,
+					XTy);
+    }
+
+    if (!err) {
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					X, GRETL_MOD_NONE,
+					XTX);
+    }
+
+    if (!err) {
+	err = gretl_LU_solve(XTX, XTy);
+    }
+
+    if (!err) {
+	int i;
+	
+	for (i=0; i<k; i++) {
+	    b->val[i] = XTy->val[i];
+	}
+    }
+
+    if (XTy != NULL) gretl_vector_free(XTy);
+    if (XTX != NULL) gretl_matrix_free(XTX);
+
+    return err;
 }
