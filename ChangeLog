@@ -1,6 +1,7 @@
 version 1.0.9
 - Add non-linear least squares ("nls" command, Levenberg-
-  Marquandt algorithm from minpack)
+  Marquandt algorithm from minpack, with either analytical or
+  numerical derivatives)
 - Fix focus bug when editing the description for a variable in
   the gretl main window
 - Add a new means of grabbing fitted values from a regression:

@@ -689,28 +689,6 @@ static int lm_calculate (double *fvec, double *fjac)
     return err;    
 }
 
-static int fjac_invert (double *ap)
-{
-    char uplo = 'U';
-    char diag = 'N';
-    integer info = 0;
-    integer n;
-    int i, np = nlspec.nparam;
-
-    n = (np * (np + 1)) / 2;
-    
-    dtptri_(&uplo, &diag, &n, ap, &info);
-
-    fprintf(stderr, "dtptri: info = %d\n", (int) info);
-
-    for (i=0; i<n; i++) {
-	fprintf(stderr, "ap[%d] = %g\n", i, ap[i]);
-	fprintf(stderr, "root ap[%d] = %g\n", i, sqrt(ap[i]));
-    }
-
-    return 0;
-}
-
 /*
 c       fjac is an output m by n array. the upper n by n submatrix
 c         of fjac contains an upper triangular matrix r with
@@ -740,6 +718,7 @@ static int lm_approximate (double *fvec, double *fjac)
 {
     integer info, m, n, ldfjac, one = 1;
     integer maxfev = 100, mode = 1, nprint = 0, nfev = 0;
+    integer iflag = 0;
     integer *ipvt;
     doublereal ftol, xtol, gtol = 0.0;
     doublereal epsfcn = 0.0001, factor = 100.;
@@ -804,14 +783,8 @@ static int lm_approximate (double *fvec, double *fjac)
 	break;
     }
 
-    if (1) {
-	int i;
-
-	for (i=0; i<n*m; i++) {
-	    fprintf(stderr, "fjac[%d] = %g\n", i, fjac[i]);
-	}
-	fjac_invert(fjac);
-    }
+    fdjac2_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, fjac, 
+	    &ldfjac, &iflag, &epsfcn, wa4);
 
  nls_cleanup:
     free(diag);

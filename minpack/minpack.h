@@ -20,6 +20,11 @@ extern int lmdif_(S_fp fcn, integer *m, integer *n, doublereal *x,
 		  doublereal *qtf, doublereal *wa1, doublereal *wa2, 
 		  doublereal *wa3, doublereal *wa4);
 
+extern int fdjac2_(S_fp fcn, integer *m, integer *n, doublereal *x, 
+		   doublereal *fvec, doublereal *fjac, integer *ldfjac, 
+		   integer *iflag, doublereal *epsfcn, doublereal *wa);
+
+
 extern doublereal dpmpar_(integer *i__);
 
 
