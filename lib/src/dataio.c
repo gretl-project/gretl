@@ -2545,9 +2545,11 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	"should be blank, or should say 'obs' or 'date'.\n"
 	"- The remainder of the file must be a rectangular "
 	"array of data.\n");
-    char delim = (*ppdinfo)->delim;
+    char delim = '\t';
     int numcount, auto_name_vars = 0;
     char *missvec = NULL;
+
+    if (*ppdinfo != NULL) delim = (*ppdinfo)->delim;
 
     check_for_console(prn);
 
@@ -2725,7 +2727,9 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
     }
     
 #ifdef ENABLE_NLS
-    if ((*ppdinfo)->decpoint != ',') setlocale(LC_NUMERIC, "C");
+    if (*ppdinfo != NULL && (*ppdinfo)->decpoint != ',') {
+	setlocale(LC_NUMERIC, "C");
+    }
 #endif
 
     pputs(prn, M_("scanning for row labels and data...\n"));

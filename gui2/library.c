@@ -418,7 +418,7 @@ gint bufopen (PRN **pprn)
 
 /* ........................................................... */
 
-static PRN *bufopen_with_size (size_t sz)
+PRN *bufopen_with_size (size_t sz)
 {
     PRN *prn;
 
@@ -4886,6 +4886,7 @@ int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+    PRN *outprn = NULL;
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
@@ -4979,6 +4980,13 @@ int gui_exec_line (char *line,
     }
 #endif
 
+    /* Attach outprn to a specific buffer, if wanted */
+    if (*cmd.savename != '\0' && TEXTSAVE_OK(cmd.ci)) {
+	if (bufopen(&outprn)) return 1;
+    } else {
+	outprn = prn;
+    }
+
     switch (cmd.ci) {
 
     case ADF: case COINT: case COINT2:
@@ -4993,7 +5001,7 @@ int gui_exec_line (char *line,
     case MEANTEST: case VARTEST:
     case RUNS: case SPEARMAN: case OUTFILE: case PCA:
 	err = simple_commands(&cmd, line, &Z, datainfo, &paths,
-			      0, prn);
+			      0, outprn);
 	if (err) errmsg(err, prn);
 	else if (cmd.ci == DATA) {
 	    register_data(NULL, NULL, 0);
@@ -5007,10 +5015,10 @@ int gui_exec_line (char *line,
 	clear_model(models[1], NULL);
 	if (cmd.ci == ADD || cmd.ci == ADDTO)
 	    err = auxreg(cmd.list, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, prn, NULL);
+			 &Z, datainfo, AUX_ADD, outprn, NULL);
 	else
 	    err = omit_test(cmd.list, models[0], models[1],
-			    &model_count, &Z, datainfo, prn);
+			    &model_count, &Z, datainfo, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -5020,7 +5028,7 @@ int gui_exec_line (char *line,
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, prn);
+		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	}
 	break;	
@@ -5039,10 +5047,10 @@ int gui_exec_line (char *line,
 	tmpmod.ID = i;
 	if (cmd.ci == ADDTO)
 	    err = auxreg(cmd.list, &tmpmod, models[1], &model_count, 
-			 &Z, datainfo, AUX_ADD, prn, NULL);
+			 &Z, datainfo, AUX_ADD, outprn, NULL);
 	else
 	    err = omit_test(cmd.list, &tmpmod, models[1],
-			    &model_count, &Z, datainfo, prn);
+			    &model_count, &Z, datainfo, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    clear_model(models[1], NULL);
@@ -5051,7 +5059,7 @@ int gui_exec_line (char *line,
 	    swap_models(&models[0], &models[1]);
 	    clear_model(models[1], NULL);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, prn);
+		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	}
 	clear_model(&tmpmod, NULL);
@@ -5060,13 +5068,13 @@ int gui_exec_line (char *line,
     case AR:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = ar_func(cmd.list, atoi(cmd.param), &Z, 
-			     datainfo, &model_count, prn);
+			     datainfo, &model_count, outprn);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn);
+	    outcovmx(models[0], datainfo, 0, outprn);
 	}
 	break;
 
@@ -5074,14 +5082,14 @@ int gui_exec_line (char *line,
 	order = atoi(cmd.param);
 	clear_model(models[1], NULL);
 	*models[1] = arch(order, cmd.list, &Z, datainfo, 
-			  &model_count, prn, ptest);
+			  &model_count, outprn, ptest);
 	if ((err = (models[1])->errcode)) 
 	    errmsg(err, prn);
 	if ((models[1])->ci == ARCH) {
 	    arch_model = 1;
 	    swap_models(&models[0], &models[1]);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, prn);
+		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	} else if (rebuild) {
 	    add_test_to_model(ptest, models[0]);
@@ -5094,21 +5102,21 @@ int gui_exec_line (char *line,
 #ifdef HAVE_X12A
 	if (cmd.opt & OPT_X) {
 	    *models[0] = arma_x12(cmd.list, (const double **) Z, datainfo,
-				  ((cmd.opt & OPT_V) ? prn : NULL), &paths); 
+				  ((cmd.opt & OPT_V) ? outprn : NULL), &paths); 
 	} else {
 	    *models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			      (cmd.opt & OPT_V)? prn : NULL);
+			      (cmd.opt & OPT_V)? outprn : NULL);
 	}
 #else
 	*models[0] = arma(cmd.list, (const double **) Z, datainfo, 
-			  (cmd.opt & OPT_V)? prn : NULL);
+			  (cmd.opt & OPT_V)? outprn : NULL);
 #endif
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 
 	    break;
 	}	
 	(models[0])->ID = ++model_count;
-	printmodel(models[0], datainfo, prn);	
+	printmodel(models[0], datainfo, outprn);	
 	break;
 
     case BXPLOT:
@@ -5123,7 +5131,7 @@ int gui_exec_line (char *line,
 
     case CHOW:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = chow_test(line, models[0], &Z, datainfo, prn, ptest);
+	err = chow_test(line, models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);
@@ -5131,13 +5139,13 @@ int gui_exec_line (char *line,
 
     case COEFFSUM:
         if ((err = script_model_test(0, prn, 1))) break;
-	err = sum_test(cmd.list, models[0], &Z, datainfo, prn);
+	err = sum_test(cmd.list, models[0], &Z, datainfo, outprn);
 	if (err) errmsg(err, prn);
 	break;
 
     case CUSUM:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = cusum_test(models[0], &Z, datainfo, prn, 
+	err = cusum_test(models[0], &Z, datainfo, outprn, 
 			 &paths, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
@@ -5146,7 +5154,7 @@ int gui_exec_line (char *line,
 
     case RESET:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = reset_test(models[0], &Z, datainfo, prn, ptest);
+	err = reset_test(models[0], &Z, datainfo, outprn, ptest);
 	if (err) errmsg(err, prn);
 	else if (rebuild) 
 	    add_test_to_model(ptest, models[0]);
@@ -5155,7 +5163,7 @@ int gui_exec_line (char *line,
     case CORC:
     case HILU:
 	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
-			NULL, 1, cmd.ci, prn);
+			NULL, 1, cmd.ci, outprn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
@@ -5167,10 +5175,10 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn);
+	    outcovmx(models[0], datainfo, 0, outprn);
 	}
 	break;
 
@@ -5182,14 +5190,14 @@ int gui_exec_line (char *line,
             break;
         }
         (models[0])->ID = ++model_count;
-        printmodel(models[0], datainfo, prn);
+        printmodel(models[0], datainfo, outprn);
         /* if (cmd.opt) outcovmx(models[0], datainfo, !batch, prn); */
         break;
 
     case CORRGM:
 	order = atoi(cmd.param);
 	err = corrgram(cmd.list[1], order, &Z, datainfo, &paths,
-		       1, prn);
+		       1, outprn);
 	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
 	break;
 
@@ -5228,7 +5236,7 @@ int gui_exec_line (char *line,
 
     case END:
 	if (!strcmp(cmd.param, "system")) {
-	    err = gretl_equation_system_finalize(sys, &Z, datainfo, prn);
+	    err = gretl_equation_system_finalize(sys, &Z, datainfo, outprn);
 	    if (err) {
 		errmsg(err, prn);
 	    }
@@ -5236,15 +5244,15 @@ int gui_exec_line (char *line,
 	} 
 	else if (!strcmp(cmd.param, "nls")) {
 	    clear_or_save_model(&models[0], datainfo, rebuild);
-	    *models[0] = nls(&Z, datainfo, prn);
+	    *models[0] = nls(&Z, datainfo, outprn);
 	    if ((err = (models[0])->errcode)) {
 		errmsg(err, prn);
 		break;
 	    }
 	    (models[0])->ID = ++model_count;
-	    printmodel(models[0], datainfo, prn);
+	    printmodel(models[0], datainfo, outprn);
 	    if (want_vcv(cmd.opt)) {
-		outcovmx(models[0], datainfo, 0, prn);
+		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	} 
 	else {
@@ -5310,7 +5318,7 @@ int gui_exec_line (char *line,
 
     case FCASTERR:
 	if ((err = script_model_test(0, prn, 0))) break;
-	err = fcast_with_errs(line, models[0], &Z, datainfo, prn,
+	err = fcast_with_errs(line, models[0], &Z, datainfo, outprn,
 			      &paths, (cmd.opt != 0)); 
 	if (err) errmsg(err, prn);
 	break;
@@ -5355,7 +5363,7 @@ int gui_exec_line (char *line,
 	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
-	printfreq(freq, prn);
+	printfreq(freq, outprn);
 	if (exec_code == CONSOLE_EXEC) {
 	    if (plot_freq(freq, &paths, NORMAL)) {
 		pprintf(prn, _("gnuplot command failed\n"));
@@ -5412,7 +5420,7 @@ int gui_exec_line (char *line,
 
     case HAUSMAN:
 	if ((err = script_model_test(0, prn, 0))) break;
-	err = hausman_test(models[0], &Z, datainfo, prn);
+	err = hausman_test(models[0], &Z, datainfo, outprn);
 	break;
 
     case HCCM:
@@ -5427,10 +5435,10 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn);
+	    outcovmx(models[0], datainfo, 0, outprn);
 	}
 	break;
 
@@ -5513,7 +5521,7 @@ int gui_exec_line (char *line,
 
     case LEVERAGE:
 	if ((err = script_model_test(0, prn, 1))) break;
-	err = leverage_test(models[0], &Z, datainfo, prn, NULL, cmd.opt);
+	err = leverage_test(models[0], &Z, datainfo, outprn, NULL, cmd.opt);
 	if (err > 1) errmsg(err, prn);
 	else if (cmd.opt) varlist(datainfo, prn);
 	break;
@@ -5523,7 +5531,7 @@ int gui_exec_line (char *line,
 	/* non-linearity (squares) */
 	if ((cmd.opt & OPT_S) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_SQ, prn, ptest);
+			 &Z, datainfo, AUX_SQ, outprn, ptest);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
@@ -5531,7 +5539,7 @@ int gui_exec_line (char *line,
 	/* non-linearity (logs) */
 	if ((cmd.opt & OPT_L) || (cmd.opt & OPT_O) || !cmd.opt) {
 	    err = auxreg(NULL, models[0], models[1], &model_count, 
-			 &Z, datainfo, AUX_LOG, prn, ptest);
+			 &Z, datainfo, AUX_LOG, outprn, ptest);
 	    clear_model(models[1], NULL);
 	    model_count--;
 	    if (err) errmsg(err, prn);
@@ -5540,12 +5548,12 @@ int gui_exec_line (char *line,
 	if ((cmd.opt & OPT_M) || (cmd.opt & OPT_O)) {
 	    int order = atoi(cmd.param);
 
-	    err = autocorr_test(models[0], order, &Z, datainfo, prn, ptest);
+	    err = autocorr_test(models[0], order, &Z, datainfo, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	    /* FIXME: need to respond? */
 	} 
 	if ((cmd.opt & OPT_C) || !cmd.opt) {
-	    err = whites_test(models[0], &Z, datainfo, prn, ptest);
+	    err = whites_test(models[0], &Z, datainfo, outprn, ptest);
 	    if (err) errmsg(err, prn);
 	}
 	if (rebuild)
@@ -5566,10 +5574,10 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn); 
+	    outcovmx(models[0], datainfo, 0, outprn); 
 	}
 	break;
 
@@ -5632,18 +5640,18 @@ int gui_exec_line (char *line,
 	}
 	(models[0])->ID = ++model_count;
 	if (!(cmd.opt & OPT_Q)) {
-	    if (printmodel(models[0], datainfo, prn)) {
+	    if (printmodel(models[0], datainfo, outprn)) {
 		(models[0])->errcode = E_NAN;
 	    }
 	}
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn); 
+	    outcovmx(models[0], datainfo, 0, outprn); 
 	}
 	break;
 
 #ifdef ENABLE_GMP
     case MPOLS:
-	err = mp_ols(cmd.list, cmd.param, &Z, datainfo, prn);
+	err = mp_ols(cmd.list, cmd.param, &Z, datainfo, outprn);
 	break;
 #endif
 
@@ -5653,7 +5661,7 @@ int gui_exec_line (char *line,
 
     case PERGM:
 	err = periodogram(cmd.list[1], &Z, datainfo, &paths,
-			  1, cmd.opt, prn);
+			  1, cmd.opt, outprn);
 	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
 	break;
 
@@ -5667,7 +5675,7 @@ int gui_exec_line (char *line,
 	if (strcmp(line, "pvalue") == 0)
 	    help("pvalue", paths.cmd_helpfile, prn);	    
 	else
-	    err = (batch_pvalue(line, Z, datainfo, prn) == NADBL);
+	    err = (batch_pvalue(line, Z, datainfo, outprn) == NADBL);
 	break;
 
     case QUIT:
@@ -5838,7 +5846,7 @@ int gui_exec_line (char *line,
 		normal_test(ptest, freq);
 		add_test_to_model(ptest, models[0]);
 	    }
-	    printfreq(freq, prn); 
+	    printfreq(freq, outprn); 
 	    free_freq(freq);
 	}
 	break;
@@ -5852,18 +5860,18 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	(models[0])->ID = ++model_count;
-	if (printmodel(models[0], datainfo, prn))
+	if (printmodel(models[0], datainfo, outprn))
 	    (models[0])->errcode = E_NAN;
 	/* is this OK? */
 	if (want_vcv(cmd.opt)) {
-	    outcovmx(models[0], datainfo, 0, prn); 
+	    outcovmx(models[0], datainfo, 0, outprn); 
 	}
 	break;		
 
     case VAR:
 	order = atoi(cmd.param);
 	err = simple_var(order, cmd.list, &Z, datainfo, 0, 
-			 (cmd.opt & OPT_Q)? NULL : prn);
+			 (cmd.opt & OPT_Q)? NULL : outprn);
 	if (!err) {
 	    err = maybe_save_var(&cmd, &Z, datainfo, prn);
 	}
@@ -5882,6 +5890,16 @@ int gui_exec_line (char *line,
     /* log the specific command? */
     if (exec_code == CONSOLE_EXEC && !err) {
 	cmd_init(line);
+    }
+
+    /* save specific output (text) buffer? */
+    if (outprn != NULL && outprn != prn) {
+	if (!err) {
+	    err = save_text_buffer(outprn, cmd.savename, prn);
+	} else {
+	    gretl_print_destroy(outprn);
+	}
+	outprn = NULL;
     }
 
     if (!err && (is_model_cmd(cmd.cmd) || !strncmp(line, "end nls", 7)

@@ -34,15 +34,17 @@ enum {
 };
 
 enum {
-    ADD_GRAPH_OK,
-    ADD_GRAPH_REPLACE,
-    ADD_GRAPH_FAIL
+    ADD_OBJECT_OK,
+    ADD_OBJECT_REPLACE,
+    ADD_OBJECT_FAIL
 };
 
 void session_menu_state (gboolean s);
 
 int real_add_graph_to_session (const char *fname, const char *grname,
 			       int code);
+
+int real_add_text_to_session (PRN *prn, const char *tname);
 
 void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
@@ -59,6 +61,10 @@ void *get_session_object_by_name (const char *name, char *which);
 void delete_model_from_session (MODEL *pmod);
 
 void delete_var_from_session (GRETL_VAR *var);
+
+void delete_text_from_session (const char *tname);
+
+void display_text_by_name (const char *tname);
 
 int session_changed (int set);
 

@@ -131,6 +131,45 @@ typedef enum {
                            (c) == TSLS || (c) == VAR || (c) == WLS || \
                            (c) == SPEARMAN)
 
+#define TEXTSAVE_OK(c) (c == ADD || \
+                        c == ADDTO || \
+                        c == ADF || \
+                        c == ARCH || \
+                        c == ARMA || \
+                        c == CHOW || \
+                        c == COEFFSUM || \
+                        c == COINT || \
+                        c == COINT2 || \
+                        c == CORR || \
+                        c == CORRGM || \
+                        c == CRITERIA || \
+                        c == CRITICAL || \
+                        c == CUSUM || \
+                        c == FCAST || \
+                        c == FCASTERR || \
+                        c == FIT || \
+                        c == FREQ || \
+                        c == GRAPH || \
+                        c == HAUSMAN || \
+                        c == LEVERAGE || \
+                        c == LMTEST || \
+                        c == MEANTEST || \
+                        c == MPOLS || \
+                        c == OMIT || \
+                        c == OMITFROM || \
+                        c == PCA || \
+                        c == PERGM || \
+                        c == PLOT || \
+                        c == PRINT || \
+                        c == PRINTF || \
+                        c == PVALUE || \
+                        c == RESET || \
+                        c == RMPLOT || \
+                        c == RUNS || \
+                        c == SPEARMAN || \
+                        c == TESTUHAT || \
+                        c == VARTEST)
+
 int gretl_command_number (const char *s);
 
 const char *gretl_command_word (int i);

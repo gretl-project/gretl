@@ -283,11 +283,11 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
 	    int ret;
 
 	    ret = real_add_graph_to_session(plotfile, cmd->savename, code);
-	    if (ret == ADD_GRAPH_FAIL) {
+	    if (ret == ADD_OBJECT_FAIL) {
 		err = 1;
 	    } else {
 		remove(fname);
-		if (ret == ADD_GRAPH_REPLACE) {
+		if (ret == ADD_OBJECT_REPLACE) {
 		    pprintf(prn, _("%s replaced\n"), cmd->savename);
 		} else {
 		    pprintf(prn, _("%s saved\n"), cmd->savename);
@@ -297,6 +297,25 @@ int maybe_save_graph (const CMD *cmd, const char *fname, int code,
     }
 
     g_free(plotfile);
+
+    return err;
+}
+
+int save_text_buffer (PRN *prn, const char *savename, PRN *errprn)
+{
+    int add, err = 0;
+
+    add = real_add_text_to_session(prn, savename);
+
+    if (add == ADD_OBJECT_FAIL) {
+	err = 1;
+    } else if (add == ADD_OBJECT_REPLACE) {
+	pprintf(errprn, _("%s replaced\n"), savename);
+    } else {
+	pprintf(errprn, _("%s saved\n"), savename);
+    }
+
+    gretl_print_destroy(prn);
 
     return err;
 }
@@ -349,6 +368,15 @@ int saved_object_action (const char *line,
 	dummy_call();
 	fprintf(stderr, "Got request to delete graph\n");
     }
+
+    else if (action == OBJ_TEXT_SHOW) {
+	display_text_by_name(savename);
+    }
+
+    else if (action == OBJ_TEXT_FREE) {
+	delete_text_from_session(savename);
+	pprintf(prn, _("Freed %s\n"), savename);
+    }    
 
     return 1;
 }

@@ -28,6 +28,8 @@ int maybe_save_var (const CMD *cmd, double ***pZ, DATAINFO *pdinfo,
 
 int maybe_save_graph (const CMD *cmd, const char *fname, int code, PRN *prn);
 
+int save_text_buffer (PRN *prn, const char *savename, PRN *errprn);
+
 int saved_object_action (const char *line, 
 			 const DATAINFO *pdinfo,
 			 PRN *prn);
