@@ -555,7 +555,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
     char *indx1, *indx2, s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
     char sexpr[MAXLEN], snew[MAXLEN], word[16], s1[MAXLEN];
-    char newvar[16], genrs[160];
+    char newvar[16], genrs[MAXLEN];
     int type2;
     int err = 0;
     char op0, op1;
@@ -732,7 +732,12 @@ int generate (double ***pZ, DATAINFO *pdinfo,
                 if (v < nv && !oflag && model_count > 0) 
 		    sprintf(genr.label, _("Replaced after model %d: "), 
 			    model_count);
-		strcat(genr.label, genrs);
+		if (strlen(genrs) > MAXLABEL - 1) {
+		    strncat(genr.label, genrs, MAXLABEL - 4);
+		    strcat(genr.label, "...");
+		} else {
+		    strncat(genr.label, genrs, MAXLABEL - 1);
+		}
                 for (i=t1; i<=t2; i++) genr.xvec[i] = mstack[i];
                 strcpy(genr.varname, newvar);
 		genr.varnum = v;
