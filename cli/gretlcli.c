@@ -786,7 +786,7 @@ void exec_line (char *line, PRN *prn)
 
     case GARCH:
 	clear_model(models[0], NULL);
-	*models[0] = garch(cmd.list, (const double **) Z, datainfo, 
+	*models[0] = garch(cmd.list, &Z, datainfo, 
 			  (cmd.opt & OPT_V)? prn : NULL);
 	if ((err = (models[0])->errcode)) { 
 	    errmsg(err, prn); 

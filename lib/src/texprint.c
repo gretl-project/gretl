@@ -161,6 +161,26 @@ static int tex_greek_param (char *targ, const char *src)
     return (*targ != 0);
 }
 
+static void tex_garch_coeff_name (char *targ, const char *src,
+				  int inmath)
+{
+    char vname[VNAMELEN], vnesc[16];
+    int lag;
+
+    fprintf(stderr, "tex_garch_coeff_name: looking at '%s'\n", src);
+
+    if (sscanf(src, "%[^(](%d)", vname, &lag) == 2) {
+	if (!inmath) {
+	    sprintf(targ, "$\\%s_%d$", vname, lag);
+	} else {
+	    sprintf(targ, "\\%s_%d", vname, lag);
+	}
+    } else {
+	tex_escape(vnesc, src);
+	strcpy(targ, vnesc);
+    }
+}
+
 static void tex_arma_coeff_name (char *targ, const char *src,
 				 int inmath)
 {
@@ -227,6 +247,8 @@ int tex_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	}
     } else if (pmod->ci == ARMA) {
 	tex_arma_coeff_name(tmp, pmod->params[c-1], 0);
+    } else if (pmod->ci == GARCH) {
+	tex_garch_coeff_name(tmp, pmod->params[c], 0);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[c]]);
     }
@@ -302,7 +324,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 {
     double tstat;
     char tmp[48];
-    int i;
+    int i, nc = pmod->ncoeff;
 
     if (standalone) {
 	pputs(prn, "\\documentclass[11pt]{article}\n");
@@ -323,15 +345,18 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     /* dependent variable */
     *tmp = '\0';
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == ARMA || pmod->ci == GARCH) {
 	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     }
     pprintf(prn, "\\widehat{\\rm %s} = \n", tmp);
 
+    if (pmod->ci == GARCH) 
+	nc -= (1 + pmod->list[1] + pmod->list[2]);
+
     /* coefficients times indep vars */
-    for (i=0; i<pmod->ncoeff; i++) {
+    for (i=0; i<nc; i++) {
 	tstat = pmod->coeff[i] / pmod->sderr[i];
 	pprintf(prn, "%s\\underset{(%.3f)}{", 
 		(pmod->coeff[i] < 0.0)? "-" :
@@ -343,6 +368,9 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	    if (pmod->ci == ARMA) {
 		tex_arma_coeff_name(tmp, pmod->params[i+1], 1);
 		pprintf(prn, "%s", tmp);
+	    } else if (pmod->ci == GARCH) {
+		tex_garch_coeff_name(tmp, pmod->params[i+2], 1);
+		pprintf(prn, "%s", tmp);
 	    } else {
 		tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
 		pprintf(prn, "\\mbox{%s}", tmp);
@@ -351,6 +379,26 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 	pputc(prn, '\n');
     }
     pputs(prn, " \\notag \\\\\n");
+
+    if (pmod->ci == GARCH) {
+	int p = pmod->list[1];
+	int q = pmod->list[2];
+	int r = pmod->list[0] - 4;
+
+	pprintf(prn, "\\alpha_0 = \\underset{(%.3f)}{%g} ", 
+		pmod->coeff[r] / pmod->sderr[r], pmod->coeff[r]);
+	if (p > 0) pputs(prn, "\\quad ");
+	for (i=1; i<=p; i++) {
+	    pprintf(prn, "\\alpha_%d = \\underset{(%.3f)}{%g} ", i, 
+		    pmod->coeff[r+i] / pmod->sderr[r+i], pmod->coeff[r+i]);
+	}
+	if (q > 0) pputs(prn, "\\quad ");
+	for (i=1; i<=q; i++) {
+	    pprintf(prn, "\\beta_%d = \\underset{(%.3f)}{%g} ", i, 
+		    pmod->coeff[p+r+i] / pmod->sderr[p+r+i], pmod->coeff[p+r+i]);
+	}
+	pputs(prn, "\\notag \\\\\n");
+    }	    
 
     /* additional info (R^2 etc) */
     if (pmod->ci == LAD) { 

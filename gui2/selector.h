@@ -23,13 +23,13 @@
 #ifdef ENABLE_GMP
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
-                       c == TSLS || c == LOGIT || c == PROBIT || \
+                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == COINT || c == COINT2 || \
                        c == MPOLS || c == LAD || c == LOGISTIC || c == TOBIT)
 #else
 #define MODEL_CODE(c) (c == OLS || c == CORC || c == HILU || c == WLS || \
                        c == POOLED || c == HCCM || c == HSK || c == ARMA || \
-                       c == TSLS || c == LOGIT || c == PROBIT || \
+                       c == TSLS || c == LOGIT || c == PROBIT || c == GARCH || \
                        c == AR || c == VAR || c == COINT || c == COINT2 || \
                        c == LAD || c == LOGISTIC || c == TOBIT)
 #endif

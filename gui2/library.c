@@ -2343,6 +2343,12 @@ void do_model (GtkWidget *widget, gpointer p)
 	err = model_output(pmod, prn);
 	break;
 
+    case GARCH:
+	*pmod = garch(cmd.list, &Z, datainfo, 
+		     (cmd.opt & OPT_V)? prn : NULL); 
+	err = model_output(pmod, prn);
+	break;
+
     case LOGISTIC:
 	delete_selection_dialog(sr);
 	*pmod = logistic_model(cmd.list, &Z, datainfo, NULL);
@@ -5162,6 +5168,20 @@ int gui_exec_line (char *line,
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[0], datainfo, 0, outprn);
 	}	
+	break;
+
+    case GARCH:
+	clear_model(models[0], NULL);
+	*models[0] = garch(cmd.list, &Z, datainfo, (cmd.opt & OPT_V)? prn : NULL);
+	if ((err = (models[0])->errcode)) { 
+	    errmsg(err, prn); 
+	    break;
+	}
+	(models[0])->ID = ++model_count;
+	printmodel(models[0], datainfo, outprn);
+	if (want_vcv(cmd.opt)) {
+	    outcovmx(models[0], datainfo, 0, outprn);
+	}	    
 	break;
 
     case BXPLOT:

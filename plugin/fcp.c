@@ -29,31 +29,19 @@ int global_np;
 
 static int invert (double *g, int dim);
 
-static double get_yhat (const double *y, const double **X, int nexo, 
-			int nobs, int t, const double *yl,
-			const double *a);
-
-static int ols_ (int t1, int t2, const double *yobs,
-		 int nobs, const double **X, int nexo, 
-		 double *yy, double *c, int nc, double *oldc,
-		 double *vc, double *ystoc, double *amax, double *aux,
-		 double *b, double **g);
-
 static  
 double garch_ll (double *c, int nc, double *res2, 
-		 double *res, double *ydet, double *yobs, 
-		 double *ystoc, const double **X, int nobs, 
+		 double *res, double *yhat, 
+		 double *ystoc, const double **X, 
 		 int nexo, int t1, int t2, double *param, 
 		 double *b, double *alfa0, 
 		 double *alfa, double *beta, int nalfa, 
 		 int nbeta, double *h);
 
-static void check_ht (double *param, int nparam);
-
 static int 
-garch_info_matrix (int t1, int t2, double *yobs,
-		   int nobs, const double **X, int nexo, 
-		   double *ydet, double *c, int nc, double *res2,
+garch_info_matrix (int t1, int t2, 
+		   const double **X, int nexo, 
+		   double *yhat, double *c, int nc, double *res2,
 		   double *res, double *ystoc, double toler, 
 		   int *ivolta, double *vc5, const double **g,
 		   double *aux3, double *param, int nparam,
@@ -62,17 +50,15 @@ garch_info_matrix (int t1, int t2, double *yobs,
 		   double **dhdp, double *zt);
 
 static int 
-garch_full_hessian (int t1, int t2, double *yobs,
-		    int nobs, const double **X, int nexo, 
-		    double *ydet, double *c, int nc, double *res2,
+garch_full_hessian (int t1, int t2, 
+		    const double **X, int nexo, 
+		    double *yhat, double *c, int nc, double *res2,
 		    double *res, double *ystoc, double toler, 
 		    int *ivolta, double *vc5, const double **g,
 		    double *aux3, double *param, int nparam,
 		    double *b, double *alfa0, double *alfa,
 		    double *beta, int nalfa, int nbeta, double *h,
 		    double **dhdp, double *zt);
-
-static void vsrstr_(const double *c, int nc, double *b);
 
 /* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
    Journal of APPLIED ECONOMETRICS, 1996 
@@ -240,12 +226,109 @@ static void print_iter_info (int iter, double *theta, int m, double ll,
     pprintf(prn, "\n    ll = %f\n", ll);
 }
 
-int vsanal_(int t1, int t2, double *yobs, int nobs, 
-	    const double **X, int nx, double *ydet, double *yy, 
-	    double *coeff, int nc, double *oldc,
-	    double *vc, double *res2, double *res,
-	    double *ystoc, double *amax, double *b, 
-	    int *iters, PRN *prn)
+static double 
+get_yhat (const double **X, int nx, int t, const double *a)
+{
+    int j;
+    double yhat = a[0];
+
+    for (j = 0; j < nx; j++) {
+	yhat += a[j+1] * X[j][t];
+    }
+
+    return yhat;
+} 
+
+static void copy_coeff (const double *c, int nc, double *b)
+{
+    int i;
+
+    for (i = 0; i < nc; ++i) {
+	b[i] = c[i];
+    }
+} 
+
+int ols_ (int t1, int t2,  const double **X, int nx, 
+	  double *c, int nc, double *vc, double *ystoc, 
+	  double *amax, double *aux, double *b, double **g)
+{
+    int i, j, k, t, err;
+    double deltc, deriv, relinc = 0.5;
+    double oldc, yy;
+
+    copy_coeff(c, nc, b);
+
+    for (t = t1; t <= t2; ++t) {
+	amax[t] = get_yhat(X, nx, t, b);
+    }
+
+    for (i = 0; i < nc; ++i) {
+	aux[i] = 0.0;
+	for (j = 0; j < nc; ++j) {
+	    vc[i + j * nc] = 0.0;
+	}
+    }
+
+    for (t = t1; t <= t2; ++t) {
+	for (k = 0; k < nc; ++k) {
+	    oldc = c[k];
+	    deltc = relinc;
+	    if (oldc != 0.0) {
+		deltc = oldc * relinc;
+	    }
+	    c[k] = oldc + deltc;
+	    copy_coeff(c, nc, b);
+	    yy = get_yhat(X, nx, t, b);
+	    deltc = c[k] - oldc;
+	    deriv = (yy - amax[t]) / deltc;
+	    c[k] = oldc;
+	    g[k][t] = deriv;
+	}
+	copy_coeff(c, nc, b);
+
+	/* cumulates all the w'z into diagonal blocks of vc 
+	   and w'y into elements of aux */
+	for (i = 0; i < nc; ++i) {
+	    aux[i] += g[i][t] * ystoc[t];
+	    for (j = 0; j < nc; ++j) {
+		vc[i + j * nc] += g[i][t] * g[j][t];
+	    }
+	}
+    }
+
+    err = invert(vc, nc);
+
+    if (err == 0) {
+	/* compute coefficients */
+	for (i = 0; i < nc; ++i) {
+	    c[i] = 0.0;
+	}
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nc; ++j) {
+		c[i] += vc[i + j * nc] * aux[j];
+	    }
+	}
+	copy_coeff(c, nc, b);
+    } else {
+	fputs("OLS: matrix is singular, initial coefficients are unchanged\n",
+	      stderr);
+
+	for (i = 0; i < nc; ++i) {
+	    for (j = 0; j < nc; ++j) {
+		vc[i + j * nc] = 0.0;
+	    }
+	}
+    }
+
+    return 0;
+} 
+
+int garch_estimate (int t1, int t2, int nobs, 
+		    const double **X, int nx, double *yhat, 
+		    double *coeff, int nc, double *vc, 
+		    double *res2, double *res,
+		    double *ystoc, double *amax, double *b, 
+		    int *iters, PRN *prn)
 {
     int i, j;
 
@@ -321,8 +404,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
     }
 
     /* this is only to calculate matrix of regressors (g) */
-    ols_(t1, t2, yobs, nobs, X, nx, yy, c, nc, oldc, 
-	 vc, ystoc, amax, aux, b, g);
+    ols_(t1, t2, X, nx, c, nc, vc, ystoc, amax, aux, b, g);
 
 #ifdef FFDEBUG
     for (i = 0; i < 3; i++) {
@@ -337,8 +419,8 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 
     for (izo = 1; izo <= 100; ++izo) {
 
-	ll = garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		      X, nobs, nx, t1, t2, param, b, &alfa0, alfa, 
+	ll = garch_ll(c, nc, res2, res, yhat, ystoc, 
+		      X, nx, t1, t2, param, b, &alfa0, alfa, 
 		      beta, nalfa, nbeta, h);
 
 	print_iter_info(izo, param, nparam, ll, 0, prn);
@@ -361,7 +443,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 	fprintf(stderr, "*** Calling garch_info_matrix, ivolta=%d\n", ivolta);	    
 #endif
 
-	garch_info_matrix(t1, t2, yobs, nobs, X, nx, ydet, c, 
+	garch_info_matrix(t1, t2, X, nx, yhat, c, 
 			  nc, res2, res, ystoc,
 			  toler1, &ivolta, vc5, (const double **) g, 
 			  aux3, param, nparam, b, 
@@ -396,8 +478,8 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
     for (izo = 1; izo <= 100; ++izo) {
 
 	/* compute residuals for covariance matrix */
-	ll = garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		      X, nobs, nx, t1, t2, param, b, &alfa0, alfa, 
+	ll = garch_ll(c, nc, res2, res, yhat, ystoc, 
+		      X, nx, t1, t2, param, b, &alfa0, alfa, 
 		      beta, nalfa, nbeta, h);
 
 	print_iter_info(nzo + 1, param, nparam, ll, 1, prn);
@@ -416,7 +498,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 	fprintf(stderr, "*** Calling garch_full_hessian, ivolt2=%d\n", ivolt2);	    
 #endif
 
-	garch_full_hessian(t1, t2, yobs, nobs, X, nx, ydet, c, nc, 
+	garch_full_hessian(t1, t2, X, nx, yhat, c, nc, 
 			   res2, res, ystoc, toler2, &ivolt2, vc5, 
 			   (const double **) g, 
 			   aux3, param, nparam, b, &alfa0, alfa, beta, 
@@ -452,7 +534,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 		nzo, toler2);
 
 	*iters = nzo;
-	amax[0] = toler2;
+	amax[0] = ll;
 
 	tollog = 0.0;
 	totdis = 0.0;
@@ -512,82 +594,10 @@ L6766:
 	    parpre, partrc);
 
     return err;
-} 
+}
 
-int ols_ (int t1, int t2, const double *yobs, int nobs, 
-	  const double **X, int nx, double *yy, double *c, 
-	  int nc, double *oldc, double *vc, double *ystoc, 
-	  double *amax, double *aux, double *b, double **g)
-{
-    int i, j, k, t, err;
-    double deltc, deriv, relinc = 0.5;
 
-    vsrstr_(c, nc, b);
 
-    for (t = t1; t <= t2; ++t) {
-	amax[t] = get_yhat(&ystoc[t], X, nx, nobs, t, yobs, b);
-    }
-
-    for (i = 0; i < nc; ++i) {
-	aux[i] = 0.0;
-	for (j = 0; j < nc; ++j) {
-	    vc[i + j * nc] = 0.0;
-	}
-    }
-
-    for (t = t1; t <= t2; ++t) {
-	for (k = 0; k < nc; ++k) {
-	    *oldc = c[k];
-	    deltc = relinc;
-	    if (*oldc != 0.0) {
-		deltc = *oldc * relinc;
-	    }
-	    c[k] = *oldc + deltc;
-	    vsrstr_(c, nc, b);
-	    *yy = get_yhat(&ystoc[t], X, nx, nobs, t, yobs, b);
-	    deltc = c[k] - *oldc;
-	    deriv = (*yy - amax[t]) / deltc;
-	    c[k] = *oldc;
-	    g[k][t] = deriv;
-	}
-	vsrstr_(c, nc, b);
-
-	/* cumulates all the w'z into diagonal blocks of vc 
-	   and w'y into elements of aux */
-	for (i = 0; i < nc; ++i) {
-	    aux[i] += g[i][t] * ystoc[t];
-	    for (j = 0; j < nc; ++j) {
-		vc[i + j * nc] += g[i][t] * g[j][t];
-	    }
-	}
-    }
-
-    err = invert(vc, nc);
-
-    if (err == 0) {
-	/* compute coefficients */
-	for (i = 0; i < nc; ++i) {
-	    c[i] = 0.0;
-	}
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nc; ++j) {
-		c[i] += vc[i + j * nc] * aux[j];
-	    }
-	}
-	vsrstr_(c, nc, b);
-    } else {
-	fputs("OLS: matrix is singular, initial coefficients are unchanged\n",
-	      stderr);
-
-	for (i = 0; i < nc; ++i) {
-	    for (j = 0; j < nc; ++j) {
-		vc[i + j * nc] = 0.0;
-	    }
-	}
-    }
-
-    return 0;
-} 
 
 /* compute the log-likelihood function.
    i parametri sono passati nel vettore param(nparam). 
@@ -598,8 +608,8 @@ int ols_ (int t1, int t2, const double *yobs, int nobs,
 
 static double 
 garch_ll (double *c, int nc, double *res2, 
-	  double *res, double *ydet, double *yobs, 
-	  double *ystoc, const double **X, int nobs, int nx,
+	  double *res, double *yhat, 
+	  double *ystoc, const double **X, int nx,
 	  int t1, int t2, double *param, double *b,  
 	  double *alfa0, double *alfa, double *beta, int nalfa,
 	  int nbeta, double *h)
@@ -632,15 +642,15 @@ garch_ll (double *c, int nc, double *res2,
     }
 
     /* calcola residui ecc. nel periodo vero di stima */
-    vsrstr_(c, nc, b);
+    copy_coeff(c, nc, b);
 
     for (t = t1; t <= t2; ++t) {
-	ydet[t] = get_yhat(&ystoc[t], X, nx, nobs, t, yobs, b);
+	yhat[t] = get_yhat(X, nx, t, b);
     }
 
     uncvar = 0.0;
     for (t = t1; t <= t2; ++t) {
-	res[t] = ystoc[t] - ydet[t];
+	res[t] = ystoc[t] - yhat[t];
 	res2[t] = res[t] * res[t];
 	uncvar += res2[t];
     }
@@ -727,8 +737,8 @@ static void check_ht (double *param, int nparam)
 */
 
 static int 
-garch_info_matrix (int t1, int t2, double *yobs, int nobs, 
-		   const double **X, int nx, double *ydet, double *c, 
+garch_info_matrix (int t1, int t2, 
+		   const double **X, int nx, double *yhat, double *c, 
 		   int nc, double *res2, double *res, double *ystoc,
 		   double toler, int *ivolta, double *vc5, 
 		   const double **g, double *aux3, 
@@ -1051,8 +1061,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     /* print d0, dac, dub? */
 
     if (*ivolta == 1) {
-	ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-			X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+	ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+			X, nx, t1, t2, param, b, alfa0, alfa, 
 			beta, nalfa, nbeta, h);
 #ifdef FFDEBUG
 	fprintf(stderr, "ivolta=1, ll1=%.9g\n", ll1);
@@ -1069,8 +1079,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif 
 
-    ll2 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll2 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "ll2=%.9g, ll1=%.9g\n", ll2, ll1);
@@ -1094,8 +1104,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif    
 
-    ll3 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll3 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
     goto L325;
 
@@ -1117,8 +1127,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif 
 
-    ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 
  L325:
@@ -1153,8 +1163,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif 
 
-    ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 
     if (++ncall > 100) {
@@ -1180,8 +1190,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif
 
-    ll3 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll3 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 
     if (++ncall > 100) {
@@ -1206,8 +1216,8 @@ garch_info_matrix (int t1, int t2, double *yobs, int nobs,
     }
 #endif
 
-    fs = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    fs = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		   X, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, h);
 
     if (++ncall > 100) {
@@ -1364,8 +1374,8 @@ static double ***allocate_dhdpdp (int np, int nvp)
     si ricavano all'inizio da param */
 
 static int 
-garch_full_hessian (int t1, int t2, double *yobs, int nobs, 
-		    const double **X, int nx, double *ydet, double *c, 
+garch_full_hessian (int t1, int t2, 
+		    const double **X, int nx, double *yhat, double *c, 
 		    int nc, double *res2, double *res, double *ystoc,
 		    double toler, int *ivolta, double *vc5, 
 		    const double **g, double *aux3, 
@@ -1901,8 +1911,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     dub = d0 * 4.0;
 
     if (*ivolta == 1) {
-	ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-			X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+	ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+			X, nx, t1, t2, param, b, alfa0, alfa, 
 			beta, nalfa, nbeta, h);
 #ifdef FDEBUG
 	fprintf(stderr, "hess: ll1 = %.9g\n", ll1);
@@ -1914,8 +1924,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    ll2 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll2 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: ll2 = %.9g\n", ll2);
@@ -1933,8 +1943,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    ll3 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll3 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: ll3 = %.9g\n", ll3);
@@ -1953,8 +1963,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: ll1(2) = %.9g\n", ll1);
@@ -1989,8 +1999,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    ll1 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll1 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: ll1(3) = %.9g\n", ll1);
@@ -2013,8 +2023,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    ll3 = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		    X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    ll3 = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		    X, nx, t1, t2, param, b, alfa0, alfa, 
 		    beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: ll3(2) = %.9g\n", ll3);
@@ -2036,8 +2046,8 @@ garch_full_hessian (int t1, int t2, double *yobs, int nobs,
     }
     check_ht(param + nc, nvparm);
 
-    fs = -garch_ll(c, nc, res2, res, ydet, yobs, ystoc, 
-		   X, nobs, nx, t1, t2, param, b, alfa0, alfa, 
+    fs = -garch_ll(c, nc, res2, res, yhat, ystoc, 
+		   X, nx, t1, t2, param, b, alfa0, alfa, 
 		   beta, nalfa, nbeta, h);
 #ifdef FDEBUG
     fprintf(stderr, "hess: fs = %.9g, ds = %.9g\n", fs, ds);
@@ -2164,14 +2174,6 @@ L490:
    the sum (Cobb-Douglas), etc.
 */
 
-static void vsrstr_(const double *c, int nc, double *b)
-{
-    int i;
-
-    for (i = 0; i < nc; ++i) {
-	b[i] = c[i];
-    }
-} 
 
 static int invert (double *g, int dim)
 {
@@ -2240,18 +2242,3 @@ static int invert (double *g, int dim)
 
     return (int) info;
 }
-
-static double 
-get_yhat (const double *y, const double **X, int nx, int nobs, int t, 
-	  const double *yl, const double *a)
-{
-    int j;
-    double yhat = a[0];
-
-    for (j = 0; j < nx; j++) {
-	yhat += a[j+1] * X[j][t];
-    }
-
-    return yhat;
-} 
-

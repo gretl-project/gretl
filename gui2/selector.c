@@ -49,7 +49,7 @@ struct _selector {
     gpointer data;
 };
 
-#define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA)
+#define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || c == GARCH)
 
 static int default_var;
 static int *xlist;
@@ -555,7 +555,7 @@ static gboolean construct_cmdlist (GtkWidget *w, selector *sr)
 	sprintf(numstr, "%d ", i);
 	strcat(sr->cmdlist, numstr);
     }
-    else if (sr->code == ARMA) {
+    else if (sr->code == ARMA || sr->code == GARCH) {
 	GtkAdjustment *adj;
 
 	adj = gtk_spin_button_get_adjustment(GTK_SPIN_BUTTON(sr->extra));
@@ -757,6 +757,8 @@ static char *est_str (int cmdnum)
 	return N_("Autoregressive");
     case ARMA:
 	return N_("ARMAX");
+    case GARCH:
+	return N_("GARCH");
     case VAR:
 	return N_("VAR");
     case LAD:
@@ -1167,14 +1169,18 @@ static void verbose_callback (GtkWidget *w,  selector *sr)
     }
 }
 
-static void build_arma_spinners (selector *sr)
+static void build_pq_spinners (selector *sr)
 {
     GtkWidget *hbox, *tmp;
     GtkObject *adj;
 
     hbox = gtk_hbox_new(FALSE, 5);
 
-    tmp = gtk_label_new(_("AR order:"));
+    if (sr->code == ARMA) {
+	tmp = gtk_label_new(_("AR order:"));
+    } else {
+	tmp = gtk_label_new(_("ARCH p:"));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
     adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
@@ -1182,7 +1188,11 @@ static void build_arma_spinners (selector *sr)
     gtk_box_pack_start(GTK_BOX(hbox), sr->extra, FALSE, FALSE, 5);
     gtk_widget_show(sr->extra);
 
-    tmp = gtk_label_new(_("MA order:"));
+    if (sr->code == ARMA) {
+	tmp = gtk_label_new(_("MA order:"));
+    } else {
+	tmp = gtk_label_new(_("ARCH q:"));
+    }
     gtk_box_pack_start(GTK_BOX(hbox), tmp, FALSE, FALSE, 5);
     gtk_widget_show(tmp);
     adj = gtk_adjustment_new(1, 0, 4, 1, 1, 1);
@@ -1205,7 +1215,7 @@ build_selector_switches (selector *sr)
 			 G_CALLBACK(robust_callback), sr);
 
     }
-    else if (sr->code == TOBIT || sr->code == ARMA) {
+    else if (sr->code == TOBIT || sr->code == ARMA || sr->code == GARCH) {
 	tmp = gtk_check_button_new_with_label(_("Show details of iterations"));
 	g_signal_connect(G_OBJECT(tmp), "toggled",
 			 G_CALLBACK(verbose_callback), sr);
@@ -1425,9 +1435,9 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
     gtk_box_pack_start(GTK_BOX(sr->vbox), big_hbox, TRUE, TRUE, 0);
     gtk_widget_show(big_hbox);
 
-    /* AR and MA spinners for ARMAX */
-    if (sr->code == ARMA) {
-	build_arma_spinners(sr);
+    /* AR and MA spinners for ARMAX; also GARCH */
+    if (sr->code == ARMA || sr->code == GARCH) {
+	build_pq_spinners(sr);
     }
 
     /* toggle switches for some cases */

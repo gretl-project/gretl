@@ -1,13 +1,12 @@
 #ifndef FCP_H
 #define FCP_H
 
-int vsanal_(int ninit, int nfinsm, double *yobs,
-	    int iread, const double **X, int nexo, 
-	    double *ydet, double *yy, double *coeff, int ncoeff,
-	    double *oldc, double *vc, double *res2,
-	    double *res, double *ystoc,
-	    double *amax, double *b, int *iters, 
-	    PRN *prn);
+int garch_estimate (int t1, int t2, int nobs, 
+		    const double **X, int nx, double *ydet, 
+		    double *coeff, int nc, double *vc, 
+		    double *res2, double *res,
+		    double *ystoc, double *amax, double *b, 
+		    int *iters, PRN *prn);
 
 #endif /* FCP_H */
 

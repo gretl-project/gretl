@@ -53,6 +53,7 @@ static void print_discrete_statistics (const MODEL *pmod,
 static void print_aicetc (const MODEL *pmod, PRN *prn);
 static void tex_print_aicetc (const MODEL *pmod, PRN *prn);
 static void rtf_print_aicetc (const MODEL *pmod, PRN *prn);
+static void print_garch_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_stats (const MODEL *pmod, PRN *prn);
 static void print_arma_roots (const MODEL *pmod, PRN *prn);
 static void print_tobit_stats (const MODEL *pmod, PRN *prn);
@@ -880,7 +881,8 @@ static void print_model_heading (const MODEL *pmod,
 		(tex)? vname : pmod->params[0]);
     }
     else { 
-	int v = (pmod->ci == ARMA)? pmod->list[4] : pmod->list[1];
+	int v = (pmod->ci == ARMA || pmod->ci == GARCH)? 
+	    pmod->list[4] : pmod->list[1];
 
 	if (tex) tex_escape(vname, pdinfo->varname[v]);
 	pprintf(prn, "%s: %s%s", 
@@ -1095,15 +1097,27 @@ static int print_coefficients (const MODEL *pmod, const DATAINFO *pdinfo, PRN *p
 {
     int i, err = 0, gotnan = 0;
     int n = pmod->ncoeff;
+    int gn = -1;
+
+    if (pmod->ci == GARCH) gn = pmod->list[0] - 4;
 
     for (i=0; i<n; i++) {
 	if (PLAIN_FORMAT(prn->format)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
 	    err = print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	else if (TEX_FORMAT(prn->format)) {
+	    if (i == gn) {
+		pputs(prn, "\\\\ \n");
+	    }
 	    err = tex_print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	else if (RTF_FORMAT(prn->format)) {
+	    if (i == gn) {
+		pputc(prn, '\n');
+	    }
 	    err = rtf_print_coeff(pdinfo, pmod, i + 2, prn);
 	}
 	if (err) gotnan = 1;
@@ -1239,7 +1253,7 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (prn->format != GRETL_PRINT_FORMAT_PLAIN) {
 	model_format_start(prn);
-    } else if (pmod->ci == ARMA || pmod->ci == TOBIT) {
+    } else if (pmod->ci == ARMA || pmod->ci == GARCH || pmod->ci == TOBIT) {
 	int iters = gretl_model_get_int(pmod, "iters");
 
 	if (iters > 0) {
@@ -1285,6 +1299,14 @@ int printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	print_middle_table_end(prn);
 	goto close_format;
     }
+
+    if (pmod->ci == GARCH) {
+	print_middle_table_start(prn);
+	depvarstats(pmod, prn);
+	print_garch_stats(pmod, prn);
+	print_middle_table_end(prn);
+	goto close_format;
+    }    
 
     if (pmod->aux == AUX_SUR) {
 	print_middle_table_start(prn);
@@ -1536,11 +1558,15 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
     } else if (pmod->ci == NLS || pmod->ci == ARMA) {
 	strcpy(varname, pmod->params[c-1]);
+    } else if (pmod->ci == GARCH) {
+	strcpy(varname, pmod->params[c]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
     }
 
-    if (pmod->ci == ARMA) {
+    if (pmod->ci == GARCH) {
+	pprintf(prn, "      %8s ", varname);
+    } else if (pmod->ci == ARMA) {
 	pprintf(prn, " %3d) %8s ", c - 1, varname);
     } else {
 	pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
@@ -1638,7 +1664,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     /* special treatment for ARCH model coefficients, NLS, ARMA */
     if (pmod->aux == AUX_ARCH) {
 	make_cname(pdinfo->varname[pmod->list[c]], varname);
-    } else if (pmod->ci == NLS || pmod->ci == ARMA) {
+    } else if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == GARCH) {
 	strcpy(varname, pmod->params[c-1]);
     } else {
 	strcpy(varname, pdinfo->varname[pmod->list[c]]);
@@ -1647,7 +1673,7 @@ static int rtf_print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
     pputs(prn, RTF_COEFF_ROW);
 
     pprintf(prn, " \\qr %d\\cell \\ql %s\\cell", 
-	    ((pmod->ci == ARMA)? c - 1 : pmod->list[c]), 
+	    ((pmod->ci == ARMA || pmod->ci == GARCH)? c - 1 : pmod->list[c]), 
 	    varname);
 
     if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
@@ -1940,6 +1966,22 @@ static void print_tobit_stats (const MODEL *pmod, PRN *prn)
 		I_("Censored observations"), cenpc);
 	tex_dcolumn_double(pmod->sigma, xstr);
 	pprintf(prn, "$\\hat{\\sigma}$ & %s \\\\\n", xstr);
+	tex_dcolumn_double(pmod->lnL, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+    }
+}
+
+static void print_garch_stats (const MODEL *pmod, PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+    }
+    else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+    }
+    else if (TEX_FORMAT(prn->format)) {
+	char xstr[32];
+
 	tex_dcolumn_double(pmod->lnL, xstr);
 	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
     }
