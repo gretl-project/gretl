@@ -520,7 +520,7 @@ static void r_print_model_tests (const MODEL *pmod, PRN *prn)
     int i;
 
     for (i=0; i<pmod->ntests; i++) {
-	pprintf(prn, "\\par %s -\\par\n"
+	pprintf(prn, "\\par \ql %s -\\par\n"
 		" Null hypothesis: %s\\par\n"
 		" Test statistic: %s\\par\n"
 		" with p-value = %s\\par\n\n",
