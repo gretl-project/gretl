@@ -2557,12 +2557,7 @@ linkend="looping"/> for details.
 
       <para>
 	<replaceable>datafile</replaceable> is the name of the file in
-	which the values should be stored. A header file
-	(<replaceable>datafile</replaceable>.<filename>hdr</filename>)
-	is also created, and if one or more of the variables has an
-	explanatory <quote>label</quote> defined, a labels file
-	(<replaceable>datafile</replaceable>.<filename>lbl</filename>)
-	is generated.
+	which the values should be stored. 
       </para>
 
       <para>
@@ -2571,10 +2566,9 @@ linkend="looping"/> for details.
       </para>
 
       <para>
-	By default storage is by observations, in native
-	<application>gretl</application> ASCII (plain text) format.
-	There are four valid (mutually exclusive)
-	<replaceable>flags</replaceable>:
+	By default storage is in native
+	<application>gretl</application> XML format.  There are six
+	valid (mutually exclusive) <replaceable>flags</replaceable>:
       </para>
 
       <informaltable frame="none">
@@ -2583,9 +2577,7 @@ linkend="looping"/> for details.
 	    <row>
 	      <entry><literal>-z</literal>
 	      </entry>
-	      <entry>The default format, but gzip compressed.  The
-		suffix <filename>.gz</filename> is automatically added
-		to the name of the data file.
+	      <entry>The default format, but gzip compressed.
 	      </entry>
 	    </row>
 	    <row>
@@ -2620,6 +2612,14 @@ linkend="looping"/> for details.
 	      <entry><literal>-m</literal>
 	      </entry>
 	      <entry>Store the data in GNU Octave format.
+	      </entry>
+	    </row>
+	    <row>
+	      <entry><literal>-t</literal>
+	      </entry>
+	      <entry>Store the data in <quote>traditional</quote> ESL
+		  format, with an ascii data file and a separate
+		  informative header file.
 	      </entry>
 	    </row>
 	  </tbody>

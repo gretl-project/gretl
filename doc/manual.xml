@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
           "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
-<!ENTITY version "0.97">
+<!ENTITY version "0.98">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
