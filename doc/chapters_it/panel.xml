@@ -296,7 +296,7 @@
       è un ricco dataset panel macroeconomico, che comprende 152 paesi
       sull'arco temporale 1950&ndash;1992. I dati sono disponibili in
       formato <application>gretl</application>: si veda la <ulink
-      url="http://ricardo.ecn.wfu.edu/gretl/gretl_data_it.html">pagina
+      url="http://gretl.sourceforge.net/gretl_data_it.html">pagina
       dei dati</ulink> di <application>gretl</application>
       (i dati sono liberamente scaricabili, anche se non sono
       distribuiti nel pacchetto principale di
