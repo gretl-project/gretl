@@ -784,6 +784,21 @@ void exec_line (char *line, PRN *prn)
 	}	
 	break;
 
+    case GARCH:
+	clear_model(models[0], NULL);
+	*models[0] = garch(cmd.list, (const double **) Z, datainfo, 
+			  (cmd.opt & OPT_V)? prn : NULL);
+	if ((err = (models[0])->errcode)) { 
+	    errmsg(err, prn); 
+	} else {	
+	    (models[0])->ID = ++model_count;
+	    printmodel(models[0], datainfo, prn);
+	    if (want_vcv(cmd.opt)) {
+		outcovmx(models[0], datainfo, !batch, prn);
+	    }	    
+	}	
+	break;
+
     case CHOW:
         if ((err = model_test_start(0, prn, 1))) break;
 	err = chow_test(line, models[0], &Z, datainfo, prn, NULL);

@@ -679,7 +679,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	linelen = strlen(line);
     }
 
-    if (command->ci == AR || command->ci == ARMA) ar = 1;
+    if (command->ci == AR || command->ci == ARMA ||
+	command->ci == GARCH) ar = 1;
 
     command->list = realloc(command->list, (1 + nf) * sizeof *command->list);
     if (command->list == NULL) {
@@ -794,7 +795,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* could be the separator between two sub-lists */
 	    if (command->ci == TSLS || command->ci == AR ||
 		command->ci == MPOLS || command->ci == SCATTERS ||
-		command->ci == ARMA) {
+		command->ci == ARMA || command->ci == GARCH) {
 		command->param = realloc(command->param, 4);
 		sprintf(command->param, "%d", j);
 		n += strlen(field) + 1;
@@ -866,8 +867,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->errcode = E_ARGS;
 
     if ((command->ci == AR || command->ci == TSLS || 
-	 command->ci == ARMA || command->ci == SCATTERS) 
-	&& strlen(command->param) == 0) {
+	 command->ci == ARMA || command->ci == SCATTERS ||
+	 command->ci == GARCH) && strlen(command->param) == 0) {
 	command->errcode = E_ARGS;
     }
 
@@ -1246,7 +1247,7 @@ void safe_print_line (const char *line, PRN *prn)
 
 #define hold_param(c) (c == TSLS || c == AR || c == ARMA || c == CORRGM || \
                        c == MPOLS || c == SCATTERS || c == GNUPLOT || \
-                       c == LOGISTIC)
+                       c == LOGISTIC || c == GARCH)
 
 void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line, 
 	       int batch, int gui, PRN *prn)
@@ -1285,7 +1286,9 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
     if (*line == '\0' || *line == '!' || !strcmp(line, "quit"))
 	return;
 
-    if (cmd->ci == AR || cmd->ci == ARMA) gotsep = 0;
+    if (cmd->ci == AR || cmd->ci == ARMA || cmd->ci == GARCH) {
+	gotsep = 0;
+    }
 
     /* command is preceded by a "savename" to which a object will
        be assigned */

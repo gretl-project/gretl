@@ -2932,15 +2932,19 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		    if (xx <= 0.0) xx = (*pZ)[nv][t];
 		    (*pZ)[nwt][t] = 1/sqrt(xx);
 		}
+
 		strcpy(pdinfo->varname[nwt], "1/sigma");
+
 		clear_model(&archmod, pdinfo);
 		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_D, 0.0);
+
 		if (model_count != NULL) {
 		    *model_count += 1;
 		    archmod.ID = *model_count;
 		} else {
 		    archmod.ID = -1;
 		}
+
 		archmod.ci = ARCH;
 		archmod.order = order;
 		printmodel(&archmod, pdinfo, prn);
@@ -2950,6 +2954,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (arlist != NULL) free(arlist);
     if (wlist != NULL) free(wlist);
+
     dataset_drop_vars(order + 1, pZ, pdinfo); 
 
     return archmod;
@@ -3140,3 +3145,38 @@ MODEL tobit_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 
     return tmod;
 }
+
+/**
+ * garch:
+ * @list: dependent variable plus arch and garch orders
+ * @Z: data matrix.
+ * @pdinfo: information on the data set.
+ * @PRN: for printing details of iterations (or NULL) 
+ *
+ * Calculate GARCH estimates.
+ * 
+ * Returns: a #MODEL struct, containing the estimates.
+ */
+
+MODEL garch (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
+{
+    MODEL gmod;
+    void *handle;
+    MODEL (*garch_model) (int *, const double **, DATAINFO *, PRN *);
+
+    *gretl_errmsg = '\0';
+
+    garch_model = get_plugin_function("garch_model", &handle);
+
+    if (garch_model == NULL) {
+	gretl_model_init(&gmod, NULL);
+	gmod.errcode = E_FOPEN;
+	return gmod;
+    }
+
+    gmod = (*garch_model) (list, Z, pdinfo, prn);
+
+    close_plugin(handle);
+
+    return gmod;
+} 

@@ -534,16 +534,27 @@ static void make_tmp_varnames (DATAINFO *ainfo, int p, int q, int r)
 }
 #endif
 
-static int adjust_sample (DATAINFO *pdinfo, const double *y,
-                          int p, int q, int r, int v,
+static int adjust_sample (DATAINFO *pdinfo, const double **Z, const int *list,
 			  int *arma_t1, int *arma_t2)
 {
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int p = list[1];
+    int q = list[2];
+    int r = list[0] - 4;
     int maxlag = (p > q)? p : q;
-    int an, t, t1min = 0;
+    int an, i, v, t, t1min = 0;
+    int anymiss;
 
     for (t=0; t<=pdinfo->t2; t++) {
-        if (na(y[t])) t1min++;
+	anymiss = 0;
+	for (i=4; i<=list[0]; i++) {
+	    v = list[i];
+	    if (na(Z[v][t])) {
+		anymiss = 1;
+		break;
+	    }
+	}
+	if (anymiss) t1min++;
         else break;
     }
 
@@ -551,19 +562,31 @@ static int adjust_sample (DATAINFO *pdinfo, const double *y,
     if (t1 < t1min) t1 = t1min;
 
     for (t=pdinfo->t2; t>=t1; t--) {
-        if (na(y[t])) t2--;
+	anymiss = 0;
+	for (i=4; i<=list[0]; i++) {
+	    v = list[i];
+	    if (na(Z[v][t])) {
+		anymiss = 1;
+		break;
+	    }
+	}
+	if (anymiss) t2--;
         else break;
     }
 
     for (t=t1-p; t<t2; t++) {
-        if (na(y[t])) {
-            char msg[64];
+	for (i=4; i<=list[0]; i++) {
+	    if (t < t1 && i > 4) continue;
+	    v = list[i];
+	    if (na(Z[v][t])) {
+		char msg[64];
 
-            sprintf(msg, _("Missing value encountered for "
+		sprintf(msg, _("Missing value encountered for "
                            "variable %d, obs %d"), v, t + 1);
-	    gretl_errmsg_set(msg);
-            return 1;
-        }
+		gretl_errmsg_set(msg);
+		return 1;
+	    }
+	}
     }
 
     an = t2 - t1 + 1;
@@ -613,7 +636,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
     r = list[0] - 4;
 
     /* adjust sample? */
-    if (adjust_sample(pdinfo, y, p, q, r, v, &arma_t1, &arma_t2)) {
+    if (adjust_sample(pdinfo, Z, list, &arma_t1, &arma_t2)) {
         armod.errcode = E_DATA;
         return armod;
     }

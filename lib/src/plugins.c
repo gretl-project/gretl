@@ -46,7 +46,8 @@ enum {
     P_ARMA,
     P_ARMA_X12,
     P_LOGISTIC,
-    P_TOBIT
+    P_TOBIT,
+    P_GARCH
 } plugin_codes;
 
 struct plugin_info {
@@ -81,7 +82,8 @@ struct plugin_info plugins[] = {
     { P_ARMA,            "arma" },
     { P_ARMA_X12,        "arma_x12" },
     { P_LOGISTIC,        "logistic" },
-    { P_TOBIT,           "tobit" }
+    { P_TOBIT,           "tobit" },
+    { P_GARCH,           "garch" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -144,6 +146,7 @@ struct plugin_function plugin_functions[] = {
     { "arma_x12_model",    P_ARMA_X12 },
     { "logistic_estimate", P_LOGISTIC },
     { "tobit_estimate",    P_TOBIT },
+    { "garch_model",       P_GARCH },
 
     /* sentinel */
     { NULL, 0 }

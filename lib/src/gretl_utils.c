@@ -828,6 +828,7 @@ int is_model_cmd (const char *s)
 	!strncmp(s, "logit", 5)  ||
 	!strncmp(s, "probit", 6) ||
 	!strncmp(s, "tobit", 5) ||
+	!strncmp(s, "garch", 5) ||
 	!strncmp(s, "logistic", 8) ||
 	!strncmp(s, "end nls", 7) ||
 	!strncmp(s, "arma", 4) ||
@@ -844,7 +845,8 @@ int is_model_cmd (const char *s)
                         c == HSK || c == ADD || c == LAD || \
                         c == OMIT || c == TSLS || c == LOGIT || \
                         c == PROBIT || c == TOBIT || c == ARMA || \
-                        c == AR || c == LOGISTIC || c == NLS)
+                        c == AR || c == LOGISTIC || c == NLS || \
+                        c == GARCH)
 
 int is_model_ref_cmd (int ci)
 {
@@ -890,6 +892,7 @@ struct gretl_opt gretl_opts[] = {
     { EQNPRINT, OPT_O, "complete" },
     { TABPRINT, OPT_O, "complete" },
     { FCASTERR, OPT_O, "plot" },
+    { GARCH,    OPT_V, "verbose" },
     { GNUPLOT,  OPT_O, "with-lines" },
     { GNUPLOT,  OPT_M, "with-impulses" },
     { GNUPLOT,  OPT_S, "suppress-fitted" },
@@ -1186,7 +1189,7 @@ int _list_dups (const int *list, int ci)
     if (ci == ARCH) start = 3;
 
     if (ci == TSLS || ci == AR || ci == ARMA || 
-	ci == SCATTERS || ci == MPOLS) {
+	ci == SCATTERS || ci == MPOLS || ci == GARCH) {
 	for (i=2; i<list[0]; i++) {
 	    if (list[i] == LISTSEP) {
 		start = i+1;
