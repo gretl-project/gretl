@@ -708,12 +708,8 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     char startmajstr[5], startminstr[3];
     int startmaj, startmin;
 
-    if (dated_daily_data(pdinfo)) {
-	long tmp = get_epoch_day(date);
-
-	if (tmp < 0) return -1;
-	else return (int) ((long) tmp - (long) pdinfo->sd0);
-    }
+    if (dated_daily_data(pdinfo)) 
+	return daily_obs_number(date, pdinfo);
 
     if (check_date(date)) return -1;
 

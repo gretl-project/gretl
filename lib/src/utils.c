@@ -1111,7 +1111,11 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 	    if (pmod->slope) free(pmod->slope);
 	}
 	if (pmod->ntests) free(pmod->tests);
-	if (pmod->data) free(pmod->data);
+	if (pmod->data) {
+	    MISSOBS *mobs = (MISSOBS *) pmod->data;
+	    free(mobs->missvec);
+	    free(pmod->data);
+	}
     }
     _init_model(pmod, pdinfo);
 
@@ -1660,6 +1664,9 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
     strcpy(fdatainfo.stobs, pdinfo->stobs);
     fdatainfo.t1 = pdinfo->t1;
+    fdatainfo.pd = pdinfo->pd;
+    fdatainfo.sd0 = pdinfo->sd0;
+    fdatainfo.time_series = pdinfo->time_series;
     fdatainfo.t2 = fn - 1;
     fdatainfo.varname = NULL;
     fdatainfo.label = NULL;
@@ -1669,10 +1676,9 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     list[0] = fv;
     for (i=1; i<=list[0]; i++) list[i] = i;
     if (pmod->ifc) list[list[0]] = 0;
-    /*  printlist(list); */
 
-    /* set entire new data matrix to zero */
-    for (i=0; i<fv; i++)
+    /* set new data matrix to zero */
+    for (i=1; i<fv; i++)
 	for (t=0; t<fn; t++) fZ[i][t] = 0.0;
     /* insert const at pos. 0 */
     for (t=0; t<fn; t++) fZ[0][t] = 1.0;
@@ -1694,14 +1700,12 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	}
     }
 
-#ifdef notdef
     /* check: print matrix */
     for (t=0; t<fn; t++) {
  	for (i=0; i<fv; i++)
- 	    printf("%.2f ", fZ[i][t]);
- 	putc('\n', stdout);
+ 	    fprintf(stderr, "%.2f ", fZ[i][t]);
+ 	putc('\n', stderr);
     }
-#endif
     
     _init_model(&fmod, &fdatainfo);
     fdatainfo.extra = 1;
@@ -1714,6 +1718,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	free(yhat);
 	free(sderr);
 	free(depvar);
+	fprintf(stderr, "forecasting model failed in fcast_with_errs()\n");
 	return err;
     }
 

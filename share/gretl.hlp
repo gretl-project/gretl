@@ -794,6 +794,8 @@ Examples of valid input:
   4 1990.1       Interpret the data as quarterly, starting in 1990, Q1
   12 1978.03     Interpret the data as monthly, starting in March 1978
   20 1.01        Data frequency 20, starting with obs 1.01 (panel data)
+  5 72/01/10     Daily data (5-day week), starting January 10, 1972
+  7 02/01/10     Daily data (7-day week), starting January 10, 2002
 
 #
 sim

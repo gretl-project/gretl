@@ -892,10 +892,19 @@ Usage:          setobs periodicity startobs
 Examples:       setobs 4 1990.1
                 setobs 12 1978.03
                 setobs 20 1.01
+
 Use this commmand to force the program to interpret the current data set as
 time series or panel, when the data have been read in as simple undated
-series.  "periodicity" must be an integer; "startobs" is a string 
-representing the date or panel ID of the first observation.  
+series.  "periodicity" must be an integer; "startobs" is a string representing
+the date or panel ID of the first observation.  Use one digit after the point
+in "startobs" for data with periodicity less than 10, two digits (with a
+leading zero if necessary) for periodicity from 10 to 99.
+
+In the case of daily data a special form of the "startobs" string is required,
+namely a date on the pattern YY/MM/DD, for example "55/02/15" if the data
+start on the 15th of February, 1955.  If the YY part is less than 50 the year
+is assumed to be in the 21st century, otherwise it is assumed to be in the
+20th century.  (With daily data, periodicity 5 and 7 are both acceptable.)
 
 #
 shell

@@ -361,11 +361,8 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
 
-    if (pmod->data != NULL) {
-	MISSOBS *mobs = (MISSOBS *) pmod->data;
-	
-	t2 += mobs->misscount;
-    }    
+    if (pmod->data != NULL) 
+	t2 += get_misscount(pmod);
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
@@ -1257,11 +1254,8 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
     int i, t2 = pmod->t2;
     char label[9], date1[9], date2[9]; 
 
-    if (pmod->data != NULL) {
-        MISSOBS *mobs = (MISSOBS *) pmod->data;
-        
-        t2 += mobs->misscount;
-    }     
+    if (pmod->data != NULL) 
+        t2 += get_misscount(pmod);
 
     ntodate(date1, pmod->t1, pdinfo);
     ntodate(date2, t2, pdinfo);
@@ -1651,11 +1645,8 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 
     depvar = pmod->list[1];
 
-    if (pmod->data != NULL) {
-        MISSOBS *mobs = (MISSOBS *) pmod->data;
-	
-	t2 += mobs->misscount;
-    }
+    if (pmod->data != NULL) 
+	t2 += get_misscount(pmod);
 
     sprintf(fcastline, "fcast %s %s fitted", pdinfo->stobs, 
 	    pdinfo->endobs);

@@ -27,6 +27,8 @@ typedef struct {
 
 long get_epoch_day (const char *date);
 
+int daily_obs_number (const char *date, const DATAINFO *pdinfo);
+
 void daily_date_string (char *str, int t, const DATAINFO *pdinfo);
 
 char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount);
@@ -36,5 +38,7 @@ int undo_repack_missing (double **Z, const DATAINFO *pdinfo,
 
 int repack_missing (double **Z, const DATAINFO *pdinfo, 
 		    const char *missvec, int misscount);
+
+int get_misscount (const MODEL *pmod);
 
 #endif /* _CALENDAR_H */ 

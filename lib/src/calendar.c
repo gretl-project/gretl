@@ -78,15 +78,6 @@ static int day_in_year (int day, int month, int year)
     return day;
 }
 
-static int day_in_week (int day, int month, int year)
-{
-    long temp;
-
-    temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
-	+ day_in_year(day, month, year);
-    return (((temp - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
-}
-
 long get_epoch_day (const char *date)
 {
     long temp;
@@ -100,6 +91,25 @@ long get_epoch_day (const char *date)
     temp = (long)(year - 1) * 365 + leap_years_since_year_1(year - 1)
 	+ day_in_year(day, month, year);
     return temp;
+}
+
+int daily_obs_number (const char *date, const DATAINFO *pdinfo)
+{
+    long ed0 = (long) pdinfo->sd0;
+    long tmp = get_epoch_day(date);
+
+    if (tmp == -1) return -1;
+
+    tmp -= ed0;
+    if (pdinfo->pd == 7) {
+	return (int) tmp;
+    } else { /* 5-day week */
+	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
+	int wkends = (tmp + startday - 1) / 7;
+
+	tmp -= (2 * wkends);
+	return (int) tmp;
+    }
 }
 
 static int t_to_epoch_day (int t, long start)
@@ -140,22 +150,9 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     sprintf(str, "%02d/%02d/%02d", yr-1900, mo, day);    
 }
 
-void get_date_from_x (double x)
-{
-    char s[8], yrstr[3], mostr[3], daystr[3];
-    int yr, mo, day;
-
-    sprintf(s, "%.4f", x);
-    sscanf(s, "%[^.].%2s%2s", yrstr, mostr, daystr);
-    yr = atoi(yrstr);
-    mo = atoi(mostr);
-    day = atoi(daystr);
-    printf("%02d/%02d/%02d\n", yr, mo, day);
-}
-
 /* The following functions have nothing to do with the "cal" program,
    but are specific to the handling of daily data so I put them in
-   here */
+   here.  AC. */
 
 char *missobs_vector (double **Z, const DATAINFO *pdinfo, int *misscount)
 {
@@ -249,4 +246,13 @@ int repack_missing (double **Z, const DATAINFO *pdinfo,
     return 0;
 }
 
+int get_misscount (const MODEL *pmod)
+{
+    if (pmod->data == NULL) return 0;
+    else {
+	MISSOBS *mobs = (MISSOBS *) pmod->data;
+
+	return mobs->misscount;
+    }
+}
 

@@ -84,7 +84,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
 		       int **pnewlist, const DATAINFO *pdinfo, 
 		       const int model_count);
 
-static int reorganize_uhat (MODEL *pmod) 
+static int reorganize_uhat_yhat (MODEL *pmod) 
 {
     int t, g;
     MISSOBS *mobs = (MISSOBS *) pmod->data;
@@ -93,6 +93,7 @@ static int reorganize_uhat (MODEL *pmod)
     tmp = malloc(pmod->nobs * sizeof *tmp);
     if (tmp == NULL) return 1;
 
+    /* first do uhat */
     for (t=0; t<pmod->nobs; t++)
 	tmp[t] = pmod->uhat[t];
 
@@ -101,6 +102,17 @@ static int reorganize_uhat (MODEL *pmod)
 	if (mobs->missvec[t - pmod->t1]) pmod->uhat[t] = NADBL;
 	else pmod->uhat[t] = tmp[g++];
     }
+
+    /* then yhat */
+    for (t=0; t<pmod->nobs; t++)
+	tmp[t] = pmod->yhat[t];
+
+    g = 0;
+    for (t=pmod->t1; t<=pmod->t2 + mobs->misscount; t++) {
+	if (mobs->missvec[t - pmod->t1]) pmod->yhat[t] = NADBL;
+	else pmod->yhat[t] = tmp[g++];
+    }
+
     free(tmp);
     return 0;
 }
@@ -181,9 +193,10 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	    char *missvec = missobs_vector(*pZ, pdinfo, &misscount);
 	    MISSOBS *mobs = NULL;
 
-	    if (missvec == NULL) ; /* handle error */
-	    else {
-		mobs = malloc(sizeof *mobs); /* check me!! */
+	    if (missvec == NULL || (mobs = malloc(sizeof *mobs)) == NULL) {
+		model.errcode = E_ALLOC;
+		return model;
+	    } else {
 		repack_missing(*pZ, pdinfo, missvec, misscount);
 		model.t2 -= misscount;
 		mobs->misscount = misscount;
@@ -325,7 +338,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
 	undo_repack_missing(*pZ, pdinfo, mobs->missvec,
 			    mobs->misscount);
-	reorganize_uhat(&model);
+	reorganize_uhat_yhat(&model);
     }
 
     return model;
@@ -1825,7 +1838,6 @@ MODEL ar_func (LIST list, const int pos, double ***pZ,
 
     _print_ar(&ar, prn);
 
-    /*  dataset_drop_vars(rholist[0] + reglist[0], pZ, pdinfo); */
     dataset_drop_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo);
     free(reglist);
     free(reglist2);
@@ -1964,7 +1976,7 @@ static int _lagdepvar (const int *list, const DATAINFO *pdinfo,
 	c = haschar('_', othervar);
 	if (c > 0 && isdigit(othervar[c+1]) 
 	    && strncmp(depvar, othervar, c-1) == 0) {
-	    /* strong candidate for lagged depvar -- but make sure */
+	    /* strong candidate for lagged depvar, but make sure */
 	    for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) 
 		if ((*pZ)[list[1]][t-1] 
 		    != (*pZ)[list[i]][t]) return 0;

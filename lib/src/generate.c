@@ -1374,8 +1374,7 @@ static int _getxvec (char *ss, double *xxvec,
 	    }	    
 	    for (i=0; i<pmod->t1; i++) xxvec[i] = NADBL;
 	    if (pmod->data != NULL) {
-		MISSOBS *mobs = (MISSOBS *) pmod->data;
-		int t2 = pmod->t2 + mobs->misscount;
+		int t2 = pmod->t2 + get_misscount(pmod);
 
 		for (i=pmod->t1; i<=t2; i++) xxvec[i] = pmod->uhat[i]; 
 		for (i=t2+1; i<n; i++) xxvec[i] = NADBL;
@@ -1432,19 +1431,28 @@ static void _lag (const char *ss, const int vi, double *xmvec, double **Z,
 		  const DATAINFO *pdinfo)
      /*  calculate lags and leads of variable  */
 {
-    register int i;
-    int lg;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2;
+    register int t;
+    int lg, t1 = pdinfo->t1, t2 = pdinfo->t2;
 
     lg = atoi(ss);
     if (lg > 0) {
-        for (i=t1; i<=t2-lg; i++) xmvec[i] = Z[vi][i+lg];
-        for (i=1+t2-lg; i<=t2; i++) xmvec[i] = NADBL;
+        for (t=t1; t<=t2-lg; t++) xmvec[t] = Z[vi][t+lg];
+        for (t=1+t2-lg; t<=t2; t++) xmvec[t] = NADBL;
     }
     if (lg < 0)  {
         lg = -lg;
-        for (i=t1+lg; i<=t2; i++) xmvec[i] = Z[vi][i-lg];
-        for (i=t1; i<=t1+lg-1; i++) xmvec[i] = NADBL;
+	if (dated_daily_data(pdinfo)) {
+	    int lagt;
+
+	    for (t=t1+lg; t<=t2; t++) {
+		lagt = t - lg;
+		while (lagt>=0 && na(Z[vi][lagt])) lagt--;
+		xmvec[t] = Z[vi][lagt];
+	    }
+	} else {
+	    for (t=t1+lg; t<=t2; t++) xmvec[t] = Z[vi][t-lg];
+	}
+        for (t=t1; t<=t1+lg-1; t++) xmvec[t] = NADBL;
     }
 }
 
@@ -1760,8 +1768,17 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
     for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     for (t=0; t<lag; t++) (*pZ)[v][t] = NADBL;
     t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
-    for (t=t1; t<=pdinfo->t2; t++) {
-        (*pZ)[v][t] = (*pZ)[iv][t-lag];
+    if (dated_daily_data(pdinfo)) {
+	int lagt;
+
+	for (t=t1; t<=pdinfo->t2; t++) {
+	    lagt = t - lag;
+	    while (lagt >= 0 && na((*pZ)[iv][lagt])) lagt--;
+	    (*pZ)[v][t] = (*pZ)[iv][lagt];
+	}
+    } else {
+	for (t=t1; t<=pdinfo->t2; t++) 
+	    (*pZ)[v][t] = (*pZ)[iv][t-lag];
     }
     strcpy(pdinfo->varname[v], s);
     sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
@@ -2548,6 +2565,8 @@ int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     i = pdinfo->v - 1;
     n = pdinfo->n;
+
+    if (pmod->data != NULL) t2 += get_misscount(pmod);
 
     for (t=0; t<t1; t++) (*pZ)[i][t] = NADBL;
     for (t=t2+1; t<n; t++) (*pZ)[i][t] = NADBL;

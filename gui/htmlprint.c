@@ -260,11 +260,8 @@ void h_printmodel (const MODEL *pmod, const DATAINFO *pdinfo,
 
     if (pmod->ci == CORC || pmod->ci == HILU) t1 += 1;
 
-    if (pmod->data) {
-	MISSOBS *mobs = (MISSOBS *) pmod->data;
-
-	t2 += mobs->misscount;
-    }
+    if (pmod->data) 
+	t2 += get_misscount(pmod);
 
     ncoeff = pmod->list[0];
     ntodate(startdate, t1, pdinfo);
