@@ -1916,18 +1916,19 @@ static void copy_compress (char *targ, const char *src, int len)
 static int plain_obs_number (const char *obs, const DATAINFO *pdinfo)
 {
     char *test;
-    int t;
+    int t = -1;
 
     errno = 0;
 
     strtol(obs, &test, 10);
-    if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
-        return -1;
-    }
 
-    t = atoi(obs);
-    if (t < 0 || t >= pdinfo->n) {
-        return -1;
+    if (*test != '\0' || !strcmp(obs, test) || errno == ERANGE) {
+	fprintf(stderr, "plain_obs_number: failed on '%s'\n", obs);
+    } else {
+	t = atoi(obs) - 1; /* convert to zero-based */
+	if (t < 0 || t >= pdinfo->n) {
+	    t = -1;
+	}
     } 
     
     return t;
@@ -1942,7 +1943,7 @@ static void get_genr_formula (char *formula, const char *line,
 
     if (line == NULL || *line == '\0') return;
 
-    /* skip over " genr " (or "eval") */
+    /* skip over any leading white space */
     while (isspace((unsigned char) *line)) line++;
 
     if (!strncmp(line, "eval", 4)) {

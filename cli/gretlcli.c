@@ -163,14 +163,12 @@ int model_test_start (int test_ci, int model_id, PRN *prn)
 	    pprintf(prn, _("Can't do this: there is no model %d\n"), model_id);
 	    err = 1;
 	}
-    }    
-    else if (!command_ok_for_model(test_ci, 
-				   model_ci_from_modelspec(modelspec, m))) {
+    } else if (!command_ok_for_model(test_ci, 
+				     model_ci_from_modelspec(modelspec, m))) {
 	pputs(prn, _("Sorry, command not available for this estimator"));
 	pputc(prn, '\n');
 	err = 1;
-    }
-    else if (model_sample_issue(NULL, modelspec, m, datainfo)) {
+    } else if (model_sample_issue(NULL, modelspec, m, datainfo)) {
 	pputs(prn, _("Can't do: the current data set is different from "
 		     "the one on which\nthe reference model was estimated\n"));
 	err = 1;

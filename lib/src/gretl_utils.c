@@ -522,8 +522,12 @@ void printlist (const int *list, const char *msg)
 	fprintf(stderr, "list: ");
     }
 
-    for (i=0; i<=list[0]; i++) {
-	fprintf(stderr, "%d ", list[i]);
+    if (list == NULL) {
+	fputs( "list is NULL", stderr);
+    } else {
+	for (i=0; i<=list[0]; i++) {
+	    fprintf(stderr, "%d ", list[i]);
+	}
     }
 
     fputc('\n', stderr);

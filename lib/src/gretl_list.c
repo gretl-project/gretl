@@ -160,6 +160,55 @@ int *gretl_list_add (const int *orig, const int *add, int *err)
 }
 
 /**
+ * gretl_list_omit_last:
+ * @orig: original list.
+ * @err: pointer to receive error code.
+ *
+ * creates a list containing all but the last elements of @orig.
+ *
+ * Returns: new list on success, %NULL on error.
+ * 
+ */
+
+int *gretl_list_omit_last (const int *orig, int *err)
+{
+    int *list = NULL;
+    int i;
+
+    *err = 0;
+
+    if (orig[0] < 2) {
+	*err = E_NOVARS;
+    }
+
+    /* can't handle compound lists */
+    if (*err == 0) {
+	for (i=1; i<=orig[0]; i++) {
+	    if (orig[i] == LISTSEP) {
+		*err = 1;
+		break;
+	    }
+	}
+    }
+
+    if (*err == 0) {
+	list = malloc(orig[0] * sizeof *list);
+	if (list == NULL) {
+	   *err = E_ALLOC;
+	} 
+    }
+    
+    if (list != NULL) {
+	list[0] = orig[0] - 1;
+	for (i=1; i<orig[0]; i++) {
+	    list[i] = orig[i];
+	}
+    }
+
+    return list;
+}
+
+/**
  * gretl_list_omit:
  * @orig: original list.
  * @omit: list of variables to drop.

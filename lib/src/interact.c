@@ -908,6 +908,14 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *cmd,
 	return;
     }
 
+    /* ... or "omit" without args (omit last var) */
+    if (cmd->ci == OMIT && nf == 0) {
+	free(cmd->list);
+	cmd->list = NULL;
+	cmd->nolist = 1;
+	return;
+    }
+
     remainder = calloc(linelen - n + 1, 1);
     if (remainder == NULL) {
 	cmd->errcode = E_ALLOC;

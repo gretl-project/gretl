@@ -182,6 +182,10 @@ int ok_in_loop (int ci, const LOOPSET *loop)
 	return 1;
     }
 
+    if (ci == ADD || ci == OMIT) {
+	return 1;
+    }
+
     return 0;
 }
 
@@ -2288,6 +2292,29 @@ int loop_exec (LOOPSET *loop, char *line,
 		    lastmod = models[0];
 		}
 		break;
+
+		
+	    case ADD:
+	    case OMIT:
+		/* FIXME: this needs work, and should only be allowed
+		   under certain conditions */
+		clear_model(models[1]);
+		if (cmd.ci == ADD || cmd.ci == ADDTO) {
+		    err = add_test(cmd.list, models[0], models[1], 
+				   pZ, *ppdinfo, cmd.opt, prn);
+		} else {
+		    err = omit_test(cmd.list, models[0], models[1],
+				    pZ, *ppdinfo, cmd.opt, prn);
+		}
+		if (err) {
+		    errmsg(err, prn);
+		    clear_model(models[1]);
+		} else {
+		    swap_models(&models[0], &models[1]);
+		    lastmod = models[0];
+		    clear_model(models[1]);
+		}
+		break;	
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {

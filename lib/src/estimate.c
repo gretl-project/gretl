@@ -912,6 +912,10 @@ static void compute_r_squared (MODEL *pmod, double *y)
 		1 - ((1 - pmod->rsq) * (pmod->nobs - 1) / pmod->dfd);
 	} 
     }
+
+    if (pmod->rsq < 0.0) {
+	pmod->rsq = 0.0;
+    }
 }
 
 /*

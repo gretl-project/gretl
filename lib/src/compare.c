@@ -438,6 +438,10 @@ int add_test (int *addvars, MODEL *orig, MODEL *new,
     const int orig_nvar = pdinfo->v; 
     int err = 0;
 
+    if (orig == NULL || orig->list == NULL) {
+	return 1;
+    }
+
     if (!command_ok_for_model(ADD, orig->ci)) {
 	return E_NOTIMP;
     }
@@ -636,8 +640,13 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     int maxlag = 0, t1 = pdinfo->t1;
     int err = 0;
 
-    if (!command_ok_for_model(OMIT, orig->ci))
+    if (orig == NULL || orig->list == NULL) {
+	return 1;
+    }
+
+    if (!command_ok_for_model(OMIT, orig->ci)) {
 	return E_NOTIMP;
+    }
 
     /* check that vars to omit have not been redefined */
     if ((err = list_members_replaced(orig->list, pdinfo, orig->ID))) {
@@ -645,7 +654,13 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
     }
 
     /* create list for test model */
-    tmplist = gretl_list_omit(orig->list, omitvars, &err);
+    if (omitvars == NULL) {
+	/* special: just drop the last variable */
+	tmplist = gretl_list_omit_last(orig->list, &err);
+    } else {
+	tmplist = gretl_list_omit(orig->list, omitvars, &err);
+    }
+
     if (tmplist == NULL) {
 	return err;
     }
@@ -682,7 +697,7 @@ int omit_test (int *omitvars, MODEL *orig, MODEL *new,
 	    printmodel(new, pdinfo, opt, prn); 
 	}	
 
-	if (new->nobs == orig->nobs) {
+	if (new->nobs == orig->nobs && omitvars != NULL) {
 	    struct COMPARE cmp;
 
 	    cmp = add_or_omit_compare(orig, new, 0);
