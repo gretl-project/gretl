@@ -214,8 +214,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
     netfloat nf;
 #endif
     
-    if ((getbuf = mymalloc(8192)) == NULL)
-        return 1;
+    if ((getbuf = mymalloc(8192)) == NULL) return 1;
     clear(getbuf, 8192);
 
     update_statusline(dbdat, _("Retrieving data..."));
@@ -229,11 +228,13 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 
     if (err) {
         if (strlen(errbuf)) {
-	    if (errbuf[strlen(errbuf)-1] == '\n')
+	    if (errbuf[strlen(errbuf)-1] == '\n') {
 		errbuf[strlen(errbuf)-1] = 0;
+	    }
 	    update_statusline(dbdat, errbuf);
-	} else 
+	} else {
 	    update_statusline(dbdat, _("Error retrieving data from server"));
+	}
 	free(getbuf);
 	return err;
     } 
@@ -255,6 +256,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         sprintf(numstr, "%g", val); 
         (*pZ)[1][t] = atof(numstr);
     }
+
     update_statusline(dbdat, "OK");
     free(getbuf);
 
@@ -1318,8 +1320,9 @@ void open_db_list (GtkWidget *w, gpointer data)
     if (strcmp(fname + n - 4, ".rat") == 0) {
 	action = RATS_SERIES;
 	build_path(paths.ratsbase, fname, dbfile, NULL);
-    } else 
+    } else {
 	build_path(paths.binbase, fname, dbfile, NULL);
+    }
 
     g_free(fname);
     display_db_series_list(action, dbfile, NULL); 
@@ -1492,6 +1495,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     gchar *dbname;
     windata_t *win = (windata_t *) data;
     char *ggzname, errbuf[80];
+    FILE *fp;
     int err;
 
     tree_view_get_string(GTK_TREE_VIEW(win->listbox), 
@@ -1503,6 +1507,18 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     if (ggzname == NULL) return;
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
+    fp = fopen(ggzname, "w");
+    if (fp == NULL) {
+	gchar *errstr;
+
+	errstr = g_strdup_printf(_("Couldn't open %s for writing"), ggzname);
+	errbox(errstr);
+	g_free(errstr);
+	free(ggzname);
+	return;
+    } else {
+	fclose(fp);
+    }
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
@@ -1602,9 +1618,10 @@ gint populate_dbfilelist (windata_t *win)
     store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(win->listbox)));
     gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 
-    if (win->role == RATS_DB)
+    if (win->role == RATS_DB) {
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(win->listbox),
 					  FALSE);
+    }
 
     i = 0;
     while ((dirent = readdir(dir)) != NULL) {

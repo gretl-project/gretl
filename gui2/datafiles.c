@@ -504,14 +504,17 @@ gint populate_filelist (windata_t *fdata)
 {
     gint a = fdata->role;
 
-    if (a == NATIVE_DB || a == RATS_DB)
+    if (a == NATIVE_DB || a == RATS_DB) {
 	return populate_dbfilelist(fdata);
+    }
 
-    if (a == REMOTE_DB)
+    if (a == REMOTE_DB) {
 	return populate_remote_db_list(fdata);
+    }
 
-    if (a == RAMU_PS || a == GREENE_PS || a == PWT_PS) 
+    if (a == RAMU_PS || a == GREENE_PS || a == PWT_PS) {
 	return read_ps_descriptions(fdata);
+    }
 
     return read_data_descriptions(fdata);
 }

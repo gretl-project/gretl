@@ -2307,10 +2307,16 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
  
     printfreq(freq, prn);
-    free_freq(freq);
 
     view_buffer(prn, 77, 300, _("gretl: residual dist."), TESTUHAT,
 		NULL);
+
+    /* show the graph too */
+    if (plot_freq(freq, &paths, NORMAL) == 0) {
+	register_graph();
+    }
+
+    free_freq(freq);
 }
 
 /* ........................................................... */

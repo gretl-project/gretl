@@ -558,6 +558,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 	if (fp == NULL) {
 	    close(sock);
 	    free(all_headers);
+	    fprintf(stderr, "Couldn't open local file\n");
 	    return FOPENERR;
 	}
     } else 

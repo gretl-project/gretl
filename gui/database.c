@@ -1455,6 +1455,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     windata_t *mydata = (windata_t *) data;
     char *ggzname, errbuf[80];
     int err;
+    FILE *fp;
 
     gtk_clist_get_text(GTK_CLIST(mydata->listbox), 
 		       mydata->active_var, 0, &dbname);
@@ -1464,6 +1465,18 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     }
 
     build_path(paths.binbase, dbname, ggzname, ".ggz");
+    fp = fopen(ggzname, "w");
+    if (fp == NULL) {
+	gchar *errstr;
+
+	errstr = g_strdup_printf(_("Couldn't open %s for writing"), ggzname);
+	errbox(errstr);
+	g_free(errstr);
+	free(ggzname);
+	return;
+    } else {
+	fclose(fp);
+    }
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     err = retrieve_url(GRAB_NBO_DATA, dbname, NULL, 1, &ggzname, errbuf);
