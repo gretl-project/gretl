@@ -3051,7 +3051,7 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 
 static void win_show_error (void)
 {
-    LPVOID lpMsgBuf;
+    LPVOID buf;
 
     FormatMessage( 
 		  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
@@ -3060,12 +3060,12 @@ static void win_show_error (void)
 		  NULL,
 		  GetLastError(),
 		  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		  (LPTSTR) &lpMsgBuf,
+		  (LPTSTR) &buf,
 		  0,
 		  NULL 
 		  );
-    MessageBox(NULL, (LPCTSTR)lpMsgBuf, "Error", MB_OK | MB_ICONINFORMATION);
-    LocalFree(lpMsgBuf);
+    MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
+    LocalFree(buf);
 }
 
 static int get_latex_path (char *latex_path)
@@ -3078,7 +3078,7 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
-int winfork (const char *cmdline, const char *dir, int wshow)
+int winfork (char *cmdline, const char *dir, int wshow)
 {
     int child;
     STARTUPINFO si;

@@ -446,7 +446,7 @@ int corrgram (const int varno, const int order, double ***pZ,
 	fprintf(fq, "%f %f\n", l + .1, pacf[l-1]);
     fprintf(fq, "e\n");
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fq, "pause -1\n");
 #endif
     fclose(fq);

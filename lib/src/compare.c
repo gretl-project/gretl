@@ -981,7 +981,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	    }
 	    fprintf(fq, "e\n");
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
 	    fprintf(fq, "pause -1\n");
 #endif
 	    fclose(fq);

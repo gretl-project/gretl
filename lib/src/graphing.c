@@ -479,18 +479,24 @@ int gnuplot_display (const PATHS *ppaths)
     int err = 0;
     char plotcmd[MAXLEN];
 
-#ifdef OS_WIN32
-    sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
-#else
-# ifdef GNUPLOT_PNG
+#ifdef GNUPLOT_PNG
+# ifdef OS_WIN32
+    sprintf(plotcmd, "%s \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) err = 1;
+# else
     sprintf(plotcmd, "%s%s \"%s\"", ppaths->gnuplot, 
 	    (GRETL_GUI(ppaths))? "" : " -persist", ppaths->plotfile);
+    if (system(plotcmd)) err = 1;
+# endif /* OS_WIN32 */
+#else  
+# ifdef OS_WIN32
+    sprintf(plotcmd, "%s \"%s\"", ppaths->gnuplot, ppaths->plotfile);
+    if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
 # else
     sprintf(plotcmd, "%s -persist \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-# endif /* GNUPLOT_PNG */
     if (system(plotcmd)) err = 1;
-#endif /* OS_WIN32 */
+# endif /* OS_WIN32 */
+#endif /* GNUPLOT_PNG */
     return err;
 }
 
@@ -768,7 +774,7 @@ int gnuplot (LIST list, const int *lines,
 	}
     }
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fq, "pause -1\n");
 #endif
     fclose(fq);
@@ -873,7 +879,7 @@ int multi_scatters (const LIST list, const int pos, double ***pZ,
 
     } 
     fprintf(fp, "set nomultiplot\n");
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "\npause -1\n");
 #endif
     fclose(fp);
@@ -985,7 +991,7 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
 	fprintf(fp, "%f %f\n", freq->midpt[i], lambda * freq->f[i]);
     fprintf(fp, "e\n");
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "pause -1\n");
 #endif
     if (fp) fclose(fp);
@@ -1021,7 +1027,7 @@ int plot_fcast_errs (const int n, const double *obs,
 	fprintf(fp, "%f %f %f\n", obs[t], yhat[t], maxerr[t]);
     fprintf(fp, "e\n");
 
-#ifdef OS_WIN32
+#if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fprintf(fp, "pause -1\n");
 #endif
     fclose(fp);
