@@ -760,7 +760,7 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
     case ADF:
     case COINT:
 	order = atoi(cmd.param);
-	if (!order) {
+	if (!order && strcmp(cmd.param, "0")) {
 	    errbox((action == ADF)? 
 		   _("Couldn't read ADF order") :
 		   _("Couldn't read cointegration order"));
