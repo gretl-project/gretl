@@ -757,6 +757,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     if (SAVE_DATA_ACTION(action)) {
 	int overwrite = 0;
 
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	if (!strcmp(fname, paths.datfile)) overwrite = 1;
 	do_store(fname, action_to_flag(action), overwrite);
     }
@@ -764,6 +765,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	int err = 0;
 	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
 
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	err = go_gnuplot(plot, fname, &paths);
 	if (err == 0) infobox(_("graph saved"));
 	else if (err == 1) errbox(_("gnuplot command failed"));
@@ -773,12 +775,14 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
 
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	save_this_graph(plot, fname);
     }
 # else
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = g_object_get_data(G_OBJECT(fs), "graph");
-	
+
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	do_save_graph(fname, savestr);
     } 
 # endif
@@ -787,6 +791,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	err = ps_print_plots(fname, action,
 			     g_object_get_data(G_OBJECT(fs), "graph"));
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	if (!err) infobox(_("boxplots saved"));
 	else errbox(_("boxplot save failed"));
     }
@@ -794,29 +799,32 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	int err;
 
 	err = plot_to_xpm(fname, g_object_get_data(G_OBJECT(fs), "graph"));
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	if (!err) infobox(_("boxplots saved"));
 	else errbox(_("boxplot save failed"));
     }
     else if (action == SAVE_SESSION) {
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	save_session(fname);
     }
     else if (SAVE_TEX_ACTION(action)) {
-	MODEL *pmod;
-	pmod = (MODEL *) g_object_get_data(G_OBJECT(fs), "model");
+	MODEL *pmod = (MODEL *) g_object_get_data(G_OBJECT(fs), "model");
+
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	do_save_tex(fname, action, pmod); 
     }
     else if (action == SET_PATH) {
 	char *strvar = g_object_get_data(G_OBJECT(fs), "text");
 
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	filesel_set_path_callback(fname, strvar);
     }
     else {
 	windata_t *vwin = g_object_get_data(G_OBJECT(fs), "text");
 
+	gtk_widget_destroy(GTK_WIDGET(fs));
 	save_editable_content(action, fname, vwin);
     }
-
-    gtk_widget_destroy(GTK_WIDGET(fs));    
 }
 
 /* ........................................................... */
