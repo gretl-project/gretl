@@ -1726,14 +1726,15 @@ static void foreach_delete_icons (gui_obj *gobj, gpointer p)
 static GdkColor *get_white (void)
 {
     GdkColormap *cmap;
-    static GdkColor *white;
+    GdkColor *white;
 
-    if (white == NULL) {
-	white = malloc(sizeof *white);
-	cmap = gdk_colormap_get_system();
-	gdk_color_parse("white", white);
-	gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
-    }
+    white = mymalloc(sizeof *white);
+    if (white == NULL) return NULL;
+
+    cmap = gdk_colormap_get_system();
+    gdk_color_parse("white", white);
+    gdk_colormap_alloc_color(cmap, white, FALSE, TRUE);
+
     return white;
 }
 
@@ -1742,10 +1743,14 @@ static GdkColor *get_white (void)
 static void white_bg_style (GtkWidget *widget, gpointer data)
 {
      GtkRcStyle *rc_style;
-     GdkColor *color = get_white();
+     static GdkColor *white;
+
+     if (white == NULL) {
+	 white = get_white();
+     }
 
      rc_style = gtk_rc_style_new();
-     rc_style->bg[GTK_STATE_NORMAL] = *color;
+     rc_style->bg[GTK_STATE_NORMAL] = *white;
      rc_style->color_flags[GTK_STATE_NORMAL] |= GTK_RC_BG;
 
      gtk_widget_modify_style(widget, rc_style);
@@ -1756,7 +1761,13 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
 
 static void white_bg_style (GtkWidget *widget, gpointer data)
 {
-    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, get_white());
+    static GdkColor *white;
+
+    if (white == NULL) {
+	white = get_white();
+    }
+
+    gtk_widget_modify_bg(widget, GTK_STATE_NORMAL, white);
 }
 
 #endif /* OLD_GTK */
@@ -1764,10 +1775,6 @@ static void white_bg_style (GtkWidget *widget, gpointer data)
 
 static void real_pack_icon (gui_obj *gobj, int row, int col)
 {
-#ifndef OLD_GTK
-    GdkColor *white = get_white();
-#endif
-
     gobj->row = row;
     gobj->col = col;
 
@@ -1776,11 +1783,7 @@ static void real_pack_icon (gui_obj *gobj, int row, int col)
 		      GTK_EXPAND, GTK_FILL, 5, 5);
     gtk_widget_show(gobj->icon);
 
-#ifdef OLD_GTK
     white_bg_style(gobj->icon, NULL);
-#else
-    gtk_widget_modify_bg(gobj->icon, GTK_STATE_NORMAL, white);
-#endif
 
     gtk_table_attach (GTK_TABLE(icon_table), gobj->label,
 		      col, col + 1, row + 1, row + 2,
@@ -2891,12 +2894,14 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	gobj->sort == 'v' || gobj->sort == 'b') { 
 	gobj->label = gtk_entry_new();
-	/* on gtk 2.0.N, the text is not going into the selected font */
+	gtk_widget_show(gobj->label);
+	/* on gtk 2.0.N, the text is/was not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
 	gtk_entry_set_max_length(GTK_ENTRY(gobj->label), OBJNAMLEN);
 	size_name_entry(gobj->label, gobj->name);
+	gtk_widget_hide(gobj->label);
 	g_signal_connect(G_OBJECT(gobj->label), "button-press-event",
 			 G_CALLBACK(start_rename_object), gobj);
 	g_signal_connect(G_OBJECT(gobj->label), "key-press-event",

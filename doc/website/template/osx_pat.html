@@ -12,39 +12,17 @@ HREF="./css-gretl.html">
 <h1>Installing gretl on Mac OS X</h1>
 </center>
 
-<p>Gretl's graphical interface uses the GTK libraries.  To run gretl on
-Mac OS X it is necessary to have the GTK libraries available.  There
-are a couple of projects underway which aim to provide a "native" OS X
-implementation of GTK, but neither is yet at a stage that is suitable
-for production work.  At present the only way to run gretl on OS X is
-to use an X11 ("X Window system") version of GTK.</p>
+<p>The simple way, if it works for you, is to install gretl from
+an OS X disk image, 
+<a href="ftp://ricardo.ecn.wfu.edu/pub/gretl/gretl.dmg">gretl.dmg</a>.
+This has been tested on OS X v10.2.4, but not on OS X 10.3 "Panther".
+The package depends upon Apple's X11 (their port to the Mac of the
+X Window system).</p>
 
-<h2>Basic prerequisites</h2>
-
-<p>My own experience with building gretl for OS X is based on the following
-setup:</p>
-
-<ol>
-
-<li><p class="in-list">OS X "Jaguar" version 10.2.4.
-   See <a href="http://www.apple.com/macosx/">http://www.apple.com/macosx/</a>.</p></li>
-<li><p class="in-list">The Apple/XFree86 X11 implementation for the
-   Mac ("beta3"), which is or was available from 
-   <a
-  href="http://www.apple.com/macosx/x11/download/">http://www.apple.com/macosx/x11/download/</a>
-   (SDK files as well as the runtime ones).</p></li>
-<li><p class="in-list">Fink, which provides basic unix and package
-   management functionality that is not provided by OS X or the Apple
-   X11 distribution.  It is available from
-   <a
-  href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p></li>
-</ol>
-
-<p>With the release of OS X 10.3 "Panther", my information has become a little
-dated.  I don't have Panther to experiment on, so if you successfully build gretl on
-Panther please let me know if there are significant differences.  If anyone is
-willing to give me a temporary login, via ssh, to a machine running Panther, I'll
-to happy to do a test build and update these notes accordingly.</p>
+<p>Otherwise you can build gretl from source yourself.  This requires,
+in addition to Apple's X11, the Fink package, available from
+<a
+  href="http://fink.sourceforge.net/download/">http://fink.sourceforge.net/download/</a>.</p>
 
 <h2>Required fink packages</h2>
   
@@ -191,34 +169,6 @@ sudo make install
 
 <p>You should now be able to run gretl by typing "gretl" at the command
 prompt in an xterm (launched by starting up Apple's X11).</p>
-
-<h2>Provisional gretl info file for Fink</h2>
-
-<p>gretl-VERSION-1.info:</p>
-
-<pre>
-Package: gretl
-Version: VERSION
-Revision: 1
-Maintainer: Allin Cottrell <cottrell@wfu.edu>
-Description: GNU Econometrics package
-Homepage: http://gretl.sourceforge.net/
-DescDetail: <<
-gretl is an econometrics package. It comprises a shared library,
-a command-line client and a gui client that uses GTK.  gretl offers
-several least-squares based estimators.  Besides reading data files
-in its own format it also reads RATS 4 databases.  It has a built-in
-spreadsheet for editing data, and uses gnuplot for graphing.  It can
-output regression results in LaTeX format.
-<<
-License: GPL
-Depends: gtk+2-shlibs, libxml2-shlibs, gmp-shlibs, dlcompat-shlibs, readline-shlibs, gnuplot (>= 3.8i.0-2)
-BuildDepends: gtk+2-dev, libxml2, gmp, dlcompat-dev, readline, recode (>=3.6)
-Source: ftp://ricardo.ecn.wfu.edu/pub/gretl/%n-%v.tar.bz2
-setCFLAGS: -Wno-long-double -g -O2
-DocFiles: README COPYING NEWS INSTALL
-ConfigureParams: --disable-png-comments --with-gmp-prefix=%p --with-readline-prefix=%p --with-libintl-prefix=%p --with-iconv-prefix=%p
-</pre>
 
 </body>
 </html>

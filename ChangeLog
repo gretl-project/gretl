@@ -1,5 +1,6 @@
-version 1.2.7
+6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
+- update Spanish helpfiles 
 - add start-up option "-e" or "--english" to force use of
   English strings when LANG would indicate translation
   (also recognize environment variable GRETL_LANG: if this
@@ -18,6 +19,7 @@ version 1.2.7
   2.0.X versions
 - fix various bug and typos in documentation
 - build tweaks for OS X
+- make available a pre-built disk image for OS X
 
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the

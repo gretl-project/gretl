@@ -14,6 +14,7 @@ fi
 cp $SRCDIR/ChangeLog .
 cp $SRCDIR/doc/manual.pdf .
 cp $SRCDIR/doc/manual-a4.pdf .
+cp $SRCDIR/doc/cmdbook_it.pdf .
 
 newlong=`date`
 newshort=`date +"%b %e, %Y"`

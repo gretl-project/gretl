@@ -93,9 +93,7 @@ add_file ${TOPDIR}/gui2/gnuplot.lang \
 # help files, license, logo
 add_file ${TOPDIR}/share/gretl.hlp gretl/gretl_hlp.txt
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt
-add_file ${TOPDIR}/share/gretl.hlp.it gretl/gretl_hlp_it.txt
-add_file ${TOPDIR}/share/gretlcli.hlp.it gretl/gretlcli_hlp_it.txt
-for lang in es ; do
+for lang in es it ; do
    $RECODE l1..utf-8 < ${TOPDIR}/share/gretl.hlp.$lang \
        > ${TOPDIR}/share/gretl_hlp_${lang}.txt
    add_file ${TOPDIR}/share/gretl_hlp_${lang}.txt \
