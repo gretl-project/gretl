@@ -25,7 +25,7 @@
 #include "internal.h"
 
 static int _cstack (double *xstack, const double *xxvec, const char op, 
-		    const DATAINFO *pdinfo, GENERATE *genr);
+		    const DATAINFO *pdinfo);
 static int _domath (double *xxvec, const double *xmvec, const int nt, 
 		    const DATAINFO *pdinfo, int *scalar);
 static int _evalexp (char *ss, double *xmvec, double *xxvec, 
@@ -51,8 +51,8 @@ static double _genr_cov (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo);
 static double _genr_corr (const char *str, double ***pZ,
 			  const DATAINFO *pdinfo);
-static double _genr_vcv (const char *str, double ***pZ, 
-			 const DATAINFO *pdinfo, MODEL *pmod);
+static double _genr_vcv (const char *str, const DATAINFO *pdinfo, 
+			 MODEL *pmod);
 static void _genr_msg (GENERATE *pgenr, const int nv);
 static int _ismatch (const int lv, const int *list);
 static void _varerror (const char *ss);
@@ -632,7 +632,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 	    printf("_getvar: op1 = %d, s = \"%s\"\n", op1, s);
 	    printf("genr.xvec[1] = %f\n", genr.xvec[1]);
 #endif
-            if (_cstack(mystack, genr.xvec, op0, pdinfo, &genr)) {
+            if (_cstack(mystack, genr.xvec, op0, pdinfo)) {
 		genr.errcode = E_UNSPEC; 
 		_genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 		return genr;
@@ -803,7 +803,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			break;
 		    }
 		    if (nt == T_VCV) {
-			xx = _genr_vcv(sexpr, pZ, pdinfo, pmod);
+			xx = _genr_vcv(sexpr, pdinfo, pmod);
 			if (na(xx)) {
 			    genr.errcode = E_INVARG;
 			    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
@@ -909,7 +909,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 /* ............................................................ */
 
 static int _cstack (double *xstack, const double *xxvec, const char op, 
-		    const DATAINFO *pdinfo, GENERATE *genr)
+		    const DATAINFO *pdinfo)
      /*  calculate stack vector  */
 {
     register int i;
@@ -1210,7 +1210,7 @@ static int _evalexp (char *ss, double *xmvec, double *xxvec,
 	if (op2 == '\0' || is_operator(op2)) {
 	    ig = _getxvec(s3, xmvec, Z, pdinfo, pmod, &genr->scalar);
 	    if (ig != 0) return ig;
-	    _cstack(xxvec, xmvec, op3, pdinfo, genr);
+	    _cstack(xxvec, xmvec, op3, pdinfo);
 	    op3 = op2;
         }
     } while (strlen(ss) > 0);
@@ -1781,8 +1781,9 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 	    (*pZ)[v][t] = (*pZ)[iv][t-lag];
     }
     strcpy(pdinfo->varname[v], s);
-    sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
-	    pdinfo->varname[iv], lag);
+    if (opt) 
+	sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
+		pdinfo->varname[iv], lag);
 
     return 0;
 }
@@ -1937,7 +1938,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	v = list[i];
 	if (v == 0) continue; /* dont try to take log of constant */
 	/* and don't try to take the log of a dummy variable */
-	if (isdummy(v, pdinfo->t1, pdinfo->t2, *pZ, pdinfo->n))
+	if (isdummy(v, pdinfo->t1, pdinfo->t2, *pZ))
 	    continue;
 	if (v < nvar)  { 
 	    le_zero = 0;
@@ -2088,7 +2089,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
     terms = 0;
     for (i=1; i<=l0; i++) {
 	li = list[i];
-	if (!isdummy(li, 0, n-1, *pZ, n)) {
+	if (!isdummy(li, 0, n-1, *pZ)) {
 	    for (t=0; t<n; t++) (*pZ)[v+terms][t] = NADBL;
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 		zi = (*pZ)[li][t];
@@ -2298,8 +2299,8 @@ static double _genr_corr (const char *str, double ***pZ,
 
 /* ...................................................... */
 
-static double _genr_vcv (const char *str, double ***pZ, 
-			 const DATAINFO *pdinfo, MODEL *pmod)
+static double _genr_vcv (const char *str, const DATAINFO *pdinfo, 
+			 MODEL *pmod)
 {
     int i, j, k, n, n2, nv, p, v1, v2, v1l, v2l;
     char v1str[9], v2str[9];

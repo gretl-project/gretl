@@ -104,8 +104,7 @@ enum flagvals {
  
 double date (const int nt, const int pd, const double sd0);
 
-int isdummy (const int varnum, const int t1, const int t2, 
-	     double **Z, const int n);
+int isdummy (const int varnum, const int t1, const int t2, double **Z);
 
 void printlist (const int *list, const char *msg);
 

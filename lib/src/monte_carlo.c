@@ -416,8 +416,7 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
  * Returns: 0 on successful completion.
  */
 
-int update_loop_model (LOOPSET *ploop, const int cmdnum,
-		       MODEL *pmod, const DATAINFO *pdinfo)
+int update_loop_model (LOOPSET *ploop, const int cmdnum, MODEL *pmod)
 {
     int j, i = get_modnum_by_cmdnum(ploop, cmdnum);
     LOOP_MODEL *plmod;

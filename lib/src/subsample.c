@@ -190,7 +190,7 @@ int set_sample_dummy (const char *line,
 	    sprintf(gretl_errmsg, _("Variable '%s' not defined"), dumv);
 	    return 1;
 	} 
-	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
+	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ);
     } 
     else if (opt == OPT_R) { /* construct dummy from boolean */
 	GENERATE genr;
@@ -208,7 +208,7 @@ int set_sample_dummy (const char *line,
 	}
 	subnum = varindex(oldinfo, "subdum");
 	dumnum = subnum;
-	sn = isdummy(subnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
+	sn = isdummy(subnum, oldinfo->t1, oldinfo->t2, *oldZ);
     } else {
 	/* impossible */
 	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));

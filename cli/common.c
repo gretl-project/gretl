@@ -103,8 +103,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 					      models[0], cmdnum)) { 
 		pprintf(prn, _("Failed to initialize model for loop\n"));
 		return 1;
-	    } else if (update_loop_model(plp, cmdnum, models[0], 
-					 datainfo)) {
+	    } else if (update_loop_model(plp, cmdnum, models[0])) { 
 		pprintf(prn, _("Failed to add results to loop model\n"));
 		return 1;
 	    }

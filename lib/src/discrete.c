@@ -63,7 +63,7 @@ static double _logit_pdf (double xx)
 
 /* .......................................................... */
 
-static void Lr_chisq (MODEL *pmod, double **Z, const int n)
+static void Lr_chisq (MODEL *pmod, double **Z)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
     double Lr;
@@ -120,7 +120,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     _init_model(&dmod, pdinfo);
 
     /* check that depvar is really a dummy */
-    if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ, n) == 0) {
+    if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ) == 0) {
 	dmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
 		"variable.\n"), pdinfo->varname[depvar]);
@@ -192,7 +192,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod.list[1] = depvar;
     dataset_drop_vars(1, pZ, pdinfo);
     dmod.lnL = _logit_probit_llhood((*pZ)[depvar], &dmod, opt);
-    Lr_chisq(&dmod, *pZ, n);
+    Lr_chisq(&dmod, *pZ);
     dmod.ci = opt;
 
     /* form the Hessian */

@@ -712,7 +712,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
     for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
 
-    _forecast(t1, t2, vi, pmod, pdinfo, pZ);
+    _forecast(t1, t2, vi, pmod, pZ);
 
     return vi;
 }

@@ -1664,7 +1664,7 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
     nfit = fcast(fcastline, pmod, pdinfo, pZ); 
     if (nfit < 0) return 1; 
 
-    if (isdummy(depvar, t1, t2, *pZ, n) > 0)
+    if (isdummy(depvar, t1, t2, *pZ) > 0)
 	pmax = get_precision((*pZ)[nfit], n);
     else
 	pmax = get_precision((*pZ)[depvar], n);

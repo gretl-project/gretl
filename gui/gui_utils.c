@@ -598,8 +598,6 @@ static void get_worksheet_data (const char *fname, int datatype)
     err = (*sheet_get_data)(fname, &Z, datainfo, errtext);
     close_plugin(handle);
 
-    if (datatype == GRETL_EXCEL) return;
-
     if (err) {
 	if (strlen(errtext)) errbox(errtext);
 	else errbox("Failed to import spreadsheet data");
@@ -2002,8 +2000,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
     /* put the dummy independent vars on the menu list */
     for (i=2; i<pmod->list[0]; i++) {
 	if (pmod->list[i] == 0) continue;
-	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, 
-		     Z, datainfo->n))
+	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, Z))
 	    continue;
 	if (!dums) { /* add separator, branch and "none" */
 	    dumitem.path = mymalloc(64);

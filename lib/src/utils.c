@@ -238,7 +238,6 @@ int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo)
  * @t1: starting observation.
  * @t2: ending observation. 
  * @Z: data matrix.
- * @n: full length of data series in @Z.
  * 
  * Check whether variable @varnum has only 0 or 1 values over the
  * given sample range. 
@@ -247,8 +246,7 @@ int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo)
  * number of 1s in the series.
  */
 
-int isdummy (const int varnum, const int t1, const int t2, 
-	     double **Z, const int n)
+int isdummy (const int varnum, const int t1, const int t2, double **Z)
 {
     int t, m = 0;
     double xx;
@@ -517,7 +515,7 @@ void _criteria (const double ess, const int nobs, const int ncoeff,
 /* ....................................................... */
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  double **Z, const int n, int *misst)
+		  double **Z, int *misst)
      /* drop first/last observations from sample if missing obs 
 	encountered -- also check for missing vals within the
         remaining sample */
@@ -1602,7 +1600,7 @@ int swap_models (MODEL **targ, MODEL **src)
 /* ........................................................... */
 
 int _forecast (int t1, const int t2, const int nv, 
-	       const MODEL *pmod, DATAINFO *pdinfo, double ***pZ)
+	       const MODEL *pmod, double ***pZ)
 {
     double xx, zz, zr;
     int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;

@@ -2689,8 +2689,7 @@ void do_dummy_graph (GtkWidget *widget, dialog_t *ddata)
     if (check_cmd(line) || cmd_init(line)) return;
 
     if (command.list[0] != 3 || 
-	!isdummy(command.list[3], datainfo->t1, datainfo->t2, Z,
-		 datainfo->n)) {
+	!isdummy(command.list[3], datainfo->t1, datainfo->t2, Z)) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
 	return;

@@ -82,8 +82,7 @@ int loop_print_init (LOOP_PRINT *pprn, const LIST list, const int id);
 int loop_store_init (LOOPSET *ploop, const LIST list, 
 		     DATAINFO *pdinfo);
 
-int update_loop_model (LOOPSET *ploop, const int cmdnum,
-		       MODEL *pmod, const DATAINFO *pdinfo);
+int update_loop_model (LOOPSET *ploop, const int cmdnum, MODEL *pmod);
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
 		       const LIST list, double ***pZ, 

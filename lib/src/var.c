@@ -222,8 +222,7 @@ static int get_listlen (const int *varlist, const int order, double **Z,
     for (i=1; i<=varlist[0]; i++) {
 	if (strcmp(pdinfo->varname[varlist[i]], "time") == 0 ||
 	    strcmp(pdinfo->varname[varlist[i]], "const") == 0 ||
-	    isdummy(varlist[i], pdinfo->t1, pdinfo->t2, Z, 
-		    pdinfo->n)) v++;
+	    isdummy(varlist[i], pdinfo->t1, pdinfo->t2, Z)) v++;
 	else v += order;
     }
     return v;
@@ -296,8 +295,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	   it unmodified -- at the end of the list */
 	if (strcmp(pdinfo->varname[list[i]], "time") == 0 || 
 	    strcmp(pdinfo->varname[list[i]], "const") == 0 || 
-	    isdummy(list[i], pdinfo->t1, pdinfo->t2, *pZ, 
-		    pdinfo->n)) {
+	    isdummy(list[i], pdinfo->t1, pdinfo->t2, *pZ)) { 
 	    varlist[end] = list[i];
 	    end--;
 	    continue;	    
@@ -321,8 +319,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     t1 = oldt1 = pdinfo->t1;
     t2 = oldt2 = pdinfo->t2;
     varlist[1] = depvars[0];
-    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, pdinfo->n, 
-			      &misst))) {
+    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, &misst))) {
 	free(varlist);
 	free(depvars);
 	free(shortlist);

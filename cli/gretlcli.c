@@ -776,10 +776,9 @@ void exec_line (char *line, PRN *prn)
     case GNUPLOT:
 	if (oflag == OPT_Z && 
 	    (command.list[0] != 3 || 
-	     !isdummy(command.list[3], datainfo->t1, datainfo->t2, Z,
-		      datainfo->n))) {
+	     !isdummy(command.list[3], datainfo->t1, datainfo->t2, Z))) { 
 	    pprintf(prn, _("You must supply three variables, the last of "
-		    "which is a dummy variable\n(with values 1 or 0)\n"));
+			   "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;
 	}
 	if (oflag == OPT_M || oflag == OPT_Z) { 

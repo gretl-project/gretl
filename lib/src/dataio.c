@@ -1295,7 +1295,7 @@ int has_gz_suffix (const char *fname)
 
 void gz_switch_ext (char *targ, char *src, char *ext)
 {
-    int i = dotpos(src), j = slashpos(src), k;
+    size_t i = dotpos(src), j = slashpos(src), k;
 
     strcpy(targ, src);
     targ[i] = '\0';
@@ -2000,7 +2000,8 @@ int add_case_markers (DATAINFO *pdinfo, const char *fname)
 
 static char *unspace (char *s)
 {
-    size_t i, n = strlen(s);
+    int i;
+    size_t n = strlen(s);
 
     for (i=n-1; i>=0; i--) { 
 	if (s[i] == ' ') s[i] = '\0';

@@ -16,7 +16,7 @@
 
 static void print_sheet (void);
 static void free_sheet (void);
-static void print_value (char *value);
+static void print_value (const char *value);
 static int getshort (char *rec,int offset);
 static int process_item (int rectype, int reclen, char *rec); 
 static int allocate (int row, int col);
@@ -26,6 +26,7 @@ static char *convert16to7 (char *src, int count);
 static char *mark_string (char *instr);
 
 char cell_separator = ',';
+char *errbuf;
 
 /* #define EDEBUG 1 */
 
@@ -48,7 +49,7 @@ static char *format_double (char *rec, int offset)
     return buffer;
 }
 
-static int do_table (FILE *input, const char *filename) 
+static int process_sheet (FILE *input, const char *filename) 
 {    
     long rectype;
     long reclen;
@@ -67,14 +68,14 @@ static int do_table (FILE *input, const char *filename)
 		itemsread = fread(rec, reclen, 1, input);
 		break;
 	    } else {
-		fprintf(stderr, "%s: Invalid BOF record\n", filename);
+		sprintf(errbuf, "%s: Invalid BOF record", filename);
 	        return 1;
 	    } 
 	}
     }    
 
     if (feof(input)) {
-	fprintf(stderr, "%s: No BOF record found\n", filename);
+	sprintf(errbuf, "%s: No BOF record found", filename);
 	return 1;
     }  
    
@@ -96,7 +97,7 @@ static int do_table (FILE *input, const char *filename)
 	}
 	if (eof_flag && rectype != BOF) 
 	    break;
-	if (process_item(rectype, reclen, rec)) { 
+	if (process_item(rectype, reclen, rec)) {
 	    err = 1;
 	    break;
 	}
@@ -198,29 +199,32 @@ static int process_item (int rectype, int reclen, char *rec)
 {
     switch (rectype) {
     case SST: {
-	char *ptr = rec + 8, **outptr;
+	char *ptr = rec + 8;
 	int i;
 
 	sstsize = getshort(rec, 4);
 	sst = malloc(sstsize * sizeof(char *));
+	if (sst == NULL) return 1;
 #ifdef EDEBUG
 	fprintf(stderr, "Got SST: malloced sst at %d bytes, %p\n", 
 		sstsize * sizeof(char *), (void *) sst);
 #endif
-	for (i=0, outptr=sst; i<sstsize && (ptr-rec)<reclen; i++, outptr++) 
-	    *outptr = copy_unicode_string(&ptr);
+	for (i=0; i<sstsize && (ptr-rec)<reclen; i++) {
+	    sst[i] = copy_unicode_string(&ptr);
+	}
 	if (i < sstsize) 
 	    sstnext = i;
 	break;
     }	
     case CONTINUE: {
-	int i = sstnext;
-	char **outptr, *ptr = rec;
+	int i;
+	char *ptr = rec;
 
-	if (i == 0) 
+	if (sstnext == 0) 
 	    break;
-	for (outptr=sst+i; i<sstsize && (ptr-rec)<reclen; i++, outptr++) 
-	    *outptr = copy_unicode_string(&ptr);
+	for (i=sstnext; i<sstsize && (ptr-rec)<reclen; i++) {
+	    sst[i] = copy_unicode_string(&ptr);
+	}
 	if (i < sstsize) 
 	    sstnext = i;
 	break;
@@ -254,11 +258,15 @@ static int process_item (int rectype, int reclen, char *rec)
 	if (allocate(row, col)) return 1;
 	prow = rowptr + row;
 	if (string_no >= sstsize) {
-	    fprintf(stderr, "string index too large\n");
+	    sprintf(errbuf, "String index too large");
 	} else if (sst[string_no] != NULL) {	
 	    int len = strlen(sst[string_no]);
 	    char *outptr;
 
+#ifdef EDEBUG
+	    fprintf(stderr, "copying sst[%d] '%s' into place\n", 
+		    string_no, sst[string_no]);
+#endif
 	    outptr = prow->cells[col] = malloc(len + 2);
 	    *(outptr++) = '"';
 	    strcpy(outptr, sst[string_no]);
@@ -346,29 +354,25 @@ static int process_item (int rectype, int reclen, char *rec)
 	int len;
 
 	if (!saved_reference) {
-	    fprintf(stderr, "String record without preceding string formula\n");
+	    sprintf(errbuf, "String record without preceding string formula");
 	    break;
 	}
 	len = getshort(rec, 0);
 	*saved_reference = mark_string(convert8to7(rec + 2, len + 1));
 	break;
     }	    
-    case BOF: {
+    case BOF: 
 	if (rowptr) {
-	    fprintf(stderr, "BOF when current sheet is not flushed\n");
-	    free_sheet();
+	    sprintf(errbuf, "BOF when current sheet is not flushed");
+	    return 1;
 	}
 	break;
-    }	  
-    case MSEOF: {
-	if (!rowptr) break;
-	print_sheet();
-	free_sheet();
+    case MSEOF: 
 	break;
-    }
     default: 
 	break;
     }
+
     return 0;
 }  
 
@@ -402,8 +406,8 @@ static char *copy_unicode_string (char **src)
 	} else {
 	    to_skip = 3 + 4 + (charsize * count) + getshort(*src, 3);
 	}
-	fprintf(stderr, "Extended string found length=%d charsize=%d "
-		"%d bytes to skip\n", count, charsize, to_skip);
+	sprintf(errbuf, "Extended string found length=%d charsize=%d "
+		"%d bytes to skip", count, charsize, to_skip);
 	*src += to_skip;
 	return g_strdup("Extended string");
     } else {
@@ -421,17 +425,16 @@ static char *copy_unicode_string (char **src)
 static char *convert8to7 (char *src, int count) 
 {
     char *dest = malloc(count + 1);
-    char *s, *d;
-    int c, i, u;
+    int i, u;
 
     if (dest == NULL) return NULL;
 
-    *dest = 0;
-    for (s=src, d=dest, i=0; i<count; i++, s++) {
-	u = (unsigned char) *s;
-	c = (u < 128)? u : '_';
-	*d++ = c;
+    for (i=0; i<count; i++) {
+	u = (unsigned char) src[i];
+	dest[i] = (u < 128)? u : '_';
     }
+    dest[i] = 0;
+
 #ifdef EDEBUG
     fprintf(stderr, "convert8to7: returning '%s' at %p\n", dest,
 	    (void *) dest);
@@ -441,16 +444,18 @@ static char *convert8to7 (char *src, int count)
 
 static char *convert16to7 (char *src, int count) 
 {
-    char *s, *dest = malloc(count + 1);
-    int c, i, j, u;
+    char *s = src, *dest = malloc(count + 1);
+    int i, j = 0, u;
 
     if (dest == NULL) return NULL;
 
-    for (s=src, i=0, j=0; i<count; i++, s+=2) {
+    for (i=0; i<count; i++) {
 	u = getshort(s, 0);
-	c = (u < 128)? u : '_';
-	dest[j++] = c;
+	dest[j++] = (u < 128)? u : '_';
+	s += 2;
     }
+    dest[i] = 0;
+
     return dest;
 }
 
@@ -512,82 +517,125 @@ static void free_sheet (void)
 static void print_sheet (void) 
 {
     int i, j;
-    struct rowdescr *row;
-    char **col;
-    int ncols, maxcols = 0;
 
-    lastrow--;
-    while (lastrow > 0 && !rowptr[lastrow].cells) lastrow--;
-
-    for (i=0, row=rowptr; i<=lastrow; i++, row++) {
-	if (row->cells != NULL) {
-	    ncols = 0;
-	    for (j=0, col=row->cells; j<=row->last; j++, col++) 
-		if (*col) ncols++;
-	    if (ncols > maxcols) maxcols = ncols;
-	}
-    }
-    ncols = maxcols;
-
-    printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
-
-    for (i=0, row=rowptr; i<=lastrow; i++, row++) {
-	if (row->cells != NULL) {
-	    printf("row %d: ", i+1);
-	    for (j=0, col=row->cells; j<=row->last; j++, col++) {
+    for (i=0; i<=lastrow; i++) {
+	if (rowptr[i].cells != NULL) {
+	    printf("row %d: ", i + 1);
+	    for (j=0; j<=rowptr[i].last; j++) {
 		if (j) fputc(cell_separator, stdout);
-		if (*col) print_value(*col);
+		if (rowptr[i].cells[j] != NULL) 
+		    print_value(rowptr[i].cells[j]);
 	    }
 	} 
 	fputc('\n', stdout);
     }
 } 
 
-static void print_value (char *value) 
+static void print_value (const char *value) 
 {
-    int i, len;
     int is_string = (*value == '"');
-    char *ptr = (is_string)? value+1 : value;
 
-    len = strlen(ptr);
-
-    if (is_string) {
-	fputc('\"', stdout);
-	for (i=0; i<len; i++) {
-	    if (ptr[i] == '\"') {
-		fputc('\"', stdout);
-		fputc('\"', stdout);
-	    } else {
-		fputc(ptr[i], stdout);
-	    }
-	}   
-	fputc('\"', stdout);
-    } else {
-	fputs(ptr, stdout);
-    }
+    if (is_string) 
+	fputs(value + 1, stdout);
+    else 
+	fputs(value, stdout);
 }  
 
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
-		    char *errbuf)
+		    char *errtext)
 {
     FILE *fp;
+    int err = 0;
+
+    errbuf = errtext;
+    *errbuf = 0;
 
     fp = fopen(fname, "rb");
     if (fp == NULL) return 1;
-    if (do_table(fp, fname)) return 1;
-    return 0;
+    err = process_sheet(fp, fname);
+
+    if (err) {
+	if (*errbuf == 0)
+	    sprintf(errbuf, "Failed to process Excel file");
+	fprintf(stderr, "%s\n", errbuf);
+    } else {
+	int i, j, t, i_sheet;
+	int time_series = 0;
+	int ncols, maxcols = 0;
+
+	lastrow--;
+	while (lastrow > 0 && !rowptr[lastrow].cells) lastrow--;
+
+	for (i=0; i<=lastrow; i++) {
+	    if (rowptr[i].cells != NULL) {
+		ncols = 0;
+		for (j=0; j<=rowptr[i].last; j++) 
+		    if (rowptr[i].cells[j] != NULL) ncols++;
+		if (ncols > maxcols) maxcols = ncols;
+	    }
+	}
+	ncols = maxcols;
+
+	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
+
+	pdinfo->v = ncols + 1;
+	pdinfo->n = lastrow;
+	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
+		pdinfo->v, pdinfo->n);
+
+	start_new_Z(pZ, pdinfo, 0);
+
+	if (!time_series) {
+	    strcpy(pdinfo->stobs, "1");
+	    sprintf(pdinfo->endobs, "%d", pdinfo->n);
+	    pdinfo->sd0 = 1.0;
+	    pdinfo->pd = 1;
+	    pdinfo->time_series = 0;
+	} else {
+	    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+	}
+	pdinfo->extra = 0; 
+
+	for (i=1; i<pdinfo->v; i++) {
+	    i_sheet = i-1;
+	    pdinfo->varname[i][0] = 0;
+	    strncat(pdinfo->varname[i], rowptr[0].cells[i_sheet] + 1, 8);
+	    for (t=0; t<pdinfo->n; t++) {
+#ifdef EDEBUG
+		fprintf(stderr, "setting Z[%d][%d] = rowptr[%d].cells[%d] "
+			"= '%s'\n", i, t, i_sheet, t+1, 
+			rowptr[t+1].cells[i_sheet]);
+#endif
+		(*pZ)[i][t] = 
+		    atof(rowptr[t+1].cells[i_sheet]);
+	    }
+	}
+    }
+
+#ifdef notdef
+    if (!err) {
+	print_sheet();
+        fflush(stdout);
+    } 
+#endif
+
+    free_sheet();
+    
+    return err;
 }  
+
 
 #ifdef notdef
 int main (int argc, char *argv[])
 {
     char *filename;
     int i, err;
+    char errtext[128];
  
     for (i=1; i<argc; i++) {
-	filename = argv[i];
-	err = excel_get_data(filename, NULL, NULL, NULL);
-    }	
+        filename = argv[i];
+        err = excel_get_data(filename, NULL, NULL, errtext);
+    }
 
     return 0;
 }

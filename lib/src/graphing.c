@@ -37,8 +37,7 @@ extern double _gammadist (double s1, double s2, double x, int control);
 /* ........................................................ */
 
 static int printv (FILE *fp, const int nt, const int v1, 
-		   const int *list, const DATAINFO *pdinfo, 
-		   double ***pZ)
+		   const int *list, double ***pZ)
 {
     register int i;
     int v2 = list[0], ls = 0, miss = 0;
@@ -399,7 +398,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 /* ........................................................ */
 
 static int factorized_vars (double ***pZ, 
-			    const int t1, const int t2, const int n,
+			    const int t1, const int t2,
 			    double **y1, double **y2,
 			    const int ynum, const int dum)
 {
@@ -580,14 +579,13 @@ int gnuplot (LIST list, const int *lines,
 	clear_model(&plotmod, NULL, NULL, pdinfo);
     }
 
-    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, pdinfo->n, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
 
     if (opt == OPT_Z || opt == OPT_RESIDZ) { /* separation by dummy variable */
 	if (lo != 3) return -1;
-	if (factorized_vars(pZ, t1, t2, pdinfo->n, &yvar1, &yvar2, 
-			    list[1], list[3])) {
+	if (factorized_vars(pZ, t1, t2, &yvar1, &yvar2, list[1], list[3])) {
 	    fclose(fq);
 	    return -1;
 	}
@@ -643,7 +641,7 @@ int gnuplot (LIST list, const int *lines,
 	fprintf(fq, "set key left top\n");
 
     xvar = (opt == OPT_Z || opt == OPT_RESIDZ)? list[lo - 1] : list[lo];
-    if (isdummy(xvar, t1, t2, *pZ, pdinfo->n)) {
+    if (isdummy(xvar, t1, t2, *pZ)) {
 	fputs("set xrange[-1:2]\n", fq);	
 	fputs("set xtics (\"0\" 0, \"1\" 1)\n", fq);
     }
@@ -746,9 +744,9 @@ int gnuplot (LIST list, const int *lines,
 	    tmplist[2] = list[i];
 	    for (t=t1; t<=t2; t++) {
 		if (gui && miss == 0) 
-		    miss = printv(fq, t, 1, tmplist, pdinfo, pZ); 
+		    miss = printv(fq, t, 1, tmplist, pZ); 
 		else
-		    printv(fq, t, 1, tmplist, pdinfo, pZ);
+		    printv(fq, t, 1, tmplist, pZ);
 	    }
 	    fprintf(fq, "e\n");
 	}

@@ -82,14 +82,14 @@ void _criteria (const double ess, const int nobs, const int ncoeff,
 		PRN *prn);
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  double **Z, const int n, int *misst);
+		  double **Z, int *misst);
 
 int _list_dups (const int *list, int ci);
 
 int _lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo);
 
 int _forecast (int t1, const int t2, const int nv, 
-	       const MODEL *pmod, DATAINFO *pdinfo, double ***pZ);
+	       const MODEL *pmod, double ***pZ);
 
 int _full_model_list (MODEL *pmod, int **plist);
 
