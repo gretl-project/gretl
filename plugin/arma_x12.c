@@ -302,6 +302,10 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	return 1;
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     while (fgets(line, sizeof line, fp)) {
 	if (sscanf(line, "%11s %lf", statname, &x) == 2) {
 	    if (!strcmp(statname, "nobs")) pmod->nobs = (int) x;
@@ -310,6 +314,10 @@ static int get_ll_stats (const char *fname, MODEL *pmod)
 	    else if (!strcmp(statname, "bic")) pmod->criterion[4] = x;
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 
@@ -335,6 +343,10 @@ static int get_roots (const char *fname, MODEL *pmod, int nr)
 	return 1;
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     i = 0;
     while (fgets(line, sizeof line, fp) && i < nr) {
 	double re, im;
@@ -347,6 +359,10 @@ static int get_roots (const char *fname, MODEL *pmod, int nr)
 	    }
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 
@@ -388,6 +404,10 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 	return 1;
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     j = k = 0;
     while (fgets(line, sizeof line, fp)) {
 	if (!strncmp(line, "Nonseas", 7)) {
@@ -404,6 +424,10 @@ static int get_x12a_vcv (const char *fname, MODEL *pmod, int nc)
 	    j++;
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     for (i=0; i<nt; i++) {
 	fprintf(stderr, "vcv[%d] = %g\n", i, pmod->vcv[i]);
@@ -438,6 +462,10 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 	coeff[i] = sderr[i] = NADBL;
     }
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     i = 1;
     j = p + 1;
     while (fgets(line, sizeof line, fp) && i < nc) {
@@ -462,6 +490,10 @@ static int get_estimates (const char *fname, double *coeff, double *sderr,
 	    }
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 
@@ -501,6 +533,10 @@ static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
 
     for (t=0; t<pdinfo->n; t++) uhat[t] = NADBL;
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     while (fgets(line, sizeof line, fp)) {
 	if (*line == '-') {
 	    start = 1;
@@ -514,6 +550,10 @@ static double *get_uhat (const char *fname, const DATAINFO *pdinfo)
 	    }
 	}
     }
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fclose(fp);
 
@@ -601,7 +641,6 @@ static void output_series_to_spc (const double *x, int t1, int t2,
     }
     fputs(" )\n", fp);
 }
-
 
 static int check_for_missing (const double **Z, const DATAINFO *pdinfo,
 			      int v, int *t1, int *t2)

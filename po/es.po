@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.2.1\n"
 "POT-Creation-Date: 2004-01-21 15:28-0500\n"
-"PO-Revision-Date: 2004-01-21 15:29-0500\n"
+"PO-Revision-Date: 2004-01-25 14:56-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -7979,7 +7979,7 @@ msgstr "/_Editar"
 #: gui/gui_utils.c:122 gui/gui_utils.c:210 gui2/gui_utils.c:122
 #: gui2/gui_utils.c:210
 msgid "/Edit/_Copy"
-msgstr "Editar"
+msgstr "/Editar/Copiar"
 
 #: gui/gui_utils.c:123 gui/gui_utils.c:211 gui2/gui_utils.c:123
 #: gui2/gui_utils.c:211
