@@ -588,12 +588,12 @@ test_forloop_element (const char *s, LOOPSET *loop,
 	ngot = sscanf(s, "%8[^=]=%8s", lhs, rhs) + 1;
 	strcpy(opstr, "=");
     } else {
-	ngot = sscanf(s, "%8[^+-*/=<>]%2[+-*/=<>]%8[^+-*/=<>]", 
+	ngot = sscanf(s, "%8[^-+*/=<>]%2[-+*/=<>]%8[^-+*/=<>]", 
 		      lhs, opstr, rhs);
     }
 
 #if LOOP_DEBUG
-    fprintf(stderr, "read forloop element %d = '%s'\n", i, s);
+    fprintf(stderr, "read forloop element, i=%d: '%s'\n", i, s);
     fprintf(stderr, " got lhs='%s', opstr='%s', rhs='%s'\n",
 	    lhs, opstr, rhs);
 #endif
@@ -602,6 +602,10 @@ test_forloop_element (const char *s, LOOPSET *loop,
 	err = E_PARSE;
     } else {
 	int v = varindex(pdinfo, lhs);
+
+#if LOOP_DEBUG
+	fprintf(stderr, " lhs: varindex = %d (pdinfo->v = %d)\n", v, pdinfo->v);
+#endif
 
 	/* examine the LHS */
 	if (i == 0) {
@@ -622,6 +626,8 @@ test_forloop_element (const char *s, LOOPSET *loop,
 	    }
 	} else if (v != loop->left.vnum) {
 	    /* the LHS var must be the same in all three "for" fields */
+	    printf("error in test_forloop_element: i=%d, lhs='%s', v=%d\n", 
+                   i, lhs, v);
 	    strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	    err = 1;
 	}
@@ -885,6 +891,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
     /* skip over the common stuff */
     while (isspace((unsigned char) *line)) line++;
     if (strncmp(line, "loop", 4)) {
+	printf("parse_loopline: line didn't begin with 'loop': '%s'\n", line);
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	return NULL;
     }
@@ -945,6 +952,7 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 
     /* out of options, complain */
     else {
+	printf("parse_loopline: failed on '%s'\n", line);
 	strcpy(gretl_errmsg, _("No valid loop condition was given."));
 	err = 1;
     }
@@ -2352,7 +2360,6 @@ int loop_exec (LOOPSET *loop, char *line,
 	return err;
     }
 
-    gretl_set_text_pause(0);
     set_loop_on();
 
 #if LOOP_DEBUG
@@ -2712,6 +2719,16 @@ static int indexed_loop_record (LOOPSET *loop, int set, int test)
 	    ret = 1;
 	}
     }
+
+#if LOOP_DEBUG
+    if (set) {
+	fprintf(stderr, "indexed_loop_record: set active_loop = %p\n",
+		(void *) loop);
+    } else {
+	fprintf(stderr, "indexed_loop_record: returning %d for test='%c'\n",
+		ret, test);
+    }	
+#endif
 
     return ret;
 }

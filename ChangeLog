@@ -31,7 +31,8 @@ version 1.3.2
 - "genr unit": generates an index variable for the cross-sectional 
   units in a panel dataset (panel data only)
 - Add "hurst" command (and GUI menu item) to compute the Hurst exponent
-  (a fractal measure, used by Mandelbrot) for a given series   
+  (a measure of long-term persistence used by Mandelbrot) for a given 
+  series   
 - Remove unused GUI popup menu item "Simulate..."
 - Updates to documentation (manual and helpfiles)
 

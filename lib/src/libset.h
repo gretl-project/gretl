@@ -47,8 +47,6 @@ double get_hp_lambda (void);
 
 int get_bkbp_k (void);
 
-void gretl_set_text_pause (int p);
-
 int gretl_get_text_pause (void);
 
 void get_bkbp_periods (int *periods);
@@ -57,7 +55,12 @@ void set_loop_on (void);
 
 void set_loop_off (void);
 
-int looping (void);
+int gretl_looping (void);
+
+void gretl_set_batch_mode (int b);
+
+int gretl_in_batch_mode (void);
+
 
 #endif /* LIBSET_H */
 

@@ -458,7 +458,7 @@ int gnuplot_init (int plottype, FILE **fpp)
     int gui = gretl_using_gui();
     char plotfile[MAXLEN];
 
-    if (looping()) {
+    if (gretl_looping()) {
 	return E_OK;
     }
 
@@ -2145,7 +2145,7 @@ rmplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     close_plugin(handle);
 
-    if (!err) {
+    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
         err = gnuplot_make_graph();
     }
 
@@ -2168,7 +2168,7 @@ hurstplot (const int *list, const double **Z, DATAINFO *pdinfo, PRN *prn)
 
     close_plugin(handle);
 
-    if (!err) {
+    if (!err && !gretl_in_batch_mode() && !gretl_looping()) {
         err = gnuplot_make_graph();
     } 
 

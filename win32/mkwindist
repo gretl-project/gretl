@@ -62,8 +62,8 @@ mkdir -p windist/gretl/lib/gtk-2.0/2.4.0/loaders
 mkdir -p windist/gretl/lib/pango/1.4.0/modules
 mkdir -p windist/gretl/etc/gtk-2.0
 mkdir -p windist/gretl/etc/pango
-mkdir -p windist/gretl/share/themes/Default/gtk-2.0
-mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
+# mkdir -p windist/gretl/share/themes/Default/gtk-2.0
+# mkdir -p windist/gretl/share/themes/MS-Windows/gtk-2.0
 
 mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 

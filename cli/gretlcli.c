@@ -714,8 +714,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	       (runit)? NULL : cmdprn);
     }
 
-    /* tell libgretl if we should pause between screens */
-    gretl_set_text_pause(!batch);
+    /* tell libgretl if we're in batch mode */
+    gretl_set_batch_mode(batch);
 
     /* if in batch mode, echo comments from input */
     if (batch && cmd.ci == CMD_COMMENT && !echo_off) {

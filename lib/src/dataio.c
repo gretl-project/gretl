@@ -3221,6 +3221,9 @@ csv_reconfigure_for_markers (double ***pZ, DATAINFO *pdinfo)
     return dataset_drop_vars(1, pZ, pdinfo);
 }
 
+#define starts_number(c) (isdigit((unsigned char) c) || c == '-' || \
+                          c == '+' || c == '.')
+
 #define obs_labels_no_varnames(o,c,n)  (!o && c->v > 3 && n == c->v - 2)
 
 /**
@@ -3434,7 +3437,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 		csvinfo->varname[nv][0] = 0;
 		/* was VNAMELEN below */
 		strncat(csvinfo->varname[nv], csvstr, USER_VLEN - 1);
-		if (isdigit((unsigned char) *csvstr)) {
+		if (starts_number(*csvstr)) {
 		    numcount++;
 		} else {
 		    iso_to_ascii(csvinfo->varname[nv]);

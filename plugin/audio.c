@@ -369,7 +369,7 @@ static int make_axis_label_comment (const char *line, dataset *dset)
     char tmp[16];
     int ret = 0;
 
-    if (sscanf(line, "set ylabel '%15[^\']", tmp) == 1) {
+    if (sscanf(line, "set ylabel '%15[^']", tmp) == 1) {
 	if (dset->pd > 0) {
 	    dset->comments[YLABEL_COMMENT] = g_strdup(tmp);
 	} else {
@@ -377,7 +377,7 @@ static int make_axis_label_comment (const char *line, dataset *dset)
 		g_strdup_printf("y variable %s", tmp);
 	}
 	ret = 1;
-    } else if (sscanf(line, "set xlabel '%15[^\']", tmp) == 1) {
+    } else if (sscanf(line, "set xlabel '%15[^']", tmp) == 1) {
 	if (dset->pd > 0) {
 	    dset->comments[XLABEL_COMMENT] = g_strdup(tmp);
 	} else {

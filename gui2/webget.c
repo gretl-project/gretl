@@ -55,6 +55,12 @@
 # include <arpa/inet.h>
 #endif /* WIN32 */
 
+#if (GLIB_MAJOR_VERSION >= 2) && (GLIB_MINOR_VERSION >= 6)
+# ifdef WIN32
+#  define USE_G_FOPEN
+# endif
+#endif
+
 #include "webget.h"
 
 #ifdef UPDATER
@@ -856,7 +862,7 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 #endif   
 
     if (u->saveopt == SAVE_TO_FILE) { 
-#ifdef WIN32
+#ifdef USE_G_FOPEN
 	fp = g_fopen(u->localfile, "wb");
 #else
 	fp = fopen(u->localfile, "wb");
@@ -1600,7 +1606,7 @@ static time_t get_time_from_stamp_file (const char *fname)
         "Oct", "Nov", "Dec"
     };
 
-#ifdef WIN32
+#ifdef USE_G_FOPEN
     fp = g_fopen(fname, "r");
 #else
     fp = fopen(fname, "r");
@@ -1719,20 +1725,12 @@ static int real_update_query (int queryopt)
 	if (admin) {
 	    strcpy(infotxt, _("New files are available from the gretl web site\n"
 		   "http://gretl.sourceforge.net/"));
-# ifdef WIN32
-	    fp = g_fopen(testfile, "w");
-#else
 	    fp = fopen(testfile, "w");
-#endif
 	} else {
 	    strcpy(infotxt, _("You may want to let the system administrator know\n"
 		   "that new files are available from the gretl web site\n"
 		   "http://gretl.sourceforge.net/"));
-# ifdef WIN32
-	    fp = g_fopen(hometest, "w");
-# else
 	    fp = fopen(hometest, "w");
-# endif
 	}
 	if (fp != NULL) {
 	    fprintf(fp, _("This file is part of the gretl update notification "
