@@ -497,6 +497,10 @@ static void get_worksheet_data (const char *fname, int datatype,
 	if (gui_open_plugin("excel_import", &handle)) return;
 	sheet_get_data = get_plugin_function("excel_get_data", handle);
     }
+    else if (datatype == GRETL_DES_DATA) {
+	if (gui_open_plugin("des_import", &handle)) return;
+	sheet_get_data = get_plugin_function("des_get_data", handle);
+    }
     else {
 	errbox(_("Unrecognized data type"));
 	return;
@@ -589,7 +593,7 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	return;
     }
     else if (datatype == GRETL_DES_DATA) {
-	errbox("Sorry, not ready yet");
+	get_worksheet_data(trydatfile, datatype, 0);
 	return;
     }    
     else { /* native data */

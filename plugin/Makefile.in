@@ -35,7 +35,7 @@ GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../lib/libgretl.la
 
 PLUGINS = stats_tables.so panel_data.so progress_bar.so \
-	gnumeric_import.so excel_import.so
+	gnumeric_import.so excel_import.so des_import.so
 
 ifdef GMP_LIBS
   PLUGINS += mp_ols.so
@@ -64,6 +64,9 @@ gnumeric_import.so: gnumeric_import.lo
 
 excel_import.so: excel_import.lo workbook.lo $(query-ms-ole.lo)
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LIBOLE2_LIBS)
+
+des_import.so: des_import.lo 
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB)
 
 mp_ols.so: mp_ols.lo
 	$(LINK) -o $@ $< $(GRETLLIB) $(GMP_LIBS)
