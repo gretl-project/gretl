@@ -108,14 +108,6 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
     int i, save = 0, k, numlines;
     GPT_SPEC *plot = (GPT_SPEC *) data;
 
-#ifdef G_OS_WIN32
-    plot->fp = fopen(paths.plotfile, "w");
-    if (plot->fp == NULL) {
-	errbox(_("Couldn't open plot file"));
-	return;
-    }
-#endif
-
     numlines = plot->list[0] - 1;
     if (widget == filesavebutton) {
 	widget_to_str(GTK_COMBO(termcombo)->entry, plot->termtype, 
@@ -170,15 +162,11 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 	return;
     }
 
-    if (save) { /* do something other than a screen graph? */
-#ifdef G_OS_WIN32
-	fclose(plot->fp);
-#endif
+    if (save)  /* do something other than a screen graph? */
 	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, plot);
-    }
-    else {
+    else 
 	go_gnuplot(plot, NULL, &paths);
-    }
+
     session_changed(1);
 }
 
@@ -766,7 +754,10 @@ void gpt_save_dialog (void)
     gint tbl_len;
     GList *termtype = NULL;
     int i;
-    char *ttypes[] = {"postscript","fig","latex","png",
+    char *ttypes[] = {"postscript", 
+		      "fig", 
+		      "latex", 
+		      "png",
 		      "plot commands"};
 
     if (dialog != NULL) {

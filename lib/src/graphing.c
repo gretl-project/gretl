@@ -1054,12 +1054,12 @@ int open_gnuplot_pipe (const PATHS *ppaths, GPT_SPEC *plot)
      /* add file or pipe to plot struct */
 {
 #ifdef OS_WIN32
-    plot->fp = fopen(ppaths->plotfile, "w");
+    plot->fp = NULL; /* will be opened later as needed */
 #else
     plot->fp = popen(ppaths->gnuplot, "w");
+    if (plot->fp == NULL) return 1;
 #endif
     plot->edit = 1;
-    if (plot->fp == NULL) return 1;
     return 0;
 }
 
@@ -1101,7 +1101,12 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 	fp = fopen(fname, "w");
 	if (fp == NULL) return 1;
     } else {     /* output to gnuplot, for screen or other "term" */
-	fp = plot->fp;
+#ifdef OS_WIN32
+	if (plot->fp == NULL) fp = fopen(ppaths->plotfile, "w");
+	if (fp == NULL) return 1;
+#else
+	fp = plot->fp; /* pipe */
+#endif
 	if (fname != NULL) { /* not a screen display */
 	    fprintf(fp, "set term %s\n", termstr);
 	    fprintf(fp, "set output '%s'\n", fname);
@@ -1192,15 +1197,17 @@ int go_gnuplot (GPT_SPEC *plot, char *fname, PATHS *ppaths)
 #ifdef OS_WIN32
     if (!dump) {
 	char plotcmd[MAXLEN];
+	int winshow;
 
-	if (fname == NULL) fprintf(fp, "pause -1\n");
+	if (fname == NULL) { /* sending plot to screen */
+	    fprintf(fp, "pause -1\n");
+	    winshow = SW_SHOWNORMAL;
+	} else
+	    winshow = SW_SHOWMINIMIZED;
 	fclose(fp);
-#ifdef notdef /* doesn't work on some systems */
-	sprintf(plotcmd, "\"%s\" < \"%s\"", ppaths->pgnuplot, ppaths->plotfile); 
-	if (system(plotcmd)) err = 1;
-#endif
+	plot->fp = NULL;
 	sprintf(plotcmd, "\"%s\" \"%s\"", ppaths->gnuplot, ppaths->plotfile);
-	if (WinExec(plotcmd, SW_SHOWNORMAL) < 32) err = 1;
+	if (WinExec(plotcmd, winshow) < 32) err = 1;
     }
 #endif
     if (miss) err = 2;

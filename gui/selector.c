@@ -240,14 +240,15 @@ static void construct_cmdlist (GtkWidget *w, selector *sr)
 	    xlist = realloc(xlist, (rows + 1) * sizeof(int));
 	    if (xlist != NULL) xlist[0] = rows;
 	}
-	for (i=0; i<rows; i++) {
-	    gchar *rvar;
+    }
+    for (i=0; i<rows; i++) {
+	gchar *rvar;
 
-	    gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
-	    strcat(sr->cmdlist, " ");
-	    strcat(sr->cmdlist, rvar);
-	    if (xlist != NULL) xlist[i+1] = atoi(rvar);
-	}
+	gtk_clist_get_text(GTK_CLIST(sr->rightvars), i, 0, &rvar);
+	strcat(sr->cmdlist, " ");
+	strcat(sr->cmdlist, rvar);
+	if (MODEL_CODE(sr->code) && xlist != NULL) 
+	    xlist[i+1] = atoi(rvar);
     }
 
     if (sr->code == TSLS) {
