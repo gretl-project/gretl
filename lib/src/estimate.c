@@ -249,7 +249,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     if (model.nobs < model.ncoeff) { 
 	model.errcode = E_DF;
         sprintf(gretl_errmsg, "No. of obs (%d) is less than no. "
-		"of parameters (%d)\n", model.nobs, model.ncoeff);
+		"of parameters (%d)", model.nobs, model.ncoeff);
         return model; 
     }
 
@@ -353,7 +353,7 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
         This function forms the X'X matrix and X'y vector
         - if rho is non-zero transforms data first
         - if nwt is non-zero, uses that variable as weight
-        Z(v, t) = t-th observation for the v-th variable
+        Z[v][t] = t-th observation for the v-th variable
         n = number of obs in data set
         t1, t2 = starting and ending observations
         rho = first order serial correlation coefficent
@@ -888,9 +888,9 @@ static double _altrho (const int order, const int t1, const int t2,
     int t, n = 0;
     double uh, uh1, rho;
 
-    if ((ut = calloc(t2-(t1+order)+1, sizeof(double))) == NULL) 
+    if ((ut = calloc(t2-(t1+order)+1, sizeof *ut)) == NULL) 
 	return NADBL;
-    if ((ut1 = calloc(t2-(t1+order)+1, sizeof(double))) == NULL) 
+    if ((ut1 = calloc(t2-(t1+order)+1, sizeof *ut1)) == NULL) 
 	return NADBL;
 
     for (t=t1+order; t<=t2; t++) { 
@@ -1132,7 +1132,7 @@ MODEL tsls_func (LIST list, const int pos, double ***pZ,
         sprintf(gretl_errmsg, 
 		"Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
-		"varlist1.\n", list1[0] - 1 - ncoeff);
+		"varlist1.", list1[0] - 1 - ncoeff);
 	free(list1); free(list2);
 	free(s1list); free(s2list);
 	free(newlist);
@@ -1370,7 +1370,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hsk = lsq(list, pZ, pdinfo, OLS, 1, 0.0);
     if (hsk.errcode) return hsk;
 
-    uhat1 = malloc(n * sizeof(double));
+    uhat1 = malloc(n * sizeof *uhat1);
     if (uhat1 == NULL) {
 	hsk.errcode = E_ALLOC;
 	return hsk;
@@ -1916,9 +1916,9 @@ static void _tsls_omitzero (int *list, double **Z,
 /* .........................................................   */
 
 static void _rearrange (int *list)
-/* checks a list for a constant term, and if present, 
-   move it to the last position.
-  (Check for constant is for varno. zero) */
+/* checks a list for a constant term (ID # 0), and if present, 
+   move it to the last position
+*/
 {
     int lo = list[0], v;
 
@@ -1959,9 +1959,9 @@ static int _zerror (const int t1, const int t2, const int yno,
 
 static int _lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		       double ***pZ)
-/* attempts to detect presence of a lagged dependent variable
-   among the regressors -- if found, returns the position of this
-   lagged var in the list; otherwise returns 0 */
+/* attempt to detect presence of a lagged dependent variable
+   among the regressors -- if found, return the position of this
+   lagged var in the list; otherwise return 0 */
 {
     int i, c, t;
     char depvar[9], othervar[9];

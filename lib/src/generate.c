@@ -315,7 +315,7 @@ int _identical (const double *x, const double *y, const int n)
 static void otheruse (const char *str1, const char *str2)
 {
     sprintf(gretl_errmsg, "'%s' refers to a %s and may not be used as a "
-	    "variable name\n", str1, str2); 
+	    "variable name", str1, str2); 
 }
 
 /* .......................................................... */
@@ -455,7 +455,7 @@ int genr_scalar_index (int opt, int put)
  * generate:
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
- * @line: command line fr parsing.
+ * @line: command line for parsing.
  * @model_count: count of models estimated so far.
  * @pmod: pointer to a model, or NULL.
  * @oflag: option flag (relates to generation of dummy variables).
@@ -885,7 +885,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 		default:
 		    if (strlen(word) != 0) 
 			sprintf(gretl_errmsg, 
-				"%s is not a var. or function\n", word);
+				"%s is not a variable or function", word);
 		    genr.errcode = E_UNSPEC;
 		    _genrfree(pZ, pdinfo, &genr, mystack, mvec, nv);
 		    return genr;
@@ -917,11 +917,9 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
     double xx, yy, *st2;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
-    st2 = malloc(pdinfo->n * sizeof(double));
-    if (st2 == NULL) {
-	sprintf(gretl_errmsg, "Out of memory in genr");
-	return E_ALLOC;
-    }    
+    st2 = malloc(pdinfo->n * sizeof *st2);
+    if (st2 == NULL) return E_ALLOC;
+
     for (i=t1; i<=t2; i++) st2[i] = xstack[i];
 
     switch (op) {
@@ -1254,32 +1252,32 @@ static int check_modelstat (const MODEL *pmod, int type1)
 	switch (type1) {
 	case 'e':
 	    strcpy(gretl_errmsg, 
-		   "No $ess (error sum of squares) value is available.");
+		   "No $ess (error sum of squares) value is available");
 	    return 1;
 	    break;
 	case 'r':
 	    strcpy(gretl_errmsg, 
-		   "No $rsq (R-squared) value is available.");
+		   "No $rsq (R-squared) value is available");
 	    return 1;
 	    break;
 	case 'q':
 	    strcpy(gretl_errmsg, 
-		   "No $trsq (T*R-squared) value is available.");
+		   "No $trsq (T*R-squared) value is available");
 	    return 1;
 	    break;
 	case 'd':
 	    strcpy(gretl_errmsg, 
-		   "No $df (degrees of freedom) value is available.");
+		   "No $df (degrees of freedom) value is available");
 	    return 1;
 	    break;
 	case 's':
 	    strcpy(gretl_errmsg, 
-		   "No $sigma (std. err. of model) value is available.");
+		   "No $sigma (std. err. of model) value is available");
 	    return 1;
 	    break;
 	case 'l':
 	    strcpy(gretl_errmsg, 
-		   "No $lnl (log-likelihood) value is available.");
+		   "No $lnl (log-likelihood) value is available");
 	    return 1;
 	    break;
 	default:
@@ -1290,7 +1288,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
     if (pmod != NULL && pmod->ci != LOGIT && pmod->ci != PROBIT &&
 	type1 == 'l') {
 	strcpy(gretl_errmsg, 
-	       "$lnl (log-likelihood) is not available for the last model.");
+	       "$lnl (log-likelihood) is not available for the last model");
 	return 1;
     }
     return 0;
@@ -1518,8 +1516,8 @@ static char _strtype (char *ss, const DATAINFO *pdinfo)
 
     if (_isnumber(ss)) {
         i = strlen(ss) - 1;
-        if (ss[i] == 'e') { /* FIXME puts() */
-            puts("Scientific notation not allowed.  Use floating point");
+        if (ss[i] == 'e') { 
+	    sprintf(gretl_errmsg, "Scientific notation not allowed for numbers");
             return 'u';
         }
         else return 'n';
@@ -1660,15 +1658,17 @@ static void _genrtime (DATAINFO *pdinfo, GENERATE *genr, int time)
     if (time) t = varindex(pdinfo, "time");
     else t = varindex(pdinfo, "index");
     if (t < v) {
-	genr->errcode = E_VAREXISTS;
+	sprintf(gretl_errmsg, "Variable '%s' already exists", 
+		(time)? "time" : "index");
+	genr->errcode = E_UNSPEC;
         return;
     }
     if (time) {
 	strcpy(genr->varname, "time");
-	strcpy(genr->label,"time trend variable");
+	strcpy(genr->label, "time trend variable");
     } else {
 	strcpy(genr->varname, "index");
-	strcpy(genr->label,"data index variable");
+	strcpy(genr->label, "data index variable");
     }
     genr->varnum = v;
     for (t=0; t<n; t++) genr->xvec[t] = (double) (t + 1);
@@ -1951,12 +1951,6 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 				"Log error: Variable '%s', obs %d,"
 				" value = %g\n", pdinfo->varname[v],
 				t+1, xx);
-#ifdef GENR_DEBUG
-			fprintf(stderr, "Log error: Variable '%s', obs %d,"
-				" value = %g\n", pdinfo->varname[v], t+1, xx);
-#endif
-			/* ran across a zero or negative number when
-			   trying to take logs */
 			le_zero = 1;
 		    }
 		}
@@ -1977,7 +1971,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 			j--;
 		    }
 		}
-	    } else printf("label: %s\n", pdinfo->label[nvar+j]);
+	    } 
 	} else _varerror(s);
 	j++;
     }
@@ -2377,16 +2371,17 @@ static int _ismatch (const int lv, const int *list)
 static void _varerror (const char *ss)
 /* print error message for variable not in name list */
 {
-    fprintf(stderr, "\nInvalid var. name (%s)\n", ss);
-    if (strcmp(ss, "const") == 0) 
-        fputs("const cannot be used to store values", stderr);
-    else if (strcmp(ss, "uhat") == 0) 
-        fputs("uhat can be used only in genr.  First use the command: "
-	      "genr newname = uhat", stderr);
+    sprintf(gretl_errmsg, "Undefined variable name '%s'", ss);
+    if (!strcmp(ss, "const")) 
+        sprintf(gretl_errmsg, "const cannot be used to store values");
+    else if (!strcmp(ss, "uhat")) 
+        sprintf(gretl_errmsg,
+		"uhat can be used only in genr.  First use the command: "
+		"genr newname = uhat");
     else if (ss[0] == '$') 
-	fprintf(stderr, "Reserved var. names starting with "
+	sprintf(gretl_errmsg, "Reserved var. names starting with "
 		"$ can be used only in genr.\nFirst use the "
-		"command:  genr newname = %s\n", ss);
+		"command:  genr newname = %s", ss);
 }
 
 /* .......................................................... */
@@ -2428,8 +2423,8 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
     nv = varindex(pdinfo, varname);
     if (nv == 0 || nv >= pdinfo->v) {
 	sprintf(gretl_errmsg, (nv)? "For 'sim', the variable must already "
-		"exist.\n" :
-		"You can't use the constant for this purpose.\n");
+		"exist" :
+		"You can't use the constant for this purpose");
 	free(a);
 	free(toks);
 	return 1;
@@ -2441,7 +2436,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 	if (isalpha((unsigned char) parm[0])) {
 	    pv = varindex(pdinfo, parm);
 	    if (pv == 0 || pv >= pdinfo->v) {
-		sprintf(gretl_errmsg, "bad varname in sim.\n");
+		sprintf(gretl_errmsg, "Bad varname '%s' in sim", parm);
 		free(a);
 		free(toks);
 		return 1;

@@ -974,7 +974,7 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 	panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
 	if (panel_diagnostics == NULL) {
-	    pprintf(prn, "Couldn't load plugin function");
+	    pprintf(prn, "Couldn't load plugin function\n");
 	    close_plugin(handle);
 	    return 1;
 	}

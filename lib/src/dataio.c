@@ -375,7 +375,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	    for (t=0; t<n; t++) {
 		if (!fread(&x, sizeof(float), 1, fp)) {
 		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
-			    "var %d\n", i);
+			    "var %d", i);
 		    return 1;
 		}
 		Z[i][t] = (double) x;
@@ -386,7 +386,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	for (i=1; i<pdinfo->v; i++) {
 	    if (!fread(Z[i], sizeof(double), n, fp)) {
 		sprintf(gretl_errmsg, 
-			"WARNING: binary data read error at var %d\n", i);
+			"WARNING: binary data read error at var %d", i);
 		return 1;
 	    }
 	}
@@ -404,7 +404,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
 		    sprintf(gretl_errmsg, 
 			    "WARNING: ascii data read error at var %d, "
-			    "obs %d\n", i, t + 1);
+			    "obs %d", i, t + 1);
 		    return 1;
 		}
 	    }
@@ -506,13 +506,12 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 int check_varname (const char *varname)
 {
     int i, n = strlen(varname);
-    static char varerr[] = "Reading data header file\n";
 
     gretl_errmsg[0] = '\0';
     
     if (!(isalpha((unsigned char) varname[0]))) {
-        sprintf(gretl_errmsg, "%sfirst char of varname ('%c') is bad\n"
-               "(first must be alphabetical)", varerr, varname[0]);
+        sprintf(gretl_errmsg, "First char of varname ('%c') is bad\n"
+               "(first must be alphabetical)", varname[0]);
         return 1;
     }
     for (i=1; i<n; i++) {
@@ -520,13 +519,13 @@ int check_varname (const char *varname)
             && !(isdigit((unsigned char) varname[i]))
             && varname[i] != '_') {
 	    if (isprint((unsigned char) varname[i]))
-		sprintf(gretl_errmsg, "%svarname contains illegal character '%c'\n"
+		sprintf(gretl_errmsg, "Varname contains illegal character '%c'\n"
 			"Use only letters, digits and underscore", 
-			varerr, varname[i]);
+			varname[i]);
 	    else
-		sprintf(gretl_errmsg, "%svarname contains illegal character 0x%x\n"
+		sprintf(gretl_errmsg, "Varname contains illegal character 0x%x\n"
 			"Use only letters, digits and underscore", 
-			varerr, (unsigned) varname[i]);
+			(unsigned) varname[i]);
             return 1;
         }
     }
@@ -545,7 +544,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 
     fp = fopen(hdrfile, "r");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, "\nCouldn't open data header file %s\n",  hdrfile);
+	sprintf(gretl_errmsg, "Couldn't open file %s",  hdrfile);
 	return E_FOPEN;
     }
     fscanf(fp, "%s", str);
@@ -553,7 +552,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     while (1) { /* find number of variables */
         if (fscanf(fp, "%s", str) != 1) {
 	    fclose(fp);
-	    sprintf(gretl_errmsg, "\nOpened header file %s\n"
+	    sprintf(gretl_errmsg, "Opened header file %s\n"
 		    "Couldn't find list of variables (must "
 		    "be terminated with a semicolon)", hdrfile);
 	    return 1;
@@ -734,7 +733,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	}
     }
     if ((dotpos1 && !dotpos2) || (dotpos2 && !dotpos1)) {
-	sprintf(gretl_errmsg, "date strings inconsistent");
+	sprintf(gretl_errmsg, "Date strings inconsistent");
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
@@ -2408,7 +2407,7 @@ static char *xml_encode (char *buf)
 
     xmlbuf = malloc(sz);
     if (xmlbuf == NULL) {
-	sprintf(gretl_errmsg, "out of memory in XML encoding\n");
+	sprintf(gretl_errmsg, "out of memory in XML encoding");
 	return NULL;
     }
 #ifdef XML_DEBUG
@@ -2479,13 +2478,13 @@ static int write_xmldata (const char *fname, const int *list,
 	if (fp == NULL) err = 1;
     }
     if (err) {
-	sprintf(gretl_errmsg, "Couldn't open %s for writing\n", fname);
+	sprintf(gretl_errmsg, "Couldn't open %s for writing", fname);
 	return 1;
     }
 
     pmax = malloc(list[0] * sizeof *pmax);
     if (pmax == NULL) {
-	sprintf(gretl_errmsg, "Out of memory\n");
+	sprintf(gretl_errmsg, "Out of memory");
 	return 1;
     } 
 
@@ -2666,17 +2665,17 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 	if (sscanf(tmp, "%d", &v) == 1) {
 	    pdinfo->v = v + 1;
 	} else {
-	    sprintf(gretl_errmsg, "failed to parse count of variables");
+	    sprintf(gretl_errmsg, "Failed to parse count of variables");
 	    err = 1;
 	}
 	if (!err && dataset_allocate_varnames(pdinfo)) {
-	    sprintf(gretl_errmsg, "out of memory reading data file");
+	    sprintf(gretl_errmsg, "Out of memory reading data file");
 	    err = 1;
 	}
 	if (!err) {
 	    *pZ = malloc(pdinfo->v * sizeof **pZ);
 	    if (*pZ == NULL) {
-		sprintf(gretl_errmsg, "out of memory reading data file");
+		sprintf(gretl_errmsg, "Out of memory reading data file");
 		err = 1;
 	    }
 	}		
@@ -2707,7 +2706,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
 		pdinfo->varname[i][8] = '\0';
 		free(tmp);
 	    } else {
-		sprintf(gretl_errmsg, "variable %d has no name", i);
+		sprintf(gretl_errmsg, "Variable %d has no name", i);
 		return 1;
 	    }
 	    tmp = xmlGetProp(cur, (UTF) "label");
@@ -2738,7 +2737,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo, double ***pZ)
     }
    
     if (i != pdinfo->v) {
-	sprintf(gretl_errmsg, "Number of variables does not match declaration\n");
+	sprintf(gretl_errmsg, "Number of variables does not match declaration");
 	return 1;
     }
     else return 0;
@@ -2754,7 +2753,7 @@ static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 	s = strpbrk(s, "01234567890+-NA");
 	if (!strncmp(s, "NA", 2)) x = NADBL;
 	else if (*s && (sscanf(s, "%lf", &x) != 1)) {
-	    sprintf(gretl_errmsg, "failed to parse data values at obs %d", t+1);
+	    sprintf(gretl_errmsg, "Failed to parse data values at obs %d", t+1);
 	    return 1;
 	}
 	Z[i][t] = x;
@@ -2790,7 +2789,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	if (sscanf(tmp, "%d", &n) == 1) 
 	    pdinfo->n = n;
 	else {
-	    sprintf(gretl_errmsg, "failed to parse number of observations");
+	    sprintf(gretl_errmsg, "Failed to parse number of observations");
 	    return 1;
 	}
 	free(tmp);
@@ -2802,7 +2801,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 	if (!strcmp(tmp, "true")) {
 	    pdinfo->markers = 1;
 	    if (dataset_allocate_markers(pdinfo)) {
-		sprintf(gretl_errmsg, "out of memory");
+		sprintf(gretl_errmsg, "Out of memory");
 		return 1;
 	    }
 	} else if (strcmp(tmp, "false")) {
@@ -2850,7 +2849,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		    pdinfo->S[t][8] = '\0';
 		    free(tmp);
 		} else {
-		    sprintf(gretl_errmsg, "case marker missing at obs %d", t+1);
+		    sprintf(gretl_errmsg, "Case marker missing at obs %d", t+1);
 		    return 1;
 		}
 	    }
@@ -2861,7 +2860,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 		free(tmp);
 		t++;
 	    } else {
-		sprintf(gretl_errmsg, "values missing at observation %d", t+1);
+		sprintf(gretl_errmsg, "Values missing at observation %d", t+1);
 		return 1;
 	    }
 	}	    
@@ -2950,7 +2949,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
-        sprintf(gretl_errmsg, "file of the wrong type, root node not gretldata");
+        sprintf(gretl_errmsg, "File of the wrong type, root node not gretldata");
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -2959,7 +2958,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     tmp = xmlGetProp(cur, (UTF) "type");
     if (tmp == NULL) {
 	sprintf(gretl_errmsg, 
-		"required attribute 'type' is missing from data file");
+		"Required attribute 'type' is missing from data file");
 	return 1;
     } else {
 	if (!strcmp(tmp, "cross-section")) 
@@ -2971,7 +2970,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	else if (!strcmp(tmp, "stacked-cross-section"))
 	    pdinfo->time_series = STACKED_CROSS_SECTION;
 	else {
-	    sprintf(gretl_errmsg, "unrecognized type attribute for data file");
+	    sprintf(gretl_errmsg, "Unrecognized type attribute for data file");
 	    return 1;
 	}
 	free(tmp);
@@ -2984,7 +2983,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	if (sscanf(tmp, "%d", &pd) == 1)
 	    pdinfo->pd = pd;
 	else {
-	    strcpy(gretl_errmsg, "failed to parse data frequency");
+	    strcpy(gretl_errmsg, "Failed to parse data frequency");
 	    return 1;
 	}
 	free(tmp);
@@ -3005,7 +3004,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    else pdinfo->sd0 = atof(tmp);
 	}
 	if (err) {
-	    strcpy(gretl_errmsg, "failed to parse startobs");
+	    strcpy(gretl_errmsg, "Failed to parse startobs");
 	    return 1;
 	}
 	strncpy(pdinfo->stobs, tmp, 8);
@@ -3026,7 +3025,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	    if (sscanf(tmp, "%lf", &x) != 1) err = 1;
 	} 
 	if (err) {
-	    strcpy(gretl_errmsg, "failed to parse endobs");
+	    strcpy(gretl_errmsg, "Failed to parse endobs");
 	    return 1;
 	}
 	strncpy(pdinfo->endobs, tmp, 8);
@@ -3048,7 +3047,7 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 	}
         else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
 	    if (!gotvars) {
-		sprintf(gretl_errmsg, "variables information is missing");
+		sprintf(gretl_errmsg, "Variables information is missing");
 		return 1;
 	    }
 	    if (process_observations(doc, cur, pZ, pdinfo, ppaths, progress)) 
@@ -3063,11 +3062,11 @@ int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
     xmlCleanupParser();
 
     if (!gotvars) {
-	sprintf(gretl_errmsg, "variables information is missing");
+	sprintf(gretl_errmsg, "Variables information is missing");
 	return 1;
     }
     if (!gotobs) {
-	sprintf(gretl_errmsg, "no observations were found");
+	sprintf(gretl_errmsg, "No observations were found");
 	return 1;
     }
 
@@ -3118,7 +3117,7 @@ char *get_xml_description (const char *fname)
     }
 
     if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
-        sprintf(gretl_errmsg, "file of the wrong type, root node not gretldata");
+        sprintf(gretl_errmsg, "File of the wrong type, root node not gretldata");
 	xmlFreeDoc(doc);
 	return NULL;
     }
