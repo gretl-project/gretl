@@ -1,4 +1,4 @@
-version 1.3.3
+03/14/2005 version 1.3.3
 - Add "poisson" command (thanks to Jack Lucchetti)
 - Fix memory leak in VAR command with impulse responses, in the
   command-line program
@@ -20,6 +20,7 @@ version 1.3.3
 - Fixes for cointegration tests: improve dialogs and prevent crash
   on selection of just one variable plus the constant
 - Fix naming of Mahalanobis distances variable
+- Respect omission of constant from an ARMAX model
 - Graph control dialog: add one-click option to force use of a
   single y axis
 - New: in case of AR(1) estimation (Cochrane-Orcutt and similar), if

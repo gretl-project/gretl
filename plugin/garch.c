@@ -160,6 +160,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
     mle_aic_bic(pmod, 1);
 
     pmod->ci = GARCH;
+    pmod->ifc = 1;
     
     add_garch_varnames(pmod, pdinfo, list);
 

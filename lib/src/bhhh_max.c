@@ -27,7 +27,7 @@
 struct _model_info {
 
     /* members that may be set by caller of bhhh_max, via accessor
-       functions: */
+       functions */
 
     int k;              /* number of parameters */
     int t1, t2;         /* starting and ending point of sample */
@@ -39,7 +39,7 @@ struct _model_info {
     void *extra_info;   /* pointer to additional info which may be
 			   used in likelihood callback */
 
-    /* members set within bhhh_max: */
+    /* members set within bhhh_max */
 
     int n;            /* length of series */
     int iters;        /* number of iterations taken */
@@ -224,8 +224,9 @@ double model_info_get_ll (const model_info *model)
  * @do_score:
  *
  * Sets the log-likelihood for @model.  If @do_score is non-zero,
- * sets the primary ll value, otherwise sets the secondary value.
- * FIXME: explain this.
+ * sets the primary ll value, otherwise sets the secondary value,
+ * which is used for comparison (to see if we have succeeded in
+ * increasing the likelihood by following the estimated gradient).
  */ 
 
 void model_info_set_ll (model_info *model, double ll, int do_score)
@@ -257,7 +258,6 @@ void model_info_set_opts (model_info *model, unsigned char opts)
  * @tol: tolerance for convergence of estimates.
  *
  * Sets the convergence tolerance for @model. 
- * FIXME: explain this.
  */ 
 
 void model_info_set_tol (model_info *model, double tol)
@@ -268,9 +268,9 @@ void model_info_set_tol (model_info *model, double tol)
 /**
  * model_info_set_k:
  * @model: model info pointer.
- * @k: number of regressors in (non-ARMA) model.
+ * @k: number of regressors in model.
  *
- * Sets the number of regressors.
+ * Sets the total number of regressors.
  */ 
 
 void model_info_set_k (model_info *model, int k)
@@ -282,7 +282,7 @@ void model_info_set_k (model_info *model, int k)
  * model_info_get_k:
  * @model: model info pointer.
  *
- * Returns: the number of regressors in (non-ARMA) @model.
+ * Returns: the number of regressors in @model.
  */ 
 
 int model_info_get_k (model_info *model)
@@ -295,7 +295,8 @@ int model_info_get_k (model_info *model)
  * @model: model info pointer.
  * @n: number of data series.
  *
- * Sets the number of auxiliary data series needed for @model.
+ * Sets the number of auxiliary data series needed for the
+ * OPG regression associated with @model.
  */ 
 
 void model_info_set_n_series (model_info *model, int n)
@@ -333,8 +334,8 @@ void *model_info_get_extra_info (model_info *model)
     return model->extra_info;
 }
 
-/* Below: construct the regression list for the OPG regression, with
-   the appropriate indices into the temporary artificial dataset.
+/* Construct the regression list for the OPG regression, with the
+   appropriate indices into the temporary artificial dataset.
 */
 
 static int *make_opg_list (int k)
@@ -448,7 +449,7 @@ static int bhhh_iter_info (int iter, double *theta, int m, double ll,
  * bhhh_max:
  * @loglik: pointer to function for calculating log-likelihood and
  * score matrix.
- * @X: data set (used by @loglik).
+ * @X: original data set (passed on for use by @loglik).
  * @init_coeff: starting values for coefficients.
  * @model: model info struct, with some initialization carried out by
  * the caller.
@@ -485,7 +486,9 @@ int bhhh_max (LL_FUNC loglik,
     int i, t, err, k;
 
     err = model_info_init(model, init_coeff);
-    if (err) return E_ALLOC;
+    if (err) {
+	return E_ALLOC;
+    }
 
     k = model->k;
     blist = make_opg_list(k);
@@ -517,6 +520,9 @@ int bhhh_max (LL_FUNC loglik,
 
     /* zero the dataset */
     for (i=1; i<=k; i++) {
+#ifdef BHHH_DEBUG
+	sprintf(tinfo->varname[i], "tZ%d", i);
+#endif
 	for (t=0; t<model->n; t++) {
 	    tZ[i][t] = 0.0;
 	}
@@ -550,9 +556,9 @@ int bhhh_max (LL_FUNC loglik,
 	}
 
 #ifdef BHHH_DEBUG
-	pprintf(prn, "Dataset for OPG regression\n");
+	pprintf(prn, "Dataset for OPG regression:\n");
 	printdata(blist, (const double **) tZ, tinfo, OPT_O, prn);
-	pprintf(prn, "OLS model, OPG regression\n");
+	pprintf(prn, "OLS model, OPG regression:\n");
 	printmodel(bmod, tinfo, 0, prn);
 #endif
 
@@ -563,7 +569,7 @@ int bhhh_max (LL_FUNC loglik,
 	
 	clear_model(bmod);
 
-	/* see if we've gone up... (0 = "don't compute score") */
+	/* see if we've gone up... (0 means "don't compute score") */
 	err = loglik(ctemp, X, tZ, model, 0); 
 
 #ifdef BHHH_DEBUG
@@ -595,7 +601,9 @@ int bhhh_max (LL_FUNC loglik,
 	}	
 
 	/* double the steplength? */
-	if (stepsize < 4.0) stepsize *= 2.0;
+	if (stepsize < 4.0) {
+	    stepsize *= 2.0;
+	}
 
 	/* print interation info, if wanted */
 	bhhh_iter_info(iters, model->theta, k, model->ll, stepsize, prn);

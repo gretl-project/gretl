@@ -507,22 +507,28 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 
     if (pmod->ci == TSLS) {
 	k = 2;
-	while (pmod->list[k++] != LISTSEP) nbeta++;
+	while (pmod->list[k++] != LISTSEP) {
+	    nbeta++;
+	}
     } else if (pmod->ci == ARMA || pmod->ci == GARCH) {
-	nbeta = 1 + pmod->list[1] + pmod->list[2] + pmod->list[0] - 4;
+	nbeta = pmod->ifc + pmod->list[1] + pmod->list[2] + pmod->list[0] - 4;
     } else {
 	nbeta = pmod->list[0] - 1;
     }
 
     tmplist = gretl_list_new(nbeta);
-    if (tmplist == NULL) return E_ALLOC;
+    if (tmplist == NULL) {
+	return E_ALLOC;
+    }
 
     for (k=1; k<=tmplist[0]; k++) {
 	tmplist[k] = pmod->list[k+1];
     }
 
     if (pmod->vcv == NULL) {
-	if (makevcv(pmod)) return E_ALLOC;
+	if (makevcv(pmod)) {
+	    return E_ALLOC;
+	}
     }
 
     text_print_matrix(pmod->vcv, tmplist, pmod, pdinfo, prn);  
