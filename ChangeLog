@@ -1,14 +1,17 @@
 version 0.999
+- add support for gtk 2.0 and gnome 2.0
+- improve support for building on win32
 - bug fixes in boxplot functions
 - always show 6 significant figures for coefficient estimates
   and standard errors in regression output
-- numerous NLS/translation fixes
+- numerous NLS/translation fixes, improvements
 - bug fixes for Excel importer
 - reorganization of gui source files
 - fix bug in random variable generation in gui
 - add support for data files from Jeffrey Wooldridge's
   econometrics textbook
 - scrap ugly overloading of "clear_model" function
+- fix miscellaneous bugs revealed by valgrind
 
 07/09/2002 version 0.998 
 - increment library version to 15.0.0

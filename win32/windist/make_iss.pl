@@ -52,6 +52,25 @@ print "Name: \"{app}\\locale\\es\\LC_MESSAGES\"\n";
 print "Name: \"{app}\\..\\gnuplot\"\n";
 print "Name: \"{app}\\..\\gnuplot\\demo\"\n\n";
 
+# extra GTK module dirs for gtk-2.0
+print "Name: \"{app}\\lib\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\\2.0.0\"\n";
+print "Name: \"{app}\\lib\\gtk-2.0\\2.0.0\\loaders\"\n";
+print "Name: \"{app}\\lib\\pango\"\n";
+print "Name: \"{app}\\lib\\pango\\1.0.0\"\n";
+print "Name: \"{app}\\lib\\pango\\1.0.0\\modules\"\n";
+
+# GTK message catalog
+print "Name: \"{app}\\lib\\locale\"\n";
+print "Name: \"{app}\\lib\\locale\\es\"\n";
+print "Name: \"{app}\\lib\\locale\\es\\LC_MESSAGES\"\n";
+
+# pango module catalog
+print "Name: \"{app}\\etc\"\n";
+print "Name: \"{app}\\etc\\pango\"\n";
+
 print "[Files]\n";
 
 while ($line = <STDIN>) {
@@ -97,8 +116,7 @@ print "\"ratsbase\"; ValueData: \"f:\\\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"dbhost_ip\"; ValueData: \"152.17.150.2\"\n";   
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
-print "\"fontspec\"; ValueData: \"-unknown-Courier ";
-print "New-normal-r-normal-*-*-120-*-*-m-*-iso8859-1\"\n";
+print "\"fontspec\"; ValueData: \"Courier New 10\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"Rcommand\"; ValueData: \"RGui.exe\"\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";

@@ -42,13 +42,13 @@ ifeq ($(have_gtk),2.0)
   GNUMERIC_PLUGIN = gnumeric_import-2.so
   EXCEL_PLUGIN = excel_import-2.so
   GTK_CFLAGS += -DGTK_DISABLE_DEPRECATED
-  INSTALLED_LIBOLE2_CFLAGS := -I. $(shell pkg-config --cflags glib-2.0)
+  GRETL_LIBOLE2_CFLAGS := -I. $(shell pkg-config --cflags glib-2.0)
 else
   GRETLLIB = ../lib/libgretl.la
   PROGRESS_PLUGIN = progress_bar.so
   GNUMERIC_PLUGIN = gnumeric_import.so
   EXCEL_PLUGIN = excel_import.so
-  INSTALLED_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
+  GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
 
 PLUGINS = stats_tables.so panel_data.so des_import.so \
@@ -59,10 +59,10 @@ ifdef GMP_LIBS
 endif
 
 ifeq ($(LIBOLE2_LIBS),)
-  query-ms-ole.lo=ms-ole.lo
+  query-ms-ole.lo = ms-ole.lo
   vpath %.c libole2
   vpath %.h libole2
-  LIBOLE2_CFLAGS = $(INSTALLED_LIBOLE2_CFLAGS)
+  LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
 all: $(PLUGINS)

@@ -1,10 +1,20 @@
 topsrc = ..
 
 prefix = @prefix@
+have_gtk = @have_gtk@
 
 gretldir = $(prefix)/share/gretl
 tooldir = $(topsrc)/tools
 INSTALL_DATA = cp -fp
+
+ifeq ($(have_gtk),2.0)
+   ES_GUI_HLP = gretl.hlp.es.utf8
+   ES_CLI_HLP = gretlcli.hlp.es.utf8
+   UTF8_FILES = $(ES_GUI_HLP) $(ES_CLI_HLP)
+else
+   ES_GUI_HLP = gretl.hlp.es
+   ES_CLI_HLP = gretlcli.hlp.es
+endif
 
 .PHONY :
 
@@ -32,14 +42,20 @@ install_man: gretl.1
 	$(tooldir)/mkinstalldirs $(prefix)/share/man/man1
 	$(INSTALL_DATA) gretl.1 $(prefix)/share/man/man1
 
-install_help:
+install_help: $(UFT8_FILES)
 	$(tooldir)/mkinstalldirs $(gretldir)
 	$(INSTALL_DATA) gretl.hlp $(gretldir)/gretl.hlp
 	$(INSTALL_DATA) gretlcli.hlp $(gretldir)/gretlcli.hlp
-	for f in gretl.hlp.* gretlcli.hlp.* ; do \
-	$(INSTALL_DATA) $$f $(gretldir)/$$f ; done
+	$(INSTALL_DATA) $(ES_GUI_HLP) $(gretldir)/gretl.hlp.es
+	$(INSTALL_DATA) $(ES_CLI_HLP) $(gretldir)/gretlcli.hlp.es
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(gretldir) $(gretldir)/data 
 	$(tooldir)/mkinstalldirs $(gretldir)/data/greene
 	$(tooldir)/mkinstalldirs $(gretldir)/scripts $(gretldir)/db
+
+gretl.hlp.es.utf8: gretl.hlp.es
+	recode l1..utf-8 < $< > $@
+
+gretlcli.hlp.es.utf8: gretlcli.hlp.es
+	recode l1..utf-8 < $< > $@

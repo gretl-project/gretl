@@ -17,7 +17,7 @@ function process_gnuplot {
 # create the gretl installer
 function inno_compile {
     echo "Building gretl installer executable..."
-    wine "$INNO_EXE" ./gretl2.iss 2>/dev/null
+    wine "$INNO_EXE" ./gretl.iss 2>/dev/null
     mv Output/setup.exe Output/gretl_install.exe
 }
 
@@ -129,7 +129,7 @@ cd windist
 process_gnuplot
 
 # make Inno builder file
-cat MANIFEST | ./make_iss2.pl $VERSION | todos > gretl2.iss 
+cat MANIFEST | ./make_iss.pl $VERSION | todos > gretl.iss 
 
 # make Inno installer
 inno_compile

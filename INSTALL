@@ -23,8 +23,9 @@ Package     gretl status   functionality
 
 gtk          required       provides the gretl GUI
 
-gtkextra     required       file selection dialogs, session icon
-                            view, data editing spreadsheet
+gtkextra     required,      file selection dialogs, session icon
+             if using       view, data editing spreadsheet
+             gtk 1.2
 
 xml          required       open and save data files in the
                             default format
@@ -64,4 +65,4 @@ Notes:
   may use the option "--with-gnome-install=DIR" when running
   configure. Substitute for "DIR" the prefix you want to use.
 
-Allin Cottrell, May 2002.
+Allin Cottrell, August 2002.

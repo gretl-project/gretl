@@ -246,6 +246,19 @@ if test x"${LATEX}" = xyes ; then
 fi
 
 dnl
+dnl Preliminary check for pkg-config
+dnl
+if test "$try_gtk2" = "yes" ; then
+   if test -z "$PKG_CONFIG"; then
+      AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+   fi
+   if test "$PKG_CONFIG" = "no" ; then
+      echo "*** pkg-config not found, can't build with gtk 2.0" 
+      $try_gtk2="no"
+   fi
+fi
+
+dnl
 dnl Check for GTK 2.0, if appropriate
 dnl
 orig_CFLAGS=$CFLAGS
