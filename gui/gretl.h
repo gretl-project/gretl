@@ -130,7 +130,7 @@ enum stat_codes {
 };
 
 enum browser_codes {
-    RAMU_DATA = 1,
+    RAMU_DATA = OP_MAX + 1,
     RAMU_PS,
     GREENE_DATA,
     GREENE_PS,
