@@ -1,5 +1,6 @@
 # Gretl: various illustrative datafiles
 "arma","artificial data for ARMA script example"
+"djclose","Daily close of Dow-Jones, 1980s"
 "ects_nls","Nonlinear least squares example"
 "hamilton","Prices and exchange rate, U.S. and Italy"
 "longley","Annual U.S. labor-market data"
