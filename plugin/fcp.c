@@ -40,6 +40,7 @@
 
 int global_np;
 double gscale;
+int gncoeff;
 
 #define vix(i,j) ((i) + global_np * (j))
 
@@ -212,12 +213,21 @@ static void print_iter_info (int iter, double *theta, int m, double ll,
 			     int hess, PRN *prn)
 {
     int i;
+    double x;
 
     pprintf(prn, "\n*** %s %d%s: theta, ll ***\n", ("iteration"), iter,
 	    (hess)? _(" (using Hessian)") : "");
     for (i=0; i<m; i++) {
-	if (i && i % 5 == 0) pputc(prn, '\n');
-	pprintf(prn, "%#12.5g ", theta[i]);
+	if (i && i % 5 == 0) {
+	    pputc(prn, '\n');
+	}
+	x = theta[i];
+	if (i < gncoeff - 1) {
+	    x *= gscale;
+	} else if (i == gncoeff - 1) {
+	    x *= gscale * gscale;
+	}
+	pprintf(prn, "%#12.5g ", x);
     }
     pprintf(prn, "\n    ll = %f\n", ll);
 }
@@ -510,6 +520,7 @@ int garch_estimate (int t1, int t2, int nobs,
     /* number of parameters of unconcentrated likelihood */
     nparam = nc + 1 + q + p;
     global_np = nparam;
+    gncoeff = nc + 1;
 
     if (vs_allocate(&dhdp, &g, &param, &aux3, &svc5, 
 		    &c, &aux, &vc5, &parpre, &partrc,

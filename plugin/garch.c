@@ -78,9 +78,10 @@ static void add_garch_varnames (MODEL *pmod, const DATAINFO *pdinfo,
 }
 
 static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
-			    double scale)
+			    int nc, double scale)
 {
     const int nterms = np * (np + 1) / 2;
+    double sfi, sfj;
     int i, j, k;
 
     free(pmod->vcv);
@@ -90,9 +91,23 @@ static int make_packed_vcv (MODEL *pmod, double *vcv, int np,
     }
 
     for (i=0; i<np; i++) {
+	if (i < nc) {
+	    sfi = scale;
+	} else if (i == nc) {
+	    sfi = scale * scale;
+	} else {
+	    sfi = 1.0;
+	}
 	for (j=0; j<=i; j++) {
+	    if (j < nc) {
+		sfj = scale;
+	    } else if (j == nc) {
+		sfj = scale * scale;
+	    } else {
+		sfj = 1.0;
+	    }
 	    k = ijton(i, j, np);
-	    pmod->vcv[k] = vcv[i + np * j];
+	    pmod->vcv[k] = vcv[i + np * j] * sfi * sfj;
 	}
     }
 
@@ -149,7 +164,7 @@ static int write_garch_stats (MODEL *pmod, const double **Z,
 	    if (i < pmod->t1 || i > pmod->t2) {
 		garch_h[i] = NADBL;
 	    } else {
-		garch_h[i] = h[i+pad];
+		garch_h[i] = h[i + pad] * scale * scale;
 	    }
 	}
 	gretl_model_set_data(pmod, "garch_h", garch_h, 
@@ -363,7 +378,7 @@ int do_fcp (const int *list, double **Z, double scale,
 	pmod->lnL = amax[0];
 	write_garch_stats(pmod, (const double **) Z, scale, pdinfo, 
 			  list, amax, nparam, pad, res, h);
-	make_packed_vcv(pmod, vcv, nparam, scale);
+	make_packed_vcv(pmod, vcv, nparam, ncoeff, scale);
 	gretl_model_set_int(pmod, "iters", iters);
 	gretl_model_set_int(pmod, "garch_vcv", vopt);
     }
@@ -472,8 +487,7 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
     MODEL model;
     int *list = NULL, *ols_list = NULL;
     double scale = 1.0;
-    int yno = 0, scaled = 0;
-    int t, err;
+    int t, err, yno = 0;
 
     gretl_model_init(&model);
 
@@ -500,14 +514,13 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 #if 1
     if (!err) {
 	yno = ols_list[1];
-	scale = model.sigma;
+	scale = gretl_stddev(model.t1, model.t2, (*pZ)[yno]);
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[yno][t] /= scale;
 	}
 	for (t=0; t<model.ncoeff; t++) {
 	    model.coeff[t] *= scale;
 	}
-	scaled = 1;
     } 
 #endif
 
@@ -515,7 +528,8 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	do_fcp(list, *pZ, scale, pdinfo, &model, prn, opt); 
     }
 
-    if (scaled) {
+    if (scale != 1.0) {
+	/* undo scaling of dependent variable */
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[yno][t] *= scale;
 	}
