@@ -375,8 +375,8 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
 	return;
     }
 
-    ntodate(date1, pdinfo->t1, pdinfo);
-    ntodate(date2, pdinfo->t2, pdinfo);
+    ntodate_full(date1, pdinfo->t1, pdinfo);
+    ntodate_full(date2, pdinfo->t2, pdinfo);
     pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, "%s:  %s - %s", _("Current sample"), date1, date2);
@@ -1283,7 +1283,10 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	    if (pause && page_break(1, &lineno, 1)) return 0;
 	    lineno++;
 	    for (t=t1; t<=t2; t++) {
-		sprintf(line, "%8s ", get_obs_string(t, pdinfo));
+		char obs_string[OBSLEN];
+
+		get_obs_string(obs_string, t, pdinfo);
+		sprintf(line, "%8s ", obs_string);
 		for (v=v1; v<=v2; v++) {
 		    xx = (*pZ)[list[v]][t];
 		    if (na(xx)) {

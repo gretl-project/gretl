@@ -159,7 +159,11 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
 
     day = rem - modays;
 
-    sprintf(str, "%04d/%02d/%02d", yr, mo, day);    
+    if (strlen(pdinfo->stobs) > 8) {
+	sprintf(str, "%04d/%02d/%02d", yr, mo, day); 
+    } else {
+	sprintf(str, "%02d/%02d/%02d", yr % 100, mo, day); 
+    }
 }
 
 double get_dec_date (const char *s)

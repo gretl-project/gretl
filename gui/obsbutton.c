@@ -878,7 +878,7 @@ static void default_output (ObsButton *obs_button)
     char buf[OBSLEN];
     gpointer data;
 
-    ntodate(buf, (int) obs_button->adjustment->value, datainfo);
+    ntodate_full(buf, (int) obs_button->adjustment->value, datainfo);
 
     if (strcmp (buf, gtk_entry_get_text(GTK_ENTRY(obs_button)))) {
 	gtk_entry_set_text(GTK_ENTRY(obs_button), buf);

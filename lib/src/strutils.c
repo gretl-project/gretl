@@ -604,32 +604,48 @@ int get_local_decpoint (void)
 #endif
 }
 
+char *real_get_obs_string (char *obs, int t, const DATAINFO *pdinfo, int full)
+{
+    if (pdinfo->markers && pdinfo->S != NULL) { 
+	/* data marker strings present */
+	strcpy(obs, pdinfo->S[t]);
+    } else {
+	if (full) {
+	    ntodate_full(obs, t, pdinfo);
+	} else {
+	    ntodate(obs, t, pdinfo);
+	}
+    }
+
+    if (!full) {
+	if (strlen(obs) > 8 && isdigit(*obs) && isdigit(*(obs + 1))) {
+	    char tmp[9];
+
+	    strcpy(tmp, obs + 2);
+	    strcpy(obs, tmp);
+	} 
+    }
+
+    return obs;
+}
+
 /**
  * get_obs_string:
+ * @obs: char array big enough to hold the observation (OBSLEN).
  * @t: zero-based observation number.
  * @pdinfo: pointer to dataset information.
  *
  * Returns: the observation string corresponding to @t.
  */
 
-const char *get_obs_string (int t, const DATAINFO *pdinfo)
+char *get_obs_string (char *obs, int t, const DATAINFO *pdinfo)
 {
-    static char ret[OBSLEN];
+    return real_get_obs_string(obs, t, pdinfo, 0);
+}
 
-    if (pdinfo->markers) { /* data marker strings present */
-	strcpy(ret, pdinfo->S[t]);
-    } else {
-	ntodate(ret, t, pdinfo);
-    }
-
-    if (strlen(ret) > 8 && isdigit(*ret) && isdigit(*(ret + 1))) {
-	char tmp[9];
-
-	strcpy(tmp, ret + 2);
-	strcpy(ret, tmp);
-    } 
-
-    return ret;
+char *get_full_obs_string (char *obs, int t, const DATAINFO *pdinfo)
+{
+    return real_get_obs_string(obs, t, pdinfo, 1);
 }
 
 /**

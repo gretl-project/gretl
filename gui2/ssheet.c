@@ -320,7 +320,7 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
     if (datainfo->markers) {
 	gtk_list_store_set(store, &iter, 0, obsname, -1);
     } else if (sheet->point == SHEET_AT_END) {
-	ntodate(rowlabel, sheet->datarows - 1, datainfo);
+	get_full_obs_string(rowlabel, sheet->datarows - 1, datainfo);
 	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }
 
@@ -339,7 +339,7 @@ static void real_add_new_obs (spreadsheet *sheet, const char *obsname)
 
     if (sheet->point == SHEET_AT_POINT && !datainfo->markers) {
 	for (i=pointpath; i<sheet->datarows; i++) {
-	    ntodate(rowlabel, i, datainfo);
+	    get_full_obs_string(rowlabel, i, datainfo);
 	    gtk_list_store_set(store, &iter, 0, rowlabel, -1);
 	    gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
 	}
@@ -731,7 +731,7 @@ static void select_first_editable_cell (spreadsheet *sheet)
 
 static int add_data_to_sheet (spreadsheet *sheet, int new)
 {
-    gchar rowlabel[10];
+    gchar rowlabel[OBSLEN];
     gint i, t, colnum, n = datainfo->n;
     GtkTreeView *view = GTK_TREE_VIEW(sheet->view);
     GtkTreeIter iter;
@@ -742,11 +742,7 @@ static int add_data_to_sheet (spreadsheet *sheet, int new)
     /* insert observation markers */
     gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
     for (t=0; t<n; t++) {
-	if (!new && datainfo->markers) {
-	    strcpy(rowlabel, datainfo->S[t]);
-	} else {
-	    ntodate(rowlabel, t, datainfo);
-	}
+	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_list_store_append(store, &iter);
 	gtk_list_store_set(store, &iter, 0, rowlabel, -1);
     }

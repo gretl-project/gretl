@@ -158,7 +158,7 @@ static void sheet_add_var (void)
 static void sheet_add_obs (void)
 {
     GtkSheet *sheet = GTK_SHEET(gretlsheet);
-    char rowlabel[10];
+    char rowlabel[OBSLEN];
 
     *newobsmarker = '\0';
 
@@ -167,10 +167,7 @@ static void sheet_add_obs (void)
     if (!datainfo->markers || *newobsmarker != '\0') {
 	gtk_sheet_add_row(sheet, 1);
 	numrows++;
-	if (datainfo->markers) 
-	    strcpy(rowlabel, newobsmarker);
-	else 
-	    ntodate(rowlabel, numrows-1, datainfo);
+	get_full_obs_string(rowlabel, numrows-1, datainfo);
 	gtk_sheet_row_button_add_label(sheet, numrows-1, rowlabel);
 	gtk_sheet_set_row_title(sheet, numrows-1, rowlabel);
 	gtk_sheet_set_active_cell(sheet, numrows-1, 0);
@@ -202,7 +199,7 @@ static void sheet_insert_obs (void)
 				    rowlabel);
 	} else {
 	    for (i=sheet->active_cell.row; i<numrows; i++) {
-		ntodate(rowlabel, i, datainfo);
+		get_full_obs_string(rowlabel, i, datainfo);
 		gtk_sheet_row_button_add_label(sheet, i, rowlabel);
 		gtk_sheet_set_row_title(sheet, i, rowlabel);
 	    }
@@ -492,10 +489,7 @@ static void add_data_to_sheet (GtkWidget *w)
     }
     numcolumns = i;
     for (t=0; t<n; t++) {
-	if (datainfo->markers) 
-	    strcpy(rowlabel, datainfo->S[t]);
-	else
-	    ntodate(rowlabel, t, datainfo);
+	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }
@@ -532,7 +526,7 @@ static void add_skel_to_sheet (GtkWidget *w)
     }
     numcolumns = i;
     for (t=0; t<n; t++) {
-	ntodate(rowlabel, t, datainfo);
+	get_full_obs_string(rowlabel, t, datainfo);
 	gtk_sheet_row_button_add_label(sheet, t, rowlabel);
 	gtk_sheet_set_row_title(sheet, t, rowlabel);
     }

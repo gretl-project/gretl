@@ -382,7 +382,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
     if (nf == 1) return 0;
 	
     if (nf == 2) {
-	if (sscanf(line, "%4s %8s", cmd, newstart) != 2) {
+	if (sscanf(line, "%4s %10s", cmd, newstart) != 2) {
 	    strcpy(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
@@ -405,7 +405,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	}
     }
 
-    if (sscanf(line, "%4s %8s %8s", cmd, newstart, newstop) != 3) {
+    if (sscanf(line, "%4s %10s %10s", cmd, newstart, newstop) != 3) {
 	strcpy(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }

@@ -1002,7 +1002,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    newinfo->pd = 1;
 	    newinfo->time_series = 0;
 	} else {
-	    ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
+	    ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
 	}
 
 	for (i=1; i<newinfo->v; i++) {
@@ -1017,7 +1017,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	    newinfo->varname[i][0] = 0;
 	    strncat(newinfo->varname[i], 
-		    rowptr[book.row_offset].cells[i_sheet] + 1, 8);
+		    rowptr[book.row_offset].cells[i_sheet] + 1, VNAMELEN - 1);
 	    for (t=0; t<newinfo->n; t++) {
 		t_sheet = t + 1 + book.row_offset;
 		if (rowptr[t_sheet].cells == NULL ||
@@ -1044,7 +1044,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		for (t=0; t<newinfo->n; t++) {
 		    t_sheet = t + 1 + book.row_offset;
 		    S[t][0] = 0;
-		    strncat(S[t], rowptr[t_sheet].cells[i] + 1, 8);
+		    strncat(S[t], rowptr[t_sheet].cells[i] + 1, OBSLEN - 1);
 		}
 		newinfo->S = S;
 	    }

@@ -2522,6 +2522,19 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 	if (t >= 0) return t + 1;
     }
 
+    if (dated_daily_data(pdinfo)) {
+	char datestr[OBSLEN];
+
+	charsub(test, ':', '/');
+	for (t=0; t<pdinfo->n; t++) {
+	    daily_date_string(datestr, t, pdinfo);
+	    if (!strcmp(test, datestr) ||
+		!strcmp(test, datestr + 2)) {
+		return t + 1;
+	    }
+	}
+    }
+
     return 0;
 }
 
@@ -2793,11 +2806,18 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/24.0);
 	break;
     case 'd':
-	strcpy(VARLABEL(pdinfo, vi), _("daily plotting variable"));
-	if (pdinfo->S != NULL) {
+	if (dated_daily_data(pdinfo) && pdinfo->n > 365) {
+	    strcpy(VARLABEL(pdinfo, vi), _("daily plotting variable"));
 	    for (t=0; t<n; t++) {
-		(*pZ)[vi][t] = get_dec_date(pdinfo->S[t]);
-	    }
+		if (pdinfo->S != NULL) {
+		    (*pZ)[vi][t] = get_dec_date(pdinfo->S[t]);
+		} else {
+		    char datestr[OBSLEN];
+		    
+		    daily_date_string(datestr, t, pdinfo);
+		    (*pZ)[vi][t] = get_dec_date(datestr);
+		}
+	    } 
 	} else {
 	    strcpy(pdinfo->varname[vi], "time");
 	    strcpy(VARLABEL(pdinfo, vi), _("time trend variable"));

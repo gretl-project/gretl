@@ -1034,11 +1034,15 @@ void clear_sample_label (void)
 
 void set_sample_label (DATAINFO *pdinfo)
 {
-    char startdate[OBSLEN], enddate[OBSLEN], pdstr[16];
+    char pdstr[16];
+    char stobs[OBSLEN], endobs[OBSLEN];
+    char t1str[OBSLEN], t2str[OBSLEN];
     char labeltxt[80];
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
-    ntodate(enddate, pdinfo->t2, pdinfo);
+    ntodate(stobs, 0, pdinfo);
+    ntodate(endobs, pdinfo->n - 1, pdinfo);
+    ntodate(t1str, pdinfo->t1, pdinfo);
+    ntodate(t2str, pdinfo->t2, pdinfo);
 
     if (dataset_is_time_series(pdinfo)) {
 	switch (pdinfo->pd) {
@@ -1078,8 +1082,8 @@ void set_sample_label (DATAINFO *pdinfo)
 	 pdinfo->time_series == STACKED_CROSS_SECTION);
 
     sprintf(labeltxt, _("%s: Full range %s - %s; current sample"
-	    " %s - %s"), pdstr, pdinfo->stobs, pdinfo->endobs,
-	    startdate, enddate);
+	    " %s - %s"), pdstr, stobs, endobs,
+	    t1str, t2str);
     gtk_label_set_text(GTK_LABEL(mdata->status), labeltxt);
 
     if (strlen(paths.datfile) > 2) {

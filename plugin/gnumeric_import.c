@@ -252,7 +252,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		if (!err && (tmp = xmlNodeGetContent(p))) {
 		    if (VTYPE_IS_NUMERIC(vtype) || vtype == VALUE_STRING) {
 			if (i_real == 0) {
-			    strncat(sheet->label[t_real], tmp, 8);
+			    strncat(sheet->label[t_real], tmp, OBSLEN - 1);
 			}
 		    }
 		    if (VTYPE_IS_NUMERIC(vtype)) {
@@ -262,7 +262,7 @@ static int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet, PRN *prn)
 		    }
 		    else if (vtype == VALUE_STRING) {
 			if (t_real == 0) {
-			    strncat(sheet->varname[i_real], tmp, 8);
+			    strncat(sheet->varname[i_real], tmp, VNAMELEN - 1);
 			    if (i_real == 0 && !strcmp(tmp, "obs")) {
 				; /* keep going */
 			    } else if (check_varname(sheet->varname[i_real])) {
@@ -641,7 +641,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    newinfo->pd = 1;
 	    newinfo->time_series = 0;
 	} else {
-	    ntodate(newinfo->endobs, newinfo->n - 1, newinfo);
+	    ntodate_full(newinfo->endobs, newinfo->n - 1, newinfo);
 	    fprintf(stderr, "endobs='%s'\n", newinfo->endobs);
 	}
 

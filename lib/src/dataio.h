@@ -72,6 +72,8 @@ int dateton (const char *date, const DATAINFO *pdinfo);
 
 char *ntodate (char *datestr, int nt, const DATAINFO *pdinfo);
 
+char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo);
+
 int get_info (const char *hdrfile, PRN *prn);
 
 int get_precision (double *x, int n, int placemax);

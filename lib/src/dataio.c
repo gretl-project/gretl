@@ -916,19 +916,8 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     return n;
 }
 
-/**
- * ntodate:
- * @datestr: string to which date is to be printed.
- * @nt: an observation number (zero-based).
- * @pdinfo: data information struct.
- * 
- * print to @datestr the calendar representation of observation
- * number nt.
- * 
- * Returns: the observation string.
- */
-
-char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
+static char *real_ntodate (char *datestr, int t, const DATAINFO *pdinfo,
+			   int full)
 {
     double x;
     static int decpoint;
@@ -940,6 +929,12 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
 	    strcpy(datestr, pdinfo->S[t]);
 	} else {
 	    daily_date_string(datestr, t, pdinfo);
+	}
+	if (!full && strlen(datestr) > 8) {
+	    char tmp[9];
+
+	    strcpy(tmp, datestr);
+	    strcpy(datestr, tmp + 2);
 	}
 	return datestr;
     }
@@ -957,6 +952,28 @@ char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
     }
     
     return datestr;
+}
+
+/**
+ * ntodate:
+ * @datestr: string to which date is to be printed.
+ * @nt: an observation number (zero-based).
+ * @pdinfo: data information struct.
+ * 
+ * print to @datestr the calendar representation of observation
+ * number nt.
+ * 
+ * Returns: the observation string.
+ */
+
+char *ntodate (char *datestr, int t, const DATAINFO *pdinfo)
+{
+    return real_ntodate(datestr, t, pdinfo, 0);
+}
+
+char *ntodate_full (char *datestr, int t, const DATAINFO *pdinfo)
+{
+    return real_ntodate(datestr, t, pdinfo, 1);
 }
 
 /* .......................................................... */
@@ -1046,8 +1063,8 @@ static int writehdr (const char *hdrfile, const int *list,
     if (opt == GRETL_DATA_FLOAT) binary = 1;
     else if (opt == GRETL_DATA_DOUBLE) binary = 2;
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
-    ntodate(enddate, pdinfo->t2, pdinfo);
+    ntodate_full(startdate, pdinfo->t1, pdinfo);
+    ntodate_full(enddate, pdinfo->t2, pdinfo);
 
     fp = fopen(hdrfile, "w");
     if (fp == NULL) return 1;
@@ -1286,7 +1303,7 @@ int write_data (const char *fname, const int *list,
 	    } else {
 		char tmp[OBSLEN];
 
-		ntodate(tmp, t, pdinfo);
+		ntodate_full(tmp, t, pdinfo);
 		fprintf(fp, "\"%s\"%c", tmp, delim);
 	    }
 	    for (i=1; i<=l0; i++) { 
@@ -1323,7 +1340,7 @@ int write_data (const char *fname, const int *list,
 		}
 	    }
 	}
-	ntodate(datestr, pdinfo->t1, pdinfo);
+	ntodate_full(datestr, pdinfo->t1, pdinfo);
 	p = strchr(datestr, ':');
 	if (p != NULL) subper = atoi(p + 1);
 	fprintf(fp, "nrow = %d, ncol = %d)), start = c(%d,%d), frequency = %d)\n",
@@ -1452,8 +1469,8 @@ int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
     time_t prntime = time(NULL);
     int i;
 
-    ntodate(startdate, 0, pdinfo);
-    ntodate(enddate, pdinfo->n - 1, pdinfo);
+    ntodate_full(startdate, 0, pdinfo);
+    ntodate_full(enddate, pdinfo->n - 1, pdinfo);
 
     sprintf(tmp, _("Data file %s\nas of"), 
 	    strlen(ppaths->datfile)? ppaths->datfile : _("(unsaved)"));
@@ -2346,7 +2363,7 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 	   pputs(prn, _("Out of memory adding data\n"));
        } else {
 	   pdinfo->n = tnew;
-	   ntodate(pdinfo->endobs, tnew - 1, pdinfo);
+	   ntodate_full(pdinfo->endobs, tnew - 1, pdinfo);
 	   pdinfo->t2 = pdinfo->n - 1;
        }
    }
@@ -3380,8 +3397,8 @@ static int write_xmldata (const char *fname, const int *list,
 	}
     }
 
-    ntodate(startdate, pdinfo->t1, pdinfo);
-    ntodate(enddate, pdinfo->t2, pdinfo);
+    ntodate_full(startdate, pdinfo->t1, pdinfo);
+    ntodate_full(enddate, pdinfo->t2, pdinfo);
 
     simple_fname(datname, fname);
     xmlbuf = gretl_xml_encode(datname);
