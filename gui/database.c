@@ -1502,12 +1502,11 @@ static gchar *get_descrip (char *fname, const PATHS *ppaths)
     FILE *fp;
     gchar *line, *p;
     char tmp[MAXLEN];
-    int n, dot;
 
     if ((line = mymalloc(MAXLEN)) == NULL) return NULL;
 
     build_path(ppaths->binbase, fname, tmp, NULL);
-    if ((p = strrchr(tmp, '.')) strcpy(p, ".idx");
+    if ((p = strrchr(tmp, '.'))) strcpy(p, ".idx");
 
     if ((fp = fopen(tmp, "r")) == NULL) {
 	g_free(line);

@@ -243,6 +243,10 @@ static void set_startdir (int action, char *startdir)
 	else
 	    get_default_dir(startdir);
     }
+#ifndef G_OS_WIN32
+    if (startdir[strlen(startdir)-1] != '/') strcat(startdir, "/");
+#endif
+
 }
 
 /* ........................................................... */

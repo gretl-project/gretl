@@ -126,6 +126,15 @@ distdepend: depend
 
 # DO NOT DELETE
 
+des_import.lo: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
+des_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
+des_import.lo: ../lib/src/generate.h ../lib/src/utils.h ../lib/src/compare.h
+des_import.lo: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
+des_import.lo: ../lib/src/describe.h ../lib/src/printout.h
+des_import.lo: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+des_import.lo: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+des_import.lo: ../lib/src/nonparam.h ../lib/src/discrete.h
+des_import.lo: ../lib/src/subsample.h ../lib/src/calendar.h
 excel_import.lo: ../config.h ../lib/src/libgretl.h ../lib/src/commands.h
 excel_import.lo: ../lib/src/errors.h ../lib/src/estimate.h
 excel_import.lo: ../lib/src/generate.h ../lib/src/utils.h
