@@ -22,9 +22,20 @@
 #include "libgretl.h"
 #include "internal.h"
 
-/* #define TINY 1.0e-13 */
-#define TINY (DBL_EPSILON * 100)
+/* There's a balancing act with 'TINY' here.  It's the minimum value
+   for determinant that libgretl will accept before rejecting a
+   data matrix as too highly collinear.  If you set it too high,
+   data sets for which gretl could produce reasonable estimates will
+   be rejected.  If you set it too low (and even 100 * DBL_EPSILON
+   is definitely too low), gretl will produce more or less worthless
+   coefficient estimates when given highly collinear data.  If you're
+   tempted to change the value of TINY, check how gretl does on the
+   NIST reference data sets for linear regression and ensure you're
+   not getting any garbage results.
+*/
 
+#define TINY 0.5e-8 /* was 1.0e-13, produced poor results on NIST Filip
+		       test */
 #define SMALL 1.0e-8
 
 typedef struct {

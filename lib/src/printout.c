@@ -144,8 +144,8 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
     }
 
     if (doing_nls()) {
-	pprintf(prn, "  %s = %g\n", _("Error Sum of Squares"), pmod->ess);
-	pprintf(prn, "  %s = %g\n", _("Standard error"), pmod->sigma);
+	pprintf(prn, "  %s = %#g\n", _("Error Sum of Squares"), pmod->ess);
+	pprintf(prn, "  %s = %#g\n", _("Standard error"), pmod->sigma);
     } else {
 	pprintf(prn, "Error Sum of Sq (ESS) ");
 	_bufspace(3, prn);
@@ -205,7 +205,7 @@ static int Fline (const MODEL *pmod, PRN *prn)
 		    _("undefined"));
 	    return 1;
 	}
-	else pprintf(prn, "%11g  p-value for F() %23f\n", pmod->fstt,
+	else pprintf(prn, "%#11g  p-value for F() %23f\n", pmod->fstt,
 		     fdist(pmod->fstt, pmod->dfn, pmod->dfd));
     }
     return 0;
@@ -216,9 +216,9 @@ static int Fline (const MODEL *pmod, PRN *prn)
 static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (doing_nls() && !na(pmod->dw)) {
-	pprintf(prn, "  %s = %g\n", _("Durbin-Watson statistic"), 
+	pprintf(prn, "  %s = %#g\n", _("Durbin-Watson statistic"), 
 		pmod->dw);
-	pprintf(prn, "  %s = %g\n", _("1st-order autocorrelation coeff."), 
+	pprintf(prn, "  %s = %#g\n", _("1st-order autocorrelation coeff."), 
 		pmod->rho);
     } else {
 	if (na(pmod->dw))
