@@ -67,13 +67,6 @@ garch_full_hessian (int t1, int t2, double *yobs,
 
 static void vsrstr_(const double *c, int nc, double *b);
 
-#define log10e 0.43429448190325182765
-
-static double d_lg10 (double x)
-{
-    return log10e * log(x);
-}
-
 /* Gabriele FIORENTINI, Giorgio CALZOLARI, Lorenzo PANATTONI
    Journal of APPLIED ECONOMETRICS, 1996 
 
@@ -163,7 +156,7 @@ int vsanal_(int t1, int t2, double *yobs, int nobs,
 
     toler1 = .05;
     toler2 = 1e-8;
-    tollog = d_lg10(toler2);
+    tollog = log10(toler2);
 
     for (i = 0; i < nc; ++i) {
 	c[i] = coeff[i];
