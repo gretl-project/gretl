@@ -47,6 +47,8 @@ void session_init (void);
 
 void do_open_session (GtkWidget *w, gpointer data);
 
+void verify_clear_data (void);
+
 void close_session (void);
 
 void free_session (void);

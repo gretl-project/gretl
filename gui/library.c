@@ -243,8 +243,8 @@ void clear_data (int full)
 	clear(paths.datfile, MAXLEN);
     }
     restore_sample(NULL, 0, NULL);
+    if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, 0);
-    if (Z != NULL) free(Z); /* FIXME */
     Z = NULL;
     fullZ = NULL;
     clear_clist(mdata->listbox);
@@ -662,7 +662,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	    return;
 	} 
 	/* printcorr(corr, datainfo, &prn); */
-	matrix_print_corr(obj, datainfo, 1, prn);
+	matrix_print_corr(obj, datainfo, 0, prn);
 	break;
     case FREQ:
 	obj = freqdist(&Z, datainfo, mdata->active_var, 1);

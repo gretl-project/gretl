@@ -215,7 +215,7 @@ GtkItemFactoryEntry data_items[] = {
       EXPORT_R, NULL },
     { "/File/_Export data/GNU _octave...", NULL, file_save, 
       EXPORT_OCTAVE, NULL },
-    { "/File/C_lear data set", NULL, clear_data, 1, NULL },
+    { "/File/C_lear data set", NULL, verify_clear_data, 0, NULL },
     { "/File/sep0", NULL, NULL, 0, "<Separator>" },
     { "/File/_Browse databases/_gretl native", NULL, display_files, 
       NATIVE_DB, NULL },

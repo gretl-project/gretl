@@ -40,6 +40,10 @@
 
 /* #define SESSION_DEBUG */
 
+/* from gui_utils.c */
+extern void winstack_init (void);
+extern void winstack_destroy (void);
+
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
@@ -294,6 +298,7 @@ void session_init (void)
     session.ngraphs = 0;
     session.name[0] = '\0';
     session_changed(0);
+    winstack_init();
 }
 
 /* ........................................................... */
@@ -364,6 +369,21 @@ void close_session (void)
     if (iconview != NULL) 
 	gtk_widget_destroy(iconview);
     session_changed(0);
+    winstack_destroy();
+}
+
+/* ........................................................... */
+
+void verify_clear_data (void)
+{
+    if (!expert) {
+        int button = yes_no_dialog ("gretl",                      
+				    "Clearing the data set will end\n"
+				    "your current session.  Continue?", 0);
+        if (button != YES_BUTTON) 
+            return;
+    }
+    close_session();
 }
 
 /* ........................................................... */

@@ -344,6 +344,70 @@ void set_rcfile (void)
 
 /* ........................................................... */
 
+enum winstack_codes {
+    STACK_INIT,
+    STACK_ADD,
+    STACK_REMOVE,
+    STACK_DESTROY
+};
+
+static void winstack (int code, GtkWidget *w)
+{
+    static int n_windows;
+    static GtkWidget **wstack;
+    int i;
+
+    switch (code) {
+    case STACK_DESTROY:	
+	for (i=0; i<n_windows; i++) 
+	    if (wstack[i] != NULL) 
+		gtk_widget_destroy(wstack[i]);
+	free(wstack);
+    case STACK_INIT:
+	wstack = NULL;
+	n_windows = 0;
+	break;
+    case STACK_ADD:
+	n_windows++;
+	wstack = myrealloc(wstack, n_windows * sizeof *wstack);
+	if (wstack != NULL) 
+	    wstack[n_windows-1] = w;
+	break;
+    case STACK_REMOVE:
+	for (i=0; i<n_windows; i++) {
+	    if (wstack[i] == w) {
+		wstack[i] = NULL;
+		break;
+	    }
+	}
+	break;
+    default:
+	break;
+    }
+}
+
+void winstack_init (void)
+{
+    winstack(STACK_INIT, NULL);
+}
+    
+void winstack_destroy (void)
+{
+    winstack(STACK_DESTROY, NULL);
+}
+
+static void winstack_add (GtkWidget *w)
+{
+    winstack(STACK_ADD, w);
+}
+
+static void winstack_remove (GtkWidget *w)
+{
+    winstack(STACK_REMOVE, w);
+}
+
+/* ........................................................... */
+
 static void delete_file (GtkWidget *widget, char *fle) 
 {
     remove(fle);
@@ -1158,7 +1222,9 @@ void free_windata (GtkWidget *w, gpointer data)
 	if (mydata->role == SUMMARY || mydata->role == VAR_SUMMARY)
 	    free_summary(mydata->data); 
 	if (mydata->role == CORR)
-	    free_corrmat(mydata->data); 
+	    free_corrmat(mydata->data);
+	if (mydata->dialog)
+	    winstack_remove(mydata->dialog);
 	free(mydata);
 	mydata = NULL;
     }
@@ -1289,6 +1355,8 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     hsize += 48;
 
     dialog = gtk_dialog_new();
+    vwin->dialog = dialog;
+    winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
     gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
@@ -1433,6 +1501,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     dialog = gtk_dialog_new();
     vwin->dialog = dialog;
+    winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
 
     title = make_viewer_title(role, filename);
@@ -1593,6 +1662,8 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize, char *title)
     hsize += 48;
 
     dialog = gtk_dialog_new();
+    vwin->dialog = dialog;
+    winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
     gtk_container_border_width (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 5);
@@ -1934,7 +2005,10 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     vwin->data = pmod;
     vwin->role = VIEW_MODEL;
+
     dialog = gtk_dialog_new();
+    vwin->dialog = dialog;
+    winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
     gtk_window_set_title(GTK_WINDOW(dialog), title);
     gtk_container_border_width (GTK_CONTAINER 

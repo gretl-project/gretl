@@ -1164,33 +1164,30 @@ void augment_copy_menu (windata_t *vwin)
     item.item_type = "<Branch>";
     item.accelerator = NULL;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
+
+    /* common for menu items */
+    item.item_type = NULL;    
+    item.accelerator = NULL;
     
     /* plain text option */
-    item.path = mymalloc(64);
     sprintf(item.path, "/Edit/Copy all/as plain _text");
     item.callback = text_copy;
     item.callback_action = COPY_TEXT;
-    item.item_type = NULL;
-    item.accelerator = NULL;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);    
 
     /* LaTeX option */
-    item.path = mymalloc(64);
     sprintf(item.path, "/Edit/Copy all/as _LaTeX");
     item.callback = text_copy;
     item.callback_action = COPY_LATEX;
-    item.item_type = NULL;
-    item.accelerator = NULL;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
 
     /* RTF option */
-    item.path = mymalloc(64);
     sprintf(item.path, "/Edit/Copy all/as _RTF");
     item.callback = text_copy;
     item.callback_action = COPY_RTF;
-    item.item_type = NULL;
-    item.accelerator = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);  
+    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
+
+    free(item.path);
 } 
 
 
