@@ -2063,12 +2063,12 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
 
 #ifdef OLD_GTK
 static GtkWidget *
-gtk_spin_button_new_with_range (double lo, double hi, double val)
+gtk_spin_button_new_with_range (double lo, double hi, double step)
 {
     GtkAdjustment *adj;
     GtkWidget *sb;
 
-    adj = (GtkAdjustment *) gtk_adjustment_new(val, lo, hi, step, 1, 0);
+    adj = (GtkAdjustment *) gtk_adjustment_new(lo, lo, hi, step, 10 * step, 0);
     sb = gtk_spin_button_new(adj, 0, 0);
 
     return sb;
@@ -2719,11 +2719,15 @@ int radio_dialog (const char *title, const char **opts,
     return ret;
 }
 
-static void set_bw_manual (GtkWidget *w, GtkWidget **wp)
+static void bw_set (GtkWidget *w, gpointer p)
 {
-    int s = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+    double *bw = (double *) p;
 
-    gtk_widget_set_sensitive(*wp, (s != 0));
+#ifdef OLD_GTK
+    *bw = GTK_ADJUSTMENT(w)->value;
+#else
+    *bw = gtk_spin_button_get_value(GTK_SPIN_BUTTON(w));
+#endif
 }
 
 int density_dialog (int vnum, double *bw)
@@ -2732,7 +2736,9 @@ int density_dialog (int vnum, double *bw)
     GtkWidget *button;
     GtkWidget *hbox;
     GtkWidget *tempwid;
-    GtkWidget *bwspin;
+#ifdef OLD_GTK
+    GtkObject *adj;
+#endif
     GSList *group;
     int ret = 0;
 
@@ -2773,49 +2779,32 @@ int density_dialog (int vnum, double *bw)
 		       tempwid, TRUE, TRUE, 0);
     gtk_widget_show(tempwid);    
 
-    /* bandwidth options */
+    /* bandwidth adjustment */
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       hbox, TRUE, TRUE, 0);
+		       hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox);
 
-    tempwid = gtk_label_new(_("bandwidth:"));
-    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 0);
+    tempwid = gtk_label_new(_("bandwidth adjustment factor:"));
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
     gtk_widget_show(tempwid);
 
-    button = gtk_radio_button_new_with_label(NULL, _("automatic (Silverman)"));
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       button, TRUE, TRUE, 0);
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON (button), TRUE);
-
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_bw_manual), &bwspin);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(0));
-    gtk_widget_show(button);
-
-    hbox = gtk_hbox_new(FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
-		       hbox, TRUE, TRUE, 0);
-    gtk_widget_show(hbox);
-
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON(button));
-    button = gtk_radio_button_new_with_label(group, _("manual"));
-    gtk_box_pack_start(GTK_BOX(hbox), button, TRUE, TRUE, 0);
-    g_signal_connect(G_OBJECT(button), "clicked",
-		     G_CALLBACK(set_bw_manual), &bwspin);
-    g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(1));
-    gtk_widget_show(button);
-
-    /* bandwidth spinner */
-    
-    bwspin = gtk_spin_button_new_with_range(0, 4, 1);
-    gtk_spin_button_set_value(GTK_SPIN_BUTTON(bwspin), 1);
-    gtk_box_pack_start(GTK_BOX(hbox), bwspin, TRUE, TRUE, 0);
-    gtk_widget_show(bwspin);
-    gtk_widget_set_sensitive(bwspin, FALSE);
+#ifdef OLD_GTK
+    adj = gtk_adjustment_new(1.0, 0.25, 4.0, 0.05, 0.5, 0);
+    tempwid = gtk_spin_button_new(GTK_ADJUSTMENT(adj), 1, 2);
+    gtk_signal_connect(GTK_OBJECT(adj), "value-changed", 
+		       GTK_SIGNAL_FUNC(bw_set), 
+		       bw); 
+#else
+    tempwid = gtk_spin_button_new_with_range(0.25, 4.0, .05);
+    gtk_spin_button_set_value(GTK_SPIN_BUTTON(tempwid), 1.0);
+    g_signal_connect(G_OBJECT(tempwid), "value-changed", 
+		     G_CALLBACK(bw_set), 
+		     bw); 
+#endif  
+    gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 5);
+    gtk_widget_show(tempwid);
 
     /* "OK" button */
     tempwid = ok_button(GTK_DIALOG(dialog)->action_area);

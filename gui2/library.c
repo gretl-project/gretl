@@ -1573,12 +1573,8 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
     void *handle;
     int (*kernel_density) (int, const double **, const DATAINFO *,
 			   double, gretlopt);
-    const char *kernel_opts[] = {
-	N_("Gaussian kernel"),
-	N_("Epanechnikov kernel")
-    };
     gretlopt opt = OPT_NONE;
-    double bw = NADBL;
+    double bw = 1.0;
     int err;
 
     if (reject_scalar(mdata->active_var)) {
@@ -1605,7 +1601,7 @@ void do_kernel (gpointer data, guint u, GtkWidget *w)
     close_plugin(handle);
 
     if (err) {
-	errbox(_("Command failed"));
+	gui_errmsg(err);
     } else {
 	make_and_display_graph();
     } 

@@ -31,9 +31,8 @@ enum {
     EPANECHNIKOV_KERNEL
 };
 
-#define ROOT5 2.23606797749979
-#define EPMULT 0.3354101966249685
-
+#define ROOT5  2.23606797749979     /* sqrt(5) */
+#define EPMULT 0.3354101966249685   /* 3 over (4 * sqrt(5)) */
 
 static double ep_pdf (double z)
 {
@@ -125,14 +124,8 @@ static int density_plot (const double *x, double s, double h,
 
     if (opt & OPT_O) {
 	ktype = EPANECHNIKOV_KERNEL;
-#ifdef KDEBUG
-	fprintf(stderr, "Using the Epanechnikov kernel\n");
-#endif
     } else {
 	ktype = GAUSSIAN_KERNEL;
-#ifdef KDEBUG
-	fprintf(stderr, "Using the Gaussian kernel\n");
-#endif
     }
 
     get_xmin_xmax(x, s, n, &xmin, &xmax);
@@ -211,17 +204,7 @@ silverman_bandwidth (const double *x, double s, int n)
 	    s, q1, q3, q3 - q1);
 #endif
 
-    if (r < s) {
-#ifdef KDEBUG
-	fprintf(stderr, "Silverman bandwidth: using IQR/1.349\n");
-#endif
-	w = r;
-    } else {
-#ifdef KDEBUG
-	fprintf(stderr, "Silverman bandwidth: using std. dev.\n");
-#endif
-	w = s;
-    }
+    w = (r < s)? r : s;
 
     return 0.9 * w * n5;
 }
@@ -256,7 +239,7 @@ static int get_kn (int nobs)
 
 int 
 kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
-		double bw, gretlopt opt)
+		double bwscale, gretlopt opt)
 {
     int len = pdinfo->t2 - pdinfo->t1 + 1;
     int nobs, kn;
@@ -266,6 +249,7 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
 
     nobs = count_obs(Z[varnum] + pdinfo->t1, len);
     if (nobs < MINOBS) {
+	gretl_errmsg_set(_("Insufficient observations for density estimation"));
 	return E_DATA;
     }
 
@@ -280,11 +264,7 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
 
     s = gretl_stddev(0, nobs - 1, x);
 
-    if (na(bw)) {
-	h = silverman_bandwidth(x, s, nobs);
-    } else {
-	h = bw;
-    }
+    h = bwscale * silverman_bandwidth(x, s, nobs);
 
     kn = get_kn(nobs);
 
