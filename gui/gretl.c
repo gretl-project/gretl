@@ -1411,7 +1411,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     sprintf(Rdata, "%sRdata.tmp", paths.userdir);
     sprintf(line, "store -r %s", Rdata); 
     if (check_cmd(line) || cmd_init(line) ||
-	write_data(Rdata, command.list, Z, datainfo, OPT_R, NULL)) {
+	write_data(Rdata, command.list, Z, datainfo, GRETL_DATA_R, NULL)) {
 	errbox(_("Write of R data file failed"));
 	fclose(fp);
 	return; 
