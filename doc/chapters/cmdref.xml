@@ -3418,6 +3418,10 @@
 	    <entry><command>lmtest</command></entry>
 	  </row>
 	  <row>
+	    <entry>Influential observations</entry>
+	    <entry><command>leverage</command></entry>
+	  </row>
+	  <row>
 	    <entry>Autocorrelation up to the data frequency</entry>
 	    <entry><command>lmtest -o</command></entry>
 	  </row>

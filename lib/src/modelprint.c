@@ -27,6 +27,7 @@
 #define TEX_FORMAT(c) (c == GRETL_PRINT_FORMAT_TEX || c == GRETL_PRINT_FORMAT_TEX_DOC)
 #define STANDALONE(c) (c == GRETL_PRINT_FORMAT_TEX_DOC)
 
+#define NO_RBAR_SQ(a) (a == AUX_SQ || a == AUX_LOG || a == AUX_WHITE || a == AUX_AR)
 
 static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod, 
 			int c, PRN *prn);
@@ -146,7 +147,7 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     if (PLAIN_FORMAT(prn->format)) {  
 	pprintf(prn, "  %s = %#.*g\n", _("Unadjusted R-squared"), 
 		GRETL_DIGITS, pmod->rsq);
-	if (!na(pmod->adjrsq)) {
+	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, "  %s = %#.*g\n", _("Adjusted R-squared"),  
 		    GRETL_DIGITS, pmod->adjrsq);
 	}
@@ -154,20 +155,21 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
     else if (RTF_FORMAT(prn->format)) {
 	pprintf(prn, RTFTAB "%s = %g\n", I_("Unadjusted R{\\super 2}"), pmod->rsq);
-	if (!na(pmod->adjrsq)) {
+	if (!NO_RBAR_SQ(pmod->aux) && !na(pmod->adjrsq)) {
 	    pprintf(prn, RTFTAB "%s = %g\n", I_("Adjusted R{\\super 2}"),  
 		    pmod->adjrsq);
 	}	
     }
 
     else if (TEX_FORMAT(prn->format)) {  
-	char x1str[32], x2str[32];
+	char r2[32];
 
-	tex_dcolumn_double(pmod->rsq, x1str);
-	tex_dcolumn_double(pmod->adjrsq, x2str);
-	pprintf(prn, "%s & %s \\\\\n %s & %s \\\\\n",
-		I_("Unadjusted $R^2$"), x1str, 
-		I_("Adjusted $\\bar{R}^2$"), x2str);
+	tex_dcolumn_double(pmod->rsq, r2);
+	pprintf(prn, "%s & %s \\\\\n", I_("Unadjusted $R^2$"), r2);
+	if (!NO_RBAR_SQ(pmod->aux)) {
+	    tex_dcolumn_double(pmod->adjrsq, r2);
+	    pprintf(prn, "%s & %s \\\\\n", I_("Adjusted $\\bar{R}^2$"), r2);
+	}
     }
 }
 

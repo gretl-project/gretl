@@ -858,7 +858,7 @@ static void fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo,
 	if (i == 3) strcpy(label, _("residuals"));
 	pprintf(prn, "%*s", UTF_WIDTH(label, 13), label); 
     }
-    pputs(prn, "\n");
+    pputs(prn, "\n\n");
 }
 
 /* ........................................................... */
