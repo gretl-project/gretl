@@ -534,12 +534,15 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		gretl_model_set_double(new, "chisq", chisq);
 	    }
 	}
+
 	add = add_compare(orig, new);
 	add.trsq = trsq;
 
 	if (aux_code == AUX_ADD && !(opt & OPT_Q) && 
-	    new->ci != AR && new->ci != ARCH)
+	    new->ci != AR && new->ci != ARCH) {
 	    printmodel(new, pdinfo, prn);
+	    *model_count += 1;
+	}
 
 	if (addvars != NULL) {
 	    _difflist(new->list, orig->list, addvars);
@@ -549,7 +552,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    gretl_print_add(&add, tmplist, pdinfo, aux_code, prn, opt);
 	}
 
-	*model_count += 1;
 	free(newlist);
 	if (addvars == NULL) free(tmplist); 
 
@@ -561,6 +563,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 
     /* put back into pdinfo what was there on input */
     exchange_smpl(orig, pdinfo);
+
     return err;
 }
 
@@ -762,6 +765,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	omit = omit_compare(orig, new);
 	if (!(opt & OPT_Q) && orig->ci != AR && orig->ci != ARCH) {
 	    printmodel(new, pdinfo, prn); 
+	    *model_count += 1;
 	}
 	_difflist(orig->list, new->list, omitvars);
 	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
@@ -770,7 +774,6 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    robust_omit_test(omitvars, orig, prn);
 	}    
 	
-	*model_count += 1;
 	free(tmplist);
 	if (orig->ci == LOGIT || orig->ci == PROBIT)
 	    new->aux = AUX_NONE;

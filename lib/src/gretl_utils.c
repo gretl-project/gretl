@@ -1227,9 +1227,11 @@ int hidden_var (int i, const DATAINFO *pdinfo)
 	strcmp(pdinfo->varname[i], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[i], "months") == 0 ||
 	strcmp(pdinfo->varname[i], "hrs") == 0 ||
-	strcmp(pdinfo->varname[i], "decdate") == 0)
+	strcmp(pdinfo->varname[i], "decdate") == 0) {
 	return 1;
-    return 0;
+    } else {
+	return 0;
+    }
 }
 
 /* ........................................................... */
@@ -1657,13 +1659,8 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
     store_list(pmod->list, spec->cmd);
 
     if (pmod->subdum != NULL) {
-	int t;
-
-	spec->subdum = malloc(fullinfo->n * sizeof *spec->subdum);
+	spec->subdum = copy_subdum(pmod->subdum, fullinfo->n);
 	if (spec->subdum == NULL) return 1;
-	for (t=0; t<fullinfo->n; t++) {
-	    spec->subdum[t] = pmod->subdum[t];
-	}
     }
 
     return 0;

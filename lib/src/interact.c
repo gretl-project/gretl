@@ -434,16 +434,24 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
     }
 
+    /* also new-style comments */
+    if (*line == '#') {
+	command->nolist = 1;
+	command->ci = -1;
+	return;
+    }    
+
     /* extract "savename" for storing an object? */
     get_savename(line, command);
 
-    linelen = strlen(line);
-
-    if (*line == '#' || sscanf(line, "%s", command->cmd) != 1) {
+    /* no command here? */
+    if (sscanf(line, "%s", command->cmd) != 1) {
 	command->nolist = 1;
 	command->ci = -1;
 	return;
     }
+
+    linelen = strlen(line);
 
     /* backwards compatibility for obsolete commands */
     if (!strcmp(command->cmd, "noecho")) {

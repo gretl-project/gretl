@@ -197,6 +197,10 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 	return;
     }
 
+    if (opt & OPT_Q) {
+	strcpy(spc, "  ");
+    }
+
     pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
 	    spc, add->score);
     if (add->score == 1) {

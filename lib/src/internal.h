@@ -122,4 +122,6 @@ int get_hc_version (void);
 
 int get_use_qr (void);
 
+char *copy_subdum (const char *src, int n);
+
 #endif /* GRETL_INTERNAL_H */

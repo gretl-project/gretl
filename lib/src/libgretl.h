@@ -282,7 +282,7 @@ struct _MODEL {
     int ID;                      /* ID number for model */
     int t1, t2, nobs;            /* starting observation, ending
                                     observation, and number of obs */
-    double *subdum;              /* keep track of sub-sample in force
+    char *subdum;                /* keep track of sub-sample in force
                                     when model was estimated */
     SAMPLE smpl;                 /* numeric start and end of current sample
                                     when model was estimated */
@@ -331,7 +331,7 @@ struct _MODEL {
 
 struct _MODELSPEC {
     char *cmd;
-    double *subdum;
+    char *subdum;
 };
 
 struct _GRAPHT {

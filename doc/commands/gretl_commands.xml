@@ -15,6 +15,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for augmented model</effect>
+	</option>
       </options>
       <examples>
         <example>add 5 7 9</example>
@@ -31,6 +35,14 @@
 	printed (for the OLS procedure only) along with its p-value. A
 	p-value below 0.05 means that the coefficients are jointly
 	significant at the 5 percent level. 
+      </para>
+      <para context="cli">
+	If the <lit>--quiet</lit> option is given the printed results
+	are confined to the test for the joint significance of the
+	added variables, otherwise the estimates for the augmented
+	model are also printed.  In the latter case, the
+	<lit>--vcv</lit> flag causes the covariance matrix for the
+	coefficients to be printed also.
       </para>
       <para context="gui">
 	The selected variables are added to the previous model and the
@@ -55,6 +67,12 @@
         <argument>modelID</argument>
 	<argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for augmented model</effect>
+	</option>
+      </options>
       <examples>
         <example>addto 2 5 7 9</example>
       </examples>
@@ -3112,6 +3130,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for reduced model</effect>
+	</option>
       </options>
       <examples>
         <example>omit 5 7 9</example>
@@ -3128,6 +3150,14 @@
 	only).  A p-value below 0.05 means that the coefficients are
 	jointly significant at the 5 percent level.
       </para>
+      <para context="cli">
+	If the <lit>--quiet</lit> option is given the printed results
+	are confined to the test for the joint significance of the
+	omitted variables, otherwise the estimates for the reduced
+	model are also printed.  In the latter case, the
+	<lit>--vcv</lit> flag causes the covariance matrix for the
+	coefficients to be printed also.
+      </para>
     </description>
 
     <gui-access>
@@ -3143,6 +3173,12 @@
         <argument>modelID</argument>
         <argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--quiet</flag>
+	  <effect>don't print estimates for reduced model</effect>
+	</option>
+      </options>
       <examples>
         <example>omitfrom 2 5 7 9</example>
       </examples>

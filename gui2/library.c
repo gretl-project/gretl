@@ -271,25 +271,7 @@ static void sync_datainfos (void)
 
 int quiet_sample_check (MODEL *pmod)
 {
-    double **checkZ;
-    DATAINFO *pdinfo;
-
-    /* are we sub-sampled or not? */
-    if (fullZ == NULL) {
-	checkZ = Z;
-	pdinfo = datainfo;
-    } else {
-	checkZ = fullZ;
-	pdinfo = fullinfo;
-    }
-
-    if (pdinfo == fullinfo) sync_datainfos();
-
-    if (checkZ == NULL || pdinfo == NULL) return 1;
-
-    if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
-    
-    return 0;
+    return model_sample_issue(pmod, NULL, datainfo);
 }
 
 /* ......................................................... */
@@ -326,8 +308,9 @@ void free_modelspec (void)
     if (modelspec != NULL) {
 	while (modelspec[i].cmd != NULL) {
 	    free(modelspec[i].cmd);
-	    if (modelspec[i].subdum != NULL)
+	    if (modelspec[i].subdum != NULL) {
 		free(modelspec[i].subdum);
+	    }
 	    i++;
 	}
 	free(modelspec);
@@ -732,7 +715,7 @@ static gint stack_model (int gui)
 		fullinfo->varname = datainfo->varname;
 		fullinfo->varinfo = datainfo->varinfo;
 		fullinfo->vector = datainfo->vector;
-		attach_subsample_to_model(models[0], &fullZ, fullinfo);
+		attach_subsample_to_model(models[0], datainfo, fullinfo->n);
 	    }
 	    save_model_spec(models[0], &modelspec[m], fullinfo);
 	    m++;
@@ -1506,7 +1489,7 @@ void do_add_omit (GtkWidget *widget, gpointer p)
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
 	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
 
     sprintf(title, _("gretl: model %d"), model_count);
@@ -2219,7 +2202,7 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
 	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
     
     /* record the fact that the last model was estimated via GUI */
@@ -2402,7 +2385,7 @@ void do_model (GtkWidget *widget, gpointer p)
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
 	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
     
     /* record the fact that the last model was estimated via GUI */
@@ -2470,7 +2453,7 @@ void do_arma (int v, int ar, int ma, unsigned long opts)
     if (fullZ != NULL) {
 	fullinfo->varname = datainfo->varname;
 	fullinfo->varinfo = datainfo->varinfo;	
-	attach_subsample_to_model(pmod, &fullZ, fullinfo);
+	attach_subsample_to_model(pmod, datainfo, fullinfo->n);
     }
     
     /* record the fact that the last model was estimated via GUI */
@@ -4947,8 +4930,7 @@ static int script_model_test (int id, PRN *prn, int ols_only)
 	return 1;
     }
 
-    if (model_sample_issue(NULL, &modelspec[m], (fullZ == NULL)? Z : fullZ, 
-			   (fullZ == NULL)? datainfo : fullinfo)) {
+    if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
 	pprintf(prn, _("Can't do: the current data set is different from "
 		"the one on which\nthe reference model was estimated\n"));
 	return 1;
@@ -5079,16 +5061,6 @@ int gui_exec_line (char *line,
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
 
-#ifdef notdef
-    if (is_model_ref_cmd(cmd.ci)) {
- 	if (model_sample_issue(models[0], &Z, datainfo)) {
- 	    pprintf(prn, _("Can't do: the current data set is different from "
-			   "the one on which\nthe reference model was estimated\n"));
- 	    return 1;
- 	}
-    }
-#endif
-
     /* Attach outprn to a specific buffer, if wanted */
     if (*cmd.savename != '\0' && TEXTSAVE_OK(cmd.ci)) {
 	if (bufopen(&outprn)) return 1;
@@ -5136,9 +5108,11 @@ int gui_exec_line (char *line,
 	} else {
 	    /* for command-line use, we keep a stack of 
 	       two models, and recycle the places */
-	    swap_models(&models[0], &models[1]);
+	    if (!(cmd.opt & OPT_Q)) {
+		swap_models(&models[0], &models[1]);
+	    }
 	    clear_model(models[1], NULL);
-	    if (want_vcv(cmd.opt)) {
+	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	}
@@ -5168,9 +5142,11 @@ int gui_exec_line (char *line,
 	    clear_model(models[1], NULL);
 	    break;
 	} else {
-	    swap_models(&models[0], &models[1]);
+	    if (!(cmd.opt & OPT_Q)) {
+		swap_models(&models[0], &models[1]);
+	    }
 	    clear_model(models[1], NULL);
-	    if (want_vcv(cmd.opt)) {
+	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, 0, outprn);
 	    }
 	}

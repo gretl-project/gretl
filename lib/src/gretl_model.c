@@ -18,6 +18,7 @@
  */
 
 #include "libgretl.h"
+#include "internal.h"
 
 /* .......................................................... */
 
@@ -534,7 +535,8 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
     if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) 
 	return 1;
     if (src->subdum != NULL && 
-	(targ->subdum = copyvec(src->subdum, pdinfo->n)) == NULL) return 1;
+	(targ->subdum = copy_subdum(src->subdum, pdinfo->n)) == NULL) 
+	return 1;
 
     if (src->xpx != NULL &&
 	(targ->xpx = copyvec(src->xpx, m)) == NULL) return 1;

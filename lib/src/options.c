@@ -306,7 +306,7 @@ int catchflags (char *line, unsigned long *oflags)
     *oflags = 0L;
     *gretl_errmsg = '\0';
 
-    if (n < 2) return 0;
+    if (n < 2 || *line == '#') return 0;
 
     /* to enable reading of trad. esl input files */
     if (line[n-2] == ';' && isspace(line[n-1])) {

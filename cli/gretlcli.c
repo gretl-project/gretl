@@ -169,21 +169,9 @@ int model_test_start (const int id, PRN *prn, int ols_only)
 		"at present\n"));
 	return 1;
     }
-    else {
-	double **checkZ;
-	DATAINFO *pdinfo;
-
-	if (fullZ == NULL) {
-	    checkZ = Z;
-	    pdinfo = datainfo;
-	} else {
-	    checkZ = fullZ;
-	    pdinfo = fullinfo;
-	}
-	if (model_sample_issue(NULL, &modelspec[m], checkZ, pdinfo)) {
-	    nosub(prn);
-	    return 1;
-	}
+    else if (model_sample_issue(NULL, &modelspec[m], datainfo)) {
+	nosub(prn);
+	return 1;
     }
     return 0;
 }
@@ -689,9 +677,11 @@ void exec_line (char *line, PRN *prn)
 	} else {
 	    /* for command-line use, we keep a "stack" of 
 	       two models, and recycle the places */
-	    swap_models(&models[0], &models[1]); 
+	    if (!(cmd.opt & OPT_Q)) {
+		swap_models(&models[0], &models[1]);
+	    } 
 	    clear_model(models[1], NULL);
-	    if (want_vcv(cmd.opt)) {
+	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
 	    }
 	}
@@ -721,9 +711,11 @@ void exec_line (char *line, PRN *prn)
 	    clear_model(models[1], NULL);
 	    break;
 	} else {
-	    swap_models(&models[0], &models[1]);
+	    if (!(cmd.opt & OPT_Q)) {
+		swap_models(&models[0], &models[1]);
+	    }
 	    clear_model(models[1], NULL);
-	    if (want_vcv(cmd.opt)) {
+	    if (!(cmd.opt & OPT_Q) && want_vcv(cmd.opt)) {
 		outcovmx(models[0], datainfo, !batch, prn);
 	    }
 	}
@@ -1604,7 +1596,7 @@ void exec_line (char *line, PRN *prn)
 	if (fullZ != NULL) {
 	    fullinfo->varname = datainfo->varname;
 	    fullinfo->varinfo = datainfo->varinfo;
-	    attach_subsample_to_model(models[0], &fullZ, fullinfo);
+	    attach_subsample_to_model(models[0], datainfo, fullinfo->n);
 	}
 	save_model_spec(models[0], &modelspec[m-1], fullinfo);
     }

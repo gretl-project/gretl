@@ -26,10 +26,25 @@
 
 /* .......................................................... */
 
-int attach_subsample_to_dataset (DATAINFO *pdinfo, double ***fullZ, 
-				 const DATAINFO *fullinfo)
-     /* if the data set is currently subsampled, record the
-	subsample info in the datainfo struct */
+char *copy_subdum (const char *src, int n)
+{
+    char *ret;
+
+    if (n == 0 || src == NULL) return NULL;
+
+    ret = malloc(n * sizeof *ret);
+    if (ret == NULL) return NULL;
+
+    memcpy(ret, src, n);
+
+    return ret;
+}
+
+/* .......................................................... */
+
+static int 
+attach_subsample_to_dataset (DATAINFO *pdinfo, double ***fullZ, 
+			     const DATAINFO *fullinfo)
 {
     int i, t, n = fullinfo->n;
 
@@ -41,66 +56,40 @@ int attach_subsample_to_dataset (DATAINFO *pdinfo, double ***fullZ,
 
     i = varindex(fullinfo, "subdum");
     if (i == fullinfo->v) { /* safety measure: should be impossible */
-	fprintf(stderr, I_("mystery failure in attach_subsample_to_model\n"));
+	fprintf(stderr, "mystery failure in attach_subsample_to_dataset\n");
 	return 1;   
     } 
 
     for (t=0; t<n; t++) {
 	pdinfo->subdum[t] = (*fullZ)[i][t];
     }
-    
+
     return 0;
 }
 
-int attach_subsample_to_model (MODEL *pmod, double ***fullZ, 
-			       const DATAINFO *fullinfo)
+int attach_subsample_to_model (MODEL *pmod, const DATAINFO *pdinfo, int n)
      /* if the data set is currently subsampled, record the
 	subsample info in pmod->subdum */
 {
-    int i, t, n = fullinfo->n;
-
     /* no subsample currently in force */
-    if (fullZ == NULL) return 0;
+    if (pdinfo == NULL || pdinfo->subdum == NULL) {
+	return 0;
+    }
 
-    pmod->subdum = malloc(n * sizeof *pmod->subdum);
+    pmod->subdum = copy_subdum(pdinfo->subdum, n);
     if (pmod->subdum == NULL) return E_ALLOC;
 
-    i = varindex(fullinfo, "subdum");
-    if (i == fullinfo->v) { /* safety measure: should be impossible */
-	fprintf(stderr, I_("mystery failure in attach_subsample_to_model\n"));
-	return 1;   
-    } 
-
-    for (t=0; t<n; t++) {
-	pmod->subdum[t] = (*fullZ)[i][t];
-    }
-    
     return 0;
 }
 
 /* .......................................................... */
 
-static int subsampled (const DATAINFO *pdinfo) 
-     /* Is the data set currently "sub-sampled" via selection of 
-	cases?   
-     */
-{
-    int t, n = pdinfo->n;
-
-    if (pdinfo->subdum == NULL) return 0;
-
-    for (t=0; t<n; t++) {
-	if (!pdinfo->subdum[t]) return 1;
-    }
-    return 0;
-}
-
-static int subdum_match (char *s, double *x, int n)
+static int subdum_match (char *s1, char *s2, int n)
 {
     int t;
 
     for (t=0; t<n; t++) {
-	if ((double) s[t] != x[t]) return 0;
+	if (s1[t] != s2[t]) return 0;
     }
 
     return 1;
@@ -109,13 +98,13 @@ static int subdum_match (char *s, double *x, int n)
 /* .......................................................... */
 
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, 
-			double **Z, const DATAINFO *pdinfo)
+			const DATAINFO *pdinfo)
      /* check a model (or modelspec) against the data info to see if 
 	it may have been estimated on a different (subsampled) data 
 	set from the current one */
 {
     int n = pdinfo->n;
-    double *subdum;
+    char *subdum;
 
     if (pmod == NULL && spec == NULL) return 0;
 
@@ -125,13 +114,10 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	subdum = spec->subdum;
     }
 
-    /* if no sub-sampling has been done, we're OK */
-    if (subdum == NULL && pdinfo->subdum == NULL) return 0;
-
     /* case: model has no sub-sampling info recorded */
     if (subdum == NULL) {
-	/* if data set is not currently sub-sampled, we're OK */
-	if (!subsampled(pdinfo)) {
+	/* if data set is not sub-sampled either, we're OK */
+	if (pdinfo->subdum == NULL) {
 	    return 0;
 	} else {
 	    fputs(_("dataset is subsampled, model is not\n"), stderr);
@@ -141,7 +127,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
     }
 
     /* case: model has sub-sampling info recorded */
-    if (!subsampled(pdinfo)) {
+    if (pdinfo->subdum == NULL) {
 	fputs(_("model is subsampled, dataset is not\n"), stderr);
 	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
 	return 1;
@@ -166,7 +152,7 @@ int allocate_case_markers (char ***S, int n)
 {
     int t;
 
-    *S = malloc(n * sizeof(char *));
+    *S = malloc(n * sizeof **S);
     if (*S == NULL) {
 	return E_ALLOC;
     }
@@ -187,10 +173,13 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
     dinfo->sd0 = 1.;
     dinfo->pd = 1;
     dinfo->time_series = 0;
-    if (markers) dinfo->markers = 1;
-    else dinfo->markers = 0;
     strcpy(dinfo->stobs, "1");
     sprintf(dinfo->endobs, "%d", n);
+    if (markers) {
+	dinfo->markers = 1;
+    } else {
+	dinfo->markers = 0;
+    }
 }
 
 /* .......................................................... */
@@ -521,7 +510,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 static int datamerge (double ***fullZ, DATAINFO *fullinfo,
 		      double ***subZ, DATAINFO *subinfo)
 {
-    int i, t, dumn, subt;
+    int i, t, subt;
     int newvars = subinfo->v - fullinfo->v;
     int n = fullinfo->n;
     double **newZ = NULL;
@@ -529,17 +518,19 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
 
     if (newvars <= 0) return 0;
 
-    dumn = varindex(subinfo, "subdum"); 
-    if (dumn == subinfo->v) return E_NOMERGE;
+    if (subinfo->subdum == NULL) {
+	return E_NOMERGE;
+    }
 
     /* allocate expanded data array */
     newZ = realloc(*fullZ, subinfo->v * sizeof **fullZ);
     if (newZ != NULL) {
 	for (i=0; i<newvars; i++) {
-	    if (subinfo->vector[fullinfo->v+i])
+	    if (subinfo->vector[fullinfo->v+i]) {
 		newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
-	    else
+	    } else {
 		newZ[fullinfo->v+i] = malloc(sizeof **newZ);
+	    }
 	    if (newZ[fullinfo->v+i] == NULL) {
 		err = 1;
 		break;
@@ -548,24 +539,29 @@ static int datamerge (double ***fullZ, DATAINFO *fullinfo,
     } else err = 1;
 
     if (err) return E_ALLOC;
-    else *fullZ = newZ;
+    
+    *fullZ = newZ;
 
-    for (i=fullinfo->v; i<subinfo->v; i++) 
-	if (!subinfo->vector[i])
+    for (i=fullinfo->v; i<subinfo->v; i++) {
+	if (!subinfo->vector[i]) {
 	   (*fullZ)[i][0] = (*subZ)[i][0]; 
+	}
+    }
 
     subt = 0;
     for (t=0; t<n; t++) {
-	if ((*fullZ)[dumn][t] == 1.0) {
+	if (subinfo->subdum[t]) {
 	    for (i=fullinfo->v; i<subinfo->v; i++) {
-		if (subinfo->vector[i]) 
+		if (subinfo->vector[i]) {
 		    (*fullZ)[i][t] = (*subZ)[i][subt];
+		}
 	    }
 	    subt++;
 	} else {
 	    for (i=fullinfo->v; i<subinfo->v; i++) { 
-		if (subinfo->vector[i]) 
+		if (subinfo->vector[i]) {
 		    (*fullZ)[i][t] = NADBL;
+		}
 	    }
 	}
     }

@@ -84,7 +84,7 @@ static int model_scalar_stat_index (const char *s);
 static int model_vector_index (const char *s);
 static int dataset_var_index (const char *s);
 
-static double *get_model_series (double **Z, const DATAINFO *pdinfo,
+static double *get_model_series (const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v);
 static double *get_random_series (DATAINFO *pdinfo, int fn);
 static double *get_mp_series (const char *s, GENERATE *genr,
@@ -643,7 +643,7 @@ static int add_model_series_to_genr (GENERATE *genr, genatom *atom)
 {
     double *x;
 
-    x = get_model_series(*genr->pZ, (const DATAINFO *) genr->pdinfo, 
+    x = get_model_series((const DATAINFO *) genr->pdinfo, 
 			 genr->pmod, atom->varnum);
     if (x == NULL) return 1;
 
@@ -2469,7 +2469,7 @@ static double get_obs_value (const char *s, double **Z,
 
 /* ...........................................................*/
 
-static double *get_model_series (double **Z, const DATAINFO *pdinfo,
+static double *get_model_series (const DATAINFO *pdinfo,
 				 const MODEL *pmod, int v)
 {
     int t, t2, n = pdinfo->n;
@@ -2479,7 +2479,7 @@ static double *get_model_series (double **Z, const DATAINFO *pdinfo,
 	return NULL;
 
     if (pmod->t2 - pmod->t1 + 1 > n || 
-	model_sample_issue(pmod, NULL, Z, pdinfo)) {
+	model_sample_issue(pmod, NULL, pdinfo)) {
 	strcpy(gretl_errmsg, 
 	       (v == UHATNUM)? 
 	       _("Can't retrieve uhat: data set has changed") :
