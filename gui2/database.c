@@ -747,16 +747,18 @@ static int check_serinfo (char *str, char *sername)
 
 /* ........................................................... */
 
-static void end_trim (char *line)
+static char *end_trim (char *s)
 {
-    size_t i, n = strlen(line);
+    size_t i, n = strlen(s);
 
     for (i=n-1; i>0; i--) {
-	if (line[i] == ' ' || line[i] == '\n' || line[i] == '\r')
-	    line[i] = 0;
-	else
+	if (s[i] == ' ' || s[i] == '\n' || s[i] == '\r') {
+	    s[i] = '\0';
+	} else {
 	    break;
+	}
     }
+    return s;
 }
 
 /* ........................................................... */
@@ -915,8 +917,6 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
     char sername[9], line1[150], line2[150];
     int n, err = 0;
 
-    getbufline(NULL, NULL, 1);
-
 #ifndef OLD_GTK
     store = GTK_LIST_STORE(gtk_tree_view_get_model 
 			   (GTK_TREE_VIEW(dbwin->listbox)));
@@ -926,11 +926,11 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
     i = 0;
 #endif
 
-    while (1) {
-	if (getbufline(buf, line1, 0) == 0) break;
+    bufgets(NULL, 0, buf);
+
+    while (bufgets(line1, sizeof line1, buf)) {
 	if (line1[0] == '#') continue;
 
-	line1[149] = 0;
 	end_trim(line1);
 	charsub(line1, '\t', ' ');
 
@@ -940,14 +940,15 @@ static int populate_remote_series_list (windata_t *dbwin, char *buf)
 
 	if (sscanf(line1, "%8s", sername) != 1) break;
 
-	sername[8] = 0;
 	n = strlen(sername);
 	row[0] = sername;
 	row[1] = start_trim(line1 + n + 1);
 
-	getbufline(buf, line2, 0);
+	bufgets(line2, sizeof line2, buf);
 	row[2] = line2;
-	if (!err) err = check_serinfo(line2, sername);
+	if (!err) {
+	    err = check_serinfo(line2, sername);
+	}
 
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);

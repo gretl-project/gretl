@@ -88,7 +88,7 @@ int add_command_to_stack (const char *str)
     return 0;
 }
 
-void delete_from_command_stack (void)
+void delete_last_command (void)
 {
     free(cmd_stack[n_cmds - 1]);
     n_cmds--;
@@ -164,7 +164,7 @@ static model_stack *mstack_from_model_id (int ID)
 
 /* ........................................................... */
 
-int model_cmd_init (char *line, CMD *cmd, int ID)
+int model_command_init (char *line, CMD *cmd, int ID)
      /* this makes a record of commands associated with
 	a given model, so that they may be reconstructed later as
 	part of the session mechanism */
@@ -212,7 +212,7 @@ static void dump_model_cmds (const model_stack *mstack, FILE *fp)
 
 /* ........................................................... */
 
-int dump_cmd_stack (const char *fname, int insert_open_data)
+int dump_command_stack (const char *fname, int insert_open_data)
      /* ship out the stack of commands entered in the current
 	session */
 {
@@ -293,7 +293,7 @@ int dump_cmd_stack (const char *fname, int insert_open_data)
 
 /* ........................................................... */
 
-void view_log (void)
+void view_command_log (void)
 {
     char fname[MAXLEN];
     
@@ -305,7 +305,7 @@ void view_log (void)
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
 
-    if (dump_cmd_stack(fname, 0)) return;
+    if (dump_command_stack(fname, 0)) return;
 
     view_file(fname, 0, 0, 78, 370, VIEW_LOG);
 }

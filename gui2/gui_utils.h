@@ -30,26 +30,20 @@ enum {
     GTK_STOCK_HELP
 };
 
-#define G_OBJECT(o)              GTK_OBJECT(o)
-#define g_object_set_data(o,s,d) gtk_object_set_data(o,s,d)
-#define g_object_get_data(o,s)   gtk_object_get_data(o,s)
-#define gtk_radio_button_get_group(b) gtk_radio_button_group(b)
+# define G_OBJECT(o)                    GTK_OBJECT(o)
+# define g_object_set_data(o,s,d)       gtk_object_set_data(o,s,d)
+# define g_object_get_data(o,s)         gtk_object_get_data(o,s)
+# define gtk_radio_button_get_group(b)  gtk_radio_button_group(b)
 
 #else
 
-#define standard_button(s) gtk_button_new_from_stock(s)
+# define standard_button(s) gtk_button_new_from_stock(s)
 
-#endif
-
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
-void window_print (windata_t *mydata, guint u, GtkWidget *widget);
 #endif
 
 #ifdef ENABLE_NLS
 gchar *menu_translate (const gchar *path, gpointer p);
 #endif
-
-int getbufline (char *buf, char *line, int init);
 
 void flip (GtkItemFactory *ifac, const char *path, gboolean s);
 
@@ -99,8 +93,6 @@ void file_view_set_editable (windata_t *vwin);
 
 int validate_varname (const char *varname);
 
-void text_copy (gpointer data, guint how, GtkWidget *widget);
-
 gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
 			 gpointer data);
 
@@ -117,14 +109,10 @@ void get_stats_table (void);
 void *gui_get_plugin_function (const char *funcname, 
 			       void **phandle);
 
-int prn_to_clipboard (PRN *prn, int copycode);
-
 int get_worksheet_data (char *fname, int datatype, int append,
 			int *gui_get_data);
 
 char *double_underscores (char *targ, const char *src);
-
-void system_print_buf (const gchar *buf, FILE *fp);
 
 #if defined(HAVE_FLITE) || defined(G_OS_WIN32)
 enum {

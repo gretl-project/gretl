@@ -38,6 +38,8 @@
   the robust option to ols always produces plain HC standard
   errors, not HAC (by default, HAC is used with time-series)
 - profile and optimize some gretl_matrix functions
+- allow specification of consecutive lags in a regressor list
+  using a shortcut of the form "x(-1 to -4)"
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

@@ -25,12 +25,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "guiprint.h"
 #include "model_table.h"
 #include "series_view.h"
 #include "console.h"
 #include "session.h"
 #include "textbuf.h"
+#include "textutil.h"
+#include "cmdstack.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -329,31 +330,7 @@ int isdir (const char *path)
 {
     struct stat buf;
 
-    if (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)) 
-	return 1;
-    else 
-	return 0;
-}
-
-/* ........................................................... */
-
-int getbufline (char *buf, char *line, int init)
-{
-    static int pos;
-    int i = 0;
-
-    if (init) pos = 0;
-    else {
-	while (buf[i+pos] != '\n') {
-	    line[i] = buf[i+pos];
-	    if (buf[i+pos] == 0)
-		return 0;
-	    i++;
-	}
-	pos += i + 1;
-	line[i] = 0;
-    }
-    return i;
+    return (stat(path, &buf) == 0 && S_ISDIR(buf.st_mode)); 
 }
 
 /* ........................................................... */
@@ -1006,12 +983,12 @@ void save_session (char *fname)
     } 
 
 #ifdef CMD_DEBUG
-    dump_cmd_stack("stderr", 0);
+    dump_command_stack("stderr", 0);
 #endif
 
     /* save commands, by dumping the command stack */
     if (haschar('.', fname) < 0) strcat(fname, ".gretl");
-    if (dump_cmd_stack(fname, 1)) return;
+    if (dump_command_stack(fname, 1)) return;
 
     get_base(session_base, fname, '.');
 
@@ -1117,29 +1094,6 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 }
 
 /* ........................................................... */
-
-void system_print_buf (const gchar *buf, FILE *fp)
-{
-    const char *p = buf;
-    int cbak = 0;
-
-    while (*p) {
-	if (*p == '\r') {
-	    if (*(p+1) != '\n') {
-		putc('\n', fp);
-	    } 
-	} else {
-	    putc(*p, fp);
-	}
-	cbak = *p;
-	p++;
-    }
-
-    /* ensure file ends with newline */
-    if (cbak != '\n') {
-	putc('\n', fp);
-    }
-}
 
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 {
@@ -3046,362 +3000,6 @@ int validate_varname (const char *varname)
     }
     return 0;
 }	
-
-/* .................................................................. */
-
-#if defined(G_OS_WIN32)
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    return win_copy_buf(prn->buf, copycode, 0);
-}
-
-#elif defined(ENABLE_NLS) && !defined(OLD_GTK)
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    if (prn->buf == NULL) return 0;
-
-    if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = NULL;
-
-    if (copycode == COPY_TEXT || copycode == COPY_TEXT_AS_RTF) { 
-	/* need to convert from utf8 */
-	gchar *trbuf;
-	gsize bytes;
-	
-	trbuf = g_locale_from_utf8(prn->buf, -1, NULL, &bytes, NULL);
-	if (bytes > 0) {
-	    if (copycode == COPY_TEXT_AS_RTF) {
-		clipboard_buf = dosify_buffer(trbuf, copycode);
-	    } else {
-		clipboard_buf = mymalloc(bytes + 1);
-	    }
-	    if (clipboard_buf == NULL) {
-		g_free(trbuf);
-		return 1;
-	    }
-	    if (copycode != COPY_TEXT_AS_RTF) {
-		memcpy(clipboard_buf, trbuf, bytes + 1);
-	    }
-	    g_free(trbuf);
-	}
-    } else { /* copying TeX, RTF or CSV */
-	size_t len;
-
-	len = strlen(prn->buf);
-	fprintf(stderr, "Copying to clipboard, %d bytes\n", (int) len);
-	clipboard_buf = mymalloc(len + 1);
-	if (clipboard_buf == NULL) return 1;
-	memcpy(clipboard_buf, prn->buf, len + 1);
-    }
-
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY, 
-			    GDK_CURRENT_TIME);
-    return 0;
-}
-
-#else /* plain GTK, no NLS */
-
-int prn_to_clipboard (PRN *prn, int copycode)
-{
-    size_t len;
-    
-    if (prn->buf == NULL) return 0;
-    len = strlen(prn->buf);
-    if (len == 0) return 0;
-
-    if (clipboard_buf) g_free(clipboard_buf);
-    clipboard_buf = mymalloc(len + 1);
-    if (clipboard_buf == NULL) return 1;
-
-    memcpy(clipboard_buf, prn->buf, len + 1);
-
-    gtk_selection_owner_set(mdata->w,
-			    GDK_SELECTION_PRIMARY,
-			    GDK_CURRENT_TIME);
-    return 0;
-}
-
-#endif /* switch for prn_to_clipboard */
-
-/* .................................................................. */
-
-#define SPECIAL_COPY(h) (h == COPY_LATEX || h == COPY_RTF)
-
-void text_copy (gpointer data, guint how, GtkWidget *w) 
-{
-    windata_t *vwin = (windata_t *) data;
-    gchar *msg = NULL;
-    PRN *prn;
-
-    /* descriptive statistics */
-    if ((vwin->role == SUMMARY || vwin->role == VAR_SUMMARY)
-	&& SPECIAL_COPY(how)) {
-	GRETLSUMMARY *summ = (GRETLSUMMARY *) vwin->data;
-	
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) {
-	    texprint_summary(summ, datainfo, prn);
-	} else if (how == COPY_RTF) { 
-	    rtfprint_summary(summ, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* correlation matrix */
-    else if (vwin->role == CORR && SPECIAL_COPY(how)) {
-	CORRMAT *corr = (CORRMAT *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_corrmat(corr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_corrmat(corr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* display for fitted, actual, resid */
-    else if (vwin->role == FCAST && SPECIAL_COPY(how)) {
-	FITRESID *fr = (FITRESID *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_fit_resid(fr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_fit_resid(fr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }   
-
-    /* forecasts with standard errors */
-    else if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
-	FITRESID *fr = (FITRESID *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_fcast_with_errs(fr, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_fcast_with_errs(fr, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }  
-
-    /* coefficient confidence intervals */
-    else if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
-	CONFINT *cf = (CONFINT *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_confints(cf, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_confints(cf, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }  
-
-    /* coefficient covariance matrix */
-    else if (vwin->role == COVAR && SPECIAL_COPY(how)) {
-	VCV *vcv = (VCV *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    texprint_vcv(vcv, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    rtfprint_vcv(vcv, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }      
-
-    /* multiple-precision OLS (gtk-1.2?) */
-    else if (vwin->role == MPOLS && SPECIAL_COPY(how)) {
-	mp_results *mpvals = (mp_results *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
-	    print_mpols_results (mpvals, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
-	    print_mpols_results (mpvals, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* VAR system */
-    else if (vwin->role == VAR && SPECIAL_COPY(how)) {
-	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_LATEX) { 
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
-	    gretl_var_print(var, datainfo, prn);
-	} 
-	else if (how == COPY_RTF) { 
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
-	    gretl_var_print(var, datainfo, prn);
-	}
-
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }    
-
-    /* or it's a model window we're copying from? */
-    else if (vwin->role == VIEW_MODEL &&
-	(how == COPY_RTF || how == COPY_LATEX ||
-	 how == COPY_LATEX_EQUATION)) {
-	MODEL *pmod = (MODEL *) vwin->data;
-
-	if (pmod->errcode) { 
-	    errbox("Couldn't format model");
-	    return;
-	}
-	if (bufopen(&prn)) return;
-
-	if (how == COPY_RTF) {
-	    prn->format = GRETL_PRINT_FORMAT_RTF;
-	    printmodel(pmod, datainfo, prn);
-	}
-	else if (how == COPY_LATEX) {
-	    prn->format = GRETL_PRINT_FORMAT_TEX;
-	    printmodel(pmod, datainfo, prn);
-	}
-	else if (how == COPY_LATEX_EQUATION) {
-	    tex_print_equation(pmod, datainfo, 0, prn);
-	}
-	prn_to_clipboard(prn, how);
-	gretl_print_destroy(prn);
-    }
-
-    /* or from the model table? */
-    else if (vwin->role == VIEW_MODELTABLE && SPECIAL_COPY(how)) {
-	if (how == COPY_LATEX) {
-	    if (tex_print_model_table(0)) return;
-	}
-	else if (how == COPY_RTF) {
-	    if (rtf_print_model_table()) return;
-	} 
-    }
-
-    /* copying plain text from window */
-#ifndef OLD_GTK
-    else if (how == COPY_TEXT || how == COPY_TEXT_AS_RTF || how == COPY_SELECTION) {
-	GtkTextBuffer *textbuf = 
-	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
-	PRN textprn;
-	int myhow = how;
-
-	if (myhow == COPY_SELECTION) myhow = COPY_TEXT;
-
-	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
-	    /* there is a selection in place */
-	    GtkTextIter selstart, selend;
-	    gchar *selbuf;
-
-	    gtk_text_buffer_get_selection_bounds(textbuf, &selstart, &selend);
-	    selbuf = gtk_text_buffer_get_text(textbuf, &selstart, &selend, FALSE);
-	    gretl_print_attach_buffer(&textprn, selbuf);
-	    prn_to_clipboard(&textprn, myhow);
-	    g_free(selbuf);
-	    if (w != NULL) {
-		infobox(_("Copied selection to clipboard"));
-	    }
-	    return;
-	} else {
-	    /* no selection: copy everything */
-	    gretl_print_attach_buffer(&textprn,
-				      textview_get_text(GTK_TEXT_VIEW(vwin->w))); 
-	    prn_to_clipboard(&textprn, myhow);
-	    g_free(textprn.buf);
-	}
-    }
-#else
-    else if (how == COPY_TEXT) {
-	PRN textprn;
-
-	gretl_print_attach_buffer(&textprn, 
-				  gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 
-							 0, -1));
-	prn_to_clipboard(&textprn, 0);
-	g_free(textprn.buf);
-    } else { /* COPY_SELECTION */
-	gtk_editable_copy_clipboard(GTK_EDITABLE(vwin->w));
-	return;
-    }
-#endif
-
-    if (w != NULL) {
-	msg = g_strdup_printf(_("Copied contents of window as %s"),
-			      (how == COPY_LATEX)? "LaTeX" :
-			      (how == COPY_RTF || how == COPY_TEXT_AS_RTF)? 
-			      "RTF" : _("plain text"));
-	infobox(msg);
-	g_free(msg);
-    }
-}
-
-/* .................................................................. */
-
-#if defined(G_OS_WIN32) || defined (USE_GNOME)
-
-void window_print (windata_t *vwin, guint u, GtkWidget *widget) 
-{
-    char *buf, *selbuf = NULL;
-
-# ifndef OLD_GTK
-    GtkTextView *tedit = GTK_TEXT_VIEW(vwin->w);
-    GtkTextBuffer *tbuf = gtk_text_view_get_buffer(tedit);
-    GtkTextIter start, end;
-
-    buf = textview_get_text(tedit);
-
-    if (gtk_text_buffer_get_selection_bounds(tbuf, &start, &end)) {
-	selbuf = gtk_text_buffer_get_text(tbuf, &start, &end, FALSE);
-    }
-# else
-    GtkEditable *gedit = GTK_EDITABLE(vwin->w);
-
-    buf = gtk_editable_get_chars(gedit, 0, -1);
-    if (gedit->has_selection)
-	selbuf = gtk_editable_get_chars(gedit, 
-					gedit->selection_start_pos,
-					gedit->selection_end_pos);
-# endif /* OLD_GTK */
-
-    winprint(buf, selbuf);
-}
-
-#endif
 
 /* ......................................................... */
 

@@ -22,6 +22,7 @@
 
 #include "gretl.h"
 #include "selector.h"
+#include "textutil.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>

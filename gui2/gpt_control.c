@@ -4131,6 +4131,7 @@ static int get_png_bounds_info (png_bounds_t *bounds)
 */
 
 #include <gdk/gdkwin32.h>
+#include "guiprint.h"
 
 static int emf_to_clip (char *emfname)
 {
@@ -4175,8 +4176,6 @@ static int emf_to_clip (char *emfname)
 
     return 0;
 }
-
-extern int winprint_graph (char *emfname); /* guiprint.c */
 
 static void win32_process_graph (GPT_SPEC *spec, int color, int dest)
 {

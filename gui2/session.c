@@ -1978,7 +1978,7 @@ static void display_model_table_wrapper (void)
 
 static void view_script_default (void)
 {
-    if (dump_cmd_stack(cmdfile, 0)) return;
+    if (dump_command_stack(cmdfile, 0)) return;
 
     view_file(cmdfile, 0, 0, 78, 350, EDIT_SCRIPT);
 }

@@ -316,10 +316,12 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn)
     strcat(fullname, fname);
 
     *pprn = gretl_print_new(GRETL_PRINT_FILE, fullname);
+
     if (*pprn == NULL) {
 	errbox(_("Couldn't open file for writing"));
 	return NULL;
     }
+
     return fullname;
 }
 
@@ -328,10 +330,12 @@ char *user_fopen (const char *fname, char *fullname, PRN **pprn)
 gint bufopen (PRN **pprn)
 {
     *pprn = gretl_print_new (GRETL_PRINT_BUFFER, NULL);
+
     if (*pprn == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
 	return 1;
     }
+
     return 0;
 }
 
@@ -341,18 +345,20 @@ PRN *bufopen_with_size (size_t sz)
 {
     PRN *prn;
 
-    prn = gretl_print_new (GRETL_PRINT_NULL, NULL);
+    prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
     if (prn == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
 	return NULL;
     }
 
     prn->buf = malloc(sz);
+
     if (prn->buf == NULL) {
 	errbox(_("Out of memory allocating output buffer"));
 	free(prn);
 	return NULL;
     }
+
     return prn;
 }
 
@@ -360,22 +366,28 @@ PRN *bufopen_with_size (size_t sz)
 
 static int freq_error (FREQDIST *freq, PRN *prn)
 {
+    int err = 0;
+
     if (freq == NULL) {
-	if (prn == NULL)
+	if (prn == NULL) {
 	    errbox(_("Out of memory in frequency distribution"));
-	else
+	} else {
 	    pprintf(prn, _("Out of memory in frequency distribution\n"));
-	return 1;
+	}
+	err = 1;
     }
-    if (get_gretl_errno()) {
-	if (prn == NULL)
+
+    if (!err && get_gretl_errno()) {
+	if (prn == NULL) {
 	    gui_errmsg(get_gretl_errno());
-	else
+	} else {
 	    errmsg(get_gretl_errno(), prn);
+	}
 	free_freq(freq);
-	return 1;
+	err = 1;
     }
-    return 0;
+
+    return err;
 }
 
 /* ........................................................... */
@@ -393,12 +405,15 @@ gint check_cmd (char *line)
     } 
 
     getcmd(line, datainfo, &cmd, &ignore, &Z, NULL); 
+
     if (cmd.errcode) {
 	gui_errmsg(cmd.errcode);
 	return 1;
     } 
 
-    /* we're not just replaying saved session commands */ 
+    /* At this point we're not just replaying 
+       saved session commands. 
+    */ 
     set_replay_off();
 
     return 0;
@@ -1026,7 +1041,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 
     pmod = vwin->data;
     buf = selector_list(sr);
-    if (*buf == 0) return;
+    if (buf == NULL || *buf == 0) return;
     
     clear(line, MAXLEN);
     sprintf(line, "coeffsum %s", buf);
@@ -1043,6 +1058,7 @@ void do_coeff_sum (GtkWidget *widget, gpointer p)
 
     strcpy(title, "gretl: ");
     strcat(title, _("Sum of coefficients"));
+
     view_buffer(prn, 78, 200, title, COEFFSUM, NULL); 
 }
 
@@ -1262,7 +1278,7 @@ void do_lmtest (gpointer data, guint action, GtkWidget *widget)
 	} 
     }
 
-    if (model_cmd_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(line, &cmd, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
@@ -1317,6 +1333,35 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
 
 /* ........................................................... */
 
+static void set_model_id_on_window (GtkWidget *w, int ID)
+{
+#ifdef OLD_GTK
+    gtk_object_set_data(GTK_OBJECT(w), "model_ID", 
+			GINT_TO_POINTER(ID));
+#else
+    g_object_set_data(G_OBJECT(w), "model_ID", 
+		      GINT_TO_POINTER(ID));
+#endif
+
+}
+
+static int get_model_id_from_window (GtkWidget *w)
+{
+    int ID;
+
+#ifdef OLD_GTK
+    ID = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), 
+					     "model_ID"));
+#else
+    ID = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), 
+					   "model_ID"));
+#endif
+
+    return ID;
+}
+
+/* ........................................................... */
+
 void add_leverage_data (windata_t *vwin)
 {
     void *handle;
@@ -1340,15 +1385,10 @@ void add_leverage_data (windata_t *vwin)
     if (err) {
 	gui_errmsg(err);
     } else {
-#ifdef OLD_GTK
-	int ID = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(vwin->dialog), 
-						     "model_ID"));
-#else
-	int ID = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(vwin->dialog), 
-						   "model_ID"));
-#endif
+	int ID = get_model_id_from_window(vwin->dialog);
+
 	strcpy(line, "leverage -o");
-	model_cmd_init(line, &cmd, ID);
+	model_command_init(line, &cmd, ID);
     }
 }
 
@@ -1381,16 +1421,13 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
 
 	vwin = view_buffer(prn, 78, 400, _("gretl: leverage and influence"), 
 			   LEVERAGE, m); 
-#ifdef OLD_GTK
-	gtk_object_set_data(GTK_OBJECT(vwin->dialog), "model_ID", 
-			    GINT_TO_POINTER(pmod->ID));
-#else
-	g_object_set_data(G_OBJECT(vwin->dialog), "model_ID", 
-			  GINT_TO_POINTER(pmod->ID));
-#endif
+	set_model_id_on_window(vwin->dialog, pmod->ID);
+
 	gnuplot_display(&paths);
 	register_graph();
-	/* FIXME command not recorded in session */
+
+	strcpy(line, "leverage");
+	model_command_init(line, &cmd, pmod->ID);
     } else {
 	errbox(_("Command failed"));
     }
@@ -1454,12 +1491,13 @@ static void do_chow_cusum (gpointer data, int code)
 	print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, &cmd, pmod->ID)) {
+    if (model_command_init(line, &cmd, pmod->ID)) {
 	return;
     }
 
     view_buffer(prn, 78, 400, (code == CHOW)?
-		_("gretl: Chow test output"): _("gretl: CUSUM test output"),
+		_("gretl: Chow test output") : 
+		_("gretl: CUSUM test output"),
 		code, NULL);
 }
 
@@ -1499,12 +1537,11 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else {
-	if (add_test_to_model(&test, pmod) == 0)
-	    print_test_to_window(&test, mydata->w);
+    } else if (add_test_to_model(&test, pmod) == 0) {
+	print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(line, &cmd, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
@@ -1527,6 +1564,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
     order = atoi(buf);
 
     if (bufopen(&prn)) return;
+
     strcpy(title, _("gretl: LM test (autocorrelation)"));
 
     clear(line, MAXLEN);
@@ -1556,14 +1594,14 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 	gui_errmsg(err);
 	gretl_print_destroy(prn);
 	return;
-    } else {
-	if (add_test_to_model(&test, pmod) == 0)
-	    print_test_to_window(&test, mydata->w);
+    } else if (add_test_to_model(&test, pmod) == 0) {
+	print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(line, &cmd, pmod->ID)) return;
 
     close_dialog(ddata);
+
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
 
@@ -1588,6 +1626,7 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 	sprintf(tmpstr, "%d ", pmod->list[i]);
 	strcat(line, tmpstr);
     }
+
     if (verify_and_record_command(line)) return;
 
     order = atoi(cmd.param);
@@ -1607,8 +1646,9 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
     if ((err = (models[1])->errcode)) 
 	errmsg(err, prn);
     else {
-	if (add_test_to_model(&test, pmod) == 0)
+	if (add_test_to_model(&test, pmod) == 0) {
 	    print_test_to_window(&test, mydata->w);
+	}
 	if (want_vcv(cmd.opt)) {
 	    outcovmx(models[1], datainfo, 0, prn);
 	}
@@ -1624,14 +1664,17 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 
 static int model_error (MODEL *pmod)
 {
+    int err = 0;
+
     if (pmod->errcode) {
 	if (pmod->errcode != E_CANCEL) {
 	    gui_errmsg(pmod->errcode);
 	}
 	free_model(pmod);
-	return 1;
+	err = 1;
     }
-    return 0;
+
+    return err;
 }
 
 /* ........................................................... */
@@ -1641,6 +1684,7 @@ static int model_output (MODEL *pmod, PRN *prn)
     if (model_error(pmod)) return 1;
 
     pmod->ID = ++model_count;
+
     if (printmodel(pmod, datainfo, prn)) {
 	pmod->errcode = E_NAN; /* some statistics were NAN */
     }
@@ -1747,18 +1791,18 @@ static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
     if (!got_start) {
 	strcpy(line, "restrict");
-	model_cmd_init(line, &cmd, pmod->ID);
+	model_command_init(line, &cmd, pmod->ID);
     }
 
     while (bufgets(line, MAXLEN-1, buf)) {
 	if (string_is_blank(line)) continue;
 	top_n_tail(line);
-	model_cmd_init(line, &cmd, pmod->ID);
+	model_command_init(line, &cmd, pmod->ID);
     }
 
     if (!got_end) {
 	strcpy(line, "end restrict");
-	model_cmd_init(line, &cmd, pmod->ID);
+	model_command_init(line, &cmd, pmod->ID);
     }
 
     return 0;
@@ -1837,7 +1881,9 @@ void do_restrict (GtkWidget *widget, dialog_t *ddata)
 
 static int do_nls_genr (void)
 {
-    if (verify_and_record_command(line)) return 1;
+    if (verify_and_record_command(line)) {
+	return 1;
+    }
     return finish_genr(NULL, NULL);
 }
 
@@ -2188,14 +2234,16 @@ void do_sim (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "sim %s", buf);
+
     if (verify_and_record_command(line)) return;
 
     sscanf(line, "%*s %*s %*s %8s", varname);
     sprintf(info, _("%s redefined OK"), varname);
 
     err = simulate(line, &Z, datainfo);
-    if (err) gui_errmsg(err);
-    else {
+    if (err) {
+	gui_errmsg(err);
+    } else {
 	close_dialog(ddata);
 	infobox(info);
     }
@@ -2230,6 +2278,7 @@ void do_simdata (GtkWidget *widget, dialog_t *ddata)
     
     prn = gretl_print_new(GRETL_PRINT_BUFFER, NULL);
     if (prn == NULL) return;
+
     err = open_nulldata(&Z, datainfo, data_status, nulldata_n, prn);
     if (err) { 
 	errbox(_("Failed to create empty data set"));
@@ -2253,6 +2302,7 @@ void do_genr (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
+
     if (verify_and_record_command(line)) return;
 
     finish_genr(NULL, ddata);
@@ -2271,7 +2321,8 @@ void do_model_genr (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
-    if (model_cmd_init(line, &cmd, pmod->ID)) return;
+
+    if (model_command_init(line, &cmd, pmod->ID)) return;
 
     finish_genr(pmod, ddata);
 }
@@ -2311,15 +2362,19 @@ void do_random (GtkWidget *widget, dialog_t *ddata)
     clear(line, MAXLEN);
 
     if (action == GENR_NORMAL) {
-	if (f1 != 0. || f2 != 1.)
+	if (f1 != 0. || f2 != 1.) {
 	    sprintf(line, "genr %s = %g * normal() + %g", 
 		    vname, f2, f1);
-	else sprintf(line, "genr %s = normal()", vname); 
+	} else {
+	    sprintf(line, "genr %s = normal()", vname); 
+	}
     } else if (action == GENR_UNIFORM) {
-	if (f1 != 0. || f2 != 1.)
+	if (f1 != 0. || f2 != 1.) {
 	    sprintf(line, "genr %s = %g + (uniform() * %g)", 
 		    vname, f1, (f2 - f1));
-	else sprintf(line, "genr %s = uniform()", vname); 
+	} else {
+	    sprintf(line, "genr %s = uniform()", vname); 
+	}
     }
 
     if (verify_and_record_command(line)) return;
@@ -2341,6 +2396,7 @@ void do_seed (GtkWidget *widget, dialog_t *ddata)
 	
     clear(line, MAXLEN);
     sprintf(line, "set seed %s", tmp); 
+
     if (verify_and_record_command(line)) return;
 
     gretl_rand_set_seed(atoi(tmp));
@@ -2364,9 +2420,11 @@ static int finish_genr (MODEL *pmod, dialog_t *ddata)
 
     if (err) {
 	gui_errmsg(err);
-	delete_from_command_stack();
+	delete_last_command();
     } else {
-	if (ddata != NULL) close_dialog(ddata);
+	if (ddata != NULL) {
+	    close_dialog(ddata);
+	}
 	populate_varlist();
 	mark_dataset_as_modified();
     }
@@ -2395,6 +2453,7 @@ static int real_do_setmiss (double missval, int varno)
 	    }
 	}	
     }
+
     return count;
 }
 
@@ -2505,7 +2564,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
-    if (model_cmd_init(line, &cmd, pmod->ID)) return;
+    if (model_command_init(line, &cmd, pmod->ID)) return;
  
     printfreq(freq, prn);
 
@@ -2738,10 +2797,11 @@ void do_pergm (gpointer data, guint opt, GtkWidget *widget)
     if (bufopen(&prn)) return;
 
     clear(line, MAXLEN);
-    if (opt)
+    if (opt) {
 	sprintf(line, "pergm %s -o", datainfo->varname[mdata->active_var]);
-    else
+    } else {
 	sprintf(line, "pergm %s", datainfo->varname[mdata->active_var]);
+    }
 
     if (verify_and_record_command(line)) {
 	gretl_print_destroy(prn);
@@ -2773,6 +2833,7 @@ void do_coeff_intervals (gpointer data, guint i, GtkWidget *w)
     if (bufopen(&prn)) return;
 
     cf = get_model_confints(pmod);
+
     if (cf != NULL) {
 	text_print_model_confints(cf, datainfo, prn);
 	view_buffer(prn, 78, 300, 
@@ -2840,8 +2901,11 @@ void add_dummies (gpointer data, guint panel, GtkWidget *widget)
 	err = dummy(&Z, datainfo);
     }
 
-    if (err) gui_errmsg(err);
-    else populate_varlist();
+    if (err) {
+	gui_errmsg(err);
+    } else {
+	populate_varlist();
+    }
 }
 
 /* ......................................................... */
@@ -2878,37 +2942,36 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     liststr = mdata_selection_to_string(0);
     if (liststr == NULL) return;
 
-    line[0] = '\0';
-    msg[0] = '\0';
+    *msg = '\0';
     sprintf(line, "%s%s", gretl_command_word(action), liststr);
     free(liststr);
 
     if (verify_and_record_command(line)) return;
 
-    if (action == LAGS)
+    if (action == LAGS) {
 	err = lags(cmd.list, &Z, datainfo);
-    else if (action == LOGS) {
+    } else if (action == LOGS) {
 	/* returns number of terms created */
 	err = logs(cmd.list, &Z, datainfo);
 	if (err < cmd.list[0]) err = 1;
 	else err = 0;
-    }
-    else if (action == SQUARE) {
+    } else if (action == SQUARE) {
 	/* returns number of terms created */
 	err = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
 	if (err <= 0) err = 1;
 	else err = 0;
-    } 
-    else if (action == DIFF)
+    } else if (action == DIFF) {
 	err = list_diffgenr(cmd.list, &Z, datainfo);
-    else if (action == LDIFF)
+    } else if (action == LDIFF) {
 	err = list_ldiffgenr(cmd.list, &Z, datainfo);
+    }
 
     if (err) {
-	if (msg[0]) errbox(msg);
+	if (*msg != '\0') errbox(msg);
 	else errbox(_("Error adding variables"));
+    } else {
+	populate_varlist();
     }
-    else populate_varlist();
 }
 
 /* ......................................................... */
@@ -2963,7 +3026,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 	    sprintf(line, "genr %s = $h", datainfo->varname[v]);
 	}
 
-	model_cmd_init(line, &cmd, pmod->ID);
+	model_command_init(line, &cmd, pmod->ID);
 
 	infobox(_("variable added"));
 	mark_dataset_as_modified();
@@ -3078,7 +3141,7 @@ void add_model_stat (MODEL *pmod, int which)
     sprintf(cmdstr, "genr %s = %s", datainfo->varname[i], statname);
 
     populate_varlist();
-    model_cmd_init(cmdstr, &cmd, pmod->ID);
+    model_command_init(cmdstr, &cmd, pmod->ID);
     infobox(_("variable added"));
 
     /* note: since this is a scalar, which will not be saved by
@@ -3377,6 +3440,7 @@ void display_selected (gpointer data, guint action, GtkWidget *widget)
 	}
 	view_buffer(prn, width, 350, _("gretl: display data"), PRINT, NULL);
     }
+
     free(prcmd.list);
     free(prcmd.param);
 }
@@ -3630,14 +3694,15 @@ static int executable_exists (const char *fname)
     int ok = 0;
 
     if (stat(fname, &sbuf) == 0) {
-	if (sbuf.st_mode & S_IXOTH) 
+	if (sbuf.st_mode & S_IXOTH) {
 	    ok = 1;
-	else if (getuid() == sbuf.st_uid &&
-		 (sbuf.st_mode & S_IXUSR)) 
+	} else if (getuid() == sbuf.st_uid &&
+		   (sbuf.st_mode & S_IXUSR)) {
 	    ok = 1;
-	else if (getgid() == sbuf.st_gid &&
-		 (sbuf.st_mode & S_IXGRP)) 
+	} else if (getgid() == sbuf.st_gid &&
+		   (sbuf.st_mode & S_IXGRP)) {
 	    ok = 1;
+	}
     }
 
     return ok;
@@ -3911,10 +3976,11 @@ void do_open_script (void)
     /* or just an "ordinary" script */
     mkfilelist(FILE_LIST_SCRIPT, scriptfile);
 
-    if (strncmp(scriptfile, paths.scriptdir, n)) 
+    if (strncmp(scriptfile, paths.scriptdir, n)) { 
 	view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
-    else 
+    } else {
 	view_file(scriptfile, 0, 0, 78, 370, VIEW_SCRIPT);
+    }
 }
 
 /* ........................................................... */
@@ -3930,6 +3996,7 @@ void do_new_script (gpointer data, guint loop, GtkWidget *widget)
 
     gretl_print_destroy(prn);
     strcpy(scriptfile, fname);
+
     view_file(scriptfile, 1, 0, 78, 370, EDIT_SCRIPT);
 }
 

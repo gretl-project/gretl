@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "model_table.h"
 #include "session.h"
+#include "textutil.h"
 
 static const MODEL **model_list;
 static int model_list_len;

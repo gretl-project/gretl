@@ -20,6 +20,7 @@
 /* series_view.c for gretl */
 
 #include "gretl.h"
+#include "textutil.h"
 
 typedef struct {
     char label[OBSLEN];

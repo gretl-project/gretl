@@ -23,6 +23,7 @@
 #include "session.h"
 #include "obsbutton.h"
 #include "textbuf.h"
+#include "textutil.h"
 
 GtkWidget *active_edit_id;
 GtkWidget *active_edit_name;

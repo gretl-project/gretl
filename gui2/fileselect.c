@@ -25,6 +25,7 @@
 #include "gpt_control.h"
 #include "session.h"
 #include "textbuf.h"
+#include "textutil.h"
 
 #if (GTK_MAJOR_VERSION >= 2) && (GTK_MINOR_VERSION >= 4)
 # ifndef G_OS_WIN32

@@ -263,7 +263,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL },
     { N_("/File/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/File/_View command log"), NULL, view_log, 0, NULL },
+    { N_("/File/_View command log"), NULL, view_command_log, 0, NULL },
     { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
 
     /* File, command files */

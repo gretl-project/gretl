@@ -799,24 +799,24 @@ static gint populate_remote_db_list (windata_t *win)
     GtkTreeIter iter;  
 #endif  
     int err;
-    char *getbuf;
+    char *buf;
     char fname[16], line[80], errbuf[80], status[20];
     gchar *row[3];
     gint i;
     time_t remtime;
 
-    getbuf = mymalloc(GRETL_BUFSIZE);
-    if (getbuf == NULL) return 1;
+    buf = mymalloc(GRETL_BUFSIZE);
+    if (buf == NULL) return 1;
 
-    memset(getbuf, 0, GRETL_BUFSIZE);
+    memset(buf, 0, GRETL_BUFSIZE);
 
     *errbuf = '\0';
 
-    err = list_remote_dbs(&getbuf, errbuf);
+    err = list_remote_dbs(&buf, errbuf);
 
     if (err) {
 	display_db_error(NULL, errbuf);
-	free(getbuf);
+	free(buf);
 	return err;
     }
 
@@ -830,16 +830,22 @@ static gint populate_remote_db_list (windata_t *win)
     gtk_clist_freeze(GTK_CLIST(win->listbox));
 #endif
 
+    bufgets(NULL, 0, buf);
     i = 0;
-    getbufline(NULL, NULL, 1);
-    while (getbufline(getbuf, line, 0)) {
+
+    while (bufgets(line, sizeof line, buf)) {
 	if (strstr(line, "idx")) continue;
 	if (parse_db_list_line(line, fname, &remtime))
 	    continue;
 	get_local_status(fname, status, remtime);
 	row[0] = strip_extension(fname);
-	if (!getbufline(getbuf, line, 0)) row[1] = NULL;
-	else row[1] = line + 2;
+
+	if (bufgets(line, sizeof line, buf)) {
+	    row[1] = line + 2;
+	} else {
+	    row[1] = NULL;
+	}
+
 	row[2] = status;
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
@@ -858,7 +864,7 @@ static gint populate_remote_db_list (windata_t *win)
     gtk_clist_thaw(GTK_CLIST(win->listbox));
 #endif
 
-    free(getbuf);
+    free(buf);
 
     if (i == 0) errbox(_("No database files found"));
 #ifdef OLD_GTK
