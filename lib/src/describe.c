@@ -35,16 +35,36 @@
 #include <glib.h>
 #endif
 
-/* ........................................................... */
-
 static int missvals (double *x, int n)
 {
     int t;
     
-    for (t=0; t<n; t++)
-	if (na(x[t])) return 1;
+    for (t=0; t<n; t++) {
+	if (na(x[t])) {
+	    return 1;
+	}
+    }
 	    
     return 0;
+}
+
+static int good_obs (const double *x, int n, double *x0)
+{
+    int t, good = n;
+
+    if (x0 != NULL) {
+	*x0 = NADBL;
+    }
+
+    for (t=0; t<n; t++) {
+	if (na(x[t])) {
+	    good--;
+	} else if (x0 != NULL && na(*x0)) {
+	    *x0 = x[t];
+	}
+    }
+
+    return good;
 }
 
 /**
@@ -62,9 +82,15 @@ double gretl_median (const double *x, int n)
     int t, n2, n2p;
 
     sx = malloc(n * sizeof *sx);
-    if (sx == NULL) return NADBL;
+    if (sx == NULL) {
+	return NADBL;
+    }
 
     for (t=0; t<n; t++) {
+	if (na(x[t])) {
+	    n--;
+	    continue;
+	}
 	sx[t] = x[t];
     }
 
@@ -78,13 +104,13 @@ double gretl_median (const double *x, int n)
     return med;
 }
 
-/* ........................................................... */
+/* k below is the "degrees of freedom loss": it will generally be one,
+   other than when dealing with a regression residual
+*/
 
 int moments (int t1, int t2, const double *x, 
 	     double *xbar, double *std, 
 	     double *skew, double *kurt, int k)
-     /* k is the "degrees of freedom loss": it will generally be one,
-	other than when dealing with a regression residual */
 {
     int t, n;
     double dev, var;
@@ -185,6 +211,23 @@ void free_freq (FREQDIST *freq)
     free(freq);
 }
 
+static FREQDIST *freq_new (void)
+{
+    FREQDIST *freq;
+
+    freq = malloc(sizeof *freq);
+    if (freq == NULL) return NULL;
+
+    freq->midpt = NULL;
+    freq->endpt = NULL;
+    freq->f = NULL;
+
+    freq->dist = 0;
+    freq->test = NADBL;
+
+    return freq;
+}
+
 static double rb1_to_z1 (double rb1, double n)
 {
     double b, w2, d, y, z1;
@@ -226,11 +269,9 @@ static double b2_to_z2 (double b1, double b2, double n)
     return z2;
 }
 
-
+/* Bowman-Shenton as modified by Doornik & Hansen */
 
 double doornik_chisq (double skew, double kurt, int n)
-     /* Bowman-Shenton as modified by Doornik & Hansen */
-	
 {
     double rb1, b1, b2, z1, z2;
 
@@ -245,7 +286,7 @@ double doornik_chisq (double skew, double kurt, int n)
 }
 
 /**
- * freqdist:
+ * get_freq:
  * @varno: ID number of variable to process.
  * @pZ: pointer to data matrix
  * @pdinfo: information on the data set.
@@ -259,42 +300,30 @@ double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
-FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo, 
+FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
 		    int params, gretlopt opt)
 {
     FREQDIST *freq;
-    double *x = NULL;
-    double xx, xmin, xmax, xbar, sdx;
+    const double *x = Z[varno];
+    double xx, xmin, xmax;
     double skew, kurt;
     double range, binwidth;
-    int i, k, n;
     int nbins;
+    int t, k, n;
 
-    freq = malloc(sizeof *freq);
+    freq = freq_new();
     if (freq == NULL) return NULL;
 
     gretl_errno = 0;
     gretl_errmsg[0] = '\0';
 
-    freq->midpt = NULL;
-    freq->endpt = NULL;
-    freq->f = NULL;
-    freq->dist = 0;
-    freq->test = NADBL;
+    n = pdinfo->t2 - pdinfo->t1 + 1;
+    n = good_obs(x + pdinfo->t1, n, NULL);
 
-    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
-    if (x == NULL) {
-	sprintf(gretl_errmsg, _("Out of memory in frequency distribution"));
-	free(freq);
-	return NULL;
-    }
-
-    n = ztox(varno, x, Z, pdinfo);
     if (n < 8) {
 	gretl_errno = E_DATA;
 	sprintf(gretl_errmsg, _("Insufficient data to build frequency "
 		"distribution for variable %s"), pdinfo->varname[varno]);
-	free(x);
 	return freq;
     }
 
@@ -304,17 +333,17 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     strcpy(freq->varname, pdinfo->varname[varno]);
 
-    if (gretl_isconst(0, n-1, x)) {
+    if (gretl_isconst(pdinfo->t1, pdinfo->t2, x)) {
 	gretl_errno = 1;
 	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
 	return freq;
     }    
     
-    moments(0, n-1, x, &freq->xbar, &freq->sdx, &skew, &kurt, params);
-    xbar = freq->xbar;
-    sdx = freq->sdx;
+    moments(pdinfo->t1, pdinfo->t2, x, 
+	    &freq->xbar, &freq->sdx, 
+	    &skew, &kurt, params);
 
-    gretl_minmax(0, n-1, x, &xmin, &xmax);
+    gretl_minmax(pdinfo->t1, pdinfo->t2, x, &xmin, &xmax);
     range = xmax - xmin;
     
     if (n < 16) {
@@ -325,7 +354,9 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	nbins = 29;
     } else {
 	nbins = (int) sqrt((double) n);
-	if (nbins % 2 == 0) nbins++;
+	if (nbins % 2 == 0) {
+	    nbins++;
+	}
     }
 
     freq->numbins = nbins;
@@ -334,11 +365,9 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
     freq->endpt = malloc((nbins + 1) * sizeof *freq->endpt);
     freq->midpt = malloc(nbins * sizeof *freq->midpt);
     freq->f = malloc(nbins * sizeof *freq->f);
-    if (freq->endpt == NULL || freq->midpt == NULL ||
-	freq->f == NULL) {
+    if (freq->endpt == NULL || freq->midpt == NULL || freq->f == NULL) {
 	gretl_errno = E_ALLOC;
 	strcpy(gretl_errmsg, _("Out of memory for frequency distribution"));
-	free(x);
 	return freq;
     }
     
@@ -362,8 +391,11 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	freq->midpt[k] = freq->endpt[k] + .5 * binwidth;
     }
 
-    for (i=0; i<n; i++) {
-	xx = x[i];
+    for (t=pdinfo->t1; t<pdinfo->t2; t++) {
+	xx = x[t];
+	if (na(xx)) {
+	    continue;
+	}
 	if (xx < freq->endpt[1]) {
 	    freq->f[0] += 1;
 	    continue;
@@ -382,7 +414,7 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 
     if (freq->n > 7) {
 	if (opt & OPT_O) {
-	    freq->test = lockes_test(Z[varno], pdinfo);
+	    freq->test = lockes_test(x, pdinfo);
 	    freq->dist = GAMMA;
 	} else {
 	    freq->test = doornik_chisq(skew, kurt, freq->n); 
@@ -393,12 +425,62 @@ FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
 	freq->dist = 0;
     }
 
-    free(x);
-
     return freq;
 }
 
-/* ...................................................... */
+int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
+	      int graph, PRN *prn, gretlopt opt)
+{
+    FREQDIST *freq;
+
+    freq = get_freq(varno, Z, pdinfo, 1, opt); 
+
+    if (freq == NULL) {
+	return E_ALLOC;
+    }
+
+    print_freq(freq, prn); 
+
+    if (graph) {
+	if (plot_freq(freq, (opt)? GAMMA : NORMAL)) {
+	    pputs(prn, _("gnuplot command failed\n"));
+	}
+    }
+
+    free_freq(freq);
+
+    return 0;
+}
+
+int model_error_dist (const MODEL *pmod, double ***pZ,
+		      DATAINFO *pdinfo, PRN *prn)
+{
+    FREQDIST *freq = NULL;
+    int err = 0;
+
+    if (genr_fit_resid(pmod, pZ, pdinfo, GENR_RESID, 1)) {
+	pputs(prn, _("Out of memory attempting to add variable\n"));
+	err = E_ALLOC;
+    }
+
+    if (!err) {
+	freq = get_freq(pdinfo->v - 1, (const double **) *pZ, pdinfo, 
+			pmod->ncoeff, OPT_NONE);
+	if (freq == NULL) {
+	    err = E_ALLOC;
+	}
+    }
+
+    if (!err) {
+	print_freq(freq, prn); 
+	free_freq(freq);
+    }
+
+    dataset_drop_vars(1, pZ, pdinfo);
+
+    return err;
+
+}
 
 #ifdef PACF_BY_OLS
 
@@ -1025,15 +1107,14 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
 static void printf15 (double zz, PRN *prn)
 {
-    if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 15), 
-			_("undefined"));
-    else {
+    if (na(zz)) {
+	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 15), 
+		_("undefined"));
+    } else {
 	pputc(prn, ' ');
 	gretl_print_fullwidth_double(zz, 5, prn);	
     }
 }
-
-/* ............................................................. */
 
 #define LINEWID 78
 
@@ -1047,10 +1128,14 @@ static void center_line (char *str, PRN *prn, int dblspc)
 
 	for (i=0; i<pad; i++) cstr[i] = ' ';
 	strcpy(cstr + i, str);
-	if (dblspc) strcat(cstr, "\n");
+	if (dblspc) {
+	    strcat(cstr, "\n");
+	}
 	pprintf(prn, "%s\n", cstr);
     } else {
-	if (dblspc) strcat(str, "\n");
+	if (dblspc) {
+	    strcat(str, "\n");
+	}
 	pprintf(prn, "%s\n", str);
     }
 }
@@ -1082,7 +1167,6 @@ static void print_summary_single (const GRETLSUMMARY *summ,
 {
     char obs1[OBSLEN], obs2[OBSLEN], tmp[128];
     double vals[8];
-    double cv;
     const char *labels[] = {
 	N_("Mean"),
 	N_("Median"),
@@ -1103,18 +1187,12 @@ static void print_summary_single (const GRETLSUMMARY *summ,
 	    pdinfo->varname[summ->list[1]], summ->n);
     center_line(tmp, prn, 1);
 
-    if (summ->mean[0] != 0.0 && !na(summ->sd[0])) {
-	cv = fabs(summ->sd[0] / summ->mean[0]);
-    } else {
-	cv = NADBL;
-    }
-
     vals[0] = summ->mean[0];
     vals[1] = summ->median[0];
     vals[2] = summ->low[0];
     vals[3] = summ->high[0];
     vals[4] = summ->sd[0];
-    vals[5] = cv;
+    vals[5] = summ->cv[0];
     vals[6] = summ->skew[0];
     vals[7] = summ->xkurt[0];
 
@@ -1242,6 +1320,7 @@ void free_summary (GRETLSUMMARY *summ)
     free(summ->xkurt);
     free(summ->low);
     free(summ->high); 
+    free(summ->cv);
 
     free(summ);
 }
@@ -1262,9 +1341,11 @@ static GRETLSUMMARY *summary_new (const int *list)
 	return NULL;
     }
 
+    summ->n = 0;
+
     summ->mean = summ->median = summ->sd = NULL;
     summ->skew = summ->xkurt = NULL;
-    summ->low = summ->high = NULL;
+    summ->low = summ->high = summ->cv = NULL;
 
     summ->mean = malloc(nv * sizeof *summ->mean);
     summ->median = malloc(nv * sizeof *summ->median);
@@ -1273,11 +1354,12 @@ static GRETLSUMMARY *summary_new (const int *list)
     summ->xkurt = malloc(nv * sizeof *summ->xkurt);
     summ->low = malloc(nv * sizeof *summ->low);
     summ->high = malloc(nv * sizeof *summ->high);
+    summ->cv = malloc(nv * sizeof *summ->cv);
 
     if (summ->mean == NULL || summ->median == NULL ||
 	summ->sd == NULL || summ->skew == NULL ||
 	summ->xkurt == NULL || summ->low == NULL ||
-	summ->high == NULL) {
+	summ->high == NULL || summ->cv == NULL) {
 	free_summary(summ);
 	return NULL;
     }
@@ -1303,38 +1385,37 @@ GRETLSUMMARY *summary (const int *list,
 		       PRN *prn) 
 {
     GRETLSUMMARY *summ;
-    int i, vi;
-    double *x = NULL;
+    int i, vi, sn;
 
     summ = summary_new(list);
     if (summ == NULL) {
 	return NULL;
     }
 
-    x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
-    if (x == NULL) {
-	free_summary(summ);
-	return NULL;
-    }
-
     for (i=0; i<summ->list[0]; i++)  {
+	double x0;
+
 	vi = summ->list[i + 1];
 
-	summ->n = ztox(vi, x, Z, pdinfo);
+	sn = pdinfo->t2 - pdinfo->t1 + 1;
+	sn = good_obs(Z[vi] + pdinfo->t1, sn, &x0);
 
-	if (summ->n < 2) { 
+	if (sn > summ->n) {
+	    summ->n = sn;
+	}
+
+	if (sn < 2) { 
 	    /* zero or one observations */
 	    if (summ->n == 0) {
 		pprintf(prn, _("Dropping %s: sample range contains no valid "
 			"observations\n"), pdinfo->varname[vi]);
 	    } else {
 		pprintf(prn, _("Dropping %s: sample range has only one "
-			"obs, namely %g\n"), pdinfo->varname[vi], x[0]);
+			"obs, namely %g\n"), pdinfo->varname[vi], x0);
 	    }
 	    list_exclude(i + 1, summ->list);
 	    if (summ->list[0] == 0) {
 		free_summary(summ);
-		free(x);
 		return NULL;
 	    } else {
 		i--;
@@ -1342,20 +1423,25 @@ GRETLSUMMARY *summary (const int *list,
 	    }
 	}
 
-	gretl_minmax(0, summ->n - 1, x, 
+	gretl_minmax(pdinfo->t1, pdinfo->t2, Z[vi], 
 		     &summ->low[i], 
 		     &summ->high[i]);
 	
-	moments(0, summ->n - 1, x, 
+	moments(pdinfo->t1, pdinfo->t2, Z[vi], 
 		&summ->mean[i], 
 		&summ->sd[i], 
 		&summ->skew[i], 
 		&summ->xkurt[i], 1);
 
-	summ->median[i] = gretl_median(x, summ->n);
-    } 
+	if (!floateq(summ->mean[i], 0.0)) {
+	    summ->cv[i] = fabs(summ->sd[i] / summ->mean[i]);
+	} else {
+	    summ->cv[i] = NADBL;
+	}
 
-    free(x);
+	summ->median[i] = gretl_median(Z[vi] + pdinfo->t1, 
+				       pdinfo->t2 - pdinfo->t1 + 1);
+    } 
 
     return summ;
 }

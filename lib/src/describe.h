@@ -30,6 +30,7 @@ struct GRETLSUMMARY_ {
     double *xkurt;
     double *low;
     double *high;
+    double *cv;
 };
 
 struct FREQDIST_ {
@@ -52,8 +53,14 @@ struct FREQDIST_ {
 
 void free_freq (FREQDIST *freq);
 
-FREQDIST *freqdist (int varno, const double **Z, const DATAINFO *pdinfo, 
+FREQDIST *get_freq (int varno, const double **Z, const DATAINFO *pdinfo, 
 		    int params, gretlopt opt);
+
+int freqdist (int varno, const double **Z, const DATAINFO *pdinfo,
+	      int graph, PRN *prn, gretlopt opt);
+
+int model_error_dist (const MODEL *pmod, double ***pZ,
+		      DATAINFO *pdinfo, PRN *prn);
 
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 

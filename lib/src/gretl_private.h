@@ -43,9 +43,9 @@ int count_fields (const char *str);
 
 void shift_left (char *str, size_t move);
 
-double gretl_corr (int n, const double *zx, const double *zy);
+double gretl_corr (int n, const double *x, const double *y);
 
-double gretl_covar (int n, const double *zx, const double *zy);
+double gretl_covar (int n, const double *x, const double *y);
 
 int gretl_iszero (int t1, int t2, const double *x);
 
@@ -53,8 +53,8 @@ int gretl_isconst (int t1, int t2, const double *x);
 
 double gretl_mean (int t1, int t2, const double *x);
 
-void gretl_minmax (int t1, int t2, const double zx[], 
-	      double *min, double *max);
+void gretl_minmax (int t1, int t2, const double *x, 
+		   double *min, double *max);
 
 int gretl_hasconst (const int *list);
 

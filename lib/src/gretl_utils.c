@@ -34,53 +34,51 @@
 
 static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
 
-/* .......................................................  */
+/*
+  returns the simple correlation coefficient between the the arrays zx
+  and zy, for the n observations 0 to n-1.  returns NADBL if square
+  root argument is invalid or no of observations is zero
+*/
 
-double gretl_corr (int n, const double *zx, const double *zy)
-     /*
-       returns the simple correlation coefficient between the the
-       arrays zx and zy, for the n observations 0 to n-1.  returns
-       NADBL if square root argument is invalid or no of observations
-       is zero 
-     */
+double gretl_corr (int n, const double *x, const double *y)
 {
     int i, nn;
-    double sx, sy, sxx, syy, sxy, den, zxbar, zybar;
+    double sx, sy, sxx, syy, sxy, den, xbar, ybar;
     double cval = 0.0;
 
     if (n == 0) {
 	return NADBL;
     }
 
-    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) {
+    if (gretl_isconst(0, n-1, x) || gretl_isconst(0, n-1, y)) {
 	return NADBL;
     }
 
     nn = n;
     sx = sy = 0.0;
     for (i=0; i<n; ++i) {
-        if (na(zx[i]) || na(zy[i])) {
+        if (na(x[i]) || na(y[i])) {
             nn--;
             continue;
         }
-        sx += zx[i];
-        sy += zy[i];
+        sx += x[i];
+        sy += y[i];
     }
 
     if (nn == 0) {
 	return NADBL;
     }
 
-    zxbar = sx / nn;
-    zybar = sy / nn;
+    xbar = sx / nn;
+    ybar = sy / nn;
     sxx = syy = sxy = 0.0;
 
     for (i=0; i<n; ++i) {
-        if (na(zx[i]) || na(zy[i])) {
+        if (na(x[i]) || na(y[i])) {
 	    continue;
 	}
-        sx = zx[i] - zxbar;
-        sy = zy[i] - zybar;
+        sx = x[i] - xbar;
+        sy = y[i] - ybar;
 	sxx += sx * sx;
 	syy += sy * sy;
 	sxy += sx * sy;
@@ -100,10 +98,10 @@ double gretl_corr (int n, const double *zx, const double *zy)
 
 /* .......................................................  */
 
-double gretl_covar (int n, const double *zx, const double *zy)
+double gretl_covar (int n, const double *x, const double *y)
 {
     int i, nn;
-    double sx, sy, sxy, zxi, zyi, zxbar, zybar;
+    double sx, sy, sxy, xi, yi, xbar, ybar;
 
     if (n == 0) {
 	return NADBL;
@@ -113,32 +111,32 @@ double gretl_covar (int n, const double *zx, const double *zy)
     sx = sy = 0.0;
 
     for (i=0; i<n; ++i) {
-        zxi = zx[i];
-        zyi = zy[i];
-        if (na(zxi) || na(zyi)) {
+        xi = x[i];
+        yi = y[i];
+        if (na(xi) || na(yi)) {
             nn--;
             continue;
         }
-        sx += zxi;
-        sy += zyi;
+        sx += xi;
+        sy += yi;
     }
 
     if (nn == 0) {
 	return NADBL;
     }
 
-    zxbar = sx / nn;
-    zybar = sy / nn;
+    xbar = sx / nn;
+    ybar = sy / nn;
     sxy = 0.0;
 
     for (i=0; i<n; i++) {
-        zxi = zx[i];
-        zyi = zy[i];
-        if (na(zxi) || na(zyi)) {
+        xi = x[i];
+        yi = y[i];
+        if (na(xi) || na(yi)) {
 	    continue;
 	}
-        sx = zxi - zxbar;
-        sy = zyi - zybar;
+        sx = xi - xbar;
+        sy = yi - ybar;
         sxy = sxy + (sx * sy);
     }
 
@@ -201,8 +199,6 @@ double date (int nt, int pd, const double sd0)
 
 int ijton (int i, int j, int nrows)
 {
-    int idx;
-
     if (i > j) {
 	int tmp = i;
 
@@ -210,8 +206,7 @@ int ijton (int i, int j, int nrows)
 	j = tmp;
     }
 
-    idx = nrows * i + j - i - ((i - 1) * i / 2);
-    return idx;
+    return nrows * i + j - i - ((i - 1) * i / 2);
 }
 
 /**
@@ -375,37 +370,35 @@ double gretl_mean (int t1, int t2, const double *x)
     return xbar + sum / n;
 }
 
-/* ......................................................  */
-
-void gretl_minmax (int t1, int t2, const double zx[], 
-		   double *min, double *max)
 /*  returns min and max of array zx for sample t1 through t2  */
+
+void gretl_minmax (int t1, int t2, const double *x, 
+		   double *min, double *max)
 {
-    register int t;
-    double xt;
+    int t;
 
-    *min = zx[t1];
-    *max = zx[t1];
+    while (na(x[t1])) t1++;
 
-    if (t2-t1+1 == 0) {
+    if (t2 - t1 + 1 <= 0) {
         *min = *max = NADBL;
         return;
     }
 
+    *min = x[t1];
+    *max = x[t1];
+
     for (t=t1; t<=t2; t++) {
-        xt = zx[t];
-	if (!(na(xt))) {
-	    *max = xt > *max ? xt : *max;
-	    *min = xt < *min ? xt : *min;
+	if (!(na(x[t]))) {
+	    *max = x[t] > *max ? x[t] : *max;
+	    *min = x[t] < *min ? x[t] : *min;
 	}
     }
 }
 
-/* ..........................................................  */
-
-int gretl_hasconst (const int *list)
 /* check if a var list contains a constant (variable with ID
    number 0) */
+
+int gretl_hasconst (const int *list)
 {
     int i;
 
@@ -425,13 +418,12 @@ int gretl_compare_doubles (const void *a, const void *b)
     return (*da > *db) - (*da < *db);
 }
 
-/* .............................................................  */
-
-double gretl_stddev (int t1, int t2, const double *x)
 /*  returns standard deviation of array x from t1 through t2
     return NADBL if square root argument is invalid
     or there are no observations
 */
+
+double gretl_stddev (int t1, int t2, const double *x)
 {
     double xx;
 

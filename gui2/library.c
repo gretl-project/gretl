@@ -392,9 +392,7 @@ static int freq_error (FREQDIST *freq, PRN *prn)
 	    pprintf(prn, _("Out of memory in frequency distribution\n"));
 	}
 	err = 1;
-    }
-
-    if (!err && get_gretl_errno()) {
+    } else if (get_gretl_errno()) {
 	if (prn == NULL) {
 	    gui_errmsg(get_gretl_errno());
 	} else {
@@ -598,14 +596,8 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, prn);
 	break;
     case FREQ:
-	obj = freqdist(mdata->active_var, (const double **) Z, datainfo, 
-		       1, OPT_NONE);
-	if (freq_error(obj, NULL)) {
-	    gretl_print_destroy(prn);
-	    return;
-	} 
-	printfreq(obj, prn);
-	free_freq(obj);
+	err = freqdist(cmd.list[1], (const double **) Z, datainfo,
+		       0, prn, OPT_NONE);
 	break;
     case RUNS:
 	err = runs_test(cmd.list[1], (const double **) Z, datainfo, prn);
@@ -631,6 +623,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	print_summary(obj, datainfo, prn);
 	break;
     }
+
     if (err) gui_errmsg(err);
 
     view_buffer(prn, hsize, vsize, title, action, obj);
@@ -2594,7 +2587,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
+    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
 		    pmod->ncoeff, OPT_NONE);
     dataset_drop_vars(1, &Z, datainfo);
     if (freq_error(freq, NULL)) {
@@ -2612,7 +2605,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     strcpy(line, "testuhat");
     if (model_command_init(line, &cmd, pmod->ID)) return;
  
-    printfreq(freq, prn);
+    print_freq(freq, prn);
 
     view_buffer(prn, 78, 300, _("gretl: residual dist."), TESTUHAT,
 		NULL);
@@ -2645,7 +2638,7 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 
     if (verify_and_record_command(line)) return;
 
-    freq = freqdist(mdata->active_var, (const double **) Z, datainfo, 
+    freq = get_freq(mdata->active_var, (const double **) Z, datainfo, 
 		    1, opt);
 
     if (!freq_error(freq, NULL)) { 
@@ -4892,7 +4885,6 @@ int gui_exec_line (char *line,
     char texfile[MAXLEN];
     unsigned char plotflags = 0;
     MODEL tmpmod;
-    FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
     LOOPSET *loop = *plp;
@@ -5382,18 +5374,9 @@ int gui_exec_line (char *line,
 	break;
 		
     case FREQ:
-	freq = freqdist(cmd.list[1], (const double **) Z, datainfo, 
-			1, cmd.opt);
-	if ((err = freq_error(freq, prn))) {
-	    break;
-	}
-	printfreq(freq, outprn);
-	if (exec_code == CONSOLE_EXEC) {
-	    if (plot_freq(freq, (cmd.opt)? GAMMA : NORMAL)) {
-		pprintf(prn, _("gnuplot command failed\n"));
-	    }
-	}
-	free_freq(freq);
+	err = freqdist(cmd.list[1], (const double **) Z, 
+		       datainfo, (exec_code != CONSOLE_EXEC),
+		       prn, cmd.opt);
 	break;
 
     case FUNC:
@@ -5815,18 +5798,20 @@ int gui_exec_line (char *line,
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
 	    pprintf(prn, _("Out of memory attempting to add variable\n"));
 	    err = 1;
-	    break;
-	}
-	freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
-			(models[0])->ncoeff, OPT_NONE);
-	dataset_drop_vars(1, &Z, datainfo);
-	if (!(err = freq_error(freq, prn))) {
-	    if (rebuild) {
-		normal_test(ptest, freq);
-		add_test_to_model(ptest, models[0]);
+	} else {
+	    FREQDIST *freq; 
+	 
+	    freq = get_freq(datainfo->v - 1, (const double **) Z, datainfo, 
+			    (models[0])->ncoeff, OPT_NONE);
+	    dataset_drop_vars(1, &Z, datainfo);
+	    if (!(err = freq_error(freq, prn))) {
+		if (rebuild) {
+		    normal_test(ptest, freq);
+		    add_test_to_model(ptest, models[0]);
+		}
+		print_freq(freq, outprn); 
+		free_freq(freq);
 	    }
-	    printfreq(freq, outprn); 
-	    free_freq(freq);
 	}
 	break;
 

@@ -150,21 +150,12 @@ void rtfprint_summary (GRETLSUMMARY *summ,
 	    I_("Std. Dev."), I_("C.V."), I_("Skewness"), I_("Ex. kurtosis"));
 
     for (i=0; i<summ->list[0]; i++) {
-	double cv;
-
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
 	    pprintf(prn, "\\intbl \\qc %s\\cell ", pdinfo->varname[vi]);
 	}
-
-	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
-	    cv = fabs(summ->sd[i] / summ->mean[i]);
-	} else {
-	    cv = NADBL;
-	}
-
 	printfrtf(summ->sd[i], prn, 0);
-	printfrtf(cv, prn, 0);
+	printfrtf(summ->cv[i], prn, 0);
 	printfrtf(summ->skew[i], prn, 0);
 	printfrtf(summ->xkurt[i], prn, 1);
     }
@@ -263,22 +254,13 @@ void texprint_summary (GRETLSUMMARY *summ,
 	    I_("Std.\\ Dev."), I_("C.V."), I_("Skewness"), I_("Ex.\\ kurtosis"));
 
     for (i=0; i<summ->list[0]; i++) {
-	double cv;
-
 	vi = summ->list[i + 1];
 	if (summ->list[0] > 1) {
 	    tex_escape(vname, pdinfo->varname[vi]);
 	    pprintf(prn, "%s & ", vname);
 	}
-
-	if (summ->mean[i] != 0.0 && !na(summ->sd[i])) {
-	    cv = fabs(summ->sd[i] / summ->mean[i]);
-	} else {
-	    cv = NADBL;
-	}
-
 	printftex(summ->sd[i], prn, 0);
-	printftex(cv, prn, 0);
+	printftex(summ->cv[i], prn, 0);
 	printftex(summ->skew[i], prn, 0);
 	printftex(summ->xkurt[i], prn, 1);
 	pputc(prn, '\n');

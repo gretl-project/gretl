@@ -58,7 +58,6 @@ char syscmd[MAXLEN];
 double **Z;                   /* data set */
 MODEL **models;               /* holds ptrs to model structs */
 DATAINFO *datainfo;           /* info on data set */
-FREQDIST *freq;               /* struct for freq distributions */
 CMD cmd;                      /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
 PRN *cmdprn;
@@ -1094,23 +1093,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 		
     case FREQ:
-	freq = freqdist(cmd.list[1], (const double **) Z, datainfo, 
-			1, cmd.opt);
-	if (freq == NULL) {
-	    err = E_ALLOC;
-	    break;
-	}
-	if ((err = get_gretl_errno())) {
-	    errmsg(err, prn);
-	} else {
-	    printfreq(freq, prn); 
-	    if (!batch) {
-		if (plot_freq(freq, (cmd.opt)? GAMMA : NORMAL)) {
-		    pputs(prn, _("gnuplot command failed\n"));
-		}
-	    }
-	    free_freq(freq);
-	}
+	err = freqdist(cmd.list[1], (const double **) Z, 
+		       datainfo, !batch, prn, cmd.opt);
 	break;
 
     case FUNC:
@@ -1568,24 +1552,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 
     case TESTUHAT:
 	if ((err = model_test_start(cmd.ci, 0, prn))) break;
-	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pputs(prn, _("Out of memory attempting to add variable\n"));
-	    err = 1;
-	    break;
-	}
-	freq = freqdist(datainfo->v - 1, (const double **) Z, datainfo, 
-			(models[0])->ncoeff, OPT_NONE);	
-	dataset_drop_vars(1, &Z, datainfo);
-	if (freq == NULL) {
-	    err = E_ALLOC;
-	    break;
-	}
-	if ((err = get_gretl_errno())) { 
-	    errmsg(err, prn);
-	} else {
-	    printfreq(freq, prn); 
-	    free_freq(freq);
-	}
+	err = model_error_dist(models[0], &Z, datainfo,
+			       prn);
 	break;
 
     case TSLS:

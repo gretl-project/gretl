@@ -226,7 +226,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 }
 
 /**
- * printfreq:
+ * print_freq:
  * @freq: gretl frequency distribution struct.
  * @prn: gretl printing struct.
  *
@@ -234,7 +234,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
  * 
  */
 
-void printfreq (FREQDIST *freq, PRN *prn)
+void print_freq (const FREQDIST *freq, PRN *prn)
 {
     int i, k, nlw, K = freq->numbins - 1;
     char word[64];
@@ -275,7 +275,9 @@ void printfreq (FREQDIST *freq, PRN *prn)
 
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
-	while (i--) pputc(prn, '*');
+	while (i--) {
+	    pputc(prn, '*');
+	}
 	pputc(prn, '\n');
     }
 

@@ -42,7 +42,7 @@ void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
-int genr_fit_resid (MODEL *pmod, 
+int genr_fit_resid (const MODEL *pmod, 
 		    double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo);
 
