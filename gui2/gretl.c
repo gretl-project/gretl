@@ -157,6 +157,10 @@ int nls_on;
 int expert = FALSE; 
 int updater = FALSE;
 int want_toolbar = TRUE;
+#ifdef G_OS_WIN32
+int wimp = FALSE;
+#endif
+
 char dbproxy[21];
 
 #ifdef G_OS_WIN32
@@ -211,6 +215,7 @@ static void gnome_help (void)
 }
 
 #elif defined(G_OS_WIN32)
+
 static void win_help (void)
 {
     char hlpshow[MAXLEN];
@@ -237,7 +242,8 @@ enum {
     TO_BACKSLASH,
     FROM_BACKSLASH
 };
-#endif
+
+#endif /* gnome and win32 specials */
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -1270,7 +1276,7 @@ void set_sample_label (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
-#ifdef USE_WINFONT
+#ifdef G_OS_WIN32
 
 #define NAME_BUFFER_LEN 32
 
@@ -1332,7 +1338,25 @@ static void try_to_get_windows_font (void)
 	g_free(fontname);
     }
 }
-#endif /* USE_WINFONT */
+
+static void set_up_windows_look (void)
+{
+    if (wimp) { 
+	/* "Windows Impersonator" wanted */
+	size_t n = strlen(paths.gretldir);
+	int needslash = (paths.gretldir[n-1] != SLASH);
+	gchar *wimprc;
+
+	wimprc = g_strdup_printf("%s%setc\\gtk-2.0\\gtkrc.wimp", paths.gretldir,
+				 (needslash)? "\\" : "");
+	gtk_rc_parse(wimprc);
+	g_free(wimprc);
+    } else {
+	try_to_get_windows_font();
+    }
+}
+
+#endif /* G_OS_WIN32 */
 
 /* ......................................................... */
 
@@ -1389,8 +1413,8 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 #endif
 
-#ifdef USE_WINFONT
-    try_to_get_windows_font();
+#ifdef G_OS_WIN32
+    set_up_windows_look();
 #endif
 
     g_signal_connect (G_OBJECT (mdata->w), "delete_event",
@@ -1783,25 +1807,27 @@ static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 
 #ifdef G_OS_WIN32
 
+/* #define CHILD_DEBUG */
+
 int create_child_process (char *prog, char *env) 
 { 
     PROCESS_INFORMATION proc_info; 
     STARTUPINFO start_info; 
     int ret;
- 
-    ZeroMemory(&proc_info, sizeof(PROCESS_INFORMATION));
-    ZeroMemory(&start_info, sizeof(STARTUPINFO));
-    start_info.cb = sizeof(STARTUPINFO); 
- 
+
+    ZeroMemory(&proc_info, sizeof proc_info);
+    ZeroMemory(&start_info, sizeof start_info);
+    start_info.cb = sizeof start_info; 
+
     ret = CreateProcess(NULL, 
 			prog,          /* command line */
 			NULL,          /* process security attributes  */
 			NULL,          /* primary thread security attributes */ 
-			TRUE,          /* handles are inherited  */
+			FALSE,         /* handles are inherited?  */
 			0,             /* creation flags  */
-			env,           /* NULL = use parent's environment  */
+			(LPVOID) env,  /* NULL => use parent's environment  */
 			NULL,          /* use parent's current directory  */
-			&start_info,   /* STARTUPINFO pointer */ 
+			&start_info,   /* receives STARTUPINFO */ 
 			&proc_info);   /* receives PROCESS_INFORMATION  */
 
     if (ret == 0) {
@@ -1809,10 +1835,23 @@ int create_child_process (char *prog, char *env)
 	win_show_error(dw);
     }
 
+#ifdef CHILD_DEBUG
+    if (1) {
+	FILE *fp = fopen("gretlbug.txt", "w");
+
+	if (fp != NULL) {
+	    fprintf(fp, "gretl: create_child_process():\n"
+		    " prog='%s'\n env='%s'\n", prog, env);
+	    fprintf(fp, " return from CreateProcess() = %d\n", ret);
+	    fclose(fp);
+	}
+    }	
+#endif
+
     return ret;
 }
 
-#else
+#else /* not win32 */
 
 void gretl_fork (const char *prog, const char *arg)
 {
@@ -1861,7 +1900,7 @@ static char *slash_convert (char *str, int which)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-init-file";
+    const char *suppress = "--no-init-file --no-restore-data";
     FILE *fp;
 #ifdef G_OS_WIN32
     char renv[MAXLEN];
@@ -1885,7 +1924,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 
 #ifdef G_OS_WIN32
     sprintf(renv, "R_PROFILE=%s", Rprofile);
-    renv[strlen(renv) + 1] = '\0';
+    renv[strlen(renv) + 1] = '\0'; /* add an extra nul-terminator */
 #else
     if (setenv("R_PROFILE", Rprofile, 1)) {
 	errbox(_("Couldn't set R_PROFILE environment variable"));
@@ -1936,14 +1975,14 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     fclose(fp);
 
 #ifdef G_OS_WIN32
-    sprintf(line, "%s %s", Rcommand, suppress);
+    sprintf(line, "\"%s\" %s", Rcommand, suppress);
     create_child_process(line, renv);
 #else
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
-    if (s0 == NULL || s1 == NULL || s2 == NULL)
-	return;
+    if (s0 == NULL || s1 == NULL || s2 == NULL) return;
+
     *s0 = *s1 = *s2 = '\0';
     i = sscanf(Rcommand, "%63s %31s %31s", s0, s1, s2);
     if (i == 0) {
@@ -1960,15 +1999,17 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
 	perror("fork");
 	return;
     } else if (pid == 0) {  
-	if (i == 1)
+	if (i == 1) {
 	    execlp(s0, s0, suppress, NULL);
-	else if (i == 2)
+	} else if (i == 2) {
 	    execlp(s0, s0, s1, suppress, NULL);
-	else if (i == 3)
+	} else if (i == 3) {
 	    execlp(s0, s0, s1, s2, suppress, NULL);
+	}
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
+
     free(s0); 
     free(s1); 
     free(s2);

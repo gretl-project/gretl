@@ -94,6 +94,9 @@ extern char *errtext;
 /* global option-related vars */
 extern int expert;
 extern int updater;
+#ifdef G_OS_WIN32
+extern int wimp;
+#endif
 extern char viewdvi[MAXSTR];
 
 /* global GUI equipment */

@@ -97,6 +97,7 @@ static int usecwd;
 int olddat;
 int jwdata;
 int useqr;
+
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
 #endif
@@ -136,6 +137,10 @@ RCVARS rc_vars[] = {
 #ifdef ENABLE_NLS
     {"lcnumeric", N_("Use locale setting for decimal point"), NULL, &lcnumeric, 
      'B', 0, 1, NULL},
+#endif
+#ifdef G_OS_WIN32
+    {"wimp", N_("Emulate Windows look"), NULL, &wimp, 
+     'B', 0, 1, NULL},    
 #endif
     {"gnuplot", N_("Command to launch gnuplot"), NULL, paths.gnuplot, 
      'R', MAXLEN, 3, NULL},
@@ -619,6 +624,17 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		int val = *(int *)(rc->var);
 		GSList *group;
 
+		/* do we have some padding to do? */
+		if (b_col == 1) {
+		    tempwid = gtk_label_new("   ");
+		    gtk_table_attach_defaults 
+			(GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+			 b_len, b_len + 1);
+		    b_col = 0;
+		    b_len++;
+		    gtk_table_resize (GTK_TABLE (b_table), b_len + 1, 2);
+		}
+
 		b_count++;
 		b_len += 3;
 		gtk_table_resize (GTK_TABLE(b_table), b_len + 1, 2);
@@ -684,9 +700,12 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	i++;
     } /* end of loop over rc_vars[i].key */
 
-    if (b_count == 0) gtk_widget_destroy(b_table);
-    if (s_count == 0) gtk_widget_destroy(s_table);
-
+    if (b_count == 0) {
+	gtk_widget_destroy(b_table);
+    }
+    if (s_count == 0) {
+	gtk_widget_destroy(s_table);
+    }
 }
 
 /* .................................................................. */

@@ -1,3 +1,7 @@
+version 1.1.6
+- Windows: add option to emulate Windows look (via WIMP)
+- add "--no-restore-data" to R invocation
+
 10/24/2003 version 1.1.5
 - Updates to manual
 - Gtk2 version: Make selection dialog tall enough for wls,
