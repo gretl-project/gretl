@@ -952,7 +952,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		if (i == 1) strcpy(s1, I_("fitted"));
 		else strcpy(s1, I_("actual"));
 	    } else {
-		strcpy(s1, get_series_name(pdinfo, list[1]));
+		strcpy(s1, get_series_name(pdinfo, list[i]));
 	    }
 	    if (!pdist) { 
 		withstring[0] = '\0';
