@@ -97,7 +97,9 @@ int write_x12a_data (char *fname, int varnum,
 		     const char *x12adir)
 {
     int i, t;
-    char varname[9], cmd[MAXLEN];
+    char tmp[8], varname[9], cmd[MAXLEN];
+    int startyr, startper;
+    double x;
     FILE *fp = NULL;
 
     *gretl_errmsg = 0;
@@ -106,6 +108,22 @@ int write_x12a_data (char *fname, int varnum,
 	sprintf(gretl_errmsg, "%s %s", pdinfo->varname[varnum], 
 		_("is a scalar"));
 	return 1;
+    }
+
+    /* make a default x12a.mdl file if it doesn't already exist */
+    sprintf(fname, "%s%cx12a.mdl", x12adir, SLASH);
+    fp = fopen(fname, "r");
+    if (fp == NULL) {
+	fp = fopen(fname, "w");
+	if (fp == NULL) return 1;
+	fprintf(fp, "(0 1 1)(0 1 1) X\n"
+		"(0 1 2)(0 1 1) X\n"
+		"(2 1 0)(0 1 1) X\n"
+		"(0 2 2)(0 1 1) X\n"
+		"(2 1 2)(0 1 1)\n");
+	fclose(fp);
+    } else {
+	fclose(fp);
     }
 
     sprintf(varname, pdinfo->varname[varnum]);
@@ -118,25 +136,30 @@ int write_x12a_data (char *fname, int varnum,
     setlocale(LC_NUMERIC, "C");
 #endif 
 
+    x = date(pdinfo->t1, pdinfo->pd, pdinfo->sd0);
+    startyr = (int) x;
+    sprintf(tmp, "%g", x);
+    startper = atoi(strchr(tmp, '.') + 1);
+
     fprintf(fp, "series{\n period=%d\n title=\"%s\"\n", pdinfo->pd, varname);
-    fprintf(fp, " start=%g\n", date(pdinfo->t1, pdinfo->pd, pdinfo->sd0));
+    fprintf(fp, " start=%d.%d\n", startyr, startper);
     fprintf(fp, " data=(\n");
 
     i = 0;
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	if (na(Z[varnum][t])) {
-	    fprintf(fp, "-99999 ");
+	    fprintf(fp, "-99999 "); /* FIXME? */
 	} else {
 	    fprintf(fp, "%g ", Z[varnum][t]);
 	}
-	if (i && i % 7 == 0) fputs("\n", fp);
+	if ((i + 1) % 7 == 0) fputs("\n", fp);
 	i++;
     }
     fputs(" )\n}\n", fp);
 
 
     /* FIXME: make these values configurable */
-    fputs("transform{   function=log   }\n\nautomdl{   }\n\nx11{  }\n", fp);
+    fputs("automdl{}\nx11{}\n", fp);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -147,7 +170,7 @@ int write_x12a_data (char *fname, int varnum,
     }
 
     /* FIXME win32 */
-    sprintf(cmd, "cd %s && ./x12a %s -r -p -q >/dev/null", x12adir, varname);
+    sprintf(cmd, "cd %s && x12a %s -r -p -q >/dev/null", x12adir, varname);
     system(cmd);
 
     sprintf(fname, "%s%c%s.out", x12adir, SLASH, varname); 

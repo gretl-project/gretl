@@ -4,6 +4,7 @@ version 1.0.1
 - remove RTF and LaTeX items from mpols copy options (not yet
   implemented) in gui2
 - updates to updater function in gui program (both gui and gui2)
+- add rudimentary plugin support for TRAMO and X-12-ARIMA
 
 11/15/02 version 1.0
 - change *nix library name to libgretl-1.0

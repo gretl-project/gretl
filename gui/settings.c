@@ -38,8 +38,9 @@ extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
 extern char dbproxy[21];
-#ifdef USE_TRAMO
+#ifdef TRAMO_X12
 extern char tramodir[MAXSTR];
+extern char x12adir[MAXSTR];
 #endif
 int use_proxy;
 
@@ -98,7 +99,9 @@ RCVARS rc_vars[] = {
      'R', MAXSTR, 1, NULL},
     {"viewdvi", N_("Command to view DVI files"), NULL, viewdvi, 
      'R', MAXSTR, 1, NULL},
-#ifdef USE_TRAMO
+#ifdef TRAMO_X12
+    {"x12adir", N_("X-12-ARIMA directory"), NULL, x12adir, 
+     'R', MAXSTR, 1, NULL},
     {"tramodir", N_("TRAMO/SEATS directory"), NULL, tramodir, 
      'R', MAXSTR, 1, NULL},
 #endif

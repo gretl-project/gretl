@@ -1,0 +1,34 @@
+--- src/Makefile.orig	Thu Nov 21 11:45:26 2002
++++ src/Makefile	Thu Nov 21 11:45:03 2002
+@@ -1,12 +1,12 @@
+ #
+-FC        = f77
+-LINKER    = f77
+-PROGRAM         = x12a
++FC        = g77
++LINKER    = g77
++PROGRAM   = ../x12a
+ DEST      = .
+ EXTHDRS         =
+-FFLAGS    = -c -C -g -Nl99
++FFLAGS    = #-c -C -g -Nl99
+ HDRS            =
+-LDFLAGS   = -g -dn -Bstatic
++LDFLAGS   = #-g -dn -Bstatic
+ LDMAP     = 
+ LIBS      =
+ MAKEFILE  = Makefile
+@@ -208,11 +208,11 @@
+ $(PROGRAM):     $(OBJS) $(LIBS)
+ 	$(LINKER) -o $@ $(OBJS) $(LDMAP) $(LIBS) $(LDFLAGS)
+ 
+-clean:;         @del -f $(OBJS)
++clean:;         @rm -f $(OBJS)
+ 
+ install:   $(PROGRAM)
+ 	@echo Installing $(PROGRAM) in $(DEST)
+-	@if not $(DEST)x==.x copy $(PROGRAM) $(DEST)
++	@install $(PROGRAM) $(DEST)
+ ### OPUS MKMF:  Do not remove this line!  Automatic dependencies follow.
+ 
+ aaamain.o:  cchars.i error.cmn hiddn.cmn lex.i ssap.prm stdio.i title.cmn \

@@ -2234,13 +2234,13 @@ extern char x12adir[];
 
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
+    /* opt == 1 for TRAMO, 0 for X-12-ARIMA */
     gint err;
     gchar *databuf;
     GError *error = NULL;
     void *handle;
     int (*write_ts_data) (char *, int, double **, const DATAINFO *, 
 			  const char *);
-
     PRN *prn;
     char fname[MAXLEN];
 
@@ -2255,6 +2255,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     if (gui_open_plugin("tramo-x12a", &handle)) return;
+
     if (opt == 1) {
 	write_ts_data = get_plugin_function("write_tramo_data", handle);
     } else {
@@ -2295,7 +2296,7 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     free(prn->buf);
     prn->buf = databuf;
 
-    view_buffer(prn, 120, 500, 
+    view_buffer(prn, opt? 120 : 84, 500, 
 		opt? _("gretl: TRAMO analysis") :_("gretl: X-12-ARIMA analysis"),
 		TRAMO_X12A, view_items);
 }

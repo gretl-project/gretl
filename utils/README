@@ -2,5 +2,8 @@ This directory contains some scripts for creating gretl databases
 out of economic data that are freely available over the web, from
 economagic.com and nber.org.  See the subdirs for details.
 
+Also provided: a script (and small patch) to automate the building
+of the X-12-ARIMA program on Linux.
+
 Allin Cottrell
 cottrell@wfu.edu

@@ -1220,7 +1220,7 @@ static void create_text (windata_t *vwin, GtkTextBuffer **buf,
     gtk_widget_modify_font(GTK_WIDGET(vwin->w), fixed_font);
     hsize *= get_char_width(vwin->w);
     hsize += 48;
-    gtk_widget_set_size_request (vwin->dialog, hsize, vsize); 
+    gtk_window_set_default_size (GTK_WINDOW(vwin->dialog), hsize, vsize); 
     gtk_text_view_set_editable(GTK_TEXT_VIEW(vwin->w), editable);
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(vwin->w), editable);
 }
