@@ -1525,6 +1525,8 @@ static double autores (MODEL *pmod, double rho, const double **Z,
     return num / den;
 }
 
+#undef AR_DEBUG
+
 /**
  * hilu_corc:
  * @toprho: pointer to receive final rho value.
@@ -1554,7 +1556,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     int iter, nn = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int missv = 0, misst = 0, err = 0;
-    gretlopt lsqopt = OPT_NONE;
+    gretlopt lsqopt = OPT_A;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1570,7 +1572,9 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 
     gretl_model_init(&corc_model);
 
-    if (opt == PWE) lsqopt |= OPT_P;
+    if (opt == PWE) {
+	lsqopt |= OPT_P;
+    }
 
     if (opt == HILU) { /* Do Hildreth-Lu first */
 	for (rho = -0.990, iter = 0; rho < 1.0; rho += .01, iter++) {
@@ -1677,7 +1681,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     while (diff > 0.001) {
 	pprintf(prn, "          %10d %12.5f", ++iter, rho);
 	clear_model(&corc_model);
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, lsqopt, rho);
 #ifdef AR_DEBUG
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
 		corc_model.t1, 
@@ -1688,14 +1692,14 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    clear_model(&corc_model);
 	    goto bailout;
 	}
-	pprintf(prn, "   %f\n", corc_model.ess);
+	pprintf(prn, "   %g\n", corc_model.ess);
 #ifdef AR_DEBUG
 	printmodel(&corc_model, pdinfo, OPT_NONE, prn);
 #endif
 	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
-	if (iter == 20) break;
+	if (iter == 30) break;
     }
 
     pprintf(prn, _("                final %11.5f\n\n"), rho);
@@ -1863,7 +1867,6 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 		 gretlopt opt)
 {
     int i, j, t, v, ncoeff;
-    int missv = 0, misst = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *list1 = NULL, *list2 = NULL, *newlist = NULL;
     int *s1list = NULL, *s2list = NULL;
@@ -1872,6 +1875,9 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     MODEL tsls;
     double xx;
     double *yhat = NULL;
+#ifdef TSLS_NO_MISSING
+    int missv, misst = 0;
+#endif
 
     if (pos_in > 0) {
 	pos = pos_in;
@@ -1882,16 +1888,18 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     gretl_model_init(&tsls);
     *gretl_errmsg = '\0';
 
-    /* reject missing obs within sample range? */
+#ifdef TSLS_NO_MISSING
     missv = adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
-			(const double **) *pZ, NULL); /* or &misst */
-#if 0
+			(const double **) *pZ, &misst);
     if (missv) {
 	sprintf(gretl_errmsg, _("Missing value encountered for "
 				"variable %d, obs %d"), missv, misst);
 	tsls.errcode = E_DATA;
 	goto tsls_bailout;
     }
+#else
+    adjust_t1t2(NULL, list, &pdinfo->t1, &pdinfo->t2, 
+			(const double **) *pZ, NULL); 
 #endif
 
     list1 = malloc(pos * sizeof *list1);
