@@ -49,6 +49,8 @@ typedef struct {
 
 double headroom = 0.24;
 double scalepos = 60.0;
+char boxfont[64] = "Helvetica";
+int boxfontsize = 12;
 
 extern void file_selector (char *msg, char *startdir, int action, 
                            gpointer data);
@@ -241,7 +243,7 @@ setup_text (GtkWidget *area, GdkPixmap *pixmap,
 				 &black, &white,  /* fore, back */
 				 FALSE,           /* transparent? */
 				 GTK_PLOT_BORDER_NONE, 0, 1, 0,
-				 "Helvetica", 12,
+				 boxfont, boxfontsize,
 				 just,
 				 text);
     } else {
@@ -304,17 +306,12 @@ place_plots (PLOTGROUP *plotgrp)
     /* divide horizontal space between plots; also get global
        maximum and minimum y-values */
 
-    plotgrp->gmax = plotgrp->plots[0].max;
-    plotgrp->gmin = plotgrp->plots[0].min;
-
     for (i=0; i<plotgrp->nplots; i++) {
 	plotgrp->plots[i].xbase = start + (2.0 * (i+1.0) - 2.0) * boxwidth;
-	if (i > 0) {
-	    if (plotgrp->plots[i].max > plotgrp->gmax) 
-		plotgrp->gmax = plotgrp->plots[i].max;
-	    if (plotgrp->plots[i].min < plotgrp->gmin) 
-		plotgrp->gmin = plotgrp->plots[i].min;
-	}	
+	if (plotgrp->plots[i].max > plotgrp->gmax) 
+	    plotgrp->gmax = plotgrp->plots[i].max;
+	if (plotgrp->plots[i].min < plotgrp->gmin) 
+	    plotgrp->gmin = plotgrp->plots[i].min;
     }
 }
 
@@ -771,6 +768,8 @@ five_numbers (gpointer data)
     return 0;
 }
 
+static void read_boxrc (PLOTGROUP *grp);
+
 /* ............................................................. */
 
 int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
@@ -778,7 +777,7 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
     int i, n = pdinfo->t2 - pdinfo->t1 + 1;
     double *x;
     PLOTGROUP *plotgrp;
-    int width = 600, height = 448;
+    int width = 576, height = 448;
 
     x = mymalloc(n * sizeof *x);
     if (x == NULL) return 1;
@@ -837,6 +836,9 @@ int boxplots (int *list, double **pZ, const DATAINFO *pdinfo, int notches)
 
     plotgrp->height = height;
     plotgrp->width = width;
+
+    read_boxrc(plotgrp);
+
     plotgrp->popup = NULL;
     plotgrp->pixmap = NULL;
     place_plots (plotgrp);
@@ -896,7 +898,6 @@ static int cb_copy_image (gpointer data)
 		"palsize = %d\n", sizeof(BITMAPINFOHEADER), palsize);
 	infobox(infostr);
     }
-    
 
     /* fill header info */
     ret = FALSE;
@@ -1080,3 +1081,48 @@ int plot_to_xpm (const char *fname, gpointer data)
 }
 
 #endif 
+
+static void read_boxrc (PLOTGROUP *grp)
+{
+    FILE *fp;
+    char *homedir;
+    char line[80], boxrc[MAXLEN];
+    char key[18], val[32];
+
+    grp->gmax = grp->gmin = -999.0;
+
+    homedir = getenv("HOME");
+    if (homedir == NULL) homedir = paths.userdir;
+
+    sprintf(boxrc, "%s%s.boxplotrc", homedir,
+	    (homedir[strlen(homedir)-1] != SLASH)? SLASHSTR : "");
+
+    fp = fopen(boxrc, "r");
+    if (fp != NULL) {
+	while (fgets(line, 79, fp)) {
+	    if (line[0] == '#') continue;
+	    if (sscanf(line, "%17s = %31s", key, val) == 2) {
+		key[17] = '\0';
+		val[31] = '\0';
+		if (!strcmp(key, "max")) 
+		    grp->gmax = atof(val);
+		else if (!strcmp(key, "min")) 
+		    grp->gmin = atof(val);
+		else if (!strcmp(key, "font")) { 
+		    strncpy(boxfont, val, 63);
+		    boxfont[63] = '\0';
+		}
+		else if (!strcmp(key, "fontsize")) 
+		    boxfontsize = atoi(val);
+		else if (!strcmp(key, "width") && atoi(val) > 0) 
+		    grp->width = atoi(val);
+		else if (!strcmp(key, "height") && atoi(val) > 0) 
+		    grp->height = atoi(val);
+	    }
+	}
+	fclose (fp);
+    }
+
+    if (grp->gmax == -999.0) grp->gmax = grp->plots[0].max;
+    if (grp->gmin == -999.0) grp->gmin = grp->plots[0].min;
+}
