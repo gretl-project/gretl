@@ -662,7 +662,7 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 
     /* simple case: merely a change of start or end of sample */
     if (*subZ == NULL) {
-	if (!opt && OPT_C) {
+	if (1 || !(opt && OPT_C)) { /* hmm, not sure about this */
 	    (*datainfo)->t1 = 0;
 	    (*datainfo)->t2 = (*datainfo)->n - 1;
 	}

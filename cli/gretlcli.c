@@ -624,7 +624,6 @@ void exec_line (char *line, PRN *prn)
 {
     int chk, nulldata_n, renumber;
     int dbdata = 0, do_arch = 0, do_nls = 0;
-    gretlopt lsqopt = 0L;
     char s1[12], s2[12];
     double rho;
 
@@ -696,8 +695,6 @@ void exec_line (char *line, PRN *prn)
     if (!echo_off && cmd.ci != ENDLOOP) 
 	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 
 		 cmdprn);
-
-    lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
 
@@ -883,7 +880,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	clear_model(models[0]);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, rho);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -1350,7 +1347,7 @@ void exec_line (char *line, PRN *prn)
     case WLS:
     case POOLED:
 	clear_model(models[0]);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    clear_model(models[0]);

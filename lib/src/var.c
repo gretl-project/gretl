@@ -1262,7 +1262,7 @@ static int real_var (int order, const LIST inlist,
 	varlist[1] = depvars[i];
 
 	/* run an OLS regression for the current dependent var */
-	*pmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_D | OPT_A), 0.0);
+	*pmod = lsq(varlist, pZ, pdinfo, VAR, (opts | OPT_A), 0.0);
 	pmod->aux = VAR;
 	pmod->ID = i + 1;
 
@@ -1458,7 +1458,7 @@ int coint (int order, const LIST list, double ***pZ,
     pputc(prn, '\n');
     pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
     
-    coint_model = lsq(cointlist, pZ, pdinfo, OLS, OPT_D, 0.0); 
+    coint_model = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
     coint_model.aux = AUX_COINT;
     printmodel(&coint_model, pdinfo, prn);
 

@@ -413,7 +413,7 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	gtk_widget_show(d->edit);
     }
 
-    if (cmdcode == SMPLBOOL && dataset_is_subsampled()) {
+    if (cmdcode == SMPLBOOL && dataset_is_restricted()) {
 	sample_cumulate_buttons(top_vbox, d);
     }
 
@@ -1651,7 +1651,7 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 {
     int err;
 
-    if (rset->opt == SMPLDUM) {
+    if (rset->opt & OPT_O) {
 	const gchar *buf;
 	char dumv[VNAMELEN];
 
@@ -1662,19 +1662,23 @@ set_sample_from_dialog (GtkWidget *w, struct range_setting *rset)
 	sprintf(line, "smpl %s --dummy", dumv);
 	if (verify_and_record_command(line)) return TRUE;
 
-	err = bool_subsample(OPT_O);
+	err = bool_subsample(rset->opt);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
-    } else if (rset->opt == SMPLRAND) {
+    } else if (rset->opt & OPT_N) {
 	int subn;
 
+#ifdef OLD_GTK
+	subn = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(rset->startspin));
+#else
 	subn = gtk_spin_button_get_value(GTK_SPIN_BUTTON(rset->startspin));
+#endif
 
 	sprintf(line, "smpl %d --random", subn);
 	if (verify_and_record_command(line)) return TRUE;
 
-	err = bool_subsample(OPT_N);
+	err = bool_subsample(rset->opt);
 	if (!err) {
 	    gtk_widget_destroy(rset->dlg);
 	} 
@@ -1765,21 +1769,38 @@ static int default_randsize (void)
     }
 }
 
+static struct range_setting *rset_new (guint code)
+{
+    struct range_setting *rset;
+
+    rset = mymalloc(sizeof *rset);
+    if (rset == NULL) return NULL;
+
+    if (code == SMPLDUM) {
+	rset->opt = OPT_O;
+    } else if (code == SMPLRAND) {
+	rset->opt = OPT_N | OPT_C;
+    } else {
+	rset->opt = OPT_NONE;
+    }
+
+    rset->dlg = gtk_dialog_new();
+    rset->combo = NULL;
+    rset->startspin = rset->endspin = NULL;
+    rset->obslabel = NULL;
+
+    return rset;
+}
+
 void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tempwid, *hbox;
     struct range_setting *rset;
     char obstext[32];
 
-    rset = mymalloc(sizeof *rset);
+    rset = rset_new(u);
     if (rset == NULL) return;
     
-    rset->dlg = gtk_dialog_new();
-    rset->opt = u;
-    rset->combo = NULL;
-    rset->startspin = rset->endspin = NULL;
-    rset->obslabel = NULL;
-
 #ifdef OLD_GTK
     gtk_signal_connect (GTK_OBJECT(rset->dlg), "destroy", 
 			GTK_SIGNAL_FUNC(free_rsetting), rset);

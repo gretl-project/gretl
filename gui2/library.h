@@ -81,7 +81,7 @@ void count_missing (void);
 
 void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
-int dataset_is_subsampled (void);
+int dataset_is_restricted (void);
 
 int maybe_restore_full_data (int action);
 

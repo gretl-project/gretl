@@ -336,8 +336,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
     /* ADD: run an augmented regression, matching the original
        estimation method */
     if (!err && aux_code == AUX_ADD) {
-	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, 
-				   opt | OPT_D, prn);
+	*new = replicate_estimator(orig, &newlist, pZ, pdinfo, opt, prn);
 	if (new->errcode) {
 	    err = new->errcode;
 	    free(newlist);
@@ -365,7 +364,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	    }
 	    newlist[1] = pdinfo->v - 1;
 
-	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
+	    aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	    if (aux.errcode) {
 		err = aux.errcode;
 		fprintf(stderr, "auxiliary regression failed\n");
@@ -598,8 +597,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
-    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, 
-			       opt | OPT_D, prn);
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, opt, prn);
 
     if (new->errcode) {
 	pprintf(prn, "%s\n", gretl_errmsg);
@@ -748,7 +746,7 @@ int reset_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -996,7 +994,7 @@ int autocorr_test (MODEL *pmod, int order,
     if (!err) {
 	newlist[1] = v;
 	/*  printlist(newlist); */
-	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
+	aux = lsq(newlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -1140,7 +1138,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	    chowlist[pmod->list[0]+1+i] = v+i;
 	}
 
-	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A | OPT_D, 0.0);
+	chow_mod = lsq(chowlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (chow_mod.errcode) {
 	    err = chow_mod.errcode;
 	    errmsg(err, prn);

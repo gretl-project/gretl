@@ -249,6 +249,16 @@ static void launch_gnuplot_interactive (void)
 
 /* ........................................................... */
 
+static void save_full_dataset (void)
+{
+    fullZ = Z;
+    fullinfo = datainfo;
+    datainfo = subinfo;
+    Z = subZ;
+}
+
+/* ........................................................... */
+
 int quiet_sample_check (MODEL *pmod)
 {
     return model_sample_issue(pmod, NULL, 0, datainfo);
@@ -869,10 +879,7 @@ int bool_subsample (gretlopt opt)
     }
 
     /* save the full data set for later use */
-    fullZ = Z;
-    fullinfo = datainfo;
-    datainfo = subinfo;
-    Z = subZ;
+    save_full_dataset();
 
     set_sample_label_special();
     restore_sample_state(TRUE);
@@ -2022,7 +2029,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	    errmsg(err, prn);
 	    break;
 	}
-	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_D, rho);
+	*pmod = lsq(cmd.list, &Z, datainfo, action, OPT_NONE, rho);
 	err = model_output(pmod, prn);
 	if (action == HILU) register_graph();
 	break;
@@ -2030,7 +2037,6 @@ void do_model (GtkWidget *widget, gpointer p)
     case OLS:
     case WLS:
     case POOLED:
-	cmd.opt |= OPT_D;
 	*pmod = lsq(cmd.list, &Z, datainfo, action, cmd.opt, 0.0);
 	err = model_output(pmod, prn);
 	break;
@@ -4059,7 +4065,14 @@ static int dat_suffix (const char *fname)
 
 /* ........................................................... */
 
-int dataset_is_subsampled (void)
+/* sub-sampled, not just by moving the starting or ending point */
+
+int dataset_is_restricted (void)
+{
+    return (fullZ != NULL);
+}
+
+static int dataset_is_subsampled (void)
 {
     int ret = 0;
 
@@ -4726,7 +4739,6 @@ int gui_exec_line (char *line,
     char linecopy[1024];
     char texfile[MAXLEN];
     unsigned char plotflags = 0;
-    gretlopt lsqopt = 0L;
     MODEL tmpmod;
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
@@ -4826,8 +4838,6 @@ int gui_exec_line (char *line,
     } else {
 	outprn = prn;
     }
-
-    lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
 
@@ -5033,7 +5043,7 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, rho);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, rho);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn);
 	    break;
@@ -5507,7 +5517,7 @@ int gui_exec_line (char *line,
     case WLS:
     case POOLED:
 	clear_or_save_model(&models[0], datainfo, rebuild);
-	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
+	*models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
 	if ((err = (models[0])->errcode)) {
 	    errmsg(err, prn); 
 	    break;
@@ -5625,27 +5635,26 @@ int gui_exec_line (char *line,
     case SMPL:
 	if (cmd.opt) {
 	    restore_sample(cmd.opt);
-	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
+	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) { 
 		err = E_ALLOC;
-	    else 
+	    } else {
 		err = restrict_sample(line, &Z, &subZ, datainfo, 
 				      subinfo, cmd.list, cmd.opt);
-	    if (!err) {
-		/* save the full data set for later use */
-		fullZ = Z;
-		fullinfo = datainfo;
-		datainfo = subinfo;
-		Z = subZ;		
 	    }
-	} 
-	else if (strcmp(line, "smpl full") == 0) {
+	    if (!err) {
+		save_full_dataset();
+	    }
+	} else if (strcmp(line, "smpl full") == 0) {
 	    restore_sample(OPT_NONE);
 	    restore_sample_state(FALSE);
 	    chk = 1;
-	} else 
+	} else {
 	    err = set_sample(line, datainfo);
-	if (err) errmsg(err, prn);
-	else {
+	}
+
+	if (err) {
+	    errmsg(err, prn);
+	} else {
 	    print_smpl(datainfo, (cmd.opt)? fullinfo->n : 0, prn);
 	    if (cmd.opt) { 
 		set_sample_label_special();
@@ -5657,8 +5666,11 @@ int gui_exec_line (char *line,
 	break;
 
     case SQUARE:
-	if (cmd.opt) chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
-	else chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
+	if (cmd.opt) {
+	    chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
+	} else {
+	    chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
+	}
 	if (chk < 0) {
 	    pprintf(prn, _("Failed to generate squares\n"));
 	    err = 1;
@@ -5673,6 +5685,7 @@ int gui_exec_line (char *line,
 	    errmsg(cmd.errcode, prn);
 	    break;
 	}
+
 	if (strlen(cmd.param)) {
 	    if ((cmd.opt & OPT_Z) && !has_gz_suffix(cmd.param)) {
 		pprintf(prn, _("store: using filename %s.gz\n"), cmd.param);
@@ -5683,6 +5696,7 @@ int gui_exec_line (char *line,
 	    pprintf(prn, _("store: no filename given\n"));
 	    break;
 	}
+
 	if (write_data(cmd.param, cmd.list, 
 		       Z, datainfo, data_option(cmd.opt), NULL)) {
 	    pprintf(prn, _("write of data file failed\n"));

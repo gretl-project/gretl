@@ -676,7 +676,7 @@ int panel_autocorr_test (MODEL *pmod, int order,
     }
 
     if (!err) {
-	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_D | OPT_A, 0.0);
+	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, OPT_A, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);

@@ -46,7 +46,6 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
-    gretlopt lsqopt = 0L;
     int err = 0;
 
     gretl_set_text_pause(0);
@@ -78,8 +77,6 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     fprintf(stderr, "loop_exec_line: linecpy='%s'\n", linecpy);
     debug_print_model_info(models[0], "models[0]");
 #endif
-
-    lsqopt = cmd.opt | OPT_D;
 
     switch (cmd.ci) {
 
@@ -129,7 +126,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	clear_model(models[0]);
 
 	if (cmd.ci == OLS || cmd.ci == WLS) {
-	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, lsqopt, 0.0);
+	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
 	}
 	else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);

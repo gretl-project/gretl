@@ -318,7 +318,6 @@ static void model_stats_init (MODEL *pmod)
  * @opts: option flags: 
  *   if & OPT_R compute robust standard errors;
  *   if & OPT_C force use of Cholesky decomp;
- *   if & OPT_D calculate dw stat and rhohat;
  *   if & OPT_A treat as auxiliary regression (don't bother checking
  *     for presence of lagged dependent var, don't augment model count);
  *   if & OPT_P use Prais-Winsten for first obs.
@@ -523,7 +522,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    if (opts & OPT_D) {
+    if (opts & OPT_T) {
 	mdl.rho = rhohat(0, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(0, &mdl, *pZ);
     } else {
@@ -1444,7 +1443,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
     double rho = 0.0, rho0 = 0.0, diff = 1.0;
     double finalrho = 0, ess = 0, essmin = 0, ssr[199], rh[199]; 
     int step, iter = 0, nn = 0, err = 0;
-    gretlopt lsqopt = OPT_D;
+    gretlopt lsqopt = OPT_NONE;
     MODEL corc_model;
 
     *gretl_errmsg = '\0';
@@ -1457,7 +1456,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	step = 1;
 	for (rho = -0.990; rho < 1.0; rho += .01) {
 	    clear_model(&corc_model);
-	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
+	    corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 	    if ((err = corc_model.errcode)) {
 		clear_model(&corc_model);
 		return err;
@@ -1505,7 +1504,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	pputs(prn, _("\nFine-tune rho using the CORC procedure...\n\n")); 
     } else { 
 	/* Go straight to Cochrane-Orcutt (or Prais-Winsten) */
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (!corc_model.errcode && corc_model.dfd == 0) {
 	    corc_model.errcode = E_DF;
 	}
@@ -1524,7 +1523,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	iter++;
 	pprintf(prn, "          %10d %12.5f", iter, rho);
 	clear_model(&corc_model);
-	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, rho);
+	corc_model = lsq(list, pZ, pdinfo, OLS, OPT_A, rho);
 #if 0
 	fprintf(stderr, "corc_model: t1=%d, first two uhats: %g, %g\n",
 		corc_model.t1, 
@@ -1784,7 +1783,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
     /* second-stage regression */
     clear_model(&tsls);
-    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_D, 0.0);
+    tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_NONE, 0.0);
     if (tsls.errcode) {
 	goto tsls_bailout;
     }
@@ -1998,7 +1997,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     ncoeff = list[0] - 1;
     rearrange_list(list);
 
-    hsk = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
+    hsk = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (hsk.errcode) return hsk;
 
     uhat1 = malloc(n * sizeof *uhat1);
@@ -2049,7 +2048,7 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
 
     clear_model(&hsk);
-    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_D, 0.0);
+    hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
     hsk.ci = HSK;
 
     shrink = pdinfo->v - orig_nvar;
@@ -2124,7 +2123,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     rearrange_list(list);
 
     /* run a regular OLS */
-    hccm = lsq(list, pZ, pdinfo, OLS, OPT_D | OPT_A, 0.0);
+    hccm = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
     if (hccm.errcode) {
 	goto bailout;
     }
@@ -2425,7 +2424,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     if (arlist[0] == 1 && arlist[1] == 1) {
 	err = hilu_corc(&xx, reglist, pZ, pdinfo, NULL, 1, CORC, prn);
 	if (err) ar.errcode = err;
-	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_D, xx);
+	else ar = lsq(reglist, pZ, pdinfo, CORC, OPT_NONE, xx);
 	printmodel(&ar, pdinfo, prn); 
 	free(arlist);
 	free(reglist);
@@ -2917,7 +2916,7 @@ MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo,
 		strcpy(pdinfo->varname[nwt], "1/sigma");
 
 		clear_model(&archmod);
-		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_D, 0.0);
+		archmod = lsq(wlist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
 
 		archmod.ci = ARCH;
 		archmod.order = order;
