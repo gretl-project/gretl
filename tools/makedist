@@ -20,12 +20,11 @@ rm -f gretl/gui/model_table.c gretl/gui/model_table.h
 rm -f gretl/gui/objectsave.c gretl/gui/objectsave.h
 rm -f gretl/gui/session.c gretl/gui/session.h
 rm -f gretl/gui/webget.c gretl/gui/webget.h
+rm -f gretl/gui/library.c gretl/gui/library.h
 mv gretl gretl-${version}
 rm -f $tarfile 
 tar cvyfX $tarfile tar_exclude gretl-${version}
 mv gretl-${version} gretl
-rm gretl/gui/model_table.c
-rm gretl/gui/model_table.h
 
 # scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/
 # scp gretl/doc/manual-a4.pdf allin@gretl.sourceforge.net:~/www/

@@ -61,4 +61,4 @@ void simple_selection (const char *title, const char *oktxt,
 
 void data_save_selection_wrapper (int file_code);
 
-char *mdata_selection_to_string (void);
+char *mdata_selection_to_string (int n_required);

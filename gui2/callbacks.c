@@ -621,7 +621,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
     case GR_NBOX:
 	strcpy(title, _("gretl: boxplots"));
 	strcpy(query, _("Specify variables to plot:"));
-	okfunc = do_box_graph_trad;
+	okfunc = do_box_graph;
 	varclick = VARCLICK_INSERT_NAME;
 	break;	
     case NLS:

@@ -2764,16 +2764,23 @@ int gretl_spawn (const char *cmdline)
 
 #elif !defined(WIN32)
 
+#include <signal.h>
+
 int gretl_spawn (const char *cmdline)
 {
     int err;
+    extern int errno;
 
-    *gretl_errmsg = '\0';
+    errno = 0;
+
+    signal(SIGCHLD, SIG_DFL);
 
     err = system(cmdline);
     if (err) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
+	perror(NULL);
     }
+
     return err;
 }
 

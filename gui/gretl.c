@@ -743,7 +743,7 @@ int main (int argc, char *argv[])
 #endif
     session_menu_state(FALSE);
     restore_sample_state(FALSE);
-    menubar_state(FALSE);
+    main_menubar_state(FALSE);
 			  
     check_for_extra_data();
 #ifdef HAVE_TRAMO
@@ -806,13 +806,13 @@ int main (int argc, char *argv[])
 void refresh_data (void)
 {
     if (data_status) {
-	populate_main_varlist();
+	populate_varlist();
     }
 }
 
 /* ........................................................... */
 
-void menubar_state (gboolean s)
+void main_menubar_state (gboolean s)
 {
     if (mdata->ifac == NULL) return;
 
@@ -971,7 +971,7 @@ void check_varmenu_state (GtkCList *list, gint i, gint j,
 
 /* ........................................................... */
 
-gint populate_main_varlist (void)
+gint populate_varlist (void)
 {
     char id[4];
     char *row[3];
@@ -1026,7 +1026,7 @@ gint populate_main_varlist (void)
 
 /* ........................................................... */
 
-void clear_clist (GtkWidget *widget)
+void clear_varlist (GtkWidget *widget)
 {
     gtk_clist_clear(GTK_CLIST(widget));
     if (popup_connected) {
@@ -1261,7 +1261,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
 
     /* put stuff into list box, activate menus */
-    if (!gui_get_data) populate_main_varlist();
+    if (!gui_get_data) populate_varlist();
 
     /* create gretl toolbar */
     if (want_toolbar) make_toolbar(mdata->w, main_vbox);
@@ -1537,6 +1537,8 @@ void gretl_fork (const char *prog, const char *arg)
 	perror("execlp");
 	_exit(EXIT_FAILURE);
     }
+
+    signal(SIGCHLD, SIG_DFL);
 }
 
 static void startR (gpointer p, guint opt, GtkWidget *w)
@@ -1606,6 +1608,7 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
 
     signal(SIGCHLD, SIG_IGN); 
+
     pid = fork();
 
     if (pid == -1) {
@@ -1634,6 +1637,8 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     free(s0); 
     free(s1); 
     free(s2);
+
+    signal(SIGCHLD, SIG_DFL); 
 }
 
 /* ........................................................... */

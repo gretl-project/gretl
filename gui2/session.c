@@ -34,12 +34,12 @@
 #include <unistd.h>
 #include <errno.h>
 
-#ifdef G_OS_WIN32
+#ifdef _WIN32
 # include <windows.h>
-#endif
-
-#if !GLIB_CHECK_VERSION(2,0,0)
-# define OLD_GTK
+#else
+# if !GLIB_CHECK_VERSION(2,0,0)
+#  define OLD_GTK
+# endif
 #endif
 
 #ifdef OLD_GTK
@@ -1379,6 +1379,8 @@ static void maybe_delete_session_object (gui_obj *obj)
     g_free(msg);
 }
 
+#ifndef OLD_GTK
+
 static void rename_session_model (MODEL *pmod, const char *newname)
 {
     char *tmp = g_strdup(newname);
@@ -1431,6 +1433,8 @@ static void rename_session_object (gui_obj *obj, const char *newname)
 
     replay = 0;
 }
+
+#endif /* !OLD_GTK */
 
 static gui_obj *get_gui_obj_from_data (void *finddata)
 {
@@ -2368,7 +2372,7 @@ static void session_build_popups (void)
 
     if (boxplot_popup == NULL) {
 	boxplot_popup = gtk_menu_new();
-	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
+	for (i=0; i<sizeof graph_items / sizeof graph_items[0]; i++) {
 	    if (strstr(graph_items[i], "GUI")) continue;
 		create_popup_item(boxplot_popup, 
 				  _(graph_items[i]), 
@@ -2378,7 +2382,7 @@ static void session_build_popups (void)
 
     if (data_popup == NULL) {
 	data_popup = gtk_menu_new();
-	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
+	for (i=0; i<sizeof dataset_items / sizeof dataset_items[0]; i++) {
 		create_popup_item(data_popup, 
 				  _(dataset_items[i]), 
 				  data_popup_activated);	    
@@ -2387,7 +2391,7 @@ static void session_build_popups (void)
 
     if (info_popup == NULL) {
 	info_popup = gtk_menu_new();
-	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
+	for (i=0; i<sizeof info_items / sizeof info_items[0]; i++) {
 		create_popup_item(info_popup, 
 				  _(info_items[i]), 
 				  info_popup_activated);	    
@@ -2472,44 +2476,39 @@ void view_session (void)
     gtk_container_foreach(GTK_CONTAINER(scroller), 
 			 (GtkCallback) white_bg_style, 
 			 NULL);
+
+    GTK_WIDGET_SET_FLAGS(icon_table, GTK_CAN_FOCUS);
+    gtk_widget_grab_focus(icon_table);
 }
 
-#ifdef OLD_GTK
+/* apparatus for renaming session objects */
 
-static void create_gobj_icon (gui_obj *gobj, char **data)
+#if 0
+
+static gboolean gtk_editable_get_editable (GtkEditable *e)
 {
-    GdkPixmap *pixmap;
-    GdkBitmap *mask;
-    GtkStyle *style;
-    GtkWidget *image;
+    gboolean ret;
 
-    style = gtk_widget_get_style(iconview);
-    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
-					  &mask, 
-					  &style->bg[GTK_STATE_NORMAL], 
-					  data);
-
-    gobj->icon = gtk_event_box_new();
-    gtk_widget_set_usize(gobj->icon, 36, 36);
-
-    image = gtk_pixmap_new(pixmap, mask);
-
-    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
-    gtk_widget_show(image);
-
-    if (gobj->sort == 't') table_drag_setup(gobj->icon);
-
-    gobj->label = gtk_label_new(gobj->name);
-
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "button_press_event",
-		       GTK_SIGNAL_FUNC(session_icon_click), gobj);
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "enter_notify_event",
-		       GTK_SIGNAL_FUNC(icon_entered), gobj);
-    gtk_signal_connect(GTK_OBJECT(gobj->icon), "leave_notify_event",
-		       GTK_SIGNAL_FUNC(icon_left), gobj);
+    gtk_object_get(GTK_OBJECT(e), "editable", &ret, NULL);
+    return ret;
 }
 
-#else
+static void gtk_entry_set_width_chars (GtkEntry *entry, int width)
+{
+    /* gtk_widget_set_usize(entry, width, height */
+    return;
+}
+
+static void gtk_entry_set_has_frame (GtkEntry *entry, gboolean b)
+{
+    return;
+}
+
+#endif /* bodges for old gtk */
+
+/* for now, object renaming is gtk2 only */
+
+#ifndef OLD_GTK
 
 static void size_name_entry (GtkWidget *w, const char *name)
 {
@@ -2531,7 +2530,7 @@ static gboolean object_name_return (GtkWidget *w,
 	const gchar *newname = gtk_entry_get_text(GTK_ENTRY(gobj->label));
 
 	gtk_editable_set_position(GTK_EDITABLE(gobj->label), 0);
-	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);
+	/* gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE); */
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	
 	if (newname != NULL && *newname != '\0' &&
@@ -2539,6 +2538,9 @@ static gboolean object_name_return (GtkWidget *w,
 	    rename_session_object(gobj, newname);
 	    size_name_entry(gobj->label, newname);
 	}
+
+	gtk_widget_grab_focus(icon_table);
+
 	return TRUE;
     } 
 
@@ -2554,12 +2556,16 @@ static gboolean start_rename_object (GtkWidget *w,
     }
 
     gtk_entry_set_width_chars(GTK_ENTRY(gobj->label), OBJECT_NAMELEN);
-    gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), TRUE);
+    /* gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), TRUE); */
     gtk_editable_set_editable(GTK_EDITABLE(gobj->label), TRUE);
     gtk_editable_select_region(GTK_EDITABLE(gobj->label), 0, -1);
+    gtk_editable_set_position(GTK_EDITABLE(gobj->label), -1);
+    gtk_widget_grab_focus(gobj->label);
     
     return TRUE;
 }
+
+#endif /* !OLD_GTK -- object renaming stuff */
 
 static void make_short_label_string (char *targ, const char *src)
 {
@@ -2572,12 +2578,51 @@ static void make_short_label_string (char *targ, const char *src)
     }
 }
 
-static void create_gobj_icon (gui_obj *gobj, const char **data)
+#ifdef OLD_GTK
+
+static void create_gobj_icon (gui_obj *gobj, char **xpm)
+{
+    GdkPixmap *pixmap;
+    GdkBitmap *mask;
+    GtkStyle *style;
+    GtkWidget *image;
+    gchar shortname[OBJECT_NAMELEN + 1];
+
+    style = gtk_widget_get_style(iconview);
+    pixmap = gdk_pixmap_create_from_xpm_d(mdata->w->window,
+					  &mask, 
+					  &style->bg[GTK_STATE_NORMAL], 
+					  xpm);
+
+    gobj->icon = gtk_event_box_new();
+    gtk_widget_set_usize(gobj->icon, 36, 36);
+
+    image = gtk_pixmap_new(pixmap, mask);
+
+    gtk_container_add(GTK_CONTAINER(gobj->icon), image);
+    gtk_widget_show(image);
+
+    if (gobj->sort == 't') table_drag_setup(gobj->icon);
+
+    make_short_label_string(shortname, gobj->name);
+    gobj->label = gtk_label_new(shortname);
+    
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "button_press_event",
+		       GTK_SIGNAL_FUNC(session_icon_click), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "enter_notify_event",
+		       GTK_SIGNAL_FUNC(icon_entered), gobj);
+    gtk_signal_connect(GTK_OBJECT(gobj->icon), "leave_notify_event",
+		       GTK_SIGNAL_FUNC(icon_left), gobj);
+}
+
+#else
+
+static void create_gobj_icon (gui_obj *gobj, const char **xpm)
 {
     GdkPixbuf *pbuf;
     GtkWidget *image;
 
-    pbuf = gdk_pixbuf_new_from_xpm_data(data);
+    pbuf = gdk_pixbuf_new_from_xpm_data(xpm);
 
     gobj->icon = gtk_event_box_new();
     gtk_widget_set_size_request(gobj->icon, 36, 36);
@@ -2622,7 +2667,7 @@ static void create_gobj_icon (gui_obj *gobj, const char **data)
 static gui_obj *gui_object_new (gchar *name, int sort)
 {
     gui_obj *gobj;
-    char **data = NULL;
+    char **xpm = NULL;
 
     gobj = mymalloc(sizeof *gobj);
     gobj->name = name; 
@@ -2630,24 +2675,24 @@ static gui_obj *gui_object_new (gchar *name, int sort)
     gobj->data = NULL;
 
     switch (sort) {
-    case 'm': data = model_xpm; break;
-    case 'v': data = model_xpm; break;	
-    case 'b': data = boxplot_xpm; break;
-    case 'g': data = gnuplot_xpm; break;
-    case 'd': data = dot_sc_xpm; break;
-    case 'i': data = xfm_info_xpm; break;
-    case 's': data = xfm_make_xpm; break;
-    case 'n': data = text_xpm; break;
-    case 'r': data = rhohat_xpm; break;
-    case 'x': data = summary_xpm; break;
-    case 't': data = model_table_xpm; break;
+    case 'm': xpm = model_xpm; break;
+    case 'v': xpm = model_xpm; break;	
+    case 'b': xpm = boxplot_xpm; break;
+    case 'g': xpm = gnuplot_xpm; break;
+    case 'd': xpm = dot_sc_xpm; break;
+    case 'i': xpm = xfm_info_xpm; break;
+    case 's': xpm = xfm_make_xpm; break;
+    case 'n': xpm = text_xpm; break;
+    case 'r': xpm = rhohat_xpm; break;
+    case 'x': xpm = summary_xpm; break;
+    case 't': xpm = model_table_xpm; break;
     default: break;
     }
 
 #ifdef OLD_GTK
-    create_gobj_icon (gobj, data);
+    create_gobj_icon (gobj, xpm);
 #else
-    create_gobj_icon (gobj, (const char **) data);
+    create_gobj_icon (gobj, (const char **) xpm);
 #endif
 
     return gobj;

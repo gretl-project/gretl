@@ -1414,7 +1414,7 @@ static void selection_add_item (gint i, struct list_maker *lmkr)
     }
 }
 
-char *mdata_selection_to_string (void)
+char *mdata_selection_to_string (int n_required)
 {
     GList *mylist = GTK_CLIST(mdata->listbox)->selection;
     struct list_maker lmkr;    
@@ -1433,6 +1433,17 @@ char *mdata_selection_to_string (void)
     if (lmkr.overflow) {
 	errbox(_("Too many items were selected"));
 	lmkr.liststr[0] = 0;
+    }
+
+    if (n_required && lmkr.n_items != n_required) {
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Please select %d variables first"),
+			      n_required);
+	errbox(msg);
+	g_free(msg);
+	free(lmkr.liststr);
+	lmkr.liststr = NULL;
     }
 
     return lmkr.liststr;

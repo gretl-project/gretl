@@ -1245,7 +1245,7 @@ static void really_set_variable_info (GtkWidget *w,
 	}
 
 	if (gui_changed)
-	    populate_main_varlist();
+	    populate_varlist();
 
 	if (changed || comp_changed || gui_changed) {
 	    data_status |= MODIFIED_DATA;

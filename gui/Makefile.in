@@ -86,8 +86,8 @@ SRCS = boxplots.c calculator.c callbacks.c console.c database.c datafiles.c \
 	gui_utils.c helpfiles.c library.c model_table.c objectsave.c \
 	selector.c series_view.c session.c settings.c ssheet.c webget.c 
 
-COMMONSRC = objectsave.c objectsave.h model_table.c model_table.h \
-	session.c session.h webget.c webget.h
+COMMONSRC = library.c library.h objectsave.c objectsave.h \
+	model_table.c model_table.h session.c session.h webget.c webget.h
 
 OBJS = $(SRCS:.c=.o)
 

@@ -532,9 +532,9 @@ void register_data (const char *fname, const char *user_fname,
     }
 
     /* sync main window with datafile */
-    populate_main_varlist();
+    populate_varlist();
     set_sample_label(datainfo);
-    menubar_state(TRUE);
+    main_menubar_state(TRUE);
     session_menu_state(TRUE);
 
     /* record opening of data file in command log */
@@ -1164,6 +1164,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 	title = g_strdup(_("gretl console")); break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
+    case VIEW_FILE:
 	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp"))
 	    title = g_strdup(_("gretl: command script"));
 	else {
@@ -1382,7 +1383,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    } else { 
+    } else if (role != VIEW_FILE) { 
 	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
     }
 

@@ -124,7 +124,7 @@ MO = mo/es.mo mo/fr.mo
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<
-	$(CC) -MM -MG $(CFLAGS) $< > $*.d 2>/dev/null
+	$(CC) -MM $(CFLAGS) $(GTK_CFLAGS) $< > $*.d 
 
 # targets begin
 

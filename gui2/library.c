@@ -26,6 +26,10 @@
 # include "gpt_control.h"
 #endif
 
+#if !GLIB_CHECK_VERSION(2,0,0)
+# define OLD_GTK
+#endif
+
 #ifdef G_OS_WIN32 
 # include "../lib/src/gretl_cmdlist.h"
 # include <io.h>
@@ -124,16 +128,55 @@ static void gui_graph_handler (int err)
     }
 }
 
+#ifdef OLD_GTK
+
+#include <errno.h>
+#include <signal.h>
+
 static void launch_gnuplot_interactive (void)
 {
-#ifdef G_OS_WIN32
+    pid_t pid;
+    char term[8];
+
+    if (get_terminal(term)) return;
+
+    signal(SIGCHLD, SIG_IGN);
+
+    pid = fork();
+    if (pid == -1) {
+	errbox(_("Couldn't fork"));
+	perror("fork");
+	return;
+    } else if (pid == 0) {
+	extern int errno;
+
+	errno = 0;
+
+	execlp(term, term, 
+	       "+sb", "+ls",
+	       "-geometry", "40x4", 
+	       "-title", "gnuplot: type q to quit",
+	       "-e", paths.gnuplot, paths.plotfile, "-", 
+	       NULL);
+	fprintf(stderr, "execlp: %s: %s\n", term, strerror(errno));
+	_exit(EXIT_FAILURE);
+    }
+
+    signal(SIGCHLD, SIG_DFL);
+}
+
+#else
+
+static void launch_gnuplot_interactive (void)
+{
+# ifdef G_OS_WIN32
     gchar *cmdline;
 
     cmdline = g_strdup_printf("\"%s\" \"%s\" -", paths.gnuplot,
 			      paths.plotfile);
     create_child_process(cmdline, NULL);
     g_free(cmdline);
-#else
+# else
     char term[8];
 
     if (get_terminal(term)) return;
@@ -161,8 +204,10 @@ static void launch_gnuplot_interactive (void)
 	    g_error_free(error);
 	}
     }
-#endif
+# endif
 }
+
+#endif
 
 /* ........................................................... */
 
@@ -1465,6 +1510,39 @@ static gint add_test_to_model (GRETLTEST *test, MODEL *pmod)
 
 /* ........................................................... */
 
+#ifdef OLD_GTK
+
+static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
+{
+    if (w == NULL) {
+        return;
+    } else {
+        char test_str[64], pval_str[64], type_str[96];
+        gchar *tempstr;
+
+	get_test_type_string (test, type_str, GRETL_PRINT_FORMAT_PLAIN);
+        get_test_stat_string (test, test_str, GRETL_PRINT_FORMAT_PLAIN);
+        get_test_pval_string (test, pval_str, GRETL_PRINT_FORMAT_PLAIN);
+
+        tempstr = g_strdup_printf("%s -\n"
+                                  "  %s: %s\n"
+                                  "  %s: %s\n"
+                                  "  %s = %s\n\n",
+                                  type_str, 
+                                  _("Null hypothesis"), _(test->h_0), 
+                                  _("Test statistic"), test_str, 
+                                  _("with p-value"), pval_str);
+
+	gtk_text_freeze(GTK_TEXT (w));
+	gtk_text_insert(GTK_TEXT (w), fixed_font, NULL, NULL, tempstr, 
+			strlen(tempstr));
+	gtk_text_thaw(GTK_TEXT (w));
+	g_free(tempstr);
+    }
+}
+
+#else
+
 static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 {
     GtkTextBuffer *buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(w));
@@ -1494,6 +1572,8 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
 	g_free(tempstr);
     }
 }
+
+#endif /* !OLD_GTK */
 
 /* ........................................................... */
 
@@ -1990,7 +2070,11 @@ void do_nls_model (GtkWidget *widget, dialog_t *ddata)
     int err = 0, started = 0;
     MODEL *pmod = NULL;
 
+#ifdef OLD_GTK
+    buf = gtk_editable_get_chars(GTK_EDITABLE(ddata->edit), 0, -1);
+#else
     buf = textview_get_text(GTK_TEXT_VIEW(ddata->edit));
+#endif
     if (blank_entry(buf, ddata)) return;
 
     bufgets(NULL, 0, buf);
@@ -2604,12 +2688,48 @@ extern char x12adir[];
 
 #if defined(HAVE_TRAMO) || defined (HAVE_X12A)
 
+static char *file_get_contents (const char *fname)
+{
+    char *buf, *p;
+    FILE *fp;
+    size_t i, alloced;
+    int c;
+
+    fp = fopen(fname, "r");
+    if (fp == NULL) return NULL;
+
+    buf = malloc(BUFSIZ);
+    if (buf == NULL) {
+	fclose(fp);
+	return NULL;
+    }
+    alloced = BUFSIZ;
+
+    i = 0;
+    while ((c = getc(fp)) != EOF) {
+	if (i + 2 == alloced) { /* allow for terminating 0 */
+	    p = realloc(buf, alloced + BUFSIZ);
+	    if (p == NULL) {
+		free(buf);
+		fclose(fp);
+		return NULL;
+	    }
+	    buf = p;
+	    alloced += BUFSIZ;
+	}
+	buf[i++] = c;
+    }
+    buf[i] = 0;
+
+    fclose(fp);
+    return buf;
+}
+
 void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 {
     gint err;
     int graph = 0, oldv = datainfo->v;
     gchar *databuf;
-    GError *error = NULL;
     void *handle;
     int (*write_tx_data) (char *, int, 
 			  double ***, DATAINFO *, 
@@ -2674,12 +2794,11 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
 	if (*fname == 0) return;
     }
 
-    g_file_get_contents (fname, &databuf, NULL, &error);
 
+    databuf = file_get_contents(fname);
     if (databuf == NULL) {
 	errbox((opt == TRAMO)? _("TRAMO command failed") : 
 	       _("X-12-ARIMA command failed"));
-	g_clear_error(&error);
 	gretl_print_destroy(prn);
 	return;
     }
@@ -3461,7 +3580,7 @@ void do_scatters (GtkWidget *widget, gpointer p)
 
 /* ........................................................... */
 
-void do_box_graph_trad (GtkWidget *widget, dialog_t *ddata)
+void do_box_graph (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     gint err, code = ddata->code; 
@@ -3530,7 +3649,7 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     gint imp = (sr->code == GR_IMP);
 
     buf = sr->cmdlist;
-    if (*buf == 0) return;
+    if (*buf == '\0') return;
 
     clear(line, MAXLEN);
     sprintf(line, "gnuplot %s%s", buf, (imp)? " -m" : "");
@@ -3770,10 +3889,14 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 
     if (data != NULL) { 
 	/* get commands from file view buffer */
+	GdkCursor *plswait;
 	windata_t *mydata = (windata_t *) data;
-	gchar *buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
-#ifdef PGRAB
-	GdkCursor *plswait; 
+	gchar *buf;
+
+#ifdef OLD_GTK
+	buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+#else
+	buf = textview_get_text(GTK_TEXT_VIEW(mydata->w));
 #endif
 
 	if (buf == NULL || !strlen(buf)) {
@@ -3783,20 +3906,16 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
 	    return;
 	}
 
-#ifdef PGRAB
 	plswait = gdk_cursor_new(GDK_WATCH);
 	gdk_pointer_grab(mydata->dialog->window, TRUE,
 			 GDK_POINTER_MOTION_MASK,
 			 NULL, plswait,
-			 GDK_CURRENT_TIME);
-#endif
+			 GDK_CURRENT_TIME); /* FIXME: localize the grab? */
 
 	err = execute_script(NULL, buf, prn, code);
 	g_free(buf);
-#ifdef PGRAB
 	gdk_cursor_destroy(plswait);
 	gdk_pointer_ungrab(GDK_CURRENT_TIME);
-#endif
     } else {
 	/* get commands from file */
 	err = execute_script(runfile, NULL, prn, code);
@@ -4041,7 +4160,7 @@ enum {
     LATEX_ERROR
 } tex_return_codes;
 
-#ifdef G_OS_WIN32
+#if defined(G_OS_WIN32)
 
 static int get_latex_path (char *latex_path)
 {
@@ -4051,6 +4170,26 @@ static int get_latex_path (char *latex_path)
     ret = SearchPath(NULL, "latex.exe", NULL, MAXLEN, latex_path, &p);
 
     return (ret == 0);
+}
+
+#elif defined (OLD_GTK)
+
+static int spawn_latex (char *texsrc)
+{
+    char tmp[MAXLEN];
+    struct stat sbuf;
+    int ret = LATEX_OK;
+
+    sprintf(tmp, "cd %s && latex \\\\batchmode \\\\input %s", 
+	    paths.userdir, texsrc);
+    system(tmp);
+    sprintf(tmp, "%s%s.dvi", paths.userdir, texsrc);
+    if (stat(tmp, &sbuf)) {
+	errbox(_("Failed to process TeX file"));
+	ret = LATEX_EXEC_FAILED;
+    } 
+
+    return ret;
 }
 
 #else
@@ -5566,9 +5705,15 @@ static void replace_string_dialog (struct search_replace *s)
     label = gtk_label_new(_("Replace with:"));
     gtk_widget_show (label);
     s->r_entry = gtk_entry_new();
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT (s->r_entry), 
+			"activate", 
+		       GTK_SIGNAL_FUNC (replace_string_callback), s);
+#else
     g_signal_connect(G_OBJECT (s->r_entry), 
 		     "activate", 
 		     G_CALLBACK (replace_string_callback), s);
+#endif
     gtk_widget_show (s->r_entry);
     gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
     gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
@@ -5581,16 +5726,26 @@ static void replace_string_dialog (struct search_replace *s)
 			    (GTK_DIALOG (s->w)->action_area), TRUE);
     gtk_window_set_position(GTK_WINDOW (s->w), GTK_WIN_POS_MOUSE);
 
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(s->w), "destroy",
+		       gtk_main_quit, NULL);
+#else
     g_signal_connect(G_OBJECT(s->w), "destroy",
 		     gtk_main_quit, NULL);
+#endif
 
     /* replace button -- make this the default */
     button = gtk_button_new_with_label (_("Replace all"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT (button), "clicked",
+		       GTK_SIGNAL_FUNC (replace_string_callback), s);
+#else
     g_signal_connect(G_OBJECT (button), "clicked",
 		     G_CALLBACK (replace_string_callback), s);
+#endif
     gtk_widget_grab_default(button);
     gtk_widget_show(button);
 
@@ -5599,16 +5754,153 @@ static void replace_string_dialog (struct search_replace *s)
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
 		       button, TRUE, TRUE, FALSE);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(trash_replace), s);
+#else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(trash_replace), s);
+#endif
+
     gtk_widget_show(button);
 
     gtk_widget_grab_focus(s->f_entry);
     gtk_widget_show (s->w);
+#ifdef OLD_GTK /* ?? */
+    gtk_window_set_modal(GTK_WINDOW(s->w), TRUE);
+#endif
     gtk_main();
 }
 
 /* ........................................................... */
+
+#ifdef OLD_GTK
+
+void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
+{
+    gchar *buf;
+    int count = 0;
+    gint pos = 0;
+    guint sel_start, sel_end;
+    size_t sz, fullsz, len, diff;
+    char *replace = NULL, *find = NULL;
+    char *modbuf, *p, *q;
+    gchar *old;
+    struct search_replace *s;
+    GtkEditable *gedit = GTK_EDITABLE(mydata->w);
+
+    s = mymalloc(sizeof *s);
+    if (s == NULL) return;
+
+    replace_string_dialog(s);
+
+    if (s->f_text == NULL || s->r_text == NULL) {
+	free(s);
+	return;
+    }
+
+    find = s->f_text;
+    replace = s->r_text;
+
+    if (!strlen(find)) {
+	free(find);
+	free(replace);
+	free(s);
+	return;
+    }
+
+    if (gedit->has_selection) {
+	sel_start = gedit->selection_start_pos;
+	sel_end = gedit->selection_end_pos;
+    } else {
+	sel_start = 0;
+	sel_end = 0;
+    }
+
+    buf = gtk_editable_get_chars(gedit, sel_start, (sel_end)? sel_end : -1);
+    if (buf == NULL || !(sz = strlen(buf))) 
+	return;
+
+    fullsz = gtk_text_get_length(GTK_TEXT(mydata->w));
+    len = strlen(find);
+    diff = strlen(replace) - len;
+
+    p = buf;
+    while (*p) {
+	if ((q = strstr(p, find))) {
+	    count++;
+	    p = q + 1;
+	}
+	else break;
+    }
+    if (count) {
+	fullsz += count * diff;
+    } else {
+	errbox(_("String to replace was not found"));
+	free(buf);
+	return;
+    }
+
+    modbuf = mymalloc(fullsz + 1);
+    if (modbuf == NULL) {
+	free(find);
+	free(replace);
+	free(s);
+	return;
+    }
+
+    *modbuf = '\0';
+
+    if (sel_start) {
+	gchar *tmp = gtk_editable_get_chars(gedit, 0, sel_start);
+
+	strcat(modbuf, tmp);
+	g_free(tmp);
+    }
+
+    p = buf;
+    while (*p) {
+	if ((q = strstr(p, find))) {
+	    strncat(modbuf, p, q - p);
+	    strcat(modbuf, replace);
+	    p = q + len;
+	} else {
+	    strcat(modbuf, p);
+	    break;
+	}
+    }
+
+    if (sel_end) {
+	gchar *tmp = gtk_editable_get_chars(gedit, sel_end, -1);
+
+	strcat(modbuf, tmp);
+	g_free(tmp);
+    }    
+
+    /* save original buffer for "undo" */
+    old = gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
+    if (old != NULL) {
+	g_free(old);
+	gtk_object_remove_data(GTK_OBJECT(mydata->w), "undo");
+    }
+    gtk_object_set_data(GTK_OBJECT(mydata->w), "undo", 
+			gtk_editable_get_chars(gedit, 0, -1));
+
+    /* now insert the modified buffer */
+    gtk_text_freeze(GTK_TEXT(mydata->w));
+    gtk_editable_delete_text(gedit, 0, -1);
+    gtk_editable_insert_text(gedit, modbuf, strlen(modbuf), &pos);
+    gtk_text_thaw(GTK_TEXT(mydata->w));
+
+    /* and clean up */
+    free(find);
+    free(replace);
+    free(s);
+    free(modbuf);
+    g_free(buf);
+}
+
+#else
 
 void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
 {
@@ -5739,5 +6031,7 @@ void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
     free(modbuf);
     g_free(buf);
 }
+
+#endif /* !OLD_GTK */
 
 #include "../cli/common.c"

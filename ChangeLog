@@ -27,6 +27,8 @@ version 1.2.0
 - minor fixes to the build process
 - updates to gtk-1.2 GUI (make more consistent with the gtk-2.0 
   version)
+- Allow for renaming of saved session models and graphs in gtk2
+  version of program
 
 10/31/2003 version 1.1.6
 - Test release for Fedora (Linux) packaging

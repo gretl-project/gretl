@@ -110,13 +110,20 @@ static int gnuplot_test_command (const char *cmd)
 
 #elif !defined(WIN32)
 
+#include <signal.h>
+
 static int gnuplot_test_command (const char *cmd)
 {
     char fullcmd[512];
+    int err;
+
+    signal(SIGCHLD, SIG_DFL);
 
     sprintf(fullcmd, "echo \"%s\" | %s 2>/dev/null", cmd,
 	    (*gnuplot_path == 0)? "gnuplot" : gnuplot_path);
-    return system(fullcmd);
+    err =  system(fullcmd);
+
+    return err;
 }
 
 #endif /* ! GLIB2, ! WIN32 */
