@@ -14,21 +14,13 @@
      required of a command -->
 
 <!ELEMENT command (usage?, description, option-notes?, addendum?, 
-                   gui-access?, numinfo?)>
+                   gui-access?)>
 
 <!ATTLIST command
    name         CDATA #REQUIRED
    section      (Dataset | Estimation | Graphs | Prediction |
                  Printing | Programming | Statistics | Tests |
                  Transformations | Utilities | Unknown) "Unknown"
->
-
-<!ELEMENT numinfo EMPTY>
-<!ATTLIST numinfo
-   args       CDATA #REQUIRED
-   optargs    CDATA #REQUIRED
-   options    CDATA #REQUIRED
-   examples   CDATA #REQUIRED
 >
 
 <!ELEMENT usage (arguments?, optargs?, options?, examples?)>
