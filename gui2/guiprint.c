@@ -321,8 +321,10 @@ void winprint (char *fullbuf, char *selbuf)
     while (*p) { /* pages loop */
 	line = 0;
 	y = 756;
-	if (page > 1) 
+	if (page > 1) {
 	    gnome_print_beginpage (gpc, _("gretl output"));
+	    gnome_print_setfont(gpc, font); 
+	}
 	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
 	gnome_print_moveto(gpc, x, y);
 	gnome_print_show(gpc, hdr);
