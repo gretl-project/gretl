@@ -2050,14 +2050,14 @@ static int scanb (const char *ss, char *word)
 
     for (i=n-1; i>=0; i--) {
 	if (ss[i] == '(' || ss[i] == '\0' || is_operator(ss[i])) {
-	    strcpy(word, ss+i+1);
+	    strcpy(word, ss + i + 1);
 	    return 1;
 	}
     }
 
     if (i == -1) {
         strcpy(word, ss);
-        if (ss[0] == '\0') return 0;
+        if (*ss == '\0') return 0;
         else return 1;
     }
 
@@ -2288,6 +2288,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned char opt)
 
     ntdum = pdinfo->pd;
     if (ntdum == 1) return E_PDWRONG;
+
     nudum = pdinfo->n / pdinfo->pd;
     if (nudum == 1) return E_PDWRONG;
 
@@ -2324,6 +2325,7 @@ int paneldum (double ***pZ, DATAINFO *pdinfo, unsigned char opt)
 	for (t=(vi-1)*pdinfo->pd; t<vi*pdinfo->pd; t++) 
 	    (*pZ)[nvar+ntdum+vi-1][t] = 1.0;
     }
+
     return 0;
 }
 
@@ -2337,6 +2339,7 @@ static int genrtime (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 
     if (time) i = varindex(pdinfo, "time");
     else i = varindex(pdinfo, "index");
+
     if (i == v) {
 	if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
     }
@@ -2577,6 +2580,7 @@ static int createvar (double *xvec, char *snew, char *sleft,
 	for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xvec[t];
 	for (t=t2+1; t<pdinfo->n; t++) (*pZ)[mv][t] = NADBL;
     }
+
     /* return a new string with the temporary variable name in
        place of the calculated expression */
     strcpy(snew, sleft);
@@ -2670,6 +2674,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
     if (j < l0) dataset_drop_vars(l0 - j, pZ, pdinfo);
 
     if (j == 0) j = -1;
+
     return j;
 }
 
@@ -2702,6 +2707,7 @@ int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    if (check < 0) return 1;
 	}
     }
+
     return 0;
 }
 
@@ -2799,6 +2805,7 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     if (terms < maxterms) 
 	dataset_drop_vars(maxterms - terms, pZ, pdinfo);
+
     return terms;
 }
 
@@ -2889,7 +2896,9 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    (*pZ)[v+i-1][t] = xx;
 	}
     }
+
     free(rhot);
+
     return 0;
 }
 
@@ -2966,7 +2975,7 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
         return 1;
     }
 
-    err = mp_log (Z[v], xvec, pdinfo->n);
+    err = mp_log(Z[v], xvec, pdinfo->n);
 
     close_plugin(handle);
     
@@ -2980,7 +2989,7 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 static double genr_cov (const char *str, double ***pZ, 
 			const DATAINFO *pdinfo)
 {
-    int i, n, n2, p, v1, v2;
+    int i, n, p, v1, v2;
     char v1str[VNAMELEN], v2str[VNAMELEN];
 
     n = strlen(str);
@@ -2989,14 +2998,13 @@ static double genr_cov (const char *str, double ***pZ,
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
 
-    n2 = n - p - 1;
-
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
 
     /* get second var name */
-    for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
+    n = n - p - 1;
+    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
 
     /* and look up the two */
@@ -3005,7 +3013,6 @@ static double genr_cov (const char *str, double ***pZ,
     if (v1 >= pdinfo->v || v2 >= pdinfo->v)
 	return NADBL;
 
-    n = pdinfo->n;
     return _covar(pdinfo->t2 - pdinfo->t1 + 1,
 		  &(*pZ)[v1][pdinfo->t1], 
 		  &(*pZ)[v2][pdinfo->t1]);
@@ -3016,7 +3023,7 @@ static double genr_cov (const char *str, double ***pZ,
 static double genr_corr (const char *str, double ***pZ, 
 			 const DATAINFO *pdinfo)
 {
-    int i, n, n2, p, v1, v2;
+    int i, n, p, v1, v2;
     char v1str[VNAMELEN], v2str[VNAMELEN];
 
     n = strlen(str);
@@ -3025,14 +3032,13 @@ static double genr_corr (const char *str, double ***pZ,
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
 
-    n2 = n - p - 1;
-
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
 
     /* get second var name */
-    for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
+    n = n - p - 1;
+    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
 
     /* and look up the two */
@@ -3041,7 +3047,6 @@ static double genr_corr (const char *str, double ***pZ,
     if (v1 >= pdinfo->v || v2 >= pdinfo->v)
 	return NADBL;
 
-    n = pdinfo->n;
     return _corr(pdinfo->t2 - pdinfo->t1 + 1,
 		 &(*pZ)[v1][pdinfo->t1], &(*pZ)[v2][pdinfo->t1]);
 }
@@ -3067,7 +3072,7 @@ static int get_nls_param_number (const MODEL *pmod,
 static double genr_vcv (const char *str, const DATAINFO *pdinfo, 
 			MODEL *pmod)
 {
-    int i, j, k, n, n2, nv, p, v1, v2, v1l, v2l;
+    int i, j, k, n, nv, p, v1, v2, v1l, v2l;
     char v1str[VNAMELEN], v2str[VNAMELEN];
 
     if (pmod == NULL || pmod->list == NULL) return NADBL;
@@ -3078,14 +3083,13 @@ static double genr_vcv (const char *str, const DATAINFO *pdinfo,
     p = haschar(',', str);
     if (p < 0 || p > 8) return NADBL;
 
-    n2 = n - p - 1;
-
     /* get first var name */
     for (i=0; i<p; i++) v1str[i] = str[i];
     v1str[p] = '\0';
 
     /* get second var name */
-    for (i=0; i<n2; i++) v2str[i] = str[p+1+i];
+    n = n - p - 1;
+    for (i=0; i<n; i++) v2str[i] = str[p+1+i];
     v2str[i] = '\0';
 
     /* are they valid? */
