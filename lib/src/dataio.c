@@ -1841,6 +1841,37 @@ int open_nulldata (double ***pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+static int check_daily_dates (DATAINFO *pdinfo)
+{
+    int n, t;
+    int pd = pdinfo->pd;
+    double sd0 = pdinfo->sd0;
+    long ed;
+    int err = 0;
+    
+    pdinfo->pd = 5; /* try it */
+    pdinfo->time_series = TIME_SERIES;
+
+    ed = get_epoch_day(pdinfo->S[0]);
+    if (ed < 0) err = 1;
+    else pdinfo->sd0 = ed;    
+
+    for (t=0; t<pdinfo->n && !err; t++) {
+	n = dateton(pdinfo->S[t], pdinfo);
+	if (n < 0) err = 1;
+	fprintf(stderr, "'%s': t = %d, n = %d\n",
+		pdinfo->S[t], t, n);
+    }
+
+    if (err) {
+	pdinfo->pd = pd;
+	pdinfo->sd0 = sd0;
+	pdinfo->time_series = 0;
+    }
+
+    return err;
+}
+
 /* ......................................................... */
 
 static int test_label (DATAINFO *pdinfo, PRN *prn)
@@ -1867,7 +1898,7 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
     if (strcmp(lbl1, "1") == 0 && strcmp(lbl2, endobs) == 0)
 	return 0;
 
-    if (n1 > 7) {
+    if (n1 > 8) {
 	pputs(prn, M_("   label strings too long for dates?\n"));
 	pdinfo->pd = 1;
 	pdinfo->sd0 = 1.0;
@@ -1878,9 +1909,29 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 	return -1;
     }
 
-    /* does it look like it starts with a year? */
     pputs(prn, M_("trying to parse row labels as dates...\n"));
-    if (n1 >= 4) {
+
+    /* daily data? */
+    if (n1 == 8) {
+	int yr1, mon1, day1;
+	int yr2, mon2, day2;
+
+	if (sscanf(lbl1, "%d/%d/%d", &yr1, &mon1, &day1) == 3 &&
+	    sscanf(lbl2, "%d/%d/%d", &yr2, &mon2, &day2) == 3) {
+	    if (yr2 >= yr1 && 
+		mon1 > 0 && mon1 < 13 &&
+		mon2 > 0 && mon2 < 13 && 
+		day1 > 0 && day1 < 32 &&
+		day2 > 0 && day2 < 32) {
+		/* looks promising for calendar dates */
+		fprintf(stderr, "Might be daily dates\n");
+		check_daily_dates(pdinfo);
+	    }
+	}
+	return -1; /* not ready to handle yet */
+    }
+
+    else if (n1 >= 4) {
 	*year = 0;
 	if (isdigit((unsigned char) lbl1[0]) &&
 	    isdigit((unsigned char) lbl1[1]) &&
@@ -1930,10 +1981,6 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		    pdinfo->pd = 12;
 		    return 12;
 		}
-	    }
-	    if (n1 == 8) {
-		/* try YYYYMMDD? */
-		;
 	    }
 	} else pputs(prn, M_("   definitely not a four-digit year\n"));
     }
