@@ -114,7 +114,7 @@ DATAINFO *fullinfo;
 char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
-char line[MAXLEN];
+char line[1024];
 PATHS paths;                /* useful paths */
 CMD command;                /* gretl command struct */
 double **Z;                 /* data set */

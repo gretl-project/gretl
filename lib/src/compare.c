@@ -668,7 +668,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
     char chowdate[8], s[9];
     MODEL chow_mod;
     double F;
-    int split, err = 0;
+    int split = 0, err = 0;
 
     if (pmod->ci != OLS) return E_OLSONLY;
 

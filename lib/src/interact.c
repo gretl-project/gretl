@@ -291,7 +291,11 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
-    remainder = malloc(linelen-n+1);
+    remainder = malloc(linelen - n + 1);
+    if (remainder == NULL) {
+	command->errcode = E_ALLOC;
+	return;
+    }
 
     /* need to treat rhodiff specially -- put everything from
        the end of the command word to the first semicolon into
@@ -317,6 +321,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	if ((q = line[n+1]) == '"' || (q = line[n+1]) == '\'') {
 	    spacename = 1;
 	    command->param = realloc(command->param, linelen - n + 1);
+	    if (command->param == NULL) {
+		command->errcode = E_ALLOC;
+		return;
+	    }
 	    strcpy(remainder, line + n + 1);
 	    for (i=1; i<strlen(remainder); i++) {
 		if (remainder[i] == q) {
@@ -343,7 +351,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    n = 0;
 	    linelen = strlen(line);
 	}
-    }
+    } /* end if STORE && nf */
 
     /* "store" takes a filename before the list, "var" takes a 
        lag order, "adf" takes a lag order, "arch" takes a lag 
@@ -359,6 +367,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == VAR) {
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
+	    if (command->param == NULL) {
+		command->errcode = E_ALLOC;
+		return;
+	    }
 	    strcpy(remainder, line + n + 1);
 	    sscanf(remainder, "%s", command->param);
 	    _shiftleft(remainder, strlen(command->param));
@@ -406,6 +418,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	
 	sscanf(remainder, "%s", field);
 	/* fprintf(stderr, "remainder: %s\n", remainder); */
+
 	if (isalpha((unsigned char) field[0])) {
 	    /* fprintf(stderr, "field: %s\n", field); */
 	    if (field[strlen(field)-1] == ';')
@@ -446,7 +459,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		    return;
 		}
 	    }
-	}
+	} /* end if isalpha(field[0]) */
 
 	if (isdigit(field[0])) {
 	    v = atoi(field);
@@ -459,6 +472,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    }	
 	    command->list[j] = v;
 	}
+
 	else if (field[0] == ';') {
 	    if (command->ci == TSLS || command->ci == AR ||
 		command->ci == SCATTERS) {
@@ -486,7 +500,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 
 	if (command->ci != PRINT && command->ci != STORE
-	    && pdinfo->vector[command->list[j]] == 0) {
+	    && !pdinfo->vector[command->list[j]]) {
 	    command->errcode = 1;
 	    sprintf(gretl_errmsg, 
 		    "variable %s is a scalar", field);

@@ -3241,7 +3241,7 @@ static int gui_exec_line (char *line,
     int i, err = 0, check = 0, order, nulldata_n, lines[1];
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
-    char linecopy[MAXLEN];
+    char linecopy[1024];
     char texfile[MAXLEN];
     MODEL tmpmod;
     FREQDIST *freq;             /* struct for freq distributions */
@@ -3259,11 +3259,14 @@ static int gui_exec_line (char *line,
 #endif
 
     /* parse the command line */
-    strcpy(linecopy, line);
+    strncpy(linecopy, line, 1023);
+    linecopy[1023] = '\0';
     catchflag(line, &oflag);
     /* but if we're stacking commands for a loop, parse "lightly" */
-    if (*plstack) get_cmd_ci(line, &command);
-    else getcmd(line, datainfo, &command, &ignore, &Z, cmds);
+    if (*plstack) 
+	get_cmd_ci(line, &command);
+    else 
+	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
     if (command.ci == -2) { /* line was a comment, pass */
 #ifdef notdef
  	cmds->fp = fopen(cmdfile, "a");

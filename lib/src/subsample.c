@@ -262,6 +262,7 @@ int set_sample_dummy (const char *line,
     newinfo->varname = oldinfo->varname;
     newinfo->label = oldinfo->label;
     newinfo->descrip = oldinfo->descrip;
+    newinfo->vector = oldinfo->vector;
 
     /* case markers */
     if (oldinfo->markers && _allocate_case_markers(&S, sn)) {

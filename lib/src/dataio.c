@@ -192,7 +192,9 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     pdinfo->varname = malloc(v * sizeof(char *));
     pdinfo->label = malloc(v * sizeof(char *));
     pdinfo->vector = malloc(v);
-    if (pdinfo->varname == NULL || pdinfo->label == NULL) return 1;
+    if (pdinfo->varname == NULL || 
+	pdinfo->label == NULL ||
+	pdinfo->vector == NULL) return 1;
     for (i=0; i<v; i++) {
 	pdinfo->varname[i] = malloc(9);
 	if (pdinfo->varname[i] == NULL) return 1;
@@ -394,7 +396,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 	    if (c == '#') while (c != '\n') c = fgetc(fp);
 	    else ungetc(c, fp);
 	    if (pdinfo->markers) {
-		fscanf(fp, "%s", marker);
+		fscanf(fp, "%8s", marker);
 		strcpy(pdinfo->S[t], marker);
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
@@ -1391,9 +1393,9 @@ int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     /* deal with case where first col. of data file contains
        "marker" strings */
-    if (pdinfo->markers) {
-	if (dataset_allocate_markers(pdinfo)) return E_ALLOC; 
-    } else pdinfo->S = NULL;
+    pdinfo->S = NULL;
+    if (pdinfo->markers && dataset_allocate_markers(pdinfo)) 
+	return E_ALLOC; 
     
     /* allocate dataset */
     if (prepZ(pZ, pdinfo)) return E_ALLOC;
