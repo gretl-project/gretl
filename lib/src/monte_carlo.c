@@ -171,7 +171,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
     int t = pdinfo->t2;
-    const int LOOPMAX = 2500; /* safety measure */
+    const int LOOPMAX = 80000; /* bodge: safety measure */
 
     if (ploop->lvar && ploop->ntimes > LOOPMAX) 
 	return 0;
@@ -766,3 +766,104 @@ void get_cmd_ci (const char *line, CMD *command)
 	return;
     }    
 } 
+
+/* ifthen stuff - conditional execution */
+
+enum {
+    IFGT,
+    IFLT,
+    IFEQ
+} if_condition;
+
+typedef struct {
+    int condition;
+    int lvar, rvar;
+    double lval, rval;
+} if_block;
+
+static void if_block_init (if_block *block)
+{
+    block->lvar = 0;
+    block->rvar = 0;
+    block->lval = 0.0;
+    block->rval = 0.0;
+}
+
+static int 
+if_block_set_condition (if_block *block, const char *line, DATAINFO *pdinfo)
+{
+    char op[6], lvar[9], rvar[9];
+    int err = 0, v;
+
+    if (sscanf(line, "if %[^ <=>]%[ <=>] %s", lvar, op, rvar) == 3) {
+	if (strstr(op, ">")) block->condition = IFGT;
+	else if (strstr(op, "<")) block->condition = IFLT;
+	else if (strstr(op, "=")) block->condition = IFEQ;
+	else err = 1;
+	if (!err && (isdigit((unsigned char) lvar[0]) 
+		     || rvar[0] == '.')) { /* numeric lvalue? */
+	    block->lval = atof(lvar);
+	} else if (!err) { /* otherwise try a varname */
+	    v = varindex(pdinfo, lvar);
+	    if (v > 0 && v < pdinfo->v) block->lvar = v;
+	    else {
+		sprintf(gretl_errmsg, 
+			_("Undefined variable '%s' in conditional"), lvar);
+		err = 1;
+	    }
+	}
+	if (!err && (isdigit((unsigned char) rvar[0]) 
+		     || rvar[0] == '.')) { /* numeric rvalue? */
+	    block->rval = atof(rvar);
+	} else if (!err) { /* otherwise try a varname */
+	    v = varindex(pdinfo, rvar);
+	    if (v > 0 && v < pdinfo->v) block->rvar = v;
+	    else {
+		sprintf(gretl_errmsg, 
+			_("Undefined variable '%s' in condition"), rvar);
+		err = 1;
+	    }
+	}
+    } else
+	err = 1;
+
+    return err;
+}
+
+static int 
+if_block_eval_condition (if_block *block, double **Z, DATAINFO *pdinfo)
+{
+    double test;
+
+    if (!block->lvar && !block->rvar) 
+	test = block->lval - block->rval;
+    else if (block->lvar && !block->rvar)
+	test = Z[block->lvar][0] - block->rval;
+    else if (!block->lvar && block->rvar) 
+	test = block->lval - Z[block->rvar][0];
+    else
+	test = Z[block->lvar][0] - Z[block->rvar][0];
+
+    switch (block->condition) {
+    case IFGT:
+	return (test > 0.0);
+    case IFLT:
+	return (test < 0.0);
+    case IFEQ:
+	return floateq(test, 0.0);
+    default:
+	return 0;
+    }
+}
+
+int if_eval (const char *line, double **Z, DATAINFO *pdinfo)
+{
+    if_block block;
+
+    if_block_init(&block);
+
+    if (if_block_set_condition(&block, line, pdinfo))
+	return -1;
+
+    return if_block_eval_condition(&block, Z, pdinfo);
+}

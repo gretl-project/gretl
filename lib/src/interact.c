@@ -223,7 +223,8 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     /* commands that never take a list of variables */
     if (command->ci == VARLIST ||
-	command->ci == ECHO ||
+	command->ci == IF ||
+	command->ci == ENDIF ||
 	command->ci == NOECHO ||
 	command->ci == QUIT || 
 	command->ci == SMPL ||
@@ -281,12 +282,16 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == LOOP ||
 	command->ci == SEED ||
 	command->ci == LMTEST ||
-	command->ci == NULLDATA) {
+	command->ci == NULLDATA ||
+	(command->ci == PRINT && strstr(line, "\""))) {
 	command->nolist = 1;
 	if (!strncmp(line, "man ", 4)) n--;
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
-	    sscanf(line + n + 1, "%s", command->param);
+	    if (command->ci == PRINT)
+		strcpy(command->param, line + n + 1);
+	    else
+		sscanf(line + n + 1, "%s", command->param);
 	}
 	return;
     }
@@ -958,6 +963,17 @@ static void showlabels (const DATAINFO *pdinfo)
     }
 }
 
+static void do_print_string (char *str, PRN *prn)
+{
+    size_t len;
+
+    if (*str == '"') str++;
+    len = strlen(str);
+    if (str[len-1] == '"') str[len-1] = 0;
+
+    pprintf(prn, "%s\n", str);
+}
+
 /* ........................................................ */
 
 int simple_commands (CMD *cmd, const char *line, 
@@ -1075,7 +1091,10 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case PRINT:
-	printdata(cmd->list, pZ, datainfo, pause, oflag, prn);
+	if (strlen(cmd->param)) 
+	    do_print_string(cmd->param, prn);
+	else 
+	    printdata(cmd->list, pZ, datainfo, pause, oflag, prn);
 	break;
 
     case SUMMARY:

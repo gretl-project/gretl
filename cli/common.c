@@ -38,7 +38,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	return 1;
     }
 
-    if (plp->type == FOR_LOOP)
+    if (!echo_off && plp->type == FOR_LOOP)
 	echo_cmd(&command, datainfo, linecpy, 0, 1, oflag, prn);
 
     switch (command.ci) {

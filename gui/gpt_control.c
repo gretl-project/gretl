@@ -1331,7 +1331,7 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
         "Save as postscript (EPS)...",
 	"Save as PNG...",
 	"Save to session as icon",
-	"Zoom...", /* disable if need be */
+	"Zoom...", 
 #ifdef USE_GNOME
 	"Print...",
 #endif
@@ -1354,6 +1354,11 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	plot_items = regular_items;
 
     while (plot_items[i]) {
+	if (plot->statusbar == NULL &&
+	    !strcmp(plot_items[i], "Zoom...")) {
+	    i++;
+	    continue;
+	}
         item = gtk_menu_item_new_with_label(plot_items[i]);
         gtk_signal_connect(GTK_OBJECT(item), "activate",
                            (GtkSignalFunc) plot_popup_activated,
@@ -1643,11 +1648,12 @@ int gnuplot_show_png (char *plotfile)
     if (plot->spec == NULL) return 1;
 
     plot->popup = NULL;
+    plot->invert_gc = NULL;        
 
     plot->zoom = malloc(sizeof *(plot->zoom));
+    if (plot->zoom == NULL) return 1;
     plot->zoom->active = 0;
     plot->zoom->zoomed = 0;
-    plot->invert_gc = NULL;
 
     /* record name of tmp file containing plot commands */
     strcpy(plot->spec->fname, plotfile);

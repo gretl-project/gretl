@@ -3211,9 +3211,10 @@ int execute_script (const char *runfile, const char *buf,
 		strcat(line, tmp);
 		compress_spaces(line);
 	    }
+	    if (!strncmp(line, "noecho", 6)) echo_off = 1;
 	    if (strncmp(line, "(* saved objects:", 17) == 0) 
 		strcpy(line, "quit"); 
-	    else {
+	    else if (!echo_off) {
 		if ((line[0] == '(' && line[1] == '*') ||
 		    (line[strlen(line)-1] == ')' && 
 		     line[strlen(line)-2] == '*')) 
@@ -3255,6 +3256,7 @@ static int ready_for_command (char *line)
         strncmp(line, "(*", 2) == 0 ||
         strncmp(line, "man ", 4) == 0 ||
         strncmp(line, "help", 4) == 0 ||
+	strncmp(line, "noecho", 6) == 0 ||
         strncmp(line, "critical", 8) == 0)
         return 1;
     return 0;
@@ -3323,6 +3325,7 @@ static int gui_exec_line (char *line,
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
     void *ptr;
+    static int if_skip;
 
     if (!data_status && !ready_for_command(line)) {
 	pprintf(prn, _("You must open a data file first\n"));
@@ -3365,7 +3368,7 @@ static int gui_exec_line (char *line,
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } else {
-            echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
+            if (!echo_off) echo_cmd(&command, datainfo, line, 1, 1, oflag, cmds);
             if (command.ci != ENDLOOP) {
                 if (add_to_loop(plp, line, command.ci, oflag)) {
                     pprintf(prn, _("Failed to add command to loop stack\n"));
@@ -3382,6 +3385,8 @@ static int gui_exec_line (char *line,
 
     /* if rebuilding a session, put the commands onto the stack */
     if (rebuild) cmd_init(line);
+
+    if (if_skip && command.ci != ENDIF) return 0;
 
 #ifdef notdef /* ??? */
      if (is_model_ref_cmd(command.ci)) {
@@ -3713,6 +3718,15 @@ static int gui_exec_line (char *line,
 	    help(command.param, paths.cmd_helpfile, prn);
 	else help(NULL, paths.cmd_helpfile, prn);
 	break;
+
+    case IF:
+        if_skip = !(if_eval(line, Z, datainfo));
+        if (if_skip < 0) err = 1;
+        break;
+
+    case ENDIF:
+        if_skip = 0;
+        break;	
 		
     case IMPORT:
 	if (exec_code == SAVE_SESSION_EXEC) break;
@@ -3838,6 +3852,10 @@ static int gui_exec_line (char *line,
 	    break;
 	}
 	*plstack = 1; 
+	break;
+
+    case NOECHO:
+	echo_off = 1;
 	break;
 
     case NULLDATA:

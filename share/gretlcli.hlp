@@ -676,6 +676,13 @@ commands is then:
 which will create incomepc = income * invpop, expendpc = expend * invpop.
 
 #
+noecho
+@Programming
+Usage:          noecho
+Suppresses the normal echoing of the input commands when you run a gretl
+script.  See also the print command (literal string variant).
+
+#
 nulldata
 @Dataset
 Usage:          nulldata series_length
@@ -791,7 +798,7 @@ command.
 print
 @Printing
 Prints the values of the specified variables for the current stobs-endobs 
-range.
+range, or prints a literal string.
 
 print              prints the entire data set in tabular form
 print 3 6          prints values of variable numbers 3 and 6
@@ -799,6 +806,9 @@ print x y z        prints values of variables named x, y and z
 
 If the -o flag is given, the variables are printed in columns, otherwise they
 are printed in consecutive blocks.
+
+print "Literal string" prints the given string.  The closing quote is not
+required, but the opening quote is needed to trigger this behavior.
 
 #
 probit

@@ -68,6 +68,7 @@ FILE *dat, *fb;
 int i, j, dot, opt, err, errfatal, oflag, batch;
 int runit, loopstack, looprun;
 int data_status, runfile_open;
+int echo_off;               /* suppress command echoing */
 int model_count;            /* keep a tally of models estimated */
 int plot_count;             /* graphs via gnuplot */
 int ignore;                 /* trap for comments */
@@ -114,6 +115,7 @@ int ready_for_command (char *line)
 	strncmp(line, "(*", 2) == 0 ||
 	strncmp(line, "man", 3) == 0 ||
 	strncmp(line, "exit", 4) == 0 ||
+	strncmp(line, "noecho", 6) == 0 ||
 	strncmp(line, "help", 4) == 0)
 	return 1;
     return 0;
@@ -196,9 +198,13 @@ void file_get_line (void)
 {
     clear(line, MAXLINE);
     fgets(line, MAXLINE, fb);
-    if (!strlen(line)) strcpy(line, "quit");
-    else strncpy(linebak, line, MAXLEN-1);
-    if (command.ci == RUN && batch && line[0] == '(') {
+    if (!strlen(line)) 
+	strcpy(line, "quit");
+    else 
+	strncpy(linebak, line, MAXLEN-1);
+    if (!strncmp(line, "noecho", 6)) 
+	echo_off = 1;
+    if (!echo_off && command.ci == RUN && batch && line[0] == '(') {
 	printf("%s", line);
 	linebak[0] = '\0';
     }
@@ -478,6 +484,7 @@ void exec_line (char *line, PRN *prn)
     int check, nulldata_n;
     char s1[12], s2[12];
     double rho;
+    static int if_skip;
 
     /* are we ready for this? */
     if (!data_status && !ignore && !ready_for_command(line)) {
@@ -493,7 +500,7 @@ void exec_line (char *line, PRN *prn)
     else 
 	getcmd(line, datainfo, &command, &ignore, &Z, cmds);
     /* if in batch mode, echo comments in input */
-    if (batch && command.ci == -2) {
+    if (batch && command.ci == -2 && !echo_off) {
 	printf("%s", linebak);
     }
     if (command.ci < 0) return; /* there's nothing there */
@@ -506,8 +513,9 @@ void exec_line (char *line, PRN *prn)
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	    return;
 	} else {
-	    echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
-		     0, oflag, cmds);
+	    if (!echo_off) 
+		echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
+			 0, oflag, cmds);
 	    if (command.ci != ENDLOOP) {
 		if (add_to_loop(&loop, line, command.ci, oflag)) 
 		    printf(_("Failed to add command to loop stack\n"));
@@ -515,9 +523,11 @@ void exec_line (char *line, PRN *prn)
 	    }
 	}
     }
-    if (command.ci != ENDLOOP) 
+    if (!echo_off && command.ci != ENDLOOP) 
 	echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 0, 
 		 oflag, cmds);
+
+    if (if_skip && command.ci != ENDIF) return;
 
     /* FIXME ?? */
 /*      if (is_model_ref_cmd(command.ci) &&  */
@@ -826,6 +836,15 @@ void exec_line (char *line, PRN *prn)
 	else help(NULL, paths.helpfile, prn);
 	break;
 
+    case IF:
+	if_skip = !(if_eval(line, Z, datainfo));
+	if (if_skip < 0) err = 1;
+	break;
+
+    case ENDIF:
+	if_skip = 0;
+	break;
+
     case IMPORT:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
@@ -951,6 +970,10 @@ void exec_line (char *line, PRN *prn)
 	    pprintf(prn, _("Enter commands for loop.  "
 		   "Type 'endloop' to get out\n"));
 	loopstack = 1; 
+	break;
+
+    case NOECHO:
+	echo_off = 1;
 	break;
 
     case NULLDATA:

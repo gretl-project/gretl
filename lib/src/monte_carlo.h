@@ -107,4 +107,4 @@ void get_cmd_ci (const char *line, CMD *command);
 
 int get_modnum_by_cmdnum (LOOPSET *ploop, const int cmdnum);
 
-
+int if_eval (const char *line, double **Z, DATAINFO *pdinfo);
