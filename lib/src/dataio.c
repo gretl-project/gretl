@@ -2574,15 +2574,19 @@ static int csv_missval (const char *str, int k, int t, PRN *prn)
     int miss = 0;
 
     if (strlen(str) == 0) {
-	pprintf(prn, M_("   the cell for variable %d, obs %d "
-		       "is empty: treating as missing value\n"), 
-		k, t);
+	if (t < 500) {
+	    pprintf(prn, M_("   the cell for variable %d, obs %d "
+			    "is empty: treating as missing value\n"), 
+		    k, t);
+	}
 	miss = 1;
     }
 
     if (ISNA(str)) {
-	pprintf(prn, M_("   warning: missing value for variable "
-		       "%d, obs %d\n"), k, t);
+	if (t < 500) {
+	    pprintf(prn, M_("   warning: missing value for variable "
+			    "%d, obs %d\n"), k, t);
+	}
 	miss = 1;
     }
 
