@@ -42,7 +42,7 @@ ifeq ($(have_gnome),2.0)
   LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-2.la
   GUI_CFLAGS = $(GNOME_CFLAGS) $(GTK_EXTRA_CFLAGS)
   query_install_gnome = install-gnome
-  GNOMEDEF = -DDATADIR=\"$(gnome_prefix)/share\"
+  GNOMEDEF = -DGNOME_DISABLE_DEPRECATED -DDATADIR=\"$(gnome_prefix)/share\"
 else
   LIBS = $(GTK_LIBS) $(GTK_EXTRA_LIB) ../lib/libgretl-2.la
   GUI_CFLAGS = $(GTK_CFLAGS) $(GTK_EXTRA_CFLAGS)
