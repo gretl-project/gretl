@@ -973,35 +973,34 @@ static int reallocate_markers (DATAINFO *pdinfo, int n)
 int grow_nobs (int newobs, double ***pZ, DATAINFO *pdinfo)
 {
     double *x;
-    int i, t, n = pdinfo->n, v = pdinfo->v;
-    char endobs[12];
+    int i, t, bign;
 
     if (newobs <= 0) return 0;
 
-    for (i=0; i<v; i++) {
+    bign = pdinfo->n + newobs;
+
+    for (i=0; i<pdinfo->v; i++) {
 	if (pdinfo->vector[i]) {
-	    x = realloc((*pZ)[i], (n + newobs) * sizeof *x);
-	    if (x == NULL) return E_ALLOC;
-	    else (*pZ)[i] = x;
+	    x = realloc((*pZ)[i], bign * sizeof *x);
+	    if (x == NULL) {
+		return E_ALLOC;
+	    }
+	    (*pZ)[i] = x;
+	    for (t=pdinfo->n; t<bign; t++) {
+		(*pZ)[i][t] = (i == 0)? 1.0 : NADBL;
+	    }	    
 	}
     }
     
     if (pdinfo->markers && pdinfo->S != NULL) {
-	if (reallocate_markers(pdinfo, n + newobs)) {
+	if (reallocate_markers(pdinfo, bign)) {
 	    return E_ALLOC;
 	}
     }
 
     pdinfo->n += newobs;
     pdinfo->t2 = pdinfo->n - 1;
-    ntodate(endobs, pdinfo->t2, pdinfo);
-    strcpy(pdinfo->endobs, endobs);
-
-    for (i=0; i<pdinfo->v; i++) {
-	for (t=n; t<pdinfo->n; t++) {
-	    (*pZ)[i][t] = (i == 0)? 1.0 : NADBL;
-	}
-    }
+    ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
 
     return 0;
 }
@@ -1308,7 +1307,31 @@ static void make_stack_label (char *label, char *s)
 
 /* ........................................................... */
 
-static int get_optional_offset (const char *s, int n, int *err)
+static int get_stack_param_val (const char *s, const double **Z,
+				const DATAINFO *pdinfo)
+{
+    int val = -1;
+
+    if (isdigit(*s)) {
+	val = atoi(s);
+    } else {
+	char vname[VNAMELEN];
+	int i, len = strcspn(s, " -");
+
+	if (len > VNAMELEN - 1) len = VNAMELEN - 1;
+	*vname = '\0';
+	strncat(vname, s, len);
+	i = varindex(pdinfo, vname);
+	if (i < pdinfo->v) {
+	    val = (int) Z[i][0];
+	}
+    }
+
+    return val;
+}
+
+static int get_optional_offset (const char *s, const double **Z,
+				const DATAINFO *pdinfo, int *err)
 {
     const char *p = strstr(s, "--o");
     int off = 0;
@@ -1317,8 +1340,8 @@ static int get_optional_offset (const char *s, int n, int *err)
 	if (strncmp(p, "--offset=", 9)) {
 	    *err = E_SYNTAX;
 	} else {
-	    off = atoi(p + 9);
-	    if (off < 0 || off > n - 1) {
+	    off = get_stack_param_val(p + 9, Z, pdinfo);
+	    if (off < 0 || off > pdinfo->n - 1) {
 		*err = E_DATA;
 	    }
 	}
@@ -1327,7 +1350,8 @@ static int get_optional_offset (const char *s, int n, int *err)
     return off;
 }
 
-static int get_optional_length (const char *s, int n, int *err)
+static int get_optional_length (const char *s, const double **Z,
+				const DATAINFO *pdinfo, int *err)
 {
     const char *p = strstr(s, "--l");
     int len = 0;
@@ -1336,8 +1360,8 @@ static int get_optional_length (const char *s, int n, int *err)
 	if (strncmp(p, "--length=", 9)) {
 	    *err = E_SYNTAX;
 	} else {
-	    len = atoi(p + 9);
-	    if (len < 0 || len > n) {
+	    len = get_stack_param_val(p + 9, Z, pdinfo);
+	    if (len < 0 || len > pdinfo->n) {
 		*err = E_DATA;
 	    }
 	}
@@ -1371,7 +1395,8 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
     int *vnum = NULL;
     double *bigx = NULL;
     int i, v1 = 0, v2 = 0, nv = 0;
-    int maxok, offset, bign, genv;
+    int maxok, offset;
+    int oldn, bign, genv;
     int err = 0;
 
     scpy = gretl_strdup(s);
@@ -1439,13 +1464,15 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* get offset specified by user? */
-    offset = get_optional_offset(scpy, pdinfo->n, &err);
+    offset = get_optional_offset(scpy, (const double **) *pZ, 
+				 pdinfo, &err);
     if (err) {
 	goto bailout;
     }
 
     /* get length specified by user? */
-    maxok = get_optional_length(scpy, pdinfo->n, &err);
+    maxok = get_optional_length(scpy, (const double **) *pZ, 
+				pdinfo, &err);
     if (err) {
 	goto bailout;
     }
@@ -1494,6 +1521,16 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	goto bailout;
     }
 
+    /* extend length of all series? */
+    oldn = pdinfo->n;
+    if (bign > oldn) {
+	err = grow_nobs(bign - oldn, pZ, pdinfo);
+	if (err) {
+	    free(bigx);
+	    goto bailout;
+	}
+    }    
+
     /* construct stacked series */
     for (i=0; i<nv; i++) {
 	int j, t, bigt, tmax;
@@ -1504,16 +1541,21 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 	    bigt = maxok * i;
 	    tmax = offset + maxok;
 	} else {
-	    bigt = pdinfo->n * i;
-	    tmax = pdinfo->n;
+	    bigt = oldn * i;
+	    tmax = oldn;
 	}
 
 	for (t=offset; t<tmax; t++) {
 	    if (pdinfo->vector[j]) {
-		bigx[bigt++] = (*pZ)[j][t];
+		bigx[bigt] = (*pZ)[j][t];
 	    } else {
-		bigx[bigt++] = (*pZ)[j][0];
-	    }	
+		bigx[bigt] = (*pZ)[j][0];
+	    }
+	    if (pdinfo->S != NULL && bigt != t && 
+		pdinfo->S[bigt][0] == '\0') {
+		strcpy(pdinfo->S[bigt], pdinfo->S[t]);
+	    }
+	    bigt++;
 	}
 
 	if (i == nv - 1) {
@@ -1521,15 +1563,6 @@ int dataset_stack_vars (double ***pZ, DATAINFO *pdinfo,
 		bigx[bigt++] = NADBL;
 	    }	
 	}    
-    }
-
-    /* extend length of all series? */
-    if (bign > pdinfo->n) {
-	err = grow_nobs(bign - pdinfo->n, pZ, pdinfo);
-	if (err) {
-	    free(bigx);
-	    goto bailout;
-	}
     }
 
     /* add stacked series to dataset */

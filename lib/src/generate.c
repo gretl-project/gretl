@@ -1755,9 +1755,12 @@ make_genr_label (GENERATE *genr, char *genrs, const char *vname)
 	if (!strncmp(vname, "$nl", 3) || !strncmp(vname, "__", 2)) {
 	    return;
 	} else {
-	    sprintf(genr->label, _("Replaced after model %d: "), 
-		    get_model_count());
-	    llen = 48;
+	    int mc = get_model_count();
+
+	    if (mc > 0) {
+		sprintf(genr->label, _("Replaced after model %d: "), mc);
+		llen = 48;
+	    }
 	}
     }
 
