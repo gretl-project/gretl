@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 1.1.0\n"
 "POT-Creation-Date: 2003-07-14 10:39-0400\n"
-"PO-Revision-Date: 2003-07-24 08:00-0500\n"
+"PO-Revision-Date: 2003-08-05 08:00-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -2244,15 +2244,15 @@ msgstr "%s: désolé, aucune aide disponible.\n"
 
 #: lib/src/interact.c:816
 msgid "ess: negative value is out of bounds.\n"
-msgstr "ess: valeur négative est hors gamme.\n"
+msgstr "ess: valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:826
 msgid "T: negative value is out of bounds.\n"
-msgstr "T: valeur négative est hors gamme.\n"
+msgstr "T: valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:836
 msgid "k: negative value is out of bounds.\n"
-msgstr "k: valeur négative est hors gamme.\n"
+msgstr "k: valeur négative est hors limite.\n"
 
 #: lib/src/interact.c:900
 msgid "predicted values"
@@ -9334,7 +9334,7 @@ msgstr "Caractère superflu (0x%x) dans les données"
 #: gui/ssheet.c:78 gui2/ssheet.c:85
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr "« %s » -- nombre hors gammes!"
+msgstr "« %s » -- nombre hors limite!"
 
 #: gui/ssheet.c:139 gui2/ssheet.c:152
 msgid "gretl: name variable"
