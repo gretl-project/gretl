@@ -2878,7 +2878,7 @@ msgstr "Spécification NLS invalide"
 #: lib/src/nls.c:733 lib/src/nls.c:811
 #, c-format
 msgid "Convergence achieved after %d iterations\n"
-msgstr "Convergence complétée après %d itérrations\n"
+msgstr "Convergence complétée après %d itérations\n"
 
 #: lib/src/nls.c:741 lib/src/nls.c:819
 #, c-format
