@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-5" frequency="1" startobs="1" endobs="50" type="cross-section">
+<description>
+DATA4-5:  THE FOLLOWING ARE 1990 CENSUS DATA BY STATES
+ 	   PARTICIPATION RATE (IN %) OF ALL WOMEN OVER 16
+ 	   Compiled by Louis Cruz 
+   wlfp = persons 16 years &amp; over--percent in labor force who are
+          female (Range 42.6 - 66.4)
+   yf   = median earnings (in thousands of dollars) by females 15
+          years &amp; over with income in 1989 (Range 14.271 - 25.62)
+   ym   = median earnings (in thousands of dollars) by males 15
+          years &amp; over with income in 1989 (Range 21.425 - 35.622)
+   educ = females 25 years &amp; over--percent high school graduate or
+          higher (Range 64.5 - 86.1)
+   ue   = civilian labor force--percent unemployed (Range 3.5 - 9.6)
+   mr   = female population 15 &amp; over--percent now married (excluding
+          separated), Range 46.88 - 60.92
+   dr   = female population 15 &amp; over--percent who are divorced 
+          (Range 6.42 - 15.06)
+   urb  = percent of population living in urban areas (Range 32.2 - 92.6)
+   wh   = female population--percent 16 years and over who are white
+          (Range 24.69 - 77.73) 
+</description>
+<variables count="9">
+<variable name="wlfp"
+ label="persons &gt;= 16 years: % in labor force who are female"/>
+<variable name="yf"
+ label="median earnings ($000s) by females &gt;= 15 years"/>
+<variable name="ym"
+ label="median earnings ($000s) by males &gt;= 15 years"/>
+<variable name="educ"
+ label="females &gt;= 25 years: percent high school grad. or above"/>
+<variable name="ue"
+ label="civilian labor force, % unemployed"/>
+<variable name="mr"
+ label="females &gt;= 15 years: percent now married"/>
+<variable name="dr"
+ label="females &gt;= 15 years: percent divorced"/>
+<variable name="urb"
+ label="percent of population living in urban areas"/>
+<variable name="wh"
+ label="females &gt;= 16 years: percent white"/>
+</variables>
+<observations count="50" labels="false">
+<obs>52.3 15.735 25.532 66.0 6.9 53.26 9.43 60.4 58.42 </obs>
+<obs>66.4 25.620 35.621 86.1 8.8 59.07 11.91 67.5 54.18 </obs>
+<obs>54.8 18.976 27.292 78.2 7.2 54.15 11.56 87.5 64.35 </obs>
+<obs>51.9 14.736 21.920 66.1 6.8 56.52 9.38 53.5 65.49 </obs>
+<obs>57.7 23.123 31.980 75.5 6.6 50.80 11.01 92.6 55.24 </obs>
+<obs>62.5 20.001 29.285 83.8 5.7 54.67 11.99 82.4 69.12 </obs>
+<obs>60.9 24.057 35.485 78.8 5.4 51.61 8.82 79.1 71.28 </obs>
+<obs>61.1 20.256 30.222 77.4 4.0 52.01 9.18 73.0 64.52 </obs>
+<obs>52.8 17.867 25.789 74.2 5.8 53.58 11.08 84.8 69.14 </obs>
+<obs>59.9 18.291 26.684 70.1 5.7 52.00 10.33 63.2 55.84 </obs>
+<obs>63.3 20.073 27.147 78.4 3.5 55.33 9.03 89.0 24.69 </obs>
+<obs>56.1 16.122 25.475 80.2 6.1 60.92 9.75 57.4 70.06 </obs>
+<obs>57.7 20.325 31.406 75.7 6.6 50.82 9.06 84.6 62.48 </obs>
+<obs>57.4 17.101 28.197 74.9 5.7 54.74 10.40 64.9 70.97 </obs>
+<obs>57.8 16.465 25.391 80.6 4.5 56.79 7.97 60.6 75.88 </obs>
+<obs>58.0 17.336 26.535 80.9 4.7 57.48 9.59 69.1 70.41 </obs>
+<obs>51.2 16.058 25.011 65.0 7.4 55.79 9.74 51.8 72.41 </obs>
+<obs>50.2 15.993 25.876 68.4 9.6 49.96 8.88 68.1 51.80 </obs>
+<obs>57.5 17.406 26.024 79.4 6.6 55.44 9.95 44.6 77.73 </obs>
+<obs>63.4 22.360 32.078 78.2 4.3 50.34 8.57 81.3 56.80 </obs>
+<obs>60.3 23.090 32.749 79.6 6.7 47.69 8.07 84.3 74.02 </obs>
+<obs>55.7 20.263 32.344 76.8 8.2 51.63 10.06 70.5 65.28 </obs>
+<obs>62.5 19.756 29.475 82.8 5.1 55.36 8.13 69.9 73.57 </obs>
+<obs>52.0 14.472 22.251 64.5 8.4 50.09 8.57 47.1 49.64 </obs>
+<obs>56.4 17.421 27.060 73.1 6.2 53.97 9.71 68.7 69.14 </obs>
+<obs>55.8 15.268 24.769 81.7 7.0 58.51 9.88 52.5 71.37 </obs>
+<obs>60.3 16.009 24.333 82.2 3.7 56.80 8.09 66.1 72.63 </obs>
+<obs>62.9 19.291 27.764 77.9 6.2 54.18 15.06 88.3 66.66 </obs>
+<obs>64.4 20.468 30.940 82.3 6.2 56.36 9.14 51.0 77.00 </obs>
+<obs>58.8 23.243 35.622 75.9 5.7 51.12 7.47 89.4 64.92 </obs>
+<obs>53.9 16.783 25.372 74.3 8.0 54.22 11.32 73.0 58.09 </obs>
+<obs>55.5 22.437 31.861 74.2 6.9 46.88 7.57 84.3 60.66 </obs>
+<obs>59.8 16.475 23.452 70.2 4.8 53.52 8.11 50.4 60.96 </obs>
+<obs>57.3 14.731 22.559 78.3 5.3 58.78 6.42 53.3 72.67 </obs>
+<obs>54.7 18.666 29.796 75.3 6.6 52.97 10.13 74.1 69.18 </obs>
+<obs>53.5 16.820 25.566 73.7 6.9 56.64 11.16 67.7 65.23 </obs>
+<obs>56.1 18.420 27.720 81.7 6.2 55.52 11.84 70.5 73.36 </obs>
+<obs>52.8 18.845 28.850 73.9 6.0 51.38 7.33 68.9 72.76 </obs>
+<obs>58.3 19.631 29.841 71.1 6.6 49.33 8.85 86.0 75.45 </obs>
+<obs>58.3 16.140 24.130 67.8 5.6 52.20 7.84 54.6 54.60 </obs>
+<obs>58.5 14.271 21.425 78.6 4.2 57.80 7.22 50.0 70.32 </obs>
+<obs>55.7 16.367 24.988 66.7 6.4 54.04 10.38 60.9 66.35 </obs>
+<obs>56.4 18.629 27.081 71.5 7.1 54.58 10.26 80.3 58.26 </obs>
+<obs>58.6 17.208 28.597 84.7 5.3 59.24 8.69 87.0 64.20 </obs>
+<obs>60.7 19.951 28.974 75.3 4.5 53.64 9.32 69.4 77.34 </obs>
+<obs>62.3 18.613 25.883 82.0 5.9 53.63 8.33 32.2 61.94 </obs>
+<obs>57.9 20.607 31.026 83.5 5.7 55.41 11.77 76.4 69.63 </obs>
+<obs>42.6 15.299 26.184 66.0 9.6 55.57 8.66 36.1 76.81 </obs>
+<obs>60.1 17.465 27.653 78.8 5.2 54.72 8.08 65.7 72.37 </obs>
+<obs>58.7 16.260 28.280 83.1 5.9 60.60 10.38 65.0 70.03 </obs>
+</observations>
+</gretldata>

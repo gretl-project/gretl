@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data10-4" frequency="1" startobs="1940" endobs="1987" type="time-series">
+<description>
+DATA10-4:
+    Annual data on U.S.  Military expenditures and their determinants Data
+    compiled by Jan Blackburn from the History of American Statistics from
+    Colonial Times, and Historical Tables: Budget of the U.S.  Government.
+    ug : unadjusted annual government outlays expressed in billions
+         of dollars, Range 9.589 - 1004.586.
+    um: total U.S. military outlays expressed in billions of dollars for
+        the years 1940-87, Range 1.504 - 273.966.
+    gnpdef: annual implicity gnp deflator for federal government
+           purchases of goods and services, base year 1972,
+           Range 22.7 - 270.5.
+    hdem : percent of democrats in the house of representatives,
+           Range 43.318 - 67.810.
+    sdem: percent of democrats in the senate, Range 46 - 71.875.
+    pres: party of the president in office Rep = 1 Demo = 0 .
+    elect: 1 for the year in which the president might have an incentive
+           to increase and decrease military expenditure as a means of
+           stabilizing the government, 0 otherwise.
+    reagan: 1 for the years during which President Reagen was in office,
+            0 otherwise.
+    opp: 1 denotes a year in which the majority party in the senate
+         is of the opposing party with respect to the president in
+         office, 0 otherwise 
+    ww2: 1 during the World War II period, 1941-1945, 0 elsewhere.
+    kwar: 1 during the Korean war period, 1951-1953, 0 elsewhere.
+    vwar: 1 during the Vietnam war period, 1965-1969, 0 elsewhere.
+    krus: 1 for the years during which Kruschev may have changed
+          Soviet military policy, 0 otherwise.
+    gorb: 1 for the years during which soviet leader Gorbachav may have
+          changed Soviet military policy, 0 otherwise.
+    salt: the structural change possibly brought about by the SALT I
+          treaty,  0 = before and 1 = after.
+</description>
+<variables count="16">
+<variable name="year"/>
+<variable name="ug"
+ label="unadjusted annual government outlays ($ billions)"/>
+<variable name="um"
+ label="total U.S. military outlays ($ billions)"/>
+<variable name="gnpdef"
+ label="implicit deflator for federal government purchases, base 1972"/>
+<variable name="hdem"
+ label="percent of democrats in the house of representatives"/>
+<variable name="sdem"
+ label="percent of democrats in the senate"/>
+<variable name="pres"
+ label="party of the president in office: Rep = 1 Dem = 0"/>
+<variable name="elect"
+ label="1 for Presidential election years, 0 otherwise"/>
+<variable name="reagan"
+ label="1 for the years of Reagan presidency, 0 otherwise"/>
+<variable name="opp"
+ label="1 when the Senate majority party opposed President"/>
+<variable name="ww2"
+ label="1 during 1941-1945, 0 elsewhere"/>
+<variable name="kwar"
+ label="1 during the Korean war period, 1951-1953, 0 elsewhere"/>
+<variable name="vwar"
+ label="1 during the Vietnam war period, 1965-1969, 0 elsewhere"/>
+<variable name="krus"
+ label="1 for years when Kruschev was in office, 0 otherwise"/>
+<variable name="gorb"
+ label="1 for years when Gorbachev was in office, 0 otherwise"/>
+<variable name="salt"
+ label="1 after the SALT I treaty, 0 before"/>
+</variables>
+<observations count="48" labels="false">
+<obs>1940 9.589 1.504 22.7 60.138 71.875 0 1 0 0 0 0 0 0 0 0 </obs>
+<obs>1941 13.980 6.062 27.8 61.609 68.750 0 0 0 0 1 0 0 0 0 0 </obs>
+<obs>1942 34.500 23.970 33.0 61.609 68.750 0 0 0 0 1 0 0 0 0 0 </obs>
+<obs>1943 78.909 63.212 34.0 50.698 60.417 0 1 0 0 1 0 0 0 0 0 </obs>
+<obs>1944 93.956 76.874 33.1 50.698 60.417 0 1 0 0 1 0 0 0 0 0 </obs>
+<obs>1945 95.184 81.585 31.9 55.760 58.333 0 0 0 0 1 0 0 0 0 0 </obs>
+<obs>1946 61.738 44.731 30.2 55.760 58.333 0 0 0 0 0 0 0 0 0 0 </obs>
+<obs>1947 36.931 13.059 35.0 43.318 46.875 0 1 0 1 0 0 0 0 0 0 </obs>
+<obs>1948 36.493 13.015 39.0 43.318 46.875 0 1 0 1 0 0 0 0 0 0 </obs>
+<obs>1949 40.570 13.097 41.4 60.460 56.250 0 0 0 0 0 0 0 0 0 0 </obs>
+<obs>1950 43.147 13.119 39.6 60.460 56.250 0 0 0 0 0 0 0 0 0 0 </obs>
+<obs>1951 45.757 22.544 46.6 53.917 51.042 0 1 0 0 0 1 0 0 0 0 </obs>
+<obs>1952 67.692 44.015 48.9 53.917 51.042 0 1 0 0 0 1 0 0 0 0 </obs>
+<obs>1953 76.769 50.413 50.1 48.618 48.958 1 0 0 0 0 1 0 0 0 0 </obs>
+<obs>1954 70.890 46.645 49.1 48.618 48.958 1 0 0 0 0 0 0 0 0 0 </obs>
+<obs>1955 68.509 40.245 50.4 53.333 50.000 1 1 0 1 0 0 0 1 0 0 </obs>
+<obs>1956 70.460 40.305 52.9 53.333 50.000 1 1 0 1 0 0 0 1 0 0 </obs>
+<obs>1957 76.741 42.760 55.1 53.811 51.042 1 0 0 1 0 0 0 1 0 0 </obs>
+<obs>1958 82.575 44.371 57.7 53.811 51.042 1 0 0 1 0 0 0 1 0 0 </obs>
+<obs>1959 92.104 46.617 59.0 64.989 65.000 1 1 0 1 0 0 0 1 0 0 </obs>
+<obs>1960 92.223 45.908 59.4 64.989 65.000 1 1 0 1 0 0 0 1 0 0 </obs>
+<obs>1961 97.795 47.381 60.2 60.183 65.000 0 0 0 0 0 0 0 1 0 0 </obs>
+<obs>1962 106.813 51.097 62.0 60.183 65.000 0 0 0 0 0 0 0 1 0 0 </obs>
+<obs>1963 111.311 52.257 63.5 59.310 67.000 0 1 0 0 0 0 0 1 0 0 </obs>
+<obs>1964 118.584 53.591 65.1 59.310 67.000 0 1 0 0 0 0 0 1 0 0 </obs>
+<obs>1965 118.430 49.578 67.1 67.816 68.000 0 0 0 0 0 0 1 0 0 0 </obs>
+<obs>1966 134.652 56.785 70.0 67.816 68.000 0 0 0 0 0 0 1 0 0 0 </obs>
+<obs>1967 158.254 70.708 72.7 56.912 64.000 0 1 0 0 0 0 1 0 0 0 </obs>
+<obs>1968 178.833 80.517 76.5 56.912 64.000 0 1 0 0 0 0 1 0 0 0 </obs>
+<obs>1969 184.548 81.232 80.1 55.862 57.000 1 0 0 1 0 0 1 0 0 0 </obs>
+<obs>1970 196.588 80.295 86.6 55.862 57.000 1 0 0 1 0 0 0 0 0 0 </obs>
+<obs>1971 210.172 77.497 92.7 58.525 54.000 1 1 0 1 0 0 0 0 0 0 </obs>
+<obs>1972 230.681 77.645 100.0 58.525 54.000 1 1 0 1 0 0 0 0 0 1 </obs>
+<obs>1973 245.707 75.033 106.3 55.324 56.000 1 0 0 1 0 0 0 0 0 1 </obs>
+<obs>1974 269.359 77.864 114.9 55.324 56.000 1 0 0 1 0 0 0 0 0 1 </obs>
+<obs>1975 332.332 84.852 126.0 66.897 60.000 1 1 0 1 0 0 0 0 0 1 </obs>
+<obs>1976 371.779 87.917 133.5 66.897 60.000 1 1 0 1 0 0 0 0 0 1 </obs>
+<obs>1977 409.203 95.147 150.2 67.126 61.000 0 0 0 0 0 0 0 0 0 1 </obs>
+<obs>1978 458.729 102.259 160.7 67.126 61.000 0 0 0 0 0 0 0 0 0 1 </obs>
+<obs>1979 503.464 113.605 175.3 63.741 58.000 0 1 0 0 0 0 0 0 0 1 </obs>
+<obs>1980 590.920 130.912 195.2 63.741 58.000 0 1 0 0 0 0 0 0 0 1 </obs>
+<obs>1981 678.209 153.868 213.2 55.862 46.000 1 0 1 0 0 0 0 0 0 1 </obs>
+<obs>1982 745.706 180.714 228.3 55.862 46.000 1 0 1 0 0 0 0 0 0 1 </obs>
+<obs>1983 808.327 204.410 237.4 61.982 46.000 1 1 1 0 0 0 0 0 0 1 </obs>
+<obs>1984 851.781 220.928 244.9 61.982 46.000 1 1 1 0 0 0 0 0 0 1 </obs>
+<obs>1985 946.316 245.154 257.1 58.065 47.000 1 0 1 0 0 0 0 0 1 1 </obs>
+<obs>1986 990.258 265.480 263.2 58.065 47.000 1 0 1 0 0 0 0 0 1 1 </obs>
+<obs>1987 1004.586 273.966 270.5 59.310 55.000 1 1 1 1 0 0 0 0 1 1 </obs>
+</observations>
+</gretldata>

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-10" frequency="1" startobs="1" endobs="27" type="cross-section">
+<description>
+DATA3-10: Data on total profits and sales of 27 German companies (1995)	
+    Sales are in billions of dollars (Range 1.199 - 58.112) and Profits
+    are in millions of dollars (Range 26 - 1618)
+    Source:  Business week, July 8, 1996, Pages 54-55.
+</description>
+<variables count="2">
+<variable name="profits"
+ label="millions of dollars (Range 26 - 1618)"/>
+<variable name="sales"
+ label="billions of dollars (Range 1.199 - 58.112)"/>
+</variables>
+<observations count="27" labels="false">
+<obs>629 36.617 </obs>
+<obs>1214 58.112 </obs>
+<obs>1254 43.421 </obs>
+<obs>1567 29.186 </obs>
+<obs>1119 34.160 </obs>
+<obs>711 41.628 </obs>
+<obs>1618 30.265 </obs>
+<obs>180 16.892 </obs>
+<obs>183 1.199 </obs>
+<obs>349 21.011 </obs>
+<obs>232 57.690 </obs>
+<obs>453 30.210 </obs>
+<obs>757 27.690 </obs>
+<obs>168 3.706 </obs>
+<obs>238 9.295 </obs>
+<obs>118 5.861 </obs>
+<obs>191 12.332 </obs>
+<obs>490 25.613 </obs>
+<obs>211 5.423 </obs>
+<obs>163 3.042 </obs>
+<obs>90 9.952 </obs>
+<obs>243 17.253 </obs>
+<obs>145 3.499 </obs>
+<obs>168 12.178 </obs>
+<obs>160 2.292 </obs>
+<obs>90 13.901 </obs>
+<obs>26 17.747 </obs>
+</observations>
+</gretldata>

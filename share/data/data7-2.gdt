@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-2" frequency="1" startobs="1" endobs="49" type="cross-section">
+<description>
+DATA7-2:  Data on salaries and employment characteristics of 49
+    employees in a  certain company.  Data compiled by Susan Wong
+    WAGE = Wage rate per month (Range 981 - 3833)
+    EDUC = Years of education beyond 8th grade when hired (Range 1 - 11)
+    EXPER = Number of years at the company (Range 1 - 23)
+    AGE = Age of employee (25 - 64)
+    GENDER = 1 for male and 0 for female
+    RACE = 1 For white, 0 for non-white
+    CLERICAL = 1 for clerical workers, 0 for others
+    MAINT = 1 for workers in maintenance and 0 for others
+    CRAFTS =1 if employee was in crafts, 0 otherwise
+    Control group is professionals.
+</description>
+<variables count="9">
+<variable name="WAGE"
+ label="Wage rate per month (Range 981 - 3833)"/>
+<variable name="EDUC"
+ label="Yrs of education &gt; 8th grade when hired (Range 1 - 11)"/>
+<variable name="EXPER"
+ label="Number of years at the company (Range 1 - 23)"/>
+<variable name="AGE"
+ label="Age of employee (25 - 64)"/>
+<variable name="GENDER"
+ label="1 for male and 0 for female"/>
+<variable name="RACE"
+ label="1 For white, 0 for non-white"/>
+<variable name="CLERICAL"
+ label="1 for clerical workers, 0 for others"/>
+<variable name="MAINT"
+ label="1 for workers in maintenance and 0 for others"/>
+<variable name="CRAFTS"
+ label="1 if employee was in crafts, 0 otherwise"/>
+</variables>
+<observations count="49" labels="false">
+<obs>1345 6 2 38 0 1 1 0 0 </obs>
+<obs>2435 4 18 52 1 1 0 0 1 </obs>
+<obs>1715 6 4 45 1 1 0 1 0 </obs>
+<obs>1461 6 4 58 1 1 1 0 0 </obs>
+<obs>1639 9 3 30 1 0 0 0 1 </obs>
+<obs>1345 5 8 43 0 1 1 0 0 </obs>
+<obs>1602 7 6 30 0 1 1 0 0 </obs>
+<obs>1144 4 3 33 0 0 0 1 0 </obs>
+<obs>1566 6 23 51 1 0 0 1 0 </obs>
+<obs>1496 4 15 37 1 1 0 1 0 </obs>
+<obs>1234 4 9 45 0 0 1 0 0 </obs>
+<obs>1345 6 3 55 0 1 1 0 0 </obs>
+<obs>1345 5 14 57 0 1 1 0 0 </obs>
+<obs>3389 9 16 36 1 1 0 0 0 </obs>
+<obs>1839 4 20 60 1 1 0 1 0 </obs>
+<obs>981 4 5 35 1 0 0 1 0 </obs>
+<obs>1345 9 10 34 0 1 1 0 0 </obs>
+<obs>1566 5 4 28 0 0 1 0 0 </obs>
+<obs>1187 6 1 25 0 1 1 0 0 </obs>
+<obs>1345 7 10 43 0 1 1 0 0 </obs>
+<obs>1345 9 2 42 0 1 1 0 0 </obs>
+<obs>2167 4 17 47 1 0 0 1 0 </obs>
+<obs>1402 11 2 46 1 1 1 0 0 </obs>
+<obs>2115 4 15 52 1 0 0 0 1 </obs>
+<obs>2218 8 11 64 1 1 0 0 1 </obs>
+<obs>3575 11 1 39 1 1 0 0 0 </obs>
+<obs>1972 4 1 39 1 1 0 0 1 </obs>
+<obs>1234 4 2 40 0 1 1 0 0 </obs>
+<obs>1926 5 9 53 1 0 0 1 0 </obs>
+<obs>2165 6 15 59 0 1 0 0 0 </obs>
+<obs>2365 6 12 35 0 0 0 0 0 </obs>
+<obs>1345 9 5 45 0 1 1 0 0 </obs>
+<obs>1839 4 14 37 0 0 0 0 0 </obs>
+<obs>2613 5 14 37 1 1 0 0 1 </obs>
+<obs>2533 11 3 43 1 1 0 0 0 </obs>
+<obs>1602 8 5 32 0 1 1 0 0 </obs>
+<obs>1839 9 18 40 0 1 0 0 1 </obs>
+<obs>2218 7 1 49 1 1 0 0 0 </obs>
+<obs>1529 4 10 43 0 0 1 0 0 </obs>
+<obs>1461 1 10 31 1 0 0 0 1 </obs>
+<obs>3307 9 22 45 1 1 0 0 1 </obs>
+<obs>3833 11 3 31 1 1 0 0 0 </obs>
+<obs>1839 4 14 55 1 0 0 1 0 </obs>
+<obs>1461 6 5 30 0 1 1 0 0 </obs>
+<obs>1433 9 3 28 1 0 0 0 1 </obs>
+<obs>2115 6 15 60 0 0 0 0 0 </obs>
+<obs>1839 4 13 32 1 0 0 1 0 </obs>
+<obs>1288 4 9 58 1 0 0 1 0 </obs>
+<obs>1288 6 4 29 0 0 0 0 1 </obs>
+</observations>
+</gretldata>

@@ -1,9 +1,0 @@
-povrate  % of families with income below poverty level
-urb	     percentage of urban population (Range 0 - 100)
-famsize  persons per household (2.76 - 3.73)
-unemp    percentage unemployment rate (3.5 - 17.6)
-highschl % of popn. >= 25 yrs having only high school education
-college  % of popn. >= 25 yrs completed >= 4 yrs college
-medinc   median family income ($000s, 13.522 - 29.721
-D90      1 for the 1990 Census and 0 for the 1980 Census
-

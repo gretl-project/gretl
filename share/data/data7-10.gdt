@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-10" frequency="1" startobs="1" endobs="30" type="cross-section">
+<description>
+DATA7-10:  Data on air quality and its determinants for 30 SMSA's in 
+           California.  Data compiled by Susan Wong are for 1970-72.
+    airqual   weight of suspended particular matter (Range 59 - 165)
+    popln     population in thousands (Range 372 - 11529)
+    valadd    value added by industrial manufactures in 1972 (in thousands
+              of dollars), Range 992.9 - 19733.8.
+    rain      rain fall in inches (Range 12.63 - 68.13)
+    coast     = 1  for SMSA's on the coast, 0 otherwise
+    density   population per square mile of area (Range 271.59 - 12957.5)
+    medincm   medium per capita income (Range 853 - 59460)
+    poverty   100 times the percentage of families with income less than
+              poverty levels (Range 117 - 1939)
+    electr    electricity consumed by industrial manufacturers
+              (megawatt hours), Range 1.7 - 169.8.
+    fueloil   thousands of barrels of fuel oil consumed in industrial
+              manufacturing (Range 18.4 - 1912.9)
+    indestab  number of industrial establishments with 20 or more
+              employees (Range 221 - 9466)
+</description>
+<variables count="11">
+<variable name="airqual"
+ label="weight of suspended particular matter (Range 59 - 165)"/>
+<variable name="popln"
+ label="population in thousands (Range 372 - 11529)"/>
+<variable name="valadd"
+ label="value added by indl. manufactures (1972, $000s)"/>
+<variable name="rain"
+ label="rain fall in inches (Range 12.63 - 68.13)"/>
+<variable name="coast"
+ label="= 1  for SMSAs on the coast, 0 otherwise"/>
+<variable name="density"
+ label="population per square mile (Range 271.59 - 12957.5)"/>
+<variable name="medincm"
+ label="median per capita income (Range 853 - 59460)"/>
+<variable name="poverty"
+ label="100 x the % of families with income below poverty level"/>
+<variable name="electr"
+ label="electricity consumed by indl, manufacturers (MW hrs)"/>
+<variable name="fueloil"
+ label="000s barrels of fuel oil consumed in indl. sector"/>
+<variable name="indestab"
+ label="number of indl. establishments with 20 or more employees"/>
+</variables>
+<observations count="30" labels="false">
+<obs>104 1420 2734.4 12.63 1 1815.86 4397 1939 5.2 175.5 839 </obs>
+<obs>85 1390 2479.2 47.14 1 804.86 5667 933 8.7 400.1 840 </obs>
+<obs>127 3375 4845.0 42.77 1 1907.86 15817 379 14.4 4079.8 1867 </obs>
+<obs>145 6979 19733.8 33.18 0 1876.08 32698 961 100.7 7260.1 5753 </obs>
+<obs>84 1556 4093.6 34.55 1 340.93 6250 1791 9.4 60.6 1498 </obs>
+<obs>135 1228 1849.8 14.81 0 335.52 4705 346 9.0 609.4 596 </obs>
+<obs>88 1985 4179.4 45.94 1 315.78 7165 1791 169.8 1843.8 1064 </obs>
+<obs>118 1110 2525.3 39.25 0 360.39 4472 589 9.9 424.8 508 </obs>
+<obs>74 609 1899.2 42.36 1 12957.50 2658 478 9.4 2535.2 742 </obs>
+<obs>104 7032 15257.1 12.63 1 1728.19 33885 1939 60.0 855.9 5916 </obs>
+<obs>64 1268 1219.0 59.76 1 620.96 5160 1305 3.4 498.7 937 </obs>
+<obs>75 1046 992.9 53.90 1 529.62 3738 952 32.1 72.4 344 </obs>
+<obs>131 11529 15120.8 42.37 1 5397.47 59460 1665 32.5 4542.1 9466 </obs>
+<obs>129 4818 9189.9 42.48 1 1356.04 19224 1271 73.3 19122.9 3161 </obs>
+<obs>84 1009 1596.9 37.18 1 276.44 3944 197 11.4 1434.5 669 </obs>
+<obs>165 2401 4157.3 36.14 1 787.47 9281 1271 98.6 2985.1 981 </obs>
+<obs>80 1358 1185.2 12.63 1 318.63 5012 1939 1.7 39.9 363 </obs>
+<obs>59 3110 3817.7 18.69 1 1255.04 15710 1939 40.2 659.9 1480 </obs>
+<obs>110 679 1686.2 35.35 0 750.28 2509 1145 17.9 374.0 388 </obs>
+<obs>120 721 1322.0 35.08 1 325.36 2627 1665 6.9 75.4 305 </obs>
+<obs>118 2071 3476.2 43.05 1 916.78 8019 392 27.4 7679.1 878 </obs>
+<obs>120 739 1123.8 68.13 1 271.59 2425 876 24.5 819.7 380 </obs>
+<obs>120 372 1151.6 35.35 0 645.83 1364 1145 14.4 451.1 221 </obs>
+<obs>59 1065 2896.3 18.69 1 819.23 4155 1939 7.0 18.4 559 </obs>
+<obs>74 1857 5608.6 42.36 1 2649.07 8947 478 25.1 7298.4 1748 </obs>
+<obs>124 1404 3700.0 29.51 0 9642.86 5952 285 16.5 692.2 1027 </obs>
+<obs>69 817 1395.5 42.92 1 1105.55 4146 177 4.3 1402.3 437 </obs>
+<obs>118 827 3022.8 41.32 0 910.79 3207 589 15.3 225.1 465 </obs>
+<obs>129 539 1515.4 31.22 0 379.58 853 853 5.2 177.3 479 </obs>
+<obs>129 693 1878.9 30.95 0 455.92 853 853 19.3 297.8 453 </obs>
+</observations>
+</gretldata>

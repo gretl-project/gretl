@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-16" frequency="1" startobs="1" endobs="34" type="cross-section">
+<description>
+DATA7-16:
+    Data on the number of college applications and its determinants
+    for 34 schools  --  Compiled by Ho Lee.
+    applied = number of applications for Fall 1987 (Range 1589 - 23670)
+    founded = the year of the school founded (Range 1636 - 1965)
+    applfee = application fee in dollars (Range 10 - 50)
+    tuition = tution fee in dollars (858 - 12960)
+    room    = Room and Board in dollars (Range 2046 - 5416)
+    R_D     = Federal obligations for Research and Development in
+              Sciences (in thousands of dollars) in 1986,
+              Range 21418 - 188120.
+    pp      = Private (1) or public(0)
+    satv    = percentage of freshmen having SAT-verbal over 600
+              (Range 5 - 81)
+    satm    = percentage of freshman having SAT-math over 600
+              (Range 19 - 100)
+</description>
+<variables count="9">
+<variable name="applied"
+ label="applications for Fall 1987 (Range 1589 - 23670)"/>
+<variable name="founded"
+ label="Year school was founded (Range 1636 - 1965)"/>
+<variable name="applfee"
+ label="application fee ($, Range 10 - 50)"/>
+<variable name="tuition"
+ label="tuition fee ($, Range 858 - 12960)"/>
+<variable name="room"
+ label="Room and Board in ($, Range 2046 - 5416)"/>
+<variable name="R_D"
+ label="Federal obligations for R&amp;D in Sciences ($000s)"/>
+<variable name="pp"
+ label="Private (1) or public (0)"/>
+<variable name="satv"
+ label="% of freshmen having SAT-verbal over 600"/>
+<variable name="satm"
+ label="% of freshman having SAT-math over 600"/>
+</variables>
+<observations count="34" labels="false">
+<obs>7368 1861 40 12500 4470 188120 1 73 99 </obs>
+<obs>16884 1855 45 11880 4955 180186 1 68 86 </obs>
+<obs>11406 1964 35 1545 4916 133243 0 11 35 </obs>
+<obs>23670 1919 35 1408 3110 125483 0 15 41 </obs>
+<obs>21075 1865 45 12300 4020 112707 1 51 82 </obs>
+<obs>13063 1701 40 12120 4900 111657 1 81 88 </obs>
+<obs>14220 1636 40 12890 4210 110356 1 80 87 </obs>
+<obs>12800 1740 50 11976 4865 103487 1 65 85 </obs>
+<obs>21667 1868 35 1476 4382 96834 0 43 70 </obs>
+<obs>10837 1880 40 10564 3922 77533 1 10 27 </obs>
+<obs>7142 1853 30 11512 4168 72750 1 33 64 </obs>
+<obs>4325 1890 30 12460 4730 71535 1 59 71 </obs>
+<obs>6924 1850 35 11456 4598 71521 1 27 62 </obs>
+<obs>15120 1838 45 10320 3804 70034 1 58 85 </obs>
+<obs>10383 1831 35 11130 5416 68372 1 24 39 </obs>
+<obs>1589 1891 25 11159 4412 59707 1 75 100 </obs>
+<obs>12924 1885 25 1196 2712 51123 0 9 23 </obs>
+<obs>1703 1826 20 10400 3970 49331 1 29 69 </obs>
+<obs>11831 1853 15 1008 3240 48911 0 5 19 </obs>
+<obs>19644 1869 35 11950 4900 38406 1 32 49 </obs>
+<obs>11944 1851 30 11637 3999 43609 1 44 68 </obs>
+<obs>12660 1746 40 12550 4368 42674 1 76 93 </obs>
+<obs>13708 1881 20 2133 2610 32604 0 16 37 </obs>
+<obs>6000 1836 25 10190 3612 30981 1 23 49 </obs>
+<obs>11988 1764 40 12960 4075 29987 1 67 82 </obs>
+<obs>6946 1965 20 2202 3732 29209 0 7 23 </obs>
+<obs>18732 1898 35 1320 3803 29770 0 9 27 </obs>
+<obs>9414 1852 35 12088 4940 27475 1 42 76 </obs>
+<obs>5058 1850 15 6290 3050 22612 1 9 24 </obs>
+<obs>10918 1851 15 986 2550 21418 0 18 25 </obs>
+<obs>13114 1849 10 1570 2700 120626 0 16 43 </obs>
+<obs>14482 1867 25 2092 3386 88986 0 21 56 </obs>
+<obs>16031 1881 50 858 3800 74028 0 18 37 </obs>
+<obs>22251 1863 10 2046 2046 26190 0 9 23 </obs>
+</observations>
+</gretldata>

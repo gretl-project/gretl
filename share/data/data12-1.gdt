@@ -1,0 +1,106 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data12-1" frequency="1" startobs="1" endobs="60" type="cross-section">
+<description>
+DATA12-1:
+    Data represent a  random selection of 60 individuals applying to
+    The University of California, San Diego, School of Medicine for the 
+    year 1988.  Compiled by Steven Bramson.
+    Accept = 1 if granted an acceptance, 0 if otherwise
+    GPA = Cumulative undergraduate Grade Point Average, Range 1.88 - 2.9.
+    Bio = Score in Biology portion of the Medical College Admissions
+          Test (MCAT), Range 2 - 9.
+    Chem = Score in Chemistry portion of MCAT, Range 2 - 9.
+    Phy = Score in Physics portion of MCAT, Range 3 - 9.
+    Red = Score in Reading portion of MCAT, Range 3 - 7.
+    Prb = Score in Problem portion of MCAT, Range 2 - 7.
+    Qnt = Score in Quantitative portion of MCAT, Range 2 - 7.
+    Age = Age of Applicant, Range 21 - 23.
+    Gender = 1 if Male, 0 if Female
+</description>
+<variables count="10">
+<variable name="Accept"
+ label="1 if granted an acceptance, 0 otherwise"/>
+<variable name="GPA"
+ label="Cumulative undergraduate Grade Point Average"/>
+<variable name="Bio"
+ label="Score in Biology portion of MCAT, Range 2 - 9"/>
+<variable name="Chem"
+ label="Score in Chemistry portion of MCAT, Range 2 - 9"/>
+<variable name="Phy"
+ label="Score in Physics portion of MCAT, Range 3 - 9"/>
+<variable name="Red"
+ label="Score in Reading portion of MCAT, Range 3 - 7"/>
+<variable name="Prb"
+ label="Score in Problem portion of MCAT, Range 2 - 7"/>
+<variable name="Qnt"
+ label="Score in Quantitative portion of MCAT, Range 2 - 7"/>
+<variable name="Age"
+ label="Age of Applicant, Range 21 - 23"/>
+<variable name="Gender"
+ label="Male = 1, Female = 0"/>
+</variables>
+<observations count="60" labels="false">
+<obs>1 3.33 9 10 8 7 5 8 23 1 </obs>
+<obs>0 2.70 7 6 9 7 5 8 24 0 </obs>
+<obs>0 2.76 8 8 8 6 10 9 25 1 </obs>
+<obs>1 3.80 10 13 14 11 11 13 28 0 </obs>
+<obs>1 3.40 9 10 12 6 5 7 33 1 </obs>
+<obs>0 2.90 10 9 8 7 5 7 33 0 </obs>
+<obs>0 2.09 6 4 5 3 3 2 31 1 </obs>
+<obs>1 3.45 8 9 12 7 9 9 27 0 </obs>
+<obs>0 2.16 7 6 7 9 9 8 24 1 </obs>
+<obs>1 2.80 9 8 9 6 7 6 24 0 </obs>
+<obs>0 1.98 6 4 9 5 4 5 22 1 </obs>
+<obs>1 3.20 9 12 10 8 7 6 22 0 </obs>
+<obs>1 3.00 7 9 10 10 7 5 22 1 </obs>
+<obs>1 3.01 11 11 10 9 9 8 22 0 </obs>
+<obs>1 3.77 10 11 11 11 9 10 23 1 </obs>
+<obs>1 2.67 10 8 12 8 7 6 24 0 </obs>
+<obs>1 2.98 11 8 9 7 7 8 21 1 </obs>
+<obs>0 2.34 7 7 6 3 3 4 21 0 </obs>
+<obs>1 2.84 10 6 7 6 6 7 23 1 </obs>
+<obs>0 2.67 10 6 8 7 7 6 26 0 </obs>
+<obs>1 3.98 14 13 14 13 13 14 30 1 </obs>
+<obs>1 3.26 13 10 12 10 11 12 23 0 </obs>
+<obs>0 1.88 7 5 5 4 4 3 23 1 </obs>
+<obs>0 2.73 10 8 7 7 8 7 22 0 </obs>
+<obs>0 2.12 6 7 8 7 6 6 22 1 </obs>
+<obs>0 2.24 10 10 9 7 7 6 22 0 </obs>
+<obs>0 3.47 10 10 10 9 10 11 22 1 </obs>
+<obs>1 3.80 12 10 9 6 5 6 22 0 </obs>
+<obs>0 3.96 10 10 9 10 8 9 22 1 </obs>
+<obs>1 3.02 13 10 10 8 7 7 22 0 </obs>
+<obs>0 2.90 10 9 8 8 7 7 21 1 </obs>
+<obs>1 2.78 10 10 9 6 6 7 21 0 </obs>
+<obs>1 3.00 13 13 11 9 9 9 23 1 </obs>
+<obs>0 3.00 10 9 8 8 9 7 24 0 </obs>
+<obs>1 3.21 8 9 10 11 11 7 26 1 </obs>
+<obs>0 3.12 7 6 7 6 5 6 27 0 </obs>
+<obs>0 2.46 2 4 3 3 2 3 28 0 </obs>
+<obs>1 2.97 12 9 10 8 9 7 24 0 </obs>
+<obs>0 2.08 9 8 7 6 6 6 25 0 </obs>
+<obs>1 3.08 11 11 10 9 7 8 22 1 </obs>
+<obs>0 2.77 9 8 9 7 8 7 22 0 </obs>
+<obs>1 2.36 12 10 9 9 10 8 22 1 </obs>
+<obs>1 2.88 13 11 7 9 10 8 22 0 </obs>
+<obs>1 1.99 7 14 10 7 6 5 22 1 </obs>
+<obs>0 2.99 6 8 7 8 8 6 22 0 </obs>
+<obs>0 3.42 7 4 5 7 8 5 23 1 </obs>
+<obs>1 2.80 9 8 12 10 10 10 22 0 </obs>
+<obs>1 3.99 9 11 12 11 11 12 21 1 </obs>
+<obs>0 2.66 12 11 12 9 8 9 22 0 </obs>
+<obs>1 3.05 11 10 9 7 8 9 23 1 </obs>
+<obs>0 2.08 6 4 5 4 7 4 23 1 </obs>
+<obs>1 4.00 10 14 13 13 14 12 26 0 </obs>
+<obs>0 2.40 9 7 8 6 6 5 24 1 </obs>
+<obs>0 3.88 12 11 9 8 7 7 23 0 </obs>
+<obs>0 2.66 9 8 11 6 5 4 23 1 </obs>
+<obs>1 3.67 13 12 14 13 13 13 23 0 </obs>
+<obs>1 2.08 7 7 6 8 6 7 22 1 </obs>
+<obs>0 2.78 7 10 9 7 7 6 22 0 </obs>
+<obs>0 2.77 5 2 3 5 4 4 22 1 </obs>
+<obs>0 3.91 7 5 8 5 4 4 22 0 </obs>
+</observations>
+</gretldata>

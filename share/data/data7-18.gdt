@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-18" frequency="1" startobs="1" endobs="58" type="cross-section">
+<description>
+DATA7-18:
+    Cross-sectional data on the 58 California counties for the year
+    1990 to explain population differentials - compiled by Alvin Chan.
+    Sources: California Statistical Abstract.
+             California Cities, Towns, &amp; Counties.
+    pop      = county population in thousands, Range 1.192 - 9149.81.
+    educexp  = local government expenditures on education per student
+               (in dollars), Range 3869-9438.
+    recexp   = expenditures per capita on recreation and cultural
+               services (in dollars),  Range 0 - 3138.
+    policexp = local government expenditures per capita on police
+               protection (in dollars), Range 79 - 674.
+    vcrime   = number of violent crimes per 100,000 population,
+               Range 230 - 1587.
+    othrcrim = number of other crimes per 100,000 population,
+               Range 2130 - 16946.
+    unemprt  = unemployment rate (%), Range 4.8 - 24.9.
+    city     = dummy variable that equals 1 if there is a city in the
+               county with a population over 100,000 inhabitants.
+    inland   = dummy variable that takes the value 1 when the county
+               does not border the Pacific ocean.
+    central  = dummy variable that takes on the value 1 when the county
+               is located in the southern portion of the state and 0
+               when it is in either the northern or southern portion of
+               the state.
+    south    = dummy variable that takes on the value 1 when the county is
+               located in the southern portion of the state and 0 if it
+               is in the central or northern portion of the state.
+</description>
+<variables count="11">
+<variable name="pop"
+ label="county population (000s, 1.192 - 9149.81)"/>
+<variable name="educexp"
+ label="local govt expend. on education ($ per student)"/>
+<variable name="recexp"
+ label="$ expend. per capita on rec. and cultural services"/>
+<variable name="policexp"
+ label="local govt expend. on police ($ per capita)"/>
+<variable name="vcrime"
+ label="violent crimes per 100,000 population (230 - 1587)"/>
+<variable name="othrcrim"
+ label="Other crimes per 100,000 population (2130 - 16946)"/>
+<variable name="unemprt"
+ label="unemployment rate (%), Range 4.8 - 24.9."/>
+<variable name="city"
+ label="= 1 if county has a city with &gt; 100,000 inhabitants"/>
+<variable name="inland"
+ label="= 1 if county does not border the Pacific ocean"/>
+<variable name="central"
+ label="= 1 if county is in central portion of state"/>
+<variable name="south"
+ label="= 1 if county is in southern portion of state"/>
+</variables>
+<observations count="58" labels="false">
+<obs>1319.480 4850 484 175 1234 6668 6.2 1 1 0 0 </obs>
+<obs>1.192 9438 0 674 755 16946 10.1 0 1 0 0 </obs>
+<obs>32.799 4100 503 119 232 2329 8.2 0 1 0 0 </obs>
+<obs>192.253 3939 226 103 491 4863 10.2 0 1 0 0 </obs>
+<obs>37.146 3869 290 91 269 2907 11.3 0 1 0 0 </obs>
+<obs>17.239 4138 0 147 522 3359 17.8 0 1 0 0 </obs>
+<obs>862.935 4499 346 149 741 5072 6.4 1 1 0 0 </obs>
+<obs>26.867 4494 361 106 525 4191 12.0 0 0 0 0 </obs>
+<obs>144.842 4058 945 119 357 3401 7.5 0 1 0 0 </obs>
+<obs>729.736 4504 243 114 1260 7704 13.6 1 1 1 0 </obs>
+<obs>25.788 3979 171 111 419 4320 15.6 0 1 0 0 </obs>
+<obs>121.749 4403 427 107 554 7042 8.8 0 0 0 0 </obs>
+<obs>137.053 4260 166 122 703 5396 24.9 0 1 0 1 </obs>
+<obs>18.434 5385 1242 237 391 3569 10.4 0 1 1 0 </obs>
+<obs>609.333 4410 236 109 850 5445 14.3 1 1 1 0 </obs>
+<obs>110.091 4247 138 101 602 3554 13.7 0 1 1 0 </obs>
+<obs>55.766 4092 344 107 931 4463 12.2 0 1 0 0 </obs>
+<obs>28.079 4572 281 81 491 2229 10.7 0 1 0 0 </obs>
+<obs>9149.811 5111 3138 218 1508 4960 9.4 1 0 0 1 </obs>
+<obs>104.925 4237 223 79 756 4707 14.9 0 1 1 0 </obs>
+<obs>235.037 4779 1158 156 357 3319 4.8 0 0 0 0 </obs>
+<obs>15.637 4752 0 125 1388 4099 9.4 0 1 1 0 </obs>
+<obs>81.895 4897 690 126 574 3656 9.7 0 0 0 0 </obs>
+<obs>196.850 4365 175 96 529 4877 15.2 0 1 1 0 </obs>
+<obs>9.672 4902 0 112 527 2130 11.9 0 1 0 0 </obs>
+<obs>10.393 5292 0 280 587 5013 10.1 0 1 1 0 </obs>
+<obs>351.927 4676 1277 143 779 4381 11.9 1 0 1 0 </obs>
+<obs>114.969 4196 959 150 512 3852 6.9 0 1 0 0 </obs>
+<obs>85.832 4099 717 98 362 3015 7.7 0 1 0 0 </obs>
+<obs>2543.168 4445 1018 182 551 4480 5.8 1 0 0 1 </obs>
+<obs>198.485 4064 611 130 466 4239 7.0 0 1 0 0 </obs>
+<obs>20.511 5631 658 152 283 7927 13.9 0 1 0 0 </obs>
+<obs>1352.932 4178 595 132 981 5657 10.6 1 1 0 1 </obs>
+<obs>1098.148 4454 565 115 968 7335 7.3 1 1 0 0 </obs>
+<obs>40.995 4261 0 94 705 2993 13.3 0 1 1 0 </obs>
+<obs>1553.625 4099 299 140 958 5911 8.4 1 1 0 0 </obs>
+<obs>2632.078 4715 727 127 888 4917 7.2 1 0 0 1 </obs>
+<obs>734.676 5170 2256 224 1489 7126 6.7 1 0 0 0 </obs>
+<obs>518.168 4394 199 140 1035 7039 12.3 1 1 0 0 </obs>
+<obs>223.710 4681 678 122 709 3400 7.4 0 0 1 0 </obs>
+<obs>676.237 4642 985 166 498 3539 4.9 0 0 1 0 </obs>
+<obs>380.494 4394 629 133 469 3884 7.3 0 0 0 1 </obs>
+<obs>1557.233 4628 539 149 580 3812 6.3 1 1 1 0 </obs>
+<obs>234.972 4423 617 156 714 5634 9.8 0 0 1 0 </obs>
+<obs>160.021 4112 427 123 552 5102 11.8 0 1 0 0 </obs>
+<obs>3.352 6831 0 338 298 2237 10.0 0 1 0 0 </obs>
+<obs>43.928 4611 526 158 232 3902 13.6 0 1 0 0 </obs>
+<obs>367.585 4149 333 188 852 5456 7.7 1 1 0 0 </obs>
+<obs>410.192 4096 530 123 494 4557 6.2 1 0 0 0 </obs>
+<obs>406.764 3928 176 127 976 6583 15.0 1 1 1 0 </obs>
+<obs>73.171 4050 197 113 619 5426 16.0 0 1 0 0 </obs>
+<obs>52.876 4140 155 108 1012 4753 11.1 0 1 0 0 </obs>
+<obs>13.482 5449 0 156 230 2388 14.4 0 1 0 0 </obs>
+<obs>343.257 4450 170 96 759 4892 15.4 0 1 1 0 </obs>
+<obs>51.933 4130 720 91 335 3709 10.9 0 1 1 0 </obs>
+<obs>702.741 4325 66 120 471 3220 7.9 1 0 0 1 </obs>
+<obs>146.422 4054 549 142 643 6705 6.5 0 1 0 0 </obs>
+<obs>62.015 4481 166 86 1587 5510 14.9 0 1 0 0 </obs>
+</observations>
+</gretldata>

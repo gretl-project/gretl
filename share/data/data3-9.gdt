@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-9" frequency="1" startobs="1" endobs="38" type="cross-section">
+<description>
+DATA3-9: Data on return on equity and assets for 38 French companies
+     (1995).  Return is in percent (Range 2.2 - 24.3) and Assets are
+     in billions of dollars (Range 0.714 - 308.621).
+     Source: Business Week, July 8, 1996, Page 54.
+</description>
+<variables count="2">
+<variable name="return"
+ label="equity return in percent (Range 2.2 - 24.3)"/>
+<variable name="assets"
+ label="billions of dollars (Range 0.714 - 308.621)"/>
+</variables>
+<observations count="38" labels="false">
+<obs>13.3 12.109 </obs>
+<obs>17.4 12.488 </obs>
+<obs>6.7 46.788 </obs>
+<obs>13.8 9.097 </obs>
+<obs>7.3 26.845 </obs>
+<obs>12.5 8.178 </obs>
+<obs>8.2 182.273 </obs>
+<obs>10.3 18.640 </obs>
+<obs>8.9 18.011 </obs>
+<obs>7.2 308.621 </obs>
+<obs>6.3 26.158 </obs>
+<obs>8.9 6.549 </obs>
+<obs>3.8 257.673 </obs>
+<obs>3.6 280.530 </obs>
+<obs>3.1 27.991 </obs>
+<obs>11.7 10.473 </obs>
+<obs>5.0 43.080 </obs>
+<obs>16.7 3.152 </obs>
+<obs>5.1 11.812 </obs>
+<obs>10.1 9.722 </obs>
+<obs>8.1 18.617 </obs>
+<obs>24.3 13.606 </obs>
+<obs>5.7 30.308 </obs>
+<obs>7.5 6.591 </obs>
+<obs>10.4 3.130 </obs>
+<obs>18.1 3.111 </obs>
+<obs>17.1 8.352 </obs>
+<obs>13.2 15.047 </obs>
+<obs>18.0 1.563 </obs>
+<obs>2.2 10.573 </obs>
+<obs>12.0 8.734 </obs>
+<obs>18.4 13.951 </obs>
+<obs>10.3 4.157 </obs>
+<obs>13.0 3.665 </obs>
+<obs>4.9 68.871 </obs>
+<obs>20.7 0.714 </obs>
+<obs>8.2 66.429 </obs>
+<obs>11.1 10.908 </obs>
+</observations>
+</gretldata>

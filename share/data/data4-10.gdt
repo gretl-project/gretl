@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-10" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA4-10:
+    The following data file were compiled by Jeffrey Wong for the study
+    involving parental school choice in the United States.  All data
+    are for the year 1986, unless otherwise noted, for all 51 states,
+    including the D.C.
+
+   ENROLL = proportion of students that enroll in private schools.
+            The data for private school enrollment for each state was
+            found by indexing public school enrollment values of the years
+            1980 and 1986.  This index was then used to calculate the
+            private school enrollment for 1986.  Thus, the private school
+            enrollment values are indexed numbers.  This should not cause
+            any problem in the model because the enrollment trends in
+            public and private education do not alter drastically from
+            year to year.
+            Source: Digest of Education Statistics, 1990. (Range 0.16 - 0.255)
+   CATHOL = proportion of population in each state which is Catholic.
+            Source: The Official Catholic Directory, 1986.
+            (Range 0.02105 - 0.65234)
+   PUPIL  = pupil to teacher ratio for public schools in each state.  
+            Source:  Digest of Education Statistics, 1990. (Range 13.7 - 23.4)
+   WHITE  = proportion of population in each state that is white.
+            Source:  United States Statistical Abstract, 1988.
+            (Range 0.3 - 0.987)
+   ADMEXP = proportion of educational expenditures devoted to administrative
+            expenses.  
+            Source: Condition of Education, 1990. (Range 0.268 - 0.518)
+   REV    = per pupil education revenue (in thousands of dollars).
+            Source: Condition of Education, 1990. (Range 1.933 - 5.982)
+   MEMNEA = proportion of all public teachers who are members of the 
+            National Education Association. 
+            Source:  National Education Association Handbook.
+            (Range 0.0573 - 0.999)
+   INCOME = per capita income (in thousands of dollars) of household families.
+            Source: Unites States Statistical Abstract, 1988.
+            (Range 9.665 - 19.548)
+   COLLEGE = the proportion of the population that has completed at least
+             four years of college.
+             Source:  United States Statistical Abstract Supplement,
+             State and Metropolitan Data Book, 1986. (Range 0.104 - 0.275)
+
+</description>
+<variables count="9">
+<variable name="ENROLL"
+ label="proportion of students that enroll in private schools"/>
+<variable name="CATHOL"
+ label="proportion of state population which is Catholic"/>
+<variable name="PUPIL"
+ label="pupil to teacher ratio for public schools"/>
+<variable name="WHITE"
+ label="proportion of population that is white"/>
+<variable name="ADMEXP"
+ label="proportion of educ. expenditures going to admin. expenses"/>
+<variable name="REV"
+ label="per pupil education revenue (thousands of dollars)"/>
+<variable name="MEMNEA"
+ label="propn. of public teachers who are members of NEA"/>
+<variable name="INCOME"
+ label="per capita income (thousands of dollars) of households"/>
+<variable name="COLLEGE"
+ label="propn. of population that completed &gt;= 4 yrs of college"/>
+</variables>
+<observations count="51" labels="true">
+<obs label="AL">0.077 0.03138 19.8 0.736 0.364 2.493 0.9793 11.293 0.122 </obs>
+<obs label="AK">0.045 0.10043 16.7 0.775 0.339 5.982 0.8902 18.383 0.211 </obs>
+<obs label="AZ">0.077 0.17808 18.4 0.898 0.423 3.587 0.6688 13.680 0.174 </obs>
+<obs label="AR">0.043 0.02580 17.5 0.829 0.380 2.248 0.5437 11.023 0.108 </obs>
+<obs label="CA">0.115 0.22688 23.0 0.821 0.439 3.655 0.8021 16.792 0.196 </obs>
+<obs label="CO">0.060 0.16624 18.2 0.935 0.403 4.080 0.8561 15.115 0.230 </obs>
+<obs label="CT">0.168 0.42445 13.7 0.904 0.358 5.314 0.7951 19.548 0.207 </obs>
+<obs label="DE">0.255 0.15841 16.0 0.794 0.332 4.199 0.9412 15.504 0.175 </obs>
+<obs label="DC">0.168 0.18242 14.3 0.300 0.359 4.606 0.0573 18.945 0.275 </obs>
+<obs label="FL">0.121 0.12317 17.5 0.844 0.428 3.817 0.3168 14.622 0.149 </obs>
+<obs label="GA">0.071 0.03044 18.9 0.721 0.372 3.142 0.4805 13.454 0.146 </obs>
+<obs label="HI">0.144 0.19025 22.6 0.337 0.389 3.174 0.9990 14.680 0.203 </obs>
+<obs label="ID">0.027 0.06736 20.4 0.973 0.390 2.382 0.8212 11.170 0.158 </obs>
+<obs label="IL">0.018 0.31183 17.4 0.813 0.403 3.158 0.5586 15.503 0.162 </obs>
+<obs label="IN">0.089 0.13111 18.3 0.906 0.371 3.504 0.7263 13.123 0.125 </obs>
+<obs label="IA">0.097 0.17928 15.5 0.972 0.419 3.640 0.9988 13.333 0.139 </obs>
+<obs label="KS">0.084 0.14118 15.4 0.917 0.419 3.847 0.7694 14.505 0.170 </obs>
+<obs label="KY">0.092 0.10162 18.6 0.920 0.268 2.278 0.8350 11.268 0.111 </obs>
+<obs label="LA">0.170 0.32079 18.5 0.679 0.428 2.690 0.4754 11.233 0.139 </obs>
+<obs label="ME">0.079 0.24901 15.5 0.987 0.313 3.448 0.8989 12.846 0.144 </obs>
+<obs label="MD">0.123 0.17395 17.1 0.709 0.369 4.527 0.7981 16.936 0.204 </obs>
+<obs label="MA">0.131 0.52546 14.4 0.932 0.346 4.679 0.8840 17.635 0.200 </obs>
+<obs label="MI">0.108 0.25357 19.2 0.837 0.430 4.053 0.8855 14.807 0.143 </obs>
+<obs label="MN">0.100 0.25765 17.4 0.957 0.373 4.176 0.8405 14.995 0.174 </obs>
+<obs label="MS">0.101 0.03799 19.0 0.636 0.379 1.933 0.3903 9.665 0.123 </obs>
+<obs label="MO">0.132 0.16934 16.4 0.881 0.387 3.218 0.3253 13.945 0.139 </obs>
+<obs label="MT">0.051 0.17796 15.6 0.934 0.373 3.777 0.7615 11.729 0.175 </obs>
+<obs label="NE">0.138 0.21548 15.1 0.951 0.363 3.533 0.9990 13.569 0.155 </obs>
+<obs label="NV">0.043 0.15244 20.4 0.878 0.396 3.531 0.8073 15.459 0.144 </obs>
+<obs label="NH">0.117 0.30300 15.9 0.982 0.350 3.819 0.6990 16.402 0.182 </obs>
+<obs label="NJ">0.158 0.41590 14.7 0.827 0.365 5.691 0.9990 18.793 0.183 </obs>
+<obs label="NM">0.063 0.26501 19.0 0.880 0.425 3.139 0.4161 11.456 0.176 </obs>
+<obs label="NY">0.176 0.37096 15.4 0.807 0.345 5.750 0.1198 16.821 0.179 </obs>
+<obs label="NC">0.050 0.02105 18.7 0.758 0.344 2.948 0.7545 12.424 0.132 </obs>
+<obs label="ND">0.103 0.27536 15.3 0.950 0.385 3.218 0.9344 12.432 0.148 </obs>
+<obs label="OH">0.123 0.21172 18.1 0.880 0.421 3.315 0.8351 13.856 0.137 </obs>
+<obs label="OK">0.030 0.04642 16.9 0.849 0.349 2.751 0.8795 12.248 0.151 </obs>
+<obs label="OR">0.016 0.12363 18.3 0.943 0.433 3.874 0.9990 13.241 0.179 </obs>
+<obs label="PA">0.177 0.30533 16.3 0.895 0.390 4.683 0.8036 14.281 0.136 </obs>
+<obs label="RI">0.174 0.65234 15.1 0.941 0.331 4.488 0.5116 14.584 0.154 </obs>
+<obs label="SC">0.075 0.02165 17.3 0.691 0.385 2.962 0.3938 11.287 0.134 </obs>
+<obs label="SD">0.085 0.20170 15.6 0.907 0.403 2.935 0.7695 11.795 0.140 </obs>
+<obs label="TN">0.078 0.02823 19.9 0.830 0.301 2.244 0.9344 11.984 0.126 </obs>
+<obs label="TX">0.050 0.19637 17.2 0.862 0.402 3.444 0.3543 13.494 0.169 </obs>
+<obs label="UT">0.016 0.03942 23.4 0.952 0.342 2.604 0.8869 10.969 0.199 </obs>
+<obs label="VT">0.092 0.28881 14.4 0.987 0.363 3.998 0.8995 13.322 0.190 </obs>
+<obs label="VA">0.069 0.05446 16.8 0.786 0.350 3.752 0.6854 15.422 0.191 </obs>
+<obs label="WA">0.068 0.09980 20.5 0.913 0.417 3.838 0.9990 14.865 0.190 </obs>
+<obs label="WV">0.032 0.05485 15.3 0.965 0.518 3.253 0.6963 10.587 0.104 </obs>
+<obs label="WI">0.166 0.32622 16.3 0.936 0.375 4.101 0.9131 13.922 0.148 </obs>
+<obs label="WY">0.029 0.13666 14.0 0.963 0.398 5.811 0.8414 12.732 0.172 </obs>
+</observations>
+</gretldata>

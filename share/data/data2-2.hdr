@@ -1,9 +1,0 @@
-(*
-DATA2-2:  High school and College GPA of undergraduate students
-     Data reflect the first year achievement.
-     colgpa =  Grade point average in college (Range 0.85 - 3.97)
-     hsgpa  =  High school GPA (Range 2.29 - 4.5)
-*)
-colgpa hsgpa ;
-1 1 427
-BYOBS

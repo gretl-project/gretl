@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-1" frequency="1" startobs="1" endobs="49" type="cross-section">
+<description>
+DATA7-1:  Data on salaries and gender of 49 employees in a certain company.
+    Data compiled by Susan Wong
+    WAGE = WAGE RATE PER MONTH (Range 981 - 3833)
+    D = 1 FOR MALE AND 0 FOR FEMALE
+</description>
+<variables count="2">
+<variable name="WAGE"
+ label="WAGE RATE PER MONTH (Range 981 - 3833)"/>
+<variable name="D"
+ label="1 FOR MALE AND 0 FOR FEMALE"/>
+</variables>
+<observations count="49" labels="false">
+<obs>1345 0 </obs>
+<obs>2435 1 </obs>
+<obs>1715 1 </obs>
+<obs>1461 1 </obs>
+<obs>1639 1 </obs>
+<obs>1345 0 </obs>
+<obs>1602 0 </obs>
+<obs>1144 0 </obs>
+<obs>1566 1 </obs>
+<obs>1496 1 </obs>
+<obs>1234 0 </obs>
+<obs>1345 0 </obs>
+<obs>1345 0 </obs>
+<obs>3389 1 </obs>
+<obs>1839 1 </obs>
+<obs>981 1 </obs>
+<obs>1345 0 </obs>
+<obs>1566 0 </obs>
+<obs>1187 0 </obs>
+<obs>1345 0 </obs>
+<obs>1345 0 </obs>
+<obs>2167 1 </obs>
+<obs>1402 1 </obs>
+<obs>2115 1 </obs>
+<obs>2218 1 </obs>
+<obs>3575 1 </obs>
+<obs>1972 1 </obs>
+<obs>1234 0 </obs>
+<obs>1926 1 </obs>
+<obs>2165 0 </obs>
+<obs>2365 0 </obs>
+<obs>1345 0 </obs>
+<obs>1839 0 </obs>
+<obs>2613 1 </obs>
+<obs>2533 1 </obs>
+<obs>1602 0 </obs>
+<obs>1839 0 </obs>
+<obs>2218 1 </obs>
+<obs>1529 0 </obs>
+<obs>1461 1 </obs>
+<obs>3307 1 </obs>
+<obs>3833 1 </obs>
+<obs>1839 1 </obs>
+<obs>1461 0 </obs>
+<obs>1433 1 </obs>
+<obs>2115 0 </obs>
+<obs>1839 1 </obs>
+<obs>1288 1 </obs>
+<obs>1288 0 </obs>
+</observations>
+</gretldata>

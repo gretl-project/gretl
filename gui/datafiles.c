@@ -137,13 +137,14 @@ static void browse_header (GtkWidget *w, gpointer data)
 		       0, &fname);
     
     if (mydata->action == PWT_DATA) 
-	sprintf(hdrname, "%s%s", pwtpath, fname);
+	sprintf(hdrname, "%s%s.gdt", pwtpath, fname);
     else if (mydata->action == RAMU_DATA)
 	sprintf(hdrname, "%s%s.gdt", paths.datadir, fname);
     else if (mydata->action == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
+	strcat(hdrname, ".gdt");
     }
 
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
@@ -169,13 +170,14 @@ void browser_open_data (GtkWidget *w, gpointer data)
 		       0, &fname);
 
     if (mydata->action == PWT_DATA) 
-	sprintf(trydatfile, "%s%s", pwtpath, fname);
+	sprintf(trydatfile, "%s%s.gdt", pwtpath, fname);
     else if (mydata->action == RAMU_DATA)  
 	sprintf(trydatfile, "%s%s.gdt", paths.datadir, fname);
     else if (mydata->action == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
 	strcat(trydatfile, fname);
+	strcat(trydatfile, ".gdt");
     }
 
     verify_open_data(mydata);

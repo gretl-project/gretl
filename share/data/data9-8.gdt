@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data9-8" frequency="1" startobs="1947" endobs="1987" type="time-series">
+<description>
+DATA9-8:
+  Annual data for estimating Domestic Revenue Passenger Miles.
+  Source: Statistical Abstract of United States, 1947-1989.
+  Data compiled by GRAHAM RUSHALL.
+  pop   = population in millions (Range 144.83 - 243.915)
+  rpm   = domestic revenue passenger miles in billions (Range 6 - 324.5)
+  nop   = number of operators (airlines), Range 31 - 106.
+  oprev = operating revenue from passengers in millions of dollars
+          (Range 256 - 37309)
+  gnp   = gross national product of United States in billions of dollars
+          (Range 232.2 - 4526.7)
+  accid = number of American planes in an accident (Range 12 - 69)
+  fatal = number of fatalities from aircraft accidents (Range 0 - 460)
+  regu  = dummy variable for airline regulation/deregulation
+          = for 1 1979-87 and 0 for 1947-78.
+</description>
+<variables count="9">
+<variable name="year"/>
+<variable name="pop"
+ label="population in millions (Range 144.83 - 243.915)"/>
+<variable name="rpm"
+ label="domestic revenue passenger miles (billions, 6 - 324.5)"/>
+<variable name="nop"
+ label="number of operators (airlines), Range 31 - 106."/>
+<variable name="oprev"
+ label="operating revenue from passengers ($ millions)"/>
+<variable name="gnp"
+ label="GNP of United States ($ billions)"/>
+<variable name="accid"
+ label="number of American planes in an accident (Range 12 - 69)"/>
+<variable name="fatal"
+ label="number of fatalities from aircraft accidents (Range 0 - 460)"/>
+<variable name="regu"
+ label="deregulation dummy (1 for 1979-87, 0 before)"/>
+</variables>
+<observations count="41" labels="false">
+<obs>1947 144.083 6.1 40 256 232.2 52 255 0 </obs>
+<obs>1948 146.730 6.0 44 312 257.3 67 158 0 </obs>
+<obs>1949 149.304 6.7 50 389 257.3 43 110 0 </obs>
+<obs>1950 152.271 8.0 54 445 284.8 41 165 0 </obs>
+<obs>1951 154.878 10.6 50 591 328.2 55 210 0 </obs>
+<obs>1952 157.553 12.5 48 695 345.4 56 157 0 </obs>
+<obs>1953 160.184 14.8 46 804 363.2 43 105 0 </obs>
+<obs>1954 163.026 16.8 47 906 361.2 54 23 0 </obs>
+<obs>1955 165.931 19.9 47 1065 398.0 46 225 0 </obs>
+<obs>1956 168.903 22.4 43 1193 419.2 53 156 0 </obs>
+<obs>1957 171.984 25.4 44 1348 442.8 51 78 0 </obs>
+<obs>1958 174.882 25.3 45 1432 444.5 63 149 0 </obs>
+<obs>1959 177.830 29.3 45 1722 482.8 69 310 0 </obs>
+<obs>1960 180.671 30.6 49 1860 507.0 67 378 0 </obs>
+<obs>1961 183.691 31.1 41 1951 520.1 58 135 0 </obs>
+<obs>1962 186.538 33.6 45 2167 560.3 43 183 0 </obs>
+<obs>1963 189.242 38.5 45 2374 589.2 49 145 0 </obs>
+<obs>1964 191.889 44.1 44 2701 628.7 53 226 0 </obs>
+<obs>1965 194.303 51.9 49 3142 691.0 63 253 0 </obs>
+<obs>1966 196.560 60.6 49 3534 749.9 54 72 0 </obs>
+<obs>1967 198.712 75.5 44 4260 793.5 51 255 0 </obs>
+<obs>1968 200.706 87.5 37 4913 865.7 54 298 0 </obs>
+<obs>1969 202.677 102.7 37 5943 932.3 48 152 0 </obs>
+<obs>1970 205.052 104.1 36 6359 1015.5 39 3 0 </obs>
+<obs>1971 207.661 106.4 38 6736 1063.4 41 194 0 </obs>
+<obs>1972 209.896 118.1 35 7565 1171.0 43 186 0 </obs>
+<obs>1973 211.909 126.3 33 8379 1307.0 32 217 0 </obs>
+<obs>1974 213.854 129.7 31 9903 1434.0 43 460 0 </obs>
+<obs>1975 215.973 131.7 35 10290 1598.4 29 122 0 </obs>
+<obs>1976 218.035 145.3 32 12104 1783.0 21 36 0 </obs>
+<obs>1977 220.239 156.6 32 13772 1991.0 18 75 0 </obs>
+<obs>1978 222.585 182.7 36 15753 2250.0 19 16 0 </obs>
+<obs>1979 225.055 208.9 52 18930 2508.0 18 352 1 </obs>
+<obs>1980 227.757 200.8 63 23317 2732.0 15 0 1 </obs>
+<obs>1981 230.138 198.7 98 25504 3052.6 25 4 1 </obs>
+<obs>1982 232.520 210.1 98 25440 3166.0 15 233 1 </obs>
+<obs>1983 234.799 226.9 96 27346 3405.7 22 15 1 </obs>
+<obs>1984 237.001 243.7 95 31437 3772.2 12 4 1 </obs>
+<obs>1985 239.279 270.6 106 33343 4014.9 17 197 1 </obs>
+<obs>1986 241.613 302.1 93 33814 4240.3 20 0 1 </obs>
+<obs>1987 243.915 324.5 93 37309 4526.7 31 231 1 </obs>
+</observations>
+</gretldata>

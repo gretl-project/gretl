@@ -1,8 +1,0 @@
-(*
-DATA10-7: Population of the state of California, in millions,
-     Range 15.863 - 32.14.
-     Source:  Economic Report of the Governor, 1995, Table 1, P. A-1.
-*)
-year pop ;
-1 1960 1994
-BYOBS

@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-20" frequency="1" startobs="1" endobs="56" type="cross-section">
+<description>
+DATA7-20: 
+    Data on NBA players' salaries and their determinants compiled by
+    Michael Pepek.
+    SALARY   = Salary earned by players in the 1989-90 NBA season, in
+               thousands of dollars.  Source: San Diego Union, Dec.10,
+               1989, pg H10. (Range 1000 - 3750).
+    YRS      = Number of years that player has been in the NBA,
+               Range 1 - 13.
+    HT       = Height of the players in inches.  Source: the Sporting
+               News Pro-Basketball Handbook, 1989-90. (Range 73 - 88)
+    WT       = The weight of each player in pounds.  Pro-Basketball
+               Handbook. (Range 175 - 290).
+    AGE      = The age of each player determined by their age in 1989.
+               For example, if their birthdate is 4-5-63, then their age
+               is determined by 1989-1963 = 26 years old, Pro-Basketball
+               Handbook. (Range 23 - 36).
+    GAMES    = Number of games that each player played in the 88-89 season,
+               HOOPS - basketball stats book 1989-90. (Range 6 - 82).
+    GAMESTRT = Number of games out of the total games played in that
+               the player started in.  HOOPS. (Range 0 - 82).
+    FORWARD  = Dummy variable for whether the player is primarily a
+               forward.  1 if forward, 0 if not.   SD Union.
+    GUARD    = Dummy var for if player is primarilly a Guard. 1 = guard,
+               0 not.  SD Union.
+    MIN      = Number of minutes that each player played during
+               season, HOOPS.  (Range 189 - 3255).
+    FGA      = Field goal attempts.  All shots taken by the player.
+               This does not include free-throws, Sporting News, May 1989.
+               (Range 104 - 1881).
+    FGPRCNT  = The fraction of shots that each player made.  1.000 is
+               perfect shooting.   Sporting News.  (Range 0.431 - 0.579).
+    FTA      = Free throw attempts.  The total number of free throws
+               attempted by each player after being fouled.  Sporting News.
+               (Range 19 - 918).
+    FTPRCNT  = Fraction of the shot free throws that were made. #made/#shot
+               Sporting News.  (Range 0.553 - 0.911).
+    REBOUNDS = The number of totsl rebounds by each player.  BRDS is
+               short for boards.  Sporting  New. (Range 37 - 1105).
+    ASSISTS  = Number of assists by player.  An assist is when one
+               player makes a pass to another player who scores because
+               of that pass.         Sporting News.  (Range 29 - 1118).
+    STEALS   = Number of times that player stole ball away from other
+               team.    Sporting News.  (Range 6 - 564).
+    BLOCKS   = number of blocked shots.   Sporting News. (Range 5 - 315).
+    POINTS   = number of points that the player scored in the full
+               season.       Sporting News.  (Range 116 - 2633).
+    AVGPNTS  = the average points per games played.  #points/#games played.
+               Sporting News.  (Range 4.7 - 32.5).
+    RACE     = Dummy variable to tell whether the player is white or
+               non-white.  0 = white, 1 = non-white.
+               Sporting News NBA Guide 1987-88.
+    EW       = Dummy var to tell whether each player is Source the east or
+               Source the west devision.  1 = east 0 = west Boston Celtics
+               1988-89 Media Guide
+    TRD      = Dummy var telling whether player has been traded in the
+               last two years.   1 = has been traded   0 = has not.
+               Sporting News.
+    WINTM    = Dummy var telling whether the team that the player is on
+               had more than 45 wins out of the 82 game schedule. 
+               Sporting News.
+    ALLSTAR  = Dummy variable telling whether the player is on the All
+               Star team in the 1990-1991 season.  The reason for using
+               this years AS team is going on the theory that players make
+               it onto the AS team the year after they deserved it.  1 =
+               on the AS team 0 = not.  San Diego Union.
+    XPAN     = dummy variable denoting whether the team is an
+               expansion team in the last 2 seasons.  1 = expansion team
+               Source : Boston Celtics Media Guide.
+ *)
+SALARY YRS HT WT AGE GAMES GAMESTRT FORWARD GUARD MIN FGA FGPRCNT FTA
+FTPRCNT REBOUNDS ASSISTS STEALS BLOCKS POINTS AVGPNTS RACE EW TRD WINTM
+ALLSTAR XPAN ;
+1 1 56
+BYOBS
+</description>
+<variables count="26">
+<variable name="SALARY"
+ label="$000s earned in 1989-90 NBA season"/>
+<variable name="YRS"
+ label="Years player has been in the NBA, Range 1 - 13."/>
+<variable name="HT"
+ label="Height of players in inches"/>
+<variable name="WT"
+ label="Weight of player in pounds"/>
+<variable name="AGE"
+ label="Age of player as of 1989"/>
+<variable name="GAMES"
+ label="Games played in the 88-89 season (Range 6 - 82)"/>
+<variable name="GAMESTRT"
+ label="Games in which player started (Range 0 - 82)"/>
+<variable name="FORWARD"
+ label="1 if player is a forward, 0 if not"/>
+<variable name="GUARD"
+ label="1 if player is a guard, 0 if not"/>
+<variable name="MIN"
+ label="Minutes played during season (189 - 3255)"/>
+<variable name="FGA"
+ label="Field goal attempts (104 - 1881)"/>
+<variable name="FGPRCNT"
+ label="Fraction of shots made (Range 0.431 - 0.579)"/>
+<variable name="FTA"
+ label="Free throw attempts (Range 19 - 918)"/>
+<variable name="FTPRCNT"
+ label="Fraction of free throws made (0.553 - 0.911)"/>
+<variable name="REBOUNDS"
+ label="Total rebounds by player (Range 37 - 1105)"/>
+<variable name="ASSISTS"
+ label="Assists by player (29 - 1118)"/>
+<variable name="STEALS"
+ label="Times player stole ball from opponents (6 - 564)"/>
+<variable name="BLOCKS"
+ label="Number of blocked shots (5 - 315)"/>
+<variable name="POINTS"
+ label="Points player scored in full season (116 - 2633)"/>
+<variable name="AVGPNTS"
+ label="Points per games played (4.7 - 32.5)"/>
+<variable name="RACE"
+ label="0 = white, 1 = non-white"/>
+<variable name="EW"
+ label="1 = player from east, 0 = west"/>
+<variable name="TRD"
+ label="1 = player has been traded, 0 = has not"/>
+<variable name="WINTM"
+ label="= 1 if player's team had &gt; 45 wins"/>
+<variable name="ALLSTAR"
+ label="= 1 for player on the All Star team, 1990-1991"/>
+<variable name="XPAN"
+ label="1 = plays for expansion team"/>
+</variables>
+<observations count="56" labels="false">
+<obs>3750 4 84 240 27 80 80 0 0 2896 1282 0.567 484 0.746 240 188 117 281 1815 22.7 1 1 0 1 1 0 </obs>
+<obs>3330 4 79 215 26 82 82 1 0 3093 1630 0.509 553 0.892 483 415 176 39 2176 26.5 0 0 0 0 1 0 </obs>
+<obs>3100 10 81 222 30 77 77 0 1 2886 1137 0.509 563 0.911 607 988 138 22 1730 22.5 1 0 0 1 1 0 </obs>
+<obs>3000 6 78 253 26 79 79 1 0 3088 1208 0.579 799 0.753 986 325 126 67 2037 25.8 1 1 0 1 1 0 </obs>
+<obs>2750 10 81 220 33 6 6 1 0 189 104 0.471 19 0.847 37 29 6 5 116 19.3 0 1 0 0 1 0 </obs>
+<obs>2500 6 78 198 26 81 81 0 1 3255 1795 0.538 793 0.850 652 650 234 65 2633 32.5 1 1 0 1 1 0 </obs>
+<obs>2500 6 84 250 26 82 82 0 0 3024 1556 0.508 652 0.696 1105 149 213 282 2039 24.8 1 0 0 1 1 0 </obs>
+<obs>2500 4 81 250 25 79 77 1 0 3000 472 0.523 160 0.744 299 53 20 20 613 19.8 1 0 1 0 0 0 </obs>
+<obs>2200 4 84 260 26 74 22 0 0 1531 269 0.524 114 0.553 453 56 54 98 345 4.7 0 1 0 1 0 0 </obs>
+<obs>2140 2 74 180 23 81 81 0 1 3179 1128 0.505 576 0.882 340 991 135 24 1650 20.4 1 0 0 1 1 0 </obs>
+<obs>2140 4 75 195 26 81 81 0 1 3102 1146 0.471 324 0.840 367 770 146 8 1431 17.7 0 0 0 0 0 0 </obs>
+<obs>2100 8 73 185 28 80 76 0 1 2924 1227 0.464 351 0.818 273 663 133 20 1458 18.2 1 1 0 1 1 0 </obs>
+<obs>2100 7 80 200 29 80 80 1 0 2997 1756 0.464 524 0.844 553 211 117 52 2099 26.2 1 1 0 1 1 0 </obs>
+<obs>2100 13 82 255 34 81 80 0 0 2878 1096 0.491 711 0.789 956 112 79 100 1637 20.2 1 1 0 1 0 0 </obs>
+<obs>2100 3 84 280 25 79 79 0 0 2662 1161 0.477 428 0.757 635 60 56 49 1432 18.1 1 0 0 0 0 0 </obs>
+<obs>2100 6 88 230 29 61 36 0 0 1086 365 0.449 95 0.653 307 77 31 65 393 6.4 1 0 1 0 0 0 </obs>
+<obs>2100 13 79 190 35 82 82 1 0 2990 1881 0.491 379 0.858 326 383 66 12 2175 26.5 1 0 0 0 0 0 </obs>
+<obs>2000 13 84 230 36 80 80 0 0 2840 1045 0.570 409 0.719 996 175 72 116 1486 18.6 1 1 0 0 1 0 </obs>
+<obs>2100 1 82 230 24 26 18 1 0 950 358 0.494 103 0.767 171 81 44 25 434 16.7 1 0 0 0 0 0 </obs>
+<obs>1800 3 81 254 26 80 80 1 0 3126 1559 0.519 918 0.766 853 219 144 70 2326 29.1 1 0 0 1 0 0 </obs>
+<obs>1800 8 82 230 30 81 81 1 0 3002 1643 0.471 598 0.851 684 231 87 55 2085 25.7 0 0 0 1 1 0 </obs>
+<obs>1700 7 81 235 28 80 78 1 0 2824 1563 0.467 460 0.787 650 198 106 72 1829 22.9 0 0 1 0 0 0 </obs>
+<obs>1700 9 83 260 30 82 82 0 0 2739 1166 0.477 341 0.871 769 138 46 106 1409 17.2 0 1 0 1 0 0 </obs>
+<obs>1700 7 75 175 29 71 71 0 1 2745 1221 0.457 344 0.785 662 559 195 20 1409 19.8 1 0 0 0 1 0 </obs>
+<obs>1500 8 83 260 30 76 64 0 0 1917 607 0.522 402 0.826 500 105 42 81 969 12.8 0 0 0 0 0 0 </obs>
+<obs>1500 6 79 215 29 82 82 0 1 3190 1710 0.501 462 0.816 342 164 108 22 2253 27.5 1 0 0 1 0 0 </obs>
+<obs>1500 7 81 225 28 81 81 1 0 2960 1282 0.548 321 0.782 489 288 108 56 1657 20.5 1 0 0 1 1 0 </obs>
+<obs>1500 11 79 215 33 81 81 1 0 2559 1371 0.477 441 0.819 384 294 64 13 1674 20.7 1 1 0 0 0 0 </obs>
+<obs>1500 4 81 230 26 82 82 1 0 2510 758 0.529 359 0.786 739 103 94 55 1088 13.3 1 0 0 1 1 0 </obs>
+<obs>1330 4 75 190 26 69 67 0 1 2409 903 0.505 306 0.850 172 390 63 5 1186 17.2 1 1 0 1 0 0 </obs>
+<obs>1320 10 85 245 32 78 76 0 0 2333 768 0.475 308 0.766 521 90 21 41 966 12.4 1 1 0 1 0 0 </obs>
+<obs>1300 7 88 290 32 81 82 0 0 2914 407 0.462 200 0.660 843 83 40 315 508 6.2 0 0 0 1 0 0 </obs>
+<obs>1300 8 80 230 29 74 72 1 0 2446 702 0.531 320 0.666 696 78 61 36 959 13.0 1 0 1 0 0 0 </obs>
+<obs>1300 5 82 235 27 66 40 1 0 1633 606 0.459 154 0.747 413 81 47 68 671 10.2 0 0 1 0 0 0 </obs>
+<obs>1200 8 84 240 31 82 82 0 0 1806 543 0.499 178 0.646 545 54 28 180 657 8.0 1 0 1 0 0 0 </obs>
+<obs>1200 8 85 255 31 64 62 0 0 1996 810 0.448 220 0.800 473 105 71 81 902 14.1 1 1 1 0 0 0 </obs>
+<obs>1200 12 83 255 34 80 80 0 0 2587 835 0.431 294 0.905 623 289 85 61 1068 13.4 0 1 1 1 0 0 </obs>
+<obs>1200 9 82 225 32 78 74 1 0 2876 1211 0.546 533 0.818 637 172 26 97 1758 22.5 0 1 0 0 1 0 </obs>
+<obs>1200 8 78 200 30 78 78 0 1 2946 1249 0.476 370 0.854 273 288 65 20 1534 19.7 1 0 0 0 1 0 </obs>
+<obs>1200 5 85 240 28 20 0 0 0 412 153 0.451 49 0.571 106 36 7 33 171 8.6 1 1 1 0 0 0 </obs>
+<obs>1100 4 84 255 25 79 62 0 0 2585 907 0.541 426 0.744 696 157 57 221 1299 16.4 1 0 0 0 0 0 </obs>
+<obs>1100 2 75 205 24 72 72 0 1 2477 1025 0.467 258 0.698 341 619 139 7 1219 16.9 1 1 0 1 0 0 </obs>
+<obs>1100 5 83 235 27 82 82 1 0 3135 961 0.542 450 0.729 787 202 82 37 1370 16.7 1 0 1 1 0 0 </obs>
+<obs>1100 3 85 255 25 78 78 0 0 2821 1012 0.538 524 0.737 718 285 63 40 1475 18.9 1 1 0 1 0 0 </obs>
+<obs>1100 6 76 195 28 74 73 0 1 2605 1198 0.491 226 0.863 302 231 114 27 1448 19.6 1 0 0 1 0 0 </obs>
+<obs>1100 11 82 220 33 79 72 0 0 1865 444 0.495 106 0.745 619 78 36 211 520 6.6 1 0 1 0 0 0 </obs>
+<obs>1100 2 81 245 25 74 60 1 0 2120 930 0.503 323 0.743 541 52 564 27 1176 15.9 1 0 0 1 0 0 </obs>
+<obs>1100 6 79 215 27 78 78 0 1 3006 1672 0.496 548 0.799 615 450 213 59 2123 27.2 1 0 0 0 1 0 </obs>
+<obs>1050 5 73 175 27 82 82 0 1 3171 923 0.538 452 0.863 248 1118 263 14 1400 17.1 0 0 0 1 1 0 </obs>
+<obs>1000 4 81 245 26 82 82 1 0 2604 835 0.510 255 0.773 861 187 104 14 1061 12.9 1 1 0 1 0 0 </obs>
+<obs>1000 6 76 205 28 76 75 0 1 2418 1410 0.480 340 0.871 179 219 39 14 1651 21.7 1 1 0 0 0 0 </obs>
+<obs>1000 6 83 232 28 82 3 1 0 2777 1272 0.483 440 0.825 447 138 48 91 1595 19.5 1 0 0 1 0 0 </obs>
+<obs>1000 3 73 175 25 75 74 0 1 2728 1006 0.526 292 0.901 226 631 115 7 1414 18.9 0 1 0 1 0 0 </obs>
+<obs>1000 8 82 217 30 73 72 1 0 2526 920 0.539 334 0.799 581 159 57 206 1259 17.2 1 1 0 0 0 0 </obs>
+<obs>1000 6 81 220 28 82 39 1 0 2542 1027 0.482 420 0.757 522 71 34 121 1308 16.0 1 1 0 0 0 0 </obs>
+<obs>1000 8 78 220 30 71 65 1 0 2302 1215 0.467 508 0.866 267 224 88 16 1606 22.6 0 1 0 0 0 1 </obs>
+</observations>
+</gretldata>

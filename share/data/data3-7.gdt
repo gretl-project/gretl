@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-7" frequency="1" startobs="1" endobs="57" type="cross-section">
+<description>
+DATA3-7:  Data for a Toyota station wagon (57 observations)
+    cost  = cumulative repair cost in actual dollars (11 - 3425)
+    age   = age of car in weeks of ownership (Range 5 - 538)
+    miles = miles driven in thousands (Range 0.8 - 74.4)
+</description>
+<variables count="3">
+<variable name="cost"
+ label="cumulative repair cost in actual dollars (11 - 3425)"/>
+<variable name="age"
+ label="age of car in weeks of ownership (Range 5 - 538)"/>
+<variable name="miles"
+ label="miles driven in thousands (Range 0.8 - 74.4)"/>
+</variables>
+<observations count="57" labels="false">
+<obs>11 5.0 0.8 </obs>
+<obs>16 12.0 3.0 </obs>
+<obs>55 30.0 4.9 </obs>
+<obs>66 40.0 7.1 </obs>
+<obs>76 42.0 7.6 </obs>
+<obs>83 53.0 10.1 </obs>
+<obs>135 66.0 12.0 </obs>
+<obs>160 73.0 12.8 </obs>
+<obs>163 79.0 13.9 </obs>
+<obs>211 101.0 18.6 </obs>
+<obs>258 114.0 21.1 </obs>
+<obs>322 129.0 23.2 </obs>
+<obs>374 150.0 25.3 </obs>
+<obs>408 180.0 28.7 </obs>
+<obs>478 195.0 30.5 </obs>
+<obs>489 196.0 30.6 </obs>
+<obs>536 204.0 31.4 </obs>
+<obs>590 212.0 32.9 </obs>
+<obs>604 224.0 35.3 </obs>
+<obs>704 227.0 35.3 </obs>
+<obs>985 232.0 36.6 </obs>
+<obs>1021 235.0 37.0 </obs>
+<obs>1030 239.0 38.1 </obs>
+<obs>1096 249.0 39.5 </obs>
+<obs>1114 260.0 40.7 </obs>
+<obs>1134 271.0 43.0 </obs>
+<obs>1157 272.0 43.1 </obs>
+<obs>1176 273.5 43.2 </obs>
+<obs>1182 276.0 43.4 </obs>
+<obs>1182 279.0 43.7 </obs>
+<obs>1231 281.0 44.3 </obs>
+<obs>1244 313.0 47.6 </obs>
+<obs>1257 326.0 48.9 </obs>
+<obs>1260 328.0 49.1 </obs>
+<obs>1342 329.0 49.2 </obs>
+<obs>1356 336.5 50.0 </obs>
+<obs>1467 338.0 50.1 </obs>
+<obs>1518 342.5 50.6 </obs>
+<obs>1557 344.5 50.8 </obs>
+<obs>1565 351.0 51.6 </obs>
+<obs>1583 366.0 53.2 </obs>
+<obs>1609 384.0 55.7 </obs>
+<obs>2825 388.0 56.0 </obs>
+<obs>2893 402.0 57.3 </obs>
+<obs>2918 432.0 60.2 </obs>
+<obs>3011 433.0 60.3 </obs>
+<obs>3077 436.0 60.6 </obs>
+<obs>3095 446.0 63.0 </obs>
+<obs>3154 456.0 63.7 </obs>
+<obs>3162 463.5 63.9 </obs>
+<obs>3217 465.0 65.1 </obs>
+<obs>3274 478.0 65.8 </obs>
+<obs>3320 485.0 67.7 </obs>
+<obs>3329 498.5 72.1 </obs>
+<obs>3401 526.0 72.1 </obs>
+<obs>3412 527.0 73.6 </obs>
+<obs>3425 538.0 74.4 </obs>
+</observations>
+</gretldata>

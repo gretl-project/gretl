@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-1" frequency="1" startobs="1" endobs="14" type="cross-section">
+<description>
+DATA4-1:  Data on single family homes in University City
+    community of San Diego, in 1990.
+    price = sale price in thousands of dollars (Range 199.9 - 505)
+    sqft  = square feet of living area (Range 1065 - 3000)
+    bedrms = number of bedrooms (Range 3 - 4)
+    baths = number of bathrooms (Range 1.75 - 3)
+</description>
+<variables count="4">
+<variable name="price"
+ label="sale price in thousands of dollars (Range 199.9 - 505)"/>
+<variable name="sqft"
+ label="square feet of living area (Range 1065 - 3000)"/>
+<variable name="bedrms"
+ label="number of bedrooms (Range 3 - 4)"/>
+<variable name="baths"
+ label="number of bathrooms (Range 1.75 - 3)"/>
+</variables>
+<observations count="14" labels="false">
+<obs>199.9 1065 3 1.75 </obs>
+<obs>228.0 1254 3 2.00 </obs>
+<obs>235.0 1300 3 2.00 </obs>
+<obs>285.0 1577 4 2.50 </obs>
+<obs>239.0 1600 3 2.00 </obs>
+<obs>293.0 1750 4 2.00 </obs>
+<obs>285.0 1800 4 2.75 </obs>
+<obs>365.0 1870 4 2.00 </obs>
+<obs>295.0 1935 4 2.50 </obs>
+<obs>290.0 1948 4 2.00 </obs>
+<obs>385.0 2254 4 3.00 </obs>
+<obs>505.0 2600 3 2.50 </obs>
+<obs>425.0 2800 4 3.00 </obs>
+<obs>415.0 3000 4 3.00 </obs>
+</observations>
+</gretldata>

@@ -1,9 +1,0 @@
-(*
-DATA11-1:
-    Data on total number of full-time nonagricultural wage and salary
-    workers in hundred thousands, Range 94341 - 108176.
-    Source: Employment & Earnings, compiled by William C. Ryburn.
-*)
-PERIOD TOTALEMP ;
-12 1983.01 1986.12
-BYOBS

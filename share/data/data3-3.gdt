@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-3" frequency="1" startobs="1960" endobs="1993" type="time-series">
+<description>
+DATA3-3:  Annual data on U.S. Patents and R&amp;D expenditures
+          YEAR = 1960-93, 34 observations.
+          PATENTS = Number of patent applications filed, in thousands
+          (Range 84.5 - 189.4)
+          Source:  Statistical Abstract of the U.S., various years.
+          R_D = R&amp;D expenditures, billions of 1992 dollars obtained as the
+          ratio of expenditure on current dollars divided by the GDP price
+          deflator.  (Range 57.94 - 166.7)
+          Source for R&amp;D expenditures, 1995 Statistical Abstract
+          of the U.S., Table 979, Page 611, and earlier issues
+          Source for GDP deflator, 1996 Economic Report of the President,
+          Table B-3, Page 284.
+</description>
+<variables count="3">
+<variable name="YEAR"/>
+<variable name="PATENTS"
+ label="Number of patent applications filed, in thousands"/>
+<variable name="R_D"
+ label="R&amp;D expenditures, billions of 1992 dollars"/>
+</variables>
+<observations count="34" labels="false">
+<obs>1960 84.5 57.94 </obs>
+<obs>1961 88.2 60.59 </obs>
+<obs>1962 90.4 64.44 </obs>
+<obs>1963 91.1 70.66 </obs>
+<obs>1964 93.2 76.83 </obs>
+<obs>1965 100.4 80.00 </obs>
+<obs>1966 93.5 84.82 </obs>
+<obs>1967 93.0 86.84 </obs>
+<obs>1968 98.7 88.81 </obs>
+<obs>1969 104.4 88.28 </obs>
+<obs>1970 109.4 85.29 </obs>
+<obs>1971 111.1 83.18 </obs>
+<obs>1972 105.3 85.07 </obs>
+<obs>1973 109.6 86.72 </obs>
+<obs>1974 107.4 85.45 </obs>
+<obs>1975 108.0 83.41 </obs>
+<obs>1976 110.0 87.44 </obs>
+<obs>1977 109.0 90.11 </obs>
+<obs>1978 109.3 94.50 </obs>
+<obs>1979 108.9 99.28 </obs>
+<obs>1980 113.0 103.64 </obs>
+<obs>1981 114.5 108.77 </obs>
+<obs>1982 118.4 113.96 </obs>
+<obs>1983 112.4 121.72 </obs>
+<obs>1984 120.6 133.33 </obs>
+<obs>1985 127.1 144.78 </obs>
+<obs>1986 133.0 148.39 </obs>
+<obs>1987 139.8 150.90 </obs>
+<obs>1988 151.9 154.36 </obs>
+<obs>1989 166.3 157.19 </obs>
+<obs>1990 176.7 161.86 </obs>
+<obs>1991 178.4 164.54 </obs>
+<obs>1992 187.2 166.70 </obs>
+<obs>1993 189.4 165.20 </obs>
+</observations>
+</gretldata>

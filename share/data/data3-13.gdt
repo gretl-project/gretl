@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-13" frequency="1" startobs="1948" endobs="1995" type="time-series">
+<description>
+DATA3-13: Annual data on U.S. population in millions
+    (Range 146.631 - 263.034)
+    Source: Economic Report of the President, 1996, Table B-30, Page 315
+</description>
+<variables count="2">
+<variable name="year"/>
+<variable name="pop"
+ label="U.S. population in millions"/>
+</variables>
+<observations count="48" labels="false">
+<obs>1948 146.631 </obs>
+<obs>1949 149.188 </obs>
+<obs>1950 152.271 </obs>
+<obs>1951 154.878 </obs>
+<obs>1952 157.553 </obs>
+<obs>1953 160.184 </obs>
+<obs>1954 163.026 </obs>
+<obs>1955 165.931 </obs>
+<obs>1956 168.903 </obs>
+<obs>1957 171.984 </obs>
+<obs>1958 174.882 </obs>
+<obs>1959 177.830 </obs>
+<obs>1960 180.671 </obs>
+<obs>1961 183.691 </obs>
+<obs>1962 186.538 </obs>
+<obs>1963 189.242 </obs>
+<obs>1964 191.889 </obs>
+<obs>1965 194.303 </obs>
+<obs>1966 196.560 </obs>
+<obs>1967 198.712 </obs>
+<obs>1968 200.706 </obs>
+<obs>1969 202.677 </obs>
+<obs>1970 205.052 </obs>
+<obs>1971 207.661 </obs>
+<obs>1972 209.896 </obs>
+<obs>1973 211.909 </obs>
+<obs>1974 213.854 </obs>
+<obs>1975 215.973 </obs>
+<obs>1976 218.035 </obs>
+<obs>1977 220.239 </obs>
+<obs>1978 222.585 </obs>
+<obs>1979 225.055 </obs>
+<obs>1980 227.726 </obs>
+<obs>1981 229.966 </obs>
+<obs>1982 232.188 </obs>
+<obs>1983 234.307 </obs>
+<obs>1984 236.348 </obs>
+<obs>1985 238.466 </obs>
+<obs>1986 240.651 </obs>
+<obs>1987 242.804 </obs>
+<obs>1988 245.021 </obs>
+<obs>1989 247.342 </obs>
+<obs>1990 249.913 </obs>
+<obs>1991 252.650 </obs>
+<obs>1992 255.419 </obs>
+<obs>1993 258.137 </obs>
+<obs>1994 260.660 </obs>
+<obs>1995 263.034 </obs>
+</observations>
+</gretldata>

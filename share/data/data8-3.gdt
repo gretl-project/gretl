@@ -1,0 +1,80 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data8-3" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA8-3: Aggregate personal income and expenditures on health care,
+     both measured in billions of dollars, 1993, for U.S. States and D.C.
+     U.S. Population is in millions
+     Source:  1995 Statistical Abstract of the U.S.
+     Population, Table 27, Page 28, Range 0.47 - 31.217
+     Personal Income, Table 712, Page 460, Range 9.3 -683.5
+     Personal Health Care Expenditures, Table 153, Page 111
+     (Range 0.998 - 94.178)
+     Seniors is percent 65 or over in 1993, Source: 1994 Statistical
+       Abstract of the U.S., Page 32, Range 4.4 - 18.6
+</description>
+<variables count="4">
+<variable name="exphlth"
+ label="Aggregate personal expenditure on health care ($ billions)"/>
+<variable name="income"
+ label="Aggregate personal income ($ billions)"/>
+<variable name="pop"
+ label="U.S. Population (millions)"/>
+<variable name="seniors"
+ label="percent 65 or over in 1993"/>
+</variables>
+<observations count="51" labels="false">
+<obs>0.998 9.3 0.470 10.9 </obs>
+<obs>1.499 11.2 0.576 12.0 </obs>
+<obs>4.285 17.1 0.579 13.3 </obs>
+<obs>1.573 13.8 0.598 4.4 </obs>
+<obs>2.021 10.9 0.637 14.8 </obs>
+<obs>2.260 15.3 0.698 12.4 </obs>
+<obs>1.953 12.8 0.716 14.7 </obs>
+<obs>2.103 14.6 0.841 13.4 </obs>
+<obs>3.428 21.2 1.000 15.5 </obs>
+<obs>2.277 19.3 1.100 11.8 </obs>
+<obs>3.452 25.1 1.124 11.9 </obs>
+<obs>3.485 27.4 1.166 11.7 </obs>
+<obs>3.433 23.3 1.240 13.7 </obs>
+<obs>3.747 31.6 1.382 11.1 </obs>
+<obs>4.400 31.7 1.613 14.2 </obs>
+<obs>3.878 26.4 1.616 11.0 </obs>
+<obs>5.197 29.4 1.818 15.3 </obs>
+<obs>4.118 30.0 1.860 8.9 </obs>
+<obs>6.111 38.8 2.426 15.0 </obs>
+<obs>6.903 50.3 2.535 13.9 </obs>
+<obs>6.187 38.9 2.640 12.5 </obs>
+<obs>7.341 51.6 2.821 15.5 </obs>
+<obs>7.999 59.0 3.035 13.8 </obs>
+<obs>8.041 55.0 3.233 13.6 </obs>
+<obs>12.216 92.3 3.278 14.1 </obs>
+<obs>10.066 76.6 3.564 10.0 </obs>
+<obs>9.029 61.2 3.630 11.7 </obs>
+<obs>10.384 64.1 3.794 12.7 </obs>
+<obs>10.635 71.3 3.945 13.4 </obs>
+<obs>12.060 71.6 4.181 13.0 </obs>
+<obs>13.014 71.3 4.290 11.3 </obs>
+<obs>14.194 94.9 4.524 12.6 </obs>
+<obs>15.154 118.5 4.958 11.1 </obs>
+<obs>14.502 99.9 5.044 13.4 </obs>
+<obs>16.203 93.9 5.094 12.8 </obs>
+<obs>15.949 102.4 5.235 14.2 </obs>
+<obs>15.129 114.5 5.259 11.6 </obs>
+<obs>16.401 109.6 5.706 12.7 </obs>
+<obs>23.421 146.9 6.018 14.0 </obs>
+<obs>6.682 140.2 6.473 11.0 </obs>
+<obs>20.104 132.9 6.902 10.1 </obs>
+<obs>18.241 129.8 6.952 12.5 </obs>
+<obs>25.741 211.2 7.859 13.6 </obs>
+<obs>27.136 194.7 9.460 12.4 </obs>
+<obs>33.456 217.9 11.061 13.3 </obs>
+<obs>34.747 263.6 11.686 12.6 </obs>
+<obs>41.521 256.0 12.030 15.8 </obs>
+<obs>44.811 283.4 13.726 18.6 </obs>
+<obs>49.816 345.0 18.022 10.2 </obs>
+<obs>67.033 450.6 18.153 13.1 </obs>
+<obs>94.178 683.5 31.217 10.6 </obs>
+</observations>
+</gretldata>

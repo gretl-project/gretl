@@ -1,9 +1,0 @@
-(*
-DATA3-9: Data on return on equity and assets for 38 French companies
-     (1995).  Return is in percent (Range 2.2 - 24.3) and Assets are
-     in billions of dollars (Range 0.714 - 308.621).
-     Source: Business Week, July 8, 1996, Page 54.
-*)
-return assets ;
-1 1 38
-BYOBS

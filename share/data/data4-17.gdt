@@ -1,0 +1,119 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-17" frequency="1" startobs="1" endobs="58" type="cross-section">
+<description>
+DATA4-17
+Data compiled by Simon Park for Counties of California, June 1999
+afdc     = Percentage of population on AFDC
+           (Aid to Families with Dependent Children)
+unemp    = Unemployment Rate
+welfexp  = Percentage of Local Government Finances for Public Welfare
+income   = Median Household Income
+hseduc   = Percentage of population with High School education
+           (for population 25yrs and older)
+colgeduc = Percentage of population with college education (for 
+           population 25 yrs and older)
+white    = Percentage of population who are White
+hispanic = Percentage of population who are Hispanic
+women    = Percentage of population who are women
+femhh    = Percentage of Female Family House-Holder (no spouse present)
+poverty  = Percentage of population Below Poverty Level
+mother20 = Percentage of mothers who are under age 20
+unwed    = Percentage of mothers who are unmarried
+mothredc = Percentage of mothers who have under 12 yrs of education
+medical  = Percentage of births funded by MEDI-CAL
+</description>
+<variables count="15">
+<variable name="afdc"
+ label="Percentage of population on AFDC"/>
+<variable name="unemp"
+ label="Unemployment Rate"/>
+<variable name="welfexp"
+ label="Percentage of Local Government Finances for Public Welfare"/>
+<variable name="income"
+ label="Median Household Income"/>
+<variable name="hseduc"
+ label="% of population (&gt;= 25 yrs) with High School education"/>
+<variable name="colgeduc"
+ label="% of population (&gt;= 25 yrs) with college education"/>
+<variable name="white"
+ label="Percentage of population who are White"/>
+<variable name="hispanic"
+ label="Percentage of population who are Hispanic"/>
+<variable name="women"
+ label="Percentage of population who are women"/>
+<variable name="femhh"
+ label="Percentage of Female Family House-Holder (no spouse present)"/>
+<variable name="poverty"
+ label="Percentage of population Below Poverty Level"/>
+<variable name="mother20"
+ label="Percentage of mothers who are under age 20"/>
+<variable name="unwed"
+ label="Percentage of mothers who are unmarried"/>
+<variable name="mothredc"
+ label="Percentage of mothers who have under 12 yrs education"/>
+<variable name="medical"
+ label="Percentage of births funded by MEDI-CAL"/>
+</variables>
+<observations count="58" labels="false">
+<obs>7.2 5.3 6.6 37544 81.4 28.8 59.6 14.2 50.7 12.9 10.6 9.6 30.1 20.7 31.4 </obs>
+<obs>12.2 8.2 4.9 24929 87.6 24.0 72.4 6.6 47.0 10.2 18.1 33.3 33.3 50.0 50.0 </obs>
+<obs>2.4 7.2 4.0 30265 82.5 14.0 89.5 8.4 43.7 6.0 8.4 9.9 20.8 14.4 28.0 </obs>
+<obs>10.1 9.4 11.4 22776 77.6 19.5 90.7 7.5 51.0 9.7 18.9 13.7 28.6 29.4 53.0 </obs>
+<obs>6.3 10.5 6.8 27645 81.6 14.4 95.7 5.4 50.4 7.1 10.1 11.8 26.0 12.9 35.8 </obs>
+<obs>5.8 15.7 5.2 24912 62.9 11.1 76.4 33.3 48.9 9.3 13.3 13.4 24.2 48.6 53.8 </obs>
+<obs>5.0 5.6 6.3 45087 86.5 31.6 76.0 11.4 51.0 10.8 7.3 8.4 25.5 18.5 23.0 </obs>
+<obs>11.4 12.5 15.7 22917 70.9 10.0 86.1 10.3 45.7 10.8 15.7 16.8 31.0 29.2 56.9 </obs>
+<obs>3.9 6.1 9.9 35058 85.9 20.8 94.5 7.0 50.0 7.8 7.7 8.1 22.0 17.9 31.5 </obs>
+<obs>15.6 12.6 11.6 26377 66.2 16.9 63.3 35.5 50.4 13.9 21.4 16.6 37.1 48.9 63.8 </obs>
+<obs>10.1 15.5 8.1 22831 66.9 9.4 85.4 20.0 50.1 10.0 17.4 14.6 24.8 42.9 59.7 </obs>
+<obs>9.8 8.8 11.0 23586 80.5 20.0 90.6 4.2 50.3 10.6 17.6 12.6 31.6 23.6 50.7 </obs>
+<obs>13.2 21.3 6.9 22442 53.2 9.7 67.3 65.8 50.8 15.0 23.8 13.8 34.3 45.5 54.3 </obs>
+<obs>5.9 8.8 4.9 24386 81.7 13.5 86.3 8.4 51.0 8.7 11.9 13.4 35.8 20.6 51.8 </obs>
+<obs>9.0 11.8 7.2 28634 67.6 13.3 69.6 28.0 49.6 12.3 16.9 15.9 36.3 39.8 52.2 </obs>
+<obs>9.4 12.8 10.4 25507 65.6 9.0 64.2 34.1 46.0 12.9 18.2 17.2 32.7 39.5 48.0 </obs>
+<obs>12.3 11.1 9.3 21794 70.9 10.7 91.8 7.2 51.1 9.5 15.3 17.8 34.7 29.2 56.7 </obs>
+<obs>9.0 10.0 8.0 26764 72.8 11.7 87.7 10.4 41.6 9.5 13.3 16.0 32.0 23.5 50.7 </obs>
+<obs>7.2 8.0 7.7 34965 70.0 22.3 56.8 37.8 50.1 13.1 15.1 12.0 38.4 42.3 44.5 </obs>
+<obs>8.8 14.0 9.9 27370 63.4 11.7 71.9 34.5 49.8 10.9 17.5 18.6 38.8 47.4 65.9 </obs>
+<obs>1.5 4.0 3.3 48544 91.9 44.0 88.7 7.8 50.5 8.5 5.2 3.6 19.9 11.5 16.2 </obs>
+<obs>6.7 6.3 8.5 25272 77.8 16.8 92.4 4.9 49.5 7.1 12.7 10.8 20.5 10.9 36.8 </obs>
+<obs>8.9 10.9 8.6 26443 78.7 17.8 89.6 10.3 50.2 10.7 14.2 14.3 31.6 38.0 48.6 </obs>
+<obs>15.0 14.6 11.7 25548 63.1 12.0 67.4 32.6 49.5 12.5 19.9 16.0 29.0 47.2 57.0 </obs>
+<obs>10.3 12.4 6.8 22029 72.2 11.2 91.0 7.2 49.0 8.0 15.0 15.7 22.7 27.8 55.6 </obs>
+<obs>2.4 12.5 2.5 31924 87.8 21.9 92.7 11.3 45.6 6.1 9.9 4.1 19.0 17.0 30.1 </obs>
+<obs>4.9 10.9 5.2 33520 72.9 21.5 63.8 33.6 48.1 10.4 11.6 12.2 26.5 42.9 40.2 </obs>
+<obs>3.2 5.9 5.9 36773 80.7 22.3 88.9 14.4 50.4 9.2 6.9 8.6 22.5 27.9 28.3 </obs>
+<obs>3.3 7.0 6.1 32200 86.3 22.1 97.3 4.2 50.8 7.6 7.7 9.3 17.7 13.8 32.9 </obs>
+<obs>3.0 4.8 4.3 45922 81.2 27.8 78.6 23.4 49.6 9.7 8.5 9.3 23.4 33.8 29.9 </obs>
+<obs>3.7 6.8 5.3 37601 85.1 22.7 93.7 8.0 50.5 8.7 7.1 7.8 20.8 13.4 27.1 </obs>
+<obs>6.4 12.0 6.1 24299 82.7 15.1 94.2 4.6 50.3 8.1 11.9 18.7 30.2 19.9 50.8 </obs>
+<obs>6.0 10.7 6.5 33081 74.1 14.6 76.4 26.3 50.0 9.6 11.5 13.6 28.5 31.4 39.2 </obs>
+<obs>11.1 6.3 11.6 32297 82.2 23.0 75.1 11.7 51.1 13.0 12.5 13.2 32.0 22.3 40.6 </obs>
+<obs>5.1 17.2 7.9 36473 68.4 14.4 69.8 45.8 49.5 9.8 9.5 15.2 28.0 38.0 36.8 </obs>
+<obs>9.7 8.0 9.1 33443 75.4 14.9 73.0 26.7 49.9 12.1 12.7 13.5 32.2 29.9 40.0 </obs>
+<obs>6.0 6.1 6.2 35022 81.9 25.3 74.9 20.4 49.0 10.8 11.3 10.4 27.3 26.7 33.6 </obs>
+<obs>4.7 5.6 6.5 33414 78.0 35.0 53.6 13.9 49.9 9.9 12.7 8.2 30.8 26.8 36.9 </obs>
+<obs>13.2 12.0 12.8 30635 68.6 13.2 73.5 23.4 49.4 12.7 15.7 15.0 32.6 39.0 49.6 </obs>
+<obs>2.9 5.8 5.3 31164 83.3 22.9 89.2 13.3 48.4 8.5 13.0 9.7 20.1 21.1 34.4 </obs>
+<obs>1.9 4.2 3.4 46437 84.1 31.3 71.9 17.6 50.7 9.8 6.3 6.7 20.8 21.1 20.6 </obs>
+<obs>3.7 6.0 4.2 35677 80.0 26.6 77.2 26.6 49.8 9.3 12.8 10.9 24.5 34.2 39.7 </obs>
+<obs>4.7 5.5 5.7 48115 82.0 32.6 68.9 21.0 49.3 10.3 7.5 8.8 25.4 22.9 24.8 </obs>
+<obs>3.5 8.0 6.2 37112 81.9 29.7 83.9 20.4 50.3 9.6 10.7 9.4 24.6 35.5 36.7 </obs>
+<obs>10.7 10.3 10.7 25581 78.4 13.7 93.8 3.8 51.0 11.0 13.7 14.4 26.0 23.4 50.7 </obs>
+<obs>5.3 10.5 5.4 23657 75.5 15.9 95.7 5.9 49.8 5.7 9.2 9.5 23.8 4.8 42.9 </obs>
+<obs>10.0 12.5 8.4 21921 77.4 14.2 92.1 9.1 50.8 9.6 14.0 15.4 26.0 23.1 56.3 </obs>
+<obs>5.6 7.0 6.9 39113 82.7 18.7 66.8 13.4 48.8 11.5 7.5 10.7 26.2 17.9 23.9 </obs>
+<obs>3.7 5.7 4.6 36299 84.4 24.5 90.6 10.6 51.0 9.8 7.6 8.5 21.2 20.8 23.9 </obs>
+<obs>10.5 14.3 10.4 29793 68.4 13.0 80.2 21.8 50.8 11.5 14.1 14.8 29.6 35.6 44.7 </obs>
+<obs>7.7 17.6 9.1 27096 72.3 15.4 76.9 16.4 50.5 10.9 15.4 13.2 23.7 35.6 51.4 </obs>
+<obs>9.2 12.4 11.7 22436 72.2 10.2 91.9 10.3 50.8 9.9 15.3 15.2 33.5 36.7 60.2 </obs>
+<obs>8.8 14.5 7.2 20494 74.2 12.9 92.9 3.3 49.0 8.4 18.5 15.8 27.7 27.8 52.0 </obs>
+<obs>14.1 17.1 11.2 24450 60.2 11.8 65.7 38.8 50.1 12.8 22.6 17.5 36.3 50.8 65.4 </obs>
+<obs>5.5 8.3 7.6 27030 80.0 14.7 90.4 7.7 47.0 8.5 9.1 8.7 24.9 15.6 41.8 </obs>
+<obs>3.1 7.0 4.3 45612 79.4 23.0 79.1 26.4 49.6 9.8 7.3 9.5 20.6 29.8 31.5 </obs>
+<obs>8.0 7.2 9.1 28866 79.1 30.3 75.9 20.0 50.4 10.2 17.4 10.8 28.2 27.9 38.3 </obs>
+<obs>17.2 14.1 14.0 21523 68.5 9.5 78.2 11.6 50.0 12.8 19.5 17.0 24.6 42.4 53.9 </obs>
+</observations>
+</gretldata>

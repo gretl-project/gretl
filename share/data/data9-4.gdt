@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data9-4" frequency="1" startobs="1974" endobs="1994" type="time-series">
+<description>
+DATA9-4:  Annual data on corporate profits (after taxes) and sales of
+    the manufacturing sector in the US, measured in billions of dollars
+    Source:  Economic Report of the President, 1996, Table B-89
+    Range for profits is 23.2 - 85.8 and that for sales is
+    1060.6 - 2220.9.
+</description>
+<variables count="3">
+<variable name="year"/>
+<variable name="profits"
+ label="corporate profits in mfg. ($billion, after taxes)"/>
+<variable name="sales"
+ label="sales of manufacturing sector ($billion)"/>
+</variables>
+<observations count="21" labels="false">
+<obs>1974 58.7 1060.6 </obs>
+<obs>1975 49.1 1065.2 </obs>
+<obs>1976 64.5 1203.2 </obs>
+<obs>1977 70.4 1328.1 </obs>
+<obs>1978 81.1 1496.4 </obs>
+<obs>1979 98.7 1741.8 </obs>
+<obs>1980 92.6 1912.8 </obs>
+<obs>1981 101.3 2144.7 </obs>
+<obs>1982 70.9 2039.4 </obs>
+<obs>1983 85.8 2114.3 </obs>
+<obs>1984 107.6 2335.0 </obs>
+<obs>1985 87.6 2331.4 </obs>
+<obs>1986 83.1 2220.9 </obs>
+<obs>1987 115.6 2378.2 </obs>
+<obs>1988 154.6 2596.2 </obs>
+<obs>1989 136.3 2745.1 </obs>
+<obs>1990 111.6 2810.7 </obs>
+<obs>1991 67.5 2761.1 </obs>
+<obs>1992 23.2 2890.2 </obs>
+<obs>1993 83.9 3015.1 </obs>
+<obs>1994 176.6 3258.4 </obs>
+</observations>
+</gretldata>

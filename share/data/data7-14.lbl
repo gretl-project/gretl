@@ -1,8 +1,0 @@
-mr     Murders per 100,000 population
-exec   Number under sentence of death and excuted
-south  1 for a Southern State, 0 otherwise.
-ue     Percent unemployed
-capital 1 if capital punishment allowed
-pcy    Per capita personal income (000s of 1987 dollars)
-
-

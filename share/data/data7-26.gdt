@@ -1,0 +1,207 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-26" frequency="1" startobs="1" endobs="102" type="cross-section">
+<description>
+DATA7-26:
+The first set of data were compiled by Jeffrey Wong for the study
+involving parental school choice in the United States.  All data are
+for the year 1986, unless otherwise noted, for all 51 states, including
+the D.C.  The last column has a zero for this data.
+   D      = 1 for the second data set and 0 for the first data set
+   ENROLL = Percentage of students that enroll in private schools.
+            The data for private school enrollment for each state was
+            found by indexing public school enrollment values of the years
+            1980 and 1986.  This index was then used to calculate the
+            private school enrollment for 1986.  Thus, the private school
+            enrollment values are indexed numbers.  This should not cause
+            any problem in the model because the enrollment trends in
+            public and private education do not alter drastically from
+            year to year.
+            Source: Digest of Education Statistics, 1990.
+   CATHOL = Percentage of population in each state which is Catholic.
+            Source: The Official Catholic Directory, 1986.
+   PUPIL  = pupil to teacher ratio for public schools in each state.  
+            Source:  Digest of Education Statistics, 1990.
+   WHITE  = Percentage of population in each state that is white.
+            Source:  United States Statistical Abstract, 1988.
+   ADMEXP = Percentage of educational expenditures devoted to administrative
+            expenses.  
+            Source: Condition of Education, 1990.
+   REV    = per pupil education revenue (in thousands of dollars).
+            Source: Condition of Education, 1990.
+   MEMNEA = Percentage of all public teachers who are members of the 
+            National Education Association. 
+            Source:  National Education Association Handbook.
+   INCOME = per capita income (in thousands of dollars) of household families.
+            Source: Unites States Statistical Abstract, 1988.
+   COLLEGE = Percentage of the population that has completed at least
+             four years of college.
+             Source:  United States Statistical Abstract Supplement,
+             State and Metropolitan Data Book, 1986.
+
+The second data on private school enrolment and its determinants, for
+the 50 U.S.  States and the District of Columbia, compiled by Colleen
+Dempsey.  Last column is 1.
+
+ENROLL =  percentage of students that enrolled in private schools.
+Data Year: 1993
+Sources: Digest of Education Statistics, 1996
+Projections of Education Statistics to 2007
+CATHOL = percentage of the population in each state which is Catholic.
+Data Year: 1990
+Source: Churches and Church Membership in the United States, 1990
+PUPIL = pupil to teacher ratio for public schools in each state.
+Data Year: 1990
+Source: Digest of Education Statistics, 1996
+WHITE = percentage of population in each state that is white.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1993
+ADMEXP = percentage of educational expenditures devoted to
+administration.
+Data Year: 1993
+Source: Digest of Education Statistics, 1996
+REVENUE = per pupil education revenue in thousands of dollars
+Data Year: 1991
+Sources: Digest of Education Statistics, 1996
+              Statistical Abstract of the U.S. 1997
+              Projections of Education Statistics to 2007
+MEMNEA = percentage of all public school teachers who are members 
+of the National Education Association 
+Data Year: 1986
+Source: National Education Association Handbook
+INCOME = per capita income in thousands of dollars
+Data Year: 1990
+Source: Statistical Abstract of the United States 1997
+COLLEGE = percentage of the population who has completed at least 
+four years of college.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1997
+</description>
+<variables count="10">
+<variable name="ENROLL"
+ label="Percentage of students that enroll in private schools"/>
+<variable name="CATHOL"
+ label="Percentage of population that is Catholic"/>
+<variable name="PUPIL"
+ label="pupil to teacher ratio for public schools, 1990"/>
+<variable name="WHITE"
+ label="Percentage of population that is white"/>
+<variable name="ADMEXP"
+ label="% of educational expenditures devoted to administration"/>
+<variable name="REV"
+ label="per pupil education revenue (thousands of dollars)"/>
+<variable name="MEMNEA"
+ label="% membership of NEA among public school teachers"/>
+<variable name="INCOME"
+ label="per capita income (thousands of dollars) of households"/>
+<variable name="COLLEGE"
+ label="% of the population that has completed &gt;= 4yrs college"/>
+<variable name="D"
+ label="1 for the second data set and 0 for the first data set"/>
+</variables>
+<observations count="102" labels="false">
+<obs>7.70 3.1 19.8 73.60 36.40 2.493 97.90 11.293 12.2 0 </obs>
+<obs>4.50 10.0 16.7 77.50 33.90 5.982 89.00 18.383 21.1 0 </obs>
+<obs>7.70 17.8 18.4 89.80 42.30 3.587 66.90 13.680 17.4 0 </obs>
+<obs>4.30 2.6 17.5 82.90 38.00 2.248 54.40 11.023 10.8 0 </obs>
+<obs>11.50 22.7 23.0 82.10 43.90 3.655 80.20 16.792 19.6 0 </obs>
+<obs>6.00 16.6 18.2 93.50 40.30 4.080 85.60 15.115 23.0 0 </obs>
+<obs>16.80 42.4 13.7 90.40 35.80 5.314 79.50 19.548 20.7 0 </obs>
+<obs>25.50 15.8 16.0 79.40 33.20 4.199 94.10 15.504 17.5 0 </obs>
+<obs>16.80 18.2 14.3 30.00 35.90 4.606 5.70 18.945 27.5 0 </obs>
+<obs>12.10 12.3 17.5 84.40 42.80 3.817 31.70 14.622 14.9 0 </obs>
+<obs>7.10 3.0 18.9 72.10 37.20 3.142 48.10 13.454 14.6 0 </obs>
+<obs>14.40 19.0 22.6 33.70 38.90 3.174 99.90 14.680 20.3 0 </obs>
+<obs>2.70 6.7 20.4 97.30 39.00 2.382 82.10 11.170 15.8 0 </obs>
+<obs>1.80 31.2 17.4 81.30 40.30 3.158 55.90 15.503 16.2 0 </obs>
+<obs>8.90 13.1 18.3 90.60 37.10 3.504 72.60 13.123 12.5 0 </obs>
+<obs>9.70 17.9 15.5 97.20 41.90 3.640 99.90 13.333 13.9 0 </obs>
+<obs>8.40 14.1 15.4 91.70 41.90 3.847 76.90 14.505 17.0 0 </obs>
+<obs>9.20 10.2 18.6 92.00 26.80 2.278 83.50 11.268 11.1 0 </obs>
+<obs>17.00 32.1 18.5 67.90 42.80 2.690 47.50 11.233 13.9 0 </obs>
+<obs>7.90 24.9 15.5 98.70 31.30 3.448 89.90 12.846 14.4 0 </obs>
+<obs>12.30 17.4 17.1 70.90 36.90 4.527 79.80 16.936 20.4 0 </obs>
+<obs>13.10 52.5 14.4 93.20 34.60 4.679 88.40 17.635 20.0 0 </obs>
+<obs>10.80 25.4 19.2 83.70 43.00 4.053 88.60 14.807 14.3 0 </obs>
+<obs>10.00 25.8 17.4 95.70 37.30 4.176 84.10 14.995 17.4 0 </obs>
+<obs>10.10 3.8 19.0 63.60 37.90 1.933 39.00 9.665 12.3 0 </obs>
+<obs>13.20 16.9 16.4 88.10 38.70 3.218 32.50 13.945 13.9 0 </obs>
+<obs>5.10 17.8 15.6 93.40 37.30 3.777 76.20 11.729 17.5 0 </obs>
+<obs>13.80 21.5 15.1 95.10 36.30 3.533 99.90 13.569 15.5 0 </obs>
+<obs>4.30 15.2 20.4 87.80 39.60 3.531 80.70 15.459 14.4 0 </obs>
+<obs>11.70 30.3 15.9 98.20 35.00 3.819 69.90 16.402 18.2 0 </obs>
+<obs>15.80 41.6 14.7 82.70 36.50 5.691 99.90 18.793 18.3 0 </obs>
+<obs>6.30 26.5 19.0 88.00 42.50 3.139 41.60 11.456 17.6 0 </obs>
+<obs>17.60 37.1 15.4 80.70 34.50 5.750 12.00 16.821 17.9 0 </obs>
+<obs>5.00 2.1 18.7 75.80 34.40 2.948 75.50 12.424 13.2 0 </obs>
+<obs>10.30 27.5 15.3 95.00 38.50 3.218 93.40 12.432 14.8 0 </obs>
+<obs>12.30 21.2 18.1 88.00 42.10 3.315 83.50 13.856 13.7 0 </obs>
+<obs>3.00 4.6 16.9 84.90 34.90 2.751 88.00 12.248 15.1 0 </obs>
+<obs>1.60 12.4 18.3 94.30 43.30 3.874 99.90 13.241 17.9 0 </obs>
+<obs>17.70 30.5 16.3 89.50 39.00 4.683 80.40 14.281 13.6 0 </obs>
+<obs>17.40 65.2 15.1 94.10 33.10 4.488 51.20 14.584 15.4 0 </obs>
+<obs>7.50 2.2 17.3 69.10 38.50 2.962 39.40 11.287 13.4 0 </obs>
+<obs>8.50 20.2 15.6 90.70 40.30 2.935 77.00 11.795 14.0 0 </obs>
+<obs>7.80 2.8 19.9 83.00 30.10 2.244 93.40 11.984 12.6 0 </obs>
+<obs>5.00 19.6 17.2 86.20 40.20 3.444 35.40 13.494 16.9 0 </obs>
+<obs>1.60 3.9 23.4 95.20 34.20 2.604 88.70 10.969 19.9 0 </obs>
+<obs>9.20 28.9 14.4 98.70 36.30 3.998 90.00 13.322 19.0 0 </obs>
+<obs>6.90 5.4 16.8 78.60 35.00 3.752 68.50 15.422 19.1 0 </obs>
+<obs>6.80 10.0 20.5 91.30 41.70 3.838 99.90 14.865 19.0 0 </obs>
+<obs>3.20 5.5 15.3 96.50 51.80 3.253 69.60 10.587 10.4 0 </obs>
+<obs>16.60 32.6 16.3 93.60 37.50 4.101 91.30 13.922 14.8 0 </obs>
+<obs>2.90 13.7 14.0 96.30 39.80 5.811 84.10 12.732 17.2 0 </obs>
+<obs>9.00 3.4 19.9 73.65 7.23 3.313 97.93 15.225 15.6 1 </obs>
+<obs>4.46 8.2 17.0 75.45 10.42 8.195 89.02 21.048 23.0 1 </obs>
+<obs>5.59 17.9 19.4 80.85 7.21 4.770 66.88 16.539 20.3 1 </obs>
+<obs>6.13 3.1 16.8 82.73 7.93 3.808 54.37 14.032 13.4 1 </obs>
+<obs>9.65 24.0 22.8 68.97 7.35 5.169 80.21 21.290 23.4 1 </obs>
+<obs>7.92 14.7 17.8 88.19 7.93 5.116 85.61 19.224 27.0 1 </obs>
+<obs>12.40 41.8 13.5 86.98 6.90 0.850 79.51 26.376 27.2 1 </obs>
+<obs>17.39 17.5 16.7 80.33 6.26 6.038 94.12 21.695 21.4 1 </obs>
+<obs>16.37 12.8 13.6 29.65 8.96 7.832 5.73 25.620 33.3 1 </obs>
+<obs>10.28 12.4 17.2 83.08 6.45 5.636 31.68 19.107 18.3 1 </obs>
+<obs>7.33 3.2 18.3 71.01 6.67 4.532 48.05 17.377 19.3 1 </obs>
+<obs>14.50 21.0 18.9 33.39 5.76 4.534 99.90 21.337 22.9 1 </obs>
+<obs>3.27 7.3 19.6 94.34 7.29 3.566 82.12 15.316 17.7 1 </obs>
+<obs>13.40 31.6 16.7 78.32 7.77 4.996 55.86 20.496 21.1 1 </obs>
+<obs>8.69 12.6 17.4 90.57 6.19 5.023 72.63 17.174 15.6 1 </obs>
+<obs>9.21 18.7 15.6 96.62 8.00 5.215 99.88 16.959 16.9 1 </obs>
+<obs>7.48 14.9 15.0 90.07 9.60 4.796 76.94 17.988 21.1 1 </obs>
+<obs>8.14 9.9 17.3 92.05 9.49 3.765 83.50 15.087 13.6 1 </obs>
+<obs>15.37 32.4 17.3 67.27 7.10 4.349 47.54 14.761 16.1 1 </obs>
+<obs>7.26 21.5 13.9 98.37 6.89 5.196 89.89 17.167 18.8 1 </obs>
+<obs>12.70 17.4 16.8 70.99 7.39 5.793 79.81 22.484 26.5 1 </obs>
+<obs>12.61 49.2 15.4 89.84 11.93 5.758 88.40 23.203 27.2 1 </obs>
+<obs>10.51 25.2 19.8 83.44 7.27 5.951 88.55 18.711 17.3 1 </obs>
+<obs>9.60 25.4 17.4 94.40 5.72 6.070 84.05 19.374 21.9 1 </obs>
+<obs>10.39 3.7 17.9 63.47 7.90 3.289 39.03 12.710 14.8 1 </obs>
+<obs>11.94 15.7 15.6 87.67 7.83 4.783 32.53 17.656 17.8 1 </obs>
+<obs>5.29 15.7 15.9 92.74 8.06 4.843 76.15 15.042 19.8 1 </obs>
+<obs>12.19 21.2 14.6 93.85 7.78 5.257 99.90 17.624 19.0 1 </obs>
+<obs>4.35 13.1 19.4 84.28 7.26 5.445 80.73 20.123 15.3 1 </obs>
+<obs>9.04 26.8 16.2 98.02 8.75 5.569 69.90 20.672 24.3 1 </obs>
+<obs>14.55 41.3 13.6 79.30 8.17 8.839 99.90 24.927 24.8 1 </obs>
+<obs>5.85 30.8 18.1 75.64 5.44 4.145 41.61 14.440 20.4 1 </obs>
+<obs>14.75 40.5 14.7 74.40 5.80 8.353 11.98 23.131 23.1 1 </obs>
+<obs>5.74 2.3 16.9 75.55 7.54 4.852 75.45 16.663 17.4 1 </obs>
+<obs>5.99 27.1 15.5 94.52 8.66 4.472 93.44 15.324 18.0 1 </obs>
+<obs>12.02 19.7 17.2 87.78 7.66 4.984 83.51 18.126 17.0 1 </obs>
+<obs>4.10 4.6 15.6 82.14 9.04 4.193 87.95 15.583 17.8 1 </obs>
+<obs>6.19 9.8 18.0 92.79 7.82 5.602 99.90 17.435 20.6 1 </obs>
+<obs>16.41 30.9 16.6 88.54 6.59 6.428 80.36 19.365 17.9 1 </obs>
+<obs>13.69 63.1 14.6 91.43 6.82 6.117 51.16 19.690 21.3 1 </obs>
+<obs>7.42 2.3 16.8 69.03 7.21 4.538 39.38 15.420 16.6 1 </obs>
+<obs>6.28 20.7 15.2 91.67 7.77 4.356 76.95 15.537 17.2 1 </obs>
+<obs>8.88 2.8 19.2 83.00 7.14 3.479 93.44 16.294 15.9 1 </obs>
+<obs>5.53 21.0 15.4 75.20 8.22 4.439 35.43 17.218 20.4 1 </obs>
+<obs>2.04 3.8 25.0 93.79 5.40 3.220 88.69 14.204 22.2 1 </obs>
+<obs>8.12 25.6 13.2 98.58 8.56 6.559 89.95 17.692 24.3 1 </obs>
+<obs>7.48 6.2 15.7 77.45 6.34 5.286 68.54 19.997 24.5 1 </obs>
+<obs>7.12 10.8 20.1 88.54 6.33 6.039 99.90 19.583 22.9 1 </obs>
+<obs>4.13 6.1 15.0 96.26 7.61 4.867 69.63 14.177 12.3 1 </obs>
+<obs>14.38 31.8 16.2 92.25 7.19 6.168 91.31 17.720 17.7 1 </obs>
+<obs>1.86 31.1 14.5 94.05 7.56 5.964 84.14 17.062 18.8 1 </obs>
+</observations>
+</gretldata>

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data6-6" frequency="1" startobs="1948" endobs="1991" type="time-series">
+<description>
+DATA6-6: U.S. farm population as percent of total population
+    (Range 1.9 - 16.6)
+    Source: 1996 Economic Report of the President, Table B-96
+</description>
+<variables count="2">
+<variable name="year"/>
+<variable name="farmpop"
+ label="farm population as percent of total population"/>
+</variables>
+<observations count="44" labels="false">
+<obs>1948 16.6 </obs>
+<obs>1949 16.2 </obs>
+<obs>1950 15.2 </obs>
+<obs>1951 14.2 </obs>
+<obs>1952 13.9 </obs>
+<obs>1953 12.5 </obs>
+<obs>1954 11.7 </obs>
+<obs>1955 11.5 </obs>
+<obs>1956 11.1 </obs>
+<obs>1957 10.3 </obs>
+<obs>1958 9.8 </obs>
+<obs>1959 9.3 </obs>
+<obs>1960 8.7 </obs>
+<obs>1961 8.1 </obs>
+<obs>1962 7.7 </obs>
+<obs>1963 7.1 </obs>
+<obs>1964 6.7 </obs>
+<obs>1965 6.4 </obs>
+<obs>1966 5.9 </obs>
+<obs>1967 5.5 </obs>
+<obs>1968 5.2 </obs>
+<obs>1969 5.1 </obs>
+<obs>1970 4.7 </obs>
+<obs>1971 4.5 </obs>
+<obs>1972 4.6 </obs>
+<obs>1973 4.5 </obs>
+<obs>1974 4.3 </obs>
+<obs>1975 4.1 </obs>
+<obs>1976 3.8 </obs>
+<obs>1977 2.8 </obs>
+<obs>1978 2.9 </obs>
+<obs>1979 2.8 </obs>
+<obs>1980 2.7 </obs>
+<obs>1981 2.5 </obs>
+<obs>1982 2.4 </obs>
+<obs>1983 2.5 </obs>
+<obs>1984 2.4 </obs>
+<obs>1985 2.2 </obs>
+<obs>1986 2.2 </obs>
+<obs>1987 2.1 </obs>
+<obs>1988 2.1 </obs>
+<obs>1989 2.0 </obs>
+<obs>1990 1.9 </obs>
+<obs>1991 1.9 </obs>
+</observations>
+</gretldata>

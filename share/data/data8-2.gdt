@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data8-2" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA8-2:
+    Aggregate personal income and expenditures on domestic travel (1993)
+    for U.S. States and the D.C.
+    Source: 1995 Statistical Abstract of the U.S.
+    exptrav =  Travel expenditures in billions of dollars,
+               Table 428, Page 266.  (Range 0.708 - 42.48).
+    income  =  Personal Income in billions of dollars, Table 712,
+               Page 460.  (Range 9.3 - 683.5).
+    pop     =  Population is in millions, Table 27, Page 28.
+               (Range 0.47 - 31.217).
+</description>
+<variables count="3">
+<variable name="exptrav"
+ label="Travel expenditures in billions of dollars"/>
+<variable name="income"
+ label="Personal Income in billions of dollars"/>
+<variable name="pop"
+ label="Population in millions"/>
+</variables>
+<observations count="51" labels="false">
+<obs>1.142 9.3 0.470 </obs>
+<obs>1.030 11.2 0.576 </obs>
+<obs>3.169 17.1 0.579 </obs>
+<obs>1.085 13.8 0.598 </obs>
+<obs>0.828 10.9 0.637 </obs>
+<obs>0.836 15.3 0.698 </obs>
+<obs>0.834 12.8 0.716 </obs>
+<obs>1.434 14.6 0.841 </obs>
+<obs>0.708 21.2 1.000 </obs>
+<obs>1.462 19.3 1.100 </obs>
+<obs>1.408 25.1 1.124 </obs>
+<obs>5.866 27.4 1.166 </obs>
+<obs>1.483 23.3 1.240 </obs>
+<obs>12.539 31.6 1.382 </obs>
+<obs>1.751 31.7 1.613 </obs>
+<obs>2.695 26.4 1.616 </obs>
+<obs>1.371 29.4 1.818 </obs>
+<obs>2.712 30.0 1.860 </obs>
+<obs>2.745 38.8 2.426 </obs>
+<obs>2.457 50.3 2.535 </obs>
+<obs>2.236 38.9 2.640 </obs>
+<obs>2.746 51.6 2.821 </obs>
+<obs>3.795 59.0 3.035 </obs>
+<obs>2.698 55.0 3.233 </obs>
+<obs>3.458 92.3 3.278 </obs>
+<obs>6.122 76.6 3.564 </obs>
+<obs>4.831 61.2 3.630 </obs>
+<obs>3.567 64.1 3.794 </obs>
+<obs>5.525 71.3 3.945 </obs>
+<obs>3.682 71.6 4.181 </obs>
+<obs>4.848 71.3 4.290 </obs>
+<obs>4.492 94.9 4.524 </obs>
+<obs>4.922 118.5 4.958 </obs>
+<obs>4.453 99.9 5.044 </obs>
+<obs>6.779 93.9 5.094 </obs>
+<obs>6.215 102.4 5.235 </obs>
+<obs>5.318 114.5 5.259 </obs>
+<obs>4.220 109.6 5.706 </obs>
+<obs>7.452 146.9 6.018 </obs>
+<obs>9.076 140.2 6.473 </obs>
+<obs>9.186 132.9 6.902 </obs>
+<obs>7.884 129.8 6.952 </obs>
+<obs>11.134 211.2 7.859 </obs>
+<obs>7.498 194.7 9.460 </obs>
+<obs>8.546 217.9 11.061 </obs>
+<obs>13.804 263.6 11.686 </obs>
+<obs>10.060 256.0 12.030 </obs>
+<obs>28.629 283.4 13.726 </obs>
+<obs>20.215 345.0 18.022 </obs>
+<obs>19.950 450.6 18.153 </obs>
+<obs>42.480 683.5 31.217 </obs>
+</observations>
+</gretldata>

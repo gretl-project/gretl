@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-8" frequency="1" startobs="1" endobs="25" type="cross-section">
+<description>
+DATA3-8: Annual tuition and average salary gain for MBAs at the 25 top
+    business schools in the country.  Both measures are in thousands
+    of dollars. 
+    slrygain = salary gain, Range 27 - 60
+    tuition  = tuition, Range 11.854 - 24.655
+    Source: Business Week, October 21, 1996.
+</description>
+<variables count="2">
+<variable name="slrygain"
+ label="salary gain, Range 27 - 60"/>
+<variable name="tuition"
+ label="tuition, Range 11.854 - 24.655"/>
+</variables>
+<observations count="25" labels="false">
+<obs>55.00 23.608 </obs>
+<obs>42.90 23.180 </obs>
+<obs>50.00 23.025 </obs>
+<obs>55.64 23.840 </obs>
+<obs>45.00 19.627 </obs>
+<obs>44.85 23.830 </obs>
+<obs>54.00 23.100 </obs>
+<obs>42.00 24.655 </obs>
+<obs>57.75 23.900 </obs>
+<obs>60.00 23.700 </obs>
+<obs>33.00 23.690 </obs>
+<obs>48.00 18.963 </obs>
+<obs>41.00 18.788 </obs>
+<obs>36.00 22.500 </obs>
+<obs>32.00 15.613 </obs>
+<obs>28.75 20.100 </obs>
+<obs>44.18 22.200 </obs>
+<obs>33.25 22.450 </obs>
+<obs>37.25 14.332 </obs>
+<obs>33.00 11.854 </obs>
+<obs>30.00 21.240 </obs>
+<obs>43.05 23.130 </obs>
+<obs>32.35 20.524 </obs>
+<obs>29.00 21.800 </obs>
+<obs>27.00 18.950 </obs>
+</observations>
+</gretldata>

@@ -1,0 +1,164 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-13" frequency="1" startobs="1" endobs="78" type="cross-section">
+<description>
+DATA4-13:
+  Data on the factors affecting baseball attendance -- compiled by
+  Scott Daniel.
+  ATTEND   = Attendance in thousands for the years 1984-86.  Source: The
+             Sporting News Official Baseball Guide 1985,86,87 on p.267,287,
+             and 286.  (Range 655.181 - 3264.593).
+  POP      = the population of the metropolitan area where the team is
+             located (in thousands).  Source: Statistical Abstract of the
+             United States: 1981 p18-20 Table 23.  For the Canadian
+             cities, the source is the Canada Year Book 1980-81 p.133
+             Table 4.9. (Range 1327 - 9120).
+  CAPACITY = Capacity of the Stadium where the team plays its home games.
+             (in thousands).  Source: The Sporting News Official Baseball
+             Guide 1984, 85, 86. pp.280-320. (Range 33.583 - 74.208).
+  PRIORWIN = the number of wins the team had in the year prior to the
+             year under examination.  Source: The Sporting News Official
+             Baseball Guide 1984,85,86 on p.86,160 for the 84 edition,
+             p.86, 160 for the 85 edition, and p.86,160 for the 1986
+             edition.  (Range 57 - 104).
+  CURNTWIN = the number of wins the team had in the year under study. 
+             Source: 1985, 86, and 87 editions of The Sporting News 
+             Baseball Guide on p.86, 160 for 1985 and 1986 editions,
+             P. 78,162 for the 1987 edition. (Range 57 - 108).
+  G1       = the number of games behind the division leader the team is
+             in the standings on April 30.  These are calculated using
+             the individual team reports found in Th Sporting News
+             Official Baseball Guide of 1985,86,87.  They are located
+             from pp 30-160 in each edition.  (Range 0 - 10.5).
+  G2       = the number of games behind the division leader the team is
+             on May 31.  See above for source. (Range 0 - 19.5).
+  G3       = the number of games behind the division leader the team is
+             on June 30.  See above for source. (Range 0 - 22.5).
+  G4       = the number of games behind the division leader the team is
+             on July 31.  See above for source. (Range 0 - 31).
+  G5       = the number of games behind the division leader the team is
+             on August 31.  See above for source. (Range 0 - 37).
+  GF       = the number of games behind the division leader the team is
+             after the season was over.  See above for source.
+             (Range 0 -44).
+  OTHER    = the number of other baseball teams in the metropolitan area.
+             (Range 0 - 1).
+  TEAMS    = the number of Football, Basketball, or Hockey teams found in
+             the Metropolitan area.  The leagues included are the NFL,
+             the CFL, the NBA, and the NHL.  This was independently
+             researched by going through old Sporting News Guides for
+             each of these individual leagues.  The years covered were
+             the guides of 1984, 1985, 1986 for the NFL and the CFL, and
+             the 1984-85, 1985-86, 1986-87 guides for the NHL and the
+             NBA. (Range 1 - 7).
+</description>
+<variables count="13">
+<variable name="ATTEND"
+ label="Attendance in thousands for the years 1984-86"/>
+<variable name="POP"
+ label="population of home metropolitan area (thousands)"/>
+<variable name="CAPACITY"
+ label="Capacity of home stadium (thousands)"/>
+<variable name="PRIORWIN"
+ label="wins the team had in prior year"/>
+<variable name="CURNTWIN"
+ label="wins the team had in current year"/>
+<variable name="G1"
+ label="games behind divn. leader as of April 30"/>
+<variable name="G2"
+ label="games behind divn. leader as of May 31"/>
+<variable name="G3"
+ label="games behind divn. leader as of June 30"/>
+<variable name="G4"
+ label="games behind divn. leader as of July 31"/>
+<variable name="G5"
+ label="games behind divn. leader as of August 31"/>
+<variable name="GF"
+ label="games behind divn. leader at end season"/>
+<variable name="OTHER"
+ label="number of other baseball teams in metro. area"/>
+<variable name="TEAMS"
+ label="number of Football, Basketball, or Hockey teams in metro. area"/>
+</variables>
+<observations count="78" labels="false">
+<obs>2704.794 4353 52.806 92 104 0.0 0.0 0.0 0.0 0.0 0.0 0 3 </obs>
+<obs>2110.009 2803 43.737 89 89 6.0 5.5 10.0 12.0 9.5 15.0 0 2 </obs>
+<obs>1821.815 9120 57.545 91 87 10.5 17.5 21.0 20.0 15.0 17.0 1 7 </obs>
+<obs>1661.618 2763 33.583 84 86 10.0 16.5 19.0 16.5 15.5 18.0 0 2 </obs>
+<obs>2045.784 2174 53.197 98 85 9.5 10.5 13.5 14.5 14.0 19.0 0 1 </obs>
+<obs>734.079 1899 74.208 70 75 7.5 19.5 22.5 26.0 27.5 29.0 0 2 </obs>
+<obs>1608.509 1397 53.192 87 67 9.0 15.0 21.0 25.0 31.0 36.5 0 1 </obs>
+<obs>2468.925 2803 43.737 89 99 0.0 0.0 0.0 0.0 0.0 0.0 0 2 </obs>
+<obs>2214.587 9120 57.545 87 97 6.0 5.5 7.5 7.5 5.0 2.0 1 7 </obs>
+<obs>2286.609 4353 52.806 104 84 1.0 5.5 3.5 9.5 11.5 15.0 0 3 </obs>
+<obs>2132.387 2174 53.198 85 83 0.5 4.0 7.5 12.5 12.5 16.0 0 1 </obs>
+<obs>1786.633 2763 33.583 86 81 4.0 9.5 7.5 10.5 20.5 18.5 0 2 </obs>
+<obs>1360.265 1397 53.192 67 71 4.5 8.0 11.0 18.0 20.5 28.0 0 1 </obs>
+<obs>655.181 1899 74.208 75 60 6.0 14.5 22.0 31.0 35.0 39.5 0 2 </obs>
+<obs>2147.641 2763 33.583 81 95 2.5 0.0 0.0 0.0 0.0 0.0 0 2 </obs>
+<obs>2268.030 9120 57.545 97 90 0.0 2.5 8.0 4.0 6.5 5.5 1 6 </obs>
+<obs>1899.437 4353 52.806 84 87 3.5 8.0 12.0 6.0 9.0 8.5 0 3 </obs>
+<obs>2455.477 2803 43.737 99 86 5.0 10.0 10.5 5.5 3.5 9.5 0 2 </obs>
+<obs>1471.805 1899 74.208 60 84 2.5 9.0 10.5 6.0 11.5 11.5 0 2 </obs>
+<obs>1265.041 1397 53.192 71 77 4.0 7.5 12.0 9.5 11.5 18.0 0 1 </obs>
+<obs>1973.176 2174 54.076 83 73 4.0 3.5 10.0 4.5 11.0 22.5 0 1 </obs>
+<obs>1810.018 1327 40.625 79 84 3.5 3.5 5.5 5.0 2.0 0.0 0 2 </obs>
+<obs>2402.997 1932 65.158 70 81 0.0 0.0 0.0 1.5 2.5 3.0 0 1 </obs>
+<obs>1598.692 2114 55.122 70 81 3.0 1.0 3.0 0.0 0.0 3.0 0 2 </obs>
+<obs>1353.281 3253 50.219 74 77 1.0 2.5 3.5 8.0 12.5 7.0 1 2 </obs>
+<obs>2136.988 7102 44.432 99 74 4.5 2.5 3.0 4.5 6.5 10.0 1 3 </obs>
+<obs>870.372 1607 59.438 60 74 1.5 2.5 4.5 7.0 10.5 10.0 0 2 </obs>
+<obs>1102.471 2975 43.508 77 69 5.0 5.0 6.5 10.5 9.0 14.5 0 2 </obs>
+<obs>2162.171 1327 40.625 84 91 2.0 1.0 3.5 2.5 2.5 0.0 0 1 </obs>
+<obs>2567.427 1932 65.158 81 90 0.0 0.0 0.0 0.0 0.0 1.0 0 1 </obs>
+<obs>1699.888 7102 44.432 74 85 3.0 2.5 4.5 3.5 9.0 6.0 1 3 </obs>
+<obs>1615.814 2114 55.122 81 77 2.5 5.0 7.0 10.5 14.0 14.0 0 2 </obs>
+<obs>1334.599 3253 50.255 77 77 5.0 4.0 2.0 5.0 6.0 14.0 1 2 </obs>
+<obs>1128.696 1607 59.438 74 74 5.0 6.0 5.0 9.5 14.0 17.0 0 2 </obs>
+<obs>1112.497 2975 43.508 69 62 6.0 9.0 13.5 18.5 24.5 28.5 0 2 </obs>
+<obs>2655.872 1932 64.573 90 92 0.0 1.5 0.0 0.0 0.0 0.0 0 1 </obs>
+<obs>1692.002 2975 43.508 62 87 3.0 0.0 0.5 3.5 5.5 5.0 0 2 </obs>
+<obs>2320.794 1327 40.625 91 76 3.0 1.0 3.5 9.5 14.0 16.0 0 1 </obs>
+<obs>1314.646 3253 50.219 77 76 2.0 2.0 11.5 12.5 14.0 16.0 1 2 </obs>
+<obs>1424.313 7102 44.087 85 72 5.0 5.5 6.5 10.5 17.5 20.0 1 3 </obs>
+<obs>1255.453 2114 55.244 77 71 5.0 5.5 7.0 12.0 19.0 21.0 0 2 </obs>
+<obs>1029.045 1607 59.438 74 67 6.0 7.0 9.5 11.0 17.0 25.0 0 2 </obs>
+<obs>1983.904 1862 58.671 81 92 1.0 0.5 0.0 0.0 0.0 0.0 0 1 </obs>
+<obs>1724.892 2030 53.046 88 80 6.0 1.0 2.5 8.5 12.0 12.0 0 2 </obs>
+<obs>1229.862 2905 45.000 85 80 7.5 6.5 8.5 14.0 10.5 12.0 0 2 </obs>
+<obs>3134.824 7478 56.000 91 79 0.0 0.0 5.5 12.0 15.5 13.0 0 4 </obs>
+<obs>1275.887 1401 52.392 74 70 6.0 1.0 9.5 19.0 23.5 22.0 0 1 </obs>
+<obs>1001.545 3253 58.000 79 66 9.0 9.0 14.0 21.5 22.0 26.0 1 2 </obs>
+<obs>3264.593 7478 56.000 79 95 0.0 5.0 4.5 0.0 0.0 0.0 0 4 </obs>
+<obs>1834.619 1401 52.392 70 89 0.5 3.5 3.5 5.5 7.5 5.5 0 1 </obs>
+<obs>1184.314 2905 45.000 80 83 0.5 3.5 6.0 13.0 14.5 12.0 0 2 </obs>
+<obs>2210.352 1862 58.671 92 83 0.0 0.0 0.0 5.0 7.0 12.0 0 1 </obs>
+<obs>1350.137 2030 53.046 80 66 1.0 8.0 10.0 14.0 19.5 29.0 0 2 </obs>
+<obs>818.697 3253 58.000 66 62 3.0 10.0 17.0 19.5 23.5 33.0 1 2 </obs>
+<obs>1734.276 2905 45.000 83 96 0.0 0.0 0.0 0.0 0.0 0.0 0 2 </obs>
+<obs>1692.432 1401 52.392 89 86 7.5 8.0 8.0 8.5 7.0 10.0 0 1 </obs>
+<obs>1528.748 3253 58.000 62 83 1.5 3.0 0.5 4.0 8.0 13.0 1 2 </obs>
+<obs>1805.716 1862 58.402 83 74 2.5 3.5 3.0 6.5 12.5 22.0 0 1 </obs>
+<obs>3023.208 7478 56.000 95 73 5.5 5.5 7.5 7.5 11.0 23.0 0 4 </obs>
+<obs>1387.181 2030 53.046 66 72 6.5 2.5 2.0 10.5 11.5 23.5 0 2 </obs>
+<obs>2104.219 7102 37.242 71 96 0.0 0.5 0.0 0.0 0.0 0.0 1 3 </obs>
+<obs>1842.695 9120 55.601 68 90 0.0 3.5 2.5 1.5 5.5 6.5 1 7 </obs>
+<obs>2037.448 2355 50.100 79 84 2.5 5.5 5.0 8.5 12.0 12.5 0 2 </obs>
+<obs>2062.693 4717 65.454 90 81 1.0 0.0 0.0 3.5 8.5 15.5 0 3 </obs>
+<obs>1606.531 2802 59.149 82 78 1.0 4.0 4.5 8.5 13.5 18.0 0 2 </obs>
+<obs>773.500 2264 58.365 84 75 5.0 7.5 12.0 16.0 22.0 21.5 0 2 </obs>
+<obs>2637.563 2355 50.100 84 101 4.5 4.0 0.0 0.0 0.0 0.0 0 2 </obs>
+<obs>2761.601 9120 55.300 90 98 0.0 0.0 5.0 2.0 2.0 3.0 1 7 </obs>
+<obs>1502.494 2802 59.149 78 84 1.0 2.0 1.5 6.0 7.0 16.5 0 2 </obs>
+<obs>2161.534 7102 37.272 96 77 0.0 0.5 4.0 8.5 15.5 23.5 1 3 </obs>
+<obs>1830.350 4717 66.744 81 75 4.5 11.0 11.0 15.5 16.5 26.0 0 3 </obs>
+<obs>735.900 2264 58.429 75 57 6.0 12.5 18.5 28.0 37.0 43.5 0 2 </obs>
+<obs>2767.601 9120 55.300 98 108 0.0 0.0 0.0 0.0 0.0 0.0 1 6 </obs>
+<obs>1933.335 4717 66.271 75 86 5.5 11.5 15.5 17.5 19.0 21.5 0 3 </obs>
+<obs>2471.974 2355 50.100 101 79 6.0 14.5 19.0 20.5 22.0 28.5 0 2 </obs>
+<obs>1128.981 2802 59.149 84 78 5.0 6.0 9.5 15.5 23.5 29.5 0 2 </obs>
+<obs>1859.102 7102 38.040 77 70 7.5 13.5 22.0 22.5 32.0 37.0 1 3 </obs>
+<obs>1000.917 2264 58.438 57 64 6.5 13.0 21.0 25.0 34.0 44.0 0 2 </obs>
+</observations>
+</gretldata>

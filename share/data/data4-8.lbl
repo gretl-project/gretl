@@ -1,9 +1,0 @@
-sub  number of subscribers of each system (thousands)
-home number of homes passed by each system
-inst Installation fee ($)
-svc  Monthly service charge of each system
-tv   number of TV signals carried by each cable system
-age  age of each system in years
-air  number of television signals received
-y    Per capita income in market area ($)
-

@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-12" frequency="1" startobs="1962" endobs="1994" type="time-series">
+<description>
+DATA3-12: Population of the United Kingdom, in millions
+         (Range 53.292 - 58.395)
+     Source:  Annual Abstract of Statistics, Central Statistical
+     Office, 1996, Table 2.1, Page 16.
+</description>
+<variables count="2">
+<variable name="year"/>
+<variable name="pop"
+ label="Population of the United Kingdom, in millions"/>
+</variables>
+<observations count="33" labels="false">
+<obs>1962 53.292 </obs>
+<obs>1963 53.625 </obs>
+<obs>1964 53.991 </obs>
+<obs>1965 54.350 </obs>
+<obs>1966 54.643 </obs>
+<obs>1967 54.959 </obs>
+<obs>1968 55.214 </obs>
+<obs>1969 55.461 </obs>
+<obs>1970 55.632 </obs>
+<obs>1971 55.928 </obs>
+<obs>1972 56.097 </obs>
+<obs>1973 56.223 </obs>
+<obs>1974 56.236 </obs>
+<obs>1975 56.226 </obs>
+<obs>1976 56.216 </obs>
+<obs>1977 56.190 </obs>
+<obs>1978 56.178 </obs>
+<obs>1979 56.240 </obs>
+<obs>1980 56.330 </obs>
+<obs>1981 56.352 </obs>
+<obs>1982 56.318 </obs>
+<obs>1983 56.377 </obs>
+<obs>1984 56.506 </obs>
+<obs>1985 56.685 </obs>
+<obs>1986 56.852 </obs>
+<obs>1987 57.009 </obs>
+<obs>1988 57.158 </obs>
+<obs>1989 57.358 </obs>
+<obs>1990 57.561 </obs>
+<obs>1991 57.808 </obs>
+<obs>1992 58.006 </obs>
+<obs>1993 58.191 </obs>
+<obs>1994 58.395 </obs>
+</observations>
+</gretldata>

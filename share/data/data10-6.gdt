@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data10-6" frequency="1" startobs="1959" endobs="1994" type="time-series">
+<description>
+DATA10-6:  Annual data for the U.S. for the period 1959-1994
+    N = Population in millions, Econ. Report of the President,
+        1996, Table B-30, Range 177.83 - 260.66.
+    M = Money supply in billions, M3, Ec. Report, 1996, Table B-65,
+        Range 299.8 - 4303.9.
+    P = GDP deflator, 1992 = 100, Ec. Report, 1996, Table B-3,
+        Range 23 - 105.
+</description>
+<variables count="4">
+<variable name="YEAR"/>
+<variable name="N"
+ label="Population in millions"/>
+<variable name="M"
+ label="Money supply in billions, M3"/>
+<variable name="P"
+ label="GDP deflator, 1992 = 100"/>
+</variables>
+<observations count="36" labels="false">
+<obs>1959 177.830 299.8 23.0 </obs>
+<obs>1960 180.671 315.3 23.3 </obs>
+<obs>1961 183.691 341.0 23.6 </obs>
+<obs>1962 186.538 371.4 23.9 </obs>
+<obs>1963 189.242 406.0 24.2 </obs>
+<obs>1964 191.889 442.5 24.6 </obs>
+<obs>1965 194.303 482.2 25.0 </obs>
+<obs>1966 196.560 505.1 25.7 </obs>
+<obs>1967 198.712 557.1 26.6 </obs>
+<obs>1968 200.706 606.2 27.7 </obs>
+<obs>1969 202.677 615.0 29.0 </obs>
+<obs>1970 205.052 677.4 30.6 </obs>
+<obs>1971 207.661 776.1 32.1 </obs>
+<obs>1972 209.896 886.0 33.5 </obs>
+<obs>1973 211.909 984.9 35.4 </obs>
+<obs>1974 213.854 1070.3 38.5 </obs>
+<obs>1975 215.973 1172.2 42.2 </obs>
+<obs>1976 218.035 1311.7 44.6 </obs>
+<obs>1977 220.239 1472.5 47.5 </obs>
+<obs>1978 222.585 1646.3 50.9 </obs>
+<obs>1979 225.055 1803.7 55.3 </obs>
+<obs>1980 227.726 1988.5 60.4 </obs>
+<obs>1981 229.966 2236.6 66.1 </obs>
+<obs>1982 232.188 2440.6 70.2 </obs>
+<obs>1983 234.307 2684.8 73.2 </obs>
+<obs>1984 236.348 2981.5 75.9 </obs>
+<obs>1985 238.466 3200.2 78.6 </obs>
+<obs>1986 240.651 3488.7 80.6 </obs>
+<obs>1987 242.804 3675.8 83.1 </obs>
+<obs>1988 245.021 3915.6 86.1 </obs>
+<obs>1989 247.342 4066.0 89.7 </obs>
+<obs>1990 249.913 4123.2 93.6 </obs>
+<obs>1991 252.650 4176.0 97.3 </obs>
+<obs>1992 255.419 4182.9 100.0 </obs>
+<obs>1993 258.137 4242.3 102.6 </obs>
+<obs>1994 260.660 4303.9 105.0 </obs>
+</observations>
+</gretldata>

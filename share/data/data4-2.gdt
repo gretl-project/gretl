@@ -1,0 +1,66 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-2" frequency="1" startobs="1959" endobs="1994" type="time-series">
+<description>
+DATA4-2: Annual data for the U.S. for 1959-94				
+    Source: 1996 Economic Report of the President
+    Ct = real consumption expenditure in billions of 1992 dollars, Table
+         B-2, Page 282 (Range 1393.6 - 4471.1)
+    Yt = Gross domestic product in billions of 1992 dollars, Table B-2,
+         Page 282 (Range 2212.3 - 6604.2)
+    WAGES = total compensation of employees in billions of current dollars,
+            Table B-24, Page 306 (Range 281.2 - 4008.3)
+    PRDEFL = Implicit price deflator for consumption expenditures, 1992 =
+             100, Table B-3, Page 284 (Range 22.8 - 105.1)
+</description>
+<variables count="5">
+<variable name="YEAR"/>
+<variable name="Ct"
+ label="real consumption expenditure (billions of 1992 dollars)"/>
+<variable name="Yt"
+ label="Gross domestic product (billions of 1992 dollars)"/>
+<variable name="WAGES"
+ label="total compensation of employees (current $ billions)"/>
+<variable name="PRDEFL"
+ label="Implicit price deflator for consumption, 1992 = 100"/>
+</variables>
+<observations count="36" labels="false">
+<obs>1959 1393.6 2212.30 281.2 22.8 </obs>
+<obs>1960 1432.6 2261.70 296.7 23.2 </obs>
+<obs>1961 1461.5 2309.08 305.6 23.4 </obs>
+<obs>1962 1533.8 2449.10 327.4 23.7 </obs>
+<obs>1963 1596.6 2554.00 345.5 24.0 </obs>
+<obs>1964 1692.3 2702.90 371.0 24.3 </obs>
+<obs>1965 1799.1 2874.80 399.8 24.7 </obs>
+<obs>1966 1902.0 3060.20 443.0 25.3 </obs>
+<obs>1967 1958.6 3140.20 475.5 26.0 </obs>
+<obs>1968 2070.2 3288.60 524.7 27.0 </obs>
+<obs>1969 2147.5 3388.00 578.3 28.2 </obs>
+<obs>1970 2197.8 3388.20 618.1 29.5 </obs>
+<obs>1971 2279.5 3500.10 660.1 30.8 </obs>
+<obs>1972 2415.9 3690.30 726.8 31.9 </obs>
+<obs>1973 2532.6 3902.30 813.1 33.6 </obs>
+<obs>1974 2514.7 3888.20 892.4 37.0 </obs>
+<obs>1975 2570.0 3865.10 951.3 40.0 </obs>
+<obs>1976 2714.3 4081.10 1061.5 42.3 </obs>
+<obs>1977 2829.8 4279.30 1182.9 45.1 </obs>
+<obs>1978 2951.6 4493.70 1338.5 48.4 </obs>
+<obs>1979 3020.2 4624.00 1503.3 52.8 </obs>
+<obs>1980 3009.7 4611.90 1653.9 58.5 </obs>
+<obs>1981 3046.4 4724.90 1827.8 63.7 </obs>
+<obs>1982 3081.5 4623.60 1927.6 67.4 </obs>
+<obs>1983 3240.6 4810.00 2044.2 70.5 </obs>
+<obs>1984 3407.6 5138.20 2257.0 73.1 </obs>
+<obs>1985 3565.5 5329.50 2425.7 75.8 </obs>
+<obs>1986 3708.7 5489.90 2572.4 78.0 </obs>
+<obs>1987 3822.3 5648.40 2757.7 81.0 </obs>
+<obs>1988 3972.7 5862.90 2973.9 84.3 </obs>
+<obs>1989 4064.6 6060.40 3151.6 88.4 </obs>
+<obs>1990 4132.2 6138.70 3352.8 92.9 </obs>
+<obs>1991 4105.8 6079.00 3457.9 96.8 </obs>
+<obs>1992 4219.8 6244.40 3644.9 100.0 </obs>
+<obs>1993 4339.7 6383.80 3809.4 102.6 </obs>
+<obs>1994 4471.1 6604.20 4008.3 105.1 </obs>
+</observations>
+</gretldata>

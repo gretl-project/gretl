@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-2" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA3-2: Aggregate personal income and expenditures on health care,
+     both measured in billions of dollars, 1993, for U.S. States and D.C.
+     Source:  1995 Statistical Abstract of the U.S.
+     exphlth = Personal Health Care Expenditures, Table 153, Page 111,
+               Range 0.998 - 9.029.
+     income  = Personal Income, Table 712, Page 460, Range 9.3 - 64.1.
+</description>
+<variables count="2">
+<variable name="exphlth"
+ label="Aggregate personal expenditures on health care by state"/>
+<variable name="income"
+ label="Aggregate personal income by state"/>
+</variables>
+<observations count="51" labels="false">
+<obs>0.998 9.3 </obs>
+<obs>1.499 11.2 </obs>
+<obs>4.285 17.1 </obs>
+<obs>1.573 13.8 </obs>
+<obs>2.021 10.9 </obs>
+<obs>2.260 15.3 </obs>
+<obs>1.953 12.8 </obs>
+<obs>2.103 14.6 </obs>
+<obs>3.428 21.2 </obs>
+<obs>2.277 19.3 </obs>
+<obs>3.452 25.1 </obs>
+<obs>3.485 27.4 </obs>
+<obs>3.433 23.3 </obs>
+<obs>3.747 31.6 </obs>
+<obs>4.400 31.7 </obs>
+<obs>3.878 26.4 </obs>
+<obs>5.197 29.4 </obs>
+<obs>4.118 30.0 </obs>
+<obs>6.111 38.8 </obs>
+<obs>6.903 50.3 </obs>
+<obs>6.187 38.9 </obs>
+<obs>7.341 51.6 </obs>
+<obs>7.999 59.0 </obs>
+<obs>8.041 55.0 </obs>
+<obs>12.216 92.3 </obs>
+<obs>10.066 76.6 </obs>
+<obs>9.029 61.2 </obs>
+<obs>10.384 64.1 </obs>
+<obs>10.635 71.3 </obs>
+<obs>12.060 71.6 </obs>
+<obs>13.014 71.3 </obs>
+<obs>14.194 94.9 </obs>
+<obs>15.154 118.5 </obs>
+<obs>14.502 99.9 </obs>
+<obs>16.203 93.9 </obs>
+<obs>15.949 102.4 </obs>
+<obs>15.129 114.5 </obs>
+<obs>16.401 109.6 </obs>
+<obs>23.421 146.9 </obs>
+<obs>6.682 140.2 </obs>
+<obs>20.104 132.9 </obs>
+<obs>18.241 129.8 </obs>
+<obs>25.741 211.2 </obs>
+<obs>27.136 194.7 </obs>
+<obs>33.456 217.9 </obs>
+<obs>34.747 263.6 </obs>
+<obs>41.521 256.0 </obs>
+<obs>44.811 283.4 </obs>
+<obs>49.816 345.0 </obs>
+<obs>67.033 450.6 </obs>
+<obs>94.178 683.5 </obs>
+</observations>
+</gretldata>

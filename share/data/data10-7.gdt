@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data10-7" frequency="1" startobs="1960" endobs="1994" type="time-series">
+<description>
+DATA10-7: Population of the state of California, in millions,
+     Range 15.863 - 32.14.
+     Source:  Economic Report of the Governor, 1995, Table 1, P. A-1.
+</description>
+<variables count="2">
+<variable name="year"/>
+<variable name="pop"
+ label="Population of the state of California, in millions"/>
+</variables>
+<observations count="35" labels="false">
+<obs>1960 15.863 </obs>
+<obs>1961 16.412 </obs>
+<obs>1962 16.951 </obs>
+<obs>1963 17.530 </obs>
+<obs>1964 18.026 </obs>
+<obs>1965 18.464 </obs>
+<obs>1966 18.831 </obs>
+<obs>1967 19.175 </obs>
+<obs>1968 19.432 </obs>
+<obs>1969 19.745 </obs>
+<obs>1970 20.039 </obs>
+<obs>1971 20.346 </obs>
+<obs>1972 20.585 </obs>
+<obs>1973 20.869 </obs>
+<obs>1974 21.174 </obs>
+<obs>1975 21.538 </obs>
+<obs>1976 21.936 </obs>
+<obs>1977 22.352 </obs>
+<obs>1978 22.836 </obs>
+<obs>1979 23.257 </obs>
+<obs>1980 23.782 </obs>
+<obs>1981 24.278 </obs>
+<obs>1982 24.805 </obs>
+<obs>1983 25.337 </obs>
+<obs>1984 25.816 </obs>
+<obs>1985 26.403 </obs>
+<obs>1986 27.052 </obs>
+<obs>1987 27.717 </obs>
+<obs>1988 28.393 </obs>
+<obs>1989 29.142 </obs>
+<obs>1990 29.976 </obs>
+<obs>1991 30.655 </obs>
+<obs>1992 31.306 </obs>
+<obs>1993 31.746 </obs>
+<obs>1994 32.140 </obs>
+</observations>
+</gretldata>

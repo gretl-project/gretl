@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data9-1" frequency="1" startobs="1" endobs="30" type="cross-section">
+<description>
+DATA9-1: Data for the demand for ice cream
+    Source: Hildreth-Lu paper, Table D16, page 73
+    Four week periods from March 18, 1951 to July 11, 1953
+    demand = per capita consumption of ice cream in pints
+             (Range 0.256 - 0.548)
+    income = weekly family income in dollars (Range 76 - 96)
+    price  = price of ice cream in dollars per pint (Range 0.26 - 0.292)
+    temp   = mean temperature in Fahrenheit (Range 24 - 72)
+</description>
+<variables count="4">
+<variable name="demand"
+ label="per capita consumption of ice cream (pints, 0.256 - 0.548)"/>
+<variable name="income"
+ label="weekly family income ($, Range 76 - 96)"/>
+<variable name="price"
+ label="price of ice cream ($/pint, Range 0.26 - 0.292)"/>
+<variable name="temp"
+ label="mean temperature (Fahrenheit, Range 24 - 72)"/>
+</variables>
+<observations count="30" labels="false">
+<obs>0.386 78 0.270 41 </obs>
+<obs>0.374 79 0.282 56 </obs>
+<obs>0.393 81 0.277 63 </obs>
+<obs>0.425 80 0.280 68 </obs>
+<obs>0.406 76 0.272 69 </obs>
+<obs>0.344 78 0.262 65 </obs>
+<obs>0.327 82 0.275 61 </obs>
+<obs>0.288 79 0.267 47 </obs>
+<obs>0.269 76 0.265 32 </obs>
+<obs>0.256 79 0.277 24 </obs>
+<obs>0.286 82 0.282 28 </obs>
+<obs>0.298 85 0.270 26 </obs>
+<obs>0.329 86 0.272 32 </obs>
+<obs>0.318 83 0.287 40 </obs>
+<obs>0.381 84 0.277 55 </obs>
+<obs>0.381 82 0.287 63 </obs>
+<obs>0.470 80 0.280 72 </obs>
+<obs>0.443 78 0.277 72 </obs>
+<obs>0.386 84 0.277 67 </obs>
+<obs>0.342 86 0.277 60 </obs>
+<obs>0.319 85 0.292 44 </obs>
+<obs>0.307 87 0.287 40 </obs>
+<obs>0.284 94 0.277 32 </obs>
+<obs>0.326 92 0.285 27 </obs>
+<obs>0.309 95 0.282 28 </obs>
+<obs>0.359 96 0.265 33 </obs>
+<obs>0.376 94 0.265 41 </obs>
+<obs>0.416 96 0.265 52 </obs>
+<obs>0.437 91 0.268 64 </obs>
+<obs>0.548 90 0.260 71 </obs>
+</observations>
+</gretldata>

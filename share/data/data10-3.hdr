@@ -1,8 +1,0 @@
-(*
-DATA10-3:  Foreign exchange rate: Germany Deutsche Marks per U.S. dollar
-           Source: International Financial Statistics,
-           Range 1.725 - 3.303.
-*)
-period exchrate ;
-12 1973.01 1986.01
-BYOBS

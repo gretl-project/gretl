@@ -1,9 +1,0 @@
-sub Number of subscribers of each system (000s, Range 1 - 462)
-homes Number of homes passed by each system (1.7 - 1201.09)
-inst Installation fee in dollars (5.95 - 75)
-svc Monthly service charge (5.08 - 24.93)
-cblchanl The number of TV carried by system (6 - 120)
-tvchanl The number of TV signals received (3 - 15)
-pcincome Per capita income for market ($000s, 7.683 - 28.597)
-D = 1 for 1994 and 0 for 1979
-

@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data9-2" frequency="1" startobs="1960" endobs="1995" type="time-series">
+<description>
+DATA9-2:  Annual data on U.S. discount rate, money supply, and 
+    government deficits.  Source: 1996 Economic Report of the President
+    r = discount rate (%), Table B-69, p. 360, Range 3 - 13.42
+    M = M2 in billions of current dollars, Table B-65, p. 355
+        (Range 312.3 - 3780.7)
+    D = Federal deficit in billions of current dollars, Table B-74, p. 367
+        (Range -3.2 - 290.4)
+</description>
+<variables count="4">
+<variable name="year"/>
+<variable name="r"
+ label="= discount rate (%)"/>
+<variable name="M"
+ label="= M2, billions of current dollars"/>
+<variable name="D"
+ label="= Federal deficit, billions of current dollars"/>
+</variables>
+<observations count="36" labels="false">
+<obs>1960 3.53 312.3 -0.3 </obs>
+<obs>1961 3.00 335.5 3.3 </obs>
+<obs>1962 3.00 362.7 7.1 </obs>
+<obs>1963 3.23 393.2 4.8 </obs>
+<obs>1964 3.55 424.8 5.9 </obs>
+<obs>1965 4.04 459.3 1.4 </obs>
+<obs>1966 4.50 480.0 3.7 </obs>
+<obs>1967 4.19 524.3 8.6 </obs>
+<obs>1968 5.16 566.3 25.2 </obs>
+<obs>1969 5.87 589.5 -3.2 </obs>
+<obs>1970 5.95 628.1 2.8 </obs>
+<obs>1971 4.88 712.7 23.0 </obs>
+<obs>1972 4.50 805.2 23.4 </obs>
+<obs>1973 6.44 861.0 14.9 </obs>
+<obs>1974 7.83 908.5 6.1 </obs>
+<obs>1975 6.25 1023.2 53.2 </obs>
+<obs>1976 5.50 1163.7 73.7 </obs>
+<obs>1977 5.46 1286.5 53.7 </obs>
+<obs>1978 7.46 1388.6 59.2 </obs>
+<obs>1979 10.28 1496.9 40.7 </obs>
+<obs>1980 11.77 1629.3 73.8 </obs>
+<obs>1981 13.42 1793.3 79.0 </obs>
+<obs>1982 11.02 1953.2 128.0 </obs>
+<obs>1983 8.50 2187.7 207.8 </obs>
+<obs>1984 8.80 2378.4 185.4 </obs>
+<obs>1985 7.69 2576.0 212.3 </obs>
+<obs>1986 6.33 2820.3 221.2 </obs>
+<obs>1987 5.66 2922.3 149.8 </obs>
+<obs>1988 6.20 3083.5 155.2 </obs>
+<obs>1989 6.93 3243.0 152.5 </obs>
+<obs>1990 6.98 3356.0 221.4 </obs>
+<obs>1991 5.45 3457.9 269.2 </obs>
+<obs>1992 3.25 3515.3 290.4 </obs>
+<obs>1993 3.00 3583.6 255.1 </obs>
+<obs>1994 3.60 3617.0 203.2 </obs>
+<obs>1995 5.21 3780.7 163.8 </obs>
+</observations>
+</gretldata>

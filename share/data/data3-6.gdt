@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-6" frequency="1" startobs="1959" endobs="1994" type="time-series">
+<description>
+DATA3-6: Per capita disposable personal income (Yt) and personal
+     consumption expenditures (Ct) in the U.S. in constant 1992
+     dollars.
+     year = 1959-94, 36 observations
+     Ct   = Personal consumption expenditures in constant 1992 dollars
+            Range 7876 - 17152
+     Yt   = Per capita disposable personal income in constant 1992 
+            dollars, Range 8641 - 18320
+     Source: 1996 Economic Report of the President, Table B-27, Page 311
+     
+</description>
+<variables count="2">
+<variable name="Ct"
+ label="Personal consumption expenditures (1992 dollars)"/>
+<variable name="Yt"
+ label="Per capita disposable personal income (1992 dollars)"/>
+</variables>
+<observations count="36" labels="false">
+<obs>7876 8641 </obs>
+<obs>7926 8660 </obs>
+<obs>7954 8794 </obs>
+<obs>8220 9077 </obs>
+<obs>8434 9274 </obs>
+<obs>8817 9805 </obs>
+<obs>9257 10292 </obs>
+<obs>9674 10715 </obs>
+<obs>9854 11061 </obs>
+<obs>10313 11448 </obs>
+<obs>10593 11708 </obs>
+<obs>10717 12022 </obs>
+<obs>10975 12345 </obs>
+<obs>11508 12770 </obs>
+<obs>11950 13539 </obs>
+<obs>11756 13310 </obs>
+<obs>11899 13404 </obs>
+<obs>12446 13793 </obs>
+<obs>12846 14095 </obs>
+<obs>13258 14662 </obs>
+<obs>13417 14899 </obs>
+<obs>13216 14813 </obs>
+<obs>13245 15009 </obs>
+<obs>13270 14999 </obs>
+<obs>13829 15277 </obs>
+<obs>14415 16252 </obs>
+<obs>14954 16597 </obs>
+<obs>15409 16981 </obs>
+<obs>15740 17106 </obs>
+<obs>16211 17621 </obs>
+<obs>16430 17801 </obs>
+<obs>16532 17942 </obs>
+<obs>16249 17755 </obs>
+<obs>16520 18062 </obs>
+<obs>16810 18075 </obs>
+<obs>17152 18320 </obs>
+</observations>
+</gretldata>

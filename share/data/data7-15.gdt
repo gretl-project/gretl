@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-15" frequency="1" startobs="1" endobs="38" type="cross-section">
+<description>
+DATA7-15:  Data compiled by Scott Murch.
+    pvote     = proportion of vote for 1988 election of congressmen/women
+                elected before 1986 and is the dependent variable.  Data
+                are cross- sectional by individuals (Range 0.5 - 0.99).
+                Source: Politics in America.
+    pvote86   = proportion vote for 1986 election (0.55 - 0.88).
+    pvote84   = proportion vote for 1984 election (0.52 - 1.0).
+    vbush     = proportion of voters voting for Bush in 1988 Presidential
+                election in each district (Range 0.19 - 0.71).
+    terms     = number of previous terms in office (Range 3 - 13).
+    amtinc    = amount spent by the incumbent in the 1988 election
+                (in thousands), Range 65 - 1755.
+    amtchall  = amount spent by the challenger in the 1988 election
+                (in thousands), Range 0 - 1633.
+    resource  = amount raised by the incumbent for the 1988 election
+                (in thousands), Range 86 - 1731.
+    lcvrate   = environmental rating of the incumbent for 1988 as
+                determined by the League of Concervation Voters with 0
+                = worst and 100 = best, Range 6 - 94.
+                Source is Almanac of American Politics 1990.
+    demo      = dummy variable reflecting party affiliation.
+                Democrat = 1, Republican = 0.
+</description>
+<variables count="10">
+<variable name="pvote"
+ label="propn. of vote for incumbent"/>
+<variable name="pvote86"
+ label="propn. vote for 1986 election (0.55 - 0.88)."/>
+<variable name="pvote84"
+ label="propn. vote for 1984 election (0.52 - 1.0)."/>
+<variable name="vbush"
+ label="propn. voting for Bush in 1988 Pres. election"/>
+<variable name="terms"
+ label="number of previous terms in office (Range 3 - 13)."/>
+<variable name="amtinc"
+ label="$000s spent by incumbent in the 1988 election"/>
+<variable name="amtchall"
+ label="$000s spent by challenger in the 1988 election"/>
+<variable name="resource"
+ label="$000s raised by the incumbent for the 1988 election"/>
+<variable name="lcvrate"
+ label="environmental rating of incumbent for 1988"/>
+<variable name="demo"
+ label="party affiliation: Dem = 1, Rep = 0."/>
+</variables>
+<observations count="38" labels="false">
+<obs>0.63 0.67 0.62 0.43 3 252 8 256 56 1 </obs>
+<obs>0.71 0.76 1.00 0.50 5 638 7 916 81 1 </obs>
+<obs>0.99 0.70 0.61 0.51 5 659 0 752 69 1 </obs>
+<obs>0.73 0.74 0.68 0.35 3 351 50 450 88 1 </obs>
+<obs>0.68 0.67 0.67 0.46 7 269 15 429 88 1 </obs>
+<obs>0.67 0.60 0.60 0.29 9 1174 7 1153 94 1 </obs>
+<obs>0.73 0.70 0.70 0.42 8 410 0 504 88 1 </obs>
+<obs>0.86 0.84 0.62 0.44 13 173 0 116 94 1 </obs>
+<obs>0.71 0.74 0.70 0.40 4 269 95 386 94 1 </obs>
+<obs>0.67 0.70 0.65 0.49 7 521 25 577 81 1 </obs>
+<obs>0.79 0.78 0.71 0.44 6 252 69 318 88 1 </obs>
+<obs>0.70 0.71 0.67 0.46 3 193 89 279 75 1 </obs>
+<obs>0.64 0.66 0.62 0.43 6 140 100 150 94 1 </obs>
+<obs>0.72 0.88 0.63 0.34 7 191 15 345 88 1 </obs>
+<obs>0.85 0.76 0.72 0.32 13 67 0 86 88 1 </obs>
+<obs>0.70 0.65 0.63 0.49 3 409 0 528 81 1 </obs>
+<obs>0.68 0.64 0.55 0.44 3 398 17 893 88 1 </obs>
+<obs>0.76 0.76 0.76 0.26 5 114 0 120 81 1 </obs>
+<obs>0.85 0.85 0.87 0.19 13 65 4 109 75 1 </obs>
+<obs>0.60 0.63 0.52 0.46 3 460 382 437 56 1 </obs>
+<obs>0.72 0.70 0.71 0.34 4 481 10 488 63 1 </obs>
+<obs>0.67 0.69 0.61 0.50 10 457 20 493 63 1 </obs>
+<obs>0.63 0.60 0.60 0.49 3 227 149 226 75 1 </obs>
+<obs>0.54 0.57 0.57 0.51 13 532 218 504 75 1 </obs>
+<obs>0.60 0.64 0.70 0.47 3 218 218 480 81 1 </obs>
+<obs>0.63 0.72 0.73 0.59 5 492 103 390 6 0 </obs>
+<obs>0.71 0.60 0.72 0.59 5 206 5 216 19 0 </obs>
+<obs>0.50 0.72 0.67 0.54 7 1470 1633 1226 38 0 </obs>
+<obs>0.71 0.73 0.71 0.65 7 329 15 335 31 0 </obs>
+<obs>0.70 0.74 0.85 0.64 8 234 18 397 19 0 </obs>
+<obs>0.69 0.72 0.71 0.62 4 186 0 487 44 0 </obs>
+<obs>0.70 0.77 0.85 0.65 5 337 0 212 19 0 </obs>
+<obs>0.64 0.64 0.64 0.61 3 122 13 129 19 0 </obs>
+<obs>0.60 0.55 0.53 0.61 5 1755 248 1731 13 0 </obs>
+<obs>0.74 0.75 0.76 0.71 5 250 2 300 6 0 </obs>
+<obs>0.66 0.68 0.63 0.58 4 407 45 453 19 0 </obs>
+<obs>0.72 0.73 0.74 0.68 3 166 74 215 13 0 </obs>
+<obs>0.74 0.77 0.75 0.66 4 489 8 392 13 0 </obs>
+</observations>
+</gretldata>

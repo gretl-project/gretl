@@ -1,8 +1,0 @@
-price	Sale price in ($000s, Range 199.9 - 505)
-sqft	Living are in square feet (Range 1065 - 3000)
-bedrms  Number of bedrooms (Range 3 - 4)
-baths	Number of bathrooms (Range 1.75 - 3)
-pool	1 if the house has a swimming pool, 0 otherwise
-famroom 1 if the house has a family room, 0 otherwise
-firepl  1 if the house has a fireplace, 0 otherwise
-

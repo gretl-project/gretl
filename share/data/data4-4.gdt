@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-4" frequency="1" startobs="1" endobs="40" type="cross-section">
+<description>
+DATA4-4: Demand for bus travel and its determinants
+    All data are for the year 1988 for 40 cities across the U.S.
+    Data compiled by Sean Naughton
+    BUSTRAVL = Demand for urban tranportation by bus in thousands of 
+               passenger hours (Range 18.1 - 1310.3)
+    FARE = Bus fare in dollars (Range 0.5 - 1.5)
+    GASPRICE = Price of a gallon of gasoline, in $ (Range 0.79 - 1.03)
+    INCOME = Average income PER CAPITA (Range 12349 - 21886)
+    POP = Population of city in thousands (Range 167 - 7323.3)
+    DENSITY = Density of city in persons/sq. mile (Range 1551 - 24288)
+    LANDAREA = Land area of the city in sq. miles (Range 18.9 - 556.4)
+</description>
+<variables count="7">
+<variable name="BUSTRAVL"
+ label="Urban tranportation by bus (000s of passenger hours)"/>
+<variable name="FARE"
+ label="Bus fare ($, Range 0.5 - 1.5)"/>
+<variable name="GASPRICE"
+ label="Price of a gallon of gasoline ($)"/>
+<variable name="INCOME"
+ label="Average income per capita"/>
+<variable name="POP"
+ label="Population of city (thousands)"/>
+<variable name="DENSITY"
+ label="Density of city (persons/sq. mile)"/>
+<variable name="LANDAREA"
+ label="Land area of the city (sq. miles)"/>
+</variables>
+<observations count="40" labels="false">
+<obs>2073.0 0.85 0.88 17293 537.1 4099 131.0 </obs>
+<obs>2136.1 0.75 1.03 17768 787.0 9798 80.3 </obs>
+<obs>1878.8 0.60 0.91 17823 587.1 12438 47.2 </obs>
+<obs>937.5 1.00 0.91 15163 338.0 8070 41.8 </obs>
+<obs>7343.3 0.50 0.97 17480 3090.0 13547 228.1 </obs>
+<obs>837.9 0.85 0.88 15329 399.0 5110 78.1 </obs>
+<obs>1648.0 1.00 0.91 16141 561.8 7110 79.0 </obs>
+<obs>739.1 0.75 0.89 15326 585.1 3234 180.9 </obs>
+<obs>1070.7 1.50 0.89 17115 1142.4 3431 333.0 </obs>
+<obs>274.6 1.50 0.89 17117 486.5 2027 240.2 </obs>
+<obs>312.9 0.75 0.87 16127 198.7 4113 48.4 </obs>
+<obs>1879.1 1.00 0.94 17242 549.8 4975 110.6 </obs>
+<obs>1941.0 0.60 0.99 17340 1253.0 8913 135.6 </obs>
+<obs>2317.6 1.50 0.87 15108 1603.0 2885 556.4 </obs>
+<obs>471.4 1.05 0.93 15809 741.2 2105 352.0 </obs>
+<obs>594.3 0.70 0.79 16321 490.4 1551 316.3 </obs>
+<obs>7632.9 0.60 0.93 18027 3478.9 7486 464.7 </obs>
+<obs>510.1 0.60 0.93 18023 423.3 8508 49.8 </obs>
+<obs>630.6 0.60 0.93 12349 304.0 4997 60.0 </obs>
+<obs>1650.9 1.00 1.03 17886 377.2 10994 34.3 </obs>
+<obs>1618.3 0.50 0.86 16537 664.0 6702 95.8 </obs>
+<obs>2009.8 1.15 0.96 13019 368.0 6714 55.1 </obs>
+<obs>1562.4 1.15 0.96 13019 265.0 5144 52.4 </obs>
+<obs>1139.4 0.60 0.88 13130 572.0 2832 199.4 </obs>
+<obs>13103.0 1.00 1.00 20513 7323.3 24288 301.5 </obs>
+<obs>3739.6 1.35 0.92 17409 1760.2 12944 136.0 </obs>
+<obs>525.7 0.75 0.91 15944 991.6 3059 324.0 </obs>
+<obs>2385.8 1.00 0.89 15207 396.6 8147 55.4 </obs>
+<obs>1698.5 1.15 0.93 15409 387.0 3751 103.3 </obs>
+<obs>544.0 1.00 0.87 17743 167.0 8309 18.9 </obs>
+<obs>1769.1 0.85 0.81 16309 495.9 8077 61.4 </obs>
+<obs>1065.0 0.50 0.85 15092 794.0 2318 262.7 </obs>
+<obs>803.1 1.25 0.98 18014 1027.2 3208 320.0 </obs>
+<obs>1616.7 0.75 0.90 21886 753.6 16240 46.4 </obs>
+<obs>146.5 0.75 0.90 20744 376.0 6988 53.9 </obs>
+<obs>18.1 0.75 0.90 21313 698.1 4422 158.0 </obs>
+<obs>2056.1 1.00 0.88 17539 548.3 3790 144.6 </obs>
+<obs>470.1 0.75 0.92 17633 295.7 3497 84.4 </obs>
+<obs>242.5 0.75 0.92 17643 259.8 4675 55.5 </obs>
+<obs>3933.5 0.60 0.96 15522 693.6 11068 62.7 </obs>
+</observations>
+</gretldata>

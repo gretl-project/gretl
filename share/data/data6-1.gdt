@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data6-1" frequency="1" startobs="1" endobs="20" type="cross-section">
+<description>
+DATA6-1:  Data on cost function
+    Source:  W.A. Spurr and C.P.Bonini, STATISTICAL ANALYSIS FOR BUSINESS
+    DECISIONS, Irwin, 1973, Page 535.
+    UNITCOST = Cost per unit dollars (Range 3.65 - 6.62)
+    OUTPUT   = Index of output (Range 50 - 104)
+    INPCOST  = Index of input costs (Range 80 - 150)
+</description>
+<variables count="3">
+<variable name="UNITCOST"
+ label="Cost per unit dollars (Range 3.65 - 6.62)"/>
+<variable name="OUTPUT"
+ label="Index of output (Range 50 - 104)"/>
+<variable name="INPCOST"
+ label="Index of input costs (Range 80 - 150)"/>
+</variables>
+<observations count="20" labels="false">
+<obs>3.65 85 80 </obs>
+<obs>4.22 78 93 </obs>
+<obs>4.29 82 107 </obs>
+<obs>5.43 64 115 </obs>
+<obs>6.62 50 130 </obs>
+<obs>5.71 62 128 </obs>
+<obs>5.09 70 116 </obs>
+<obs>3.99 90 92 </obs>
+<obs>4.08 94 94 </obs>
+<obs>4.38 100 110 </obs>
+<obs>4.28 104 115 </obs>
+<obs>4.42 82 117 </obs>
+<obs>5.11 75 128 </obs>
+<obs>4.88 84 134 </obs>
+<obs>4.99 86 135 </obs>
+<obs>4.57 90 135 </obs>
+<obs>4.84 94 139 </obs>
+<obs>5.16 80 142 </obs>
+<obs>5.67 72 147 </obs>
+<obs>6.26 60 150 </obs>
+</observations>
+</gretldata>

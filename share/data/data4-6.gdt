@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-6" frequency="1" startobs="1" endobs="58" type="cross-section">
+<description>
+DATA4-6:  Data on poverty rates and determinants across California
+    counties.  The following was extracted from the County and City Data
+    Book (1994) for California Counties by Kalena Cortes.
+    povrate  =  percentage of families with income below poverty level
+                (Range 3 - 20.8)
+    urb      =  percentage of urban population (Range 2.7 - 94.3)
+    famsize  =  persons per household (Range 2.29 - 3.26)
+    unemp    =  percentage unemployment rate (Range 4 - 21.3)
+    highschl =  percentage of the population (25 years and over) that 
+                had only high school education (Range 43 - 68.5)
+    college  =  percentage of the population (25 years and over) that
+                completed four years of college or higher (Range 9 - 44)
+    medinc   =  median family income in thousands of dollars
+                (Range 24.364 - 59.147)
+    *)
+povrate urb famsize unemp highschl college medinc ;
+1 1 58
+BYOBS
+</description>
+<variables count="7">
+<variable name="povrate"
+ label="percentage of families with income below poverty level"/>
+<variable name="urb"
+ label="percentage of urban population"/>
+<variable name="famsize"
+ label="persons per household"/>
+<variable name="unemp"
+ label="percentage unemployment rate"/>
+<variable name="highschl"
+ label="percent of pop. &gt;= 25 years having only high school education"/>
+<variable name="college"
+ label="percent that completed four years of college or higher"/>
+<variable name="medinc"
+ label="median family income ($000s)"/>
+</variables>
+<observations count="58" labels="false">
+<obs>8.1 18.3 2.59 5.3 52.6 28.8 45.037 </obs>
+<obs>16.7 4.2 2.47 8.2 63.6 24.0 29.276 </obs>
+<obs>6.3 65.0 2.41 7.2 68.5 14.0 35.062 </obs>
+<obs>12.2 31.0 2.48 9.4 58.1 19.5 28.314 </obs>
+<obs>7.5 70.8 2.50 10.5 67.2 14.4 32.211 </obs>
+<obs>10.4 31.6 2.84 15.7 51.8 11.1 28.230 </obs>
+<obs>5.5 28.1 2.64 5.6 54.9 31.6 51.651 </obs>
+<obs>12.7 58.5 2.63 12.5 60.9 10.0 26.992 </obs>
+<obs>5.8 61.0 2.66 6.1 65.1 20.8 39.823 </obs>
+<obs>16.8 37.1 2.96 12.6 49.3 16.9 29.970 </obs>
+<obs>14.1 19.5 2.77 15.5 57.5 9.4 27.216 </obs>
+<obs>12.8 12.4 2.49 8.8 60.5 20.0 30.357 </obs>
+<obs>20.8 40.0 3.26 21.3 43.5 9.7 25.147 </obs>
+<obs>9.2 2.7 2.35 8.8 68.2 13.5 30.460 </obs>
+<obs>13.7 45.8 2.92 11.8 54.3 13.3 31.714 </obs>
+<obs>15.0 45.6 3.08 12.8 56.6 9.0 27.614 </obs>
+<obs>12.3 47.9 2.38 11.1 60.2 10.7 26.563 </obs>
+<obs>10.4 29.7 2.66 10.0 61.1 11.7 31.803 </obs>
+<obs>11.6 21.1 2.91 8.0 46.7 23.3 39.035 </obs>
+<obs>13.1 56.9 3.05 14.0 51.7 11.7 30.035 </obs>
+<obs>3.0 5.0 2.33 4.0 47.9 44.0 59.147 </obs>
+<obs>10.7 38.1 2.42 6.3 61.0 16.8 29.468 </obs>
+<obs>11.0 22.4 2.57 10.9 60.9 17.8 31.276 </obs>
+<obs>15.4 40.5 3.17 14.6 51.1 12.0 28.269 </obs>
+<obs>11.6 14.0 2.49 12.4 61.0 11.2 27.407 </obs>
+<obs>6.7 16.1 2.48 12.5 65.9 21.9 35.932 </obs>
+<obs>8.5 26.8 2.96 10.9 51.4 21.5 36.223 </obs>
+<obs>4.6 14.1 2.54 5.9 58.4 22.3 42.789 </obs>
+<obs>5.8 61.1 2.51 7.0 64.2 22.1 36.942 </obs>
+<obs>5.2 28.6 2.87 4.8 53.4 27.8 51.167 </obs>
+<obs>5.3 59.6 2.66 6.8 62.4 22.7 42.805 </obs>
+<obs>9.8 19.4 2.41 12.0 67.6 15.1 29.967 </obs>
+<obs>8.4 94.3 2.85 10.7 59.5 14.6 37.694 </obs>
+<obs>9.8 39.6 2.58 6.3 59.2 23.0 37.841 </obs>
+<obs>7.3 53.5 3.15 17.2 54.0 14.4 39.637 </obs>
+<obs>10.3 71.4 2.97 8.0 60.5 14.9 36.977 </obs>
+<obs>8.1 39.7 2.69 6.1 56.6 25.3 39.798 </obs>
+<obs>9.7 7.4 2.29 5.6 43.0 35.0 40.561 </obs>
+<obs>12.0 45.1 2.94 12.0 55.4 13.2 34.701 </obs>
+<obs>6.8 41.9 2.53 5.8 60.4 22.9 37.086 </obs>
+<obs>4.3 13.0 2.64 4.2 52.8 31.3 53.430 </obs>
+<obs>7.4 25.7 2.73 6.0 53.4 26.6 41.289 </obs>
+<obs>5.0 18.0 2.81 5.5 49.4 32.6 53.670 </obs>
+<obs>6.2 22.8 2.66 8.0 52.2 29.7 43.130 </obs>
+<obs>11.0 36.3 2.58 10.3 64.7 13.7 30.332 </obs>
+<obs>5.7 6.2 2.45 10.5 59.6 15.9 29.911 </obs>
+<obs>11.6 11.5 2.48 12.5 63.2 14.2 26.073 </obs>
+<obs>6.0 53.9 2.88 7.0 64.0 18.7 42.392 </obs>
+<obs>5.2 33.8 2.55 5.7 59.9 24.5 41.961 </obs>
+<obs>11.4 48.6 2.91 14.3 55.4 13.0 32.923 </obs>
+<obs>12.2 33.0 2.75 17.6 56.9 15.4 31.842 </obs>
+<obs>12.6 33.5 2.60 12.4 62.0 10.2 25.946 </obs>
+<obs>15.1 11.7 2.49 14.5 61.3 12.9 25.009 </obs>
+<obs>18.0 34.7 3.12 17.1 48.4 11.8 26.697 </obs>
+<obs>6.9 49.6 2.46 8.3 65.3 14.7 31.464 </obs>
+<obs>5.0 29.7 3.02 7.0 56.4 23.0 50.091 </obs>
+<obs>9.8 27.7 2.63 7.2 48.8 30.3 36.866 </obs>
+<obs>16.0 22.4 2.85 14.1 59.0 9.5 24.364 </obs>
+</observations>
+</gretldata>

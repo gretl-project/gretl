@@ -1,0 +1,69 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data2-3" frequency="1" startobs="1959" endobs="1995" type="time-series">
+<description>
+DATA2-3:  Annual data for the U.S. on unemployment and inflation
+    rates and wage growth.
+    Source: 1996 Economic Report of the President.
+    year   =  1959-95, 37 observations
+    unemp  =  Civilian unemployment rate (%), Table B-38,
+              Range 3.5 - 9.7.
+    cpi    =  Consumer price index (1982-84 = 100), Table B-56,
+              Range 29.1 - 152.4.
+    infl   =  Percent change in CPI (inflation rate) calculated
+              as 100*[CPI(t) - CPI(t-1)]/CPI(t-1), Range 0.69 - 13.5.
+    wggr   =  Percent change in average weekly earnings, in current
+              dollars, Table B-43, Range 1.9 - 8.5.
+</description>
+<variables count="5">
+<variable name="year"/>
+<variable name="unemp"
+ label="Civilian unemployment rate (%)"/>
+<variable name="cpi"
+ label="Consumer price index (1982-84 = 100)"/>
+<variable name="infl"
+ label="Percent change in CPI (inflation rate)"/>
+<variable name="wggr"
+ label="Percent change in avg weekly earnings (current dollars)"/>
+</variables>
+<observations count="37" labels="false">
+<obs>1959 5.2 29.1 0.69 4.9 </obs>
+<obs>1960 5.4 29.6 1.72 2.4 </obs>
+<obs>1961 6.4 29.9 1.01 2.4 </obs>
+<obs>1962 5.2 30.2 1.00 4.0 </obs>
+<obs>1963 5.7 30.6 1.32 3.0 </obs>
+<obs>1964 5.2 31.0 1.31 3.2 </obs>
+<obs>1965 4.5 31.5 1.61 4.5 </obs>
+<obs>1966 3.8 32.4 2.86 3.5 </obs>
+<obs>1967 3.8 33.4 3.09 3.1 </obs>
+<obs>1968 3.6 34.8 4.19 5.8 </obs>
+<obs>1969 3.5 36.7 5.46 6.4 </obs>
+<obs>1970 4.9 38.8 5.72 4.6 </obs>
+<obs>1971 5.9 40.5 4.38 6.2 </obs>
+<obs>1972 5.6 41.8 3.21 7.5 </obs>
+<obs>1973 4.9 44.4 6.22 6.2 </obs>
+<obs>1974 5.6 49.3 11.04 6.4 </obs>
+<obs>1975 8.5 53.8 9.13 5.7 </obs>
+<obs>1976 7.7 56.9 5.76 7.3 </obs>
+<obs>1977 7.1 60.6 6.50 7.7 </obs>
+<obs>1978 6.1 65.2 7.59 7.8 </obs>
+<obs>1979 5.8 72.6 11.35 8.0 </obs>
+<obs>1980 7.1 82.4 13.50 6.9 </obs>
+<obs>1981 7.6 90.9 10.32 8.5 </obs>
+<obs>1982 9.7 96.5 6.16 4.7 </obs>
+<obs>1983 9.6 99.6 3.21 5.0 </obs>
+<obs>1984 7.5 103.9 4.32 4.3 </obs>
+<obs>1985 7.2 107.6 3.56 2.1 </obs>
+<obs>1986 7.0 109.6 1.86 1.9 </obs>
+<obs>1987 6.2 113.6 3.65 2.5 </obs>
+<obs>1988 5.5 118.3 4.14 3.0 </obs>
+<obs>1989 5.3 124.0 4.82 3.8 </obs>
+<obs>1990 5.5 130.7 5.40 3.3 </obs>
+<obs>1991 6.7 136.2 4.21 2.5 </obs>
+<obs>1992 7.4 140.3 3.01 2.7 </obs>
+<obs>1993 6.8 144.5 2.99 2.8 </obs>
+<obs>1994 6.1 148.2 2.56 3.4 </obs>
+<obs>1995 5.6 152.4 2.83 2.4 </obs>
+</observations>
+</gretldata>

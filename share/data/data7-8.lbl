@@ -1,9 +1,0 @@
-grth   log of change in income 1960-85 
-y60    log of income in 1960
-inv    average investment to GNP ratio over 60-85
-pop    measure of population growth in logarithms
-school measure of percentage population in school
-dn     dummy for non oil
-di     dummy for industrialised
-doecd  dummy for OECD
-

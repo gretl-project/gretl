@@ -1,0 +1,68 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data6-5" frequency="1" startobs="1959" endobs="1989" type="time-series">
+<description>
+DATA6-5: This is time series data from 1959 to 1989 measuring Oregon's
+    Total Softwood harvest.  All data are entered on a yearly basis.
+    Compiled by Anthony Hazen.
+    HARVEST = Total Softwood Timber harvested from Oregon in a given year.
+              Data are in billion board feet. (Range 5.1212 - 8.743)
+    EXPORTS = Volume of timber exports to foriegn destinations measured
+              in 100 million board feet. (1.469 - 13.874)
+    HOUSTART = Total housing starts in the U.S, in millions.
+               (Range 1.072 - 2.379)
+    INDPROD = Index of Industrial Production for paper and wood products.
+              (Range 4.75 - 15.57)
+    TIMBPRIC = Stumpage prices for the Pacific Northwest.  Prices are
+          measured in dollars per 1000 board feet. (Range 2.48 - 43.22)
+    PRODPRIC = Producer Price Index for all commodities. (Range 3.16 - 10.87)
+</description>
+<variables count="6">
+<variable name="HARVEST"
+ label="Total Softwood Timber harvested from Oregon"/>
+<variable name="EXPORTS"
+ label="Volume of timber exports to foreign destinations"/>
+<variable name="HOUSTART"
+ label="Total housing starts in the U.S, in millions"/>
+<variable name="INDPROD"
+ label="Index of Industrial Production, paper and wood products"/>
+<variable name="TIMBPRIC"
+ label="Stumpage prices for the Pacific Northwest"/>
+<variable name="PRODPRIC"
+ label="Producer Price Index for all commodities"/>
+</variables>
+<observations count="31" labels="false">
+<obs>5.1212 1.757 1.554 4.75 3.68 3.16 </obs>
+<obs>5.1599 1.836 1.296 4.93 3.20 3.17 </obs>
+<obs>5.6790 1.877 1.365 5.52 2.76 3.16 </obs>
+<obs>6.3289 1.469 1.493 5.52 2.48 3.17 </obs>
+<obs>6.7946 2.974 1.635 5.84 2.80 3.16 </obs>
+<obs>7.7419 3.712 1.561 6.20 3.81 3.16 </obs>
+<obs>8.0178 2.829 1.510 6.66 4.26 3.23 </obs>
+<obs>7.8653 3.886 1.196 7.19 5.00 3.33 </obs>
+<obs>7.7140 5.023 1.322 7.20 4.17 3.34 </obs>
+<obs>7.4246 6.526 1.545 7.59 6.73 3.42 </obs>
+<obs>7.8590 5.615 1.500 8.19 8.22 3.56 </obs>
+<obs>7.1660 6.369 1.469 8.10 4.19 3.69 </obs>
+<obs>8.0470 5.174 2.085 8.45 4.91 3.81 </obs>
+<obs>8.4260 7.299 2.379 9.19 7.17 3.98 </obs>
+<obs>8.3740 8.059 2.058 9.84 13.81 4.50 </obs>
+<obs>7.5510 7.658 1.353 9.76 20.24 5.35 </obs>
+<obs>7.1260 7.981 1.171 8.48 16.95 5.84 </obs>
+<obs>7.9290 9.441 1.548 9.64 17.62 6.11 </obs>
+<obs>8.1020 8.887 1.990 10.00 22.59 6.49 </obs>
+<obs>8.0150 9.314 2.023 10.68 25.03 6.99 </obs>
+<obs>7.6940 9.836 1.749 11.08 34.43 7.87 </obs>
+<obs>6.6390 9.327 1.313 11.06 43.22 8.98 </obs>
+<obs>5.6950 6.713 1.100 11.24 35.02 9.80 </obs>
+<obs>5.7580 9.709 1.072 10.04 11.82 10.00 </obs>
+<obs>7.4640 8.517 1.713 11.98 16.16 10.13 </obs>
+<obs>7.5500 9.331 1.756 12.72 13.29 10.37 </obs>
+<obs>8.1270 11.125 1.745 12.76 12.62 10.32 </obs>
+<obs>8.7430 10.415 1.805 13.65 16.07 10.02 </obs>
+<obs>8.2150 11.041 1.621 14.44 10.02 10.28 </obs>
+<obs>8.6150 13.874 1.488 15.03 25.60 10.69 </obs>
+<obs>8.1860 12.572 1.550 15.57 38.98 10.87 </obs>
+</observations>
+</gretldata>

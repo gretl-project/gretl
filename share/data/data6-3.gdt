@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data6-3" frequency="1" startobs="1948" endobs="1989" type="time-series">
+<description>
+DATA6-3:  United Kingdom Annual data.
+    Cons = Per capita consumption expenditure in British pounds
+           (Range 1858 - 4744)
+    DI   = Per capita personal disposable income in British pounds
+           (Range 1875 - 5084)
+    Source: Economic Trends, Annual Supplement 1991 Edition.
+    A publication of the Government Statistical Service, London, UK.
+</description>
+<variables count="3">
+<variable name="Year"/>
+<variable name="Cons"
+ label="Per capita consumption (British pounds)"/>
+<variable name="DI"
+ label="Per capita personal disposable income (pounds)"/>
+</variables>
+<observations count="42" labels="false">
+<obs>1948 1858 1875 </obs>
+<obs>1949 1877 1909 </obs>
+<obs>1950 1917 1957 </obs>
+<obs>1951 1892 1932 </obs>
+<obs>1952 1887 1964 </obs>
+<obs>1953 1963 2051 </obs>
+<obs>1954 2037 2110 </obs>
+<obs>1955 2117 2201 </obs>
+<obs>1956 2126 2248 </obs>
+<obs>1957 2160 2273 </obs>
+<obs>1958 2203 2298 </obs>
+<obs>1959 2285 2402 </obs>
+<obs>1960 2354 2538 </obs>
+<obs>1961 2386 2623 </obs>
+<obs>1962 2418 2628 </obs>
+<obs>1963 2513 2724 </obs>
+<obs>1964 2573 2820 </obs>
+<obs>1965 2595 2859 </obs>
+<obs>1966 2627 2907 </obs>
+<obs>1967 2676 2934 </obs>
+<obs>1968 2738 2971 </obs>
+<obs>1969 2742 2986 </obs>
+<obs>1970 2813 3093 </obs>
+<obs>1971 2889 3117 </obs>
+<obs>1972 3062 3369 </obs>
+<obs>1973 3216 3576 </obs>
+<obs>1974 3169 3547 </obs>
+<obs>1975 3157 3564 </obs>
+<obs>1976 3171 3551 </obs>
+<obs>1977 3159 3476 </obs>
+<obs>1978 3338 3736 </obs>
+<obs>1979 3478 3947 </obs>
+<obs>1980 3477 4003 </obs>
+<obs>1981 3478 3975 </obs>
+<obs>1982 3516 3969 </obs>
+<obs>1983 3676 4076 </obs>
+<obs>1984 3727 4165 </obs>
+<obs>1985 3849 4263 </obs>
+<obs>1986 4082 4444 </obs>
+<obs>1987 4286 4589 </obs>
+<obs>1988 4584 4847 </obs>
+<obs>1989 4744 5084 </obs>
+</observations>
+</gretldata>

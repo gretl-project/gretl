@@ -1,8 +1,0 @@
-volume  NYSE reported share volume (millions of shares)
-sp500   S&P common stock price index
-tbill   U.S. Treasury bill rate (3 month. percent)
-long    U.S. Treasury bond yield (10 + yrs)
-gdp     gross domestic product ($ billions)
-cconf   consumer confidence index, 1985=100
-cexpect consumer expectations index, 1985=100
-csent UMich index of consumer sentiment, Feb 1966=100

@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data6-2" frequency="1" startobs="1961" endobs="1994" type="time-series">
+<description>
+DATA6-2:  Data on the white tuna (Thunnus Alalunga) fishery production
+    in the Basque region of Spain.  Data compiled by Felix Telleria.
+    catch  = total catch in thousands of tonnes, Range 16.608 - 51.8
+    effort = total days of fishing in thousands, Range 10.31185 - 61.24754
+</description>
+<variables count="3">
+<variable name="year"/>
+<variable name="catch"
+ label="total catch, thousands of tonnes, Range 16.6 - 51.8"/>
+<variable name="effort"
+ label="total days of fishing, thousands, Range 10.3 - 61.2"/>
+</variables>
+<observations count="34" labels="false">
+<obs>1961 41.400 45.03512 </obs>
+<obs>1962 51.800 50.05673 </obs>
+<obs>1963 44.300 44.30000 </obs>
+<obs>1964 48.000 44.54000 </obs>
+<obs>1965 44.826 59.97878 </obs>
+<obs>1966 39.208 45.37687 </obs>
+<obs>1967 48.278 46.60833 </obs>
+<obs>1968 37.819 52.24526 </obs>
+<obs>1969 31.992 54.11967 </obs>
+<obs>1970 29.894 35.60816 </obs>
+<obs>1971 39.406 61.24754 </obs>
+<obs>1972 34.279 54.76161 </obs>
+<obs>1973 27.958 46.56643 </obs>
+<obs>1974 36.407 28.51477 </obs>
+<obs>1975 27.827 27.16532 </obs>
+<obs>1976 33.710 38.83327 </obs>
+<obs>1977 32.888 22.07106 </obs>
+<obs>1978 35.804 31.36205 </obs>
+<obs>1979 38.950 25.68735 </obs>
+<obs>1980 29.157 19.38004 </obs>
+<obs>1981 23.748 21.78884 </obs>
+<obs>1982 28.333 20.10470 </obs>
+<obs>1983 31.945 27.18085 </obs>
+<obs>1984 18.434 17.92367 </obs>
+<obs>1985 22.531 18.97028 </obs>
+<obs>1986 25.587 22.37778 </obs>
+<obs>1987 29.777 16.89844 </obs>
+<obs>1988 27.906 20.19613 </obs>
+<obs>1989 25.757 16.42839 </obs>
+<obs>1990 24.503 15.57284 </obs>
+<obs>1991 16.608 17.14402 </obs>
+<obs>1992 18.162 15.78574 </obs>
+<obs>1993 18.371 12.12064 </obs>
+<obs>1994 16.993 10.31185 </obs>
+</observations>
+</gretldata>

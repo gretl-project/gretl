@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-12" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA4-12:
+  This data set was compiled by Marc Selznick.  It relates the
+  mortality rate in a state to a number of socio-economic variables. 
+  Data are for U.S.  States and D.C.  All variables are in per-capita
+  amounts or represent Proportions of state populations.
+  MORT = Total Mortality Rate per 100,000 Population, by State 
+         National Center For Health Statistics. "Advance Report of
+         Final Mortality Statistics, 1985." August 28, 1987. Table
+         17. Pages 42-43. (Range 396.2 - 1120.5).
+  INCC = Per-Capita Income by State, in Dollars  Pennsylvania
+         Department of Labor and Industry Annual 1986. Table 20.
+         (Range 9187 - 18187).
+  POV  = Proportion of Families Living Below the Poverty Line by State 
+         Statistical Abstract of the United States 1990. Table 742.
+         (Range 0.079 - 0.239).
+  EDU1 = Proportion of Population Completing 4 Years of High School by
+         State  U.S. Department of Education, "Digest of Education
+         Statistics, 1987." Table 10. (Range 0.531 - 0.825).
+  EDU2 = Proportion of Population Completing 4 or More Years of College
+         by State  U.S. Department of Education, "Digest of
+         Education Statistics, 1987." Table 10. (Range 0.104 - 0.275).
+  ALCC = Per-Capita Consumption of Alcohol by State, in Gallons,
+         Metropolitan Life Insurance Company, "Alcohol Use in the U.S."
+         January- March, 1987.  Page 22. (Range 1.53 - 5.34).
+  TOBC = Per-Capita Consumption of Cigarettes by State, in Packs  Tobacco
+         Institute Annual 1987. "Tax Burden on Tobacco." Table 11.
+         (Range 66.5 - 201.1).
+  HEXC = Per-Capita Health Care Expenditures by State, in Dollars (Personal,
+         State, and Federal Spending)  Almanac of the 50 States,
+         1987. Pages 9-357. Various Tables (By State).
+         (Range 1203 - 3872).
+  PHYS = Physicians per 100,000 Population by State  Health
+         Insurance Association of America, "Source Book of Health
+         Insurance Data, 1986-7." Table 7.1. (Range 117 - 552).
+  URB  = Proportion of Population Living in Urban Areas by State 
+         Statistical Abstract of the United States 1990. Page xii.
+         State Rankings Section. (Range 0.2 - 1)
+  AGED = Proportion of Population over the Age of 65, by State  U.S.
+         Department of Commerce. "Current Population Reports, 1987."
+         Page 86. Table 8.  (Range 0.034 0.177).
+</description>
+<variables count="11">
+<variable name="MORT"
+ label="Total Mortality Rate per 100,000 Population"/>
+<variable name="INCC"
+ label="Per-Capita Income by State, in Dollars"/>
+<variable name="POV"
+ label="Propn. of Families Living Below the Poverty Line"/>
+<variable name="EDU1"
+ label="Propn. of Population Completing 4 Years of High School"/>
+<variable name="EDU2"
+ label="Propn. of Population Completing 4 or More Years of College"/>
+<variable name="ALCC"
+ label="Per-Capita Consumption of Alcohol by State (gallons)"/>
+<variable name="TOBC"
+ label="Per-Capita Consumption of Cigarettes by State (packs)"/>
+<variable name="HEXC"
+ label="Per-Capita Health Care Expenditures by State (dollars)"/>
+<variable name="PHYS"
+ label="Physicians per 100,000 Population"/>
+<variable name="URB"
+ label="Propn. of Population Living in Urban Areas"/>
+<variable name="AGED"
+ label="Propn. of Population over the Age of 65"/>
+</variables>
+<observations count="51" labels="true">
+<obs label="AL">934.9 10673 0.189 0.565 0.122 1.90 114.5 1620 142 0.675 0.122 </obs>
+<obs label="AK">396.2 18187 0.107 0.825 0.211 3.86 128.9 1667 127 0.417 0.034 </obs>
+<obs label="AZ">771.5 12795 0.132 0.724 0.174 3.08 107.1 1473 184 0.764 0.123 </obs>
+<obs label="AR">1022.8 10476 0.190 0.555 0.108 1.78 125.8 1552 136 0.397 0.149 </obs>
+<obs label="CA">766.0 16065 0.114 0.735 0.196 3.19 102.8 2069 235 0.957 0.106 </obs>
+<obs label="CO">625.7 14812 0.101 0.786 0.230 3.09 112.4 1664 196 0.817 0.090 </obs>
+<obs label="CT">888.4 18089 0.080 0.703 0.207 2.80 111.0 1945 275 0.926 0.133 </obs>
+<obs label="DE">880.2 14272 0.119 0.686 0.175 3.17 144.5 1691 185 0.659 0.114 </obs>
+<obs label="DC">1120.5 18168 0.186 0.671 0.275 5.34 122.1 3872 552 1.000 0.122 </obs>
+<obs label="FL">1065.6 13742 0.135 0.667 0.149 3.12 124.2 1886 191 0.908 0.177 </obs>
+<obs label="GA">814.3 12543 0.166 0.564 0.146 2.48 128.8 1755 159 0.648 0.100 </obs>
+<obs label="HI">554.2 13814 0.099 0.738 0.203 2.97 69.8 1693 212 0.763 0.097 </obs>
+<obs label="ID">708.7 11120 0.126 0.737 0.158 2.43 100.7 1288 118 0.200 0.112 </obs>
+<obs label="IL">886.5 14738 0.110 0.665 0.162 2.77 121.6 1864 199 0.825 0.120 </obs>
+<obs label="IN">876.3 12446 0.097 0.664 0.125 2.19 135.3 1625 142 0.681 0.119 </obs>
+<obs label="IA">966.1 12594 0.101 0.715 0.139 2.09 109.4 1758 136 0.434 0.145 </obs>
+<obs label="KS">900.3 13775 0.101 0.733 0.170 1.95 115.7 1820 162 0.534 0.134 </obs>
+<obs label="KY">935.0 10824 0.176 0.531 0.111 1.85 182.4 1404 149 0.461 0.120 </obs>
+<obs label="LA">825.4 11274 0.186 0.577 0.139 2.63 125.0 1716 173 0.692 0.101 </obs>
+<obs label="ME">979.4 11887 0.130 0.687 0.144 2.57 127.9 1641 165 0.361 0.133 </obs>
+<obs label="MD">833.6 15864 0.098 0.674 0.204 2.84 121.9 1732 303 0.929 0.106 </obs>
+<obs label="MA">955.4 16380 0.096 0.722 0.200 3.04 117.2 2289 300 0.906 0.136 </obs>
+<obs label="MI">866.2 13608 0.104 0.680 0.143 2.60 126.6 1996 174 0.799 0.114 </obs>
+<obs label="MN">830.2 14087 0.095 0.731 0.174 2.68 113.0 1888 203 0.666 0.125 </obs>
+<obs label="MS">944.6 9187 0.239 0.548 0.123 2.06 115.3 1519 117 0.305 0.120 </obs>
+<obs label="MO">1000.4 13244 0.122 0.635 0.139 2.27 129.2 1858 179 0.660 0.137 </obs>
+<obs label="MT">815.0 10974 0.123 0.744 0.175 2.95 103.6 1494 136 0.242 0.121 </obs>
+<obs label="NE">928.5 13281 0.107 0.734 0.155 2.41 105.1 1766 156 0.476 0.136 </obs>
+<obs label="NV">772.3 14488 0.087 0.755 0.144 5.19 146.7 1946 155 0.826 0.103 </obs>
+<obs label="NH">849.1 14964 0.085 0.723 0.182 4.91 201.1 1417 179 0.563 0.116 </obs>
+<obs label="NJ">940.7 17211 0.095 0.674 0.183 2.83 116.9 1702 219 1.000 0.129 </obs>
+<obs label="NM">672.8 10914 0.176 0.689 0.176 2.75 88.0 1385 161 0.489 0.098 </obs>
+<obs label="NY">969.9 16050 0.134 0.663 0.179 2.67 115.9 2412 287 0.912 0.128 </obs>
+<obs label="NC">846.3 11617 0.148 0.548 0.132 2.13 156.3 1380 168 0.554 0.115 </obs>
+<obs label="ND">821.6 12052 0.126 0.664 0.148 2.55 103.2 1872 157 0.384 0.130 </obs>
+<obs label="OH">920.6 13228 0.103 0.670 0.137 2.26 126.7 1833 182 0.789 0.123 </obs>
+<obs label="OK">900.8 12232 0.134 0.660 0.151 1.91 124.2 1644 138 0.588 0.124 </obs>
+<obs label="OR">889.7 12622 0.107 0.756 0.179 2.63 118.6 1654 189 0.677 0.134 </obs>
+<obs label="PA">1043.9 13437 0.105 0.647 0.136 2.25 115.8 1894 214 0.848 0.146 </obs>
+<obs label="RI">997.6 13906 0.103 0.611 0.154 2.92 133.4 2054 223 0.926 0.146 </obs>
+<obs label="SC">812.6 10586 0.166 0.537 0.134 2.50 125.4 1341 146 0.605 0.105 </obs>
+<obs label="SD">932.6 11161 0.169 0.679 0.140 2.33 104.4 1617 130 0.291 0.139 </obs>
+<obs label="TN">906.8 11243 0.165 0.562 0.126 1.95 128.7 1671 176 0.671 0.123 </obs>
+<obs label="TX">722.2 13483 0.147 0.626 0.169 2.82 115.9 1577 160 0.813 0.095 </obs>
+<obs label="UT">550.1 10493 0.103 0.800 0.199 1.53 66.5 1203 171 0.774 0.080 </obs>
+<obs label="VT">871.4 12117 0.121 0.710 0.190 3.12 144.5 1481 232 0.232 0.119 </obs>
+<obs label="VA">794.1 14542 0.118 0.624 0.191 2.55 134.6 1498 194 0.722 0.105 </obs>
+<obs label="WA">782.8 13876 0.098 0.776 0.190 2.71 96.5 1660 196 0.816 0.117 </obs>
+<obs label="WV">1003.8 10193 0.150 0.560 0.104 1.68 109.1 1542 156 0.365 0.136 </obs>
+<obs label="WI">868.8 13154 0.087 0.696 0.148 3.19 107.0 1862 172 0.665 0.130 </obs>
+<obs label="WY">642.9 13223 0.079 0.779 0.172 2.86 125.7 1453 125 0.292 0.084 </obs>
+</observations>
+</gretldata>

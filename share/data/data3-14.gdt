@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-14" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA3-14:  Aggregate personal income and expenditures on domestic travel,
+     both measured in billions of dollars (1993), for U.S. States
+     and D.C.  Source: 1995 Statistical Abstract of the U.S. 
+     Travel expenditures, Table 428, Page 266 (Range 0.708 - 42.48)
+     Personal Income, Table 712, Page 460 (Range 9.3 - 683.5)
+</description>
+<variables count="2">
+<variable name="exptrav"
+ label="Aggregate personal income (billions of 1993 dollars)"/>
+<variable name="income"
+ label="Aggregate personal expenditures on domestic travel"/>
+</variables>
+<observations count="51" labels="false">
+<obs>3.682 71.6 </obs>
+<obs>1.085 13.8 </obs>
+<obs>5.525 71.3 </obs>
+<obs>2.745 38.8 </obs>
+<obs>42.480 683.5 </obs>
+<obs>6.122 76.6 </obs>
+<obs>3.458 92.3 </obs>
+<obs>0.836 15.3 </obs>
+<obs>3.169 17.1 </obs>
+<obs>28.629 283.4 </obs>
+<obs>9.186 132.9 </obs>
+<obs>5.866 27.4 </obs>
+<obs>1.462 19.3 </obs>
+<obs>13.804 263.6 </obs>
+<obs>4.220 109.6 </obs>
+<obs>2.746 51.6 </obs>
+<obs>2.457 50.3 </obs>
+<obs>3.567 64.1 </obs>
+<obs>4.848 71.3 </obs>
+<obs>1.483 23.3 </obs>
+<obs>4.922 118.5 </obs>
+<obs>7.452 146.9 </obs>
+<obs>7.498 194.7 </obs>
+<obs>4.492 94.9 </obs>
+<obs>2.236 38.9 </obs>
+<obs>6.215 102.4 </obs>
+<obs>1.434 14.6 </obs>
+<obs>7.884 129.8 </obs>
+<obs>0.828 10.9 </obs>
+<obs>1.751 31.7 </obs>
+<obs>12.539 31.6 </obs>
+<obs>1.408 25.1 </obs>
+<obs>11.134 211.2 </obs>
+<obs>2.695 26.4 </obs>
+<obs>19.950 450.6 </obs>
+<obs>8.546 217.9 </obs>
+<obs>2.698 55.0 </obs>
+<obs>3.795 59.0 </obs>
+<obs>10.060 256.0 </obs>
+<obs>0.708 21.2 </obs>
+<obs>4.831 61.2 </obs>
+<obs>0.834 12.8 </obs>
+<obs>6.779 93.9 </obs>
+<obs>20.215 345.0 </obs>
+<obs>2.712 30.0 </obs>
+<obs>1.030 11.2 </obs>
+<obs>9.076 140.2 </obs>
+<obs>1.371 29.4 </obs>
+<obs>5.318 114.5 </obs>
+<obs>4.453 99.9 </obs>
+<obs>1.142 9.3 </obs>
+</observations>
+</gretldata>

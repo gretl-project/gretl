@@ -1,9 +1,0 @@
-(*
-DATA9-6:
-  Data on log(money), log(income) and interest rate from US
-  Source: Stock and Watson (1993) Econometrica - unsmoothed data
-  Period is 1900-1989 (annual data).  Data compiled by Graham Elliott.
-*)
-lmoney lincome intrate ;
-1 1900 1989
-BYOBS

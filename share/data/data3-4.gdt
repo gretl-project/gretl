@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-4" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA3-4: Data on Adjusted Gross Income and Taxes by States (1992),
+         including the District of Columbia.
+         Source: 1995 Statistical Abstract of the U.S., Table 537, Page 347
+         tax    = Total income tax in billions of current dollars
+                  (Range 0.895 - 62.48)
+         income = Adjusted gross income in billions of current dollars 
+                  (Range 6.198 - 453.941)
+</description>
+<variables count="2">
+<variable name="tax"
+ label="Total income tax in billions of current dollars"/>
+<variable name="income"
+ label="Adjusted gross income in billions of current dollars"/>
+</variables>
+<observations count="51" labels="false">
+<obs>1.835 14.947 </obs>
+<obs>2.525 17.825 </obs>
+<obs>0.947 7.417 </obs>
+<obs>14.551 99.257 </obs>
+<obs>1.880 14.139 </obs>
+<obs>10.846 67.088 </obs>
+<obs>43.144 291.690 </obs>
+<obs>22.328 148.626 </obs>
+<obs>23.306 168.778 </obs>
+<obs>19.741 148.230 </obs>
+<obs>10.066 75.257 </obs>
+<obs>26.720 181.322 </obs>
+<obs>17.823 131.884 </obs>
+<obs>9.137 69.841 </obs>
+<obs>9.149 67.253 </obs>
+<obs>4.496 34.818 </obs>
+<obs>9.037 66.759 </obs>
+<obs>0.963 7.228 </obs>
+<obs>1.129 8.071 </obs>
+<obs>2.691 20.431 </obs>
+<obs>4.570 33.449 </obs>
+<obs>1.504 11.114 </obs>
+<obs>11.401 84.009 </obs>
+<obs>1.559 10.226 </obs>
+<obs>13.334 96.314 </obs>
+<obs>2.263 18.243 </obs>
+<obs>11.137 88.167 </obs>
+<obs>5.014 41.733 </obs>
+<obs>11.878 89.568 </obs>
+<obs>27.732 187.754 </obs>
+<obs>5.297 41.645 </obs>
+<obs>8.729 62.725 </obs>
+<obs>6.126 47.859 </obs>
+<obs>2.865 24.286 </obs>
+<obs>3.092 24.763 </obs>
+<obs>5.992 45.044 </obs>
+<obs>4.556 35.342 </obs>
+<obs>32.855 224.455 </obs>
+<obs>1.165 9.168 </obs>
+<obs>1.580 12.478 </obs>
+<obs>0.895 6.198 </obs>
+<obs>7.366 52.167 </obs>
+<obs>2.119 17.171 </obs>
+<obs>6.107 47.305 </obs>
+<obs>2.524 21.057 </obs>
+<obs>3.456 22.041 </obs>
+<obs>11.940 81.105 </obs>
+<obs>5.145 39.711 </obs>
+<obs>62.480 453.941 </obs>
+<obs>1.504 9.747 </obs>
+<obs>2.472 18.399 </obs>
+</observations>
+</gretldata>

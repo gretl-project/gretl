@@ -1,0 +1,125 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-16" frequency="1" startobs="1" endobs="51" type="cross-section">
+<description>
+DATA4-16
+Data on private school enrolment and its determinants, for the 50 U.S. 
+States and the District of Columbia, compiled by Colleen Dempsey.
+
+enroll =  percentage of students that enrolled in private schools.
+Data Year: 1993
+Sources: Digest of Education Statistics, 1996
+Projections of Education Statistics to 2007
+
+cathol = percentage of the population in each state which is Catholic.
+Data Year: 1990
+Source: Churches and Church Membership in the United States, 1990
+
+pupil = pupil to teacher ratio for public schools in each state.
+Data Year: 1990
+Source: Digest of Education Statistics, 1996
+
+white = percentage of population in each state that is white.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1993
+
+admexp = percentage of educational expenditures devoted to
+administration.
+Data Year: 1993
+Source: Digest of Education Statistics, 1996
+
+revenue = per pupil education revenue in thousands of dollars
+Data Year: 1991
+Sources: Digest of Education Statistics, 1996
+              Statistical Abstract of the U.S. 1997
+              Projections of Education Statistics to 2007
+
+memnea = percentage of all public school teachers who are members 
+of the National Education Association 
+Data Year: 1986
+Source: National Education Association Handbook
+
+income = per capita income in thousands of dollars
+Data Year: 1990
+Source: Statistical Abstract of the United States 1997
+
+college = percentage of the population who has completed at least 
+four years of college.
+Data Year: 1990
+Source: Statistical Abstract of the U.S. 1997
+</description>
+<variables count="9">
+<variable name="enroll"
+ label="percentage of students enrolled in private schools"/>
+<variable name="cathol"
+ label="percentage of population which is Catholic"/>
+<variable name="pupil"
+ label="pupil to teacher ratio for public schools"/>
+<variable name="white"
+ label="percentage of population that is white"/>
+<variable name="admexp"
+ label="% of educational expenditures devoted to administration"/>
+<variable name="revenue"
+ label="per pupil education revenue ($1000s)"/>
+<variable name="memnea"
+ label="% membership of Natl. Education Assoc. among public school teachers"/>
+<variable name="income"
+ label="per capita income ($1000s)"/>
+<variable name="college"
+ label="% of population who have completed &gt;= 4 years college"/>
+</variables>
+<observations count="51" labels="false">
+<obs>9.00 3.4 19.9 73.65 7.23 3.313 97.93 15.225 15.6 </obs>
+<obs>4.46 8.2 17.0 75.45 10.42 8.195 89.02 21.048 23.0 </obs>
+<obs>5.59 17.9 19.4 80.85 7.21 4.770 66.88 16.539 20.3 </obs>
+<obs>6.13 3.1 16.8 82.73 7.93 3.808 54.37 14.032 13.4 </obs>
+<obs>9.65 24.0 22.8 68.97 7.35 5.169 80.21 21.290 23.4 </obs>
+<obs>7.92 14.7 17.8 88.19 7.93 5.116 85.61 19.224 27.0 </obs>
+<obs>12.40 41.8 13.5 86.98 6.90 0.850 79.51 26.376 27.2 </obs>
+<obs>17.39 17.5 16.7 80.33 6.26 6.038 94.12 21.695 21.4 </obs>
+<obs>16.37 12.8 13.6 29.65 8.96 7.832 5.73 25.620 33.3 </obs>
+<obs>10.28 12.4 17.2 83.08 6.45 5.636 31.68 19.107 18.3 </obs>
+<obs>7.33 3.2 18.3 71.01 6.67 4.532 48.05 17.377 19.3 </obs>
+<obs>14.50 21.0 18.9 33.39 5.76 4.534 99.90 21.337 22.9 </obs>
+<obs>3.27 7.3 19.6 94.34 7.29 3.566 82.12 15.316 17.7 </obs>
+<obs>13.40 31.6 16.7 78.32 7.77 4.996 55.86 20.496 21.1 </obs>
+<obs>8.69 12.6 17.4 90.57 6.19 5.023 72.63 17.174 15.6 </obs>
+<obs>9.21 18.7 15.6 96.62 8.00 5.215 99.88 16.959 16.9 </obs>
+<obs>7.48 14.9 15.0 90.07 9.60 4.796 76.94 17.988 21.1 </obs>
+<obs>8.14 9.9 17.3 92.05 9.49 3.765 83.50 15.087 13.6 </obs>
+<obs>15.37 32.4 17.3 67.27 7.10 4.349 47.54 14.761 16.1 </obs>
+<obs>7.26 21.5 13.9 98.37 6.89 5.196 89.89 17.167 18.8 </obs>
+<obs>12.70 17.4 16.8 70.99 7.39 5.793 79.81 22.484 26.5 </obs>
+<obs>12.61 49.2 15.4 89.84 11.93 5.758 88.40 23.203 27.2 </obs>
+<obs>10.51 25.2 19.8 83.44 7.27 5.951 88.55 18.711 17.3 </obs>
+<obs>9.60 25.4 17.4 94.40 5.72 6.070 84.05 19.374 21.9 </obs>
+<obs>10.39 3.7 17.9 63.47 7.90 3.289 39.03 12.710 14.8 </obs>
+<obs>11.94 15.7 15.6 87.67 7.83 4.783 32.53 17.656 17.8 </obs>
+<obs>5.29 15.7 15.9 92.74 8.06 4.843 76.15 15.042 19.8 </obs>
+<obs>12.19 21.2 14.6 93.85 7.78 5.257 99.90 17.624 19.0 </obs>
+<obs>4.35 13.1 19.4 84.28 7.26 5.445 80.73 20.123 15.3 </obs>
+<obs>9.04 26.8 16.2 98.02 8.75 5.569 69.90 20.672 24.3 </obs>
+<obs>14.55 41.3 13.6 79.30 8.17 8.839 99.90 24.927 24.8 </obs>
+<obs>5.85 30.8 18.1 75.64 5.44 4.145 41.61 14.440 20.4 </obs>
+<obs>14.75 40.5 14.7 74.40 5.80 8.353 11.98 23.131 23.1 </obs>
+<obs>5.74 2.3 16.9 75.55 7.54 4.852 75.45 16.663 17.4 </obs>
+<obs>5.99 27.1 15.5 94.52 8.66 4.472 93.44 15.324 18.0 </obs>
+<obs>12.02 19.7 17.2 87.78 7.66 4.984 83.51 18.126 17.0 </obs>
+<obs>4.10 4.6 15.6 82.14 9.04 4.193 87.95 15.583 17.8 </obs>
+<obs>6.19 9.8 18.0 92.79 7.82 5.602 99.90 17.435 20.6 </obs>
+<obs>16.41 30.9 16.6 88.54 6.59 6.428 80.36 19.365 17.9 </obs>
+<obs>13.69 63.1 14.6 91.43 6.82 6.117 51.16 19.690 21.3 </obs>
+<obs>7.42 2.3 16.8 69.03 7.21 4.538 39.38 15.420 16.6 </obs>
+<obs>6.28 20.7 15.2 91.67 7.77 4.356 76.95 15.537 17.2 </obs>
+<obs>8.88 2.8 19.2 83.00 7.14 3.479 93.44 16.294 15.9 </obs>
+<obs>5.53 21.0 15.4 75.20 8.22 4.439 35.43 17.218 20.4 </obs>
+<obs>2.04 3.8 25.0 93.79 5.40 3.220 88.69 14.204 22.2 </obs>
+<obs>8.12 25.6 13.2 98.58 8.56 6.559 89.95 17.692 24.3 </obs>
+<obs>7.48 6.2 15.7 77.45 6.34 5.286 68.54 19.997 24.5 </obs>
+<obs>7.12 10.8 20.1 88.54 6.33 6.039 99.90 19.583 22.9 </obs>
+<obs>4.13 6.1 15.0 96.26 7.61 4.867 69.63 14.177 12.3 </obs>
+<obs>14.38 31.8 16.2 92.25 7.19 6.168 91.31 17.720 17.7 </obs>
+<obs>1.86 31.1 14.5 94.05 7.56 5.964 84.14 17.062 18.8 </obs>
+</observations>
+</gretldata>

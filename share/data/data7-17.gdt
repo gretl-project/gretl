@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-17" frequency="1" startobs="1" endobs="40" type="cross-section">
+<description>
+DATA7-17:
+    Data (compiled by Denise Lerner) are cross section for 40
+    countries, including Chad, India, Diger, Tanzania, Madagascar,
+    Thailand, Honduras, Philippines, Zambia, El, Salvador, Colombia,
+    Ecuador, Peru Tunisia, Costa, Rica, Chile, Jamaica, Lebanon,
+    Mexico, Brazil, Panama, Iraq Uruguay, Argentina, Uygoslavia,
+    Venezuela, Greece, Spain, Isreal, Sudan United, Kingdom, New,
+    Zealand, Japan, Norway, Canada, United States, Sweden, Hungary,
+    Poland, and Czechoslovia.
+    Y   = gini coefficient range 0&lt;Yt&lt;1: 0 is perfect equality Todaro,
+          Development Economics in the Third World (Range 0.18 - 0.66)
+    gnp = per capita gross national product,(base 1976) Source:same.
+          Range 63 - 3603.
+    gdp = growth rate (%) of gross domestic product. Source:  World
+          Development Report 1978, Range 0.3 - 10.5.
+    pop = growth rate of population (0.3 - 3.5).
+    urb = measure of people living in urban areas (%), Range 5 - 78.
+    lit = percentage of people in country who can read and write,
+          Range 5 - 99.
+    edu = secondary school enrollment expressed as percentage of the
+          total population of secondary school age, Range 0 - 74.
+    agr = share of agriculture in GDP (%), Range 4 - 66.
+    soc = 1 if country is socialist 0 if not
+    All sources not mentioned are from the World Development Report 1978.
+</description>
+<variables count="9">
+<variable name="Y"
+ label="gini coefficient (range 0 to 1, 0 is perfect equality)"/>
+<variable name="gnp"
+ label="per capita GNP (base 1976)"/>
+<variable name="gdp"
+ label="growth rate (%) of GDP"/>
+<variable name="pop"
+ label="growth rate of population (0.3 - 3.5)"/>
+<variable name="urb"
+ label="percentage of people living in urban areas (5 - 78)"/>
+<variable name="lit"
+ label="percentage literacy rate (5 - 99)"/>
+<variable name="edu"
+ label="secondary school enrollment (percent of age group, 0 - 74)"/>
+<variable name="agr"
+ label="% share of agriculture in GDP, Range 4 - 66."/>
+<variable name="soc"
+ label="1 if country is socialist, 0 if not"/>
+</variables>
+<observations count="40" labels="false">
+<obs>0.35 63 2.5 1.7 7 10 0 55 0 </obs>
+<obs>0.46 84 3.6 2.3 18 24 23 50 0 </obs>
+<obs>0.36 73 2.7 2.7 6 5 0 66 0 </obs>
+<obs>0.48 70 5.4 3.0 5 17 2 57 0 </obs>
+<obs>0.52 93 0.3 2.6 12 20 4 37 0 </obs>
+<obs>0.50 92 8.2 3.1 13 58 8 40 0 </obs>
+<obs>0.61 224 5.1 2.7 23 47 8 37 0 </obs>
+<obs>0.50 150 5.1 3.0 30 72 26 26 0 </obs>
+<obs>0.49 150 4.0 2.9 18 41 1 11 0 </obs>
+<obs>0.45 248 5.9 3.5 38 51 11 32 0 </obs>
+<obs>0.54 251 5.1 2.9 47 61 12 34 0 </obs>
+<obs>0.66 202 5.9 3.3 34 67 12 33 0 </obs>
+<obs>0.57 297 5.4 2.9 47 61 18 26 1 </obs>
+<obs>0.50 156 4.6 2.1 32 40 12 24 0 </obs>
+<obs>0.43 423 6.5 3.5 34 84 21 29 0 </obs>
+<obs>0.49 427 4.2 2.1 69 84 24 11 0 </obs>
+<obs>0.56 388 4.5 1.7 30 82 43 10 0 </obs>
+<obs>0.52 454 4.9 2.5 35 60 19 12 0 </obs>
+<obs>0.58 464 7.3 3.4 50 62 11 16 0 </obs>
+<obs>0.61 231 8.0 2.9 45 61 11 16 0 </obs>
+<obs>0.54 560 7.8 3.1 41 78 29 23 0 </obs>
+<obs>0.61 172 6.1 3.2 43 15 19 17 0 </obs>
+<obs>0.42 460 1.2 0.6 73 90 37 19 0 </obs>
+<obs>0.42 681 4.2 1.4 71 91 31 17 0 </obs>
+<obs>0.33 451 6.8 1.0 28 77 34 24 1 </obs>
+<obs>0.52 750 5.9 3.4 68 65 21 6 0 </obs>
+<obs>0.37 341 6.9 0.6 43 80 41 23 0 </obs>
+<obs>0.38 572 7.3 1.1 57 87 23 21 0 </obs>
+<obs>0.30 686 8.5 3.3 78 84 48 11 0 </obs>
+<obs>0.43 91 2.9 2.2 9 9 3 58 0 </obs>
+<obs>0.32 1599 2.9 0.6 78 98 67 4 0 </obs>
+<obs>0.37 1800 3.9 1.7 76 99 73 14 0 </obs>
+<obs>0.31 780 10.5 1.0 63 98 74 15 0 </obs>
+<obs>0.35 1609 4.9 0.8 37 99 56 9 0 </obs>
+<obs>0.32 2057 5.6 1.8 69 98 50 6 0 </obs>
+<obs>0.31 3603 4.3 1.2 70 98 64 4 0 </obs>
+<obs>0.39 2220 4.4 0.7 72 99 55 7 0 </obs>
+<obs>0.24 870 3.8 0.3 40 97 47 24 1 </obs>
+<obs>0.25 649 4.3 1.0 47 98 50 26 1 </obs>
+<obs>0.18 880 3.2 0.5 47 95 25 16 1 </obs>
+</observations>
+</gretldata>

@@ -1,0 +1,256 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-7" frequency="1" startobs="1" endobs="222" type="cross-section">
+<description>
+DATA7-7:  Data on annual (1995) salary for professors at the seven
+    universities: UC Berkeley, UCLA, UC San Diego, Illinois, Michigan,
+    Stanford, and Virginia.  
+    salary = annual salary in thousands of dollars (Range 41.3 - 153).
+    years  = number of years since Ph.D. (Range 1 - 45).
+    d1 through d6 are dummy variables for six Universities, but are not
+    specifically identified so as to maintain the confidentiality. 
+</description>
+<variables count="8">
+<variable name="salary"
+ label="professorial salary ($000s, Range 41.3 - 153)"/>
+<variable name="years"
+ label="years since Ph.D. (1 - 45)"/>
+<variable name="d1"
+ label="dummy for University A"/>
+<variable name="d2"
+ label="dummy for University B"/>
+<variable name="d3"
+ label="dummy for University C"/>
+<variable name="d4"
+ label="dummy for University D"/>
+<variable name="d5"
+ label="dummy for University E"/>
+<variable name="d6"
+ label="dummy for University F"/>
+</variables>
+<observations count="222" labels="false">
+<obs>105.200 36 0 0 0 0 0 0 </obs>
+<obs>91.300 30 0 0 0 0 0 0 </obs>
+<obs>72.500 29 0 0 0 0 0 0 </obs>
+<obs>74.300 28 0 0 0 0 0 0 </obs>
+<obs>103.500 26 0 0 0 0 0 0 </obs>
+<obs>117.500 26 0 0 0 0 0 0 </obs>
+<obs>64.200 25 0 0 0 0 0 0 </obs>
+<obs>86.700 25 0 0 0 0 0 0 </obs>
+<obs>81.500 23 0 0 0 0 0 0 </obs>
+<obs>98.000 20 0 0 0 0 0 0 </obs>
+<obs>91.200 19 0 0 0 0 0 0 </obs>
+<obs>91.300 19 0 0 0 0 0 0 </obs>
+<obs>93.100 17 0 0 0 0 0 0 </obs>
+<obs>83.000 16 0 0 0 0 0 0 </obs>
+<obs>80.000 12 0 0 0 0 0 0 </obs>
+<obs>55.900 19 0 0 0 0 0 0 </obs>
+<obs>66.000 14 0 0 0 0 0 0 </obs>
+<obs>60.600 10 0 0 0 0 0 0 </obs>
+<obs>56.500 10 0 0 0 0 0 0 </obs>
+<obs>53.900 8 0 0 0 0 0 0 </obs>
+<obs>56.500 8 0 0 0 0 0 0 </obs>
+<obs>43.900 10 0 0 0 0 0 0 </obs>
+<obs>48.000 8 0 0 0 0 0 0 </obs>
+<obs>48.000 8 0 0 0 0 0 0 </obs>
+<obs>47.900 5 0 0 0 0 0 0 </obs>
+<obs>48.200 4 0 0 0 0 0 0 </obs>
+<obs>55.000 3 0 0 0 0 0 0 </obs>
+<obs>53.000 3 0 0 0 0 0 0 </obs>
+<obs>52.000 1 0 0 0 0 0 0 </obs>
+<obs>100.600 29 1 0 0 0 0 0 </obs>
+<obs>78.200 18 1 0 0 0 0 0 </obs>
+<obs>128.100 17 1 0 0 0 0 0 </obs>
+<obs>100.400 30 1 0 0 0 0 0 </obs>
+<obs>58.100 22 1 0 0 0 0 0 </obs>
+<obs>108.500 18 1 0 0 0 0 0 </obs>
+<obs>75.300 14 1 0 0 0 0 0 </obs>
+<obs>72.200 29 1 0 0 0 0 0 </obs>
+<obs>78.300 24 1 0 0 0 0 0 </obs>
+<obs>114.400 33 1 0 0 0 0 0 </obs>
+<obs>94.900 16 1 0 0 0 0 0 </obs>
+<obs>88.000 31 1 0 0 0 0 0 </obs>
+<obs>98.200 13 1 0 0 0 0 0 </obs>
+<obs>63.600 21 1 0 0 0 0 0 </obs>
+<obs>86.000 10 1 0 0 0 0 0 </obs>
+<obs>80.000 10 1 0 0 0 0 0 </obs>
+<obs>90.100 12 1 0 0 0 0 0 </obs>
+<obs>78.300 29 1 0 0 0 0 0 </obs>
+<obs>66.300 14 1 0 0 0 0 0 </obs>
+<obs>91.300 27 1 0 0 0 0 0 </obs>
+<obs>129.000 32 1 0 0 0 0 0 </obs>
+<obs>104.000 15 1 0 0 0 0 0 </obs>
+<obs>55.300 23 1 0 0 0 0 0 </obs>
+<obs>51.300 7 1 0 0 0 0 0 </obs>
+<obs>53.000 2 1 0 0 0 0 0 </obs>
+<obs>52.000 3 1 0 0 0 0 0 </obs>
+<obs>55.000 6 1 0 0 0 0 0 </obs>
+<obs>52.400 3 1 0 0 0 0 0 </obs>
+<obs>128.000 20 0 1 0 0 0 0 </obs>
+<obs>60.400 25 0 1 0 0 0 0 </obs>
+<obs>78.200 13 0 1 0 0 0 0 </obs>
+<obs>135.000 45 0 1 0 0 0 0 </obs>
+<obs>78.300 25 0 1 0 0 0 0 </obs>
+<obs>104.000 30 0 1 0 0 0 0 </obs>
+<obs>108.000 14 0 1 0 0 0 0 </obs>
+<obs>73.000 25 0 1 0 0 0 0 </obs>
+<obs>98.000 23 0 1 0 0 0 0 </obs>
+<obs>97.400 42 0 1 0 0 0 0 </obs>
+<obs>80.000 13 0 1 0 0 0 0 </obs>
+<obs>72.200 34 0 1 0 0 0 0 </obs>
+<obs>98.000 25 0 1 0 0 0 0 </obs>
+<obs>75.000 13 0 1 0 0 0 0 </obs>
+<obs>70.000 7 0 1 0 0 0 0 </obs>
+<obs>70.000 9 0 1 0 0 0 0 </obs>
+<obs>65.000 7 0 1 0 0 0 0 </obs>
+<obs>70.000 9 0 1 0 0 0 0 </obs>
+<obs>53.000 2 0 1 0 0 0 0 </obs>
+<obs>55.000 6 0 1 0 0 0 0 </obs>
+<obs>47.800 9 0 1 0 0 0 0 </obs>
+<obs>51.000 5 0 1 0 0 0 0 </obs>
+<obs>55.000 5 0 1 0 0 0 0 </obs>
+<obs>52.500 2 0 1 0 0 0 0 </obs>
+<obs>50.500 4 0 1 0 0 0 0 </obs>
+<obs>50.500 4 0 1 0 0 0 0 </obs>
+<obs>50.000 3 0 1 0 0 0 0 </obs>
+<obs>84.400 17 0 0 1 0 0 0 </obs>
+<obs>74.600 27 0 0 1 0 0 0 </obs>
+<obs>108.300 37 0 0 1 0 0 0 </obs>
+<obs>82.200 12 0 0 1 0 0 0 </obs>
+<obs>91.500 19 0 0 1 0 0 0 </obs>
+<obs>83.800 25 0 0 1 0 0 0 </obs>
+<obs>80.100 36 0 0 1 0 0 0 </obs>
+<obs>88.000 18 0 0 1 0 0 0 </obs>
+<obs>81.900 22 0 0 1 0 0 0 </obs>
+<obs>88.600 14 0 0 1 0 0 0 </obs>
+<obs>88.600 21 0 0 1 0 0 0 </obs>
+<obs>75.500 27 0 0 1 0 0 0 </obs>
+<obs>85.000 27 0 0 1 0 0 0 </obs>
+<obs>100.200 25 0 0 1 0 0 0 </obs>
+<obs>115.200 35 0 0 1 0 0 0 </obs>
+<obs>74.000 19 0 0 1 0 0 0 </obs>
+<obs>77.000 34 0 0 1 0 0 0 </obs>
+<obs>80.000 35 0 0 1 0 0 0 </obs>
+<obs>71.200 35 0 0 1 0 0 0 </obs>
+<obs>74.400 34 0 0 1 0 0 0 </obs>
+<obs>81.500 16 0 0 1 0 0 0 </obs>
+<obs>92.600 12 0 0 1 0 0 0 </obs>
+<obs>122.500 23 0 0 1 0 0 0 </obs>
+<obs>51.900 14 0 0 1 0 0 0 </obs>
+<obs>55.600 15 0 0 1 0 0 0 </obs>
+<obs>41.300 26 0 0 1 0 0 0 </obs>
+<obs>63.300 6 0 0 1 0 0 0 </obs>
+<obs>62.400 7 0 0 1 0 0 0 </obs>
+<obs>70.500 13 0 0 1 0 0 0 </obs>
+<obs>53.500 26 0 0 1 0 0 0 </obs>
+<obs>47.900 5 0 0 1 0 0 0 </obs>
+<obs>45.800 4 0 0 1 0 0 0 </obs>
+<obs>51.900 8 0 0 1 0 0 0 </obs>
+<obs>47.200 4 0 0 1 0 0 0 </obs>
+<obs>87.700 38 0 0 0 1 0 0 </obs>
+<obs>97.800 37 0 0 0 1 0 0 </obs>
+<obs>99.300 31 0 0 0 1 0 0 </obs>
+<obs>77.500 31 0 0 0 1 0 0 </obs>
+<obs>87.500 31 0 0 0 1 0 0 </obs>
+<obs>72.100 30 0 0 0 1 0 0 </obs>
+<obs>92.500 30 0 0 0 1 0 0 </obs>
+<obs>83.200 27 0 0 0 1 0 0 </obs>
+<obs>66.700 29 0 0 0 1 0 0 </obs>
+<obs>107.000 28 0 0 0 1 0 0 </obs>
+<obs>83.600 27 0 0 0 1 0 0 </obs>
+<obs>68.100 25 0 0 0 1 0 0 </obs>
+<obs>102.800 24 0 0 0 1 0 0 </obs>
+<obs>100.500 24 0 0 0 1 0 0 </obs>
+<obs>67.000 22 0 0 0 1 0 0 </obs>
+<obs>94.300 22 0 0 0 1 0 0 </obs>
+<obs>114.500 22 0 0 0 1 0 0 </obs>
+<obs>90.000 22 0 0 0 1 0 0 </obs>
+<obs>87.168 21 0 0 0 1 0 0 </obs>
+<obs>85.500 21 0 0 0 1 0 0 </obs>
+<obs>90.000 20 0 0 0 1 0 0 </obs>
+<obs>104.000 19 0 0 0 1 0 0 </obs>
+<obs>76.200 19 0 0 0 1 0 0 </obs>
+<obs>98.500 18 0 0 0 1 0 0 </obs>
+<obs>89.000 15 0 0 0 1 0 0 </obs>
+<obs>82.000 12 0 0 0 1 0 0 </obs>
+<obs>62.900 13 0 0 0 1 0 0 </obs>
+<obs>65.700 12 0 0 0 1 0 0 </obs>
+<obs>61.200 12 0 0 0 1 0 0 </obs>
+<obs>78.500 11 0 0 0 1 0 0 </obs>
+<obs>68.000 10 0 0 0 1 0 0 </obs>
+<obs>64.000 9 0 0 0 1 0 0 </obs>
+<obs>64.800 8 0 0 0 1 0 0 </obs>
+<obs>69.000 8 0 0 0 1 0 0 </obs>
+<obs>74.000 7 0 0 0 1 0 0 </obs>
+<obs>48.700 14 0 0 0 1 0 0 </obs>
+<obs>49.500 11 0 0 0 1 0 0 </obs>
+<obs>50.700 6 0 0 0 1 0 0 </obs>
+<obs>46.000 5 0 0 0 1 0 0 </obs>
+<obs>50.000 4 0 0 0 1 0 0 </obs>
+<obs>50.500 3 0 0 0 1 0 0 </obs>
+<obs>50.000 3 0 0 0 1 0 0 </obs>
+<obs>50.000 3 0 0 0 1 0 0 </obs>
+<obs>48.700 2 0 0 0 1 0 0 </obs>
+<obs>153.000 28 0 0 0 0 1 0 </obs>
+<obs>135.000 15 0 0 0 0 1 0 </obs>
+<obs>121.000 30 0 0 0 0 1 0 </obs>
+<obs>107.500 25 0 0 0 0 1 0 </obs>
+<obs>103.000 29 0 0 0 0 1 0 </obs>
+<obs>91.000 33 0 0 0 0 1 0 </obs>
+<obs>93.000 18 0 0 0 0 1 0 </obs>
+<obs>83.000 20 0 0 0 0 1 0 </obs>
+<obs>70.000 27 0 0 0 0 1 0 </obs>
+<obs>68.000 21 0 0 0 0 1 0 </obs>
+<obs>66.500 26 0 0 0 0 1 0 </obs>
+<obs>66.000 12 0 0 0 0 1 0 </obs>
+<obs>82.000 20 0 0 0 0 1 0 </obs>
+<obs>74.000 11 0 0 0 0 1 0 </obs>
+<obs>60.500 10 0 0 0 0 1 0 </obs>
+<obs>58.000 11 0 0 0 0 1 0 </obs>
+<obs>57.500 10 0 0 0 0 1 0 </obs>
+<obs>55.000 14 0 0 0 0 1 0 </obs>
+<obs>54.000 7 0 0 0 0 1 0 </obs>
+<obs>54.000 6 0 0 0 0 1 0 </obs>
+<obs>51.000 3 0 0 0 0 1 0 </obs>
+<obs>51.000 4 0 0 0 0 1 0 </obs>
+<obs>51.000 2 0 0 0 0 1 0 </obs>
+<obs>126.000 28 0 0 0 0 0 1 </obs>
+<obs>121.000 26 0 0 0 0 0 1 </obs>
+<obs>121.000 37 0 0 0 0 0 1 </obs>
+<obs>121.000 18 0 0 0 0 0 1 </obs>
+<obs>121.000 16 0 0 0 0 0 1 </obs>
+<obs>121.000 28 0 0 0 0 0 1 </obs>
+<obs>121.000 22 0 0 0 0 0 1 </obs>
+<obs>120.500 13 0 0 0 0 0 1 </obs>
+<obs>116.500 26 0 0 0 0 0 1 </obs>
+<obs>115.700 22 0 0 0 0 0 1 </obs>
+<obs>115.485 34 0 0 0 0 0 1 </obs>
+<obs>114.920 28 0 0 0 0 0 1 </obs>
+<obs>114.500 34 0 0 0 0 0 1 </obs>
+<obs>113.330 31 0 0 0 0 0 1 </obs>
+<obs>112.000 40 0 0 0 0 0 1 </obs>
+<obs>109.650 40 0 0 0 0 0 1 </obs>
+<obs>107.640 28 0 0 0 0 0 1 </obs>
+<obs>105.155 17 0 0 0 0 0 1 </obs>
+<obs>100.000 26 0 0 0 0 0 1 </obs>
+<obs>97.000 26 0 0 0 0 0 1 </obs>
+<obs>95.800 44 0 0 0 0 0 1 </obs>
+<obs>90.045 21 0 0 0 0 0 1 </obs>
+<obs>90.000 15 0 0 0 0 0 1 </obs>
+<obs>87.000 27 0 0 0 0 0 1 </obs>
+<obs>85.500 29 0 0 0 0 0 1 </obs>
+<obs>73.000 10 0 0 0 0 0 1 </obs>
+<obs>60.000 6 0 0 0 0 0 1 </obs>
+<obs>57.850 13 0 0 0 0 0 1 </obs>
+<obs>54.445 5 0 0 0 0 0 1 </obs>
+<obs>53.500 9 0 0 0 0 0 1 </obs>
+<obs>52.650 7 0 0 0 0 0 1 </obs>
+<obs>51.850 5 0 0 0 0 0 1 </obs>
+<obs>51.750 7 0 0 0 0 0 1 </obs>
+<obs>50.250 2 0 0 0 0 0 1 </obs>
+<obs>50.250 2 0 0 0 0 0 1 </obs>
+<obs>50.000 1 0 0 0 0 0 1 </obs>
+<obs>50.000 1 0 0 0 0 0 1 </obs>
+</observations>
+</gretldata>

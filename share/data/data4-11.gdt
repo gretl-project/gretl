@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-11" frequency="1" startobs="1" endobs="40" type="cross-section">
+<description>
+DATA4-11:  Data on private housing units authorized.
+           Compiled by Susan Huberman.
+HOUSING = New private housing units authorized by building permits for
+          1992, in number of houses, Range 39 - 5222.
+DENSITY = Population density per square mile for 1992, in number of
+          persons, Range 746 - 23671.
+VALUE =  Median value for owner occupied home during 1990, in hundreds of
+          dollars, Range 256 - 2989.
+INCOME   = Median Household income for 1989, in thousands of dollars,
+           Range 16.925 - 46.206
+POPCHANG = Percent change in population from 1980 to 1992,
+           Range -15.9 - 59.1
+UNEMPRT = Unemployment rate for civilian labor force during 1990, in
+percentage, Range 4.7 - 19.7
+****data for above variables taken from County and City Data Book 1994,
+   cities tables pgs 650-853
+LOCALTAX= Average local taxes per capita for 1992, in dollars
+Range 239 - 2341.
+STATETAX= Average state tax per capita for 1993, in dollars
+Range 1005 - 1725
+****data for above variables taken from Statistical Abstract for the US
+   1995 tables 502 and 492 
+</description>
+<variables count="8">
+<variable name="housing"
+ label="New private housing units authorized by building permits"/>
+<variable name="density"
+ label="Population density: persons per square mile"/>
+<variable name="value"
+ label="Median value of owner-occupied home during 1990 ($100s)"/>
+<variable name="income"
+ label="Median Household income for 1989 ($1000s)"/>
+<variable name="popchang"
+ label="Percent change in population 1980-1992"/>
+<variable name="unemprt"
+ label="Unemployment rate for civilian labor force (1990, percent)"/>
+<variable name="localtax"/>
+<variable name="statetax"/>
+</variables>
+<observations count="40" labels="false">
+<obs>5222 2411 771 29.291 28.2 6.7 339 1339 </obs>
+<obs>965 2656 668 21.748 25.6 8.3 326 1339 </obs>
+<obs>86 8775 2229 31.938 21.4 6.9 425 1561 </obs>
+<obs>2587 7436 2445 30.925 17.6 8.4 554 1561 </obs>
+<obs>905 6653 1774 27.095 10.0 9.5 596 1561 </obs>
+<obs>2641 3546 1894 33.686 31.2 6.2 345 1561 </obs>
+<obs>629 15609 2989 33.414 7.4 6.3 1349 1561 </obs>
+<obs>1662 4678 2591 46.206 27.3 5.5 419 1561 </obs>
+<obs>850 3975 1158 28.183 38.8 7.6 417 1561 </obs>
+<obs>506 3156 790 25.106 -1.8 6.8 836 1036 </obs>
+<obs>4518 871 629 28.305 22.2 5.7 391 1195 </obs>
+<obs>552 10309 792 16.925 5.9 11.0 476 1195 </obs>
+<obs>630 2996 712 22.275 -7.1 9.2 566 1180 </obs>
+<obs>1733 12185 787 26.301 -7.9 11.3 572 1240 </obs>
+<obs>3594 2064 608 29.006 6.5 5.6 574 1211 </obs>
+<obs>182 2711 696 18.477 -12.2 12.7 605 1017 </obs>
+<obs>78 8986 547 24.045 -7.7 9.2 903 1447 </obs>
+<obs>100 11398 1614 29.180 -2.0 8.3 1117 1725 </obs>
+<obs>309 7297 256 18.742 -15.9 19.7 536 1393 </obs>
+<obs>1314 1385 561 26.713 -3.7 7.3 758 1047 </obs>
+<obs>39 6199 507 19.458 -15.3 11.0 698 1047 </obs>
+<obs>1929 3014 859 27.555 19.7 6.4 344 1718 </obs>
+<obs>3882 23671 1896 29.823 3.4 9.0 2341 1724 </obs>
+<obs>97 6526 409 17.822 -12.4 14.0 539 1156 </obs>
+<obs>3517 3368 660 26.651 13.8 5.9 453 1156 </obs>
+<obs>653 4719 619 21.006 -5.5 7.9 653 1156 </obs>
+<obs>1689 746 549 25.741 12.4 7.2 436 1289 </obs>
+<obs>1079 3572 592 25.592 21.0 6.2 464 1205 </obs>
+<obs>250 11492 494 24.603 -8.0 9.7 935 1380 </obs>
+<obs>120 6598 412 20.747 -13.5 9.1 640 1380 </obs>
+<obs>1914 1046 744 27.821 8.6 5.1 980 1005 </obs>
+<obs>2522 2260 726 25.414 42.3 6.4 378 1012 </obs>
+<obs>2782 2986 788 27.489 13.0 7.4 502 1012 </obs>
+<obs>2651 2216 585 23.460 27.9 10.3 250 1012 </obs>
+<obs>1084 1617 599 26.547 18.0 7.5 437 1012 </obs>
+<obs>3576 3131 580 26.261 6.0 8.2 478 1012 </obs>
+<obs>2468 2902 497 23.584 23.0 9.2 239 1012 </obs>
+<obs>2036 1680 965 36.271 59.1 4.7 950 1170 </obs>
+<obs>2191 6193 1379 29.353 5.2 4.9 718 1693 </obs>
+<obs>384 6421 535 23.627 -3.0 8.9 265 1577 </obs>
+</observations>
+</gretldata>

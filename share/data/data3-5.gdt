@@ -1,0 +1,110 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data3-5" frequency="12" startobs="1983.01" endobs="1990.05" type="time-series">
+<description>
+DATA3-5: Sealing compound shipment data - compiled by Rodney Random
+    Monthly data for the period January 1983 through May 1990
+    Q = shipments of sealing compound used in construction in
+        gallons/month (Range 90 - 7723)
+    P = price per gallon in dollars (Range 5.48 - 14.21)
+</description>
+<variables count="3">
+<variable name="period"/>
+<variable name="Q"
+ label="shipments of sealing compound for construction (gals/month)"/>
+<variable name="P"
+ label="price per gallon in dollars"/>
+</variables>
+<observations count="89" labels="false">
+<obs>1983.01 120 9.90 </obs>
+<obs>1983.02 829 8.74 </obs>
+<obs>1983.03 1928 5.48 </obs>
+<obs>1983.04 930 8.97 </obs>
+<obs>1983.05 722 9.49 </obs>
+<obs>1983.06 2184 8.45 </obs>
+<obs>1983.07 2632 8.75 </obs>
+<obs>1983.08 4799 7.35 </obs>
+<obs>1983.09 3185 8.58 </obs>
+<obs>1983.10 6202 8.73 </obs>
+<obs>1983.11 2234 8.67 </obs>
+<obs>1983.12 1806 8.56 </obs>
+<obs>1984.01 1692 8.00 </obs>
+<obs>1984.02 1865 7.80 </obs>
+<obs>1984.03 3587 7.73 </obs>
+<obs>1984.04 1975 8.08 </obs>
+<obs>1984.05 3619 8.11 </obs>
+<obs>1984.06 2560 7.80 </obs>
+<obs>1984.07 4135 8.58 </obs>
+<obs>1984.08 1648 8.72 </obs>
+<obs>1984.09 1555 10.04 </obs>
+<obs>1984.10 1626 8.57 </obs>
+<obs>1984.11 2685 8.71 </obs>
+<obs>1984.12 627 8.84 </obs>
+<obs>1985.01 484 9.20 </obs>
+<obs>1985.02 781 9.07 </obs>
+<obs>1985.03 2527 9.36 </obs>
+<obs>1985.04 2108 8.69 </obs>
+<obs>1985.05 3986 9.22 </obs>
+<obs>1985.06 1909 8.69 </obs>
+<obs>1985.07 2609 8.47 </obs>
+<obs>1985.08 7723 7.84 </obs>
+<obs>1985.09 7149 8.34 </obs>
+<obs>1985.10 3417 8.07 </obs>
+<obs>1985.11 3980 8.18 </obs>
+<obs>1985.12 2230 8.86 </obs>
+<obs>1986.01 4225 8.25 </obs>
+<obs>1986.02 1045 13.69 </obs>
+<obs>1986.03 3475 8.49 </obs>
+<obs>1986.04 4320 8.32 </obs>
+<obs>1986.05 4910 8.29 </obs>
+<obs>1986.06 2265 13.48 </obs>
+<obs>1986.07 2655 11.21 </obs>
+<obs>1986.08 4120 8.24 </obs>
+<obs>1986.09 1095 8.26 </obs>
+<obs>1986.10 3740 7.76 </obs>
+<obs>1986.11 680 8.59 </obs>
+<obs>1986.12 635 9.47 </obs>
+<obs>1987.01 305 10.22 </obs>
+<obs>1987.02 2250 8.26 </obs>
+<obs>1987.03 2515 8.45 </obs>
+<obs>1987.04 1205 13.69 </obs>
+<obs>1987.05 5765 8.71 </obs>
+<obs>1987.06 2675 8.92 </obs>
+<obs>1987.07 3455 8.47 </obs>
+<obs>1987.08 5930 9.00 </obs>
+<obs>1987.09 2300 8.38 </obs>
+<obs>1987.10 2865 8.43 </obs>
+<obs>1987.11 1165 9.11 </obs>
+<obs>1987.12 485 12.85 </obs>
+<obs>1988.01 90 13.35 </obs>
+<obs>1988.02 965 14.21 </obs>
+<obs>1988.03 2370 8.26 </obs>
+<obs>1988.04 2635 8.64 </obs>
+<obs>1988.05 4265 8.55 </obs>
+<obs>1988.06 740 9.31 </obs>
+<obs>1988.07 190 10.72 </obs>
+<obs>1988.08 2740 6.97 </obs>
+<obs>1988.09 4425 8.76 </obs>
+<obs>1988.10 1325 8.35 </obs>
+<obs>1988.11 3185 7.37 </obs>
+<obs>1988.12 3685 8.17 </obs>
+<obs>1989.01 1715 8.25 </obs>
+<obs>1989.02 1790 8.43 </obs>
+<obs>1989.03 2890 8.33 </obs>
+<obs>1989.04 2855 9.31 </obs>
+<obs>1989.05 3685 9.00 </obs>
+<obs>1989.06 3015 8.14 </obs>
+<obs>1989.07 2985 8.60 </obs>
+<obs>1989.08 3320 9.03 </obs>
+<obs>1989.09 3165 9.56 </obs>
+<obs>1989.10 3470 9.01 </obs>
+<obs>1989.11 410 8.83 </obs>
+<obs>1989.12 1390 10.90 </obs>
+<obs>1990.01 1150 6.83 </obs>
+<obs>1990.02 1190 10.34 </obs>
+<obs>1990.03 1620 8.60 </obs>
+<obs>1990.04 3355 9.54 </obs>
+<obs>1990.05 2555 10.63 </obs>
+</observations>
+</gretldata>

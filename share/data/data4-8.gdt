@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data4-8" frequency="1" startobs="1" endobs="40" type="cross-section">
+<description>
+DATA4-8: DATA ON SYSTEMS IN THE TOP 40 TELEVISION MARKETS IN 1979
+    SOURCE: BROADCASTING YEARBOOK 80
+    Data compiled by David Andersen
+    sub  = The number of subscribers of each system (in thousands)
+           (Range 1 - 170)
+    home = The number of homes passed by each system (Range 1.7 - 350)
+    inst = Installation fee in dollars (5.95 - 25)
+    svc  = Monthly service charge of each system (Range 5.6 - 10)
+    tv   = The number of television signals carried by each cable system
+           (Range 6 22)
+    age  = The age of each system in years (Range 0.17 - 26)
+    air  = The number of television signals received (Range 4 - 13)
+    y    = Per capita income for each television market with cable, in
+           dollars (Range 7683 - 11741)
+</description>
+<variables count="8">
+<variable name="sub"
+ label="number of subscribers of each system (thousands)"/>
+<variable name="home"
+ label="number of homes passed by each system"/>
+<variable name="inst"
+ label="Installation fee ($)"/>
+<variable name="svc"
+ label="Monthly service charge of each system"/>
+<variable name="tv"
+ label="number of TV signals carried by each cable system"/>
+<variable name="age"
+ label="age of each system in years"/>
+<variable name="air"
+ label="number of television signals received"/>
+<variable name="y"
+ label="Per capita income in market area ($)"/>
+</variables>
+<observations count="40" labels="false">
+<obs>105.000 350.000 14.95 10.00 16 11.83 13 9839 </obs>
+<obs>90.000 255.631 15.00 7.50 15 11.42 11 10606 </obs>
+<obs>14.000 31.000 15.00 7.00 11 7.33 9 10455 </obs>
+<obs>11.700 34.840 10.00 7.00 22 6.92 10 8958 </obs>
+<obs>46.000 153.434 25.00 10.00 20 26.00 12 11741 </obs>
+<obs>11.217 26.621 15.00 7.66 18 8.83 8 9378 </obs>
+<obs>12.000 18.000 15.00 7.50 12 13.08 8 10433 </obs>
+<obs>6.428 9.324 15.00 7.00 17 5.58 7 10167 </obs>
+<obs>20.100 32.000 10.00 5.60 10 12.42 8 9218 </obs>
+<obs>8.500 28.000 15.00 6.50 6 4.92 6 10519 </obs>
+<obs>1.600 8.000 17.50 7.50 8 4.08 6 10025 </obs>
+<obs>1.100 5.000 15.00 8.95 9 4.25 9 9714 </obs>
+<obs>4.355 15.204 10.00 7.00 7 10.67 7 9294 </obs>
+<obs>78.910 97.889 24.95 9.49 12 17.58 7 9784 </obs>
+<obs>19.600 93.000 20.00 7.50 9 8.08 7 8173 </obs>
+<obs>1.000 3.000 9.95 10.00 13 0.17 6 8967 </obs>
+<obs>1.650 2.600 25.00 7.55 6 13.25 5 10133 </obs>
+<obs>13.400 18.284 15.50 6.30 11 12.67 5 9361 </obs>
+<obs>18.708 55.000 15.00 7.00 16 5.25 6 9085 </obs>
+<obs>1.352 1.700 20.00 5.60 6 15.00 6 10067 </obs>
+<obs>170.000 270.000 15.00 8.75 15 17.00 5 8908 </obs>
+<obs>15.388 46.540 15.00 8.73 9 6.83 6 9632 </obs>
+<obs>6.555 20.417 5.95 5.95 10 5.67 6 8995 </obs>
+<obs>40.000 120.000 25.00 6.50 10 7.00 5 7787 </obs>
+<obs>19.900 46.390 15.00 7.50 9 11.25 7 8890 </obs>
+<obs>2.450 14.500 9.95 6.25 6 2.92 4 8041 </obs>
+<obs>3.762 9.500 20.00 6.50 6 2.17 5 8605 </obs>
+<obs>24.882 81.980 18.00 7.50 8 7.08 4 8639 </obs>
+<obs>21.187 39.700 20.00 6.00 9 12.17 4 8781 </obs>
+<obs>3.487 4.113 10.00 6.85 11 13.08 4 8551 </obs>
+<obs>3.000 8.000 10.00 7.95 9 0.17 6 9306 </obs>
+<obs>42.100 99.750 9.95 5.73 8 7.67 5 8346 </obs>
+<obs>20.350 33.379 15.00 7.50 8 10.33 4 8803 </obs>
+<obs>23.150 35.500 17.50 6.50 8 12.25 5 8942 </obs>
+<obs>9.866 34.775 15.00 8.25 11 2.00 4 8591 </obs>
+<obs>42.608 64.840 10.00 6.00 11 13.08 6 9163 </obs>
+<obs>10.371 30.556 20.00 7.50 8 1.00 6 7683 </obs>
+<obs>5.164 16.500 14.95 6.95 8 4.00 5 7924 </obs>
+<obs>31.150 70.515 9.95 7.00 10 4.67 4 8454 </obs>
+<obs>18.350 42.040 20.00 7.00 6 3.00 4 8429 </obs>
+</observations>
+</gretldata>

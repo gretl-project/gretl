@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="data7-3" frequency="1" startobs="1" endobs="14" type="cross-section">
+<description>
+DATA7-3: Determinants of the sale price of single family homes in
+	 University City community of San Diego, in 1990.
+  price    = Sale price in thousands of dollars (Range 199.9 - 505)
+  sqft     = Living are in square feet (Range 1065 - 3000)
+  bedrms   = Number of bedrooms (Range 3 - 4)
+  baths    = Number of bathrooms (Range 1.75 - 3)
+  pool     = 1 if the house has a swimming pool, 0 otherwise
+  famroom  = 1 if the house has a family room, 0 otherwise
+  firepl   = 1 if the house has a fireplace, 0 otherwise
+</description>
+<variables count="7">
+<variable name="price"
+ label="Sale price in ($000s, Range 199.9 - 505)"/>
+<variable name="sqft"
+ label="Living are in square feet (Range 1065 - 3000)"/>
+<variable name="bedrms"
+ label="Number of bedrooms (Range 3 - 4)"/>
+<variable name="baths"
+ label="Number of bathrooms (Range 1.75 - 3)"/>
+<variable name="pool"
+ label="1 if the house has a swimming pool, 0 otherwise"/>
+<variable name="famroom"
+ label="1 if the house has a family room, 0 otherwise"/>
+<variable name="firepl"
+ label="1 if the house has a fireplace, 0 otherwise"/>
+</variables>
+<observations count="14" labels="false">
+<obs>199.9 1065 3 1.75 1 0 0 </obs>
+<obs>228.0 1254 3 2.00 0 0 0 </obs>
+<obs>235.0 1300 3 2.00 1 1 1 </obs>
+<obs>285.0 1577 4 2.50 0 1 1 </obs>
+<obs>239.0 1600 3 2.00 0 1 1 </obs>
+<obs>293.0 1750 4 2.00 0 0 1 </obs>
+<obs>285.0 1800 4 2.75 0 1 1 </obs>
+<obs>365.0 1870 4 2.00 1 1 1 </obs>
+<obs>295.0 1935 4 2.50 0 1 1 </obs>
+<obs>290.0 1948 4 2.00 0 1 1 </obs>
+<obs>385.0 2254 4 3.00 1 1 1 </obs>
+<obs>505.0 2600 3 2.50 1 1 1 </obs>
+<obs>425.0 2800 4 3.00 0 1 1 </obs>
+<obs>415.0 3000 4 3.00 0 1 1 </obs>
+</observations>
+</gretldata>
