@@ -1013,6 +1013,7 @@ void do_remove_markers (gpointer data, guint u, GtkWidget *w)
 {
     destroy_dataset_markers(datainfo);
     infobox(_("Case markers removed"));
+    mark_dataset_as_modified();
     remove_markers_state(FALSE);
 }
 
