@@ -71,7 +71,7 @@ struct gnuplot_info {
     
 #ifdef GLIB2
 
-/* #define SPAWN_DEBUG */
+#undef SPAWN_DEBUG
 
 int gnuplot_test_command (const char *cmd)
 {
@@ -303,7 +303,8 @@ int gnuplot_has_specified_colors (void)
     static int err = -1; 
 
     if (err == -1) {
-	/* try the old-style command: if it fails, we have the new driver */
+	/* try the old-style command: 
+	   if it fails, we have the new driver, we hope */
 	err = gnuplot_test_command("set term png color");
     }
     return err;
@@ -498,14 +499,14 @@ int gnuplot_make_graph (void)
     int err = 0;
     char plotcmd[MAXLEN];
 
-# ifdef WIN32
+#ifdef WIN32
     sprintf(plotcmd, "\"%s\" \"%s\"", gretl_gnuplot_path(), gretl_plotfile());
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
-# else
+#else
     sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
 	    (gretl_using_gui())? "" : " -persist", gretl_plotfile());
     err = gretl_spawn(plotcmd);  
-# endif /* WIN32 */
+#endif
 
     return err;
 }
@@ -716,10 +717,12 @@ check_for_yscale (struct gnuplot_info *gpinfo, const int *list,
     double ratio;
     int i, j, oddcount;
 
-    /* find minima, maxima of the vars */
+    /* find minima, maxima of the y-axis vars */
     for (i=1; i<list[0]; i++) {
 	gretl_minmax(gpinfo->t1, gpinfo->t2, Z[list[i]], &ymin[i], &ymax[i]);
     }
+
+    gpinfo->yscale = 0;
 
     for (i=1; i<list[0]; i++) {
 	oddcount = 0;
@@ -1149,18 +1152,21 @@ int multi_scatters (const int *list, int pos, double ***pZ,
 
     if (yvar) {
 	plotlist[0] = list[0] - pos;
-	for (i=1; i<=plotlist[0]; i++)
-	   plotlist[i] = list[i+pos]; 
+	for (i=1; i<=plotlist[0]; i++) {
+	   plotlist[i] = list[i + pos]; 
+	}
     } else {
 	plotlist[0] = pos - 1;
-	for (i=1; i<pos; i++)
+	for (i=1; i<pos; i++) {
 	   plotlist[i] = list[i]; 
+	}
     }
 
     /* max 6 plots */
     if (plotlist[0] > 6) {
 	plotlist[0] = 6;
     }
+
     nplots = plotlist[0];
 
     if (get_gnuplot_output_file(&fp, flags, plot_count, PLOT_MULTI_SCATTER)) {
@@ -1172,6 +1178,10 @@ int multi_scatters (const int *list, int pos, double ***pZ,
 	  "set multiplot\n", fp);
     fputs("set nokey\n", fp);
     fputs("set noxtics\nset noytics\n", fp);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif
 
     for (i=0; i<nplots; i++) {  
 	if (nplots <= 4) {
@@ -1191,41 +1201,46 @@ int multi_scatters (const int *list, int pos, double ***pZ,
 	    else if (i == 4) fputs("0.32,0.0\n", fp);
 	    else if (i == 5) fputs("0.64,0.0\n", fp);
 	}
+
 	fprintf(fp, "set xlabel '%s'\n",
 		(yvar)? pdinfo->varname[plotlist[i+1]] :
 		pdinfo->varname[xvar]);
+
 	fprintf(fp, "set ylabel '%s'\n", 
 		(yvar)? pdinfo->varname[yvar] :
 		pdinfo->varname[plotlist[i+1]]);
+
 	fputs("plot '-' using 1:2\n", fp);
 
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "C");
-#endif
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    double xx;
 	    int m;
 
 	    m = (yvar)? plotlist[i+1] : xvar;
 	    xx = (*pZ)[m][t];
+
 	    if (na(xx)) {
 		fputs("? ", fp);
 	    } else {
 		fprintf(fp, "%.8g ", xx);
 	    }
+
 	    m = (yvar)? yvar : plotlist[i+1];
 	    xx = (*pZ)[m][t];
+
 	    if (na(xx)) {
 		fputs("?\n", fp);
 	    } else {
 		fprintf(fp, "%.8g\n", xx);
 	    }
 	}
+
 	fputs("e\n", fp);
-#ifdef ENABLE_NLS
-	setlocale(LC_NUMERIC, "");
-#endif
     } 
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     fputs("set nomultiplot\n", fp);
 
