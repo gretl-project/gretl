@@ -1,3 +1,22 @@
+/*
+ *  Copyright (c) by Allin Cottrell
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+
 /* TRAMO/SEATS, X-12-ARIMA plugin for gretl */
 
 #include "libgretl.h"
@@ -58,6 +77,25 @@ typedef struct {
 } tx_request;
 
 #ifdef G_OS_WIN32
+static void win_show_error (void)
+{
+    LPVOID buf;
+
+    FormatMessage( 
+                  FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+                  FORMAT_MESSAGE_FROM_SYSTEM | 
+                  FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL,
+                  GetLastError(),
+                  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                  (LPTSTR) &buf,
+                  0,
+                  NULL 
+                  );
+    MessageBox(NULL, (LPCTSTR) buf, "Error", MB_OK | MB_ICONERROR);
+    LocalFree(buf);
+}
+
 static int win_fork_prog (char *cmdline, const char *dir)
 {
     int child;
@@ -303,7 +341,7 @@ static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
 
 static int add_series_from_file (const char *fname, int code,
 				 double **Z, DATAINFO *pdinfo,
-				 int v, int opt)
+				 int v, int opt, char *errmsg)
 {
     FILE *fp;
     char *p, line[128], varname[16], sfname[MAXLEN], date[8];
@@ -322,7 +360,7 @@ static int add_series_from_file (const char *fname, int code,
 
     fp = fopen(sfname, "r");
     if (fp == NULL) {
-	sprintf(gretl_errmsg, "%s %s", _("Couldn't open"), sfname);
+	sprintf(errmsg, "%s %s", _("Couldn't open"), sfname);
 	return 1;
     }
 
@@ -543,7 +581,8 @@ static void copy_basic_data_info (DATAINFO *targ, DATAINFO *src)
 
 static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 				 double **tmpZ, DATAINFO *tmpinfo,
-				 int *varlist, tx_request *request)
+				 int *varlist, tx_request *request,
+				 char *errmsg)
 {
     int i, v, j, addvars = 0;
 
@@ -556,7 +595,7 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
     }
 
     if (addvars > 0 && dataset_add_vars(addvars, pZ, pdinfo)) {
-	strcpy(gretl_errmsg, _("Failed to allocate memory for new data"));
+	strcpy(errmsg, _("Failed to allocate memory for new data"));
 	return 1;
     }
 
@@ -578,7 +617,8 @@ static int save_vars_to_dataset (double ***pZ, DATAINFO *pdinfo,
 int write_tx_data (char *fname, int varnum, 
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PATHS *paths, int *graph,
-		   const char *prog, const char *workdir)
+		   const char *prog, const char *workdir,
+		   char *errmsg)
 {
     int i, opt, doit, err = 0;
     char varname[9], cmd[MAXLEN];
@@ -589,9 +629,9 @@ int write_tx_data (char *fname, int varnum,
     DATAINFO *tmpinfo;
 
     /* sanity check */
-    *gretl_errmsg = 0;
+    *errmsg = 0;
     if (!pdinfo->vector[varnum]) {
-	sprintf(gretl_errmsg, "%s %s", pdinfo->varname[varnum], 
+	sprintf(errmsg, "%s %s", pdinfo->varname[varnum], 
 		_("is a scalar"));
 	return 1;
     }
@@ -683,7 +723,8 @@ int write_tx_data (char *fname, int varnum,
 	    copy_variable(tmpZ, tmpinfo, 0, *pZ, pdinfo, varnum);
 	    for (i=1; i<=varlist[0]; i++) {
 		err = add_series_from_file((opt == X12A)? fname : workdir, 
-					   varlist[i], tmpZ, tmpinfo, i, opt);
+					   varlist[i], tmpZ, tmpinfo, i, opt, 
+					   errmsg);
 	    }
 	    if (request.opt[TRIGRAPH].save) {
 		err = graph_series(tmpZ, tmpinfo, paths, opt);
@@ -693,7 +734,8 @@ int write_tx_data (char *fname, int varnum,
 
 	/* now save the local vars to main dataset, if wanted */
 	if (request.savevars > 0) {
-	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, varlist, &request);
+	    err = save_vars_to_dataset(pZ, pdinfo, tmpZ, tmpinfo, varlist, 
+				       &request, errmsg);
 	}
     }
 
