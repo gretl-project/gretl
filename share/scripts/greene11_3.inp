@@ -12,16 +12,14 @@ loop while essdiff > .00001
    genr C0 = C + gamma0 * b0 * Y^gamma0 * log(Y)
    genr x1 = Y^gamma0
    genr x2 = b0 * Y^gamma0 * log(Y)
-   # run OLS quietly
-   ols C0 0 x1 x2 --quiet
+   # run OLS 
+   ols C0 0 x1 x2 --print-final --no-df-corr --vcv
    genr b0 = coeff(x1)
    genr gamma0 = coeff(x2)
    genr ess = $ess
    genr essdiff = abs(ess - essbak)/essbak
    genr essbak = ess
 endloop 
-# compute final estimates, with covariance matrix
-ols C0 0 x1 x2 --vcv --no-df-corr
 # print parameter estimates using their "proper names"
 noecho
 printf "alpha = %g\n", coeff(0)
