@@ -7,7 +7,7 @@ GNUPLOT_ZIPFILE=/home/ftp/pub/gretl/winbuild/gp38jw32.zip
 HOME_WIN32=/home/cottrell/stats/esl/win32/runtime
 GTK2RT=$HOME_WIN32/gtk-2.0-runtime.tar.gz
 
-INNO_EXE="c:/Userdata/Inno Setup 2/ISCC.exe"
+INNO_EXE="c:/Program Files/Inno Setup 3/ISCC.exe"
 RECODE=recode
 THISDIR=`pwd`
 

@@ -210,6 +210,31 @@
 	  endloop</programlisting>
       </example>
 
+    <para>The <command>smpl</command> command in the above example
+    illustrates the use of the variable <varname>i</varname> within a
+    loop.  In addition, you can use the expression
+    <varname>$i</varname>: in this case the value of
+    <varname>i</varname> will be substituted before the command is
+    evaluated.  This enables you to construct strings (for example,
+    variable names) within the loop, as in <xref
+    linkend="string-loop"/>.</para>
+
+    <example id="string-loop"><title>Second indexed loop example</title>
+    <programlisting>
+	open bea.dat
+	loop for i=1987..2001
+	  genr V = COMP$i
+	  genr TC = GOC$i - PBT$i
+	  genr C = TC - V
+	  ols PBT$i const TC V
+	endloop</programlisting>
+      </example>
+
+    <para>The first time round this loop <varname>V</varname> will be
+      set to equal <varname>COMP1987</varname> and the dependent
+      variable for the <command>ols</command> will be
+      <varname>PBT1987</varname>, and so on.</para>
+
     </sect1>
 
   </chapter>

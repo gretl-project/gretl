@@ -13,7 +13,7 @@ MGW_INC = $(CROSSDIR)/mingw32/include
 GLIB_INC = $(CROSSDIR)/mingw32/include/glib-2.0
 
 # msgfmt command for producing win32 messages file
-WIN32_MSGFMT = wine c:/Userdata/gettext/msgfmt.exe
+WIN32_MSGFMT = wine c:/bin/msgfmt.exe
 
 # pkgconfig path
 PKG_CONFIG_PATH = $(CROSSDIR)/mingw32/lib/pkgconfig
