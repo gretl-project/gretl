@@ -3154,7 +3154,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
     if (check_cmd(line) || cmd_init(line)) return;
 
     if (command.list[0] != 3 || 
-	!isdummy(command.list[3], datainfo->t1, datainfo->t2, Z)) {
+	!isdummy(Z[command.list[3]], datainfo->t1, datainfo->t2)) {
 	errbox(_("You must supply three variables, the last\nof which "
 	       "is a dummy variable (values 1 or 0)"));
 	return;
@@ -3227,6 +3227,7 @@ void display_var (void)
     PRN *prn;
     windata_t *vwin;
     int height = 350;
+    int vec = 1;
 
     list[0] = 1;
     list[1] = mdata->active_var;
@@ -3236,11 +3237,12 @@ void display_var (void)
     printdata(list, &Z, datainfo, 0, 1, prn);
 
     if (!datainfo->vector[list[1]]) {
+	vec = 0;
 	height = 80;
     }
 
     vwin = view_buffer(prn, 28, height, datainfo->varname[list[1]], VIEW_SERIES,
-		       NULL);   
+		       (vec)? series_view_items : scalar_view_items);   
 
     series_view_connect(vwin, list[1]);
 }

@@ -35,8 +35,28 @@ typedef struct {
     data_point_t *points;
 } series_view_t;
 
-static void series_view_format_dialog (GtkWidget *w, 
-				       windata_t *vwin);
+static void series_view_format_dialog (windata_t *vwin, guint a, GtkWidget *w);
+static void series_view_sort (windata_t *vwin, guint a, GtkWidget *w);
+static void series_view_graph (windata_t *vwin, guint a, GtkWidget *w);
+static void scalar_to_clipboard (windata_t *vwin, guint a, GtkWidget *w);
+
+GtkItemFactoryEntry series_view_items[] = {
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { N_("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
+    { N_("/_Series"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Series/_Sort"), NULL, series_view_sort, 0, NULL },
+    { N_("/Series/_Graph"), NULL, series_view_graph, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
+
+GtkItemFactoryEntry scalar_view_items[] = {
+    { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Edit/_Format..."), NULL, series_view_format_dialog, 0, NULL },
+    { N_("/Edit/_Copy value"), NULL, scalar_to_clipboard, 0, NULL },
+    { NULL, NULL, NULL, 0, NULL }
+};
 
 static int buf_to_clipboard (const char *buf)
 {
@@ -153,7 +173,7 @@ static void series_view_print (windata_t *vwin)
     gretl_print_destroy(prn);
 }
 
-static void series_view_sort (GtkWidget *w, gpointer data)
+static void series_view_sort (windata_t *vwin, guint action, GtkWidget *w)
 {
     int err;
     windata_t *vwin = (windata_t *) data;
@@ -172,23 +192,19 @@ static void series_view_sort (GtkWidget *w, gpointer data)
 }
 
 static void 
-series_view_boxplot_callback (GtkWidget *w, windata_t *vwin)
+series_view_graph (windata_t *vwin, guint action, GtkWidget *w)
 {
     series_view_t *sview = (series_view_t *) vwin->data;
 
-    do_boxplot_var(sview->varnum);
+    if (dataset_is_time_series(datainfo)) {
+	do_graph_var(sview->varnum);
+    } else {
+	do_boxplot_var(sview->varnum);
+    }
 }
 
 static void 
-series_view_plot_callback (GtkWidget *w, windata_t *vwin)
-{
-    series_view_t *sview = (series_view_t *) vwin->data;
-
-    do_graph_var(sview->varnum);
-}
-
-static void 
-scalar_to_clipboard (GtkWidget *w, windata_t *vwin)
+scalar_to_clipboard (windata_t *vwin, guint action, GtkWidget *w)
 {
     series_view_t *sview = (series_view_t *) vwin->data;
     double val;
@@ -207,40 +223,6 @@ scalar_to_clipboard (GtkWidget *w, windata_t *vwin)
     g_free(buf);
 }
 
-void series_view_build_popup (windata_t *vwin)
-{
-    int vec = datainfo->vector[mdata->active_var];
-
-    if (vwin->popup != NULL) return;
-
-    vwin->popup = gtk_menu_new();
-
-    if (vec) {
-	add_popup_item(_("Sort"), vwin->popup, 
-		       GTK_SIGNAL_FUNC(series_view_sort), 
-		       vwin);
-    }
-    add_popup_item(_("Format..."), vwin->popup, 
-		   GTK_SIGNAL_FUNC(series_view_format_dialog), 
-		   vwin);
-    if (vec) {
-	if (dataset_is_time_series(datainfo)) {
-	    add_popup_item(_("Time series plot"), vwin->popup, 
-			   GTK_SIGNAL_FUNC(series_view_plot_callback), 
-			   vwin);
-	} else {
-	    add_popup_item(_("Boxplot"), vwin->popup, 
-			   GTK_SIGNAL_FUNC(series_view_boxplot_callback), 
-			   vwin);
-	}
-    }
-    if (!vec) {
-	add_popup_item(_("Copy value"), vwin->popup, 
-		       GTK_SIGNAL_FUNC(scalar_to_clipboard), 
-		       vwin);
-    }
-}
-
 void series_view_connect (windata_t *vwin, int varnum)
 {
     series_view_t *sview;
@@ -257,8 +239,6 @@ void series_view_connect (windata_t *vwin, int varnum)
 	sview->format = 'G';
 	vwin->data = sview;
     }
-
-    series_view_build_popup(vwin);
 }
 
 static 
@@ -287,7 +267,7 @@ set_series_float_format (GtkWidget *w, gpointer p)
 }
 
 static void 
-series_view_format_dialog (GtkWidget *src, windata_t *vwin)
+series_view_format_dialog (windata_t *vwin, guint action, GtkWidget *src)
 {
     GtkWidget *w, *tmp, *label, *button;
     GtkWidget *vbox, *hbox;

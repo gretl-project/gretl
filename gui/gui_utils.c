@@ -1236,15 +1236,6 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_signal_connect(GTK_OBJECT(dialog), "key_press_event", 
 		       GTK_SIGNAL_FUNC(catch_view_key), dialog);
 
-    /* want popup menu? */
-    if (role == VIEW_SERIES) {
-	series_view_build_popup(vwin);
-	/* vwin->w is the gtktext widget */
-	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
-			    GTK_SIGNAL_FUNC(popup_menu_handler), 
-			    (gpointer) vwin->popup);
-    } 
-
     gtk_widget_show(vwin->vbox);
     gtk_widget_show(dialog);
     return vwin;
@@ -1807,7 +1798,7 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 	if (pmod->list[i] == 0) continue;
 
-	if (!isdummy(pmod->list[i], datainfo->t1, datainfo->t2, Z)) {
+	if (!isdummy(Z[pmod->list[i]], datainfo->t1, datainfo->t2)) {
 	    continue;
 	}
 
