@@ -821,9 +821,11 @@ GRETLSUMMARY *summary (int *list,
 
 void free_corrmat (CORRMAT *corrmat)
 {
-    free(corrmat->list);
-    free(corrmat->xpx);
-    free(corrmat);
+    if (corrmat != NULL) {
+	free(corrmat->list);
+	free(corrmat->xpx);
+	free(corrmat);
+    }
 }
 
 /* ....................................................... */
