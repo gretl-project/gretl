@@ -1027,7 +1027,7 @@ static int make_smpl_mask (double ***pZ, DATAINFO *pdinfo)
 
    If the call is a prelude to _replacing_ an existing
    sample restriction, the "opt" parameter should equal
-   OPT_C (think "replaCe").
+   OPT_C (think "replaCe"!).
 */
 
 int restore_full_sample (double ***pZ, DATAINFO **ppdinfo, gretlopt opt)

@@ -2153,7 +2153,6 @@ int loop_exec (LOOPSET *loop, char *line,
     top_of_loop(loop, *pZ);
 
     while (!err && loop_condition(lround, loop, *pZ, *ppdinfo)) {
-	DATAINFO *pdinfo = *ppdinfo;
 	int childnum = 0;
 	int j;
 
@@ -2183,7 +2182,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	       will do some checking that hasn't been done earlier.
 	    */
 
-	    getcmd(linecpy, pdinfo, &cmd, &ignore, pZ, NULL);
+	    getcmd(linecpy, *ppdinfo, &cmd, &ignore, pZ, NULL);
 
 	    if (cmd.ci < 0) {
 		continue;
@@ -2198,7 +2197,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (cmd.ci == ENDLOOP) {
 		    pputc(prn, '\n');
 		} else {
-		    echo_cmd(&cmd, pdinfo, linecpy, 0, 1, 0, prn);
+		    echo_cmd(&cmd, *ppdinfo, linecpy, 0, 1, 0, prn);
 		}
 	    }
 
@@ -2208,7 +2207,7 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case SIM:
 	    case ADF:
 	    case KPSS:
-		err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		break;
 
 	    case LOOP:
@@ -2221,7 +2220,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		break;
 
 	    case GENR:
-		err = generate(pZ, pdinfo, linecpy, lastmod);
+		err = generate(pZ, *ppdinfo, linecpy, lastmod);
 		if (loop_is_verbose(loop) && !err) { 
 		    print_gretl_msg(prn);
 		}
@@ -2251,13 +2250,13 @@ int loop_exec (LOOPSET *loop, char *line,
 		clear_model(models[0]);
 
 		if (cmd.ci == OLS || cmd.ci == WLS || cmd.ci == HCCM) {
-		    *models[0] = lsq(cmd.list, pZ, pdinfo, cmd.ci, cmd.opt, 0.0);
+		    *models[0] = lsq(cmd.list, pZ, *ppdinfo, cmd.ci, cmd.opt, 0.0);
 		} else if (cmd.ci == LAD) {
-		    *models[0] = lad(cmd.list, pZ, pdinfo);
+		    *models[0] = lad(cmd.list, pZ, *ppdinfo);
 		} else if (cmd.ci == HSK) {
-		    *models[0] = hsk_func(cmd.list, pZ, pdinfo);
+		    *models[0] = hsk_func(cmd.list, pZ, *ppdinfo);
 		} else if (cmd.ci == GARCH) {
-		    *models[0] = garch(cmd.list, pZ, pdinfo, cmd.opt, prn);
+		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
 		}
 
 		if ((err = (models[0])->errcode)) {
@@ -2285,32 +2284,32 @@ int loop_exec (LOOPSET *loop, char *line,
 		    model_count_minus();
 		} else {
 		    (models[0])->ID = ++modnum; /* FIXME? */
-		    printmodel(models[0], pdinfo, cmd.opt, prn);
+		    printmodel(models[0], *ppdinfo, cmd.opt, prn);
 		    lastmod = models[0];
 		}
 		break;
 
 	    case PRINT:
 		if (cmd.param[0] != '\0') {
-		    err = simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		    err = simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		} else if (loop_is_progressive(loop)) {
 		    if (lround == 0) {
 			if ((err = add_loop_print(loop, cmd.list, j))) {
 			    break;
 			}
 		    }
-		    if (update_loop_print(loop, j, cmd.list, pZ, pdinfo)) {
+		    if (update_loop_print(loop, j, cmd.list, pZ, *ppdinfo)) {
 			gretl_errmsg_set(_("Failed to add values to print loop\n"));
 			err = 1;
 		    }
 		} else {
-		    err = printdata(cmd.list, (const double **) *pZ, pdinfo, 
+		    err = printdata(cmd.list, (const double **) *pZ, *ppdinfo, 
 				    cmd.opt, prn);
 		}
 		break;
 
 	    case PRINTF:
-		err = do_printf(linecpy, pZ, pdinfo, models[0], prn);
+		err = do_printf(linecpy, pZ, *ppdinfo, models[0], prn);
 		break;
 
 	    case SMPL:
@@ -2341,21 +2340,21 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (loop_is_progressive(loop)) {
 		    if (lround == 0) {
 			loop->nstore = cmd.list[0];
-			if (loop_store_init(loop, cmd.param, cmd.list, pdinfo)) {
+			if (loop_store_init(loop, cmd.param, cmd.list, *ppdinfo)) {
 			    err = 1;
 			}
 		    }
 		    if (!err) {
 			loop_add_storevals(cmd.list, loop, lround,
-					   (const double **) *pZ, pdinfo);
+					   (const double **) *pZ, *ppdinfo);
 		    }
 		} else {
-		    simple_commands(&cmd, linecpy, pZ, pdinfo, prn);
+		    simple_commands(&cmd, linecpy, pZ, *ppdinfo, prn);
 		}
 		break;
 
 	    case PVALUE:
-		batch_pvalue(linecpy, (const double **) *pZ, pdinfo, prn);
+		batch_pvalue(linecpy, (const double **) *pZ, *ppdinfo, prn);
 		break;
 
 	    default: 
