@@ -114,11 +114,11 @@ static void get_critical (GtkWidget *w, gpointer data)
 {
     lookup_t **look = (lookup_t **) data;
     void *handle;
-    void *funp;
-    void (*norm_table)(print_t *);
-    void (*dw)(int, print_t *);
-    void (*tcrit)(int, print_t *);
-    void (*chicrit)(int, print_t *);
+    void *funp = NULL;
+    void (*norm_table)(print_t *) = NULL;
+    void (*dw)(int, print_t *) = NULL;
+    void (*tcrit)(int, print_t *) = NULL;
+    void (*chicrit)(int, print_t *) = NULL;
     int i, n, df;
     print_t prn;
     extern GtkItemFactoryEntry view_items[];
@@ -154,6 +154,7 @@ static void get_critical (GtkWidget *w, gpointer data)
     default:
 	break;
     }
+
     if (funp == NULL)  {
 	close_plugin(handle);
 	prnclose(&prn);
@@ -312,7 +313,7 @@ static double f_crit_a (const double a, const int df1, const int df2)
 
 static void htest_graph (int dist, double x, int df1, int df2)
 {
-    double xx, prange, spike;
+    double xx, prange, spike = 0.0;
     FILE *fp;
     char plotcmd[MAXLEN];
 
@@ -916,9 +917,9 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	code 2: hypothesis tests
      */
 {
-    GtkWidget *tempwid, *dialog, *notebook;
-    test_t **test;
-    lookup_t **look;
+    GtkWidget *tempwid = NULL, *dialog, *notebook;
+    test_t **test = NULL;
+    lookup_t **look = NULL;
     gint i;
 
     if (code == 0 || code == 1) {

@@ -387,7 +387,7 @@ gtk_area_boxplot (BOXPLOT *plot, GtkWidget *area, GdkPixmap *pixmap,
     double xcenter = plot->xbase + boxwidth / 2.0;
     double scale = (1.0 - headroom) * height / (gmax - gmin);
     double median, uq, lq, maxval, minval;
-    double conflo, confhi = 0.;
+    double conflo = 0., confhi = 0.;
     GdkRectangle rect;
     GdkGC *gc = NULL;
     /* GdkGC *whitegc = NULL; */
@@ -702,8 +702,12 @@ int ps_print_plots (const char *fname, int flag, gpointer data)
     if (ps == NULL) return 1;
 
     if (eps) {
+	ps->page_width = pscale * grp->width;
+	ps->page_height = pscale * grp->height;
+#ifdef notdef
 	ps->page_width = ps->pc.width = pscale * grp->width;
 	ps->page_height = ps->pc.height = pscale * grp->height;
+#endif
     }
 
     if (!psinit (ps)) return 1;
