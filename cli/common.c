@@ -39,29 +39,28 @@ static void substitute_dollar_i (char *str)
     }
 }
 
-static int loop_exec (LOOPSET *main_loop, PRN *prn)
+static int loop_exec (LOOPSET *loop, PRN *prn)
 {
     int lround = 0;
     int err = 0;
 
-    if (main_loop->ncmds == 0) {
+    if (loop->ncmds == 0) {
 	pprintf(prn, _("No commands in loop\n"));
 	return 0;
     }
 
     gretl_set_text_pause(0);
 
-    while (!err && loop_condition(lround, main_loop, Z, datainfo)) {
+    while (!err && loop_condition(lround, loop, Z, datainfo)) {
 	int j;
 
-	if (main_loop->type == FOR_LOOP && !echo_off) {
+	if (loop->type == FOR_LOOP && !echo_off) {
 	    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 	}
 
-	for (j=0; !err && j<main_loop->ncmds; j++) {
+	for (j=0; !err && j<loop->ncmds; j++) {
 	    char linecpy[MAXLINE];
 	    static MODEL *tmpmodel;
-	    LOOPSET *loop = main_loop;
 
 	    strcpy(linecpy, loop->lines[j]);
 
@@ -264,18 +263,20 @@ static int loop_exec (LOOPSET *main_loop, PRN *prn)
 
     if (err) {
 	print_gretl_errmsg(prn);
-    } else if (main_loop->err) {
+    } else if (loop->err) {
 	print_gretl_errmsg(prn);
-	err = main_loop->err;
+	err = loop->err;
     }
 
     if (!err && lround > 0) {
-	if (main_loop->type != FOR_LOOP) {
-	    print_loop_results(main_loop, datainfo, prn, &paths); 
+	if (loop->type != FOR_LOOP) {
+	    print_loop_results(loop, datainfo, prn, &paths); 
 	}
     } 
 
-    main_loop = gretl_loop_terminate(main_loop);
+#if 0
+    loop = gretl_loop_terminate(loop);
+#endif
 
     clear(line, MAXLINE);
 
