@@ -2044,7 +2044,7 @@
 
   </command>
 
-  <command name="label" section="Dataset" context="cli">
+  <command name="label" section="Dataset">
 
     <usage>
       <arguments>
@@ -2548,16 +2548,25 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Calculates the <mathvar>t</mathvar> statistic for the null
 	hypothesis that the population means are equal for the
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
-	its p-value. The command may be called with the assumption
-	that the variances are equal for the two variables (the
-	default) or that they are unequal.  This will make a
+	its p-value. By default the test statistic is calculated on
+	the assumption that the variances are equal for the two
+	variables; with the <lit>--unequal-vars</lit>option the
+	variances are asumed to be different.  This will make a
 	difference to the test statistic only if there are different
 	numbers of non-missing observations for the two variables.
       </para>
+      <para context="gui">
+	Calculates the t statistic for the null hypothesis that the
+	population means are equal for two selected variables, and
+	shows its p-value.  The command may be called with or without
+	the assumption that the variances are equal for the two
+	variables (although this will make a difference to the test
+	statistic only if there are different numbers of non-missing
+	observations for the two variables.)</para>
     </description>
 
     <gui-access>
@@ -2757,7 +2766,7 @@
 
   </command>
 
-  <command name="noecho" section="Printing" context="cli">
+  <command name="noecho" section="Obsolete" context="cli">
     <description>
       <para>Obsolete command.  See <cmdref targ="set"/>.
       </para>
@@ -3298,8 +3307,8 @@
 
     <description>
       <para>
-	Probit regression. The dependent variable should be a binary
-	variable. Maximum likelihood estimates of the coefficients on
+	The dependent variable should be a binary variable. Maximum
+	likelihood estimates of the coefficients on
 	<repl>indepvars</repl> are obtained via iterated least squares
 	(the EM or Expectation&ndash;Maximization method).  As the
 	model is nonlinear the slopes depend on the values of the
@@ -3588,7 +3597,7 @@
 
   </command>
 
-  <command name="seed" section="Programming" context="cli">
+  <command name="seed" section="Obsolete" context="cli">
     <description>
       <para>Obsolete command.  See <cmdref targ="set"/>.
       </para>
@@ -3937,12 +3946,17 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Prints Spearman's rank correlation coefficient for the two
 	variables <mathvar>x</mathvar> and <mathvar>y</mathvar>. The
 	variables do not have to be ranked manually in advance; the
 	function takes care of this.
       </para>
+
+      <para context="gui">
+	Prints Spearman's rank correlation coefficient for a specified
+	pair of variables.  The variables do not have to be ranked
+	manually in advance; the function takes care of this.</para>
 
       <para>
 	The automatic ranking is from largest to smallest (i.e. the
@@ -4155,7 +4169,7 @@
 
   </command>
 
-  <command name="testuhat" section="Tests">
+  <command name="testuhat" section="Tests" context="cli">
 
     <blurb>Normality of residual</blurb>
 
@@ -4235,7 +4249,7 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Computes two-stage least squares (TSLS) estimates:
 	<repl>depvar</repl> is the dependent variable,
 	<repl>indepvars</repl> is the list of independent variables
@@ -4246,11 +4260,23 @@
 	<repl>instruments</repl> list is not at least as long as
 	<repl>indepvars</repl>, the model is not identified.</para>
 
-      <para>
+      <para context="cli">
 	In the above example, the <lit>y</lit>s are the endogenous
 	variables and the <lit>x</lit>s are the exogenous and
 	predetermined variables.  
       </para>
+
+      <para context="gui">
+	This command requires the selection of two lists of variables:
+	the independent variables to appear in the given model and a
+	set of "instruments".  The latter comprises the exogenous
+	and/or predetermined variables that may be used as regressors
+	to derive fitted values for the right-hand side endogenous
+	variables.</para>
+
+      <para context="gui">If some of the right-hand side variables for
+	the model are exogenous, they should be referenced in both
+	lists.</para>
     </description>
 
     <gui-access>

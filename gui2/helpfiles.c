@@ -143,6 +143,7 @@ static int extra_command_number (const char *s)
     for (i=0; gui_help_items[i].code; i++)
 	if (!strcmp(s, gui_help_items[i].string))
 	    return gui_help_items[i].code;
+
     return 0;
 }
 
@@ -155,6 +156,7 @@ static char *help_string_from_cmd (int cmd)
     for (i=0; gui_help_items[i].code; i++)
 	if (cmd == gui_help_items[i].code)
 	    return gui_help_items[i].string;
+
     return NULL;    
 }
 
@@ -254,6 +256,7 @@ static int real_helpfile_init (int cli)
     while (!memfail && fgets(testline, MAXLEN-1, fp)) {
 	if (*testline == '@') {
 	    chopstr(testline);
+	    if (!strcmp(testline, "@Obsolete")) continue;
 	    match = 0;
 	    for (i=0; i<nheads; i++) {
 		if (!strcmp(testline + 1, (heads[i])->name)) {
@@ -304,6 +307,7 @@ static int real_helpfile_init (int cli)
 	    sscanf(testline, "%31s", topicword);
 	if (*testline == '@') {
 	    chopstr(testline);
+	    if (!strcmp(testline, "@Obsolete")) continue;
 	    match = -1;
 	    for (i=0; i<nheads; i++) {
 		if (!strcmp(testline + 1, (heads[i])->name)) {
@@ -351,6 +355,7 @@ static char *get_gui_help_string (int pos)
 	for (j=0; j<(gui_heads[i])->ntopics; j++)
 	    if (pos == (gui_heads[i])->pos[j])
 		return help_string_from_cmd((gui_heads[i])->topics[j]);
+
     return NULL;
 }
 
@@ -487,6 +492,7 @@ void context_help (GtkWidget *widget, gpointer data)
 	    if (help_code == (gui_heads[i])->topics[j])
 		pos = (gui_heads[i])->pos[j];
     }
+
     /* fallback */
     if (!pos) {
 	char *helpstr = help_string_from_cmd(help_code);
@@ -500,6 +506,7 @@ void context_help (GtkWidget *widget, gpointer data)
 			pos = (gui_heads[i])->pos[j];
 	}
     }
+
     do_gui_help(NULL, pos, NULL);
 }
 
@@ -578,6 +585,7 @@ static int pos_from_cmd (int cmd)
 	for (j=0; j<(cli_heads[i])->ntopics; j++)
 	    if (cmd == (cli_heads[i])->topics[j])
 		return (cli_heads[i])->pos[j];
+
     return 0;
 }
 
@@ -656,6 +664,7 @@ gint edit_script_help (GtkWidget *widget, GdkEventButton *b,
 #endif
 	vwin->help_active = 0;
     }
+
     return FALSE;
 }
 
