@@ -962,6 +962,10 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 	"Wampler5.dat"
     };
 
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "C");
+#endif 
+
     ntests = sizeof nist_files / sizeof *nist_files;
 
     verbose = verbosity;
@@ -1001,6 +1005,10 @@ int run_nist_tests (const char *datapath, const char *outfile, int verbosity)
 
     print_nist_summary(ntests, missing, modelerrs, poorvals, mpfails,
 		       NULL, prn);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     gretl_print_destroy(prn);
 

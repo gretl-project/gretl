@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="armanew" frequency="12" startobs="1950:01" endobs="2001:12" type="time-series">
+<gretldata name="arma" frequency="12" startobs="1950:01" endobs="2001:12" type="time-series">
+<description>Artificial dataset, can be used to illustrate ARMA
+estimation.  The data are by construction ARMA(1,1).</description>
 <variables count="3">
 <variable name="eps"
  label="eps = normal()"

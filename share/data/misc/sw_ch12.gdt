@@ -1,7 +1,9 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE gretldata SYSTEM "gretldata.dtd">
 
-<gretldata name="sw2" frequency="4" startobs="1959:1" endobs="1999:4" type="time-series">
+<gretldata name="sw_ch12" frequency="4" startobs="1959:1" endobs="1999:4" type="time-series">
+<description>Macro dataset used by Stock and Watson in their Introduction
+to Econometrics, chapter 12.</description>
 <variables count="6">
 <variable name="GDP_JP"
  label="Real GDP Per Capita for Japan (IFS Series L99BV&amp;R_a@c158)"

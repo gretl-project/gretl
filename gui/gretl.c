@@ -688,11 +688,15 @@ int main (int argc, char *argv[])
 	    get_runfile(paths.datfile);
 	    paths.datfile[0] = '\0';
 	    break;
-	case GRETL_UNRECOGNIZED:
 	case GRETL_NATIVE_DB:
 	case GRETL_RATS_DB:    
-	    exit(EXIT_FAILURE);
+	    strcpy(dbname, paths.datfile);
+	    *paths.datfile = '\0';
+	    fix_dbname(dbname);
+	    gui_get_data = OPT_DBOPEN;
 	    break;
+	case GRETL_UNRECOGNIZED:
+	    gui_usage();
 	default:
 	    exit(EXIT_FAILURE);
 	    break;

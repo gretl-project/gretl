@@ -83,7 +83,7 @@ enum {
     COLL_PS
 };
 
-static char *full_path (const char *s1, const char *s2);
+static char *full_path (char *s1, const char *s2);
 
 static char *unslash (const char *s)
 {
@@ -330,12 +330,19 @@ static void reset_ps_stack (void)
     collection_stack(NULL, STACK_RESET_PS);
 }
 
-
-static char *full_path (const char *s1, const char *s2)
+static char *full_path (char *s1, const char *s2)
 {
     static char fpath[FILENAME_MAX];
 
-    sprintf(fpath, "%s%c%s", s1, SLASH, s2);
+    if (s1[strlen(s1) - 1] == '.') {
+	s1[strlen(s1) - 1] = '\0';
+    }
+    
+    if (s1[strlen(s1) - 1] == SLASH) {
+	sprintf(fpath, "%s%s", s1, s2);
+    } else {
+	sprintf(fpath, "%s%c%s", s1, SLASH, s2);
+    }
     return fpath;
 }
 
