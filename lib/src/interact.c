@@ -237,6 +237,22 @@ static int flow_control (const char *line, double ***pZ,
     return 1;
 }
 
+static void get_gnuplot_block (char *line, CMD *command)
+{
+    char *p = strchr(line, '{');
+    char *bl = NULL;
+
+    if (p != NULL) {
+	bl = malloc(strlen(p) + 1);
+	if (bl != NULL) {
+	    strcpy(bl, p);
+	    free(command->param);
+	    command->param = bl;
+	    *p = 0;
+	}
+    }
+}
+
 /**
  * getcmd:
  * @line: the command line (string).
@@ -325,6 +341,12 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     if (command->ci == BXPLOT && strchr(line, '(')) {
 	command->nolist = 1;
 	return;
+    }
+
+    /* gnuplot command can have a block of stuff to pass literally
+       to gnuplot */
+    if (command->ci == GNUPLOT) {
+	get_gnuplot_block(line, command);
     }
 
     /* fix lines that contain a semicolon right after a var */
@@ -990,7 +1012,8 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (pcmd->ci == RHODIFF) printf(" %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
 		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS) 
+		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS
+		     && pcmd->ci != GNUPLOT) 
 		printf(" %s", pcmd->param);
 	}
 	if (!batch) {
@@ -998,7 +1021,8 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	    if (pcmd->ci == RHODIFF) pprintf(prn, " %s;", pcmd->param);
 	    else if (strlen(pcmd->param) && pcmd->ci != TSLS 
 		     && pcmd->ci != AR && pcmd->ci != CORRGM
-		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS) 
+		     && pcmd->ci != MPOLS && pcmd->ci != SCATTERS
+		     && pcmd->ci != GNUPLOT) 
 		pprintf(prn, " %s", pcmd->param);
 	}
 	/* if list is very long, break it up over lines */
@@ -1028,8 +1052,9 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 		    pputs(prn, " \\\n"); /* break line */
 	    }
 	}
-	/* corrgm: param comes last */
-	if (pcmd->ci == CORRGM && strlen(pcmd->param)) { 
+	/* corrgm and gnuplot: param comes last */
+	if ((pcmd->ci == CORRGM || pcmd->ci == GNUPLOT)
+	    && strlen(pcmd->param)) { 
 	    if (!gui) printf(" %s", pcmd->param);
 	    if (!batch) pprintf(prn, " %s", pcmd->param);
 	}

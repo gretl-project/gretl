@@ -8,7 +8,7 @@ ols LNSALARY const YEARS YRS2
 (* save uhat squared and predicted LNSALARY *)
 genr usq=uhat*uhat
 (* genr predicted LNSALARY as actual minus residual stored as uhat *)
-genr yhat=LNSALARY-uhat
+genr yhat1=LNSALARY-uhat
 (* graph estimated residual variance against YEARS and yhat *)
 graph usq YEARS 
-graph usq yhat 
+graph usq yhat1 

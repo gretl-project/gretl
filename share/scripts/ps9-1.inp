@@ -2,7 +2,6 @@
    autocorrelation and the residual plot *)
 genr time
 ols farmpop const time 
-genr yhat=farmpop-uhat
 genr ut=uhat
 genr ut1=ut(-1)
 corr ut ut1 

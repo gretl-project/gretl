@@ -2922,7 +2922,7 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     }
 
     /* generate graph */
-    err = gnuplot(plot_list, lines, &Z, datainfo,
+    err = gnuplot(plot_list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, 
 		  (pdum)? OPT_RESIDZ : OPT_RESID);
     if (err < 0) errbox(_("gnuplot command failed"));
@@ -2974,7 +2974,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	} 
     }
 
-    err = gnuplot(plot_list, lines, &Z, datainfo,
+    err = gnuplot(plot_list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, OPT_FA);
 
     if (err < 0) {
@@ -3125,7 +3125,7 @@ void do_graph_var (int varnum)
     if (check_cmd(line) || cmd_init(line)) return;
 
     lines[0] = 1;
-    err = gnuplot(command.list, lines, &Z, datainfo,
+    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, 0);
     if (err == -999)
 	errbox(_("No data were available to graph"));
@@ -3221,7 +3221,7 @@ void do_dummy_graph (GtkWidget *widget, gpointer p)
 	return;
     }
 
-    err = gnuplot(command.list, lines, &Z, datainfo,
+    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, OPT_Z);
 
     if (err < 0) errbox(_("gnuplot command failed"));
@@ -3258,10 +3258,10 @@ void do_graph_from_selector (GtkWidget *widget, gpointer p)
     }
 
     if (imp) {
-        err = gnuplot(command.list, NULL, &Z, datainfo,
+        err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
                       &paths, &plot_count, 0, 1, OPT_M);
     } else {
-        err = gnuplot(command.list, lines, &Z, datainfo,
+        err = gnuplot(command.list, lines, NULL, &Z, datainfo,
                       &paths, &plot_count, 0, 1, 0);
     }
 
@@ -3295,7 +3295,7 @@ void plot_from_selection (gpointer data, guint action, GtkWidget *widget)
     if (lines == NULL) return;
     for (i=0; i<command.list[0]-1 ; i++) lines[i] = 1;
 
-    err = gnuplot(command.list, lines, &Z, datainfo,
+    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 		  &paths, &plot_count, 0, 1, 0);
 
     if (err == -999)
@@ -4391,7 +4391,7 @@ int gui_exec_line (char *line,
 	    command.list[2] = varindex(datainfo, "autofit");
 	    command.list[3] = varindex(datainfo, "time");
 	    lines[0] = oflag;
-	    err = gnuplot(command.list, lines, &Z, datainfo,
+	    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 			  &paths, &plot_count, 1, 0, 0);
 	    if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
 	    else register_graph();
@@ -4432,12 +4432,13 @@ int gui_exec_line (char *line,
 	    break;
 	}
 	if (oflag == OPT_M) { /* plot with impulses */
-	    err = gnuplot(command.list, NULL, &Z, datainfo,
+	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, 0, 0, OPT_M);
 	} else {	
 	    lines[0] = oflag;
-	    err = gnuplot(command.list, lines, &Z, datainfo,
-			  &paths, &plot_count, 0, 0, 0);
+	    err = gnuplot(command.list, lines, command.param, 
+			  &Z, datainfo, &paths, &plot_count, 
+			  0, 0, 0);
 	}
 	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
 	else register_graph();

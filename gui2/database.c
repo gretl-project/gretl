@@ -313,7 +313,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     lines[0] = 1;
     list[0] = 2; list[1] = 1; list[2] = 2;
-    err = gnuplot(list, lines, dbZ, dbdinfo,
+    err = gnuplot(list, lines, NULL, dbZ, dbdinfo,
 		  &paths, &plot_count, 0, 1, 0);
 
     if (err < 0) {

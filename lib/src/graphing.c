@@ -622,11 +622,48 @@ static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
     if (*title) fprintf(fp, "set title '%s'\n", title);
 }
 
+static const char *front_strip (const char *s)
+{
+    while (*s) {
+	if (isspace(*s) || *s == '{') s++;
+	else break;
+    }	
+    return s;
+}
+
+static void line_out (const char *s, int len, FILE *fp)
+{
+    char *p = malloc(len + 1);
+
+    if (p != NULL) {
+	*p = 0;
+	strncat(p, s, len);
+	fprintf(fp, "%s\n", front_strip(p));
+	free(p);
+    }
+}
+
+static void print_gnuplot_literal_lines (const char *s, FILE *fp)
+{
+    const char *p;
+
+    p = s = front_strip(s);
+
+    while (*s && *s != '}') {
+	if (*s == ';') {
+	    line_out(p, s - p, fp);
+	    p = s + 1;
+	}
+	s++;
+    }
+}
+
 /**
  * gnuplot:
  * @list: list of variables to plot, by ID number.
  * @lines: vector of 1s and 0s to indicate whether variables should
  * be represented by lines or not (or NULL).
+ * @literal: commands to be passed to gnuplot.
  * @pZ: pointer to data matrix.
  * @pdinfo: data information struct.
  * @ppaths: path information struct.
@@ -643,10 +680,9 @@ static void make_gtitle (FILE *fp, int code, const char *n1, const char *n2)
  * command fails, or 1 if there are missing data values.
  */
 
-int gnuplot (LIST list, const int *lines, 
-	     double ***pZ, DATAINFO *pdinfo,
-	     PATHS *ppaths, int *plot_count, 
-	     int batch, int gui, int opt)
+int gnuplot (LIST list, const int *lines, const char *literal,
+	     double ***pZ, DATAINFO *pdinfo, PATHS *ppaths, 
+	     int *plot_count, int batch, int gui, int opt)
 {
     FILE *fq = NULL;
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, lo = list[0];
@@ -852,6 +888,13 @@ int gnuplot (LIST list, const int *lines,
     if (tscale) {
 	fputs("set ytics nomirror\n", fq);
 	fputs("set y2tics\n", fq);
+    }
+
+    if (literal != NULL && *literal != 0) {
+	print_gnuplot_literal_lines(literal, fq);
+    }
+
+    if (tscale) {
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++) {
 	    if (i != oddman) {

@@ -863,7 +863,7 @@ void exec_line (char *line, PRN *prn)
 	    command.list[2] = varindex(datainfo, "autofit");
 	    command.list[3] = varindex(datainfo, "time");
 	    lines[0] = 1;
-	    err = gnuplot(command.list, lines, &Z, datainfo,
+	    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
 	    if (err) pputs(prn, _("gnuplot command failed\n"));
 	}
@@ -905,12 +905,14 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (oflag == OPT_M || oflag == OPT_Z) { 
-	    err = gnuplot(command.list, NULL, &Z, datainfo,
+	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, oflag);
 	} else {
 	    lines[0] = oflag;
-	    err = gnuplot(command.list, lines, &Z, datainfo,
-			  &paths, &plot_count, batch, 0, 0);
+	    err = gnuplot(command.list, lines, command.param, 
+			  &Z, datainfo, &paths, &plot_count, 
+			  batch, 0, 0);
+	    
 	}
 	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
 	break;

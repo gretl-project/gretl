@@ -433,7 +433,7 @@ int _reserved (const char *str)
 		otheruse(str, _("residual vector"));
 		break;
 	    case 1: 
-		otheruse(str, _("fitted values"));
+		otheruse(str, _("fitted values vector"));
 		break;
 	    case 2: case 3: case 4:
 		otheruse(str, _("constant"));
