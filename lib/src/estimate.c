@@ -40,13 +40,13 @@
 
 #define TINY      2.1e-09 /* was 4.75e-09 (last changed 2004/07/16) */
 #define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
-#define STATZERO  0.5e-14
-#define ESSZERO   1.0e-22
+#define YBARZERO  0.5e-14 /* threshold for treating mean of dependent
+			     variable as effectively zero */
+#define ESSZERO   1.0e-22 /* threshold for considering a tiny error-sum-of-
+			     squares value to be effectively zero */
 
+/* define for lots of debugging info */
 #undef XPX_DEBUG
-
-extern void _print_rho (int *arlist, const MODEL *pmod, 
-			int c, PRN *prn);
 
 /* private function prototypes */
 static int form_xpxxpy (const int *list, int t1, int t2, 
@@ -61,15 +61,15 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv);
 static double dwstat (int order, MODEL *pmod, double **Z);
 static double rhohat (int order, int t1, int t2, const double *uhat);
 static int hatvar (MODEL *pmod, int n, double **Z);
-static void dropwt (int *list);
-static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
-			 DATAINFO *pdinfo);
 static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z);
 static void tsls_omitzero (int *list, double **Z, int t1, int t2);
 static int zerror (int t1, int t2, int yno, int nwt, double ***pZ);
 static int lagdepvar (const int *list, const DATAINFO *pdinfo, 
 		      double ***pZ);
 /* end private protos */
+
+
+/* compute statistics for the dependent variable in a model */
 
 static void model_depvar_stats (MODEL *pmod, const double **Z)
 {
@@ -110,7 +110,7 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
 
     pmod->ybar = pmod->ybar + sum / pmod->nobs;
 
-    if (fabs(pmod->ybar) < STATZERO) {
+    if (fabs(pmod->ybar) < YBARZERO) {
 	pmod->ybar = 0.0;
     }
 
@@ -129,6 +129,10 @@ static void model_depvar_stats (MODEL *pmod, const double **Z)
 
     pmod->sdy = (sum >= 0)? sqrt(sum) : NADBL;
 }
+
+/* initial setup for structure to hold info on autoregressive
+   coefficients 
+*/
 
 static int ar_info_init (MODEL *pmod, int nterms)
 {
@@ -169,6 +173,8 @@ static int ar_info_init (MODEL *pmod, int nterms)
     return 0;
 }
 
+/* determine the degrees of freedom for a model */
+
 static int get_model_df (MODEL *pmod)
 {
     pmod->ncoeff = pmod->list[0] - 1;
@@ -185,6 +191,8 @@ static int get_model_df (MODEL *pmod)
 
     return 0;
 }
+
+/* special computation of statistics for autoregressive models */
 
 static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
 {
@@ -235,7 +243,7 @@ static int compute_ar_stats (MODEL *pmod, const double **Z, double rho)
     return 0;
 }
 
-/* Calculation of WLS stats in agreement with GNU R */
+/* calculation of WLS stats in agreement with GNU R */
 
 static void get_wls_stats (MODEL *pmod, const double **Z)
 {
@@ -303,6 +311,18 @@ static void fix_wls_values (MODEL *pmod, double **Z)
 	    }
 	}
 	pmod->sigma = sqrt(pmod->ess / pmod->dfd);
+    }
+}
+
+/* drop the weight var from the list of regressors (WLS) */
+
+static void dropwt (int *list)
+{
+    int i;
+
+    list[0] -= 1;
+    for (i=1; i<=list[0]; i++) {
+	list[i] = list[i+1];
     }
 }
 
@@ -589,13 +609,14 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	goto lsq_abort;
     }
 
-    /* get the mean and sd of depvar and make available */
+    /* get the mean and sd of dep. var. and make available */
     model_depvar_stats(&mdl, (const double **) *pZ);
 
     /* Doing an autoregressive procedure? */
     if (ci == CORC || ci == HILU || ci == PWE) {
-	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) 
+	if (compute_ar_stats(&mdl, (const double **) *pZ, rho)) { 
 	    goto lsq_abort;
+	}
     }
 
     /* weighted least squares: fix fitted values, ESS, sigma */
@@ -629,6 +650,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!(opts & OPT_A)) {
+	/* if it's not an auxiliary regression, set an ID number
+	   on the model */
 	set_model_id(&mdl);
     }
 
@@ -652,7 +675,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     xpx = X'X matrix as a lower triangle
           stacked by columns
     xpy = X'y vector
-    xpy[0] = sum of y's
+    xpy[0] = sum of y
     xpy[list[0]] = y'y
 */
 
@@ -842,8 +865,8 @@ static void compute_r_squared (MODEL *pmod, double *y)
   regress: takes xpx, the X'X matrix produced by form_xpxxpy(), and
   xpy (X'y), and computes ols estimates and associated statistics.
 
-  n = no. of observations per series in data set
-  ifc = 1 if constant is present else = 0
+  n = number of observations per series in data set
+  ifc = 1 if constant is present, else = 0
 
   ess = error sum of squares
   sigma = standard error of regression
@@ -900,11 +923,9 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	rss = ypy - pmod->ess;
     }
 
-    /* the idea below was broken */
     if (pmod->ess < ESSZERO && pmod->ess > (-ESSZERO)) {
 	pmod->ess = 0.0;
     } else if (pmod->ess < 0.0) { 
-        /*  pmod->errcode = E_ESS; */ 
 	sprintf(gretl_errmsg, _("Error sum of squares (%g) is not > 0"),
 		pmod->ess);
         return; 
@@ -1245,7 +1266,7 @@ void free_vcv (VCV *vcv)
     free(vcv);
 }
 
-/*  dwstat: computes durbin-watson statistic
+/*  dwstat: computes Durbin-Watson statistic
     order is the order of autoregression, 0 for OLS.
 */
 
@@ -1330,14 +1351,18 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     for (t=t1+order+1; t<=t2; t++) { 
         ut = uhat[t];
         ut1 = uhat[t-1];
-        if (na(ut) || na(ut1)) continue;
+        if (na(ut) || na(ut1)) {
+	    continue;
+	}
         uu += ut * ut1;
         xx += ut1 * ut1;
     }
 #else
     for (t=t1; t<=t2; t++) { 
         ut = uhat[t];
-	if (na(ut)) continue;
+	if (na(ut)) {
+	    continue;
+	}
 	if (t > t1) {
 	    ut1 = uhat[t-1];
 	    if (!na(ut1)) {
@@ -1409,18 +1434,6 @@ static int hatvar (MODEL *pmod, int n, double **Z)
     return 0;
 }
 
-/* dropwt: drop the weight var from the list of regressors (WLS) */
-
-static void dropwt (int *list)
-{
-    int i;
-
-    list[0] -= 1;
-    for (i=1; i<=list[0]; i++) {
-	list[i] = list[i+1];
-    }
-}
-
 static int hilu_plot (double *ssr, double *rho, int n)
 {
     FILE *fp;
@@ -1452,7 +1465,7 @@ static int hilu_plot (double *ssr, double *rho, int n)
     return 0;
 }
 
-#undef USE_DW
+#undef USE_DW /* base rho-hat on the D-W statistic */
 
 static double autores (MODEL *pmod, const double **Z, int opt)
 {
@@ -1506,7 +1519,7 @@ static double autores (MODEL *pmod, const double **Z, int opt)
  *
  * Estimate the quasi-differencing coefficient for use with the
  * Cochrane-Orcutt, Hildreth-Lu or Prais-Winsten procedures for
- * handling first-order serial correlation).  Print a trace of the
+ * handling first-order serial correlation.  Print a trace of the
  * search for rho.
  * 
  * Returns: rho estimate on successful completion, %NADBL error.
@@ -1828,6 +1841,7 @@ tsls_make_replist (const int *reglist, int *instlist, int *replist)
     replist[0] = k;
 
     if (fixup) {
+	/* add const to list of instruments */
 	instlist[0] += 1;
 	for (i=instlist[0]; i>=2; i--) {
 	    instlist[i] = instlist[i - 1];
@@ -1889,7 +1903,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
        s1list: regression list for first-stage regressions
        s2list: regression list for second-stage regression
        replist: list of vars to be replaced by fitted values
-                for the second-stage regression.
+                for the second-stage regression
     */
     reglist = malloc(pos * sizeof *reglist);
     instlist = malloc((list[0] - pos + 2) * sizeof *instlist);
@@ -1930,7 +1944,8 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* determine the list of variables (replist) for which we need to
-       obtain fitted values in the first stage */
+       obtain fitted values in the first stage 
+    */
     tsls_make_replist(reglist, instlist, replist);
 
     /* check for order condition */
@@ -2079,8 +2094,9 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     /* set command code on the model */
     tsls.ci = TSLS;
 
-    /* write the full tsls list (regressors plus instruments, possibly
-       purged of zero elements) into the model for future reference 
+    /* write the full tsls list (dep. var. and regressors, followed by
+       instruments, possibly purged of zero elements) into the model
+       for future reference
     */
     nelem = reglist[0] + instlist[0];
     tsls.list = realloc(tsls.list, (nelem + 2) * sizeof *tsls.list);
@@ -2127,71 +2143,77 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
     return tsls;
 }
 
-/* get_aux_uhat: feed in a uhat series -- this func finds the fitted
-   values for the series using an aux. regression with squares, and
-   adds that series to the data set 
+/* get_hsk_weights: take the residuals from the model pmod, square them
+   and take logs; find the fitted values for this series using an
+   auxiliary regression including the original independent variables
+   and their squares; transform the fitted values by exponentiating
+   and taking the square root; and add the resulting series to the
+   data set
 */
 
-static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
-			 DATAINFO *pdinfo)
+static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, t, nxpx;
-    int oldv = pdinfo->v, l0 = pmod->list[0];
+    int oldv = pdinfo->v;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int *list = NULL, *tmplist = NULL;
+    int *list = NULL;
     int err = 0, shrink = 0;
+    double xx;
     MODEL aux;
 
-    gretl_model_init(&aux);
-
+    /* allocate space for an additional variable */
     if (dataset_add_vars(1, pZ, pdinfo)) {
 	return E_ALLOC;
     }
 
-    /* add uhat1 to data set temporarily */
-    for (t=pmod->t1; t<=pmod->t2; t++) {
-	(*pZ)[pdinfo->v - 1][t] = uhat1[t];
-    }
+    /* add transformed pmod residuals to data set */
+    for (t=0; t<pdinfo->n; t++) {
+	if (na(pmod->uhat[t])) {
+	    (*pZ)[oldv][t] = NADBL;
+	} else {
+	    xx = pmod->uhat[t];
+	    (*pZ)[oldv][t] = log(xx * xx);
+	}
+    }	    
 
-    /* tmplist is first used to construct a list of
-       vars to be squared */
-    tmplist = gretl_list_new((pmod->ifc)? l0 - 2 : l0 - 1);
-    if (tmplist == NULL) {
+    /* list is first used to hold a list of variables to be
+       squared; it will then be used for the aux regression list;
+       we allocate to the max size of the latter 
+    */
+    list = malloc((2 * pmod->list[0]) * sizeof *list);
+    if (list == NULL) {
 	return E_ALLOC;
     }
 
+    /* construct the list of variables to square */
     j = 1;
+    list[0] = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	if (pmod->list[i] != 0) {
-	    tmplist[j++] = pmod->list[i];
+	    list[j++] = pmod->list[i];
+	    list[0] += 1;
 	}
     }
 
-    /* now generate the required squares */
-    nxpx = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
+    /* generate the required squares */
+    nxpx = xpxgenr(list, pZ, pdinfo, 0, 0);
     if (nxpx < 1) {
 	printf(_("generation of squares failed\n"));
-	free(tmplist);
+	free(list);
 	return E_SQUARES;
     } 
 
-    tmplist = realloc(tmplist, (nxpx + 2) * sizeof *tmplist);
-    if (tmplist == NULL) {
-	return E_ALLOC;
-    }
-
-    tmplist[0] = pdinfo->v - oldv - 1;
-    for (i=1; i<=tmplist[0]; i++) {
-	tmplist[i] = i + oldv;
-    }
-
-    list = gretl_list_add(pmod->list, tmplist, &err);
-    if (err) {
-	free(tmplist);
-	return err;
-    }
-
+    /* build the auxiliary regression list */
+    list[0] = pmod->list[0] + nxpx;
     list[1] = oldv;
+    j = 1;
+    for (i=2; i<=list[0]; i++) {
+	if (i <= pmod->list[0]) {
+	    list[i] = pmod->list[i];
+	} else {
+	    list[i] = oldv + j++;
+	}
+    }
 
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
@@ -2201,8 +2223,14 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
     if (err) {
 	shrink = pdinfo->v - oldv;
     } else {
+	/* write into the data set the required weights */
 	for (t=aux.t1; t<=aux.t2; t++) {
-	    (*pZ)[oldv][t] = aux.yhat[t]; 
+	    if (na(aux.yhat[t])) {
+		(*pZ)[oldv][t] = NADBL;
+	    } else {
+		xx = aux.yhat[t];
+		(*pZ)[oldv][t] = 1.0 / sqrt(exp(xx));
+	    }
 	}
 	shrink = pdinfo->v - oldv - 1;
     }
@@ -2216,7 +2244,6 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	dataset_drop_vars(shrink, pZ, pdinfo);
     }
 
-    free(tmplist);
     free(list);
 
     return err;
@@ -2236,18 +2263,12 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
 MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int err, lo, ncoeff, yno, t, nwt, v;
-    int shrink, orig_nvar = pdinfo->v;
-    double *uhat1, zz;
+    int i, err;
+    int orig_nvar = pdinfo->v;
     int *hsklist;
     MODEL hsk;
 
     *gretl_errmsg = '\0';
-
-    lo = list[0];         /* number of vars in original list */
-    yno = list[1];        /* ID number of original dependent variable */
-    ncoeff = lo - 1;
-    rearrange_list(list);
 
     /* run initial OLS */
     hsk = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
@@ -2255,74 +2276,38 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	return hsk;
     }
 
-    uhat1 = malloc(pdinfo->n * sizeof *uhat1);
-    if (uhat1 == NULL) {
-	hsk.errcode = E_ALLOC;
-	return hsk;
-    }
-
-    /* get residuals, square and log */
-    for (t=hsk.t1; t<=hsk.t2; t++) {
-	if (na(hsk.uhat[t])) {
-	    uhat1[t] = NADBL;
-	} else {
-	    zz = hsk.uhat[t];
-	    uhat1[t] = log(zz * zz);
-	}
-    }
-
-    /* run auxiliary regression */
-    err = get_aux_uhat(&hsk, uhat1, pZ, pdinfo);
+    /* use the residuals from the initial OLS to form weights */
+    err = get_hsk_weights(&hsk, pZ, pdinfo);
     if (err) {
 	hsk.errcode = err;
-	free(uhat1);
 	return hsk;
     }
 
-    /* get fitted value from last regression and process */
-    for (t=hsk.t1; t<=hsk.t2; t++) {
-	if (na(hsk.uhat[t])) {
-	    (*pZ)[pdinfo->v - 1][t] = NADBL;
-	} else {
-	    zz = (*pZ)[pdinfo->v - 1][t];
-	    (*pZ)[pdinfo->v - 1][t] = 1.0 / sqrt(exp(zz));
-	}
-    }    
-
-    /* prepare to run weighted least squares */
-    hsklist = malloc((lo + 2) * sizeof *hsklist);
+    /* allocate regression list for weighted least squares */
+    hsklist = gretl_list_new(list[0] + 1);
     if (hsklist == NULL) {
 	hsk.errcode = E_ALLOC;
-	free(uhat1);
 	return hsk;
     }
 
-    /* "hsklist" will be one variable longer than the original
-       regression list, because it includes a weight variable */
-    hsklist[0] = lo + 1;
-
-    /* the variable last added to the dataset will be the weight var */
-    nwt = hsklist[1] = pdinfo->v - 1;
+    /* the last variable in the dataset will be the weight var */
+    hsklist[1] = pdinfo->v - 1;
 
     /* put the original dependent variable in at position 2 */
-    hsklist[2] = yno;
+    hsklist[2] = list[1];
 
-    /* put the original indep vars into the WLS list */
-    for (v=lo+1; v>=3; v--) {
-	hsklist[v] = list[v-1];
+    /* add the original independent vars into the WLS list */
+    for (i=3; i<=hsklist[0]; i++) {
+	hsklist[i] = list[i-1];
     }
 
     clear_model(&hsk);
     hsk = lsq(hsklist, pZ, pdinfo, WLS, OPT_NONE, 0.0);
     hsk.ci = HSK;
 
-    shrink = pdinfo->v - orig_nvar;
-    if (shrink > 0) {
-	dataset_drop_vars(shrink, pZ, pdinfo);
-    }
+    dataset_drop_vars(pdinfo->v - orig_nvar, pZ, pdinfo);
 
     free(hsklist);
-    free(uhat1);
 
     return hsk;
 }
@@ -2378,7 +2363,7 @@ static void free_hccm_p (double **p, int m)
 
 MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
-    int nobs, lo, index, ncoeff, i, j, t, t1, t2, tp;
+    int nobs, nc, i, j, k, t, t1, t2, tp;
     double *st = NULL, *uhat1 = NULL, **p = NULL;
     double xx;
     MODEL hccm;
@@ -2387,8 +2372,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     gretl_model_init(&hccm);
 
-    lo = list[0];
-    ncoeff = lo - 1;
+    nc = list[0] - 1;
     rearrange_list(list);
 
     /* run a regular OLS */
@@ -2404,9 +2388,9 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     hccm.ci = HCCM;
 
     /* now try allocating memory */
-    st = malloc(lo * sizeof *st);
+    st = malloc(list[0] * sizeof *st);
     uhat1 = malloc(nobs * sizeof *uhat1);
-    p = allocate_hccm_p(lo, nobs);
+    p = allocate_hccm_p(list[0], nobs);
 
     if (st == NULL || p == NULL || uhat1 == NULL) {
 	hccm.errcode = E_ALLOC;
@@ -2414,32 +2398,32 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     }    
 
     if (get_use_qr()) {
-	/* vcv is already computed */
-	int nt = (ncoeff * ncoeff + ncoeff) / 2; 
-	double sgmasq = hccm.sigma * hccm.sigma;
+	/* vcv is already computed in this case */
+	int nt = (nc * nc + nc) / 2; 
+	double s2 = hccm.sigma * hccm.sigma;
 
 	for (i=0; i<nt; i++) {
-	    hccm.vcv[i] /= sgmasq;
+	    hccm.vcv[i] /= s2;
 	}
     } else if (makevcv(&hccm)) {
 	hccm.errcode = E_ALLOC;
 	goto bailout;
     } 
 
-    for (i=1; i<=ncoeff; i++) {
+    for (i=1; i<=nc; i++) {
 	tp = 0;
 	for (t=t1; t<=t2; t++) {
 	    if (model_missing(&hccm, t)) {
 		continue;
 	    }
 	    xx = 0.0;
-	    for (j=1; j<=ncoeff; j++) {
+	    for (j=1; j<=nc; j++) {
 		if (i <= j) {
-		    index = ijton(i-1, j-1, ncoeff);
+		    k = ijton(i-1, j-1, nc);
 		} else {
-		    index = ijton(j-1, i-1, ncoeff);
+		    k = ijton(j-1, i-1, nc);
 		}
-		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
+		xx += hccm.vcv[k] * (*pZ)[list[j+1]][t];
 	    }
 	    p[i][tp++] = xx;
 	}
@@ -2451,7 +2435,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    continue;
 	}	
 	xx = 0.0;
-	for (i=1; i<=ncoeff; i++) {
+	for (i=1; i<=nc; i++) {
 	    xx += (*pZ)[list[i+1]][t] * p[i][tp];
 	}
 	if (floateq(xx, 1.0)) {
@@ -2460,7 +2444,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	uhat1[tp++] = hccm.uhat[t] / (1 - xx);
     }
 
-    for (i=1; i<=ncoeff; i++) {
+    for (i=1; i<=nc; i++) {
 	xx = 0.0;
 	for (t=0; t<nobs; t++) {
 	    xx += p[i][t] * uhat1[t];
@@ -2469,14 +2453,14 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
     }
 
     for (t=0; t<nobs; t++) {
-	for (i=1; i<=ncoeff; i++) {
+	for (i=1; i<=nc; i++) {
 	    p[i][t] *= uhat1[t];
 	}
     }
 
-    index = 0;
-    for (i=1; i<=ncoeff; i++) {
-	for (j=i; j<=ncoeff; j++) {
+    k = 0;
+    for (i=1; i<=nc; i++) {
+	for (j=i; j<=nc; j++) {
 	    xx = 0.0;
 	    for (t=0; t<nobs; t++) {
 		xx += p[i][t] * p[j][t];
@@ -2486,7 +2470,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	    if (i == j) {
 		hccm.sderr[i-1] = sqrt(xx);
 	    }
-	    hccm.vcv[index++] = xx;
+	    hccm.vcv[k++] = xx;
 	}
     }
 
@@ -2499,7 +2483,7 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     free(st);
     free(uhat1);
-    free_hccm_p(p, lo);
+    free_hccm_p(p, list[0]);
 
     set_model_id(&hccm);
 
@@ -2513,7 +2497,9 @@ static int var_already_there (MODEL *pmod, double **Z, int testv)
     int ret = 0;
 
     for (i=2; i<=pmod->list[0]; i++) {
-	if (pmod->list[i] == 0) continue;
+	if (pmod->list[i] == 0) {
+	    continue;
+	}
 	if (vars_identical(Z[pmod->list[i]], Z[testv], n)) {
 	    ret = 1;
 	    break;
@@ -2689,7 +2675,7 @@ static int ar_list_max (const int *list)
 MODEL ar_func (LIST list, int pos, double ***pZ, 
 	       DATAINFO *pdinfo, gretlopt opt, PRN *prn)
 {
-    double diff, ess = 0, tss = 0, xx;
+    double diff, ess, tss, xx;
     int i, j, t, t1, t2, vc, yno, ryno, iter;
     int err, lag, maxlag, v = pdinfo->v;
     int *arlist = NULL, *rholist = NULL;
@@ -2741,13 +2727,15 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	goto bailout;
     }
 
-    /* first pass: estimate model via OLS */
+    /* first pass: estimate model via OLS: use OPT_M to generate an
+       error in case of missing values within sample range 
+    */
     ar = lsq(reglist, pZ, pdinfo, OLS, OPT_A | OPT_M, 0.0);
     if (ar.errcode) {
 	goto bailout;
     }
 
-    /* make room for the uhat terms and transformed data */
+    /* allocate space for the uhat terms and transformed data */
     if (dataset_add_vars(arlist[0] + 1 + reglist[0], pZ, pdinfo)) {
 	ar.errcode = E_ALLOC;
 	goto bailout;
@@ -2765,6 +2753,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     /* now loop while ess is changing */
     diff = 1.0e6;
+    ess = 0.0;
     for (iter = 1; iter <= 20 && diff > 0.005; iter++) {
 	for (t=0; t<pdinfo->n; t++) {
 	    if (t < t1 || t > t2) {
@@ -2819,8 +2808,9 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 	ar = lsq(reglist2, pZ, pdinfo, OLS, OPT_A, 0.0);
 
         if (iter > 1) {
-	    diff = 100 * (ar.ess - ess)/ess;
+	    diff = 100 * (ar.ess - ess) / ess;
 	}
+
         if (diff < 0.0) {
 	    diff = -diff;
 	}
@@ -2872,6 +2862,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     /* special computation of TSS */
     xx = gretl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
+    tss = 0.0;
     for (t=ar.t1; t<=ar.t2; t++) {
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
@@ -2960,8 +2951,6 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
     }
 }
 
-/* .........................................................   */
-
 static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 {
     int i, v;
@@ -3040,7 +3029,6 @@ static int lagdepvar (const int *list, const DATAINFO *pdinfo,
 
     return 0;
 }
-
 
 /**
  * arch:
