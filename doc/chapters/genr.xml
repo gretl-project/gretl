@@ -223,8 +223,8 @@
       <xref linkend="cmd-lmtest"/> (see below);
       <xref linkend="cmd-meantest"/> (test for difference of means);
       <xref linkend="cmd-omit"/> (joint test for the significance of variables
-      omitted form a model);
-      <xref linkend="cmd-reset"/> (Ramsay's RESET);
+      omitted from a model);
+      <xref linkend="cmd-reset"/> (Ramsey's RESET);
       <xref linkend="cmd-restrict"/> (general linear restriction);
       <xref linkend="cmd-runs"/> (runs test for randomness); 
       <xref linkend="cmd-testuhat"/> (test for normality of residual); and
