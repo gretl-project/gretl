@@ -3551,7 +3551,7 @@ int maybe_restore_full_data (int action)
 						 "/Sample/Restore full range");
 
 	if (w != NULL && GTK_WIDGET_IS_SENSITIVE(w)) {
-	    int resp;
+	    int resp = GRETL_CANCEL;
 
 	    if (action == SAVE_DATA) {
 		resp = yes_no_dialog(_("gretl: save data"), 

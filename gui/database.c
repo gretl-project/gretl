@@ -1839,7 +1839,7 @@ static void set_target_pd (GtkWidget *w, gpointer data)
     gint *pd = (gint *) data;
 
     if (GTK_TOGGLE_BUTTON (w)->active) 
-        *pd = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w), "action"));
+        *pd = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
 }
 
 static void pd_buttons (dialog_t *d, int *target_pd)
@@ -1860,7 +1860,7 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 			GINT_TO_POINTER(quart));
     gtk_widget_show (button);
 
-    group = gtk_radio_button_get_group(GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("Annual"));
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -1953,7 +1953,7 @@ static void data_compact_dialog (int spd, int *target_pd,
 			GINT_TO_POINTER(COMPACT_AVG));
     gtk_widget_show (button);
 
-    group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label (group, _("Compact by summing"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
@@ -1963,7 +1963,7 @@ static void data_compact_dialog (int spd, int *target_pd,
 			GINT_TO_POINTER(COMPACT_SUM));
     gtk_widget_show (button);
 
-    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    group = gtk_radio_button_group(GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
