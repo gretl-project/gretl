@@ -2306,6 +2306,54 @@
 
   </command>
 
+  <command name="kpss" section="Tests" label="KPSS test">
+
+    <usage>
+      <arguments>
+        <argument>order</argument>
+        <argument>varname</argument>
+      </arguments>
+      <options>
+	<option>
+	  <flag>--trend</flag>
+	  <effect>include a trend</effect>
+	</option>
+	<option>
+	  <flag>--verbose</flag>
+	  <effect>print regression results</effect>
+	</option>
+      </options>
+      <examples>
+	<example>kpss 8 y</example>
+        <example>kpss 4 x1 --trend</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and
+	Shin, 1992) for stationarity of a variable.  The null
+	hypothesis is that the variable in question is stationary,
+	either around a level or, if the <lit>--trend</lit> option is
+	given, around a deterministic linear trend.  
+      </para>
+
+      <para>
+	The order argument determines the size of the window used for
+	Bartlett smoothing.  If the <lit>--verbose</lit> option is
+	chosen the results of the auxiliary regression are printed,
+	along with the estimated variance of the random walk component
+	of the variable.
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/Variable/KPSS test</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="labels" section="Dataset" context="cli">
 
     <description>
