@@ -24,10 +24,11 @@
 
 extern GtkItemFactoryEntry script_items[];
 extern GtkItemFactoryEntry sample_script_items[];
-extern char remember_dir[MAXLEN];
 extern void do_save_graph (const char *fname, const char *savestr);
 extern int ps_print_plots (const char *fname, int flag, gpointer data);
 extern int plot_to_xpm (const char *fname, gpointer data);
+
+static char remember_dir[MAXLEN];
 
 struct extmap {
     int action;
@@ -113,7 +114,6 @@ static char *get_ext (int action, gpointer data)
 	    }
 	}
     }
-
     return s;
 }
 
@@ -218,8 +218,7 @@ static char *get_filter (int action, gpointer data)
 
 /* ........................................................... */
 
-void file_selector (char *msg, char *startdir, int action, 
-		    gpointer data) 
+void file_selector (char *msg, int action, gpointer data) 
 {
     OPENFILENAME of;
     int retval, gotdir = 0;
@@ -228,7 +227,10 @@ void file_selector (char *msg, char *startdir, int action,
 
     fname[0] = '\0';
     endname[0] = '\0';
-    strcpy(startd, startdir);
+    if (remember_dir[0] != '\0')
+	strcpy(startd, remember_dir);
+    else
+	get_default_dir(startd);
 
     /* special case: default save of data */
     if (action == SAVE_DATA && paths.datfile[0] &&
@@ -501,10 +503,16 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-void file_selector (char *msg, char *startdir, int action, gpointer data) 
+void file_selector (char *msg, int action, gpointer data) 
 {
     GtkWidget *filesel;
     int gotdir = 0;
+    char startdir[MAXLEN];
+
+    if (remember_dir[0] != '\0')
+	strcpy(startdir, remember_dir);
+    else
+	get_default_dir(startdir);
 
     filesel = gtk_icon_file_selection_new(msg);
 

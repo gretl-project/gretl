@@ -106,7 +106,7 @@ Owner: Use gretl.stamp as the time reference.  In case notification of
 an update is given, write to gretl.stamp to update its mtime so that
 notification is not given again.
 
-Not owner: See if a per-user ~/.gretl/.gretl.stamp exists.  If so, use
+Not owner: See if a per-user ~/gretl/.gretl.stamp exists.  If so, use
 this as the time reference, otherwise use the system-wide gretl.stamp
 as the reference.  If an update notification is given, write to the
 per-user stamp file (creating it or updating it).

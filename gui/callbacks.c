@@ -33,8 +33,6 @@ extern void do_samplebool (GtkWidget *widget, dialog_t *ddata);
 GtkWidget *active_edit_id = NULL;
 GtkWidget *active_edit_name = NULL;
 
-char remember_dir[MAXLEN] = "";
-
 /* ......................................................... */
 
 void selectrow (GtkCList *clist, gint row, gint column, 
@@ -98,17 +96,15 @@ void selectrow (GtkCList *clist, gint row, gint column,
 
 void open_data (gpointer data, guint code, GtkWidget *widget)
 {
-    char *startdir = (remember_dir[0])? remember_dir : paths.userdir;
-
     switch (code) {
     case OPEN_DATA:
-	file_selector("Open data file", startdir, code, NULL);
+	file_selector("Open data file", code, NULL);
 	break;
     case OPEN_CSV:
-	file_selector("Open CSV file", startdir, code, NULL);
+	file_selector("Open CSV file", code, NULL);
 	break;
     case OPEN_BOX:
-	file_selector("Open BOX file", startdir, code, NULL);
+	file_selector("Open BOX file", code, NULL);
 	break;
     }
 }
@@ -117,20 +113,10 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 
 void open_script (gpointer data, guint action, GtkWidget *widget)
 {
-    switch (action) {
-    case 0:
-	file_selector("Open script file", paths.userdir, 
-			   OPEN_SCRIPT, NULL);
-	break;
-    case 1:
-	file_selector("Open session file", paths.userdir, 
-			   OPEN_SESSION, NULL);
-	break;
-    case 2:
-	file_selector("Open session file", paths.scriptdir, 
-			   OPEN_SESSION, NULL);
-	break;    
-    }
+    if (action == OPEN_SCRIPT)
+	file_selector("Open script file", action, NULL);
+    else if (action == OPEN_SESSION)
+	file_selector("Open session file", action, NULL);
 }
 
 /* ........................................................... */
@@ -138,70 +124,56 @@ void open_script (gpointer data, guint action, GtkWidget *widget)
 void file_save (gpointer data, guint file_code, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;
-    char *startdir = (remember_dir[0])? remember_dir : paths.userdir;    
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector("Save output file", startdir, 
-		      SAVE_OUTPUT, mydata->w);
+	file_selector("Save output file", SAVE_OUTPUT, mydata->w);
 	break;
     case SAVE_CONSOLE:
-	file_selector("Save console output", startdir, 
-		      SAVE_CONSOLE, mydata->w);
+	file_selector("Save console output", SAVE_CONSOLE, mydata->w);
 	break;
     case SAVE_CMDS: 
-	file_selector("Save command log", startdir, 
-		      SAVE_CMDS, mydata->w);
+	file_selector("Save command log", SAVE_CMDS, mydata->w);
 	break;
     case SAVE_SCRIPT:
-	file_selector("Save command script", startdir, 
-		      SAVE_SCRIPT, mydata->w);
+	file_selector("Save command script", SAVE_SCRIPT, mydata->w);
 	break;
     case SAVE_DATA:
 	if (!storevars_dialog(STORE)) {
-	    file_selector("Save data file", startdir,
-			  SAVE_DATA, NULL);
+	    file_selector("Save data file", SAVE_DATA, NULL);
 	}
 	break;
     case SAVE_GZDATA:
     case SAVE_BIN1:
     case SAVE_BIN2:
 	if (!storevars_dialog(STORE))
-	    file_selector("Save data file", startdir, 
-			  file_code, NULL);
+	    file_selector("Save data file", file_code, NULL);
 	break;
     case EXPORT_CSV:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save CSV data file", startdir, 
-			  file_code, NULL);
+	    file_selector("Save CSV data file", file_code, NULL);
 	break;
     case EXPORT_R:
     case EXPORT_R_ALT:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save R data file", startdir, 
-			  file_code, NULL);
+	    file_selector("Save R data file", file_code, NULL);
 	break;
     case EXPORT_OCTAVE:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save octave data file", startdir, 
-			  file_code, NULL);
+	    file_selector("Save octave data file", file_code, NULL);
 	break;
     case SAVE_TEX_TAB:
     case SAVE_TEX_EQ:
-	file_selector("Save LaTeX file", startdir, 
-		      file_code, mydata->data);
+	file_selector("Save LaTeX file", file_code, mydata->data);
 	break;
     case SAVE_HTML:
-	file_selector("Save HTML file", startdir, 
-		      file_code, mydata->data);
+	file_selector("Save HTML file", file_code, mydata->data);
 	break;
     case SAVE_MODEL:
-	file_selector("Save model output", startdir, 
-		      file_code, mydata->w);
+	file_selector("Save model output", file_code, mydata->w);
 	break;
     case SAVE_GP_CMDS:
-	file_selector("Save gnuplot commands", startdir, 
-		      file_code, mydata->w);
+	file_selector("Save gnuplot commands", file_code, mydata->w);
 	break;
     default:
 	dummy_call();

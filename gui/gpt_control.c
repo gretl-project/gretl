@@ -174,8 +174,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 #ifdef G_OS_WIN32
 	fclose(plot->fp);
 #endif
-	file_selector("Save gnuplot graph", paths.userdir,
-		      SAVE_GNUPLOT, plot);
+	file_selector("Save gnuplot graph", SAVE_GNUPLOT, plot);
     }
     else {
 	go_gnuplot(plot, NULL, &paths);
@@ -700,7 +699,7 @@ static void plot_save_filesel (GtkWidget *w, gpointer data)
     strcpy(savestr, 
 	   gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry)));
     gtk_widget_destroy(GTK_WIDGET(combo->parent->parent->parent));
-    file_selector("save graph", paths.userdir, SAVE_LAST_GRAPH, savestr);
+    file_selector("save graph", SAVE_LAST_GRAPH, savestr);
 }
 
 /* ........................................................... */

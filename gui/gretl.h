@@ -73,13 +73,14 @@ extern gchar *clipboard_buf;
 extern char cmdfile[MAXLEN];
 extern char scriptfile[MAXLEN];
 extern char trydatfile[MAXLEN];
+extern char tryscript[MAXLEN];
 
 /* global error string */
 extern char *errtext;
 
 /* global option-related vars */
-extern char expert[6];
-extern char updater[6];
+extern int expert;
+extern int updater;
 
 /* global GUI equipment */
 extern windata_t *mdata;
@@ -90,7 +91,6 @@ enum file_ops {
     OPEN_DB,
     OPEN_RATSDB,
     OPEN_SCRIPT,
-    OPEN_SAMPLE_SCRIPT,
     OPEN_CSV,
     OPEN_BOX,
     OPEN_SESSION,
@@ -215,7 +215,7 @@ gint main_popup (GtkWidget *widget, GdkEventButton *event,
 
 /* functions defined in files other than gretl.c */
 
-void file_selector (char *msg, char *startdir, int action, gpointer data);
+void file_selector (char *msg, int action, gpointer data);
 int retrieve_url (int opt, const char *dbase, const char *series, 
 		  int filesave, char **saver, char *errbuf);
 void gui_get_series (gpointer data, guint bci_code, 

@@ -108,7 +108,8 @@ DATAINFO *datainfo;
 DATAINFO *subinfo;
 DATAINFO *fullinfo;
 char *errtext;
-char cmdfile[MAXLEN], scriptfile[MAXLEN], trydatfile[MAXLEN];
+char cmdfile[MAXLEN], scriptfile[MAXLEN];
+char trydatfile[MAXLEN], tryscript[MAXLEN];
 char line[MAXLEN];
 PATHS paths;                /* useful paths */
 CMD command;                /* gretl command struct */
@@ -124,9 +125,9 @@ PRN *cmds;
 gchar *clipboard_buf; /* for copying models as HTML, LaTeX */
 
 /* defaults for some options */
-char expert[6] = "false"; 
-char updater[6] = "false";
-char want_toolbar[6] = "true";
+int expert = FALSE; 
+int updater = FALSE;
+int want_toolbar = TRUE;
 
 #ifdef G_OS_WIN32
     char Rcommand[MAXSTR] = "RGui.exe";
@@ -212,7 +213,8 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/sep2", NULL, NULL, 0, "<Separator>" },
     { "/File/_View command log", NULL, view_log, 0, NULL },
     { "/File/sep2a", NULL, NULL, 0, "<Separator>" },
-    { "/File/Open command file/user file...", NULL, open_script, 0, NULL },
+    { "/File/Open command file/user file...", NULL, open_script, 
+      OPEN_SCRIPT, NULL },
     { "/File/Open command file/practice file/Ramanathan...", NULL, 
       display_files, RAMU_PS, NULL },
     { "/File/Open command file/practice file/Greene...", NULL, 
@@ -238,12 +240,11 @@ GtkItemFactoryEntry data_items[] = {
     { "/_Session", NULL, NULL, 0, "<Branch>" },
     { "/Session/_Icon view", NULL, view_session, 0, NULL },
     { "/Session/_Add last graph", NULL, add_last_graph, 0, NULL },
-    { "/Session/_Open/user...", NULL, open_script, 1, NULL },
-    { "/Session/_Open/practice...", NULL, open_script, 2, NULL },
-    { "/Session/sep", NULL, NULL, 0, "<Separator>" },
+    { "/Session/sep0", NULL, NULL, 0, "<Separator>" },
+    { "/Session/_Open...", NULL, open_script, OPEN_SESSION, NULL },
+    { "/Session/sep1", NULL, NULL, 0, "<Separator>" },
     { "/Session/_Save", NULL, save_session_callback, 0, NULL },
     { "/Session/Save _as...", NULL, save_session_callback, 1, NULL },
-    /* { "/Session/Close", NULL, close_session, 0, NULL }, */
     { "/_Data", NULL, NULL, 0, "<Branch>" },
     { "/Data/_Display values/all variables", NULL, display_data, 0, NULL },
     { "/Data/_Display values/selected variables...", 
@@ -675,8 +676,7 @@ int main (int argc, char *argv[])
 	do_open_script(NULL, NULL);
 
     /* check for program updates? */
-    if (updater[0] == 't')
-	update_query(); 
+    if (updater) update_query(); 
 
     /* try opening specified database */
     if (gui_get_data == OPT_DBOPEN)
@@ -1056,7 +1056,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 	populate_clist(mdata->listbox, datainfo);
 
     /* create gretl toolbar */
-    if (want_toolbar[0] == 't')
+    if (want_toolbar)
 	make_toolbar(mdata->w, main_vbox);
 
     /* get a monospaced font for various windows */
@@ -1690,6 +1690,6 @@ static void auto_store (void)
     if (data_status & USER_DATA)
 	do_store(paths.datfile, 0);
     else
-	file_selector("Save data file", paths.userdir, SAVE_DATA, NULL);	
+	file_selector("Save data file", SAVE_DATA, NULL);	
 }
 

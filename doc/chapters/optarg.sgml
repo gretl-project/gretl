@@ -269,7 +269,7 @@
 	  <tbody>
 	    <row>
 	      <entry>User directory</entry>
-	      <entry><filename>$HOME/.gretl</filename></entry>
+	      <entry><filename>$HOME/gretl</filename></entry>
 	      <entry><filename>PREFIX\gretl\user</filename></entry>
 	    </row>
 	    <row>

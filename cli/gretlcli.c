@@ -128,10 +128,11 @@ int make_userdir (PATHS *ppaths)
     if ((dir = opendir(ppaths->userdir)) == NULL) {
         sprintf(buf, "mkdir -p \"%s\"", ppaths->userdir);
         if (system(buf)) {
-	    printf("Couldn't create user directory %s\n", ppaths->userdir);
+	    fprintf(stderr, "Couldn't create user directory %s\n", 
+		    ppaths->userdir);
 	    return 1;
 	} else 
-	    printf("Created user directory %s\n", ppaths->userdir);
+	    fprintf(stderr, "Created user directory %s\n", ppaths->userdir);
     } else 
 	closedir(dir);
     return 0;

@@ -107,4 +107,6 @@ void *get_plugin_function (const char *funcname, void *handle);
 
 void close_plugin (void *handle);
 
+void get_default_dir (char *s);
+
 #endif /* GUI_UTILS_H */

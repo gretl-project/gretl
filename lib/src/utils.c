@@ -1155,14 +1155,14 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui)
 	home = getenv("HOME");
 	if (home != NULL) {
 	    strcpy(ppaths->userdir, home);
-	    strcat(ppaths->userdir, "/.gretl/");
+	    strcat(ppaths->userdir, "/gretl/");
 	    if ((try = opendir(ppaths->userdir)) == NULL) {
 		/* see if there's an old-style user dir */
 		strcpy(ppaths->userdir, home);
 		strcat(ppaths->userdir, "/esl/");
 		if ((try = opendir(ppaths->userdir)) == NULL) {
 		    strcpy(ppaths->userdir, home);
-		    strcat(ppaths->userdir, "/.gretl/");
+		    strcat(ppaths->userdir, "/gretl/");
 		} 
 	    } 
 	} else 

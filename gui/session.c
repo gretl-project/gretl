@@ -38,7 +38,7 @@
 #include "pixmaps/rhohat.xpm"
 #include "pixmaps/summary.xpm"
 
-#define SESSION_DEBUG
+/* #define SESSION_DEBUG */
 
 static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
@@ -163,12 +163,14 @@ char *space_to_score (char *str)
 static void edit_session_notes (void)
 {
     FILE *fp;
-    char notesfile[MAXLEN];
+    char notesfile[MAXLEN], savedir[MAXLEN];
+
+    get_default_dir(savedir);
 
     if (session_file_open && scriptfile[0]) 
 	switch_ext(notesfile, scriptfile, "Notes");
     else 
-	sprintf(notesfile, "%ssession.Notes", paths.userdir);
+	sprintf(notesfile, "%ssession.Notes", savedir);
 
     fp = fopen(notesfile, "a");
     if (fp != NULL) {
@@ -183,12 +185,14 @@ static void edit_session_notes (void)
 
 void add_last_graph (gpointer data, guint code, GtkWidget *w)
 {
-    char grname[12], pltname[MAXLEN];
+    char grname[12], pltname[MAXLEN], savedir[MAXLEN];
     int i = session.ngraphs;
     static int boxplot_count;
 
+    get_default_dir(savedir);
+
     if (code == 0) { /* gnuplot graph */
-	sprintf(pltname, "%ssession.Graph_%d", paths.userdir, plot_count + 1);
+	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "Graph %d", plot_count + 1);
 	if (copyfile(paths.plotfile, pltname)) {
 	    errbox("No graph found");
@@ -196,7 +200,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	} 
 	remove(paths.plotfile);
     } else { /* gretl boxplot */
-	sprintf(pltname, "%ssession.Plot_%d", paths.userdir, boxplot_count + 1);
+	sprintf(pltname, "%ssession.Plot_%d", savedir, boxplot_count + 1);
 	sprintf(grname, "Boxplot %d", boxplot_count + 1);
 	boxplot_count++;
 	if (copyfile("boxdump.tmp", pltname)) {
@@ -280,7 +284,8 @@ void session_init (void)
 void do_open_session (GtkWidget *w, gpointer data)
 {
     dialog_t *d = NULL;
-    windata_t *fwin = NULL;    
+    windata_t *fwin = NULL;
+    FILE *fp;
 
     if (data != NULL) {    
 	if (w == NULL) /* not coming from edit_dialog */
@@ -289,6 +294,15 @@ void do_open_session (GtkWidget *w, gpointer data)
 	    d = (dialog_t *) data;
 	    fwin = (windata_t *) d->data;
 	}
+    }
+
+    fp = fopen(tryscript, "r");
+    if (fp != NULL) {
+	fclose(fp);
+	strcpy(scriptfile, tryscript);
+    } else {
+	errbox("Couldn't open session file");
+	return;
     }
 
     clear_data(1);
@@ -915,7 +929,7 @@ void save_session_callback (GtkWidget *w, guint i, gpointer data)
     if (i == 0 && session_file_open && scriptfile[0]) 
 	save_session(scriptfile);
     else
-	file_selector("Save session", paths.userdir, SAVE_SESSION, NULL);
+	file_selector("Save session", SAVE_SESSION, NULL);
 }
 
 /* ........................................................... */

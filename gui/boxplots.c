@@ -62,8 +62,6 @@ double scalepos = 60.0;
 char boxfont[64] = "Helvetica";
 int boxfontsize = 12;
 
-extern char remember_dir[MAXLEN];
-
 int ps_print_plots (const char *fname, int flag, gpointer data);
 static int five_numbers (gpointer data);
 int dump_boxplot (PLOTGROUP *grp, const char *fname);
@@ -127,9 +125,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 	gtk_widget_destroy(w);
     }
     else if (key->keyval == GDK_s) {
-        file_selector("Save boxplot file", 
-		      (remember_dir[0])? remember_dir : paths.userdir, 
-                      SAVE_BOXPLOT_EPS, data);
+        file_selector("Save boxplot file", SAVE_BOXPLOT_EPS, data);
     }
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
@@ -140,9 +136,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     }
 #else
     else if (key->keyval == GDK_c) { 
-        file_selector("Save boxplot file", 
-		      (remember_dir[0])? remember_dir : paths.userdir, 
-                      SAVE_BOXPLOT_XPM, data);	
+        file_selector("Save boxplot file", SAVE_BOXPLOT_XPM, data);	
     }
 #endif
     return TRUE;
@@ -163,21 +157,15 @@ static gint popup_activated (GtkWidget *w, gpointer data)
 	add_last_graph(NULL, 1, NULL);
     }
     else if (!strcmp(item, "Save as EPS...")) 
-        file_selector("Save boxplot file", 
-		      (remember_dir[0])? remember_dir : paths.userdir, 
-                      SAVE_BOXPLOT_EPS, ptr);
+        file_selector("Save boxplot file", SAVE_BOXPLOT_EPS, ptr);
     else if (!strcmp(item, "Save as PS...")) 
-        file_selector("Save boxplot file", 
-		      (remember_dir[0])? remember_dir : paths.userdir, 
-                      SAVE_BOXPLOT_PS, ptr);
+        file_selector("Save boxplot file", SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
     else if (!strcmp(item, "Copy to clipboard"))
 	cb_copy_image(ptr);
 #else
     else if (!strcmp(item, "Save as XPM..."))
-        file_selector("Save boxplot file", 
-		      (remember_dir[0])? remember_dir : paths.userdir, 
-                      SAVE_BOXPLOT_XPM, ptr);
+        file_selector("Save boxplot file", SAVE_BOXPLOT_XPM, ptr);
 #endif
     else if (!strcmp(item, "Help"))
 	do_help (NULL, GR_BOX, NULL);

@@ -44,7 +44,7 @@ extern GtkWidget *mysheet;
 extern GtkWidget *toolbar_box;
 extern char *space_to_score (char *str);
 
-extern char want_toolbar[6];
+extern int want_toolbar;
 extern char calculator[MAXSTR];
 extern char editor[MAXSTR];
 extern char Rcommand[MAXSTR];
@@ -100,6 +100,8 @@ static char fontspec[MAXLEN] =
 /* "-misc-fixed-medium-r-*-*-*-120-*-*-*-*-*-*" */
 GdkFont *fixed_font;
 
+static int usecwd;
+
 typedef struct {
     char *key,         /* config file variable name */
          *description; /* How the field will show up in the options dialog */
@@ -115,14 +117,16 @@ RCVARS rc_vars[] = {
     {"userdir", "User's gretl directory", paths.userdir, 'U', MAXLEN, 1, NULL},
     {"gnuplot", "Command to launch gnuplot", paths.gnuplot, 'R', MAXLEN, 1, NULL},
     {"Rcommand", "Command to launch GNU R", Rcommand, 'R', MAXSTR, 1, NULL},
-    {"expert", "Expert mode (no warnings)", expert, 'B', 6, 1, NULL},
-    {"updater", "Tell me about gretl updates", updater, 'B', 6, 1, NULL},
+    {"expert", "Expert mode (no warnings)", &expert, 'B', 0, 1, NULL},
+    {"updater", "Tell me about gretl updates", &updater, 'B', 0, 1, NULL},
     {"binbase", "gretl database directory", paths.binbase, 'U', MAXLEN, 2, NULL},
     {"ratsbase", "RATS data directory", paths.ratsbase, 'U', MAXLEN, 2, NULL},
     {"dbhost_ip", "Database server IP", paths.dbhost_ip, 'U', 16, 2, NULL},
     {"calculator", "Calculator", calculator, 'U', MAXSTR, 3, NULL},
     {"editor", "Editor", editor, 'U', MAXSTR, 3, NULL},
-    {"toolbar", "Show gretl toolbar", want_toolbar, 'B', 6, 3, NULL},
+    {"toolbar", "Show gretl toolbar", &want_toolbar, 'B', 0, 3, NULL},
+    {"usecwd", "Use current working directory as default", 
+     &usecwd, 'B', 0, 4, NULL},
     {"fontspec", "Fixed font", fontspec, 'U', MAXLEN, 0, NULL},
     {NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
@@ -494,7 +498,7 @@ void verify_open_data (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_status && expert[0] == 'f' && 
+    if (data_status && !expert && 
 	yes_no_dialog ("gretl: open data", 
 		       "Opening a new data file will automatically\n"
 		       "close the current one.  Any unsaved work\n"
@@ -511,7 +515,7 @@ void verify_open_session (gpointer userdata)
 	if there's already a datafile open and we're not
 	in "expert" mode */
 {
-    if (data_status && expert[0] == 'f' &&
+    if (data_status && !expert &&
 	yes_no_dialog ("gretl: open session", 
 		       "Opening a new session file will automatically\n"
 		       "close the current session.  Any unsaved work\n"
@@ -535,7 +539,7 @@ static void set_data_from_filelist (gpointer data, guint i,
 static void set_session_from_filelist (gpointer data, guint i, 
 				       GtkWidget *widget)
 {
-    strcpy(scriptfile, sessionp[i]);
+    strcpy(tryscript, sessionp[i]);
     verify_open_session(NULL);
 }
 
@@ -544,7 +548,7 @@ static void set_session_from_filelist (gpointer data, guint i,
 static void set_script_from_filelist (gpointer data, guint i, 
 				      GtkWidget *widget)
 {
-    strcpy(scriptfile, scriptp[i]);
+    strcpy(tryscript, scriptp[i]);
     do_open_script(NULL, NULL);
 }
 
@@ -1619,6 +1623,7 @@ void options_dialog (gpointer data)
     make_prefs_tab (notebook, 1);
     make_prefs_tab (notebook, 2);
     make_prefs_tab (notebook, 3);
+    make_prefs_tab (notebook, 4);
    
     tempwid = gtk_button_new_with_label ("OK");
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -1672,6 +1677,9 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	tempwid = gtk_label_new ("Databases");
     else if (tab == 3)
 	tempwid = gtk_label_new ("Toolbar");
+    else if (tab == 4)
+	tempwid = gtk_label_new ("Open/Save path");
+    
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -1692,13 +1700,13 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     i = 0;
     while (rc_vars[i].key != NULL) {
 	if (rc_vars[i].tab == tab) {
-	    if (rc_vars[i].type == 'B') {
+	    if (rc_vars[i].type == 'B') { /* boolean variable */
 		tempwid = gtk_check_button_new_with_label 
 		    (rc_vars[i].description);
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num, tbl_num + 1);
-		if (strcmp(rc_vars[i].var, "true") == 0)
+		if (*(int *)(rc_vars[i].var))
 		    gtk_toggle_button_set_active 
 			(GTK_TOGGLE_BUTTON (tempwid), TRUE);
 		else
@@ -1712,7 +1720,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		    tbl_num++;
 		    gtk_table_resize (GTK_TABLE (inttbl), tbl_num + 1, 2);
 		}
-	    } else {
+	    } else { /* string variable */
 		tbl_len++;
 		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);
 		tempwid = gtk_label_new (rc_vars[i].description);
@@ -1745,8 +1753,8 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	if (rc_vars[i].widget != NULL) {
 	    if (rc_vars[i].type == 'B') {
 		if (GTK_TOGGLE_BUTTON(rc_vars[i].widget)->active)
-		    strcpy(rc_vars[i].var, "true");
-		else strcpy(rc_vars[i].var, "false");
+		    *(int *)(rc_vars[i].var) = TRUE;
+		else *(int *)(rc_vars[i].var) = FALSE;
 	    } 
 	    if (rc_vars[i].type == 'U' || rc_vars[i].type == 'R') {
 		tempstr = gtk_entry_get_text
@@ -1758,12 +1766,30 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	i++;
     }
     write_rc();
-    if (toolbar_box == NULL && want_toolbar[0] == 't')
+    if (toolbar_box == NULL && want_toolbar)
 	show_toolbar();
-    else if (toolbar_box != NULL && want_toolbar[0] == 'f') {
+    else if (toolbar_box != NULL && !want_toolbar) {
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+}
+
+/* .................................................................. */
+
+static void str_to_boolvar (char *s, void *b)
+{
+    if (strcmp(s, "true") == 0 || strcmp(s, "1") == 0)
+	*(int *)b = TRUE;
+    else
+	*(int *)b = FALSE;	
+}
+
+/* .................................................................. */
+
+static void boolvar_to_str (void *b, char *s)
+{
+    if (*(int *)b) strcpy(s, "true");
+    else strcpy(s, "false");
 }
 
 /* .................................................................. */
@@ -1773,11 +1799,16 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 void write_rc (void) 
 {
     char gpath[MAXSTR];
+    char val[6];
     int i = 0;
 
     while (rc_vars[i].key != NULL) {
 	sprintf(gpath, "/gretl/%s/%s", rc_vars[i].description, rc_vars[i].key);
-	gnome_config_set_string(gpath, rc_vars[i].var);
+	if (rc_vars[i].type == 'B') {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    gnome_config_set_string(gpath, val);
+	} else
+	    gnome_config_set_string(gpath, rc_vars[i].var);
 	i++;
     }
     gnome_printfilelist(1); /* data files */
@@ -1798,7 +1829,10 @@ static void read_rc (void)
 		rc_vars[i].description, 
 		rc_vars[i].key);
 	if ((value = gnome_config_get_string(gpath)) != NULL) {
-	    strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+	    if (rc_vars[i].type == 'B')
+		str_to_boolvar(value, rc_vars[i].var);
+	    else
+		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
 	    g_free(value);
 	}
 	i++;
@@ -1844,11 +1878,16 @@ static void read_rc (void)
 void write_rc (void) 
 {
     int i = 0;
+    char val[6];
 
     while (rc_vars[i].key != NULL) {
-	write_reg_val((rc_vars[i].type == 'R')? 
-		      HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-		      rc_vars[i].key, rc_vars[i].var);
+	if (rc_vars[i].type == 'B') {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    write_reg_val(HKEY_CURRENT_USER, rc_vars[i].key, val);
+	} else
+	    write_reg_val((rc_vars[i].type == 'R')? 
+			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
+			  rc_vars[i].key, rc_vars[i].var);
 	i++;
     }
     win_printfilelist(1); /* data files */
@@ -1865,8 +1904,12 @@ void read_rc (void)
     while (rc_vars[i].key != NULL) {
 	if (read_reg_val((rc_vars[i].type == 'R')? 
 			 HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
-			 rc_vars[i].key, value) == 0)
-	    strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+			 rc_vars[i].key, value) == 0) {
+	    if (rc_vars[i].type == 'B') {
+		str_to_boolvar(value, rc_vars[i].var);
+	    } else
+		strncpy(rc_vars[i].var, value, rc_vars[i].len - 1);
+	}
 	i++;
     }
 
@@ -1904,6 +1947,7 @@ void write_rc (void)
 {
     FILE *rc;
     int i;
+    char val[6];
 
     rc = fopen(rcfile, "w");
     if (rc == NULL) {
@@ -1914,7 +1958,11 @@ void write_rc (void)
     i = 0;
     while (rc_vars[i].var != NULL) {
 	fprintf(rc, "# %s\n", rc_vars[i].description);
-	fprintf(rc, "%s = %s\n", rc_vars[i].key, rc_vars[i].var);
+	if (rc_vars[i].type == 'B') {
+	    boolvar_to_str(rc_vars[i].var, val);
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, val);
+	} else
+	    fprintf(rc, "%s = %s\n", rc_vars[i].key, rc_vars[i].var);
 	i++;
     }
     printfilelist(1, rc); /* data files */
@@ -1947,17 +1995,16 @@ static void read_rc (void)
 	    strcpy(linevar, line + strlen(key) + 3); 
 	    chopstr(linevar); 
 	    for (j=0; rc_vars[j].key != NULL; j++) {
-		if (!strcmp(key, rc_vars[j].key))
-		    strcpy(rc_vars[j].var, linevar);
+		if (!strcmp(key, rc_vars[j].key)) {
+		    if (rc_vars[j].type == 'B')
+			str_to_boolvar(linevar, rc_vars[j].var);
+		    else
+			strcpy(rc_vars[j].var, linevar);
+		}
 	    }
 	}
 	i++;
     }
-
-    if (expert[0] == '1') strcpy(expert, "true");
-    else if (expert[0] == '0') strcpy(expert, "false");
-    if (want_toolbar[0] == '1') strcpy(want_toolbar, "true");
-    if (want_toolbar[0] == '0') strcpy(want_toolbar, "false");
 
     /* get lists of recently opened files */
     for (i=0; i<MAXRECENT; i++) { 
@@ -2558,10 +2605,10 @@ void add_files_to_menu (int filetype)
     GtkItemFactoryEntry fileitem;
     GtkWidget *w;
     gchar *msep[] = {"/File/Open data/sep",
-		     "/Session/Open/sep",
+		     "/Session/sep",
 		     "/File/Open command file/sep"};
     gchar *mpath[] = {"/File/_Open data",
-		     "/Session/_Open",
+		     "/Session",
 		     "/File/Open command file"};
 
     fileitem.path = NULL;
@@ -2679,4 +2726,21 @@ void close_plugin (void *handle)
 #else
     dlclose(handle);
 #endif
+}
+
+/* .................................................................. */
+
+void get_default_dir (char *s)
+{
+    char *test = NULL;
+
+    if (usecwd) {
+	test = getcwd(s, MAXLEN);
+	if (test == NULL) 
+	    strcpy(s, paths.userdir);
+	else
+	    strcat(s, SLASHSTR);
+    }
+    else
+	strcpy(s, paths.userdir);    
 }
