@@ -2,6 +2,7 @@ version 1.0
 - change *nix library name to libgretl-1.0
 - improve sizing of some windows
 - incorporate new translations
+- update appearance of gtk-1.2 version of gui
 
 11/06/02 version 1.0pre4 (for translators)
 - fix bug in progress bar when loading large data set

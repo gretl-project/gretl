@@ -35,6 +35,7 @@ extern gint populate_dbfilelist (windata_t *ddata);
 extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
+char woolpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
@@ -103,16 +104,13 @@ static int read_data_descriptions (windata_t *fdata)
 	build_path(paths.datadir, "descriptions", fname, NULL);
     else if (fdata->role == PWT_DATA)
 	build_path(pwtpath, "descriptions", fname, NULL);
+    else if (fdata->role == JW_DATA)
+	build_path(woolpath, "jw_descriptions", fname, NULL);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
 	strcat(fname, "wg_descriptions"); 
     } 
-    else if (fdata->role == JW_DATA) {
-	strcpy(fname, paths.datadir);
-	append_dir(fname, "wooldridge");
-	strcat(fname, "jw_descriptions"); 
-    }    
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
@@ -157,15 +155,11 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(pwtpath, fname, hdrname, ".gdt");
     else if (win->role == RAMU_DATA)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
+    else if (win->role == JW_DATA)
+	build_path(woolpath, fname, hdrname, ".gdt");
     else if (win->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
-	strcat(hdrname, fname);
-	strcat(hdrname, ".gdt");
-    }
-    else if (win->role == JW_DATA) {
-	strcpy(hdrname, paths.datadir);
-	append_dir(hdrname, "wooldridge");
 	strcat(hdrname, fname);
 	strcat(hdrname, ".gdt");
     }
@@ -200,15 +194,12 @@ void browser_open_data (GtkWidget *w, gpointer data)
     else if (win->role == RAMU_DATA) {
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
     }
+    else if (win->role == JW_DATA) {
+	build_path(woolpath, datname, trydatfile, ".gdt");
+    }
     else if (win->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
-	strcat(trydatfile, datname);
-	strcat(trydatfile, ".gdt");
-    }
-    else if (win->role == JW_DATA) {
-	strcpy(trydatfile, paths.datadir);
-	append_dir(trydatfile, "wooldridge");
 	strcat(trydatfile, datname);
 	strcat(trydatfile, ".gdt");
     }

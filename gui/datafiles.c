@@ -33,6 +33,7 @@ extern gint populate_dbfilelist (windata_t *ddata);
 extern GtkItemFactoryEntry sample_script_items[];
 
 char pwtpath[MAXLEN];
+char woolpath[MAXLEN];
 static int file_sel_open = 0;
 
 static GtkWidget *files_window (windata_t *fdata);
@@ -93,15 +94,13 @@ static int read_data_descriptions (windata_t *fdata)
 	build_path(paths.datadir, "descriptions", fname, NULL);
     else if (fdata->role == PWT_DATA)
 	build_path(pwtpath, "descriptions", fname, NULL);
+    else if (fdata->role == JW_DATA) {
+	build_path(woolpath, "jw_descriptions", fname, NULL);
+    } 
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
 	strcat(fname, "wg_descriptions"); 
-    } 
-    else if (fdata->role == JW_DATA) {
-        strcpy(fname, paths.datadir);
-        append_dir(fname, "wooldridge");
-        strcat(fname, "jw_descriptions"); 
     } 
 
     fp = fopen(fname, "r");
@@ -112,17 +111,16 @@ static int read_data_descriptions (windata_t *fdata)
     }
     
     while (fgets(line, MAXLEN - 1, fp)) {
-	if (line[0] == '#')
-	    continue;
-	line[MAXLEN-1] = 0;
-	strncpy(fname, strtok(line, "\""), 15);
-	fname[15] = 0;
-	row[0] = fname;
-	(void) strtok(NULL, "\"");
-	strncpy(descrip, strtok(NULL, "\""), 79); 
-	descrip[79] = 0;
-	row[1] = descrip;
-	gtk_clist_append(GTK_CLIST (fdata->listbox), row);
+        if (line[0] == '#') continue;
+        line[MAXLEN-1] = 0;
+        *fname = 0;
+        *descrip = 0;
+        if (sscanf(line, " \"%15[^\"]\",\"%79[^\"]\"", 
+                   fname, descrip) == 2) {
+	    row[0] = fname;
+	    row[1] = descrip;
+	    gtk_clist_append(GTK_CLIST (fdata->listbox), row);
+	}
     }
 
     fclose(fp);
@@ -147,17 +145,13 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(pwtpath, fname, hdrname, ".gdt"); 
     else if (win->role == RAMU_DATA)
 	build_path(paths.datadir, fname, hdrname, ".gdt");
+    else if (win->role == JW_DATA)
+	build_path(woolpath, fname, hdrname, ".gdt");
     else if (win->role == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
 	strcat(hdrname, fname);
 	strcat(hdrname, ".gdt");
-    }
-    else if (win->role == JW_DATA) {
-        strcpy(hdrname, paths.datadir);
-        append_dir(hdrname, "wooldridge");
-        strcat(hdrname, fname);
-        strcat(hdrname, ".gdt");
     }
 
     prn = gretl_print_new(GRETL_PRINT_NULL, NULL);
@@ -186,17 +180,13 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	build_path(pwtpath, datname, trydatfile, ".gdt");
     else if (win->role == RAMU_DATA)  
 	build_path(paths.datadir, datname, trydatfile, ".gdt");
+    else if (win->role == JW_DATA)
+	build_path(woolpath, datname, trydatfile, ".gdt");
     else if (win->role == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
 	strcat(trydatfile, datname);
 	strcat(trydatfile, ".gdt");
-    }
-    else if (win->role == JW_DATA) {
-        strcpy(trydatfile, paths.datadir);
-        append_dir(trydatfile, "wooldridge");
-        strcat(trydatfile, datname);
-        strcat(trydatfile, ".gdt");
     }
 
     verify_open_data(win, OPEN_DATA);
@@ -366,7 +356,7 @@ static gint populate_remote_dblist (windata_t *ddata)
 
 void display_files (gpointer data, guint code, GtkWidget *widget)
 {
-    GtkWidget *frame, *openbutton, *midbutton, *closebutton;
+    GtkWidget *listbox, *openbutton, *midbutton, *closebutton;
     GtkWidget *main_vbox, *button_box;
     windata_t *fdata;
     void (*browse_func)() = NULL;
@@ -417,9 +407,9 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_container_add (GTK_CONTAINER (fdata->w), main_vbox);
 
     fdata->role = code;
-    frame = files_window(fdata);
+    listbox = files_window(fdata);
 
-    gtk_box_pack_start(GTK_BOX (main_vbox), frame, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX (main_vbox), listbox, TRUE, TRUE, 0);
 
     if (code == REMOTE_DB) {
 	GtkWidget *hbox;
@@ -502,14 +492,17 @@ static GtkWidget *files_window (windata_t *fdata)
     char *ps_titles[] = {_("Script"), _("Topic"), _("Data")};
     char *db_titles[] = {_("Database"), _("Source")};
     char *remote_titles[] = {_("Database"), _("Source"), _("Local status")};
+
     char **titles = data_titles;
+
     int data_col_width[] = {128, 256}; 
     int ps_col_width[] = {68, 180, 160};
     int db_col_width[] = {80, 304};
     int remote_col_width[] = {80, 256, 180};
     int *col_width = data_col_width;
-    int full_width = 420, file_height = 260;
-    GtkWidget *box, *scroll_list, *parent;
+    int full_width = 500, file_height = 260;
+
+    GtkWidget *box, *scroller;
     int i, cols = 2;
 
     switch (fdata->role) {
@@ -550,24 +543,19 @@ static GtkWidget *files_window (windata_t *fdata)
 
     fdata->active_var = 1; 
 
-    parent = gtk_frame_new (NULL);
+    box = gtk_vbox_new (FALSE, 0);
 
     full_width *= gui_scale;
     file_height *= gui_scale;
 
-    gtk_widget_set_usize (parent, full_width, file_height);
-    gtk_widget_show (parent);
-
-    box = gtk_vbox_new (FALSE, 0);
-    gtk_container_border_width (GTK_CONTAINER (box), 5);
-    gtk_container_add (GTK_CONTAINER (parent), box);
+    gtk_widget_set_usize (box, full_width, file_height);
    
-    scroll_list = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroll_list),
+    scroller = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
 				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
     fdata->listbox = gtk_clist_new_with_titles(cols, titles);
     gtk_clist_column_titles_passive(GTK_CLIST(fdata->listbox));
-    gtk_container_add (GTK_CONTAINER (scroll_list), fdata->listbox);
+    gtk_container_add (GTK_CONTAINER (scroller), fdata->listbox);
     gtk_clist_set_selection_mode (GTK_CLIST (fdata->listbox), 
 				  GTK_SELECTION_BROWSE);
     for (i=0; i<cols; i++) {
@@ -577,14 +565,14 @@ static GtkWidget *files_window (windata_t *fdata)
 	gtk_clist_set_column_justification (GTK_CLIST (fdata->listbox), i, 
 					    GTK_JUSTIFY_LEFT);
     }
-    gtk_box_pack_start (GTK_BOX (box), scroll_list, TRUE, TRUE, TRUE);
+    gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
     gtk_signal_connect_after (GTK_OBJECT (fdata->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), fdata);
     gtk_widget_show (fdata->listbox);
-    gtk_widget_show (scroll_list);
+    gtk_widget_show (scroller);
 
     gtk_widget_show (box);
-    return (parent);
+    return box;
 }
 
 /* .................................................................. */

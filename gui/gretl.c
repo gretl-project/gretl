@@ -66,7 +66,7 @@ static void auto_store (void);
 
 GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 
-static GtkWidget *dataframe;
+static GtkWidget *datalabel;
 static GtkWidget *main_vbox;
 static GtkWidget *gretl_toolbar = NULL;
 GtkTooltips *gretl_tips;
@@ -701,7 +701,7 @@ int main (int argc, char *argv[])
     /* create main window */
     if ((mdata = mymalloc(sizeof(windata_t))) == NULL)
 	noalloc(_("GUI"));
-    if ((dataframe = make_main_window(gui_get_data)) == NULL) 
+    if ((datalabel = make_main_window(gui_get_data)) == NULL) 
 	noalloc(_("main window"));
     if (!gui_get_data) set_sample_label(datainfo);
 
@@ -908,7 +908,7 @@ void clear_clist (GtkWidget *widget)
 void clear_sample_label (void)
 {
     gtk_label_set_text(GTK_LABEL(mdata->status), "");
-    gtk_frame_set_label(GTK_FRAME(dataframe), _(" No datafile loaded "));
+    gtk_label_set_text(GTK_LABEL(datalabel), _(" No datafile loaded "));
 }
 
 /* ......................................................... */
@@ -967,24 +967,24 @@ void set_sample_label (DATAINFO *pdinfo)
 		    strrchr(paths.datfile, SLASH) + 1);
 	if (data_status & MODIFIED_DATA) 
 	    strcat(labeltxt, "* ");
-	if (dataframe != NULL)
-	    gtk_frame_set_label(GTK_FRAME(dataframe), labeltxt);
+	if (datalabel != NULL)
+	    gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
     } 
     else if (data_status & MODIFIED_DATA) {
 	strcpy(labeltxt, _(" Unsaved data "));
-	gtk_frame_set_label(GTK_FRAME(dataframe), labeltxt);
+	gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
     }
 }
 
 /* ......................................................... */
 
-static float get_gui_scale (GtkWidget *w)
+static float get_gui_scale (void)
 {
     GtkStyle *style = NULL;
     int fsize = 0;
     float scale = 1.0;
 
-    style = gtk_rc_get_style(w);
+    style = gtk_rc_get_style(mdata->w);
 
     if (style != NULL && style->font != NULL) {
 	fsize = gdk_char_width(style->font, 'X');
@@ -995,19 +995,49 @@ static float get_gui_scale (GtkWidget *w)
     return scale;
 }
 
+/* .................................................................. */
+
+static GtkWidget *list_box_create (GtkBox *box, char *titles[]) 
+{
+    GtkWidget *view, *scroller;
+    int listbox_id_width = 30;
+    int listbox_varname_width = 90;
+    int listbox_label_width = 400;
+
+    view = gtk_clist_new_with_titles (3, titles);
+    gtk_clist_column_titles_passive(GTK_CLIST(view));
+    gtk_clist_set_selection_mode (GTK_CLIST (view), 
+				  GTK_SELECTION_BROWSE);
+    gtk_clist_set_column_width (GTK_CLIST (view), 
+				0, listbox_id_width * gui_scale);
+    gtk_clist_set_column_justification (GTK_CLIST (view), 0, 
+					GTK_JUSTIFY_LEFT);
+    setup_column(view, 1, listbox_varname_width * gui_scale);
+    setup_column(view, 2, listbox_label_width * gui_scale);
+
+    scroller = gtk_scrolled_window_new (NULL, NULL);
+    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
+				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_container_add (GTK_CONTAINER(scroller), view);
+
+    gtk_box_pack_start (box, scroller, TRUE, TRUE, TRUE);
+
+    gtk_widget_show(view);
+    gtk_widget_show(scroller);
+
+    return view;
+}
+
 /* ......................................................... */
 
 static GtkWidget *make_main_window (int gui_get_data) 
 {
-    GtkWidget *box, *scroller, *dlabel, *align;
-    char *titles[3] = {
+    GtkWidget *box, *dlabel, *align;
+    char *titles[] = {
 	_("ID #"), 
 	_("Variable name"), 
 	_("Descriptive label")
     };
-    int listbox_id_width = 30;
-    int listbox_varname_width = 90;
-    int listbox_label_width = 400;
     int mainwin_width = 520;
     int mainwin_height = 400;
 
@@ -1015,9 +1045,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->listbox = NULL;
     mdata->popup = NULL;
     mdata->role = MAINWIN;
-
-    /* allow for longer foreign strings */
-    if (strcmp(titles[1], "Variable name")) listbox_varname_width = 110;
 
 #ifdef USE_GNOME
     mdata->w = gnome_app_new("gretl", _("Econometrics program"));
@@ -1030,19 +1057,19 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_signal_connect (GTK_OBJECT (mdata->w), "destroy",
 			GTK_SIGNAL_FUNC (destroy), NULL);
 
-    gui_scale = get_gui_scale(mdata->w); 
+    gui_scale = get_gui_scale();
+
     mainwin_width *= gui_scale;
     mainwin_height *= gui_scale;
-    
+
+    gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_default_size(GTK_WINDOW (mdata->w), 
 				mainwin_width, mainwin_height);
-    gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
-    gtk_window_set_policy(GTK_WINDOW (mdata->w), TRUE, TRUE, FALSE);
     gtk_signal_connect_after(GTK_OBJECT(mdata->w), "realize", 
                              GTK_SIGNAL_FUNC(set_wm_icon), 
                              NULL);
 
-    main_vbox = gtk_vbox_new(FALSE, 0);
+    main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER (main_vbox), 10);
 
 #ifdef USE_GNOME
@@ -1055,56 +1082,34 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start(GTK_BOX (main_vbox), mdata->mbar, FALSE, TRUE, 0);
     gtk_widget_show(mdata->mbar);
 
-    mdata->active_var = 1;
-    
     dlabel = gtk_label_new(_(" No datafile loaded ")); 
     gtk_widget_show(dlabel);
-    
+
     box = gtk_vbox_new (FALSE, 0);
     align = gtk_alignment_new(0, 0, 0, 0);
     gtk_box_pack_start(GTK_BOX(box), align, FALSE, FALSE, 0);
     gtk_widget_show(align);
     gtk_container_add(GTK_CONTAINER(align), dlabel);
    
-    scroller = gtk_scrolled_window_new (NULL, NULL);
-    gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
-				    GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-
-    mdata->listbox = gtk_clist_new_with_titles (3, titles);
-    gtk_clist_column_titles_passive(GTK_CLIST(mdata->listbox));
-    gtk_clist_set_selection_mode (GTK_CLIST (mdata->listbox), 
-				  GTK_SELECTION_BROWSE);
-    gtk_clist_set_column_width (GTK_CLIST (mdata->listbox), 
-				0, listbox_id_width * gui_scale);
-    gtk_clist_set_column_justification (GTK_CLIST (mdata->listbox), 0, 
-					GTK_JUSTIFY_LEFT);
-    setup_column(mdata->listbox, 1, listbox_varname_width * gui_scale);
-    setup_column(mdata->listbox, 2, listbox_label_width * gui_scale);
-    gtk_container_add (GTK_CONTAINER(scroller), mdata->listbox);
+    mdata->listbox = list_box_create (GTK_BOX(box), titles);
+    gtk_widget_show(box);
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
 		       target_table, 1,
 		       GDK_ACTION_COPY);
+
     gtk_signal_connect (GTK_OBJECT(mdata->listbox), "drag_data_received",
 			GTK_SIGNAL_FUNC(drag_data_received),
 			NULL);
 
     gtk_box_pack_start(GTK_BOX (main_vbox), box, TRUE, TRUE, 0);
 
-    gtk_box_pack_start (GTK_BOX(box), scroller, TRUE, TRUE, 0);
-    gtk_signal_connect_after (GTK_OBJECT (mdata->listbox), "select_row", 
-			      GTK_SIGNAL_FUNC (selectrow), (gpointer) mdata);
-
-    gtk_widget_show(mdata->listbox);
-    gtk_widget_show(scroller);
-    gtk_widget_show(box);
-
     mdata->status = gtk_label_new("");
     
-    gtk_box_pack_start(GTK_BOX(main_vbox), mdata->status, FALSE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX (main_vbox), mdata->status, FALSE, TRUE, 0);
 
-    /* put stuff into clist, activate menus */
+    /* put stuff into list box, activate menus */
     if (!gui_get_data) populate_clist(mdata->listbox, datainfo);
 
     /* create gretl toolbar */
@@ -1113,8 +1118,13 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* get a monospaced font for various windows */
     load_fixed_font();
 
+    /* and a proportional font for menus, etc */
+#ifndef USE_GNOME
+    set_app_font(NULL);
+#endif
+
     gtk_widget_show_all(mdata->w); 
-    
+
     return dlabel;
 }
 
@@ -1222,7 +1232,7 @@ static void check_for_extra_data (void)
 {
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char woolpath[MAXLEN]; /* fileselect.c */
+    extern char woolpath[MAXLEN]; /* datafiles.c */
     int gotpwt = 0, gotwool = 0;
 
     /* first check for Penn World Table */
@@ -1425,13 +1435,6 @@ static void show_edit (void)
 
 /* ........................................................... */
 
-static void open_ramudata (void)
-{
-    display_files(NULL, RAMU_DATA, NULL);
-}
-
-/* ........................................................... */
-
 void colorize_tooltips (GtkTooltips *tip)
 {
     GdkColor t_back;
@@ -1445,6 +1448,19 @@ void colorize_tooltips (GtkTooltips *tip)
 	    gtk_widget_set_style(tip->tip_window, style);
 	} 
     } 
+}
+
+/* ........................................................... */
+
+static void open_textbook_data (void)
+{
+    extern int jwdata; /* settings.c */
+
+    if (jwdata) {
+        display_files(NULL, JW_DATA, NULL);
+    } else {
+        display_files(NULL, RAMU_DATA, NULL);
+    }
 }
 
 /* ........................................................... */
@@ -1577,7 +1593,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 	    break;
 	case 9:
 	    toolxpm = mini_ofolder_xpm;
-	    toolfunc = open_ramudata;
+	    toolfunc = open_textbook_data;
 	    break;
 	default:
 	    break;

@@ -522,7 +522,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     char *titlestr;
     windata_t *dbdat;
 
-    if ((dbdat = mymalloc(sizeof(windata_t))) == NULL)
+    if ((dbdat = mymalloc(sizeof *dbdat)) == NULL)
 	return;
     windata_init(dbdat);
 
@@ -533,8 +533,9 @@ void display_db_series_list (int action, char *fname, char *buf)
 
     if (buf == NULL && strrchr(fname, SLASH)) {
 	titlestr = strrchr(fname, SLASH) + 1;
-    } else
+    } else {
 	titlestr = fname;
+    }
     gtk_window_set_title(GTK_WINDOW(dbdat->w), titlestr);
     if (action == NATIVE_SERIES) {
 	for (i=strlen(fname)-1; i>0; i--) {
@@ -767,24 +768,18 @@ static GtkWidget *database_window (windata_t *ddata)
 	_("Description"), 
 	_("Frequency and dates")
     };
-    GtkWidget *box, *scroller, *parent;
+    GtkWidget *box, *scroller;
     int i, cols = 3;
     int col_width[] = {72, 450, 240};
-    int full_width = 540, listbox_height = 320;
+    int db_width = 540, db_height = 320;
 
     ddata->active_var = 1; 
 
-    parent = gtk_frame_new (NULL);
-
-    full_width *= gui_scale;
-    listbox_height *= gui_scale;
-
-    gtk_widget_set_usize (parent, full_width, listbox_height);
-    gtk_widget_show (parent);
+    db_width *= gui_scale;
+    db_height *= gui_scale;
 
     box = gtk_vbox_new (FALSE, 0);
-    gtk_container_border_width (GTK_CONTAINER (box), 5);
-    gtk_container_add (GTK_CONTAINER (parent), box);
+    gtk_widget_set_usize (box, db_width, db_height);
    
     scroller = gtk_scrolled_window_new (NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (scroller),
@@ -814,7 +809,8 @@ static GtkWidget *database_window (windata_t *ddata)
     gtk_widget_show (ddata->listbox);
     gtk_widget_show (scroller);
     gtk_widget_show (box);
-    return (parent);
+
+    return box;
 }
 
 /* ........................................................... */
@@ -888,16 +884,18 @@ static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 
     for (t=0; t<goodobs; t++) {
 	p = (t + 1) * 3;
-	if (method == 1) /* averaging */
+	if (method == 1) { /* averaging */
 	    val = (mvec[p-3+skip] + mvec[p-2+skip] + mvec[p-1+skip]) / 3.0;
-	else if (method == 2) /* end of period */
+	} else if (method == 2) { /* end of period */
 	    val = mvec[p-1+skip];
-	else if (method == 2) /* start of period */
+	} else if (method == 2) { /* start of period */
 	    val = mvec[p-3+skip];
+	}
 	sprintf(numstr, "%.*f", pmax, val);
 	(*pq)[t] = atof(numstr);
 	/*  printf("qvec[%d] = %f\n", t, (*pq)[t]); */
     }
+
     sinfo->pd = 4;
     return 0;
 }

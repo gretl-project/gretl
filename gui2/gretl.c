@@ -1484,7 +1484,7 @@ static void check_for_extra_data (void)
 {
     DIR *dir;
     extern char pwtpath[MAXLEN]; /* datafiles.c */
-    extern char woolpath[MAXLEN]; /* fileselect.c */
+    extern char woolpath[MAXLEN]; /* datafiles.c */
     const char *pwt_menu_paths[] = {
 	"/File/Open data/sample file/Penn World Table...",
 	"/File/Open command file/practice file/Penn World Table..."

@@ -629,7 +629,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
                         tempwid, TRUE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
 			GTK_SIGNAL_FUNC(context_help), 
-			GINT_TO_POINTER(GNUPLOT));
+			GINT_TO_POINTER(GR_PLOT));
     gtk_widget_show (tempwid);
 
     gtk_widget_show (gpt_control);

@@ -69,7 +69,6 @@ extern int nls_on;
 extern char line[1024];
 extern int *default_list;
 extern char *storelist;
-extern gchar datalabel[64];
 extern gchar *clipboard_buf;
 extern float gui_scale;
 
