@@ -613,10 +613,12 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     pmod->dfn = nv - pmod->ifc;
     ysum = xpy[0];
     ypy = xpy[nv + 1];
+#ifdef NO_LHS_ZERO
     if (floateq(ypy, 0.0)) { 
         pmod->errcode = E_YPY;
         return; 
     }
+#endif
 
     zz = ysum * ysum/nobs;
     tss = ypy - zz;

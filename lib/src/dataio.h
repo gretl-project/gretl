@@ -48,7 +48,8 @@ typedef enum {
     CLEAR_SUBSAMPLE
 } clear_codes;
 
-#define free_datainfo(p) clear_datainfo(p, 0); free(p);
+#define free_datainfo(p) do { if (p != NULL) { clear_datainfo(p, 0); free(p); } \
+                            } while (0);
 
 /* functions follow */
 

@@ -75,7 +75,9 @@ enum transformations {
     T_LOG = 1, 
     T_EXP, 
     T_SIN, 
-    T_COS, 
+    T_COS,
+    T_TAN,
+    T_ATAN,
     T_DIFF,
     T_LDIFF, 
     T_MEAN, 
@@ -138,6 +140,8 @@ static char *math[] = {
     "exp", 
     "sin", 
     "cos", 
+    "tan",
+    "atan",
     "diff",
     "ldiff", 
     "mean", 
@@ -413,14 +417,12 @@ int math_word (const char *s)
 int _reserved (const char *str)
 {
     const char *resword[] = {"uhat", "yhat",
-			     "const", "CONST", 
+			     "const", "CONST", "pi",
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
 			     "full", "subdum", 
 			     "t", "annual", "qtrs", "months", "hrs", "i",
-			     "log", "exp", "sin", "cos", "diff", "ldiff", 
-			     "sort", "int", "ln", "abs", "sqrt", "cum",
-			     "pvalue", NULL};
+			     NULL};
     int i = 0;
 
     while (resword[i] != NULL) {
@@ -432,28 +434,28 @@ int _reserved (const char *str)
 	    case 1: 
 		otheruse(str, _("fitted values"));
 		break;
-	    case 2: case 3:
+	    case 2: case 3: case 4:
 		otheruse(str, _("constant"));
 		break;
-	    case 4:
+	    case 5:
 		otheruse(str, _("regr. coeff."));
 		break;
-	    case 5:
+	    case 6:
 		otheruse(str, _("standard error"));
 		break;
-	    case 6:
+	    case 7:
 		otheruse(str, _("autocorr. coeff."));
 		break;
-	    case 7: case 8: case 9: case 10: case 11: case 12:
+	    case 8: case 9: case 10: case 11: case 12: case 13:
 		otheruse(str, _("stats function"));
 		break;
-	    case 13: case 14:
+	    case 14: case 15:
 		otheruse(str, _("sampling concept"));
 		break;
-	    case 15: case 16: case 17: case 18: case 19:
+	    case 16: case 17: case 18: case 19: case 20:
 		otheruse(str, _("plotting variable"));
 		break;
-	    case 20:
+	    case 21:
 		otheruse(str, _("internal variable"));
 		break;
 	    default:
@@ -463,7 +465,13 @@ int _reserved (const char *str)
             return 1;
         }
 	i++; 
-    }  
+    } 
+
+    if (math_word(str)) {
+	otheruse(str, _("math function"));
+	return 1;
+    }
+ 
     return 0;
 }
 
@@ -729,6 +737,9 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     while ((ls = strlen(s)) > 0) {
 #ifdef GENR_DEBUG
 	fprintf(stderr, "s='%s', zeroing mvec, xvec\n", s);
+	if (_isnumber(s)) {
+	    fprintf(stderr, "Got valid floating point number, '%s'\n", s);
+	}
 #endif
 	/* for (i=t1; i<=t2; i++) mvec[i] = genr.xvec[i] = 0.0; */
 	for (i=0; i<pdinfo->n; i++) mvec[i] = genr.xvec[i] = 0.0;
@@ -801,7 +812,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
             strncpy(sleft, s, nleft1);  /* string to left of (  */
             strcpy(sleft + nleft1, "\0");
             /* calculate equation inside parenthesis */
-            strcpy(sright, indx1);         /*string to right of ( */
+            strcpy(sright, indx1);         /* string to right of ( */
             indx2 = strchr(sright, ')');  /* point to first ) */
             if (indx2 == NULL) {
 		genrfree(pZ, pdinfo, &genr, mstack, mvec, nv);
@@ -816,6 +827,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
             strcpy(sexpr + nleft2, "\0");
             iw = scanb(sleft, word);  /* scan backwards for word in
 					 front of ( */
+
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "genr: scanb gave word = '%s'\n", word);
+#endif
+
             if (iw == 0) {
 		/* there is an operator in front of (  */
                 nvtmp++;
@@ -1303,7 +1319,10 @@ static int domath (double *xvec, const double *mvec, int nt,
                 xvec[t] = NADBL;
                 continue;
 	    }
-	    else if (xx > _HIGHVALU) return E_HIGH;
+	    if (exp(xx) == HUGE_VAL) {
+		fprintf(stderr, "genr: T_EXP: exponent = %g\n", xx);
+		return E_HIGH;
+	    }
 	    xvec[t] = exp(xx);
 	}
 	break;
@@ -1319,6 +1338,20 @@ static int domath (double *xvec, const double *mvec, int nt,
 	for (t=t1; t<=t2; t++) {
 	    xx = mvec[t];
 	    xvec[t] = (na(xx))? NADBL: cos(xx);
+	}
+	break;
+
+    case T_TAN:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: tan(xx);
+	}
+	break;
+
+    case T_ATAN:
+	for (t=t1; t<=t2; t++) {
+	    xx = mvec[t];
+	    xvec[t] = (na(xx))? NADBL: atan(xx);
 	}
 	break;
 
@@ -1541,12 +1574,27 @@ static void getvar (char *str, char *word, char *c)
 {
     size_t i;
 
+#ifdef GENR_DEBUG
+    fprintf(stderr, "genr: getvar: working on '%s'\n", str);
+#endif
+
+    /* don't pick apart valid floating-point numbers */
+    if (_isnumber(str)) {
+	strcpy(word, str);
+	*str = '\0';
+	*c = '\0';
+	return;
+    }	
+
     *word = '\0';
     for (i=0; i<strlen(str); i++)  { 
 	if (str[i] == '{' || str[i] == '}' || str[i] == '(' ||
 	    str[i] == ')' || is_operator(str[i])) {
 	    *c = str[i];
 	    copy(str, 0, i, word);
+#ifdef GENR_DEBUG
+	    fprintf(stderr, "genr: getvar: word='%s'\n", word);
+#endif
 	    _delete(str, 0, i + 1);
 	    return;
 	}
@@ -1696,7 +1744,11 @@ static int getxvec (char *s, double *xvec,
 	break;
 
     case R_NUMERIC:
-	value = atof(s);
+	if (strcmp(s, "pi") == 0) {
+	    value = M_PI;
+	} else {
+	    value = atof(s);
+	}
 	for (t=0; t<n; t++) xvec[t] = value; 
 	break;
 
@@ -1917,6 +1969,10 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
 {
     int i;
 
+#ifdef GENR_DEBUG
+    fprintf(stderr, "genr: strtype: working on '%s'\n", ss);
+#endif
+
     if (ss[0] == '$') {
         lower(ss);
         if (strcmp(ss, "$ess") == 0)  
@@ -1940,6 +1996,9 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
     }
 
     if (_isnumber(ss)) {
+#ifdef GENR_DEBUG
+	fprintf(stderr, "genr: numeric string = '%s'\n", ss);
+#endif
         i = strlen(ss) - 1;
         if (ss[i] == 'e') { 
 	    sprintf(gretl_errmsg, 
@@ -1948,6 +2007,8 @@ static int strtype (char *ss, const DATAINFO *pdinfo)
         }
         else return R_NUMERIC;
     }
+
+    if (strcmp(ss, "pi") == 0) return R_NUMERIC;
 
     if (math_word(ss)) return R_MATH;
 

@@ -96,8 +96,8 @@ static int add_term_from_nlfunc (const char *vname)
     double *coeff;
     int i, v, nt = nlspec.nparam + 1; 
 
-    /* if term is a math function, skip */
-    if (math_word(vname)) return 0;
+    /* if term is math function or constant, skip */
+    if (math_word(vname) || !strcmp(vname, "pi")) return 0;
 
     v = varindex(pdinfo, vname);
     if (v >= pdinfo->v) {
@@ -420,16 +420,22 @@ static MODEL GNR (double *fvec, double *fjac)
     }
 
     gnr = lsq(nlist, &nZ, ninfo, OLS, 0, 0.0);
+
     if (gnr.errcode) {
 	pputs(prn, _("In Gauss-Newton Regression:\n"));
 	errmsg(gnr.errcode, prn);
 	err = 1;
-    } else {
-	add_coeffs_to_model(&gnr, nlspec.coeff);
-	add_param_names_to_model(&gnr);
-	add_fit_resid_to_model(&gnr, fvec);
-	gnr.list[1] = nlspec.depvar;
+    } 
+
+    if (gnr.errcode || gnr.list[1] != nlist[1]) {
+	for (i=1; i<=gnr.ncoeff; i++) 
+	    gnr.sderr[i] = NADBL;
     }
+
+    add_coeffs_to_model(&gnr, nlspec.coeff);
+    add_param_names_to_model(&gnr);
+    add_fit_resid_to_model(&gnr, fvec);
+    gnr.list[1] = nlspec.depvar;
 
     nlspec.t1 = t1;
     nlspec.t2 = t2;

@@ -22,7 +22,6 @@
 
 #include <time.h>
 
-#define _HIGHVALU 87     /* maximum value for exponent in genr formula */
 #define _VSMALL 1.0e-14  /* adjustment for (int) conversion */
 
 typedef enum {
