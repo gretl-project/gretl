@@ -306,34 +306,40 @@ static MODEL replicate_estimator (const MODEL *orig, int **plist,
 
     if (rep.errcode) return rep;
 
-    if (orig->ci == AR) {
+    switch (orig->ci) {
+
+    case AR:
 	rep = ar_func(list, pos, pZ, pdinfo, model_count, prn);
-    }
-    else if (orig->ci == ARCH) {
+	break;
+    case ARCH:
 	rep = arch(orig->order, list, pZ, pdinfo, model_count, 
 		   prn, NULL);
-    } 
-    else if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	break;
+    case LOGIT:
+    case PROBIT:
 	rep = logit_probit(list, pZ, pdinfo, orig->ci);
-    }
-    else if (orig->ci == TOBIT) {
+	break;
+    case TOBIT:
 	rep = tobit_model(list, pZ, pdinfo, NULL);
-    }
-    else if (orig->ci == LAD) {
+	break;
+    case LAD:
 	rep = lad(list, pZ, pdinfo);
-    }
-    else if (orig->ci == LOGISTIC) {
-	char lmaxstr[32];
-	double lmax;
+	break;
+    case LOGISTIC: 
+	{
+	    char lmaxstr[32];
+	    double lmax;
 
-	lmax = gretl_model_get_double(orig, "lmax");
-	sprintf(lmaxstr, "lmax=%g", lmax);
-	rep = logistic_model(list, pZ, pdinfo, lmaxstr);
-    }
-    else {
-	/* handles OLS, WLS, HSK, HCCM */
+	    lmax = gretl_model_get_double(orig, "lmax");
+	    sprintf(lmaxstr, "lmax=%g", lmax);
+	    rep = logistic_model(list, pZ, pdinfo, lmaxstr);
+	}
+	break;
+    default:
+	/* handles OLS, WLS, HSK, HCCM, etc. */
 	if (gretl_model_get_int(orig, "robust")) lsqopt |= OPT_R;
 	rep = lsq(list, pZ, pdinfo, orig->ci, lsqopt, rho);
+	break;
     }
 
     /* check that we got the same sample as the original */
