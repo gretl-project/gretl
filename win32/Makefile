@@ -69,6 +69,7 @@ PLUGINSRC = \
 	tramo-x12a.c \
 	nistcheck.c \
 	arma.c \
+        arma_x12.c \
 	workbook.c
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
@@ -76,7 +77,7 @@ PLUGINOBJ = $(PLUGINSRC:.c=.o)
 PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
 	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
-	plugins/johansen.dll plugins/arma.dll \
+	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
 	plugins/range-mean.dll plugins/lad.dll plugins/tramo-x12a.dll \
 	plugins/leverage.dll plugins/pca.dll plugins/nistcheck.dll
 
@@ -260,6 +261,10 @@ plugins/nistcheck.dll: nistcheck.o dllinit.o
 plugins/arma.dll: arma.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(LAPACK_LIBS)
+
+plugins/arma_x12.dll: arma_x12.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) $(LAPACK_LIBS)
 
 ms-ole.o: ms-ole.c $(topsrc)/plugin/libole2/ms-ole.h
 	$(CC) -c $(CFLAGS) $(GTK_CFLAGS) $<

@@ -1158,11 +1158,18 @@ void write_rc (void)
 			  rc_vars[i].key, 
 			  val);
 	} else {
+#ifdef OLD_REGISTRY
 	    write_reg_val((rc_vars[i].type == 'R')? 
 			  HKEY_CLASSES_ROOT : HKEY_CURRENT_USER, 
 			  get_reg_base(rc_vars[i].key),
 			  rc_vars[i].key, 
 			  rc_vars[i].var);
+#else
+	    write_reg_val(HKEY_CURRENT_USER, 
+			  get_reg_base(rc_vars[i].key),
+			  rc_vars[i].key, 
+			  rc_vars[i].var);
+#endif
 	}
 	i++;
     }
