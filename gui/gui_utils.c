@@ -2185,9 +2185,10 @@ gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
     GdkModifierType mods;
 
     gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
-    
+
     if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
 	GdkEventButton *bevent = (GdkEventButton *) event; 
+
 	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
 			bevent->button, bevent->time);
 	return TRUE;

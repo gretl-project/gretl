@@ -49,6 +49,9 @@ AM_GNU_GETTEXT([external])
 AC_DEFUN(AC_PROG_X12A,
 [AC_CHECK_PROG(X12A,x12a,yes)])
 
+AC_DEFUN(AC_PROG_TRAMO,
+[AC_CHECK_PROG(TRAMO,tramo,yes)])
+
 dnl
 dnl Process options supplied to the configure script
 dnl
@@ -88,9 +91,15 @@ fi])
 AC_SUBST(HAVE_X12A)
 
 AC_ARG_ENABLE(tramo-seats,
-[  --enable-tramo-seats    TRAMO/SEATS support [default=no]],
+[  --enable-tramo-seats    TRAMO/SEATS support [default=auto]],
 [if test "$enableval" = "yes"
 then
+  AC_DEFINE(HAVE_TRAMO)
+  HAVE_TRAMO=1
+  have_tramo="yes"
+fi],
+[AC_PROG_TRAMO
+if test x"${TRAMO}" = xyes ; then
   AC_DEFINE(HAVE_TRAMO)
   HAVE_TRAMO=1
   have_tramo="yes"
