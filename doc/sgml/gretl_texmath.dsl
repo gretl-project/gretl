@@ -57,7 +57,13 @@
 
 ;;What font would you like for titles?
 (define %title-font-family% 
-  "Helvetica")
+  "LucidaSans")
+  
+(define %guilabel-font-family%
+  "LucidaSans")
+    
+(define %admon-font-family%
+  "LucidaSans")
 
 ;;What font would you like for the body?
 (define %body-font-family% 
@@ -72,6 +78,18 @@
 (define %hsize-bump-factor% 
  1.1)
 ;;1.2
+
+(define (BULLSIZE m lvl)
+  (let ((md (case-fold-down m)))
+    (case md
+          (("bullet") (MSIZE m lvl 1.0 1.0))
+          (("box") (MSIZE m lvl 0.9 0.72))
+          (("checkbox") (MSIZE m lvl 0.9 0.72))
+          (("check") (MSIZE m lvl 1.0 1.0))
+          (("checkedbox") (MSIZE m lvl 1.0 1.0))
+          (("dash") (MSIZE m lvl 1.0 1.0))
+          (("none") (MSIZE m lvl 1.0 1.0))
+          (else (MSIZE m lvl 1.0 1.0)))))
 
 ;; These elements appear in this order on the title page of a book.
 (define (book-titlepage-recto-elements)
