@@ -169,6 +169,7 @@ static void sync_datainfos (void)
     fullinfo->descrip = datainfo->descrip;
     fullinfo->vector = datainfo->vector;
 }
+
 /* ........................................................... */
 
 int quiet_sample_check (MODEL *pmod)
@@ -192,6 +193,19 @@ int quiet_sample_check (MODEL *pmod)
     if (model_sample_issue(pmod, NULL, checkZ, pdinfo)) return 1;
     
     return 0;
+}
+
+/* ......................................................... */
+
+int dataset_added_to_model (MODEL *pmod)
+{
+    int err;
+
+    err = add_subsampled_dataset_to_model(pmod, 
+					  (const double **) fullZ, 
+					  fullinfo);
+
+    return !err;
 }
 
 /* ......................................................... */
@@ -1092,9 +1106,9 @@ static int bool_subsample (gpointer data, guint opt, GtkWidget *w)
 	return 1;
 
     if (opt == 0)
-	err = set_sample_dummy(NULL, &Z, &subZ, datainfo, subinfo, 'o');
+	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, 'o');
     else
-	err = set_sample_dummy(line, &Z, &subZ, datainfo, subinfo, opt);
+	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, opt);
     if (err) {
 	gui_errmsg(err);
 	return 1;
@@ -2869,11 +2883,26 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
 /* ......................................................... */
 
 int add_fit_resid (MODEL *pmod, const int code, const int undo)
-   /* If undo = 1, don't bother with the label, don't update
-   the var display in the main window, and don't add to
-   command log. */
+   /* 
+      If undo = 1, don't bother with the label, don't update
+      the var display in the main window, and don't add to
+      command log. 
+   */
 {
-    if (genr_fit_resid(pmod, &Z, datainfo, code, undo)) {
+    int err;
+
+    if (pmod->dataset != NULL) {
+	if (!undo) return 1;
+	err = genr_fit_resid(pmod, 
+			     &(pmod->dataset->Z), 
+			     pmod->dataset->dinfo, 
+			     code, 
+			     undo);
+    } else {
+	err = genr_fit_resid(pmod, &Z, datainfo, code, undo);
+    }
+
+    if (err) {
 	errbox(_("Out of memory attempting to add variable"));
 	return 1;
     }
@@ -2895,6 +2924,7 @@ int add_fit_resid (MODEL *pmod, const int code, const int undo)
 	infobox(_("variable added"));
 	mark_dataset_as_modified();
     }
+
     return 0;
 }
 
@@ -2973,20 +3003,35 @@ void add_model_stat (MODEL *pmod, const int which)
 
 void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv = datainfo->v, plot_list[5], lines[1];
+    int err, origv, ts, plot_list[5], lines[1];
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
-    int ts = dataset_is_time_series(datainfo);
     int pdum = vwin->active_var; 
+    double ***gZ;
+    DATAINFO *ginfo;
+
+    origv = (pmod->dataset != NULL)? 
+	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add residuals to data set temporarily */
     if (add_fit_resid(pmod, 0, 1)) return;
 
+    /* handle model estimated on different subsample */
+    if (pmod->dataset != NULL) {
+	gZ = &(pmod->dataset->Z);
+	ginfo = pmod->dataset->dinfo;
+    } else {
+	gZ = &Z;
+	ginfo = datainfo;
+    }    
+
+    ts = dataset_is_time_series(ginfo);
+
     plot_list[0] = 3; /* extra entry to pass depvar name to plot */
-    plot_list[1] = datainfo->v - 1; /* last var added */
+    plot_list[1] = ginfo->v - 1; /* last var added */
     plot_list[3] = pmod->list[1];
 
-    strcpy(datainfo->varname[plot_list[1]], _("residual"));
+    strcpy(ginfo->varname[plot_list[1]], _("residual"));
 
     if (xvar) { /* plot against specified xvar */
 	plot_list[2] = xvar;
@@ -2994,10 +3039,10 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     } else {    /* plot against obs index or time */
 	int pv;
 
-	pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	pv = plotvar(gZ, ginfo, (ts)? "time" : "index");
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_vars(1, &Z, datainfo);
+	    dataset_drop_vars(1, gZ, ginfo);
 	    return;
 	}
 	plot_list[2] = pv;
@@ -3012,29 +3057,46 @@ void resid_plot (gpointer data, guint xvar, GtkWidget *widget)
     }
 
     /* generate graph */
-    err = gnuplot(plot_list, lines, NULL, &Z, datainfo,
+    err = gnuplot(plot_list, lines, NULL, gZ, ginfo,
 		  &paths, &plot_count, 
 		  (pdum)? (GP_GUI | GP_RESIDS | GP_DUMMY) :
 		  (GP_GUI | GP_RESIDS)); 
-    if (err < 0) errbox(_("gnuplot command failed"));
-    else register_graph();
+    if (err < 0) {
+	errbox(_("gnuplot command failed"));
+    } else {
+	register_graph();
+    }
     
-    dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
+    dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
 }
 
 /* ........................................................... */
 
 void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 {
-    int err, origv = datainfo->v, plot_list[4], lines[2];
+    int err, origv, plot_list[4], lines[2];
     windata_t *vwin = (windata_t *) data;
     MODEL *pmod = (MODEL *) vwin->data;
+    double ***gZ;
+    DATAINFO *ginfo;
+
+    origv = (pmod->dataset != NULL)?
+	pmod->dataset->dinfo->v : datainfo->v;
 
     /* add fitted values to data set temporarily */
     if (add_fit_resid(pmod, 1, 1)) return;
 
+    /* handle model estimated on different subsample */
+    if (pmod->dataset != NULL) {
+	gZ = &(pmod->dataset->Z);
+	ginfo = pmod->dataset->dinfo;
+    } else {
+	gZ = &Z;
+	ginfo = datainfo;
+    }
+
     plot_list[0] = 3;
-    plot_list[1] = datainfo->v - 1; /* last var added (fitted vals) */
+    plot_list[1] = ginfo->v - 1;    /* last var added (fitted vals) */
     plot_list[2] = pmod->list[1];   /* depvar from regression */
 
     if (xvar) { 
@@ -3049,13 +3111,13 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	lines[1] = 0;
     } else { 
 	/* plot against obs */
-	int ts = dataset_is_time_series(datainfo);
+	int ts = dataset_is_time_series(ginfo);
 	int pv;
 
-	pv = plotvar(&Z, datainfo, (ts)? "time" : "index");
+	pv = plotvar(gZ, ginfo, (ts)? "time" : "index");
 	if (pv < 0) {
 	    errbox(_("Failed to add plotting index variable"));
-	    dataset_drop_vars(1, &Z, datainfo);
+	    dataset_drop_vars(1, gZ, ginfo);
 	    return;
 	}
 	plot_list[3] = pv;
@@ -3063,7 +3125,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	lines[1] = (ts)? 1 : 0;
     } 
 
-    err = gnuplot(plot_list, lines, NULL, &Z, datainfo,
+    err = gnuplot(plot_list, lines, NULL, gZ, ginfo,
 		  &paths, &plot_count, GP_GUI | GP_FA);
 
     if (err < 0) {
@@ -3072,7 +3134,7 @@ void fit_actual_plot (gpointer data, guint xvar, GtkWidget *widget)
 	register_graph();
     }
 
-    dataset_drop_vars(datainfo->v - origv, &Z, datainfo);
+    dataset_drop_vars(ginfo->v - origv, gZ, ginfo);
 }
 
 /* ........................................................... */
@@ -3081,8 +3143,19 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
 {
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+    double ***gZ;
+    DATAINFO *ginfo;
     int list[4];
     int err;
+
+    /* handle model estimated on different subsample */
+    if (pmod->dataset != NULL) {
+	gZ = &(pmod->dataset->Z);
+	ginfo = pmod->dataset->dinfo;
+    } else {
+	gZ = &Z;
+	ginfo = datainfo;
+    }    
 
     /* Y, X, Z */
 
@@ -3091,7 +3164,7 @@ void fit_actual_splot (gpointer data, guint u, GtkWidget *widget)
     list[2] = pmod->list[3];
     list[3] = pmod->list[1];
 
-    err = gnuplot_3d(list, NULL, &Z, datainfo,
+    err = gnuplot_3d(list, NULL, gZ, ginfo,
 		     &paths, &plot_count, GP_GUI | GP_FA);
 
     if (err == -999) {
@@ -5144,8 +5217,8 @@ int gui_exec_line (char *line,
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
 		err = E_ALLOC;
 	    else 
-		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
-				       subinfo, oflag);
+		err = restrict_sample(line, &Z, &subZ, datainfo, 
+				      subinfo, oflag);
 	    if (!err) {
 		/* save the full data set for later use */
 		fullZ = Z;

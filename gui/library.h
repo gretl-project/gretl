@@ -64,6 +64,8 @@ int maybe_restore_full_data (int action);
 
 void do_add_markers (GtkWidget *widget, dialog_t *ddata);
 
+int dataset_added_to_model (MODEL *pmod);
+
 /* model-related functions */
 
 void do_coint (GtkWidget *widget, gpointer p);

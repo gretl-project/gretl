@@ -1253,10 +1253,7 @@ void clear_model (MODEL *pmod, DATAINFO *pdinfo)
 	    free(pmod->data);
 	}
 	if (pmod->dataset) {
-	    free_Z(pmod->dataset->Z, pmod->dataset->dinfo);
-	    clear_datainfo(pmod->dataset->dinfo, CLEAR_SUBSAMPLE);
-	    free(pmod->dataset->dinfo);
-	    free(pmod->dataset);
+	    free_model_dataset(pmod);
 	}
     }
 

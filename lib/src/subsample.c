@@ -22,6 +22,8 @@
 #include "libgretl.h"
 #include "internal.h"
 
+#define SUBDEBUG
+
 /* .......................................................... */
 
 int attach_subsample_to_model (MODEL *pmod, double ***fullZ, 
@@ -92,21 +94,21 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	if (!subsampled(Z, pdinfo, i)) {
 	    return 0;
 	} else {
-	    fprintf(stderr, I_("dataset is subsampled, model is not\n"));
+	    strcpy(gretl_errmsg, _("dataset is subsampled, model is not\n"));
 	    return 1;
 	}
     }
 
     /* case: model has sub-sampling info recorded */
     if (!subsampled(Z, pdinfo, i)) {
-	fprintf(stderr, I_("model is subsampled, dataset is not\n"));
+	strcpy(gretl_errmsg, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { 
 	/* do the subsamples (model and current data set) agree? */
 	if (vars_identical(Z[i], subdum, n)) {
 	    return 0;
 	} else {
-	    fprintf(stderr, I_("model and dataset subsamples not the same\n"));
+	    strcpy(gretl_errmsg, _("model and dataset subsamples not the same\n"));
 	    return 1;
 	}
     }
@@ -171,29 +173,44 @@ static int dummy_with_missing (double *x, int t1, int t2)
 
 /* .......................................................... */
 
-int set_sample_dummy (const char *line, 
-		      double ***oldZ, double ***newZ,
-		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      unsigned char oflag)
+enum {
+    SUBSAMPLE_UNKNOWN,
+    SUBSAMPLE_DROP_MISSING,
+    SUBSAMPLE_USE_DUMMY,
+    SUBSAMPLE_BOOLEAN
+} subsample_options;
+
+int restrict_sample (const char *line, 
+		     double ***oldZ, double ***newZ,
+		     DATAINFO *oldinfo, DATAINFO *newinfo,
+		     unsigned char oflag)
      /* sub-sample the data set, based on the criterion of skipping
 	all observations with missing data values; or using as a
-	mask a specified dummy variable, or masking with a specified
+	mask a specified dummy variable; or masking with a specified
 	boolean condition */
 {
     double xx, *dum = NULL;
     char **S = NULL, dumv[9];
-    int missobs = 0, subnum = 0, dumnum = 0;
+    int subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
+    int opt = SUBSAMPLE_UNKNOWN;
 
     *gretl_errmsg = '\0';
-
     *dumv = '\0';
+
     if (oflag == 'o' && 
 	(line == NULL || sscanf(line, "%*s %s", dumv) <= 0)) {
-	missobs = 1; 
+	opt = SUBSAMPLE_DROP_MISSING;
+    } else if (oflag == 'o') {
+	opt = SUBSAMPLE_USE_DUMMY;
+    } else if (oflag == 'r') {
+	opt = SUBSAMPLE_BOOLEAN;
+    } else {
+	strcpy(gretl_errmsg, "Unrecognized sample command");
+	return 1;
     }
 
-    if (missobs) { /* construct missing obs dummy on the fly */
+    if (opt == SUBSAMPLE_DROP_MISSING) { 
 	dum = malloc(n * sizeof *dum);
 	if (dum == NULL) return E_ALLOC;
 	sn = 0;
@@ -208,7 +225,8 @@ int set_sample_dummy (const char *line,
 	    if (floateq(dum[t], 1.0)) sn++;
 	}
     } 
-    else if (oflag == 'o') { /* the name of a dummy var was given */ 
+
+    else if (opt == SUBSAMPLE_USE_DUMMY) { 
 	dumnum = varindex(oldinfo, dumv);
 	if (dumnum == oldinfo->v) {
 	    sprintf(gretl_errmsg, _("Variable '%s' not defined"), dumv);
@@ -216,7 +234,8 @@ int set_sample_dummy (const char *line,
 	} 
 	sn = isdummy((*oldZ)[dumnum], oldinfo->t1, oldinfo->t2);
     } 
-    else if (oflag == 'r') { /* construct dummy from boolean */
+
+    else if (opt == SUBSAMPLE_BOOLEAN) { 
 	char formula[MAXLEN];
 	int err;
 
@@ -244,11 +263,12 @@ int set_sample_dummy (const char *line,
     /* does this policy lead to an empty sample, or no change
        in the sample, perchance? */
     if (sn == 0) {
-	if (oflag == 'o' && !missobs) {
+	if (opt == SUBSAMPLE_USE_DUMMY) {
 	    sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), dumv);
-	} else if (missobs) {
+	} else if (opt == SUBSAMPLE_DROP_MISSING) {
 	    strcpy(gretl_errmsg, _("No observations would be left!"));
-	} else { /* case of boolean expression */
+	} else { 
+	    /* case of boolean expression */
 	    if ((*oldZ)[subnum][oldinfo->t1] == 0) {
 		strcpy(gretl_errmsg, _("No observations would be left!"));
 	    } else {
@@ -272,9 +292,9 @@ int set_sample_dummy (const char *line,
     }
 
     for (t=0; t<n; t++) {
-	if (missobs) {
+	if (opt == SUBSAMPLE_DROP_MISSING) {
 	    (*oldZ)[subnum][t] = dum[t];
-	} else if (oflag == 'o') {
+	} else if (opt == SUBSAMPLE_USE_DUMMY) {
 	    /* possibility of missing values here? */
 	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
 	}
@@ -312,7 +332,7 @@ int set_sample_dummy (const char *line,
 
     st = 0;
     for (t=0; t<n; t++) {
-	xx = (missobs)? dum[t] : (*oldZ)[dumnum][t];
+	xx = (opt == SUBSAMPLE_DROP_MISSING)? dum[t] : (*oldZ)[dumnum][t];
 	if (xx == 1.) {
 	    for (i=1; i<oldinfo->v; i++) {
 		if (oldinfo->vector[i]) {
@@ -592,4 +612,149 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	    "of total data values)\n"), missval, 
 	    (100.0 * missval / totvals));
     return missval;
+}
+
+static void copy_varinfo (VARINFO *dest, const VARINFO *src)
+{
+    strcpy(dest->label, src->label);
+    strcpy(dest->display_name, src->display_name);
+    dest->compact_method = src->compact_method;
+}
+
+static void copy_series_info (DATAINFO *dest, const DATAINFO *src)
+{
+    int i;
+
+    for (i=1; i<src->v; i++) {
+	strcpy(dest->varname[i], src->varname[i]);
+	copy_varinfo(dest->varinfo[i], src->varinfo[i]);
+	dest->vector[i] = src->vector[i];	
+    }
+}
+
+/* Below: For a model that was estimated using a subsample which
+   differs from the current sample, reconstitute the dataset
+   appropriate to the model.  Use the special dummy variable
+   saved with the model to select observations from the
+   full dataset.  Attach this dataset to the model, so that
+   it can be used for, e.g., residual or fitted versus actual
+   plots.  The attached data set will be destroyed when the
+   model itself is destroyed.
+*/
+
+int add_subsampled_dataset_to_model (MODEL *pmod, 
+				     const double **fullZ, 
+				     const DATAINFO *fullinfo)
+{
+    int i, t, st, sn = 0;
+    double **modZ = NULL;
+    char **S = NULL;
+
+    if (fullZ == NULL || fullinfo == NULL) {
+#ifdef SUBDEBUG
+	fputs("add_subsampled_dataset_to_model: got NULL full dataset\n",
+	      stderr);
+#endif
+	return 1;
+    }
+
+    if (pmod->dataset != NULL) {
+#ifdef SUBDEBUG
+	fputs("add_subsampled_dataset_to_model: job already done\n",
+	      stderr);
+#endif	
+	return 0;
+    }
+
+    if (pmod->subdum == NULL) {
+	/* no subsample info: model was estimated on full dataset */
+	sn = fullinfo->n;
+    } else {
+	for (t=0; t<fullinfo->n; t++) {
+	    if (pmod->subdum[t] > 0) sn++;
+	}
+	if (sn == 0) return 1;
+    }
+
+    pmod->dataset = malloc(sizeof *pmod->dataset);
+    if (pmod->dataset == NULL) return E_ALLOC;
+
+    pmod->dataset->dinfo = malloc(sizeof *pmod->dataset->dinfo);
+    if (pmod->dataset->dinfo == NULL) {
+	free(pmod->dataset);
+	pmod->dataset = NULL;
+	return E_ALLOC;	
+    }
+
+    /* set up the sub-sampled datainfo */
+    pmod->dataset->dinfo->n = sn;
+    pmod->dataset->dinfo->v = fullinfo->v;
+    if (start_new_Z(&modZ, pmod->dataset->dinfo, 0)) {
+	free(pmod->dataset->dinfo);
+	free(pmod->dataset);
+	pmod->dataset = NULL;
+	return E_ALLOC;
+    }
+
+    /* copy across info on series */
+    copy_series_info(pmod->dataset->dinfo, fullinfo);
+
+    /* case markers */
+    if (fullinfo->markers && allocate_case_markers(&S, sn)) {
+	free_Z(modZ, pmod->dataset->dinfo);
+	free(pmod->dataset->dinfo);
+	free(pmod->dataset);
+	pmod->dataset = NULL;
+	return E_ALLOC;
+    }
+
+    /* copy across data and case markers, if any */
+
+    for (i=1; i<fullinfo->v; i++) {
+	if (!fullinfo->vector[i]) {
+	    /* copy any scalars */
+	    modZ[i][0] = fullZ[i][0];
+	}
+    }
+
+    st = 0;
+    for (t=0; t<fullinfo->n; t++) {
+	if (sn == fullinfo->n || pmod->subdum[t] == 1.) {
+	    for (i=1; i<fullinfo->v; i++) {
+		if (fullinfo->vector[i]) {
+		    modZ[i][st] = fullZ[i][t];
+		}
+	    } if (fullinfo->markers) {
+		strcpy(S[st], fullinfo->S[t]);
+	    }
+	    st++;
+	}
+    }
+
+    pmod->dataset->Z = modZ;
+
+    prep_subdinfo(pmod->dataset->dinfo, fullinfo->markers, sn);
+    if (fullinfo->markers) {
+	pmod->dataset->dinfo->S = S;
+    }
+
+#ifdef SUBDEBUG
+    fputs("add_subsampled_dataset_to_model: success\n", stderr);
+#endif
+
+    return 0;
+}
+
+void free_model_dataset (MODEL *pmod)
+{
+    if (pmod->dataset != NULL) {
+#ifdef SUBDEBUG
+	fprintf(stderr, "Deep freeing model->dataset\n");
+#endif
+	free_Z(pmod->dataset->Z, pmod->dataset->dinfo);
+	clear_datainfo(pmod->dataset->dinfo, CLEAR_FULL);
+	free(pmod->dataset->dinfo);
+	free(pmod->dataset);
+	pmod->dataset = NULL;
+    }
 }

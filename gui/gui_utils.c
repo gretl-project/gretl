@@ -366,9 +366,13 @@ static void delete_file_viewer (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-void delete_model (GtkWidget *widget, gpointer data) 
+static void delete_unnamed_model (GtkWidget *widget, gpointer data) 
 {
     MODEL *pmod = (MODEL *) data;
+
+    if (pmod->dataset != NULL) {
+	free_model_dataset(pmod);
+    }
 
     if (pmod->name == NULL) {
 	free_model(pmod);
@@ -481,6 +485,14 @@ void *myrealloc (void *ptr, size_t size)
     if ((mem = realloc(ptr, size)) == NULL) 
 	errbox(_("Out of memory!"));
     return mem;
+}
+
+/* ........................................................... */
+
+void mark_dataset_as_modified (void)
+{
+    data_status |= MODIFIED_DATA;
+    set_sample_label(datainfo);
 }
 
 /* ........................................................... */
@@ -1527,7 +1539,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
 
     /* clean up when dialog is destroyed */
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
-		       GTK_SIGNAL_FUNC(delete_model), 
+		       GTK_SIGNAL_FUNC(delete_unnamed_model), 
 		       vwin->data);
     gtk_signal_connect(GTK_OBJECT(dialog), "destroy", 
 		       GTK_SIGNAL_FUNC(free_windata), 
@@ -1927,6 +1939,8 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
 /* ........................................................... */
 
+#define ALLOW_MODEL_DATASETS
+
 static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
@@ -1949,10 +1963,28 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     }
 
     if (quiet_sample_check(pmod)) ok = 0;
+
     s = GTK_WIDGET_IS_SENSITIVE
 	(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
     if ((s && ok) || (!s && !ok)) return;
     s = !s;
+
+#ifdef ALLOW_MODEL_DATASETS
+    if (!ok && dataset_added_to_model(pmod)) {
+	flip(mwin->ifac, "/Tests", s);
+	flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
+	if (pmod->ci != LAD) {
+	    flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+	}
+	flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
+	flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
+	flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
+	flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
+	flip(mwin->ifac, "/Model data/Define new variable...", s);
+	infobox(get_gretl_errmsg());
+	return FALSE;
+    }
+#endif
 
     flip(mwin->ifac, "/Tests", s);
     flip(mwin->ifac, "/Graphs", s);
@@ -1965,6 +1997,10 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
     flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
     flip(mwin->ifac, "/Model data/Define new variable...", s);
+
+    if (!ok) {
+	infobox(get_gretl_errmsg());
+    } 
 }
 
 /* ......................................................... */

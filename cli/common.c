@@ -243,8 +243,8 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 		pputs(prn, _("Out of memory\n"));
 		return 1;
 	    }
-	    if (set_sample_dummy(linecpy, &Z, &subZ, datainfo, 
-				 subinfo, oflag)) {
+	    if (restrict_sample(linecpy, &Z, &subZ, datainfo, 
+				subinfo, oflag)) {
 		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }

@@ -10,8 +10,9 @@ version 1.1.5
   to open a datafile (get this saved first if need be)
 - Database browser window: close this when a database is
   selected
-- Start on adding facility to do graphs, tests on models that
-  were estimated on different sub-samples
+- GUI model windows: allow drawing of graphs relating to model
+  data, even if the sample has been changed since the model
+  was estimated
 
 10/06/2003 version 1.1.4
 - Make auto-entry of varname for sampling with dummy smarter

@@ -1325,8 +1325,8 @@ void exec_line (char *line, PRN *prn)
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
 		err = E_ALLOC;
 	    } else {
-		err = set_sample_dummy(line, &Z, &subZ, datainfo, 
-				       subinfo, optflag);
+		err = restrict_sample(line, &Z, &subZ, datainfo, 
+				      subinfo, optflag);
 	    }
 	    if (!err) {
 		fullZ = Z;

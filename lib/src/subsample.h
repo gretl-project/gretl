@@ -30,10 +30,10 @@ int attach_subsample_to_model (MODEL *pmod,
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 			double **Z, const DATAINFO *pdinfo);
 
-int set_sample_dummy (const char *line, 
-		      double ***oldZ, double ***newZ,
-		      DATAINFO *oldinfo, DATAINFO *newinfo,
-		      unsigned char oflag);
+int restrict_sample (const char *line, 
+		     double ***oldZ, double ***newZ,
+		     DATAINFO *oldinfo, DATAINFO *newinfo,
+		     unsigned char oflag);
 
 int set_sample (const char *line, DATAINFO *pdinfo);
 
@@ -44,5 +44,11 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 int allocate_case_markers (char ***S, int n);
+
+int add_subsampled_dataset_to_model (MODEL *pmod, 
+				     const double **fullZ, 
+				     const DATAINFO *fullinfo);
+
+void free_model_dataset (MODEL *pmod);
 
 #endif /* SUBSAMPLE_H */
