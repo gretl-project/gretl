@@ -112,6 +112,7 @@ print "Name: \"{userdesktop}\\gretl\"; Filename: \"{app}\\gretlw32.exe\"; Workin
 
 print "\n[Registry]\n";
 print "; Start \"gretl\" keys under HKEY_CURRENT_USER and HKEY_CLASSES_ROOT.\n"; 
+print "Root: HKCR; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n"; 
 print "Root: HKCU; Subkey: \"Software\\gretl\"; Flags: uninsdeletekey\n";
 print "Root: HKCU; Subkey: \"Software\\gretl\"; ValueType: string; ValueName: ";
 print "\"gretldir\"; ValueData: \"{app}\"\n"; 
