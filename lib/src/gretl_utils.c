@@ -563,8 +563,7 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 /* ....................................................... */
 
-static int calculate_criteria (double *x, double ess, 
-			       int nobs, int ncoeff)
+int calculate_criteria (double *x, double ess, int nobs, int ncoeff)
 {
     if (na(ess) || ess < 0.0 || ncoeff < 1 || nobs <= ncoeff) {
 	x[C_AIC] = NADBL;

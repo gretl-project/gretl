@@ -112,22 +112,22 @@ int get_vcv_index (MODEL *pmod, int i, int j, int n)
 
 static int qr_make_vcv (MODEL *pmod, gretl_matrix *v, int robust)
 {
-    const int nv = pmod->ncoeff;
-    const int nterms = nv * (nv + 1) / 2;
+    int k = pmod->ncoeff;
+    int nterms = k * (k + 1) / 2;
     double x;
-    int i, j, k;
+    int i, j, idx;
 
     pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
     if (pmod->vcv == NULL) return 1;  
 
-    for (i=0; i<nv; i++) {
+    for (i=0; i<k; i++) {
 	for (j=0; j<=i; j++) {
-	    k = get_vcv_index(pmod, i, j, nv);
+	    idx = get_vcv_index(pmod, i, j, k);
 	    x = gretl_matrix_get(v, i, j);
 	    if (!robust) {
 		x *= pmod->sigma * pmod->sigma;
 	    }
-	    pmod->vcv[k] = x;
+	    pmod->vcv[idx] = x;
 	}
     }
 
@@ -267,8 +267,8 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 {
     gretl_matrix *vcv = NULL, *wtj = NULL, *gammaj = NULL;
     gretl_matrix *X;
-    int m = pmod->nobs;
-    int n = pmod->ncoeff;
+    int T = pmod->nobs;
+    int k = pmod->ncoeff;
     int p, i, j, t;
     double weight, uu;
     double *uhat;
@@ -284,12 +284,13 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     uhat = pmod->uhat + pmod->t1;
 
     /* get the user's preferred maximum lag setting */
-    p = get_hac_lag(m);
+    p = get_hac_lag(T);
     gretl_model_set_int(pmod, "hac_lag", p);
 
-    vcv = gretl_matrix_alloc(n, n);
-    wtj = gretl_matrix_alloc(n, n);
-    gammaj = gretl_matrix_alloc(n, n);
+    vcv = gretl_matrix_alloc(k, k);
+    wtj = gretl_matrix_alloc(k, k);
+    gammaj = gretl_matrix_alloc(k, k);
+
     if (vcv == NULL || wtj == NULL || gammaj == NULL) {
 	err = 1;
 	goto bailout;
@@ -300,9 +301,9 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     for (j=0; j<=p; j++) {
 	/* cumulate running sum of Gamma-hat terms */
 	gretl_matrix_zero(gammaj);
-	for (t=j; t<m; t++) {
+	for (t=j; t<T; t++) {
 	    /* W(t)-transpose * W(t-j) */
-	    wtw(wtj, X, n, t, j);
+	    wtw(wtj, X, k, t, j);
 	    uu = uhat[t] * uhat[t-j];
 	    gretl_matrix_multiply_by_scalar(wtj, uu);
 	    /* DM equation (9.36), p. 363 */
@@ -327,10 +328,10 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
     gretl_matrix_multiply(wtj, xpxinv, vcv);
 
     /* vcv now holds HAC */
-    for (i=0; i<n; i++) {
+    for (i=0; i<k; i++) {
 	double x = gretl_matrix_get(vcv, i, i);
 
-	j = (pmod->ifc)? (i + 1) % n : i;
+	j = (pmod->ifc)? (i + 1) % k : i;
 	pmod->sderr[j] = sqrt(x);
     }
 
@@ -460,19 +461,16 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
 
 static int qr_make_regular_vcv (MODEL *pmod, gretl_matrix *v)
 {
-    int i, k, n = pmod->ncoeff;
-    int err = 0;
+    int i, j, k = pmod->ncoeff;
 
-    for (i=0; i<n; i++) {
+    for (i=0; i<k; i++) {
 	double x = v->val[mdx(v, i, i)];
 
-	k = (pmod->ifc)? (i + 1) % n : i;
-	pmod->sderr[k] = pmod->sigma * sqrt(x);
+	j = (pmod->ifc)? (i + 1) % k : i;
+	pmod->sderr[j] = pmod->sigma * sqrt(x);
     }
 
-    err = qr_make_vcv(pmod, v, 0);
-
-    return err;
+    return qr_make_vcv(pmod, v, 0);
 }
 
 static void get_model_data (MODEL *pmod, const double **Z, 
@@ -580,11 +578,11 @@ static void save_coefficients (MODEL *pmod, gretl_matrix *b,
 }
 
 static int 
-allocate_model_arrays (MODEL *pmod, int n, int m)
+allocate_model_arrays (MODEL *pmod, int k, int T)
 {
-    pmod->sderr = malloc(n * sizeof *pmod->sderr);
-    pmod->yhat = malloc(m * sizeof *pmod->yhat);
-    pmod->uhat = malloc(m * sizeof *pmod->uhat);
+    pmod->sderr = malloc(k * sizeof *pmod->sderr);
+    pmod->yhat = malloc(T * sizeof *pmod->yhat);
+    pmod->uhat = malloc(T * sizeof *pmod->uhat);
 
     if (pmod->sderr == NULL || pmod->yhat == NULL || pmod->uhat == NULL) {
 	return 1;
@@ -593,16 +591,15 @@ allocate_model_arrays (MODEL *pmod, int n, int m)
     return 0;
 }
 
-int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
-		      gretlopt opts)
+static int gretl_QR_decomp (gretl_matrix *Q, gretl_matrix *R,
+			    integer T, integer k)
 {
-    integer info, lwork;
-    integer m, n, lda;
+    integer info = 0;
+    integer lwork = -1;
+    integer lda = T;
     integer *iwork = NULL;
-    gretl_matrix *Q = NULL, *y = NULL;
-    gretl_matrix *R = NULL, *g = NULL, *b = NULL;
-    gretl_matrix *xpxinv = NULL;
-    doublereal *tau = NULL, *work = NULL;
+    doublereal *tau = NULL;
+    doublereal *work = NULL;
     doublereal *work2;
     doublereal rcond;
     char uplo = 'U';
@@ -611,96 +608,69 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     int i, j;
     int err = 0;
 
-    m = pmod->nobs;               /* # of rows = # of observations */
-    lda = m;                      /* leading dimension of Q */
-    n = pmod->list[0] - 1;        /* # of cols = # of variables */
-
-    Q = gretl_matrix_alloc(m, n);
-    y = gretl_matrix_alloc(m, 1);
-
-    /* dim of tau is min (m, n) */
-    tau = malloc(n * sizeof *tau);
-
+    /* dim of tau is min (T, k) */
+    tau = malloc(k * sizeof *tau);
     work = malloc(sizeof *work);
-    iwork = malloc(n * sizeof *iwork);
+    iwork = malloc(k * sizeof *iwork);
 
-    if (Q == NULL || y == NULL || tau == NULL || work == NULL ||
-	iwork == NULL) {
+    if (tau == NULL || work == NULL || iwork == NULL) {
 	err = E_ALLOC;
-	goto qr_cleanup;
+	goto bailout;
     }
 
-    get_model_data(pmod, Z, Q, y);
-
-    /* do a workspace size query */
-    lwork = -1;
-    info = 0;
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
+    /* workspace size query */
+    dgeqrf_(&T, &k, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
 	err = 1;
-	goto qr_cleanup;
+	goto bailout;
     }
 
-    /* set up optimally sized work array */
+    /* optimally sized work array */
     lwork = (integer) work[0];
     work2 = realloc(work, (size_t) lwork * sizeof *work);
     if (work2 == NULL) {
 	err = E_ALLOC;
-	goto qr_cleanup;
+	goto bailout;
     }
 
     work = work2;
 
     /* run actual QR factorization */
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
+    dgeqrf_(&T, &k, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
 	err = 1;
-	goto qr_cleanup;
+	goto bailout;
     }
 
     /* check reciprocal condition number of R */
-    dtrcon_(&norm, &uplo, &diag, &n, Q->val, &lda, &rcond, work, 
+    dtrcon_(&norm, &uplo, &diag, &k, Q->val, &lda, &rcond, work, 
 	    iwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dtrcon: info = %d\n", (int) info);
 	err = 1;
-	goto qr_cleanup;
+	goto bailout;
     }
 
     if (rcond < QR_RCOND_MIN) {
 	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
 		QR_RCOND_MIN);
 	err = E_SINGULAR;
-	goto qr_cleanup;
-    }
-
-    /* allocate temporary auxiliary matrices */
-    R = gretl_matrix_alloc(n, n);
-    g = gretl_matrix_alloc(n, 1);
-    b = gretl_matrix_alloc(n, 1);
-    if (R == NULL || g == NULL || b == NULL) {
-	err = E_ALLOC;
-	goto qr_cleanup;
-    }
-
-    if (allocate_model_arrays(pmod, n, fulln)) {
-	err = E_ALLOC;
-	goto qr_cleanup;
+	goto bailout;
     }
 
     /* invert R */
-    dtrtri_(&uplo, &diag, &n, Q->val, &lda, &info);
+    dtrtri_(&uplo, &diag, &k, Q->val, &lda, &info);
     if (info != 0) {
 	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
 	err = 1;
-	goto qr_cleanup;
+	goto bailout;
     }
 
     /* copy the upper triangular R-inverse out of Q */
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
+    for (i=0; i<k; i++) {
+	for (j=0; j<k; j++) {
 	    if (i <= j) {
 		gretl_matrix_set(R, i, j, 
 				 gretl_matrix_get(Q, i, j));
@@ -711,10 +681,61 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     }
 
     /* obtain the real "Q" matrix */
-    dorgqr_(&m, &n, &n, Q->val, &lda, tau, work, &lwork, &info);
+    dorgqr_(&T, &k, &k, Q->val, &lda, tau, work, &lwork, &info);
     if (info != 0) {
 	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
 	err = 1;
+	goto bailout;
+    }    
+
+ bailout:
+
+    free(tau);
+    free(work);
+    free(iwork);
+
+    return err;
+}
+
+int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
+		      gretlopt opts)
+{
+    integer T, k;
+    gretl_matrix *Q = NULL, *y = NULL;
+    gretl_matrix *R = NULL, *g = NULL, *b = NULL;
+    gretl_matrix *xpxinv = NULL;
+    int err = 0;
+
+    T = pmod->nobs;               /* # of rows (observations) */
+    k = pmod->list[0] - 1;        /* # of cols (variables) */
+
+    Q = gretl_matrix_alloc(T, k);
+    R = gretl_matrix_alloc(k, k);
+    y = gretl_matrix_alloc(T, 1);
+    xpxinv = gretl_matrix_alloc(k, k);
+
+    if (Q == NULL || R == NULL || y == NULL || xpxinv == NULL) {
+	err = E_ALLOC;
+	goto qr_cleanup;
+    }
+
+    get_model_data(pmod, Z, Q, y);
+
+    err = gretl_QR_decomp(Q, R, T, k);
+    if (err) {
+	goto qr_cleanup;
+    }
+
+    /* allocate temporary arrays */
+    g = gretl_matrix_alloc(k, 1);
+    b = gretl_matrix_alloc(k, 1);
+    if (g == NULL || b == NULL) {
+	err = E_ALLOC;
+	goto qr_cleanup;
+    }
+
+    if (allocate_model_arrays(pmod, k, fulln)) {
+	err = E_ALLOC;
 	goto qr_cleanup;
     }
 
@@ -724,7 +745,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 
     /* OLS coefficients */
     gretl_matrix_multiply(R, g, b);
-    save_coefficients(pmod, b, n);
+    save_coefficients(pmod, b, k);
 
     /* write vector of fitted values into y */
     gretl_matrix_multiply(Q, g, y);    
@@ -733,23 +754,17 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     get_resids_and_SSR(pmod, Z, y, fulln);
 
     /* standard error of regression */
-    if (m - n > 0) {
+    if (T - k > 0) {
 	if (gretl_model_get_int(pmod, "no-df-corr")) {
-	    pmod->sigma = sqrt(pmod->ess / m);
+	    pmod->sigma = sqrt(pmod->ess / T);
 	} else {
-	    pmod->sigma = sqrt(pmod->ess / (m - n));
+	    pmod->sigma = sqrt(pmod->ess / (T - k));
 	}
     } else {
 	pmod->sigma = 0.0;
     }
 
     /* create (X'X)^{-1} */
-    xpxinv = gretl_matrix_alloc(n, n);
-    if (xpxinv == NULL) {
-	err = E_ALLOC;
-	goto qr_cleanup;
-    }
-
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
 			      xpxinv);
@@ -766,21 +781,16 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 	qr_make_regular_vcv(pmod, xpxinv);
     }
 
-    gretl_matrix_free(Q);
-    Q = NULL;
-
     /* get R^2 */
-    qr_compute_r_squared(pmod, Z[pmod->list[1]], m);
+    qr_compute_r_squared(pmod, Z[pmod->list[1]], T);
     qr_compute_f_stat(pmod, opts);
 
  qr_cleanup:
+
     gretl_matrix_free(Q);
+    gretl_matrix_free(R);
     gretl_matrix_free(y);
 
-    free(tau); free(work);
-    free(iwork);
-
-    gretl_matrix_free(R);
     gretl_matrix_free(g);
     gretl_matrix_free(b);
     gretl_matrix_free(xpxinv);
@@ -792,118 +802,30 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 
 int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
 {
-    integer info, lwork;
-    integer m, n, lda;
-    integer *iwork = NULL;
-    gretl_matrix *Q = NULL, *R = NULL;
+    integer T, k;
+    gretl_matrix *Q = NULL;
+    gretl_matrix *R = NULL;
     gretl_matrix *xpxinv = NULL;
-    doublereal *tau = NULL, *work = NULL;
-    doublereal rcond;
-    char uplo = 'U';
-    char diag = 'N';
-    char norm = '1';
-    int i, j;
     int err = 0;
 
-    m = pmod->nobs;               /* # of rows = # of observations */
-    lda = m;                      /* leading dimension of Q */
-    n = pmod->list[0] - 1;        /* # of cols = # of variables */
+    T = pmod->nobs;               /* # of rows (observations) */
+    k = pmod->list[0] - 1;        /* # of cols (variables) */
 
     Q = make_data_X(pmod, Z);
-    if (Q == NULL) {
-	err = E_ALLOC;
-	goto qr_cleanup;
-    }	
+    R = gretl_matrix_alloc(k, k);
+    xpxinv = gretl_matrix_alloc(k, k);
 
-    /* dim of tau is min (m, n) */
-    tau = malloc(n * sizeof *tau);
-    work = malloc(sizeof *work);
-    iwork = malloc(n * sizeof *iwork);
-
-    if (tau == NULL || work == NULL || iwork == NULL) {
+    if (Q == NULL || R == NULL || xpxinv == NULL) {
 	err = E_ALLOC;
 	goto qr_cleanup;
     }
 
-    /* do a workspace size query */
-    lwork = -1;
-    info = 0;
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
-	goto qr_cleanup;
-    }
-
-    /* set up optimally sized work array */
-    lwork = (integer) work[0];
-    work = realloc(work, (size_t) lwork * sizeof *work);
-    if (work == NULL) {
-	err = E_ALLOC;
-	goto qr_cleanup;
-    }
-
-    /* run QR factorization */
-    dgeqrf_(&m, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dgeqrf: info = %d\n", (int) info);
-	err = 1;
-	goto qr_cleanup;
-    }
-
-    /* check reciprocal condition number of R */
-    dtrcon_(&norm, &uplo, &diag, &n, Q->val, &lda, &rcond, work, 
-	    iwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dtrcon: info = %d\n", (int) info);
-	err = 1;
-	goto qr_cleanup;
-    }
-
-    if (rcond < QR_RCOND_MIN) {
-	fprintf(stderr, "dtrcon: rcond = %g, but min is %g\n", rcond,
-		QR_RCOND_MIN);
-	err = E_SINGULAR;
-	goto qr_cleanup;
-    }
-
-    /* allocate temporary auxiliary matrix */
-    R = gretl_matrix_alloc(n, n);
-    if (R == NULL) {
-	err = E_ALLOC;
-	goto qr_cleanup;
-    }
-
-    /* invert R */
-    dtrtri_(&uplo, &diag, &n, Q->val, &lda, &info);
-    if (info != 0) {
-	fprintf(stderr, "dtrtri: info = %d\n", (int) info);
-	err = 1;
-	goto qr_cleanup;
-    }
-
-    /* copy the upper triangular R-inverse out of Q */
-    for (i=0; i<n; i++) {
-	for (j=0; j<n; j++) {
-	    if (i <= j) {
-		gretl_matrix_set(R, i, j, 
-				 gretl_matrix_get(Q, i, j));
-	    } else {
-		gretl_matrix_set(R, i, j, 0.0);
-	    }
-	}
-    }
-
-    /* obtain the real "Q" matrix */
-    dorgqr_(&m, &n, &n, Q->val, &lda, tau, work, &lwork, &info);
-    if (info != 0) {
-	fprintf(stderr, "dorgqr: info = %d\n", (int) info);
-	err = 1;
+    err = gretl_QR_decomp(Q, R, T, k);
+    if (err) {
 	goto qr_cleanup;
     }
 
     /* create (X'X)^{-1} */
-    xpxinv = gretl_matrix_alloc(n, n);
     gretl_matrix_multiply_mod(R, GRETL_MOD_NONE,
 			      R, GRETL_MOD_TRANSPOSE,
 			      xpxinv);
@@ -921,11 +843,8 @@ int qr_tsls_vcv (MODEL *pmod, const double **Z, gretlopt opts)
     }
 
  qr_cleanup:
+
     gretl_matrix_free(Q);
-
-    free(tau); free(work);
-    free(iwork);
-
     gretl_matrix_free(R);
     gretl_matrix_free(xpxinv);
 

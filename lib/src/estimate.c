@@ -681,7 +681,9 @@ MODEL lsq (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* Generate model selection statistics */
-    ls_aic_bic(&mdl);
+    calculate_criteria(mdl.criterion, 
+		       (mdl.ci == WLS)? mdl.ess_wt : mdl.ess, 
+		       mdl.nobs, mdl.ncoeff);
 
  lsq_abort:
 

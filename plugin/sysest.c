@@ -322,6 +322,7 @@ print_overidentification_test (const gretl_equation_system *sys, PRN *prn)
 	X2 = 2.0 * (llu - ll);
 
 	pprintf(prn, "\n%s:\n", _("Over-identification test"));
+	pprintf(prn, "  %s = %g\n", _("Restricted log-likelihood"), ll);
 	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
 	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
 		df, X2, _("with p-value"), chisq(X2, df));

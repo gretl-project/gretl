@@ -1582,14 +1582,10 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	       int batch, int gui, int loopstack, PRN *prn)
 {
     int i, err, gotsep = 1;
-    char leadchar = '?';
+    char leadchar = (loopstack)? '>' : '?';
     int cli = !gui;
 
     if (line == NULL) return;
-
-    if (loopstack) {
-	leadchar = '>';
-    }
 
 #if 0
     fprintf(stderr, "echo_cmd: line='%s', gui=%d, cmd->opt=%ld, batch=%d, "
@@ -1631,7 +1627,8 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	/* command has a list of args to be printed */
 	if (cli) {
 	    if (batch) {
-		printf("\n%c %s", leadchar, cmd->cmd);
+		if (cmd->ci != EQUATION) putchar('\n');
+		printf("%c %s", leadchar, cmd->cmd);
 	    } else {
 		printf(" %s", cmd->cmd);
 	    }

@@ -62,6 +62,8 @@ int gretl_compare_doubles (const void *a, const void *b);
 
 int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
+int calculate_criteria (double *x, double ess, int nobs, int ncoeff);
+
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double **Z, int *misst);
 
