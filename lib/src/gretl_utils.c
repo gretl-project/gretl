@@ -819,6 +819,7 @@ int is_model_ref_cmd (int ci)
 	ci == CUSUM ||
 	ci == LMTEST ||
 	ci == LEVERAGE ||
+	ci == VIF ||
 	ci == RESTRICT ||
 	ci == FCAST ||
 	ci == FCASTERR ||
@@ -1117,13 +1118,39 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_drop_listed_vars (const int *list, double ***pZ, 
-			      DATAINFO *pdinfo, int *renumber)
+static int shrink_dataset_to_size (double ***pZ,
+				   DATAINFO *pdinfo,
+				   int nv)
 {
-    double **newZ;
     char **varname;
     char *vector;
     VARINFO **varinfo;
+    double **newZ;
+    
+    varname = realloc(pdinfo->varname, nv * sizeof *varname);
+    if (varname == NULL) return E_ALLOC;
+    pdinfo->varname = varname;
+
+    vector = realloc(pdinfo->vector, nv * sizeof *vector);
+    if (vector == NULL) return E_ALLOC;
+    pdinfo->vector = vector;
+
+    varinfo = realloc(pdinfo->varinfo, nv * sizeof *varinfo);
+    if (varinfo == NULL) return E_ALLOC;
+    pdinfo->varinfo = varinfo;
+
+    newZ = realloc(*pZ, nv * sizeof *newZ); 
+    if (newZ == NULL) return E_ALLOC;
+    *pZ = newZ;
+
+    pdinfo->v = nv;
+
+    return 0;
+}
+
+int dataset_drop_listed_vars (const int *list, double ***pZ, 
+			      DATAINFO *pdinfo, int *renumber)
+{
     int oldv = pdinfo->v, vmax = pdinfo->v;
     int i, v, ndel = 0; 
 
@@ -1173,35 +1200,13 @@ int dataset_drop_listed_vars (const int *list, double ***pZ,
 	}
     }
 
-    varname = realloc(pdinfo->varname, (oldv - ndel) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
-    pdinfo->varname = varname;
-
-    vector = realloc(pdinfo->vector, (oldv - ndel) * sizeof *vector);
-    if (vector == NULL) return E_ALLOC;
-    pdinfo->vector = vector;
-
-    varinfo = realloc(pdinfo->varinfo, (oldv - ndel) * sizeof *varinfo);
-    if (varinfo == NULL) return E_ALLOC;
-    pdinfo->varinfo = varinfo;
-
-    newZ = realloc(*pZ, (oldv - ndel) * sizeof *newZ); 
-    if (newZ == NULL) return E_ALLOC;
-    *pZ = newZ;
-
-    pdinfo->v -= ndel;
-
-    return 0;
+    return shrink_dataset_to_size(pZ, pdinfo, oldv - ndel);
 }
 
 /* drop specified number of variables at the end of the dataset */
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 {
-    double **newZ;
-    char **varname;
-    char *vector;
-    VARINFO **varinfo;
     int i, v = pdinfo->v;   
 
     if (delvars <= 0) {
@@ -1224,25 +1229,7 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 	}
     }
 
-    newZ = realloc(*pZ, (v - delvars) * sizeof *newZ); 
-    if (newZ == NULL) return E_ALLOC;
-    *pZ = newZ;
-        
-    varname = realloc(pdinfo->varname, (v - delvars) * sizeof *varname);
-    if (varname == NULL) return E_ALLOC;
-    pdinfo->varname = varname;
-
-    vector = realloc(pdinfo->vector, (v - delvars) * sizeof *vector);
-    if (vector == NULL) return E_ALLOC;
-    pdinfo->vector = vector;
-
-    varinfo = realloc(pdinfo->varinfo, (v - delvars) * sizeof *varinfo);
-    if (varinfo == NULL) return E_ALLOC;
-    pdinfo->varinfo = varinfo;
-
-    pdinfo->v -= delvars;
-
-    return 0;
+    return shrink_dataset_to_size(pZ, pdinfo, v - delvars);
 }
 
 /* ........................................................... */
@@ -1649,7 +1636,9 @@ int gretl_forecast (int t1, int t2, int nv,
     if (ar) {
 	arlist = pmod->arinfo->arlist;
 	maxlag = arlist[arlist[0]];
-	if (t1 < maxlag) t1 = maxlag; 
+	if (t1 < maxlag) {
+	    t1 = maxlag; 
+	}
     }
 
     for (t=t1; t<=t2; t++) {
@@ -1660,7 +1649,9 @@ int gretl_forecast (int t1, int t2, int nv,
 	    xx = (*pZ)[yno][t - arlist[k]];
 	    zr = pmod->arinfo->rho[k];
 	    if (na(xx)) {
-		if (zr == 0) continue;
+		if (zr == 0) {
+		    continue;
+		}
 		xx = (*pZ)[nv][t - arlist[k]];
 		if (na(xx)) {
 		    (*pZ)[nv][t] = NADBL;
