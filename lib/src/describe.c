@@ -221,6 +221,8 @@ static double doornik_chisq (double skew, double kurt, int n)
  *
  */
 
+#if 0
+
 FREQDIST *old_freqdist (double ***pZ, const DATAINFO *pdinfo, 
 			int varno, int params)
 {
@@ -334,7 +336,7 @@ FREQDIST *old_freqdist (double ***pZ, const DATAINFO *pdinfo,
     return freq;
 }
 
-/* &&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& */
+#endif
 
 FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
 		    int varno, int params)
@@ -393,11 +395,14 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     range = xmax - xmin;
     
     if (n < 16) {
-	nbins = 6; /* ? */
-    } else if (n >= 2500) {
-	nbins = 50;
+	nbins = 5; 
+    } else if (n < 50) {
+	nbins = 7;
+    } else if (n > 850) {
+	nbins = 29;
     } else {
 	nbins = (int) sqrt((double) n);
+	if (nbins % 2 == 0) nbins++;
     }
 
     freq->numbins = nbins;
@@ -415,7 +420,15 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     }
     
     freq->endpt[0] = xmin - .5 * binwidth;
-    freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+    if (xmin > 0.0 && freq->endpt[0] < 0.0) {
+	double rshift;
+
+	freq->endpt[0] = 0.0;
+	rshift = 1.0 - xmin / binwidth;
+	freq->endpt[freq->numbins] = xmax + rshift * binwidth;
+    } else {
+	freq->endpt[freq->numbins] = xmax + .5 * binwidth;
+    }
     
     for (k=0; k<freq->numbins; k++) {
 	freq->f[k] = 0;

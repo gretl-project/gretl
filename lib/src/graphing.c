@@ -1420,6 +1420,8 @@ int plot_freq (FREQDIST *freq, PATHS *ppaths, int dist)
     int plottype = PLOT_FREQ_SIMPLE;
     int use_bars = gnuplot_has_filledcurve();
 
+    if (freq->numbins > 16) barskip /= 2.0;
+
     if (dist == NORMAL) plottype = PLOT_FREQ_NORMAL;
     else if (dist == GAMMA) plottype = PLOT_FREQ_GAMMA;
 
