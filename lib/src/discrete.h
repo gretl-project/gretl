@@ -20,6 +20,6 @@
 /* functions follow */
 
 MODEL logit_probit (LIST list, 
-		    double **pZ, DATAINFO *pdinfo, 
+		    double ***pZ, DATAINFO *pdinfo, 
 		    int opt);
 

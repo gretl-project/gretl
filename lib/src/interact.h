@@ -45,16 +45,16 @@ enum option_codes {
 /* functions follow */
  
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double **pZ, PRN *cmds);
+	     int *ignore, double ***pZ, PRN *cmds);
 
 int command_number (const char *cmd);
 
 int help (const char *cmd, const char *helpfile, PRN *prn);
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double **pZ);
+	   double ***pZ);
 
-int add_new_var (DATAINFO *pdinfo, double **pZ, GENERATE *genr);
+int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr);
 
 int parseopt (const char *s);
 
@@ -65,7 +65,7 @@ void echo_cmd (CMD *pcmd, const DATAINFO *pdinfo, const char *line,
 	       PRN *prn);
 
 int simple_commands (CMD *cmd, const char *line, 
-		     double **pZ, DATAINFO *datainfo, PATHS *paths,
+		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
 		     const int batch, const int oflag, 
 		     PRN *prn);
 

@@ -106,7 +106,7 @@ static int rats_populate_series_list (windata_t *dbdat);
 static SERIESINFO *get_series_info (windata_t *ddata, int action);
 static int read_RATSBase (GtkWidget *widget, FILE *fp);
 static int get_rats_data (const char *fname, const int series_number,
-			  SERIESINFO *sinfo, double **pZ);
+			  SERIESINFO *sinfo, double ***pZ);
 static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo);
 static int mon_to_quart (double **pq, double *mvec, SERIESINFO *sinfo,
 			 int method);
@@ -136,11 +136,11 @@ GtkItemFactoryEntry db_items[] = {
 
 /* ........................................................... */
 
-static int get_db_data (const char *dbbase, SERIESINFO *sinfo, double **pZ)
+static int get_db_data (const char *dbbase, SERIESINFO *sinfo, double ***pZ)
 {
     char dbbin[MAXLEN], numstr[16];
     FILE *fp;
-    int i, n = sinfo->nobs;
+    int t, n = sinfo->nobs;
     dbnumber val;
 
     strcpy(dbbin, dbbase);
@@ -149,10 +149,10 @@ static int get_db_data (const char *dbbase, SERIESINFO *sinfo, double **pZ)
     if (fp == NULL) return 1;
     
     fseek(fp, (long) sinfo->offset, SEEK_SET);
-    for (i=0; i<n; i++) {
+    for (t=0; t<n; t++) {
 	fread(&val, sizeof(dbnumber), 1, fp);
 	sprintf(numstr, "%g", val);
-	(*pZ)[n + i] = atof(numstr);
+	(*pZ)[1][t] = atof(numstr);
     }
     fclose(fp);
     return 0;
@@ -177,11 +177,11 @@ float retrieve_float (netfloat nf)
 /* ........................................................... */
 
 static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo, 
-			       double **pZ)
+			       double ***pZ)
 {
     char *getbuf, errbuf[80], numstr[16];
     char *dbbase = dbdat->fname;
-    int i, err, n = sinfo->nobs;
+    int t, err, n = sinfo->nobs;
     dbnumber val;
     size_t offset;
 #ifdef OTHER_ARCH
@@ -213,7 +213,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
     } 
 
     offset = 0L;
-    for (i=0; i<n; i++) {
+    for (t=0; t<n; t++) {
 #ifndef OTHER_ARCH
 	/* just read floats -- ok for ix86 at least */
 	memcpy(&val, getbuf + offset, sizeof(dbnumber));
@@ -227,7 +227,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 	val = retrieve_float(nf);
 #endif
         sprintf(numstr, "%g", val); 
-        (*pZ)[n + i] = atof(numstr);
+        (*pZ)[1][t] = atof(numstr);
     }
     update_statusline(dbdat, "OK");
     free(getbuf);
@@ -237,7 +237,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 
 /* ........................................................... */
 
-static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
+static void display_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
     PRN *prn;
 
@@ -251,7 +251,7 @@ static void display_dbdata (double **dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
-static void graph_dbdata (double **dbZ, DATAINFO *dbdinfo)
+static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 {
     int err, lines[1], list[3];
     char pd[7];
@@ -274,7 +274,7 @@ static void graph_dbdata (double **dbZ, DATAINFO *dbdinfo)
 
 /* ........................................................... */
 
-static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
+static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
     double *xvec;
@@ -305,15 +305,15 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) 
-		mon_to_quart(&xvec, &(*dbZ)[sinfo->nobs], sinfo,
+		mon_to_quart(&xvec, (*dbZ)[1], sinfo,
 			     compact_method);
 	    else if (datainfo->pd == 1) 
-		to_annual(&xvec, &(*dbZ)[sinfo->nobs], sinfo,
+		to_annual(&xvec, (*dbZ)[1], sinfo,
 			  compact_method);
 	} else {  /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
 	    for (t=0; t<sinfo->nobs; t++) 
-		xvec[t] = (*dbZ)[sinfo->nobs + t];
+		xvec[t] = (*dbZ)[1][t];
 	}
 	/* common stuff for adding a var */
 	strcpy(datainfo->varname[v-1], sinfo->varname);
@@ -322,19 +322,19 @@ static void add_dbdata (windata_t *dbdat, double **dbZ, SERIESINFO *sinfo)
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
 	    for (t=0; t<pad1; t++) 
-		Z[(v - 1)*n + t] = NADBL;
+		Z[v-1][t] = NADBL;
 	    start = pad1;
 	} else start = 0;
 	if (pad2 > 0) {
 	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
 	    for (t=n-1; t>=n-1-pad2; t--) 
-		Z[(v - 1)*n + t] = NADBL;
+		Z[v-1][t] = NADBL;
 	    stop = n - pad2;
 	} else stop = n;
 	/* fill in actual data values */
 	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 	for (t=start; t<stop; t++) 
-	    Z[(v-1)*n + t] = xvec[t-pad1];
+	    Z[v-1][t] = xvec[t-pad1];
 	free(xvec);
     } else {  /* no datafile open: start new working data set 
 		 with this db series */
@@ -391,7 +391,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     int err = 0, dbcode = dbdat->role;
     DATAINFO *dbdinfo;
     SERIESINFO *sinfo;
-    double *dbZ = NULL;
+    double **dbZ = NULL;
 
     sinfo = get_series_info(dbdat, dbcode);
     if (sinfo == NULL) return;
@@ -427,7 +427,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 	graph_dbdata(&dbZ, dbdinfo);
     else if (action == DB_IMPORT) 
 	add_dbdata(dbdat, &dbZ, sinfo);
-    free(dbZ);
+    free_Z(dbZ, dbdinfo);
     free_datainfo(dbdinfo);
     free(sinfo);
 } 
@@ -915,7 +915,7 @@ static int get_endobs (char *datestr, const int startyr, const int startfrac,
 /* ........................................................... */
 
 static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp, 
-			    double **pZ)
+			    double ***pZ)
 /* print the actual data values from the data blocks */
 {
     RATSData rdata;
@@ -936,7 +936,7 @@ static int get_rats_series (int offset, SERIESINFO *sinfo, FILE *fp,
 		miss = 1;
 	    }
 	    /*  printf("t=%d val=%s\n", t, numstr); */
-	    (*pZ)[sinfo->nobs + t] = val;
+	    (*pZ)[1][t] = val;
 	    t++;
 	}
     }
@@ -1123,7 +1123,7 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
 /* ........................................................... */
 
 static int get_rats_data (const char *fname, const int series_number,
-			  SERIESINFO *sinfo, double **pZ)
+			  SERIESINFO *sinfo, double ***pZ)
 /* series are numbered from 1 for this function.
    We need to know the specific filename. */
 {

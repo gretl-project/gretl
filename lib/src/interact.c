@@ -176,7 +176,7 @@ static int aliased (char *cmd)
 /* ........................................................... */
 
 void getcmd (char *line, DATAINFO *pdinfo, CMD *command, 
-	     int *ignore, double **pZ, PRN *cmds)
+	     int *ignore, double ***pZ, PRN *cmds)
 {
     int i, j, nf, linelen, n, v, gotdata = 0, ar = 0;
     int spacename = 0;
@@ -600,11 +600,10 @@ int help (const char *cmd, const char *helpfile, PRN *prn)
 /* ........................................................... */
 
 static int parse_criteria (const char *line, const DATAINFO *pdinfo, 
-			   double **pZ, PRN *prn)
+			   double ***pZ, PRN *prn)
 {
-    int i, n = pdinfo->n;
     double ess;
-    int T, k;
+    int i, T, k;
     char cmd[9], essstr[32], Tstr[9], kstr[9];
     
     if (sscanf(line, "%s %s %s %s", cmd, essstr, Tstr, kstr) != 4) {
@@ -612,7 +611,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) essstr[0]) && 
 	(i = varindex(pdinfo, essstr)) < pdinfo->v) 
-	    ess = (*pZ)[n*i + pdinfo->t1];
+	    ess = (*pZ)[i][pdinfo->t1];
     else if (isdigit(essstr[0])) ess = atof(essstr);
     else return 1;
     if (ess < 0) {
@@ -621,7 +620,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) Tstr[0]) &&
 	(i = varindex(pdinfo, Tstr)) < pdinfo->v) 
-	    T = (int) (*pZ)[n*i + pdinfo->t1];
+	    T = (int) (*pZ)[i][pdinfo->t1];
     else if (isdigit(Tstr[0])) T = atoi(Tstr);
     else return 1;
     if (T < 0) {
@@ -630,7 +629,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
     }
     if (isalpha((unsigned char) kstr[0]) &&
 	(i = varindex(pdinfo, kstr)) < pdinfo->v) 
-	    k = (int) (*pZ)[n*i + pdinfo->t1];
+	    k = (int) (*pZ)[i][pdinfo->t1];
     else if (isdigit(kstr[0])) k = atoi(kstr);
     else return 1;
     if (k < 0) {
@@ -645,11 +644,11 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 /* ........................................................... */
 
 int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo, 
-	   double **pZ)
+	   double ***pZ)
      /* return ID of var containing the forecast, or negative int on 
 	error */
 {
-    int t, t1, t2, vi, n = pdinfo->n;
+    int t, t1, t2, vi;
     char t1str[8], t2str[8], varname[9];
 
     *t1str = '\0'; *t2str = '\0';
@@ -677,7 +676,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
     strcpy(pdinfo->varname[vi], varname);
     strcpy(pdinfo->label[vi], "predicted values");
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[n*vi + t] = NADBL;
+    for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
 
     _forecast(t1, t2, vi, pmod, pdinfo, pZ);
 
@@ -686,7 +685,7 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
 /* ........................................................... */
     
-int add_new_var (DATAINFO *pdinfo, double **pZ, GENERATE *genr)
+int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 {
     int t, isconst = 1, n = pdinfo->n, v = genr->varnum;
     double xx;
@@ -708,11 +707,11 @@ int add_new_var (DATAINFO *pdinfo, double **pZ, GENERATE *genr)
 	}
     }
     if (isconst) {
-	for (t=0; t<n; t++) (*pZ)[n*v + t] = xx;
+	for (t=0; t<n; t++) (*pZ)[v][t] = xx;
     } else {
-	for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
+	for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	    (*pZ)[n*v + t] = genr->xvec[t];
+	    (*pZ)[v][t] = genr->xvec[t];
     }
     if (genr->xvec != NULL) free(genr->xvec);
     return 0;
@@ -921,7 +920,7 @@ static void showlabels (const DATAINFO *pdinfo)
 /* ........................................................ */
 
 int simple_commands (CMD *cmd, const char *line, 
-		     double **pZ, DATAINFO *datainfo, PATHS *paths,
+		     double ***pZ, DATAINFO *datainfo, PATHS *paths,
 		     const int pause, const int oflag, 
 		     PRN *prn)
      /* common code for command-line and GUI client programs, where

@@ -180,7 +180,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	}
 	for (i=0; i<command.list[0]; i++) {
 	    plp->storeval[i*plp->ntimes + round] = 
-		Z[datainfo->n*command.list[i+1] + datainfo->t1 + 1];
+		Z[command.list[i+1]][datainfo->t1 + 1];
 	}	
 	break;
 

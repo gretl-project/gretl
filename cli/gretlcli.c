@@ -50,9 +50,9 @@ char outfile[MAXLEN];
 char hdrfile[MAXLEN];
 char syscmd[MAXLEN];
 char msg[80];
-double *Z;                    /* data set */
-double *subZ;                 /* sub-sampled data set */
-double *fullZ;                /* convenience pointer */
+double **Z;                   /* data set */
+double **subZ;                /* sub-sampled data set */
+double **fullZ;               /* convenience pointer */
 MODEL **models;               /* holds ptrs to model structs */
 DATAINFO *datainfo;           /* info on data set */
 DATAINFO *subinfo;            /* info on sub-sampled data set */
@@ -173,7 +173,7 @@ int model_test_start (const int id, PRN *prn, const int ols_only)
 	return 1;
     }
     else {
-	double *checkZ;
+	double **checkZ;
 	DATAINFO *pdinfo;
 
 	if (fullZ == NULL) {
@@ -437,8 +437,8 @@ int main (int argc, char *argv[])
     } /* end of get commands loop */
 
     /* leak check -- try explicitly freeing all memory allocated */
-    free(Z);
-    if (fullZ) free(fullZ);
+    free_Z(Z, datainfo);
+    if (fullZ) free_Z(fullZ, fullinfo);
     free_model(models[0]);
     free_model(models[1]);
     free(models);

@@ -60,7 +60,7 @@ static int printnum (char *dest, const char *s, int d)
 	double xx;
 
 	if (data_status && (v = varindex(datainfo, s)) < datainfo->v) {
-	    xx = Z[datainfo->n * v];
+	    xx = Z[v][0];
 	    if (na(xx)) {
 		sprintf(errtext, "Data missing for variable '%s'", s);
 		errbox(errtext);

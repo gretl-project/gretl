@@ -24,7 +24,7 @@
 
 /* ......................................................  */
 
-static int gettrend (double **pZ, DATAINFO *pdinfo)
+static int gettrend (double ***pZ, DATAINFO *pdinfo)
 {
     int index;
     int t, n = pdinfo->n, v = pdinfo->v;
@@ -34,7 +34,7 @@ static int gettrend (double **pZ, DATAINFO *pdinfo)
     
     if (_grow_Z(1, pZ, pdinfo)) return 999;
 
-    for (t=0; t<n; t++) (*pZ)[n*v + t] = (double) t+1;
+    for (t=0; t<n; t++) (*pZ)[v][t] = (double) t+1;
     strcpy(pdinfo->varname[v], "time");
     strcpy(pdinfo->label[v], "time trend variable");
 	    
@@ -58,7 +58,7 @@ static int diffvarnum (const int index, const DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int diffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
+static int diffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
@@ -76,15 +76,15 @@ static int diffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
 
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
-    for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
+    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
     for (t=t1; t<=pdinfo->t2; t++) {
-	x0 = (*pZ)[iv*n + t];
-	x1 = (*pZ)[iv*n + t-1];
+	x0 = (*pZ)[iv][t];
+	x1 = (*pZ)[iv][t-1];
 	if (na(x0) || na(x1)) 
-	    (*pZ)[n*v + t] = NADBL;
+	    (*pZ)[v][t] = NADBL;
 	else				      
-	    (*pZ)[n*v + t] = x0 - x1;
+	    (*pZ)[v][t] = x0 - x1;
     }
 
     strcpy(pdinfo->varname[v], s);
@@ -96,7 +96,7 @@ static int diffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
+static int ldiffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
 {
     char word[32];
     char s[32];
@@ -114,15 +114,15 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
 
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
-    for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
+    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
     t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
     for (t=t1; t<=pdinfo->t2; t++) {
-	x0 = (*pZ)[iv*n + t];
-	x1 = (*pZ)[iv*n + t-1];
+	x0 = (*pZ)[iv][t];
+	x1 = (*pZ)[iv][t-1];
 	if (na(x0) || na(x1) || x0/x1 < 0.) 
-	    (*pZ)[n*v + t] = NADBL;
+	    (*pZ)[v][t] = NADBL;
 	else				      
-	    (*pZ)[n*v + t] = log(x0/x1);
+	    (*pZ)[v][t] = log(x0/x1);
     }
 
     strcpy(pdinfo->varname[v], s);
@@ -145,7 +145,7 @@ static int ldiffgenr (const int iv, double **pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_diffgenr (const LIST list, double **pZ, DATAINFO *pdinfo)
+int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i;
     
@@ -167,7 +167,7 @@ int list_diffgenr (const LIST list, double **pZ, DATAINFO *pdinfo)
  *
  */
 
-int list_ldiffgenr (const LIST list, double **pZ, DATAINFO *pdinfo)
+int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i;
     
@@ -212,7 +212,7 @@ static void reset_list (int *list1, int *list2)
 
 /* ...................................................................  */
 
-static int get_listlen (const int *varlist, const int order, double *Z, 
+static int get_listlen (const int *varlist, const int order, double **Z, 
 			const DATAINFO *pdinfo)
      /* parse varlist (for a VAR) and determine how long the augmented 
 	list will be, once all the appropriate lag terms are inserted */
@@ -244,7 +244,7 @@ static int get_listlen (const int *varlist, const int order, double *Z,
  *
  */
 
-int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
+int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	 const int pause, PRN *prn)
 {
     /* construct the respective lists by adding the appropriate
@@ -420,7 +420,7 @@ int var (const int order, const LIST list, double **pZ, DATAINFO *pdinfo,
  *
  */
 
-int coint (const int order, const LIST list, double **pZ, 
+int coint (const int order, const LIST list, double ***pZ, 
 	   DATAINFO *pdinfo, PRN *prn)
      /* FIXME - need proper error checking here */
 {
@@ -454,11 +454,11 @@ int coint (const int order, const LIST list, double **pZ,
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
     nv = pdinfo->v - 1;
     for (t=0; t<coint_model.t1; t++)
-	(*pZ)[n*nv + t] = NADBL;
+	(*pZ)[nv][t] = NADBL;
     for (t = coint_model.t1; t<=coint_model.t2; t++)
-	(*pZ)[n*nv + t] = coint_model.uhat[t];
+	(*pZ)[nv][t] = coint_model.uhat[t];
     for (t=coint_model.t2 + 1; t<n; t++) 
-	(*pZ)[n*nv + t] = NADBL;
+	(*pZ)[nv][t] = NADBL;
     strcpy(pdinfo->varname[nv], "uhat");
 
     /* Run ADF test on these residuals */
@@ -487,13 +487,14 @@ int coint (const int order, const LIST list, double **pZ,
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  *
- * Carries out and prints the results of the Augmented Dickey-Fuller test for a unit root.
+ * Carries out and prints the results of the Augmented Dickey-Fuller test for 
+ * a unit root.
  *
  * Returns: 0 on successful completion.
  *
  */
 
-int adf_test (const int order, const int varno, double **pZ,
+int adf_test (const int order, const int varno, double ***pZ,
 	      DATAINFO *pdinfo, PRN *prn)
 {
     int i, l, T, k, row, orig_nvars = pdinfo->v;
@@ -632,9 +633,9 @@ int adf_test (const int order, const int varno, double **pZ,
 
 /* ....................................................... */
 
-int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
+int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    int t, n = pdinfo->n, v = pdinfo->v, err = 0;
+    int t, v = pdinfo->v, err = 0;
     int malist[4], iv = list[2];
     double a, aopt, essmin, diff;
     int step, t0 = pdinfo->t1, T = pdinfo->t2;
@@ -661,9 +662,9 @@ int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
     for (step=1; step<=100; step++) {
 	a += diff;
 	if (a > 0.995) break;
-	(*pZ)[v*n + t0] = (*pZ)[iv*n + t0] / (1 - a);
+	(*pZ)[v][t0] = (*pZ)[iv][t0] / (1 - a);
 	for (t=t0+1; t<T; t++) { 
-	    (*pZ)[v*n + t] = (*pZ)[iv*n + t] + a * (*pZ)[v*n + t-1];
+	    (*pZ)[v][t] = (*pZ)[iv][t] + a * (*pZ)[v][t-1];
 	    /*  printf("newvars[%d] %g %g\n", t, 
 		(*pZ)[v*n + t], (*pZ)[(v+1)*n + t]); */
 	}
@@ -688,9 +689,9 @@ int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, PRN *prn)
 
     pprintf(prn, "\n\nESS is minimum for adj = %.2f\n\n", aopt);
     a = aopt;
-    (*pZ)[v*n + t0] = (*pZ)[iv*n + t0] / (1 - a);
+    (*pZ)[v][t0] = (*pZ)[iv][t0] / (1 - a);
     for (t=t0+1; t<T; t++) { 
-	(*pZ)[v*n + t] = (*pZ)[iv*n + t] + a * (*pZ)[v*n + t-1];
+	(*pZ)[v][t] = (*pZ)[iv][t] + a * (*pZ)[v][t-1];
     }
     mamod = lsq(malist, pZ, pdinfo, OLS, 1, 0.0);
     printmodel(&mamod, pdinfo, prn);

@@ -81,7 +81,7 @@ enum flagvals {
 double date (const int nt, const int pd, const double sd0);
 
 int isdummy (const int varnum, const int t1, const int t2, 
-	     const double *Z, const int n);
+	     double **Z, const int n);
 
 void printlist (const int *list, const char *msg);
 
@@ -111,13 +111,13 @@ int set_paths (PATHS *ppaths, const int defaults, const int gui);
 
 int copylist (int **target, const int *src);
 
-int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo);
+int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo);
+int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo);
+int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);
 
-int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo);
+int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo);
 
 int hidden_var (const int i, const DATAINFO *pdinfo);
 
@@ -126,7 +126,7 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo);
 int swap_models (MODEL **targ, MODEL **src);
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double **pZ, DATAINFO *pdinfo, PRN *prn,
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		     const PATHS *ppaths, const int plot);
 
 int is_model_cmd (const char *line);
@@ -136,13 +136,13 @@ int is_model_ref_cmd (const int ci);
 int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo);
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
-		 double **pZ, DATAINFO *pdinfo);
+		 double ***pZ, DATAINFO *pdinfo);
 
 double *copyvec (const double *src, const int n);
 
 int ijton (const int i, const int j, const int lo);
 
 int ztox (const int i, double *px, 
-	  const double *Z, const DATAINFO *pdinfo); 
+	  double **Z, const DATAINFO *pdinfo); 
 
 #endif /* UTILS_H */

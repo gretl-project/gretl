@@ -24,9 +24,9 @@
 
 #define TINY 1.0e-13
 
-static double *hessian (MODEL *pmod, const double *Z, const int n, 
+static double *hessian (MODEL *pmod, double **Z, const int n, 
 			const int opt); 
-static double *hess_wts (MODEL *pmod, const double *Z, const int n, 
+static double *hess_wts (MODEL *pmod, double **Z, const int n, 
 			 const int opt);
 static int neginv (double *xpx, double *diag, int nv);
 static int choleski (double *xpx, int nv);
@@ -63,13 +63,13 @@ static double _logit_pdf (double xx)
 
 /* .......................................................... */
 
-static void Lr_chisq (MODEL *pmod, const double *Z, const int n)
+static void Lr_chisq (MODEL *pmod, double **Z, const int n)
 {
     int t, zeros, ones = 0, m = pmod->nobs;
     double Lr;
     
     for (t=pmod->t1; t<=pmod->t2; t++) 
-	if (floateq(Z[n*pmod->list[1] + t], 1.0)) ones++;
+	if (floateq(Z[pmod->list[1]][t], 1.0)) ones++;
     zeros = m - ones;
     Lr = (double) ones * log((double) ones/ (double) m);
     Lr += (double) zeros * log((double) zeros/(double) m);
@@ -108,7 +108,7 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
  */
 
 
-MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
      /* EM algorithm, see Ruud */
 {
     int i, t, v, depvar = list[1];
@@ -152,7 +152,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
     for (i=2; i<=list[0]; i++) {
 	xbar[i-2] = 0.0;
 	for (t=dmod.t1; t<=dmod.t2; t++)
-	    xbar[i-2] += (*pZ)[n*dmod.list[i] + t];
+	    xbar[i-2] += (*pZ)[dmod.list[i]][t];
 	xbar[i-2] /= dmod.nobs;
     }
     list[1] = v;
@@ -170,13 +170,13 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
 		fx = _norm_pdf(xx);
 		Fx = _norm_cdf(xx);
 	    }
-	    if (floateq((*pZ)[n*depvar + t], 0.0)) 
+	    if (floateq((*pZ)[depvar][t], 0.0)) 
 		xx -= fx/(1.0 - Fx);
 	    else 
 		xx += fx/Fx;
-	    (*pZ)[n*v + t] = xx;
+	    (*pZ)[v][t] = xx;
 	}
-	dmod.lnL = _logit_probit_llhood(&(*pZ)[n*v], &dmod, opt);
+	dmod.lnL = _logit_probit_llhood(&(*pZ)[v][0], &dmod, opt);
 	if (fabs(dmod.lnL - Lbak) < .000005) break; 
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
@@ -191,7 +191,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
     /* put back original dependent variable */
     dmod.list[1] = depvar;
     _shrink_Z(1, pZ, pdinfo);
-    dmod.lnL = _logit_probit_llhood(&(*pZ)[n*depvar], &dmod, opt);
+    dmod.lnL = _logit_probit_llhood((*pZ)[depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ, n);
     dmod.ci = opt;
 
@@ -244,7 +244,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
     xx = 0.0;
     dmod.correct = 0;
     for (t=dmod.t1; t<=dmod.t2; t++) {
-	zz = (*pZ)[n*depvar + t];
+	zz = (*pZ)[depvar][t];
 	xx += zz;
 	dmod.correct += ((dmod.yhat[t] >= 0.5 && floateq(zz, 1.0)) ||
 		    (dmod.yhat[t] < 0.5 && floateq(zz, 0.0)));
@@ -258,7 +258,7 @@ MODEL logit_probit (LIST list, double **pZ, DATAINFO *pdinfo, int opt)
 
 /* .......................................................... */
 
-static double *hessian (MODEL *pmod, const double *Z, const int n, 
+static double *hessian (MODEL *pmod, double **Z, const int n, 
 			const int opt) 
 {
     int i, j, li, lj, l0 = pmod->list[0], m, t;
@@ -279,7 +279,7 @@ static double *hessian (MODEL *pmod, const double *Z, const int n,
 	    lj = pmod->list[j];
 	    xx = 0.0;
 	    for (t=pmod->t1; t<=pmod->t2; t++) 
-		xx += wt[t] * Z(li, t) * Z(lj, t);
+		xx += wt[t] * Z[li][t] * Z[lj][t];
 	    if (floateq(xx, 0.0) && li == lj) {
 		free(xpx);
 		free(wt);
@@ -296,7 +296,7 @@ static double *hessian (MODEL *pmod, const double *Z, const int n,
 
 /* .......................................................... */
 
-static double *hess_wts (MODEL *pmod, const double *Z, const int n, 
+static double *hess_wts (MODEL *pmod, double **Z, const int n, 
 			 const int opt) 
 {
     int i, t;
@@ -306,9 +306,9 @@ static double *hess_wts (MODEL *pmod, const double *Z, const int n,
     if (wt == NULL) return NULL;
     for (t=pmod->t1; t<=pmod->t2; t++) {
 	bx = 0.0;
-	q = 2.0 * Z(pmod->list[1], t) - 1.0;
+	q = 2.0 * Z[pmod->list[1]][t] - 1.0;
 	for (i=0; i<pmod->ncoeff; i++) {
-	    bx += pmod->coeff[i+1] * Z(pmod->list[i+2], t);
+	    bx += pmod->coeff[i+1] * Z[pmod->list[i+2]][t];
 	}
 	if (opt == LOGIT) {
 	    wt[t] = -1.0 * _logit(bx) * (1.0 - _logit(bx));

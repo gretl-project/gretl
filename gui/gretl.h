@@ -48,7 +48,7 @@
 #define MAXSTR 255
 
 /* basic global program vars */
-extern double *Z;
+extern double **Z;
 extern DATAINFO *datainfo;
 extern PATHS paths; 
 extern CMD command;

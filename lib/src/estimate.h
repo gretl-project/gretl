@@ -21,46 +21,35 @@
 
 #include <stdio.h>
 
-/**
- * Z:
- * @i: series index.
- * @j: observation index.
- *
- * Simulate a two-dimensional array based on a one-dimensional
- * data "matrix", for ease of reference.
- */
- 
-#define Z(i, j) Z[n*(i) + (j)]
-
 /* functions follow */
  
 MODEL lsq (LIST list, 
-	   double **pZ, DATAINFO *pdinfo, 
+	   double ***pZ, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho);
 
 int hilu_corc (double *toprho, LIST list, 
-	       double **pZ, DATAINFO *pdinfo, 
+	       double ***pZ, DATAINFO *pdinfo, 
 	       const int opt, PRN *prn);
 
 MODEL tsls_func (LIST list, const int pos, 
-		 double **pZ, DATAINFO *pdinfo);
+		 double ***pZ, DATAINFO *pdinfo);
 
 MODEL hsk_func (LIST list, 
-		double **pZ, DATAINFO *pdinfo);
+		double ***pZ, DATAINFO *pdinfo);
 
 MODEL hccm_func (LIST list, 
-		 double **pZ, DATAINFO *pdinfo);
+		 double ***pZ, DATAINFO *pdinfo);
 
 int whites_test (MODEL *pmod, 
-		 double **pZ, DATAINFO *pdinfo, 
+		 double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test);
 
 MODEL ar_func (LIST list, const int pos, 
-	       double **pZ, DATAINFO *pdinfo, 
+	       double ***pZ, DATAINFO *pdinfo, 
 	       int *model_count, PRN *prn);
 
 MODEL arch (int order, LIST list, 
-	    double **pZ, DATAINFO *pdinfo, 
+	    double ***pZ, DATAINFO *pdinfo, 
 	    int *model_count, PRN *prn, 
 	    GRETLTEST *test);
 

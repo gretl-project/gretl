@@ -44,13 +44,13 @@ static int inverse_compare_doubles (const void *a, const void *b)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo, 
+int spearman (const LIST list, double **Z, const DATAINFO *pdinfo, 
 	      const int opt, PRN *prn)
 {
     double xx, yy, *sx, *sy, *rx, *ry, *tmp;
     double xdate, rsum, avg, z = 0;
     int i, j, vx, vy, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
-    int idate, rcount, n = pdinfo->n;
+    int idate, rcount;
     size_t nn;
 
     if (list[0] != 2) {
@@ -71,8 +71,8 @@ int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo,
     vy = list[2];
     i = -1;
     for (t=t1; t<=t2; t++) {
-	xx = Z[vx*n + t];
-	yy = Z[vy*n + t];
+	xx = Z[vx][t];
+	yy = Z[vy][t];
 	if (na(xx) || na(yy)) continue;
 	i++;
 	sx[i] = xx;
@@ -85,8 +85,8 @@ int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo,
     /* make rankings by comparing "raw" with sorted */
     i = -1;
     for (t=t1; t<=t2; t++) {
-	xx = Z[vx*n + t];
-	yy = Z[vy*n + t];
+	xx = Z[vx][t];
+	yy = Z[vy][t];
 	if (na(xx) || na(yy)) continue;
 	i++;
 	for (j=0; j<nn; j++) {
@@ -177,8 +177,8 @@ int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo,
 		else if (pdinfo->pd < 10) pprintf(prn, "%8.1f ", xdate);
 		else pprintf(prn, "%8.2f ", xdate);
 	    }
-	    xx = Z[n*vx + t];
-	    yy = Z[n*vy + t];
+	    xx = Z[vx][t];
+	    yy = Z[vy][t];
 	    if (!(na(xx)) && !(na(yy))) {
 		_printxs(xx, 15, PRINT, prn);
 		_printxs(rx[i], 15, PRINT, prn);
@@ -210,7 +210,7 @@ int spearman (const LIST list, const double *Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, non-zero on error.
  */
 
-int runs_test (const int varno, const double *Z, const DATAINFO *pdinfo, 
+int runs_test (const int varno, double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn)
 {
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n, runs = 1;
@@ -223,7 +223,7 @@ int runs_test (const int varno, const double *Z, const DATAINFO *pdinfo,
 
     nn = 0;
     for (t=t1; t<=t2; t++) {
-	xx = Z[n*varno + t];
+	xx = Z[varno][t];
 	if (na(xx)) continue;
 	else x[nn++] = xx;
     }

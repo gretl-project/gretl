@@ -24,7 +24,7 @@
 
 /* .......................................................... */
 
-int attach_subsample_to_model (MODEL *pmod, double **fullZ, 
+int attach_subsample_to_model (MODEL *pmod, double ***fullZ, 
 			       const DATAINFO *fullinfo)
      /* if the data set is currently subsampled, record the
 	subsample info in pmod->subdum */
@@ -44,14 +44,14 @@ int attach_subsample_to_model (MODEL *pmod, double **fullZ,
     } 
 
     for (t=0; t<n; t++)
-	pmod->subdum[t] = (*fullZ)[i*n + t];
+	pmod->subdum[t] = (*fullZ)[i][t];
     
     return 0;
 }
 
 /* .......................................................... */
 
-static int subsampled (const double *Z, const DATAINFO *pdinfo, 
+static int subsampled (double **Z, const DATAINFO *pdinfo, 
 		       const int subnum)
      /* Is the data set currently "sub-sampled" via selection of 
 	cases?  Use this func _only_ if subnum tests < pdinfo->v */
@@ -59,14 +59,14 @@ static int subsampled (const double *Z, const DATAINFO *pdinfo,
     int t, n = pdinfo->n;
 
     for (t=0; t<n; t++)
-	if (floatneq(Z[n*subnum + t], 0.0)) return 1;
+	if (floatneq(Z[subnum][t], 0.0)) return 1;
     return 0;
 }
 
 /* .......................................................... */
 
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec, 
-			const double *Z, const DATAINFO *pdinfo)
+			double **Z, const DATAINFO *pdinfo)
      /* check a model (or modelspec) against the data info to see if 
 	it may have been estimated on a different (subsampled) data 
 	set from the current one */
@@ -100,7 +100,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	fprintf(stderr, "model is subsampled, dataset is not\n");
 	return 1;
     } else { /* do the subsamples (model and current data set) agree? */
-	if (_identical(&Z[n*i], subdum, n))
+	if (_identical(Z[i], subdum, n))
 	    return 0;
 	else {
 	    fprintf(stderr, "model and dataset subsamples not the same\n");
@@ -146,59 +146,10 @@ static void prep_subdinfo (DATAINFO *dinfo, int markers, int n)
     sprintf(dinfo->endobs, "%d", n);
 }
 
-#ifdef NOT_YET
-/* .......................................................... */
-
-int case_sample_direct (double **oldZ, double **newZ,
-			DATAINFO *olddinfo, DATAINFO *newdinfo,
-			double *dummy)
-     /* subsample directly from a full-length dummy var */
-{
-    int i, t, st, sn, n = olddinfo->n;
-    char **S = NULL;
-
-    sn = 0;
-    /* how many cases in sub-sample? */
-    for (t=0; t<n; t++) {
-	if (dummy[t] == 1.0) sn++;
-    }
-    /* FIXME handle pathological cases for sn? */
-
-    newdinfo->n = sn;
-    newdinfo->v = olddinfo->v;
-    if (start_new_Z(newZ, newdinfo, 1)) return E_ALLOC;
-
-    newdinfo->varname = olddinfo->varname;
-    newdinfo->label = olddinfo->label;
-
-    if (olddinfo->markers && _allocate_case_markers(&S, sn)) {
-	free(*newZ);
-	return E_ALLOC;
-    }
-
-    /* copy across data and case markers, if any */
-    st = 0;
-    for (t=0; t<n; t++) {
-	if (dummy[t] == 1.) {
-	    for (i=1; i<olddinfo->v; i++) 
-		(*newZ)[i * sn + st] = (*oldZ)[i * n + t];
-	    if (olddinfo->markers) 
-		strcpy(S[st], olddinfo->S[t]);
-	    st++;
-	}
-    }
-
-    prep_subdinfo(newdinfo, olddinfo->markers, sn);
-    if (olddinfo->markers) newdinfo->S = S;
-
-    return 0;
-}
-#endif
-
 /* .......................................................... */
 
 int set_sample_dummy (const char *line, 
-		      double **oldZ, double **newZ,
+		      double ***oldZ, double ***newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
 		      const int opt)
      /* sub-sample the data set, based on the criterion of skipping
@@ -226,7 +177,7 @@ int set_sample_dummy (const char *line,
 	for (t=0; t<n; t++) {
 	    dum[t] = 1.0;
 	    for (i=1; i<oldinfo->v; i++) {
-		if (na((*oldZ)[i*n + t])) {
+		if (na((*oldZ)[i][t])) {
 		    dum[t] = 0.;
 		    break;
 		}
@@ -273,7 +224,7 @@ int set_sample_dummy (const char *line,
 	else if (missobs)
 	    strcpy(gretl_errmsg, "No observations would be left!");
 	else { /* case of boolean expression */
-	    if ((*oldZ)[subnum * n + oldinfo->t1] == 0)
+	    if ((*oldZ)[subnum][oldinfo->t1] == 0)
 		strcpy(gretl_errmsg, "No observations would be left!");
 	    else
 		strcpy(gretl_errmsg, "No observations were dropped!");
@@ -294,10 +245,10 @@ int set_sample_dummy (const char *line,
     }
     for (t=0; t<n; t++) {
 	if (missobs) 
-	    (*oldZ)[subnum * n + t] = dum[t];
+	    (*oldZ)[subnum][t] = dum[t];
 	else if (opt == OPT_O)
 	    /* ?possibility of missing values here? */
-	    (*oldZ)[subnum * n + t] = (*oldZ)[dumnum * n + t];
+	    (*oldZ)[subnum][t] = (*oldZ)[dumnum][t];
     }
 
     newinfo->n = sn;
@@ -314,7 +265,7 @@ int set_sample_dummy (const char *line,
 
     /* case markers */
     if (oldinfo->markers && _allocate_case_markers(&S, sn)) {
-	free(*newZ);
+	free_Z(*newZ, newinfo);
 	free(dum);
 	return E_ALLOC;
     }
@@ -322,10 +273,10 @@ int set_sample_dummy (const char *line,
     /* copy across data and case markers, if any */
     st = 0;
     for (t=0; t<n; t++) {
-	xx = (missobs)? dum[t] : (*oldZ)[dumnum * n + t];
+	xx = (missobs)? dum[t] : (*oldZ)[dumnum][t];
 	if (xx == 1.) {
 	    for (i=1; i<oldinfo->v; i++) 
-		(*newZ)[i * sn + st] = (*oldZ)[i * n + t];
+		(*newZ)[i][st] = (*oldZ)[i][t];
 	    if (oldinfo->markers) 
 		strcpy(S[st], oldinfo->S[t]);
 	    st++;
@@ -393,33 +344,44 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 
 /* ........................................................... */
 
-static int datamerge (double **fullZ, DATAINFO *fullinfo,
-		      double **subZ, DATAINFO *subinfo)
+static int datamerge (double ***fullZ, DATAINFO *fullinfo,
+		      double ***subZ, DATAINFO *subinfo)
 {
     int i, t, dumn, subt;
     int newvars = subinfo->v - fullinfo->v;
-    int subn = subinfo->n, n = fullinfo->n;
-    double *newZ = NULL;
+    int n = fullinfo->n;
+    double **newZ = NULL;
+    int err = 0;
 
     if (newvars <= 0) return 0;
 
     dumn = varindex(subinfo, "subdum");
     if (dumn == subinfo->v) return E_NOMERGE;
 
-    newZ = realloc(*fullZ, subinfo->v * n * sizeof **fullZ);  
-    if (newZ == NULL) return E_ALLOC;
+    newZ = realloc(*fullZ, subinfo->v * sizeof **fullZ);
+    if (newZ != NULL) {
+	for (i=0; i<newvars; i++) {
+	    newZ[fullinfo->v+i] = malloc(n * sizeof **newZ);
+	    if (newZ[fullinfo->v+i] == NULL) {
+		err = 1;
+		break;
+	    }
+	}
+    } else err = 1;
+
+    if (err) return E_ALLOC;
     else *fullZ = newZ;
 
     subt = 0;
     for (t=0; t<n; t++) {
-	if ((*fullZ)[dumn * n + t] == 1.0) {
+	if ((*fullZ)[dumn][t] == 1.0) {
 	    for (i=fullinfo->v; i<subinfo->v; i++) {
-		(*fullZ)[i*n + t] = (*subZ)[i*subn + subt];
+		(*fullZ)[i][t] = (*subZ)[i][subt];
 	    }
 	    subt++;
 	} else {
 	    for (i=fullinfo->v; i<subinfo->v; i++) { 
-		(*fullZ)[i*n + t] = NADBL;
+		(*fullZ)[i][t] = NADBL;
 	    }
 	}
     }
@@ -433,7 +395,7 @@ static int datamerge (double **fullZ, DATAINFO *fullinfo,
 
 /* ........................................................... */
 
-int restore_full_sample (double **subZ, double **fullZ, double **Z,
+int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
 			 DATAINFO **datainfo)
 {
@@ -460,12 +422,12 @@ int restore_full_sample (double **subZ, double **fullZ, double **Z,
     /* zero out the "subdum" dummy variable */
     i = varindex(*fullinfo, "subdum");
     if (i < (*fullinfo)->v)
-        for (t=0; t<n; t++) (*fullZ)[i*n + t] = 0.;
+        for (t=0; t<n; t++) (*fullZ)[i][t] = 0.;
 
     /* reorganize pointers for data set */
     *subZ = *Z;
     *Z = *fullZ;
-    free(*subZ);
+    free_Z(*subZ, *subinfo); 
     *subZ = NULL;
     *fullZ = NULL;
     /* and data info struct */
@@ -482,27 +444,27 @@ int restore_full_sample (double **subZ, double **fullZ, double **Z,
 
 /* ........................................................... */
 
-int count_missing_values (double **pZ, DATAINFO *pdinfo, PRN *prn)
+int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 {
-    int i, v, t, n = pdinfo->n;
+    int i, v, t;
     int missval = 0, missobs = 0, oldmiss = 0, tmiss;
     int year = 0, yearmiss = 0, totvals = 0, yearbak = 0;
 
     v = varindex(pdinfo, "year");
     if (v == pdinfo->v) v = varindex(pdinfo, "YEAR");
     if (v == pdinfo->v) v = 0;
-    else yearbak = (int) (*pZ)[v*n + pdinfo->t1];
+    else yearbak = (int) (*pZ)[v][pdinfo->t1];
 
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	tmiss = 0;
 	for (i=1; i<pdinfo->v; i++) {
 	    if (hidden_var(i, pdinfo)) continue;
-	    if (na((*pZ)[i*n + t])) missval++;
+	    if (na((*pZ)[i][t])) missval++;
 	    totvals++;
 	}
 	if ((tmiss = missval - oldmiss)) missobs++;
 	if (v) {
-	    year = (int) (*pZ)[v*n + t];
+	    year = (int) (*pZ)[v][t];
 	    if (year != yearbak) {
 		pprintf(prn, "%d: %4d missing data values\n", 
 			yearbak, yearmiss);

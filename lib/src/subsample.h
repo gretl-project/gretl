@@ -25,22 +25,22 @@
 /* functions follow */
 
 int attach_subsample_to_model (MODEL *pmod, 
-			       double **fullZ, const DATAINFO *fulldinfo);
+			       double ***fullZ, const DATAINFO *fulldinfo);
 
 int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
-			const double *Z, const DATAINFO *pdinfo);
+			double **Z, const DATAINFO *pdinfo);
 
 int set_sample_dummy (const char *line, 
-		      double **oldZ, double **newZ,
+		      double ***oldZ, double ***newZ,
 		      DATAINFO *oldinfo, DATAINFO *newinfo,
 		      const int opt);
 
 int set_sample (const char *line, DATAINFO *pdinfo);
 
-int restore_full_sample (double **subZ, double **fullZ, double **Z,
+int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
 			 DATAINFO **datainfo); 
 
-int count_missing_values (double **pZ, DATAINFO *pdinfo, PRN *prn);
+int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
 #endif /* SUBSAMPLE_H */

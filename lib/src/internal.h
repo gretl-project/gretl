@@ -25,10 +25,10 @@
 #define _grow_Z(n, p1, p2) dataset_add_vars((n), p1, p2)
 #define _shrink_Z(n, p1, p2) dataset_drop_vars((n), p1, p2)
 
-int _laggenr (const int iv, const int lag, const int opt, double **pZ, 
+int _laggenr (const int iv, const int lag, const int opt, double ***pZ, 
 	      DATAINFO *pdinfo);
 
-int _multiply (char *s, int *list, char *sfx, double **pZ,
+int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo);
 
 void _print_add (const COMPARE *add, const int *addvars, 
@@ -85,14 +85,14 @@ void _criteria (const double ess, const int nobs, const int ncoeff,
 		PRN *prn);
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  const double *Z, const int n, int *misst);
+		  double **Z, const int n, int *misst);
 
 int _list_dups (const int *list, int ci);
 
 int _lagvarnum (const int iv, const int lag, const DATAINFO *pdinfo);
 
 int _forecast (int t1, const int t2, const int nv, 
-	       const MODEL *pmod, DATAINFO *pdinfo, double **pZ);
+	       const MODEL *pmod, DATAINFO *pdinfo, double ***pZ);
 
 int _full_model_list (MODEL *pmod, int **plist);
 
@@ -103,6 +103,6 @@ double _tcrit95 (const int df);
 int _allocate_case_markers (char ***S, int n);
 
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
-	    const DATAINFO *pdinfo, const double *Z);
+	    const DATAINFO *pdinfo, double **Z);
 
 #endif /* GRETL_INTERNAL_H */

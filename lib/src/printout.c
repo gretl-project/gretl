@@ -1468,15 +1468,14 @@ static int bufprintnum (char *buf, double x, int signif, int width)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int printdata (LIST list, double **pZ, const DATAINFO *pdinfo, 
+int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo, 
 	       int pause, int byobs, PRN *prn)
 {
     int idate, l0, j, v, v1, v2, j5, nvj5, lineno, ncol;
     register int t;
     int gui, isconst; 
     int *pmax = NULL; 
-    int pd = pdinfo->pd, t1 = pdinfo->t1, t2 = pdinfo->t2,
-	n = pdinfo->n;
+    int pd = pdinfo->pd, t1 = pdinfo->t1, t2 = pdinfo->t2;
     double xx, xdate, sd0 = pdinfo->sd0;
     int *tmplist = NULL, freelist = 0;
     char line[96];
@@ -1496,7 +1495,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
     isconst = 1;
     for (j=1; j<=list[0]; j++) {
 	for (t=t1+1; t<=t2; t++) {
-	    if (floatneq((*pZ)[n*list[j] + t], (*pZ)[n*list[j] + t1])) {
+	    if (floatneq((*pZ)[list[j]][t], (*pZ)[list[j]][t1])) {
 		isconst = 0;
 		break;
 	    }
@@ -1506,7 +1505,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
     if (isconst) {
 	for (j=1; j<=list[0]; j++) 
 	    pprintf(prn, "%8s = %10g\n", pdinfo->varname[list[j]], 
-		    (*pZ)[n*list[j] + t1]);
+		    (*pZ)[list[j]][t1]);
 	if (freelist) free(list);
 	return 0;
     }
@@ -1518,7 +1517,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
 	    pprintf(prn, "Data frequency: %d\n", pdinfo->pd);
 	    print_smpl (pdinfo, 0, prn);
 	    pprintf(prn, "\n");
-	    printz(&((*pZ)[n*list[j]]), pdinfo, prn);
+	    printz((*pZ)[list[j]], pdinfo, prn);
 	    pprintf(prn, "\n");
 	}
 	return 0;
@@ -1529,7 +1528,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
     if (pmax == NULL) return 1;
     for (j=1; j<=l0; j++) {
 	/* this runs fairly quickly, even for large dataset */
-	pmax[j-1] = get_signif(&(*pZ)[n*list[j] + t1], t2-t1+1);
+	pmax[j-1] = get_signif(&(*pZ)[list[j]][t1], t2-t1+1);
     }
 
     /* print data by observations */
@@ -1558,7 +1557,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
 			sprintf(line, "%8.2f ", xdate);
 		} /* end print obs marker */
 		for (v=v1; v<=v2; v++) {
-		    xx = (*pZ)[n*list[v] + t];
+		    xx = (*pZ)[list[v]][t];
 		    if (na(xx)) {
 			strcat(line, "             ");
 		    } else { 
@@ -1598,7 +1597,7 @@ int printdata (LIST list, double **pZ, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int print_fit_resid (const MODEL *pmod, double **pZ, 
+int print_fit_resid (const MODEL *pmod, double ***pZ, 
 		     DATAINFO *pdinfo, PRN *prn)
 {
     int pmax, idate, depvar, t, nfit, ast = 0;
@@ -1614,9 +1613,9 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
     if (nfit < 0) return 1;
 
     if (isdummy(depvar, t1, t2, *pZ, n) > 0)
-	pmax = get_precision(&(*pZ)[n*nfit], n);
+	pmax = get_precision((*pZ)[nfit], n);
     else
-	pmax = get_precision(&(*pZ)[n*depvar], n);
+	pmax = get_precision((*pZ)[depvar], n);
 
     fit_resid_head(pmod, pdinfo, prn);
     for (t=0; t<n; t++) {
@@ -1633,17 +1632,17 @@ int print_fit_resid (const MODEL *pmod, double **pZ,
 	}
 #ifdef notdef
  	for (i=1; i<4; i++) {
- 	    if (i == 1) xx = (*pZ)[n*depvar + t];
- 	    if (i == 2) xx = (*pZ)[n*nfit + t];
- 	    if (i == 3) xx = (*pZ)[n*depvar + t] - (*pZ)[n*nfit + t];
+ 	    if (i == 1) xx = (*pZ)[depvar][t];
+ 	    if (i == 2) xx = (*pZ)[nfit][t];
+ 	    if (i == 3) xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
  	    printxs(xx, 15, PRINT, prn);
  	}
 #endif
-	xx = (*pZ)[n*depvar + t] - (*pZ)[n*nfit + t];
+	xx = (*pZ)[depvar][t] - (*pZ)[nfit][t];
 	if (fabs(xx) > 2.5 * pmod->sigma) ast = 1;
 	pprintf(prn, "%12.*f%12.*f%12.*f", 
-		pmax, (*pZ)[n*depvar + t],
-		pmax, (*pZ)[n*nfit + t], pmax, xx);
+		pmax, (*pZ)[depvar][t],
+		pmax, (*pZ)[nfit][t], pmax, xx);
 	pprintf(prn, "%s\n", (fabs(xx) > 2.5 * pmod->sigma)? " *" : "");
     }
     pprintf(prn, "\n");

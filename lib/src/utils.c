@@ -204,9 +204,9 @@ int ijton (const int i, const int j, const int lo)
  * Returns: the number of valid observations put into @px.
  */
 
-int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo) 
+int ztox (const int i, double *px, double **Z, const DATAINFO *pdinfo) 
 {
-    int t, m = 0, n = pdinfo->n;
+    int t, m = 0;
     double xx;
 
 #ifdef notdef
@@ -214,7 +214,7 @@ int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo)
 #endif
     
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	xx = Z(i, t);
+	xx = Z[i][t];
 	if (na(xx)) continue;
 	else px[m++] = xx;
     }
@@ -243,13 +243,13 @@ int ztox (const int i, double *px, const double *Z, const DATAINFO *pdinfo)
  */
 
 int isdummy (const int varnum, const int t1, const int t2, 
-	     const double *Z, const int n)
+	     double **Z, const int n)
 {
     int t, m = 0;
     double xx;
 
     for (t=t1; t<=t2; t++) {
-	xx = Z[n*varnum + t];
+	xx = Z[varnum][t];
 	if (floatneq(xx, 0.0) && floatneq(xx, 1.0)) return 0;
 	if (floateq(xx, 1.0)) m++;
     }
@@ -512,7 +512,7 @@ void _criteria (const double ess, const int nobs, const int ncoeff,
 /* ....................................................... */
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  const double *Z, const int n, int *misst)
+		  double **Z, const int n, int *misst)
      /* drop first/last observations from sample if missing obs 
 	encountered -- also check for missing vals within the
         remaining sample */
@@ -524,16 +524,16 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     
     for (i=1; i<=list[0]; i++) {
 	for (t=t1min; t<t2max; t++) {
-	    xx = Z(list[i], t);
-	    if (dwt) xx *= Z(dwt, t);
+	    xx = Z[list[i]][t];
+	    if (dwt) xx *= Z[dwt][t];
 	    if (na(xx)) t1min += 1;
 	    else break;
 	}
     }
     for (i=1; i<=list[0]; i++) {
 	for (t=t2max; t>t1min; t--) {
-	    xx = Z(list[i], t);
-	    if (dwt) xx *= Z(dwt, t);
+	    xx = Z[list[i]][t];
+	    if (dwt) xx *= Z[dwt][t];
 	    if (na(xx)) t2max -= 1;
 	    else break;
 	}
@@ -541,8 +541,8 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     if (misst != NULL) {
 	for (i=1; i<=list[0]; i++) {
 	    for (t=t1min; t<=t2max; t++) {
-		xx = Z(list[i], t);
-		if (dwt) xx *= Z(dwt, t);
+		xx = Z[list[i]][t];
+		if (dwt) xx *= Z[dwt][t];
 		if (na(xx)) {
 		    *misst = t + 1;
 		    return list[i];
@@ -1223,18 +1223,20 @@ int copylist (int **target, const int *src)
 
 /* ......................................................  */
 
-int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo)
+int grow_nobs (const int newobs, double ***pZ, DATAINFO *pdinfo)
 {
-    double *newZ;
-    int t, n = pdinfo->n, v = pdinfo->v;
+    double *x;
+    int i, t, n = pdinfo->n, v = pdinfo->v;
     char endobs[12];
 
     if (newobs <= 0) return 0;
 
-    newZ = realloc(*pZ, v * (n + newobs) * sizeof *newZ);  
-    if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
-
+    for (i=0; i<v; i++) {
+	x = realloc((*pZ)[i], (n + newobs) * sizeof *x);
+	if (x == NULL) return E_ALLOC;
+	else (*pZ)[i] = x;
+    }
+    
     if (pdinfo->markers && pdinfo->S != NULL) {
 	char **S;
 
@@ -1246,25 +1248,29 @@ int grow_nobs (const int newobs, double **pZ, DATAINFO *pdinfo)
     pdinfo->t2 = pdinfo->n - 1;
     ntodate(endobs, pdinfo->t2, pdinfo);
     strcpy(pdinfo->endobs, endobs);
-    for (t=0; t<pdinfo->n; t++) (*pZ)[t] = 1.0;
+    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0;
     return 0;
 }
 
 /* ......................................................  */
 
-int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo)
+int dataset_add_vars (const int newvars, double ***pZ, DATAINFO *pdinfo)
 {
-    double *newZ;
+    double **newZ;
     char **varname;
     char **label;
     int i, n = pdinfo->n, v = pdinfo->v;    
 
 /*      printf("grow_Z: n = %d, v = %d, newvars = %d\n", n, v, newvars);  */
 /*      printf("Z size wanted: %d\n", (v + newvars) * n * sizeof(double));  */
-    
-    newZ = realloc(*pZ, (v + newvars) * n * sizeof *newZ);  
+
+    newZ = realloc(*pZ, (v + newvars) * sizeof *newZ);  
     if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
+    for (i=0; i<newvars; i++) {
+	newZ[v+i] = malloc(n * sizeof **newZ);
+	if (newZ[v+i] == NULL) return E_ALLOC;
+    }
+    *pZ = newZ;
 
     varname = realloc(pdinfo->varname, (v + newvars) * sizeof(char *));
     if (varname == NULL) return E_ALLOC;
@@ -1292,22 +1298,22 @@ int dataset_add_vars (const int newvars, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo)
+int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 {
-    double *newZ;
+    double **newZ;
     char **varname;
     char **label;
-    int i, t, n = pdinfo->n, v = pdinfo->v; 
+    int i, v = pdinfo->v; 
 
     free(pdinfo->varname[varno]);
     if (pdinfo->label[varno] != NULL) 
 	free(pdinfo->label[varno]);
+    free((*pZ)[varno]);
 
     for (i=varno; i<v-1; i++) {
 	pdinfo->varname[i] = pdinfo->varname[i+1];
 	pdinfo->label[i] = pdinfo->label[i+1];
-	for (t=0; t<n; t++)
-	    (*pZ)[n*i + t] = (*pZ)[n*(i+1) + t];
+	(*pZ)[i] = (*pZ)[i+1];
     }
 
     varname = realloc(pdinfo->varname, (v-1) * sizeof(char *));
@@ -1318,7 +1324,7 @@ int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo)
     if (label == NULL) return E_ALLOC;
     else pdinfo->label = label;
 
-    newZ = realloc(*pZ, (v-1) * n * sizeof *newZ); 
+    newZ = realloc(*pZ, (v-1) * sizeof *newZ); 
     if (newZ == NULL) return E_ALLOC;
     else *pZ = newZ;
 
@@ -1329,24 +1335,24 @@ int dataset_drop_var (int varno, double **pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-int dataset_drop_vars (const int delvars, double **pZ, DATAINFO *pdinfo)
+int dataset_drop_vars (const int delvars, double ***pZ, DATAINFO *pdinfo)
 {
-    double *newZ;
+    double **newZ;
     char **varname;
     char **label;
-    int i, n = pdinfo->n, v = pdinfo->v;   
+    int i, v = pdinfo->v;   
 
     if (delvars <= 0) return 0;
-
-    /*  printf("shrinking Z by %d\n", delvars); */
-    newZ = realloc(*pZ, (v - delvars) * n * sizeof *newZ); 
-    if (newZ == NULL) return E_ALLOC;
-    else *pZ = newZ;
 
     for (i=v-delvars; i<v; i++) {
 	if (pdinfo->varname[i] != NULL) free(pdinfo->varname[i]);
 	if (pdinfo->label[i] != NULL) free(pdinfo->label[i]);
+	if ((*pZ)[i] != NULL) free((*pZ)[i]);
     }
+
+    newZ = realloc(*pZ, (v - delvars) * sizeof *newZ); 
+    if (newZ == NULL) return E_ALLOC;
+    else *pZ = newZ;
         
     varname = realloc(pdinfo->varname, (v - delvars) * sizeof(char *));
     if (varname == NULL) return E_ALLOC;
@@ -1445,11 +1451,11 @@ int swap_models (MODEL **targ, MODEL **src)
 /* ........................................................... */
 
 int _forecast (int t1, const int t2, const int nv, 
-	       const MODEL *pmod, DATAINFO *pdinfo, double **pZ)
+	       const MODEL *pmod, DATAINFO *pdinfo, double ***pZ)
 {
     double xx, zz, zr;
     int i, k, maxlag = 0, yno = pmod->list[1], ARMODEL;
-    int v, t, n = pdinfo->n;
+    int v, t;
 
     ARMODEL = (pmod->ci == AR || pmod->ci == CORC || 
 	       pmod->ci == HILU)? 1: 0;
@@ -1460,13 +1466,13 @@ int _forecast (int t1, const int t2, const int nv,
     for (t=t1; t<=t2; t++) {
 	zz = 0.0;
 	if (ARMODEL) for (k=1; k<=pmod->arlist[0]; k++) {
-	    xx = (*pZ)[n*yno + t-pmod->arlist[k]];
+	    xx = (*pZ)[yno][t-pmod->arlist[k]];
 	    zr = pmod->rhot[k];
 	    if (na(xx)) {
 		if (zr == 0) continue;
-		xx = (*pZ)[n*nv + t-pmod->arlist[k]];
+		xx = (*pZ)[nv][t-pmod->arlist[k]];
 		if (na(xx)) {
-		    (*pZ)[n*nv + t] = NADBL;
+		    (*pZ)[nv][t] = NADBL;
 		    goto ENDIT;
 		}
 	    }
@@ -1474,19 +1480,19 @@ int _forecast (int t1, const int t2, const int nv,
 	}
 	for (v=1; v<=pmod->ncoeff; v++) {
 	    k = pmod->list[v+1];
-	    xx = (*pZ)[n*k + t];
+	    xx = (*pZ)[k][t];
 	    if (na(xx)) {
 		zz = NADBL;
 		break;
 	    }
 	    if (ARMODEL) {
-		xx = (*pZ)[n*k + t];
+		xx = (*pZ)[k][t];
 		for (i=1; i<=pmod->arlist[0]; i++) 
-		    xx -= pmod->rhot[i] * (*pZ)[n*k + t-pmod->arlist[i]];
+		    xx -= pmod->rhot[i] * (*pZ)[k][t-pmod->arlist[i]];
 	    }
 	    zz = zz + xx * pmod->coeff[v];
 	}
-	(*pZ)[n*nv + t] = zz;
+	(*pZ)[nv][t] = zz;
     ENDIT:  ;
     }
     return 0;
@@ -1528,16 +1534,16 @@ int _full_model_list (MODEL *pmod, int **plist)
 /* ........................................................... */
 
 int fcast_with_errs (const char *str, const MODEL *pmod, 
-		     double **pZ, DATAINFO *pdinfo, PRN *prn,
+		     double ***pZ, DATAINFO *pdinfo, PRN *prn,
 		     const PATHS *ppaths, const int plot)
      /* use Salkever's method to generate forecasts plus forecast
 	variances -- FIXME ifc = 0, and methods other than OLS */
 {
-    double *fZ;
+    double **fZ;
     DATAINFO fdatainfo;
     MODEL fmod; 
     int *list, orig_v, idate, ft1, ft2, v1, err = 0;
-    int i, j, k, t, n = pdinfo->n, nfcast, fn, fv;
+    int i, j, k, t, nfcast, fn, fv;
     double xdate, tval, maxerr, *yhat, *sderr, *depvar;
     char t1str[8], t2str[8];
 
@@ -1560,7 +1566,10 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     fn = fdatainfo.n = nfcast + pdinfo->t2 + 1;
     fv = fdatainfo.v = nfcast + orig_v;
 
-    fZ = malloc(fn * fv * sizeof *fZ);
+    fZ = malloc(fv * sizeof *fZ);
+    if (fZ != NULL) 
+	for (i=0; i<fv; i++) 
+	    fZ[i] = malloc(fn * sizeof **fZ);
     list = malloc((fv + 1) * sizeof *list);
     yhat = malloc(nfcast * sizeof *yhat);
     sderr = malloc(nfcast * sizeof *sderr);
@@ -1583,24 +1592,24 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
     /* set entire new data matrix to zero */
     for (i=0; i<fv; i++)
-	for (t=0; t<fn; t++) fZ[fn*i + t] = 0.0;
+	for (t=0; t<fn; t++) fZ[i][t] = 0.0;
     /* insert const at pos. 0 */
-    for (t=0; t<fn; t++) fZ[t] = 1.0;
+    for (t=0; t<fn; t++) fZ[0][t] = 1.0;
     /* insert orig model vars into fZ */
     k = pmod->ifc? orig_v-1: orig_v;
     for (i=1; i<=k; i++) {
 	for (t=0; t<=pdinfo->t2; t++) 
-	    fZ[fn*i + t] = (*pZ)[n*pmod->list[i] + t];
+	    fZ[i][t] = (*pZ)[pmod->list[i]][t];
 	if (i == 1) continue;
 	for (t=pdinfo->t2+1; t<fn; t++)
-	    fZ[fn*i + t] = (*pZ)[n*pmod->list[i] + (t - (pdinfo->t2+1) + ft1)];
+	    fZ[i][t] = (*pZ)[pmod->list[i]][t - (pdinfo->t2+1) + ft1];
     }
     /* insert -I section */
     for (i=orig_v; i<fv; i++) {
 	k = orig_v - i;
 	for (t=pdinfo->t2+1; t<fn; t++) {
 	    j = pdinfo->t2 + 1 - t;
-	    if (k == j) fZ[fn*i + t] = -1.0;
+	    if (k == j) fZ[i][t] = -1.0;
 	}
     }
 
@@ -1608,7 +1617,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     /* check: print matrix */
     for (t=0; t<fn; t++) {
  	for (i=0; i<fv; i++)
- 	    printf("%.2f ", fZ[fn*i + t]);
+ 	    printf("%.2f ", fZ[i][t]);
  	putc('\n', stdout);
     }
 #endif
@@ -1619,7 +1628,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     if (fmod.errcode) {
 	err = fmod.errcode;
 	clear_model(&fmod, NULL, NULL, &fdatainfo);
-	free(fZ);
+	free_Z(fZ, &fdatainfo);
 	free(list);
 	free(yhat);
 	free(sderr);
@@ -1659,7 +1668,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 
     /* print results */
     for (t=0; t<nfcast; t++) 
-	depvar[t] = (*pZ)[n*v1 + ft1 + t];
+	depvar[t] = (*pZ)[v1][ft1 + t];
     tval = _tcrit95(pmod->dfd);
     pprintf(prn, " For 95%% confidence intervals, t(%d, .025) = %.3f\n", 
 	    pmod->dfd, tval);
@@ -1711,12 +1720,12 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 		plotvar(pZ, pdinfo, "time");
 	    }
 	} else plotvar(pZ, pdinfo, "index");
-	err = plot_fcast_errs(nfcast, &(*pZ)[(pdinfo->v - 1) * pdinfo->n + ft1], 
+	err = plot_fcast_errs(nfcast, &(*pZ)[pdinfo->v - 1][ft1], 
 			      depvar, yhat, sderr, pdinfo->varname[v1], ppaths);
     }
 
     clear_model(&fmod, NULL, NULL, &fdatainfo);
-    free(fZ);
+    free_Z(fZ, &fdatainfo);
     free(list);
     free(yhat);
     free(sderr);
@@ -1803,7 +1812,7 @@ int save_model_spec (MODEL *pmod, MODELSPEC *spec, DATAINFO *fullinfo)
 /* ........................................................... */
 
 int re_estimate (char *model_spec, MODEL *tmpmod, 
-		 double **pZ, DATAINFO *pdinfo) 
+		 double ***pZ, DATAINFO *pdinfo) 
 {
     CMD command;
     int err = 0, ignore = 0, model_count = 0;
@@ -1866,9 +1875,9 @@ int re_estimate (char *model_spec, MODEL *tmpmod,
 
 /* ........................................................... */
 
-int guess_panel_structure (double *Z, DATAINFO *pdinfo)
+int guess_panel_structure (double **Z, DATAINFO *pdinfo)
 {
-    int v, panel, n = pdinfo->n;
+    int v, panel;
 
     v = varindex(pdinfo, "year");
     if (v == pdinfo->v)
@@ -1876,7 +1885,7 @@ int guess_panel_structure (double *Z, DATAINFO *pdinfo)
     if (v == pdinfo->v)
 	panel = 0; /* can't guess */
     else {
-	if (floateq(Z[n*v], Z[n*v+1])) { /* "year" is same for first two obs */
+	if (floateq(Z[v][0], Z[v][1])) { /* "year" is same for first two obs */
 	    pdinfo->time_series = STACKED_CROSS_SECTION; 
 	    panel = STACKED_CROSS_SECTION;
 	} else {

@@ -908,7 +908,7 @@ static void read_boxrc (PLOTGROUP *grp);
 
 /* ............................................................. */
 
-int boxplots (int *list, char **bools, double **pZ, const DATAINFO *pdinfo, 
+int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo, 
 	      int notches)
 {
     int i, j, n = pdinfo->t2 - pdinfo->t1 + 1;
@@ -1431,7 +1431,7 @@ static int special_varcount (const char *s)
     return n;
 }
 
-int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo, 
+int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo, 
 		      int notches)
 {
     int i, k, v, nvars, nbool, err = 0;
@@ -1524,9 +1524,9 @@ int boolean_boxplots (const char *str, double **pZ, DATAINFO *pdinfo,
 	    } else {
 		for (t=0; t<n; t++) {
 		    if (genr.xvec[t] == 1.0) 
-			(*pZ)[k*n + t] = (*pZ)[list[i]*n + t];
+			(*pZ)[k][t] = (*pZ)[list[i]][t];
 		    else 
-			(*pZ)[k*n + t] = NADBL;
+			(*pZ)[k][t] = NADBL;
 		}
 		strcpy(pdinfo->varname[k], pdinfo->varname[list[i]]);
 		list[i] = k++;

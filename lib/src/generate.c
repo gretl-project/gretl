@@ -27,11 +27,11 @@ static int _cstack (double *xstack, const double *xxvec, const char op,
 static int _domath (double *xxvec, const double *xmvec, const int nt, 
 		    const DATAINFO *pdinfo);
 static int _evalexp (char *ss, double *xmvec, double *xxvec, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod, GENERATE *genr);
 static void _getvar (char *str, char *word, char *c);
 static int _getxvec (char *ss, double *xxvec, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod);
 static int _scanb (const char *ss, char *word);
 static char _strtype (char *ss, const DATAINFO *pdinfo);
@@ -39,17 +39,17 @@ static int _whichtrans (const char *ss);
 static int _normal_dist (double *a, const int t1, const int t2); 
 static void _uniform (double *a, const int t1, const int t2);
 static int _createvar (double *xxvec, char *snew, char *sleft, 
-		       char *sright, int nv, int nvtmp, double **pZ, 
+		       char *sright, int nv, int nvtmp, double ***pZ, 
 		       DATAINFO *pdinfo);
-static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *pgenr,
+static void _genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *pgenr,
 		       double *mystack, double *mvec, const int nv);
-static void _lag (const char *ss, const int vi, double *xmvec, double *Z, 
+static void _lag (const char *ss, const int vi, double *xmvec, double **Z, 
 		  const DATAINFO *pdinfo);
-static double _genr_cov (const char *str, double **pZ,
+static double _genr_cov (const char *str, double ***pZ,
 			 const DATAINFO *pdinfo);
-static double _genr_corr (const char *str, double **pZ,
+static double _genr_corr (const char *str, double ***pZ,
 			  const DATAINFO *pdinfo);
-static double _genr_vcv (const char *str, double **pZ, 
+static double _genr_vcv (const char *str, double ***pZ, 
 			 const DATAINFO *pdinfo, MODEL *pmod);
 static void _genr_msg (GENERATE *pgenr, const int nv);
 static int _ismatch (const int lv, const int *list);
@@ -465,7 +465,7 @@ int genr_scalar_index (int opt, int put)
  * Returns: a #GENERATE struct.
  */
 
-GENERATE generate (double **pZ, DATAINFO *pdinfo, 
+GENERATE generate (double ***pZ, DATAINFO *pdinfo, 
 		   const char *line, const int model_count, 
 		   MODEL *pmod, const int oflag)
 {
@@ -1224,7 +1224,7 @@ static int _domath (double *xxvec, const double *xmvec, const int nt,
 /* .....................................................*/
 
 static int _evalexp (char *ss, double *xmvec, double *xxvec, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod, GENERATE *genr)
 {
     char s3[MAXLEN], op2, op3;
@@ -1324,7 +1324,7 @@ static int check_modelstat (const MODEL *pmod, int type1)
 /* ...........................................................*/
 
 static int _getxvec (char *ss, double *xxvec, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
 		     const MODEL *pmod)
      /* calculate and return the xxvec vector of values */
 {
@@ -1413,7 +1413,7 @@ static int _getxvec (char *ss, double *xxvec,
 	    } else
 		for (i=0; i<n; i++) xxvec[i] = (double) (i + 1);
 	} else 
-	    for (i=0; i<n; i++) xxvec[i] = Z(v1, i);
+	    for (i=0; i<n; i++) xxvec[i] = Z[v1][i];
 	break;
 
     case 'u':  return 1;
@@ -1430,22 +1430,22 @@ static int _getxvec (char *ss, double *xxvec,
 
 /* ..................................................................*/
 
-static void _lag (const char *ss, const int vi, double *xmvec, double *Z, 
+static void _lag (const char *ss, const int vi, double *xmvec, double **Z, 
 		  const DATAINFO *pdinfo)
      /*  calculate lags and leads of variable  */
 {
     register int i;
     int lg;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
 
     lg = atoi(ss);
     if (lg > 0) {
-        for (i=t1; i<=t2-lg; i++) xmvec[i] = Z(vi, i+lg);
+        for (i=t1; i<=t2-lg; i++) xmvec[i] = Z[vi][i+lg];
         for (i=1+t2-lg; i<=t2; i++) xmvec[i] = NADBL;
     }
     if (lg < 0)  {
         lg = -lg;
-        for (i=t1+lg; i<=t2; i++) xmvec[i] = Z(vi, i-lg);
+        for (i=t1+lg; i<=t2; i++) xmvec[i] = Z[vi][i-lg];
         for (i=t1; i<=t1+lg-1; i++) xmvec[i] = NADBL;
     }
 }
@@ -1555,11 +1555,11 @@ static int _whichtrans (const char *ss)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int dummy (double **pZ, DATAINFO *pdinfo)
+int dummy (double ***pZ, DATAINFO *pdinfo)
 {
     static char word[16];
     int vi, t, yy, pp, mm;
-    int n = pdinfo->n, nvar = pdinfo->v;
+    int nvar = pdinfo->v;
     int ndummies = pdinfo->pd;
     double xx;
 
@@ -1576,7 +1576,7 @@ int dummy (double **pZ, DATAINFO *pdinfo)
             xx = date(t, pdinfo->pd, pdinfo->sd0);
             yy = (int) xx;
             pp = (int) (mm * (xx - yy) + 0.5);
-            (*pZ)[n*(nvar+vi-1) + t] = (pp == vi)? 1.0 : 0.0;
+            (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
         }
     }
     return 0;
@@ -1594,14 +1594,14 @@ int dummy (double **pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int paneldum (double **pZ, DATAINFO *pdinfo, int opt)
+int paneldum (double ***pZ, DATAINFO *pdinfo, int opt)
 /* creates panel data dummies (unit and period) 
    opt = 0 for stacked time-series, 1 for stacked cross-section
 */
 {
     static char word[16];
     int vi, t, yy, pp, mm;
-    int n = pdinfo->n, nvar = pdinfo->v;
+    int nvar = pdinfo->v;
     int ndum, nudum, ntdum;
     double xx;
 
@@ -1625,7 +1625,7 @@ int paneldum (double **pZ, DATAINFO *pdinfo, int opt)
             xx = date(t, pdinfo->pd, pdinfo->sd0);
             yy = (int) xx;
             pp = (int) (mm*(xx - yy) + 0.5);
-            (*pZ)[n*(nvar+vi-1) + t] = (pp == vi)? 1.0 : 0.0;
+            (*pZ)[nvar+vi-1][t] = (pp == vi)? 1.0 : 0.0;
         }
     }
 
@@ -1637,9 +1637,9 @@ int paneldum (double **pZ, DATAINFO *pdinfo, int opt)
 	sprintf(pdinfo->label[nvar+ntdum+vi-1], "%s = 1 if %s is %d, "
 		"0 otherwise", word, (opt)? "period": "unit", vi);
         for (t=0; t<pdinfo->n; t++) 
-	    (*pZ)[n*(nvar+ntdum+vi-1) + t] = 0.0;
+	    (*pZ)[nvar+ntdum+vi-1][t] = 0.0;
 	for (t=(vi-1)*pdinfo->pd; t<vi*pdinfo->pd; t++) 
-	    (*pZ)[n*(nvar+ntdum+vi-1) + t] = 1.0;
+	    (*pZ)[nvar+ntdum+vi-1][t] = 1.0;
     }
     return 0;
 }
@@ -1681,7 +1681,7 @@ static void _genrtime (DATAINFO *pdinfo, GENERATE *genr, int time)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
+int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
 {
     int t, vi, y1, n = pdinfo->n, v = pdinfo->v;
     float rm;
@@ -1697,33 +1697,33 @@ int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
     case 'a':
 	strcpy(pdinfo->label[vi], "annual plotting variable"); 
 	for (t=0; t<n; t++) 
-	    (*pZ)[n*vi + t] = (double) (t + atoi(pdinfo->stobs));
+	    (*pZ)[vi][t] = (double) (t + atoi(pdinfo->stobs));
 	break;
     case 'q':
 	strcpy(pdinfo->label[vi], "quarterly plotting variable");
-	(*pZ)[n*vi + 0] = y1 + (10.0 * rm - 1.0)/4.0;
+	(*pZ)[vi][0] = y1 + (10.0 * rm - 1.0)/4.0;
 	for (t=1; t<n; t++) 
-	    (*pZ)[n*vi + t] = (*pZ)[n*vi + t-1] + .25;
+	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + .25;
 	break;
     case 'm':
 	strcpy(pdinfo->label[vi], "monthly plotting variable");
-	(*pZ)[n*vi + 0] = y1 + (100.0 * rm - 1.0)/12.0;
+	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/12.0;
 	for (t=1; t<n; t++) 
-	    (*pZ)[n*vi + t] = (*pZ)[n*vi + t-1] + (1.0/12.0);
+	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/12.0);
 	break;
     case 'h':
 	strcpy(pdinfo->label[vi], "hourly plotting variable");
-	(*pZ)[n*vi + 0] = y1 + (100.0 * rm - 1.0)/24.0;
+	(*pZ)[vi][0] = y1 + (100.0 * rm - 1.0)/24.0;
 	for (t=1; t<n; t++) 
-	    (*pZ)[n*vi + t] = (*pZ)[n*vi + t-1] + (1.0/24.0);
+	    (*pZ)[vi][t] = (*pZ)[vi][t-1] + (1.0/24.0);
 	break; 
     case 'i':
 	strcpy(pdinfo->label[vi], "index variable");
-	for (t=0; t<n; t++) (*pZ)[n*vi + t] = (double) (t + 1);
+	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     case 't':
 	strcpy(pdinfo->label[vi], "time trend variable");
-	for (t=0; t<n; t++) (*pZ)[n*vi + t] = (double) (t + 1);
+	for (t=0; t<n; t++) (*pZ)[vi][t] = (double) (t + 1);
 	break;
     default:
 	break;
@@ -1733,7 +1733,7 @@ int plotvar (double **pZ, DATAINFO *pdinfo, const char *period)
 
 /* ......................................................  */
 
-int _laggenr (const int iv, const int lag, const int opt, double **pZ, 
+int _laggenr (const int iv, const int lag, const int opt, double ***pZ, 
 	      DATAINFO *pdinfo)
 /*
     creates Z[iv][t-lagval] and prints label if opt != 0.
@@ -1756,11 +1756,11 @@ int _laggenr (const int iv, const int lag, const int opt, double **pZ,
 
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
-    for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
-    for (t=0; t<lag; t++) (*pZ)[n*v + t] = NADBL;
+    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
+    for (t=0; t<lag; t++) (*pZ)[v][t] = NADBL;
     t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
     for (t=t1; t<=pdinfo->t2; t++) {
-        (*pZ)[n*v + t] = (*pZ)[iv*n + t-lag];
+        (*pZ)[v][t] = (*pZ)[iv][t-lag];
     }
     strcpy(pdinfo->varname[v], s);
     sprintf(pdinfo->label[v], "%s = %s(-%d)", s, 
@@ -1851,11 +1851,11 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 /* ........................................................ */
 
 static int _createvar (double *xxvec, char *snew, char *sleft, 
-		       char *sright, int nv, int nvtmp, double **pZ, 
+		       char *sright, int nv, int nvtmp, double ***pZ, 
 		       DATAINFO *pdinfo)
 {
     static char ss[10];
-    int mv, t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int mv, t1 = pdinfo->t1, t2 = pdinfo->t2;
     register int t;
 
     sprintf(ss, "q#$%d", nv + nvtmp); 
@@ -1864,7 +1864,7 @@ static int _createvar (double *xxvec, char *snew, char *sleft,
     if (_grow_Z(1, pZ, pdinfo)) return E_ALLOC;
 
     strcpy(pdinfo->varname[mv], ss);
-    for (t=t1; t<=t2; t++) (*pZ)[n*mv + t] = xxvec[t];
+    for (t=t1; t<=t2; t++) (*pZ)[mv][t] = xxvec[t];
     /* return a new string with the temporary variable name in
        place of the calculated expression */
     strcpy(snew, sleft);
@@ -1876,7 +1876,7 @@ static int _createvar (double *xxvec, char *snew, char *sleft,
 
 /* ........................................................ */
 
-static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *genr,
+static void _genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *genr,
 		       double *mystack, double *mvec, const int nv)
 {
     int s = pdinfo->v - nv;
@@ -1900,7 +1900,7 @@ static void _genrfree (double **pZ, DATAINFO *pdinfo, GENERATE *genr,
  * Returns: the number of variables generated, or -1 on failure.
  */
 
-int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
+int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     register int i;
     int j, t, v, nvar = pdinfo->v, n = pdinfo->n;
@@ -1920,11 +1920,11 @@ int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
 	    continue;
 	if (v < nvar)  { 
 	    le_zero = 0;
-	    for (t=0; t<n; t++) (*pZ)[n*(nvar+j) + t] = NADBL;
+	    for (t=0; t<n; t++) (*pZ)[nvar+j][t] = NADBL;
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = (*pZ)[n*v + t];
+		xx = (*pZ)[v][t];
 		if (xx <= 0.0) {
-		    (*pZ)[n*(nvar+j) + t] = NADBL;
+		    (*pZ)[nvar+j][t] = NADBL;
 		    if (!na(xx)) {
 			sprintf(gretl_errmsg, 
 				"Log error: Variable '%s', obs %d,"
@@ -1939,7 +1939,7 @@ int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
 			le_zero = 1;
 		    }
 		}
-		else (*pZ)[n*(nvar+j) + t] = log(xx); 
+		else (*pZ)[nvar+j][t] = log(xx); 
 	    }
 	    if (le_zero) continue;
 	    strcpy(s, "l_");
@@ -1951,7 +1951,7 @@ int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
 	    strcpy(pdinfo->label[nvar+j], s);
 	    check = varindex(pdinfo, pdinfo->varname[j]);
 	    if (check < nvar) {
-		if (_identical(&(*pZ)[n*check], &(*pZ)[n*(nvar+j)], n)) {
+		if (_identical((*pZ)[check], (*pZ)[nvar+j], n)) {
 		    j--;
 		}
 	    } else printf("label: %s\n", pdinfo->label[nvar+j]);
@@ -1978,7 +1978,7 @@ int logs (const LIST list, double **pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int lags (const LIST list, double **pZ, DATAINFO *pdinfo)
+int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
 /* generates lag variables for each var in list */
 {
     int check, l, v, lv, opt = 1;
@@ -2052,7 +2052,7 @@ int _parse_lagvar (const char *varname, LAGVAR *plagv, DATAINFO *pdinfo)
  * Returns: The number of variables generated, or -1 on error.
  */
 
-int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo, 
+int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo, 
 	     const int opt, const int nodup)
 {
     int check, i, j, t, li, lj, l0 = list[0];
@@ -2072,13 +2072,13 @@ int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo,
     for (i=1; i<=l0; i++) {
 	li = list[i];
 	if (!isdummy(li, 0, n-1, *pZ, n)) {
-	    for (t=0; t<n; t++) (*pZ)[n*(v+terms) + t] = NADBL;
+	    for (t=0; t<n; t++) (*pZ)[v+terms][t] = NADBL;
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		zi = (*pZ)[n*li + t];
-		if (na(zi)) (*pZ)[n*(v+terms) + t] = NADBL;
-		else (*pZ)[n*(v+terms) + t] = zi * zi;
+		zi = (*pZ)[li][t];
+		if (na(zi)) (*pZ)[v+terms][t] = NADBL;
+		else (*pZ)[v+terms][t] = zi * zi;
 	    }
-	    if (_iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue; 
+	    if (_iszero(0, n-1, (*pZ)[v+terms])) continue; 
 	    /*
 	      prefix varname by sq, truncate if too long and save under 
 	      new varname; new label is "varname = oldname squared"
@@ -2091,7 +2091,7 @@ int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo,
 	    if (nodup) {
 		check = varindex(pdinfo, pdinfo->varname[(v+terms)]);
 		if (check < v) {
-		    if (_identical(&(*pZ)[n*check], &(*pZ)[n*(v+terms)], n)) 
+		    if (_identical((*pZ)[check], (*pZ)[v+terms], n)) 
 			continue;
 		}
 	    }
@@ -2103,15 +2103,15 @@ int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo,
 	if (opt) {
 	    for (j=i+1; j<=l0; j++) {
 		lj = list[j];
-		for (t=0; t<n; t++) (*pZ)[n*(v+terms) + t] = NADBL;
+		for (t=0; t<n; t++) (*pZ)[v+terms][t] = NADBL;
 		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		    zi = (*pZ)[n*li + t];
-		    zj = (*pZ)[n*lj + t];
+		    zi = (*pZ)[li][t];
+		    zj = (*pZ)[lj][t];
 		    if (na(zi) || na(zj)) 
-			(*pZ)[n*(v+terms) + t] = NADBL;
-		    else (*pZ)[n*(v+terms) + t] = zi*zj;
+			(*pZ)[v+terms][t] = NADBL;
+		    else (*pZ)[v+terms][t] = zi*zj;
 		}
-		if (_iszero(0, n-1, &(*pZ)[n*(v+terms)])) continue;
+		if (_iszero(0, n-1, (*pZ)[v+terms])) continue;
 		/*
 		  trunc varname i and varname j if needed and cat them.
 		  save as newvarname.  Also make label.
@@ -2148,7 +2148,7 @@ int xpxgenr (const LIST list, double **pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int rhodiff (char *param, const LIST list, double **pZ, DATAINFO *pdinfo)
+int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int i, j, maxlag, p, t, t1, nv, v = pdinfo->v, n = pdinfo->n;
     char s[64], parmbit[9];
@@ -2176,7 +2176,7 @@ int rhodiff (char *param, const LIST list, double **pZ, DATAINFO *pdinfo)
 		    free(rhot);
 		    return E_UNKVAR;
 		}
-		rhot[p] = (*pZ)[n*nv + pdinfo->t1];
+		rhot[p] = (*pZ)[nv][pdinfo->t1];
 		/*  printf("rhodiff: rhot[%d] = %f\n", p, rhot[p]); */
 	    } else {
 		rhot[p] = atof(parmbit);
@@ -2199,21 +2199,21 @@ int rhodiff (char *param, const LIST list, double **pZ, DATAINFO *pdinfo)
 	sprintf(pdinfo->label[v+i-1], "%s = rho-differenced %s", 
 		pdinfo->varname[v+i-1], pdinfo->varname[j]);
 	/* fill out values */
-	for (t=0; t<n; t++) (*pZ)[n*(v+i-1) + t] = NADBL;
+	for (t=0; t<n; t++) (*pZ)[v+i-1][t] = NADBL;
 	for (t=t1; t<=pdinfo->t2; t++) {
-	    xx = (*pZ)[n*j + t];
+	    xx = (*pZ)[j][t];
 	    if (na(xx)) {
-		(*pZ)[n*(v+i-1) + t] = NADBL;
+		(*pZ)[v+i-1][t] = NADBL;
 		continue;
 	    }
 	    for (p=0; p<maxlag; p++) {
-		if (na((*pZ)[n*j + t-p-1])) {
+		if (na((*pZ)[j][t-p-1])) {
 		    xx = NADBL;
 		    break;
 		}
-		else xx -= rhot[p] * (*pZ)[n*j + t-p-1];
+		else xx -= rhot[p] * (*pZ)[j][t-p-1];
 	    }
-	    (*pZ)[n*(v+i-1) + t] = xx;
+	    (*pZ)[v+i-1][t] = xx;
 	}
     }
     free(rhot);
@@ -2222,7 +2222,7 @@ int rhodiff (char *param, const LIST list, double **pZ, DATAINFO *pdinfo)
 
 /* ...................................................... */
 
-static double _genr_cov (const char *str, double **pZ, 
+static double _genr_cov (const char *str, double ***pZ, 
 			 const DATAINFO *pdinfo)
 {
     int i, n, n2, p, v1, v2;
@@ -2247,13 +2247,13 @@ static double _genr_cov (const char *str, double **pZ,
 
     n = pdinfo->n;
     return _covar(pdinfo->t2 - pdinfo->t1 + 1,
-		  &(*pZ)[v1*n + pdinfo->t1], 
-		  &(*pZ)[v2*n + pdinfo->t1]);
+		  &(*pZ)[v1][pdinfo->t1], 
+		  &(*pZ)[v2][pdinfo->t1]);
 }
 
 /* ...................................................... */
 
-static double _genr_corr (const char *str, double **pZ, 
+static double _genr_corr (const char *str, double ***pZ, 
 			  const DATAINFO *pdinfo)
 {
     int i, n, n2, p, v1, v2;
@@ -2278,12 +2278,12 @@ static double _genr_corr (const char *str, double **pZ,
 
     n = pdinfo->n;
     return _corr(pdinfo->t2 - pdinfo->t1 + 1,
-		 &(*pZ)[v1*n + pdinfo->t1], &(*pZ)[v2*n + pdinfo->t1]);
+		 &(*pZ)[v1][pdinfo->t1], &(*pZ)[v2][pdinfo->t1]);
 }
 
 /* ...................................................... */
 
-static double _genr_vcv (const char *str, double **pZ, 
+static double _genr_vcv (const char *str, double ***pZ, 
 			 const DATAINFO *pdinfo, MODEL *pmod)
 {
     int i, j, k, n, n2, nv, p, v1, v2, v1l, v2l;
@@ -2369,10 +2369,10 @@ static void _varerror (const char *ss)
 
 /* .......................................................... */
 
-int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
+int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
      /* for "sim" command */
 {
-    int f, i, t, t1, t2, m, n = pdinfo->n, nv, pv, *isconst;
+    int f, i, t, t1, t2, m, nv, pv, *isconst;
     char varname[32], tmpstr[128], parm[9], **toks;
     double xx, *a;
 
@@ -2441,18 +2441,18 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
 	for (i=0; i<m; i++) {
 	    if (isconst[i]) {
 		if (i == 0) xx += a[i];
-		else xx += a[i] * (*pZ)[n*nv + t-i];
+		else xx += a[i] * (*pZ)[nv][t-i];
 	    } else {
 		pv = (int) a[i];
-		if (na((*pZ)[n*pv + t])) {
+		if (na((*pZ)[pv][t])) {
 		    xx = NADBL;
 		    break;
 		}
-		if (i == 0) xx += (*pZ)[n*pv + t];
-		else xx += (*pZ)[n*pv + t] * (*pZ)[n*nv + t-i];
+		if (i == 0) xx += (*pZ)[pv][t];
+		else xx += (*pZ)[pv][t] * (*pZ)[nv][t-i];
 	    }
 	}
-	(*pZ)[n*nv + t] = xx;
+	(*pZ)[nv][t] = xx;
     }
 
     free(a);
@@ -2463,7 +2463,7 @@ int simulate (char *cmd, double **pZ, DATAINFO *pdinfo)
 
 /* .......................................................... */
 
-int _multiply (char *s, int *list, char *sfx, double **pZ,
+int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	       DATAINFO *pdinfo)
 {
     int i, t, v = 0, nv, n = pdinfo->n, lv, l0 = list[0];
@@ -2485,17 +2485,17 @@ int _multiply (char *s, int *list, char *sfx, double **pZ,
     for (i=1; i<=l0; i++) {
 	nv = pdinfo->v - l0 - 1 + i;
 	lv = list[i];
-	for (t=0; t<n; t++) (*pZ)[n*nv + t] = NADBL;
+	for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (na((*pZ)[n*lv + t])) {
-		(*pZ)[n*nv + t] = NADBL;
+	    if (na((*pZ)[lv][t])) {
+		(*pZ)[nv][t] = NADBL;
 		continue;
 	    }
 	    if (v) {
-		if (na((*pZ)[n*v + t]))
-		    (*pZ)[n*nv + t] = NADBL;
-		else (*pZ)[n*nv + t] = (*pZ)[n*v + t] * (*pZ)[n*lv + t];
-	    } else (*pZ)[n*nv + t] = m * (*pZ)[n*lv + t];
+		if (na((*pZ)[v][t]))
+		    (*pZ)[nv][t] = NADBL;
+		else (*pZ)[nv][t] = (*pZ)[v][t] * (*pZ)[lv][t];
+	    } else (*pZ)[nv][t] = m * (*pZ)[lv][t];
 	}
 	/* do names and labels */
 	strcpy(tmp, pdinfo->varname[lv]);
@@ -2528,7 +2528,7 @@ int _multiply (char *s, int *list, char *sfx, double **pZ,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int genr_fit_resid (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
+int genr_fit_resid (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		    int code, int undo)
 {
     char vname[9], vlabel[MAXLABEL];
@@ -2539,26 +2539,26 @@ int genr_fit_resid (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     i = pdinfo->v - 1;
     n = pdinfo->n;
 
-    for (t=0; t<t1; t++) (*pZ)[n*i + t] = NADBL;
-    for (t=t2+1; t<n; t++) (*pZ)[n*i + t] = NADBL;
+    for (t=0; t<t1; t++) (*pZ)[i][t] = NADBL;
+    for (t=t2+1; t<n; t++) (*pZ)[i][t] = NADBL;
 
     if (code == GENR_RESID) { /* residuals */
 	sprintf(vname, "uhat%d", pmod->ID);
 	sprintf(vlabel, "residual from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 
-	    (*pZ)[n*i + t] = pmod->uhat[t];
+	    (*pZ)[i][t] = pmod->uhat[t];
     }
     else if (code == GENR_FITTED) { /* fitted values */
 	sprintf(vname, "yhat%d", pmod->ID);
 	sprintf(vlabel, "fitted value from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 
-	    (*pZ)[n*i + t] = pmod->yhat[t];
+	    (*pZ)[i][t] = pmod->yhat[t];
     }
     else if (code == GENR_RESID2) { /* squared residuals */
 	sprintf(vname, "usq%d", pmod->ID);
 	sprintf(vlabel, "squared residual from model %d", pmod->ID);
 	for (t=t1; t<=t2; t++) 
-	    (*pZ)[n*i + t] = pmod->uhat[t] * pmod->uhat[t];
+	    (*pZ)[i][t] = pmod->uhat[t] * pmod->uhat[t];
     }
     strcpy(pdinfo->varname[i], vname);
 

@@ -243,7 +243,7 @@ static COMPARE omit_compare (const MODEL *pmodA, const MODEL *pmodB)
  */
 
 int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count, 
-	    double **pZ, DATAINFO *pdinfo, const int aux_code, 
+	    double ***pZ, DATAINFO *pdinfo, const int aux_code, 
 	    PRN *prn, GRETLTEST *test)
 {
     COMPARE add;             
@@ -362,9 +362,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<n; t++)
-		(*pZ)[n*(pdinfo->v - 1) + t] = NADBL;
+		(*pZ)[pdinfo->v - 1][t] = NADBL;
 	    for (t=orig->t1; t<=orig->t2; t++)
-		(*pZ)[n*(pdinfo->v - 1) + t] = orig->uhat[t];
+		(*pZ)[pdinfo->v - 1][t] = orig->uhat[t];
 	    newlist[1] = pdinfo->v - 1;
 	    pdinfo->extra = 1;
 
@@ -443,7 +443,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
  */
 
 int omit_test (LIST omitvars, MODEL *orig, MODEL *new, 
-	       int *model_count, double **pZ, DATAINFO *pdinfo, 
+	       int *model_count, double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn)
 {
     COMPARE omit;             /* Comparison struct for two models */
@@ -553,7 +553,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
+int autocorr_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, GRETLTEST *test)
 {
     int *newlist;
@@ -582,9 +582,9 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     if (!err) {
 	/* add uhat to data set */
 	for (t=0; t<n; t++)
-	    (*pZ)[n*v + t] = NADBL;
+	    (*pZ)[v][t] = NADBL;
 	for (t = pmod->t1; t<= pmod->t2; t++)
-	    (*pZ)[n*v + t] = pmod->uhat[t];
+	    (*pZ)[v][t] = pmod->uhat[t];
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(pdinfo->label[v], "residual");
 	/* then lags of same */
@@ -659,7 +659,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int chow_test (const char *line, MODEL *pmod, double **pZ,
+int chow_test (const char *line, MODEL *pmod, double ***pZ,
 	       DATAINFO *pdinfo, PRN *prn, GRETLTEST *test)
 {
     int *chowlist = NULL;
@@ -708,7 +708,7 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 
 	/* generate the split variable */
 	for (t=0; t<n; t++) 
-	    (*pZ)[n*v + t] = (double) (t > split); 
+	    (*pZ)[v][t] = (double) (t > split); 
 	strcpy(pdinfo->varname[v], "splitdum");
 	strcpy(pdinfo->label[v], "dummy variable for Chow test");
 	chowlist[pmod->list[0] + 1] = v;
@@ -716,8 +716,8 @@ int chow_test (const char *line, MODEL *pmod, double **pZ,
 	/* and the interaction terms */
 	for (i=1; i<newvars; i++) {
 	    for (t=0; t<n; t++)
-		(*pZ)[n*(v+i) + t] = 
-		    (*pZ)[n*v + t] * (*pZ)[n*(pmod->list[1+i]) + t];
+		(*pZ)[v+i][t] = 
+		    (*pZ)[v][t] * (*pZ)[pmod->list[1+i]][t];
 	    strcpy(s, pdinfo->varname[pmod->list[1+i]]); 
 	    _esl_trunc(s, 5);
 	    strcpy(pdinfo->varname[v+i], "sd_");
@@ -806,11 +806,11 @@ static double vprime_M_v (double *v, double *M, int n)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn, 
+int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn, 
 		const PATHS *ppaths, GRETLTEST *test)
 {
     int n_est, i, j, t;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int xno, yno = pmod->list[1];
     int T = pmod->t2 - pmod->t1 + 1, K = pmod->ncoeff;
     MODEL cum_mod;
@@ -848,10 +848,10 @@ int cusum_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, PRN *prn,
 		yy = 0.0;
 		for (i=1; i<=K; i++) {
 		    xno = cum_mod.list[i+1];
-		    xvec[i-1] = (*pZ)[n*xno + t];
-		    yy += cum_mod.coeff[i] * (*pZ)[n*xno + t];
+		    xvec[i-1] = (*pZ)[xno][t];
+		    yy += cum_mod.coeff[i] * (*pZ)[xno][t];
 		}
-		cresid[j] = (*pZ)[n*yno + t] - yy;
+		cresid[j] = (*pZ)[yno][t] - yy;
 		cum_mod.ci = CUSUM;
 		makevcv(&cum_mod);
 		xx = vprime_M_v(xvec, cum_mod.vcv, K);

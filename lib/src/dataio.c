@@ -28,18 +28,37 @@
 
 #define QUOTE '\''
 
-static int prepZ (double **pZ, const DATAINFO *pdinfo);
+static int prepZ (double ***pZ, const DATAINFO *pdinfo);
 static int writelbl (const char *lblfile, const int *list, 
 		     const DATAINFO *pdinfo);
 static int writehdr (const char *hdrfile, const int *list, 
 		     const DATAINFO *pdinfo, const int opt);
 static double obs_float (const DATAINFO *pdinfo, const int end);
 static int write_xmldata (const char *fname, const int *list, 
-			  double *Z, const DATAINFO *pdinfo, int opt);
+			  double **Z, const DATAINFO *pdinfo, int opt);
 static int xmlfile (const char *fname);
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
+
+
+/**
+ * free_Z:
+ * @Z: data matrix.
+ * @pdinfo: data information struct.
+ *
+ * Do a deep free on the data matrix.
+ * 
+ */
+
+void free_Z (double **Z, DATAINFO *pdinfo)
+{
+    int i;
+
+    for (i=0; i<pdinfo->v; i++)
+	free(Z[i]);
+    free(Z);
+}
 
 /**
  * clear_datainfo:
@@ -232,7 +251,7 @@ DATAINFO *datainfo_new (void)
  *
  */
 
-DATAINFO *create_new_dataset (double **pZ,  
+DATAINFO *create_new_dataset (double ***pZ,  
 			      int nvar,
 			      int nobs,
 			      int markers
@@ -275,7 +294,7 @@ DATAINFO *create_new_dataset (double **pZ,
  *
  */
 
-int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample)
+int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 {
     if (prepZ(pZ, pdinfo)) return 1;
 
@@ -299,16 +318,20 @@ int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample)
 
 /* ................................................. */
 
-static int prepZ (double **pZ, const DATAINFO *pdinfo)
+static int prepZ (double ***pZ, const DATAINFO *pdinfo)
     /* allocate data array and put in constant */
 {
-    int t;
+    int i, t;
 
     if (*pZ != NULL) free(*pZ);
-    *pZ = malloc(pdinfo->v * pdinfo->n * sizeof **pZ);
+    *pZ = malloc(pdinfo->v * sizeof **pZ);
     if (*pZ == NULL) return 1;
+    for (i=0; i<pdinfo->v; i++) {
+	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
+	if (*pZ == NULL) return 1;
+    }
 
-    for (t=0; t<pdinfo->n; t++) (*pZ)[t] = 1.0; 
+    for (t=0; t<pdinfo->n; t++) (*pZ)[0][t] = 1.0; 
     return 0;
 }
 
@@ -329,7 +352,7 @@ static void eatspace (FILE *fp)
 
 /* ................................................. */
 
-static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
+static int readdata (FILE *fp, const DATAINFO *pdinfo, double **Z)
 {
     int i, t, n = pdinfo->n;
     char c, marker[9];
@@ -345,13 +368,13 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
 			    "var %d\n", i);
 		    return 1;
 		}
-		Z(i, t) = (double) x;
+		Z[i][t] = (double) x;
 	    }
 	}
     }
     else if (pdinfo->bin == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!fread(&Z(i, 0), sizeof(double), n, fp)) {
+	    if (!fread(Z[i], sizeof(double), n, fp)) {
 		sprintf(gretl_errmsg, 
 			"WARNING: binary data read error at var %d\n", i);
 		return 1;
@@ -368,7 +391,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
 		strcpy(pdinfo->S[t], marker);
 	    }
 	    for (i=1; i<pdinfo->v; i++) {
-		if ((fscanf(fp, "%lf", &Z(i, t))) != 1) {
+		if ((fscanf(fp, "%lf", &Z[i][t])) != 1) {
 		    sprintf(gretl_errmsg, 
 			    "WARNING: ascii data read error at var %d, "
 			    "obs %d\n", i, t + 1);
@@ -382,7 +405,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
 
 /* ................................................. */
 
-static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double *Z)
+static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double **Z)
 {
     int i, t, n = pdinfo->n;
     
@@ -398,13 +421,13 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double *Z)
 			    "var %d", i);
 		    return 1;
 		}
-		Z(i, t) = (double) xx;
+		Z[i][t] = (double) xx;
 	    }
 	}
     }
     else if (pdinfo->bin == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!gzread(fz, &Z(i, 0), n * sizeof(double))) {
+	    if (!gzread(fz, &Z[i][0], n * sizeof(double))) {
 		sprintf(gretl_errmsg, 
 			"WARNING: binary data read error at var %d", i);
 		return 1;
@@ -450,7 +473,7 @@ static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double *Z)
 		    return 1;
 		}
 		numstr[23] = 0;
-		Z(i, t) = atof(numstr);
+		Z[i][t] = atof(numstr);
 		if (i < pdinfo->v - 1)
 		    offset += strlen(numstr) + 1;
 	    }
@@ -918,7 +941,7 @@ int get_precision (double *x, int n)
  */
 
 int write_data (const char *fname, const int *list, 
-		double *Z, const DATAINFO *pdinfo, int opt)
+		double **Z, const DATAINFO *pdinfo, int opt)
 {
     int i = 0, t, l0 = list[0], n = pdinfo->n;
     char datfile[MAXLEN], hdrfile[MAXLEN], lblfile[MAXLEN];
@@ -966,14 +989,14 @@ int write_data (const char *fname, const int *list,
 
 	for (i=1; i<=l0; i++) {
 	    for (t=0; t<n; t++) {
-		x = (float) Z(list[i], t);
+		x = (float) Z[list[i]][t];
 		fwrite(&x, sizeof(float), 1, fp);
 	    }
 	}
     }
     else if (opt == GRETL_DATA_DOUBLE) { /* double-precision binary */
 	for (i=1; i<=l0; i++) 
-	    fwrite(&Z(list[i], 0), sizeof(double), n, fp);
+	    fwrite(&Z[list[i]][0], sizeof(double), n, fp);
     }
 
     if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_OCTAVE || 
@@ -982,7 +1005,7 @@ int write_data (const char *fname, const int *list,
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
 	for (i=1; i<=l0; i++) 
-	    pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
+	    pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
     }
 
     if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
@@ -990,10 +1013,10 @@ int write_data (const char *fname, const int *list,
 	    if (pdinfo->markers && pdinfo->S != NULL) 
 		fprintf(fp, "%s ", pdinfo->S[t]);
 	    for (i=1; i<=l0; i++) {
-		if (na(Z(list[i], t)))
+		if (na(Z[list[i]][t]))
 		    fprintf(fp, "-999 ");
 		else 
-		    fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+		    fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
 	    }
 	    fputs("\n", fp);
 	}
@@ -1027,11 +1050,11 @@ int write_data (const char *fname, const int *list,
 		else fprintf(fp, "\"%.2f\"%s", xdate, comma);
 	    }
 	    for (i=1; i<=l0; i++) { 
-		xx = Z(list[i], t);
+		xx = Z[list[i]][t];
 		if (na(xx))
 		    fprintf(fp, "NA");
 		else
-		    fprintf(fp, "%.*f", pmax[i-1], Z(list[i], t));
+		    fprintf(fp, "%.*f", pmax[i-1], Z[list[i]][t]);
 		if (i < l0) fprintf(fp, "%s", comma);
 		else fprintf(fp, "\n");
 	    }
@@ -1043,9 +1066,9 @@ int write_data (const char *fname, const int *list,
 	    fprintf(fp, "\"%s\" <-\n", pdinfo->varname[list[i]]);
 	    fprintf(fp, "structure(c(");
 	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		xx = Z(list[i], t);
+		xx = Z[list[i]][t];
 		if (na(xx)) fprintf(fp, "NA");
-		else fprintf(fp, "%g", Z(list[i], t));
+		else fprintf(fp, "%g", Z[list[i]][t]);
 		if (t < pdinfo->t2) fprintf(fp, ", "); 
 		if (t > pdinfo->t1 && (t - pdinfo->t1) % 8 == 0 &&
 		    t < pdinfo->t2)
@@ -1065,14 +1088,14 @@ int write_data (const char *fname, const int *list,
 		pdinfo->varname[list[1]], n);
 	/* write out column of values of dep. var. */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-	    fprintf(fp, "%.*f\n", pmax[0], Z(list[1], t));
+	    fprintf(fp, "%.*f\n", pmax[0], Z[list[1]][t]);
 	/* write out info for indep vars matrix */
 	fprintf(fp, "# name: X\n# type: matrix\n# rows: %d\n# columns: %d\n", 
 		n, list[0] - 1);
 	/* write out indep. var. matrix */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    for (i=2; i<=list[0]; i++) {
-		fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+		fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
 	    }
 	    fputs("\n", fp);
 	}
@@ -1252,7 +1275,7 @@ static void try_gdt (char *fname)
  *
  */
 
-int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
+int get_data (double ***pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
 	      const int data_status, PRN *prn) 
 {
 
@@ -1384,7 +1407,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
  *
  */
 
-int open_nulldata (double **pZ, DATAINFO *pdinfo, 
+int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   const int data_status, const int length,
 		   PRN *prn) 
 {
@@ -1538,10 +1561,9 @@ static int check_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
 /* ......................................................... */
 
 static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
-			 double **pZ, double **csvZ, PRN *prn)
+			 double ***pZ, double ***csvZ, PRN *prn)
 {
     int i, t, newvars = pcinfo->v, oldvars = pdinfo->v;
-    int n = pdinfo->n;
 
     pprintf(prn, "Attempting data merge...\n");
     if (_grow_Z(newvars - 1, pZ, pdinfo)) {
@@ -1550,11 +1572,11 @@ static int do_csv_merge (DATAINFO *pdinfo, DATAINFO *pcinfo,
     }
     for (i=1; i<newvars; i++) {
 	for (t=0; t<pdinfo->n; t++) 
-	    (*pZ)[n*(oldvars+i-1) + t] = (*csvZ)[n*i + t];
+	    (*pZ)[oldvars+i-1][t] = (*csvZ)[i][t];
 	strcpy(pdinfo->varname[oldvars+i-1], pcinfo->varname[i]);
     }  
+    free_Z(*csvZ, pcinfo);
     clear_datainfo(pcinfo, 0);
-    free(*csvZ);
     pprintf(prn, "   OK, I think.\n");
     return 0;
 }
@@ -1592,7 +1614,7 @@ static void trim_csv_line (char *line)
  *
  */
 
-int import_csv (double **pZ, DATAINFO *pdinfo, 
+int import_csv (double ***pZ, DATAINFO *pdinfo, 
 		const char *fname, PRN *prn)
 {
     int n, nv, missval = 0, ncols = 0, chkcols = 0;
@@ -1602,7 +1624,7 @@ int import_csv (double **pZ, DATAINFO *pdinfo,
     char *line, varname[9], numstr[32], field_1[32];
     FILE *fp;
     DATAINFO csvinfo;
-    double *csvZ = NULL;
+    double **csvZ = NULL;
     const char *msg = "\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
 	"names of the variables.\n"
@@ -1808,9 +1830,9 @@ int import_csv (double **pZ, DATAINFO *pdinfo,
 		strcpy(csvinfo.S[t], numstr);
 	    } else {
 		if (missval) 
-		    csvZ[csvinfo.n * nv + t] = NADBL;
+		    csvZ[nv][t] = NADBL;
 		else
-		    csvZ[csvinfo.n * nv + t] = atof(numstr);
+		    csvZ[nv][t] = atof(numstr);
 		missval = 0;
 	    }
 	    if (k == ncols) break;
@@ -1935,7 +1957,7 @@ static char *unspace (char *s)
  *
  */
 
-int import_box (double **pZ, DATAINFO *pdinfo, 
+int import_box (double ***pZ, DATAINFO *pdinfo, 
 		const char *fname, PRN *prn)
 {
     int c, cc, i, t, v, realv, gotdata;
@@ -1946,7 +1968,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
     double x;
     FILE *fp;
     DATAINFO boxinfo;
-    double *boxZ = NULL;
+    double **boxZ = NULL;
     extern int errno;
 
     fp = fopen(fname, "r");
@@ -2097,7 +2119,7 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 		    pprintf(prn, "'%s' -- number out of range!\n", tmp);
 		    x = -999.0;
 		}
-		boxZ[boxinfo.n * realv + t] = x;
+		boxZ[realv][t] = x;
 #ifdef BOX_DEBUG
 		fprintf(stderr, "setting Z[%d][%d] = %g\n", realv, t, x);
 #endif
@@ -2318,9 +2340,9 @@ static char *xml_encode (char *buf)
  */
 
 static int write_xmldata (const char *fname, const int *list, 
-			  double *Z, const DATAINFO *pdinfo, int opt)
+			  double **Z, const DATAINFO *pdinfo, int opt)
 {
-    int err, i, t, n = pdinfo->n;
+    int err, i, t;
     FILE *fp = NULL;
     gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
@@ -2346,7 +2368,7 @@ static int write_xmldata (const char *fname, const int *list,
 	return 1;
     } 
     for (i=1; i<=list[0]; i++) 
-	pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
+	pmax[i-1] = get_precision(&Z[list[i]][pdinfo->t1], tsamp);
 
     ntodate(startdate, pdinfo->t1, pdinfo);
     ntodate(enddate, pdinfo->t2, pdinfo);
@@ -2448,12 +2470,12 @@ static int write_xmldata (const char *fname, const int *list,
 	    else fputs(">", fp);
 	}
 	for (i=1; i<=list[0]; i++) {
-	    if (na(Z(list[i], t))) {
+	    if (na(Z[list[i]][t])) {
 		if (opt) gzputs(fz, "-999 ");
 		else fputs("-999 ", fp);
 	    } else {
-		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z(list[i], t));
-		else fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z[list[i]][t]);
+		else fprintf(fp, "%.*f ", pmax[i-1], Z[list[i]][t]);
 	    }
 	}
 	if (opt) gzputs(fz, "</obs>\n");
@@ -2535,7 +2557,7 @@ static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
     else return 0;
 }
 
-static int process_values (double *Z, DATAINFO *pdinfo, int t, char *s)
+static int process_values (double **Z, DATAINFO *pdinfo, int t, char *s)
 {
     int i;
     double x;
@@ -2546,7 +2568,7 @@ static int process_values (double *Z, DATAINFO *pdinfo, int t, char *s)
 	    sprintf(gretl_errmsg, "failed to parse data values at obs %d", t+1);
 	    return 1;
 	} else {
-	    Z[pdinfo->n * i + t] = x;
+	    Z[i][t] = x;
 	    s = strpbrk(s, " ,\t\n\r");
 	}
     }
@@ -2554,11 +2576,11 @@ static int process_values (double *Z, DATAINFO *pdinfo, int t, char *s)
 }
 
 static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
-				 double **pZ, DATAINFO *pdinfo)
+				 double ***pZ, DATAINFO *pdinfo)
 {
     xmlNodePtr cur;
     char *tmp = xmlGetProp(node, (UTF) "count");
-    int t;
+    int i, t;
 
     if (tmp) {
 	int n;
@@ -2595,10 +2617,15 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
 
     pdinfo->t2 = pdinfo->n - 1;
 
-    *pZ = malloc(pdinfo->n * pdinfo->v * sizeof(double));
+    *pZ = malloc(pdinfo->v * sizeof **pZ);
     if (*pZ == NULL) return 1;
+    for (i=0; i<pdinfo->v; i++) {
+	(*pZ)[i] = malloc(pdinfo->n * sizeof ***pZ);
+	if ((*pZ)[i] == NULL) return 1;
+    }
+
     for (t=0; t<pdinfo->n; t++)
-	(*pZ)[t] = 1.0;
+	(*pZ)[0][t] = 1.0;
 
     /* now get individual obs info: labels and values */
     cur = node->xmlChildrenNode;
@@ -2662,7 +2689,7 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
  *
  */
 
-int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
+int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn) 
 {
     xmlDocPtr doc;

@@ -54,11 +54,11 @@ void print_white_vcv (const MODEL *pmod, PRN *prn);
 int page_break (const int n, int *lineno, const int quit_option);
 
 int printdata (LIST list, 
-	       double **pZ, const DATAINFO *pdinfo, 
+	       double ***pZ, const DATAINFO *pdinfo, 
 	       int pause, int byobs, PRN *prn);
 
 int print_fit_resid (const MODEL *pmod, 
-		     double **pZ, DATAINFO *pdinfo, 
+		     double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn);
 
 void printxx (const double xx, char *str, const int ci);

@@ -30,7 +30,7 @@ double normal (const double x);
 double rhocrit95 (const int n);
 
 double batch_pvalue (const char *str, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
                      PRN *prn);
 
 void interact_pvalue (void);

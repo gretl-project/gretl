@@ -280,7 +280,7 @@ double normal (const double x)
  */
 
 double batch_pvalue (const char *str, 
-		     const double *Z, const DATAINFO *pdinfo, 
+		     double **Z, const DATAINFO *pdinfo, 
                      PRN *prn)
 {
     int i, df1 = 0, df2 = 0;
@@ -313,8 +313,8 @@ double batch_pvalue (const char *str,
     if (isalpha((unsigned char) df1str[0])) {
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(df1str, pdinfo->varname[i]) == 0) {
-		df1 = (int) Z[pdinfo->n * i + 1];
-		mean = Z[pdinfo->n * i + 1];
+		df1 = (int) Z[i][1];
+		mean = Z[i][1];
 		break;
 	    }
 	}
@@ -326,8 +326,8 @@ double batch_pvalue (const char *str,
     if (isalpha((unsigned char) df2str[0])) {
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(df2str, pdinfo->varname[i]) == 0) {
-		df2 = (int) Z[pdinfo->n * i + 1];
-		variance = Z[pdinfo->n * i + 1];
+		df2 = (int) Z[i][1];
+		variance = Z[i][1];
 		break;
 	    }
 	}
@@ -339,7 +339,7 @@ double batch_pvalue (const char *str,
     if (isalpha((unsigned char) fstr[0])) {
 	for (i=0; i<pdinfo->v; i++) {
 	    if (strcmp(fstr, pdinfo->varname[i]) == 0) {
-		xval = Z[pdinfo->n * i + pdinfo->t1];
+		xval = Z[i][pdinfo->t1];
 		if (na(xval)) {
 		    pprintf(prn, "\nstatistic has missing value code\n");
 		    return NADBL;

@@ -45,13 +45,13 @@ extern void _print_rho (int *arlist, const MODEL *pmod,
 			const int c, PRN *prn);
 
 static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2, 
-			    const double *Z, const int n, const int nwt, 
+			    double **Z, const int n, const int nwt, 
 			    const double rho);
-static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z, 
+static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
 		      const int n, const double rho);
 static CHOLBETA _cholbeta (XPXXPY xpxxpy);
 static void _diaginv (XPXXPY xpxxpy, double *diag);
-static double _dwstat (int order, MODEL *pmod, const double *Z,
+static double _dwstat (int order, MODEL *pmod, double **Z,
 		       const int n); 
 static double _corrrsq (const int nobs, const double *y, 
 			const double *yhat);
@@ -59,25 +59,25 @@ static double _rhohat (int order, const int t1, const int t2,
 		       const double *uhat);
 static double _altrho (const int order, const int t1, const int t2, 
 		       const double *uhat);
-static int _hatvar (MODEL *pmod, const double *Z, const int n);
+static int _hatvar (MODEL *pmod, double **Z, const int n);
 static void _dropwt (int *list);
-static void _autores (const int i, double *Z, const int n, 
+static void _autores (const int i, double **Z, const int n, 
 		      const MODEL *pmod, double *uhat);
-static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ, 
+static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
 			  DATAINFO *pdinfo);
 static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo, 
-		       const double *Z);
-static void _tsls_omitzero (int *list, const double *Z, 
+		       double **Z);
+static void _tsls_omitzero (int *list, double **Z, 
 			    const int t1, const int t2, const int n);
 static void _rearrange (int *list);
 static int _zerror (const int t1, const int t2, const int yno,
-		    const int nwt, const int n, double **pZ);
+		    const int nwt, const int n, double ***pZ);
 static int _lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		       double **pZ);
+		       double ***pZ);
 static int _tsls_match (const int *list1, const int *list2, int *newlist);
-static double _wt_dummy_mean (const MODEL *pmod, const double *Z, 
+static double _wt_dummy_mean (const MODEL *pmod, double **Z, 
 			      const int n);
-static double _wt_dummy_stddev (const MODEL *pmod, const double *Z, 
+static double _wt_dummy_stddev (const MODEL *pmod, double **Z, 
 				const int n);
 
 extern int _addtolist (const int *oldlist, const int *addvars, 
@@ -99,7 +99,7 @@ extern int _addtolist (const int *oldlist, const int *addvars,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo, 
+MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo, 
 	   const int ci, const int opt, const double rho)
 {
     int l0, ifc, nwt, yno, i, n;
@@ -138,7 +138,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     model.nwt = nwt = 0;
     if (ci == WLS) { 
 	model.nwt = nwt = model.list[1];
-	if (_iszero(model.t1, model.t2, &(*pZ)[n*nwt])) {
+	if (_iszero(model.t1, model.t2, (*pZ)[nwt])) {
 	    model.errcode = E_WTZERO;
 	    return model;
 	}
@@ -215,8 +215,8 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 	model.ybar = _wt_dummy_mean(&model, *pZ, n);
 	model.sdy = _wt_dummy_stddev(&model, *pZ, n);
     } else {
-	model.ybar = _esl_mean(t1, t2, &(*pZ)[n*yno]);
-	model.sdy = _esl_stddev(t1, t2, &(*pZ)[n*yno]);
+	model.ybar = _esl_mean(t1, t2, (*pZ)[yno]);
+	model.sdy = _esl_stddev(t1, t2, (*pZ)[yno]);
     }
 
     /* Doing an autoregressive procedure? */
@@ -236,17 +236,17 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 	model.uhat[t1] = NADBL;
 	model.yhat[t1] = NADBL;
 	for (t=t1+1; t<=t2; t++) {
-	    xx = (*pZ)[n*yno + t] - rho * (*pZ)[n*yno + t-1];
+	    xx = (*pZ)[yno][t] - rho * (*pZ)[yno][t-1];
 	    for (v=1; v<=model.ncoeff-model.ifc; v++)
 		xx -= model.coeff[v] * 
-		    ((*pZ)[n * model.list[v+1] + t] - 
-		    rho * (*pZ)[n * model.list[v+1] + t-1]);
+		    ((*pZ)[model.list[v+1]][t] - 
+		    rho * (*pZ)[model.list[v+1]][t-1]);
 	    if (model.ifc) xx -= (1 - rho) * model.coeff[model.ncoeff];
 	    model.uhat[t] = xx;
-	    model.yhat[t] = (*pZ)[n*yno + t] - xx;
+	    model.yhat[t] = (*pZ)[yno][t] - xx;
 	}
 	model.rsq = 
-	    _corrrsq(t2-t1, &(*pZ)[n*yno + t1+1], model.yhat + t1+1);
+	    _corrrsq(t2-t1, &(*pZ)[yno][t1+1], model.yhat + t1+1);
     	model.adjrsq = 
            1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
     }
@@ -264,15 +264,15 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 	model.sigma_wt = model.sigma;
 	model.ess = 0.0;
 	for (t=t1; t<=t2; t++) {
-	    model.yhat[t] /= (*pZ)[n*nwt + t];
-	    xx = model.uhat[t] /= (*pZ)[n*nwt + t];
+	    model.yhat[t] /= (*pZ)[nwt][t];
+	    xx = model.uhat[t] /= (*pZ)[nwt][t];
 	    model.ess += xx * xx;
 	}
 	model.sigma = sqrt(model.ess/model.dfd);
     }
     if (ci == WLS && model.wt_dummy) {
 	for (t=t1; t<=t2; t++) {
-	    if (floateq((*pZ)[n*nwt + t], 0.0)) 
+	    if (floateq((*pZ)[nwt][t], 0.0)) 
 		model.yhat[t] = model.uhat[t] = NADBL;
 	}
     }
@@ -286,7 +286,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 /* .......................................................... */
 
 static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2, 
-			    const double *Z, const int n, const int nwt, 
+			    double **Z, const int n, const int nwt, 
 			    const double rho)
 /*
         This function forms the X'X matrix and X'y vector
@@ -321,17 +321,17 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
 
     xpxxpy.nv = l0 - 1;
     if (rho) for (t=t1+1; t<=t2; t++) {
-        xx = Z(yno, t) - rho * Z(yno, t-1);
+        xx = Z[yno][t] - rho * Z[yno][t-1];
         xpxxpy.xpy[0] += xx;
         xpxxpy.xpy[l0] += xx * xx;
     }
     else if (nwt) for (t=t1; t<=t2; t++) {
-        xx = Z(yno, t) * Z(nwt, t);       
+        xx = Z[yno][t] * Z[nwt][t];       
         xpxxpy.xpy[0] += xx;
         xpxxpy.xpy[l0] += xx * xx;
     }
     else for (t=t1; t<=t2; t++) {
-        xx = Z(yno, t); 
+        xx = Z[yno][t]; 
         xpxxpy.xpy[0] += xx;
         xpxxpy.xpy[l0] += xx * xx;
     }
@@ -349,8 +349,8 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
             z2 = lj? rho: 0.0;
             xx = 0.0;
             for (t=t1+1; t<=t2; t++)
-                xx += (Z(li, t) - z1 * Z(li, t-1)) * 
-		    (Z(lj, t) - z2 * Z(lj, t-1));
+                xx += (Z[li][t] - z1 * Z[li][t-1]) * 
+		    (Z[lj][t] - z2 * Z[lj][t-1]);
                 if (floateq(xx, 0.0) && li == lj)  {
                     xpxxpy.ivalue = li;
                     return xpxxpy; 
@@ -359,8 +359,8 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
         }
         xx = 0;
         for (t=t1+1; t<=t2; t++)
-            xx = xx + (Z(yno, t) - rho * Z(yno, t-1)) *
-		(Z(li, t) - z1 * Z(li, t-1));
+            xx = xx + (Z[yno][t] - rho * Z[yno][t-1]) *
+		(Z[li][t] - z1 * Z[li][t-1]);
         xpxxpy.xpy[i-1] = xx;
     }
     else if (nwt) for (i=2; i<=l0; i++) {
@@ -369,8 +369,8 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
             lj = list[j];
             xx = 0.0;
             for (t=t1; t<=t2; t++) {
-                z1 = Z(nwt, t);
-                xx += z1 * z1 * Z(li, t) * Z(lj, t);
+                z1 = Z[nwt][t];
+                xx += z1 * z1 * Z[li][t] * Z[lj][t];
             }
             if (floateq(xx, 0.0) && li == lj)  {
                 xpxxpy.ivalue = li;
@@ -380,8 +380,8 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
         }
         xx = 0;
         for(t=t1; t<=t2; t++) {
-            z1 = Z(nwt, t);
-            xx += z1 * z1 * Z(yno, t) * Z(li, t);
+            z1 = Z[nwt][t];
+            xx += z1 * z1 * Z[yno][t] * Z[li][t];
         }
         xpxxpy.xpy[i-1] = xx;
     }
@@ -390,7 +390,7 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
         for (j=i; j<=l0; j++) {
             lj = list[j];
             xx = 0.0;
-            for (t=t1; t<=t2; t++) xx += Z(li, t) * Z(lj, t);
+            for (t=t1; t<=t2; t++) xx += Z[li][t] * Z[lj][t];
             if (floateq(xx, 0.0) && li == lj)  {
                 xpxxpy.ivalue = li;
                 return xpxxpy;  
@@ -398,7 +398,7 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
             xpxxpy.xpx[++m] = xx;
         }
         xx = 0;
-        for (t=t1; t<=t2; t++) xx += Z(yno, t) * Z(li, t);
+        for (t=t1; t<=t2; t++) xx += Z[yno][t] * Z[li][t];
         xpxxpy.xpy[i-1] = xx;
     }
     xpxxpy.ivalue = 0;
@@ -409,7 +409,7 @@ static XPXXPY _xpxxpy_func (const int *list, const int t1, const int t2,
 
 /* .......................................................... */
 
-static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z, 
+static void _regress (MODEL *pmod, XPXXPY xpxxpy, double **Z, 
 		      const int n, const double rho)
 /*
         This function takes xpx, the X'X matrix ouput
@@ -509,7 +509,7 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z,
     if (pmod->dfd > 0) {
 	pmod->adjrsq = 1 - (ess * (nobs-1)/den);
 	if (!pmod->ifc) {  
-	    pmod->rsq = _corrrsq(nobs, &Z(yno, t1), pmod->yhat + t1);
+	    pmod->rsq = _corrrsq(nobs, &Z[yno][t1], pmod->yhat + t1);
 	    pmod->adjrsq = 
 		1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
 	}
@@ -528,11 +528,11 @@ static void _regress (MODEL *pmod, XPXXPY xpxxpy, const double *Z,
 	zz = 0.0;
 	for (t=pmod->t1; t<=pmod->t2; t++) { 
 	    zz += pmod->yhat[t] * pmod->yhat[t];
-	    altyhat[t] = pmod->yhat[t]/Z(nwt, t);
+	    altyhat[t] = pmod->yhat[t] / Z[nwt][t];
 	}
 	pmod->dfn += 1; 
 	pmod->fstt = (zz * pmod->dfd)/(pmod->dfn * ess);
-	pmod->rsq = _corrrsq(nobs, &Z(yno, pmod->t1), altyhat + pmod->t1);
+	pmod->rsq = _corrrsq(nobs, &Z[yno][pmod->t1], altyhat + pmod->t1);
 	pmod->adjrsq = 
            1 - ((1 - pmod->rsq)*(nobs - 1)/pmod->dfd);
 	free(altyhat);
@@ -765,7 +765,7 @@ int makevcv (MODEL *pmod)
 
 /* ............................................................... */
 
-static double _dwstat (int order, MODEL *pmod, const double *Z,
+static double _dwstat (int order, MODEL *pmod, double **Z,
 		       const int n)
 /*  computes durbin-watson statistic
     opt is the order of autoregression, 0 for OLS and WLS
@@ -781,8 +781,8 @@ static double _dwstat (int order, MODEL *pmod, const double *Z,
         utt = pmod->uhat[t];
         utt1 = pmod->uhat[t-1];
         if (na(utt) || na(utt1) ||
-	    (pmod->nwt && (floateq(Z[n*pmod->nwt + t], 0.) || 
-	    floateq(Z[n*pmod->nwt + t-1], 0.)))) continue;
+	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.) || 
+	    floateq(Z[pmod->nwt][t-1], 0.)))) continue;
         diff = utt - utt1;
         diffsq += diff * diff;
     }
@@ -860,7 +860,7 @@ static double _corrrsq (const int nobs, const double *y,
 
 /* ........................................................... */
 
-static int _hatvar (MODEL *pmod, const double *Z, const int n)
+static int _hatvar (MODEL *pmod, double **Z, const int n)
 /* finds fitted values and residuals */
 {
     int yno, xno, i, t, nwt = pmod->nwt;
@@ -870,12 +870,12 @@ static int _hatvar (MODEL *pmod, const double *Z, const int n)
     for (t=pmod->t1; t<=pmod->t2; t++) {
         for (i=1; i<=pmod->ncoeff; i++) {
             xno = pmod->list[i+1];
-	    xx = Z[n*xno + t];
-	    if (nwt) xx = xx * Z[n*nwt + t];
+	    xx = Z[xno][t];
+	    if (nwt) xx = xx * Z[nwt][t];
             pmod->yhat[t] += pmod->coeff[i] * xx;
         }
-	xx = Z[n*yno + t];
-	if (nwt) xx = xx * Z[n*nwt + t];
+	xx = Z[yno][t];
+	if (nwt) xx = xx * Z[nwt][t];
         pmod->uhat[t] = xx - pmod->yhat[t];                
     }
     return 0;
@@ -911,7 +911,7 @@ static void _dropwt (int *list)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo, 
+int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo, 
 	       const int opt, PRN *prn)
 {
     double rho = 0.0, rho0 = 0.0, diff = 1.0, *uhat;
@@ -1000,16 +1000,16 @@ int hilu_corc (double *toprho, LIST list, double **pZ, DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static void _autores (const int i, double *Z, const int n, 
+static void _autores (const int i, double **Z, const int n, 
 		      const MODEL *pmod, double *uhat)
 {
     int t, v;
     double xx;
 
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	xx = Z(i, t);
+	xx = Z[i][t];
 	for (v=1; v<=pmod->ncoeff - pmod->ifc; v++)
-	    xx -= pmod->coeff[v] * Z(pmod->list[v+1], t);
+	    xx -= pmod->coeff[v] * Z[pmod->list[v+1]][t];
 	if (pmod->ifc) xx -= pmod->coeff[pmod->ncoeff] / pmod->dw;
 	uhat[t] = xx;
     }
@@ -1029,7 +1029,7 @@ static void _autores (const int i, double *Z, const int n,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (LIST list, const int pos, double **pZ, 
+MODEL tsls_func (LIST list, const int pos, double ***pZ, 
 		 DATAINFO *pdinfo)
 {
     int i, j, t, v, ncoeff, *list1, *list2, *newlist, *s1list, *s2list;
@@ -1126,9 +1126,9 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
 		break;
 	    }
 	}
-	for (t=0; t<n; t++) (*pZ)[n*(orig_nvar + i - 1) + t] = NADBL;
+	for (t=0; t<n; t++) (*pZ)[orig_nvar+i-1][t] = NADBL;
 	for (t=tsls.t1; t<=tsls.t2; t++)
-	    (*pZ)[(orig_nvar+i-1)*n + t] = tsls.yhat[t];
+	    (*pZ)[orig_nvar+i-1][t] = tsls.yhat[t];
 	strcpy(pdinfo->varname[orig_nvar+i-1], pdinfo->varname[newlist[i]]);
     } 
 
@@ -1163,10 +1163,10 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
 /*  	    printf("coeff[%d] = %f, Z(%d, %d) = %f\n",  */
 /*  		   i, tsls.coeff[i], list1[i+1], t,  */
 /*  		   (*pZ)[list1[i+1]*n + t]);  */
-	    xx += tsls.coeff[i] * (*pZ)[list1[i+1]*n + t];
+	    xx += tsls.coeff[i] * (*pZ)[list1[i+1]][t];
 	}
 	yhat[t] = xx; 
-	tsls.uhat[t] = (*pZ)[tsls.list[1]*n + t] - xx;
+	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
 	tsls.ess += tsls.uhat[t] * tsls.uhat[t];
     }
     tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
@@ -1192,7 +1192,7 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
     if (cholbeta.xpxxpy.xpy != NULL) free(cholbeta.xpxxpy.xpy);
     if (cholbeta.coeff != NULL) free(cholbeta.coeff);
 
-    tsls.rsq = _corrrsq(tsls.nobs, &(*pZ)[n*tsls.list[1] + tsls.t1], 
+    tsls.rsq = _corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 			yhat + tsls.t1);
     tsls.adjrsq = 
 	1 - ((1 - tsls.rsq)*(tsls.nobs - 1)/tsls.dfd);
@@ -1217,13 +1217,13 @@ MODEL tsls_func (LIST list, const int pos, double **pZ,
 
 /* ........................................................ */
 
-static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ, 
+static int _get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ, 
 			  DATAINFO *pdinfo)
      /* feed in a uhat series -- this func finds the fitted values
 	for the series using an aux. regression with squares, and
 	adds that series to the data set */
 {
-    int *tmplist, *list, t, v = pdinfo->v, n = pdinfo->n;
+    int *tmplist, *list, t, v = pdinfo->v;
     int i, l0 = pmod->list[0], listlen, check, shrink;
     MODEL aux;
 
@@ -1233,7 +1233,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
 
     /* add uhat1 to data set temporarily */
     for (t=pmod->t1; t<=pmod->t2; t++)
-	(*pZ)[v*n + t] = uhat1[t];
+	(*pZ)[v][t] = uhat1[t];
 
     listlen = (pmod->ifc)? l0 - 1 : l0;
     tmplist = malloc(listlen * sizeof(int));
@@ -1268,7 +1268,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
     if (check) shrink = pdinfo->v - v;
     else {
 	for (t=aux.t1; t<=aux.t2; t++)
-	    (*pZ)[v*n + t] = aux.yhat[t]; 
+	    (*pZ)[v][t] = aux.yhat[t]; 
 	shrink = pdinfo->v - v - 1;
     }
     if (shrink > 0) _shrink_Z(shrink, pZ, pdinfo);
@@ -1291,7 +1291,7 @@ static int _get_aux_uhat (MODEL *pmod, double *uhat1, double **pZ,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
+MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int err, lo, ncoeff, yno, t, nwt, v, n = pdinfo->n;
     int shrink, orig_nvar = pdinfo->v;
@@ -1331,8 +1331,8 @@ MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
 
     /* get fitted value from last regression and process */
     for (t=hsk.t1; t<=hsk.t2; t++) {
-	zz = (*pZ)[(pdinfo->v-1)*n + t];
-	(*pZ)[(pdinfo->v-1)*n + t] = 1.0/sqrt(exp(zz));
+	zz = (*pZ)[pdinfo->v-1][t];
+	(*pZ)[pdinfo->v-1][t] = 1.0/sqrt(exp(zz));
     }    
 
     /* run weighted least squares */
@@ -1372,7 +1372,7 @@ MODEL hsk_func (LIST list, double **pZ, DATAINFO *pdinfo)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
+MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 {
     int nobs, m3, lo, index, ncoeff, i, j, n, t, t1, t2;
     double xx, *st, *uhat1, **p;
@@ -1436,14 +1436,14 @@ MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
 	    for (j=1; j<=ncoeff; j++) {
 		if (i <= j) index = 1 + ijton(i, j, ncoeff);
 		else index = 1 + ijton(j, i, ncoeff);
-		xx += hccm.vcv[index] * (*pZ)[n*list[j+1] + t];
+		xx += hccm.vcv[index] * (*pZ)[list[j+1]][t];
 	    }
 	    p[i][t] = xx;
 	}
     }
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
-	for (i=1; i<=ncoeff; i++) xx += (*pZ)[n*list[i+1] + t] * p[i][t];
+	for (i=1; i<=ncoeff; i++) xx += (*pZ)[list[i+1]][t] * p[i][t];
 	if (floateq(xx, 1.0)) xx = 0.0;
 	uhat1[t] = hccm.uhat[t] / (1 - xx);
     }
@@ -1489,10 +1489,10 @@ MODEL hccm_func (LIST list, double **pZ, DATAINFO *pdinfo)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo, 
+int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int lo, ncoeff, yno, i, t, n = pdinfo->n, check;
+    int lo, ncoeff, yno, i, t, check;
     int shrink, v = pdinfo->v, listlen;
     int *tmplist = NULL, *list = NULL;
     double zz;
@@ -1512,7 +1512,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
 	/* get residuals, square and add to data set */
 	for (t=pmod->t1; t<=pmod->t2; t++) {
 	    zz = pmod->uhat[t];
-	    (*pZ)[v*n + t] = zz * zz;
+	    (*pZ)[v][t] = zz * zz;
 	}
 	strcpy(pdinfo->varname[v], "uhatsq");
 
@@ -1605,7 +1605,7 @@ int whites_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
  * Returns: #MODEL struct containing the results.
  */
 
-MODEL ar_func (LIST list, const int pos, double **pZ, 
+MODEL ar_func (LIST list, const int pos, double ***pZ, 
 	       DATAINFO *pdinfo, int *model_count, PRN *prn)
 {
     double diff = 100.0, ess = 0, tss = 0, xx;
@@ -1677,21 +1677,21 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     /* now loop while ess is changing */
     while (diff > 0.005) {
 	iter++;
-	for (t=0; t<n; t++) (*pZ)[n*v + t] = NADBL;
+	for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
 	/* special computation of uhat */
 	for (t=t1; t<=t2; t++) {
-	    xx = (*pZ)[yno*n + t];
+	    xx = (*pZ)[yno][t];
 	    for (j=1; j<reglist[0]; j++) {
-		xx -= ar.coeff[j] * (*pZ)[reglist[j+1]*n + t];
+		xx -= ar.coeff[j] * (*pZ)[reglist[j+1]][t];
 	    }
-	    (*pZ)[n*v + t] = xx;
+	    (*pZ)[v][t] = xx;
 	}
 	for (i=1; i<=arlist[0]; i++) {
 	    lag = arlist[i];
 	    rholist[1+i] = v + i;
-	    for (t=0; t<t1+lag; t++) (*pZ)[(v+i)*n + t] = NADBL;
+	    for (t=0; t<t1+lag; t++) (*pZ)[v+i][t] = NADBL;
 	    for (t=t1+lag; t<=t2; t++)
-		(*pZ)[(v+i)*n + t] = (*pZ)[n*v + t-lag];
+		(*pZ)[v+i][t] = (*pZ)[v][t-lag];
 	}
 	ryno = vc = v + i;
 
@@ -1704,14 +1704,14 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
 /*  	    printf("i = %d, vc = %d, t1 = %d\n" */
 /*  		   "using var %d, setting var %d\n", */
 /*  		   i, vc, t1, reglist[i], vc); */
-	    for (t=0; t<n; t++) (*pZ)[vc*n + t] = NADBL;
+	    for (t=0; t<n; t++) (*pZ)[vc][t] = NADBL;
 	    for (t=t1+p; t<=t2; t++) {
-		xx = (*pZ)[reglist[i]*n + t];
+		xx = (*pZ)[reglist[i]][t];
 		for (j=1; j<=arlist[0]; j++) {
 		    lag = arlist[j];
-		    xx -= rhomod.coeff[j] * (*pZ)[reglist[i]*n + t-lag];
+		    xx -= rhomod.coeff[j] * (*pZ)[reglist[i]][t-lag];
 		}
-		(*pZ)[vc*n + t] = xx;
+		(*pZ)[vc][t] = xx;
 	    }
 	    reglist2[i] = vc;
 	    vc++;
@@ -1751,8 +1751,8 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     for (t=t1; t<=t2; t++) {
 	xx = 0.0;
 	for (j=2; j<=reglist[0]; j++) 
-	    xx += ar.coeff[j-1] * (*pZ)[reglist[j]*n + t];
-	ar.uhat[t] = (*pZ)[yno*n + t] - xx;
+	    xx += ar.coeff[j-1] * (*pZ)[reglist[j]][t];
+	ar.uhat[t] = (*pZ)[yno][t] - xx;
 	for (j=1; j<=arlist[0]; j++)
 	    if (t - t1 >= arlist[j]) 
 		xx += rhomod.coeff[j] * ar.uhat[t - arlist[j]];
@@ -1761,15 +1761,15 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
     }
 
     for (t=t1; t<=t2; t++) 
-	ar.uhat[t] = (*pZ)[yno*n + t] - ar.yhat[t];
-    ar.rsq = _corrrsq(ar.nobs, &(*pZ)[n*reglist[1] + ar.t1], ar.yhat + ar.t1);
+	ar.uhat[t] = (*pZ)[yno][t] - ar.yhat[t];
+    ar.rsq = _corrrsq(ar.nobs, &(*pZ)[reglist[1]][ar.t1], ar.yhat + ar.t1);
     ar.adjrsq = 
 	1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
     /*  ar.fstt = ar.rsq*ar.dfd/(ar.dfn*(1 - ar.rsq)); */
     /* special computation of TSS */
-    xx = _esl_mean(ar.t1, ar.t2, &(*pZ)[ryno*n]);
+    xx = _esl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
     for (t=ar.t1; t<=ar.t2; t++)
-	tss += ((*pZ)[ryno*n + t] - xx) * ((*pZ)[ryno*n + t] - xx);
+	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     ar.fstt = ar.dfd * (tss - ar.ess) / (ar.dfn * ar.ess);
     _aicetc(&ar);
     ar.dw = _dwstat(p, &ar, *pZ, pdinfo->n);
@@ -1799,19 +1799,18 @@ MODEL ar_func (LIST list, const int pos, double **pZ,
 /* ..........................................................  */
 
 static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo, 
-		       const double *Z)
+		       double **Z)
 /* From 2 to end of list, omits variables with all zero observations
    and packs the rest of them */
 {
     int t = 0, v, lv, offset, wtzero = 0, drop = 0;
-    int n = pdinfo->n;
     double xx = 0.;
     char vnamebit[20];
 
     offset = (pmod->ci == WLS)? 3 : 2;
     for (v=offset; v<=pmod->list[0]; v++) {
         lv = pmod->list[v];
-        if (_iszero(pmod->t1, pmod->t2, &Z(lv, 0))) {
+        if (_iszero(pmod->t1, pmod->t2, Z[lv])) {
 	    list_exclude(v, pmod->list);
 	    sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
 	    strcat(pmod->infomsg, vnamebit);
@@ -1823,7 +1822,7 @@ static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo,
 	    lv = pmod->list[v];
 	    wtzero = 1;
 	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		xx = Z(lv, t) * Z(pmod->nwt, t);
+		xx = Z[lv][t] * Z[pmod->nwt][t];
 		if (floatneq(xx, 0.0)) {
 		    wtzero = 0;
 		    break;
@@ -1842,14 +1841,14 @@ static void _omitzero (MODEL *pmod, const DATAINFO *pdinfo,
 
 /* .........................................................   */
 
-static void _tsls_omitzero (int *list, const double *Z, 
+static void _tsls_omitzero (int *list, double **Z, 
 			    const int t1, const int t2, const int n)
 {
     int v, lv;
 
     for (v=2; v<=list[0]; v++) {
         lv = list[v];
-        if (_iszero(t1, t2, &Z(lv, 0))) 
+        if (_iszero(t1, t2, Z[lv])) 
 	    list_exclude(v, list);
     }
 }
@@ -1879,19 +1878,19 @@ static void _rearrange (int *list)
 /* ...........................................................*/
 
 static int _zerror (const int t1, const int t2, const int yno,
-		    const int nwt, const int n, double **pZ)
+		    const int nwt, const int n, double ***pZ)
 {
     double xx, yy;
     int t;
 
-    xx = _esl_mean(t1, t2, &(*pZ)[n*yno]);
-    yy = _esl_stddev(t1, t2, &(*pZ)[n*yno]);
+    xx = _esl_mean(t1, t2, (*pZ)[yno]);
+    yy = _esl_stddev(t1, t2, (*pZ)[yno]);
     if (floateq(xx, 0.0) && floateq(yy, 0.0)) return 1;
 
     if (nwt) {
 	xx = 0.0;
 	for (t=t1; t<=t2; t++) {
-	    xx = (*pZ)[n*nwt + t] * (*pZ)[n*yno + t];
+	    xx = (*pZ)[nwt][t] * (*pZ)[yno][t];
 	    if (floatneq(xx, 0.0)) return 0;
 	}
 	return 1;
@@ -1902,12 +1901,12 @@ static int _zerror (const int t1, const int t2, const int yno,
 /* .......................................................... */
 
 static int _lagdepvar (const int *list, const DATAINFO *pdinfo, 
-		       double **pZ)
+		       double ***pZ)
 /* attempts to detect presence of a lagged dependent variable
    among the regressors -- if found, returns the position of this
    lagged var in the list; otherwise returns 0 */
 {
-    int i, c, t, n = pdinfo->n;
+    int i, c, t;
     char depvar[9], othervar[9];
 
     /* this may be an auxiliary regression */
@@ -1922,8 +1921,8 @@ static int _lagdepvar (const int *list, const DATAINFO *pdinfo,
 	    && strncmp(depvar, othervar, c-1) == 0) {
 	    /* strong candidate for lagged depvar -- but make sure */
 	    for (t=pdinfo->t1+1; t<=pdinfo->t2; t++) 
-		if ((*pZ)[n*list[1] + t-1] 
-		    != (*pZ)[n*list[i] + t]) return 0;
+		if ((*pZ)[list[1]][t-1] 
+		    != (*pZ)[list[i]][t]) return 0;
 	    return i; 
 	}
     } 
@@ -1960,7 +1959,7 @@ static int _tsls_match (const int *list1, const int *list2, int *newlist)
 
 /* ............................................................  */
 
-static double _wt_dummy_mean (const MODEL *pmod, const double *Z, 
+static double _wt_dummy_mean (const MODEL *pmod, double **Z, 
 			      const int n)
 /* returns mean of dependent variable in WLS model w. dummy weight */
 {
@@ -1970,12 +1969,12 @@ static double _wt_dummy_mean (const MODEL *pmod, const double *Z,
 
     if (m <= 0) return NADBL;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-	if (floateq(Z[n*pmod->nwt + t], 0.0)) continue;
+	if (floateq(Z[pmod->nwt][t], 0.0)) continue;
 	else {
-	    if (na(Z[n*yno + t])) {
+	    if (na(Z[yno][t])) {
 		m--;
 		continue;
-	    } else sum += Z[n*yno + t]; 
+	    } else sum += Z[yno][t]; 
 	}
     }
     return sum/m;
@@ -1983,7 +1982,7 @@ static double _wt_dummy_mean (const MODEL *pmod, const double *Z,
 
 /* .............................................................  */
 
-static double _wt_dummy_stddev (const MODEL *pmod, const double *Z, 
+static double _wt_dummy_stddev (const MODEL *pmod, double **Z, 
 				const int n)
 /*  returns standard deviation of dep. var. in WLS model
     with a dummy variable for weight.
@@ -1998,8 +1997,8 @@ static double _wt_dummy_stddev (const MODEL *pmod, const double *Z,
     if (na(xbar)) return NADBL;
     sumsq = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {
-        xx = Z[n*yno + t] - xbar;
-        if (floatneq(Z[n*pmod->nwt + t], 0.0) && !na(Z[n*yno + t]))
+        xx = Z[yno][t] - xbar;
+        if (floatneq(Z[pmod->nwt][t], 0.0) && !na(Z[yno][t]))
 	    sumsq += xx*xx;
     }
     sumsq = (m > 1)? sumsq/(m-1) : 0.0;
@@ -2025,7 +2024,7 @@ static double _wt_dummy_stddev (const MODEL *pmod, const double *Z,
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo, 
+MODEL arch (int order, LIST list, double ***pZ, DATAINFO *pdinfo, 
 	    int *model_count, PRN *prn, GRETLTEST *test)
 {
     MODEL archmod;
@@ -2067,16 +2066,16 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
 	strcpy(pdinfo->varname[nv], "utsq");
 	for (t=archmod.t1; t<=archmod.t2; t++) {
 	    xx = archmod.uhat[t];
-	    (*pZ)[n*nv + t] = xx * xx;
+	    (*pZ)[nv][t] = xx * xx;
 	}
 	/* also lags of squared resids */
 	for (i=1; i<=order; i++) {
 	    nv =  pdinfo->v - order + i - 1;
 	    arlist[i+2] = nv;
 	    sprintf(pdinfo->varname[nv], "utsq_%d", i);
-	    for (t=0; t<n; t++) (*pZ)[n*nv + t] = NADBL;
+	    for (t=0; t<n; t++) (*pZ)[nv][t] = NADBL;
 	    for (t=archmod.t1+i; t<=archmod.t2; t++) 
-		(*pZ)[n*nv + t] = (*pZ)[n*arlist[1] + t-i];
+		(*pZ)[nv][t] = (*pZ)[arlist[1]][t-i];
 	}
 
 	/* run aux. regression */
@@ -2121,8 +2120,8 @@ MODEL arch (int order, LIST list, double **pZ, DATAINFO *pdinfo,
 		nv = pdinfo->v - order - 1;
 		for (t=archmod.t1; t<=archmod.t2; t++) {
 		    xx = archmod.yhat[t];
-		    if (xx <= 0.0) xx = (*pZ)[n*nv + t];
-		    (*pZ)[n*nwt + t] = 1/sqrt(xx);
+		    if (xx <= 0.0) xx = (*pZ)[nv][t];
+		    (*pZ)[nwt][t] = 1/sqrt(xx);
 		}
 		strcpy(pdinfo->varname[nwt], "1/sigma");
 		clear_model(&archmod, NULL, NULL, pdinfo);

@@ -158,9 +158,9 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-int loop_condition (int k, LOOPSET *ploop, double *Z, DATAINFO *pdinfo)
+int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
-    int n = pdinfo->n, t = pdinfo->t2;
+    int t = pdinfo->t2;
     const int LOOPMAX = 2500; /* safety measure */
 
     if (ploop->lvar && ploop->ntimes > LOOPMAX) 
@@ -170,11 +170,11 @@ int loop_condition (int k, LOOPSET *ploop, double *Z, DATAINFO *pdinfo)
     if (ploop->rvar > 0) {
 	ploop->ntimes += 1;
 	if (ploop->ineq == GT) {
-	    if (Z(ploop->lvar, t) > Z(ploop->rvar, t))
+	    if (Z[ploop->lvar][t] > Z[ploop->rvar][t])
 		return 1;
 	    else return 0;
 	} else {
-	    if (Z(ploop->lvar, t) < Z(ploop->rvar, t))
+	    if (Z[ploop->lvar][t] < Z[ploop->rvar][t])
 		return 1;
 	    else return 0;
 	}
@@ -191,10 +191,10 @@ int loop_condition (int k, LOOPSET *ploop, double *Z, DATAINFO *pdinfo)
     /* case of inequality between a var and a number */
 	ploop->ntimes += 1;
 	if (ploop->ineq == GT) {
-	    if (Z(ploop->lvar, t) > ploop->rval) return 1;
+	    if (Z[ploop->lvar][t] > ploop->rval) return 1;
 	    else return 0;
 	} else {
-	    if (Z(ploop->lvar, t) < ploop->rval) return 1;
+	    if (Z[ploop->lvar][t] < ploop->rval) return 1;
 	    else return 0;
 	}
     }
@@ -449,15 +449,15 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
 
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
-		       const LIST list, double **pZ, 
+		       const LIST list, double ***pZ, 
 		       const int n, const int t)
 {
     int j, i = get_prnnum_by_id(ploop, cmdnum);
     LOOP_PRINT *pprn = &ploop->prns[i];
     
     for (j=1; j<=list[0]; j++) {
-	pprn->sum[j-1] += (*pZ)[list[j]*n + t];
-	pprn->ssq[j-1] += (*pZ)[list[j]*n + t] * (*pZ)[list[j]*n + t];
+	pprn->sum[j-1] += (*pZ)[list[j]][t];
+	pprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
     }
     return 0;
 }

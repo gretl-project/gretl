@@ -38,10 +38,10 @@ extern double _gammadist (double s1, double s2, double x, int control);
 
 static int printv (FILE *fp, const int nt, const int v1, 
 		   const int *list, const DATAINFO *pdinfo, 
-		   double **pZ)
+		   double ***pZ)
 {
     register int i;
-    int n = pdinfo->n, v2 = list[0], ls = 0, miss = 0;
+    int v2 = list[0], ls = 0, miss = 0;
     double xx;
     PRN prn;
 
@@ -49,7 +49,7 @@ static int printv (FILE *fp, const int nt, const int v1,
     prn.buf = NULL;
     
     for (i=v1; i<=v2; i++)  {
-	xx = (*pZ)[n*list[i] + nt];
+	xx = (*pZ)[list[i]][nt];
 	if (na(xx)) {
 	    fprintf(fp, "? ");
 	    miss = 1;
@@ -101,14 +101,14 @@ static int get_timevar (DATAINFO *pdinfo, char *timevar)
 /* ........................................................ */
 
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
-           const DATAINFO *pdinfo, const double *Z)
+           const DATAINFO *pdinfo, double **Z)
 {
-    int m = 0, n = pdinfo->n, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int m = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     double x1, x2;
 
     for (t=t1; t<=t2; t++)  {
-	x1 = Z(v1, t);
-	x2 = Z(v2, t);
+	x1 = Z[v1][t];
+	x2 = Z[v2][t];
 	if (na(x1) || na(x2)) continue;
 	px[m] = x1;
 	py[m++] = x2;
@@ -157,7 +157,7 @@ static void drawline (const int nn, PRN *prn)
  * Returns: 0 on successful completion, error code on error.
  */
 
-int plot (const LIST list, double *Z, const DATAINFO *pdinfo, 
+int plot (const LIST list, double **Z, const DATAINFO *pdinfo, 
 	  int oflag, int pause, PRN *prn)
 /*
 	plot var1 ;		plots var1 values
@@ -213,7 +213,7 @@ int plot (const LIST list, double *Z, const DATAINFO *pdinfo,
 	/* plot values */
 	lineno = 3;
 	for (t=t1; t<=t2; ++t) {
-	    xxx = Z(vy, t);
+	    xxx = Z[vy][t];
 	    if (na(xxx)) continue;
 	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
@@ -293,8 +293,8 @@ int plot (const LIST list, double *Z, const DATAINFO *pdinfo,
     for (t=t1; t<=t2; ++t) {
 	if (pause) page_break(1, &lineno, 0);
 	lineno++;
-	xxx = Z(vy, t);
-	yy = Z(vz, t);
+	xxx = Z[vy][t];
+	yy = Z[vz][t];
 	if (na(xxx) || na(yy)) continue;
 	prntdate(t, n, pdinfo, prn);
 	if (oflag == OPT_O) {
@@ -336,7 +336,7 @@ int plot (const LIST list, double *Z, const DATAINFO *pdinfo,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int graph (const LIST list, double *Z, const DATAINFO *pdinfo, 
+int graph (const LIST list, double **Z, const DATAINFO *pdinfo, 
 	   const int oflag, PRN *prn)
 /*
   graph var1 var2 ;	graphs var1 (y-axis) against var2 (x-axis)
@@ -345,7 +345,7 @@ int graph (const LIST list, double *Z, const DATAINFO *pdinfo,
 */
 {
     int m, vx, vy, vz, l0, t;
-    int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
+    int t1 = pdinfo->t1, t2 = pdinfo->t2;
     double *x, *y, xx, xy, xz, *uhat;
 
     if (list[0] < 2) return E_ARGS; 
@@ -377,9 +377,9 @@ int graph (const LIST list, double *Z, const DATAINFO *pdinfo,
 	vz = list[2];
 	vx = list[3];
 	for(t=t1; t<=t2; t++) {
-	    xx = Z(vx, t);
-	    xy = Z(vy, t);
-	    xz = Z(vz, t);
+	    xx = Z[vx][t];
+	    xy = Z[vy][t];
+	    xz = Z[vz][t];
 	    if (na(xx) || na(xy) || na(xz)) continue;
 	    else {
 		x[m] = xx;
@@ -398,7 +398,7 @@ int graph (const LIST list, double *Z, const DATAINFO *pdinfo,
 
 /* ........................................................ */
 
-static int factorized_vars (double **pZ, 
+static int factorized_vars (double ***pZ, 
 			    const int t1, const int t2, const int n,
 			    double **y1, double **y2,
 			    const int ynum, const int dum)
@@ -413,17 +413,17 @@ static int factorized_vars (double **pZ,
     if (*y1 == NULL || *y2 == NULL) return 1;
 
     for (t=t1; t<=t2; t++) {
-	if (na((*pZ)[n*ynum + t])) {
+	if (na((*pZ)[ynum][t])) {
 	    (*y1)[i] = NADBL;
 	    (*y2)[i] = NADBL;
 	} else {
-	    xx = (*pZ)[n*dum + t];
+	    xx = (*pZ)[dum][t];
 	    if (floateq(xx, 1.)) {
-		(*y1)[i] = (*pZ)[n*ynum + t];
+		(*y1)[i] = (*pZ)[ynum][t];
 		(*y2)[i] = NADBL;
 	    } else {
 		(*y1)[i] = NADBL;
-		(*y2)[i] = (*pZ)[n*ynum + t];
+		(*y2)[i] = (*pZ)[ynum][t];
 	    }
 	}
 	i++;
@@ -478,7 +478,7 @@ int gnuplot_display (const char *gpt, const char *fname)
  */
 
 int gnuplot (LIST list, const int *lines, 
-	     double **pZ, DATAINFO *pdinfo,
+	     double ***pZ, DATAINFO *pdinfo,
 	     const PATHS *ppaths, int *plot_count, 
 	     const int batch, const int gui, const int opt)
 {
@@ -623,8 +623,7 @@ int gnuplot (LIST list, const int *lines,
 
 	/* find minima, maxima of the vars */
 	for (i=1; i<lo; i++) 
-	    _minmax(t1, t2, &(*pZ)[pdinfo->n*list[i]], 
-		    &(ymin[i]), &(ymax[i]));
+	    _minmax(t1, t2, (*pZ)[list[i]], &(ymin[i]), &(ymax[i]));
 	tscale = 0;
 	for (i=1; i<lo; i++) {
 	    oddcount = 0;
@@ -697,7 +696,7 @@ int gnuplot (LIST list, const int *lines,
 
 	for (i=0; i<2; i++) {
 	    for (t=t1; t<=t2; t++) {
-		xx = (*pZ)[pdinfo->n*list[2] + t];
+		xx = (*pZ)[list[2]][t];
 		if (na(xx)) continue;
 		yy = (i)? yvar2[t-t1] : yvar1[t-t1];
 		if (na(yy))
@@ -749,11 +748,11 @@ int gnuplot (LIST list, const int *lines,
  * Returns: 0 on successful completion, error code on error.
  */
 
-int multi_scatters (const LIST list, const int pos, double **pZ, 
+int multi_scatters (const LIST list, const int pos, double ***pZ, 
 		    const DATAINFO *pdinfo, const PATHS *ppaths)
 {
     int i, t, err = 0, xvar, yvar, *plotlist;
-    int nplots, m, n = pdinfo->n;
+    int nplots, m;
     FILE *fp;
     double xx;
 
@@ -816,11 +815,11 @@ int multi_scatters (const LIST list, const int pos, double **pZ,
 	fprintf(fp, "plot '-' using 1:2\n");
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    m = (yvar)? plotlist[i+1] : xvar;
-	    xx = (*pZ)[n * m + t];
+	    xx = (*pZ)[m][t];
 	    if (na(xx)) fprintf(fp, "? ");
 	    else fprintf(fp, "%f ", xx);
 	    m = (yvar)? yvar : plotlist[i+1];
-	    xx = (*pZ)[n * m + t];
+	    xx = (*pZ)[m][t];
 	    if (na(xx)) fprintf(fp, "?\n");
 	    else fprintf(fp, "%f\n", xx);
 	}

@@ -70,7 +70,7 @@ int parse_loopline (char *line, LOOPSET *ploop,
 		    DATAINFO *pdinfo);
 
 int loop_condition (int k, LOOPSET *ploop, 
-		    double *Z, DATAINFO *pdinfo); 
+		    double **Z, DATAINFO *pdinfo); 
 
 void monte_carlo_free (LOOPSET *ploop);
 
@@ -86,7 +86,7 @@ int update_loop_model (LOOPSET *ploop, const int cmdnum,
 		       MODEL *pmod, const DATAINFO *pdinfo);
 
 int update_loop_print (LOOPSET *ploop, const int cmdnum, 
-		       const LIST list, double **pZ, 
+		       const LIST list, double ***pZ, 
 		       const int n, const int t);
 
 void print_loop_results (LOOPSET *ploop, 

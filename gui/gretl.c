@@ -117,9 +117,9 @@ char trydatfile[MAXLEN], tryscript[MAXLEN];
 char line[MAXLEN];
 PATHS paths;                /* useful paths */
 CMD command;                /* gretl command struct */
-double *Z;                  /* data set */
-double *subZ;               /* sub-sampled data set */
-double *fullZ;              /* convenience pointer */
+double **Z;                 /* data set */
+double **subZ;              /* sub-sampled data set */
+double **fullZ;             /* convenience pointer */
 MODEL **models;             /* gretl models structs */
 SESSION session;            /* hold models, graphs */
 SESSIONBUILD rebuild;       /* rebuild session later */
@@ -749,8 +749,8 @@ int main (int argc, char *argv[])
     /* clean up before exiting */
     /* if (mdata) free_windata(NULL, mdata); */
     free_session();
-    if (Z) free(Z);
-    if (fullZ) free(fullZ);
+    if (Z) free_Z(Z, datainfo);
+    if (fullZ) free_Z(fullZ, fullinfo);
     free_model(models[0]);
     free_model(models[1]);
     free_model(models[2]);

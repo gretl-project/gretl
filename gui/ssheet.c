@@ -459,9 +459,9 @@ static void get_data_from_sheet (void)
 	for (t=0; t<n; t++) {
 	    celltext = gtk_sheet_cell_get_text(sheet, t, i);
 	    if (celltext != NULL)
-		Z[n*(i+1) + t] = atof(celltext);
+		Z[i+1][t] = atof(celltext);
 	    else {
-		Z[n*(i+1) + t] = NADBL;
+		Z[i+1][t] = NADBL;
 		missobs = 1;
 	    }
 	}
@@ -505,9 +505,9 @@ static void add_data_to_sheet (GtkWidget *w)
     /* enter the data values */
     for (t=0; t<n; t++) {
 	for (i=0; i<datainfo->v-1; i++) {
-	    xx = Z[n*(i+1) + t];
+	    xx = Z[i+1][t];
 	    if (!na(xx)) 
-		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[n*(i+1) + t]);
+		sprintf(label, "%.*f", DEFAULT_PRECISION, Z[i+1][t]);
 	    else
 		strcpy(label, "");
 	    gtk_sheet_set_cell(sheet, t, i, GTK_JUSTIFY_RIGHT, label); 

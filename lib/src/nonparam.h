@@ -22,10 +22,10 @@
 /* functions follow */
  
 int spearman (const LIST list, 
-	      const double *Z, const DATAINFO *pdinfo,
+	      double **Z, const DATAINFO *pdinfo,
 	      const int opt, PRN *prn);
 
 int runs_test (const int varno, 
-	       const double *Z, const DATAINFO *pdinfo, 
+	       double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
 

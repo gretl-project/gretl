@@ -44,9 +44,11 @@ typedef enum {
 
 /* functions follow */
 
+void free_Z (double **Z, DATAINFO *pdinfo);
+
 DATAINFO *datainfo_new (void);
 
-DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
+DATAINFO *create_new_dataset (double ***pZ, /* data matrix */
 			      int nvar,     /* number of variables */
 			      int nobs,     /* observations per variable */
 			      int markers   /* case markers or not? */
@@ -54,7 +56,7 @@ DATAINFO *create_new_dataset (double **pZ,  /* data matrix */
 
 void clear_datainfo (DATAINFO *pdinfo, int subsample);
 
-int start_new_Z (double **pZ, DATAINFO *pdinfo, int resample);
+int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample);
 
 int dateton (const char *date, const int pd, const char *startdate);
 
@@ -65,32 +67,32 @@ int get_info (const char *hdrfile, PRN *prn);
 int get_precision (double *x, int n);
 
 int write_data (const char *fname, const int *list, 
-		double *Z, const DATAINFO *pdinfo, 
+		double **Z, const DATAINFO *pdinfo, 
 	        int opt);
 
 int has_gz_suffix (const char *fname);
 
 void gz_switch_ext (char *targ, char *src, char *ext);
 
-int get_data (double **pZ, DATAINFO *pdinfo, 
+int get_data (double ***pZ, DATAINFO *pdinfo, 
 	      char *datfile, PATHS *ppaths, 
 	      const int data_status, PRN *prn);
 
-int open_nulldata (double **pZ, DATAINFO *pdinfo, 
+int open_nulldata (double ***pZ, DATAINFO *pdinfo, 
 		   const int data_status, const int length,
 		   PRN *prn);
 
-int import_csv (double **pZ, DATAINFO *pdinfo, 
+int import_csv (double ***pZ, DATAINFO *pdinfo, 
                 const char *fname, PRN *prn);
 
-int import_box (double **pZ, DATAINFO *pdinfo, 
+int import_box (double ***pZ, DATAINFO *pdinfo, 
 		const char *fname, PRN *prn);
 
 int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
 
-int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
+int get_xmldata (double ***pZ, DATAINFO *pdinfo, char *fname,
 		 PATHS *ppaths, int data_status, PRN *prn); 
 
 char *get_xml_description (const char *fname);

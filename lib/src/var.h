@@ -20,22 +20,22 @@
 /* functions follow */
  
 int list_diffgenr (const LIST list, 
-		   double **pZ, DATAINFO *pdinfo);
+		   double ***pZ, DATAINFO *pdinfo);
 
 int list_ldiffgenr (const LIST list, 
-		    double **pZ, DATAINFO *pdinfo);
+		    double ***pZ, DATAINFO *pdinfo);
 
 int var (const int order, const LIST list, 
-	 double **pZ, DATAINFO *pdinfo,
+	 double ***pZ, DATAINFO *pdinfo,
 	 const int pause, PRN *prn);
 
 int coint (const int order, const LIST list, 
-	   double **pZ, DATAINFO *pdinfo, 
+	   double ***pZ, DATAINFO *pdinfo, 
 	   PRN *prn);
 
 int adf_test (const int order, const int varno, 
-	      double **pZ, DATAINFO *pdinfo, 
+	      double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);
 
-int ma_model (LIST list, double **pZ, DATAINFO *pdinfo, 
+int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, 
 	      PRN *prn);

@@ -34,21 +34,21 @@ typedef struct {
 
 void free_freq (FREQDIST *freq);
 
-FREQDIST *freqdist (double **pZ, const DATAINFO *pdinfo, 
+FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
 		    int varno, int params);
 
 int corrgram (const int varno, const int order, 
-	      double **pZ, DATAINFO *pdinfo, 
+	      double ***pZ, DATAINFO *pdinfo, 
 	      const PATHS *ppaths, const int batch, 
 	      PRN *prn);
 
 int periodogram (const int varno, 
-		 double **pZ, const DATAINFO *pdinfo, 
+		 double ***pZ, const DATAINFO *pdinfo, 
 		 const PATHS *ppaths, const int batch, 
 		 const int opt, PRN *prn);
 
 GRETLSUMMARY *summary (LIST list, 
-		       double **pZ, const DATAINFO *pdinfo,
+		       double ***pZ, const DATAINFO *pdinfo,
 		       PRN *prn);
 
 void print_summary (GRETLSUMMARY *summ,
@@ -58,20 +58,20 @@ void print_summary (GRETLSUMMARY *summ,
 void free_summary (GRETLSUMMARY *summ);
 
 CORRMAT *corrlist (LIST list, 
-		   double **pZ, const DATAINFO *pdinfo);
+		   double ***pZ, const DATAINFO *pdinfo);
 
 void free_corrmat (CORRMAT *corrmat);
 
 int esl_corrmx (LIST list, 
-		double **pZ, const DATAINFO *pdinfo, 
+		double ***pZ, const DATAINFO *pdinfo, 
 		const int pause, PRN *prn);
 
 int means_test (LIST list, 
-		double *Z, const DATAINFO *pdinfo, 
+		double **Z, const DATAINFO *pdinfo, 
 		const int vareq, PRN *prn);
 
 int vars_test (LIST list, 
-	       double *Z, const DATAINFO *pdinfo, 
+	       double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
 
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,

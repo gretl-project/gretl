@@ -28,8 +28,8 @@
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
-extern double *subZ;
-extern double *fullZ;
+extern double **subZ;
+extern double **fullZ;
 
 /* ../cli/common.c */
 static int data_option (int flag);
@@ -37,9 +37,9 @@ extern int loop_exec_line (LOOPSET *plp, const int round,
 			   const int cmdnum, PRN *prn);
 /* boxplots.c */
 extern int boxplots (int *list, char **bools, 
-		     double **pZ, const DATAINFO *pdinfo, 
+		     double ***pZ, const DATAINFO *pdinfo, 
 		     int notches);
-extern int boolean_boxplots (const char *str, double **pZ, 
+extern int boolean_boxplots (const char *str, double ***pZ, 
 			     DATAINFO *pdinfo, int notches);
 
 /* calculator.c */
@@ -160,7 +160,7 @@ static char last_model = 's';
 
 int quiet_sample_check (MODEL *pmod)
 {
-    double *checkZ;
+    double **checkZ;
     DATAINFO *pdinfo;
 
     if (fullZ == NULL) {
@@ -242,7 +242,7 @@ void clear_data (int full)
     }
     restore_sample(NULL, 0, NULL);
     clear_datainfo(datainfo, 0);
-    if (Z != NULL) free(Z);
+    if (Z != NULL) free(Z); /* FIXME */
     Z = NULL;
     fullZ = NULL;
     clear_clist(mdata->listbox);
@@ -1434,7 +1434,7 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
     void *handle;
-    void (*panel_diagnostics)(MODEL *, double **, DATAINFO *, PRN *);
+    void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
     PRN *prn;
 
     if (!balanced_panel()) {
@@ -2295,41 +2295,41 @@ void add_model_stat (MODEL *pmod, const int which)
     i = datainfo->v - 1;
     n = datainfo->n;
 
-    for (t=0; t<t1; t++) Z[n*i + t] = NADBL;
-    for (t=t2+1; t<n; t++) Z[n*i + t] = NADBL;
+    for (t=0; t<t1; t++) Z[i][t] = NADBL;
+    for (t=t2+1; t<n; t++) Z[i][t] = NADBL;
 
     switch (which) {
     case ESS:
 	sprintf(vname, "ess_%d", pmod->ID);
 	sprintf(vlabel, "error sum of squares from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->ess;
+	for (t=t1; t<=t2; t++) Z[i][t] = pmod->ess;
 	sprintf(cmdstr, "genr ess_%d = $ess", pmod->ID);
 	break;
     case R2:
 	sprintf(vname, "r2_%d", pmod->ID);
 	sprintf(vlabel, "R-squared from model %d", pmod->ID);
-	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->rsq;
+	for (t=t1; t<=t2; t++) Z[i][t] = pmod->rsq;
 	sprintf(cmdstr, "genr r2_%d = $rsq", pmod->ID);
 	break;
     case TR2:
 	sprintf(vname, "trsq%d", pmod->ID);
 	sprintf(vlabel, "T*R-squared from model %d", pmod->ID);
-	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->nobs * pmod->rsq;
+	for (t=t1; t<=t2; t++) Z[i][t] = pmod->nobs * pmod->rsq;
 	sprintf(cmdstr, "genr trsq%d = $trsq", pmod->ID);
 	break;
     case DF:
 	sprintf(vname, "df_%d", pmod->ID);
 	sprintf(vlabel, "degrees of freedom from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[n*i + t] = (double) pmod->dfd;
+	for (t=t1; t<=t2; t++) Z[i][t] = (double) pmod->dfd;
 	sprintf(cmdstr, "genr df_%d = $df", pmod->ID);
 	break;
     case SIGMA:
 	sprintf(vname, "sgma_%d", pmod->ID);
 	sprintf(vlabel, "std err of residuals from model %d", 
 		pmod->ID);
-	for (t=t1; t<=t2; t++) Z[n*i + t] = pmod->sigma;
+	for (t=t1; t<=t2; t++) Z[i][t] = pmod->sigma;
 	sprintf(cmdstr, "genr sgma_%d = $sigma", pmod->ID);
 	break;
     }
