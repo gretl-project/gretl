@@ -3095,3 +3095,25 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
 
     return armod;
 }  
+
+MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL lmod;
+    void *handle;
+    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *);
+
+    *gretl_errmsg = '\0';
+
+    logistic_estimate = get_plugin_function("logistic_estimate", &handle);
+    if (logistic_estimate == NULL) {
+	gretl_model_init(&lmod, pdinfo);
+	lmod.errcode = E_FOPEN;
+	return lmod;
+    }
+
+    lmod = (*logistic_estimate) (list, pZ, pdinfo);
+
+    close_plugin(handle);
+
+    return lmod;
+}

@@ -103,26 +103,6 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
 
 /* .......................................................... */
 
-MODEL logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
-{
-    MODEL lmod;
-    void *handle;
-    MODEL (*logistic_estimate) (int *, double ***, DATAINFO *);
-
-    logistic_estimate = get_plugin_function("logistic_estimate", &handle);
-    if (logistic_estimate == NULL) {
-	gretl_model_init(&lmod, pdinfo);
-	lmod.errcode = E_FOPEN;
-	return lmod;
-    }
-
-    lmod = (*logistic_estimate) (list, pZ, pdinfo);
-
-    close_plugin(handle);
-
-    return lmod;
-}
-
 static int add_slopes_to_model (MODEL *pmod, double fbx)
 {
     double *slopes;
@@ -178,15 +158,10 @@ MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
     /* check whether depvar is binary */
     dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
     if (!dummy) {
-	if (opt == LOGIT) {
-	    dmod = logistic_model(list, pZ, pdinfo);
-	    return dmod;
-	} else {
-	    dmod.errcode = E_UNSPEC;
-	    sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
-				    "variable.\n"), pdinfo->varname[depvar]);
-	    return dmod;
-	}
+	dmod.errcode = E_UNSPEC;
+	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
+				"variable.\n"), pdinfo->varname[depvar]);
+	return dmod;
     }
 
     dmodlist = malloc((list[0] + 1) * sizeof *dmodlist);

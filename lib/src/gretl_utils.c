@@ -2219,10 +2219,9 @@ int _forecast (int t1, int t2, int nv,
 	}
 
 	if (pmod->ci == LOGISTIC) {
-	    zz = 1.0 / (1.0 + exp(-zz));
-	    if (gretl_model_get_int(pmod, "logistic_percent")) {
-		zz *= 100.0;
-	    }
+	    double lmax = gretl_model_get_double(pmod, "lmax");
+
+	    zz = lmax / (1.0 + exp(-zz));
 	}
 
 	(*pZ)[nv][t] = zz;
@@ -2557,6 +2556,7 @@ int is_model_cmd (const char *line)
 	!strncmp(line, "tsls", 4) ||
 	!strncmp(line, "logit", 5)  ||
 	!strncmp(line, "probit", 6) ||
+	!strncmp(line, "logistic", 8) ||
 	!strncmp(line, "end nls", 7) ||
 	!strncmp(line, "arma", 4) ||
 	!strncmp(line, "ar ", 3)) {

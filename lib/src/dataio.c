@@ -2002,6 +2002,7 @@ static int check_daily_dates (DATAINFO *pdinfo, char **pmiss)
 
 /* ......................................................... */
 
+#if 0
 static int labels_all_numeric (DATAINFO *pdinfo)
 {
     int t, ret = 1;
@@ -2015,6 +2016,7 @@ static int labels_all_numeric (DATAINFO *pdinfo)
 
     return  ret;
 }
+#endif
 
 static int complete_year_labels (DATAINFO *pdinfo)
 {

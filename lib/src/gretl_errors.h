@@ -27,59 +27,60 @@ extern char gretl_msg[ERRLEN];
 
 typedef enum {
     E_DATA = 2,
-    E_SINGULAR,
-    E_DF,
-    E_YPY,
-    E_ZERO,
-    E_TSS,
-    E_ESS,
-    E_NOTALPH,
-    E_CONST,
-    E_UNBAL,
-    E_NEST,
-    E_NOTINTG,
-    E_NOTIMP,
-    E_IGNONZERO,
-    E_CASEU,
-    E_UNSPEC,
-    E_SYNTAX,
-    E_ER,
-    E_BADOP,
-    E_PDWRONG,
-    E_OFLAG,
-    E_FOPEN,
-    E_ALLOC,
-    E_NOEQ,
-    E_EQN,
-    E_UNKVAR,
-    E_NODATA,
-    E_ARGS,
-    E_OLSONLY,
-    E_INVARG,
-    E_ADF,
-    E_SPLIT,
-    E_PARSE,
-    E_NOVARS,
-    E_NOOMIT,
-    E_VARCHANGE,
-    E_NOADD,
-    E_ADDDUP,
-    E_LOGS,
-    E_SQUARES,
-    E_LAGS,
-    E_RHO,
-    E_SQRT,
-    E_HIGH,
-    E_WTZERO,
-    E_OBS,
-    E_NOVAR,
-    E_NOCONST,
-    E_MISS,
-    E_BADSTAT,
-    E_NOMERGE,
-    E_NOCONV,
-    E_NAN,
-    E_MAX
+    E_SINGULAR,     /* 3 */
+    E_DF,           /* 4 */
+    E_YPY,          /* 5 */
+    E_ZERO,         /* 6 */
+    E_TSS,          /* 7 */
+    E_ESS,          /* 8 */
+    E_NOTALPH,      /* 9 */
+    E_CONST,       /* 10 */
+    E_UNBAL,       /* 11 */
+    E_NEST,        /* 12 */
+    E_NOTINTG,     /* 13 */
+    E_NOTIMP,      /* 14 */
+    E_IGNONZERO,   /* 15 */
+    E_CASEU,       /* 16 */
+    E_UNSPEC,      /* 17 */
+    E_SYNTAX,      /* 18 */
+    E_ER,          /* 19 */
+    E_BADOP,       /* 20 */
+    E_PDWRONG,     /* 21 */
+    E_OFLAG,       /* 22 */
+    E_FOPEN,       /* 23 */
+    E_ALLOC,       /* 24 */
+    E_NOEQ,        /* 25 */
+    E_EQN,         /* 26 */
+    E_UNKVAR,      /* 27 */
+    E_NODATA,      /* 28 */
+    E_ARGS,        /* 29 */
+    E_OLSONLY,     /* 30 */
+    E_INVARG,      /* 31 */
+    E_ADF,         /* 32 */
+    E_SPLIT,       /* 33 */
+    E_PARSE,       /* 34 */
+    E_NOVARS,      /* 35 */
+    E_NOOMIT,      /* 36 */
+    E_VARCHANGE,   /* 37 */
+    E_NOADD,       /* 38 */
+    E_ADDDUP,      /* 39 */
+    E_LOGS,        /* 40 */
+    E_SQUARES,     /* 41 */
+    E_LAGS,        /* 42 */
+    E_RHO,         /* 43 */
+    E_SQRT,        /* 44 */
+    E_HIGH,        /* 45 */
+    E_WTZERO,      /* 46 */
+    E_OBS,         /* 47 */
+    E_NOVAR,       /* 48 */
+    E_NOCONST,     /* 49 */
+    E_MISS,        /* 50 */
+    E_BADSTAT,     /* 51 */
+    E_NOMERGE,     /* 52 */
+    E_NOCONV,      /* 53 */
+    E_CANCEL,      /* 54 */
+    E_NAN,         /* 55 */
+    E_MAX          /* 56 */
 } error_codes; 
 
 /* functions follow */

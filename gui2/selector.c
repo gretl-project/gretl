@@ -722,6 +722,8 @@ static char *est_str (int cmdnum)
 	return N_("Logit");
     case PROBIT:
 	return N_("Probit");
+    case LOGISTIC:
+	return N_("Logistic");
     case POOLED:
 	return N_("Pooled OLS");
     case WLS:

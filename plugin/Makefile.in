@@ -142,7 +142,7 @@ arma_x12.la: arma_x12.lo
 	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) $(LAPACK_LIBS)
 
 logistic.la: logistic.lo
-	$(LINK) -o $@ $^ $(GRETLLIB) 
+	$(LINK) -o $@ $^ $(GTK_LIBS) $(GRETLLIB) 
 
 $(GRETLLIB):
 	$(MAKE) -C ../lib

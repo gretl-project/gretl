@@ -1976,7 +1976,9 @@ void do_arch (GtkWidget *widget, dialog_t *ddata)
 static int model_error (MODEL *pmod)
 {
     if (pmod->errcode) {
-	gui_errmsg(pmod->errcode);
+	if (pmod->errcode != E_CANCEL) {
+	    gui_errmsg(pmod->errcode);
+	}
 	free_model(pmod);
 	return 1;
     }
@@ -2275,6 +2277,11 @@ void do_model (GtkWidget *widget, gpointer p)
     case LOGIT:
     case PROBIT:
 	*pmod = logit_probit(cmd.list, &Z, datainfo, action);
+	err = model_output(pmod, prn);
+	break;
+
+    case LOGISTIC:
+	*pmod = logistic_model(cmd.list, &Z, datainfo);
 	err = model_output(pmod, prn);
 	break;	
 
