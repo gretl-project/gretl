@@ -2320,6 +2320,52 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
 
 /* #define CLIPTEST 1 */
 
+#if 0
+static void emf_to_clip_as_wmf (HENHMETAFILE hemf)
+{
+    /* int mfscale = 2540; */
+    size_t mflen;
+    HDC dc;
+    GLOBALHANDLE hmem;
+    HMETAFILE hmf;
+    LPMETAFILEPICT lpmfp;
+    char *mfbuf;
+
+    dc = GetDC(NULL);
+
+    /* determine storage size */
+    mflen = GetWinMetaFileBits(hemf, 0, NULL,
+			       MM_ANISOTROPIC, dc);
+
+    /* allocate storage */
+    mfbuf = malloc(mflen);
+
+    /* copy the bits into buffer */
+    GetWinMetaFileBits(hemf, mflen, mfbuf, 
+		       MM_ANISOTROPIC, dc);
+
+    /* create memory-based metafile */
+    hmf = SetMetaFileBitsEx(mflen, mfbuf);
+
+    /* assemble the LPMETAFILEPICT */
+    hmem = GlobalAlloc(GMEM_MOVEABLE, (DWORD) sizeof(METAFILEPICT));
+    lpmfp = (LPMETAFILEPICT) GlobalLock(hmem);
+    lpmfp->mm = MM_ANISOTROPIC;
+    lpmfp->xExt = 0;
+    lpmfp->yExt = 0;
+    lpmfp->hMF = hmf;
+    GlobalUnlock(hmem);
+
+    OpenClipboard(NULL);
+    EmptyClipboard();
+    SetClipboardData(CF_METAFILEPICT, hmem);
+    CloseClipboard();
+
+    ReleaseDC(NULL, dc);
+    free(mfbuf);
+}
+#endif
+
 #ifdef CLIPTEST
 static int emf_to_clip (char *emfname)
 {
@@ -2384,10 +2430,15 @@ static int emf_to_clip (char *emfname)
     EmptyClipboard();
 
     hemf = GetEnhMetaFile(emfname);
+
+#if 0
+    emf_to_clip_as_wmf(hemf);
+#else
     hemfclip = CopyEnhMetaFile(hemf, NULL);
     SetClipboardData(CF_ENHMETAFILE, hemfclip);
 
     CloseClipboard();
+#endif
 
     DeleteEnhMetaFile(hemf);
 
