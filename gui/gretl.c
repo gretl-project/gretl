@@ -728,6 +728,7 @@ void menubar_state (gboolean s)
 {
     if (mdata->ifac != NULL) {
 	flip(mdata->ifac, "/File/Clear data set", s);
+	flip(mdata->ifac, "/File/Save data", s);
 	flip(mdata->ifac, "/File/Save data as", s);
 	flip(mdata->ifac, "/File/Export data", s);
 	flip(mdata->ifac, "/File/Create data set", !s);
@@ -735,10 +736,6 @@ void menubar_state (gboolean s)
 	flip(mdata->ifac, "/Sample", s);
 	flip(mdata->ifac, "/Variable", s);
 	flip(mdata->ifac, "/Model", s);
-	if (s && (data_status & USER_DATA))
-	    flip(mdata->ifac, "/File/Save data", s);
-	if (!s) 
-	    flip(mdata->ifac, "/File/Save data", s);
     }
 }
 
@@ -1690,7 +1687,10 @@ static void clip_init (GtkWidget *w)
 static void auto_store (void)
 {
     if (make_default_storelist()) return;
-    
-    do_store(paths.datfile, 0);
+
+    if (data_status & USER_DATA)
+	do_store(paths.datfile, 0);
+    else
+	file_selector("Save data file", paths.userdir, SAVE_DATA, NULL);	
 }
 
