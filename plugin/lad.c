@@ -20,7 +20,8 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
     double *a = NULL, *b = NULL, *e = NULL, *x = NULL;
-    int i, j, k, m, n, nrows, dim;
+    int i, j, k, t, m, n, nrows, dim;
+    int yno = pmod->list[1];
     int ladcode;
 
     m = pmod->nobs;
@@ -55,22 +56,27 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
     /* populate data array */
     k = 0;
-    for (j = 1; j <= n; ++j) {
-	for (i = 1; i <= m; ++i) {
-	    a[i + k * nrows - 1] = Z[pmod->list[j+1]][i - 1 + pmod->t1];
+    for (j = 1; j <= n; j++) {
+	int lj1 = pmod->list[j+1];
+
+	t = pmod->t1;
+	for (i = 0; i < m; i++) {
+	    while (model_missing(pmod, t)) t++;
+	    a[i + k * nrows] = Z[lj1][t++];
 	}
 	k++;
     }
 
-    for (i = 1; i <= m; ++i) {
-	b[i - 1] = a[i + (n + 1) * nrows - (nrows + 1)] =
-	    Z[pmod->list[1]][i - 1 + pmod->t1];
+    t = pmod->t1;
+    for (i = 0; i < m; i++) {
+	while (model_missing(pmod, t)) t++;
+	b[i] = a[i + n * nrows] = Z[yno][t++];
     }
 
     l1_(m, n, a, b, x, e);
 
     /* handle case where exit code indicates numeric error */
-    ladcode = (int) a[m + 2 + (n + 1) * nrows - (nrows + 1)];
+    ladcode = (int) a[m + 1 + n * nrows];
     if (ladcode == 2) {
 	pmod->errcode = E_SINGULAR;
     } else {
@@ -85,13 +91,14 @@ int lad_driver (MODEL *pmod, double **Z, DATAINFO *pdinfo)
 
 	pmod->ess = 0.0;
 	for (i=0; i<m; i++) {
-	    pmod->yhat[i + pmod->t1] = Z[pmod->list[1]][i + pmod->t1] - e[i];
-	    pmod->uhat[i + pmod->t1] = e[i];
+	    t = i + pmod->t1;
+	    pmod->yhat[t] = Z[yno][t] - e[i];
+	    pmod->uhat[t] = e[i];
 	    pmod->ess += e[i] * e[i];
 	}
 
 	/* sum of absolute residuals (abuse of "rho") */
-	pmod->rho = a[m + 1 + (n + 1) * nrows - (nrows + 1)];
+	pmod->rho = a[m + n * nrows];
 
 	/* set ess-based stats to missing value */
 	pmod->rsq = NADBL;
@@ -509,26 +516,57 @@ static int col_(double *v1, double *v2, double amlt,
     return 0;
 }
 
+static int missobs_before (const char *mask, int t)
+{
+    int i, c = 0;
+
+    for (i=0; i<t; i++) {
+	if (mask[i]) c++;
+    }
+
+    return c;
+}
+
+static void adjust_sample_for_missing (int *sample, int n, 
+				       const char *mask)
+{
+    int i;
+
+    for (i=0; i<n; i++) {
+	sample[i] += missobs_before(mask, sample[i]);
+    }
+}
+
 #define ITERS 500
+
+/* obtain bootstrap estimates of LAD standard errors */
 
 static int 
 bootstrap_stderrs (MODEL *pmod, double **Z,
 		   double *a, double *b, double *e, double *x,
 		   int m, int n, int dim)
-     /* obtain bootstrap estimates of LAD standard errors */
 {
     double **coeffs = NULL;
     int i, j, k, r, *sample = NULL;
+    int yno = pmod->list[1];
     int nrows = m + 2;
 
     /* an array for each coefficient */
-    coeffs = malloc (pmod->ncoeff * sizeof *coeffs);
-    if (coeffs == NULL) return 1;
+    coeffs = malloc(pmod->ncoeff * sizeof *coeffs);
+    if (coeffs == NULL) {
+	return 1;
+    }
 
     /* each array has length ITERS + 1*/
     for (i=0; i<pmod->ncoeff; i++) {
 	coeffs[i] = malloc((ITERS + 1) * sizeof **coeffs);
-	if (coeffs[i] == NULL) return 1;
+	if (coeffs[i] == NULL) {
+	    for (k=0; k<i; k++) {
+		free(coeffs[k]);
+	    }
+	    free(coeffs);
+	    return 1;
+	}
     }
 
     /* sample array has length pmod->nobs */
@@ -556,22 +594,24 @@ bootstrap_stderrs (MODEL *pmod, double **Z,
 	
 	/* create random sample index array */
 	for (i=0; i<m; i++) {
-	    sample[i] = gretl_rand_int_max(m);
+	    sample[i] = pmod->t1 + gretl_rand_int_max(m);
+	}
+
+	if (pmod->missmask != NULL) {
+	    adjust_sample_for_missing(sample, m, pmod->missmask);
 	}
 
 	/* populate data array using the sample */
 	r = 0;
-	for (j = 1; j <= n; ++j) {
-	    for (i = 1; i <= m; ++i) {
-		a[i + r * nrows - 1] = 
-		    Z[pmod->list[j+1]][sample[i - 1 + pmod->t1]];
+	for (j = 1; j <= n; j++) {
+	    for (i = 0; i < m; i++) {
+		a[i + r * nrows] = Z[pmod->list[j+1]][sample[i]];
 	    }
 	    r++;
 	}
 
-	for (i = 1; i <= m; ++i) {
-	    b[i - 1] = a[i + (n + 1) * nrows - (nrows + 1)] =
-		Z[pmod->list[1]][sample[i - 1 + pmod->t1]];
+	for (i = 0; i < m; i++) {
+	    b[i] = a[i + n * nrows] = Z[yno][sample[i]];
 	}
 
 	/* estimate LAD model and store coeffs */
