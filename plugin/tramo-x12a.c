@@ -182,13 +182,13 @@ static int tx_dialog (tx_request *request, int opt)
     gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
     request->opt[D12].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     tmp = gtk_check_button_new_with_label(_("Irregular"));
     gtk_widget_show(tmp);
     gtk_box_pack_start(GTK_BOX(vbox), tmp, FALSE, FALSE, 5);
     request->opt[D13].check = tmp;
-    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), TRUE);
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
     tmp = gtk_hseparator_new();
     gtk_widget_show(tmp);

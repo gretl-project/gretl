@@ -7,7 +7,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.0.1\n"
-"POT-Creation-Date: 2002-12-05 16:21-0500\n"
+"POT-Creation-Date: 2002-12-05 20:26-0500\n"
 "PO-Revision-Date: 2002-12-01 23:10-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -37,7 +37,7 @@ msgstr "la relación es lineal"
 #: lib/src/modelprint.c:1030 lib/src/modelprint.c:1039
 #: lib/src/modelprint.c:1048 lib/src/printout.c:167 lib/src/printout.c:177
 #: lib/src/printout.c:184 lib/src/printout.c:210 lib/src/printout.c:221
-#: gui/library.c:1421 gui2/library.c:1267 plugin/panel_data.c:769
+#: gui/library.c:1421 gui2/library.c:1267 plugin/panel_data.c:771
 msgid "Test statistic"
 msgstr "Estadístico de contraste"
 
@@ -46,7 +46,7 @@ msgstr "Estadístico de contraste"
 #: lib/src/modelprint.c:583 lib/src/modelprint.c:604 lib/src/modelprint.c:622
 #: lib/src/modelprint.c:1033 lib/src/modelprint.c:1042
 #: lib/src/modelprint.c:1051 lib/src/printout.c:340 gui/library.c:1422
-#: gui2/library.c:1268 plugin/panel_data.c:770 plugin/panel_data.c:776
+#: gui2/library.c:1268 plugin/panel_data.c:772 plugin/panel_data.c:778
 msgid "with p-value"
 msgstr "con valor p "
 
@@ -77,7 +77,7 @@ msgstr "residuo"
 msgid "lagging uhat failed"
 msgstr "falló el retardo de uhat"
 
-#: lib/src/compare.c:802 plugin/panel_data.c:775
+#: lib/src/compare.c:802 plugin/panel_data.c:777
 msgid "Alternative statistic"
 msgstr "Estadístico alternativo"
 
@@ -85,16 +85,16 @@ msgstr "Estadístico alternativo"
 #: lib/src/modelprint.c:513 lib/src/modelprint.c:1033
 #: lib/src/modelprint.c:1042 lib/src/modelprint.c:1524
 #: lib/src/modelprint.c:1543 lib/src/printout.c:178 lib/src/printout.c:222
-#: lib/src/printout.c:339 plugin/panel_data.c:777
+#: lib/src/printout.c:339 plugin/panel_data.c:779
 msgid "Chi-square"
 msgstr "Chi-cuadrado"
 
-#: lib/src/compare.c:818 plugin/panel_data.c:780
+#: lib/src/compare.c:818 plugin/panel_data.c:782
 #, c-format
 msgid "LM test for autocorrelation up to order %s"
 msgstr "Contraste LM de autocorrelación hasta el orden %s"
 
-#: lib/src/compare.c:819 plugin/panel_data.c:781
+#: lib/src/compare.c:819 plugin/panel_data.c:783
 msgid "no autocorrelation"
 msgstr "no hay autocorrelación"
 
@@ -2160,7 +2160,7 @@ msgstr "Estructura de panel asignada a %s\n"
 msgid "stacked cross sections"
 msgstr "secciones cruzadas apiladas"
 
-#: lib/src/gretl_utils.c:2289
+#: lib/src/gretl_utils.c:2289 gui/datafiles.c:755 gui2/datafiles.c:763
 msgid "stacked time series"
 msgstr "series temporales apiladas"
 
@@ -5371,7 +5371,8 @@ msgstr "Estado local"
 
 #: gui/datafiles.c:653 gui/datafiles.c:739 gui2/datafiles.c:666
 #: gui2/datafiles.c:747
-msgid "gretl: panel data structure"
+#, fuzzy
+msgid "gretl: panel structure"
 msgstr "gretl: estructura de datos de panel"
 
 #: gui/datafiles.c:669 gui2/datafiles.c:677
@@ -5396,38 +5397,38 @@ msgstr ""
 msgid "Failed to change panel structure"
 msgstr "Fallo al organizar la estructura del panel\n"
 
-#: gui/datafiles.c:752 gui2/datafiles.c:760
-#, fuzzy
-msgid "Panel structure changed to stacked time series"
+#: gui/datafiles.c:754 gui2/datafiles.c:762
+#, fuzzy, c-format
+msgid "Panel structure changed to %s"
 msgstr "Estructura de panel asignada a %s\n"
 
 # FALTA
-#: gui/datafiles.c:776 gui2/datafiles.c:784
+#: gui/datafiles.c:781 gui2/datafiles.c:789
 msgid "annual data"
 msgstr "datos anuales"
 
-#: gui/datafiles.c:777 gui2/datafiles.c:785
+#: gui/datafiles.c:782 gui2/datafiles.c:790
 msgid "quarterly data"
 msgstr "datos trimestrales"
 
-#: gui/datafiles.c:778 gui2/datafiles.c:786
+#: gui/datafiles.c:783 gui2/datafiles.c:791
 msgid "monthly data"
 msgstr "datos mensuales"
 
-#: gui/datafiles.c:779 gui2/datafiles.c:787
+#: gui/datafiles.c:784 gui2/datafiles.c:792
 msgid "weekly data"
 msgstr "datos semanales"
 
-#: gui/datafiles.c:780 gui/datafiles.c:781 gui2/datafiles.c:788
-#: gui2/datafiles.c:789
+#: gui/datafiles.c:785 gui/datafiles.c:786 gui2/datafiles.c:793
+#: gui2/datafiles.c:794
 msgid "daily data"
 msgstr "datos diarios"
 
-#: gui/datafiles.c:782 gui2/datafiles.c:790
+#: gui/datafiles.c:787 gui2/datafiles.c:795
 msgid "hourly data"
 msgstr "datos horarios"
 
-#: gui/datafiles.c:796 gui2/datafiles.c:804
+#: gui/datafiles.c:801 gui2/datafiles.c:809
 #, c-format
 msgid ""
 "Do you want to register the current data set\n"
@@ -5436,11 +5437,11 @@ msgstr ""
 "¿Desea registrar el conjunto de datos actual\n"
 "como %s?"
 
-#: gui/datafiles.c:798 gui2/datafiles.c:806
+#: gui/datafiles.c:803 gui2/datafiles.c:811
 msgid "gretl: time series data"
 msgstr "gretl: datos de series temporales"
 
-#: gui/datafiles.c:806 gui2/datafiles.c:814
+#: gui/datafiles.c:811 gui2/datafiles.c:819
 #, c-format
 msgid ""
 "The current data frequency, %d, is not recognized\n"
@@ -8222,7 +8223,7 @@ msgstr ""
 "de las cuales ha de ser una variable ficticia (valores 1 o 0)"
 
 #: gui/library.c:3305 gui2/boxplots.c:1317 gui2/library.c:3111
-#: plugin/tramo-x12a.c:367
+#: plugin/tramo-x12a.c:371
 #, c-format
 msgid "Couldn't open %s"
 msgstr "No se pudo abrir %s"
@@ -8957,7 +8958,7 @@ msgid "Clear Cells"
 msgstr "Vaciar celdas"
 
 #: gui/ssheet.c:441 gui/ssheet.c:448 gui2/ssheet.c:477 gui2/ssheet.c:485
-#: plugin/tramo-x12a.c:619
+#: plugin/tramo-x12a.c:623
 msgid "Failed to allocate memory for new data"
 msgstr "No se pudo asignar memoria para los datos nuevos"
 
@@ -9867,16 +9868,16 @@ msgstr "Generada"
 msgid "irregular"
 msgstr ""
 
-#: plugin/tramo-x12a.c:299
+#: plugin/tramo-x12a.c:303
 msgid "trend/cycle"
 msgstr ""
 
-#: plugin/tramo-x12a.c:311
+#: plugin/tramo-x12a.c:315
 #, fuzzy
 msgid "adjusted"
 msgstr "$R^2$ no corregido"
 
-#: plugin/tramo-x12a.c:656
+#: plugin/tramo-x12a.c:660
 msgid "is a scalar"
 msgstr "es un escalar"
 
@@ -9907,7 +9908,14 @@ msgid "Unexpected error reading the file"
 msgstr "Error inesperado al leer el fichero"
 
 #, fuzzy
-#~ msgid "gretl: panel structure"
+#~ msgid "Panel structure changed to "
+#~ msgstr "Estructura de panel asignada a %s\n"
+
+#, fuzzy
+#~ msgid "Panel structure changed to stacked time series"
+#~ msgstr "Estructura de panel asignada a %s\n"
+
+#~ msgid "gretl: panel data structure"
 #~ msgstr "gretl: estructura de datos de panel"
 
 #, fuzzy
