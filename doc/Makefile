@@ -17,7 +17,7 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
 	chapters/nls.xml chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
-	chapters/trouble.xml chapters/biblio.xml 
+	chapters/trouble.xml chapters/biblio.xml chapters/sampling.xml
 
 CMDLIST = chapters/cmdlist.xml
 CMDLIST_STANDALONE = chapters/cmdlist_standalone_it.xml

@@ -1,0 +1,301 @@
+<?PSGML NOFILL programlisting example informalequation?>
+
+  <chapter id="sampling"><title>Sub-sampling a dataset</title>
+
+  <sect1 id="sample-intro"><title>Introduction</title>
+
+    <para>Some subtle issues can arise here.  This section attempts to
+      explain the issues.</para>
+
+    <para><application>Gretl</application> maintains a conceptual
+      distinction between two ways of defining a sub-sample in
+      relation to a full data set: we will refer to these as
+      <quote>setting</quote> the sample and <quote>restricting</quote>
+      the sample respectively.</para>
+
+  </sect1>
+
+  <sect1 id="sample-set"><title>Setting the sample</title>
+
+    <para>By <quote>setting</quote> the sample we mean defining a
+      sub-sample simply by means of adjusting the starting and/or
+      ending point of the current sample range.  This is likely to be
+      most relevant for time-series data.  For example, one has
+      quarterly data from 1960:1 to 2003:4, and one wants to run a
+      regression using only data from the 1970s.  A suitable command
+      is then
+
+      <programlisting>
+	smpl 1970:1 1979:4</programlisting> Or one wishes to set aside
+      a block of observations at the end of the data period for
+      out-of-sample forecasting.  In that case one might do
+
+      <programlisting>
+	smpl ; 2000:4</programlisting> where the semicolon is
+      shorthand for <quote>leave the starting observation
+	unchanged</quote>.  (The semicolon may also be used in place
+      of the second parameter, to mean that the ending observation
+      should be unchanged.) By <quote>unchanged</quote> here, we mean
+      unchanged relative to the last <literal>smpl</literal> setting,
+      or relative to the full dataset if no sub-sample has been
+      defined up to this point. For example, after
+
+      <programlisting>
+	smpl 1970:1 2003:4
+	smpl ; 2000:4</programlisting> the sample range will be 1970:1
+      to 2000:4.</para>  
+
+    <para>An incremental or relative form of setting the sample range
+      is also supported.  In this case a relative offset should be
+      given, in the form of a signed integer (or a semicolon to
+      indicate no change), for both the starting and ending point. For
+      example
+
+      <programlisting>
+	smpl +1 ;</programlisting> will advance the starting
+      observation by one while preserving the ending observation, and
+
+      <programlisting>
+	smpl +2 -1</programlisting> will both advance the starting
+      observation by two and retard the ending observation by
+      one.</para>
+
+    <para>An important feature of <quote>setting</quote> the sample as
+      described above is that it necessarily results in the selection
+      of a subset of observations that are contiguous in the full
+      dataset. The structure of the dataset is therefore unaffected
+      (for example, if it is a quarterly time series before setting
+      the sample, it remains a quarterly time series
+      afterwards).</para> 
+
+  </sect1>
+
+  <sect1 id="sample-restrict"><title>Restricting the sample</title>
+
+    <para>By <quote>restricting</quote> the sample we mean selecting
+      observations on the basis of some Boolean (logical) criterion,
+      or by means of a random number generator.  This is likely to be
+      most relevant for cross-sectional or panel data.</para>  
+
+    <para>Suppose we have data on a cross-section of individuals,
+      recording their gender, income and other characteristics.  We
+      wish to select for analysis only the women.  If we have a
+      <varname>gender</varname> dummy variable with value 1 for men
+      and 0 for women we could do
+
+      <programlisting>
+	smpl gender=0 --restrict</programlisting> to this effect.  Or
+      suppose we want to restrict the sample to repondents with
+      incomes over $50,000.  Then we could use</para>
+
+      <programlisting>
+	smpl income>50000 --restrict</programlisting>
+
+    <para>A question arises here.  If we issue the two commands above
+      in sequence, what do we end up with in our sub-sample: all cases
+      with income over 50000, or just women with income over 50000? By
+      default, in a gretl script, the answer is the former: all cases
+      with income over 50000.  The second restriction replaces the
+      first (but see <xref linkend="sample-menu"/> below).  If you
+      want the restrictions to cumulate (that is, for the active
+      restriction to be calculated as the logical product of the most
+      recently specified restriction and any previous restrictions)
+      you have two options:</para>
+
+    <itemizedlist>  
+      <listitem><para>Specify the joint restriction:
+
+	    <programlisting>	   
+	      smpl (gender=0 &amp; income>50000) --restrict</programlisting>
+	</para>
+      </listitem>
+      <listitem><para>Use the <literal>cumulate</literal> option for
+	  the <literal>smpl</literal> command:
+
+	    <programlisting>
+	      smpl gender=0 --restrict
+	      smpl income>50000 --restrict --cumulate</programlisting>
+	</para>
+      </listitem>
+    </itemizedlist>
+
+    <para>Unlike a simple <quote>setting</quote> of the sample,
+      <quote>restricting</quote> the sample may result in selection of
+      non-contiguous observations from the full data set.  It may also
+      change the structure of the data set.</para> 
+
+    <para>This can be seen in the case of panel data.  Say we have a
+      panel of five firms (indexed by the variable
+      <varname>firm</varname>) observed in each of several years
+      (identified by the variable <varname>year</varname>).  Then the
+      restriction
+
+      <programlisting>
+	smpl year=1995 --restrict</programlisting> produces a dataset
+      that is not a panel, but a cross-section for the year 1995.
+      Similarly
+
+      <programlisting>
+	smpl firm=3 --restrict</programlisting> produces a time-series
+      dataset for firm number 3.</para> 
+
+    <para>For these reasons (possible non-contiguity in the
+      observations, possible change in the structure of the data),
+      gretl acts differently when you <quote>restrict</quote> the
+      sample as opposed to simply <quote>setting</quote> it. In the
+      case of setting, the program merely records the starting and
+      ending observations and uses these as parameters to the various
+      commands calling for the estimation of models, the computation
+      of statistics, and so on. In the case of restriction, the
+      program makes a reduced copy of the dataset and by default
+      treats this reduced copy as a simple, undated cross-section.  If
+      you wish to re-impose a time-series or panel interpretation of
+      the reduced dataset you can do so using <xref
+	linkend="cmd-setobs"/> (and <xref linkend="cmd-panel"/> if
+      appropriate).</para> 
+
+    <para>You should be aware that, because of this difference in
+      treatment of the <quote>setting</quote> and
+      <quote>restricting</quote> forms of sub-sampling, the two forms
+      are handled independently by gretl.</para> 
+
+    <itemizedlist>  
+      <listitem>
+	<para>
+	  Regardless of any sample <quote>setting</quote> currently in
+	  place, when you use the <quote>restrict</quote> form of
+	  <literal>smpl</literal> the basis for sub-sampling is always
+	  the entire current data set.
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  After using the <quote>restrict</quote> form, the sample
+	  <quote>setting</quote> defaults to the full range of the
+	  reduced data set.
+	</para>
+      </listitem>
+    </itemizedlist> 
+
+    <para>This means that if you want for some reason to combine a
+      logical restriction with a limitation of the sample based on the
+      observation number, you need to express the latter as a logical
+      restriction, which you can do using the internal variable
+      <varname>obs</varname>. To return to the cross-sectional example
+      given above, if I want a sub-sample consisting of women only,
+      excluding observations 1 to 30, I can do</para>
+
+      <programlisting>
+	smpl (gender=0 &amp; obs > 30) --restrict</programlisting>
+
+    <para>The fact that <quote>restricting</quote> the sample results
+      in the creation of a reduced copy of the original dataset may
+      raise an issue when the dataset is very large (say, several
+      thousands of observations).  With such a dataset in memory, the
+      creation of a copy may lead to a situation where the computer
+      runs low on memory for calculating regression results.  You can
+      work around this as follows:</para>
+
+    <orderedlist>
+      <listitem>
+	<para>
+	  Open the full data set, and impose the sample restriction.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Save a copy of the reduced data set to disk.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Close the full dataset and open the reduced one.
+	</para>
+      </listitem>
+      <listitem><para>
+	  Proceed with your analysis.
+	</para>
+      </listitem>
+    </orderedlist>
+
+  </sect1>
+
+  <sect1 id="sample-random"><title>Random sampling</title>
+
+    <para>With very large datasets (or perhaps to study the properties
+      of an estimator) you may wish to draw a random sample from the
+      full dataset. This can be done using, for example,
+
+      <programlisting>
+	smpl 100 --random</programlisting> to select 100 cases.  If
+      you want the sample to be reproducible, you should set the seed
+      for the random number generator first, using 
+      <xref linkend="cmd-set"/>.</para>
+
+    <para>This sort of sampling falls under the
+      <quote>restriction</quote> category: a reduced copy of the
+      dataset is made.</para>
+
+  </sect1>
+
+  <sect1 id="sample-menu"><title>The Sample menu items</title>
+
+    <para>The discussion above has focused on the script command 
+      <xref linkend="cmd-smpl"/>. You can also use the items under the
+      <guimenuitem>Sample</guimenuitem> menu in the GUI program to
+      select a sub-sample.</para>
+
+    <para>The menu items mostly work in the same way as the
+      corresponding <literal>smpl</literal> variant, but with these
+      differences:</para>
+
+    <orderedlist>
+      <listitem>
+	<para>When you use the item <quote>Sample, Restrict based on
+	criterion</quote>, and the dataset is already restricted, you
+	are given the option of preserving or replacing the current
+	restriction.  Preserving the current restriction means,
+	in effect, invoking the <literal>cumulate</literal> option
+	described above (<xref linkend="sample-restrict"/>).
+	</para>
+      </listitem>
+      <listitem>
+	<para>When you use the items <quote>Sample, Define based on
+	dummy</quote> or <quote>Sample, Random sub-sample</quote>, and
+	the dataset is already restricted, the current restriction (if
+	any) is automatically preserved.  
+	</para>
+      </listitem>
+    </orderedlist>
+
+    <para>Note that behavior under point 2 above is
+      <emphasis>not</emphasis> the same as for the script command
+      <literal>smpl</literal>, where the preservation of any previous
+      restrictions is not the default.  The reason for this difference
+      lies in the visual context of the GUI program: when the dataset
+      is restricted, it is the restricted version which is
+      <quote>before</quote> the user, indicated in the program's
+      status bar.  It therefore seems more intuitive to take this as a
+      basis.  If you want to <emphasis>replace</emphasis> the current
+      restriction using one or other of these menu items, you should
+      first invoke the item <quote>Sample, Restore full range</quote>.
+    </para>
+
+  </sect1>
+
+</chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+sgml-default-dtd-file:"../manual.ced"
+mode: xml
+sgml-parent-document:("../manual.xml" "book" "chapter")
+End:
+-->
+
+
+
+
+
+
+
+
+

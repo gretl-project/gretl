@@ -2,7 +2,7 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
 "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd" [
 
-<!ENTITY version "1.0.6">
+<!ENTITY version "1.0.7">
 <!ENTITY latex "LaTeX">
 <!ENTITY tex "TeX">
 <!ENTITY opto "<literal>[ -o ]</literal>">
@@ -13,6 +13,7 @@
 <!ENTITY modes SYSTEM "chapters/modes.xml">
 <!ENTITY datafiles SYSTEM "chapters/datafiles.xml">
 <!ENTITY panel SYSTEM "chapters/panel.xml">
+<!ENTITY sampling SYSTEM "chapters/sampling.xml">
 <!ENTITY graphs SYSTEM "chapters/graphs.xml">
 <!ENTITY nls SYSTEM "chapters/nls.xml">
 <!ENTITY looping SYSTEM "chapters/looping.xml">
@@ -74,6 +75,7 @@
   &starting;
   &modes;
   &datafiles;
+  &sampling;
   &panel;
   &graphs;
   &nls;

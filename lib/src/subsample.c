@@ -166,7 +166,8 @@ static int overlay_masks (double *targ, const double *src, int n)
     return sn;
 }
 
-static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, const char *line,
+static int make_boolean_mask (double ***pZ, DATAINFO *pdinfo, 
+			      const char *line,
 			      double *oldmask, int *dnum)
 {
     char formula[MAXLEN];
@@ -255,7 +256,8 @@ static int count_selected_cases (double *x, int n)
     return count;
 }
 
-static int make_random_mask (double *mask, double *oldmask, int fulln, int subn)
+static int make_random_mask (double *mask, double *oldmask, 
+			     int fulln, int subn)
 {
     int i, cases = 0, err = 0;
     unsigned u;
@@ -513,7 +515,7 @@ static int get_sample_increment (const char *str)
 
 int set_sample (const char *line, DATAINFO *pdinfo)
 {
-    int nf, new_t1 = 0, new_t2 = 0;
+    int nf, new_t1 = pdinfo->t1, new_t2 = pdinfo->t2;
     char cmd[5], newstart[OBSLEN], newstop[OBSLEN];
 
     *gretl_errmsg = '\0';

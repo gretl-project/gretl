@@ -4029,6 +4029,8 @@
 	nature of the data) is lost.  You may reimpose structure with
 	<quote>Sample/Set frequency, startobs...</quote>.</para>
 
+      <para>Please see <manref targ="sampling"/> for further details.</para>
+
     </description>
   </command>
 
@@ -4452,11 +4454,19 @@
 
       <para>The internal variable <lit>obs</lit> may be used with the
 	<lit>--restrict</lit> form of <lit>smpl</lit> to exclude
-	particular observations from the sample.  For example,
-	<lit>smpl obs!=4 --restrict</lit> will drop just the fourth
-	observation. If the data points are identified by labels,
-	<lit>smpl obs!="USA" --restrict</lit> will drop the
-	observation with label <quote>USA</quote>.</para>
+	particular observations from the sample.  For example</para>
+
+      <code>
+	smpl obs!=4 --restrict</code> 
+
+      <para>will drop just the fourth observation. If the data points
+	are identified by labels,</para>
+
+      <code>
+	smpl obs!="USA" --restrict</code>
+	  
+      <para>will drop the observation with label <quote>USA</quote>.
+      </para>
 
       <para>
 	One point should be noted about the <lit>--dummy</lit>,
@@ -4466,6 +4476,9 @@
 	the data) is lost when this command is issued.  You may
 	reimpose structure with the <cmdref targ="setobs"/> command.
       </para>
+
+      <para>Please see <manref targ="sampling"/> for further details.</para>
+
     </description>
 
     <gui-access>

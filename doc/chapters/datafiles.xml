@@ -80,7 +80,7 @@
       <emphasis>data file</emphasis>, is not read directly into the
       program's workspace.  A database can contain series of mixed
       frequencies and sample ranges.  You open the database and select
-      series to import into the working data set.  You can then save
+      series to import into the working dataset.  You can then save
       those series in a native format data file if you wish. Databases
       can be accessed via <application>gretl</application>'s menu item
       <quote>File, Browse databases</quote>.</para>
@@ -228,14 +228,14 @@
     <sect2><title>Appending imported data</title>
 
       <para>You may wish to establish a
-	<application>gretl</application> data set piece by piece, by
+	<application>gretl</application> dataset piece by piece, by
 	incremental importation of data from other sources.  This is
 	supported via the <quote>File, Append data</quote> menu items.
 	<application>gretl</application> will check the new data for
-	conformability with the existing data set and, if everything
+	conformability with the existing dataset and, if everything
 	seems OK, will merge the data.  You can add new variables in
 	this way, provided the data frequency matches that of the
-	existing data set.  Or you can append new observations for
+	existing dataset.  Or you can append new observations for
 	data series that are already present; in this case the
 	variable names must match up correctly.  Note that by default
 	(that is, if you choose <quote>Open data</quote> rather than
@@ -247,11 +247,11 @@
     <sect2><title>Using the built-in spreadsheet</title>
 
       <para>Under <application>gretl</application>'s <quote>File,
-	  Create data set</quote> menu you can choose the sort of data
-	set you want to establish (e.g. quarterly time series,
+	  Create data set</quote> menu you can choose the sort of
+	dataset you want to establish (e.g. quarterly time series,
 	cross-sectional).  You will then be prompted for starting and
 	ending dates (or observation numbers) and the name of the
-	first variable to add to the data set. After supplying this
+	first variable to add to the dataset. After supplying this
 	information you will be faced with a simple spreadsheet into
 	which you can type data values.  In the spreadsheet window,
 	clicking the right mouse button will invoke a popup menu which
@@ -273,7 +273,7 @@
 
     <sect2><title>Selecting from a database</title>
 
-      <para>Another alternative is to establish your data set by
+      <para>Another alternative is to establish your dataset by
 	selecting variables from a database.
 	<application>gretl</application> comes with a database of US
 	macroeconomic time series and, as mentioned above, the program
@@ -340,7 +340,7 @@
 	<application>gretl</application> <emphasis>you must start by
 	  importing a series of the lowest frequency you intend to
 	  use.</emphasis> This will initialize your
-	<application>gretl</application> data set to the low
+	<application>gretl</application> dataset to the low
 	frequency, and higher frequency data can be imported
 	subsequently (they will be compacted automatically).  If you
 	start with a high frequency series you will not be able to
@@ -387,8 +387,8 @@
 	  message and refuses to produce estimates.</para></listitem>
     </itemizedlist>
 
-    <para>Missing values in the middle of a data set are a problem. In
-      a cross-sectional data set it may be possible to move the
+    <para>Missing values in the middle of a dataset are a problem. In
+      a cross-sectional dataset it may be possible to move the
       offending observations to the beginning or the end of the file,
       but obviously this won't do with time series data.  For those
       who know what they are doing (!), the
