@@ -1,12 +1,12 @@
-This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.10)  14 SEP 2001 11:13
+This is pdfTeX, Version 3.14159-14f-released-20000525 (Web2C 7.3.2x) (format=jadetex 2001.9.16)  16 OCT 2001 18:59
 **testmath
-(./testmath.tex{/usr/share/texmf/tex/pdftex/base/pdftex.cfg}
+(testmath.tex{/usr/local/share/texmf/tex/pdftex/base/pdftex.cfg}
 JadeTeX 2001/07/19: 3.11
 LaTeX Font Info:    Try loading font information for OT1+ptm on input line 1.
-(/usr/share/texmf/tex/latex/psnfss/ot1ptm.fd
-File: ot1ptm.fd 2000/01/12 PSNFSS-v8.1 font definitions for OT1/ptm.
+(/usr/local/share/texmf/tex/latex/psnfss/ptm/ot1ptm.fd
+File: ot1ptm.fd 1998/07/06 Fontinst v1.800 font definitions for OT1/ptm.
 )
-(./jadetex.cfg (./lucidabr.tex
+(jadetex.cfg (lucidabr.tex
 LaTeX Font Info:    Redeclaring symbol font `letters' on input line 92.
 LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
 (Font)                  OML/cmm/m/it --> OML/hlcm/m/it on input line 92.
@@ -370,7 +370,7 @@ LaTeX Font Info:    Redeclaring math delimiter \lrcorner on input line 613.
 ))
 Elements will be labelled
 Jade begin document sequence at 19
-(./testmath.aux)
+(testmath.aux)
 \openout1 = `testmath.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
@@ -389,14 +389,14 @@ LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 19.
 LaTeX Font Info:    ... okay on input line 19.
 LaTeX Font Info:    Checking defaults for T2A/cmr/m/n on input line 19.
 LaTeX Font Info:    Try loading font information for T2A+cmr on input line 19.
- (/usr/share/texmf/tex/latex/cyrillic/t2acmr.fd
+ (/usr/local/share/texmf/tex/latex/cyrillic/t2acmr.fd
 File: t2acmr.fd 1999/01/07 v1.0 Computer Modern Cyrillic font definitions
 )
 LaTeX Font Info:    ... okay on input line 19.
 LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 19.
 LaTeX Font Info:    Try loading font information for TS1+cmr on input line 19.
 
-(/usr/share/texmf/tex/latex/base/ts1cmr.fd
+(/usr/local/share/texmf/tex/latex/base/ts1cmr.fd
 File: ts1cmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    ... okay on input line 19.
@@ -420,159 +420,150 @@ LaTeX Font Info:    Checking defaults for LMR/hlcm/m/n on input line 19.
 LaTeX Font Info:    Try loading font information for LMR+hlcm on input line 19.
 
 
-(/usr/share/texmf/tex/latex/sitefonts/lmrhlcm.fd
+(/usr/local/share/texmf/tex/latex/sitefonts/lmrhlcm.fd
 File: lmrhlcm.fd 1997/02/20 v4.1 Lucida New Math Arrows(SPQR/DPC)
 )
 LaTeX Font Info:    ... okay on input line 19.
 LaTeX Font Info:    Try loading font information for T1+ptm on input line 19.
 
-(/usr/share/texmf/tex/latex/psnfss/t1ptm.fd
-File: t1ptm.fd 2000/01/12 PSNFSS-v8.1 font definitions for T1/ptm.
-)
-(/usr/share/texmf/tex/context/base/supp-pdf.tex
-(/usr/share/texmf/tex/context/base/supp-mis.tex
-loading : Context Support Macros / Missing
-\protectiondepth=\count116
-\scratchcounter=\count117
-\scratchtoks=\toks22
-\scratchdimen=\dimen131
-\scratchskip=\skip54
-\scratchmuskip=\muskip10
-\scratchbox=\box62
-\scratchread=\read1
-\scratchwrite=\write4
-\zeropoint=\dimen132
-\nextbox=\box63
-\nextdepth=\dimen133
-\everyline=\toks23
-\!!counta=\count118
-\!!countb=\count119
-\recursecounter=\count120
-)
-loading : Context Support Macros / PDF
-\nofMPsegments=\count121
-\nofMParguments=\count122
-\everyMPtoPDFconversion=\toks24
+(/usr/local/share/texmf/tex/latex/psnfss/ptm/t1ptm.fd
+File: t1ptm.fd 1998/07/06 Fontinst v1.800 font definitions for T1/ptm.
 )
 Package hyperref Info: Link coloring ON on input line 19.
- (/usr/share/texmf/tex/latex/hyperref/nameref.sty
-Package: nameref 2001/01/27 v2.19 Cross-referencing by name of section
-\c@section@level=\count123
-) (./testmath.out)
-(./testmath.out)
-\openout3 = `testmath.out'.
 
+(/usr/local/share/texmf/tex/latex/hyperref/nameref.sty
+Package: nameref 2000/05/08 v2.18 Cross-referencing by name of section
+\c@section@level=\count114
+)
 LaTeX Info: Redefining \ref on input line 19.
 LaTeX Info: Redefining \pageref on input line 19.
 LaTeX Font Info:    Try loading font information for T1+hlh on input line 32.
- (/usr/share/texmf/tex/latex/sitefonts/t1hlh.fd
+
+(/usr/local/share/texmf/tex/latex/sitefonts/t1hlh.fd
 File: t1hlh.fd 1998/07/06 Fontinst v1.800 font definitions for T1/hlh.
 )
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
 (Font)              scaled to size 9.49997pt on input line 32.
 LaTeX Font Info:    Try loading font information for T1+phv on input line 99.
 
-(/usr/share/texmf/tex/latex/psnfss/t1phv.fd
-File: t1phv.fd 2000/01/12 PSNFSS-v8.1 scalable font definitions for T1/phv.
+(/usr/local/share/texmf/tex/latex/psnfss/phv/t1phv.fd
+File: t1phv.fd 1998/07/06 Fontinst v1.800 font definitions for T1/phv.
 )
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <16.105> not available
 (Font)              Font shape `T1/phv/b/n' tried instead on input line 99.
- [1.0.21{/usr/share/texmf/dvips/config/pdftex.map}]
+ [1.0.23]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10> not available
 (Font)              Font shape `T1/phv/b/n' tried instead on input line 166.
- [2.0.21
+ [2.0.23
 
 ]
+
+Package Fancyhdr Warning: fancyhdr's E option without twoside option is useless
+ on input line 235.
+
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <14.641> not available
 (Font)              Font shape `T1/phv/b/n' tried instead on input line 256.
 LaTeX Font Info:    Font shape `T1/hlh/bx/n' in size <10> not available
 (Font)              Font shape `T1/hlh/b/n' tried instead on input line 274.
 LaTeX Font Info:    Font shape `T1/hlh/b/n' will be
 (Font)              scaled to size 9.49997pt on input line 274.
+
+Package Fancyhdr Warning: fancyhdr's E option without twoside option is useless
+ on input line 292.
+
 LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
 (Font)              scaled to size 9.49997pt on input line 292.
- [3.0.21
+[3.0.23
 
 ]
+
+Package Fancyhdr Warning: fancyhdr's E option without twoside option is useless
+ on input line 381.
+
+
+Package Fancyhdr Warning: fancyhdr's E option without twoside option is useless
+ on input line 381.
+
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <13.31> not available
 (Font)              Font shape `T1/phv/b/it' tried instead on input line 425.
 LaTeX Font Info:    Font shape `T1/phv/b/it' in size <13.31> not available
 (Font)              Font shape `T1/phv/b/sl' tried instead on input line 425.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 6.93004pt on input line 464.
+(Font)              scaled to size 6.93004pt on input line 445.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 5.19997pt on input line 464.
-LaTeX Font Info:    Try loading font information for OML+hlcm on input line 464
+(Font)              scaled to size 5.19997pt on input line 445.
+LaTeX Font Info:    Try loading font information for OML+hlcm on input line 445
 .
-
-(/usr/share/texmf/tex/latex/sitefonts/omlhlcm.fd
+(/usr/local/share/texmf/tex/latex/sitefonts/omlhlcm.fd
 File: omlhlcm.fd 1997/02/20 v4.1 Lucida New Math Italic(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 9.49997pt on input line 464.
+(Font)              scaled to size 9.49997pt on input line 445.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 6.93004pt on input line 464.
+(Font)              scaled to size 6.93004pt on input line 445.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 5.19997pt on input line 464.
-LaTeX Font Info:    Try loading font information for OMS+hlcy on input line 464
+(Font)              scaled to size 5.19997pt on input line 445.
+LaTeX Font Info:    Try loading font information for OMS+hlcy on input line 445
 .
 
-(/usr/share/texmf/tex/latex/sitefonts/omshlcy.fd
+(/usr/local/share/texmf/tex/latex/sitefonts/omshlcy.fd
 File: omshlcy.fd 1997/02/20 v4.1 Lucida New Math Symbols(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 9.49997pt on input line 464.
+(Font)              scaled to size 9.49997pt on input line 445.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 6.93004pt on input line 464.
+(Font)              scaled to size 6.93004pt on input line 445.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 5.19997pt on input line 464.
-LaTeX Font Info:    Try loading font information for OMX+hlcv on input line 464
+(Font)              scaled to size 5.19997pt on input line 445.
+LaTeX Font Info:    Try loading font information for OMX+hlcv on input line 445
 .
 
-(/usr/share/texmf/tex/latex/sitefonts/omxhlcv.fd
+(/usr/local/share/texmf/tex/latex/sitefonts/omxhlcv.fd
 File: omxhlcv.fd 1997/02/20 v4.1 Lucida New Math Extension(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 9.49997pt on input line 464.
+(Font)              scaled to size 9.49997pt on input line 445.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 6.93004pt on input line 464.
+(Font)              scaled to size 6.93004pt on input line 445.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 5.19997pt on input line 464.
-LaTeX Font Info:    Try loading font information for U+msa on input line 464.
+(Font)              scaled to size 5.19997pt on input line 445.
+LaTeX Font Info:    Try loading font information for U+msa on input line 445.
+LaTeX Font Info:    No file Umsa.fd. on input line 445.
 
-(/usr/share/texmf/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 1995/01/05 v2.2e AMS font definitions
-)
-LaTeX Font Info:    Try loading font information for U+msb on input line 464.
 
-(/usr/share/texmf/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 1995/01/05 v2.2e AMS font definitions
-)
+LaTeX Font Warning: Font shape `U/msa/m/n' undefined
+(Font)              using `U/cmr/m/n' instead on input line 445.
+
+LaTeX Font Info:    Try loading font information for U+msb on input line 445.
+LaTeX Font Info:    No file Umsb.fd. on input line 445.
+
+LaTeX Font Warning: Font shape `U/msb/m/n' undefined
+(Font)              using `U/cmr/m/n' instead on input line 445.
+
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 9.49997pt on input line 464.
+(Font)              scaled to size 9.49997pt on input line 445.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 6.93004pt on input line 464.
+(Font)              scaled to size 6.93004pt on input line 445.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 5.19997pt on input line 464.
+(Font)              scaled to size 5.19997pt on input line 445.
 
-! pdfTeX warning (ext4): destination with the same identifier (name{page.1}) ha
-s been already used, duplicate ignored
-<to be read again> 
-                   \penalty 
-l.518 ...dDisplayGroup{}\endNode{}\endSeq{}\endSpS
-                                                  {}\endNode{}\endSeq{}\endN...
-[1.0.21
+Package Fancyhdr Warning: fancyhdr's E option without twoside option is useless
+ on input line 520.
 
-] (./testmath.aux) ) 
+[1.0.23
+
+] (testmath.aux)
+
+LaTeX Font Warning: Some font shapes were not available, defaults substituted.
+
+ ) 
 Here is how much of TeX's memory you used:
- 806 strings out of 41067
- 16089 string characters out of 347798
- 143647 words of memory out of 263001
- 13034 multiletter control sequences out of 10000+50000
- 26740 words of font info for 53 fonts, out of 200000 for 1000
+ 457 strings out of 41124
+ 11325 string characters out of 349093
+ 131768 words of memory out of 263001
+ 12798 multiletter control sequences out of 10000+50000
+ 20574 words of font info for 40 fonts, out of 200000 for 1000
  15 hyphenation exceptions out of 1000
- 28i,11n,39p,360b,603s stack positions out of 1500i,500n,1500p,12000b,5000s
-</usr/local/psfonts/lucida/lbms.pfb></usr/local/psfonts/luc
-ida/lbmo.pfb>{/usr/share/texmf/dvips/8r.enc}</usr/local/psfonts/lucida/lbr.pfb>
-</usr/local/psfonts/lucida/lbi.pfb></usr/local/psfonts/lucida/lbd.pfb>
-Output written on testmath.pdf (4 pages, 25653 bytes).
+ 30i,11n,42p,360b,597s stack positions out of 1500i,500n,1500p,3000b,5000s
+
+Output written on testmath.dvi (4 pages, 6952 bytes).
