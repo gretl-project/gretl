@@ -382,7 +382,7 @@ static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
     if (err == 1) {
 	errbox(_("Error saving graph"));
     } else {
-	infobox(_("graph saved"));
+	infobox(_("Graph saved"));
     }
 }
 #endif
@@ -473,14 +473,16 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     GList *termtype = NULL;
     gchar *terminal_types[] = {
 	"postscript",
+	"postscript color",
 	"fig",
 	"latex",
 	"png",
 	"plot commands"
     };  
 
-    for (i=0; i<5; i++)
+    for (i=0; i<6; i++) {
 	termtype = g_list_append(termtype, terminal_types[i]);
+    }
    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_set_border_width (GTK_CONTAINER (box), 10);
@@ -875,7 +877,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
 #ifdef GNUPLOT_PNG
 
 #ifdef G_OS_WIN32
-static void gnuplot_graph_to_clipboard (GPT_SPEC *spec);
+static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color);
 #endif
 
 void save_this_graph (GPT_SPEC *plot, const char *fname)
@@ -1012,7 +1014,7 @@ static void plot_save_filesel (GtkWidget *w, gpointer data)
     strcpy(savestr, 
 	   gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry)));
     gtk_widget_destroy(GTK_WIDGET(combo->parent->parent->parent));
-    file_selector(_("save graph"), SAVE_LAST_GRAPH, savestr);
+    file_selector(_("Save gnuplot graph"), SAVE_LAST_GRAPH, savestr);
 }
 
 /* ........................................................... */
@@ -1645,26 +1647,45 @@ static void start_editing_png_plot (png_plot_t *plot)
     }
 }
 
+static gint color_popup_activated (GtkWidget *w, gpointer data)
+{
+    gchar *item = (gchar *) data;
+    gint color = strcmp(item, _("monochrome"));
+
+    GtkWidget *color_menu = g_object_get_data(G_OBJECT(w), "menu");
+    GtkWidget *parent = (GTK_MENU(color_menu))->parent_menu_item;
+    gchar *parent_item = g_object_get_data(G_OBJECT(parent), "string");
+    png_plot_t *plot = g_object_get_data(G_OBJECT(parent), "plot");
+
+    if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
+	strcpy(plot->spec->termtype, "postscript");
+	if (color) strcat(plot->spec->termtype, " color");
+	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
+		      plot->spec);
+    } 
+#ifdef G_OS_WIN32
+    else if (!strcmp(parent_item, _("Copy to clipboard"))) {
+	gnuplot_graph_to_clipboard(plot->spec, color);
+    }    
+#endif   
+
+    gtk_widget_destroy(color_menu);
+    gtk_widget_destroy(plot->popup);
+    plot->popup = NULL;
+
+    return TRUE;
+}
+
 static gint plot_popup_activated (GtkWidget *w, gpointer data)
 {
     gchar *item = (gchar *) data;
     gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
 
-    if (!strcmp(item, _("Save as postscript (EPS)..."))) {
-	strcpy(plot->spec->termtype, "postscript");
-	file_selector("Save graph as postscript file", SAVE_THIS_GRAPH, 
-		      plot->spec);
-    }
-    else if (!strcmp(item, _("Save as PNG..."))) {
+    if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
-        file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
+        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
     }
-#ifdef G_OS_WIN32
-    else if (!strcmp(item, _("Copy to clipboard"))) {
-	gnuplot_graph_to_clipboard(plot->spec);
-    }
-#endif
     else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_graph_to_session(plot->spec, 0, NULL);
     }
@@ -1704,10 +1725,10 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
 static GtkWidget *build_plot_menu (png_plot_t *plot)
 {
-    GtkWidget *menu, *item;    
+    GtkWidget *menu, *color_menu, *item;    
     const char *regular_items[] = {
-        N_("Save as postscript (EPS)..."),
 	N_("Save as PNG..."),
+        N_("Save as postscript (EPS)..."),
 #ifdef G_OS_WIN32
 	N_("Copy to clipboard"),
 #endif
@@ -1726,8 +1747,27 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	N_("Close"),
 	NULL
     };
+    const char *color_items[] = {
+	N_("color"),
+	N_("monochrome"),
+	NULL
+    };
     const char **plot_items;
-    int i = 0;
+    int i;
+
+    color_menu = gtk_menu_new();
+
+    i = 0;
+    while (color_items[i]) {
+        item = gtk_menu_item_new_with_label(_(color_items[i]));
+        g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(color_popup_activated),
+			 _(color_items[i]));
+        g_object_set_data(G_OBJECT(item), "menu", color_menu);
+        gtk_widget_show(item);
+        gtk_menu_shell_append(GTK_MENU_SHELL(color_menu), item);
+        i++;
+    }	
 
     menu = gtk_menu_new();
 
@@ -1737,6 +1777,7 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	plot_items = regular_items;
     }
 
+    i = 0;
     while (plot_items[i]) {
 	if (plot->statusbar == NULL &&
 	    !strcmp(plot_items[i], "Zoom...")) {
@@ -1759,13 +1800,20 @@ static GtkWidget *build_plot_menu (png_plot_t *plot)
 	    continue;
 	}
         item = gtk_menu_item_new_with_label(_(plot_items[i]));
-        g_signal_connect(G_OBJECT(item), "activate",
-			 G_CALLBACK(plot_popup_activated),
-			 _(plot_items[i]));
         g_object_set_data(G_OBJECT(item), "plot", plot);
         GTK_WIDGET_SET_FLAGS (item, GTK_SENSITIVE | GTK_CAN_FOCUS);
         gtk_widget_show(item);
         gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+
+	if (!strcmp(plot_items[i], _("Save as postscript (EPS)...")) ||
+	    !strcmp(plot_items[i], _("Copy to clipboard"))) {
+	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), color_menu);
+	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
+	} else {
+	    g_signal_connect(G_OBJECT(item), "activate",
+			     G_CALLBACK(plot_popup_activated),
+			     _(plot_items[i]));
+	}
         i++;
     }
 
@@ -2450,7 +2498,7 @@ static int emf_to_clip (char *emfname)
 }
 #endif /* CLIPTEST */
 
-static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
+static void gnuplot_graph_to_clipboard (GPT_SPEC *spec, int color)
 {
     FILE *fq;
     PRN *prn;
@@ -2472,9 +2520,13 @@ static void gnuplot_graph_to_clipboard (GPT_SPEC *spec)
 
     /* generate gnuplot source file to make emf */
     emfname = g_strdup_printf("%sgpttmp.emf", paths.userdir);
-    /* pprintf(prn, "set term emf monochrome dashed\n"); */
-    pprintf(prn, "set term emf\n");
+    if (color) {
+	pprintf(prn, "set term emf\n");
+    } else {
+	pprintf(prn, "set term emf mono dash\n");
+    }
     pprintf(prn, "set output '%s'\n", emfname);
+    pprintf(prn, "set size 0.74,0.74\n");
     while (fgets(plotline, MAXLEN-1, fq)) {
 	if (strncmp(plotline, "set term", 8) && 
 	    strncmp(plotline, "set output", 10))

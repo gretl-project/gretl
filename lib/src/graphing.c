@@ -1173,14 +1173,16 @@ int termtype_to_termstr (const char *termtype, char *termstr)
 {
     int cmds = 0;
 
-    if (!strcmp(termtype, "postscript")) 
-	strcpy(termstr, "postscript eps color"); /* color? */
+    if (!strcmp(termtype, "postscript color")) 
+	strcpy(termstr, "postscript eps color"); 
+    else if (!strcmp(termtype, "postscript")) 
+	strcpy(termstr, "postscript eps"); 
     else if (!strcmp(termtype, "fig")) 
 	strcpy(termstr, "fig");
     else if (!strcmp(termtype, "latex")) 
 	strcpy(termstr, "latex");
     else if (!strcmp(termtype, "png")) { 
-	strcpy(termstr, "png small"); /* FIXME "small" ?? */
+	strcpy(termstr, "png"); 
 #ifndef OS_WIN32
 	if (gp_png_wants_color()) {
 	    strcat(termstr, " color");

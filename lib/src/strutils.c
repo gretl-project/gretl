@@ -484,13 +484,52 @@ int pprintf (PRN *prn, const char *template, ...)
     }
     va_start(args, template);
 #ifdef PRN_DEBUG
-     fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
+    fprintf(stderr, "printing at %p\n", (void *) (prn->buf + blen));
 #endif
     vsprintf(prn->buf + blen, template, args);
     va_end(args);
 #ifdef PRN_DEBUG
-     fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
+    fprintf(stderr, "printed %d byte(s)\n", strlen(prn->buf) - blen);
 #endif
+
+    return 0;
+}
+
+/**
+ * pputs:
+ * @s: constant string to print,
+ * @prn: gretl printing struct.
+ * 
+ * Returns: 0 on successful completion, 1 on memory allocation
+ * failure.
+ */
+
+int pputs (const char *s, PRN *prn)
+{
+    size_t blen;
+
+    if (prn == NULL) return 0;
+
+    if (prn->fp != NULL) {
+	fputs(s, prn->fp);
+	return 0;
+    }
+
+    if (prn->buf == NULL) return 1;
+
+    blen = strlen(prn->buf);
+
+    if (prn->bufsize - blen < 1024) { 
+	char *tmp;
+
+	prn->bufsize *= 2; 
+	tmp = realloc(prn->buf, prn->bufsize); 
+	if (tmp == NULL) return 1;
+	prn->buf = tmp;
+	memset(prn->buf + blen, 0, 1);
+    }
+
+    strcpy(prn->buf + blen, s);
 
     return 0;
 }

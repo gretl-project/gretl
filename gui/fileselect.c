@@ -98,7 +98,7 @@ static int action_to_flag (const int action)
 
 static const char *get_gp_ext (const char *termtype)
 {
-    if (!strcmp(termtype, "postscript")) return ".eps";
+    if (!strncmp(termtype, "postscript", 10)) return ".eps";
     else if (!strcmp(termtype, "fig")) return ".fig";
     else if (!strcmp(termtype, "latex")) return ".tex";
     else if (!strcmp(termtype, "png")) return ".png";

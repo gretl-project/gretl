@@ -367,7 +367,7 @@ static void save_session_graph_plotspec (GtkWidget *w, GPT_SPEC *spec)
     if (err == 1) {
 	errbox(_("Error saving graph"));
     } else {
-	infobox(_("graph saved"));
+	infobox(_("Graph saved"));
     }
 }
 #endif
@@ -451,13 +451,14 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *spec)
     GList *termtype = NULL;
     gchar *terminal_types[] = {
 	"postscript",
+	"postscript color",
 	"fig",
 	"latex",
 	"png",
 	"plot commands"
     };  
 
-    for (i=0; i<5; i++) {
+    for (i=0; i<6; i++) {
 	termtype = g_list_append(termtype, terminal_types[i]);
     }
    
@@ -945,7 +946,7 @@ static void plot_save_filesel (GtkWidget *w, gpointer data)
     strcpy(savestr, 
 	   gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry)));
     gtk_widget_destroy(GTK_WIDGET(combo->parent->parent->parent));
-    file_selector(_("save graph"), SAVE_LAST_GRAPH, savestr);
+    file_selector(_("Save gnuplot graph"), SAVE_LAST_GRAPH, savestr);
 }
 
 /* ........................................................... */
@@ -1581,12 +1582,12 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
     if (!strcmp(item, _("Save as postscript (EPS)..."))) {
 	strcpy(plot->spec->termtype, "postscript");
-	file_selector("Save graph as postscript file", SAVE_THIS_GRAPH, 
+	file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, 
 		      plot->spec);
     }
     else if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
-        file_selector("Save graph as PNG", SAVE_THIS_GRAPH, plot->spec);
+        file_selector(_("Save gnuplot graph"), SAVE_THIS_GRAPH, plot->spec);
     }
     else if (!strcmp(item, _("Save to session as icon"))) { 
 	add_graph_to_session(plot->spec, 0, NULL);

@@ -679,6 +679,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	strcpy(line, "corr");
 	strcat(line, liststr);
 	strcat(title, _("correlation matrix"));
+	action = CORR;
 	break;
     case FREQ:
 	sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
@@ -698,6 +699,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	strcpy(line, "summary");
 	strcat(line, liststr);
 	strcat(title, _("summary statistics"));
+	action = SUMMARY;
 	break;
     case VAR_SUMMARY:
 	sprintf(line, "summary %s", datainfo->varname[mdata->active_var]);
@@ -715,14 +717,12 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
     /* execute the command */
     switch (action) {
     case CORR:
-    case CORR_SELECTED:
 	obj = corrlist(command.list, &Z, datainfo);
 	if (obj == NULL) {
 	    errbox(_("Failed to generate correlation matrix"));
 	    gretl_print_destroy(prn);
 	    return;
 	} 
-	/* printcorr(corr, datainfo, &prn); */
 	matrix_print_corr(obj, datainfo, 0, prn);
 	break;
     case FREQ:
@@ -738,7 +738,6 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	err = runs_test(command.list[1], Z, datainfo, prn);
 	break;
     case SUMMARY:
-    case SUMMARY_SELECTED:
     case VAR_SUMMARY:	
 	obj = summary(command.list, &Z, datainfo, prn);
 	if (obj == NULL) {

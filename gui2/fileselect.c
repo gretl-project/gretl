@@ -95,7 +95,7 @@ static int action_to_flag (const int action)
 
 static const char *get_gp_ext (const char *termtype)
 {
-    if (!strcmp(termtype, "postscript")) return ".eps";
+    if (!strncmp(termtype, "postscript", 10)) return ".eps";
     else if (!strcmp(termtype, "fig")) return ".fig";
     else if (!strcmp(termtype, "latex")) return ".tex";
     else if (!strcmp(termtype, "png")) return ".png";
@@ -242,15 +242,16 @@ static void save_editable_content (int action, const char *fname,
 
 /* ........................................................... */
 
-static void set_startdir (int action, char *startdir)
+static void set_startdir (char *startdir)
 {
-    if (*remember_dir != '\0')
+    if (*remember_dir != '\0') {
 	strcpy(startdir, remember_dir);
-    else
+    } else {
 	get_default_dir(startdir);
+    }
 
 #ifndef G_OS_WIN32
-    if (startdir[strlen(startdir)-1] != '/') strcat(startdir, "/");
+    if (startdir[strlen(startdir) - 1] != '/') strcat(startdir, "/");
 #endif
 }
 
@@ -322,7 +323,7 @@ static struct winfilter get_gp_filter (const char *termtype)
 	{ N_("all files (*.*)"), "*.*" }
     };
 
-    if (!strcmp(termtype, "postscript")) 
+    if (!strncmp(termtype, "postscript", 10)) 
 	return gpfilters[0];
     else if (!strcmp(termtype, "fig")) 
 	return gpfilters[1];
@@ -437,7 +438,7 @@ void file_selector (const char *msg, int action, gpointer data)
     fname[0] = '\0';
     endname[0] = '\0';
 
-    set_startdir(action, startdir);
+    set_startdir(startdir);
 
     /* special case: default save of data */
     if ((action == SAVE_DATA || action == SAVE_GZDATA) && paths.datfile[0]
@@ -593,7 +594,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	} else fclose(fp);
     } 
 
-    strcpy(remember_dir, path);
+    strncpy(remember_dir, fname, slashpos(fname));
 
     if (OPEN_DATA_ACTION(action)) {
 	strcpy(trydatfile, fname);
@@ -751,7 +752,7 @@ void file_selector (const char *msg, int action, gpointer data)
     char suffix[16], startdir[MAXLEN];
     int do_glob = 1;
 
-    set_startdir(action, startdir);
+    set_startdir(startdir);
 
     filesel = gtk_file_selection_new(msg);
 

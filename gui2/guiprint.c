@@ -1527,7 +1527,7 @@ int csv_selected_to_clipboard (void)
     int err = 0;
 
     liststr = mdata_selection_to_string(0);
-    if (liststr == NULL) return;
+    if (liststr == NULL) return 0;
 
     delimiter_dialog();
 
