@@ -746,12 +746,6 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     zz = ysum * ysum / pmod->nobs;
     pmod->tss = ypy - zz;
-#ifdef NO_LHS_CONST
-    if (floatlt(pmod->tss, 0.0)) { 
-        pmod->errcode = E_TSS; 
-        return; 
-    }
-#endif
 
     /*  Cholesky-decompose X'X and find the coefficients */
     err = cholbeta(pmod->xpx, xpy, pmod->coeff, &rss, pmod->ncoeff);
@@ -786,16 +780,11 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
     if (floatlt(pmod->tss, 0.0) || floateq(pmod->tss, 0.0)) {
        pmod->rsq = pmod->adjrsq = NADBL;
-#ifdef NO_LHS_CONST
-       pmod->errcode = E_TSS;
-       return;
-#endif
-    }       
+    } 
 
     hatvar(pmod, Z); 
     if (pmod->errcode) return;
 
-    /* this is out of place? */
     if (pmod->tss > 0) {
 	compute_r_squared(pmod, &Z[yno][pmod->t1]);
     }
