@@ -1328,9 +1328,9 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 
     strcpy(fname, buf);
 
-    if (add_case_markers(datainfo, fname)) 
+    if (add_case_markers(datainfo, fname)) { 
 	errbox(_("Failed to add case markers"));
-    else {
+    } else {
 	close_dialog(ddata);
 	infobox(_("Case markers added"));
 	mark_dataset_as_modified();
@@ -2667,13 +2667,23 @@ void do_global_setmiss (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     double missval;
-    int count;
+    int count, err;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
-    if (blank_entry(buf, ddata)) return;
+    if (blank_entry(buf, ddata)) {
+	close_dialog(ddata);
+	return;
+    }
+
+    if ((err = check_atof(buf))) {
+	gui_errmsg(err);
+	return;
+    }
 
     missval = atof(buf);
     count = real_do_setmiss(missval, 0);
+
+    close_dialog(ddata);
 
     if (count) {
 	sprintf(errtext, _("Set %d values to \"missing\""), count);
@@ -2688,18 +2698,26 @@ void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
     double missval;
-    int count;
+    int count, err;
 
     buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
     if (blank_entry(buf, ddata)) return;
 
     if (!datainfo->vector[mdata->active_var]) {
+	close_dialog(ddata);
 	errbox(_("This variable is a scalar"));
 	return;
     }
 
+    if ((err = check_atof(buf))) {
+	gui_errmsg(err);
+	return;
+    }    
+
     missval = atof(buf);
     count = real_do_setmiss(missval, mdata->active_var);
+
+    close_dialog(ddata);
 
     if (count) {
 	sprintf(errtext, _("Set %d observations to \"missing\""), count);

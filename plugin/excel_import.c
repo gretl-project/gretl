@@ -552,12 +552,13 @@ static char *convert8to7 (char *src, int count)
     memset(dest, 0, VNAMELEN);
     p = dest;
 
+#ifdef EDEBUG
+    fprintf(stderr, "convert8to7: input = '%s'\n", src);
+#endif
+
     for (i=0; i<count && j<VNAMELEN-1; i++) {
 	u = (unsigned char) src[i];
-#ifdef EDEBUG
-	fprintf(stderr, "convert8to7: src[%d] = %u\n", i, u);
-#endif
-	if (isalnum(u) && u < 128) {
+	if ((isalnum(u) || ispunct(u)) && u < 128) {
 	    *p++ = u;
 	    j++;
 	}
@@ -981,7 +982,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	}	    
 
 	i = book.col_offset;
-	if (obs_column(rowptr[book.row_offset].cells[i] + 1)) {
+	if (obs_column(rowptr[book.row_offset].cells[i])) {
 	    int pd = consistent_date_labels(book.row_offset);
 
 	    if (pd) {

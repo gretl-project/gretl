@@ -68,12 +68,16 @@ static int label_is_date (char *str)
 	len--;
     }
 
+    fprintf(stderr, "label_is_date: looking at '%s'\n", str);
+
     for (i=0; i<len; i++) {
 	if (str[i] == ':' || str[i] == 'Q') {
 	    str[i] = '.';
 	    break;
 	}
     }
+
+    fprintf(stderr, "label_is_date: after subst, looking at '%s'\n", str);
 
     if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
 	d > 0 && d < 3000) {
@@ -95,7 +99,9 @@ static int label_is_date (char *str)
 
 static int obs_column (char *label)
 {
-    fprintf(stderr, "obs_column(): test='%s'\n", label);
+    if (label == NULL) return 1;
+    
+    label++;
 
     if (*label == '\0') return 1;    
 
