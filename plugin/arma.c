@@ -646,6 +646,7 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 
 	/* compute and print polynomial roots */
 	roots = arma_roots(p, q, coeff);
+
 	if (roots != NULL) {
 	    pprintf(prn,"  %s:\t", _("AR roots"));
 
@@ -669,6 +670,10 @@ MODEL arma_model (int *list, const double **Z, DATAINFO *pdinfo,
 		pputc(prn, '\t');
 	    }
 	    pputc(prn, '\n');
+
+	    /* we'll get around to saving the roots for later printing,
+	       but for now let's not leak memory */
+	    free(roots);
 	}
     }
 
