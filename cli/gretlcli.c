@@ -946,7 +946,11 @@ void exec_line (char *line, PRN *prn)
 			  &Z, datainfo, &paths, &plot_count, 
 			  gp_flags(batch, 0));
 	}
-	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
+	if (err < 0) {
+	    pputs(prn, _("gnuplot command failed\n"));
+	} else if (batch) {
+	    pprintf(prn, _("wrote %s\n"), paths.plotfile);
+	}
 	break;
 
     case HAUSMAN:

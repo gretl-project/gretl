@@ -28,7 +28,8 @@ enum gnuplot_flags {
     GP_DUMMY    = 1 << 3,  /* using a dummy for separation */
     GP_BATCH    = 1 << 4,  /* working in batch mode */
     GP_GUI      = 1 << 5,  /* called from GUI context */
-    GP_OLS_OMIT = 1 << 6   /* Don't draw fitted line on graph */
+    GP_OLS_OMIT = 1 << 6,  /* Don't draw fitted line on graph */
+    GP_FILE     = 1 << 7   /* send output to named file */
 };
 
 enum gptspec_flags {
@@ -147,6 +148,7 @@ int plot_fcast_errs (int n, const double *obs,
 		     const double *maxerr, const char *varname, 
 		     PATHS *ppaths);
 
+int is_auto_ols_string (const char *s);
 
 
 

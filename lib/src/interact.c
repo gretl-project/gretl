@@ -41,7 +41,7 @@ extern int _parse_lagvar (const char *varname, LAGVAR *plagv,
 			  DATAINFO *pdinfo);
 
 static int _full_list (const DATAINFO *pdinfo, CMD *command);
-static void get_tex_filename (const char *line, CMD *cmd);
+static void get_optional_filename (const char *line, CMD *cmd);
 
 /* ........................................................... */
 
@@ -360,9 +360,10 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	return;
     }
 
-    /* tex printing commands can take a filename parameter */
+    /* tex printing commands can take a filename parameter; so
+       can gnuplot command */
     if (command->ci == EQNPRINT || command->ci == TABPRINT) {
-	get_tex_filename(line, command);
+	get_optional_filename(line, command);
     } 
 
     /* commands that never take a list of variables */
@@ -1160,7 +1161,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 /* .......................................................... */
 
 /* Look for a flag of the form "-x".  Make sure it's outside of
-   any quotes */
+   any quotes.  Return pointer to  */
 
 static const char *flag_present (const char *s, char f, int *quoted)
 {
@@ -1172,6 +1173,11 @@ static const char *flag_present (const char *s, char f, int *quoted)
 	if (!inquote) {
 	    if (*s == '-') gotdash = 1;
 	    else if (gotdash && *s == f && *(s+1)) {
+#if 0
+		/* blank out the flag and following in the
+		   original string? */
+		*s = 0;
+#endif
 		s++;
 		while (*s) {
 		    if (isspace(*s)) s++;
@@ -1259,7 +1265,7 @@ static int make_var_label (const char *line, const DATAINFO *pdinfo,
 
 /* .......................................................... */
 
-static void get_tex_filename (const char *line, CMD *cmd)
+static void get_optional_filename (const char *line, CMD *cmd)
 {
     char *p;
 

@@ -540,6 +540,8 @@ int gnuplot_init (PATHS *ppaths, FILE **fpp)
     if (GRETL_GUI(ppaths)) {
 	sprintf(ppaths->plotfile, "%sgpttmp.XXXXXX", ppaths->userdir);
 	if (mktemp(ppaths->plotfile) == NULL) return 1;
+    } else {
+	sprintf(ppaths->plotfile, "%sgpttmp.plt", ppaths->userdir);
     }
 
     *fpp = fopen(ppaths->plotfile, "w");
@@ -732,7 +734,9 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	lo--;
     }
 
-    if (flags & GP_BATCH) {  
+    if ((flags & GP_FILE) && *ppaths->plotfile) {
+	fq = fopen(ppaths->plotfile, "w");
+    } else if (flags & GP_BATCH) {  
 	if (*ppaths->plotfile == 0) {
 	    *plot_count += 1; 
 	    sprintf(ppaths->plotfile, "%sgpttmp%02d.plt", ppaths->userdir, 
@@ -1391,7 +1395,9 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     double xx;
 
     if (!string_is_blank(spec->titles[0])) {
-	fprintf(fp, "set title '%s'\n", spec->titles[0]);
+	if ((spec->flags & GPTSPEC_OLS_HIDDEN) && 
+	    is_auto_ols_string(spec->titles[0])) ;
+	else fprintf(fp, "set title '%s'\n", spec->titles[0]);
     }
     if (!string_is_blank(spec->titles[1])) {
 	fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
@@ -1640,6 +1646,15 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
     } else {
 	return err;
     }
+}
+
+/* ........................................................... */
+
+int is_auto_ols_string (const char *s)
+{
+    if (strstr(s, "automatic OLS")) return 1;
+    if (strstr(s, I_("with least squares fit"))) return 1;
+    return 0;
 }
 
 

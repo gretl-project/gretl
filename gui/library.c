@@ -4031,6 +4031,7 @@ int gui_exec_line (char *line,
     char runfile[MAXLEN], datfile[MAXLEN];
     char linecopy[1024];
     char texfile[MAXLEN];
+    unsigned char plotflags = 0;
     MODEL tmpmod;
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
@@ -4406,6 +4407,8 @@ int gui_exec_line (char *line,
 	err = 0;
 	pprintf(prn, _("Retrieved fitted values as \"autofit\"\n"));
 	varlist(datainfo, prn); 
+	if (exec_code != CONSOLE_EXEC)
+	    break;
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
 	    command.list = myrealloc(command.list, 4 * sizeof(int));
@@ -4415,7 +4418,7 @@ int gui_exec_line (char *line,
 	    command.list[3] = varindex(datainfo, "time");
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, NULL, &Z, datainfo,
-			  &paths, &plot_count, GP_BATCH); /* FIXME */
+			  &paths, &plot_count, 0); 
 	    if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
 	    else register_graph();
 	}
@@ -4450,17 +4453,24 @@ int gui_exec_line (char *line,
     case GNUPLOT:
 	if (exec_code == SAVE_SESSION_EXEC || exec_code == REBUILD_EXEC)
 	    break;
+	if (exec_code == SCRIPT_EXEC) plotflags = GP_BATCH;
 	if (oflag == OPT_M) { /* plot with impulses */
+	    plotflags |= GP_IMPULSES;
 	    err = gnuplot(command.list, NULL, NULL, &Z, datainfo,
-			  &paths, &plot_count, GP_IMPULSES); /* FIXME? */
-	} else {	
+			  &paths, &plot_count, plotflags); 
+	} else {
 	    lines[0] = oflag;
 	    err = gnuplot(command.list, lines, command.param, 
-			  &Z, datainfo, &paths, &plot_count, 0);
+			  &Z, datainfo, &paths, &plot_count, plotflags);
 	}
-	if (err < 0) pputs(prn, _("gnuplot command failed\n"));
-	else {
-	    if (plp == NULL) register_graph();
+	if (err < 0) {
+	    pputs(prn, _("gnuplot command failed\n"));
+	} else {
+	    if (exec_code == CONSOLE_EXEC) {
+		register_graph();
+	    } else if (exec_code == SCRIPT_EXEC) {
+		pprintf(prn, _("wrote %s\n"), paths.plotfile);
+	    }
 	    err = maybe_save_graph(&command, paths.plotfile,
 				   GRETL_GNUPLOT_GRAPH, prn);
 	}

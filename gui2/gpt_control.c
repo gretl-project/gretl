@@ -313,7 +313,7 @@ static int add_or_remove_png_term (const char *fname, int add, GPT_SPEC *spec)
 	    if (!strncmp(fline, "set term", 8)) printit = 0;
 	    else if (!strncmp(fline, "set output", 10)) printit = 0;
 	    else if (spec != NULL && (spec->flags & GPTSPEC_OLS_HIDDEN)
-		     && strstr(fline, "automatic OLS")) printit = 0;
+		     && is_auto_ols_string(line)) printit = 0;
 	    if (printit) fputs(fline, ftmp);
 	}
     }
@@ -405,7 +405,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
     widget_to_str(GTK_COMBO(keycombo)->entry, spec->keyspec, 
 		  sizeof spec->keyspec);
 
-    spec->flags ^= GPTSPEC_Y2AXIS;
+    spec->flags &= ~GPTSPEC_Y2AXIS;
     for (i=0; i<numlines; i++) {
 	spec->lines[i].yaxis = 1;
 	yaxis = 
@@ -461,7 +461,7 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	if (GTK_TOGGLE_BUTTON(no_ols_check)->active) {
 	    spec->flags |= GPTSPEC_OLS_HIDDEN;
 	} else {
-	    spec->flags ^= GPTSPEC_OLS_HIDDEN;
+	    spec->flags &= ~GPTSPEC_OLS_HIDDEN;
 	}
     }
 
@@ -593,6 +593,10 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	no_ols_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  no_ols_check, 0, 2, tbl_len-1, tbl_len);
+	if (spec->flags & GPTSPEC_OLS_HIDDEN) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(no_ols_check),
+					 TRUE);
+	}	
 	gtk_widget_show(no_ols_check);
     } else {
 	no_ols_check = NULL;
