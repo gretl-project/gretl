@@ -17,7 +17,7 @@
  *
  */
 
-/* lib.c for gretl -- main interface to libgretl functions */
+/* library.c for gretl -- main interface to libgretl functions */
 
 #include "gretl.h"
 #include "var.h"
@@ -40,6 +40,7 @@
 #include "objectsave.h"
 #include "datafiles.h"
 #include "model_table.h"
+#include "cmdstack.h"
 
 extern DATAINFO *subinfo;
 extern DATAINFO *fullinfo;
@@ -70,23 +71,13 @@ static int get_terminal (char *s);
 
 const char *CANTDO = N_("Can't do this: no model has been estimated yet\n");
 
-typedef struct {
-    int ID, cmdnum;
-    int n;
-    char **cmds;
-} model_stack;
-
 /* file scope state variables */
 static CMD cmd;
 static int ignore;
 static int echo_off;
 static int replay;
 static char loopstorefile[MAXLEN];
-static model_stack *mstack;
-static int n_mstacks;
 static int model_count;
-static char **cmd_stack;
-static int n_cmds;
 static MODELSPEC *modelspec;
 static char last_model = 's';
 static gretl_equation_system *sys;
@@ -291,31 +282,6 @@ static void set_sample_label_special (void)
 
 /* ........................................................... */
 
-void free_command_stack (void)
-{
-    int i, j;
-
-    if (cmd_stack != NULL) {
-	for (i=0; i<n_cmds; i++)
-	    if (cmd_stack[i]) free(cmd_stack[i]);
-	free(cmd_stack);
-	cmd_stack = NULL;
-    }
-    n_cmds = 0;
-
-    if (n_mstacks > 0 && mstack != NULL) {  
-	for (i=0; i<n_mstacks; i++) {
-	    for (j=0; j<mstack[i].n; j++)
-		free(mstack[i].cmds[j]); 
-	}
-	free(mstack);
-	mstack = NULL;
-    }
-    n_mstacks = 0;
-}
-
-/* ........................................................... */
-
 void clear_data (void)
 {
     *paths.datfile = 0;
@@ -461,28 +427,6 @@ static void maybe_quote_filename (char *line, char *cmd)
 
 /* ........................................................... */
 
-static int add_command_to_stack (const char *str)
-{
-    if (n_cmds == 0) {
-	cmd_stack = mymalloc(sizeof *cmd_stack);
-    } else {
-	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
-    }
-
-    if (cmd_stack == NULL) return 1;
-
-    if ((cmd_stack[n_cmds] = mymalloc(strlen(str) + 1)) == NULL)
-	return 1;
-
-    strcpy(cmd_stack[n_cmds], str);
-    
-    n_cmds++;
-
-    return 0;
-}
-
-/* ........................................................... */
-
 gint cmd_init (char *cmdstr)
 {
     PRN *echo;
@@ -518,141 +462,6 @@ int verify_and_record_command (char *line)
 
 /* ........................................................... */
 
-static gint record_model_genr (char *line)
-{
-    size_t len = strlen(line);
-
-    if (n_cmds == 0) {
-	cmd_stack = mymalloc(sizeof *cmd_stack);
-    } else { 
-	cmd_stack = myrealloc(cmd_stack, (n_cmds + 1) * sizeof *cmd_stack);
-    }
-    if (cmd_stack == NULL) return 1;
-
-    if ((cmd_stack[n_cmds] = mymalloc(len + 1)) == NULL) {
-	return 1;
-    }
-
-    strncpy(cmd_stack[n_cmds], line, len);
-    n_cmds++;
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static int grow_mstack (int i, int model_id)
-{
-    if (n_mstacks == 0) { 
-#ifdef CMD_DEBUG
-	fprintf(stderr, "grow_mstack: starting from scratch\n");
-#endif
-	mstack = mymalloc(sizeof *mstack);
-    } else { 
-#ifdef CMD_DEBUG
-	fprintf(stderr, "grow_mstack: reallocating to %d stacks\n",
-		n_mstacks+1);
-#endif
-	mstack = myrealloc(mstack, (n_mstacks+1) * sizeof *mstack);
-    }
-    if (mstack == NULL) {
-	n_mstacks = 0;
-	return 1;
-    }
-
-    mstack[i].ID = model_id;    
-    mstack[i].cmdnum = n_cmds-1;
-    mstack[i].n = 0;
-
-#ifdef CMD_DEBUG
-    fprintf(stderr, "mstack[%d]: ID=%d, cmdnum=%d\n", i, model_id, n_cmds-1);
-#endif
-
-    mstack[i].cmds = mymalloc(sizeof(char **));
-    if (mstack[i].cmds == NULL) return 1;
-    n_mstacks++;
-
-#ifdef CMD_DEBUG
-    fprintf(stderr, "grow_mstack: n_mstacks now = %d\n", n_mstacks);
-#endif
-
-    return 0;
-}
-
-/* ........................................................... */
-
-static gint model_cmd_init (char *line, int ID)
-     /* this makes a record of commands associated with
-	a given model, so that they may be reconstructed later as
-	part of the session mechanism */
-{
-    int i, sn;
-    PRN *echo;
-    size_t len;
-
-    /* pre-process the line */
-    if (check_cmd(line)) return 1;
-
-    /* have we started this stuff at all, yet? */
-    if (n_mstacks == 0) { /* no */
-	if (grow_mstack(0, ID)) {
-	    free(mstack);
-	    return 1;
-	}
-    }
-
-    /* have we already started a stack for this model? */
-    sn = -1;
-    for (i=0; i<n_mstacks; i++) {
-	if (mstack[i].ID == ID) { /* yes */
-	    sn = i;
-	    break;
-	}
-    }
-    if (sn == -1) { /* no, not yet */
-	sn = n_mstacks;
-	if (grow_mstack(sn, ID)) { 
-	    free(mstack);
-	    return 1;
-	}
-    } 
-
-    if (mstack[sn].n > 0) { /* stack already underway for this model; 
-			       make space for another command string */
-#ifdef CMD_DEBUG
-	fprintf(stderr, "model_cmd_init: realloc mstack[%d] for %d cmds\n",
-		sn, mstack[sn].n+1);
-#endif
-	mstack[sn].cmds = myrealloc(mstack[sn].cmds,
-				    (mstack[sn].n + 1) * sizeof(char **));
-	if (mstack[sn].cmds == NULL) {
-	    /* do more stuff! */
-	    return 1;
-	}
-    }
-
-    if (bufopen(&echo)) return 1;
-
-    echo_cmd(&cmd, datainfo, line, 0, 1, echo);
-
-    len = strlen(echo->buf);
-
-    mstack[sn].cmds[mstack[sn].n] = mymalloc(len + 1);
-    if (mstack[sn].cmds[mstack[sn].n] == NULL) {
-	gretl_print_destroy(echo);
-	return 1;
-    }
-    strcpy(mstack[sn].cmds[mstack[sn].n], echo->buf);
-
-    gretl_print_destroy(echo);
-
-    mstack[sn].n += 1;
-
-    return 0;
-}
-
-/* ........................................................... */
-
 static gint stack_model (MODEL *pmod)
 {
     int script, err = 0;
@@ -678,128 +487,6 @@ static gint stack_model (MODEL *pmod)
     }
 
     return err;
-}
-
-/* ........................................................... */
-
-static void dump_model_cmds (FILE *fp, int m)
-{
-    int i;
-
-    fprintf(fp, "(* commands pertaining to model %d *)\n", mstack[m].ID);
-
-    for (i=0; i<mstack[m].n; i++) {
-	fprintf(fp, "%s", mstack[m].cmds[i]);
-    }
-}
-
-/* ........................................................... */
-
-gint dump_cmd_stack (const char *fname, int insert_open_data)
-     /* ship out the stack of commands entered in the current
-	session */
-{
-    FILE *fp;
-    int i, j;
-
-    if (fname == NULL || *fname == '\0') return 0;
-
-    if (!strcmp(fname, "stderr")) {
-	fp = stderr;
-	fprintf(fp, "dumping command stack:\n");
-    } else {
-	fp = fopen(fname, "w"); 
-	if (fp == NULL) {
-	    errbox(_("Couldn't open command file for writing"));
-	    return 1;
-	}
-    }
-
-    /* Check: Did we open any datafile in this session?  If not,
-       the session may have involved importing data from a
-       database; the data may or may not have been saved as a
-       gretl datafile.  If we're really saving the session for
-       future use, we'd better insert an "open" command.
-    */
-
-    if (insert_open_data) {
-	int opened_data = 0;
-
-	for (i=0; i<n_cmds; i++) {
-	    if (!strncmp(cmd_stack[i], "open ", 5)) {
-		opened_data = 1;
-		break;
-	    }
-	}
-
-	if (!opened_data) {
-	    if (*paths.datfile == '\0') {
-		/* current data not saved yet */
-		infobox(_("Please give the current dataset a name"));
-		file_selector(_("Save data file"), SAVE_DATA, NULL);
-	    }
-	    if (*paths.datfile != '\0') {
-		/* prepend an "open" command for the current data file */
-		fprintf(fp, "open %s\n", paths.datfile);
-	    } else {
-		/* the user canceled the saving of the data */
-		if (strcmp(fname, "stderr")) {
-		    fclose(fp);
-		    remove(fname);
-		}
-		return 1;
-	    }
-	}
-    }
-
-    for (i=0; i<n_cmds; i++) {
-	fprintf(fp, "%s", cmd_stack[i]);
-	if (is_model_cmd(cmd_stack[i]) && mstack != NULL) {
-#ifdef CMD_DEBUG
-	    fprintf(stderr, "cmd_stack[%d]: looking for model commands\n", i);
-#endif
-	    for (j=0; j<n_mstacks; j++) { 
-		if (mstack[j].cmdnum == i) {
-		   dump_model_cmds(fp, j);
-		   break;
-		} 
-	    }
-	}
-    }
-
-    if (strcmp(fname, "stderr")) 
-	fclose(fp);
-
-    return 0;
-}
-
-/* ........................................................... */
-
-int work_done (void)
-     /* See whether user has done any work, to determine whether or
-	not to offer the option of saving commands/output.  Merely
-	running a script, or opening a data file, or a few other
-	trivial actions, do not count as "work done". */
-{
-    int i, work = 0;
-    const char *s;
-
-    for (i=0; i<n_cmds; i++) {
-	s = cmd_stack[i];
-	if (strlen(s) > 2 && 
-	    strncmp(s, "run ", 4) &&
-	    strncmp(s, "open", 4) &&
-	    strncmp(s, "help", 4) &&
-	    strncmp(s, "impo", 4) &&
-	    strncmp(s, "info", 4) &&
-	    strncmp(s, "labe", 4) &&
-	    strncmp(s, "list", 4) &&
-	    strncmp(s, "quit", 4)) {
-	    work = 1;
-	    break;
-	}
-    }
-    return work;
 }
 
 /* ........................................................... */
@@ -1123,25 +810,6 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 
 /* ........................................................... */
 
-void view_log (void)
-{
-    char fname[MAXLEN];
-    
-    if (n_cmds == 0) {
-	errbox(_("The command log is empty"));
-	return;
-    }
-
-    strcpy(fname, paths.userdir);
-    strcat(fname, "session.inp");
-
-    if (dump_cmd_stack(fname, 0)) return;
-
-    view_file(fname, 0, 0, 78, 370, VIEW_LOG);
-}
-
-/* ........................................................... */
-
 void gui_errmsg (const int errcode)
 {
     char *msg = get_gretl_errmsg();
@@ -1215,16 +883,23 @@ void drop_all_missing (gpointer data, guint opt, GtkWidget *w)
 void do_samplebool (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf = NULL;
+    gretlopt opt;
     int err;
 
     buf = dialog_data_get_text(ddata);
     if (buf == NULL) return;
 
+    opt = dialog_data_get_opt(ddata);
+
     clear(line, MAXLEN);
-    sprintf(line, "smpl %s --restrict", buf); 
+    if (opt & OPT_C) { 
+	sprintf(line, "smpl %s --restrict --cumulate", buf); 
+    } else {
+	sprintf(line, "smpl %s --restrict", buf);
+    }
     if (verify_and_record_command(line)) return;
 
-    err = bool_subsample(OPT_R);
+    err = bool_subsample(opt | OPT_R);
     if (!err) {
 	close_dialog(ddata);
     }
@@ -1584,7 +1259,7 @@ void do_lmtest (gpointer data, guint aux_code, GtkWidget *widget)
 	} 
     }
 
-    if (model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, &cmd, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
 }
@@ -1670,7 +1345,7 @@ void add_leverage_data (windata_t *vwin)
 						   "model_ID"));
 #endif
 	strcpy(line, "leverage -o");
-	model_cmd_init(line, ID);
+	model_cmd_init(line, &cmd, ID);
     }
 }
 
@@ -1775,7 +1450,7 @@ static void do_chow_cusum (gpointer data, int code)
 	print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, pmod->ID)) {
+    if (model_cmd_init(line, &cmd, pmod->ID)) {
 	return;
     }
 
@@ -1825,7 +1500,7 @@ void do_reset (gpointer data, guint u, GtkWidget *widget)
 	    print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, &cmd, pmod->ID)) return;
 
     view_buffer(prn, 78, 400, title, RESET, NULL); 
 }
@@ -1882,7 +1557,7 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 	    print_test_to_window(&test, mydata->w);
     }
 
-    if (model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, &cmd, pmod->ID)) return;
 
     close_dialog(ddata);
     view_buffer(prn, 78, 400, title, LMTEST, NULL); 
@@ -2068,18 +1743,18 @@ static int record_model_commands_from_buf (const gchar *buf, const MODEL *pmod,
 
     if (!got_start) {
 	strcpy(line, "restrict");
-	model_cmd_init(line, pmod->ID);
+	model_cmd_init(line, &cmd, pmod->ID);
     }
 
     while (bufgets(line, MAXLEN-1, buf)) {
 	if (string_is_blank(line)) continue;
 	top_n_tail(line);
-	model_cmd_init(line, pmod->ID);
+	model_cmd_init(line, &cmd, pmod->ID);
     }
 
     if (!got_end) {
 	strcpy(line, "end restrict");
-	model_cmd_init(line, pmod->ID);
+	model_cmd_init(line, &cmd, pmod->ID);
     }
 
     return 0;
@@ -2401,7 +2076,7 @@ void do_model (GtkWidget *widget, gpointer p)
 	strcat(line, cmd.param);
     }
 
-    if (*modelgenr && record_model_genr(modelgenr)) {
+    if (*modelgenr && add_command_to_stack(modelgenr)) {
 	errbox(_("Error saving model information"));
 	return;
     }
@@ -2592,7 +2267,7 @@ void do_model_genr (GtkWidget *widget, dialog_t *ddata)
 
     clear(line, MAXLEN);
     sprintf(line, "genr %s", buf);
-    if (model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, &cmd, pmod->ID)) return;
 
     finish_genr(pmod, ddata);
 }
@@ -2685,8 +2360,7 @@ static int finish_genr (MODEL *pmod, dialog_t *ddata)
 
     if (err) {
 	gui_errmsg(err);
-	free(cmd_stack[n_cmds-1]);
-	n_cmds--;
+	delete_from_command_stack();
     } else {
 	if (ddata != NULL) close_dialog(ddata);
 	populate_varlist();
@@ -2827,7 +2501,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 
     clear(line, MAXLEN);
     strcpy(line, "testuhat");
-    if (model_cmd_init(line, pmod->ID)) return;
+    if (model_cmd_init(line, &cmd, pmod->ID)) return;
  
     printfreq(freq, prn);
 
@@ -3285,7 +2959,7 @@ int add_fit_resid (MODEL *pmod, int code, int undo)
 	    sprintf(line, "genr %s = $h", datainfo->varname[v]);
 	}
 
-	model_cmd_init(line, pmod->ID);
+	model_cmd_init(line, &cmd, pmod->ID);
 
 	infobox(_("variable added"));
 	mark_dataset_as_modified();
@@ -3400,7 +3074,7 @@ void add_model_stat (MODEL *pmod, int which)
     sprintf(cmdstr, "genr %s = %s", datainfo->varname[i], statname);
 
     populate_varlist();
-    model_cmd_init(cmdstr, pmod->ID);
+    model_cmd_init(cmdstr, &cmd, pmod->ID);
     infobox(_("variable added"));
 
     /* note: since this is a scalar, which will not be saved by

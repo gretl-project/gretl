@@ -22,9 +22,7 @@
 #include "gretl.h"
 #include "session.h"
 #include "obsbutton.h"
-
-#include "textbuf.h" /* ? */
-#include "selector.h" /* ? */
+#include "textbuf.h"
 
 GtkWidget *active_edit_id;
 GtkWidget *active_edit_name;
@@ -60,7 +58,8 @@ static void destroy_dialog_data (GtkWidget *w, gpointer data)
     if (active_edit_text) active_edit_text = NULL;
 }
 
-static dialog_t *dialog_data_new (gpointer data, gint code)
+static dialog_t *
+dialog_data_new (gpointer data, gint code, const char *title)
 {
     dialog_t *d = mymalloc(sizeof *d);
 
@@ -71,9 +70,11 @@ static dialog_t *dialog_data_new (gpointer data, gint code)
     d->opt = OPT_NONE;
     d->dialog = gtk_dialog_new();
 
-    gtk_box_set_homogeneous (GTK_BOX 
-			     (GTK_DIALOG (d->dialog)->action_area), TRUE);
-    gtk_window_set_position (GTK_WINDOW (d->dialog), GTK_WIN_POS_MOUSE);
+    gtk_window_set_title(GTK_WINDOW(d->dialog), title);
+
+    gtk_box_set_homogeneous(GTK_BOX 
+			    (GTK_DIALOG(d->dialog)->action_area), TRUE);
+    gtk_window_set_position(GTK_WINDOW(d->dialog), GTK_WIN_POS_MOUSE);
 
 #ifndef OLD_GTK
     g_signal_connect (G_OBJECT (d->dialog), "destroy", 
@@ -152,19 +153,46 @@ GtkWidget *dialog_data_get_vbox (dialog_t *ddata)
 
 /* ........................................................... */
 
+static void set_dialog_border_widths (GtkWidget *dlg)
+{
+    int w1 = 10, w2 = 5;
+
+#ifdef OLD_GTK
+    gtk_container_border_width(GTK_CONTAINER 
+			       (GTK_DIALOG(dlg)->vbox), w1);
+    gtk_container_border_width(GTK_CONTAINER 
+			       (GTK_DIALOG(dlg)->action_area), w2);
+#else
+    gtk_container_set_border_width(GTK_CONTAINER 
+				   (GTK_DIALOG(dlg)->vbox), w1);
+    gtk_container_set_border_width(GTK_CONTAINER 
+				   (GTK_DIALOG(dlg)->action_area), w2);
+#endif
+
+    gtk_box_set_spacing (GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
+}
+
+/* ........................................................... */
+
 static void dialog_table_setup (dialog_t *dlg, int hsize)
 {
     GtkWidget *sw;
 
     sw = gtk_scrolled_window_new (NULL, NULL);
+#ifdef OLD_GTK
+    gtk_widget_set_usize(sw, hsize, 200);
+#else
     gtk_widget_set_size_request(sw, hsize, 200);
+#endif
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg->dialog)->vbox), 
 		       sw, TRUE, TRUE, FALSE);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
 				    GTK_POLICY_AUTOMATIC,
 				    GTK_POLICY_AUTOMATIC);
+#ifndef OLD_GTK
     gtk_scrolled_window_set_shadow_type (GTK_SCROLLED_WINDOW (sw),
 					 GTK_SHADOW_IN);
+#endif
     gtk_container_add(GTK_CONTAINER(sw), dlg->edit); 
     gtk_widget_show(dlg->edit);
     gtk_widget_show(sw);
@@ -217,10 +245,12 @@ static GtkWidget *text_edit_new (int *hsize)
 
 static void set_cumulate_restrictions (GtkWidget *w, gpointer p)
 {
+    dialog_t *d = (dialog_t *) p;
+    
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(w))) {
-	fprintf(stderr, "Active\n");
+	d->opt = OPT_C;
     } else {
-	fprintf(stderr, "Not active\n");
+	d->opt = OPT_NONE;
     }
 }
 
@@ -241,8 +271,14 @@ static void sample_cumulate_buttons (GtkWidget *box, gpointer data)
     gtk_box_pack_start(GTK_BOX(box), tmp, TRUE, TRUE, 0);
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(tmp), FALSE);
 
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(set_cumulate_restrictions), data);
+#else
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(set_cumulate_restrictions), data);
+#endif
+
     gtk_widget_show(tmp);
 }
 
@@ -299,6 +335,17 @@ static GtkWidget *ok_button (GtkWidget *box)
 
 /* ........................................................... */
 
+static void no_resize (GtkWidget *w)
+{
+#ifdef OLD_GTK
+    gtk_window_set_policy(GTK_WINDOW(w), FALSE, FALSE, FALSE);
+#else
+    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+#endif
+}    
+
+/* ........................................................... */
+
 void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext, 
 		  void (*okfunc)(), void *okptr,
 		  guint cmdcode, guint varclick)
@@ -312,13 +359,13 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	return;
     }
 
-    d = dialog_data_new(okptr, cmdcode);
+    d = dialog_data_new(okptr, cmdcode, diagtxt);
     if (d == NULL) return;
 
     open_dialog = d->dialog;
+    no_resize(d->dialog);
 
-    gtk_window_set_title(GTK_WINDOW(d->dialog), diagtxt);
-    gtk_window_set_resizable(GTK_WINDOW(d->dialog), FALSE);
+    set_dialog_border_widths(d->dialog);
 
     /* convenience pointers */
     top_vbox = GTK_DIALOG(d->dialog)->vbox;
@@ -348,8 +395,13 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 
 	/* make the Enter key do the business */
 	if (okfunc) {
+#ifdef OLD_GTK
+	    gtk_signal_connect (GTK_OBJECT (d->edit), "activate", 
+				GTK_SIGNAL_FUNC (okfunc), d);
+#else
 	    g_signal_connect (G_OBJECT (d->edit), "activate", 
 			      G_CALLBACK (okfunc), d);
+#endif
 	}
 	
 	if (deftext) {
@@ -376,8 +428,13 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
     /* Create the "OK" button */
     tempwid = ok_button(button_box);
     if (okfunc) {
+#ifdef OLD_GTK
+	gtk_signal_connect (GTK_OBJECT(tempwid), "clicked", 
+			    GTK_SIGNAL_FUNC(okfunc), d);
+#else
 	g_signal_connect (G_OBJECT(tempwid), "clicked", 
 			  G_CALLBACK(okfunc), d);
+#endif
     }
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
@@ -392,7 +449,9 @@ void edit_dialog (const char *diagtxt, const char *infotxt, const char *deftext,
 	context_help_button(button_box, cmdcode);
     }
 
+#ifndef OLD_GTK
     gtk_window_set_destroy_with_parent(GTK_WINDOW(d->dialog), TRUE);
+#endif
 
     gtk_widget_show(d->dialog); 
 
@@ -421,6 +480,8 @@ static void save_data_callback (void)
 	data_status ^= MODIFIED_DATA;
     /* FIXME: need to do more here? */
 }
+
+#ifndef OLD_GTK
 
 gint yes_no_dialog (char *title, char *msg, int cancel)
 {
@@ -464,6 +525,129 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 	return GRETL_CANCEL;
     }
 }
+
+#else /* gtk 1.2 versions follow */
+
+# ifdef USE_GNOME
+
+int yes_no_dialog (char *title, char *message, int cancel)
+{
+    GtkWidget *dialog, *label;
+    int button;
+
+    if (cancel)
+	dialog = gnome_dialog_new (title,
+				   GNOME_STOCK_BUTTON_YES,
+				   GNOME_STOCK_BUTTON_NO,
+				   GNOME_STOCK_BUTTON_CANCEL,
+				   NULL);
+    else
+	dialog = gnome_dialog_new (title,
+				   GNOME_STOCK_BUTTON_YES,
+				   GNOME_STOCK_BUTTON_NO,
+				   NULL);
+
+    gnome_dialog_set_parent (GNOME_DIALOG (dialog), 
+			     GTK_WINDOW(mdata->w));
+
+    label = gtk_label_new (message);
+    gtk_widget_show (label);
+    gtk_box_pack_start (GTK_BOX (GNOME_DIALOG (dialog)->vbox), label, 
+			TRUE, TRUE, 0);
+
+    button = gnome_dialog_run_and_close (GNOME_DIALOG (dialog));
+
+    if (button == 0) return GRETL_YES;
+    if (button == 1) return GRETL_NO;
+    if (button == 2) return GRETL_CANCEL;
+
+    return GRETL_CANCEL;
+}
+
+# else /* not USE_GNOME */
+
+struct yes_no_data {
+    GtkWidget *dialog;
+    int *ret;
+    int button;
+};
+
+static void yes_no_callback (GtkWidget *w, gpointer data)
+{
+    struct yes_no_data *mydata = data;
+
+    *(mydata->ret) = mydata->button;
+    gtk_main_quit();
+    gtk_widget_destroy(mydata->dialog);
+}
+
+gint yes_no_dialog (char *title, char *msg, int cancel)
+{
+   GtkWidget *tempwid, *dialog;
+   int ret;
+   struct yes_no_data yesdata, nodata, canceldata;
+
+   dialog = gtk_dialog_new();
+
+   yesdata.dialog = nodata.dialog = canceldata.dialog 
+       = dialog;
+   yesdata.ret = nodata.ret = canceldata.ret = &ret; 
+   yesdata.button = GRETL_YES;
+   nodata.button = GRETL_NO;
+   canceldata.button = GRETL_CANCEL;
+   
+   gtk_grab_add (dialog);
+   gtk_window_set_title (GTK_WINDOW (dialog), title);
+   no_resize(dialog);
+   set_dialog_border_widths(dialog);
+   
+   gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->action_area), 15);
+   gtk_box_set_homogeneous (GTK_BOX (GTK_DIALOG (dialog)->action_area), TRUE);
+   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+   tempwid = gtk_label_new (msg);
+   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), tempwid, 
+		       TRUE, TRUE, FALSE);
+   gtk_widget_show(tempwid);
+
+   /* "Yes" button */
+   tempwid = gtk_button_new_with_label (_("Yes"));
+   GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+		       tempwid, TRUE, TRUE, TRUE);  
+   gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+		       GTK_SIGNAL_FUNC (yes_no_callback), &yesdata);
+   gtk_widget_grab_default (tempwid);
+   gtk_widget_show (tempwid);
+
+   /* "No" button */
+   tempwid = gtk_button_new_with_label (_("No"));
+   gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+		       tempwid, TRUE, TRUE, TRUE); 
+   gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+		       GTK_SIGNAL_FUNC (yes_no_callback), &nodata);
+   gtk_widget_show (tempwid);
+
+   /* Cancel button -- if wanted */
+   if (cancel) {
+       tempwid = gtk_button_new_with_label (_("Cancel"));
+       gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
+			   tempwid, TRUE, TRUE, TRUE); 
+       gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			   GTK_SIGNAL_FUNC (yes_no_callback), &canceldata);
+       gtk_widget_show (tempwid);
+   }
+
+   gtk_widget_show (dialog);
+
+   gtk_main();
+
+   return ret;
+}
+
+# endif /* plain GTK */
+
+#endif /* gtk 1.2 */
 
 /* ........................................................... */
 
@@ -579,25 +763,6 @@ static void destroy_delim_dialog (GtkWidget *w, gint *p)
     gtk_main_quit();
 }
 
-static void set_dialog_border_widths (GtkWidget *dlg)
-{
-    int w1 = 10, w2 = 5;
-
-#ifdef OLD_GTK
-    gtk_container_border_width(GTK_CONTAINER 
-			       (GTK_DIALOG(dlg)->vbox), w1);
-    gtk_container_border_width(GTK_CONTAINER 
-			       (GTK_DIALOG(dlg)->action_area), w2);
-#else
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dlg)->vbox), w1);
-    gtk_container_set_border_width(GTK_CONTAINER 
-				   (GTK_DIALOG(dlg)->action_area), w2);
-#endif
-
-    gtk_box_set_spacing (GTK_BOX(GTK_DIALOG(dlg)->vbox), w2);
-}
-
 void delimiter_dialog (void)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
@@ -615,14 +780,18 @@ void delimiter_dialog (void)
     dialog = gtk_dialog_new();
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: data delimiter"));
-    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-
+    no_resize(dialog);
     set_dialog_border_widths(dialog);
 
     gtk_window_set_position(GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
+			GTK_SIGNAL_FUNC(destroy_delim_dialog), csvptr);
+#else
     g_signal_connect (G_OBJECT(dialog), "destroy", 
 		      G_CALLBACK(destroy_delim_dialog), csvptr);
+#endif
 
     internal_vbox = gtk_vbox_new (FALSE, 5);
 
@@ -638,10 +807,17 @@ void delimiter_dialog (void)
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == ',')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_delim), csvptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(','));
+#else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER(','));
+#endif
     gtk_widget_show (button);
 
     /* space separator */
@@ -651,10 +827,17 @@ void delimiter_dialog (void)
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == ' ')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_delim), csvptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER(' '));
+#else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
     g_object_set_data(G_OBJECT(button), "action", 
-		      GINT_TO_POINTER(' '));    
+		      GINT_TO_POINTER(' '));  
+#endif  
     gtk_widget_show (button);
 
     /* tab separator */
@@ -663,11 +846,18 @@ void delimiter_dialog (void)
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     if (csvptr->delim == '\t')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_delim), csvptr);
+    gtk_object_set_data(GTK_OBJECT(button), "action", 
+			GINT_TO_POINTER('\t'));
+#else
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_delim), csvptr);
     g_object_set_data(G_OBJECT(button), "action", 
 		      GINT_TO_POINTER('\t'));    
     gtk_widget_show (button);
+#endif
 
 #ifdef ENABLE_NLS
     if (',' == get_local_decpoint()) {
@@ -692,10 +882,17 @@ void delimiter_dialog (void)
 			    button, TRUE, TRUE, 0);
 	if (csvptr->decpoint == '.')
 	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+# ifdef OLD_GTK
+	gtk_signal_connect(GTK_OBJECT(button), "clicked",
+			   GTK_SIGNAL_FUNC(set_dec), csvptr);
+	gtk_object_set_data(GTK_OBJECT(button), "action", 
+			    GINT_TO_POINTER('.'));
+# else
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
 	g_object_set_data(G_OBJECT(button), "action", 
 			  GINT_TO_POINTER('.'));
+# endif
 	gtk_widget_show (button);
 
 	/* comma decpoint */
@@ -705,13 +902,20 @@ void delimiter_dialog (void)
 			    button, TRUE, TRUE, 0);
 	if (csvptr->decpoint == ',')
 	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+# ifdef OLD_GTK
+	gtk_signal_connect(GTK_OBJECT(button), "clicked",
+			   GTK_SIGNAL_FUNC(set_dec), csvptr);
+	gtk_object_set_data(GTK_OBJECT(button), "action", 
+			    GINT_TO_POINTER(','));
+# else
 	g_signal_connect(G_OBJECT(button), "clicked",
 			 G_CALLBACK(set_dec), csvptr);
 	g_object_set_data(G_OBJECT(button), "action", 
-			  GINT_TO_POINTER(','));    
+			  GINT_TO_POINTER(','));   
+# endif 
 	gtk_widget_show (button);
     }
-#endif
+#endif /* ENABLE_NLS */
 
     hbox = gtk_hbox_new(FALSE, 5);
     gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
@@ -724,11 +928,17 @@ void delimiter_dialog (void)
 
     /* Create the "OK" button */
     tempwid = ok_button(GTK_DIALOG (dialog)->action_area);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(really_set_csv_stuff), csvptr);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(delete_widget), dialog);
+#else
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_csv_stuff), csvptr);
-    g_signal_connect (G_OBJECT (tempwid), "clicked", 
-		      G_CALLBACK (delete_widget), 
-		      dialog);
+    g_signal_connect (G_OBJECT(tempwid), "clicked", 
+		      G_CALLBACK(delete_widget), dialog);
+#endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
@@ -769,6 +979,109 @@ static void set_copy_format (GtkWidget *w, struct format_info *finfo)
     }
 }
 
+#ifdef OLD_GTK
+
+void copy_format_dialog (windata_t *vwin, int unused)
+{
+    GtkWidget *dialog, *tempwid, *button, *hbox;
+    GtkWidget *internal_vbox;
+    GSList *group;
+    struct format_info *finfo;
+
+    finfo = mymalloc(sizeof *finfo);
+    if (finfo == NULL) return;
+
+    dialog = gtk_dialog_new();
+    
+    finfo->vwin = vwin;
+    finfo->dialog = dialog;
+    finfo->format = COPY_LATEX;
+
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: copy formats"));
+    /* gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE); */
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (dialog)->action_area), 5);
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (dialog)->vbox), 5);
+
+    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+
+    gtk_signal_connect (GTK_OBJECT(dialog), "destroy", 
+			GTK_SIGNAL_FUNC(destroy_format_dialog), finfo);
+
+    internal_vbox = gtk_vbox_new (FALSE, 5);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    tempwid = gtk_label_new (_("Copy as:"));
+    gtk_box_pack_start (GTK_BOX(hbox), tempwid, TRUE, TRUE, 5);
+    gtk_widget_show(tempwid);
+    gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show(hbox); 
+
+    /* LaTeX option */
+    button = gtk_radio_button_new_with_label(NULL, "LaTeX");
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
+    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_LATEX));    
+    gtk_widget_show (button);   
+
+    /* RTF option */
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label(group, "RTF");
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
+    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_RTF));    
+    gtk_widget_show (button);
+
+    /* plain text option */
+    group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+    button = gtk_radio_button_new_with_label (group, _("plain text"));
+    gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
+    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(set_copy_format), finfo);
+    gtk_object_set_data(GTK_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
+    gtk_widget_show (button);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(hbox), internal_vbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    gtk_widget_show (internal_vbox);
+
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), hbox, TRUE, TRUE, 5);
+    gtk_widget_show (hbox);
+
+    /* Create the "OK" button */
+    tempwid = gtk_button_new_with_label(_("OK"));
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(copy_with_format_callback), finfo);
+    gtk_widget_grab_default (tempwid);
+    gtk_widget_show (tempwid);
+
+    /* "Cancel" button */
+    tempwid = gtk_button_new_with_label(_("Cancel"));
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (dialog)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(delete_widget), dialog);
+    gtk_widget_show (tempwid);
+
+    gtk_widget_show(dialog);
+
+    gtk_main();
+}
+
+#else /* gtk 2 version follows */
+
 void copy_format_dialog (windata_t *vwin, int multicopy)
 {
     GtkWidget *dialog, *tempwid, *button, *hbox;
@@ -783,26 +1096,24 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 
     finfo->vwin = vwin;
     finfo->dialog = dialog;
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     if (multicopy) {
 	finfo->format = COPY_RTF;
     } else {
 	finfo->format = COPY_TEXT_AS_RTF;
     }
-#else
+# else
     if (multicopy) {
 	finfo->format = COPY_LATEX;
     } else {
 	finfo->format = COPY_TEXT;
     }
-#endif
+# endif
 
     gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: copy formats"));
-    gtk_window_set_resizable (GTK_WINDOW (dialog), FALSE);
-
+    no_resize(dialog);
     set_dialog_border_widths(dialog);
-
-    gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
     g_signal_connect (G_OBJECT(dialog), "destroy", 
 		      G_CALLBACK(destroy_format_dialog), finfo);
@@ -816,7 +1127,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     gtk_box_pack_start (GTK_BOX(internal_vbox), hbox, TRUE, TRUE, 5);
     gtk_widget_show(hbox); 
 
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
 
     /* RTF option */
     button = gtk_radio_button_new_with_label(NULL, "RTF (MS Word)");
@@ -844,7 +1155,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 	gtk_widget_show (button);
     }
 
-#else /* not MS Windows: reverse the first two options */
+# else /* not MS Windows: reverse the first two options */
 
     /* LaTeX option? */
     if (multicopy) {
@@ -876,7 +1187,7 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     gtk_widget_show (button);
 
-#endif /* G_OS_WIN32 */
+# endif /* G_OS_WIN32 */
 
     /* plain text option */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
@@ -885,11 +1196,11 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
     g_signal_connect(G_OBJECT(button), "clicked",
 		     G_CALLBACK(set_copy_format), finfo);
     g_object_set_data(G_OBJECT(button), "format", GINT_TO_POINTER(COPY_TEXT));
-#ifdef G_OS_WIN32
+# ifdef G_OS_WIN32
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
-#else
+# else
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), !multicopy);
-#endif
+# endif
     gtk_widget_show (button);
 
     hbox = gtk_hbox_new(FALSE, 5);
@@ -915,6 +1226,8 @@ void copy_format_dialog (windata_t *vwin, int multicopy)
 
     gtk_main();
 }
+
+#endif /* gtk variants */
 
 struct varinfo_settings {
     GtkWidget *dlg;
@@ -1131,14 +1444,17 @@ void varinfo_dialog (int varnum, int full)
     vset->compaction_menu = NULL;
     vset->full = full;
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(vset->dlg), "destroy", 
+			GTK_SIGNAL_FUNC(free_vsettings), vset);
+#else
     g_signal_connect (G_OBJECT(vset->dlg), "destroy", 
 		      G_CALLBACK(free_vsettings), vset);
+#endif
 
     gtk_window_set_title(GTK_WINDOW(vset->dlg), _("gretl: variable attributes"));
-
     set_dialog_border_widths(vset->dlg);
-
-    gtk_window_set_position (GTK_WINDOW (vset->dlg), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(vset->dlg), GTK_WIN_POS_MOUSE);
 
     /* read/set name of variable */
     hbox = gtk_hbox_new(FALSE, 5);
@@ -1146,15 +1462,24 @@ void varinfo_dialog (int varnum, int full)
     gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
     gtk_widget_show(tempwid);
 
+#ifdef OLD_GTK
+    vset->name_entry = gtk_entry_new_with_max_length(8);
+#else
     vset->name_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->name_entry), 8);
     gtk_entry_set_width_chars(GTK_ENTRY(vset->name_entry), 11);
+#endif
     gtk_entry_set_text(GTK_ENTRY(vset->name_entry), 
 		       datainfo->varname[varnum]);
     gtk_box_pack_start(GTK_BOX(hbox), 
 		       vset->name_entry, FALSE, FALSE, 0);
     gtk_widget_show(vset->name_entry); 
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(vset->name_entry), "activate", 
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+#else
     gtk_entry_set_activates_default(GTK_ENTRY(vset->name_entry), TRUE);
+#endif
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1170,13 +1495,22 @@ void varinfo_dialog (int varnum, int full)
     gtk_widget_show(hbox);
 
     hbox = gtk_hbox_new(FALSE, 0);
+#ifdef OLD_GTK
+    vset->label_entry = gtk_entry_new_with_max_length(MAXLABEL-1);
+#else
     vset->label_entry = gtk_entry_new();
     gtk_entry_set_max_length(GTK_ENTRY(vset->label_entry), MAXLABEL-1);
+#endif
     gtk_entry_set_text(GTK_ENTRY(vset->label_entry), 
 		       VARLABEL(datainfo, varnum));
     gtk_box_pack_start(GTK_BOX(hbox), vset->label_entry, TRUE, TRUE, 0);
     gtk_widget_show(vset->label_entry);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(vset->label_entry), "activate", 
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+#else
     gtk_entry_set_activates_default(GTK_ENTRY(vset->label_entry), TRUE);
+#endif
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 0);
@@ -1189,17 +1523,26 @@ void varinfo_dialog (int varnum, int full)
 	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
 	gtk_widget_show(tempwid);
 
+#ifdef OLD_GTK
+	vset->display_name_entry = gtk_entry_new_with_max_length(MAXDISP-1);
+#else
 	vset->display_name_entry = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(vset->display_name_entry), 
 				 MAXDISP-1);
 	gtk_entry_set_width_chars(GTK_ENTRY(vset->display_name_entry), 
 				  MAXDISP+4);
+#endif
 	gtk_entry_set_text(GTK_ENTRY(vset->display_name_entry), 
 			   DISPLAYNAME(datainfo, varnum));
 	gtk_box_pack_start(GTK_BOX(hbox), 
 			   vset->display_name_entry, FALSE, FALSE, 0);
 	gtk_widget_show(vset->display_name_entry); 
+#ifdef OLD_GTK
+	gtk_signal_connect(GTK_OBJECT(vset->display_name_entry), "activate", 
+			   GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+#else
 	gtk_entry_set_activates_default(GTK_ENTRY(vset->display_name_entry), TRUE);
+#endif
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 			   hbox, FALSE, FALSE, 5);
@@ -1209,6 +1552,9 @@ void varinfo_dialog (int varnum, int full)
     /* read/set compaction method? */
     if (full && dataset_is_time_series(datainfo)) {  
 	GtkWidget *menu;
+#ifdef OLD_GTK
+	GtkWidget *child;
+#endif
 	int i;
 
 	hbox = gtk_hbox_new(FALSE, 0);
@@ -1222,8 +1568,15 @@ void varinfo_dialog (int varnum, int full)
 	vset->compaction_menu = gtk_option_menu_new();
 	menu = gtk_menu_new();
 	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
+#ifdef OLD_GTK
+	    child = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), child);
+	    gtk_object_set_data(GTK_OBJECT(child), "option",
+				GINT_TO_POINTER(i));
+#else
 	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
 	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+#endif
 	}
 	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
 	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
@@ -1241,18 +1594,28 @@ void varinfo_dialog (int varnum, int full)
 
     /* Create the "OK" button */
     tempwid = ok_button(GTK_DIALOG (vset->dlg)->action_area);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(really_set_variable_info), vset);
+#else
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(really_set_variable_info), vset);
+#endif
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
     /* And a Cancel button */
-    tempwid = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    tempwid = standard_button(GTK_STOCK_CANCEL);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(vset->dlg)->action_area), 
 			tempwid, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
+			GTK_SIGNAL_FUNC(varinfo_cancel), vset);
+#else
     g_signal_connect (G_OBJECT (tempwid), "clicked", 
 		      G_CALLBACK (varinfo_cancel), vset);
+#endif
     gtk_widget_show (tempwid);
 
     /* And a Help button? */
@@ -1390,14 +1753,17 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
     
     rset->dlg = gtk_dialog_new();
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(rset->dlg), "destroy", 
+			GTK_SIGNAL_FUNC(free_rsetting), rset);
+#else
     g_signal_connect (G_OBJECT(rset->dlg), "destroy", 
 		      G_CALLBACK(free_rsetting), rset);
+#endif
 
     gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample"));
-
     set_dialog_border_widths(rset->dlg);
-
-    gtk_window_set_position (GTK_WINDOW (rset->dlg), GTK_WIN_POS_MOUSE);
+    gtk_window_set_position(GTK_WINDOW(rset->dlg), GTK_WIN_POS_MOUSE);
 
     if (u == SMPLDUM) {
 	GList *dumlist;
@@ -1425,11 +1791,18 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 	    gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), 
 			       datainfo->varname[mdata->active_var]);
 	}
+#ifndef OLD_GTK
 	gtk_entry_set_width_chars(GTK_ENTRY(GTK_COMBO(rset->combo)->entry), VNAMELEN);
+#endif
 	gtk_editable_set_editable(GTK_EDITABLE(GTK_COMBO(rset->combo)->entry), FALSE);
 
+#ifdef OLD_GTK
+	gtk_signal_connect(GTK_OBJECT(GTK_COMBO(rset->combo)->entry), "changed",
+			   GTK_SIGNAL_FUNC(update_obs_label), rset);
+#else
 	g_signal_connect(G_OBJECT(GTK_COMBO(rset->combo)->entry), "changed",
 			 G_CALLBACK(update_obs_label), rset);
+#endif
 
 	hbox = gtk_hbox_new(TRUE, 5);
 	gtk_box_pack_start(GTK_BOX(hbox), rset->combo, FALSE, FALSE, 5);
@@ -1494,8 +1867,13 @@ void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
 
     /* Create the "OK" button */
     tempwid = ok_button(GTK_DIALOG (rset->dlg)->action_area);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+		       GTK_SIGNAL_FUNC(set_sample_from_dialog), rset);
+#else
     g_signal_connect(G_OBJECT(tempwid), "clicked",
 		     G_CALLBACK(set_sample_from_dialog), rset);
+#endif
     gtk_widget_grab_default(tempwid);
 
     /* And a Cancel button */
@@ -1553,6 +1931,21 @@ static void exec_arma_opts (GtkWidget *w, struct arma_options *opts)
     gtk_widget_destroy(GTK_WIDGET(opts->dlg));
 }
 
+#ifdef OLD_GTK
+static GtkWidget *
+gtk_spin_button_new_with_range (int a, int b, int c)
+{
+    GtkAdjustment *adj;
+    GtkWidget *sb;
+
+    adj = (GtkAdjustment *) gtk_adjustment_new(c, a, b, 1, 1, 0);
+    sb = gtk_spin_button_new(adj, 0, 0);
+
+    return sb;
+}
+
+#endif
+
 void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
 {
     GtkWidget *tmp, *hbox;
@@ -1565,13 +1958,16 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     opts->dlg = gtk_dialog_new();
     opts->v = mdata->active_var;
 
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(opts->dlg), "destroy", 
+			GTK_SIGNAL_FUNC(free_arma_opts), opts);
+#else
     g_signal_connect (G_OBJECT(opts->dlg), "destroy", 
 		      G_CALLBACK(free_arma_opts), opts);
+#endif
 
     gtk_window_set_title(GTK_WINDOW(opts->dlg), _("ARMA"));
-
     set_dialog_border_widths(opts->dlg);
-
     gtk_window_set_position (GTK_WINDOW (opts->dlg), GTK_WIN_POS_MOUSE);
 
     /* horizontal box for spinners */
@@ -1625,16 +2021,26 @@ void arma_options_dialog (gpointer p, guint u, GtkWidget *w)
     
     /* Create the "OK" button */
     tmp = ok_button(GTK_DIALOG (opts->dlg)->action_area);
+#ifdef OLD_GTK
+    gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
+		       GTK_SIGNAL_FUNC(exec_arma_opts), opts);
+#else
     g_signal_connect(G_OBJECT(tmp), "clicked",
 		     G_CALLBACK(exec_arma_opts), opts);
+#endif
     gtk_widget_grab_default (tmp);
 
     /* And a Cancel button */
-    tmp = gtk_button_new_from_stock(GTK_STOCK_CANCEL);
+    tmp = standard_button(GTK_STOCK_CANCEL);
     gtk_box_pack_start (GTK_BOX(GTK_DIALOG(opts->dlg)->action_area), 
 			tmp, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC(destroy_arma_opts), opts->dlg);
+#else
     g_signal_connect (G_OBJECT (tmp), "clicked", 
 		      G_CALLBACK(destroy_arma_opts), opts->dlg);
+#endif
 
     /* plus Help */
     context_help_button(GTK_DIALOG(opts->dlg)->action_area, ARMA);
@@ -1685,13 +2091,13 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     GSList *group;
 
     d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
-			pdinfo->time_series : STACKED_TIME_SERIES);
+			pdinfo->time_series : STACKED_TIME_SERIES,
+			_("gretl: panel structure"));
     if (d == NULL) return;
     
     w = d->dialog;
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
-    gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
+    no_resize(d->dialog);
 
     g_signal_connect (G_OBJECT (d->dialog), "destroy", 
 		      G_CALLBACK (dialog_unblock), NULL);
@@ -1751,14 +2157,13 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     GSList *group;
 
     d = dialog_data_new(pdinfo, (dataset_is_panel(pdinfo))?
-			pdinfo->time_series : STACKED_TIME_SERIES);
+			pdinfo->time_series : STACKED_TIME_SERIES,
+			_("gretl: panel structure"));
     if (d == NULL) return;
 
     w = d->dialog;
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel structure"));
-    gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
-
+    no_resize(d->dialog);
     set_dialog_border_widths(d->dialog);
 
     gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
@@ -1790,7 +2195,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
     gtk_widget_show(button);
 
     /* Create the "OK" button */
-    ok_button(GTK_DIALOG(d->dialog)->action_area);
+    tempwid = ok_button(GTK_DIALOG(d->dialog)->action_area);
     gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
                        GTK_SIGNAL_FUNC(really_set_panel_code), d);
     gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
@@ -1910,7 +2315,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     int all_vars = 0;
     gchar *labelstr;
 
-    d = dialog_data_new(NULL, 0);
+    d = dialog_data_new(NULL, 0, _("gretl: compact data"));
     if (d == NULL) return;
     
     if (*target_pd != 0) {
@@ -1932,14 +2337,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	}
     }
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: compact data"));
-
-#ifndef OLD_GTK
-    gtk_window_set_resizable (GTK_WINDOW (d->dialog), FALSE);
-#else
-    gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
-#endif
-
+    no_resize(d->dialog);
     set_dialog_border_widths(d->dialog);
 
     gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
@@ -2071,7 +2469,89 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
 /* ........................................................... */
 
-#if defined(G_OS_WIN32)
+#if defined(OLD_GTK)
+
+#include "../pixmaps/stock_dialog_error_48.xpm"
+#include "../pixmaps/stock_dialog_info_48.xpm"
+
+static GtkWidget *get_msgbox_icon (int err)
+{
+    static GdkColormap *cmap;
+    GtkWidget *iconw;
+    GdkPixmap *icon;
+    GdkBitmap *mask;
+    gchar **msgxpm;
+
+    if (err) {
+	msgxpm = stock_dialog_error_48_xpm;
+    } else {
+	msgxpm = stock_dialog_info_48_xpm;
+    }
+
+    if (cmap == NULL) {
+	cmap = gdk_colormap_get_system();
+    }
+    icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, cmap, &mask, NULL, 
+						 msgxpm);
+    iconw = gtk_pixmap_new(icon, mask);
+
+    return iconw;
+}
+
+static void msgbox_close (GtkWidget *w, gpointer p)
+{
+    gtk_widget_destroy(GTK_WIDGET(p));
+    gtk_main_quit();
+}
+
+static void msgbox (const char *msg, int err) 
+{
+    GtkWidget *w, *label, *button, *vbox, *hbox, *hsep, *iconw;
+
+    w = gtk_window_new(GTK_WINDOW_DIALOG);
+    gtk_container_border_width(GTK_CONTAINER(w), 5);
+    gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
+    gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
+			  _("gretl info")); 
+
+    vbox = gtk_vbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+    /* icon */
+    iconw = get_msgbox_icon(err);
+    gtk_box_pack_start(GTK_BOX(hbox), iconw, FALSE, FALSE, 5);
+
+    /* text of message */
+    label = gtk_label_new(msg);
+    gtk_box_pack_start(GTK_BOX(hbox), label, FALSE, FALSE, 5);
+
+    hsep = gtk_hseparator_new();
+    gtk_container_add(GTK_CONTAINER(vbox), hsep);
+
+    /* button */
+    hbox = gtk_hbox_new(FALSE, 5);
+    gtk_container_add(GTK_CONTAINER(vbox), hbox);
+    
+    if (err) {
+	button = gtk_button_new_with_label(_("Close"));
+    } else {
+	button = gtk_button_new_with_label(_("OK"));
+    }
+
+    gtk_box_pack_end(GTK_BOX(hbox), button, FALSE, FALSE, 5);
+
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+		       GTK_SIGNAL_FUNC(msgbox_close), w);
+
+    gtk_widget_show_all(w);
+
+    gtk_main();
+}
+
+#elif defined(G_OS_WIN32)
 
 static void msgbox (const char *msg, int err)
 {
@@ -2094,7 +2574,7 @@ static void msgbox (const char *msg, int err)
     if (nls_on) g_free(trmsg);
 }
 
-#else /* GTK native */
+#else /* gtk 2 native */
 
 static void msgbox (const char *msg, int err)
 {
@@ -2109,7 +2589,7 @@ static void msgbox (const char *msg, int err)
     gtk_widget_destroy (dialog);
 }
 
-#endif
+#endif /* msgbox variants */
 
 /* ........................................................... */
 
@@ -2124,3 +2604,22 @@ void infobox (const char *msg)
 {
     msgbox(msg, 0);
 }
+
+/* ........................................................... */
+
+#ifdef OLD_GTK
+
+GtkWidget *standard_button (int code)
+{
+    const char *button_strings[] = {
+	N_("OK"),
+	N_("Cancel"),
+	N_("Close"),
+	N_("Apply"),
+	N_("Help")
+    };
+
+    return gtk_button_new_with_label(_(button_strings[code]));
+}
+
+#endif

@@ -112,6 +112,7 @@ GUISRC = about.c \
 	boxplots.c \
 	calculator.c \
 	callbacks.c \
+	cmdstack.c \
 	console.c \
 	database.c \
 	datafiles.c \

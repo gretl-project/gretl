@@ -27,6 +27,7 @@
 #include "webget.h"
 #include "database.h"
 #include "settings.h"
+#include "cmdstack.h"
 
 #include <dirent.h>
 #include <unistd.h>
@@ -50,7 +51,6 @@
 
 /* functions from other gretl GUI files */
 extern void exit_free_modelspec (void);
-extern void free_command_stack (void);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
 extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);

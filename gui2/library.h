@@ -59,13 +59,9 @@ gint check_cmd (char *line);
  
 gint cmd_init (char *line);
 
-gint dump_cmd_stack (const char *fname, int insert_open_data);
-
 void do_menu_op (gpointer data, guint action, GtkWidget *widget);
 
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata);
-
-void view_log (void);
 
 void do_run_script (gpointer data, guint code, GtkWidget *w);
 

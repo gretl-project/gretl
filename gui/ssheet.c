@@ -83,10 +83,9 @@ static int check_data_in_sheet (void)
 
 static void name_new_var (GtkWidget *widget, dialog_t *ddata) 
 {
-    char *buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    const char *buf = dialog_data_get_text(ddata);
 
-    if (blank_entry(buf, ddata)) return;
-    if (validate_varname(buf)) return;
+    if (buf == NULL || validate_varname(buf)) return;
 
     *newvarname = '\0';
     strncat(newvarname, buf, 8);
@@ -98,9 +97,9 @@ static void name_new_var (GtkWidget *widget, dialog_t *ddata)
 
 static void name_new_obs (GtkWidget *widget, dialog_t *ddata) 
 {
-    char *buf = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    const char *buf = dialog_data_get_text(ddata);
 
-    if (blank_entry(buf, ddata)) return;
+    if (buf == NULL) return;
 
     *newobsmarker = '\0';
     strncat(newobsmarker, buf, 8);

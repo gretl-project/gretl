@@ -14,6 +14,7 @@ for f in \
   about.c boxplots.c boxplots.h \
   calculator.c guiprint_common.c \
   callbacks.c callbacks.h \
+  cmdstack.c cmdstack.h \
   console.c console.h dialogs.c \
   database.c database.h \
   datafiles.c datafiles.h \

@@ -315,8 +315,8 @@ static int open_xpm (char *filename, GtkWidget *parent, GdkPixmap **pixmap,
 					  mask, 
 					  &style->bg[GTK_STATE_NORMAL], 
 					  exfile);
-    if (*pixmap == NULL) return 0;
-    else return 1;
+
+    return (*pixmap != NULL);
 }
 
 void about_dialog (gpointer data) 
@@ -335,6 +335,8 @@ void about_dialog (gpointer data)
 			 paths.gretldir);
     dialog = gtk_dialog_new ();
     gtk_window_set_title (GTK_WINDOW (dialog), _("About gretl"));
+    gtk_widget_set_usize(dialog, 522, 470);
+
     gtk_container_border_width (GTK_CONTAINER 
 				(GTK_DIALOG (dialog)->vbox), 10);
     gtk_container_border_width (GTK_CONTAINER 
@@ -401,7 +403,7 @@ void about_dialog (gpointer data)
 
     vscroll = gtk_vscrollbar_new (GTK_TEXT (view)->vadj);
     gtk_table_attach (GTK_TABLE (tempwid), vscroll, 1, 2, 0, 1,
-		      GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
+		      GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_widget_show (vscroll);
 
     label = gtk_label_new (_("License Agreement"));
