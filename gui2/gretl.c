@@ -1526,21 +1526,28 @@ BOOL CreateChildProcess (char *prog)
 { 
     PROCESS_INFORMATION piProcInfo; 
     STARTUPINFO siStartInfo; 
+    int ret;
  
     ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
     ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
     siStartInfo.cb = sizeof(STARTUPINFO); 
  
-    return CreateProcess(NULL, 
-			 prog,          /* command line */
-			 NULL,          /* process security attributes  */
-			 NULL,          /* primary thread security attributes */ 
-			 TRUE,          /* handles are inherited  */
-			 0,             /* creation flags  */
-			 NULL,          /* use parent's environment  */
-			 NULL,          /* use parent's current directory  */
-			 &siStartInfo,  /* STARTUPINFO pointer */ 
-			 &piProcInfo);  /* receives PROCESS_INFORMATION  */
+    ret = CreateProcess(NULL, 
+			prog,          /* command line */
+			NULL,          /* process security attributes  */
+			NULL,          /* primary thread security attributes */ 
+			TRUE,          /* handles are inherited  */
+			0,             /* creation flags  */
+			NULL,          /* use parent's environment  */
+			NULL,          /* use parent's current directory  */
+			&siStartInfo,  /* STARTUPINFO pointer */ 
+			&piProcInfo);  /* receives PROCESS_INFORMATION  */
+
+    if (ret == 0) {
+	win_show_error();
+    }
+
+    return ret;
 }
 
 #else

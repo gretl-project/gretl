@@ -3131,7 +3131,7 @@ int do_store (char *mydatfile, const int opt, int overwrite)
 
 #ifdef G_OS_WIN32
 
-static void win_show_error (void)
+void win_show_error (void)
 {
     LPVOID buf;
 

@@ -189,7 +189,7 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
 	return TRUE;
     }
 
-#ifdef notdef
+#ifdef notdef /* FIXME: check on this */
     gtk_widget_destroy(grp->popup);
     grp->popup = NULL;
 #endif
