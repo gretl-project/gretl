@@ -1,6 +1,4 @@
-<?xml version="1.0"?>
-
-<!DOCTYPE book SYSTEM "/usr/share/sgml/docbook-xml-4.1.2/docbookx.dtd"[
+<!DOCTYPE book SYSTEM "/usr/share/sgml/docbook-4.1/docbook.dtd"[
 <!ENTITY % texmath SYSTEM "./dbtexmath.dtd">
 <!ENTITY version "0.96">
 <!ENTITY latex "LaTeX">
@@ -1932,8 +1930,14 @@
 
     <para><xref linkend="greene-consump"/> uses a <quote>while</quote>
       loop to replicate the estimation of a nonlinear consumption
-      function, of the form $C = \alpha + \beta Y^{\gamma} +
-      \epsilon$, as presented in Greene (2000, Example 11.3).  This
+      function of the form 
+	<inlineequation>
+	  <inlinegraphic fileref="figures/greeneC.png"/>
+	  <texmath>
+	    $C = \alpha + \beta Y^{\gamma} + \epsilon$
+	  </texmath>
+	</inlineequation>
+	as presented in Greene (2000, Example 11.3).  This
       script is included in the <application>gretl</application>
       distribution under the name <filename>greene11_3.inp</filename>;
       you can find it in <application>gretl</application> under the
@@ -2232,11 +2236,10 @@
 	<tgroup cols="1">
 	  <tbody>
 	    <row>
-	      <entry><para><emphasis>Note:</emphasis>
-		  <filename>PREFIX</filename> denotes the base
-		  directory chosen at the time
-		  <application>gretl</application> is installed.
-		</para>
+	      <entry><emphasis>Note:</emphasis>
+		<filename>PREFIX</filename> denotes the base
+		directory chosen at the time
+		<application>gretl</application> is installed.
 	      </entry>
 	    </row>
 	  </tbody>
@@ -2468,14 +2471,12 @@
 	  case the null hypothesis is that the variable in question
 	  exhibits a unit root. The first is a
 	  <emphasis>t</emphasis>-test based on the model 
-
 	  <informalequation>
-	    <graphic fileref="adf1"/>
+	    <graphic fileref="figures/adf1.png"/>
 	    <texmath>
 	      $$(1-L)x_t=m+gx_{t-1}+\epsilon_t$$
 	    </texmath>
 	  </informalequation>
-
 	  The null hypothesis is that
 	  <emphasis>g</emphasis> = 0. The second (augmented) test
 	  proceeds by estimating an unrestricted regression (with
@@ -2483,14 +2484,12 @@
 	  variable, and <replaceable>order</replaceable> lags of the
 	  first difference) and a restricted version (dropping the
 	  time trend and the first lag).  The test statistic is
-
 	  <informalequation>
-	    <graphic fileref="adf2"/>
+	    <graphic fileref="figures/adf2.png"/>
 	    <texmath>
 	      $$F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}$$
 	    </texmath>
 	  </informalequation>
-
 	  where <emphasis>T</emphasis> is the sample size,
 	  <emphasis>k</emphasis> the number of parameters in the
 	  unrestricted model, and the subscripts
@@ -2532,8 +2531,15 @@
 	of squares do not vary by more than 0.005 percent or when 20
 	iterations have been done. <replaceable>lags</replaceable> is
 	a list of lags in the residuals, terminated by a semicolon. In
-	the above example, the error term is specified as $$u_t =
-	\rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} + e_t$$
+	the above example, the error term is specified as 
+	<inlineequation>
+	  <inlinegraphic fileref="figures/corc.png"/>
+	  <texmath>
+	    $u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} + \rho_4 u_{t-4} +
+	    e_t$
+	  </texmath>
+	</inlineequation></para>
+	<para>
 	<replaceable>depvar</replaceable> is the dependent variable
 	and <replaceable>indepvars</replaceable> is the list of
 	independent variables separated by spaces.  Use the number
@@ -2579,7 +2585,13 @@
 	If the LM test statistic has p-value below 0.10, then ARCH
 	estimation is also carried out.  If the predicted variance of
 	any observation in the auxiliary regression is not positive,
-	then the corresponding $\hat{u}^2$ is used instead. Weighted
+	then the corresponding 
+	<inlineequation>
+	  <inlinegraphic fileref="figures/uhatsq.png"/>
+	  <texmath>
+	    $\hat{u}^2$
+	  </texmath>
+        </inlineequation> is used instead. Weighted
 	least square estimation is then performed on the original
 	model. The flag <literal>-o</literal> calls for the coefficient
 	covariance matrix.
@@ -2790,9 +2802,15 @@
 	Prints the values of the autocorrelation function for the
 	<replaceable>variable</replaceable> specified (either by name
 	or number).  See Ramanathan, Section 11.7.  It is thus
-	$\rho(u_t, u_{t-s})$, where $u_t$ is the
-	<emphasis>t</emphasis>th observation of the variable $u$ and
-	$s$ is the number of lags.
+	<inlineequation>
+	  <inlinegraphic fileref="figures/autocorr.png"/>
+	  <texmath>
+	      $\rho(u_t, u_{t-s})$
+	    </texmath>
+	</inlineequation> where 
+	<emphasis>u</emphasis><subscript><emphasis>t</emphasis></subscript> is the
+	<emphasis>t</emphasis>th observation of the variable 
+	<emphasis>u</emphasis>u and <emphasis>s</emphasis> is the number of lags.
       </para>
 
       <para>
@@ -3135,9 +3153,9 @@
 	  <literal>&lt;</literal>, <literal>=</literal> and
 	  <literal>!=</literal> (not equal to).  The Boolean operators
 	  can be used in constructing dummy variables: for instance
-	  <literal>(x > 10)</literal> returns 1 if $x_t > 10$, 0
-	  otherwise. Supported <emphasis>functions</emphasis> fall
-	  into these groups:
+	  <literal>(x > 10)</literal> returns 1 if
+	  <literal>x</literal> &gt; 10, 0 otherwise. Supported
+	  <emphasis>functions</emphasis> fall into these groups:
       </para>
 
       <itemizedlist>
@@ -3434,13 +3452,13 @@
       <para>
 	ASCII graphics.  In the first example, variable
 	<replaceable>var1</replaceable> (which may be a name or a
-	number) is graphed ($y$-axis) against
-	<replaceable>var2</replaceable> ($x$-axis) using ASCII
+	number) is graphed (y-axis) against
+	<replaceable>var2</replaceable> (x-axis) using ASCII
 	symbols. <literal>-o</literal> flag will graph with 40 rows and 60
 	columns. Without it, the graph will be 20 by 60 (for screen
 	output). In the second example, both
 	<replaceable>var1</replaceable> and
-	<replaceable>var2</replaceable> will be graphed (on $y$-axis)
+	<replaceable>var2</replaceable> will be graphed (on y-axis)
 	against <replaceable>var3</replaceable>. This is useful to
 	graph observed and predicted values against time. See also the
 	<command>gnuplot</command> command.
@@ -3519,17 +3537,17 @@
       </informaltable>
 
       <para> <command>hilu</command> computes the estimates of a model
-	using the Hildreth&ndash;Lu search procedure (fine tuned by
-	the CORC procedure) with <replaceable>depvar</replaceable> as
-	the dependent variable and
-	<replaceable>indepvars</replaceable> as the list of
-	independent variables separated by spaces.  Use the number
-	zero for a constant term. The error sum of squares of the
-	transformed model is graphed against the value of rho from
-	$-$0.99 to 0.99.  If the <literal>-o</literal> flag is present, the
-	covariance matrix of regression coefficients will be printed.
-	Residuals of this transformed regression are stored under the
-	name <varname>uhat</varname>.
+	  using the Hildreth&ndash;Lu search procedure (fine tuned by
+	  the CORC procedure) with <replaceable>depvar</replaceable>
+	  as the dependent variable and
+	  <replaceable>indepvars</replaceable> as the list of
+	  independent variables separated by spaces.  Use the number
+	  zero for a constant term. The error sum of squares of the
+	  transformed model is graphed against the value of rho from
+	  &minus;0.99 to 0.99.  If the <literal>-o</literal> flag is
+	  present, the covariance matrix of regression coefficients
+	  will be printed. Residuals of this transformed regression
+	  are stored under the name <varname>uhat</varname>.
       </para>
 
     </sect2>
@@ -3652,7 +3670,7 @@
 	  variables in varlist.  The number of lagged variables equals
 	  the periodicity. For example, if the periodicity is 4
 	  (quarterly), the command <command>lags x y</command> creates
-	  <varname>x_1</varname> $= x_{t-1}$,<varname>x_2</varname> $=
+	  <varname>x_1</varname> = x_{t-1}, <varname>x_2</varname> $=
 	  x_{t-2}$, <varname>x_3</varname> $= x_{t-3}$ and
 	  <varname>x_4</varname> $= x_{t-4}$. Similarly for
 	  <varname>y</varname>. These variables must be referred to in
@@ -3682,8 +3700,20 @@
 	varlist is obtained and the result stored in a new variable
 	with the prefix <varname>ld_</varname>.  Thus <command>ldiff x
 	  y</command> creates the new variables
-	<varname>ld_x</varname> $= \ln(x_t) - \ln(x_{t-1})$ and
-	<varname>ld_y</varname> $= \ln(y_t) - \ln(y_{t-1})$.
+	<varname>ld_x</varname> =
+	  <inlineequation>
+	    <inlinegraphic fileref="figures/ldx.png"/>
+	    <texmath>
+	    $\ln(x_t) - \ln(x_{t-1})$ 
+	    </texmath>
+	  </inlineequation> and
+	<varname>ld_y</varname> =
+	  <inlineequation>
+	    <inlinegraphic fileref="figures/ldy.png"/>
+	    <texmath>
+	    $\ln(y_t) - \ln(y_{t-1})$ 
+	    </texmath>
+	  </inlineequation>.
       </para>
 
     </sect2>
@@ -4162,7 +4192,13 @@
 	  Computes and displays (and if not in batch mode, graphs) the
 	  spectrum of the specified variable.  Without the
 	  <literal>-o</literal> flag the sample periodogram is given;
-	  with the flag a Bartlett lag window of length $2\sqrt{T}$
+	  with the flag a Bartlett lag window of length 
+	  <inlineequation>
+	  <inlinegraphic fileref="figures/bartlett.png"/>
+	  <texmath>
+	    $2\sqrt{T}$
+	  </texmath>
+	  </inlineequation>
 	  (where <emphasis>T</emphasis> is the sample size).  is used
 	  in estimating the spectrum (see Chapter 18 of Greene's
 	  <citetitle>Econometric Analysis</citetitle>). When the
@@ -5809,15 +5845,13 @@
       certified results. (Total run time for the tests was 0.195
       seconds on a 333MHz i686 machine running GNU/Linux.)  With the
       <filename>Filip</filename> data set, where the model is 
-
       <informalequation>
-	<graphic fileref="poly"/>
+	<graphic fileref="figures/poly.png"/>
 	<texmath>
 	  $$y_t=\beta_0+\beta_1 x_t+\beta_2 x^2_t+\beta_3 x^3_t+\cdots
 	  +\beta_{10}x^{10}_t+\epsilon$$
 	</texmath>
       </informalequation>
-
       <application>gretl</application> refuses to produce estimates
       due to a high degree of multicollinearity (the popular
       commercial econometrics program <citetitle>Eviews
@@ -5833,16 +5867,13 @@
       of the correlation coefficient between the fitted and actual
       values of the dependent variable in this case, while the NIST
       figure is 
-
       <informalequation>
-	<graphic fileref="nistr2"/>
-	<texmath>
-	  $$R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}$$
-	</texmath>
+	<graphic fileref="figures/nistr2.png"/> 
+      <texmath> 
+	$$R^2 = 1 - \frac{\mathrm{ESS}}{\sum y^2}$$ 
+      </texmath> 
       </informalequation>
-
-      There is
-      no universal agreement among statisticians on the
+      There is no universal agreement among statisticians on the
       <quote>correct</quote> formula (see for instance the discussion
       in Ramanathan, 1998, pp. 163&ndash;4). <citetitle>Eviews
 	3.1</citetitle> produces a different figure again (which has a
@@ -5865,7 +5896,7 @@
 	definitions</quote>. The certified value is computed as 
 
       <informalequation>
-	<graphic fileref="nistr1"/>
+	<graphic fileref="figures/nistr1.png"/>
 	<texmath>
 	  $$r_1=\frac{\sum^T_2(y_t-\bar{y})(y_{t-1}-\bar{y})} {\sum^T_1
 	  (y_t - \bar{y})^2}$$
@@ -5933,7 +5964,7 @@
 	which is the simple linear regression model</para> 
 
 	<informalequation>
-        <graphic fileref="linreg"/>
+        <graphic fileref="figures/linreg.png"/>
 	<texmath>
 	  $$y_t = \alpha + \beta x_t + \epsilon_t$$
 	</texmath>
@@ -5979,7 +6010,7 @@
 	squares as 
 
 	<informalequation>
-	  <graphic fileref="yhat"/>
+	  <graphic fileref="figures/yhat.png"/>
 	  <texmath>
 	    $$\hat{y}_t = a + b x_t$$
 	  </texmath>
@@ -5988,7 +6019,7 @@
 	We define the regression <quote>residual</quote> as 
 
 	<informalequation>
-	  <graphic fileref="resid"/>
+	  <graphic fileref="figures/resid.png"/>
 	  <texmath>
 	    $$\hat{\epsilon}_t = y_t - \hat{y}_t$$
 	  </texmath>
@@ -6115,37 +6146,37 @@
 	example, all of the following equations represent nonlinear
 	relationships between <emphasis>y</emphasis> and
 	<emphasis>x</emphasis> that can readily be estimated using OLS
-	or similar:</para>
+	or similar:
 
 	<informalequation>
-	<graphic fileref="nonlin1"/>
+	<graphic fileref="figures/nonlin1.png"/>
 	<texmath>
 	  $y_t = \alpha + \beta(1/x_t) + \epsilon_t$
 	</texmath>
 	</informalequation>
 
 	<informalequation>
-	<graphic fileref="nonlin2"/>
+	<graphic fileref="figures/nonlin2.png"/>
 	  <texmath>
 	  $y_t = \alpha + \beta x_t + \gamma x^2_t + \epsilon_t$
 	  </texmath>
 	</informalequation>
 
 	<informalequation>
-	<graphic fileref="nonlin3"/>
+	<graphic fileref="figures/nonlin3.png"/>
 	<texmath>
 	  $y_t = \alpha + \beta \log x_t + \epsilon_t$
 	</texmath>
 	</informalequation>
 
 	<informalequation>
-	<graphic fileref="nonlin4"/>
+	<graphic fileref="figures/nonlin4.png"/>
 	<texmath>
 	  $\log y_t = \alpha + \beta \log x_t + \epsilon_t$
 	</texmath>
 	</informalequation>
 
-	<para>Of course there are nonlinear relationships that cannot
+	Of course there are nonlinear relationships that cannot
 	be reduced to linearity by this sort of change of variables:
 	OLS cannot deal with these; more complex estimators are
 	required. Of these additional estimators,

@@ -1,11 +1,8 @@
 #! /bin/sh
 
-# DB_STYLESHEET=/usr/lib/sgml/stylesheets/cygnus-both.dsl
-# DB_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.72/html/docbook.dsl
 DB_STYLESHEET=../gretl_htmlmath.dsl
 HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.72/frames/docbook.css
 ADMON_GRAPHICS=/usr/lib/sgml/stylesheets/nwalsh-modular/images/*.gif
-XMLDECL=/opt/jade/share/xml.dcl
 
 output=db2html-dir
 TMPDIR=DBTOHTML_OUTPUT_DIR$$
@@ -14,7 +11,7 @@ echo TMPDIR is $TMPDIR
 
 if [ $# -gt 2 ]
 then
-  echo "Usage: `basename $0` [filename.xml]" >&2
+  echo "Usage: `basename $0` [filename.sgml]" >&2
   exit 1
 fi
 
@@ -25,7 +22,7 @@ then
     echo Cannot read \"$1\".  Exiting. >&2
     exit 1
   fi
-  if echo $1 | egrep -i '\.xml' >/dev/null 2>&1
+  if echo $1 | egrep -i '\.sgml' >/dev/null 2>&1
   then
     # now make sure that the output directory is always a subdirectory
     # of hte current directory
@@ -45,10 +42,10 @@ mkdir $TMPDIR
 SAVE_PWD=`pwd`
 if [ $1 = `basename $1` ]; then
   echo "working on ../$1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDECL ../$1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} ../$1; cd $SAVE_PWD)
 else
   echo "working on $1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDECL $1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $1; cd $SAVE_PWD)
 fi
 
 if [ $# -eq 1 ]

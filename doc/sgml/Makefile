@@ -1,4 +1,4 @@
-XMLDCL = /opt/jade/share/xml.dcl
+# XMLDCL = /opt/jade/share/xml.dcl
 MANUAL = manual
 DSL = gretl_texmath.dsl
 HDSL = gretl_htmlmath.dsl
@@ -10,11 +10,17 @@ pdf: $(MANUAL).tex jadetex.cfg lucidabr.tex
 	pdfjadetex $(MANUAL)
 	pdfjadetex $(MANUAL)
 
-$(MANUAL).tex: $(MANUAL).xml $(DSL) $(MATHSS) titlepage.dsl
-	jade -t tex -d $(DSL) $(XMLDCL) $(MANUAL).xml
+$(MANUAL).tex: $(MANUAL).sgml $(DSL) $(MATHSS) titlepage.dsl
+	jade -t tex -d $(DSL) $(MANUAL).sgml
 	./unescape_math.pl
 
-html: manual.xml db2html $(HDSL) $(HMATHSS)
-	./db2html $(MANUAL).xml
+html: manual.sgml db2html $(HDSL) $(HMATHSS) pix
+	./db2html $(MANUAL).sgml
+
+clean:
+	rm -rf manual manual.junk manual.tex *.log *.out *.aux
+
+pix: manual.sgml
+	./grab_equations.pl
 
 

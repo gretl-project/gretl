@@ -19,6 +19,7 @@
 
 
 <!ENTITY % equation.content "(alt?, graphic?, texmath?)">
+<!ENTITY % inlineequation.content "(alt?, inlinegraphic?, texmath?)">
 
 <!ELEMENT texmath (#PCDATA)>
 

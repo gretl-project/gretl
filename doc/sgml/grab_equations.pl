@@ -3,9 +3,9 @@
 use strict;
 
 my ($line, $texline, $foo, $figfile);
-my $manual = "./manual.xml";
+my $manual = "./manual.sgml";
 my $textmp = "./eqntmp";
-my $i = 0;
+# my $i = 0;
 
 open (MAN, "<$manual") || die "Can't open $manual";
 
@@ -21,13 +21,14 @@ sub printtex {
     # print "printed tex file $i\n"; $i++;
     system ("latex $textmp");
     system ("dvips -o $textmp.eps $textmp -E");
-    system ("convert -density 100x100 $textmp.eps $figfile.png");
-    system ("cp $textmp.tex $textmp$i.tex"); $i++;
+    system ("convert -density 100x100 $textmp.eps $figfile");
+    # system ("cp $textmp.tex $textmp$i.tex"); $i++;
     system ("rm -f $textmp.*");
 }
 
 while ($line = <MAN>) {
-    if ($line =~ /\<informalequation\>/) {
+    if ($line =~ /\<informalequation\>/ ||
+        $line =~ /\<inlineequation\>/) {
         $texline = '';
         $line = <MAN>;
 	($foo, $figfile) = split(/\"/, $line);
@@ -39,7 +40,7 @@ while ($line = <MAN>) {
 	    $texline = $texline . $line;
 	    $line = <MAN>;
 	}
-	print "creating $figfile.png\n";
+	print "creating $figfile\n";
 	$texline =~ s/^\S+//g;
 	print "Here's texline:\n";
 	print "$texline";

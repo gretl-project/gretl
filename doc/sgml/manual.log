@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  19 OCT 2001 14:55
+This is pdfTeX, Version 3.14159-1.00a-pretest-20010806 (Web2C 7.3.3.1) (format=pdfjadetex 2001.9.17)  21 OCT 2001 14:21
 **manual
 (./manual.tex{/usr/share/texmf/tex/pdftex/base/pdftex.cfg}
 JadeTeX 2001/07/19: 3.11
@@ -514,476 +514,19 @@ LaTeX Font Info:    Font shape `T1/hlh/bx/n' in size <10.03738> not available
 (Font)              Font shape `T1/hlh/b/n' tried instead on input line 419.
 LaTeX Font Info:    Font shape `T1/hlh/b/n' will be
 (Font)              scaled to size 9.57112pt on input line 419.
-
-
-LaTeX Warning: Reference `intro' on page iii undefined on input line 437.
-
-
-LaTeX Warning: Reference `features' on page iii undefined on input line 461.
-
-
-LaTeX Warning: Reference `ack' on page iii undefined on input line 484.
-
-
-LaTeX Warning: Reference `install' on page iii undefined on input line 507.
-
-
-LaTeX Warning: Reference `linux-install' on page iii undefined on input line 53
-1.
-
-
-LaTeX Warning: Reference `windows-install' on page iii undefined on input line 
-554.
-
-
-LaTeX Warning: Reference `updating' on page iii undefined on input line 577.
-
-
-LaTeX Warning: Reference `getting-started' on page iii undefined on input line 
-611.
-
-
-LaTeX Warning: Reference `est-output' on page iii undefined on input line 635.
-
-
-LaTeX Warning: Reference `menus' on page iii undefined on input line 669.
-
-
-LaTeX Warning: Reference `modes' on page iii undefined on input line 703.
-
-
-LaTeX Warning: Reference `scripts' on page iii undefined on input line 727.
-
-
-LaTeX Warning: Reference `session' on page iii undefined on input line 755.
-
-
-LaTeX Warning: Reference `toolbar' on page iii undefined on input line 778.
-
-
-LaTeX Warning: Reference `datafiles' on page iii undefined on input line 812.
-
-
-LaTeX Warning: Reference `native' on page iii undefined on input line 836.
-
-
-LaTeX Warning: Reference `extensions' on page iii undefined on input line 860.
-
-
-LaTeX Warning: Reference `other-formats' on page iii undefined on input line 88
-3.
-
-
-LaTeX Warning: Reference `dbase' on page iii undefined on input line 906.
-
-
-LaTeX Warning: Reference `online-data' on page iii undefined on input line 930.
-
-
-
-LaTeX Warning: Reference `RATS' on page iii undefined on input line 953.
-
-
-LaTeX Warning: Reference `missing-data' on page iii undefined on input line 976
-.
-
-
-LaTeX Warning: Reference `scratch' on page iii undefined on input line 999.
-
-
-LaTeX Warning: Reference `687' on page iii undefined on input line 1023.
-
-
-LaTeX Warning: Reference `695' on page iii undefined on input line 1046.
-
-
-LaTeX Warning: Reference `709' on page iii undefined on input line 1069.
-
-
-LaTeX Warning: Reference `722' on page iii undefined on input line 1092.
-
-
-LaTeX Warning: Reference `746' on page iii undefined on input line 1115.
-
-
-LaTeX Warning: Reference `panel' on page iii undefined on input line 1149.
-
-
-LaTeX Warning: Reference `dummies' on page iii undefined on input line 1173.
-
-
-LaTeX Warning: Reference `panel-lagged' on page iii undefined on input line 119
-6.
-
-
-LaTeX Warning: Reference `PWT' on page iii undefined on input line 1219.
-
-
-LaTeX Warning: Reference `getting-more-data' on page iii undefined on input lin
-e 1253.
-
-
-LaTeX Warning: Reference `graphs-plots' on page iii undefined on input line 128
-7.
-
-
-LaTeX Warning: Reference `looping' on page iii undefined on input line 1321.
-
-
-LaTeX Warning: Reference `monte-carlo' on page iii undefined on input line 1345
-.
-
-
-LaTeX Warning: Reference `ils' on page iii undefined on input line 1368.
-
-
-LaTeX Warning: Reference `optarg' on page iii undefined on input line 1402.
-
 LaTeX Font Info:    Try loading font information for T1+hlst on input line 1421
 .
-(/usr/share/texmf/tex/latex/sitefonts/t1hlst.fd
+ (/usr/share/texmf/tex/latex/sitefonts/t1hlst.fd
 File: t1hlst.fd 1998/07/06 Fontinst v1.800 font definitions for T1/hlst.
 )
 LaTeX Font Info:    Font shape `T1/hlst/m/n' will be
 (Font)              scaled to size 8.70477pt on input line 1421.
-
-
-LaTeX Warning: Reference `optarg1' on page iii undefined on input line 1431.
-
-
-LaTeX Warning: Reference `optarg2' on page iii undefined on input line 1459.
-
-
-LaTeX Warning: Reference `path-search' on page iii undefined on input line 1482
-.
-
-
-LaTeX Warning: Reference `MS-behave' on page iii undefined on input line 1506.
-
-
-LaTeX Warning: Reference `cmdref' on page iii undefined on input line 1540.
-
-
-LaTeX Warning: Reference `cmd-intro' on page iii undefined on input line 1564.
-
 LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
 (Font)              scaled to size 9.57112pt on input line 1571.
-[3.0.26
+ [3.0.26
 
-]
-
-LaTeX Warning: Reference `cmd-cmd' on page iv undefined on input line 1592.
-
-
-LaTeX Warning: Reference `add' on page iv undefined on input line 1616.
-
-
-LaTeX Warning: Reference `addto' on page iv undefined on input line 1639.
-
-
-LaTeX Warning: Reference `adf' on page iv undefined on input line 1662.
-
-
-LaTeX Warning: Reference `ar' on page iv undefined on input line 1685.
-
-
-LaTeX Warning: Reference `arch' on page iv undefined on input line 1708.
-
-
-LaTeX Warning: Reference `chow' on page iv undefined on input line 1731.
-
-
-LaTeX Warning: Reference `coint' on page iv undefined on input line 1754.
-
-
-LaTeX Warning: Reference `corc' on page iv undefined on input line 1777.
-
-
-LaTeX Warning: Reference `corr' on page iv undefined on input line 1800.
-
-
-LaTeX Warning: Reference `corrgm' on page iv undefined on input line 1823.
-
-
-LaTeX Warning: Reference `criteria' on page iv undefined on input line 1846.
-
-
-LaTeX Warning: Reference `cusum' on page iv undefined on input line 1869.
-
-
-LaTeX Warning: Reference `delete' on page iv undefined on input line 1892.
-
-
-LaTeX Warning: Reference `diff' on page iv undefined on input line 1915.
-
-
-LaTeX Warning: Reference `endloop' on page iv undefined on input line 1938.
-
-
-LaTeX Warning: Reference `eqnprint' on page iv undefined on input line 1961.
-
-
-LaTeX Warning: Reference `fcast' on page iv undefined on input line 1984.
-
-
-LaTeX Warning: Reference `fcasterr' on page iv undefined on input line 2007.
-
-
-LaTeX Warning: Reference `fit' on page iv undefined on input line 2030.
-
-
-LaTeX Warning: Reference `freq' on page iv undefined on input line 2053.
-
-
-LaTeX Warning: Reference `genr' on page iv undefined on input line 2076.
-
-
-LaTeX Warning: Reference `gnuplot' on page iv undefined on input line 2099.
-
-
-LaTeX Warning: Reference `graph' on page iv undefined on input line 2122.
-
-
-LaTeX Warning: Reference `hccm' on page iv undefined on input line 2145.
-
-
-LaTeX Warning: Reference `help' on page iv undefined on input line 2168.
-
-
-LaTeX Warning: Reference `hilu' on page iv undefined on input line 2191.
-
-
-LaTeX Warning: Reference `hsk' on page iv undefined on input line 2214.
-
-
-LaTeX Warning: Reference `import' on page iv undefined on input line 2237.
-
-
-LaTeX Warning: Reference `info' on page iv undefined on input line 2260.
-
-
-LaTeX Warning: Reference `labels' on page iv undefined on input line 2283.
-
-
-LaTeX Warning: Reference `lags' on page iv undefined on input line 2306.
-
-
-LaTeX Warning: Reference `ldiff' on page iv undefined on input line 2329.
-
-
-LaTeX Warning: Reference `list' on page iv undefined on input line 2352.
-
-
-LaTeX Warning: Reference `lmtest' on page iv undefined on input line 2375.
-
-
-LaTeX Warning: Reference `logit' on page iv undefined on input line 2398.
-
-
-LaTeX Warning: Reference `logs' on page iv undefined on input line 2421.
-
-
-LaTeX Warning: Reference `loop' on page iv undefined on input line 2444.
-
-
-LaTeX Warning: Reference `meantest' on page iv undefined on input line 2467.
-
-
-LaTeX Warning: Reference `multiply' on page iv undefined on input line 2490.
-
-
-LaTeX Warning: Reference `nulldata' on page iv undefined on input line 2513.
-
-
-LaTeX Warning: Reference `ols' on page iv undefined on input line 2536.
-
-
-LaTeX Warning: Reference `omit' on page iv undefined on input line 2559.
-
-
-LaTeX Warning: Reference `omitfrom' on page iv undefined on input line 2582.
-
-
-LaTeX Warning: Reference `open' on page iv undefined on input line 2605.
-
-
-LaTeX Warning: Reference `pergm' on page iv undefined on input line 2628.
-
-
-LaTeX Warning: Reference `plot' on page iv undefined on input line 2651.
-
-[4.0.26]
-
-LaTeX Warning: Reference `print' on page v undefined on input line 2674.
-
-
-LaTeX Warning: Reference `probit' on page v undefined on input line 2697.
-
-
-LaTeX Warning: Reference `pvalue' on page v undefined on input line 2720.
-
-
-LaTeX Warning: Reference `quit' on page v undefined on input line 2743.
-
-
-LaTeX Warning: Reference `rhodiff' on page v undefined on input line 2766.
-
-
-LaTeX Warning: Reference `run' on page v undefined on input line 2789.
-
-
-LaTeX Warning: Reference `runs' on page v undefined on input line 2812.
-
-
-LaTeX Warning: Reference `scatters' on page v undefined on input line 2835.
-
-
-LaTeX Warning: Reference `seed' on page v undefined on input line 2858.
-
-
-LaTeX Warning: Reference `setobs' on page v undefined on input line 2881.
-
-
-LaTeX Warning: Reference `shell' on page v undefined on input line 2904.
-
-
-LaTeX Warning: Reference `sim' on page v undefined on input line 2927.
-
-
-LaTeX Warning: Reference `smpl' on page v undefined on input line 2950.
-
-
-LaTeX Warning: Reference `spearman' on page v undefined on input line 2973.
-
-
-LaTeX Warning: Reference `square' on page v undefined on input line 2996.
-
-
-LaTeX Warning: Reference `store' on page v undefined on input line 3019.
-
-
-LaTeX Warning: Reference `summary' on page v undefined on input line 3042.
-
-
-LaTeX Warning: Reference `tabprint' on page v undefined on input line 3065.
-
-
-LaTeX Warning: Reference `testuhat' on page v undefined on input line 3088.
-
-
-LaTeX Warning: Reference `tsls' on page v undefined on input line 3111.
-
-
-LaTeX Warning: Reference `var' on page v undefined on input line 3134.
-
-
-LaTeX Warning: Reference `vartest' on page v undefined on input line 3157.
-
-
-LaTeX Warning: Reference `wls' on page v undefined on input line 3180.
-
-
-LaTeX Warning: Reference `estimators' on page v undefined on input line 3203.
-
-
-LaTeX Warning: Reference `trouble' on page v undefined on input line 3237.
-
-
-LaTeX Warning: Reference `cli' on page v undefined on input line 3271.
-
-
-LaTeX Warning: Reference `cli-syntax' on page v undefined on input line 3295.
-
-
-LaTeX Warning: Reference `cli-changes' on page v undefined on input line 3319.
-
-
-LaTeX Warning: Reference `cli-missing' on page v undefined on input line 3342.
-
-
-LaTeX Warning: Reference `cli-redefined' on page v undefined on input line 3365
-.
-
-
-LaTeX Warning: Reference `cli-added' on page v undefined on input line 3388.
-
-
-LaTeX Warning: Reference `cli-newfeatures' on page v undefined on input line 34
-12.
-
-
-LaTeX Warning: Reference `nist' on page v undefined on input line 3447.
-
-
-LaTeX Warning: Reference `app-a' on page v undefined on input line 3481.
-
-
-LaTeX Warning: Reference `metrics-intro' on page v undefined on input line 3505
-.
-
-
-LaTeX Warning: Reference `metrics-ols' on page v undefined on input line 3528.
-
-
-LaTeX Warning: Reference `pop-and-sample' on page v undefined on input line 355
-1.
-
-
-LaTeX Warning: Reference `metrics-pathol' on page v undefined on input line 357
-4.
-
-
-LaTeX Warning: Reference `linearity' on page v undefined on input line 3597.
-
-
-LaTeX Warning: Reference `app-b' on page v undefined on input line 3631.
-
-
-LaTeX Warning: Reference `app-c' on page v undefined on input line 3666.
-
-
-LaTeX Warning: Reference `3518' on page v undefined on input line 3695.
-
-[5.0.26]
-
-LaTeX Warning: Reference `tab-path' on page vi undefined on input line 4065.
-
-
-LaTeX Warning: Reference `tab-estim' on page vi undefined on input line 4338.
-
-
-LaTeX Warning: Reference `tab-tests' on page vi undefined on input line 4364.
-
-
-LaTeX Warning: Reference `tab-linreg' on page vi undefined on input line 4435.
-
-
-LaTeX Warning: Reference `fig-datafiles' on page vi undefined on input line 463
-3.
-
-
-LaTeX Warning: Reference `fig-mainwin' on page vi undefined on input line 4660.
-
-
-
-LaTeX Warning: Reference `fig-session' on page vi undefined on input line 4718.
-
-
-
-LaTeX Warning: Reference `fig-plot' on page vi undefined on input line 4865.
-
-
-LaTeX Warning: Reference `examp-pwt' on page vi undefined on input line 5570.
-
-
-LaTeX Warning: Reference `script-loop' on page vi undefined on input line 5617.
-
-
-
-LaTeX Warning: Reference `greene-consump' on page vi undefined on input line 56
-53.
-
-[6.0.26
+] [4.0.26]
+[5.0.26] [6.0.26
 
 ]
 LaTeX Font Info:    Font shape `T1/phv/bx/it' in size <13.35974> not available
@@ -995,16 +538,16 @@ LaTeX Font Info:    Font shape `T1/phv/b/it' in size <13.35974> not available
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.6681       \endPar{}
+l.6673       \endPar{}
                       \endNode{}\Node% [1.0.26
 
 
 
 ]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <12.14523> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 6840.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 6831.
 
-Overfull \hbox (2.18053pt too wide) in paragraph at lines 7156--7175
+Overfull \hbox (2.18053pt too wide) in paragraph at lines 7144--7163
  /hlhr8t@9.57112pt/You will be prompted for a lo-ca-tion to in-stall the pack-a
 ge (the de-fault is []  /hlsrt8t@8.70477pt/c:\userdata\gretl/hlhr8t@9.57112pt/)
 . 
@@ -1014,28 +557,28 @@ ge (the de-fault is []  /hlsrt8t@8.70477pt/c:\userdata\gretl/hlhr8t@9.57112pt/)
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7188 {1}}
+l.7176 {1}}
            \Seq% [2.0.26]
 ! pdfTeX warning (ext4): destination with the same identifier (name{page.3}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7303 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
+l.7289 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
                                                   {}\endNode{}\Node% [3.0.26
-! pdfTeX warning (ext4): destination with the same identifier (name{updating}) 
+! pdfTeX warning (ext4): destination with the same identifier (name{UPDATING}) 
 has been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.7303 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
+l.7289 ...DisplayGroup{}\endNode{}\endSeq{}\endSpS
                                                   {}\endNode{}\Node%]
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 6.16585pt on input line 7467.
+(Font)              scaled to size 6.16585pt on input line 7452.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 8.70477pt on input line 7515.
+(Font)              scaled to size 8.70477pt on input line 7500.
 LaTeX Font Info:    Font shape `T1/hlst/m/n' will be
-(Font)              scaled to size 7.91585pt on input line 7515.
+(Font)              scaled to size 7.91585pt on input line 7500.
 
-<figures/datafiles.png, id=1129, 400.60777pt x 290.86444pt>
+<figures/datafiles.png, id=1127, 400.60777pt x 290.86444pt>
 File: figures/datafiles.png Graphic file (type png)
 
 <use figures/datafiles.png>
@@ -1043,18 +586,17 @@ File: figures/datafiles.png Graphic file (type png)
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7685 {1}}
-            [4.0.26
+l.7668 {1}}
+                 If you select a row in this window and click on [4.0.26
 
  <./figures/datafiles.png>]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <9.03365> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 7737.
-
-<figures/mainwin.png, id=1153, 453.24889pt x 373.84111pt>
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 7719.
+ <figures/mainwin.png, id=1151, 453.24889pt x 373.84111pt>
 File: figures/mainwin.png Graphic file (type png)
 
 <use figures/mainwin.png>
-Overfull \hbox (31.67766pt too wide) detected at line 7829
+Overfull \hbox (31.67766pt too wide) detected at line 7810
  [] 
  []
 
@@ -1062,92 +604,132 @@ Overfull \hbox (31.67766pt too wide) detected at line 7829
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.7845 {1}}
-            [5.0.26 <./figures/mainwin.png>]
+l.7826 {1}}
+                 OK, what can we do now?  Hopefully the various menu options
+[5.0.26 <./figures/mainwin.png>]
 ! pdfTeX warning (ext4): destination with the same identifier (name{page.6}) ha
 s been already used, duplicate ignored
 <to be read again> 
                    \penalty 
-l.8174 ...ce.\endPar{}\endNode{}\endDisplayGroup{}
+l.8152 ...ce.\endPar{}\endNode{}\endDisplayGroup{}
                                                   \endNode{}\endSeq{}\endDis...
 [6.0.26] [7.0.26]
 LaTeX Font Info:    Font shape `TS1/hlh/m/n' will be
-(Font)              scaled to size 7.81813pt on input line 8363.
+(Font)              scaled to size 7.81813pt on input line 8340.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 7.1814pt on input line 8401.
+(Font)              scaled to size 7.1814pt on input line 8378.
 LaTeX Font Info:    Font shape `TS1/hlh/m/n' will be
-(Font)              scaled to size 7.1814pt on input line 8401.
+(Font)              scaled to size 7.1814pt on input line 8378.
 LaTeX Font Info:    Calculating math sizes for size <10.03738> on input line 87
-85.
+62.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8785.
+(Font)              scaled to size 7.008pt on input line 8762.
 LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8785.
-LaTeX Font Info:    Try loading font information for OML+hlcm on input line 878
-5.
+(Font)              scaled to size 5.25848pt on input line 8762.
+LaTeX Font Info:    Try loading font information for OML+hlcm on input line 876
+2.
  (/usr/share/texmf/tex/latex/sitefonts/omlhlcm.fd
 File: omlhlcm.fd 1997/02/20 v4.1 Lucida New Math Italic(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 9.57112pt on input line 8785.
+(Font)              scaled to size 9.57112pt on input line 8762.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 7.008pt on input line 8785.
+(Font)              scaled to size 7.008pt on input line 8762.
 LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
-(Font)              scaled to size 5.25848pt on input line 8785.
-LaTeX Font Info:    Try loading font information for OMS+hlcy on input line 878
-5.
+(Font)              scaled to size 5.25848pt on input line 8762.
+LaTeX Font Info:    Try loading font information for OMS+hlcy on input line 876
+2.
 
 (/usr/share/texmf/tex/latex/sitefonts/omshlcy.fd
 File: omshlcy.fd 1997/02/20 v4.1 Lucida New Math Symbols(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8785.
+(Font)              scaled to size 9.57112pt on input line 8762.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8785.
+(Font)              scaled to size 7.008pt on input line 8762.
 LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8785.
-LaTeX Font Info:    Try loading font information for OMX+hlcv on input line 878
-5.
+(Font)              scaled to size 5.25848pt on input line 8762.
+LaTeX Font Info:    Try loading font information for OMX+hlcv on input line 876
+2.
 
 (/usr/share/texmf/tex/latex/sitefonts/omxhlcv.fd
 File: omxhlcv.fd 1997/02/20 v4.1 Lucida New Math Extension(SPQR/DPC)
 )
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8785.
+(Font)              scaled to size 9.57112pt on input line 8762.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8785.
+(Font)              scaled to size 7.008pt on input line 8762.
 LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8785.
-LaTeX Font Info:    Try loading font information for U+msa on input line 8785.
+(Font)              scaled to size 5.25848pt on input line 8762.
+LaTeX Font Info:    Try loading font information for U+msa on input line 8762.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 1995/01/05 v2.2e AMS font definitions
 )
-LaTeX Font Info:    Try loading font information for U+msb on input line 8785.
+LaTeX Font Info:    Try loading font information for U+msb on input line 8762.
 
 (/usr/share/texmf/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 1995/01/05 v2.2e AMS font definitions
 )
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 9.57112pt on input line 8785.
+(Font)              scaled to size 9.57112pt on input line 8762.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 7.008pt on input line 8785.
+(Font)              scaled to size 7.008pt on input line 8762.
 LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
-(Font)              scaled to size 5.25848pt on input line 8785.
+(Font)              scaled to size 5.25848pt on input line 8762.
  [8.0.26
 
-] [9.0.26] [10.0.26]
-[11.0.26
+] [9.0.26]
+LaTeX Font Info:    Calculating math sizes for size <9.03365> on input line 971
+7.
+LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
+(Font)              scaled to size 6.49832pt on input line 9717.
+LaTeX Font Info:    Font shape `T1/hlh/m/n' will be
+(Font)              scaled to size 4.73264pt on input line 9717.
+LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
+(Font)              scaled to size 8.70477pt on input line 9717.
+LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
+(Font)              scaled to size 6.49832pt on input line 9717.
+LaTeX Font Info:    Font shape `OML/hlcm/m/it' will be
+(Font)              scaled to size 4.73264pt on input line 9717.
+LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
+(Font)              scaled to size 8.70477pt on input line 9717.
+LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
+(Font)              scaled to size 6.49832pt on input line 9717.
+LaTeX Font Info:    Font shape `OMS/hlcy/m/n' will be
+(Font)              scaled to size 4.73264pt on input line 9717.
+LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
+(Font)              scaled to size 8.70477pt on input line 9717.
+LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
+(Font)              scaled to size 6.49832pt on input line 9717.
+LaTeX Font Info:    Font shape `OMX/hlcv/m/n' will be
+(Font)              scaled to size 4.73264pt on input line 9717.
 
-] <figures/session.png, id=1448, 364.02667pt x 285.51111pt>
+
+LaTeX Font Warning: Font shape `U/msa/m/n' in size <4.5337> not available
+(Font)              size <5> substituted on input line 9717.
+
+
+LaTeX Font Warning: Font shape `U/msb/m/n' in size <4.5337> not available
+(Font)              size <5> substituted on input line 9717.
+
+LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
+(Font)              scaled to size 8.70477pt on input line 9717.
+LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
+(Font)              scaled to size 6.49832pt on input line 9717.
+LaTeX Font Info:    Font shape `LMR/hlcm/m/n' will be
+(Font)              scaled to size 4.73264pt on input line 9717.
+[10.0.26] [11.0.26
+
+] <figures/session.png, id=1447, 364.02667pt x 285.51111pt>
 File: figures/session.png Graphic file (type png)
 
 <use figures/session.png> [12.0.26 <./figures/session.png>]
 LaTeX Font Info:    Font shape `T1/hlst/m/it' in size <10.03738> not available
-(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 11068
+(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 11040
 .
 LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
-(Font)              scaled to size 9.57112pt on input line 11068.
+(Font)              scaled to size 9.57112pt on input line 11040.
  [13.0.26] [14.0.26] [15.0.26
 
 ] [16.0.26] [17.0.26] [18.0.26] [19.0.26] [20.0.26] [21.0.26
@@ -1155,7 +737,7 @@ LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
 ] [22.0.26] [23.0.26] [24.0.26] [25.0.26
 
 ]
-<figures/plot_control.png, id=1944, 289.97223pt x 266.77444pt>
+<figures/plot_control.png, id=1943, 289.97223pt x 266.77444pt>
 File: figures/plot_control.png Graphic file (type png)
 
 <use figures/plot_control.png> [26.0.26
@@ -1164,72 +746,72 @@ File: figures/plot_control.png Graphic file (type png)
 
 ] [29.0.26] [30.0.26]
 LaTeX Font Info:    Font shape `T1/hlst/bx/n' in size <12.02377> not available
-(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17308.
+(Font)              Font shape `T1/hlst/b/n' tried instead on input line 17276.
 
 LaTeX Font Info:    Font shape `T1/hlst/b/n' will be
-(Font)              scaled to size 11.2238pt on input line 17308.
+(Font)              scaled to size 11.2238pt on input line 17276.
  [31.0.26
 
 ]
 LaTeX Font Info:    Font shape `T1/hlst/m/it' in size <9.03365> not available
-(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18578
+(Font)              Font shape `T1/hlst/m/sl' tried instead on input line 18535
 .
 LaTeX Font Info:    Font shape `T1/hlst/m/sl' will be
-(Font)              scaled to size 8.70477pt on input line 18578.
+(Font)              scaled to size 8.70477pt on input line 18535.
  [32.0.26] [33.0.26] [34.0.26] [35.0.26
 
-] [36.0.26] [37.0.26] [38.0.26
-! pdfTeX warning (ext4): destination with the same identifier (name{corc}) has 
+] [36.0.26] [37.0.26]
+LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
+(Font)              scaled to size 6.16585pt on input line 22130.
+ [38.0.26
+! pdfTeX warning (ext4): destination with the same identifier (name{CORC}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.22250 {1}}
+l.22219 {1}}
             \Seq%] [39.0.26
-! pdfTeX warning (ext4): destination with the same identifier (name{criteria}) 
+! pdfTeX warning (ext4): destination with the same identifier (name{CRITERIA}) 
 has been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.22963 {1}}
+l.22925 {1}}
             \Seq%] [40.0.26] [41.0.26] [42.0.26] [43.0.26
-! pdfTeX warning (ext4): destination with the same identifier (name{gnuplot}) h
+! pdfTeX warning (ext4): destination with the same identifier (name{GNUPLOT}) h
 as been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.26130 {1}}
+l.26072 {1}}
             \Node%] [44.0.26] [45.0.26] [46.0.26] [47.0.26] [48.0.26] [49.0.26]
 [50.0.26] [51.0.26] [52.0.26] [53.0.26] [54.0.26] [55.0.26
-! pdfTeX warning (ext4): destination with the same identifier (name{tsls}) has 
+! pdfTeX warning (ext4): destination with the same identifier (name{TSLS}) has 
 been already used, duplicate ignored
 <to be read again> 
                    \endgroup 
-l.35920       \endPar{}
+l.35780       \endPar{}
                        \endNode{}\endSeq{}\endDisplayGroup{}\endNode{}\endSe...
 ] [56.0.26] [57.0.26] [58.0.26
 
 ] [59.0.26
 
 ]
-Overfull \hbox (17.09665pt too wide) in paragraph at lines 38884--38892
+Overfull \hbox (17.09665pt too wide) in paragraph at lines 38730--38738
  []/hlhr8t@9.57112pt/These are de-scribed in de-tail in [][]Chap-ter 11[][]. Th
 ey are briefly sum-ma-rized in Ta-ble~\ref{cmdtab}. 
  []
 
 [60.0.26] [61.0.26]
 LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
-(Font)              scaled to size 8.70477pt on input line 39426.
+(Font)              scaled to size 8.70477pt on input line 39270.
  [62.0.26
 
-] [63.0.26]
-LaTeX Font Info:    Font shape `T1/hlh/m/it' will be
-(Font)              scaled to size 6.16585pt on input line 40417.
- [64.0.26] [65.0.26
+] [63.0.26] [64.0.26] [65.0.26
 
 ] [66.0.26] [67.0.26] [68.0.26
 
 ] [69.0.26
 
 ]
-Overfull \hbox (2.51035pt too wide) in paragraph at lines 42704--42711
+Overfull \hbox (2.51035pt too wide) in paragraph at lines 42511--42518
  []/hlhr8t@9.57112pt/Greene, William H. (2000) /hlhri8t@9.57112pt/Econo-met-ric
  Analy-sis/hlhr8t@9.57112pt/, 4th edi-tion, Up-per Sad-dle River, NJ: Prentice-
 
@@ -1239,20 +821,21 @@ Overfull \hbox (2.51035pt too wide) in paragraph at lines 42704--42711
 
 ] (./manual.aux)
 
-LaTeX Warning: There were undefined references.
+LaTeX Font Warning: Size substitutions with differences
+(Font)              up to 0.46805pt have occurred.
 
  ) 
 Here is how much of TeX's memory you used:
- 7911 strings out of 41056
- 60754 string characters out of 347609
- 157343 words of memory out of 263001
- 17694 multiletter control sequences out of 10000+50000
- 63047 words of font info for 98 fonts, out of 200000 for 1000
+ 7978 strings out of 41056
+ 61400 string characters out of 347609
+ 157191 words of memory out of 263001
+ 17744 multiletter control sequences out of 10000+50000
+ 67213 words of font info for 114 fonts, out of 200000 for 1000
  15 hyphenation exceptions out of 1000
  28i,12n,39p,684b,4511s stack positions out of 1500i,500n,1500p,12000b,5000s
-</usr/local/psfonts/lucida/lbme.pfb></usr/local/psfonts/lucida/lbms.pfb>{/usr
-/share/texmf/dvips/8r.enc}</usr/local/psfonts/lucida/lstb.pfb></usr/local/psfon
+</usr/local/psfonts/lucida/lbme.pfb>{/usr/share/texmf/dvips/8r.enc}</usr/loca
+l/psfonts/lucida/lstb.pfb></usr/local/psfonts/lucida/lbms.pfb></usr/local/psfon
 ts/lucida/lsto.pfb></usr/local/psfonts/lucida/lbmo.pfb></usr/local/psfonts/luci
 da/lstr.pfb></usr/local/psfonts/lucida/lbd.pfb></usr/local/psfonts/lucida/lbi.p
 fb></usr/local/psfonts/lucida/lbr.pfb>
-Output written on manual.pdf (76 pages, 671331 bytes).
+Output written on manual.pdf (76 pages, 674044 bytes).
