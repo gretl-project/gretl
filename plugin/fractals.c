@@ -19,7 +19,7 @@
 
 #include "libgretl.h"
 
-#define MINSAMP 8
+#define MINSAMP 6
 #define LOG2 0.6931471805599453
 
 #define HDEBUG 0
@@ -248,7 +248,7 @@ int hurst_exponent (int vnum, const double **Z, const DATAINFO *pdinfo,
 
     T = t2 - t1 + 1;
 
-    if (T - missing < 128) {
+    if (T - missing < 96) {
 	pputs(prn, _("Sample is too small for Hurst exponent\n"));
 	errmsg(err, prn);
 	return 1;
