@@ -815,16 +815,16 @@ static void create_sheet_cell_renderers (spreadsheet *sheet)
     GtkCellRenderer *r;
 
     r = gtk_cell_renderer_text_new();
-    g_object_set(r, "ypad", 1, NULL);
-    g_object_set(r, "xalign", 1.0, NULL);
-    g_object_set(r, "background", "gray", NULL);
-    g_object_set(r, "editable", FALSE, NULL);
+    g_object_set(r, "ypad", 1, 
+		 "xalign", 1.0,
+		 "background", "gray",
+		 "editable", FALSE, NULL);
     sheet->dumbcell = r;
 
     r = gtk_cell_renderer_text_new();
-    g_object_set(r, "ypad", 1, NULL);
-    g_object_set(r, "xalign", 1.0, NULL);
-    g_object_set(r, "editable", TRUE, NULL);
+    g_object_set(r, "ypad", 1, 
+		 "xalign", 1.0, 
+		 "editable", TRUE, NULL);
     g_signal_connect (G_OBJECT (r), "edited",
 		      G_CALLBACK (sheet_cell_edited), sheet);
     sheet->datacell = r;
@@ -955,7 +955,7 @@ static gint catch_spreadsheet_key (GtkWidget *view, GdkEventKey *key,
     /* numeric key: start editing */
 
     else if ((key->keyval >= GDK_0 && key->keyval <= GDK_9) ||
-	key->keyval == GDK_minus) {
+	key->keyval == GDK_minus || key->keyval == GDK_period) {
 	GtkTreePath *path = NULL;
 	GtkTreeViewColumn *column;
 
@@ -1046,8 +1046,6 @@ static gint catch_spreadsheet_click (GtkWidget *view, GdkEvent *event,
 #endif /* end of gtk >= 2.2 code */
 
 /* ........................................................... */
-
-#define MINCOLS 1 /* 6 */
 
 static GtkWidget *data_sheet_new (spreadsheet *sheet, gint nobs, gint nvars)
 {
