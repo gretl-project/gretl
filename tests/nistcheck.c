@@ -31,7 +31,7 @@
 #ifdef LONGLEY_ONLY
 # define MAX_DIGITS 10
 #else
-# define MAX_DIGITS 9
+# define MAX_DIGITS 10 /* can make this smaller */
 #endif
 
 #define MIN_DIGITS 4

@@ -238,7 +238,7 @@ static void print_f_pval_str (double pval, PRN *prn)
 
 static void Fline (const MODEL *pmod, PRN *prn)
 {
-    if (pmod->ifc && pmod->ncoeff == 2) {
+    if (pmod->ifc && pmod->ncoeff <= 2) {
 	if (PLAIN_FORMAT(prn->format)) {
 	    pprintf(prn, "  %s = %d\n", _("Degrees of freedom"), pmod->dfd);
 	}

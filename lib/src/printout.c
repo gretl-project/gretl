@@ -537,6 +537,7 @@ int outcovmx (MODEL *pmod, const DATAINFO *pdinfo, int pause,
 
     nbetas = pmod->list[0] - 1;
     if (copylist(&tmplist, pmod->list)) return E_ALLOC;
+
     for (k=1; k<=nbetas; k++) tmplist[k] = pmod->list[k+1];
     tmplist[0] = nbetas;
 
@@ -635,7 +636,7 @@ int page_break (int n, int *lineno, int quit_option)
 void text_print_matrix (const double *rr, const int *list, 
 			MODEL *pmod, const DATAINFO *pdinfo, 
 			int pause, PRN *prn)
-     /*  Given a single dimensional array, which represents a
+     /*  Given a one dimensional array, which represents a
 	 symmetric matrix, prints out an upper triangular matrix
 	 of any size. 
 

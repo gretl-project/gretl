@@ -35,9 +35,8 @@
    not getting any garbage results.
 */
 
-#define TINY 4.75e-9 /* was 1.0e-13, produced poor results on NIST Filip
-		        test */
-#define SMALL 1.0e-8
+#define TINY 4.75e-9 
+#define SMALL 1.0e-8 /* threshold for printing a warning for collinearity */
 
 extern void _print_rho (int *arlist, const MODEL *pmod, 
 			int c, PRN *prn);
@@ -70,8 +69,6 @@ static int tsls_match (const int *list1, const int *list2, int *newlist);
 static double wt_dummy_mean (const MODEL *pmod, double **Z); 
 static double wt_dummy_stddev (const MODEL *pmod, double **Z);
 /* end private protos */
-
-
 
 /* use Choleski or QR for regression? */
 static int use_qr;
@@ -389,6 +386,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (use_qr || getenv("GRETL_USE_QR")) {
+	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
 	int l = l0 - 1;
@@ -438,12 +436,18 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	fix_wls_values(&mdl, *pZ);
     }
 
-    /* if opt = 1, compute residuals and rhohat */
+    /* if opt != 0, compute rhohat and DW stat */
     if (opt) {
 	int order = (ci == CORC || ci == HILU)? 1 : 0;
 
 	mdl.rho = rhohat(order, mdl.t1, mdl.t2, mdl.uhat);
 	mdl.dw = dwstat(order, &mdl, *pZ);
+    }
+
+    /* weird special case: degenerate model */
+    if (mdl.ncoeff == 1 && mdl.ifc) {
+	mdl.rsq = mdl.adjrsq = 0.0;
+	mdl.fstt = NADBL;
     }
 
     /* Generate model selection statistics */
@@ -762,7 +766,7 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
     hatvar(pmod, Z); 
     if (pmod->errcode) return;
 
-    /* this is out of place */
+    /* this is out of place? */
     if (pmod->tss > 0) {
 	compute_r_squared(pmod, &Z[yno][pmod->t1]);
     }
@@ -802,22 +806,10 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 
 /* .......................................................... */
 
-#ifdef USE_LAPACK
-static int ijtok (int i, int j, int n)
-{
-    int s, subt = 0;
-
-    for (s=1; s<=j; s++) subt += s;
-    return i + j * n - subt;
-}
-#endif /* USE_LAPACK */
-
-/* .......................................................... */
-
 int cholbeta (double *xpx, double *xpy, double *coeff, double *rss,
 	      int nv)
 /*
-  This function does an inplace Choleski decomposition of xpx
+  This function does an in-place Choleski decomposition of xpx
   (lower triangular matrix stacked in columns) and then
   solves the normal equations for coeff.  xpx is X'X
   on input and Choleski decomposition on output; xpy is
@@ -962,6 +954,8 @@ int makevcv (MODEL *pmod)
     int nv, dec, nm1, mst, kk, i, j, kj, icnt, m, k, l = 0;
     int idxpx;
     double sigma, d;
+
+    if (pmod->vcv != NULL) return 0;
 
     nv = pmod->ncoeff;
     nm1 = nv - 1;
@@ -1111,14 +1105,14 @@ void free_vcv (VCV *vcv)
 
 static double dwstat (int order, MODEL *pmod, double **Z)
 /*  computes durbin-watson statistic
-    opt is the order of autoregression, 0 for OLS and WLS
+    order is the order of autoregression, 0 for OLS.
 */
 {
     double diff, ut, ut1;
     double diffsq = 0.0;
     int t;
 
-    if (order) order -= 1;
+    if (order) order--;
 
     if (pmod->ess <= 0.0) return NADBL;
 
@@ -1127,12 +1121,13 @@ static double dwstat (int order, MODEL *pmod, double **Z)
         ut1 = pmod->uhat[t-1];
         if (na(ut) || na(ut1) ||
 	    (pmod->nwt && (floateq(Z[pmod->nwt][t], 0.0) || 
-	    floateq(Z[pmod->nwt][t-1], 0.0)))) continue;
+			   floateq(Z[pmod->nwt][t-1], 0.0)))) 
+	    continue;
         diff = ut - ut1;
         diffsq += diff * diff;
     }
 
-    return diffsq/pmod->ess;
+    return diffsq / pmod->ess;
 }
 
 /* ......................................................  */
@@ -1142,11 +1137,11 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
     order is the order of autoregression, 0 for OLS.
 */
 {
-    double ut, ut1, uu, xx, rho;
+    double ut, ut1, uu = 0.0, xx = 0.0;
+    double rho;
     int t;
 
-    xx = uu = 0.0;
-    if (order) order -= 1;
+    if (order) order--;
 
     for (t=t1+order+1; t<=t2; t++) { 
         ut = uhat[t];
@@ -1158,7 +1153,7 @@ static double rhohat (int order, int t1, int t2, const double *uhat)
 
     if (floateq(xx, 0.0)) return NADBL;
 
-    rho = uu/xx;
+    rho = uu / xx;
     if (rho > 1.0 || rho < -1.0) {
 	rho = altrho(order, t1, t2, uhat);
     }
