@@ -144,6 +144,12 @@ lib/src/compare.h,289
 } aux_codes;aux_codes36,1595
 } COMPARE;COMPARE49,2138
 
+lib/src/daily.c,105
+char *missobs_vector 3,29
+int undo_repack_missing 25,481
+int repack_missing 60,1322
+int main 97,2162
+
 lib/src/dataio.c,1887
 #define QUOTE 31,1004
 static char STARTCOMMENT[44,1521
@@ -375,106 +381,107 @@ MODEL arch 2095,57935
 
 lib/src/estimate.h,0
 
-lib/src/generate.c,2604
-enum transformations transformations63,2646
-    T_LOG 64,2669
-    T_EXP,65,2685
-    T_SIN,66,2697
-    T_COS,67,2709
-    T_DIFF,68,2721
-    T_LDIFF,69,2733
-    T_MEAN,70,2747
-    T_SD,71,2760
-    T_SORT,72,2771
-    T_INT,73,2784
-    T_LN,74,2796
-    T_COEFF,75,2807
-    T_ABS,76,2820
-    T_RHO,77,2832
-    T_SQRT,78,2844
-    T_SUM,79,2857
-    T_NORMAL,80,2869
-    T_UNIFORM,81,2884
-    T_STDERR,82,2900
-    T_CUM,83,2914
-    T_MISSING,84,2926
-    T_MISSZERO,85,2941
-    T_CORR,86,2957
-    T_VCV,87,2969
-    T_VAR,88,2980
-    T_COV,89,2991
-    T_MEDIAN,90,3002
-    T_ZEROMISS,91,3016
-    T_PVALUE92,3032
-enum retrieve retrieve95,3049
-    R_ESS 96,3065
-    R_NOBS,97,3080
-    R_RSQ,98,3092
-    R_SIGMA,99,3103
-    R_DF,100,3116
-    R_LNL,101,3126
-    R_TRSQ,102,3137
-    R_NUMERIC,103,3149
-    R_MATH,104,3164
-    R_VARNAME,105,3176
-    R_UNKNOWN106,3191
-enum composites composites109,3209
-    NEQ 110,3227
-    GEQ,111,3241
-    LEQ112,3250
-static char *math[115,3262
-static char operators[148,3672
-#define LEVELS 154,3793
-static int is_operator 158,3873
-static void catch_double_symbols 169,4071
-static int op_level 193,4493
-static void count_ops 214,4908
-static int insert_paren 222,5069
-static int paren_state 235,5376
-static int parenthesize 252,5718
-int _identical 335,7397
-static void otheruse 348,7674
-static int reserved 356,7916
-static void copy 412,9329
-static int getword 425,9644
-static void get_genr_formula 449,10287
-int genr_scalar_index 473,10941
-GENERATE generate 503,11781
-static int _cstack 936,24740
-static int _domath 1057,27816
-static int _evalexp 1237,31488
-static void _getvar 1260,32109
-static int check_modelstat 1287,32804
-static int _getxvec 1337,34004
-static void _lag 1464,37147
-static int _scanb 1495,37933
-static int _strtype 1528,38632
-static int _whichtrans 1574,39812
-int dummy 1596,40236
-int paneldum 1635,41331
-static void _genrtime 1687,43032
-int plotvar 1724,44026
-int _laggenr 1776,45503
-static int _normal_dist 1827,46885
-static void _uniform 1843,47268
-void varlist 1862,47639
-int varindex 1887,48196
-static int _createvar 1906,48691
-static void _genrfree 1936,49517
-int logs 1959,50128
-int lags 2033,52028
-int _parse_lagvar 2051,52468
-int xpxgenr 2107,53966
-int rhodiff 2203,56712
-static double _genr_cov 2275,58590
-static double _genr_corr 2306,59411
-static double _genr_vcv 2336,60227
-static void _genr_msg 2385,61513
-static int _ismatch 2395,61817
-static void _varerror 2406,62035
-int simulate 2424,62703
-int _multiply 2519,64964
-int genr_fit_resid 2588,66697
+lib/src/generate.c,2614
+#define GENR_DEBUG22,831
+enum transformations transformations63,2603
+    T_LOG 64,2626
+    T_EXP,65,2642
+    T_SIN,66,2654
+    T_COS,67,2666
+    T_DIFF,68,2678
+    T_LDIFF,69,2690
+    T_MEAN,70,2704
+    T_SD,71,2717
+    T_SORT,72,2728
+    T_INT,73,2741
+    T_LN,74,2753
+    T_COEFF,75,2764
+    T_ABS,76,2777
+    T_RHO,77,2789
+    T_SQRT,78,2801
+    T_SUM,79,2814
+    T_NORMAL,80,2826
+    T_UNIFORM,81,2841
+    T_STDERR,82,2857
+    T_CUM,83,2871
+    T_MISSING,84,2883
+    T_MISSZERO,85,2898
+    T_CORR,86,2914
+    T_VCV,87,2926
+    T_VAR,88,2937
+    T_COV,89,2948
+    T_MEDIAN,90,2959
+    T_ZEROMISS,91,2973
+    T_PVALUE92,2989
+enum retrieve retrieve95,3006
+    R_ESS 96,3022
+    R_NOBS,97,3037
+    R_RSQ,98,3049
+    R_SIGMA,99,3060
+    R_DF,100,3073
+    R_LNL,101,3083
+    R_TRSQ,102,3094
+    R_NUMERIC,103,3106
+    R_MATH,104,3121
+    R_VARNAME,105,3133
+    R_UNKNOWN106,3148
+enum composites composites109,3166
+    NEQ 110,3184
+    GEQ,111,3198
+    LEQ112,3207
+static char *math[115,3219
+static char operators[148,3629
+#define LEVELS 154,3750
+static int is_operator 158,3830
+static void catch_double_symbols 169,4028
+static int op_level 193,4450
+static void count_ops 214,4865
+static int insert_paren 222,5026
+static int paren_state 235,5333
+static int parenthesize 252,5675
+int _identical 337,7356
+static void otheruse 350,7647
+static int reserved 358,7891
+static void copy 414,9304
+static int getword 427,9624
+static void get_genr_formula 451,10266
+int genr_scalar_index 475,10920
+GENERATE generate 505,11760
+static int cstack 954,25033
+static int domath 1075,28093
+static int evalexp 1256,31776
+static void getvar 1279,32385
+static int check_modelstat 1307,33108
+static int getxvec 1357,34308
+static void _lag 1484,37425
+static int scanb 1515,38205
+static int strtype 1548,38904
+static int whichtrans 1596,40092
+int dummy 1618,40515
+int paneldum 1657,41617
+static void genrtime 1709,43339
+int plotvar 1746,44337
+int _laggenr 1798,45814
+static int _normal_dist 1849,47214
+static void _uniform 1865,47597
+void varlist 1884,47968
+int varindex 1909,48525
+static int createvar 1928,49020
+static void genrfree 1958,49840
+int logs 1981,50446
+int lags 2055,52347
+int _parse_lagvar 2073,52792
+int xpxgenr 2129,54290
+int rhodiff 2225,57044
+static double genr_cov 2297,58922
+static double genr_corr 2328,59741
+static double genr_vcv 2358,60555
+static void genr_msg 2407,61839
+static int _ismatch 2417,62153
+static void varerror 2428,62371
+int simulate 2446,63049
+int _multiply 2541,65318
+int genr_fit_resid 2610,67051
 
 lib/src/generate.h,227
 #define GENERATE_H21,879
@@ -530,13 +537,13 @@ int help 593,15498
 static int parse_criteria 671,17111
 int fcast 715,18385
 int add_new_var 758,19519
-static int _full_list 801,20726
-int parseopt 820,21314
-int shell 843,22012
-void echo_cmd 894,23134
-static void showlabels 987,25892
-static void do_print_string 1000,26166
-int simple_commands 1013,26428
+static int _full_list 802,20777
+int parseopt 821,21365
+int shell 844,22063
+void echo_cmd 895,23185
+static void showlabels 988,25943
+static void do_print_string 1001,26217
+int simple_commands 1014,26479
 
 lib/src/interact.h,247
 #define INTERACT_H23,907
