@@ -845,6 +845,9 @@ static void set_lcnumeric (void)
 	else if (lang != NULL && !strcmp(lang, "fr")) {
 	    setlocale(LC_NUMERIC, "French");
 	}
+	else if (lang != NULL && !strcmp(lang, "it")) {
+	    setlocale(LC_NUMERIC, "Italian");
+	}
 	else setlocale(LC_NUMERIC, "");
 	putenv("LC_NUMERIC=");
 #else
