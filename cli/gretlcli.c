@@ -774,7 +774,7 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
     case CORR:
     case CRITERIA: case CRITICAL: case DATA:
     case DIFF: case LDIFF: case LAGS: case LOGS:
-    case MULTIPLY:
+    case MULTIPLY: case SQUARE: case RHODIFF:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT: 
@@ -1457,16 +1457,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	} 
 	break;
 
-    case RHODIFF:
-	if (!cmd.list[0]) {
-	    pputs(prn, _("This command requires a list of variables\n"));
-	    break;
-	}
-	err = rhodiff(cmd.param, cmd.list, &Z, datainfo);
-	if (err) errmsg(err, prn);
-	else varlist(datainfo, prn);
-	break;
-
     case RUN:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
@@ -1548,21 +1538,6 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    errmsg(err, prn);
 	} else {
 	    print_smpl(datainfo, get_full_length_n(), prn);
-	}
-	break;
-
-    case SQUARE:
-	if (cmd.opt) {
-	    chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
-	} else {
-	    chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
-	}
-	if (chk < 0) {
-	    pputs(prn, _("Failed to generate squares\n"));
-	    err = 1;
-	} else {
-	    pputs(prn, _("Squares generated OK\n"));
-	    varlist(datainfo, prn);
 	}
 	break;
 

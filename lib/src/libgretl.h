@@ -426,6 +426,7 @@ struct _VCV {
 #include "plugins.h"
 #include "nls.h"
 #include "missing.h"
+#include "transforms.h"
 #ifdef WIN32
 # include "gretl_win32.h"
 #endif

@@ -97,6 +97,7 @@ SRCS = bhhh_max.c \
 	subsample.c \
 	system.c \
 	texprint.c \
+	transforms.c \
 	var.c
 
 CEPHES_SRC = bdtr.c btdtr.c chbevl.c chdtr.c const.c drand.c expx2.c \

@@ -178,8 +178,9 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 	(add->ci == OLS || add->ci == HCCM)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) 
+	for (i=1; i<=addvars[0]; i++) {
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+	}
 	pprintf(prn, "\n  %s: %s(%d, %d) = %g, ", _("Test statistic"), 
 		(add->robust)? _("Robust F"): "F",
 		add->dfn, add->dfd, add->F);
@@ -189,8 +190,9 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
     else if (aux_code == AUX_ADD && addvars[0] > 1 && LIMDEP(add->ci)) {
 	pprintf(prn, _("\n%sNull hypothesis: the regression parameters are "
 		"zero for the added variables\n\n"), spc);
-	for (i=1; i<=addvars[0]; i++) 
+	for (i=1; i<=addvars[0]; i++) { 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
+	}
 	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
 		_("Chi-square"), add->dfn, add->chisq);
 	pprintf(prn, _("with p-value = %g\n\n"), 

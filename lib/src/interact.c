@@ -373,7 +373,7 @@ int auto_lag_ok (const char *s, int *lnum,
 	int laglen = lagvar.firstlag + i;
 	int vnum;
 
-	vnum = laggenr(lagvar.varnum, laglen, 1, pZ, pdinfo);
+	vnum = laggenr(lagvar.varnum, laglen, pZ, pdinfo);
 
 	if (vnum < 0) {
 	    cmd->errcode = 1;
@@ -2029,21 +2029,24 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case LAGS:
-	err = lags(cmd->list, pZ, datainfo); 
+	err = list_laggenr(cmd->list, pZ, datainfo); 
 	if (err) 
 	    pputs(prn, _("Error adding lags of variables.\n"));
 	else varlist(datainfo, prn);
 	break;
 
     case LOGS:
-	err = logs(cmd->list, pZ, datainfo);
-	if (err < cmd->list[0]) 
+	err = list_loggenr(cmd->list, pZ, datainfo);
+	if (err) 
 	    pputs(prn, _("Error adding logs of variables.\n"));
-	if (err > 0) { 
-	    varlist(datainfo, prn);
-	    err = 0;
-	} else
-	    err = 1;
+	else varlist(datainfo, prn);
+	break;
+
+    case SQUARE:
+	err = list_xpxgenr(cmd->list, pZ, datainfo, cmd->opt);
+	if (err) 
+	    pputs(prn, _("Failed to generate squares\n"));
+	else varlist(datainfo, prn);
 	break;
 
     case MULTIPLY:
@@ -2093,6 +2096,12 @@ int simple_commands (CMD *cmd, const char *line,
 	} else {
 	    printdata(cmd->list, pZ, datainfo, cmd->opt, prn);
 	}
+	break;
+
+    case RHODIFF:
+	err = rhodiff(cmd->param, cmd->list, pZ, datainfo);
+	if (err) errmsg(err, prn);
+	else varlist(datainfo, prn);
 	break;
 
     case SUMMARY:

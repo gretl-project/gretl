@@ -42,19 +42,6 @@ void varlist (const DATAINFO *pdinfo, PRN *prn);
 
 int varindex (const DATAINFO *pdinfo, const char *varname);
 
-int logs (const LIST list, 
-	  double ***pZ, DATAINFO *pdinfo);
-
-int lags (const LIST list, 
-	  double ***pZ, DATAINFO *pdinfo);
-
-int xpxgenr (const LIST list, 
-	     double ***pZ, DATAINFO *pdinfo, 
-	     const int opt, const int nodup);
-
-int rhodiff (char *param, const LIST list, 
-	     double ***pZ, DATAINFO *pdinfo);
-
 int simulate (char *cmd, 
 	      double ***pZ, DATAINFO *pdinfo); 
 

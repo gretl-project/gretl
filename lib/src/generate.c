@@ -40,8 +40,6 @@ enum {
 static double calc_xy (double x, double y, char op, int t, int *err);
 
 static void genrfree (GENERATE *genr);
-static void get_lag (int v, int lag, double *lagvec, double **Z, 
-		     const DATAINFO *pdinfo);
 static double genr_cov (const char *str, double ***pZ,
 			const DATAINFO *pdinfo);
 static double genr_corr (const char *str, double ***pZ,
@@ -58,7 +56,6 @@ static int genr_mlog (const char *str, double *xvec, double **pZ,
 #endif
 
 static void genr_msg (GENERATE *genr, int oldv);
-static void varerror (const char *s);
 static int listpos (int v, const int *list);
 static int add_new_var (double ***pZ, DATAINFO *pdinfo, GENERATE *genr);
 
@@ -1656,21 +1653,6 @@ static int parenthesize (char *str)
 	}
     }
     return 0;
-}
-
-/* ...................................................... */
-
-int vars_identical (const double *x, const double *y, int n)
-     /* check whether two vars are identical or not */
-{
-    int t;
-
-    for (t=0; t<n; t++) {
-	if (floatneq(x[t], y[t])) {
-	    return 0;
-	}
-    }
-    return 1;
 }
 
 /* ........................................................  */
@@ -3405,56 +3387,6 @@ static double get_tnum (const DATAINFO *pdinfo, int t)
     }
 }
 
-/* ..................................................................*/
-
-static void get_lag (int v, int lag, double *lagvec, double **Z, 
-		     const DATAINFO *pdinfo)
-{
-    register int t;
-    int t1, lt;
-
-    t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
-
-    for (t=0; t<pdinfo->n; t++) lagvec[t] = NADBL;
-
-    /* stacked X-section needs rather special handling */
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	for (t=t1; t<=pdinfo->t2; t++) { 
-	    lt = t - lag * pdinfo->pd;
-	    if (lt < 0 || lt >= pdinfo->n) continue;
-	    lagvec[t] = Z[v][lt];
-	}
-    }
-    else if (dated_daily_data(pdinfo)) {
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    lt = t - lag;
-	    while (lt >= 0 && na(Z[v][lt])) lt--;
-	    lagvec[t] = Z[v][lt];
-	}
-    } 
-    else { /* the "standard" time-series case */
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    lt = t - lag;
-	    if (lt < 0 || lt >= pdinfo->n) continue;
-	    lagvec[t] = Z[v][lt];
-	}
-    }
-
-    /* post-process missing panel values */
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	char *p, obs[OBSLEN];
-	int j;
-
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    ntodate(obs, t, pdinfo);
-	    p = strchr(obs, ':');
-	    j = atoi(p + 1);
-	    if (j <= lag) lagvec[t] = NADBL;
-	}
-    }
-}
-
-
 /* ......................................................   */
 
 static int obs_num (const char *s, const DATAINFO *pdinfo)
@@ -3465,6 +3397,7 @@ static int obs_num (const char *s, const DATAINFO *pdinfo)
 
     *test = 0;
     strncat(test, (*s == '"')? s + 1 : s, OBSLEN - 1);
+
     n = strlen(test);
     if (test[n-1] == '"') test[n-1] = '\0';
 
@@ -3550,8 +3483,6 @@ static int model_scalar_stat_index (const char *s)
 
     return 0;
 }
-
-/* ........................................................  */
 
 static int model_vector_index (const char *s)
 {
@@ -3995,71 +3926,6 @@ int plotvar (double ***pZ, DATAINFO *pdinfo, const char *period)
     return vi;
 }
 
-/* laggenr: create Z[iv][t-lag] if this variable does not
-   already exist.  
-
-   Return the ID number of the lag var, or -1 on error.
-*/
-
-int newlag; /* library global */
-
-int laggenr (int parent, int lag, int opt, double ***pZ, 
-	     DATAINFO *pdinfo)
-{
-    char s[32], ext[6];
-    int lno;
-    double *lx;
-
-    /* can't do lags of a scalar */
-    if (!pdinfo->vector[parent]) {
-	return -1;
-    }
-
-    /* sanity check */
-    if (lag > pdinfo->n) {
-	return -1;
-    }
-
-    lx = malloc(pdinfo->n * sizeof *lx);
-    if (lx == NULL) {
-	return -1;
-    }
-
-    *s = '\0';
-    strncat(s, pdinfo->varname[parent], 8);
-    sprintf(ext, "_%d", lag);
-    strcat(s, ext);
-    lno = varindex(pdinfo, s);
-
-    /* put the lag values into array lx */
-    get_lag(parent, lag, lx, *pZ, pdinfo);
-
-    newlag = 1;
-
-    if (lno < pdinfo->v) {
-	/* a variable of this name already exists */
-	if (vars_identical(lx, (*pZ)[lno], pdinfo->n)) {
-	    /* and it is just what we want */
-	    free(lx);
-	    newlag = 0;
-	} else {
-	    /* but the values are wrong: swap them */
-	    free((*pZ)[lno]);
-	    (*pZ)[lno] = lx;
-	}
-    } else {
-	/* no var of this name, working from scratch */
-	dataset_add_allocated_var(lx, pZ, pdinfo);
-	strcpy(pdinfo->varname[lno], s);
-	if (opt) { 
-	    sprintf(VARLABEL(pdinfo, lno), "%s = %s(t - %d)", s, 
-		    pdinfo->varname[parent], lag);
-	}
-    }
-
-    return lno;
-}
-
 /**
  * varlist:
  * @pdinfo: data information struct.
@@ -4198,19 +4064,6 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
     return real_varindex(pdinfo, varname, 0);
 }
 
-static int descindex (const DATAINFO *pdinfo, const char *desc)
-{
-    int i;
-
-    for (i=0; i<pdinfo->v; i++) { 
-	if (!strcmp(VARLABEL(pdinfo, i), desc)) { 
-	    return i;
-	}
-    }
-
-    return pdinfo->v;
-}
-
 /* ........................................................ */
 
 static void genrfree (GENERATE *genr)
@@ -4231,338 +4084,6 @@ static void genrfree (GENERATE *genr)
     free(genr->xvec);
 }
 
-/**
- * logs:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set the natural logs of the
- * variables given in @list.
- *
- * Returns: the number of variables generated, or -1 on failure.
- */
-
-int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i, t, nlogs;
-    int v, newv, nvar = pdinfo->v, n = pdinfo->n;
-    int check, le_zero;
-    int l0 = list[0];
-    double xx;
-    char s[32];
-
-    if (dataset_add_vars(l0, pZ, pdinfo)) {
-	return -1;
-    }
-
-    nlogs = 0;
-
-    for (i=1; i<=list[0]; i++) {
-	v = list[i];
-	if (v >= nvar) {
-	    varerror(s);
-	    continue;
-	}
-	if (v == 0) {
-	    /* don't try to take log of constant */ 
-	    continue; 
-	}
-	if (isdummy((*pZ)[v], pdinfo->t1, pdinfo->t2)) {
-	    /* and don't try to take the log of a dummy variable */
-	    continue;
-	}
-
-	newv = nvar + nlogs;
-	le_zero = 0;
-
-	for (t=0; t<n; t++) {
-	    (*pZ)[newv][t] = NADBL;
-	}
-
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    xx = (pdinfo->vector[v])? (*pZ)[v][t] : (*pZ)[v][0];
-	    if (xx <= 0.0) {
-		(*pZ)[newv][t] = NADBL;
-		if (!na(xx)) {
-		    sprintf(gretl_errmsg, 
-			    _("Log error: Variable '%s', obs %d,"
-			      " value = %g\n"), pdinfo->varname[v],
-			    t+1, xx);
-		    le_zero = 1;
-		}
-	    } else {
-		(*pZ)[newv][t] = log(xx); 
-	    }
-	}
-
-	if (le_zero) {
-	    continue;
-	}
-
-	/* create name for new var */
-	strcpy(s, "l_");
-	strncat(s, pdinfo->varname[v], 
-		min_unique_length(v, pdinfo, 6));
-	strcpy(pdinfo->varname[newv], s);
-
-	/* write description of new var */
-	strcpy(s, _(" = log of "));
-	strcat(s, pdinfo->varname[v]);
-	strcpy(VARLABEL(pdinfo, newv), s);
-
-	/* have we duplicated an existing var? */
-	check = descindex(pdinfo, VARLABEL(pdinfo, newv));
-	if (check < nvar && pdinfo->vector[check]) {
-	    if (vars_identical((*pZ)[check], (*pZ)[newv], n)) {
-		nlogs--;
-	    }
-	} 
-
-	nlogs++;
-    }
-
-    /* ensure new vars have unique names */
-    for (i=nvar; i<nvar+nlogs; i++) {
-	make_varname_unique(pdinfo->varname[i], i, pdinfo);
-    }
-
-    /* shrink Z if warranted (not all vars logged) */
-    if (nlogs < l0) {
-	dataset_drop_vars(l0 - nlogs, pZ, pdinfo);
-    }
-
-    if (nlogs == 0) {
-	/* what if all were already present? */
-	nlogs = -1;
-    }
-
-    return nlogs;
-}
-
-/**
- * lags:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set lagged values of the 
- * variables given in @list (up to the frequency of the data).
- *
- * Returns: 0 on successful completion, 1 on error.
- */
-
-int lags (const LIST list, double ***pZ, DATAINFO *pdinfo)
-     /* generates lag variables for each var in list */
-{
-    int check, l, v, lv;
-    int maxlag = pdinfo->pd;
-
-    /* play safe with panel data */
-    if (dataset_is_panel(pdinfo)) maxlag = 1;
-    
-    for (v=1; v<=list[0]; v++) {
-	lv = list[v];
-	if (lv == 0 || !pdinfo->vector[lv]) continue;
-	for (l=1; l<=maxlag; l++) {
-	    check = laggenr(lv, l, 1, pZ, pdinfo);
-	    if (check < 0) return 1;
-	}
-    }
-
-    return 0;
-}
-
-/**
- * xpxgenr:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- * @opt: If = 0, only squares are generated, if non-zero, both
- * squares and cross-products are generated.
- * @nodup: If non-zero, variables will not be created if they
- * are already present in the data set.
- *
- * Generates and adds to the data set squares and (if @opt is non-zero) 
- * cross-products of the variables given in @list.
- *
- * Returns: The number of variables generated, or -1 on error.
- */
-
-int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo, 
-	     int opt, int nodup)
-{
-    int check, i, j, t, li, lj, l0 = list[0];
-    int maxterms, terms, n = pdinfo->n, v = pdinfo->v;
-    double zi, zj;
-    char s[12], s1[VNAMELEN];
-
-    /* maximum number of terms if none are "bad" */
-    if (opt) maxterms = (l0*l0 + l0)/2;
-    else maxterms = l0;
-
-    if (dataset_add_vars(maxterms, pZ, pdinfo)) return -1;
-
-    terms = 0;
-    for (i=1; i<=l0; i++) {
-	li = list[i];
-	if (!isdummy((*pZ)[li], 0, n-1)) {
-	    for (t=0; t<n; t++) {
-		(*pZ)[v+terms][t] = NADBL;
-	    }
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		zi = (*pZ)[li][t];
-		if (na(zi)) {
-		    (*pZ)[v+terms][t] = NADBL;
-		} else {
-		    (*pZ)[v+terms][t] = zi * zi;
-		}
-	    }
-	    if (gretl_iszero(0, n-1, (*pZ)[v+terms])) continue; 
-	    /*
-	      prefix varname by sq, truncate if too long and save under 
-	      new varname; new label is "varname = oldname squared"
-	    */
-	    strcpy(s, "sq_");
-	    strcat(s, pdinfo->varname[li]);
-	    gretl_trunc(s, 8);
-	    strcpy(pdinfo->varname[v+terms], s);
-	    /* check if an identical variable exists? */
-	    if (nodup) {
-		check = varindex(pdinfo, pdinfo->varname[(v+terms)]);
-		if (check < v) {
-		    if (vars_identical((*pZ)[check], (*pZ)[v+terms], n)) 
-			continue;
-		}
-	    }
-	    sprintf(VARLABEL(pdinfo, v+terms), _("%s = %s squared"), s,
-		    pdinfo->varname[li]);  
-	    terms++;
-	}
-	/* also do cross-products if wanted */
-	if (opt) {
-	    for (j=i+1; j<=l0; j++) {
-		lj = list[j];
-		for (t=0; t<n; t++) (*pZ)[v+terms][t] = NADBL;
-		for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-		    zi = (*pZ)[li][t];
-		    zj = (*pZ)[lj][t];
-		    if (na(zi) || na(zj)) 
-			(*pZ)[v+terms][t] = NADBL;
-		    else (*pZ)[v+terms][t] = zi*zj;
-		}
-		if (gretl_iszero(0, n-1, (*pZ)[v+terms])) continue;
-		/*
-		  trunc varname i and varname j if needed and cat them.
-		  save as newvarname.  Also make label.
-		*/
-		strcpy(s, pdinfo->varname[li]);
-		gretl_trunc(s, 3);
-		strcat(s, "_");
-		strcpy(s1, pdinfo->varname[lj]);
-		gretl_trunc(s1, 4);
-		strcat(s, s1);
-		strcpy(pdinfo->varname[v+terms], s);
-		sprintf(VARLABEL(pdinfo, v+terms), _("%s = %s times %s"),
-			s, pdinfo->varname[li], pdinfo->varname[lj]);
-		terms++;
-	    }
-	}
-    }
-
-    if (terms < maxterms) {
-	dataset_drop_vars(maxterms - terms, pZ, pdinfo);
-    }
-
-    return terms;
-}
-
-/**
- * rhodiff:
- * @param: please see the gretl help on rhodiff() for syntax.
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generates and adds to the data set rho-differenced versions
- * of the variables given in @list.
- *
- * Returns: 0 on successful completion, error code on error.
- */
-
-int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i, j, maxlag, p, t, t1, nv, v = pdinfo->v, n = pdinfo->n;
-    char s[64], parmbit[VNAMELEN];
-    double xx, *rhot;
-
-
-    DPRINTF(("rhodiff: param = '%s'\n", param));
-
-    maxlag = count_fields(param);
-    rhot = malloc(maxlag * sizeof *rhot);
-    if (rhot == NULL) return E_ALLOC;
-    if (maxlag > pdinfo->t1) t1 = maxlag;
-    else t1 = pdinfo->t1;
-
-    DPRINTF(("rhodiff: maxlag = %d, t1 = %d\n", maxlag, t1));
-
-    /* parse "param" string */
-    j = strlen(param);
-    p = 0;
-    for (i=0; i<j; i++) {
-	if ((i == 0 || param[i] == ' ') && i < (j - 1)) {
-	    sscanf(param + i + (i? 1: 0), "%8s", parmbit); 
-	    DPRINTF(("rhodiff: parmbit = '%s'\n", parmbit));
-	    if (isalpha((unsigned char) parmbit[0])) {
-		nv = varindex(pdinfo, parmbit);
-		if (nv == v) {
-		    free(rhot);
-		    return E_UNKVAR;
-		}
-		rhot[p] = get_xvalue(nv, (const double **) *pZ, pdinfo);
-	    } else {
-		rhot[p] = dot_atof(parmbit);
-	    }
-	    p++;
-	}
-    }
-
-    if (dataset_add_vars(list[0], pZ, pdinfo)) return E_ALLOC;
-
-    for (i=1; i<=list[0]; i++) {
-	j = list[i];
-	DPRINTF(("rhodiff: doing list[%d] = %d\n", i, list[i]));
-	/* make name and label */
-	strcpy(s, pdinfo->varname[j]);
-	gretl_trunc(s, 7);
-	strcat(s, "#");
-	strcpy(pdinfo->varname[v+i-1], s);
-	sprintf(VARLABEL(pdinfo, v+i-1), _("%s = rho-differenced %s"), 
-		pdinfo->varname[v+i-1], pdinfo->varname[j]);
-	/* fill out values */
-	for (t=0; t<n; t++) (*pZ)[v+i-1][t] = NADBL;
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    xx = (*pZ)[j][t];
-	    if (na(xx)) {
-		(*pZ)[v+i-1][t] = NADBL;
-		continue;
-	    }
-	    for (p=0; p<maxlag; p++) {
-		if (na((*pZ)[j][t-p-1])) {
-		    xx = NADBL;
-		    break;
-		}
-		else xx -= rhot[p] * (*pZ)[j][t-p-1];
-	    }
-	    (*pZ)[v+i-1][t] = xx;
-	}
-    }
-
-    free(rhot);
-
-    return 0;
-}
 
 /* ...................................................... */
 
@@ -4856,28 +4377,6 @@ static int listpos (int v, const int *list)
     return 0;
 }
 
-/* .......................................................... */
-
-static void varerror (const char *s)
-     /* print error message for variable not in name list */
-{
-    sprintf(gretl_errmsg, _("Undefined variable name '%s'"), s);
-
-    if (!strcmp(s, "const")) {
-	sprintf(gretl_errmsg, _("const cannot be used to store values"));
-    } else if (!strcmp(s, "uhat")) {
-	sprintf(gretl_errmsg,
-		_("uhat can be used only in genr.  First use the command: "
-		  "genr newname = uhat"));
-    } else if (*s == '$') {
-	sprintf(gretl_errmsg, _("Reserved var. names starting with "
-				"$ can be used only in genr.\nFirst use the "
-				"command:  genr newname = %s"), s);
-    }
-}
-
-/* .......................................................... */
-
 /* ensure there's no gap betweeen a minus sign and the term
    it qualifies, in a "sim" command */
 
@@ -5104,7 +4603,10 @@ int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
 	if (v == pdinfo->v) return E_UNKVAR; 
     }
 
-    if (dataset_add_vars(l0, pZ, pdinfo)) return E_ALLOC;
+    if (dataset_add_vars(l0, pZ, pdinfo)) {
+	return E_ALLOC;
+    }
+
     slen = strlen(sfx);
 
     /* fill out values */

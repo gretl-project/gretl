@@ -3022,23 +3022,11 @@ void add_logs_etc (gpointer data, guint action, GtkWidget *widget)
     if (verify_and_record_command(line)) return;
 
     if (action == LAGS) {
-	err = lags(cmd.list, &Z, datainfo);
+	err = list_laggenr(cmd.list, &Z, datainfo);
     } else if (action == LOGS) {
-	/* returns number of terms created */
-	err = logs(cmd.list, &Z, datainfo);
-	if (err < cmd.list[0]) {
-	    err = 1;
-	} else {
-	    err = 0;
-	}
+	err = list_loggenr(cmd.list, &Z, datainfo);
     } else if (action == SQUARE) {
-	/* returns number of terms created */
-	err = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
-	if (err <= 0) {
-	    err = 1;
-	} else {
-	    err = 0;
-	}
+	err = list_xpxgenr(cmd.list, &Z, datainfo, OPT_NONE);
     } else if (action == DIFF) {
 	err = list_diffgenr(cmd.list, &Z, datainfo);
     } else if (action == LDIFF) {
@@ -5061,7 +5049,7 @@ int gui_exec_line (char *line,
     case DATA:
     case DIFF: case LDIFF: 
     case LAGS: case LOGS:
-    case MULTIPLY:
+    case MULTIPLY: case SQUARE: case RHODIFF:
     case GRAPH: case PLOT: case LABEL:
     case INFO: case LABELS: case VARLIST:
     case PRINT: case SUMMARY:
@@ -5736,17 +5724,6 @@ int gui_exec_line (char *line,
 	} 
 	break;
 
-    case RHODIFF:
-	if (!cmd.list[0]) {
-	    pprintf(prn, _("This command requires a list of variables\n"));
-	    err = 1;
-	    break;
-	}
-	err = rhodiff(cmd.param, cmd.list, &Z, datainfo);
-	if (err) errmsg(err, prn);
-	else varlist(datainfo, prn);
-	break;
-
     case RUN:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
@@ -5829,21 +5806,6 @@ int gui_exec_line (char *line,
 		set_sample_label(datainfo);
 	    }
 	    if (!chk) restore_sample_state(TRUE);
-	}
-	break;
-
-    case SQUARE:
-	if (cmd.opt) {
-	    chk = xpxgenr(cmd.list, &Z, datainfo, 1, 1);
-	} else {
-	    chk = xpxgenr(cmd.list, &Z, datainfo, 0, 1);
-	}
-	if (chk < 0) {
-	    pprintf(prn, _("Failed to generate squares\n"));
-	    err = 1;
-	} else {
-	    pprintf(prn, _("Squares generated OK\n"));
-	    varlist(datainfo, prn);
 	}
 	break;
 

@@ -29,12 +29,6 @@ enum ur_codes {
     UR_TREND_SQUARED
 };
 
-int list_diffgenr (const LIST list, 
-		   double ***pZ, DATAINFO *pdinfo);
-
-int list_ldiffgenr (const LIST list, 
-		    double ***pZ, DATAINFO *pdinfo);
-
 int simple_var (int order, const LIST list, 
 		double ***pZ, DATAINFO *pdinfo,
 		int pause, gretlopt opts, PRN *prn);

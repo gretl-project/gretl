@@ -2153,7 +2153,7 @@ MODEL tsls_func (LIST list, int pos_in, double ***pZ, DATAINFO *pdinfo,
 
 static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 {
-    int i, j, t, nxpx;
+    int i, k, t, nxpx;
     int oldv = pdinfo->v;
     int t1 = pdinfo->t1, t2 = pdinfo->t2;
     int *list = NULL;
@@ -2176,44 +2176,34 @@ static int get_hsk_weights (MODEL *pmod, double ***pZ, DATAINFO *pdinfo)
 	}
     }	    
 
-    /* list is first used to hold a list of variables to be
-       squared; it will then be used for the aux regression list;
-       we allocate to the max size of the latter 
-    */
+    /* allocate the aux regression list to the max size that
+       might be needed */
     list = malloc((2 * pmod->list[0]) * sizeof *list);
     if (list == NULL) {
 	return E_ALLOC;
     }
 
-    /* construct the list of variables to square */
-    j = 1;
-    list[0] = 0;
+    list[0] = pmod->list[0];
+    list[1] = oldv; /* the newly added uhat squared */
     for (i=2; i<=pmod->list[0]; i++) {
-	if (pmod->list[i] != 0) {
-	    list[j++] = pmod->list[i];
-	    list[0] += 1;
-	}
+	/* transcribe original independent vars */
+	list[i] = pmod->list[i];
     }
 
-    /* generate the required squares */
-    nxpx = xpxgenr(list, pZ, pdinfo, 0, 0);
-    if (nxpx < 1) {
-	printf(_("generation of squares failed\n"));
-	free(list);
-	return E_SQUARES;
-    } 
+    k = list[0];
+    /* now add squares of original independent variables */
+    for (i=2; i<=pmod->list[0]; i++) {
+	int sqnum, vi = pmod->list[i];
 
-    /* build the auxiliary regression list */
-    list[0] = pmod->list[0] + nxpx;
-    list[1] = oldv;
-    j = 1;
-    for (i=2; i<=list[0]; i++) {
-	if (i <= pmod->list[0]) {
-	    list[i] = pmod->list[i];
-	} else {
-	    list[i] = oldv + j++;
+	if (vi == 0) {
+	    continue;
+	}
+	sqnum = xpxgenr(vi, vi, pZ, pdinfo);
+	if (sqnum > 0 && !var_already_there(pmod, *pZ, sqnum)) {
+	    list[++k] = sqnum;
 	}
     }
+    list[0] = k;
 
     pdinfo->t1 = pmod->t1;
     pdinfo->t2 = pmod->t2;
@@ -2526,9 +2516,9 @@ static int var_already_there (MODEL *pmod, double **Z, int testv)
 int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, 
 		 PRN *prn, GRETLTEST *test)
 {
-    int lo, ncoeff, yno, i, t, check = 0;
+    int lo, ncoeff, yno, i, k, t, check = 0;
     int shrink, v = pdinfo->v;
-    int *tmplist = NULL, *list = NULL;
+    int *list = NULL;
     double zz;
     MODEL white;
     int err = 0;
@@ -2564,52 +2554,37 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 	strcpy(pdinfo->varname[v], "uhatsq");
 
-	tmplist = gretl_list_new((pmod->ifc)? lo - 2 : lo - 1);
-	if (tmplist == NULL) {
+	list = malloc(2 * pmod->ncoeff + 3);
+	if (list == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    for (i=1; i<=tmplist[0]; i++) {
-		tmplist[i] = pmod->list[i + 1 + pmod->ifc];
+	    list[0] = pmod->list[0];
+	    list[1] = v; /* the newly added uhat squared */
+	    for (i=2; i<=pmod->list[0]; i++) {
+		/* transcribe original independent vars */
+		list[i] = pmod->list[i];
 	    }
 	}
     }
 
     if (!err) {
-	/* now add squares of independent variables */
-	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
-	if (check < 1) {
-	    fprintf(stderr, I_("generation of squares failed\n"));
-	    err = E_SQUARES;
-	}
-    }
+	k = list[0];
+	/* now add squares of original independent variables */
+	for (i=2; i<=pmod->list[0]; i++) {
+	    int sqnum, vi = pmod->list[i];
 
-    if (!err) {
-	tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
-	if (tmplist == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    int k = 1;
-
-	    tmplist[0] = pdinfo->v - v - 1; 
-	    for (i=1; i<=tmplist[0]; i++) {
-		/* check here for identical vars? */
-		if (!var_already_there(pmod, *pZ, i + v)) { 
-		    tmplist[k++] = i + v;
-		}
+	    if (vi == 0) {
+		continue;
 	    }
-	    tmplist[0] = k - 1;
+	    sqnum = xpxgenr(vi, vi, pZ, pdinfo);
+	    if (sqnum > 0 && !var_already_there(pmod, *pZ, sqnum)) {
+		list[++k] = sqnum;
+	    }
 	}
+	list[0] = k;
     }
 
     if (!err) {
-	list = gretl_list_add(pmod->list, tmplist, &err);
-	if (err) {
-	    fprintf(stderr, I_("didn't add to list\n"));
-	}
-    }
-
-    if (!err) {
-	list[1] = v; 
 	/* run auxiliary regression */
 	white = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.);
 	err = white.errcode;
@@ -2637,7 +2612,6 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	dataset_drop_vars(shrink, pZ, pdinfo);
     }
 
-    free(tmplist);
     free(list);
 
     return err;

@@ -773,155 +773,6 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo, int square)
     return index;
 }
 
-/* Given an "ordinary" variable name, construct the name of the
-   corresponding first difference and find its ID number
-*/
-
-static int diffvarnum (int v, const DATAINFO *pdinfo)
-{
-    char diffname[VNAMELEN];
-
-    strcpy(diffname, "d_");
-    strncat(diffname, pdinfo->varname[v], 8); /* or 6 */
-
-    return varindex(pdinfo, diffname);
-}
-
-/* ......................................................  */
-
-static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo,
-		     int logdiff)
-{
-    char s[32];
-    int t, t1, n = pdinfo->n, v = pdinfo->v;
-    double x0, x1;
-
-    /* compose the varname */
-    if (logdiff) {
-	strcpy(s, "ld_");
-    } else {
-	strcpy(s, "d_");
-    }
-    strncat(s, pdinfo->varname[iv], 8);
-
-    /* "s" should now contain the new variable name --
-     check whether it already exists: if so, get out */
-    if (varindex(pdinfo, s) < v) {
-	return 0;
-    }
-
-    if (dataset_add_vars(1, pZ, pdinfo)) {
-	return E_ALLOC;
-    }
-
-    for (t=0; t<n; t++) {
-	(*pZ)[v][t] = NADBL;
-    }
-
-    t1 = (pdinfo->t1 > 1)? pdinfo->t1 : 1;
-
-    for (t=t1; t<=pdinfo->t2; t++) {
-	if (pdinfo->time_series == STACKED_TIME_SERIES &&
-	    panel_unit_first_obs(t, pdinfo)) {
-	    continue;
-	}
-	x0 = (*pZ)[iv][t];
-	if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	    x1 = (t - pdinfo->pd >= 0)? (*pZ)[iv][t-pdinfo->pd] : NADBL;
-	} else {
-	    x1 = (*pZ)[iv][t-1];
-	}
-	if (logdiff) {
-	    if (!na(x0) && !na(x1) && x0 > 0 && x1 > 0) {
-		(*pZ)[v][t] = log(x0) - log(x1);
-	    }
-	} else {
-	    if (!na(x0) && !na(x1)) {
-		(*pZ)[v][t] = x0 - x1;
-	    }
-	}
-    }
-
-    strcpy(pdinfo->varname[v], s);
-    sprintf(VARLABEL(pdinfo, v), 
-	    ((logdiff)? _("%s = log difference of %s") : 
-	    _("%s = first difference of %s")),
-	    pdinfo->varname[v], pdinfo->varname[iv]);
-	    
-    return 0;
-}
-
-/**
- * list_diffgenr:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generate first-differences of the variables in @list, and add them
- * to the data set.
- *
- * Returns: 0 on successful completion, 1 on error.
- *
- */
-
-int list_diffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i;
-    
-    for (i=1; i<=list[0]; i++) {
-	if (diffgenr(list[i], pZ, pdinfo, 0)) return 1;
-    }
-    return 0;
-}
-
-/**
- * list_ldiffgenr:
- * @list: list of variables to process.
- * @pZ: pointer to data matrix.
- * @pdinfo: data information struct.
- *
- * Generate log-differences of the variables in @list, and add them
- * to the data set.
- *
- * Returns: 0 on successful completion, 1 on error.
- *
- */
-
-int list_ldiffgenr (const LIST list, double ***pZ, DATAINFO *pdinfo)
-{
-    int i;
-    
-    for (i=1; i<=list[0]; i++) {
-	if (diffgenr(list[i], pZ, pdinfo, 1)) return 1;
-    }
-    return 0;
-}
-
-/**
- * lagvarnum:
- * @iv: ID number of the variable.
- * @lag: Desired lag length.
- * @pdinfo: data information struct.
- *
- * Given an "ordinary" variable, construct the name of the
- * corresponding lagged variable and find its ID number.
- *
- * Returns: the ID number of the lagged variable.
- *
- */
-
-static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
-{
-    char lagname[16], ext[6];
-
-    *lagname = '\0';
-    strncat(lagname, pdinfo->varname[iv], 8);
-    sprintf(ext, "_%d", lag);
-    strcat(lagname, ext);
-
-    return varindex(pdinfo, lagname);
-}
-
 /* ...................................................................  */
 
 static void reset_list (int *list1, int *list2)
@@ -1206,7 +1057,7 @@ static int real_var (int order, const LIST inlist,
 	    depvars[neqns] = list[i];
 	    neqns++;
 	    for (l=1; l<=order; l++) {
-		int lnum = laggenr(list[i], l, 1, pZ, pdinfo);
+		int lnum = laggenr(list[i], l, pZ, pdinfo);
 
 		if (lnum > 0) {
 		    varlist[idx] = lnum; 
@@ -1573,14 +1424,16 @@ static int *adf_prepare_vars (int order, int varno,
     pdinfo->t1 = 0;
 
     /* generate first difference of the given variable */
-    if (diffgenr(varno, pZ, pdinfo, 0)) {
+    list[1] = diffgenr(varno, pZ, pdinfo, 0);
+    if (list[1] < 0) {
 	pdinfo->t1 = orig_t1;
 	free(list);
 	return NULL;
     }	
 
     /* generate lag of given var */
-    if (laggenr(varno, 1, 1, pZ, pdinfo) < 0) {
+    list[2] = laggenr(varno, 1, pZ, pdinfo); 
+    if (list[2] < 0) {
 	pdinfo->t1 = orig_t1;
 	free(list);
 	return NULL;
@@ -1589,13 +1442,9 @@ static int *adf_prepare_vars (int order, int varno,
     /* undo reset sample */
     pdinfo->t1 = orig_t1;
 
-    /* dependent var is the first diff */
-    list[1] = diffvarnum(varno, pdinfo);
-    list[2] = lagvarnum(varno, 1, pdinfo);
-
     /* generate lags of difference for augmented test */
     for (i=1; i<=order && !err; i++) {
-	int lnum = laggenr(list[1], i, 1, pZ, pdinfo);
+	int lnum = laggenr(list[1], i, pZ, pdinfo);
 
 	if (lnum < 0) {
 	    fprintf(stderr, "Error generating lag variable\n");
@@ -1812,29 +1661,35 @@ has_time_trend (LIST varlist, double ***pZ, DATAINFO *pdinfo)
     tlist[2] = 0;
 
     for (i=1; i<=varlist[0]; i++) {
+	int vi = varlist[i];
 	double tstat;
-	int v, vl;
 
-	v = varlist[i];
-	if (v == 0) continue;
-	if (diffgenr(v, pZ, pdinfo, 0)) {
+	if (varlist[vi] == 0) {
+	    continue;
+	}
+
+	tlist[1] = vi;
+
+	tlist[3] = laggenr(vi, 1, pZ, pdinfo); /* diffgenr?? */
+	if (tlist[3] < 0) {
 	    trends = -1;
 	    break;
 	}
-	vl = lagvarnum(v, 1, pdinfo);
-	tlist[1] = v;
-	tlist[3] = vl;
+
 	tmod = lsq(tlist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (tmod.errcode) {
 	    trends = -1;
 	    clear_model(&tmod);
 	    break;
 	}
+
 	tstat = tmod.coeff[0] / tmod.sderr[0];
 	if (tprob(tstat, tmod.dfd) < 0.05) {
 	    trends = 1;
 	}
+
 	clear_model(&tmod);
+
 	if (trends) break;
     }
 
@@ -1987,12 +1842,17 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* we're assuming that the list we are fed is in levels */
     resids.levels_list = malloc((1 + list[0]) * sizeof *list);
-    if (resids.levels_list == NULL) return E_ALLOC;
-    resids.levels_list[0] = list[0];
+    if (resids.levels_list == NULL) {
+	return E_ALLOC;
+    }
 
     varlist = malloc((2 + list[0]) * sizeof *list);
-    if (varlist == NULL) return E_ALLOC;
-    varlist[0] = list[0];
+    if (varlist == NULL) {
+	free(resids.levels_list);
+	return E_ALLOC;
+    }
+
+    resids.levels_list[0] = varlist[0] = list[0];
 
     j = 1;
     for (i=1; i<=list[0]; i++) {
@@ -2003,18 +1863,26 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    hasconst = 1;
 	    continue;
 	}
-	lnum = laggenr(list[i], 1, 1, pZ, pdinfo);
-	/* FIXME: handle laggenr error */
-	if (lnum > 0) {
-	    resids.levels_list[j++] = lnum;
+	lnum = laggenr(list[i], 1, pZ, pdinfo);
+	if (lnum < 0) {
+	    free(varlist);
+	    free(resids.levels_list);
+	    return E_DATA;
 	}
+	resids.levels_list[j++] = lnum;
     }
 
     /* now get differences and put them into list */
     for (i=1; i<=list[0]; i++) {
-	if (list[i] == 0) continue;
-	diffgenr(list[i], pZ, pdinfo, 0);
-	varlist[i] = diffvarnum(list[i], pdinfo);
+	if (list[i] == 0) {
+	    continue;
+	}
+	varlist[i] = diffgenr(list[i], pZ, pdinfo, 0);
+	if (varlist[i] < 0) {
+	    free(varlist);
+	    free(resids.levels_list);
+	    return E_DATA;
+	}
     }
 
     if (!hasconst) {
@@ -2127,7 +1995,6 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
-
 
 int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 {

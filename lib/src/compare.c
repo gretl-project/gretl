@@ -261,11 +261,11 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 {
     COMPARE add;  
     MODEL aux;
-    int *newlist = NULL, *tmplist = NULL;
-    int i, j, t, listlen;
+    int *newlist = NULL;
+    int i, t;
     const int n = pdinfo->n, orig_nvar = pdinfo->v; 
     double trsq = 0.0;
-    int newvars = 0, err = 0;
+    int err = 0;
 
     if (!command_ok_for_model(ADD, orig->ci)) {
 	return E_NOTIMP;
@@ -277,12 +277,16 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 
     /* check for changes in original list members */
     err = list_members_replaced(orig->list, pdinfo, orig->ID);
-    if (err) return err;
+    if (err) {
+	return err;
+    }
 
     /* if adding specified vars, build the list */
     if (addvars != NULL) {
 	newlist = gretl_list_add(orig->list, addvars, &err);
-	if (err) return err;
+	if (err) {
+	    return err;
+	}
     }
 
     /* temporarily re-impose the sample that was in force when the
@@ -292,49 +296,50 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
     gretl_model_init(&aux);
 
     if (addvars == NULL) {
-	listlen = orig->list[0] - orig->ifc;
-	tmplist = gretl_list_new(listlen - 1);
-	if (tmplist == NULL) {
-	    err = E_ALLOC;
-	} else {
-	    j = 2;
-	    for (i=1; i<=tmplist[0]; i++) {
-		if (orig->list[j] == 0) j++;
-		tmplist[i] = orig->list[j++];
+	/* no specific list: trying squares or logs */
+	newlist = malloc((2 * (orig->ncoeff + 1)) * sizeof *newlist);
+	if (newlist != NULL) {
+	    int k = orig->list[0];
+
+	    for (i=0; i<=orig->list[0]; i++) {
+		newlist[i] = orig->list[i];
 	    }
-	    /* no cross-products yet */
-	    if (aux_code == AUX_SQ) { 
-		/* add squares of original variables */
-		newvars = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
-		if (newvars < 0) {
-		    fprintf(stderr, "gretl: generation of squares failed\n");
-		    free(tmplist);
-		    err = E_SQUARES;
+
+	    for (i=2; i<=orig->list[0]; i++) {
+		int newv = 0, vi = orig->list[i];
+
+		if (vi == 0) {
+		    continue;
+		}
+
+		if (aux_code == AUX_SQ) { 
+		    newv = xpxgenr(vi, vi, pZ, pdinfo);
+		} else if (aux_code == AUX_LOG) {
+		    newv = loggenr(vi, pZ, pdinfo);
+		}
+
+		if (newv > 0) {
+		    newlist[++k] = newv;
 		}
 	    }
-	    else if (aux_code == AUX_LOG) { /* add logs of orig vars */
-		newvars = logs(tmplist, pZ, pdinfo);
-		if (newvars < 0) {
+
+	    newlist[0] = k;
+
+	    if (k == orig->list[0]) {
+		/* no vars added */
+		if (aux_code == AUX_SQ) {
+		    fprintf(stderr, "gretl: generation of squares failed\n");
+		    err = E_SQUARES;
+		} else if (aux_code == AUX_LOG) {
 		    fprintf(stderr, "gretl: generation of logs failed\n");
-		    free(tmplist);
 		    err = E_LOGS;
 		}
-	    }	    
-	    /* now construct an "addvars" list including all the
-	       vars that were just generated -- re-use tmplist */
-	    if (!err) {
-		tmplist = realloc(tmplist, (newvars + 2) * sizeof *tmplist);
-		if (tmplist == NULL) {
-		    err = E_ALLOC;
-		} else {
-		    tmplist[0] = pdinfo->v - orig_nvar;
-		    for (i=1; i<=tmplist[0]; i++) { 
-			tmplist[i] = i + orig_nvar - 1;
-		    }
-		    newlist = gretl_list_add(orig->list, tmplist, &err);
-		}
-	    }
-	} /* tmplist != NULL */
+		free(newlist);
+		newlist = NULL;
+	    } 
+	} else {
+	    err = E_ALLOC;
+	}
     }
 
     /* ADD: run an augmented regression, matching the original
@@ -344,9 +349,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	if (new->errcode) {
 	    err = new->errcode;
 	    free(newlist);
-	    if (addvars == NULL) {
-		free(tmplist); 
-	    }
 	    clear_model(new);
 	}
     } /* end if AUX_ADD */
@@ -370,7 +372,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 		err = aux.errcode;
 		fprintf(stderr, "auxiliary regression failed\n");
 		free(newlist);
-		if (addvars == NULL) free(tmplist); 
 	    } else {
 		aux.aux = aux_code;
 		printmodel(&aux, pdinfo, opt, prn);
@@ -416,11 +417,10 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn, opt);
 	} else {
 	    add.dfn = newlist[0] - orig->list[0];
-	    gretl_print_add(&add, tmplist, pdinfo, aux_code, prn, opt);
+	    gretl_print_add(&add, NULL, pdinfo, aux_code, prn, opt);
 	}
 
 	free(newlist);
-	if (addvars == NULL) free(tmplist); 
 
 	/* trash any extra variables generated (squares, logs) */
 	if (pdinfo->v > orig_nvar) {
@@ -921,9 +921,9 @@ int autocorr_test (MODEL *pmod, int order,
 		   double ***pZ, DATAINFO *pdinfo, 
 		   PRN *prn, GRETLTEST *test)
 {
-    int *newlist;
+    int *newlist = NULL;
     MODEL aux;
-    int i, k, t, n = pdinfo->n, v = pdinfo->v; 
+    int i, t, n = pdinfo->n, v = pdinfo->v; 
     double trsq, LMF, lb, pval = 1.0;
     int err = 0;
 
@@ -957,36 +957,36 @@ int autocorr_test (MODEL *pmod, int order,
 
     if (order <= 0) order = pdinfo->pd;
 
-    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1)
+    if (pmod->ncoeff + order >= pdinfo->t2 - pdinfo->t1) {
 	return E_DF;
+    }
 
-    k = order + 1;
-    newlist = malloc((pmod->list[0] + k) * sizeof *newlist);
+    newlist = malloc((pmod->list[0] + order + 1) * sizeof *newlist);
 
     if (newlist == NULL) {
 	err = E_ALLOC;
     } else {
 	newlist[0] = pmod->list[0] + order;
-	for (i=2; i<=pmod->list[0]; i++) newlist[i] = pmod->list[i];
+	for (i=2; i<=pmod->list[0]; i++) {
+	    newlist[i] = pmod->list[i];
+	}
 	if (dataset_add_vars(1, pZ, pdinfo)) {
-	    k = 0;
 	    err = E_ALLOC;
 	}
     }
 
     if (!err) {
 	/* add uhat to data set */
-	for (t=0; t<n; t++)
-	    (*pZ)[v][t] = NADBL;
-	for (t = pmod->t1; t<= pmod->t2; t++)
+	for (t=0; t<n; t++) {
 	    (*pZ)[v][t] = pmod->uhat[t];
+	}
 	strcpy(pdinfo->varname[v], "uhat");
 	strcpy(VARLABEL(pdinfo, v), _("residual"));
 	/* then lags of same */
 	for (i=1; i<=order; i++) {
 	    int lnum;
 
-	    lnum = laggenr(v, i, 1, pZ, pdinfo);
+	    lnum = laggenr(v, i, pZ, pdinfo);
 	    if (lnum < 0) {
 		sprintf(gretl_errmsg, _("lagging uhat failed"));
 		err = E_LAGS;
@@ -1045,7 +1045,7 @@ int autocorr_test (MODEL *pmod, int order,
     }
 
     free(newlist);
-    dataset_drop_vars(k, pZ, pdinfo); 
+    dataset_drop_vars(pdinfo->v - v, pZ, pdinfo); 
     clear_model(&aux); 
 
     if (pval < 0.05 && !gretl_model_get_int(pmod, "robust")) {
