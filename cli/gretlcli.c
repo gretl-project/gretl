@@ -1094,17 +1094,17 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, cmd.list[1], 1);
+	freq = freqdist(&Z, datainfo, cmd.list[1], 1, cmd.opt);
 	if (freq == NULL) {
 	    err = E_ALLOC;
 	    break;
 	}
-	if ((err = get_gretl_errno())) 
+	if ((err = get_gretl_errno())) {
 	    errmsg(err, prn);
-	else {
+	} else {
 	    printfreq(freq, prn); 
 	    if (!batch) {
-		if (plot_freq(freq, NORMAL)) {
+		if (plot_freq(freq, (cmd.opt)? GAMMA : NORMAL)) {
 		    pputs(prn, _("gnuplot command failed\n"));
 		}
 	    }
@@ -1608,7 +1608,8 @@ static void exec_line (char *line, LOOPSET **ploop, PRN *prn)
 	    err = 1;
 	    break;
 	}
-	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff);	
+	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff,
+			OPT_NONE);	
 	dataset_drop_vars(1, &Z, datainfo);
 	if (freq == NULL) {
 	    err = E_ALLOC;

@@ -220,6 +220,7 @@ double doornik_chisq (double skew, double kurt, int n)
  * @varno: ID number of variable to process.
  * @params: degrees of freedom loss (generally = 1 unless we're dealing
  * with the residual from a regression)
+ * @opt: if & OPT_O, compare with gamma distribution, not normal
  *
  * Calculates the frequency distribution for the specified variable.
  *
@@ -228,7 +229,7 @@ double doornik_chisq (double skew, double kurt, int n)
  */
 
 FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
-		    int varno, int params)
+		    int varno, int params, gretlopt opt)
 {
     FREQDIST *freq;
     double *x = NULL;
@@ -247,6 +248,8 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     freq->midpt = NULL;
     freq->endpt = NULL;
     freq->f = NULL;
+    freq->dist = 0;
+    freq->test = NADBL;
 
     x = malloc((pdinfo->t2 - pdinfo->t1 + 1) * sizeof *x);
     if (x == NULL) {
@@ -347,9 +350,16 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (freq->n > 7) {
-	freq->chisqu = doornik_chisq(skew, kurt, freq->n); 
+	if (opt & OPT_O) {
+	    freq->test = lockes_test((*pZ)[varno], pdinfo);
+	    freq->dist = GAMMA;
+	} else {
+	    freq->test = doornik_chisq(skew, kurt, freq->n); 
+	    freq->dist = NORMAL;
+	}
     } else {
-	freq->chisqu = NADBL;
+	freq->test = NADBL;
+	freq->dist = 0;
     }
 
     free(x);

@@ -1614,6 +1614,33 @@ int gnuplot_3d (LIST list, const char *literal,
     return 0;
 }
 
+static int gamma_visible (FREQDIST *freq, double alpha, double beta,
+			  double lambda)
+{
+    double fmax = 0.0, gmax = 0.0;
+    int i;
+
+    for (i=0; i<freq->numbins; i++) { 
+	double x = freq->midpt[i];
+	double f = lambda * freq->f[i];
+	double g = pow(x, alpha - 1.0) * exp(-x/beta) /
+	    (gamma(alpha) * pow(beta, alpha));
+
+#if 1
+	fprintf(stderr, "x = %g, f = %g, g = %g\n", x, f, g);
+#endif
+
+	if (f > fmax) {
+	    fmax = f;
+	}
+	if (g > gmax) {
+	    gmax = g;
+	}
+    }
+
+    return (gmax > .02 * fmax);
+}
+
 /**
  * plot_freq:
  * @freq: frequency distribution struct.
@@ -1630,21 +1657,26 @@ int plot_freq (FREQDIST *freq, int dist)
     double alpha = 0.0, beta = 0.0, lambda = 1.0;
     FILE *fp = NULL;
     int i, K = freq->numbins;
-    char withstring[32];
+    char withstring[32] = {0};
     double plotmin = 0.0, plotmax = 0.0;
     double barwidth = freq->endpt[K-1] - freq->endpt[K-2];
     double barskip = 0.005 * (freq->endpt[K] - freq->endpt[0]);
     int plottype = PLOT_FREQ_SIMPLE;
     int use_boxes = 1;
 
-    if (freq->numbins > 16) barskip /= 2.0;
+    if (freq->numbins > 16) {
+	barskip /= 2.0;
+    }
 
-    if (dist == NORMAL) plottype = PLOT_FREQ_NORMAL;
-    else if (dist == GAMMA) plottype = PLOT_FREQ_GAMMA;
+    if (dist == NORMAL) {
+	plottype = PLOT_FREQ_NORMAL;
+    } else if (dist == GAMMA) {
+	plottype = PLOT_FREQ_GAMMA;
+    }
 
-    if (gnuplot_init(plottype, &fp)) return E_FOPEN;
-
-    *withstring = 0;
+    if (gnuplot_init(plottype, &fp)) {
+	return E_FOPEN;
+    }
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "C");
@@ -1653,19 +1685,21 @@ int plot_freq (FREQDIST *freq, int dist)
     fputs("# frequency plot ", fp);
 
     if (dist) {
+	char testlbl[80];
 	double propn;
 
 	/* find the endpts that straddle the mean... */
-	for (i=0; i<K ; i++) 
-	    if (freq->endpt[i] > freq->xbar) break;
+	for (i=0; i<K ; i++) {
+	    if (freq->endpt[i] > freq->xbar) {
+		break;
+	    }
+	}
 
 	/* OK, they are k-1 and k: now find the proportion of the 
 	   theoretical distribution they enclose, and calculate a
 	   height adjustment factor for the impulses */
 
 	if (dist == NORMAL) {
-	    char chilbl[80];
-
 	    fputs("(against normal)\n", fp);
 
 	    propn = normal((freq->endpt[i-1] - freq->xbar)/freq->sdx) -
@@ -1683,17 +1717,16 @@ int plot_freq (FREQDIST *freq, int dist)
 		plotmax = freq->xbar + 3.3 * freq->sdx;
 	    }
 
-	    if (!na(freq->chisqu)) {
+	    if (!na(freq->test)) {
 		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
 			I_("Test statistic for normality"),
 			label_front());
-		sprintf(chilbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
-			freq->chisqu, chisq(freq->chisqu, 2));
+		sprintf(testlbl, I_("Chi-squared(2) = %.3f, pvalue %.5f"), 
+			freq->test, chisq(freq->test, 2));
 		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
-			chilbl, label_front());
+			testlbl, label_front());
 	    }	
-	}
-	else if (dist == GAMMA) {
+	} else if (dist == GAMMA) {
 	    double xx, height, var = freq->sdx * freq->sdx;
 
 	    fputs("(against gamma)\n", fp);
@@ -1708,20 +1741,35 @@ int plot_freq (FREQDIST *freq, int dist)
 	    xx = (freq->endpt[i] + freq->endpt[i-1])/2.0;
 	    height = pow(xx, alpha - 1.0) * exp(-xx / beta) /
 		(cephes_gamma(alpha) * pow(beta, alpha));
-	    lambda = height/(freq->n * propn);
+	    lambda = height / (freq->n * propn);
 	    fprintf(fp, "beta = %g\n", beta);
 	    fprintf(fp, "alpha = %g\n", alpha);
 	    plotmin = 0.0;
 	    plotmax = freq->xbar + 4.0 * freq->sdx;
+
+	    if (!na(freq->test)) {
+		fprintf(fp, "set label '%s:' at graph .03, graph .97%s\n",
+			I_("Test statistic for gamma"),
+			label_front());
+		sprintf(testlbl, I_("z = %.3f, pvalue %.5f"), 
+			freq->test, 2.0 * normal(fabs(freq->test)));
+		fprintf(fp, "set label '%s' at graph .03, graph .93%s\n", 
+			testlbl, label_front());
+	    }	
 	}
 
 	/* adjust min, max if needed */
-	if (freq->midpt[0] < plotmin) plotmin = freq->midpt[0];
-	if (freq->midpt[K-1] > plotmax) plotmax = freq->midpt[K-1];
+	if (freq->midpt[0] < plotmin) {
+	    plotmin = freq->midpt[0];
+	}
+	if (freq->midpt[K-1] > plotmax) {
+	    plotmax = freq->midpt[K-1];
+	}
 
 	fprintf(fp, "set xrange [%.8g:%.8g]\n", plotmin, plotmax);
 	fputs("set key right top\n", fp);
-    } else { /* plain frequency plot */
+    } else { 
+	/* plain frequency plot */
 	fputs("(simple)\n", fp);
 
 	lambda = 1.0 / freq->n;
@@ -1734,7 +1782,9 @@ int plot_freq (FREQDIST *freq, int dist)
     }
 
     if (isnan(lambda)) {
-	if (fp) fclose(fp);
+	if (fp != NULL) {
+	    fclose(fp);
+	}
 	return 1;
     }
 
@@ -1748,6 +1798,10 @@ int plot_freq (FREQDIST *freq, int dist)
 	strcat(withstring, "w impulses");
     }
 
+    if (dist == GAMMA && !gamma_visible(freq, alpha, beta, lambda)) {
+	dist = 0;
+    }
+
     if (!dist) {
 	fprintf(fp, "plot '-' using 1:($2) %s\n", withstring);
     } else if (dist == NORMAL) {
@@ -1756,16 +1810,13 @@ int plot_freq (FREQDIST *freq, int dist)
 		"(1/(sqrt(2*pi)*sigma)*exp(-(x-mu)**2/(2*sigma**2))) "
 		"title 'N(%.4f,%.4f)' w lines\n",
 		freq->varname, withstring, freq->xbar, freq->sdx);
-    }
-    else if (dist == GAMMA) {
+    } else if (dist == GAMMA) {
 	fputs("plot \\\n", fp);
 	fprintf(fp, "'-' using 1:($2) title '%s' %s ,\\\n"
 		"x**(alpha-1.0)*exp(-x/beta)/(gamma(alpha)*(beta**alpha)) "
 		"title 'gamma(%.4f,%.4f)' w lines\n",
 		freq->varname, withstring, alpha, beta); 
     }
-
-    /* send sample data inline */
 
     for (i=0; i<K; i++) { 
 	fprintf(fp, "%.8g %.8g\n", freq->midpt[i], lambda * freq->f[i]);
@@ -1777,7 +1828,9 @@ int plot_freq (FREQDIST *freq, int dist)
     setlocale(LC_NUMERIC, "");
 #endif
 
-    if (fp) fclose(fp);
+    if (fp != NULL) {
+	fclose(fp);
+    }
 
     return gnuplot_make_graph();
 }

@@ -598,7 +598,7 @@ void do_menu_op (gpointer data, guint action, GtkWidget *widget)
 	matrix_print_corr(obj, datainfo, prn);
 	break;
     case FREQ:
-	obj = freqdist(&Z, datainfo, mdata->active_var, 1);
+	obj = freqdist(&Z, datainfo, mdata->active_var, 1, OPT_NONE);
 	if (freq_error(obj, NULL)) {
 	    gretl_print_destroy(prn);
 	    return;
@@ -2599,9 +2599,9 @@ static void normal_test (GRETLTEST *test, FREQDIST *freq)
     strcpy(test->h_0, N_("error is normally distributed"));
     test->param[0] = 0;
     test->teststat = GRETL_TEST_NORMAL_CHISQ;
-    test->value = freq->chisqu;
+    test->value = freq->test;
     test->dfn = 2;
-    test->pvalue = chisq(freq->chisqu, 2);
+    test->pvalue = chisq(freq->test, 2);
 }
 
 /* ........................................................... */
@@ -2621,7 +2621,7 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 	return;
     }
 
-    freq = freqdist(&Z, datainfo, datainfo->v - 1, pmod->ncoeff);
+    freq = freqdist(&Z, datainfo, datainfo->v - 1, pmod->ncoeff, OPT_NONE);
     dataset_drop_vars(1, &Z, datainfo);
     if (freq_error(freq, NULL)) {
 	gretl_print_destroy(prn);
@@ -2656,18 +2656,22 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
 void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 {
     FREQDIST *freq;
+    gretlopt opt = (dist == GAMMA)? OPT_O : OPT_NONE;
 
     if (mdata->active_var < 0) return;
+
     if (mdata->active_var == 0) {
 	errbox(_("This command is not applicable to the constant"));
 	return;
     }
 
     clear(line, MAXLEN);
-    sprintf(line, "freq %s", datainfo->varname[mdata->active_var]);
+    sprintf(line, "freq %s%s", datainfo->varname[mdata->active_var],
+	    (dist == GAMMA)? " --gamma" : "");
+
     if (verify_and_record_command(line)) return;
 
-    freq = freqdist(&Z, datainfo, mdata->active_var, 1);
+    freq = freqdist(&Z, datainfo, mdata->active_var, 1, opt);
 
     if (!freq_error(freq, NULL)) { 
 	if (dist == GAMMA && freq->midpt[0] < 0.0 && freq->f[0] > 0) {
@@ -5408,13 +5412,13 @@ int gui_exec_line (char *line,
 	break;
 		
     case FREQ:
-	freq = freqdist(&Z, datainfo, cmd.list[1], 1);
+	freq = freqdist(&Z, datainfo, cmd.list[1], 1, cmd.opt);
 	if ((err = freq_error(freq, prn))) {
 	    break;
 	}
 	printfreq(freq, outprn);
 	if (exec_code == CONSOLE_EXEC) {
-	    if (plot_freq(freq, NORMAL)) {
+	    if (plot_freq(freq, (cmd.opt)? GAMMA : NORMAL)) {
 		pprintf(prn, _("gnuplot command failed\n"));
 	    }
 	}
@@ -5879,7 +5883,8 @@ int gui_exec_line (char *line,
 	    err = 1;
 	    break;
 	}
-	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff);
+	freq = freqdist(&Z, datainfo, datainfo->v - 1, (models[0])->ncoeff,
+			OPT_NONE);
 	dataset_drop_vars(1, &Z, datainfo);
 	if (!(err = freq_error(freq, prn))) {
 	    if (rebuild) {

@@ -391,11 +391,20 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	pputc(prn, '\n');
     }
 
-    if (!na(freq->chisqu)) {
-	pprintf(prn, "\n%s:\n", _("Test for null hypothesis of normal distribution"));
-	pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
-		_("Chi-square"), freq->chisqu, 
-		_("with p-value"), chisq(freq->chisqu, 2));
+    if (!na(freq->test)) {
+	if (freq->dist == NORMAL) {
+	    pprintf(prn, "\n%s:\n", 
+		    _("Test for null hypothesis of normal distribution"));
+	    pprintf(prn, "%s(2) = %.3f %s %.5f\n", 
+		    _("Chi-square"), freq->test, 
+		    _("with p-value"), chisq(freq->test, 2));
+	} else if (freq->dist == GAMMA) {
+	    pprintf(prn, "\n%s:\n", 
+		    _("Test for null hypothesis of gamma distribution"));
+	    pprintf(prn, "z = %.3f %s %.5f\n", 
+		    freq->test, 
+		    _("with p-value"), 2.0 * normal(fabs(freq->test)));
+	}	    
     }
 }
 

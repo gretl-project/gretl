@@ -19,13 +19,16 @@
 
 typedef struct {
     char varname[VNAMELEN];  /* for ID purposes */
+    int dist;                /* code for theoretical distribution */
     int numbins;             /* number of bins or intervals */
     double xbar, sdx;        /* mean and std dev of variable */
     double *midpt;           /* array of midpoints of intervals */
     double *endpt;           /* array of endpoints of intervals */
     int *f;                  /* frequencies in the intervals */
-    double chisqu;           /* Chi-squared statistic for testing
-                                for a Gaussian distribution */
+    double test;             /* either Chi-squared statistic for testing
+                                for a Gaussian distribution, or z statistic
+			        for testing for Gamma dist.
+			     */
     int n;
     int t1, t2;
 } FREQDIST;
@@ -35,7 +38,7 @@ typedef struct {
 void free_freq (FREQDIST *freq);
 
 FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo, 
-		    int varno, int params);
+		    int varno, int params, gretlopt opt);
 
 int corrgram (int varno, int order, 
 	      double ***pZ, DATAINFO *pdinfo, 

@@ -479,6 +479,8 @@ static int *make_ols_list (const int *list)
     return olist;
 }
 
+#define GARCH_SCALE_SIGMA 1
+
 /* the driver function for the plugin */
 
 MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
@@ -511,17 +513,31 @@ MODEL garch_model (int *cmdlist, double ***pZ, DATAINFO *pdinfo,
 	}
     }
 
-#if 1
+#if GARCH_SCALE_SDY
     if (!err) {
 	yno = ols_list[1];
-	scale = gretl_stddev(model.t1, model.t2, (*pZ)[yno]);
+	scale = model.sdy;
 	for (t=0; t<pdinfo->n; t++) {
 	    (*pZ)[yno][t] /= scale;
 	}
 	for (t=0; t<model.ncoeff; t++) {
 	    model.coeff[t] *= scale;
 	}
-	/* model.sigma *= scale; */
+	model.ess /= scale * scale;
+	model.sigma = sqrt(model.ess / model.dfd);
+    } 
+#elif GARCH_SCALE_SIGMA
+    if (!err) {
+	yno = ols_list[1];
+	scale = model.sigma;
+	for (t=0; t<pdinfo->n; t++) {
+	    (*pZ)[yno][t] /= scale;
+	}
+	for (t=0; t<model.ncoeff; t++) {
+	    model.coeff[t] *= scale;
+	}
+	model.ess /= scale * scale;
+	model.sigma = 1.0;
     } 
 #endif
 

@@ -1,5 +1,5 @@
 /* gretl - The Gnu Regression, Econometrics and Time-series Library
- * Copyright (C) 1999-2000 Ramu Ramanathan and Allin Cottrell
+ * Copyright (C) 1999-2004 Allin Cottrell
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License 
@@ -17,14 +17,17 @@
  * Boston, MA 02111-1307, USA.
  */
 
-/* nonparam.h for gretl */
-
-/* functions follow */
+#ifndef NONPARAM_H
+#define NONPARAM_H
  
 int spearman (const LIST list, 
 	      double **Z, const DATAINFO *pdinfo,
 	      gretlopt opt, PRN *prn);
 
+double lockes_test (const double *x, const DATAINFO *pdinfo);
+
 int runs_test (int varno, double **Z, const DATAINFO *pdinfo, 
 	       PRN *prn);
+
+#endif /* NONPARAM_H */
 
