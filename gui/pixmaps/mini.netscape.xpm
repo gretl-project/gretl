@@ -5,7 +5,7 @@ static char *mini_netscape_xpm[] = {
 /* colors */
 ". c #ffffff",
 "# c #000000",
-"b c Gray50",
+"b c #7f7f7f",
 "i c #00008b",
 "  c None",
 /* pixels */

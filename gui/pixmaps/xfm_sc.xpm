@@ -1,10 +1,10 @@
 /* XPM */
 static char * dot_sc_xpm[] = {
 "32 32 4 1 0 0",
-" 	m white	c white",
-".	m black	c black",
-"X	c wheat",
-"o	m white	c red",
+" 	m #ffffff c #ffffff",
+".	m #000000 c #000000",
+"X	c #dddddd",
+"o	m #ffffff c #ff0000",
 "      .                         ",
 "      .   ..   .  ...   .   ..  ",
 "      .  .  .      . .     .  . ",

@@ -19,6 +19,12 @@
 
 /* statistical tables for gretl */
 
+#ifdef OS_WIN32
+# include "../winconfig.h"
+#else
+# include "../config.h"
+#endif
+
 #include "libgretl.h"
 
 typedef struct {

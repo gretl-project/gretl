@@ -1,9 +1,9 @@
 /* XPM */
 static char * xfm_info_xpm[] = {
 "32 32 5 1",
-" 	c white",
+" 	c #ffffffffffff",
 ".	s none c none",
-"X	c black",
+"X	c #000000000000",
 "o	c #BEFBBEFBBEFB",
 "O	c #8617CF3CEBAD",
 "....XXXXXXXXXXXXXXXXXX..........",

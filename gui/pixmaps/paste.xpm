@@ -2,10 +2,10 @@
 static char *paste_xpm[] = {
 /* columns rows colors chars-per-pixel */
 "24 24 5 1",
-"  c Gray0",
+"  c #000000000000",
 ". c #62ee62ee62ee",
-"X c Gray68",
-"o c Gray82",
+"X c #ad91ad91ad91",
+"o c #d1ebd1ebd1eb",
 "O c None",
 /* pixels */
 "OOOOOOOOOOOOOOOOOOOOOOOO",

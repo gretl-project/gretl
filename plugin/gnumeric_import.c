@@ -17,8 +17,15 @@
  *
  */
 
-#include "libgretl.h"
 #include <gtk/gtk.h>
+
+#ifdef G_OS_WIN32
+# include "../winconfig.h"
+#else
+# include "../config.h"
+#endif
+
+#include "libgretl.h"
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include "importer.h"
@@ -196,22 +203,22 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 		    vtype = atoi(tmp);
 		    free(tmp);
 		} else { /* a formula perhaps? */
-		    sprintf(errbuf, "Couldn't get value for col %d, row %d.\n"
-			    "Maybe there's a formula in the sheet?",
+		    sprintf(errbuf, _("Couldn't get value for col %d, row %d.\n"
+			    "Maybe there's a formula in the sheet?"),
 			    i, t);
 		    err = 1;
 		}
 		/* check the top-left cell */
 		if (!err && i_real == 0 && t_real == 0) {
 		    if (VTYPE_IS_NUMERIC(vtype)) {
-			sprintf(errbuf, "Expected to find a variable name");
+			sprintf(errbuf, _("Expected to find a variable name"));
 			err = 1;
 		    }
 		}
 		else if (! err && i_real >= 1 && t_real == 0 && 
 			 !(vtype == VALUE_STRING)) {
 		    /* ought to be a varname here */
-		    sprintf(errbuf, "Expected to find a variable name");
+		    sprintf(errbuf, _("Expected to find a variable name"));
 		    err = 1;
 		}
 		if (!err && (tmp = xmlNodeGetContent(p))) {
@@ -243,11 +250,11 @@ int wsheet_parse_cells (xmlNodePtr node, wsheet *sheet)
 	    if (toprows[t]) sheet->text_rows += 1;
 
 	if (sheet->text_rows > 1) {
-	    sprintf(errbuf, "Found an extraneous row of text");
+	    sprintf(errbuf, _("Found an extraneous row of text"));
 	    err = 1;
 	}
 	if (sheet->text_cols > 1) {
-	    sprintf(errbuf, "Found an extraneous column of text");
+	    sprintf(errbuf, _("Found an extraneous column of text"));
 	    err = 1;
 	}
     }
@@ -270,19 +277,19 @@ static int wsheet_get_data (const char *fname, wsheet *sheet)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(errbuf, "xmlParseFile failed on %s", fname);
+	sprintf(errbuf, _("xmlParseFile failed on %s"), fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(errbuf, "%s: empty document", fname);
+        sprintf(errbuf, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        sprintf(errbuf, "File of the wrong type, root node not Workbook");
+        sprintf(errbuf, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -372,19 +379,19 @@ static int wbook_get_info (const char *fname, wbook *book)
 
     doc = xmlParseFile(fname);
     if (doc == NULL) {
-	sprintf(errbuf, "xmlParseFile failed on %s", fname);
+	sprintf(errbuf, _("xmlParseFile failed on %s"), fname);
 	return 1;
     }
 
     cur = xmlDocGetRootElement(doc);
     if (cur == NULL) {
-        sprintf(errbuf, "%s: empty document", fname);
+        sprintf(errbuf, _("%s: empty document"), fname);
 	xmlFreeDoc(doc);
 	return 1;
     }
 
     if (xmlStrcmp(cur->name, (UTF) "Workbook")) {
-        sprintf(errbuf, "File of the wrong type, root node not Workbook");
+        sprintf(errbuf, _("File of the wrong type, root node not Workbook"));
 	xmlFreeDoc(doc);
 	return 1;
     }
@@ -485,13 +492,13 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (wbook_get_info(fname, &book)) {
-	sprintf(errbuf, "Failed to get workbook info");
+	sprintf(errbuf, _("Failed to get workbook info"));
 	err = 1;
     } else
 	wbook_print_info(&book);
 
     if (book.nsheets == 0) {
-	sprintf(errbuf, "No worksheets found");
+	sprintf(errbuf, _("No worksheets found"));
     }
     else if (book.nsheets > 1) {
 	wsheet_menu(&book, 1);
@@ -509,7 +516,7 @@ int wbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     if (!err && sheetnum >= 0) {
 	fprintf(stderr, "Getting data...\n");
 	if (wsheet_setup(&sheet, &book, sheetnum)) {
-	    sprintf(errbuf, "error in wsheet_setup()");
+	    sprintf(errbuf, _("error in wsheet_setup()"));
 	    err = 1;
 	} else {
 	    err = wsheet_get_data(fname, &sheet);

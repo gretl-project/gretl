@@ -2,9 +2,9 @@
 static char * text_xpm[] = {
 "32 32 4 1 0 0",
 " 	s None	c None",
-".	c black",
-"X	c white",
-"o	c grey",
+".	c #000000",
+"X	c #ffffff",
+"o	c #bebebe",
 "    ..................          ",
 "    .XXXXXXXXXXXXXXXX..         ",
 "    .XXXXXXXXXXXXXXXX.o.        ",

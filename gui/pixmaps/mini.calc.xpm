@@ -5,7 +5,7 @@ static char * mini_calc_xpm[] = {
 ".	c #808080",
 "X	c #ffffff",
 "o	c #000000",
-"O	c gray85",
+"O	c #d9d9d9",
 "                ",
 " .............. ",
 ".XXXXXXXXXXXXXo ",

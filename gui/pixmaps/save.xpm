@@ -4,7 +4,7 @@ static char *save_xpm[] = {
 "24 24 5 1",
 "  c #01be01be01be",
 ". c #62dd62dd62dd",
-"X c Gray62",
+"X c #9e9e9e9e9e9e",
 "o c #e625e625e625",
 "O c None",
 /* pixels */

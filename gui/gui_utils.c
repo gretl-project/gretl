@@ -178,10 +178,10 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
     { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
     { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy _all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy _all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
-    { N_("/Edit/Copy _all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
-    { N_("/Edit/Copy _all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+    { N_("/Edit/Copy all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
+    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
@@ -200,34 +200,35 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/_Model data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/_Model data/Display actual, fitted, residual"), NULL, 
+    { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
-    { N_("/_Model data/Forecasts with standard errors"), NULL, 
+    { N_("/Model data/Forecasts with standard errors"), NULL, 
       model_test_callback, FCAST, NULL },
-    { N_("/_Model data/Confidence intervals for coefficients"), NULL, 
+    { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
-    { N_("/_Model data/Add to data set/fitted values"), NULL, 
+    { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Model data/Add to data set/fitted values"), NULL, 
       fit_resid_callback, 1, NULL },
-    { N_("/_Model data/Add to data set/residuals"), NULL, 
+    { N_("/Model data/Add to data set/residuals"), NULL, 
       fit_resid_callback, 0, NULL },
-    { N_("/_Model data/Add to data set/squared residuals"), NULL, 
+    { N_("/Model data/Add to data set/squared residuals"), NULL, 
       fit_resid_callback, 2, NULL },
-    { N_("/_Model data/Add to data set/error sum of squares"), NULL, 
+    { N_("/Model data/Add to data set/error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL },
-    { N_("/_Model data/Add to data set/standard error of residuals"), NULL, 
+    { N_("/Model data/Add to data set/standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL },
-    { N_("/_Model data/Add to data set/R-squared"), NULL, 
+    { N_("/Model data/Add to data set/R-squared"), NULL, 
       model_stat_callback, R2, NULL },
-    { N_("/_Model data/Add to data set/T*R-squared"), NULL, 
+    { N_("/Model data/Add to data set/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL },
-    { N_("/_Model data/Add to data set/log likelihood"), NULL, 
+    { N_("/Model data/Add to data set/log likelihood"), NULL, 
       model_stat_callback, LNL, NULL },
-    { N_("/_Model data/Add to data set/degrees of freedom"), NULL, 
+    { N_("/Model data/Add to data set/degrees of freedom"), NULL, 
       model_stat_callback, DF, NULL },
-    { N_("/_Model data/coefficient covariance matrix"), NULL, 
+    { N_("/Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
-    { N_("/_Model data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/_Model data/Define new variable..."), NULL, model_test_callback, 
+    { N_("/Model data/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Model data/Define new variable..."), NULL, model_test_callback, 
       MODEL_GENR, NULL },
     { N_("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
@@ -2683,7 +2684,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    if (rc->type == 'B' 
 		&& rc->link == NULL) { /* simple boolean variable */
 		tempwid = gtk_check_button_new_with_label 
-		    (rc->description);
+		    (_(rc->description));
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num, tbl_num + 1);
@@ -2719,7 +2720,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_table_resize (GTK_TABLE(inttbl), tbl_num + 1, 2);
 
 		tempwid = gtk_radio_button_new_with_label(NULL, 
-							  rc->description);
+							  _(rc->description));
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num - 2, tbl_num - 1);    
@@ -2729,7 +2730,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		gtk_widget_show (tempwid);
 		rc->widget = tempwid;
 		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
-		tempwid = gtk_radio_button_new_with_label(group, rc->link);
+		tempwid = gtk_radio_button_new_with_label(group, _(rc->link));
 		gtk_table_attach_defaults 
 		    (GTK_TABLE (inttbl), tempwid, tbl_col, tbl_col + 1, 
 		     tbl_num - 1, tbl_num);  
@@ -2740,7 +2741,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	    } else { /* string variable */
 		tbl_len++;
 		gtk_table_resize (GTK_TABLE (chartbl), tbl_len, 2);
-		tempwid = gtk_label_new (rc->description);
+		tempwid = gtk_label_new (_(rc->description));
 		gtk_misc_set_alignment (GTK_MISC (tempwid), 1, 0.5);
 		gtk_table_attach_defaults (GTK_TABLE (chartbl), 
 					   tempwid, 0, 1, tbl_len-1, tbl_len);

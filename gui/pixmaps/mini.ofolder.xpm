@@ -4,11 +4,11 @@ static char *mini_ofolder_xpm[] = {
 "    17    16       6            1",
 /* colors */
 "  c None s None",
-". c black",
+". c #000000",
 "# c #808080",
-"g c white",
+"g c #ffffff",
 "h c #c0c0c0",
-"j c yellow",
+"j c #ffff00",
 /* pixels */
 "                 ",
 "   #####         ",

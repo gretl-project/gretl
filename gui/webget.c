@@ -1154,7 +1154,11 @@ int update_query (void)
     struct stat fbuf;
     long filedate = 0L;
 
+#ifdef G_OS_WIN32
+    sprintf(testfile, "%s\\gretl.stamp", paths.gretldir);
+#else
     sprintf(testfile, "%sgretl.stamp", paths.gretldir);
+#endif
 
     if (stat(testfile, &fbuf)) {
 	fprintf(stderr, "update_query: couldn't stat testfile '%s'\n", 

@@ -5,8 +5,8 @@ static char *mini_sh_xpm[] = {
 /* colors */
 "  c None s None",
 "# c #c0c0c0",
-"a c black",
-"b c white",
+"a c #000000",
+"b c #ffffff",
 "d c #808080",
 "e c #0000ff",
 /* pixels */

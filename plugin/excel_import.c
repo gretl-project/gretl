@@ -23,11 +23,19 @@
   excel plugin by Michael Meeks.
 */
 
+
+#include <gtk/gtk.h>
+
+#ifdef G_OS_WIN32
+# include "../winconfig.h"
+#else
+# include "../config.h"
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <gtk/gtk.h>
 
 #include "libgretl.h"
 
@@ -96,14 +104,14 @@ static int process_sheet (FILE *input, const char *filename,
 		itemsread = fread(rec, reclen, 1, input);
 		break;
 	    } else {
-		sprintf(errbuf, "%s: Invalid BOF record", filename);
+		sprintf(errbuf, _("%s: Invalid BOF record"), filename);
 	        return 1;
 	    } 
 	}
     }    
 
     if (feof(input)) {
-	sprintf(errbuf, "%s: No BOF record found", filename);
+	sprintf(errbuf, _("%s: No BOF record found"), filename);
 	return 1;
     }  
    
@@ -310,7 +318,7 @@ static int process_item (int rectype, int reclen, char *rec)
 	if (allocate(row, col)) return 1;
 	prow = rowptr + row;
 	if (string_no >= sstsize) {
-	    sprintf(errbuf, "String index too large");
+	    sprintf(errbuf, _("String index too large"));
 	} else if (sst[string_no] != NULL) {	
 	    int len = strlen(sst[string_no]);
 	    char *outptr;
@@ -425,7 +433,7 @@ static int process_item (int rectype, int reclen, char *rec)
 	int len;
 
 	if (!saved_reference) {
-	    sprintf(errbuf, "String record without preceding string formula");
+	    sprintf(errbuf, _("String record without preceding string formula"));
 	    break;
 	}
 	len = getshort(rec, 0);
@@ -475,7 +483,7 @@ static char *copy_unicode_string (char **src)
 	} else {
 	    to_skip = 3 + 4 + (charsize * count) + getshort(*src, 3);
 	}
-	sprintf(errbuf, "Extended string found length=%d charsize=%d "
+	fprintf(stderr, "Extended string found length=%d charsize=%d "
 		"%d bytes to skip", count, charsize, to_skip);
 	*src += to_skip;
 	return g_strdup("Extended string");
@@ -668,24 +676,26 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
     int err = 0;
     double **newZ = NULL;
     DATAINFO *newinfo;
+    const char *adjust_rc = N_("Perhaps you need to adjust the "
+			       "starting column or row?");
 
     errbuf = errtext;
     errbuf[0] = '\0';
 
     newinfo = datainfo_new();
     if (newinfo == NULL) {
-	sprintf(errtext, _("Out of memory\n"));
+	sprintf(errbuf, _("Out of memory\n"));
 	return 1;
     }
 
     wbook_init(&book);
 
     if (excel_book_get_info(fname, &book)) {
-	sprintf(errbuf, "Failed to get workbook info");
+	sprintf(errbuf, _("Failed to get workbook info"));
 	err = 1;
     }
     else if (book.nsheets == 0) {
-	sprintf(errbuf, "No worksheets found");
+	sprintf(errbuf, _("No worksheets found"));
 	err = 1;
     }
     else 
@@ -712,7 +722,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 
     if (err) {
 	if (*errbuf == 0)
-	    sprintf(errbuf, "Failed to process Excel file");
+	    sprintf(errbuf, _("Failed to process Excel file"));
 	fprintf(stderr, "%s\n", errbuf);
     } else {
 	int i, j, t, i_sheet, t_sheet;
@@ -734,8 +744,8 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
 
 	if (ncols <= 0 || lastrow < 1) {
-	    sprintf(errbuf, "No data found.\n"
-		    "Perhaps you need to adjust the starting column or row?");
+	    sprintf(errbuf, _("No data found.\n"));
+	    strcat(errbuf, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
 	}
@@ -743,15 +753,15 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	label_strings = first_col_strings(&book);
 
 	if (got_varnames(&book, ncols, label_strings) != 1) {
-	    sprintf(errbuf, "One or more variable names are missing.\n"
-		    "Perhaps you need to adjust the starting column or row?");
+	    sprintf(errbuf, _("One or more variable names are missing.\n"));
+	    strcat(errbuf, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
 	}
 
 	if (!data_block(&book, ncols, label_strings)) {
-	    sprintf(errbuf, "Expected numeric data, found string.\n"
-		    "Perhaps you need to adjust the starting column or row?");
+	    sprintf(errbuf, _("Expected numeric data, found string.\n"));
+	    strcat(errbuf, _(adjust_rc));
 	    err = 1;
 	    goto getout; 
 	}

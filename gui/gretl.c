@@ -19,8 +19,6 @@
 
 /* gretl.c : main for gretl */
 
-/* #define DND_DEBUG 1 */
-
 #include "gretl.h"
 #include <dirent.h>
 
@@ -102,11 +100,11 @@ char *optrun = NULL, *optdb = NULL;
 
 static const struct poptOption options[] = {
     {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
-     N_("open a script file on startup"), N_("SCRIPT")},
+     N_("open a script file on startup"), "SCRIPT"},
     {"db", 'd', POPT_ARG_STRING, &optdb, 0, 
-     N_("open a database on startup"), N_("DATABASE")},
+     N_("open a database on startup"), "DATABASE"},
     {"webdb", 'w', POPT_ARG_STRING, &optdb, 0, 
-     N_("open a remote (web) database on startup"), N_("REMOTE_DB")},
+     N_("open a remote (web) database on startup"), "REMOTE_DB"},
     {NULL, '\0', 0, NULL, 0}
 };
 #endif /* USE_GNOME */
@@ -195,73 +193,90 @@ static int unmangle (const char *dosname, char *longname);
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
 GtkItemFactoryEntry data_items[] = {
+    /* File menu */
     { N_("/_File"), NULL, NULL, 0, "<Branch>" },
-    { N_("/File/_Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
-    { N_("/File/_Open data/sample file/Ramanathan..."), NULL, 
+    /* File, Open data */
+    { N_("/File/_Open data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Open data/user file..."), NULL, open_data, OPEN_DATA, NULL },
+    { N_("/File/Open data/sample file"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Open data/sample file/Ramanathan..."), NULL, 
       display_files, RAMU_DATA, NULL },
-    { N_("/File/_Open data/sample file/Greene..."), NULL, 
+    { N_("/File/Open data/sample file/Greene..."), NULL, 
       display_files, GREENE_DATA, NULL },
-    { N_("/File/_Open data/sample file/Penn World Table..."), NULL, 
+    { N_("/File/Open data/sample file/Penn World Table..."), NULL, 
       display_files, PWT_DATA, NULL },
-    { N_("/File/_Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
-    { N_("/File/_Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
-    { N_("/File/_Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
-    { N_("/File/_Open data/import Gnumeric..."), NULL, open_data, 
+    { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    
+    { N_("/File/Open data/import CSV..."), NULL, open_data, OPEN_CSV, NULL },
+    { N_("/File/Open data/import BOX..."), NULL, open_data, OPEN_BOX, NULL },
+    { N_("/File/Open data/import Gnumeric..."), NULL, open_data, 
       OPEN_GNUMERIC, NULL },
-    { N_("/File/_Open data/import Excel..."), NULL, open_data, 
+    { N_("/File/Open data/import Excel..."), NULL, open_data, 
       OPEN_EXCEL, NULL },
-    { N_("/File/_Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
-    { N_("/File/_Append data/from Gnumeric..."), NULL, open_data, 
+    /* File, Append data */
+    { N_("/File/_Append data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Append data/from CSV..."), NULL, open_data, APPEND_CSV, NULL },
+    { N_("/File/Append data/from Gnumeric..."), NULL, open_data, 
       APPEND_GNUMERIC, NULL },
-    { N_("/File/_Append data/from Excel..."), NULL, open_data, 
+    { N_("/File/Append data/from Excel..."), NULL, open_data, 
       APPEND_EXCEL, NULL },
+    /* File, Save data */
     { N_("/File/_Save data"), NULL, auto_store, 0, NULL },
-    { N_("/File/_Save data _as/_standard format..."), NULL, file_save, 
+    { N_("/File/Save data _as"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Save data as/_standard format..."), NULL, file_save, 
       SAVE_DATA, NULL },
-    { N_("/File/_Save data _as/_gzipped..."), NULL, 
+    { N_("/File/Save data as/_gzipped..."), NULL, 
       file_save, SAVE_GZDATA, NULL },
 #ifdef notdef
-    { N_("/File/Save data _as/_alternative formats/_single precision binary..."), 
+    { N_("/File/Save data as/_alternative formats/_single precision binary..."), 
       NULL, file_save, SAVE_BIN1, NULL },
-    { N_("/File/Save data _as/_alternative formats/_double precision binary..."),
+    { N_("/File/Save data as/_alternative formats/_double precision binary..."),
       NULL, file_save, SAVE_BIN2, NULL },
 #endif 
-    { N_("/File/_Export data/_CSV..."), NULL, file_save, 
+    /* File, Export data */
+    { N_("/File/_Export data"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Export data/_CSV..."), NULL, file_save, 
       EXPORT_CSV, NULL },
-    { N_("/File/_Export data/GNU _R..."), NULL, file_save, 
+    { N_("/File/Export data/GNU _R..."), NULL, file_save, 
       EXPORT_R, NULL },
-    { N_("/File/_Export data/GNU _octave..."), NULL, file_save, 
+    { N_("/File/Export data/GNU _octave..."), NULL, file_save, 
       EXPORT_OCTAVE, NULL },
     { N_("/File/C_lear data set"), NULL, verify_clear_data, 0, NULL },
     { N_("/File/sep0"), NULL, NULL, 0, "<Separator>" },
-    { N_("/File/_Browse databases/_gretl native"), NULL, display_files, 
+    /* File, Browse databases */
+    { N_("/File/_Browse databases"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Browse databases/_gretl native"), NULL, display_files, 
       NATIVE_DB, NULL },
-    { N_("/File/_Browse databases/_RATS 4"), NULL, display_files, 
+    { N_("/File/Browse databases/_RATS 4"), NULL, display_files, 
       RATS_DB, NULL },
-    { N_("/File/_Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/File/_Browse databases/on database _server"), NULL, display_files, 
+    { N_("/File/Browse databases/sep1"), NULL, NULL, 0, "<Separator>" },
+    { N_("/File/Browse databases/on database _server"), NULL, display_files, 
       REMOTE_DB, NULL },
-    { N_("/File/_Create data set/time-series/annual"), 
+    /* File, Create dataset */
+    { N_("/File/_Create data set"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Create data set/time-series"), NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Create data set/time-series/annual"), 
       NULL, newdata_dialog, 1, NULL },    
-    { N_("/File/_Create data set/time-series/quarterly"), 
+    { N_("/File/Create data set/time-series/quarterly"), 
       NULL, newdata_dialog, 4, NULL },    
-    { N_("/File/_Create data set/time-series/monthly"), 
-      NULL, newdata_dialog, 12, NULL }, 
-    { N_("/File/_Create data set/time-series/high frequency/weekly"), 
+    { N_("/File/Create data set/time-series/monthly"), 
+      NULL, newdata_dialog, 12, NULL },
+    { N_("/File/Create data set/time-series/high frequency"), 
+      NULL, NULL, 0, "<Branch>" },
+    { N_("/File/Create data set/time-series/high frequency/weekly"), 
       NULL, newdata_dialog, 52, NULL }, 
-    { N_("/File/_Create data set/time-series/high frequency/daily (5-day week)"), 
+    { N_("/File/Create data set/time-series/high frequency/daily (5-day week)"), 
       NULL, newdata_dialog, 5, NULL }, 
-    { N_("/File/_Create data set/time-series/high frequency/daily (7-day week)"), 
+    { N_("/File/Create data set/time-series/high frequency/daily (7-day week)"), 
       NULL, newdata_dialog, 7, NULL }, 
-    { N_("/File/_Create data set/time-series/high frequency/hourly"), 
+    { N_("/File/Create data set/time-series/high frequency/hourly"), 
       NULL, newdata_dialog, 24, NULL }, 
-    { N_("/File/_Create data set/cross-sectional"), 
+    { N_("/File/Create data set/cross-sectional"), 
       NULL, newdata_dialog, 0, NULL }, 
 #ifdef notdef  
-    { N_("/File/_Create data set/panel"), 
+    { N_("/File/Create data set/panel"), 
       NULL, start_panel_dialog, 0, NULL }, 
 #endif 
-    { N_("/File/_Create data set/simulation"), NULL, gretl_callback, 
+    { N_("/File/Create data set/simulation"), NULL, gretl_callback, 
       NULLDATA, NULL },
     { N_("/File/sep1"), NULL, NULL, 0, "<Separator>" },
 #ifndef GNUPLOT_PNG
@@ -270,22 +285,30 @@ GtkItemFactoryEntry data_items[] = {
 #endif
     { N_("/File/_View command log"), NULL, view_log, 0, NULL },
     { N_("/File/sep2a"), NULL, NULL, 0, "<Separator>" },
+    /* File, command files */
+    { N_("/File/Open command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/user file..."), NULL, open_script, 
       OPEN_SCRIPT, NULL },
+    { N_("/File/Open command file/practice file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/Open command file/practice file/Ramanathan..."), NULL, 
       display_files, RAMU_PS, NULL },
     { N_("/File/Open command file/practice file/Greene..."), NULL, 
       display_files, GREENE_PS, NULL },
     { N_("/File/Open command file/practice file/Penn World Table..."), NULL, 
       display_files, PWT_PS, NULL },
+    { N_("/File/New command file"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/New command file/regular script"), NULL, do_new_script, 0, NULL },
     { N_("/File/New command file/Monte Carlo loop"), NULL, 
       do_new_script, 1, NULL },
     { N_("/File/sep3"), NULL, NULL, 0, "<Separator>" },
+    /* File, preferences */
+    { N_("/File/_Preferences"), NULL, NULL, 0, "<Branch>" },
     { N_("/File/_Preferences/_General..."), NULL, options_dialog, 0, NULL },
-    { N_("/File/_Preferences/_Fixed font..."), NULL, font_selector, 0, NULL },
+    { N_("/File/Preferences/_Fixed font..."), NULL, font_selector, 0, NULL },
     { N_("/File/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/File/E_xit"), NULL, menu_exit_check, 0, NULL },
+
+    /* Utilities menu */
     { N_("/_Utilities"), NULL, NULL, 0, "<Branch>" },
     { N_("/Utilities/Statistical tables"), NULL, stats_calculator, 1, NULL },
     { N_("/Utilities/p-value finder"), NULL, stats_calculator, 0, NULL },
@@ -294,6 +317,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/Gretl console"), NULL, console, 0, NULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>" },
     { N_("/Utilities/Start GNU R"), NULL, startR, 0, NULL },
+
+    /* Session menu */
     { N_("/_Session"), NULL, NULL, 0, "<Branch>" },
     { N_("/Session/_Icon view"), NULL, view_session, 0, NULL },
 #ifndef GNUPLOT_PNG
@@ -304,23 +329,27 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Session/sep1"), NULL, NULL, 0, "<Separator>" },
     { N_("/Session/_Save"), NULL, save_session_callback, 0, NULL },
     { N_("/Session/Save _as..."), NULL, save_session_callback, 1, NULL },
+
+    /* Data menu */
     { N_("/_Data"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Data/Display values/all variables"), NULL, display_data, 0, NULL },
-    { N_("/Data/Display values/selected variables..."), 
+    { N_("/Data/_Display values"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Data/Display values/_all variables"), NULL, display_data, 0, NULL },
+    { N_("/Data/Display values/_selected variables..."), 
       NULL, selector_callback, PRINT, NULL },
     { N_("/Data/_Edit values"), NULL, spreadsheet_edit, 0, NULL },
     { N_("/Data/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Data/_Graph specified vars/Time series plot..."), 
+    { N_("/Data/_Graph specified vars"), NULL, NULL, 0, "<Branch>" },
+    { N_("/Data/Graph specified vars/Time series plot..."), 
       NULL, selector_callback, GR_PLOT, NULL },
-    { N_("/Data/_Graph specified vars/X-Y scatter..."), 
+    { N_("/Data/Graph specified vars/X-Y scatter..."), 
       NULL, selector_callback, GR_XY, NULL },
-    { N_("/Data/_Graph specified vars/X-Y with impulses..."), 
+    { N_("/Data/Graph specified vars/X-Y with impulses..."), 
       NULL, selector_callback, GR_IMP, NULL },
-    { N_("/Data/_Graph specified vars/X-Y with factor separation..."), 
+    { N_("/Data/Graph specified vars/X-Y with factor separation..."), 
       NULL, selector_callback, GR_DUMMY, NULL },
-    { N_("/Data/_Graph specified vars/Boxplots..."), 
+    { N_("/Data/Graph specified vars/Boxplots..."), 
       NULL, selector_callback, GR_BOX, NULL },
-    { N_("/Data/_Graph specified vars/Notched boxplots..."), 
+    { N_("/Data/Graph specified vars/Notched boxplots..."), 
       NULL, selector_callback, GR_NBOX, NULL },
     { N_("/Data/_Multiple scatterplots..."), 
       NULL, selector_callback, SCATTERS, NULL},
@@ -332,12 +361,14 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/_Summary statistics"), NULL, do_menu_op, SUMMARY, NULL },
     { N_("/Data/_Correlation matrix"), NULL, do_menu_op, CORR, NULL },
     { N_("/Data/sep4"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Difference of means"), NULL, NULL, 0, "<Branch>" },
     { N_("/Data/Difference of means/assuming equal variances..."), NULL, 
       gretl_callback, MEANTEST, NULL },
     { N_("/Data/Difference of means/assuming unequal variances..."), NULL, 
       gretl_callback, MEANTEST2, NULL },
     { N_("/Data/Difference of variances..."), NULL, gretl_callback, VARTEST, NULL },
     { N_("/Data/sep5"), NULL, NULL, 0, "<Separator>" },
+    { N_("/Data/Add variables"), NULL, NULL, 0, "<Branch>" },
     { N_("/Data/Add variables/time trend"), NULL, add_time, 0, NULL },
     { N_("/Data/Add variables/index variable"), NULL, add_time, 1, NULL },
     { N_("/Data/Add variables/logs of variables..."), NULL, 
@@ -358,6 +389,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Data/Add variables/seed generator..."), NULL, gretl_callback, 
       SEED, NULL },
     { N_("/Data/Refresh window"), NULL, refresh_data, 0, NULL },
+
+    /* Sample menu */
     { N_("/_Sample"), NULL, NULL, 0, "<Branch>" },
     { N_("/Sample/_Set range..."), NULL, gretl_callback, SMPL, NULL },
     { N_("/Sample/_Restore full range"), NULL, restore_sample, 1, NULL },
@@ -380,6 +413,8 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL },
     { N_("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
+
+    /* Variable menu */
     { N_("/_Variable"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Find..."), NULL, find_var, 0, NULL },
     { N_("/Variable/_Display values"), NULL, display_var, 0, NULL },
@@ -388,13 +423,15 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Variable/_Time series plot"), NULL, do_graph_var, 0, NULL },
     { N_("/Variable/_Frequency distribution"), NULL, do_menu_op, 
       FREQ, NULL },
+    { N_("/Variable/Frequency plot"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Frequency plot/simple"), NULL, do_freqplot, 0, NULL },
     { N_("/Variable/Frequency plot/against Normal"), NULL, do_freqplot, 
       NORMAL, NULL },
     { N_("/Variable/Frequency plot/against Gamma"), NULL, do_freqplot, 
       GAMMA, NULL },
     { N_("/Variable/sep1"), NULL, NULL, 0, "<Separator>" },
-    { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL }, 
+    { N_("/Variable/Correlogram"), NULL, gretl_callback, CORRGM, NULL },
+    { N_("/Variable/Spectrum"), NULL, NULL, 0, "<Branch>" },
     { N_("/Variable/Spectrum/sample periodogram"), NULL, do_pergm, 0, NULL }, 
     { N_("/Variable/Spectrum/Bartlett lag window"), NULL, do_pergm, 1, NULL }, 
     { N_("/Variable/_Augmented Dickey-Fuller test"), NULL, gretl_callback, 
@@ -531,31 +568,39 @@ void dummy_output_handler (const gchar *log_domain,
 {
     return;
 }
-#endif 
+#endif /* G_OS_WIN32 */
 
-#ifdef DND_DEBUG
-    FILE *dp;
-#endif
+#ifdef ENABLE_NLS
+# ifdef G_OS_WIN32
+void nls_init (void)
+{
+    char gretldir[MAXSTR], localedir[MAXSTR];
+
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
+	return;
+    sprintf(localedir, "%s\\locale", gretldir);
+    setlocale (LC_ALL, "");
+    bindtextdomain ("gretl", localedir);
+    textdomain ("gretl");    
+}
+# else
+void nls_init (void)
+{
+    setlocale (LC_ALL, "");
+    bindtextdomain (PACKAGE, LOCALEDIR);
+    textdomain (PACKAGE);
+}
+# endif /* G_OS_WIN32 */
+#endif /* ENABLE_NLS */
 
 int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
     char dbname[MAXLEN];
-#ifdef DND_DEBUG
-    int i;
 
-    dp = fopen("c:\\userdata\\debug.txt", "w");
-    if (dp == NULL) exit(EXIT_FAILURE);
-    for (i=0; i<argc; i++)
-	fprintf(dp, "argv[%d] = '%s'\n", i, argv[i]);
-    fflush(dp);
-#endif
-
-#if defined(ENABLE_NLS) && !defined(G_OS_WIN32)
-    setlocale (LC_ALL, "");
-    bindtextdomain (PACKAGE, LOCALEDIR);
-    textdomain (PACKAGE);
-#endif
+#ifdef ENABLE_NLS
+    nls_init();
+#endif       
 
     if ((errtext = malloc(MAXLEN)) == NULL) 
 	noalloc(_("startup"));
@@ -590,10 +635,6 @@ int main (int argc, char *argv[])
     make_userdir(&paths);
 #endif/* G_OS_WIN32 */
 
-#ifdef DND_DEBUG
-    fprintf(dp, "About to parse arguments if argc > 1\n");
-    fflush(dp);
-#endif
     if (argc > 1) {
 	int opt = parseopt(argv[1]);
 
@@ -631,12 +672,6 @@ int main (int argc, char *argv[])
 	}
     } else 
 	gui_get_data = 1;
-
-#ifdef DND_DEBUG
-    fprintf(dp, "Parsed args: gui_get_data = %d\n",
-	    opt, gui_get_data);
-    fflush(dp);
-#endif
 
     strcpy(cmdfile, paths.userdir);
     strcat(cmdfile, "session.inp");
@@ -677,10 +712,6 @@ int main (int argc, char *argv[])
 	int ftype;
 	PRN *prn; 
 
-#ifdef DND_DEBUG
-	fprintf(dp, "About to try to get file\n");
-	fflush(dp);
-#endif
 	prn = gretl_print_new(GRETL_PRINT_STDERR, NULL);
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
@@ -692,10 +723,7 @@ int main (int argc, char *argv[])
 	strncat(paths.datfile, argv[1], MAXLEN-1);
 #endif
 	ftype = detect_filetype(paths.datfile, &paths, prn);
-#ifdef DND_DEBUG
-	fprintf(dp, "detect_filetype: got ftype = %d\n", ftype);
-	fflush(dp);
-#endif
+
 	switch (ftype) {
 	case GRETL_UNRECOGNIZED:
 	    exit(EXIT_FAILURE);
@@ -725,10 +753,6 @@ int main (int argc, char *argv[])
 	}
 	gretl_print_destroy(prn);
     }
-#ifdef DND_DEBUG
-	fprintf(dp, "About to create GUI; err = %d\n", err);
-	fflush(dp);
-#endif
 
     /* create the GUI */
     gretl_tips = gtk_tooltips_new();
