@@ -415,6 +415,40 @@
                   (process-node-list footnotes))))))
         ))
 		
+;; These elements appear in this order on the title page of a book.
+(define (book-titlepage-recto-elements)
+  (list
+        (normalize "title")
+        (normalize "graphic")
+        (normalize "subtitle")
+        (normalize "author")
+	    (normalize "othercredit")
+        (normalize "date")
+        (normalize "legalnotice")))	
+
+;; These elements appear in this order on the title page of an article.
+(define (article-titlepage-recto-elements)
+  (list
+        (normalize "title")
+        (normalize "graphic")
+        (normalize "subtitle")
+        (normalize "author")
+        (normalize "othercredit")
+        (normalize "date")
+        (normalize "legalnotice")))
+		
+;;   (element othercredit
+;;     (let ((othercredit-name  (author-string))
+;; 	  (othercredit-contrib (select-elements (children (current-node)) 
+;; 					 (normalize "contrib"))))
+;;       (make sequence
+;; 	(make element gi: "H3"
+;; 	      attributes: (list (list "CLASS" (gi)))
+;; 	      (make element gi: "A"
+;; 		    attributes: (list (list "NAME" (element-id)))
+;; 		    (literal othercredit-name)))
+;; 	(process-node-list othercredit-contrib))))			
+		
 &htmlmath.dsl;
 
 ;; end of html stylesheet customization
