@@ -1282,14 +1282,15 @@ static void make_stack_label (char *label, char *s)
 	    strcat(label, s);
 	}
     } else {
-	int llen = strlen(p) + 1;
+	int llen = strlen(p);
 	char *q = strstr(p + 2, "--");
+	int sp = 1 + (q != NULL);
 
 	len++;
 	*p = '\0';
 
-	if (len > MAXLABEL - 1) {
-	    strncat(label, s, MAXLABEL - 4 - llen);
+	if (len + sp > MAXLABEL - 1) {
+	    strncat(label, s, MAXLABEL - 4 - (llen + sp));
 	    strcat(label, "...");
 	} else {
 	    strcat(label, s);
