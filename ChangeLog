@@ -16,6 +16,7 @@ version 1.2.5
 - setobs command: be more flexible in regard to the format of
   the "startobs" field
 - saving text files: try to improve handling of CR/LF
+- minor fixes to model printing
 
 3/30/2004 version 1.2.4
 - Add ARMAX models: ARMA with exogenous variables

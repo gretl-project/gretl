@@ -837,6 +837,19 @@ static void garch_vcv_line (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */
 
+static void model_print_newline (PRN *prn)
+{
+    if (TEX_FORMAT(prn->format)) {
+	pputs(prn, "\\\\\n");
+    } else if (RTF_FORMAT(prn->format)) {
+	pputs(prn, "\\par\n");
+    } else {
+	pputc(prn, '\n');
+    }
+}
+
+/* ......................................................... */
+
 static void print_model_heading (const MODEL *pmod, 
 				 const DATAINFO *pdinfo, 
 				 PRN *prn)
@@ -927,30 +940,28 @@ static void print_model_heading (const MODEL *pmod,
 		pmod->nobs);
     }
 
-    if (tex) pputs(prn, "\\\\\n");
-    else if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
-    else pputs(prn, "\n");
+    model_print_newline(prn);
 
     /* special names for dependent variable in cases of certain sorts
        of auxiliary regressions */
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG) {
-	pprintf(prn, "%s: %s\n", 
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}$" : "uhat");
     }
     else if (pmod->aux == AUX_WHITE) {
-	pprintf(prn, "%s: %s\n", 
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$\\hat{u}^2$" : "uhat^2");
     }
     else if (pmod->aux == AUX_ARCH) {
-	pprintf(prn, "%s: %s\n", 
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? "$u_t^2$" : "ut^2");
     }
     else if (pmod->ci == NLS) {
 	if (tex) tex_escape(vname, pmod->params[0]);
-	pprintf(prn, "%s: %s\n", 
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
 		(tex)? vname : pmod->params[0]);
     }
@@ -959,12 +970,12 @@ static void print_model_heading (const MODEL *pmod,
 	    pmod->list[4] : pmod->list[1];
 
 	if (tex) tex_escape(vname, pdinfo->varname[v]);
-	pprintf(prn, "%s: %s%s", 
+	pprintf(prn, "%s: %s", 
 		(utf)? _("Dependent variable") : I_("Dependent variable"),
-		(tex)? vname : pdinfo->varname[v],
-		(pmod->ci == TSLS && tex)? "\\\\\n" : 
-		(pmod->ci == TSLS && RTF_FORMAT(prn->format))? "\\par\n" : "\n");
+		(tex)? vname : pdinfo->varname[v]);
     }
+
+    model_print_newline(prn);
 
     /* supplementary strings below the estimator and sample info */
 
@@ -1018,7 +1029,7 @@ static void print_model_heading (const MODEL *pmod,
     }
 
     if (RTF_FORMAT(prn->format)) pputs(prn, "\\par\n");
-    else pputs(prn, "\n");
+    else pputc(prn, '\n');
 }
 
 static void model_format_start (PRN *prn)
