@@ -22,12 +22,6 @@
 #include "gretl.h"
 #include "console.h"
 
-/* from library.c */
-extern int gui_exec_line (char *line, 
-			  LOOPSET *plp, int *plstack, int *plrun, 
-			  PRN *prn, int exec_code, 
-			  const char *myname);
-
 static GtkWidget *console_view;
 static PRN *console_prn;
 static gchar *cbuf;

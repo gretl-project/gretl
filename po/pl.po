@@ -1,13 +1,14 @@
-# Polish translation for gretl-1.2.9.
+# Polish translation for gretl-1.3.0.
 # Copyright (C) 2004 Free Software Foundation, Inc.
 # Pawel Kufel <qfel@mat.uni.torun.pl>, 2004.
+# and Tadeusz Kufel <tadeusz.kufel@uni.torun.pl>
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: gretl 1.2.9\n"
+"Project-Id-Version: gretl 1.3.0\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-09-08 12:33-0400\n"
-"PO-Revision-Date: 2004-09-02 18:00+0100\n"
+"PO-Revision-Date: 2004-09-09 18:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -28,7 +29,7 @@ msgstr "Test na nieliniowo¶æ (logarytmy)"
 
 #: lib/src/compare.c:384
 msgid "relationship is linear"
-msgstr "wspó³zale¿no¶æ jest liniowa"
+msgstr "zale¿no¶æ jest liniowa"
 
 #: lib/src/compare.c:761 lib/src/compare.c:1012 lib/src/describe.c:1545
 #: lib/src/gretl_restrict.c:570 lib/src/modelprint.c:658
@@ -55,7 +56,7 @@ msgstr "Test RESET na specyfikacjê"
 
 #: lib/src/compare.c:768
 msgid "specification is adequate"
-msgstr "specyfikacja adekwatna"
+msgstr "poprawna specyfikacja"
 
 #: lib/src/compare.c:979 lib/src/graphing.c:1080 lib/src/graphing.c:1088
 #: lib/src/graphing.c:1185 lib/src/graphing.c:1802 gui2/guiprint_common.c:687
@@ -101,18 +102,18 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Test Chowa dla punktu zwrotnego w obserwacji %s:\n"
+"Test Chowa na wystêpowanie za³amania strukturalnego w momencie %s:\n"
 "  F(%d, %d) = %f  z  p-value %f\n"
 "\n"
 
 #: lib/src/compare.c:1157
 #, c-format
 msgid "Chow test for structural break at observation %s"
-msgstr "Test Chowa dla punktu zwrotnego w obserwacji %s"
+msgstr "Test Chowa na wystêpowanie za³amania strukturalnego w momencie %s"
 
 #: lib/src/compare.c:1160
 msgid "no structural break"
-msgstr "brak punktu zwrotnego"
+msgstr "brak za³amania strukturalnego"
 
 #: lib/src/compare.c:1290
 msgid "CUSUM test for stability of parameters"
@@ -166,7 +167,7 @@ msgstr "Obserwacja"
 #: lib/src/compare.c:1341
 #, no-c-format
 msgid "CUSUM plot with 95% confidence band"
-msgstr "Wykres CUSUM z 95% przedzia³ami ufno¶ci"
+msgstr "Wykres CUSUM z 95% przedzia³em ufno¶ci"
 
 #: lib/src/compare.c:1389
 msgid "This test is only relevant for pooled models\n"
@@ -182,6 +183,9 @@ msgid ""
 "You need to have the same number of observations\n"
 "for each cross-sectional unit"
 msgstr ""
+"Uwaga, niezbilansowany panel.\n"
+"Ka¿dy przekrój musi mieæ tak± sam± liczbê obserwacji\n"
+"dla tego panelu"
 
 #: lib/src/compare.c:1443 lib/src/dbread.c:1195 lib/src/dbread.c:1207
 #: lib/src/dbread.c:1243 gui2/database.c:273
@@ -229,22 +233,22 @@ msgstr "sta³a-automatycznie generowana"
 #: lib/src/dataio.c:589
 #, c-format
 msgid "WARNING: binary data read error at var %d"
-msgstr ""
+msgstr "UWAGA: dla zmiennej %d b³êdny odczyt danych"
 
 #: lib/src/dataio.c:546 lib/src/dataio.c:635
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
-msgstr ""
+msgstr "UWAGA: dla zmiennej %d w obserwacji %d b³êdny odczyt danych"
 
 #: lib/src/dataio.c:610
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
-msgstr ""
+msgstr "UWAGA: dla obserwacji %d b³êdny odczyt danych"
 
 #: lib/src/dataio.c:624
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
-msgstr ""
+msgstr "UWAGA: dla obserwacji %d b³êdny odczyt danych"
 
 #: lib/src/dataio.c:675
 #, c-format
@@ -287,17 +291,17 @@ msgstr ""
 
 #: lib/src/dataio.c:831
 msgid "Failed to store data comments\n"
-msgstr ""
+msgstr "B³±d w zapisie komentarzy\n"
 
 #: lib/src/dataio.c:856
 #, c-format
 msgid "Bad character '%c' in date string"
-msgstr "B³êdny znak '%c' w ³añcuchu znaków"
+msgstr "B³êdny znak '%c' w ³añcuchu danych"
 
 #: lib/src/dataio.c:859
 #, c-format
 msgid "Bad character %d in date string"
-msgstr "B³êdny znak '%d' w ³añcuchu znaków"
+msgstr "B³êdny znak '%d' w ³añcuchu danych"
 
 #: lib/src/dataio.c:934
 #, c-format
@@ -312,7 +316,7 @@ msgstr "Numer obserwacji poza zakresem"
 
 #: lib/src/dataio.c:1035
 msgid "space for comments"
-msgstr ""
+msgstr "obszar dla komentarzy"
 
 #: lib/src/dataio.c:1064 lib/src/dataio.c:1076 lib/src/dataio.c:2808
 #: lib/src/dataio.c:3213 lib/src/dbread.c:942 gui2/session.c:677
@@ -340,9 +344,7 @@ msgstr " (brak)\n"
 
 #: lib/src/dataio.c:1231 gui2/guiprint_common.c:980
 #, c-format
-msgid ""
-"You can't use the same character for the column delimiter and the decimal "
-"point"
+msgid "You can't use the same character for the column delimiter and the decimal point"
 msgstr ""
 
 #: lib/src/dataio.c:1254
@@ -351,51 +353,51 @@ msgstr "B³±d w zapisie nag³ówka pliku"
 
 #: lib/src/dataio.c:1258
 msgid "Write of labels file failed"
-msgstr ""
+msgstr "B³±d w zapisie etykiet pliku"
 
 #: lib/src/dataio.c:1490
 msgid "time series"
-msgstr ""
+msgstr "szeregi czasowe"
 
 #: lib/src/dataio.c:1492
 msgid "panel"
-msgstr ""
+msgstr "panel"
 
 #: lib/src/dataio.c:1495 gui2/dialogs.c:2191 gui2/dialogs.c:2260
 msgid "Stacked time series"
-msgstr ""
+msgstr "Stos szeregów czasowych"
 
 #: lib/src/dataio.c:1495 gui2/dialogs.c:2203 gui2/dialogs.c:2272
 msgid "Stacked cross sections"
-msgstr ""
+msgstr "Stos danych przekrojowych"
 
 #: lib/src/dataio.c:1498
 msgid "undated"
-msgstr ""
+msgstr "niedatowane"
 
 #: lib/src/dataio.c:1506
 msgid "annual"
-msgstr ""
+msgstr "roczne"
 
 #: lib/src/dataio.c:1508 gui2/dialogs.c:2626
 msgid "quarterly"
-msgstr ""
+msgstr "kwartalne"
 
 #: lib/src/dataio.c:1510 gui2/dialogs.c:2626
 msgid "monthly"
-msgstr ""
+msgstr "miesiêczne"
 
 #: lib/src/dataio.c:1512
 msgid "hourly"
-msgstr ""
+msgstr "godzinowe"
 
 #: lib/src/dataio.c:1514
 msgid "weekly"
-msgstr ""
+msgstr "tygodniowe"
 
 #: lib/src/dataio.c:1516 lib/src/dataio.c:1518
 msgid "daily"
-msgstr ""
+msgstr "dzienne"
 
 #: lib/src/dataio.c:1520 lib/src/modelprint.c:1706 lib/src/modelprint.c:1798
 msgid "unknown"
@@ -407,18 +409,20 @@ msgid ""
 "Data file %s\n"
 "as of"
 msgstr ""
+"Plik danych %s\n"
+"jako"
 
 #: lib/src/dataio.c:1546
 msgid "(unsaved)"
-msgstr ""
+msgstr "(niezapisane)"
 
 #: lib/src/dataio.c:1551 gui2/database.c:1077 gui2/database.c:1102
 msgid "Description"
-msgstr ""
+msgstr "Opis"
 
 #: lib/src/dataio.c:1556
 msgid "Type of data"
-msgstr ""
+msgstr "Typ danych"
 
 #: lib/src/dataio.c:1560 lib/src/modelprint.c:1948 lib/src/modelprint.c:1956
 msgid "Frequency"
@@ -426,21 +430,21 @@ msgstr ""
 
 #: lib/src/dataio.c:1563
 msgid "Range"
-msgstr ""
+msgstr "Zakres"
 
 #: lib/src/dataio.c:1566
 msgid "Listing of variables"
-msgstr ""
+msgstr "Lista zmiennych"
 
 #: lib/src/dataio.c:1619
 #, c-format
 msgid "Bad data label in %s"
-msgstr ""
+msgstr "B³êdna etykieta danych w %s"
 
 #: lib/src/dataio.c:1631
 #, c-format
 msgid "extraneous label for var '%s'\n"
-msgstr ""
+msgstr "niezwi±zana etykieta ze zmienn± '%s'\n"
 
 #: lib/src/dataio.c:1764
 #, c-format
@@ -448,6 +452,8 @@ msgid ""
 "\n"
 "Read datafile %s\n"
 msgstr ""
+"\n"
+"Czytnie pliku danych %s\n"
 
 #: lib/src/dataio.c:1765 lib/src/dataio.c:1890 lib/src/dataio.c:1990
 #, c-format
@@ -455,6 +461,8 @@ msgid ""
 "periodicity: %d, maxobs: %d,\n"
 "observations range: %s-%s\n"
 msgstr ""
+"okresowo¶æ: %d, maksymalna liczba obserwacji: %d,\n"
+"zakres obserwacji: %s-%s\n"
 
 #: lib/src/dataio.c:1854
 #, c-format
@@ -462,51 +470,55 @@ msgid ""
 "\n"
 "Reading header file %s\n"
 msgstr ""
+"\n"
+"Wczytywanie nag³ówka pliku %s\n"
 
 #: lib/src/dataio.c:1894
 msgid ""
 "\n"
 "Reading "
 msgstr ""
+"\n"
+"Wczytywanie "
 
 #: lib/src/dataio.c:1896
 msgid "time-series"
-msgstr ""
+msgstr "szeregi czasowe"
 
 #: lib/src/dataio.c:1896
 msgid "cross-sectional"
-msgstr ""
+msgstr "dane przekrojowe"
 
 #: lib/src/dataio.c:1897
 msgid " datafile"
-msgstr ""
+msgstr "plik danych"
 
 #: lib/src/dataio.c:1986 lib/src/generate.c:3538
 msgid "index variable"
-msgstr ""
+msgstr "indeks zmiennej"
 
 #: lib/src/dataio.c:2193
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
-msgstr ""
+msgstr "   etykieta pierwszego wiersza \"%s\", etykieta ostatniego wiersza \"%s\"\n"
 
 #: lib/src/dataio.c:2202
 msgid "   label strings can't be consistent dates\n"
-msgstr ""
+msgstr "   etykieta nie mo¿e byæ dat±\n"
 
 #: lib/src/dataio.c:2206
 msgid "trying to parse row labels as dates...\n"
-msgstr ""
+msgstr "próba przypisania dat etykietom wierszy...\n"
 
 #: lib/src/dataio.c:2237
 #, c-format
 msgid "   %s: probably a year... "
-msgstr ""
+msgstr "   %s: prawdopodobny rok... "
 
 #: lib/src/dataio.c:2239
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
-msgstr ""
+msgstr "   %s: przekroczenie granicy dla roku?\n"
 
 #: lib/src/dataio.c:2242
 msgid "   but I can't make sense of the extra bit\n"
@@ -518,54 +530,54 @@ msgstr ""
 
 #: lib/src/dataio.c:2254
 msgid "   but the dates are not complete and consistent\n"
-msgstr ""
+msgstr "   ale daty s± niekompletne i niezgodne\n"
 
 #: lib/src/dataio.c:2261
 #, c-format
 msgid "quarter %s?\n"
-msgstr ""
+msgstr "kwarta³ %s?\n"
 
 #: lib/src/dataio.c:2272
 #, c-format
 msgid "month %s?\n"
-msgstr ""
+msgstr "miesi±c %s?\n"
 
 #: lib/src/dataio.c:2283
 msgid "   definitely not a four-digit year\n"
-msgstr ""
+msgstr "   zdecydowanie nie cztero-znakowy zapis roku\n"
 
 #: lib/src/dataio.c:2378
 msgid "Data frequency does not match\n"
-msgstr ""
+msgstr "Czêstotliwo¶æ danych nie pasuje\n"
 
 #: lib/src/dataio.c:2388
 msgid "New data not conformable for appending\n"
-msgstr ""
+msgstr "Dodawane nowe dane nie s± zgodne\n"
 
 #: lib/src/dataio.c:2405
 msgid "Starting point of new data does not fit\n"
-msgstr ""
+msgstr "Nieodpowiedni punkt startowy dla nowych danych\n"
 
 #: lib/src/dataio.c:2409
 msgid "Inconsistency in observation markers\n"
-msgstr ""
+msgstr "Niezgodno¶æ w zaznaczonych obserwacjach\n"
 
 #: lib/src/dataio.c:2422 lib/src/dataio.c:2484
 msgid "Out of memory adding data\n"
-msgstr ""
+msgstr "Brak pamiêci dla do³±czonych danych\n"
 
 #: lib/src/dataio.c:2493
 msgid "Data appended OK\n"
-msgstr ""
+msgstr "Do³±czenie danych OK\n"
 
 #: lib/src/dataio.c:2534
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid text file\n"
-msgstr ""
+msgstr "Analizowany plik binarny (%d) nie jest odpowiednim plikiem tekstowym\n"
 
 #: lib/src/dataio.c:2548
 msgid "Data file is empty\n"
-msgstr ""
+msgstr "Plik danych jest pusty\n"
 
 #: lib/src/dataio.c:2550
 msgid "Data file has trailing commas\n"
@@ -574,27 +586,26 @@ msgstr ""
 #: lib/src/dataio.c:2642
 #, c-format
 msgid "   first field: '%s'\n"
-msgstr ""
+msgstr "   pierwsze pole: '%s'\n"
 
 #: lib/src/dataio.c:2646
 msgid "   seems to be observation label\n"
-msgstr ""
+msgstr "   wygl±da na etykiete obserwacji\n"
 
 #: lib/src/dataio.c:2665
 #, c-format
-msgid ""
-"   the cell for variable %d, obs %d is empty: treating as missing value\n"
-msgstr ""
+msgid "   the cell for variable %d, obs %d is empty: treating as missing value\n"
+msgstr "   komórka dla zmiennej %d, obserwacji %d jest pusta: bêdzie traktowana jako brak danych\n"
 
 #: lib/src/dataio.c:2674
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
-msgstr ""
+msgstr "   uwaga: brak danych dla zmiennej %d, obserwacja %d\n"
 
 #: lib/src/dataio.c:2748
 #, c-format
 msgid "At variable %d, observation %d:\n"
-msgstr ""
+msgstr "W zmiennej %d, obserwacja %d:\n"
 
 #: lib/src/dataio.c:2787
 msgid ""
@@ -602,329 +613,338 @@ msgid ""
 "Please note:\n"
 "- The first row of the CSV file should contain the names of the variables.\n"
 "- The first column may optionally contain date strings or other 'markers':\n"
-"  in that case its row 1 entry should be blank, or should say 'obs' or "
-"'date'.\n"
+"  in that case its row 1 entry should be blank, or should say 'obs' or 'date'.\n"
 "- The remainder of the file must be a rectangular array of data.\n"
 msgstr ""
+"\n"
+"Wyja¶nienia:\n"
+"- Pierwszy wiersz pliku CSV powinien zawieraæ nazwy zmiennych.\n"
+"- Pierwsza kolumna mo¿e opcjonalnie zawieraæ ³añcuchy znaków lub inne 'znaczniki':\n"
+"- w takim wypadku pierwszy wiersz powinien byæ pusty lub zawieraæ opis 'obs' albo 'date'.\n"
+"- Pamiêtaj, ¿e zbiór danych musi byæ prostok±tna tablic±.\n"
 
 #: lib/src/dataio.c:2815 lib/src/dataio.c:2840 lib/src/dataio.c:2893
 #: lib/src/dataio.c:2900 lib/src/dataio.c:2967 lib/src/dataio.c:3220
 #: cli/common.c:211 plugin/excel_import.c:952 plugin/gnumeric_import.c:567
 msgid "Out of memory\n"
-msgstr ""
+msgstr "Brak pamiêci\n"
 
 #: lib/src/dataio.c:2820 lib/src/dataio.c:3225
 msgid "parsing"
-msgstr ""
+msgstr "analizowanie"
 
 #: lib/src/dataio.c:2832
 #, c-format
 msgid "using delimiter '%c'\n"
-msgstr ""
+msgstr "wykorzystuje ogranicznik '%c'\n"
 
 #: lib/src/dataio.c:2833
 #, c-format
 msgid "   longest line: %d characters\n"
-msgstr ""
+msgstr "   najd³u¿sza linia: %d znaków\n"
 
 #: lib/src/dataio.c:2863
 #, c-format
 msgid "   number of columns = %d\n"
-msgstr ""
+msgstr "   liczba kolumn = %d\n"
 
 #: lib/src/dataio.c:2866
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
-msgstr ""
+msgstr "   ...ale wiersz %d ma %d pól: przerwanie dzialania\n"
 
 #: lib/src/dataio.c:2878
 #, c-format
 msgid "   number of variables: %d\n"
-msgstr ""
+msgstr "   liczba zmiennych: %d\n"
 
 #: lib/src/dataio.c:2879
 #, c-format
 msgid "   number of non-blank lines: %d\n"
-msgstr ""
+msgstr "   ilo¶æ niepustych wierszy: %d\n"
 
 #: lib/src/dataio.c:2887
 msgid "Invalid data file\n"
-msgstr ""
+msgstr "B³êdny zbiór danych\n"
 
 #: lib/src/dataio.c:2912
 msgid "scanning for variable names...\n"
-msgstr ""
+msgstr "szukanie nazw zmiennych...\n"
 
 #: lib/src/dataio.c:2924
 #, c-format
 msgid "   line: %s\n"
-msgstr ""
+msgstr "   linia: %s\n"
 
 #: lib/src/dataio.c:2943
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
-msgstr ""
+msgstr "   nazwa zmiennej %d nie wystêpuje: przerwanie dzia³ania\n"
 
 #: lib/src/dataio.c:2965
 msgid "it seems there are no variable names\n"
-msgstr ""
+msgstr "prawdopodobny brak nazw zmiennych\n"
 
 #: lib/src/dataio.c:2989
 msgid "scanning for row labels and data...\n"
-msgstr ""
+msgstr "szukanie etykiet wierszy i danych...\n"
 
 #: lib/src/dataio.c:3006
 #, c-format
 msgid "warning: truncating data at row %d, column %d\n"
-msgstr ""
+msgstr "uwaga: uciête dane w wierszu %d, kolumna %d\n"
 
 #: lib/src/dataio.c:3042
 msgid ""
 "taking date information from row labels\n"
 "\n"
 msgstr ""
+"pobieranie informacji z wiersza etykiet\n"
+"\n"
 
 #: lib/src/dataio.c:3044
 msgid ""
 "treating these as undated data\n"
 "\n"
 msgstr ""
+"traktowanie danych jako niedatowanych\n"
+"\n"
 
 #: lib/src/dataio.c:3234
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"
-msgstr ""
+msgstr "Analizowany plik binarny (%d) nie jest odpowiednim plikiem BOX1\n"
 
 #: lib/src/dataio.c:3258
 #, c-format
 msgid "   found %d variables\n"
-msgstr ""
+msgstr "   znaleziono %d zmiennych\n"
 
 #: lib/src/dataio.c:3259
 #, c-format
 msgid "   found %d observations\n"
-msgstr ""
+msgstr "   znaleziono %d obserwacji\n"
 
 #: lib/src/dataio.c:3260
 #, c-format
 msgid "   longest line = %d characters\n"
-msgstr ""
+msgstr "   najdlu¿sza linia = %d znaków\n"
 
 #: lib/src/dataio.c:3264
 msgid "allocating memory for data... "
-msgstr ""
+msgstr "alokacja pamiêci dla danych... "
 
 #: lib/src/dataio.c:3283
 msgid "done\n"
-msgstr ""
+msgstr "wykonano\n"
 
 #: lib/src/dataio.c:3290
 msgid "reading variable information...\n"
-msgstr ""
+msgstr "wczytywanie informacji o zmiennych...\n"
 
 #: lib/src/dataio.c:3314
 #, c-format
 msgid " variable %d: '%s'\n"
-msgstr ""
+msgstr " zmienna %d: '%s'\n"
 
 #: lib/src/dataio.c:3318
 msgid "   Non-numeric data: will be skipped\n"
-msgstr ""
+msgstr "   Dana nienumeryczna: bêdzie pominiêta\n"
 
 #: lib/src/dataio.c:3328
 #, c-format
 msgid "   starting col. %d, "
-msgstr ""
+msgstr "   rozpoczêcie od kolumny %d, "
 
 #: lib/src/dataio.c:3332
 #, c-format
 msgid "field width %d, "
-msgstr ""
+msgstr " szeroko¶æ pola %d, "
 
 #: lib/src/dataio.c:3335
 #, c-format
 msgid "decimal places %d\n"
-msgstr ""
+msgstr "ilo¶æ miejsc po przecinku %d\n"
 
 #: lib/src/dataio.c:3341
 #, c-format
 msgid "   Warning: coded variable (format '%s' in BOX file)\n"
-msgstr ""
+msgstr "   Uwaga: kodowana zmienna (format '%s' jak w pliku BOX)\n"
 
 #: lib/src/dataio.c:3346
 #, c-format
 msgid "   definition: '%s'\n"
-msgstr ""
+msgstr "   definicja: '%s'\n"
 
 #: lib/src/dataio.c:3391
 msgid "done reading data\n"
-msgstr ""
+msgstr "zakoñczono wczytywanie danych\n"
 
 #: lib/src/dataio.c:3402
 #, c-format
 msgid "Warning: discarded %d non-numeric variable(s)\n"
-msgstr ""
+msgstr "Uwaga: odrzucona zmienna nienumeryczna: %d\n"
 
 #: lib/src/dataio.c:3546
 msgid "box file seems to be malformed\n"
-msgstr ""
+msgstr "Prawdopodobnie b³êdny format pliku BOX\n"
 
 #: lib/src/dataio.c:3626 gui2/boxplots.c:1419 gui2/database.c:1624
 #, c-format
 msgid "Couldn't open %s for writing"
-msgstr ""
+msgstr "Nie mo¿na otworzyæ pliku %s do zapisania"
 
 #: lib/src/dataio.c:3632 gui2/database.c:414 gui2/library.c:1119
 #: gui2/library.c:1955 gui2/library.c:2030 gui2/library.c:2192
 #, c-format
 msgid "Out of memory"
-msgstr ""
+msgstr "Brak pamiêci"
 
 #: lib/src/dataio.c:3638
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
-msgstr ""
+msgstr "Zapisano %ld KB danych\n"
 
 #: lib/src/dataio.c:3897
 #, c-format
 msgid "Failed to parse count of variables"
-msgstr ""
+msgstr "B³±d w analizie liczby zmiennych"
 
 #: lib/src/dataio.c:3901 lib/src/dataio.c:3907
 #, c-format
 msgid "Out of memory reading data file"
-msgstr ""
+msgstr "Brak pamiêci do wczytania pliku danych"
 
 #: lib/src/dataio.c:3915 lib/src/dataio.c:3925
 #, c-format
 msgid "Got no variables"
-msgstr ""
+msgstr "Nie otrzymano ¿adnych zmiennych"
 
 #: lib/src/dataio.c:3938
 #, c-format
 msgid "Variable %d has no name"
-msgstr ""
+msgstr "Zmienna %d nie ma nazwy"
 
 #: lib/src/dataio.c:3980
 #, c-format
 msgid "Number of variables does not match declaration"
-msgstr ""
+msgstr "Liczba zmiennych nie jest równa deklarowanej"
 
 #: lib/src/dataio.c:4022
 #, c-format
 msgid "Failed to parse data values at obs %d"
-msgstr ""
+msgstr "B³±d w analizie warto¶ci dla obserwacji %d"
 
 #: lib/src/dataio.c:4049
 #, c-format
 msgid "Failed to parse number of observations"
-msgstr ""
+msgstr "B³±d w analizie liczby obserwacji"
 
 #: lib/src/dataio.c:4065
 #, c-format
 msgid "labels attribute for observations must be 'true' or 'false'"
-msgstr ""
+msgstr "etykieta atrybutu dla obserwacji musi byæ 'true' lub 'false'"
 
 #: lib/src/dataio.c:4092
 #, c-format
 msgid "Got no observations\n"
-msgstr ""
+msgstr "Nie otrzymano ¿adnych obserwacji\n"
 
 #: lib/src/dataio.c:4108
 #, c-format
 msgid "Case marker missing at obs %d"
-msgstr ""
+msgstr "Brak znacznika przypadku dla obserwacji %d"
 
 #: lib/src/dataio.c:4120
 #, c-format
 msgid "Values missing at observation %d"
-msgstr ""
+msgstr "Brak warto¶ci dla obserwacji %d"
 
 #: lib/src/dataio.c:4136
 #, c-format
 msgid "Number of observations does not match declaration"
-msgstr ""
+msgstr "Liczba obserwacji nie jest równa deklarowanej"
 
 #: lib/src/dataio.c:4214
 msgid "Uncompressing"
-msgstr ""
+msgstr "Nieskompresowane"
 
 #: lib/src/dataio.c:4214
 msgid "Reading"
-msgstr ""
+msgstr "Wczytywanie"
 
 #: lib/src/dataio.c:4215
 msgid "of data"
-msgstr ""
+msgstr "danych"
 
 #: lib/src/dataio.c:4221 lib/src/dataio.c:4458 plugin/gnumeric_import.c:318
 #: plugin/gnumeric_import.c:421
 #, c-format
 msgid "xmlParseFile failed on %s"
-msgstr ""
+msgstr "xmlParseFile - b³±d dla %s"
 
 #: lib/src/dataio.c:4234 lib/src/dataio.c:4464 plugin/gnumeric_import.c:324
 #: plugin/gnumeric_import.c:427
 #, c-format
 msgid "%s: empty document"
-msgstr ""
+msgstr "%s: pusty dokument"
 
 #: lib/src/dataio.c:4241 lib/src/dataio.c:4470
 #, c-format
 msgid "File of the wrong type, root node not gretldata"
-msgstr ""
+msgstr "B³êdny typ pliku (root node not gretldata)"
 
 #: lib/src/dataio.c:4251
 #, c-format
 msgid "Required attribute 'type' is missing from data file"
-msgstr ""
+msgstr "Brak wymaganego atrybutu 'type' w pliku danych"
 
 #: lib/src/dataio.c:4264
 #, c-format
 msgid "Unrecognized type attribute for data file"
-msgstr ""
+msgstr "Nierozpoznany atrybut typu dla pliku danych"
 
 #: lib/src/dataio.c:4280
 msgid "Failed to parse data frequency"
-msgstr ""
+msgstr "Nieudana analiza czêstotliwo¶ci danych"
 
 #: lib/src/dataio.c:4316
 msgid "Failed to parse startobs"
-msgstr ""
+msgstr "Nieudana analiza obserwacji startowej"
 
 #: lib/src/dataio.c:4340
 msgid "Failed to parse endobs"
-msgstr ""
+msgstr "Nieudana analiza obserwacji koñcowej"
 
 #: lib/src/dataio.c:4366 lib/src/dataio.c:4389
 #, c-format
 msgid "Variables information is missing"
-msgstr ""
+msgstr "Brak informacji o zmiennych"
 
 #: lib/src/dataio.c:4394
 #, c-format
 msgid "No observations were found"
-msgstr ""
+msgstr "Nie znaleziono ¿adnych obserwacji"
 
 #: lib/src/dataio.c:4502
 #, c-format
 msgid "'%s' -- no numeric conversion performed!"
-msgstr ""
+msgstr "'%s' -- nie dokonano konwersji numerycznej!"
 
 #: lib/src/dataio.c:4508
 #, c-format
 msgid "Extraneous character '%c' in data"
-msgstr ""
+msgstr "Niezwi±zany znak '%c' w danych"
 
 #: lib/src/dataio.c:4510
 #, c-format
 msgid "Extraneous character (0x%x) in data"
-msgstr ""
+msgstr "Niezwi±zany znak (0x%x) w danych"
 
 #: lib/src/dataio.c:4516
 #, c-format
 msgid "'%s' -- number out of range!"
-msgstr ""
+msgstr "'%s' -- liczba poza zakresem!"
 
 #: lib/src/dbread.c:210 gui2/database.c:848
 msgid "Couldn't open database index file"
@@ -1762,8 +1782,7 @@ msgstr ""
 
 #: lib/src/generate.c:4315
 #, c-format
-msgid ""
-"uhat can be used only in genr.  First use the command: genr newname = uhat"
+msgid "uhat can be used only in genr.  First use the command: genr newname = uhat"
 msgstr ""
 
 #: lib/src/generate.c:4318
@@ -1918,7 +1937,7 @@ msgstr "B³±d w danych"
 
 #: lib/src/gretl_errors.c:32
 msgid "Exact or near collinearity encountered"
-msgstr ""
+msgstr "Wystgêpuje dok³adna lub bliska wspó³liniowo¶æ"
 
 #: lib/src/gretl_errors.c:33
 msgid "Insufficient degrees of freedom for regression"
@@ -1954,8 +1973,7 @@ msgstr "W poleceniu genr niezbilansowane nawiasy"
 
 #: lib/src/gretl_errors.c:41
 msgid "Too many nested parentheses.  genr not done"
-msgstr ""
-"Zbyt du¿o zagnie¿dzonych nawiasów. Polecenie genr nie zosta³o wykonane."
+msgstr "Zbyt du¿o zagnie¿dzonych nawiasów. Polecenie genr nie zosta³o wykonane."
 
 #: lib/src/gretl_errors.c:42
 msgid "Argument must be an integer"
@@ -1967,7 +1985,7 @@ msgstr "Przepraszam, polecenie niedostêpne dla tego estymatora"
 
 #: lib/src/gretl_errors.c:44
 msgid "Evaluation of genr expression failed"
-msgstr ""
+msgstr "B³êdne wyra¿enie polecenia genr"
 
 #: lib/src/gretl_errors.c:45
 msgid "Unrecognized term in genr formula"
@@ -2018,8 +2036,7 @@ msgid "Unknown variable name in command"
 msgstr "Nieznana nazwa zmiennej w poleceniu"
 
 #: lib/src/gretl_errors.c:57
-msgid ""
-"The observations specified for the regression exceed those in the data set"
+msgid "The observations specified for the regression exceed those in the data set"
 msgstr "Obserwacje wyspecyfikowane w regresji przekraczj± zakres danych"
 
 #: lib/src/gretl_errors.c:59
@@ -2032,8 +2049,7 @@ msgstr "To polecenie jest tylko dostêpne dla modelu estymowanego KMNK"
 
 #: lib/src/gretl_errors.c:61
 msgid "Invalid argument for coeff, corr, stderr, rho, pvalue or mpow"
-msgstr ""
-"B³êdny argument dla polecenia coeff, corr, stderr, rho, pvalue lub mpow"
+msgstr "B³êdny argument dla polecenia coeff, corr, stderr, rho, pvalue lub mpow"
 
 #: lib/src/gretl_errors.c:63
 msgid "Invalid lag order for adf command"
@@ -2049,7 +2065,7 @@ msgstr "B³êdna sk³adnia w poleceniu"
 
 #: lib/src/gretl_errors.c:66
 msgid "No independent variables left after omissions"
-msgstr ""
+msgstr "Brak niezaleznych zmiennych dla polecenia omit"
 
 #: lib/src/gretl_errors.c:67
 msgid "No independent variables were omitted"
@@ -2057,9 +2073,7 @@ msgstr "Brak pominiêtych niezale¿nych zmiennych"
 
 #: lib/src/gretl_errors.c:68
 msgid "Can't do this: some vars in original model have been redefined"
-msgstr ""
-"Nie mo¿na tego wykonaæ: niektóre zmienne w oryginalnym modelu zosta³y "
-"przedefiniowane"
+msgstr "Nie mo¿na tego wykonaæ: niektóre zmienne w oryginalnym modelu zosta³y przedefiniowane"
 
 #: lib/src/gretl_errors.c:70
 msgid "No new independent variables were added"
@@ -2823,8 +2837,7 @@ msgid "Weight var is a dummy variable, effective obs ="
 msgstr ""
 
 #: lib/src/modelprint.c:1077
-msgid ""
-"      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
+msgid "      VARIABLE      COEFFICIENT        STDERROR       T STAT       SLOPE\n"
 msgstr ""
 
 #: lib/src/modelprint.c:1080
@@ -2833,15 +2846,13 @@ msgstr ""
 
 #: lib/src/modelprint.c:1082
 msgid ""
-"      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |"
-"T|)\n"
+"      PARAMETER      ESTIMATE          STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
 
 #: lib/src/modelprint.c:1085
 msgid ""
-"      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |"
-"T|)\n"
+"      VARIABLE      COEFFICIENT        STDERROR       T STAT   2Prob(t > |T|)\n"
 "\n"
 msgstr ""
 
@@ -3199,8 +3210,7 @@ msgid "z-score = %f, with one-tailed p-value %f\n"
 msgstr ""
 
 #: lib/src/nonparam.c:160
-msgid ""
-"Sample is too small to calculate a p-value based on the normal distribution\n"
+msgid "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
 
 #: lib/src/nonparam.c:165 lib/src/printout.c:953 gui2/guiprint_common.c:752
@@ -3299,8 +3309,7 @@ msgstr ""
 #, c-format
 msgid ""
 "\n"
-"%sNull hypothesis: the regression parameters are zero for the added "
-"variables\n"
+"%sNull hypothesis: the regression parameters are zero for the added variables\n"
 "\n"
 msgstr ""
 
@@ -3772,8 +3781,7 @@ msgstr ""
 
 #: lib/src/subsample.c:874
 #, c-format
-msgid ""
-"Total number of missing data values = %d (%.2f%% of total data values)\n"
+msgid "Total number of missing data values = %d (%.2f%% of total data values)\n"
 msgstr ""
 
 #: lib/src/system.c:71
@@ -4269,8 +4277,7 @@ msgid "You should now use the \"print\" command to verify the data\n"
 msgstr ""
 
 #: cli/gretlcli.c:1148
-msgid ""
-"If they are OK, use the \"store\" command to save them in gretl format\n"
+msgid "If they are OK, use the \"store\" command to save them in gretl format\n"
 msgstr ""
 
 #: cli/gretlcli.c:1156
@@ -5958,9 +5965,7 @@ msgid "No undo information available"
 msgstr ""
 
 #: gui2/about.c:39
-msgid ""
-"An econometrics program for the gnome desktop issued under the GNU General "
-"Public License.  http://gretl.sourceforge.net/"
+msgid "An econometrics program for the gnome desktop issued under the GNU General Public License.  http://gretl.sourceforge.net/"
 msgstr ""
 
 #: gui2/about.c:64 gui2/about.c:185 gui2/about.c:186 gui2/about.c:279
@@ -5970,8 +5975,7 @@ msgstr ""
 
 #: gui2/about.c:158 gui2/about.c:333
 #, c-format
-msgid ""
-"Cannot find the license agreement file COPYING. Please make sure it's in %s"
+msgid "Cannot find the license agreement file COPYING. Please make sure it's in %s"
 msgstr ""
 
 #: gui2/about.c:162 gui2/about.c:337
@@ -7652,9 +7656,7 @@ msgid "None"
 msgstr ""
 
 #: gui2/gpt_control.c:930
-msgid ""
-"This box may contain the name of a TrueType font, such as arial or verdana, "
-"and a size in points.  Leave blank to use the default graph font."
+msgid "This box may contain the name of a TrueType font, such as arial or verdana, and a size in points.  Leave blank to use the default graph font."
 msgstr ""
 
 #: gui2/gpt_control.c:935
@@ -9198,8 +9200,7 @@ msgid "Couldn't format model\n"
 msgstr ""
 
 #: gui2/library.c:5349
-msgid ""
-"If they are OK, use the  \"store\" command to save them in gretl format\n"
+msgid "If they are OK, use the  \"store\" command to save them in gretl format\n"
 msgstr ""
 
 #: gui2/library.c:5358
@@ -9257,8 +9258,7 @@ msgid "Sorry, TSLS models can't be put in the model table"
 msgstr ""
 
 #: gui2/model_table.c:139
-msgid ""
-"Can't add model to table -- this model has a different dependent variable"
+msgid "Can't add model to table -- this model has a different dependent variable"
 msgstr ""
 
 #: gui2/model_table.c:147 gui2/model_table.c:152
@@ -10355,8 +10355,7 @@ msgid ""
 msgstr ""
 
 #: plugin/stats_tables.c:343 plugin/stats_tables.c:373
-msgid ""
-"Column headings show alpha (significance level) for a one-tailed test.\n"
+msgid "Column headings show alpha (significance level) for a one-tailed test.\n"
 msgstr ""
 
 #: plugin/stats_tables.c:345 plugin/stats_tables.c:375

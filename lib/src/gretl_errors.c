@@ -153,11 +153,24 @@ char *get_gretl_msg (void)
     return gretl_msg;
 }
 
-void print_gretl_msg (PRN *prn)
+int print_gretl_errmsg (PRN *prn)
+{
+    if (*gretl_errmsg != '\0') {
+	pprintf(prn, "%s\n", gretl_errmsg);
+	return 1;
+    } else {
+	return 0;
+    }
+}
+
+int print_gretl_msg (PRN *prn)
 {
     if (*gretl_msg != '\0') {
 	pprintf(prn, "%s\n", gretl_msg);
-    }	
+	return 1;
+    } else {
+	return 0;
+    }
 }
 
 /**

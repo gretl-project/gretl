@@ -39,18 +39,19 @@ static void substitute_dollar_i (char *str)
     }
 }
 
-static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
+static int loop_exec_line (LOOPSET **plp, int lround, int cmdnum, PRN *prn)
      /* special version of command executor for loop construct */
 {
     int i, m;
     char linecpy[MAXLEN];
     static MODEL *tmpmodel;
     GRETLSUMMARY *summ;
+    LOOPSET *loop = *plp;
     int err = 0;
 
     gretl_set_text_pause(0);
 
-    strcpy(linecpy, plp->lines[cmdnum]);
+    strcpy(linecpy, loop->lines[cmdnum]);
 
     err = catchflags(linecpy, &cmd.opt);
     if (err) {
@@ -69,7 +70,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	return 1;
     }
 
-    if (!echo_off && plp->type == FOR_LOOP) {
+    if (!echo_off && loop->type == FOR_LOOP) {
 	echo_cmd(&cmd, datainfo, linecpy, 0, 1, prn);
     }
 
@@ -95,30 +96,30 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     case HCCM:
 	/* if this is the first time round the loop, allocate space
 	   for each loop model */
-	if (lround == 0 && plp->type != FOR_LOOP) {
-	    plp->nmod += 1;
-	    if (plp->type != COUNT_LOOP) { /* a conditional loop */
-		if (plp->models == NULL) {
-		    plp->models = malloc(sizeof(MODEL *));
+	if (lround == 0 && loop->type != FOR_LOOP) {
+	    loop->nmod += 1;
+	    if (loop->type != COUNT_LOOP) { /* a conditional loop */
+		if (loop->models == NULL) {
+		    loop->models = malloc(sizeof(MODEL *));
 		} else {
-		    plp->models = realloc(plp->models, plp->nmod 
-					    * sizeof(MODEL *));
+		    loop->models = realloc(loop->models, loop->nmod 
+					   * sizeof(MODEL *));
 		}
-		if (plp->models == NULL) return 1;
+		if (loop->models == NULL) return 1;
 
-		plp->models[plp->nmod - 1] = gretl_model_new();
-		if (plp->models[plp->nmod - 1] == NULL) {
+		loop->models[loop->nmod - 1] = gretl_model_new();
+		if (loop->models[loop->nmod - 1] == NULL) {
 		    return 1;
 		}
-		(plp->models[plp->nmod - 1])->ID = cmdnum;
+		(loop->models[loop->nmod - 1])->ID = cmdnum;
 	    } else { /* loop a fixed number of times */
-		if (plp->lmodels == NULL) {
-		    plp->lmodels = malloc(sizeof *plp->lmodels);
+		if (loop->lmodels == NULL) {
+		    loop->lmodels = malloc(sizeof *loop->lmodels);
 		} else {
-		    plp->lmodels = realloc(plp->lmodels, plp->nmod
-					     * sizeof *plp->lmodels);
+		    loop->lmodels = realloc(loop->lmodels, loop->nmod
+					    * sizeof *loop->lmodels);
 		}
-		if (plp->lmodels == NULL) return 1;
+		if (loop->lmodels == NULL) return 1;
 	    }
 	} /* end of basic round 0 setup */
 
@@ -127,14 +128,11 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
 	if (cmd.ci == OLS || cmd.ci == WLS) {
 	    *models[0] = lsq(cmd.list, &Z, datainfo, cmd.ci, cmd.opt, 0.0);
-	}
-	else if (cmd.ci == LAD) {
+	} else if (cmd.ci == LAD) {
 	    *models[0] = lad(cmd.list, &Z, datainfo);
-	}
-	else if (cmd.ci == HSK) {
+	} else if (cmd.ci == HSK) {
 	    *models[0] = hsk_func(cmd.list, &Z, datainfo);
-	}
-	else if (cmd.ci == HCCM) {
+	} else if (cmd.ci == HCCM) {
 	    *models[0] = hccm_func(cmd.list, &Z, datainfo);
 	}
 
@@ -143,24 +141,24 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    return 1;
 	}
 
-	if (plp->type == FOR_LOOP) {
+	if (loop->type == FOR_LOOP) {
 	    (models[0])->ID = lround + 1;
 	    printmodel(models[0], datainfo, cmd.opt, prn); 
-	}
-	else if (plp->type != COUNT_LOOP) { /* conditional loop */
+	    tmpmodel = models[0];
+	} else if (loop->type != COUNT_LOOP) { /* conditional loop */
 	    /* deal with model estimate for "while" loop */
-	    m = get_modnum_by_cmdnum(plp, cmdnum);
-	    swap_models(&models[0], &plp->models[m]);
-	    (plp->models[m])->ID = cmdnum;
-	    tmpmodel = plp->models[m];
+	    m = get_modnum_by_cmdnum(loop, cmdnum);
+	    swap_models(&models[0], &loop->models[m]);
+	    (loop->models[m])->ID = cmdnum;
+	    tmpmodel = loop->models[m];
 	    model_count_minus();
 	} else { 
 	    /* looping a fixed number of times */
-	    if (lround == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 
+	    if (lround == 0 && loop_model_init(&loop->lmodels[loop->nmod - 1], 
 					       models[0], cmdnum)) { 
 		pputs(prn, _("Failed to initialize model for loop\n"));
 		return 1;
-	    } else if (update_loop_model(plp, cmdnum, models[0])) { 
+	    } else if (update_loop_model(loop, cmdnum, models[0])) { 
 		pputs(prn, _("Failed to add results to loop model\n"));
 		return 1;
 	    }
@@ -173,23 +171,23 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    simple_commands(&cmd, linecpy, &Z, datainfo, &paths, prn);
 	    break;
 	}
-	if (plp->type != COUNT_LOOP) {
+	if (loop->type != COUNT_LOOP) {
 	    printdata(cmd.list, &Z, datainfo, cmd.opt, prn);
 	    break;
 	}
 	if (lround == 0) {
-	    plp->nprn += 1;
-	    if (plp->prns == NULL) 
-		plp->prns = malloc(sizeof *plp->prns);
+	    loop->nprn += 1;
+	    if (loop->prns == NULL) 
+		loop->prns = malloc(sizeof *loop->prns);
 	    else 
-		plp->prns = realloc(plp->prns, (plp->nprn) * sizeof *plp->prns);
-	    if (loop_print_init(&plp->prns[plp->nprn-1], 
+		loop->prns = realloc(loop->prns, (loop->nprn) * sizeof *loop->prns);
+	    if (loop_print_init(&loop->prns[loop->nprn-1], 
 				cmd.list, cmdnum)) { 
 		pputs(prn, _("Failed to initalize print struct for loop\n"));
 		return 1;
 	    }
 	}
-	if (update_loop_print(plp, cmdnum, cmd.list, &Z, datainfo)) {
+	if (update_loop_print(loop, cmdnum, cmd.list, &Z, datainfo)) {
 	    pputs(prn, _("Failed to add values to print loop\n"));
 	    return 1;
 	}
@@ -200,6 +198,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	break;
 
     case SMPL:
+	/* FIXME returns in here */
 	if (cmd.opt) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
 				    &subinfo, &fullinfo, 
@@ -222,37 +221,37 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    Z = subZ;
 	} else {
 	    pputs(prn, _("loop: only the '-o' and '-r' forms of the smpl "
-		    " command may be used.\n"));
+			 " command may be used.\n"));
 	    return 1;
 	}
 	break;
 
     case STORE:
 	if (lround == 0) {
-	    plp->nstore = cmd.list[0];
-	    strcpy(loopstorefile, cmd.param);
-	    if (loop_store_init(plp, cmd.list, datainfo))
+	    loop->nstore = cmd.list[0];
+	    if (loop_store_init(loop, cmd.param, cmd.list, datainfo)) {
 		return 1;
+	    }
 	}
 	for (i=0; i<cmd.list[0]; i++) {
 	    if (datainfo->vector[cmd.list[i+1]]) { 
-		plp->storeval[i * plp->ntimes + lround] = 
+		loop->storeval[i * loop->ntimes + lround] = 
 		    Z[cmd.list[i+1]][datainfo->t1 + 1];
 	    } else {
-		plp->storeval[i * plp->ntimes + lround] = 
+		loop->storeval[i * loop->ntimes + lround] = 
 		    Z[cmd.list[i+1]][0];
 	    }
 	}	
 	break;
 
     case PVALUE:
-	batch_pvalue(plp->lines[cmdnum], Z, datainfo, prn);
+	batch_pvalue(loop->lines[cmdnum], Z, datainfo, prn);
 	break;
 
     case SUMMARY:
-	if (plp->type == COUNT_LOOP) {
+	if (loop->type == COUNT_LOOP) {
 	    pputs(prn, _("The summary command is not available in "
-		    "this sort of loop.\n"));
+			 "this sort of loop.\n"));
 	    return 1;
 	}
 	summ = summary(cmd.list, &Z, datainfo, prn);
@@ -264,7 +263,8 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	}	    
 	break; 
 
-    default: /* not reachable */
+    default: 
+	/* not reachable */
 	pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
 		linecpy);
 	return 1;
@@ -272,7 +272,9 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 
     }
 
-    if (err) errmsg(err, prn);
+    if (err) {
+	errmsg(err, prn);
+    }
 
     return err;
 }

@@ -201,6 +201,8 @@ struct genr_func funcs[] = {
 #define MISSVAL_FUNC(f) (f == T_MISSING || f == T_OK || \
                          f == T_MISSZERO || f == T_ZEROMISS)
 
+#define MODEL_VAR_INDEX(v) (v == HNUM || v == UHATNUM || v == YHATNUM)
+
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
 #else
@@ -322,13 +324,11 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 
     if (sscanf(s, format, vname, &m) == 2) {
 	v = varindex(genr->pdinfo, vname);
-	if (v >= genr->pdinfo->v) {
-#if 0
-	    sprintf(gretl_errmsg, _("Unknown variable '%s'"), vname);
-	    genr->err = E_UNKVAR;
-#endif
+	DPRINTF(("get_lagvar: looking at '%s' (v == %d)\n", vname, v));
+	if (v >= genr->pdinfo->v && !MODEL_VAR_INDEX(v)) {
+	    DPRINTF(("get_lagvar: rejecting '%s'\n", s));
 	    v = m = 0;
-	} else if (genr->pdinfo->vector[v] == 0) {
+	} else if (v < genr->pdinfo->v && genr->pdinfo->vector[v] == 0) {
 	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
 				    "can't do lags/leads"), 
 		    genr->pdinfo->varname[v]);
@@ -337,7 +337,22 @@ static int get_lagvar (const char *s, int *lag, GENERATE *genr)
 	}
     }
 
-    if (lag != NULL) *lag = -m;
+    if (lag == NULL) {
+	/* just testing for atomicity */
+	if (v > 0) {
+	    char test[VNAMELEN + 8];
+
+	    sprintf(test, "%s(%d)", vname, m);
+	    if (strcmp(test, s)) {
+		/* string s contains extra stuff */
+		v = 0;
+	    }
+	}
+    } else {
+	*lag = -m;
+    }
+
+    DPRINTF(("get_lagvar: v = %d, m = %d\n", v, m));
 
     return v;
 }
@@ -453,11 +468,15 @@ static genatom *parse_token (const char *s, char op,
 	}
     }
 
-    /* first char is not alpha */
+    /* by now, first char is not alpha */
+
     else if (*s == '$') {
 	int i;
 
-	if ((i = model_scalar_stat_index(s)) > 0) {
+	if ((i = get_lagvar(s, &lag, genr)) > 0) {
+	    DPRINTF(("recognized var #%d lag %d\n", i, lag));
+	    v = i;
+	} else if ((i = model_scalar_stat_index(s)) > 0) {
 	    DPRINTF(("recognized '%s' as model variable, index #%d\n", 
 		     s, i));
 	    val = get_model_scalar_stat(genr->pmod, i, &genr->err);
@@ -800,9 +819,7 @@ static int evaluate_genr (GENERATE *genr)
 	if (atom->varnum == genr->varnum && atom->lag > m) {
 	    m = atom->lag;
 	}
-	if (atom->varnum == UHATNUM || 
-	    atom->varnum == YHATNUM ||
-	    atom->varnum == HNUM) {
+	if (MODEL_VAR_INDEX(atom->varnum)) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_UNIFORM || 
@@ -1249,6 +1266,19 @@ static int strip_wrapper_parens (char *s)
     return strip;
 }
 
+#ifdef OLD_CODE
+static int valid_var (const DATAINFO *pdinfo, const char *s)
+{
+    int v = varindex(pdinfo, s);
+
+    if (v < pdinfo->v || MODEL_VAR_INDEX(v)) {
+	return 1;
+    }
+
+    return 0;
+}
+#endif
+
 static int math_tokenize (char *s, GENERATE *genr, int level)
 {
     char tok[TOKLEN];
@@ -1265,11 +1295,24 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 
     q = p = s;
 
+#ifdef OLD_CODE
     /* whole expression is valid numeric? */
     if (numeric_string(s)) {
-	DPRINTF(("got a constant numeric token\n"));
-	goto numeric_case; 
+	DPRINTF(("math_tokenize: got a constant numeric token\n"));
+	goto atomic_case; 
     }  
+
+    /* whole expression is valid variable name? */
+    if (valid_var(genr->pdinfo, s)) {
+	DPRINTF(("math_tokenize: got a valid variable\n"));
+	goto atomic_case; 
+    } 
+#else
+    if (token_is_atomic(s, genr)) {
+	DPRINTF(("math_tokenize: string is atomic token\n"));
+	goto atomic_case; 
+    } 
+#endif
 
     while (*p) {
 	DPRINTF(("math_tokenize: inner loop '%s'\n", p));
@@ -1297,7 +1340,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	    /* ... and peek at the right-hand term */
 	    if (numeric_string(p)) {
 		DPRINTF(("got a constant numeric token\n"));
-		goto numeric_case;
+		goto atomic_case;
 	    }	    
 	}
 	p++;
@@ -1308,7 +1351,7 @@ static int math_tokenize (char *s, GENERATE *genr, int level)
 	return E_UNBAL;
     }    
 
- numeric_case:
+ atomic_case:
 	
     if (*q) {
 	if (strlen(q) > TOKLEN - 1) {
@@ -2922,7 +2965,7 @@ static double *get_model_series (const DATAINFO *pdinfo,
     int t, t2, n = pdinfo->n;
     double *x, *garch_h = NULL;
 
-    if (pmod == NULL || (v != UHATNUM && v != YHATNUM && v != HNUM))
+    if (pmod == NULL || !MODEL_VAR_INDEX(v))
 	return NULL;
 
     if (pmod->t2 - pmod->t1 + 1 > n || 
@@ -3663,14 +3706,29 @@ int varindex (const DATAINFO *pdinfo, const char *varname)
 	check = varname;
     }
 
-    if (!strcmp(check, "uhat")) return UHATNUM; 
-    if (!strcmp(check, "yhat")) return YHATNUM; 
-    if (!strcmp(check, "i"))    return INDEXNUM;
-    if (!strcmp(check, "t"))    return TNUM;
-    if (!strcmp(check, "obs"))  return TNUM;
+    if (!strcmp(check, "uhat") || !strcmp(check, "$uhat")) {
+	return UHATNUM; 
+    } 
+    if (!strcmp(check, "yhat") || !strcmp(check, "$yhat")) {
+	return YHATNUM; 
+    }
+    if (!strcmp(check, "$h")) {
+	return HNUM; 
+    }
 
-    if (!strcmp(check, "const") || !strcmp(check, "CONST"))
+    /* FIXME: should we allow "$i", "$t", "$obs" ?? */
+    if (!strcmp(check, "i")) {
+	return INDEXNUM;
+    }
+    if (!strcmp(check, "t")) {
+	return TNUM;
+    }
+    if (!strcmp(check, "obs")) {
+	return TNUM;
+    }
+    if (!strcmp(check, "const") || !strcmp(check, "CONST")) {
 	return 0;
+    }
 
     for (i=0; i<pdinfo->v; i++) { 
 	if (!strcmp(pdinfo->varname[i], check)) { 

@@ -49,7 +49,6 @@ extern void initialize_readline (void);
 
 #define MAXLINE 1024
 
-char loopstorefile[MAXLEN];
 char prefix[MAXLEN];
 char runfile[MAXLEN];
 char cmdfile[MAXLEN];
@@ -67,7 +66,7 @@ DATAINFO *fullinfo;           /* convenience pointer */
 FREQDIST *freq;               /* struct for freq distributions */
 CMD cmd;                      /* struct for command characteristics */
 PATHS paths;                  /* useful paths */
-LOOPSET loop;                 /* struct for monte carlo loop */
+LOOPSET *loop;                /* struct for monte carlo loop */
 PRN *cmdprn;
 MODELSPEC *modelspec;
 MODEL tmpmod;
@@ -90,7 +89,7 @@ gretl_equation_system *sys;
 gretl_restriction_set *rset;
 
 void exec_line (char *line, PRN *prn); 
-static int loop_exec_line (LOOPSET *plp, const int round, 
+static int loop_exec_line (LOOPSET **plp, const int round, 
 			   const int cmdnum, PRN *prn);
 
 void usage(void)
@@ -445,19 +444,14 @@ int main (int argc, char *argv[])
     if (cmd.list == NULL || cmd.param == NULL) 
 	noalloc(_("command list")); 
 
-    /* monte carlo struct */
-    loop.lines = NULL;
-    loop.models = NULL;
-    loop.lmodels = NULL;
-    loop.prns = NULL;
-    loop.storename = NULL;
-    loop.storelbl = NULL;
-    loop.storeval = NULL;
-
     /* initialize random number generator */
     gretl_rand_init();
 
-    if (data_status) varlist(datainfo, prn);
+    /* print list of variables */
+    if (data_status) {
+	varlist(datainfo, prn);
+    }
+
     /* check for help file */
     if (!batch) {
 	dat = fopen(paths.helpfile, "r");
@@ -470,8 +464,10 @@ int main (int argc, char *argv[])
 	    show_paths(&paths);
 	}
     } 
-    if (!batch && !runit && !data_status) 
+
+    if (!batch && !runit && !data_status) {
 	fprintf(stderr, _("Type \"open filename\" to open a data set\n"));
+    }
 
 #ifdef HAVE_READLINE
     if (!batch) initialize_readline();
@@ -494,38 +490,39 @@ int main (int argc, char *argv[])
 	if (err && batch && errfatal) gretl_abort(linecopy);
 
 	if (looprun) { 
-	    if (!loop.ncmds) {
+	    if (loop->ncmds == 0) {
 		printf(_("No commands in loop\n"));
 		looprun = errfatal = 0;
 		continue;
 	    }
 	    i = 0;
-	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
-		if (loop.type == FOR_LOOP && !echo_off) {
+	    while (!aborted && loop_condition(i, loop, Z, datainfo)) {
+		if (loop->type == FOR_LOOP && !echo_off) {
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		}
-		for (j=0; j<loop.ncmds; j++) {
+		for (j=0; j<loop->ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			printf(_("Error in command loop: aborting\n"));
 			aborted = 1;
+			break;
 		    }
 		}
 		i++;
 	    }
-	    if (loop.err) {
+	    if (loop->err) {
 		pprintf(prn, "\n%s\n", get_gretl_errmsg());
 	    }
 	    if (!aborted && i > 0) {
-		if (loop.type != FOR_LOOP) {
-		    print_loop_results(&loop, datainfo, prn, &paths, 
-				       loopstorefile);
+		if (loop->type != FOR_LOOP) {
+		    print_loop_results(loop, datainfo, prn, &paths); 
 		}
 		errfatal = 0;
 	    } 
-	    looprun = 0;
-	    monte_carlo_free(&loop);
+	    loop = gretl_loop_terminate(loop, &looprun);
 	    clear(line, MAXLINE);
-	    if (aborted) return 1;
+	    if (aborted) {
+		return 1;
+	    }
 	}
 	else { /* not looprun */
 #ifdef HAVE_READLINE
@@ -681,24 +678,27 @@ void exec_line (char *line, PRN *prn)
    
     if (loopstack) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd.ci, &loop)) {
+	if (!ok_in_loop(cmd.ci, loop)) {
 	    printf(_("Command '%s' ignored; not available in loop mode\n"), line);
 	    return;
 	} else {
-	    if (!echo_off) 
+	    if (!echo_off) {
 		echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 
 			 0, cmdprn);
+	    }
 	    if (cmd.ci != ENDLOOP) {
-		if (add_to_loop(&loop, line, cmd.ci, cmd.opt)) 
+		if (add_to_loop(loop, line, cmd.ci, cmd.opt)) { 
 		    printf(_("Failed to add command to loop stack\n"));
+		}
 		return;
 	    }
 	}
     }
 
-    if (!echo_off && cmd.ci != ENDLOOP) 
+    if (!echo_off && cmd.ci != ENDLOOP) {
 	echo_cmd(&cmd, datainfo, line, (batch || runit)? 1 : 0, 0, 
 		 cmdprn);
+    }
 
     switch (cmd.ci) {
 
@@ -950,13 +950,16 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     case ENDLOOP:
-	if (!loopstack) {
+	if (loopstack == 0) {
 	    pputs(prn, _("You can't end a loop here, "
 			 "you haven't started one\n"));
 	    break;
 	}
-	loopstack = 0;
-	looprun = 1;
+	loopstack--;
+	if (loopstack == 0) {
+	    looprun = 1;
+	}
+	/* FIXME need to do more ?? */
 	break;
 
     case EQUATION:
@@ -1270,20 +1273,17 @@ void exec_line (char *line, PRN *prn)
 
     case LOOP:
 	errfatal = 1;
-	err = parse_loopline(line, &loop, datainfo, (const double **) Z);
-	if (err) {
-	    pprintf(prn, "%s\n", get_gretl_errmsg());
+	loop = parse_loopline(line, loop, loopstack,
+			      datainfo, (const double **) Z);
+	if (loop == NULL) {
+	    print_gretl_errmsg(prn);
 	    break;
 	}
-	if (loop.lvar == 0 && loop.ntimes < 2) {
-	    pputs(prn, _("Loop count missing or invalid\n"));
-	    monte_carlo_free(&loop);
-	    break;
-	}
-	if (!batch && !runit) 
+	if (!batch && !runit) {
 	    pputs(prn, _("Enter commands for loop.  "
 			 "Type 'endloop' to get out\n"));
-	loopstack = 1; 
+	}
+	loopstack++; 
 	break;
 
     case NLS:

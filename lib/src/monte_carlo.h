@@ -66,8 +66,11 @@ typedef struct {
     bigval *ssq_sderr;      /* sums of squares of estd std. errs */
 } LOOP_MODEL;
 
-typedef struct {
+typedef struct LOOPSET_ LOOPSET;
+
+struct LOOPSET_ {
     char type;
+    int level;
     int err;
     int ntimes;
     int lvar, rvar;
@@ -84,50 +87,51 @@ typedef struct {
     MODEL **models;
     LOOP_MODEL *lmodels;
     LOOP_PRINT *prns;
+    char storefile[MAXLEN];
     char **storename;
     char **storelbl;
     double *storeval;
-} LOOPSET;
+    LOOPSET *parent;
+    LOOPSET **children;
+    int n_children;
+};
 
 /* functions follow */
 
-void script_loop_init (LOOPSET *ploop);
+int ok_in_loop (int ci, const LOOPSET *loop);
 
-int ok_in_loop (int ci, const LOOPSET *ploop);
+LOOPSET *parse_loopline (char *line, LOOPSET *ploop, int loopstack,
+			 DATAINFO *pdinfo, const double **Z);
 
-int parse_loopline (char *line, LOOPSET *ploop, 
-		    DATAINFO *pdinfo, const double **Z);
+LOOPSET *gretl_loop_terminate (LOOPSET *loop, int *looprun);
 
-int loop_condition (int k, LOOPSET *ploop, 
+int loop_condition (int k, LOOPSET *loop, 
 		    double **Z, DATAINFO *pdinfo); 
 
-void monte_carlo_free (LOOPSET *ploop);
-
-int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
+int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 		     int id);
 
-int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id);
+int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id);
 
-int loop_store_init (LOOPSET *ploop, const LIST list, 
-		     DATAINFO *pdinfo);
+int loop_store_init (LOOPSET *loop, const char *fname,
+		     const LIST list, DATAINFO *pdinfo);
 
-int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod);
+int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod);
 
-int update_loop_print (LOOPSET *ploop, int cmdnum, 
+int update_loop_print (LOOPSET *loop, int cmdnum, 
 		       const LIST list, double ***pZ, 
 		       const DATAINFO *pdinfo);
 
-void print_loop_results (LOOPSET *ploop, 
+void print_loop_results (LOOPSET *loop, 
 			 const DATAINFO *pdinfo, 
-			 PRN *prn, PATHS *ppaths,
-			 char *loopstorefile);
+			 PRN *prn, PATHS *ppaths);
 
-int add_to_loop (LOOPSET *ploop, char *line, int ci, 
+int add_to_loop (LOOPSET *loop, char *line, int ci, 
 		 gretlopt oflags);
 
 void get_cmd_ci (const char *line, CMD *command);
 
-int get_modnum_by_cmdnum (LOOPSET *ploop, int cmdnum);
+int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum);
 
 int if_eval (const char *line, double ***pZ, DATAINFO *pdinfo);
 

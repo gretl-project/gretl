@@ -54,13 +54,8 @@ extern char tramodir[];
 
 /* ../cli/common.c */
 static int data_option (gretlopt flag);
-static int loop_exec_line (LOOPSET *plp, int lround, 
+static int loop_exec_line (LOOPSET **plp, int lround, 
 			   int cmdnum, PRN *prn);
-
-int gui_exec_line (char *line, 
-		   LOOPSET *plp, int *plstack, int *plrun, 
-		   PRN *prn, int exec_code, 
-		   const char *myname); 
 
 /* private functions */
 static int finish_genr (MODEL *pmod, dialog_t *ddata);
@@ -76,7 +71,6 @@ static CMD cmd;
 static int ignore;
 static int echo_off;
 static int replay;
-static char loopstorefile[MAXLEN];
 static MODELSPEC *modelspec;
 static char last_model = 's';
 static gretl_equation_system *sys;
@@ -2036,7 +2030,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case CORC:
     case HILU:
-    case PWE:
+    case PWE: 
 	err = hilu_corc(&rho, cmd.list, &Z, datainfo, 
 			&paths, 0, action, prn);
 	if (err) {
@@ -4541,10 +4535,11 @@ int execute_script (const char *runfile, const char *buf,
      /* run commands from runfile or buf, output to prn */
 {
     FILE *fb = NULL;
-    int exec_err = 0;
-    int i, j = 0, loopstack = 0, looprun = 0, aborted = 0;
     char tmp[MAXLEN];
-    LOOPSET loop; 
+    int loopstack = 0, looprun = 0;
+    int exec_err = 0, aborted = 0;
+    int i, j = 0;
+    LOOPSET *loop = NULL;
 
 #if 0
     debug_print_model_info(models[0], "Start of execute_script, models[0]");
@@ -4570,9 +4565,6 @@ int execute_script (const char *runfile, const char *buf,
 	exec_code == SAVE_SESSION_EXEC) 
 	reset_model_count();
 
-    /* looping struct */
-    script_loop_init(&loop);
-
 #if 0
     /* Put the action of running this script into the command log? */
     if (exec_code == SCRIPT_EXEC && runfile != NULL) {
@@ -4590,36 +4582,36 @@ int execute_script (const char *runfile, const char *buf,
 
     while (strcmp(cmd.cmd, "quit")) {
 	if (looprun) { /* Are we doing a Monte Carlo simulation? */
-	    if (!loop.ncmds) {
+	    if (loop->ncmds == 0) {
 		pprintf(prn, _("No commands in loop\n"));
 		looprun = 0;
 		continue;
 	    }
 	    i = 0;
-	    while (!aborted && loop_condition(i, &loop, Z, datainfo)) {
-		if (loop.type == FOR_LOOP && !echo_off) {
+	    while (!aborted && loop_condition(i, loop, Z, datainfo)) {
+		if (loop->type == FOR_LOOP && !echo_off) {
 		    pprintf(prn, "loop: i = %d\n\n", genr_scalar_index(0, 0));
 		}
-		for (j=0; j<loop.ncmds; j++) {
+		for (j=0; j<loop->ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, prn)) {
 			pprintf(prn, _("Error in command loop: aborting\n"));
 			aborted = 1;
+			break;
 		    }
 		}
 		i++;
 	    }
-	    if (loop.err) {
+	    if (loop->err) {
 		pprintf(prn, "\n%s\n", get_gretl_errmsg());
 	    }	    
-	    if (!aborted && i > 0 && loop.type != FOR_LOOP) {
-		print_loop_results(&loop, datainfo, prn, &paths, 
-				   loopstorefile);
+	    if (!aborted && i > 0 && loop->type != FOR_LOOP) {
+		print_loop_results(loop, datainfo, prn, &paths);
 	    }
-	    looprun = 0;
-	    monte_carlo_free(&loop);
-	    if (aborted) return 1;
-	} else { 
-	    /* end if Monte Carlo stuff */
+	    loop = gretl_loop_terminate(loop, &looprun);
+	    if (aborted) {
+		return 1;
+	    }
+	} else { /* not looprun */
 	    int bslash;
 
 	    *line = '\0';
@@ -4754,12 +4746,13 @@ static unsigned char gp_flags (int batch, gretlopt opt)
 /* ........................................................... */
 
 int gui_exec_line (char *line, 
-		   LOOPSET *plp, int *plstack, int *plrun, 
+		   LOOPSET **plp, int *plstack, int *plrun, 
 		   PRN *prn, int exec_code, 
 		   const char *myname) 
 {
     int i, err = 0, chk = 0, order, nulldata_n, lines[1];
     int dbdata = 0, do_arch = 0, do_nls = 0, renumber;
+    int loopstack = *plstack, looprun = *plrun;
     int rebuild = (exec_code == REBUILD_EXEC);
     double rho;
     char runfile[MAXLEN], datfile[MAXLEN];
@@ -4770,12 +4763,20 @@ int gui_exec_line (char *line,
     FREQDIST *freq;             /* struct for freq distributions */
     GRETLTEST test;             /* struct for model tests */
     GRETLTEST *ptest;
+    LOOPSET *loop;
     PRN *outprn = NULL;
 
 #ifdef CMD_DEBUG
     fprintf(stderr, "gui_exec_line: exec_code = %d\n",
 	    exec_code);
 #endif
+
+    /* hook up loop pointer */
+    if (plp == NULL) {
+	loop = NULL;
+    } else {
+	loop = *plp;
+    }
 
     /* catch requests relating to saved objects, which are not
        really "commands" as such */
@@ -4803,7 +4804,7 @@ int gui_exec_line (char *line,
     }	
 
     /* if we're stacking commands for a loop, parse "lightly" */
-    if (*plstack) { 
+    if (loopstack) { 
 	get_cmd_ci(line, &cmd);
     } else {
 	if (exec_code == CONSOLE_EXEC) {
@@ -4837,14 +4838,14 @@ int gui_exec_line (char *line,
 	return 1;
     }
 
-    if (*plstack) {  
+    if (loopstack) {  
 	/* accumulating loop commands */
-	if (!ok_in_loop(cmd.ci, plp)) {
+	if (!ok_in_loop(cmd.ci, loop)) {
             pprintf(prn, _("Sorry, this command is not available in loop mode\n"));
             return 1;
         } 
 	if (cmd.ci != ENDLOOP) {
-	    if (add_to_loop(plp, line, cmd.ci, cmd.opt)) {
+	    if (add_to_loop(loop, line, cmd.ci, cmd.opt)) {
 		pprintf(prn, _("Failed to add command to loop stack\n"));
 		return 1;
 	    }
@@ -5141,13 +5142,15 @@ int gui_exec_line (char *line,
 	break;
 
     case ENDLOOP:
-	if (*plstack != 1) {
+	if (loopstack == 0) {
 	    pprintf(prn, _("You can't end a loop here, "
 			   "you haven't started one\n"));
 	    break;
 	}
-	*plstack = 0;
-	*plrun = 1;
+	loopstack--;
+	if (loopstack == 0) {
+	    looprun = 1;
+	}
 	break;
 
     case EQUATION:
@@ -5458,22 +5461,18 @@ int gui_exec_line (char *line,
 	break;
 
     case LOOP:
-	if (plp == NULL) {
+	if (plp == NULL) { 
 	    pprintf(prn, _("Sorry, Monte Carlo loops not available "
 			   "in this mode\n"));
 	    break;
 	}
-	err = parse_loopline(line, plp, datainfo, (const double **) Z);
-	if (err) {
-	    pprintf(prn, "%s\n", get_gretl_errmsg());
+	loop = parse_loopline(line, loop, loopstack,
+			      datainfo, (const double **) Z);
+	if (loop == NULL) {
+	    print_gretl_errmsg(prn);
 	    break;
 	}
-	if (plp->lvar == 0 && plp->ntimes < 2) {
-	    printf(_("Loop count missing or invalid\n"));
-	    monte_carlo_free(plp);
-	    break;
-	}
-	*plstack = 1; 
+	loopstack++;
 	break;
 
     case MODELTAB:
@@ -5551,8 +5550,11 @@ int gui_exec_line (char *line,
 	break;
 
     case QUIT:
-	if (plp) pprintf(prn, _("Script done\n"));
-	else pprintf(prn, _("Please use the Close button to exit\n"));
+	if (plp != NULL) {
+	    pprintf(prn, _("Script done\n"));
+	} else {
+	    pprintf(prn, _("Please use the Close button to exit\n"));
+	}
 	break;
 
     case RHODIFF:
@@ -5805,6 +5807,10 @@ int gui_exec_line (char *line,
 	    maybe_save_model(&cmd, &models[0], datainfo, prn);
 	}
     }
+
+    *plstack = loopstack;
+    *plrun = looprun;
+    *plp = loop;
 
     return (err != 0);
 }

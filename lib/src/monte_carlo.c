@@ -31,29 +31,30 @@ enum inequalities {
     LT
 };
 
-static int monte_carlo_init (LOOPSET *ploop);
-static void free_loop_model (LOOP_MODEL *plmod);
-static void free_loop_print (LOOP_PRINT *pprn);
-static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
+static void gretl_loop_init (LOOPSET *loop);
+static int monte_carlo_init (LOOPSET *loop);
+static void monte_carlo_free (LOOPSET *loop);
+static void free_loop_model (LOOP_MODEL *lmod);
+static void free_loop_print (LOOP_PRINT *lprn);
+static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn);
-static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *plmod, 
+static void print_loop_coeff (const DATAINFO *pdinfo, const LOOP_MODEL *lmod, 
 			      int c, int n, PRN *prn);
-static void print_loop_prn (LOOP_PRINT *pprn, int n,
+static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn);
-static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
-			     char *loopstorefile);
-static int get_prnnum_by_id (LOOPSET *ploop, int id);
+static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths);
+static int get_prnnum_by_id (LOOPSET *loop, int id);
 
 /**
  * ok_in_loop:
  * @ci: command index.
- * @ploop: pointer to loop structure
+ * @loop: pointer to loop structure
  *
  * Returns: 1 if the given command is acceptable inside the loop construct,
  * 0 otherwise.
  */
 
-int ok_in_loop (int ci, const LOOPSET *ploop)
+int ok_in_loop (int ci, const LOOPSET *loop)
 {
     if (ci == OLS || 
 	ci == GENR ||
@@ -70,68 +71,138 @@ int ok_in_loop (int ci, const LOOPSET *ploop)
 	ci == ENDLOOP) 
 	return 1;
 
-    if (ploop->type == COUNT_LOOP && 
+    if (loop->type == COUNT_LOOP && 
 	(ci == LAD || ci == HSK || ci == HCCM || ci == WLS)) 
 	return 1;
 
     return 0;
 }
 
+/* ......................................................  */
+
+static int loop_attach_child (LOOPSET *loop, LOOPSET *child)
+{
+    LOOPSET **children;
+    int n;
+
+    n = loop->n_children + 1;
+    children = realloc(loop->children, n * sizeof *loop->children);
+    if (children == NULL) {
+	return 1;
+    } 
+
+    loop->children = children;
+    loop->children[n - 1] = child;
+    child->parent = loop;
+    child->level = loop->level + 1;
+
+    loop->n_children += 1;
+
+    return 0;
+}
+
+static LOOPSET *gretl_loop_new (LOOPSET *ploop, int loopstack)
+{
+    LOOPSET *loop;
+
+    loop = malloc(sizeof *loop);
+    if (loop == NULL) {
+	return NULL;
+    }
+
+    gretl_loop_init(loop);
+
+    if (ploop != NULL) {
+	int err = loop_attach_child(ploop, loop);
+
+	if (err) {
+	    free(loop);
+	    loop = NULL;
+	} 
+    }
+	
+    return loop;
+}
+
 /**
  * parse_loopline:
  * @line: command line.
- * @ploop: loop commands struct.
+ * @ploop: current loop struct pointer, or %NULL.
+ * @loopstack: stacking level for the loop.
  * @pdinfo: data information struct.
  * @Z: data array.
  *
  * Parse a line specifying a loop condition.
  *
- * Returns: 0 on successful completion, 1 on error.
+ * Returns: loop pointer on successful completion, %NULL on error.
  */
 
-int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
-		    const double **Z)
+LOOPSET *parse_loopline (char *line, LOOPSET *ploop, int loopstack,
+			 DATAINFO *pdinfo, const double **Z)
 {
+    LOOPSET *loop;
     char lvar[VNAMELEN], rvar[VNAMELEN], op[8];
     int start, end;
     int n, v;
     int err = 0;
 
+    if (ploop == NULL) {
+	/* starting from scratch */
+	loop = gretl_loop_new(NULL, 0);
+	if (loop == NULL) {
+	    return NULL;
+	}
+    } else if (loopstack > ploop->level) {
+	/* have to nest this loop */
+	loop = gretl_loop_new(ploop, loopstack);
+	if (loop == NULL) {
+	    return NULL;
+	}
+    } else {
+	/* shouldn't happen: need error message? */
+	loop = ploop;
+    }
+
     *gretl_errmsg = '\0';
-    monte_carlo_init(ploop);
+    monte_carlo_init(loop);
 
     /* try parsing as a while loop */
     if (sscanf(line, "loop while %[^ <>]%[ <>] %s", lvar, op, rvar) == 3) {
-	if (strstr(op, ">")) ploop->ineq = GT;
-	else ploop->ineq = LT;
+	if (strstr(op, ">")) {
+	    loop->ineq = GT;
+	} else {
+	    loop->ineq = LT;
+	}
 	v = varindex(pdinfo, lvar);
-	if (v > 0 && v < pdinfo->v) ploop->lvar = v;
-	else {
+	if (v > 0 && v < pdinfo->v) {
+	    loop->lvar = v;
+	} else {
 	    sprintf(gretl_errmsg, 
 		    _("Undefined variable '%s' in loop condition."), lvar);
 	    err = 1;
 	}
 	if (!err && (isdigit((unsigned char) *rvar) || *rvar == '.')) { 
-	    /* numeric rvalue? */
+	    /* numeric rvalue?  FIXME: too restrictive?  */
 	    if (check_atof(rvar)) {
 		err = 1;
 	    } else {
-		ploop->rval = atof(rvar);
+		loop->rval = atof(rvar);
 	    }
 	} else if (!err) { /* otherwise try a varname */
 	    v = varindex(pdinfo, rvar);
-	    if (v > 0 && v < pdinfo->v) ploop->rvar = v;
-	    else {
+	    if (v > 0 && v < pdinfo->v) {
+		loop->rvar = v;
+	    } else {
 		sprintf(gretl_errmsg, 
 			_("Undefined variable '%s' in loop condition."), rvar);
-		ploop->lvar = 0;
+		loop->lvar = 0;
 		err = 1;
 	    }
 	}
 
-	ploop->type = WHILE_LOOP;
-
-	return err;
+	if (!err) {
+	    loop->type = WHILE_LOOP;
+	}
     }
 
     /* or try parsing as a for loop */
@@ -150,12 +221,11 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	if (!err) {
 	    /* initialize special genr index to starting value */
 	    genr_scalar_index(1, start - 1);
-	    ploop->lvar = INDEXNUM;
-	    ploop->rvar = 0;
-	    ploop->ntimes = end;
-	    ploop->type = FOR_LOOP;
+	    loop->lvar = INDEXNUM;
+	    loop->rvar = 0;
+	    loop->ntimes = end;
+	    loop->type = FOR_LOOP;
 	}
-	return err;
     }
 
     /* or as a simple count loop */
@@ -164,10 +234,9 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 	    strcpy(gretl_errmsg, _("Loop count must be positive."));
 	    err = 1;
 	} else {
-	    ploop->ntimes = n;
-	    ploop->type = COUNT_LOOP;
+	    loop->ntimes = n;
+	    loop->type = COUNT_LOOP;
 	}
-	return err;
     }
 
     /* or as a count loop with named scalar max */
@@ -179,17 +248,31 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo,
 		strcpy(gretl_errmsg, _("Loop count must be positive."));
 		err = 1;
 	    } else {
-		ploop->ntimes = n;
-		ploop->type = COUNT_LOOP;
+		loop->ntimes = n;
+		loop->type = COUNT_LOOP;
 	    }
-	    return err;	    
 	}
     }
 
     /* out of options, complain */
-    strcpy(gretl_errmsg, _("No valid loop condition was given."));
+    else {
+	strcpy(gretl_errmsg, _("No valid loop condition was given."));
+	err = 1;
+    }
 
-    return 1;
+    if (!err && loop->lvar == 0 && loop->ntimes < 2) {
+	strcpy(gretl_errmsg, _("Loop count missing or invalid\n"));
+	err = 1;
+    }
+
+    if (err) {
+	if (loop != ploop) {
+	    free(loop);
+	}
+	loop = NULL;
+    }
+
+    return loop;
 }
 
 #define DEFAULT_MAX_ITER 250
@@ -211,7 +294,7 @@ static int get_maxloop (void)
 /**
  * loop_condition:
  * @k: in case of a simple count loop, the number of iterations so far.
- * @ploop: loop commands struct.
+ * @loop: pointer to loop commands struct.
  * @Z: data matrix.
  * @pdinfo: data information struct.
  *
@@ -220,64 +303,64 @@ static int get_maxloop (void)
  * Returns: 1 to indicate looping should continue, 0 to terminate.
  */
 
-int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
+int loop_condition (int k, LOOPSET *loop, double **Z, DATAINFO *pdinfo)
 {
     static int maxloop = 0;
     int t, cont = 0;
-    int oldtimes = ploop->ntimes;
+    int oldtimes = loop->ntimes;
 
     if (maxloop == 0) maxloop = get_maxloop();
 
     /* an inequality between variables */
-    if (ploop->rvar > 0) {
-	ploop->ntimes += 1;
-	if (ploop->ntimes >= maxloop) {
+    if (loop->rvar > 0) {
+	loop->ntimes += 1;
+	if (loop->ntimes >= maxloop) {
 	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
 		    maxloop);
-	    ploop->err = 1;
+	    loop->err = 1;
 	    return 0; /* safety measure */
 	}
-	if (ploop->ineq == GT) {
-	    cont = (Z[ploop->lvar][0] > Z[ploop->rvar][0]);
+	if (loop->ineq == GT) {
+	    cont = (Z[loop->lvar][0] > Z[loop->rvar][0]);
 	} else {
-	    cont = (Z[ploop->lvar][0] < Z[ploop->rvar][0]);
+	    cont = (Z[loop->lvar][0] < Z[loop->rvar][0]);
 	}
     } 
 
     /* a 'for' loop */
-    else if (ploop->lvar == INDEXNUM) {  
+    else if (loop->lvar == INDEXNUM) {  
 	t = genr_scalar_index(0, 0); /* fetch index */
-	if (t < ploop->ntimes) {
+	if (t < loop->ntimes) {
 	    genr_scalar_index(2, 1); /* increment index */
 	    cont = 1;
 	}
     }
 
     /* inequality between a var and a number */
-    else if (ploop->lvar) {
-	ploop->ntimes += 1;
-	if (ploop->ntimes >= maxloop) {
+    else if (loop->lvar) {
+	loop->ntimes += 1;
+	if (loop->ntimes >= maxloop) {
 	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
 		    maxloop);
-	    ploop->err = 1;
+	    loop->err = 1;
 	    return 0; /* safety measure */
 	}
-	if (ploop->ineq == GT) {
-	    cont = (Z[ploop->lvar][0] > ploop->rval);
+	if (loop->ineq == GT) {
+	    cont = (Z[loop->lvar][0] > loop->rval);
 	} else {
-	    cont = (Z[ploop->lvar][0] < ploop->rval);
+	    cont = (Z[loop->lvar][0] < loop->rval);
 	}
     }
 
     /* a simple count loop */
     else {
-	if (k < ploop->ntimes) cont = 1;
+	if (k < loop->ntimes) cont = 1;
     }
 
     if (!cont && oldtimes == 0) {
 	strcpy(gretl_errmsg, _("Loop condition not satisfied at first round"));
-	ploop->err = 1;
-	ploop->ntimes = 0;
+	loop->err = 1;
+	loop->ntimes = 0;
     }
 
     return cont;
@@ -285,267 +368,276 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
-void script_loop_init (LOOPSET *ploop)
+LOOPSET *gretl_loop_terminate (LOOPSET *loop, int *looprun)
 {
-    ploop->ntimes = 0;
-    ploop->err = 0;
-    ploop->lvar = 0;
-    ploop->rvar = 0;
-    ploop->rval = 0;
-    ploop->ineq = 0;
+    LOOPSET *nextloop = loop->parent;
 
-    ploop->ncmds = 0;
-    ploop->nmod = 0;
-    ploop->nprn = 0;
-    ploop->nstore = 0;
+    /* free allocated storage in loop */
+    monte_carlo_free(loop);
 
-    ploop->next_model = 0;
-    ploop->next_print = 0;
+    /* free loop struct pointer itself */
+    free(loop);
 
-    ploop->lines = NULL;
-    ploop->ci = NULL;
-    ploop->models = NULL;
-    ploop->lmodels = NULL;
-    ploop->prns = NULL;
+    if (nextloop == NULL) {
+	*looprun = 0;
+    }
 
-    ploop->storename = NULL;
-    ploop->storelbl = NULL;
-    ploop->storeval = NULL;
+    return nextloop;
 }
 
-static int monte_carlo_init (LOOPSET *ploop)
+/* ......................................................  */
+
+static void gretl_loop_init (LOOPSET *loop)
 {
-    ploop->ntimes = 0;
-    ploop->err = 0;
-    ploop->lvar = 0;
-    ploop->rvar = 0;
-    ploop->rval = 0;
-    ploop->ineq = 0;
-    ploop->ncmds = 0;
-    ploop->nmod = 0;
-    ploop->nprn = 0;
-    ploop->nstore = 0;
-    ploop->next_model = 0;
-    ploop->next_print = 0;
-    ploop->models = NULL;
-    ploop->lmodels = NULL;
-    ploop->prns = NULL;
+    loop->level = 0;
+
+    loop->ntimes = 0;
+    loop->err = 0;
+    loop->lvar = 0;
+    loop->rvar = 0;
+    loop->rval = 0;
+    loop->ineq = 0;
+
+    loop->ncmds = 0;
+    loop->nmod = 0;
+    loop->nprn = 0;
+    loop->nstore = 0;
+
+    loop->next_model = 0;
+    loop->next_print = 0;
+
+    loop->lines = NULL;
+    loop->ci = NULL;
+    loop->models = NULL;
+    loop->lmodels = NULL;
+    loop->prns = NULL;
+
+    loop->storefile[0] = '\0';
+    loop->storename = NULL;
+    loop->storelbl = NULL;
+    loop->storeval = NULL;
+
+    loop->parent = NULL;
+    loop->children = NULL;
+    loop->n_children = 0;
+}
+
+static int monte_carlo_init (LOOPSET *loop)
+{
+    gretl_loop_init(loop);
 
 #ifdef ENABLE_GMP
     mpf_set_default_prec(256);
 #endif
 
-    ploop->lines = malloc(32 * sizeof *ploop->lines); 
-    ploop->ci = malloc(32 * sizeof *ploop->ci);
+    loop->lines = malloc(32 * sizeof *loop->lines); 
+    loop->ci = malloc(32 * sizeof *loop->ci);
     
-    if (ploop->lines == NULL || ploop->ci == NULL) {
+    if (loop->lines == NULL || loop->ci == NULL) {
 	return 1;
     }
 
     return 0;
 }
 
-/**
- * monte_carlo_free:
- * @ploop: loop commands struct.
- *
- * Free allocated elements of @ploop.
- *
- */
-
-void monte_carlo_free (LOOPSET *ploop)
+static void monte_carlo_free (LOOPSET *loop)
 {
     int i;
 
-    if (ploop->lines) {
-	for (i=0; i<ploop->ncmds; i++)
-	    if (ploop->lines[i]) free (ploop->lines[i]);
-	free(ploop->lines);
-	ploop->lines = NULL;
+    if (loop->lines) {
+	for (i=0; i<loop->ncmds; i++)
+	    if (loop->lines[i]) free (loop->lines[i]);
+	free(loop->lines);
+	loop->lines = NULL;
     }
-    if (ploop->ci) 
-	free(ploop->ci);
-    if (ploop->lmodels) {
-	for (i=0; i<ploop->nmod; i++) 
-	    free_loop_model(&ploop->lmodels[i]);
-	free(ploop->lmodels);
-	ploop->lmodels = NULL;
+    if (loop->ci) 
+	free(loop->ci);
+    if (loop->lmodels) {
+	for (i=0; i<loop->nmod; i++) 
+	    free_loop_model(&loop->lmodels[i]);
+	free(loop->lmodels);
+	loop->lmodels = NULL;
     }
-    if (ploop->models) {
-	for (i=0; i<ploop->nmod; i++) {
-	    free_model(ploop->models[i]);
-	    ploop->models[i] = NULL;
+    if (loop->models) {
+	for (i=0; i<loop->nmod; i++) {
+	    free_model(loop->models[i]);
+	    loop->models[i] = NULL;
 	}
-	free(ploop->models);
-	ploop->models = NULL;
+	free(loop->models);
+	loop->models = NULL;
     }    
-    if (ploop->prns) {
-	for (i=0; i<ploop->nprn; i++) 
-	    free_loop_print(&ploop->prns[i]);
-	free(ploop->prns);
-	ploop->prns = NULL;
+    if (loop->prns) {
+	for (i=0; i<loop->nprn; i++) 
+	    free_loop_print(&loop->prns[i]);
+	free(loop->prns);
+	loop->prns = NULL;
     }
-    if (ploop->storename) {
-	for (i=0; i<ploop->nstore; i++)
-	    if (ploop->storename[i])
-		free(ploop->storename[i]);
-	free(ploop->storename);
-	ploop->storename = NULL;
+    if (loop->storename) {
+	for (i=0; i<loop->nstore; i++)
+	    if (loop->storename[i])
+		free(loop->storename[i]);
+	free(loop->storename);
+	loop->storename = NULL;
     }
-    if (ploop->storelbl) {
-	for (i=0; i<ploop->nstore; i++)
-	    if (ploop->storelbl[i])
-		free(ploop->storelbl[i]);
-	free(ploop->storelbl);
-	ploop->storelbl = NULL;
+    if (loop->storelbl) {
+	for (i=0; i<loop->nstore; i++)
+	    if (loop->storelbl[i])
+		free(loop->storelbl[i]);
+	free(loop->storelbl);
+	loop->storelbl = NULL;
     }
-    if (ploop->storeval) { 
-	free(ploop->storeval);
-	ploop->storeval = NULL;
+    if (loop->storeval) { 
+	free(loop->storeval);
+	loop->storeval = NULL;
     }
 }
 
 /**
  * loop_model_init:
- * @plmod: pointer to struct to initialize.
+ * @lmod: pointer to struct to initialize.
  * @pmod: model to take as basis.
- * @id: ID number to assign to @plmod.
+ * @id: ID number to assign to @lmod.
  *
  * Initialize a #LOOP_MODEL struct, based on @pmod.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
+int loop_model_init (LOOP_MODEL *lmod, const MODEL *pmod,
 		     int id)
 {
     int i, ncoeff = pmod->ncoeff;
 
-    plmod->sum_coeff = malloc(ncoeff * sizeof *plmod->sum_coeff);
-    if (plmod->sum_coeff == NULL) return 1;
+    lmod->sum_coeff = malloc(ncoeff * sizeof *lmod->sum_coeff);
+    if (lmod->sum_coeff == NULL) return 1;
 
-    plmod->ssq_coeff = malloc(ncoeff * sizeof *plmod->ssq_coeff);
-    if (plmod->ssq_coeff == NULL) goto cleanup;
+    lmod->ssq_coeff = malloc(ncoeff * sizeof *lmod->ssq_coeff);
+    if (lmod->ssq_coeff == NULL) goto cleanup;
 
-    plmod->sum_sderr = malloc(ncoeff * sizeof *plmod->sum_sderr);
-    if (plmod->sum_sderr == NULL) goto cleanup;
+    lmod->sum_sderr = malloc(ncoeff * sizeof *lmod->sum_sderr);
+    if (lmod->sum_sderr == NULL) goto cleanup;
 
-    plmod->ssq_sderr = malloc(ncoeff * sizeof *plmod->ssq_sderr);
-    if (plmod->ssq_sderr == NULL) goto cleanup;
+    lmod->ssq_sderr = malloc(ncoeff * sizeof *lmod->ssq_sderr);
+    if (lmod->ssq_sderr == NULL) goto cleanup;
 
-    plmod->list = copylist(pmod->list);
-    if (plmod->list == NULL) goto cleanup;
+    lmod->list = copylist(pmod->list);
+    if (lmod->list == NULL) goto cleanup;
 
     for (i=0; i<ncoeff; i++) {
 #ifdef ENABLE_GMP
-	mpf_init(plmod->sum_coeff[i]);
-	mpf_init(plmod->ssq_coeff[i]);
-	mpf_init(plmod->sum_sderr[i]);
-	mpf_init(plmod->ssq_sderr[i]);
+	mpf_init(lmod->sum_coeff[i]);
+	mpf_init(lmod->ssq_coeff[i]);
+	mpf_init(lmod->sum_sderr[i]);
+	mpf_init(lmod->ssq_sderr[i]);
 #else
-	plmod->sum_coeff[i] = plmod->ssq_coeff[i] = 0.0;
-	plmod->sum_sderr[i] = plmod->ssq_sderr[i] = 0.0;
+	lmod->sum_coeff[i] = lmod->ssq_coeff[i] = 0.0;
+	lmod->sum_sderr[i] = lmod->ssq_sderr[i] = 0.0;
 #endif
     }
 
-    plmod->ncoeff = ncoeff;
-    plmod->t1 = pmod->t1;
-    plmod->t2 = pmod->t2;
-    plmod->nobs = pmod->nobs;
-    plmod->ID = id;
-    plmod->ci = pmod->ci;
+    lmod->ncoeff = ncoeff;
+    lmod->t1 = pmod->t1;
+    lmod->t2 = pmod->t2;
+    lmod->nobs = pmod->nobs;
+    lmod->ID = id;
+    lmod->ci = pmod->ci;
     return 0;
 
  cleanup:
-    free(plmod->ssq_coeff);
-    free(plmod->sum_sderr);
-    free(plmod->ssq_sderr);
+    free(lmod->ssq_coeff);
+    free(lmod->sum_sderr);
+    free(lmod->ssq_sderr);
 
     return 1;
 }
 
 /**
  * loop_print_init:
- * @pprn: pointer to struct to initialize.
+ * @lprn: pointer to struct to initialize.
  * @list: list of variables to be printed.
- * @id: ID number to assign to @pprn.
+ * @id: ID number to assign to @lprn.
  *
  * Initialize a #LOOP_PRINT struct.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
+int loop_print_init (LOOP_PRINT *lprn, const LIST list, int id)
 {
     int i;
 
-    pprn->list = copylist(list);
-    if (pprn->list == NULL) return 1;
+    lprn->list = copylist(list);
+    if (lprn->list == NULL) return 1;
 
-    pprn->sum = malloc(list[0] * sizeof *pprn->sum);
-    if (pprn->sum == NULL) goto cleanup;
+    lprn->sum = malloc(list[0] * sizeof *lprn->sum);
+    if (lprn->sum == NULL) goto cleanup;
 
-    pprn->ssq = malloc(list[0] * sizeof *pprn->ssq);
-    if (pprn->ssq == NULL) goto cleanup;
+    lprn->ssq = malloc(list[0] * sizeof *lprn->ssq);
+    if (lprn->ssq == NULL) goto cleanup;
 
     for (i=0; i<list[0]; i++) { 
 #ifdef ENABLE_GMP
-	mpf_init(pprn->sum[i]);
-	mpf_init(pprn->ssq[i]);
+	mpf_init(lprn->sum[i]);
+	mpf_init(lprn->ssq[i]);
 #else
-	pprn->sum[i] = pprn->ssq[i] = 0.0;
+	lprn->sum[i] = lprn->ssq[i] = 0.0;
 #endif
     }
 
-    pprn->ID = id;
+    lprn->ID = id;
 
     return 0;
 
  cleanup:
-    free(pprn->list);
-    free(pprn->sum);
-    free(pprn->ssq);
+    free(lprn->list);
+    free(lprn->sum);
+    free(lprn->ssq);
 
     return 1;
 }
 
 /**
  * loop_store_init:
- * @ploop: pointer to loop struct.
+ * @loop: pointer to loop struct.
+ * @fname: name of file in which to store data.
  * @list: list of variables to be stored (written to file).
  * @pdinfo: data information struct.
  *
- * Set up @ploop for saving a set of variables.
+ * Set up @loop for saving a set of variables.
  *
  * Returns: 0 on successful completion, 1 on error.
  */
 
-int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
+int loop_store_init (LOOPSET *loop, const char *fname, 
+		     const LIST list, DATAINFO *pdinfo)
 {
-    int i, tot = list[0] * ploop->ntimes;
+    int i, tot = list[0] * loop->ntimes;
 
-    ploop->storename = malloc(list[0] * sizeof *ploop->storename);
-    if (ploop->storename == NULL) return 1;
+    loop->storefile[0] = '\0';
+    strncat(loop->storefile, fname, MAXLEN - 1);
 
-    ploop->storelbl = malloc(list[0] * sizeof *ploop->storelbl);
-    if (ploop->storelbl == NULL) goto cleanup;
+    loop->storename = malloc(list[0] * sizeof *loop->storename);
+    if (loop->storename == NULL) return 1;
 
-    ploop->storeval = malloc(tot * sizeof *ploop->storeval);
-    if (ploop->storeval == NULL) goto cleanup;
+    loop->storelbl = malloc(list[0] * sizeof *loop->storelbl);
+    if (loop->storelbl == NULL) goto cleanup;
+
+    loop->storeval = malloc(tot * sizeof *loop->storeval);
+    if (loop->storeval == NULL) goto cleanup;
 
     for (i=0; i<list[0]; i++) {
 	char *p;
 
-	ploop->storename[i] = malloc(VNAMELEN);
-	if (ploop->storename[i] == NULL) goto cleanup;
+	loop->storename[i] = malloc(VNAMELEN);
+	if (loop->storename[i] == NULL) goto cleanup;
 
-	strcpy(ploop->storename[i], pdinfo->varname[list[i+1]]);
+	strcpy(loop->storename[i], pdinfo->varname[list[i+1]]);
 
-	ploop->storelbl[i] = malloc(MAXLABEL);
-	if (ploop->storelbl[i] == NULL) goto cleanup;
+	loop->storelbl[i] = malloc(MAXLABEL);
+	if (loop->storelbl[i] == NULL) goto cleanup;
 
-	strcpy(ploop->storelbl[i], VARLABEL(pdinfo, list[i+1]));
-	if ((p = strstr(ploop->storelbl[i], "(scalar)"))) {
+	strcpy(loop->storelbl[i], VARLABEL(pdinfo, list[i+1]));
+	if ((p = strstr(loop->storelbl[i], "(scalar)"))) {
 	    *p = 0;
 	}
     }
@@ -553,53 +645,53 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
     return 0;
 
  cleanup:
-    free(ploop->storename);
-    free(ploop->storelbl);
-    free(ploop->storeval);
+    free(loop->storename);
+    free(loop->storelbl);
+    free(loop->storeval);
 
     return 1;
 }
 
 /**
  * update_loop_model:
- * @ploop: pointer to loop struct.
- * @cmdnum: sequential index number of the command within @ploop.
+ * @loop: pointer to loop struct.
+ * @cmdnum: sequential index number of the command within @loop.
  * @pmod: contains estimates from the current iteration.
  *
- * Update a #LOOP_MODEL belonging to @ploop, based on the results
+ * Update a #LOOP_MODEL belonging to @loop, based on the results
  * in @pmod.
  *
  * Returns: 0 on successful completion.
  */
 
-int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
+int update_loop_model (LOOPSET *loop, int cmdnum, MODEL *pmod)
 {
-    int j, i = get_modnum_by_cmdnum(ploop, cmdnum);
-    LOOP_MODEL *plmod;
+    int j, i = get_modnum_by_cmdnum(loop, cmdnum);
+    LOOP_MODEL *lmod;
 #ifdef ENABLE_GMP
     mpf_t m;
 
     mpf_init(m);
 #endif
 
-    plmod = &ploop->lmodels[i];
+    lmod = &loop->lmodels[i];
 
     for (j=0; j<pmod->ncoeff; j++) {
 #ifdef ENABLE_GMP
 	mpf_set_d(m, pmod->coeff[j]);
-	mpf_add(plmod->sum_coeff[j], plmod->sum_coeff[j], m); 
+	mpf_add(lmod->sum_coeff[j], lmod->sum_coeff[j], m); 
 	mpf_mul(m, m, m);
-	mpf_add(plmod->ssq_coeff[j], plmod->ssq_coeff[j], m);
+	mpf_add(lmod->ssq_coeff[j], lmod->ssq_coeff[j], m);
 
 	mpf_set_d(m, pmod->sderr[j]);
-	mpf_add(plmod->sum_sderr[j], plmod->sum_sderr[j], m);
+	mpf_add(lmod->sum_sderr[j], lmod->sum_sderr[j], m);
 	mpf_mul(m, m, m);
-	mpf_add(plmod->ssq_sderr[j], plmod->ssq_sderr[j], m);
+	mpf_add(lmod->ssq_sderr[j], lmod->ssq_sderr[j], m);
 #else
-	plmod->sum_coeff[j] += pmod->coeff[j];
-	plmod->ssq_coeff[j] += pmod->coeff[j] * pmod->coeff[j];
-	plmod->sum_sderr[j] += pmod->sderr[j];
-	plmod->ssq_sderr[j] += pmod->sderr[j] * pmod->sderr[j];
+	lmod->sum_coeff[j] += pmod->coeff[j];
+	lmod->ssq_coeff[j] += pmod->coeff[j] * pmod->coeff[j];
+	lmod->sum_sderr[j] += pmod->sderr[j];
+	lmod->ssq_sderr[j] += pmod->sderr[j] * pmod->sderr[j];
 #endif
     }
 
@@ -612,25 +704,25 @@ int update_loop_model (LOOPSET *ploop, int cmdnum, MODEL *pmod)
 
 /**
  * update_loop_print:
- * @ploop: pointer to loop struct.
- * @cmdnum: sequential index number of the command within @ploop.
+ * @loop: pointer to loop struct.
+ * @cmdnum: sequential index number of the command within @loop.
  * @list: list of variables to be printed.
  * @pZ: pointer to data matrix.
  * @pdinfo: pointer to data information struct.
  *
- * Update a #LOOP_PRINT belonging to @ploop, based on the current
+ * Update a #LOOP_PRINT belonging to @loop, based on the current
  * data values.
  *
  * Returns: 0 on successful completion.
  */
 
 
-int update_loop_print (LOOPSET *ploop, int cmdnum, 
+int update_loop_print (LOOPSET *loop, int cmdnum, 
 		       const LIST list, double ***pZ, 
 		       const DATAINFO *pdinfo)
 {
-    int j, t, i = get_prnnum_by_id(ploop, cmdnum);
-    LOOP_PRINT *pprn = &ploop->prns[i];
+    int j, t, i = get_prnnum_by_id(loop, cmdnum);
+    LOOP_PRINT *lprn = &loop->prns[i];
 #ifdef ENABLE_GMP
     mpf_t m;
 
@@ -642,12 +734,12 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
 	else t = 0;
 #ifdef ENABLE_GMP
 	mpf_set_d(m, (*pZ)[list[j]][t]); 
-	mpf_add(pprn->sum[j-1], pprn->sum[j-1], m);
+	mpf_add(lprn->sum[j-1], lprn->sum[j-1], m);
 	mpf_mul(m, m, m);
-	mpf_add(pprn->ssq[j-1], pprn->ssq[j-1], m);
+	mpf_add(lprn->ssq[j-1], lprn->ssq[j-1], m);
 #else
-	pprn->sum[j-1] += (*pZ)[list[j]][t];
-	pprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
+	lprn->sum[j-1] += (*pZ)[list[j]][t];
+	lprn->ssq[j-1] += (*pZ)[list[j]][t] * (*pZ)[list[j]][t];
 #endif
     }
 
@@ -660,37 +752,36 @@ int update_loop_print (LOOPSET *ploop, int cmdnum,
 
 /**
  * print_loop_results:
- * @ploop: pointer to loop struct.
+ * @loop: pointer to loop struct.
  * @pdinfo: data information struct.
  * @prn: gretl printing struct.
  * @ppaths: path information struct.
- * @loopstorefile: name of file into which to save data (or NULL).
  *
- * Print out the results after completion of the loop @ploop.
+ * Print out the results after completion of the loop @loop.
  *
  */
 
-void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo, 
-			 PRN *prn, PATHS *ppaths, char *loopstorefile)
+void print_loop_results (LOOPSET *loop, const DATAINFO *pdinfo, 
+			 PRN *prn, PATHS *ppaths)
 {
     int i, j;
     gretlopt opt;
     MODEL *pmod = NULL;
 
-    if (ploop->lvar && ploop->lvar != INDEXNUM) {
-	pprintf(prn, _("\nNumber of iterations: %d\n\n"), ploop->ntimes);
+    if (loop->lvar && loop->lvar != INDEXNUM) {
+	pprintf(prn, _("\nNumber of iterations: %d\n\n"), loop->ntimes);
     }
 
-    for (i=0; i<ploop->ncmds; i++) {
+    for (i=0; i<loop->ncmds; i++) {
 #ifdef LOOP_DEBUG
-	fprintf(stderr, "loop command %d (i=%d): %s\n\n", i+1, i, ploop->lines[i]);
+	fprintf(stderr, "loop command %d (i=%d): %s\n\n", i+1, i, loop->lines[i]);
 #endif
-	catchflags(ploop->lines[i], &opt);
+	catchflags(loop->lines[i], &opt);
 
-	if (ploop->lvar && ploop->ci[i] == OLS) {
+	if (loop->lvar && loop->ci[i] == OLS) {
 	    double dfadj, sqrta;
 
-	    pmod = ploop->models[ploop->next_model];
+	    pmod = loop->models[loop->next_model];
 
 	    set_model_id(pmod);
 
@@ -721,69 +812,69 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 	    }
 #endif
 
-	    ploop->next_model += 1;	    
+	    loop->next_model += 1;	    
 	}
-	else if (ploop->ci[i] == OLS || ploop->ci[i] == LAD ||
-		 ploop->ci[i] == HSK || ploop->ci[i] == HCCM || 
-		 ploop->ci[i] == WLS) {
-	    print_loop_model(&ploop->lmodels[ploop->next_model], 
-			     ploop->ntimes, pdinfo, prn);
-	    ploop->next_model += 1;
+	else if (loop->ci[i] == OLS || loop->ci[i] == LAD ||
+		 loop->ci[i] == HSK || loop->ci[i] == HCCM || 
+		 loop->ci[i] == WLS) {
+	    print_loop_model(&loop->lmodels[loop->next_model], 
+			     loop->ntimes, pdinfo, prn);
+	    loop->next_model += 1;
 	}
-	else if (ploop->ci[i] == PRINT) {
-	    print_loop_prn(&ploop->prns[ploop->next_print], 
-			   ploop->ntimes, pdinfo, prn);
-	    ploop->next_print += 1;
+	else if (loop->ci[i] == PRINT) {
+	    print_loop_prn(&loop->prns[loop->next_print], 
+			   loop->ntimes, pdinfo, prn);
+	    loop->next_print += 1;
 	}
-	else if (ploop->ci[i] == STORE) {
-	    print_loop_store(ploop, prn, ppaths, loopstorefile);
+	else if (loop->ci[i] == STORE) {
+	    print_loop_store(loop, prn, ppaths);
 	}
     }
 }
 
 /* ......................................................  */
 
-static void free_loop_model (LOOP_MODEL *plmod)
+static void free_loop_model (LOOP_MODEL *lmod)
 {
 #ifdef ENABLE_GMP
     int i;
 
-    for (i=0; i<plmod->ncoeff; i++) {
-	mpf_clear(plmod->sum_coeff[i]);
-	mpf_clear(plmod->sum_sderr[i]);
-	mpf_clear(plmod->ssq_coeff[i]);
-	mpf_clear(plmod->ssq_sderr[i]);
+    for (i=0; i<lmod->ncoeff; i++) {
+	mpf_clear(lmod->sum_coeff[i]);
+	mpf_clear(lmod->sum_sderr[i]);
+	mpf_clear(lmod->ssq_coeff[i]);
+	mpf_clear(lmod->ssq_sderr[i]);
     }
 #endif
 
-    free(plmod->sum_coeff);
-    free(plmod->sum_sderr);
-    free(plmod->ssq_coeff);
-    free(plmod->ssq_sderr);
-    free(plmod->list);
+    free(lmod->sum_coeff);
+    free(lmod->sum_sderr);
+    free(lmod->ssq_coeff);
+    free(lmod->ssq_sderr);
+    free(lmod->list);
 }
 
 /* ......................................................  */
 
-static void free_loop_print (LOOP_PRINT *pprn)
+static void free_loop_print (LOOP_PRINT *lprn)
 {
 #ifdef ENABLE_GMP
     int i;
 
-    for (i=0; i<pprn->list[0]; i++) {
-	mpf_clear(pprn->sum[i]);
-	mpf_clear(pprn->ssq[i]);
+    for (i=0; i<lprn->list[0]; i++) {
+	mpf_clear(lprn->sum[i]);
+	mpf_clear(lprn->ssq[i]);
     }
 #endif
 
-    free(pprn->sum);
-    free(pprn->ssq);
-    free(pprn->list);    
+    free(lprn->sum);
+    free(lprn->ssq);
+    free(lprn->list);    
 }
 
 /**
  * add_to_loop:
- * @ploop: pointer to loop struct.
+ * @loop: pointer to loop struct.
  * @line: command line.
  * @ci: command index number.
  * @oflags: option flag(s) associated with the command.
@@ -793,30 +884,30 @@ static void free_loop_print (LOOP_PRINT *pprn)
  * Returns: 0 on successful completion.
  */
 
-int add_to_loop (LOOPSET *ploop, char *line, int ci,
+int add_to_loop (LOOPSET *loop, char *line, int ci,
 		 gretlopt oflags)
 {
-    int i = ploop->ncmds;
+    int i = loop->ncmds;
 
-    ploop->ncmds += 1;
+    loop->ncmds += 1;
 
-    ploop->lines[i] = malloc(MAXLEN);
-    if (ploop->lines[i] == NULL) return E_ALLOC;
+    loop->lines[i] = malloc(MAXLEN);
+    if (loop->lines[i] == NULL) return E_ALLOC;
 
     top_n_tail(line);
 
-    if (ci == PRINT && ploop->type != COUNT_LOOP) {
-	ploop->ci[i] = 0;
+    if (ci == PRINT && loop->type != COUNT_LOOP) {
+	loop->ci[i] = 0;
     } else {
-	ploop->ci[i] = ci;
+	loop->ci[i] = ci;
     }
 
-    strncpy(ploop->lines[i], line, MAXLEN - 4);
+    strncpy(loop->lines[i], line, MAXLEN - 4);
 
     if (oflags) {
 	const char *flagstr = print_flags(oflags, ci);
 
-	strcat(ploop->lines[i], flagstr);
+	strcat(loop->lines[i], flagstr);
     }
 
     return 0;
@@ -824,21 +915,21 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
 
 /* ......................................................... */ 
 
-static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
+static void print_loop_model (LOOP_MODEL *lmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
     char startdate[OBSLEN], enddate[OBSLEN];
 
-    ntodate(startdate, plmod->t1, pdinfo);
-    ntodate(enddate, plmod->t2, pdinfo);
+    ntodate(startdate, lmod->t1, pdinfo);
+    ntodate(enddate, lmod->t2, pdinfo);
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(plmod->ci, prn->format)), plmod->t2 - plmod->t1 + 1, 
+	    _(estimator_string(lmod->ci, prn->format)), lmod->t2 - lmod->t1 + 1, 
 	    startdate, enddate);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 
-	    pdinfo->varname[plmod->list[1]]);
+	    pdinfo->varname[lmod->list[1]]);
 
     pputs(prn, _("                     mean of      std. dev. of     mean of"
 		 "     std. dev. of\n"
@@ -847,8 +938,8 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 		 "      Variable     coefficients   coefficients   std. errors"
 		 "    std. errors\n\n"));
 
-    for (i=0; i<plmod->ncoeff; i++) {
-	print_loop_coeff(pdinfo, plmod, i, loopnum, prn);
+    for (i=0; i<lmod->ncoeff; i++) {
+	print_loop_coeff(pdinfo, lmod, i, loopnum, prn);
     }
     pputs(prn, "\n");
 }
@@ -856,7 +947,7 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 /* ......................................................... */ 
 
 static void print_loop_coeff (const DATAINFO *pdinfo, 
-			      const LOOP_MODEL *plmod, 
+			      const LOOP_MODEL *lmod, 
 			      int c, int n, PRN *prn)
 {
 #ifdef ENABLE_GMP
@@ -869,10 +960,10 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
     mpf_init(sd1);
     mpf_init(sd2);
 
-    mpf_div_ui(c1, plmod->sum_coeff[c], ln);
+    mpf_div_ui(c1, lmod->sum_coeff[c], ln);
     mpf_mul(m, c1, c1);
     mpf_mul_ui(m, m, ln);
-    mpf_sub(m, plmod->ssq_coeff[c], m);
+    mpf_sub(m, lmod->ssq_coeff[c], m);
     mpf_div_ui(sd1, m, ln);
     if (mpf_cmp_d(sd1, 0.0) > 0) {
 	mpf_sqrt(sd1, sd1);
@@ -880,10 +971,10 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	mpf_set_d(sd1, 0.0);
     }
 
-    mpf_div_ui(c2, plmod->sum_sderr[c], ln);
+    mpf_div_ui(c2, lmod->sum_sderr[c], ln);
     mpf_mul(m, c2, c2);
     mpf_mul_ui(m, m, ln);
-    mpf_sub(m, plmod->ssq_sderr[c], m);
+    mpf_sub(m, lmod->ssq_sderr[c], m);
     mpf_div_ui(sd2, m, ln);
     if (mpf_cmp_d(sd2, 0.0) > 0) {
 	mpf_sqrt(sd2, sd2);
@@ -891,8 +982,8 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 	mpf_set_d(sd2, 0.0);
     }
 
-    pprintf(prn, " %3d) %8s ", plmod->list[c+2], 
-	   pdinfo->varname[plmod->list[c+2]]);
+    pprintf(prn, " %3d) %8s ", lmod->list[c+2], 
+	   pdinfo->varname[lmod->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", mpf_get_d(c1), mpf_get_d(sd1), 
 	    mpf_get_d(c2), mpf_get_d(sd2));
@@ -905,16 +996,16 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 #else /* non-GMP */
     bigval m1, m2, var1, var2, sd1, sd2;
     
-    m1 = plmod->sum_coeff[c] / n;
-    var1 = (plmod->ssq_coeff[c] - n * m1 * m1) / n;
+    m1 = lmod->sum_coeff[c] / n;
+    var1 = (lmod->ssq_coeff[c] - n * m1 * m1) / n;
     sd1 = (var1 <= 0.0)? 0.0 : sqrt((double) var1);
 
-    m2 = plmod->sum_sderr[c] / n;
-    var2 = (plmod->ssq_sderr[c] - n * m2 * m2) / n;
+    m2 = lmod->sum_sderr[c] / n;
+    var2 = (lmod->ssq_sderr[c] - n * m2 * m2) / n;
     sd2 = (var2 <= 0.0)? 0 : sqrt((double) var2);
 
-    pprintf(prn, " %3d) %8s ", plmod->list[c+2], 
-	   pdinfo->varname[plmod->list[c+2]]);
+    pprintf(prn, " %3d) %8s ", lmod->list[c+2], 
+	   pdinfo->varname[lmod->list[c+2]]);
 
     pprintf(prn, "%#14g %#14g %#14g %#14g\n", (double) m1, (double) sd1, 
 	    (double) m2, (double) sd2);
@@ -923,13 +1014,13 @@ static void print_loop_coeff (const DATAINFO *pdinfo,
 
 /* ......................................................... */ 
 
-static void print_loop_prn (LOOP_PRINT *pprn, int n,
+static void print_loop_prn (LOOP_PRINT *lprn, int n,
 			    const DATAINFO *pdinfo, PRN *prn)
 {
     int i;
     bigval mean, m, sd;
 
-    if (pprn == NULL) return;
+    if (lprn == NULL) return;
 
     pputs(prn, _("   Variable     mean         std. dev.\n"));
 
@@ -938,18 +1029,18 @@ static void print_loop_prn (LOOP_PRINT *pprn, int n,
     mpf_init(m);
     mpf_init(sd);
     
-    for (i=1; i<=pprn->list[0]; i++) {
-	mpf_div_ui(mean, pprn->sum[i-1], (unsigned long) n);
+    for (i=1; i<=lprn->list[0]; i++) {
+	mpf_div_ui(mean, lprn->sum[i-1], (unsigned long) n);
 	mpf_mul(m, mean, mean);
 	mpf_mul_ui(m, m, (unsigned long) n);
-	mpf_sub(sd, pprn->ssq[i-1], m);
+	mpf_sub(sd, lprn->ssq[i-1], m);
 	mpf_div_ui(sd, sd, (unsigned long) n);
 	if (mpf_cmp_d(sd, 0.0) > 0) {
 	    mpf_sqrt(sd, sd);
 	} else {
 	    mpf_set_d(sd, 0.0);
 	}
-	pprintf(prn, " %8s ", pdinfo->varname[pprn->list[i]]);
+	pprintf(prn, " %8s ", pdinfo->varname[lprn->list[i]]);
 	pprintf(prn, "%#14g %#14g\n", mpf_get_d(mean), mpf_get_d(sd));
     }
 
@@ -957,11 +1048,11 @@ static void print_loop_prn (LOOP_PRINT *pprn, int n,
     mpf_clear(m);
     mpf_clear(sd);
 #else
-    for (i=1; i<=pprn->list[0]; i++) {
-	mean = pprn->sum[i-1] / n;
-	m = (pprn->ssq[i-1] - n * mean * mean) / n;
+    for (i=1; i<=lprn->list[0]; i++) {
+	mean = lprn->sum[i-1] / n;
+	m = (lprn->ssq[i-1] - n * mean * mean) / n;
 	sd = (m < 0)? 0 : sqrt((double) m);
-	pprintf(prn, " %8s ", pdinfo->varname[pprn->list[i]]);
+	pprintf(prn, " %8s ", pdinfo->varname[lprn->list[i]]);
 	pprintf(prn, "%#14g %#14g\n", (double) mean, (double) sd);
     }
 #endif
@@ -970,8 +1061,7 @@ static void print_loop_prn (LOOP_PRINT *pprn, int n,
 
 /* ......................................................... */ 
 
-static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
-			     char *loopstorefile)
+static int print_loop_store (LOOPSET *loop, PRN *prn, PATHS *ppaths)
 {
     int i, t;
     FILE *fp;
@@ -980,10 +1070,13 @@ static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     time_t writetime;
 
     /* organize filename */
-    if (slashpos(loopstorefile) == 0) { /* no path given */
-	sprintf(gdtfile, "%s%s", ppaths->userdir, loopstorefile);
+    if (loop->storefile[0] == '\0') {
+	sprintf(gdtfile, "%sloopdata.gdt", ppaths->userdir);	
+    } else if (slashpos(loop->storefile) == 0) { 
+	/* no path given (FIXME) */
+	sprintf(gdtfile, "%s%s", ppaths->userdir, loop->storefile);
     } else {
-	strcpy(gdtfile, loopstorefile);
+	strcpy(gdtfile, loop->storefile);
     }
 
     if (strchr(gdtfile, '.') == NULL) {
@@ -996,13 +1089,13 @@ static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
     writetime = time(NULL);
 
     pprintf(prn, _("printing %d values of variables to %s\n"), 
-	    ploop->ntimes, gdtfile);
+	    loop->ntimes, gdtfile);
 
     fprintf(fp, "<?xml version=\"1.0\"?>\n"
 	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
 	    "<gretldata name=\"%s\" frequency=\"1\" "
 	    "startobs=\"1\" endobs=\"%d\" ", 
-	    gdtfile, ploop->ntimes);
+	    gdtfile, loop->ntimes);
 
     fprintf(fp, "type=\"cross-section\">\n");
 
@@ -1017,13 +1110,13 @@ static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 #endif
 
     /* print info on variables */
-    fprintf(fp, "<variables count=\"%d\">\n", ploop->nstore);
+    fprintf(fp, "<variables count=\"%d\">\n", loop->nstore);
 
-    for (i=0; i<ploop->nstore; i++) {
-	xmlbuf = gretl_xml_encode(ploop->storename[i]);
+    for (i=0; i<loop->nstore; i++) {
+	xmlbuf = gretl_xml_encode(loop->storename[i]);
 	fprintf(fp, "<variable name=\"%s\"", xmlbuf);
 	free(xmlbuf);
-	xmlbuf = gretl_xml_encode(ploop->storelbl[i]);
+	xmlbuf = gretl_xml_encode(loop->storelbl[i]);
 	fprintf(fp, "\n label=\"%s\"/>\n", xmlbuf);
 	free(xmlbuf);
     }
@@ -1032,14 +1125,14 @@ static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 
     /* print actual data */
     fprintf(fp, "<observations count=\"%d\" labels=\"false\">\n",
-	    ploop->ntimes);
+	    loop->ntimes);
 
-    for (t=0; t<ploop->ntimes; t++) {
+    for (t=0; t<loop->ntimes; t++) {
 	double x;
 
 	fputs("<obs>", fp);
-	for (i=0; i<ploop->nstore; i++) {
-	    x = ploop->storeval[ploop->ntimes*i + t];
+	for (i=0; i<loop->nstore; i++) {
+	    x = loop->storeval[loop->ntimes*i + t];
 	    if (na(x)) {
 		fputs("NA ", fp);
 	    } else {
@@ -1061,33 +1154,33 @@ static int print_loop_store (LOOPSET *ploop, PRN *prn, PATHS *ppaths,
 
 /* ......................................................... */ 
 
-static int get_prnnum_by_id (LOOPSET *ploop, int id)
+static int get_prnnum_by_id (LOOPSET *loop, int id)
 {
     int i;
 
-    for (i=0; i<ploop->nprn; i++) {
-	if (ploop->prns[i].ID == id) return i;
+    for (i=0; i<loop->nprn; i++) {
+	if (loop->prns[i].ID == id) return i;
     }
     return -1;
 }
 
 /**
  * get_modnum_by_cmdnum:
- * @ploop: pointer to loop struct.
- * @cmdnum: sequential index of command within @ploop.
+ * @loop: pointer to loop struct.
+ * @cmdnum: sequential index of command within @loop.
  *
  * Determine the ID number of a model within a "while" loop construct.
  *
  * Returns: model ID number, or -1 in case of no match.
  */
 
-int get_modnum_by_cmdnum (LOOPSET *ploop, int cmdnum)
+int get_modnum_by_cmdnum (LOOPSET *loop, int cmdnum)
 {
     int i;
 
-    for (i=0; i<ploop->nmod; i++) {
-	if (ploop->lvar && (ploop->models[i])->ID == cmdnum) return i;
-	if (ploop->lvar == 0 && ploop->lmodels[i].ID == cmdnum) return i;
+    for (i=0; i<loop->nmod; i++) {
+	if (loop->lvar && (loop->models[i])->ID == cmdnum) return i;
+	if (loop->lvar == 0 && loop->lmodels[i].ID == cmdnum) return i;
     }
     return -1;
 }

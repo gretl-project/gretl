@@ -230,6 +230,11 @@ void do_save_text (char *fname, MODEL *pmod);
 int execute_script (const char *runfile, const char *buf,
 		    PRN *prn, int exec_code);
 
+int gui_exec_line (char *line, 
+		   LOOPSET **plp, int *plstack, int *plrun, 
+		   PRN *prn, int exec_code, 
+		   const char *myname); 
+
 int verify_and_record_command (char *line);
 
 /* other */
