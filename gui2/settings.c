@@ -34,6 +34,7 @@
 
 #ifdef G_OS_WIN32
 # include <windows.h>
+# include "gretlwin32.h"
 #else
 # include <dirent.h>
 # include <sys/stat.h>

@@ -304,7 +304,7 @@ static int set_network_cfg_filename (const char *prog)
 
 void gretl_win32_init (const char *progname)
 {
-    get_network_cfg_filename(progname);
+    set_network_cfg_filename(progname);
 
     read_rc(); /* get config info from registry */
 
