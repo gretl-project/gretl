@@ -34,7 +34,7 @@ extern double _gammadist (double s1, double s2, double x, int control);
 /* ........................................................ */
 
 static int printvars (FILE *fp, int t, const int *list, double **Z,
-		      double offset)
+		      const char *label, double offset)
 {
     int i, miss = 0;
     double xx;
@@ -42,7 +42,7 @@ static int printvars (FILE *fp, int t, const int *list, double **Z,
     for (i=1; i<=list[0]; i++)  {
 	xx = Z[list[i]][t];
 	if (na(xx)) {
-	    fprintf(fp, "? ");
+	    fputs("? ", fp);
 	    miss = 1;
 	} else {
 	    if (i == 1) { /* the x variable */
@@ -52,7 +52,11 @@ static int printvars (FILE *fp, int t, const int *list, double **Z,
 	}
     }
 
-    fprintf(fp, "\n");
+    if (label != NULL) {
+	fprintf(fp, "# %s", label);
+    }
+
+    fputc('\n', fp);
 
     return miss;
 }
@@ -686,8 +690,8 @@ int gnuplot (LIST list, const int *lines,
     /* titling and so on */
 
     fprintf(fq, "set xlabel '%s'\n", xlabel);
-    fprintf(fq, "set xzeroaxis\n"); 
-    fprintf(fq, "set missing \"?\"\n");
+    fputs("set xzeroaxis\n", fq); 
+    fputs("set missing \"?\"\n", fq);
 
     if (lo == 2) {
 	if (ols_ok) 
@@ -695,15 +699,15 @@ int gnuplot (LIST list, const int *lines,
 	if (opt == OPT_RESID) {
 	    make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
 	    fprintf(fq, "set ylabel '%s'\n", I_("residual"));
-	    fprintf(fq, "set nokey\n");
+	    fputs("set nokey\n", fq);
 	} else {
 	    fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[1]]);
-	    fprintf(fq, "set nokey\n");
+	    fputs("set nokey\n", fq);
 	}
     } else if (opt == OPT_RESIDZ) {
 	make_gtitle(fq, GTITLE_RESID, pdinfo->varname[list[1]], NULL);
 	fprintf(fq, "set ylabel '%s'\n", I_("residual"));
-	fprintf(fq, "set key left top\n");
+	fputs("set key left top\n", fq);
     } else if (opt == OPT_FA) {
 	if (list[3] == pdinfo->v - 1) /* x var is just time or index */
 	    make_gtitle(fq, GTITLE_AF, pdinfo->varname[list[2]], NULL);
@@ -711,9 +715,9 @@ int gnuplot (LIST list, const int *lines,
 	    make_gtitle(fq, GTITLE_AFV, pdinfo->varname[list[2]], 
 			pdinfo->varname[list[3]]);
 	fprintf(fq, "set ylabel '%s'\n", pdinfo->varname[list[2]]);
-	fprintf(fq, "set key left top\n");	
+	fputs("set key left top\n", fq);	
     } else {
-	fprintf(fq, "set key left top\n");
+	fputs("set key left top\n", fq);
     }
 
 #ifdef ENABLE_NLS
@@ -763,8 +767,8 @@ int gnuplot (LIST list, const int *lines,
     }
 
     if (tscale) {
-	fprintf(fq, "set ytics nomirror\n");
-	fprintf(fq, "set y2tics\n");
+	fputs("set ytics nomirror\n", fq);
+	fputs("set y2tics\n", fq);
 	fputs("plot \\\n", fq);
 	for (i=1; i<lo; i++) {
 	    if (i != oddman) {
@@ -776,8 +780,8 @@ int gnuplot (LIST list, const int *lines,
 			pdinfo->varname[list[i]], I_("right"),
 			(pdist)? "w impulses" : "w lines");
 	    }
-	    if (i == lo - 1) fprintf(fq, "\n");
-	    else fprintf(fq, " , \\\n");
+	    if (i == lo - 1) fputc('\n', fq);
+	    else fputs(" , \\\n", fq);
 	}
     } else if (opt == OPT_Z || opt == OPT_RESIDZ) { 
 	/* FIXME OPT_Z with time series? */
@@ -821,7 +825,6 @@ int gnuplot (LIST list, const int *lines,
     }
 
     /* supply the data to gnuplot inline */
-
     if (opt == OPT_Z || opt == OPT_RESIDZ) {
 	double xx, yy;
 
@@ -833,10 +836,14 @@ int gnuplot (LIST list, const int *lines,
 		if (na(yy)) {
 		    fprintf(fq, "%f ?\n", xx);
 		} else {
-		    fprintf(fq, "%f %f\n", xx, yy);
+		    fprintf(fq, "%g %g", xx, yy);
+		    if (!ts_plot && pdinfo->markers) {
+			fprintf(fq, " # %s", pdinfo->S[t]);
+		    }
+		    fputc('\n', fq);
 		}
 	    }
-	    fprintf(fq, "e\n");
+	    fputs("e\n", fq);
 	}
 	free(yvar1);
 	free(yvar2);
@@ -848,13 +855,18 @@ int gnuplot (LIST list, const int *lines,
 
 	    tmplist[2] = list[i];
 	    for (t=t1; t<=t2; t++) {
+		int t_miss;
+		const char *label = NULL;
+
+		if (!ts_plot && pdinfo->markers && i == 1) {
+		    label = pdinfo->S[t];
+		}
+		t_miss = printvars(fq, t, tmplist, *pZ, label, xoff);
 		if (gui && miss == 0) {
-		    miss = printvars(fq, t, tmplist, *pZ, xoff); 
-		} else {
-		    printvars(fq, t, tmplist, *pZ, xoff);
+		    miss = t_miss;
 		}
 	    }
-	    fprintf(fq, "e\n");
+	    fputs("e\n", fq);
 	}
     }
 
@@ -863,7 +875,7 @@ int gnuplot (LIST list, const int *lines,
 #endif
 
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
-    fprintf(fq, "pause -1\n");
+    fputs("pause -1\n", fq);
 #endif
     fclose(fq);
 
@@ -1283,20 +1295,24 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
 	for (t=spec->t1; t<=spec->t2; t++) {
 	    xx = spec->data[t - spec->t1];
 	    if (na(xx)) {
-		fprintf(fp, "? ");
+		fputs("? ", fp);
 		miss = 1;
 	    } else {
-		fprintf(fp, "%f ", xx);
+		fprintf(fp, "%g ", xx);
 	    }
 	    xx = spec->data[plotn * i + t - spec->t1];
 	    if (na(xx)) {
-		fprintf(fp, "?\n");
+		fprintf(fp, "?");
 		miss = 1;
 	    } else {
-		fprintf(fp, "%f\n", xx);
+		fprintf(fp, "%g", xx);
 	    }
+	    if (spec->labels != NULL && datlines == 1) {
+		fprintf(fp, " # %s", spec->labels[t]);
+	    }
+	    fputc('\n', fp);
 	}
-	fprintf(fp, "e\n");
+	fputs("e\n", fp);
     }
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");

@@ -50,6 +50,7 @@ typedef struct {
     GPT_LINE *lines;           /* details on individual lines */
     char *literal[4];          /* additional commands */
     double *data;              /* data to plot */
+    char **labels;             /* data-point labels (not always present) */
     void *ptr;                 /* for GUI use */
 } GPT_SPEC;
 
