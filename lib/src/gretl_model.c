@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 /* .......................................................... */
 

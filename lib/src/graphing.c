@@ -20,7 +20,7 @@
 /* graphing.c for gretl */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 #include "var.h"
 #include "../../cephes/libprob.h"
 
@@ -216,8 +216,8 @@ const char *get_timevar_name (DATAINFO *pdinfo)
 
 /* ........................................................ */
 
-int _ztoxy (int v1, int v2, double *px, double *py, 
-           const DATAINFO *pdinfo, double **Z)
+int z_to_xy (int v1, int v2, double *px, double *py, 
+	     const DATAINFO *pdinfo, double **Z)
 {
     int m = 0, t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     double x1, x2;
@@ -308,7 +308,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     if (l0 == 1) {
 	/* only one variable is to be plotted */
 	n = ztox(vy, x, Z, pdinfo);
-	_minmax(t1, t2, x, &xmin, &xmax);
+	gretl_minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;
 	/* print headings */
@@ -318,11 +318,11 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pputs(prn, word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
-	_bufspace(ls, prn);
+	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word); 
 	if (cntrline) {
 	    iy = (-xmin/xrange)*ncols;
-	    _bufspace(iy+7, prn);
+	    bufspace(iy+7, prn);
 	    pputs(prn, "0.0\n"); 
 	}
 	drawline(ncols, prn);
@@ -357,11 +357,11 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     /* two variables are to be plotted */
     vz = list[2];
     strcpy(s2, pdinfo->varname[vz]);
-    n = _ztoxy(vy, vz, x, y, pdinfo, Z);
+    n = z_to_xy(vy, vz, x, y, pdinfo, Z);
     /* find maximum and minimum using all values from both arrays */
-    _minmax(t1, t2, x, &xmin, &xmax);
+    gretl_minmax(t1, t2, x, &xmin, &xmax);
     xrange = xmax - xmin;
-    _minmax(t1, t2, y, &ymin, &ymax);
+    gretl_minmax(t1, t2, y, &ymin, &ymax);
     yrange = ymax - ymin;
     xymin = (xmin <= ymin) ? xmin : ymin;
     xymax = (xmax >= ymax) ? xmax : ymax;
@@ -378,7 +378,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pputs(prn, word);
 	sprintf(word, "xy-max = %g", xymax);
 	ls = 78-ls-strlen(word);
-	_bufspace(ls, prn);
+	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
     else {
@@ -388,14 +388,14 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pputs(prn, word);
 	sprintf(word, "o-max = %g", ymax);
 	ls = 78-ls-strlen(word);
-	_bufspace(ls, prn);
+	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
 	sprintf(word, "        x-min = %g", xmin);
 	ls = strlen(word);
 	pputs(prn, word);
 	sprintf(word, "x-max = %g", xmax);
 	ls = 78-ls-strlen(word);
-	_bufspace(ls, prn);
+	bufspace(ls, prn);
 	pprintf(prn, "%s\n", word);
     }
     /*  First x and y values are scaled, then it checks to see which scaled
@@ -407,8 +407,8 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     pputc(prn, '\n');
     cntrline = (floatgt(xymax, 0) && floatlt(xymin, 0))? 1 : 0;
     if (cntrline) {
-	iz = (-xymin/xyrange)*ncols;
-	_bufspace(iz+7, prn);
+	iz = (-xymin / xyrange) * ncols;
+	bufspace(iz+7, prn);
 	pputs(prn, "0.0\n");
     }
     drawline(ncols, prn);
@@ -479,7 +479,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 
     if (list[0] < 2) return E_ARGS; 
 
-    m = _list_dups(list, GRAPH);
+    m = list_dups(list, GRAPH);
     if (m) {
 	fprintf(stderr, _("var no. %d duplicated in command list.\n"), m);
 	return 1;
@@ -498,9 +498,9 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
     m = 0;
     if (l0 == 2) {
 	vx = list[2];
-	m = _ztoxy(vx, vy, x, y, pdinfo, Z);
-	_graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
-		  pdinfo->varname[vx], pdinfo, oflag, prn);
+	m = z_to_xy(vx, vy, x, y, pdinfo, Z);
+	graphyzx(list, y, uhat, x, m, pdinfo->varname[vy], 
+		 pdinfo->varname[vx], pdinfo, oflag, prn);
     }
     else {
 	vz = list[2];
@@ -517,8 +517,8 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 		m++;
 	    }
 	}
-	_graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
-		  pdinfo->varname[vx], pdinfo, oflag, prn);
+	graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
+		 pdinfo->varname[vx], pdinfo, oflag, prn);
     }
     pputc(prn, '\n');
 
@@ -992,7 +992,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	clear_model(&plotmod, pdinfo);
     }
 
-    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return GRAPH_NO_DATA;
     npoints = t2 - t1 + 1;
@@ -1076,7 +1076,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     } else {
 	double xmin, xmax;
 
-	_minmax(t1, t2, (*pZ)[xvar], &xmin, &xmax);
+	gretl_minmax(t1, t2, (*pZ)[xvar], &xmin, &xmax);
 	xrange = xmax - xmin;
 	xmin -= xrange * .025;
 	xmax += xrange * .025;
@@ -1093,7 +1093,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 
 	/* find minima, maxima of the vars */
 	for (i=1; i<lo; i++) {
-	    _minmax(t1, t2, (*pZ)[list[i]], &(ymin[i]), &(ymax[i]));
+	    gretl_minmax(t1, t2, (*pZ)[list[i]], &(ymin[i]), &(ymax[i]));
 	}
 	yscale = 0;
 	for (i=1; i<lo; i++) {
@@ -1412,7 +1412,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	return E_FOPEN;
     }
 
-    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return GRAPH_NO_DATA;
 
@@ -1432,8 +1432,8 @@ int gnuplot_3d (LIST list, const char *literal,
 	tmplist[3] = list[2];
 	tmplist[4] = list[1];
 
-	_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
-	_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
+	gretl_minmax(t1, t2, (*pZ)[list[2]], &umin, &umax);
+	gretl_minmax(t1, t2, (*pZ)[list[1]], &vmin, &vmax);
 
 	gretl_model_init(&pmod, pdinfo);
 	pmod = lsq(tmplist, pZ, pdinfo, OLS, OPT_A, 0.0);
@@ -1674,7 +1674,7 @@ int plot_fcast_errs (int n, const double *obs,
 
     fputs("# forecasts with 95 pc conf. interval\n", fp);
 
-    _minmax(0, n - 1, obs, &xmin, &xmax);
+    gretl_minmax(0, n - 1, obs, &xmin, &xmax);
     xrange = xmax - xmin;
     xmin -= xrange * .025;
     xmax += xrange * .025;

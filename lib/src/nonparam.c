@@ -20,7 +20,7 @@
 /* non-parametric stats for gretl */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 static int inverse_compare_doubles (const void *a, const void *b)
 {
@@ -104,7 +104,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     }
     /* fix up duplicated ranks */
     for (t=0; t<nn; t++) tmp[t] = rx[t];
-    qsort(tmp, nn, sizeof *tmp, _compare_doubles);
+    qsort(tmp, nn, sizeof *tmp, gretl_compare_doubles);
     for (t=0; t<nn; ) {
 	rsum = xx = tmp[t];
 	rcount = 1;
@@ -123,7 +123,7 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
     }
 
     for (t=0; t<nn; t++) tmp[t] = ry[t];
-    qsort(tmp, nn, sizeof *tmp, _compare_doubles);
+    qsort(tmp, nn, sizeof *tmp, gretl_compare_doubles);
     for (t=0; t<nn; ) {
 	rsum = yy = tmp[t];
 	rcount = 1;
@@ -171,10 +171,10 @@ int spearman (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    xx = Z[vx][t];
 	    yy = Z[vy][t];
 	    if (!(na(xx)) && !(na(yy))) {
-		_printxs(xx, 15, PRINT, prn);
-		_printxs(rx[i], 15, PRINT, prn);
-		_printxs(yy, 15, PRINT, prn);
-		_printxs(ry[i], 15, PRINT, prn);
+		gretl_printxs(xx, 15, PRINT, prn);
+		gretl_printxs(rx[i], 15, PRINT, prn);
+		gretl_printxs(yy, 15, PRINT, prn);
+		gretl_printxs(ry[i], 15, PRINT, prn);
 		i++;
 	    }
 	    pputc(prn, '\n');

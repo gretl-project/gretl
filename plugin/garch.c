@@ -22,7 +22,6 @@
 */
 
 #include "libgretl.h"
-#include "internal.h"
 #include "libset.h"
 
 #include "fcp.h"

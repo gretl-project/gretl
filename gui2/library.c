@@ -2269,7 +2269,7 @@ void do_model (GtkWidget *widget, gpointer p)
 
     case TSLS:
 	*pmod = tsls_func(cmd.list, atoi(cmd.param), 
-			  &Z, datainfo);
+			  &Z, datainfo, cmd.opt);
 	err = model_output(pmod, prn);
 	break;
 
@@ -5951,7 +5951,7 @@ int gui_exec_line (char *line,
     case TSLS:
 	clear_or_save_model(&models[0], datainfo, rebuild);
 	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-			       &Z, datainfo);
+			       &Z, datainfo, cmd.opt);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
 	    break;

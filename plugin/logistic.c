@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #include <gtk/gtk.h>
 
@@ -219,8 +219,8 @@ static int rewrite_logistic_stats (const double **Z, const DATAINFO *pdinfo,
     int t;
     double x;
 
-    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, Z[dv]);
-    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, Z[dv]);
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, Z[dv]);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, Z[dv]);
 
     /* make the VCV matrix before messing with the model stats */
     makevcv(pmod);

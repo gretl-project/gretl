@@ -21,7 +21,7 @@
 */  
 
 #include "libgretl.h" 
-#include "internal.h"
+#include "gretl_private.h"
 
 #include <time.h>
 #include <unistd.h>

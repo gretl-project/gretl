@@ -21,7 +21,7 @@
 
 #include "libgretl.h"
 #include "var.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 /* equipment for the "shell" command */
 #ifndef WIN32
@@ -34,10 +34,7 @@
 # endif
 #endif
 
-extern int _omitfromlist (int *list, const int *omitvars, int newlist[],
-			  const DATAINFO *pdinfo, const int model_count);
-
-static int _full_list (const DATAINFO *pdinfo, CMD *command);
+static int make_full_list (const DATAINFO *pdinfo, CMD *command);
 static void get_optional_filename (const char *line, CMD *cmd);
 
 typedef struct {
@@ -118,7 +115,7 @@ static int get_rhodiff_param (char *str, CMD *cmd)
     *cmd->param = 0;
     strncat(cmd->param, str, k);
 
-    _shiftleft(str, k + 1);
+    shift_left(str, k + 1);
 
     return 0;
 }
@@ -255,7 +252,7 @@ static void get_savename (char *s, CMD *cmd)
 	if (n > MAXSAVENAME - 1) n = MAXSAVENAME - 1;
 	strncat(cmd->savename, s + quote, n);
 	if (cmd->savename[n-1] == '"') cmd->savename[n-1] = 0;
-	_shiftleft(s, len + 3);
+	shift_left(s, len + 3);
     }
 }
 
@@ -554,7 +551,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     }
 
     /* now we're probably dealing with a command that wants a list... */    
-    nf = _count_fields(line) - 1;
+    nf = count_fields(line) - 1;
     n = strlen(command->cmd);
 
     /* unless it's on a short list of specials */
@@ -595,7 +592,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	}
 	strcpy(line, remainder);
 	linelen = strlen(line);
-	nf = _count_fields(line);
+	nf = count_fields(line);
 	n = 0;
     }
 
@@ -627,7 +624,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 		return;
 	    }
 	    /* fprintf(stderr, "got filename '%s'\n", command->param); */
-	    _shiftleft(remainder, strlen(command->param));
+	    shift_left(remainder, strlen(command->param));
 	    /* unquote the filename */
 	    for (i=0; i< (int) strlen(command->param) - 2; i++) {
 		command->param[i] = command->param[i+1];
@@ -666,7 +663,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    }
 	    strcpy(remainder, line + n + 1);
 	    sscanf(remainder, "%s", command->param);
-	    _shiftleft(remainder, strlen(command->param));
+	    shift_left(remainder, strlen(command->param));
 	    nf--;
 	    n = 0;
 	    if (nf > 0) {
@@ -681,7 +678,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
 	sscanf(line, "%3s", suffix);
 	strcpy(command->str, suffix);
-	_shiftleft(line, strlen(suffix));
+	shift_left(line, strlen(suffix));
 	nf--;
 	n = 0;
 	linelen = strlen(line);
@@ -862,7 +859,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == PCA ||
 	command->ci == LAGS) {
 	if (command->list[0] == 0) {
-	    _full_list(pdinfo, command);
+	    make_full_list(pdinfo, command);
 	    /* suppress echo of the list -- may be too long */
 	    command->nolist = 1;
 	}
@@ -1013,7 +1010,7 @@ static int parse_criteria (const char *line, const DATAINFO *pdinfo,
 	return 1;
     }   
  
-    _criteria(ess, T, k, prn);
+    gretl_criteria(ess, T, k, prn);
 
     return 0;
 }
@@ -1068,14 +1065,14 @@ int fcast (const char *line, const MODEL *pmod, DATAINFO *pdinfo,
 
     for (t=0; t<pdinfo->n; t++) (*pZ)[vi][t] = NADBL;
 
-    _forecast(t1, t2, vi, pmod, pZ);
+    gretl_forecast(t1, t2, vi, pmod, pZ);
 
     return vi;
 }
 
 /* ........................................................... */
 
-static int _full_list (const DATAINFO *pdinfo, CMD *command)
+static int make_full_list (const DATAINFO *pdinfo, CMD *command)
 /* create a gretl "list" containing all the vars in the data set,
    except for the constant and any "hidden" variables or scalars */
 {
@@ -1361,7 +1358,7 @@ void echo_cmd (CMD *cmd, const DATAINFO *pdinfo, const char *line,
 	}
 
 	/* check for duplicated vars */
-	err = _list_dups(cmd->list, cmd->ci);
+	err = list_dups(cmd->list, cmd->ci);
 	if (err) {
 	    printf(_("\nvar number %d duplicated in the command list.\n"),
 		   err);
@@ -1750,7 +1747,7 @@ int simple_commands (CMD *cmd, const char *line,
 	break;
 
     case MULTIPLY:
-	err = _multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
+	err = gretl_multiply(cmd->param, cmd->list, cmd->str, pZ, datainfo);
 	if (!err) varlist(datainfo, prn);
 	break;
 

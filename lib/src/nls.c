@@ -22,7 +22,7 @@
 #include <math.h>
 
 #include "libgretl.h" 
-#include "internal.h"
+#include "gretl_private.h"
 #include "f2c.h"
 #include "../../minpack/minpack.h"  
 
@@ -302,8 +302,8 @@ static void add_stats_to_model (MODEL *pmod)
     pmod->ess = nlspec.ess;
     pmod->sigma = sqrt(nlspec.ess/(pmod->nobs - nlspec.nparam));
     
-    pmod->ybar = _esl_mean(t1, t2, (*pZ)[nlspec.depvar]);
-    pmod->sdy = _esl_stddev(t1, t2, (*pZ)[nlspec.depvar]);
+    pmod->ybar = gretl_mean(t1, t2, (*pZ)[nlspec.depvar]);
+    pmod->sdy = gretl_stddev(t1, t2, (*pZ)[nlspec.depvar]);
 
     tss = 0.0;
     for (t=t1; t<=t2; t++) {

@@ -21,7 +21,7 @@
 
 #include "libgretl.h"
 #include "qr_estimate.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
    for test that libgretl will accept before rejecting a
@@ -368,7 +368,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.nwt = 0;
     if (ci == WLS) { 
 	mdl.nwt = mdl.list[1];
-	if (_iszero(mdl.t1, mdl.t2, (*pZ)[mdl.nwt])) {
+	if (gretl_iszero(mdl.t1, mdl.t2, (*pZ)[mdl.nwt])) {
 	    mdl.errcode = E_WTZERO;
 	    return mdl;
 	}
@@ -379,8 +379,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* check for missing obs in sample */
-    if ((missv = _adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2, 
-			      (const double **) *pZ, &misst))) {
+    if ((missv = adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2, 
+			     (const double **) *pZ, &misst))) {
 	if (!dated_daily_data(pdinfo)) {
 	    sprintf(gretl_errmsg, _("Missing value encountered for "
 		    "variable %d, obs %d"), missv, misst);
@@ -418,7 +418,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     omitzero(&mdl, pdinfo, *pZ);
 
     /* if regressor list contains a constant, place it first */
-    i = _hasconst(mdl.list);
+    i = gretl_hasconst(mdl.list);
     mdl.ifc = (i > 1);
     if (i > 2) rearrange_list(mdl.list);
 
@@ -479,8 +479,8 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	mdl.ybar = wt_dummy_mean(&mdl, *pZ);
 	mdl.sdy = wt_dummy_stddev(&mdl, *pZ);
     } else {
-	mdl.ybar = _esl_mean(mdl.t1, mdl.t2, (*pZ)[yno]);
-	mdl.sdy = _esl_stddev(mdl.t1, mdl.t2, (*pZ)[yno]);
+	mdl.ybar = gretl_mean(mdl.t1, mdl.t2, (*pZ)[yno]);
+	mdl.sdy = gretl_stddev(mdl.t1, mdl.t2, (*pZ)[yno]);
 	if (fabs(mdl.ybar) < STATZERO) mdl.ybar = 0.0;
     }
 
@@ -802,12 +802,14 @@ static void regress (MODEL *pmod, double *xpy, double **Z,
 	compute_r_squared(pmod, &Z[yno][pmod->t1]);
     }
 
+#if 0
     if (pmod->ifc && pmod->ncoeff == 1) {
         zz = 0.0;
         pmod->dfn = 1;
     }
+#endif
 
-    if (sgmasq <= 0.0 || pmod->dfd == 0) {
+    if (sgmasq <= 0.0 || pmod->dfd == 0 || pmod->dfn == 0) {
 	pmod->fstt = NADBL;
     } else {
 	pmod->fstt = (rss - zz * pmod->ifc) / (sgmasq * pmod->dfn);
@@ -1219,7 +1221,7 @@ static double altrho (int order, int t1, int t2, const double *uhat)
 	}
     }
 
-    rho = _corr(n, ut, ut1);
+    rho = gretl_corr(n, ut, ut1);
 
     free(ut);
     free(ut1);
@@ -1234,7 +1236,7 @@ double corrrsq (int nobs, const double *y, const double *yhat)
 {
     double x;
 
-    x = _corr(nobs, y, yhat);
+    x = gretl_corr(nobs, y, yhat);
     if (na(x)) return NADBL;
     else return x * x;
 }
@@ -1373,7 +1375,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 		    rh[nn++] = rho;
 		    pprintf(prn, "%5.2f %10.4g", rho, ess);
 		    if (nn % 4 == 0) pputs(prn, "\n");
-		    else _bufspace(3, prn);
+		    else bufspace(3, prn);
 		} 
 	    } else {
 		ssr[nn] = ess;
@@ -1391,7 +1393,7 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	rho0 = rho = finalrho;
 	pprintf(prn, _("\n\nESS is minimum for rho = %.2f\n\n"), rho);
 	if (batch) {
-	    _graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
+	    graphyzx(NULL, ssr, NULL, rh, nn, "ESS", "RHO", NULL, 0, prn); 
 	    pputs(prn, "\n");
 	} else {
 	    hilu_plot(ssr, rh, nn, ppaths);
@@ -1461,79 +1463,6 @@ static void autores (int i, double **Z, const MODEL *pmod, double *uhat)
     }
 }
 
-/* .......................................................... */
-
-#if 0
-
-static int pack_tsls_vcv (MODEL *pmod, gretl_matrix *v, int robust)
-{
-    const int nv = pmod->ncoeff;
-    const int nterms = nv * (nv + 1) / 2;
-    double x;
-    int i, j, k;
-
-    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
-    if (pmod->vcv == NULL) return 1;  
-
-    for (i=0; i<nv; i++) {
-	for (j=0; j<=i; j++) {
-	    k = get_vcv_index(pmod, i, j, nv);
-	    x = gretl_matrix_get(v, i, j);
-	    if (!robust) {
-		x *= pmod->sigma * pmod->sigma;
-		if (j == i) {
-		    pmod->sderr[i] = sqrt(x);
-		}
-	    }
-	    pmod->vcv[k] = x;
-	}
-    }
-
-    return 0;
-}
-
-static int make_tsls_vcv (MODEL *pmod, const double **Z)
-{
-    gretl_matrix *w = NULL, *wpwinv = NULL;
-    int k = pmod->ncoeff;
-    int T = pmod->nobs;
-    int i, j, t;
-    int row, col, xnum;
-    int err = 0;
-
-    w = gretl_matrix_alloc(T, k);
-    wpwinv = gretl_matrix_alloc(k, k);
-    if (w == NULL || wpwinv == NULL) {
-	free(w);
-	free(wpwinv);
-	return E_ALLOC;
-    }
-
-    for (i=2; i<=pmod->list[0]; i++) {
-	col = i - 2;
-	xnum = pmod->list[i];
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    row = t - pmod->t1;
-	    gretl_matrix_set(w, row, col, Z[xnum][t]);
-	}
-    }
-
-    gretl_matrix_multiply_mod(w, GRETL_MOD_TRANSPOSE,
-			      w, GRETL_MOD_NONE,
-			      wpwinv);
-
-    gretl_invert_symmetric_matrix(wpwinv);
-    
-    pack_tsls_vcv(pmod, wpwinv, 0);
-
-    gretl_matrix_free(w);
-    gretl_matrix_free(wpwinv);
-
-    return err;
-}
-
-#endif
-
 /**
  * tsls_func:
  * @list: dependent variable plus list of regressors.
@@ -1541,6 +1470,7 @@ static int make_tsls_vcv (MODEL *pmod, const double **Z)
  *   of variables and list of instruments.
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
+ * @opt: may contain OPT_R for robust VCV.
  *
  * Estimate the model given in @list by means of Two-Stage Least
  * Squares.
@@ -1548,15 +1478,17 @@ static int make_tsls_vcv (MODEL *pmod, const double **Z)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
+MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo,
+		 unsigned long opt)
 {
     int i, j, t, v, ncoeff;
     int *list1 = NULL, *list2 = NULL, *newlist = NULL;
     int *s1list = NULL, *s2list = NULL;
     int yno, n = pdinfo->n, orig_nvar = pdinfo->v;
-    int nv, nxpx;
+    int nv, nxpx, addvars = 0;
     MODEL tsls;
-    double xx, *diag, *yhat, *xpx, *xpy;
+    double xx;
+    double *yhat = NULL;
 
     *gretl_errmsg = '\0';
 
@@ -1570,13 +1502,8 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 
     if (list1 == NULL || list2 == NULL || s1list == NULL ||
 	s2list == NULL || newlist == NULL) {
-	free(list1);
-	free(list2);
-	free(s1list);
-	free(s2list);
-	free(newlist);
 	tsls.errcode = E_ALLOC;
-	return tsls;
+	goto tsls_bailout;
     }	
 
     list1[0] = pos - 1;
@@ -1602,37 +1529,24 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 		_("Order condition for identification is not satisfied.\n"
 		"varlist 2 needs at least %d more variable(s) not in "
 		"varlist1."), list1[0] - 1 - ncoeff);
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	free(newlist);
 	tsls.errcode = E_UNSPEC; 
-	return tsls;
+	goto tsls_bailout;
     }
 
     /* now determine which fitted vals to obtain */
     if (tsls_match(list1, list2, newlist)) {
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	free(newlist);
 	strcpy(gretl_errmsg, 
 	       _("Constant term is in varlist1 but not in varlist2"));
 	tsls.errcode = E_UNSPEC;
-	return tsls;
+	goto tsls_bailout;
     }
 
     /* newlist[0] holds the number of new vars to create */
     if (dataset_add_vars(newlist[0], pZ, pdinfo)) {
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	free(newlist);
 	tsls.errcode = E_ALLOC;
-	return tsls;	
+	goto tsls_bailout;
+    } else {
+	addvars = newlist[0];
     }
 
     /* deal with the variables for which instruments are needed */
@@ -1649,13 +1563,7 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	clear_model(&tsls, pdinfo);
 	tsls = lsq(s1list, pZ, pdinfo, OLS, 0, 0.0);
 	if (tsls.errcode) {
-	    free(list1); 
-	    free(list2);
-	    free(s1list); 
-	    free(s2list);
-	    dataset_drop_vars(newlist[0], pZ, pdinfo);
-	    free(newlist);
-	    return tsls;
+	    goto tsls_bailout;
 	}
 
         /* grab fitted values and stick into Z */
@@ -1667,40 +1575,29 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	}
 
 	for (t=0; t<n; t++) {
-	    (*pZ)[orig_nvar+i-1][t] = NADBL;
+	    if (t >= tsls.t1 && t <= tsls.t2) {
+		(*pZ)[orig_nvar+i-1][t] = tsls.yhat[t];
+	    } else {
+		(*pZ)[orig_nvar+i-1][t] = NADBL;
+	    }
 	}
-	for (t=tsls.t1; t<=tsls.t2; t++) {
-	    (*pZ)[orig_nvar+i-1][t] = tsls.yhat[t];
-	}
+
 	strcpy(pdinfo->varname[orig_nvar+i-1], pdinfo->varname[newlist[i]]);
     } 
 
     /* second-stage regression */
     clear_model(&tsls, pdinfo);
     tsls = lsq(s2list, pZ, pdinfo, OLS, OPT_D, 0.0);
-
     if (tsls.errcode) {
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	dataset_drop_vars(newlist[0], pZ, pdinfo);
-	free(newlist);
-	return tsls;
+	goto tsls_bailout;
     }
 
     /* special: need to use the original RHS vars to compute residuals 
        and associated statistics */
     yhat = malloc(n * sizeof *yhat);
     if (yhat == NULL) {
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	dataset_drop_vars(newlist[0], pZ, pdinfo);
-	free(newlist);
 	tsls.errcode = E_ALLOC;
-	return tsls;
+	goto tsls_bailout;
     }
 
     tsls.ess = 0.0;
@@ -1713,41 +1610,38 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	tsls.uhat[t] = (*pZ)[tsls.list[1]][t] - xx;
 	tsls.ess += tsls.uhat[t] * tsls.uhat[t];
     }
-    tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess/tsls.dfd) : 0.0;
+    tsls.sigma = (tsls.ess >= 0.0) ? sqrt(tsls.ess / tsls.dfd) : 0.0;
 
-#if 0
-    make_tsls_vcv(&tsls, (const double **) *pZ);
-#else
-    nv = s2list[0] - 1;
-    nxpx = nv * (nv + 1) / 2;
-    xpx = malloc(nxpx * sizeof *xpx);
-    xpy = malloc((s2list[0] + 1) * sizeof *xpy);
-    diag = malloc((s2list[0] - 1) * sizeof *diag);
+    if (opt & OPT_R) {
+	qr_tsls_vcv(&tsls, (const double **) *pZ, opt);
+    } else {
+	double *xpx = NULL, *xpy = NULL, *diag = NULL;
 
-    if (xpy == NULL || xpx == NULL || diag == NULL) {
-	free(list1); 
-	free(list2);
-	free(s1list); 
-	free(s2list);
-	clear_model(&tsls, pdinfo);
-	dataset_drop_vars(newlist[0], pZ, pdinfo);
-	free(newlist);
-	free(yhat);
-	tsls.errcode = E_ALLOC;
-	return tsls;
+	nv = s2list[0] - 1;
+	nxpx = nv * (nv + 1) / 2;
+	xpx = malloc(nxpx * sizeof *xpx);
+	xpy = malloc((s2list[0] + 1) * sizeof *xpy);
+	diag = malloc((s2list[0] - 1) * sizeof *diag);
+
+	if (xpy == NULL || xpx == NULL || diag == NULL) {
+	    free(xpx);
+	    free(xpy);
+	    free(diag);
+	    tsls.errcode = E_ALLOC;
+	    goto tsls_bailout;
+	}
+
+	form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
+		    xpx, xpy);
+	cholbeta(xpx, xpy, NULL, NULL, nv);    
+	diaginv(xpx, xpy, diag, nv);
+	for (i=0; i<tsls.ncoeff; i++) {
+	    tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
+	}
+	free(diag); 
+	free(xpx);
+	free(xpy);
     }
-
-    form_xpxxpy(s2list, tsls.t1, tsls.t2, *pZ, 0, 0.0,
-		xpx, xpy);
-    cholbeta(xpx, xpy, NULL, NULL, nv);    
-    diaginv(xpx, xpy, diag, nv);
-    for (i=0; i<tsls.ncoeff; i++) {
-	tsls.sderr[i] = tsls.sigma * sqrt(diag[i]); 
-    }
-    free(diag); 
-    free(xpx);
-    free(xpy);
-#endif
 
     tsls.rsq = corrrsq(tsls.nobs, &(*pZ)[tsls.list[1]][tsls.t1], 
 		       yhat + tsls.t1);
@@ -1782,13 +1676,15 @@ MODEL tsls_func (LIST list, int pos, double ***pZ, DATAINFO *pdinfo)
 	tsls.yhat[t] = yhat[t];
     }
 
+ tsls_bailout:
+
     free(list1); 
     free(list2);
     free(s1list); 
     free(s2list);
     free(yhat); 
 
-    dataset_drop_vars(newlist[0], pZ, pdinfo);
+    dataset_drop_vars(addvars, pZ, pdinfo);
     free(newlist);
 
     return tsls;
@@ -2383,8 +2279,8 @@ static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count,
 	double tss = 0.0;
 	int nobs = armod.t2 - armod.t1 + 1;
 
-	armod.ybar = _esl_mean(armod.t1, armod.t2, (*pZ)[list[1]]);
-	armod.sdy = _esl_stddev(armod.t1, armod.t2, (*pZ)[list[1]]);
+	armod.ybar = gretl_mean(armod.t1, armod.t2, (*pZ)[list[1]]);
+	armod.sdy = gretl_stddev(armod.t1, armod.t2, (*pZ)[list[1]]);
 
 	for (t=armod.t1; t<=armod.t2; t++) {
 	    double y = (*pZ)[list[1]][t];
@@ -2477,7 +2373,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /*  printf("arlist:\n"); printlist(arlist); */
     /*  printf("reglist:\n"); printlist(reglist); */
 
-    if (_hasconst(reglist)) rearrange_list(reglist);
+    if (gretl_hasconst(reglist)) rearrange_list(reglist);
 
 #ifdef AR_BY_NLS /* not ready yet */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -2528,7 +2424,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     rholist[1] = v;
 
     pprintf(prn, "%s\n\n", _("Generalized Cochrane-Orcutt estimation"));
-    _bufspace(17, prn);
+    bufspace(17, prn);
     /* xgettext:no-c-format */
     pputs(prn, _("ITER             ESS           % CHANGE"));
     pputs(prn, "\n\n");
@@ -2588,7 +2484,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     } /* end "ess changing" loop */
 
     for (i=0; i<=reglist[0]; i++) ar.list[i] = reglist[i];
-    i = _hasconst(reglist);
+    i = gretl_hasconst(reglist);
     if (i > 1) ar.ifc = 1;
     if (ar.ifc) ar.dfn -= 1;
     ar.ci = AR;
@@ -2623,7 +2519,7 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     ar.adjrsq = 1 - ((1 - ar.rsq)*(ar.nobs - 1)/ar.dfd);
 
     /* special computation of TSS */
-    xx = _esl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
+    xx = gretl_mean(ar.t1, ar.t2, (*pZ)[ryno]);
     for (t=ar.t1; t<=ar.t2; t++) {
 	tss += ((*pZ)[ryno][t] - xx) * ((*pZ)[ryno][t] - xx);
     }
@@ -2671,7 +2567,7 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
 
     for (v=offset; v<=pmod->list[0]; v++) {
         lv = pmod->list[v];
-        if (_iszero(pmod->t1, pmod->t2, Z[lv])) {
+        if (gretl_iszero(pmod->t1, pmod->t2, Z[lv])) {
 	    list_exclude(v, pmod->list);
 	    if (pdinfo->varname[lv][0] != 0) {
 		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
@@ -2714,7 +2610,7 @@ static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 
     for (i=2; i<=list[0]; i++) {
         v = list[i];
-        if (_iszero(t1, t2, Z[v])) {
+        if (gretl_iszero(t1, t2, Z[v])) {
 	    list_exclude(i, list);
 	    i--;
 	}
@@ -2746,8 +2642,8 @@ static int zerror (int t1, int t2, int yno, int nwt, double ***pZ)
     double xx, yy;
     int t;
 
-    xx = _esl_mean(t1, t2, (*pZ)[yno]);
-    yy = _esl_stddev(t1, t2, (*pZ)[yno]);
+    xx = gretl_mean(t1, t2, (*pZ)[yno]);
+    yy = gretl_stddev(t1, t2, (*pZ)[yno]);
     if (floateq(xx, 0.0) && floateq(yy, 0.0)) return 1;
 
     if (nwt) {

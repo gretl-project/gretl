@@ -20,7 +20,7 @@
 /* generate.c for gretl */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 #include "genstack.h"
 
 #include <time.h>
@@ -468,7 +468,7 @@ static genatom *parse_token (const char *s, char op,
 	}
     }
 
-    else if (_isnumber(s)) {
+    else if (numeric_string(s)) {
 	val = dot_atof(s);
 	scalar = 1;
     }
@@ -1377,7 +1377,7 @@ int get_function (const char *s)
 
 /* .......................................................... */
 
-int is_reserved (const char *str)
+int gretl_is_reserved (const char *str)
 {
     const char *resword[] = {"uhat", "yhat",
 			     "const", "CONST", "pi",
@@ -1455,10 +1455,10 @@ static int getword (char *word, char *str, char c, unsigned long oflag)
 
     *word = '\0';
     strncat(word, str, i);
-    _delete(str, 0, ++i);
+    gretl_delete(str, 0, ++i);
 
     if (oflag && !strcmp(word, "subdum")) ;
-    else if (is_reserved(word)) i = 0;
+    else if (gretl_is_reserved(word)) i = 0;
 
     return i;
 }
@@ -1530,7 +1530,7 @@ static int gentoler (const char *s)
     int ret = 0;
     double x;
 
-    if (_isnumber(s)) {
+    if (numeric_string(s)) {
 	x = dot_atof(s);
 	set_nls_toler(x);
 	sprintf(gretl_msg, _("Set tolerance to %g"), x);
@@ -1644,7 +1644,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    goto genr_return;
 	}
 
-	_esl_trunc(newvar, VNAMELEN - 1);
+	gretl_trunc(newvar, VNAMELEN - 1);
 
 	if (strncmp(newvar, "$nls", 4) && !oflag && 
 	    check_varname(newvar)) {
@@ -2019,20 +2019,20 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     }
 
     if (fn == T_MEAN) {
-	x = _esl_mean(0, i, tmp);
+	x = gretl_mean(0, i, tmp);
     }
     else if (fn == T_SUM) {
-	x = _esl_mean(0, i, tmp);
+	x = gretl_mean(0, i, tmp);
 	x *= (i + 1);
     }
     else if (fn == T_SD) {
-	x = _esl_stddev(0, i, tmp);
+	x = gretl_stddev(0, i, tmp);
     }
     else if (fn == T_VAR) {
-	x = _esl_variance(0, i, tmp);
+	x = gretl_variance(0, i, tmp);
     }
     else if (fn == T_SST) {
-	x = _esl_sst(0, i, tmp);
+	x = gretl_sst(0, i, tmp);
     }
     else if (fn == T_MEDIAN) {
 	x = gretl_median(tmp, i + 1);
@@ -2040,7 +2040,7 @@ static double evaluate_statistic (double *z, GENERATE *genr, int fn)
     else if (fn == T_MIN || fn == T_MAX) {
 	double min, max;
 
-	_minmax(0, i, tmp, &min, &max);
+	gretl_minmax(0, i, tmp, &min, &max);
 	x = (fn == T_MIN)? min : max;
     }
 
@@ -2181,7 +2181,7 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
 	    tmp[++i] = mvec[t];
 	}
 
-	qsort(tmp, i + 1, sizeof *tmp, _compare_doubles);
+	qsort(tmp, i + 1, sizeof *tmp, gretl_compare_doubles);
 
 	for (t=t1; t<=t2; t++) {
 	    x[t] = tmp[t-t1];
@@ -2278,7 +2278,7 @@ static int arma_model_stat_pos (const char *s, const MODEL *pmod)
 {
     int p = -1;
 
-    if (_isnumber(s)) {
+    if (numeric_string(s)) {
 	p = atoi(s) - 1;
 	if (p >= pmod->ncoeff) p = -1;
 	return p;
@@ -2306,7 +2306,7 @@ get_model_data_element (const char *s, GENERATE *genr,
     if (pmod == NULL) return x;
 
     if (idx == T_RHO) {
-	if (!(_isnumber(s))) {
+	if (!(numeric_string(s))) {
 	    genr->err = E_INVARG;
 	}
 	else if (dot_atof(s) == 1 && 
@@ -2346,7 +2346,7 @@ get_model_data_element (const char *s, GENERATE *genr,
 		return NADBL;
 	    }
 	} else {
-	    lv = _isnumber(s)? atoi(s) : varindex(genr->pdinfo, s);
+	    lv = numeric_string(s)? atoi(s) : varindex(genr->pdinfo, s);
 	    vi = listpos(lv, pmod->list);
 
 	    if (vi < 2) {
@@ -2985,8 +2985,8 @@ int laggenr (int parent, int lag, int opt, double ***pZ,
     if (lx == NULL) return -1;
 
     strcpy(s, pdinfo->varname[parent]);
-    if (pdinfo->pd >=10) _esl_trunc(s, 5);
-    else _esl_trunc(s, 6);
+    if (pdinfo->pd >=10) gretl_trunc(s, 5);
+    else gretl_trunc(s, 6);
     sprintf(word, "_%d", lag);
     strcat(s, word);
     lno = varindex(pdinfo, s);
@@ -3166,7 +3166,7 @@ int logs (const LIST list, double ***pZ, DATAINFO *pdinfo)
 	    /* create name for new var */
 	    strcpy(s, "l_");
 	    strcat(s, pdinfo->varname[v]);
-	    _esl_trunc(s, VNAMELEN - 1);
+	    gretl_trunc(s, VNAMELEN - 1);
 	    strcpy(pdinfo->varname[newv], s);
 
 	    /* write description of new var */
@@ -3273,14 +3273,14 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 		if (na(zi)) (*pZ)[v+terms][t] = NADBL;
 		else (*pZ)[v+terms][t] = zi * zi;
 	    }
-	    if (_iszero(0, n-1, (*pZ)[v+terms])) continue; 
+	    if (gretl_iszero(0, n-1, (*pZ)[v+terms])) continue; 
 	    /*
 	      prefix varname by sq, truncate if too long and save under 
 	      new varname; new label is "varname = oldname squared"
 	    */
 	    strcpy(s, "sq_");
 	    strcat(s, pdinfo->varname[li]);
-	    _esl_trunc(s, 8);
+	    gretl_trunc(s, 8);
 	    strcpy(pdinfo->varname[v+terms], s);
 	    /* check if an identical variable exists? */
 	    if (nodup) {
@@ -3306,16 +3306,16 @@ int xpxgenr (const LIST list, double ***pZ, DATAINFO *pdinfo,
 			(*pZ)[v+terms][t] = NADBL;
 		    else (*pZ)[v+terms][t] = zi*zj;
 		}
-		if (_iszero(0, n-1, (*pZ)[v+terms])) continue;
+		if (gretl_iszero(0, n-1, (*pZ)[v+terms])) continue;
 		/*
 		  trunc varname i and varname j if needed and cat them.
 		  save as newvarname.  Also make label.
 		*/
 		strcpy(s, pdinfo->varname[li]);
-		_esl_trunc(s, 3);
+		gretl_trunc(s, 3);
 		strcat(s, "_");
 		strcpy(s1, pdinfo->varname[lj]);
-		_esl_trunc(s1, 4);
+		gretl_trunc(s1, 4);
 		strcat(s, s1);
 		strcpy(pdinfo->varname[v+terms], s);
 		sprintf(VARLABEL(pdinfo, v+terms), _("%s = %s times %s"),
@@ -3354,7 +3354,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 
     DPRINTF(("rhodiff: param = '%s'\n", param));
 
-    maxlag = _count_fields(param);
+    maxlag = count_fields(param);
     rhot = malloc(maxlag * sizeof *rhot);
     if (rhot == NULL) return E_ALLOC;
     if (maxlag > pdinfo->t1) t1 = maxlag;
@@ -3390,7 +3390,7 @@ int rhodiff (char *param, const LIST list, double ***pZ, DATAINFO *pdinfo)
 	DPRINTF(("rhodiff: doing list[%d] = %d\n", i, list[i]));
 	/* make name and label */
 	strcpy(s, pdinfo->varname[j]);
-	_esl_trunc(s, 7);
+	gretl_trunc(s, 7);
 	strcat(s, "#");
 	strcpy(pdinfo->varname[v+i-1], s);
 	sprintf(VARLABEL(pdinfo, v+i-1), _("%s = rho-differenced %s"), 
@@ -3513,9 +3513,9 @@ static double genr_cov (const char *str, double ***pZ,
     if (v1 >= pdinfo->v || v2 >= pdinfo->v)
 	return NADBL;
 
-    return _covar(pdinfo->t2 - pdinfo->t1 + 1,
-		  &(*pZ)[v1][pdinfo->t1], 
-		  &(*pZ)[v2][pdinfo->t1]);
+    return gretl_covar(pdinfo->t2 - pdinfo->t1 + 1,
+		       &(*pZ)[v1][pdinfo->t1], 
+		       &(*pZ)[v2][pdinfo->t1]);
 }
 
 /* ...................................................... */
@@ -3547,8 +3547,9 @@ static double genr_corr (const char *str, double ***pZ,
     if (v1 >= pdinfo->v || v2 >= pdinfo->v)
 	return NADBL;
 
-    return _corr(pdinfo->t2 - pdinfo->t1 + 1,
-		 &(*pZ)[v1][pdinfo->t1], &(*pZ)[v2][pdinfo->t1]);
+    return gretl_corr(pdinfo->t2 - pdinfo->t1 + 1,
+		      &(*pZ)[v1][pdinfo->t1], 
+		      &(*pZ)[v2][pdinfo->t1]);
 }
 
 /* ...................................................... */
@@ -3773,7 +3774,7 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 
     close_minus(cmd);
 
-    f = _count_fields(cmd);
+    f = count_fields(cmd);
     m = f - 2; /* default: allow for command word varname */
 
     a = malloc(m * sizeof *a);
@@ -3916,8 +3917,8 @@ int simulate (char *cmd, double ***pZ, DATAINFO *pdinfo)
 
 /* .......................................................... */
 
-int _multiply (char *s, int *list, char *sfx, double ***pZ,
-	       DATAINFO *pdinfo)
+int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
+		    DATAINFO *pdinfo)
 {
     int i, t, v = 0, nv, n = pdinfo->n, lv, l0 = list[0];
     int slen;
@@ -3956,7 +3957,7 @@ int _multiply (char *s, int *list, char *sfx, double ***pZ,
 	}
 	/* do names and labels */
 	strcpy(tmp, pdinfo->varname[lv]);
-	_esl_trunc(tmp, 8 - slen);
+	gretl_trunc(tmp, 8 - slen);
 	strcat(tmp, sfx);
 	strcpy(pdinfo->varname[nv], tmp);
 	if (v) 

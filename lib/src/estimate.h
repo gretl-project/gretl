@@ -50,7 +50,8 @@ MODEL garch (int *list, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	     unsigned long opt);
 
 MODEL tsls_func (LIST list, const int pos, 
-		 double ***pZ, DATAINFO *pdinfo);
+		 double ***pZ, DATAINFO *pdinfo,
+		 unsigned long opt);
 
 MODEL hsk_func (LIST list, 
 		double ***pZ, DATAINFO *pdinfo);

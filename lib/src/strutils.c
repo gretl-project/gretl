@@ -20,6 +20,8 @@
 /* strutils.c for gretl */
 
 #include "libgretl.h"
+#include "gretl_private.h"
+
 #include <errno.h>
 #include <time.h>
 
@@ -158,7 +160,7 @@ void delchar (int c, char *str)
 }
 
 /**
- * _delete:
+ * gretl_delete:
  * @str: the string to process.
  * @indx: the starting point for deleting characters.
  * @count: the number of characters to delete.
@@ -167,7 +169,7 @@ void delchar (int c, char *str)
  *
  */
 
-void _delete (char *str, int indx, int count)
+void gretl_delete (char *str, int indx, int count)
 {
     size_t i, n = strlen(str);
 
@@ -236,14 +238,14 @@ char *charsub (char *str, char find, char repl)
 }
 
 /**
- * _isnumber:
+ * numeric_string:
  * @str: the string to examine.
  *
  * Returns: 1 if the given @str is numeric, otherwise 0.
  *
  */
 
-int _isnumber (const char *str)
+int numeric_string (const char *str)
 {
     char *test;
     extern int errno;
@@ -313,7 +315,7 @@ void lower (char *str)
 }
 
 /**
- * _esl_trunc:
+ * gretl_trunc:
  * @str: the string to truncate.
  * @n: the desired length of the truncated string.
  *
@@ -321,7 +323,7 @@ void lower (char *str)
  *
  */
 
-void _esl_trunc (char *str, size_t n)
+void gretl_trunc (char *str, size_t n)
 {
     if (n < strlen(str)) str[n] = 0;
 }
@@ -341,14 +343,14 @@ void clear (char *str, int len)
 }
 
 /**
- * _count_fields:
+ * count_fields:
  * @str: the string to process.
  *
  * Returns: the number of space-separated fields in @str.
  *
  */
 
-int _count_fields (const char *str)
+int count_fields (const char *str)
 {
     int n = 0;
     char tmpstr[MAXLEN];
@@ -360,7 +362,7 @@ int _count_fields (const char *str)
 }
 
 /**
- * _shiftleft:
+ * shift_left:
  * @str: the string to process.
  * @move: the number of places to shift.
  *
@@ -369,7 +371,7 @@ int _count_fields (const char *str)
  *
  */
 
-void _shiftleft (char *str, size_t move)
+void shift_left (char *str, size_t move)
 {
     size_t n = strlen(str);
 
@@ -393,7 +395,7 @@ void chopstr (char *str)
 {
     int i = strspn(str, " \t");
 
-    _shiftleft(str, i);
+    shift_left(str, i);
 
     for (i = strlen(str) - 1; i >= 0; i--) {
 	if (isspace((unsigned char) str[i]) || str[i] == '\r') {
@@ -490,7 +492,7 @@ int top_n_tail (char *str)
     /* drop any leading spaces, also possible questionmark */
     i = 0;
     while (isspace((unsigned char) str[i]) || str[i] == '?') i++;
-    if (i) _shiftleft(str, i);
+    if (i) shift_left(str, i);
 
     /* then replace backslash, if present */
     len = strlen(str);

@@ -46,7 +46,7 @@ struct _selector {
 };
 
 #define WANT_TOGGLES(c) (c == OLS || c == TOBIT || c == ARMA || \
-                         c == GARCH || c == COINT2)
+                         c == GARCH || c == COINT2 || c == TSLS)
 
 void clear_selector (void)
 {
@@ -967,7 +967,7 @@ build_selector_switches (selector *sr)
 {
     GtkWidget *hbox, *tmp;
 
-    if (sr->code == OLS || sr->code == GARCH) {
+    if (sr->code == OLS || sr->code == GARCH || sr->code == TSLS) {
 	tmp = gtk_check_button_new_with_label(_("Robust standard errors"));
 	gtk_signal_connect(GTK_OBJECT(tmp), "toggled",
 			   GTK_SIGNAL_FUNC(robust_callback), sr);

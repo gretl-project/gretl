@@ -21,7 +21,7 @@
 
 #include "libgretl.h" 
 #include "var.h"  
-#include "internal.h"
+#include "gretl_private.h"
 
 /* #define VAR_DEBUG */
 
@@ -743,7 +743,7 @@ static int diffvarnum (int index, const DATAINFO *pdinfo)
     char diffname[16], s[16];
     
     strcpy(s, pdinfo->varname[index]);
-    _esl_trunc(s, 6);
+    gretl_trunc(s, 6);
     strcpy(diffname, "d_");
     strcat(diffname, s);
     return varindex(pdinfo, diffname);
@@ -759,7 +759,7 @@ static int diffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
     double x0, x1;
 
     strcpy(word, pdinfo->varname[iv]);
-    _esl_trunc(word, 6);
+    gretl_trunc(word, 6);
     strcpy(s, "d_");
     strcat(s, word);
 
@@ -802,7 +802,7 @@ static int ldiffgenr (int iv, double ***pZ, DATAINFO *pdinfo)
     double x0, x1;
 
     strcpy(word, pdinfo->varname[iv]);
-    _esl_trunc(word, 5);
+    gretl_trunc(word, 5);
     strcpy(s, "ld_");
     strcat(s, word);
 
@@ -900,8 +900,8 @@ static int lagvarnum (int iv, int lag, const DATAINFO *pdinfo)
 
     strcpy(lagname, pdinfo->varname[iv]);
 
-    if (pdinfo->pd >=10) _esl_trunc(lagname, 5);
-    else _esl_trunc(lagname, 6);
+    if (pdinfo->pd >=10) gretl_trunc(lagname, 5);
+    else gretl_trunc(lagname, 6);
 
     sprintf(ext, "_%d", lag);
     strcat(lagname, ext);
@@ -1089,8 +1089,8 @@ static int real_var (int order, const LIST inlist,
     t2 = pdinfo->t2;
     varlist[1] = depvars[0];
 
-    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, 
-			      (const double **) *pZ, &misst))) {
+    if ((missv = adjust_t1t2(NULL, varlist, &t1, &t2, 
+			     (const double **) *pZ, &misst))) {
 	err = 1;
 	goto var_bailout;
     }
@@ -1366,7 +1366,7 @@ int coint (int order, const LIST list, double ***pZ,
     }
 
     /* step 2: carry out the cointegrating regression */
-    if (_hasconst(list) == 0) {
+    if (gretl_hasconst(list) == 0) {
 	cointlist = malloc((l0 + 2) * sizeof *cointlist);
 	if (cointlist == NULL) return E_ALLOC;
 	for (i=0; i<=l0; i++) cointlist[i] = list[i];

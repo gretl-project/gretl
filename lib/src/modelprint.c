@@ -20,7 +20,7 @@
 /*  modelprint.c */ 
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 #include "libset.h"
 
 #ifndef cmplx
@@ -965,6 +965,11 @@ static void print_model_heading (const MODEL *pmod,
 
     /* supplementary strings below the estimator and sample info */
 
+    /* list of instruments for TSLS */
+    if (pmod->ci == TSLS) {
+	print_tsls_instruments (pmod->list, pdinfo, prn);
+    }
+
     /* VCV variants */
     if (pmod->aux == AUX_SCR || gretl_model_get_int(pmod, "hac_lag")) {
 	hac_vcv_line(pmod, prn);
@@ -994,11 +999,6 @@ static void print_model_heading (const MODEL *pmod,
 		    gretl_model_get_double(pmod, "rho_in"));
 	}
     } 
-
-    /* list of instruments for TSLS */
-    else if (pmod->ci == TSLS) {
-	print_tsls_instruments (pmod->list, pdinfo, prn);
-    }
 
     /* message about new variable created */
     if (PLAIN_FORMAT(prn->format) && gretl_msg[0] != '\0' &&
@@ -1642,7 +1642,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	pprintf(prn, " %3d) %8s ", pmod->list[c], varname);
     }
 
-    _bufspace(2, prn);
+    bufspace(2, prn);
 
     /* print coeff value if well-defined */
     if (isnan(pmod->coeff[c-2]) || na(pmod->coeff[c-2])) {
@@ -1652,7 +1652,7 @@ static int print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	gretl_print_value (pmod->coeff[c-2], prn);
     }
 
-    _bufspace(2, prn);
+    bufspace(2, prn);
 
     /* get out if std error is undefined */
     if (isnan(pmod->sderr[c-2]) || na(pmod->sderr[c-2])) {
@@ -1815,9 +1815,9 @@ static void print_rho (const ARINFO *arinfo, int c, int dfd, PRN *prn)
     if (PLAIN_FORMAT(prn->format)) {
 	sprintf(ustr, "u_%d", arinfo->arlist[c]);
 	pprintf(prn, "%14s", ustr); 
-	_bufspace(3, prn);
+	bufspace(3, prn);
 	gretl_print_value (arinfo->rho[c], prn);
-	_bufspace(2, prn);
+	bufspace(2, prn);
 	gretl_print_value (arinfo->sderr[c], prn); 
 	pprintf(prn, " %7.3f ", xx, tprob(xx, dfd));
 	if (1) {

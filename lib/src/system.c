@@ -21,7 +21,7 @@
 #include <stdlib.h>
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 struct _gretl_equation_system {
     int type;

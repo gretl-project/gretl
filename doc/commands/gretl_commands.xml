@@ -4654,6 +4654,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+	<option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
       </options>      
       <examples>
         <example>tsls y1 0 y2 y3 x1 x2 ; 0 x1 x2 x3 x4 x5 x6</example>
@@ -4662,7 +4666,7 @@
 
     <description>
       <para context="cli">
-	Computes two-stage least squares (TSLS) estimates:
+	Computes two-stage least squares (TSLS or IV) estimates:
 	<repl>depvar</repl> is the dependent variable,
 	<repl>indepvars</repl> is the list of independent variables
 	(including right-hand side endogenous variables) in the

@@ -1535,7 +1535,7 @@ void exec_line (char *line, PRN *prn)
     case TSLS:
 	clear_model(models[0], NULL);
 	*models[0] = tsls_func(cmd.list, atoi(cmd.param), 
-			       &Z, datainfo);
+			       &Z, datainfo, cmd.opt);
 	if ((err = (models[0])->errcode)) {
 	    errmsg((models[0])->errcode, prn);
 	    break;

@@ -20,8 +20,9 @@
 /*  printout.c - simple text print routines for some gretl structs */ 
 
 #include "libgretl.h"
-#include "internal.h" 
+#include "gretl_private.h" 
 #include "version.h"
+
 #include <stdarg.h>
 #include <time.h>
 
@@ -33,7 +34,7 @@ print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 
 /* ........................................................ */
   
-void _bufspace (int n, PRN *prn)
+void bufspace (int n, PRN *prn)
 {
     if (n > 0) while (n--) pputc(prn, ' ');
 }
@@ -163,9 +164,9 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, "\n  %s: F(%d, %d) = %f, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: F(%d, %d) = %g, ", _("Test statistic"), 
 		add->dfn, add->dfd, add->F);
-	pprintf(prn, _("with p-value = %f\n"), 
+	pprintf(prn, _("with p-value = %g\n"), 
 		fdist(add->F, add->dfn, add->dfd));
     }
     else if (aux_code == AUX_ADD && addvars[0] > 1 && add->ci == HCCM) {
@@ -173,9 +174,9 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, "\n  %s: %s(%d) = %f, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
 		_("Chi-square"), add->dfn, add->chisq);
-	pprintf(prn, _("with p-value = %f\n\n"), 
+	pprintf(prn, _("with p-value = %g\n\n"), 
 		chisq(add->chisq, add->dfn));
 	return;
     }
@@ -184,30 +185,28 @@ void gretl_print_add (const COMPARE *add, const int *addvars,
 		"zero for the added variables\n\n"), spc);
 	for (i = 1; i<=addvars[0]; i++) 
 	    pprintf(prn, "%s  %s\n", spc, pdinfo->varname[addvars[i]]);	
-	pprintf(prn, "\n  %s: %s(%d) = %f, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: %s(%d) = %g, ", _("Test statistic"), 
 		_("Chi-square"), add->dfn, add->chisq);
-	pprintf(prn, _("with p-value = %f\n\n"), 
+	pprintf(prn, _("with p-value = %g\n\n"), 
 		chisq(add->chisq, add->dfn));
 	return;
     }
     else if (aux_code == AUX_SQ || aux_code == AUX_LOG) {
-	pprintf(prn, "\n%s: TR^2 = %f,\n", _("Test statistic"), add->trsq);
-	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %f) = %f\n\n"), 
+	pprintf(prn, "\n%s: TR^2 = %g,\n", _("Test statistic"), add->trsq);
+	pprintf(prn, _("with p-value = prob(Chi-square(%d) > %g) = %g\n\n"), 
 		add->dfn, add->trsq, chisq(add->trsq, add->dfn));
 	return;
     }
 
-    if (opt & OPT_Q) {
-	strcpy(spc, "  ");
-    }
-
-    pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
-	    spc, add->score);
-    if (add->score == 1) {
-	pputs(prn, _("has improved.\n"));
-    }
-    else {
-	pputs(prn, _("have improved.\n\n"));
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("%sOf the 8 model selection statistics, %d "), 
+		spc, add->score);
+	if (add->score == 1) {
+	    pputs(prn, _("has improved.\n"));
+	}
+	else {
+	    pputs(prn, _("have improved.\n\n"));
+	}
     }
 }
 
@@ -233,9 +232,9 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
-	pprintf(prn, "\n  %s: F(%d, %d) = %f, ", _("Test statistic"), 
+	pprintf(prn, "\n  %s: F(%d, %d) = %g, ", _("Test statistic"), 
 		omit->dfn, omit->dfd, omit->F);
-	pprintf(prn, _("with p-value = %f\n"), 
+	pprintf(prn, _("with p-value = %g\n"), 
 		fdist(omit->F, omit->dfn, omit->dfd));
     }
     else if (LIMDEP(omit->ci) && omit->dfn > 0 && omitvars[0] > 1) {
@@ -244,9 +243,9 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
-	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),
+	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
 		_("Chi-square"), omit->dfn, omit->chisq);
-	pprintf(prn, _("with p-value = %f\n\n"), 
+	pprintf(prn, _("with p-value = %g\n\n"), 
 		chisq(omit->chisq, omit->dfn));
 	return;
     } 
@@ -256,15 +255,17 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 	for (i=1; i<=omitvars[0]; i++) {
 	    pprintf(prn, "    %s\n", pdinfo->varname[omitvars[i]]);	
 	} 
-	pprintf(prn, "\n  %s: %s(%d) = %f, ",  _("Test statistic"),
+	pprintf(prn, "\n  %s: %s(%d) = %g, ",  _("Test statistic"),
 		_("Chi-square"), omit->dfn, omit->chisq);
-	pprintf(prn, _("with p-value = %f\n\n"), 
+	pprintf(prn, _("with p-value = %g\n\n"), 
 		chisq(omit->chisq, omit->dfn));
     }
 
-    pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
-	    omit->score, (omit->score == 1)? 
-	    _("has improved") : _("have improved"));
+    if (!(opt & OPT_Q)) {
+	pprintf(prn, _("  Of the 8 model selection statistics, %d %s\n\n"), 
+		omit->score, (omit->score == 1)? 
+		_("has improved") : _("have improved"));
+    }
 }
 
 /* ........................................................ */
@@ -375,13 +376,13 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	pprintf(prn, "%s", word);
 
 	nlw = 10 - strlen(word);
-	_bufspace(nlw, prn);
+	bufspace(nlw, prn);
 
 	sprintf(word, " %g", freq->midpt[k]);
 	pputs(prn, word);
 
 	nlw = 10 - strlen(word);
-	_bufspace(nlw, prn);
+	bufspace(nlw, prn);
 
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
@@ -534,7 +535,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
     pprintf(prn, " %3d) %8s ", cf->list[c], 
 	    pdinfo->varname[cf->list[c]]);
 
-    _bufspace(3, prn);
+    bufspace(3, prn);
 
     if (isnan(cf->coeff[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 16), _("undefined"));
@@ -542,7 +543,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 	gretl_print_value (cf->coeff[c-2], prn);
     }
 
-    _bufspace(2, prn);
+    bufspace(2, prn);
 
     if (isnan(cf->maxerr[c-2])) {
 	pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 10), _("undefined"));
@@ -712,7 +713,7 @@ void text_print_matrix (const double *rr, const int *list,
 		ljnf = list[j + nf];
 		strcpy(s, pdinfo->varname[ljnf]);
 	    }
-	    _bufspace(9 - strlen(s), prn);
+	    bufspace(9 - strlen(s), prn);
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
 	pputc(prn, '\n');
@@ -735,7 +736,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    if (pause) page_break(1, &lineno, 0);
 	    lineno++;
 	    ij2 = nf + j;
-	    _bufspace(14 * (j - 1), prn);
+	    bufspace(14 * (j - 1), prn);
 	    for (k=j; k<=p; k++) {
 		index = ijton(ij2, nf+k, lo);
 		outxx(rr[index], (pmod == NULL)? CORR : 0, prn);
@@ -757,15 +758,15 @@ static void printgx (const double xx, PRN *prn)
     sprintf(word, "%11g", xx);
     lw = strlen(word);
     pputs(prn, word);
-    _bufspace(13 - lw, prn);
+    bufspace(13 - lw, prn);
 } 
 
 /* ........................................................ */
 
-void _graphyzx (const int *list, const double *zy1, const double *zy2, 
-		const double *zx, int n, const char *yname, 
-		const char *xname, const DATAINFO *pdinfo, 
-		unsigned long oflag, PRN *prn)
+void graphyzx (const int *list, const double *zy1, const double *zy2, 
+	       const double *zx, int n, const char *yname, 
+	       const char *xname, const DATAINFO *pdinfo, 
+	       unsigned long oflag, PRN *prn)
 /*
   if n > 0 graphs zy1 against zx, otherwise
   graphs zy1[i] and zy2[i] against zx[i] for i = 1, 2, .... n
@@ -791,12 +792,12 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
     if (n < 0) {
 	n = -n;
 	option = 1;
-	_minmax(t1, t2, zy1, &y1min, &y1max);
-	_minmax(t1, t2, zy2, &y2min, &y2max);
+	gretl_minmax(t1, t2, zy1, &y1min, &y1max);
+	gretl_minmax(t1, t2, zy2, &y2min, &y2max);
 	ymin = (y1min < y2min)? y1min : y2min;
 	ymax = (y1max > y2max)? y1max : y2max;
     }
-    else _minmax(t1, t2, zy1, &ymin, &ymax);
+    else gretl_minmax(t1, t2, zy1, &ymin, &ymax);
     yrange = ymax - ymin;
     xzero = yzero = 0;
     /* setting the number of columns and rows to be used */
@@ -805,7 +806,7 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
     else nrows = option ? 16 : 18 ;
     nr2 = nrows/2;
     nc2 = ncols/2;
-    _minmax(t1, t2, zx, &xmin, &xmax);
+    gretl_minmax(t1, t2, zx, &xmin, &xmax);
     xrange = xmax - xmin;
 
     /* Initialize picture matrix */
@@ -861,18 +862,18 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 	    xx = ymin + ((ymax-ymin) * i/nrows);
 	    printgx(xx, prn);
 	}
-	else _bufspace(13, prn);
+	else bufspace(13, prn);
 	for (j=0; j<=ncols+1; ++j) pprintf(prn, "%c", p[i][j]);
 	pputc(prn, '\n');
     }
-    _bufspace(13, prn);
+    bufspace(13, prn);
     pputc(prn, '|');
     for (j=0; j<=ncols; j++) {
 	if (j%10 == 0) pputc(prn, '+');
 	else pputc(prn, '-');
     }
     pputc(prn, '\n');
-    _bufspace(14, prn);
+    bufspace(14, prn);
     sprintf(word, "%g", xmin);
     lx = strlen(word);
     lw = 13 + lx;
@@ -880,16 +881,16 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
     sprintf(word, "%s", xname);
     ly = strlen(word);
     ls = 30 - lx - ly/2;
-    _bufspace(ls, prn);
+    bufspace(ls, prn);
     pputs(prn, word);
     lw = lw + ls + ly; 
     sprintf(word, "%g", xmax);
 
     ls = strlen(word);
-    if (ls < 7) _bufspace(73 - lw, prn);
+    if (ls < 7) bufspace(73 - lw, prn);
     else { 
 	lw = lw + ls;
-	_bufspace(79 - lw, prn);
+	bufspace(79 - lw, prn);
     }
     pprintf(prn, "%s\n\n", word);
 }
@@ -956,7 +957,7 @@ static void varheading (int v1, int v2,
 
 /* ........................................................... */
 
-void _printxs (double xx, int n, int ci, PRN *prn)
+void gretl_printxs (double xx, int n, int ci, PRN *prn)
 {
     int ls;
     char s[32];
@@ -964,7 +965,7 @@ void _printxs (double xx, int n, int ci, PRN *prn)
     printxx(xx, s, ci);
     ls = strlen(s);
     pputc(prn, ' ');
-    _bufspace(n-3-ls, prn);
+    bufspace(n-3-ls, prn);
     pputs(prn, s);
 }
 
@@ -1021,7 +1022,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2, ls = 0;
     double xx;
 
-    if (_isconst(t1, t2, z)) {
+    if (gretl_isconst(t1, t2, z)) {
 	if (opt & OPT_T) printstr_ten(prn, z[t1], &ls);
 	else printstr(prn, z[t1], &ls);
     }
@@ -1467,13 +1468,13 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
-	_printxs(fr->actual[t], 15, PRINT, prn);
-	_printxs(fr->fitted[t], 15, PRINT, prn);
-	_printxs(fr->sderr[t], 15, PRINT, prn);
+	gretl_printxs(fr->actual[t], 15, PRINT, prn);
+	gretl_printxs(fr->fitted[t], 15, PRINT, prn);
+	gretl_printxs(fr->sderr[t], 15, PRINT, prn);
 	maxerr[t] = fr->tval * fr->sderr[t];
-	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
+	gretl_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
 	pputs(prn, " -");
-	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
+	gretl_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
 	pputc(prn, '\n');
     }
 

@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #include "../cephes/mconf.h"
 
@@ -191,8 +191,8 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 
     copylist(&pmod->list, list);
 
-    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
 
     mean_error = pmod->ess = 0.0;
     for (t=0; t<pdinfo->n; t++) {
@@ -652,7 +652,7 @@ static int check_for_missing (const double **Z, const DATAINFO *pdinfo,
     *t1 = pdinfo->t1;
     *t2 = pdinfo->t2;
 
-    if (_adjust_t1t2(NULL, list, t1, t2, Z, &misst)) {
+    if (adjust_t1t2(NULL, list, t1, t2, Z, &misst)) {
 	gchar *msg;
 
 	msg = g_strdup_printf(_("Missing value encountered for "

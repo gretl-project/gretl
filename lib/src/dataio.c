@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #include <zlib.h>
 #include <ctype.h>
@@ -650,7 +650,7 @@ int check_varname (const char *varname)
 
     *gretl_errmsg = '\0';
 
-    if (is_reserved(varname)) return 1;
+    if (gretl_is_reserved(varname)) return 1;
     
     if (!(isalpha((unsigned char) *varname))) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
@@ -2495,7 +2495,7 @@ static int get_max_line_length (FILE *fp, char delim, int *gotdelim,
     return maxlen;
 }
 
-static int count_fields (const char *line, char delim)
+static int count_csv_fields (const char *line, char delim)
 {
     int cbak, nf = 0;
     const char *p = line;
@@ -2713,7 +2713,7 @@ int import_csv (double ***pZ, DATAINFO **ppdinfo,
 	    check_first_field(line, delim, &blank_1, &obs_1, prn);
 	    gotdata = 1;
 	} 
-	chkcols = count_fields(line, delim);
+	chkcols = count_csv_fields(line, delim);
 	if (ncols == 0) {
 	    ncols = chkcols;
 	    pprintf(prn, M_("   number of columns = %d\n"), ncols);	    

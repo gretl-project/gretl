@@ -20,8 +20,9 @@
 /* describe.c - gretl descriptive statistics */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 #include "gretl_matrix.h"
+
 #include <unistd.h>
 
 #ifdef WIN32
@@ -65,7 +66,7 @@ double gretl_median (const double *x, int n)
 	sx[t] = x[t];
     }
 
-    qsort(sx, n, sizeof *sx, _compare_doubles); 
+    qsort(sx, n, sizeof *sx, gretl_compare_doubles); 
 
     n2p = (n2 = n/2) + 1;
     med = (n % 2)? sx[n2p - 1] : 0.5 * (sx[n2 - 1] + sx[n2p - 1]);
@@ -90,7 +91,7 @@ int moments (int t1, int t2, const double *zx,
 
     if (skew == NULL && kurt == NULL) allstats = 0;
 
-    if (_isconst(t1, t2, zx)) {
+    if (gretl_isconst(t1, t2, zx)) {
 	*xbar = zx[t1];
 	*std = 0.0;
 	if (allstats) {
@@ -288,7 +289,7 @@ FREQDIST *old_freqdist (double ***pZ, const DATAINFO *pdinfo,
 	return freq;
     }
     
-    _minmax(0, n-1, x, &xmin, &xmax);
+    gretl_minmax(0, n-1, x, &xmin, &xmax);
     freq->n = n;
     freq->endpt[0] = xmin;
 
@@ -385,7 +386,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 
     strcpy(freq->varname, pdinfo->varname[varno]);
 
-    if (_isconst(0, n-1, x)) {
+    if (gretl_isconst(0, n-1, x)) {
 	gretl_errno = 1;
 	sprintf(gretl_errmsg, _("%s is a constant"), freq->varname);
 	return freq;
@@ -395,7 +396,7 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
     xbar = freq->xbar;
     sdx = freq->sdx;
 
-    _minmax(0, n-1, x, &xmin, &xmax);
+    gretl_minmax(0, n-1, x, &xmin, &xmax);
     range = xmax - xmin;
     
     if (n < 16) {
@@ -560,7 +561,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     list[0] = 1;
     list[1] = varno;
-    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
@@ -574,7 +575,7 @@ int corrgram (int varno, int order, double ***pZ,
 	return 1;
     }
 
-    if (_isconst(t1, t2, &(*pZ)[varno][0])) {
+    if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
 	sprintf(gretl_tmp_str, _("%s is a constant"), 
 		pdinfo->varname[varno]);
 	pprintf(prn, "\n%s\n", gretl_tmp_str);
@@ -617,7 +618,7 @@ int corrgram (int varno, int order, double ***pZ,
 	    x[k] = (*pZ)[varno][t];
 	    y[k] = (*pZ)[varno][t-l];
 	}
-	acf[l-1] = _corr(nobs-l, x, y);
+	acf[l-1] = gretl_corr(nobs-l, x, y);
     }
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
@@ -652,8 +653,8 @@ int corrgram (int varno, int order, double ***pZ,
 	}
 	for (l=0; l<acf_m; l++) xl[l] = l + 1.0;
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-	_graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
-		  _("lag"), NULL, 0, prn);
+	graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
+		 _("lag"), NULL, 0, prn);
 	free(xl);
     } 
 
@@ -861,7 +862,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     list[0] = 1;
     list[1] = varno;
-    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
+    adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
@@ -876,7 +877,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    if (_isconst(t1, t2, &(*pZ)[varno][0])) {
+    if (gretl_isconst(t1, t2, &(*pZ)[varno][0])) {
 	sprintf(gretl_tmp_str, _("'%s' is a constant"), pdinfo->varname[varno]);
 	pprintf(prn, "\n%s\n", gretl_tmp_str);
 	return 1;
@@ -897,7 +898,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
     if (autocov == NULL || omega == NULL || hhat == NULL) 
 	return E_ALLOC;
 
-    xx = _esl_mean(t1, t2, (*pZ)[varno]);
+    xx = gretl_mean(t1, t2, (*pZ)[varno]);
 
     /* find autocovariances */
     for (k=1; k<=L; k++) {
@@ -968,7 +969,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	}
     }
 
-    varx = _esl_variance(t1, t2, &(*pZ)[varno][0]);
+    varx = gretl_variance(t1, t2, &(*pZ)[varno][0]);
     varx *= (double) (nobs - 1) / nobs;
 
     for (t=1; t<=nobs/2; t++) {
@@ -1283,7 +1284,7 @@ GRETLSUMMARY *summary (LIST list,
 	    }
 	}
 
-	_minmax(0, summ->n-1, x, &low, &high);	
+	gretl_minmax(0, summ->n-1, x, &low, &high);	
 	moments(0, summ->n-1, x, &xbar, &std, &skew, &kurt, 1);
 
 	summ->xpx[v] = low;
@@ -1355,7 +1356,7 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
 
     /* drop any constants from list */
     for (i=1; i<=p[0]; i++) {
-	if (_isconst(t1, t2, (*pZ)[p[i]])) {
+	if (gretl_isconst(t1, t2, (*pZ)[p[i]])) {
 	    list_exclude(i, p);
 	    i--;
 	}
@@ -1377,9 +1378,10 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
 		corrmat->xpx[nij] = 1.0;
 		continue;
 	    }
-	    corrmat->xpx[nij] = _corr(corrmat->n, 
-				      &(*pZ)[corrmat->list[i]][t1],
-				      &(*pZ)[corrmat->list[j]][t1]);
+	    corrmat->xpx[nij] = 
+		gretl_corr(corrmat->n, 
+			   &(*pZ)[corrmat->list[i]][t1],
+			   &(*pZ)[corrmat->list[j]][t1]);
 	}
     }
 

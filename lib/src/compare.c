@@ -22,14 +22,14 @@
 */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 #include "gretl_matrix.h"
 
 #ifdef WIN32
 # include <windows.h>
 #endif
 
-static int _justreplaced (int i, const DATAINFO *pdinfo, 
+static int just_replaced (int i, const DATAINFO *pdinfo, 
 			  const int *list);
 
 /* ........................................................... */
@@ -73,7 +73,7 @@ int addtolist (const int *oldlist, const int *addvars, int **plist,
 	return E_NOADD;
     }
 
-    if (model_count >= 0 && _justreplaced(model_count, pdinfo, oldlist)) {
+    if (model_count >= 0 && just_replaced(model_count, pdinfo, oldlist)) {
 	return E_VARCHANGE;
     }
 
@@ -82,8 +82,8 @@ int addtolist (const int *oldlist, const int *addvars, int **plist,
 
 /* ........................................................... */
 
-int _omitfromlist (int *list, const int *omitvars, int *newlist,
-		   const DATAINFO *pdinfo, int model_count)
+int omit_from_list (int *list, const int *omitvars, int *newlist,
+		    const DATAINFO *pdinfo, int model_count)
 /* Drops specified independent variables from a specified
    list, forming newlist.  The first element of omitvars
    is the number of variables to be omitted; the remaining
@@ -119,7 +119,7 @@ int _omitfromlist (int *list, const int *omitvars, int *newlist,
 	return E_NOOMIT; 
     }
 
-    if (_justreplaced(model_count, pdinfo, newlist)) {
+    if (just_replaced(model_count, pdinfo, newlist)) {
 	/* values of one or more vars to omit have changed */
 	return E_VARCHANGE; 
     }
@@ -129,7 +129,7 @@ int _omitfromlist (int *list, const int *omitvars, int *newlist,
 
 /* ........................................................... */
 
-static void _difflist (int *biglist, int *smalist, int *targ)
+static void difflist (int *biglist, int *smalist, int *targ)
 {
     int i, j, k, match;
 
@@ -152,7 +152,7 @@ static void _difflist (int *biglist, int *smalist, int *targ)
 
 /* ........................................................... */
 
-static int _justreplaced (int i, const DATAINFO *pdinfo, 
+static int just_replaced (int i, const DATAINFO *pdinfo, 
 			  const int *list)
      /* check if any var in list has been replaced via genr since a
 	previous model (model_count i) was estimated.  Expects
@@ -427,7 +427,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 			    NULL, 1, orig->ci, prn);
 	}
 	else if (orig->ci == WLS || orig->ci == AR) {
-	    pos = _full_model_list(orig, &newlist);
+	    pos = full_model_list(orig, &newlist);
 	    if (pos < 0) err = E_ALLOC;
 	}
 
@@ -543,7 +543,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	}
 
 	if (addvars != NULL) {
-	    _difflist(new->list, orig->list, addvars);
+	    difflist(new->list, orig->list, addvars);
 	    gretl_print_add(&add, addvars, pdinfo, aux_code, prn, opt);
 	} else {
 	    add.dfn = newlist[0] - orig->list[0];
@@ -689,7 +689,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 = t1;
 	err = E_ALLOC; 
     } else {
-	err = _omitfromlist(orig->list, omitvars, tmplist, pdinfo, m);
+	err = omit_from_list(orig->list, omitvars, tmplist, pdinfo, m);
 	if (err) {
 	    free(tmplist);
 	}
@@ -704,7 +704,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    }
 	}
 	else if (orig->ci == WLS || orig->ci == AR) {
-	    pos = _full_model_list(orig, &tmplist);
+	    pos = full_model_list(orig, &tmplist);
 	    if (pos < 0) {
 		free(tmplist);
 		err = E_ALLOC;
@@ -766,7 +766,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	    *model_count += 1;
 	}
 
-	_difflist(orig->list, new->list, omitvars);
+	difflist(orig->list, new->list, omitvars);
 	gretl_print_omit(&omit, omitvars, pdinfo, prn, opt); 
 
 	if (gretl_model_get_int(orig, "hc")) {
@@ -798,7 +798,7 @@ static int ljung_box (int varno, int order, const double **Z,
 
     list[0] = 1;
     list[1] = varno;
-    _adjust_t1t2(NULL, list, &t1, &t2, Z, NULL);
+    adjust_t1t2(NULL, list, &t1, &t2, Z, NULL);
     nobs = t2 - t1 + 1;
 
     x = malloc(n * sizeof *x);
@@ -813,7 +813,7 @@ static int ljung_box (int varno, int order, const double **Z,
 	    x[k] = Z[varno][t];
 	    y[k] = Z[varno][t-l];
 	}
-	acf[l] = _corr(nobs-l, x, y);
+	acf[l] = gretl_corr(nobs-l, x, y);
     }
 
     /* compute Ljung-Box statistic */
@@ -1280,7 +1280,7 @@ int chow_test (const char *line, MODEL *pmod, double ***pZ,
 		    (*pZ)[pmod->list[orig]][t];
 	    }
 	    strcpy(s, pdinfo->varname[pmod->list[orig]]); 
-	    _esl_trunc(s, 5);
+	    gretl_trunc(s, 5);
 	    strcpy(pdinfo->varname[v+i], "sd_");
 	    strcat(pdinfo->varname[v+i], s);
 	    sprintf(VARLABEL(pdinfo, v+i), "splitdum * %s", 
@@ -1895,7 +1895,7 @@ int sum_test (LIST sumvars, MODEL *pmod,
 	err = hilu_corc(&rho, tmplist, pZ, pdinfo, 
 			NULL, 1, pmod->ci, prn);
     } else if (pmod->ci == WLS || pmod->ci == AR) {
-	pos = _full_model_list(pmod, &tmplist);
+	pos = full_model_list(pmod, &tmplist);
 	if (pos < 0) err = E_ALLOC;
     }
 

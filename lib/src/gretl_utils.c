@@ -20,7 +20,7 @@
 /* utils.c for gretl  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #include <errno.h>
 
@@ -32,12 +32,12 @@
 # endif /* GLIB_CHECK_VERSION */
 #endif /* ! WIN32 */
 
-static int _pdton (int pd);
+static int pdton (int pd);
 static int allocate_fit_resid_arrays (FITRESID *fr, int n, int errs);
 
 /* .......................................................  */
 
-double _corr (int n, const double *zx, const double *zy)
+double gretl_corr (int n, const double *zx, const double *zy)
 /*
         returns the simple correlation coefficient between the the
         arrays zx and zy, for the n observations 0 to n-1.  returns
@@ -50,7 +50,7 @@ double _corr (int n, const double *zx, const double *zy)
     double cval = 0.0;
 
     if (n == 0) return NADBL;
-    if (_isconst(0, n-1, zx) || _isconst(0, n-1, zy)) return NADBL;
+    if (gretl_isconst(0, n-1, zx) || gretl_isconst(0, n-1, zy)) return NADBL;
 
     nn = n;
     sx = sy = 0.0;
@@ -93,7 +93,7 @@ double _corr (int n, const double *zx, const double *zy)
 
 /* .......................................................  */
 
-double _covar (int n, const double *zx, const double *zy)
+double gretl_covar (int n, const double *zx, const double *zy)
 {
     register int i;
     int nn;
@@ -148,7 +148,7 @@ double date (int nt, int pd, const double sd0)
     if (pd == 1) 
 	return ((double) (ysd + nt));  
 
-    pp = (nt) % pd + _pdton(pd) * (sd0 - ysd) + .5;
+    pp = (nt) % pd + pdton(pd) * (sd0 - ysd) + .5;
     if (pp != pd)  {
         yy = ysd + (nt)/pd  + (pp/pd) + .5;
         yp = pp % pd;
@@ -276,7 +276,7 @@ int isdummy (double *x, int t1, int t2)
 
 /* ........................................................  */
 
-int _iszero (int t1, int t2, const double *x)
+int gretl_iszero (int t1, int t2, const double *x)
 /*  checks whether all obs are zero for variable x from t1 to t2 */
 {
     int t;
@@ -308,7 +308,7 @@ void list_exclude (int n, int *list)
 
 /* ........................................................  */
 
-int _isconst (int t1, int t2, const double *x)
+int gretl_isconst (int t1, int t2, const double *x)
 {
     int t;
     double xx = x[t1];
@@ -321,7 +321,7 @@ int _isconst (int t1, int t2, const double *x)
 
 /* ............................................................  */
 
-double _esl_mean (int t1, int t2, const double *x)
+double gretl_mean (int t1, int t2, const double *x)
 /* returns mean of array x from obs t1 through t2 */
 {
     int n;
@@ -349,8 +349,8 @@ double _esl_mean (int t1, int t2, const double *x)
 
 /* ......................................................  */
 
-void _minmax (int t1, int t2, const double zx[], 
-	      double *min, double *max)
+void gretl_minmax (int t1, int t2, const double zx[], 
+		   double *min, double *max)
 /*  returns min and max of array zx for sample t1 through t2  */
 {
     register int t;
@@ -375,7 +375,7 @@ void _minmax (int t1, int t2, const double zx[],
 
 /* .......................................................     */
 
-static int _pdton (int pd)
+static int pdton (int pd)
 {
     if (pd == 1) return 1;
     if (pd < 10) return 10;
@@ -384,7 +384,7 @@ static int _pdton (int pd)
 
 /* ..........................................................  */
 
-int _hasconst (const int *list)
+int gretl_hasconst (const int *list)
 /* check if a var list contains a constant (variable with ID
    number 0) */
 {
@@ -398,7 +398,7 @@ int _hasconst (const int *list)
 
 /* ...................................................... */
 
-int _compare_doubles (const void *a, const void *b)
+int gretl_compare_doubles (const void *a, const void *b)
 {
     const double *da = (const double *) a;
     const double *db = (const double *) b;
@@ -408,7 +408,7 @@ int _compare_doubles (const void *a, const void *b)
 
 /* .............................................................  */
 
-double _esl_stddev (int t1, int t2, const double *x)
+double gretl_stddev (int t1, int t2, const double *x)
 /*  returns standard deviation of array x from t1 through t2
     return NADBL if square root argument is invalid
     or there are no observations
@@ -416,14 +416,14 @@ double _esl_stddev (int t1, int t2, const double *x)
 {
     double xx;
 
-    xx = _esl_variance(t1, t2, x);
+    xx = gretl_variance(t1, t2, x);
 
     return (na(xx))? xx : sqrt(xx);
 }
 
 /* .............................................................  */
 
-double _esl_variance (int t1, int t2, const double *x)
+double gretl_variance (int t1, int t2, const double *x)
 {
     int n;
     register int i;
@@ -432,7 +432,7 @@ double _esl_variance (int t1, int t2, const double *x)
     n = t2 - t1 + 1;
     if (n == 0) return NADBL;
 
-    xbar = _esl_mean(t1, t2, x);
+    xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) return NADBL;
 
     sumsq = 0.0;
@@ -450,14 +450,14 @@ double _esl_variance (int t1, int t2, const double *x)
 
 /* .............................................................  */
 
-double _esl_sst (int t1, int t2, const double *x)
+double gretl_sst (int t1, int t2, const double *x)
 {
     register int i;
     double sumsq, xx, xbar;
 
     if (t2 - t1 + 1 == 0) return NADBL;
 
-    xbar = _esl_mean(t1, t2, x);
+    xbar = gretl_mean(t1, t2, x);
     if (na(xbar)) return NADBL;
 
     sumsq = 0.0;
@@ -555,8 +555,8 @@ void gretl_aic_etc (MODEL *pmod)
 		       pmod->ncoeff);
 }
 
-void _criteria (const double ess, int nobs, int ncoeff, 
-		PRN *prn)
+void gretl_criteria (const double ess, int nobs, int ncoeff, 
+		     PRN *prn)
 {
     double criterion[8];
 
@@ -581,8 +581,8 @@ void _criteria (const double ess, int nobs, int ncoeff,
 
 /* ....................................................... */
 
-int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  const double **Z, int *misst)
+int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		 const double **Z, int *misst)
      /* drop first/last observations from sample if missing obs 
 	encountered -- also check for missing vals within the
         remaining sample */
@@ -871,7 +871,7 @@ int is_model_ref_cmd (int ci)
 
 /* .......................................................... */
 
-int _list_dups (const int *list, int ci)
+int list_dups (const int *list, int ci)
 {
     int i, j, start = 2;
 
@@ -1253,8 +1253,8 @@ double *copyvec (const double *src, int n)
 
 /* ........................................................... */
 
-int _forecast (int t1, int t2, int nv, 
-	       const MODEL *pmod, double ***pZ)
+int gretl_forecast (int t1, int t2, int nv, 
+		    const MODEL *pmod, double ***pZ)
 {
     double xx, zz, zr;
     int i, k, maxlag = 0, yno, ARMODEL;
@@ -1328,7 +1328,7 @@ int _forecast (int t1, int t2, int nv,
 
 /* ........................................................... */
 
-int _full_model_list (MODEL *pmod, int **plist)
+int full_model_list (MODEL *pmod, int **plist)
 /* reconstitute full varlist for WLS and AR models */
 {
     int i, pos = 0, len, *mylist = NULL;

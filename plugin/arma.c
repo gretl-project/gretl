@@ -23,7 +23,7 @@
 */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #include "bhhh_max.h"
 
@@ -319,8 +319,8 @@ static void rewrite_arma_model_stats (MODEL *pmod, model_info *arma,
 
     copylist(&pmod->list, list);
 
-    pmod->ybar = _esl_mean(pmod->t1, pmod->t2, y);
-    pmod->sdy = _esl_stddev(pmod->t1, pmod->t2, y);
+    pmod->ybar = gretl_mean(pmod->t1, pmod->t2, y);
+    pmod->sdy = gretl_stddev(pmod->t1, pmod->t2, y);
 
     mean_error = pmod->ess = 0.0;
     for (t=pmod->t1; t<=pmod->t2; t++) {

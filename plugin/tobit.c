@@ -22,8 +22,6 @@
 */
 
 #include "libgretl.h"
-#include "internal.h"
-
 #include "bhhh_max.h"
 
 /* #define DEBUG */

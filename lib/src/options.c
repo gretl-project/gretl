@@ -18,7 +18,7 @@
  */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #define is_model_ci(c) (c == OLS || c == CORC || c == HILU || \
                         c == WLS || c == POOLED || c == HCCM || \
@@ -96,6 +96,7 @@ struct gretl_opt gretl_opts[] = {
     { STORE,    OPT_T, "traditional" },
     { STORE,    OPT_Z, "gzipped" },
     { TOBIT,    OPT_V, "verbose" },
+    { TSLS,     OPT_R, "robust" },    
     { VAR,      OPT_Q, "quiet" },    
     { 0,        0L,    NULL }
 };
@@ -215,7 +216,7 @@ static unsigned long get_short_opts (char *line, int ci, int *err)
 		return 0L;
 	    }
 	    ret |= opt;
-	    _delete(p, 0, 2);
+	    gretl_delete(p, 0, 2);
 	    match = 1;
 	}
 	if (!match) p++;
@@ -269,7 +270,7 @@ static unsigned long get_long_opts (char *line, int ci, int *err)
 	match = valid_long_opt(ci, longopt);
 	if (match > 0) {
 	    ret |= match;
-	    _delete(p, 0, 2 + strlen(longopt));
+	    gretl_delete(p, 0, 2 + strlen(longopt));
 	} else if (is_long_opt(longopt)) {
 	    /* recognized option, but not valid for the command */
 	    sprintf(gretl_errmsg, "Invalid option '--%s'", longopt);

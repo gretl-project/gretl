@@ -20,7 +20,7 @@
 /* subsample.c for gretl */
 
 #include "libgretl.h"
-#include "internal.h"
+#include "gretl_private.h"
 
 #define SUBDEBUG
 
@@ -427,7 +427,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 
     *gretl_errmsg = '\0';
 
-    nf = _count_fields(line);
+    nf = count_fields(line);
 
     if (nf == 3 && pdinfo->n == 0) {
 	/* database special */

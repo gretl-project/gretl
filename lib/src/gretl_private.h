@@ -19,14 +19,14 @@
 
 /* functions shared internally by library translation units */
 
-#ifndef GRETL_INTERNAL_H
-#define GRETL_INTERNAL_H
+#ifndef GRETL_PRIVATE_H
+#define GRETL_PRIVATE_H
 
 int laggenr (int parent, int lag, int opt, double ***pZ, 
 	     DATAINFO *pdinfo);
 
-int _multiply (char *s, int *list, char *sfx, double ***pZ,
-	       DATAINFO *pdinfo);
+int gretl_multiply (char *s, int *list, char *sfx, double ***pZ,
+		    DATAINFO *pdinfo);
 
 void gretl_print_add (const COMPARE *add, const int *addvars, 
 		      const DATAINFO *pdinfo, int aux_code, PRN *prn,
@@ -36,70 +36,68 @@ void gretl_print_omit (const COMPARE *omit, const int *omitvars,
 		       const DATAINFO *pdinfo, PRN *prn,
 		       unsigned long opt);
 
-void _graphyzx (const int *list, const double *zy1, const double *zy2, 
-		const double *zx, int n, const char *yname, 
-		const char *xname, const DATAINFO *pdinfo, 
-		unsigned long oflag, PRN *prn);
+void graphyzx (const int *list, const double *zy1, const double *zy2, 
+	       const double *zx, int n, const char *yname, 
+	       const char *xname, const DATAINFO *pdinfo, 
+	       unsigned long oflag, PRN *prn);
 
-void _printxs (double xx, int n, int ci, PRN *prn);
+void gretl_printxs (double xx, int n, int ci, PRN *prn);
 
-void _bufspace (int n, PRN *prn);
+void bufspace (int n, PRN *prn);
 
-void _print_ar (MODEL *pmod, PRN *prn);
+void gretl_print_ar (MODEL *pmod, PRN *prn);
 
-void _delete (char *str, int indx, int count);
+void gretl_delete (char *str, int indx, int count);
 
-int _isnumber (const char *str);
+int numeric_string (const char *str);
 
-void _esl_trunc (char *str, size_t n);
+void gretl_trunc (char *str, size_t n);
 
-int _count_fields (const char *str);
+int count_fields (const char *str);
 
-void _shiftleft (char *str, size_t move);
+void shift_left (char *str, size_t move);
 
-double _corr (int n, const double *zx, const double *zy);
+double gretl_corr (int n, const double *zx, const double *zy);
 
-double _covar (int n, const double *zx, const double *zy);
+double gretl_covar (int n, const double *zx, const double *zy);
 
-int _iszero (int t1, int t2, const double *x);
+int gretl_iszero (int t1, int t2, const double *x);
 
-int _isconst (int t1, int t2, const double *x);
+int gretl_isconst (int t1, int t2, const double *x);
 
-double _esl_mean (int t1, int t2, const double *x);
+double gretl_mean (int t1, int t2, const double *x);
 
-void _minmax (int t1, int t2, const double zx[], 
+void gretl_minmax (int t1, int t2, const double zx[], 
 	      double *min, double *max);
 
-int _hasconst (const int *list);
+int gretl_hasconst (const int *list);
 
-int _compare_doubles (const void *a, const void *b);
+int gretl_compare_doubles (const void *a, const void *b);
 
-double _esl_stddev (int t1, int t2, const double *x);
+double gretl_stddev (int t1, int t2, const double *x);
 
-double _esl_variance (int t1, int t2, const double *x);
+double gretl_variance (int t1, int t2, const double *x);
 
-double _esl_sst (int t1, int t2, const double *x);
+double gretl_sst (int t1, int t2, const double *x);
 
 void gretl_aic_etc (MODEL *pmod);
 
-void _criteria (double ess, int nobs, int ncoeff, PRN *prn);
+void gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
-int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  const double **Z, int *misst);
+int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
+		 const double **Z, int *misst);
 
-int _list_dups (const int *list, int ci);
+int list_dups (const int *list, int ci);
 
-int _lagvarnum (int iv, int lag, const DATAINFO *pdinfo);
+int gretl_forecast (int t1, int t2, int nv, 
+		    const MODEL *pmod, double ***pZ);
 
-int _forecast (int t1, int t2, int nv, 
-	       const MODEL *pmod, double ***pZ);
+int full_model_list (MODEL *pmod, int **plist);
 
-int _full_model_list (MODEL *pmod, int **plist);
+int z_to_xy (int v1, int v2, double *px, double *py, 
+	     const DATAINFO *pdinfo, double **Z);
 
-int _ztoxy (int v1, int v2, double *px, double *py, 
-	    const DATAINFO *pdinfo, double **Z);
-
-int is_reserved (const char *str);
+int gretl_is_reserved (const char *str);
 
 void gretl_test_init (GRETLTEST *test);
 
@@ -126,4 +124,8 @@ char *copy_subdum (const char *src, int n);
 
 int get_vcv_index (MODEL *pmod, int i, int j, int n);
 
-#endif /* GRETL_INTERNAL_H */
+int omit_from_list (int *list, const int *omitvars, int *newlist,
+		    const DATAINFO *pdinfo, int model_count);
+
+
+#endif /* GRETL_PRIVATE_H */

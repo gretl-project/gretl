@@ -23,4 +23,6 @@
 int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
 		      unsigned long opts);
 
+int qr_tsls_vcv (MODEL *pmod, const double **Z, unsigned long opts);
+
 #endif  /* QR_ESTIMATE_H */

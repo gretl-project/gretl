@@ -102,7 +102,7 @@ int main (void)
        estimates and associated statistics. */
     model = gretl_model_new(datainfo);
     if (model == NULL) noalloc();
-    *model = lsq(list, &Z, datainfo, OLS, OPT_R, 0.0);
+    *model = lsq(list, &Z, datainfo, OLS, OPT_D, 0.0);
 
     /* Handle case where lsq bombed */
     if (model->errcode) {
