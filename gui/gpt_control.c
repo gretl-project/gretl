@@ -1165,6 +1165,7 @@ static GPT_SPEC *plotspec_new (void)
     spec->ptr = NULL;
 
     spec->termtype[0] = 0;
+    spec->t1 = spec->t2 = 0;
 
     return spec;
 }
@@ -1574,6 +1575,59 @@ static void draw_selection_rectangle (png_plot_t *plot,
 		       rx, ry, rw, rh);
 }
 
+#define TOLDIST 0.01
+
+static int
+identify_point (png_plot_t *plot, double x, double y) 
+{
+    double xrange, yrange;
+    double xdiff, ydiff;
+    double dist, mindist;
+    double diag;    
+    int best_match = -1;
+    int t, plot_n;
+    const double *data_x, *data_y;
+
+    if (plot->spec == NULL || plot->spec->t1 == plot->spec->t2) {
+	/* plot has no in-memory data */
+	return -1;
+    }
+
+    plot_n = plot->spec->t2 - plot->spec->t1 + 1;
+
+    xrange = plot->xmax - plot->xmin;
+    yrange = plot->ymax - plot->ymin;
+
+    diag = sqrt(xrange * xrange + yrange * yrange);
+    mindist = diag;
+    
+    data_x = &plot->spec->data[0];
+    data_y = &plot->spec->data[plot_n];
+
+    for (t=0; t<plot_n; t++) { 
+	if (na(data_x[t]) || na(data_y[t])) continue;
+	xdiff = data_x[t] - x;
+	ydiff = data_y[t] - y;
+	dist = sqrt(xdiff * xdiff + ydiff * ydiff);
+	if (dist < mindist) {
+	    mindist = dist;
+	    best_match = t + plot->spec->t1;
+	}
+    }
+
+    if (mindist > TOLDIST * diag) {
+	best_match = -1;
+    } else {
+	fprintf(stderr, "Got a match at obs %d\n", best_match);
+	if (datainfo->markers) {
+	    fprintf(stderr, "Got a match at %s\n", 
+		    datainfo->S[best_match]);
+	}
+    }
+	
+    return best_match;
+}
+
 static gint
 motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 		     png_plot_t *plot)
@@ -1602,6 +1656,11 @@ motion_notify_event (GtkWidget *widget, GdkEventMotion *event,
 	double data_x, data_y;
 
 	get_data_xy(plot, x, y, &data_x, &data_y);
+
+#ifdef notyet
+	identify_point(plot, data_x, data_y);
+#endif
+
 	if (plot->pd == 4 || plot->pd == 12) {
 	    x_to_date(data_x, plot->pd, label);
 	} else
