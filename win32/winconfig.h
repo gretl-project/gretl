@@ -64,6 +64,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Use installed gtkextra? */
 /* #undef HAVE_GTKEXTRA 1 */
 
+/* Use gtksourceview for syntax highlighting */
+#define USE_GTKSOURCEVIEW 1
+
 /* Does unistd.h have getdomainname? */
 #define GETDOMAINNAME 1
 

@@ -1395,8 +1395,8 @@ static GtkWidget *make_main_window (int gui_get_data)
 			   NULL);
 #endif
 
-    main_vbox = gtk_vbox_new(FALSE, 5);
-    gtk_container_set_border_width(GTK_CONTAINER (main_vbox), 10);
+    main_vbox = gtk_vbox_new(FALSE, 4);
+    gtk_container_set_border_width(GTK_CONTAINER (main_vbox), 8);
 
 #ifdef USE_GNOME
     gnome_app_set_contents (GNOME_APP (mdata->w), main_vbox);

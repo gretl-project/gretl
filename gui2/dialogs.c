@@ -1110,7 +1110,7 @@ void copy_format_dialog (windata_t *vwin)
 #ifdef G_OS_WIN32
 
     /* RTF option */
-    button = gtk_radio_button_new_with_label(NULL, _("RTF (MS Word)"));
+    button = gtk_radio_button_new_with_label(NULL, "RTF (MS Word)");
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -1120,7 +1120,7 @@ void copy_format_dialog (windata_t *vwin)
 
     /* LaTeX option */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(NULL, _("LaTeX"));
+    button = gtk_radio_button_new_with_label(group, "LaTeX");
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -1131,7 +1131,7 @@ void copy_format_dialog (windata_t *vwin)
 #else /* not Windows: reverse the first two options */
 
     /* LaTeX option */
-    button = gtk_radio_button_new_with_label(NULL, _("LaTeX"));
+    button = gtk_radio_button_new_with_label(NULL, "LaTeX");
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     g_signal_connect(G_OBJECT(button), "clicked",
@@ -1141,7 +1141,7 @@ void copy_format_dialog (windata_t *vwin)
 
     /* RTF option */
     group = gtk_radio_button_get_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, _("RTF"));
+    button = gtk_radio_button_new_with_label(group, "RTF");
     gtk_box_pack_start (GTK_BOX(internal_vbox), button, TRUE, TRUE, 0);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), FALSE);
     g_signal_connect(G_OBJECT(button), "clicked",

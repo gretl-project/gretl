@@ -55,6 +55,7 @@ mkdir -p windist/gretl/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/es/LC_MESSAGES
 mkdir -p windist/gretl/locale/fr/LC_MESSAGES
 mkdir -p windist/gretl/lib/locale/fr/LC_MESSAGES
+mkdir -p windist/gretl/share/gtksourceview-1.0/language-specs
 
 # put binaries in place
 add_file gretlcli.exe gretl/gretlcli.exe
@@ -81,11 +82,15 @@ cd $THISDIR
 
 # auxiliary dlls
 for f in \
-    libgmp-3.dll libxml.dll readline.dll zlib.dll libpng.dll \
-    libblas.dll libf2c.dll liblapack.dll
+    libgmp-3.dll libxml2.dll readline.dll zlib.dll libpng.dll \
+    libblas.dll libf2c.dll liblapack.dll libgtksourceview.dll
 do
     add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
+
+# gretl lang file for gtksourceview
+add_file ${TOPDIR}/gui2/gretl.lang \
+  gretl/share/gtksourceview-1.0/language-specs/gretl.lang
 
 # help files, license, logo
 add_file ${TOPDIR}/share/gretlcli.hlp gretl/gretlcli_hlp.txt

@@ -1377,8 +1377,8 @@ static void create_text (windata_t *vwin, GtkTextBuffer **buf,
 static void viewer_box_config (windata_t *vwin)
 {
     vwin->vbox = gtk_vbox_new(FALSE, 1);
-    gtk_container_set_border_width (GTK_CONTAINER(vwin->vbox), 5);
-    gtk_box_set_spacing (GTK_BOX(vwin->vbox), 5);
+    gtk_container_set_border_width (GTK_CONTAINER(vwin->vbox), 4);
+    gtk_box_set_spacing (GTK_BOX(vwin->vbox), 4);
 #ifndef G_OS_WIN32
     g_signal_connect_after(G_OBJECT(vwin->dialog), "realize", 
 			   G_CALLBACK(set_wm_icon), 
@@ -2444,6 +2444,7 @@ int prn_to_clipboard (PRN *prn, int copycode)
 void text_copy (gpointer data, guint how, GtkWidget *widget) 
 {
     windata_t *vwin = (windata_t *) data;
+    gchar *msg = NULL;
     PRN *prn;
 
     /* descriptive statistics */
@@ -2461,11 +2462,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* correlation matrix */
-    if (vwin->role == CORR && SPECIAL_COPY(how)) {
+    else if (vwin->role == CORR && SPECIAL_COPY(how)) {
 	CORRMAT *corr = (CORRMAT *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2479,11 +2479,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* display for fitted, actual, resid */
-    if (vwin->role == FCAST && SPECIAL_COPY(how)) {
+    else if (vwin->role == FCAST && SPECIAL_COPY(how)) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2497,11 +2496,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }   
 
     /* forecasts with standard errors */
-    if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
+    else if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
 	FITRESID *fr = (FITRESID *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2515,11 +2513,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }  
 
     /* coefficient confidence intervals */
-    if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
+    else if (vwin->role == COEFFINT && SPECIAL_COPY(how)) {
 	CONFINT *cf = (CONFINT *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2533,11 +2530,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }  
 
     /* coefficient covariance matrix */
-    if (vwin->role == COVAR && SPECIAL_COPY(how)) {
+    else if (vwin->role == COVAR && SPECIAL_COPY(how)) {
 	VCV *vcv = (VCV *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2551,11 +2547,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }      
 
     /* multiple-precision OLS */
-    if (vwin->role == MPOLS && SPECIAL_COPY(how)) {
+    else if (vwin->role == MPOLS && SPECIAL_COPY(how)) {
 	mp_results *mpvals = (mp_results *) vwin->data;
 
 	if (bufopen(&prn)) return;
@@ -2571,11 +2566,10 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* or it's a model window we're copying from? */
-    if (vwin->role == VIEW_MODEL &&
+    else if (vwin->role == VIEW_MODEL &&
 	(how == COPY_RTF || how == COPY_LATEX ||
 	 how == COPY_LATEX_EQUATION)) {
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2601,12 +2595,12 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
-	return;
     }
 
     /* copying plain text from window */
-    if (how == COPY_TEXT || how == COPY_SELECTION) {
-	GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
+    else if (how == COPY_TEXT || how == COPY_SELECTION) {
+	GtkTextBuffer *textbuf = 
+	    gtk_text_view_get_buffer(GTK_TEXT_VIEW(vwin->w));
 	PRN textprn;
 
 	if (gtk_text_buffer_get_selection_bounds(textbuf, NULL, NULL)) {
@@ -2619,6 +2613,8 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    gretl_print_attach_buffer(&textprn, selbuf);
 	    prn_to_clipboard(&textprn, COPY_TEXT);
 	    g_free(selbuf);
+	    infobox(_("Copied selection to clipboard"));
+	    return;
 	} else {
 	    /* no selection: copy everything */
 	    gretl_print_attach_buffer(&textprn,
@@ -2627,6 +2623,12 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	    g_free(textprn.buf);
 	}
     }
+
+    msg = g_strdup_printf(_("Copied contents of window as %s"),
+			  (how == COPY_LATEX)? "LaTeX" :
+			  (how == COPY_RTF)? "RTF" : _("plain text"));
+    infobox(msg);
+    g_free(msg);
 }
 
 /* .................................................................. */

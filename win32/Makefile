@@ -22,7 +22,7 @@ GLIBLIB := -L$(imports) $(shell PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
                           pkg-config --libs glib-2.0)
 ZLIB_LIB = -lz.dll
 CLI_LIBS = -L$(imports) -lreadline.dll
-GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lwsock32 #-lhhctrl
+GUI_LIBS = $(GTKLIBS) -lgtkextra-lite -lgtksourceview -lwsock32 #-lhhctrl
 GRETLLIB = -L$(imports) -lgretl -lintl.dll
 LIBS = -lm $(GRETLLIB) -ladvapi32
 LAPACK_LIBS = -llapack -lblas -lf2c
@@ -168,7 +168,7 @@ topclean:
 clean:
 	rm -f *.o *.d *.def $(CLIPROG) $(GUIPROG) $(CHECKER) dlls/*
 	rm -f plugins/* $(PLUGINS)
-	rm -f dlls/libgtkextra-lite.dll $(imports)/libgtkextra-lite.a $(imports)/libgtkextra-lite.def
+	rm -f dlls/libgtkextra-lite.dll $(imports)/*.a $(imports)/libgtkextra-lite.def
 	rm -f gretl.stamp build.h
 	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output

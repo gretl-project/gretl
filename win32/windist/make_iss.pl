@@ -75,6 +75,9 @@ print "Name: \"{app}\\etc\"\n";
 print "Name: \"{app}\\etc\\gtk-2.0\"\n";
 print "Name: \"{app}\\etc\\pango\"\n";
 
+# gtksourceview shared file
+print "Name: \"{app}\\share\\gtksourceview-1.0\\language-specs\"\n";
+
 print "\n[Files]\n";
 
 while ($line = <STDIN>) {
