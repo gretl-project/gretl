@@ -978,90 +978,20 @@ void set_sample_label (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
-#ifdef USE_WINFONT
-
-#define NAME_BUFFER_LEN 32
-#undef FONT_DEBUG
-
-static int get_windows_font (char *fontspec)
-{
-    HDC h_dc;
-    HGDIOBJ h_font;
-    TEXTMETRIC tm;
-    char name[NAME_BUFFER_LEN];
-#ifdef FONT_DEBUG
-    FILE *fp;
-    char fname[MAXLEN];
-
-    build_path(paths.userdir, "debug.txt", fname, NULL);
-    fp = fopen(fname, "w");
-    if (fp == NULL) return 1;
-#endif
-
-    h_dc = CreateDC("DISPLAY", NULL, NULL, NULL);
-    if (h_dc == NULL) return 1;
-
-    h_font = GetStockObject(DEFAULT_GUI_FONT); 
-    if (h_font == NULL || !SelectObject(h_dc, h_font)) {
-	DeleteDC(h_dc);
-	return 1;
-    }
-
-#ifdef FONT_DEBUG
-    fprintf(fp, "h_dc is OK, h_font is OK, SelectObject worked\n");
-#endif    
-
-    if (GetTextFace(h_dc, NAME_BUFFER_LEN, name) <= 0) {
-	DeleteDC(h_dc);
-	return 1;
-    }
-
-#ifdef FONT_DEBUG
-    fprintf(fp, "GetTextFace gave '%s'\n", name);
-#endif    
-
-    if (!GetTextMetrics(h_dc, &tm)) {
-	DeleteDC(h_dc);
-	return 1;
-    } else {
-	HDC screen = GetDC(0);
-	double scaleY = GetDeviceCaps(screen, LOGPIXELSY) / 96.0;
-	int pix_height = (int) (tm.tmHeight * scaleY);
-
-	ReleaseDC(0, screen);
-	DeleteDC(h_dc);
-
-	/* sprintf(fontspec, "-*-%s-*-*-*-*-%i-*-*-*-*-*-*-*", 
-	   name, pix_height); */
-	sprintf(fontspec, "-*-%s-medium-r-normal-*-%d-*-*-*-*-*-*-*",
-		name, pix_height);
-#ifdef FONT_DEBUG
-	fprintf(fp, "scaleY=%g, tm.tmHeight=%ld, pix_height=%d\n"
-		"fontspec: %s\n", scaleY, tm.tmHeight, pix_height,
-		fontspec);
-	fclose(fp);
-#endif    
-	return 0;
-    }
-}
-#endif /* USE_WINFONT */
-
-/* ......................................................... */
-
-static float get_gui_scale (void)
+static float get_gui_scale (GtkWidget *w)
 {
     GtkStyle *style = NULL;
     int fsize = 0;
     float scale = 1.0;
 
-    style = gtk_widget_get_style(mdata->w);
+    style = gtk_rc_get_style(w);
 
     if (style != NULL && style->font != NULL) {
-	fsize = gdk_char_height(style->font, 'x');
+	fsize = gdk_char_width(style->font, 'X');
     }
 
-    if (fsize > 0) scale = fsize / 10.0;
-
+    if (fsize > 0) scale = fsize / 9.0;
+    
     return scale;
 }
 
@@ -1080,10 +1010,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     int listbox_label_width = 400;
     int listbox_data_width = 500;
     int listbox_file_height = 300;
-#ifdef USE_WINFONT
-    GtkStyle *style;
-    char winfont[128];
-#endif
 
     mdata->data = NULL;  
     mdata->listbox = NULL;
@@ -1097,12 +1023,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     mdata->w = gnome_app_new("gretl", _("Econometrics program"));
 #else
     mdata->w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-#endif
-
-#ifdef USE_WINFONT
-    style = gtk_widget_get_style(mdata->w);
-    if (get_windows_font(winfont) == 0) style->font = gdk_font_load(winfont);
-    if (style->font) gtk_widget_set_style(mdata->w, style);
 #endif
 
     gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
@@ -1129,12 +1049,16 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_box_pack_start(GTK_BOX (main_vbox), mdata->mbar, FALSE, TRUE, 0);
     gtk_widget_show(mdata->mbar);
 
-    mdata->active_var = 1; 
-
+    mdata->active_var = 1;
+    
+    gui_scale = get_gui_scale(mdata->w); 
+    listbox_data_width *= gui_scale;
+    listbox_file_height *= gui_scale;
+     
     dframe = gtk_frame_new(_(" No datafile loaded ")); 
     gtk_widget_set_usize(dframe, listbox_data_width, listbox_file_height);
     gtk_widget_show(dframe);
-
+    
     box = gtk_vbox_new (FALSE, 0);
     gtk_container_border_width (GTK_CONTAINER (box), 5);
     gtk_container_add (GTK_CONTAINER (dframe), box);
@@ -1149,11 +1073,11 @@ static GtkWidget *make_main_window (int gui_get_data)
     gtk_clist_set_selection_mode (GTK_CLIST (mdata->listbox), 
 				  GTK_SELECTION_BROWSE);
     gtk_clist_set_column_width (GTK_CLIST (mdata->listbox), 
-				0, listbox_id_width);
+				0, listbox_id_width * gui_scale);
     gtk_clist_set_column_justification (GTK_CLIST (mdata->listbox), 0, 
 					GTK_JUSTIFY_LEFT);
-    setup_column(mdata->listbox, 1, listbox_varname_width);
-    setup_column(mdata->listbox, 2, listbox_label_width);
+    setup_column(mdata->listbox, 1, listbox_varname_width * gui_scale);
+    setup_column(mdata->listbox, 2, listbox_label_width * gui_scale);
 
     gtk_drag_dest_set (mdata->listbox,
 		       GTK_DEST_DEFAULT_ALL,
@@ -1189,7 +1113,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     load_fixed_font();
 
     gtk_widget_show_all(mdata->w); 
-
+    
     return dframe;
 }
 
