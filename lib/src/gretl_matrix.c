@@ -714,14 +714,24 @@ static void transcribe_eigenvectors(double *vi, gretl_matrix *ev, int n)
     ev->val = vi;
 }
 
-double *gretl_general_matrix_eigenvals_plus (gretl_matrix *m,
-					     gretl_matrix *ev) 
+/* below: calculate eigenvalues of m; also calculate eigenvectors and
+   return as columns of ev, if ev is non-NULL.
+*/
+
+double *gretl_general_matrix_eigenvals (gretl_matrix *m, gretl_matrix *ev) 
 {
     integer n = m->rows;
     integer info;
     integer lwork;
     integer one = 1;
+    integer nvr = n;
     char jvl = 'N', jvr = 'V';
+    int vecs = (ev != NULL);
+
+    if (!vecs) {
+	jvr = 'N';
+	nvr = 1;
+    }
 
     double *work;
     double *wr = NULL, *wi = NULL, *vr = NULL;
@@ -740,23 +750,26 @@ double *gretl_general_matrix_eigenvals_plus (gretl_matrix *m,
 	return NULL;
     }
 
-    vr = malloc(n * n * sizeof *vr);
-    if (vr == NULL) {
-	free(work);
-	free(wr);
-	free(wi);
-	return NULL;
+    if (vecs) {
+	vr = malloc(n * n * sizeof *vr);
+	if (vr == NULL) {
+	    free(work);
+	    free(wr);
+	    free(wi);
+	    return NULL;
+	}
     }	
 
     lwork = -1; /* find optimal workspace size */
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, NULL, 
-	   &one, vr, &n, work, &lwork, &info);
+	   &one, vr, &nvr, work, &lwork, &info);
 
     if (info != 0 || work[0] <= 0.0) {
 	fputs(wspace_fail, stderr);
 	free(work);
 	free(wr);
 	free(wi);
+	free(vr);
 	return NULL;
     }	
 
@@ -766,81 +779,19 @@ double *gretl_general_matrix_eigenvals_plus (gretl_matrix *m,
     if (work == NULL) {
 	free(wr);
 	free(wi);
+	free(vr);
 	return NULL;
     } 
 
     dgeev_(&jvl, &jvr, &n, m->val, &n, wr, wi, NULL, 
-	   &one, vr, &n, work, &lwork, &info);
+	   &one, vr, &nvr, work, &lwork, &info);
 
     if (info != 0) {
 	free(wr);
 	wr = NULL;
 	free(vr);
-    } else {
+    } else if (vecs) {
 	transcribe_eigenvectors(vr, ev, n);
-    }
-
-    free(wi);
-    free(work);
-
-    return wr;
-}
-
-double *gretl_general_matrix_eigenvals (gretl_matrix *m) 
-{
-    integer n = m->rows;
-    integer info, sdim;
-    integer lwork;
-    integer one = 1;
-
-    double *work;
-    double *wr = NULL, *wi = NULL;
-
-    char job = 'N', sort = 'N';
-
-    work = malloc(sizeof *work);
-    if (work == NULL) {
-	return NULL;
-    }
-
-    wr = malloc(n * sizeof *wr);
-    wi = malloc(n * sizeof *wi);
-    if (wr == NULL || wi == NULL) {
-	free(work);
-	free(wr);
-	free(wi);
-	return NULL;
-    }
-
-    lwork = -1; /* find optimal workspace size */
-    dgees_(&job, &sort, NULL, &n, 
-	   m->val, &n, &sdim, wr, wi, NULL, &one, 
-	   work, &lwork, NULL, &info);
-
-    if (info != 0 || work[0] <= 0.0) {
-	fputs(wspace_fail, stderr);
-	free(work);
-	free(wr);
-	free(wi);
-	return NULL;
-    }	
-
-    lwork = (integer) work[0];
-
-    work = realloc(work, lwork * sizeof *work);
-    if (work == NULL) {
-	free(wr);
-	free(wi);
-	return NULL;
-    }    
-
-    dgees_(&job, &sort, NULL, &n, 
-	   m->val, &n, &sdim, wr, wi, NULL, &one, 
-	   work, &lwork, NULL, &info);
-
-    if (info != 0) {
-	free(wr);
-	wr = NULL;
     }
 
     free(wi);
