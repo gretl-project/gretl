@@ -21,11 +21,43 @@
    the native MS file selector under MS Windows */
 
 #include "gretl.h"
-#include "fileselect.h"
 #include "boxplots.h"
 #include "gpt_control.h"
 #include "session.h"
 #include "textbuf.h"
+
+#define IS_DAT_ACTION(i) (i == SAVE_DATA || \
+                          i == SAVE_DATA_AS || \
+                          i == SAVE_GZDATA || \
+                          i == SAVE_BIN1 || \
+                          i == SAVE_BIN2 || \
+                          i == OPEN_DATA)
+
+#define OPEN_DATA_ACTION(i)  (i == OPEN_DATA || \
+                              i == OPEN_CSV || \
+                              i == OPEN_ASCII || \
+	                      i == OPEN_BOX || \
+                              i == OPEN_GNUMERIC || \
+	                      i == OPEN_EXCEL || \
+                              i == OPEN_DES) 
+
+#define APPEND_DATA_ACTION(i) (i == APPEND_CSV || \
+                               i == APPEND_GNUMERIC || \
+                               i == APPEND_EXCEL || \
+                               i == APPEND_ASCII)
+
+#define SAVE_TEX_ACTION(i) (i == SAVE_TEX_TAB || \
+                            i == SAVE_TEX_EQ || \
+	                    i == SAVE_TEX_TAB_FRAG || \
+                            i == SAVE_TEX_EQ_FRAG)
+
+#define SAVE_GRAPH_ACTION(i) (i == SAVE_GNUPLOT || \
+                              i == SAVE_THIS_GRAPH || \
+                              i == SAVE_LAST_GRAPH || \
+                              i == SAVE_BOXPLOT_EPS || \
+                              i == SAVE_BOXPLOT_PS || \
+                              i == SAVE_BOXPLOT_XPM)
+
 
 extern int olddat; /* settings.c */
 
@@ -196,9 +228,15 @@ static void script_window_update (windata_t *vwin, const char *fname)
     g_free(title);
 
     /* make the window editable */
+#ifndef OLD_GTK
     if (!gtk_text_view_get_editable(GTK_TEXT_VIEW(vwin->w))) {
 	file_view_set_editable(vwin);
     }
+#else
+    if (vwin->role == VIEW_SCRIPT) {
+	file_view_set_editable(vwin);
+    } 
+#endif
 }
 
 /* ........................................................... */
@@ -208,12 +246,16 @@ static void save_editable_content (int action, const char *fname,
 {
     FILE *fp;
     gchar *buf;
-#ifdef ENABLE_NLS
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
     gsize bytes;
     gchar *trbuf;
 #endif
 
+#ifndef OLD_GTK
     buf = textview_get_text(GTK_TEXT_VIEW(vwin->w));
+#else
+    buf = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1);
+#endif
 
     if (buf == NULL) {
 	errbox("Couldn't retrieve buffer");
@@ -226,7 +268,7 @@ static void save_editable_content (int action, const char *fname,
 	return;
     }
 
-#ifdef ENABLE_NLS
+#if defined(ENABLE_NLS) && !defined(OLD_GTK)
     trbuf = g_locale_from_utf8(buf, -1, NULL, &bytes, NULL);
     fprintf(fp, "%s", trbuf);
     g_free(trbuf);
@@ -614,17 +656,31 @@ void file_selector (const char *msg, int action, gpointer data)
 
 static void filesel_callback (GtkWidget *w, gpointer data) 
 {
+# ifndef OLD_GTK
     GtkWidget *fs = GTK_WIDGET(data);
     gint action = GPOINTER_TO_INT(g_object_get_data
 				  (G_OBJECT(data), "action"));
+# else
+    GtkIconFileSel *fs = GTK_ICON_FILESEL(data);
+    gint action = GPOINTER_TO_INT(gtk_object_get_data
+				  (GTK_OBJECT(data), "action"));
+    char *test;
+# endif
     char fname[MAXLEN];
     const gchar *path;
     FILE *fp = NULL;
     gpointer extdata = NULL;
 
+# ifndef OLD_GTK
     path = gtk_file_selection_get_filename(GTK_FILE_SELECTION(fs));
     if (path == NULL || *path == '\0' || isdir(path)) return;
     strcpy(fname, path);
+# else
+    test = gtk_entry_get_text(GTK_ENTRY(fs->file_entry));
+    if (test == NULL || *test == '\0') return;    
+    path = gtk_file_list_get_path(GTK_FILE_LIST(fs->file_list));
+    sprintf(fname, "%s%s", path, test);
+# endif
 
     /* do some elementary checking */
     if (action < END_OPEN) {
@@ -691,19 +747,19 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	else if (err == 1) errbox(_("gnuplot command failed"));
 	else if (err == 2) infobox(_("There were missing observations"));
     }
-#ifdef GNUPLOT_PNG
+# ifdef GNUPLOT_PNG
     else if (action == SAVE_THIS_GRAPH) {
 	GPT_SPEC *plot = g_object_get_data(G_OBJECT(fs), "graph");
 
 	save_this_graph(plot, fname);
     }
-#else
+# else
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = g_object_get_data(G_OBJECT(fs), "graph");
 	
 	do_save_graph(fname, savestr);
     } 
-#endif
+# endif
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
@@ -755,7 +811,7 @@ static void extra_get_filter (int action, gpointer data, char *suffix)
     }
 }
 
-/* ........................................................... */
+# ifndef OLD_GTK
 
 #include <glob.h> /* POSIX */
 
@@ -869,6 +925,96 @@ void file_selector (const char *msg, int action, gpointer data)
     gtk_window_set_modal (GTK_WINDOW(filesel), TRUE);
     gtk_main(); 
 }
+
+# else /* gtk version diffs */
+
+void file_selector (const char *msg, int action, gpointer data) 
+{
+    GtkWidget *filesel;
+    int gotdir = 0;
+    char suffix[8], startdir[MAXLEN];
+
+    set_startdir(startdir);
+
+    filesel = gtk_icon_file_selection_new(msg);
+
+    if (strstr(startdir, "/.")) {
+	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), TRUE);
+    } else {
+	gtk_icon_file_selection_show_hidden(GTK_ICON_FILESEL(filesel), FALSE);
+    }
+
+    gtk_object_set_data(GTK_OBJECT(filesel), "action", GINT_TO_POINTER(action));
+
+    extra_get_filter(action, data, suffix);
+    gtk_icon_file_selection_set_filter(GTK_ICON_FILESEL(filesel), suffix);
+
+    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)->ok_button),
+		       "clicked", 
+		       GTK_SIGNAL_FUNC(filesel_callback), filesel);
+
+    if (action > END_OPEN) {
+	/* a file save action */
+	gtk_object_set_data(GTK_OBJECT(filesel), "text", data);
+    }
+
+    /* special cases */
+
+    if (action == SAVE_GNUPLOT || action == SAVE_THIS_GRAPH  
+	|| action == SAVE_LAST_GRAPH ||
+	action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS ||
+	action == SAVE_BOXPLOT_XPM) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
+
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ ||
+	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) 
+	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
+
+    else if ((action == SAVE_DATA || action == SAVE_GZDATA) 
+	     && paths.datfile[0] && dat_ext(paths.datfile, 0)) {
+	char *fname = paths.datfile + slashpos(paths.datfile) + 1;
+	char startd[MAXLEN];
+
+	gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			   fname);
+	if (get_base(startd, paths.datfile, SLASH) == 1) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gotdir = 1;
+	}
+    }
+
+    else if (action == SET_PATH) {
+	char *strvar = (char *) data;
+	char startd[MAXLEN];
+
+	if (get_base(startd, strvar, SLASH) == 1) {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startd);
+	    gtk_entry_set_text(GTK_ENTRY(GTK_ICON_FILESEL(filesel)->file_entry),
+			       strvar + slashpos(strvar) + 1);
+	} else {
+	    gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), 
+					     "/usr/bin/");
+	}
+	gotdir = 1;
+    }
+
+    if (!gotdir) {
+	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
+    }
+
+    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
+                       gtk_main_quit, NULL);
+    gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
+					 (filesel)->cancel_button),
+			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
+			      GTK_OBJECT (filesel));
+
+    gtk_widget_show(filesel);
+    gtk_window_set_modal(GTK_WINDOW(filesel), TRUE);
+    gtk_main(); 
+}
+
+# endif /* old gtk */
 
 #endif /* end of non-MS Windows code */
 

@@ -1661,9 +1661,13 @@ static void clear_files_list (int filetype, char **filep)
     if (pindex == -1) return;
 
     for (i=0; i<MAXRECENT; i++) {
+#ifndef OLD_GTK
 	sprintf(itempath, "%s/%d. %s", fpath[pindex],
 		i+1, endbit(tmpname, filep[i], 0)); 
-	/* FIXME? gtk-1.2 had -1 above here */
+#else
+	sprintf(itempath, "%s/%d. %s", fpath[pindex],
+		i+1, endbit(tmpname, filep[i], -1)); 
+#endif
 	w = gtk_item_factory_get_widget(mdata->ifac, itempath);
 	if (w != NULL) {
 	    gtk_item_factory_delete_item(mdata->ifac, itempath);

@@ -23,58 +23,6 @@
 #include "gretl.h"
 #include "selector.h"
 
-void augment_copy_menu (windata_t *vwin)
-{
-    GtkItemFactoryEntry item;
-    const char *itempaths[] = {
-	N_("/Edit/Copy _all"),
-	N_("/Edit/Copy all/as plain _text"),
-	N_("/Edit/Copy all/as _LaTeX"),
-	N_("/Edit/Copy all/as _RTF")
-    };
-
-    item.path = NULL;
-
-    if (gtk_item_factory_get_item(vwin->ifac, "/Edit/Copy all")) {
-	gtk_item_factory_delete_item(vwin->ifac, "/Edit/Copy all");
-    }
-
-    item.path = mymalloc(64);
-    if (item.path == NULL) return;
-
-    /* menu branch */
-    sprintf(item.path, itempaths[0]);
-    item.callback = NULL;
-    item.callback_action = 0;
-    item.item_type = "<Branch>";
-    item.accelerator = NULL;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-
-    /* common for menu items */
-    item.item_type = NULL;    
-    item.accelerator = NULL;
-    
-    /* plain text option */
-    sprintf(item.path, itempaths[1]);
-    item.callback = text_copy;
-    item.callback_action = COPY_TEXT;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);    
-
-    /* LaTeX option */
-    sprintf(item.path, itempaths[2]);
-    item.callback = text_copy;
-    item.callback_action = COPY_LATEX;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
-
-    /* RTF option */
-    sprintf(item.path, itempaths[3]);
-    item.callback = text_copy;
-    item.callback_action = COPY_RTF;
-    gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
-
-    free(item.path);
-} 
-
 #if defined(USE_GNOME)
 
 #include <libgnomeprint/gnome-print.h>

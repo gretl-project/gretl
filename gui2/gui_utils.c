@@ -81,7 +81,7 @@ static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
-static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
 static void model_copy_callback (gpointer p, guint u, GtkWidget *w);
@@ -197,12 +197,9 @@ static GtkItemFactoryEntry model_items[] = {
     { N_("/File/_Print..."), NULL, window_print, 0, NULL },
 # endif
     { N_("/File/Close"), NULL, close_model, 0, NULL },
+
     { N_("/_Edit"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
-    { N_("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
-    { N_("/Edit/Copy all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
-    { N_("/Edit/Copy all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
-    { N_("/Edit/Copy all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+    { N_("/Edit/_Copy"), "", model_copy_callback, 0, NULL },
     { N_("/_Tests"), NULL, NULL, 0, "<Branch>" },    
     { N_("/Tests/omit variables"), NULL, selector_callback, OMIT, NULL },
     { N_("/Tests/add variables"), NULL, selector_callback, ADD, NULL },
@@ -2240,22 +2237,6 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
 
 /* ........................................................... */
 
-#ifdef OLD_GTK
-
-static void model_rtf_copy_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Edit/Copy all/as RTF", s);
-}
-
-static void model_latex_copy_state (GtkItemFactory *ifac, gboolean s)
-{
-    flip(ifac, "/Edit/Copy all/as LaTeX", s);
-}
-
-#endif
-
-/* ........................................................... */
-
 static void model_equation_copy_state (GtkItemFactory *ifac, gboolean s)
 {
     flip(ifac, "/LaTeX/View/Equation", s);
@@ -2361,22 +2342,30 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
 
 /* ........................................................... */
 
-#ifndef OLD_GTK /* FIXME differences here */
-
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[])
 {
+#ifdef OLD_GTK
+    GtkAccelGroup *accel = gtk_accel_group_new();
+#endif
     gint n_items = 0;
 
     while (items[n_items].path != NULL) n_items++;
 
-    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				      NULL);
+#ifdef OLD_GTK
+    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", accel);
+#else
+    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
+#endif
+
 # ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
 # endif
     gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
     vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
+#ifdef OLD_GTK
+    gtk_accel_group_attach(accel, GTK_OBJECT (window));
+#endif
 
     if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
 	MODEL *pmod = (MODEL *) vwin->data;
@@ -2414,75 +2403,6 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	}	
     }
 }
-
-#else /* gtk versions */
-
-static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
-				GtkItemFactoryEntry items[])
-{
-    GtkAccelGroup *accel;
-    gint n_items = 0;
-
-    while (items[n_items].path != NULL) n_items++;
-
-    accel = gtk_accel_group_new();
-    vwin->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				      accel);
-# ifdef ENABLE_NLS
-    gtk_item_factory_set_translate_func(vwin->ifac, menu_translate, NULL, NULL);
-# endif
-    gtk_item_factory_create_items(vwin->ifac, n_items, items, vwin);
-    vwin->mbar = gtk_item_factory_get_widget(vwin->ifac, "<main>");
-    gtk_accel_group_attach(accel, GTK_OBJECT (window));
-
-    if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR || vwin->role == FCASTERR
-	|| vwin->role == FCAST || vwin->role == COEFFINT
-	|| vwin->role == COVAR) {
-	augment_copy_menu(vwin);
-	return;
-    }
-
-    if (vwin->role == VIEW_MODEL && vwin->data != NULL) { 
-	MODEL *pmod = (MODEL *) vwin->data;
-
-	model_rtf_copy_state(vwin->ifac, !pmod->errcode);
-	model_latex_copy_state(vwin->ifac, !pmod->errcode);
-	latex_menu_state(vwin->ifac, !pmod->errcode);
-
-	model_equation_copy_state(vwin->ifac, 
-				  !pmod->errcode && pmod->ci != NLS);
-
-	model_panel_menu_state(vwin->ifac, pmod->ci == POOLED);
-
-	ols_menu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
-
-	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
-	    model_menu_state(vwin->ifac, FALSE);
-	    model_ml_menu_state(vwin->ifac, TRUE);
-	} else {
-	    model_ml_menu_state(vwin->ifac, FALSE);
-	}
-
-	if (pmod->name) model_save_state(vwin->ifac, FALSE);
-
-	if (pmod->ci == LAD) lad_menu_mod(vwin->ifac);
-	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
-
-	if (dataset_is_panel(datainfo)) {
-	    model_arch_menu_state(vwin->ifac, FALSE);
-	}
-    } else if (vwin->role == VAR && vwin->data != NULL) {
-	GRETL_VAR *var = (GRETL_VAR *) vwin->data;
-	const char *name = gretl_var_get_name(var);
-
-	if (name != NULL && *name != '\0') {
-	    model_save_state(vwin->ifac, FALSE);
-	}
-    }
-}
-
-#endif /* OLD_GTK */
 
 /* .................................................................. */
 
@@ -2726,7 +2646,7 @@ static void add_var_menu_items (windata_t *vwin)
 
 #define ALLOW_MODEL_DATASETS
 
-static void check_model_menu (GtkWidget *w, GdkEventButton *eb, 
+static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data)
 {
     windata_t *mwin = (windata_t *) data;
@@ -2743,14 +2663,14 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Graphs", FALSE);
 	flip(mwin->ifac, "/Model data", FALSE);
 	flip(mwin->ifac, "/LaTeX", FALSE);
-	return;
+	return FALSE;
     }
 
     if (quiet_sample_check(pmod)) ok = 0;
 
     s = GTK_WIDGET_IS_SENSITIVE
 	(gtk_item_factory_get_item(mwin->ifac, "/Tests"));
-    if ((s && ok) || (!s && !ok)) return;
+    if ((s && ok) || (!s && !ok)) return FALSE;
     s = !s;
 
 #ifdef ALLOW_MODEL_DATASETS
@@ -2766,7 +2686,7 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 	flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
 	flip(mwin->ifac, "/Model data/Define new variable...", s);
 	infobox(get_gretl_errmsg());
-	return;
+	return FALSE;
     }
 #endif
 
@@ -2784,7 +2704,9 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
 
     if (!ok) {
 	infobox(get_gretl_errmsg());
-    }    
+    } 
+
+    return FALSE;
 }
 
 /* ........................................................... */
@@ -3082,7 +3004,7 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	} 
     }
 
-    /* copying plain text from window FIXME for old gtk */
+    /* copying plain text from window */
 #ifndef OLD_GTK
     else if (how == COPY_TEXT || how == COPY_SELECTION) {
 	GtkTextBuffer *textbuf = 
