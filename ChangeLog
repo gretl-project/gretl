@@ -19,6 +19,8 @@ version 1.3.3
   consistent estimates of the standard errors
 - Fix: gui menu items for test of equality of means, with equal
   or unequal variances: these were hooked up in reverse
+- corc, hilu and pwe AR(1) commands: make these available in
+  loop mode
 
 01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
