@@ -51,7 +51,6 @@ struct gretl_option gretl_opts[] = {
     { ADF,      OPT_C, "c" }, 
     { ADF,      OPT_R, "tt" },     
     { ADF,      OPT_T, "t" }, 
-    { ADF,      OPT_V, "show-all" }, 
     { ARMA,     OPT_N, "native" },
     { ARMA,     OPT_V, "verbose" },
     { ARMA,     OPT_X, "x-12-arima" },

@@ -111,12 +111,11 @@
 	  <effect>test with constant and trend</effect>
 	  <flag>--tt</flag>
 	  <effect>test with constant and quadratic trend</effect>
-	  <flag>--show-all</flag>
-	  <effect>run all test variants</effect>
 	</option>
       </options>
       <examples>
-        <example>adf 2 x1</example>
+	<example>adf 0 y</example>
+        <example>adf 2 y --nc --c --t</example>
       </examples>
     </usage>
 
@@ -131,10 +130,10 @@
 	  variable has a unit root.</para>
 
       <para>By default, three variants of the test are shown: one
-	  based on a regression containing a constant, one using
-	  a constant and linear trend, and one using a constant and a
-	  quadratic trend.  You can use the option flags to control the
-	  variants that are presented.
+	  based on a regression containing a constant, one using a
+	  constant and linear trend, and one using a constant and a
+	  quadratic trend.  You can control the variants that are
+	  presented by specifying one or more of the option flags.
       </para>
 
       <para>In all cases the dependent variable is the first
@@ -143,9 +142,9 @@
 	<mathvar>y</mathvar>.  The model is constructed so that the
 	coefficient on lagged <mathvar>y</mathvar> equals 1 minus the
 	root in question.  For example, the model with a constant may
-	be written as <equation
-	  status="display" tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
-	  ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)" graphic="adf1"/>
+	be written as <equation status="display"
+	tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
+	ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)" graphic="adf1"/>
       </para>
 
       <para>If the lag order, <mathvar>p</mathvar>, is greater than 0,

@@ -1493,12 +1493,9 @@ int coint (int order, const LIST list, double ***pZ,
 	if (list[i] == 0) {
 	    continue;
 	}
-	if (i > 1) {
-	    pputc(prn, '\n');
-	}
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		i, pdinfo->varname[list[i]]);
-	real_adf_test(list[i], order, 1, pZ, pdinfo, OPT_V, -1, prn);
+	real_adf_test(list[i], order, 1, pZ, pdinfo, 0L, -1, prn);
     }
 
     /* step 2: carry out the cointegrating regression */
@@ -1519,7 +1516,6 @@ int coint (int order, const LIST list, double ***pZ,
 	}
     }
 
-    pputc(prn, '\n');
     pprintf(prn, _("Step %d: cointegrating regression\n"), l0 + 1);
     
     cmod = lsq(cointlist, pZ, pdinfo, OLS, OPT_NONE, 0.0); 
@@ -1649,8 +1645,8 @@ static int real_adf_test (int varno, int order, int niv,
     int *list;
     char pvstr[48];
     double DFt, pv;
-    int i, imin = 1, imax = 3;
-    int itv;
+    char mask[4] = {0};
+    int i, itv;
 
     list = adf_prepare_vars(order, varno, pZ, pdinfo);
     if (list == NULL) {
@@ -1659,30 +1655,34 @@ static int real_adf_test (int varno, int order, int niv,
 
     gretl_model_init(&dfmod);
 
-    if (opt & OPT_V) {
-	/* verbose: show all */
-	imin = 0;
-	imax = 4;
-    } else if (opt & OPT_N) {
-	/* no constant */
-	imin = 0;
-	imax = 1;
-    } else if (opt & OPT_C) {
-	/* constant only */
-	imin = 1;
-	imax = 2;
-    } else if (opt & OPT_T) {
-	/* trend only */
-	imin = 2;
-	imax = 3;
-    } else if (opt & OPT_R) {
-	/* quadratic trend only */
-	imin = 3;
-	imax = 4;
+    if (opt == 0L) {
+	/* default display */
+	mask[1] = mask[2] = mask[3] = 1;
+    } else {
+	if (opt & OPT_N) {
+	    /* without constant */
+	    mask[0] = 1;
+	}
+	if (opt & OPT_C) {
+	    /* constant */
+	    mask[1] = 1;
+	}
+	if (opt & OPT_T) {
+	    /* trend */
+	    mask[2] = 1;
+	}
+	if (opt & OPT_R) {
+	    /* quadratic trend */
+	    mask[3] = 1;
+	}
     }
 
-    for (i=imin; i<imax; i++) {
+    for (i=0; i<4; i++) {
 	int dfnum = (i > 0);
+
+	if (mask[i] == 0) {
+	    continue;
+	}
 
 	list[0] = 2 + order + i;
 
@@ -1748,8 +1748,8 @@ static int real_adf_test (int varno, int order, int niv,
 
 	pprintf(prn, "   %s\n", _(teststrs[i]));
 	if (cointcode == 0) {
-	pprintf(prn, "   %s: %s\n", _("model"), 
-		(order > 0)? aug_models[i] : models[i]);
+	    pprintf(prn, "   %s: %s\n", _("model"), 
+		    (order > 0)? aug_models[i] : models[i]);
 	}
 	pprintf(prn, "   %s: %g\n"
 		"   %s: t = %g\n"
@@ -1761,7 +1761,9 @@ static int real_adf_test (int varno, int order, int niv,
 	clear_model(&dfmod);
     }
 
-    pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
+    if (cointcode >= 0) {
+	pputs(prn, _("P-values based on MacKinnon (JAE, 1996)\n"));
+    }
 
     free(list);
     dataset_drop_vars(pdinfo->v - orig_nvars, pZ, pdinfo);
