@@ -4,6 +4,7 @@ version 1.2.8
 - fix for exporting time-series data to R version 1.9
 - add option to export data to PcGive .dat format (thanks to
   Michal Kurcewicz)
+- enable TRAMO analysis of annual time-series data
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)
