@@ -3078,35 +3078,37 @@ static int get_latex_path (char *latex_path)
     return (ret == 0);
 }
 
-int winfork (const char *cmdline)
+int winfork (const char *cmdline, const char *dir, int wshow)
 {
     int child;
-    STARTUPINFO startup;
-    
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi; 
 
-    GetStartupInfo(&startup);
-    startup.dwFlags = STARTF_USESHOWWINDOW;
-    startup.wShowWindow = SW_SHOWMINIMIZED;
+    ZeroMemory(&si, sizeof(si));
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = wshow;
+
+    ZeroMemory(&pi, sizeof(pi));    
 
     /* zero return means failure */
     child = CreateProcess(NULL, cmdline, 
 			  NULL,NULL, FALSE,
 			  CREATE_NEW_CONSOLE | HIGH_PRIORITY_CLASS,
-			  NULL, lpCurrentDirectory,
-			  &startup, NULL);
+			  NULL, dir,
+			  &si, &pi);
 
-    if (!child) return 1;
-    else return 0;
+    if (!child) {
+	win_show_error();
+	return 1;
+    }
+
+    WaitForSingleObject(pi.hProcess, INFINITE);    
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    return 0;
 }
-
-/* just in case
-typedef struct _PROCESS_INFORMATION { 
-    HANDLE hProcess; 
-    HANDLE hThread; 
-    DWORD dwProcessId; 
-    DWORD dwThreadId; 
-} PROCESS_INFORMATION; 
-*/
 
 #endif
 
@@ -3143,19 +3145,14 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	static char latex_path[MAXLEN];
 	char *texshort = strrchr(texbase, SLASH) + 1;
 
-	if (*latex_path == 0) {
-	    int err = get_latex_path(latex_path);
-	    
-	    if (err) {
-		win_show_error();
-		return;
-	    }
+	if (*latex_path == 0 && get_latex_path(latex_path)) {
+	    win_show_error();
+	    return;
 	}
 
-	SetCurrentDirectory(paths.userdir);
 	sprintf(tmp, "\"%s\" %s", latex_path, texshort);
-	if (WinExec(tmp, SW_SHOWMINIMIZED) < 32) {
-	    win_show_error();
+	if (winfork(tmp, paths.userdir, SW_SHOWMINIMIZED)) {
+	    return;
 	} else {
 	    sprintf(tmp, "\"%s\" %s.dvi", viewdvi, texbase);
 	    if (WinExec(tmp, SW_SHOWNORMAL) < 32)
