@@ -511,10 +511,12 @@ void set_rcfile (void)
 
     tmp = getenv("HOME");
     strcpy(rcfile, tmp);
-# ifndef OLD_GTK
-    strcat(rcfile, "/.gretl2rc");
+# if defined(OSX_PKG)
+    strcat(rcfile, "/.gretlosxrc");
+# elif defined(OLD_GTK)
+    strcat(rcfile, "/.gretlrc");        
 # else
-    strcat(rcfile, "/.gretlrc");
+    strcat(rcfile, "/.gretl2rc");
 # endif
     read_rc(); 
 }
