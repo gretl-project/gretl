@@ -1596,10 +1596,11 @@ void flip (GtkItemFactory *ifac, const char *path, gboolean s)
     if (ifac != NULL) {
 	GtkWidget *w = gtk_item_factory_get_item(ifac, path);
 
-	if (w != NULL) 
+	if (w != NULL) {
 	    gtk_widget_set_sensitive(w, s);
-	else
+	} else {
 	    fprintf(stderr, _("Failed to flip state of \"%s\"\n"), path);
+	}
     }
 }
 
@@ -1671,9 +1672,11 @@ static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
 
 static void lad_menu (GtkItemFactory *ifac)
 {
-    /* FIXME: this is actually unnecessarily restrictive */
     flip(ifac, "/Tests", FALSE);
-    flip(ifac, "/Model data/Add to data set", FALSE);
+    flip(ifac, "/Model data/Forecasts with standard errors", FALSE);
+    flip(ifac, "/Model data/coefficient covariance matrix", FALSE);
+    flip(ifac, "/Model data/Add to data set/R-squared", FALSE);
+    flip(ifac, "/Model data/Add to data set/T*R-squared", FALSE);
 }
 
 /* ........................................................... */
@@ -1731,9 +1734,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	} else {
 	    model_ml_menu_state(vwin->ifac, FALSE);
 	}
-	if (pmod->name) {
-	    model_save_state(vwin->ifac, FALSE);
-	}
+
+	if (pmod->name) model_save_state(vwin->ifac, FALSE);
 
 	if (pmod->ci == LAD) lad_menu(vwin->ifac);
 
@@ -1899,7 +1901,9 @@ static gint check_model_menu (GtkWidget *w, GdkEventButton *eb,
     flip(mwin->ifac, "/Tests/ARCH", s);
     flip(mwin->ifac, "/Graphs", s);
     flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
-    flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+    if (pmod->ci != LAD) {
+	flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
+    }
     flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
     flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
     flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
