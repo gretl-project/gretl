@@ -101,39 +101,62 @@
         <argument>order</argument>
         <argument>varname</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>test without a constant</effect>
+	  <flag>--c</flag>
+	  <effect>test with constant only</effect>
+	  <flag>--t</flag>
+	  <effect>test with constant and trend</effect>
+	  <flag>--tt</flag>
+	  <effect>test with constant and quadratic trend</effect>
+	  <flag>--show-all</flag>
+	  <effect>run all test variants</effect>
+	</option>
+      </options>
       <examples>
         <example>adf 2 x1</example>
       </examples>
     </usage>
 
     <description>
-      <para context="gui">This command needs an integer lag order.</para>
+      <para context="gui">This command needs an integer lag order; if
+      the order is zero a standard (not augmented) Dickey&ndash;Fuller
+      test is run.</para>
+
       <para>
-	  Computes statistics for two Dickey&ndash;Fuller tests.  In
-	each case the null hypothesis is that the selected variable
-	exhibits a unit root. The first is a <mathvar>t</mathvar>-test
-	based on the model 
-	  <equation status="display"
-	  tex="\[(1-L)x_t=m+gx_{t-1}+\epsilon_t\]"
-	  ascii="(1 - L)x(t) = m + gx(t-1) + e(t)"
-	  graphic="adf1"/> The null hypothesis is that
-	<mathvar>g</mathvar> = 0. The second (augmented) test proceeds
-	by estimating an unrestricted regression (with regressors a
-	constant, a time trend, the first lag of the variable, and
-	<repl quote="true">order</repl> lags of the first difference)
-	and a restricted version (dropping the time trend and the
-	first lag).  The test statistic is
-	  <equation status="display"
-	  tex="\[F_{2,T-k}=\frac{(ESS_r-ESS_u)/2}{ESS_u/(T-k)}\]"
-	  ascii="F(2, T-k) = [(ESSr - ESSu)/2] / [ESSu/(T - k)]"
-	  graphic="adf2"/> where <mathvar>T</mathvar> is the sample
-	size, <mathvar>k</mathvar> the number of parameters in the
-	unrestricted model, and the subscripts <mathvar>u</mathvar>
-	and <mathvar>r</mathvar> denote the unrestricted and
-	restricted models respectively. Note that the critical values
-	for these statistics are not the usual ones; a p-value range
-	is printed, when it can be determined.
+	Computes statistics for a set of Dickey&ndash;Fuller tests on
+	  the specified variable, the null hypothesis being that the
+	  variable has a unit root.</para>
+
+      <para>By default, three variants of the test are shown: one
+	  based on a regression containing a constant, one using
+	  a constant and linear trend, and one using a constant and a
+	  quadratic trend.  You can use the option flags to control the
+	  variants that are presented.
       </para>
+
+      <para>In all cases the dependent variable is the first
+	difference of the specified variable, <mathvar>y</mathvar>,
+	and the key independent variable is the first lag of
+	<mathvar>y</mathvar>.  The model is constructed so that the
+	coefficient on lagged <mathvar>y</mathvar> equals 1 minus the
+	root in question.  For example, the model with a constant may
+	be written as <equation
+	  status="display" tex="\[(1-L)y_t=\beta_0+(1-\alpha)y_{t-1}+\epsilon_t\]"
+	  ascii="(1 - L)y(t) = b0 + (1-a)y(t-1) + e(t)" graphic="adf1"/>
+      </para>
+
+      <para>If the lag order, <mathvar>p</mathvar>, is greater than 0,
+	then <mathvar>p</mathvar> lags of the dependent variable are
+	included on the right-hand side of each test
+	regression.</para>
+
+      <para><emphasis>P-</emphasis>values for this test are based on
+	MacKinnon (1996).  The relevant code is included by kind
+	permission of the author.</para>
+
     </description>
 
     <gui-access>
