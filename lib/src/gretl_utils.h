@@ -154,6 +154,9 @@ int set_panel_structure (gretlopt opt, DATAINFO *pdinfo, PRN *prn);
 
 int balanced_panel (const DATAINFO *pdinfo);
 
+int generate_obs_markers (const double **Z, DATAINFO *pdinfo,
+			  char *s);
+
 double get_xvalue (int i, double **Z, const DATAINFO *pdinfo);
 
 void free_gretl_mp_results (mp_results *mpvals);

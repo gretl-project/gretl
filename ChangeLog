@@ -11,6 +11,9 @@ version 1.3.0
 - add stack() function to genr command: creates a stacked
   series from a comma-separated list of series, or a
   range of series as in stack(x1..xn)
+- add a genr "special": genr markers = ... can be used to
+  manipulate the observation marker strings -- details in
+  panel.pdf
 
 7/23/2004 version 1.2.9
 - fixes for LaTeX printing of autoregressive models

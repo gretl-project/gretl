@@ -1875,6 +1875,13 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	return genr.err;
     }
 
+    /* special case of generating observation labels */
+    if (!strcmp(newvar, "markers")) {
+	genr.err = generate_obs_markers((const double **) *pZ, 
+					pdinfo, s);
+	return genr.err;
+    }
+
     /* pre-process special operators */
     if ((genr.err = catch_special_operators(s))) {
 	return genr.err;
