@@ -22,8 +22,8 @@
 #include "gretl_matrix_private.h"
 
 /* fiml.c */
-extern int fiml_driver (gretl_equation_system *sys, const double **Z, 
-			gretl_matrix *sigma, const DATAINFO *pdinfo, 
+extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 
+			gretl_matrix *sigma, DATAINFO *pdinfo, 
 			PRN *prn);
 
 
@@ -303,6 +303,30 @@ system_model_list (gretl_equation_system *sys, int i, int *freeit)
     return NULL;
 }
 
+static void
+print_overidentification_test (const gretl_equation_system *sys, PRN *prn)
+{
+    int df = system_get_df(sys);
+
+    if (df > 0) {
+	double ll = system_get_ll(sys);
+	double llu = system_get_llu(sys);
+	double X2;
+
+	/* let's not print rubbish */
+	if (na(ll) || na(llu) || ll == 0.0 || llu == 0.0) {
+	    return;
+	}
+
+	X2 = 2.0 * (llu - ll);
+
+	pprintf(prn, "\n%s:\n", _("Over-identification test"));
+	pprintf(prn, "  %s = %g\n", _("Unrestricted log-likelihood"), llu);
+	pprintf(prn, "  %s(%d) = %g %s %g\n", _("Chi-square"),
+		df, X2, _("with p-value"), chisq(X2, df));
+    }
+}
+
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn)
 {
@@ -500,7 +524,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
 	uhat = NULL;
-	err = fiml_driver(sys, (const double **) *pZ, sigma, pdinfo, prn);
+	err = fiml_driver(sys, pZ, sigma, pdinfo, prn);
 	if (err) {
 	    goto bailout;
 	}
@@ -531,6 +555,10 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 		_("Cross-equation VCV for residuals"),
 		_("correlations above the diagonal"));
 	print_system_vcv(sigma, 1, prn);
+    }
+
+    if (systype == FIML) {
+	print_overidentification_test(sys, prn);
     }
 
  bailout:

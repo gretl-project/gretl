@@ -49,19 +49,15 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);
-
 int system_save_yhat (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
-
 int system_n_identities (const gretl_equation_system *sys);
 
 int system_n_obs (const gretl_equation_system *sys);
-
 void system_set_n_obs (gretl_equation_system *sys, int n);
 
 int system_max_indep_vars (const gretl_equation_system *sys);
-
 int system_n_indep_vars (const gretl_equation_system *sys);
 
 int system_adjust_t1t2 (const gretl_equation_system *sys,
@@ -78,7 +74,6 @@ const char *gretl_system_short_string (const MODEL *pmod);
 int system_get_type (const gretl_equation_system *sys);
 
 int *system_get_endog_vars (const gretl_equation_system *sys);
-
 int *system_get_instr_vars (const gretl_equation_system *sys);
 
 void system_attach_uhat (gretl_equation_system *sys, gretl_matrix *u);
@@ -88,6 +83,13 @@ const gretl_matrix *system_get_uhat (const gretl_equation_system *sys);
 void system_attach_models (gretl_equation_system *sys, MODEL **models);
 
 MODEL *system_get_model (const gretl_equation_system *sys, int i);
+
+double system_get_ll (const gretl_equation_system *sys);
+double system_get_llu (const gretl_equation_system *sys);
+void system_set_ll (gretl_equation_system *sys, double ll);
+void system_set_llu (gretl_equation_system *sys, double llu);
+
+int system_get_df (const gretl_equation_system *sys);
 
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar);

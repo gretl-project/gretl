@@ -53,6 +53,8 @@ struct _gretl_equation_system {
     int n_identities;
     int n_obs;
     char flags;
+    double ll;
+    double llu;
     int **lists;
     int *endog_vars;
     int *instr_vars;
@@ -165,6 +167,9 @@ static gretl_equation_system *gretl_equation_system_new (int type)
     sys->n_identities = 0;
     sys->n_obs = 0;
     sys->flags = 0;
+
+    sys->ll = sys->llu = 0.0;
+
     sys->lists = NULL;
     sys->endog_vars = NULL;
     sys->instr_vars = NULL;
@@ -496,6 +501,41 @@ MODEL *system_get_model (const gretl_equation_system *sys, int i)
     }   
 
     return sys->models[i];
+}
+
+double system_get_ll (const gretl_equation_system *sys)
+{
+    return sys->ll;
+}
+
+double system_get_llu (const gretl_equation_system *sys)
+{
+    return sys->llu;
+}
+
+void system_set_ll (gretl_equation_system *sys, double ll)
+{
+    sys->ll = ll;
+}
+
+void system_set_llu (gretl_equation_system *sys, double llu)
+{
+    sys->llu = llu;
+}
+
+/* for FIML over-identification test */
+
+int system_get_df (const gretl_equation_system *sys)
+{
+    int gl, i, k = 0;
+
+    gl = sys->n_equations * sys->instr_vars[0];
+
+    for (i=0; i<sys->n_equations; i++) {
+	k += sys->lists[i][0] - 1;
+    }
+
+    return gl - k;
 }
 
 /* dealing with identities (FIML) */

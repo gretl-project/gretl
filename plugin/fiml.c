@@ -23,6 +23,8 @@
 
 #define FDEBUG 0
 
+#define LN_2_PI 1.837877066409345
+
 typedef struct fiml_system_ fiml_system;
 
 struct fiml_system_ {
@@ -34,6 +36,7 @@ struct fiml_system_ {
     int nexo;               /* total number of exogenous vars */
 
     double ll;              /* log-likelihood */
+    double llu;             /* unrestricted log-likelihood */
 
     gretl_matrix *uhat;     /* structural-form residuals, all equations */
     gretl_matrix *sigma;    /* cross-equation covariance matrix */
@@ -100,6 +103,7 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     fsys->nexo = exog_vars[0];
 
     fsys->ll = 0.0;
+    fsys->llu = 0.0;
 
     fsys->uhat = NULL;
     fsys->sigma = NULL;
@@ -145,6 +149,92 @@ static fiml_system *fiml_system_new (gretl_equation_system *sys)
     }	
 
     return fsys;
+}
+
+/* estimate the unrestricted reduced-form equations to get the
+   unrestricted log-likelihood for the system 
+*/
+
+static int 
+over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
+{
+    const int *enlist = system_get_endog_vars(fsys->sys);
+    const int *exlist = system_get_instr_vars(fsys->sys);
+    int t1 = pdinfo->t1;
+
+    gretl_matrix *uru = NULL;
+    gretl_matrix *urv = NULL;
+
+    MODEL umod;
+    double ldetS;
+    int *list;
+    int i, t;
+    int err = 0;
+
+    if (system_get_df(fsys->sys) <= 0) {
+	return 1;
+    }
+
+    list = malloc((fsys->nexo + 2) * sizeof *list);
+    if (list == NULL) {
+	return E_ALLOC;
+    }
+
+    uru = gretl_matrix_alloc(fsys->n, fsys->g);
+    if (uru == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    urv = gretl_matrix_alloc(fsys->g, fsys->g);
+    if (urv == NULL) {
+	err = E_ALLOC;
+	goto bailout;
+    }
+
+    list[0] = fsys->nexo + 1;
+    for (i=2; i<=list[0]; i++) {
+	list[i] = exlist[i - 1];
+    }
+
+    for (i=0; i<fsys->g; i++) {
+	list[1] = enlist[i + 1];
+	umod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
+	if (umod.errcode) {
+	    err = umod.errcode;
+	    goto bailout;
+	}
+	for (t=0; t<fsys->n; t++) {
+	    gretl_matrix_set(uru, t, i, umod.uhat[t + t1]);
+	}
+	clear_model(&umod);
+    }
+
+    err = gretl_matrix_multiply_mod(uru, GRETL_MOD_TRANSPOSE,
+				    uru, GRETL_MOD_NONE,
+				    urv);
+
+    if (err) {
+	goto bailout;
+    }
+
+    gretl_matrix_divide_by_scalar(urv, fsys->n);
+    ldetS = gretl_matrix_log_determinant(urv);
+    if (na(ldetS)) {
+	err = 1;
+	goto bailout;
+    }
+
+    fsys->llu = - (fsys->gn / 2.0) * (LN_2_PI + 1.0);
+    fsys->llu -= (fsys->n / 2.0) * ldetS;
+
+ bailout:
+
+    gretl_matrix_free(uru);
+    gretl_matrix_free(urv);
+    free(list);
+    
+    return err;
 }
 
 /* calculate FIML residuals as YG - WB */
@@ -257,6 +347,10 @@ fiml_transcribe_results (fiml_system *fsys, const double **Z, int t1,
     /* no df correction for pmod->sigma or sigma matrix */
     
     gretl_matrix_copy_values(sigma, fsys->sigma);
+
+    /* record restricted and unrestricted log-likelihood */
+    system_set_ll(fsys->sys, fsys->ll);
+    system_set_llu(fsys->sys, fsys->llu);
 }
 
 /* form the LHS stacked vector for the artificial regression */
@@ -555,8 +649,6 @@ static void fiml_B_update (fiml_system *fsys)
 #endif
 }
 
-#define LN_2_PI 1.837877066409345
-
 /* calculate log-likelihood for FIML system */
 
 static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
@@ -770,11 +862,12 @@ static int fiml_get_std_errs (fiml_system *fsys)
 
 #define FIML_ITER_MAX 250
 
-int fiml_driver (gretl_equation_system *sys, const double **Z, 
-		 gretl_matrix *sigma, const DATAINFO *pdinfo, 
+int fiml_driver (gretl_equation_system *sys, double ***pZ, 
+		 gretl_matrix *sigma, DATAINFO *pdinfo, 
 		 PRN *prn)
 {
     fiml_system *fsys;
+    int t1 = pdinfo->t1;
     double llbak;
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
@@ -806,7 +899,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
     fiml_B_init(fsys, pdinfo);
 
     /* initial loglikelihood */
-    err = fiml_ll(fsys, Z, pdinfo->t1);
+    err = fiml_ll(fsys, (const double **) *pZ, t1);
     if (err) {
 	fprintf(stderr, "fiml_ll: failed\n");
 	goto bailout;
@@ -822,14 +915,14 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	fiml_form_depvar(fsys);
 
 	/* instrument the RHS endog vars */
-	err = fiml_endog_rhs(fsys, Z, pdinfo->t1);
+	err = fiml_endog_rhs(fsys, (const double **) *pZ, t1);
 	if (err) {
 	    fprintf(stderr, "fiml_endog_rhs: failed\n");
 	    break;
 	}	
 
 	/* form RHS matrix for artificial regression */
-	fiml_form_indepvars(fsys, Z, pdinfo->t1);
+	fiml_form_indepvars(fsys, (const double **) *pZ, t1);
 
 	/* run artificial regression (ETM, equation 12.86) */
 	err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
@@ -840,7 +933,7 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	}
 
 	/* adjust param estimates based on gradients in fsys->artb */
-	err = fiml_adjust_estimates(fsys, Z, pdinfo->t1, &step);
+	err = fiml_adjust_estimates(fsys, (const double **) *pZ, t1, &step);
 	if (err) {
 	    break;
 	}
@@ -865,8 +958,10 @@ int fiml_driver (gretl_equation_system *sys, const double **Z,
 	err = fiml_get_std_errs(fsys);
     }
 
+    over_identification_test(fsys, pZ, pdinfo);
+
     /* write the results into the parent system */
-    fiml_transcribe_results(fsys, Z, pdinfo->t1, sigma);
+    fiml_transcribe_results(fsys, (const double **) *pZ, t1, sigma);
 
  bailout:
     

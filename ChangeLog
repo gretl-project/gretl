@@ -1,4 +1,6 @@
 version 1.3.1
+- Add FIML estimation to system command; also add 
+  over-identification test for FIML systems
 - Add univariate kernel density estimation (under the Variable
   menu in the gui program -- no script counterpart)
 - Purge the lesser-used model selection statistics, and use
