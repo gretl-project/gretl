@@ -61,6 +61,9 @@ void gretl_set_batch_mode (int b);
 
 int gretl_in_batch_mode (void);
 
+void gretl_set_gui_mode (int g);
+
+int gretl_in_gui_mode (void);
 
 #endif /* LIBSET_H */
 

@@ -20,6 +20,8 @@
 /* gretl_paths.c for gretl  */
 
 #include "libgretl.h"
+#include "libset.h"
+
 #include <unistd.h>
 
 #ifdef WIN32
@@ -531,8 +533,7 @@ int getopenfile (const char *line, char *fname, PATHS *ppaths,
 /* .......................................................... */
 
 enum paths_status_flags {
-    GRETL_USING_GUI      = 1 << 0,
-    STRING_TABLE_WRITTEN = 1 << 1
+    STRING_TABLE_WRITTEN = 1 << 0
 };
 
 struct INTERNAL_PATHS {
@@ -642,11 +643,6 @@ int gretl_string_table_written (void)
     return ret;
 }
 
-int gretl_using_gui (void)
-{
-    return (gretl_paths.status & GRETL_USING_GUI);
-}
-
 static void ensure_slash (char *str)
 {
     if (str[strlen(str) - 1] != SLASH) {
@@ -712,6 +708,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 
     if (opt & OPT_X) {
 	/* gui program */
+	gretl_set_gui_mode(1);
 	if (opt & OPT_N) {
 	    /* force english */
 	    sprintf(ppaths->helpfile, "%sgretl_hlp.txt", ppaths->gretldir);
@@ -720,10 +717,8 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretl_hlp.txt"));
 	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
 	}
-	gretl_paths.status |= GRETL_USING_GUI;
     } else { 
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli_hlp.txt"));
-	gretl_paths.status = 0;
     }
 
     sprintf(envstr, "GTKSOURCEVIEW_LANGUAGE_DIR=%sshare\\gtksourceview-1.0"
@@ -792,6 +787,7 @@ int set_paths (PATHS *ppaths, gretlopt opt)
     sprintf(ppaths->scriptdir, "%sscripts/", ppaths->gretldir);
 
     if (opt & OPT_X) {
+	gretl_set_gui_mode(1);
 	if (opt & OPT_N) {
 	    /* force english */
 	    sprintf(ppaths->helpfile, "%sgretl.hlp", ppaths->gretldir);
@@ -800,10 +796,8 @@ int set_paths (PATHS *ppaths, gretlopt opt)
 	    sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretl.hlp"));
 	    sprintf(ppaths->cmd_helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
 	}
-	gretl_paths.status |= GRETL_USING_GUI;
     } else {
 	sprintf(ppaths->helpfile, "%s%s", ppaths->gretldir, _("gretlcli.hlp"));
-	gretl_paths.status = 0;
     }
 
     ensure_slash(ppaths->userdir);

@@ -455,7 +455,7 @@ const char *get_gretl_emf_term_line (int plottype, int color)
 
 int gnuplot_init (int plottype, FILE **fpp)
 {
-    int gui = gretl_using_gui();
+    int gui = gretl_in_gui_mode();
     char plotfile[MAXLEN];
 
     if (gretl_looping()) {
@@ -509,7 +509,7 @@ int gnuplot_make_graph (void)
     err = winfork(plotcmd, NULL, SW_SHOWMINIMIZED, 0);
 #else
     sprintf(plotcmd, "%s%s \"%s\"", gretl_gnuplot_path(), 
-	    (gretl_using_gui())? "" : " -persist", gretl_plotfile());
+	    (gretl_in_gui_mode())? "" : " -persist", gretl_plotfile());
     err = gretl_spawn(plotcmd);  
 #endif
 

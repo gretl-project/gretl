@@ -384,6 +384,7 @@ int get_halt_on_error (void)
 static int gretl_text_pause;
 static int loop_on;
 static int batch_mode;
+static int gui_mode;
 
 int gretl_get_text_pause (void)
 {
@@ -399,7 +400,7 @@ void set_loop_on (void)
 void set_loop_off (void)
 {
     loop_on = 0;
-    if (!batch_mode) {
+    if (!batch_mode && !gui_mode) {
 	gretl_text_pause = 1;
     }
 }
@@ -420,6 +421,16 @@ void gretl_set_batch_mode (int b)
 int gretl_in_batch_mode (void)
 {
     return batch_mode;
+}
+
+void gretl_set_gui_mode (int g)
+{
+    gui_mode = g;
+}
+
+int gretl_in_gui_mode (void)
+{
+    return gui_mode;
 }
 
 

@@ -3,6 +3,8 @@ version 1.3.3
   command-line program
 - Fix bug: possible crash in "loop foreach" if an invalid variable
   name is given
+- Fix bug: "display data" broken in gui program for long datasets
+  ("press a key to continue" mechanism was invoked erroneously)
 - Fixes for appending data (make more flexible: allow appending of
   observations and/or variables)
 - Fixes for cointegration tests: improve dialogs and prevent crash

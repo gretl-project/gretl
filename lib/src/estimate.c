@@ -3508,7 +3508,7 @@ MODEL arma_x12 (int *list, const double **Z, DATAINFO *pdinfo, PRN *prn,
     void *handle;
     MODEL (*arma_x12_model) (int *, const double **, DATAINFO *, PRN *, 
 			     const char *, const char *, int);
-    int gui = gretl_using_gui();
+    int gui = gretl_in_gui_mode();
 
     *gretl_errmsg = '\0';
 
