@@ -82,11 +82,11 @@ int storevars_dialog (int code)
     if (storelist == NULL) return 0;
 
     edit_dialog ((code == EXPORT)? 
-		 "gretl: export data": "gretl: store data",
-		 "Enter ID numbers of variables to save: ", 
+		 _("gretl: export data"): _("gretl: store data"),
+		 _("Enter ID numbers of variables to save: "), 
 		 storelist, 1, 
 		 " OK ", set_storelist, NULL, 
-		 " Cancel ", cancel_data_save, &cancel, code, 1);
+		 _(" Cancel "), cancel_data_save, &cancel, code, 1);
     return cancel;
 }
 
@@ -95,18 +95,18 @@ int storevars_dialog (int code)
 void random_dialog (gpointer data, guint uni, GtkWidget *widget) 
 {
     if (uni) {
-	edit_dialog ("gretl: uniform variable", 
-		     "Enter name for variable, and\n"
-		     "minimum and maximum values:", 
+	edit_dialog (_("gretl: uniform variable"), 
+		     _("Enter name for variable, and\n"
+		     "minimum and maximum values:"), 
 		     "unif 0 100", 1, 
-		     "Apply", do_random, NULL, 
-		     "  Cancel  ", NULL, NULL, 0, 0);
+		     _("Apply"), do_random, NULL, 
+		     _("  Cancel  "), NULL, NULL, 0, 0);
     } else {
-	edit_dialog ("gretl: normal variable", 
-		     "Enter name, mean and standard deviation:", 
+	edit_dialog (_("gretl: normal variable"), 
+		     _("Enter name, mean and standard deviation:"), 
 		     "norm 0 1", 1,
-		     "Apply", do_random, NULL, 
-		     "  Cancel  ", NULL, NULL, 0, 0);
+		     _("Apply"), do_random, NULL, 
+		     _("  Cancel  "), NULL, NULL, 0, 0);
     }
 }
 
@@ -125,7 +125,7 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 
     /* check validity of dataspec */
     if (sscanf(dataspec, "%8s %8s %8s", stobs, endobs, firstvar) != 3) {
-	errbox("Insufficient dataset information supplied");
+	errbox(_("Insufficient dataset information supplied"));
 	return;
     }
 
@@ -137,11 +137,11 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 
 	if (sd0 < 0) {
 	    err = 1;
-	    sprintf(errtext, "Invalid starting observation '%s'", stobs);
+	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
 	}
 	if (!err && ed0 < 0) {
 	    err = 1;
-	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
 	}
 	if (err) {
 	    errbox(errtext);
@@ -150,20 +150,20 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
     } else { /* not daily data */
 	sd0 = strtod(stobs, &test);
 	if (strcmp(stobs, test) == 0 || test[0] != '\0' || sd0 < 0) {
-	    sprintf(errtext, "Invalid starting observation '%s'", stobs);
+	    sprintf(errtext, _("Invalid starting observation '%s'"), stobs);
 	    errbox(errtext);
 	    return;
 	}
 	ed0 = strtod(endobs, &test);
 	if (strcmp(endobs, test) == 0 || test[0] != '\0' || ed0 < 0) {
-	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
 	    errbox(errtext);
 	    return;
 	}
     }
 
     if (sd0 > ed0) {
-	sprintf(errtext, "Empty data range '%s - %s'", stobs, endobs);
+	sprintf(errtext, _("Empty data range '%s - %s'"), stobs, endobs);
 	errbox(errtext);
 	return;
     }
@@ -174,9 +174,9 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	/* try to infer structure from ending obs */
 	if (sscanf(endobs, "%[^.].%s", unit, period) == 2) { 
 	    datainfo->pd = atoi(period);
-	    fprintf(stderr, "Setting data frequency = %d\n", datainfo->pd);
+	    fprintf(stderr, _("Setting data frequency = %d\n"), datainfo->pd);
 	} else {
-	    sprintf(errtext, "Invalid ending observation '%s'", endobs);
+	    sprintf(errtext, _("Invalid ending observation '%s'"), endobs);
 	    errbox(errtext);
 	    return;	    
 	}
@@ -188,8 +188,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	n = strlen(stobs);
 	for (i=0; i<n; i++) {
 	    if (!isdigit((unsigned char) stobs[i])) {
-		sprintf(errtext, "Invalid starting observation '%s'\n"
-			"for data frequency 1", stobs);
+		sprintf(errtext, _("Invalid starting observation '%s'\n"
+			"for data frequency 1"), stobs);
 		errbox(errtext);
 		return;
 	    }
@@ -197,8 +197,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	n = strlen(endobs);
 	for (i=0; i<n; i++) {
 	    if (!isdigit((unsigned char) endobs[i])) {
-		sprintf(errtext, "Invalid ending observation '%s'\n"
-			"for data frequency 1", endobs);
+		sprintf(errtext, _("Invalid ending observation '%s'\n"
+			"for data frequency 1"), endobs);
 		errbox(errtext);
 		return;
 	    }
@@ -211,8 +211,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
-	    sprintf(errtext, "Invalid starting observation '%s'\n"
-		    "for data frequency %d", stobs, datainfo->pd);
+	    sprintf(errtext, _("Invalid starting observation '%s'\n"
+		    "for data frequency %d"), stobs, datainfo->pd);
 	    errbox(errtext);
 	    return;
 	}
@@ -220,8 +220,8 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 	    strlen(year) > 4 || atoi(subper) > datainfo->pd ||
 	    (datainfo->pd < 10 && strlen(subper) != 1) ||
 	    (datainfo->pd >= 10 && strlen(subper) != 2)) {
-	    sprintf(errtext, "Invalid ending observation '%s'\n"
-		    "for data frequency %d", endobs, datainfo->pd);
+	    sprintf(errtext, _("Invalid ending observation '%s'\n"
+		    "for data frequency %d"), endobs, datainfo->pd);
 	    errbox(errtext);
 	    return;
 	}	    
@@ -282,12 +282,12 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
 	strcpy(obsstr, "1950.01 2001.52 newvar");
 	break;
     }
-    edit_dialog ("gretl: create data set", 
-		 "Enter start and end obs for new data set\n"
-		 "and name of first var to add:", 
+    edit_dialog (_("gretl: create data set"), 
+		 _("Enter start and end obs for new data set\n"
+		 "and name of first var to add:"), 
 		 obsstr, 1,
-		 "Apply", prep_spreadsheet, wdata, 
-		 " Cancel ", NULL, NULL, 0, 0);
+		 _("Apply"), prep_spreadsheet, wdata, 
+		 _(" Cancel "), NULL, NULL, 0, 0);
 }
 
 /* ........................................................... */
@@ -298,14 +298,14 @@ void start_panel_dialog (gpointer data, guint u, GtkWidget *widget)
 
     datainfo->pd = 999;
 
-    edit_dialog ("gretl: create panel data set", 
-		 "Enter starting and ending observations and\n"
+    edit_dialog (_("gretl: create panel data set"), 
+		 _("Enter starting and ending observations and\n"
 		 "the name of the first variable to add.\n"
 		 "The example below is suitable for 20 units\n"
-		 "observed over 10 periods", 
+		 "observed over 10 periods"), 
 		 "1.01 10.20 newvar", 1,
-		 "Apply", prep_spreadsheet, wdata, 
-		 " Cancel ", NULL, NULL, 0, 0);
+		 _("Apply"), prep_spreadsheet, wdata, 
+		 _(" Cancel "), NULL, NULL, 0, 0);
 }
 
 /* ........................................................... */
@@ -325,30 +325,30 @@ void addvars_dialog (gpointer data, guint add_code, GtkWidget *widget)
 
     switch (add_code) {
     case LOGS:
-	strcpy(tmp, "Enter ID numbers of variables for logging");
-	strcpy(title, "gretl: generate logs");
+	strcpy(tmp, _("Enter ID numbers of variables for logging"));
+	strcpy(title, _("gretl: generate logs"));
 	break;
     case LAGS:
-	strcpy(tmp, "Enter ID numbers of variables for lagging");
-	strcpy(title, "gretl: generate lags");
+	strcpy(tmp, _("Enter ID numbers of variables for lagging"));
+	strcpy(title, _("gretl: generate lags"));
 	break;	
     case SQUARE:
-	strcpy(tmp, "Enter ID numbers of variables to square");
-	strcpy(title, "gretl: generate squares");
+	strcpy(tmp, _("Enter ID numbers of variables to square"));
+	strcpy(title, _("gretl: generate squares"));
 	break;
     case DIFF:
-	strcpy(tmp, "Enter ID numbers of vars to difference");
-	strcpy(title, "gretl: generate differences");
+	strcpy(tmp, _("Enter ID numbers of vars to difference"));
+	strcpy(title, _("gretl: generate differences"));
 	break;
     case LDIFF:
-	strcpy(tmp, "Enter ID numbers of vars to log-difference");
-	strcpy(title, "gretl: log differences");
+	strcpy(tmp, _("Enter ID numbers of vars to log-difference"));
+	strcpy(title, _("gretl: log differences"));
 	break;
 
     }
     edit_dialog (title, tmp, liststr, 1,
-		 "Apply", add_logs_etc, NULL, 
-		 " Cancel ", NULL, NULL, add_code, 1);    
+		 _("Apply"), add_logs_etc, NULL, 
+		 _(" Cancel "), NULL, NULL, add_code, 1);    
     free(liststr);
 }
 
@@ -364,33 +364,33 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
     switch (code) {
     case GR_BOX: case GR_NBOX:
 	gfunc = do_box_graph;
-	strcpy(title, "gretl: boxplots");
-	strcpy(request, "Enter var names or numbers:");
+	strcpy(title, _("gretl: boxplots"));
+	strcpy(request, _("Enter var names or numbers:"));
 	break;
     case GR_DUMMY:
 	gfunc = do_dummy_graph;
-	strcpy(title, "gretl: define plot");
-	strcpy(request, "Enter 3 var names or nos. (Y, X, factor):");
+	strcpy(title, _("gretl: define plot"));
+	strcpy(request, _("Enter 3 var names or nos. (Y, X, factor):"));
 	break;
     case GR_IMP:
 	gfunc = do_graph;
-	strcpy(title, "gretl: define impulse plot");
-	strcpy(request, "Enter two var names or numbers (Y then X):");
+	strcpy(title, _("gretl: define impulse plot"));
+	strcpy(request, _("Enter two var names or numbers (Y then X):"));
 	break;
     case GR_XY:
 	gfunc = do_graph;
-	strcpy(title, "gretl: define graph");
-	strcpy(request, "Enter var names or numbers (X comes last):");
+	strcpy(title, _("gretl: define graph"));
+	strcpy(request, _("Enter var names or numbers (X comes last):"));
 	break;
     case GR_PLOT:
 	gfunc = do_graph;
-	strcpy(title, "gretl: time-series plot");
-	strcpy(request, "Enter var names or numbers:");
+	strcpy(title, _("gretl: time-series plot"));
+	strcpy(request, _("Enter var names or numbers:"));
 	break;
     case SCATTERS:
 	gfunc = do_scatters;
-	strcpy(title, "gretl: multiple plots");
-	strcpy(request, "yvar ; xvarlist  or  yvarlist ; xvar");
+	strcpy(title, _("gretl: multiple plots"));
+	strcpy(request, _("yvar ; xvarlist  or  yvarlist ; xvar"));
 	strcpy(tmp, "1 ;");
 	for (i=2; i<8; i++) {
 	    if (i >= datainfo->v - 1) break;
@@ -403,8 +403,8 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
 
     }
     edit_dialog (title, request, (code == SCATTERS)? tmp : NULL, 
-		 1, " Graph ", gfunc, wdata, 
-		 " Cancel ", NULL, NULL, code, 1);
+		 1, _(" Graph "), gfunc, wdata, 
+		 _(" Cancel "), NULL, NULL, code, 1);
 }
 
 /* ........................................................... */
@@ -530,7 +530,7 @@ void edit_dialog (char *diagtxt, char *infotxt, char *deftext,
 
     /* Create a "Help" button if wanted */
     if (cmdcode && cmdcode != PRINT) {
-	tempwid = gtk_button_new_with_label ("Help");
+	tempwid = gtk_button_new_with_label (_("Help"));
 	GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
 	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			    tempwid, TRUE, TRUE, FALSE);
@@ -561,9 +561,9 @@ void about_dialog (gpointer data)
     dlg = gnome_about_new("gretl", version_string,
 			  "(c) 2000-2002 Allin Cottrell", 
 			  authors, 
-			  "An econometrics program for the gnome desktop "
+			  _("An econometrics program for the gnome desktop "
 			  "issued under the GNU General Public License.  "
-			  "http://gretl.sourceforge.net/",
+			  "http://gretl.sourceforge.net/"),
 			  gnome_pixmap_file("gretl-gnome-logo.xpm") 
 			  );
 
@@ -604,11 +604,11 @@ void about_dialog (gpointer data)
     FILE *fd;
 
     no_gpl = 
-	g_strdup_printf ("Cannot find the license agreement file COPYING. "
-			 "Please make sure it's in %s", 
+	g_strdup_printf (_("Cannot find the license agreement file COPYING. "
+			 "Please make sure it's in %s"), 
 			 paths.gretldir);
     dialog = gtk_dialog_new ();
-    gtk_window_set_title (GTK_WINDOW (dialog), "About gretl");
+    gtk_window_set_title (GTK_WINDOW (dialog), _("About gretl"));
     gtk_container_border_width (GTK_CONTAINER 
 				(GTK_DIALOG (dialog)->vbox), 10);
     gtk_container_border_width (GTK_CONTAINER 
@@ -635,20 +635,20 @@ void about_dialog (gpointer data)
 	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
 	gtk_widget_show (tempwid);
     }
-    tempstr = g_strdup_printf ("gretl, version %s\n"
+    tempstr = g_strdup_printf (_("gretl, version %s\n")
 #ifdef G_OS_WIN32
 			       BUILD_DATE
 #endif
-			       "Copyright (C) 2000-2001 Allin Cottrell "
+			       _("Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/",
+			       "http://gretl.sourceforge.net/"),
 			       version_string);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
     gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
     gtk_widget_show (tempwid);
    
-    label = gtk_label_new ("About");
+    label = gtk_label_new (_("About"));
     gtk_widget_show (label);
    
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
@@ -674,12 +674,12 @@ void about_dialog (gpointer data)
 		      GTK_FILL, GTK_EXPAND | GTK_FILL | GTK_SHRINK, 0, 0);
     gtk_widget_show (vscroll);
 
-    label = gtk_label_new ("License Agreement");
+    label = gtk_label_new (_("License Agreement"));
     gtk_widget_show (label);
    
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, label);
 
-    tempwid = gtk_button_new_with_label ("  Close  ");
+    tempwid = gtk_button_new_with_label (_("  Close  "));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 			tempwid, FALSE, FALSE, 0);
@@ -866,7 +866,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    gtk_widget_show(tempwid);
 
    /* "Yes" button */
-   tempwid = gtk_button_new_with_label ("Yes");
+   tempwid = gtk_button_new_with_label (_("Yes"));
    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 		       tempwid, TRUE, TRUE, TRUE);  
@@ -876,7 +876,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    gtk_widget_show (tempwid);
 
    /* "No" button */
-   tempwid = gtk_button_new_with_label ("No");
+   tempwid = gtk_button_new_with_label (_("No"));
    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 		       tempwid, TRUE, TRUE, TRUE); 
    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
@@ -885,7 +885,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
 
    /* Cancel button -- if wanted */
    if (cancel) {
-       tempwid = gtk_button_new_with_label ("Cancel");
+       tempwid = gtk_button_new_with_label (_("Cancel"));
        gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 			   tempwid, TRUE, TRUE, TRUE); 
        gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
@@ -919,8 +919,8 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     if (!expert && !replay && 
 	(session_changed(0) || (work_done() && !session_saved))) {
 	button = yes_no_dialog ("gretl", 		      
-				"Do you want to save the commands and\n"
-				"output from this gretl session?", 1);
+				_("Do you want to save the commands and\n"
+				"output from this gretl session?"), 1);
 	if (button == YES_BUTTON) {
 	    save_session_callback(NULL, 1, NULL);
 	    return TRUE; /* bodge */
@@ -932,8 +932,8 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
 
     if (data_status & MODIFIED_DATA) {
 	button = yes_no_dialog ("gretl", 
-				"Do you want to save changes you have\n"
-				"made to the current data set?", 1);
+				_("Do you want to save changes you have\n"
+				"made to the current data set?"), 1);
 	if (button == YES_BUTTON) {
 	    save_data_callback();
 	    return TRUE; 

@@ -51,7 +51,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	    } 
 	    else if (add_new_var(datainfo, &Z, &genr)) {
-		pprintf(prn, "Failed to add new variable.\n");
+		pprintf(prn, _("Failed to add new variable.\n"));
 		return 1;
 	    }
 	}
@@ -101,11 +101,11 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	} else { /* fixed number of times */
 	    if (round == 0 && loop_model_init(&plp->lmodels[plp->nmod - 1], 
 					      models[0], cmdnum)) { 
-		pprintf(prn, "Failed to initialize model for loop\n");
+		pprintf(prn, _("Failed to initialize model for loop\n"));
 		return 1;
 	    } else if (update_loop_model(plp, cmdnum, models[0], 
 					 datainfo)) {
-		pprintf(prn, "Failed to add results to loop model\n");
+		pprintf(prn, _("Failed to add results to loop model\n"));
 		return 1;
 	    }
 	    tmpmodel = models[0];
@@ -126,12 +126,12 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 				    * sizeof(LOOP_PRINT));
 	    if (loop_print_init(&plp->prns[plp->nprn-1], 
 				command.list, cmdnum)) { 
-		pprintf(prn, "Failed to initalize print struct for loop\n");
+		pprintf(prn, _("Failed to initalize print struct for loop\n"));
 		return 1;
 	    }
 	}
 	if (update_loop_print(plp, cmdnum, command.list, &Z, datainfo)) {
-	    pprintf(prn, "Failed to add values to print loop\n");
+	    pprintf(prn, _("Failed to add values to print loop\n"));
 	    return 1;
 	}
 	break;
@@ -144,7 +144,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 		return 1;
 	    }
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) {
-		pprintf(prn, "Out of memory\n");
+		pprintf(prn, _("Out of memory\n"));
 		return 1;
 	    }
 	    if (set_sample_dummy(linecpy, &Z, &subZ, datainfo, 
@@ -157,8 +157,8 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	    datainfo = subinfo;
 	    Z = subZ;
 	} else {
-	    pprintf(prn, "loop: only the '-o' and '-r' forms of the smpl "
-		    " command may be used.\n");
+	    pprintf(prn, _("loop: only the '-o' and '-r' forms of the smpl "
+		    " command may be used.\n"));
 	    return 1;
 	}
 	break;
@@ -166,8 +166,8 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
     case STORE:
 #ifdef notdef
 	if (plp->lvar) {
-	    pprintf(prn, "The store command is not available in "
-		    "this sort of loop.\n");
+	    pprintf(prn, _("The store command is not available in "
+		    "this sort of loop.\n"));
 	    return 1;
 	}
 #endif
@@ -193,13 +193,13 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 
     case SUMMARY:
 	if (!plp->lvar) {
-	    pprintf(prn, "The summary command is not available in "
-		    "this sort of loop.\n");
+	    pprintf(prn, _("The summary command is not available in "
+		    "this sort of loop.\n"));
 	    return 1;
 	}
 	summ = summary(command.list, &Z, datainfo, prn);
 	if (summ == NULL)
-	    pprintf(prn, "generation of summary stats failed\n");
+	    pprintf(prn, _("generation of summary stats failed\n"));
 	else {
 	    print_summary(summ, datainfo, 0, prn);
 	    free_summary(summ);
@@ -207,7 +207,7 @@ int loop_exec_line (LOOPSET *plp, const int round, const int cmdnum,
 	break; 
 
     default: /* not reachable */
-	pprintf(prn, "command: '%s'\nThis is not available in a loop.\n",
+	pprintf(prn, _("command: '%s'\nThis is not available in a loop.\n"),
 		linecpy);
 	return 1;
 	break;

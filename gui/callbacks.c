@@ -98,13 +98,13 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 {
     switch (code) {
     case OPEN_DATA:
-	file_selector("Open data file", code, NULL);
+	file_selector(_("Open data file"), code, NULL);
 	break;
     case OPEN_CSV:
-	file_selector("Open CSV file", code, NULL);
+	file_selector(_("Open CSV file"), code, NULL);
 	break;
     case OPEN_BOX:
-	file_selector("Open BOX file", code, NULL);
+	file_selector(_("Open BOX file"), code, NULL);
 	break;
     }
 }
@@ -114,9 +114,9 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
 void open_script (gpointer data, guint action, GtkWidget *widget)
 {
     if (action == OPEN_SCRIPT)
-	file_selector("Open script file", action, NULL);
+	file_selector(_("Open script file"), action, NULL);
     else if (action == OPEN_SESSION)
-	file_selector("Open session file", action, NULL);
+	file_selector(_("Open session file"), action, NULL);
 }
 
 /* ........................................................... */
@@ -127,53 +127,53 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 
     switch (file_code) {
     case SAVE_OUTPUT:
-	file_selector("Save output file", SAVE_OUTPUT, mydata->w);
+	file_selector(_("Save output file"), SAVE_OUTPUT, mydata->w);
 	break;
     case SAVE_CONSOLE:
-	file_selector("Save console output", SAVE_CONSOLE, mydata->w);
+	file_selector(_("Save console output"), SAVE_CONSOLE, mydata->w);
 	break;
     case SAVE_CMDS: 
-	file_selector("Save command log", SAVE_CMDS, mydata->w);
+	file_selector(_("Save command log"), SAVE_CMDS, mydata->w);
 	break;
     case SAVE_SCRIPT:
-	file_selector("Save command script", SAVE_SCRIPT, mydata);
+	file_selector(_("Save command script"), SAVE_SCRIPT, mydata);
 	break;
     case SAVE_DATA:
 	if (!storevars_dialog(STORE)) {
-	    file_selector("Save data file", SAVE_DATA, NULL);
+	    file_selector(_("Save data file"), SAVE_DATA, NULL);
 	}
 	break;
     case SAVE_GZDATA:
     case SAVE_BIN1:
     case SAVE_BIN2:
 	if (!storevars_dialog(STORE))
-	    file_selector("Save data file", file_code, NULL);
+	    file_selector(_("Save data file"), file_code, NULL);
 	break;
     case EXPORT_CSV:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save CSV data file", file_code, NULL);
+	    file_selector(_("Save CSV data file"), file_code, NULL);
 	break;
     case EXPORT_R:
     case EXPORT_R_ALT:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save R data file", file_code, NULL);
+	    file_selector(_("Save R data file"), file_code, NULL);
 	break;
     case EXPORT_OCTAVE:
 	if (!storevars_dialog(EXPORT)) 
-	    file_selector("Save octave data file", file_code, NULL);
+	    file_selector(_("Save octave data file"), file_code, NULL);
 	break;
     case SAVE_TEX_TAB:
     case SAVE_TEX_EQ:
-	file_selector("Save LaTeX file", file_code, mydata->data);
+	file_selector(_("Save LaTeX file"), file_code, mydata->data);
 	break;
     case SAVE_HTML:
-	file_selector("Save HTML file", file_code, mydata->data);
+	file_selector(_("Save HTML file"), file_code, mydata->data);
 	break;
     case SAVE_MODEL:
-	file_selector("Save model output", file_code, mydata->w);
+	file_selector(_("Save model output"), file_code, mydata->w);
 	break;
     case SAVE_GP_CMDS:
-	file_selector("Save gnuplot commands", file_code, mydata->w);
+	file_selector(_("Save gnuplot commands"), file_code, mydata->w);
 	break;
     default:
 	dummy_call();
@@ -184,7 +184,7 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 
 void dummy_call (void)
 {
-    errbox("Sorry, this item not yet implemented!");
+    errbox(_("Sorry, this item not yet implemented!"));
 }
 
 /* ........................................................... */
@@ -192,9 +192,9 @@ void dummy_call (void)
 void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
     if (data_status & BOOK_DATA)
-	errbox("You don't have permission to do this");
+	errbox(_("You don't have permission to do this"));
     else 
-	edit_buffer(&datainfo->descrip, 80, 400, "gretl: edit data info",
+	edit_buffer(&datainfo->descrip, 80, 400, _("gretl: edit data info"),
 		    EDIT_HEADER);
 }
 
@@ -239,28 +239,28 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
     case LOGIT:
     case PROBIT:
     case POOLED:
-	sprintf(tempstr, "Enter specification for %s model:\n"
-		"(depvar indepvars)", commands[model_code]);
+	sprintf(tempstr, _("Enter specification for %s model:\n"
+		"(depvar indepvars)"), commands[model_code]);
 	break;
     case WLS:
-	strcpy(tempstr, "Enter specification for WLS model:\n"
-	       "(wtvar depvar indepvars)");
+	strcpy(tempstr, _("Enter specification for WLS model:\n"
+	       "(wtvar depvar indepvars)"));
 	break;
     case TSLS:
-	strcpy(tempstr, "Enter specification for TSLS model:\n"
+	strcpy(tempstr, _("Enter specification for TSLS model:\n"
 	       "<varlist1> ; <varlist2>\n"
 	       "You will probably want to consult the "
-	       "help on tsls first");
+	       "help on tsls first"));
 	break;
     case AR:
-	strcpy(tempstr, "Enter specification for AR model:\n"
+	strcpy(tempstr, _("Enter specification for AR model:\n"
 	       "<laglist> ; <varlist>\n"
 	       "You will probably want to consult the "
-	       "help on ar first");
+	       "help on ar first"));
 	break;
     case VAR:
-	strcpy(tempstr, "Enter specification for VAR:\n"
-	       "(lag_order depvar indepvars)");
+	strcpy(tempstr, _("Enter specification for VAR:\n"
+	       "(lag_order depvar indepvars)"));
 	break;
     }
 
@@ -272,10 +272,10 @@ void model_callback (gpointer data, guint model_code, GtkWidget *widget)
 	}
     } else modelstr[0] = '\0';
 
-    edit_dialog ("gretl: define model", tempstr,
+    edit_dialog (_("gretl: define model"), tempstr,
 		 modelstr, 1,
-		 "Estimate", do_model, NULL, 
-		 " Cancel ", NULL, NULL, model_code, 1);
+		 _("Estimate"), do_model, NULL, 
+		 _(" Cancel "), NULL, NULL, model_code, 1);
     if (oldlist != NULL) free(oldlist);
 }
 
@@ -288,8 +288,8 @@ static int model_dates_check (windata_t *mydata)
 
     if (pmod->smpl.t1 != datainfo->t1 ||
 	pmod->smpl.t2 != datainfo->t2) {
-	errbox("Sorry, can't do: the sample has been reset\nsince this model "
-	       "was estimated");
+	errbox(_("Sorry, can't do: the sample has been reset\nsince this model "
+	       "was estimated"));
 	return 1;
     }
     return 0;
@@ -310,51 +310,51 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 
     switch (action) {
     case ARCH:
-	strcpy(title, "gretl: ARCH test");
-	strcpy(query, "Lag order for ARCH test:");
+	strcpy(title, _("gretl: ARCH test"));
+	strcpy(query, _("Lag order for ARCH test:"));
 	strcpy(defstr, "1");
 	okfunc = do_arch;
 	break;
     case CHOW:
 	ntodate(startdate, datainfo->t1, datainfo);
 	ntodate(enddate, datainfo->t2, datainfo);
-	strcpy(title, "gretl: Chow test");
-	sprintf(query, "Enter observation at which\n"
+	strcpy(title, _("gretl: Chow test"));
+	sprintf(query, _("Enter observation at which\n"
 		"to split the sample\n"
-		"(between %s and %s):", startdate, enddate);
+		"(between %s and %s):"), startdate, enddate);
 	okfunc = do_chow;
 	break;
     case OMIT:
-	strcpy(title, "gretl: omit vars");
-	strcpy(query, "Names (or numbers) of variables to omit:");
+	strcpy(title, _("gretl: omit vars"));
+	strcpy(query, _("Names (or numbers) of variables to omit:"));
 	okfunc = do_add_omit;
 	varclick = 1;
 	break;	
     case ADD:
-	strcpy(title, "gretl: add vars");
-	strcpy(query, "Names (or numbers) of variables to add:");
+	strcpy(title, _("gretl: add vars"));
+	strcpy(query, _("Names (or numbers) of variables to add:"));
 	okfunc = do_add_omit;
 	varclick = 1;
 	break;
     case FCAST: 
-	strcpy(title, "gretl: forecast");
-	sprintf(query, "Starting obs (min = %s)\n"
-		"and ending obs (max = %s)?", 
+	strcpy(title, _("gretl: forecast"));
+	sprintf(query, _("Starting obs (min = %s)\n"
+		"and ending obs (max = %s)?"), 
 		datainfo->stobs, datainfo->endobs);
 	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
 	okfunc = do_forecast;
 	break;
     case MODEL_GENR:
-	strcpy(title, "gretl: add var");
-	strcpy(query, "Enter formula for new variable:");
+	strcpy(title, _("gretl: add var"));
+	strcpy(query, _("Enter formula for new variable:"));
 	okfunc = do_model_genr;
 	varclick = 2;
 	break;
     }
 
     edit_dialog(title, query, defstr, 1,
-		" Apply ", okfunc, mydata, 
-		" Cancel ", NULL, NULL, action, varclick);   
+		_(" Apply "), okfunc, mydata, 
+		_(" Cancel "), NULL, NULL, action, varclick);   
 }
 
 /* ........................................................... */
@@ -372,149 +372,149 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
     switch (action) {
     case SMPL:
-	strcpy(title, "gretl: set sample");
-	sprintf(query, "New starting obs (min = %s)\n"
-		"and ending obs (max = %s):", 
+	strcpy(title, _("gretl: set sample"));
+	sprintf(query, _("New starting obs (min = %s)\n"
+		"and ending obs (max = %s):"), 
 		datainfo->stobs, datainfo->endobs);
 	sprintf(defstr, "%s %s", datainfo->stobs, datainfo->endobs);
 	okfunc = change_sample;
 	break;
     case SMPLDUM:
-	strcpy(title, "gretl: define sample");
-	strcpy(query, "Name of dummy variable to use:");
+	strcpy(title, _("gretl: define sample"));
+	strcpy(query, _("Name of dummy variable to use:"));
 	strcpy(defstr, datainfo->varname[mdata->active_var]);
 	okfunc = do_sampledum;
 	varclick = 2;
 	break;
     case SMPLBOOL:
-	strcpy(title, "gretl: restrict sample");
-	strcpy(query, "Enter boolean condition for selecting cases:");
+	strcpy(title, _("gretl: restrict sample"));
+	strcpy(query, _("Enter boolean condition for selecting cases:"));
 	okfunc = do_samplebool;
 	varclick = 2;
 	break;
     case SETOBS:
-	strcpy(title, "gretl: set data frequency");
-	strcpy(query, "Enter integer frequency and\n"
-	       "starting observation string:");
+	strcpy(title, _("gretl: set data frequency"));
+	strcpy(query, _("Enter integer frequency and\n"
+	       "starting observation string:"));
 	okfunc = do_setobs;
 	break;
     case SEED:
-	strcpy(title, "gretl: random variables");
-	strcpy(query, "Enter integer seed for\n"
-	       "pseudo-random number generator:");
+	strcpy(title, _("gretl: random variables"));
+	strcpy(query, _("Enter integer seed for\n"
+	       "pseudo-random number generator:"));
 	okfunc = do_seed;
 	break; 
     case SIM:
 	if (mdata->active_var < 0) return;
 	if (mdata->active_var == 0) {
-	    errbox("You can't simulate with the constant");
+	    errbox(_("You can't simulate with the constant"));
 	    return;
 	}
 	ntodate(startdate, datainfo->t1 + 1, datainfo);
 	ntodate(enddate, datainfo->n - 1, datainfo);
-	strcpy(title, "gretl: simulate variable");
-	strcpy(query, "Enter spec. for simulation:\n"
+	strcpy(title, _("gretl: simulate variable"));
+	strcpy(query, _("Enter spec. for simulation:\n"
 	       "(start end parameters)\n"
 	       "You will probably want to consult the "
-	       "help on sim first");
+	       "help on sim first"));
 	sprintf(defstr, "%s %s %s", startdate, enddate, 
 		datainfo->varname[mdata->active_var]);
 	okfunc = do_sim;
 	break; 
     case NULLDATA:
-	strcpy(title, "gretl: simulation data");
-	strcpy(query, "Series length for simulation data set:");
+	strcpy(title, _("gretl: simulation data"));
+	strcpy(query, _("Series length for simulation data set:"));
 	strcpy(defstr, "100");
 	okfunc = do_simdata;
 	break;         
     case ADF:
-	strcpy(title, "gretl: ADF test");
-	strcpy(query, "Lag order for ADF test:");
+	strcpy(title, _("gretl: ADF test"));
+	strcpy(query, _("Lag order for ADF test:"));
 	strcpy(defstr, "1");
 	okfunc = do_dialog_cmd;
 	break;
     case COINT:
-	strcpy(title, "gretl: cointegration test");
-	strcpy(query, "Enter spec. for cointegration test:\n"
-	       "(lag_order depvar indepvars)");
+	strcpy(title, _("gretl: cointegration test"));
+	strcpy(query, _("Enter spec. for cointegration test:\n"
+	       "(lag_order depvar indepvars)"));
 	okfunc = do_dialog_cmd;
 	varclick = 1;
 	break;
     case SPEARMAN:
-	strcpy(title, "gretl: rank correlation");
-	strcpy(query, "Enter two variables by name or number:");
+	strcpy(title, _("gretl: rank correlation"));
+	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
 	varclick = 1;
 	break;
     case MEANTEST:
     case MEANTEST2:
-	strcpy(title, "gretl: means test");
+	strcpy(title, _("gretl: means test"));
 	if (action == MEANTEST2) 
-	    strcat(title, " (unequal var)");
-	strcpy(query, "Enter two variables by name or number:");
+	    strcat(title, _(" (unequal var)"));
+	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
 	varclick = 1;
 	break;
     case VARTEST:
-	strcpy(title, "gretl: variances test");
-	strcpy(query, "Enter two variables by name or number:");
+	strcpy(title, _("gretl: variances test"));
+	strcpy(query, _("Enter two variables by name or number:"));
 	okfunc = do_dialog_cmd;
 	varclick = 1;
 	break;
     case PRINT:
-	strcpy(title, "gretl: display vars");
-	strcpy(query, "Enter variable names or numbers:");
+	strcpy(title, _("gretl: display vars"));
+	strcpy(query, _("Enter variable names or numbers:"));
 	okfunc = display_selected;
 	varclick = 1;
 	break;
     case GENR:
-	strcpy(title, "gretl: add var");
-	strcpy(query, "Enter formula for new variable:");
+	strcpy(title, _("gretl: add var"));
+	strcpy(query, _("Enter formula for new variable:"));
 	okfunc = do_genr;
 	varclick = 2;
 	break;
     case RENAME:
-	strcpy(title, "gretl: rename var");
-	strcpy(query, "Enter new name for variable\n(max. 8 characters):");
+	strcpy(title, _("gretl: rename var"));
+	strcpy(query, _("Enter new name for variable\n(max. 8 characters):"));
 	strcpy(defstr, datainfo->varname[mdata->active_var]);
 	okfunc = do_rename_var;
 	break;
     case RELABEL:
 	v = mdata->active_var;
-	strcpy(title, "gretl: edit label");
-	sprintf(query, "Edit label for variable number %d (%s):",
+	strcpy(title, _("gretl: edit label"));
+	sprintf(query, _("Edit label for variable number %d (%s):"),
 		v, datainfo->varname[v]);
 	if (strlen(datainfo->label[v]) > 2) 
 	    strcpy(defstr, datainfo->label[v]);
 	okfunc = do_edit_label;
 	break;
     case VSETMISS:
-	strcpy(title, "gretl: missing code for variable");
-	strcpy(query, "Enter value to be read as \"missing\":");
+	strcpy(title, _("gretl: missing code for variable"));
+	strcpy(query, _("Enter value to be read as \"missing\":"));
 	okfunc = do_variable_setmiss;
 	break;
     case GSETMISS:
-	strcpy(title, "gretl: missing code for dataset");
-	strcpy(query, "Enter value to be read as \"missing\":");
+	strcpy(title, _("gretl: missing code for dataset"));
+	strcpy(query, _("Enter value to be read as \"missing\":"));
 	okfunc = do_global_setmiss;
 	break;
     case MARKERS:
-	strcpy(title, "gretl: add markers");
-	strcpy(query, "Supply full path to file with markers:");
+	strcpy(title, _("gretl: add markers"));
+	strcpy(query, _("Supply full path to file with markers:"));
 	strcpy(defstr, paths.userdir);
 	okfunc = do_add_markers; 
 	break;
     case CORRGM:
-	strcpy(title, "gretl: correlogram");
-	strcpy(query, "Max lag length?\n(0 for automatic):");
+	strcpy(title, _("gretl: correlogram"));
+	strcpy(query, _("Max lag length?\n(0 for automatic):"));
 	strcpy(defstr, "0");
 	okfunc = do_dialog_cmd;
 	break;
     }
 
     edit_dialog(title, query, defstr, 1,
-		" Apply ", okfunc, mydata, 
-		" Cancel ", NULL, NULL, action, varclick);   
+		_(" Apply "), okfunc, mydata, 
+		_(" Cancel "), NULL, NULL, action, varclick);   
 }
 
 /* ........................................................... */
@@ -522,11 +522,11 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 void delete_var_by_id (int id)
 {
     if (dataset_drop_var(id, &Z, datainfo))
-	errbox("Out of memory reorganizing data set");
+	errbox(_("Out of memory reorganizing data set"));
     else {
 	refresh_data();
 	if (id < datainfo->v - 1)
-	    infobox("Take note: variables have been renumbered");
+	    infobox(_("Take note: variables have been renumbered"));
     }
 }
 
@@ -577,7 +577,7 @@ void file_save_callback (GtkWidget *w, gpointer data)
 	u = SAVE_SCRIPT;
 	break;
     default:
-	errbox("Sorry, not yet implemented");
+	errbox(_("Sorry, not yet implemented"));
 	return;
     }
 

@@ -122,131 +122,131 @@ typedef struct {
    controls the sensitivity of the "dbproxy" entry widget. */
 
 RCVARS rc_vars[] = {
-    {"gretldir", "Main gretl directory", NULL, paths.gretldir, 
+    {"gretldir", _("Main gretl directory"), NULL, paths.gretldir, 
      'R', MAXLEN, 1, NULL},
-    {"userdir", "User's gretl directory", NULL, paths.userdir, 
+    {"userdir", _("User's gretl directory"), NULL, paths.userdir, 
      'U', MAXLEN, 1, NULL},
-    {"gnuplot", "Command to launch gnuplot", NULL, paths.gnuplot, 
+    {"gnuplot", _("Command to launch gnuplot"), NULL, paths.gnuplot, 
      'R', MAXLEN, 1, NULL},
-    {"Rcommand", "Command to launch GNU R", NULL, Rcommand, 
+    {"Rcommand", _("Command to launch GNU R"), NULL, Rcommand, 
      'R', MAXSTR, 1, NULL},
-    {"expert", "Expert mode (no warnings)", NULL, &expert, 
+    {"expert", _("Expert mode (no warnings)"), NULL, &expert, 
      'B', 0, 1, NULL},
-    {"updater", "Tell me about gretl updates", NULL, &updater, 
+    {"updater", _("Tell me about gretl updates"), NULL, &updater, 
      'B', 0, 1, NULL},
-    {"binbase", "gretl database directory", NULL, paths.binbase, 
+    {"binbase", _("gretl database directory"), NULL, paths.binbase, 
      'U', MAXLEN, 2, NULL},
-    {"ratsbase", "RATS data directory", NULL, paths.ratsbase, 
+    {"ratsbase", _("RATS data directory"), NULL, paths.ratsbase, 
      'U', MAXLEN, 2, NULL},
-    {"dbhost_ip", "Database server IP", NULL, paths.dbhost_ip, 
+    {"dbhost_ip", _("Database server IP"), NULL, paths.dbhost_ip, 
      'U', 16, 2, NULL},
-    {"dbproxy", "HTTP proxy (ipnumber:port)", NULL, dbproxy, 
+    {"dbproxy", _("HTTP proxy (ipnumber:port)"), NULL, dbproxy, 
      'U', 21, 2, NULL},
-    {"useproxy", "Use HTTP proxy", NULL, &use_proxy, 
+    {"useproxy", _("Use HTTP proxy"), NULL, &use_proxy, 
      'B', 1, 2, NULL},
-    {"calculator", "Calculator", NULL, calculator, 
+    {"calculator", _("Calculator"), NULL, calculator, 
      'U', MAXSTR, 3, NULL},
-    {"editor", "Editor", NULL, editor, 
+    {"editor", _("Editor"), NULL, editor, 
      'U', MAXSTR, 3, NULL},
-    {"toolbar", "Show gretl toolbar", NULL, &want_toolbar, 
+    {"toolbar", _("Show gretl toolbar"), NULL, &want_toolbar, 
      'B', 0, 3, NULL},
-    {"usecwd", "Use current working directory as default", 
-     "Use gretl user directory as default", &usecwd, 'B', 0, 4, NULL},
-    {"olddat", "Use \".dat\" as default datafile suffix", 
-     "Use \".gdt\" as default suffix", &olddat, 'B', 0, 5, NULL},
-    {"fontspec", "Fixed font", NULL, fontspec, 'U', MAXLEN, 0, NULL},
+    {"usecwd", _("Use current working directory as default"), 
+     _("Use gretl user directory as default"), &usecwd, 'B', 0, 4, NULL},
+    {"olddat", _("Use \".dat\" as default datafile suffix"), 
+     _("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
+    {"fontspec", _("Fixed font"), NULL, fontspec, 'U', MAXLEN, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
 
 GtkItemFactoryEntry model_items[] = {
-    { "/_File", NULL, NULL, 0, "<Branch>" },
-    { "/File/_Save as text...", NULL, file_save, SAVE_MODEL, NULL },
-    { "/File/Save to session as icon", NULL, remember_model, 0, NULL },
-    { "/File/Save as icon and close", NULL, remember_model, 1, NULL },
+    { _("/_File"), NULL, NULL, 0, "<Branch>" },
+    { _("/File/_Save as text..."), NULL, file_save, SAVE_MODEL, NULL },
+    { _("/File/Save to session as icon"), NULL, remember_model, 0, NULL },
+    { _("/File/Save as icon and close"), NULL, remember_model, 1, NULL },
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { "/File/_Print...", NULL, window_print, 0, NULL },
+    { _("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif
-    { "/_Edit", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/Copy _all/as plain _text", NULL, text_copy, COPY_TEXT, NULL },
-    { "/Edit/Copy _all/as _HTML", NULL, text_copy, COPY_HTML, NULL },
-    { "/Edit/Copy _all/as _LaTeX", NULL, text_copy, COPY_LATEX, NULL },
-    { "/Edit/Copy _all/as _RTF", NULL, text_copy, COPY_RTF, NULL },
-    { "/_Tests", NULL, NULL, 0, "<Branch>" },    
-    { "/Tests/omit variables", NULL, model_test_callback, OMIT, NULL },
-    { "/Tests/add variables", NULL, model_test_callback, ADD, NULL },
-    { "/Tests/sep1", NULL, NULL, 0, "<Separator>" },
-    { "/Tests/non-linearity (squares)", NULL, do_lmtest, AUX_SQ, NULL },
-    { "/Tests/non-linearity (logs)", NULL, do_lmtest, AUX_LOG, NULL },
-    { "/Tests/sep2", NULL, NULL, 0, "<Separator>" },
-    { "/Tests/autocorrelation", NULL, do_lmtest, AUX_AR, NULL },
-    { "/Tests/heteroskedasticity", NULL, do_lmtest, AUX_WHITE, NULL },
-    { "/Tests/Chow test", NULL, model_test_callback, CHOW, NULL },
-    { "/Tests/CUSUM test", NULL, do_cusum, 0, NULL },
-    { "/Tests/ARCH", NULL, model_test_callback, ARCH, NULL },
-    { "/Tests/normality of residual", NULL, do_resid_freq, 0, NULL },
-    { "/Tests/panel diagnostics", NULL, do_panel_diagnostics, 0, NULL },
-    { "/_Graphs", NULL, NULL, 0, "<Branch>" }, 
-    { "/Graphs/residual plot", NULL, NULL, 0, "<Branch>" },
-    { "/Graphs/fitted, actual plot", NULL, NULL, 0, "<Branch>" },
-    { "/_Model data", NULL, NULL, 0, "<Branch>" },
-    { "/_Model data/Display actual, fitted, residual", NULL, 
+    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { _("/Edit/Copy _all"), NULL, NULL, 0, "<Branch>" },
+    { _("/Edit/Copy _all/as plain _text"), NULL, text_copy, COPY_TEXT, NULL },
+    { _("/Edit/Copy _all/as _HTML"), NULL, text_copy, COPY_HTML, NULL },
+    { _("/Edit/Copy _all/as _LaTeX"), NULL, text_copy, COPY_LATEX, NULL },
+    { _("/Edit/Copy _all/as _RTF"), NULL, text_copy, COPY_RTF, NULL },
+    { _("/_Tests"), NULL, NULL, 0, "<Branch>" },    
+    { _("/Tests/omit variables"), NULL, model_test_callback, OMIT, NULL },
+    { _("/Tests/add variables"), NULL, model_test_callback, ADD, NULL },
+    { _("/Tests/sep1"), NULL, NULL, 0, "<Separator>" },
+    { _("/Tests/non-linearity (squares)"), NULL, do_lmtest, AUX_SQ, NULL },
+    { _("/Tests/non-linearity (logs)"), NULL, do_lmtest, AUX_LOG, NULL },
+    { _("/Tests/sep2"), NULL, NULL, 0, "<Separator>" },
+    { _("/Tests/autocorrelation"), NULL, do_lmtest, AUX_AR, NULL },
+    { _("/Tests/heteroskedasticity"), NULL, do_lmtest, AUX_WHITE, NULL },
+    { _("/Tests/Chow test"), NULL, model_test_callback, CHOW, NULL },
+    { _("/Tests/CUSUM test"), NULL, do_cusum, 0, NULL },
+    { _("/Tests/ARCH"), NULL, model_test_callback, ARCH, NULL },
+    { _("/Tests/normality of residual"), NULL, do_resid_freq, 0, NULL },
+    { _("/Tests/panel diagnostics"), NULL, do_panel_diagnostics, 0, NULL },
+    { _("/_Graphs"), NULL, NULL, 0, "<Branch>" }, 
+    { _("/Graphs/residual plot"), NULL, NULL, 0, "<Branch>" },
+    { _("/Graphs/fitted, actual plot"), NULL, NULL, 0, "<Branch>" },
+    { _("/_Model data"), NULL, NULL, 0, "<Branch>" },
+    { _("/_Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
-    { "/_Model data/Forecasts with standard errors", NULL, 
+    { _("/_Model data/Forecasts with standard errors"), NULL, 
       model_test_callback, FCAST, NULL },
-    { "/_Model data/Confidence intervals for coefficients", NULL, 
+    { _("/_Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
-    { "/_Model data/Add to data set/fitted values", NULL, 
+    { _("/_Model data/Add to data set/fitted values"), NULL, 
       fit_resid_callback, 1, NULL },
-    { "/_Model data/Add to data set/residuals", NULL, 
+    { _("/_Model data/Add to data set/residuals"), NULL, 
       fit_resid_callback, 0, NULL },
-    { "/_Model data/Add to data set/squared residuals", NULL, 
+    { _("/_Model data/Add to data set/squared residuals"), NULL, 
       fit_resid_callback, 2, NULL },
-    { "/_Model data/Add to data set/error sum of squares", NULL, 
+    { _("/_Model data/Add to data set/error sum of squares"), NULL, 
       model_stat_callback, ESS, NULL },
-    { "/_Model data/Add to data set/standard error of residuals", NULL, 
+    { _("/_Model data/Add to data set/standard error of residuals"), NULL, 
       model_stat_callback, SIGMA, NULL },
-    { "/_Model data/Add to data set/R-squared", NULL, 
+    { _("/_Model data/Add to data set/R-squared"), NULL, 
       model_stat_callback, R2, NULL },
-    { "/_Model data/Add to data set/T*R-squared", NULL, 
+    { _("/_Model data/Add to data set/T*R-squared"), NULL, 
       model_stat_callback, TR2, NULL },
-    { "/_Model data/Add to data set/degrees of freedom", NULL, 
+    { _("/_Model data/Add to data set/degrees of freedom"), NULL, 
       model_stat_callback, DF, NULL },
-    { "/_Model data/coefficient covariance matrix", NULL, 
+    { _("/_Model data/coefficient covariance matrix"), NULL, 
       do_outcovmx, 0, NULL },
-    { "/_Model data/sep1", NULL, NULL, 0, "<Separator>" },
-    { "/_Model data/Define new variable...", NULL, model_test_callback, 
+    { _("/_Model data/sep1"), NULL, NULL, 0, "<Separator>" },
+    { _("/_Model data/Define new variable..."), NULL, model_test_callback, 
       MODEL_GENR, NULL },
-    { "/_LaTeX", NULL, NULL, 0, "<Branch>" },
-    { "/LaTeX/_View", NULL, NULL, 0, "<Branch>" },
-    { "/LaTeX/View/_Tabular", NULL, view_latex, 0, NULL },
-    { "/LaTeX/View/_Equation", NULL, view_latex, 1, NULL },
-    { "/LaTeX/_Save", NULL, NULL, 0, "<Branch>" },
-    { "/LaTeX/Save/_Tabular", NULL, file_save, SAVE_TEX_TAB, NULL },
-    { "/LaTeX/Save/_Equation", NULL, file_save, SAVE_TEX_EQ, NULL },
-    { "/LaTeX/_Copy", NULL, NULL, 0, "<Branch>" },
-    { "/LaTeX/Copy/_Tabular", NULL, text_copy, COPY_LATEX, NULL },
-    { "/LaTeX/Copy/_Equation", NULL, text_copy, COPY_LATEX_EQUATION, NULL },
+    { _("/_LaTeX"), NULL, NULL, 0, "<Branch>" },
+    { _("/LaTeX/_View"), NULL, NULL, 0, "<Branch>" },
+    { _("/LaTeX/View/_Tabular"), NULL, view_latex, 0, NULL },
+    { _("/LaTeX/View/_Equation"), NULL, view_latex, 1, NULL },
+    { _("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
+    { _("/LaTeX/Save/_Tabular"), NULL, file_save, SAVE_TEX_TAB, NULL },
+    { _("/LaTeX/Save/_Equation"), NULL, file_save, SAVE_TEX_EQ, NULL },
+    { _("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
+    { _("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
+    { _("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry help_items[] = {
-    { "/_Topics", NULL, NULL, 0, "<Branch>" },    
-    { "/_Find", NULL, menu_find, 0, NULL },
+    { _("/_Topics"), NULL, NULL, 0, "<Branch>" },    
+    { _("/_Find"), NULL, menu_find, 0, NULL },
     { NULL, NULL, NULL, 0, NULL}
 };
 
 GtkItemFactoryEntry edit_items[] = {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
-    { "/File/_Print...", NULL, window_print, 0, NULL },
+    { _("/File/_Print..."), NULL, window_print, 0, NULL },
 #endif    
-    { "/_Edit", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
-    { "/Edit/_Paste", NULL, text_paste, 0, NULL },
-    { "/Edit/_Replace...", NULL, text_replace, 0, NULL },
-    { "/Edit/_Undo", NULL, text_undo, 0, NULL },
+    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
+    { _("/Edit/_Paste"), NULL, text_paste, 0, NULL },
+    { _("/Edit/_Replace..."), NULL, text_replace, 0, NULL },
+    { _("/Edit/_Undo"), NULL, text_undo, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -518,7 +518,7 @@ void *mymalloc (size_t size)
     void *mem;
    
     if((mem = malloc(size)) == NULL) 
-	errbox("Out of memory!");
+	errbox(_("Out of memory!"));
     return mem;
 }
 
@@ -529,7 +529,7 @@ void *myrealloc (void *ptr, size_t size)
     void *mem;
    
     if ((mem = realloc(ptr, size)) == NULL) 
-	errbox("Out of memory!");
+	errbox(_("Out of memory!"));
     return mem;
 }
 
@@ -640,10 +640,10 @@ void verify_open_data (gpointer userdata)
 	in "expert" mode */
 {
     if (data_status && !expert && 
-	yes_no_dialog ("gretl: open data", 
-		       "Opening a new data file will automatically\n"
+	yes_no_dialog (_("gretl: open data"), 
+		       _("Opening a new data file will automatically\n"
 		       "close the current one.  Any unsaved work\n"
-		       "will be lost.  Proceed to open data file?", 0))
+		       "will be lost.  Proceed to open data file?"), 0))
 	return;
     else 
 	do_open_data(NULL, userdata);
@@ -657,10 +657,10 @@ void verify_open_session (gpointer userdata)
 	in "expert" mode */
 {
     if (data_status && !expert &&
-	yes_no_dialog ("gretl: open session", 
-		       "Opening a new session file will automatically\n"
+	yes_no_dialog (_("gretl: open session"), 
+		       _("Opening a new session file will automatically\n"
 		       "close the current session.  Any unsaved work\n"
-		       "will be lost.  Proceed to open session file?", 0))
+		       "will be lost.  Proceed to open session file?"), 0))
 	return;
     else 
 	do_open_session(NULL, userdata);
@@ -722,7 +722,7 @@ void save_session (char *fname)
     /* get ready to save "session" */
     fp = fopen(fname, "a");
     if (fp == NULL) {
-	sprintf(errtext, "Couldn't open session file %s", fname);
+	sprintf(errtext, _("Couldn't open session file %s"), fname);
 	errbox(errtext);
 	return;
     }
@@ -744,7 +744,7 @@ void save_session (char *fname)
 	   current one? */
 	if (strcmp((session.graphs[i])->fname, tmp)) {
 	    if (copyfile((session.graphs[i])->fname, tmp)) {
-		errbox("Couldn't copy graph file");
+		errbox(_("Couldn't copy graph file"));
 		continue;
 	    } else {
 		remove((session.graphs[i])->fname);
@@ -771,27 +771,27 @@ void save_session (char *fname)
 	    fprintf(fp, "%s", session.notes);
 	    fclose(fp);
 	} else
-	    errbox("Couldn't write session notes file");
+	    errbox(_("Couldn't write session notes file"));
     }
 
     /* save output */
     switch_ext(fname2, fname, "txt");
     prn = gretl_print_new(GRETL_PRINT_FILE, fname2);
     if (prn == NULL) {
-	errbox("Couldn't open output file for writing");
+	errbox(_("Couldn't open output file for writing"));
 	return;
     }
 
     gui_logo(prn->fp);
     session_time(prn->fp);
-    pprintf(prn, "Output from %s\n", fname);
+    pprintf(prn, _("Output from %s\n"), fname);
     execute_script(fname, NULL, NULL, prn, SAVE_SESSION_EXEC); 
     gretl_print_destroy(prn);
 
-    sprintf(msg, "session saved to %s -\n", savedir);
-    strcat(msg, "commands: ");
+    sprintf(msg, _("session saved to %s -\n"), savedir);
+    strcat(msg, _("commands: "));
     strcat(msg, (spos)? fname + spos + 1 : fname);
-    strcat(msg, "\noutput: ");
+    strcat(msg, _("\noutput: "));
     spos = slashpos(fname2);
     strcat(msg, (spos)? fname2 + spos + 1 : fname2);
     infobox(msg);
@@ -863,7 +863,7 @@ static int real_helpfile_init (int cli)
     /* first pass: find length and number of topics */
     fp = fopen(helpfile, "r");
     if (fp == NULL) {
-	fprintf(stderr, "help file %s is not accessible\n", helpfile);
+	fprintf(stderr, _("help file %s is not accessible\n"), helpfile);
 	return -1;
     }
 
@@ -975,7 +975,7 @@ static void add_help_topics (windata_t *hwin, int script)
 {
     int i, j;
     GtkItemFactoryEntry helpitem;
-    gchar *mpath = "/_Topics";
+    gchar *mpath = _("/_Topics");
     struct help_head_t **heads = (script)? cli_heads : gui_heads;
 
     helpitem.path = NULL;
@@ -1177,7 +1177,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
     text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
     if (text == NULL || !strlen(text)) {
-	errbox("Buffer is empty");
+	errbox(_("Buffer is empty"));
 	g_free(text);
 	return;
     }
@@ -1187,11 +1187,11 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
     *pbuf = text;
 
     if (mydata->role == EDIT_HEADER) {
-	infobox("Data info saved");
+	infobox(_("Data info saved"));
 	data_status |= MODIFIED_DATA;
     } 
     else if (mydata->role == EDIT_NOTES) {
-	infobox("Notes saved");
+	infobox(_("Notes saved"));
 	session_changed(1);
     }
 }
@@ -1210,14 +1210,14 @@ static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 	gchar *text;
 
 	if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	    errbox("Can't open file for writing");
+	    errbox(_("Can't open file for writing"));
 	    return;
 	} else {
 	    text = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
 	    fprintf(fp, "%s", text);
 	    fclose(fp);
 	    g_free(text);
-	    sprintf(buf, "Saved %s\n", mydata->fname);
+	    sprintf(buf, _("Saved %s\n"), mydata->fname);
 	    infobox(buf);
 	    if (mydata->role == EDIT_SCRIPT) mydata->active_var = 0;
 	}
@@ -1295,15 +1295,15 @@ static void make_editbar (windata_t *vwin, GtkWidget *dialog)
     GdkColormap *colormap;
     gpointer ptr = vwin;
     int i;
-    static char *editstrings[] = {"Save",
-				  "Save as...",
-				  "Run",
-				  "Copy selection", 
-				  "Paste", 
-				  "Replace...",
-				  "Undo",
-				  "Help on command",
-				  "Close",
+    static char *editstrings[] = {_("Save"),
+				  _("Save as..."),
+				  _("Run"),
+				  _("Copy selection"), 
+				  _("Paste"), 
+				  _("Replace..."),
+				  _("Undo"),
+				  _("Help on command"),
+				  _("Close"),
 				  NULL};
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
@@ -1446,7 +1446,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     gtk_widget_show(table);
 
     /* close button */
-    close = gtk_button_new_with_label("Close");
+    close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
@@ -1479,26 +1479,26 @@ static gchar *make_viewer_title (int role, const char *fname)
 
     switch (role) {
     case HELP: 
-	title = g_strdup("gretl: help"); break;
+	title = g_strdup(_("gretl: help")); break;
     case CLI_HELP:
-	title = g_strdup("gretl: command syntax"); break;
+	title = g_strdup(_("gretl: command syntax")); break;
     case VIEW_LOG:
-	title = g_strdup("gretl: command log"); break;
+	title = g_strdup(_("gretl: command log")); break;
     case CONSOLE:
-	title = g_strdup("gretl console"); break;
+	title = g_strdup(_("gretl console")); break;
     case EDIT_SCRIPT:
     case VIEW_SCRIPT:	
 	if (strstr(fname, "script_tmp") || strstr(fname, "session.inp"))
-	    title = g_strdup("gretl: command script");
+	    title = g_strdup(_("gretl: command script"));
 	else {
 	    gchar *p = strrchr(fname, SLASH);
 	    title = g_strdup_printf("gretl: %s", p? p + 1 : fname);
 	} 
 	break;
     case EDIT_NOTES:
-	title = g_strdup("gretl: session notes"); break;
+	title = g_strdup(_("gretl: session notes")); break;
     case GR_PLOT:
-	title = g_strdup("gretl: edit plot commands"); break;
+	title = g_strdup(_("gretl: edit plot commands")); break;
     default:
 	break;
     }
@@ -1529,7 +1529,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     fd = fopen(filename, "r");
     if (fd == NULL) {
-	sprintf(errtext, "Can't open %s for reading", filename);
+	sprintf(errtext, _("Can't open %s for reading"), filename);
 	errbox(errtext);
 	return NULL;
     }
@@ -1627,7 +1627,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     /* close button for non-editable windows and console */
     if (role == CONSOLE || !editable) {
 	GtkWidget *close = 
-	    gtk_button_new_with_label("Close");
+	    gtk_button_new_with_label(_("Close"));
 
 	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 			   close, FALSE, TRUE, 0);
@@ -1783,7 +1783,7 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s)
 	if (w != NULL) 
 	    gtk_widget_set_sensitive(w, s);
 	else
-	    fprintf(stderr, "Failed to flip state of \"%s\"\n", path);
+	    fprintf(stderr, _("Failed to flip state of \"%s\"\n"), path);
     }
 }
 
@@ -1791,56 +1791,56 @@ void flip (GtkItemFactory *ifac, char *path, gboolean s)
 
 static void model_panel_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/Tests/panel diagnostics", s);
+    flip(ifac, _("/Tests/panel diagnostics"), s);
 }
 
 /* ........................................................... */
 
 static void model_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/Tests/non-linearity (squares)", s);
-    flip(ifac, "/Tests/non-linearity (logs)", s);
-    flip(ifac, "/Tests/autocorrelation", s);
-    flip(ifac, "/Tests/heteroskedasticity", s);
-    flip(ifac, "/Tests/Chow test", s);
-    flip(ifac, "/Tests/CUSUM test", s);
-    flip(ifac, "/Tests/ARCH", s);
-    flip(ifac, "/Tests/normality of residual", s);
-    flip(ifac, "/Graphs", s);
-    flip(ifac, "/Model data/Display actual, fitted, residual", s);
-    flip(ifac, "/Model data/Forecasts with standard errors", s);
-    flip(ifac, "/Model data/Add to data set/residuals", s);
-    flip(ifac, "/Model data/Add to data set/error sum of squares", s);
-    flip(ifac, "/Model data/Add to data set/standard error of residuals", s);
-    flip(ifac, "/Model data/Add to data set/R-squared", s);
+    flip(ifac, _("/Tests/non-linearity (squares)"), s);
+    flip(ifac, _("/Tests/non-linearity (logs)"), s);
+    flip(ifac, _("/Tests/autocorrelation"), s);
+    flip(ifac, _("/Tests/heteroskedasticity"), s);
+    flip(ifac, _("/Tests/Chow test"), s);
+    flip(ifac, _("/Tests/CUSUM test"), s);
+    flip(ifac, _("/Tests/ARCH"), s);
+    flip(ifac, _("/Tests/normality of residual"), s);
+    flip(ifac, _("/Graphs"), s);
+    flip(ifac, _("/Model data/Display actual, fitted, residual"), s);
+    flip(ifac, _("/Model data/Forecasts with standard errors"), s);
+    flip(ifac, _("/Model data/Add to data set/residuals"), s);
+    flip(ifac, _("/Model data/Add to data set/error sum of squares"), s);
+    flip(ifac, _("/Model data/Add to data set/standard error of residuals"), s);
+    flip(ifac, _("/Model data/Add to data set/R-squared"), s);
 }
 
 /* ........................................................... */
 
 static void lmmenu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/Tests/non-linearity (squares)", s);
-    flip(ifac, "/Tests/non-linearity (logs)", s);
-    flip(ifac, "/Tests/autocorrelation", s);
-    flip(ifac, "/Tests/heteroskedasticity", s);
-    flip(ifac, "/Tests/Chow test", s);
-    flip(ifac, "/Tests/CUSUM test", s);
-    flip(ifac, "/Tests/ARCH", s);
+    flip(ifac, _("/Tests/non-linearity (squares)"), s);
+    flip(ifac, _("/Tests/non-linearity (logs)"), s);
+    flip(ifac, _("/Tests/autocorrelation"), s);
+    flip(ifac, _("/Tests/heteroskedasticity"), s);
+    flip(ifac, _("/Tests/Chow test"), s);
+    flip(ifac, _("/Tests/CUSUM test"), s);
+    flip(ifac, _("/Tests/ARCH"), s);
 }
 
 /* ........................................................... */
 
 static void latex_menu_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/LaTeX", s);
+    flip(ifac, _("/LaTeX"), s);
 }
 
 /* ........................................................... */
 
 static void model_save_state (GtkItemFactory *ifac, gboolean s)
 {
-    flip(ifac, "/File/Save to session as icon", s);
-    flip(ifac, "/File/Save as icon and close", s);
+    flip(ifac, _("/File/Save to session as icon"), s);
+    flip(ifac, _("/File/Save as icon and close"), s);
 }
 
 /* ........................................................... */
@@ -1890,8 +1890,8 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 {
     int i, j;
     GtkItemFactoryEntry varitem;
-    gchar *mpath[] = {"/Graphs/residual plot", 
-		      "/Graphs/fitted, actual plot"};
+    gchar *mpath[] = {_("/Graphs/residual plot"), 
+		      _("/Graphs/fitted, actual plot")};
     MODEL *pmod = vwin->data;
 
     varitem.path = NULL;
@@ -1902,9 +1902,9 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	varitem.callback_action = 0; 
 	varitem.item_type = NULL;
 	if (dataset_is_time_series(datainfo))
-	    sprintf(varitem.path, "%s/against time", mpath[i]);
+	    sprintf(varitem.path, _("%s/against time"), mpath[i]);
 	else
-	    sprintf(varitem.path, "%s/by observation number", mpath[i]);
+	    sprintf(varitem.path, _("%s/by observation number"), mpath[i]);
 	if (i == 0)
 	    varitem.callback = resid_plot; 
 	else
@@ -1919,7 +1919,7 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.accelerator = NULL;
 	    varitem.callback_action = pmod->list[j]; 
 	    varitem.item_type = NULL;
-	    sprintf(varitem.path, "%s/against %s", mpath[i], 
+	    sprintf(varitem.path, _("%s/against %s"), mpath[i], 
 		    datainfo->varname[pmod->list[j]]);
 	    if (i == 0)
 		varitem.callback = resid_plot; 
@@ -1959,21 +1959,21 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    continue;
 	if (!dums) { /* add separator, branch and "none" */
 	    dumitem.path = mymalloc(64);
-	    sprintf(dumitem.path, "/Graphs/dumsep");
+	    sprintf(dumitem.path, _("/Graphs/dumsep"));
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
 	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    /* menu branch */
-	    sprintf(dumitem.path, "/Graphs/Separation");
+	    sprintf(dumitem.path, _("/Graphs/Separation"));
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Branch>";
 	    dumitem.accelerator = NULL;
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 	    /* "none" option */
-	    sprintf(dumitem.path, "/Graphs/Separation/none");
+	    sprintf(dumitem.path, _("/Graphs/Separation/none"));
 	    dumitem.callback = plot_dummy_call;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<RadioItem>";
@@ -1982,11 +1982,11 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    dums = 1;
 	} 
 	dumitem.callback_action = pmod->list[i]; 
-	sprintf(dumitem.path, "/Graphs/Separation/by %s",  
+	sprintf(dumitem.path, _("/Graphs/Separation/by %s"),  
 		datainfo->varname[pmod->list[i]]);
 	dumitem.callback = plot_dummy_call;	    
 	dumitem.accelerator = NULL;
-	dumitem.item_type = "/Graphs/Separation/none";
+	dumitem.item_type = _("/Graphs/Separation/none");
 	gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
     }
     free(dumitem.path);
@@ -2003,40 +2003,40 @@ static void check_model_menu (GtkWidget *w, GdkEventButton *eb,
     int s, ok = 1;
 
     if (Z == NULL) {
-	flip(mwin->ifac, "/File/Save to sesssion as icon", FALSE);
-	flip(mwin->ifac, "/File/Save as icon and close", FALSE);
-	flip(mwin->ifac, "/Edit/Copy all", FALSE);
-	flip(mwin->ifac, "/Model data", FALSE);
-	flip(mwin->ifac, "/Tests", FALSE);
-	flip(mwin->ifac, "/Graphs", FALSE);
-	flip(mwin->ifac, "/Model data", FALSE);
-	flip(mwin->ifac, "/LaTeX", FALSE);
+	flip(mwin->ifac, _("/File/Save to sesssion as icon"), FALSE);
+	flip(mwin->ifac, _("/File/Save as icon and close"), FALSE);
+	flip(mwin->ifac, _("/Edit/Copy all"), FALSE);
+	flip(mwin->ifac, _("/Model data"), FALSE);
+	flip(mwin->ifac, _("/Tests"), FALSE);
+	flip(mwin->ifac, _("/Graphs"), FALSE);
+	flip(mwin->ifac, _("/Model data"), FALSE);
+	flip(mwin->ifac, _("/LaTeX"), FALSE);
 	return;
     }
 
     if (quiet_sample_check(pmod)) ok = 0;
     s = GTK_WIDGET_IS_SENSITIVE
-	(gtk_item_factory_get_item(mwin->ifac, "/Tests/omit variables"));
+	(gtk_item_factory_get_item(mwin->ifac, _("/Tests/omit variables")));
     if ((s && ok) || (!s && !ok)) return;
     s = !s;
 
-    flip(mwin->ifac, "/Tests/omit variables", s);
-    flip(mwin->ifac, "/Tests/add variables", s);
-    flip(mwin->ifac, "/Tests/non-linearity (squares)", s);
-    flip(mwin->ifac, "/Tests/non-linearity (logs)", s);
-    flip(mwin->ifac, "/Tests/autocorrelation", s);
-    flip(mwin->ifac, "/Tests/heteroskedasticity", s);
-    flip(mwin->ifac, "/Tests/Chow test", s);
-    flip(mwin->ifac, "/Tests/CUSUM test", s);
-    flip(mwin->ifac, "/Tests/ARCH", s);
-    flip(mwin->ifac, "/Graphs", s);
-    flip(mwin->ifac, "/Model data/Display actual, fitted, residual", s);
-    flip(mwin->ifac, "/Model data/Forecasts with standard errors", s);
-    flip(mwin->ifac, "/Model data/Confidence intervals for coefficients", s);
-    flip(mwin->ifac, "/Model data/Add to data set/fitted values", s);
-    flip(mwin->ifac, "/Model data/Add to data set/residuals", s);
-    flip(mwin->ifac, "/Model data/Add to data set/squared residuals", s);
-    flip(mwin->ifac, "/Model data/Define new variable...", s);
+    flip(mwin->ifac, _("/Tests/omit variables"), s);
+    flip(mwin->ifac, _("/Tests/add variables"), s);
+    flip(mwin->ifac, _("/Tests/non-linearity (squares)"), s);
+    flip(mwin->ifac, _("/Tests/non-linearity (logs)"), s);
+    flip(mwin->ifac, _("/Tests/autocorrelation"), s);
+    flip(mwin->ifac, _("/Tests/heteroskedasticity"), s);
+    flip(mwin->ifac, _("/Tests/Chow test"), s);
+    flip(mwin->ifac, _("/Tests/CUSUM test"), s);
+    flip(mwin->ifac, _("/Tests/ARCH"), s);
+    flip(mwin->ifac, _("/Graphs"), s);
+    flip(mwin->ifac, _("/Model data/Display actual, fitted, residual"), s);
+    flip(mwin->ifac, _("/Model data/Forecasts with standard errors"), s);
+    flip(mwin->ifac, _("/Model data/Confidence intervals for coefficients"), s);
+    flip(mwin->ifac, _("/Model data/Add to data set/fitted values"), s);
+    flip(mwin->ifac, _("/Model data/Add to data set/residuals"), s);
+    flip(mwin->ifac, _("/Model data/Add to data set/squared residuals"), s);
+    flip(mwin->ifac, _("/Model data/Define new variable..."), s);
 }
 
 /* ........................................................... */
@@ -2107,7 +2107,7 @@ int view_model (PRN *prn, MODEL *pmod, int hsize, int vsize,
     gtk_widget_show(table);
 
     /* close button */
-    close = gtk_button_new_with_label("Close");
+    close = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
 		       close, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(close), "clicked", 
@@ -2181,14 +2181,14 @@ static void msgbox (const char *msg, int err)
     char labeltext[MAXLEN];
 
     if (err)
-	sprintf(labeltext, "Error:\n%s\n", msg);
+	sprintf(labeltext, _("Error:\n%s\n"), msg);
     else
-	sprintf(labeltext, "Info:\n%s\n", msg);
+	sprintf(labeltext, _("Info:\n%s\n"), msg);
     w = gtk_window_new(GTK_WINDOW_DIALOG);
     gtk_container_border_width(GTK_CONTAINER(w), 5);
     gtk_window_position (GTK_WINDOW(w), GTK_WIN_POS_MOUSE);
-    gtk_window_set_title (GTK_WINDOW (w), (err)? "gretl error" : 
-			  "gretl info");  
+    gtk_window_set_title (GTK_WINDOW (w), (err)? _("gretl error") : 
+			  _("gretl info"));  
   
     table = gtk_table_new(2, 3, FALSE);
     gtk_container_add(GTK_CONTAINER(w), table);
@@ -2197,7 +2197,7 @@ static void msgbox (const char *msg, int err)
     gtk_table_attach_defaults(GTK_TABLE(table), label, 0, 3, 0, 1);
 
     if (err)
-	button = gtk_button_new_with_label("Close");
+	button = gtk_button_new_with_label(_("Close"));
     else
 	button = gtk_button_new_with_label("OK");
     gtk_table_attach_defaults(GTK_TABLE(table), button, 1, 2, 1, 2);
@@ -2235,14 +2235,14 @@ int validate_varname (const char *varname)
     
     if (n > 8) {
 	safecpy(namebit, varname, 8);
-	sprintf(errtext, "Variable name %s... is too long\n"
-	       "(the max is 8 characters)", namebit);
+	sprintf(errtext, _("Variable name %s... is too long\n"
+	       "(the max is 8 characters)"), namebit);
 	errbox(errtext);
 	return 1;
     }
     if (!(isalpha(varname[0]))) {
-	sprintf(errtext, "First char of name ('%c') is bad\n"
-	       "(first must be alphabetical)", varname[0]);
+	sprintf(errtext, _("First char of name ('%c') is bad\n"
+	       "(first must be alphabetical)"), varname[0]);
 	errbox(errtext);
 	return 1;
     }
@@ -2250,8 +2250,8 @@ int validate_varname (const char *varname)
 	if (!(isalpha(varname[i]))  
 	    && !(isdigit(varname[i]))
 	    && varname[i] != '_') {
-	    sprintf(errtext, "Name contains an illegal char (in place %d)\n"
-		    "Use only letters, digits and underscore", i + 1);
+	    sprintf(errtext, _("Name contains an illegal char (in place %d)\n"
+		    "Use only letters, digits and underscore"), i + 1);
 	    errbox(errtext);
 	    return 1;
 	}
@@ -2266,7 +2266,7 @@ void options_dialog (gpointer data)
     GtkWidget *tempwid, *dialog, *notebook;
 
     dialog = gtk_dialog_new ();
-    gtk_window_set_title (GTK_WINDOW (dialog), "gretl: options");
+    gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: options"));
     gtk_container_border_width 
 	(GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), 10);
     gtk_container_border_width 
@@ -2302,7 +2302,7 @@ void options_dialog (gpointer data)
 			       GTK_OBJECT (dialog));
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_with_label ("  Cancel  ");
+    tempwid = gtk_button_new_with_label (_("  Cancel  "));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
@@ -2312,7 +2312,7 @@ void options_dialog (gpointer data)
 			       GTK_OBJECT (dialog));
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_with_label ("Apply");
+    tempwid = gtk_button_new_with_label (_("Apply"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 
@@ -2347,15 +2347,15 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
     gtk_widget_show (box);
 
     if (tab == 1)
-	tempwid = gtk_label_new ("General");
+	tempwid = gtk_label_new (_("General"));
     else if (tab == 2)
-	tempwid = gtk_label_new ("Databases");
+	tempwid = gtk_label_new (_("Databases"));
     else if (tab == 3)
-	tempwid = gtk_label_new ("Toolbar");
+	tempwid = gtk_label_new (_("Toolbar"));
     else if (tab == 4)
-	tempwid = gtk_label_new ("Open/Save path");
+	tempwid = gtk_label_new (_("Open/Save path"));
     else if (tab == 5)
-	tempwid = gtk_label_new ("Data files");
+	tempwid = gtk_label_new (_("Data files"));
     
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
@@ -2667,7 +2667,7 @@ void write_rc (void)
 
     rc = fopen(rcfile, "w");
     if (rc == NULL) {
-	errbox("Couldn't open config file for writing");
+	errbox(_("Couldn't open config file for writing"));
 	return;
     }
     fprintf(rc, "# config file written by gretl: do not edit\n");
@@ -2788,7 +2788,7 @@ void font_selector (void)
 
     if (!fontsel) {
 	fontsel = gtk_font_selection_dialog_new 
-	    ("Font for gretl output windows");
+	    (_("Font for gretl output windows"));
 	gtk_window_set_position (GTK_WINDOW (fontsel), GTK_WIN_POS_MOUSE);
 	gtk_font_selection_dialog_set_filter 
 	    (GTK_FONT_SELECTION_DIALOG (fontsel),
@@ -2863,7 +2863,7 @@ static void find_in_help (GtkWidget *widget, gpointer data)
 				 (gfloat) (linecount - 2) *
 				 GTK_TEXT(hwin->w)->vadj->upper / help_length);
 	find_window = NULL;
-    } else infobox("String was not found.");
+    } else infobox(_("String was not found."));
 
     g_free(haystack);
 }
@@ -2901,7 +2901,7 @@ static void find_in_clist (GtkWidget *w, gpointer data)
     } else {
 	gtk_clist_select_row(GTK_CLIST(dbdat->listbox), 0, 0);
 	dbdat->active_var = 0;
-	infobox("String was not found.");
+	infobox(_("String was not found."));
     }
 }
 
@@ -2949,11 +2949,11 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_signal_connect (GTK_OBJECT (find_window), "destroy",
 	                GTK_SIGNAL_FUNC (close_find_dialog),
 	                find_window);
-    gtk_window_set_title (GTK_WINDOW (find_window), "gretl: find");
+    gtk_window_set_title (GTK_WINDOW (find_window), _("gretl: find"));
     gtk_container_border_width (GTK_CONTAINER (find_window), 5);
 
     hbox = gtk_hbox_new(TRUE, TRUE);
-    label = gtk_label_new(" Find what:");
+    label = gtk_label_new(_(" Find what:"));
     gtk_widget_show (label);
     find_entry = gtk_entry_new();
 
@@ -2981,7 +2981,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_window_set_position(GTK_WINDOW (find_window), GTK_WIN_POS_MOUSE);
 
     /* find button -- make this the default */
-    button = gtk_button_new_with_label ("Find next");
+    button = gtk_button_new_with_label (_("Find next"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
@@ -2991,7 +2991,7 @@ static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
     gtk_widget_show(button);
 
     /* cancel button */
-    button = gtk_button_new_with_label ("Cancel");
+    button = gtk_button_new_with_label (_("Cancel"));
     GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX (GTK_DIALOG (find_window)->action_area), 
 		       button, TRUE, TRUE, FALSE);
@@ -3137,7 +3137,7 @@ void text_undo (windata_t *mydata, guint u, GtkWidget *widget)
 	gtk_object_get_data(GTK_OBJECT(mydata->w), "undo");
     
     if (old == NULL) {
-	errbox("No undo information available");
+	errbox(_("No undo information available"));
     } else {
 	guint len = 
 	    gtk_text_get_length(GTK_TEXT(mydata->w));
@@ -3207,9 +3207,9 @@ static void clear_files_list (int filetype, char **filep)
     char tmpname[MAXSTR];
     gchar itempath[80];
     int i;
-    gchar *pathstart[] = {"/File/Open data", 
-			  "/Session/Open",
-			  "/File/Open command file"};
+    gchar *pathstart[] = {_("/File/Open data"), 
+			  _("/Session/Open"),
+			  _("/File/Open command file")};
 
     for (i=0; i<MAXRECENT; i++) {
 	sprintf(itempath, "%s/%d. %s", pathstart[filetype - 1],
@@ -3429,12 +3429,12 @@ void add_files_to_menu (int filetype)
     void (*callfunc)();
     GtkItemFactoryEntry fileitem;
     GtkWidget *w;
-    gchar *msep[] = {"/File/Open data/sep",
-		     "/Session/sep",
-		     "/File/Open command file/sep"};
-    gchar *mpath[] = {"/File/_Open data",
-		     "/Session",
-		     "/File/Open command file"};
+    gchar *msep[] = {_("/File/Open data/sep"),
+		     _("/Session/sep"),
+		     _("/File/Open command file/sep")};
+    gchar *mpath[] = {_("/File/_Open data"),
+		     _("/Session"),
+		     _("/File/Open command file")};
 
     fileitem.path = NULL;
 
@@ -3507,7 +3507,7 @@ int gui_open_plugin (const char *plugin, void **handle)
     if (*handle == NULL) {
 	char buf[MAXLEN];
 
-	sprintf(buf, "Couldn't load plugin %s", pluginpath);
+	sprintf(buf, _("Couldn't load plugin %s"), pluginpath);
 	errbox(buf);
 	return 1;
     }
@@ -3516,7 +3516,7 @@ int gui_open_plugin (const char *plugin, void **handle)
     *handle = dlopen(pluginpath, RTLD_LAZY);
     if (*handle == NULL) {
 	errbox(dlerror());
-	fprintf(stderr, "Failed to load plugin: %s\n", pluginpath);
+	fprintf(stderr, _("Failed to load plugin: %s\n"), pluginpath);
 	return 1;
     } 
 #endif 

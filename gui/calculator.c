@@ -51,7 +51,7 @@ static int printnum (char *dest, const char *s, int d)
     char numstr[16];
 
     if (s == NULL || strlen(s) == 0) {
-	errbox("Incomplete entry for p-value");
+	errbox(_("Incomplete entry for p-value"));
 	return 1;
     }
 
@@ -62,7 +62,7 @@ static int printnum (char *dest, const char *s, int d)
 	if (data_status && (v = varindex(datainfo, s)) < datainfo->v) {
 	    xx = Z[v][0];
 	    if (na(xx)) {
-		sprintf(errtext, "Data missing for variable '%s'", s);
+		sprintf(errtext, _("Data missing for variable '%s'"), s);
 		errbox(errtext);
 		return 1;
 	    }
@@ -70,7 +70,7 @@ static int printnum (char *dest, const char *s, int d)
 	    else sprintf(numstr, "%d", (int) xx);
 	} else {
 	    sprintf(errtext, 
-		    "Unrecognized variable '%s' in p-value command", s);
+		    _("Unrecognized variable '%s' in p-value command"), s);
 	    errbox(errtext);
 	    return 1;
 	}
@@ -89,7 +89,7 @@ static int printnum (char *dest, const char *s, int d)
 static double getval (const char *s, PRN *prn) 
 {
     if (s == NULL || strlen(s) == 0) {
-	errbox("Incomplete entry for hypothesis test");
+	errbox(_("Incomplete entry for hypothesis test"));
 	gretl_print_destroy(prn);
 	return NADBL;
     }
@@ -101,7 +101,7 @@ static double getval (const char *s, PRN *prn)
 static int getint (const char *s, PRN *prn) 
 {
     if (s == NULL || strlen(s) == 0) {
-	errbox("Incomplete entry for hypothesis test");
+	errbox(_("Incomplete entry for hypothesis test"));
 	gretl_print_destroy(prn);
 	return -1;
     }
@@ -145,7 +145,7 @@ void get_critical (GtkWidget *w, gpointer data)
 	lineprint_t *lpt = (lineprint_t *) data;
 
 	if (parse_critical_input(lpt->line, &i, &df, &n)) {
-	    errbox("Couldn't parse 'critical' line");
+	    errbox(_("Couldn't parse 'critical' line"));
 	    close_plugin(handle);
 	    return;
 	}
@@ -188,7 +188,7 @@ void get_critical (GtkWidget *w, gpointer data)
     }
 
     if (i != 3 && funp == NULL)  {
-	errbox("Couldn't load plugin function");
+	errbox(_("Couldn't load plugin function"));
 	close_plugin(handle);
 	if (w != NULL) gretl_print_destroy(prn);
 	return;
@@ -205,9 +205,9 @@ void get_critical (GtkWidget *w, gpointer data)
 	(*chicrit)(df, prn, w != NULL);
 	break;	
     case 3:
-	pprintf(prn, "Approximate critical values of F(%d, %d)\n\n",
+	pprintf(prn, _("Approximate critical values of F(%d, %d)\n\n"),
 		df, n);
-	pprintf(prn, " 10%% in right tail %.2f\n", f_crit_a(.10, df, n));
+	pprintf(prn, _(" 10%% in right tail %.2f\n"), f_crit_a(.10, df, n));
 	pprintf(prn, "  5%%               %.2f\n", f_crit_a(.05, df, n));	
 	pprintf(prn, "  1%%               %.2f\n", f_crit_a(.01, df, n));
 	break;
@@ -221,7 +221,7 @@ void get_critical (GtkWidget *w, gpointer data)
     close_plugin(handle);
 
     if (w != NULL)
-	view_buffer(prn, 77, 300, "gretl: statistical table", STAT_TABLE,
+	view_buffer(prn, 77, 300, _("gretl: statistical table"), STAT_TABLE,
 		    view_items);
 }
 
@@ -248,7 +248,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
 	val = atof(tmp); /* std. deviation */
 	if (val <= 0) {
-	    errbox("Invalid standard deviation");
+	    errbox(_("Invalid standard deviation"));
 	    return;
 	}
 	xx /= val; 
@@ -264,7 +264,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[3]));
 	val = atof(tmp); /* std. deviation */
 	if (val <= 0) {
-	    errbox("Invalid standard deviation");
+	    errbox(_("Invalid standard deviation"));
 	    return;
 	}
 	xx /= val; 
@@ -296,14 +296,14 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     }
     if (bufopen(&prn)) return;
     batch_pvalue(cmd, Z, datainfo, prn);
-    view_buffer(prn, 78, 200, "gretl: p-value", PVALUE, view_items);
+    view_buffer(prn, 78, 200, _("gretl: p-value"), PVALUE, view_items);
 }
 
 /* ........................................................... */
 
 static void print_pv (PRN *prn, double p1, double p2)
 {
-    pprintf(prn, "Two-tailed p-value = %.4g\n(one-tailed = %.4g)\n",
+    pprintf(prn, _("Two-tailed p-value = %.4g\n(one-tailed = %.4g)\n"),
 	    p1, p2);
 }
 
@@ -365,7 +365,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
 	spike = .25;
 	fprintf(fp, "set xrange [%.3f:%.3f]\n", -prange, prange);
 	fprintf(fp, "set yrange [0:.50]\n");
-	fprintf(fp, "set xlabel \"standard errors\"\n");
+	fprintf(fp, _("set xlabel \"standard errors\"\n"));
     }
     if (dist == 1 || dist == 3) { /* t, F */
 	fprintf(fp, "Binv(p,q)=exp(lgamma(p+q)-lgamma(p)-lgamma(q))\n");
@@ -394,24 +394,24 @@ static void htest_graph (int dist, double x, int df1, int df2)
 
     fprintf(fp, "plot \\\n");
     if (dist == 0) {
-	fprintf(fp, "(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
-		"title 'Gaussian sampling distribution' w lines , \\\n");
+	fprintf(fp, _("(1/(sqrt(2*pi))*exp(-(x)**2/2)) "
+		"title 'Gaussian sampling distribution' w lines , \\\n"));
     }
     else if (dist == 1) {
-	fprintf(fp, "Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
+	fprintf(fp, _("Binv(0.5*df1,0.5)/sqrt(df1)*(1.0+(x*x)/df1)"
 		"**(-0.5*(df1+1.0)) "
-		"title 't(%d) sampling distribution' w lines , \\\n",
+		"title 't(%d) sampling distribution' w lines , \\\n"),
 		df1);
     }
     else if (dist == 2) {
-	fprintf(fp, "chi(x) title 'Chi-square(%d) sampling distribution' "
-		"w lines , \\\n", df1);
+	fprintf(fp, _("chi(x) title 'Chi-square(%d) sampling distribution' "
+		"w lines , \\\n"), df1);
     }
     else if (dist == 3) {
-	fprintf(fp, "f(x) title 'F(%d, %d) sampling distribution' w lines , "
-		"\\\n", df1, df2);
+	fprintf(fp, _("f(x) title 'F(%d, %d) sampling distribution' w lines , "
+		"\\\n"), df1, df2);
     }
-    fprintf(fp, "'-' using 1:($2) title 'test statistic' w impulses\n");
+    fprintf(fp, _("'-' using 1:($2) title 'test statistic' w impulses\n"));
     fprintf(fp, "%f %f\n", x, spike);
     fprintf(fp, "e\n");
 
@@ -426,7 +426,7 @@ static void htest_graph (int dist, double x, int df1, int df2)
     sprintf(plotcmd, "%s -persist %s", 
 	    paths.gnuplot, paths.plotfile);
     if (system(plotcmd))
-	errbox("gnuplot command failed");
+	errbox(_("gnuplot command failed"));
 #endif
 }
 
@@ -459,19 +459,19 @@ static void h_test (GtkWidget *w, gpointer data)
 	if (na(x[2])) return;
 	sderr = x[1]/sqrt((double) n1);
 	ts = (x[0] - x[2])/sderr;
-	pprintf(prn, "Null hypothesis: population mean = %g\n", x[2]);
-	pprintf(prn, "Sample size: n = %d\n", n1);
-	pprintf(prn, "Sample mean = %g, std. deviation = %g\n", 
+	pprintf(prn, _("Null hypothesis: population mean = %g\n"), x[2]);
+	pprintf(prn, _("Sample size: n = %d\n"), n1);
+	pprintf(prn, _("Sample mean = %g, std. deviation = %g\n"), 
 		x[0], x[1]);
 	if (GTK_TOGGLE_BUTTON(test[i]->check)->active) {
-	    pprintf(prn, "Test statistic: z = (%g - %g)/%g = %g\n", 
+	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		    x[0], x[2], sderr, ts);
 	    if (ts > 0) pv = normal(ts);
 	    else pv = normal(-ts);
 	    print_pv(prn, 2 * pv, pv);
 	    if (grf) htest_graph(0, ts, 0, 0);
 	} else {
-	    pprintf(prn, "Test statistic: t(%d) = (%g - %g)/%g = %g\n", n1-1,
+	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"), n1-1,
 		    x[0], x[2], sderr, ts);
 	    pv = tprob(ts, n1 - 1);
 	    print_pv(prn, pv, 0.5 * pv);
@@ -488,10 +488,10 @@ static void h_test (GtkWidget *w, gpointer data)
 	x[1] = getval(tmp, prn);
 	if (na(x[1])) return;
 	ts = (n1 - 1) * x[0] / x[1];
-	pprintf(prn, "Null hypothesis: population variance = %g\n", x[1]);
-	pprintf(prn, "Sample size: n = %d\n", n1);
-	pprintf(prn, "Sample variance = %g\n", x[0]);
-	pprintf(prn, "Test statistic: chi-square(%d) = %d * %g/%g = %g\n", 
+	pprintf(prn, _("Null hypothesis: population variance = %g\n"), x[1]);
+	pprintf(prn, _("Sample size: n = %d\n"), n1);
+	pprintf(prn, _("Sample variance = %g\n"), x[0]);
+	pprintf(prn, _("Test statistic: chi-square(%d) = %d * %g/%g = %g\n"), 
 		n1-1, n1-1, x[0], x[1], ts);
 	if (x[0] > x[1])
 	    pv = chisq(ts, n1-1);
@@ -510,17 +510,17 @@ static void h_test (GtkWidget *w, gpointer data)
 	x[1] = getval(tmp, prn);
 	if (na(x[1])) return;
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
-	    infobox("The assumption of a normal sampling distribution\n"
-		    "is not justified here.  Abandoning the test.");
+	    infobox(_("The assumption of a normal sampling distribution\n"
+		    "is not justified here.  Abandoning the test."));
 	    gretl_print_destroy(prn);
 	    return;
 	}
 	sderr = sqrt(x[1] * (1.0 - x[1]) / n1);
 	ts = (x[0] - x[1]) / sderr;
-	pprintf(prn, "Null hypothesis: population proportion = %g\n", x[1]);
-	pprintf(prn, "Sample size: n = %d\n", n1);
-	pprintf(prn, "Sample proportion = %g\n", x[0]);
-	pprintf(prn, "Test statistic: z = (%g - %g)/%g = %g\n", 
+	pprintf(prn, _("Null hypothesis: population proportion = %g\n"), x[1]);
+	pprintf(prn, _("Sample size: n = %d\n"), n1);
+	pprintf(prn, _("Sample proportion = %g\n"), x[0]);
+	pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"), 
 		x[0], x[1], sderr, ts);
 	if (ts > 0)
 	    pv = normal(ts);
@@ -547,10 +547,10 @@ static void h_test (GtkWidget *w, gpointer data)
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[6]));
 	x[4] = getval(tmp, prn);
 	if (na(x[4])) return;
-	pprintf(prn, "Null hypothesis: Difference of means = %g\n", x[4]);
-	pprintf(prn, "Sample 1:\n n = %d, mean = %g, s.d. = %g\n",
+	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
+	pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
 		n1, x[0], x[1]);
-	pprintf(prn, "Sample 2:\n n = %d, mean = %g, s.d. = %g\n",
+	pprintf(prn, _("Sample 2:\n n = %d, mean = %g, s.d. = %g\n"),
 		n2, x[2], x[3]);
 	/* are we assuming a common variance? */
 	j = 0;
@@ -565,9 +565,9 @@ static void h_test (GtkWidget *w, gpointer data)
 	ts = (x[0] - x[2]) / sderr;
 	if (j) {
 	    if (j == 2)
-		pprintf(prn, "Small samples: assuming normality and common "
-			"variance\n");
-	    pprintf(prn, "Test statistic: t(%d) = (%g - %g)/%g = %g\n",
+		pprintf(prn, _("Small samples: assuming normality and common "
+			"variance\n"));
+	    pprintf(prn, _("Test statistic: t(%d) = (%g - %g)/%g = %g\n"),
 		    n1+n2-2, x[0], x[2], sderr, ts);
 	    if (ts > 0)
 		pv = tprob(ts, n1+n2-2);
@@ -576,7 +576,7 @@ static void h_test (GtkWidget *w, gpointer data)
 	    print_pv(prn, pv, 0.5 * pv);
 	    if (grf) htest_graph(1, ts, n1+n2-2, 0);
 	} else {
-	    pprintf(prn, "Test statistic: z = (%g - %g)/%g = %g\n",
+	    pprintf(prn, _("Test statistic: z = (%g - %g)/%g = %g\n"),
 		    x[0], x[2], sderr, ts);
 	    if (ts > 0)
 		pv = normal(ts);
@@ -597,18 +597,18 @@ static void h_test (GtkWidget *w, gpointer data)
 	if (na(x[1])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
-	pprintf(prn, "Null hypothesis: The population variances are "
-		"equal\n");
-	pprintf(prn, "Sample 1:\n n = %d, variance = %g\n", n1, x[0]);
-	pprintf(prn, "Sample 2:\n n = %d, variance = %g\n", n2, x[1]);
+	pprintf(prn, _("Null hypothesis: The population variances are "
+		"equal\n"));
+	pprintf(prn, _("Sample 1:\n n = %d, variance = %g\n"), n1, x[0]);
+	pprintf(prn, _("Sample 2:\n n = %d, variance = %g\n"), n2, x[1]);
 	if (x[0] > x[1]) {
 	    ts = x[0]/x[1];
-	    pprintf(prn, "Test statistic: F(%d, %d) = %g\n", 
+	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n1-1, n2-1, ts);
 	    pv = fdist(ts, n1-1, n2-1);
 	} else {
 	    ts = x[1]/x[0];
-	    pprintf(prn, "Test statistic: F(%d, %d) = %g\n", 
+	    pprintf(prn, _("Test statistic: F(%d, %d) = %g\n"), 
 		    n2-1, n1-1, ts);
 	    pv = fdist(ts, n2-1, n1-1);
 	}
@@ -626,14 +626,14 @@ static void h_test (GtkWidget *w, gpointer data)
 	if (na(x[1])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
-	pprintf(prn, "Null hypothesis: the population proportions are "
-		"equal\n");
-	pprintf(prn, "Sample 1:\n n = %d, proportion = %g\n", n1, x[0]);
-	pprintf(prn, "Sample 2:\n n = %d, proportion = %g\n", n2, x[1]);
+	pprintf(prn, _("Null hypothesis: the population proportions are "
+		"equal\n"));
+	pprintf(prn, _("Sample 1:\n n = %d, proportion = %g\n"), n1, x[0]);
+	pprintf(prn, _("Sample 2:\n n = %d, proportion = %g\n"), n2, x[1]);
 	x[2] = (n1*x[0] + n2*x[1]) / (n1 + n2);
 	sderr = sqrt((x[2] * (1.0-x[2])) * (1.0/n1 + 1.0/n2));
 	ts = (x[0] - x[1]) / sderr;
-	pprintf(prn, "Test statistic: z = (%g - %g) / %g = %g\n",
+	pprintf(prn, _("Test statistic: z = (%g - %g) / %g = %g\n"),
 		x[0], x[1], sderr, ts);
 	if (ts > 0)
 	    pv = normal(ts);
@@ -645,7 +645,7 @@ static void h_test (GtkWidget *w, gpointer data)
     default:
 	break;
     }
-    view_buffer(prn, 78, 300, "gretl: hypothesis test", H_TEST,
+    view_buffer(prn, 78, 300, _("gretl: hypothesis test"), H_TEST,
                 view_items);
 }
 
@@ -933,8 +933,8 @@ static void make_test_tab (GtkWidget *notebook, int code, test_t **test)
     /* add check box for showing graph of sampling dist. */
     tbl_len += 1;
     gtk_table_resize (GTK_TABLE (tbl), tbl_len, 2);
-    tempwid = gtk_check_button_new_with_label("Show graph of sampling "
-					      "distribution");
+    tempwid = gtk_check_button_new_with_label(_("Show graph of sampling "
+					      "distribution"));
     gtk_table_attach_defaults (GTK_TABLE (tbl), 
 			       tempwid, 0, 2, tbl_len - 1, tbl_len);
     gtk_toggle_button_set_active 
@@ -967,11 +967,11 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 
     dialog = gtk_dialog_new ();
     if (code == 0)
-	gtk_window_set_title (GTK_WINDOW (dialog), "gretl: p-value finder");
+	gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: p-value finder"));
     else if (code == 1)
-	gtk_window_set_title (GTK_WINDOW (dialog), "gretl: statistical tables");
+	gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: statistical tables"));
     else if (code == 2)
-	gtk_window_set_title (GTK_WINDOW (dialog), "gretl: test calculator");
+	gtk_window_set_title (GTK_WINDOW (dialog), _("gretl: test calculator"));
     gtk_container_border_width 
 	(GTK_CONTAINER (GTK_DIALOG (dialog)->vbox), 10);
     gtk_container_border_width 
@@ -999,7 +999,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    else
 		make_lookup_tab(notebook, i, look);
 	}
-	tempwid = gtk_button_new_with_label ("Find");
+	tempwid = gtk_button_new_with_label (_("Find"));
     } 
     else if (code == 2) {
 	for (i=0; i<NTESTS; i++) {
@@ -1008,7 +1008,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
 	    test[i]->book = notebook;
 	    make_test_tab(notebook, i, test);
 	}
-	tempwid = gtk_button_new_with_label ("Test");
+	tempwid = gtk_button_new_with_label (_("Test"));
     }
 
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -1028,7 +1028,7 @@ void stats_calculator (gpointer data, guint code, GtkWidget *widget)
     gtk_widget_show (tempwid);
 
     /* Close button */
-    tempwid = gtk_button_new_with_label ("Close");
+    tempwid = gtk_button_new_with_label (_("Close"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG 
 				 (dialog)->action_area), 

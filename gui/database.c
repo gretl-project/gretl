@@ -126,10 +126,10 @@ enum db_data_actions {
 };
 
 GtkItemFactoryEntry db_items[] = {
-    { "/_Series/_Display", NULL, gui_get_series, DB_DISPLAY, NULL},
-    { "/_Series/_Graph", NULL, gui_get_series, DB_GRAPH, NULL },
-    { "/_Series/_Import", NULL, gui_get_series, DB_IMPORT, NULL },
-    { "/_Find", NULL, menu_find, 1, NULL },
+    { _("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
+    { _("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
+    { _("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
+    { _("/_Find"), NULL, menu_find, 1, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -192,7 +192,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
         return 1;
     clear(getbuf, 8192);
 
-    update_statusline(dbdat, "Retrieving data...");
+    update_statusline(dbdat, _("Retrieving data..."));
 #ifdef OTHER_ARCH
     err = retrieve_url(GRAB_NBO_DATA, dbbase, sinfo->varname, 0, &getbuf, 
 		       errbuf);
@@ -207,7 +207,7 @@ static int get_remote_db_data (windata_t *dbdat, SERIESINFO *sinfo,
 		errbuf[strlen(errbuf)-1] = 0;
 	    update_statusline(dbdat, errbuf);
 	} else 
-	    update_statusline(dbdat, "Error retrieving data from server");
+	    update_statusline(dbdat, _("Error retrieving data from server"));
 	free(getbuf);
 	return err;
     } 
@@ -245,7 +245,7 @@ static void display_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     printdata(NULL, dbZ, dbdinfo, 0, 1, prn);
 
-    view_buffer(prn, 36, 350, "gretl: display database series", PRINT,
+    view_buffer(prn, 36, 350, _("gretl: display database series"), PRINT,
 		NULL); 
 }
 
@@ -266,8 +266,8 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
     err = gnuplot(list, lines, dbZ, dbdinfo,
 		  &paths, &plot_count, 0, 1, 0);
     if (err) {
-        if (err > 0) infobox("There were missing observations");
-	else errbox("gnuplot command failed");
+        if (err > 0) infobox(_("There were missing observations"));
+	else errbox(_("gnuplot command failed"));
     }
     else graphmenu_state(TRUE);
 }
@@ -285,7 +285,7 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	err = check_import(sinfo, datainfo);
 	if (err) return;
 	if (dataset_add_vars(1, &Z, datainfo)) {
-	    errbox("Out of memory adding series");
+	    errbox(_("Out of memory adding series"));
 	    return;
 	}
 	v = datainfo->v;
@@ -294,7 +294,7 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	if (sinfo->pd > datainfo->pd) {
 	    if (datainfo->pd != 1 && datainfo->pd != 4 &&
 		sinfo->pd != 12) {
-		errbox("Sorry, can't handle this conversion yet!");
+		errbox(_("Sorry, can't handle this conversion yet!"));
 		dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
@@ -356,7 +356,7 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	    err = get_rats_data(dbdat->fname, dbdat->active_var + 1,
 				sinfo, &Z);
 	if (err) {
-	    errbox("Couldn't access binary data");
+	    errbox(_("Couldn't access binary data"));
 	    return;
 	} else {
 	    strcpy(datainfo->varname[1], sinfo->varname);
@@ -366,7 +366,7 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
     }
 
     register_data(NULL, 0);
-    infobox("Series imported OK"); 
+    infobox(_("Series imported OK")); 
 }
 
 /* ........................................................... */
@@ -401,7 +401,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 
     dbdinfo = create_new_dataset(&dbZ, 2, sinfo->nobs, 0);
     if (dbdinfo == NULL) {
-	errbox("Out of memory");
+	errbox(_("Out of memory"));
 	return;
     }
 
@@ -418,7 +418,7 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
 	err = get_rats_data(dbdat->fname, dbdat->active_var + 1, 
 			    sinfo, &dbZ);
     if (err && dbcode != REMOTE_SERIES) {
-	errbox("Couldn't access binary datafile");
+	errbox(_("Couldn't access binary datafile"));
 	return;
     } 
     strcpy(dbdinfo->varname[1], sinfo->varname);
@@ -450,13 +450,13 @@ static void build_db_menu (windata_t *dbdat)
 
     database_menu = gtk_menu_new();
 
-    make_menu_item("Display", database_menu, gui_display_series, 
+    make_menu_item(_("Display"), database_menu, gui_display_series, 
 		   (gpointer) dbdat);
-    make_menu_item("Graph", database_menu, gui_graph_series, 
+    make_menu_item(_("Graph"), database_menu, gui_graph_series, 
 		   (gpointer) dbdat);
-    make_menu_item("Import", database_menu, gui_import_series, 
+    make_menu_item(_("Import"), database_menu, gui_import_series, 
 		   (gpointer) dbdat);
-    make_menu_item("Find...", database_menu, db_menu_find, 
+    make_menu_item(_("Find..."), database_menu, db_menu_find, 
 		   (gpointer) dbdat);
 
     dbdat->popup = database_menu;
@@ -531,12 +531,12 @@ void display_db_series_list (int action, char *fname, char *buf)
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
-	dbdat->status = gtk_label_new("Network status: OK");
+	dbdat->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(dbdat->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), dbdat->status, FALSE, FALSE, 0);
     }
 
-    closebutton = gtk_button_new_with_label("Close");
+    closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (main_vbox), closebutton, FALSE, TRUE, 0);
     gtk_signal_connect (GTK_OBJECT(closebutton), "clicked", 
 			GTK_SIGNAL_FUNC(delete_widget), dbdat->w);
@@ -572,7 +572,7 @@ static int check_serinfo (char *str, char *sername)
 	!isdigit((unsigned char) endobs[0]) ||
 	!isdigit((unsigned char) n[0]) || 
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U')) {
-	sprintf(msg, "Database parse error at variable '%s'", sername);
+	sprintf(msg, _("Database parse error at variable '%s'"), sername);
 	errbox(msg);
 	return 1;
     }
@@ -592,7 +592,7 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
     strcat(dbidx, ".idx");
     fp = fopen(dbidx, "r");
     if (fp == NULL) {
-	errbox("Couldn't open database index file");
+	errbox(_("Couldn't open database index file"));
 	return 1;
     }
     while (1) {
@@ -653,7 +653,7 @@ static int rats_populate_series_list (windata_t *dbdat)
 
     fp = fopen(dbdat->fname, "rb");
     if (fp == NULL) {
-	errbox("Couldn't open RATS data file");
+	errbox(_("Couldn't open RATS data file"));
 	return 1;
     } else {
 	/* extract catalog from RATS file */
@@ -687,7 +687,7 @@ static gint db_popup_handler (GtkWidget *widget, GdkEvent *event)
 
 static GtkWidget *database_window (windata_t *ddata) 
 {
-    char *titles[] = {"Name", "Description", "Frequency and dates"};
+    char *titles[] = {_("Name"), _("Description"), _("Frequency and dates")};
     GtkWidget *box, *scroller, *parent;
     int i, cols = 3;
     int col_width[] = {72, 450, 200};
@@ -741,16 +741,16 @@ static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
     double sd0, sdn_new, sdn_old;
 
     if (sinfo->pd < pdinfo->pd) {
-	errbox("You can't add a lower frequency series to a\nhigher "
-	       "frequency working data set.");
+	errbox(_("You can't add a lower frequency series to a\nhigher "
+	       "frequency working data set."));
 	return 1;
     }
     sd0 = atof(sinfo->stobs);
     sdn_new = atof(sinfo->endobs);
     sdn_old = atof(pdinfo->endobs);
     if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
-	errbox("Observation range does not overlap\nwith the working "
-	       "data set");
+	errbox(_("Observation range does not overlap\nwith the working "
+	       "data set"));
 	return 1;
     }
     return 0;
@@ -1144,7 +1144,7 @@ static int get_rats_data (const char *fname, const int series_number,
     fseek(fp, (offset - 1) * 256 + 12, SEEK_SET); 
     fread(&first_data, sizeof(RECNUM), 1, fp);
     if (get_rats_series(first_data, sinfo, fp, pZ))
-	infobox("Warning: series has missing observations");
+	infobox(_("Warning: series has missing observations"));
     fclose(fp);
     return 0;
 }
@@ -1165,7 +1165,7 @@ void open_named_db_clist (char *dbname)
 	fp = fopen(dbname, "r");
     }
     if (fp == NULL)
-	errbox("Couldn't open database");
+	errbox(_("Couldn't open database"));
     else {
 	fclose(fp);
 	display_db_series_list(action, dbname, NULL);
@@ -1201,7 +1201,7 @@ static void update_statusline (windata_t *windat, char *str)
 {
     gchar *tmp;
 
-    tmp = g_strdup_printf("Network status: %s", str);
+    tmp = g_strdup_printf(_("Network status: %s"), str);
     gtk_label_set_text(GTK_LABEL(windat->status), tmp);
     while (gtk_events_pending())
 	gtk_main_iteration();
@@ -1225,7 +1225,7 @@ void open_named_remote_clist (char *dbname)
 		errbuf[strlen(errbuf)-1] = 0;
 	    errbox(errbuf);
 	} else
-	    errbox("Error retrieving data from server");
+	    errbox(_("Error retrieving data from server"));
     } 
     else if (strncmp(getbuf, "Couldn't open", 13) == 0) {
 	errbox(getbuf);
@@ -1249,7 +1249,7 @@ void open_remote_clist (GtkWidget *w, gpointer data)
 
     if ((getbuf = mymalloc(8192)) == NULL) return;
     clear(getbuf, 8192);
-    update_statusline(mydata, "Retrieving data...");
+    update_statusline(mydata, _("Retrieving data..."));
     errbuf[0] = '\0';
     err = retrieve_url(GRAB_IDX, fname, NULL, 0, &getbuf, errbuf);
 
@@ -1259,7 +1259,7 @@ void open_remote_clist (GtkWidget *w, gpointer data)
 		errbuf[strlen(errbuf)-1] = 0;
 	    update_statusline(mydata, errbuf);
 	} else 
-	    update_statusline(mydata, "Error retrieving data from server");
+	    update_statusline(mydata, _("Error retrieving data from server"));
     } else {
 	update_statusline(mydata, "OK");
 	display_db_series_list(REMOTE_SERIES, fname, getbuf);
@@ -1292,20 +1292,20 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
 
     fgz = gzopen(ggzname, "rb");
     if (fgz == NULL) {
-        sprintf(errbuf, "Couldn't gzopen %s for reading\n", ggzname);
+        sprintf(errbuf, _("Couldn't gzopen %s for reading\n"), ggzname);
         return 1;
     }
     fidx = fopen(idxname, "wb");
     if (fidx == NULL) {
         gzclose(fgz);
-        sprintf(errbuf, "Couldn't open %s for writing\n", idxname);
+        sprintf(errbuf, _("Couldn't open %s for writing\n"), idxname);
         return 1;
     }
     fbin = fopen(binname, "wb");
     if (fbin == NULL) {
         gzclose(fgz);
         fclose(fidx);
-        sprintf(errbuf, "Couldn't open %s for writing\n", binname);
+        sprintf(errbuf, _("Couldn't open %s for writing\n"), binname);
         return 1;
     }
 
@@ -1380,7 +1380,7 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     if (err) {
         if (strlen(errbuf)) errbox(errbuf);
 	else 
-	    errbox("Error retrieving data from server");
+	    errbox(_("Error retrieving data from server"));
 	free(ggzname);
 	return;
     } 
@@ -1389,9 +1389,9 @@ void grab_remote_db (GtkWidget *w, gpointer data)
     if (err) {
 	if (strlen(errbuf)) errbox(errbuf);
 	else 
-	    errbox("Error unzipping compressed data");
+	    errbox(_("Error unzipping compressed data"));
     } else {
-	infobox("database installed");
+	infobox(_("database installed"));
 	populate_filelist(mydata);
     }
 
@@ -1452,7 +1452,7 @@ gint populate_dbfilelist (windata_t *ddata)
 #endif
 
     if ((dir = opendir(dbdir)) == NULL) {
-	sprintf(errtext, "Can't open folder %s", dbdir);
+	sprintf(errtext, _("Can't open folder %s"), dbdir);
 	errbox(errtext);
 	return 1;
     }
@@ -1476,7 +1476,7 @@ gint populate_dbfilelist (windata_t *ddata)
     closedir(dir);
 
     if (i == 0) {
-	errbox("No database files found");
+	errbox(_("No database files found"));
 	return 1;
     }
     gtk_clist_select_row(GTK_CLIST (ddata->listbox), 0, 0);
@@ -1525,11 +1525,11 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 
     d->dialog = gtk_dialog_new();
 
-    sprintf(labelstr, "You are adding a %s series to %s dataset",
-	    (spd == 4)? "quarterly" : "monthly",
-	    (dpd == 4)? "a quarterly": "an annual");
+    sprintf(labelstr, _("You are adding a %s series to %s dataset"),
+	    (spd == 4)? _("quarterly") : _("monthly"),
+	    (dpd == 4)? _("a quarterly"): _("an annual"));
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), "gretl: compact data");
+    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: compact data"));
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
     gtk_container_border_width (GTK_CONTAINER 
 				(GTK_DIALOG (d->dialog)->vbox), 10);
@@ -1550,7 +1550,7 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show(tempwid);
 
-    button = gtk_radio_button_new_with_label (NULL, "Compact by averaging");
+    button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
@@ -1560,7 +1560,7 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
     gtk_widget_show (button);
 
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "Use end-of-period values");
+    button = gtk_radio_button_new_with_label(group, _("Use end-of-period values"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
@@ -1569,7 +1569,7 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
     gtk_widget_show (button);
 
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "Use start-of-period values");
+    button = gtk_radio_button_new_with_label(group, _("Use start-of-period values"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
@@ -1589,7 +1589,7 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
     gtk_widget_show (tempwid);
 
     /* Create the "Cancel" button */
-    tempwid = gtk_button_new_with_label ("Cancel");
+    tempwid = gtk_button_new_with_label (_("Cancel"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -1601,7 +1601,7 @@ static void data_compact_dialog (int spd, int dpd, guint *compact_method)
     gtk_widget_show (tempwid);
 
     /* Create a "Help" button */
-    tempwid = gtk_button_new_with_label ("Help");
+    tempwid = gtk_button_new_with_label (_("Help"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);

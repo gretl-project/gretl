@@ -157,13 +157,13 @@ int ws_startup (void)
     requested = MAKEWORD(1, 1);
 
     if (WSAStartup(requested, &data)) {
-	fprintf(stderr, "Couldn't find usable socket driver.\n");
+	fprintf(stderr, _("Couldn't find usable socket driver.\n"));
 	return 1;
     }
 
     if (LOBYTE (requested) < 1 || (LOBYTE (requested) == 1 &&
 				   HIBYTE (requested) < 1)) {
-	fprintf(stderr, "Couldn't find usable socket driver.\n");
+	fprintf(stderr, _("Couldn't find usable socket driver.\n"));
 	WSACleanup();
 	return 1;
     }
@@ -490,9 +490,9 @@ static char *herrmsg (int error)
 	|| error == NO_DATA
 	|| error == NO_ADDRESS
 	|| error == TRY_AGAIN)
-	return "Host not found";
+	return _("Host not found");
     else
-	return "Unknown error";
+	return _("Unknown error");
 }
 
 /* ........................................................... */
@@ -666,14 +666,14 @@ static uerr_t gethttp (struct urlinfo *u, struct http_stat *hs,
 		   case when no data was actually received.  Handle this
 		   special case.  */
 		if (!*hdr)
-		    hs->error = g_strdup("No data received");
+		    hs->error = g_strdup(_("No data received"));
 		else
-		    hs->error = g_strdup("Malformed status line");
+		    hs->error = g_strdup(_("Malformed status line"));
 		free(hdr);
 		break;
 	    }
 	    else if (!*error)
-		hs->error = g_strdup("(no description)");
+		hs->error = g_strdup(_("(no description)"));
 	    else
 		hs->error = g_strdup(error);
 	    goto done_header;
@@ -1183,31 +1183,31 @@ int update_query (void)
     if (err) 
 	return 1;
 
-    if (getbuf && strncmp(getbuf, "No new files", 12)) {
+    if (getbuf && strncmp(getbuf, _("No new files"), 12)) {
 	char infotxt[512];
 
 #ifdef G_OS_WIN32 
-	sprintf(infotxt, "New files are available from the gretl web site.\n"
+	sprintf(infotxt, _("New files are available from the gretl web site.\n"
 		"These files have a combined size of %u bytes.\n\nIf you "
 		"would like to update your installation, please quit gretl\n"
 		"and run the program titled \"gretl updater\".\n\nOnce the "
-		"updater has completed you may restart gretl.",
+		"updater has completed you may restart gretl."),
 		get_size(getbuf));
 
 #else
 	if (admin) {
-	    strcpy(infotxt, "New files are available from the gretl web site\n"
-		   "http://gretl.sourceforge.net/");
+	    strcpy(infotxt, _("New files are available from the gretl web site\n"
+		   "http://gretl.sourceforge.net/"));
 	    fp = fopen(testfile, "w");
 	} else {
-	    strcpy(infotxt, "You may want to let the system administrator know\n"
+	    strcpy(infotxt, _("You may want to let the system administrator know\n"
 		   "that new files are available from the gretl web site\n"
-		   "http://gretl.sourceforge.net/");
+		   "http://gretl.sourceforge.net/"));
 	    fp = fopen(hometest, "w");
 	}
 	if (fp != NULL) {
-	    fprintf(fp, "This file is part of the gretl update notification "
-		    "system\n");
+	    fprintf(fp, _("This file is part of the gretl update notification "
+		    "system\n"));
 	    fclose(fp);
 	}
 #endif /* G_OS_WIN32 */
@@ -1239,8 +1239,8 @@ int proxy_init (const char *dbproxy)
 
     p = strrchr(dbproxy, ':');
     if (p == NULL) {
-	errbox("Failed to parse HTTP proxy:\n"
-	       "format must be ipnumber:port");
+	errbox(_("Failed to parse HTTP proxy:\n"
+	       "format must be ipnumber:port"));
 	return 1;
     }
     gretlproxy.port = atoi(p + 1);
@@ -1248,7 +1248,7 @@ int proxy_init (const char *dbproxy)
     if (gretlproxy.host == NULL) return 1;
     iplen = p - dbproxy;
     if (iplen > 15) {
-	errbox("HTTP proxy: first field must be an IP number");
+	errbox(_("HTTP proxy: first field must be an IP number"));
 	return 1;	
     }
     gretlproxy.host[0] = '\0';

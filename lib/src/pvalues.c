@@ -35,7 +35,7 @@ static void _enterdf (const char *str);
 
 double _gammadist (double s1, double s2, double x, int control);
 
-const char negval[] = "\nEnter x value (value < 0 will exit menu): "; 
+const char negval[] = _("\nEnter x value (value < 0 will exit menu): "); 
 
 /**
  * _tcrit95:
@@ -341,7 +341,7 @@ double batch_pvalue (const char *str,
 	    if (strcmp(fstr, pdinfo->varname[i]) == 0) {
 		xval = get_xvalue(i, Z, pdinfo);
 		if (na(xval)) {
-		    pprintf(prn, "\nstatistic has missing value code\n");
+		    pprintf(prn, _("\nstatistic has missing value code\n"));
 		    return NADBL;
 		}		
 		break;
@@ -356,31 +356,31 @@ double batch_pvalue (const char *str,
     case 'n':
 	xx = normal(xval);
 	if (xx < 0) {
-	    pprintf(prn, "\np-value calculation failed\n");
+	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}	
-	pprintf(prn, "\nStandard normal: area to the %s "
-		"of %f = %.4g\n", (xval > 0)? "right": "left", 
+	pprintf(prn, _("\nStandard normal: area to the %s "
+		"of %f = %.4g\n"), (xval > 0)? _("right"): _("left"), 
 		xval, xx);
-	pprintf(prn, "(two-tailed value = %.4g; complement = %.4g)\n", 
+	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
 		2.0 * xx, 1.0 - 2.0 * xx);
 	return xx;
 
     case '2':
     case 't':
 	if (!*fstr || !*df1str) {
-	    pprintf(prn, "\npvalue for t: missing parameter\n");
+	    pprintf(prn, _("\npvalue for t: missing parameter\n"));
 	    return -1;
 	}
 	xx = tprob(xval, df1);
 	if (xx < 0) {
-	    pprintf(prn, "\np-value calculation failed\n");
+	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, "\nt(%d): area to the %s of %f = %.4g\n", 
-		df1, (xval > 0)? "right": "left",
+	pprintf(prn, _("\nt(%d): area to the %s of %f = %.4g\n"), 
+		df1, (xval > 0)? _("right"): _("left"),
 		xval, 0.5 * xx);
-	pprintf(prn, "(two-tailed value = %.4g; complement = %.4g)\n", 
+	pprintf(prn, _("(two-tailed value = %.4g; complement = %.4g)\n"), 
 		xx, 1.0 - xx);
 	return xx;
     case '3':
@@ -388,34 +388,34 @@ double batch_pvalue (const char *str,
     case 'x':
     case 'X':
 	if (!*fstr || !*df1str) {
-	    pprintf(prn, "\npvalue for chi-square: missing parameter\n");
+	    pprintf(prn, _("\npvalue for chi-square: missing parameter\n"));
 	    return -1;
 	}
 	xx = chisq(xval, df1);
 	if (xx < 0) {
-	    pprintf(prn, "\np-value calculation failed\n");
+	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, "\nChi-square(%d): area to the right of %f = %.4g\n", 
+	pprintf(prn, _("\nChi-square(%d): area to the right of %f = %.4g\n"), 
 		df1, xval, xx);
-	pprintf(prn, "(to the left: %.4g)\n", 1.0 - xx);
+	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
 	return xx;
 
     case '4':
     case 'f':
     case 'F':
 	if (!*fstr || !*df1str || !*df2str) {
-	    pprintf(prn, "\npvalue for F: missing parameter\n");
+	    pprintf(prn, _("\npvalue for F: missing parameter\n"));
 	    return -1;
 	}
 	xx = fdist(xval, df1, df2);
 	if (xx < 0) {
-	    pprintf(prn, "\np-value calculation failed\n");
+	    pprintf(prn, _("\np-value calculation failed\n"));
 	    return -1;
 	}
-	pprintf(prn, "\nF(%d, %d): area to the right of %f = %.4g\n", 
+	pprintf(prn, _("\nF(%d, %d): area to the right of %f = %.4g\n"), 
 		df1, df2, xval, xx);
-	pprintf(prn, "(to the left: %.4g)\n", 1.0 - xx);
+	pprintf(prn, _("(to the left: %.4g)\n"), 1.0 - xx);
 	return xx;
 
     case '5':
@@ -423,16 +423,16 @@ double batch_pvalue (const char *str,
     case 'G':
 	xx = _gammadist(mean, variance, xval, 2);
 	if (na(xx))
-	    pprintf(prn, "\nError computing gamma distribution\n");
+	    pprintf(prn, _("\nError computing gamma distribution\n"));
 	else
-	    pprintf(prn, "\nGamma (mean %g, variance %g, shape %g, scale %g):"
-		    "\n area to the right of %f = %.4g\n", 
+	    pprintf(prn, _("\nGamma (mean %g, variance %g, shape %g, scale %g):"
+		    "\n area to the right of %f = %.4g\n"), 
 		    mean, variance, mean*mean/variance, variance/mean,
 		    xval, 1.0 - xx);
 	return xx;
 
     default:
-	pprintf(prn, "\nunrecognized pvalue code\n");
+	pprintf(prn, _("\nunrecognized pvalue code\n"));
 	return NADBL;
     }
 }
@@ -450,12 +450,12 @@ void interact_pvalue (void)
     char ans[3];
 
     do {
-	printf("\n\nChoose one of the following distributions: "
+	printf(_("\n\nChoose one of the following distributions: "
 	       "\n\n\t1) Standard normal\t\t2) Student's t\n\t3) "
 	       "Chi-square\t\t\t4) F\n"
 	       "\t5) Gamma\n\n"
 	       "Enter your choice (a number < 0 to exit gretl, 0 to quit "
-	       "menu, or\n1, 2, 3, 4, or 5): ");
+	       "menu, or\n1, 2, 3, 4, or 5): "));
 
 	fflush(stdout);
 	v = fscanf(stdin, "%d", &choice);
@@ -484,11 +484,11 @@ void interact_pvalue (void)
 	    _pgamma();
 	    break;
 	default:	
-	    puts("\ninvalid choice");
+	    puts(_("\ninvalid choice"));
 	    break;
 	}
 
-	printf("\nDo you want to continue with more pvalues (y or n)? ");
+	printf(_("\nDo you want to continue with more pvalues (y or n)? "));
 	fflush(stdout);
 	fscanf(stdin, "%s", ans);
 
@@ -505,8 +505,8 @@ static void _pnormal (void)
     zx = _getvalue();
     if(zx < 0.0) return;
     xx = normal(zx);
-    printf("\nFor the standard normal, area (one-tail) to the "
-	   "right of %g is ", zx);
+    printf(_("\nFor the standard normal, area (one-tail) to the "
+	   "right of %g is "), zx);
     _putxx(xx);
 }
 
@@ -525,8 +525,8 @@ static void _ptvalue (void)
     if(zx < 0.0) return;
     xsq = zx * zx;
     xx = fdist(xsq, 1, n)/2.0;
-    printf("\nFor Student's t(%d), area (one-tail) to the "
-	   "right of %g is ", n, zx);
+    printf(_("\nFor Student's t(%d), area (one-tail) to the "
+	   "right of %g is "), n, zx);
     _putxx(xx);
 }
 
@@ -544,7 +544,7 @@ static void _pchisq (void)
     zx = _getvalue();
     if(zx < 0.0) return;
     xx = chisq(zx, n);
-    printf("\nFor Chi-square(%d), area to the right of %g is ", 
+    printf(_("\nFor Chi-square(%d), area to the right of %g is "), 
 	   n, zx);
     _putxx(xx);
 }
@@ -556,17 +556,17 @@ static void _pfvalue (void)
     int m, n;
     double xx, zx; 
 
-    _enterdf(" for the numerator ");
+    _enterdf(_(" for the numerator "));
     m = (int) _getvalue();
     if (m <= 0) return;
-    _enterdf(" for the denominator ");
+    _enterdf(_(" for the denominator "));
     n = (int) _getvalue();
     if (n <= 0) return;
     printf("%s", negval);
     zx = _getvalue();
     if (zx < 0.0) return;
     xx = fdist(zx, m, n);
-    printf("\nFor F(%d, %d), area to the right of %g is ",
+    printf(_("\nFor F(%d, %d), area to the right of %g is "),
 	   m, n, zx);
     _putxx(xx);
 }
@@ -578,17 +578,17 @@ static void _pgamma (void)
     double mean, variance;
     double xx, zx; 
 
-    printf("\nEnter the mean: ");
+    printf(_("\nEnter the mean: "));
     mean = _getvalue();
     if (mean <= 0) return;
-    printf("\nEnter the variance: ");
+    printf(_("\nEnter the variance: "));
     variance = _getvalue();
     if (variance <= 0) return;
     printf("%s", negval);
     zx = _getvalue();
     if (zx < 0.0) return;
     xx = 1.0 - _gammadist(mean, variance, zx, 2);
-    printf("\nFor Gamma (mean %g, variance %g), area to the right of %g is ",
+    printf(_("\nFor Gamma (mean %g, variance %g), area to the right of %g is "),
 	   mean, variance, zx);
     _putxx(xx);
 }
@@ -609,7 +609,7 @@ static double _getvalue (void)
 
 static void _enterdf (const char *str)
 {
-    printf("\nEnter d.f.%s(value <= 0 will exit menu): ", str);
+    printf(_("\nEnter d.f.%s(value <= 0 will exit menu): "), str);
 }
 
 /* ........................................................ */

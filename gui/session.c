@@ -52,42 +52,42 @@ static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 /* "session" struct and "errtext" are globals */
 
 static char *model_items[] = {
-    "Display",
-    "Delete"
+    _("Display"),
+    _("Delete")
 };
 
 static char *graph_items[] = {
-    "Display",
-    "Edit using GUI",
-    "Edit plot commands",
-    "Delete"
+    _("Display"),
+    _("Edit using GUI"),
+    _("Edit plot commands"),
+    _("Delete")
 };
 
 static char *dataset_items[] = {
-    "Edit",
-    "Save...",
-    "Export as CSV..."
+    _("Edit"),
+    _("Save..."),
+    _("Export as CSV...")
 };
 
 static char *info_items[] = {
-    "View",
-    "Edit",
+    _("View"),
+    _("Edit"),
 };
 
 static char *session_items[] = {
-    "Save",
-    "Save As...",
-    "Add last graph"
+    _("Save"),
+    _("Save As..."),
+    _("Add last graph")
 };
 
 GtkItemFactoryEntry gp_edit_items[] = {
-    { "/_File", NULL, NULL, 0, "<Branch>" }, 
-    { "/File/_Save", NULL, auto_save_gp, 0, NULL },
-    { "/File/Save _As...", NULL, file_save, SAVE_GP_CMDS, NULL },
-    { "/File/Send to _gnuplot", NULL, gp_to_gnuplot, 0, NULL },
-    { "/_Edit", NULL, NULL, 0, "<Branch>" },
-    { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
-    { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { _("/_File"), NULL, NULL, 0, "<Branch>" }, 
+    { _("/File/_Save"), NULL, auto_save_gp, 0, NULL },
+    { _("/File/Save _As..."), NULL, file_save, SAVE_GP_CMDS, NULL },
+    { _("/File/Send to _gnuplot"), NULL, gp_to_gnuplot, 0, NULL },
+    { _("/_Edit"), NULL, NULL, 0, "<Branch>" },
+    { _("/Edit/_Copy selection"), NULL, text_copy, COPY_SELECTION, NULL },
+    { _("/Edit/Copy _all"), NULL, text_copy, COPY_TEXT, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -168,7 +168,7 @@ char *space_to_score (char *str)
 
 static void edit_session_notes (void)
 {
-    edit_buffer(&session.notes, 80, 400, "gretl: session notes",
+    edit_buffer(&session.notes, 80, 400, _("gretl: session notes"),
 		EDIT_NOTES);
 }
 
@@ -186,7 +186,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	sprintf(pltname, "%ssession.Graph_%d", savedir, plot_count + 1);
 	sprintf(grname, "Graph %d", plot_count + 1);
 	if (copyfile(paths.plotfile, pltname)) {
-	    errbox("No graph found");
+	    errbox(_("No graph found"));
 	    return;
 	} 
 	remove(paths.plotfile);
@@ -195,7 +195,7 @@ void add_last_graph (gpointer data, guint code, GtkWidget *w)
 	sprintf(grname, "Boxplot %d", boxplot_count + 1);
 	boxplot_count++;
 	if (copyfile("boxdump.tmp", pltname)) {
-	    errbox("Failed to copy boxplot file");
+	    errbox(_("Failed to copy boxplot file"));
 	    return;
 	}
 	remove("boxdump.tmp");
@@ -252,7 +252,7 @@ void remember_model (gpointer data, guint close, GtkWidget *widget)
     if (iconview != NULL)
 	session_add_object(session.models[i], 'm'); 
 
-    sprintf(buf, "%s saved", pmod->name);
+    sprintf(buf, _("%s saved"), pmod->name);
     infobox(buf);
 
     session_changed(1);
@@ -312,7 +312,7 @@ void do_open_session (GtkWidget *w, gpointer data)
     } else {
 	char errbuf[MAXLEN];
 
-	sprintf(errbuf, "Couldn't open %s\n", tryscript);
+	sprintf(errbuf, _("Couldn't open %s\n"), tryscript);
 	errbox(errbuf);
 	delete_from_filelist(2, tryscript);
 	delete_from_filelist(3, tryscript);
@@ -388,8 +388,8 @@ void verify_clear_data (void)
 {
     if (!expert) {
         int button = yes_no_dialog ("gretl",                      
-				    "Clearing the data set will end\n"
-				    "your current session.  Continue?", 0);
+				    _("Clearing the data set will end\n"
+				    "your current session.  Continue?"), 0);
         if (button != YES_BUTTON) 
             return;
     }
@@ -555,7 +555,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     }
 
     if (rebuild_init(rebuild)) {
-	errbox("Out of memory!");
+	errbox(_("Out of memory!"));
 	return 1;
     }
 
@@ -568,7 +568,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "*)", 2) == 0) break;
 	if (sscanf(line, "%6s %d", object, &id) != 2) {
-	    errbox("Session file is corrupted, ignoring");
+	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
 	    return 1;
 	}
@@ -643,7 +643,7 @@ int parse_savefile (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 	    k++;
 	    continue;
 	} else {
-	    errbox("Session file is corrupted, ignoring");
+	    errbox(_("Session file is corrupted, ignoring"));
 	    fclose(fp);
 	    return 1;
 	}
@@ -672,7 +672,7 @@ int recreate_session (char *fname, SESSION *psession, SESSIONBUILD *rebuild)
 #endif
 
     if (execute_script(fname, psession, rebuild, prn, REBUILD_EXEC)) 
-	errbox("Error recreating session");
+	errbox(_("Error recreating session"));
 #ifdef SESSION_DEBUG
     fprintf(stderr, "recreate_session: after execute_script()\n");
     print_session();
@@ -722,7 +722,7 @@ void view_session (void)
     }
 
     sprintf(title, "gretl: %s", 
-	    (session.name[0])? session.name : "current session");
+	    (session.name[0])? session.name : _("current session"));
     
     iconview = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(iconview), title);
@@ -805,7 +805,7 @@ void view_session (void)
 static void set_addgraph_mode (void)
 {
     GtkWidget *gmenu = 
-	gtk_item_factory_get_item(mdata->ifac, "/Session/Add last graph");
+	gtk_item_factory_get_item(mdata->ifac, _("/Session/Add last graph"));
 
     if (gmenu == NULL || addgraph == NULL) return;
 
@@ -981,7 +981,7 @@ void save_session_callback (GtkWidget *w, guint i, gpointer data)
 	save_session(scriptfile);
 	session_changed(0);
     } else {
-	file_selector("Save session", SAVE_SESSION, NULL);
+	file_selector(_("Save session"), SAVE_SESSION, NULL);
     }
 }
 
@@ -991,11 +991,11 @@ static void session_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
-    if (strcmp(item, "Save") == 0) 
+    if (strcmp(item, _("Save")) == 0) 
 	save_session_callback(NULL, 0, NULL);
-    else if (strcmp(item, "Save As...") == 0) 
+    else if (strcmp(item, _("Save As...")) == 0) 
 	save_session_callback(NULL, 1, NULL);
-    else if (strcmp(item, "Add last graph") == 0)
+    else if (strcmp(item, _("Add last graph")) == 0)
 	add_last_graph(NULL, 0, NULL);
 }
 
@@ -1005,9 +1005,9 @@ static void info_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
-    if (strcmp(item, "View") == 0) 
+    if (strcmp(item, _("View")) == 0) 
 	open_info(NULL, 0, NULL);
-    else if (strcmp(item, "Edit") == 0) 
+    else if (strcmp(item, _("Edit")) == 0) 
 	edit_header(NULL, 0, NULL);
 }
 
@@ -1017,11 +1017,11 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
-    if (strcmp(item, "Edit") == 0) 
+    if (strcmp(item, _("Edit")) == 0) 
 	show_spreadsheet(NULL);
-    else if (strcmp(item, "Save...") == 0) 
+    else if (strcmp(item, _("Save...")) == 0) 
 	file_save(mdata, SAVE_DATA, NULL);
-    else if (strcmp(item, "Export as CSV...") == 0) 
+    else if (strcmp(item, _("Export as CSV...")) == 0) 
 	file_save(mdata, EXPORT_CSV, NULL);
 }
 
@@ -1038,11 +1038,11 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 
     myobject = (gui_obj *) gtk_icon_list_get_link(active_icon);
 
-    if (strcmp(item, "Display") == 0) {
+    if (strcmp(item, _("Display")) == 0) {
 	if (myobject->sort == 'm') open_gui_model(myobject);
 	else if (myobject->sort == 'g') open_gui_graph(myobject);
     } 
-    else if (strcmp(item, "Edit using GUI") == 0) {
+    else if (strcmp(item, _("Edit using GUI")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
 	    GPT_SPEC *plot = mymalloc(sizeof *plot);
@@ -1051,18 +1051,18 @@ static void object_popup_activated (GtkWidget *widget, gpointer data)
 	    read_plotfile(plot, graph->fname);
 	}
     } 
-    else if (strcmp(item, "Edit plot commands") == 0) {
+    else if (strcmp(item, _("Edit plot commands")) == 0) {
 	if (myobject->sort == 'g') {
 	    GRAPHT *graph = (GRAPHT *) myobject->data;
 
 	    view_file(graph->fname, 1, 0, 78, 400, GR_PLOT, gp_edit_items);
 	}
     }   
-    else if (strcmp(item, "Delete") == 0) {
+    else if (strcmp(item, _("Delete")) == 0) {
 	gchar msg[64];
 
-	sprintf(msg, "Really delete %s?", myobject->name);
-	if (!yes_no_dialog("gretl: delete", msg, 0)) {
+	sprintf(msg, _("Really delete %s?"), myobject->name);
+	if (!yes_no_dialog(_("gretl: delete"), msg, 0)) {
 	    delete_session_object(myobject);
 	}
     }
@@ -1174,22 +1174,22 @@ static gui_obj *session_add_object (gpointer data, int sort)
 	name = g_strdup(graph->name);
 	break;
     case 'd':
-	name = g_strdup("Data set");
+	name = g_strdup(_("Data set"));
 	break;
     case 'i':
-	name = g_strdup("Data info");
+	name = g_strdup(_("Data info"));
 	break;
     case 's':
-	name = g_strdup("Session");
+	name = g_strdup(_("Session"));
 	break;
     case 'n':
-	name = g_strdup("Notes");
+	name = g_strdup(_("Notes"));
 	break;
     case 'r':
-	name = g_strdup("Corrmat");
+	name = g_strdup(_("Corrmat"));
 	break;
     case 'x':
-	name = g_strdup("Summary");
+	name = g_strdup(_("Summary"));
 	break;
     default:
 	break;
@@ -1258,11 +1258,11 @@ static void open_gui_graph (gui_obj *gobj)
 #ifdef G_OS_WIN32
     sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, graph->fname);
     if (WinExec(buf, SW_SHOWNORMAL) < 32)
-	errbox("gnuplot command failed");
+	errbox(_("gnuplot command failed"));
 #else
     sprintf(buf, "gnuplot -persist \"%s\"", graph->fname);
     if (system(buf))
-	errbox("gnuplot command failed");
+	errbox(_("gnuplot command failed"));
 #endif
 }
 
@@ -1275,7 +1275,7 @@ static void open_boxplot (gui_obj *gobj)
     GRAPHT *graph = (GRAPHT *) gobj->data;
 
     if (retrieve_boxplot(graph->fname)) 
-	errbox("Failed to reconstruct boxplot");
+	errbox(_("Failed to reconstruct boxplot"));
 }
 
 /* ........................................................... */
@@ -1319,7 +1319,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     windata_t *mydata = (windata_t *) data;
 
     if ((fp = fopen(mydata->fname, "w")) == NULL) {
-	sprintf(msg, "couldn't write to %s", mydata->fname);
+	sprintf(msg, _("couldn't write to %s"), mydata->fname);
 	errbox(msg); 
 	return;
     }
@@ -1328,7 +1328,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);
-    if (!quiet) infobox("plot commands saved");
+    if (!quiet) infobox(_("plot commands saved"));
 }
 
 /* ........................................................... */
@@ -1343,11 +1343,11 @@ static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 #ifdef G_OS_WIN32
     sprintf(buf, "\"%s\" \"%s\"", paths.gnuplot, mydata->fname);
     if (WinExec(buf, SW_SHOWNORMAL) < 32)
-        errbox("gnuplot command failed");
+        errbox(_("gnuplot command failed"));
 #else
     sprintf(buf, "gnuplot -persist \"%s\"", mydata->fname);
     if (system(buf))
-        errbox("gnuplot command failed");
+        errbox(_("gnuplot command failed"));
 #endif
 }
 

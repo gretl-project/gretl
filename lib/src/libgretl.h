@@ -33,7 +33,9 @@
 # define M_PI 3.14159265358979323846
 #endif
 
-#define _(String) String
+#ifndef __GNOME_I18N_H__
+#define _(String)  (String)
+#endif /* __GNOME_I18N_H__ */
 
 typedef enum {
     GRETL_PRINT_STDOUT,

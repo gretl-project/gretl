@@ -126,7 +126,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
 	gtk_widget_destroy(w);
     }
     else if (key->keyval == GDK_s) {
-        file_selector("Save boxplot file", SAVE_BOXPLOT_EPS, data);
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, data);
     }
     else if (key->keyval == GDK_p) {  
 	five_numbers(data);
@@ -137,7 +137,7 @@ box_key_handler (GtkWidget *w, GdkEventKey *key, gpointer data)
     }
 #else
     else if (key->keyval == GDK_c) { 
-        file_selector("Save boxplot file", SAVE_BOXPLOT_XPM, data);	
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, data);	
     }
 #endif
     return TRUE;
@@ -151,26 +151,26 @@ static gint box_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = gtk_object_get_data(GTK_OBJECT(w), "group");
     PLOTGROUP *grp = (PLOTGROUP *) ptr;
 
-    if (!strcmp(item, "Five-number summary")) 
+    if (!strcmp(item, _("Five-number summary"))) 
         five_numbers(grp);
-    else if (!strcmp(item, "Save to session as icon")) {
+    else if (!strcmp(item, _("Save to session as icon"))) {
         dump_boxplot(grp, "boxdump.tmp");
 	add_last_graph(NULL, 1, NULL);
     }
-    else if (!strcmp(item, "Save as EPS...")) 
-        file_selector("Save boxplot file", SAVE_BOXPLOT_EPS, ptr);
-    else if (!strcmp(item, "Save as PS...")) 
-        file_selector("Save boxplot file", SAVE_BOXPLOT_PS, ptr);
+    else if (!strcmp(item, _("Save as EPS..."))) 
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_EPS, ptr);
+    else if (!strcmp(item, _("Save as PS..."))) 
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_PS, ptr);
 #ifdef G_OS_WIN32
-    else if (!strcmp(item, "Copy to clipboard"))
+    else if (!strcmp(item, _("Copy to clipboard")))
 	cb_copy_image(ptr);
 #else
-    else if (!strcmp(item, "Save as XPM..."))
-        file_selector("Save boxplot file", SAVE_BOXPLOT_XPM, ptr);
+    else if (!strcmp(item, _("Save as XPM...")))
+        file_selector(_("Save boxplot file"), SAVE_BOXPLOT_XPM, ptr);
 #endif
-    else if (!strcmp(item, "Help"))
+    else if (!strcmp(item, _("Help")))
 	context_help (NULL, GINT_TO_POINTER(GR_BOX));
-    else if (!strcmp(item, "Close")) { 
+    else if (!strcmp(item, _("Close"))) { 
 	gtk_widget_destroy(grp->popup);
 	grp->popup = NULL;
         gtk_widget_destroy(grp->window);
@@ -188,17 +188,17 @@ static GtkWidget *build_menu (gpointer data)
 {
     GtkWidget *menu, *item;    
     static char *items[] = {
-        "Five-number summary",
-	"Save to session as icon",
-        "Save as EPS...",
-        "Save as PS...",
+        _("Five-number summary"),
+	_("Save to session as icon"),
+        _("Save as EPS..."),
+        _("Save as PS..."),
 #ifdef G_OS_WIN32
-	"Copy to clipboard",
+	_("Copy to clipboard"),
 #else
-	"Save as XPM...",
+	_("Save as XPM..."),
 #endif
-	"Help",
-        "Close",
+	_("Help"),
+        _("Close"),
 	NULL
     };
     int i = 0;
@@ -406,8 +406,8 @@ gtk_boxplot_yscale (PLOTGROUP *grp, GtkPlotPC *pc)
     /* special on-screen string for notched plots */
     if (pc == NULL && grp->plots[0].conf[0] != -999.0 && grp->width >=460) {
 	setup_text (grp->area, grp->pixmap, gc, pc, 
-		    "notches show bootstrapped 90% confidence intervals "
-		    "for medians", 
+		    _("notches show bootstrapped 90% confidence intervals "
+		    "for medians"), 
 		    grp->width / 2.0,
 		    grp->height * headroom / 3.0,
 		    GTK_JUSTIFY_CENTER);
@@ -626,7 +626,7 @@ static GtkWidget *
 make_area (PLOTGROUP *grp)
 {
     grp->window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(grp->window), "gretl: boxplots");
+    gtk_window_set_title(GTK_WINDOW(grp->window), _("gretl: boxplots"));
 
     /* Create the drawing area */
     grp->area = gtk_drawing_area_new ();
@@ -867,10 +867,10 @@ five_numbers (gpointer data)
     if (bufopen(&prn)) return 1;
 
     if (grp->plots[0].conf[0] == -999.0) { /* no confidence intervals */
-	pprintf(prn, "Five-number summar%s\n\n"
-		"%20s%10s%10s%10s%10s\n",
-		(grp->nplots > 1)? "ies" : "y",
-		"min", "Q1", "median", "Q3", "max");
+	pprintf(prn, _("Five-number summar%s\n\n"
+		"%20s%10s%10s%10s%10s\n"),
+		(grp->nplots > 1)? _("ies") : "y",
+		"min", "Q1", _("median"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
 	    pprintf(prn, "%-10s%10g%10g%10g%10g%10g\n",
@@ -881,11 +881,11 @@ five_numbers (gpointer data)
     } else { /* confidence intervals */
 	char intstr[24];
 
-	pprintf(prn, "Five-number summar%s with bootstrapped confidence "
+	pprintf(prn, _("Five-number summar%s with bootstrapped confidence "
 		"interval for median\n\n"
-		"%18s%10s%10s%17s%10s%10s\n",
-		(grp->nplots > 1)? "ies" : "y",
-		"min", "Q1", "median", "(90% interval)", "Q3", "max");
+		"%18s%10s%10s%17s%10s%10s\n"),
+		(grp->nplots > 1)? _("ies") : "y",
+		"min", "Q1", _("median"), _("(90% interval)"), "Q3", "max");
 
 	for (i=0; i<grp->nplots; i++) {
 	    sprintf(intstr, "%g - %g", grp->plots[i].conf[0], 
@@ -898,7 +898,7 @@ five_numbers (gpointer data)
 	}
     }
 
-    (void) view_buffer(prn, 78, 240, "gretl: 5 numbers", BXPLOT,
+    (void) view_buffer(prn, 78, 240, _("gretl: 5 numbers"), BXPLOT,
                        view_items);
 
     return 0;
@@ -936,7 +936,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
     for (i=0, j=0; i<plotgrp->nplots; i++, j++) {
 	n = ztox(list[i+1], x, *pZ, pdinfo);
 	if (n < 2) {
-	    sprintf(errtext, "Dropping %s: insufficient observations",
+	    sprintf(errtext, _("Dropping %s: insufficient observations"),
 		    pdinfo->varname[list[i+1]]);
 	    errbox(errtext);
 	    list_exclude(i+1, list);
@@ -960,7 +960,7 @@ int boxplots (int *list, char **bools, double ***pZ, const DATAINFO *pdinfo,
 	if (notches) {
 	    if (median_interval(x, n, &plotgrp->plots[i].conf[0],
 				&plotgrp->plots[i].conf[1])) {
-		errbox ("Couldn't obtain confidence interval");
+		errbox (_("Couldn't obtain confidence interval"));
 		plotgrp->plots[i].conf[0] = 
 		    plotgrp->plots[i].conf[1] = -999.0;
 	    }
@@ -1041,7 +1041,7 @@ static int cb_copy_image (gpointer data)
 
     hDIB = GlobalAlloc(GMEM_MOVEABLE | GMEM_DDESHARE, dibsize);
     if (hDIB == NULL) {
-	    errbox ("Failed to allocate DIB");
+	    errbox (_("Failed to allocate DIB"));
 	    return FALSE;
     }
 
@@ -1064,7 +1064,7 @@ static int cb_copy_image (gpointer data)
 	GlobalUnlock(hDIB);
 	ret = TRUE;
     } else 
-	errbox("Failed to lock DIB Header");
+	errbox(_("Failed to lock DIB Header"));
 
     /* fill color map */
     if (ret) {
@@ -1084,7 +1084,7 @@ static int cb_copy_image (gpointer data)
 	    ret = TRUE;
 	    GlobalUnlock(hDIB);
 	} else
-	    errbox ("Failed to lock DIB Palette");
+	    errbox (_("Failed to lock DIB Palette"));
     } 
   
     /* copy data to DIB */
@@ -1116,27 +1116,27 @@ static int cb_copy_image (gpointer data)
 	    ret = TRUE;
 	    GlobalUnlock (hDIB);
 	} else 
-	    errbox("Failed to lock DIB Data");
+	    errbox(_("Failed to lock DIB Data"));
     } /* copy data to DIB */
   
     /* copy DIB to ClipBoard */
     if (ret) {      
 	if (!OpenClipboard (NULL)) {
-	    errbox ("Cannot open the Clipboard!");
+	    errbox (_("Cannot open the Clipboard!"));
 	    ret = FALSE;
 	} else {
 	    if (ret && !EmptyClipboard ()) {
-		errbox ("Cannot empty the Clipboard");
+		errbox (_("Cannot empty the Clipboard"));
 		ret = FALSE;
 	    }
 	    if (ret) {
 		if (NULL != SetClipboardData (CF_DIB, hDIB))
 		    hDIB = NULL; /* data now owned by clipboard */
 		else
-		    errbox ("Failed to set clipboard data");
+		    errbox (_("Failed to set clipboard data"));
 	    }
 	    if (!CloseClipboard ())
-		errbox ("Failed to close Clipboard");
+		errbox (_("Failed to close Clipboard"));
 	}
     }
     /* done */
@@ -1159,7 +1159,7 @@ int plot_to_xpm (const char *fname, gpointer data)
     
     fp = fopen(fname, "w");
     if (fp == NULL) {
-	errbox ("Couldn't open XPM file for writing");
+	errbox (_("Couldn't open XPM file for writing"));
 	return 1;
     }
 
@@ -1413,7 +1413,7 @@ int retrieve_boxplot (const char *fname)
     return 0;
 
     corrupt:
-    fprintf(stderr, "boxplot file is corrupt\n");
+    fprintf(stderr, _("boxplot file is corrupt\n"));
     fclose(fp);
     return 1;
 }
@@ -1476,7 +1476,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		v = atoi(tok);
 		if (v < origv) list[++i] = v;
 		else {
-		    sprintf(errtext, "got invalid variable number %d", v);
+		    sprintf(errtext, _("got invalid variable number %d"), v);
 		    errbox(errtext);
 		    err = 1;
 		}
@@ -1485,12 +1485,12 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 		v = varindex(pdinfo, tok);
 		if (v < origv) list[++i] = v;
 		else {
-		    sprintf(errtext, "got invalid varname '%s'", tok);
+		    sprintf(errtext, _("got invalid varname '%s'"), tok);
 		    errbox(errtext);
 		    err = 1;
 		}
 	    } else {
-		sprintf(errtext, "got invalid field '%s'", tok);
+		sprintf(errtext, _("got invalid field '%s'"), tok);
 		errbox(errtext);
 		err = 1; 
 	    }
@@ -1518,7 +1518,7 @@ int boolean_boxplots (const char *str, double ***pZ, DATAINFO *pdinfo,
 	    sprintf(formula, "bool_%d = %s", i-1, bools[i-1]);
 	    genr = generate(pZ, pdinfo, formula, 0, NULL, 0);
 	    if (genr.errcode) {
-		errbox("boxplots: generation of dummy variable failed");
+		errbox(_("boxplots: generation of dummy variable failed"));
 		fprintf(stderr, "%s\n", get_gretl_errmsg());
 		err = 1;
 	    } else {

@@ -36,7 +36,7 @@ static int gettrend (double ***pZ, DATAINFO *pdinfo)
 
     for (t=0; t<n; t++) (*pZ)[v][t] = (double) t+1;
     strcpy(pdinfo->varname[v], "time");
-    strcpy(pdinfo->label[v], "time trend variable");
+    strcpy(pdinfo->label[v], _("time trend variable"));
 	    
     return index;
 }
@@ -88,7 +88,7 @@ static int diffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
     }
 
     strcpy(pdinfo->varname[v], s);
-    sprintf(pdinfo->label[v], "%s = first difference of %s",
+    sprintf(pdinfo->label[v], _("%s = first difference of %s"),
 	    pdinfo->varname[v], pdinfo->varname[iv]);
 	    
     return 0;
@@ -126,7 +126,7 @@ static int ldiffgenr (const int iv, double ***pZ, DATAINFO *pdinfo)
     }
 
     strcpy(pdinfo->varname[v], s);
-    sprintf(pdinfo->label[v], "%s = log difference of %s",
+    sprintf(pdinfo->label[v], _("%s = log difference of %s"),
 	    pdinfo->varname[v], pdinfo->varname[iv]);
 	    
     return 0;
@@ -273,7 +273,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     _init_model(&var_model, pdinfo);
 
     if (order < 1) {
-	fprintf(stderr, "Not much point in a zero-order \"VAR\" surely?\n");
+	fprintf(stderr, _("Not much point in a zero-order \"VAR\" surely?\n"));
 	return 1;
     }
 
@@ -332,7 +332,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
     pdinfo->t2 = t2;
 
     /* run and print out the several regressions */
-    pprintf(prn, "\nVAR system, lag order %d\n\n", order);
+    pprintf(prn, _("\nVAR system, lag order %d\n\n"), order);
     shortlist[0] = listlen - order;
     
     for (i=0; i<neqns; i++) {
@@ -347,7 +347,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	clear_model(&var_model, NULL, NULL, pdinfo);
 	/* now build truncated lists for hyp. tests */
 	shortlist[1] = varlist[1];
-	pprintf(prn, "\nF-tests of zero restrictions:\n\n");
+	pprintf(prn, _("\nF-tests of zero restrictions:\n\n"));
 	for (j=0; j<neqns; j++) {
 	    reset_list(shortlist, varlist);
 	    for (l=1; l<=order; l++) {
@@ -360,17 +360,17 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		shortlist[l] = varlist[varlist[0]-end];
 		end++;
 	    }
-	    pprintf(prn, "All lags of %-8s ", 
+	    pprintf(prn, _("All lags of %-8s "), 
 		   pdinfo->varname[depvars[j]]);
 	    /*  printlist(shortlist); */
 	    var_model = lsq(shortlist, pZ, pdinfo, VAR, 0, 0.0);
 	    F = ((var_model.ess - essu)/order)/(essu/dfd);
 	    clear_model(&var_model, NULL, NULL, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", order, dfd, F);
-	    pprintf(prn, "p-value %f\n", fdist(F, order, dfd));
+	    pprintf(prn, _("p-value %f\n"), fdist(F, order, dfd));
 	}
 	if (order > 1) {
-	    pprintf(prn, "All vars, lag %-6d ", order);
+	    pprintf(prn, _("All vars, lag %-6d "), order);
 	    reset_list(shortlist, varlist);
 	    index = 2;
 	    for (j=1; j<=neqns*(order); j++) {
@@ -389,7 +389,7 @@ int var (const int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 	    F = ((var_model.ess - essu)/neqns)/(essu/dfd);
 	    clear_model(&var_model, NULL, NULL, pdinfo);
 	    pprintf(prn, "F(%d, %d) = %f, ", neqns, dfd, F);
-	    pprintf(prn, "p-value %f\n", fdist(F, neqns, dfd)); 
+	    pprintf(prn, _("p-value %f\n"), fdist(F, neqns, dfd)); 
 	}
 	pprintf(prn, "\n");
 	if (pause) page_break(0, NULL, 0);
@@ -465,12 +465,12 @@ int coint (const int order, const LIST list, double ***pZ,
     pprintf(prn, "\n");
     adf_test(order, pdinfo->v - 1, pZ, pdinfo, prn);
 
-    pprintf(prn, "\nThere is evidence for a cointegrating relationship if:\n"
+    pprintf(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
 	    "(a) The unit-root hypothesis is not rejected for the individual"
 	    " variables.\n(b) The unit-root hypothesis is rejected for the "
 	    "residuals (uhat) from the \n    cointegrating regression.\n"
 	    "\n(Note that significance levels for the D-W and F statistics here "
-	    "cannot be \nread from the usual statistical tables.)\n");
+	    "cannot be \nread from the usual statistical tables.)\n"));
 
     /* clean up and get out */
     clear_model(&coint_model, NULL, NULL, pdinfo);
@@ -545,26 +545,26 @@ int adf_test (const int order, const int varno, double ***pZ,
     row = (T > 500)? 5 : (T > 450)? 4 : (T > 240)? 3 : (T > 90)? 2 : 
 	(T > 40)? 1 : (T > 24)? 0 : -1;
     if (row < 0) {
-	sprintf(pval, "significance level unknown");
+	sprintf(pval, _("significance level unknown"));
     } else {
 	if (DFt < t_crit_vals[row][0] || DFt > t_crit_vals[row][7])
-	    sprintf(pval, "significant at the 1 percent level");
+	    sprintf(pval, _("significant at the 1 percent level"));
 	else if (DFt < t_crit_vals[row][1] || DFt > t_crit_vals[row][6])
-	    sprintf(pval, "significant at the 2.5 percent level");
+	    sprintf(pval, _("significant at the 2.5 percent level"));
 	else if (DFt < t_crit_vals[row][2] || DFt > t_crit_vals[row][5])
-	    sprintf(pval, "significant at the 5 percent level");
+	    sprintf(pval, _("significant at the 5 percent level"));
 	else if (DFt < t_crit_vals[row][3] || DFt > t_crit_vals[row][4])
-	    sprintf(pval, "significant at the 10 percent level");
+	    sprintf(pval, _("significant at the 10 percent level"));
 	else
-	    sprintf(pval, "not significant at the 10 percent level");
+	    sprintf(pval, _("not significant at the 10 percent level"));
     }
     
-    pprintf(prn, "\nDickey-Fuller test with constant\n\n"
+    pprintf(prn, _("\nDickey-Fuller test with constant\n\n"
 	    "   model: (1 - L)%s = m + g * %s(-1) + e\n"
 	    "   unit-root null hypothesis: g = 0\n"
 	    "   estimated value of g: %f\n"
 	    "   test statistic: t = %f, with sample size %d\n"
-	    "   %s\n",
+	    "   %s\n"),
 	    pdinfo->varname[varno], pdinfo->varname[varno],
 	    adf_model.coeff[1], DFt, adf_model.nobs, pval);
     clear_model(&adf_model, NULL, NULL, pdinfo);
@@ -610,19 +610,19 @@ int adf_test (const int order, const int varno, double ***pZ,
     else if (T > 25) row = 1;
     else if (T > 23) row = 0;
 
-    if (row == -1) strcpy(pval, "unknown pvalue");
+    if (row == -1) strcpy(pval, _("unknown pvalue"));
     else {
-	if (F > crit_vals[row][3]) strcpy(pval, "pvalue < .01");
-	else if (F > crit_vals[row][2]) strcpy(pval, ".025 > pvalue > .01");
-	else if (F > crit_vals[row][1]) strcpy(pval, ".05 > pvalue > .025");
-	else if (F > crit_vals[row][0]) strcpy(pval, ".10 > pvalue > .05");
-	else strcpy(pval, "pvalue > .10");
+	if (F > crit_vals[row][3]) strcpy(pval, _("pvalue < .01"));
+	else if (F > crit_vals[row][2]) strcpy(pval, _(".025 > pvalue > .01"));
+	else if (F > crit_vals[row][1]) strcpy(pval, _(".05 > pvalue > .025"));
+	else if (F > crit_vals[row][0]) strcpy(pval, _(".10 > pvalue > .05"));
+	else strcpy(pval, _("pvalue > .10"));
     }
 
-    pprintf(prn, "Augmented Dickey-Fuller test on %s:\n   F(2, %d) = %f, "
-	   "with %s\n", pdinfo->varname[varno], T - k, F, pval);
-    pprintf(prn, "The null hypothesis is that %s has a unit root, i.e. "
-	    "the parameters on\nthe time trend and %s are both zero.\n",
+    pprintf(prn, _("Augmented Dickey-Fuller test on %s:\n   F(2, %d) = %f, "
+	   "with %s\n"), pdinfo->varname[varno], T - k, F, pval);
+    pprintf(prn, _("The null hypothesis is that %s has a unit root, i.e. "
+	    "the parameters on\nthe time trend and %s are both zero.\n"),
 	    pdinfo->varname[varno], pdinfo->varname[adflist[3]]);
 
     free(adflist);

@@ -58,7 +58,7 @@ static int read_ps_descriptions (windata_t *fdata)
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	errbox("Couldn't open descriptions file");
+	errbox(_("Couldn't open descriptions file"));
 	return 1;
     }
     
@@ -100,7 +100,7 @@ static int read_data_descriptions (windata_t *fdata)
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	errbox("Couldn't open data descriptions file");
+	errbox(_("Couldn't open data descriptions file"));
 	return 1;
     }
     
@@ -152,10 +152,10 @@ static void browse_header (GtkWidget *w, gpointer data)
     prn->buf = get_xml_description(hdrname);
 
     if (prn->buf != NULL)
-	view_buffer(prn, 80, 300, "gretl: data header", INFO, NULL);
+	view_buffer(prn, 80, 300, _("gretl: data header"), INFO, NULL);
     else {
-	errbox("Failed to retrieve description of data");
-	fprintf(stderr, "didn't get description from %s\n", hdrname);
+	errbox(_("Failed to retrieve description of data"));
+	fprintf(stderr, _("didn't get description from %s\n"), hdrname);
     }
 }
 
@@ -226,15 +226,15 @@ static void get_local_status (char *fname, char *status, time_t remtime)
     sprintf(fullname, "%s%s", paths.binbase, fname);
     if ((err = stat(fullname, &fbuf)) == -1) {
 	if (errno == ENOENT)
-	    strcpy(status, "Not installed");
+	    strcpy(status, _("Not installed"));
 	else
-	    strcpy(status, "Unknown: access error");
+	    strcpy(status, _("Unknown: access error"));
     }
     if (!err) {
 	if (difftime(remtime, fbuf.st_ctime) > 360)
-	    strcpy(status, "Not up to date");
+	    strcpy(status, _("Not up to date"));
 	else 
-	    strcpy(status, "Up to date");
+	    strcpy(status, _("Up to date"));
     }
 }
 
@@ -305,7 +305,7 @@ static gint populate_remote_dblist (windata_t *ddata)
 		errbuf[strlen(errbuf)-1] = '\0';
 	    errbox(errbuf);
 	} else 
-	    errbox("Error retrieving data from server");
+	    errbox(_("Error retrieving data from server"));
 	free(getbuf);
 	return err;
     }
@@ -337,7 +337,7 @@ static gint populate_remote_dblist (windata_t *ddata)
     if (i > 0) 
 	gtk_clist_select_row(GTK_CLIST(ddata->listbox), 0, 0);
     else 
-	errbox("No database files found");
+	errbox(_("No database files found"));
     return 0;
 }
 
@@ -366,25 +366,25 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     case GREENE_PS:
     case PWT_PS:
 	gtk_window_set_title(GTK_WINDOW (fdata->w), 
-			     "gretl: practice files");
+			     _("gretl: practice files"));
 	browse_func = browser_open_ps;
 	break;
     case RAMU_DATA:
     case GREENE_DATA:
     case PWT_DATA:
 	gtk_window_set_title(GTK_WINDOW (fdata->w), 
-			     "gretl: data files");
+			     _("gretl: data files"));
 	browse_func = browser_open_data;
 	break;
     case NATIVE_DB:
     case RATS_DB:
 	gtk_window_set_title(GTK_WINDOW (fdata->w), 
-			     "gretl: database files");
+			     _("gretl: database files"));
 	browse_func = open_db_clist;
 	break;
     case REMOTE_DB:
 	gtk_window_set_title(GTK_WINDOW (fdata->w), 
-			     "gretl: databases on server");
+			     _("gretl: databases on server"));
 	browse_func = open_remote_clist;
 	break;
     }
@@ -404,7 +404,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
 
 	hbox = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(main_vbox), hbox, FALSE, FALSE, 0);
-	fdata->status = gtk_label_new("Network status: OK");
+	fdata->status = gtk_label_new(_("Network status: OK"));
 	gtk_label_set_justify(GTK_LABEL(fdata->status), GTK_JUSTIFY_LEFT);
 	gtk_box_pack_start(GTK_BOX(hbox), fdata->status, FALSE, FALSE, 0);
     }
@@ -414,7 +414,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     gtk_box_pack_start (GTK_BOX (main_vbox), button_box, FALSE, FALSE, 0);
 
     openbutton = gtk_button_new_with_label 
-	((code == REMOTE_DB)? "Get series listing" : "Open");
+	((code == REMOTE_DB)? _("Get series listing") : _("Open"));
     gtk_box_pack_start (GTK_BOX (button_box), openbutton, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(openbutton), "clicked",
 		       GTK_SIGNAL_FUNC(browse_func), fdata);
@@ -425,7 +425,7 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
 	|| code == REMOTE_DB) {
 	midbutton = gtk_button_new_with_label 
-	    ((code == REMOTE_DB)? "Install" : "Info");
+	    ((code == REMOTE_DB)? _("Install") : _("Info"));
 	gtk_box_pack_start (GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
 			   (code == REMOTE_DB)?
@@ -434,13 +434,13 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     }
 
     if (code == RAMU_DATA) {
-	midbutton = gtk_button_new_with_label("Find");
+	midbutton = gtk_button_new_with_label(_("Find"));
 	gtk_box_pack_start(GTK_BOX (button_box), midbutton, FALSE, TRUE, 0);
 	gtk_signal_connect(GTK_OBJECT(midbutton), "clicked",
 			   GTK_SIGNAL_FUNC(datafile_find), fdata);	
     }
 
-    closebutton = gtk_button_new_with_label("Close");
+    closebutton = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (button_box), closebutton, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(closebutton), "clicked",
 		       GTK_SIGNAL_FUNC(delete_widget), fdata->w);
@@ -476,10 +476,10 @@ gint populate_filelist (windata_t *fdata)
 
 static GtkWidget *files_window (windata_t *fdata) 
 {
-    char *data_titles[] = {"Data file", "Summary"};
-    char *ps_titles[] = {"Script", "Topic", "Data"};
-    char *db_titles[] = {"Database", "Source"};
-    char *remote_titles[] = {"Database", "Source", "Local status"};
+    char *data_titles[] = {_("Data file"), _("Summary")};
+    char *ps_titles[] = {_("Script"), _("Topic"), _("Data")};
+    char *db_titles[] = {_("Database"), _("Source")};
+    char *remote_titles[] = {_("Database"), _("Source"), _("Local status")};
     char **titles = data_titles;
     int data_col_width[] = {128, 256}; 
     int ps_col_width[] = {68, 180, 160};
@@ -598,7 +598,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     d->dialog = gtk_dialog_new();
     w = d->dialog;
 
-    gtk_window_set_title (GTK_WINDOW (d->dialog), "gretl: panel data structure");
+    gtk_window_set_title (GTK_WINDOW (d->dialog), _("gretl: panel data structure"));
     gtk_window_set_policy (GTK_WINDOW (d->dialog), FALSE, FALSE, FALSE);
     gtk_container_border_width (GTK_CONTAINER 
 				(GTK_DIALOG (d->dialog)->vbox), 10);
@@ -614,7 +614,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
 			GTK_SIGNAL_FUNC (cleanfun), 
 			cancel_d);
 
-    button = gtk_radio_button_new_with_label (NULL, "Stacked time series");
+    button = gtk_radio_button_new_with_label (NULL, _("Stacked time series"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     if (pdinfo->time_series == STACKED_TIME_SERIES)
@@ -626,7 +626,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_widget_show (button);
 
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
-    button = gtk_radio_button_new_with_label(group, "Stacked cross sections");
+    button = gtk_radio_button_new_with_label(group, _("Stacked cross sections"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
     if (pdinfo->time_series == STACKED_CROSS_SECTION)
@@ -649,7 +649,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_widget_show (tempwid);
 
     /* Create the "Cancel" button */
-    tempwid = gtk_button_new_with_label ("Cancel");
+    tempwid = gtk_button_new_with_label (_("Cancel"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -659,7 +659,7 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w,
     gtk_widget_show (tempwid);
 
     /* Create a "Help" button */
-    tempwid = gtk_button_new_with_label ("Help");
+    tempwid = gtk_button_new_with_label (_("Help"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
@@ -705,9 +705,9 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
     if (label != NULL) {
 	int resp;
 
-	sprintf(msg, "Do you want to register the current data set\n"
-		"as %s data?", label);
-	resp = yes_no_dialog("gretl: time series data", msg, 0);
+	sprintf(msg, _("Do you want to register the current data set\n"
+		"as %s data?"), label);
+	resp = yes_no_dialog(_("gretl: time series data"), msg, 0);
 	if (resp == YES_BUTTON) {
 	    if (!(datainfo->time_series == TIME_SERIES))
 		data_status |= MODIFIED_DATA;
@@ -715,8 +715,8 @@ void time_series_dialog (gpointer data, guint u, GtkWidget *w)
 	    set_sample_label(datainfo);
 	}
     } else {
-	sprintf(msg, "The current data frequency, %d, is not recognized\n"
-		"as a valid time-series frequency", datainfo->pd);
+	sprintf(msg, _("The current data frequency, %d, is not recognized\n"
+		"as a valid time-series frequency"), datainfo->pd);
 	errbox(msg);
     }
 }

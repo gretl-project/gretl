@@ -292,9 +292,9 @@ dfstat_t chi_vals[NCHI] = {{1,{2.706,3.841,5.024,6.635,10.828}},
 
 static void other_tables (PRN *prn)
 {
-    pprintf(prn, "\nFor more comprehensive statistical tables, please consult "
+    pprintf(prn, _("\nFor more comprehensive statistical tables, please consult "
 	    "a statistics or\neconometrics text, e.g. Ramanathan's "
-	    "Introductory Econometrics.\n");
+	    "Introductory Econometrics.\n"));
 }
 
 /* .................................................................. */
@@ -316,9 +316,9 @@ void dw_lookup (int n, PRN *prn)
 	}
     }
 
-    pprintf(prn, "5%% critical values for Durbin-Watson statistic\n\n");
-    pprintf(prn, "              Number of explanatory variables (excluding the "
-	    "constant):\n\n");
+    pprintf(prn, _("5%% critical values for Durbin-Watson statistic\n\n"));
+    pprintf(prn, _("              Number of explanatory variables (excluding the "
+	    "constant):\n\n"));
     pprintf(prn, "               1             2             3             4"
 	    "             5\n");
     pprintf(prn, "           dL     dU     dL     dU     dL     dU     dL     dU"
@@ -338,13 +338,13 @@ void dw_lookup (int n, PRN *prn)
 
 void norm_lookup (PRN *prn, int gui)
 {
-    pprintf(prn, "Critical values for standard normal distribution\n\n");
-    pprintf(prn, "Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n");
-    pprintf(prn, "For a two-tailed test, select the column heading "
-	    "showing half the desired\nalpha level.  ");
-    pprintf(prn, "(For example, for a two-tailed test using the 10%% "
-	    "significance\nlevel, use the 0.05 column.)\n\n");
+    pprintf(prn, _("Critical values for standard normal distribution\n\n"));
+    pprintf(prn, _("Column headings show alpha (significance level) for "
+	    "a one-tailed test.\n"));
+    pprintf(prn, _("For a two-tailed test, select the column heading "
+	    "showing half the desired\nalpha level.  "));
+    pprintf(prn, _("(For example, for a two-tailed test using the 10%% "
+	    "significance\nlevel, use the 0.05 column.)\n\n"));
     pprintf(prn, "      0.10     0.05    0.025     0.01    0.001\n\n"); 
     pprintf(prn, "  %8.3f %8.3f %8.3f %8.3f %8.3f",
 	    1.282, 1.645, 1.960, 2.326, 3.090);
@@ -367,19 +367,19 @@ void t_lookup (int df, PRN *prn, int gui)
 	}
     }
 
-    pprintf(prn, "Critical values for Student's t distribution\n\n");
-    pprintf(prn, "Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n");
-    pprintf(prn, "For a two-tailed test, select the column heading "
-	    "showing half the desired\nalpha level.  ");
-    pprintf(prn, "(For example, for a two-tailed test using the 10%% "
-	    "significance\nlevel, use the 0.05 column.)\n\n");
+    pprintf(prn, _("Critical values for Student's t distribution\n\n"));
+    pprintf(prn, _("Column headings show alpha (significance level) for "
+	    "a one-tailed test.\n"));
+    pprintf(prn, _("For a two-tailed test, select the column heading "
+	    "showing half the desired\nalpha level.  "));
+    pprintf(prn, _("(For example, for a two-tailed test using the 10%% "
+	    "significance\nlevel, use the 0.05 column.)\n\n"));
     pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NTSTAT; i++) {
 	if (t_vals[i].df >= dflo && t_vals[i].df <= dfhi) {
 	    pprintf(prn, "df = ");
 	    if (t_vals[i].df == 999)
-		pprintf(prn, "inf.");
+		pprintf(prn, _("inf."));
 	    else
 		pprintf(prn, "%3d ", t_vals[i].df);
 	    for (j=0; j<5; j++)
@@ -398,9 +398,9 @@ void chisq_lookup (int df, PRN *prn, int gui)
 
     if (df > 100) df = 100;
 
-    pprintf(prn, "Critical values for Chi-square distribution\n\n");
-    pprintf(prn, "Column headings show alpha (significance level) for "
-	    "a one-tailed test.\n\n");
+    pprintf(prn, _("Critical values for Chi-square distribution\n\n"));
+    pprintf(prn, _("Column headings show alpha (significance level) for "
+	    "a one-tailed test.\n\n"));
     pprintf(prn, "             0.10     0.05    0.025     0.01    0.001\n\n"); 
     for (i=0; i<NCHI; i++) {
 	if (chi_vals[i].df == df) {

@@ -116,8 +116,8 @@ static int dat_ext (char *str, int err)
     if (suff != NULL && 
 	(!strcmp(suff, ".dat") || !strcmp(suff, ".gdt"))) {
 	if (err) 
-	    errbox("The suffix you selected should be used\n"
-		   "only for gretl datafiles");
+	    errbox(_("The suffix you selected should be used\n"
+		   "only for gretl datafiles"));
 	return 1;
     }
     return 0;
@@ -198,16 +198,16 @@ static void script_set_title (windata_t *vwin, char *fname)
 static const char *get_gp_filter (const char *termtype)
 {
     if (!strcmp(termtype, "postscript")) 
-	return "postscript files\0*.eps\0";
+	return _("postscript files\0*.eps\0");
     else if (!strcmp(termtype, "fig")) 
-	return "xfig files\0*.fig\0";
+	return _("xfig files\0*.fig\0");
     else if (!strcmp(termtype, "latex")) 
-	return "LaTeX files\0*.tex\0";
+	return _("LaTeX files\0*.tex\0");
     else if (!strcmp(termtype, "png")) 
-	return "PNG files\0*.png\0";
+	return _("PNG files\0*.png\0");
     else if (!strcmp(termtype, "plot commands")) 
-	return "gnuplot files\0*.gp\0";
-    else return "all files\0*\0";
+	return _("gnuplot files\0*.gp\0");
+    else return _("all files\0*\0");
 }
 
 struct win32_filtermap {
@@ -220,34 +220,34 @@ static const char *get_filter (int action, gpointer data)
     int i;
     char *filter;
     static struct win32_filtermap map[] = {
-	{SAVE_DATA, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
-	{SAVE_GZDATA, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
-	{SAVE_BIN1, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
-	{SAVE_BIN2, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
-	{SAVE_CMDS, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
-	{SAVE_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
-	{SAVE_CONSOLE, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},
-	{SAVE_MODEL, "text files (*.txt)\0*.txt\0all files\0*\0"},
-	{SAVE_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
-	{SAVE_BOXPLOT_EPS, "postscript files (*.eps)\0*.eps\0all files\0*\0"},
-	{SAVE_BOXPLOT_PS, "postscript files (*.ps)\0*.ps\0all files\0*\0"},
-	{SAVE_LAST_GRAPH, "all files\0*\0"},
-	{SAVE_GP_CMDS, "gnuplot files (*.gp)\0*.gp\0all files\0*\0"},
-	{EXPORT_CSV, "CSV files (*.csv)\0*.csv\0all files\0*\0"},
-	{EXPORT_R, "GNU R files (*.R)\0*.R\0all files\0*\0"},
-	{EXPORT_R_ALT, "GNU R files (*.R)\0*.R\0all files\0*\0"},
-	{EXPORT_OCTAVE, "GNU Octave files (*.m)\0*.m\0all files\0*\0"},
-	{SAVE_OUTPUT, "text files (*.txt)\0*.txt\0all files\0*\0"},
-	{SAVE_TEX_TAB, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
-	{SAVE_TEX_EQ, "TeX files (*.tex)\0*.tex\0all files\0*\0"},
-	{OPEN_DATA, "gretl data files (*.gdt)\0*.gdt*\0all files\0*\0"},
-	{OPEN_SCRIPT, "gretl script files (*.inp)\0*.inp\0all files\0*\0"},
-	{OPEN_SESSION, "session files (*.gretl)\0*.gretl\0all files\0*\0"},
-	{OPEN_CSV,  "CSV files (*.csv)\0*.csv\0all files\0*\0"},
-	{OPEN_BOX, "BOX data files (*.box)\0*.box\0all files\0*\0"}};
+	{SAVE_DATA, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_GZDATA, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_BIN1, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_BIN2, _("gretl data files (*.gdt)\0*.gdt\0all files\0*\0")},
+	{SAVE_CMDS, _("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_SCRIPT, _("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_CONSOLE, _("gretl command files (*.inp)\0*.inp\0all files\0*\0")},
+	{SAVE_MODEL, _("text files (*.txt)\0*.txt\0all files\0*\0")},
+	{SAVE_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
+	{SAVE_BOXPLOT_EPS, _("postscript files (*.eps)\0*.eps\0all files\0*\0")},
+	{SAVE_BOXPLOT_PS, _("postscript files (*.ps)\0*.ps\0all files\0*\0")},
+	{SAVE_LAST_GRAPH, _("all files\0*\0")},
+	{SAVE_GP_CMDS, _("gnuplot files (*.gp)\0*.gp\0all files\0*\0")},
+	{EXPORT_CSV, _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{EXPORT_R, _("GNU R files (*.R)\0*.R\0all files\0*\0")},
+	{EXPORT_R_ALT, _("GNU R files (*.R)\0*.R\0all files\0*\0")},
+	{EXPORT_OCTAVE, _("GNU Octave files (*.m)\0*.m\0all files\0*\0")},
+	{SAVE_OUTPUT, _("text files (*.txt)\0*.txt\0all files\0*\0")},
+	{SAVE_TEX_TAB, _("TeX files (*.tex)\0*.tex\0all files\0*\0")},
+	{SAVE_TEX_EQ, _("TeX files (*.tex)\0*.tex\0all files\0*\0")},
+	{OPEN_DATA, _("gretl data files (*.gdt)\0*.gdt*\0all files\0*\0")},
+	{OPEN_SCRIPT, _("gretl script files (*.inp)\0*.inp\0all files\0*\0")},
+	{OPEN_SESSION, _("session files (*.gretl)\0*.gretl\0all files\0*\0")},
+	{OPEN_CSV,  _("CSV files (*.csv)\0*.csv\0all files\0*\0")},
+	{OPEN_BOX, _("BOX data files (*.box)\0*.box\0all files\0*\0")}};
 
     if (olddat && is_data_action(action)) 
-	return "gretl data files (*.dat)\0*.dat\0all files\0*\0";
+	return _("gretl data files (*.dat)\0*.dat\0all files\0*\0");
 
     if (action == SAVE_GNUPLOT) {
 	GPT_SPEC *plot = (GPT_SPEC *) data;
@@ -315,7 +315,7 @@ void file_selector (char *msg, int action, gpointer data)
 
     if (!retval) {
 	if (CommDlgExtendedError())
-	    errbox("File dialog box error");
+	    errbox(_("File dialog box error"));
 	return;
     }
 	
@@ -372,16 +372,16 @@ void file_selector (char *msg, int action, gpointer data)
 	GPT_SPEC *plot = (GPT_SPEC *) data;
 
 	err = go_gnuplot(plot, fname, &paths);
-	if (err == 0) infobox("graph saved");
-	else if (err == 1) errbox("gnuplot command failed");
-	else if (err == 2) infobox("There were missing observations");
+	if (err == 0) infobox(_("graph saved"));
+	else if (err == 1) errbox(_("gnuplot command failed"));
+	else if (err == 2) infobox(_("There were missing observations"));
     }
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
 	err = ps_print_plots(fname, action, data);
-	if (!err) infobox("boxplots saved");
-	else errbox("boxplot save failed");
+	if (!err) infobox(_("boxplots saved"));
+	else errbox(_("boxplot save failed"));
     }
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = (char *) data;
@@ -400,13 +400,13 @@ void file_selector (char *msg, int action, gpointer data)
 	FILE *fp;
 
 	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox("Couldn't open file for writing");
+	    errbox(_("Couldn't open file for writing"));
 	    return;
 	}
 	fprintf(fp, "%s", 
 		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
 	fclose(fp);
-	infobox("File saved OK");
+	infobox(_("File saved OK"));
 	strcpy(scriptfile, fname);
 	mkfilelist(3, scriptfile);
 	vwin->active_var = 0; /* zero out "changed" flag */
@@ -418,13 +418,13 @@ void file_selector (char *msg, int action, gpointer data)
 
 	editwin = (GtkWidget *) data;
 	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox("Couldn't open file for writing");
+	    errbox(_("Couldn't open file for writing"));
 	    return;
 	}
 	fprintf(fp, "%s", 
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
-	infobox("File saved OK");
+	infobox(_("File saved OK"));
     }
 }
 
@@ -451,7 +451,7 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     /* do some elementary checking */
     if (action < END_OPEN) {
 	if ((fp = fopen(fname, "r")) == NULL) {
-	    errbox("Couldn't open the specified file");
+	    errbox(_("Couldn't open the specified file"));
 	    return;
 	} else fclose(fp);
     } 
@@ -519,24 +519,24 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 	GPT_SPEC *plot = gtk_object_get_data(GTK_OBJECT(fs), "graph");
 
 	err = go_gnuplot(plot, fname, &paths);
-	if (err == 0) infobox("graph saved");
-	else if (err == 1) errbox("gnuplot command failed");
-	else if (err == 2) infobox("There were missing observations");
+	if (err == 0) infobox(_("graph saved"));
+	else if (err == 1) errbox(_("gnuplot command failed"));
+	else if (err == 2) infobox(_("There were missing observations"));
     }
     else if (action == SAVE_BOXPLOT_EPS || action == SAVE_BOXPLOT_PS) {
 	int err;
 
 	err = ps_print_plots(fname, action,
 			     gtk_object_get_data(GTK_OBJECT(fs), "graph"));
-	if (!err) infobox("boxplots saved");
-	else errbox("boxplot save failed");
+	if (!err) infobox(_("boxplots saved"));
+	else errbox(_("boxplot save failed"));
     }
     else if (action == SAVE_BOXPLOT_XPM) {
 	int err;
 
 	err = plot_to_xpm(fname, gtk_object_get_data(GTK_OBJECT(fs), "graph"));
-	if (!err) infobox("boxplots saved");
-	else errbox("boxplot save failed");
+	if (!err) infobox(_("boxplots saved"));
+	else errbox(_("boxplot save failed"));
     }
     else if (action == SAVE_LAST_GRAPH) {
 	char *savestr = gtk_object_get_data(GTK_OBJECT(fs), "graph");
@@ -557,14 +557,14 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	vwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
 	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox("Couldn't open file for writing");
+	    errbox(_("Couldn't open file for writing"));
 	    gtk_widget_destroy(GTK_WIDGET(fs));
 	    return;
 	}
 	fprintf(fp, "%s", 
 		gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0, -1));
 	fclose(fp);
-	infobox("File saved OK");
+	infobox(_("File saved OK"));
 	strcpy(scriptfile, fname);
 	mkfilelist(3, scriptfile);
 	vwin->active_var = 0; /* zero out "changed" flag */
@@ -576,14 +576,14 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 
 	editwin = gtk_object_get_data(GTK_OBJECT(fs), "text");
 	if ((fp = fopen(fname, "w")) == NULL) {
-	    errbox("Couldn't open file for writing");
+	    errbox(_("Couldn't open file for writing"));
 	    gtk_widget_destroy(GTK_WIDGET(fs));
 	    return;
 	}
 	fprintf(fp, "%s", 
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
-	infobox("File saved OK");
+	infobox(_("File saved OK"));
     }
     gtk_widget_destroy(GTK_WIDGET(fs));    
 }

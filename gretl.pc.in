@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: gretl
+Description: Econometrics program and library
+Version: @VERSION@
+Libs: -L${libdir} -lgretl
+Cflags: -I${includedir}

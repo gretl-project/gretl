@@ -39,7 +39,7 @@ int attach_subsample_to_model (MODEL *pmod, double ***fullZ,
 
     i = varindex(fullinfo, "subdum");
     if (i == fullinfo->v) { /* safety measure: should be impossible */
-	fprintf(stderr, "mystery failure in attach_subsample_to_model\n");
+	fprintf(stderr, _("mystery failure in attach_subsample_to_model\n"));
 	return 1;   
     } 
 
@@ -89,7 +89,7 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
 	if (!subsampled(Z, pdinfo, i)) return 0;
 	/* data set is subsampled, model is not: problem */
 	else {
-	    fprintf(stderr, "dataset is subsampled, model is not\n");
+	    fprintf(stderr, _("dataset is subsampled, model is not\n"));
 	    return 1;
 	}
     }
@@ -97,13 +97,13 @@ int model_sample_issue (const MODEL *pmod, MODELSPEC *spec,
     /* case: model has sub-sampling info recorded */
     if (!subsampled(Z, pdinfo, i)) {
 	/* data set not sub-sampled: problem */
-	fprintf(stderr, "model is subsampled, dataset is not\n");
+	fprintf(stderr, _("model is subsampled, dataset is not\n"));
 	return 1;
     } else { /* do the subsamples (model and current data set) agree? */
 	if (_identical(Z[i], subdum, n))
 	    return 0;
 	else {
-	    fprintf(stderr, "model and dataset subsamples not the same\n");
+	    fprintf(stderr, _("model and dataset subsamples not the same\n"));
 	    return 1;
 	}
     }
@@ -187,7 +187,7 @@ int set_sample_dummy (const char *line,
     else if (opt == OPT_O) { /* the name of a dummy var was given */ 
 	dumnum = varindex(oldinfo, dumv);
 	if (dumnum == oldinfo->v) {
-	    sprintf(gretl_errmsg, "Variable '%s' not defined", dumv);
+	    sprintf(gretl_errmsg, _("Variable '%s' not defined"), dumv);
 	    return 1;
 	} 
 	sn = isdummy(dumnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
@@ -203,7 +203,7 @@ int set_sample_dummy (const char *line,
 	    return 1;
 	}
 	if (add_new_var(oldinfo, oldZ, &genr)) {
-	    strcpy(gretl_errmsg, "Failed to add sub-sampling dummy variable");
+	    strcpy(gretl_errmsg, _("Failed to add sub-sampling dummy variable"));
 	    return 1;
 	}
 	subnum = varindex(oldinfo, "subdum");
@@ -211,7 +211,7 @@ int set_sample_dummy (const char *line,
 	sn = isdummy(subnum, oldinfo->t1, oldinfo->t2, *oldZ, n);
     } else {
 	/* impossible */
-	strcpy(gretl_errmsg, "Sub-sample command failed mysteriously");
+	strcpy(gretl_errmsg, _("Sub-sample command failed mysteriously"));
 	return 1;
     }
 
@@ -219,19 +219,19 @@ int set_sample_dummy (const char *line,
        in the sample, perchance? */
     if (sn == 0) {
 	if (opt == OPT_O && !missobs)
-	    sprintf(gretl_errmsg, "'%s' is not a dummy variable", dumv);
+	    sprintf(gretl_errmsg, _("'%s' is not a dummy variable"), dumv);
 	else if (missobs)
-	    strcpy(gretl_errmsg, "No observations would be left!");
+	    strcpy(gretl_errmsg, _("No observations would be left!"));
 	else { /* case of boolean expression */
 	    if ((*oldZ)[subnum][oldinfo->t1] == 0)
-		strcpy(gretl_errmsg, "No observations would be left!");
+		strcpy(gretl_errmsg, _("No observations would be left!"));
 	    else
-		strcpy(gretl_errmsg, "No observations were dropped!");
+		strcpy(gretl_errmsg, _("No observations were dropped!"));
 	}
 	return 1;
     }
     if (sn == n) {
-	strcpy(gretl_errmsg, "No observations were dropped!");
+	strcpy(gretl_errmsg, _("No observations were dropped!"));
 	return 1;
     }
 
@@ -240,7 +240,7 @@ int set_sample_dummy (const char *line,
     if (subnum == oldinfo->v) {
 	if (dataset_add_vars(1, oldZ, oldinfo)) return E_ALLOC;
 	strcpy(oldinfo->varname[subnum], "subdum");
-	strcpy(oldinfo->label[subnum], "automatic sub-sampling dummy");
+	strcpy(oldinfo->label[subnum], _("automatic sub-sampling dummy"));
     }
 
     for (t=0; t<n; t++) {
@@ -312,13 +312,13 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	
     if (nf == 2) {
 	if (sscanf(line, "%s %s", cmd, newstart) != 2) {
-	    sprintf(gretl_errmsg, "error reading smpl line");
+	    sprintf(gretl_errmsg, _("error reading smpl line"));
 	    return 1;
 	} else {
 	    new_t1 = dateton(newstart, pdinfo);
 	    if (new_t1 < 0 || strlen(gretl_errmsg)) return 1;
 	    if (new_t1 > pdinfo->n) {
-		sprintf(gretl_errmsg, "error in new starting obs");
+		sprintf(gretl_errmsg, _("error in new starting obs"));
 		return 1;
 	    }
 	    pdinfo->t1 = new_t1;
@@ -326,7 +326,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	}
     }
     if (sscanf(line, "%s %s %s", cmd, newstart, newstop) != 3) {
-	sprintf(gretl_errmsg, "error reading smpl line");
+	sprintf(gretl_errmsg, _("error reading smpl line"));
 	return 1;
     }
     if (strcmp(newstart, ";")) {
@@ -340,7 +340,7 @@ int set_sample (const char *line, DATAINFO *pdinfo)
 	new_t2 = dateton(newstop, pdinfo);
 	if (strlen(gretl_errmsg)) return 1;
 	if (new_t2 >= pdinfo->n) {
-	    sprintf(gretl_errmsg, "error in new ending obs");
+	    sprintf(gretl_errmsg, _("error in new ending obs"));
 	    return 1;
 	}
 	pdinfo->t2 = new_t2;
@@ -430,10 +430,10 @@ int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
     /* in case any new vars added, try to merge them in */
     err = datamerge(fullZ, *fullinfo, Z, *subinfo);
     if (err == E_ALLOC)
-        sprintf(gretl_errmsg, "Out of memory expanding data set\n");
+        sprintf(gretl_errmsg, _("Out of memory expanding data set\n"));
     if (err == E_NOMERGE)
         sprintf(gretl_errmsg, 
-		"Missing sub-sample information; can't merge data\n");
+		_("Missing sub-sample information; can't merge data\n"));
 
     /* reattach the malloc'd elements, which might have moved */
     (*fullinfo)->varname = (*subinfo)->varname;
@@ -489,7 +489,7 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	if (v) {
 	    year = (int) (*pZ)[v][t];
 	    if (year != yearbak) {
-		pprintf(prn, "%d: %4d missing data values\n", 
+		pprintf(prn, _("%d: %4d missing data values\n"), 
 			yearbak, yearmiss);
 		yearmiss = tmiss;
 		yearbak = year;
@@ -499,14 +499,14 @@ int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn)
 	oldmiss = missval;
     }
     if (v) 
-	pprintf(prn, "%d: %4d missing data values\n", 
+	pprintf(prn, _("%d: %4d missing data values\n"), 
 		year, yearmiss);
     
-    pprintf(prn, "\nNumber of observations (rows) with missing data "
-	    "values = %d (%d%%)\n", missobs, 
+    pprintf(prn, _("\nNumber of observations (rows) with missing data "
+	    "values = %d (%d%%)\n"), missobs, 
 	    (int) (100.0 * missobs / (pdinfo->t2 - pdinfo->t1 + 1)));
-    pprintf(prn, "Total number of missing data values = %d (%d%% "
-	    "of total data values)\n", missval, 
+    pprintf(prn, _("Total number of missing data values = %d (%d%% "
+	    "of total data values)\n"), missval, 
 	    (int) (100.0 * missval / totvals));
     return missval;
 }

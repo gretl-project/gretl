@@ -499,9 +499,9 @@ void _criteria (const double ess, const int nobs, const int ncoeff,
     zz = 1.0 - zz;
     criterion[6] = ersq/(zz*zz);
 
-    pprintf(prn, "Using ess = %f, %d observations, %d coefficients\n", 
+    pprintf(prn, _("Using ess = %f, %d observations, %d coefficients\n"), 
 	   ess, nobs, ncoeff);
-    pprintf(prn, "\nMODEL SELECTION STATISTICS\n\n");	
+    pprintf(prn, _("\nMODEL SELECTION STATISTICS\n\n"));	
     pprintf(prn, "SGMASQ    %13g     AIC       %13g     FPE       %12g\n"
 	    "HQ        %13g     SCHWARZ   %13g     SHIBATA   %12g\n"
 	    "GCV       %13g",
@@ -579,14 +579,14 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     gretl_errmsg[0] = '\0';
 
     if (sscanf(line, "%*s %d %8s", &pd, stobs) != 2) {
-	strcpy(gretl_errmsg, "Failed to parse line as frequency, startobs");
+	strcpy(gretl_errmsg, _("Failed to parse line as frequency, startobs"));
 	return 1;
     }
 
     /* does frequency make sense? */
     if (pd < 1 || pd > pdinfo->n) {
 	sprintf(gretl_errmsg, 
-		"frequency (%d) does not make seem to make sense", pd);
+		_("frequency (%d) does not make seem to make sense"), pd);
 	return 1;
     }
 
@@ -594,7 +594,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     if ((pd == 5 || pd == 7) && strstr(stobs, "/")) {
 	ed0 = get_epoch_day(stobs);
 	if (ed0 < 0) {
-	    sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
+	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
 	else pdinfo->sd0 = (double) ed0;
@@ -609,24 +609,24 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 	    if (stobs[i] == '.') dc++;
 	}
 	if (bad || dc > 1) {
-	    sprintf(gretl_errmsg, "starting obs '%s' is invalid", stobs);
+	    sprintf(gretl_errmsg, _("starting obs '%s' is invalid"), stobs);
 	    return 1;
 	}
 	pos = dotpos(stobs);
 	if (pd > 1 && pos == len) {
-	    strcpy(gretl_errmsg, "starting obs must contain a '.' with "
-		   "frequency > 1");
+	    strcpy(gretl_errmsg, _("starting obs must contain a '.' with "
+		   "frequency > 1"));
 	    return 1;
 	}
 	if (pd == 1 && pos < len) {
-	    strcpy(gretl_errmsg, "no '.' allowed in starting obs with "
-		   "frequency 1");
+	    strcpy(gretl_errmsg, _("no '.' allowed in starting obs with "
+		   "frequency 1"));
 	    return 1;
 	}    
 	if ((pd > 1 && pd < 10 && strlen(stobs + pos) != 2) ||
 	    (pd >= 10 && pd < 100 && strlen(stobs + pos) != 3)) {
-	    sprintf(gretl_errmsg, "starting obs '%s' is incompatible with "
-		    "frequency", stobs);
+	    sprintf(gretl_errmsg, _("starting obs '%s' is incompatible with "
+		    "frequency"), stobs);
 	    return 1;
 	}
 	if (pd > 1) {
@@ -634,7 +634,7 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
 	    dc = atoi(endbit);
 	    if (dc < 0 || dc > pd) {
 		sprintf(gretl_errmsg, 
-			"starting obs '%s' is incompatible with frequency", 
+			_("starting obs '%s' is incompatible with frequency"), 
 			stobs);
 		return 1;
 	    }	    
@@ -658,8 +658,8 @@ int set_obs (char *line, DATAINFO *pdinfo, int opt)
     else pdinfo->time_series = 0;
 
     /* and report */
-    fprintf(stderr, "setting data frequency = %d\n", pd);
-    fprintf(stderr, "data range: %s - %s\n", pdinfo->stobs, pdinfo->endobs);
+    fprintf(stderr, _("setting data frequency = %d\n"), pd);
+    fprintf(stderr, _("data range: %s - %s\n"), pdinfo->stobs, pdinfo->endobs);
     return 0;
 }
 
@@ -727,7 +727,7 @@ static char *search_dir (char *filename, const char *topdir,
     strcpy(origfile, filename);
 
     if (path_append(filename, topdir) == 0) {
-	fprintf(stderr, "Trying %s\n", filename);
+	fprintf(stderr, _("Trying %s\n"), filename);
 	test = fopen(filename, "r");
 	if (test != NULL) {
 	    fclose(test);
@@ -738,7 +738,7 @@ static char *search_dir (char *filename, const char *topdir,
 	    while ((got = get_subdir(topdir, 0, trypath)) >= 0) {
 		strcpy(filename, origfile);
 		if (got && path_append(filename, trypath) == 0) {
-		    fprintf(stderr, "Trying %s\n", filename);
+		    fprintf(stderr, _("Trying %s\n"), filename);
 		    test = fopen(filename, "r");
 		    if (test != NULL) {
 			fclose(test);
@@ -1126,7 +1126,7 @@ int clear_model (void *ptr, SESSION *psession, SESSIONBUILD *rebuild,
 
 void show_paths (PATHS *ppaths)
 {
-    printf("gretl: using these basic search paths:\n");
+    printf(_("gretl: using these basic search paths:\n"));
     printf("gretldir: %s\n", ppaths->gretldir);
     printf("userdir: %s\n", ppaths->userdir);
     printf("datadir: %s\n", ppaths->datadir);
@@ -1723,7 +1723,7 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
 	free(yhat);
 	free(sderr);
 	free(depvar);
-	fprintf(stderr, "forecasting model failed in fcast_with_errs()\n");
+	fprintf(stderr, _("forecasting model failed in fcast_with_errs()\n"));
 	return err;
     }
 
@@ -1761,14 +1761,14 @@ int fcast_with_errs (const char *str, const MODEL *pmod,
     for (t=0; t<nfcast; t++) 
 	depvar[t] = (*pZ)[v1][ft1 + t];
     tval = _tcrit95(pmod->dfd);
-    pprintf(prn, " For 95%% confidence intervals, t(%d, .025) = %.3f\n", 
+    pprintf(prn, _(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
 	    pmod->dfd, tval);
     if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
     else pprintf(prn, "\n\n     Obs ");
     pprintf(prn, "%13s", pdinfo->varname[v1]);
-    pprintf(prn, "%13s", "prediction");
-    pprintf(prn, "%14s", " std. error");
-    pprintf(prn, "   95%% confidence interval\n");
+    pprintf(prn, "%13s", _("prediction"));
+    pprintf(prn, "%14s", _(" std. error"));
+    pprintf(prn, _("   95%% confidence interval\n"));
     pprintf(prn, "\n");
 
     for (t=0; t<nfcast; t++) {
@@ -2027,9 +2027,9 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
     int old_ts = pdinfo->time_series;
 
     if (pdinfo->pd == 1) {
-	pprintf(prn, "The current data frequency, 1, is not "
+	pprintf(prn, _("The current data frequency, 1, is not "
 		"compatible with panel data.\nPlease see the 'setobs' "
-		"command.\n");
+		"command.\n"));
 	return 1;
     }
 
@@ -2039,14 +2039,14 @@ int set_panel_structure (int flag, DATAINFO *pdinfo, PRN *prn)
 	pdinfo->time_series = STACKED_TIME_SERIES;
 
     if (get_panel_structure(pdinfo, &nunits, &T)) {
-	pprintf(prn, "Failed to set panel structure\n");
+	pprintf(prn, _("Failed to set panel structure\n"));
 	pdinfo->time_series = old_ts;
 	return 1;
     } else {
-	pprintf(prn, "Panel structure set to %s\n",
+	pprintf(prn, _("Panel structure set to %s\n"),
 		(pdinfo->time_series = STACKED_CROSS_SECTION)? 
-		"stacked cross sections" : "stacked time series");
-	pprintf(prn, "(%d units observed in each of %d periods)\n",
+		_("stacked cross sections") : _("stacked time series"));
+	pprintf(prn, _("(%d units observed in each of %d periods)\n"),
 		nunits, T);
     }
     return 0;

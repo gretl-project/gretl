@@ -248,7 +248,7 @@ static void _pmax_line (const MODEL *pmod, const DATAINFO *pdinfo,
 
 static void covhdr (PRN *prn)
 {
-    pprintf(prn, "\nCOVARIANCE MATRIX OF REGRESSION COEFFICIENTS\n\n");
+    pprintf(prn, _("\nCOVARIANCE MATRIX OF REGRESSION COEFFICIENTS\n\n"));
 }
 
 /* ......................................................... */ 
@@ -269,7 +269,7 @@ void session_time (FILE *fp)
 {
     time_t runtime = time(NULL);
 
-    fprintf(fp, "Current session: %s", ctime(&runtime));
+    fprintf(fp, _("Current session: %s"), ctime(&runtime));
 }
 
 /**
@@ -406,18 +406,18 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, PRN *prn)
 	break;
     }
 
-    if (pmod->ci == OLS || pmod->ci == VAR) pprintf(prn, "OLS ");
-    else if (pmod->ci == WLS) pprintf(prn, "WLS "); 
-    else if (pmod->ci == ARCH) pprintf(prn, "WLS (ARCH) ");
-    else if (pmod->ci == CORC) pprintf(prn, "Cochrane-Orcutt ");
-    else if (pmod->ci == HILU) pprintf(prn, "Hildreth-Lu ");
-    else if (pmod->ci == TSLS) pprintf(prn, "TSLS ");
-    else if (pmod->ci == HSK) pprintf(prn, "Heteroskedasticity ");
-    else if (pmod->ci == AR) pprintf(prn, "AR ");
-    else if (pmod->ci == HCCM) pprintf(prn, "HCCM ");
-    else if (pmod->ci == PROBIT) pprintf(prn, "Probit ");
-    else if (pmod->ci == LOGIT) pprintf(prn, "Logit ");
-    else if (pmod->ci == POOLED) pprintf(prn, "Pooled OLS ");
+    if (pmod->ci == OLS || pmod->ci == VAR) pprintf(prn, _("OLS "));
+    else if (pmod->ci == WLS) pprintf(prn, _("WLS ")); 
+    else if (pmod->ci == ARCH) pprintf(prn, _("WLS (ARCH) "));
+    else if (pmod->ci == CORC) pprintf(prn, _("Cochrane-Orcutt "));
+    else if (pmod->ci == HILU) pprintf(prn, _("Hildreth-Lu "));
+    else if (pmod->ci == TSLS) pprintf(prn, _("TSLS "));
+    else if (pmod->ci == HSK) pprintf(prn, _("Heteroskedasticity "));
+    else if (pmod->ci == AR) pprintf(prn, _("AR "));
+    else if (pmod->ci == HCCM) pprintf(prn, _("HCCM "));
+    else if (pmod->ci == PROBIT) pprintf(prn, _("Probit "));
+    else if (pmod->ci == LOGIT) pprintf(prn, _("Logit "));
+    else if (pmod->ci == POOLED) pprintf(prn, _("Pooled OLS "));
     pprintf(prn, _("estimates using the %d observations %s-%s\n"),
 	    pmod->nobs, startdate, enddate);
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG)
@@ -875,13 +875,13 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	   pdinfo->varname[pmod->list[c]]);
     _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1]))
-	pprintf(prn, "%10s", "undefined");
+	pprintf(prn, "%10s", _("undefined"));
     else print_float_10 (pmod->coeff[c-1], prn);
     _bufspace(4, prn);
     if (isnan(pmod->sderr[c-1])) {
-	pprintf(prn, "%10s", "undefined");
-	pprintf(prn, "%12s", "undefined");
-	pprintf(prn, "%14s", "undefined");
+	pprintf(prn, "%10s", _("undefined"));
+	pprintf(prn, "%12s", _("undefined"));
+	pprintf(prn, "%14s", _("undefined"));
 	pvalue = 999.0;
     } else {
 	print_float_10 (pmod->sderr[c-1], prn); 
@@ -889,7 +889,7 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	    t = pmod->coeff[c-1]/pmod->sderr[c-1];
 	    if (pmod->aux == AUX_ADF) {
 		pvalue = 1.;
-		pprintf(prn, " %12.3f %13s", t, "unknown");
+		pprintf(prn, " %12.3f %13s", t, _("unknown"));
 	    } else {
 		pvalue = tprob(t, pmod->dfd);
 		pprintf(prn, " %12.3f %14f", t, pvalue);
@@ -897,7 +897,7 @@ static void print_coeff (const DATAINFO *pdinfo, const MODEL *pmod,
 	} 
 	else {
 	    pvalue = 1.;
-	    pprintf(prn, "     %12s", "undefined");
+	    pprintf(prn, "     %12s", _("undefined"));
 	}
     }
     if (pvalue < 0.01) pprintf(prn, " ***");
@@ -988,7 +988,7 @@ void print_white_vcv (const MODEL *pmod, PRN *prn)
 static void outxx (const double xx, const int ci, PRN *prn)
 {
     if (ci == CORR) {
-	if (na(xx)) pprintf(prn, " %13s", "undefined");
+	if (na(xx)) pprintf(prn, " %13s", _("undefined"));
 	else pprintf(prn, " %13.3f", xx);
     } else {
 	if (xx > -0.001 && xx < 0.001)
@@ -1002,9 +1002,9 @@ static int takenotes (int quit_option)
     char s[4];
 
     if (quit_option)
-	puts("\nTake notes then press return key to continue (or q to quit)");
+	puts(_("\nTake notes then press return key to continue (or q to quit)"));
     else
-	puts("\nTake notes then press return key to continue");
+	puts(_("\nTake notes then press return key to continue"));
     fflush(stdout);
     fgets(s, 3, stdin);
     if (quit_option && s[0] == 'q') return 1;
@@ -1205,8 +1205,8 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
        2-dimensional p matrix. */
     if (!option) pprintf(prn, "%14s\n", yname);
     else if (list) 
-	pprintf(prn, "%7co stands for %s and x stands for %s (+ means they "
-		"are equal)\n\n%9s, %s\n", ' ', 
+	pprintf(prn, _("%7co stands for %s and x stands for %s (+ means they "
+		"are equal)\n\n%9s, %s\n"), ' ', 
 		yname, pdinfo->varname[list[2]], yname, 
 		pdinfo->varname[list[2]]);
     for (i=nrows; i>=0; --i) {
@@ -1259,20 +1259,20 @@ static void fit_resid_head (const MODEL *pmod, const DATAINFO *pdinfo,
 
     ntodate(date1, pmod->t1, pdinfo);
     ntodate(date2, t2, pdinfo);
-    pprintf(prn, "\nFull data range: %s - %s (n = %d)\n",
+    pprintf(prn, _("\nFull data range: %s - %s (n = %d)\n"),
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
-    pprintf(prn, "Model estimation range:  %s - %s", date1, date2);
+    pprintf(prn, _("Model estimation range:  %s - %s"), date1, date2);
     if (pmod->nobs == pdinfo->n) pprintf(prn, "\n");
     else pprintf(prn, " (n = %d)\n", pmod->nobs); 
 
-    pprintf(prn, "Standard error of residuals = %f\n", pmod->sigma);
+    pprintf(prn, _("Standard error of residuals = %f\n"), pmod->sigma);
     
     if (pdinfo->pd == 1) pprintf(prn, "\n Obs ");
     else pprintf(prn, "\n\n     Obs ");
     for (i=1; i<4; i++) {
 	if (i == 1) strcpy(label, pdinfo->varname[pmod->list[1]]);
-	if (i == 2) strcpy(label, "fitted");
-	if (i == 3) strcpy(label, "residual");
+	if (i == 2) strcpy(label, _("fitted"));
+	if (i == 3) strcpy(label, _("residual"));
 	pprintf(prn, "%13s", label);
     }
     pprintf(prn, "\n");
@@ -1544,8 +1544,8 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	if (list[0] > 0) pprintf(prn, "\n");
 	/* print data by variables */
 	for (j=1; j<=list[0]; j++) {
-	    pprintf(prn, "Varname: %s\n", pdinfo->varname[list[j]]);
-	    pprintf(prn, "Data frequency: %d\n", pdinfo->pd);
+	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
+	    pprintf(prn, _("Data frequency: %d\n"), pdinfo->pd);
 	    print_smpl (pdinfo, 0, prn);
 	    pprintf(prn, "\n");
 	    printz((*pZ)[list[j]], pdinfo, prn);
@@ -1693,8 +1693,8 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 	}
     }
     pprintf(prn, "\n");
-    if (ast) pprintf(prn, "Note: * denotes a residual in excess of "
-		     "2.5 standard errors\n");
+    if (ast) pprintf(prn, _("Note: * denotes a residual in excess of "
+		     "2.5 standard errors\n"));
     return 0;
 }
 
@@ -1702,10 +1702,10 @@ int print_fit_resid (const MODEL *pmod, double ***pZ,
 
 void _print_ar (MODEL *pmod, PRN *prn)
 {
-    pprintf(prn, "Statistics based on the rho-differenced data\n"
+    pprintf(prn, _("Statistics based on the rho-differenced data\n"
            "(R-squared is computed as the square of the correlation "
            "between observed and\nfitted values of the dependent "
-           "variable):\n\n");
+           "variable):\n\n"));
     if (_essline(pmod, prn, 0)) return;
     _rsqline(pmod, prn);
     _Fline(pmod, prn);
@@ -1725,7 +1725,7 @@ static void print_discrete_coeff (const DATAINFO *pdinfo,
 	   pdinfo->varname[pmod->list[c]]);
     _bufspace(6, prn);
     if (isnan(pmod->coeff[c-1]))
-	pprintf(prn, "%10s", "undefined");
+	pprintf(prn, "%10s", _("undefined"));
     else print_float_10 (pmod->coeff[c-1], prn);
     _bufspace(4, prn);
     print_float_10 (pmod->sderr[c-1], prn);
@@ -1744,10 +1744,10 @@ static void print_discrete_stats (const MODEL *pmod,
 {
     int i, ncoeff = pmod->list[0];
 
-    pprintf(prn, "      VARIABLE      COEFFICIENT      STDERROR       "
-	    "T STAT       SLOPE\n");
-    pprintf(prn, "                                                    "
-	    "           (at mean)\n");
+    pprintf(prn, _("      VARIABLE      COEFFICIENT      STDERROR       "
+	    "T STAT       SLOPE\n"));
+    pprintf(prn, _("                                                    "
+	    "           (at mean)\n"));
 
     if (pmod->ifc) {
 	print_discrete_coeff(pdinfo, pmod, ncoeff, prn);
@@ -1756,16 +1756,16 @@ static void print_discrete_stats (const MODEL *pmod,
     for (i=2; i<=ncoeff; i++) 
 	print_discrete_coeff(pdinfo, pmod, i, prn);
     pprintf(prn, "\n");
-    pprintf(prn, "Mean of %s = %.3f\n", 
+    pprintf(prn, _("Mean of %s = %.3f\n"), 
 	    pdinfo->varname[pmod->list[1]], pmod->ybar);
-    pprintf(prn, "Number of cases 'correctly predicted' = %d (%.1f%%)\n", 
+    pprintf(prn, _("Number of cases 'correctly predicted' = %d (%.1f%%)\n"), 
 	    pmod->correct, 100 * (double) pmod->correct / (double) pmod->nobs);
-    pprintf(prn, "f(beta'x) at mean of independent vars = %.3f\n", pmod->sdy);
-    pprintf(prn, "Log-likelihood = %.3f\n", pmod->lnL);
+    pprintf(prn, _("f(beta'x) at mean of independent vars = %.3f\n"), pmod->sdy);
+    pprintf(prn, _("Log-likelihood = %.3f\n"), pmod->lnL);
     if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	i = pmod->ncoeff - 1;
-	pprintf(prn, "Likelihood ratio test: "
-		"Chi-square(%d) = %.3f (p-value %f)\n\n",
+	pprintf(prn, _("Likelihood ratio test: "
+		"Chi-square(%d) = %.3f (p-value %f)\n\n"),
 		i, pmod->chisq, chisq(pmod->chisq, i));
     } else pprintf(prn, "\n");
 }
@@ -1813,13 +1813,13 @@ PRN *gretl_print_new (int prncode, const char *fname)
     PRN *prn = NULL;
 
     if (prncode == GRETL_PRINT_FILE && fname == NULL) {
-	fprintf(stderr, "gretl_prn_new: Must supply a filename\n");
+	fprintf(stderr, _("gretl_prn_new: Must supply a filename\n"));
 	return NULL;
     }
 
     prn = malloc(sizeof *prn);
     if (prn == NULL) {
-	fprintf(stderr, "gretl_prn_new: out of memory\n");
+	fprintf(stderr, _("gretl_prn_new: out of memory\n"));
 	return NULL;
     }
 
@@ -1832,7 +1832,7 @@ PRN *gretl_print_new (int prncode, const char *fname)
 	prn->buf = NULL;
 	prn->fp = fopen(fname, "w");
 	if (prn->fp == NULL) {
-	    fprintf(stderr, "gretl_prn_new: couldn't open %s\n", fname);
+	    fprintf(stderr, _("gretl_prn_new: couldn't open %s\n"), fname);
 	    free(prn);
 	    return NULL;
 	}
@@ -1851,7 +1851,7 @@ PRN *gretl_print_new (int prncode, const char *fname)
     else if (prncode == GRETL_PRINT_BUFFER) {
 	prn->fp = NULL;
 	if (pprintf(prn, "@init")) {
-	    fprintf(stderr, "gretl_prn_new: out of memory\n");
+	    fprintf(stderr, _("gretl_prn_new: out of memory\n"));
 	    free(prn);
 	    return NULL;
 	}

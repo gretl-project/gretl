@@ -47,14 +47,14 @@ static void sheet_clear (gpointer *data, guint all, GtkWidget *w);
 static void get_data_from_sheet (void);
 
 static GtkItemFactoryEntry sheet_items[] = {
-    { "/_Observation", NULL, NULL, 0, "<Branch>" },
-    { "/Observation/_Append obs", NULL, sheet_add_obs, 0, NULL },
-    { "/Observation/_Insert obs", NULL, sheet_insert_obs, 0, NULL },
-    { "/_Variable", NULL, NULL, 0, "<Branch>" },
-    { "/Variable/_Add", NULL, sheet_add_var, 0, NULL },
-    { "/_Clear", NULL, NULL, 0, "<Branch>" },
-    { "/_Clear/_Selected cells", NULL, sheet_clear, 0, NULL },
-    { "/_Clear/_All data", NULL, sheet_clear, 1, NULL }
+    { _("/_Observation"), NULL, NULL, 0, "<Branch>" },
+    { _("/Observation/_Append obs"), NULL, sheet_add_obs, 0, NULL },
+    { _("/Observation/_Insert obs"), NULL, sheet_insert_obs, 0, NULL },
+    { _("/_Variable"), NULL, NULL, 0, "<Branch>" },
+    { _("/Variable/_Add"), NULL, sheet_add_var, 0, NULL },
+    { _("/_Clear"), NULL, NULL, 0, "<Branch>" },
+    { _("/_Clear/_Selected cells"), NULL, sheet_clear, 0, NULL },
+    { _("/_Clear/_All data"), NULL, sheet_clear, 1, NULL }
 };
 
 /* ........................................................... */
@@ -67,20 +67,20 @@ static int check_atof (char *numstr)
     (void) strtod(numstr, &test);
 
     if (strcmp(numstr, test) == 0) {
-	sprintf(errtext, "'%s' -- no numeric conversion performed!", numstr);
+	sprintf(errtext, _("'%s' -- no numeric conversion performed!"), numstr);
 	errbox(errtext);
 	return 1;
     }
     if (test[0] != '\0') {
 	if (isprint(test[0]))
-	    sprintf(errtext, "Extraneous character '%c' in data", test[0]);
+	    sprintf(errtext, _("Extraneous character '%c' in data"), test[0]);
 	else
-	    sprintf(errtext, "Extraneous character (0x%x) in data", test[0]);
+	    sprintf(errtext, _("Extraneous character (0x%x) in data"), test[0]);
 	errbox(errtext);
 	return 1;
     }
     if (errno == ERANGE) {
-	sprintf(errtext, "'%s' -- number out of range!", numstr);
+	sprintf(errtext, _("'%s' -- number out of range!"), numstr);
 	errbox(errtext);
 	return 1;
     }
@@ -135,24 +135,24 @@ static void name_new_obs (GtkWidget *widget, dialog_t *ddata)
 
 static void name_var_dialog (void) 
 {
-    edit_dialog ("gretl: name variable", 
-		 "Enter name for new variable\n"
-		 "(max. 8 characters)",
+    edit_dialog (_("gretl: name variable"), 
+		 _("Enter name for new variable\n"
+		 "(max. 8 characters)"),
 		 NULL, 1,
-		 "Apply", name_new_var, mdata, 
-		 "Cancel", NULL, NULL, 0, 0);
+		 _("Apply"), name_new_var, mdata, 
+		 _("Cancel"), NULL, NULL, 0, 0);
 }
 
 /* ........................................................... */
 
 static void new_case_dialog (void) 
 {
-    edit_dialog ("gretl: case marker", 
-		 "Enter case marker for new obs\n"
-		 "(max. 8 characters)",
+    edit_dialog (_("gretl: case marker"), 
+		 _("Enter case marker for new obs\n"
+		 "(max. 8 characters)"),
 		 NULL, 1,
-		 "Apply", name_new_obs, mdata, 
-		 "Cancel", NULL, NULL, 0, 0);
+		 _("Apply"), name_new_obs, mdata, 
+		 _("Cancel"), NULL, NULL, 0, 0);
 }
 
 /* ........................................................... */
@@ -243,16 +243,16 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 {
     gchar *item = (gchar *) data;
 
-    if (strcmp(item, "Add Variable") == 0) { 
+    if (strcmp(item, _("Add Variable")) == 0) { 
 	sheet_add_var();
     }
-    else if (strcmp(item, "Add Observation") == 0) {
+    else if (strcmp(item, _("Add Observation")) == 0) {
 	sheet_add_obs();
     }
-    else if (strcmp(item, "Insert Observation") == 0) {
+    else if (strcmp(item, _("Insert Observation")) == 0) {
 	sheet_insert_obs();
     }
-    else if (strcmp(item, "Clear Cells") == 0) {
+    else if (strcmp(item, _("Clear Cells")) == 0) {
 	sheet_clear(NULL, 0, NULL);
     } 
     gtk_widget_destroy(sheet_popup);
@@ -264,10 +264,10 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 static GtkWidget *build_menu (GtkWidget *sheet)
 {
     static char *items[]={
-        "Add Variable",
-        "Add Observation",
-        "Insert Observation",
-        "Clear Cells"
+        _("Add Variable"),
+        _("Add Observation"),
+        _("Insert Observation"),
+        _("Clear Cells")
     };
     GtkWidget *menu;
     GtkWidget *item;
@@ -438,7 +438,7 @@ static void get_data_from_sheet (void)
 
     if (newobs > 0) {
 	if (grow_nobs(newobs, &Z, datainfo)) {
-	    errbox("Failed to allocate memory for new data");
+	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}
 	n = datainfo->n;
@@ -446,7 +446,7 @@ static void get_data_from_sheet (void)
     if (newvars > 0) {
 	/*  g_print("%d vars added\n", newvars); */
 	if (dataset_add_vars(newvars, &Z, datainfo)) {
-	    errbox("Failed to allocate memory for new data");
+	    errbox(_("Failed to allocate memory for new data"));
 	    return;
 	}
 	for (i=0; i<newvars; i++) { 
@@ -473,9 +473,9 @@ static void get_data_from_sheet (void)
     data_status |= (GUI_DATA|MODIFIED_DATA);
     register_data(NULL, 0);
     if (missobs)
-	infobox("Warning: there were missing observations");
+	infobox(_("Warning: there were missing observations"));
     else
-	infobox("Data updated OK");
+	infobox(_("Data updated OK"));
 }
 
 /* ........................................................... */
@@ -564,7 +564,7 @@ void show_spreadsheet (DATAINFO *pdinfo)
     }
 
     sheetwin = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(sheetwin), "gretl: edit data");
+    gtk_window_set_title(GTK_WINDOW(sheetwin), _("gretl: edit data"));
     gtk_widget_set_usize(GTK_WIDGET(sheetwin), 600, 400);
 
     main_vbox = gtk_vbox_new(FALSE, 1);
@@ -615,13 +615,13 @@ void show_spreadsheet (DATAINFO *pdinfo)
     gtk_signal_connect(GTK_OBJECT(sheetwin), "destroy",
 		       GTK_SIGNAL_FUNC(free_spreadsheet), NULL);
 
-    tmp = gtk_button_new_with_label("Apply Changes");
+    tmp = gtk_button_new_with_label(_("Apply Changes"));
     gtk_box_pack_start (GTK_BOX (button_box), tmp, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
 		       GTK_SIGNAL_FUNC(get_data_from_sheet), NULL);
     gtk_widget_show(tmp);
 
-    tmp = gtk_button_new_with_label("Close");
+    tmp = gtk_button_new_with_label(_("Close"));
     gtk_box_pack_start (GTK_BOX (button_box), tmp, FALSE, TRUE, 0);
     gtk_signal_connect(GTK_OBJECT(tmp), "clicked",
 		       GTK_SIGNAL_FUNC(delete_widget), sheetwin);

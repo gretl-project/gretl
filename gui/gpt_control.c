@@ -52,10 +52,10 @@ GPT_RANGE axis_range[3];
 #define NTITLES 4
 
 struct gpt_titles_t gpt_titles[] = {
-    {"Title of plot", 0, NULL},
-    {"Title for axis", 1, NULL},
-    {"Title for axis", 2, NULL},
-    {"Title for axis", 3, NULL},
+    {_("Title of plot"), 0, NULL},
+    {_("Title for axis"), 1, NULL},
+    {_("Title for axis"), 2, NULL},
+    {_("Title for axis"), 3, NULL},
 };
 
 /* ........................................................... */
@@ -111,7 +111,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 #ifdef G_OS_WIN32
     plot->fp = fopen(paths.plotfile, "w");
     if (plot->fp == NULL) {
-	errbox("Couldn't open plot file");
+	errbox(_("Couldn't open plot file"));
 	return;
     }
 #endif
@@ -174,7 +174,7 @@ static void apply_gpt_changes (GtkWidget *widget, gpointer data)
 #ifdef G_OS_WIN32
 	fclose(plot->fp);
 #endif
-	file_selector("Save gnuplot graph", SAVE_GNUPLOT, plot);
+	file_selector(_("Save gnuplot graph"), SAVE_GNUPLOT, plot);
     }
     else {
 	go_gnuplot(plot, NULL, &paths);
@@ -194,8 +194,8 @@ static void save_session_graph (GtkWidget *w, gpointer data)
     strcpy(plot->termtype, "plot commands");
     plot->edit += 2;
     err = go_gnuplot(plot, plot->fname, &paths);
-    if (err == 1) errbox("Error saving graph");
-    else infobox("graph saved");
+    if (err == 1) errbox(_("Error saving graph"));
+    else infobox(_("graph saved"));
 }
 
 /* ........................................................... */
@@ -222,7 +222,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
     gtk_container_border_width (GTK_CONTAINER (box), 10);
     gtk_widget_show(box);
     
-    tempwid = gtk_label_new ("Main");
+    tempwid = gtk_label_new (_("Main"));
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -254,7 +254,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *plot)
 	}
     }
     tbl_len++;
-    tempwid = gtk_label_new("key position");
+    tempwid = gtk_label_new(_("key position"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(tempwid);
@@ -290,7 +290,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *plot)
     gtk_container_border_width (GTK_CONTAINER (box), 10);
     gtk_widget_show(box);
     
-    tempwid = gtk_label_new ("Output to file");
+    tempwid = gtk_label_new (_("Output to file"));
     gtk_widget_show (tempwid);
     gtk_notebook_append_page (GTK_NOTEBOOK (notebook), box, tempwid);   
 
@@ -302,7 +302,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *plot)
     gtk_widget_show (tbl);
    
     tbl_len++;
-    tempwid = gtk_label_new("output format");
+    tempwid = gtk_label_new(_("output format"));
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
 			      tempwid, 0, 1, tbl_len-1, tbl_len);
     gtk_widget_show(tempwid);
@@ -314,7 +314,7 @@ static void gpt_tab_output (GtkWidget *notebook, GPT_SPEC *plot)
     gtk_widget_show(termcombo);
 
     /* button to generate output to file */
-    filesavebutton = gtk_button_new_with_label ("Save to file...");
+    filesavebutton = gtk_button_new_with_label (_("Save to file..."));
     GTK_WIDGET_SET_FLAGS(filesavebutton, GTK_CAN_DEFAULT);
     tbl_len++;
     gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -355,7 +355,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
     gtk_container_border_width(GTK_CONTAINER (box), 10);
     gtk_widget_show(box);
 
-    tempwid = gtk_label_new("Lines");
+    tempwid = gtk_label_new(_("Lines"));
 
     gtk_widget_show(tempwid);
     gtk_notebook_append_page(GTK_NOTEBOOK(notebook), box, tempwid);   
@@ -373,7 +373,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 	/* identifier and key or legend text */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	sprintf(label_text, "line %d: ", i + 1);
+	sprintf(label_text, _("line %d: "), i + 1);
 	tempwid = gtk_label_new(label_text);
 	gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5);
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
@@ -578,15 +578,15 @@ void gnuplot_dialog (GPT_SPEC *plot)
     int i;
 
     if (gpt_control != NULL) {
-	errbox("You can only have one plot controller open\n"
-	       "at any given time");
+	errbox(_("You can only have one plot controller open\n"
+	       "at any given time"));
 	return;
     }
 
     for (i=0; i<3; i++) axis_range[i].isauto = NULL;
 
     gpt_control = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(gpt_control), "gretl plot controls");
+    gtk_window_set_title(GTK_WINDOW(gpt_control), _("gretl plot controls"));
     gtk_container_border_width 
         (GTK_CONTAINER(GTK_DIALOG(gpt_control)->vbox), 10);
     gtk_container_border_width 
@@ -611,7 +611,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
     gpt_tab_lines(notebook, plot); 
     gpt_tab_output(notebook, plot);
 
-    tempwid = gtk_button_new_with_label ("Redraw");
+    tempwid = gtk_button_new_with_label (_("Redraw"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
                         tempwid, TRUE, TRUE, 0);
@@ -620,7 +620,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_with_label ("Save");
+    tempwid = gtk_button_new_with_label (_("Save"));
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
                         tempwid, TRUE, TRUE, 0);
@@ -628,7 +628,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
                         GTK_SIGNAL_FUNC(save_session_graph), plot);
     gtk_widget_show (tempwid);
 
-    tempwid = gtk_button_new_with_label("Close");
+    tempwid = gtk_button_new_with_label(_("Close"));
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
 		       tempwid, TRUE, TRUE, 0);
@@ -636,7 +636,7 @@ void gnuplot_dialog (GPT_SPEC *plot)
                        GTK_SIGNAL_FUNC(delete_widget), gpt_control);
     gtk_widget_show(tempwid);
 
-    tempwid = gtk_button_new_with_label("Help");
+    tempwid = gtk_button_new_with_label(_("Help"));
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
                         tempwid, TRUE, TRUE, 0);
@@ -661,14 +661,14 @@ void do_save_graph (const char *fname, char *savestr)
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
     fq = fopen(paths.plotfile, "r");
     if (fq == NULL) {
-	errbox("Couldn't access graph info");
+	errbox(_("Couldn't access graph info"));
 	gretl_print_destroy(prn);
 	return;
     } 
     cmds = termtype_to_termstr(savestr, termstr);  
     if (cmds) {
 	if (copyfile(paths.plotfile, fname)) 
-	    errbox("Failed to copy graph file");
+	    errbox(_("Failed to copy graph file"));
 	return;
     } else {
 	pprintf(prn, "set term %s\n", termstr);
@@ -681,13 +681,13 @@ void do_save_graph (const char *fname, char *savestr)
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
 #ifdef G_OS_WIN32
     if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
-	errbox("Gnuplot error creating graph");
+	errbox(_("Gnuplot error creating graph"));
 #else
     if (system(plotcmd))
-	errbox("Gnuplot error creating graph");
+	errbox(_("Gnuplot error creating graph"));
 #endif
     remove(plottmp);
-    infobox("Graph saved");
+    infobox(_("Graph saved"));
 }
 
 /* ........................................................... */
@@ -700,7 +700,7 @@ static void plot_save_filesel (GtkWidget *w, gpointer data)
     strcpy(savestr, 
 	   gtk_entry_get_text(GTK_ENTRY(GTK_COMBO(combo)->entry)));
     gtk_widget_destroy(GTK_WIDGET(combo->parent->parent->parent));
-    file_selector("save graph", SAVE_LAST_GRAPH, savestr);
+    file_selector(_("save graph"), SAVE_LAST_GRAPH, savestr);
 }
 
 /* ........................................................... */
@@ -734,7 +734,7 @@ void gpt_save_dialog (void)
 	termtype = g_list_append(termtype, ttypes[i]);
 
     dialog = gtk_dialog_new();
-    gtk_window_set_title(GTK_WINDOW(dialog), "gretl: save graph");
+    gtk_window_set_title(GTK_WINDOW(dialog), _("gretl: save graph"));
     gtk_container_border_width 
         (GTK_CONTAINER(GTK_DIALOG(dialog)->vbox), 10);
     gtk_container_border_width 
@@ -765,7 +765,7 @@ void gpt_save_dialog (void)
     gtk_combo_set_popdown_strings(GTK_COMBO(combo), termtype);   
     gtk_widget_show(combo);
 
-    tempwid = gtk_button_new_with_label("Save");
+    tempwid = gtk_button_new_with_label(_("Save"));
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
                         tempwid, TRUE, TRUE, 0);
@@ -774,7 +774,7 @@ void gpt_save_dialog (void)
     gtk_widget_grab_default(tempwid);
     gtk_widget_show(tempwid);
    
-    tempwid = gtk_button_new_with_label("Cancel");
+    tempwid = gtk_button_new_with_label(_("Cancel"));
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->action_area), 
                         tempwid, TRUE, TRUE, 0);
@@ -872,7 +872,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* open the file */
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	errbox("Couldn't open graph file");
+	errbox(_("Couldn't open graph file"));
 	return 1;
     }
     
@@ -880,17 +880,17 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     i = 0;
     while (fgets(line, MAXLEN - 1, fp)) {
 	if (strncmp(line, "# mult", 6) == 0) {
-	    errbox("Sorry, can't edit multiple scatterplots");
+	    errbox(_("Sorry, can't edit multiple scatterplots"));
 	    free(plot->lines);
 	    return 1;
 	}
 	if (strncmp(line, "# CUSUM", 7) == 0) {
-	    errbox("Sorry, can't edit CUSUM plots");
+	    errbox(_("Sorry, can't edit CUSUM plots"));
 	    free(plot->lines);
 	    return 1;
 	}
 	if (strncmp(line, "# sampl", 7) == 0) {
-	    errbox("Sorry, can't edit sampling distribution plots");
+	    errbox(_("Sorry, can't edit sampling distribution plots"));
 	    free(plot->lines);
 	    return 1;
 	}
@@ -960,7 +960,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     /* then get the "plot" lines */
     if (strncmp(line, "plot ", 4) ||
 	(strlen(line) < 10 && fgets(line, MAXLEN - 1, fp) == NULL)) {	
-	errbox("Failed to parse gnuplot file");
+	errbox(_("Failed to parse gnuplot file"));
 	fprintf(stderr, "plotfile line: '%s'\n", line);
 	fclose(fp);
 	return 1;
@@ -1050,7 +1050,7 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
     plot->list[0] = i+2;
 
     if (open_gnuplot_pipe(&paths, plot)) {
-	errbox("gnuplot command failed");
+	errbox(_("gnuplot command failed"));
 	return 1;
     }
     else {

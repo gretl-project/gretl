@@ -57,7 +57,7 @@ static ProgressData *progress_window (int flag)
 		       GTK_SIGNAL_FUNC(destroy_progress),
 		       pdata);
     gtk_window_set_title(GTK_WINDOW(pdata->window), (flag == SP_LOAD_INIT)?
-			 "gretl: loading data" : "gretl: storing data");
+			 _("gretl: loading data") : _("gretl: storing data"));
     gtk_container_set_border_width(GTK_CONTAINER(pdata->window), 0);
 
     vbox = gtk_vbox_new(FALSE, 5);
@@ -88,7 +88,7 @@ static ProgressData *progress_window (int flag)
     gtk_widget_show(separator);
 
     /* Add button to close progress bar window */
-    button = gtk_button_new_with_label("Cancel");
+    button = gtk_button_new_with_label(_("Cancel"));
     gtk_signal_connect_object(GTK_OBJECT(button), "clicked",
 			      (GtkSignalFunc) gtk_widget_destroy,
 			      GTK_OBJECT(pdata->window));
@@ -125,7 +125,7 @@ int show_progress (long res, long expected, int flag)
 	if ((pdata = progress_window(flag)) == NULL) return 0;
 	gtk_progress_bar_update(GTK_PROGRESS_BAR(pdata->pbar), (gfloat) 0);
 	sprintf(bytestr, "%s %ld Kbytes", 
-		(flag == SP_LOAD_INIT)? "Retrieving" : "Storing",
+		(flag == SP_LOAD_INIT)? _("Retrieving") : _("Storing"),
 		expected / 1024);
 	gtk_label_set_text(GTK_LABEL(pdata->label), bytestr);
 	while (gtk_events_pending()) gtk_main_iteration();

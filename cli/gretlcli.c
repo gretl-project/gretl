@@ -86,7 +86,7 @@ extern int loop_exec_line (LOOPSET *plp, const int round,
 void usage(void)
 {
     logo();
-    printf("\nYou may supply the name of a data file on the command line.\n"
+    printf(_("\nYou may supply the name of a data file on the command line.\n"
 	   "Options:\n"
 	   " -b or --batch     Process a command script and exit.\n"
 	   " -r or --run       Run a script then hand control to command line.\n"
@@ -96,7 +96,7 @@ void usage(void)
 	   "Example of batch mode usage:\n"
 	   " gretlcli -b myfile.inp >myfile.out\n"
 	   "Example of run mode usage:\n"
-	   " gretlcli -r myfile.inp\n");
+	   " gretlcli -r myfile.inp\n"));
     exit(EXIT_SUCCESS);
 }
 
@@ -126,11 +126,11 @@ int make_userdir (PATHS *ppaths)
     if ((dir = opendir(ppaths->userdir)) == NULL) {
         sprintf(buf, "mkdir -p \"%s\"", ppaths->userdir);
         if (system(buf)) {
-	    fprintf(stderr, "Couldn't create user directory %s\n", 
+	    fprintf(stderr, _("Couldn't create user directory %s\n"), 
 		    ppaths->userdir);
 	    return 1;
 	} else 
-	    fprintf(stderr, "Created user directory %s\n", ppaths->userdir);
+	    fprintf(stderr, _("Created user directory %s\n"), ppaths->userdir);
     } else 
 	closedir(dir);
     return 0;
@@ -138,21 +138,21 @@ int make_userdir (PATHS *ppaths)
 
 void gretl_abort (char *line)
 {
-    fprintf(stderr, "\ngretlcli: error executing script: halting.\n");
+    fprintf(stderr, _("\ngretlcli: error executing script: halting.\n"));
     fprintf(stderr, "> %s\n", line);
     exit(EXIT_FAILURE);
 }
 
 void noalloc (char *str)
 {
-    fprintf(stderr, "Couldn't allocate memory for %s.\n", str);
+    fprintf(stderr, _("Couldn't allocate memory for %s.\n"), str);
     exit(EXIT_FAILURE);
 }
 
 void nosub (PRN *prn) 
 {
-    pprintf(prn, "Can't do: the current data set is different from " 
-	    "the one on which\nthe reference model was estimated.\n");
+    pprintf(prn, _("Can't do: the current data set is different from " 
+	    "the one on which\nthe reference model was estimated.\n"));
 }
 
 int model_test_start (const int id, PRN *prn, const int ols_only)
@@ -160,16 +160,16 @@ int model_test_start (const int id, PRN *prn, const int ols_only)
     int m = (id)? id - 1 : 0;
 
     if (model_count == 0) { 
-	pprintf(prn, "Can't do this: no model has been estimated yet\n");
+	pprintf(prn, _("Can't do this: no model has been estimated yet\n"));
 	return 1;
     }
     else if (id > model_count) { 
-	pprintf(prn, "Can't do this: there is no model %d\n", id);
+	pprintf(prn, _("Can't do this: there is no model %d\n"), id);
 	return 1;
     }    
     else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
-	pprintf(prn, "This command only available for OLS models "
-		"at present.\n");
+	pprintf(prn, _("This command only available for OLS models "
+		"at present.\n"));
 	return 1;
     }
     else {
@@ -214,7 +214,7 @@ int main (int argc, char *argv[])
 #endif
     datainfo = datainfo_new();
     if (datainfo == NULL)
-	noalloc("data information");
+	noalloc(_("data information"));
     
     if (argc > 1) {
 	opt = parseopt(argv[1]);
@@ -254,7 +254,7 @@ int main (int argc, char *argv[])
     fb = stdin; /* may be reset later wth "run" command */
     prn.fp = stdout;
     line = malloc(MAXLINE);
-    if (line == NULL) noalloc("command line"); 
+    if (line == NULL) noalloc(_("command line")); 
 
     set_paths(&paths, 1, 0); /* 1 = defaults, 0 = not gui */
 #ifdef OS_WIN32
@@ -269,7 +269,7 @@ int main (int argc, char *argv[])
 	strcat(cmdfile, "session.inp");
 	cmds = gretl_print_new(GRETL_PRINT_FILE, cmdfile);
 	if (cmds == NULL) {
-	    printf("Can't open file to save commands.\n");
+	    printf(_("Can't open file to save commands.\n"));
 	    return EXIT_FAILURE;
 	}
     }
@@ -320,7 +320,7 @@ int main (int argc, char *argv[])
     command.list = malloc(sizeof(int));
     command.param = malloc(1);
     if (command.list == NULL || command.param == NULL) 
-	noalloc("command list"); 
+	noalloc(_("command list")); 
 
     /* monte carlo struct */
     loop.lines = NULL;
@@ -339,16 +339,16 @@ int main (int argc, char *argv[])
     if (!batch) {
 	dat = fopen(paths.helpfile, "r");
 	if (dat != NULL) { 
-	    printf("\n\"help\" gives a list of commands\n");
+	    printf(_("\n\"help\" gives a list of commands\n"));
 	    fclose(dat);
 	} else {
-	    printf("help file %s is not accessible\n", 
+	    printf(_("help file %s is not accessible\n"), 
 		   paths.helpfile);
 	    show_paths(&paths);
 	}
     } 
     if (!batch && !runit && !data_status) 
-	fprintf(stderr, "Type \"open filename\" to open a data set\n");
+	fprintf(stderr, _("Type \"open filename\" to open a data set\n"));
 
 #ifdef HAVE_READLINE
     if (!batch) initialize_readline();
@@ -369,7 +369,7 @@ int main (int argc, char *argv[])
 
 	if (looprun) { /* Are we doing a Monte Carlo simulation? */
 	    if (!loop.ncmds) {
-		printf("No commands in loop.\n");
+		printf(_("No commands in loop.\n"));
 		looprun = errfatal = 0;
 		continue;
 	    }
@@ -377,7 +377,7 @@ int main (int argc, char *argv[])
 	    while (j != 1000 && loop_condition(i, &loop, Z, datainfo)) {
 		for (j=0; j<loop.ncmds; j++) {
 		    if (loop_exec_line(&loop, i, j, &prn)) {
-			printf("Error in command loop: aborting\n");
+			printf(_("Error in command loop: aborting\n"));
 			j = 999;
 		    }
 		}
@@ -414,7 +414,7 @@ int main (int argc, char *argv[])
 	    /* allow for backslash continuation of lines */
 	    while ((cont = top_n_tail(line))) {
 		if (cont == E_ALLOC) {
-		    printf("Out of memory loading command line.\n");
+		    printf(_("Out of memory loading command line.\n"));
 		    exit(EXIT_FAILURE);
 		}
 		*tmp = '\0';
@@ -478,7 +478,7 @@ void exec_line (char *line, PRN *prn)
 
     /* are we ready for this? */
     if (!data_status && !ignore && !ready_for_command(line)) {
-	fprintf(stderr, "You must open a data file first.\n");
+	fprintf(stderr, _("You must open a data file first.\n"));
 	err = 1;
 	return;
     }
@@ -500,14 +500,14 @@ void exec_line (char *line, PRN *prn)
     }
     if (loopstack) {  /* accumulating loop commands */
 	if (!ok_in_loop(command.ci)) {
-	    printf("Command '%s' ignored; not available in loop mode.\n", line);
+	    printf(_("Command '%s' ignored; not available in loop mode.\n"), line);
 	    return;
 	} else {
 	    echo_cmd(&command, datainfo, line, (batch || runit)? 1: 0, 
 		     0, oflag, cmds);
 	    if (command.ci != ENDLOOP) {
 		if (add_to_loop(&loop, line, command.ci, oflag)) 
-		    printf("Failed to add command to loop stack.\n");
+		    printf(_("Failed to add command to loop stack.\n"));
 		return;
 	    }
 	}
@@ -570,7 +570,7 @@ void exec_line (char *line, PRN *prn)
 	if (i == (models[0])->ID) goto plain_add_omit;
 	err = re_estimate(modelspec[i-1].cmd, &tmpmod, &Z, datainfo);
 	if (err) {
-	    pprintf(prn, "Failed to reconstruct model %d\n", i);
+	    pprintf(prn, _("Failed to reconstruct model %d\n"), i);
 	    break;
 	} 
 	clear_model(models[1], NULL, NULL, NULL);
@@ -653,24 +653,24 @@ void exec_line (char *line, PRN *prn)
 	order = atoi(command.param);
 	err = corrgram(command.list[1], order, &Z, datainfo, &paths,
 		       batch, prn);
-	if (err) pprintf(prn, "Failed to generate correlogram\n");
+	if (err) pprintf(prn, _("Failed to generate correlogram\n"));
 	break;
 
     case DELEET:
 	if (fullZ != NULL) {
-	    pprintf(prn, "Can't delete last variable when in sub-sample"
-		    " mode\n");
+	    pprintf(prn, _("Can't delete last variable when in sub-sample"
+		    " mode\n"));
 	    break;
 	}	
 	if (datainfo->v <= 1 || dataset_drop_vars(1, &Z, datainfo)) 
-	    pprintf(prn, "Failed to shrink the data set");
+	    pprintf(prn, _("Failed to shrink the data set"));
 	else varlist(datainfo, prn);
 	break;
 
     case ENDLOOP:
 	if (!loopstack) {
-	    pprintf(prn, "You can't end a loop here, "
-		    "you haven't started one.\n");
+	    pprintf(prn, _("You can't end a loop here, "
+		    "you haven't started one.\n"));
 	    break;
 	}
 	loopstack = 0;
@@ -687,9 +687,9 @@ void exec_line (char *line, PRN *prn)
 	    err = tabprint(models[0], datainfo, &paths, 
 			   texfile, model_count, oflag);
 	if (err) 
-	    pprintf(prn, "Couldn't open tex file for writing.\n");
+	    pprintf(prn, _("Couldn't open tex file for writing.\n"));
 	else 
-	   pprintf(prn, "Model printed to %s\n", texfile);
+	   pprintf(prn, _("Model printed to %s\n"), texfile);
 	break;
 
     case FCAST:
@@ -697,7 +697,7 @@ void exec_line (char *line, PRN *prn)
 	err = fcast(line, models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
-	    pprintf(prn, "Error retrieving fitted values.\n");
+	    pprintf(prn, _("Error retrieving fitted values.\n"));
 	    errmsg(err, prn);
 	    break;
 	}
@@ -717,12 +717,12 @@ void exec_line (char *line, PRN *prn)
 	err = fcast("fcast autofit", models[0], datainfo, &Z);
 	if (err < 0) {
 	    err *= -1;
-	    pprintf(prn, "Error retrieving fitted values.\n");
+	    pprintf(prn, _("Error retrieving fitted values.\n"));
 	    errmsg(err, prn);
 	    break;
 	}
 	err = 0;
-	pprintf(prn, "Retrieved fitted values as \"autofit\".\n");
+	pprintf(prn, _("Retrieved fitted values as \"autofit\".\n"));
 	varlist(datainfo, prn);
 	if (dataset_is_time_series(datainfo)) {
 	    plotvar(&Z, datainfo, "time");
@@ -734,7 +734,7 @@ void exec_line (char *line, PRN *prn)
 	    lines[0] = 1;
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
-	    if (err) pprintf(prn, "gnuplot command failed.\n");
+	    if (err) pprintf(prn, _("gnuplot command failed.\n"));
 	}
 	break;
 		
@@ -750,7 +750,7 @@ void exec_line (char *line, PRN *prn)
 	    printfreq(freq, prn); 
 	    if (!batch) {
 		if (plot_freq(freq, &paths, NORMAL))
-		    pprintf(prn, "gnuplot command failed.\n");
+		    pprintf(prn, _("gnuplot command failed.\n"));
 	    }
 	    free_freq(freq);
 	}
@@ -766,7 +766,7 @@ void exec_line (char *line, PRN *prn)
 		errmsg(err, prn);
 	    else {
 		if (add_new_var(datainfo, &Z, &genr)) 
-		    pprintf(prn, "Failed to add new variable.\n");
+		    pprintf(prn, _("Failed to add new variable.\n"));
 		else pprintf(prn, "%s", genr.msg);
 	    }
 	}
@@ -777,8 +777,8 @@ void exec_line (char *line, PRN *prn)
 	    (command.list[0] != 3 || 
 	     !isdummy(command.list[3], datainfo->t1, datainfo->t2, Z,
 		      datainfo->n))) {
-	    pprintf(prn, "You must supply three variables, the last of "
-		    "which is a dummy variable\n(with values 1 or 0)\n");
+	    pprintf(prn, _("You must supply three variables, the last of "
+		    "which is a dummy variable\n(with values 1 or 0)\n"));
 	    break;
 	}
 	if (oflag == OPT_M || oflag == OPT_Z) { 
@@ -789,7 +789,7 @@ void exec_line (char *line, PRN *prn)
 	    err = gnuplot(command.list, lines, &Z, datainfo,
 			  &paths, &plot_count, batch, 0, 0);
 	}
-	if (err < 0) pprintf(prn, "gnuplot command failed\n");
+	if (err < 0) pprintf(prn, _("gnuplot command failed\n"));
 	break;
 
     case HAUSMAN:
@@ -827,7 +827,7 @@ void exec_line (char *line, PRN *prn)
     case IMPORT:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
-	    pprintf(prn, "import command is malformed.\n");
+	    pprintf(prn, _("import command is malformed.\n"));
 	    break;
 	}
 	if (oflag)
@@ -838,27 +838,27 @@ void exec_line (char *line, PRN *prn)
 	    data_status = 1;
 	    print_smpl(datainfo, 0, prn);
 	    varlist(datainfo, prn);
-	    pprintf(prn, "You should now use the \"print\" command "
-		   "to verify the data.\n");
-	    pprintf(prn, "If they are OK, use the  \"store\" command "
-		   "to save them in gretl format.\n");
+	    pprintf(prn, _("You should now use the \"print\" command "
+		   "to verify the data.\n"));
+	    pprintf(prn, _("If they are OK, use the  \"store\" command "
+		   "to save them in gretl format.\n"));
 	}
 	break;
 
     case OPEN:
 	err = getopenfile(line, datfile, &paths, 0, 0);
 	if (err) {
-	    pprintf(prn, "'open' command is malformed.\n");
+	    pprintf(prn, _("'open' command is malformed.\n"));
 	    break;
 	}
 	if (data_status && !(batch) 
 	    && strcmp(datfile, paths.datfile)) {
-	    fprintf(stderr, "Opening a new data file closes the "
-		    "present one.  Proceed? (y/n) ");
+	    fprintf(stderr, _("Opening a new data file closes the "
+		    "present one.  Proceed? (y/n) "));
 	    fgets(response, 2, stdin);
 	    if (*response != 'y' && *response != 'Y') {
 		fprintf(stderr, 
-			"OK, staying with current data set.\n");
+			_("OK, staying with current data set.\n"));
 		break;
 	    }
 	}
@@ -938,32 +938,32 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (loop.lvar == 0 && loop.ntimes < 2) {
-	    pprintf(prn, "Loop count missing or invalid.\n");
+	    pprintf(prn, _("Loop count missing or invalid.\n"));
 	    monte_carlo_free(&loop);
 	    break;
 	}
 	if (!batch && !runit) 
-	    pprintf(prn, "Enter commands for loop.  "
-		   "Type 'endloop' to get out.\n");
+	    pprintf(prn, _("Enter commands for loop.  "
+		   "Type 'endloop' to get out.\n"));
 	loopstack = 1; 
 	break;
 
     case NULLDATA:
 	nulldata_n = atoi(command.param);
 	if (nulldata_n < 2) {
-	    pprintf(prn, "Data series length count missing or invalid.\n");
+	    pprintf(prn, _("Data series length count missing or invalid.\n"));
 	    err = 1;
 	    break;
 	}
 	if (nulldata_n > 1000000) {
-	    pprintf(prn, "Data series too long.\n");
+	    pprintf(prn, _("Data series too long.\n"));
 	    err = 1;
 	    break;
 	}
 	err = open_nulldata(&Z, datainfo, data_status, 
 			    nulldata_n, prn);
 	if (err) 
-	    pprintf(prn, "Failed to create empty data set.\n");
+	    pprintf(prn, _("Failed to create empty data set.\n"));
 	else data_status = 1;	
 	break;
 
@@ -990,7 +990,7 @@ void exec_line (char *line, PRN *prn)
     case PERGM:
 	err = periodogram(command.list[1], &Z, datainfo, &paths,
 			  batch, oflag, prn);
-	if (err) pprintf(prn, "Failed to generate periodogram\n");
+	if (err) pprintf(prn, _("Failed to generate periodogram\n"));
 	break;
 
     case PVALUE:
@@ -1001,7 +1001,7 @@ void exec_line (char *line, PRN *prn)
 
     case QUIT:
 	if (batch) {
-	    pprintf(prn, "Done\n");
+	    pprintf(prn, _("Done\n"));
 	    break;
 	}
 	if (runit) {
@@ -1012,14 +1012,14 @@ void exec_line (char *line, PRN *prn)
 	    strcpy(command.cmd, "endrun"); /* overwrite "quit" */
 	    break;
 	}
-	pprintf(prn, "commands saved as %s\n", cmdfile);
+	pprintf(prn, _("commands saved as %s\n"), cmdfile);
 	gretl_print_destroy(cmds);
 	if (command.param[0] == 'x') break;
-	printf("type a filename to store output (enter to quit): ");
+	printf(_("type a filename to store output (enter to quit): "));
 	*line = '\0';
 	fgets(outfile, MAXLEN-1, stdin); 
 	if (outfile[0] != '\n' && strcmp(outfile, "q\n")) {
-	    printf("writing session output to %s%s\n", 
+	    printf(_("writing session output to %s%s\n"), 
 		   paths.userdir, outfile);
 #ifdef OS_WIN32
 	    sprintf(syscmd, "\"%s\\gretlcli\" -b \"%s\" > \"%s%s\"", 
@@ -1035,7 +1035,7 @@ void exec_line (char *line, PRN *prn)
 
     case RHODIFF:
 	if (!command.list[0]) {
-	    pprintf(prn, "This command requires a list of variables.\n");
+	    pprintf(prn, _("This command requires a list of variables.\n"));
 	    break;
 	}
 	err = rhodiff(command.param, command.list, &Z, datainfo);
@@ -1046,11 +1046,11 @@ void exec_line (char *line, PRN *prn)
     case RUN:
 	err = getopenfile(line, runfile, &paths, 1, 1);
 	if (err) { 
-	    pprintf(prn, "Command is malformed.\n");
+	    pprintf(prn, _("Command is malformed.\n"));
 	    break;
 	}
 	if ((fb = fopen(runfile, "r")) == NULL) {
-	    fprintf(stderr, "Couldn't open script \"%s\".\n", runfile);
+	    fprintf(stderr, _("Couldn't open script \"%s\".\n"), runfile);
 	    if (runit) {
 		fb = stdin;
 		runit = 0;
@@ -1058,7 +1058,7 @@ void exec_line (char *line, PRN *prn)
 		if (batch) exit(EXIT_FAILURE);
 	    }
 	} else {
-	    fprintf(stderr, "%s opened OK\n", runfile);
+	    fprintf(stderr, _("%s opened OK\n"), runfile);
 	    runfile_open = 1;
 	    if (!batch) runit = 1;
 	}
@@ -1066,17 +1066,17 @@ void exec_line (char *line, PRN *prn)
 
     case SCATTERS:
 	if (batch) 
-	    pprintf(prn, "scatters command not available in batch mode.\n");
+	    pprintf(prn, _("scatters command not available in batch mode.\n"));
 	else {
 	    err = multi_scatters(command.list, atoi(command.param), &Z, 
 				 datainfo, &paths);
-	    if (err) pprintf(prn, "scatters command failed.\n");
+	    if (err) pprintf(prn, _("scatters command failed.\n"));
 	}		
 	break;
 
     case SEED:
 	srand((unsigned) atoi(command.param));
-	pprintf(prn, "Pseudo-random number generator seeded with %d\n",
+	pprintf(prn, _("Pseudo-random number generator seeded with %d\n"),
 	       atoi(command.param));
 	break;
 
@@ -1089,7 +1089,7 @@ void exec_line (char *line, PRN *prn)
 
     case SHELL:
 #ifdef OS_WIN32
-	fprintf(stderr, "shell command not implemented in win32\n");
+	fprintf(stderr, _("shell command not implemented in win32\n"));
 #else		
 	shell(line + 1);
 #endif
@@ -1128,10 +1128,10 @@ void exec_line (char *line, PRN *prn)
 	if (oflag) check = xpxgenr(command.list, &Z, datainfo, 1, 1);
 	else check = xpxgenr(command.list, &Z, datainfo, 0, 1);
 	if (check < 0) {
-	    pprintf(prn, "Failed to generate squares.\n");
+	    pprintf(prn, _("Failed to generate squares.\n"));
 	    err = 1;
 	} else {
-	    pprintf(prn, "Squares generated OK.\n");
+	    pprintf(prn, _("Squares generated OK.\n"));
 	    varlist(datainfo, prn);
 	}
 	break;
@@ -1142,25 +1142,25 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (strlen(command.param)) {
-	    pprintf(prn, "store: using filename %s\n", command.param);
+	    pprintf(prn, _("store: using filename %s\n"), command.param);
 	} else {
-	    pprintf(prn, "store: no filename given.\n");
+	    pprintf(prn, _("store: no filename given.\n"));
 	    break;
 	}
 	if (write_data(command.param, command.list, Z, datainfo, 
 		       data_option(oflag), NULL)) {
-	    fprintf(stderr, "write of data file failed.\n");
+	    fprintf(stderr, _("write of data file failed.\n"));
 	    break;
 	}
-	pprintf(prn, "Data written OK.\n");
+	pprintf(prn, _("Data written OK.\n"));
 	if ((oflag == OPT_O || oflag == OPT_S) && datainfo->markers) 
-	    pprintf(prn, "Warning: case markers not saved in binary datafile.\n");
+	    pprintf(prn, _("Warning: case markers not saved in binary datafile.\n"));
 	break;
 
     case TESTUHAT:
 	if ((err = model_test_start(0, prn, 0))) break;
 	if (genr_fit_resid(models[0], &Z, datainfo, GENR_RESID, 1)) {
-	    pprintf(prn, "Out of memory attempting to add variable.\n");
+	    pprintf(prn, _("Out of memory attempting to add variable.\n"));
 	    err = 1;
 	    break;
 	}
@@ -1207,8 +1207,8 @@ void exec_line (char *line, PRN *prn)
 	break;
 
     default:
-	pprintf(prn, "Sorry, the %s command is not yet implemented "
-	       "in gretlcli\n", command.cmd);
+	pprintf(prn, _("Sorry, the %s command is not yet implemented "
+	       "in gretlcli\n"), command.cmd);
 	err = 1;
 	break;
     }
@@ -1220,7 +1220,7 @@ void exec_line (char *line, PRN *prn)
 	    modelspec = malloc(2 * sizeof *modelspec);
 	else 
 	    modelspec = realloc(modelspec, (m+1) * (sizeof *modelspec));
-	if (modelspec == NULL) noalloc("model command");
+	if (modelspec == NULL) noalloc(_("model command"));
 
 	modelspec[m-1].cmd = malloc(MAXLEN);
 	modelspec[m-1].subdum = NULL;

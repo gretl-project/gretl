@@ -82,7 +82,7 @@ static void time_string (char *s)
 {
     time_t prntime = time(NULL);
     
-    sprintf(s, "gretl output %s", ctime(&prntime));
+    sprintf(s, _("gretl output %s"), ctime(&prntime));
     s[strlen(s)-1] = '\0';
 }
 
@@ -158,7 +158,7 @@ void winprint (char *fullbuf, char *selbuf)
 	SelectObject(dc, fixed_font);
 	SetMapMode(dc, MM_TEXT);
 	/* make simple header */
-	sprintf(hdr, "%s, page %d", hdrstart, page++);
+	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
 	TextOut(dc, x, px/8, hdr, strlen(hdr));
 	line = 0;
 	y = px/2;
@@ -214,9 +214,9 @@ void winprint (char *fullbuf, char *selbuf)
 	return;
     }
 
-    pc = gnome_print_context_new_with_paper_size(printer, "US-Letter");
+    pc = gnome_print_context_new_with_paper_size(printer, _("US-Letter"));
 
-    gnome_print_beginpage (pc, "gretl output");
+    gnome_print_beginpage (pc, _("gretl output"));
 
     /* could use GNOME_FONT_MEDIUM below */
     font = gnome_font_new_closest("Courier", GNOME_FONT_BOOK, 0, 10);
@@ -233,8 +233,8 @@ void winprint (char *fullbuf, char *selbuf)
 	line = 0;
 	y = 756;
 	if (page > 1) 
-	    gnome_print_beginpage (pc, "gretl output");
-	sprintf(hdr, "%s, page %d", hdrstart, page++);
+	    gnome_print_beginpage (pc, _("gretl output"));
+	sprintf(hdr, _("%s, page %d"), hdrstart, page++);
 	gnome_print_moveto(pc, x, y);
 	gnome_print_show(pc, hdr);
 	y = 720;
@@ -1155,12 +1155,12 @@ void augment_copy_menu (windata_t *vwin)
 
     item.path = NULL;
 
-    if (gtk_item_factory_get_item(vwin->ifac, "/Edit/Copy all"))
-	gtk_item_factory_delete_item(vwin->ifac, "/Edit/Copy all");
+    if (gtk_item_factory_get_item(vwin->ifac, _("/Edit/Copy all")))
+	gtk_item_factory_delete_item(vwin->ifac, _("/Edit/Copy all"));
 
     /* menu branch */
     item.path = mymalloc(64);
-    sprintf(item.path, "/Edit/Copy _all");
+    sprintf(item.path, _("/Edit/Copy _all"));
     item.callback = NULL;
     item.callback_action = 0;
     item.item_type = "<Branch>";
@@ -1172,19 +1172,19 @@ void augment_copy_menu (windata_t *vwin)
     item.accelerator = NULL;
     
     /* plain text option */
-    sprintf(item.path, "/Edit/Copy all/as plain _text");
+    sprintf(item.path, _("/Edit/Copy all/as plain _text"));
     item.callback = text_copy;
     item.callback_action = COPY_TEXT;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);    
 
     /* LaTeX option */
-    sprintf(item.path, "/Edit/Copy all/as _LaTeX");
+    sprintf(item.path, _("/Edit/Copy all/as _LaTeX"));
     item.callback = text_copy;
     item.callback_action = COPY_LATEX;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 
 
     /* RTF option */
-    sprintf(item.path, "/Edit/Copy all/as _RTF");
+    sprintf(item.path, _("/Edit/Copy all/as _RTF"));
     item.callback = text_copy;
     item.callback_action = COPY_RTF;
     gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1); 

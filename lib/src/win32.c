@@ -37,7 +37,7 @@ int read_reg_val (HKEY tree, char *keyname, char *keyval)
                      KEY_READ,                    /* access mask */
                      &regkey                      /* key handle */
                      ) != ERROR_SUCCESS) {
-        fprintf(stderr, "couldn't open registry\n");
+        fprintf(stderr, _("couldn't open registry\n"));
         return 1;
     }
 

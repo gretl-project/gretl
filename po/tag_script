@@ -1,0 +1,8 @@
+#!/bin/sh
+
+testdir=lib
+
+echo "Files in TAGS..."
+cat TAGS | grep '^\.\.' | grep /$testdir/ | awk -F',' '{print $1 " \\"}'
+echo "Last reference(s) in .pot file..."
+tail gretl2.pot | grep '#:'

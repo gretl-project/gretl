@@ -39,7 +39,7 @@ static void print_panel_const (MODEL *panelmod, PRN *prn)
     int i = panelmod->list[0] - 1;
 
     sprintf(numstr, "(%.5g)", panelmod->sderr[i]);
-    pprintf(prn, " constant: %14.5g %15s\n", 
+    pprintf(prn, _(" constant: %14.5g %15s\n"), 
 	    panelmod->coeff[i], numstr);
 }
 
@@ -350,17 +350,17 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     lsdv = lsq(dvlist, pZ, pdinfo, OLS, 0, 0.0);
     if (lsdv.errcode) {
 	var = NADBL;
-	pprintf(prn, "Error estimating fixed effects model\n");
+	pprintf(prn, _("Error estimating fixed effects model\n"));
 	errmsg(lsdv.errcode, prn);
     } else {
 	haus->sigma_e = lsdv.sigma;
 	var = lsdv.sigma * lsdv.sigma;
 	pprintf(prn, 
-		"                          Fixed effects estimator\n"
+		_("                          Fixed effects estimator\n"
 		"          allows for differing intercepts by cross-sectional "
 		"unit\n"
 		"         (slope standard errors in parentheses, a_i = "
-		"intercepts)\n\n");
+		"intercepts)\n\n"));
 	for (i=1; i<pmod->list[0] - 1; i++) {
 	    print_panel_coeff(&lsdv, &lsdv, pdinfo, i, prn);
 	    haus->bdiff[i] = lsdv.coeff[i];
@@ -372,16 +372,16 @@ static double LSDV (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	    sprintf(dumstr, "a_%d", i - pmod->list[0] + 1);
 	    pprintf(prn, "%9s: %14.4g\n", dumstr, lsdv.coeff[i-1]);
 	}
-	pprintf(prn, "\nResidual variance: %g/(%d - %d) = %g\n", 
+	pprintf(prn, _("\nResidual variance: %g/(%d - %d) = %g\n"), 
 		lsdv.ess, pdinfo->n, lsdv.ncoeff, var);
 	F = (pmod->ess - lsdv.ess) * lsdv.dfd /
 	    (lsdv.ess * (nunits - 1.0));
-	pprintf(prn, "Joint significance of unit dummy variables:\n"
-		" F(%d, %d) = %g with p-value %g\n", nunits - 1,
+	pprintf(prn, _("Joint significance of unit dummy variables:\n"
+		" F(%d, %d) = %g with p-value %g\n"), nunits - 1,
 		lsdv.dfd, F, fdist(F, nunits - 1, lsdv.dfd));
-	pprintf(prn, "(A low p-value counts against the null hypothesis that "
+	pprintf(prn, _("(A low p-value counts against the null hypothesis that "
 		"the pooled OLS model\nis adequate, in favor of the fixed "
-		"effects alternative.)\n\n");
+		"effects alternative.)\n\n"));
 	makevcv(&lsdv);
 	vcv_slopes(haus, &lsdv, nunits, 0);
     }
@@ -446,14 +446,14 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
     remod = lsq(relist, &reZ, reinfo, OLS, 0, 0.0);
     if ((err = remod.errcode)) {
-	pprintf(prn, "Error estimating random effects model\n");
+	pprintf(prn, _("Error estimating random effects model\n"));
 	errmsg(err, prn);
     } else {
 	pprintf(prn,
-		"                         Random effects estimator\n"
+		_("                         Random effects estimator\n"
 		"           allows for a unit-specific component to the "
 		"error term\n"
-		"                     (standard errors in parentheses)\n\n");
+		"                     (standard errors in parentheses)\n\n"));
 	print_panel_const(&remod, prn);
 	for (i=1; i<relist[0] - 1; i++) {
 	    print_panel_coeff(pmod, &remod, pdinfo, i, prn);
@@ -501,22 +501,22 @@ int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo,
     fprintf(stderr,  "breusch_pagan: found ubars\n");
 #endif
 
-    pprintf(prn, "\nMeans of pooled OLS residuals for cross-sectional "
-	    "units:\n\n");
+    pprintf(prn, _("\nMeans of pooled OLS residuals for cross-sectional "
+	    "units:\n\n"));
     for (i=0; i<nunits; i++) {
-	pprintf(prn, " unit %2d: %13.5g\n", 
+	pprintf(prn, _(" unit %2d: %13.5g\n"), 
 		i + 1, ubar[i]);
     }
     free(ubar);
 
     LM = (double) pdinfo->n/(2.0*(T - 1.0)) * 
 	pow((T * T * eprime/pmod->ess) - 1.0, 2);
-    pprintf(prn, "\nBreusch-Pagan test statistic:\n"
-	    " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n", 
+    pprintf(prn, _("\nBreusch-Pagan test statistic:\n"
+	    " LM = %g with p-value = prob(chi-square(1) > %g) = %g\n"), 
 	    LM, LM, chisq(LM, 1));
-    pprintf(prn, "(A low p-value counts against the null hypothesis that "
+    pprintf(prn, _("(A low p-value counts against the null hypothesis that "
 	    "the pooled OLS model\nis adequate, in favor of the random "
-	    "effects alternative.)\n\n");
+	    "effects alternative.)\n\n"));
     return 0;
 }
 
@@ -537,20 +537,20 @@ static int do_hausman_test (hausman_t *haus, PRN *prn)
 #endif
 
     if (haus_invert(haus)) { 
-	pprintf(prn, "Error attempting to invert vcv difference matrix\n");
+	pprintf(prn, _("Error attempting to invert vcv difference matrix\n"));
 	return 1;
     }
     if (haus->H < 0) 
-	pprintf(prn, "\nHausman test matrix is not positive definite (this "
+	pprintf(prn, _("\nHausman test matrix is not positive definite (this "
 		"result may be treated as\n\"fail to reject\" the random effects "
-		"specification).\n");
+		"specification).\n"));
     else {
-	pprintf(prn, "\nHausman test statistic:\n"
-		" H = %g with p-value = prob(chi-square(%d) > %g) = %g\n",
+	pprintf(prn, _("\nHausman test statistic:\n"
+		" H = %g with p-value = prob(chi-square(%d) > %g) = %g\n"),
 		haus->H, haus->ns, haus->H, chisq(haus->H, haus->ns));
-	pprintf(prn, "(A low p-value counts against the null hypothesis that "
+	pprintf(prn, _("(A low p-value counts against the null hypothesis that "
 		"the random effects\nmodel is consistent, in favor of the fixed "
-		"effects model.)\n");
+		"effects model.)\n"));
     }
 
     return 0;
@@ -578,9 +578,9 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	if (haus.sigma == NULL) return E_ALLOC; 
     }   
     
-    pprintf(prn, "      Diagnostics: assuming a balanced panel with %d "
+    pprintf(prn, _("      Diagnostics: assuming a balanced panel with %d "
 	    "cross-sectional units\n "
-	    "                        observed over %d periods\n\n", 
+	    "                        observed over %d periods\n\n"), 
 	    nunits, T);
 
     var2 = LSDV(pmod, pZ, pdinfo, nunits, T, &haus, prn);
@@ -599,10 +599,10 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	var1 = group_means_variance(pmod, *pZ, pdinfo, 
 				    &groupZ, &ginfo, nunits, T);
 	if (var1 < 0) 
-	    pprintf(prn, "Couldn't estimate group means regression\n");
+	    pprintf(prn, _("Couldn't estimate group means regression\n"));
 	else {
-	    pprintf(prn, "Residual variance for group means "
-		    "regression: %g\n\n", var1);    
+	    pprintf(prn, _("Residual variance for group means "
+		    "regression: %g\n\n"), var1);    
 	    theta = 1.0 - sqrt(var2 / (T * var1));
 	    random_effects(pmod, *pZ, pdinfo, groupZ, theta, nunits, T, 
 			   &haus, prn);
