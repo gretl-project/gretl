@@ -11,6 +11,7 @@
 "kmenta","US macro data plus artificial data"
 "longley","Annual U.S. labor-market data"
 "leverage","Illustrates detection of incorrect data"
+"mccullagh","Ship damage data used by William Greene"
 "mrw","Mankiw, Romer and Weil cross-country data"
 "np","Nelson and Plosser (JME, 1982) US macro data"
 "poisson","Test data for Poisson regression"

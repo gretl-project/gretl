@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="mccullagh" frequency="1" startobs="1" endobs="40" type="cross-section">
+<description>Ship damage data originally from 
+P. McCullagh and J. A. Nelder, Generalized Linear Models, 
+London: Chapman &amp; Hall, 1983.
+
+Appears as Table 21.12 in William Greene, Econometric Analysis,
+3e, New York: Macmillan, 1993, and as Table 19.3 (on CDROM) with 
+Greene's 4th edition,
+</description>
+<variables count="14">
+<variable name="Type"
+ label="type of ship"
+/>
+<variable name="TA"
+ label="dummy: = 1 if ship type is A"
+/>
+<variable name="TB"
+ label="dummy: = 1 if ship type is B"
+/>
+<variable name="TC"
+ label="dummy: = 1 if ship type is C"
+/>
+<variable name="TD"
+ label="dummy: = 1 if ship type is D"
+/>
+<variable name="TE"
+ label="dummy: = 1 if ship type is E"
+/>
+<variable name="T6064"
+ label="= 1 if ship constructed 1960-1964, else 0"
+/>
+<variable name="T6569"
+ label="= 1 if ship constructed 1965-1969, else 0"
+/>
+<variable name="T7074"
+ label="= 1 if ship constructed 1970-1974, else 0"
+/>
+<variable name="T7579"
+ label="= 1 if ship constructed 1975-1979, else 0"
+/>
+<variable name="O6074"
+ label="observation period is 1960-1974"
+/>
+<variable name="O7579"
+ label="observation period is 1975-1979"
+/>
+<variable name="Months"
+ label="months ship was operated"
+/>
+<variable name="Acc"
+ label="total number of accidents for ship in period"
+/>
+</variables>
+<observations count="40" labels="false">
+<obs>1 1 0 0 0 0 1 0 0 0 1 0 127 0 </obs>
+<obs>1 1 0 0 0 0 1 0 0 0 0 1 63 0 </obs>
+<obs>1 1 0 0 0 0 0 1 0 0 1 0 1095 3 </obs>
+<obs>1 1 0 0 0 0 0 1 0 0 0 1 1095 4 </obs>
+<obs>1 1 0 0 0 0 0 0 1 0 1 0 1512 6 </obs>
+<obs>1 1 0 0 0 0 0 0 1 0 0 1 3353 18 </obs>
+<obs>1 1 0 0 0 0 0 0 0 1 1 0 NA NA </obs>
+<obs>1 1 0 0 0 0 0 0 0 1 0 1 2244 11 </obs>
+<obs>2 0 1 0 0 0 1 0 0 0 1 0 44882 39 </obs>
+<obs>2 0 1 0 0 0 1 0 0 0 0 1 17176 29 </obs>
+<obs>2 0 1 0 0 0 0 1 0 0 1 0 28609 58 </obs>
+<obs>2 0 1 0 0 0 0 1 0 0 0 1 20370 53 </obs>
+<obs>2 0 1 0 0 0 0 0 1 0 1 0 7064 12 </obs>
+<obs>2 0 1 0 0 0 0 0 1 0 0 1 13099 44 </obs>
+<obs>2 0 1 0 0 0 0 0 0 1 1 0 NA NA </obs>
+<obs>2 0 1 0 0 0 0 0 0 1 0 1 7117 18 </obs>
+<obs>3 0 0 1 0 0 1 0 0 0 1 0 1179 1 </obs>
+<obs>3 0 0 1 0 0 1 0 0 0 0 1 552 1 </obs>
+<obs>3 0 0 1 0 0 0 1 0 0 1 0 781 0 </obs>
+<obs>3 0 0 1 0 0 0 1 0 0 0 1 676 1 </obs>
+<obs>3 0 0 1 0 0 0 0 1 0 1 0 783 6 </obs>
+<obs>3 0 0 1 0 0 0 0 1 0 0 1 1948 2 </obs>
+<obs>3 0 0 1 0 0 0 0 0 1 1 0 NA NA </obs>
+<obs>3 0 0 1 0 0 0 0 0 1 0 1 274 1 </obs>
+<obs>4 0 0 0 1 0 1 0 0 0 1 0 251 0 </obs>
+<obs>4 0 0 0 1 0 1 0 0 0 0 1 105 0 </obs>
+<obs>4 0 0 0 1 0 0 1 0 0 1 0 288 0 </obs>
+<obs>4 0 0 0 1 0 0 1 0 0 0 1 192 0 </obs>
+<obs>4 0 0 0 1 0 0 0 1 0 1 0 349 2 </obs>
+<obs>4 0 0 0 1 0 0 0 1 0 0 1 1208 11 </obs>
+<obs>4 0 0 0 1 0 0 0 0 1 1 0 NA NA </obs>
+<obs>4 0 0 0 1 0 0 0 0 1 0 1 2051 4 </obs>
+<obs>5 0 0 0 0 1 0 0 0 1 0 1 45 0 </obs>
+<obs>5 0 0 0 0 1 1 0 0 0 0 1 NA NA </obs>
+<obs>5 0 0 0 0 1 0 1 0 0 1 0 789 7 </obs>
+<obs>5 0 0 0 0 1 0 1 0 0 0 1 437 7 </obs>
+<obs>5 0 0 0 0 1 0 0 1 0 1 0 1157 5 </obs>
+<obs>5 0 0 0 0 1 0 0 1 0 0 1 2161 12 </obs>
+<obs>5 0 0 0 0 1 0 0 0 1 1 0 NA NA </obs>
+<obs>5 0 0 0 0 1 0 0 0 1 0 1 542 1 </obs>
+</observations>
+</gretldata>

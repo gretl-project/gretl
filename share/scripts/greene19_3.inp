@@ -1,0 +1,11 @@
+# Replicate the Poisson analysis of McCullagh and Nelder's
+# ship damage data, from chapter 19 of Greene's Econometric Analysis,
+# 4th edition
+
+open mccullagh.gdt
+
+poisson Acc const TB TC TD TE T6569 T7074 T7579 O7579 ; Months
+poisson Acc const T6569 T7074 T7579 O7579 ; Months
+poisson Acc const TB TC TD TE O7579 ; Months
+
+
