@@ -99,8 +99,6 @@ int gretl_is_reserved (const char *str);
 
 void gretl_test_init (GRETLTEST *test);
 
-void rearrange_list (int *list);
-
 int vars_identical (const double *x, const double *y, int n);
 
 int get_function (const char *s);

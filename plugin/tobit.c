@@ -156,7 +156,9 @@ static int make_vcv (MODEL *pmod, gretl_matrix *v)
     double x;
     int i, j, k;
 
-    pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    if (pmod->vcv == NULL) {
+	pmod->vcv = malloc(nterms * sizeof *pmod->vcv);
+    }
     if (pmod->vcv == NULL) return 1;  
 
     for (i=0; i<nv; i++) {

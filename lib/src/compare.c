@@ -24,159 +24,11 @@
 #include "libgretl.h"
 #include "gretl_private.h"
 #include "gretl_matrix.h"
+#include "gretl_list.h"
 
 #ifdef WIN32
 # include <windows.h>
 #endif
-
-static int just_replaced (int i, const DATAINFO *pdinfo, 
-			  const int *list)
-     /* check if any var in list has been replaced via genr since a
-	previous model (model_count i) was estimated.  Expects
-	the "label" in datainfo to be of the form "Replaced
-	after model <count>" */
-{
-    int j, repl = 0;
-
-    for (j=1; j<=list[0]; j++) {
-	if (strncmp(VARLABEL(pdinfo, list[j]), _("Replaced"), 8) == 0 &&
-	    sscanf(VARLABEL(pdinfo, list[j]), "%*s %*s %*s %d", &repl) == 1) {
-	    if (repl >= i) return 1;
-	}
-    }
-    return 0; 
-}
-
-static int in_list (int k, const int *list)
-{
-    int i;
-
-    for (i=1; i<=list[0]; i++) {
-	if (list[i] == k) return 1;
-    }
-
-    return 0;
-}
-
-/* augment orig with add, return resulting big list (private) */
-
-int *big_list (const int *orig, const int *add, const DATAINFO *pdinfo, 
-	       int model_count, int *err)
-{
-    int i, j, k, match;
-    int *biglist;
-    const int nadd = add[0];
-
-    *err = 0;
-
-    biglist = malloc((orig[0] + nadd + 1) * sizeof *biglist);
-    if (biglist == NULL) {
-	*err = E_ALLOC;
-	return NULL;
-    }
-
-    for (i=0; i<=orig[0]; i++) {
-	biglist[i] = orig[i];
-    }
-    k = orig[0];
-
-    for (i=1; i<=add[0]; i++) {
-	match = 0;
-	for (j=1; j<=orig[0]; j++) {
-	    if (add[i] == orig[j]) {
-		/* a "new" var was already present */
-		free(biglist);
-		*err = E_ADDDUP;
-		return NULL;
-	    }
-	}
-	if (!match) {
-	    biglist[0] += 1;
-	    biglist[++k] = add[i];
-	}
-    }
-
-    if (biglist[0] == orig[0]) {
-	free(biglist);
-	*err = E_NOADD;
-	return NULL;
-    }
-
-    if (model_count >= 0 && just_replaced(model_count, pdinfo, orig)) {
-	free(biglist);
-	*err = E_VARCHANGE;
-	return NULL;
-    }
-
-    return biglist;
-}
-
-/**
- * omit_from_list:
- * @list: original list (not modified)
- * @omitvars: list of variables to drop (by ID number).
- * @newlist: target list.
- * @pdinfo: dataset information.
- * @model_count: count of models estimated to date.
- *
- * fills @newlist with the elements of @list that are not also
- * present in @omitvars. 
- *
- * Returns: 0 on success, else non-zero error code.  
- * 
- */
-
-static int 
-omit_from_list (const int *list, const int *omitvars, int *newlist,
-		const DATAINFO *pdinfo, int model_count)
-{
-    int match, nomit = omitvars[0];
-    int i, j, k;
-
-    /* check for spurious "omissions" */
-    for (i=1; i<=omitvars[0]; i++) {
-	if (!in_list(omitvars[i], list)) {
-	    sprintf(gretl_errmsg, _("Variable %d was not in the original list"),
-				 omitvars[i]);
-	    return 1;
-	}
-    }
-
-    if (nomit >= list[0] - 1) {
-	/* attempting to omit all vars or more ? */
-	return E_NOVARS;
-    }
-
-    newlist[0] = 1;
-    newlist[1] = list[1];
-    k = 1;
-
-    for (i=2; i<=list[0]; i++) {
-        match = 0;
-        for (j=1; j<=nomit; j++) {
-            if (list[i] == omitvars[j]) {
-                match = 1; /* matching var: omit it */
-		break;
-            }
-        }
-        if (!match) { /* var is not in omit list: keep it */
-            newlist[++k] = list[i];
-        }
-    }
-    newlist[0] = k;
-
-    if (newlist[0] == list[0]) {
-	/* no vars were omitted */
-	return E_NOOMIT; 
-    }
-
-    if (just_replaced(model_count, pdinfo, newlist)) {
-	/* values of one or more vars to omit have changed */
-	return E_VARCHANGE; 
-    }
-
-    return 0;
-}
 
 /* ........................................................... */
 
@@ -408,26 +260,28 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
     if (aux_code != AUX_ADD && (orig->ci == LOGISTIC || orig->ci == LAD))
 	return E_NOTIMP;
 
+    /* check for changes in original list members */
+    err = list_members_replaced(orig->list, pdinfo, m);
+    if (err) return err;
+
+    /* if adding specified vars, build the list */
+    if (addvars != NULL) {
+	newlist = gretl_list_add(orig->list, addvars, &err);
+	if (err) return err;
+    }
+
     /* temporarily re-impose the sample that was in force when the
        original model was estimated */
     exchange_smpl(orig, pdinfo);
 
     gretl_model_init(&aux, pdinfo);
 
-    /* was a specific list of vars to add passed in, or should we
-       concoct one? (e.g. "lmtest") */
-
-    if (addvars != NULL) {
-	/* specific list was given */
-	newlist = big_list(orig->list, addvars, pdinfo, m, &err);
-    } else {
-	/* we should concoct one */
+    if (addvars == NULL) {
 	listlen = orig->list[0] - orig->ifc;
-	tmplist = malloc(listlen * sizeof *tmplist);
+	tmplist = gretl_list_new(listlen - 1);
 	if (tmplist == NULL) {
 	    err = E_ALLOC;
 	} else {
-	    tmplist[0] = listlen - 1;
 	    j = 2;
 	    for (i=1; i<=tmplist[0]; i++) {
 		if (orig->list[j] == 0) j++;
@@ -462,7 +316,7 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 		    for (i=1; i<=tmplist[0]; i++) { 
 			tmplist[i] = i + orig_nvar - 1;
 		    }
-		    newlist = big_list(orig->list, tmplist, pdinfo, m, &err);
+		    newlist = gretl_list_add(orig->list, tmplist, &err);
 		}
 	    }
 	} /* tmplist != NULL */
@@ -477,7 +331,9 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new, int *model_count,
 	if (new->errcode) {
 	    err = new->errcode;
 	    free(newlist);
-	    if (addvars == NULL) free(tmplist); 
+	    if (addvars == NULL) {
+		free(tmplist); 
+	    }
 	    clear_model(new, pdinfo);
 	} else {
 	    ++m;
@@ -582,7 +438,7 @@ static int omit_index (int i, const int *list, const MODEL *pmod)
 	int j, match = 0;
 
 	for (j=2; j<=pmod->list[0]; j++) {
-	    if (in_list(pmod->list[j], list)) {
+	    if (in_gretl_list(list, pmod->list[j])) {
 		if (match == i) {
 		    k = j - 2;
 		    break;
@@ -704,13 +560,23 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	       int *model_count, double ***pZ, DATAINFO *pdinfo, 
 	       PRN *prn, gretlopt opt)
 {
-    COMPARE omit;             /* Comparison struct for two models */
+    COMPARE omit;
     int *tmplist, m = *model_count;
     int maxlag = 0, t1 = pdinfo->t1;
     int err = 0;
 
     if (!command_ok_for_model(OMIT, orig->ci))
 	return E_NOTIMP;
+
+    /* check that vars to omit have not been redefined */
+    if ((err = list_members_replaced(orig->list, pdinfo, m)))
+	return err;
+
+    /* create list for test model */
+    tmplist = gretl_list_omit(orig->list, omitvars, &err);
+    if (tmplist == NULL) {
+	return err;
+    }
 
     /* temporarily impose the sample that was in force when the
        original model was estimated */
@@ -727,35 +593,22 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
 	pdinfo->t1 -= 1;
     }
 
-    tmplist = malloc((orig->ncoeff + 2) * sizeof *tmplist);
-    if (tmplist == NULL) { 
-	pdinfo->t1 = t1;
-	err = E_ALLOC; 
-    } else {
-	err = omit_from_list(orig->list, omitvars, tmplist, pdinfo, m);
-	if (err) {
-	    free(tmplist);
-	}
-    }
+    *new = replicate_estimator(orig, &tmplist, pZ, pdinfo, model_count, 
+			       OPT_D, prn);
 
-    if (!err) {
-	*new = replicate_estimator(orig, &tmplist, pZ, pdinfo, model_count, 
-				   OPT_D, prn);
-
-	if (new->errcode) {
-	    pprintf(prn, "%s\n", gretl_errmsg);
-	    free(tmplist);
-	    err = new->errcode; 
-	}
-
-	if (orig->ci == LOGIT || orig->ci == PROBIT) {
-	    new->aux = AUX_OMIT;
-	}
+    if (new->errcode) {
+	pprintf(prn, "%s\n", gretl_errmsg);
+	free(tmplist);
+	err = new->errcode; 
     }
 
     if (!err) {
 	++m;
 	new->ID = m;
+
+	if (orig->ci == LOGIT || orig->ci == PROBIT) {
+	    new->aux = AUX_OMIT;
+	}
 
 	omit = add_or_omit_compare(orig, new, 0);
 
@@ -803,6 +656,7 @@ static int ljung_box (int varno, int order, const double **Z,
     x = malloc(n * sizeof *x);
     y = malloc(n * sizeof *y);
     acf = malloc((order + 1) * sizeof *acf);
+
     if (x == NULL || y == NULL || acf == NULL)
 	return E_ALLOC;    
 

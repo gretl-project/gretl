@@ -530,7 +530,7 @@ static double get_model_data (MODEL *pmod, const double **Z,
     /* insert constant last (numerical issues) */
     if (pmod->ifc) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    x = 1.0;
+	    x = Z[0][t]; /* in some special cases the constant is pre-transformed */
 	    if (dwt) {
 		if (Z[dwt][t] == 0.0) continue;
 	    } else if (pmod->nwt) {

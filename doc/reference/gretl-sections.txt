@@ -241,7 +241,7 @@ get_fcast_with_errs
 fcast_with_errs
 is_model_cmd
 is_model_ref_cmd
-save_model_spec
+is_quiet_model_test
 re_estimate
 copyvec
 ijton
@@ -265,6 +265,8 @@ gretl_spawn_quiet
 <FILE>interact</FILE>
 MAXSAVENAME
 VARDUP
+CMD_NULL
+CMD_COMMENT
 CMD
 getcmd
 command_number
@@ -404,7 +406,6 @@ CORRMAT
 SAMPLE
 ARINFO
 MODEL
-MODELSPEC
 GRAPHT
 PRN
 FITRESID
@@ -538,7 +539,7 @@ gretl_vector_free
 gretl_matrix_alloc
 gretl_packed_matrix_alloc
 gretl_matrix_copy
-gretl_diagonal_matrix
+gretl_column_vector_from_array
 gretl_matrix_from_2d_array
 gretl_matrix_zero
 gretl_matrix_zero_upper
@@ -603,7 +604,6 @@ check_db_import
 <SECTION>
 <FILE>subsample</FILE>
 attach_subsample_to_model
-model_sample_issue
 restrict_sample
 set_sample
 restore_full_sample
@@ -710,12 +710,12 @@ debug_print_model_info
 copy_model
 swap_models
 command_ok_for_model
-model_ci_from_modelspec
 </SECTION>
 
 <SECTION>
 <FILE>libset</FILE>
 get_garch_vcv_version
+get_force_hc
 get_hp_lambda
 </SECTION>
 
@@ -740,5 +740,16 @@ gretl_string_table_destroy
 restriction_set_start
 restriction_set_parse_line
 gretl_restriction_set_finalize
+</SECTION>
+
+<SECTION>
+<FILE>modelspec</FILE>
+model_ci_from_modelspec
+model_sample_issue
+modelspec_last_index
+modelspec_index_from_model_id
+modelspec_get_command_by_id
+modelspec_save
+free_modelspec
 </SECTION>
 

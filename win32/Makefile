@@ -97,7 +97,7 @@ RES2COFF = echo gretlw32_res.o
 
 LIBSRC = bhhh_max.c calendar.c compare.c dataio.c dbread.c describe.c \
         discrete.c estimate.c generate.c genstack.c graphing.c \
-	gretl_commands.c gretl_errors.c gretl_matrix.c gretl_model.c \
+	gretl_commands.c gretl_errors.c gretl_list.c gretl_matrix.c gretl_model.c \
 	gretl_paths.c gretl_restrict.c gretl_string_table.c \
 	gretl_utils.c gretl_win32.c interact.c libset.c modelprint.c modelspec.c \
 	monte_carlo.c nls.c nonparam.c options.c plugins.c printout.c \

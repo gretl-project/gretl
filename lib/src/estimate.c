@@ -22,6 +22,7 @@
 #include "libgretl.h"
 #include "qr_estimate.h"
 #include "gretl_private.h"
+#include "gretl_list.h"
 
 /* There's a balancing act with 'TINY' here.  It's the minimum value
    for test that libgretl will accept before rejecting a
@@ -1888,7 +1889,7 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	adds that series to the data set */
 {
     int *tmplist, *list, t, v = pdinfo->v;
-    int i, j, l0 = pmod->list[0], listlen, check, shrink;
+    int i, j, l0 = pmod->list[0], check, shrink;
     MODEL aux;
 
     gretl_model_init(&aux, pdinfo);
@@ -1902,11 +1903,9 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 
     /* tmplist is first used to construct a list of
        vars to be squared */
-    listlen = (pmod->ifc)? l0 - 1 : l0;
-    tmplist = malloc(listlen * sizeof *tmplist);
+    tmplist = gretl_list_new((pmod->ifc)? l0 - 2 : l0 - 1);
     if (tmplist == NULL) return E_ALLOC;
 
-    tmplist[0] = listlen - 1;
     j = 1;
     for (i=2; i<=pmod->list[0]; i++) {
 	if (pmod->list[i] != 0) {
@@ -1930,8 +1929,8 @@ static int get_aux_uhat (MODEL *pmod, double *uhat1, double ***pZ,
 	tmplist[i] = i + v;
     }
 
-    list = big_list(pmod->list, tmplist, pdinfo, -1, &check);
-    if (check && check != E_VARCHANGE) {
+    list = gretl_list_add(pmod->list, tmplist, &check);
+    if (check) {
 	free(tmplist);
 	return check;
     }
@@ -2236,7 +2235,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 		 PRN *prn, GRETLTEST *test)
 {
     int lo, ncoeff, yno, i, t, check = 0;
-    int shrink, v = pdinfo->v, listlen;
+    int shrink, v = pdinfo->v;
     int *tmplist = NULL, *list = NULL;
     double zz;
     MODEL white;
@@ -2262,12 +2261,10 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	}
 	strcpy(pdinfo->varname[v], "uhatsq");
 
-	listlen = (pmod->ifc)? lo - 1 : lo;
-
-	tmplist = malloc(listlen * sizeof *tmplist);
-	if (tmplist == NULL) err = E_ALLOC;
-	else {
-	    tmplist[0] = listlen - 1;
+	tmplist = gretl_list_new((pmod->ifc)? lo - 2 : lo - 1);
+	if (tmplist == NULL) {
+	    err = E_ALLOC;
+	} else {
 	    for (i=1; i<=tmplist[0]; i++) {
 		tmplist[i] = pmod->list[i + 1 + pmod->ifc];
 	    }
@@ -2302,13 +2299,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	list = big_list(pmod->list, tmplist, pdinfo, -1, &err);
+	list = gretl_list_add(pmod->list, tmplist, &err);
 	if (err) {
-	    if (err != E_VARCHANGE) 
-		fprintf(stderr, I_("didn't add to list\n"));
-	    else {
-		err = 0;
-	    }
+	    fprintf(stderr, I_("didn't add to list\n"));
 	}
     }
 
@@ -2344,188 +2337,6 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     return err;
 }
-
-#ifdef AR_BY_NLS /* not quite ready yet */
-
-static MODEL ar1 (LIST list, double ***pZ, DATAINFO *pdinfo, int *model_count, 
-		  PRN *prn)
-{
-    int arvars = list[0] + 1;
-    int i, j, t, v = pdinfo->v;
-    int ifc = 0;
-    int *arlist;
-    double rho = 0.0;
-    double ess, essdiff = 1.0;
-    MODEL armod;
-
-    *gretl_errmsg = '\0';
-
-    arlist = malloc((arvars + 1) * sizeof *arlist);
-
-    if (arlist == NULL) {
-	armod.errcode = E_ALLOC;
-	return armod;
-    }
-
-    if (dataset_add_vars(arvars, pZ, pdinfo)) {
-	free(arlist);
-	armod.errcode = E_ALLOC;
-	return armod;
-    }
-
-    gretl_model_init(&armod, pdinfo);
-
-    /* run initial OLS */
-    armod = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.0);
-    if (armod.errcode) goto ar1_abort;
-
-    ifc = armod.ifc;
-    ess = armod.ess;
-    /* is this a good idea? */
-#if 0
-    rho = armod.rho; 
-#endif
-
-    /* form regression list for NLS */
-    arlist[0] = arvars;
-    arlist[1] = v; /* the first-numbered new variable */
-    for (i=2; i<=list[0]; i++) {
-	arlist[i] = v+i-1;
-    }
-    arlist[arvars] = v + list[0];
-
-    /* first obs will not be usable */
-    (*pZ)[v+1][0] = NADBL;
-
-    pprintf(prn, "\n%s\n\n", _("Nonlinear least squares"));
-
-    j = 0;
-    while (essdiff > .00001) {
-	int av = v + 1;
-
-	/* create transformed indep vars */
-	for (i=2; i<=list[0]; i++) {
-	    for (t=1; t<pdinfo->n; t++) {
-		if (na((*pZ)[list[i]][t]) || na((*pZ)[list[i]][t-1])) {
-		    (*pZ)[av][t] = NADBL;
-		} else {
-		    (*pZ)[av][t] = 
-			(*pZ)[list[i]][t] - rho * (*pZ)[list[i]][t-1];
-		}
-	    }
-	    av++;
-	}
-
-	/* create pseudo-regressor for rho */
-	for (t=1; t<pdinfo->n; t++) {
-	    if (na((*pZ)[list[1]][t-1])) {
-		(*pZ)[av][t] = NADBL;
-	    } else {
-		double x = (*pZ)[list[1]][t-1];
-
-		for (i=2; i<=list[0]; i++) {
-		    x -= armod.coeff[i-2] * (*pZ)[list[i]][t-1];
-		}
-		(*pZ)[av][t] = x;
-	    }
-	}
-
-	/* create artificial dep var */
-	for (t=1; t<pdinfo->n; t++) {
-	    if (na((*pZ)[list[1]][t])) {
-		(*pZ)[v][t] = NADBL;
-	    } else {
-		double y = (*pZ)[list[1]][t];
-
-		for (i=2; i<=list[0]; i++) {
-		    y -= rho * armod.coeff[i-2] * (*pZ)[list[i]][t-1];
-		}
-		(*pZ)[v][t] = y;
-	    }
-	}
-
-	if (j > 0) {
-	    rho = armod.coeff[list[0]-1];
-	    ess = armod.ess;
-	    clear_model(&armod, pdinfo);
-	} 
-
-	pprintf(prn, " iteration %2d: SSR = %#g, rho = %#g\n", j, ess, rho);
-
-	/* (re-)estimate linearized model */
-	armod = lsq(arlist, pZ, pdinfo, OLS, OPT_A, 0.0);
-	if (armod.errcode) break;
-
-	/* essdiff = fabs(ess - armod.ess) / ess; */
-	essdiff = fabs(rho - armod.coeff[list[0]-1]) / rho;
-
-	if (++j > 20) break;
-    }
-
-    if (armod.errcode) goto ar1_abort;
-
-    for (i=0; i<=list[0]; i++) {
-	armod.list[i] = list[i];
-    }
-    armod.ncoeff -= 1;
-    armod.ifc = ifc;
-    if (ifc) armod.dfn -= 1;
-    *model_count += 1;
-    armod.ID = *model_count;
-    armod.ci = AR;
-
-    if (ar_info_init(&armod, 2)) {
-	armod.errcode = E_ALLOC;
-	goto ar1_abort;
-    } else {
-	armod.arinfo->arlist[0] = 1;
-	armod.arinfo->arlist[1] = 1;
-	armod.arinfo->rho[1] = armod.coeff[list[0]-1];
-	armod.arinfo->sderr[1] = armod.sderr[list[0]-1];
-    }
-
-    /* special computation of additional stats */
-    if (armod.errcode == 0) {
-	double tss = 0.0;
-	int nobs = armod.t2 - armod.t1 + 1;
-
-	armod.ybar = gretl_mean(armod.t1, armod.t2, (*pZ)[list[1]]);
-	armod.sdy = gretl_stddev(armod.t1, armod.t2, (*pZ)[list[1]]);
-
-	for (t=armod.t1; t<=armod.t2; t++) {
-	    double y = (*pZ)[list[1]][t];
-
-	    tss += (y - armod.ybar) * (y - armod.ybar);
-	}
-	armod.fstt = armod.dfd * (tss - armod.ess) / (armod.dfn * armod.ess);
-	if (tss > 0) {
-	    armod.rsq = 1.0 - (armod.ess / tss);
-	    if (armod.dfd > 0) {
-		double den = tss * armod.dfd;
-
-		armod.adjrsq = 1.0 - (armod.ess * (nobs-1)/den);
-		if (!armod.ifc) {  
-		    armod.rsq = corrrsq(nobs, &((*pZ)[list[1]][armod.t1]), 
-					armod.yhat + armod.t1);
-		    armod.adjrsq = 
-			1.0 - ((1.0 - armod.rsq)*(nobs - 1)/armod.dfd);
-		}
-	    }
-	}
-	gretl_aic_etc(&armod);
-    }
-
-    printmodel(&armod, pdinfo, prn);
-
- ar1_abort:
-    dataset_drop_vars(arvars, pZ, pdinfo);
-    free(arlist);
-    free(list);
-
-    return armod;
-}
-
-#endif /* AR_BY_NLS */
 
 /**
  * ar_func:
@@ -2584,15 +2395,6 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
     /*  printf("reglist:\n"); printlist(reglist); */
 
     if (gretl_hasconst(reglist)) rearrange_list(reglist);
-
-#ifdef AR_BY_NLS /* not ready yet */
-    if (arlist[0] == 1 && arlist[1] == 1) {
-	free(arlist);
-	free(reglist2);
-	free(rholist);
-	return ar1(reglist, pZ, pdinfo, model_count, prn);
-    }
-#endif
 
     /* special case: ar 1 ; ... => use CORC */
     if (arlist[0] == 1 && arlist[1] == 1) {
@@ -2824,24 +2626,6 @@ static void tsls_omitzero (int *list, double **Z, int t1, int t2)
 	    list_exclude(i, list);
 	    i--;
 	}
-    }
-}
-
-/* .........................................................   */
-
-void rearrange_list (int *list)
-/* checks a list for a constant term (ID 0), and if present, 
-   moves it to the first dep var position (pos 2)
-*/
-{
-    int i, v;
-
-    for (v=list[0]; v>2; v--) {
-        if (list[v] == 0)  {
-	    for (i=v; i>2; i--) list[i] = list[i-1];
-	    list[2] = 0;
-	    return;
-        }
     }
 }
 

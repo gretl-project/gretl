@@ -31,7 +31,7 @@ typedef struct {
     double *sigma;
 } hausman_t;
 
-/* #define PDEBUG 1 */
+#undef PDEBUG
 
 /* .................................................................. */
 
@@ -351,7 +351,9 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 	k++;
     }
 
-    for (t=0; t<pdinfo->n; t++) reZ[0][t] = 1.0 - theta;
+    for (t=0; t<pdinfo->n; t++) {
+	reZ[0][t] = 1.0 - theta;
+    }
 
 #ifdef PDEBUG
     fprintf(stderr, "random_effects: about to run OLS\n");
@@ -369,7 +371,9 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 		"                     (standard errors in parentheses)\n\n"));
 	for (i=0; i<relist[0] - 1; i++) {
 	    print_panel_coeff(pmod, &remod, pdinfo, i, prn);
-	    if (i > 0) haus->bdiff[i-1] -= remod.coeff[i];
+	    if (i > 0) {
+		haus->bdiff[i-1] -= remod.coeff[i];
+	    }
 	}
 	makevcv(&remod);
 	vcv_slopes(haus, &remod, nunits, 1);

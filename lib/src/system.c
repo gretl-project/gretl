@@ -22,6 +22,7 @@
 
 #include "libgretl.h"
 #include "gretl_private.h"
+#include "gretl_list.h"
 
 typedef struct id_atom_ id_atom;
 typedef struct identity_ identity;
