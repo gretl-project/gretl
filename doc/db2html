@@ -1,11 +1,9 @@
 #!/bin/sh
 
-DB_STYLESHEET=../gretl-both.dsl\#html
 HTML_STYLESHEET=/usr/share/sgml/docbook-dsssl-1.74b/frames/docbook.css
 ADMON_GRAPHICS=/usr/share/sgml/docbook-dsssl-1.74b/images/*.gif
 XMLDCL=/opt/jade/share/xml.dcl
 
-output="manual-html"
 TMPDIR=DBTOHTML_OUTPUT_DIR$$
 
 echo TMPDIR is $TMPDIR
@@ -23,14 +21,17 @@ then
     echo Cannot read \"$1\".  Exiting. >&2
     exit 1
   fi
-  if echo $1 | egrep -i '\.sgml' >/dev/null 2>&1
+  if echo $1 | egrep -i '\.xml' >/dev/null 2>&1
   then
     # now make sure that the output directory is always a subdirectory
     # of the current directory
     echo
     input_file=`basename $1`
-    output="`echo $input_file | sed 's,\.xml$,,;s,\.sgml$,,'`"
+    base="`echo $input_file | sed 's,\.xml$,,;s,\.sgml$,,'`"
+    output=${base}-html
+    DB_STYLESHEET=${base}-both.dsl
     echo "input file was called $input_file -- output will be in $output"
+    echo "using stylesheet $DB_STYLESHEET"
     echo
   fi
 fi
@@ -39,21 +40,17 @@ mkdir $TMPDIR
 SAVE_PWD=`pwd`
 if [ $1 = `basename $1` ]; then
   echo "working on ../$1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDCL ../$1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ../${DB_STYLESHEET}\#html $XMLDCL ../$1; cd $SAVE_PWD)
 else
   echo "working on $1"
-  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET} $XMLDCL $1; cd $SAVE_PWD)
+  (cd $TMPDIR; jade -t sgml -ihtml -d ${DB_STYLESHEET}\#html $XMLDCL $1; cd $SAVE_PWD)
 fi
 
 if [ $# -eq 1 ]
 then
-  if [ -d ${output}.junk ]
-  then
-    /bin/rm -rf ${output}.junk
-  fi
   if [ -d ${output} ]
   then
-    mv $output ${output}.junk
+    rm -rf $output
   fi
   echo "about to copy cascading stylesheet to temp dir"
   cp ${HTML_STYLESHEET} ${TMPDIR}/

@@ -23,12 +23,14 @@ cusum_test
 data_options
 gretl_filetypes
 free_datainfo
+datainfo_new
 create_new_dataset
 clear_datainfo
 start_new_Z
 dateton
 ntodate
 get_info
+get_precision
 write_data
 has_gz_suffix
 gz_switch_ext
@@ -38,6 +40,8 @@ import_csv
 import_box
 add_case_markers
 detect_filetype
+get_xmldata
+get_xml_description
 </SECTION>
 
 <SECTION>

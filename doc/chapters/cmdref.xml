@@ -2855,11 +2855,11 @@ linkend="looping"/> for details.
 
   <sect1 id="estimators"><title>Estimators and tests: summary</title>
 
-    <para><xref linkend="tab-estim"/> shows the estimators available under the
-      Model menu in <application>gretl</application>'s main window.
-      The corresponding script command is shown in parentheses.  For
-      details consult the command's entry in
-      <xref linkend="cmdref"/>.</para>
+    <para><xref linkend="tab-estim"/> shows the estimators available
+      under the Model menu in <application>gretl</application>'s main
+      window.  The corresponding script command (if there is one
+      available) is shown in parentheses.  For details consult the
+      command's entry in <xref linkend="cmdref"/>.</para>
 
     <table id="tab-estim" frame="none">
       <title>Estimators</title>
@@ -2940,8 +2940,8 @@ linkend="looping"/> for details.
 	    <entry>Correlation with ordinal data</entry>
 	  </row>
 	  <row>
-	    <entry>Pooled OLS (panel)
-	      (<command>pooled</command>)</entry>
+	    <entry>Pooled OLS
+	      </entry>
 	    <entry>OLS estimation for pooled cross-section, time
 	      series data</entry>
 	  </row>
@@ -3000,7 +3000,7 @@ linkend="looping"/> for details.
 	  </row>
 	  <row>
 	    <entry>Panel diagnostics</entry>
-	    <entry><command>FIXME</command></entry>
+	    <entry>&nbsp;</entry>
 	  </row>
 	</tbody>
       </tgroup>

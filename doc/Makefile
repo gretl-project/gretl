@@ -1,14 +1,15 @@
 DOC = manual
-SRC = manual.xml
-DSL = gretl-both.dsl
+SRC = $(DOC).xml
+DSL = $(DOC)-both.dsl
 ALTDSL = gretl-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
 XSLDIR = /usr/share/sgml/docbook-xsl-1.48
+HTMLDIR = $(DOC)-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
-	chapters/looping.xml chapters/nist.xml chapters/starting.xml \
+	chapters/looping.xml chapters/starting.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/menus.xml \
 	chapters/optarg.xml chapters/trouble.xml
 
@@ -36,7 +37,7 @@ $(DOC)_a4.tex: $(SRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
 
 html: $(SRC) db2html $(DSL) $(HMATHSS) 
 	./db2html $(SRC)
-	./texmath2png.pl manual-html/equation-list.sgml
+	./texmath2png.pl $(DOC)-html/equation-list.sgml
 
 htmlhelp:
 	cd gretlhlp && \
@@ -47,4 +48,4 @@ htmlhelp:
 
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex
-	rm -rf manual-html manual-html.junk
+	rm -rf $(DOC)-html 

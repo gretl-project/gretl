@@ -214,24 +214,29 @@
 
   <sect1 id="pooled"><title>Pooled estimation</title>
 
-    <para>FIXME. This command is for use with panel data.  To take
-      advantage of it, you should specify a model without any dummy
-      variables representing cross-sectional units.  The routine
-      presents estimates for straightforward pooled OLS, which treats
+    <para>Having come this far, we can reveal that there is a special
+      purpose estimation command for use with panel data, the
+      <quote>Pooled OLS</quote> option under the
+      <guimenu>Model</guimenu> menu. This command is available only if
+      the data set is recognized as a panel.  To take advantage of it,
+      you should specify a model without any dummy variables
+      representing cross-sectional units.  The routine presents
+      estimates for straightforward pooled OLS, which treats
       cross-sectional and time-series variation at par.  This model
-      may or may not be appropriate.  Under the Tests menu in the
-      model window, you will find an item <quote>panel
-      diagnostics</quote>, which tests pooled OLS against the
-      principal alternatives, the fixed effects and random effects
-      models.</para>
+      may or may not be appropriate.  Under the
+      <guimenu>Tests</guimenu> menu in the model window, you will find
+      an item <quote>panel diagnostics</quote>, which tests pooled OLS
+      against the principal alternatives, the fixed effects and random
+      effects models.</para>
 
     <para>The fixed effects model adds a dummy variable for all but
       one of the cross-sectional units, allowing the intercept of the
-      regression to vary across the units.  An F-test for the joint
-      significance of these dummies is presented: if the p-value for
-      this test is small, that counts against the null hypothesis
-      (that the simple pooled model is adequate) and in favor of the
-      fixed effects model.</para>
+      regression to vary across the units.  An
+      <emphasis>F</emphasis>-test for the joint significance of these
+      dummies is presented: if the p-value for this test is small,
+      that counts against the null hypothesis (that the simple pooled
+      model is adequate) and in favor of the fixed effects
+      model.</para>
 
     <para>The random effects model, on the other hand, decomposes the
       residual variance into two parts, one part specific to the

@@ -1,5 +1,3 @@
-Mem leak in datainfo->descrip on smpl -r.
-
 Complete the TeX, HTML and RTF printing functions.
 
 Summary stats: don't bomb out when one variable is all missing,

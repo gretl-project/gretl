@@ -21,7 +21,6 @@
 <!ENTITY cmdref SYSTEM "chapters/cmdref.xml">
 <!ENTITY trouble SYSTEM "chapters/trouble.xml">
 <!ENTITY cli SYSTEM "chapters/cli.xml">
-<!ENTITY nist SYSTEM "chapters/nist.xml">
 <!ENTITY appendices SYSTEM "chapters/appendices.xml">
 ]>
 
@@ -81,7 +80,6 @@
   &cmdref;
   &trouble;
   &cli;
-  &nist;
   &appendices;
 
   <bibliography>

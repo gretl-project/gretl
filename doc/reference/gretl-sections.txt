@@ -22,6 +22,7 @@ cusum_test
 <FILE>dataio</FILE>
 data_options
 gretl_filetypes
+datainfo_new
 free_datainfo
 create_new_dataset
 clear_datainfo
@@ -36,8 +37,11 @@ get_data
 open_nulldata
 import_csv
 import_box
+get_xmldata
+get_xml_description
 add_case_markers
 detect_filetype
+get_precision
 </SECTION>
 
 <SECTION>

@@ -217,7 +217,7 @@
       <listitem><para><guimenuitem>Drop all obs with missing
 	    values</guimenuitem>: Drop from the current sample all
 	  observations for which at least one variable has a missing
-	  value (see <xref linkend="missing-data"/>.
+	  value (see <xref linkend="missing-data"/>).
 	</para></listitem> <listitem><para><guimenuitem>Count missing
 	    values</guimenuitem>: Give a report on observations where
 	  data values are missing. May be useful in examining a panel
@@ -228,8 +228,10 @@
 	  markers</quote> (short strings identifying the individual
 	  observations) and adds this information to the data set. See
 	  <xref linkend="datafiles"/>.</para></listitem>
-      <listitem><para><guimenuitem>Panel structure</guimenuitem>To be
-	  filled in, FIXME.</para></listitem>
+      <listitem><para><guimenuitem>Panel structure</guimenuitem>Opens
+	  a dialog box which enables you to fix the interpretation of
+	  a panel data set as either stacked time series or stacked
+	  cross sections (see <xref linkend="panel"/>).</para></listitem>
     </itemizedlist>
   </listitem>
 

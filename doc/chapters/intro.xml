@@ -3,9 +3,7 @@
     <para>
       <application>gretl</application> is an econometrics package,
       including a shared library, a command-line client program and a
-      graphical user interface. If you don't know what econometrics is
-      but have some interest in the software anyway, please take a
-      look at <xref linkend="app-crash"/>.
+      graphical user interface.
     </para>
 
     <sect1 id="features"><title>Features at a glance</title>

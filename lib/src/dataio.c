@@ -77,8 +77,10 @@ void clear_datainfo (DATAINFO *pdinfo, int subsample)
 	    free(pdinfo->label);
 	    pdinfo->label = NULL;
 	}
-	free(pdinfo->descrip);
-	pdinfo->descrip = NULL;
+	if (pdinfo->descrip) {
+	    free(pdinfo->descrip);
+	    pdinfo->descrip = NULL;
+	}
     }
 }
 
@@ -616,6 +618,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
 	    pdinfo->descrip = malloc(strlen(dbuf) + 1);
 	    if (pdinfo->descrip != NULL) 
 		strcpy(pdinfo->descrip, dbuf);
+	    free(dbuf);
 	}
 	else if (lines < 0) 
 	    fprintf(stderr, "Failed to store data comments\n");

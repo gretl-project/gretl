@@ -207,7 +207,7 @@ int set_sample_dummy (const char *line,
 	boolean condition */
 {
     double xx, *dum = NULL;
-    char **S, dumv[9];
+    char **S = NULL, dumv[9];
     int missobs = 0, subnum = 0, dumnum = 0;
     int i, t, st, sn, n = oldinfo->n;
 
@@ -310,6 +310,7 @@ int set_sample_dummy (const char *line,
     /* link varnames and descriptions (not dependent on series length) */
     newinfo->varname = oldinfo->varname;
     newinfo->label = oldinfo->label;
+    newinfo->descrip = oldinfo->descrip;
 
     /* case markers */
     if (oldinfo->markers && _allocate_case_markers(&S, sn)) {
@@ -334,7 +335,7 @@ int set_sample_dummy (const char *line,
     prep_subdinfo(newinfo, oldinfo->markers, sn);
     if (oldinfo->markers) newinfo->S = S;
 
-    free(dum);
+    if (dum != NULL) free(dum);
 
     return 0;
 }

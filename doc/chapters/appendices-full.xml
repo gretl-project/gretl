@@ -1,3 +1,241 @@
+  <appendix id="app-crash"><title>Crash course in econometrics</title>
+
+    <section id="metrics-intro"><title>Introduction</title>
+
+      <para> This highly condensed discussion is no substitute for a
+	proper training in econometrics, but hopefully it may serve to
+	orient people without an econometrics background who
+	nonetheless have some interest in experimenting with
+	<application>gretl</application>, or even hacking on it (dream
+	on!).
+      </para>
+
+      <para>
+	The substance of econometrics is the quantification of
+	relationships between economic variables using statistical
+	methods.  The larger purposes served by this work include
+	forecasting, policy analysis, and the assessment or refinement
+	of economic theories.
+      </para>
+
+      <para>
+	Much of econometrics is based on the classical statistical
+	paradigm of sampling theory. Econometric relationships are
+	generally represented as stochastic equations, the simplest of
+	which is the simple linear regression model</para> 
+
+	<informalequation>
+	<alt role="tex">
+	  \[y_t = \alpha + \beta x_t + \epsilon_t\]
+	</alt>
+	<graphic fileref="figures/linreg"/>
+        </informalequation>
+	      
+	<para>This model represents the <emphasis>dependent
+	  variable</emphasis>, <emphasis>y</emphasis>, at observation
+	<emphasis>t</emphasis>, as a linear function (with intercept
+	&alpha; and slope &beta;) of a single <emphasis>independent
+	  variable</emphasis>,
+	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	plus a random <quote>error</quote> or
+	<quote>disturbance</quote> term
+	&egr;<subscript><emphasis>t</emphasis></subscript>. The random
+	term may be thought of as summing up various influences on
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
+	not specified in the equation, or as reflecting inherently
+	stochastic behavior in <emphasis>y</emphasis>, or in various
+	other ways. The task of econometric estimation is to provide
+	estimates of the parameters &alpha; and &beta; (and the
+	variance, &sigma;<superscript>2</superscript>, of the error
+	term), given some actual data on <emphasis>x</emphasis> and
+	<emphasis>y</emphasis>.</para> 
+
+    </section>
+
+    <section id="metrics-ols"><title>Least Squares</title>
+
+      <para>Provided that the distribution of &egr; satisfies
+	certain conditions (it has a mean or expected value of zero;
+	it has a constant variance; it is uncorrelated across
+	observations; it is uncorrelated with the independent
+	variable, <emphasis>x</emphasis>), the Gauss&ndash;Markov
+	Theorem tells us that optimal estimates of the regression
+	parameters are delivered by the method of <emphasis>least
+	  squares</emphasis>.
+      </para>
+
+      <para>
+	Let the least-squares estimates of &alpha; and &beta; be
+	denoted by <emphasis>a</emphasis> and <emphasis>b</emphasis>:
+	we then represent the equation <quote>fitted</quote> via least
+	squares as 
+
+	<informalequation>
+	  <alt role="tex">
+	    \[\hat{y}_t = a + b x_t\]
+	  </alt>
+	  <graphic fileref="figures/yhat"/>
+	</informalequation> 
+
+	We define the regression <quote>residual</quote> as 
+
+	<informalequation>
+	  <alt role="tex">
+	    \[\hat{\epsilon}_t = y_t - \hat{y}_t\]
+	  </alt>
+	  <graphic fileref="figures/resid"/>
+	</informalequation> 
+
+	the difference between actual
+	<emphasis>y</emphasis> at observation <emphasis>t</emphasis>
+	and the <quote>fitted</quote> or predicted value (which lies
+	on the least-squares regression line). The least squares
+	method consists in finding the specific coefficient values
+	<emphasis>a</emphasis> and <emphasis>b</emphasis> which
+	produce the smallest possible sum of squared residuals.
+	Provided the equation in view is indeed linear, this is just
+	an exercise in the differential calculus. The sum of squared
+	residuals (or estimated errors), ESS, is a function of
+	<emphasis>a</emphasis> and <emphasis>b</emphasis> (and the
+	data).  One takes the partial derivatives of ESS with respect
+	to both <emphasis>a</emphasis> and <emphasis>b</emphasis> and
+	sets them to zero, then solves the resulting two equations for
+	the implied <emphasis>a</emphasis> and <emphasis>b</emphasis>
+	values. The same principle extends to higher-dimensional
+	systems.</para>
+
+    </section>
+
+    <section id="pop-and-sample"><title>Population and sample</title>
+
+      <para>On the classical sampling paradigm, the actual observed
+	data
+	(<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript>) 
+	from any given period are conceived as a particular sample
+	<emphasis>realization</emphasis> of the (potentially infinite)
+	<emphasis>population</emphasis> of
+	<emphasis>x</emphasis><subscript><emphasis>t</emphasis></subscript>, 
+	<emphasis>y</emphasis><subscript><emphasis>t</emphasis></subscript> 
+	pairs that could have been observed, given different possible
+	<quote>drawings</quote> from the distribution of the error
+	term, &egr;<subscript><emphasis>t</emphasis></subscript>, in
+	each sub-period.  Application of the least-squares method
+	guarantees the <quote>best fit</quote> (in a well-defined
+	sense) to any given set of sample data, but data from any
+	finite sample may be more or less unrepresentative of the
+	larger population from which they are drawn.
+      </para>
+
+      <para>
+	One sort of question of interest in econometrics is: Given
+	that the conditions of optimality of the least-squares
+	estimates are satisfied, how much confidence can one have that
+	the coefficients derived via least squares lie within a
+	specified distance of the <quote>true</quote> underlying
+	parameters that characterize the data-generating process (DGP)
+	itself?  This is the issue of <quote>confidence
+	  intervals.</quote>  As a rough rule of thumb, a 95 percent
+	confidence interval for a parameter can be constructed as the
+	point estimate plus-or-minus two standard errors: that is
+	(again, roughly) one can have 95 percent confidence that a
+	given coefficient estimate is within 2 standard errors of the
+	corresponding unknown parameter. Standard errors for
+	coefficient estimates are reported routinely within
+	<application>gretl</application>.
+      </para>
+
+      <para>
+	One is also interested in hypothesis tests: For instance,
+	given a certain non-zero value for a least-squares regression
+	coefficient, how confident can we be that the corresponding
+	unknown parameter is non-zero? It's always possible that even
+	if <emphasis>x</emphasis> and <emphasis>y</emphasis> are
+	<quote>truly</quote> statistically independent, one derives a
+	non-zero correlation between observations of these variables
+	in a finite sample by the <quote>luck of the draw.</quote> The
+	larger the sample, and the larger the (absolute value of the)
+	sample correlation, presumably the smaller the probability
+	that this correlation could be a <quote>luck of the
+	draw</quote> phenomenon.
+      </para>
+
+      <para>
+	So-called <quote>p-values</quote> for hypothesis tests
+	(reported in various contexts within
+	<application>gretl</application>) address this issue: the
+	p-value is the probability of observing a sample effect of the
+	given, observed magnitude or greater, conditional on there
+	being no real effect at the population level.  Thus a small
+	p-value counts against the Null Hypothesis (no real effect).
+	If the p-value for a given coefficient estimate is less than
+	&alpha; one says that the coefficient is <quote>statistically
+	  significant</quote> at the &alpha; level (e.g. a
+	coefficient with a p-value &lt; .05 is significant at the 5
+	percent level).</para> 
+
+    </section>
+
+    <section id="metrics-pathol"><title>Regression pathologies</title> 
+
+      <para>Two other questions of interest in econometrics are:  How
+	can we tell if the conditions for optimality of the least
+	squares estimates are <emphasis>not</emphasis> satisfied?  And if it
+	appears these conditions are violated, what better
+	alternatives to least squares are available?
+	<application>gretl</application> offers a battery of tests and
+	alternative estimators. The tests are available under the
+	menus in the model window after running a regression; the
+	alternative estimators are under the Model menu in the main
+	window, while details on their use are in the online help
+	file. I can't hope to teach much about these topics here.
+	Please consult, for instance, Ramanathan (2002) or, for a
+	comprehensive treatment, Greene (2000).  Ruud (2000) is also a
+	rather comprehensive resource.</para>
+
+    </section>
+
+    <section id="linearity"><title>Linearity: how restrictive?</title>
+
+
+      <para>As mentioned above, the least squares regression routines
+	in <application>gretl</application> presuppose a linear model.
+	This is not quite as restrictive as it may seem.  We require
+	an equation that is linear in its
+	<emphasis>parameters</emphasis>, but this does not necessarily
+	mean that it is linear in the variables of interest.  For
+	example, all of the following equations represent nonlinear
+	relationships between <emphasis>y</emphasis> and
+	<emphasis>x</emphasis> that can readily be estimated using OLS
+	or similar:
+
+	<informalequation>
+	<alt role="tex"><![CDATA[
+         \begin{eqnarray*}
+	  y_t &=& \alpha + \beta(1/x_t) + \epsilon_t\\
+	  y_t &=& \alpha + \beta x_t + \gamma x^2_t + \epsilon_t\\
+	  y_t &=& \alpha + \beta \log x_t + \epsilon_t\\
+	  \log y_t &=& \alpha + \beta \log x_t + \epsilon_t
+         \end{eqnarray*}]]>
+	</alt>
+	<graphic fileref="figures/nonlin"/>
+	</informalequation>
+
+	Of course there are nonlinear relationships that cannot
+	be reduced to linearity by this sort of change of variables:
+	OLS cannot deal with these; more complex estimators are
+	required. Of these additional estimators,
+	<application>gretl</application> offers only the logit and
+	probit models for a binomial dependent variable (but see also
+	<xref linkend="ils"/> above for the use of iterated least
+	squares in estimating nonlinear models).  As mentioned above,
+	<application>gretl</application> can be complemented by GNU R
+	or GNU Octave for further analysis of nonlinear relationships.
+      </para>
+    </section>
+
+  </appendix>
+
 <appendix id="app-datafile"><title>Data file details</title>
 
     <sect1 id="native"><title>Basic native format</title>
@@ -433,6 +671,18 @@
 <varlistentry><term>GNU Readline manual</term>
  <listitem><para><ulink url="http://cnswww.cns.cwru.edu/~chet/readline/readline.html">
   <literal>http://cnswww.cns.cwru.edu/~chet/readline/readline.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>NIST regression test main page</term>
+ <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/main.html">
+  <literal>http://www.nist.gov/itl/div898/strd/general/main.html</literal></ulink></para>
+ </listitem>
+</varlistentry>
+
+<varlistentry><term>NIST data page</term>
+ <listitem><para><ulink url="http://www.nist.gov/itl/div898/strd/general/dataarchive.html">
+  <literal>http://www.nist.gov/itl/div898/strd/general/dataarchive.html</literal></ulink></para>
  </listitem>
 </varlistentry>
 

@@ -494,7 +494,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 		pmod->ID = *model_count;
 		/* std. errors are asymptotic; degrees of freedom
 		 correction is not wanted */
-		free(pmod->vcv);
+		if (pmod->vcv) free(pmod->vcv);
 		pmod->vcv = NULL;
 		pmod->sigma = sqrt((1.0/pmod->nobs) * pmod->ess);
 		makevcv(pmod);
