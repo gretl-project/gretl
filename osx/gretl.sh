@@ -31,4 +31,4 @@ GNUPLOT_DEFAULT_GDFONT=$PREFIX/share/fonts/Vera.ttf
 export GNUPLOT_DEFAULT_GDFONT
 
 export PATH=$PREFIX/bin:$PATH
-exec "$PREFIX/bin/gretl_x11" 
+exec "$PREFIX/bin/gretl_x11" "$@"
