@@ -1283,7 +1283,7 @@ static void auto_save_script (windata_t *vwin)
     char msg[MAXLEN];
     gchar *savestuff;
 
-    if (strstr(vwin->fname, "script_tmp") || !strlen(vwin->fname)) {
+    if (strstr(vwin->fname, "script_tmp") || *vwin->fname == '\0') {
 	file_save(vwin, SAVE_SCRIPT, NULL);
 	strcpy(vwin->fname, scriptfile);
     }
@@ -1293,10 +1293,12 @@ static void auto_save_script (windata_t *vwin)
 	errbox(msg); 
 	return;
     }
+
     savestuff = textview_get_text(GTK_TEXT_VIEW(vwin->w));
     fprintf(fp, "%s", savestuff);
     g_free(savestuff); 
     fclose(fp);
+
     infobox(_("script saved"));
     MARK_SCRIPT_SAVED(vwin);
 }
@@ -1384,6 +1386,7 @@ static windata_t *common_viewer_new (int role, const char *title,
     if (vwin == NULL) return NULL;
 
     windata_init(vwin);
+
     vwin->role = role;
     vwin->data = data;
     vwin->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -1602,8 +1605,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
 
 static int 
 gtk_source_buffer_load_file (GtkSourceBuffer *sbuf, 
-			     const char *fname,
-			     int role)
+			     const char *fname)
 {
     FILE *fp;
     GtkTextIter iter;    
@@ -1619,7 +1621,7 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
 
     memset(readbuf, 0, sizeof readbuf);
 
-    while (fgets(readbuf, sizeof readbuf - 1, fp)) {
+    while (fgets(readbuf, sizeof readbuf, fp)) {
 #ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    gsize bytes;
@@ -1677,7 +1679,7 @@ static void source_buffer_insert_file (GtkSourceBuffer *sbuf,
 	gtk_source_buffer_set_language(sbuf, language);
     }
 
-    gtk_source_buffer_load_file(sbuf, filename, role);
+    gtk_source_buffer_load_file(sbuf, filename);
 }
 
 #endif

@@ -1151,6 +1151,11 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 void view_log (void)
 {
     char fname[MAXLEN];
+    
+    if (n_cmds == 0) {
+	errbox(_("The command log is empty"));
+	return;
+    }
 
     strcpy(fname, paths.userdir);
     strcat(fname, "session.inp");
