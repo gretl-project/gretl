@@ -1039,6 +1039,8 @@ static void make_viewbar (windata_t *vwin, int text_out)
 
     viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
     gtk_toolbar_set_button_relief(GTK_TOOLBAR(viewbar), GTK_RELIEF_NONE);
+    gtk_toolbar_set_space_size(GTK_TOOLBAR(viewbar), 3);
+
     gtk_box_pack_start(GTK_BOX(hbox), viewbar, FALSE, FALSE, 0);
 
     cmap = gdk_colormap_get_system();
@@ -1151,6 +1153,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	button = gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
 					 NULL, toolstr, NULL,
 					 iconw, toolfunc, vwin);
+	gtk_toolbar_append_space(GTK_TOOLBAR(viewbar));
     }
 
     gtk_widget_show(viewbar);

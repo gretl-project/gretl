@@ -760,12 +760,6 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     /* get equation newvar = s, where s is expression */
     i = getword('=', s, newvar, oflag);
 
-#if 0
-    if (get_obs_index(newvar, pdinfo) >= 0) {
-	;
-    }
-#endif
-
     if (i > 0) {
 	if (!strlen(newvar)) {
 	    err = E_NOVAR;
