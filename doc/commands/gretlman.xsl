@@ -3,6 +3,7 @@
                 xmlns:xsl="http://www.w3.org/1999/XSL/Transform" >
 
 <xsl:param name="hlp">cli</xsl:param>
+<xsl:param name="standalone">false</xsl:param>
 
 <xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
 

@@ -71,7 +71,7 @@ hlp: xsltrans reflow $(CMDSDIR)/gretl_commands.xml $(CMDSDIR)/gretltxt.xsl
 	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp
 	./xsltrans --hlp $(CMDSDIR)/gretl_commands_it.xml && \
 	./reflow < cmdlist.txt > $(SHAREDIR)/gretlcli.hlp.it
-	./reflow < guilist.txt > $(SHAREDIR)/share/gretl.hlp.it
+	./reflow < guilist.txt > $(SHAREDIR)/gretl.hlp.it
 
 # Validate the commands "master" XML files against libgretl
 check: validate 

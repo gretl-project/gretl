@@ -9,7 +9,8 @@ sharesrc = $(topsrc)/share
 
 INSTALL_DATA = cp -fp
 
-AUTO_HELPFILES = $(sharesrc)/gretl.hlp \
+AUTO_HELPFILES = \
+	$(sharesrc)/gretl.hlp \
 	$(sharesrc)/gretlcli.hlp \
 	$(sharesrc)/gretl.hlp.it \
 	$(sharesrc)/gretlcli.hlp.it

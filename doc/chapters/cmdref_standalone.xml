@@ -1,7 +1,5 @@
 <?PSGML NOFILL programlisting example informalequation?>
 
-  <chapter id="cmdref"><title>Command Reference</title>
-
   <sect1 id="cmd-intro"><title>Introduction</title>
     <para>
       The commands defined below may be executed in the command-line
@@ -75,7 +73,7 @@
       under the Model menu in <application>gretl</application>'s main
       window.  The corresponding script command (if there is one
       available) is shown in parentheses.  For details consult the
-      command's entry in <xref linkend="cmdref"/>.</para>
+      command's entry in <xref linkend="cmd-cmd"/>.</para>
 
     <table id="tab-estim" frame="none">
       <title>Estimators</title>
@@ -541,13 +539,11 @@
 
   </sect1>	
 
-  </chapter>
-
 <!-- Keep this comment at the end of the file
 Local variables:
-sgml-default-dtd-file:"../manual.ced"
+sgml-default-dtd-file:"../cmdbook.ced"
 mode: xml
-sgml-parent-document:("../cmdbook.xml" "book" "chapter")
+sgml-parent-document:("../cmdbook.xml" "article" "sect1")
 End:
 -->
 

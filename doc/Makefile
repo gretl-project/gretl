@@ -27,24 +27,22 @@ CMDREF = commands/gretl_commands.xml
 CMDREF_IT = commands/gretl_commands_it.xml
 MANXSL = commands/gretlman.xsl
 
+%.pdf: %.tex
+	pdfjadetex $<
+	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
+	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
+	-grep undefined $(<:.tex=.log) >/dev/null && pdfjadetex $<
+
 all: manual.pdf manual-a4.pdf html chm # thumbs altthumbs
 
 manual.pdf: manual.tex jadetex.cfg lucidabr.tex
-	pdfjadetex manual
-	-grep undefined manual.log >/dev/null && pdfjadetex manual
-	-grep undefined manual.log >/dev/null && pdfjadetex manual
-	-grep undefined manual.log >/dev/null && pdfjadetex manual
 
 manual-a4.pdf: manual-a4.tex jadetex.cfg lucidabr.tex
-	pdfjadetex manual-a4
-	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
-	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
-	-grep undefined manual-a4.log >/dev/null && pdfjadetex manual-a4
 
 thumbs: manual.pdf
 	thumbpdf manual
 	pdfjadetex manual
-        
+
 altthumbs: manual-a4.pdf
 	thumbpdf manual-a4
 	pdfjadetex manual-a4
@@ -62,8 +60,10 @@ manual-a4.xml: manual.xml
 
 # Italian standalone PDF command reference
 
+cmdbook.pdf: cmdbook.tex jadetex.cfg lucidabr.tex
+
 cmdbook.tex: cmdbook.xml $(CMDREF_WRAPPER) $(DSL) $(MATHSS) $(CMDLIST_STANDALONE)
-	$(JADE) -t tex -d $(DSL)\#print $(XMLDCL) $<
+	$(JADE) -t tex -d $(ALTDSL)\#print $(XMLDCL) $<
 	./unescape_math.pl $@
 
 $(CMDLIST): $(CMDREF) $(MANXSL) 

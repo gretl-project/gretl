@@ -26,7 +26,7 @@
 
 (define %generate-article-toc% 
   ;; Should a Table of Contents be produced for Articles?
-  #t)
+  #f)
 
 (define %generate-article-titlepage-on-separate-page%
   ;; Should the article title page be on a separate page?
