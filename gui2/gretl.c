@@ -1193,6 +1193,7 @@ void set_sample_label (DATAINFO *pdinfo)
     else if (data_status & MODIFIED_DATA) {
 	strcpy(labeltxt, _(" Unsaved data "));
 	gtk_label_set_text(GTK_LABEL(datalabel), labeltxt);
+	build_main_popups();
     }
 }
 
