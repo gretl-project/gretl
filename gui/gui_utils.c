@@ -1138,6 +1138,7 @@ static windata_t *common_viewer_new (int role, const char *title,
     vwin->data = data;
     vwin->dialog = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_title(GTK_WINDOW(vwin->dialog), title);
+    gtk_window_set_policy(GTK_WINDOW(vwin->dialog), TRUE, TRUE, TRUE);
 
     if (record) winstack_add(vwin->dialog);
 
