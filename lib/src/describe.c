@@ -689,27 +689,46 @@ static void printf17 (const double zz, PRN *prn)
     else _printxs(zz, 17, SUMMARY, prn);
 }
 
+/* ............................................................. */
+
+#define LINEWID 78
+
+static void center_line (char *str, PRN *prn, int dblspc)
+{
+    size_t len = strlen(str);
+
+    if (LINEWID > len) {
+	size_t i, pad = (LINEWID - len) / 2;
+	char cstr[84];
+
+	for (i=0; i<pad; i++) cstr[i] = ' ';
+	strcpy(cstr + i, str);
+	if (dblspc) strcat(cstr, "\n");
+	pprintf(prn, "%s\n", cstr);
+    } else {
+	if (dblspc) strcat(str, "\n");
+	pprintf(prn, "%s\n", str);
+    }
+}
+
 /* ............................................................... */
 
 static void prhdr (const char *str, const DATAINFO *pdinfo, 
 		   const int ci, PRN *prn)
 {
-    char date1[9], date2[9];
+    char date1[9], date2[9], tmp[96];
 
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
 
     pprintf(prn, "\n");
-    if (pdinfo->pd != 1) _bufspace((ci == SUMMARY)? 10 : 7, prn);
-    else {
-	if (pdinfo->sd0 > 1900) _bufspace((ci == SUMMARY)? 12 : 9, prn);
-	else _bufspace((ci == SUMMARY)? 15 : 12, prn);
-    } 
-    
-    pprintf(prn, _("%s, using the observations %s - %s\n"), str, date1, date2);
+
+    sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
+    center_line(tmp, prn, 0);
+
     if (ci == CORR) {
-	pprintf(prn, _("               "
-		"(missing values denoted by -999 will be skipped)\n\n"));
+	strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
+	center_line(tmp, prn, 1);
     }
 }
 
@@ -730,15 +749,16 @@ void print_summary (GRETLSUMMARY *summ,
 {
     double xbar, std, xcv;
     int lo = summ->list[0], v, lv, lineno = 4;
+    char tmp[96];
 
     prhdr(_("Summary Statistics"), pdinfo, SUMMARY, prn);
     if (lo == 1) {
-	_bufspace(16, prn);
-	pprintf(prn, _("for the variable '%s' (%d valid observations)\n\n"), 
+	sprintf(tmp, _("for the variable '%s' (%d valid observations)"), 
 		pdinfo->varname[summ->list[1]], summ->n);
+	center_line(tmp, prn, 1);
     } else {
-	pprintf(prn, _("               "
-		"(missing values denoted by -999 will be skipped)\n\n"));
+	strcpy(tmp, _("(missing values denoted by -999 will be skipped)"));
+	center_line(tmp, prn, 1);
 	pprintf(prn, _("\nVariable    "));
     }
 
@@ -979,10 +999,12 @@ CORRMAT *corrlist (LIST list, double ***pZ, const DATAINFO *pdinfo)
 void matrix_print_corr (CORRMAT *corr, const DATAINFO *pdinfo,
 			const int pause, PRN *prn)
 {
-    prhdr(_("Correlation Coefficients"), pdinfo, CORR, prn);
-    pprintf(prn, _("              5%% critical value (two-tailed) = "
-	    "%.3f for n = %d\n\n"), rhocrit95(corr->n), corr->n);
+    char tmp[96];
 
+    prhdr(_("Correlation Coefficients"), pdinfo, CORR, prn);
+    sprintf(tmp, _("5%% critical value (two-tailed) = "
+	    "%.3f for n = %d"), rhocrit95(corr->n), corr->n);
+    center_line(tmp, prn, 1);
     _mxout(corr->xpx, corr->list, CORR, pdinfo, pause, prn);
 }
 

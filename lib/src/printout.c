@@ -49,21 +49,6 @@ void _mxout (const double *rr, const int *list, const int ci,
 
 /* ......................................................... */ 
 
-static int dec (double x)
-{
-    int i, dec = 0;
-    char numstr[16];
-
-    sprintf(numstr, "%8g", x);
-    for (i=strlen(numstr)-1; i>0; i--) {
-	if (numstr[i] != '.' && numstr[i] != ',') dec++;
-	else break;
-    }
-    return dec;
-}	
-
-/* ......................................................... */ 
-
 static void noconst (PRN *prn)
 {
     pprintf(prn, _("The model has no constant term.\n"  
@@ -78,14 +63,10 @@ static void noconst (PRN *prn)
 static void depvarstats (const MODEL *pmod, PRN *prn)
 {
     if (doing_nls()) {
-	int d;
-
-	d = dec(pmod->ybar);
-	pprintf(prn, "  %-38s %*g\n", _("Mean of dependent variable"), 
-		8+d, pmod->ybar);
-	d = dec(pmod->sdy);
-	pprintf(prn, "  %-38s %*g\n", _("Standard deviation of dep. var."), 
-		8+d, pmod->sdy);
+	pprintf(prn, "  %s = %g\n", _("Mean of dependent variable"), 
+		pmod->ybar);
+	pprintf(prn, "  %s = %g\n", _("Standard deviation of dep. var."), 
+		pmod->sdy);
     } else 
 	pprintf(prn, _("Mean of dep. var. %17.3f  "
 		       "S.D. of dep. variable %17.3f\n"), 
@@ -162,12 +143,8 @@ static int essline (const MODEL *pmod, PRN *prn, int wt)
     }
 
     if (doing_nls()) {
-	int d;
-
-	d = dec(pmod->ess);
-	pprintf(prn, "  %-38s %*g\n", _("Error Sum of Squares"), 8+d, pmod->ess);
-	d = dec(pmod->sigma);
-	pprintf(prn, "  %-38s %*g\n", _("Standard error"), 8+d, pmod->sigma);
+	pprintf(prn, "  %s = %g\n", _("Error Sum of Squares"), pmod->ess);
+	pprintf(prn, "  %s = %g\n", _("Standard error"), pmod->sigma);
     } else {
 	pprintf(prn, "Error Sum of Sq (ESS) ");
 	_bufspace(3, prn);
@@ -189,13 +166,9 @@ static void rsqline (const MODEL *pmod, PRN *prn)
     if (pmod->rsq > .999 && pmod->rsq < .999999) xx = .999;
 
     if (doing_nls()) {
-	int d;
-
-	d = dec(pmod->rsq);
-	pprintf(prn, "  %-38s %*g\n", _("Unadjusted R-squared"), 8+d, pmod->rsq);
+	pprintf(prn, "  %s = %g\n", _("Unadjusted R-squared"), pmod->rsq);
 	if (!na(pmod->adjrsq)) {
-	    d = dec(pmod->adjrsq);
-	    pprintf(prn, "  %-38s %*g\n", _("Adjusted R-squared"), 8+d, 
+	    pprintf(prn, "  %s = %g\n", _("Adjusted R-squared"),  
 		    pmod->adjrsq);
 	}
     } else {
@@ -218,11 +191,8 @@ static int Fline (const MODEL *pmod, PRN *prn)
     char tmp[32];
 
     if (doing_nls() && !na(pmod->fstt)) {
-	int d;
-
-	d = dec(pmod->fstt);
 	sprintf(tmp, _("F-statistic (%d, %d)"), pmod->dfn, pmod->dfd);
-	pprintf(prn, "  %-38s %*g", tmp, 8+d, pmod->fstt);
+	pprintf(prn, "  %s = %g", tmp, pmod->fstt);
 	pprintf(prn, " (%s = %.3g)\n", _("p-value"), 
 		fdist(pmod->fstt, pmod->dfn, pmod->dfd));
     } else {
@@ -245,14 +215,10 @@ static int Fline (const MODEL *pmod, PRN *prn)
 static void dwline (const MODEL *pmod, PRN *prn)
 {
     if (doing_nls() && !na(pmod->dw)) {
-	int d;
-
-	d = dec(pmod->dw);
-	pprintf(prn, "  %-38s %*g\n", _("Durbin-Watson statistic"), 
-		8+d, pmod->dw);
-	d = dec(pmod->rho);
-	pprintf(prn, "  %-38s %*g\n", _("1st-order autocorrelation coeff."), 
-		8+d, pmod->rho);
+	pprintf(prn, "  %s = %g\n", _("Durbin-Watson statistic"), 
+		pmod->dw);
+	pprintf(prn, "  %s = %g\n", _("1st-order autocorrelation coeff."), 
+		pmod->rho);
     } else {
 	if (na(pmod->dw))
 	    pprintf(prn, "Durbin-Watson stat. %15s  First-order autocorr. "
