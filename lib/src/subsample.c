@@ -426,7 +426,7 @@ int restrict_sample (const char *line,
     }
 
     /* cumulate restrictions, if appropriate */
-    if (oldmask != NULL) {
+    if (oldmask != NULL && opt != SUBSAMPLE_RANDOM) {
 	sn = overlay_masks(mask, oldmask, n);
     }
 
