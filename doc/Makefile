@@ -12,14 +12,9 @@ $(DOC).tex: $(DOC).sgml $(DSL) $(MATHSS) titlepage.dsl unescape_math.pl
 	jade -t tex -d $(DSL)\#print $(DOC).sgml
 	./unescape_math.pl $(DOC).tex
 
-html: $(DOC).sgml db2html $(DSL) $(HMATHSS) pix
+html: $(DOC).sgml db2html $(DSL) $(HMATHSS) 
 	./db2html $(DOC).sgml
+	./texmath2png.pl manual/equation-list.sgml
 
 clean:
 	rm -rf $(DOC) $(DOC).junk $(DOC).tex *.log *.out *.aux
-
-pix: $(DOC).sgml grab_equations.pl
-	spam -x -x $(DOC).sgml > tmp.sgml && \
-	./grab_equations.pl tmp.sgml && rm tmp.sgml
-
-
