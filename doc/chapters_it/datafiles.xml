@@ -334,7 +334,8 @@
       <para>Dopo aver aperto un database è anche possibile importare
         singole serie nello spazio di lavoro di <application>gretl</application>
 	usando il comando <quote>Importa</quote> nella finestra del
-        database (o nel menù che compare facendo clic col tasto destro).
+        database, o nel menù che compare facendo clic col tasto destro,
+        oppure trascinando la serie nella finestra principale del programma.
 	</para>   
 
     </sect2>
@@ -384,12 +385,12 @@
       trecentesima potenza, e non va interpretato come un valore legittimo
       dei dati).  Nei file di dati in formato interno vanno rappresentati come
       <literal>NA</literal>, mentre se si importano dati in formato
-      CSV <application>gretl</application> accetta una delle tre
-      rappresentazioni seguenti: &minus;999, la stringa
-      <literal>NA</literal>, o semplicemente un valore nullo. Questi
-      ultimi, ovviamente, vanno delimitati in modo opportuno, ad es.
-      <literal>120.6,,5.38</literal> indica che il valore di mezzo è
-      mancante.</para>
+      CSV <application>gretl</application> riconosce alcuni modi comuni di
+      rappresentare i valori mancanti: &minus;999, la stringa
+      <literal>NA</literal> (in maiuscolo o minuscolo), un singolo punto,
+      o semplicemente una stringa vuota. Queste ultime, ovviamente, vanno
+      delimitate in modo opportuno, ad es. <literal>120.6,,5.38</literal>
+      indica che il valore di mezzo è mancante.</para>
 
     <para>Per quanto riguarda il trattamento dei valori mancanti durante
       le analisi statistiche, <application>gretl</application> si
@@ -439,7 +440,7 @@
 
     <para>è possibile produrre la serie <command>pippo</command>, che è
       identica a <command>pluto</command>, tranne per il fatto che tutti i
-      valori &minus;999 sono stati trasformati in zeri. In seguito,
+      valori mancanti sono stati trasformati in zeri. In seguito,
       costruendo opportunamente delle variabili dummy, sarà possibile
       eliminare dalla regressione le osservazioni che contengono valori
       mancanti, pur mantenendo lo stesso intervallo del
@@ -484,8 +485,8 @@
       Greene).</para>
       </listitem>
       <listitem><para>Il programma cerca alcune raccolte di dati
-      opzionali, ossia i file relativi ai libri di testo di Wooldridge e
-      Gujarati, e la Penn World Table (PWT 5.6). Si veda <ulink
+      opzionali, ad esempio i file relativi ad alcuni libri di testo (Wooldridge,
+      Gujarati, Stock e Watson) e la Penn World Table (PWT 5.6). Si veda <ulink
 	    url="http://gretl.sourceforge.net/gretl_data_it.html">la pagina
             dei dati</ulink> sul sito web di gretl per ulteriori
             informazioni su queste raccolte. Se queste raccolte vengono

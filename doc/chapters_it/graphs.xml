@@ -20,11 +20,14 @@
     opzioni:</para>
 
       <itemizedlist>
-	<listitem><para><guimenuitem>Salva come postscript</guimenuitem>:
-        salva il grafico in formato encapsulated postscript (EPS)</para>
-	</listitem>
 	<listitem><para><guimenuitem>Salva come PNG</guimenuitem>:
-        salva in formato Portable Network Graphics</para>
+        salva il grafico in formato Portable Network Graphics</para>
+	</listitem>
+	<listitem><para><guimenuitem>Salva come postscript</guimenuitem>:
+        salva in formato encapsulated postscript (EPS)</para>
+	</listitem>
+        <listitem><para><guimenuitem>Salva come Windows metafile</guimenuitem>:
+        save in formato Enhanced Metafile (EMF).</para>
 	</listitem>
 	<listitem><para><guimenuitem>Salva alla sessione come icona</guimenuitem>:
         il grafico apparirà sotto forma di icona quando si seleziona

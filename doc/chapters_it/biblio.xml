@@ -3,6 +3,14 @@
   <bibliography id="bib">
 
   <bibliomixed>
+    <bibliomset relation='article'>Akaike, H. (1974) <title>A New Look
+     at the Statistical Model Identification</title>,</bibliomset>
+    <bibliomset relation='journal'><title>IEEE Transactions on
+     Automatic Control</title>, AC-19, pp.
+     716&ndash;23.</bibliomset>
+  </bibliomixed>
+
+  <bibliomixed>
     <bibliomset relation='article'>Baiocchi, G. and Distaso, W. (2003)
       <title>GRETL: Econometric software for the GNU
 	generation</title>, </bibliomset> <bibliomset
@@ -187,6 +195,10 @@
        Quality Technology</title>, 33, <artpagenums>pp.
        47&ndash;59</artpagenums>.
     </bibliomset>
+  </bibliomixed>
+  
+  <bibliomixed>Silverman, B. W. (1986) <title>Density Estimation for
+     Statistics and Data Analysis</title>, London: Chapman and Hall.
   </bibliomixed>
 
   <bibliomixed>Stock, James H. and Watson, Mark W. (2003)

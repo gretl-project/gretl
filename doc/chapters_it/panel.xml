@@ -43,54 +43,45 @@
     <application>gretl</application> da un foglio di calcolo o da un
     file con valori separati da virgole, la struttura panel non verrà
     riconosciuta automaticamente (molto probabilmente i dati verranno
-    trattati come <quote>non datati</quote>). Per far sì che i dati
-    siano interpretati correttamente, occorre agire in due tempi:
-    per prima cosa stabilire la periodicità dei dati e l'osservazione
-    iniziale, in seguito decidere la struttura panel dei dati (pila di
-    dati cross-section, o pila di serie storiche).
+    trattati come <quote>non datati</quote>). Per imporre
+    un'interpretazione panel ai dati, è possibile procedere in due modi.
     </para>
 
     <orderedlist>
       <listitem>
-	<para>Per i dati panel, la <emphasis>periodicità</emphasis>
-          è pari al numero di righe contenute in ogni blocco di dati:
-          se i dati sono organizzati come pila di serie storiche,
-          essa sarà pari al numero dei periodi temporali, se i dati
-          sono organizzati come pila di dati cross-section, essa sarà
-          pari al numero di unità cross-section.
-	</para> 
-        <para>Nella maggior parte dei casi, l'<emphasis>osservazione
-          iniziale</emphasis> va indicata nella forma
-          <literal>1:1</literal>.  Il primo di questa coppia di numeri separati
-          dal punto e virgola rappresenta il blocco di dati, mentre il
-          secondo numero rappresenta l'osservazione all'interno di
-          questo blocco (ad esempio, se il panel è organizzato come
-          pila di dati cross-section, l'etichetta <literal>3:2</literal>
-          indica l'osservazione relativa alla terza unità nel secondo
-          periodo).
-        </para>
-	<para>La periodicità e l'osservazione iniziale possono essere
-         impostate usando il comando testuale <command>setobs</command>
-         o il comando dal menù <guimenuitem>Campione, Imposta frequenza
-         e inizio&hellip;</guimenuitem>.
-        </para>
+	<para>Usando il comando dell'interfaccia grafica <quote>Campione,
+        Struttura dataset</quote>. Nella prima finestra di dialogo occorre
+        selezionare <quote>Panel</quote>; in quella successiva, occorre
+        indicare se i dati sono organizzati sotto forma di pila di serie
+        storiche o di dati cross section.  Nella finestra di dialogo successiva
+        occorre indicare il numero di unità cross section nel dataset, infine è
+        possibile controllare se la specificazione dei dati mostrata è
+        corretta e confermare l'operazione.
+ 	</para> 
       </listitem>
       <listitem>
-        <para>Una volta impostate la periodicità e l'osservazione
-        iniziale, è possibile imporre la corretta interpretazione
-        della struttura dei dati usando il comando testuale
-        <command>panel</command> o quello grafico dal menù
-        <guimenuitem>Campione, Interpreta come panel</guimenuitem>.
-        Il comando <command>panel</command> accetta un'opzione, che
-        può essere <literal>--time-series</literal> (per indicare una
-        pila di serie storiche) o <literal>--cross-section</literal>
-        (per indicare una pila di dati cross-section). Se non si
-        indica alcuna opzione, verrà usata l'interpretazione come pila
-        di dati cross-section. Il comando del menù <quote>interpreta
-        come panel</quote> apre una finestra di dialogo in cui è
-        possibile selezionare uno dei due metodi di interpretazione.
-        </para>
-	</listitem>
+	<para>Usando il comando testuale <command>setobs</command>. Per i
+        dati panel, la sintassi del comando è
+	  <literal>setobs</literal> <replaceable>freq</replaceable>
+	  <literal>1:1</literal> <replaceable>struttura</replaceable>,
+          dove <replaceable>freq</replaceable> indica la
+	  <quote>dimensione dei blocchi</quote> di dati (ossia, il numero
+          di periodi nel caso delle pile di serie storiche, o il numero
+          di unità cross section nel caso di pila di dati cross section),
+          mentre <replaceable>struttura</replaceable> può essere uguale a
+	  <literal>--stacked-time-series</literal> o
+	  <literal>--stacked-cross-section</literal>. Di seguito vengono
+          mostrati due esempi: il primo per un dataset panel sotto forma
+          di pila di serie storiche con osservazioni per 20 periodi, il secondo
+          per un dataset panel sotto forma di pila di dati cross section, con
+          5 unità cross section.
+	</para>
+	
+	<programlisting>
+	    setobs 20 1:1 --stacked-time-series
+	    setobs 5 1:1 --stacked-cross-section
+	</programlisting>
+      </listitem>
     </orderedlist>
 
   </sect1>
@@ -105,41 +96,38 @@
       variare tra le unità cross-section, il secondo per permettere
       all'intercetta di variare tra i periodi.</para>
 
-    <para>Per creare questo tipo di dummy, è possibile usare due
+    <para>Per creare questo tipo di dummy, è possibile usare le tre
     funzioni speciali del menù <guimenuitem>Dati, Aggiungi
       variabile</guimenuitem>, o del comando testuale
       <command>genr</command>.</para>
 
     <orderedlist>
       <listitem><para><quote>Dummy periodiche</quote> (comando
-          testuale <command>genr dummy</command>). Questo comando è
-          usato tipicamente nello studio di serie storiche, per
-          creare un insieme di variabili dummy periodiche adeguate
-          alla frequenza dei dati (ad esempio, un insieme di dummy
-          trimestrali da usare per eseguire un aggiustamento
-          stagionale), ma funziona anche con i dati panel. Si noti che
-          l'interpretazione delle dummy create dal comando differisce
-          a seconda che le righe di dati panel siano raggruppate per
-          unità cross-section o per periodo. Se il raggruppamento è
-          per <emphasis>unità</emphasis> (frequenza pari a
-          <emphasis>T</emphasis>), verranno create
-          <emphasis>T dummy periodiche</emphasis>, ad esempio
-	  <varname>dummy_2</varname> avrà valore 1 in ogni riga dei
-          dati corrispondente a un'osservazione del periodo 2, e avrà
-          valore 0 altrove. Se il raggruppamento è per
-          <emphasis>periodo</emphasis> (frequenza pari a
-	  <emphasis>n</emphasis>), verranno create <emphasis>n</emphasis>
-	  <emphasis>dummy longitudinali</emphasis>:
-	  <varname>dummy_2</varname> avrà valore 1 in ogni riga dei
-          dati associata alla seconda unità cross-section, e 0
-          altrove.</para></listitem>
-      <listitem><para><quote>dummy panel</quote> (comando testuale
-	  <command>genr paneldum</command>). Questo comando crea tutte
-          le dummy, periodiche e longitudinali, in un colpo solo. Le
-          dummy longitudinali sono chiamate <varname>du_1</varname>,
-	  <varname>du_2</varname> e così via, mentre le dummy
-          periodiche sono chiamate <varname>dt_1</varname>, <varname>dt_2</varname>,
-          ecc.</para>
+       testuale <command>genr dummy</command>). Questo comando
+       crea un insieme di variabili dummy che identificano i periodi.
+       La variabile <varname>dummy_1</varname> avrà valore 1 in ogni riga
+       dei dati che corrisponde a un'osservazione del primo periodo, e 0 altrove;
+       <varname>dummy_2</varname> avrà valore 1 in ogni riga
+       dei dati che corrisponde a un'osservazione del secondo, e così via.
+      </para>
+      </listitem>
+      <listitem><para><quote>Dummy per unità</quote> (comando testuale
+        <command>genr unitdum</command>). Questo comando crea un insieme di
+        variabili dummy che identificano le unità cross section.  La variabile
+        <varname>du_1</varname> avrà valore 1 in ogni riga dei dati che
+        corrisponde a un'osservazione della prima unità cross section, e 0
+        altrove; <varname>du_2</varname> avrà valore 1 in ogni riga dei dati che
+        corrisponde a un'osservazione della seconda unità cross section, e così
+        via.
+        </para>
+      </listitem>
+      <listitem><para><quote>Dummy panel</quote> (comando testuale
+       <command>genr paneldum</command>). Questo comando crea entrambi i tipi di
+       dummy: sia quelle periodiche e quelle relative alle unità cross section
+       (longitudinali). Le dummy longitudinali sono chiamate
+       <varname>du_1</varname>, <varname>du_2</varname> e così via, mentre le
+       dummy periodiche sono chiamate <varname>dt_1</varname>,
+       <varname>dt_2</varname>, ecc.</para>
       </listitem>
     </orderedlist>
 
@@ -176,55 +164,9 @@
       non è disponibile.
     </para>
 
-    <para>Se occorre includere una variabile ritardata in una
-    regressione, occorre assicurarsi che la prima osservazione di ogni
-    blocco di dati cross-section venga scartato. Un modo per farlo
-    consiste nell'usare i minimi quadrati ponderati
-    (<command>wls</command>) con una dummy appropriata come peso:
-    questa dummy (che può essere chiamata <command>lagdum</command>)
-    deve valere 0 per le osservazioni da scartare, e 1 altrove (ossia
-    deve essere il complementare di una variabile dummy periodica per
-    il periodo 1). Quindi, se è già stato usato il comando
-    <command>genr dummy</command>, è possibile eseguire
-    <command>genr lagdum = 1 - dummy_1</command>; se invece è stato
-    usato <command>genr paneldum</command>, occorre eseguire
-      <command>genr lagdum = 1 - dt_1</command>. Fatto questo, è
-      possibile eseguire</para>
-
-    <para>
-      <command>wls lagdum y const x1_1 ...</command>
-    </para>
-
-    <para>per ottenere una regressione <quote>pooled</quote>, che usa il primo
-    ritardo di <varname>x1</varname> ed esclude tutte le osservazioni
-    relative al periodo 1.</para>
-
-    <para>Un'altra possibilità consiste nell'usare il comando
-    <command>smpl</command> con l'opzione
-    <command>--restrict</command> o <command>--dummy</command>.
-      L'<xref linkend="examp-pwt"/> mostra alcuni esempi, assumendo che
-      ogni blocco di dati contenga osservazioni relative a 30 periodi
-      e che si intenda scartare la prima riga di ogni blocco. È così
-      possibile stimare regressioni sul campione limitato senza dover
-      usare il comando <command>wls</command>. Se si intende
-      riutilizzare il campione limitato, è possibile salvarlo usando
-      il comando <command>store</command> (si veda il <xref
-	linkend="cmdref"/>).
-    </para>
-
-    <example id="examp-panel-lags">
-      <title>Ritardi con dati panel</title>
-    <programlisting>
-      # Crea la variabile indice "index" 
-      genr index 
-      # Crea la dummy "dum", pari a 0 ogni 30 osservazioni
-      genr dum = ((index-1)%30) > 0 
-      # Imposta il campione basandosi sulla dummy
-      smpl --dummy dum 
-      # Ricrea la struttura delle osservazioni basata su 29 periodi
-      setobs 29 1.01 
-    </programlisting>
-    </example>
+    <para>Quanto si esegue una regressione che include questo tipo di
+      variabili, il programma escluderà automaticamente le osservazioni
+      mancanti.</para>
 
   </sect1>
 

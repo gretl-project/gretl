@@ -445,11 +445,11 @@
 	  </listitem>
 	  <listitem><para><guimenuitem>Ripristina campione completo</guimenuitem>:
               si spiega da sé.</para></listitem>
-	  <listitem><para><guimenuitem>Imposta frequenza e
-          inizio</guimenuitem>: impone una particolare interpretazione
-          dei dati in termine di frequenza e punto di partenza. Può
-          essere utile con dati panel; si veda il <xref
-          linkend="chap-panel"/>.</para>
+	  <listitem><para><guimenuitem>Struttura dataset</guimenuitem>:
+          permette di modificare l'interpretazione strutturale del dataset
+          in uso. Ad esempio, se i dati sono stati importati come cross section,
+          è possibile fare in modo che il programma li interpreti come serie
+          storiche o come panel. Si veda anche il <xref linkend="chap-panel"/>.</para>
 	  </listitem> 
 	  <listitem><para><guimenuitem>Compatta dati</guimenuitem>:
           per serie storiche con frequenza superiore a quella annuale,
@@ -495,20 +495,12 @@
           singole osservazioni) e aggiunge queste informazioni al
           dataset. Si veda il <xref linkend="datafiles"/>.</para>
 	  </listitem>
-	  <listitem><para><guimenuitem>Interpreta come serie
-          storiche</guimenuitem>: apre una finestra di dialogo che
-          permette di imporre una struttura di serie storiche a un
-          dataset che era finora considerato non datato.</para></listitem>
-	  <listitem><para><guimenuitem>Interpreta come
-          panel</guimenuitem>: apre una finestra di dialogo che
-          permette di interpretare un dataset panel come composto di
-          una pila di serie storiche o una pila di dati cross-section
-          (si veda il <xref linkend="chap-panel"/>).</para></listitem>
 	  <listitem><para><guimenuitem>Ristruttura
           panel</guimenuitem>: permette di convertire un dataset panel
           da una struttura "pila di dati cross-section" a una "pila di
-          serie storiche" (a differenza del comando precedente, questo
-          modifica effettivamente l'organizzazione dei dati).
+          serie storiche", o viceversa. A differenza del comando
+          <guimenuitem>Struttura dataset</guimenuitem>, questo modifica
+          effettivamente l'organizzazione dei dati.
 	    </para></listitem>
 	</itemizedlist>
       </listitem>
