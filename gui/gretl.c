@@ -61,7 +61,7 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box);
 static void clip_init (GtkWidget *w);
 static GtkWidget *make_main_window (int gui_get_data);
 static GtkWidget *build_var_popup (void);
-static void build_selection_popup (void);
+static GtkWidget *build_selection_popup (void);
 static gint popup_activated (GtkWidget *widget, gpointer data);
 
 static void set_up_main_menu (void);
@@ -75,7 +75,6 @@ GtkWidget *toolbar_box = NULL; /* shared with settings.c */
 static GtkWidget *datalabel;
 static GtkWidget *main_vbox;
 static GtkWidget *gretl_toolbar;
-static GtkWidget *selection_popup;
 
 GdkColor red, blue, gray;
 
@@ -997,21 +996,24 @@ gint main_varclick (GtkWidget *widget, GdkEventButton *event,
     if (mods & GDK_BUTTON3_MASK) { 
 	gint selcount = get_mdata_selection();
 
+	if (mdata->popup) {
+	    gtk_widget_destroy(mdata->popup);
+	    mdata->popup = NULL;
+	}	
+
 	if (selcount == 1) {
-	    if (mdata->popup) {
-		gtk_widget_destroy(mdata->popup);
-	    }
 	    mdata->popup = build_var_popup();
 	    gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	} else if (selcount > 1) {
-	    if (selection_popup) {
-		gtk_widget_destroy(selection_popup);
-	    }
-	    build_selection_popup();
-	    gtk_menu_popup(GTK_MENU(selection_popup), NULL, NULL, NULL, NULL,
+	    mdata->popup = build_selection_popup();
+	    gtk_menu_popup(GTK_MENU(mdata->popup), NULL, NULL, NULL, NULL,
 			   event->button, event->time);
 	}
+
+	gtk_signal_connect(GTK_OBJECT(mdata->popup), "destroy",
+			   GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
+			   &mdata->popup);
     }
 
     return TRUE;
@@ -1370,9 +1372,6 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* get a monospaced font for various windows */
     set_fixed_font();
 
-    /* build popup menu for multiple selections */
-    build_selection_popup();
-
     gtk_widget_show_all(mdata->w); 
 
     return dlabel;
@@ -1440,7 +1439,7 @@ static gint popup_activated (GtkWidget *widget, gpointer data)
 
     gtk_widget_destroy(mdata->popup);
 
-    return TRUE;
+    return FALSE;
 }
 
 /* ........................................................... */
@@ -1465,7 +1464,6 @@ static GtkWidget *build_var_popup (void)
 	N_("Simulate..."),
 	N_("Define new variable...")
     };
-
     GtkWidget *var_menu;
     GtkWidget *var_item;
     int i, n_items = sizeof var_items / sizeof var_items[0];
@@ -1489,6 +1487,7 @@ static GtkWidget *build_var_popup (void)
 	gtk_widget_show(var_item);
 	gtk_menu_append(GTK_MENU(var_menu), var_item);
     }
+
     return var_menu;
 }
 
@@ -1511,10 +1510,12 @@ static gint selection_popup_click (GtkWidget *widget, gpointer data)
     else if (!strcmp(item, _("Delete"))) 
 	delete_selected_vars();
 
-    return TRUE;
+    gtk_widget_destroy(mdata->popup);
+
+    return FALSE;
 }
 
-static void build_selection_popup (void)
+static GtkWidget *build_selection_popup (void)
 {
     const char *items[] = {
 	N_("Display values"),
@@ -1525,11 +1526,11 @@ static void build_selection_popup (void)
 	N_("Copy to clipboard"),
 	N_("Delete")
     };
-
+    GtkWidget *sel_menu;
     GtkWidget *item;
     int i, n_items = sizeof items / sizeof items[0];
 
-    selection_popup = gtk_menu_new();
+    sel_menu = gtk_menu_new();
 
     for (i=0; i<n_items; i++) {
 	if (!dataset_is_time_series(datainfo) && i == 4) {
@@ -1540,8 +1541,10 @@ static void build_selection_popup (void)
 			   GTK_SIGNAL_FUNC(selection_popup_click),
 			   _(items[i]));
 	gtk_widget_show(item);
-	gtk_menu_append(GTK_MENU(selection_popup), item);
+	gtk_menu_append(GTK_MENU(sel_menu), item);
     }
+
+    return sel_menu;
 }
 
 /* ........................................................... */

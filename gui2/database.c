@@ -1236,6 +1236,7 @@ static SERIESINFO *get_series_info (windata_t *win, int action)
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
     else if (pdc == 'B') sinfo->pd = 5;
+    else if (pdc == 'S') sinfo->pd = 6;
     else if (pdc == 'D') sinfo->pd = 7;
     else if (pdc == 'U') sinfo->undated = 1;
 

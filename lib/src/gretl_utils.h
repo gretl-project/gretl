@@ -51,7 +51,7 @@ enum model_selection_criteria {
  * data (1) or not (0).
  */
 #define dataset_is_daily(p) (p->time_series == TIME_SERIES \
-                             && (p->pd == 5 || p->pd == 7))
+                             && (p->pd == 5 || p->pd == 6 || p->pd == 7))
 
 /**
  * dataset_is_weekly:
@@ -81,8 +81,8 @@ enum model_selection_criteria {
  * data (1) or not (0).
  */
 #define dated_daily_data(p) (p->time_series == TIME_SERIES \
-                             && (p->pd == 5 || p->pd == 7) && \
-                             p->sd0 > 10000.0)
+                             && (p->pd == 5 || p->pd == 6 || p->pd == 7) \
+                             && p->sd0 > 10000.0)
 
 /**
  * dated_seven_day_data:

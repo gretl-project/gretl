@@ -171,7 +171,7 @@ double get_date_x (int pd, const char *obs)
 {
     double x = 1.0;
 
-    if ((pd == 5 || pd == 7) && strlen(obs) > 4) { 
+    if ((pd >= 5 &&pd <= 7) && strlen(obs) > 4) { 
 	/* daily data */
 	long ed = get_epoch_day(obs);
 
@@ -3367,7 +3367,7 @@ int import_box (double ***pZ, DATAINFO **ppdinfo,
 		pprintf(prn, M_("   Warning: coded variable (format '%s' "
 			"in BOX file)\n"), tmp);
 	    *VARLABEL(boxinfo, realv) = 0;
-	    strncat(VARLABEL(boxinfo, realv), line+87, 99);
+	    strncat(VARLABEL(boxinfo, realv), line + 87, 99);
 	    unspace(VARLABEL(boxinfo, realv));
 	    pprintf(prn, M_("   definition: '%s'\n"), VARLABEL(boxinfo, realv));
 	    realv++;

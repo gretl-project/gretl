@@ -757,7 +757,7 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
     }
 
     /* special case: daily data (dated or undated) */
-    if ((pd == 5 || pd == 7) && 
+    if ((pd >= 5 && pd <= 7) && 
 	((strstr(stobs, "/") || !strcmp(stobs, "1"))) &&
 	opt != OPT_S && opt != OPT_C) {
 	if (strcmp(stobs, "1")) {
@@ -837,8 +837,8 @@ int set_obs (const char *line, DATAINFO *pdinfo, gretlopt opt)
 	pdinfo->time_series = 0;
     }
 
-    /* try to catch panels with frequency 5 or 7 */
-    if ((pdinfo->pd == 5 || pdinfo->pd == 7) &&
+    /* try to catch panels with frequency 5, 6 or 7 */
+    if ((pdinfo->pd >= 5 && pdinfo->pd <= 7) &&
 	pdinfo->sd0 > 1.0 && pdinfo->sd0 < 2.0 &&
 	opt != OPT_S && opt != OPT_C) {
 	pdinfo->time_series = 0;

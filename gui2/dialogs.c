@@ -2635,7 +2635,7 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 	    labelstr = g_strdup(_("Compact monthly data to:"));
 	    *target_pd = 4;
 	    show_pd_buttons = 1;
-	} else if (spd == 5 || spd == 7) {
+	} else if (spd >= 5 && spd <= 7) {
 	    /* source data are daily */
 	    if (dated_daily_data(datainfo)) {
 		labelstr = g_strdup(_("Compact daily data to:"));

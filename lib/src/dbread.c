@@ -151,6 +151,7 @@ static int get_native_series_pd (SERIESINFO *sinfo, char pdc)
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
     else if (pdc == 'B') sinfo->pd = 5;
+    else if (pdc == 'S') sinfo->pd = 6;
     else if (pdc == 'D') sinfo->pd = 7;
     else if (pdc == 'U') sinfo->undated = 1;
     else return 1;
@@ -1297,7 +1298,7 @@ static double *compact_series (const double *src, int i, int n, int oldn,
 {
     int t, idx;
     int lead = startskip - min_startskip;
-    int to_weekly = (compfac == 5 || compfac == 7);
+    int to_weekly = (compfac >= 5 && compfac <= 7);
     double *x;
 
 #ifdef DB_DEBUG
@@ -1876,10 +1877,10 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
 	if (err) return err;
     }
 
-    if (newpd == 12 && (oldpd == 5 || oldpd == 7)) {
+    if (newpd == 12 && oldpd >= 5 && oldpd <= 7) {
 	/* daily to monthly: special */
 	return dataset_to_monthly(pZ, pdinfo, default_method);
-    } else if (oldpd == 5 || oldpd == 7) {
+    } else if (oldpd >= 5 && oldpd <= 7) {
 	/* daily to weekly */
 	compfac = oldpd;
 	if (dated_daily_data(pdinfo)) {
@@ -1945,7 +1946,7 @@ int compact_data_set (double ***pZ, DATAINFO *pdinfo, int newpd,
     pdinfo->t2 = pdinfo->n - 1;
     ntodate(pdinfo->endobs, pdinfo->t2, pdinfo);
     
-    if (oldpd == 5 || oldpd == 7) {
+    if (oldpd >= 5 && oldpd <= 7) {
 	/* remove any daily date strings */
 	destroy_dataset_markers(pdinfo);
     }

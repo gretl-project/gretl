@@ -154,7 +154,6 @@ typedef struct png_plot_t {
     GtkWidget *shell;
     GtkWidget *canvas;
     GtkWidget *popup;
-    GtkWidget *color_popup;
     GtkWidget *statusarea;    
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
@@ -2885,14 +2884,8 @@ static gint color_popup_activated (GtkWidget *w, gpointer data)
     gpointer ptr = g_object_get_data(G_OBJECT(w), "plot");
     png_plot_t *plot = (png_plot_t *) ptr;
     gint color = strcmp(item, _("monochrome"));
-
-    GtkWidget *parent = (GTK_MENU(plot->color_popup))->parent_menu_item;
+    GtkWidget *parent = (GTK_MENU(w->parent))->parent_menu_item;
     gchar *parent_item = g_object_get_data(G_OBJECT(parent), "string");
-
-    gtk_widget_destroy(plot->color_popup);
-    gtk_widget_destroy(plot->popup);
-    plot->color_popup = NULL;
-    plot->popup = NULL;
 
     if (!strcmp(parent_item, _("Save as postscript (EPS)..."))) {
 	strcpy(plot->spec->termtype, "postscript");
@@ -2931,11 +2924,6 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 
     gtk_widget_destroy(plot->popup);
     plot->popup = NULL;
-
-    if (plot->color_popup != NULL) {
-	gtk_widget_destroy(plot->color_popup);
-	plot->color_popup = NULL;
-    }
 
     if (!strcmp(item, _("Save as PNG..."))) {
 	strcpy(plot->spec->termtype, "png");
@@ -2983,6 +2971,37 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
     return TRUE;
 }
 
+static void attach_color_popup (GtkWidget *w, png_plot_t *plot)
+{
+    GtkWidget *item, *cpopup;
+    const char *color_items[] = {
+	N_("color"),
+	N_("monochrome")
+    };
+    int i;
+
+    cpopup = gtk_menu_new();
+
+    for (i=0; i<2; i++) {
+	item = gtk_menu_item_new_with_label(_(color_items[i]));
+#ifdef OLD_GTK
+	gtk_signal_connect(GTK_OBJECT(item), "activate",
+			   (GtkSignalFunc) color_popup_activated,
+			   _(color_items[i]));
+	gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
+#else
+	g_signal_connect(G_OBJECT(item), "activate",
+			 G_CALLBACK(color_popup_activated),
+			 _(color_items[i]));
+	g_object_set_data(G_OBJECT(item), "plot", plot);
+#endif
+	gtk_widget_show(item);
+	gtk_menu_shell_append(GTK_MENU_SHELL(cpopup), item);
+    } 
+
+    gtk_menu_item_set_submenu(GTK_MENU_ITEM(w), cpopup);
+}
+
 static void build_plot_menu (png_plot_t *plot)
 {
     GtkWidget *item;    
@@ -3019,11 +3038,6 @@ static void build_plot_menu (png_plot_t *plot)
 	N_("Close"),
 	NULL
     };
-    const char *color_items[] = {
-	N_("color"),
-	N_("monochrome"),
-	NULL
-    };
     const char **plot_items;
     int i;
 
@@ -3033,36 +3047,6 @@ static void build_plot_menu (png_plot_t *plot)
 	plot_items = zoomed_items;
     } else {
 	plot_items = regular_items;
-	plot->color_popup = gtk_menu_new();
-
-	i = 0;
-	while (color_items[i]) {
-	    item = gtk_menu_item_new_with_label(_(color_items[i]));
-#ifdef OLD_GTK
-	    gtk_signal_connect(GTK_OBJECT(item), "activate",
-			       (GtkSignalFunc) color_popup_activated,
-			       _(color_items[i]));
-	    gtk_object_set_data(GTK_OBJECT(item), "plot", plot);
-#else
-	    g_signal_connect(G_OBJECT(item), "activate",
-			     G_CALLBACK(color_popup_activated),
-			     _(color_items[i]));
-	    g_object_set_data(G_OBJECT(item), "plot", plot);
-#endif
-	    gtk_widget_show(item);
-	    gtk_menu_shell_append(GTK_MENU_SHELL(plot->color_popup), item);
-	    i++;
-	}
-
-#ifdef OLD_GTK
-	gtk_signal_connect(GTK_OBJECT(plot->color_popup), "destroy",
-			   GTK_SIGNAL_FUNC(gtk_widget_destroyed), 
-			   &plot->color_popup);
-#else
-	g_signal_connect(G_OBJECT(plot->color_popup), "destroy",
-			 G_CALLBACK(gtk_widget_destroyed), 
-			 &plot->color_popup);
-#endif
     }
 
     i = 0;
@@ -3105,7 +3089,7 @@ static void build_plot_menu (png_plot_t *plot)
 	    !strcmp(plot_items[i], "Save as postscript (EPS)...") ||
 	    !strcmp(plot_items[i], "Copy to clipboard") ||
 	    !strcmp(plot_items[i], "Print")) {
-	    gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), plot->color_popup);
+	    attach_color_popup(item, plot);
 	    g_object_set_data(G_OBJECT(item), "string", _(plot_items[i]));
 	} else {
 #ifdef OLD_GTK
@@ -3314,10 +3298,6 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
     if (plot->popup != NULL) {
 	gtk_widget_destroy(plot->popup);
 	plot->popup = NULL;
-    }
-    if (plot->color_popup != NULL) {
-	gtk_widget_destroy(plot->color_popup);
-	plot->color_popup = NULL;
     }
 
     build_plot_menu(plot);
@@ -3811,7 +3791,6 @@ static png_plot_t *png_plot_new (void)
     plot->shell = NULL;
     plot->canvas = NULL;
     plot->popup = NULL;
-    plot->color_popup = NULL;
     plot->statusarea = NULL;    
     plot->statusbar = NULL;
     plot->cursor_label = NULL;

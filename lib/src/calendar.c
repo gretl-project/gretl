@@ -126,12 +126,17 @@ int daily_obs_number (const char *date, const DATAINFO *pdinfo)
 
     tmp -= ed0;
 
-    if (pdinfo->pd == 5) { /* 5-day week */
+    if (pdinfo->pd == 5 || pdinfo->pd == 6) { /* 5-day or 6-day week */
 	int startday = (((ed0 - 1 + SATURDAY) - NUMBER_MISSING_DAYS) % 7);
 	int wkends = (tmp + startday - 1) / 7;
 
-	tmp -= (2 * wkends);
-	return (int) tmp;
+	/* FIXME 6-day?? */
+
+	if (pdinfo->pd == 5) {
+	    tmp -= (2 * wkends);
+	} else {
+	    tmp -= wkends;
+	}
     }
 
     return (int) tmp;
@@ -165,6 +170,7 @@ void daily_date_string (char *str, int t, const DATAINFO *pdinfo)
     if (pdinfo->pd == 7) {
 	dfind = (long) pdinfo->sd0 + t;
     } else {
+	/* FIXME 6-day data */
 	dfind = t_to_epoch_day(t, (long) pdinfo->sd0);
     }
 
@@ -250,6 +256,9 @@ static int day_of_week_from_ymd (int yr, int mo, int day)
 	    - ((2 * c) % 7)) % 7; 
 }
 
+#define day_in_calendar(w, d) ((w == 6 && d != 0) || \
+                               (w == 5 && d != 0 && d != 6))
+
 /**
  * get_day_of_week:
  * @date: calendar representation of date, [YY]YY/MM/DD
@@ -277,12 +286,12 @@ int get_day_of_week (const char *date)
  * @d: day of month, 1-based
  * @m: month number, 1-based
  * @y: 4-digit year
- * @wkdays: number of days in week (7 or 5)
+ * @wkdays: number of days in week (7, 6 or 5)
  * @pad: content set = 1 if the first day of the month
  * can reasonably be padded by a missing value (Jan 1)
  * 
  * Returns: 1 if the day is the "first day of the month", 
- * allowance made for the possibility of a 5-day week, else 0.
+ * allowance made for the possibility of a 5- or 6-day week, else 0.
  */
 
 int day_starts_month (int d, int m, int y, int wkdays, int *pad)
@@ -297,12 +306,12 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
 	    ret = 1;
 	}
     } else {
-	/* 5-day week: check for first weekday */
+	/* 5- or 6-day week: check for first weekday or non-Sunday */
 	int i, wd;
 
-	for (i=1; i<4; i++) {
+	for (i=1; i<6; i++) {
 	   wd = day_of_week_from_ymd(y, m, i); 
-	   if (wd != 0 && wd != 6) break;
+	   if (day_in_calendar(wkdays, wd)) break;
 	}
 	if (d == i) {
 	    ret = 1;
@@ -320,10 +329,10 @@ int day_starts_month (int d, int m, int y, int wkdays, int *pad)
  * @d: day of month, 1-based
  * @m: month number, 1-based
  * @y: 4-digit year
- * @wkdays: number of days in week (7 or 5)
+ * @wkdays: number of days in week (7, 6 or 5)
  * 
  * Returns: 1 if the day is the "last day of the month", 
- * allowance made for the possibility of a 5-day week, else 0.
+ * allowance made for the possibility of a 5- or 6-day week, else 0.
  */
 
 int day_ends_month (int d, int m, int y, int wkdays)
@@ -335,15 +344,15 @@ int day_ends_month (int d, int m, int y, int wkdays)
     if (wkdays == 7) {
 	ret = (d == dm);
     } else {
-	/* 5-day week: check for last weekday */
+	/* 5- or 6-day week: check for last weekday or non-Sunday */
 	int i, wd;
 
 	for (i=dm; i>0; i--) {
 	    wd = day_of_week_from_ymd(y, m, i);
-	    if (wd != 0 && wd != 6) break;
+	    if (day_in_calendar(wkdays, wd)) break;
 	}
-	ret = (d == i);
-    }
+	ret = (d == i);	
+    } 
 
     return ret;
 }
@@ -352,10 +361,10 @@ int day_ends_month (int d, int m, int y, int wkdays)
  * get_days_in_month:
  * @mon: month number, 1-based
  * @yr: 4-digit year
- * @wkdays: number of days in week (7 or 5)
+ * @wkdays: number of days in week (7, 6 or 5)
  * 
  * Returns: the number of days in the month, allowance made 
- * for the possibility of a 5-day week.
+ * for the possibility of a 5- or 6-day week.
  */
 
 int get_days_in_month (int mon, int yr, int wkdays)
@@ -371,9 +380,9 @@ int get_days_in_month (int mon, int yr, int wkdays)
 
 	for (i=0; i<dm; i++) {
 	    wd = day_of_week_from_ymd(yr, mon, i + 1);
-	    if (wd != 0 && wd != 6) ret++;
-	}
-    }
+	    if (day_in_calendar(wkdays, wd)) ret++;
+	}	
+    } 
 
     return ret;
 }
@@ -389,9 +398,9 @@ int days_in_month_before (int yr, int mon, int day, int wkdays)
 
 	for (i=1; i<day; i++) {
 	    wd = day_of_week_from_ymd(yr, mon, i);
-	    if (wd != 0 && wd != 6) ret++;
-	}
-    }
+	    if (day_in_calendar(wkdays, wd)) ret++;
+	}	
+    } 
 
     return ret;    
 }
@@ -409,7 +418,7 @@ int days_in_month_after (int yr, int mon, int day, int wkdays)
 
 	for (i=dm; i>day; i--) {
 	    wd = day_of_week_from_ymd(yr, mon, i);
-	    if (wd != 0 && wd != 6) ret++;
+	    if (day_in_calendar(wkdays, wd)) ret++;
 	}
     }
 
