@@ -264,11 +264,13 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
     double trsq = 0.0;
     int newvars = 0, err = 0;
 
-    if (!command_ok_for_model(ADD, orig->ci))
+    if (!command_ok_for_model(ADD, orig->ci)) {
 	return E_NOTIMP;
+    }
 
-    if (aux_code != AUX_ADD && (orig->ci == LOGISTIC || orig->ci == LAD))
+    if (aux_code != AUX_ADD && (orig->ci == LOGISTIC || orig->ci == LAD)) {
 	return E_NOTIMP;
+    }
 
     /* check for changes in original list members */
     err = list_members_replaced(orig->list, pdinfo, orig->ID);
@@ -356,9 +358,6 @@ int auxreg (LIST addvars, MODEL *orig, MODEL *new,
 	    err = E_ALLOC;
 	} else {
 	    for (t=0; t<n; t++) {
-		(*pZ)[pdinfo->v - 1][t] = NADBL;
-	    }
-	    for (t=orig->t1; t<=orig->t2; t++) {
 		(*pZ)[pdinfo->v - 1][t] = orig->uhat[t];
 	    }
 	    newlist[1] = pdinfo->v - 1;
@@ -1605,10 +1604,14 @@ int make_mp_lists (const LIST list, const char *str,
     }
     
     (*reglist)[0] = pos - 1;
-    for (i=1; i<pos; i++) (*reglist)[i] = list[i];
+    for (i=1; i<pos; i++) {
+	(*reglist)[i] = list[i];
+    }
 
     (*polylist)[0] = list[0] - pos;
-    for (i=1; i<=(*polylist)[0]; i++) (*polylist)[i] = list[i+pos];
+    for (i=1; i<=(*polylist)[0]; i++) {
+	(*polylist)[i] = list[i+pos];
+    }
 
     return 0;
 }

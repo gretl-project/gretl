@@ -31,6 +31,11 @@ struct flag_info {
     unsigned char *flag;
 };
 
+#define missing_masked(m,t,t1) (m != NULL && m[t-t1] != 0)
+#define model_missing(m,t)     (m->missmask != NULL && \
+                                m->missmask[t - m->t1] != 0)
+
+
 static gboolean destroy_save_dialog (GtkWidget *w, struct flag_info *finfo)
 {
     free(finfo);
@@ -203,12 +208,12 @@ unsigned char leverage_data_dialog (void)
     return flag;
 }
 
-static int leverage_plot (int n, int tstart, gretl_matrix *S,
+static int leverage_plot (const MODEL *pmod, gretl_matrix *S,
 			  double ***pZ, DATAINFO *pdinfo, 
 			  PATHS *ppaths)
 {
     FILE *fp = NULL;
-    int t, tmod;
+    int t, ts;
     int timeplot = 0;
 
     if (gnuplot_init(ppaths, PLOT_LEVERAGE, &fp)) return 1;
@@ -232,7 +237,7 @@ static int leverage_plot (int n, int tstart, gretl_matrix *S,
     fputs("set xzeroaxis\n", fp);
     if (!timeplot) { 
 	fprintf(fp, "set xrange [%g:%g]\n", 
-		tstart + 0.5, tstart + n + 0.5);
+		pmod->t1 + 0.5, pmod->t2 + 0.5); /* FIXME? */
     }
     fputs("set nokey\n", fp); 
 
@@ -242,18 +247,31 @@ static int leverage_plot (int n, int tstart, gretl_matrix *S,
 
     /* upper plot: leverage factor */
     fputs("set origin 0.0,0.50\n", fp);
+    fputs("set missing '?'\n", fp);
     fputs("set yrange [0:1]\n", fp);
     fprintf(fp, "set title '%s'\n", I_("leverage"));
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
-    for (t=0; t<n; t++) {
-	double h = gretl_matrix_get(S, t, 0);
 
-	if (timeplot) {
-	    tmod = t + tstart;
-	    fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], h);
-	} else { 
-	    fprintf(fp, "%d %g\n", t+tstart+1, h);
+    ts = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	double h = NADBL;
+
+	if (!model_missing(pmod, t)) {
+	    h = gretl_matrix_get(S, ts++, 0);
 	}
+	if (na(h)) {
+	    if (timeplot) {
+		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
+	    } else { 
+		fprintf(fp, "%d ?\n", t + 1);
+	    }
+	} else {
+	    if (timeplot) {
+		fprintf(fp, "%g %g\n", (*pZ)[timeplot][t], h);
+	    } else { 
+		fprintf(fp, "%d %g\n", t + 1, h);
+	    }
+	} 
     }
     fputs("e\n", fp);
 
@@ -263,21 +281,25 @@ static int leverage_plot (int n, int tstart, gretl_matrix *S,
     fputs("set yrange [*:*]\n", fp);
     fprintf(fp, "set title '%s'\n", I_("influence")); 
     fputs("plot \\\n'-' using 1:2 w impulses\n", fp);
-    for (t=0; t<n; t++) {
-	double f = gretl_matrix_get(S, t, 1);
 
-	tmod = t + tstart;
-	if (!na(f)) {
+    ts = 0;
+    for (t=pmod->t1; t<=pmod->t2; t++) {
+	double f = NADBL;
+
+	if (!model_missing(pmod, t)) {
+	    f = gretl_matrix_get(S, ts++, 1);
+	}
+	if (na(f)) {
 	    if (timeplot) {
-		fprintf(fp, "%g %g\n", (*pZ)[timeplot][tmod], f);
+		fprintf(fp, "%g ?\n", (*pZ)[timeplot][t]);
 	    } else {
-		fprintf(fp, "%d %g\n", tmod + 1, f);
+		fprintf(fp, "%d ?\n", t + 1);
 	    }
 	} else {
 	    if (timeplot) {
-		fprintf(fp, "%g ?\n", (*pZ)[timeplot][tmod]);
+		fprintf(fp, "%g %g\n", (*pZ)[timeplot][t], f);
 	    } else {
-		fprintf(fp, "%d ?\n", tmod + 1);
+		fprintf(fp, "%d %g\n", t + 1, f);
 	    }
 	}
     }
@@ -296,38 +318,33 @@ static int leverage_plot (int n, int tstart, gretl_matrix *S,
 static int studentized_residuals (const MODEL *pmod, double ***pZ, 
 				  DATAINFO *pdinfo, gretl_matrix *S)
 {
-    double *dum = NULL, *suhat = NULL;
+    double *dum = NULL;
     int *slist = NULL;
     MODEL smod;  
     int orig_v = pdinfo->v;
     int err = 0;
-    int i, t, k;
+    int i, t, ts, k;
 
+    /* create a full-length dummy variable */
     dum = malloc(pdinfo->n * sizeof *dum);
     if (dum == NULL) {
 	return E_ALLOC;
     }
 
-    suhat = malloc(pdinfo->n * sizeof *suhat);
-    if (suhat == NULL) {
-	free(dum);
-	return E_ALLOC;
-    }
-
+    /* allocate regression list */
     slist = malloc((pmod->list[0] + 2) * sizeof *slist);
     if (slist == NULL) {
 	free(dum);
-	free(suhat);
 	return E_ALLOC;
     }
 
     if (dataset_add_allocated_var(dum, pZ, pdinfo)) {
 	free(dum);
-	free(suhat);
 	free(slist);
 	return E_ALLOC;	
     }
 
+    /* zero out the dummy */
     for (t=0; t<pdinfo->n; t++) {
 	dum[t] = 0.0;
     }
@@ -339,30 +356,33 @@ static int studentized_residuals (const MODEL *pmod, double ***pZ,
     slist[slist[0]] = pdinfo->v - 1; /* last var added */  
     k = slist[0] - 2;
 
+    ts = 0;
     for (t=pmod->t1; t<=pmod->t2 && !err; t++) {
+	if (model_missing(pmod, t)) {
+	    dum[t-1] = 0.0;
+	    continue;
+	}	
 	dum[t] = 1.0;
-	if (t > pmod->t1) dum[t-1] = 0.0;
+	if (t > pmod->t1) {
+	    dum[t-1] = 0.0;
+	}
 	smod = lsq(slist, pZ, pdinfo, OLS, OPT_A, 0.0);
 	if (smod.errcode) {
 	    err = smod.errcode;
 	} else {
-	    suhat[t] = smod.coeff[k] / smod.sderr[k];
+	    gretl_matrix_set(S, ts++, 2, smod.coeff[k] / smod.sderr[k]);
 	}
 	clear_model(&smod);
     }
 
-    if (!err) {
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    gretl_matrix_set(S, t - pmod->t1, 2, suhat[t]);
+    if (err) {
+	for (t=0; t<pmod->nobs; t++) {
+	    gretl_matrix_set(S, t, 2, NADBL);
 	}
-    } else {
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    gretl_matrix_set(S, t - pmod->t1, 2, NADBL);
-	}
-    }	
+    }
 
-    free(suhat);
     free(slist);
+
     dataset_drop_vars(pdinfo->v - orig_v, pZ, pdinfo);
 
     return err;
@@ -383,10 +403,10 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     gretl_matrix *Q, *S = NULL;
     doublereal *tau, *work;
     double lp;
-    int i, j, t;
+    int i, j, t, tmod;
     int err = 0, serr = 0, gotlp = 0;
 
-    m = pmod->t2 - pmod->t1 + 1; /* # of rows = # of observations */
+    m = pmod->nobs;              /* # of rows = # of observations */
     lda = m;                     /* leading dimension of Q */
     n = pmod->list[0] - 1;       /* # of cols = # of variables */
 
@@ -404,7 +424,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     j = 0;
     for (i=2; i<=pmod->list[0]; i++) {
 	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    Q->val[j++] = (*pZ)[pmod->list[i]][t];
+	    if (!model_missing(pmod, t)) {
+		Q->val[j++] = (*pZ)[pmod->list[i]][t];
+	    }
 	}
     }
 
@@ -477,13 +499,24 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     lp = 2.0 * n / m;
 
     /* print the results */
-    for (t=0; t<m; t++) {
-	double f, h, s, d;
-	int tmod = t + pmod->t1;
+    t = 0;
+    tmod = pmod->t1;
+    while (t < m) {
+	double h, s, d, f = 0.0;
 	char fstr[24];
 
+	if (na(pmod->uhat[tmod])) {
+	    print_obs_marker(tmod, pdinfo, prn);
+	    pputc(prn, '\n');
+	    tmod++;
+	    continue;
+	}
+
 	h = gretl_matrix_get(S, t, 0);
-	if (h > lp) gotlp = 1;
+	if (h > lp) {
+	    gotlp = 1;
+	}
+
 	if (h < 1.0) {
 	    f = pmod->uhat[tmod] * h / (1.0 - h);
 	    sprintf(fstr, "%15.5g", f);
@@ -491,7 +524,9 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 	    f = NADBL;
 	    sprintf(fstr, "%15s", _("undefined"));
 	}
+
 	print_obs_marker(tmod, pdinfo, prn);
+
 	if (!serr) {
 	    s = gretl_matrix_get(S, t, 2);
 	    d = s * sqrt(h / (1.0 - h));
@@ -503,6 +538,8 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
 		    (h > lp)? "*" : " ", fstr);
 	}
 	gretl_matrix_set(S, t, 1, f);
+	t++;
+	tmod++;
     }
 
     if (gotlp) {
@@ -512,7 +549,7 @@ gretl_matrix *model_leverage (const MODEL *pmod, double ***pZ,
     }
 
     if (ppaths != NULL) {
-	leverage_plot(m, pmod->t1, S, pZ, pdinfo, ppaths);
+	leverage_plot(pmod, S, pZ, pdinfo, ppaths);
     }
 
  qr_cleanup:

@@ -2425,11 +2425,13 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     MODEL white;
     int err = 0;
 
-    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) 
+    if (pmod->ci == NLS || pmod->ci == ARMA || pmod->ci == LOGISTIC) { 
 	return E_NOTIMP;
+    }
 
-    if ((err = list_members_replaced(pmod->list, pdinfo, pmod->ID)))
+    if ((err = list_members_replaced(pmod->list, pdinfo, pmod->ID))) {
 	return err;
+    }
 
     gretl_model_init(&white);
 
@@ -2438,13 +2440,19 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     ncoeff = pmod->list[0] - 1;
 
     /* make space in data set */
-    if (dataset_add_vars(1, pZ, pdinfo)) err = E_ALLOC;
+    if (dataset_add_vars(1, pZ, pdinfo)) {
+	err = E_ALLOC;
+    }
 
     if (!err) {
 	/* get residuals, square and add to data set */
-	for (t=pmod->t1; t<=pmod->t2; t++) {
+	for (t=0; t<pdinfo->n; t++) {
 	    zz = pmod->uhat[t];
-	    (*pZ)[v][t] = zz * zz;
+	    if (na(zz)) {
+		(*pZ)[v][t] = NADBL;
+	    } else {
+		(*pZ)[v][t] = zz * zz;
+	    }
 	}
 	strcpy(pdinfo->varname[v], "uhatsq");
 
@@ -2459,7 +2467,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     }
 
     if (!err) {
-	/* now add squares */
+	/* now add squares of independent variables */
 	check = xpxgenr(tmplist, pZ, pdinfo, 0, 0);
 	if (check < 1) {
 	    fprintf(stderr, I_("generation of squares failed\n"));
@@ -2470,8 +2478,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	tmplist = realloc(tmplist, (check + 2) * sizeof *tmplist);
-	if (tmplist == NULL) err = E_ALLOC;
-	else {
+	if (tmplist == NULL) {
+	    err = E_ALLOC;
+	} else {
 	    int k = 1;
 
 	    tmplist[0] = pdinfo->v - v - 1; 
@@ -2494,7 +2503,7 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (!err) {
 	list[1] = v; 
-	/* run auxiliary regression and print results */
+	/* run auxiliary regression */
 	white = lsq(list, pZ, pdinfo, OLS, OPT_A, 0.);
 	err = white.errcode;
     }
@@ -2517,7 +2526,9 @@ int whites_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
     clear_model(&white);
 
     shrink = pdinfo->v - v;
-    if (shrink > 0) dataset_drop_vars(shrink, pZ, pdinfo);
+    if (shrink > 0) {
+	dataset_drop_vars(shrink, pZ, pdinfo);
+    }
 
     free(tmplist);
     free(list);

@@ -50,10 +50,13 @@ enum loop_types {
     WHILE_LOOP,
     INDEX_LOOP,
     DATED_LOOP,
-    FOR_LOOP
+    FOR_LOOP,
+    EACH_LOOP
 };
 
-#define indexed_loop(l) (l->type == INDEX_LOOP || l->type == DATED_LOOP)
+#define indexed_loop(l) (l->type == INDEX_LOOP || \
+                         l->type == DATED_LOOP || \
+			 l->type == EACH_LOOP)
 
 typedef struct {
     int ID;
@@ -102,6 +105,7 @@ struct LOOPSET_ {
     int next_print;
     char **lines;
     int *ci;
+    char **eachstrs;
     MODEL **models;
     LOOP_MODEL *lmodels;
     LOOP_PRINT *prns;
@@ -492,6 +496,69 @@ test_forloop_element (const char *s, LOOPSET *loop,
     return err;
 }
 
+static int
+parse_as_each_loop (LOOPSET *loop, const char *s)
+{
+    char ivar[3];
+    int i, nf, err = 0;
+
+    s += strlen("loop foreach");
+
+    if (*s == '\0') {
+	return 1;
+    }
+
+    s++;
+    if (sscanf(s, "%2s", ivar) != 1) {
+	err = 1;
+    } else if (strcmp(ivar, "i") && strcmp(ivar, "$i")) {
+	err = 1;
+    }
+
+    if (err) {
+	return 1;
+    }
+
+    s += strlen(ivar);
+    nf = count_fields(s);
+    if (nf == 0) {
+	return 1;
+    }
+
+    loop->eachstrs = malloc(nf * sizeof *loop->eachstrs);
+    if (loop->eachstrs == NULL) {
+	err = E_ALLOC;
+    }
+
+    for (i=0; i<nf && !err; i++) {
+	int len;
+
+	while (isspace((unsigned char) *s)) s++;
+	len = strcspn(s, " ");
+
+	loop->eachstrs[i] = gretl_strndup(s, len);
+	if (loop->eachstrs[i] == NULL) {
+	    int j;
+	    
+	    for (j=0; j<i; j++) {
+		free(loop->eachstrs[j]);
+	    }
+	    free(loop->eachstrs);
+	    loop->eachstrs = NULL;
+	    err = E_ALLOC;
+	} else {
+	    s += len;
+	}
+    }
+
+    if (!err) {
+	loop->type = EACH_LOOP;
+	loop->ntimes = nf;
+    }
+
+    return err;
+}
+
 static int 
 parse_as_for_loop (LOOPSET *loop,
 		   DATAINFO *pdinfo, double ***pZ,
@@ -608,6 +675,10 @@ parse_loopline (char *line, LOOPSET *ploop, int loopstack,
 	err = parse_as_indexed_loop(loop, pdinfo, (const double **) *pZ, 
 				    lvar, op, rvar);
     }
+
+    else if (strstr(line, "loop foreach") != NULL) {
+	err = parse_as_each_loop(loop, line);
+    }    
 
     else if (strstr(line, "loop for") != NULL) {
 	err = parse_as_for_loop(loop, pdinfo, pZ, line);
@@ -816,6 +887,9 @@ static void gretl_loop_init (LOOPSET *loop)
 
     loop->lines = NULL;
     loop->ci = NULL;
+
+    loop->eachstrs = NULL;
+
     loop->models = NULL;
     loop->lmodels = NULL;
     loop->prns = NULL;
@@ -857,7 +931,7 @@ void gretl_loop_destroy (LOOPSET *loop)
 
     if (loop->lines != NULL) {
 	for (i=0; i<loop->ncmds; i++) {
-	    free (loop->lines[i]);
+	    free(loop->lines[i]);
 	}
 	free(loop->lines);
     }
@@ -865,6 +939,13 @@ void gretl_loop_destroy (LOOPSET *loop)
     if (loop->ci != NULL) { 
 	free(loop->ci);
     }
+
+    if (loop->eachstrs != NULL) {
+	for (i=0; i<loop->ntimes; i++) {
+	    free(loop->eachstrs[i]);
+	}
+	free(loop->eachstrs);
+    }    
 
     if (loop->models != NULL) {
 	for (i=0; i<loop->nmod; i++) {
@@ -1791,8 +1872,13 @@ static int substitute_dollar_i (char *str, const LOOPSET *loop,
     int i = loop->initval + loop->index;
     int err = 0;
 
+    if (!indexed_loop(loop)) {
+	return 1;
+    }
+
     while ((p = strstr(str, "$i")) != NULL) {
 	char ins[OBSLEN];
+	char *pins = ins;
 	char *q;
 
 	q = malloc(strlen(p));
@@ -1803,11 +1889,13 @@ static int substitute_dollar_i (char *str, const LOOPSET *loop,
 	strcpy(q, p + 2);
 	if (loop->type == INDEX_LOOP) {
 	    sprintf(ins, "%d", i);
-	} else {
+	} else if (loop->type == DATED_LOOP) {
 	    ntodate(ins, i, pdinfo);
+	} else if (loop->type == EACH_LOOP) {
+	    pins = loop->eachstrs[i];
 	}
-	strcpy(p, ins);
-	strcpy(p + strlen(ins), q);
+	strcpy(p, pins);
+	strcpy(p + strlen(pins), q);
 	free(q);	
     }
 
@@ -1920,7 +2008,7 @@ int loop_exec (LOOPSET *loop, char *line,
 		if (err) {
 		    break;
 		}
-	    }
+	    } 	
 
 	    /* We already have the "ci" index recorded, but this line
 	       will do some checking that hasn't been done earlier.
