@@ -171,10 +171,12 @@ static void gnome_help (void)
 static void win_help (void)
 {
     char hlpfile[MAXLEN];
-
 # ifdef USE_HHCTRL
+    int err = 0;
+
     sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
-    if (!HtmlHelp(GetDesktopWindow(), hlpfile, HELP_FINDER, 0)) 
+    chtml(GetDesktopWindow(), &hlpfile, NULL, &err);
+    if (err) 
 	errbox("Couldn't access help file");
 # else
     sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
