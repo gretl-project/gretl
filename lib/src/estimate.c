@@ -138,17 +138,17 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     model.nwt = nwt = 0;
     if (ci == WLS) { 
 	model.nwt = nwt = model.list[1];
-	if (_iszero(model.t1, model.t2, &(*pZ)[pdinfo->n*nwt])) {
+	if (_iszero(model.t1, model.t2, &(*pZ)[n*nwt])) {
 	    model.errcode = E_WTZERO;
 	    return model;
 	}
-	effobs = isdummy(nwt, model.t1, model.t2, *pZ, pdinfo->n);
+	effobs = isdummy(nwt, model.t1, model.t2, *pZ, n);
 	if (effobs) model.wt_dummy = 1;
     }
 
     /* check for missing obs in sample */
     if ((missv = _adjust_t1t2(&model, model.list, &model.t1, &model.t2, 
-			      *pZ, pdinfo->n, &misst))) {
+			      *pZ, n, &misst))) {
 	sprintf(gretl_errmsg, "Missing value encountered for "
 		"variable %d, obs %d", missv, misst);
 	model.errcode = E_DATA;
@@ -161,7 +161,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     yno = model.list[1];
     
     /* check for availability of data */
-    if (t1 < 0 || t2 > pdinfo->n - 1) {
+    if (t1 < 0 || t2 > n - 1) {
         model.errcode = E_NODATA;
         return model;
     }                   
@@ -173,7 +173,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     }       
 
     /* check for zero dependent var */
-    if (_zerror(t1, t2, yno, nwt, pdinfo->n, pZ)) {  
+    if (_zerror(t1, t2, yno, nwt, n, pZ)) {  
         model.errcode = E_ZERO;
         return model; 
     } 
@@ -203,20 +203,20 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     }
 
     /* calculate regression results */
-    xpxxpy = _xpxxpy_func(model.list, t1, t2, *pZ, pdinfo->n, nwt, rho);
+    xpxxpy = _xpxxpy_func(model.list, t1, t2, *pZ, n, nwt, rho);
     model.tss = xpxxpy.xpy[l0];
 
-    _regress(&model, xpxxpy, *pZ, pdinfo->n, rho);
+    _regress(&model, xpxxpy, *pZ, n, rho);
     free(xpxxpy.xpy);
     if (model.errcode) return model;
 
     /* get the mean and sd of depvar and make available */
     if (model.ci == WLS && model.wt_dummy) {
-	model.ybar = _wt_dummy_mean(&model, *pZ, pdinfo->n);
-	model.sdy = _wt_dummy_stddev(&model, *pZ, pdinfo->n);
+	model.ybar = _wt_dummy_mean(&model, *pZ, n);
+	model.sdy = _wt_dummy_stddev(&model, *pZ, n);
     } else {
-	model.ybar = _esl_mean(t1, t2, &(*pZ)[pdinfo->n*yno]);
-	model.sdy = _esl_stddev(t1, t2, &(*pZ)[pdinfo->n*yno]);
+	model.ybar = _esl_mean(t1, t2, &(*pZ)[n*yno]);
+	model.sdy = _esl_stddev(t1, t2, &(*pZ)[n*yno]);
     }
 
     /* Doing an autoregressive procedure? */
@@ -236,18 +236,17 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 	model.uhat[t1] = NADBL;
 	model.yhat[t1] = NADBL;
 	for (t=t1+1; t<=t2; t++) {
-	    xx = (*pZ)[pdinfo->n*yno + t] - rho * (*pZ)[pdinfo->n*yno + t-1];
+	    xx = (*pZ)[n*yno + t] - rho * (*pZ)[n*yno + t-1];
 	    for (v=1; v<=model.ncoeff-model.ifc; v++)
-		xx = xx-model.coeff[v] * 
-		    (*pZ)[pdinfo->n * model.list[v+1] + t] - 
-		    rho * (*pZ)[pdinfo->n * model.list[v+1] + t-1];
-	    if (model.ifc) xx = xx - (1 - rho) * 
-			     model.coeff[model.ncoeff];
+		xx -= model.coeff[v] * 
+		    ((*pZ)[n * model.list[v+1] + t] - 
+		    rho * (*pZ)[n * model.list[v+1] + t-1]);
+	    if (model.ifc) xx -= (1 - rho) * model.coeff[model.ncoeff];
 	    model.uhat[t] = xx;
-	    model.yhat[t] = (*pZ)[pdinfo->n*yno + t] - xx;
+	    model.yhat[t] = (*pZ)[n*yno + t] - xx;
 	}
 	model.rsq = 
-	    _corrrsq(t2-t1, &(*pZ)[pdinfo->n*yno + t1+1], model.yhat + t1+1);
+	    _corrrsq(t2-t1, &(*pZ)[n*yno + t1+1], model.yhat + t1+1);
     	model.adjrsq = 
            1 - ((1 - model.rsq)*(t2 - t1 - 1)/model.dfd);
     }
@@ -256,7 +255,7 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
     if (opt) {
 	order = (ci == CORC || ci == HILU)? 1 : 0;
 	model.rho = _rhohat(order, t1, t2, model.uhat);
-	model.dw = _dwstat(order, &model, *pZ, pdinfo->n);
+	model.dw = _dwstat(order, &model, *pZ, n);
     }
 
     /* weighted least squares: fix fitted values, ESS, sigma */
@@ -265,15 +264,15 @@ MODEL lsq (LIST list, double **pZ, DATAINFO *pdinfo,
 	model.sigma_wt = model.sigma;
 	model.ess = 0.0;
 	for (t=t1; t<=t2; t++) {
-	    model.yhat[t] /= (*pZ)[pdinfo->n*nwt + t];
-	    xx = model.uhat[t] /= (*pZ)[pdinfo->n*nwt + t];
+	    model.yhat[t] /= (*pZ)[n*nwt + t];
+	    xx = model.uhat[t] /= (*pZ)[n*nwt + t];
 	    model.ess += xx * xx;
 	}
 	model.sigma = sqrt(model.ess/model.dfd);
     }
     if (ci == WLS && model.wt_dummy) {
 	for (t=t1; t<=t2; t++) {
-	    if (floateq((*pZ)[pdinfo->n*nwt + t], 0.0)) 
+	    if (floateq((*pZ)[n*nwt + t], 0.0)) 
 		model.yhat[t] = model.uhat[t] = NADBL;
 	}
     }

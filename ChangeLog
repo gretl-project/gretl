@@ -1,7 +1,7 @@
 version 0.98
 - fix some build problems
 - add more functionality to boxplots
-- various fixes to "session" mechanism
+- several fixes and enhancements to "session" mechanism
 - better handling of empty data header info
 - substantial code cleanups in the interest of adding API
   documentation

@@ -1,11 +1,8 @@
 #!/bin/sh
 
-for f in *.c *.h ; do
-#for f in trial.c ; do
-   cp $f $f.bak
+for f in `grep -l $1 *.{c,h} 2>/dev/null` ; do
+   echo $f
+   cp -ap $f $f.bak
    cat $f | sed s/$1/$2/g > $f.new
-   if ! diff -s $f $f.new | grep identical >/dev/null ; then
-      mv $f.new $f
-   fi
-done
-
+   mv $f.new $f
+done   
