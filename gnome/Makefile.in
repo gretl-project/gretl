@@ -72,7 +72,7 @@ install-gconf-keys:
 	GCONF_CONFIG_SOURCE=$(GCONF_SCHEMA_CONFIG_SOURCE) \
 	$(GCONFTOOL) --makefile-install-rule $(topsrc)/gnome/gretl.schemas
 
-install-gconf-schema-file: gretl.schemas	
+install-gconf-schema-file: $(topsrc)/gnome/gretl.schemas	
 	$(tooldir)/mkinstalldirs $(schemadir)
 	$(INSTALL_DATA) $(topsrc)/gnome/gretl.schemas $(schemadir)
 
