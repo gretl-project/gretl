@@ -45,8 +45,8 @@ static int createvar (double *xvec, char *snew, char *sleft,
 		      DATAINFO *pdinfo, int scalar);
 static void genrfree (double ***pZ, DATAINFO *pdinfo, GENERATE *pgenr,
 		      double *mstack, double *mvec, const int nv);
-static void _lag (const char *ss, const int vi, double *mvec, double **Z, 
-		  const DATAINFO *pdinfo);
+static void get_lag (int v, int lag, double *lagvec, double **Z, 
+		     const DATAINFO *pdinfo);
 static double genr_cov (const char *str, double ***pZ,
 			const DATAINFO *pdinfo);
 static double genr_corr (const char *str, double ***pZ,
@@ -785,7 +785,7 @@ GENERATE generate (double ***pZ, DATAINFO *pdinfo,
 			return genr;
 		    } 
 		    genr.scalar = 0;
-		    _lag(sexpr, vi, mvec, *pZ, pdinfo);
+		    get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
 		    for (i=t1; i<=t2; i++) genr.xvec[i] = mvec[i];
 		    break;
 
@@ -1582,32 +1582,50 @@ static int getxvec (char *s, double *xvec,
 
 /* ..................................................................*/
 
-static void _lag (const char *ss, const int vi, double *mvec, double **Z, 
-		  const DATAINFO *pdinfo)
-     /*  calculate lags and leads of variable  */
+static void get_lag (int v, int lag, double *lagvec, double **Z, 
+		     const DATAINFO *pdinfo)
 {
     register int t;
-    int lg, t1 = pdinfo->t1, t2 = pdinfo->t2;
+    int t1, lt;
 
-    lg = atoi(ss);
-    if (lg > 0) {
-        for (t=t1; t<=t2-lg; t++) mvec[t] = Z[vi][t+lg];
-        for (t=1+t2-lg; t<=t2; t++) mvec[t] = NADBL;
-    }
-    if (lg < 0)  {
-        lg = -lg;
-	if (dated_daily_data(pdinfo)) {
-	    int lagt;
+    t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
 
-	    for (t=t1+lg; t<=t2; t++) {
-		lagt = t - lg;
-		while (lagt>=0 && na(Z[vi][lagt])) lagt--;
-		mvec[t] = Z[vi][lagt];
-	    }
-	} else {
-	    for (t=t1+lg; t<=t2; t++) mvec[t] = Z[vi][t-lg];
+    for (t=0; t<pdinfo->n; t++) lagvec[t] = NADBL;
+
+    /* stacked X-section needs rather special handling */
+    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
+	for (t=t1; t<=pdinfo->t2; t++) { 
+	    lt = t - lag * pdinfo->pd;
+	    if (lt < 0 || lt >= pdinfo->n) continue;
+	    lagvec[t] = Z[v][lt];
 	}
-        for (t=t1; t<=t1+lg-1; t++) mvec[t] = NADBL;
+    }
+    else if (dated_daily_data(pdinfo)) {
+	for (t=t1; t<=pdinfo->t2; t++) {
+	    lt = t - lag;
+	    while (lt >= 0 && na(Z[v][lt])) lt--;
+	    lagvec[t] = Z[v][lt];
+	}
+    } 
+    else { /* the "standard" time-series case */
+	for (t=t1; t<=pdinfo->t2; t++) {
+	    lt = t - lag;
+	    if (lt < 0 || lt >= pdinfo->n) continue;
+	    lagvec[t] = Z[v][lt];
+	}
+    }
+
+    /* post-process missing panel values */
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	char *p, obs[9];
+	int j;
+
+	for (t=t1; t<=pdinfo->t2; t++) {
+	    ntodate(obs, t, pdinfo);
+	    p = strchr(obs, '.');
+	    j = atoi(p + 1);
+	    if (j <= lag) lagvec[t] = NADBL;
+	}
     }
 }
 
@@ -1907,7 +1925,7 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 {
     char word[32];
     char s[32];
-    int t, t1, n = pdinfo->n, v = pdinfo->v;
+    int v = pdinfo->v;
 
     /* can't do lags of a scalar */
     if (!pdinfo->vector[iv]) return 1;
@@ -1924,43 +1942,7 @@ int _laggenr (const int iv, const int lag, const int opt, double ***pZ,
 
     if (dataset_add_vars(1, pZ, pdinfo)) return E_ALLOC;
 
-    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-    for (t=0; t<lag; t++) (*pZ)[v][t] = NADBL;
-    t1 = (lag > pdinfo->t1)? lag : pdinfo->t1;
-
-    /* stacked X-section needs rather special handling */
-    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-	for (t=t1; t<=pdinfo->t2; t++) { 
-	    if (t - lag * pdinfo->pd < 0) continue;
-	    (*pZ)[v][t] = (*pZ)[iv][t - lag * pdinfo->pd];
-	}
-    }
-    else if (dated_daily_data(pdinfo)) {
-	int lagt;
-
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    lagt = t - lag;
-	    while (lagt >= 0 && na((*pZ)[iv][lagt])) lagt--;
-	    (*pZ)[v][t] = (*pZ)[iv][lagt];
-	}
-    } 
-    else { /* the "standard" time-series case */
-	for (t=t1; t<=pdinfo->t2; t++) 
-	    (*pZ)[v][t] = (*pZ)[iv][t-lag];
-    }
-
-    /* post-process missing panel values */
-    if (pdinfo->time_series == STACKED_TIME_SERIES) {
-	char *p, obs[9];
-	int j;
-
-	for (t=t1; t<=pdinfo->t2; t++) {
-	    ntodate(obs, t, pdinfo);
-	    p = strchr(obs, '.');
-	    j = atoi(p + 1);
-	    if (j <= lag) (*pZ)[v][t] = NADBL;
-	}
-    }
+    get_lag(iv, lag, (*pZ)[v], *pZ, pdinfo);
 
     strcpy(pdinfo->varname[v], s);
 
