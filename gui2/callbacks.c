@@ -592,7 +592,7 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 	break;	
     case NLS:
 	strcpy(title, _("gretl: nonlinear least squares"));
-	strcpy(query, _("Specify regression function and derivatives:"));
+	strcpy(query, _("NLS: Specify function, and derivatives if possible:"));
 	okfunc = do_nls_model;
 	varclick = VARCLICK_INSERT_TEXT;
 	break;	

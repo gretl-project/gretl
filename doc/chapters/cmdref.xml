@@ -1041,6 +1041,10 @@
 	  this under the <quote>Model data</quote> menu in the model's
 	  window.</para>
 
+        <para>The internal series <varname>uhat</varname> and
+	  <varname>yhat</varname> hold, respectively, the residuals
+	  and fitted values from the last regression.</para>
+
 	<para>
 	  Three other <quote>internal</quote> variables are available:
 	  <varname>$nobs</varname> holds the number of observations in
@@ -1049,7 +1053,7 @@
 	  observations used in estimating the last model).  The
 	  variable <varname>t</varname> serves as an index of the
 	  observations. Thus for instance <literal>genr dum =
-	    (t=15)</literal> will generate a dummy variable that has
+	  (t=15)</literal> will generate a dummy variable that has
 	  value 1 for observation 15, 0 otherwise.  The variable
 	  <varname>$pd</varname> holds the frequency or periodicity of
 	  the data (e.g. 4 for quarterly data).</para>
@@ -1952,6 +1956,71 @@
 	  <varname>expendpc</varname> as <varname>expend</varname>
 	  times <varname>invpop</varname>.
 	</para>
+
+      </sect2>
+
+      <sect2 id="nls"><title>nls</title>
+
+	<para>
+	Performs Nonlinear Least Squares (NLS) estimation using a
+	modified version of the Levenberg&ndash;Marquandt algorithm.
+	The user must supply a function specification.  The parameters
+	of this function must be declared and given starting values
+	(using the <command>genr</command> command) prior to
+	estimation. Optionally, the user may specify the derivatives
+	of the regression function with respect to each of the
+	parameters; if analytical derivatives are not supplied, a
+	numerical approximation to the Jacobian is computed.</para>
+
+      <para>
+	It is easiest to show what is required by example.  The
+	following is a complete script to estimate the nonlinear
+	consumption function set out in William Greene's
+	<citetitle>Econometric Analysis</citetitle>, in chapter 11 of
+	the 4th edition, or chapter 9 of the 5th.  (The numbers to the
+	left of the lines are for reference and are not part of the
+	commands.)</para>
+
+      <programlisting>
+ 1  open greene11_3.gdt
+ 2  ols C 0 Y
+ 3  genr alpha = coeff(0)
+ 4  genr beta = coeff(Y)
+ 5  genr gamma = 1.0
+ 6  nls C = alpha + beta * Y^gamma
+ 7  deriv alpha = 1
+ 8  deriv beta = Y^gamma
+ 9  deriv gamma = beta * Y^gamma * log(Y)
+10  end nls
+      </programlisting>
+
+      <para>
+	It is often convenient to initialize the parameters by
+	reference to a related linear model; that is accomplished here
+	on lines 2 to 5.  The parameters alpha, beta and gamma could
+	be set to any initial values (not necessarily based on a model
+	estimated with OLS), although convergence of the NLS procedure
+	is not guaranteed for an arbitrary starting point.</para>
+
+      <para>
+	The actual NLS commands occupy lines 6 to 10. On line 6 the
+	<command>nls</command> command is given: a dependent variable
+	is specified, followed by an equals sign, followed by a
+	function specification.  The syntax for the expression on the
+	right is the same as that for the <command>genr</command>
+	command.  The next three lines specify the derivatives of the
+	regression function with respect to each of the parameters in
+	turn.  Each line begins with the keyword
+	<command>deriv</command>, gives the name of a parameter, an
+	equals sign, and an expression whereby the derivative can be
+	calculated (again, the syntax here is the same as for
+	<command>genr</command>). These <command>deriv</command> lines
+	are optional, but it is recommended that you supply them if
+	possible.</para>
+
+      <para>
+	Line 10, <command>end nls</command>, completes the command and
+	calls for estimation.</para>
 
       </sect2>
 

@@ -24,7 +24,6 @@
 #include "libgretl.h" 
 #include "internal.h"
 #include "../../plugin/f2c.h"
-#include "../../plugin/clapack_double.h"
 #include "../../minpack/minpack.h"  
 
 enum {
@@ -50,6 +49,7 @@ struct _nls_spec {
     int t1;             /* starting observation */
     int t2;             /* ending observation */
     double ess;         /* error sum of squares */
+    double tol;         /* tolerance for stopping iteration */
     nls_term *terms;    /* array of info on terms in the function */
     doublereal *coeff;  /* coefficient estimates */
 };
@@ -59,6 +59,8 @@ static double ***pZ;
 static DATAINFO *pdinfo;
 static PRN *prn;
 static nls_spec nlspec;
+integer one = 1;
+double toler;
 
 static void print_iter_ess (void)
 {
@@ -92,12 +94,19 @@ static int add_term_from_nlfunc (const char *vname)
 {
     nls_term *terms;
     double *coeff;
-    int v, nt = nlspec.nparam + 1; 
+    int i, v, nt = nlspec.nparam + 1; 
 
     v = varindex(pdinfo, vname);
     if (v >= pdinfo->v) return E_UNKVAR;
 
+    /* if term is not a scalar, skip it */
     if (pdinfo->vector[v]) return 0;
+
+    /* if term is already present, skip it */
+    for (i=0; i<nlspec.nparam; i++) {
+	if (strcmp(vname, nlspec.terms[i].name) == 0) 
+	    return 0;
+    }
 
     terms = realloc(nlspec.terms, nt * sizeof *nlspec.terms);
     if (terms == NULL) return E_ALLOC;
@@ -601,7 +610,7 @@ static int check_derivs (integer m, integer n, double *x,
     mode = 2;
     chkder_(&m, &n, x, fvec, fjac, &ldfjac, xp, fvecp, &mode, err);
 
-    /* examine err vector */
+    /* examine "err" vector */
     for (i=0; i<m; i++) {
 	if (err[i] == 0.0) zerocount++;
 	else if (err[i] < 0.35) badcount++;
@@ -626,12 +635,14 @@ static int check_derivs (integer m, integer n, double *x,
     return zerocount;
 }
 
+/* Below: version of levenberg-marquandt code for use when analytical
+   derivatives have been supplied */
+
 static int lm_calculate (double *fvec, double *fjac)
 {
     integer info, lwa;
     integer m, n, ldfjac;
     integer *ipvt;
-    doublereal tol = 0.0001;
     doublereal *wa;
     int err = 0;
 
@@ -651,9 +662,7 @@ static int lm_calculate (double *fvec, double *fjac)
     err = check_derivs(m, n, nlspec.coeff, fvec, fjac, ldfjac);
     if (err) goto nls_cleanup; 
 
-    /* run levenberg-marquandt nonlinear least squares from minpack,
-       analytical derivatives version */
-    lmder1_(nls_calc, &m, &n, nlspec.coeff, fvec, fjac, &ldfjac, &tol, 
+    lmder1_(nls_calc, &m, &n, nlspec.coeff, fvec, fjac, &ldfjac, &nlspec.tol, 
 	    &info, ipvt, wa, &lwa);
 
     switch ((int) info) {
@@ -690,46 +699,22 @@ static int lm_calculate (double *fvec, double *fjac)
     return err;    
 }
 
-/*
-c       fjac is an output m by n array. the upper n by n submatrix
-c         of fjac contains an upper triangular matrix r with
-c         diagonal elements of nonincreasing magnitude such that
-c
-c                t     t           t
-c               p *(jac *jac)*p = r *r,
-c
-c         where p is a permutation matrix and jac is the final
-c         calculated jacobian. column j of p is column ipvt(j)
-c         (see below) of the identity matrix. the lower trapezoidal
-c         part of fjac contains information generated during
-c         the computation of r.
-
-c       ipvt is an integer output array of length n. ipvt
-c         defines a permutation matrix p such that jac*p = q*r,
-c         where jac is the final calculated jacobian, q is
-c         orthogonal (not stored), and r is upper triangular
-c         with diagonal elements of nonincreasing magnitude.
-c         column j of p is column ipvt(j) of the identity matrix.
-c
-c       qtf is an output array of length n which contains
-c         the first n elements of the vector (q transpose)*fvec.
-*/
+/* Below: version of levenberg-marquandt code for use when the Jacobian
+   must be approximated numerically */
 
 static int lm_approximate (double *fvec, double *fjac)
 {
-    integer info, m, n, ldfjac, one = 1;
+    integer info, m, n, ldfjac;
     integer maxfev = 200, mode = 1, nprint = 0, nfev = 0;
     integer iflag = 0;
     integer *ipvt;
-    doublereal ftol, xtol, gtol = 0.0;
-    doublereal epsfcn = 0.0001, factor = 100.;
+    doublereal gtol = 0.0;
+    doublereal epsfcn = 0.0, factor = 100.;
     doublereal *diag, *qtf;
     doublereal *wa1, *wa2, *wa3, *wa4;
     double ess;
     int err = 0;
-
-    xtol = ftol = sqrt(dpmpar_(&one));
-
+    
     m = nlspec.t2 - nlspec.t1 + 1; /* number of observations */
     n = nlspec.nparam;             /* number of parameters */
     ldfjac = m;                    /* leading dimension of fjac array */
@@ -749,10 +734,8 @@ static int lm_approximate (double *fvec, double *fjac)
 	goto nls_cleanup;
     }
 
-    /* run levenberg-marquandt nonlinear least squares from minpack,
-       approximate derivatives version */
     lmdif_(nls_calc_approx, &m, &n, nlspec.coeff, fvec, 
-	   &ftol, &xtol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
+	   &nlspec.tol, &nlspec.tol, &gtol, &maxfev, &epsfcn, diag, &mode, &factor,
 	   &nprint, &info, &nfev, fjac, &ldfjac, 
 	   ipvt, qtf, wa1, wa2, wa3, wa4);
 
@@ -829,7 +812,8 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	err = get_params_from_nlfunc();
 	if (err) {
 	    clear_nls_spec();
-	    nlsmod.errcode = E_PARSE;
+	    if (err == 1) nlsmod.errcode = E_PARSE;
+	    else nlsmod.errcode = err;
 	    return nlsmod;
 	}
     }
@@ -854,6 +838,8 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     nlsmod.errcode = err = check_for_missing_vals();
 
     if (!err) {
+	if (toler > 0) nlspec.tol = toler;
+	else nlspec.tol = sqrt(dpmpar_(&one));
 	if (nlspec.mode == NUMERIC_DERIVS) {
 	    pputs(prn, _("Using numerical derivatives\n"));
 	    err = lm_approximate(fvec, fjac);
@@ -861,6 +847,7 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
 	    pputs(prn, _("Using analytical derivatives\n"));
 	    err = lm_calculate(fvec, fjac);
 	}
+	pprintf(prn, _("Tolerance = %g\n"), nlspec.tol);
     }
 
     if (!err) {
@@ -884,6 +871,11 @@ MODEL nls (double ***mainZ, DATAINFO *maininfo, PRN *mainprn)
     *mainZ = *pZ;
   
     return nlsmod;
+}
+
+void set_nls_toler (double x)
+{
+    toler = x;
 }
 
 

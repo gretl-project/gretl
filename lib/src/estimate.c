@@ -2544,7 +2544,11 @@ static void omitzero (MODEL *pmod, const DATAINFO *pdinfo, double **Z)
         lv = pmod->list[v];
         if (_iszero(pmod->t1, pmod->t2, Z[lv])) {
 	    list_exclude(v, pmod->list);
-	    sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
+	    if (pdinfo->varname[lv][0] != 0) {
+		sprintf(vnamebit, "%s ", pdinfo->varname[lv]);
+	    } else {
+		sprintf(vnamebit, "%s %d ", _("variable"), lv);
+	    }
 	    strcat(gretl_msg, vnamebit);
 	    drop = 1;
 	}

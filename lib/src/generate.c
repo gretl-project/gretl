@@ -542,6 +542,20 @@ int genr_scalar_index (int opt, int put)
     return i;
 }
 
+static int gentoler (const char *s)
+{
+    if (_isnumber(s)) {
+	double x = atof(s);
+
+	set_nls_toler(x);
+	sprintf(gretl_msg, _("Set tolerance to %g"), x);
+	return 0;
+    } else {
+	strcpy(gretl_errmsg, _("The setting for \"toler\" must be numeric"));
+	return 1;
+    }
+}
+
 /**
  * generate:
  * @pZ: pointer to data matrix.
@@ -620,6 +634,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     if (strcmp(s, "time") == 0) {
 	err = genrtime(pZ, pdinfo, &genr, 1);
 	if (!err) genr_msg(&genr, nv);
+	return err;
+    }
+    if (strncmp(s, "toler=", 6) == 0) {
+	err = gentoler(s + 6);
 	return err;
     }
 

@@ -25,4 +25,6 @@ int nls_parse_line (const char *line, const double **Z,
 
 MODEL nls (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 
+void set_nls_toler (double x);
+
 #endif /* GRETL_NLS_H */

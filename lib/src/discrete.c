@@ -298,8 +298,11 @@ static double *hessian (MODEL *pmod, double **Z, const int n,
 
     i = l0 - 1;
     m = i * (i + 1) / 2;
+
     xpx = malloc((m+1) * sizeof *xpx);
     if (xpx == NULL) return NULL;
+    xpx[0] = NADBL;
+
     if ((wt = hess_wts(pmod, Z, n, opt)) == NULL) {
 	free(xpx);
 	return NULL;

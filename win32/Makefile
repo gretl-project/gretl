@@ -113,7 +113,8 @@ PROBSRC = bdtr.c btdtr.c chdtr.c drand.c expx2.c fdtr.c gamma.c gdtr.c \
 	stdtr.c unity.c polevl.c const.c
 PROBOBJ = $(PROBSRC:.c=.o)
 
-MINSRC = chkder.c dpmpar.c enorm.c lmder1.c lmder.c lmpar.c qrfac.c qrsolv.c
+MINSRC = chkder.c dpmpar.c enorm.c fdjac2.c lmder1.c lmder.c lmdif.c lmpar.c \
+	qrfac.c qrsolv.c
 MINOBJ = $(MINSRC:.c=.o)
 
 OBJS = $(LIBOBJ) $(CLIOBJ) $(GUIOBJ) $(PLUGINOBJ)
