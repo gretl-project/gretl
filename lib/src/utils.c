@@ -19,13 +19,9 @@
 
 /* utils.c for gretl  */
 
-#ifdef OS_WIN32
-# include "winconfig.h"
-#else
-# include "../../config.h"
-#endif
 #include "libgretl.h"
 #include "internal.h"
+
 #include <dirent.h>
 #include <unistd.h>
 
