@@ -550,8 +550,8 @@ static void copy (const char *str, int indx,
 {
     int i;
 
-    dest[0] = '\0';
-    for (i=0; i<count; ++i) dest[i] = str[indx+i];
+    *dest = '\0';
+    for (i=0; i<count; ++i) dest[i] = str[indx + i];
     dest[count] = '\0';
 }
 
@@ -565,18 +565,23 @@ static int getword (char c, char *str, char *word, unsigned char oflag)
 	or 0 if reserved word is used 
      */
 {
-    register int i;
+    int i;
+
+    *word = '\0';
 
     i = haschar(c, str);
-    word[0] = '\0';
     if (i == -1) return -1;
+
     copy(str, 0, i, word);
-    _delete(str, 0, i+1);
+    _delete(str, 0, i + 1);
+
     /* special case for auto sub-sampling dummy */
     if (oflag && strcmp(word, "subdum") == 0)
-	return i+1;
+	return i + 1;
+
     if (_reserved(word)) return 0;
-    return i+1;
+
+    return i + 1;
 }
 
 /* ........................................................... */
@@ -668,20 +673,22 @@ static int handle_type2 (int type2, char *word, char *sexpr,
     switch (type2) {
 
     case R_VARNAME:    
-	if ( !(_isnumber(sexpr)))  {
-	    return E_NOTINTG;
-	}
-	vi = varindex(pdinfo, word);
-	if (!pdinfo->vector[vi]) {
-	    sprintf(gretl_errmsg, _("Variable %s is a scalar; "
-				    "can't do lags/leads"), 
-		    pdinfo->varname[vi]);
-	    return 1;
-	} 
-	genr->scalar = 0;
-	get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
-	for (i=t1; i<=t2; i++) {
-	    genr->xvec[i] = mvec[i];
+	if (!(_isnumber(sexpr)))  {
+	    err = E_NOTINTG;
+	} else {
+	    vi = varindex(pdinfo, word);
+	    if (!pdinfo->vector[vi]) {
+		sprintf(gretl_errmsg, _("Variable %s is a scalar; "
+					"can't do lags/leads"), 
+			pdinfo->varname[vi]);
+		err = 1;
+	    } else {
+		genr->scalar = 0;
+		get_lag(vi, -atoi(sexpr), mvec, *pZ, pdinfo);
+		for (i=t1; i<=t2; i++) {
+		    genr->xvec[i] = mvec[i];
+		}
+	    }
 	}
 	break;
 
@@ -698,22 +705,21 @@ static int handle_type2 (int type2, char *word, char *sexpr,
 					 pmod->ci == HILU)) {
 		for (i=t1; i<=t2; i++)
 		    genr->xvec[i] = pmod->rho_in;
-		break;
 	    }
-	    if (pmod->ci != AR && dot_atof(sexpr) == 1) {
+	    else if (pmod->ci != AR && dot_atof(sexpr) == 1) {
 		for (i=t1; i<=t2; i++)
 		    genr->xvec[i] = pmod->rho;
-		break;
 	    }
-	    if (pmod->arinfo == NULL || 
+	    else if (pmod->arinfo == NULL || 
 		pmod->arinfo->arlist == NULL || pmod->arinfo->rho == NULL) {
-		return E_INVARG;
+		err = E_INVARG;
 	    }
-	    if (!(vi = ismatch(atoi(sexpr), pmod->arinfo->arlist))) {
-		return E_INVARG;
+	    else if (!(vi = ismatch(atoi(sexpr), pmod->arinfo->arlist))) {
+		err = E_INVARG;
 	    }
-	    for (i=0; i<n; i++) {
-		genr->xvec[i] = pmod->arinfo->rho[vi];
+	    else {
+		for (i=0; i<n; i++) 
+		    genr->xvec[i] = pmod->arinfo->rho[vi];
 	    }
 	}
 	else if (nt == T_NORMAL) {
@@ -727,57 +733,49 @@ static int handle_type2 (int type2, char *word, char *sexpr,
 	else if (nt == T_COV) {
 	    xx = genr_cov(sexpr, pZ, pdinfo);
 	    if (na(xx)) {
-		return E_INVARG;
+		err = E_INVARG;
 	    } else {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n; i++) 
 		    genr->xvec[i] = xx;
-		}
 	    }
 	}
 	else if (nt == T_CORR) {
 	    xx = genr_corr(sexpr, pZ, pdinfo);
 	    if (na(xx)) {
-		return E_INVARG;
+		err = E_INVARG;
 	    } else {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n; i++) 
 		    genr->xvec[i] = xx;
-		}
 	    }
 	}
 	else if (nt == T_VCV) {
 	    xx = genr_vcv(sexpr, pdinfo, pmod);
 	    if (na(xx)) {
-		return E_INVARG;
+		err = E_INVARG;
 	    } else {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n; i++) 
 		    genr->xvec[i] = xx;
-		}
 	    }
 	}
 	else if (nt == T_PVALUE) {
 	    xx = batch_pvalue(sexpr, *pZ, pdinfo, NULL);
 	    if (na(xx) || xx == -1.0) {
-		return E_INVARG;
+		err = E_INVARG;
 	    } else {
-		for (i=0; i<n; i++) {
+		for (i=0; i<n; i++) 
 		    genr->xvec[i] = xx;
-		}
 	    }
 	}
 	else if (nt == T_MPOW) {
 	    genr->scalar = 0;
 	    err = genr_mpow(sexpr, genr->xvec, *pZ, pdinfo);
-	    if (err) {
-		return E_INVARG;
-	    }
+	    if (err) err = E_INVARG;
 	}
 #ifdef HAVE_MPFR
 	else if (nt == T_MLOG) {
 	    genr->scalar = 0;
 	    err = genr_mlog(sexpr, genr->xvec, *pZ, pdinfo);
-	    if (err) {
-		return E_INVARG;
-	    }
+	    if (err) err = E_INVARG;
 	}
 #endif
 	else if (nt == T_COEFF || nt == T_STDERR) {
@@ -810,10 +808,11 @@ static int handle_type2 (int type2, char *word, char *sexpr,
 	    ig = evalexp(sexpr, nt, mvec, genr->xvec, 
 			 *pZ, pdinfo, pmod, genr);
 	    if (ig != 0) {  
-		return E_IGNONZERO;
+		err = E_IGNONZERO;
+	    } else {
+		for (i=t1; i<=t2; i++) mvec[i] = genr->xvec[i];
+		err = domath(genr->xvec, mvec, nt, pdinfo, &genr->scalar);
 	    }
-	    for (i=t1; i<=t2; i++) mvec[i] = genr->xvec[i];
-	    err = domath(genr->xvec, mvec, nt, pdinfo, &genr->scalar);
 	}
 	break;
 
@@ -854,11 +853,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	      const char *line, int model_count, 
 	      MODEL *pmod, unsigned char oflag)
 {
-    int nleft1, nleft2, nright1, nright2, ig, iw, nt; 
-    int v, ls, lword, nv1, type2, nvtmp = 0;
+    int nt, v, ls, nv1, type2, nvtmp = 0;
     int t1 = pdinfo->t1, t2 = pdinfo->t2, n = pdinfo->n;
-    char *indx1, *indx2, s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
-    char sexpr[MAXLEN], snew[MAXLEN], word[16], s1[MAXLEN];
+    char s[MAXLEN], sright[MAXLEN], sleft[MAXLEN];
+    char snew[MAXLEN], word[16], s1[MAXLEN];
     char newvar[32], genrs[MAXLEN];
     int err = 0;
     char op0, op1;
@@ -1004,6 +1002,8 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 #endif
 
     while ((ls = strlen(s)) > 0) {
+	char *indx1, *indx2;
+
 #ifdef GENR_DEBUG
 	fprintf(stderr, "s='%s', zeroing mvec, xvec\n", s);
 	if (_isnumber(s)) {
@@ -1075,6 +1075,10 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		goto genr_return;
             }
         } else { /* indx1 != NULL: left paren was found */
+	    int iw, nright1, nright2;
+	    int nleft1, nleft2;
+	    char sexpr[MAXLEN];
+
             nright1 = strlen(indx1);    /* no. of characters to right of ( */
             nleft1 = ls - nright1;      /* no. of characters before ( */
 	    *sleft = '\0';
@@ -1087,7 +1091,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 		goto genr_return;
             }
             nright2 = strlen(indx2);        /* no chars at end of string */
-            nleft2 = nright1 - nright2 -1 ; /* no of character inside the (),
+            nleft2 = nright1 - nright2 - 1; /* no of character inside the (),
 					       including */
             indx1++;
             strcpy(sright, indx1);
@@ -1100,7 +1104,6 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	    fprintf(stderr, "genr: scanb gave word = '%s'\n", word);
 #endif
 
-
 	    if (++nvtmp > MAXTERMS) {
 		err = E_NEST;
 		goto genr_return;   
@@ -1110,29 +1113,27 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
             if (iw == 0) {
 		/* there is an operator in front of (  */
-                ig = evalexp(sexpr, 0, mvec, genr.xvec, 
+                err = evalexp(sexpr, 0, mvec, genr.xvec, 
 			     *pZ, pdinfo, pmod, &genr);
-                if (ig != 0) {
+                if (err) {
 		    err = E_IGNONZERO;
 		    goto genr_return;  
                 }
             } else {
 		/* there is a math function or lag/lead */
-
                 type2 = strtype(word, pdinfo);
 		err = handle_type2(type2, word, sexpr, &genr, mvec,
 				   pZ, pdinfo, pmod);
 		if (err) goto genr_return; 
 
-                lword = strlen(word);
-		*(sleft + nleft1 - lword) = '\0';
+		*(sleft + nleft1 - strlen(word)) = '\0';
             } /* end of if (iw == 0) */
 
 	    memmove(sright, indx2, strlen(indx2) + 1);
 	    /* create temp var */
-	    ig = createvar(genr.xvec, snew, sleft, sright, 
+	    err = createvar(genr.xvec, snew, sleft, sright, 
 			   nv + nvtmp, pZ, pdinfo, genr.scalar);
-	    if (ig != 0) {
+	    if (err) {
 		err = E_UNSPEC; 
 		goto genr_return; 
 	    }
@@ -1182,24 +1183,15 @@ static int add_new_var (DATAINFO *pdinfo, double ***pZ, GENERATE *genr)
 	    (*pZ)[v] = realloc((*pZ)[v], pdinfo->n * sizeof ***pZ);
 	    if ((*pZ)[v] == NULL) return E_ALLOC;
 	}
-#if 0
-	/* expanding constants is probably not a good idea */
-	if (_isconst(pdinfo->t1, pdinfo->t2, genr->xvec)) {
-	    for (t=0; t<n; t++) (*pZ)[v][t] = xx;
-	} else {
-	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
-	    for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
-		(*pZ)[v][t] = genr->xvec[t];
-	}
-#else
 	if (!modify) {
 	    for (t=0; t<n; t++) (*pZ)[v][t] = NADBL;
 	}
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) 
 	    (*pZ)[v][t] = genr->xvec[t];
-#endif
     }
+
     if (genr->xvec != NULL) free(genr->xvec);
+
     return 0;
 }
 
@@ -1637,8 +1629,9 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 		    const MODEL *pmod, GENERATE *genr)
 {
     char s3[MAXLEN], op2, op3;
-    int ig, v, expand;
+    int v, expand;
     int *pscalar = &(genr->scalar);
+    int err = 0;
 
     if (SCALAR_SCOPE(nt)) {
 	pscalar = NULL;
@@ -1652,6 +1645,7 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 #endif
 
     /* evaluate expression inside parentheses and value in xvec */
+
     op3 = '\0';
     do {
 	/* don't expand real, vector variables */
@@ -1663,17 +1657,18 @@ static int evalexp (char *ss, int nt, double *mvec, double *xvec,
 	}
 	getvar(ss, s3, &op2);
 	if (op2 == '\0' || is_operator(op2)) {
-	    ig = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
-	    if (ig != 0) return ig;
+	    err = getxvec(s3, mvec, Z, pdinfo, pmod, pscalar);
+	    if (!err) {
 #ifdef GENR_DEBUG
-	    fprintf(stderr, "evalexp, about to do cstack: ss='%s'\n", ss);
+		fprintf(stderr, "evalexp, about to do cstack: ss='%s'\n", ss);
 #endif	    
-	    cstack(xvec, mvec, op3, pdinfo, expand);
-	    op3 = op2;
+		cstack(xvec, mvec, op3, pdinfo, expand);
+		op3 = op2;
+	    }
         }
-    } while (strlen(ss) > 0);
+    } while (*ss != '\0' && !err);
 
-    return 0;
+    return err;
 }
 
 /* ........................................................ */
@@ -1726,8 +1721,6 @@ static void getvar (char *str, char *word, char *c)
 
     *str = '\0';
     *c = '\0';
-
-    return;
 }
 
 /* ...........................................................*/
