@@ -523,7 +523,7 @@ static void gsheet_menu (gbook *book, int multisheet)
     GtkObject *adj;
 
     w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title(GTK_WINDOW(w), "gretl: gnumeric import");
+    gtk_window_set_title(GTK_WINDOW(w), "gretl: Gnumeric import");
     gtk_signal_connect(GTK_OBJECT(w), "destroy",  
 		       GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
 
@@ -715,12 +715,14 @@ int gbook_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	if (sheet.text_cols == 0 && obs_column(&sheet)) {
 	    int pd = consistent_date_labels(&sheet);
 
-	    if (pd) pdinfo->pd = pd;
-	    pdinfo->sd0 = atof(sheet.label[1]);
-	    strcpy(pdinfo->stobs, sheet.label[1]);
-	    pdinfo->time_series = TIME_SERIES;
-	    sheet.text_cols = 1;
-	    time_series = 1;
+	    if (pd) {
+		pdinfo->pd = pd;
+		pdinfo->sd0 = atof(sheet.label[1]);
+		strcpy(pdinfo->stobs, sheet.label[1]);
+		pdinfo->time_series = TIME_SERIES;
+		sheet.text_cols = 1;
+		time_series = 1;
+	    }
 	}
 
 	pdinfo->v = sheet.maxcol + 3 - sheet.startcol - sheet.text_cols;

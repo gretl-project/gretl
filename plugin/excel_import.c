@@ -1,23 +1,42 @@
 /*
-  gretl importer plugin for MS Excel files, Allin Cottrell, 2002.
-  Based on xls2csv (Copyright 1998 David Rysdam)
-  as distributed in the "catdoc" package by Vitus Wagner.
-  This file is released under the GPL.  Details can be
-  found in the file COPYING accompanying this distribution.
+ *  Copyright (c) by Allin Cottrell 2002
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU General Public License as published by
+ *   the Free Software Foundation; either version 2 of the License, or
+ *   (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU General Public License
+ *   along with this program; if not, write to the Free Software
+ *   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
+ *
+ */
+
+/*
+  Based on xls2csv (David Rysdam, 1998), as distributed in the 
+  "catdoc" package by Vitus Wagner, with some help from the Gnumeric
+  excel plugin.
 */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <glib.h>
+#include <gtk/gtk.h>
 #include "libgretl.h"
 #include "xltypes.h"
 
+#ifdef EDEBUG
 static void print_sheet (void);
-static void free_sheet (void);
 static void print_value (const char *value);
-static int getshort (char *rec,int offset);
+#endif
+static void free_sheet (void);
+static int getshort (char *rec, int offset);
 static int process_item (int rectype, int reclen, char *rec); 
 static int allocate (int row, int col);
 static char *copy_unicode_string (char **src);
@@ -495,16 +514,18 @@ static void free_sheet (void)
     printf("free_sheet(), lastrow=%d\n", lastrow);
 
     /* free shared string table */
-    for (i=0; i<sstsize; i++) 
-	free(sst[i]);
-    free(sst);
+    if (sst != NULL) {
+	for (i=0; i<sstsize; i++) 
+	    if (sst[i] != NULL) free(sst[i]);
+	free(sst);
+    }
 
     /* free cells (was i<lastrow below) */
     for (i=0; i<=lastrow; i++) {
 	if (rowptr[i].cells == NULL) continue;
 	for (j=0; j<rowptr[i].end; j++) {
-	    if (rowptr[i].cells[j] == NULL) continue;
-	    free(rowptr[i].cells[j]);
+	    if (rowptr[i].cells[j] != NULL) 
+		free(rowptr[i].cells[j]);
 	}
 	free(rowptr[i].cells);
     }
@@ -514,6 +535,7 @@ static void free_sheet (void)
     lastrow = 0;
 }
 
+#ifdef EDEBUG
 static void print_sheet (void) 
 {
     int i, j;
@@ -539,14 +561,187 @@ static void print_value (const char *value)
 	fputs(value + 1, stdout);
     else 
 	fputs(value, stdout);
-}  
+} 
+#endif
+
+static int label_is_date (char *str)
+{
+    size_t len = strlen(str);
+    int i, d, pd = 0;
+    double dd, sub;
+
+    for (i=0; i<len; i++)
+	if (str[i] == ':') str[i] = '.';
+     
+    if (len == 4 && sscanf(str, "%4d", &d) == 1 &&
+	d > 0 && d < 3000) {
+	pd = 1;
+    }
+    else if (len == 6 && sscanf(str, "%lf", &dd) == 1 &&
+	dd > 0 && dd < 3000) { 
+	sub = 10.0 * (dd - (int) dd);
+	if (sub >= .999 && sub <= 4.001) pd = 4;
+    }
+    else if (len == 7 && sscanf(str, "%lf", &dd) == 1 &&
+	dd > 0 && dd < 3000) {
+	sub = 100.0 * (dd - (int) dd);
+	if (sub >= .9999 && sub <= 12.0001) pd = 12;
+    }
+    return pd;
+}
+
+static int consistent_date_labels (void)
+{
+    int t;
+    int pd = 0, pdbak = 0;
+    double x, xbak = 0.0;
+    char *test;
+    
+    for (t=1; t<=lastrow; t++) {
+	test = rowptr[t].cells[0];
+	if (test[0] == '\0') return 0;
+	pd = label_is_date(test);
+	if (pd == 0) return 0;
+	x = atof(test);
+	if (t == 1) pdbak = pd;
+	else { /* t > 1 */
+	    if (pd != pdbak) return 0;
+	    if (x <= xbak) return 0;
+	}
+	xbak = x;
+    }
+    return pd;
+}
+
+static int obs_column (void)
+{
+    char *test = rowptr[0].cells[0] + 1;
+
+    fprintf(stderr, "obs_column(): test='%s'\n", test);
+
+    if (test[0] == '\0') return 1;
+
+    lower(test);
+    if (strcmp(test, "obs") == 0 ||
+	strcmp(test, "date") == 0 ||
+	strcmp(test, "year") == 0)
+	return 1;
+
+    return 0;
+}
+
+static int first_col_strings (void)
+{
+    int t;
+    
+    for (t=1; t<=lastrow; t++) {
+	if (rowptr[t].cells[0][0] != '\"')
+	    return 0;
+    }
+    return 1;
+}
+
+struct ebook {
+    int bailout;
+    int col_offset, row_offset;
+    GtkWidget *colspin, *rowspin;
+};
+
+static 
+void excel_menu_cancel (GtkWidget *w, struct ebook *book)
+{
+    book->bailout = 1;
+}
+
+static 
+void excel_get_col_offset (GtkWidget *w, struct ebook *book)
+{
+    book->col_offset = gtk_spin_button_get_value_as_int
+	(GTK_SPIN_BUTTON(book->colspin)) - 1;
+}
+
+static 
+void excel_get_row_offset (GtkWidget *w, struct ebook *book)
+{
+    book->row_offset = gtk_spin_button_get_value_as_int
+	(GTK_SPIN_BUTTON(book->rowspin)) - 1;
+}
+
+static void excel_menu (struct ebook *book)
+{
+    GtkWidget *w, *tmp, *frame;
+    GtkWidget *vbox, *hbox;
+    GtkObject *adj;
+
+    w = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title(GTK_WINDOW(w), "gretl: Excel import");
+    gtk_signal_connect(GTK_OBJECT(w), "destroy",  
+		       GTK_SIGNAL_FUNC(gtk_main_quit), NULL);
+
+    vbox = gtk_vbox_new (FALSE, 5);
+    gtk_container_set_border_width (GTK_CONTAINER (vbox), 10);
+
+    /* choose starting column and row */
+    frame = gtk_frame_new("Start import at");
+    gtk_box_pack_start (GTK_BOX (vbox), frame, TRUE, TRUE, 5);
+
+    hbox = gtk_hbox_new (FALSE, 5);
+    gtk_container_set_border_width (GTK_CONTAINER (hbox), 10);
+    gtk_container_add(GTK_CONTAINER (frame), hbox);
+
+    tmp = gtk_label_new("column:");
+    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    book->colspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (excel_get_col_offset), book);
+    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (hbox), book->colspin, FALSE, FALSE, 5);
+
+    tmp = gtk_label_new("row:");
+    adj = gtk_adjustment_new(1, 1, 5, 1, 1, 1);
+    book->rowspin = gtk_spin_button_new (GTK_ADJUSTMENT(adj), 1, 0);
+    gtk_signal_connect (adj, "value_changed",
+			GTK_SIGNAL_FUNC (excel_get_row_offset), book);
+    gtk_box_pack_start (GTK_BOX (hbox), tmp, FALSE, FALSE, 5);
+    gtk_box_pack_start (GTK_BOX (hbox), book->rowspin, FALSE, FALSE, 5);
+
+    hbox = gtk_hbox_new (TRUE, 5);
+    tmp = gtk_button_new_with_label("OK");
+    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (hbox), 
+                        tmp, TRUE, TRUE, FALSE);
+    gtk_signal_connect_object (GTK_OBJECT (tmp), "clicked", 
+                               GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+                               GTK_OBJECT (w));
+    gtk_widget_grab_default (tmp);
+
+    tmp = gtk_button_new_with_label("Cancel");
+    GTK_WIDGET_SET_FLAGS (tmp, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX (hbox), 
+                        tmp, TRUE, TRUE, FALSE);
+    gtk_signal_connect (GTK_OBJECT (tmp), "clicked", 
+			GTK_SIGNAL_FUNC (excel_menu_cancel), book);
+    gtk_signal_connect_object (GTK_OBJECT (tmp), "clicked", 
+                               GTK_SIGNAL_FUNC (gtk_widget_destroy), 
+                               GTK_OBJECT (w));
+
+    gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 5);
+
+    gtk_container_add(GTK_CONTAINER(w), vbox);
+
+    gtk_widget_show_all(w);
+    gtk_main();
+}
 
 int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    char *errtext)
 {
     FILE *fp;
+    struct ebook book;
     int err = 0;
-
+    
+    book.col_offset = book.row_offset = 0;
+    book.bailout = 0;
     errbuf = errtext;
     *errbuf = 0;
 
@@ -560,8 +755,8 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	fprintf(stderr, "%s\n", errbuf);
     } else {
 	int i, j, t, i_sheet;
-	int time_series = 0;
-	int ncols, maxcols = 0;
+	int label_strings, time_series = 0;
+	int skip, ncols, maxcols = 0;
 
 	lastrow--;
 	while (lastrow > 0 && !rowptr[lastrow].cells) lastrow--;
@@ -575,10 +770,30 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	    }
 	}
 	ncols = maxcols;
-
 	printf("nrows=%d, ncols=%d\n", lastrow + 1, ncols);
 
-	pdinfo->v = ncols + 1;
+	excel_menu(&book);
+	if (book.bailout) goto getout; 
+
+	label_strings = first_col_strings();
+
+	if (!label_strings && obs_column()) {
+	    int pd = consistent_date_labels();
+
+	    fprintf(stderr, "obs_column: pd = %d\n", pd);
+
+	    if (pd) {
+		pdinfo->pd = pd;
+		pdinfo->sd0 = atof(rowptr[1].cells[0]);
+		strcpy(pdinfo->stobs, rowptr[1].cells[0]);
+		pdinfo->time_series = TIME_SERIES;
+		time_series = 1;
+	    }
+	}
+
+	skip = (time_series || label_strings);
+
+	pdinfo->v = ncols + ((skip)? 0 : 1);
 	pdinfo->n = lastrow;
 	fprintf(stderr, "pdinfo->v = %d, pdinfo->n = %d\n",
 		pdinfo->v, pdinfo->n);
@@ -597,7 +812,7 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 	pdinfo->extra = 0; 
 
 	for (i=1; i<pdinfo->v; i++) {
-	    i_sheet = i-1;
+	    i_sheet = i - 1 + skip;
 	    pdinfo->varname[i][0] = 0;
 	    strncat(pdinfo->varname[i], rowptr[0].cells[i_sheet] + 1, 8);
 	    for (t=0; t<pdinfo->n; t++) {
@@ -610,15 +825,30 @@ int excel_get_data (const char *fname, double ***pZ, DATAINFO *pdinfo,
 		    atof(rowptr[t+1].cells[i_sheet]);
 	    }
 	}
+
+	if (label_strings) {
+	    char **S = NULL;
+
+	    pdinfo->markers = 1;
+	    if (allocate_case_markers(&S, pdinfo->n) == 0) {
+		pdinfo->markers = 1;
+		for (t=0; t<pdinfo->n; t++) {
+		    S[t][0] = 0;
+		    strncat(S[t], rowptr[t+1].cells[0] + 1, 8);
+		}
+		pdinfo->S = S;
+	    }
+	}
     }
 
-#ifdef notdef
+#ifdef EDEBUG
     if (!err) {
 	print_sheet();
         fflush(stdout);
     } 
 #endif
 
+ getout:
     free_sheet();
     
     return err;
