@@ -560,7 +560,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     list[0] = 1;
     list[1] = varno;
-    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {
@@ -865,7 +865,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 
     list[0] = 1;
     list[1] = varno;
-    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     nobs = t2 - t1 + 1;
 
     if (missvals(&(*pZ)[varno][t1], nobs)) {

@@ -1015,7 +1015,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	clear_model(&plotmod, pdinfo);
     }
 
-    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
     npoints = t2 - t1 + 1;
@@ -1440,7 +1440,7 @@ int gnuplot_3d (LIST list, const char *literal,
 	return E_FOPEN;
     }
 
-    _adjust_t1t2(NULL, list, &t1, &t2, *pZ, NULL);
+    _adjust_t1t2(NULL, list, &t1, &t2, (const double **) *pZ, NULL);
     /* if resulting sample range is empty, complain */
     if (t2 == t1) return -999;
 

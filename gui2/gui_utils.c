@@ -74,6 +74,8 @@ extern int session_saved;
 	                      || c == COVAR || c == VIEW_MODEL \
                               || c == VIEW_MODELTABLE || c == VAR)
 
+#define ARMA_BY_X12(m) (m->ci == ARMA && !na(m->lnL))
+
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
 static void file_viewer_save (GtkWidget *widget, windata_t *vwin);
@@ -81,6 +83,7 @@ static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin);
 static void add_vars_to_plot_menu (windata_t *vwin);
 static void add_dummies_to_plot_menu (windata_t *vwin);
 static void add_var_menu_items (windata_t *vwin);
+static void add_x12_output_menu_item (windata_t *vwin);
 static gint check_model_menu (GtkWidget *w, GdkEventButton *eb, 
 			      gpointer data);
 static void buf_edit_save (GtkWidget *widget, gpointer data);
@@ -1800,7 +1803,7 @@ windata_t *view_file (const char *filename, int editable, int del_file,
 	gtk_box_pack_start(GTK_BOX(vwin->vbox), 
 			   vwin->mbar, FALSE, TRUE, 0);
 	gtk_widget_show(vwin->mbar);
-    } else if (role != VIEW_FILE) { 
+    } else { /* was else if (role != VIEW_FILE) */
 	make_viewbar(vwin, (role == VIEW_DATA || role == CONSOLE));
     }
 
@@ -2354,6 +2357,13 @@ static void model_save_state (GtkItemFactory *ifac, gboolean s)
     flip(ifac, "/File/Save as icon and close", s);
 }
 
+static void arma_x12_menu_mod (windata_t *vwin)
+{
+    model_ml_menu_state(vwin->ifac, TRUE);
+    flip(vwin->ifac, "/Model data/coefficient covariance matrix", FALSE);
+    add_x12_output_menu_item(vwin);
+}
+
 /* ........................................................... */
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
@@ -2406,11 +2416,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 	else if (pmod->ci == NLS) nls_menu_mod(vwin->ifac);
 	else if (pmod->ci == ARMA) {
 	    arma_menu_mod(vwin->ifac);
-	    if (!na(pmod->lnL)) {
-		/* arma by x12arima */
-		model_ml_menu_state(vwin->ifac, TRUE);
-		flip(vwin->ifac, "/Model data/coefficient covariance matrix", 
-		     FALSE);
+	    if (ARMA_BY_X12(pmod)) {
+		arma_x12_menu_mod(vwin);
 	    }
 	}
 
@@ -2538,12 +2545,12 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 	    dumitem.callback = NULL;
 	    dumitem.callback_action = 0;
 	    dumitem.item_type = "<Separator>";
-	    sprintf(dumitem.path, _("%s"), mpath[0]);
+	    strcpy(dumitem.path, _(mpath[0]));
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 
 	    /* menu branch */
 	    dumitem.item_type = "<Branch>";
-	    sprintf(dumitem.path, _("%s"), mpath[1]);
+	    strcpy(dumitem.path, _(mpath[1]));
 	    gtk_item_factory_create_item(vwin->ifac, &dumitem, vwin, 1);
 
 	    /* "none" option */
@@ -2566,6 +2573,61 @@ static void add_dummies_to_plot_menu (windata_t *vwin)
 
     free(dumitem.path);
     free(radiopath);
+}
+
+/* ........................................................... */
+
+static void x12_output_callback (gpointer p, guint v, GtkWidget *w)
+{
+    windata_t *vwin = (windata_t *) p;
+    MODEL *pmod = vwin->data;
+
+    if (pmod != NULL && pmod->params != NULL &&
+	pmod->params[0] != NULL && *pmod->params[0] != '\0') {
+	char *p = strrchr(pmod->params[0], '.');
+
+	if (p != NULL && strlen(p) > 4) {
+	    gchar *tmp = g_strdup(pmod->params[0]);
+
+	    sprintf(p, ".%d", pmod->ID);
+	    rename(tmp, pmod->params[0]);
+	    g_free(tmp);
+	}
+	
+	view_file(pmod->params[0], 0, 0, 78, 350, VIEW_FILE);
+    }
+}
+
+/* ........................................................... */
+
+static void add_x12_output_menu_item (windata_t *vwin)
+{
+    GtkItemFactoryEntry x12item;
+    MODEL *pmod = vwin->data;
+    const char *mpath[] = {
+	N_("/Model data/x12sep"),
+	N_("/Model data/view X12ARIMA output")
+    };
+
+    if (pmod->params == NULL || pmod->params[0] == NULL)
+	return;
+
+    x12item.accelerator = NULL; 
+    x12item.callback_action = 0;
+
+    /* separator */
+    x12item.callback = NULL;
+    x12item.item_type = "<Separator>";
+    x12item.path = g_strdup(_(mpath[0]));
+    gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
+    g_free(x12item.path);
+
+    /* actual item */
+    x12item.callback = x12_output_callback;
+    x12item.item_type = NULL;
+    x12item.path = g_strdup(_(mpath[1]));
+    gtk_item_factory_create_item(vwin->ifac, &x12item, vwin, 1);
+    g_free(x12item.path);
 }
 
 /* ........................................................... */

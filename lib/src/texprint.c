@@ -307,7 +307,7 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
     /* dependent variable */
     *tmp = '\0';
     if (pmod->ci == ARMA) {
-	tex_escape(tmp, pmod->params[0]);
+	tex_escape(tmp, pdinfo->varname[pmod->list[4]]);
     } else {
 	tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     }

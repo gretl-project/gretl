@@ -371,7 +371,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 
     /* check for missing obs in sample */
     if ((missv = _adjust_t1t2(&mdl, mdl.list, &mdl.t1, &mdl.t2, 
-			      *pZ, &misst))) {
+			      (const double **) *pZ, &misst))) {
 	if (!dated_daily_data(pdinfo)) {
 	    sprintf(gretl_errmsg, _("Missing value encountered for "
 		    "variable %d, obs %d"), missv, misst);

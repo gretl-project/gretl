@@ -177,9 +177,7 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 
     pmod->ci = ARMA;
     pmod->ifc = 1;
-    pmod->t1 = pdinfo->t1;
-    pmod->t2 = pdinfo->t2;
-    pmod->nobs = pmod->t2 - pmod->t1 + 1; /* FIXME initial offset */
+    pmod->nobs = pmod->t2 - pmod->t1 + 1; 
     pmod->dfn = p + q;
     pmod->dfd = pmod->nobs - pmod->dfn;
     pmod->ncoeff = p + q + 1;
@@ -222,6 +220,31 @@ static void write_arma_model_stats (MODEL *pmod, const int *list,
 	    pmod->adjrsq = 1.0 - (pmod->ess * (pmod->nobs - 1) / den);
 	}
     }
+}
+
+static int add_unique_output_file (MODEL *pmod, const char *path)
+{
+    char fname[FILENAME_MAX];
+    char unique[FILENAME_MAX];
+    time_t t;
+    int err;
+
+    t = time(NULL);
+
+    sprintf(fname, "%s.out", path);
+    sprintf(unique, "%s.%ld", fname, (long) t);
+
+    free(pmod->params[0]);
+    pmod->params[0] = NULL;
+    
+    err = rename(fname, unique);
+    if (!err) {
+	pmod->params[0] = malloc(strlen(unique) + 1);
+	if (pmod->params[0] == NULL) err = 1;
+	else strcpy(pmod->params[0], unique);
+    } 
+
+    return err;
 }
 
 static int print_iterations (const char *path, PRN *prn)
@@ -480,50 +503,55 @@ populate_arma_model (MODEL *pmod, const int *list, const char *path,
     }
 }
 
-static void output_series_to_spc (const double *x, const DATAINFO *pdinfo, 
-				  FILE *fp, int lag, int offset)
+static void output_series_to_spc (const double *x, int t1, int t2, 
+				  FILE *fp)
 {
     int i, t;
 
     fputs(" data = (\n", fp);
 
     i = 0;
-    for (t=pdinfo->t1 + offset; t<=pdinfo->t2; t++) {
-	if (t - lag < 0) continue;
-	else if (na(x[t-lag])) {
-	    fputs("0.0 ", fp); /* FIXME: how do you say "NA" to x12arima? */
-	} else {
-	    fprintf(fp, "%g ", x[t-lag]);
-	}
+    for (t=t1; t<=t2; t++) {
+	fprintf(fp, "%g ", x[t]);
 	if ((i + 1) % 7 == 0) fputc('\n', fp);
 	i++;
     }
     fputs(" )\n", fp);
 }
 
-static int get_offset (const double *y, const DATAINFO *pdinfo, int p)
+
+static int check_for_missing (const double **Z, const DATAINFO *pdinfo,
+			      int v, int *t1, int *t2)
 {
-    int t, j, offset = 0;
+    int misst = 0;
+    int list[2];
 
-    for (t=pdinfo->t1; t<=pdinfo->t1 + p; t++) {
-	for (j=0; j<=p; j++) {
-	    if (t - j < 0 || na(y[t-j])) {
-		offset++;
-		break;
-	    }
-	}
-    }
+    list[0] = 1;
+    list[1] = v;
 
-    return offset;
+    *t1 = pdinfo->t1;
+    *t2 = pdinfo->t2;
+
+    if (_adjust_t1t2(NULL, list, t1, t2, Z, &misst)) {
+	gchar *msg;
+
+	msg = g_strdup_printf(_("Missing value encountered for "
+				"variable %d, obs %d"), v, misst);
+	gretl_errmsg_set(msg);
+	g_free(msg);
+	return 1;
+    }       
+
+    return 0;
 }
 
 static int write_spc_file (const char *fname, 
 			   const double **Z, const DATAINFO *pdinfo, 
-			   int v, int p, int q, int verbose) 
+			   int v, int p, int q, 
+			   int t1, int t2, int verbose) 
 {
     double x;
     FILE *fp;
-    int offset;
     int startyr, startper;
     char *s, tmp[8];
 
@@ -534,9 +562,7 @@ static int write_spc_file (const char *fname,
     setlocale(LC_NUMERIC, "C");
 #endif 
 
-    offset = get_offset(Z[v], pdinfo, p);
-
-    x = date(pdinfo->t1 + offset, pdinfo->pd, pdinfo->sd0);
+    x = date(t1, pdinfo->pd, pdinfo->sd0);
     startyr = (int) x;
     sprintf(tmp, "%g", x);
     s = strchr(tmp, '.');
@@ -546,7 +572,7 @@ static int write_spc_file (const char *fname,
     fprintf(fp, "series {\n period = %d\n title = \"%s\"\n", pdinfo->pd, 
 	    pdinfo->varname[v]);
     fprintf(fp, " start = %d.%d\n", startyr, startper);
-    output_series_to_spc(Z[v], pdinfo, fp, 0, offset);
+    output_series_to_spc(Z[v], t1, t2, fp);
     fputs("}\n", fp);
 
     fputs("Regression {\n Variables = (const)\n}\n", fp);
@@ -596,6 +622,7 @@ MODEL arma_x12_model (int *list, const double **Z,
     char cmd[MAXLEN];
 #endif
     int v, p, q;
+    int t1, t2;
     MODEL armod;
 
     _init_model(&armod, pdinfo);  
@@ -620,11 +647,17 @@ MODEL arma_x12_model (int *list, const double **Z,
 	return armod;
     }
 
+    /* missing observations check */
+    if (check_for_missing(Z, pdinfo, v, &t1, &t2)) {
+	armod.errcode = E_DATA;
+	return armod;
+    }	
+
     sprintf(varname, pdinfo->varname[v]);
 
     /* write out an .spc file */
     sprintf(path, "%s%c%s.spc", workdir, SLASH, varname);
-    write_spc_file(path, Z, pdinfo, v, p, q, verbose);
+    write_spc_file(path, Z, pdinfo, v, p, q, t1, t2, verbose);
 
     /* run the program */
 #if defined(WIN32)
@@ -643,10 +676,15 @@ MODEL arma_x12_model (int *list, const double **Z,
 	const double *y = Z[v];
 
 	sprintf(path, "%s%c%s", workdir, SLASH, varname); 
+	armod.t1 = t1;
+	armod.t2 = t2;
 	populate_arma_model(&armod, list, path, y, pdinfo, p + q + 1);
 	if (verbose && !armod.errcode) {
 	    print_iterations(path, prn);
 	}
+	if (!armod.errcode) {
+	    add_unique_output_file(&armod, path);
+	}	
     }
 
     return armod;

@@ -1089,7 +1089,8 @@ static int real_var (int order, const LIST inlist,
     t2 = pdinfo->t2;
     varlist[1] = depvars[0];
 
-    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, *pZ, &misst))) {
+    if ((missv = _adjust_t1t2(NULL, varlist, &t1, &t2, 
+			      (const double **) *pZ, &misst))) {
 	err = 1;
 	goto var_bailout;
     }

@@ -657,7 +657,7 @@ int omit_test (LIST omitvars, MODEL *orig, MODEL *new,
     return err;
 }
 
-static int ljung_box (int varno, int order, double **Z, 
+static int ljung_box (int varno, int order, const double **Z, 
 		      DATAINFO *pdinfo, double *lb)
 {
     double *x, *y, *acf;
@@ -1035,7 +1035,7 @@ int autocorr_test (MODEL *pmod, int order,
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
 	/* add Ljung-Box Q' */
-	if (ljung_box(v, order, *pZ, pdinfo, &lb) == 0) {
+	if (ljung_box(v, order, (const double **) *pZ, pdinfo, &lb) == 0) {
 	    pprintf(prn, "Ljung-Box Q' = %g %s = P(%s(%d) > %g) = %.3g\n", 
 		    lb, _("with p-value"), _("Chi-square"), order,
 		    lb, chisq(lb, order));

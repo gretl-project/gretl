@@ -86,7 +86,7 @@ void _criteria (const double ess, int nobs, int ncoeff,
 		PRN *prn);
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  double **Z, int *misst);
+		  const double **Z, int *misst);
 
 int _list_dups (const int *list, int ci);
 

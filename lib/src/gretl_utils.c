@@ -602,7 +602,7 @@ void _criteria (const double ess, int nobs, int ncoeff,
 /* ....................................................... */
 
 int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
-		  double **Z, int *misst)
+		  const double **Z, int *misst)
      /* drop first/last observations from sample if missing obs 
 	encountered -- also check for missing vals within the
         remaining sample */
