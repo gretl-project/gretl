@@ -29,6 +29,7 @@ char *commands[] = {
     "adf",      
     "ar",       
     "arch",
+    "boxplot",
     "chow", 
     "coint",
     "corc", 

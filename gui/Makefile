@@ -68,12 +68,13 @@ PROG  = gretl_x11
 SRCS = gretl.c lib.c gui_utils.c callbacks.c dialogs.c ssheet.c \
 	datafiles.c database.c fileselect.c gpt_control.c session.c \
 	webget.c calculator.c htmlprint.c guiprint.c exitprompt.c \
-	../cli/common.c 
+	../cli/common.c boxplots.c
 HDRS = gretl.h lib.h gui_utils.h callbacks.h dialogs.h session.h \
 	gretltypes.h webget.h htmlprint.h guiprint.h
 OBJS = gui_utils.o lib.o gretl.o callbacks.o dialogs.o ssheet.o \
 	datafiles.o database.o fileselect.o gpt_control.o session.o \
-	webget.o calculator.o htmlprint.o guiprint.o exitprompt.o
+	webget.o calculator.o htmlprint.o guiprint.o exitprompt.o \
+	boxplots.o
 COMPILE = $(CC) -c -I$(srcdir) $(CFLAGS) $(GUI_CFLAGS) $(EXTRAI)
 
 .c.o:

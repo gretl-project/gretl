@@ -38,6 +38,7 @@ enum extra_cmds {
     GR_XY,
     GR_IMP,
     GR_DUMMY,
+    GR_BOX,
     PANEL,    
     COMPACT,
     CONFINT,

@@ -115,4 +115,7 @@ double *copyvec (const double *src, const int n);
 
 int ijton (const int i, const int j, const int lo);
 
+int ztox (const int i, double *px, const DATAINFO *pdinfo, 
+	  const double *Z);
+
 #endif /* UTILS_H */

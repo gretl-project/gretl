@@ -118,9 +118,6 @@ int *n_model_cmds = NULL;
 char errline[MAXLEN] = "";
 char last_model = 's';
 
-/* for console and other uses */
-GdkFont *fixed_font = NULL;
-
 /* ........................................................... */
 
 int quiet_sample_check (MODEL *pmod)
@@ -779,7 +776,6 @@ void console (void)
     view_file(fname, 1, 0, 78, 400, "gretl console", 
 	      console_items, sizeof console_items);
     gtk_text_set_point(GTK_TEXT(console_view), 2);
-    fixed_font = gdk_font_load (fontspec);
 }
 
 /* ........................................................... */
@@ -1201,8 +1197,6 @@ static void print_test_to_window (GRETLTEST *test, GtkWidget *w)
     gchar *tempstr;
 
     if (w == NULL) return;
-
-    fixed_font = gdk_font_load (fontspec);
 
     tempstr = g_strdup_printf("%s -\n"
 			      "  Null hypothesis: %s\n"
@@ -2436,6 +2430,27 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata)
 			 datainfo, &paths);
     if (err < 0) errbox("gnuplot command failed");
     else graphmenu_state(TRUE);
+}
+
+/* ........................................................... */
+
+extern int 
+boxplots (const int *list, double **pZ, const DATAINFO *pdinfo);
+
+void do_box_graph (GtkWidget *widget, dialog_t *ddata)
+{
+    char *edttext;
+    gint err; 
+
+    edttext = gtk_entry_get_text (GTK_ENTRY (ddata->edit));
+    if (*edttext == '\0') return;
+
+    clear(line, MAXLEN);
+    sprintf(line, "boxplot %s", edttext);
+
+    if (check_cmd(line) || cmd_init(line)) return;
+    err = boxplots(command.list, &Z, datainfo);
+    if (err) errbox("boxplot command failed");
 }
 
 /* ........................................................... */

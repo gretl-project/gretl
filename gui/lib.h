@@ -128,6 +128,8 @@ void do_scatters (GtkWidget *widget, dialog_t *ddata);
 
 void do_graph (GtkWidget *widget, dialog_t *ddata);
 
+void do_box_graph (GtkWidget *widget, dialog_t *ddata);
+
 void do_dummy_graph (GtkWidget *widget, dialog_t *ddata);
 
 void display_selected (GtkWidget *widget, dialog_t *ddata);

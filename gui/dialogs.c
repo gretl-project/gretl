@@ -293,6 +293,11 @@ void graph_dialog (gpointer data, guint code, GtkWidget *widget)
     int i;
 
     switch (code) {
+    case GR_BOX:
+	gfunc = do_box_graph;
+	strcpy(title, "gretl: boxplots");
+	strcpy(request, "Enter var names or numbers:");
+	break;
     case GR_DUMMY:
 	gfunc = do_dummy_graph;
 	strcpy(title, "gretl: define plot");
@@ -525,12 +530,10 @@ void about_dialog (gpointer data)
     GtkWidget *tempwid, *notebook, *box, *label, *view, *vscroll;
     GdkPixmap *logo_pixmap;
     GdkBitmap *logo_mask;
-    GdkFont *fixed_font;
     char *tempstr, *no_gpl, buf[MAXSTR];
     GtkWidget *dialog;
     FILE *fd;
 
-    fixed_font = gdk_font_load(fontspec);
     no_gpl = 
 	g_strdup_printf ("Cannot find the license agreement file COPYING. "
 			 "Please make sure it's in %s", 

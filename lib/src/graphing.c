@@ -105,26 +105,6 @@ static int get_timevar (DATAINFO *pdinfo, char *timevar)
 
 /* ........................................................ */
 
-int _ztox (const int nlv, double *px, const DATAINFO *pdinfo, 
-	   const double *Z)
-{
-    int t, t1 = pdinfo->t1, t2 = pdinfo->t2, m = 0;
-    int n = pdinfo->n;
-    double xx;
-    
-    for (t=t1; t<=t2; t++) {
-	xx = Z(nlv, t);
-	if (na(xx)) continue;
-	else px[m++] = xx;
-    }
-    if (m) return m;
-
-    printf("\nNo obs. left for var.: %s\n", pdinfo->varname[nlv]);
-    return 0;
-}
-
-/* ........................................................ */
-
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
            const DATAINFO *pdinfo, const double *Z)
 {
@@ -202,7 +182,7 @@ int plot (const int *list, double *Z, const DATAINFO *pdinfo,
 
     if (l0 == 1) {
 	/* only one variable is to be plotted */
-	n = _ztox(vy, x, pdinfo, Z);
+	n = ztox(vy, x, pdinfo, Z);
 	minmax(t1, t2, x, &xmin, &xmax);
 	xrange = xmax - xmin;
 	cntrline = (floatgt(xmax, 0) && floatlt(xmin, 0))? 1 : 0;

@@ -178,6 +178,27 @@ int ijton (const int i, const int j, const int lo)
     return n;
 }
 
+/* ........................................................ */
+
+int ztox (const int i, double *px, const DATAINFO *pdinfo, 
+	  const double *Z)
+/* pull one series from data matrix; return number of valid
+   observations */
+{
+    int t, m = 0, n = pdinfo->n;
+    double xx;
+    
+    for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
+	xx = Z(i, t);
+	if (na(xx)) continue;
+	else px[m++] = xx;
+    }
+    if (m == 0)
+	fprintf(stderr, "\nNo obs. left for var.: %s\n", 
+		pdinfo->varname[i]);
+    return m;
+}
+
 /* .......................................................  */
 
 int isdummy (const int varnum, const int t1, const int t2, 
@@ -1712,9 +1733,4 @@ int guess_panel_structure (double *Z, DATAINFO *pdinfo)
     }
     return panel;
 }
-
-
-
-
-
 

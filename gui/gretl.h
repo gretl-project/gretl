@@ -66,6 +66,7 @@ extern int plot_count;
 extern int popup_connected;
 
 extern GtkWidget *sample_label;
+extern GdkFont *fixed_font;
 
 extern int oflag, batch, data_file_open;
 extern int orig_vars;

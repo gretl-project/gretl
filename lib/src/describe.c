@@ -724,7 +724,7 @@ GRETLSUMMARY *summary (const int *list,
 		       print_t *prn) 
 {
     int mm, lo, len = pdinfo->t2 - pdinfo->t1 + 1;
-    int v, lv, *tmp = NULL;
+    int v, *tmp = NULL;
     GRETLSUMMARY *summ;
     double xbar, std, low, high, skew, kurt, *x;
 
@@ -743,9 +743,8 @@ GRETLSUMMARY *summary (const int *list,
     if ((x = malloc(len * sizeof *x)) == NULL) return NULL;
 
     for (v=1; v<=lo; v++)  {
-	lv = list[v];
 	x[0] = -999999.0;
-	summ->n = _ztox(lv, x, pdinfo, *pZ);
+	summ->n = ztox(list[v], x, pdinfo, *pZ);
 	if (summ->n == 0) return NULL;
 	if (summ->n == 1) {
 	    pprintf(prn, "Sample range has only one observation.");
@@ -880,8 +879,8 @@ int means_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
     x[0] = y[0] = -999999.0;
-    n1 = _ztox(list[1], x, pdinfo, Z);
-    n2 = _ztox(list[2], y, pdinfo, Z);
+    n1 = ztox(list[1], x, pdinfo, Z);
+    n2 = ztox(list[2], y, pdinfo, Z);
     if (n1 == 0 || n2 == 0) return 1;
     if (n1 == 1 || n2 == 1) {
 	pprintf(prn, "Sample range has only one observation.");
@@ -936,8 +935,8 @@ int vars_test (int *list, double *Z, const DATAINFO *pdinfo,
     if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
 
     x[0] = y[0] = -999999.0;
-    n1 = _ztox(list[1], x, pdinfo, Z);
-    n2 = _ztox(list[2], y, pdinfo, Z);
+    n1 = ztox(list[1], x, pdinfo, Z);
+    n2 = ztox(list[2], y, pdinfo, Z);
     if (n1 == 0 || n2 == 0) return 1;
     if (n1 == 1 || n2 == 1) {
 	pprintf(prn, "Sample range has only one observation.");

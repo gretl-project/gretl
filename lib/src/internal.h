@@ -103,9 +103,6 @@ double tcrit95 (const int df);
 
 int allocate_case_markers (char ***S, int n);
 
-int _ztox (const int nlv, double *px, const DATAINFO *pdinfo, 
-	   const double *Z);
-
 int _ztoxy (const int v1, const int v2, double *px, double *py, 
 	    const DATAINFO *pdinfo, const double *Z);
 

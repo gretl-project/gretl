@@ -142,6 +142,7 @@ char want_toolbar[6] = "true";
 char fontspec[MAXLEN] = 
 "-b&h-lucidatypewriter-medium-r-normal-sans-12-*-*-*-*-*-*-*";
 /* "-misc-fixed-medium-r-*-*-*-120-*-*-*-*-*-*" */
+GdkFont *fixed_font;
 
 #ifdef G_OS_WIN32
     char Rcommand[MAXSTR] = "RGui.exe";
@@ -269,6 +270,8 @@ GtkItemFactoryEntry data_items[] = {
       NULL, graph_dialog, GR_IMP, NULL },
     { "/Data/_Graph specified vars/X-Y with factor separation...", 
       NULL, graph_dialog, GR_DUMMY, NULL },
+    { "/Data/_Graph specified vars/Boxplots...", 
+      NULL, graph_dialog, GR_BOX, NULL },
     { "/Data/_Multiple scatterplots...", 
       NULL, graph_dialog, SCATTERS, NULL},
     { "/Data/sep2", NULL, NULL, 0, "<Separator>" },
@@ -1058,6 +1061,9 @@ static GtkWidget *make_main_window (int gui_get_data)
     /* create gretl toolbar */
     if (want_toolbar[0] == 't')
 	make_toolbar(mdata->w, main_vbox);
+
+    /* get a monospaced font for various windows */
+    fixed_font = gdk_font_load(fontspec);
 
     gtk_widget_show_all(mdata->w); 
 

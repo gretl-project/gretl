@@ -840,7 +840,6 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
 			GtkItemFactoryEntry menu_items[], int msize) 
 {
     GtkWidget *dialog, *close, *table;
-    GdkFont *fixed_font;
     GtkWidget *vscrollbar; 
     windata_t *vwin;
 
@@ -849,7 +848,6 @@ windata_t *view_buffer (print_t *prn, int hsize, int vsize,
     windata_init(vwin);
     vwin->action = action;
 
-    fixed_font = gdk_font_load(fontspec); 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
 
@@ -937,7 +935,6 @@ int view_file (char *filename, int editable, int del_file,
 	       GtkItemFactoryEntry menu_items[], int msize) 
 {
     GtkWidget *dialog, *close, *save = NULL, *table;
-    GdkFont *fixed_font;
     GtkWidget *vscrollbar; 
     extern GdkColor red, blue;
     void *colptr = NULL, *nextcolor = NULL;
@@ -958,7 +955,6 @@ int view_file (char *filename, int editable, int del_file,
     windata_init(vwin);
     strcpy(vwin->fname, filename);
 
-    fixed_font = gdk_font_load(fontspec); 
     hsize *= gdk_char_width(fixed_font, 'W');
     hsize += 48;
 
@@ -1349,12 +1345,10 @@ int view_model (print_t *prn, MODEL *pmod, int hsize, int vsize,
 {
     windata_t *vwin;
     GtkWidget *dialog, *close, *table, *scroller;
-    GdkFont *fixed_font;
 
     if ((vwin = mymalloc(sizeof *vwin)) == NULL) return 1;
     windata_init(vwin);
 
-    fixed_font = gdk_font_load(fontspec);
     hsize *= gdk_char_width (fixed_font, 'W');
     hsize += 48;
 
@@ -1981,9 +1975,12 @@ static void font_selection_ok (GtkWidget *w, GtkFontSelectionDialog *fs)
 {
     gchar *fstring = gtk_font_selection_dialog_get_font_name(fs);
 
-    if (strlen(fstring))
+    if (strlen(fstring)) {
 	strcpy(fontspec, fstring);
-    write_rc();
+	gdk_font_unref(fixed_font);
+	fixed_font = gdk_font_load(fontspec);
+	write_rc();
+    }
     g_free(fstring);
     gtk_widget_destroy(GTK_WIDGET (fs));
 }
