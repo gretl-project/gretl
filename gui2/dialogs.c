@@ -1468,3 +1468,96 @@ void varinfo_dialog (int varnum, int full)
     if (!full) gtk_main();
 }
 
+
+#if 1
+
+#include "gtkdatebutton.h"
+
+struct range_setting {
+    GtkWidget *dlg;
+    GtkWidget *startmaj;
+    GtkWidget *startmin;
+    GtkWidget *stopmaj;
+    GtkWidget *stopmin;
+    char *text;
+};
+
+static void free_rsetting (GtkWidget *w, struct range_setting *rset)
+{
+    free(rset);
+}
+
+static gboolean destroy_rset (GtkWidget *w, GtkWidget *dlg)
+{
+    gtk_widget_destroy(dlg);
+    return TRUE;
+}
+
+void sample_range_dialog (gpointer p, guint u, GtkWidget *w)
+{
+    GtkWidget *tempwid, *hbox;
+    GtkObject *adj;
+    struct range_setting *rset;
+
+    rset = mymalloc(sizeof *rset);
+    if (rset == NULL) return;
+
+    rset->dlg = gtk_dialog_new();
+    rset->startmin = NULL;
+    rset->stopmin = NULL;
+    rset->text = NULL;
+
+    g_signal_connect (G_OBJECT(rset->dlg), "destroy", 
+		      G_CALLBACK(free_rsetting), rset);
+
+    gtk_window_set_title(GTK_WINDOW(rset->dlg), _("gretl: set sample range"));
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (rset->dlg)->vbox), 10);
+    gtk_container_set_border_width (GTK_CONTAINER 
+				    (GTK_DIALOG (rset->dlg)->action_area), 5); 
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (rset->dlg)->vbox), 5);
+    gtk_window_set_position (GTK_WINDOW (rset->dlg), GTK_WIN_POS_MOUSE);
+
+    hbox = gtk_hbox_new(FALSE, 5);
+
+    /* spinner for starting obs */
+    adj = gtk_adjustment_new(datainfo->t1, 
+			     0, datainfo->n,
+			     1, 1, 1);
+    rset->startmaj = gtk_date_button_new (GTK_ADJUSTMENT(adj), 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(rset->startmaj), strlen(datainfo->endobs) + 1);
+    gtk_box_pack_start(GTK_BOX(hbox), rset->startmaj, FALSE, FALSE, 5);
+
+    /* spinner for ending obs */
+    adj = gtk_adjustment_new(datainfo->t2, 
+			     0, datainfo->n, 
+			     1, 1, 1);
+    rset->stopmaj = gtk_date_button_new(GTK_ADJUSTMENT(adj), 1.0);
+    gtk_entry_set_width_chars(GTK_ENTRY(rset->stopmaj), strlen(datainfo->endobs) + 1);
+    gtk_box_pack_start(GTK_BOX(hbox), rset->stopmaj, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(rset->dlg)->vbox), 
+		       hbox, FALSE, FALSE, 0);
+    
+    /* Create the "OK" button */
+    tempwid = standard_button(GTK_STOCK_OK);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG (rset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(dummy_call), rset);
+    gtk_widget_grab_default (tempwid);
+
+    /* And a Cancel button */
+    tempwid = standard_button(GTK_STOCK_CANCEL);
+    GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
+    gtk_box_pack_start (GTK_BOX(GTK_DIALOG(rset->dlg)->action_area), 
+			tempwid, TRUE, TRUE, 0);
+    g_signal_connect (G_OBJECT (tempwid), "clicked", 
+		      G_CALLBACK(destroy_rset), rset->dlg);
+
+    gtk_widget_show_all(rset->dlg);
+
+    /* gtk_main(); */
+}
+
+#endif

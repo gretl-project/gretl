@@ -42,4 +42,6 @@ void copy_format_dialog (windata_t *vwin);
 
 void varinfo_dialog (int varnum, int full);
 
+void sample_range_dialog (gpointer p, guint u, GtkWidget *w);
+
 #endif /* DIALOGS_H */
