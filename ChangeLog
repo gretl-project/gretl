@@ -1,5 +1,5 @@
 7/07/2004 version 1.2.8
-- fixes for LaTeX versions of autoregressive models
+- fixes for LaTeX printing of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
 - fix for exporting time-series data to R version 1.9
@@ -17,10 +17,14 @@
   ('-c' or '--dump')
 - small fixes for nonlinear least squares
 - Replace fixed IP address for database server with hostname
-- Fix for copying from gretl windows using Ctrl-C on Windows
+- Fix for copying material from gretl using Ctrl-C on Windows
 - Update Windows version to gtk 2.4.3 runtime
 - add "restrict" command for general Wald test (not yet trans-
   lated, too new)
+- add "ok(x)" as a short synonym for "!missing(x)" in the 
+  context of the genr command
+- add a new "smpl" option: "smpl 100 --random" selects 100
+  observations from the dataset at random
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

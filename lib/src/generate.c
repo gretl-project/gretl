@@ -158,6 +158,7 @@ struct genr_func funcs[] = {
     { T_STDERR,   "stderr" },
     { T_CUM,      "cum" }, 
     { T_MISSING,  "missing" },
+    { T_OK,       "ok" },        /* opposite of missing */
     { T_MISSZERO, "misszero" },
     { T_CORR,     "corr" },
     { T_VCV,      "vcv" },
@@ -196,8 +197,8 @@ struct genr_func funcs[] = {
 #define MODEL_DATA_ELEMENT(f) (f == T_COEFF || f == T_STDERR || \
                                f == T_RHO || f == T_VCV)
 
-#define MISSVAL_FUNC(f) (f == T_MISSING || f == T_MISSZERO || \
-                         f == T_ZEROMISS)
+#define MISSVAL_FUNC(f) (f == T_MISSING || f == T_OK || \
+                         f == T_MISSZERO || f == T_ZEROMISS)
 
 #ifdef HAVE_MPFR
 # define MP_MATH(f) (f == T_MPOW || f == T_MLOG)
@@ -799,7 +800,8 @@ static int evaluate_genr (GENERATE *genr)
 	    atom->varnum == HNUM) {
 	    genr->err = add_model_series_to_genr(genr, atom);
 	}
-	else if (atom->func == T_UNIFORM || atom->func == T_NORMAL) {
+	else if (atom->func == T_UNIFORM || 
+		 atom->func == T_NORMAL) {
 	    genr->err = add_random_series_to_genr(genr, atom);
 	}
 	else if (atom->func == T_DIFF || atom->func == T_LDIFF ||
@@ -2293,6 +2295,10 @@ static double evaluate_missval_func (double arg, int fn)
     if (fn == T_MISSING) {
 	/* check whether obs is missing or not */
 	x = (na(arg))? 1.0 : 0.0;
+    }
+    if (fn == T_OK) {
+	/* check whether obs is present or not */
+	x = (na(arg))? 0.0 : 1.0;
     }
     else if (fn == T_MISSZERO) {
 	/* change missing obs to zero */

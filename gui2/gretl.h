@@ -135,7 +135,7 @@ void set_sample_label (DATAINFO *pdinfo);
 
 void restore_sample_state (gboolean s); 
 
-void restore_sample (void);
+void restore_sample (gretlopt opt);
 
 void refresh_data (void);
 

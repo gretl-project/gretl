@@ -4461,14 +4461,13 @@ char *get_xml_description (const char *fname)
 int check_atof (const char *numstr)
 {
     char *test;
-    extern int errno;
-
-    errno = 0;
 
     /* accept blank entries */
     if (*numstr == '\0') return 0;
 
-    (void) strtod(numstr, &test);
+    strtod(numstr, &test);
+
+    if (*test == '\0' && errno != ERANGE) return 0;
 
     if (!strcmp(numstr, test)) {
 	sprintf(gretl_errmsg, M_("'%s' -- no numeric conversion performed!"), numstr);
@@ -4486,8 +4485,7 @@ int check_atof (const char *numstr)
 
     if (errno == ERANGE) {
 	sprintf(gretl_errmsg, M_("'%s' -- number out of range!"), numstr);
-	return 1;
     }
 
-    return 0;
+    return 1;
 }

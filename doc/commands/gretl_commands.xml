@@ -1352,11 +1352,13 @@
 	</li>
 	<li><para>Dataset functions: <func>misszero</func> (replace
 	    the missing observation code in a given series with
-	    zeros), <func>zeromiss</func> (the inverse operation to
-	    <func>misszero</func>), <func>nobs</func> (return the
-	    number of valid observations in a given data series),
+	    zeros); <func>zeromiss</func> (the inverse operation to
+	    <func>misszero</func>); <func>nobs</func> (return the
+	    number of valid observations in a given data series);
 	    <func>missing</func> (at each observation, 1 if the
-	    argument has a missing value, 0 otherwise).</para>
+	    argument has a missing value, 0 otherwise);
+	    <func>ok</func> (the opposite of <func>missing</func>).
+	  </para>
 	</li>
 	<li><para>Pseudo-random numbers: <func>uniform</func>,
 	    <func>normal</func>.</para>
@@ -4378,7 +4380,8 @@
 	<altform><lit>smpl</lit> <repl>+i -j</repl></altform>
 	<altform><lit>smpl</lit> <repl>dumvar</repl> <lit>--dummy</lit></altform>
 	<altform><lit>smpl</lit> <repl>condition</repl> <lit>--restrict</lit></altform>
-	<altform><lit>smpl</lit> <lit>--no-missing [</lit> <repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <lit>--no-missing [</lit><repl>varlist</repl> <lit>]</lit></altform>
+	<altform><lit>smpl</lit> <repl>n</repl> <lit>--random</lit></altform>
 	<altform><lit>smpl full</lit></altform>
       </altforms>
       <examples>
@@ -4386,6 +4389,7 @@
 	<example>smpl 1960:2 1982:4</example>
 	<example>smpl +1 -1</example>
 	<example>smpl x > 3000 --restrict</example>
+	<example>smpl 100 --random</example>
       </examples>
     </usage>
 
@@ -4414,6 +4418,12 @@
 	<repl>varlist</repl> has a missing value at that observation;
 	otherwise observations are dropped if <emphasis>any</emphasis>
 	variable has a missing value.</para>
+
+      <para>With the <lit>--random</lit> flag, the specified number of
+	cases are selected from the full dataset at random.  If you
+	wish to be able to replicate this selection you should 
+	set the seed for the random number generator first (see the
+	<cmdref targ="set"/> command).</para>
 
       <para>The final form, <lit>smpl full</lit>, restores the full
 	data range.

@@ -334,6 +334,9 @@ static int qr_make_hac (MODEL *pmod, const double **Z, gretl_matrix *xpxinv)
 	gretl_matrix_add_to(vcv, gammaj);
     }
 
+    gretl_matrix_free(X);
+    X = NULL;
+
     gretl_matrix_multiply_mod(xpxinv, GRETL_MOD_TRANSPOSE,
 			      vcv, GRETL_MOD_NONE,
 			      wtj);
@@ -427,6 +430,11 @@ static int qr_make_hccme (MODEL *pmod, const double **Z,
     gretl_matrix_multiply(tmp1, X, tmp2);
     gretl_matrix_multiply(xpxinv, tmp2, tmp3); 
     gretl_matrix_multiply(tmp3, xpxinv, tmp2);
+
+    gretl_matrix_free(X);
+    X = NULL;
+    gretl_matrix_free(tmp1);
+    tmp1 = NULL;
 
     /* tmp2 now holds HCCM */
     for (i=0; i<n; i++) {
@@ -732,6 +740,9 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln,
     } else {
 	qr_make_regular_vcv(pmod, xpxinv);
     }
+
+    gretl_matrix_free(Q);
+    Q = NULL;
 
     /* get R^2 */
     qr_compute_r_squared(pmod, Z[pmod->list[1]], m);

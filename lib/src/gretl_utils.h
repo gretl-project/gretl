@@ -89,7 +89,7 @@ enum model_selection_criteria {
  
 double date (int nt, int pd, const double sd0);
 
-int isdummy (double *x, int t1, int t2);
+int isdummy (const double *x, int t1, int t2);
 
 void printlist (const int *list, const char *msg);
 

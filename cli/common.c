@@ -232,7 +232,8 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
     case SMPL:
 	if (cmd.opt) {
 	    if (restore_full_sample(&subZ, &fullZ, &Z,
-				    &subinfo, &fullinfo, &datainfo)) {
+				    &subinfo, &fullinfo, 
+				    &datainfo, cmd.opt)) {
 		pprintf(prn, "%s\n", get_gretl_errmsg());
 		return 1;
 	    }

@@ -38,7 +38,7 @@ int set_sample (const char *line, DATAINFO *pdinfo);
 
 int restore_full_sample (double ***subZ, double ***fullZ, double ***Z,
 			 DATAINFO **subinfo, DATAINFO **fullinfo,
-			 DATAINFO **datainfo); 
+			 DATAINFO **datainfo, gretlopt opt); 
 
 int count_missing_values (double ***pZ, DATAINFO *pdinfo, PRN *prn);
 

@@ -75,6 +75,7 @@ enum transformations {
     T_STDERR,
     T_CUM, 
     T_MISSING,
+    T_OK,
     T_MISSZERO,
     T_CORR,
     T_VCV,

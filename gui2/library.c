@@ -329,7 +329,7 @@ void free_command_stack (void)
 void clear_data (void)
 {
     *paths.datfile = 0;
-    restore_sample();
+    restore_sample(OPT_NONE);
     if (Z != NULL) free_Z(Z, datainfo); 
     clear_datainfo(datainfo, CLEAR_FULL);
     Z = NULL;
@@ -1207,19 +1207,20 @@ void gui_errmsg (const int errcode)
 /* ........................................................... */
 
 int bool_subsample (gretlopt opt)
-     /* opt = OPT_M  drop all obs with missing data values 
-	opt = OPT_O  sample using dummy variable
-	opt = OPT_R  sample using boolean expression
+     /* OPT_M  drop all obs with missing data values 
+	OPT_O  sample using dummy variable
+	OPT_R  sample using boolean expression
+	OPT_C  cumulate restrictions
      */
 {
     int err = 0;
 
-    restore_sample();
+    restore_sample(opt);
 
     if ((subinfo = mymalloc(sizeof *subinfo)) == NULL) 
 	return 1;
 
-    if (opt == OPT_M) {
+    if (opt & OPT_M) {
 	err = restrict_sample(NULL, &Z, &subZ, datainfo, subinfo, NULL, opt);
     } else {
 	err = restrict_sample(line, &Z, &subZ, datainfo, subinfo, NULL, opt);
@@ -4394,7 +4395,7 @@ int maybe_restore_full_data (int action)
 	    }
 
 	    if (resp == GRETL_YES) {
-		restore_sample();
+		restore_sample(OPT_NONE);
 		restore_sample_state(FALSE);
 	    } else if (resp == GRETL_CANCEL || resp < 0 || action == COMPACT) {
 		return 1;
@@ -5944,7 +5945,7 @@ int gui_exec_line (char *line,
 
     case SMPL:
 	if (cmd.opt) {
-	    restore_sample();
+	    restore_sample(cmd.opt);
 	    if ((subinfo = malloc(sizeof *subinfo)) == NULL) 
 		err = E_ALLOC;
 	    else 
@@ -5959,7 +5960,7 @@ int gui_exec_line (char *line,
 	    }
 	} 
 	else if (strcmp(line, "smpl full") == 0) {
-	    restore_sample();
+	    restore_sample(OPT_NONE);
 	    restore_sample_state(FALSE);
 	    chk = 1;
 	} else 

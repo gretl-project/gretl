@@ -1709,12 +1709,13 @@ static void build_main_popups (void)
 
 /* ........................................................... */
 
-void restore_sample (void)
+void restore_sample (gretlopt opt)
 {
     int err;
 
     err = restore_full_sample(&subZ, &fullZ, &Z,
-			      &subinfo, &fullinfo, &datainfo);
+			      &subinfo, &fullinfo, 
+			      &datainfo, opt);
     if (err) {
 	gui_errmsg(err);
 	return;
@@ -1724,7 +1725,7 @@ void restore_sample (void)
 
 static void restore_sample_callback (gpointer p, int verbose, GtkWidget *w)
 {
-    restore_sample();
+    restore_sample(OPT_NONE);
 
     if (verbose) {
 	infobox(_("Full sample range restored"));
