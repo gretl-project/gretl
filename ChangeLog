@@ -1,3 +1,7 @@
+version 1.0.9
+- add non-linear least squares ("nls" command, Levenberg-
+  Marquandt algorithm from minpack)
+
 05/02/03 version 1.0.8
 - Require lapack
 - Fixes to build for Mac OS X
