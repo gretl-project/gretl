@@ -1190,10 +1190,11 @@ static void really_set_variable_info (GtkWidget *w,
     int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
-    if (validate_varname(edttext)) {
-	return;
-    } else {
-	if (strcmp(datainfo->varname[v], edttext)) {
+    if (strcmp(datainfo->varname[v], edttext)) {
+	sprintf(line, "rename %d %s", v, edttext);
+	if (verify_and_record_command(line)) {
+	    return;
+	} else {
 	    strcpy(datainfo->varname[v], edttext);
 	    gui_changed = 1;
 	}

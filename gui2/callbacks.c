@@ -644,12 +644,16 @@ void gretl_callback (gpointer data, guint action, GtkWidget *widget)
 
 void delete_var_by_id (int id)
 {
-    if (dataset_drop_var(id, &Z, datainfo))
+    sprintf(line, "delete %d", id);
+    if (verify_and_record_command(line)) return;
+
+    if (dataset_drop_var(id, &Z, datainfo)) {
 	errbox(_("Out of memory reorganizing data set"));
-    else {
+    } else {
 	refresh_data();
-	if (id < datainfo->v - 1)
+	if (id < datainfo->v - 1) {
 	    infobox(_("Take note: variables have been renumbered"));
+	}
     }
 }
 

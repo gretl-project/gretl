@@ -35,7 +35,7 @@ print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
   
 void _bufspace (int n, PRN *prn)
 {
-    if (n > 0) while (n--) pputs(prn, " ");
+    if (n > 0) while (n--) pputc(prn, ' ');
 }
 
 /**
@@ -127,7 +127,7 @@ void text_print_model_confints (const CONFINT *cf, const DATAINFO *pdinfo,
 	print_coeff_interval(cf, pdinfo, i, prn);
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /* ........................................................... */
@@ -298,7 +298,7 @@ void printcorr (const CORRMAT *corrmat, const DATAINFO *pdinfo,
 	    }
         }
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /**
@@ -338,8 +338,8 @@ void printfreq (FREQDIST *freq, PRN *prn)
 	_bufspace(nlw, prn);
 	pprintf(prn, "%6d  ", freq->f[k]);
 	i = 36.0 * freq->f[k]/freq->n;
-	while (i--) pputs(prn, "*");
-	pputs(prn, "\n");
+	while (i--) pputc(prn, '*');
+	pputc(prn, '\n');
     }
 
     if (!na(freq->chisqu)) {
@@ -376,9 +376,11 @@ void print_smpl (const DATAINFO *pdinfo, int fulln, PRN *prn)
     pprintf(prn, "%s: %s - %s (n = %d)\n", _("Full data range"), 
 	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
     pprintf(prn, "%s:  %s - %s", ("Current sample"), date1, date2);
-    if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) 
-	pputs(prn, "\n");
-    else pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
+    if (pdinfo->t1 == 0 && pdinfo->t2 == pdinfo->n - 1) {
+	pputc(prn, '\n');
+    } else {
+	pprintf(prn, " (n = %d)\n", pdinfo->t2 - pdinfo->t1 + 1);  
+    }
 }
 
 /**
@@ -501,7 +503,7 @@ static void print_coeff_interval (const CONFINT *cf, const DATAINFO *pdinfo,
 		GRETL_DIGITS, cf->coeff[c-2] - cf->maxerr[c-2],
 		GRETL_DIGITS, cf->coeff[c-2] + cf->maxerr[c-2]);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /**
@@ -639,7 +641,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    _bufspace(9 - strlen(s), prn);
 	    pprintf(prn, "%3d) %s", ljnf, s);
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	lineno += 2;
 
 	/* print rectangular part, if any, of matrix */
@@ -665,7 +667,7 @@ void text_print_matrix (const double *rr, const int *list,
 	    }
 	    pprintf(prn, "   (%d\n", (nls)? ij2 : list[ij2]);
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 }
 
@@ -785,13 +787,15 @@ void _graphyzx (const int *list, const double *zy1, const double *zy2,
 	}
 	else _bufspace(13, prn);
 	for (j=0; j<=ncols+1; ++j) pprintf(prn, "%c", p[i][j]);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
     _bufspace(13, prn);
-    pputs(prn, "|");
-    for (j=0; j<=ncols; j++) if (j%10 == 0) pputs(prn, "+");
-    else pputs(prn, "-");
-    pputs(prn, "\n");
+    pputc(prn, '|');
+    for (j=0; j<=ncols; j++) {
+	if (j%10 == 0) pputc(prn, '+');
+	else pputc(prn, '-');
+    }
+    pputc(prn, '\n');
     _bufspace(14, prn);
     sprintf(word, "%g", xmin);
     lx = strlen(word);
@@ -835,7 +839,7 @@ static void fit_resid_head (const FITRESID *fr,
 	    fdate1, fdate2, nobs);
     pprintf(prn, _("Model estimation range: %s - %s"), date1, date2);
 
-    if (fr->nobs == nobs) pputs(prn, "\n");
+    if (fr->nobs == nobs) pputc(prn, '\n');
     else pprintf(prn, " (n = %d)\n", fr->nobs); 
 
     pprintf(prn, _("Standard error of residuals = %f\n"), fr->sigma);
@@ -875,7 +879,7 @@ void _printxs (double xx, int n, int ci, PRN *prn)
 
     printxx(xx, s, ci);
     ls = strlen(s);
-    pputs(prn, " ");
+    pputc(prn, ' ');
     _bufspace(n-3-ls, prn);
     pputs(prn, s);
 }
@@ -896,7 +900,7 @@ static void printstr_ten (PRN *prn, double xx, int *ls)
     lwrd = strlen(str);
     if (*ls + lwrd > 78) {
 	*ls = 0;
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
     pputs(prn, str);
     *ls += lwrd;
@@ -918,7 +922,7 @@ static void printstr (PRN *prn, double xx, int *ls)
     lwrd = strlen(str);
     if (*ls + lwrd > 78) {
 	*ls = 0;
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
     pputs(prn, str);
     *ls += lwrd;
@@ -942,7 +946,7 @@ static void printz (const double *z, const DATAINFO *pdinfo,
 	if (opt == 't') printstr_ten(prn, xx, &ls);
 	else printstr(prn, xx, &ls);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 #define SMAX 7            /* stipulated max. significant digits */
@@ -1178,7 +1182,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	} 
     }
     if (list[0] < l0) {
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	l0 = list[0];
     }
 
@@ -1208,13 +1212,13 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
     }
 
     if (oflag != 'o') { /* not by observations, but by variable */
-	if (list[0] > 0) pputs(prn, "\n");
+	if (list[0] > 0) pputc(prn, '\n');
 	for (j=1; j<=list[0]; j++) {
 	    pprintf(prn, _("Varname: %s\n"), pdinfo->varname[list[j]]);
 	    print_smpl (pdinfo, 0, prn);
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	    printz((*pZ)[list[j]], pdinfo, prn, oflag);
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
 	return 0;
     }
@@ -1271,7 +1275,7 @@ int printdata (LIST list, double ***pZ, const DATAINFO *pdinfo,
 	} /* end if nvj5 */
     } /* end for j loop */
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     lineno++;
 
     if (freelist) free(list);
@@ -1306,13 +1310,13 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
     fit_resid_head(fr, t1, t2, pdinfo, prn); 
 
     for (t=t1; t<=t2; t++) {
-	if (t == fr->t1 && t > t1) pputs(prn, "\n");
-	if (t == fr->t2 + 1) pputs(prn, "\n");
+	if (t == fr->t1 && t > t1) pputc(prn, '\n');
+	if (t == fr->t2 + 1) pputc(prn, '\n');
 
 	print_obs_marker(t, pdinfo, prn);
 
 	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	} else {
 	    int ast;
 
@@ -1333,7 +1337,8 @@ text_print_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 	}
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
+
     if (anyast) pputs(prn, _("Note: * denotes a residual in excess of "
 			       "2.5 standard errors\n"));
     return 0;
@@ -1360,7 +1365,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
     pprintf(prn, "%*s", UTF_WIDTH(_("prediction"), 14), _("prediction"));
     pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
     pprintf(prn, _("   95%% confidence interval\n"));
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     for (t=0; t<fr->nobs; t++) {
 	print_obs_marker(t + fr->t1, pdinfo, prn);
@@ -1371,7 +1376,7 @@ int text_print_fcast_with_errs (const FITRESID *fr,
 	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
 	pputs(prn, " -");
 	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     if (plot && fr->nobs > 3) {
@@ -1630,7 +1635,7 @@ int pprintf (PRN *prn, const char *template, ...)
 /**
  * pputs:
  * @prn: gretl printing struct.
- * @s: constant string to print,
+ * @s: constant string to print
  * 
  * Returns: 0 on successful completion, 1 on memory allocation
  * failure.
@@ -1669,3 +1674,45 @@ int pputs (PRN *prn, const char *s)
     return 0;
 }
 
+/**
+ * pputc:
+ * @prn: gretl printing struct.
+ * @c: character to print
+ * 
+ * Returns: 0 on successful completion, 1 on memory allocation
+ * failure.
+ */
+
+int pputc (PRN *prn, int c)
+{
+    if (prn == NULL) return 0;
+
+    if (prn->fp != NULL) {
+	fputc(c, prn->fp);
+	return 0;
+    }
+
+    if (prn->buf == NULL) return 1;
+
+    if (prn->format == GRETL_PRINT_FORMAT_FIXED) {
+	/* a fixed-length buffer */
+	prn->buf[0] = c;
+	prn->buf[1] = '\0';
+    } else {
+	size_t blen = strlen(prn->buf);
+
+	if (prn->bufsize - blen < 1024) { 
+	    char *tmp;
+
+	    prn->bufsize *= 2; 
+	    tmp = realloc(prn->buf, prn->bufsize); 
+	    if (tmp == NULL) return 1;
+	    prn->buf = tmp;
+	}
+
+	prn->buf[blen] = c;
+	prn->buf[blen + 1] = '\0';
+    }
+
+    return 0;
+}

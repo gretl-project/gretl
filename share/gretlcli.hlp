@@ -267,12 +267,14 @@ high frequency observations), "last" (uses the last observation), "first" and
 #
 delete
 @Dataset
-Usage:          delete
+Usage:          delete varnumber
 
-Removes the last (highest numbered) variable from the current data set.  Use
-with caution: no confirmation is asked.  Can be useful for getting rid of
-temporary dummy variables.  There is no provision for deleting any but the
-last variable.
+Removes the variable with the given number from the dataset.  Use with
+caution: no confirmation is asked, and any variables with higher ID numbers
+will be re-numbered.
+
+If no varnumber is given with this command, it deletes the last (highest
+numbered) variable from the dataset.
 
 #
 diff
@@ -1167,6 +1169,17 @@ quit
 
 Exit from gretl. ('q' is a shortcut; 'x' exits without a prompt to save
 output.)
+
+#
+rename
+@Dataset
+Usage:          rename varnumber newname
+
+Changes the name of the variable with identification number "varnumber" to
+"newname".  The varnumber must be between 1 and the number of variables in the
+dataset.  The new name must be of 8 characters maximum, must start with a
+letter, and must be composed of only letters, digits, and the underscore
+character.
 
 #
 reset

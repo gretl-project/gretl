@@ -214,7 +214,7 @@ static int aliased (char *cmd)
 	               c == IMPORT || \
 	               c == ENDLOOP || \
 	               c == SIM || \
-	               c == DELEET || \
+                       c == RENAME || \
 	               c == TESTUHAT || \
                        c == RESET || \
                        c == SYSTEM || \
@@ -300,6 +300,48 @@ static int parse_lagvar (const char *s, LAGVAR *plagv, DATAINFO *pdinfo)
     }
 
     return ret;
+}
+
+static void parse_rename_cmd (const char *line, CMD *cmd, 
+			      const DATAINFO *pdinfo)
+{
+    int v, vnum;
+    char vname[9];
+
+    line += strlen("rename ");
+
+    if (sscanf(line, "%d %8s", &vnum, vname) != 2) {
+	cmd->errcode = E_DATA;
+	return;
+    }
+
+    if (vnum > 999 || vnum < 1) {
+	cmd->errcode = E_DATA;
+	return;
+    } 
+
+    v = varindex(pdinfo, vname);
+    if (v < pdinfo->v && v != vnum) {
+	sprintf(gretl_errmsg, _("'%s': there is already a variable "
+				"of this name"), vname);
+	cmd->errcode = E_DATA;
+	return;
+    }
+
+    if (check_varname(vname)) {
+	cmd->errcode = E_DATA;
+	return;
+    }
+
+    free(cmd->param);
+    cmd->param = malloc(strlen(vname) + 1);
+    if (cmd->param == NULL) {
+	cmd->errcode = E_ALLOC;
+	return;
+    }
+    
+    strcpy(cmd->param, vname);
+    sprintf(cmd->str, "%d", vnum);
 }
 
 static void parse_outfile_cmd (char *line, CMD *cmd)
@@ -420,9 +462,15 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     } 
 
     /* the "outfile" command may have a filename */
-    if (command->ci == OUTFILE) {
+    else if (command->ci == OUTFILE) {
 	parse_outfile_cmd(line, command);
     }
+
+    /* the "rename" command calls for a variable number and a
+       new name */
+    else if (command->ci == RENAME) {
+	parse_rename_cmd(line, command, pdinfo);
+    }    
 
     /* commands that never take a list of variables */
     if (NO_VARLIST(command->ci)) {
@@ -464,6 +512,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == SEED ||
 	command->ci == LMTEST ||
 	command->ci == NULLDATA ||
+	command->ci == DELEET ||
 	(command->ci == PRINT && strstr(line, "\""))) {
 	command->nolist = 1;
 	if (!strncmp(line, "man ", 4)) n--;

@@ -130,9 +130,15 @@ int dataset_add_allocated_var (double *x, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo);
 
+int 
+dataset_drop_var_wrapper (const char *str, double ***pZ, DATAINFO *pdinfo);
+
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo);
 
 int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo);
+
+int rename_var_by_id (const char *str, const char *vname, 
+		      DATAINFO *pdinfo);
 
 int hidden_var (int i, const DATAINFO *pdinfo);
 

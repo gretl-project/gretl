@@ -634,9 +634,9 @@ int corrgram (int varno, int order, double ***pZ,
     /* print acf */
     for (t=0; t<acf_m; t++) {
 	pprintf(prn, "%5d)%7.3f", t + 1, acf[t]);
-	if ((t + 1) % 5 == 0) pputs(prn, "\n");
+	if ((t + 1) % 5 == 0) pputc(prn, '\n');
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     if (batch) { 
 	/* batch mode: use ASCII graphics, not gnuplot */
@@ -678,11 +678,11 @@ int corrgram (int varno, int order, double ***pZ,
 	}
 	for (k=0; k<pacf_m; k++) {
 	    pprintf(prn, "%5d)%7.3f", k+1, pacf[k]);
-	    if ((k + 1) % 5 == 0) pputs(prn, "\n");
+	    if ((k + 1) % 5 == 0) pputc(prn, '\n');
 	}
     }
-    pputs(prn, "\n");
-    if (pacf_m % 5 > 0) pputs(prn, "\n");
+    pputc(prn, '\n');
+    if (pacf_m % 5 > 0) pputc(prn, '\n');
 
     if (batch) {
 	goto acf_getout;
@@ -988,7 +988,7 @@ int periodogram (int varno, double ***pZ, const DATAINFO *pdinfo,
 	    hhat[t-1] = xx;
 	}
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     if (do_graph) {
 #ifdef ENABLE_NLS
@@ -1026,7 +1026,7 @@ static void printf15 (double zz, PRN *prn)
     if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 15), 
 			_("undefined"));
     else {
-	pputs(prn, " ");
+	pputc(prn, ' ');
 	gretl_print_fullwidth_double(zz, 5, prn);	
     }
 }
@@ -1039,7 +1039,7 @@ static void printf17 (double zz, PRN *prn)
     if (na(zz)) pprintf(prn, "%*s", UTF_WIDTH(_("undefined"), 17),
 			_("undefined"));
     else {
-	pputs(prn, " ");
+	pputc(prn, ' ');
 	gretl_print_value(zz, prn);
     }
 }
@@ -1077,7 +1077,7 @@ static void prhdr (const char *str, const DATAINFO *pdinfo,
     ntodate(date1, pdinfo->t1, pdinfo);
     ntodate(date2, pdinfo->t2, pdinfo);
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     sprintf(tmp, _("%s, using the observations %s - %s"), str, date1, date2);
     center_line(tmp, prn, 0);
@@ -1134,12 +1134,12 @@ void print_summary (GRETLSUMMARY *summ,
 	printf15(summ->xmedian[v], prn);
 	printf15(summ->xpx[v], prn);
 	printf15(summ->xpy[v], prn);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 
     if (pause) page_break(lo + 2, &lineno, 0);
     lineno += 2;
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     if (lo > 1) pprintf(prn, "\n%s  ", _("Variable"));
     pputs(prn, _("      S.D.            C.V.           "
@@ -1160,9 +1160,9 @@ void print_summary (GRETLSUMMARY *summ,
 	printf15(xcv, prn);
 	printf15(summ->xskew[v], prn);
 	printf15(summ->xkurt[v], prn);
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /**

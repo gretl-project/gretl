@@ -24,6 +24,7 @@
 
 #include <dirent.h>
 #include <unistd.h>
+#include <errno.h>
 
 #ifndef WIN32
 # include <glib.h>
@@ -1602,6 +1603,41 @@ int dataset_add_scalar (double ***pZ, DATAINFO *pdinfo)
 
 /* ......................................................  */
 
+static int varnum_from_string (const char *str, DATAINFO *pdinfo)
+{
+    int varno;
+    char *test;
+    extern int errno;
+
+    errno = 0;
+
+    strtol(str, &test, 10);
+    if (*test != '\0' || !strcmp(str, test) || errno == ERANGE) {
+        return -1;
+    }
+
+    varno = atoi(str);
+
+    if (varno <= 0 || varno >= pdinfo->v) {
+	return -1;
+    } 
+    
+    return varno;
+}
+
+/* ......................................................  */
+
+int 
+dataset_drop_var_wrapper (const char *str, double ***pZ, DATAINFO *pdinfo)
+{
+    int varno = varnum_from_string(str, pdinfo);
+
+    if (varno < 0) return E_DATA;
+    else return dataset_drop_var(varno, pZ, pdinfo);
+}
+
+/* ......................................................  */
+
 int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
 {
     double **newZ;
@@ -1610,9 +1646,14 @@ int dataset_drop_var (int varno, double ***pZ, DATAINFO *pdinfo)
     VARINFO **varinfo;
     int i, v = pdinfo->v; 
 
+    if (varno <= 0 || varno >= v) {
+	return E_DATA;
+    }
+
     free(pdinfo->varname[varno]);
-    if (pdinfo->varinfo[varno] != NULL) 
+    if (pdinfo->varinfo[varno] != NULL) {
 	free(pdinfo->varinfo[varno]);
+    }
     free((*pZ)[varno]);
 
     for (i=varno; i<v-1; i++) {
@@ -1654,6 +1695,8 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
 
     if (delvars <= 0) return 0;
 
+    if (pdinfo->v <= 1) return E_DATA;
+
     for (i=v-delvars; i<v; i++) {
 	if (pdinfo->varname[i] != NULL) free(pdinfo->varname[i]);
 	if (pdinfo->varinfo[i] != NULL) free(pdinfo->varinfo[i]);
@@ -1677,6 +1720,25 @@ int dataset_drop_vars (int delvars, double ***pZ, DATAINFO *pdinfo)
     else pdinfo->varinfo = varinfo;
 
     pdinfo->v -= delvars;
+
+    return 0;
+}
+
+/* ........................................................... */
+
+int rename_var_by_id (const char *str, const char *vname, 
+		      DATAINFO *pdinfo)
+{
+    int varno = varnum_from_string(str, pdinfo);
+
+    if (varno < 0) return E_DATA;
+
+    /* should be pre-checked for validity of varname and
+       non-duplication (see interact.c under RENAME)
+    */
+
+    strcpy(pdinfo->varname[varno], vname);
+
     return 0;
 }
 

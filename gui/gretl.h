@@ -90,8 +90,7 @@ extern GdkFont *fixed_font;
 extern GtkTargetEntry gretl_drag_targets[];
 
 enum extra_cmds {
-    RENAME = NC,
-    RELABEL,
+    RELABEL = NC,
     VSETMISS,
     GSETMISS,
     SMPLDUM,

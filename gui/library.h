@@ -112,8 +112,6 @@ void do_random (GtkWidget *widget, dialog_t *ddata);
 
 void do_seed (GtkWidget *widget, dialog_t *ddata);
 
-void do_rename_var (GtkWidget *widget, dialog_t *ddata);
-
 void do_global_setmiss (GtkWidget *widget, dialog_t *ddata);
 
 void do_variable_setmiss (GtkWidget *widget, dialog_t *ddata);

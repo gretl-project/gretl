@@ -626,9 +626,9 @@ int check_varname (const char *varname)
 
     if (_reserved(varname)) return 1;
     
-    if (!(isalpha((unsigned char) varname[0]))) {
+    if (!(isalpha((unsigned char) *varname))) {
         sprintf(gretl_errmsg, _("First char of varname ('%c') is bad\n"
-               "(first must be alphabetical)"), varname[0]);
+               "(first must be alphabetical)"), *varname);
         return 1;
     }
 
@@ -1001,7 +1001,7 @@ int get_info (const char *hdrfile, PRN *prn)
     }
 
     if (i == 0) pputs(prn, _(" (none)\n"));
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     if (hdr != NULL) fclose(hdr);
     return 0;

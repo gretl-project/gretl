@@ -128,6 +128,9 @@ static int listbox_rename_var (const gchar *newname, gint varnum)
 {
     if (*newname == '\0' || validate_varname(newname)) return 1;
 
+    sprintf(line, "rename %d %s", varnum, newname);
+    if (verify_and_record_command(line)) return 1; /* FIXME: error reporting */
+
     strcpy(datainfo->varname[varnum], newname);
     data_status |= MODIFIED_DATA; 
     set_sample_label(datainfo);

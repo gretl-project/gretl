@@ -91,7 +91,8 @@
 	     <keyword>print</keyword>  
 	     <keyword>probit</keyword>
 	     <keyword>pvalue</keyword>  
-	     <keyword>quit</keyword>  
+	     <keyword>quit</keyword>
+             <keyword>rename</keyword> 
 	     <keyword>reset</keyword>
 	     <keyword>rhodiff</keyword> 
 	     <keyword>rmplot</keyword>

@@ -1146,7 +1146,7 @@ int db_get_series (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 	if (!err) {
 	    pprintf(prn, _("Series imported OK"));
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
     }
     

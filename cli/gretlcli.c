@@ -802,13 +802,32 @@ void exec_line (char *line, PRN *prn)
 
     case DELEET:
 	if (fullZ != NULL) {
-	    pputs(prn, _("Can't delete last variable when in sub-sample"
+	    pputs(prn, _("Can't delete a variable when in sub-sample"
 		    " mode\n"));
 	    break;
 	}	
-	if (datainfo->v <= 1 || dataset_drop_vars(1, &Z, datainfo)) 
+	if (*command.param != '\0') {
+	    /* delete a specified variable */
+	    err = dataset_drop_var_wrapper(command.param, &Z, datainfo);
+	} else {
+	    err = dataset_drop_vars(1, &Z, datainfo);
+	}
+	if (err) {
 	    pputs(prn, _("Failed to shrink the data set"));
-	else varlist(datainfo, prn);
+	} else {
+	    pputs(prn, _("Take note: variables have been renumbered"));
+	    pputc(prn, '\n');
+	    varlist(datainfo, prn);
+	}
+	break;
+
+    case RENAME:
+	err = rename_var_by_id(command.str, command.param, datainfo);
+	if (err) {
+	    errmsg(err, prn);
+	} else {
+	    varlist(datainfo, prn);
+	}
 	break;
 
     case END:

@@ -396,13 +396,13 @@ gretl_var_print_impulse_response (GRETL_VAR *var, int shock,
 		}
 	    }
 	    if (TEX_PRN(prn)) pputs(prn, "\\\\\n");
-	    else pputs(prn, "\n");
+	    else pputc(prn, '\n');
 	}
 
 	if (TEX_PRN(prn)) {
 	    pputs(prn, "\\end{tabular}\n\n");
 	} else {
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
 
 	if (pause && block < blockmax - 1) {
@@ -696,13 +696,13 @@ gretl_var_print_fcast_decomp (GRETL_VAR *var, int targ,
 		}
 	    }
 	    if (TEX_PRN(prn)) pputs(prn, "\\\\\n");
-	    else pputs(prn, "\n");
+	    else pputc(prn, '\n');
 	}
 
 	if (TEX_PRN(prn)) {
 	    pputs(prn, "\\end{tabular}\n\n");
 	} else {
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
 
 	if (pause && block < blockmax - 1) {
@@ -1233,11 +1233,11 @@ static int real_var (int order, const LIST inlist,
 		if (save) var->Fvals[k++] = F;
 	    }
 
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	    if (pause) page_break(0, NULL, 0);
 	}
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
  var_bailout:
 
@@ -1358,7 +1358,7 @@ int coint (int order, const LIST list, double ***pZ,
 
     /* step 1: test all the vars for unit root */
     for (i=1; i<=l0; i++) {
-	if (i > 1) pputs(prn, "\n");
+	if (i > 1) pputc(prn, '\n');
 	pprintf(prn, _("Step %d: testing for a unit root in %s\n"),
 		i, pdinfo->varname[list[i]]);
 	adf_test(order, list[i], pZ, pdinfo, prn);
@@ -1375,7 +1375,7 @@ int coint (int order, const LIST list, double ***pZ,
 	copylist(&cointlist, list);
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     pprintf(prn, _("Step %d: cointegration\n"), l0 + 1);
     
     coint_model = lsq(cointlist, pZ, pdinfo, OLS, 1, 0.0); 
@@ -1400,7 +1400,7 @@ int coint (int order, const LIST list, double ***pZ,
     strcpy(pdinfo->varname[nv], "uhat");
 
     /* Run ADF test on these residuals */
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     adf_test(order, pdinfo->v - 1, pZ, pdinfo, prn);
 
     pputs(prn, _("\nThere is evidence for a cointegrating relationship if:\n"
@@ -1656,7 +1656,7 @@ int ma_model (LIST list, double ***pZ, DATAINFO *pdinfo, PRN *prn)
 		    "ADJ       ESS      ADJ       ESS     \n");
 	}
 	pprintf(prn, "%5.2f %10.4g", a, mamod.ess);
-	if (step%4 == 0) pputs(prn, "\n");
+	if (step%4 == 0) pputc(prn, '\n');
 	else _bufspace(3, prn);
 	if (step == 1 || mamod.ess < essmin) {
 	    essmin = mamod.ess;
@@ -1829,9 +1829,9 @@ print_sigmas (const double **X, const double **Y, const double **Z,
 	    for (j=0; j<k; j++) {
 		pprintf(prn, "%#12.6g", P[i][j]);
 	    }
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
-	pputs(prn, "\n");
+	pputc(prn, '\n');
     }
 }
 
@@ -2089,11 +2089,11 @@ int gretl_var_print (GRETL_VAR *var, const DATAINFO *pdinfo, PRN *prn)
 		  "\\end{center}\n\n"
 		  "\\clearpage\n\n");
 	} else {
-	    pputs(prn, "\n");
+	    pputc(prn, '\n');
 	}
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 
     for (i=0; i<var->neqns; i++) {
 	gretl_var_print_impulse_response(var, i, 0, pdinfo, 0, prn);

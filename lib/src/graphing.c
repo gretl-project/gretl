@@ -229,7 +229,7 @@ static void drawline (int nn, PRN *prn)
 	if(t%10 == 0) pputs(prn, "+");
 	else pputs(prn, "-");
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
 }
 
 /**
@@ -273,7 +273,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
     if (x == NULL || y == NULL) return E_ALLOC;
 
     l0 = list[0];
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     ncols = 70;
     nc2 = ncols/2;
     vy = list[1];
@@ -318,7 +318,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    px[ix+1] = 'o';
 	    for (i=0; i<=ncols+1; i++) 
 		pprintf(prn, "%c", px[i]); 
-	    if (ix == ncols) pputs(prn, "\n");
+	    if (ix == ncols) pputc(prn, '\n');
 	}
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
@@ -357,7 +357,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	pprintf(prn, "%s\n", word);
     }
     else {
-	pputs(prn, "\n");
+	pputc(prn, '\n');
 	sprintf(word, "        o-min = %g", ymin);
 	ls = strlen(word);
 	pputs(prn, word);
@@ -379,7 +379,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	otherwise it prints an "x" for the first variable and an "o" for the
 	second variable.
     */
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     cntrline = (floatgt(xymax, 0) && floatlt(xymin, 0))? 1 : 0;
     if (cntrline) {
 	iz = (-xymin/xyrange)*ncols;
@@ -413,7 +413,7 @@ int plot (const LIST list, double **Z, const DATAINFO *pdinfo,
 	    px[iy+1] = 'x';
 	}
 	for (i=0; i<=ncols+1; i++) pprintf(prn, "%c", px[i]);
-	if (ix == ncols || iy == ncols) pputs(prn, "\n");
+	if (ix == ncols || iy == ncols) pputc(prn, '\n');
     }
 #ifdef ENABLE_NLS
 	setlocale(LC_NUMERIC, "");
@@ -459,7 +459,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 	return 1;
     }
 
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     l0 = list[0];
     vy = list[1];
 
@@ -494,7 +494,7 @@ int graph (const LIST list, double **Z, const DATAINFO *pdinfo,
 	_graphyzx(list, y, uhat, x, -m, pdinfo->varname[vy], 
 		  pdinfo->varname[vx], pdinfo, oflag, prn);
     }
-    pputs(prn, "\n");
+    pputc(prn, '\n');
     free(x); free(y); free(uhat);
     return 0;
 }
