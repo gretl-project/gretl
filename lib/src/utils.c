@@ -526,7 +526,7 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     double xx;
 
     if (pmod != NULL && pmod->wt_dummy) dwt = pmod->nwt;
-    
+
     for (i=1; i<=list[0]; i++) {
 	for (t=t1min; t<t2max; t++) {
 	    xx = Z[list[i]][t];

@@ -1362,8 +1362,8 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     _init_model(&hsk, pdinfo);
 
-    lo = list[0];
-    yno = list[1];
+    lo = list[0];         /* number of vars in original list */
+    yno = list[1];        /* ID number of original dependent variable */
     ncoeff = list[0] - 1;
     _rearrange(list);
 
@@ -1392,21 +1392,24 @@ MODEL hsk_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 
     /* get fitted value from last regression and process */
     for (t=hsk.t1; t<=hsk.t2; t++) {
-	zz = (*pZ)[pdinfo->v-1][t];
-	(*pZ)[pdinfo->v-1][t] = 1.0/sqrt(exp(zz));
+	zz = (*pZ)[pdinfo->v - 1][t];
+	(*pZ)[pdinfo->v - 1][t] = 1.0/sqrt(exp(zz));
     }    
 
-    /* run weighted least squares */
+    /* prepare to run weighted least squares */
     hsklist = malloc((lo + 2) * sizeof(int));
     if (hsklist == NULL) {
 	hsk.errcode = E_ALLOC;
 	free(uhat1);
 	return hsk;
     }
+    /* "hsklist" will be one variable longer than the original
+       regression list, because it includes a weight variable */
     hsklist[0] = lo + 1;
+    /* the variable last added to the dataset will be the weight var */
     nwt = hsklist[1] = pdinfo->v - 1;
-    for (v=lo; v>=3; v--) hsklist[v] = list[v-1];
-    if (hsk.ifc) hsklist[hsklist[0]] = 0;
+    for (v=lo+1; v>=3; v--) hsklist[v] = list[v-1];
+    /* put the original dependent variable in a position 2 */
     hsklist[2] = yno;
 
     clear_model(&hsk, NULL, NULL, pdinfo);
