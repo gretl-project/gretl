@@ -62,24 +62,6 @@ enum db_data_actions {
     DB_IMPORT
 };
 
-#ifndef OLD_GTK
-GtkItemFactoryEntry db_items[] = {
-    { N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL, GNULL },
-    { N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL, GNULL },
-    { N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL, GNULL },
-    { N_("/_Find"), NULL, menu_find, 1, NULL, GNULL },
-    { NULL, NULL, NULL, 0, NULL, GNULL }
-};
-#else
-GtkItemFactoryEntry db_items[] = {
-    { N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
-    { N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
-    { N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
-    { N_("/_Find"), NULL, menu_find, 1, NULL },
-    { NULL, NULL, NULL, 0, NULL }
-};
-#endif
-
 /* ........................................................... */
 
 static void set_time_series (DATAINFO *pdinfo)
@@ -540,19 +522,30 @@ static void build_db_popup (windata_t *win, int cb)
 
 /* ........................................................... */
 
-static void set_up_db_menu (GtkWidget *window, windata_t *win, 
-			    GtkItemFactoryEntry items[])
+static void set_up_db_menu (windata_t *win)
 {
-    gint n_items = 0;
+#ifndef OLD_GTK
+    GtkItemFactoryEntry db_items[] = {
+	{ N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL, GNULL },
+	{ N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL, GNULL },
+	{ N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL, GNULL },
+	{ N_("/_Find"), NULL, menu_find, 1, NULL, GNULL },
+    };
+#else
+    GtkItemFactoryEntry db_items[] = {
+	{ N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL},
+	{ N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
+	{ N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
+	{ N_("/_Find"), NULL, menu_find, 1, NULL },
+    };
+#endif
+    gint n_items = sizeof db_items / sizeof db_items[0];
 
-    while (items[n_items].path != NULL) n_items++;
-
-    win->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", 
-				     NULL);
+    win->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
 #ifdef ENABLE_NLS
     gtk_item_factory_set_translate_func(win->ifac, menu_translate, NULL, NULL);
 #endif
-    gtk_item_factory_create_items(win->ifac, n_items, items, win);
+    gtk_item_factory_create_items(win->ifac, n_items, db_items, win);
     win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
 }
 
@@ -659,7 +652,7 @@ void display_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
-    set_up_db_menu(dbwin->w, dbwin, db_items);
+    set_up_db_menu(dbwin);
     build_db_popup(dbwin, db_has_codebook(fname));
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
