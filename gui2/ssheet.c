@@ -530,10 +530,11 @@ static void get_data_from_sheet (GtkWidget *w, spreadsheet *sheet)
     data_status |= (GUI_DATA|MODIFIED_DATA);
     register_data(NULL, NULL, 0);
 
-    if (missobs)
+    if (missobs) {
 	infobox(_("Warning: there were missing observations"));
-    else
+    } else {
 	infobox(_("Data updated OK"));
+    }
 
     sheet_modified = 0;
 }
@@ -980,10 +981,11 @@ void show_spreadsheet (DATAINFO *pdinfo)
 		      G_CALLBACK(popup_menu_handler),
 		      sheet->popup);
 
-    if (pdinfo != NULL)
+    if (pdinfo != NULL) {
 	add_skel_to_sheet(sheet);
-    else 
+    } else {
 	add_data_to_sheet(sheet);
+    }
 
     gtk_widget_show(sheet->win);
 }
