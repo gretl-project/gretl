@@ -62,6 +62,9 @@ distdepend:
 dist: distdepend	
 	./tools/makedist
 
+snapshot: distdepend
+	./tools/makesnap
+
 distclean: clean
 	rm -f config.log config.cache config.status config.h 
 	rm -f gretl_sh gretl-config

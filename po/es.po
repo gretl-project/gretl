@@ -8,7 +8,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.996\n"
-"POT-Creation-Date: 2002-05-31 13:13-0400\n"
+"POT-Creation-Date: 2002-05-31 23:48-0400\n"
 "PO-Revision-Date: 2002-05-31 23:51-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -42,7 +42,7 @@ msgstr "la relación es lineal"
 msgid "prob(Chi-square(%d) > %f) = %f"
 msgstr "prob(Chi-cuadrado(%d) > %f) = %f"
 
-#: lib/src/compare.c:641 lib/src/graphing.c:676 lib/src/graphing.c:684
+#: lib/src/compare.c:641 lib/src/graphing.c:665 lib/src/graphing.c:673
 #: lib/src/printout.c:1364
 msgid "residual"
 msgstr "residuo"
@@ -1820,7 +1820,7 @@ msgstr "%s = 1 si %s es %d, 0 en otro caso"
 msgid "unit"
 msgstr "unidad"
 
-#: lib/src/generate.c:1837 lib/src/generate.c:1853 lib/src/graphing.c:615
+#: lib/src/generate.c:1837 lib/src/generate.c:1853 lib/src/graphing.c:604
 msgid "period"
 msgstr "periodo"
 
@@ -1983,60 +1983,60 @@ msgstr ""
 msgid "var no. %d duplicated in command list.\n"
 msgstr "var núm. %d duplicada en lista de commandos.\n"
 
-#: lib/src/graphing.c:527
+#: lib/src/graphing.c:516
 #, fuzzy, c-format
 msgid "%s versus %s (with least squares fit)"
 msgstr "%s %s (con ajuste mínimo cuadrático)"
 
-#: lib/src/graphing.c:531
+#: lib/src/graphing.c:520
 #, c-format
 msgid "Regression residuals (= observed - fitted %s)"
 msgstr ""
 
-#: lib/src/graphing.c:534
+#: lib/src/graphing.c:523
 #, c-format
 msgid "Actual and fitted %s"
 msgstr ""
 
-#: lib/src/graphing.c:537
+#: lib/src/graphing.c:526
 #, c-format
 msgid "Actual and fitted %s versus %s"
 msgstr ""
 
-#: lib/src/graphing.c:603
+#: lib/src/graphing.c:592
 msgid "Observation"
 msgstr "Observación"
 
-#: lib/src/graphing.c:743 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+#: lib/src/graphing.c:736 lib/src/pvalues.c:363 lib/src/pvalues.c:381
 msgid "left"
 msgstr "izquierda"
 
-#: lib/src/graphing.c:747 lib/src/pvalues.c:363 lib/src/pvalues.c:381
+#: lib/src/graphing.c:740 lib/src/pvalues.c:363 lib/src/pvalues.c:381
 msgid "right"
 msgstr "derecha"
 
-#: lib/src/graphing.c:765 lib/src/graphing.c:1080 lib/src/printout.c:1363
+#: lib/src/graphing.c:758 lib/src/graphing.c:1071 lib/src/printout.c:1363
 msgid "fitted"
 msgstr "ajustado"
 
-#: lib/src/graphing.c:766
+#: lib/src/graphing.c:759
 msgid "actual"
 msgstr "actual"
 
-#: lib/src/graphing.c:784
+#: lib/src/graphing.c:775
 msgid "least squares fit"
 msgstr "ajuste mínimo cuadrático"
 
-#: lib/src/graphing.c:992
+#: lib/src/graphing.c:983
 msgid "Test statistic for normality"
 msgstr "Contraste de normalidad"
 
-#: lib/src/graphing.c:993
+#: lib/src/graphing.c:984
 #, c-format
 msgid "Chi-squared(2) = %.3f, pvalue %.5f"
 msgstr "Chi-cuadrado(2)= %.3f valor-p %.5f"
 
-#: lib/src/graphing.c:1080
+#: lib/src/graphing.c:1071
 #, c-format
 msgid "95%% confidence interval"
 msgstr "Intervalo de confianza 95%%"
@@ -4199,7 +4199,7 @@ msgid "'-' using 1:($2) title 'test statistic' w impulses\n"
 msgstr "'-' using 1:($2) title 'estadístico de contraste' w impulses\n"
 
 #: gui/calculator.c:416 gui/database.c:294 gui/fileselect.c:495
-#: gui/fileselect.c:637 gui/gpt_control.c:1129 gui/session.c:1311
+#: gui/fileselect.c:637 gui/gpt_control.c:1136 gui/session.c:1311
 #: gui/session.c:1315 gui/session.c:1396 gui/session.c:1400 gui/library.c:2314
 #: gui/library.c:2623 gui/library.c:2664 gui/library.c:2790 gui/library.c:2823
 #: gui/library.c:2899 gui/library.c:2942
@@ -4365,7 +4365,7 @@ msgstr "gretl: tablas estadísticas"
 msgid "gretl: test calculator"
 msgstr "gretl: calculadora de contrastes"
 
-#: gui/calculator.c:993 gui/datafiles.c:437
+#: gui/calculator.c:993 gui/datafiles.c:438
 msgid "Find"
 msgstr "Buscar"
 
@@ -4373,9 +4373,9 @@ msgstr "Buscar"
 msgid "Test"
 msgstr "Contrastar"
 
-#: gui/calculator.c:1022 gui/database.c:567 gui/datafiles.c:443
-#: gui/gpt_control.c:618 gui/gpt_control.c:1363 gui/gpt_control.c:1383
-#: gui/gpt_control.c:1388 gui/gui_utils.c:1503 gui/gui_utils.c:1691
+#: gui/calculator.c:1022 gui/database.c:567 gui/datafiles.c:444
+#: gui/gpt_control.c:618 gui/gpt_control.c:1370 gui/gpt_control.c:1390
+#: gui/gpt_control.c:1395 gui/gui_utils.c:1503 gui/gui_utils.c:1691
 #: gui/gui_utils.c:1919 gui/gui_utils.c:2444 gui/gui_utils.c:2545
 #: gui/ssheet.c:633 gui/boxplots.c:173 gui/boxplots.c:201
 msgid "Close"
@@ -4425,7 +4425,7 @@ msgstr "Guardar histórico de instrucciones"
 msgid "Save command script"
 msgstr "Guardar guión de instrucciones"
 
-#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1915
+#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1909
 msgid "Save data file"
 msgstr "Guardar fichero de datos"
 
@@ -4781,7 +4781,7 @@ msgid "Retrieving data..."
 msgstr "Recuperando datos..."
 
 #: gui/database.c:233 gui/database.c:1325 gui/database.c:1359
-#: gui/database.c:1480 gui/datafiles.c:308
+#: gui/database.c:1480 gui/datafiles.c:309
 msgid "Error retrieving data from server"
 msgstr "Error recuperando datos desde el servidor"
 
@@ -4825,7 +4825,7 @@ msgstr "Importar"
 msgid "Find..."
 msgstr "Buscar..."
 
-#: gui/database.c:562 gui/datafiles.c:407
+#: gui/database.c:562 gui/datafiles.c:408
 msgid "Network status: OK"
 msgstr "Estado de red: correcto"
 
@@ -4888,12 +4888,12 @@ msgstr "No se pudo abrir base de datos"
 msgid "Network status: %s"
 msgstr "Estado de red: %s"
 
-#: gui/database.c:1392
+#: gui/database.c:1391
 #, c-format
 msgid "Couldn't gzopen %s for reading\n"
 msgstr "No se pudo abrir (gzopen) %s para lectura\n"
 
-#: gui/database.c:1398 gui/database.c:1405
+#: gui/database.c:1397 gui/database.c:1404
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "No se pudo abrir %s para escritura\n"
@@ -4911,7 +4911,7 @@ msgstr "base de datos instalada"
 msgid "Can't open folder %s"
 msgstr "No se puede abrir carpeta %s"
 
-#: gui/database.c:1576 gui/datafiles.c:340
+#: gui/database.c:1576 gui/datafiles.c:341
 msgid "No database files found"
 msgstr "No se han encontrado ficheros de base de datos"
 
@@ -4953,14 +4953,14 @@ msgstr "Usar valores final-de-periodo"
 msgid "Use start-of-period values"
 msgstr "Usar valores principio-de-periodo"
 
-#: gui/database.c:1689 gui/datafiles.c:666 gui/dialogs.c:829
-#: gui/gpt_control.c:813 gui/gui_utils.c:3409 gui/ssheet.c:143
+#: gui/database.c:1689 gui/datafiles.c:667 gui/dialogs.c:829
+#: gui/gpt_control.c:819 gui/gui_utils.c:3409 gui/ssheet.c:143
 #: gui/ssheet.c:155 gui/library.c:4488 gui/selector.c:764
 #: plugin/progress_bar.c:97
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: gui/database.c:1701 gui/datafiles.c:676 gui/dialogs.c:458
+#: gui/database.c:1701 gui/datafiles.c:677 gui/dialogs.c:458
 #: gui/gpt_control.c:626 gui/boxplots.c:171 gui/boxplots.c:200
 #: gui/selector.c:773
 msgid "Help"
@@ -4971,115 +4971,118 @@ msgid "Couldn't open descriptions file"
 msgstr "No se pudo abrir fichero de descripciones"
 
 #: gui/datafiles.c:103
-msgid "Couldn't open data descriptions file"
+#, fuzzy, c-format
+msgid ""
+"Couldn't open data descriptions file\n"
+"%s"
 msgstr "No se pudo abrir fichero de descripciones de los datos"
 
-#: gui/datafiles.c:155
+#: gui/datafiles.c:156
 msgid "gretl: data header"
 msgstr "gretl: cabecera de los datos"
 
-#: gui/datafiles.c:157
+#: gui/datafiles.c:158
 msgid "Failed to retrieve description of data"
 msgstr "Fallo al recuperar la descripción de los datos"
 
-#: gui/datafiles.c:158
+#: gui/datafiles.c:159
 #, c-format
 msgid "didn't get description from %s\n"
 msgstr "no se consiguió descripción de %s\n"
 
-#: gui/datafiles.c:229
+#: gui/datafiles.c:230
 msgid "Not installed"
 msgstr "No instalado"
 
-#: gui/datafiles.c:231
+#: gui/datafiles.c:232
 msgid "Unknown: access error"
 msgstr "Desconocido: error de acceso"
 
-#: gui/datafiles.c:235
+#: gui/datafiles.c:236
 msgid "Not up to date"
 msgstr "No actualizado"
 
-#: gui/datafiles.c:237
+#: gui/datafiles.c:238
 msgid "Up to date"
 msgstr "Actualizado"
 
-#: gui/datafiles.c:369
+#: gui/datafiles.c:370
 msgid "gretl: practice files"
 msgstr "gretl: ficheros de práctica"
 
-#: gui/datafiles.c:376
+#: gui/datafiles.c:377
 msgid "gretl: data files"
 msgstr "gretl: ficheros de datos"
 
-#: gui/datafiles.c:382
+#: gui/datafiles.c:383
 msgid "gretl: database files"
 msgstr "gretl: ficheros de base de datos"
 
-#: gui/datafiles.c:387
+#: gui/datafiles.c:388
 msgid "gretl: databases on server"
 msgstr "gretl: bases de datos en servidor"
 
-#: gui/datafiles.c:417
+#: gui/datafiles.c:418
 msgid "Get series listing"
 msgstr "Obtener listado de series"
 
-#: gui/datafiles.c:417
+#: gui/datafiles.c:418
 msgid "Open"
 msgstr "Abrir"
 
-#: gui/datafiles.c:428
+#: gui/datafiles.c:429
 msgid "Install"
 msgstr "Instalar"
 
-#: gui/datafiles.c:428
+#: gui/datafiles.c:429
 msgid "Info"
 msgstr "Información"
 
-#: gui/datafiles.c:479
+#: gui/datafiles.c:480
 msgid "File"
 msgstr "Fichero"
 
-#: gui/datafiles.c:479 gui/session.c:1241
+#: gui/datafiles.c:480 gui/session.c:1241
 msgid "Summary"
 msgstr "Resumen"
 
-#: gui/datafiles.c:480
+#: gui/datafiles.c:481
 msgid "Script"
 msgstr "Guión"
 
-#: gui/datafiles.c:480
+#: gui/datafiles.c:481
 msgid "Topic"
 msgstr "Tema"
 
-#: gui/datafiles.c:480
+#: gui/datafiles.c:481
 msgid "Data"
 msgstr "Datos"
 
-#: gui/datafiles.c:481 gui/datafiles.c:482
+#: gui/datafiles.c:482 gui/datafiles.c:483
 msgid "Database"
 msgstr "Base de datos"
 
-#: gui/datafiles.c:481 gui/datafiles.c:482
+#: gui/datafiles.c:482 gui/datafiles.c:483
 msgid "Source"
 msgstr "Fuente"
 
-#: gui/datafiles.c:482
+#: gui/datafiles.c:483
 msgid "Local status"
 msgstr "Estado local"
 
-#: gui/datafiles.c:613
+#: gui/datafiles.c:614
 msgid "gretl: panel data structure"
 msgstr "gretl: estructura de datos de panel"
 
-#: gui/datafiles.c:629
+#: gui/datafiles.c:630
 msgid "Stacked time series"
 msgstr "Series temporales apiladas"
 
-#: gui/datafiles.c:641
+#: gui/datafiles.c:642
 msgid "Stacked cross sections"
 msgstr "Secciones cruzadas apiladas"
 
-#: gui/datafiles.c:722
+#: gui/datafiles.c:723
 #, c-format
 msgid ""
 "Do you want to register the current data set\n"
@@ -5088,11 +5091,11 @@ msgstr ""
 "¿Desea registrar el conjunto de datos actual\n"
 "como datos %s?"
 
-#: gui/datafiles.c:724
+#: gui/datafiles.c:725
 msgid "gretl: time series data"
 msgstr "gretl: datos de series temporales"
 
-#: gui/datafiles.c:732
+#: gui/datafiles.c:733
 #, c-format
 msgid ""
 "The current data frequency, %d, is not recognized\n"
@@ -5514,7 +5517,7 @@ msgstr "controladores de gráfico gretl"
 msgid "Redraw"
 msgstr "Redibujar"
 
-#: gui/gpt_control.c:610 gui/gpt_control.c:804 gui/gui_utils.c:1493
+#: gui/gpt_control.c:610 gui/gpt_control.c:810 gui/gui_utils.c:1493
 #: gui/session.c:79 gui/session.c:1043
 msgid "Save"
 msgstr "Guardar"
@@ -5527,98 +5530,98 @@ msgstr "No se pudo acceder a la información del gráfico"
 msgid "Failed to copy graph file"
 msgstr "Fallo al copiar fichero de gráfico"
 
-#: gui/gpt_control.c:675 gui/gpt_control.c:715 gui/gpt_control.c:718
+#: gui/gpt_control.c:675 gui/gpt_control.c:718 gui/gpt_control.c:723
 msgid "Gnuplot error creating graph"
 msgstr "Error de Gnuplot al crear el gráfico"
 
-#: gui/gpt_control.c:677 gui/gpt_control.c:721 gui/session.c:272
+#: gui/gpt_control.c:677 gui/gpt_control.c:727 gui/session.c:272
 msgid "Graph saved"
 msgstr "Gráfico guardado"
 
-#: gui/gpt_control.c:734
+#: gui/gpt_control.c:740
 msgid "save graph"
 msgstr "guardar gráfico"
 
-#: gui/gpt_control.c:773
+#: gui/gpt_control.c:779
 msgid "gretl: save graph"
 msgstr "gretl: guardar gráfico"
 
-#: gui/gpt_control.c:793
+#: gui/gpt_control.c:799
 msgid "output type"
 msgstr "formato de la salida"
 
-#: gui/gpt_control.c:866
+#: gui/gpt_control.c:873
 msgid "Sorry, can't edit multiple scatterplots"
 msgstr "Lo siento, no se pueden editar los 'scatterplots' múltiples"
 
-#: gui/gpt_control.c:870
+#: gui/gpt_control.c:877
 msgid "Sorry, can't edit CUSUM plots"
 msgstr "Lo siento, no se pueden editar los gráficos CUSUM"
 
-#: gui/gpt_control.c:874
+#: gui/gpt_control.c:881
 msgid "Sorry, can't edit sampling distribution plots"
 msgstr "Lo siento, no se pueden editar los gráficos de distribución muestral"
 
-#: gui/gpt_control.c:915 gui/gpt_control.c:1030
+#: gui/gpt_control.c:922 gui/gpt_control.c:1037
 msgid "Failed to parse gnuplot file"
 msgstr "Fallo al pasar fichero gnuplot"
 
-#: gui/gpt_control.c:981
+#: gui/gpt_control.c:988
 msgid "Couldn't open graph file"
 msgstr "No se pudo abrir fichero de gráfico"
 
-#: gui/gpt_control.c:1002
+#: gui/gpt_control.c:1009
 msgid "Plot file is corrupted"
 msgstr "el fichero de gráfico está corrupto"
 
-#: gui/gpt_control.c:1331 gui/gpt_control.c:1376
+#: gui/gpt_control.c:1338 gui/gpt_control.c:1383
 msgid "Save as postscript (EPS)..."
 msgstr "Guardar como postscript (EPS)..."
 
-#: gui/gpt_control.c:1336 gui/gpt_control.c:1377
+#: gui/gpt_control.c:1343 gui/gpt_control.c:1384
 msgid "Save as PNG..."
 msgstr "Guardar como PNG..."
 
-#: gui/gpt_control.c:1340 gui/gpt_control.c:1378 gui/boxplots.c:156
+#: gui/gpt_control.c:1347 gui/gpt_control.c:1385 gui/boxplots.c:156
 #: gui/boxplots.c:192
 msgid "Save to session as icon"
 msgstr "Guardar a sesión como icono"
 
-#: gui/gpt_control.c:1343 gui/gpt_control.c:1379
+#: gui/gpt_control.c:1350 gui/gpt_control.c:1386
 msgid "Zoom..."
 msgstr ""
 
-#: gui/gpt_control.c:1351
+#: gui/gpt_control.c:1358
 msgid " Drag to define zoom rectangle"
 msgstr ""
 
-#: gui/gpt_control.c:1354 gui/gpt_control.c:1387
+#: gui/gpt_control.c:1361 gui/gpt_control.c:1394
 #, fuzzy
 msgid "Restore full view"
 msgstr "Recuperar XXX"
 
-#: gui/gpt_control.c:1359 gui/gpt_control.c:1381 gui/gui_utils.c:1495
+#: gui/gpt_control.c:1366 gui/gpt_control.c:1388 gui/gui_utils.c:1495
 msgid "Print..."
 msgstr "Imprimir..."
 
-#: gui/gpt_control.c:1469
+#: gui/gpt_control.c:1476
 #, fuzzy
 msgid "Failed to generate PNG file"
 msgstr "Fallo algenerar XXX"
 
-#: gui/gpt_control.c:1562
+#: gui/gpt_control.c:1569
 msgid "Failed to create pixbuf from file"
 msgstr ""
 
-#: gui/gpt_control.c:1571
+#: gui/gpt_control.c:1578
 msgid "Malformed PNG file for graph"
 msgstr ""
 
-#: gui/gpt_control.c:1760
+#: gui/gpt_control.c:1767
 msgid "gretl: gnuplot graph"
 msgstr "gretl: gráfico gnuplot"
 
-#: gui/gpt_control.c:1827
+#: gui/gpt_control.c:1834
 msgid " Click on graph for pop-up menu"
 msgstr ""
 
@@ -5658,7 +5661,7 @@ msgstr "/Archivo/Abrir datos/archivo de muestra/Ramanathan..."
 msgid "/File/Open data/sample file/Greene..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
 
-#: gui/gretl.c:209 gui/gretl.c:1373
+#: gui/gretl.c:209
 msgid "/File/Open data/sample file/Penn World Table..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Tabla mundial de Penn..."
 
@@ -5869,7 +5872,7 @@ msgstr ""
 msgid "/File/Open command file/practice file/Greene..."
 msgstr "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Greene..."
 
-#: gui/gretl.c:298 gui/gretl.c:1377
+#: gui/gretl.c:298
 msgid "/File/Open command file/practice file/Penn World Table..."
 msgstr ""
 "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Tabla mundial de "
@@ -6574,35 +6577,35 @@ msgstr "Simular..."
 msgid "Define new variable..."
 msgstr "Definir nueva variable"
 
-#: gui/gretl.c:1395
+#: gui/gretl.c:1389
 msgid "Full sample range restored"
 msgstr "Restaurado el rango muestral completo"
 
-#: gui/gretl.c:1440 gui/gretl.c:1523
+#: gui/gretl.c:1434 gui/gretl.c:1517
 msgid "Couldn't fork"
 msgstr "No se pudo bifurcar"
 
-#: gui/gretl.c:1468 gui/gretl.c:1661 gui/gretl.c:1669
+#: gui/gretl.c:1462 gui/gretl.c:1655 gui/gretl.c:1663
 msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
-#: gui/gretl.c:1476
+#: gui/gretl.c:1470
 msgid "Couldn't move existing .Rprofile out of the way"
 msgstr "No se pudo mover el fichero .Rprofile existente a otro lugar"
 
-#: gui/gretl.c:1482
+#: gui/gretl.c:1476
 msgid "Couldn't write R startup file"
 msgstr "No se pudo escribir fichero de inicio R"
 
-#: gui/gretl.c:1489
+#: gui/gretl.c:1483
 msgid "Write of R data file failed"
 msgstr "Falló la escritura del fichero de datos R"
 
-#: gui/gretl.c:1514
+#: gui/gretl.c:1508
 msgid "No command was supplied to start R"
 msgstr "No se suministró orden para iniciar R"
 
-#: gui/gretl.c:1556
+#: gui/gretl.c:1550
 msgid ""
 "Error restoring .Rprofile from\n"
 "the temporary copy, .Rprofile.gretltmp"
@@ -6610,47 +6613,47 @@ msgstr ""
 "Error recuperando .Rprofile desde\n"
 "la copia temporal, .Rprofile.gretltmp"
 
-#: gui/gretl.c:1650
+#: gui/gretl.c:1644
 msgid "Failed to open URL"
 msgstr "Fallo al abrir URL"
 
-#: gui/gretl.c:1682
+#: gui/gretl.c:1676
 msgid "launch calculator"
 msgstr "Lanzar calculadora"
 
-#: gui/gretl.c:1683
+#: gui/gretl.c:1677
 msgid "launch editor"
 msgstr "lanzar editor"
 
-#: gui/gretl.c:1684
+#: gui/gretl.c:1678
 msgid "open gretl console"
 msgstr "abrir consola gretl"
 
-#: gui/gretl.c:1685
+#: gui/gretl.c:1679
 msgid "session icon view"
 msgstr "vista de iconos de sesión"
 
-#: gui/gretl.c:1686
+#: gui/gretl.c:1680
 msgid "gretl website"
 msgstr "sitio web de gretl"
 
-#: gui/gretl.c:1687
+#: gui/gretl.c:1681
 msgid "gretl manual (PDF)"
 msgstr "manual de gretl (PDF)"
 
-#: gui/gretl.c:1688
+#: gui/gretl.c:1682
 msgid "show help"
 msgstr "mostrar ayuda"
 
-#: gui/gretl.c:1689
+#: gui/gretl.c:1683
 msgid "X-Y graph"
 msgstr "gráfico X-Y"
 
-#: gui/gretl.c:1690
+#: gui/gretl.c:1684
 msgid "Capture last graph for editing"
 msgstr "Coger último gráfico para edición"
 
-#: gui/gretl.c:1691
+#: gui/gretl.c:1685
 msgid "open dataset"
 msgstr "abrir conjunto de datos"
 

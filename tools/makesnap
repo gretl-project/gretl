@@ -1,0 +1,48 @@
+#!/bin/sh
+
+topdir=/home/cottrell/stats/esl/gretl
+version=$(date +%Y%m%d)
+tarfile="gretl-${version}.tar.gz"
+
+echo "making dist file for gretl $version using filename $tarfile"
+
+# get in place and make dist directory
+cd ${topdir}/..
+mkdir ${topdir}/../gretl-$version
+
+# create time stamp for updater
+# date > gretl/share/gretl.stamp
+
+# copy everything across
+cp -ap gretl/* gretl-$version
+
+# go in and clean in dist dir
+cd gretl-$version && make distclean
+
+# come back up a level
+cd ${topdir}/..
+
+# clean out additional stuff
+find gretl-$version -name "*CVS" | xargs rm -rf
+find gretl-$version -name "*.bak" | xargs rm -f
+find gretl-$version -name "*.old" | xargs rm -f
+find gretl-$version -name ".xvpics" | xargs rm -rf
+find gretl-$version -name "*~" | xargs rm -f
+find gretl-$version -name ".#*" | xargs rm -f
+
+# retain only the relevant parts of the doc tree
+rm -rf gretl-$version/doc
+mkdir gretl-$version/doc
+cp -ap gretl/doc/manual.pdf gretl-$version/doc
+cp -ap gretl/doc/manual-a4.pdf gretl-$version/doc
+cp -ap gretl/doc/manual-html gretl-$version/doc
+cp -ap gretl/doc/figures gretl-$version/doc
+find gretl-$version/doc -name "*CVS" | xargs rm -rf
+
+# make the archive and remove the dist dir
+rm -f $tarfile
+tar cvfz $tarfile gretl-$version
+rm -rf gretl-$version
+
+scp $tarfile root@ricardo:/usr/local/apache/share/htdocs/gretl-snapshot
+
