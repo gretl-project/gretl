@@ -212,6 +212,8 @@ static int data_option (int flag)
     switch (flag) {
     case OPT_S:
 	return GRETL_DATA_FLOAT;
+    case OPT_T:
+	return GRETL_DATA_TRAD;
     case OPT_O:
 	return GRETL_DATA_DOUBLE;
     case OPT_M:

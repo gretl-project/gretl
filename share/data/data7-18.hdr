@@ -7,7 +7,7 @@ DATA7-18:
     pop      = county population in thousands, Range 1.192 - 9149.81.
     educexp  = local government expenditures on education per student
                (in dollars), Range 3869-9438.
-    recrexp  = expenditures per capita on recreation and cultural
+    recexp   = expenditures per capita on recreation and cultural
                services (in dollars),  Range 0 - 3138.
     policexp = local government expenditures per capita on police
                protection (in dollars), Range 79 - 674.

@@ -864,6 +864,7 @@ static int isflag (int c)
     case 'm': return OPT_M;
     case 'r': return OPT_R;
     case 's': return OPT_S;
+    case 't': return OPT_T;
     case 'l': return OPT_L;
     case 'z': return OPT_Z;
     default: return 0;
@@ -877,6 +878,7 @@ char getflag (int opt)
     switch (opt) {
     case OPT_R: return 'r';
     case OPT_S: return 's';
+    case OPT_T: return 't';
     case OPT_O: return 'o';
     case OPT_C: return 'c';
     case OPT_M: return 'm';

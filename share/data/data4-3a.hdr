@@ -10,7 +10,7 @@ DATA4-3: Annual data on new housing units and their determinants
             (Range 3.5 - 9.7)
   intrate = New home mortgage yields in %, Table B-69, (Range 5.81 -  15.14)
 *)
-YEAR  HOUSING POP  GDP  UNEMP  INTRATE ;
+year housing pop gdp unemp intrate ;
 1 1963 1994
 BYOBS
 

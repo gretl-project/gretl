@@ -10,9 +10,9 @@ DATA7-17:
     Poland, and Czechoslovia.
     Y   = gini coefficient range 0<Yt<1: 0 is perfect equality Todaro,
           Development Economics in the Third World (Range 0.18 - 0.66)
-    Gnp = per capita gross national product,(base 1976) Source:same.
+    gnp = per capita gross national product,(base 1976) Source:same.
           Range 63 - 3603.
-    Gdp = growth rate (%) of gross domestic product. Source:  World
+    gdp = growth rate (%) of gross domestic product. Source:  World
           Development Report 1978, Range 0.3 - 10.5.
     pop = growth rate of population (0.3 - 3.5).
     urb = measure of people living in urban areas (%), Range 5 - 78.
@@ -24,6 +24,6 @@ DATA7-17:
     soc = 1 if country is socialist 0 if not
     All sources not mentioned are from the World Development Report 1978.
 *)
-Y gnp gdp   pop  urb lit edu agr soc;
+Y gnp gdp pop urb lit edu agr soc;
 1 1 40
 BYOBS

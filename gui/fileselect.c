@@ -39,7 +39,7 @@ struct extmap {
 
 static struct extmap action_map[] = {
     {SAVE_DATA, ".gdt"},
-    {SAVE_GZDATA, ".gz"},
+    {SAVE_GZDATA, ".gdt"},
     {SAVE_BIN1, ".gdt"},
     {SAVE_BIN2, ".gdt"},
     {SAVE_CMDS, ".inp"},
@@ -209,7 +209,7 @@ static char *get_filter (int action, gpointer data)
     char *filter;
     static struct win32_filtermap map[] = {
 	{SAVE_DATA, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
-	{SAVE_GZDATA, "compressed data files (*.gz)\0*.gz\0all files\0*\0"},
+	{SAVE_GZDATA, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
 	{SAVE_BIN1, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
 	{SAVE_BIN2, "gretl data files (*.gdt)\0*.gdt\0all files\0*\0"},
 	{SAVE_CMDS, "gretl command files (*.inp)\0*.inp\0all files\0*\0"},

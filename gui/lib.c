@@ -3450,8 +3450,10 @@ static int gui_exec_line (char *line,
 	    err = import_csv(&Z, datainfo, datfile, prn);
 	else if (check == GRETL_BOX_DATA)
 	    err = import_box(&Z, datainfo, datfile, prn);
-	else 	
-	    err = get_data(&Z, datainfo, datfile, &paths, data_status, stderr);
+	else if (check == GRETL_XML_DATA)
+	    err = get_xmldata(&Z, datainfo, datfile, &paths, data_status, prn);
+	else
+	    err = get_data(&Z, datainfo, datfile, &paths, data_status, prn);
 	if (err) {
 	    gui_errmsg(err);
 	    break;

@@ -22,6 +22,6 @@ Range 1005 - 1725
 ****data for above variables taken from Statistical Abstract for the US
    1995 tables 502 and 492 
 *)
-housing density value income popchang unemp localtax statetax ;
+housing density value income popchang unemprt localtax statetax ;
 1 1 40
 BYOBS

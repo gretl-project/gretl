@@ -490,8 +490,14 @@ void do_open_data (GtkWidget *w, gpointer data)
 	do_open_csv_box(trydatfile, OPEN_BOX);
 	return;
     }
-    else 	
-	err = get_data(&Z, datainfo, trydatfile, &paths, data_status, stderr);
+    else { /* native data */
+	PRN prn;
+	prn.buf = NULL; prn.fp = stderr;
+	if (datatype == GRETL_XML_DATA)
+	    err = get_xmldata(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+	else
+	    err = get_data(&Z, datainfo, trydatfile, &paths, data_status, &prn);
+    }
 
     if (err) {
 	gui_errmsg(err);
@@ -850,6 +856,7 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 	free(*pbuf); 
 	*pbuf = text;
 	infobox("Data info saved");
+	data_status |= MODIFIED_DATA;
     } else if (strlen(text))
 	g_free(text);
 }

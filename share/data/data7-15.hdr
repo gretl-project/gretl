@@ -13,7 +13,7 @@ DATA7-15:  Data compiled by Scott Murch.
                 (in thousands), Range 65 - 1755.
     amtchall  = amount spent by the challenger in the 1988 election
                 (in thousands), Range 0 - 1633.
-    resources = amount raised by the incumbent for the 1988 election
+    resource  = amount raised by the incumbent for the 1988 election
                 (in thousands), Range 86 - 1731.
     lcvrate   = environmental rating of the incumbent for 1988 as
                 determined by the League of Concervation Voters with 0
@@ -22,6 +22,6 @@ DATA7-15:  Data compiled by Scott Murch.
     demo      = dummy variable reflecting party affiliation.
                 Democrat = 1, Republican = 0.
 *)
-pvote pvote86 pvote84 vbush terms amtinc amtchall resources lcvrate demo ; 
+pvote pvote86 pvote84 vbush terms amtinc amtchall resource lcvrate demo ; 
 1 1 38
 BYOBS

@@ -59,7 +59,7 @@ DATA7-20:
     WINTM    = Dummy var telling whether the team that the player is on
                had more than 45 wins out of the 82 game schedule. 
                Sporting News.
-    ALLSTAT  = Dummy variable telling whether the player is on the All
+    ALLSTAR  = Dummy variable telling whether the player is on the All
                Star team in the 1990-1991 season.  The reason for using
                this years AS team is going on the theory that players make
                it onto the AS team the year after they deserved it.  1 =

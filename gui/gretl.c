@@ -174,12 +174,14 @@ GtkItemFactoryEntry data_items[] = {
     { "/File/_Save data", NULL, auto_store, 0, NULL },
     { "/File/Save data _as/_standard format...", NULL, file_save, 
       SAVE_DATA, NULL },
-    { "/File/Save data _as/_alternative formats/_gzipped ASCII...", NULL, 
+    { "/File/Save data _as/__gzipped...", NULL, 
       file_save, SAVE_GZDATA, NULL },
+#ifdef notdef
     { "/File/Save data _as/_alternative formats/_single precision binary...", 
       NULL, file_save, SAVE_BIN1, NULL },
-    { "/File/Save data _as/_alternative formats/_double precision binary...", 
+    { "/File/Save data _as/_alternative formats/_double precision binary...",
       NULL, file_save, SAVE_BIN2, NULL },
+#endif 
     { "/File/_Export data/_CSV...", NULL, file_save, 
       EXPORT_CSV, NULL },
     { "/File/_Export data/GNU _R...", NULL, file_save, 
@@ -266,7 +268,7 @@ GtkItemFactoryEntry data_items[] = {
       NULL, graph_dialog, GR_NBOX, NULL },
     { "/Data/sep2", NULL, NULL, 0, "<Separator>" },
     { "/Data/_Read info", NULL, open_info, 0, NULL },
-    { "/Data/Edit _header", NULL, edit_header, 0, NULL },
+    { "/Data/Edit _info", NULL, edit_header, 0, NULL },
     { "/Data/sep3", NULL, NULL, 0, "<Separator>" },
     { "/Data/_Summary statistics", NULL, do_menu_op, SUMMARY, NULL },
     { "/Data/_Correlation matrix", NULL, do_menu_op, CORR, NULL },
@@ -603,7 +605,11 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	case GRETL_NATIVE_DATA:
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, data_status, 
-			   stderr);
+			   &prn);
+	    break;
+	case GRETL_XML_DATA:
+	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, data_status, 
+			      &prn);
 	    break;
 	case GRETL_CSV_DATA:
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
@@ -720,17 +726,21 @@ void refresh_data (void)
 
 void menubar_state (gboolean s)
 {
-    if (mdata->ifac != NULL) {
-	flip(mdata->ifac, "/File/Clear data set", s);
-	flip(mdata->ifac, "/File/Save data", s);
-	flip(mdata->ifac, "/File/Save data as", s);
-	flip(mdata->ifac, "/File/Export data", s);
-	flip(mdata->ifac, "/File/Create data set", !s);
-	flip(mdata->ifac, "/Data", s);
-	flip(mdata->ifac, "/Sample", s);
-	flip(mdata->ifac, "/Variable", s);
-	flip(mdata->ifac, "/Model", s);
-    }
+    if (mdata->ifac == NULL) return;
+
+    flip(mdata->ifac, "/File/Clear data set", s);
+    flip(mdata->ifac, "/File/Save data", s);
+    flip(mdata->ifac, "/File/Save data as", s);
+    flip(mdata->ifac, "/File/Export data", s);
+    flip(mdata->ifac, "/File/Create data set", !s);
+    flip(mdata->ifac, "/Data", s);
+    flip(mdata->ifac, "/Sample", s);
+    flip(mdata->ifac, "/Variable", s);
+    flip(mdata->ifac, "/Model", s);
+
+    if (s && (data_status & BOOK_DATA))
+	flip(mdata->ifac, "/Data/Edit info", 0);
+
 }
 
 /* ........................................................... */

@@ -282,7 +282,10 @@ int main (int argc, char *argv[])
 	    exit(EXIT_FAILURE);
 	if (err == GRETL_NATIVE_DATA)
 	    err = get_data(&Z, datainfo, paths.datfile, &paths, 
-			   data_status, prn.fp);
+			   data_status, &prn);
+	if (err == GRETL_XML_DATA)
+	    err = get_xmldata(&Z, datainfo, paths.datfile, &paths, 
+			      data_status, &prn);
 	else if (err == GRETL_CSV_DATA)
 	    err = import_csv(&Z, datainfo, paths.datfile, &prn);
 	else if (err == GRETL_BOX_DATA)
@@ -861,7 +864,7 @@ void exec_line (char *line, PRN *prn)
 	    err = import_box(&Z, datainfo, datfile, prn);
 	else 
 	    err = get_data(&Z, datainfo, datfile, &paths, 
-			   data_status, prn->fp);
+			   data_status, prn);
 	if (err) {
 	    errmsg(err, prn);
 	    break;
@@ -1126,10 +1129,7 @@ void exec_line (char *line, PRN *prn)
 	    break;
 	}
 	if (strlen(command.param)) {
-	    if (oflag == OPT_Z && !has_gz_suffix(command.param))
-		pprintf(prn, "store: using filename %s.gz\n", command.param);
-	    else
-		pprintf(prn, "store: using filename %s\n", command.param);
+	    pprintf(prn, "store: using filename %s\n", command.param);
 	} else {
 	    pprintf(prn, "store: no filename given.\n");
 	    break;

@@ -7,7 +7,7 @@ DATA7-16:
     applfee = application fee in dollars (Range 10 - 50)
     tuition = tution fee in dollars (858 - 12960)
     room    = Room and Board in dollars (Range 2046 - 5416)
-    R_D     = Federal obligations for Research and Developement in
+    R_D     = Federal obligations for Research and Development in
               Sciences (in thousands of dollars) in 1986,
               Range 21418 - 188120.
     pp      = Private (1) or public(0)
@@ -16,6 +16,6 @@ DATA7-16:
     satm    = percentage of freshman having SAT-math over 600
               (Range 19 - 100)
 *)
-appl founded applfee tuition room  R_D pp satv satm ;
+applied founded applfee tuition room R_D pp satv satm ;
 1 1 34
 BYOBS

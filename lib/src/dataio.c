@@ -22,6 +22,10 @@
 #include <zlib.h>
 #include <ctype.h>
 #include <errno.h>
+#include "../../config.h"
+
+#include <libxml/xmlmemory.h>
+#include <libxml/parser.h>
 
 #define QUOTE '\''
 
@@ -31,6 +35,9 @@ static int writelbl (const char *lblfile, const int *list,
 static int writehdr (const char *hdrfile, const int *list, 
 		     const DATAINFO *pdinfo, const int opt);
 static double obs_float (const DATAINFO *pdinfo, const int end);
+static int write_xmldata (const char *fname, const int *list, 
+			  double *Z, const DATAINFO *pdinfo, int opt);
+
 
 static char STARTCOMMENT[3] = "(*";
 static char ENDCOMMENT[3] = "*)";
@@ -373,7 +380,7 @@ static int readdata (FILE *fp, const DATAINFO *pdinfo, double *Z)
 
 /* ................................................. */
 
-static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z)
+static int gz_readdata (gzFile fz, const DATAINFO *pdinfo, double *Z)
 {
     int i, t, n = pdinfo->n;
     
@@ -384,7 +391,7 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z)
 
 	for (i=1; i<pdinfo->v; i++) {
 	    for (t=0; t<n; t++) {
-		if (!gzread(fgz, &xx, sizeof xx)) {
+		if (!gzread(fz, &xx, sizeof xx)) {
 		    sprintf(gretl_errmsg, "WARNING: binary data read error at "
 			    "var %d", i);
 		    return 1;
@@ -395,7 +402,7 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z)
     }
     else if (pdinfo->bin == 2) { /* double-precision binary data */
 	for (i=1; i<pdinfo->v; i++) {
-	    if (!gzread(fgz, &Z(i, 0), n * sizeof(double))) {
+	    if (!gzread(fz, &Z(i, 0), n * sizeof(double))) {
 		sprintf(gretl_errmsg, 
 			"WARNING: binary data read error at var %d", i);
 		return 1;
@@ -410,7 +417,7 @@ static int gz_readdata (gzFile fgz, const DATAINFO *pdinfo, double *Z)
 	if (line == NULL) return E_ALLOC;
 	for (t=0; t<n; t++) {
 	    offset = 0L;
-	    if (!gzgets(fgz, line, llen - 1)) {
+	    if (!gzgets(fz, line, llen - 1)) {
 		sprintf(gretl_errmsg, "WARNING: ascii data read error at "
 			"obs %d", t + 1);
 		free(line);
@@ -916,10 +923,10 @@ int write_data (const char *fname, const int *list,
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     double xx;
 
-    strcpy(datfile, fname);
+    if (opt == 0 || opt == GRETL_DATA_GZIPPED) 
+	return write_xmldata(fname, list, Z, pdinfo, opt);
 
-    if (opt == GRETL_DATA_GZIPPED && !has_gz_suffix(datfile))
-	strcat(datfile, ".gz");
+    strcpy(datfile, fname);
 
     if (opt == GRETL_DATA_R && pdinfo->time_series == TIME_SERIES) 
 	opt = GRETL_DATA_R_ALT;
@@ -947,9 +954,9 @@ int write_data (const char *fname, const int *list,
     /* open files, other than for gzipped output */
     if (opt == GRETL_DATA_FLOAT || opt == GRETL_DATA_DOUBLE) 
 	fp = fopen(datfile, "wb");
-    else if (opt != GRETL_DATA_GZIPPED) 
+    else 
 	fp = fopen(datfile, "w");
-    if (opt != GRETL_DATA_GZIPPED && fp == NULL) return 1;
+    if (fp == NULL) return 1;
 
     if (opt == GRETL_DATA_FLOAT) { /* single-precision binary */
 	float x;
@@ -966,8 +973,8 @@ int write_data (const char *fname, const int *list,
 	    fwrite(&Z(list[i], 0), sizeof(double), n, fp);
     }
 
-    if (opt == GRETL_DATA_GZIPPED || opt == GRETL_DATA_CSV || 
-	opt == GRETL_DATA_OCTAVE || GRETL_DATA_R || opt == 0) { 
+    if (opt == GRETL_DATA_CSV || opt == GRETL_DATA_OCTAVE || 
+	GRETL_DATA_R || opt == GRETL_DATA_TRAD) { 
 	/* an ASCII variant of some sort */
 	pmax = malloc(l0 * sizeof *pmax);
 	if (pmax == NULL) return 1;
@@ -975,26 +982,7 @@ int write_data (const char *fname, const int *list,
 	    pmax[i-1] = get_precision(&Z(list[i], pdinfo->t1), tsamp);
     }
 
-    if (opt == GRETL_DATA_GZIPPED) { /* compressed ASCII */
-	gzFile fgz;
-
-	fgz = gzopen(datfile, "wb");
-	if (fgz == Z_NULL) return 1;
-	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	    if (pdinfo->markers && pdinfo->S != NULL) 
-		gzprintf(fgz, "%s ", pdinfo->S[t]);
-	    for (i=1; i<=l0; i++) {
-		if (na(Z(list[i], t)))
-		    gzprintf(fgz, "-999 ");
-		else 
-		    gzprintf(fgz, "%.*f ", pmax[i-1], Z(list[i], t));
-	    }
-	    gzprintf(fgz, "\n");
-	}
-	gzprintf(fgz, "\n");
-	gzclose(fgz);
-    }
-    else if (opt == 0) { /* plain ASCII */
+    if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
 	for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
 	    if (pdinfo->markers && pdinfo->S != NULL) 
 		fprintf(fp, "%s ", pdinfo->S[t]);
@@ -1123,7 +1111,7 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 {
     FILE * fp;
     char line[MAXLEN], *label, varname[9];
-    int len, v;
+    int v;
     
     gretl_errmsg[0] = '\0';
 
@@ -1139,16 +1127,18 @@ static int readlbl (const char *lblfile, DATAINFO *pdinfo)
 	    sprintf(gretl_errmsg, "Bad data label in %s", lblfile); 
             return 0;
         }
-        len = strlen(varname);
-        label = line + len;
+        label = line + strlen(varname);
         if (top_n_tail(label) == E_ALLOC) {
             fclose(fp);
             return E_ALLOC;
         }
 	v = varindex(pdinfo, varname);
 	if (v < pdinfo->v) strcpy(pdinfo->label[v], label);
+	else
+	    fprintf(stderr, "extraneous label for var '%s'\n", varname);
     }
-    if (fp != NULL) fclose(fp);
+    if (fp != NULL) 
+	fclose(fp);
     return 0;
 }
 
@@ -1252,7 +1242,7 @@ static int try_gdt (char *fname)
  * @ppaths: path information struct.
  * @data_status: indicator for whether a data file is currently open
  * in gretl's work space (not-0) or not (0).
- * @fp: file pointer from which data may be read.
+ * @prn: where messages should be written.
  * 
  * Read data from file into gretl's work space, allocating space as
  * required.
@@ -1262,11 +1252,11 @@ static int try_gdt (char *fname)
  */
 
 int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths, 
-	      const int data_status, FILE *fp) 
+	      const int data_status, PRN *prn) 
 {
 
     FILE *dat = NULL;
-    gzFile fgz = NULL;
+    gzFile fz = NULL;
     int err, gzsuff = 0;
     char hdrfile[MAXLEN], lblfile[MAXLEN];
 
@@ -1314,7 +1304,7 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     err = readhdr(hdrfile, pdinfo);
     if (err) return err;
     else 
-	fprintf(fp, "\nReading header file %s\n", hdrfile);
+	pprintf(prn, "\nReading header file %s\n", hdrfile);
 
     /* deal with case where first col. of data file contains
        "marker" strings */
@@ -1327,8 +1317,8 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
 
     /* Invoke data (Z) reading function */
     if (gzsuff) {
-	fgz = gzopen(datfile, "rb");
-	if (fgz == NULL) return E_FOPEN;
+	fz = gzopen(datfile, "rb");
+	if (fz == NULL) return E_FOPEN;
     } else {
 	if (pdinfo->bin)
 	    dat = fopen(datfile, "rb");
@@ -1338,20 +1328,20 @@ int get_data (double **pZ, DATAINFO *pdinfo, char *datfile, PATHS *ppaths,
     }
 
     /* print out basic info from the files read */
-    fprintf(fp, "periodicity: %d, maxobs: %d, "
+    pprintf(prn, "periodicity: %d, maxobs: %d, "
 	   "observations range: %s-%s\n", pdinfo->pd, pdinfo->n,
 	   pdinfo->stobs, pdinfo->endobs);
 
-    fprintf(fp, "\nReading ");
-    fprintf(fp, (pdinfo->time_series == TIME_SERIES) ? 
+    pprintf(prn, "\nReading ");
+    pprintf(prn, (pdinfo->time_series == TIME_SERIES) ? 
 	    "time-series" : "cross-sectional");
-    fprintf(fp, " datafile");
-    if (strlen(datfile) > 40) putc('\n', fp);
-    fprintf(fp, " %s\n\n", datfile);
+    pprintf(prn, " datafile");
+    if (strlen(datfile) > 40) pprintf(prn, "\n");
+    pprintf(prn, " %s\n\n", datfile);
 
     if (gzsuff) {
-	err = gz_readdata(fgz, pdinfo, *pZ); 
-	gzclose(fgz);
+	err = gz_readdata(fz, pdinfo, *pZ); 
+	gzclose(fz);
     } else {
 	err = readdata(dat, pdinfo, *pZ); 
 	fclose(dat);
@@ -2137,6 +2127,23 @@ int import_box (double **pZ, DATAINFO *pdinfo,
     return 0;
 }
 
+static int xmlfile (const char *fname)
+{
+    gzFile fz;
+    char test[6];
+    int ret = 0;
+
+    fz = gzopen(fname, "rb");
+    if (fz != Z_NULL) {
+	if (gzread(fz, test, 5)) {
+	    test[5] = '\0';
+	    if (!strcmp(test, "<?xml")) ret = 1;
+	} 
+	gzclose(fz);
+    } 
+    return ret;
+} 
+
 /**
  * detect_filetype:
  * @fname: name of file to examine.
@@ -2166,6 +2173,9 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     fp = fopen(fname, "r");
     if (fp == NULL)  
 	return GRETL_NATIVE_DATA; /* may be native file in different location */
+
+    if (xmlfile(fname))
+	return GRETL_XML_DATA;
 
     /* first look at extension */
     n = strlen(fname);
@@ -2209,9 +2219,7 @@ int detect_filetype (char *fname, PATHS *ppaths, PRN *prn)
     return GRETL_NATIVE_DATA; /* FIXME? */
 }
 
-#ifdef XML_NOT_YET
-
-/* ................................................. */
+#define UTF const xmlChar *
 
 static char *simple_fname (char *dest, const char *src)
 {
@@ -2231,12 +2239,51 @@ static char *simple_fname (char *dest, const char *src)
     return dest;
 }
 
+static char *xml_encode (char *buf)
+{
+    char *xmlbuf, *p;
+    size_t sz = strlen(buf) + 1;
+
+    p = buf;
+    while (*buf++) {
+	if (*buf == '&') sz += 4;
+	else if (*buf == '<') sz += 3;
+	else if (*buf == '>') sz += 3;
+    }
+    buf = p;
+
+    xmlbuf = malloc(sz);
+    if (xmlbuf == NULL) {
+	fprintf(stderr, "out of memory in XML encoding\n");
+	return NULL;
+    }
+    p = xmlbuf;
+    while (*buf) {
+	if (*buf == '&') {
+	    strcpy(p, "&amp;");
+	    p += 5;
+	} else if (*buf == '<') {
+	    strcpy(p, "&lt;");
+	    p += 4;
+	} else if (*buf == '>') {
+	    strcpy(p, "&gt;");
+	    p += 4;
+	} else {
+	    *p++ = *buf;
+	}
+	buf++;
+    }
+    xmlbuf[sz-1] = '\0';
+    return xmlbuf;
+}
+
 /**
  * write_xmldata:
  * @fname: name of file to write.
  * @list: list of variables to write.
  * @Z: data matrix.
  * @pdinfo: data information struct.
+ * @opt: if non-zero, write gzipped data, else plain.
  * 
  * Write out in xml a data file containing the values of the given set
  * of variables.
@@ -2245,16 +2292,25 @@ static char *simple_fname (char *dest, const char *src)
  * 
  */
 
-int write_xmldata (const char *fname, const int *list, 
-		   double *Z, const DATAINFO *pdinfo)
+static int write_xmldata (const char *fname, const int *list, 
+			  double *Z, const DATAINFO *pdinfo, int opt)
 {
-    int i, t, n = pdinfo->n;
+    int err, i, t, n = pdinfo->n;
     FILE *fp = NULL;
+    gzFile *fz = Z_NULL;
     int *pmax = NULL, tsamp = pdinfo->t2 - pdinfo->t1 + 1;
     char startdate[8], enddate[8], datname[MAXLEN], type[24];
+    char *xmlbuf;
 
-    fp = fopen(fname, "w");
-    if (fp == NULL) {
+    err = 0;
+    if (opt) {
+	fz = gzopen(fname, "wb");
+	if (fz == Z_NULL) err = 1;
+    } else {
+	fp = fopen(fname, "w");
+	if (fp == NULL) err = 1;
+    }
+    if (err) {
 	fprintf(stderr, "Couldn't open %s for writing\n", fname);
 	return 1;
     }
@@ -2272,11 +2328,20 @@ int write_xmldata (const char *fname, const int *list,
 
     simple_fname(datname, fname);
 
-    fprintf(fp, "<?xml version=\"1.0\"?>\n"
-	    "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
-	    "<gretldata name=\"%s\" frequency=\"%d\" "
-	    "startobs=\"%s\" endobs=\"%s\" ", 
-	    datname, pdinfo->pd, startdate, enddate);
+    if (opt) {
+	gzprintf(fz, "<?xml version=\"1.0\"?>\n"
+		 "<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
+		 "<gretldata name=\"%s\" frequency=\"%d\" "
+		 "startobs=\"%s\" endobs=\"%s\" ", 
+		 datname, pdinfo->pd, startdate, enddate);
+
+    } else {
+	fprintf(fp, "<?xml version=\"1.0\"?>\n"
+		"<!DOCTYPE gretldata SYSTEM \"gretldata.dtd\">\n\n"
+		"<gretldata name=\"%s\" frequency=\"%d\" "
+		"startobs=\"%s\" endobs=\"%s\" ", 
+		datname, pdinfo->pd, startdate, enddate);
+    }
 
     switch (pdinfo->time_series) {
     case 0:
@@ -2290,47 +2355,421 @@ int write_xmldata (const char *fname, const int *list,
     default:
 	strcpy(type, "cross-section"); break;
     }
-    fprintf(fp, "type=\"%s\">\n", type);
+
+    if (opt) gzprintf(fz, "type=\"%s\">\n", type);
+    else fprintf(fp, "type=\"%s\">\n", type);
 
     /* first deal with description, if any */
-    if (pdinfo->descrip != NULL) 
-	fprintf(fp, "<description>\n%s</description>\n", pdinfo->descrip);
+    if (pdinfo->descrip != NULL) {
+	xmlbuf = xml_encode(pdinfo->descrip);
+	if (xmlbuf == NULL) return 1;
+	else {
+	    if (opt)
+		gzprintf(fz, "<description>\n%s</description>\n", xmlbuf);
+	    else
+		fprintf(fp, "<description>\n%s</description>\n", xmlbuf);
+	    free(xmlbuf);
+	}
+    }
 
     /* then listing of variable names and labels */
-    fprintf(fp, "<variables count=\"%d\">\n", list[0]);
+    if (opt) gzprintf(fz, "<variables count=\"%d\">\n", list[0]);
+    else fprintf(fp, "<variables count=\"%d\">\n", list[0]);
     for (i=1; i<=list[0]; i++) {
-	fprintf(fp, "<variable name=\"%s\"", pdinfo->varname[list[i]]);
+	xmlbuf = xml_encode(pdinfo->varname[list[i]]);
+	if (xmlbuf == NULL) return 1;
+	else {
+	    if (opt) gzprintf(fz, "<variable name=\"%s\"", xmlbuf);
+	    else fprintf(fp, "<variable name=\"%s\"", xmlbuf);
+	    free(xmlbuf);
+	}
 	if (pdinfo->label[list[i]][0]) {
-	    fprintf(fp, "\n label=\"%s\"/>\n", pdinfo->label[list[i]]);
+	    xmlbuf = xml_encode(pdinfo->label[list[i]]);
+	    if (xmlbuf == NULL) return 1;
+	    else {
+		if (opt) gzprintf(fz, "\n label=\"%s\"/>\n", xmlbuf);
+		else fprintf(fp, "\n label=\"%s\"/>\n", xmlbuf);
+		free(xmlbuf);
+	    }
 	} else {
-	    fprintf(fp, "/>\n");
+	    if (opt) gzprintf(fz, "/>\n");
+	    else fprintf(fp, "/>\n");
 	}
     }
-    fprintf(fp, "</variables>\n");
+    if (opt) gzprintf(fz, "</variables>\n");
+    else fprintf(fp, "</variables>\n");
 
     /* then listing of observations */
-    fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
-	    tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+    if (opt)
+	gzprintf(fz, "<observations count=\"%d\" labels=\"%s\">\n",
+		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
+    else
+	fprintf(fp, "<observations count=\"%d\" labels=\"%s\">\n",
+		tsamp, (pdinfo->markers && pdinfo->S != NULL)? "true" : "false");
     for (t=pdinfo->t1; t<=pdinfo->t2; t++) {
-	fprintf(fp, "<obs");
-	if (pdinfo->markers && pdinfo->S != NULL) 
-	    fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
-	else
-	    fputs(">", fp);
-	for (i=1; i<=list[0]; i++) {
-	    if (na(Z(list[i], t)))
-		fprintf(fp, "-999 ");
-	    else 
-		fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+	if (opt) gzprintf(fz, "<obs");
+	else fprintf(fp, "<obs");
+	if (pdinfo->markers && pdinfo->S != NULL) {
+	    if (opt) gzprintf(fz, " label=\"%s\">", pdinfo->S[t]);
+	    else fprintf(fp, " label=\"%s\">", pdinfo->S[t]);
+	} else {
+	    if (opt) gzprintf(fz, ">");
+	    else fputs(">", fp);
 	}
-	fputs("</obs>\n", fp);
+	for (i=1; i<=list[0]; i++) {
+	    if (na(Z(list[i], t))) {
+		if (opt) gzprintf(fz, "-999 ");
+		else fprintf(fp, "-999 ");
+	    } else {
+		if (opt) gzprintf(fz, "%.*f ", pmax[i-1], Z(list[i], t));
+		else fprintf(fp, "%.*f ", pmax[i-1], Z(list[i], t));
+	    }
+	}
+	if (opt) gzprintf(fz, "</obs>\n");
+	else fputs("</obs>\n", fp);
     }
-    
-    fprintf(fp, "</observations>\n</gretldata>\n");
+
+    if (opt) gzprintf(fz, "</observations>\n</gretldata>\n");
+    else fprintf(fp, "</observations>\n</gretldata>\n");
 
     if (pmax) free(pmax);
     if (fp != NULL) fclose(fp);
+    if (fz != Z_NULL) gzclose(fz);
     return 0;
 }
 
-#endif /* XML_NOT_YET */
+static int 
+process_description (xmlDocPtr doc, xmlNodePtr node, DATAINFO *pdinfo)
+{
+    char *desc =
+	xmlNodeListGetString(doc, node->xmlChildrenNode, 1);
+
+    pdinfo->descrip = malloc(strlen(desc) + 1);
+    if (pdinfo->descrip == NULL) return 1;
+    strcpy(pdinfo->descrip, desc);
+    return 0;
+}
+
+static int process_varlist (xmlNodePtr node, DATAINFO *pdinfo)
+{
+    xmlNodePtr cur;
+    int i;
+    char *tmp = xmlGetProp(node, (UTF) "count");
+
+    if (tmp) {
+	int v;
+
+	if (sscanf(tmp, "%d", &v) == 1) {
+	    pdinfo->v = v + 1;
+	} else {
+	    sprintf(gretl_errmsg, "failed to parse count of variables");
+	    return 1;
+	}
+	if (dataset_allocate_varnames(pdinfo)) {
+	    sprintf(gretl_errmsg, "out of memory reading data file");
+	    return 1;
+	}
+    }
+    else {
+	sprintf(gretl_errmsg, "Got no variables");
+	return 1;
+    }
+
+    /* now get individual variable info: names and labels */
+    cur = node->xmlChildrenNode;
+    while (cur && xmlIsBlankNode(cur)) {
+	cur = cur->next;
+    }
+    if (cur == 0) {
+	sprintf(gretl_errmsg, "Got no variables");
+	return 1;
+    }
+
+    i = 1;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (UTF) "variable")) {
+	    tmp = xmlGetProp(cur, (UTF) "name");
+	    if (tmp) {
+		strncpy(pdinfo->varname[i], tmp, 8);
+		pdinfo->varname[i][8] = '\0';
+	    } else {
+		sprintf(gretl_errmsg, "variable %d has no name", i);
+		return 1;
+	    }
+	    tmp = xmlGetProp(cur, (UTF) "label");
+	    if (tmp) {
+		strncpy(pdinfo->label[i], tmp, MAXLABEL-1);
+		pdinfo->varname[i][MAXLABEL-1] = '\0';
+	    }
+	    i++;
+	}	    
+	cur = cur->next;
+    }
+   
+    if (i != pdinfo->v) {
+	sprintf(gretl_errmsg, "Number of variables does not match declaration\n");
+	return 1;
+    }
+    else return 0;
+}
+
+static int process_values (double *Z, DATAINFO *pdinfo, int t, char *s)
+{
+    int i;
+    double x;
+
+    for (i=1; i<pdinfo->v; i++) {
+	s = strpbrk(s, "01234567890+-NA");
+	if (*s && (sscanf(s, "%lf", &x) != 1)) {
+	    sprintf(gretl_errmsg, "failed to parse data values at obs %d", t+1);
+	    return 1;
+	} else {
+	    Z[pdinfo->n * i + t] = x;
+	    s = strpbrk(s, " ,\t\n\r");
+	}
+    }
+    return 0;
+}
+
+static int process_observations (xmlDocPtr doc, xmlNodePtr node, 
+				 double **pZ, DATAINFO *pdinfo)
+{
+    xmlNodePtr cur;
+    char *tmp = xmlGetProp(node, (UTF) "count");
+    int t;
+
+    if (tmp) {
+	int n;
+
+	if (sscanf(tmp, "%d", &n) == 1) 
+	    pdinfo->n = n;
+	else {
+	    sprintf(gretl_errmsg, "failed to parse number of observations");
+	    return 1;
+	}
+    } else 
+	return 1;
+
+    tmp = xmlGetProp(node, (UTF) "labels");
+    if (tmp) {
+	if (!strcmp(tmp, "true")) {
+	    pdinfo->markers = 1;
+	    if (dataset_allocate_markers(pdinfo)) {
+		sprintf(gretl_errmsg, "out of memory");
+		return 1;
+	    }
+	} else if (strcmp(tmp, "false")) {
+	    sprintf(gretl_errmsg, "labels attribute for observations must be "
+		    "'true' or 'false'");
+	    return 1;
+	}
+    } else
+	return 1;
+
+    if (pdinfo->endobs[0] == '\0') 
+	sprintf(pdinfo->endobs, "%d", pdinfo->n);
+
+    pdinfo->t2 = pdinfo->n - 1;
+
+    *pZ = malloc(pdinfo->n * pdinfo->v * sizeof(double));
+    if (*pZ == NULL) return 1;
+    for (t=0; t<pdinfo->n; t++)
+	(*pZ)[t] = 1.0;
+
+    /* now get individual obs info: labels and values */
+    cur = node->xmlChildrenNode;
+    while (cur && xmlIsBlankNode(cur)) {
+	cur = cur->next;
+    }
+    if (cur == 0) {
+	sprintf(gretl_errmsg, "Got no observations\n");
+	return 1;
+    }
+
+    t = 0;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (UTF) "obs")) {
+	    if (pdinfo->markers) {
+		tmp = xmlGetProp(cur, (UTF) "label");
+		if (tmp) {
+		    strncpy(pdinfo->S[t], tmp, 8);
+		    pdinfo->S[t][8] = '\0';
+		} else {
+		    sprintf(gretl_errmsg, "case marker missing at obs %d", t+1);
+		    return 1;
+		}
+	    }
+	    tmp = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+	    if (tmp) {
+		if (process_values(*pZ, pdinfo, t, tmp))
+		    return 1;
+		t++;
+	    } else {
+		sprintf(gretl_errmsg, "values missing at observation %d", t+1);
+		return 1;
+	    }
+	}	    
+	cur = cur->next;
+    }
+
+    if (t != pdinfo->n) {
+	sprintf(gretl_errmsg, "Number of observations does not match declaration");
+	return 1;
+    }
+    else return 0;
+}
+
+/**
+ * get_xmldata:
+ * @pZ: pointer to data set.
+ * @pdinfo: data information struct.
+ * @fname: name of file to try.
+ * @ppaths: path information struct.
+ * @data_status: indicator for whether a data file is currently open
+ * in gretl's work space (not-0) or not (0).
+ * @prn: where messages should be written.
+ * 
+ * Read data from file into gretl's work space, allocating space as
+ * required.
+ * 
+ * Returns: 0 on successful completion, non-zero otherwise.
+ *
+ */
+
+int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
+		 PATHS *ppaths, int data_status, PRN *prn) 
+{
+    xmlDocPtr doc;
+    xmlNodePtr cur;
+    char *tmp;
+    int gotvars = 0, gotobs = 0;
+
+    gretl_errmsg[0] = '\0';
+
+    doc = xmlParseFile(fname);
+    if (doc == NULL) {
+	sprintf(gretl_errmsg, "xmlParseFile failed on %s", fname);
+	return 1;
+    }
+
+    /* clear any existing data info */
+    if (data_status) clear_datainfo(pdinfo, 0);
+
+    cur = xmlDocGetRootElement(doc);
+    if (cur == NULL) {
+        sprintf(gretl_errmsg, "%s: empty document", fname);
+	xmlFreeDoc(doc);
+	return 1;
+    }
+
+    if (xmlStrcmp(cur->name, (UTF) "gretldata")) {
+        sprintf(gretl_errmsg, "file of the wrong type, root node not gretldata");
+	xmlFreeDoc(doc);
+	return 1;
+    }
+
+    /* set some datainfo parameters */
+    tmp = xmlGetProp(cur, (UTF) "type");
+    if (tmp == NULL) {
+	sprintf(gretl_errmsg, 
+		"required attribute 'type' is missing from data file");
+	return 1;
+    } else {
+	if (!strcmp(tmp, "cross-section")) 
+	    pdinfo->time_series = 0;
+	else if (!strcmp(tmp, "time-series"))
+	    pdinfo->time_series = TIME_SERIES;
+	else if (!strcmp(tmp, "stacked-time-series"))
+	    pdinfo->time_series = STACKED_TIME_SERIES;
+	else if (!strcmp(tmp, "stacked-cross-section"))
+	    pdinfo->time_series = STACKED_CROSS_SECTION;
+	else {
+	    sprintf(gretl_errmsg, "unrecognized type attribute for data file");
+	    return 1;
+	}
+    }
+    pdinfo->pd = 1;
+    tmp = xmlGetProp(cur, (UTF) "frequency");
+    if (tmp) {
+	int pd = 0;
+
+	if (sscanf(tmp, "%d", &pd) == 1)
+	    pdinfo->pd = pd;
+	else {
+	    strcpy(gretl_errmsg, "failed to parse data frequency");
+	    return 1;
+	}
+    }
+    strcpy(pdinfo->stobs, "1");
+    tmp = xmlGetProp(cur, (UTF) "startobs");
+    if (tmp) {
+	double x;
+
+	if (sscanf(tmp, "%lf", &x) == 1) {
+	    strncpy(pdinfo->stobs, tmp, 8);
+	    pdinfo->stobs[8] = '\0';
+	} else {
+	    strcpy(gretl_errmsg, "failed to parse startobs");
+	    return 1;
+	}
+    }
+    pdinfo->endobs[0] = '\0';
+    tmp = xmlGetProp(cur, (UTF) "endobs");
+    if (tmp) {
+	double x;
+
+	if (sscanf(tmp, "%lf", &x) == 1) {
+	    strncpy(pdinfo->endobs, tmp, 8);
+	    pdinfo->endobs[8] = '\0';
+	} else {
+	    strcpy(gretl_errmsg, "failed to parse endobs");
+	    return 1;
+	}	
+    }
+
+    /* Now walk the tree */
+    cur = cur->xmlChildrenNode;
+    while (cur != NULL) {
+        if (!xmlStrcmp(cur->name, (UTF) "description")) {
+	    if (process_description(doc, cur, pdinfo)) 
+		return 1;
+        } else if (!xmlStrcmp(cur->name, (UTF) "variables")) {
+	    if (process_varlist(cur, pdinfo)) 
+		return 1;
+	    else
+		gotvars = 1;
+	}
+        else if (!xmlStrcmp(cur->name, (UTF) "observations")) {
+	    if (!gotvars) {
+		sprintf(gretl_errmsg, "variables information is missing");
+		return 1;
+	    }
+	    if (process_observations(doc, cur, pZ, pdinfo)) 
+		return 1;
+	    else
+		gotobs = 1;
+	}
+	cur = cur->next;
+    }
+
+    if (!gotvars) {
+	sprintf(gretl_errmsg, "variables information is missing");
+	return 1;
+    }
+    if (!gotobs) {
+	sprintf(gretl_errmsg, "no observations were found");
+	return 1;
+    }
+
+    strcpy(ppaths->datfile, fname);
+    ppaths->hdrfile[0] = '\0';
+    ppaths->lblfile[0] = '\0';
+
+    pprintf(prn, "\nRead datafile %s\n", fname);
+    pprintf(prn, "periodicity: %d, maxobs: %d, "
+	   "observations range: %s-%s\n\n", pdinfo->pd, pdinfo->n,
+	    pdinfo->stobs, pdinfo->endobs);
+
+    return 0;
+}
+

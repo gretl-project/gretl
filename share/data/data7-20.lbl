@@ -22,5 +22,5 @@ RACE     0 = white, 1 = non-white
 EW       1 = player from east, 0 = west
 TRD      1 = player has been traded, 0 = has not
 WINTM    = 1 if player's team had > 45 wins 
-ALLSTAT  = 1 for player on the All Star team, 1990-1991
+ALLSTAR  = 1 for player on the All Star team, 1990-1991
 XPAN     1 = plays for expansion team

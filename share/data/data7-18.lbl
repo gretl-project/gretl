@@ -1,6 +1,6 @@
 pop      county population (000s, 1.192 - 9149.81)
 educexp  local govt expend. on education ($ per student)
-recrexp  $ expend. per capita on rec. and cultural services
+recexp   $ expend. per capita on rec. and cultural services
 policexp local govt expend. on police ($ per capita)
 vcrime   violent crimes per 100,000 population (230 - 1587)
 othrcrim Other crimes per 100,000 population (2130 - 16946)

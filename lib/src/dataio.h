@@ -27,11 +27,13 @@ typedef enum {
     GRETL_DATA_CSV,       /* data in Comma Separated Values format */
     GRETL_DATA_R,         /* data in Gnu R format */
     GRETL_DATA_R_ALT,     /* data in alternate Gnu R format */
-    GRETL_DATA_GZIPPED    /* gzipped data */
+    GRETL_DATA_GZIPPED,   /* gzipped data */
+    GRETL_DATA_TRAD       /* traditional (ESL-style) data */
 } data_options;
 
 typedef enum {
     GRETL_NATIVE_DATA,    /* gretl native format data file */
+    GRETL_XML_DATA,       /* gretl xml format data file */
     GRETL_CSV_DATA,       /* comma-separated data file */
     GRETL_BOX_DATA,       /* BOX1 format data file */
     GRETL_SCRIPT,         /* file containing gretl commands */
@@ -72,8 +74,7 @@ void gz_switch_ext (char *targ, char *src, char *ext);
 
 int get_data (double **pZ, DATAINFO *pdinfo, 
 	      char *datfile, PATHS *ppaths, 
-	      const int data_status,
-	      FILE *fp);
+	      const int data_status, PRN *prn);
 
 int open_nulldata (double **pZ, DATAINFO *pdinfo, 
 		   const int data_status, const int length,
@@ -88,6 +89,9 @@ int import_box (double **pZ, DATAINFO *pdinfo,
 int add_case_markers (DATAINFO *pdinfo, const char *fname);
 
 int detect_filetype (char *fname, PATHS *ppaths, PRN *prn);
+
+int get_xmldata (double **pZ, DATAINFO *pdinfo, char *fname,
+		 PATHS *ppaths, int data_status, PRN *prn); 
 
 
 

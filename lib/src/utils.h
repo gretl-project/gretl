@@ -30,6 +30,7 @@ enum flagvals {
     OPT_C,     /* write data in Comma Separated Values format */
     OPT_R,     /* write data in Gnu R format */
     OPT_S,     /* write single-precision binary data */
+    OPT_T,     /* write traditional (ESL-style) data */
     OPT_L,
     OPT_Z,     /* write gzipped data */
     OPT_FA,

@@ -24,6 +24,6 @@ DATA4-15
     agr = share of agriculture in GDP (%), Range 0.7 - 56.3.
           Statistical Abstract of the World.
 *)
-Y gnp gdp   pop  urb lit edu agr ;
+Y gnp gdp pop urb lit edu agr ;
 1 1 41
 BYOBS
