@@ -1,8 +1,13 @@
 version 1.1.1
+- Graph editing: add facility to write labels onto the graph
+- Add compaction method (e.g. average, sum) as an attribute of 
+  variables
+- In importing data from a database, recognize if a variable
+  of the same name is already in the working dataset
 - Fix "pmax" bug in printing of actual, fitted and residuals
 - When using "<-" save mechanism for models, preserve the model
   info so it's accessible for genr, etc.
-- Fix bug in numbering of auto-generated of lagged variables
+- Fix bug in numbering of auto-generated lagged variables
 - Fix bug in parsing of gnuplot { ... } special command list
 
 07/23/03 version 1.1.0

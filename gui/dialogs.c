@@ -1094,6 +1094,7 @@ struct varinfo_settings {
     GtkWidget *name_entry;
     GtkWidget *label_entry;
     GtkWidget *display_name_entry;
+    GtkWidget *compaction_menu;
     int varnum;
 };
 
@@ -1102,8 +1103,8 @@ static void really_set_variable_info (GtkWidget *w,
 {
     const char *edttext;
     int v = vset->varnum;
-    int changed = 0;
-    int gui_changed = 0;
+    int changed = 0, gui_changed = 0, comp_changed;
+    int comp_method;
 
     edttext = gtk_entry_get_text(GTK_ENTRY(vset->name_entry));
     if (validate_varname(edttext)) {
@@ -1130,6 +1131,15 @@ static void really_set_variable_info (GtkWidget *w,
 	changed = 1;
     }
 
+    if (dataset_is_time_series(datainfo)) {    
+	comp_method = 
+	    gtk_option_menu_get_history(GTK_OPTION_MENU(vset->compaction_menu));
+	if (comp_method != COMPACT_METHOD(datainfo, v)) {
+	    COMPACT_METHOD(datainfo, v) = comp_method;
+	    comp_changed = 1;
+	}
+    }
+
     if (changed) {
 	sprintf(line, "label %s -d \"%s\" -n \"%s\"", datainfo->varname[v],
 		VARLABEL(datainfo, v), DISPLAYNAME(datainfo, v));
@@ -1139,7 +1149,7 @@ static void really_set_variable_info (GtkWidget *w,
     if (gui_changed)
 	populate_main_varlist();
 
-    if (changed || gui_changed) {
+    if (changed || comp_changed || gui_changed) {
 	data_status |= MODIFIED_DATA;
 	set_sample_label(datainfo);
     }
@@ -1153,10 +1163,21 @@ static void free_vsettings (GtkWidget *w,
     free(vset);
 }
 
+static const char *comp_int_to_string (int i)
+{
+    if (i == COMPACT_NONE) return N_("not set");
+    else if (i == COMPACT_AVG) return N_("average of observations");
+    else if (i == COMPACT_SUM) return N_("sum of observations");
+    else if (i == COMPACT_SOP) return N_("first observation");
+    else if (i == COMPACT_EOP) return N_("last observation");
+    else return N_("not set");
+}
+
 void varinfo_dialog (int varnum)
 {
-    GtkWidget *tempwid, *hbox;
+    GtkWidget *tempwid, *hbox, *menu;
     struct varinfo_settings *vset;
+    int i;
 
     vset = mymalloc(sizeof *vset);
     if (vset == NULL) return;
@@ -1227,6 +1248,36 @@ void varinfo_dialog (int varnum)
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
 		       hbox, FALSE, FALSE, 5);
     gtk_widget_show(hbox); 
+
+    /* read/set compaction method? */
+    if (dataset_is_time_series(datainfo)) {
+	hbox = gtk_hbox_new(FALSE, 0);
+	tempwid = gtk_label_new (_("compaction method (for reducing frequency):"));
+	gtk_box_pack_start(GTK_BOX(hbox), tempwid, FALSE, FALSE, 0);
+	gtk_widget_show(tempwid);
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox);
+
+	vset->compaction_menu = gtk_option_menu_new();
+	menu = gtk_menu_new();
+	for (i=COMPACT_NONE; i<COMPACT_MAX; i++) {
+	    tempwid = gtk_menu_item_new_with_label(_(comp_int_to_string(i)));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	}
+	gtk_option_menu_set_menu(GTK_OPTION_MENU(vset->compaction_menu), menu);
+	gtk_option_menu_set_history(GTK_OPTION_MENU(vset->compaction_menu),
+				    COMPACT_METHOD(datainfo, varnum));    
+
+	hbox = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox), 
+			   vset->compaction_menu, FALSE, FALSE, 0);
+	gtk_widget_show_all(vset->compaction_menu); 
+
+	gtk_box_pack_start(GTK_BOX(GTK_DIALOG(vset->dlg)->vbox), 
+			   hbox, FALSE, FALSE, 0);
+	gtk_widget_show(hbox); 
+    }
 
     /* Create the "OK" button */
     tempwid = gtk_button_new_with_label (_("OK"));

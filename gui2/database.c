@@ -207,11 +207,10 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 {
     gint err = 0;
     double *xvec;
-    int n, v, t, start, stop, pad1 = 0, pad2 = 0;
+    int n, t, start, stop, pad1 = 0, pad2 = 0;
     int compact_method = COMPACT_AVG;
-
-    /* FIXME: allow for case where a series of the given name is
-       already in the working dataset */
+    int overwrite = 0;
+    int dbv = 1;
 
     if (data_status) { 
 	/* we already have data in gretl's workspace */
@@ -221,12 +220,29 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	    return;
 	}
 
-	if (dataset_add_vars(1, &Z, datainfo)) {
+	/* is there already a var of this name? */
+	dbv = varindex(datainfo, sinfo->varname);
+	if (dbv < datainfo->v) {
+	    int resp = yes_no_dialog ("gretl",                      
+				      _("There is already a variable of this name\n"
+					"in the dataset.  OK to overwrite it?"), 0);
+
+	    if (resp == GRETL_YES) {
+		overwrite = 1;
+		/* pick up on pre-registered compaction method? */
+		if (COMPACT_METHOD(datainfo, dbv) != COMPACT_NONE) {
+		    compact_method = COMPACT_METHOD(datainfo, dbv);
+		}
+	    } else {
+		return;
+	    }
+	}
+
+	if (!overwrite && dataset_add_vars(1, &Z, datainfo)) {
 	    errbox(_("Out of memory adding series"));
 	    return;
 	}
 
-	v = datainfo->v;
 	n = datainfo->n;
 
 	if (sinfo->pd > datainfo->pd) {
@@ -234,14 +250,14 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	    if (datainfo->pd != 1 && datainfo->pd != 4 &&
 		sinfo->pd != 12) {
 		errbox(_("Sorry, can't handle this conversion yet!"));
-		dataset_drop_vars(1, &Z, datainfo);
+		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
 
 	    data_compact_dialog(dbwin->w, sinfo->pd, &datainfo->pd, &compact_method);
 
 	    if (compact_method == COMPACT_NONE) {
-		dataset_drop_vars(1, &Z, datainfo);
+		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
 		return;
 	    }
 	    if (sinfo->pd == 12 && datainfo->pd == 4) {
@@ -253,21 +269,25 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	} else {  
 	    /* series does not need compacting */
 	    xvec = mymalloc(sinfo->nobs * sizeof *xvec);
-	    for (t=0; t<sinfo->nobs; t++) 
+	    if (xvec == NULL) {
+		errbox(_("Out of memory attempting to add variable"));
+		if (!overwrite) dataset_drop_vars(1, &Z, datainfo);
+		return;
+	    }
+	    for (t=0; t<sinfo->nobs; t++) {
 		xvec[t] = dbZ[1][t];
+	    }
 	}
 
-	/* FIXME xvec could be NULL */
-
 	/* common stuff for adding a var */
-	strcpy(datainfo->varname[v-1], sinfo->varname);
-	strcpy(VARLABEL(datainfo, v-1), sinfo->descrip);
+	strcpy(datainfo->varname[dbv], sinfo->varname);
+	strcpy(VARLABEL(datainfo, dbv), sinfo->descrip);
 	get_db_padding(sinfo, datainfo, &pad1, &pad2);
 
 	if (pad1 > 0) {
 	    fprintf(stderr, "Padding at start, %d obs\n", pad1);
 	    for (t=0; t<pad1; t++) {
-		Z[v-1][t] = NADBL;
+		Z[dbv][t] = NADBL;
 	    }
 	    start = pad1;
 	} else start = 0;
@@ -275,7 +295,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	if (pad2 > 0) {
 	    fprintf(stderr, "Padding at end, %d obs\n", pad2);
 	    for (t=n-1; t>=n-1-pad2; t--) {
-		Z[v-1][t] = NADBL;
+		Z[dbv][t] = NADBL;
 	    }
 	    stop = n - pad2;
 	} else stop = n;
@@ -283,7 +303,7 @@ static void add_dbdata (windata_t *dbwin, double **dbZ, SERIESINFO *sinfo)
 	/* fill in actual data values */
 	fprintf(stderr, "Filling in values from %d to %d\n", start, stop - 1);
 	for (t=start; t<stop; t++) {
-	    Z[v-1][t] = xvec[t - pad1];
+	    Z[dbv][t] = xvec[t - pad1];
 	}
 	free(xvec);
     } else {  
@@ -1519,7 +1539,8 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
     GtkWidget *tempwid;
     GSList *group;
     int show_pd_buttons = 0;
-    char labelstr[64];
+    int all_vars = 0;
+    gchar *labelstr;
 
     d = malloc(sizeof *d);
     if (d == NULL) return;
@@ -1530,17 +1551,18 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     if (*target_pd != 0) {
 	/* importing series from database */
-	sprintf(labelstr, _("You are adding a %s series to %s dataset"),
-		(spd == 4)? _("quarterly") : _("monthly"),
-		(*target_pd == 4)? _("a quarterly"): _("an annual"));
+	labelstr = g_strdup_printf(_("You are adding a %s series to %s dataset"),
+				   (spd == 4)? _("quarterly") : _("monthly"),
+				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
     } else {
 	/* compacting whole data set */
+	all_vars = 1;
 	if (spd == 4) {
 	    *target_pd = 1;
-	    strcpy(labelstr, _("Compact quarterly data to annual"));
+	    labelstr = g_strdup(_("Compact quarterly data to annual"));
 	} else {
 	    /* source data are monthly */
-	    strcpy(labelstr, _("Compact monthly data to:"));
+	    labelstr = g_strdup(_("Compact monthly data to:"));
 	    show_pd_buttons = 1;
 	    *target_pd = 4;
 	}
@@ -1565,6 +1587,7 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 		      G_CALLBACK (dialog_unblock), NULL);
 
     tempwid = gtk_label_new(labelstr);
+    g_free(labelstr);
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_widget_show(tempwid);
@@ -1646,25 +1669,34 @@ static void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 
     gtk_widget_show (d->dialog);
     gtk_window_set_transient_for(GTK_WINDOW(d->dialog), GTK_WINDOW(w));
+#if 0
+    /* FIXME: this makes it impossible to scroll the help item */
     gtk_window_set_modal (GTK_WINDOW(d->dialog), TRUE);
+#endif
     gtk_main();
 }
 
-static int compact_series (double **Z, int i, int n, int startskip, int cfac,
+static int compact_series (double **Z, int i, int n, int oldn,
+			   int startskip, int min_startskip, int cfac,
 			   int method)
 {
     int t, j;
     int idx = startskip;
+    int leader = startskip - min_startskip;
     double *x;
 
     x = malloc(n * sizeof *x);
     if (x == NULL) return 1;
 
-    for (t=0; t<n; t++) {
+    for (t=0; t<n; t++) x[t] = NADBL;
+
+    for (t=leader; t<n; t++) {
+	if (idx > oldn - 1) break;
 	if (method == COMPACT_SOP || method == COMPACT_EOP) {
 	    x[t] = Z[i][idx];
 	}
 	else {
+	    if (idx + cfac - 1 > oldn - 1) break;
 	    x[t] = 0.0;
 	    for (j=0; j<cfac; j++) {
 		x[t] += Z[i][idx + j];
@@ -1682,6 +1714,67 @@ static int compact_series (double **Z, int i, int n, int startskip, int cfac,
     return 0;
 }
 
+static void 
+get_startskip_etc (int cfac, int startper, int endper, 
+		   int oldn, int method, 
+		   int *startskip, int *newn) 
+{
+    int ss = cfac - (startper % cfac) + 1;
+    int es, n;
+
+    ss = ss % cfac;
+
+    if (method == COMPACT_EOP) {
+	if (ss > 0) {
+	    ss--;
+	} else {
+	    /* move to end of initial period */
+	    ss = cfac - 1;
+	}
+    }
+
+    es = endper % cfac;
+    if (method == COMPACT_SOP && es > 1) es--;
+
+    n = (oldn - ss - es) / cfac;
+    if (ss && method == COMPACT_EOP) n++;
+    if (es && method == COMPACT_SOP) n++;
+
+    *startskip = ss;
+    *newn = n;
+}
+
+static void 
+get_global_compact_params (int cfac, int startper, int endper,
+			   int oldn, int default_method, 
+			   int *min_startskip, int *max_n,
+			   int *any_eop)
+{
+    int i, startskip, n, cm;
+    int n_not_eop = 0;
+
+    for (i=0; i<datainfo->v; i++) {
+	if (i == 0) {
+	    get_startskip_etc(cfac, startper, endper, oldn, 
+			      default_method, &startskip, &n);
+	    if (default_method == COMPACT_EOP) *any_eop = 1;
+	} else {
+	    cm = COMPACT_METHOD(datainfo, i);
+	    if (cm != default_method && cm != COMPACT_NONE) {
+		get_startskip_etc(cfac, startper, endper, oldn, 
+				  cm, &startskip, &n);
+		if (cm == COMPACT_EOP) *any_eop = 1;
+		else n_not_eop++;
+	    }
+	}
+	if (startskip < *min_startskip) *min_startskip = startskip;
+	if (n > *max_n) *max_n = n;
+    }
+
+    if (n_not_eop == datainfo->v - 1) *any_eop = 0;
+
+}
+
 void compact_data_set (void)
 {
     int newpd, oldpd = datainfo->pd;
@@ -1689,16 +1782,17 @@ void compact_data_set (void)
     int cfac;
     int startper, endper;
     int startyr;
-    int startskip = 0, endskip = 0;
+    int any_eop;
+    int min_startskip = 0;
     int i, err = 0;
-    int method = COMPACT_AVG;
+    int default_method = COMPACT_AVG;
     char stobs[9], *p;
 
     if (maybe_restore_full_data(COMPACT)) return;
 
     newpd = 0;
-    data_compact_dialog(mdata->w, oldpd, &newpd, &method);
-    if (method == COMPACT_NONE) return;
+    data_compact_dialog(mdata->w, oldpd, &newpd, &default_method);
+    if (default_method == COMPACT_NONE) return;
 
     cfac = oldpd / newpd;
 
@@ -1718,32 +1812,23 @@ void compact_data_set (void)
     p++;
     if (*p == '0') p++;
     endper = atoi(p);   
+
+    min_startskip = oldpd;
+    newn = 0;
+    any_eop = 0;
+    get_global_compact_params(cfac, startper, endper, oldn, default_method,
+			      &min_startskip, &newn, &any_eop);
+    if (newn == 0) {
+	errbox(_("Compacted dataset would be empty"));
+	return;
+    }    
     
-    /* calculate offset into original dataset */
-    startskip = cfac - (startper % cfac) + 1;
-    startskip = startskip % cfac;
-
-    if (method == COMPACT_EOP) {
-	if (startskip > 0) {
-	    startskip--;
-	} else {
-	    /* move to end of initial period */
-	    startskip = cfac - 1;
-	}
-    }
-
-    /* calculate remainder at end of original dataset */
-    endskip = endper % cfac;
-    if (method == COMPACT_SOP && endskip > 1) {
-	endskip--;
-    }
-
     if (newpd == 1) {
-	if (startskip > 0 && method != COMPACT_EOP) 
+	if (min_startskip > 0 && !any_eop) 
 	    startyr++;
 	sprintf(stobs, "%d", startyr);
     } else if (newpd == 4) {
-	int mo = startper + startskip;
+	int mo = startper + min_startskip;
 	int qtr = mo / 3 + (mo % 3 > 0);
 
 	if (qtr > 4) {
@@ -1751,17 +1836,6 @@ void compact_data_set (void)
 	    qtr -= 4;
 	}
 	sprintf(stobs, "%d:%d", startyr, qtr);
-    }
-
-    /* calculate number of obs in compacted dataset */
-    newn = (oldn - startskip - endskip) / cfac;
-    if (startskip && method == COMPACT_EOP) 
-	newn += 1;
-    if (endskip && method == COMPACT_SOP) 
-	newn += 1;
-    if (newn == 0) {
-	errbox(_("Compacted dataset would be empty"));
-	return;
     }
 
     /* revise datainfo members */
@@ -1775,7 +1849,25 @@ void compact_data_set (void)
 
     for (i=0; i<datainfo->v && err == 0; i++) {
 	if (datainfo->vector[i]) {
-	    if (compact_series(Z, i, datainfo->n, startskip, cfac, method)) {
+	    int this_method = default_method;
+	    int startskip;
+
+	    if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
+		this_method = COMPACT_METHOD(datainfo, i);
+	    }
+
+	    startskip = cfac - (startper % cfac) + 1;
+	    startskip = startskip % cfac;
+	    if (this_method == COMPACT_EOP) {
+		if (startskip > 0) {
+		    startskip--;
+		} else {
+		    startskip = cfac - 1;
+		}
+	    }
+
+	    if (compact_series(Z, i, datainfo->n, oldn, startskip, min_startskip,
+			       cfac, this_method)) {
 		errbox(_("Out of memory!"));
 		err = 1;
 	    }

@@ -96,6 +96,12 @@ typedef enum {
     PLOT_LABELS_UP      = 1 << 5
 } plot_format_flags;
 
+typedef enum {
+    JUST_LEFT,
+    JUST_CENTER,
+    JUST_RIGHT
+} just_codes;
+
 #define plot_is_saved(p)        (p->flags & PLOT_SAVED)
 #define plot_has_controller(p)  (p->flags & PLOT_HAS_CONTROLLER)
 #define plot_is_zoomed(p)       (p->flags & PLOT_ZOOMED)
@@ -243,6 +249,24 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 	strncat(str, tmp, n-1);
 #endif
     }
+}
+
+/* ........................................................... */
+
+static int just_string_to_int (const char *str)
+{
+    if (!strcmp(str, "left")) return JUST_LEFT;
+    else if (!strcmp(str, "center")) return JUST_CENTER;
+    else if (!strcmp(str, "right")) return JUST_RIGHT;
+    else return JUST_LEFT;
+}
+
+static const char *just_int_to_string (int j)
+{
+    if (j == JUST_LEFT) return "left";
+    else if (j == JUST_CENTER) return "center";
+    else if (j == JUST_RIGHT) return "right";
+    else return "left";
 }
 
 /* ........................................................... */
@@ -415,11 +439,11 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 	widget_to_str(labeltext[i], 
 		      spec->text_labels[i].text, 
 		      sizeof spec->text_labels[0].text);
-	widget_to_str(GTK_COMBO(labeljust[i])->entry, 
-		      spec->text_labels[i].just, 
-		      sizeof spec->text_labels[0].just);
 	widget_to_str(labelpos[i], spec->text_labels[i].pos, 
 		      sizeof spec->text_labels[0].pos);
+	strcpy(spec->text_labels[i].just, 
+	       just_int_to_string(gtk_option_menu_get_history
+				  (GTK_OPTION_MENU(labeljust[i]))));
     }    
 
 #ifdef GNUPLOT_PIPE
@@ -738,14 +762,9 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
-    GtkWidget *tempwid, *box, *tbl;
-    int i, tbl_len, tbl_num, tbl_col;
+    GtkWidget *tempwid, *box, *tbl, *menu;
+    int i, j, tbl_len, tbl_num, tbl_col;
     char label_text[32];
-    GList *label_loc = NULL;
-
-    label_loc = g_list_append(label_loc, "left");
-    label_loc = g_list_append(label_loc, "center");
-    label_loc = g_list_append(label_loc, "right");
 
     box = gtk_vbox_new(FALSE, 0);
     gtk_container_set_border_width(GTK_CONTAINER (box), 10);
@@ -800,26 +819,10 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 			  spec);
 	gtk_widget_show(labeltext[i]);
 
-	/* label justification */
-	tbl_len++;
-	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("justification"));
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show(tempwid);
-
-	labeljust[i] = gtk_combo_new();
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
-	gtk_combo_set_popdown_strings(GTK_COMBO(labeljust[i]), label_loc); 
-	gtk_entry_set_text(GTK_ENTRY(GTK_COMBO(labeljust[i])->entry), 
-			   spec->text_labels[i].just);  
-	gtk_widget_show(labeljust[i]);	
-
 	/* label placement */
 	tbl_len++;
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
-	tempwid = gtk_label_new(_("position"));
+	tempwid = gtk_label_new(_("position (X,Y)"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show (tempwid);
@@ -834,6 +837,28 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show(labelpos[i]);
+
+	/* label justification */
+	tbl_len++;
+	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
+	tempwid = gtk_label_new(_("justification"));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  tempwid, 1, 2, tbl_len-1, tbl_len);
+	gtk_widget_show(tempwid);
+
+	labeljust[i] = gtk_option_menu_new();
+	menu = gtk_menu_new();
+	for (j=0; j<3; j++) {
+	    tempwid = gtk_menu_item_new_with_label(just_int_to_string(j));
+	    gtk_menu_shell_append(GTK_MENU_SHELL(menu), tempwid);
+	}
+	gtk_option_menu_set_menu(GTK_OPTION_MENU(labeljust[i]), menu);	
+	gtk_option_menu_set_history(GTK_OPTION_MENU(labeljust[i]),
+				    just_string_to_int(spec->text_labels[i].just));
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  labeljust[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show_all(labeljust[i]);	
+
     }
 }
 

@@ -177,9 +177,11 @@ Writing data to a lower frequency
 
 When you add to a dataset a series that is of higher frequency, it is
 necessary to "compact" the new series.  For instance, a monthly series will
-have to be compacted to fit into a quarterly dataset.  In addition, you may
-sometimes want to compact an entire dataset to a lower frequency (perhaps,
-prior to adding a lower-frequency variable to the dataset).
+have to be compacted to fit into a quarterly dataset.  
+
+In addition, you may sometimes want to compact an entire dataset to a lower
+frequency (perhaps, prior to adding a lower-frequency variable to the
+dataset).
 
 You are offered four options for compacting:
 
@@ -199,6 +201,11 @@ You are offered four options for compacting:
 4. Start-of-period values: The value written to the dataset is the first
    relevant value from the higher-frequency data.  For example, the first
    quarter of 1990 will get the January 1990 value.
+
+In the case of compacting an entire dataset, the choice you make in this
+dialog box sets the default method.  But if you have set a compaction method
+for an individual variable (menu item "Variable/Edit attributes") that method
+is used rather than the default.
 
 #
 corc
@@ -461,6 +468,11 @@ In this dialog box you can:
   displayed in a graph.  This for instance you can associate a more
   comprehensible string such as "T-bill rate" with a cryptically named
   variable such as "tb3".
+
+* (In case of a time-series dataset) set the compaction method for the
+  variable.  This method will be used if you decide to reduce the frequency of
+  the dataset, or if you update the variable by importing from a database
+  where the variable is at a higher frequency than in the working dataset.
 
 #
 lad

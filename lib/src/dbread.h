@@ -33,7 +33,8 @@ enum compaction_methods {
     COMPACT_SUM,
     COMPACT_AVG,
     COMPACT_SOP,
-    COMPACT_EOP
+    COMPACT_EOP,
+    COMPACT_MAX
 }; 
 
 typedef float dbnumber;
