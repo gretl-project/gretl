@@ -33,10 +33,12 @@
    coefficient estimates when given highly collinear data.  If you're
    tempted to change the value of TINY, check how gretl does on the
    NIST reference data sets for linear regression and ensure you're
-   not getting any garbage results.
+   not getting any garbage results.  The setting of 2.1e-09 enables
+   me to get decent results on the NIST nonlinear regression test
+   suite, but it could be a bit too low for some contexts.
 */
 
-#define TINY     4.75e-09 
+#define TINY      2.1e-09 /* was 4.75e-09 (last changed 2004/07/16) */
 #define SMALL     1.0e-08 /* threshold for printing a warning for collinearity */
 #define STATZERO  0.5e-14
 #define ESSZERO   1.0e-22
@@ -372,7 +374,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* preserve a copy of the list supplied, for future reference */
-    /* should mdl.list be freed first?? */
     mdl.list = copylist(list);
     if (mdl.list == NULL) {
         mdl.errcode = E_ALLOC;
@@ -441,7 +442,7 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
     mdl.ifc = (i > 1);
     if (i > 2) rearrange_list(mdl.list);
 
-    /* check for presence of lagged dependent variable? 
+    /* Check for presence of lagged dependent variable? 
        Don't bother if this is an auxiliary regression. */
     if (!(opts & OPT_A)) {
 	ldepvar = lagdepvar(mdl.list, pdinfo, pZ);
@@ -975,10 +976,10 @@ static void diaginv (double *xpx, double *xpy, double *diag, int nv)
 /*
         Solves for the diagonal elements of the X'X inverse matrix.
 
-        xpx = Choleski-decomposed X'X matrix (input)
+        xpx = Cholesky-decomposed X'X matrix (input)
         xpy = X'y vector (input) used as work array
         diag = diagonal elements of X'X (output)
-        nv = no. of regression coefficients
+        nv = number of regression coefficients
 */
 {
     int kk, l, m, k, i, j;
@@ -1534,7 +1535,9 @@ int hilu_corc (double *toprho, LIST list, double ***pZ, DATAINFO *pdinfo,
 	    return err;
 	}
 	pprintf(prn, "   %f\n", corc_model.ess);
-	/* printmodel(&corc_model, pdinfo, prn); */
+#if 0
+	printmodel(&corc_model, pdinfo, prn);
+#endif
 	rho = autores(&corc_model, rho, (const double **) *pZ, opt);
 	diff = (rho > rho0) ? rho - rho0 : rho0 - rho;
 	rho0 = rho;
@@ -2214,9 +2217,6 @@ MODEL hccm_func (LIST list, double ***pZ, DATAINFO *pdinfo)
 	free(p);
     }
 
-    /* FIXME: don't do this if it's a replication for
-       a hypothesis test */
-
     set_model_id(&hccm);
 
     return hccm;
@@ -2415,8 +2415,10 @@ MODEL ar_func (LIST list, int pos, double ***pZ,
 
     rholist[0] = arlist[0] + 1;
     p = arlist[arlist[0]];
-    /*  printf("arlist:\n"); printlist(arlist); */
-    /*  printf("reglist:\n"); printlist(reglist); */
+#if 0
+    printf("arlist:\n"); printlist(arlist); 
+    printf("reglist:\n"); printlist(reglist); 
+#endif
 
     if (gretl_hasconst(reglist)) rearrange_list(reglist);
 

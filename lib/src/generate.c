@@ -493,7 +493,7 @@ static genatom *parse_token (const char *s, char op,
     }
 
     else if (strchr(s, ':')) {
-	/* time-series observation */
+	/* time-series observation? */
 	val = obs_num(s, genr->pdinfo);
 	if (val > 0) {
 	    scalar = 1;
@@ -1009,7 +1009,7 @@ static int unary_op_context (char *start, char *p)
     if (pos >= 2 && *(p-1) == '(' && op_level(*(p-2)))
 	return 1;
 
-    /* plus/minus may be part of a lead/lag specification */
+    /* N.B. plus/minus may be part of a lead/lag specification */
 
     return 0;
 }
@@ -1018,23 +1018,26 @@ static int catch_special_operators (char *s)
 {
     char *p = s;
     int err = 0;
+    int lshift;
 
     while (*s) {
+	lshift = 0;
+
 	if (*s == '!' && *(s+1) == '=') {
 	    *s = NEQ;
-	    *(++s) = ' ';
+	    lshift = 1;
 	}
 	else if (*s == '>' && *(s+1) == '=') {
 	    *s = GEQ;
-	    *(++s) = ' ';
+	    lshift = 1;
 	}
 	else if (*s == '<' && *(s+1) == '=') {
 	    *s = LEQ;
-	    *(++s) = ' ';
+	    lshift = 1;
 	}
 	else if (*s == '*' && *(s+1) == '*') {
 	    *s = '^';
-	    *(++s) = ' ';
+	    lshift = 1;
 	}
 	else if ((*s == '-' || *s == '+') && unary_op_context(p, s)) {
 	    int np; /* "need (to insert) parentheses" ? */
@@ -1042,6 +1045,11 @@ static int catch_special_operators (char *s)
 	    err = insert_ghost_zero(p, s, &np);
 	    s += 1 + np;
 	}
+
+	if (lshift) {
+	    memmove(s + 1, s + 2, 1 + strlen(s + 2));
+	}
+
 	s++;
     }
 
@@ -1599,22 +1607,30 @@ int gretl_is_reserved (const char *str)
 static int split_genr_formula (char *lhs, char *s)
 {
     char *p = strchr(s, '=');
+    int err = 0;
 
     *lhs = '\0';
 
-    if (p == NULL) return -1;
+    if (p != NULL) {
+	*p = '\0';
 
-    *p = '\0';
-    strncat(lhs, s, VNAMELEN - 1);
+	if (*(p + 1) == '\0') {
+	    /* got "equals", but no rhs */
+	    err = E_SYNTAX;
+	} else {
+	    /* should we warn if lhs name is truncated? */
+	    strncat(lhs, s, VNAMELEN - 1);
 
-    if (gretl_is_reserved(lhs)) {
-	return 0;
+	    if (gretl_is_reserved(lhs)) {
+		err = 1;
+	    } else {
+		p++;
+		memmove(s, p, strlen(p) + 1);
+	    }
+	}
     }
 
-    p++;
-    memmove(s, p, strlen(p) + 1);
-
-    return 1;
+    return err;
 }
 
 /* ........................................................... */
@@ -1635,22 +1651,44 @@ static void fix_decimal_commas (char *str)
 
 /* ........................................................... */
 
+static int copy_compress (char *targ, const char *src, int len)
+{
+    int j = 0;
+
+    while (*src && j < len) {
+	if (*src != ' ') {
+	    targ[j++] = *src;
+	}
+	src++;
+    }
+
+    targ[j] = '\0';
+
+    return *src;
+}
+
+/* ........................................................... */
+
 static void get_genr_formula (char *formula, const char *line,
 			      GENERATE *genr)
 {
-    if (line == NULL || *line == 0) return;
+    if (line == NULL || *line == '\0') return;
 
     /* skip over " genr " (or "eval") */
     while (isspace((unsigned char) *line)) line++;
 
-    if (!strncmp(line, "eval", 4)) genr->save = 0;
+    if (!strncmp(line, "eval", 4)) {
+	genr->save = 0;
+    }
+
     if (!strncmp(line, "genr", 4) || !genr->save) {
 	line += 4;
 	while (isspace((unsigned char) *line)) line++;
     }
 
     *formula = '\0';
-    strncat(formula, line, MAXLEN - 10);
+
+    copy_compress(formula, line, MAXLEN - 10);
 }
 
 /**
@@ -1761,9 +1799,11 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 
     genr_init(&genr, pZ, pdinfo, pmod);
 
+    /* grab the expression, skipping the command word 
+       and compressing spaces */
     get_genr_formula(s, line, &genr);
-    delchar('\n', s);
-    delchar(' ', s);
+
+    /* record the full genr expression */
     strcpy(genrs, s);
 
     DPRINTF(("\n*** starting genr, s='%s'\n", s)); 
@@ -1773,6 +1813,7 @@ int generate (double ***pZ, DATAINFO *pdinfo,
 	fix_decimal_commas(s);
 #endif
 
+    /* special cases which do not involve "lhs=rhs" */
     if (strcmp(s, "dummy") == 0) {
 	genr.err = dummy(pZ, pdinfo);
 	if (!genr.err)
@@ -1801,38 +1842,26 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     }
 
     /* split into lhs = rhs */
-    i = split_genr_formula(newvar, s);
+    if ((genr.err = split_genr_formula(newvar, s))) {
+	return genr.err;
+    }
     
     DPRINTF(("after split, newvar='%s', s='%s'\n", newvar, s));
 
-    if (i > 0) {
-	if (*newvar == '\0') {
-	    genr.err = E_NOVAR;
-	    goto genr_return;
-	}
-
+    if (*newvar != '\0') {
 	if (strncmp(newvar, "$nl", 3) && 
 	    strncmp(newvar, "__", 2) && 
 	    check_varname(newvar)) {
 	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
-
 	genr.varnum = varindex(pdinfo, newvar);
-
-	if (genr.varnum == 0) { 
-	    genr.err = E_CONST;
-	    goto genr_return;
-	}
-	if (lastchar('=', s)) {
-	    genr.err = E_EQN;
-	    goto genr_return;
-	}
     } else {
+	/* no "lhs=" bit */
 	if (!genr.save) {
 	    strcpy(newvar, "$eval");
 	} else {
-	    genr.err = E_NOEQ;
+	    genr.err = E_SYNTAX;
 	    goto genr_return;
 	}
     }
@@ -1841,8 +1870,6 @@ int generate (double ***pZ, DATAINFO *pdinfo,
     if ((genr.err = catch_special_operators(s))) {
 	return genr.err;
     }
-    /* remove any spaces this introduced */
-    delchar(' ', s);
 
     DPRINTF(("after catch_special_operators: s='%s'\n", s));
 
@@ -2103,7 +2130,7 @@ static double evaluate_math_function (double arg, int fn, int *err)
 	break;	
     case T_EXP:
 	if (exp(arg) == HUGE_VAL) {
-	    fprintf(stderr, "genr: exponent = %g\n", arg);
+	    fprintf(stderr, "genr: excessive exponent = %g\n", arg);
 	    *err = E_HIGH;
 	} else {
 	    x = exp(arg);
@@ -2519,43 +2546,35 @@ static double *get_tmp_series (double *mvec, const DATAINFO *pdinfo,
     x = malloc(pdinfo->n * sizeof *x); 
     if (x == NULL) return NULL;
 
-    if (fn == T_DIFF) {
+    if (fn == T_DIFF || fn == T_LDIFF) {
 	for (t=t1+1; t<=t2; t++) {
+	    /* get "later" value */
 	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
 		panel_unit_first_obs(t, pdinfo)) {
 		x[t] = NADBL;
 		continue;
 	    }
 	    xx = mvec[t];
-	    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
-		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
-	    } else {
-		yy = mvec[t-1];
-	    }
-	    x[t] = (na(xx) || na(yy))? NADBL : xx - yy;
-	}
-	x[t1] = NADBL;
-    }
 
-    else if (fn == T_LDIFF) {
-	for (t=t1+1; t<=t2; t++) {
-	    if (pdinfo->time_series == STACKED_TIME_SERIES &&
-		panel_unit_first_obs(t, pdinfo)) {
-		x[t] = NADBL;
-		continue;
-	    }
-	    xx = mvec[t];
+	    /* get "earlier" value */
 	    if (pdinfo->time_series == STACKED_CROSS_SECTION) {
 		yy = (t - pdinfo->pd >= 0)? mvec[t-pdinfo->pd] : NADBL;
 	    } else {
 		yy = mvec[t-1];
 	    }
+
 	    if (na(xx) || na(yy)) {
 		x[t] = NADBL;
 		continue;
-	    }   
-	    else if (xx <= 0.0 || yy <= 0.0) *err = E_LOGS;
-	    else x[t] = log(xx) - log(yy);
+	    }
+
+	    /* perform the differencing */
+	    if (fn == T_DIFF) {
+		x[t] = xx - yy;
+	    } else {
+		if (xx <= 0.0 || yy <= 0.0) *err = E_LOGS;
+		else x[t] = log(xx) - log(yy);
+	    }
 	}
 	x[t1] = NADBL;
     }
