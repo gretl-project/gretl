@@ -2,13 +2,13 @@
 
   <chapter id="intro"><title>Introduction</title>
 
-  <para>
-    <application>gretl</application> is an econometrics package,
-    including a shared library, a command-line client program and a
-    graphical user interface.
-  </para>
-
   <sect1 id="features"><title>Features at a glance</title>
+
+    <para>
+      <application>gretl</application> is an econometrics package,
+      including a shared library, a command-line client program and a
+      graphical user interface.
+    </para>
 
     <variablelist>
       <varlistentry><term>User-friendly</term>

@@ -38,6 +38,8 @@ find gretl-$version -name ".#*" | xargs rm -f
 # retain only the relevant parts of the doc tree
 rm -rf gretl-$version/doc
 mkdir gretl-$version/doc
+cp -ap gretl/doc/manual.xml gretl-$version/doc
+cp -ap gretl/doc/chapters gretl-$version/doc
 cp -ap gretl/doc/manual.pdf gretl-$version/doc
 cp -ap gretl/doc/manual-a4.pdf gretl-$version/doc
 cp -ap gretl/doc/manual-html gretl-$version/doc

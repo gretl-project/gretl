@@ -1713,11 +1713,21 @@
 	use the number zero for a constant term.  This command is
 	available only if <application>gretl</application> is compiled
 	with support for the Gnu Multiple Precision library (GMP).
-	Note that since <application>gretl</application> reads data
-	from file in ordinary double-precision format, and any data
-	transformations (logs and so on) are also done using double
-	precision, the OLS arithmetic itself may not be the limiting
-	factor in the accuracy of regression results.
+      </para>
+
+      <para>
+	To estimate a polynomial fit, using multiple precision
+	arithmetic to generate the required powers of the independent
+	variable, use the form, e.g. <command>mpols y 0 x ; 2 3
+	  4</command> This does a regression of <varname>y</varname>
+	on <varname>x</varname>, <varname>x</varname> squared,
+	<varname>x</varname> cubed and <varname>x</varname> to the
+	fourth power.  That is, the numbers (which must be positive
+	integers) to the right of the semicolon specify the powers of
+	<varname>x</varname> to be used.  If more than one independent
+	variable is specified, the last variable before the semicolon
+	is taken to be the one that should be raised to various
+	powers.
       </para>
 
     </sect2>

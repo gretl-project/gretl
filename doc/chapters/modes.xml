@@ -199,62 +199,6 @@
 
     </sect1>
 
-  <sect1 id="toolbar"><title>The gretl toolbar</title>
-
-    <para>At the bottom left of the main window sits the toolbar.</para>
-
-      <graphic fileref="figures/toolbar" align="center"/>
-
-      <para>The
-      icons have the following functions, reading from left to
-      right:</para>
-    
-
-    <orderedlist>
-      <listitem><para>Launch a calculator program.  A
-	  convenience function in case you want quick access to a
-	  calculator when you're working in
-	  <application>gretl</application>.  The default program is
-	  <filename>calc.exe</filename> under MS Windows, or
-	  <filename>xcalc</filename> under the X window system.  You
-	  can change the program under the <quote>File, Preferences,
-	    General</quote> menu, <quote>Toolbar</quote>
-	  tab.</para></listitem>
-      <listitem><para>Launch an editor or word processor.  The default
-	  is <filename>winword.exe</filename> under MS Windows,
-	  <filename>emacs</filename> under X. This is configurable in
-	  the same way as the calculator launcher.</para></listitem>
-      <listitem><para>Open the gretl console.  A shortcut to the
-	  <quote>Gretl console</quote> menu item (<xref linkend="menus"/>
-	  above).</para></listitem>
-      <listitem><para>Open the gretl session window.</para></listitem>
-      <listitem><para>Open the <application>gretl</application>
-	  website in your web browser.  This will work only if you are
-	  connected to the Internet and have a properly configured
-	  browser.</para></listitem>
-      <listitem><para>Open the current version of this manual, in PDF
-	  format.  As with the previous item, this requires an
-	  Internet connection; it also requires that your browser
-	  knows how to handle PDF files.</para></listitem>
-      <listitem><para>Open the  help item for script commands
-	  syntax (i.e. a listing with details of all available
-	  commands).</para></listitem>
-      <listitem><para>Open the dialog box for defining a
-	  graph.</para></listitem>
-      <listitem><para>Capture the last displayed graph for 
-          editing.</para></listitem>
-      <listitem><para>Open a window listing the datasets associated
-	  with Ramanathan's <citetitle>Introductory
-	  Econometrics</citetitle>.</para></listitem>
-    </orderedlist>
-
-    <para>
-      If you don't care to have the toolbar displayed, you can turn it
-      off under the <quote>File, Preferences, General</quote> menu. Go
-      to the Toolbar tab and uncheck the <quote>show gretl
-	toolbar</quote> box.</para>
-
-    </sect1>
   </chapter>
 
 <!-- Keep this comment at the end of the file

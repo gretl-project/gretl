@@ -1,5 +1,7 @@
   <chapter id="trouble"><title>Troubleshooting gretl</title>
 
+  <sect1 id="trouble-bugs"><title>Bug reports</title>
+
     <para>
       As I steer <application>gretl</application> towards a
       <quote>stable</quote> release (version 1.0) I welcome any
@@ -15,6 +17,10 @@
       precisely did it say?  (You needn't bother, though, to quote the
       memory address numbers given in any crash reports from MS
       Windows &mdash; these won't mean anything to me.)</para>
+
+  </sect1>
+
+  <sect1 id="trouble-programs"><title>Auxiliary programs</title>
 
     <para>
       As mentioned above, <application>gretl</application> calls some
@@ -37,12 +43,13 @@
       <application>gretl</application> assumes that the programs in
       question are available in your <quote>path</quote> &mdash; that
       is, that they can be invoked simply via the name of the program,
-      without supplying the program's full location.<footnote><para>The
-      exception to this rule is the invocation of gnuplot under MS
-      Windows, where a full path to the program is given.</para>
-      </footnote>  Thus if a
-      given program fails, try the experiment of typing the program
-      name at the command prompt, as shown below.</para>
+      without supplying the program's full
+      location.<footnote><para>The exception to this rule is the
+	  invocation of gnuplot under MS Windows, where a full path to
+	  the program is given.</para>
+      </footnote>  Thus if a given program fails, try the experiment
+      of typing the program name at the command prompt, as shown
+      below.</para>
 
     <informaltable frame="none">
       <tgroup cols="4">
@@ -80,6 +87,8 @@
       please see the documentation or online help for your operating
       system or shell.
     </para>
+
+  </sect1>
 
   </chapter>
 

@@ -8,13 +8,14 @@
       Allin Cottrell (cottrell@wfu.edu)
     </maintainer>
     <title>
-      Gretl Manual
+      Gretl
     </title>    
     <date>
       2002-08-21
     </date>
-    <version identifier="0.4" date="2002-08-21" description="Updated for GNOME 2.0, program version 0.999"/>
-    <subject category="GNOME|Applications|Scientific|Other"/>
+    <version identifier="0.4" date="2002-08-21" 
+       description="Updated for GNOME 2.0, program version 0.999"/>
+    <subject category="Applications|Scientific|Other"/>
     <description>
       User manual for the gretl econometrics program.
     </description>

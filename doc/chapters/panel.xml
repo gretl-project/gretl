@@ -2,84 +2,92 @@
 
   <chapter id="panel"><title>Panel data</title>
 
-  <para>Panel data (pooled cross-section and time-series) require
-    special care.  Here are some pointers.</para>
+  <sect1 id="panel-structure"><title>Panel structure</title>
 
-  <para>Consider a data set composed of observations on each of
-    <emphasis>n</emphasis> cross-sectional units (countries, states,
-    persons or whatever) in each of <emphasis>T</emphasis> periods.
-    Let each observation comprise the values of <emphasis>m</emphasis>
-    variables of interest.  The data set then contains
-    <emphasis>mnT</emphasis> values.</para>
+    <para>Panel data (pooled cross-section and time-series) require
+      special care.  Here are some pointers.</para>
 
-  <para>The data should be arranged <quote>by observation</quote>:
-    each row represents an observation; each column contains the
-    values of a particular variable. The data matrix then has
-    <emphasis>nT</emphasis> rows and <emphasis>m</emphasis> columns.
-    That leaves open the matter of how the rows should be arranged.
-    There are two possibilities.<footnote><para>If you don't intend to
-	make any conceptual or statistical distinction between
-	cross-sectional and temporal variation in the data you can
-	arrange the rows arbitrarily, but this is probably wasteful of
-	information.</para>
-    </footnote></para>
+    <para>Consider a data set composed of observations on each of
+      <emphasis>n</emphasis> cross-sectional units (countries, states,
+      persons or whatever) in each of <emphasis>T</emphasis> periods.
+      Let each observation comprise the values of
+      <emphasis>m</emphasis> variables of interest.  The data set then
+      contains <emphasis>mnT</emphasis> values.</para>
 
-  <itemizedlist>
-    <listitem><para>Rows grouped by <emphasis>unit</emphasis>. Think
-	of the data matrix as composed of <emphasis>n</emphasis>
-	blocks, each having <emphasis>T</emphasis> rows. The first
-	block of <emphasis>T</emphasis> rows contains the observations
-	on cross-sectional unit 1 for each of the periods; the next
-	block contains the observations on unit 2 for all periods; and
-	so on.  In effect, the data matrix is a set of time-series
-	data sets, stacked vertically.</para></listitem>
-    <listitem><para>Rows grouped by <emphasis>period</emphasis>. Think
-	of the data matrix as composed of <emphasis>T</emphasis>
-	blocks, each having <emphasis>n</emphasis> rows. The first
-	<emphasis>n</emphasis> rows contain the observations for each
-	of the cross-sectional units in period 1; the next block
-	contains the observations for all units in period 2; and so
-	on.  The data matrix is a set of cross-sectional data sets,
-	stacked vertically.</para></listitem>
-  </itemizedlist>
+    <para>The data should be arranged <quote>by observation</quote>:
+      each row represents an observation; each column contains the
+      values of a particular variable. The data matrix then has
+      <emphasis>nT</emphasis> rows and <emphasis>m</emphasis> columns.
+      That leaves open the matter of how the rows should be arranged.
+      There are two possibilities.<footnote><para>If you don't intend
+	  to make any conceptual or statistical distinction between
+	  cross-sectional and temporal variation in the data you can
+	  arrange the rows arbitrarily, but this is probably wasteful
+	  of information.</para>
+      </footnote></para>
 
-  <para>You may use whichever arrangement is more convenient.  The
-    first is perhaps easier to keep straight.  If you use the second
-    then of course you must ensure that the cross-sectional units
-    appear in the same order in each of the period data blocks.</para>
+    <itemizedlist>
+      <listitem><para>Rows grouped by <emphasis>unit</emphasis>. Think
+	  of the data matrix as composed of <emphasis>n</emphasis>
+	  blocks, each having <emphasis>T</emphasis> rows. The first
+	  block of <emphasis>T</emphasis> rows contains the
+	  observations on cross-sectional unit 1 for each of the
+	  periods; the next block contains the observations on unit 2
+	  for all periods; and so on.  In effect, the data matrix is a
+	  set of time-series data sets, stacked
+	  vertically.</para></listitem>
+      <listitem><para>Rows grouped by <emphasis>period</emphasis>.
+	  Think of the data matrix as composed of
+	  <emphasis>T</emphasis> blocks, each having
+	  <emphasis>n</emphasis> rows. The first
+	  <emphasis>n</emphasis> rows contain the observations for
+	  each of the cross-sectional units in period 1; the next
+	  block contains the observations for all units in period 2;
+	  and so on.  The data matrix is a set of cross-sectional data
+	  sets, stacked vertically.</para></listitem>
+    </itemizedlist>
 
-  <para>In either case you can use the frequency field in the
-    <emphasis>observations</emphasis> line of the data header file
-    (see <xref linkend="datafiles"/>) to make life a little easier.</para>
+    <para>You may use whichever arrangement is more convenient.  The
+      first is perhaps easier to keep straight.  If you use the second
+      then of course you must ensure that the cross-sectional units
+      appear in the same order in each of the period data
+      blocks.</para>
 
-  <itemizedlist>
-    <listitem><para><emphasis>Grouped by unit</emphasis>: Set the
-	frequency equal to <emphasis>T</emphasis>. Suppose you have
-	observations on 20 units in each of 5 time periods. Then this
-	observations line is appropriate: <literal>5 1.1
-	  20.5</literal> (read: frequency 5, starting with the
-	observation for unit 1, period 1, and ending with the
-	observation for unit 20, period 5). Then, for instance, you
-	can refer to the observation for unit 2 in period 5 as
-	<literal>2.5</literal>, and that for unit 13 in period 1 as
-	<literal>13.1</literal>.</para></listitem>
-    <listitem><para><emphasis>Grouped by period</emphasis>: Set the
-	frequency equal to <emphasis>n</emphasis>.  In this case if
-	you have observations on 20 units in each of 5 periods, the
-	observations line should be: <literal>20 1.01 5.20</literal>
-	(read: frequency 20, starting with the observation for period
-	1, unit 01, and ending with the observation for period 5, unit
-	20).  One refers to the observation for unit 2, period 5 as
-	<literal>5.02</literal>.</para></listitem>
-  </itemizedlist>
+    <para>In either case you can use the frequency field in the
+      <emphasis>observations</emphasis> line of the data header file
+      (see <xref linkend="datafiles"/>) to make life a little
+      easier.</para>
 
-  <para>If you decide to construct a panel data set using a
-    spreadsheet program then import the data into
-    <application>gretl</application>, the program may not at first
-    recognize the special nature of the data.  You can fix this by
-    using the command <command>setobs</command> (see
+    <itemizedlist>
+      <listitem><para><emphasis>Grouped by unit</emphasis>: Set the
+	  frequency equal to <emphasis>T</emphasis>. Suppose you have
+	  observations on 20 units in each of 5 time periods. Then
+	  this observations line is appropriate: <literal>5 1.1
+	    20.5</literal> (read: frequency 5, starting with the
+	  observation for unit 1, period 1, and ending with the
+	  observation for unit 20, period 5). Then, for instance, you
+	  can refer to the observation for unit 2 in period 5 as
+	  <literal>2.5</literal>, and that for unit 13 in period 1 as
+	  <literal>13.1</literal>.</para></listitem>
+      <listitem><para><emphasis>Grouped by period</emphasis>: Set the
+	  frequency equal to <emphasis>n</emphasis>.  In this case if
+	  you have observations on 20 units in each of 5 periods, the
+	  observations line should be: <literal>20 1.01 5.20</literal>
+	  (read: frequency 20, starting with the observation for
+	  period 1, unit 01, and ending with the observation for
+	  period 5, unit 20).  One refers to the observation for unit
+	  2, period 5 as <literal>5.02</literal>.</para></listitem>
+    </itemizedlist>
+
+    <para>If you decide to construct a panel data set using a
+      spreadsheet program then import the data into
+      <application>gretl</application>, the program may not at first
+      recognize the special nature of the data.  You can fix this by
+      using the command <command>setobs</command> (see
       <xref linkend="cmdref"/>) or the GUI menu item <quote>Sample,
-      Set frequency, startobs&hellip;</quote>.</para>
+	Set frequency, startobs&hellip;</quote>.</para>
+
+  </sect1>
 
   <sect1 id="dummies"><title>Dummy variables</title>
 

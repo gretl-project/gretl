@@ -12,8 +12,8 @@ HTMLDIR = $(DOC)-html
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/panel.xml chapters/appendices.xml chapters/datafiles.xml \
 	chapters/looping.xml chapters/starting.xml \
-	chapters/cli.xml chapters/graphs.xml chapters/menus.xml \
-	chapters/optarg.xml chapters/trouble.xml
+	chapters/cli.xml chapters/graphs.xml chapters/optarg.xml \
+	chapters/trouble.xml chapters/biblio.xml
 
 all: thumbs pdf altthumbs altpdf html chm
 
@@ -54,7 +54,7 @@ html: $(SRC) db2html $(DSL) $(HMATHSS)
 
 # make windows HTML help file for gretl
 
-topdoc = ../../doc
+topdoc = .
 
 chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml 
 	mkdir -p htmlhelp/figures

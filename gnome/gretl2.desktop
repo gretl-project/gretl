@@ -1,10 +1,10 @@
 [Desktop Entry]
 Name=gretl 2
 Comment=Econometrics program
-Exec=gretl2 %F
+Exec=gretl2 %U
 Icon=gretl.png
 Terminal=0
 Type=Application
-DocPath=gretl/gretl.xml
+X-GNOME-DocPath=gretl/gretl.xml
 Categories=Application;Scientific;Econometrics
 
