@@ -227,7 +227,7 @@ GtkItemFactoryEntry data_items[] = {
       REMOTE_DB, NULL },
     { _("/File/_Create data set/time-series/annual"), 
       NULL, newdata_dialog, 1, NULL },    
-    { _("/F_(ile/_Create data set/time-series/quarterly"), 
+    { _("/File/_Create data set/time-series/quarterly"), 
       NULL, newdata_dialog, 4, NULL },    
     { _("/File/_Create data set/time-series/monthly"), 
       NULL, newdata_dialog, 12, NULL }, 
