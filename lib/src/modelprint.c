@@ -1260,6 +1260,7 @@ static int print_discrete_stats (const MODEL *pmod,
 	ret = print_discrete_coeff(pdinfo, pmod, i, prn);
 	if (ret) gotnan = 1;
     }
+
     pprintf(prn, "\n");
     pprintf(prn, "%s %s = %.3f\n", _("Mean of"), 
 	    pdinfo->varname[pmod->list[1]], pmod->ybar);
