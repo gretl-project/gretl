@@ -737,7 +737,12 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	return -1;  
     }
     if (!dotpos1 && !dotpos2) {
-        return (atoi(date) - atoi(pdinfo->stobs));
+	n = atoi(date) - atoi(pdinfo->stobs);
+	if (n < 0 || n > pdinfo->n) {
+	    sprintf(gretl_errmsg, _("Observation number out of bounds"));
+	    return -1; 
+	}
+        else return n;
     }
     safecpy(startmajstr, pdinfo->stobs, dotpos2);
     startmaj = atoi(startmajstr);

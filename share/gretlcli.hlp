@@ -907,6 +907,21 @@ is assumed to be in the 21st century, otherwise it is assumed to be in the
 20th century.  (With daily data, periodicity 5 and 7 are both acceptable.)
 
 #
+setmiss
+@Dataset
+Usage:         setmiss -1
+               setmiss xvar 100
+
+Use this command to get the program to interpret some specific numerical data
+value (the first parameter to the command) as a code for "missing", in the
+case of imported data.  If this value is the only parameter, as in the first
+example above, the interpretation will be applied to all series in the data
+set.  If the missing numeric value code is followed by a list of variables, by
+name or number, the interpretation is confined to the specified variable(s).
+Thus in the second example the value 100 is interpreted as "missing", but only
+for the variable named xvar.
+
+#
 shell
 @Utilities
 Usage:		! [shell command]

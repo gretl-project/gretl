@@ -559,6 +559,76 @@ int _adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2,
     return 0;
 }
 
+/* ........................................................... */
+
+static int real_setmiss (double missval, int varno, 
+			 double **Z, DATAINFO *pdinfo) 
+{
+    int i, t, count = 0;
+    int start = 1, end = pdinfo->v;
+
+    if (varno) {
+	start = varno;
+	end = varno + 1;
+    }
+
+    for (i=start; i<end; i++) {
+	for (t=0; t<pdinfo->n; t++) {
+	    if (Z[i][t] == missval) {
+		Z[i][t] = NADBL;
+		count++;
+	    }
+	}	
+    }
+    return count;
+}
+
+/**
+ * set_miss:
+ * @LIST: list of variables to process.
+ * @param: string with specification of value to treat as missing.
+ * @pdinfo: pointer to data information struct.
+ * @PRN: pointer to printing struct.
+ * 
+ * Set to "missing" each observation of each series in list that
+ * has the specified value, as in @param.
+ *
+ */
+
+void set_miss (LIST list, const char *param, double **Z,
+	       DATAINFO *pdinfo, PRN *prn)
+{
+    double missval;
+    int i, count;
+
+    missval = atof(param);
+
+    if (list[0] == 0) {
+	count = real_setmiss(missval, 0, Z, pdinfo);
+	if (count) 
+	    pprintf(prn, _("Set %d value%s to \"missing\"\n"), count,
+		    (count > 1)? "s" : "");
+	else
+	    pprintf(prn, _("Didn't find any matching observations\n"));
+	return;
+    }
+
+    for (i=1; i<=list[0]; i++) {
+	if (!pdinfo->vector[list[i]]) {
+	    pprintf(prn, _("The variable %s is a scalar\n"), 
+		    pdinfo->varname[list[i]]);
+	    continue;
+	}
+	count = real_setmiss(missval, list[i], Z, pdinfo);
+	if (count) 
+	    pprintf(prn, _("%s: set %d observations to \"missing\"\n"), 
+		    pdinfo->varname[list[i]], count);
+	else 
+	    pprintf(prn, _("%s: Didn't find any matching observations\n"),
+		    pdinfo->varname[list[i]]);
+    }
+}
+
 /**
  * set_obs:
  * @line: command line.

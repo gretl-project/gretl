@@ -358,7 +358,9 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
     /* "store" takes a filename before the list, "var" takes a 
        lag order, "adf" takes a lag order, "arch" takes a lag 
        order, "multiply" takes a multiplier.  "omitfrom" and
-       "addto" take the ID of a previous model */
+       "addto" take the ID of a previous model. "setmiss" takes
+       a value to be interpreted as "missing"
+    */
     if ((command->ci == STORE && !spacename) ||
 	command->ci == ADF ||
 	command->ci == ARCH ||
@@ -366,6 +368,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	command->ci == ADDTO ||
 	command->ci == OMITFROM ||
 	command->ci == MULTIPLY ||
+	command->ci == SETMISS ||	
 	command->ci == VAR) {
 	if (nf) {
 	    command->param = realloc(command->param, linelen - n + 1);
@@ -396,7 +399,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 
     if (command->ci == AR) ar = 1;
 
-    command->list = realloc(command->list, (1+nf) * sizeof(int));
+    command->list = realloc(command->list, (1 + nf) * sizeof(int));
     if (command->list == NULL) {
 	command->errcode = E_ALLOC;
 	strcpy (gretl_errmsg, _("Memory allocation failed for command list"));
@@ -532,7 +535,7 @@ void getcmd (char *line, DATAINFO *pdinfo, CMD *command,
 	    /* suppress echo of the list -- may be too long */
 	    command->nolist = 1;
 	}
-    } else {
+    } else if (command->ci != SETMISS) {
 	/* command that needs a list but doesn't have one */
 	if (command->list[0] == 0) command->errcode = E_ARGS;
     }

@@ -83,6 +83,7 @@ typedef enum {
     SCATTERS,
     SEED,
     SETOBS,
+    SETMISS,
     SHELL,   
     SIM,     
     SMPL,

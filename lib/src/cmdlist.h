@@ -85,6 +85,7 @@ char *commands[] = {
     "scatters",
     "seed",
     "setobs",
+    "setmiss",
     "shell",   
     "sim",     
     "smpl",

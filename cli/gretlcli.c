@@ -1087,6 +1087,10 @@ void exec_line (char *line, PRN *prn)
 	    print_smpl(datainfo, 0, prn);
 	break;
 
+    case SETMISS:
+	set_miss(command.list, command.param, Z, datainfo, prn);
+	break;
+
     case SHELL:
 #ifdef OS_WIN32
 	fprintf(stderr, _("shell command not implemented in win32\n"));

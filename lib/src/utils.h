@@ -113,6 +113,9 @@ void list_exclude (const int n, int *list);
 
 int set_obs (char *line, DATAINFO *pdinfo, int opt);
 
+void set_miss (LIST list, const char *param, double **Z,
+	       DATAINFO *pdinfo, PRN *prn);
+
 char *addpath (char *fname, PATHS *ppaths, int script);
 
 int getopenfile (const char *line, char *fname, PATHS *ppaths,
