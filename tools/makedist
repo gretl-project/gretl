@@ -21,6 +21,7 @@ for f in calculator.c guiprint_common.c gpt_control.c gpt_control.h \
   session.c session.h webget.c webget.h library.c library.h ; do
     rm -f gretl/gui/$f
     cp -ap gretl/gui2/$f gretl/gui/
+done
 mv gretl gretl-${version}
 rm -f $tarfile 
 tar cvyfX $tarfile tar_exclude gretl-${version}
