@@ -1854,8 +1854,10 @@ special_selection_get (GtkWidget *widget,
 	gdk_free_compound_text(text);
 	str[length] = c;
     }
+#if 0
     g_free(str);
     clipboard_buf = NULL;
+#endif
     return TRUE;
 }
 

@@ -1222,10 +1222,16 @@ int print_plotspec_details (const GPT_SPEC *spec, FILE *fp)
     int miss = 0;
     double xx;
 
-    fprintf(fp, "set title '%s'\n", spec->titles[0]);
-    fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
-    fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
-    if (spec->y2axis) {
+    if (spec->titles[0][0]) {
+	fprintf(fp, "set title '%s'\n", spec->titles[0]);
+    }
+    if (spec->titles[1][0]) {
+	fprintf(fp, "set xlabel '%s'\n", spec->titles[1]);
+    }
+    if (spec->titles[2][0]) {
+	fprintf(fp, "set ylabel '%s'\n", spec->titles[2]);
+    }
+    if (spec->y2axis && spec->titles[3][0]) {
 	fprintf(fp, "set y2label '%s'\n", spec->titles[3]);
     }
 

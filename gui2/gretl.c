@@ -1008,6 +1008,8 @@ static void check_varmenu_state (GtkTreeSelection *select, gpointer p)
 	int selcount = tree_view_selection_count(select);
 
 	flip(mdata->ifac, "/Variable", (selcount == 1));
+	flip(mdata->ifac, "/Data/Correlation matrix/selected variables", 
+	     (selcount > 1));
     }
 }
 
@@ -2092,7 +2094,7 @@ static void gretl_clipboard_get (GtkClipboard *clip,
     str = clipboard_buf; /* global */
     if (str == NULL) return;
     length = strlen(str);
-  
+
     if (info == TARGET_STRING) {
 	gtk_selection_data_set (selection_data,
 				GDK_SELECTION_TYPE_STRING,
@@ -2115,28 +2117,14 @@ static void gretl_clipboard_get (GtkClipboard *clip,
 	gdk_free_compound_text(text);
 	str[length] = c;
     }
-
-    /* experiment */
-    if (1) {
-	gtk_clipboard_set_text(gtk_clipboard_get(GDK_SELECTION_PRIMARY),
-			       "eggblot", -1);
-    }
-
-#if 1
-    g_free(str);
-    clipboard_buf = NULL;
-#endif
 }
 
 /* ........................................................... */
 
 static void gretl_clipboard_clear (GtkClipboard *clip, gpointer p)
 {
-#if 0
     free(clipboard_buf);
     clipboard_buf = NULL;
-#endif
-    return;
 }
 
 /* ........................................................... */
