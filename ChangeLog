@@ -1,4 +1,4 @@
-version 0.981
+version 0.99
 - add option for HTTP proxy when contacting gretl data server
 - fix bugs in drag and drop under Windows
 - fix crashing bug when trying to save a data file with over
@@ -16,6 +16,7 @@ version 0.981
   and undo
 - add context help (click on a command and press the "?" button)
   for the edit command script window
+- correct typos in supplied data files data3-2 and data8-3
 
 02/11/2002 version 0.98
 - fig bug affecting frequency distributions and the test for

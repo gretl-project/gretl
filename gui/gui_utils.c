@@ -53,14 +53,7 @@ int use_proxy;
 /* filelist stuff */
 #define MAXRECENT 4
 
-#ifdef USE_GNOME
-static void gnome_printfilelist (int filetype);
-#else
-# ifdef G_OS_WIN32
-static void win_printfilelist (int filetype);
-# endif
 static void printfilelist (int filetype, FILE *fp);
-#endif
 
 static char datalist[MAXRECENT][MAXSTR], *datap[MAXRECENT];
 static char sessionlist[MAXRECENT][MAXSTR], *sessionp[MAXRECENT];
@@ -2255,9 +2248,9 @@ void write_rc (void)
 	    gnome_config_set_string(gpath, rc_vars[i].var);
 	i++;
     }
-    gnome_printfilelist(1); /* data files */
-    gnome_printfilelist(2); /* session files */
-    gnome_printfilelist(3); /* script files */    
+    printfilelist(1, NULL); /* data files */
+    printfilelist(2, NULL); /* session files */
+    printfilelist(3, NULL); /* script files */    
     gnome_config_sync();
     set_paths(&paths, 0, 1);
 }
@@ -2334,9 +2327,9 @@ void write_rc (void)
 			  rc_vars[i].key, rc_vars[i].var);
 	i++;
     }
-    win_printfilelist(1); /* data files */
-    win_printfilelist(2); /* session files */
-    win_printfilelist(3); /* script files */
+    printfilelist(1, NULL); /* data files */
+    printfilelist(2, NULL); /* session files */
+    printfilelist(3, NULL); /* script files */
     set_paths(&paths, 0, 1);
 }
 
@@ -2999,7 +2992,7 @@ void mkfilelist (int filetype, const char *fname)
 
 void delete_from_filelist (int filetype, const char *fname)
 {
-    char *tmp[MAXRECENT-1];
+    char *tmp[MAXRECENT];
     char **filep;
     int i, match = -1;
 
@@ -3009,7 +3002,7 @@ void delete_from_filelist (int filetype, const char *fname)
     else return;
 
     /* save pointers to current order */
-    for (i=0; i<MAXRECENT-1; i++) {
+    for (i=0; i<MAXRECENT; i++) {
 	tmp[i] = filep[i];
 	if (!strcmp(filep[i], fname)) match = i;
     }
@@ -3019,12 +3012,15 @@ void delete_from_filelist (int filetype, const char *fname)
     /* clear menu files list before rebuilding */
     clear_files_list(filetype, filep);
 
-    for (i=match; i<MAXRECENT-1; i++)
+    for (i=match; i<MAXRECENT-1; i++) {
 	filep[i] = tmp[i+1];
+    }
 
+    filep[MAXRECENT-1] = tmp[match];
     filep[MAXRECENT-1][0] = '\0';
 
     add_files_to_menu(filetype);
+    /* need to save to file at this point? */
 }
 
 /* .................................................................. */
@@ -3063,7 +3059,8 @@ char *endbit (char *dest, char *src, int addscore)
 
 #if defined(USE_GNOME)
 
-static void gnome_printfilelist (int filetype)
+static void printfilelist (int filetype, FILE *fp)
+     /* fp is ignored */
 {
     int i;
     char **filep;
@@ -3080,16 +3077,15 @@ static void gnome_printfilelist (int filetype)
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0]) { 
-	    sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
-	    gnome_config_set_string(gpath, filep[i]);
-	} else break;
+	sprintf(gpath, "/gretl/%s/%d", section[filetype - 1], i);
+	gnome_config_set_string(gpath, filep[i]);
     }
 }
 
 #elif defined(G_OS_WIN32)
 
-static void win_printfilelist (int filetype)
+static void printfilelist (int filetype, FILE *fp)
+     /* fp is ignored */
 {
     int i;
     char **filep;
@@ -3106,10 +3102,8 @@ static void win_printfilelist (int filetype)
     }
 
     for (i=0; i<MAXRECENT; i++) {
-	if (filep[i][0]) { 
-	    sprintf(rpath, "%s\\%d", section[filetype - 1], i);
-	    write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
-	} else break;
+	sprintf(rpath, "%s\\%d", section[filetype - 1], i);
+	write_reg_val(HKEY_CURRENT_USER, rpath, filep[i]);
     }
 }
 
