@@ -69,8 +69,8 @@ GtkWidget *labelpos[MAX_PLOT_LABELS];
 static GtkWidget *gpt_control;
 static GtkWidget *keycombo;
 static GtkWidget *termcombo;
-static GtkWidget *no_ols_check;
-static GtkWidget *no_border_check;
+static GtkWidget *fitline_check;
+static GtkWidget *border_check;
 static GtkWidget *ttfcombo;
 static GtkWidget *ttfspin;
 
@@ -615,16 +615,16 @@ static void apply_gpt_changes (GtkWidget *widget, GPT_SPEC *spec)
 #endif
     } 
 
-    if (no_border_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(no_border_check)->active) {
-	    spec->flags |= GPTSPEC_BORDER_HIDDEN;
-	} else {
+    if (border_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(border_check)->active) {
 	    spec->flags &= ~GPTSPEC_BORDER_HIDDEN;
+	} else {
+	    spec->flags |= GPTSPEC_BORDER_HIDDEN;
 	}
     } 
 
-    if (no_ols_check != NULL) {
-	if (GTK_TOGGLE_BUTTON(no_ols_check)->active) {
+    if (fitline_check != NULL) {
+	if (GTK_TOGGLE_BUTTON(fitline_check)->active) {
 	    spec->flags |= GPTSPEC_OLS_HIDDEN;
 	} else {
 	    spec->flags &= ~GPTSPEC_OLS_HIDDEN;
@@ -899,33 +899,33 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
     /* give option of removing top & right border */
     if (!(spec->flags & GPTSPEC_Y2AXIS)) { 
 	tbl_len++;
-	no_border_check = gtk_check_button_new_with_label(_("Hide top, right border"));
+	border_check = gtk_check_button_new_with_label(_("Show full border"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  no_border_check, 0, TAB_MAIN_COLS, 
+				  border_check, 0, TAB_MAIN_COLS, 
 				  tbl_len-1, tbl_len);
-	if (spec->flags & GPTSPEC_BORDER_HIDDEN) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(no_border_check),
+	if (!(spec->flags & GPTSPEC_BORDER_HIDDEN)) {
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(border_check),
 					 TRUE);
 	}	
-	gtk_widget_show(no_border_check);
+	gtk_widget_show(border_check);
     } else {
-	no_border_check = NULL;
+	border_check = NULL;
     }
 
     /* give option of removing an auto-fitted line */
     if (spec->flags & GPTSPEC_AUTO_OLS) { 
 	tbl_len++;
-	no_ols_check = gtk_check_button_new_with_label(_("Hide fitted line"));
+	fitline_check = gtk_check_button_new_with_label(_("Hide fitted line"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  no_ols_check, 0, TAB_MAIN_COLS, 
+				  fitline_check, 0, TAB_MAIN_COLS, 
 				  tbl_len-1, tbl_len);
 	if (spec->flags & GPTSPEC_OLS_HIDDEN) {
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(no_ols_check),
+	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(fitline_check),
 					 TRUE);
 	}	
-	gtk_widget_show(no_ols_check);
+	gtk_widget_show(fitline_check);
     } else {
-	no_ols_check = NULL;
+	fitline_check = NULL;
     }
 
     /* set TT font (if gnuplot uses libgd and freetype) */

@@ -19,8 +19,6 @@ int copyfile (const char *src, const char *dest);
 
 int isdir (const char *path);
 
-void append_dir (char *fname, const char *dir);
-
 void delete_widget (GtkWidget *widget, gpointer data);
 
 void *mymalloc (size_t size); 
@@ -82,8 +80,7 @@ void add_popup_item (const gchar *label, GtkWidget *menu,
 void get_stats_table (void);
 
 void *gui_get_plugin_function (const char *funcname, 
-			       const char *plugin,
-			       void **handle);
+			       void **phandle);
 
 void text_set_cursor (GtkWidget *w, GdkCursorType cspec);
 

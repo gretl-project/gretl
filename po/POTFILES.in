@@ -1,5 +1,4 @@
 lib/src/calendar.c
-lib/src/choltest.c
 lib/src/compare.c
 lib/src/dataio.c
 lib/src/dbread.c
@@ -18,9 +17,9 @@ lib/src/interact.c
 lib/src/modelprint.c
 lib/src/monte_carlo.c
 lib/src/mt19937ar.c
-lib/src/newvar.c
 lib/src/nls.c
 lib/src/nonparam.c
+lib/src/plugins.c
 lib/src/printout.c
 lib/src/pvalues.c
 lib/src/qr_estimate.c

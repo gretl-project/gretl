@@ -21,8 +21,6 @@ int prn_to_clipboard (PRN *prn, int copycode);
 
 int isdir (const char *path);
 
-void append_dir (char *fname, const char *dir);
-
 void delete_model (GtkWidget *widget, gpointer data);
 
 void delete_widget (GtkWidget *widget, gpointer data);
@@ -91,8 +89,7 @@ void add_popup_item (gchar *label, GtkWidget *menu,
 void get_stats_table (void);
 
 void *gui_get_plugin_function (const char *funcname, 
-			       const char *plugin,
-			       void **handle);
+			       void **phandle);
 
 int build_path (const char *dir, const char *fname, char *path, const char *ext);
 

@@ -1846,26 +1846,15 @@ johansen_complete (const double **X, const double **Y, const double **Z,
 
     *gretl_errmsg = 0;
     
-    if (open_plugin("johansen", &handle)) {
-        err = 1;
-        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
-        goto system_bailout;
-    }
+    johansen = get_plugin_function("johansen_eigenvals", &handle);
 
-    johansen = get_plugin_function("johansen_eigenvals", handle);
     if (johansen == NULL) {
-        err = 1;
-        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
-        goto system_bailout;
+	err = 1;
+    } else {
+	err = (* johansen) (X, Y, Z, k, T, trends, prn);
+	close_plugin(handle);
     }
-        
-    err = (* johansen) (X, Y, Z, k, T, trends, prn);
     
- system_bailout:
-    if (handle != NULL) {
-        close_plugin(handle);
-    }
-
     return err;
 }
 

@@ -874,7 +874,7 @@ void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
 	int (*switch_panel_orientation)(double **, DATAINFO *);
 
 	switch_panel_orientation = gui_get_plugin_function("switch_panel_orientation",
-							   "panel_data", &handle);
+							   &handle);
 	
 	if (switch_panel_orientation != NULL) {
 	    if (switch_panel_orientation(Z, datainfo)) {

@@ -1645,7 +1645,6 @@ void do_panel_diagnostics (gpointer data, guint u, GtkWidget *w)
     }
 
     panel_diagnostics = gui_get_plugin_function("panel_diagnostics", 
-						"panel_data",
 						&handle);
     if (panel_diagnostics == NULL) {
 	return;
@@ -1677,7 +1676,6 @@ void do_leverage (gpointer data, guint u, GtkWidget *w)
     gretl_matrix *L;
 
     model_leverage = gui_get_plugin_function("model_leverage", 
-					     "leverage",
 					     &handle);
     if (model_leverage == NULL) {
 	return;
@@ -1844,7 +1842,6 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
 				   PRN *, GRETLTEST *);
 
 	panel_autocorr_test = gui_get_plugin_function("panel_autocorr_test", 
-						      "panel_data",
 						      &handle);
 	if (panel_autocorr_test == NULL) {
 	    gretl_print_destroy(prn);
@@ -1995,7 +1992,7 @@ void do_mp_ols (GtkWidget *widget, gpointer p)
 
     if (verify_and_record_command(line) || bufopen(&prn)) return;
 
-    mplsq = gui_get_plugin_function("mplsq", "mp_ols", &handle);
+    mplsq = gui_get_plugin_function("mplsq", &handle);
     if (mplsq == NULL) {
 	return;
     }
@@ -2722,7 +2719,6 @@ void do_tramo_x12a (gpointer data, guint opt, GtkWidget *widget)
     }
 
     write_tx_data = gui_get_plugin_function("write_tx_data", 
-					    "tramo-x12a",
 					    &handle);
     if (write_tx_data == NULL) {
 	return;
@@ -2789,7 +2785,6 @@ void do_range_mean (gpointer data, guint opt, GtkWidget *widget)
     PRN *prn;
 
     range_mean_graph = gui_get_plugin_function("range_mean_graph", 
-					       "range-mean",
 					       &handle);
     if (range_mean_graph == NULL) {
 	return;
@@ -4533,7 +4528,7 @@ int execute_script (const char *runfile, const char *buf,
 	    if (loop.err) {
 		pprintf(prn, "\n%s\n", get_gretl_errmsg());
 	    }	    
-	    if (!aborted && loop.type != FOR_LOOP) {
+	    if (!aborted && i > 0 && loop.type != FOR_LOOP) {
 		print_loop_results(&loop, datainfo, prn, &paths, 
 				   &model_count, loopstorefile);
 	    }

@@ -554,8 +554,6 @@ int print_critical (const char *line, PRN *prn)
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
 
-    if (open_plugin("stats_tables", &handle)) return 1;
-
     if (parse_critical_input(line, &i, &df, &n)) {
 	pputs(prn, _("Invalid input\n"));
 	err = 1;
@@ -570,25 +568,22 @@ int print_critical (const char *line, PRN *prn)
 	err = 1;
     }    
 
-    if (err) {
-	close_plugin(handle);
-	return 1;
-    }
+    if (err) return 1;
 
     switch (i) {
     case 0: /* normal */
-	funp = norm_table = get_plugin_function("norm_lookup", handle);
+	funp = norm_table = get_plugin_function("norm_lookup", &handle);
 	break;
     case 1: /* t */
-	funp = tcrit = get_plugin_function("t_lookup", handle);
+	funp = tcrit = get_plugin_function("t_lookup", &handle);
 	break;
     case 2: /* chi-square */
-	funp = chicrit = get_plugin_function("chisq_lookup", handle);
+	funp = chicrit = get_plugin_function("chisq_lookup", &handle);
 	break;
     case 3: /* F */
 	break;
     case 4: /* DW */
-	funp = dw = get_plugin_function("dw_lookup", handle);
+	funp = dw = get_plugin_function("dw_lookup", &handle);
 	break;
     default:
 	break;
@@ -596,7 +591,6 @@ int print_critical (const char *line, PRN *prn)
 
     if (i != 3 && funp == NULL)  {
 	pputs(prn, _("Couldn't load plugin function\n"));
-	close_plugin(handle);
 	return 1;
     }
     
@@ -624,7 +618,9 @@ int print_critical (const char *line, PRN *prn)
 	break;
     }
 
-    close_plugin(handle);
+    if (handle != NULL) {
+	close_plugin(handle);
+    }
 
     return 0;
 }

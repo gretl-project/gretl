@@ -2485,7 +2485,6 @@ static int unmangle (const char *dosname, char *longname)
 	void (*real_unmangle)(const char *, char *, int, int *); 
 
 	real_unmangle = gui_get_plugin_function("real_unmangle", 
-						"longname",
 						&handle);
 	if (real_unmangle == NULL) return 1;
 

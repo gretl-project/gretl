@@ -234,24 +234,6 @@ int getbufline (char *buf, char *line, int init)
 
 /* ........................................................... */
 
-void append_dir (char *fname, const char *dir)
-{
-    size_t len;
-
-    if (dir == NULL) return;
-
-    len = strlen(fname);
-    if (fname[len - 1] == '/' || fname[len - 1] == '\\')
-	strcat(fname, dir);
-    else {
-	strcat(fname, SLASHSTR);
-	strcat(fname, dir);
-    }
-    strcat(fname, SLASHSTR);
-}
-
-/* ........................................................... */
-
 /* Below: Keep a record of (most) windows that are open, so they 
    can be destroyed en masse when a new data file is opened, to
    prevent weirdness that could arise if (e.g.) a model window
@@ -562,12 +544,10 @@ int get_worksheet_data (const char *fname, int datatype, int append)
 
     if (datatype == GRETL_GNUMERIC) {
 	sheet_get_data = gui_get_plugin_function("wbook_get_data",
-						 "gnumeric_import",
 						 &handle);
     }
     else if (datatype == GRETL_EXCEL) {
 	sheet_get_data = gui_get_plugin_function("excel_get_data",
-						 "excel_import",
 						 &handle);
     }
     else {
@@ -1030,7 +1010,6 @@ static void add_leverage_data (windata_t *vwin)
     if (m == NULL) return;
 
     leverage_data_dialog = gui_get_plugin_function("leverage_data_dialog",
-						   "leverage",
 						   &handle);
     if (leverage_data_dialog == NULL) return;
 
@@ -2685,36 +2664,14 @@ void add_popup_item (gchar *label, GtkWidget *menu,
 
 /* .................................................................. */
 
-int gui_open_plugin (const char *plugin, void **handle)
-{
-    char pluginpath[MAXLEN];
-
-    strcpy(pluginpath, fetch_gretl_lib_path());
-
-    strcat(pluginpath, plugin);
-    strcat(pluginpath, ".so");
-    *handle = dlopen(pluginpath, RTLD_LAZY);
-    if (*handle == NULL) {
-        sprintf(errtext, _("Failed to load plugin: %s"), pluginpath);
-        errbox(errtext);
-        return 1;
-    } 
-    return 0;
-}
-
 void *gui_get_plugin_function (const char *funcname, 
-			       const char *plugin,
-			       void **handle)
+			       void **phandle)
 {
     void *func;
 
-    if (gui_open_plugin(plugin, handle)) return NULL;
-
-    func = get_plugin_function(funcname, *handle);
+    func = get_plugin_function(funcname, phandle);
     if (func == NULL) {
-	errbox(_("Couldn't load plugin function"));
-	close_plugin(*handle);
-	return NULL;
+	errbox(get_gretl_errmsg());
     }
 
     return func;

@@ -810,4 +810,24 @@ char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo)
     return vname;
 }
 
+char *append_dir (char *fname, const char *dir)
+{
+    size_t len;
+
+    if (dir == NULL) return fname;
+
+    len = strlen(fname);
+    if (fname[len - 1] == '/' || fname[len - 1] == '\\')
+        strcat(fname, dir);
+    else {
+        strcat(fname, SLASHSTR);
+        strcat(fname, dir);
+    }
+
+    strcat(fname, SLASHSTR);
+
+    return fname;
+}
+
+
 

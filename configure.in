@@ -48,7 +48,15 @@ have_gnu_regex="no"
 MAKE="make"
 XML_LIBS=
 
-AM_GNU_GETTEXT([external])
+AC_CHECK_HEADERS(libintl.h,
+	try_nls="yes",
+	try_nls="no"
+)
+
+if test [ "$try_nls" = "yes" ]
+then
+   AM_GNU_GETTEXT([external])
+fi
 
 dnl
 dnl Process options supplied to the configure script

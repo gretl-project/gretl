@@ -396,6 +396,7 @@ struct _VCV {
 #include "subsample.h"
 #include "calendar.h"
 #include "system.h"
+#include "plugins.h"
 #include "nls.h"
 #ifdef WIN32
 # include "gretl_win32.h"

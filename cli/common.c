@@ -177,7 +177,7 @@ static int loop_exec_line (LOOPSET *plp, int lround, int cmdnum, PRN *prn)
 	    m = get_modnum_by_cmdnum(plp, cmdnum);
 	    swap_models(&models[0], &plp->models[m]);
 	    (plp->models[m])->ID = cmdnum;
-	    /* "correct" is being borrowed here, to mark the '-o' */
+	    /* Bodge: "correct" is being borrowed here, to mark the '-o' */
 	    if (oflag) {
 		/* covariance matrix wanted */
 		(plp->models[m])->correct = 1;

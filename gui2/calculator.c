@@ -160,7 +160,6 @@ static void get_critical (GtkWidget *w, gpointer data)
     void (*chicrit)(int, PRN *, int) = NULL;
     int i, n = -1, df = -1, err = 0;
     PRN *prn;
-    const char *plugin = "stats_tables";
 
     i = gtk_notebook_get_current_page(GTK_NOTEBOOK(look[0]->book));
 
@@ -170,18 +169,15 @@ static void get_critical (GtkWidget *w, gpointer data)
 
     switch (i) {
     case 0: /* normal */
-	funp = norm_table = gui_get_plugin_function("norm_lookup", plugin,
-						    &handle);
+	funp = norm_table = gui_get_plugin_function("norm_lookup", &handle);
 	break;
     case 1: /* t */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = tcrit = gui_get_plugin_function("t_lookup", plugin,
-					       &handle);
+	funp = tcrit = gui_get_plugin_function("t_lookup", &handle);
 	break;
     case 2: /* chi-square */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = chicrit = gui_get_plugin_function("chisq_lookup", plugin,
-						 &handle);
+	funp = chicrit = gui_get_plugin_function("chisq_lookup", &handle);
 	break;
     case 3: /* F */
 	df = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
@@ -189,8 +185,7 @@ static void get_critical (GtkWidget *w, gpointer data)
 	break;
     case 4: /* DW */
 	n = atoi(gtk_entry_get_text(GTK_ENTRY(look[i]->entry[0])));
-	funp = dw = gui_get_plugin_function("dw_lookup", plugin,
-					    &handle);
+	funp = dw = gui_get_plugin_function("dw_lookup", &handle);
 	break;
     default:
 	break;
@@ -235,7 +230,9 @@ static void get_critical (GtkWidget *w, gpointer data)
 	}
     }
 
-    close_plugin(handle);
+    if (handle != NULL) {
+	close_plugin(handle);
+    }
 
     if (err) {
 	gretl_print_destroy(prn);

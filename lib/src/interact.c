@@ -1500,26 +1500,14 @@ int call_pca_plugin (CORRMAT *corrmat, double ***pZ,
 
     *gretl_errmsg = 0;
     
-    if (open_plugin("pca", &handle)) {
-        err = 1;
-        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
-        goto pca_bailout;
-    }
-
-    pca_from_corrmat = get_plugin_function("pca_from_corrmat", handle);
+    pca_from_corrmat = get_plugin_function("pca_from_corrmat", &handle);
     if (pca_from_corrmat == NULL) {
-        err = 1;
-        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
-        goto pca_bailout;
+        return 1;
     }
         
     err = (* pca_from_corrmat) (corrmat, pZ, pdinfo, pflag, prn);
+    close_plugin(handle);
     
- pca_bailout:
-    if (handle != NULL) {
-        close_plugin(handle);
-    }
-
     return err;
 }
 

@@ -465,7 +465,7 @@ int main (int argc, char *argv[])
 	    if (loop.err) {
 		pprintf(prn, "\n%s\n", get_gretl_errmsg());
 	    }
-	    if (!aborted) {
+	    if (!aborted && i > 0) {
 		if (loop.type != FOR_LOOP) {
 		    print_loop_results(&loop, datainfo, prn, &paths, 
 				       &model_count, loopstorefile);

@@ -100,4 +100,6 @@ void unescape_url (char *url);
 
 char *make_varname_unique (char *vname, int v, DATAINFO *pdinfo);
 
+char *append_dir (char *fname, const char *dir);
+
 #endif /* STRUTILS_H */

@@ -189,16 +189,9 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	if (err) goto system_bailout;
     }
 
-    if (open_plugin("sur", &handle)) {
-	err = 1;
-	strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
-	goto system_bailout;
-    }
-
-    system_est = get_plugin_function("sur", handle);
+    system_est = get_plugin_function("sur", &handle);
     if (system_est == NULL) {
 	err = 1;
-        strcpy(gretl_errmsg, _("Couldn't load plugin function\n"));
         goto system_bailout;
     }
 	

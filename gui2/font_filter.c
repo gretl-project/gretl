@@ -109,7 +109,6 @@ static gboolean validate_font_family (const gchar *familyname,
 #ifdef SHOW_PROGRESS
 	if (show && handle == NULL) {
 	    show_progress = gui_get_plugin_function("show_progress", 
-						    "progress_bar",
 						    &handle);
 	    if (show_progress == NULL) {
 		show = 0;

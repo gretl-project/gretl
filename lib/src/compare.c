@@ -950,16 +950,9 @@ int autocorr_test (MODEL *pmod, int order,
 				   double **, DATAINFO *, 
 				   PRN *, GRETLTEST *);
 
-	if (open_plugin("panel_data", &handle)) {
-	    pputs(prn, _("Couldn't access panel plugin\n"));
-	    return 1;
-	}
-
 	panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
-						  handle);
+						  &handle);
 	if (panel_autocorr_test == NULL) {
-	    pputs(prn, _("Couldn't load plugin function\n"));
-	    close_plugin(handle);
 	    return 1;
 	}
 
@@ -1427,14 +1420,8 @@ int hausman_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 	void *handle;
 	void (*panel_diagnostics)(MODEL *, double ***, DATAINFO *, PRN *);
 
-	if (open_plugin("panel_data", &handle)) {
-	    pputs(prn, _("Couldn't access panel plugin\n"));
-	    return 1;
-	}
-	panel_diagnostics = get_plugin_function("panel_diagnostics", handle);
+	panel_diagnostics = get_plugin_function("panel_diagnostics", &handle);
 	if (panel_diagnostics == NULL) {
-	    pputs(prn, _("Couldn't load plugin function\n"));
-	    close_plugin(handle);
 	    return 1;
 	}
 	(*panel_diagnostics) (pmod, pZ, pdinfo, prn);
@@ -1513,11 +1500,8 @@ int leverage_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
     if (pmod->ci != OLS) return E_OLSONLY;
 
-    if (open_plugin("leverage", &handle)) return 1;
-
-    model_leverage = get_plugin_function("model_leverage", handle);
+    model_leverage = get_plugin_function("model_leverage", &handle);
     if (model_leverage == NULL) {
-	close_plugin(handle);
 	return 1;
     }
 
@@ -1579,7 +1563,7 @@ int mp_ols (const LIST list, const char *pos,
 	    double ***pZ, DATAINFO *pdinfo, 
 	    PRN *prn) 
 {
-    void *handle;
+    void *handle = NULL;
     int (*mplsq)(const int *, const int *, double ***, 
 		 DATAINFO *, PRN *, char *, mp_results *);
     const int *reglist = NULL;
@@ -1587,16 +1571,8 @@ int mp_ols (const LIST list, const char *pos,
     mp_results *mpvals = NULL;
     int nc, err = 0;
 
-    if (open_plugin("mp_ols", &handle)) {
-	pputs(prn, _("Couldn't access GMP plugin\n"));
-	return 1;
-    }
-
-    mplsq = get_plugin_function("mplsq", handle);
-    if (mplsq == NULL) {
-	pputs(prn, _("Couldn't load plugin function\n"));
-	err = 1;
-    }
+    mplsq = get_plugin_function("mplsq", &handle);
+    if (mplsq == NULL) return 1;
 
     if (!err && *pos) { /* got a list of polynomial terms? */
 	err = make_mp_lists(list, pos, &tmplist, &polylist);

@@ -2114,13 +2114,8 @@ int rmplot (const LIST list, double **Z, DATAINFO *pdinfo, PRN *prn,
     int (*range_mean_graph) (int, double **, const DATAINFO *, 
                              PRN *, PATHS *);
 
-    if (open_plugin("range-mean", &handle)) return 1;
-
-    range_mean_graph = get_plugin_function("range_mean_graph", handle);
-
+    range_mean_graph = get_plugin_function("range_mean_graph", &handle);
     if (range_mean_graph == NULL) {
-        pputs(prn, _("Couldn't load plugin function\n"));
-        close_plugin(handle);
         return 1;
     }
 

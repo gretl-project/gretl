@@ -388,8 +388,8 @@ static int random_effects (MODEL *pmod, double **Z, DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo, 
-		      int nunits, int T, PRN *prn)
+static int breusch_pagan_LM (MODEL *pmod, DATAINFO *pdinfo, 
+			     int nunits, int T, PRN *prn)
 {
     double *ubar, LM, eprime = 0.0;
     int i, t, start = 0;

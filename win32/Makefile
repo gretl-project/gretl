@@ -89,7 +89,7 @@ RES2COFF = echo gretlw32_res.o
 LIBSRC = calendar.c compare.c dataio.c dbread.c describe.c discrete.c \
         estimate.c generate.c genstack.c graphing.c gretl_commands.c \
 	gretl_errors.c gretl_matrix.c gretl_utils.c gretl_win32.c interact.c \
-	modelprint.c monte_carlo.c nls.c nonparam.c printout.c pvalues.c \
+	modelprint.c monte_carlo.c nls.c nonparam.c plugins.c printout.c pvalues.c \
 	qr_estimate.c random.c strutils.c subsample.c system.c texprint.c var.c
 LIBOBJ = $(LIBSRC:.c=.o)
 

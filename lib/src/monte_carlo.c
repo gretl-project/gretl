@@ -93,7 +93,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
     int n, v;
     int err = 0;
 
-    gretl_errmsg[0] = '\0';
+    *gretl_errmsg = '\0';
     monte_carlo_init(ploop);
 
     /* try parsing as a while loop */
@@ -107,9 +107,13 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 		    _("Undefined variable '%s' in loop condition."), lvar);
 	    err = 1;
 	}
-	if (!err && (isdigit((unsigned char) rvar[0]) 
-	    || rvar[0] == '.')) { /* numeric rvalue? */
-	    ploop->rval = atof(rvar);
+	if (!err && (isdigit((unsigned char) *rvar) || *rvar == '.')) { 
+	    /* numeric rvalue? */
+	    if (check_atof(rvar)) {
+		err = 1;
+	    } else {
+		ploop->rval = atof(rvar);
+	    }
 	} else if (!err) { /* otherwise try a varname */
 	    v = varindex(pdinfo, rvar);
 	    if (v > 0 && v < pdinfo->v) ploop->rvar = v;
@@ -120,7 +124,9 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 		err = 1;
 	    }
 	}
+
 	ploop->type = WHILE_LOOP;
+
 	return err;
     }
 
@@ -162,6 +168,7 @@ int parse_loopline (char *line, LOOPSET *ploop, DATAINFO *pdinfo)
 
     /* out of options, complain */
     strcpy(gretl_errmsg, _("No valid loop condition was given."));
+
     return 1;
 }
 
@@ -195,12 +202,13 @@ static int get_maxloop (void)
 
 int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 {
-    int t, cont = 0;
     static int maxloop = 0;
+    int t, cont = 0;
+    int oldtimes = ploop->ntimes;
 
     if (maxloop == 0) maxloop = get_maxloop();
 
-    /* case of an inequality between variables */
+    /* an inequality between variables */
     if (ploop->rvar > 0) {
 	ploop->ntimes += 1;
 	if (ploop->ntimes >= maxloop) {
@@ -215,15 +223,18 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 	    cont = (Z[ploop->lvar][0] < Z[ploop->rvar][0]);
 	}
     } 
-    else if (ploop->lvar == INDEXNUM) {  /* a 'for' loop */
+
+    /* a 'for' loop */
+    else if (ploop->lvar == INDEXNUM) {  
 	t = genr_scalar_index(0, 0); /* fetch index */
 	if (t < ploop->ntimes) {
 	    genr_scalar_index(2, 1); /* increment index */
 	    cont = 1;
 	}
     }
+
+    /* inequality between a var and a number */
     else if (ploop->lvar) {
-	/* case of inequality between a var and a number */
 	ploop->ntimes += 1;
 	if (ploop->ntimes >= maxloop) {
 	    sprintf(gretl_errmsg, _("Warning: no convergence after %d interations"),
@@ -237,9 +248,16 @@ int loop_condition (int k, LOOPSET *ploop, double **Z, DATAINFO *pdinfo)
 	    cont = (Z[ploop->lvar][0] < ploop->rval);
 	}
     }
+
+    /* a simple count loop */
     else {
-	/* case of a simple count */
 	if (k < ploop->ntimes) cont = 1;
+    }
+
+    if (!cont && oldtimes == 0) {
+	strcpy(gretl_errmsg, _("Loop condition not satisfied at first round"));
+	ploop->err = 1;
+	ploop->ntimes = 0;
     }
 
     return cont;
@@ -390,6 +408,7 @@ int loop_model_init (LOOP_MODEL *plmod, const MODEL *pmod,
     free(plmod->ssq_coeff);
     free(plmod->sum_sderr);
     free(plmod->ssq_sderr);
+
     return 1;
 }
 
@@ -436,6 +455,7 @@ int loop_print_init (LOOP_PRINT *pprn, const LIST list, int id)
     free(pprn->list);
     free(pprn->sum);
     free(pprn->ssq);
+
     return 1;
 }
 
@@ -481,10 +501,12 @@ int loop_store_init (LOOPSET *ploop, const LIST list, DATAINFO *pdinfo)
     }
 
     return 0;
+
  cleanup:
     free(ploop->storename);
     free(ploop->storelbl);
     free(ploop->storeval);
+
     return 1;
 }
 
@@ -678,6 +700,7 @@ static void free_loop_model (LOOP_MODEL *plmod)
 	mpf_clear(plmod->ssq_sderr[i]);
     }
 #endif
+
     free(plmod->sum_coeff);
     free(plmod->sum_sderr);
     free(plmod->ssq_coeff);
@@ -697,6 +720,7 @@ static void free_loop_print (LOOP_PRINT *pprn)
 	mpf_clear(pprn->ssq[i]);
     }
 #endif
+
     free(pprn->sum);
     free(pprn->ssq);
     free(pprn->list);    

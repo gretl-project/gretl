@@ -3171,17 +3171,8 @@ static int genr_mpow (const char *str, double *xvec, double **Z,
 	return 1;
     } 
 
-    if (open_plugin("mp_ols", &handle)) {
-	fprintf(stderr, I_("Couldn't access GMP plugin\n"));
-	return 1;
-    }
-
-    mp_raise = 
-	get_plugin_function("mp_vector_raise_to_power", handle);
-
+    mp_raise = get_plugin_function("mp_vector_raise_to_power", &handle);
     if (mp_raise == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	close_plugin(handle);
 	return 1;
     }
 
@@ -3211,16 +3202,8 @@ static int genr_mlog (const char *str, double *xvec, double **Z,
 	return 1;
     } 
 
-    if (open_plugin("mp_ols", &handle)) {
-	fprintf(stderr, I_("Couldn't access GMP plugin\n"));
-	return 1;
-    }
-
-    mp_log = get_plugin_function("mp_vector_ln", handle);
-
+    mp_log = get_plugin_function("mp_vector_ln", &handle);
     if (mp_log == NULL) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	close_plugin(handle);
 	return 1;
     }
 

@@ -3017,16 +3017,9 @@ MODEL lad (LIST list, double ***pZ, DATAINFO *pdinfo)
         return lad_model;
     }
 
-    if (open_plugin("lad", &handle)) {
-	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	lad_model.errcode = E_FOPEN;
-	return lad_model;
-    }
-
-    lad_driver = get_plugin_function("lad_driver", handle);
+    lad_driver = get_plugin_function("lad_driver", &handle);
     if (lad_driver == NULL) {
 	fprintf(stderr, I_("Couldn't load plugin function\n"));
-	close_plugin(handle);
 	lad_model.errcode = E_FOPEN;
 	return lad_model;
     }

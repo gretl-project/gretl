@@ -3132,59 +3132,6 @@ static int xmlfile (const char *fname)
     return ret;
 } 
 
-#ifdef WIN32
-# include <windows.h>
-#else
-# include <dlfcn.h>
-#endif
-
-int open_plugin (const char *plugin, void **handle)
-{
-    char pluginpath[MAXLEN];
-
-#ifdef WIN32
-    sprintf(pluginpath, "%s\\plugins\\%s.dll", fetch_gretl_lib_path(), plugin);
-    *handle = LoadLibrary(pluginpath);
-    if (*handle == NULL) return 1;
-#else
-    sprintf(pluginpath, "%s%s.so", fetch_gretl_lib_path(), plugin);
-    *handle = dlopen(pluginpath, RTLD_LAZY);
-    if (*handle == NULL) {
-	fprintf(stderr, "%s\n", dlerror());
-	return 1;
-    }
-#endif 
-    return 0;
-}
-
-void *get_plugin_function (const char *funcname, void *handle)
-{
-    void *funp;
-
-#ifdef WIN32
-    funp = GetProcAddress(handle, funcname);
-#else
-    funp = dlsym(handle, funcname);
-    if (funp == NULL) {
-	char munged[64];
-
-	sprintf(munged, "_%s", funcname);
-	funp = dlsym(handle, munged);
-	if (funp == NULL) fputs (dlerror(), stderr);
-    }
-#endif   
-    return funp;
-}
-
-void close_plugin (void *handle)
-{
-#ifdef WIN32
-    FreeLibrary(handle);
-#else
-    dlclose(handle);
-#endif
-}
-
 static int file_has_suffix (const char *fname, const char *sfx)
 {
     const char *p = strrchr(fname, '.');
@@ -3368,16 +3315,8 @@ static int write_xmldata (const char *fname, const int *list,
     }
 
     if (sz) {
-	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
-	    show_progress = 
-		get_plugin_function("show_progress", handle);
-	    if (show_progress == NULL) {
-		close_plugin(handle);
-		sz = 0L;
-	    }
-	} else {
-	    sz = 0L;
-	}
+	show_progress = get_plugin_function("show_progress", &handle);
+	if (show_progress == NULL) sz = 0L;
     }
 
     if (sz) (*show_progress)(0, sz, SP_SAVE_INIT); 
@@ -3725,14 +3664,8 @@ static int process_observations (xmlDocPtr doc, xmlNodePtr node,
     int (*show_progress) (long, long, int) = NULL;
 
     if (progress > 0) {
-	if (open_plugin(PROGRESS_BAR, &handle) == 0) {
-	    show_progress = 
-		get_plugin_function("show_progress", handle);
-	    if (show_progress == NULL) {
-		close_plugin(handle);
-		progress = 0L;
-	    }
-	} else progress = 0L;
+	show_progress = get_plugin_function("show_progress", &handle);
+	if (show_progress == NULL) progress = 0L;
     }
 
     if (tmp) {
