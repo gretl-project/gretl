@@ -13,7 +13,7 @@ AUTO_HELPFILES = \
 	$(sharesrc)/gretl.hlp \
 	$(sharesrc)/gretlcli.hlp \
 	$(sharesrc)/gretl.hlp.es \
-	$(sharesrc)/gretlcli.hlp.es 
+	$(sharesrc)/gretlcli.hlp.es \
 	$(sharesrc)/gretl.hlp.it \
 	$(sharesrc)/gretlcli.hlp.it 
 

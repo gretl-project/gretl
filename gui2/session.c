@@ -2891,6 +2891,7 @@ static void create_gobj_icon (gui_obj *gobj, const char **xpm)
     if (gobj->sort == 'm' || gobj->sort == 'g' ||
 	gobj->sort == 'v' || gobj->sort == 'b') { 
 	gobj->label = gtk_entry_new();
+	/* on gtk 2.0.N, the text is not going into the selected font */
 	gtk_entry_set_text(GTK_ENTRY(gobj->label), gobj->name);
 	gtk_editable_set_editable(GTK_EDITABLE(gobj->label), FALSE);
 	gtk_entry_set_has_frame(GTK_ENTRY(gobj->label), FALSE);

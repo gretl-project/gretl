@@ -280,7 +280,7 @@ int match_heading (struct help_head_t **heads, int nh,
     for (i=0; i<nh; i++) {
 	if (!strcmp(str, (heads[i])->name)) {
 #ifdef HDEBUG
-	    fprintf(stderr, "str='%s', heads[%d].nname='%s', matched\n",
+	    fprintf(stderr, "str='%s', heads[%d].name='%s', matched\n",
 		    str, i, (heads[i])->name);
 #endif
 	    match = i;
@@ -306,6 +306,9 @@ static int add_help_heading (struct help_head_t ***pheads,
 	(heads[nh])->name = malloc(strlen(str) + 1);
 	if ((heads[nh])->name != NULL) {
 	    strcpy((heads[nh])->name, str);
+#ifdef HDEBUG
+	    fprintf(stderr, "str='%s', heads[%d].name added new\n", str, nh);
+#endif
 	    (heads[nh])->ntopics = 1;
 	    nh++;
 	} else err = 1;
@@ -553,7 +556,7 @@ static int real_helpfile_init (int cli)
     /* first pass: find length and number of topics */
     err = get_help_length(&heads, &nh, &length, newhelp, fp);
 
-#if HDEBUG
+#ifdef HDEBUG
     fprintf(stderr, "got help length = %d, nh = %d\n", length, nh);
 #endif
 

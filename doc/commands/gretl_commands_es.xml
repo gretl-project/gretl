@@ -7,7 +7,7 @@
 <!-- June 11, 2004: Based on English gretl_commands.xml,
   CVS version 1.25 -->
 
-  <command name="add" section="Contrastes" label="Añadir variables">
+  <command name="add" section="Tests" label="Añadir variables">
 
     <usage>
       <arguments>
@@ -62,7 +62,7 @@
 
   </command>
 
-  <command name="addto" section="Contrastes" context="cli">
+  <command name="addto" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -96,7 +96,7 @@
 
   </command>
 
-  <command name="adf" section="Contrastes" label="Contraste aumentado de Dickey-Fuller">
+  <command name="adf" section="Tests" label="Contraste aumentado de Dickey-Fuller">
 
     <usage>
       <arguments>
@@ -144,7 +144,7 @@
 
   </command>
 
-  <command name="ar" section="Estimación" label="Estimación autorregresiva">
+  <command name="ar" section="Estimation" label="Estimación autorregresiva">
 
     <usage>
       <arguments>
@@ -201,7 +201,7 @@
 
   </command>
 
-  <command name="arch" section="Contrastes" label="Contraste ARCH">
+  <command name="arch" section="Tests" label="Contraste ARCH">
 
     <usage>
       <arguments>
@@ -241,7 +241,7 @@
 
   </command>
 
-  <command name="arma" section="Estimación" label="Modelo ARMA">
+  <command name="arma" section="Estimation" label="Modelo ARMA">
 
     <usage>
       <arguments>
@@ -337,7 +337,7 @@
 
   </command>
 
-  <command name="boxplot" section="Gráficos" label="Gráficos de caja">
+  <command name="boxplot" section="Graphs" label="Gráficos de caja">
 
     <usage>
       <arguments>
@@ -404,7 +404,7 @@
 
   </command>
 
-  <command name="chow" section="Contrastes" label="Contraste de Chow">
+  <command name="chow" section="Tests" label="Contraste de Chow">
 
     <usage>
       <arguments>
@@ -438,7 +438,7 @@
 
   </command>
 
-  <command name="coeffsum" section="Contrastes" label="Suma de coeficientes">
+  <command name="coeffsum" section="Tests" label="Suma de coeficientes">
 
     <usage>
       <arguments>
@@ -476,7 +476,7 @@
 
   </command>
 
-  <command name="coint" section="Contrastes" 
+  <command name="coint" section="Tests" 
     label="Contraste de cointegración de Engle-Granger">
 
     <usage>
@@ -510,7 +510,7 @@
 
   </command>
 
-  <command name="coint2" section="Contrastes" label="Contraste de cointegración de Johansen">
+  <command name="coint2" section="Tests" label="Contraste de cointegración de Johansen">
 
     <usage>
       <arguments>
@@ -565,7 +565,7 @@
 
   </command>
 
-  <command name="compact" section="Conjunto de datos" context="gui"
+  <command name="compact" section="Dataset" context="gui"
     label="Compactar datos">
 
     <description>
@@ -617,7 +617,7 @@
     </description>
   </command>
 
-  <command name="corc" section="Estimación" label="Procedimiento de Cochrane-Orcutt">
+  <command name="corc" section="Estimation" label="Procedimiento de Cochrane-Orcutt">
 
     <usage>
       <arguments>
@@ -651,7 +651,7 @@
 
   </command>
 
-  <command name="corr" section="Estadística" context="cli">
+  <command name="corr" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -678,7 +678,7 @@
 
   </command>
 
-  <command name="corrgm" section="Estadística" label="Correlograma">
+  <command name="corrgm" section="Statistics" label="Correlograma">
 
     <usage>
       <arguments>
@@ -730,7 +730,7 @@
 
   </command>
 
-  <command name="criteria" section="Utilidades" context="cli">
+  <command name="criteria" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -757,7 +757,7 @@
 
   </command>
 
-  <command name="critical" section="Utilidades" context="cli">
+  <command name="critical" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -793,7 +793,7 @@
 
   </command>
 
-  <command name="cusum" section="Contrastes" label="Contraste CUSUM">
+  <command name="cusum" section="Tests" label="Contraste CUSUM">
 
     <description>
       <para>
@@ -829,7 +829,7 @@
 
   </command>
 
-  <command name="data" section="Conjunto de datos" context="cli">
+  <command name="data" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -879,7 +879,7 @@
 
   </command>
 
-  <command name="delete" section="Conjunto de datost" context="cli">
+  <command name="delete" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -903,7 +903,7 @@
 
   </command>
 
-  <command name="dialog" section="Estimación" context="gui"
+  <command name="dialog" section="Estimation" context="gui"
     label="Caja de diálogo de Modelo">
 
     <description>
@@ -929,7 +929,7 @@
 
   </command>
 
-  <command name="diff" section="Transformaciones" context="cli">
+  <command name="diff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -953,14 +953,14 @@
 
   </command>
 
-  <command name="else" section="Programación" context="cli">
+  <command name="else" section="Programming" context="cli">
 
     <description><para>Ver <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="end" section="Programación" context="cli">
+  <command name="end" section="Programming" context="cli">
 
     <description>
       <para>
@@ -971,7 +971,7 @@
 
   </command>
 
-  <command name="endif" section="Programación" context="cli">
+  <command name="endif" section="Programming" context="cli">
 
     <description><para>Ver <cmdref targ="if"/>.</para>
     </description>
@@ -988,7 +988,7 @@
 
   </command>
 
-  <command name="eqnprint" section="Presentación" context="cli">
+  <command name="eqnprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -1026,7 +1026,7 @@
 
   </command>
 
-  <command name="equation" section="Estimación" context="cli">
+  <command name="equation" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -1051,7 +1051,7 @@
 
   </command>
 
-  <command name="export" section="Conjunto de datos" context="gui"
+  <command name="export" section="Dataset" context="gui"
     label="Exportar datos">
 
     <description>
@@ -1067,7 +1067,7 @@
     </description>
   </command>
 
-  <command name="factorized" section="Gráficos" context="gui"
+  <command name="factorized" section="Graphs" context="gui"
     label="Gráfico con factor de separación">
 
     <description>
@@ -1093,7 +1093,7 @@
   </command>
   
 
-  <command name="fcast" section="Predicción" context="cli">
+  <command name="fcast" section="Prediction" context="cli">
 
     <usage>
       <arguments>
@@ -1127,7 +1127,7 @@
 
   </command>
 
-  <command name="fcasterr" section="Predicción"
+  <command name="fcasterr" section="Prediction"
     label="Predicciones con intervalos de confianza">
 
     <usage>
@@ -1166,7 +1166,7 @@
 
   </command>
 
-  <command name="fit" section="Predicción" context="cli">
+  <command name="fit" section="Prediction" context="cli">
 
     <description>
       <para>
@@ -1181,7 +1181,7 @@
 
   </command>
 
-  <command name="freq" section="Estadística" context="cli">
+  <command name="freq" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -1204,7 +1204,7 @@
 
   </command>
 
-  <command name="garch" section="Estimación" label="Modelo GARCH">
+  <command name="garch" section="Estimation" label="Modelo GARCH">
 
     <usage>
       <arguments>
@@ -1289,7 +1289,7 @@
 
   </command>
 
-  <command name="genr" section="Conjunto de datos"
+  <command name="genr" section="Dataset"
     label="Generar una variable nueva">
 
     <usage>
@@ -1666,7 +1666,7 @@
 
   </command>
 
-  <command name="gnuplot" section="Gráficos" context="cli">
+  <command name="gnuplot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1746,7 +1746,7 @@
 
   </command>
 
-  <command name="graph" section="Gráficos" context="cli">
+  <command name="graph" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1773,7 +1773,7 @@
 
   </command>
 
-  <command name="graphing" section="Gráficos" context="gui"
+  <command name="graphing" section="Graphs" context="gui"
     label="Graphing">
 
     <description>
@@ -1852,7 +1852,7 @@
 
   </command>
 
-  <command name="graphpag" section="Gráficos" context="gui"
+  <command name="graphpag" section="Graphs" context="gui"
     label="Página de gráficos de Gretl">
 
     <description>
@@ -1881,7 +1881,7 @@
 
   </command>
 
-  <command name="3-D" section="Gráficos" context="gui"
+  <command name="3-D" section="Graphs" context="gui"
     label="Gráficos tridimensionales">
 
     <description>
@@ -1904,7 +1904,7 @@
     </description>
   </command>
     
-  <command name="hausman" section="Contrastes"
+  <command name="hausman" section="Tests"
     label="Contraste de Hausman test (diagnósticos de panel)">
 
     <description>
@@ -1952,7 +1952,7 @@
 
   </command>
 
-  <command name="hccm" section="Estimación" label="Estimación HCCM">
+  <command name="hccm" section="Estimation" label="Estimación HCCM">
 
     <usage>
       <arguments>
@@ -1984,7 +1984,7 @@
 
   </command>
 
-  <command name="help" section="Utilidades" context="cli">
+  <command name="help" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -2002,7 +2002,7 @@
 
   </command>
 
-  <command name="hilu" section="Estimación" label="Estimación de Hildreth-Lu">
+  <command name="hilu" section="Estimation" label="Estimación de Hildreth-Lu">
 
     <usage>
       <arguments>
@@ -2034,7 +2034,7 @@
 
   </command>
 
-  <command name="hsk" section="Estimación"
+  <command name="hsk" section="Estimation"
     label="Estimaciones corregidas de heterocedasticidad">
 
     <usage>
@@ -2077,7 +2077,7 @@
 
   </command>
 
-  <command name="if" section="Programación" context="cli">
+  <command name="if" section="Programming" context="cli">
 
     <description>
       <para>Control de flujo para la ejecución de instrucciones.  La sintaxis es:</para>
@@ -2103,7 +2103,7 @@
 
   </command>
 
-  <command name="import" section="Conjunto de datos" context="cli">
+  <command name="import" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -2142,7 +2142,7 @@
 
   </command>
 
-  <command name="info" section="Conjunto de datos" context="cli">
+  <command name="info" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -2158,7 +2158,7 @@
 
   </command>
 
-  <command name="label" section="Conjunto de datos" label="Editar los atributos de una variable">
+  <command name="label" section="Dataset" label="Editar los atributos de una variable">
 
     <usage>
       <arguments>
@@ -2214,7 +2214,7 @@
 
   </command>
 
-  <command name="labels" section="Conjunto de datos" context="cli">
+  <command name="labels" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -2226,7 +2226,7 @@
 
   </command>
 
-  <command name="lad" section="Estimación"
+  <command name="lad" section="Estimation"
     label="Estimación de mínima desviación absoluta">
 
     <usage>
@@ -2254,7 +2254,7 @@
 
   </command>
 
-  <command name="lags" section="Transformaciones" context="cli">
+  <command name="lags" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2282,7 +2282,7 @@
 
   </command>
 
-  <command name="ldiff" section="Transformaciones" context="cli">
+  <command name="ldiff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2313,7 +2313,7 @@
 
   </command>
 
-  <command name="leverage" section="Contrastes"
+  <command name="leverage" section="Tests"
     label="Observations influyentes">
 
     <usage>
@@ -2382,7 +2382,7 @@
 
   </command>
 
-  <command name="lmtest" section="Contrastes" label="Contrastes LM">
+  <command name="lmtest" section="Tests" label="Contrastes LM">
 
     <usage>
       <options>
@@ -2448,7 +2448,7 @@
 
   </command>
 
-  <command name="logistic" section="Estimación"
+  <command name="logistic" section="Estimation"
     label="Regresión logística">
 
     <usage>
@@ -2519,7 +2519,7 @@
 
   </command>
 
-  <command name="logit" section="Estimación"
+  <command name="logit" section="Estimation"
     label="Regresión Logit">
 
     <usage>
@@ -2568,7 +2568,7 @@
 
   </command>
 
-  <command name="logs" section="Transformaciones" context="cli">
+  <command name="logs" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2592,7 +2592,7 @@
 
   </command>
 
-  <command name="loop" section="Programación" context="cli">
+  <command name="loop" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -2632,7 +2632,7 @@
 
   </command>
 
-  <command name="markers" section="Conjunto de datos" context="gui"
+  <command name="markers" section="Dataset" context="gui"
     label="Añadir marcadores de caja">
 
     <description>
@@ -2649,7 +2649,7 @@
     </description>
   </command>
 
-  <command name="meantest" section="Contrastes"
+  <command name="meantest" section="Tests"
     label="Diferencia de medias">
 
     <usage>
@@ -2692,7 +2692,7 @@
 
   </command>
 
-  <command name="missing" section="Conjunto de datos" context="gui"
+  <command name="missing" section="Dataset" context="gui"
     label="valores ausentes">
 
     <description>
@@ -2712,7 +2712,7 @@
     </description>
   </command>
 
-  <command name="modeltab" section="Utilidades"
+  <command name="modeltab" section="Utilities"
     label="La tabla de modelos">
 
     <usage>
@@ -2798,7 +2798,7 @@
 
   </command>
 
-  <command name="mpols" section="Estimación"
+  <command name="mpols" section="Estimation"
     label="MCO de precisión Múltiple">
 
     <usage>
@@ -2837,7 +2837,7 @@
 
   </command>
 
-  <command name="multiply" section="Transformaciones" context="cli">
+  <command name="multiply" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2876,7 +2876,7 @@
 
   </command>
 
-  <command name="nls" section="Estimación"
+  <command name="nls" section="Estimation"
     label="Mínimos cuadrados no lineales">
 
     <usage>
@@ -3019,14 +3019,14 @@
 
   </command>
 
-  <command name="noecho" section="Obsoleta" context="cli">
+  <command name="noecho" section="Obsolete" context="cli">
     <description>
       <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
       </para>
     </description>
   </command>
 
-  <command name="nulldata" section="Conjunto de datos"
+  <command name="nulldata" section="Dataset"
     label="Crear un conjunto de datos vacío">
 
     <usage>
@@ -3059,7 +3059,7 @@
 
   </command>
 
-  <command name="ols" section="Estimación"
+  <command name="ols" section="Estimation"
     label="Mínimos Cuadrados Ordinarios">
 
     <usage>
@@ -3132,7 +3132,7 @@
 
   </command>
 
-  <command name="omit" section="Contrastes" label="Omisión de variables">
+  <command name="omit" section="Tests" label="Omisión de variables">
 
     <usage>
       <arguments>
@@ -3178,7 +3178,7 @@
 
   </command>
 
-  <command name="omitfrom" section="Contrastes" context="cli">
+  <command name="omitfrom" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -3211,7 +3211,7 @@
 
   </command>
 
-  <command name="online" section="Conjunto de datos" context="gui"
+  <command name="online" section="Dataset" context="gui"
     label="Bases de datos de acceso en línea">
 
     <description>
@@ -3258,7 +3258,7 @@
     </description>
   </command>
 
-  <command name="open" section="Conjunto de datos" context="cli">
+  <command name="open" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -3288,7 +3288,7 @@
 
   </command>
 
-  <command name="outfile" section="Impresión" context="cli">
+  <command name="outfile" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3337,7 +3337,7 @@
 
   </command>
 
-  <command name="panel" section="Conjunto de datos"
+  <command name="panel" section="Dataset"
     label="Datos de panel">
 
     <usage>
@@ -3410,7 +3410,7 @@
 
   </command>
 
-  <command name="pca" section="Estadística"
+  <command name="pca" section="Statistics"
     label="Análisis de componentes principales">
 
     <usage>
@@ -3456,8 +3456,7 @@
 
   </command>
 
-  <command name="pergm" section="Estadísticas"
-    label="Periodograma">
+  <command name="pergm" section="Statistics" label="Periodograma">
 
     <usage>
       <arguments>
@@ -3498,7 +3497,7 @@
 
   </command>
 
-  <command name="plot" section="Gráficos" context="cli">
+  <command name="plot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -3524,7 +3523,7 @@
 
   </command>
 
-  <command name="pooled" section="Estimación"
+  <command name="pooled" section="Estimation"
     label="MCO combinados">
 
     <usage>
@@ -3553,7 +3552,7 @@
 
   </command>
 
-  <command name="print" section="Impresión" context="cli">
+  <command name="print" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3600,7 +3599,7 @@
 
   </command>
 
-  <command name="printf" section="Impresión" context="cli">
+  <command name="printf" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3647,7 +3646,7 @@
 
   </command>
 
-  <command name="probit" section="Estimación"
+  <command name="probit" section="Estimation"
     label="Modelo Probit">
 
     <usage>
@@ -3688,7 +3687,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilidades" context="cli">
+  <command name="pvalue" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -3725,7 +3724,7 @@
 
   </command>
 
-  <command name="pwe" section="Estimación" label="Estimador de Prais-Winsten">
+  <command name="pwe" section="Estimation" label="Estimador de Prais-Winsten">
 
     <usage>
       <arguments>
@@ -3763,7 +3762,7 @@
 
   </command>
 
-  <command name="quit" section="Utilidades" context="cli">
+  <command name="quit" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -3778,7 +3777,7 @@
 
   </command>
 
-  <command name="rename" section="Conjunto de datos" context="cli">
+  <command name="rename" section="Dataset" context="cli">
 
     <usage>
       <arguments>
@@ -3805,7 +3804,7 @@
 
   </command>
 
-  <command name="reset" section="Contrastes"
+  <command name="reset" section="Tests"
     label="Ramsey's RESET">
 
     <description>
@@ -3825,7 +3824,7 @@
 
   </command>
 
-  <command name="rhodiff" section="Transformaciones" context="cli">
+  <command name="rhodiff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -3854,7 +3853,7 @@
 
   </command>
 
-  <command name="rmplot" section="Gráficos"
+  <command name="rmplot" section="Graphs"
     label="Gráfico Rango-Media">
 
     <usage>
@@ -3900,7 +3899,7 @@
 
   </command>
 
-  <command name="run" section="Programación" context="cli">
+  <command name="run" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -3921,7 +3920,7 @@
 
   </command>
 
-  <command name="runs" section="Contrastes" label="Contraste de rachas">
+  <command name="runs" section="Tests" label="Contraste de rachas">
 
     <usage>
       <arguments>
@@ -3949,7 +3948,7 @@
 
   </command>
 
-  <command name="sampling" section="Conjunto de datos" context="gui"
+  <command name="sampling" section="Dataset" context="gui"
     label="Establecer el rango muestral">
 
     <description>
@@ -4005,7 +4004,7 @@
   </command>
 
 
-  <command name="scatters" section="Gráficos"
+  <command name="scatters" section="Graphs"
     label="Gráficos bivariantes múltiples">
 
     <usage>
@@ -4051,14 +4050,14 @@
 
   </command>
 
-  <command name="seed" section="Obsoleta" context="cli">
+  <command name="seed" section="Obsolete" context="cli">
     <description>
       <para>Instrucción obsoleta.  Ver <cmdref targ="set"/>.
       </para>
     </description>
   </command>
 
-  <command name="seed" section="Programación" context="gui"
+  <command name="seed" section="Programming" context="gui"
     label="Semilla aleatoria">
 
     <description>
@@ -4073,7 +4072,7 @@
     </description>
   </command>
 
-  <command name="set" section="Programación" context="cli">
+  <command name="set" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -4163,7 +4162,7 @@
     </description>
   </command>
 
-  <command name="setobs" section="Conjunto de datos"
+  <command name="setobs" section="Dataset"
     label="Frequencia y observación inicial">
 
     <usage>
@@ -4229,7 +4228,7 @@
 
   </command>
 
-  <command name="setmiss" section="Conjunto de datos"
+  <command name="setmiss" section="Dataset"
     label="Código de valor ausente">
 
     <usage>
@@ -4280,7 +4279,7 @@
 
   </command>
 
-  <command name="shell" section="Utilidades" context="cli">
+  <command name="shell" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -4302,7 +4301,7 @@
 
   </command>
 
-  <command name="sim" section="Conjunto de datos"
+  <command name="sim" section="Dataset"
     label="Simulación">
 
     <usage>
@@ -4339,7 +4338,7 @@
 
   </command>
 
-  <command name="smpl" section="Conjunto de datos" context="cli">
+  <command name="smpl" section="Dataset" context="cli">
 
     <!-- don't break the lines below or the text version will get messed
     up -->
@@ -4412,7 +4411,7 @@
 
   </command>
 
-  <command name="spearman" section="Estadística"
+  <command name="spearman" section="Statistics"
     label="Correlación por rangos de Spearmans">
 
     <usage>
@@ -4460,7 +4459,7 @@
 
   </command>
 
-  <command name="square" section="Transformaciones" context="cli">
+  <command name="square" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -4493,7 +4492,7 @@
 
   </command>
 
-  <command name="store" section="Conjunto de datos"
+  <command name="store" section="Dataset"
     label="Guardar datos">
 
     <usage>
@@ -4558,7 +4557,7 @@
 
   </command>
 
-  <command name="summary" section="Estadística" context="cli">
+  <command name="summary" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -4584,7 +4583,7 @@
 
   </command>
 
-  <command name="system" section="Estimación" context="cli">
+  <command name="system" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -4614,7 +4613,7 @@
 
   </command>
 
-  <command name="tabprint" section="Impresión" context="cli">
+  <command name="tabprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -4652,7 +4651,7 @@
 
   </command>
 
-  <command name="testuhat" section="Contrastes" context="cli"
+  <command name="testuhat" section="Tests" context="cli"
     label="Normalidad de los residuos">
 
     <description>
@@ -4670,7 +4669,7 @@
 
   </command>
 
-  <command name="tobit" section="Estimación" label="Modelo Tobit">
+  <command name="tobit" section="Estimation" label="Modelo Tobit">
 
     <usage>
       <arguments>
@@ -4706,7 +4705,7 @@
 
   </command>
 
-  <command name="tsls" section="Estimación"
+  <command name="tsls" section="Estimation"
     label="Mínimos cuadrados en dos etapas">
 
     <usage>
@@ -4767,7 +4766,7 @@
 
   </command>
 
-  <command name="var" section="Estimación"
+  <command name="var" section="Estimation"
     label="Autorregresión vectorial">
 
     <usage>
@@ -4865,7 +4864,7 @@
 
   </command>
 
-  <command name="listavar" section="Conjunto de datos" context="cli">
+  <command name="listavar" section="Dataset" context="cli">
 
     <description>
       <para>
@@ -4876,7 +4875,7 @@
 
   </command>
 
-  <command name="vartest" section="Contrastes"
+  <command name="vartest" section="Tests"
     label="Diferencia de varianzas">
 
     <usage>
@@ -4906,7 +4905,7 @@
 
   </command>
 
-  <command name="wls" section="Estimación"
+  <command name="wls" section="Estimation"
     label="Mínimos cuadrados ponderados">
 
     <usage>

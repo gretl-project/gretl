@@ -4,7 +4,7 @@
 
 <?PSGML NOFILL label code altforms altform menu-path other-access?>
 
-  <command name="add" section="Test" label="Aggiunge variabili">
+  <command name="add" section="Tests" label="Aggiunge variabili">
 
     <usage>
       <arguments>
@@ -58,7 +58,7 @@
 
   </command>
 
-  <command name="addto" section="Test" context="cli">
+  <command name="addto" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -92,7 +92,7 @@
 
   </command>
 
-  <command name="adf" section="Test" label="Test Dickey-Fuller aumentato">
+  <command name="adf" section="Tests" label="Test Dickey-Fuller aumentato">
 
     <usage>
       <arguments>
@@ -140,7 +140,7 @@
 
   </command>
 
-  <command name="ar" section="Stima" label="Stima autoregressiva">
+  <command name="ar" section="Estimation" label="Stima autoregressiva">
 
     <usage>
       <arguments>
@@ -197,7 +197,7 @@
 
   </command>
 
-  <command name="arch" section="Test" label="Test ARCH">
+  <command name="arch" section="Tests" label="Test ARCH">
 
     <usage>
       <arguments>
@@ -235,7 +235,7 @@
 
   </command>
 
-  <command name="arma" section="Stima" label="Modello ARMA">
+  <command name="arma" section="Estimation" label="Modello ARMA">
 
     <usage>
       <arguments>
@@ -328,7 +328,7 @@
 
   </command>
 
-  <command name="boxplot" section="Grafici" label="Boxplot">
+  <command name="boxplot" section="Graphs" label="Boxplot">
 
     <usage>
       <arguments>
@@ -392,7 +392,7 @@
 
   </command>
 
-  <command name="chow" section="Test" label="Test Chow">
+  <command name="chow" section="Tests" label="Test Chow">
 
     <usage>
       <arguments>
@@ -428,7 +428,7 @@
 
   </command>
 
-  <command name="coeffsum" section="Test" label="Somma dei coefficienti">
+  <command name="coeffsum" section="Tests" label="Somma dei coefficienti">
 
     <usage>
       <arguments>
@@ -466,7 +466,7 @@
 
   </command>
 
-  <command name="coint" section="Test" 
+  <command name="coint" section="Tests" 
     label="Test di cointegrazione di Engle-Granger">
 
     <usage>
@@ -499,7 +499,7 @@
 
   </command>
 
-  <command name="coint2" section="Test" label="Test di cointegrazione di Johansen">
+  <command name="coint2" section="Tests" label="Test di cointegrazione di Johansen">
 
     <usage>
       <arguments>
@@ -604,7 +604,7 @@
     </description>
   </command>
 
-  <command name="corc" section="Stima" label="Stima Cochrane-Orcutt">
+  <command name="corc" section="Estimation" label="Stima Cochrane-Orcutt">
 
     <usage>
       <arguments>
@@ -638,7 +638,7 @@
 
   </command>
 
-  <command name="corr" section="Statistiche" context="cli">
+  <command name="corr" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -664,7 +664,7 @@
 
   </command>
 
-  <command name="corrgm" section="Statistiche" label="Correlogramma">
+  <command name="corrgm" section="Statistics" label="Correlogramma">
 
     <usage>
       <arguments>
@@ -714,7 +714,7 @@
 
   </command>
 
-  <command name="criteria" section="Utilità" context="cli">
+  <command name="criteria" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -741,7 +741,7 @@
 
   </command>
 
-  <command name="critical" section="Utilità" context="cli">
+  <command name="critical" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -777,7 +777,7 @@
 
   </command>
 
-  <command name="cusum" section="Test" label="Test CUSUM">
+  <command name="cusum" section="Tests" label="Test CUSUM">
 
     <description>
       <para>
@@ -886,7 +886,7 @@
 
   </command>
 
-  <command name="dialog" section="Stima" context="gui"
+  <command name="dialog" section="Estimation" context="gui"
     label="Finestra di dialogo Modello">
 
     <description>
@@ -910,7 +910,7 @@
 
   </command>
 
-  <command name="diff" section="Trasformazioni" context="cli">
+  <command name="diff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -933,14 +933,14 @@
 
   </command>
 
-  <command name="else" section="Programmazione" context="cli">
+  <command name="else" section="Programming" context="cli">
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="end" section="Programmazione" context="cli">
+  <command name="end" section="Programming" context="cli">
 
     <description>
       <para>
@@ -952,14 +952,14 @@
 
   </command>
 
-  <command name="endif" section="Programmazione" context="cli">
+  <command name="endif" section="Programming" context="cli">
 
     <description><para>Si veda <cmdref targ="if"/>.</para>
     </description>
 
   </command>
 
-  <command name="endloop" section="Programmazione" context="cli">
+  <command name="endloop" section="Programming" context="cli">
 
     <description>
       <para>
@@ -969,7 +969,7 @@
 
   </command>
 
-  <command name="eqnprint" section="Stampa" context="cli">
+  <command name="eqnprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -1007,7 +1007,7 @@
 
   </command>
 
-  <command name="equation" section="Stima" context="cli">
+  <command name="equation" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -1048,7 +1048,7 @@
     </description>
   </command>
 
-  <command name="factorized" section="Grafici" context="gui"
+  <command name="factorized" section="Graphs" context="gui"
     label="Grafico X-Y con fattore">
 
     <description>
@@ -1072,7 +1072,7 @@
   </command>
   
 
-  <command name="fcast" section="Previsione" context="cli">
+  <command name="fcast" section="Prediction" context="cli">
 
     <usage>
       <arguments>
@@ -1106,7 +1106,7 @@
 
   </command>
 
-  <command name="fcasterr" section="Previsione"
+  <command name="fcasterr" section="Prediction"
     label="Previsioni con errori standard">
 
     <usage>
@@ -1144,7 +1144,7 @@
 
   </command>
 
-  <command name="fit" section="Previsione" context="cli">
+  <command name="fit" section="Prediction" context="cli">
 
     <description>
       <para>
@@ -1159,7 +1159,7 @@
 
   </command>
 
-  <command name="freq" section="Statistiche" context="cli">
+  <command name="freq" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -1182,7 +1182,7 @@
 
   </command>
 
-  <command name="garch" section="Stima" label="Modello GARCH">
+  <command name="garch" section="Estimation" label="Modello GARCH">
 
     <usage>
       <arguments>
@@ -1639,7 +1639,7 @@
 
   </command>
 
-  <command name="gnuplot" section="Grafici" context="cli">
+  <command name="gnuplot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1716,7 +1716,7 @@
 
   </command>
 
-  <command name="graph" section="Grafici" context="cli">
+  <command name="graph" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -1744,7 +1744,7 @@
 
   </command>
 
-  <command name="graphing" section="Grafici" context="gui"
+  <command name="graphing" section="Graphs" context="gui"
     label="Grafici">
 
     <description>
@@ -1823,7 +1823,7 @@
 
   </command>
 
-  <command name="graphpag" section="Grafici" context="gui"
+  <command name="graphpag" section="Graphs" context="gui"
     label="Pagina dei grafici">
 
     <description>
@@ -1854,7 +1854,7 @@
 
   </command>
 
-  <command name="3-D" section="Grafici" context="gui"
+  <command name="3-D" section="Graphs" context="gui"
     label="Grafici tridimensionali">
 
     <description>
@@ -1878,7 +1878,7 @@
     </description>
   </command>
     
-  <command name="hausman" section="Test"
+  <command name="hausman" section="Tests"
     label="Test di Hausman (diagnosi panel)">
 
     <description>
@@ -1926,7 +1926,7 @@
 
   </command>
 
-  <command name="hccm" section="Stima" label="Stima HCCM">
+  <command name="hccm" section="Estimation" label="Stima HCCM">
 
     <usage>
       <arguments>
@@ -1959,7 +1959,7 @@
 
   </command>
 
-  <command name="help" section="Utilità" context="cli">
+  <command name="help" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -1976,7 +1976,7 @@
 
   </command>
 
-  <command name="hilu" section="Stima" label="Stima Hildreth-Lu">
+  <command name="hilu" section="Estimation" label="Stima Hildreth-Lu">
 
     <usage>
       <arguments>
@@ -2007,7 +2007,7 @@
 
   </command>
 
-  <command name="hsk" section="Stima"
+  <command name="hsk" section="Estimation"
     label="Stime corrette per l'eteroschedasticità">
 
     <usage>
@@ -2048,7 +2048,7 @@
 
   </command>
 
-  <command name="if" section="Programmazione" context="cli">
+  <command name="if" section="Programming" context="cli">
 
     <description>
       <para>Controllo di flusso per l'esecuzione dei comandi. La sintassi è:</para>
@@ -2198,7 +2198,7 @@
 
   </command>
 
-  <command name="lad" section="Stima"
+  <command name="lad" section="Estimation"
     label="Stima con minime deviazioni assolute">
 
     <usage>
@@ -2226,7 +2226,7 @@
 
   </command>
 
-  <command name="lags" section="Trasformazioni" context="cli">
+  <command name="lags" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2254,7 +2254,7 @@
 
   </command>
 
-  <command name="ldiff" section="Trasformazioni" context="cli">
+  <command name="ldiff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2285,7 +2285,7 @@
 
   </command>
 
-  <command name="leverage" section="Test"
+  <command name="leverage" section="Tests"
     label="Osservazioni influenti">
 
     <usage>
@@ -2354,7 +2354,7 @@
 
   </command>
 
-  <command name="lmtest" section="Test" label="Test LM">
+  <command name="lmtest" section="Tests" label="Test LM">
 
     <usage>
       <options>
@@ -2420,7 +2420,7 @@
 
   </command>
 
-  <command name="logistic" section="Stima"
+  <command name="logistic" section="Estimation"
     label="Regressione logistica">
 
     <usage>
@@ -2494,7 +2494,7 @@
 
   </command>
 
-  <command name="logit" section="Stima"
+  <command name="logit" section="Estimation"
     label="Regressione logit">
 
     <usage>
@@ -2541,7 +2541,7 @@
 
   </command>
 
-  <command name="logs" section="Trasformazioni" context="cli">
+  <command name="logs" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2566,7 +2566,7 @@
 
   </command>
 
-  <command name="loop" section="Programmazione" context="cli">
+  <command name="loop" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -2625,7 +2625,7 @@
     </description>
   </command>
 
-  <command name="meantest" section="Test"
+  <command name="meantest" section="Tests"
     label="Differenza delle medie">
 
     <usage>
@@ -2689,7 +2689,7 @@
     </description>
   </command>
 
-  <command name="modeltab" section="Utilità"
+  <command name="modeltab" section="Utilities"
     label="La tabella modelli">
 
     <usage>
@@ -2779,7 +2779,7 @@
 
   </command>
 
-  <command name="mpols" section="Stima"
+  <command name="mpols" section="Estimation"
     label="OLS a precisione multipla">
 
     <usage>
@@ -2817,7 +2817,7 @@
 
   </command>
 
-  <command name="multiply" section="Trasformazioni" context="cli">
+  <command name="multiply" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -2856,7 +2856,7 @@
 
   </command>
 
-  <command name="nls" section="Stima"
+  <command name="nls" section="Estimation"
     label="Minimi quadrati non-lineari">
 
     <usage>
@@ -3034,7 +3034,7 @@
 
   </command>
 
-  <command name="ols" section="Stima"
+  <command name="ols" section="Estimation"
     label="Minimi quadrati ordinari">
 
     <usage>
@@ -3105,7 +3105,7 @@
 
   </command>
 
-  <command name="omit" section="Test" label="Variabili omesse">
+  <command name="omit" section="Tests" label="Variabili omesse">
 
     <usage>
       <arguments>
@@ -3152,7 +3152,7 @@
 
   </command>
 
-  <command name="omitfrom" section="Test" context="cli">
+  <command name="omitfrom" section="Tests" context="cli">
 
     <usage>
       <arguments>
@@ -3258,7 +3258,7 @@
 
   </command>
 
-  <command name="outfile" section="Stampa" context="cli">
+  <command name="outfile" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3375,7 +3375,7 @@
 
   </command>
 
-  <command name="pca" section="Statistiche"
+  <command name="pca" section="Statistics"
     label="Analisi delle componenti principali">
 
     <usage>
@@ -3419,7 +3419,7 @@
 
   </command>
 
-  <command name="pergm" section="Statistiche"
+  <command name="pergm" section="Statistics"
     label="Periodogramma">
 
     <usage>
@@ -3461,7 +3461,7 @@
 
   </command>
 
-  <command name="plot" section="Grafici" context="cli">
+  <command name="plot" section="Graphs" context="cli">
 
     <usage>
       <arguments>
@@ -3487,7 +3487,7 @@
 
   </command>
 
-  <command name="pooled" section="Stima"
+  <command name="pooled" section="Estimation"
     label="Pooled OLS">
 
     <usage>
@@ -3515,7 +3515,7 @@
 
   </command>
 
-  <command name="print" section="Stampa" context="cli">
+  <command name="print" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3562,7 +3562,7 @@
 
   </command>
 
-  <command name="printf" section="Stampa" context="cli">
+  <command name="printf" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -3606,7 +3606,7 @@
 
   </command>
 
-  <command name="probit" section="Stima"
+  <command name="probit" section="Estimation"
     label="Modello probit">
 
     <usage>
@@ -3647,7 +3647,7 @@
 
   </command>
 
-  <command name="pvalue" section="Utilità" context="cli">
+  <command name="pvalue" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -3684,7 +3684,7 @@
 
   </command>
 
-  <command name="pwe" section="Stima" label="Stimatore di Prais-Winsten">
+  <command name="pwe" section="Estimation" label="Stimatore di Prais-Winsten">
 
     <usage>
       <arguments>
@@ -3721,7 +3721,7 @@
 
   </command>
 
-  <command name="quit" section="Utilità" context="cli">
+  <command name="quit" section="Utilities" context="cli">
 
     <description>
       <para>
@@ -3762,7 +3762,7 @@
 
   </command>
 
-  <command name="reset" section="Test"
+  <command name="reset" section="Tests"
     label="Test RESET di Ramsey">
 
     <description>
@@ -3782,7 +3782,7 @@
 
   </command>
 
-  <command name="rhodiff" section="Trasformazioni" context="cli">
+  <command name="rhodiff" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -3811,7 +3811,7 @@
 
   </command>
 
-  <command name="rmplot" section="Grafici"
+  <command name="rmplot" section="Graphs"
     label="Grafico range-mean">
 
     <usage>
@@ -3858,7 +3858,7 @@
 
   </command>
 
-  <command name="run" section="Programmazione" context="cli">
+  <command name="run" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -3879,7 +3879,7 @@
 
   </command>
 
-  <command name="runs" section="Test" label="Test delle successioni">
+  <command name="runs" section="Tests" label="Test delle successioni">
 
     <usage>
       <arguments>
@@ -3960,7 +3960,7 @@
   </command>
 
 
-  <command name="scatters" section="Grafici"
+  <command name="scatters" section="Graphs"
     label="Grafici a dispersione multipli">
 
     <usage>
@@ -4015,7 +4015,7 @@
     </description>
   </command>
 
-  <command name="seed" section="Programmazione" context="gui"
+  <command name="seed" section="Programming" context="gui"
     label="Seme dei numeri casuali">
 
     <description>
@@ -4029,7 +4029,7 @@
     </description>
   </command>
 
-  <command name="set" section="Programmazione" context="cli">
+  <command name="set" section="Programming" context="cli">
 
     <usage>
       <arguments>
@@ -4237,7 +4237,7 @@
 
   </command>
 
-  <command name="shell" section="Utilità" context="cli">
+  <command name="shell" section="Utilities" context="cli">
 
     <usage>
       <arguments>
@@ -4375,7 +4375,7 @@
 
   </command>
 
-  <command name="spearman" section="Statistiche"
+  <command name="spearman" section="Statistics"
     label="Correlazione di rango di Spearman">
 
     <usage>
@@ -4423,7 +4423,7 @@
 
   </command>
 
-  <command name="square" section="Trasformazioni" context="cli">
+  <command name="square" section="Transformations" context="cli">
 
     <usage>
       <arguments>
@@ -4520,7 +4520,7 @@
 
   </command>
 
-  <command name="summary" section="Statistiche" context="cli">
+  <command name="summary" section="Statistics" context="cli">
 
     <usage>
       <arguments>
@@ -4546,7 +4546,7 @@
 
   </command>
 
-  <command name="system" section="Stima" context="cli">
+  <command name="system" section="Estimation" context="cli">
 
     <usage>
       <arguments>
@@ -4577,7 +4577,7 @@
 
   </command>
 
-  <command name="tabprint" section="Stampa" context="cli">
+  <command name="tabprint" section="Printing" context="cli">
 
     <usage>
       <arguments>
@@ -4615,7 +4615,7 @@
 
   </command>
 
-  <command name="testuhat" section="Test" context="cli"
+  <command name="testuhat" section="Tests" context="cli"
     label="Normalità dei residui">
 
     <description>
@@ -4633,7 +4633,7 @@
 
   </command>
 
-  <command name="tobit" section="Stima" label="Modello tobit">
+  <command name="tobit" section="Estimation" label="Modello tobit">
 
     <usage>
       <arguments>
@@ -4669,7 +4669,7 @@
 
   </command>
 
-  <command name="tsls" section="Stima"
+  <command name="tsls" section="Estimation"
     label="Minimi quadrati a due stadi">
 
     <usage>
@@ -4729,7 +4729,7 @@
 
   </command>
 
-  <command name="var" section="Stima"
+  <command name="var" section="Estimation"
     label="Autoregressione vettoriale">
 
     <usage>
@@ -4837,7 +4837,7 @@
 
   </command>
 
-  <command name="vartest" section="Test"
+  <command name="vartest" section="Tests"
     label="Differenza delle varianze">
 
     <usage>
@@ -4867,7 +4867,7 @@
 
   </command>
 
-  <command name="wls" section="Stima"
+  <command name="wls" section="Estimation"
     label="Minimi quadrati ponderati">
 
     <usage>
