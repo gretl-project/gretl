@@ -499,10 +499,12 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 {
     GtkWidget *tmp, *x_hbox;
 
-    if (sr->code == SCATTERS)
+    if (sr->code == SCATTERS) {
 	tmp = gtk_label_new(_("Y-axis variable"));
-    else
+    } else {
 	tmp = gtk_label_new(_("X-axis variable"));
+    }
+
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);
 
@@ -895,14 +897,15 @@ void selection_dialog (const char *title, const char *oktxt,
 	build_mid_section(sr, right_vbox);
     
     /* lower right: selected (independent) variables */
-    if (MODEL_CODE(cmdcode))
+    if (MODEL_CODE(cmdcode)) {
 	tmp = gtk_label_new(_("Independent variables"));
-    else if (cmdcode == GR_XY || cmdcode == GR_IMP)
+    } else if (cmdcode == GR_XY || cmdcode == GR_IMP) {
 	tmp = gtk_label_new(_("Y-axis variables"));
-    else if (cmdcode == SCATTERS)
+    } else if (cmdcode == SCATTERS) {
 	tmp = gtk_label_new(_("X-axis variables"));
-    else if (cmdcode == GR_DUMMY)
+    } else if (cmdcode == GR_DUMMY) {
 	tmp = gtk_label_new(_("Factor (dummy)"));
+    }
     
     gtk_box_pack_start(GTK_BOX(right_vbox), tmp, FALSE, TRUE, 0);
     gtk_widget_show(tmp);

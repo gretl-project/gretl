@@ -745,10 +745,11 @@ static void build_x_axis_section (selector *sr, GtkWidget *right_vbox)
 {
     gchar *label_string;
 
-    if (sr->code == SCATTERS)
+    if (sr->code == SCATTERS) {
 	label_string = _("Y-axis variable");
-    else
+    } else {
 	label_string = _("X-axis variable");
+    }
 
     sr->depvar = entry_with_label_and_chooser (sr, right_vbox,
 					       label_string,
