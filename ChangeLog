@@ -1,4 +1,5 @@
 7/06/2004 version 1.2.8
+- fixes for LaTeX versions of autoregressive models
 - correct Spanish help strings
 - fix font problem for some objects in session window
 - fix for exporting time-series data to R version 1.9
@@ -18,7 +19,7 @@
 - Replace fixed IP address for database server with hostname
 - Update Windows version to gtk 2.4.3 runtime
 - add "restrict" command for general Wald test (not yet trans-
-  lated)
+  lated, too new)
 
 6/13/2004 version 1.2.7
 - add Italian helpfiles (thanks to Cristian Rigamonti)

@@ -82,7 +82,6 @@ static int check_R_matrix (const gretl_matrix *R)
 			      m);
 
     err = gretl_invert_general_matrix(m);
-    if (err) err = GRETL_MATRIX_SINGULAR;
     
     gretl_matrix_free(m);
 

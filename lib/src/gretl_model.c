@@ -626,6 +626,7 @@ int command_ok_for_model (int test_ci, int model_ci)
     case FCAST:
     case FIT:
 	break;
+
     case FCASTERR:
 	if (model_ci != OLS) ok = 0;
 	break;
