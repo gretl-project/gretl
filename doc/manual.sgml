@@ -888,7 +888,7 @@
     
 
     <orderedlist>
-      <listitem><para>Launch a calculator program.  This is just a
+      <listitem><para>Launch a calculator program.  A
 	  convenience function in case you want quick access to a
 	  calculator when you're working in
 	  <application>gretl</application>.  The default program is
@@ -904,6 +904,7 @@
       <listitem><para>Open the gretl console.  A shortcut to the
 	  <quote>Gretl console</quote> menu item (<xref linkend="menus"/>
 	  above).</para></listitem>
+      <listitem><para>Open the gretl session window.</para></listitem>
       <listitem><para>Open the <application>gretl</application>
 	  website in your web browser.  This will work only if you are
 	  connected to the Internet and have a properly configured
@@ -912,12 +913,14 @@
 	  format.  As with the previous item, this requires an
 	  Internet connection; it also requires that your browser
 	  knows how to handle PDF files.</para></listitem>
-      <listitem><para>A shortcut to the help item for script commands
+      <listitem><para>Open the  help item for script commands
 	  syntax (i.e. a listing with details of all available
 	  commands).</para></listitem>
-      <listitem><para>A shortcut to the dialog box for defining a
+      <listitem><para>Open the dialog box for defining a
 	  graph.</para></listitem>
-      <listitem><para>A shortcut to the listing of datasets associated
+      <listitem><para>Capture the last displayed graph for 
+          editing.</para></listitem>
+      <listitem><para>Open a window listing the datasets associated
 	  with Ramanathan's <citetitle>Introductory
 	  Econometrics</citetitle>.</para></listitem>
     </orderedlist>
@@ -3735,14 +3738,7 @@
 
     </sect2>
 
-    <sect2 id="list"><title>list</title>
 
-      <para>
-	Prints a listing of variables currently available.
-	<command>ls</command> is a synonym.  
-      </para>
-
-    </sect2>
 
     <sect2 id="lmtest"><title>lmtest</title>
 
@@ -5096,6 +5092,15 @@ linkend="looping"/> for details.
 	<emphasis>F</emphasis>-tests for zero restrictions on all lags
 	of each of the variables, and an <emphasis>F</emphasis>-test
 	for the maximum lag.
+      </para>
+
+    </sect2>
+
+    <sect2 id="list"><title>varlist</title>
+
+      <para>
+	Prints a listing of variables currently available.
+	<command>list</command> and <command>ls</command> are synonyms.  
       </para>
 
     </sect2>

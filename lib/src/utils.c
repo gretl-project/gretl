@@ -979,7 +979,7 @@ MODEL *gretl_model_new (void)
     return pmod;
 }
 
-#define SESSION_DEBUG
+/* #define SESSION_DEBUG */
 
 /* ........................................................... */
 
