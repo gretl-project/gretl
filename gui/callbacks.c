@@ -201,6 +201,19 @@ void dummy_call (void)
 
 /* ........................................................... */
 
+void print_report (gpointer data, guint unused, GtkWidget *widget)
+{
+    PRN *prn;
+
+    if (bufopen(&prn)) return;
+
+    data_report (datainfo, &paths, prn);
+    view_buffer(prn, 77, 400, _("gretl: data summary"), 
+		DATA_REPORT, NULL);
+}
+
+/* ........................................................... */
+
 void edit_header (gpointer data, guint unused, GtkWidget *widget)
 {
     if (data_status & BOOK_DATA)

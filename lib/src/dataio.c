@@ -21,6 +21,7 @@
 #include "internal.h"
 #include <zlib.h>
 #include <ctype.h>
+#include <time.h>
 #include <errno.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -1149,6 +1150,77 @@ int write_data (const char *fname, const int *list,
 
     if (pmax) free(pmax);
     if (fp != NULL) fclose(fp);
+    return 0;
+}
+
+static void pd_string (char *str, const DATAINFO *pdinfo)
+{
+    if (dataset_is_time_series(pdinfo)) {
+        switch (pdinfo->pd) {
+        case 1:
+            strcpy(str, _("Annual")); break;
+        case 4:
+            strcpy(str, _("Quarterly")); break;
+        case 12:
+            strcpy(str, _("Monthly")); break;
+        case 24:
+            strcpy(str, _("Hourly")); break;
+        case 52:
+            strcpy(str, _("Weekly")); break;
+        case 5:
+            strcpy(str, _("Daily")); break;
+        case 7:
+            strcpy(str, _("Daily")); break;
+        default:
+            strcpy(str, _("Unknown")); break;
+        }
+	strcat(str, _(" time-series"));
+    } 
+    else if (dataset_is_panel(pdinfo)) 
+        strcpy(str, _("Panel"));
+    else 
+        strcpy(str, _("Undated"));
+}
+
+/**
+ * data_report:
+ * @pdinfo: data information struct.
+ * @ppaths: path information struct.
+ * @prn: gretl printing struct.
+ * 
+ * Write out a summary of the content of the current data set.
+ * 
+ * Returns: 0 on successful completion, non-zero on error.
+ * 
+ */
+
+int data_report (const DATAINFO *pdinfo, PATHS *ppaths, PRN *prn)
+{
+    char startdate[9], enddate[9], pdstr[36];
+    time_t prntime = time(NULL);
+    int i;
+
+    ntodate(startdate, 0, pdinfo);
+    ntodate(enddate, pdinfo->n - 1, pdinfo);
+
+    pprintf(prn, "Data file %s\nas of %s\n", 
+	    strlen(ppaths->datfile)? ppaths->datfile : "(unsaved)", 
+	    ctime(&prntime));
+
+    if (pdinfo->descrip != NULL && strlen(pdinfo->descrip)) {
+	pprintf(prn, "Description:\n\n");
+	pprintf(prn, "%s\n\n", pdinfo->descrip);
+    }
+
+    pd_string(pdstr, pdinfo);
+    pprintf(prn, "%s data, %s - %s (n = %d)\n\n",
+	    pdstr, startdate, enddate, pdinfo->n);
+
+    pprintf(prn, "Listing of variables:\n\n");
+
+    for (i=1; i<pdinfo->v; i++) 
+	pprintf(prn, "%9s  %s\n", pdinfo->varname[i], pdinfo->label[i]);
+
     return 0;
 }
 

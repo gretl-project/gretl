@@ -118,6 +118,7 @@ enum extra_cmds {
     VIEW_LOG,
     VIEW_DATA,
     VIEW_SCRIPT,
+    DATA_REPORT,
     SCRIPT_OUT,
     CONSOLE,
     EDIT_HEADER,

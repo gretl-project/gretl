@@ -229,10 +229,6 @@ static void prep_spreadsheet (GtkWidget *widget, dialog_t *data)
 
     gtk_widget_destroy(data->dialog); 
 
-    if (datainfo->sd0 >= 1.0) 
-        datainfo->time_series = TIME_SERIES; 
-    else datainfo->time_series = 0;
-
     strcpy(datainfo->stobs, stobs);
     strcpy(datainfo->endobs, endobs);
     datainfo->sd0 = sd0;
@@ -260,7 +256,13 @@ void newdata_dialog (gpointer data, guint pd_code, GtkWidget *widget)
     windata_t *wdata = NULL;
     char obsstr[32];
 
-    datainfo->pd = pd_code;
+    if (pd_code == 0) {
+	datainfo->time_series = 0;
+	datainfo->pd = 1;
+    } else {
+	datainfo->time_series = TIME_SERIES;
+	datainfo->pd = pd_code;
+    }
 
     switch (pd_code) {
     case 0:

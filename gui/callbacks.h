@@ -18,7 +18,9 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget);
 
 void dummy_call (void);
 
-void edit_header (gpointer data, guint save, GtkWidget *widgetvoid);
+void print_report (gpointer data, guint unused, GtkWidget *widget);
+
+void edit_header (gpointer data, guint save, GtkWidget *widget);
 
 void fit_resid_callback (gpointer data, guint code, GtkWidget *widget);
 

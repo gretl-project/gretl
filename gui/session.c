@@ -76,8 +76,12 @@ static char *info_items[] = {
 
 static char *session_items[] = {
     _("Save"),
+#ifdef GNUPLOT_PNG
+    _("Save As...")
+#else
     _("Save As..."),
     _("Add last graph")
+#endif
 };
 
 GtkItemFactoryEntry gp_edit_items[] = {
@@ -415,7 +419,7 @@ void do_open_session (GtkWidget *w, gpointer data)
 
 void close_session (void)
 {
-    clear_data(0);
+    clear_data(1); /* this was (0): why?? */
     free_session();
     session_state(FALSE);
     session_file_open = 0;
