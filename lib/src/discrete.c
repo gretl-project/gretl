@@ -270,15 +270,8 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     for (t=dmod.t1; t<=dmod.t2; t++) {
 	zz = (*pZ)[depvar][t];
 	xx += zz;
-	/* FIXME: is the following correct ?? */
-#ifdef notdef
-	dmod.correct += ((dmod.yhat[t] >= 0.5 && floateq(zz, 1.0)) ||
-		    (dmod.yhat[t] < 0.5 && floateq(zz, 0.0)));
-#else
 	dmod.correct += ((dmod.yhat[t] > 0.0 && floateq(zz, 1.0)) ||
 		    (dmod.yhat[t] <= 0.0 && floateq(zz, 0.0)));
-#endif
-	
     }
 
     xx /= dmod.nobs;
