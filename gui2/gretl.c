@@ -388,6 +388,11 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Utilities/Gretl console"), NULL, show_gretl_console, 0, NULL, GNULL },
     { N_("/Utilities/sep2"), NULL, NULL, 0, "<Separator>", GNULL },
     { N_("/Utilities/Start GNU R"), NULL, startR, 0, NULL, GNULL },
+    { "/Utilities/sep3", NULL, NULL, 0, "<Separator>", GNULL },
+    { N_("/Utilities/NIST test suite"), NULL, NULL, 0, "<Branch>", GNULL },
+    { N_("/Utilities/NIST test suite/basic"), NULL, do_nistcheck, 0, NULL, GNULL },
+    { N_("/Utilities/NIST test suite/verbose"), NULL, do_nistcheck, 1, NULL, GNULL },
+    { N_("/Utilities/NIST test suite/very verbose"), NULL, do_nistcheck, 2, NULL, GNULL },
 
     /* Session menu */
     { N_("/_Session"), NULL, NULL, 0, "<Branch>", GNULL },

@@ -74,4 +74,6 @@ void newdata_callback (gpointer data, guint pd_code, GtkWidget *widget);
 void start_panel_callback (gpointer data, guint u, GtkWidget *widget);
 #endif
 
+void do_nistcheck (gpointer p, guint u, GtkWidget *w);
+
 #endif /* CALLBACKS_H */

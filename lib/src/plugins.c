@@ -41,7 +41,8 @@ enum {
     P_RANGE_MEAN,
     P_STATS_TABLES,
     P_SUR,
-    P_TRAMO_X12A
+    P_TRAMO_X12A,
+    P_NISTCHECK
 } plugin_codes;
 
 struct plugin_info {
@@ -71,7 +72,8 @@ struct plugin_info plugins[] = {
     { P_RANGE_MEAN,      "range-mean" },
     { P_STATS_TABLES,    "stats_tables" },
     { P_SUR,             "sur" },
-    { P_TRAMO_X12A,      "tramo-x12a" }
+    { P_TRAMO_X12A,      "tramo-x12a" },
+    { P_NISTCHECK,       "nistcheck" },
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -120,7 +122,10 @@ struct plugin_function plugin_functions[] = {
     { "sur", P_SUR },
 
     /* TRAMO/SEATS and X12A */
-    { "write_tx_data", P_TRAMO_X12A},
+    { "write_tx_data", P_TRAMO_X12A },
+
+    /* NIST test suite */
+    { "run_nist_tests", P_NISTCHECK },    
 
 #ifdef WIN32
     { "real_unmangle", P_LONGNAME },

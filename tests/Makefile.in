@@ -17,9 +17,9 @@ LIBGRETL = ../lib/libgretl-1.0.la
 RAND_LIBS = $(LIBGRETL)
 
 ifeq ($(GMP_LIBS),)
-  DEFINES = -DNO_GMP
+  DEFINES = -DNO_GMP -DSTANDALONE
 else
-  DEFINES = -DUSE_GMP
+  DEFINES = -DUSE_GMP -DSTANDALONE
 endif
 
 ifeq ($(havegtk),2.0)

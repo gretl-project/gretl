@@ -1010,3 +1010,26 @@ void start_panel_callback (gpointer data, guint u, GtkWidget *widget)
 }
 #endif
 
+void do_nistcheck (gpointer p, guint v, GtkWidget *w)
+{
+    void *handle;
+    int (*run_nist_tests)(const char *, const char *, int);
+    gchar *fname;
+    
+    run_nist_tests = gui_get_plugin_function("run_nist_tests", 
+					     &handle);
+    if (run_nist_tests == NULL) {
+	return;
+    }
+
+    fname = g_strdup_printf("%snist.out", paths.userdir);
+
+    (*run_nist_tests)(paths.datadir, fname, (int) v);
+
+    close_plugin(handle);
+
+    view_file(fname, 0, 1, 78, 400, VIEW_FILE);
+
+    g_free(fname);
+}
+

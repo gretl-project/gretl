@@ -1,4 +1,6 @@
 version 1.2.1
+- More flexible and general support for collections of data
+  files or script file
 - Add support for the data files from Davidson & MacKinnon,
   Econometric Theory and Methods (ETM)
 

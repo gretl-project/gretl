@@ -24,6 +24,6 @@
 #define LIBGRETL_REVISION  14
 #define LIBGRETL_AGE       0
 
-const char *version_string = "1.2.0";
+const char *version_string = "1.2.1";
 
 #endif

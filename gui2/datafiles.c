@@ -85,7 +85,6 @@ enum {
 
 static char *full_path (const char *s1, const char *s2);
 
-#ifdef _WIN32
 static char *unslash (const char *s)
 {
     size_t n = strlen(s);
@@ -99,38 +98,28 @@ static char *unslash (const char *s)
 
     return dest;
 }
-#endif
 
 static int recognized_collection (file_collection *coll)
 {
     const file_collection recognized_data[] = {
-	{ "BASE", "descriptions", "Ramanathan", COLL_DATA, NULL },
-	{ "greene", "wg_descriptions", "Greene", COLL_DATA, NULL },
 	{ "wooldridge", "jw_descriptions", "Wooldridge", COLL_DATA, NULL },
 	{ "gujarati", "dg_descriptions", "Gujarati", COLL_DATA, NULL },
 	{ "pwt56", "descriptions", "Penn World Table", COLL_DATA, NULL },
 	{ NULL, NULL, NULL, COLL_DATA, NULL }
     }; 
     const file_collection recognized_ps[] = {
-	{ "BASE", "ps_descriptions", "Ramanathan", COLL_PS, NULL },
-	{ "BASE", "wg_ps_descriptions", "Greene",  COLL_PS, NULL },
 	{ "pwt56", "ps_descriptions", "Penn World Table", COLL_PS, NULL },
 	{ NULL, NULL, NULL, COLL_PS, NULL }
     }; 
-    char test[MAXLEN];
-    int i, n = strlen(coll->path);
-
-    strcpy(test, coll->path);
-    if (strstr(test, paths.gretldir) && test[n-1] == '.') {
-	/* FIXME: see if this works on Windows */
-	strcpy(test, "BASE");
-    }
+    int i;
 
     for (i=0; recognized_data[i].path != NULL; i++) {
-	if (strstr(test, recognized_data[i].path) &&
+	if (strstr(coll->path, recognized_data[i].path) &&
 	    !strcmp(coll->descfile, recognized_data[i].descfile)) {
 	    coll->title = malloc(strlen(recognized_data[i].title) + 1);
-	    if (coll->title == NULL) return RECOG_ERROR;
+	    if (coll->title == NULL) {
+		return RECOG_ERROR;
+	    }
 	    strcpy(coll->title, recognized_data[i].title);
 	    coll->which = COLL_DATA;
 	    return RECOG_OK;
@@ -138,10 +127,12 @@ static int recognized_collection (file_collection *coll)
     }
 
     for (i=0; recognized_ps[i].path != NULL; i++) {
-	if (strstr(test, recognized_ps[i].path) &&
+	if (strstr(coll->path, recognized_ps[i].path) &&
 	    !strcmp(coll->descfile, recognized_ps[i].descfile)) {
 	    coll->title = malloc(strlen(recognized_ps[i].title) + 1);
-	    if (coll->title == NULL) return RECOG_ERROR;
+	    if (coll->title == NULL) {
+		return RECOG_ERROR;
+	    }
 	    strcpy(coll->title, recognized_ps[i].title);
 	    coll->which = COLL_PS;
 	    return RECOG_OK;
@@ -156,21 +147,26 @@ static int get_title_from_descfile (file_collection *coll)
     FILE *fp;
     char *test;
     char line[64], title[24];
-    int err = 0;
+    int err = 1;
 
     test = full_path(coll->path, coll->descfile);
 
     fp = fopen(test, "r");
-    if (fp == NULL) return 1;
 
-    fgets(line, sizeof line, fp);
-    if (sscanf(line, "# %23[^:]", title)) {
-	coll->title = malloc(strlen(title) + 1);
-	if (coll->title == NULL) err = 1;
-	else strcpy(coll->title, title);
-    } else {
-	err = 1;
+    if (fp == NULL) return err;
+
+    if (fgets(line, sizeof line, fp) == NULL) {
+	fclose(fp);
+	return err;
     }
+    
+    if (sscanf(line, "# %23[^:]", title) == 1) {
+	coll->title = malloc(strlen(title) + 1);
+	if (coll->title != NULL) {
+	    strcpy(coll->title, title);
+	    err = 0;
+	}
+    } 
 
     fclose(fp);
 
@@ -371,11 +367,7 @@ static int seek_file_collections (const char *topdir)
     struct dirent *dirent;
     char *subdir;
     int err = 0;
-#ifdef _WIN32
     char *tmp = unslash(topdir);
-#else
-    const char *tmp = topdir;
-#endif
 
     dir = opendir(tmp);
     if (dir == NULL) return 1;
@@ -393,9 +385,7 @@ static int seek_file_collections (const char *topdir)
 
     closedir(dir);
 
-#ifdef _WIN32
     free(tmp);
-#endif
 
     return err;
 }
@@ -408,6 +398,28 @@ static void print_collection (const file_collection *coll)
     if (coll->title != NULL && *coll->title != '\0') {
 	printf("title = '%s'\n", coll->title);
     }
+}
+
+static void print_data_collections (void)
+{
+    file_collection *coll;
+
+    printf("\n*** Data collections:\n");
+    while ((coll = pop_data_collection())) {
+	print_collection(coll);
+    }
+    reset_data_stack();
+}
+
+static void print_script_collections (void)
+{
+    file_collection *coll;
+
+    printf("\n*** Script collections:\n");
+    while ((coll = pop_ps_collection())) {
+	print_collection(coll);
+    }
+    reset_ps_stack();
 }
 #endif
 
@@ -422,6 +434,11 @@ static int build_file_collections (void)
 	if (!err) err = seek_file_collections(paths.userdir);
 	built = 1;
     }
+
+#if 0
+    print_data_collections();
+    print_script_collections();
+#endif
 
     return err;
 }
@@ -778,11 +795,8 @@ static gint populate_remote_db_list (windata_t *win)
 	    continue;
 	get_local_status(fname, status, remtime);
 	row[0] = strip_extension(fname);
-	if (!getbufline(getbuf, line, 0)) {
-	    row[1] = NULL;
-	} else {
-	    row[1] = line + 2;
-	}
+	if (!getbufline(getbuf, line, 0)) row[1] = NULL;
+	else row[1] = line + 2;
 	row[2] = status;
 #ifndef OLD_GTK
 	gtk_list_store_append(store, &iter);
@@ -1646,7 +1660,7 @@ static int populate_notebook_filelists (windata_t *win,
 	populate_filelist(win, coll);
     }
 
-    if (code == TEXTBOOK_DATA) 	reset_data_stack();
+    if (code == TEXTBOOK_DATA) reset_data_stack();
     else reset_ps_stack();
 
     j = 0;
@@ -1671,7 +1685,7 @@ static int populate_notebook_filelists (windata_t *win,
 
     win->listbox = coll->page;
 
-    if (code == TEXTBOOK_DATA) 	reset_data_stack();
+    if (code == TEXTBOOK_DATA) reset_data_stack();
     else reset_ps_stack();
 
 #ifndef OLD_GTK
