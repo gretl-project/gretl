@@ -894,14 +894,6 @@ static int cb_copy_image (gpointer data)
 	    return FALSE;
     }
 
-    {
-	char infostr[128];
-
-	sprintf(infostr, "sizeof BITMAPINFOHEADER = %d\n"
-		"palsize = %d\n", sizeof(BITMAPINFOHEADER), palsize);
-	infobox(infostr);
-    }
-
     /* fill header info */
     ret = FALSE;
     hdr = GlobalLock(hDIB);
@@ -960,7 +952,7 @@ static int cb_copy_image (gpointer data)
 		i = 0; c = 0;
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
-		    if (pixel != white_pixel) c |= (1 << i); /* 7-i ?? */
+		    if (pixel != white_pixel) c |= (1 << (7-i)); 
 		    i++;
 		    if (i == 8) { /* done 8 bits -> ship out char */
 			*data++ = c;
@@ -1029,7 +1021,6 @@ int plot_to_xpm (const char *fname, gpointer data)
 	    "\". c black\",\n"
 	    "/* pixels */\n", grp->width, grp->height);
 
-
     image = gdk_image_get (grp->pixmap, 0, 0, 
 			   grp->width, grp->height);
 
@@ -1044,38 +1035,6 @@ int plot_to_xpm (const char *fname, gpointer data)
 	}
 	fprintf(fp, "\"%s\n", (i<grp->height-1)? "," : "};");
     }
-
-#ifdef notdef
-    { /* test in re. copy to clipboard */
-	int i, x, y;
-	unsigned char c;
-	FILE *fp;
-	unsigned char *pData, *start;
-	int psize = grp->height * grp->width / 8;
-
-	pData = malloc(psize);
-	start = pData;
-	fp = fopen("testbits", "w");
-
-	for (y=grp->height-1; y>=0; y--) {
-	    i = 0; c = 0;
-	    for (x=0; x<grp->width; x++) {
-		pixel = gdk_image_get_pixel(image, x, y);
-		if (pixel != white_pixel) c |= (1 << (7-i));
-		i++;
-		if (i == 8) { /* done 8 bits */
-		    *pData++ = c;
-		    i = 0;
-		    c = 0;
-		}
-	    }
-	}
-	i = 0;
-	while (i < psize) fputc(start[i++], fp);
-	free(start);
-	fclose(fp);
-    } /* end test */
-#endif
 
     gdk_image_destroy(image);
 
