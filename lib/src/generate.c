@@ -1464,7 +1464,7 @@ static int getword (char *word, char *str, char c)
     strncat(word, str, i);
     gretl_delete(str, 0, ++i);
 
-    if (!strcmp(word, "__subdum") || strcmp(word, "__iftest")) ;
+    if (!strcmp(word, "__subdum") || !strcmp(word, "__iftest")) ;
     else if (gretl_is_reserved(word)) {
 	i = 0;
     }

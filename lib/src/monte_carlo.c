@@ -659,10 +659,7 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
 
 	    pmod = ploop->models[ploop->next_model];
 
-#if 0
-	    *model_count += 1;
-	    pmod->ID = *model_count;
-#endif
+	    set_model_id(pmod);
 
 	    /* std. errors are asymptotic; degrees of freedom
 	       correction is not wanted */
