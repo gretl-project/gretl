@@ -431,10 +431,10 @@ void display_files (gpointer data, guint code, GtkWidget *widget)
     if (code == RAMU_DATA || code == GREENE_DATA || code == PWT_DATA
 	|| code == JW_DATA) {
 	build_datafiles_popup(fdata);
-	gtk_signal_connect_object (GTK_OBJECT(fdata->listbox), 
-				   "button_press_event",
-				   GTK_SIGNAL_FUNC(popup_menu_handler), 
-				   GTK_OBJECT(fdata->popup));
+	gtk_signal_connect (GTK_OBJECT(fdata->listbox), 
+			    "button_press_event",
+			    GTK_SIGNAL_FUNC(popup_menu_handler), 
+			    (gpointer) fdata->popup);
     }
 
     if (code == REMOTE_DB) {

@@ -1240,9 +1240,9 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     if (role == VIEW_SERIES) {
 	series_view_build_popup(vwin);
 	/* vwin->w is the gtktext widget */
-	gtk_signal_connect_object (GTK_OBJECT(vwin->w), "button_press_event",
-				   GTK_SIGNAL_FUNC(popup_menu_handler), 
-				   GTK_OBJECT(vwin->popup));
+	gtk_signal_connect (GTK_OBJECT(vwin->w), "button_press_event",
+			    GTK_SIGNAL_FUNC(popup_menu_handler), 
+			    (gpointer) vwin->popup);
     } 
 
     gtk_widget_show(vwin->vbox);
@@ -2179,26 +2179,19 @@ void text_paste (windata_t *vwin, guint u, GtkWidget *widget)
 
 /* ......................................................... */
 
-gint popup_menu_handler (GtkWidget *widget, GdkEvent *event)
+gint popup_menu_handler (GtkWidget *widget, GdkEvent *event,
+			 gpointer data)
 {
-    GtkMenu *menu;
+    GdkModifierType mods;
 
-    g_return_val_if_fail (widget != NULL, FALSE);
-    g_return_val_if_fail (GTK_IS_MENU (widget), FALSE);
-    g_return_val_if_fail (event != NULL, FALSE);
-
-    menu = GTK_MENU (widget);
-
-    if (event->type == GDK_BUTTON_PRESS) {
-	GdkEventButton *event_button = (GdkEventButton *) event;
-
-	if (event_button->button == 3) {
-	    gtk_menu_popup (menu, NULL, NULL, NULL, NULL, 
-			    event_button->button, event_button->time);
-	    return TRUE;
-	}
+    gdk_window_get_pointer(widget->window, NULL, NULL, &mods);
+    
+    if (mods & GDK_BUTTON3_MASK && event->type == GDK_BUTTON_PRESS) {
+	GdkEventButton *bevent = (GdkEventButton *) event; 
+	gtk_menu_popup (GTK_MENU(data), NULL, NULL, NULL, NULL,
+			bevent->button, bevent->time);
+	return TRUE;
     }
-
     return FALSE;
 }
 

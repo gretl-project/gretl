@@ -780,10 +780,10 @@ static GtkWidget *database_window (windata_t *ddata)
     }    
     gtk_box_pack_start (GTK_BOX (box), scroller, TRUE, TRUE, TRUE);
 
-    gtk_signal_connect_object (GTK_OBJECT(ddata->listbox), 
-			       "button_press_event",
-			       GTK_SIGNAL_FUNC(popup_menu_handler), 
-			       GTK_OBJECT(ddata->popup));
+    gtk_signal_connect (GTK_OBJECT(ddata->listbox), 
+			"button_press_event",
+			GTK_SIGNAL_FUNC(popup_menu_handler), 
+			(gpointer) ddata->popup);
 
     gtk_signal_connect_after (GTK_OBJECT (ddata->listbox), "select_row", 
 			      GTK_SIGNAL_FUNC (selectrow), 
