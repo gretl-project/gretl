@@ -62,11 +62,11 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 /* Does unistd.h have getdomainname? */
 #undef GETDOMAINNAME
 
-/* Do we have paths.h? */
-#undef HAVE_PATHS_H
-
 /* Do we have unistd.h */
 #undef HAVE_UNISTD_H
+
+/* Do we have dirent.h */
+#undef HAVE_DIRENT_H
 
 /* Define if the `long double' type works.  */
 #undef HAVE_LONG_DOUBLE

@@ -6,7 +6,8 @@ ALTSRC = $(ALTDOC).xml
 ALTDSL = manual-a4.dsl
 MATHSS = TeXMath.dsl
 HMATHSS = HTMLMath.dsl
-XSLDIR = /usr/share/sgml/docbook-xsl-1.48
+XSLDIR = /usr/share/sgml/docbook-xsl
+XMLDCL = /opt/jade/share/xml.dcl
 HTMLDIR = $(DOC)-html
 
 CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
@@ -35,12 +36,12 @@ altthumbs: $(ALTSRC) $(CHAPTERS)
 	thumbpdf $(ALTDOC)
 
 $(DOC).tex: $(SRC) $(CHAPTERS) $(DSL) $(MATHSS)
-	jade -t tex -d $(DSL)\#print /opt/jade/share/xml.dcl $(SRC)
+	jade -t tex -d $(DSL)\#print $(XMLDCL) $(SRC)
 	./unescape_math.pl $(DOC).tex
 
 $(ALTDOC).tex: $(ALTSRC) $(CHAPTERS) $(ALTDSL) $(MATHSS)
 	echo "Running jade on $(ALTSRC)"
-	jade -t tex -d $(ALTDSL)\#print /opt/jade/share/xml.dcl $(ALTSRC)
+	jade -t tex -d $(ALTDSL)\#print $(XMLDCL) $(ALTSRC)
 	echo "Unescaping math in $(ALTDOC).tex"
 	./unescape_math.pl $(ALTDOC).tex
 

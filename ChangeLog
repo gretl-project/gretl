@@ -5,6 +5,7 @@ version 0.999
 - always show 6 significant figures for coefficient estimates
   and standard errors in regression output
 - numerous NLS/translation fixes, improvements
+- NLS translation of TeX model results
 - bug fixes for Excel importer
 - reorganization of gui source files
 - fix bug in random variable generation in gui

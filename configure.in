@@ -115,6 +115,16 @@ else
 fi,
 try_ole=yes)
 
+AC_ARG_WITH(gtkextra,
+[  --with-gtkextra   Use installed gtkextra [default=auto]],
+if test "x${withval}" = "xno"
+then
+  try_gtkextra=no
+else
+  try_gtkextra=yes
+fi,
+try_gtkextra=yes)
+
 AC_ARG_WITH(gmp,
 [  --with-gmp   Use Gnu Multiple Precision library [default=auto]],
 if test "x${withval}" = "xno"
@@ -155,7 +165,7 @@ AC_CHECK_LIB(c, fopen)
 dnl Checks for header files, etc.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS(paths.h unistd.h)
+AC_CHECK_HEADERS(unistd.h dirent.h)
 AC_C_CONST
 AC_C_LONG_DOUBLE 
 AC_CHECK_SIZEOF(int)
@@ -281,9 +291,8 @@ if test "$have_gtk" = "no" ; then
    fi
    CFLAGS="$CFLAGS $GTK_CFLAGS"
    LIBS="$LIBS $GTK_LIBS"
-   AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
-   if test "${have_gtkextra}" = "no" ; then
-       exit
+   if test ${try_gtkextra} = yes ; then
+      AM_PATH_GTK_EXTRA(0.99.15,have_gtkextra="yes",have_gtkextra="no")
    fi
    gretlbin="gretl"
 fi
@@ -406,9 +415,12 @@ dnl Create output
 CFLAGS="$orig_CFLAGS"
 AC_OUTPUT([ 
 Makefile 
+gretl_sh
+gretl-config
 gretl2_sh 
 gretl2.pc 
 gui/Makefile
+gui/gtkextra-lite/Makefile
 gui2/Makefile
 gui2/gtkextra-lite/Makefile
 gui2/omf-install/Makefile
@@ -421,6 +433,7 @@ plugin/Makefile
 po/Makefile.in 
 share/Makefile
 tests/Makefile
+extra/Makefile
 ])
 
 if test "${have_zlib}" = "no" ; then
@@ -447,6 +460,7 @@ Configuration:
   Gnu Multiple Precision support:       ${have_gmp}
   Build with GTK version:               ${have_gtk}
   Use installed libole2:                ${have_libole2}
+  Use installed gtkextra:		${have_gtkextra}
   Build with gnome support:             ${have_gnome}
   Gnome installation prefix:            ${gnome_prefix}
 

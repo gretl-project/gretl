@@ -8,6 +8,9 @@ tarfile="gretl-${version}.tar.gz"
 
 echo "making dist file for gretl $version using filename $tarfile"
 
+# make clean first
+cd ${topdir} && make clean && make -C win32 clean
+
 # get in place and make dist directory
 cd ${topdir}/..
 mkdir ${topdir}/../gretl-$version
@@ -34,6 +37,7 @@ find gretl-$version -name "*.old" | xargs rm -f
 find gretl-$version -name ".xvpics" | xargs rm -rf
 find gretl-$version -name "*~" | xargs rm -f
 find gretl-$version -name ".#*" | xargs rm -f
+find gretl-$version -name "*.tar.gz" | xargs rm -f
 
 # retain only the relevant parts of the doc tree
 rm -rf gretl-$version/doc

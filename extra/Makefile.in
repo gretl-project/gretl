@@ -1,0 +1,14 @@
+have_gtk = @have_gtk@
+
+ifeq ($(have_gtk),2.0)
+  CFLAGS = -g -O2 -Wall `pkg-config --cflags gretl2`
+  LDFLAGS = `pkg-config --libs  gretl2`
+else  
+  CFLAGS = -g -O2 -Wall `gretl-config --cflags`
+  LDFLAGS = `gretl-config --libs`
+endif
+
+all: simple_client
+
+clean:
+	rm -f ./simple_client core 

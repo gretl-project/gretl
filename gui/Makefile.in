@@ -37,10 +37,17 @@ endif
 ifeq ($(LN),)
   LN = ln -sf
 endif
+
+ifeq ($(GTK_EXTRA_LIBS),)
+  GTK_EXTRA_CFLAGS = -I./gtkextra-lite
+  GTK_EXTRA_LIBS = -L./gtkextra-lite -lgtkextra-lite
+  query_gtkextra_lib = gtkextra-lib
+endif
+
 ifeq ($(gnome_prefix),)
   gnome_prefix = `gnome-config --prefix`
 endif
-ifeq ($(have_gnome),"1.4")
+ifeq ($(have_gnome),1.4)
   LIBS = $(GNOME_LIBS) $(GTK_EXTRA_LIBS) ../lib/libgretl.la
   GUI_CFLAGS = $(GNOME_CFLAGS) $(GTK_EXTRA_CFLAGS)
   query_install_gnome = install-gnome
@@ -78,10 +85,13 @@ OBJS = gretl.o library.o gui_utils.o callbacks.o dialogs.o ssheet.o \
 	webget.o calculator.o htmlprint.o guiprint.o boxplots.o \
 	selector.o settings.o helpfiles.o
 
-$(PROG): $(OBJS)
-	$(LIBTOOL) --mode=link $(CC) -o $@ $^ $(LIBS) $(INETLIB)
+$(PROG): $(OBJS) $(query_gtkextra_lib)
+	$(LIBTOOL) --mode=link $(CC) -o $@ $(OBJS) $(LIBS) $(INETLIB)
 
 .PHONY:
+
+gtkextra-lib: 
+	make -C gtkextra-lite
 
 install: $(PROG) install-data $(query_install_gnome)
 	$(LIBTOOL) $(INSTALL_PROGRAM) $(PROG) $(bindir)/$(PROG)
@@ -107,6 +117,7 @@ installdirs:
 clean:
 	rm -f *.o $(PROG) core
 	rm -rf .libs
+	make -C gtkextra-lite clean
 
 depend:
 	makedepend -Y$(libsrc) *.c 

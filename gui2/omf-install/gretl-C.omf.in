@@ -15,7 +15,7 @@
     </date>
     <version identifier="0.4" date="2002-08-21" 
        description="Updated for GNOME 2.0, program version 0.999"/>
-    <subject category="Applications|Scientific|Other"/>
+    <subject category="Applications|Scientific"/>
     <description>
       User manual for the gretl econometrics program.
     </description>

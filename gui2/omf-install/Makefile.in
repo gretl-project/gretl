@@ -9,7 +9,6 @@ gretl-C.omf: gretl-C.omf.in
 	  scrollkeeper-preinstall $(docdir)/`awk 'BEGIN {RS = ">" } \
 	  /identifier/ {print $$0}' $< | awk 'BEGIN {FS="\""} /url/ \
 	  {print $$2}'` $< $@; 
-	touch omf_timestamp
 
 install: gretl-C.omf
 	../../tools/mkinstalldirs $(omfdir)
