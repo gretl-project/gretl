@@ -145,24 +145,28 @@ static void tx_dialog_cancel (GtkWidget *w, tx_request *request)
 }
 #endif
 
-static int tx_dialog (tx_request *request)
+static int tx_dialog (tx_request *request, int opt)
 {
     GtkWidget *hbox, *vbox, *tmp;
 #if GTK_MAJOR_VERSION >= 2
     gint ret = 0;
 
-    request->dialog = gtk_dialog_new_with_buttons ("X-12-ARIMA",
-					  NULL,
-					  GTK_DIALOG_MODAL | 
-					  GTK_DIALOG_DESTROY_WITH_PARENT,
-					  GTK_STOCK_OK,
-					  GTK_RESPONSE_ACCEPT,
-					  GTK_STOCK_CANCEL,
-					  GTK_RESPONSE_REJECT,
-					  NULL);
+    request->dialog = 
+	gtk_dialog_new_with_buttons (
+				     (opt == TRAMO)?
+				     "TRAMO/SEATS" : "X-12-ARIMA",
+				     NULL,
+				     GTK_DIALOG_MODAL | 
+				     GTK_DIALOG_DESTROY_WITH_PARENT,
+				     GTK_STOCK_OK,
+				     GTK_RESPONSE_ACCEPT,
+				     GTK_STOCK_CANCEL,
+				     GTK_RESPONSE_REJECT,
+				     NULL);
 #else
     request->dialog = gtk_dialog_new();
-    gtk_window_set_title (GTK_WINDOW(request->dialog), "X-12-ARIMA");
+    gtk_window_set_title (GTK_WINDOW(request->dialog), 
+			  (opt == TRAMO)? "TRAMO/SEATS" : "X-12-ARIMA");
 #endif
 
     tmp = gtk_label_new ("Save to data set");
@@ -651,7 +655,7 @@ int write_tx_data (char *fname, int varnum,
     else opt = X12A;
 
     /* show dialog and get option settings */
-    doit = tx_dialog(&request); 
+    doit = tx_dialog(&request, opt); 
     if (!doit) {
 	gtk_widget_destroy(request.dialog);
 	return 0;

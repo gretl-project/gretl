@@ -20,12 +20,6 @@
 /* progress.c for gretl, gtk-2.0 version */
 
 #include <gtk/gtk.h>
-#ifdef G_OS_WIN32
-# include "winconfig.h"
-#else
-# include "../config.h"
-#endif
-
 #include "libgretl.h"
 
 typedef struct _ProgressData {
