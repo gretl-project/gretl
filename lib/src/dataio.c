@@ -1815,6 +1815,10 @@ static int test_label (DATAINFO *pdinfo, PRN *prn)
 		    return 12;
 		}
 	    }
+	    if (n1 == 8) {
+		/* try YYYYMMDD */
+		;
+	    }
 	} else pputs(prn, _("   definitely not a four-digit year\n"));
     }
 
@@ -1969,8 +1973,88 @@ int merge_data (double ***pZ, DATAINFO *pdinfo,
 
 /* ......................................................... */
 
+/* The function below checks for the maximum line length in the given
+   file.  It also checks for extraneous binary data (the file is 
+   supposed to be plain text), and checks whether the 'delim'
+   character is present in the file, on a non-comment line (where
+   a comment line is one that starts with '#').
+*/
+
+static int get_max_line_length (FILE *fp, char delim, int *gotdelim, PRN *prn)
+{
+    int c, cc = 0;
+    int comment = 0, maxlen = 0;
+
+    while (1) {
+	c = fgetc(fp);
+	if (c == '\n') {
+	    if (cc > maxlen) maxlen = cc;
+	    cc = 0;
+	    continue;
+	}
+	if (c == EOF) break;
+	if (!isspace((unsigned char) c) && !isprint((unsigned char) c)) {
+	    pprintf(prn, _("Binary data (%d) encountered: this is not a valid "
+			   "text file\n"), c);
+	    return -1;
+	}
+	if (cc == 0) {
+	    if (c == '#') comment = 1;
+	    else comment = 0;
+	}
+	if (!comment && *gotdelim == 0 && c == delim) *gotdelim = 1;
+	cc++;
+    }
+
+    if (maxlen == 0) {
+	pprintf(prn, _("Data file is empty\n"));
+    }	
+
+    return maxlen;
+}
+
+static int line_is_blank (const char *line)
+{
+    const char *p = line;
+
+    while (*p) {
+	if (!isspace((unsigned char) *p)) return 0;
+	p++;
+    }
+
+    return 1;
+}
+
+static int count_fields (const char *line, char delim)
+{
+    int cbak, nf = 0;
+    const char *p = line;
+
+    if (*p == delim && *p == ' ') p++;
+
+    while (*p) {
+	if (*p == delim) nf++;
+	cbak = *p;
+	p++;
+	if (*p == '\0' && cbak == delim) {
+	    nf--;
+	}
+    }
+
+    return nf + 1;
+}
+
 static void compress_csv_line (char *line, char delim)
 {
+    int n = strlen(line);
+    char *p = line + n - 1;
+
+    if (*p == '\n') {
+	*p = '\0';
+	p--;
+    }
+    if (*p == '\r') *p = '\0';
+
     if (delim != ' ') {
 	delchar(' ', line);
     } else {
@@ -1979,21 +2063,60 @@ static void compress_csv_line (char *line, char delim)
     delchar('"', line);
 }
 
-static void trim_csv_line (char *line)
+static void check_first_field (const char *line, char delim, 
+			       int *blank_1, int *obs_1, PRN *prn)
 {
-    size_t n;
+    *blank_1 = 0;
+    *obs_1 = 0;
+    
+    if (delim != ' ' && *line == delim) {
+	*blank_1 = 1;
+    } else {
+	char field1[16];
+	int i = 0;
 
-    if (line == NULL) return;
-    n = strlen(line);
-    if (n == 0) return;
+	if (delim == ' ' && *line == ' ') line++;
 
-    if (line[n-1] == '\n') line[n-1] = '\0';
-    n = strlen(line);
-    if (n == 0) return;
-    if (line[n-1] == '\r') line[n-1] = '\0';
-    n = strlen(line);
-    if (n == 0) return;
-    if (line[n-1] == ',') line[n-1] = '\0';
+	while (*line && i < 15) {
+	    if (*line == delim) break;
+	    field1[i++] = *line++;
+	}
+	field1[i] = '\0';
+	pprintf(prn, _("   first field: '%s'\n"), field1);
+	lower(field1);
+	if (!strcmp(field1, "obs") || !strcmp(field1, "date") ||
+	    !strcmp(field1, "year")) {
+	    pputs(prn, _("   seems to be observation label\n"));
+	    *obs_1 = 1;
+	}
+    }
+}
+
+#define ISNA(s) (strcmp(s, "NA") == 0 || \
+                 strcmp(s, "N.A.") == 0 || \
+                 strcmp(s, "n.a.") == 0 || \
+                 strcmp(s, "na") == 0 || \
+                 strcmp(s, ".") == 0 || \
+                 strncmp(s, "-999", 4) == 0)
+
+static int csv_missval (const char *str, int k, int t, PRN *prn)
+{
+    int miss = 0;
+
+    if (strlen(str) == 0) {
+	pprintf(prn, _("   the cell for variable %d, obs %d "
+		       "is empty: treating as missing value\n"), 
+		k, t);
+	miss = 1;
+    }
+
+    if (ISNA(str)) {
+	pprintf(prn, _("   warning: missing value for variable "
+		       "%d, obs %d\n"), k, t);
+	miss = 1;
+    }
+
+    return miss;
 }
 
 /**
@@ -2013,14 +2136,14 @@ static void trim_csv_line (char *line)
 int import_csv (double ***pZ, DATAINFO *pdinfo, 
 		const char *fname, PRN *prn)
 {
-    int n, nv, missval = 0, ncols = 0, chkcols = 0;
-    char c, cbak;
-    int bad_commas = 0, skipvar = 0, markertest = -1;
-    int i, j, k, t, blank_1 = 0, obs_1 = 0, len = 0, maxlen = 0, ok = 0;
-    char *line, varname[9], numstr[32], field_1[32];
-    FILE *fp;
-    DATAINFO *csvinfo;
+    int ncols, chkcols;
+    int gotdata = 0, gotdelim = 0, markertest = -1;
+    int i, k, t, blank_1 = 0, obs_1 = 0, maxlen;
+    char csvstr[32];
+    FILE *fp = NULL;
+    DATAINFO *csvinfo = NULL;
     double **csvZ = NULL;
+    char *line = NULL, *p = NULL;
     const char *msg = _("\nPlease note:\n"
 	"- The first row of the CSV file should contain the "
 	"names of the variables.\n"
@@ -2039,233 +2162,188 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 
     csvinfo = datainfo_new();
     if (csvinfo == NULL) {
+	fclose(fp);
 	pputs(prn, _("Out of memory\n"));
 	return 1;
     }
     csvinfo->delim = delim;
 
     pprintf(prn, "%s %s...\n", _("parsing"), fname);
+
+    /* get line length, also check for binary data */
+    maxlen = get_max_line_length(fp, delim, &gotdelim, prn);    
+    if (maxlen <= 0) {
+	goto csv_bailout;
+    }
+    if (!gotdelim) {
+	delim = csvinfo->delim = ' ';
+    }
+
     pprintf(prn, _("using delimiter '%c'\n"), delim);
-
-    /* count chars and fields in first line */
-    if (fread(&cbak, 1, 1, fp) == 0 || cbak == '\n') {
-	pputs(prn, _("   empty first line!\n"));
-	fclose(fp);
-	return 1;
-    }
-    if (cbak == delim && cbak != ' ') {
-	blank_1 = 1;
-	pputs(prn, _("   first field is blank (dates?)\n"));
-	ncols++;
-    }
-    maxlen++;
-    while (fread(&c, 1, 1, fp)) {
-	if ((c == '\n' || c == '\r') && cbak == ',') {
-	    bad_commas = 1;
-	    pputs(prn, _("   file has trailing commas (lame)\n"));
-	}
-	if (c == '\n') break;
-	maxlen++;
-	if (c == delim) {
-	    if (c == ' ' && cbak == ' ') ;
-	    else ncols++;
-	}
-	cbak = c;
-    }
-    if (!bad_commas) ncols++;
-
-    pprintf(prn, _("   number of columns = %d\n"), ncols);
-
-    /* now count remaining non-blank rows, checking for fields */
-    cbak = ' ';
-    chkcols = (bad_commas)? -1: 0;
-    while (fread(&c, 1, 1, fp)) {
-	if (!(isspace((unsigned char) c))) ok = 1;
-	if (c == delim) {
-	    if (c == ' ' && (cbak == ' ' || cbak == '\n')) ;
-	    else chkcols++;
-	}
-	if (c != '\n') len++;
-	else {
-	    if (len > maxlen) maxlen = len;
-	    len = 0;
-	    if (ok) {
-		chkcols++;
-		csvinfo->n += 1;
-		if (chkcols != ncols) {
-		    pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
-			    csvinfo->n, chkcols);
-		    fclose(fp);
-		    pputs(prn, msg);
-		    return 1;
-		}
-	    }
-	    ok = 0; 
-	    chkcols = (bad_commas)? -1: 0;
-	}
-	cbak = c;
-    }
     pprintf(prn, _("   longest line: %d characters\n"), maxlen + 1);
 
-    if (cbak != '\n') {
-	fprintf(stderr, "last char was not newline: could be a problem\n");
+    /* create buffer to hold lines */
+    line = malloc(maxlen + 1);
+    if (line == NULL) {
+	pputs(prn, _("Out of memory\n"));
+	goto csv_bailout;
+    }  
+    
+    rewind(fp);
+    
+    /* read lines, check for consistency in number of fields */
+    chkcols = ncols = gotdata = 0;
+    while (fgets(line, maxlen + 1, fp)) {
+	/* skip comment lines */
+	if (*line == '#') continue;
+	/* skip blank lines */
+	if (line_is_blank(line)) continue;
+	csvinfo->n += 1;
+	compress_csv_line(line, delim);
+	if (!gotdata) {
+	    /* scrutinize first "real" line */
+	    check_first_field(line, delim, &blank_1, &obs_1, prn);
+	    gotdata = 1;
+	} 
+	chkcols = count_fields(line, delim);
+	if (ncols == 0) {
+	    ncols = chkcols;
+	    pprintf(prn, _("   number of columns = %d\n"), ncols);	    
+	} else {
+	    if (chkcols != ncols) {
+		pprintf(prn, _("   ...but row %d has %d fields: aborting\n"),
+			csvinfo->n, chkcols);
+		pputs(prn, msg);
+		goto csv_bailout;
+	    }
+	}
     }
 
-    fprintf(stderr, "blank_1 = %d\n", blank_1);
-
-    if (!blank_1) {
-	rewind(fp);
-	c = 0; i = 0;
-	while (c != delim && c != '\n' && c != '\r' && i < 32) {
-	    fread(&c, 1, 1, fp);
-	    fprintf(stderr, "read %c\n", c);
-	    field_1[i++] = c;
-	}
-	field_1[i-1] = '\0';
-	delchar('"', field_1);
-	pprintf(prn, _("   first field: '%s'\n"), field_1);
-	lower(field_1);
-	if (strcmp(field_1, "obs") == 0 || strcmp(field_1, "date") == 0) {
-	    pputs(prn, _("   seems to be observation label\n"));
-	    obs_1 = 1;
-	    skipvar = 1;
-	}
-    }
+    /* need to decrement csvinfo->n to allow for var headings */
+    csvinfo->n -= 1;
 
     csvinfo->v = (blank_1 || obs_1)? ncols: ncols + 1;
     pprintf(prn, _("   number of variables: %d\n"), csvinfo->v - 1);
     pprintf(prn, _("   number of non-blank lines: %d\n"), 
 	    csvinfo->n + 1);
 
-    fclose(fp);
     /* end initial checking */
+    fclose(fp);
+    fp = NULL;
 
     if (csvinfo->n == 0) {
 	pputs(prn, _("Invalid data file\n"));
-	free(csvinfo);
-	return 1;
+	goto csv_bailout;
     }
 
     /* initialize datainfo and Z */
-    if (start_new_Z(&csvZ, csvinfo, 0)) return E_ALLOC;
+    if (start_new_Z(&csvZ, csvinfo, 0)) {
+	pputs(prn, _("Out of memory\n"));
+	goto csv_bailout;
+    }
 
     if (blank_1 || obs_1) {
 	csvinfo->markers = 1;
-	if (dataset_allocate_markers(csvinfo)) return E_ALLOC;
+	if (dataset_allocate_markers(csvinfo)) {
+	    pputs(prn, _("Out of memory\n"));
+	    goto csv_bailout;
+	}
     }
 
     /* second pass */
     fp = fopen(fname, "r");
-    if (fp == NULL) return 1;
-    line = malloc(maxlen + 1);
-    if (line == NULL) {
-	fclose(fp);
-	clear_datainfo(csvinfo, CLEAR_FULL);
-	return E_ALLOC;
+    if (fp == NULL) {
+	goto csv_bailout;
     }
 
-    /* parse the variable names, truncating to 8 chars */
+    /* parse the line containing variable names */
     pputs(prn, _("scanning for variable names...\n"));
-    fgets(line, maxlen + 1, fp);
-    trim_csv_line(line);
-    compress_csv_line(line, delim);
-    pprintf(prn, _("   line: %s\n"), line);
-    n = strlen(line);
-    k = 0;
-    for (i=0; i<n; i++) {
-	while (line[i] == delim || line[i] == '"' || line[i] == QUOTE) i++;
-	j = 0; 
-	while (line[i] != '"' && line[i] != QUOTE && line[i] != delim && j < 8) 
-	    varname[j++] = line[i++];
-	varname[j] = '\0';
-	k++;
-	if (strlen(varname) == 0 || varname[0] == '\n') {
-	    pprintf(prn, _("   variable name %d is missing: aborting\n"), k);
-	    pputs(prn, msg);
-	    goto csv_bailout;
-	}
-	if (k == 1 && skipvar) {
-	    k--;
-	    skipvar = 0;
-	} else {
-	    pprintf(prn, _("   variable %d: '%s'\n"), k, varname);
-	    if (check_varname(varname)) {
-		pprintf(prn, "%s\n", gretl_errmsg);
-		goto csv_bailout;
-	    }	    
-	    strcpy(csvinfo->varname[k], varname);
-	} 
-	if (k == csvinfo->v - 1) break;
-	if ((k) && j == 8 && line[i] != delim) 
-	    while (line[i+1] != delim && i < n) i++;
-    }
 
+    while (fgets(line, maxlen + 1, fp)) {
+	if (*line == '#') continue;
+	if (line_is_blank(line)) continue;
+	else break;
+    }
+    compress_csv_line(line, delim);    
+
+    p = line;
+    if (delim == ' ' && *p == ' ') p++;
+    pprintf(prn, _("   line: %s\n"), p);
+
+    for (k=0; k<ncols; k++) {
+	int nv = 0;
+
+	i = 0;
+	while (*p && *p != delim) {
+	    if (i < 31) csvstr[i++] = *p;
+	    p++;
+	}
+	if (*p == delim) p++;
+	csvstr[i] = 0;
+	if (k == 0 && (blank_1 || obs_1)) {
+	    ;
+	} else {
+	    nv = (blank_1 || obs_1)? k : k + 1;
+
+	    if (strlen(csvstr) == 0) {
+		pprintf(prn, _("   variable name %d is missing: aborting\n"), nv);
+		pputs(prn, msg);
+		goto csv_bailout;
+	    } else {
+		csvinfo->varname[nv][0] = 0;
+		strncat(csvinfo->varname[nv], csvstr, 8);
+		if (check_varname(csvinfo->varname[nv])) {
+		    pprintf(prn, "%s\n", gretl_errmsg);
+		    goto csv_bailout;
+		}
+	    }
+	}
+	if (nv == csvinfo->v - 1) break;
+    }
+    
 #ifdef ENABLE_NLS
     if (pdinfo->decpoint != ',') setlocale(LC_NUMERIC, "C");
 #endif
 
     pputs(prn, _("scanning for row labels and data...\n"));
-    for (t=0; t<csvinfo->n; t++) {
-	ok = 0;
-	fgets(line, maxlen + 1, fp);
-	trim_csv_line(line);
+
+    t = 0;
+    while (fgets(line, maxlen + 1, fp)) {
+	int nv;
+
+	if (*line == '#') continue;
+	if (line_is_blank(line)) continue;
 	compress_csv_line(line, delim);
-	n = strlen(line);
-	for (i=0; i<n; i++) {
-	    if (!(isspace((unsigned char) line[i]))) { 
-		ok = 1; 
-		break; 
-	    }
-	}
-	if (!ok) { 
-	    t--; 
-	    continue; 
-	}
-	k = 0;
-	/* printf("t=%d: ", t); */
-	for (i=0; i<n; i++) {   /* parse line */
-	    if (i != 0 || line[i] != delim) {
-		if (k == 0 && line[i] == delim) i++;
-		if (line[i] == '"' || line[i] == QUOTE) i++;
-		j = 0; 
-		while (line[i] != delim && line[i] != '\n' 
-		       && line[i] != '"' && line[i] != QUOTE
-		       && line[i] != '\0') {
-		    numstr[j++] = line[i++];
+	p = line;
+	if (delim == ' ' && *p == ' ') p++;
+
+	for (k=0; k<ncols; k++) {
+	    i = 0;
+	    while (*p && *p != delim) {
+		if (i < 31) csvstr[i++] = *p;
+		else {
+		    pprintf(prn, _("warning: truncating data at row %d, column %d\n"),
+			    t+1, k+1);
 		}
-		numstr[j] = '\0';
-	    } else {
-		numstr[0] = '\0';
+		p++;
 	    }
-	    if (strlen(numstr) == 0 || numstr[0] == '\n' ||
-		strcmp(numstr, "NA") == 0) {
-		if (numstr[0] == 'N') 
-		    pprintf(prn, _("   warning: missing value for variable "
-			    "%d, obs %d\n"), k, t+1);
-		else 
-		    pprintf(prn, _("   the cell for variable %d, obs %d "
-			    "is empty: treating as missing value\n"), 
-			    k, t+1);
-		missval = 1;
-	    } 
-	    k++;
-	    if (blank_1 || obs_1) nv = k - 1;
-	    else nv = k;
-	    if ((blank_1 || obs_1) && k == 1) {
-		_esl_trunc(numstr, 8);
-		strcpy(csvinfo->S[t], numstr);
+	    if (*p == delim) p++;
+	    csvstr[i] = 0;
+	    if (k == 0 && (blank_1 || obs_1)) {
+		csvinfo->S[t][0] = 0;
+		strncat(csvinfo->S[t], csvstr, 8);
 	    } else {
-		if (missval) 
+		nv = (blank_1 || obs_1)? k : k + 1;
+		if (csv_missval(csvstr, k+1, t+1, prn)) {
 		    csvZ[nv][t] = NADBL;
-		else
-		    csvZ[nv][t] = atof(numstr);
-		missval = 0;
+		} else {
+		    csvZ[nv][t] = atof(csvstr);
+		}
 	    }
-	    if (k == ncols) break;
 	}
+	t++;
+	if (t == csvinfo->n) break;
     }
-    fclose(fp); 
-    free(line);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
@@ -2300,15 +2378,19 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	*pdinfo = *csvinfo;
     } else {
 	if (merge_data(pZ, pdinfo, csvZ, csvinfo, prn, 0))
-	    return 1;
+	    goto csv_bailout;
     }
+
+    fclose(fp); 
+    free(line);
 
     return 0;
 
  csv_bailout:
-    fclose(fp);
-    free(line);
-    clear_datainfo(csvinfo, CLEAR_FULL);
+    if (fp != NULL) fclose(fp);
+    if (line != NULL) free(line);
+    if (csvinfo != NULL) 
+	clear_datainfo(csvinfo, CLEAR_FULL);
     return 1;
 }
 
