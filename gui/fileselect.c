@@ -61,6 +61,8 @@ static struct extmap action_map[] = {
     {SAVE_OUTPUT, ".txt"},
     {SAVE_TEX_TAB, ".tex"},
     {SAVE_TEX_EQ, ".tex"},
+    {SAVE_TEX_TAB_FRAG, ".tex"},
+    {SAVE_TEX_EQ_FRAG, ".tex"},
     {OPEN_DATA, ".gdt"},
     {OPEN_SCRIPT, ".inp"},
     {OPEN_SESSION, ".gretl"},
@@ -296,6 +298,8 @@ static struct winfilter get_filter (int action, gpointer data)
 	{SAVE_OUTPUT, { N_("text files (*.txt)"), "*.txt" }},
 	{SAVE_TEX_TAB, { N_("TeX files (*.tex)"), "*.tex" }},
 	{SAVE_TEX_EQ, { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX_TAB_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
+	{SAVE_TEX_EQ_FRAG, { N_("TeX files (*.tex)"), "*.tex" }},
 	{OPEN_DATA, { N_("gretl data files (*.gdt)"), "*.gdt" }},
 	{OPEN_SCRIPT, { N_("gretl script files (*.inp)"), "*.inp" }},
 	{OPEN_SESSION, { N_("session files (*.gretl)"), "*.gretl" }},
@@ -513,7 +517,8 @@ void file_selector (char *msg, int action, gpointer data)
     else if (action == SAVE_SESSION) {
 	save_session(fname);
     }
-    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) {
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ ||
+	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) {
 	MODEL *pmod = (MODEL *) data;
 	do_save_tex(fname, action, pmod); 
     }
@@ -662,7 +667,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     else if (action == SAVE_SESSION) {
 	save_session(fname);
     }
-    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) {
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ ||
+	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) {
 	MODEL *pmod;
 	pmod = (MODEL *) gtk_object_get_data(GTK_OBJECT(fs), "model");
 	do_save_tex(fname, action, pmod); 
@@ -730,7 +736,8 @@ void file_selector (char *msg, int action, gpointer data)
 	action == SAVE_BOXPLOT_XPM) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "graph", data);
 
-    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ) 
+    else if (action == SAVE_TEX_TAB || action == SAVE_TEX_EQ ||
+	     action == SAVE_TEX_TAB_FRAG || action == SAVE_TEX_EQ_FRAG) 
 	gtk_object_set_data(GTK_OBJECT(filesel), "model", data);
 
     else if ((action == SAVE_DATA || action == SAVE_GZDATA) 

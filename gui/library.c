@@ -3311,8 +3311,12 @@ void do_save_tex (char *fname, const int code, MODEL *pmod)
 
     if (code == SAVE_TEX_EQ)
 	tex_print_equation(pmod, datainfo, 1, texprn);
-    else 
+    else if (code == SAVE_TEX_TAB)
 	tex_print_model(pmod, datainfo, 1, texprn);
+    else if (code == SAVE_TEX_EQ_FRAG)
+	tex_print_equation(pmod, datainfo, 0, texprn);
+    else if (code == SAVE_TEX_TAB_FRAG)
+	tex_print_model(pmod, datainfo, 0, texprn);
 
     gretl_print_destroy(texprn);
 

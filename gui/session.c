@@ -956,17 +956,17 @@ static void session_build_popups (void)
 	session_popup = gtk_menu_new();
 	for (i=0; i<n; i++) {
 	    if (i < n-1) {
-		item = gtk_menu_item_new_with_label(session_items[i]);
+		item = gtk_menu_item_new_with_label(_(session_items[i]));
 		gtk_signal_connect(GTK_OBJECT(item), "activate",
 				   (GtkSignalFunc) session_popup_activated,
-				   session_items[i]);
+				   _(session_items[i]));
 		gtk_widget_show(item);
 		gtk_menu_append(GTK_MENU(session_popup),item);
 	    } else {
-		addgraph = gtk_menu_item_new_with_label(session_items[i]);
+		addgraph = gtk_menu_item_new_with_label(_(session_items[i]));
 		gtk_signal_connect(GTK_OBJECT(addgraph), "activate",
 				   (GtkSignalFunc) session_popup_activated,
-				   session_items[i]);
+				   _(session_items[i]));
 		gtk_widget_show(addgraph);
 		gtk_menu_append(GTK_MENU(session_popup), addgraph);
 	    }
@@ -976,10 +976,10 @@ static void session_build_popups (void)
     if (model_popup == NULL) {
 	model_popup = gtk_menu_new();
 	for (i=0; i<sizeof(model_items)/sizeof(model_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(model_items[i]);
+	    item = gtk_menu_item_new_with_label(_(model_items[i]));
 	    gtk_signal_connect(GTK_OBJECT(item), "activate",
 			       (GtkSignalFunc) object_popup_activated,
-			       model_items[i]);
+			       _(model_items[i]));
 	    gtk_widget_show(item);
 	    gtk_menu_append(GTK_MENU(model_popup),item);
 	}
@@ -988,10 +988,10 @@ static void session_build_popups (void)
     if (graph_popup == NULL) {
 	graph_popup = gtk_menu_new();
 	for (i=0; i<sizeof(graph_items)/sizeof(graph_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(graph_items[i]);
+	    item = gtk_menu_item_new_with_label(_(graph_items[i]));
 	    gtk_signal_connect(GTK_OBJECT(item), "activate",
 			       (GtkSignalFunc) object_popup_activated,
-			       graph_items[i]);
+			       _(graph_items[i]));
 	    gtk_widget_show(item);
 	    gtk_menu_append(GTK_MENU(graph_popup),item);
 	}
@@ -1000,10 +1000,10 @@ static void session_build_popups (void)
     if (data_popup == NULL) {
 	data_popup = gtk_menu_new();
 	for (i=0; i<sizeof(dataset_items)/sizeof(dataset_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(dataset_items[i]);
+	    item = gtk_menu_item_new_with_label(_(dataset_items[i]));
 	    gtk_signal_connect(GTK_OBJECT(item), "activate",
 			       (GtkSignalFunc) data_popup_activated,
-			       dataset_items[i]);
+			       _(dataset_items[i]));
 	    gtk_widget_show(item);
 	    gtk_menu_append(GTK_MENU(data_popup),item);
 	}
@@ -1012,10 +1012,10 @@ static void session_build_popups (void)
     if (info_popup == NULL) {
 	info_popup = gtk_menu_new();
 	for (i=0; i<sizeof(info_items)/sizeof(info_items[0]); i++) {
-	    item = gtk_menu_item_new_with_label(info_items[i]);
+	    item = gtk_menu_item_new_with_label(_(info_items[i]));
 	    gtk_signal_connect(GTK_OBJECT(item), "activate",
 			       (GtkSignalFunc) info_popup_activated,
-			       info_items[i]);
+			       _(info_items[i]));
 	    gtk_widget_show(item);
 	    gtk_menu_append(GTK_MENU(info_popup),item);
 	}

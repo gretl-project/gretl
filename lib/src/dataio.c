@@ -243,6 +243,7 @@ static int dataset_allocate_varnames (DATAINFO *pdinfo)
     return 0;
 }
 
+#ifdef notdef
 static char locale_friendly_delim (void)
 {
     if (',' == get_local_decpoint())
@@ -250,6 +251,7 @@ static char locale_friendly_delim (void)
     else
 	return ',';
 }
+#endif
 
 /**
  * datainfo_new:
@@ -281,7 +283,7 @@ DATAINFO *datainfo_new (void)
     dinfo->varname = NULL;
     dinfo->label = NULL;    
     dinfo->markers = 0;  
-    dinfo->delim = locale_friendly_delim();
+    dinfo->delim = ',';
     dinfo->decpoint = '.';
     dinfo->S = NULL;
     dinfo->descrip = NULL;
@@ -365,7 +367,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
 
     pdinfo->S = NULL;
     pdinfo->markers = 0;
-    pdinfo->delim = locale_friendly_delim();
+    pdinfo->delim = ',';
     pdinfo->descrip = NULL;
     
     return 0;
@@ -969,7 +971,7 @@ static int writehdr (const char *hdrfile, const int *list,
     fputs(";\n", fp);
 
     /* then obs line */
-    fprintf(fp, "%d %d %s\n", pdinfo->pd, startdate, enddate);
+    fprintf(fp, "%d %s %s\n", pdinfo->pd, startdate, enddate);
     
     /* and flags as required */
     if (bin == 1) fputs("BYVAR\nSINGLE\n", fp);
@@ -1051,7 +1053,7 @@ int write_data (const char *fname, const int *list,
 	return write_xmldata(fname, list, Z, pdinfo, opt, ppaths);
 
     if (opt == GRETL_DATA_CSV && pdinfo->delim == ',' && 
-	',' == get_local_decpoint()) {
+	',' == pdinfo->decpoint) {
 	sprintf(gretl_errmsg, _("You can't use the same character for "
 				"the column delimiter and the decimal point"));
 	return 1;
@@ -1125,7 +1127,8 @@ int write_data (const char *fname, const int *list,
     }
 
 #ifdef ENABLE_NLS
-    setlocale(LC_NUMERIC, "C");
+    if (opt == GRETL_DATA_CSV && pdinfo->decpoint == ',') ;
+    else setlocale(LC_NUMERIC, "C");
 #endif
 
     if (opt == GRETL_DATA_TRAD) { /* plain ASCII */
@@ -2108,6 +2111,10 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 	    while (line[i+1] != delim) i++;
     }
 
+#ifdef ENABLE_NLS
+    if (pdinfo->decpoint != ',') setlocale(LC_NUMERIC, "C");
+#endif
+
     pprintf(prn, _("scanning for row labels and data...\n"));
     for (t=0; t<csvinfo->n; t++) {
 	ok = 0;
@@ -2163,7 +2170,7 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
 		if (missval) 
 		    csvZ[nv][t] = NADBL;
 		else
-		    csvZ[nv][t] = atod(numstr, csvinfo);
+		    csvZ[nv][t] = atof(numstr);
 		missval = 0;
 	    }
 	    if (k == ncols) break;
@@ -2171,6 +2178,10 @@ int import_csv (double ***pZ, DATAINFO *pdinfo,
     }
     fclose(fp); 
     free(line);
+
+#ifdef ENABLE_NLS
+    setlocale(LC_NUMERIC, "");
+#endif
 
     csvinfo->t1 = 0;
     csvinfo->t2 = csvinfo->n - 1;

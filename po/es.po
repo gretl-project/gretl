@@ -8,8 +8,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.996\n"
-"POT-Creation-Date: 2002-05-30 13:17-0400\n"
-"PO-Revision-Date: 2002-05-30 13:20-0400\n"
+"POT-Creation-Date: 2002-05-31 13:13-0400\n"
+"PO-Revision-Date: 2002-05-31 13:17-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -208,29 +208,29 @@ msgstr "No ha sido posible acceder al enchufe ('plugin') de GMP\n"
 msgid "auto-generated constant"
 msgstr "constante generada automáticamente"
 
-#: lib/src/dataio.c:422 lib/src/dataio.c:434 lib/src/dataio.c:475
-#: lib/src/dataio.c:487
+#: lib/src/dataio.c:425 lib/src/dataio.c:437 lib/src/dataio.c:486
+#: lib/src/dataio.c:498
 #, c-format
 msgid "WARNING: binary data read error at var %d"
 msgstr "ATENCIÓN: error de lectura de datos binarios en variable %d"
 
-#: lib/src/dataio.c:451 lib/src/dataio.c:526
+#: lib/src/dataio.c:457 lib/src/dataio.c:541
 #, c-format
 msgid "WARNING: ascii data read error at var %d, obs %d"
 msgstr ""
 "ATENCIÓN: error de lectura de datos ascii en variable %d, observación %d "
 
-#: lib/src/dataio.c:501
+#: lib/src/dataio.c:516
 #, c-format
 msgid "WARNING: ascii data read error at obs %d"
 msgstr "ATENCIÓN: error de lectura de datos ascii en observación %d"
 
-#: lib/src/dataio.c:515
+#: lib/src/dataio.c:530
 #, c-format
 msgid "WARNING: failed to read case marker for obs %d"
 msgstr "ATENCIÓN: fallo al leer marcador de caja para la observación %d"
 
-#: lib/src/dataio.c:560
+#: lib/src/dataio.c:579
 #, c-format
 msgid ""
 "First char of varname ('%c') is bad\n"
@@ -239,7 +239,7 @@ msgstr ""
 "El primer carácter del nombre de variable ('%c') no es válido\n"
 "(el primero debe ser alfabético)"
 
-#: lib/src/dataio.c:569
+#: lib/src/dataio.c:588
 #, c-format
 msgid ""
 "Varname contains illegal character '%c'\n"
@@ -248,7 +248,7 @@ msgstr ""
 "El nombre de variable contiene el carácter ilegal '%c'\n"
 "Use sólo letras, dígitos y carácter de subrayado (_)"
 
-#: lib/src/dataio.c:573
+#: lib/src/dataio.c:592
 #, c-format
 msgid ""
 "Varname contains illegal character 0x%x\n"
@@ -257,12 +257,12 @@ msgstr ""
 "El nombre de variable contiene el carácter ilegal 0x%x\n"
 "Use sólo letras, dígitos y carácter de subrayado (_)"
 
-#: lib/src/dataio.c:594
+#: lib/src/dataio.c:613
 #, c-format
 msgid "Couldn't open file %s"
 msgstr "No se pudo abrir el fichero %s"
 
-#: lib/src/dataio.c:602
+#: lib/src/dataio.c:621
 #, c-format
 msgid ""
 "Opened header file %s\n"
@@ -272,44 +272,44 @@ msgstr ""
 "No se pudo encontrar la lista de variables (debe terminar con un punto y "
 "coma [;])"
 
-#: lib/src/dataio.c:707
+#: lib/src/dataio.c:726
 msgid "Failed to store data comments\n"
 msgstr "Fallo al guardar los comentarios sobre los datos\n"
 
-#: lib/src/dataio.c:731
+#: lib/src/dataio.c:750
 #, c-format
 msgid "Bad character '%c' in date string"
 msgstr "Carácter '%c' no válido en etiqueta de fechas"
 
-#: lib/src/dataio.c:734
+#: lib/src/dataio.c:753
 #, c-format
 msgid "Bad character %d in date string"
 msgstr "Carácter %d no válido en etiqueta de fechas"
 
-#: lib/src/dataio.c:790
+#: lib/src/dataio.c:809
 msgid "Date strings inconsistent"
 msgstr "Etiquetas de fechas inconsistentes"
 
-#: lib/src/dataio.c:796
+#: lib/src/dataio.c:815
 msgid "Observation number out of bounds"
 msgstr "Número de observaciones fuera de los límites"
 
-#: lib/src/dataio.c:857
+#: lib/src/dataio.c:876
 msgid "space for comments"
 msgstr "espacio para comentarios"
 
-#: lib/src/dataio.c:884 lib/src/dataio.c:896 lib/src/dataio.c:1937
-#: lib/src/dataio.c:2291 gui/session.c:363
+#: lib/src/dataio.c:903 lib/src/dataio.c:915 lib/src/dataio.c:1963
+#: lib/src/dataio.c:2325 gui/session.c:363
 #, c-format
 msgid "Couldn't open %s\n"
 msgstr "No se pudo abrir %s\n"
 
-#: lib/src/dataio.c:890
+#: lib/src/dataio.c:909
 #, c-format
 msgid "No info in %s\n"
 msgstr "No hay información en %s\n"
 
-#: lib/src/dataio.c:900
+#: lib/src/dataio.c:919
 #, c-format
 msgid ""
 "Data info in file %s:\n"
@@ -318,66 +318,66 @@ msgstr ""
 "Información sobre los datos en el fichero %s:\n"
 "\n"
 
-#: lib/src/dataio.c:912
+#: lib/src/dataio.c:931
 msgid " (none)\n"
 msgstr " (ninguno)\n"
 
-#: lib/src/dataio.c:1040
+#: lib/src/dataio.c:1057
 msgid ""
 "You can't use the same character for the column delimiter and the decimal "
 "point"
 msgstr ""
 
-#: lib/src/dataio.c:1061
+#: lib/src/dataio.c:1078
 msgid "Write of header file failed"
 msgstr "Falló la escritura del fichero de cabecera"
 
-#: lib/src/dataio.c:1065
+#: lib/src/dataio.c:1082
 msgid "Write of labels file failed"
 msgstr "Falló la escritura del fichero de etiquetas"
 
-#: lib/src/dataio.c:1219 gui/gretl.c:1001
+#: lib/src/dataio.c:1245 gui/gretl.c:1001
 msgid "Annual"
 msgstr "Anual"
 
-#: lib/src/dataio.c:1221 gui/gretl.c:1003
+#: lib/src/dataio.c:1247 gui/gretl.c:1003
 msgid "Quarterly"
 msgstr "Trimestral"
 
-#: lib/src/dataio.c:1223 gui/gretl.c:1005
+#: lib/src/dataio.c:1249 gui/gretl.c:1005
 msgid "Monthly"
 msgstr "Mensual"
 
-#: lib/src/dataio.c:1225 gui/gretl.c:1007
+#: lib/src/dataio.c:1251 gui/gretl.c:1007
 msgid "Hourly"
 msgstr "Horario"
 
-#: lib/src/dataio.c:1227 gui/gretl.c:1009
+#: lib/src/dataio.c:1253 gui/gretl.c:1009
 msgid "Weekly"
 msgstr "Semanal"
 
-#: lib/src/dataio.c:1229 lib/src/dataio.c:1231 gui/gretl.c:1011
+#: lib/src/dataio.c:1255 lib/src/dataio.c:1257 gui/gretl.c:1011
 #: gui/gretl.c:1013
 msgid "Daily"
 msgstr "Diario"
 
-#: lib/src/dataio.c:1233 gui/gretl.c:1015
+#: lib/src/dataio.c:1259 gui/gretl.c:1015
 msgid "Unknown"
 msgstr "Desconocido"
 
-#: lib/src/dataio.c:1235
+#: lib/src/dataio.c:1261
 msgid " time-series"
 msgstr "serie temporal"
 
-#: lib/src/dataio.c:1238 gui/gretl.c:1019
+#: lib/src/dataio.c:1264 gui/gretl.c:1019
 msgid "Panel"
 msgstr "Panel"
 
-#: lib/src/dataio.c:1240 gui/gretl.c:1021
+#: lib/src/dataio.c:1266 gui/gretl.c:1021
 msgid "Undated"
 msgstr "Sin fecha"
 
-#: lib/src/dataio.c:1264
+#: lib/src/dataio.c:1290
 #, c-format
 msgid ""
 "Data file %s\n"
@@ -386,11 +386,11 @@ msgstr ""
 "Fichero de datos %s\n"
 "as of %s\n"
 
-#: lib/src/dataio.c:1265
+#: lib/src/dataio.c:1291
 msgid "(unsaved)"
 msgstr "(no guardado)"
 
-#: lib/src/dataio.c:1269
+#: lib/src/dataio.c:1295
 msgid ""
 "Description:\n"
 "\n"
@@ -398,7 +398,7 @@ msgstr ""
 "Descripción:\n"
 "\n"
 
-#: lib/src/dataio.c:1274
+#: lib/src/dataio.c:1300
 #, c-format
 msgid ""
 "%s data, %s - %s (n = %d)\n"
@@ -407,23 +407,23 @@ msgstr ""
 "%s datos, %s - %s (n = %d)\n"
 "\n"
 
-#: lib/src/dataio.c:1277
+#: lib/src/dataio.c:1303
 msgid ""
 "Listing of variables:\n"
 "\n"
 msgstr "Listando variables:\n"
 
-#: lib/src/dataio.c:1328
+#: lib/src/dataio.c:1354
 #, c-format
 msgid "Bad data label in %s"
 msgstr "Etiqueta de datos no válida en %s"
 
-#: lib/src/dataio.c:1339
+#: lib/src/dataio.c:1365
 #, c-format
 msgid "extraneous label for var '%s'\n"
 msgstr "etiqueta extraña para la variable '%s'\n"
 
-#: lib/src/dataio.c:1536
+#: lib/src/dataio.c:1562
 #, c-format
 msgid ""
 "\n"
@@ -432,12 +432,12 @@ msgstr ""
 "\n"
 "Leyendo fichero de cabecera %s\n"
 
-#: lib/src/dataio.c:1560 lib/src/dataio.c:1632
+#: lib/src/dataio.c:1586 lib/src/dataio.c:1658
 #, c-format
 msgid "periodicity: %d, maxobs: %d, observations range: %s-%s\n"
 msgstr "periodicidad: %d, maxobs: %d, rango de observaciones: %s-%s\n"
 
-#: lib/src/dataio.c:1564
+#: lib/src/dataio.c:1590
 msgid ""
 "\n"
 "Reading "
@@ -445,100 +445,100 @@ msgstr ""
 "\n"
 "Leyendo "
 
-#: lib/src/dataio.c:1566
+#: lib/src/dataio.c:1592
 msgid "time-series"
 msgstr "serie temporal"
 
-#: lib/src/dataio.c:1566
+#: lib/src/dataio.c:1592
 msgid "cross-sectional"
 msgstr "sección cruzada"
 
-#: lib/src/dataio.c:1567
+#: lib/src/dataio.c:1593
 msgid " datafile"
 msgstr " fichero de datos"
 
-#: lib/src/dataio.c:1660
+#: lib/src/dataio.c:1686
 #, c-format
 msgid "   first row label \"%s\", last label \"%s\"\n"
 msgstr "   etiqueta de primera fila \"%s\", etiqueta última \"%s\"\n"
 
-#: lib/src/dataio.c:1669
+#: lib/src/dataio.c:1695
 msgid "   label strings too long for dates?\n"
 msgstr "   ¿etiquetas demasiado largas para las fechas?\n"
 
-#: lib/src/dataio.c:1675
+#: lib/src/dataio.c:1701
 msgid "   label strings can't be consistent dates\n"
 msgstr "  las etiquetas no pueden ser fechas consistentes\n"
 
-#: lib/src/dataio.c:1680
+#: lib/src/dataio.c:1706
 msgid "trying to parse row labels as dates...\n"
 msgstr "intentando aplicar etiquetas de fila como fechas\n"
 
-#: lib/src/dataio.c:1689
+#: lib/src/dataio.c:1715
 #, c-format
 msgid "   %s: probably a year... "
 msgstr "   %s: probablemente un año... "
 
-#: lib/src/dataio.c:1691
+#: lib/src/dataio.c:1717
 #, c-format
 msgid "   %s: out of bounds for a year?\n"
 msgstr "   %s: ¿fuera de los límites para un año?\n"
 
-#: lib/src/dataio.c:1694
+#: lib/src/dataio.c:1720
 msgid "   but I can't make sense of the extra bit\n"
 msgstr "   pero no puede tener sentido el bit extra\n"
 
-#: lib/src/dataio.c:1698
+#: lib/src/dataio.c:1724
 msgid "and just a year\n"
 msgstr "y sólo un año\n"
 
-#: lib/src/dataio.c:1709
+#: lib/src/dataio.c:1735
 #, c-format
 msgid "quarter %s?\n"
 msgstr "¿trimestre %s?\n"
 
-#: lib/src/dataio.c:1719
+#: lib/src/dataio.c:1745
 #, c-format
 msgid "month %s?\n"
 msgstr "¿mes %s?\n"
 
-#: lib/src/dataio.c:1729
+#: lib/src/dataio.c:1755
 msgid "   definitely not a four-digit year\n"
 msgstr "   definitivamente, no es un año de cuatro dígitos\n"
 
-#: lib/src/dataio.c:1766
+#: lib/src/dataio.c:1792
 msgid "Data frequency does not match"
 msgstr "   La frecuencia no casa"
 
-#: lib/src/dataio.c:1771
+#: lib/src/dataio.c:1797
 msgid "New data not conformable for appending"
 msgstr "Los nuevos datos tienen la estructura adecuada para añadirlos"
 
-#: lib/src/dataio.c:1793
+#: lib/src/dataio.c:1819
 msgid "Starting observation does not match"
 msgstr "La observación inicial no casa"
 
-#: lib/src/dataio.c:1797
+#: lib/src/dataio.c:1823
 msgid "Ending observation does not match"
 msgstr "La observación final no casa"
 
-#: lib/src/dataio.c:1806
+#: lib/src/dataio.c:1832
 msgid "Starting point of new data does not fit"
 msgstr "El punto inicial de los nuevos datos no casa"
 
-#: lib/src/dataio.c:1810
+#: lib/src/dataio.c:1836
 msgid "Inconsistency in observation markers"
 msgstr "Inconsistencia en marcadores de observación"
 
-#: lib/src/dataio.c:1823 lib/src/dataio.c:1866
+#: lib/src/dataio.c:1849 lib/src/dataio.c:1892
 msgid "Out of memory adding data"
 msgstr "Fuera de memoria leyendo al añadir datos"
 
-#: lib/src/dataio.c:1871 gui/gui_utils.c:670
+#: lib/src/dataio.c:1897 gui/gui_utils.c:678
 msgid "Data appended OK"
 msgstr "Los datos se han añadido correctamente"
 
-#: lib/src/dataio.c:1925
+#: lib/src/dataio.c:1951
 msgid ""
 "\n"
 "Please note:\n"
@@ -558,96 +558,96 @@ msgstr ""
 "mostrar 'obs' o 'date'.\n"
 "- El resto del fichero debe ser una formación de datos rectangular.\n"
 
-#: lib/src/dataio.c:1943 lib/src/dataio.c:2297 cli/common.c:146
-#: plugin/excel_import.c:697 plugin/gnumeric_import.c:507
+#: lib/src/dataio.c:1969 lib/src/dataio.c:2331 cli/common.c:146
+#: plugin/excel_import.c:697 plugin/gnumeric_import.c:495
 msgid "Out of memory\n"
 msgstr "Falta de memoria\n"
 
-#: lib/src/dataio.c:1948 lib/src/dataio.c:2301
+#: lib/src/dataio.c:1974 lib/src/dataio.c:2335
 #, c-format
 msgid "parsing %s...\n"
 msgstr "aplicando %s...\n"
 
-#: lib/src/dataio.c:1949
+#: lib/src/dataio.c:1975
 #, c-format
 msgid "using delimiter '%c'\n"
 msgstr "usando delimitador '%c'\n"
 
-#: lib/src/dataio.c:1953
+#: lib/src/dataio.c:1979
 msgid "   empty first line!\n"
 msgstr "   ¡primera línea vacía!\n"
 
-#: lib/src/dataio.c:1959
+#: lib/src/dataio.c:1985
 msgid "   first field is blank (dates?)\n"
 msgstr "   el primer campo está vacío (¿fechas?)\n"
 
-#: lib/src/dataio.c:1966
+#: lib/src/dataio.c:1992
 msgid "   file has trailing commas (lame)\n"
 msgstr "   el fichero contiene comas que no casan (cojo)\n"
 
-#: lib/src/dataio.c:1975
+#: lib/src/dataio.c:2001
 #, c-format
 msgid "   number of columns = %d\n"
 msgstr "   número de columnas = %d\n"
 
-#: lib/src/dataio.c:1990
+#: lib/src/dataio.c:2016
 #, c-format
 msgid "   ...but row %d has %d fields: aborting\n"
 msgstr "   ...pero la fila %d tiene %d campos: abortando\n"
 
-#: lib/src/dataio.c:2002
+#: lib/src/dataio.c:2028
 #, c-format
 msgid "   longest line: %d characters\n"
 msgstr "   línea más larga: %d caracteres\n"
 
-#: lib/src/dataio.c:2016
+#: lib/src/dataio.c:2042
 #, c-format
 msgid "   first field: '%s'\n"
 msgstr "   primer campo: '%s'\n"
 
-#: lib/src/dataio.c:2019
+#: lib/src/dataio.c:2045
 msgid "   seems to be observation label\n"
 msgstr "   parecer ser etiqueta de observación\n"
 
-#: lib/src/dataio.c:2026
+#: lib/src/dataio.c:2052
 #, c-format
 msgid "   number of variables: %d\n"
 msgstr "   número de variables: %d\n"
 
-#: lib/src/dataio.c:2027
+#: lib/src/dataio.c:2053
 #, c-format
 msgid "   number of non-blank lines: %d\n"
 msgstr "   número de líneas que no están en blanco: %d\n"
 
-#: lib/src/dataio.c:2052
+#: lib/src/dataio.c:2078
 msgid "scanning for variable names...\n"
 msgstr "buscando nombres de variables...\n"
 
-#: lib/src/dataio.c:2057
+#: lib/src/dataio.c:2083
 #, c-format
 msgid "   line: %s\n"
 msgstr "   línea: %s\n"
 
-#: lib/src/dataio.c:2068
+#: lib/src/dataio.c:2094
 #, c-format
 msgid "   variable name %d is missing: aborting\n"
 msgstr "   falta el nombre de la variable %d: abortando\n"
 
-#: lib/src/dataio.c:2076
+#: lib/src/dataio.c:2102
 #, c-format
 msgid "   variable %d: '%s'\n"
 msgstr "   variable %d: '%s'\n"
 
-#: lib/src/dataio.c:2088
+#: lib/src/dataio.c:2118
 msgid "scanning for row labels and data...\n"
 msgstr "buscando etiquetas de fila y datos...\n"
 
-#: lib/src/dataio.c:2125
+#: lib/src/dataio.c:2155
 #, c-format
 msgid "   warning: missing value for variable %d, obs %d\n"
 msgstr "   ATENCIÓN: valor perdido de la variable  %d, observación %d\n"
 
-#: lib/src/dataio.c:2128
+#: lib/src/dataio.c:2158
 #, c-format
 msgid ""
 "   the cell for variable %d, obs %d is empty: treating as missing value\n"
@@ -655,7 +655,7 @@ msgstr ""
 "   la celda de la variable %d, observación %d está vacía: tratándola como "
 "valor perdido\n"
 
-#: lib/src/dataio.c:2156
+#: lib/src/dataio.c:2190
 msgid ""
 "taking date information from row labels\n"
 "\n"
@@ -663,7 +663,7 @@ msgstr ""
 "tomando información de fechas de las etiquetas de filas\n"
 "\n"
 
-#: lib/src/dataio.c:2158
+#: lib/src/dataio.c:2192
 msgid ""
 "treating these as undated data\n"
 "\n"
@@ -671,245 +671,240 @@ msgstr ""
 "tratando estos como datos sin fecha\n"
 "\n"
 
-#: lib/src/dataio.c:2310
+#: lib/src/dataio.c:2344
 #, c-format
 msgid "Binary data (%d) encountered: this is not a valid BOX1 file\n"
 msgstr "Encontrados datos binarios (%d): este no es un fichero BOX1 válido\n"
 
-#: lib/src/dataio.c:2332
+#: lib/src/dataio.c:2366
 #, c-format
 msgid "   found %d variables\n"
 msgstr "   encontradas %d variables\n"
 
-#: lib/src/dataio.c:2333
+#: lib/src/dataio.c:2367
 #, c-format
 msgid "   found %d observations\n"
 msgstr "   encontradas %d observaciones\n"
 
-#: lib/src/dataio.c:2334
+#: lib/src/dataio.c:2368
 #, c-format
 msgid "   longest line = %d characters\n"
 msgstr "   línea más larga = %d caracteres\n"
 
-#: lib/src/dataio.c:2338
+#: lib/src/dataio.c:2372
 msgid "allocating memory for data... "
 msgstr "asignando memoria para los datos..."
 
-#: lib/src/dataio.c:2346
+#: lib/src/dataio.c:2380
 msgid "done\n"
 msgstr "hecho\n"
 
-#: lib/src/dataio.c:2350
+#: lib/src/dataio.c:2384
 msgid "reading variable information...\n"
 msgstr "leyendo información de variable...\n"
 
-#: lib/src/dataio.c:2370
+#: lib/src/dataio.c:2408
 #, c-format
 msgid " variable %d: '%s'\n"
 msgstr " variable %d: '%s'\n"
 
-#: lib/src/dataio.c:2374
+#: lib/src/dataio.c:2412
 msgid "   Non-numeric data: will be skipped\n"
 msgstr "   Datos no numéricos: serán ignorados\n"
 
-#: lib/src/dataio.c:2384
+#: lib/src/dataio.c:2422
 #, c-format
 msgid "   starting col. %d, "
 msgstr "   col. inicial %d, "
 
-#: lib/src/dataio.c:2388
+#: lib/src/dataio.c:2426
 #, c-format
 msgid "field width %d, "
 msgstr "anchura de campo %d, "
 
-#: lib/src/dataio.c:2391
+#: lib/src/dataio.c:2429
 #, c-format
 msgid "decimal places %d\n"
 msgstr "decimales %d\n"
 
-#: lib/src/dataio.c:2397
+#: lib/src/dataio.c:2435
 #, c-format
 msgid "   Warning: coded variable (format '%s' in BOX file)\n"
 msgstr "   ATENCIÓN: variable codificada (formato '%s' en fichero BOX)\n"
 
-#: lib/src/dataio.c:2402
+#: lib/src/dataio.c:2440
 #, c-format
 msgid "   definition: '%s'\n"
 msgstr "   definición: '%s'\n"
 
-#: lib/src/dataio.c:2420
+#: lib/src/dataio.c:2458
 #, c-format
 msgid "read %d chars from pos %d: '%s' -> %g\n"
 msgstr "leer %d caracteres desde posición %d: '%s' -> %g\n"
 
-#: lib/src/dataio.c:2424
+#: lib/src/dataio.c:2462
 #, c-format
 msgid "'%s' -- no numeric conversion performed!\n"
 msgstr "'%s' -- ¡realizada conversión no numérica!\n"
 
-#: lib/src/dataio.c:2430
+#: lib/src/dataio.c:2468
 #, c-format
 msgid "Extraneous character '%c' in data\n"
 msgstr "Carácter extraño '%c' en los datos\n"
 
-#: lib/src/dataio.c:2433
+#: lib/src/dataio.c:2471
 #, c-format
 msgid "Extraneous character (0x%x) in data\n"
 msgstr "Carácter extraño (0x%x) en los datos\n"
 
-#: lib/src/dataio.c:2438
+#: lib/src/dataio.c:2476
 #, c-format
 msgid "'%s' -- number out of range!\n"
 msgstr "'%s' -- ¡número fuera de rango!\n"
 
-#: lib/src/dataio.c:2455
+#: lib/src/dataio.c:2497
 msgid "done reading data\n"
 msgstr "lectura de datos realizada\n"
 
-#: lib/src/dataio.c:2466
+#: lib/src/dataio.c:2508
 #, c-format
 msgid "Warning: discarded %d non-numeric variable(s)\n"
 msgstr "ATENCIÓN: %d variable(s) no numéricas deshechadas\n"
 
-#: lib/src/dataio.c:2615
+#: lib/src/dataio.c:2657
 msgid "box file seems to be malformed\n"
 msgstr "el fichero BOX parece estar mal formado\n"
 
-#: lib/src/dataio.c:2663
+#: lib/src/dataio.c:2705
 msgid "out of memory in XML encoding"
 msgstr "fuera de memoria en la codificación XML"
 
-#: lib/src/dataio.c:2738
+#: lib/src/dataio.c:2775
 #, c-format
 msgid "Couldn't open %s for writing"
 msgstr "No se pudo abrir %s para escritura"
 
-#: lib/src/dataio.c:2744 gui/database.c:427 gui/library.c:1327
+#: lib/src/dataio.c:2781 gui/database.c:427 gui/library.c:1327
 #: gui/library.c:1828
 msgid "Out of memory"
 msgstr "Fuera de memoria"
 
-#: lib/src/dataio.c:2750
+#: lib/src/dataio.c:2787
 #, c-format
 msgid "Writing %ld Kbytes of data\n"
 msgstr "Escribiendo %ld Kbytes de datos\n"
 
-#: lib/src/dataio.c:2925
+#: lib/src/dataio.c:2970
 msgid "Failed to parse count of variables"
 msgstr "Fallo al aplicar recuento de variables"
 
-#: lib/src/dataio.c:2929 lib/src/dataio.c:2935
+#: lib/src/dataio.c:2974 lib/src/dataio.c:2980
 msgid "Out of memory reading data file"
 msgstr "Fuera de memoria leyendo el fichero de datos"
 
-#: lib/src/dataio.c:2943 lib/src/dataio.c:2953
+#: lib/src/dataio.c:2988 lib/src/dataio.c:2998
 msgid "Got no variables"
 msgstr "No se obtuvieron variables"
 
-#: lib/src/dataio.c:2966
+#: lib/src/dataio.c:3011
 #, c-format
 msgid "Variable %d has no name"
 msgstr "La variable %d no tiene nombre"
 
-#: lib/src/dataio.c:2997
+#: lib/src/dataio.c:3042
 msgid "Number of variables does not match declaration"
 msgstr "El número de variables no coincide con el declarado"
 
-#: lib/src/dataio.c:3020
+#: lib/src/dataio.c:3058
 #, c-format
 msgid "Failed to parse data values at obs %d"
 msgstr "Fallo al pasar valores de datos en la observación %d"
 
-#: lib/src/dataio.c:3056
+#: lib/src/dataio.c:3094
 msgid "Failed to parse number of observations"
 msgstr "Fallo al pasar número de observaciones"
 
-#: lib/src/dataio.c:3072
+#: lib/src/dataio.c:3110
 msgid "labels attribute for observations must be 'true' or 'false'"
 msgstr ""
 "el atributo de etiqueta para las observaciones ha de ser 'true' o 'false'"
 
-#: lib/src/dataio.c:3100
+#: lib/src/dataio.c:3138
 msgid "Got no observations\n"
 msgstr "No se obtuvieron observaciones\n"
 
-#: lib/src/dataio.c:3116
+#: lib/src/dataio.c:3154
 #, c-format
 msgid "Case marker missing at obs %d"
 msgstr "Marcador de caja perdido en observación %d"
 
-#: lib/src/dataio.c:3127
+#: lib/src/dataio.c:3165
 #, c-format
 msgid "Values missing at observation %d"
 msgstr "Valores perdidos en observación %d"
 
-#: lib/src/dataio.c:3142
+#: lib/src/dataio.c:3180
 msgid "Number of observations does not match declaration"
 msgstr "El número de observaciones no coincide con el declarado"
 
-#: lib/src/dataio.c:3193
+#: lib/src/dataio.c:3231
 #, c-format
 msgid "%s %ld bytes of data...\n"
 msgstr "%s %ld bytes de datos...\n"
 
-#: lib/src/dataio.c:3194
+#: lib/src/dataio.c:3232
 msgid "Uncompressing"
 msgstr "Descomprimiendo"
 
-#: lib/src/dataio.c:3194
+#: lib/src/dataio.c:3232
 msgid "Reading"
 msgstr "Leyendo"
 
-#: lib/src/dataio.c:3201 lib/src/dataio.c:3387 plugin/gnumeric_import.c:297
-#: plugin/gnumeric_import.c:399
+#: lib/src/dataio.c:3239 lib/src/dataio.c:3421 plugin/gnumeric_import.c:285
+#: plugin/gnumeric_import.c:387
 #, c-format
 msgid "xmlParseFile failed on %s"
 msgstr "xmlParseFile falló en %s"
 
-#: lib/src/dataio.c:3210 lib/src/dataio.c:3393 plugin/gnumeric_import.c:303
-#: plugin/gnumeric_import.c:405
+#: lib/src/dataio.c:3248 lib/src/dataio.c:3427 plugin/gnumeric_import.c:291
+#: plugin/gnumeric_import.c:393
 #, c-format
 msgid "%s: empty document"
 msgstr "%s: documento vacío"
 
-#: lib/src/dataio.c:3216 lib/src/dataio.c:3399
+#: lib/src/dataio.c:3254 lib/src/dataio.c:3433
 msgid "File of the wrong type, root node not gretldata"
 msgstr "Fichero de tipo equivocado, el nodo raíz no es 'gretldata'"
 
-#: lib/src/dataio.c:3225
+#: lib/src/dataio.c:3263
 msgid "Required attribute 'type' is missing from data file"
 msgstr "Atributo obligatorio 'type' no se encuentra en el fichero de datos"
 
-#: lib/src/dataio.c:3237
+#: lib/src/dataio.c:3275
 msgid "Unrecognized type attribute for data file"
 msgstr "Atributo 'type' desconocido en fichero de datos"
 
-#: lib/src/dataio.c:3251
+#: lib/src/dataio.c:3289
 msgid "Failed to parse data frequency"
 msgstr "Fallo al pasar la frecuencia de los datos"
 
-#: lib/src/dataio.c:3265
-#, fuzzy
-msgid "Failed to recognize decimal point character"
-msgstr "Fallo al recuperar la descripción de los datos"
-
-#: lib/src/dataio.c:3286
+#: lib/src/dataio.c:3310
 msgid "Failed to parse startobs"
 msgstr "Fallo al pasar observación inicial"
 
-#: lib/src/dataio.c:3308
+#: lib/src/dataio.c:3332
 msgid "Failed to parse endobs"
 msgstr "Fallo al pasar observación final"
 
-#: lib/src/dataio.c:3331 lib/src/dataio.c:3346
+#: lib/src/dataio.c:3359 lib/src/dataio.c:3380
 msgid "Variables information is missing"
 msgstr "No se encuentra la información de variables"
 
-#: lib/src/dataio.c:3350
+#: lib/src/dataio.c:3384
 msgid "No observations were found"
 msgstr "No se encontraron observaciones"
 
-#: lib/src/dataio.c:3356
+#: lib/src/dataio.c:3390
 #, c-format
 msgid ""
 "\n"
@@ -918,7 +913,7 @@ msgstr ""
 "\n"
 "Leer fichero de datos %s\n"
 
-#: lib/src/dataio.c:3357
+#: lib/src/dataio.c:3391
 #, c-format
 msgid ""
 "periodicity: %d, maxobs: %d, observations range: %s-%s\n"
@@ -3828,7 +3823,7 @@ msgstr ""
 msgid "Couldn't allocate memory for %s\n"
 msgstr "No se pudo asignar memoria para %s\n"
 
-#: cli/gretlcli.c:158 gui/library.c:3566 gui/library.c:3654
+#: cli/gretlcli.c:158 gui/library.c:3570 gui/library.c:3658
 msgid ""
 "Can't do: the current data set is different from the one on which\n"
 "the reference model was estimated\n"
@@ -3837,11 +3832,11 @@ msgstr ""
 "para\n"
 "estimar el modelo de referencia\n"
 
-#: cli/gretlcli.c:167 gui/library.c:137 gui/library.c:3537
+#: cli/gretlcli.c:167 gui/library.c:137 gui/library.c:3541
 msgid "Can't do this: no model has been estimated yet\n"
 msgstr "No se puede hacer esto: ningún modelo ha sido aún estimado\n"
 
-#: cli/gretlcli.c:171 gui/library.c:3541
+#: cli/gretlcli.c:171 gui/library.c:3545
 #, c-format
 msgid "Can't do this: there is no model %d\n"
 msgstr "No se puede hacer esto: no hay modelo %d\n"
@@ -3874,7 +3869,7 @@ msgstr ""
 "\n"
 "\"help\" da una lista de instrucciones\n"
 
-#: cli/gretlcli.c:382 gui/gui_utils.c:1008
+#: cli/gretlcli.c:382 gui/gui_utils.c:1017
 #, c-format
 msgid "help file %s is not accessible\n"
 msgstr "el archivo de ayuda %s no está accesible\n"
@@ -3883,11 +3878,11 @@ msgstr "el archivo de ayuda %s no está accesible\n"
 msgid "Type \"open filename\" to open a data set\n"
 msgstr "Escriba \"open filename\" para abrir un conjunto de datos\n"
 
-#: cli/gretlcli.c:409 gui/library.c:3436
+#: cli/gretlcli.c:409 gui/library.c:3440
 msgid "No commands in loop\n"
 msgstr "Sin instrucciones en el bucle\n"
 
-#: cli/gretlcli.c:419 gui/library.c:3446
+#: cli/gretlcli.c:419 gui/library.c:3450
 msgid "Error in command loop: aborting\n"
 msgstr "Error en bucle de órdenes: abortando\n"
 
@@ -3895,7 +3890,7 @@ msgstr "Error en bucle de órdenes: abortando\n"
 msgid "Out of memory loading command line\n"
 msgstr "Falta de memoria cargando línea de instrucciones\n"
 
-#: cli/gretlcli.c:520 gui/library.c:3593
+#: cli/gretlcli.c:520 gui/library.c:3597
 msgid "You must open a data file first\n"
 msgstr "Primero se debe abrir un fichero de datos\n"
 
@@ -3904,52 +3899,52 @@ msgstr "Primero se debe abrir un fichero de datos\n"
 msgid "Command '%s' ignored; not available in loop mode\n"
 msgstr "orden '%s' ignorada; no disponible en modo bucle\n"
 
-#: cli/gretlcli.c:550 gui/library.c:3636
+#: cli/gretlcli.c:550 gui/library.c:3640
 msgid "Failed to add command to loop stack\n"
 msgstr "Fallo al añadir orden a la pila de bucle\n"
 
-#: cli/gretlcli.c:614 gui/library.c:3708
+#: cli/gretlcli.c:614 gui/library.c:3712
 #, c-format
 msgid "Failed to reconstruct model %d\n"
 msgstr "Fallo al reconstruir el modelo %d\n"
 
-#: cli/gretlcli.c:697 gui/library.c:3811
+#: cli/gretlcli.c:697 gui/library.c:3815
 msgid "Failed to generate correlogram\n"
 msgstr "Fallo al generar el correlograma\n"
 
-#: cli/gretlcli.c:702 gui/library.c:3816
+#: cli/gretlcli.c:702 gui/library.c:3820
 msgid "Can't delete last variable when in sub-sample mode\n"
 msgstr ""
 "No se puede borrar la última variable cuando se está en modo de sub-"
 "muestreo\n"
 
-#: cli/gretlcli.c:707 gui/library.c:2218 gui/library.c:3821
+#: cli/gretlcli.c:707 gui/library.c:2218 gui/library.c:3825
 msgid "Failed to shrink the data set"
 msgstr "Fallo al reducir el conjunto de datos"
 
-#: cli/gretlcli.c:713 gui/library.c:3827
+#: cli/gretlcli.c:713 gui/library.c:3831
 msgid "You can't end a loop here, you haven't started one\n"
 msgstr "No se puede finalizar un bucle aquí, no se ha iniciado ninguno\n"
 
-#: cli/gretlcli.c:731 gui/library.c:3849
+#: cli/gretlcli.c:731 gui/library.c:3853
 msgid "Couldn't open tex file for writing\n"
 msgstr "No se pudo abrir fichero de texto para escritura\n"
 
-#: cli/gretlcli.c:733 gui/library.c:3851
+#: cli/gretlcli.c:733 gui/library.c:3855
 #, c-format
 msgid "Model printed to %s\n"
 msgstr "Modelo impreso en %s\n"
 
-#: cli/gretlcli.c:741 cli/gretlcli.c:761 gui/library.c:3859
+#: cli/gretlcli.c:741 cli/gretlcli.c:761 gui/library.c:3863
 msgid "Error retrieving fitted values\n"
 msgstr "Error al recuperar los valores ajustados\n"
 
-#: cli/gretlcli.c:766 gui/library.c:3883
+#: cli/gretlcli.c:766 gui/library.c:3887
 msgid "Retrieved fitted values as \"autofit\"\n"
 msgstr "Se han recuperado los valores ajustados como \"autofit\"\n"
 
-#: cli/gretlcli.c:778 cli/gretlcli.c:794 cli/gretlcli.c:825 gui/library.c:3895
-#: gui/library.c:3908 gui/library.c:3941
+#: cli/gretlcli.c:778 cli/gretlcli.c:794 cli/gretlcli.c:825 gui/library.c:3899
+#: gui/library.c:3912 gui/library.c:3945
 msgid "gnuplot command failed\n"
 msgstr "orden gnuplot fallida\n"
 
@@ -3962,15 +3957,15 @@ msgstr ""
 "variable ficticia\n"
 "(con valores 1 o 0)\n"
 
-#: cli/gretlcli.c:863 gui/library.c:3984
+#: cli/gretlcli.c:863 gui/library.c:3988
 msgid "import command is malformed\n"
 msgstr "la orden 'import' está mal construída\n"
 
-#: cli/gretlcli.c:874 gui/library.c:3998
+#: cli/gretlcli.c:874 gui/library.c:4002
 msgid "You should now use the \"print\" command to verify the data\n"
 msgstr "Ahora se debería usar la orden \"print\" para verificar los datos\n"
 
-#: cli/gretlcli.c:876 gui/library.c:4000
+#: cli/gretlcli.c:876 gui/library.c:4004
 msgid ""
 "If they are OK, use the  \"store\" command to save them in gretl format\n"
 msgstr ""
@@ -3990,7 +3985,7 @@ msgstr ""
 msgid "OK, staying with current data set\n"
 msgstr "De acuerdo, nos quedamos con el conjunto de datos actual\n"
 
-#: cli/gretlcli.c:977 gui/library.c:4100
+#: cli/gretlcli.c:977 gui/library.c:4104
 msgid "Loop count missing or invalid\n"
 msgstr "Cuenta de bucle perdida o inválida\n"
 
@@ -3998,19 +3993,19 @@ msgstr "Cuenta de bucle perdida o inválida\n"
 msgid "Enter commands for loop.  Type 'endloop' to get out\n"
 msgstr "Introduzca órdenes para el bucle. Teclee 'endloop' para salir\n"
 
-#: cli/gretlcli.c:994 gui/library.c:4114
+#: cli/gretlcli.c:994 gui/library.c:4118
 msgid "Data series length count missing or invalid\n"
 msgstr "Anotación del tamaño de la serie de datos perdida o inválida\n"
 
-#: cli/gretlcli.c:999 gui/library.c:4119
+#: cli/gretlcli.c:999 gui/library.c:4123
 msgid "Data series too long\n"
 msgstr "Serie de datos demasiado larga\n"
 
-#: cli/gretlcli.c:1006 gui/library.c:4125
+#: cli/gretlcli.c:1006 gui/library.c:4129
 msgid "Failed to create empty data set\n"
 msgstr "Fallo al crear conjunto de datos vacío\n"
 
-#: cli/gretlcli.c:1039 gui/library.c:4167
+#: cli/gretlcli.c:1039 gui/library.c:4171
 msgid "Failed to generate periodogram\n"
 msgstr "Fallo al generar el periodograma\n"
 
@@ -4033,7 +4028,7 @@ msgstr ""
 msgid "writing session output to %s%s\n"
 msgstr "escribiendo los resultados de sesión a %s%s\n"
 
-#: cli/gretlcli.c:1084 gui/library.c:4184
+#: cli/gretlcli.c:1084 gui/library.c:4188
 msgid "This command requires a list of variables\n"
 msgstr "Esta instrucción necesita una lista de variables\n"
 
@@ -4051,15 +4046,15 @@ msgstr "No se pudo abrir guión \"%s\"\n"
 msgid "%s opened OK\n"
 msgstr "%s bien abierto\n"
 
-#: cli/gretlcli.c:1115 gui/library.c:4209
+#: cli/gretlcli.c:1115 gui/library.c:4213
 msgid "scatters command not available in batch mode\n"
 msgstr "la orden 'scatters' no está disponible en modo 'batch'\n"
 
-#: cli/gretlcli.c:1119 gui/library.c:4213
+#: cli/gretlcli.c:1119 gui/library.c:4217
 msgid "scatters command failed\n"
 msgstr "falló la orden 'scatters'\n"
 
-#: cli/gretlcli.c:1125 gui/library.c:4219
+#: cli/gretlcli.c:1125 gui/library.c:4223
 #, c-format
 msgid "Pseudo-random number generator seeded with %d\n"
 msgstr "Generador de números pseudoaleatorios iniciado con semilla %d\n"
@@ -4068,24 +4063,24 @@ msgstr "Generador de números pseudoaleatorios iniciado con semilla %d\n"
 msgid "shell command not implemented in win32\n"
 msgstr "Orden 'shell' no implementada en win32\n"
 
-#: cli/gretlcli.c:1181 gui/library.c:4282
+#: cli/gretlcli.c:1181 gui/library.c:4286
 msgid "Failed to generate squares\n"
 msgstr "Fallo al generar los cuadrados\n"
 
-#: cli/gretlcli.c:1184 gui/library.c:4285
+#: cli/gretlcli.c:1184 gui/library.c:4289
 msgid "Squares generated OK\n"
 msgstr "Los cuadrados se han generado bien\n"
 
-#: cli/gretlcli.c:1195 gui/library.c:4299
+#: cli/gretlcli.c:1195 gui/library.c:4303
 #, c-format
 msgid "store: using filename %s\n"
 msgstr "store: usando nombre de fichero %s\n"
 
-#: cli/gretlcli.c:1197 gui/library.c:4301
+#: cli/gretlcli.c:1197 gui/library.c:4305
 msgid "store: no filename given\n"
 msgstr "store: no se ha proporcionado nombre de fichero\n"
 
-#: cli/gretlcli.c:1202 gui/library.c:4306
+#: cli/gretlcli.c:1202 gui/library.c:4310
 msgid "write of data file failed\n"
 msgstr "falló la escritura del fichero de datos\n"
 
@@ -4093,12 +4088,12 @@ msgstr "falló la escritura del fichero de datos\n"
 msgid "Data written OK\n"
 msgstr "Los datos se han escrito correctamente\n"
 
-#: cli/gretlcli.c:1207 gui/library.c:4312
+#: cli/gretlcli.c:1207 gui/library.c:4316
 msgid "Warning: case markers not saved in binary datafile\n"
 msgstr ""
 "ATENCIÓN: marcadores de caja no guardados en fichero de datos binario\n"
 
-#: cli/gretlcli.c:1213 gui/library.c:4319
+#: cli/gretlcli.c:1213 gui/library.c:4323
 msgid "Out of memory attempting to add variable\n"
 msgstr "Fuera de momoria al intentar añadir variable\n"
 
@@ -4142,7 +4137,7 @@ msgstr "grados de libertad no válidos"
 msgid "Invalid sample size"
 msgstr "Tamaño muestral no válido"
 
-#: gui/calculator.c:181 gui/gui_utils.c:652 gui/library.c:1507
+#: gui/calculator.c:181 gui/gui_utils.c:660 gui/library.c:1507
 #: gui/library.c:1773
 msgid "Couldn't load plugin function"
 msgstr "No se pudo cargar la función enchufe (plugin)"
@@ -4203,8 +4198,8 @@ msgstr "f(x) title 'Distribución muestral F(%d, %d)' w lines , \\\n"
 msgid "'-' using 1:($2) title 'test statistic' w impulses\n"
 msgstr "'-' using 1:($2) title 'estadístico de contraste' w impulses\n"
 
-#: gui/calculator.c:416 gui/database.c:294 gui/fileselect.c:491
-#: gui/fileselect.c:632 gui/gpt_control.c:1129 gui/session.c:1311
+#: gui/calculator.c:416 gui/database.c:294 gui/fileselect.c:495
+#: gui/fileselect.c:637 gui/gpt_control.c:1129 gui/session.c:1311
 #: gui/session.c:1315 gui/session.c:1396 gui/session.c:1400 gui/library.c:2314
 #: gui/library.c:2623 gui/library.c:2664 gui/library.c:2790 gui/library.c:2823
 #: gui/library.c:2899 gui/library.c:2942
@@ -4380,8 +4375,8 @@ msgstr "Contrastar"
 
 #: gui/calculator.c:1022 gui/database.c:567 gui/datafiles.c:443
 #: gui/gpt_control.c:618 gui/gpt_control.c:1363 gui/gpt_control.c:1383
-#: gui/gpt_control.c:1388 gui/gui_utils.c:1494 gui/gui_utils.c:1682
-#: gui/gui_utils.c:1910 gui/gui_utils.c:2435 gui/gui_utils.c:2536
+#: gui/gpt_control.c:1388 gui/gui_utils.c:1503 gui/gui_utils.c:1691
+#: gui/gui_utils.c:1919 gui/gui_utils.c:2444 gui/gui_utils.c:2545
 #: gui/ssheet.c:633 gui/boxplots.c:173 gui/boxplots.c:201
 msgid "Close"
 msgstr "Cerrar"
@@ -4430,7 +4425,7 @@ msgstr "Guardar histórico de instrucciones"
 msgid "Save command script"
 msgstr "Guardar guión de instrucciones"
 
-#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1911
+#: gui/callbacks.c:158 gui/callbacks.c:165 gui/gretl.c:1915
 msgid "Save data file"
 msgstr "Guardar fichero de datos"
 
@@ -4446,47 +4441,47 @@ msgstr "Guardar fichero de datos R"
 msgid "Save octave data file"
 msgstr "Guardar fichero de datos Octave"
 
-#: gui/callbacks.c:184
+#: gui/callbacks.c:186
 msgid "Save LaTeX file"
 msgstr "Guardar fichero LaTeX"
 
-#: gui/callbacks.c:187
+#: gui/callbacks.c:189
 msgid "Save HTML file"
 msgstr "Guardar fichero HTML"
 
-#: gui/callbacks.c:190
+#: gui/callbacks.c:192
 msgid "Save model output"
 msgstr "Guardar resultados de modelo"
 
-#: gui/callbacks.c:193
+#: gui/callbacks.c:195
 msgid "Save gnuplot commands"
 msgstr "Guardar instrucciones de gnuplot"
 
-#: gui/callbacks.c:204
+#: gui/callbacks.c:206
 msgid "Sorry, this item not yet implemented!"
 msgstr "Lo siento, ¡este tema aún no está implementado!"
 
-#: gui/callbacks.c:216
+#: gui/callbacks.c:218
 msgid "gretl: data summary"
 msgstr "gretl: resumen de los datos"
 
-#: gui/callbacks.c:225
+#: gui/callbacks.c:227
 msgid "You don't have permission to do this"
 msgstr "Vd. no tiene permiso para hacer esto"
 
-#: gui/callbacks.c:227
+#: gui/callbacks.c:229
 msgid "gretl: edit data info"
 msgstr "gretl: editar información de datos"
 
-#: gui/callbacks.c:255 gui/callbacks.c:264
+#: gui/callbacks.c:257 gui/callbacks.c:266
 msgid "gretl: specify model"
 msgstr "gretl: especificar modelo"
 
-#: gui/callbacks.c:255 gui/callbacks.c:264 gui/callbacks.c:359
+#: gui/callbacks.c:257 gui/callbacks.c:266 gui/callbacks.c:361
 msgid "Estimate"
 msgstr "Estimar"
 
-#: gui/callbacks.c:278
+#: gui/callbacks.c:280
 msgid ""
 "Sorry, can't do: the sample has been reset\n"
 "since this model was estimated"
@@ -4494,27 +4489,27 @@ msgstr ""
 "Lo siento, no puede hacerse: la muestra se ha reorganizado\n"
 "después de que el modelo se estimase"
 
-#: gui/callbacks.c:300 gui/library.c:1680
+#: gui/callbacks.c:302 gui/library.c:1680
 msgid "gretl: ARCH test"
 msgstr "gretl: Contraste ARCH"
 
-#: gui/callbacks.c:301
+#: gui/callbacks.c:303
 msgid "Lag order for ARCH test:"
 msgstr "Orden del retardo para el contraste ARCH:"
 
-#: gui/callbacks.c:306
+#: gui/callbacks.c:308
 msgid "gretl: autocorrelation"
 msgstr "gretl: autocorrelación"
 
-#: gui/callbacks.c:307
+#: gui/callbacks.c:309
 msgid "Lag order for test:"
 msgstr "Orden del retardo para el contraste:"
 
-#: gui/callbacks.c:314
+#: gui/callbacks.c:316
 msgid "gretl: Chow test"
 msgstr "gretl: Contraste de Chow"
 
-#: gui/callbacks.c:315
+#: gui/callbacks.c:317
 #, c-format
 msgid ""
 "Enter observation at which\n"
@@ -4525,11 +4520,11 @@ msgstr ""
 "dividir la muestra\n"
 "(entre %s and %s):"
 
-#: gui/callbacks.c:321
+#: gui/callbacks.c:323
 msgid "gretl: forecast"
 msgstr "gretl: predicción"
 
-#: gui/callbacks.c:322
+#: gui/callbacks.c:324
 #, c-format
 msgid ""
 "Starting obs (min = %s)\n"
@@ -4538,62 +4533,62 @@ msgstr ""
 "Observación inicial (min = %s)\n"
 "y observación final (max = %s)?"
 
-#: gui/callbacks.c:329 gui/callbacks.c:506
+#: gui/callbacks.c:331 gui/callbacks.c:508
 msgid "gretl: add var"
 msgstr "gretl: añadir variable"
 
-#: gui/callbacks.c:330 gui/callbacks.c:507
+#: gui/callbacks.c:332 gui/callbacks.c:509
 msgid "Enter formula for new variable:"
 msgstr "Introduzca la fórmula para la nueva variable"
 
-#: gui/callbacks.c:337 gui/callbacks.c:561
+#: gui/callbacks.c:339 gui/callbacks.c:563
 msgid " Apply "
 msgstr " Aplicar"
 
-#: gui/callbacks.c:338 gui/callbacks.c:562 gui/dialogs.c:91 gui/dialogs.c:301
+#: gui/callbacks.c:340 gui/callbacks.c:564 gui/dialogs.c:91 gui/dialogs.c:301
 #: gui/dialogs.c:319
 msgid " Cancel "
 msgstr " Cancelar"
 
-#: gui/callbacks.c:359 gui/library.c:774
+#: gui/callbacks.c:361 gui/library.c:774
 msgid "gretl: cointegration test"
 msgstr "gretl: contraste de cointegración"
 
-#: gui/callbacks.c:380
+#: gui/callbacks.c:382
 msgid "gretl: define graph"
 msgstr "gretl: definir gráfico"
 
-#: gui/callbacks.c:380 gui/database.c:480
+#: gui/callbacks.c:382 gui/database.c:480
 msgid "Graph"
 msgstr "Gráfico"
 
-#: gui/callbacks.c:388
+#: gui/callbacks.c:390
 msgid "gretl: model tests"
 msgstr "gretl: contrastes del modelo"
 
-#: gui/callbacks.c:392
+#: gui/callbacks.c:394
 msgid "gretl: display vars"
 msgstr "gretl: mostrar variables"
 
-#: gui/callbacks.c:396 gui/callbacks.c:550 gui/boxplots.c:629
+#: gui/callbacks.c:398 gui/callbacks.c:552 gui/boxplots.c:629
 msgid "gretl: boxplots"
 msgstr "gretl: gráficos de caja (boxplots)"
 
-#: gui/callbacks.c:400
+#: gui/callbacks.c:402
 msgid "gretl: time-series plot"
 msgstr "gretl: gráfico de series temporales"
 
-#: gui/callbacks.c:405 gui/dialogs.c:104 gui/dialogs.c:110 gui/dialogs.c:300
-#: gui/dialogs.c:318 gui/dialogs.c:327 gui/gui_utils.c:2651 gui/ssheet.c:142
+#: gui/callbacks.c:407 gui/dialogs.c:104 gui/dialogs.c:110 gui/dialogs.c:300
+#: gui/dialogs.c:318 gui/dialogs.c:327 gui/gui_utils.c:2660 gui/ssheet.c:142
 #: gui/ssheet.c:154
 msgid "Apply"
 msgstr "Aplicar"
 
-#: gui/callbacks.c:423
+#: gui/callbacks.c:425
 msgid "gretl: set sample"
 msgstr "gretl: establecer muestra"
 
-#: gui/callbacks.c:424
+#: gui/callbacks.c:426
 #, c-format
 msgid ""
 "New starting obs (min = %s)\n"
@@ -4602,27 +4597,27 @@ msgstr ""
 "Nueva observación inicial (min = %s)\n"
 "y final (max = %s):"
 
-#: gui/callbacks.c:431
+#: gui/callbacks.c:433
 msgid "gretl: define sample"
 msgstr "gretl: definir muestra"
 
-#: gui/callbacks.c:432
+#: gui/callbacks.c:434
 msgid "Name of dummy variable to use:"
 msgstr "Nombre de variable ficticia a utilizar:"
 
-#: gui/callbacks.c:438
+#: gui/callbacks.c:440
 msgid "gretl: restrict sample"
 msgstr "gretl: restringir muestra"
 
-#: gui/callbacks.c:439
+#: gui/callbacks.c:441
 msgid "Enter boolean condition for selecting cases:"
 msgstr "Introduzca condición booleana para seleccionar casos:"
 
-#: gui/callbacks.c:444
+#: gui/callbacks.c:446
 msgid "gretl: set data frequency"
 msgstr "gretl: establecer frecuencia de los datos"
 
-#: gui/callbacks.c:445
+#: gui/callbacks.c:447
 msgid ""
 "Enter integer frequency and\n"
 "starting observation string:"
@@ -4630,11 +4625,11 @@ msgstr ""
 "Introduzca frecuencia entera y\n"
 "etiqueta (fecha) de la observación inicial:"
 
-#: gui/callbacks.c:450
+#: gui/callbacks.c:452
 msgid "gretl: random variables"
 msgstr "gretl: variable aleatorias"
 
-#: gui/callbacks.c:451
+#: gui/callbacks.c:453
 msgid ""
 "Enter integer seed for\n"
 "pseudo-random number generator:"
@@ -4642,15 +4637,15 @@ msgstr ""
 "Introduzca semilla (entero) para\n"
 "el generador de números pseudo-aleatorios:"
 
-#: gui/callbacks.c:458
+#: gui/callbacks.c:460
 msgid "You can't simulate with the constant"
 msgstr "No se puede simular con la constante"
 
-#: gui/callbacks.c:463
+#: gui/callbacks.c:465
 msgid "gretl: simulate variable"
 msgstr "gretl: simular una variable"
 
-#: gui/callbacks.c:464
+#: gui/callbacks.c:466
 msgid ""
 "Enter spec. for simulation:\n"
 "(start end parameters)\n"
@@ -4660,47 +4655,47 @@ msgstr ""
 "(principio final parámetros)\n"
 "Probablemente, Vd. deseará antes consultar la ayuda sobre 'sim'"
 
-#: gui/callbacks.c:473
+#: gui/callbacks.c:475
 msgid "gretl: simulation data"
 msgstr "gretl: datos de simulación"
 
-#: gui/callbacks.c:474
+#: gui/callbacks.c:476
 msgid "Series length for simulation data set:"
 msgstr "Largura de las series para el conjunto de datos simulados:"
 
-#: gui/callbacks.c:479
+#: gui/callbacks.c:481
 msgid "gretl: ADF test"
 msgstr "gretl: contraste ADF"
 
-#: gui/callbacks.c:480
+#: gui/callbacks.c:482
 msgid "Lag order for ADF test:"
 msgstr "Orden del retardo para el contraste ADF:"
 
-#: gui/callbacks.c:485
+#: gui/callbacks.c:487
 msgid "gretl: rank correlation"
 msgstr "gretl: rango de correlación"
 
-#: gui/callbacks.c:486 gui/callbacks.c:495 gui/callbacks.c:501
+#: gui/callbacks.c:488 gui/callbacks.c:497 gui/callbacks.c:503
 msgid "Enter two variables by name or number:"
 msgstr "Introduzca dos variables mediante el nombre o número:"
 
-#: gui/callbacks.c:492
+#: gui/callbacks.c:494
 msgid "gretl: means test"
 msgstr "gretl: contraste de medias"
 
-#: gui/callbacks.c:494
+#: gui/callbacks.c:496
 msgid " (unequal var)"
 msgstr " (varianzas desiguales)"
 
-#: gui/callbacks.c:500
+#: gui/callbacks.c:502
 msgid "gretl: variances test"
 msgstr "gretl: contraste de varianzas"
 
-#: gui/callbacks.c:512
+#: gui/callbacks.c:514
 msgid "gretl: rename var"
 msgstr "gretl: renombrar variable"
 
-#: gui/callbacks.c:513
+#: gui/callbacks.c:515
 msgid ""
 "Enter new name for variable\n"
 "(max. 8 characters):"
@@ -4708,40 +4703,40 @@ msgstr ""
 "Introduzca el nombre nuevo para la variable\n"
 "(máx. 8 caracteres):"
 
-#: gui/callbacks.c:519
+#: gui/callbacks.c:521
 msgid "gretl: edit label"
 msgstr "gretl: editar etiqueta"
 
-#: gui/callbacks.c:520
+#: gui/callbacks.c:522
 #, c-format
 msgid "Edit label for variable number %d (%s):"
 msgstr "Editar etiqueta para la variable número %d (%s):"
 
-#: gui/callbacks.c:527
+#: gui/callbacks.c:529
 msgid "gretl: missing code for variable"
 msgstr "gretl: código de 'valor perdido' para la variable "
 
-#: gui/callbacks.c:528 gui/callbacks.c:533
+#: gui/callbacks.c:530 gui/callbacks.c:535
 msgid "Enter value to be read as \"missing\":"
 msgstr "Introduzca valor para ser leído como \"perdido\":"
 
-#: gui/callbacks.c:532
+#: gui/callbacks.c:534
 msgid "gretl: missing code for dataset"
 msgstr "gretl: código de 'valor perdido' para conjunto de datos"
 
-#: gui/callbacks.c:537
+#: gui/callbacks.c:539
 msgid "gretl: add markers"
 msgstr "gretl: añadir marcadores"
 
-#: gui/callbacks.c:538
+#: gui/callbacks.c:540
 msgid "Supply full path to file with markers:"
 msgstr "Suministrar el camino completo al fichero de marcadores:"
 
-#: gui/callbacks.c:543
+#: gui/callbacks.c:545
 msgid "gretl: correlogram"
 msgstr "gretl: correlograma"
 
-#: gui/callbacks.c:544
+#: gui/callbacks.c:546
 msgid ""
 "Max lag length?\n"
 "(0 for automatic):"
@@ -4749,19 +4744,19 @@ msgstr ""
 "Máximo retardo?\n"
 "(0 para automático):"
 
-#: gui/callbacks.c:551
+#: gui/callbacks.c:553
 msgid "Specify variables to plot:"
 msgstr "Indique las variables a representar gráficamente:"
 
-#: gui/callbacks.c:570
+#: gui/callbacks.c:572
 msgid "Out of memory reorganizing data set"
 msgstr "Fuera de memoria al reorganizar el conjunto de datos"
 
-#: gui/callbacks.c:574
+#: gui/callbacks.c:576
 msgid "Take note: variables have been renumbered"
 msgstr "Tome nota: se han renumerado las variables"
 
-#: gui/callbacks.c:632
+#: gui/callbacks.c:634
 msgid "Sorry, not yet implemented"
 msgstr "Lo siento, no implementado aún"
 
@@ -4777,16 +4772,16 @@ msgstr "/_series/_Representar"
 msgid "/_Series/_Import"
 msgstr "/_Series/_Import"
 
-#: gui/database.c:132 gui/gui_utils.c:255
+#: gui/database.c:132 gui/gui_utils.c:263
 msgid "/_Find"
 msgstr "/_Buscar"
 
-#: gui/database.c:218 gui/database.c:1306
+#: gui/database.c:218 gui/database.c:1349
 msgid "Retrieving data..."
 msgstr "Recuperando datos..."
 
-#: gui/database.c:233 gui/database.c:1282 gui/database.c:1316
-#: gui/database.c:1437 gui/datafiles.c:308
+#: gui/database.c:233 gui/database.c:1325 gui/database.c:1359
+#: gui/database.c:1480 gui/datafiles.c:308
 msgid "Error retrieving data from server"
 msgstr "Error recuperando datos desde el servidor"
 
@@ -4794,7 +4789,7 @@ msgstr "Error recuperando datos desde el servidor"
 msgid "gretl: display database series"
 msgstr "gretl: mostrar base de datos de series"
 
-#: gui/database.c:293 gui/fileselect.c:492 gui/fileselect.c:633
+#: gui/database.c:293 gui/fileselect.c:496 gui/fileselect.c:638
 msgid "There were missing observations"
 msgstr "Hubo observaciones perdidas"
 
@@ -4826,7 +4821,7 @@ msgstr "Mostrar"
 msgid "Import"
 msgstr "Importar"
 
-#: gui/database.c:484 gui/gui_utils.c:1490
+#: gui/database.c:484 gui/gui_utils.c:1499
 msgid "Find..."
 msgstr "Buscar..."
 
@@ -4839,27 +4834,27 @@ msgstr "Estado de red: correcto"
 msgid "Database parse error at variable '%s'"
 msgstr "Error de paso en base de datos en la variable '%s'"
 
-#: gui/database.c:624
+#: gui/database.c:652
 msgid "Couldn't open database index file"
 msgstr "No se pudo abrir el fichero índice de la base de datos"
 
-#: gui/database.c:685
+#: gui/database.c:723
 msgid "Couldn't open RATS data file"
 msgstr "No se pudo abrir fichero de datos RATS"
 
-#: gui/database.c:720
+#: gui/database.c:758
 msgid "Name"
 msgstr "Nombre"
 
-#: gui/database.c:721
+#: gui/database.c:759
 msgid "Description"
 msgstr "Descripción"
 
-#: gui/database.c:722
+#: gui/database.c:760
 msgid "Frequency and dates"
 msgstr "Frecuencia y fechas"
 
-#: gui/database.c:777
+#: gui/database.c:815
 msgid ""
 "You can't add a lower frequency series to a\n"
 "higher frequency working data set."
@@ -4867,7 +4862,7 @@ msgstr ""
 "No se puede añadir una serie de frecuencia más baja a\n"
 "un conjunto de datos de trabajo de frecuencia superior."
 
-#: gui/database.c:785
+#: gui/database.c:823
 msgid ""
 "Observation range does not overlap\n"
 "with the working data set"
@@ -4875,92 +4870,97 @@ msgstr ""
 "El dominio de observación no se solapa\n"
 "con el conjunto de datos de trabajo"
 
-#: gui/database.c:1201
+#: gui/database.c:1195
+#, fuzzy
+msgid "Failed to parse series information"
+msgstr "Fallo al pasar número de observaciones"
+
+#: gui/database.c:1244
 msgid "Warning: series has missing observations"
 msgstr "ATENCIÓN: la serie tiene observaciones perdidas"
 
-#: gui/database.c:1222
+#: gui/database.c:1265
 msgid "Couldn't open database"
 msgstr "No se pudo abrir base de datos"
 
-#: gui/database.c:1258
+#: gui/database.c:1301
 #, c-format
 msgid "Network status: %s"
 msgstr "Estado de red: %s"
 
-#: gui/database.c:1349
+#: gui/database.c:1392
 #, c-format
 msgid "Couldn't gzopen %s for reading\n"
 msgstr "No se pudo abrir (gzopen) %s para lectura\n"
 
-#: gui/database.c:1355 gui/database.c:1362
+#: gui/database.c:1398 gui/database.c:1405
 #, c-format
 msgid "Couldn't open %s for writing\n"
 msgstr "No se pudo abrir %s para escritura\n"
 
-#: gui/database.c:1446
+#: gui/database.c:1489
 msgid "Error unzipping compressed data"
 msgstr "Error al descomprimir datos (unzip)"
 
-#: gui/database.c:1448
+#: gui/database.c:1491
 msgid "database installed"
 msgstr "base de datos instalada"
 
-#: gui/database.c:1509
+#: gui/database.c:1552
 #, c-format
 msgid "Can't open folder %s"
 msgstr "No se puede abrir carpeta %s"
 
-#: gui/database.c:1533 gui/datafiles.c:340
+#: gui/database.c:1576 gui/datafiles.c:340
 msgid "No database files found"
 msgstr "No se han encontrado ficheros de base de datos"
 
-#: gui/database.c:1582
+#: gui/database.c:1625
 #, c-format
 msgid "You are adding a %s series to %s dataset"
 msgstr "Vd está añadiendo una serie %s a un conjunto de datos %s"
 
-#: gui/database.c:1583
+#: gui/database.c:1626
 msgid "quarterly"
 msgstr "trimestralmente"
 
-#: gui/database.c:1583
+#: gui/database.c:1626
 msgid "monthly"
 msgstr "mensualmente"
 
-#: gui/database.c:1584
+#: gui/database.c:1627
 msgid "a quarterly"
 msgstr "una trimestral"
 
 # FALTA
-#: gui/database.c:1584
+#: gui/database.c:1627
 msgid "an annual"
 msgstr "una anual"
 
-#: gui/database.c:1586
+#: gui/database.c:1629
 msgid "gretl: compact data"
 msgstr "gretl: compactar datos"
 
-#: gui/database.c:1607
+#: gui/database.c:1650
 msgid "Compact by averaging"
 msgstr "Compactar promediando"
 
-#: gui/database.c:1617
+#: gui/database.c:1660
 msgid "Use end-of-period values"
 msgstr "Usar valores final-de-periodo"
 
-#: gui/database.c:1626
+#: gui/database.c:1669
 msgid "Use start-of-period values"
 msgstr "Usar valores principio-de-periodo"
 
-#: gui/database.c:1646 gui/datafiles.c:666 gui/dialogs.c:829
-#: gui/gpt_control.c:813 gui/gui_utils.c:3400 gui/ssheet.c:143
-#: gui/ssheet.c:155 gui/library.c:4484 gui/selector.c:764
+#: gui/database.c:1689 gui/datafiles.c:666 gui/dialogs.c:829
+#: gui/gpt_control.c:813 gui/gui_utils.c:3409 gui/ssheet.c:143
+#: gui/ssheet.c:155 gui/library.c:4488 gui/selector.c:764
 #: plugin/progress_bar.c:97
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: gui/database.c:1658 gui/datafiles.c:676 gui/dialogs.c:458
+#: gui/database.c:1701 gui/datafiles.c:676 gui/dialogs.c:458
 #: gui/gpt_control.c:626 gui/boxplots.c:171 gui/boxplots.c:200
 #: gui/selector.c:773
 msgid "Help"
@@ -5125,7 +5125,7 @@ msgstr ""
 "Introduzca el nombre para la variable y\n"
 "los valores mínimo y máximo:"
 
-#: gui/dialogs.c:105 gui/dialogs.c:111 gui/gui_utils.c:2641
+#: gui/dialogs.c:105 gui/dialogs.c:111 gui/gui_utils.c:2650
 msgid "  Cancel  "
 msgstr "  Cancelar  "
 
@@ -5285,31 +5285,41 @@ msgstr ""
 "¿Desea guardar los cambios que ha hecho\n"
 "en el conjunto de datos actual?"
 
-#: gui/dialogs.c:924
+#: gui/dialogs.c:959
 msgid "gretl: data delimiter"
 msgstr "gretl: delimitador de los datos"
 
-#: gui/dialogs.c:939
+#: gui/dialogs.c:974
 msgid "separator for data columns:"
 msgstr "separador para columnas de datos:"
 
-#: gui/dialogs.c:945
+#: gui/dialogs.c:980 gui/dialogs.c:1047
 msgid "comma (,)"
 msgstr "coma (,)"
 
-#: gui/dialogs.c:958
+#: gui/dialogs.c:993
 msgid "space"
 msgstr "espacio"
 
-#: gui/dialogs.c:971
+#: gui/dialogs.c:1007
 msgid "tab"
 msgstr "tabulador"
 
-#: gui/dialogs.c:983 gui/gui_utils.c:2538
+#: gui/dialogs.c:1027
+#, fuzzy
+msgid "decimal point character:"
+msgstr "Fallo al recuperar la descripción de los datos"
+
+#: gui/dialogs.c:1033
+#, fuzzy
+msgid "period (.)"
+msgstr "periodo"
+
+#: gui/dialogs.c:1061 gui/gui_utils.c:2547
 msgid "OK"
 msgstr "De acuerdo"
 
-#: gui/fileselect.c:127
+#: gui/fileselect.c:129
 msgid ""
 "The suffix you selected should be used\n"
 "only for gretl datafiles"
@@ -5317,112 +5327,113 @@ msgstr ""
 "El sufijo que Vd ha elegido sólo debería\n"
 "usarse para los ficheros de datos gretl"
 
-#: gui/fileselect.c:206 gui/library.c:290
+#: gui/fileselect.c:208 gui/library.c:290
 msgid "Couldn't open file for writing"
 msgstr "No se pudo abrir fichero para escritura"
 
-#: gui/fileselect.c:219
+#: gui/fileselect.c:221
 msgid "File saved OK"
 msgstr "Fichero guardado correctamente"
 
-#: gui/fileselect.c:253 gui/fileselect.c:289
+#: gui/fileselect.c:255 gui/fileselect.c:291
 msgid "postscript files (*.eps)"
 msgstr "ficheros postscript (*.eps)"
 
-#: gui/fileselect.c:254
+#: gui/fileselect.c:256
 msgid "xfig files (*.fig)"
 msgstr "ficheros xfig (*.fig)"
 
-#: gui/fileselect.c:255
+#: gui/fileselect.c:257
 msgid "LaTeX files (*.tex)"
 msgstr "ficheros LaTeX (*.tex)"
 
-#: gui/fileselect.c:256
+#: gui/fileselect.c:258
 msgid "PNG files (*.png)"
 msgstr "ficheros PNG (*.png)"
 
-#: gui/fileselect.c:257 gui/fileselect.c:291
+#: gui/fileselect.c:259 gui/fileselect.c:293
 msgid "gnuplot files (*.gp)"
 msgstr "ficheros gnuplot (*.gp)"
 
-#: gui/fileselect.c:258 gui/fileselect.c:354
+#: gui/fileselect.c:260 gui/fileselect.c:358
 msgid "all files (*.*)"
 msgstr "todos los ficheros (*.*)"
 
-#: gui/fileselect.c:280 gui/fileselect.c:281 gui/fileselect.c:282
-#: gui/fileselect.c:283 gui/fileselect.c:299
+#: gui/fileselect.c:282 gui/fileselect.c:283 gui/fileselect.c:284
+#: gui/fileselect.c:285 gui/fileselect.c:303
 msgid "gretl data files (*.gdt)"
 msgstr "ficheros de datos gretl (*.gdt)"
 
-#: gui/fileselect.c:284 gui/fileselect.c:286
+#: gui/fileselect.c:286 gui/fileselect.c:288
 msgid "gretl command files (*.inp)"
 msgstr "ficheros de órdenes gretl (*.inp)"
 
-#: gui/fileselect.c:285 gui/fileselect.c:300
+#: gui/fileselect.c:287 gui/fileselect.c:304
 msgid "gretl script files (*.inp)"
 msgstr "ficheros de guiones gretl (*.inp)"
 
-#: gui/fileselect.c:287 gui/fileselect.c:296
+#: gui/fileselect.c:289 gui/fileselect.c:298
 msgid "text files (*.txt)"
 msgstr "ficheros de texto (*.txt)"
 
-#: gui/fileselect.c:288 gui/fileselect.c:301
+#: gui/fileselect.c:290 gui/fileselect.c:305
 msgid "session files (*.gretl)"
 msgstr "ficheros de sesión (*.gretl)"
 
-#: gui/fileselect.c:290
+#: gui/fileselect.c:292
 msgid "postscript files (*.ps)"
 msgstr "ficheros postscript (*.ps)"
 
-#: gui/fileselect.c:292 gui/fileselect.c:302 gui/fileselect.c:303
+#: gui/fileselect.c:294 gui/fileselect.c:306 gui/fileselect.c:307
 msgid "CSV files (*.csv)"
 msgstr "ficheros CSV (*.csv)"
 
-#: gui/fileselect.c:293 gui/fileselect.c:294
+#: gui/fileselect.c:295 gui/fileselect.c:296
 msgid "GNU R files (*.R)"
 msgstr "ficheros GNU R (*.R)"
 
-#: gui/fileselect.c:295
+#: gui/fileselect.c:297
 msgid "GNU Octave files (*.m)"
 msgstr "ficheros GNU Octave (*.m)"
 
-#: gui/fileselect.c:297 gui/fileselect.c:298
+#: gui/fileselect.c:299 gui/fileselect.c:300 gui/fileselect.c:301
+#: gui/fileselect.c:302
 msgid "TeX files (*.tex)"
 msgstr "ficheros TeX (*.tex)"
 
-#: gui/fileselect.c:304
+#: gui/fileselect.c:308
 msgid "BOX data files (*.box)"
 msgstr "ficheros de datos BOX (*.box)"
 
-#: gui/fileselect.c:305 gui/fileselect.c:306
+#: gui/fileselect.c:309 gui/fileselect.c:310
 msgid "Gnumeric files (*.gnumeric)"
 msgstr "ficheros de Gnumeric (*.gnumeric)"
 
-#: gui/fileselect.c:307 gui/fileselect.c:308
+#: gui/fileselect.c:311 gui/fileselect.c:312
 msgid "Excel files (*.xls)"
 msgstr "ficheros Excel (*.xls)"
 
-#: gui/fileselect.c:311
+#: gui/fileselect.c:315
 msgid "gretl data files (*.dat)"
 msgstr "ficheros de datos gretl (*.dat)"
 
-#: gui/fileselect.c:427
+#: gui/fileselect.c:431
 msgid "File dialog box error"
 msgstr "Error en archivo de caja de diálogo"
 
-#: gui/fileselect.c:490 gui/fileselect.c:631 gui/gpt_control.c:186
+#: gui/fileselect.c:494 gui/fileselect.c:636 gui/gpt_control.c:186
 msgid "graph saved"
 msgstr "gráfico guardado"
 
-#: gui/fileselect.c:505 gui/fileselect.c:647 gui/fileselect.c:654
+#: gui/fileselect.c:509 gui/fileselect.c:652 gui/fileselect.c:659
 msgid "boxplots saved"
 msgstr "gráficos de caja (boxplots) guardados"
 
-#: gui/fileselect.c:506 gui/fileselect.c:648 gui/fileselect.c:655
+#: gui/fileselect.c:510 gui/fileselect.c:653 gui/fileselect.c:660
 msgid "boxplot save failed"
 msgstr "fallo al guardar gráfico de caja (boxplot)"
 
-#: gui/fileselect.c:551
+#: gui/fileselect.c:556
 msgid "Couldn't open the specified file"
 msgstr "No se pudo abrir el archivo especificado"
 
@@ -5503,7 +5514,7 @@ msgstr "controladores de gráfico gretl"
 msgid "Redraw"
 msgstr "Redibujar"
 
-#: gui/gpt_control.c:610 gui/gpt_control.c:804 gui/gui_utils.c:1484
+#: gui/gpt_control.c:610 gui/gpt_control.c:804 gui/gui_utils.c:1493
 #: gui/session.c:79 gui/session.c:1043
 msgid "Save"
 msgstr "Guardar"
@@ -5586,7 +5597,7 @@ msgstr ""
 msgid "Restore full view"
 msgstr "Recuperar XXX"
 
-#: gui/gpt_control.c:1359 gui/gpt_control.c:1381 gui/gui_utils.c:1486
+#: gui/gpt_control.c:1359 gui/gpt_control.c:1381 gui/gui_utils.c:1495
 msgid "Print..."
 msgstr "Imprimir..."
 
@@ -5647,7 +5658,7 @@ msgstr "/Archivo/Abrir datos/archivo de muestra/Ramanathan..."
 msgid "/File/Open data/sample file/Greene..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Greene..."
 
-#: gui/gretl.c:209 gui/gretl.c:1369
+#: gui/gretl.c:209 gui/gretl.c:1373
 msgid "/File/Open data/sample file/Penn World Table..."
 msgstr "/Archivo/Abrir datos/archivo de muestra/Tabla mundial de Penn..."
 
@@ -5837,7 +5848,7 @@ msgstr "/Archivo/_Ver histórico de instrucciones"
 msgid "/File/sep2a"
 msgstr "/Archivo/sep2a"
 
-#: gui/gretl.c:290 gui/gui_utils.c:3628 gui/gui_utils.c:3856
+#: gui/gretl.c:290 gui/gui_utils.c:3637 gui/gui_utils.c:3865
 msgid "/File/Open command file"
 msgstr "/Archivo/Abrir archivo de instrucciones"
 
@@ -5858,7 +5869,7 @@ msgstr ""
 msgid "/File/Open command file/practice file/Greene..."
 msgstr "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Greene..."
 
-#: gui/gretl.c:298 gui/gretl.c:1373
+#: gui/gretl.c:298 gui/gretl.c:1377
 msgid "/File/Open command file/practice file/Penn World Table..."
 msgstr ""
 "/Archivo/Abrir archivo de instrucciones/archivo de práctica/Tabla mundial de "
@@ -6473,7 +6484,7 @@ msgstr "GUI"
 msgid "main window"
 msgstr "ventana principal"
 
-#: gui/gretl.c:985 gui/gretl.c:1187
+#: gui/gretl.c:985 gui/gretl.c:1191
 msgid " No datafile loaded "
 msgstr " No se ha cargado ningún fichero de datos "
 
@@ -6486,112 +6497,112 @@ msgstr "%s: Rango completo %s - %s; muestra actual %s - %s"
 msgid " Unsaved data "
 msgstr " Datos no guardados"
 
-#: gui/gretl.c:1125
+#: gui/gretl.c:1129
 msgid "ID #"
 msgstr "ID #"
 
-#: gui/gretl.c:1126
+#: gui/gretl.c:1130
 msgid "Variable name"
 msgstr "Nombre de variable"
 
-#: gui/gretl.c:1127
+#: gui/gretl.c:1131
 msgid "Descriptive label"
 msgstr "Etiqueta descriptiva"
 
-#: gui/gretl.c:1148
+#: gui/gretl.c:1152
 msgid "Econometrics program"
 msgstr "Programa econométrico"
 
-#: gui/gretl.c:1277 gui/gretl.c:1313
+#: gui/gretl.c:1281 gui/gretl.c:1317
 msgid "Display values"
 msgstr "Mostrar valores"
 
-#: gui/gretl.c:1278 gui/gretl.c:1314
+#: gui/gretl.c:1282 gui/gretl.c:1318
 msgid "Descriptive statistics"
 msgstr "Estadísticos descriptivos"
 
-#: gui/gretl.c:1280 gui/gretl.c:1315
+#: gui/gretl.c:1284 gui/gretl.c:1319
 msgid "Time series plot"
 msgstr "Gráfico de series temporales"
 
-#: gui/gretl.c:1281 gui/gretl.c:1316
+#: gui/gretl.c:1285 gui/gretl.c:1320
 msgid "Frequency distribution"
 msgstr "Distribución de frecuencias"
 
-#: gui/gretl.c:1283 gui/gretl.c:1317
+#: gui/gretl.c:1287 gui/gretl.c:1321
 msgid "Frequency plot"
 msgstr "Gráfico de frecuencias"
 
-#: gui/gretl.c:1284 gui/gretl.c:1318
+#: gui/gretl.c:1288 gui/gretl.c:1322
 msgid "Boxplot"
 msgstr "Gráfico de cajas"
 
-#: gui/gretl.c:1286 gui/gretl.c:1319
+#: gui/gretl.c:1290 gui/gretl.c:1323
 msgid "Correlogram"
 msgstr "Correlograma"
 
-#: gui/gretl.c:1288 gui/gretl.c:1320
+#: gui/gretl.c:1292 gui/gretl.c:1324
 msgid "Spectrum"
 msgstr "Espectro"
 
-#: gui/gretl.c:1290 gui/gretl.c:1321
+#: gui/gretl.c:1294 gui/gretl.c:1325
 msgid "Dickey-Fuller test"
 msgstr "Contraste de Dickey-Fuller"
 
-#: gui/gretl.c:1292 gui/gretl.c:1322
+#: gui/gretl.c:1296 gui/gretl.c:1326
 msgid "Runs test"
 msgstr "Contraste de rachas"
 
-#: gui/gretl.c:1294 gui/gretl.c:1323
+#: gui/gretl.c:1298 gui/gretl.c:1327
 msgid "Rename"
 msgstr "Renombrar"
 
-#: gui/gretl.c:1296 gui/gretl.c:1324
+#: gui/gretl.c:1300 gui/gretl.c:1328
 msgid "Edit label"
 msgstr "Editar etiqueta"
 
-#: gui/gretl.c:1298 gui/gretl.c:1325 gui/session.c:57 gui/session.c:64
+#: gui/gretl.c:1302 gui/gretl.c:1329 gui/session.c:57 gui/session.c:64
 #: gui/session.c:1110
 msgid "Delete"
 msgstr "Borrar"
 
-#: gui/gretl.c:1300 gui/gretl.c:1326
+#: gui/gretl.c:1304 gui/gretl.c:1330
 msgid "Simulate..."
 msgstr "Simular..."
 
-#: gui/gretl.c:1302 gui/gretl.c:1327
+#: gui/gretl.c:1306 gui/gretl.c:1331
 msgid "Define new variable..."
 msgstr "Definir nueva variable"
 
-#: gui/gretl.c:1391
+#: gui/gretl.c:1395
 msgid "Full sample range restored"
 msgstr "Restaurado el rango muestral completo"
 
-#: gui/gretl.c:1436 gui/gretl.c:1519
+#: gui/gretl.c:1440 gui/gretl.c:1523
 msgid "Couldn't fork"
 msgstr "No se pudo bifurcar"
 
-#: gui/gretl.c:1464 gui/gretl.c:1657 gui/gretl.c:1665
+#: gui/gretl.c:1468 gui/gretl.c:1661 gui/gretl.c:1669
 msgid "Please open a data file first"
 msgstr "Por favor, abra primero un archivo de datos"
 
-#: gui/gretl.c:1472
+#: gui/gretl.c:1476
 msgid "Couldn't move existing .Rprofile out of the way"
 msgstr "No se pudo mover el fichero .Rprofile existente a otro lugar"
 
-#: gui/gretl.c:1478
+#: gui/gretl.c:1482
 msgid "Couldn't write R startup file"
 msgstr "No se pudo escribir fichero de inicio R"
 
-#: gui/gretl.c:1485
+#: gui/gretl.c:1489
 msgid "Write of R data file failed"
 msgstr "Falló la escritura del fichero de datos R"
 
-#: gui/gretl.c:1510
+#: gui/gretl.c:1514
 msgid "No command was supplied to start R"
 msgstr "No se suministró orden para iniciar R"
 
-#: gui/gretl.c:1552
+#: gui/gretl.c:1556
 msgid ""
 "Error restoring .Rprofile from\n"
 "the temporary copy, .Rprofile.gretltmp"
@@ -6599,47 +6610,47 @@ msgstr ""
 "Error recuperando .Rprofile desde\n"
 "la copia temporal, .Rprofile.gretltmp"
 
-#: gui/gretl.c:1646
+#: gui/gretl.c:1650
 msgid "Failed to open URL"
 msgstr "Fallo al abrir URL"
 
-#: gui/gretl.c:1678
+#: gui/gretl.c:1682
 msgid "launch calculator"
 msgstr "Lanzar calculadora"
 
-#: gui/gretl.c:1679
+#: gui/gretl.c:1683
 msgid "launch editor"
 msgstr "lanzar editor"
 
-#: gui/gretl.c:1680
+#: gui/gretl.c:1684
 msgid "open gretl console"
 msgstr "abrir consola gretl"
 
-#: gui/gretl.c:1681
+#: gui/gretl.c:1685
 msgid "session icon view"
 msgstr "vista de iconos de sesión"
 
-#: gui/gretl.c:1682
+#: gui/gretl.c:1686
 msgid "gretl website"
 msgstr "sitio web de gretl"
 
-#: gui/gretl.c:1683
+#: gui/gretl.c:1687
 msgid "gretl manual (PDF)"
 msgstr "manual de gretl (PDF)"
 
-#: gui/gretl.c:1684
+#: gui/gretl.c:1688
 msgid "show help"
 msgstr "mostrar ayuda"
 
-#: gui/gretl.c:1685
+#: gui/gretl.c:1689
 msgid "X-Y graph"
 msgstr "gráfico X-Y"
 
-#: gui/gretl.c:1686
+#: gui/gretl.c:1690
 msgid "Capture last graph for editing"
 msgstr "Coger último gráfico para edición"
 
-#: gui/gretl.c:1687
+#: gui/gretl.c:1691
 msgid "open dataset"
 msgstr "abrir conjunto de datos"
 
@@ -6739,24 +6750,24 @@ msgstr "/Archivo/Guardar a sesión como icono"
 msgid "/File/Save as icon and close"
 msgstr "/Archivo/Guardar como icono y cerrar"
 
-#: gui/gui_utils.c:183 gui/gui_utils.c:261 gui/library.c:68 gui/library.c:90
+#: gui/gui_utils.c:183 gui/gui_utils.c:269 gui/library.c:68 gui/library.c:90
 #: gui/library.c:106 gui/library.c:118 gui/library.c:129
 msgid "/File/_Print..."
 msgstr "/Archivo/Im_primir..."
 
-#: gui/gui_utils.c:185 gui/gui_utils.c:263 gui/session.c:93 gui/library.c:70
+#: gui/gui_utils.c:185 gui/gui_utils.c:271 gui/session.c:93 gui/library.c:70
 #: gui/library.c:79 gui/library.c:92 gui/library.c:108 gui/library.c:120
 #: gui/library.c:131
 msgid "/_Edit"
 msgstr "/_Editar"
 
-#: gui/gui_utils.c:186 gui/gui_utils.c:264 gui/session.c:94 gui/library.c:71
+#: gui/gui_utils.c:186 gui/gui_utils.c:272 gui/session.c:94 gui/library.c:71
 #: gui/library.c:80 gui/library.c:93 gui/library.c:109 gui/library.c:121
 #: gui/library.c:132
 msgid "/Edit/_Copy selection"
 msgstr "/Editar/_Copiar selección"
 
-#: gui/gui_utils.c:187 gui/gui_utils.c:265 gui/session.c:95
+#: gui/gui_utils.c:187 gui/gui_utils.c:273 gui/session.c:95
 #: gui/guiprint.c:1245 gui/library.c:72 gui/library.c:81 gui/library.c:94
 #: gui/library.c:110 gui/library.c:122 gui/library.c:133
 msgid "/Edit/Copy _all"
@@ -6838,11 +6849,11 @@ msgstr "/Contrastes/diagnósticos de panel"
 msgid "/_Graphs"
 msgstr "/_Gráficos"
 
-#: gui/gui_utils.c:207 gui/gui_utils.c:2218
+#: gui/gui_utils.c:207 gui/gui_utils.c:2227
 msgid "/Graphs/residual plot"
 msgstr "/Gráficos/Gráfico de residuos"
 
-#: gui/gui_utils.c:208 gui/gui_utils.c:2219
+#: gui/gui_utils.c:208 gui/gui_utils.c:2228
 msgid "/Graphs/fitted, actual plot"
 msgstr "/Gráficos/gráfico de ajustada-observada"
 
@@ -6942,55 +6953,75 @@ msgid "/LaTeX/Save/_Tabular"
 msgstr "/LaTeX/Guardar/en modo _tabular"
 
 #: gui/gui_utils.c:246
+#, fuzzy
+msgid "/LaTeX/Save/Tabular/as _document"
+msgstr "/LaTeX/Guardar/en modo tabular/como"
+
+#: gui/gui_utils.c:248
+#, fuzzy
+msgid "/LaTeX/Save/Tabular/as _fragment"
+msgstr "/LaTeX/Guardar/en modo tabular/como"
+
+#: gui/gui_utils.c:250
 msgid "/LaTeX/Save/_Equation"
 msgstr "/LaTeX/Guardar/en modo _ecuación"
 
-#: gui/gui_utils.c:247
+#: gui/gui_utils.c:251
+#, fuzzy
+msgid "/LaTeX/Save/Equation/as _document"
+msgstr "/LaTeX/Guardar/en modo ecuación/como"
+
+#: gui/gui_utils.c:253
+#, fuzzy
+msgid "/LaTeX/Save/Equation/as _fragment"
+msgstr "/LaTeX/Guardar/en modo ecuación/como"
+
+#: gui/gui_utils.c:255
 msgid "/LaTeX/_Copy"
 msgstr "/LaTeX/_Copiar"
 
-#: gui/gui_utils.c:248
+#: gui/gui_utils.c:256
 msgid "/LaTeX/Copy/_Tabular"
 msgstr "/LaTeX/Copiar/en modo _tabular"
 
-#: gui/gui_utils.c:249
+#: gui/gui_utils.c:257
 msgid "/LaTeX/Copy/_Equation"
 msgstr "/LaTeX/Copiar/en modo _ecuación"
 
-#: gui/gui_utils.c:254 gui/gui_utils.c:1121
+#: gui/gui_utils.c:262 gui/gui_utils.c:1130
 msgid "/_Topics"
 msgstr "/_Temas"
 
-#: gui/gui_utils.c:266 gui/library.c:95
+#: gui/gui_utils.c:274 gui/library.c:95
 msgid "/Edit/_Paste"
 msgstr "/Editar/_Pegar"
 
-#: gui/gui_utils.c:267 gui/library.c:96
+#: gui/gui_utils.c:275 gui/library.c:96
 msgid "/Edit/_Replace..."
 msgstr "/Editar/Reemplazar..."
 
-#: gui/gui_utils.c:268 gui/library.c:97
+#: gui/gui_utils.c:276 gui/library.c:97
 msgid "/Edit/_Undo"
 msgstr "/Editar/_Deshacer"
 
-#: gui/gui_utils.c:575 gui/gui_utils.c:586 gui/session.c:607
+#: gui/gui_utils.c:583 gui/gui_utils.c:594 gui/session.c:607
 #: gui/library.c:2716
 msgid "Out of memory!"
 msgstr "¡Falta de memoria!"
 
-#: gui/gui_utils.c:647
+#: gui/gui_utils.c:655
 msgid "Unrecognized data type"
 msgstr "tipo de datos desconocido"
 
-#: gui/gui_utils.c:665
+#: gui/gui_utils.c:673
 msgid "Failed to import spreadsheet data"
 msgstr "Fallo al importar datos de la hoja de cÂŽálculo"
 
-#: gui/gui_utils.c:767
+#: gui/gui_utils.c:775
 msgid "gretl: open data"
 msgstr "gretl: abrir datos"
 
-#: gui/gui_utils.c:768
+#: gui/gui_utils.c:776
 msgid ""
 "Opening a new data file will automatically\n"
 "close the current one.  Any unsaved work\n"
@@ -7000,11 +7031,11 @@ msgstr ""
 "automáticamente el actual.  Se perderá cualquier\n"
 "trabajo no guardado.  ¿abrir archivo de datos?"
 
-#: gui/gui_utils.c:784
+#: gui/gui_utils.c:792
 msgid "gretl: open session"
 msgstr "gretl: abrir sesión"
 
-#: gui/gui_utils.c:785
+#: gui/gui_utils.c:793
 msgid ""
 "Opening a new session file will automatically\n"
 "close the current session.  Any unsaved work\n"
@@ -7014,38 +7045,38 @@ msgstr ""
 "automáticamente la sesión actual.  Se perderá cualquier trabajo\n"
 "no guardado.  ¿abrir archivo de sesión?"
 
-#: gui/gui_utils.c:849
+#: gui/gui_utils.c:858
 #, c-format
 msgid "Couldn't open session file %s"
 msgstr "No se pudo abrir archivo de sesión %s"
 
-#: gui/gui_utils.c:871
+#: gui/gui_utils.c:880
 msgid "Couldn't copy graph file"
 msgstr "No se pudo copiar fichero de gráfico"
 
-#: gui/gui_utils.c:896
+#: gui/gui_utils.c:905
 msgid "Couldn't write session notes file"
 msgstr "No se pudo escribir archivo de notas de sesión"
 
-#: gui/gui_utils.c:903
+#: gui/gui_utils.c:912
 msgid "Couldn't open output file for writing"
 msgstr "No se pudo abrir para escritura el archivo de resultados"
 
-#: gui/gui_utils.c:909
+#: gui/gui_utils.c:918
 #, c-format
 msgid "Output from %s\n"
 msgstr "Resultados de %s\n"
 
-#: gui/gui_utils.c:913
+#: gui/gui_utils.c:922
 #, c-format
 msgid "session saved to %s -\n"
 msgstr "sesión guardada a %s -\n"
 
-#: gui/gui_utils.c:914
+#: gui/gui_utils.c:923
 msgid "commands: "
 msgstr "instrucciones:"
 
-#: gui/gui_utils.c:916
+#: gui/gui_utils.c:925
 msgid ""
 "\n"
 "output: "
@@ -7053,187 +7084,187 @@ msgstr ""
 "\n"
 "resultado: "
 
-#: gui/gui_utils.c:956
+#: gui/gui_utils.c:965
 msgid "Dataset"
 msgstr "Conjunto de datos"
 
-#: gui/gui_utils.c:957
+#: gui/gui_utils.c:966
 msgid "Estimation"
 msgstr "Estimación"
 
-#: gui/gui_utils.c:958
+#: gui/gui_utils.c:967
 msgid "Graphs"
 msgstr "Gráficos"
 
-#: gui/gui_utils.c:959
+#: gui/gui_utils.c:968
 msgid "Prediction"
 msgstr "Predicción"
 
-#: gui/gui_utils.c:960
+#: gui/gui_utils.c:969
 msgid "Printing"
 msgstr "Impresión"
 
-#: gui/gui_utils.c:961
+#: gui/gui_utils.c:970
 msgid "Programming"
 msgstr "Programación"
 
-#: gui/gui_utils.c:962
+#: gui/gui_utils.c:971
 msgid "Statistics"
 msgstr "Estadísticos"
 
-#: gui/gui_utils.c:963
+#: gui/gui_utils.c:972
 msgid "Tests"
 msgstr "Contrastes"
 
-#: gui/gui_utils.c:964
+#: gui/gui_utils.c:973
 msgid "Transformations"
 msgstr "Transformaciones"
 
-#: gui/gui_utils.c:965
+#: gui/gui_utils.c:974
 msgid "Utilities"
 msgstr "Utilidades"
 
-#: gui/gui_utils.c:1346
+#: gui/gui_utils.c:1355
 msgid "Buffer is empty"
 msgstr "El buffer está vacío"
 
-#: gui/gui_utils.c:1356
+#: gui/gui_utils.c:1365
 msgid "Data info saved"
 msgstr "Guardada la información de los datos"
 
-#: gui/gui_utils.c:1360
+#: gui/gui_utils.c:1369
 msgid "Notes saved"
 msgstr "Notas guardadas"
 
-#: gui/gui_utils.c:1379
+#: gui/gui_utils.c:1388
 msgid "Can't open file for writing"
 msgstr "No se puede abrir el fichero para escritura"
 
-#: gui/gui_utils.c:1386
+#: gui/gui_utils.c:1395
 #, c-format
 msgid "Saved %s\n"
 msgstr "%s guardado\n"
 
-#: gui/gui_utils.c:1485
+#: gui/gui_utils.c:1494
 msgid "Save as..."
 msgstr "Guardar como..."
 
-#: gui/gui_utils.c:1487
+#: gui/gui_utils.c:1496
 msgid "Run"
 msgstr "Ejecutar"
 
-#: gui/gui_utils.c:1488
+#: gui/gui_utils.c:1497
 msgid "Copy selection"
 msgstr "Copiar selección"
 
-#: gui/gui_utils.c:1489
+#: gui/gui_utils.c:1498
 msgid "Paste"
 msgstr "Pegar"
 
-#: gui/gui_utils.c:1491
+#: gui/gui_utils.c:1500
 msgid "Replace..."
 msgstr "Reemplazar..."
 
-#: gui/gui_utils.c:1492
+#: gui/gui_utils.c:1501
 msgid "Undo"
 msgstr "Deshacer"
 
-#: gui/gui_utils.c:1493
+#: gui/gui_utils.c:1502
 msgid "Help on command"
 msgstr "Ayuda sobre instrucción"
 
-#: gui/gui_utils.c:1714
+#: gui/gui_utils.c:1723
 msgid "gretl: help"
 msgstr "gretl: ayuda"
 
-#: gui/gui_utils.c:1716
+#: gui/gui_utils.c:1725
 msgid "gretl: command syntax"
 msgstr "gretl: sintaxis de instrucción"
 
-#: gui/gui_utils.c:1718
+#: gui/gui_utils.c:1727
 msgid "gretl: command log"
 msgstr "gretl: histórico de instrucciones"
 
-#: gui/gui_utils.c:1720
+#: gui/gui_utils.c:1729
 msgid "gretl console"
 msgstr "consola gretl"
 
-#: gui/gui_utils.c:1724
+#: gui/gui_utils.c:1733
 msgid "gretl: command script"
 msgstr "gretl: guión de instrucciones"
 
-#: gui/gui_utils.c:1731 gui/session.c:176
+#: gui/gui_utils.c:1740 gui/session.c:176
 msgid "gretl: session notes"
 msgstr "gretl: notas de sesión"
 
-#: gui/gui_utils.c:1733
+#: gui/gui_utils.c:1742
 msgid "gretl: edit plot commands"
 msgstr "gretl: editar instrucciones de gráfico"
 
-#: gui/gui_utils.c:1735
+#: gui/gui_utils.c:1744
 msgid "gretl: script output"
 msgstr "gretl: resultado de guión"
 
-#: gui/gui_utils.c:1763 gui/session.c:1372
+#: gui/gui_utils.c:1772 gui/session.c:1372
 #, c-format
 msgid "Couldn't write to %s"
 msgstr "No se pudo escribir a %s"
 
-#: gui/gui_utils.c:1772
+#: gui/gui_utils.c:1781
 msgid "script saved"
 msgstr "guión guardado"
 
-#: gui/gui_utils.c:1783
+#: gui/gui_utils.c:1792
 msgid "gretl: script"
 msgstr "gretl: guión"
 
-#: gui/gui_utils.c:1784
+#: gui/gui_utils.c:1793
 msgid "Save changes?"
 msgstr "¿Guardar los cambios?"
 
-#: gui/gui_utils.c:1816
+#: gui/gui_utils.c:1825
 #, c-format
 msgid "Can't open %s for reading"
 msgstr "No se puede abrir %s para lectura"
 
-#: gui/gui_utils.c:2070
+#: gui/gui_utils.c:2079
 #, c-format
 msgid "Failed to flip state of \"%s\"\n"
 msgstr "Fallo al repasar el estado de \"%s\"\n"
 
-#: gui/gui_utils.c:2231
+#: gui/gui_utils.c:2240
 #, c-format
 msgid "%s/against time"
 msgstr "%s/contra el tiempo"
 
-#: gui/gui_utils.c:2233
+#: gui/gui_utils.c:2242
 #, c-format
 msgid "%s/by observation number"
 msgstr "%s/por número de observación"
 
-#: gui/gui_utils.c:2248
+#: gui/gui_utils.c:2257
 #, c-format
 msgid "%s/against %s"
 msgstr "%s/contra %s"
 
-#: gui/gui_utils.c:2287
+#: gui/gui_utils.c:2296
 msgid "/Graphs/dumsep"
 msgstr "/Gráficos/dumsep"
 
-#: gui/gui_utils.c:2294
+#: gui/gui_utils.c:2303
 msgid "/Graphs/Separation"
 msgstr "/Gráficos/Separación"
 
-#: gui/gui_utils.c:2301 gui/gui_utils.c:2314
+#: gui/gui_utils.c:2310 gui/gui_utils.c:2323
 msgid "/Graphs/Separation/none"
 msgstr "/Gráficos/Separación/ninguna"
 
-#: gui/gui_utils.c:2310
+#: gui/gui_utils.c:2319
 #, c-format
 msgid "/Graphs/Separation/by %s"
 msgstr "/Gráficos/Separación/por %s"
 
-#: gui/gui_utils.c:2520
+#: gui/gui_utils.c:2529
 #, c-format
 msgid ""
 "Error:\n"
@@ -7242,7 +7273,7 @@ msgstr ""
 "Error:\n"
 "%s\n"
 
-#: gui/gui_utils.c:2522
+#: gui/gui_utils.c:2531
 #, c-format
 msgid ""
 "Info:\n"
@@ -7251,15 +7282,15 @@ msgstr ""
 "Información:\n"
 "%s\n"
 
-#: gui/gui_utils.c:2526
+#: gui/gui_utils.c:2535
 msgid "gretl error"
 msgstr "error de gretl"
 
-#: gui/gui_utils.c:2527
+#: gui/gui_utils.c:2536
 msgid "gretl info"
 msgstr "información de gretl"
 
-#: gui/gui_utils.c:2574
+#: gui/gui_utils.c:2583
 #, c-format
 msgid ""
 "Variable name %s... is too long\n"
@@ -7268,7 +7299,7 @@ msgstr ""
 "El nombre de variable %s... es demasiado largo\n"
 "(el máximo es 8 caracteres)"
 
-#: gui/gui_utils.c:2580
+#: gui/gui_utils.c:2589
 #, c-format
 msgid ""
 "First char of name ('%c') is bad\n"
@@ -7277,7 +7308,7 @@ msgstr ""
 "El primer carácter del nombre ('%c') es no válido\n"
 "(el primero tiene que ser alfabético)"
 
-#: gui/gui_utils.c:2589
+#: gui/gui_utils.c:2598
 #, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
@@ -7286,92 +7317,92 @@ msgstr ""
 "El nombre contiene un carácter ilegal (en el lugar %d)\n"
 "Use sólo letras, dígitos carácter de subrayado (_)"
 
-#: gui/gui_utils.c:2605
+#: gui/gui_utils.c:2614
 msgid "gretl: options"
 msgstr "gretl: opciones"
 
-#: gui/gui_utils.c:2686
+#: gui/gui_utils.c:2695
 msgid "General"
 msgstr "General"
 
-#: gui/gui_utils.c:2688
+#: gui/gui_utils.c:2697
 msgid "Databases"
 msgstr "Bases de datos"
 
-#: gui/gui_utils.c:2690
+#: gui/gui_utils.c:2699
 msgid "Toolbar"
 msgstr "Barra de herramientas"
 
-#: gui/gui_utils.c:2692
+#: gui/gui_utils.c:2701
 msgid "Open/Save path"
 msgstr "Abrir/Guardar camino"
 
-#: gui/gui_utils.c:2694
+#: gui/gui_utils.c:2703
 msgid "Data files"
 msgstr "Ficheros de datos"
 
-#: gui/gui_utils.c:2848
+#: gui/gui_utils.c:2857
 msgid "Please restart gretl to ensure consistent results"
 msgstr ""
 
-#: gui/gui_utils.c:3036
+#: gui/gui_utils.c:3045
 msgid "Couldn't open config file for writing"
 msgstr "No se pudo abrir archivo de configuración para escritura"
 
-#: gui/gui_utils.c:3160
+#: gui/gui_utils.c:3169
 msgid "Font for gretl output windows"
 msgstr "Fuente para ventana de resultados gretl"
 
-#: gui/gui_utils.c:3223 gui/gui_utils.c:3265 gui/gui_utils.c:3310
+#: gui/gui_utils.c:3232 gui/gui_utils.c:3274 gui/gui_utils.c:3319
 msgid "String was not found."
 msgstr "No se encontró la etiqueta."
 
-#: gui/gui_utils.c:3358
+#: gui/gui_utils.c:3367
 msgid "gretl: find"
 msgstr "gretl: buscar"
 
-#: gui/gui_utils.c:3362
+#: gui/gui_utils.c:3371
 msgid " Find what:"
 msgstr " Buscar qué:"
 
-#: gui/gui_utils.c:3390
+#: gui/gui_utils.c:3399
 msgid "Find next"
 msgstr "Buscar siguiente"
 
-#: gui/gui_utils.c:3555
+#: gui/gui_utils.c:3564
 msgid "No undo information available"
 msgstr "No hay disponible información de 'deshacer'"
 
-#: gui/gui_utils.c:3626 gui/gui_utils.c:3854
+#: gui/gui_utils.c:3635 gui/gui_utils.c:3863
 msgid "/File/Open data"
 msgstr "/Archivo/Abrir datos"
 
-#: gui/gui_utils.c:3627
+#: gui/gui_utils.c:3636
 msgid "/Session/Open"
 msgstr "/Sesión/Abrir"
 
-#: gui/gui_utils.c:3849
+#: gui/gui_utils.c:3858
 msgid "/File/Open data/sep"
 msgstr "/Archivo/Abrir datos/sep"
 
-#: gui/gui_utils.c:3850
+#: gui/gui_utils.c:3859
 msgid "/Session/sep"
 msgstr "/sesión/sep"
 
-#: gui/gui_utils.c:3851
+#: gui/gui_utils.c:3860
 msgid "/File/Open command file/sep"
 msgstr "/archivo/Abrir archivo de instrucciones/sep"
 
-#: gui/gui_utils.c:3855
+#: gui/gui_utils.c:3864
 msgid "/Session"
 msgstr "/Sesión"
 
-#: gui/gui_utils.c:3925
+#: gui/gui_utils.c:3934
 #, c-format
 msgid "Couldn't load plugin %s"
 msgstr "No se pudo cargar enchufe (plugin) %s"
 
-#: gui/gui_utils.c:3933
+#: gui/gui_utils.c:3942
 #, c-format
 msgid "Failed to load plugin: %s"
 msgstr "Fallo al cargar enchufe (plugin): %s"
@@ -8325,7 +8356,7 @@ msgid "Couldn't make backup of data file"
 msgstr "No se pudo hacer copia de seguridad del fichero de datos"
 
 #: gui/library.c:3145
-#, fuzzy, c-format
+#, c-format
 msgid ""
 "Write of data file failed\n"
 "%s"
@@ -8342,23 +8373,23 @@ msgstr "%s escrito correctamente"
 msgid "Couldn't open tex file for writing"
 msgstr "No se pudo abrir fichero de texto para escritura"
 
-#: gui/library.c:3319
+#: gui/library.c:3323
 msgid "LaTeX file saved"
 msgstr "Fichero LaTeX guardado"
 
-#: gui/library.c:3374
+#: gui/library.c:3378
 msgid "Couldn't open script"
 msgstr "No se pudo abrir guión"
 
-#: gui/library.c:3394 gui/library.c:3399
+#: gui/library.c:3398 gui/library.c:3403
 msgid "No commands to execute"
 msgstr "No hay instrucciones a ejecutar"
 
-#: gui/library.c:3466
+#: gui/library.c:3470
 msgid "Out of memory loading command line"
 msgstr "Fuera de memoria al cargar línea de instrucciones"
 
-#: gui/library.c:3494
+#: gui/library.c:3498
 msgid ""
 "\n"
 "Error executing script: halting\n"
@@ -8366,7 +8397,7 @@ msgstr ""
 "\n"
 "Error al ejecutar guión: parando\n"
 
-#: gui/library.c:3554
+#: gui/library.c:3558
 msgid ""
 "Sorry, can't do this.\n"
 "To operate on a model estimated via the graphical interface, please use the\n"
@@ -8377,82 +8408,82 @@ msgstr ""
 "favor,\n"
 "los menús que hay en la ventana del modelo.\n"
 
-#: gui/library.c:3560
+#: gui/library.c:3564
 msgid "This command is only available for OLS models at present\n"
 msgstr "Esta orden sólo está disponible en la actualidad para modelos de MCO\n"
 
-#: gui/library.c:3630
+#: gui/library.c:3634
 msgid "Sorry, this command is not available in loop mode\n"
 msgstr "Lo siento, esta orden no está disponible en modo bucle\n"
 
-#: gui/library.c:3838
+#: gui/library.c:3842
 msgid "Couldn't format model\n"
 msgstr "No se pudo formatear el modelo\n"
 
-#: gui/library.c:3930
+#: gui/library.c:3934
 msgid "script mode: gnuplot command ignored\n"
 msgstr "modo guión: instrucción gnuplot ignorada\n"
 
-#: gui/library.c:4009
+#: gui/library.c:4013
 msgid "'open' command is malformed"
 msgstr "la orden 'abrir' está mal formado"
 
-#: gui/library.c:4091
+#: gui/library.c:4095
 msgid "Sorry, Monte Carlo loops not available in this mode\n"
 msgstr ""
 "Lo siento, los bucles de Monte Carlo no están dispopnibles en este modelo\n"
 
-#: gui/library.c:4178
+#: gui/library.c:4182
 msgid "Script done\n"
 msgstr "Guión ejecutado\n"
 
-#: gui/library.c:4179
+#: gui/library.c:4183
 msgid "Please use the Close button to exit\n"
 msgstr "Por favor, para salir use el boton 'Cerrar'\n"
 
-#: gui/library.c:4196
+#: gui/library.c:4200
 msgid "Run command failed\n"
 msgstr "falló la instrucción 'run'\n"
 
-#: gui/library.c:4200
+#: gui/library.c:4204
 msgid "Infinite loop detected in script\n"
 msgstr "Se ha detectado un bucle infinito en el guión\n"
 
-#: gui/library.c:4237
+#: gui/library.c:4241
 msgid "shell command not implemented in script mode\n"
 msgstr "Instrucción 'shell' no implementada en el modo guión\n"
 
-#: gui/library.c:4297
+#: gui/library.c:4301
 #, c-format
 msgid "store: using filename %s.gz\n"
 msgstr "store: usando nombre de fichero %s.gz\n"
 
-#: gui/library.c:4310
+#: gui/library.c:4314
 msgid "Data written OK.\n"
 msgstr "Los datos se han escrito correctamente.\n"
 
-#: gui/library.c:4363
+#: gui/library.c:4367
 #, c-format
 msgid "Sorry, the %s command is not yet implemented in libgretl\n"
 msgstr "Lo siento, la instrucción %s no está aún implementado en libgretl\n"
 
-#: gui/library.c:4435
+#: gui/library.c:4439
 msgid "gretl: replace"
 msgstr "gretl: reemplazar"
 
-#: gui/library.c:4440
+#: gui/library.c:4444
 msgid "Find:"
 msgstr "Buscar:"
 
-#: gui/library.c:4452
+#: gui/library.c:4456
 msgid "Replace with:"
 msgstr "Reemplazado con:"
 
-#: gui/library.c:4474
+#: gui/library.c:4478
 msgid "Replace all"
 msgstr "Reemplazar todo"
 
-#: gui/library.c:4559
+#: gui/library.c:4563
 msgid "String to replace was not found"
 msgstr "No se encontró la cadena a reemplazar."
 
@@ -8934,31 +8965,31 @@ msgstr "Grabación de cadena sin una fórmula de cadena anterior"
 msgid "Perhaps you need to adjust the starting column or row?"
 msgstr "¿Quizás necesita ajustar la columna o fila inicial?"
 
-#: plugin/excel_import.c:704 plugin/gnumeric_import.c:512
+#: plugin/excel_import.c:708 plugin/gnumeric_import.c:504
 msgid "Failed to get workbook info"
 msgstr "Fallo al obtener información de libro de trabajo"
 
-#: plugin/excel_import.c:708 plugin/gnumeric_import.c:518
+#: plugin/excel_import.c:712 plugin/gnumeric_import.c:510
 msgid "No worksheets found"
 msgstr "No se han encontrado hojas de trabajo"
 
-#: plugin/excel_import.c:735
+#: plugin/excel_import.c:739
 msgid "Failed to process Excel file"
 msgstr "Fallo al pasar fichero Excel"
 
-#: plugin/excel_import.c:757
+#: plugin/excel_import.c:761
 msgid "No data found.\n"
 msgstr "No se han encontrado datos.\n"
 
-#: plugin/excel_import.c:767
+#: plugin/excel_import.c:771
 msgid "One or more variable names are missing.\n"
 msgstr "Falta uno o más nombres de variables\n"
 
-#: plugin/excel_import.c:776
+#: plugin/excel_import.c:780
 msgid "Expected numeric data, found string.\n"
 msgstr "Se esperaba un dato numérico, pero se encontró una cadena.\n"
 
-#: plugin/gnumeric_import.c:218
+#: plugin/gnumeric_import.c:206
 #, c-format
 msgid ""
 "Couldn't get value for col %d, row %d.\n"
@@ -8967,23 +8998,23 @@ msgstr ""
 "No se pudo obtener un valor para la columna %d, fila %d.\n"
 "¿Es posible que haya una fórmula en la hoja?"
 
-#: plugin/gnumeric_import.c:226 plugin/gnumeric_import.c:233
+#: plugin/gnumeric_import.c:214 plugin/gnumeric_import.c:221
 msgid "Expected to find a variable name"
 msgstr "Se esperaba encontrar un nombre de variable"
 
-#: plugin/gnumeric_import.c:270
+#: plugin/gnumeric_import.c:258
 msgid "Found an extraneous row of text"
 msgstr "Se ha encontrado una fila de texto extraña"
 
-#: plugin/gnumeric_import.c:274
+#: plugin/gnumeric_import.c:262
 msgid "Found an extraneous column of text"
 msgstr "Se ha encontrado una columna de texto extraña"
 
-#: plugin/gnumeric_import.c:309 plugin/gnumeric_import.c:411
+#: plugin/gnumeric_import.c:297 plugin/gnumeric_import.c:399
 msgid "File of the wrong type, root node not Workbook"
 msgstr "Fichero de tipo equivocado, el nodo raíz no es 'Workbook'"
 
-#: plugin/gnumeric_import.c:536
+#: plugin/gnumeric_import.c:528
 msgid "error in wsheet_setup()"
 msgstr "error en wsheet_setup()"
 

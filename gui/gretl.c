@@ -1354,29 +1354,23 @@ static void check_for_pwt (void)
 {
     DIR *dir;
     char pwtdir[MAXLEN];
-    extern char pwtpath[MAXLEN];
+    extern char pwtpath[MAXLEN]; /* datafiles.c */
 
-    sprintf(pwtdir, "%spwt56%c", paths.datadir, SLASH);
+    sprintf(pwtdir, "%spwt56", paths.datadir); /* try at system level */
     if ((dir = opendir(pwtdir)) != NULL) {
 	closedir(dir);
-	strcpy(pwtpath, pwtdir);
+	sprintf(pwtpath, "%s%c", pwtdir, SLASH);
 	return;
     }
-    sprintf(pwtdir, "%spwt56%c", paths.userdir, SLASH);
+    sprintf(pwtdir, "%spwt56", paths.userdir); /* and at user level */
     if ((dir = opendir(pwtdir)) != NULL) {
 	closedir(dir);
-	strcpy(pwtpath, pwtdir);
+	sprintf(pwtpath, "%s%c", pwtdir, SLASH);
 	return;
     }
-    gtk_widget_set_sensitive(gtk_item_factory_get_item
-			     (mdata->ifac, 
-			      _("/File/Open data/sample file/Penn World Table...")), 
-			     FALSE);
-    gtk_widget_set_sensitive(gtk_item_factory_get_item
-			     (mdata->ifac, 
-			      _("/File/Open command file/practice file/"
-			      "Penn World Table...")), 
-			     FALSE);
+
+    flip (mdata->ifac, "/File/Open data/sample file/Penn World Table...", FALSE);
+    flip (mdata->ifac, "/File/Open command file/practice file/Penn World Table...", FALSE);
 }
 
 /* ........................................................... */

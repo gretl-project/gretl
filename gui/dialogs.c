@@ -886,21 +886,54 @@ gint exit_check (GtkWidget *widget, GdkEvent *event, gpointer data)
     return FALSE;
 }
 
-static void set_delim (GtkWidget *w, gpointer p)
+typedef struct {
+    GtkWidget *space_button;
+    GtkWidget *point_button;
+    gint delim;
+    gint decpoint;
+} csv_stuff;
+
+#ifdef ENABLE_NLS
+static void set_dec (GtkWidget *w, gpointer p)
 {
-    gint i, *ptr = (gint *) p;
+    gint i;
+    csv_stuff *csv = (csv_stuff *) p;
 
     if (GTK_TOGGLE_BUTTON(w)->active) {
 	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
-	*ptr = i;
+	csv->decpoint = i;
+	if (csv->decpoint == ',' && csv->delim == ',') {
+	    csv->delim = ' ';
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (csv->space_button), 
+					  TRUE);
+	}
+    }
+}
+#endif
+
+static void set_delim (GtkWidget *w, gpointer p)
+{
+    gint i;
+    csv_stuff *csv = (csv_stuff *) p;
+
+    if (GTK_TOGGLE_BUTTON(w)->active) {
+	i = GPOINTER_TO_INT(gtk_object_get_data(GTK_OBJECT(w), "action"));
+	csv->delim = i;
+	if (csv->point_button != NULL && 
+	    csv->delim == ',' && csv->decpoint == ',') {
+	    csv->decpoint = '.';
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (csv->point_button), 
+					  TRUE);
+	}
     }
 }
 
-static void really_set_delim (GtkWidget *w, gpointer p)
+static void really_set_csv_stuff (GtkWidget *w, gpointer p)
 {
-    gint *delim = (gint *) p;
+    csv_stuff *stuff = (csv_stuff *) p;
 
-    datainfo->delim = *delim;
+    datainfo->delim = stuff->delim;
+    datainfo->decpoint = stuff->decpoint;
 }
 
 static void destroy_delim_dialog (GtkWidget *w, gint *p)
@@ -913,11 +946,13 @@ void delimiter_dialog (void)
 {
     GtkWidget *dialog, *tempwid, *button;
     GSList *group;
-    gint *delptr;
+    csv_stuff *csvptr = NULL;
 
-    delptr = mymalloc(sizeof *delptr);
-    if (delptr == NULL) return;
-    *delptr = datainfo->delim;
+    csvptr = mymalloc(sizeof *csvptr);
+    if (csvptr == NULL) return;
+    csvptr->delim = datainfo->delim;
+    csvptr->decpoint = '.';
+    csvptr->point_button = NULL;
 
     dialog = gtk_dialog_new();
 
@@ -934,7 +969,7 @@ void delimiter_dialog (void)
     gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_MOUSE);
 
     gtk_signal_connect (GTK_OBJECT (dialog), "destroy", 
-			destroy_delim_dialog, delptr);
+			destroy_delim_dialog, csvptr);
 
     tempwid = gtk_label_new (_("separator for data columns:"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
@@ -945,10 +980,10 @@ void delimiter_dialog (void)
     button = gtk_radio_button_new_with_label (NULL, _("comma (,)"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (*delptr == ',')
+    if (csvptr->delim == ',')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(set_delim), delptr);
+                       GTK_SIGNAL_FUNC(set_delim), csvptr);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER(','));
     gtk_widget_show (button);
@@ -956,12 +991,13 @@ void delimiter_dialog (void)
     /* space separator */
     group = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
     button = gtk_radio_button_new_with_label(group, _("space"));
+    csvptr->space_button = button;
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (*delptr == ' ')
+    if (csvptr->delim == ' ')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(set_delim), delptr);
+                       GTK_SIGNAL_FUNC(set_delim), csvptr);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER(' '));    
     gtk_widget_show (button);
@@ -971,13 +1007,55 @@ void delimiter_dialog (void)
     button = gtk_radio_button_new_with_label(group, _("tab"));
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
 			button, TRUE, TRUE, FALSE);
-    if (*delptr == '\t')
+    if (csvptr->delim == '\t')
 	gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
     gtk_signal_connect(GTK_OBJECT(button), "clicked",
-                       GTK_SIGNAL_FUNC(set_delim), delptr);
+                       GTK_SIGNAL_FUNC(set_delim), csvptr);
     gtk_object_set_data(GTK_OBJECT(button), "action", 
 			GINT_TO_POINTER('\t'));    
     gtk_widget_show (button);
+
+#ifdef ENABLE_NLS
+    if (',' == get_local_decpoint()) {
+	GSList *decgroup;
+
+	tempwid = gtk_hseparator_new();
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    tempwid, TRUE, TRUE, FALSE);
+	gtk_widget_show(tempwid);
+	
+	tempwid = gtk_label_new (_("decimal point character:"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    tempwid, TRUE, TRUE, FALSE);
+	gtk_widget_show(tempwid);
+ 
+	/* period decpoint */
+	button = gtk_radio_button_new_with_label (NULL, _("period (.)"));
+	csvptr->point_button = button;
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    button, TRUE, TRUE, FALSE);
+	if (csvptr->decpoint == '.')
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_signal_connect(GTK_OBJECT(button), "clicked",
+			   GTK_SIGNAL_FUNC(set_dec), csvptr);
+	gtk_object_set_data(GTK_OBJECT(button), "action", 
+			    GINT_TO_POINTER('.'));
+	gtk_widget_show (button);
+
+	/* comma decpoint */
+	decgroup = gtk_radio_button_group (GTK_RADIO_BUTTON (button));
+	button = gtk_radio_button_new_with_label(decgroup, _("comma (,)"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox), 
+			    button, TRUE, TRUE, FALSE);
+	if (csvptr->decpoint == ',')
+	    gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (button), TRUE);
+	gtk_signal_connect(GTK_OBJECT(button), "clicked",
+			   GTK_SIGNAL_FUNC(set_dec), csvptr);
+	gtk_object_set_data(GTK_OBJECT(button), "action", 
+			    GINT_TO_POINTER(','));    
+	gtk_widget_show (button);
+    }
+#endif
 
     /* Create the "OK" button */
     tempwid = gtk_button_new_with_label (_("OK"));
@@ -985,7 +1063,7 @@ void delimiter_dialog (void)
     gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 			tempwid, TRUE, TRUE, FALSE);
     gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
-                       GTK_SIGNAL_FUNC(really_set_delim), delptr);
+                       GTK_SIGNAL_FUNC(really_set_csv_stuff), csvptr);
     gtk_signal_connect_object (GTK_OBJECT (tempwid), "clicked", 
 			       GTK_SIGNAL_FUNC (gtk_widget_destroy), 
 			       GTK_OBJECT (dialog));

@@ -4,6 +4,12 @@ version 0.998 (not released)
   LC_NUMERIC
 - fix listings of recently opened files on menus under NLS
 - fix up formatting of fitted/residual printout
+- activate translations of "session" popup menus
+- extend LaTeX menu for models with choice of saving as full
+  document or tex fragment for inclusion in document
+- correct over-eager rejection of some variable names in data
+  files ("c" and "C")
+- recompile gretl_updater.exe with new zlib dll
 
 
 05/28/2002 version 0.997

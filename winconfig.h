@@ -25,6 +25,9 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define ENABLE_NLS 1
 #define PACKAGE gretl
 
+/* try to use Windows GUI font */
+#define USE_WINFONT 1
+
 /* GMP library support -- broken on win32 at present */
 /* #define ENABLE_GMP 1 */
 

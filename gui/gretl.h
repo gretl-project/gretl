@@ -156,6 +156,8 @@ enum file_ops {
     SAVE_CMDS,
     SAVE_TEX_TAB,
     SAVE_TEX_EQ,
+    SAVE_TEX_TAB_FRAG,
+    SAVE_TEX_EQ_FRAG,
     SAVE_SCRIPT,
     SAVE_OUTPUT,
     SAVE_SESSION,

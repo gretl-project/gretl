@@ -242,8 +242,16 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/LaTeX/View/_Tabular"), NULL, view_latex, 0, NULL },
     { N_("/LaTeX/View/_Equation"), NULL, view_latex, 1, NULL },
     { N_("/LaTeX/_Save"), NULL, NULL, 0, "<Branch>" },
-    { N_("/LaTeX/Save/_Tabular"), NULL, file_save, SAVE_TEX_TAB, NULL },
-    { N_("/LaTeX/Save/_Equation"), NULL, file_save, SAVE_TEX_EQ, NULL },
+    { N_("/LaTeX/Save/_Tabular"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/Tabular/as _document"), NULL, file_save, 
+      SAVE_TEX_TAB, NULL },
+    { N_("/LaTeX/Save/Tabular/as _fragment"), NULL, file_save, 
+      SAVE_TEX_TAB_FRAG, NULL },
+    { N_("/LaTeX/Save/_Equation"), NULL, NULL, 0, "<Branch>" },
+    { N_("/LaTeX/Save/Equation/as _document"), NULL, file_save, 
+      SAVE_TEX_EQ, NULL },
+    { N_("/LaTeX/Save/Equation/as _fragment"), NULL, file_save, 
+      SAVE_TEX_EQ_FRAG, NULL },
     { N_("/LaTeX/_Copy"), NULL, NULL, 0, "<Branch>" },
     { N_("/LaTeX/Copy/_Tabular"), NULL, text_copy, COPY_LATEX, NULL },
     { N_("/LaTeX/Copy/_Equation"), NULL, text_copy, COPY_LATEX_EQUATION, NULL },
@@ -795,7 +803,8 @@ void verify_open_session (gpointer userdata)
 static void set_data_from_filelist (gpointer data, guint i, 
 				    GtkWidget *widget)
 {
-    strcpy(trydatfile, datap[i]); 
+    strcpy(trydatfile, datap[i]);
+    if (strstr(trydatfile, ".csv")) delimiter_dialog();
     verify_open_data(NULL, 0);
 }
 

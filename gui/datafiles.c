@@ -89,9 +89,9 @@ static int read_data_descriptions (windata_t *fdata)
     gchar *row[2];
 
     if (fdata->role == RAMU_DATA) 
-	sprintf(fname, "%s%s", paths.datadir, "descriptions");
+	sprintf(fname, "%sdescriptions", paths.datadir);
     else if (fdata->role == PWT_DATA)
-	sprintf(fname, "%s%s", pwtpath, "descriptions");
+	sprintf(fname, "%sdescriptions", pwtpath);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
@@ -100,7 +100,8 @@ static int read_data_descriptions (windata_t *fdata)
 
     fp = fopen(fname, "r");
     if (fp == NULL) {
-	errbox(_("Couldn't open data descriptions file"));
+	sprintf(errtext, _("Couldn't open data descriptions file\n%s"), fname);
+	errbox(errtext);
 	return 1;
     }
     

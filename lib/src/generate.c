@@ -372,7 +372,7 @@ static void otheruse (const char *str1, const char *str2)
 int _reserved (const char *str)
 {
     const char *resword[] = {"uhat", 
-			     "c", "const", "C", "CONST", 
+			     "const", "CONST", 
 			     "coeff", "stderr", "rho",
 			     "mean", "median", "var", "cov", "vcv", "sd",
 			     "full", "subdum", 
@@ -388,28 +388,28 @@ int _reserved (const char *str)
 	    case 0: 
 		otheruse(str, _("residual vector"));
 		break;
-	    case 1: case 2: case 3: case 4:
+	    case 1: case 2:
 		otheruse(str, _("constant"));
 		break;
-	    case 5:
+	    case 3:
 		otheruse(str, _("regr. coeff."));
 		break;
-	    case 6:
+	    case 4:
 		otheruse(str, _("standard error"));
 		break;
-	    case 7:
+	    case 5:
 		otheruse(str, _("autocorr. coeff."));
 		break;
-	    case 8: case 9: case 10: case 11: case 12: case 13:
+	    case 6: case 7: case 8: case 9: case 10: case 11:
 		otheruse(str, _("stats function"));
 		break;
-	    case 14: case 15:
+	    case 12: case 13:
 		otheruse(str, _("sampling concept"));
 		break;
-	    case 16: case 17: case 18: case 19: case 20:
+	    case 14: case 15: case 16: case 17: case 18:
 		otheruse(str, _("plotting variable"));
 		break;
-	    case 21:
+	    case 19:
 		otheruse(str, _("internal variable"));
 		break;
 	    default:

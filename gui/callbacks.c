@@ -181,6 +181,8 @@ void file_save (gpointer data, guint file_code, GtkWidget *widget)
 	break;
     case SAVE_TEX_TAB:
     case SAVE_TEX_EQ:
+    case SAVE_TEX_TAB_FRAG:
+    case SAVE_TEX_EQ_FRAG:
 	file_selector(_("Save LaTeX file"), file_code, mydata->data);
 	break;
     case SAVE_HTML:

@@ -590,15 +590,15 @@ void display_db_series_list (int action, char *fname, char *buf)
 static int check_serinfo (char *str, char *sername)
 {
     char pdc;
-    char stobs[11], endobs[11], n[6];
+    char stobs[11], endobs[11];
+    int n;
     char msg[64];
 
     if (!isalpha((unsigned char) sername[0]) || 
-	sscanf(str, "%c %10s %*s %10s %*s %*s %5s", 
-	       &pdc, stobs, endobs, n) != 4 || 
+	sscanf(str, "%c %10s - %10s %*s = %d", 
+	       &pdc, stobs, endobs, &n) != 4 || 
 	!isdigit((unsigned char) stobs[0]) || 
 	!isdigit((unsigned char) endobs[0]) ||
-	!isdigit((unsigned char) n[0]) || 
 	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
 	 pdc != 'D')) {
 	sprintf(msg, _("Database parse error at variable '%s'"), sername);
@@ -610,12 +610,40 @@ static int check_serinfo (char *str, char *sername)
 
 /* ........................................................... */
 
+static void end_trim (char *line)
+{
+    size_t i, n = strlen(line);
+
+    for (i=n-1; i>0; i--) {
+	if (line[i] == ' ' || line[i] == '\n' || line[i] == '\r')
+	    line[i] = 0;
+	else
+	    break;
+    }
+}
+
+/* ........................................................... */
+
+static char *start_trim (char *s)
+{
+    char *p = s;
+
+    while (*s == ' ') {
+	p++;
+	s++;
+    }
+    return p;
+}
+
+/* ........................................................... */
+
 static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
 {
     gchar *row[3];
-    char sername[9], line1[150], line2[150], dbidx[MAXLEN];
+    char sername[9], line1[256], line2[72], dbidx[MAXLEN];
     FILE *fp;
-    int err = 0, n;
+    size_t n;
+    int err = 0;
 
     strcpy(dbidx, dbdat->fname);
     strcat(dbidx, ".idx");
@@ -625,20 +653,25 @@ static int populate_series_list (windata_t *dbdat, PATHS *ppaths)
 	return 1;
     }
     while (1) {
-	if (fgets(line1, 149, fp) == NULL) break;
-	if (line1[0] == '#') continue;
-	if (sscanf(line1, "%s", sername) != 1) break;
+	if (fgets(line1, 255, fp) == NULL) break;
+	if (*line1 == '#') continue;
+	line1[255] = 0;
+	end_trim(line1);
+	charsub(line1, '\t', ' ');
+
+	if (sscanf(line1, "%8s", sername) != 1) break;
+
+	sername[8] = 0;
 	n = strlen(sername);
 	row[0] = sername;
-	row[1] = line1+n+1;
-	top_n_tail(row[1]);
+	row[1] = start_trim(line1 + n + 1);
+
 	fgets(line2, 71, fp);
+	line2[71] = 0;
+	end_trim(line2);
 	row[2] = line2;
-	if (!err) 
-	    err = check_serinfo(line2, sername);
-	delchar('\r', row[1]);
-	delchar('\r', row[2]);
-	delchar('\n', row[2]);
+
+	if (!err) err = check_serinfo(line2, sername);
 	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
     }
     fclose(fp);
@@ -660,15 +693,20 @@ static int populate_remote_series_list (windata_t *dbdat, char *buf)
     while (1) {
 	if (getbufline(buf, line1, 0) == 0) break;
 	if (line1[0] == '#') continue;
-	sscanf(line1, "%8s", sername);
+
+	line1[149] = 0;
+	end_trim(line1);
+	charsub(line1, '\t', ' ');
+	if (sscanf(line1, "%8s", sername) != 1) break;
+
+	sername[8] = 0;
 	n = strlen(sername);
 	row[0] = sername;
-	row[1] = line1 + n + 1;
-	top_n_tail(row[1]);
+	row[1] = start_trim(line1 + n + 1);
+
 	getbufline(buf, line2, 0);
 	row[2] = line2;
-	if (!err) 
-	    err = check_serinfo(line2, sername);
+	if (!err) err = check_serinfo(line2, sername);
 	gtk_clist_append(GTK_CLIST(dbdat->listbox), row);
     }
     return 0;
@@ -923,8 +961,8 @@ static int get_places (double x)
 
 /* ........................................................... */
 
-static int get_endobs (char *datestr, const int startyr, const int startfrac, 
-		       const int pd, const int n)
+static int get_endobs (char *datestr, int startyr, int startfrac, 
+		       int pd, int n)
 /* Figure the ending observation date of a series */
 {
     int endyr, endfrac;  
@@ -1124,8 +1162,8 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
     int sernum = dbdat->active_var;
     char stobs[11], endobs[11];
 
-    if ((sinfo = mymalloc(sizeof *sinfo)) == NULL)
-	return NULL;
+    sinfo = mymalloc(sizeof *sinfo);
+    if (sinfo == NULL) return NULL;
 
     if (action != RATS_SERIES) {
 	int i, n;
@@ -1152,11 +1190,16 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
 
     gtk_clist_get_text 
 	(GTK_CLIST(dbdat->listbox), sernum, 2, &temp);
-    sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
-	   &pdc, stobs, endobs, &(sinfo->nobs));
+    if (sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
+	       &pdc, stobs, endobs, &(sinfo->nobs)) != 4) {
+	errbox(_("Failed to parse series information"));
+	free(sinfo);
+	return NULL;
+    }
+
+    sinfo->pd = 1;
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
-    else if (pdc == 'A') sinfo->pd = 1;
     else if (pdc == 'D') sinfo->pd = 5;
 
     if (strchr(stobs, '/')) { /* daily data */
@@ -1334,7 +1377,6 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
     char idxname[MAXLEN], binname[MAXLEN], tmp[MAXLEN];
     char gzbuf[BUFSIZE];
     gzFile fgz;
-    unsigned i;
 #if G_BYTE_ORDER == G_BIG_ENDIAN
     size_t offset;
     netfloat nf;
@@ -1363,16 +1405,17 @@ static int ggz_extract (char *errbuf, char *dbname, char *ggzname)
         return 1;
     }
 
-    clear(gzbuf, BUFSIZE);
+    memset(gzbuf, BUFSIZE, 0);
     gzread(fgz, gzbuf, INFOLEN);
     idxlen = (size_t) atoi(gzbuf);
 
-    for (i=0; i<1+idxlen/BUFSIZE; i++) {
-        bytesleft = idxlen - BUFSIZE * i;
-        if (bytesleft <= 0) break;
-        clear(gzbuf, BUFSIZE);
-        gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
-        fprintf(fidx, "%s", gzbuf);
+    bytesleft = idxlen;
+    while (bytesleft > 0) {
+	memset(gzbuf, BUFSIZE, 0);
+	bgot = gzread(fgz, gzbuf, (bytesleft > BUFSIZE)? BUFSIZE : bytesleft);
+	if (bgot <= 0) break;
+	bytesleft -= bgot;
+	fwrite(gzbuf, 1, bgot, fidx);
     }
     fclose(fidx);
 

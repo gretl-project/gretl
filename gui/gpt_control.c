@@ -687,7 +687,7 @@ void do_save_graph (const char *fname, char *savestr)
     PRN *prn;
     char plottmp[MAXLEN], plotline[MAXLEN], plotcmd[MAXLEN];
     char termstr[MAXLEN];
-    int cmds;
+    int cmds, err = 0;
 
     if (!user_fopen("gptout.tmp", plottmp, &prn)) return;
     fq = fopen(paths.plotfile, "r");
@@ -704,21 +704,27 @@ void do_save_graph (const char *fname, char *savestr)
     } else {
 	pprintf(prn, "set term %s\n", termstr);
 	pprintf(prn, "set output '%s'\n", fname);
-	while (fgets(plotline, MAXLEN-1, fq))
-	    pprintf(prn, "%s", plotline);
+	while (fgets(plotline, MAXLEN-1, fq)) {
+	    if (strncmp(plotline, "pause", 5)) pprintf(prn, "%s", plotline);
+	}
     }
     gretl_print_destroy(prn);
     fclose(fq);
     sprintf(plotcmd, "\"%s\" \"%s\"", paths.gnuplot, plottmp);
+
 #ifdef G_OS_WIN32
-    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32)
+    if (WinExec(plotcmd, SW_SHOWMINIMIZED) < 32) {
+	err = 1;
 	errbox(_("Gnuplot error creating graph"));
+    }
 #else
-    if (system(plotcmd))
+    if (system(plotcmd)) {
+	err = 1;
 	errbox(_("Gnuplot error creating graph"));
+    }
 #endif
     remove(plottmp);
-    infobox(_("Graph saved"));
+    if (!err) infobox(_("Graph saved"));
 }
 
 /* ........................................................... */
@@ -845,11 +851,12 @@ static void get_gpt_data (char *line, double *x, double *y)
     setlocale(LC_NUMERIC, "C");
 #endif
     if (x != NULL) {
-	if (sscanf(line, "%lf %lf", x, y) != 2) {
+	if (sscanf(line, "%lf %lf", x, y) == 2) ; /* fine */
+	else {
 	    if (sscanf(line, "%lf", x) == 1) *y = NADBL;
 	    else if (sscanf(line, "%*s %lf", y) == 1) *x = NADBL;
+	    else *x = NADBL; *y = NADBL;
 	}
-	*x = NADBL; *y = NADBL;
     } else {
 	if (sscanf(line, "%*s %lf", y) != 1) *y = NADBL;
     }
