@@ -1327,6 +1327,7 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
 /* ........................................................... */
 
 #ifdef G_OS_WIN32
+
 BOOL CreateChildProcess (char *prog) 
 { 
    PROCESS_INFORMATION piProcInfo; 
@@ -1348,6 +1349,30 @@ BOOL CreateChildProcess (char *prog)
       &siStartInfo,  /* STARTUPINFO pointer */ 
       &piProcInfo);  /* receives PROCESS_INFORMATION  */
 }
+
+#else
+
+void gretl_fork (const char *prog, const char *arg)
+{
+    pid_t pid;
+
+    signal(SIGCLD, SIG_IGN);
+
+    pid = fork();
+    if (pid == -1) {
+	errbox(_("Couldn't fork"));
+	perror("fork");
+	return;
+    } else if (pid == 0) {
+	if (arg != NULL)
+	    execlp(prog, prog, arg, NULL);
+	else
+	    execlp(prog, prog, NULL);
+	perror("execlp");
+	_exit(EXIT_FAILURE);
+    }
+}
+
 #endif	
 
 /* ........................................................... */
@@ -1465,20 +1490,7 @@ static void show_calc (void)
 #ifdef G_OS_WIN32
     CreateChildProcess(calculator);
 #else
-    pid_t pid;
-
-    signal(SIGCLD, SIG_IGN);
-
-    pid = fork();
-    if (pid == -1) {
-	errbox(_("Couldn't fork"));
-	perror("fork");
-	return;
-    } else if (pid == 0) {  
-	execlp(calculator, calculator, NULL);
-	perror("execlp");
-	_exit(EXIT_FAILURE);
-    }
+    gretl_fork(calculator, NULL);
 #endif 
 }
 
@@ -1489,20 +1501,7 @@ static void show_edit (void)
 #ifdef G_OS_WIN32
     CreateChildProcess(editor);
 #else
-    pid_t pid;
-
-    signal(SIGCLD, SIG_IGN);
-
-    pid = fork();
-    if (pid == -1) {
-	errbox(_("Couldn't fork"));
-	perror("fork");
-	return;
-    } else if (pid == 0) {  
-	execlp(editor, editor, NULL);
-	perror("execlp");
-	_exit(EXIT_FAILURE);
-    }
+    gretl_fork(editor, NULL);
 #endif 
 }
 
@@ -1552,21 +1551,7 @@ static void netscape_open (const char *url)
 
     sprintf(ns_cmd, "netscape -remote \"openURLNewWindow(%s)\"", url);
     err = system(ns_cmd);
-    if (err) {
-	pid_t pid;
-
-	signal(SIGCLD, SIG_IGN);
-	pid = fork();
-	if (pid == -1) {
-	    errbox(_("Couldn't fork"));
-	    perror("fork");
-	    return;
-	} else if (pid == 0) {
-	    execlp("netscape", "netscape", url, NULL);
-	    perror("execlp");
-	    _exit(EXIT_FAILURE);
-	}
-    }
+    if (err) gretl_fork("netscape", url);
 #endif /* USE_GNOME */
 }
 #endif /* G_OS_WIN32 */

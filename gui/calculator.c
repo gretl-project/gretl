@@ -86,26 +86,41 @@ static int printnum (char *dest, const char *s, int d)
 
 /* ........................................................... */
 
-static double getval (const char *s, PRN *prn) 
+static double getval (const char *s, PRN *prn, int pos)
+     /* if pos != 0, value must be positive or it is invalid */ 
 {
+    double x;
+
     if (s == NULL || strlen(s) == 0) {
 	errbox(_("Incomplete entry for hypothesis test"));
 	gretl_print_destroy(prn);
 	return NADBL;
     }
-    return atof(s);
+    x = atof(s);
+    if (pos && x <= 0.0) {
+	errbox(_("Invalid entry for hypothesis test"));
+	return NADBL;
+    } else
+	return x;
 }
 
 /* ........................................................... */
 
 static int getint (const char *s, PRN *prn) 
 {
+    int n;
+
     if (s == NULL || strlen(s) == 0) {
 	errbox(_("Incomplete entry for hypothesis test"));
 	gretl_print_destroy(prn);
 	return -1;
     }
-    return atoi(s);
+    n = atoi(s);
+    if (n <= 0) {
+	errbox(_("Invalid entry for hypothesis test"));
+	return -1;
+    } else
+	return n;
 }
 
 /* ........................................................... */
@@ -231,6 +246,7 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 {
     lookup_t **pval = (lookup_t **) data;
     gint i, j;
+    int df;
     double val, xx;
     gchar *tmp, cmd[128];
     PRN *prn;
@@ -256,7 +272,11 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	break;
     case 1: /* t */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
-	j = atoi(tmp);
+	df= atoi(tmp);   /* df */
+	if (df <= 0) {
+	    errbox(_("Invalid degrees of freedom"));
+	    return;
+	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
 	xx = atof(tmp); /* value */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
@@ -268,11 +288,16 @@ static void get_pvalue (GtkWidget *w, gpointer data)
 	    return;
 	}
 	xx /= val; 
-	sprintf(cmd, "pvalue 2 %d %f", j, xx);
+	sprintf(cmd, "pvalue 2 %d %f", df, xx);
 	break;
 
     case 2: /* chi-square */
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[0]));
+	df = atoi(tmp);   /* df */
+	if (df <= 0) {
+	    errbox(_("Invalid degrees of freedom"));
+	    return;
+	}	
 	if (printnum(cmd, tmp, 0)) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[1]));
 	if (printnum(cmd, tmp, 1)) return;
@@ -280,6 +305,11 @@ static void get_pvalue (GtkWidget *w, gpointer data)
     case 3: /* F */
 	for (j=0; j<2; j++) {
 	    tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[j]));
+	    df = atoi(tmp);
+	    if (df <= 0) {
+		errbox(_("Invalid degrees of freedom"));
+		return;
+	    }	    
 	    if (printnum(cmd, tmp, 0)) return;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(pval[i]->entry[2]));
@@ -448,14 +478,15 @@ static void h_test (GtkWidget *w, gpointer data)
     switch (i) {
     case 0: /* mean */
 	for (j=0; j<2; j++) {
+	    /* get sample mean and std dev */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j]));
-	    x[j] = getval(tmp, prn);
+	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
 	    if (na(x[j])) return;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
-	x[2] = getval(tmp, prn);
+	x[2] = getval(tmp, prn, 0);
 	if (na(x[2])) return;
 	sderr = x[1]/sqrt((double) n1);
 	ts = (x[0] - x[2])/sderr;
@@ -480,12 +511,12 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     case 1: /* variance */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
-	x[0] = getval(tmp, prn);
+	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
-	x[1] = getval(tmp, prn);
+	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	ts = (n1 - 1) * x[0] / x[1];
 	pprintf(prn, _("Null hypothesis: population variance = %g\n"), x[1]);
@@ -502,12 +533,12 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     case 2: /* proportion */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
-	x[0] = getval(tmp, prn);
+	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
-	x[1] = getval(tmp, prn);
+	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	if (n1 * x[1] < 5.0 || n1 * (1.0 - x[1]) < 5.0) {
 	    infobox(_("The assumption of a normal sampling distribution\n"
@@ -531,21 +562,23 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     case 3: /* two means */
 	for (j=0; j<2; j++) {
+	    /* mean and std dev, sample 1 */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j]));
-	    x[j] = getval(tmp, prn);
+	    x[j] = getval(tmp, prn, (j==1)? 1 : 0);
 	    if (na(x[j])) return;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	for (j=2; j<4; j++) {
+	    /* mean and std dev, sample 2 */
 	    tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[j+1]));
-	    x[j] = getval(tmp, prn);
+	    x[j] = getval(tmp, prn, (j==3)? 1 : 0);
 	    if (na(x[j])) return;
 	}
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[5]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[6]));
-	x[4] = getval(tmp, prn);
+	x[4] = getval(tmp, prn, 0);
 	if (na(x[4])) return;
 	pprintf(prn, _("Null hypothesis: Difference of means = %g\n"), x[4]);
 	pprintf(prn, _("Sample 1:\n n = %d, mean = %g, s.d. = %g\n"),
@@ -588,12 +621,12 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     case 4: /* two variances */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
-	x[0] = getval(tmp, prn);
+	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
-	x[1] = getval(tmp, prn);
+	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
@@ -617,12 +650,12 @@ static void h_test (GtkWidget *w, gpointer data)
 	break;
     case 5: /* two proportions */
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[0]));
-	x[0] = getval(tmp, prn);
+	x[0] = getval(tmp, prn, 1);
 	if (na(x[0])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[1]));
 	if ((n1 = getint(tmp, prn)) == -1) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[2]));
-	x[1] = getval(tmp, prn);
+	x[1] = getval(tmp, prn, 1);
 	if (na(x[1])) return;
 	tmp = gtk_entry_get_text(GTK_ENTRY(test[i]->entry[3]));
 	if ((n2 = getint(tmp, prn)) == -1) return;
