@@ -421,6 +421,11 @@ void printmodel (const MODEL *pmod, const DATAINFO *pdinfo, print_t *prn)
 	return;
     }
 
+    if (pmod->aux == AUX_AR) {
+	_rsqline(pmod, prn);
+	return;
+    }
+
     if (pmod->ci == OLS || pmod->ci == VAR || pmod->ci == TSLS
 	|| pmod->ci == HCCM || pmod->ci == POOLED ||
 	(pmod->ci == WLS && pmod->wt_dummy)) {

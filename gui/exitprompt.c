@@ -139,31 +139,19 @@ int yes_no_dialog (char *title, char *message, int cancel)
 
 #endif /* G_OS_WIN32 */
 
-static void yes_button (GtkWidget *w, gpointer data)
+struct yes_no_data {
+    GtkWidget *dialog;
+    int *ret;
+    int button;
+};
+
+static void yes_no_callback (GtkWidget *w, gpointer data)
 {
-    int *ret = (int *) data;
+    struct yes_no_data *mydata = data;
 
-    *ret = 0;
+    *(mydata->ret) = mydata->button;
     gtk_main_quit();
-    gtk_widget_destroy(w->parent);
-}
-
-static void no_button (GtkWidget *w, gpointer data)
-{
-    int *ret = (int *) data;
-
-    *ret = 1;
-    gtk_main_quit();
-    gtk_widget_destroy(w->parent);
-}
-
-static void cancel_button (GtkWidget *w, gpointer data)
-{
-    int *ret = (int *) data;
-
-    *ret = -1;
-    gtk_main_quit();
-    gtk_widget_destroy(w->parent);
+    gtk_widget_destroy(mydata->dialog);
 }
 
 /* ......................................................... */
@@ -171,9 +159,17 @@ static void cancel_button (GtkWidget *w, gpointer data)
 gint yes_no_dialog (char *title, char *msg, int cancel)
 {
    GtkWidget *tempwid, *dialog;
-   int ret = 99;
+   int ret;
+   struct yes_no_data yesdata, nodata, canceldata;
 
    dialog = gtk_dialog_new();
+
+   yesdata.dialog = nodata.dialog = canceldata.dialog 
+       = dialog;
+   yesdata.ret = nodata.ret = canceldata.ret = &ret; 
+   yesdata.button = 0;
+   nodata.button = 1;
+   canceldata.button = -1;
    
    gtk_grab_add (dialog);
    gtk_window_set_title (GTK_WINDOW (dialog), title);
@@ -198,7 +194,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 		       tempwid, TRUE, TRUE, TRUE);  
    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC (yes_button), (gpointer) &ret);
+		       GTK_SIGNAL_FUNC (yes_no_callback), &yesdata);
    gtk_widget_grab_default (tempwid);
    gtk_widget_show (tempwid);
 
@@ -207,7 +203,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 		       tempwid, TRUE, TRUE, TRUE); 
    gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-		       GTK_SIGNAL_FUNC (no_button), (gpointer) &ret);
+		       GTK_SIGNAL_FUNC (yes_no_callback), &nodata);
    gtk_widget_show (tempwid);
 
    /* Cancel button -- if wanted */
@@ -216,7 +212,7 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
        gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area), 
 			   tempwid, TRUE, TRUE, TRUE); 
        gtk_signal_connect (GTK_OBJECT (tempwid), "clicked", 
-			   GTK_SIGNAL_FUNC (cancel_button), (gpointer) &ret);
+			   GTK_SIGNAL_FUNC (yes_no_callback), &canceldata);
        gtk_widget_show (tempwid);
    }
 

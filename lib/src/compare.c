@@ -490,7 +490,7 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     int *newlist;
     MODEL aux;
     int err, i, k, t, n = pdinfo->n, v = pdinfo->v; 
-    double trsq;
+    double trsq, LMF;
 
     init_model(&aux);
 
@@ -537,17 +537,28 @@ int autocorr_test (MODEL *pmod, double **pZ, DATAINFO *pdinfo,
     aux.aux = AUX_AR;
     printmodel(&aux, pdinfo, prn);
     trsq = aux.rsq * aux.nobs;
+    LMF = (aux.rsq/(1.0 - aux.rsq)) * 
+	(aux.nobs - pmod->ncoeff - pdinfo->pd)/pdinfo->pd; 
 
-    pprintf(prn, "\nTest statistic: TR^2 = %f,\n", trsq);
+    pprintf(prn, "\nTest statistic: LMF = %f,\n", LMF);
+    pprintf(prn, "with p-value = prob(F(%d,%d) > %f) = %f\n", 
+	    pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
+	    fdist(LMF, pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd));
+
+    pprintf(prn, "\nAlternative statistic: TR^2 = %f,\n", trsq);
     pprintf(prn, "with p-value = prob(Chi-square(%d) > %f) = %f\n\n", 
 	    pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
 
     if (test != NULL) {
 	strcpy(test->type, "LM test for autocorrelation");
 	sprintf(test->h_0, "no autocorrelation up to order %d", pdinfo->pd);
-	sprintf(test->teststat, "TR^2 = %f", trsq);
-	sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
-		pdinfo->pd, trsq, chisq(trsq, pdinfo->pd));
+	/* sprintf(test->teststat, "TR^2 = %f", trsq); */
+	/* sprintf(test->pvalue, "prob(Chi-square(%d) > %f) = %f", 
+	   pdinfo->pd, trsq, chisq(trsq, pdinfo->pd)); */
+	sprintf(test->teststat, "LMF = %f", trsq);
+	sprintf(test->pvalue, "prob(F(%d,%d) > %f) = %f", pdinfo->pd, 
+		aux.nobs - pmod->ncoeff - pdinfo->pd, LMF,
+		fdist(LMF, pdinfo->pd, aux.nobs - pmod->ncoeff - pdinfo->pd));	
     }
 
     shrink_Z(k, pZ, pdinfo);

@@ -971,7 +971,7 @@ static GtkWidget *make_main_window (int gui_get_data)
 #endif
 
     gtk_signal_connect (GTK_OBJECT (mdata->w), "delete_event",
-			GTK_SIGNAL_FUNC (menu_exit),
+			GTK_SIGNAL_FUNC (exit_check),
 			NULL);
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
