@@ -5,12 +5,12 @@ CFLAGS = @CFLAGS@
 MAKE = @MAKE@
 GTK_CFLAGS = @GTK_CFLAGS@
 
+VPATH = $(topsrc)/gui2/gtkextra-lite
+
 override CFLAGS += -I$(topsrc)/gui2/gtkextra-lite $(GTK_CFLAGS) -I$(topsrc)/lib/src
 
 SRCS = gtkplotpc.c gtkplotps.c gtkpsfont.c
-
 HDRS = gtkplot-lite.h gtkplotpc.h gtkplotps.h gtkpsfont.h
-
 OBJS = $(SRCS:.c=.o)
 
 LIB = libgtkextra-lite.a
@@ -23,9 +23,5 @@ $(LIB): $(OBJS)
 clean:
 	rm -f *.o $(LIB)
 
-# DO NOT DELETE
 
-gtkplotpc.o: gtkplotpc.h gtkpsfont.h
-gtkplotps.o: gtkplot-lite.h gtkplotpc.h gtkpsfont.h gtkplotps.h
-gtkpsfont.o: gtkpsfont.h
 

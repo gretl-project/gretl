@@ -1,64 +1,35 @@
 #!/bin/sh
 
+parent=/home/cottrell/stats/esl
 WWW='allin@gretl.sourceforge.net:~/www/'
-topdir=/home/cottrell/stats/esl/gretl
-version=$(cat lib/src/version.h | grep version_ | \
+
+version=$(cat ${parent}/gretl/lib/src/version.h | grep version_ | \
      awk '{ print $NF}' | sed s/[\"\;]//g)
 tarfile="gretl-${version}.tar.bz2"
+topdir=/home/cottrell/stats/esl/gretl-${version}
 
 echo "making dist file for gretl $version using filename $tarfile"
 
-# make clean first
-cd ${topdir} && make clean && make -C win32 clean
+# clean Windows version first; make time stamp
+cd ${topdir} && make -C win32 clean && date > share/gretl.stamp
 
-# get in place and make dist directory
-cd ${topdir}/..
-mkdir ${topdir}/../gretl-$version
-
-# create time stamp for updater
-date > gretl/share/gretl.stamp
-
-# copy everything across
-echo "copying files to gretl-$version..."
-cp -ap gretl/* gretl-$version
-
-# go in and clean in dist dir
-echo "cleaning in gretl-$version..."
-cd gretl-$version && make distclean
-
-# come back up a level
-cd ${topdir}/..
-
-# retain only the relevant parts of the doc tree
-rm -rf gretl-$version/doc
-mkdir gretl-$version/doc
-cp -ap gretl/doc/manual.xml gretl-$version/doc
-cp -ap gretl/doc/chapters gretl-$version/doc
-cp -ap gretl/doc/manual.pdf gretl-$version/doc
-cp -ap gretl/doc/manual-a4.pdf gretl-$version/doc
-cp -ap gretl/doc/manual-html gretl-$version/doc
-cp -ap gretl/doc/figures gretl-$version/doc
-find gretl-$version/doc -name "*CVS" | xargs rm -rf
-
-echo "removing various unwanted files..."
-rm -rf gretl-$version/lib/src/lapack
-rm -rf gretl-$version/autom4te.cache
-rm -f gretl-$version/myconf 
-rm -f gretl-$version/gmp.m4
-rm -f gretl-$version/clapack.m4 
-find gretl-$version -name "*CVS" | xargs rm -rf
-find gretl-$version -name "*.bak" | xargs rm -f
-find gretl-$version -name "*.old" | xargs rm -f
-find gretl-$version -name ".xvpics" | xargs rm -rf
-find gretl-$version -name "*~" | xargs rm -f
-find gretl-$version -name ".#*" | xargs rm -f
-find gretl-$version -name "*.tar.gz" | xargs rm -f
+# create tar exclusion list
+rm -f ../tar_exclude
+for f in autom4te.cache build clapack.m4 gmp.m4 doc/htmlhelp \
+  doc/*.log doc/*.out doc/*.aux doc/*.tpt doc/manual*.tex \
+  doc/reference ; do
+  echo $f >> ../tar_exclude
+done
+find -name "CVS" -print | sed s+^\./++ >> ../tar_exclude
+find -name "*~" -print | sed s+^\./++ >> ../tar_exclude
+find -name ".#*" -print | sed s+^\./++ >> ../tar_exclude
+find -name ".xvpics" -print | sed s+^\./++ >> ../tar_exclude
 
 # make the archive and remove the dist dir
+cd $parent
 echo "making archive..."
 rm -f $tarfile
-tar cvfy $tarfile gretl-$version
-rm -rf gretl-$version
+tar cvfyX $tarfile tar_exclude gretl-$version
 
 # scp gretl/doc/manual.pdf allin@gretl.sourceforge.net:~/www/
 # scp gretl/doc/manual-a4.pdf allin@gretl.sourceforge.net:~/www/

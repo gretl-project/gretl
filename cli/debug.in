@@ -1,4 +1,4 @@
 #!/bin/sh
 echo "set args $1 $2" > .cli.gdb
 echo "run" >>.cli.gdb
-gdb /opt/esl/bin/gretlcli -x .cli.gdb
+gdb @prefix@/bin/gretlcli -x .cli.gdb

@@ -552,13 +552,16 @@ gretl_sh
 gretl-config
 gretl.pc 
 gui/Makefile
+gui/debug
 gui/gtkextra-lite/Makefile
 gui2/Makefile
+gui2/debug
 gui2/gtkextra-lite/Makefile
 gui2/omf-install/Makefile
 gnome/Makefile
 gnome/gretl.keys 
 cli/Makefile 
+cli/debug
 lib/Makefile 
 plugin/Makefile
 po/Makefile.in 

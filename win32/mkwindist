@@ -81,9 +81,10 @@ cd $THISDIR
 
 # auxiliary dlls
 for f in \
-    libgmp-3.dll libxml.dll readline.dll zlib.dll
+    libgmp-3.dll libxml.dll readline.dll zlib.dll libpng.dll \
+    libblas.dll libf2c.dll liblapack.dll
 do
-    add_file ../../gretl/win32/dlls/$f gretl/$f
+    add_file $HOME_WIN32/misc-dll/$f gretl/$f
 done
 
 # help files, license, logo

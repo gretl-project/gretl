@@ -1,6 +1,10 @@
+topsrc = $top_srcdir@
+tooldir = $(topsrc)/tools
 
 INSTALL = @INSTALL@
 gnome_prefix = @gnome_prefix@
+
+VPATH = $(topsrc)/gui2/omf-install
 
 docdir = $(gnome_prefix)/share/gnome/help/gretl/C
 omfdir = $(gnome_prefix)/share/omf/gretl
@@ -11,6 +15,6 @@ gretl-C.omf: gretl-C.omf.in
 	  {print $$2}'` $< $@; 
 
 install: gretl-C.omf
-	../../tools/mkinstalldirs $(omfdir)
+	$(tooldir)/mkinstalldirs $(omfdir)
 	$(INSTALL) -m 644 $< $(omfdir)
 	scrollkeeper-update -p $(gnome_prefix)/var/scrollkeeper

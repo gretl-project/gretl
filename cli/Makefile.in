@@ -50,7 +50,7 @@ CLI = gretlcli
 LIBTOOL = ../libtool
 
 %.d: %.c
-	set -e; $(CC) -M -I.. -I$(topsrc) -I$(libsrc) $(DEFS) $< \
+	set -e; $(CC) -MM -I.. -I$(topsrc) -I$(libsrc) $(DEFS) $< \
 	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@; \
 	[ -s $@ ] || rm -f $@
 
@@ -72,7 +72,7 @@ installdirs: $(tooldir)/mkinstalldirs
 	$(tooldir)/mkinstalldirs $(bindir)
 
 clean:
-	rm -f *.o $(CLI) core 
+	rm -f *.o *.d $(CLI) core 
 	rm -rf ./.libs
 
 

@@ -35,7 +35,7 @@ plugindir = $(prefix)/lib/gretl
 
 override CFLAGS += -I.. -DHAVE_CONFIG_H
 
-LIBTOOL = $(topsrc)/libtool
+LIBTOOL = ../libtool
 COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS) 
 LINK = $(LIBTOOL) --mode=link $(CC) -module -avoid-version -rpath $(plugindir)
 
@@ -48,6 +48,11 @@ ifeq ($(have_gtk),2.0)
 else
   GRETL_LIBOLE2_CFLAGS := -I. $(shell glib-config --cflags)
 endif  
+
+SRCS = excel_import.c gnumeric_import.c gretl_matrix.c import_common.c \
+	johansen.c lad.c longname.c mp_ols.c panel_data.c progress_bar.c \
+	range-mean.c stats_tables.c sur.c tramo_options.c tramo-x12a.c \
+	workbook.c
 
 PLUGINS = lad.la stats_tables.la panel_data.la range-mean.la \
 	progress_bar.la gnumeric_import.la excel_import.la $(TXPLUGIN)
@@ -77,7 +82,14 @@ ifeq ($(LIBOLE2_LIBS),)
   LIBOLE2_CFLAGS = $(GRETL_LIBOLE2_CFLAGS)
 endif
 
+%.d: %.c
+	set -e; $(CC) -MM -MG $(GRETLINC) $< 2>/dev/null \
+	| sed 's/\($*\)\.o[ :]*/\1.o $@ : /g' > $@ ; \
+	[ -s $@ ] || rm -f $@
+
 all: $(PLUGINS)
+
+include $(SRCS:.c=.d)
 
 stats_tables.la: stats_tables.lo
 	$(LINK) -o $@ $< $(GRETLLIB)
