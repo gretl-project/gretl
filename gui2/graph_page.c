@@ -317,6 +317,7 @@ static int gp_make_outfile (const char *gfname, int i, double scale,
 	fname = gpage_fname(".png", i);
     } else {
 	fprintf(fq, "set term postscript eps%s\n", (color)? " color" : "");
+	fputs("set encoding iso_8859_1\n", fp);
 	fname = gpage_fname(".ps", i);
 	if (scale != 1.0) {
 	    fprintf(fq, "set size %g,%g\n", scale, scale);
