@@ -144,6 +144,7 @@ enum file_ops {
     APPEND_GNUMERIC,
     OPEN_EXCEL,
     APPEND_EXCEL,
+    OPEN_DES,
     OPEN_SESSION,
     END_OPEN,      /* marker for end of file open section */
     SAVE_DATA,

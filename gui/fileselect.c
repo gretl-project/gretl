@@ -73,6 +73,7 @@ static struct extmap action_map[] = {
     {APPEND_GNUMERIC, ".gnumeric"},
     {OPEN_EXCEL, ".xls"},
     {APPEND_EXCEL, ".xls"},
+    {OPEN_DES, ".des"},
     {OP_MAX, NULL}
 };
 
@@ -310,6 +311,7 @@ static struct winfilter get_filter (int action, gpointer data)
 	{APPEND_GNUMERIC, { N_("Gnumeric files (*.gnumeric)"), "*.gnumeric" }},
 	{OPEN_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
 	{APPEND_EXCEL, { N_("Excel files (*.xls)"), "*.xls" }},
+	{OPEN_DES, { N_("DES files (*.des)"), "*.des" }},
     };
     static struct winfilter olddat_filter = {
 	N_("gretl data files (*.dat)"), "*.dat"
@@ -435,7 +437,8 @@ void file_selector (char *msg, int action, gpointer data)
     strncpy(remember_dir, fname, slashpos(fname));
 
     if (action == OPEN_DATA || action == OPEN_CSV || 
-	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
+	action == OPEN_BOX || action == OPEN_GNUMERIC || 
+	action == OPEN_EXCEL || action == OPEN_DES) {
 	strcpy(trydatfile, fname);
 	verify_open_data(NULL, action);
     }
@@ -561,7 +564,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
     strcpy(remember_dir, path);
 
     if (action == OPEN_DATA || action == OPEN_CSV || 
-	action == OPEN_BOX || action == OPEN_GNUMERIC || action == OPEN_EXCEL) {
+	action == OPEN_BOX || action == OPEN_GNUMERIC || 
+	action == OPEN_EXCEL || action == OPEN_DES) {
 	strcpy(trydatfile, fname);
 	gtk_widget_destroy(GTK_WIDGET(fs));  
 	verify_open_data(NULL, action);

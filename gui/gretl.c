@@ -206,6 +206,8 @@ GtkItemFactoryEntry data_items[] = {
       display_files, RAMU_DATA, NULL },
     { N_("/File/Open data/sample file/Greene..."), NULL, 
       display_files, GREENE_DATA, NULL },
+    { N_("/File/Open data/sample file/Wooldridge..."), NULL, 
+      open_data, OPEN_DES, NULL },
     { N_("/File/Open data/sample file/Penn World Table..."), NULL, 
       display_files, PWT_DATA, NULL },
     { N_("/File/Open data/sep1"), NULL, NULL, 0, "<Separator>" },    

@@ -118,6 +118,9 @@ void open_data (gpointer data, guint code, GtkWidget *widget)
     case APPEND_EXCEL:
 	file_selector(_("Open Excel file"), code, NULL);
 	break;
+    case OPEN_DES:
+	file_selector(_("Open Wooldridge file"), code, NULL);
+	break;
     default:
 	errbox("Unrecognized data code");
 	break;

@@ -563,6 +563,8 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	datatype = GRETL_EXCEL;
     else if (code == OPEN_BOX)
 	datatype = GRETL_BOX_DATA;
+    else if (code == OPEN_DES)
+	datatype = GRETL_DES_DATA;
     else {
 	PRN *prn;	
 
@@ -586,6 +588,10 @@ void do_open_data (GtkWidget *w, gpointer data, int code)
 	do_open_csv_box(trydatfile, OPEN_BOX, 0);
 	return;
     }
+    else if (datatype == GRETL_DES_DATA) {
+	errbox("Sorry, not ready yet");
+	return;
+    }    
     else { /* native data */
 	PRN prn;
 	prn.buf = NULL; prn.fp = stderr;
