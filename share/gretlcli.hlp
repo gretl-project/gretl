@@ -224,6 +224,34 @@ stability is also quoted.  See Chapter 7 of Greene's Econometric Analysis for
 details.
 
 #
+data
+@Dataset
+Usage           data varlist
+
+Reads the variables in varlist from a database (gretl or RATS 4.0), which must
+have been opened previously using the "open" command.  In addition, a data
+frequency and sample range must be established using the the "setobs" and
+"smpl" commands prior to using this command.  Here is a full example:
+
+open macrodat.rat
+setobs 4 1959:1
+smpl ; 1999:4
+data GDP_JP GDP_UK
+
+These commands open a database named "macrodat.rat", establish a quarterly
+data set starting in the first quarter of 1959 and ending in the fourth
+quarter of 1999, and then import the series named "GDP_JP" and "GDP_UK".
+
+If the series to be read are of higher frequency than the working data set,
+you must specify a compaction method as below:
+
+data (compact=average) LHUR PUNEW
+
+The four available compaction methods are "average" (takes the mean of the
+high frequency observations), "last" (uses the last observation), "first" and
+"sum".  
+
+#
 delete
 @Dataset
 Usage:          delete
@@ -961,6 +989,10 @@ Opens a data file.  If a data file is already open, it is replaced by the
 newly opened one.  The program will try to detect the format of the data file
 ("native", CSV or BOX1) and treat it accordingly.
 
+This command can also be used to open a database (gretl or RATS 4.0) for
+reading, in which case it should be followed by the "data" command to extract
+particular series from the database.
+
 #
 panel
 @Dataset
@@ -1230,28 +1262,31 @@ Examples:
 smpl
 @Dataset
 Usage:         smpl startobs endobs
+               smpl +i -j
                smpl -o dummyvar
                smpl -o
                smpl -r <boolean expression>
 	       smpl full
 
 Resets the sample range.  In the first form startobs and endobs must be
-consistent with the periodicity of the data.  In the second form, dummyvar
-must be an indicator variable with values 0 or 1: the sample will be
-restricted to those observations where the indicator value is 1.  The third
-form, smpl -o, drops all observations for which values of one or more
-variables are missing.  The fourth form, using the -r flag, restricts the
-sample to cases satisfying the given expression.  The last form, "smpl full",
-restores the full data range.
-
+consistent with the periodicity of the data.  In the second form, the "+i" and
+"-j" (where i and j are integers) are taken as offsets relative to the
+existing sample range.  In the third form, dummyvar must be an indicator
+variable with values 0 or 1: the sample will be restricted to those
+observations where the indicator value is 1.  The fourth form, smpl -o, drops
+all observations for which values of one or more variables are missing.  The
+fifth form, using the -r flag, restricts the sample to cases satisfying the
+given expression.  The last form, "smpl full", restores the full data range.
 
     smpl 3 10                for data with periodicity 1
     smpl 1950 1990           for annual data with periodicity 1	
     smpl 1960.2 1982.4       for quarterly data
     smpl 1960.04 1985.10     for monthly data
-    smpl 1960.2 ;            to keep endobs unchanged
-    smpl ; 1984.3            to keep startobs unchanged
-    smpl -o dum1             to create a sample based on "dum1"
+    smpl 1960.2 ;            keep endobs unchanged
+    smpl ; 1984.3            keep startobs unchanged
+    smpl +1 -1               advance the starting obs by one, move the
+                             ending obs back by one
+    smpl -o dum1             create a sample based on "dum1"
     smpl -r sqft>1400        sample cases in which the variable sqft has
                              a value greater than 1400
 

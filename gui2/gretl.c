@@ -1819,7 +1819,7 @@ static char *slash_convert (char *str, int which)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-restore";
+    const char *suppress = "--no-init-file";
     FILE *fp;
 #ifdef G_OS_WIN32
     char renv[MAXLEN];
@@ -2027,10 +2027,9 @@ static void go_session (void)
 
 /* ........................................................... */
 
-static GtkWidget *image_button_new (GdkPixmap *pix, GdkBitmap *mask,
-				    void (*toolfunc)())
+static GtkWidget *image_button_new (GdkPixbuf *pix, void (*toolfunc)())
 {
-    GtkWidget *image = gtk_image_new_from_pixmap(pix, mask);
+    GtkWidget *image = gtk_image_new_from_pixbuf(pix);
     GtkWidget *button = gtk_button_new();
 
     gtk_widget_set_size_request(button, 26, 24);
@@ -2047,8 +2046,7 @@ static GtkWidget *image_button_new (GdkPixmap *pix, GdkBitmap *mask,
 static void make_toolbar (GtkWidget *w, GtkWidget *box)
 {
     GtkWidget *button, *hbox;
-    GdkPixmap *icon;
-    GdkBitmap *mask;
+    GdkPixbuf *icon;
     int i;
     const char *toolstrings[] = {
 	N_("launch calculator"), 
@@ -2129,9 +2127,8 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 #endif
 
 	toolstr = _(toolstrings[i]);
-	icon = gdk_pixmap_create_from_xpm_d(mdata->w->window, &mask, 
-					    NULL, toolxpm);
-	button = image_button_new(icon, mask, toolfunc);
+	icon = gdk_pixbuf_new_from_xpm_data((const char **) toolxpm);
+	button = image_button_new(icon, toolfunc);
 	gtk_toolbar_append_widget(GTK_TOOLBAR(gretl_toolbar), button,
 				  toolstr, NULL);
     }

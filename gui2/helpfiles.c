@@ -428,7 +428,7 @@ static windata_t *helpwin (int script, int english)
     }
 #endif
 
-    vwin = view_file(helpfile, 0, 0, 77, 400, helpcode, items);
+    vwin = view_file(helpfile, 0, 0, 80, 400, helpcode, items);
 
     if (!english) 
 	add_help_topics(vwin, script);

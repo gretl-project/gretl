@@ -1540,7 +1540,7 @@ void gretl_fork (const char *prog, const char *arg)
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rprofile[MAXLEN], Rdata[MAXLEN], line[MAXLEN];
-    const char *suppress = "--no-restore";
+    const char *suppress = "--no-init-file";
     FILE *fp;
     int i;
     char *s0, *s1, *s2;

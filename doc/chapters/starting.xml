@@ -175,7 +175,7 @@
 	  MS Windows, Windows will only allow you to paste the
 	  material into applications that <quote>understand</quote>
 	  RTF.  Thus you will be able to paste into MS Word, but not
-	  into <application>notepad</application>.</para>
+	  into notepad.</para>
       </footnote>  Alternatively, you can save the output to a (plain
       text) file then import the file into the target program.  When
       you finish a <application>gretl</application> session you are
@@ -215,14 +215,17 @@
 	      native <application>gretl</application> data file or
 	      import from other formats.  See <xref
 		linkend="datafiles"/>.</para></listitem>
+	  <listitem><para><guimenuitem>Append data</guimenuitem>: Add
+	      data to the current working data set, from a
+	      comma-separated or spreadsheet file.</para></listitem>
 	  <listitem><para><guimenuitem>Save data</guimenuitem>: Save
 	      the currently open native
 	      <application>gretl</application> data
 	      file.</para></listitem>
 	  <listitem><para><guimenuitem>Save data as</guimenuitem>:
 	      Write out the current data set in native format, with
-	      the option of using gzip data compression or storing the
-	      data in binary format. See <xref linkend="datafiles"/>.
+	      the option of using gzip data compression. See <xref
+		linkend="datafiles"/>.
 	    </para></listitem>
 	  <listitem><para><guimenuitem>Export data</guimenuitem>:
 	      Write out the current data set in Comma Separated Values
@@ -242,8 +245,6 @@
 	      Initialize the built-in spreadsheet for entering data
 	      manually.  See <xref
 		linkend="scratch"/>.</para></listitem>
-	  <listitem><para><guimenuitem>Save last graph</guimenuitem>:
-	      Just as it says.</para></listitem>
 	  <listitem><para><guimenuitem>View command log</guimenuitem>:
 	      Open a window containing a record of the commands
 	      executed so far.</para></listitem>
@@ -263,8 +264,9 @@
 	      selected various warning messages are suppressed.)
 	      Activate or suppress <application>gretl</application>'s
 	      messaging about the availability of program updates.
-	      Configure or turn on/off the main-window
-	      toolbar.</para></listitem>
+	      Configure or turn on/off the main-window toolbar. See
+	      <xref linkend="optarg"/> for
+	      details.</para></listitem>
           <listitem><para><guimenuitem>Exit</guimenuitem>: Quit the
 	      program. If expert mode is not selected you'll be
 	      prompted to save any unsaved work.</para></listitem>
@@ -340,9 +342,11 @@
 	  <listitem><para><guimenuitem>Edit values</guimenuitem>: pops
 	      up a spreadsheet window where you can make changes, add
 	      new variables, and extend the number of observations.
-	      (The data matrix must remain rectangular, with the same
-	      number of observations for each
-	      series.)</para></listitem>
+	      </para></listitem>
+	  <listitem><para><guimenuitem>Sort variables</guimenuitem>:
+	      Rearrange the listing of variables in the main window,
+	      either by ID number or alphabetically by name.
+	      </para></listitem>
 	  <listitem><para><guimenuitem>Graph specified
 		vars</guimenuitem>: Gives a choice between a time
 	      series plot, a regular X&ndash;Y scatter plot, an
@@ -351,16 +355,8 @@
 	      (i.e. with the points colored differently depending to
 	      the value of a given dummy variable) and boxplots.
 	      Serves up a dialog box where you specify the variables
-	      to graph.  The simplest way to fill out the dialog entry
-	      is to refer to the variables by their ID numbers (shown
-	      in the leftmost column of the main data window). Thus,
-	      having chosen the scatter plot option, an entry of
-	      <quote>2 3</quote> will plot variable number 2 (here,
-	      consumption) against variable number 3 (income). The
-	      last referenced variable will be on the
-	      <emphasis>x</emphasis> axis.  Gnuplot is used to render
-	      the graph (except for the boxplots
-	      option).</para></listitem>
+	      to graph. Gnuplot is used to render the graph (except
+	      for the boxplots option).</para></listitem>
 	  <listitem><para><guimenuitem>Multiple
 		scatterplots</guimenuitem>: Show a collection of (at
 	      most six) pairwise plots, with either a given variable
@@ -371,9 +367,9 @@
 	      <emphasis>x</emphasis>. May be useful for exploratory
 	      data analysis.</para></listitem>
 	  <listitem><para><guimenuitem>Read info</guimenuitem>,
-	      <guimenuitem>Edit header</guimenuitem>: <quote>Read
+	      <guimenuitem>Edit info</guimenuitem>: <quote>Read
 		info</quote> just displays the header file information
-	      for the current data file; <quote>Edit header</quote>
+	      for the current data file; <quote>Edit info</quote>
 	      allows you to make changes to it (if you have permission
 	      to do so).</para></listitem>
 	  <listitem><para><guimenuitem>Summary
@@ -424,14 +420,22 @@
 	  <listitem><para><guimenuitem>Set frequency,
 		startobs</guimenuitem>: Impose a particular
 	      interpretation of the data in terms of frequency and
-	      starting point.  This is primarily intended for use with
+	      starting point.  This may be useful with
 	      panel data; see <xref
 		linkend="panel"/>.</para>
-	  </listitem> <listitem><para><guimenuitem>Define, based on
+	  </listitem> 
+	  <listitem><para><guimenuitem>Compact data</guimenuitem>: For
+	      time-series data of higher than annual frequency, gives
+	      you the option of compacting the data to a lower
+	      frequency, using one of four compaction methods
+	      (average, sum, start of period or end of
+	      period).</para></listitem>
+	  <listitem><para><guimenuitem>Define, based on
 		dummy</guimenuitem>: Given a dummy (indicator)
 	      variable with values 0 or 1, this drops from the current
 	      sample all observations for which the dummy variable has
-	      value 0.</para></listitem>
+	      value 0.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Restrict, based on
 		criterion</guimenuitem>: Similar to the item above,
 	      except that you don't need a pre-defined variable: you
@@ -440,22 +444,32 @@
 	      observations satisfying that condition. See the help for
 	      <command>genr</command> in <xref
 	    linkend="cmdref"/> for details on the Boolean operators
-	      that can be used.</para></listitem>
+	      that can be used.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Drop all obs with missing
 		values</guimenuitem>: Drop from the current sample all
 	      observations for which at least one variable has a
 	      missing value (see <xref linkend="missing-data"/>).
-	    </para></listitem> <listitem><para><guimenuitem>Count
-		missing values</guimenuitem>: Give a report on
-	      observations where data values are missing. May be
-	      useful in examining a panel data set, where it's quite
-	      common to encounter missing values.</para></listitem>
+	    </para>
+	  </listitem> 
+	  <listitem><para><guimenuitem>Count missing
+		values</guimenuitem>: Give a report on observations
+	      where data values are missing. May be useful in
+	      examining a panel data set, where it's quite common to
+	      encounter missing values.</para>
+	  </listitem>
+	  <listitem><para><guimenuitem>Set missing value
+		code</guimenuitem>: Set a numerical value that will be
+	      interpreted as <quote>missing</quote> or <quote>not
+		available</quote>.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Add case markers</guimenuitem>:
 	      Prompts for the name of a text file containing
 	      <quote>case markers</quote> (short strings identifying
 	      the individual observations) and adds this information
 	      to the data set. See
-	      <xref linkend="datafiles"/>.</para></listitem>
+	      <xref linkend="datafiles"/>.</para>
+	  </listitem>
 	  <listitem><para><guimenuitem>Interpret as time 
 		series</guimenuitem>: Opens a dialog box which
 	      enables you to set a time-series interpretation for data
@@ -480,10 +494,11 @@
 	  <quote>active</quote> variable is set by highlighting it
 	  (clicking on its row) in the main data window.  Most options
 	  will be self-explanatory.  Note that you can rename a
-	  variable, and can edit its descriptive label. You can also
-	  <quote>Define a new variable</quote> via a formula (e.g.
-	  involving some function of one or more existing variables).
-	  For the syntax of such formulae, look at the online help for
+	  variable and can edit its descriptive label under
+	  <quote>Edit attributes</quote>. You can also <quote>Define a
+	    new variable</quote> via a formula (e.g. involving some
+	  function of one or more existing variables). For the syntax
+	  of such formulae, look at the online help for
 	  <quote>Generate variable syntax</quote> or see the
 	  <command>genr</command> command in 
 	  <xref linkend="cmdref"/>. One simple example:

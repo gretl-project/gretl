@@ -603,6 +603,56 @@
 
     </sect2>
 
+    <sect2 id="data"><title>data</title>
+
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>varlist</replaceable>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+
+      <para>Reads the variables in <replaceable>varlist</replaceable>
+	from a database (gretl or RATS 4.0), which must have been
+	opened previously using the <command>open</command> command.
+	In addition, a data frequency and sample range must be
+	established using the the <command>setobs</command> and
+	<command>smpl</command> commands prior to using this command.
+	Here is a full example:</para>
+
+      <programlisting>
+	open macrodat.rat
+	setobs 4 1959:1
+	smpl ; 1999:4
+	data GDP_JP GDP_UK</programlisting>
+
+      <para>These commands open a database named
+	<filename>macrodat.rat</filename>, establish a quarterly data
+	set starting in the first quarter of 1959 and ending in the
+	fourth quarter of 1999, and then import the series named
+	<varname>GDP_JP</varname> and
+	<varname>GDP_UK</varname>.</para>
+
+      <para>If the series to be read are of higher frequency than the
+	working data set, you must specify a compaction method as
+	below:</para>
+
+      <programlisting>
+	data (compact=average) LHUR PUNEW</programlisting>
+
+      <para>The four available compaction methods are
+	<quote>average</quote> (takes the mean of the high frequency
+	observations), <quote>last</quote> (uses the last
+	observation), <quote>first</quote> and <quote>sum</quote>.
+      </para> 
+
+    </sect2>    
+
     <sect2 id="delete"><title>delete</title>
 
       <para>
@@ -2230,25 +2280,32 @@
 
       </sect2>
 
-      <sect2 id="open"><title>open</title>
+    <sect2 id="open"><title>open</title>
 
-	<informaltable role="cmd" frame="none">
-	  <tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
-	    <tbody>
-	      <row>
-		<entry>Argument:</entry>
-		<entry><replaceable>datafile</replaceable>
-		</entry>
-	      </row>
-	    </tbody>
-	  </tgroup>
-	</informaltable>
+      <informaltable role="cmd" frame="none">
+	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
+	  <tbody>
+	    <row>
+	      <entry>Argument:</entry>
+	      <entry><replaceable>datafile</replaceable>
+	      </entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
 
-	<para>
-	  Opens a data file.  If a data file is already open, it is
-	  replaced by the newly opened one.  The program will try to
-	  detect the format of the data file (native, CSV or BOX1).
-	</para>
+      <para>
+	Opens a data file.  If a data file is already open, it is
+	replaced by the newly opened one.  The program will try to
+	detect the format of the data file (native, CSV or BOX1).
+      </para>
+
+      <para>
+	This command can also be used to open a database (gretl or
+	RATS 4.0) for reading, in which case it should be followed by
+	the <command>data</command> command to extract particular
+	series from the database.
+      </para>
 
       </sect2>
 
@@ -2888,6 +2945,13 @@
 	      </row>
 	      <row>
 		<entry></entry>
+		<entry><command>smpl</command>
+		  <command>+</command><replaceable>i</replaceable>
+		<command>-</command><replaceable>j</replaceable>
+		</entry>
+	      </row>
+	      <row>
+		<entry></entry>
 		<entry><command>smpl -o</command>
 		  <replaceable>dummyvar</replaceable>
 		</entry>
@@ -2902,24 +2966,32 @@
 		<entry><command>smpl -r</command>
 		  <replaceable>condition</replaceable>
 		</entry>
+	      </row>
+	      <row>
+		<entry></entry>
+		<entry><command>smpl full</command>
+		</entry>
 	      </row>	
 	    </tbody>
 	  </tgroup>
 	</informaltable>
 
 	<para>
-	  Resets the sample range.  In the first form
-	  <replaceable>startobs</replaceable> and
-	  <replaceable>endobs</replaceable> must be consistent with
-	  the periodicity of the data. In the second form
-	  <replaceable>dummyvar</replaceable> must be an indicator
-	  variable with values 0 or 1 at each observation; the sample
-	  will be restricted to observations where the value is 1.
-	  The third form, <command>smpl -o</command>, drops all
-	  observations for which values of one or more variables are
-	  missing.  The fourth form (<literal>-r</literal>) restricts
-	  the sample to observations that satisfy the given (Boolean)
-	  condition.
+	Resets the sample range.  In the first form
+	<replaceable>startobs</replaceable> and
+	<replaceable>endobs</replaceable> must be consistent with the
+	periodicity of the data.  In the second form, the integers
+	<replaceable>i</replaceable> and <replaceable>j</replaceable>
+	are taken as offsets relative to the existing sample range. In
+	the third form <replaceable>dummyvar</replaceable> must be an
+	indicator variable with values 0 or 1 at each observation; the
+	sample will be restricted to observations where the value is
+	1. The fourth form, <command>smpl -o</command>, drops all
+	observations for which values of one or more variables are
+	missing.  The fifth form (<literal>-r</literal>) restricts the
+	sample to observations that satisfy the given (Boolean)
+	condition.  The last form, <command>smpl full</command>,
+	restores the full data range.
 	</para>
 
 	<informaltable frame="none">
@@ -2957,6 +3029,13 @@
 		</entry>
 		<entry>keep <replaceable>startobs</replaceable>
 		  unchanged
+		</entry>
+	      </row>
+	      <row>
+		<entry><command>smpl +1 -1</command>
+		</entry>
+		<entry>advance the starting observation by one; move
+		the ending observation back one
 		</entry>
 	      </row>
 	      <row>

@@ -36,21 +36,25 @@
 
     <para>The toolbar at the botton left of the script window offers
       the following functions (left to right): (1) Save the file; (2)
-      Save the file under a specified name; (3) Execute the commands
-      in the file; (4) Copy selected text; (5) Paste the selected
-      text; (6) Find and replace text; (7) Undo the last Paste or
-      Replace action; (8) Help (if you place the cursor in a command
-      word and press the question mark you will get help on that
-      command); (9) Close the window.</para>
+      Save the file under a specified name; (3) Print the file (under
+      Windows or the gnome desktop only); (4) Execute the commands in
+      the file; (5) Copy selected text; (6) Paste the selected text;
+      (7) Find and replace text; (8) Undo the last Paste or Replace
+      action; (9) Help (if you place the cursor in a command word and
+      press the question mark you will get help on that command); (10)
+      Close the window.
+    </para>
 
-    <para>These functions (and in addition a Print option) may also be
-    found under the <quote>File</quote> and <quote>Edit</quote> menus
-    at the top of the script window.</para>
+    <para>These functions may also be found under the
+      <quote>File</quote> and <quote>Edit</quote> menus at the top of
+      the script window.
+    </para>
 
     <para>When you click the Execute icon or choose the <quote>File,
 	Run</quote> menu item all output is directed to a single
       window, where it can be edited, saved or copied to the
-      clipboard.</para>
+      clipboard.
+    </para>
 
     <para>To learn more about the possibilities of scripting, take a
       look at the <application>gretl</application> Help item
@@ -66,8 +70,8 @@
       <quote>File, Open command file, practice file</quote>  There you
       will find a listing of the files along with a brief description
       of the points they illustrate and the data they employ.  Open
-      any file and run it (<quote>File, Run</quote> in the resulting
-      script window) to see the output.</para>
+      any file and run it to see the output.
+    </para>
 
     <para>Note that long commands in a script can be broken over two
       or more lines, using backslash as a continuation
@@ -99,11 +103,11 @@
     </itemizedlist>
 
     <para>A further option is available for your computing
-      convenience. Under <application>gretl</application>'s File menu
-      you will find the item <quote>Gretl console</quote>.  This opens
-      up a window in which you can type commands and execute them one
-      by one (by pressing the Enter key) interactively.  This is
-      essentially the same as <application>gretlcli</application>'s
+      convenience. Under <application>gretl</application>'s Utilities
+      menu you will find the item <quote>Gretl console</quote>.  This
+      opens up a window in which you can type commands and execute
+      them one by one (by pressing the Enter key) interactively.  This
+      is essentially the same as <application>gretlcli</application>'s
       mode of operation, except that (a) the GUI is updated based on
       commands executed from the console, enabling you to work back
       and forth as you wish, and (b)
@@ -267,14 +271,17 @@
 	later, either</para>
 
       <itemizedlist>
-	<listitem><para>Start <application>gretl</application> then
-	    re-open the session file by going to the
-	    <quote>Open</quote> item under the Session menu,
-	    or</para></listitem>
-	<listitem><para>From the command line, type <command>gretl
+	<listitem>
+	  <para>Start <application>gretl</application> then re-open
+	    the session file by going to the <quote>Open</quote> item
+	    under the Session menu, or</para>
+	</listitem>
+	<listitem>
+	  <para>From the command line, type <command>gretl
 	      -r</command> <replaceable>sessionfile</replaceable>,
 	    where <replaceable>sessionfile</replaceable> is the name
-	    under which the session was saved.</para></listitem>
+	    under which the session was saved.</para>
+	</listitem>
       </itemizedlist>
 
     </sect2>
