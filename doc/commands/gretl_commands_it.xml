@@ -5112,7 +5112,7 @@
 	per il regressore <mathvar>j</mathvar> è definito come
 	<equation status="display" 
 	  tex="\[\frac{1}{1-R_j^2}\]"
-	  ascii="1/(1 - Rj^2"
+	  ascii="1/(1 - Rj^2)"
 	  graphic="vif"/> dove <mathvar>R<sub>j</sub></mathvar> è il
 	coefficiente di correlazione multipla tra il regressore
 	<mathvar>j</mathvar> e gli altri regressori. Il fattore ha un valore
