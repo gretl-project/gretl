@@ -967,6 +967,7 @@ static int get_signif (double *x, int n)
 	    }
 	    else break;
 	}
+	if (xx < 1.0) s--; /* don't count leading zero */
 	if (s > smax) smax = s;
 #ifdef PRN_DEBUG
 	fprintf(stderr, "get_signif: set smax = %d\n", smax);
@@ -1046,9 +1047,9 @@ static int bufprintnum (char *buf, double x, int signif, int width)
 	    if (signif > 4) signif = 4;
 #ifdef PRN_DEBUG
 	    fprintf(stderr, "got %d for leftvals, %d for signif: "
-		    "printing with %%.%dG\n", l, signif, signif);
+		    "printing with %%#.%dG\n", l, signif, signif);
 #endif
-	    sprintf(numstr, "%.*G", signif, x);
+	    sprintf(numstr, "%#.*G", signif, x); /* hash wanted? */
 	}
     }
 
