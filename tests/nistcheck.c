@@ -551,20 +551,42 @@ void print_nist_summary (int ntests, int missing, int modelerrs,
 # include <dlfcn.h>
 #endif
 
-int open_mpols_plugin (void **handle)
+void *get_mplsq (void **handle)
 {
+    void *funp;
+
 #ifdef WIN32
     *handle = LoadLibrary("plugins\\mp_ols.dll");
-    if (*handle == NULL) return 1;
+    if (*handle == NULL) return NULL;
 #else 
     *handle = dlopen("../plugin/.libs/mp_ols.so", RTLD_LAZY);
     if (*handle == NULL) {
-	fprintf(stderr, "%s\n", dlerror());
-	return 1;
+	fputs(dlerror(), stderr);
+	return NULL;
     }
 #endif /* WIN32 */
-    return 0;
+
+#ifdef WIN32
+    funp = GetProcAddress(*handle, "mplsq");
+#else
+    funp = dlsym(*handle, "mplsq");
+    if (funp == NULL) {
+	/* try munged version */
+	funp = dlsym(*handle, "_mplsq");
+	if (funp == NULL) {
+	    fputs(dlerror(), stderr);
+	}
+    }
+#endif   
+
+    if (funp == NULL) {
+	close_plugin(*handle);
+	*handle = NULL;
+    }
+
+    return funp;
 }
+
 
 int mp_vals_differ (double x, double y, double *diff)
      /* x is certified value, y is gretl MP value */
@@ -642,13 +664,7 @@ int run_gretl_mp_comparison (double ***pZ, DATAINFO *dinfo,
 
     if (getvals) gretlvals = gretl_mp_results_new (certvals->ncoeff);
 
-    if (open_mpols_plugin(&handle)) {
-        fprintf(stderr, "Couldn't access GMP plugin\n");
-	free(list);
-        return 1;
-    }
-
-    mplsq = get_plugin_function("mplsq", handle);
+    mplsq = get_mplsq(&handle);
     if (mplsq == NULL) {
         fprintf(stderr, "Couldn't load mplsq function\n");
         err = 1;

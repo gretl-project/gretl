@@ -61,9 +61,14 @@ static void qr_compute_r_squared (MODEL *pmod, const double *y, int n)
 	    pmod->rsq = 1.0 - (pmod->ess / pmod->tss);
 	    pmod->adjrsq = 1 - (pmod->ess * (n - 1) / den);
 	} else {
-	    pmod->rsq = corrrsq(n, y + t1, pmod->yhat + t1);
-	    pmod->adjrsq = 
-		1 - ((1 - pmod->rsq) * (n - 1) / pmod->dfd);
+	    double alt = corrrsq(n, y + t1, pmod->yhat + t1);
+
+	    if (na(alt)) {
+		pmod->rsq = pmod->adjrsq = NADBL;
+	    } else {
+		pmod->rsq = alt;
+		pmod->adjrsq = 1 - ((1 - alt) * (n - 1) / pmod->dfd);
+	    }
 	}
 	pmod->fstt = (pmod->tss - pmod->ess) * pmod->dfd / 
 	    (pmod->ess * pmod->dfn);

@@ -68,9 +68,9 @@ double _corr (int n, const double *zx, const double *zy)
         is zero 
 */
 {
-    register int i;
-    int nn;
+    int i, nn;
     double sx, sy, sxx, syy, sxy, den, zxi, zyi, zxbar, zybar;
+    double cval = 0.0;
 
     if (n == 0) return NADBL;
     if (_isconst(0, n-1, zx) || _isconst(0, n-1, zy)) return NADBL;
@@ -90,8 +90,8 @@ double _corr (int n, const double *zx, const double *zy)
 
     if (nn == 0) return NADBL;
 
-    zxbar = sx/nn;
-    zybar = sy/nn;
+    zxbar = sx / nn;
+    zybar = sy / nn;
     sxx = syy = sxy = 0.0;
 
     for (i=0; i<n; ++i) {
@@ -100,17 +100,18 @@ double _corr (int n, const double *zx, const double *zy)
         if (na(zxi) || na(zyi)) continue;
         sx = zxi - zxbar;
         sy = zyi - zybar;
-        sxx = sxx + (sx*sx);
-        syy = syy + (sy*sy); 
-        sxy = sxy + (sx*sy);
+	sxx += sx * sx;
+	syy += sy * sy;
+	sxy += sx * sy;
     }
 
     if (sxy != 0.0) {
         den = sxx * syy;
-        if (den > 0.0) return sxy/sqrt(den);
-        else return NADBL;
+        if (den > 0.0) cval = sxy / sqrt(den);
+        else cval = NADBL;
     }
-    else return 0.0;
+
+    return cval;
 }
 
 /* .......................................................  */
@@ -1194,6 +1195,7 @@ void _init_model (MODEL *pmod, const DATAINFO *pdinfo)
     pmod->ifc = 0;
     pmod->rho_in = 0.0;
     pmod->aux = AUX_NONE;
+    pmod->correct = 0;
     *gretl_msg = '\0';
     
     for (i=0; i<8; i++) {

@@ -301,7 +301,8 @@ static void fix_wls_values (MODEL *pmod, double **Z)
  * @pZ: pointer to data matrix.
  * @pdinfo: information on the data set.
  * @ci: command index (see commands.h)
- * @opt: option flag: If = 1, then residuals, dw stat and rhohat are obtained.
+ * @opt: option flag: If = 1, then residuals, dw stat and rhohat are obtained,
+ *                    If = 2, then besides the above, force use of Cholesky decomp
  * @rho: coefficient for rho-differencing the data.
  *
  * Computes least squares estimates of the model specified by @list,
@@ -425,9 +426,13 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
         goto lsq_abort; 
     }
 
-    if (getenv("GRETL_USE_QR")) set_use_qr(1);
+    if (getenv("GRETL_USE_QR")) {
+	char *s = getenv("GRETL_USE_QR");
 
-    if (use_qr) {
+	if (*s && *s != '0') set_use_qr(1);
+    }
+
+    if (use_qr && opt != 2) { /* bodge */
 	mdl.rho = rho;
 	gretl_qr_regress(&mdl, (const double **) *pZ, pdinfo->n);
     } else {
@@ -1219,7 +1224,8 @@ double corrrsq (int nobs, const double *y, const double *yhat)
     double x;
 
     x = _corr(nobs, y, yhat);
-    return x * x;
+    if (na(x)) return NADBL;
+    else return x * x;
 }
 
 /* ........................................................... */

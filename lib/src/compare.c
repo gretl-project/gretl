@@ -1272,7 +1272,7 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
     if (!err) {
 	_init_model(&cum_mod, pdinfo);
 	for (j=0; j<n_est; j++) {
-	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 1, 0.0);
+	    cum_mod = lsq(pmod->list, pZ, pdinfo, OLS, 2, 0.0);
 	    err = cum_mod.errcode;
 	    if (err) {
 		errmsg(err, prn);
@@ -1313,8 +1313,8 @@ int cusum_test (MODEL *pmod, double ***pZ, DATAINFO *pdinfo, PRN *prn,
 	sigma = sqrt(sigma);
 	pprintf(prn, _("sigmahat                 = %g\n\n"), sigma);
 
-	xx = 0.948*sqrt((double) (T-K));
-	yy = 2.0*xx/(T-K);
+	xx = 0.948 * sqrt((double) (T-K));
+	yy = 2.0 * xx / (T-K);
 
 	pputs(prn, _("Cumulated sum of scaled residuals\n"
 		"('*' indicates a value outside of 95%% confidence band):\n\n"));

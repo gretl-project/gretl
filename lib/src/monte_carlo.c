@@ -628,48 +628,50 @@ void print_loop_results (LOOPSET *ploop, const DATAINFO *pdinfo,
     int i, j;
     MODEL *pmod = NULL;
 
-    if (ploop->lvar && ploop->lvar != INDEXNUM) 
+    if (ploop->lvar && ploop->lvar != INDEXNUM) {
 	pprintf(prn, _("\nNumber of iterations: %d\n\n"), ploop->ntimes);
+    }
 
     for (i=0; i<ploop->ncmds; i++) {
-	/*  pprintf(prn, "loop command %d: %s\n\n", i+1, ploop->lines[i]); */
-	if (ploop->lvar) {
-	    if (ploop->ci[i] == OLS) {
-		double dfadj, sqrta;
+#ifdef LOOP_DEBUG
+	fprintf(stderr, "loop command %d (i=%d): %s\n\n", i+1, i, ploop->lines[i]);
+#endif
+	if (ploop->lvar && ploop->ci[i] == OLS) {
+	    double dfadj, sqrta;
 
-		pmod = ploop->models[ploop->next_model];
+	    pmod = ploop->models[ploop->next_model];
 
-		*model_count += 1;
-		pmod->ID = *model_count;
+	    *model_count += 1;
+	    pmod->ID = *model_count;
 
-		/* std. errors are asymptotic; degrees of freedom
-		 correction is not wanted */
-		dfadj = (double) pmod->dfd / pmod->nobs;
-		sqrta = sqrt(dfadj);
-		pmod->sigma = sqrt((1.0 / pmod->nobs) * pmod->ess);
-		for (j=0; j<pmod->ncoeff; j++) {
-		    pmod->sderr[j] *= sqrta;
-		}
-		printmodel(pmod, pdinfo, prn);
-
-		if (pmod->correct) {
-		    /* bodge: coding for -o flag, for covariance matrix */
-		    if (pmod->vcv) {
-			int nc = pmod->ncoeff;
-			int nt = nc * (nc + 1) / 2;
-
-			for (i=0; i<nt; i++) pmod->vcv[i] *= dfadj;
-		    } else {
-			makevcv(pmod);
-		    }
-		    outcovmx(pmod, pdinfo, 0, prn);
-		}
-
-		ploop->next_model += 1;	    
-		continue;
+	    /* std. errors are asymptotic; degrees of freedom
+	       correction is not wanted */
+	    dfadj = (double) pmod->dfd / pmod->nobs;
+	    sqrta = sqrt(dfadj);
+	    pmod->sigma = sqrt((1.0 / pmod->nobs) * pmod->ess);
+	    for (j=0; j<pmod->ncoeff; j++) {
+		pmod->sderr[j] *= sqrta;
 	    }
+	    printmodel(pmod, pdinfo, prn);
+
+	    if (pmod->correct) {
+		/* bodge: coding for -o flag, for covariance matrix */
+		if (pmod->vcv) {
+		    int nc = pmod->ncoeff;
+		    int nt = nc * (nc + 1) / 2;
+
+		    for (j=0; j<nt; j++) {
+			pmod->vcv[j] *= dfadj;
+		    }
+		} else {
+		    makevcv(pmod);
+		}
+		outcovmx(pmod, pdinfo, 0, prn);
+	    }
+
+	    ploop->next_model += 1;	    
 	}
-	if (ploop->ci[i] == OLS || ploop->ci[i] == LAD ||
+	else if (ploop->ci[i] == OLS || ploop->ci[i] == LAD ||
 	    ploop->ci[i] == HSK || ploop->ci[i] == HCCM) {
 	    print_loop_model(&ploop->lmodels[ploop->next_model], 
 			     ploop->ntimes, pdinfo, prn);
