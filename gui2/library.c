@@ -915,7 +915,7 @@ void open_info (gpointer data, guint edit, GtkWidget *widget)
 
 void gui_errmsg (const int errcode)
 {
-    char *msg = get_gretl_errmsg();
+    const char *msg = get_gretl_errmsg();
 
     if (*msg != '\0') {
 	errbox(msg);

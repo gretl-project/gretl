@@ -1369,6 +1369,20 @@ static void print_whites_results (const MODEL *pmod, PRN *prn)
     }
 }
 
+static void print_ll (const MODEL *pmod, PRN *prn)
+{
+    if (PLAIN_FORMAT(prn->format)) {
+	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+    } else if (RTF_FORMAT(prn->format)) {
+	pprintf(prn, RTFTAB "%s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+    } else if (TEX_FORMAT(prn->format)) {
+	char xstr[32];
+
+	tex_dcolumn_double(pmod->lnL, xstr);
+	pprintf(prn, "%s & %s \\\\\n", I_("Log-likelihood"), xstr);
+    }
+}
+
 /**
  * printmodel:
  * @pmod: pointer to gretl model.
@@ -1402,17 +1416,17 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	}
     }
 
-    print_model_heading (pmod, pdinfo, prn);
+    print_model_heading(pmod, pdinfo, prn);
 
-    print_coeff_table_start (pmod, prn, is_discrete);
+    print_coeff_table_start(pmod, prn, is_discrete);
 
-    gotnan = print_coefficients (pmod, pdinfo, prn);
+    gotnan = print_coefficients(pmod, pdinfo, prn);
 
     if (pmod->ci == AR) {
-	print_rho_terms (pmod, prn); 
+	print_rho_terms(pmod, prn); 
     }
 
-    print_coeff_table_end (prn);
+    print_coeff_table_end(prn);
 
     if (pmod->aux == AUX_ARCH || pmod->aux == AUX_ADF || 
 	pmod->aux == AUX_RESET || pmod->aux == AUX_SCR ||
@@ -1493,14 +1507,18 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	|| pmod->ci == ARMA || pmod->ci == LOGISTIC || pmod->ci == TOBIT
 	|| (pmod->ci == WLS && gretl_model_get_int(pmod, "wt_dummy"))) {
 	print_middle_table_start(prn);
-	if (pmod->ci != VAR) depvarstats(pmod, prn);
+	if (pmod->ci != VAR) {
+	    depvarstats(pmod, prn);
+	}
 	if (essline(pmod, prn, 0)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
 
 	rsqline(pmod, prn);
-	if (pmod->ci != NLS) Fline(pmod, prn);
+	if (pmod->ci != NLS) {
+	    Fline(pmod, prn);
+	}
 
 	if (dataset_is_time_series(pdinfo)) {
 	    if (pmod->ci == OLS || pmod->ci == VAR ||
@@ -1516,11 +1534,15 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	    }
 	}
 
-	if (pmod->ci == ARMA) print_arma_stats(pmod, prn);
+	if (pmod->ci == ARMA) {
+	    print_arma_stats(pmod, prn);
+	}
 
 	print_middle_table_end(prn);
 
-	if (pmod->ci == ARMA) print_arma_roots(pmod, prn);
+	if (pmod->ci == ARMA) {
+	    print_arma_roots(pmod, prn);
+	}
 
 	if (pmod->ci == TSLS && PLAIN_FORMAT(prn->format)) {
 	    r_squared_message(prn);
@@ -1532,24 +1554,34 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
 	weighted_stats_message(prn);
 	print_middle_table_start(prn);
+
 	if (essline(pmod, prn, 1)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
+
 	rsqline(pmod, prn);
 	Fline(pmod, prn);
+
 	if (dataset_is_time_series(pdinfo)) {
 	    dwline(pmod, prn);
 	}
+
 	print_middle_table_end(prn);
 
 	original_stats_message(prn);
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
+
 	if (essline(pmod, prn, 0)) {
 	    print_middle_table_end(prn);
 	    goto close_format;
 	}
+
+	if (pmod->ci == WLS && gretl_model_get_int(pmod, "iters")) {
+	    print_ll(pmod, prn);
+	}
+
 	print_middle_table_end(prn);
     }
 

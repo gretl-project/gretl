@@ -912,7 +912,7 @@ static double max_coeff_diff (const MODEL *pmod, const double *bvec)
 
 static double 
 pooled_lm_test (double s2, const double *uvar, int nobs, 
-		int nunits, int *unit_obs, PRN *prn)
+		int nunits, const int *unit_obs, PRN *prn)
 {
     double x2, s2h = 0.0;
     int i;
@@ -930,11 +930,52 @@ pooled_lm_test (double s2, const double *uvar, int nobs,
     return x2;
 }
 
+#define LN_2_PI (log(2.0 * M_PI))
+
 static double pooled_ll (const MODEL *pmod)
 {
     double n = pmod->nobs;
 
-    return -(n / 2.0) * (1.0 + log(2.0*M_PI) - log(n) + log(pmod->ess));
+    return -(n / 2.0) * (1.0 + LN_2_PI - log(n) + log(pmod->ess));
+}
+
+static double real_ll (const MODEL *pmod, const DATAINFO *pdinfo,
+		       const double *uvar, int nunits, int T,
+		       const int *unit_obs)
+{
+    double ll = -(pmod->nobs / 2.0) * LN_2_PI;
+    double umult;
+    int i, t, bigt;
+
+    for (i=0; i<nunits; i++) {
+	if (unit_obs[i] > 0) {
+	    ll -= (unit_obs[i] / 2.0) * log(uvar[i]);
+	}
+    }
+
+    if (pdinfo->time_series == STACKED_TIME_SERIES) {
+	for (i=0; i<nunits; i++) {
+	    umult = 1.0 / (2.0 * uvar[i]);
+	    for (t=0; t<T; t++) {
+		bigt = i * T + t;
+		if (!na(pmod->uhat[bigt])) {
+		    ll -= umult * pmod->uhat[bigt] * pmod->uhat[bigt];
+		}
+	    }
+	}
+    } else {
+	for (t=0; t<T; t++) {
+	    for (i=0; i<nunits; i++) {
+		umult = 1.0 / (2.0 * uvar[i]);
+		bigt = t * nunits + i;
+		if (!na(pmod->uhat[bigt])) {
+		    ll -= umult * pmod->uhat[bigt] * pmod->uhat[bigt];
+		}
+	    }
+	}
+    }
+
+    return ll;
 }
 
 #define SMALLDIFF 0.0001
@@ -955,7 +996,8 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     int i, iter = 0;
 
     if (opt & OPT_T) {
-	wlsopt = OPT_N;
+	/* iterating: no degrees-of-freedom correction */
+	wlsopt = OPT_N; 
     } else {
 	wlsopt = OPT_NONE;
     }
@@ -1020,7 +1062,7 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
     }
 
     /* if wanted, iterate to ML solution; otherwise just do
-       one-step estimation 
+       one-step FGLS estimation 
     */
 
     while (diff > SMALLDIFF) {
@@ -1060,9 +1102,8 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	if (opt & OPT_T) {
 	    diff = max_coeff_diff(&mdl, bvec);
 	    if (opt & OPT_V && iter == 1) {
-		pprintf(prn, "\nFGLS error variance = %g\n",
+		pprintf(prn, "\nFGLS pooled error variance = %g\n",
 			mdl.ess / mdl.nobs);
-		pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
 	    }
 	} else {
 	    break;
@@ -1077,9 +1118,12 @@ MODEL panel_wls_by_unit (int *list, double ***pZ, DATAINFO *pdinfo,
 	}
 	mdl.nwt = 0;
 	if (opt & OPT_T) {
-	    pprintf(prn, "ML error variance = %g\n", mdl.ess / mdl.nobs);
 	    pooled_lm_test(s2, uvar, mdl.nobs, nunits, unit_obs, prn);
-	    pprintf(prn, "log-likelihood = %g\n", pooled_ll(&mdl));
+	    unit_error_variances(uvar, &mdl, pdinfo, nunits, T, unit_obs);
+	    mdl.lnL = real_ll(&mdl, pdinfo, uvar, nunits, T, unit_obs);
+	    if (opt & OPT_V) {
+		pputc(prn, '\n');
+	    }
 	}
     }    
 
