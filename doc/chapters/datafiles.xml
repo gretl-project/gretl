@@ -2,71 +2,61 @@
 
   <chapter id="datafiles"><title>Data files</title>
 
-    <sect1 id="native-format"><title>Native format</title>
+  <sect1 id="native-format"><title>Native format</title>
 
-      <para><application>gretl</application> has its own format for
-      data files.  Most users will probably not want to read or write
-      such files outside of <application>gretl</application> itself,
-      but occasionally this may be useful and full details on the file
+    <para><application>gretl</application> has its own format for data
+      files.  Most users will probably not want to read or write such
+      files outside of <application>gretl</application> itself, but
+      occasionally this may be useful and full details on the file
       formats are given in <xref linkend="app-datafile"/>.</para>
 
-    </sect1>
+  </sect1>
 
-    <sect1 id="other-formats"><title>Other data file formats</title>
+  <sect1 id="other-formats"><title>Other data file formats</title>
 
-      <para>
-	<application>gretl</application> will read various other data
-	formats.
-      </para>
+    <para>
+      <application>gretl</application> will read various other data
+      formats.
+    </para>
 
-      <itemizedlist>
+    <itemizedlist>
   
-	<listitem><para>Comma-Separated Values (CSV) files.  These can
-	    be brought in using <application>gretl</application>'s
-	    <quote>File, Open Data, Import CSV&hellip;</quote> menu
-	    item, or the <command>import</command> script
-	    command.</para>
+      <listitem><para>Comma-Separated Values (CSV) files.  These can
+	  be brought in using <application>gretl</application>'s
+	  <quote>File, Open Data, Import CSV&hellip;</quote> menu
+	  item, or the <command>import</command> script command.  For
+	  details on what <application>gretl</application> expects of
+	  a CSV file, see
+	  <xref linkend="scratch"/>.</para>
+      </listitem>
+      <listitem><para>BOX1 format data.  Large amounts of micro data
+	  are available (for free) in this format via the <ulink
+	    url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data 
+	    Extraction Service</ulink> of the US Bureau of the Census.
+	  BOX1 data may be imported using the <quote>File, Open Data,
+	    Import BOX&hellip;</quote> menu item or the
+	  <command>import -o</command> script command.</para>
+      </listitem>
 
-	<para>The program expects a file that has (a) valid variable
-	    names (FIXME) on the first row and (b) a rectangular block of data
-	    beneath. Optionally the first column may contain strings
-	    such as dates (8 characters max.).  Such a column should be
-	    headed <quote><command>obs</command></quote> or
-	    <quote><command>date</command></quote>, or its first row
-	    cell may be left blank. There should be <emphasis>exactly
-	      one</emphasis> non-data row at the top of the file.  See
-	    also
-	    <xref linkend="scratch"/> below.</para></listitem>
-  
-	<listitem><para>BOX1 format data.  Large amounts of micro data
-	    are available (for free) in this format via the <ulink
-	      url="http://www.census.gov/ftp/pub/DES/www/welcome.html">Data 
-	      Extraction Service</ulink> of the US Bureau of the
-	    Census. BOX1 data may be imported using the <quote>File,
-	      Open Data, Import BOX&hellip;</quote> menu item or the
-	    <command>import -o</command> script command.</para>
-	</listitem>
+    </itemizedlist>
 
-      </itemizedlist>
+    <para>When you import data from either of these two formats,
+      <application>gretl</application> opens a
+      <quote>diagnostic</quote> window, reporting on its progress in
+      reading the data.  If you encounter a problem with ill-formatted
+      data, the messages in this window should give you a handle on
+      fixing the problem.</para>
 
-      <para>When you import data from either of these two formats,
-	<application>gretl</application> opens a
-	<quote>diagnostic</quote> window, reporting on its progress in
-	reading the data.  If you encounter a problem with
-	ill-formatted data, the messages in this window should give
-	you a handle on fixing the problem.</para>
+    <para>For the convenience of anyone wanting to carry out more
+      complex data analysis, <application>gretl</application> has a
+      facility for writing out data in the native formats of GNU R and
+      GNU Octave (see <xref linkend="app-advanced"/>).  In the GUI
+      client this option is found under the <quote>File</quote> menu;
+      in the command-line client use the <command>store</command>
+      command with the flag <command>-r</command> (R) or
+      <command>-m</command> (Octave).</para>
 
-      <para>For the convenience of anyone wanting to carry out more
-	complex data analysis, <application>gretl</application> has a
-	facility for writing out data in the native formats of GNU R
-	and GNU Octave (see <xref linkend="app-advanced"/>).  In the GUI
-	client this option is found under the <quote>File</quote>
-	menu; in the command-line client use the
-	<command>store</command> command with the flag
-	<command>-r</command> (R) or <command>-m</command>
-	(Octave).</para>
-
-    </sect1>
+  </sect1>
 
   <sect1 id="dbase"><title>Binary databases</title>
   
@@ -77,13 +67,13 @@
       program's workspace.  A database can contain series of mixed
       frequencies and sample ranges.  You open the database and select
       series to import into the working data set.  You can then save
-      those series in a native format data file if you wish.
-      Databases can be accessed via <application>gretl</application>'s
-      menu item <quote>File, Browse databases</quote>.</para>
+      those series in a native format data file if you wish. Databases
+      can be accessed via <application>gretl</application>'s menu item
+      <quote>File, Browse databases</quote>.</para>
 
     <para>For details on the format of
-    <application>gretl</application> databases, see <xref
-    linkend="app-datafile"/>.</para>
+      <application>gretl</application> databases, see <xref
+	linkend="app-datafile"/>.</para>
   
     <sect2 id="online-data"><title>Online access to databases</title>
 
@@ -113,53 +103,64 @@
 	    page</ulink> for details and updates on available
 	  data.</para></tip>
 
-      </sect2>
-    </sect1>
+    </sect2>
+  </sect1>
 
   <sect1 id="scratch"><title>Creating a data file from scratch</title>
 
     <para>There are four ways to do this: (1) Use your favorite
-    spreadsheet to establish the data file, save it in Comma Separated
-    Values format, then use <application>gretl</application>'s
-    <quote>Import CSV</quote> option. (2) Use
-    <application>gretl</application>'s built-in spreadsheet. (3)
-    Select data series from a suitable database. (4) Use your favorite
-    text editor or other software tools to create the data file
-    independently.</para>
+      spreadsheet to establish the data file, save it in Comma
+      Separated Values format, then use
+      <application>gretl</application>'s <quote>Import CSV</quote>
+      option. (2) Use <application>gretl</application>'s built-in
+      spreadsheet. (3) Select data series from a suitable database.
+      (4) Use your favorite text editor or other software tools to
+      create the data file independently.</para>
 
     <para>Here are a few comments and details on these methods.</para>
 
     <sect2><title>Using a separate spreadsheet</title>
 
       <para>This may be a good choice if you're comfortable with a
-	particular spreadsheet. Of course if you use a spreadsheet
-	you're able to carry out various transformations of the
-	<quote>raw</quote> data with ease (adding things up, taking
-	percentages or whatever): note, however, that you can also do
-	this sort of thing easily &mdash; perhaps more
-	easily &mdash; within <application>gretl</application>, by using
-	the tools under the <quote>Data, Add variables</quote> menu
-	and/or <quote>Variable, define new variable</quote>.</para>
+	particular spreadsheet.  If you take this option, please pay
+	attention to the specification of what your spreadsheet should
+	look like before you save it in CSV format.
+	<application>gretl</application> expects a file that has (a)
+	valid variable names on the first row and (b) a rectangular
+	block of data beneath. A valid variable name is of 8
+	characters maximum; starts with a letter; and contains nothing
+	but letters, numbers and the underscore character,
+	<literal>_</literal>.  Optionally the first column may contain
+	strings such as dates (8 characters maximum).  Such a column
+	should be headed <quote><command>obs</command></quote> or
+	<quote><command>date</command></quote>, or its first row cell
+	may be left blank. There should be <emphasis>exactly
+	  one</emphasis> non-data row at the top of the file.
+      </para>
 
-	<para>If you take this option, please pay attention to the
-	  specification of what your spreadsheet should look like
-	  before you save it in CSV format (<xref linkend="other-formats"/>).
-	  </para>
-  
-	<para>You may wish to establish a
-	  <application>gretl</application> data set piece by piece,
-	  via incremental importation of CSV data.  This is supported
-	  as follows. When you have a datafile open already, and then
-	  select the menu item <quote>File, Open data, import
+      <para>If you use a spreadsheet to prepare your data you're able
+	to carry out various transformations of the <quote>raw</quote>
+	data with ease (adding things up, taking percentages or
+	whatever): note, however, that you can also do this sort of
+	thing easily &mdash; perhaps more easily &mdash; within
+	<application>gretl</application>, by using the tools under the
+	<quote>Data, Add variables</quote> menu and/or
+	<quote>Variable, define new variable</quote>.</para>
+
+      <para>You may wish to establish a
+	<application>gretl</application> data set piece by piece, via
+	incremental importation of CSV data.  This is supported as
+	follows. When you have a datafile open already, and then
+	select the menu item <quote>File, Open data, import
 	  CSV&hellip;</quote> the program checks for conformability
-	  between the existing data set and the new import.  If the
-	  data frequency, starting observation and ending observation
-	  all seem to match, the new data are merged into the data
-	  set.  If not, an error message is printed and the import is
-	  refused.  If you want to import the new data <emphasis>in
-	  place of</emphasis> the existing data set, you can achieve
-	  this by first selecting <quote>File, Clear data
-	  set</quote>.</para>
+	between the existing data set and the new import.  If the data
+	frequency, starting observation and ending observation all
+	seem to match, the new data are merged into the data set.  If
+	not, an error message is printed and the import is refused. If
+	you want to import the new data <emphasis>in place
+	  of</emphasis> the existing data set, you can achieve this by
+	first selecting <quote>File, Clear data set</quote>.
+      </para>
 
     </sect2>
 
@@ -179,16 +180,15 @@
 	insert an observation at the selected point (move the data
 	down and insert a blank row.)</para>
   
-	<para>Once you have entered data into the spreadsheet you
-	  import these into <application>gretl</application>'s
-	  workspace using the spreadsheet's <quote>Apply
-	    changes</quote> button.</para>
+      <para>Once you have entered data into the spreadsheet you import
+	these into <application>gretl</application>'s workspace using
+	the spreadsheet's <quote>Apply changes</quote> button.</para>
 
-	<para>Please note that <application>gretl</application>'s
-	  spreadsheet is quite basic and has no support for functions
-	  or formulas.  Data transformations are done via the
-	  <quote>Data</quote> or <quote>Variable</quote> menus in the
-	  main <application>gretl</application> window.</para>
+      <para>Please note that <application>gretl</application>'s
+	spreadsheet is quite basic and has no support for functions or
+	formulas.  Data transformations are done via the
+	<quote>Data</quote> or <quote>Variable</quote> menus in the
+	main <application>gretl</application> window.</para>
     </sect2>
 
     <sect2><title>Selecting from a database</title>
@@ -209,12 +209,12 @@
 	distribution.</para>
 	
       <para>You won't find anything under <quote>RATS 4</quote> unless
-	  you have purchased RATS data<footnote><para>See <ulink
-		url="http://www.estima.com/">www.estima.com</ulink></para>
+	you have purchased RATS data<footnote><para>See <ulink
+	      url="http://www.estima.com/">www.estima.com</ulink></para>
 	  </footnote>.  If you do possess RATS data you should go into
-	  <application>gretl</application>'s <quote>File, Preferences,
-	    General</quote> dialog, select the Databases tab, and fill
-	  in the correct path to your RATS files.</para> 
+	<application>gretl</application>'s <quote>File, Preferences,
+	  General</quote> dialog, select the Databases tab, and fill
+	in the correct path to your RATS files.</para> 
   
       <para>If your computer is connected to the internet you should
 	find several databases (at Wake Forest University) under
@@ -236,14 +236,14 @@
     <sect2><title>Creating a data file independently</title>
 
       <para>It is possible to create a
-      <application>gretl</application> data file using a text editor
-      or software tools such as <application>awk</application>,
-      <application>sed</application> or
-      <application>perl</application>.  This may be a good choice if
-      you have large amounts of data already in machine readable form.
-	You will, of course, need to study the
-      <application>gretl</application> data formats (XML format or
-      <quote>traditional</quote> format) as described in 
+	<application>gretl</application> data file using a text editor
+	or software tools such as <application>awk</application>,
+	<application>sed</application> or
+	<application>perl</application>.  This may be a good choice if
+	you have large amounts of data already in machine readable
+	form. You will, of course, need to study the
+	<application>gretl</application> data formats (XML format or
+	<quote>traditional</quote> format) as described in 
 	<xref linkend="datafiles"/>.</para>
 
     </sect2>
@@ -268,7 +268,7 @@
 
     </sect2>
 
-    </sect1>
+  </sect1>
 
   <sect1 id="missing-data"><title>Missing data values</title>
 
@@ -287,9 +287,10 @@
 
     <itemizedlist>
       <listitem><para>In calculating descriptive statistics (mean,
-	  standard deviation, etc.) under the <command>summary</command>
-	  command, missing values are simply skipped and the sample
-	  size adjusted appropriately.</para></listitem>
+	  standard deviation, etc.) under the
+	  <command>summary</command> command, missing values are
+	  simply skipped and the sample size adjusted
+	  appropriately.</para></listitem>
       <listitem><para>In running regressions
 	  <application>gretl</application> first adjusts the beginning
 	  and end of the sample range, truncating the sample if need
@@ -309,8 +310,9 @@
       a cross-sectional data set it may be possible to move the
       offending observations to the beginning or the end of the file,
       but obviously this won't do with time series data.  For those
-      who know what they are doing (!), the <command>misszero</command> function
-      is provided under the <command>genr</command> command.  By doing
+      who know what they are doing (!), the
+      <command>misszero</command> function is provided under the
+      <command>genr</command> command.  By doing
     </para> 
 
     <para><command>genr foo = misszero(bar)</command>
@@ -321,13 +323,13 @@
       values become zeros.  Then you can use carefully constructed
       dummy variables to, in effect, drop the missing observations
       from the regression while retaining the surrounding sample
-      range.<footnote><para><command>genr</command> also offers the inverse
-      function to <command>misszero</command>, namely
-      <command>zeromiss</command>, which replaces zeros in a given
-      series with the missing observation code.</para>
+      range.<footnote><para><command>genr</command> also offers the
+	  inverse function to <command>misszero</command>, namely
+	  <command>zeromiss</command>, which replaces zeros in a given
+	  series with the missing observation code.</para>
       </footnote></para>
 
-    </sect1>
+  </sect1>
 
 
   </chapter>
@@ -335,8 +337,9 @@
 <!-- Keep this comment at the end of the file
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
-mode: sgml
+mode: xml
 sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->
+
 

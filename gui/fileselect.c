@@ -398,6 +398,8 @@ void file_selector (char *msg, int action, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
+	if (action == SAVE_SCRIPT)
+	    strcpy(scriptfile, fname);
     }
 }
 
@@ -538,6 +540,8 @@ static void filesel_callback (GtkWidget *w, gpointer data)
 		gtk_editable_get_chars(GTK_EDITABLE(editwin), 0, -1));
 	fclose(fp);
 	infobox("File saved OK");
+	if (action == SAVE_SCRIPT)
+	    strcpy(scriptfile, fname);
     }
     gtk_widget_destroy(GTK_WIDGET(fs));    
 }
@@ -613,12 +617,15 @@ void file_selector (char *msg, int action, gpointer data)
     if (!gotdir)
 	gtk_icon_file_selection_open_dir(GTK_ICON_FILESEL(filesel), startdir);
 
+    gtk_signal_connect(GTK_OBJECT(GTK_ICON_FILESEL(filesel)), "destroy",
+		       gtk_main_quit, NULL);
     gtk_signal_connect_object(GTK_OBJECT(GTK_ICON_FILESEL
 					 (filesel)->cancel_button),
 			      "clicked", (GtkSignalFunc) gtk_widget_destroy,
 			      GTK_OBJECT (filesel));
 
     gtk_widget_show(filesel);
+    gtk_main(); /* make file selector modal */
 }
 
 #endif /* end of non-MS Windows code */

@@ -655,6 +655,7 @@ int main (int argc, char *argv[])
 	case GRETL_SCRIPT:
 	    gui_get_data = 1;
 	    get_runfile(paths.datfile);
+	    paths.datfile[0] = '\0';
 	    break;
 	}
 	if (ftype != GRETL_SCRIPT) {
@@ -708,8 +709,10 @@ int main (int argc, char *argv[])
 	register_data(paths.datfile, 1);
 
     /* opening a script from the command line? */
-    if (tryscript[0] != '\0') 
+    if (tryscript[0] != '\0') { 
+	strcpy(scriptfile, tryscript);
 	do_open_script(NULL, NULL);
+    }
 
     /* check for program updates? */
     if (updater) update_query(); 

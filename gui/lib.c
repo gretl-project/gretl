@@ -52,6 +52,7 @@ static void console_exec (void);
 static void finish_genr (MODEL *pmod);
 static void do_run_script (gpointer data, guint code, GtkWidget *w);
 static void auto_save_script (gpointer data, guint action, GtkWidget *w);
+static void text_replace (windata_t *mydata, guint u, GtkWidget *w);
 static gint stack_model (int gui);
 
 int replay;                 /* shared, to indicate whether we're just
@@ -84,6 +85,8 @@ GtkItemFactoryEntry script_items[] = {
     { "/_Edit", NULL, NULL, 0, "<Branch>" },
     { "/Edit/_Copy selection", NULL, text_copy, COPY_SELECTION, NULL },
     { "/Edit/Copy _all", NULL, text_copy, COPY_TEXT, NULL },
+    { "/Edit/_Paste", NULL, text_paste, 0, NULL },
+    { "/Edit/_Replace...", NULL, text_replace, 0, NULL },
     { NULL, NULL, NULL, 0, NULL }
 };
 
@@ -2697,6 +2700,7 @@ void do_open_script (GtkWidget *w, GtkFileSelection *fs)
 	verify_open_session(NULL);
 	return;
     }
+
     /* or just an "ordinary" script */
     mkfilelist(3, scriptfile);
     strcpy(title, "gretl: ");
@@ -3826,6 +3830,195 @@ void view_script_default (void)
     if (dump_cmd_stack(cmdfile)) return;
 
     view_file(cmdfile, 0, 0, 77, 350, "gretl: command script", NULL);
+}
+
+/* .................................................................. */
+
+struct search_replace {
+    GtkWidget *w;
+    GtkWidget *f_entry;
+    GtkWidget *r_entry;
+    gchar *f_text;
+    gchar *r_text;
+};
+
+/* .................................................................. */
+
+static void replace_string_callback (GtkWidget *widget, 
+				     struct search_replace *s)
+{
+    s->f_text = 
+	gtk_editable_get_chars(GTK_EDITABLE(s->f_entry), 0, -1);
+    s->r_text = 
+	gtk_editable_get_chars(GTK_EDITABLE(s->r_entry), 0, -1);
+    gtk_widget_destroy(s->w);
+}
+
+/* .................................................................. */
+
+static void trash_replace (GtkWidget *widget, 
+			   struct search_replace *s)
+{
+    s->f_text = NULL;
+    s->r_text = NULL;
+    gtk_widget_destroy(s->w);
+}
+
+/* .................................................................. */
+
+static void replace_string_dialog (struct search_replace *s)
+{
+    GtkWidget *label, *button, *hbox;
+
+    s->w = gtk_dialog_new();
+
+    gtk_window_set_title (GTK_WINDOW (s->w), "gretl: replace");
+    gtk_container_border_width (GTK_CONTAINER (s->w), 5);
+
+    /* Find part */
+    hbox = gtk_hbox_new(TRUE, TRUE);
+    label = gtk_label_new("Find:");
+    gtk_widget_show (label);
+    s->f_entry = gtk_entry_new();
+    gtk_widget_show (s->f_entry);
+    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(hbox), s->f_entry, TRUE, TRUE, 0);
+    gtk_widget_show (hbox);
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
+                        hbox, TRUE, TRUE, 5);
+
+    /* Replace part */
+    hbox = gtk_hbox_new(TRUE, TRUE);
+    label = gtk_label_new("Replace with:");
+    gtk_widget_show (label);
+    s->r_entry = gtk_entry_new();
+    gtk_signal_connect(GTK_OBJECT (s->r_entry), 
+			"activate", 
+			GTK_SIGNAL_FUNC (dummy_call),
+	                NULL);
+    gtk_widget_show (s->r_entry);
+    gtk_box_pack_start (GTK_BOX(hbox), label, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(hbox), s->r_entry, TRUE, TRUE, 0);
+    gtk_widget_show (hbox);
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->vbox), 
+                        hbox, TRUE, TRUE, 5);
+
+    gtk_box_set_spacing(GTK_BOX (GTK_DIALOG (s->w)->action_area), 15);
+    gtk_box_set_homogeneous(GTK_BOX 
+			     (GTK_DIALOG (s->w)->action_area), TRUE);
+    gtk_window_set_position(GTK_WINDOW (s->w), GTK_WIN_POS_MOUSE);
+
+    gtk_signal_connect(GTK_OBJECT(s->w), "destroy",
+		       gtk_main_quit, NULL);
+
+    /* find button -- make this the default */
+    button = gtk_button_new_with_label ("Replace");
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
+		       button, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT (button), "clicked",
+		       GTK_SIGNAL_FUNC (replace_string_callback), s);
+    gtk_widget_grab_default(button);
+    gtk_widget_show(button);
+
+    /* cancel button */
+    button = gtk_button_new_with_label ("Cancel");
+    GTK_WIDGET_SET_FLAGS(button, GTK_CAN_DEFAULT);
+    gtk_box_pack_start(GTK_BOX (GTK_DIALOG (s->w)->action_area), 
+		       button, TRUE, TRUE, FALSE);
+    gtk_signal_connect(GTK_OBJECT(button), "clicked",
+                       GTK_SIGNAL_FUNC(trash_replace), s);
+    gtk_widget_show(button);
+
+    gtk_widget_grab_focus(s->f_entry);
+    gtk_widget_show (s->w);
+    gtk_main();
+}
+
+/* ........................................................... */
+
+static void text_replace (windata_t *mydata, guint u, GtkWidget *widget)
+{
+    gchar *buf;
+    int count = 0;
+    gint pos = 0;
+    size_t sz, len, diff;
+    char *dest = NULL, *src = NULL;
+    char *destbuf, *p, *q;
+    struct search_replace *s;
+
+    s = mymalloc(sizeof *s);
+    if (s == NULL) return;
+
+    replace_string_dialog(s);
+
+    if (s->f_text == NULL || s->r_text == NULL) {
+	free(s);
+	return;
+    }
+    src = s->f_text;
+    dest = s->r_text;
+
+    if (!strlen(src)) {
+	free(src);
+	free(dest);
+	free(s);
+	return;
+    }
+
+    buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
+    if (buf == NULL || !(sz = strlen(buf))) 
+	return;
+    len = strlen(src);
+    diff = strlen(dest) - len;
+    p = buf;
+    while (*p) {
+	if ((q = strstr(p, src))) {
+	    count++;
+	    p = q + 1;
+	}
+	else break;
+    }
+    if (count) {
+	sz += count * diff;
+    } else {
+	free(buf);
+	return;
+    }
+
+    destbuf = mymalloc(sz + 1);
+    if (destbuf == NULL) {
+	free(src);
+	free(dest);
+	free(s);
+	return;
+    }
+    *destbuf = '\0';
+    p = buf;
+    while (*p) {
+	if ((q = strstr(p, src))) {
+	    strncat(destbuf, p, q - p);
+	    strcat(destbuf, dest);
+	    p = q + len;
+	} else {
+	    strcat(destbuf, p);
+	    break;
+	}
+    }    
+
+    /* now insert the modified buffer */
+    gtk_text_freeze(GTK_TEXT(mydata->w));
+    gtk_editable_delete_text(GTK_EDITABLE(mydata->w), 0, -1);
+    gtk_editable_insert_text(GTK_EDITABLE(mydata->w), destbuf,
+			     strlen(destbuf), &pos);
+    gtk_text_thaw(GTK_TEXT(mydata->w));
+
+    /* and clean up */
+    free(src);
+    free(dest);
+    free(s);
+    free(buf);
+    free(destbuf);
 }
 
 #include "../cli/common.c"

@@ -865,21 +865,30 @@ static void buf_edit_save (GtkWidget *widget, gpointer data)
 
 /* ........................................................... */
 
-static void file_viewer_save (GtkWidget *widget, gpointer data)
+static void file_viewer_save (GtkWidget *widget, windata_t *mydata)
 {
-    gchar *text;
-    FILE *fp;
-    windata_t *mydata = (windata_t *) data;
+    /* windata_t *mydata = (windata_t *) data; */
 
-    fp = fopen(mydata->fname, "w");
-    if (fp == NULL) {
-	errbox("Can't open file for writing");
-	return;
+    /* special case: a newly created script */
+    if (strstr(mydata->fname, "script_tmp") || !strlen(mydata->fname)) {
+	file_save(mydata, SAVE_SCRIPT, NULL);
+	strcpy(mydata->fname, scriptfile);
     } else {
-	text = gtk_editable_get_chars (GTK_EDITABLE(mydata->w), 0, -1);
-	fprintf(fp, "%s", text);
-	fclose(fp);
-	g_free(text);
+	char buf[MAXLEN];
+	FILE *fp;
+	gchar *text;
+
+	if ((fp = fopen(mydata->fname, "w")) == NULL) {
+	    errbox("Can't open file for writing");
+	    return;
+	} else {
+	    text = gtk_editable_get_chars (GTK_EDITABLE(mydata->w), 0, -1);
+	    fprintf(fp, "%s", text);
+	    fclose(fp);
+	    g_free(text);
+	    sprintf(buf, "Saved %s\n", mydata->fname);
+	    infobox(buf);
+	}
     }
 } 
 
@@ -1026,6 +1035,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
     FILE *fd = NULL;
     windata_t *vwin;
     int console = 0;
+    static GtkStyle *style;
 
     fd = fopen(filename, "r");
     if (fd == NULL) {
@@ -1069,6 +1079,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		       table, TRUE, TRUE, FALSE);
 
     vwin->w = gtk_text_new(NULL, NULL);
+
+    if (style == NULL) {
+	style = gtk_style_new();
+	gdk_font_unref(style->font);
+	style->font = fixed_font;
+    }
+    gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
 
     if (editable)
 	gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
@@ -1122,6 +1139,14 @@ windata_t *view_file (char *filename, int editable, int del_file,
 		       GTK_SIGNAL_FUNC(delete_file_viewer), 
 		       (gpointer) dialog);
     gtk_widget_show(close);
+
+    /* set the font for this window */
+    {
+	GtkStyle *style = gtk_style_new();
+	gdk_font_unref(style->font);
+	style->font = fixed_font;
+	gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
+    }
 
     /* insert the file text */
     memset(tempstr, 0, sizeof tempstr);
@@ -2459,9 +2484,6 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
     windata_t *mydata = (windata_t *) data;
     PRN *prn;
 
-    /* mydata->action code says what sort of thing is displayed in
-       the window in question */
-
     /* descriptive statistics */
     if ((mydata->action == SUMMARY || mydata->action == VAR_SUMMARY)
 	&& (how == COPY_LATEX || how == COPY_RTF)) {
@@ -2538,6 +2560,16 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	gtk_editable_select_region(GTK_EDITABLE(mydata->w), 0, -1);
 	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
     }
+    else if (how == COPY_SELECTION) {
+	gtk_editable_copy_clipboard(GTK_EDITABLE(mydata->w));
+    }
+}
+
+/* .................................................................. */
+
+void text_paste (windata_t *mydata, guint u, GtkWidget *widget)
+{
+    gtk_editable_paste_clipboard(GTK_EDITABLE(mydata->w));
 }
 
 /* .................................................................. */

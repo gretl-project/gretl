@@ -1566,17 +1566,18 @@
       </informaltable>
 
       <para>Opens a special mode in which the program accepts commands
-to be repeated either a specified number of times, or so long as a
-specified condition holds true, or for successive integer values of
-the (internal) index variable <varname>i</varname>.  Within a loop,
-only six commands can be used: <command>genr</command>,
-<command>ols</command>, <command>print</command>,
-<command>smpl</command>, <command>store</command> and
-<command>summary</command> (store can't be used in a
-<quote>while</quote> loop).  You exit the mode of entering loop
-commands with <command>endloop</command>: at this point the stacked
-commands are executed.  Loops cannot be nested.  See <xref
-linkend="looping"/> for details.
+	to be repeated either a specified number of times, or so long
+	as a specified condition holds true, or for successive integer
+	values of the (internal) index variable <varname>i</varname>.
+	Within a loop, only six commands can be used:
+	<command>genr</command>, <command>ols</command>,
+	<command>print</command>, <command>smpl</command>,
+	<command>store</command> and <command>summary</command> (store
+	can't be used in a <quote>while</quote> loop).  You exit the
+	mode of entering loop commands with
+	<command>endloop</command>: at this point the stacked commands
+	are executed.  Loops cannot be nested.  See <xref
+	  linkend="looping"/> for details.
       </para>
 
     </sect2>
@@ -2634,32 +2635,19 @@ linkend="looping"/> for details.
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
 	    <row>
+	      <entry>Usage:</entry>
 	      <entry><command>summary</command>
-	      </entry>
-	      <entry>print summary statistics for all variables in the
-		file
+		[ <replaceable>varlist</replaceable> ]
 	      </entry>
 	    </row>
-	    <row>
-	      <entry><command>summary 3 7 9</command>
-	      </entry>
-	      <entry>summary statistics for variables number 3, 7, and
-		9
-	      </entry>
-	    </row>
-	    <row>
-	      <entry><command>summary x y z</command>
-	      </entry>
-	      <entry>summary statistics for the variables
-		<varname>x</varname>, <varname>y</varname>, and
-		<varname>z</varname>
-	      </entry>
-	    </row>	
 	  </tbody>
 	</tgroup>
       </informaltable>
 
       <para>
+	Print summary statistics for the variables in
+	<replaceable>varlist</replaceable>, or for all the variables in
+	the data set if <replaceable>varlist</replaceable> is omitted.
 	Output consists of the mean, standard deviation (sd),
 	coefficient of variation (= sd/mean), median, minimum,
 	maximum, skewness coefficient, and excess kurtosis.
@@ -3020,7 +3008,7 @@ linkend="looping"/> for details.
 <!-- Keep this comment at the end of the file
 Local variables:
 sgml-default-dtd-file:"../manual.ced"
-mode: sgml
+mode: xml
 sgml-parent-document:("../manual.xml" "book" "chapter")
 End:
 -->

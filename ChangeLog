@@ -21,6 +21,8 @@ version 0.98
   for gretl datafiles (but add option to GUI to use ".dat")
 - changing to storing data header info in buffer rather than using
   repeated file I/O
+- add search/replace dialog to window for editing scripts; also
+  Edit/Paste menu choice and choice of fixed font
 - add drag and drop support for datafiles under win32, 
   register the .gdt suffix for gretl datafiles, and add an icon
   for these files

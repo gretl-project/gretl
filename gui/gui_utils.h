@@ -94,7 +94,9 @@ void options_dialog (gpointer data);
 
 void font_selector (void);
 
-void text_copy (gpointer data, guint all, GtkWidget *widget);
+void text_copy (gpointer data, guint how, GtkWidget *widget);
+
+void text_paste (windata_t *mydata, guint u, GtkWidget *widget);
 
 void make_menu_item (gchar *label, GtkWidget *menu,
 		     GtkSignalFunc func, gpointer data);
