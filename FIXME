@@ -1,6 +1,0 @@
-Need to check LAD window: do the options for predictions, 
-confidence intervals, covariance matrix give the correct
-results, or OLS results??
-
-Check PWT: name of 'descriptions' file -- with "pwt_" prefix
-or not?
