@@ -1,4 +1,4 @@
-version 1.3.2
+01/28/2005 version 1.3.2
 - Fix bug in auto-determination of lag in ADF test: was looking
   at the wrong coefficient in some cases
 - Fix bug in VAR impulse responses: could get messed up by
