@@ -1727,9 +1727,11 @@ int copy_model (MODEL *targ, const MODEL *src, const DATAINFO *pdinfo)
 	return 1;
     if ((targ->uhat = copyvec(src->uhat, pdinfo->n)) == NULL) return 1;
     if ((targ->yhat = copyvec(src->yhat, pdinfo->n)) == NULL) return 1;
-    if ((targ->xpx = copyvec(src->xpx, m)) == NULL) return 1;
     if (src->subdum != NULL && 
 	(targ->subdum = copyvec(src->subdum, pdinfo->n)) == NULL) return 1;
+
+    if (src->xpx != NULL &&
+	(targ->xpx = copyvec(src->xpx, m)) == NULL) return 1;
     if (src->vcv != NULL && 
 	(targ->vcv = copyvec(src->vcv, m)) == NULL) return 1;
 

@@ -916,8 +916,8 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	gretl_print_destroy(prn);
     } else {
 	close_dialog(ddata);
-	if (ddata->code == CORRGM) register_graph();
 	view_buffer(prn, hsize, vsize, title, ddata->code, view_items);
+	if (ddata->code == CORRGM) register_graph();
     }
 }
 
@@ -3632,6 +3632,8 @@ void view_latex (gpointer data, guint prn_code, GtkWidget *widget)
 	errbox(_("Sorry, can't format this model"));
 	return;
     }
+
+    *texfile = 0;
 
     if (prn_code) {
 	err = eqnprint(pmod, datainfo, &paths, texfile, model_count, 1);

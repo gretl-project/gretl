@@ -67,6 +67,7 @@ GdkFont *fixed_font;
 static int usecwd;
 int olddat;
 int jwdata;
+int useqr;
 #ifdef ENABLE_NLS
 static int lcnumeric = 1;
 #endif
@@ -144,8 +145,9 @@ RCVARS rc_vars[] = {
     {"olddat", N_("Use \".dat\" as default datafile suffix"), 
      N_("Use \".gdt\" as default suffix"), &olddat, 'B', 0, 5, NULL},
     {"jwdata", N_("Show Wooldridge data first"), 
-     N_("Show Ramanathan data first"), 
-     &jwdata, 'B', 0, 5, NULL},
+     N_("Show Ramanathan data first"), &jwdata, 'B', 0, 5, NULL},
+    {"useqr", N_("Use QR decomposition"), 
+     N_("Use Cholesky decomposition"), &useqr, 'B', 0, 1, NULL},
     {"fontspec", N_("Fixed font"), NULL, fontspec, 'U', MAXLEN, 0, NULL},
     {NULL, NULL, NULL, NULL, 0, 0, 0, NULL}   
 };
@@ -467,33 +469,38 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 		b_count++;
 		b_len += 3;
 		gtk_table_resize (GTK_TABLE(b_table), b_len + 1, 2);
-
-		tempwid = gtk_radio_button_new_with_label(NULL, 
-							  _(rc->description));
-		gtk_table_attach_defaults 
-		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
-		     b_len - 3, b_len - 2);    
-		if (val) 
-		    gtk_toggle_button_set_active 
-			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
-		gtk_widget_show (tempwid);
-		rc->widget = tempwid;
-		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
-		tempwid = gtk_radio_button_new_with_label(group, _(rc->link));
-		gtk_table_attach_defaults 
-		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
-		     b_len - 2, b_len - 1);  
-		if (!val) {
-		    gtk_toggle_button_set_active
-			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
-		}
-		gtk_widget_show (tempwid);
+		
+		/* first a separator for the group */
                 tempwid = gtk_hseparator_new ();
                 gtk_table_attach_defaults 
                     (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
-                     b_len - 1, b_len);  
+                     b_len - 3, b_len - 2);  
                 gtk_widget_show (tempwid);
 
+		/* then a first button */
+		tempwid = gtk_radio_button_new_with_label(NULL, 
+							  _(rc->link));
+		gtk_table_attach_defaults 
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len - 2, b_len - 1);    
+		if (!val) 
+		    gtk_toggle_button_set_active 
+			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		gtk_widget_show (tempwid);
+		group = gtk_radio_button_group(GTK_RADIO_BUTTON(tempwid));
+
+		/* and a second button */
+		tempwid = gtk_radio_button_new_with_label(group, 
+							  _(rc->description));
+		gtk_table_attach_defaults 
+		    (GTK_TABLE (b_table), tempwid, b_col, b_col + 1, 
+		     b_len - 1, b_len);  
+		if (val) {
+		    gtk_toggle_button_set_active
+			(GTK_TOGGLE_BUTTON(tempwid), TRUE);
+		}
+		rc->widget = tempwid;
+		gtk_widget_show (tempwid);
 	    } else { /* string variable */
 		s_count++;
 		s_len++;
@@ -570,13 +577,17 @@ static void apply_changes (GtkWidget *widget, gpointer data)
 	}
 	i++;
     }
+
     write_rc();
+
     if (toolbar_box == NULL && want_toolbar)
 	show_toolbar();
     else if (toolbar_box != NULL && !want_toolbar) {
 	gtk_widget_destroy(toolbar_box);
 	toolbar_box = NULL;
     }
+
+    set_use_qr(useqr);
 
 #ifdef ENABLE_NLS
     set_lcnumeric();
@@ -686,6 +697,8 @@ static void read_rc (void)
 	}
 	else break;
     }
+
+    set_use_qr(useqr);
 
     set_paths(&paths, 0, 1); /* 0 = not defaults, 1 = gui */
 

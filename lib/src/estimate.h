@@ -64,3 +64,5 @@ int makevcv (MODEL *pmod);
 VCV *get_vcv (MODEL *pmod);
 
 void free_vcv (VCV *vcv);
+
+void set_use_qr (int set);

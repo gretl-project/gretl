@@ -401,7 +401,7 @@ int gretl_qr_regress (MODEL *pmod, const double **Z, int fulln)
 
     save_standard_errors(pmod, xpxinv, n);
 
-    /* set up covar matrix (triangular) */
+    /* set up covariance matrix (triangular) */
     qr_make_vcv(pmod, xpxinv);
 
     /* get R^2 and F-stat */

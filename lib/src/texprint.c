@@ -251,8 +251,8 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 			int standalone, PRN *prn)
 {
 
-    int i, start, constneg = 0, ncoeff = pmod->list[0];
-    double tstat;
+    int i, start, ncoeff = pmod->ncoeff;
+    double tstat, const_tstat = 0, const_coeff = 0;
     char tmp[16];
 
     if (standalone) {
@@ -268,36 +268,43 @@ int tex_print_equation (const MODEL *pmod, const DATAINFO *pdinfo,
 
     pputs(prn, "\\begin{center}\n");
 
+    if (pmod->ifc) {
+	const_coeff = pmod->coeff[0];
+	const_tstat = pmod->coeff[0] / pmod->sderr[0];
+    }
+
     /* tabular header */
     pprintf(prn, "{\\setlength{\\tabcolsep}{.5ex}\n"
 	    "\\renewcommand{\\arraystretch}{1}\n"
 	    "\\begin{tabular}{rc"
 	    "%s", (pmod->ifc)? "c" : "c@{\\,}l");
-    start = (pmod->ifc)? 1 : 2;
+    start = (pmod->ifc)? 1 : 0;
     for (i=start; i<ncoeff; i++) pputs(prn, "cc@{\\,}l");
     pputs(prn, "}\n");
 
     /* dependent variable */
-    tmp[0] = '\0';
+    *tmp = '\0';
     tex_escape(tmp, pdinfo->varname[pmod->list[1]]);
     pprintf(prn, "$\\widehat{\\rm %s}$ & = &\n", tmp);
 
-    start++;
     /* coefficients times indep vars */
-    tex_escape(tmp, pdinfo->varname[pmod->list[2]]);
-    tex_print_float(pmod->coeff[0], 0, prn);
-    pprintf(prn, " & %s ", tmp);
-    for (i=start; i<=ncoeff; i++) {
-	tex_print_float(pmod->coeff[i-2], 1, prn);
-	tex_escape(tmp, pdinfo->varname[pmod->list[i]]);
+    if (pmod->ifc) tex_print_float(const_coeff, 0, prn);
+    start = (pmod->ifc)? 1 : 0;
+    for (i=start; i<ncoeff; i++) {
+	tex_print_float(pmod->coeff[i], (i > 0), prn);
+	tex_escape(tmp, pdinfo->varname[pmod->list[i+2]]);
 	pprintf(prn, " & %s ", tmp);
     }
     pputs(prn, "\\\\\n");
 
     /* t-stats in row beneath */
-    for (i=0; i<ncoeff; i++) {
-        tstat = pmod->coeff[i]/pmod->sderr[i];
-	if (i == 0) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
+    if (pmod->ifc) {
+	pprintf(prn, " & & {\\small $(%.3f)$} ", const_tstat);
+    } 
+    start = (pmod->ifc)? 1 : 0;
+    for (i=start; i<ncoeff; i++) {
+        tstat = pmod->coeff[i] / pmod->sderr[i];
+	if (i == start) pprintf(prn, "& & \\small{$(%.3f)$} ", tstat);
 	else pprintf(prn, "& & & \\small{$(%.3f)$} ", tstat);
     }
     pputs(prn, "\n\\end{tabular}}\n\n");

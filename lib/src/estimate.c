@@ -443,7 +443,6 @@ MODEL lsq (LIST list, double ***pZ, DATAINFO *pdinfo,
 	/* calculate regression results, Choleski style */
 	form_xpxxpy(mdl.list, mdl.t1, mdl.t2, *pZ, mdl.nwt, rho,
 		    mdl.xpx, xpy);
-	/* mdl.tss = xpy[l0]; */ /* done elsewhere */
 
 	regress(&mdl, xpy, *pZ, pdinfo->n, rho);
 	free(xpy);

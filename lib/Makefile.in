@@ -93,10 +93,10 @@ $(LIBGRETL): $(LOBJS) $(AUX_LOBJ)
 .PHONY: 
 
 install: $(LIBGRETL) install-data
-	$(LIBTOOL) $(INSTALL_PROGRAM) $< $(libdir)/$<
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) $< $(libdir)/$<
 
 install-strip: $(LIBGRETL) install-data
-	$(LIBTOOL) $(INSTALL_PROGRAM) -s $< $(libdir)/$<
+	$(LIBTOOL) --mode=install $(INSTALL_PROGRAM) -s $< $(libdir)/$<
 
 install-data: installdirs $(INSTALL_CFG)
 	$(INSTALL_DATA) $(libsrc)/*.h $(includedir)

@@ -256,6 +256,16 @@ static int haus_invert (hausman_t *haus)
     int i, j, k, *idx;
     int err = 0, n = haus->ns;
 
+#ifdef notyet
+    /* lapack: invert triangular matrix */
+    int dtrtri_(char *uplo, char *diag, integer *n, doublereal *
+		a, integer *lda, integer *info);
+
+    /* packed storage version */
+    int dtptri_(char *uplo, char *diag, integer *n, doublereal *
+		ap, integer *info);
+#endif
+
     a = malloc((n + 1) * sizeof *a);
     if (a == NULL) return 1;
 

@@ -320,7 +320,8 @@ FREQDIST *freqdist (double ***pZ, const DATAINFO *pdinfo,
 static int get_pacf (double *pacf, int m, int varnum, 
 		     double ***pZ, DATAINFO *pdinfo)
 {
-    int i, j, err = 0, *laglist, *list;
+    int i, j, err = 0;
+    int *laglist, *list;
     int t1 = pdinfo->t1;
     int v = pdinfo->v;
     MODEL tmp;
@@ -345,12 +346,16 @@ static int get_pacf (double *pacf, int m, int varnum,
     pdinfo->t1 = t1;
 
     list[1] = varnum;
+
     for (i=2; i<=m; i++) {
 	list[0] = i + 2;
-	list[i+2] = 0;
-	for (j=2; j<i+2; j++) list[j] = laglist[j-2];
+	list[2] = 0;
+	for (j=0; j<i; j++) list[j+3] = laglist[j];
 	tmp = lsq(list, pZ, pdinfo, OLS, 0, 0);
-	if ((err = tmp.errcode)) break;
+	if ((err = tmp.errcode)) {
+	    fprintf(stderr, "error estimating model for pacf\n");
+	    break;
+	}
 	pacf[i-1] = tmp.coeff[i];
 	if (i < m) clear_model(&tmp, pdinfo);
     }
@@ -386,10 +391,11 @@ int corrgram (int varno, int order, double ***pZ,
 {
     double *x, *y, *acf, *xl, box, pm;
     double *pacf = NULL;
-    int err = 0, k, l, acf_m, pacf_m, nobs; 
+    int k, l, acf_m, pacf_m, nobs; 
     int t, t1 = pdinfo->t1, t2 = pdinfo->t2;
     int list[2];
     FILE *fq = NULL;
+    int err = 0, pacf_err = 0;
 
     list[0] = 1;
     list[1] = varno;
@@ -436,7 +442,7 @@ int corrgram (int varno, int order, double ***pZ,
 
     x = malloc(pdinfo->n * sizeof *x);
     y = malloc(pdinfo->n * sizeof *y);
-    acf = malloc((acf_m + 1) * sizeof *acf);
+    acf = malloc(acf_m * sizeof *acf);
     if (x == NULL || y == NULL || acf == NULL)
 	return E_ALLOC;    
 
@@ -447,7 +453,7 @@ int corrgram (int varno, int order, double ***pZ,
 	    x[k] = (*pZ)[varno][t];
 	    y[k] = (*pZ)[varno][t-l];
 	}
-	acf[l] = _corr(nobs-l, x, y);
+	acf[l-1] = _corr(nobs-l, x, y);
     }
 
     sprintf(gretl_tmp_str, _("Autocorrelation function for %s"), 
@@ -456,8 +462,8 @@ int corrgram (int varno, int order, double ***pZ,
 
     /* add Ljung-Box statistic */
     box = 0;
-    for (t=1; t<=acf_m; t++) { 
-	box += acf[t] * acf[t] / (nobs - t);
+    for (t=0; t<acf_m; t++) { 
+	box += acf[t] * acf[t] / (nobs - t + 1);
     }
     box *= nobs * (nobs + 2.0);
 
@@ -466,9 +472,9 @@ int corrgram (int varno, int order, double ***pZ,
 	    acf_m, chisq(box, acf_m));
 
     /* print acf */
-    for (t=1; t<=acf_m; t++) {
-	pprintf(prn, "%5d)%7.3f", t, acf[t]);
-	if (t%5 == 0) pputs(prn, "\n");
+    for (t=0; t<acf_m; t++) {
+	pprintf(prn, "%5d)%7.3f", t + 1, acf[t]);
+	if ((t + 1) % 5 == 0) pputs(prn, "\n");
     }
     pputs(prn, "\n");
 
@@ -478,7 +484,7 @@ int corrgram (int varno, int order, double ***pZ,
 	if (xl == NULL) return E_ALLOC;
 	for (l=0; l<acf_m; l++) xl[l] = l + 1.0;
         pprintf(prn, "\n\n%s\n\n", _("Correlogram"));
-	_graphyzx(NULL, acf + 1, NULL, xl, acf_m, pdinfo->varname[varno], 
+	_graphyzx(NULL, acf, NULL, xl, acf_m, pdinfo->varname[varno], 
 		  _("lag"), NULL, 0, prn);
 	free(x);
 	free(xl);
@@ -498,25 +504,28 @@ int corrgram (int varno, int order, double ***pZ,
 	goto getout;
     }
 
-    err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo);
+    err = pacf_err = get_pacf(pacf, pacf_m, varno, pZ, pdinfo);
 
     if (!err) {
-	pacf[0] = acf[1];
+	pacf[0] = acf[0];
 	pprintf(prn, "\n%s", _("Partial autocorrelations"));
 	if (pacf_m < acf_m) {
 	    pprintf(prn, " (%s %d):\n\n", _("to lag"), pacf_m);
 	} else {
 	    pputs(prn, ":\n\n");
 	}
-	for (l=1; l<=pacf_m; l++) {
-	    pprintf(prn, "%5d)%7.3f", l, pacf[l-1]);
-	    if (l%5 == 0) pputs(prn, "\n");
+	for (k=0; k<pacf_m; k++) {
+	    pprintf(prn, "%5d)%7.3f", k+1, pacf[k]);
+	    if ((k + 1) % 5 == 0) pputs(prn, "\n");
 	}
     }
     pputs(prn, "\n");
     if (pacf_m % 5 > 0) pputs(prn, "\n");
 
-    if (gnuplot_init(ppaths, &fq)) return E_FOPEN;
+    if (gnuplot_init(ppaths, &fq)) {
+	fprintf(stderr, "gnuplot_init failed\n");
+	return E_FOPEN;
+    }
 
     /* for confidence bands */
     pm = 1.0 / sqrt((double) nobs);
@@ -528,16 +537,16 @@ int corrgram (int varno, int order, double ***pZ,
 #endif
 
     /* create two separate plots, if both are OK */
-    if (!err) {
+    if (!pacf_err) {
 	fputs("set size 1.0,1.0\nset multiplot\nset size 1.0,0.48\n", fq);
     }
     fputs("set xzeroaxis\n", fq);
     fputs("set key top right\n", fq); 
     fprintf(fq, "set xlabel \"%s\"\n", _("lag"));
-    fputs("set yrange [-1.0:1.0]\n", fq);
+    fputs("set yrange [-1.1:1.1]\n", fq);
 
     /* upper plot: Autocorrelation Function or ACF */
-    if (!err) {
+    if (!pacf_err) {
 	fputs("set origin 0.0,0.50\n", fq);
     }
     fprintf(fq, "set title \"%s %s\"\n", I_("ACF for"), 
@@ -549,12 +558,12 @@ int corrgram (int varno, int order, double ***pZ,
 	    "%g notitle lt 2\n", pm, 
 	    "+- 1.96/T^0.5",
 	    -pm);
-    for (l=1; l<=acf_m; l++) {
-	fprintf(fq, "%d %g\n", l, acf[l]);
+    for (k=0; k<acf_m; k++) {
+	fprintf(fq, "%d %g\n", k + 1, acf[k]);
     }
     fputs("e\n", fq);
 
-    if (!err) {
+    if (!pacf_err) {
 	/* lower plot: Partial Autocorrelation Function or PACF */
 	fputs("set origin 0.0,0.0\n", fq);
 	fprintf(fq, "set title \"%s %s\"\n", I_("PACF for"), 
@@ -566,21 +575,22 @@ int corrgram (int varno, int order, double ***pZ,
 		"%g notitle lt 2\n", pm,
 		"+- 1.96/T^0.5",
 		-pm);
-	for (l=1; l<=pacf_m; l++) {
-	    fprintf(fq, "%g %g\n", l + .1, pacf[l-1]);
+	for (k=0; k<pacf_m; k++) {
+	    fprintf(fq, "%d %g\n", k + 1, pacf[k]);
 	}
 	fputs("e\n", fq);
     }
+
+    if (!pacf_err) fputs("set nomultiplot\n", fq);
 
 #ifdef ENABLE_NLS
     setlocale(LC_NUMERIC, "");
 #endif
 
-    if (!err) fputs("set nomultiplot\n", fq);
-
 #if defined(OS_WIN32) && !defined(GNUPLOT_PNG)
     fputs("pause -1\n", fq);
 #endif
+
     fclose(fq);
     err = gnuplot_display(ppaths);
 
