@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl-1.2.0\n"
-"POT-Creation-Date: 2003-12-26 12:19-0500\n"
+"POT-Creation-Date: 2003-12-27 20:02-0500\n"
 "PO-Revision-Date: 2003-12-09 22:19-0500\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
@@ -194,8 +194,8 @@ msgstr ""
 "Se necesita el mismo número de observaciones\n"
 "para cada unidad de sección cruzada"
 
-#: lib/src/compare.c:1439 lib/src/dbread.c:1205 lib/src/dbread.c:1217
-#: lib/src/dbread.c:1255 gui/database.c:261 gui2/database.c:261
+#: lib/src/compare.c:1439 lib/src/dbread.c:1203 lib/src/dbread.c:1215
+#: lib/src/dbread.c:1253 gui/database.c:261 gui2/database.c:261
 msgid "Out of memory adding series"
 msgstr "Fuera de memoria al añadir series"
 
@@ -204,7 +204,7 @@ msgid "Failed to parse mp_ols command\n"
 msgstr "Fallo al pasar instrucción mp_ols\n"
 
 #: lib/src/compare.c:1594 lib/src/dbread.c:547 lib/src/dbread.c:558
-#: lib/src/dbread.c:1129 gui/database.c:2295 gui/gui_utils.c:696
+#: lib/src/dbread.c:1127 gui/database.c:2295 gui/gui_utils.c:696
 #: gui/gui_utils.c:707 gui/library.c:2062 gui/library.c:3507 gui/session.c:884
 #: gui/webget.c:412 gui/webget.c:422 gui2/database.c:2295 gui2/gui_utils.c:696
 #: gui2/gui_utils.c:707 gui2/library.c:2062 gui2/library.c:3507
@@ -329,7 +329,7 @@ msgid "space for comments"
 msgstr "espacio para comentarios"
 
 #: lib/src/dataio.c:995 lib/src/dataio.c:1007 lib/src/dataio.c:2517
-#: lib/src/dataio.c:2913 lib/src/dbread.c:956 gui/session.c:615
+#: lib/src/dataio.c:2913 lib/src/dbread.c:954 gui/session.c:615
 #: gui2/session.c:615
 #, c-format
 msgid "Couldn't open %s\n"
@@ -966,23 +966,23 @@ msgstr "Esto no es una base de datos RATS válida"
 msgid "frequency (%d) does not make seem to make sense"
 msgstr "frecuencia (%d) no parece tener sentido"
 
-#: lib/src/dbread.c:973 lib/src/subsample.c:387 lib/src/subsample.c:410
+#: lib/src/dbread.c:971 lib/src/subsample.c:387 lib/src/subsample.c:410
 msgid "error reading smpl line"
 msgstr "error leyendo línea de smpl"
 
-#: lib/src/dbread.c:988 lib/src/generate.c:3577 lib/src/subsample.c:444
+#: lib/src/dbread.c:986 lib/src/generate.c:3577 lib/src/subsample.c:444
 msgid "Invalid null sample"
 msgstr "muestra nula no valida"
 
-#: lib/src/dbread.c:1095
+#: lib/src/dbread.c:1093
 msgid "No database has been opened"
 msgstr "No se ha abierto ninguna base de datos"
 
-#: lib/src/dbread.c:1148 gui/database.c:367 gui2/database.c:367
+#: lib/src/dbread.c:1146 gui/database.c:367 gui2/database.c:367
 msgid "Series imported OK"
 msgstr "Series importadas correctamente"
 
-#: lib/src/dbread.c:1169
+#: lib/src/dbread.c:1167
 msgid ""
 "You can't add a lower frequency series to a\n"
 "higher frequency working data set."
@@ -990,7 +990,7 @@ msgstr ""
 "No se puede añadir una serie de frecuencia más baja a\n"
 "un conjunto de datos de trabajo de frecuencia superior."
 
-#: lib/src/dbread.c:1178
+#: lib/src/dbread.c:1176
 msgid ""
 "Observation range does not overlap\n"
 "with the working data set"
@@ -998,11 +998,11 @@ msgstr ""
 "El dominio de observación no se solapa\n"
 "con el conjunto de datos de trabajo"
 
-#: lib/src/dbread.c:1227 gui/database.c:271 gui2/database.c:271
+#: lib/src/dbread.c:1225 gui/database.c:271 gui2/database.c:271
 msgid "Sorry, can't handle this conversion yet!"
 msgstr "Lo siento, no se puede manejar esta conversión aún"
 
-#: lib/src/dbread.c:1232
+#: lib/src/dbread.c:1230
 #, c-format
 msgid "%s: you must specify a compaction method"
 msgstr "%s: Vd. debe de especificar un método de compactado"
@@ -1169,8 +1169,8 @@ msgstr ""
 msgid "Fractional integration test failed"
 msgstr "Falló el contraste de integración fraccional"
 
-#: lib/src/describe.c:1030 lib/src/describe.c:1031 lib/src/estimate.c:2544
-#: lib/src/estimate.c:2545 lib/src/modelprint.c:284 lib/src/modelprint.c:294
+#: lib/src/describe.c:1030 lib/src/describe.c:1031 lib/src/estimate.c:2546
+#: lib/src/estimate.c:2547 lib/src/modelprint.c:284 lib/src/modelprint.c:294
 #: lib/src/modelprint.c:309 lib/src/modelprint.c:1416
 #: lib/src/modelprint.c:1485 lib/src/modelprint.c:1495
 #: lib/src/modelprint.c:1525 lib/src/modelprint.c:1579
@@ -1503,39 +1503,44 @@ msgstr "Mínimos cuadrados no lineales"
 msgid "Generalized Cochrane-Orcutt estimation"
 msgstr "Estimación generalizada de Cochrane-Orcutt"
 
-#: lib/src/estimate.c:2636
+#: lib/src/estimate.c:2494
+#, no-c-format
+msgid "ITER             ESS           % CHANGE"
+msgstr ""
+
+#: lib/src/estimate.c:2638
 msgid "variable"
 msgstr "variable"
 
-#: lib/src/estimate.c:2655
+#: lib/src/estimate.c:2657
 #, c-format
 msgid "weighted %s "
 msgstr "%s ponderado"
 
-#: lib/src/estimate.c:2661
+#: lib/src/estimate.c:2663
 msgid "omitted because all obs are zero."
 msgstr "omitido porque todas las observaciones son cero"
 
-#: lib/src/estimate.c:2872
+#: lib/src/estimate.c:2874
 #, c-format
 msgid "Invalid lag order for arch (%d)"
 msgstr "Número de retardos no válido para arch (%d)"
 
-#: lib/src/estimate.c:2924
+#: lib/src/estimate.c:2926
 #, c-format
 msgid "No of obs. = %d, unadjusted R^2 = %f\n"
 msgstr "Núm. de obs.= %d, R^2 = %f\n"
 
-#: lib/src/estimate.c:2931
+#: lib/src/estimate.c:2933
 #, c-format
 msgid "Test for ARCH of order %s"
 msgstr "Contraste de ARCH de orden %s"
 
-#: lib/src/estimate.c:2933
+#: lib/src/estimate.c:2935
 msgid "no ARCH effect is present"
 msgstr "no hay efecto ARCH"
 
-#: lib/src/estimate.c:2940
+#: lib/src/estimate.c:2942
 #, c-format
 msgid ""
 "LM test statistic (%f) is distributed as Chi-square (%d)\n"
@@ -1545,19 +1550,19 @@ msgstr ""
 "d)\n"
 "Área a la derecha de LM = %f  "
 
-#: lib/src/estimate.c:2944
+#: lib/src/estimate.c:2946
 msgid "ARCH effect is insignificant at the 10 percent level"
 msgstr "El efecto ARCH no es significativo al nivel del 10 por ciento"
 
-#: lib/src/estimate.c:2945
+#: lib/src/estimate.c:2947
 msgid "Weighted estimation not done"
 msgstr "No se ha realizado la estimación por mínimos cuadrados ponderados"
 
-#: lib/src/estimate.c:2948
+#: lib/src/estimate.c:2950
 msgid "ARCH effect is significant at the 10 percent level"
 msgstr "El efecto ARCH es significativo al nivel del 10 por ciento"
 
-#: lib/src/estimate.c:3015 lib/src/pvalues.c:591
+#: lib/src/estimate.c:3017 lib/src/pvalues.c:591
 msgid "Couldn't load plugin function\n"
 msgstr "No ha sido posible cargar la función de enchufe ('plugin')\n"
 
@@ -3176,6 +3181,17 @@ msgstr ""
 "La muestra es demasiado pequeña para calcular un valor p basado en la "
 "distribución normal\n"
 
+#: lib/src/nonparam.c:165 lib/src/printout.c:864 gui/guiprint_common.c:752
+#: gui/guiprint_common.c:804 gui2/guiprint_common.c:752
+#: gui2/guiprint_common.c:804
+msgid "Obs"
+msgstr "Obs."
+
+#: lib/src/nonparam.c:166 lib/src/nonparam.c:167
+#, fuzzy
+msgid "rank"
+msgstr "Rango"
+
 #: lib/src/nonparam.c:222
 msgid ""
 "\n"
@@ -3400,6 +3416,11 @@ msgstr ""
 msgid "Full data range"
 msgstr "Rango de datos completo"
 
+#: lib/src/printout.c:378
+#, fuzzy
+msgid "Current sample"
+msgstr "Sesión actual"
+
 #: lib/src/printout.c:583
 msgid ""
 "\n"
@@ -3446,11 +3467,6 @@ msgstr "Rango de estimación del modelo: %s - %s"
 #, c-format
 msgid "Standard error of residuals = %f\n"
 msgstr "Desviación típica de los residuos = %f\n"
-
-#: lib/src/printout.c:864 gui/guiprint_common.c:752 gui/guiprint_common.c:804
-#: gui2/guiprint_common.c:752 gui2/guiprint_common.c:804
-msgid "Obs"
-msgstr "Obs."
 
 #: lib/src/printout.c:868 gui/guiprint_common.c:625 gui2/guiprint_common.c:625
 msgid "residuals"
@@ -3760,14 +3776,14 @@ msgstr ""
 msgid " 10%% in right tail %.2f\n"
 msgstr " 10%% en la cola derecha %.2f\n"
 
-#: lib/src/strutils.c:561 gui/gretl.c:184 gui/gui_utils.c:107
+#: lib/src/strutils.c:564 gui/gretl.c:184 gui/gui_utils.c:107
 #: gui/gui_utils.c:195 gui/gui_utils.c:282 gui/gui_utils.c:300
 #: gui2/gretl.c:212 gui2/gui_utils.c:107 gui2/gui_utils.c:195
 #: gui2/gui_utils.c:282 gui2/gui_utils.c:300
 msgid "/_File"
 msgstr "/_Archivo"
 
-#: lib/src/strutils.c:735
+#: lib/src/strutils.c:738
 msgid "out of memory in XML encoding"
 msgstr "fuera de memoria en la codificación XML"
 
@@ -6045,7 +6061,7 @@ msgstr ""
 "¿Desea guardar las órdenes y resultados\n"
 "de esta sesión gretl?"
 
-#: gui/dialogs.c:575 gui/ssheet.c:562 gui2/dialogs.c:545 gui2/ssheet.c:1022
+#: gui/dialogs.c:575 gui/ssheet.c:562 gui2/dialogs.c:545 gui2/ssheet.c:1024
 msgid ""
 "Do you want to save changes you have\n"
 "made to the current data set?"
@@ -6877,8 +6893,8 @@ msgstr "/Archivo/_Ver historial de instrucciones"
 msgid "/File/sep2a"
 msgstr "/Archivo/sep2a"
 
-#: gui/gretl.c:270 gui/settings.c:1664 gui/settings.c:1980 gui2/gretl.c:314
-#: gui2/settings.c:1664 gui2/settings.c:1980
+#: gui/gretl.c:270 gui/settings.c:1734 gui/settings.c:2050 gui2/gretl.c:314
+#: gui2/settings.c:1734 gui2/settings.c:2050
 msgid "/File/Open command file"
 msgstr "/Archivo/Abrir archivo de instrucciones"
 
@@ -9839,215 +9855,215 @@ msgstr "Sesión actual"
 msgid "plot commands saved"
 msgstr "guardadas las órdenes de gráfico"
 
-#: gui/settings.c:143 gui2/settings.c:143
+#: gui/settings.c:152 gui2/settings.c:152
 msgid "Main gretl directory"
 msgstr "Directorio gretl principal"
 
-#: gui/settings.c:145 gui2/settings.c:145
+#: gui/settings.c:154 gui2/settings.c:154
 msgid "User's gretl directory"
 msgstr "Directorio gretl de usuario"
 
-#: gui/settings.c:147 gui2/settings.c:147
+#: gui/settings.c:156 gui2/settings.c:156
 msgid "Expert mode (no warnings)"
 msgstr "Modo experto (sin avisos)"
 
-#: gui/settings.c:149 gui2/settings.c:149
+#: gui/settings.c:158 gui2/settings.c:158
 msgid "Tell me about gretl updates"
 msgstr "Informar sobre actualizaciones de gretl"
 
-#: gui/settings.c:151 gui2/settings.c:151
+#: gui/settings.c:160 gui2/settings.c:160
 msgid "Show gretl toolbar"
 msgstr "Mostrar barra de herramientas gretl"
 
-#: gui/settings.c:154 gui2/settings.c:154
+#: gui/settings.c:163 gui2/settings.c:163
 msgid "Use locale setting for decimal point"
 msgstr "Usar las preferencias locales para el punto decimal"
 
-#: gui/settings.c:158 gui2/settings.c:158
+#: gui/settings.c:167 gui2/settings.c:167
 msgid "Emulate Windows look"
 msgstr "Emular la apariencia de Windows"
 
-#: gui/settings.c:161 gui2/settings.c:161
+#: gui/settings.c:169 gui2/settings.c:169
 msgid "Command to launch gnuplot"
 msgstr "Instrucción para lanzar gnuplot"
 
-#: gui/settings.c:163 gui2/settings.c:163
+#: gui/settings.c:171 gui2/settings.c:171
 msgid "Command to launch GNU R"
 msgstr "Instrucción para lanzar GNU R"
 
-#: gui/settings.c:165 gui2/settings.c:165
+#: gui/settings.c:173 gui2/settings.c:173
 msgid "Command to view DVI files"
 msgstr "Instrucción para ver los ficheros DVI"
 
-#: gui/settings.c:167 gui2/settings.c:167
+#: gui/settings.c:175 gui2/settings.c:175
 msgid "Calculator"
 msgstr "Calculadora"
 
-#: gui/settings.c:170 gui2/settings.c:170
+#: gui/settings.c:177 gui2/settings.c:177
 msgid "Editor"
 msgstr "Editor"
 
-#: gui/settings.c:174 gui2/settings.c:174
+#: gui/settings.c:180 gui2/settings.c:180
 msgid "path to x12arima"
 msgstr "camino a x12arima"
 
-#: gui/settings.c:178 gui2/settings.c:178
+#: gui/settings.c:183 gui2/settings.c:183
 msgid "path to tramo"
 msgstr "camino a tramo"
 
-#: gui/settings.c:182 gui2/settings.c:182
+#: gui/settings.c:186 gui2/settings.c:186
 msgid "X-12-ARIMA working directory"
 msgstr "directorio de trabajo ARIMA X-12"
 
-#: gui/settings.c:186 gui2/settings.c:186
+#: gui/settings.c:190 gui2/settings.c:190
 msgid "TRAMO working directory"
 msgstr "Directorio de trabajo de TRAMO"
 
-#: gui/settings.c:189 gui2/settings.c:189
+#: gui/settings.c:193 gui2/settings.c:193
 msgid "gretl database directory"
 msgstr "Directorio gretl de bases de datos"
 
-#: gui/settings.c:191 gui2/settings.c:191
+#: gui/settings.c:195 gui2/settings.c:195
 msgid "RATS data directory"
 msgstr "Directorio de datos RATS"
 
-#: gui/settings.c:193 gui2/settings.c:193
+#: gui/settings.c:197 gui2/settings.c:197
 msgid "Database server IP"
 msgstr "IP del servidor de bases de datos"
 
-#: gui/settings.c:195 gui2/settings.c:195
+#: gui/settings.c:199 gui2/settings.c:199
 msgid "HTTP proxy (ipnumber:port)"
 msgstr "Proxy HTTP (número_de_ip:puerto)"
 
-#: gui/settings.c:197 gui2/settings.c:197
+#: gui/settings.c:201 gui2/settings.c:201
 msgid "Use HTTP proxy"
 msgstr "Utilizar proxy HTTP"
 
-#: gui/settings.c:199 gui2/settings.c:199
+#: gui/settings.c:202 gui2/settings.c:202
 msgid "Use current working directory as default"
 msgstr "Usar por defecto el directorio de trabajo actual"
 
-#: gui/settings.c:200 gui2/settings.c:200
+#: gui/settings.c:203 gui2/settings.c:203
 msgid "Use gretl user directory as default"
 msgstr "Usar por defecto el directorio gretl de usuario"
 
-#: gui/settings.c:201 gui2/settings.c:201
+#: gui/settings.c:204 gui2/settings.c:204
 msgid "Use \".dat\" as default datafile suffix"
 msgstr "Usar por defecto \".dat\" como extensión de fichero de datos"
 
-#: gui/settings.c:202 gui2/settings.c:202
+#: gui/settings.c:205 gui2/settings.c:205
 msgid "Use \".gdt\" as default suffix"
 msgstr "Usar por defecto \".gdt\" como extensión de fichero"
 
-#: gui/settings.c:203 gui2/settings.c:203
+#: gui/settings.c:206 gui2/settings.c:206
 msgid "Use QR decomposition"
 msgstr "Usar la descomposición QR"
 
-#: gui/settings.c:204 gui2/settings.c:204
+#: gui/settings.c:207 gui2/settings.c:207
 msgid "Use Cholesky decomposition"
 msgstr "Usar la descomposición de Cholesky"
 
-#: gui/settings.c:205 gui2/settings.c:205
+#: gui/settings.c:208 gui2/settings.c:208
 msgid "Fixed font"
 msgstr "Fuente fija"
 
-#: gui/settings.c:207 gui2/settings.c:207
+#: gui/settings.c:210 gui2/settings.c:210
 msgid "Menu font"
 msgstr "Fuente de menú"
 
-#: gui/settings.c:211 gui2/settings.c:211
+#: gui/settings.c:214 gui2/settings.c:214
 msgid "PNG graph font"
 msgstr "Fuente para el gráfico PNG"
 
-#: gui/settings.c:212 gui2/settings.c:212
+#: gui/settings.c:215 gui2/settings.c:215
 msgid "Gnuplot colors"
 msgstr "Colores de Gnuplot"
 
-#: gui/settings.c:495 gui2/settings.c:495
+#: gui/settings.c:498 gui2/settings.c:498
 msgid "gretl: options"
 msgstr "gretl: opciones"
 
-#: gui/settings.c:619 gui2/settings.c:619
+#: gui/settings.c:618 gui2/settings.c:618
 msgid "Browse..."
 msgstr "Revisar..."
 
-#: gui/settings.c:636 gui2/settings.c:636
+#: gui/settings.c:635 gui2/settings.c:635
 msgid "This change will take effect when you restart gretl"
 msgstr "Este cambio tendrá efecto cuando se reinicie gretl"
 
-#: gui/settings.c:654 gui2/settings.c:654 plugin/tramo_options.c:352
+#: gui/settings.c:653 gui2/settings.c:653 plugin/tramo_options.c:352
 msgid "General"
 msgstr "General"
 
-#: gui/settings.c:656 gui2/settings.c:656
+#: gui/settings.c:655 gui2/settings.c:655
 msgid "Databases"
 msgstr "Bases de datos"
 
-#: gui/settings.c:658 gui2/settings.c:658
+#: gui/settings.c:657 gui2/settings.c:657
 msgid "Programs"
 msgstr "Programas"
 
-#: gui/settings.c:660 gui2/settings.c:660
+#: gui/settings.c:659 gui2/settings.c:659
 msgid "Open/Save path"
 msgstr "Abrir/Guardar camino"
 
-#: gui/settings.c:662 gui2/settings.c:662
+#: gui/settings.c:661 gui2/settings.c:661
 msgid "Data files"
 msgstr "Ficheros de datos"
 
-#: gui/settings.c:1259 gui2/settings.c:1259
+#: gui/settings.c:1334 gui2/settings.c:1334
 msgid "Couldn't open config file for writing"
 msgstr "No se pudo abrir archivo de configuración para escritura"
 
-#: gui/settings.c:1441 gui/settings.c:1517 gui2/settings.c:1441
-#: gui2/settings.c:1517
+#: gui/settings.c:1511 gui/settings.c:1587 gui2/settings.c:1511
+#: gui2/settings.c:1587
 msgid "Font for gretl output windows"
 msgstr "Fuente para ventana de resultados gretl"
 
-#: gui/settings.c:1447 gui2/settings.c:1447
+#: gui/settings.c:1517 gui2/settings.c:1517
 msgid "Font for menus and labels"
 msgstr "Fuente para menús y tablas"
 
-#: gui/settings.c:1662 gui/settings.c:1978 gui2/settings.c:1662
-#: gui2/settings.c:1978
+#: gui/settings.c:1732 gui/settings.c:2048 gui2/settings.c:1732
+#: gui2/settings.c:2048
 msgid "/File/Open data"
 msgstr "/Archivo/Abrir datos"
 
-#: gui/settings.c:1663 gui/settings.c:1979 gui2/settings.c:1663
-#: gui2/settings.c:1979
+#: gui/settings.c:1733 gui/settings.c:2049 gui2/settings.c:1733
+#: gui2/settings.c:2049
 msgid "/Session"
 msgstr "/Sesión"
 
-#: gui/settings.c:1973 gui2/settings.c:1973
+#: gui/settings.c:2043 gui2/settings.c:2043
 msgid "/File/Open data/sep"
 msgstr "/Archivo/Abrir datos/sep"
 
-#: gui/settings.c:1974 gui2/settings.c:1974
+#: gui/settings.c:2044 gui2/settings.c:2044
 msgid "/Session/sep"
 msgstr "/sesión/sep"
 
-#: gui/settings.c:1975 gui2/settings.c:1975
+#: gui/settings.c:2045 gui2/settings.c:2045
 msgid "/File/Open command file/sep"
 msgstr "/archivo/Abrir archivo de instrucciones/sep"
 
-#: gui/settings.c:2183 gui2/settings.c:2183
+#: gui/settings.c:2253 gui2/settings.c:2253
 msgid "Select color"
 msgstr "Seleccione un color"
 
-#: gui/settings.c:2299 gui2/settings.c:2299
+#: gui/settings.c:2369 gui2/settings.c:2369
 #, c-format
 msgid "Couldn't create directory '%s'"
 msgstr "No ha sido posible crear el directorio '%s'"
 
-#: gui/settings.c:2302 gui2/settings.c:2302
+#: gui/settings.c:2372 gui2/settings.c:2372
 msgid "Working directory created OK"
 msgstr "Eel directorio de trabajo se ha creado correctamente"
 
-#: gui/settings.c:2343 gui2/settings.c:2343
+#: gui/settings.c:2413 gui2/settings.c:2413
 msgid "gretl: working directory"
 msgstr "gretl: directorio de trabajo"
 
-#: gui/settings.c:2344 gui2/settings.c:2344
+#: gui/settings.c:2414 gui2/settings.c:2414
 msgid ""
 "You seem to be using gretl for the first time.\n"
 "Please enter a directory for gretl user files."
@@ -10137,11 +10153,11 @@ msgstr "Atención: había observaciones perdidas"
 msgid "Data updated OK"
 msgstr "Los datos se han actualizado correctamente"
 
-#: gui/ssheet.c:589 gui2/ssheet.c:1055
+#: gui/ssheet.c:589 gui2/ssheet.c:1057
 msgid "Please add a variable to the dataset first"
 msgstr "Por favor, primero añada una variable al conjunto de datos"
 
-#: gui/ssheet.c:594 gui2/ssheet.c:1062
+#: gui/ssheet.c:594 gui2/ssheet.c:1064
 msgid "gretl: edit data"
 msgstr "gretl: editar datos"
 
@@ -10299,11 +10315,11 @@ msgstr "El paquete econométrico para GNOME 2.0"
 msgid "Failed to open URL"
 msgstr "Fallo al abrir URL"
 
-#: gui2/gretlwin32.c:151 gui2/gretlwin32.c:154
+#: gui2/gretlwin32.c:152 gui2/gretlwin32.c:155
 msgid "gretl.chm"
 msgstr "gretl_es.chm"
 
-#: gui2/gretlwin32.c:163
+#: gui2/gretlwin32.c:164
 msgid "Couldn't access help file"
 msgstr "No se pudo acceder al fichero de ayuda"
 
@@ -10391,36 +10407,36 @@ msgstr "Elija las variables a guardar"
 msgid "/Add _Variable"
 msgstr "/Añadir _variable"
 
-#: plugin/arma.c:341
+#: plugin/arma.c:343
 #, fuzzy
 msgid "Error in arma command"
 msgstr "Error de sintaxis en línea de instrucciones"
 
-#: plugin/arma.c:560
+#: plugin/arma.c:562
 msgid "Maximum number of subiterations reached: quitting"
 msgstr ""
 
-#: plugin/arma.c:565
+#: plugin/arma.c:567
 #, c-format
 msgid "  constant        = %.8g (gradient = %#.6g)\n"
 msgstr ""
 
-#: plugin/arma.c:568
+#: plugin/arma.c:570
 #, c-format
 msgid "  ar%d coefficient = %.8g (gradient = %#.6g)\n"
 msgstr ""
 
-#: plugin/arma.c:572
+#: plugin/arma.c:574
 #, c-format
 msgid "  ma%d coefficient = %.8g (gradient = %#.6g)\n"
 msgstr ""
 
-#: plugin/arma.c:575
+#: plugin/arma.c:577
 #, c-format
 msgid "  steplength = %.6g (subiterations = %d)\n"
 msgstr ""
 
-#: plugin/arma.c:580
+#: plugin/arma.c:582
 #, c-format
 msgid ""
 "  criterion = %g\n"
