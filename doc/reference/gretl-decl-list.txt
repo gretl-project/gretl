@@ -156,6 +156,7 @@ ERRLEN
 M_PI
 prn_codes
 ts_codes
+auto_genr
 LIST
 DATAINFO
 PATHS
