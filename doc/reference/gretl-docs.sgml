@@ -1,0 +1,58 @@
+<!doctype article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" [
+<!ENTITY gretl-commands SYSTEM "sgml/commands.sgml">
+<!ENTITY gretl-compare SYSTEM "sgml/compare.sgml">
+<!ENTITY gretl-dataio SYSTEM "sgml/dataio.sgml">
+<!ENTITY gretl-describe SYSTEM "sgml/describe.sgml">
+<!ENTITY gretl-win32 SYSTEM "sgml/win32.sgml">
+<!ENTITY gretl-discrete SYSTEM "sgml/discrete.sgml">
+<!ENTITY gretl-errors SYSTEM "sgml/errors.sgml">
+<!ENTITY gretl-estimate SYSTEM "sgml/estimate.sgml">
+<!ENTITY gretl-generate SYSTEM "sgml/generate.sgml">
+<!ENTITY gretl-graphing SYSTEM "sgml/graphing.sgml">
+<!ENTITY gretl-interact SYSTEM "sgml/interact.sgml">
+<!ENTITY gretl-internal SYSTEM "sgml/internal.sgml">
+<!ENTITY gretl-libgretl SYSTEM "sgml/libgretl.sgml">
+<!ENTITY gretl-monte-carlo SYSTEM "sgml/monte_carlo.sgml">
+<!ENTITY gretl-nonparam SYSTEM "sgml/nonparam.sgml">
+<!ENTITY gretl-printout SYSTEM "sgml/printout.sgml">
+<!ENTITY gretl-pvalues SYSTEM "sgml/pvalues.sgml">
+<!ENTITY gretl-strutils SYSTEM "sgml/strutils.sgml">
+<!ENTITY gretl-subsample SYSTEM "sgml/subsample.sgml">
+<!ENTITY gretl-texprint SYSTEM "sgml/texprint.sgml">
+<!ENTITY gretl-utils SYSTEM "sgml/utils.sgml">
+<!ENTITY gretl-var SYSTEM "sgml/var.sgml">
+]>
+<article id="index">
+  <articleinfo>
+    <title>Libgretl Reference Manual</title>
+  </articleinfo>
+  
+<!--    <sect1><title>gretl and libgretl</title> -->
+
+  <para>Gretl stands for Gnu Regression, Econometrics and Time-Series
+  Library.  The libgretl library is free software released under the GNU
+  General Public License.  This document describes the libgretl API.
+  It is at an early stage, and is incomplete.</para>    
+    
+    &gretl-commands;
+    &gretl-compare;
+    &gretl-dataio;
+    &gretl-describe;
+    &gretl-discrete;
+    &gretl-errors;
+    &gretl-estimate;
+    &gretl-generate;
+    &gretl-graphing;
+    &gretl-interact;
+    &gretl-libgretl;
+    &gretl-monte-carlo;
+    &gretl-nonparam;
+    &gretl-printout;
+    &gretl-pvalues;
+    &gretl-strutils;
+    &gretl-subsample;
+    &gretl-texprint;
+    &gretl-utils;
+    &gretl-var;
+    <!-- </sect1> -->
+</article>
