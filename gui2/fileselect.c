@@ -145,8 +145,8 @@ static const char *get_gp_ext (const char *termtype)
     if (!strncmp(termtype, "postscript", 10))    return ".eps";
     else if (!strcmp(termtype, "fig"))           return ".fig";
     else if (!strcmp(termtype, "latex"))         return ".tex";
-    else if (!strcmp(termtype, "png"))           return ".png";
-    else if (!strcmp(termtype, "emf"))           return ".emf";
+    else if (!strncmp(termtype, "png", 3))       return ".png";
+    else if (!strncmp(termtype, "emf", 3))       return ".emf";
     else if (!strcmp(termtype, "plot commands")) return ".plt";
     else return "*";
 }
@@ -558,9 +558,9 @@ static struct winfilter get_gp_filter (const char *termtype)
 	return gpfilters[1];
     else if (!strcmp(termtype, "latex")) 
 	return gpfilters[2];
-    else if (!strcmp(termtype, "png")) 
+    else if (!strncmp(termtype, "png", 3)) 
 	return gpfilters[3];
-    else if (!strcmp(termtype, "emf")) 
+    else if (!strncmp(termtype, "emf", 3)) 
 	return gpfilters[4];
     else if (!strcmp(termtype, "plot commands")) 
 	return gpfilters[5];

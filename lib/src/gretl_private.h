@@ -128,4 +128,6 @@ void difflist (int *biglist, int *smalist, int *targ);
 
 int takenotes (int quit_opt);
 
+char *get_month_name (char *mname, int m);
+
 #endif /* GRETL_PRIVATE_H */

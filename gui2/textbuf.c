@@ -179,6 +179,8 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
     memset(readbuf, 0, sizeof readbuf);
 
     while (fgets(readbuf, sizeof readbuf, fp)) {
+	int len;
+
 # ifdef ENABLE_NLS
 	if (!g_utf8_validate(readbuf, -1, NULL)) {
 	    chunk = my_locale_to_utf8(readbuf);
@@ -190,10 +192,18 @@ gtk_source_buffer_load_file (GtkSourceBuffer *sbuf,
 	}
 # else
 	chunk = readbuf;
-# endif
+# endif /* ENABLE_NLS */
+
+	/* check that this works */
+	len = strlen(chunk);
+	if (chunk[len - 2] == '\r') {
+	    chunk[len - 2] = '\n';
+	    chunk[len - 1] = '\0';
+	}
+
 	gtk_text_buffer_insert(GTK_TEXT_BUFFER(sbuf), &iter, chunk, -1);
 	memset(readbuf, 0, sizeof readbuf);
-	if (chunk != NULL && chunk != readbuf) {
+	if (chunk != readbuf) {
 	    g_free(chunk);
 	    chunk = NULL;
 	}

@@ -3362,23 +3362,6 @@ static int model_vector_index (const char *s)
     return 0;
 }
 
-/* ........................................................  */
-
-static void get_month_name (char *mname, int m)
-{
-    struct tm mt;
-
-    mt.tm_sec = 0;
-    mt.tm_min = 0;
-    mt.tm_hour = 0;
-    mt.tm_mday = 1;
-    mt.tm_mon = m - 1;
-    mt.tm_year = 100;
-
-    strftime(mname, 7, "%b", &mt);
-    *mname = tolower(*mname);
-}
-
 static int panel_x_offset (const DATAINFO *pdinfo, int *bad)
 {
     char *p = strchr(pdinfo->stobs, ':');

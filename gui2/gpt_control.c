@@ -259,7 +259,10 @@ static void flip_manual_range (GtkWidget *widget, gpointer data)
     }
 }
 
-/* ........................................................... */
+/* Take text from a gtkentry and write to gnuplot spec string.
+   Under gtk2, the entries will be in utf-8, and have to be converted
+   to the locale for use with gnuplot.
+*/
 
 static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 {
@@ -279,8 +282,40 @@ static void entry_to_gp_string (GtkWidget *w, char *targ, size_t n)
 	}
 #else
 	strncat(targ, wstr, n-1);
-#endif
+#endif /* OLD_GTK */
     }
+}
+
+/* Take text from a gnuplot spec string and put it into a gtkentry.
+   Under gtk2, we have to ensure that the text is put into utf-8.
+*/
+
+static void gp_string_to_entry (GtkWidget *w, const char *str)
+{
+#ifndef OLD_GTK
+# ifdef ENABLE_NLS
+    int l2 = doing_iso_latin_2();
+# else
+    int l2 = 0;
+# endif /* ENABLE_NLS */
+    gchar *trstr;
+
+    if (l2) {
+	char lstr[MAXTITLE];
+	
+	sprint_html_to_l2(lstr, str);
+	trstr = my_locale_to_utf8(lstr);
+    } else {
+	trstr = my_locale_to_utf8(str);
+    }
+
+    if (trstr != NULL) {
+	gtk_entry_set_text(GTK_ENTRY(w), trstr);
+	g_free(trstr);
+    }    
+#else 
+    gtk_entry_set_text(GTK_ENTRY(w), str);
+#endif /* OLD_GTK */
 }
 
 /* ........................................................... */
@@ -786,34 +821,6 @@ static int get_point_size (const char *font)
     }
 }
 
-static void set_gp_entry_string (GtkWidget *w, const char *str)
-{
-#ifndef OLD_GTK
-# ifdef ENABLE_NLS
-    int l2 = doing_iso_latin_2();
-# else
-    int l2 = 0;
-# endif
-    gchar *trstr;
-
-    if (l2) {
-	char lstr[MAXTITLE];
-	
-	sprint_html_to_l2(lstr, str);
-	trstr = my_locale_to_utf8(lstr);
-    } else {
-	trstr = my_locale_to_utf8(str);
-    }
-
-    if (trstr != NULL) {
-	gtk_entry_set_text(GTK_ENTRY(w), trstr);
-	g_free(trstr);
-    }    
-#else
-    gtk_entry_set_text(GTK_ENTRY(w), str);
-#endif
-}
-
 static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *tempwid, *box, *tbl;
@@ -862,7 +869,7 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 				      tbl_len-1, tbl_len);
 				      
             if (spec->titles[i] != NULL && *spec->titles[i] != '\0') {
-		set_gp_entry_string(tempwid, spec->titles[i]);
+		gp_string_to_entry(tempwid, spec->titles[i]);
             }		
 
 #ifdef OLD_GTK		
@@ -1182,7 +1189,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 	linetitle[i] = gtk_entry_new();
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  linetitle[i], 2, 3, tbl_len-1, tbl_len);
-	set_gp_entry_string(linetitle[i], spec->lines[i].title);
+	gp_string_to_entry(linetitle[i], spec->lines[i].title);
 #ifdef OLD_GTK
 	gtk_signal_connect (GTK_OBJECT(linetitle[i]), "changed", 
 			    GTK_SIGNAL_FUNC(linetitle_callback), 
@@ -1334,7 +1341,7 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	labeltext[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labeltext[i]), PLOT_LABEL_TEXT_LEN);
-	set_gp_entry_string(labeltext[i], spec->text_labels[i].text);
+	gp_string_to_entry(labeltext[i], spec->text_labels[i].text);
 #ifdef OLD_GTK
 	gtk_signal_connect (GTK_OBJECT(labeltext[i]), "activate", 
 			    GTK_SIGNAL_FUNC(apply_gpt_changes), 
@@ -1479,7 +1486,7 @@ static void gpt_tab_XY (GtkWidget *notebook, GPT_SPEC *spec, gint axis)
 	    tempwid = gtk_entry_new();
 	    gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				      tempwid, 1, 2, tbl_len-1, tbl_len);
-	    set_gp_entry_string(tempwid, spec->titles[i]);
+	    gp_string_to_entry(tempwid, spec->titles[i]);
 #ifdef OLD_GTK
 	    gtk_signal_connect(GTK_OBJECT (tempwid), "activate", 
 			       GTK_SIGNAL_FUNC(apply_gpt_changes), 

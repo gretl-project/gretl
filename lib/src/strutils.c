@@ -1038,72 +1038,171 @@ utf8_to_iso_latin_1 (unsigned char *out, int outlen,
 
 #endif
 
-char *iso_to_ascii (char *s)
+static char *real_iso_to_ascii (char *s, int latin)
 {
     char *tmp, *p, *q;
-    int n = strlen(s);
 
-    tmp = malloc(n + 1);
+    tmp = malloc(strlen(s) + 1);
     if (tmp == NULL) return NULL;
 
     p = tmp;
     q = s;
-    
-    while (*q) {
-	unsigned char c = *q;
 
-	if (c == '\t' || (c >= 32 && c <= 126)) {
-	    *p++ = c;
-	} else if (c >= 192 && c <= 198) {
-	    *p++ = 'A';
-	} else if (c == 199) {
-	    *p++ = 'C';
-	} else if (c >= 200 && c <= 203) {
-	    *p++ = 'E';
-	} else if (c >= 204 && c <= 207) {
-	    *p++ = 'I';
-	} else if (c == 208) {
-	    *p++ = 'D';
-	} else if (c == 209) {
-	    *p++ = 'N';
-	} else if (c >= 210 && c <= 214) {
-	    *p++ = 'O';
-	} else if (c == 216) {
-	    *p++ = 'O';
-	} else if (c >= 217 && c <= 220) {
-	    *p++ = 'U';
-	} else if (c == 221) {
-	    *p++ = 'Y';
-	} else if (c >= 224 && c <= 230) {
-	    *p++ = 'a';
-	} else if (c == 231) {
-	    *p++ = 'c';
-	} else if (c >= 232 && c <= 235) {
-	    *p++ = 'e';
-	} else if (c >= 236 && c <= 239) {
-	    *p++ = 'i';
-	} else if (c == 240) {
-	    *p++ = 'd';
-	} else if (c == 241) {
-	    *p++ = 'n';
-	} else if (c >= 242 && c <= 246) {
-	    *p++ = 'o';
-	} else if (c == 248) {
-	    *p++ = 'o';
-	} else if (c >= 249 && c <= 252) {
-	    *p++ = 'u';
-	} else if (c == 253) {
-	    *p++ = 'y';
+    if (latin != 1 && latin != 2) {
+	/* fallback?? */
+	latin = 1;
+    }
+
+    if (latin == 1) {
+	while (*q) {
+	    unsigned char c = *q;
+
+	    if (c == '\t' || (c >= 32 && c <= 126)) {
+		*p++ = c;
+	    } else if (c >= 192 && c <= 198) {
+		*p++ = 'A';
+	    } else if (c == 199) {
+		*p++ = 'C';
+	    } else if (c >= 200 && c <= 203) {
+		*p++ = 'E';
+	    } else if (c >= 204 && c <= 207) {
+		*p++ = 'I';
+	    } else if (c == 208) {
+		*p++ = 'D';
+	    } else if (c == 209) {
+		*p++ = 'N';
+	    } else if (c >= 210 && c <= 214) {
+		*p++ = 'O';
+	    } else if (c == 216) {
+		*p++ = 'O';
+	    } else if (c >= 217 && c <= 220) {
+		*p++ = 'U';
+	    } else if (c == 221) {
+		*p++ = 'Y';
+	    } else if (c >= 224 && c <= 230) {
+		*p++ = 'a';
+	    } else if (c == 231) {
+		*p++ = 'c';
+	    } else if (c >= 232 && c <= 235) {
+		*p++ = 'e';
+	    } else if (c >= 236 && c <= 239) {
+		*p++ = 'i';
+	    } else if (c == 240) {
+		*p++ = 'd';
+	    } else if (c == 241) {
+		*p++ = 'n';
+	    } else if (c >= 242 && c <= 246) {
+		*p++ = 'o';
+	    } else if (c == 248) {
+		*p++ = 'o';
+	    } else if (c >= 249 && c <= 252) {
+		*p++ = 'u';
+	    } else if (c == 253) {
+		*p++ = 'y';
+	    }
+	    q++;
 	}
-	q++;
+    } else if (latin == 2) {
+	while (*q) {
+	    unsigned char c = *q;
+
+	    if (c == '\t' || (c >= 32 && c <= 126)) {
+		*p++ = c;
+	    } else if (c == 161 || (c >= 193 && c <= 196)) {
+		*p++ = 'A';
+	    } else if (c == 198 || c == 199 || c == 200) {
+		*p++ = 'C';
+	    } else if (c == 207 || c == 208) {
+		*p++ = 'D';
+	    } else if (c >= 201 && c <= 204) {
+		*p++ = 'E';
+	    } else if (c == 205 || c == 206) {
+		*p++ = 'I';
+	    } else if (c == 163 || c == 165 || c == 197) {
+		*p++ = 'L';
+	    } else if (c == 209 || c == 210) {
+		*p++ = 'N';
+	    } else if (c >= 211 && c <= 214) {
+		*p++ = 'O';
+	    } else if (c == 192 || c == 216) {
+		*p++ = 'R';
+	    } else if (c == 166 || c == 169 || c == 170 || c == 223) {
+		*p++ = 'S';
+	    } else if (c == 171 || c == 222) {
+		*p++ = 'T';
+	    } else if (c >= 217 && c <= 220) {
+		*p++ = 'U';
+	    } else if (c == 221) {
+		*p++ = 'Y';
+	    } else if (c == 172 || c == 174 || c == 175) {
+		*p++ = 'Z';
+	    } else if (c == 177 || (c >= 225 && c <= 228)) {
+		*p++ = 'a';
+	    } else if (c == 230 || c == 231 || c == 232) {
+		*p++ = 'c';
+	    } else if (c == 239 || c == 240) {
+		*p++ = 'd';
+	    } else if (c >= 233 && c <= 236) {
+		*p++ = 'e';
+	    } else if (c == 237 || c == 238) {
+		*p++ = 'i';
+	    } else if (c == 179 || c == 181 || c == 229) {
+		*p++ = 'l';
+	    } else if (c == 241 || c == 242) {
+		*p++ = 'n';
+	    } else if (c >= 243 && c <= 246) {
+		*p++ = 'o';
+	    } else if (c == 224 || c == 248) {
+		*p++ = 'r';
+	    } else if (c == 182 || c == 185 || c == 186) {
+		*p++ = 's';
+	    } else if (c == 187 || c == 254) {
+		*p++ = 't';
+	    } else if (c >= 249 && c <= 252) {
+		*p++ = 'u';
+	    } else if (c == 253) {
+		*p++ = 'y';
+	    } else if (c == 188 || c == 190 || c == 191) {
+		*p++ = 'z';
+	    }
+	    q++;
+	}
     }
 
     *p = '\0';
+
     strcpy(s, tmp);
     free(tmp);
 
     return s;
 }
+
+char *iso_to_ascii (char *s) 
+{
+    return real_iso_to_ascii(s, 1);
+}
+
+char *get_month_name (char *mname, int m)
+{
+    struct tm mt;
+
+    mt.tm_sec = 0;
+    mt.tm_min = 0;
+    mt.tm_hour = 0;
+    mt.tm_mday = 1;
+    mt.tm_mon = m - 1;
+    mt.tm_year = 100;
+
+    strftime(mname, 7, "%b", &mt);
+    *mname = tolower(*mname);
+
+#ifdef ENABLE_NLS
+    real_iso_to_ascii(mname, gretl_cset_min);
+#endif
+
+    return mname;
+}
+
 
 #ifdef ENABLE_NLS
 
