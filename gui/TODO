@@ -1,5 +1,11 @@
-Why do we get "open <datafile>" twice in the command log
-when we start gretl with a datafile on the command line?
+? Make the "edit graph using GUI" use the PNG graph mechanism
+rather than a pipe to gnuplot.
 
-Somehow the command line, "open <file>" is being run through
-cmd_init() twice (register_data() is invoked only once).
+? Shift to PNG graph mechanism under win32 (trade-off: have to
+reconstruct the options that are currently offered under the win32
+gnuplot menus -- copy to clipboard (nicely scaled), print (ditto),
+change line styles and so on.
+
+? Institute more "advanced" model dialog box -- would be useful
+under win32, or with WMs that use click-to-raise (current system
+works well for WMs that use click-to-focus but not click-to-raise).

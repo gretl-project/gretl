@@ -380,7 +380,7 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *plot)
 				   tempwid, 0, 1, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
 
-	tempwid = gtk_label_new("key");
+	tempwid = gtk_label_new("legend");
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
 	gtk_widget_show(tempwid);
@@ -942,11 +942,11 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	    strncmp(line, "# peri", 6) == 0) {
 	    /* special cases */
 	    if (line[2] == 'f') plot->code = FREQ;
-	    else  plot->code = PERGM;
+	    else plot->code = PERGM;
 	    for (j=0; j<4; j++) {
-		plot->literal[j] = mymalloc(MAXLABEL);
+		plot->literal[j] = mymalloc(MAXLEN);
 		if (plot->literal[j] == NULL) return 1;
-		fgets(plot->literal[j], MAXLABEL - 1, fp);
+		fgets(plot->literal[j], MAXLEN - 1, fp);
 		top_n_tail(plot->literal[j]);
 	    }
 	    continue;
@@ -989,6 +989,8 @@ int read_plotfile (GPT_SPEC *plot, char *fname)
 	else if (strcmp(set_thing, "y2label") == 0)
 	    strcpy(plot->titles[3], setting);
 	else if (strcmp(set_thing, "key") == 0)
+	    strcpy(plot->keyspec, setting);
+	else if (strcmp(set_thing, "nokey") == 0)
 	    strcpy(plot->keyspec, setting);
 	else if (strcmp(set_thing, "xtics") == 0) 
 	    safecpy(plot->xtics, setting, 15);
