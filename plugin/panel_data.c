@@ -926,6 +926,10 @@ wald_hetero_test (const MODEL *pmod, const DATAINFO *pdinfo,
 		fii += x * x;
 	    }
 	}
+	if (fii <= 0) {
+	    W = NADBL;
+	    break;
+	}	    
 	fii *= (1.0 / Ti) * (1.0 / (Ti - 1.0));
 	x = uvar[i] - s2;
 	W += x * x / fii;
