@@ -23,7 +23,9 @@ Analysis, Chapters 19 and 20.
 The new commands depend upon two new plugins, "sur" and "johansen",
 which are linked against the LAPACK and BLAS libraries.  These
 libraries are supplied with the Windows distribution of gretl in the
-form of DLLs.  
+form of DLLs.  The gretl RPM packages (red hat 7.3 and "generic") do
+not contain the plugins with the dependency on LAPACK, but there is an
+additional RPM, gretl-lapack-VERSION.rpm, which supplies them.
 
 If you are building gretl on Linux/unix and wish to have these
 commands available, you will need to install LAPACK before configuring

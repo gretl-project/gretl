@@ -1,4 +1,4 @@
-version 1.0.6
+03/16/03 version 1.0.6
 - minor adjustment to model print output formatting
 - fix for correlogram graph (was incompatible with older gnuplot)
 - fix a couple of minor gretlcli bugs
@@ -17,7 +17,7 @@ version 1.0.6
   relation to a model estimated using hccm
 - permit comments starting with '#' on first line of script
 - change to Mersenne Twister for gretl's PRNG, and supply the
-  Marsaglia test suite for the PRNG
+  Marsaglia test suite for the PRNG in the gretl source package
 - make correlogram and periodogram functions more robust in
   the face of weird data
 
