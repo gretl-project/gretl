@@ -776,7 +776,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 		return E_ALLOC;
 	    }
 	}
-	strcpy(xlabel, I_("Observation"));
+	/* strcpy(xlabel, I_("Observation")); */
+	*xlabel = 0;
 	if (lo > 2 && lo < 7) tscale = 1;
     } else {
 	if (flags & GP_DUMMY) {
@@ -790,7 +791,8 @@ int gnuplot (LIST list, const int *lines, const char *literal,
     if (strcmp(pdinfo->varname[list[lo]], "qtrs") == 0 ||
 	strcmp(pdinfo->varname[list[lo]], "months") == 0) {
 	ts_plot = 1;
-	strcpy(xlabel, I_("period"));
+	*xlabel = 0;
+	/* strcpy(xlabel, I_("period")); */
     }
 
     /* add a simple regression line if appropriate */
@@ -873,8 +875,7 @@ int gnuplot (LIST list, const int *lines, const char *literal,
 	fputs("set key left top\n", fq);
     } else if (flags & GP_FA) {
 	if (list[3] == pdinfo->v - 1) { 
-	    /* FIXME rubbish? */
-	    /* x var is just time or index */
+	    /* x var is just time or index: is this always right? */
 	    make_gtitle(fq, GTITLE_AF, get_series_name(pdinfo, list[2]), NULL);
 	} else {
 	    make_gtitle(fq, GTITLE_AFV, get_series_name(pdinfo, list[2]), 
