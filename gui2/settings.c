@@ -1186,57 +1186,12 @@ void write_rc (void)
     set_paths(&paths, 0, 1);
 }
 
-static int get_network_cfg_filename (char *inifile)
-{
-    LPTSTR blank;
-    LPWSTR *args;
-    int nargs;
-    gchar *msg;
-
-    *inifile = '\0';
-    *blank = 0;
-
-    args = CommandLineToArgvW(blank, &nargs);
-    if (args == NULL) {
-	errbox("get_network_settings: args = NULL");
-    } else {
-	gchar *msg;
-	const char *prog, *p;
-	int n;
-    
-	msg = g_strdup_printf("get_network_settings: args[0] = '%s',"
-			      "nargs = %d", (char *) args[0], nargs);
-	infobox(msg);
-	g_free(msg);
-
-	prog = args[0];
-	n = strlen(prog) - 1;
-	p = prog + n;
-	while (p - prog >= 0) {
-	    if (*p == '\\' || *p == '/') {
-		strncpy(inifile, prog, n - strlen(p));
-		strcat(inifile, "\\gretlnet.txt");
-		break;
-	    }
-	    p--;
-	}
-
-	msg = g_strdup_printf("inifile = '%s'", inifile);
-	infobox(msg);
-	g_free(msg);	
-
-	GlobalFree(args);
-    }
-
-    return 0;
-}
-
 static int get_network_settings (void)
 {
-    char inifile[FILENAME_MAX];
+    const char *inifile;
     FILE *fp;
 
-    get_network_cfg_filename(inifile);
+    inifile = get_network_cfg_filename();
 
     if (*inifile && (fp = fopen(inifile, "r"))) {
 	int j;

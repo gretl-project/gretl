@@ -35,6 +35,6 @@ void set_up_windows_look (void);
 
 void win_help (void);
 
-void gretl_win32_init (void);
+void gretl_win32_init (const char *progname);
 
 #endif /* GRETLWIN32_H */

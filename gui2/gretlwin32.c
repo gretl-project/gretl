@@ -269,8 +269,43 @@ void set_up_windows_look (void)
     }
 }
 
-void gretl_win32_init (void)
+static char inifile[FILENAME_MAX];
+
+const char *get_network_cfg_filename (void)
 {
+    return inifile;
+}
+
+static int set_network_cfg_filename (const char *prog)
+{
+    gchar *msg;
+    const char *p;
+    int n;
+
+    *inifile = '\0';
+    
+    n = strlen(prog) - 1;
+    p = prog + n;
+    while (p - prog >= 0) {
+	if (*p == '\\' || *p == '/') {
+	    strncpy(inifile, prog, n - strlen(p));
+	    strcat(inifile, "\\gretlnet.txt");
+	    break;
+	}
+	p--;
+    }
+
+    msg = g_strdup_printf("inifile = '%s'", inifile);
+    infobox(msg);
+    g_free(msg);	
+
+    return 0;
+}
+
+void gretl_win32_init (const char *progname)
+{
+    get_network_cfg_filename(progname);
+
     read_rc(); /* get config info from registry */
 
 # ifdef HUSH_RUNTIME_WARNINGS
