@@ -36,9 +36,9 @@ extern int session_saved;
 extern GtkWidget *mysheet;
 extern char *space_to_score (char *str);
 
-#define SCRIPT_CHANGED(w) w->active_var = 1
-#define SCRIPT_SAVED(w) w->active_var = 0
-#define SCRIPT_IS_CHANGED(w) w->active_var == 1
+#define MARK_SCRIPT_CHANGED(w) (w->active_var = 1)
+#define MARK_SCRIPT_SAVED(w) (w->active_var = 0)
+#define SCRIPT_IS_CHANGED(w) (w->active_var == 1)
 
 static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin, 
 				GtkItemFactoryEntry items[]);
@@ -651,8 +651,9 @@ void verify_open_session (gpointer userdata)
 		       "close the current session.  Any unsaved work\n"
 		       "will be lost.  Proceed to open session file?"), 0))
 	return;
-    else 
+    else {
 	do_open_session(NULL, userdata);
+    }
 }
 
 /* ........................................................... */
@@ -827,8 +828,9 @@ static void file_viewer_save (GtkWidget *widget, windata_t *vwin)
 	    g_free(text);
 	    sprintf(buf, _("Saved %s\n"), vwin->fname);
 	    infobox(buf);
-	    if (vwin->role == EDIT_SCRIPT) 
-		SCRIPT_SAVED(vwin);
+	    if (vwin->role == EDIT_SCRIPT) { 
+		MARK_SCRIPT_SAVED(vwin);
+	    }
 	}
     }
 } 
@@ -1077,7 +1079,7 @@ static gchar *make_viewer_title (int role, const char *fname)
 
 static gint script_changed (GtkWidget *w, windata_t *vwin)
 {
-    SCRIPT_CHANGED(vwin);
+    MARK_SCRIPT_CHANGED(vwin);
     return FALSE;
 }
 
@@ -1104,7 +1106,7 @@ static void auto_save_script (windata_t *vwin)
     g_free(savestuff); 
     fclose(fp);
     infobox(_("script saved"));
-    SCRIPT_SAVED(vwin);
+    MARK_SCRIPT_SAVED(vwin);
 }
 
 /* ........................................................... */
@@ -1117,10 +1119,12 @@ static gint query_save_script (GtkWidget *w, GdkEvent *event, windata_t *vwin)
 	button = yes_no_dialog(_("gretl: script"), 
 			       _("Save changes?"), 1);
 
-	if (button == CANCEL_BUTTON)
+	if (button == CANCEL_BUTTON) {
 	    return TRUE;
-	if (button == YES_BUTTON)
+	}
+	if (button == YES_BUTTON) {
 	    auto_save_script(vwin);
+	}
     }
     return FALSE;
 }

@@ -2145,10 +2145,16 @@ void do_resid_freq (gpointer data, guint action, GtkWidget *widget)
     if (check_cmd(line) || model_cmd_init(line, pmod->ID)) return;
  
     printfreq(freq, prn);
-    free_freq(freq);
 
     view_buffer(prn, 78, 300, _("gretl: residual dist."), TESTUHAT,
 		view_items);
+
+    /* show the graph too */
+    if (plot_freq(freq, &paths, NORMAL) == 0) {
+	register_graph();
+    }
+
+    free_freq(freq);
 }
 
 /* ........................................................... */
@@ -2174,10 +2180,11 @@ void do_freqplot (gpointer data, guint dist, GtkWidget *widget)
 	    errbox(_("Data contain negative values: gamma distribution not "
 		   "appropriate"));
 	} else {
-	    if (plot_freq(freq, &paths, dist))
+	    if (plot_freq(freq, &paths, dist)) {
 		errbox(_("gnuplot command failed"));
-	    else
+	    } else {
 		register_graph();
+	    }
 	}
 	free_freq(freq);
     }
