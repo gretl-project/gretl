@@ -1663,6 +1663,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gpt_tab_labels(notebook, spec); 
     gpt_tab_output(notebook, spec);
 
+    /* "Apply" button */
     tempwid = standard_button(GTK_STOCK_APPLY);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
@@ -1677,6 +1678,24 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_widget_grab_default (tempwid);
     gtk_widget_show (tempwid);
 
+    /* "OK" button (apply and close) */
+    tempwid = standard_button(GTK_STOCK_OK);
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 
+		       tempwid, TRUE, TRUE, 0);
+#ifdef OLD_GTK
+    gtk_signal_connect (GTK_OBJECT(tempwid), "clicked", 
+                        GTK_SIGNAL_FUNC(apply_gpt_changes), spec);
+    gtk_signal_connect(GTK_OBJECT(tempwid), "clicked",
+                       GTK_SIGNAL_FUNC(delete_widget), gpt_control);
+#else
+    g_signal_connect (G_OBJECT(tempwid), "clicked", 
+		      G_CALLBACK(apply_gpt_changes), spec);
+    g_signal_connect(G_OBJECT(tempwid), "clicked",
+		     G_CALLBACK(delete_widget), gpt_control);
+#endif
+    gtk_widget_show (tempwid);
+
+    /* Old, weird stuff */
 #ifdef GNUPLOT_PIPE
     tempwid = standard_button(GTK_STOCK_SAVE);
     GTK_WIDGET_SET_FLAGS (tempwid, GTK_CAN_DEFAULT);
@@ -1692,6 +1711,7 @@ static int show_gnuplot_dialog (GPT_SPEC *spec)
     gtk_widget_show (tempwid);
 #endif /* GNUPLOT_PIPE */
 
+    /* Close button (do not apply changes */
     tempwid = standard_button(GTK_STOCK_CLOSE);
     GTK_WIDGET_SET_FLAGS(tempwid, GTK_CAN_DEFAULT);
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(gpt_control)->action_area), 

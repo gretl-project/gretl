@@ -13,7 +13,7 @@ fedstl.bin: mkbin fedstl.dat
 mkbin: mkbin.c
 	$(CC) -o $@ $<
 
-install: bcih.bin
+install: fedstl.bin
 	$(INSTALL_DATA) fedstl.bin $(gretldir)/db/fedstl.bin
 	$(INSTALL_DATA) $(topsrc)/share/bcih/fedstl.idx $(gretldir)/db/fedstl.idx
 

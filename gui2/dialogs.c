@@ -2345,7 +2345,7 @@ static void set_mon_start (GtkWidget *w, gpointer data)
 
 static void pd_buttons (dialog_t *d, int *target_pd)
 {    
-    GtkWidget *button, *hs;
+    GtkWidget *button;
     GtkWidget *vbox;
     GSList *group;
     gint quart = 4, ann = 1;
@@ -2388,16 +2388,11 @@ static void pd_buttons (dialog_t *d, int *target_pd)
 			GINT_TO_POINTER(ann));
 #endif
     gtk_widget_show (button);
-
-    hs = gtk_hseparator_new();
-    gtk_box_pack_start (GTK_BOX(vbox), 
-			hs, TRUE, TRUE, FALSE);
-    gtk_widget_show (hs);
 }
 
-static void mon_start_buttons (dialog_t *d, int *mon_start)
+static void monday_buttons (dialog_t *d, int *mon_start)
 {
-    GtkWidget *button, *hs;
+    GtkWidget *button;
     GtkWidget *vbox;
     GSList *group;
 
@@ -2439,76 +2434,27 @@ static void mon_start_buttons (dialog_t *d, int *mon_start)
 			GINT_TO_POINTER(0));
 #endif
     gtk_widget_show (button);
-
-    hs = gtk_hseparator_new();
-    gtk_box_pack_start (GTK_BOX(vbox), 
-			hs, TRUE, TRUE, FALSE);
-    gtk_widget_show (hs);
 }
 
-void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
-			  int *mon_start, gint *compact_method)
+enum {
+    NO_METHODS_SET,
+    SOME_METHODS_SET,
+    ALL_METHODS_SET
+};
+
+static void compact_method_buttons (dialog_t *d, gint *compact_method,
+				    int methods_set)
 {
-    dialog_t *d;
     GtkWidget *button;
-    GtkWidget *tempwid;
     GSList *group;
-    int show_pd_buttons = 0;
-    int all_vars = 0;
-    gchar *labelstr = NULL;
 
-    d = dialog_data_new(NULL, 0, _("gretl: compact data"));
-    if (d == NULL) return;
+    if (methods_set == SOME_METHODS_SET) {
+	GtkWidget *label;
 
-    if (mon_start != NULL) {
-	*mon_start = 1;
-    }
-    
-    if (*target_pd != 0) {
-	/* importing series from database */
-	labelstr = g_strdup_printf(_("You are adding a %s series to %s dataset"),
-				   (spd == 4)? _("quarterly") : _("monthly"),
-				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
-    } else {
-	/* compacting whole data set */
-	all_vars = 1;
-	if (spd == 4) {
-	    *target_pd = 1;
-	    labelstr = g_strdup(_("Compact quarterly data to annual"));
-	} else if (spd == 12) {
-	    /* source data are monthly */
-	    labelstr = g_strdup(_("Compact monthly data to:"));
-	    show_pd_buttons = 1;
-	    *target_pd = 4;
-	} else if (spd == 5 || spd == 7) {
-	    /* source data are daily */
-	    labelstr = g_strdup(_("Compact daily data to weekly"));
-	    *target_pd = 52;
-	}
-    }
-
-    no_resize(d->dialog);
-    set_dialog_border_widths(d->dialog);
-
-    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
-
-#ifndef OLD_GTK
-    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
-		      G_CALLBACK (dialog_unblock), NULL);
-#endif
-
-    tempwid = gtk_label_new(labelstr);
-    g_free(labelstr);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
-			tempwid, TRUE, TRUE, FALSE);
-    gtk_widget_show (tempwid);
-
-    if (spd == 7 && mon_start != NULL) {
-	mon_start_buttons(d, mon_start);
-    }
-
-    if (show_pd_buttons) {
-	pd_buttons(d, target_pd);
+	label = gtk_label_new(_("Default method:"));
+	gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			    label, TRUE, TRUE, FALSE);
+	gtk_widget_show (label);
     }
 
     button = gtk_radio_button_new_with_label (NULL, _("Compact by averaging"));
@@ -2578,6 +2524,120 @@ void data_compact_dialog (GtkWidget *w, int spd, int *target_pd,
 			GINT_TO_POINTER(COMPACT_SOP));
 #endif
     gtk_widget_show (button);
+}
+
+static int compact_methods_set (void)
+{
+    int i, nmeth = 0;
+    int ret = NO_METHODS_SET;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (COMPACT_METHOD(datainfo, i) != COMPACT_NONE) {
+	    nmeth++;
+	}
+    }
+
+    if (nmeth == datainfo->v - 1) {
+	ret = ALL_METHODS_SET;
+    } else if (nmeth > 0) {
+	ret = SOME_METHODS_SET;
+    }
+
+    return ret;
+}
+
+static void dialog_hsep (dialog_t *d)
+{
+    GtkWidget *hs = gtk_hseparator_new();
+    
+    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(d->dialog)->vbox), hs, 
+		       TRUE, TRUE, FALSE);
+    gtk_widget_show(hs);
+}
+
+void data_compact_dialog (GtkWidget *w, int spd, int *target_pd, 
+			  int *mon_start, gint *compact_method)
+{
+    dialog_t *d;
+    GtkWidget *tempwid;
+    int show_pd_buttons = 0;
+    int show_monday_buttons = 0;
+    int show_method_buttons = 0;
+    int methods_set = NO_METHODS_SET;
+    gchar *labelstr = NULL;
+
+    d = dialog_data_new(NULL, 0, _("gretl: compact data"));
+    if (d == NULL) return;
+
+    if (mon_start != NULL) {
+	*mon_start = 1;
+    }
+    
+    if (*target_pd != 0) {
+	/* importing series from database */
+	labelstr = g_strdup_printf(_("You are adding a %s series to %s dataset"),
+				   (spd == 4)? _("quarterly") : _("monthly"),
+				   (*target_pd == 4)? _("a quarterly"): _("an annual"));
+    } else {
+	/* compacting whole data set */
+	if (spd == 4) {
+	    *target_pd = 1;
+	    labelstr = g_strdup(_("Compact quarterly data to annual"));
+	} else if (spd == 12) {
+	    /* source data are monthly */
+	    labelstr = g_strdup(_("Compact monthly data to:"));
+	    *target_pd = 4;
+	    show_pd_buttons = 1;
+	} else if (spd == 5 || spd == 7) {
+	    /* source data are daily */
+	    labelstr = g_strdup(_("Compact daily data to weekly"));
+	    *target_pd = 52;
+	    if (mon_start != NULL) {
+		show_monday_buttons = 1;
+	    }
+	}
+	methods_set = compact_methods_set();
+    }
+
+    no_resize(d->dialog);
+    set_dialog_border_widths(d->dialog);
+
+    gtk_box_set_spacing (GTK_BOX (GTK_DIALOG (d->dialog)->action_area), 15);
+
+#ifndef OLD_GTK
+    g_signal_connect (G_OBJECT (d->dialog), "destroy", 
+		      G_CALLBACK (dialog_unblock), NULL);
+#endif
+
+    tempwid = gtk_label_new(labelstr);
+    g_free(labelstr);
+    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (d->dialog)->vbox), 
+			tempwid, TRUE, TRUE, FALSE);
+    gtk_widget_show (tempwid);
+
+    show_method_buttons = (methods_set != ALL_METHODS_SET);
+
+    /* 7-day daily data: give choice of when the week starts */
+    if (show_monday_buttons) {
+	monday_buttons(d, mon_start);
+	if (show_pd_buttons || show_method_buttons) {
+	    dialog_hsep(d);
+	}	
+    }
+
+    /* monthly data: give choice of going to quarterly or annual */
+    if (show_pd_buttons) {
+	pd_buttons(d, target_pd);
+	if (show_method_buttons) {
+	    dialog_hsep(d);
+	}	
+    }
+
+    /* per-variable compaction methods not all set already: 
+       give choice of default compaction method */
+    if (show_method_buttons) {
+	compact_method_buttons(d, compact_method, methods_set);
+    } 
 
     /* Create the "OK" button */
     tempwid = ok_button(GTK_DIALOG (d->dialog)->action_area);

@@ -3,8 +3,8 @@
 
 int main (int argc, char *argv[])
 {
-    const char *binfile = "bcih.bin";
-    const char *datfile = "bcih.dat";
+    const char *binfile = "fedstl.bin";
+    const char *datfile = "fedstl.dat";
     char datpath[128];
     FILE *fdat, *fbin;
     double xx;

@@ -283,9 +283,10 @@
 	  Browse databases</quote> menu item. This has three forks:
 	<quote>gretl native</quote>, <quote>RATS 4</quote> and
 	<quote>on database server</quote>.  You should be able to find
-	the file <filename>bcih.bin</filename> in the file selector
+	the file <filename>fedstl.bin</filename> in the file selector
 	that opens if you choose the <quote>gretl native</quote>
-	option &mdash; this file is supplied with the
+	option &mdash; this file, which contains a large collection of
+	US macroeconomic time series, is supplied with the
 	distribution.</para>
 	
       <para>You won't find anything under <quote>RATS 4</quote> unless

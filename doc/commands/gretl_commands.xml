@@ -572,7 +572,7 @@
 	dataset to a lower frequency (perhaps, prior to adding a
 	lower-frequency variable to the dataset).</para>
 
-      <para>You are offered four options for compacting:</para>
+      <para>Gretl offers four options for compacting:</para>
 
       <ilist>
 	<li><para>Averaging: The value written to the dataset will be
@@ -605,7 +605,9 @@
 	you make in this dialog box sets the default method.  But if
 	you have set a compaction method for an individual variable
 	(menu item <quote>Variable/Edit attributes</quote>) that
-	method is used rather than the default.</para>
+	method is used rather than the default.  If the compaction
+	method is already set for all variables, the choice of a
+	default compaction method is not presented.</para>
 
     </description>
   </command>

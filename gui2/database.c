@@ -475,25 +475,10 @@ static void db_view_codebook (GtkWidget *w, windata_t *dbwin)
     view_file(cbname, 0, 0, 78, 350, VIEW_CODEBOOK);
 }
 
-static void db_view_infobook (GtkWidget *w, windata_t *dbwin)
-{
-    char infname[MAXLEN];
-
-    strcpy(infname, dbwin->fname);
-    strcat(infname, ".inf");
-    
-    view_file(infname, 0, 0, 78, 350, VIEW_CODEBOOK);
-}
-
 static void 
-book_callback_wrapper (gpointer p, guint v, GtkWidget *w)
+book_callback_wrapper (gpointer p, guint u, GtkWidget *w)
 {
-    if (v == 0) {
-	db_view_codebook(w, p);
-    } 
-    else if (v == 1) {
-	db_view_infobook(w, p);
-    }
+    db_view_codebook(w, p);
 }
 
 /* ........................................................... */
@@ -505,7 +490,7 @@ static void db_menu_find (GtkWidget *w, windata_t *dbwin)
 
 /* ........................................................... */
 
-static void build_db_popup (windata_t *win, int cb, int info)
+static void build_db_popup (windata_t *win, int cb)
 {
 #ifndef OLD_GTK /* ?? */    
     if (win->popup != NULL) return;
@@ -550,50 +535,22 @@ static void build_db_popup (windata_t *win, int cb, int info)
 #endif
 		       win);
     }
-    if (info) {
-	add_popup_item(_("Info"), win->popup, 
-#ifndef OLD_GTK
-		       G_CALLBACK(db_view_infobook), 
-#else
-		       db_view_infobook,
-#endif
-		       win);
-    }
 }
 
 /* ........................................................... */
 
-static void add_book_to_menu (windata_t *vwin, int cb, int info)
-{
-    GtkItemFactoryEntry item;
-    const gchar *mpaths[] = {
-	N_("/_Codebook"),
-	N_("/_Info")
-    };
-    int i;
-
-    item.accelerator = NULL; 
-    item.item_type = NULL;
-    item.callback = book_callback_wrapper;
-
-    for (i=0; i<2; i++) {
-	if (i == 0 && !cb) continue;
-	if (i == 1 && !info) continue;
-	item.callback_action = i;
-	item.path = g_strdup(_(mpaths[i]));
-	gtk_item_factory_create_item(vwin->ifac, &item, vwin, 1);
-	g_free(item.path);
-    }
-}
-
-static void set_up_db_menu (windata_t *win, int cb, int info)
+static void set_up_db_menu (windata_t *win, int cb)
 {
 #ifndef OLD_GTK
     GtkItemFactoryEntry db_items[] = {
 	{ N_("/_Series/_Display"), NULL, gui_get_series, DB_DISPLAY, NULL, GNULL },
 	{ N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL, GNULL },
 	{ N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL, GNULL },
-	{ N_("/_Find"), NULL, menu_find, 1, NULL, GNULL },
+	{ N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
+	{ N_("/Find/_Find in window"), NULL, menu_find, 1, "<StockItem>", GTK_STOCK_FIND },
+	{ N_("/_Codebook"), NULL, NULL, 0, "<Branch>", GNULL },    
+	{ N_("/Codebook/_Open"), NULL, book_callback_wrapper, 0, "<StockItem>", 
+	  GTK_STOCK_OPEN }
     };
 #else
     GtkItemFactoryEntry db_items[] = {
@@ -601,9 +558,18 @@ static void set_up_db_menu (windata_t *win, int cb, int info)
 	{ N_("/_Series/_Graph"), NULL, gui_get_series, DB_GRAPH, NULL },
 	{ N_("/_Series/_Import"), NULL, gui_get_series, DB_IMPORT, NULL },
 	{ N_("/_Find"), NULL, menu_find, 1, NULL },
+	{ N_("/_Codebook"), NULL, book_callback_wrapper, 0, NULL }
     };
 #endif
     gint n_items = sizeof db_items / sizeof db_items[0];
+
+    if (!cb) {
+#ifndef OLD_GTK
+	n_items -= 2;
+#else
+	n_items--;
+#endif
+    }
 
     win->ifac = gtk_item_factory_new(GTK_TYPE_MENU_BAR, "<main>", NULL);
 #ifdef ENABLE_NLS
@@ -611,10 +577,6 @@ static void set_up_db_menu (windata_t *win, int cb, int info)
 #endif
     gtk_item_factory_create_items(win->ifac, n_items, db_items, win);
     win->mbar = gtk_item_factory_get_widget(win->ifac, "<main>");
-
-    if (cb || info) {
-	add_book_to_menu(win, cb, info);
-    }
 }
 
 /* ........................................................... */
@@ -635,7 +597,7 @@ static void destroy_db_win (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
-static void test_db_books (const char *fname, int *cb, int *info)
+static void test_db_book (const char *fname, int *cb)
 {
     char testname[MAXLEN];
     FILE *fp;
@@ -647,16 +609,6 @@ static void test_db_books (const char *fname, int *cb, int *info)
 	*cb = 0;
     } else {
 	*cb = 1;
-	fclose(fp);
-    }
-
-    strcpy(testname, fname);
-    strcat(testname, ".inf");
-    fp = fopen(testname, "r");
-    if (fp == NULL) {
-	*info = 0;
-    } else {
-	*info = 1;
 	fclose(fp);
     }
 }
@@ -691,7 +643,7 @@ static int display_db_series_list (int action, char *fname, char *buf)
     char *titlestr;
     windata_t *dbwin;
     int db_width = 700, db_height = 420;
-    int cb = 0, info = 0;
+    int cb = 0;
     int err = 0;
 
     dbwin = mymalloc(sizeof *dbwin);
@@ -731,9 +683,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
     gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 10);
     gtk_container_add (GTK_CONTAINER (dbwin->w), main_vbox);
 
-    test_db_books(fname, &cb, &info);
-    set_up_db_menu(dbwin, cb, info);
-    build_db_popup(dbwin, cb, info);
+    test_db_book(fname, &cb);
+    set_up_db_menu(dbwin, cb);
+    build_db_popup(dbwin, cb);
 
     gtk_box_pack_start (GTK_BOX (main_vbox), dbwin->mbar, FALSE, TRUE, 0);
     gtk_widget_show (dbwin->mbar);
@@ -766,11 +718,9 @@ static int display_db_series_list (int action, char *fname, char *buf)
 
     if (action == NATIVE_SERIES) { 
 	err = populate_series_list(dbwin);
-    } 
-    else if (action == REMOTE_SERIES) { 
+    } else if (action == REMOTE_SERIES) { 
 	err = populate_remote_series_list(dbwin, buf);
-    }
-    else {
+    } else {
 	err = rats_populate_series_list(dbwin);
     } 
 
@@ -1906,6 +1856,17 @@ gint populate_dbfilelist (windata_t *win)
     return 0;
 }
 
+static void set_compact_info_from_default (int method)
+{
+    int i;
+
+    for (i=1; i<datainfo->v; i++) {
+	if (COMPACT_METHOD(datainfo, i) == COMPACT_NONE) {
+	    COMPACT_METHOD(datainfo, i) = method;
+	}
+    }
+}
+
 void do_compact_data_set (void)
 {
     int default_method = COMPACT_AVG;
@@ -1914,7 +1875,10 @@ void do_compact_data_set (void)
     if (maybe_restore_full_data(COMPACT)) return;
 
     data_compact_dialog(mdata->w, datainfo->pd, &newpd, &monstart, &default_method);
-    if (default_method == COMPACT_NONE) return;
+    if (default_method == COMPACT_NONE) {
+	/* the user cancelled */
+	return;
+    }
 
     err = compact_data_set(Z, datainfo, newpd, default_method, monstart);
 
@@ -1927,6 +1891,8 @@ void do_compact_data_set (void)
 	if (datainfo->pd == 1 || datainfo->pd == 52) {
 	    flip(mdata->ifac, "/Sample/Compact data...", FALSE);
 	}
+
+	set_compact_info_from_default(default_method);
     }
 }
 

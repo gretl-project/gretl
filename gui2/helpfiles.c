@@ -67,7 +67,8 @@ static char *needle;
 #ifndef OLD_GTK
 GtkItemFactoryEntry help_items[] = {
     { N_("/_Topics"), NULL, NULL, 0, "<Branch>", GNULL },    
-    { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
+    { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
+    { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 #else
@@ -81,7 +82,8 @@ GtkItemFactoryEntry help_items[] = {
 #ifdef ENABLE_NLS
 # ifndef OLD_GTK
 GtkItemFactoryEntry english_help_items[] = {
-    { N_("/_Find"), NULL, menu_find, 0, NULL, GNULL },
+    { N_("/_Find"), NULL, NULL, 0, "<Branch>", GNULL },   
+    { N_("/Find/_Find in window"), NULL, menu_find, 0, "<StockItem>", GTK_STOCK_FIND },
     { NULL, NULL, NULL, 0, NULL, GNULL }
 };
 # else
@@ -720,7 +722,7 @@ static void add_help_topics (windata_t *hwin, int script)
 
 GtkItemFactoryEntry *get_help_menu_items (int code)
 {
-    if (code == CLI_HELP_ENGLISH || GUI_HELP_ENGLISH) {
+    if (code == CLI_HELP_ENGLISH || code == GUI_HELP_ENGLISH) {
 	return english_help_items;
     } else {
 	return help_items;
@@ -732,9 +734,18 @@ GtkItemFactoryEntry *get_help_menu_items (int code)
 static windata_t *helpwin (int script, int english) 
 {
     windata_t *vwin = NULL;
-    char *helpfile;
+    char *helpfile = NULL;
     int helpcode;
 
+#ifdef ENABLE_NLS
+    if (script) {
+	helpfile = (english)? english_script_helpfile : paths.cmd_helpfile;
+	helpcode = (english)? CLI_HELP_ENGLISH : CLI_HELP;
+    } else {
+	helpfile = (english)? english_gui_helpfile : paths.helpfile;
+	helpcode = (english)? GUI_HELP_ENGLISH : GUI_HELP;
+    }
+#else
     if (script) {
 	helpfile = paths.cmd_helpfile;
 	helpcode = CLI_HELP;
@@ -742,20 +753,9 @@ static windata_t *helpwin (int script, int english)
 	helpfile = paths.helpfile;
 	helpcode = GUI_HELP;
     }
+#endif
 
     if (helpfile == NULL) return NULL;
-
-#ifdef ENABLE_NLS
-    if (english) {
-	if (script) {
-	    helpcode = CLI_HELP_ENGLISH;
-	    helpfile = english_script_helpfile;
-	} else {
-	    helpcode = GUI_HELP_ENGLISH;
-	    helpfile = english_gui_helpfile;
-	}
-    }
-#endif
 
     vwin = view_file(helpfile, 0, 0, 80, 400, helpcode);
 
