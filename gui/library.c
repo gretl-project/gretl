@@ -388,8 +388,8 @@ gint cmd_init (char *line)
 	return 1;
     strcpy(cmd_stack[n_cmds], echo->buf);
 #ifdef CMD_DEBUG
-    fprintf(stderr, "cmd_init: copied '%s' to cmd_stack[%d]\n", 
-	    echo->buf, n_cmds);
+    fprintf(stderr, "cmd_init: cmd_stack[%d] now contains: '%s'\n", 
+	    n_cmds, cmd_stack[n_cmds]);
 #endif
     gretl_print_destroy(echo);
     n_cmds++;
@@ -3120,7 +3120,7 @@ static char *bufgets (char *s, int size, const char *buf)
 int execute_script (const char *runfile, const char *buf,
 		    SESSION *psession, SESSIONBUILD *rebuild,
 		    PRN *prn, int exec_code)
-     /* run commands in runfile, output to prn */
+     /* run commands from runfile or buf, output to prn */
 {
     FILE *fb = NULL;
     int cont, exec_err = 0;
@@ -3154,11 +3154,11 @@ int execute_script (const char *runfile, const char *buf,
 	    errbox(_("No commands to execute"));
 	    return -1;
 	}
-    }
-
-    if ((runfile != NULL && !cont) || (buf == NULL || !strlen(buf))) {
-	errbox(_("No commands to execute"));
-	return -1;
+    } else { /* no runfile, commands from buffer */
+	if (buf == NULL || !strlen(buf)) {
+	    errbox(_("No commands to execute"));
+	    return -1;	
+	}
     }
 
     if (runfile != NULL) fb = fopen(runfile, "r");
@@ -3219,7 +3219,7 @@ int execute_script (const char *runfile, const char *buf,
 	} else { /* end if Monte Carlo stuff */
 	    line[0] = '\0';
 	    if ((fb && fgets(line, MAXLEN, fb) == NULL) ||
-		bufgets(line, MAXLEN, buf) == NULL) 
+		(fb == NULL && bufgets(line, MAXLEN, buf) == NULL)) 
 		goto endwhile;
 	    while ((cont = top_n_tail(line))) {
 		if (cont == E_ALLOC) {

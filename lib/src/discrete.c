@@ -108,18 +108,25 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
  */
 
 
-MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
      /* EM algorithm, see Ruud */
 {
     int i, t, v, depvar = list[1];
     int n = pdinfo->n, itermax = 200;
+    int *dmodlist = NULL;
     double xx, zz, fx, Fx, fbx, Lbak;
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
     _init_model(&dmod, pdinfo);
 
-    /* check that depvar is really a dummy */
+    dmodlist = malloc((list[0] + 1) * sizeof *dmodlist);
+    if (dmodlist == NULL) {
+	dmod.errcode = E_ALLOC;
+	return dmod;
+    } 
+
+    /* check that depvar really is binary */
     if (isdummy(depvar, pdinfo->t1, pdinfo->t2, *pZ) == 0) {
 	dmod.errcode = E_UNSPEC;
 	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
@@ -128,8 +135,9 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     }
 
     /* allocate space for means of indep vars */
-    xbar = malloc((list[0] - 1) * sizeof *xbar);
+    xbar = malloc(list[0] * sizeof *xbar);
     if (xbar == NULL) {
+	free(dmodlist);
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
@@ -137,25 +145,32 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     /* make room for special expected value */
     if (dataset_add_vars(1, pZ, pdinfo)) {
 	free(xbar);
+	free(dmodlist);
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
-    v = pdinfo->v - 1;
+
+    v = pdinfo->v - 1; /* the last created variable */
 
     dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
 	(void) dataset_drop_vars(1, pZ, pdinfo);
 	free(xbar);
+	free(dmodlist);
 	return dmod;
     }
+
     for (i=2; i<=list[0]; i++) {
+	dmodlist[i] = list[i];
 	xbar[i-2] = 0.0;
 	for (t=dmod.t1; t<=dmod.t2; t++)
 	    xbar[i-2] += (*pZ)[dmod.list[i]][t];
 	xbar[i-2] /= dmod.nobs;
     }
-    list[1] = v;
+
+    dmodlist[0] = list[0];
+    dmodlist[1] = v; /* dep var is the newly created one */
 
     /* Iterated least squares: see Ruud, "An Introduction to Classical 
        Econometric Theory", chapter 27 */
@@ -181,19 +196,22 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	/*  printf("Log likelihood = %f\n", dmod.lnL); */
 	Lbak = dmod.lnL;
 	clear_model(&dmod, NULL, NULL, NULL);
-	dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
+	dmod = lsq(dmodlist, pZ, pdinfo, OLS, 0, 0);
 	if (dmod.errcode) {
+	    fprintf(stderr, "logit_probit: dmod errcode=%d\n", dmod.errcode);
 	    (void) dataset_drop_vars(1, pZ, pdinfo);
 	    free(xbar);
+	    free(dmodlist);
 	    return dmod;
 	}
     }
-    /* put back original dependent variable */
-    dmod.list[1] = depvar;
+
     dataset_drop_vars(1, pZ, pdinfo);
+    dmod.list[1] = depvar;
     dmod.lnL = _logit_probit_llhood((*pZ)[depvar], &dmod, opt);
     Lr_chisq(&dmod, *pZ);
     dmod.ci = opt;
+    free(dmodlist);
 
     /* form the Hessian */
     if (dmod.xpx != NULL) free(dmod.xpx);
@@ -204,6 +222,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	strcpy(gretl_errmsg, _("Failed to construct Hessian matrix"));
 	return dmod;
     } 
+
     /* obtain negative inverse of Hessian */
     choleski(dmod.xpx, dmod.ncoeff); 
     diag = malloc((dmod.ncoeff + 1) * sizeof(double)); 
@@ -212,8 +231,10 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
+
     xpx = copyvec(dmod.xpx, 1 + dmod.ncoeff * (dmod.ncoeff + 1) / 2);
     neginv(xpx, diag, dmod.ncoeff);
+
     /* std errors: square roots of diagonal elements */
     for (i=1; i<=dmod.ncoeff; i++) 
 	dmod.sderr[i] = sqrt(diag[i]);
@@ -226,15 +247,18 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
 	xx += dmod.coeff[i+1] * xbar[i];
     }
     free(xbar);
+
     if (opt == LOGIT)
 	fbx = _logit_pdf(xx);
     else
 	fbx = _norm_pdf(xx);
+
     dmod.slope = malloc((dmod.ncoeff + 1) * sizeof(double));
     if (dmod.slope == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     }
+
     for (i=0; i<dmod.ncoeff; i++) {
 	if (dmod.list[i+2] == 0) continue;
 	dmod.slope[i+1] = dmod.coeff[i+1] * fbx;
@@ -246,6 +270,7 @@ MODEL logit_probit (LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     for (t=dmod.t1; t<=dmod.t2; t++) {
 	zz = (*pZ)[depvar][t];
 	xx += zz;
+	/* is the following correct ?? */
 	dmod.correct += ((dmod.yhat[t] >= 0.5 && floateq(zz, 1.0)) ||
 		    (dmod.yhat[t] < 0.5 && floateq(zz, 0.0)));
     }

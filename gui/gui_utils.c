@@ -856,8 +856,6 @@ void save_session (char *fname)
 
     fprintf(fp, "*)\n");
     fclose(fp);
-    session_saved = 1;
-    mkfilelist(2, fname);
 
     /* save session notes, if any */
     if (session.notes != NULL && strlen(session.notes)) {
@@ -891,6 +889,10 @@ void save_session (char *fname)
     spos = slashpos(fname2);
     strcat(msg, (spos)? fname2 + spos + 1 : fname2);
     infobox(msg);
+
+    mkfilelist(2, fname);
+    session_saved = 1;
+    session_changed(0);
 
     return;
 }
