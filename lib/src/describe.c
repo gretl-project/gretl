@@ -121,10 +121,9 @@ int moments (int t1, int t2, const double *x,
 	allstats = 0;
     }
 
-    for (t=t1; t<=t2; t++) {
-	if (!na(x[t])) break;
+    while (na(x[t1]) && t1 <= t2) {
+	t1++;
     }
-    t1 = t;
 
     if (gretl_isconst(t1, t2, x)) {
 	*xbar = x[t1];
@@ -612,8 +611,9 @@ static double gretl_acf (int n, int k, const double *y)
     int t;
     double z, ybar, num = 0.0, den = 0.0;
 
-    if (n == 0 || gretl_isconst(0, n-1, y)) 
+    if (n == 0 || gretl_isconst(0, n - 1, y)) { 
 	return NADBL;
+    }
 
     ybar = gretl_mean(0, n-1, y);
 
@@ -735,8 +735,11 @@ int corrgram (int varno, int order, double ***pZ,
     } 
 
     /* determine lag order for pacf (may have to be shorter than acf_m) */
-    if (acf_m > nobs / 2 - 1) pacf_m = nobs / 2 - 1;
-    else pacf_m = acf_m;
+    if (acf_m > nobs / 2 - 1) {
+	pacf_m = nobs / 2 - 1;
+    } else {
+	pacf_m = acf_m;
+    }
 
     /* generate (and if not in batch mode) plot partial 
        autocorrelation function */
@@ -767,7 +770,9 @@ int corrgram (int varno, int order, double ***pZ,
 	}
     }
     pputc(prn, '\n');
-    if (pacf_m % 5 > 0) pputc(prn, '\n');
+    if (pacf_m % 5 > 0) {
+	pputc(prn, '\n');
+    }
 
     if (batch) {
 	goto acf_getout;
@@ -777,11 +782,7 @@ int corrgram (int varno, int order, double ***pZ,
     }
 
     /* for confidence bands */
-#if 0
-    pm = 1.0 / sqrt((double) nobs);
-#else
     pm = 1.96 / sqrt((double) nobs);
-#endif
 
     fprintf(fq, "# correlogram\n");
 

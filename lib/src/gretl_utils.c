@@ -326,14 +326,22 @@ void list_exclude (int n, int *list)
 
 int gretl_isconst (int t1, int t2, const double *x)
 {
+    
     int t;
-    double xx = x[t1];
+
+    while (na(x[t1]) && t1 <= t2) {
+	t1++;
+    }
 
     for (t=t1+1; t<=t2; t++) {
-	if (floatneq(x[t], xx)) {
+	if (na(x[t])) {
+	    continue;
+	}
+	if (floatneq(x[t], x[t1])) {
 	    return 0;
 	}
     }
+
     return 1;
 }
 
@@ -377,9 +385,11 @@ void gretl_minmax (int t1, int t2, const double *x,
 {
     int t;
 
-    while (na(x[t1])) t1++;
+    while (na(x[t1]) && t1 <= t2) {
+	t1++;
+    }
 
-    if (t2 - t1 + 1 <= 0) {
+    if (t1 >= t2) {
         *min = *max = NADBL;
         return;
     }
@@ -432,8 +442,6 @@ double gretl_stddev (int t1, int t2, const double *x)
     return (na(xx))? xx : sqrt(xx);
 }
 
-/* .............................................................  */
-
 double gretl_variance (int t1, int t2, const double *x)
 {
     int i, n;
@@ -465,8 +473,6 @@ double gretl_variance (int t1, int t2, const double *x)
 
     return (sumsq >= 0)? sumsq : NADBL;
 }
-
-/* .............................................................  */
 
 double gretl_sst (int t1, int t2, const double *x)
 {
