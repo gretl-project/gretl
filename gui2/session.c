@@ -24,6 +24,7 @@
 #include "boxplots.h"
 #include "ssheet.h"
 #include "gpt_control.h"
+#include "guiprint.h"
 #include <sys/stat.h>
 #include <unistd.h>
 
@@ -84,7 +85,8 @@ static char *graph_items[] = {
 static char *dataset_items[] = {
     N_("Edit"),
     N_("Save..."),
-    N_("Export as CSV...")
+    N_("Export as CSV..."),
+    N_("Copy as CSV...")
 };
 
 static char *info_items[] = {
@@ -1619,6 +1621,8 @@ static void data_popup_activated (GtkWidget *widget, gpointer data)
 	file_save(mdata, SAVE_DATA, NULL);
     else if (strcmp(item, _("Export as CSV...")) == 0) 
 	file_save(mdata, EXPORT_CSV, NULL);
+    else if (strcmp(item, _("Copy as CSV...")) == 0) 
+	csv_to_clipboard();
 }
 
 /* ........................................................... */

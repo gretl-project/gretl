@@ -1210,6 +1210,8 @@ static char *get_topstr (int cmdnum)
     case EXPORT_R:
     case EXPORT_OCTAVE:
 	return N_("Select variables to save");
+    case COPY_CSV:
+	return N_("Select variables to copy");
     default:
 	return "";
     }
@@ -1462,12 +1464,16 @@ static void data_save_selection_callback (GtkWidget *w, gpointer p)
 
     storelist = g_strdup(sr->cmdlist);
 
-    file_selector(data_save_title(sr->code), sr->code, NULL);
+    if (sr->code != COPY_CSV) {
+	file_selector(data_save_title(sr->code), sr->code, NULL);
+    }
 }
 
 void data_save_selection_wrapper (int file_code)
 {
-    simple_selection(_("Save data"), data_save_selection_callback, file_code, 
+    simple_selection((file_code == COPY_CSV)? 
+		     _("Copy data") : _("Save data"), 
+		     data_save_selection_callback, file_code, 
 		     NULL);
     gtk_main();
 }

@@ -185,41 +185,45 @@ static void widget_to_str (GtkWidget *w, char *str, size_t n)
 
 static int add_or_remove_png_term (const char *fname, int add)
 {
-    FILE *fs, *fd;
+    FILE *fs;
+    int ftmp;
     char tmp[MAXLEN], fline[MAXLEN];
 
     sprintf(tmp, "%sgpttmp.XXXXXX", paths.userdir);
-    if (mktemp(tmp) == NULL) return 1;
+    ftmp = g_mkstemp(tmp);
+    if (ftmp < 0) {
+        sprintf(errtext, _("Couldn't write to %s"), tmp);
+        errbox(errtext);
+        return 1;
+    }
 
     fs = fopen(fname, "r");
     if (!fs) {
 	sprintf(errtext, _("Couldn't open %s"), fname);
 	errbox(errtext);
-	return 1;
-    }
-
-    fd = fopen(tmp, "w");
-    if (!fd) {
-	sprintf(errtext, _("Couldn't write to %s"), tmp);
-	errbox(errtext);
-	fclose(fs);
+	close(ftmp);
 	return 1;
     }
 
     if (add) {
-	fprintf(fd, "set term png\n");
-	fprintf(fd, "set output '%sgretltmp.png'\n", paths.userdir);
+	gchar *outline;
+
+	outline = g_strdup_printf("set term png\n"
+				  "set output '%sgretltmp.png'\n", 
+				  paths.userdir);
+	write(ftmp, outline, strlen(outline));
+	g_free(outline);
     }
 
     while (fgets(fline, MAXLEN-1, fs)) {
 	if (add || (strncmp(fline, "set term", 8) && 
 	    strncmp(fline, "set output", 10))) {
-	    fputs(fline, fd);
+	    write(ftmp, fline, strlen(fline));
 	}
     }
 
     fclose(fs);
-    fclose(fd);
+    close(ftmp);
 
     return rename(tmp, fname);
 }

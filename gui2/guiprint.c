@@ -21,6 +21,7 @@
     printing */ 
 
 #include "gretl.h"
+#include "selector.h"
 
 #ifdef G_OS_WIN32
 # include <windows.h>
@@ -1410,21 +1411,22 @@ void augment_copy_menu (windata_t *vwin)
     free(item.path);
 } 
 
-int csv_to_buf (const int *list, PRN *prn)
+/* copy data to buffer in CSV format and place on clipboard */
+
+#define SCALAR_DIGITS 12
+
+static int data_to_buf_as_csv (const int *list, PRN *prn)
 {
-    int i = 0, t, l0, n = datainfo->n;
+    int i, t, l0 = list[0];
     int *pmax = NULL;
     int tsamp = datainfo->t2 - datainfo->t1 + 1;
+    char delim = datainfo->delim;
     double xx;
-    char delim;
     char tmp[9];
 
-    *gretl_errmsg = 0;
-
-    l0 = list[0];
     if (l0 == 0) return 1;
 
-    if (datainfo->delim == ',' && ',' == datainfo->decpoint) {
+    if (delim == ',' && ',' == datainfo->decpoint) {
 	errbox(_("You can't use the same character for "
 		 "the column delimiter and the decimal point"));
 	return 1;
@@ -1448,15 +1450,14 @@ int csv_to_buf (const int *list, PRN *prn)
     }
 #endif
 
-    delim = datainfo->delim;
-
     /* variable names */
     pprintf(prn, "obs%c", delim);
     for (i=1; i<l0; i++) {
 	pprintf(prn, "%s%c", datainfo->varname[list[i]], delim);
     }
     pprintf(prn, "%s\n", datainfo->varname[list[l0]]);
-	
+
+    /* actual data values */
     for (t=datainfo->t1; t<=datainfo->t2; t++) {
 	if (datainfo->S != NULL) {
 	    pprintf(prn, "%s%c", datainfo->S[t], delim);
@@ -1472,7 +1473,7 @@ int csv_to_buf (const int *list, PRN *prn)
 	    } else {
 		pprintf(prn, "%.*f", pmax[i-1], xx);
 	    }
-	    pprintf(prn, "%c", (i<l0)? delim : '\n');
+	    pprintf(prn, "%c", (i < l0)? delim : '\n');
 	}
     }
 
@@ -1483,4 +1484,50 @@ int csv_to_buf (const int *list, PRN *prn)
     if (pmax) free(pmax);
 
     return 0;
+}
+
+static int csv_buf_to_clipboard (PRN *prn)
+{
+    size_t len = strlen(prn->buf);
+
+    clipboard_buf = mymalloc(len + 1);
+    if (clipboard_buf == NULL) return 1;
+
+    memcpy(clipboard_buf, prn->buf, len + 1);
+    gtk_selection_owner_set(mdata->w,
+			    GDK_SELECTION_PRIMARY,
+			    GDK_CURRENT_TIME);
+    return 0;
+}
+
+int csv_to_clipboard (void)
+{
+    int err = 0;
+
+    delimiter_dialog();
+    data_save_selection_wrapper(COPY_CSV);
+
+    if (storelist != NULL && *storelist != 0) {
+	PRN *prn;
+
+	*line = 0;
+	sprintf(line, "store csv %s", storelist);
+
+	err = check_cmd(line);
+	if (!err) {
+	    err = bufopen(&prn);
+	}
+	if (!err) {
+	    err = data_to_buf_as_csv(command.list, prn);
+	}
+	if (!err) {
+	    err = csv_buf_to_clipboard(prn);
+	}
+
+        gretl_print_destroy(prn);
+	free(storelist);
+	storelist = NULL;
+    }
+
+    return err;
 }

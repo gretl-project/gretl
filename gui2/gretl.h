@@ -168,6 +168,7 @@ enum file_ops {
     EXPORT_R,
     EXPORT_R_ALT,
     EXPORT_CSV,
+    COPY_CSV,
     END_SAVE_DATA,  /* marker for end of data-saving section */
     SAVE_CMDS,
     SAVE_TEX_TAB,
