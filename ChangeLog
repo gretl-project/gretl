@@ -11,6 +11,10 @@ version 1.2.7
   't': plot current variable
 - make start-up tests for tramo and x12a less verbose
 - fix bug in deletion of scalar variables from the dataset
+- fix bug in built-in spreadsheet: clicking in a blank
+  column could crash gretl (thanks to Cristian Rigamonti for
+  the report)
+- fix various bug and typos in documentation
 
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the
