@@ -1,0 +1,93 @@
+
+gtkplot.c,65
+gtk_plot_text_get_size(31,1085
+gtk_plot_text_get_area(254,8047
+
+gtkplotpc.c,911
+static GtkObjectClass *parent_class 37,1298
+gtk_plot_pc_get_type 40,1351
+gtk_plot_pc_class_init 64,1858
+gtk_plot_pc_real_init 77,2125
+gtk_plot_pc_new	87,2292
+gboolean gtk_plot_pc_init 96,2423
+void gtk_plot_pc_leave 104,2640
+void gtk_plot_pc_set_viewport 112,2841
+void gtk_plot_pc_gsave 119,3040
+void gtk_plot_pc_grestore 124,3187
+void gtk_plot_pc_clip 129,3337
+void gtk_plot_pc_clip_mask 135,3566
+void gtk_plot_pc_set_color 143,3841
+void gtk_plot_pc_set_lineattr 150,4097
+void gtk_plot_pc_set_dash 159,4579
+void gtk_plot_pc_draw_line 167,4981
+void gtk_plot_pc_draw_lines 174,5311
+void gtk_plot_pc_draw_point 182,5674
+void gtk_plot_pc_draw_rectangle 188,5911
+void gtk_plot_pc_draw_polygon 197,6392
+void gtk_plot_pc_draw_circle 206,6835
+void gtk_plot_pc_draw_ellipse 214,7229
+void gtk_plot_pc_set_font 223,7708
+void gtk_plot_pc_draw_string 230,7972
+void  gtk_plot_pc_draw_pixmap 266,9928
+
+gtkplotps.c,993
+static GtkPlotPCClass *parent_class 129,5308
+static gchar *locale 130,5352
+gtk_plot_ps_get_type 133,5390
+gtk_plot_ps_init 157,5893
+gtk_plot_ps_class_init 165,5987
+gtk_plot_ps_destroy(202,7109
+gtk_plot_ps_new 215,7281
+gtk_plot_ps_construct 235,7827
+gtk_plot_ps_new_with_size 275,8891
+gtk_plot_ps_construct_with_size 295,9525
+gtk_plot_ps_set_size 309,10080
+gtk_plot_ps_set_scale 344,11122
+static void pssetviewport	352,11368
+static void pssetlineattr	358,11448
+pssetdash(375,12066
+psleave(406,13007
+psinit	417,13295
+static void ps_reencode_font(603,21230
+static void pssetcolor(623,21937
+psdrawpoint(634,22219
+psdrawlines(645,22451
+psdrawpolygon(659,22786
+static void psdrawline(677,23201
+psdrawrectangle(687,23449
+psdrawcircle(705,23828
+psdrawellipse(719,24123
+psoutputstring 737,24510
+psdrawstring	806,25927
+pssetfont(1146,36053
+psgsave(1161,36439
+psgrestore(1175,36609
+psclipmask(1191,36813
+psclip(1268,38629
+psdrawpixmap 1284,38936
+color_to_hex(1338,40515
+
+gtkpsfont.c,784
+#define FONTCACHE_SIZE 34,1178
+#define NUM_X11_FONTS 35,1204
+static GtkPSFont font_data[38,1230
+#define NUM_FONTS 287,5761
+static GList *user_fonts;289,5818
+static gboolean psfont_init 290,5844
+static GList *psfont_families;291,5881
+static gint numf;292,5912
+static gint psfont_refcount 293,5930
+static const char *default_font 296,5988
+static const char *default_font 298,6036
+gtk_psfont_init(304,6146
+gtk_psfont_unref(356,7282
+gtk_psfont_get_by_name(382,7722
+gtk_psfont_get_gdkfont(402,8132
+gtk_psfont_get_font_description(436,9143
+gtk_psfont_get_psfontname(486,10567
+gtk_psfont_add_font 495,10690
+gtk_psfont_add_i18n_font 517,11290
+find_psfont(541,12023
+gtk_psfont_get_by_family(584,12906
+gtk_psfont_get_families(628,13896
+gtk_psfont_get_char_size(641,14221

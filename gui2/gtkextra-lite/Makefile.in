@@ -1,0 +1,33 @@
+CC = @CC@
+CFLAGS = @CFLAGS@
+MAKE = @MAKE@
+GTK_CFLAGS = @GTK_CFLAGS@
+
+override CFLAGS += -I. $(GTK_CFLAGS) -I../../lib/src
+
+SRCS = gtkplot-lite.c gtkpsfont.c gtkplotpc.c gtkplotps.c
+
+HDRS = gtkplot-lite.h  gtkplotpc.h  gtkplotps.h  gtkpsfont.h
+
+OBJS = $(SRCS:.c=.o)
+
+LIB = libgtkextra-lite.a
+
+all: $(LIB)
+
+$(LIB): $(OBJS)
+	ar -rs $@ $^
+
+depend:
+	makedepend -Y$(libsrc) *.c 
+
+clean:
+	rm -f *.o $(LIB)
+
+# DO NOT DELETE
+
+gtkextra.o: gtkextrafeatures.h
+gtkplot.o: gtkplot.h gtkplotpc.h gtkpsfont.h gtkextra-marshal.h
+gtkplotpc.o: gtkplotpc.h gtkpsfont.h gtkplot.h
+gtkplotps.o: gtkplot.h gtkplotpc.h gtkpsfont.h gtkplotps.h
+gtkpsfont.o: gtkpsfont.h
