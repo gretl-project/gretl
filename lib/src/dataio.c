@@ -995,7 +995,9 @@ int dateton (const char *date, const DATAINFO *pdinfo)
     int dotpos1 = 0, dotpos2 = 0, maj = 0, min = 0, n, i;
     char majstr[5], minstr[3];
     char startmajstr[5], startminstr[3];
-    int startmaj, startmin;
+    int hasmaj, startmaj, startmin;
+
+    hasmaj = (strchr(pdinfo->stobs, ':') != NULL);
 
     if (dated_daily_data(pdinfo)) {
 	if (pdinfo->markers && pdinfo->S != NULL) {
@@ -1009,7 +1011,7 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 	    return daily_obs_number(date, pdinfo);
 	}
     } else if (dataset_is_daily(pdinfo) ||
-	       dataset_is_weekly(pdinfo) ||
+	       (dataset_is_weekly(pdinfo) && !hasmaj) ||
 	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	if (sscanf(date, "%d", &i) && i > 0 && i <= pdinfo->n) {
@@ -1072,8 +1074,10 @@ int dateton (const char *date, const DATAINFO *pdinfo)
 static char *
 real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 {
-    double x;
     static int decpoint;
+
+    int hasmaj = (strchr(pdinfo->stobs, ':') != NULL);
+    double x;
 
     decpoint = get_local_decpoint();
 
@@ -1084,14 +1088,14 @@ real_ntodate (char *datestr, int t, const DATAINFO *pdinfo, int full)
 	    daily_date_string(datestr, t, pdinfo);
 	}
 	if (!full && strlen(datestr) > 8) {
-	    char tmp[9];
+	    char tmp[12];
 
 	    strcpy(tmp, datestr);
 	    strcpy(datestr, tmp + 2);
 	}
 	return datestr;
     } else if (dataset_is_daily(pdinfo) || 
-	       dataset_is_weekly(pdinfo) ||
+	       (dataset_is_weekly(pdinfo) && !hasmaj) ||
 	       custom_time_series(pdinfo)) {
 	/* undated time series */
 	x = date(t, 1, pdinfo->sd0);

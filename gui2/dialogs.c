@@ -3136,18 +3136,18 @@ datawiz_make_changes (DATAINFO *dwinfo)
 	dwinfo->pd = (dwinfo->structure == STACKED_TIME_SERIES)? 
 	    nperiods : nunits;
 	strcpy(dwinfo->stobs, "1.1");
-    } else if (dwinfo->pd == 24) {
-	/* hourly data */
-	strcpy(dwinfo->stobs, "1.1");
-    } else if (dwinfo->pd == 52) {
-	/* weekly data */
-	strcpy(dwinfo->stobs, "1");
-    }
+    } 
 
     /* handle conversion to cross-section */
     if (dwinfo->structure == CROSS_SECTION) {
 	strcpy(dwinfo->stobs, "1");
     }
+
+    /* weekly: what should be done? */
+    if (dwinfo->structure == TIME_SERIES && dwinfo->pd == 52) {
+	strcpy(dwinfo->stobs, "1");
+    }
+    
 
     sprintf(setline, "setobs %d %s", dwinfo->pd, dwinfo->stobs);
 
@@ -3365,6 +3365,15 @@ static void dw_compute_datainfo (DATAINFO *dwinfo)
 	strcpy(dwinfo->stobs, "1900:01");
 	dwinfo->n = 1500;
 	dwinfo->t1 = 960;
+    } else if (dwinfo->pd == 24) {
+	strcpy(dwinfo->stobs, "1:01");
+	dwinfo->n = 1500;
+	dwinfo->t1 = 0;
+    } else if (dwinfo->pd == 52) {
+	/* FIXME */
+	strcpy(dwinfo->stobs, "1:01");
+	dwinfo->n = 150000;
+	dwinfo->t1 = 0;
     } else if (dwinfo->pd == 5 ||
 	       dwinfo->pd == 6 ||
 	       dwinfo->pd == 7) {
@@ -3631,10 +3640,8 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 	    } else if (step == DW_TS_FREQUENCY) {
 		if (dwinfo->pd == 5 || dwinfo->pd == 6 || dwinfo->pd == 7) {
 		    step = DW_WEEK_DAYS;
-		} else if (dwinfo->pd == 52 || 
-			   dwinfo->pd == 24 ||
-			   dwinfo->pd == PD_SPECIAL) {
-		    /* we don't do dates for weekly or hourly or... */
+		} else if (dwinfo->pd == PD_SPECIAL || dwinfo->pd == 52) {
+		    /* no 'dates' for special frequencies */
 		    step = DW_CONFIRM;
 		} else {
 		    step = DW_STARTING_OBS;
@@ -3663,9 +3670,7 @@ void data_structure_wizard (gpointer p, guint u, GtkWidget *w)
 		step = DW_PANEL_MODE;
 	    } else if (step == DW_CONFIRM) {
 		if (dwinfo->structure == TIME_SERIES) {
-		    if (dwinfo->pd != 52 && 
-			dwinfo->pd != 24 &&
-			dwinfo->pd != PD_SPECIAL) {
+		    if (dwinfo->pd != PD_SPECIAL && dwinfo->pd != 52) {
 			step = DW_STARTING_OBS;
 		    } else {
 			step = DW_TS_FREQUENCY;
