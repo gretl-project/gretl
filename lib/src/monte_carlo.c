@@ -715,26 +715,6 @@ int add_to_loop (LOOPSET *ploop, char *line, int ci,
 
 /* ......................................................... */ 
 
-static const char *estimator_string (int ci)
-{
-    if (ci == OLS || ci == VAR) return N_("OLS");
-    else if (ci == WLS) return N_("WLS"); 
-    else if (ci == ARCH) return N_("WLS (ARCH)");
-    else if (ci == TSLS) return N_("TSLS");
-    else if (ci == HSK) return N_("Heteroskedasticity-corrected");
-    else if (ci == AR) return N_("AR");
-    else if (ci == LAD) return N_("LAD");
-    else if (ci == HCCM) return N_("HCCM");
-    else if (ci == PROBIT) return N_("Probit");
-    else if (ci == LOGIT) return N_("Logit");
-    else if (ci == POOLED) return N_("Pooled OLS");
-    else if (ci == CORC) return N_("Cochrane-Orcutt");
-    else if (ci == HILU) return N_("Hildreth-Lu");
-    else return "";
-}
-
-/* ......................................................... */ 
-
 static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
 			      const DATAINFO *pdinfo, PRN *prn)
 {
@@ -745,7 +725,7 @@ static void print_loop_model (LOOP_MODEL *plmod, int loopnum,
     ntodate(enddate, plmod->t2, pdinfo);
 
     pprintf(prn, _("%s estimates using the %d observations %s-%s\n"),
-	    _(estimator_string(plmod->ci)), plmod->t2 - plmod->t1 + 1, 
+	    _(estimator_string(plmod->ci, prn->format)), plmod->t2 - plmod->t1 + 1, 
 	    startdate, enddate);
     pprintf(prn, _("Statistics for %d repetitions\n"), loopnum); 
     pprintf(prn, _("Dependent variable: %s\n\n"), 

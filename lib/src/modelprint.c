@@ -448,7 +448,7 @@ static const char *aux_string (int aux, int format)
 
 /* ......................................................... */
 
-static const char *estimator_string (int ci, int format)
+const char *estimator_string (int ci, int format)
 {
     if (ci == OLS || ci == VAR) return N_("OLS");
     else if (ci == WLS) return N_("WLS"); 

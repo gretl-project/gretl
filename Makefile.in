@@ -50,9 +50,6 @@ install-strip: $(SUBDIRS) installdirs install-man
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d install-strip; done
 	$(MAKE) -C share install-strip
 
-install-lapack: $(SUBDIRS) installdirs
-	$(MAKE) -C plugin install-lapack
-
 install-man:
 	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl.1 
 	$(tooldir)/install_man $(tooldir) $(prefix) $(topsrc)/gretl-config.1
@@ -69,7 +66,6 @@ distclean: clean
 	rm -f config.log config.cache config.status config.h gretl.pc
 	rm -f gretl_sh gretl-config libtool Makefile
 	for d in $(ALLSUBDIRS) ; do $(MAKE) -C $$d distclean; done
-	# rm -rf win32/dlls win32/import-libs win32/gtkextra-lib win32/plugins
 
 check:
 	make -C tests check

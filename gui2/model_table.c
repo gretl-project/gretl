@@ -197,12 +197,55 @@ static int model_list_empty (void)
     return (real_n_models == 0);
 }
 
+static int common_estimator (void)
+{
+    int i, ci0;
+
+    ci0 = (model_list[0])->ci;
+
+    if (model_list_len == 1) return ci0;
+
+    for (i=1; i<model_list_len; i++) {
+	if ((model_list[i])->ci != ci0) return 0;
+    }  
+
+    return ci0;
+}
+
+static void center_in_field (const char *s, int width, PRN *prn)
+{
+    int rem = width - strlen(s);
+
+    if (rem <= 1) {
+	pprintf(prn, "%s", s);
+    }
+    else {
+	int i, off = rem / 2;
+
+	for (i=0; i<off; i++) {
+	    pputs(prn, " ");
+	}
+	pprintf(prn, "%-*s", width - off, s);
+    }
+}
+
+static const char *short_estimator_string (int ci, int format)
+{
+    if (ci == HSK) return N_("HSK");
+    else if (ci == CORC) return N_("CORC");
+    else if (ci == HILU) return N_("HILU");
+    else if (ci == ARCH) return N_("ARCH");
+    else if (ci == POOLED) return N_("OLS");
+    else return estimator_string (ci, format);
+}
+
 int display_model_table (void)
 {
-    int i, j, gl0;
+    int i, j, gl0, ci;
     const MODEL *pmod;
     PRN *prn;
     char se[16];
+    extern GtkItemFactoryEntry view_items[];
 
     if (model_list_empty()) {
 	errbox(_("The model table is empty"));
@@ -216,20 +259,47 @@ int display_model_table (void)
 	return 1;
     }
 
+    ci = common_estimator();
+
     gl0 = grand_list[0];
 
-    pprintf(prn, _("Dependent variable: %s\n\n"),
+    if (ci > 0) {
+	/* all models use same estimation procedure */
+	pprintf(prn, _("%s estimates"), 
+		_(estimator_string(ci, prn->format)));
+	pputs(prn, "\n");
+    }
+
+    pprintf(prn, _("Dependent variable: %s\n"),
 	    datainfo->varname[grand_list[1]]);
 
-    pputs(prn, "          ");
+    pputs(prn, _("Standard errors in parentheses\n\n"));
+
+    pputs(prn, "            ");
     for (j=0; j<model_list_len; j++) {
 	char modhd[16];
 
 	if (model_list[j] == NULL) continue;
-	sprintf(modhd, _("Model %d "), (model_list[j])->ID);
-	pprintf(prn, "%12s", modhd);
+	sprintf(modhd, _("Model %d"), (model_list[j])->ID);
+	center_in_field(modhd, 12, prn);
     }
-    pputs(prn, "\n\n");
+    pputs(prn, "\n");
+    
+    if (ci == 0) {
+	char est[12];	
+
+	pputs(prn, "            ");
+	for (j=0; j<model_list_len; j++) {
+	    if (model_list[j] == NULL) continue;
+	    strcpy(est, 
+		   _(short_estimator_string((model_list[j])->ci,
+					    prn->format)));
+	    center_in_field(est, 12, prn);
+	}
+	pputs(prn, "\n");
+    }
+
+    pputs(prn, "\n");    
 
     /* print coefficients, standard errors */
     for (i=2; i<=gl0; i++) {
@@ -275,7 +345,7 @@ int display_model_table (void)
     }
     pputs(prn, "\n");
 
-    view_buffer(prn, 78, 350, _("gretl: model table"), PRINT, NULL);
+    view_buffer(prn, 78, 450, _("gretl: model table"), PRINT, view_items);
 
     return 0;
 }

@@ -27,5 +27,7 @@ void get_test_stat_string (const GRETLTEST *test, char *str, int format);
 
 void get_test_pval_string (const GRETLTEST *test, char *str, int format);
 
+const char *estimator_string (int ci, int format);
+
 void print_mpols_results (const mp_results *mpvals, DATAINFO *pdinfo,
 			  PRN *prn);

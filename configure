@@ -1002,6 +1002,7 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+  --disable-rpath         do not hardcode runtime library paths
   --disable-nls           do not use Native Language Support
   --enable-gui		  Enable gui default=yes
   --enable-png-graphs     Enable PNG graph support default=auto
@@ -2901,95 +2902,13 @@ echo "${ECHO_T}$acl_cv_rpath" >&6
   hardcode_minus_L="$acl_cv_hardcode_minus_L"
   sys_lib_search_path_spec="$acl_cv_sys_lib_search_path_spec"
   sys_lib_dlsearch_path_spec="$acl_cv_sys_lib_dlsearch_path_spec"
-
-
-
-
-
-
-
-
-
-
-
-
-
-  echo "$as_me:$LINENO: checking whether NLS is requested" >&5
-echo $ECHO_N "checking whether NLS is requested... $ECHO_C" >&6
-    # Check whether --enable-nls or --disable-nls was given.
-if test "${enable_nls+set}" = set; then
-  enableval="$enable_nls"
-  USE_NLS=$enableval
+    # Check whether --enable-rpath or --disable-rpath was given.
+if test "${enable_rpath+set}" = set; then
+  enableval="$enable_rpath"
+  :
 else
-  USE_NLS=yes
+  enable_rpath=yes
 fi;
-  echo "$as_me:$LINENO: result: $USE_NLS" >&5
-echo "${ECHO_T}$USE_NLS" >&6
-
-
-
-  LIBINTL=
-  LTLIBINTL=
-  POSUB=
-
-    if test "$USE_NLS" = "yes"; then
-    gt_use_preinstalled_gnugettext=no
-
-
-
-
-
-
-        echo "$as_me:$LINENO: checking for GNU gettext in libc" >&5
-echo $ECHO_N "checking for GNU gettext in libc... $ECHO_C" >&6
-if test "${gt_cv_func_gnugettext1_libc+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-#line $LINENO "configure"
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <libintl.h>
-extern int _nl_msg_cat_cntr;
-extern int *_nl_domain_bindings;
-int
-main ()
-{
-bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings
-  ;
-  return 0;
-}
-_ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
-if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
-  (eval $ac_link) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } &&
-         { ac_try='test -s conftest$ac_exeext'
-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
-  (eval $ac_try) 2>&5
-  ac_status=$?
-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); }; }; then
-  gt_cv_func_gnugettext1_libc=yes
-else
-  echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-gt_cv_func_gnugettext1_libc=no
-fi
-rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
-fi
-echo "$as_me:$LINENO: result: $gt_cv_func_gnugettext1_libc" >&5
-echo "${ECHO_T}$gt_cv_func_gnugettext1_libc" >&6
-
-        if test "$gt_cv_func_gnugettext1_libc" != "yes"; then
-
 
 
 
@@ -3130,7 +3049,7 @@ fi;
           if test "X$found_dir" != "X"; then
                         LTLIBICONV="${LTLIBICONV}${LTLIBICONV:+ }-L$found_dir -l$name"
             if test "X$found_so" != "X"; then
-                                                        if test "X$found_dir" = "X/usr/lib"; then
+                                                        if test "$enable_rpath" = no || test "X$found_dir" = "X/usr/lib"; then
                                 LIBICONV="${LIBICONV}${LIBICONV:+ }$found_so"
               else
                                                                                 haveit=
@@ -3300,6 +3219,31 @@ fi;
                       fi
                     fi
                     ;;
+                  -R*)
+                    dir=`echo "X$dep" | sed -e 's/^X-R//'`
+                    if test "$enable_rpath" != no; then
+                                                                  haveit=
+                      for x in $rpathdirs; do
+                        if test "X$x" = "X$dir"; then
+                          haveit=yes
+                          break
+                        fi
+                      done
+                      if test -z "$haveit"; then
+                        rpathdirs="$rpathdirs $dir"
+                      fi
+                                                                  haveit=
+                      for x in $ltrpathdirs; do
+                        if test "X$x" = "X$dir"; then
+                          haveit=yes
+                          break
+                        fi
+                      done
+                      if test -z "$haveit"; then
+                        ltrpathdirs="$ltrpathdirs $dir"
+                      fi
+                    fi
+                    ;;
                   -l*)
                                         names_next_round="$names_next_round "`echo "X$dep" | sed -e 's/^X-l//'`
                     ;;
@@ -3347,6 +3291,102 @@ fi;
       LTLIBICONV="${LTLIBICONV}${LTLIBICONV:+ }-R$found_dir"
     done
   fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  echo "$as_me:$LINENO: checking whether NLS is requested" >&5
+echo $ECHO_N "checking whether NLS is requested... $ECHO_C" >&6
+    # Check whether --enable-nls or --disable-nls was given.
+if test "${enable_nls+set}" = set; then
+  enableval="$enable_nls"
+  USE_NLS=$enableval
+else
+  USE_NLS=yes
+fi;
+  echo "$as_me:$LINENO: result: $USE_NLS" >&5
+echo "${ECHO_T}$USE_NLS" >&6
+
+
+
+  LIBINTL=
+  LTLIBINTL=
+  POSUB=
+
+    if test "$USE_NLS" = "yes"; then
+    gt_use_preinstalled_gnugettext=no
+
+
+
+
+
+
+        echo "$as_me:$LINENO: checking for GNU gettext in libc" >&5
+echo $ECHO_N "checking for GNU gettext in libc... $ECHO_C" >&6
+if test "${gt_cv_func_gnugettext1_libc+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <libintl.h>
+extern int _nl_msg_cat_cntr;
+extern int *_nl_domain_bindings;
+int
+main ()
+{
+bindtextdomain ("", "");
+return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  gt_cv_func_gnugettext1_libc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+gt_cv_func_gnugettext1_libc=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+fi
+echo "$as_me:$LINENO: result: $gt_cv_func_gnugettext1_libc" >&5
+echo "${ECHO_T}$gt_cv_func_gnugettext1_libc" >&6
+
+        if test "$gt_cv_func_gnugettext1_libc" != "yes"; then
+
+
+
 
 
           am_save_CPPFLAGS="$CPPFLAGS"
@@ -3624,7 +3664,7 @@ fi;
           if test "X$found_dir" != "X"; then
                         LTLIBINTL="${LTLIBINTL}${LTLIBINTL:+ }-L$found_dir -l$name"
             if test "X$found_so" != "X"; then
-                                                        if test "X$found_dir" = "X/usr/lib"; then
+                                                        if test "$enable_rpath" = no || test "X$found_dir" = "X/usr/lib"; then
                                 LIBINTL="${LIBINTL}${LIBINTL:+ }$found_so"
               else
                                                                                 haveit=
@@ -3794,6 +3834,31 @@ fi;
                       fi
                     fi
                     ;;
+                  -R*)
+                    dir=`echo "X$dep" | sed -e 's/^X-R//'`
+                    if test "$enable_rpath" != no; then
+                                                                  haveit=
+                      for x in $rpathdirs; do
+                        if test "X$x" = "X$dir"; then
+                          haveit=yes
+                          break
+                        fi
+                      done
+                      if test -z "$haveit"; then
+                        rpathdirs="$rpathdirs $dir"
+                      fi
+                                                                  haveit=
+                      for x in $ltrpathdirs; do
+                        if test "X$x" = "X$dir"; then
+                          haveit=yes
+                          break
+                        fi
+                      done
+                      if test -z "$haveit"; then
+                        ltrpathdirs="$ltrpathdirs $dir"
+                      fi
+                    fi
+                    ;;
                   -l*)
                                         names_next_round="$names_next_round "`echo "X$dep" | sed -e 's/^X-l//'`
                     ;;
@@ -3860,7 +3925,6 @@ cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <libintl.h>
 extern int _nl_msg_cat_cntr;
-extern int *_nl_domain_bindings;
 extern
 #ifdef __cplusplus
 "C"
@@ -3870,7 +3934,7 @@ int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings + *_nl_expand_alias (0)
+return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias (0)
   ;
   return 0;
 }
@@ -3906,7 +3970,6 @@ cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <libintl.h>
 extern int _nl_msg_cat_cntr;
-extern int *_nl_domain_bindings;
 extern
 #ifdef __cplusplus
 "C"
@@ -3916,7 +3979,7 @@ int
 main ()
 {
 bindtextdomain ("", "");
-return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_domain_bindings + *_nl_expand_alias (0)
+return (int) gettext ("") + _nl_msg_cat_cntr + *_nl_expand_alias (0)
   ;
   return 0;
 }
@@ -6708,7 +6771,7 @@ test "x$enable_libtool_lock" != xno && enable_libtool_lock=yes
 case $host in
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 6711 "configure"' > conftest.$ac_ext
+  echo '#line 6774 "configure"' > conftest.$ac_ext
   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7237,7 +7300,7 @@ chmod -w .
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -o out/conftest2.$ac_objext"
 compiler_c_o=no
-if { (eval echo configure:7240: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
+if { (eval echo configure:7303: \"$ac_compile\") 1>&5; (eval $ac_compile) 2>out/conftest.err; } && test -s out/conftest2.$ac_objext; then
   # The compiler can only warn and ignore the option if not recognized
   # So say no if there are warnings
   if test -s out/conftest.err; then
@@ -9069,7 +9132,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9072 "configure"
+#line 9135 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9167,7 +9230,7 @@ else
     lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9170 "configure"
+#line 9233 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11346,13 +11409,13 @@ fi
 
 
 
-    echo "$as_me:$LINENO: checking for tgetent in -lncurses" >&5
-echo $ECHO_N "checking for tgetent in -lncurses... $ECHO_C" >&6
-if test "${ac_cv_lib_ncurses_tgetent+set}" = set; then
+    echo "$as_me:$LINENO: checking for tgetent in -ltermcap" >&5
+echo $ECHO_N "checking for tgetent in -ltermcap... $ECHO_C" >&6
+if test "${ac_cv_lib_termcap_tgetent+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lncurses  $LIBS"
+LIBS="-ltermcap  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -11388,20 +11451,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_ncurses_tgetent=yes
+  ac_cv_lib_termcap_tgetent=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_ncurses_tgetent=no
+ac_cv_lib_termcap_tgetent=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_ncurses_tgetent" >&5
-echo "${ECHO_T}$ac_cv_lib_ncurses_tgetent" >&6
-if test $ac_cv_lib_ncurses_tgetent = yes; then
-  termcap_lib=-lncurses
+echo "$as_me:$LINENO: result: $ac_cv_lib_termcap_tgetent" >&5
+echo "${ECHO_T}$ac_cv_lib_termcap_tgetent" >&6
+if test $ac_cv_lib_termcap_tgetent = yes; then
+  termcap_lib=-ltermcap
 else
   echo "$as_me:$LINENO: checking for tgetent in -lcurses" >&5
 echo $ECHO_N "checking for tgetent in -lcurses... $ECHO_C" >&6
@@ -11460,13 +11523,13 @@ echo "${ECHO_T}$ac_cv_lib_curses_tgetent" >&6
 if test $ac_cv_lib_curses_tgetent = yes; then
   termcap_lib=-lcurses
 else
-  echo "$as_me:$LINENO: checking for tgetent in -ltermcap" >&5
-echo $ECHO_N "checking for tgetent in -ltermcap... $ECHO_C" >&6
-if test "${ac_cv_lib_termcap_tgetent+set}" = set; then
+  echo "$as_me:$LINENO: checking for tgetent in -lncurses" >&5
+echo $ECHO_N "checking for tgetent in -lncurses... $ECHO_C" >&6
+if test "${ac_cv_lib_ncurses_tgetent+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-ltermcap  $LIBS"
+LIBS="-lncurses  $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 /* confdefs.h.  */
@@ -11502,20 +11565,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_termcap_tgetent=yes
+  ac_cv_lib_ncurses_tgetent=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_termcap_tgetent=no
+ac_cv_lib_ncurses_tgetent=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_termcap_tgetent" >&5
-echo "${ECHO_T}$ac_cv_lib_termcap_tgetent" >&6
-if test $ac_cv_lib_termcap_tgetent = yes; then
-  termcap_lib=-ltermcap
+echo "$as_me:$LINENO: result: $ac_cv_lib_ncurses_tgetent" >&5
+echo "${ECHO_T}$ac_cv_lib_ncurses_tgetent" >&6
+if test $ac_cv_lib_ncurses_tgetent = yes; then
+  termcap_lib=-lncurses
 else
   termcap_lib=''
 fi
@@ -11666,7 +11729,6 @@ fi
 
   CFLAGS="$ac_save_CFLAGS"
   LIBS="$ac_save_LIBS"
-
 
 fi
 
@@ -12154,10 +12216,7 @@ fi;
      lapack_config_args="$lapack_config_args --prefix=$lapack_config_prefix"
   fi
 
-  if test x"${LAPACK_LIBS}" = x ; then
-     echo "$as_me:$LINENO: checking for libf2c" >&5
-echo $ECHO_N "checking for libf2c... $ECHO_C" >&6
-     echo "$as_me:$LINENO: checking for c_sqrt in -lf2c" >&5
+  echo "$as_me:$LINENO: checking for c_sqrt in -lf2c" >&5
 echo $ECHO_N "checking for c_sqrt in -lf2c... $ECHO_C" >&6
 if test "${ac_cv_lib_f2c_c_sqrt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -12217,8 +12276,8 @@ else
   FLIB="none"
 fi
 
-     if test $FLIB = "none" ; then
-        echo "$as_me:$LINENO: checking for c_sqrt in -lg2c" >&5
+  if test $FLIB = "none" ; then
+    echo "$as_me:$LINENO: checking for c_sqrt in -lg2c" >&5
 echo $ECHO_N "checking for c_sqrt in -lg2c... $ECHO_C" >&6
 if test "${ac_cv_lib_g2c_c_sqrt+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
@@ -12278,14 +12337,15 @@ else
   FLIB="none"
 fi
 
-     fi
-     if test $FLIB = "none" ; then
-        echo "*** Couldn't find either libf2c or libg2c"
-     fi
+  fi
+  if test $FLIB = "none" ; then
+     echo "*** Couldn't find either libf2c or libg2c"
   fi
 
   echo "$as_me:$LINENO: checking for LAPACK" >&5
 echo $ECHO_N "checking for LAPACK... $ECHO_C" >&6
+
+  LAPACK_CFLAGS="-I$lapack_config_prefix/include -I./plugin"
   if test x"${LAPACK_LIBS}" = x ; then
      LAPACK_LIBS="-L$lapack_config_prefix/lib -llapack -lblas $FLIB"
   fi
@@ -15377,7 +15437,7 @@ cat >>$CONFIG_STATUS <<_ACEOF
 # INIT-COMMANDS section.
 #
 
-# Capture the value of obsolete $ALL_LINGUAS because we need it to compute
+# Capture the value of obsolete ALL_LINGUAS because we need it to compute
     # POFILES, GMOFILES, UPDATEPOFILES, DUMMYPOFILES, CATALOGS. But hide it
     # from automake.
     eval 'ALL_LINGUAS''="$ALL_LINGUAS"'

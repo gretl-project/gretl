@@ -10,8 +10,8 @@ topdir=/home/cottrell/stats/esl/gretl
 
 echo "making dist file for gretl $version using filename $tarfile"
 
-# clean Windows version first; make time stamp
-cd ${topdir} && make -C win32 clean && date > share/gretl.stamp
+# make time stamp
+cd ${topdir} && date > share/gretl.stamp
 
 # make the archive and remove the dist dir
 cd $parent 
