@@ -1159,8 +1159,6 @@ static void selector_init (selector *sr, guint code, const char *title)
 	dlgheight = 450;
     }
 
-    /* FIXME dialog height with multiple toggles */
-
     if (WANT_TOGGLES(code)) {
 	dlgheight += 40;
     }
@@ -1510,15 +1508,24 @@ void selection_dialog (const char *title, void (*okfunc)(), guint cmdcode)
 	gtk_list_store_clear (store);
 	gtk_tree_model_get_iter_first (GTK_TREE_MODEL(store), &iter);
 
-	if (MODEL_CODE(cmdcode) && xlist != NULL) {
-	    for (i=1; i<=xlist[0]; i++) {
+	if (MODEL_CODE(cmdcode)) {
+	    if (xlist != NULL) {
+		/* we have a saved list of regressors */
+		for (i=1; i<=xlist[0]; i++) {
+		    gtk_list_store_append(store, &iter);
+		    gtk_list_store_set(store, &iter, 
+				       0, xlist[i], 
+				       1, datainfo->varname[xlist[i]], 
+				       -1);
+		}
+	    } else if (cmdcode != COINT2 && cmdcode != VAR) {
+		/* stick the constant in by default */
 		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, xlist[i], 
-				   1, datainfo->varname[xlist[i]], -1);
+		gtk_list_store_set(store, &iter, 
+				   0, 0, 
+				   1, "const", 
+				   -1);
 	    }
-	} else if (MODEL_CODE(cmdcode) && cmdcode != COINT2 && cmdcode != VAR) {
-	    gtk_list_store_append(store, &iter);
-	    gtk_list_store_set(store, &iter, 0, 0, 1, "const", -1);
 	}
 
 	/* hook remove button to listing */

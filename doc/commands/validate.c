@@ -252,38 +252,35 @@ static int ref_cmd_in_gretl (const char *cmdword)
 }
 
 static int
-option_lists_match (const char *cmdword, const char **l1, 
-		    char **l2, int nl2)
+option_lists_match (const char *cmdword, const char **libopts, int libn,
+		    char **refopts, int refn)
 {
-    const char *opt, **libopts;
-    int i;
     int match;
+    int i, j;
 
-    for (i=0; i<nl2; i++) {
+    for (i=0; i<refn; i++) {
 	match = 0;
-	libopts = l1;
-	while ((opt = *libopts++)) {
-	    if (!strcmp(opt, l2[i] + 2)) {
+	for (j=0; j<libn; j++) {
+	    if (!strcmp(libopts[j], refopts[i] + 2)) {
 		match = 1;
 		break;
 	    }
 	}
 	if (!match) {
-	    printf("* '%s': ref option '%s' unmatched in lib\n", cmdword, l2[i]);
+	    printf("* '%s': ref option '%s' unmatched in lib\n", cmdword, refopts[i]);
 	}
     }
 
-    libopts = l1;
-    while ((opt = *libopts++)) {
+    for (i=0; i<libn; i++) {
 	match = 0;
-	for (i=0; i<nl2; i++) {
-	    if (!strcmp(opt, l2[i] + 2)) {
+	for (j=0; j<refn; j++) {
+	    if (!strcmp(libopts[i], refopts[j] + 2)) {
 		match = 1;
 		break;
 	    }
 	}
 	if (!match) {
-	    printf("* '%s': lib option '--%s' unmatched in ref\n", cmdword, opt);
+	    printf("* '%s': lib option '--%s' unmatched in ref\n", cmdword, libopts[i]);
 	}
     }
 
@@ -292,35 +289,26 @@ option_lists_match (const char *cmdword, const char **l1,
 
 static int check_options_for_cmd (command *cmd)
 {
-    int i;
-    const char *opt, **optp, **opts = NULL;
-    int nopt;
+    const char **libopts = NULL;
+    int i, nopt;
 
     for (i=1; i<NC; i++) {
 	if (!strcmp(cmd->name, gretl_command_word(i))) {
-	    opts = get_opts_for_command(i);
+	    libopts = get_opts_for_command(i, &nopt);
 	    break;
 	}
     }
 
-    if (opts == NULL) return 1;
+    if (libopts == NULL) return 1;
 
-    nopt = 0;
-    optp = opts;
-    while ((opt = *optp++)) {
-	nopt++;
-    }
-
-#if 0
     if (nopt != cmd->nopts) {
-	printf("* '%s' has %d options in lib, %d in manual\n",
+	printf("* '%s' appears to have %d options in lib, %d in manual\n",
 	       cmd->name, nopt, cmd->nopts);
     }
-#endif
 
-    option_lists_match(cmd->name, opts, cmd->opts, cmd->nopts);
+    option_lists_match(cmd->name, libopts, nopt, cmd->opts, cmd->nopts);
 
-    free(opts);
+    free(libopts);
     
     return 0;
 }

@@ -24,7 +24,7 @@ gretlopt get_gretl_options (char *line, int *err);
 
 const char *print_flags (gretlopt oflags, int ci);
 
-const char **get_opts_for_command (int ci);
+const char **get_opts_for_command (int ci, int *nopt);
 
 int check_for_loop_only_options (int ci, gretlopt opt, PRN *prn);
 

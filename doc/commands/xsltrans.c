@@ -58,7 +58,7 @@ static void full_fname (const char *fname, const char *dir,
     if (dir == NULL) {
 	strcpy(targ, fname);
     } else {
-	sprintf(targ, "%s%s", dir, fname);
+	sprintf(targ, "%s/%s", dir, fname);
     }
 }
 
@@ -254,27 +254,24 @@ int parse_commands_data (const char *fname, int output,
     return err;
 }
 
-static char *get_docdir (const char *fname)
+static char *get_docdir (char *ddir, const char *fname)
 {
-    char *docdir, *p;
+    char *p;
 
     p = strrchr(fname, '/');
     if (p == NULL) return NULL;
 
-    docdir = malloc(strlen(fname) + 1);
-    if (docdir == NULL) return NULL;
+    strcpy(ddir, fname);
+    p = strrchr(ddir, '/');
+    *p = 0;
 
-    strcpy(docdir, fname);
-    p = strrchr(docdir, '/');
-    *(p + 1) = 0;
-
-    return docdir;
+    return ddir;
 }
 
 int main (int argc, char **argv)
 {
     const char *fname;
-    char *docdir;
+    char docdir[FILENAME_MAX];
     int output = OUTPUT_ALL;
     int err;
 
@@ -283,22 +280,31 @@ int main (int argc, char **argv)
 	exit(EXIT_FAILURE);
     }
 
-    if (argc == 3) {
+    *docdir = '\0';
+
+    if (argc >= 3) {
 	fname = argv[2];
 	if (!strcmp(argv[1], "--docbook")) {
 	    output = OUTPUT_DOCBOOK;
-	}
-	if (!strcmp(argv[1], "--docbook-standalone")) {
+	} else if (!strcmp(argv[1], "--docbook-standalone")) {
 	    output = OUTPUT_DOCBOOK_STANDALONE;
-	}
-	else if (!strcmp(argv[1], "--hlp")) {
+	} else if (!strcmp(argv[1], "--hlp")) {
 	    output = OUTPUT_HLP;
+	} else if (!strcmp(argv[1], "--all")) {
+	    output = OUTPUT_ALL;
+	}
+	if (argc == 4) {
+	    strcpy(docdir, argv[3]);
 	}
     } else {
 	fname = argv[1];
     }
 
-    docdir = get_docdir(fname);
+    if (*docdir == '\0') {
+	get_docdir(docdir, fname);
+    }
+
+    fprintf(stderr, "%s: fname='%s', docdir='%s'\n", argv[0], fname, docdir);
 
     err = parse_commands_data(fname, output, docdir);
 

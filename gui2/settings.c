@@ -970,7 +970,7 @@ static void make_prefs_tab (GtkWidget *notebook, int tab)
 	gtk_box_pack_start(GTK_BOX(hb), w, FALSE, FALSE, 0);
 	g_signal_connect(G_OBJECT(w), "clicked", 
 			 G_CALLBACK(context_help), 
-			 GINT_TO_POINTER(0));
+			 GINT_TO_POINTER(HCCME));
 	gtk_widget_show(w);
 
 	gtk_box_pack_start(GTK_BOX(box), hb, FALSE, FALSE, 0);

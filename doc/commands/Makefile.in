@@ -12,7 +12,11 @@ XSLT_LIBS = @XSLT_LIBS@
 GRETLINC = -I$(topsrc)/lib/src
 GRETLLIB = ../../lib/libgretl-1.0.la
 
-vpath %.c = $(topsrc)/doc/commands
+CMDSDIR = $(topsrc)/doc/commands
+
+vpath %.c = $(CMDSDIR)
+vpath %.dtd = $(CMDSDIR)
+vpath %.xsl = $(CMDSDIR)
 
 LIBTOOL = ../../libtool
 
@@ -57,12 +61,12 @@ validate.o: validate.c
 # test generation of XML skeleton from libgretl info:
 # the skeleton could be used as a template for translation
 skeleton.xml: skeleton gretl_commands.dtd
-	./skeleton > $@
+	./skeleton $(CMDSDIR) > $@
 
 # test validity of skeleton.xml, and ability of xsltrans
 # to generate formatted output (text and XML)
 test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
-	xmllint --valid --noout $< && ./xsltrans skeleton.xml
+	xmllint --valid --noout $< && ./xsltrans --all skeleton.xml $(CMDSDIR)
 
 # Generate docbook XML for the command-reference section of the 
 # full manual, cmdlist.xml

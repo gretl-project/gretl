@@ -12,10 +12,14 @@
 
 /* output XML preamble at start */
 
-void print_top (void)
+void print_top (const char *dtddir)
 {
     puts("<?xml version=\"1.0\"?>");
-    puts("<!DOCTYPE commandlist SYSTEM \"gretl_commands.dtd\">");
+    if (dtddir != NULL) {
+	printf("<!DOCTYPE commandlist SYSTEM \"%s/gretl_commands.dtd\">\n", dtddir);
+    } else {
+	puts("<!DOCTYPE commandlist SYSTEM \"gretl_commands.dtd\">");
+    }
     puts("<commandlist language=\"english\">\n"); 
 }
 
@@ -29,16 +33,20 @@ void print_foot (void)
 void print_skel_for_command (int ci)
 {
     const char *cmdword;
-    const char **opts, *opt;   
+    const char **opts;  
     char section[32];
+    int i, nopt;
 
     /* Get the string associated with each command index
        number, from libgretl */
     cmdword = gretl_command_word(ci);
 
+    fprintf(stderr, "ci = %d, command word = '%s'\n", 
+	    ci, cmdword);
+
     /* (Try to) get a list of the options recognized as
        valid for the given command */
-    opts = get_opts_for_command(ci);
+    opts = get_opts_for_command(ci, &nopt);
 
     if (is_model_cmd(cmdword)) {
 	strcpy(section, "Estimation");
@@ -58,15 +66,18 @@ void print_skel_for_command (int ci)
     puts("      </arguments>");
 
     if (opts != NULL) {
+	fprintf(stderr, " Got some options for '%s'\n", cmdword);
 	fputs("      <options>\n", stdout);
-	while ((opt = *opts++)) {
+	for (i=0; i<nopt; i++) {
 	    puts("        <option>");
-	    printf("        <flag>--%s</flag>\n", opt);
+	    printf("        <flag>--%s</flag>\n", opts[i]);
 	    printf("        <effect>.</effect>\n");
 	    puts("        </option>");
 	}
 	puts("       </options>");
 	free(opts);
+    } else {
+	fprintf(stderr, " Found no options for '%s'\n", cmdword);
     }
 
     puts("      <examples>");
@@ -82,11 +93,15 @@ void print_skel_for_command (int ci)
     puts("\n  </command>\n");	
 }
 
-int main (void)
+int main (int argc, char **argv)
 {
     int i;
 
-    print_top();
+    if (argc == 2) {
+	print_top(argv[1]);
+    } else {
+	print_top(NULL);
+    }
 
     /* NC is the sentinel value for the maximum gretl command index */
     for (i=1; i<NC; i++) {

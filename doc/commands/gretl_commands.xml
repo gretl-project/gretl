@@ -537,6 +537,12 @@
         <argument>depvar</argument>
 	<argument>indepvars</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--nc</flag>
+	  <effect>do not include a constant</effect>
+	</option>
+      </options>
       <examples>
 	<example>coint 4 y x1 x2</example>
       </examples>
@@ -552,6 +558,11 @@
 	The Durbin&ndash;Watson statistic for the cointegrating
 	regression is also given.  Note that none of these test
 	statistics can be referred to the usual statistical tables.
+      </para>
+      <para context="cli">
+	By default, the cointegrating regression contains a constant.
+	If you wish to suppress the constant, add the <lit>--nc</lit>
+	flag. 
       </para>
     </description>
 
@@ -1306,6 +1317,10 @@
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
         </option>
+        <option>
+	  <flag>--arma-init</flag>
+	  <effect>initial variance parameters from ARMA</effect>
+        </option>
       </options>
       <examples>
         <example>garch 1 1 ; y</example>
@@ -1322,9 +1337,9 @@
 	<repl>q</repl> represent the lag orders in the conditional
 	variance equation.
 	<equation status="display"
-	  tex="\[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
+	  tex="\alpha_0 + \[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
-	  ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) + sum(j=1 to p) b(j)*h(t-j)"
+	  ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) + sum(j=1 to p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
       </para>
 
@@ -1334,9 +1349,9 @@
 	if independent variables are selected, including the given
 	exogenous variables.  The conditional variance equation is
 	shown below.
-	<equation status="display" tex="\[h_t =
+	<equation status="display" tex="\[h_t = \alpha_0 + 
 	\sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} + \sum_{j=1}^p
-	\beta_i h_{t-j}\]" ascii="h(t) = sum(i=1 to q) a(i)*u(t-i) +
+	\beta_i h_{t-j}\]" ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) +
 	sum(j=1 to p) b(j)*h(t-j)" graphic="garch_h"/>
       </para>
 
@@ -1362,6 +1377,20 @@
 	estimator) can be specified using the <cmdref targ="set"/>
 	command.
       </para>
+
+      <para context="cli">
+	By default, the estimates of the variance parameters are
+	initialized using the unconditional error variance from
+	initial OLS estimation for the constant, and small positive
+	values for the coefficients on the past values of the squared
+	error and the error variance.  The flag <lit>--arma-init</lit>
+	calls for the starting values of these parameters to be
+	set using an initial ARMA model, exploiting the relationship
+	between GARCH and ARMA set out in Chapter 21 of Hamilton's
+	Time Series Analysis.  In some cases this may improve the
+	chances of convergence.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1542,6 +1571,10 @@
 	    <row>
 	      <cell><lit>$aic</lit></cell> 
 	      <cell>Akaike Information Criterion</cell> 
+	    </row> 
+	    <row>
+	      <cell><lit>$bic</lit></cell> 
+	      <cell>Schwarz's Bayesian Information Criterion</cell> 
 	    </row> 
 	    <row>
 	      <cell><lit>$lnl</lit></cell> 
@@ -2047,7 +2080,8 @@
 
   </command>
 
-  <command name="hccm" section="Estimation" label="HCCM estimation">
+  <command name="hccm" section="Estimation" context="cli"
+    label="HCCM estimation">
 
     <usage>
       <arguments>
@@ -2076,6 +2110,42 @@
     <gui-access>
       <menu-path>/Model/HCCM</menu-path>
     </gui-access>
+
+  </command>
+
+  <command name="hccme" section="Estimation" context="gui"
+    label="Robust standard errors">
+
+    <description>
+      <para>
+	You are offered several variant calculations for standard
+	errors that are robust in the presence of heteroskedasticity
+	(and, in the case of the HAC estimator, autocorrelation).
+      </para>
+
+      <para>HC0 produces the original <quote>White's standard
+	errors</quote>; HC1, HC2, HC3 and HC3a are subsequent
+	variations that are generally reckoned to produce superior
+	(more reliable) results.  For details of the estimators, see
+	MacKinnon and White (Journal of Econometrics, 1985) or
+	Davidson and MacKinnon, Econometric Theory and Methods
+	(Oxford, 2004).  The labels given here are those used by
+	Davidson and MacKinnon.  Variant <quote>HC3a</quote> is the
+	jackknife, as described in MacKinnon and White (1985); HC3 is
+	a close approximation to the jackknife.  
+      </para>
+
+      <para>If you use the HAC estimator for time-series data, you are
+	able to fine-tune the lag-length using the <cmd>set</cmd>
+	command.  Please see the gretl manual or the script commands
+	help file for details.</para>
+
+      <para>Two robust estimators of the covariance matrix are
+	offered for GARCH models: QML is the Quasi-Maximum Likelihood
+	Estimator, and BW is the Bollerslev-Wooldridge estimator.
+      </para>
+
+    </description>
 
   </command>
 
@@ -3288,13 +3358,14 @@
 	selection statistics (described in Ramanathan, Section 4.3)
 	are also printed.</para>
 
-      <para>If the option <lit>--no-df-corr</lit> is given, the usual
-	degrees of freedom correction is not applied when calculating
-	the estimated error variance (and hence also the standard
-	errors of the parameter estimates).</para>
+      <para context="cli">If the option <lit>--no-df-corr</lit> is
+	given, the usual degrees of freedom correction is not applied
+	when calculating the estimated error variance (and hence also
+	the standard errors of the parameter estimates).</para>
 
-      <para>The option <lit>--print-final</lit> is applicable only in
-	the context of a <cmdref targ="loop"/>.  It arranges for the
+      <para context="cli">
+	The option <lit>--print-final</lit> is applicable only in the
+	context of a <cmdref targ="loop"/>.  It arranges for the
 	regression to be run silently on all but the final iteration
 	of the loop. See <manref targ="loop-examples"/> for details.
       </para>
@@ -3524,7 +3595,7 @@
 
   </command>
 
-  <command name="panel" section="Dataset"
+  <command name="panel" section="Dataset" context="cli"
     label="Panel data structure">
 
     <usage>
@@ -3541,40 +3612,7 @@
     </usage>
 
     <description>
-      <para context="gui">
-	The two options here are <quote>stacked time series</quote>
-	and <quote>stacked cross sections</quote>. Gretl must know
-	which way your data are organized if you want to make use of
-	the "Pooled OLS" model command and its associated panel
-	diagnostics.</para>
-
-      <para context="gui">Stacked time series means that the blocks in
-	the data file take the form of time series for each of the
-	cross-sectional units in turn.  For example, the first 10 rows
-	of data might represent the values of certain variables for
-	country A over 10 periods, the next 10 rows the values for
-	country B over the same 10 periods, and so on.</para>
-
-      <para context="gui">Stacked cross sections means that the blocks in
-	the data file take the form of cross sections for each of the
-	time periods in turn.  For example, the first 6 rows of data
-	might represent the values of certain variables for countries
-	A to F for the year 1970, the next 6 rows the values for the
-	same countries in 1971, and so on.</para>
-
-      <para context="gui">If you save your data file after setting this
-	attribute, the information will be recorded in the data file
-	and you won't have to set it again.</para>  
-
-      <para context="gui">Note that this menu item does not change the
-	structure of your panel data set, it simply fixes the
-	interpretation of that structure on gretl's part.  If you want
-	to convert a panel data set currently in stacked cross section
-	form to stacked time series, use the menu item
-	<quote>Restructure panel</quote>.
-      </para>
-
-      <para context="cli">Request that the current data set be
+      <para>Request that the current data set be
 	interpreted as a panel (pooled cross section and time series).
 	By default, or with the <lit>--time-series</lit> flag, the
 	data set is taken to be in the form of stacked time series
@@ -3585,12 +3623,7 @@
 	period).  See also
 	<cmdref targ="setobs"/>.
       </para>
-
     </description>
-
-    <gui-access>
-      <menu-path>/Sample/interpret as panel</menu-path>
-    </gui-access>
 
   </command>
 
@@ -3716,6 +3749,14 @@
       </arguments>
       <options>
 	<option>
+	  <flag>--unit-weights</flag>
+	  <effect>feasible GLS</effect>
+	</option>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>iterate to Maximum Likelihood solution</effect>
+	</option>
+	<option>
 	  <flag>--vcv</flag>
 	  <effect>print covariance matrix</effect>
 	</option>
@@ -3723,10 +3764,21 @@
     </usage>
 
     <description>
-      <para>Estimates a model via OLS (see <cmdref targ="ols"/> for
-	details on syntax), and flags it as a pooled or panel model,
-	so that the <cmdref targ="hausman"/> test item becomes
-	available.</para>
+      <para>By default, estimates a model via OLS (see <cmdref
+	  targ="ols"/> for details on syntax), and flags it as a
+	pooled or panel model, so that the <cmdref targ="hausman"/>
+	test item becomes available.
+      </para>
+      <para>If the <lit>--unit-weights</lit> flag is given, estimation
+	is by feasible GLS, using weights constructed from the
+	specific error variances per cross-sectional unit.  This
+	offers a gain in efficiency over OLS if the error variance
+	differs across units.
+      </para>
+      <para>If, in addition, the <lit>--iterate</lit> flag is given,
+	the GLS estimator is iterated: if this procedure converges it
+	yields Maximum Likelihood estimates.
+      </para>
     </description>
 
     <gui-access>
@@ -4399,7 +4451,7 @@
     </description>
   </command>
 
-  <command name="setobs" section="Dataset"
+  <command name="setobs" section="Dataset" context="cli"
     label="Frequency and starting observation">
 
     <usage>
@@ -4407,62 +4459,70 @@
         <argument>periodicity</argument>
         <argument>startobs</argument>
       </arguments>
+      <options>
+        <option>
+	  <flag>--cross-section</flag>
+	  <effect>interpret as cross section</effect>
+        </option>
+        <option>
+	  <flag>--time-series</flag>
+	  <effect>interpret as time series</effect>
+        </option>
+        <option>
+	  <flag>--stacked-cross-section</flag>
+	  <effect>interpret as panel data</effect>
+        </option>
+        <option>
+	  <flag>--stacked-time-series</flag>
+	  <effect>interpret as panel data</effect>
+        </option>
+      </options>
       <examples>
-        <example>setobs 4 1990:1</example>
+        <example>setobs 4 1990:1 --time-series</example>
         <example>setobs 12 1978:03</example>
-        <example>setobs 20 1:01</example>
+	<example>setobs 1 1 --cross-section</example>
+        <example>setobs 20 1:1 --stacked-time-series</example>
       </examples>
     </usage>
 
     <description>
-      <para context="cli">
-	Force the program to interpret the current data set as time
-	series or panel, when the data have been read in as simple
-	undated series.  <repl>periodicity</repl> must be an integer;
-	<repl>startobs</repl> is a string representing the date or
-	panel ID of the first observation. See also <cmdref
-	  targ="panel"/>.
+      <para>
+	Force the program to interpret the current data set as having
+	a specified structure.  
       </para>
-      <para context="gui">
-	Use this command to force the program to interpret the current
-	data set as time series or panel, when the data have been read
-	in as simple undated series.  Two parameters are needed: an
-	integer frequency and a starting observation string (usually a
-	date).  Here are some examples of valid input:</para>
+      <para>
+	The <repl>periodicity</repl>, which must be an integer,
+	represents frequency in the case of time-series data (1 =
+	annual; 4 = quarterly; 12 = monthly; 52 = weekly; 5, 6, or 7 =
+	daily; 24 = hourly).  In the case of panel data the
+	periodicity means the number of lines per data block: this
+	corresponds to the number of cross-sectional units in the case
+	of stacked cross-sections, or the number of time periods in
+	the case of stacked time series.  In the case of simple
+	cross-sectional data the periodicity should be set to 1.
+      </para>
+      <para>
+	The starting observation represents the starting date in the
+	case of time series data.  Years may be given with two or four
+	digits; subperiods (for example, quarters or years) should be
+	separated from the year with a colon.  In the case of panel
+	data the starting observation should be given as 1:1; and in
+	the case of cross-sectional data, as 1.  Starting observations
+	for daily or weekly data should be given in the form YY/MM/DD
+	or YYYY/MM/DD (or simply as 1 for undated data).  
+      </para>
+      <para>
+	If no explicit option flag is given to indicate the structure
+	of the data the program will attempt to guess the structure
+	from the information given.
+      </para>
 
-      <table context="gui">
-	<row>
-	  <cell>4 1990:1</cell>
-	  <cell>Interpret the data as quarterly, starting in 1990,
-	    Q1</cell>
-	</row>
-	<row>
-	  <cell>12 1978:03</cell>
-	  <cell>Interpret as monthly, starting in March 1978</cell>
-	</row>
-	<row>
-	  <cell>20 1:01</cell>
-	  <cell>Frequency 20, starting with obs 1.01 (panel
-	    data)</cell>
-	</row>
-	<row>
-	  <cell>5 1972/01/20</cell>
-	  <cell>Daily data (5-day week), starting January 20,
-	    1972</cell>
-	</row>
-	<row>
-	  <cell>7 2002/01/20</cell>
-	  <cell>Daily data (7-day week), starting January 20,
-	    2002</cell>
-	</row>
-      </table>
-
-    </description>
+    </description> 
 
     <gui-access>
-      <menu-path>/Sample/Set frequency, startobs</menu-path>
+      <menu-path>/Sample/Dataset structure</menu-path>
     </gui-access>
-
+      
   </command>
 
   <command name="setmiss" section="Dataset"
@@ -5055,8 +5115,16 @@
       </arguments>
       <options>
         <option>
+	  <flag>--robust</flag>
+	  <effect>robust standard errors</effect>
+        </option>
+        <option>
+	  <flag>--impulse-responses</flag>
+	  <effect>print impulse responses</effect>
+        </option>
+        <option>
 	  <flag>--quiet</flag>
-	  <effect>don't print impulse responses etc.</effect>
+	  <effect>don't print results</effect>
         </option>
       </options>
       <examples>
@@ -5095,8 +5163,8 @@
 	variable in the system.  Output for each equation includes
 	F-tests for zero restrictions on all lags of each of the
 	variables and an F-test for the maximum lag, along with
-	forecast variance decompositions and impulse response
-	functions.</para>  
+	(optionally) forecast variance decompositions and impulse
+	response functions.</para>
 
       <para context="cli">
 	Sets up and estimates (using OLS) a vector autoregression
@@ -5121,17 +5189,24 @@
 	A separate regression is run for each variable in
 	<repl>varlist</repl>. Output for each equation includes
 	<mathvar>F</mathvar>-tests for zero restrictions on all lags
-	of each of the variables; an <mathvar>F</mathvar>-test for the
-	significance of the maximum lag; forecast variance
-	decompositions; and impulse response functions.</para>
+	of each of the variables, an <mathvar>F</mathvar>-test for the
+	significance of the maximum lag, and, if the
+	<lit>--impulse-responses</lit> flag is given, forecast
+	variance decompositions and impulse responses.</para>
 
       <para>
-	The variance decompositions and impulse responses are based on
-	the Cholesky decomposition of the contemporaneous covariance
-	matrix, and in this context the order in which the
+	Forecast variance decompositions and impulse responses are
+	based on the Cholesky decomposition of the contemporaneous
+	covariance matrix, and in this context the order in which the
 	(stochastic) variables are given matters.  The first variable
 	in the list is assumed to be <quote>most exogenous</quote>
-	within-period.</para> 
+	within-period.</para>
+
+      <para context="cli">
+	The <lit>--quiet</lit> flag suppresses the printing of
+	output.  This will be useful only in the context of a script
+	which saves the VAR for future examination.
+      </para>
 
     </description>
 

@@ -131,22 +131,25 @@ struct gretl_option gretl_opts[] = {
     { 0,        0L,    NULL }
 };
 
-const char **get_opts_for_command (int ci)
+const char **get_opts_for_command (int ci, int *nopt)
 {
-    int i, j, nopt = 0;
+    int i, j, n = 0;
     const char **ret = NULL;
 
     if (is_model_ci(ci) && ci != OLS && ci != LAD) {
-	nopt++; /* vcv */
+	n++; /* vcv */
     }
 
     for (i=0; gretl_opts[i].ci != 0; i++) {
-	if (gretl_opts[i].ci == ci) nopt++;
+	if (gretl_opts[i].ci == ci) n++;
     }
 
-    if (nopt == 0) return NULL;
+    if (n == 0) {
+	*nopt = 0;
+	return NULL;
+    }
 
-    ret = malloc((nopt + 1) * sizeof *ret);
+    ret = malloc(n * sizeof *ret);
     if (ret == NULL) return NULL;
 
     j = 0;
@@ -160,7 +163,7 @@ const char **get_opts_for_command (int ci)
 	ret[j++] = "vcv";
     }
 
-    ret[j] = NULL;
+    *nopt = n;
 
     return ret;
 }
