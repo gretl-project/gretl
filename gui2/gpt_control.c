@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "gpt_control.h"
 #include "session.h"
+#include "../pixmaps/mouse.xpm"
 
 /* #define POINTS_DEBUG 1 */
 
@@ -86,8 +87,9 @@ typedef enum {
     PLOT_NO_LABELS      = 1 << 4,
     PLOT_PNG_COORDS     = 1 << 5,
     PLOT_DONT_ZOOM      = 1 << 6,
-    PLOT_DONT_EDIT      = 1 << 7
-} plot_flags;
+    PLOT_DONT_EDIT      = 1 << 7,
+    PLOT_POSITIONING    = 1 << 8
+} plot_status_flags;
 
 typedef enum {
     PLOT_TITLE          = 1 << 0,
@@ -104,14 +106,15 @@ typedef enum {
     JUST_RIGHT
 } just_codes;
 
-#define plot_is_saved(p)        (p->flags & PLOT_SAVED)
-#define plot_has_controller(p)  (p->flags & PLOT_HAS_CONTROLLER)
-#define plot_is_zoomed(p)       (p->flags & PLOT_ZOOMED)
-#define plot_is_zooming(p)      (p->flags & PLOT_ZOOMING)
-#define plot_has_no_labels(p)   (p->flags & PLOT_NO_LABELS)
-#define plot_has_png_coords(p)  (p->flags & PLOT_PNG_COORDS)
-#define plot_not_zoomable(p)    (p->flags & PLOT_DONT_ZOOM)
-#define plot_not_editable(p)    (p->flags & PLOT_DONT_EDIT)
+#define plot_is_saved(p)        (p->status_flags & PLOT_SAVED)
+#define plot_has_controller(p)  (p->status_flags & PLOT_HAS_CONTROLLER)
+#define plot_is_zoomed(p)       (p->status_flags & PLOT_ZOOMED)
+#define plot_is_zooming(p)      (p->status_flags & PLOT_ZOOMING)
+#define plot_has_no_labels(p)   (p->status_flags & PLOT_NO_LABELS)
+#define plot_has_png_coords(p)  (p->status_flags & PLOT_PNG_COORDS)
+#define plot_not_zoomable(p)    (p->status_flags & PLOT_DONT_ZOOM)
+#define plot_not_editable(p)    (p->status_flags & PLOT_DONT_EDIT)
+#define plot_doing_position(p)  (p->status_flags & PLOT_POSITIONING)
 
 #define plot_has_title(p)       (p->format & PLOT_TITLE)
 #define plot_has_xlabel(p)      (p->format & PLOT_XLABEL)
@@ -144,6 +147,7 @@ typedef struct png_plot_t {
     GtkWidget *statusarea;    
     GtkWidget *statusbar;
     GtkWidget *cursor_label;
+    GtkWidget *labelpos_entry;
     GdkPixmap *pixmap;
     GdkGC *invert_gc;
     GPT_SPEC *spec;
@@ -155,7 +159,7 @@ typedef struct png_plot_t {
     int pd;
     guint cid;
     zoom_t *zoom;
-    unsigned char flags; 
+    unsigned long status_flags; 
     unsigned char format;
     char *labeled;
 } png_plot_t;
@@ -208,7 +212,7 @@ static void close_plot_controller (GtkWidget *widget, gpointer data)
     free_plotspec(spec); 
 #else
     if (plot != NULL) { /* PNG plot window open */
-	plot->flags ^= PLOT_HAS_CONTROLLER;
+	plot->status_flags ^= PLOT_HAS_CONTROLLER;
     } else {
 	free_plotspec(spec); 
     }
@@ -339,7 +343,7 @@ void mark_plot_as_saved (GPT_SPEC *spec)
 {
     png_plot_t *plot = (png_plot_t *) spec->ptr;
 
-    plot->flags |= PLOT_SAVED;
+    plot->status_flags |= PLOT_SAVED;
 }
 
 static int gnuplot_png_init (const char *fname, FILE **fpp)
@@ -554,7 +558,6 @@ static void gpt_tab_main (GtkWidget *notebook, GPT_SPEC *spec)
 	    tbl_len++;
 	    gtk_table_resize(GTK_TABLE(tbl), tbl_len, 2);
 	    tempwid = gtk_label_new(_(gpt_titles[i].description));
-	    /* gtk_misc_set_alignment(GTK_MISC(tempwid), 1, 0.5); */
 	    gtk_table_attach_defaults(GTK_TABLE (tbl), 
 				      tempwid, 0, 1, tbl_len-1, tbl_len);
 	    gtk_widget_show(tempwid);
@@ -795,6 +798,28 @@ static void gpt_tab_lines (GtkWidget *notebook, GPT_SPEC *spec)
 
 /* ........................................................... */
 
+static void label_pos_click (GtkWidget *w, GPT_SPEC *spec)
+{
+    png_plot_t *plot;
+
+    plot = (png_plot_t *) spec->ptr;
+    if (plot != NULL) {
+	GtkWidget *entry;
+	GdkCursor* cursor;
+
+	cursor = gdk_cursor_new(GDK_CROSSHAIR);
+	gdk_window_set_cursor(plot->canvas->window, cursor);
+	gdk_cursor_destroy(cursor);
+	entry = g_object_get_data(G_OBJECT(w), "labelpos_entry");
+	plot->labelpos_entry = entry;
+	plot->status_flags |= PLOT_POSITIONING;
+	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
+			   _(" Click to define label coordinates"));
+    }
+}
+
+/* ........................................................... */
+
 static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec) 
 {
     GtkWidget *tempwid, *box, *tbl, *menu;
@@ -822,6 +847,8 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
     for (i=0; i<MAX_PLOT_LABELS; i++) {
 	gsize bytes;
 	gchar *titlestr;
+	GtkWidget *hbox, *button, *image;
+	GdkPixbuf *icon;
 
 	/* label text */
 	tbl_len++;
@@ -856,22 +883,43 @@ static void gpt_tab_labels (GtkWidget *notebook, GPT_SPEC *spec)
 
 	/* label placement */
 	tbl_len++;
+
 	gtk_table_resize(GTK_TABLE(tbl), tbl_len, 3);
 	tempwid = gtk_label_new(_("position (X,Y)"));
 	gtk_table_attach_defaults(GTK_TABLE(tbl), 
 				  tempwid, 1, 2, tbl_len-1, tbl_len);
-	gtk_widget_show (tempwid);
+	gtk_widget_show(tempwid);
 
+	/* holder for entry and button */
+	hbox = gtk_hbox_new(FALSE, 5);
+
+	/* entry for coordinates */
 	labelpos[i] = gtk_entry_new();
 	gtk_entry_set_max_length(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
 	gtk_entry_set_width_chars(GTK_ENTRY(labelpos[i]), PLOT_LABEL_POS_LEN);
-	gtk_table_attach_defaults(GTK_TABLE(tbl), 
-				  labelpos[i], 2, 3, tbl_len-1, tbl_len);
+	gtk_container_add(GTK_CONTAINER(hbox), labelpos[i]);
 	gtk_entry_set_text(GTK_ENTRY(labelpos[i]), spec->text_labels[i].pos);
 	g_signal_connect(G_OBJECT(labelpos[i]), "activate", 
 			 G_CALLBACK(apply_gpt_changes), 
 			 spec);
 	gtk_widget_show(labelpos[i]);
+
+	/* button to invoke mouse-assisted placement */
+	icon = gdk_pixbuf_new_from_xpm_data((const char **) mini_mouse_xpm);
+	image = gtk_image_new_from_pixbuf(icon);
+	button = gtk_button_new();
+	gtk_widget_set_size_request(button, 32, 24);
+	gtk_container_add (GTK_CONTAINER(button), image);
+	g_object_set_data(G_OBJECT(button), "labelpos_entry",
+			  labelpos[i]);
+	g_signal_connect (G_OBJECT(button), "clicked",
+			  G_CALLBACK(label_pos_click), spec);
+	gtk_container_add(GTK_CONTAINER(hbox), button);
+	gtk_widget_show_all(button);
+
+	gtk_table_attach_defaults(GTK_TABLE(tbl), 
+				  hbox, 2, 3, tbl_len-1, tbl_len);
+	gtk_widget_show(hbox);
 
 	/* label justification */
 	tbl_len++;
@@ -2163,7 +2211,7 @@ identify_point (png_plot_t *plot, int pixel_x, int pixel_y,
 
     /* no labels to show */
     if (plot->spec->labels == NULL) {
-	plot->flags |= PLOT_NO_LABELS;	
+	plot->status_flags |= PLOT_NO_LABELS;	
 	return;
     }
 
@@ -2299,7 +2347,7 @@ static void start_editing_png_plot (png_plot_t *plot)
     }
 
     if (show_gnuplot_dialog(plot->spec) == 0) { /* OK */
-	plot->flags |= PLOT_HAS_CONTROLLER;
+	plot->status_flags |= PLOT_HAS_CONTROLLER;
     }
 }
 
@@ -2357,7 +2405,7 @@ static gint plot_popup_activated (GtkWidget *w, gpointer data)
 	cursor = gdk_cursor_new(GDK_CROSSHAIR);
 	gdk_window_set_cursor(plot->canvas->window, cursor);
 	gdk_cursor_destroy(cursor);
-	plot->flags |= PLOT_ZOOMING;
+	plot->status_flags |= PLOT_ZOOMING;
 	gtk_statusbar_push(GTK_STATUSBAR(plot->statusbar), plot->cid, 
 			   _(" Drag to define zoom rectangle"));
 	create_selection_gc(plot);
@@ -2627,7 +2675,7 @@ static gint plot_button_release (GtkWidget *widget, GdkEventButton *event,
 	    plot->zoom->ymin != plot->zoom->ymax) {
 	    zoom_unzoom_png(plot, PNG_ZOOM);
 	}
-	plot->flags ^= PLOT_ZOOMING;
+	plot->status_flags ^= PLOT_ZOOMING;
 	gdk_window_set_cursor(plot->canvas->window, NULL);
 	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
     }
@@ -2642,6 +2690,23 @@ static gint plot_button_press (GtkWidget *widget, GdkEventButton *event,
 		    &plot->zoom->xmin, &plot->zoom->ymin);
 	plot->zoom->screen_xmin = event->x;
 	plot->zoom->screen_ymin = event->y;
+	return TRUE;
+    }
+
+    if (plot_doing_position(plot)) {
+	if (plot->labelpos_entry != NULL) {
+	    double dx, dy;
+	    gchar *posstr;
+	    
+	    get_data_xy(plot, event->x, event->y, &dx, &dy);
+	    posstr = g_strdup_printf("%g,%g", dx, dy);
+	    gtk_entry_set_text(GTK_ENTRY(plot->labelpos_entry), posstr);
+	    g_free(posstr);
+	}
+	plot->status_flags ^= PLOT_POSITIONING;
+	plot->labelpos_entry = NULL;
+	gdk_window_set_cursor(plot->canvas->window, NULL);
+	gtk_statusbar_pop(GTK_STATUSBAR(plot->statusbar), plot->cid);
 	return TRUE;
     }
 
@@ -2738,9 +2803,9 @@ static void render_pngfile (png_plot_t *plot, int view)
 			     0, 0,
 			     PLOT_PIXEL_WIDTH, PLOT_PIXEL_HEIGHT);
 	if (view == PNG_ZOOM) {
-	    plot->flags |= PLOT_ZOOMED;
+	    plot->status_flags |= PLOT_ZOOMED;
 	} else if (view == PNG_UNZOOM) {
-	    plot->flags ^= PLOT_ZOOMED;
+	    plot->status_flags ^= PLOT_ZOOMED;
 	}
     }
 }
@@ -2971,8 +3036,8 @@ static int get_plot_ranges (png_plot_t *plot)
 #endif
     while (fgets(line, MAXLEN-1, fp)) {
 	if (cant_edit(line)) {
-	    plot->flags |= PLOT_DONT_EDIT;
-	    plot->flags |= PLOT_DONT_ZOOM;
+	    plot->status_flags |= PLOT_DONT_EDIT;
+	    plot->status_flags |= PLOT_DONT_ZOOM;
 	    fclose(fp);
 	    return 0;
 	}
@@ -2998,7 +3063,7 @@ static int get_plot_ranges (png_plot_t *plot)
 	    } else if (!strncmp(line, "set y2ti", 8)) {
 		plot->format |= PLOT_Y2AXIS;
 	    } else if (cant_zoom(line)) {
-		plot->flags |= PLOT_DONT_ZOOM;
+		plot->status_flags |= PLOT_DONT_ZOOM;
 	    } 
 	}
 	if (!strncmp(line, "plot ", 5)) break;
@@ -3014,7 +3079,7 @@ static int get_plot_ranges (png_plot_t *plot)
     coords = get_png_bounds_info(&b);
     if (coords == 0) {
 	/* OK: retrieved accurate coordinates */
-	plot->flags |= PLOT_PNG_COORDS;
+	plot->status_flags |= PLOT_PNG_COORDS;
 	got_x = 1;
 	plot->pixel_xmin = b.xleft;
 	plot->pixel_xmax = b.xright;
@@ -3082,7 +3147,7 @@ static png_plot_t *png_plot_new (void)
     plot->pd = 0;
     plot->cid = 0;
     plot->zoom = NULL;
-    plot->flags = 0;
+    plot->status_flags = 0;
     plot->format = 0;
     plot->labeled = NULL;
 
@@ -3117,7 +3182,7 @@ int gnuplot_show_png (const char *plotfile, GPT_SPEC *spec, int saved)
     if (plot->zoom == NULL) return 1;
 
     if (saved) {
-	plot->flags |= PLOT_SAVED;
+	plot->status_flags |= PLOT_SAVED;
     }
 
     /* parse this file for x range */
