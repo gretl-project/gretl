@@ -15,7 +15,7 @@ CHAPTERS = chapters/cmdref.xml chapters/intro.xml chapters/modes.xml \
 	chapters/cli.xml chapters/graphs.xml chapters/menus.xml \
 	chapters/optarg.xml chapters/trouble.xml
 
-all: thumbs pdf altthumbs altpdf html htmlhelp
+all: thumbs pdf altthumbs altpdf html chm
 
 pdf: $(DOC).tex jadetex.cfg lucidabr.tex
 	-pdfjadetex $(DOC)
@@ -52,6 +52,18 @@ html: $(SRC) db2html $(DSL) $(HMATHSS)
 	./db2html $(SRC)
 	./texmath2png.pl $(DOC)-html/equation-list.sgml
 
+# make windows HTML help file for gretl
+
+topdoc = ../../doc
+
+chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml 
+	mkdir -p htmlhelp/figures
+	cp $(topdoc)/figures/*.png htmlhelp/figures
+	for f in htmlhelp/figures/*.png ; do convert $$f $${f%.png}.gif ; done
+	cd htmlhelp && \
+	saxon ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl tex.math.in.alt=latex
+	wine "c:/Program Files/HTML Help Workshop/hhc.exe" htmlhelp/gretl.hhp
+
 clean:
 	rm -f *.aux *.log *.out *.pdf $(DOC).tex $(ALTDOC).tex
-	rm -rf $(DOC)-html
+	rm -rf $(DOC)-html htmlhelp

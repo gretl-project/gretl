@@ -45,7 +45,7 @@ ifeq ($(LIBOLE2_LIBS),)
   query-ms-ole.lo=ms-ole.lo
   vpath %.c libole2
   vpath %.h libole2
-  LIBOLE2_CFLAGS = -I.
+  LIBOLE2_CFLAGS = -I. `glib-config --cflags`
 endif
 
 all: $(PLUGINS)
