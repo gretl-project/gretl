@@ -485,7 +485,7 @@ int check_for_prog (const char *prog)
 	sprintf(tmp, "%s > /dev/null 2>&1", prog);
     }
 
-    ret = gretl_spawn(tmp) == 0;
+    ret = gretl_spawn_quiet(tmp) == 0;
 
     if (!strcmp(prog, "latex")) remove("x.log");
 

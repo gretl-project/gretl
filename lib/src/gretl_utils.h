@@ -174,6 +174,7 @@ void free_confint (CONFINT *cf);
 
 #ifndef WIN32
 int gretl_spawn (const char *cmdline);
+int gretl_spawn_quiet (const char *cmdline);
 #endif
 
 #endif /* GRETL_UTILS_H */

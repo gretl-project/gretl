@@ -1074,7 +1074,6 @@ int varnum_from_string (const char *str, DATAINFO *pdinfo)
 {
     int varno;
     char *test;
-    extern int errno;
 
     errno = 0;
 
@@ -2096,7 +2095,7 @@ static int font_not_found (const char *s)
     }
 }
 
-int gretl_spawn (const char *cmdline)
+static int real_gretl_spawn (const char *cmdline, int verbose)
 {
     GError *error = NULL;
     gchar *errout = NULL, *sout = NULL;
@@ -2115,12 +2114,16 @@ int gretl_spawn (const char *cmdline)
 
     if (!ok) {
 	strcpy(gretl_errmsg, error->message);
-	fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
+	if (verbose) {
+	    fprintf(stderr, "gretl_spawn: '%s'\n", error->message);
+	}
 	g_error_free(error);
 	ret = 1;
     } else if (errout && *errout) {
 	strcpy(gretl_errmsg, errout);
-	fprintf(stderr, "stderr: '%s'\n", errout);
+	if (verbose) {
+	    fprintf(stderr, "stderr: '%s'\n", errout);
+	}
 	if (!font_not_found(errout)) {
 	    ret = 1;
 	}
@@ -2128,14 +2131,16 @@ int gretl_spawn (const char *cmdline)
 	sprintf(gretl_errmsg, "%s\n%s", 
 		_("Command failed"),
 		sout);
-	fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	if (verbose) {
+	    fprintf(stderr, "status=%d: '%s'\n", status, sout);
+	}
 	ret = 1;
     }
 
     if (errout != NULL) g_free(errout);
     if (sout != NULL) g_free(sout);
 
-    if (ret) {
+    if (ret && verbose) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
     } 
 
@@ -2146,22 +2151,35 @@ int gretl_spawn (const char *cmdline)
 
 #if !defined(WIN32) && !defined(GRETL_GLIB)
 
-int gretl_spawn (const char *cmdline)
+static int real_gretl_spawn (const char *cmdline, int verbose)
 {
     int err;
-    extern int errno;
 
     errno = 0;
 
     signal(SIGCHLD, SIG_DFL);
 
     err = system(cmdline);
-    if (err) {
+    if (err && verbose) {
 	fprintf(stderr, "Failed command: '%s'\n", cmdline);
 	perror(NULL);
     }
 
     return err;
+}
+
+#endif
+
+#ifndef WIN32
+
+int gretl_spawn (const char *cmdline)
+{
+    return real_gretl_spawn(cmdline, 1);
+}
+
+int gretl_spawn_quiet (const char *cmdline)
+{
+    return real_gretl_spawn(cmdline, 0);
 }
 
 #endif

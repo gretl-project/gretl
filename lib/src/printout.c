@@ -2095,7 +2095,7 @@ char *bufgets (char *s, size_t size, const char *buf)
 	GOT_LF,
 	GOT_CR,
 	GOT_CRLF
-    } buf_status;
+    };
     int i, status = END_OF_BUF;
     static const char *p;
 

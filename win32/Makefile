@@ -58,7 +58,6 @@ PLUGINSRC = \
 	johansen.c \
 	lad.c \
 	leverage.c \
-	longname.c \
 	mp_ols.c \
 	panel_data.c \
 	pca.c \
@@ -80,7 +79,7 @@ PLUGINSRC = \
 
 PLUGINOBJ = $(PLUGINSRC:.c=.o)
 
-PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll plugins/longname.dll \
+PLUGINS = plugins/stats_tables.dll plugins/panel_data.dll \
 	plugins/progress_bar.dll plugins/gnumeric_import.dll \
 	plugins/excel_import.dll plugins/mp_ols.dll plugins/sur.dll \
 	plugins/johansen.dll plugins/arma.dll plugins/arma_x12.dll \
@@ -263,10 +262,6 @@ plugins/gnumeric_import.dll: gnumeric_import.o dllinit.o
 plugins/excel_import.dll: excel_import.o workbook.o ms-ole.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) $(GTKLIBS) -lmoldname
-
-plugins/longname.dll: longname.o 
-	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
-	--implib plugins/$(<:.o=.a) $^ -lkernel32
 
 plugins/mp_ols.dll: mp_ols.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

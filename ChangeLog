@@ -9,6 +9,7 @@ version 1.2.7
   'x': stop audio
   'e': edit attributes of current variable
   't': plot current variable
+- make start-up tests for tramo and x12a less verbose
 
 5/25/2004 version 1.2.6
 - add Hodrick-Prescott filter, as "hpfilt" function in the

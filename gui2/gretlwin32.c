@@ -89,62 +89,58 @@ char *slash_convert (char *str, int which)
     return str;
 }
 
-static int old_windows (void) {
-    OSVERSIONINFO *winver;
-    static int old = 1;
+static char *substr (char *targ, const char *src, const char *p)
+{
+    *targ = '\0';
 
-    if (!old) return 0; /* do only one look up */
-
-    winver = mymalloc(sizeof *winver);
-    if (winver == NULL) return old;
-
-    winver->dwOSVersionInfoSize = sizeof *winver;
-    GetVersionEx(winver);
-
-    switch (winver->dwPlatformId) {
-    case VER_PLATFORM_WIN32_WINDOWS:
-        if (winver->dwMinorVersion >= 10) /* win98 or higher */
-	    old = 0;
-        break;
-    case VER_PLATFORM_WIN32_NT:
-        if (winver->dwMajorVersion > 4) /* win2000 or higher */
-	    old = 0;
-        break;
+    if (p == NULL) {
+	strcpy(targ, src);
+    } else {
+	strncat(targ, src, p - src);
     }
 
-    free(winver);
-    return old;
+    return targ;
 }
 
 int unmangle (const char *dosname, char *longname)
 {
-    if (strchr(dosname, ':') == NULL) {
-	/* not a full path */
+    HANDLE handle;
+    WIN32_FIND_DATA fdata;
+    char tmp[MAXLEN];
+    const char *p;
+    int err = 0, done = 0;
+    char drive;
+
+    *longname = '\0';
+    
+    if (sscanf(dosname, "%c:\\", &drive) != 1 ||
+	dosname[strlen(dosname) - 1] == '\\') {
 	strcpy(longname, dosname);
 	return 0;
-    }	
-    else if (old_windows()) {
-	/* sorry but I really can't be bothered */
-	strcpy(longname, dosname);
-	return 0;
-    } else {
-	int err;
-	void *handle;
-	void (*real_unmangle)(const char *, char *, int, int *); 
-
-	real_unmangle = gui_get_plugin_function("real_unmangle", 
-						&handle);
-	if (real_unmangle == NULL) return 1;
-
-# ifdef WINDEBUG
-	fprintf(dbg, "calling real_unmangle with dosname='%s'\n", dosname);
-	fflush(dbg);
-# endif
-	(*real_unmangle)(dosname, longname, MAXLEN, &err);
-	close_plugin(handle);
-
-	return err;
     }
+
+    sprintf(longname, "%c:", drive);
+    p = dosname + 2;
+
+    while (!done) {
+	p = strchr(p + 1, '\\');
+	if (p == NULL) {
+	    done = 1;
+	} 
+	substr(tmp, dosname, p);
+	handle = FindFirstFile(tmp, &fdata);
+	if (handle != INVALID_HANDLE_VALUE) {
+	    strcat(longname, "\\");
+	    strcat(longname, fdata.cFileName);
+	    FindClose(handle);
+	} else {
+	    *longname = '\0';
+	    err = 1;
+	    break;
+	}
+    }
+
+    return err;
 }
 
 void win_help (void)
@@ -188,6 +184,10 @@ static void hush_warnings (void)
 		       (GLogFunc) dummy_output_handler,
 		       NULL);
     g_log_set_handler ("GLib",
+		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
+		       (GLogFunc) dummy_output_handler,
+		       NULL);
+    g_log_set_handler ("Pango",
 		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
 		       (GLogFunc) dummy_output_handler,
 		       NULL);

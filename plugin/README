@@ -11,8 +11,3 @@ The material in here has been hived off in the form of "plugins"
   consuming operation via GTK) has been separated so that its
   functionality can be accessed via the libgretl library, without
   the need to link the latter against glib and gtk.  
-
-* The longname plugin (win32 only) represents a work-around for 
-  the fact that the Windows function that returns the long name
-  counterpart to a DOS 8.3 mangled filename is available only in
-  Windows 98 and higher.
