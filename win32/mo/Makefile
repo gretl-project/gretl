@@ -10,4 +10,4 @@ es.mo: $(PODIR)/es.po
 	mv messages $@ && rm es.po
 
 clean:
-	rm -r es.po es-utf8.po es.mo
+	rm -f es.po es-utf8.po es.mo

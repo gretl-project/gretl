@@ -89,9 +89,10 @@ PROBHDR = mconf.h
 PROBOBJ = $(PROBSRC:.c=.o)
 
 MO = mo/es.mo
+HELP = doc/gretl.chm
 
 # targets begin
-all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO)
+all: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(HELP)
 
 $(CLIPROG): $(CLIOBJ) 
 	$(CC) -s -o $@ $^ $(LIBS) $(CLI_LIBS) $(ZLIB_LIB)
@@ -122,11 +123,14 @@ $(UPDATER):
 $(MO):
 	make -C mo
 
+$(HELP):
+	make -C doc
+
 dirs:
 	mkdir -p dlls 
 	mkdir -p plugins 
 
-dist: $(CLIPROG) $(GUIPROG) dll extra-dll plugin $(UPDATER)
+dist: dirs prob-dll dll extra-dll plugin $(CLIPROG) $(GUIPROG) $(MO) $(HELP) $(UPDATER)
 	./mkwindist 
 
 topclean:
@@ -140,6 +144,7 @@ clean:
 	rm -f windist/MANIFEST windist/gretl.iss 
 	rm -rf windist/gretl windist/gnuplot windist/Output
 	make -C updater clean
+	make -C mo clean
 
 dll: dlls/libgretl.dll
 extra-dll: dlls/libgtkextra-lite.dll

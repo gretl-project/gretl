@@ -1,4 +1,6 @@
-version 0.998 (not released yet) 
+07/08/2002 version 0.998 
+- increment library version to 15.0.0
+- update Spanish translations
 - switch to more accurate (cephes) algorithms for p-values
 - add materials for building gretl on win32
 - try to support LC_NUMERIC conversion automagically
@@ -13,7 +15,6 @@ version 0.998 (not released yet)
   files ("c" and "C")
 - recompile gretl_updater.exe with new zlib dll
 - fixes to graph editing (this got broken by NLS changes)
-
 
 05/28/2002 version 0.997
 - increment library version to 14.0.1

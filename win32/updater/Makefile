@@ -10,7 +10,7 @@ PROG = gretl_updater.exe
 vpath %.h $(libsrc)
 
 $(PROG): $(OBJ) version.h
-	 $(CC) -mwindows -s -o $@ $^ $(LIBS)
+	 $(CC) -mwindows -s -o $@ $(OBJ) $(LIBS)
 
 .PHONY :
 

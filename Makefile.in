@@ -34,6 +34,7 @@ all: $(SUBDIRS)
 
 clean:
 	for d in $(SUBDIRS) ; do $(MAKE) -C $$d clean; done
+	make -C win32 clean
 
 installdirs:
 	$(tooldir)/mkinstalldirs $(libdir) $(includedir) $(bindir)
@@ -70,6 +71,8 @@ distclean: clean
 	rm -f gretl_sh gretl-config
 	rm -f libtool Makefile lib/Makefile cli/Makefile gui/Makefile \
 	share/Makefile plugin/Makefile
+	rm -rf win32/dlls win32/import-libs win32/gtkextra-lib win32/plugins
+
 
 
 
