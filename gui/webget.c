@@ -881,8 +881,10 @@ static void freeurl (struct urlinfo *u, int complete)
 static int get_contents (int fd, FILE *fp, char **getbuf, long *len, 
 			 long expected, struct rbuf *rbuf)
 {
-    int i, res = 0;
-    static char c[8192];
+    int res = 0;
+    static char cbuf[8192];
+    size_t allocated;
+    int nrealloc;
     void *handle;
     int (*show_progress) (long, long, int) = NULL;
     int show = 0;
@@ -896,41 +898,55 @@ static int get_contents (int fd, FILE *fp, char **getbuf, long *len,
 
     *len = 0L;
     if (show) (*show_progress)(res, expected, SP_LOAD_INIT);
+
     if (rbuf && RBUF_FD(rbuf) == fd) {
-	while ((res = rbuf_flush(rbuf, c, sizeof c)) != 0) {
+	while ((res = rbuf_flush(rbuf, cbuf, sizeof cbuf)) != 0) {
 	    if (fp == NULL) {
-		memcpy(*getbuf, c, res);
-	    } else 
-		if (fwrite(c, 1, res, fp) < (unsigned) res)
+		memcpy(*getbuf, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res)
 		    return -2;
+	    }
 	    *len += res;
 	    if (show) (*show_progress)(res, expected, SP_NONE);
 	}
     }
+
     /* Read from fd while there is available data. */
-    i = (res)? 2 : 1;
+    nrealloc = 2;
+    allocated = 8192;
     do {
-	res = iread(fd, c, sizeof c);
+	res = iread(fd, cbuf, sizeof cbuf);
 	if (res > 0) {
 	    if (fp == NULL) {
-		if (i > 1) {
-		    *getbuf = realloc(*getbuf, i * 8192);
-		    if (*getbuf == NULL)
+		if ((size_t) (*len + res) > allocated) {
+		    *getbuf = realloc(*getbuf, nrealloc * 8192);
+		    nrealloc++;
+		    allocated += 8192;
+		    if (*getbuf == NULL) {
 			return -2;
+		    }
 		}
-		memcpy(*getbuf + *len, c, res);
-	    } else
-		if (fwrite(c, 1, res, fp) < (unsigned) res)
+		memcpy(*getbuf + *len, cbuf, res);
+	    } else {
+		if (fwrite(cbuf, 1, res, fp) < (unsigned) res)
 		    return -2;
+	    }
 	    *len += res;
+	    
 	    if (show && (*show_progress)(res, expected, SP_NONE) < 0)
 		break;
 	}
-	i++;
     } while (res > 0);
+
     if (res < -1)
 	res = -1;
-    if (show) (*show_progress)(0, expected, SP_FINISH);
+
+    if (show) {
+	(*show_progress)(0, expected, SP_FINISH);
+	close_plugin(handle);
+    }
+
     return res;
 }
 

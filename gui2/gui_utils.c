@@ -989,6 +989,7 @@ static void make_viewbar (windata_t *vwin)
     static char *viewstrings[] = {
 	N_("Save"),
 	N_("Save as..."),
+	N_("Send to gnuplot"),
 	N_("Print..."),
 	N_("Run"),
 	N_("Copy selection"), 
@@ -1049,6 +1050,13 @@ static void make_viewbar (windata_t *vwin)
 		toolfunc = NULL;
 	    break;
 	case 2:
+	    if (vwin->role == GR_PLOT) {
+		stockicon = GTK_STOCK_CONVERT;
+		toolfunc = gp_send_callback;
+	    } else
+		toolfunc = NULL;
+	    break;	    
+	case 3:
 	    if (print_ok) {
 #if defined(G_OS_WIN32) || defined(USE_GNOME)
 		stockicon = GTK_STOCK_PRINT;
@@ -1057,50 +1065,50 @@ static void make_viewbar (windata_t *vwin)
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 3:
+	case 4:
 	    if (run_ok) {
 		stockicon = GTK_STOCK_EXECUTE;
 		toolfunc = run_script_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 4:
+	case 5:
 	    stockicon = GTK_STOCK_COPY;
 	    toolfunc = text_copy_callback;
 	    break;
-	case 5:
+	case 6:
 	    if (edit_ok) {
 		stockicon = GTK_STOCK_PASTE;
 		toolfunc = text_paste_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 6:
+	case 7:
 	    stockicon = GTK_STOCK_FIND;
 	    toolfunc = text_find_callback;
 	    break;
-	case 7:
+	case 8:
 	    if (edit_ok) {
 		stockicon = GTK_STOCK_FIND_AND_REPLACE;
 		toolfunc = text_replace_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 8:
+	case 9:
 	    if (edit_ok) {
 		stockicon = GTK_STOCK_UNDO;
 		toolfunc = text_undo_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 9:
+	case 10:
 	    if (run_ok) {
 		stockicon = GTK_STOCK_HELP;
 		toolfunc = activate_script_help;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 10:
+	case 11:
 	    stockicon = GTK_STOCK_CLOSE;
 	    toolfunc = delete_file_viewer;
 	    break;

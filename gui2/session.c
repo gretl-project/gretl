@@ -99,7 +99,6 @@ extern int winstack_match_data (gpointer p);
 
 extern int replay; /* lib.c */
 
-static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
 static void auto_save_gp (gpointer data, guint i, GtkWidget *w);
 
 /* "session" struct and "errtext" are globals */
@@ -1086,7 +1085,7 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
     fprintf(fp, "%s", savestuff);
 #endif
 
-#ifdef G_OS_WIN32
+#ifdef OLD_G_OS_WIN32
     if (strstr(savestuff, "set term") == NULL &&
 	strstr(savestuff, "pause -1") == NULL) {
 	fputs("\npause -1\n", fp);
@@ -1100,22 +1099,72 @@ static void auto_save_gp (gpointer data, guint quiet, GtkWidget *w)
 
 /* ........................................................... */
 
-static void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
+#ifdef G_OS_WIN32
+static char *add_pause_to_plotfile (const char *fname)
+{
+    FILE *fin, *fout;
+    char fline[MAXLEN];
+    char *tmpfile = NULL;
+    int gotpause = 0;
+
+    fin = fopen(fname, "r");
+    if (fin == NULL) return NULL;
+
+    tmpfile = g_strdup_printf("%showtmp.gp", paths.userdir);
+
+    fout = fopen(tmpfile, "w");
+    if (fout == NULL) {
+	fclose(fin);
+	g_free(tmpfile);
+	return NULL;
+    }
+
+    while (fgets(fline, MAXLEN - 1, fin)) {
+	fputs(fline, fout);
+	if (strstr(fline, "pause -1")) gotpause = 1;
+    }
+
+    if (!gotpause) {
+	fputs("pause -1\n", fout);
+    }
+
+    fclose(fin);
+    fclose(fout);
+
+    return tmpfile;
+}
+#endif
+
+/* ........................................................... */
+
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w)
 {
     gchar *buf = NULL;
     windata_t *mydata = (windata_t *) data;
+    int err = 0;
+#ifdef G_OS_WIN32
+    gchar *tmpfile;
+#endif
 
     auto_save_gp(data, 1, NULL);
 
 #ifdef G_OS_WIN32
-    buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, mydata->fname);
-    if (WinExec(buf, SW_SHOWNORMAL) < 32)
-        errbox(_("gnuplot command failed"));
+    tmpfile = add_pause_to_plotfile(mydata->fname);
+    if (tmpfile != NULL) {
+	buf = g_strdup_printf("\"%s\" \"%s\"", paths.gnuplot, tmpfile);
+	err = (WinExec(buf, SW_SHOWNORMAL) < 32);
+	remove(tmpfile); /* is this OK? */
+	g_free(tmpfile);
+    } else {
+	err = 1;
+    }
 #else
     buf = g_strdup_printf("gnuplot -persist \"%s\"", mydata->fname);
-    if (system(buf))
-        errbox(_("gnuplot command failed"));
+    err = system(buf);
 #endif
+
+    if (err) errbox(_("gnuplot command failed"));
+
     g_free(buf);
 }
 

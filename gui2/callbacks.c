@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "selector.h"
+#include "session.h"
 
 extern void browser_open_data (GtkWidget *w, gpointer data);
 extern void browser_open_ps (GtkWidget *w, gpointer data);
@@ -657,6 +658,13 @@ void text_undo_callback (GtkWidget *w, gpointer data)
 void run_script_callback (GtkWidget *w, gpointer data)
 {
     do_run_script(data, SCRIPT_EXEC, w);
+}
+
+/* ........................................................... */
+
+void gp_send_callback (GtkWidget *w, gpointer data)
+{
+    gp_to_gnuplot(data, 0, w);
 }
 
 /* ........................................................... */

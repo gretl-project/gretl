@@ -21,6 +21,7 @@
 
 #include "gretl.h"
 #include "treeutils.h"
+#include "database.h"
 
 #include <sys/stat.h>
 #include <unistd.h>
@@ -30,11 +31,6 @@
 #define N_BROWSER_TYPES 5
 #define BROWSER_BUSY    1
 #define BROWSER_OK      0
-
-extern void open_db_list (GtkWidget *w, gpointer data);
-extern void open_remote_db_list (GtkWidget *w, gpointer data);
-extern void grab_remote_db (GtkWidget *w, gpointer data);
-extern gint populate_dbfilelist (windata_t *ddata);
 
 extern GtkItemFactoryEntry sample_script_items[];
 

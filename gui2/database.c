@@ -22,6 +22,7 @@
 #include "gretl.h"
 #include "treeutils.h"
 #include "boxplots.h"
+#include "database.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -86,4 +86,6 @@ void print_saved_object_specs (const char *session_base, FILE *fp);
 
 int print_session_notes (const char *fname);
 
+void gp_to_gnuplot (gpointer data, guint i, GtkWidget *w);
+
 #endif /* SESSION_H */

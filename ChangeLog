@@ -9,6 +9,7 @@ version 1.1.1
   a specified file
 - In importing data from a database, recognize if a variable
   of the same name is already in the working dataset
+- Fix memory bug in opening remote database
 - Start adding Principal Components Analysis
 - Fix "pmax" bug in printing of actual, fitted and residuals
 - When using "<-" save mechanism for models, preserve the model

@@ -1609,7 +1609,8 @@ static int data_to_buf_as_csv (const int *list, PRN *prn)
 	    pprintf(prn, "%s%c", datainfo->S[t], delim);
 	} else {
 	    ntodate(tmp, t, datainfo);
-	    pprintf(prn, "\"%s\"%c", tmp, delim);
+	    /* Does the "'" work correctly below? */
+	    pprintf(prn, "\"'%s\"%c", tmp, delim); 
 	}
 	for (i=1; i<=l0; i++) { 
 	    xx = (datainfo->vector[list[i]])? 
