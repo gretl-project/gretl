@@ -2446,7 +2446,7 @@
     </description>
 
     <gui-access>
-      <menu-path>/Variable/FIXME</menu-path>
+      <menu-path>/Variable/Esponente di Hurst</menu-path>
     </gui-access>
 
   </command>
@@ -3121,7 +3121,7 @@
        <mathvar>C</mathvar>, la distanza di Mahalanobis tra le due osservazioni
        è data da
        <equation status="display"
-        tex="\[\sqrt{(p-q)^'C^{-1}(p-q)}\]"
+        tex="\[\sqrt{(p-q)^{\prime}C^{-1}(p-q)}\]"
         ascii="sqrt((p - q)' * C-inversa * (p - q))"
           graphic="mahal"/> dove
        <equation status="inline" tex="$(p-q)$" ascii="(p - q)"/> è un
