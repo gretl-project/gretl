@@ -1621,7 +1621,7 @@ windata_t *view_buffer (PRN *prn, int hsize, int vsize,
     }
 
     table = gtk_table_new(1, 2, FALSE);
-    gtk_widget_set_usize(table, 500, 400);
+    /* gtk_widget_set_usize(table, 500, 400); */
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dialog)->vbox), 
 		       table, TRUE, TRUE, FALSE);
 
