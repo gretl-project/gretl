@@ -35,52 +35,49 @@
       <application>gretl</application>'s <guimenu>Sample</guimenu>
       menu you will find an item <quote>Restructure panel</quote>
       which allows you to convert from stacked cross section form to
-      stacked time series.</para>
+      stacked time series or vice versa.</para>
 
     <para>When you import panel data into
       <application>gretl</application> from a spreadsheet or comma
       separated format, the panel nature of the data will not be
       recognized automatically (most likely the data will be treated
-      as <quote>undated</quote>).  Getting the data recognized
-      correctly is a two-step process: first, establish the
-      periodicity of the data and the starting observation; second,
-      establish the structure of the data (stacked time series or
-      stacked cross-sections).</para>
+      as <quote>undated</quote>).  A panel interpretation can be
+      imposed on the data in either of two ways.</para>
 
     <orderedlist>
       <listitem>
-	<para>In the context of panel data the
-	  <emphasis>periodicity</emphasis> equals the number of rows
-	  per block of data.  In the case of stacked time series, this
-	  is the number of time periods; in the case of stacked
-	  cross-sections it is the number of cross-sectional units.
+	<para>Use the  GUI menu item <quote>Sample, Dataset
+	    structure</quote>.  In the first dialog box that appears,
+	  select <quote>Panel</quote>.  In the next dialog, make a
+	  selection between stacked time series or stacked cross
+	  sections depending on how your data are organized.  In the
+	  next, supply the number of cross-sectional units in the
+	  dataset.  Finally, check the specification that is shown to
+	  you, and confirm the change if it looks OK.
 	</para> 
-	<para>In most cases the <emphasis>starting
-	    observation</emphasis> should be set as
-	  <literal>1:1</literal>.  In this colon-separated pair of
-	  numbers, the leading number represents the data-block and
-	  the trailing number represents the entry within that block.
-	  (Thus for example, with stacked time series the observation
-	  label <literal>3:2</literal> denotes the observation for
-	  unit 3, period 2.)</para>
-	<para>The periodicity and starting observation can be set
-	  using the script command <command>setobs</command> or the
-	  GUI menu item <quote>Sample, Set frequency,
-	    startobs&hellip;</quote>.</para>
       </listitem>
       <listitem>
-	<para>Once the periodicity and starting observation are set
-	  appropriately, you can impose the correct interpretation of
-	  the data structure using the script command
-	  <command>panel</command> or the GUI menu item <quote>Sample,
-	    interpret as panel</quote>.  The <command>panel</command>
-	  takes an option, either <literal>--time-series</literal>
-	  (for stacked time series) or
-	  <literal>--cross-section</literal> (for stacked
-	  cross-sections).  If no option is given, stacked time series
-	  is assumed.  The <quote>interpret as panel</quote> menu item
-	  brings up a dialog box where you select stacked time series
-	  or stacked cross sections.</para>
+	<para>Use the script command <command>setobs</command>.  For
+	  panel data this command takes the form
+	  <literal>setobs</literal> <replaceable>freq</replaceable>
+	  <literal>1:1</literal> <replaceable>structure</replaceable>,
+	  where <replaceable>freq</replaceable> is replaced by the
+	  <quote>block size</quote> of the data (that is, the number
+	  of periods in the case of stacked time series, or the number
+	  of cross-sectional units in the case of stacked
+	  cross-sections) and <replaceable>structure</replaceable> is
+	  either <literal>--stacked-time-series</literal> or
+	  <literal>--stacked-cross-section</literal>.  Two examples
+	  are given below: the first is suitable for a panel in the
+	  form of stacked time series with observations from 20
+	  periods; the second for stacked cross sections with 5
+	  cross-sectional units.   
+	</para>
+	
+	<programlisting>
+	    setobs 20 1:1 --stacked-time-series
+	    setobs 5 1:1 --stacked-cross-section
+	</programlisting>
       </listitem>
     </orderedlist>
 
@@ -96,7 +93,7 @@
       units, the latter to allow the intercept to differ across
       periods.</para>
 
-    <para>You can use three special functions to create such dummies.
+    <para>Three special functions are available to create such dummies.
       These are found under the <quote>Data, Add variables</quote>
       menu in the GUI, or under the <command>genr</command> command in
       script mode or <application>gretlcli</application>.</para>
@@ -162,54 +159,8 @@
       missing value code where the lag is not available.
     </para>
 
-    <para>If a lag of this sort is to be included in a regression you
-      must ensure that the first observation from each unit block is
-      dropped. One way to achieve this is to use Weighted Least
-      Squares (<command>wls</command>) using an appropriate dummy
-      variable as weight.  This dummy (call it
-      <command>lagdum</command>) should have value 0 for the
-      observations to be dropped, 1 otherwise.  In other words, it is
-      complementary to a dummy variable for period 1.  Thus if you
-      have already issued the command <command>genr dummy</command>
-      you can now do <command>genr lagdum = 1 - dummy_1</command>.  If
-      you have used <command>genr paneldum</command> you would now say
-      <command>genr lagdum = 1 - dt_1</command>. Either way, you can
-      now do</para>
-
-    <para>
-      <command>wls lagdum y const x1_1 ...</command>
-    </para>
-
-    <para>to get a pooled regression using the first lag of
-      <varname>x1</varname>, dropping all observations from period
-      1.</para>
-
-    <para>Another option is to use the <command>smpl</command> with
-      the <command>--restrict</command> or <command>--dummy</command>
-      option.
-      <xref linkend="examp-pwt"/> shows illustrative commands,
-      assuming the unit data blocks each contain 30 observations and
-      we want to drop the first row of each.  You can then run
-      regressions on the restricted data set without having to use the
-      <command>wls</command> command.  If you plan to reuse the
-      restricted data set you may wish to save it using the
-      <command>store</command> command (see <xref
-	linkend="cmdref"/> below).
-    </para>
-
-    <example id="examp-panel-lags">
-      <title>Lags with panel data</title>
-    <programlisting>
-      # create index variable 
-      genr index 
-      # create dum = 0 for every 30th obs 
-      genr dum = ((index-1)%30) > 0 
-      # sample based on this dummy
-      smpl --dummy dum 
-      # recreate the obs. structure, for 29 periods
-      setobs 29 1.01 
-    </programlisting>
-    </example>
+    <para>When you run a regression using such variables, the program
+      will automatically skip the missing observations.</para>
 
   </sect1>
 

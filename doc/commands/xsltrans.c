@@ -55,7 +55,7 @@ enum {
 static void full_fname (const char *fname, const char *dir,
 			char *targ)
 {
-    if (dir == NULL) {
+    if (dir == NULL || *dir == '\0') {
 	strcpy(targ, fname);
     } else {
 	sprintf(targ, "%s/%s", dir, fname);
@@ -121,8 +121,8 @@ int apply_xslt (xmlDocPtr doc, int output, const char *lang,
 	}
     }
 
-    /* make "standalone" DocBook XML output */
-    if (output == OUTPUT_ALL || output == OUTPUT_DOCBOOK_STANDALONE) {
+    /* make "standalone" DocBook XML output (not needed) */
+    if (output == OUTPUT_DOCBOOK_STANDALONE) {
 	full_fname("gretlman.xsl", docdir, styname);
 	style = xsltParseStylesheetFile(styname);
 	if (style == NULL) {
@@ -304,7 +304,8 @@ int main (int argc, char **argv)
 	get_docdir(docdir, fname);
     }
 
-    fprintf(stderr, "%s: fname='%s', docdir='%s'\n", argv[0], fname, docdir);
+    fprintf(stderr, "%s: input file '%s', docdir '%s'\n", 
+	    argv[0], fname, docdir);
 
     err = parse_commands_data(fname, output, docdir);
 

@@ -333,8 +333,9 @@
       <para>Assuming you have managed to open a database you can
 	import selected series into <application>gretl</application>'s
 	workspace by using the <quote>Import</quote> menu item in the
-	database window (or via the popup menu that appears if you
-	click the right mouse button).</para>   
+	database window, or via the popup menu that appears if you
+	click the right mouse button, or by dragging the series into
+	the program's main window.</para>   
 
     </sect2>
 
@@ -384,12 +385,12 @@
       least 10 to the power 300, and so should not be confused with
       legitimate data values).  In a native-format data file they
       should be represented as <literal>NA</literal>. When importing
-      CSV data <application>gretl</application> accepts any of three
-      representations of missing values: &minus;999, the string
-      <literal>NA</literal>, or simply a blank cell.  Blank cells
-      should, of course, be properly delimited, e.g.
-      <literal>120.6,,5.38</literal>, in which the middle value is
-      presumed missing.</para>
+      CSV data <application>gretl</application> accepts several common
+      representations of missing values including &minus;999, the
+      string <literal>NA</literal> (in upper or lower case), a single
+      dot, or simply a blank cell.  Blank cells should, of course, be
+      properly delimited, e.g. <literal>120.6,,5.38</literal>, in
+      which the middle value is presumed missing.</para>
 
     <para>As for handling of missing values in the course of
       statistical analysis, <application>gretl</application> does the
@@ -440,7 +441,7 @@
     </para>
 
     <para>you can produce a series <command>foo</command> which is
-      identical to <command>bar</command> except that any &minus;999
+      identical to <command>bar</command> except that any missing
       values become zeros.  Then you can use carefully constructed
       dummy variables to, in effect, drop the missing observations
       from the regression while retaining the surrounding sample
@@ -487,9 +488,10 @@
 	  <citetitle>Econometric Analysis</citetitle>).</para>
       </listitem>
       <listitem><para>The program looks for certain known collections
-	  of data files available as optional extras, namely the
-	  datafiles from the textbooks by Wooldridge and Gujarati, and
-	  the Penn World Table (PWT 5.6).  (See <ulink
+	  of data files available as optional extras, for instance the
+	  datafiles from various econometrics textbooks (Wooldridge,
+	  Gujarati, Stock and Watson) and the Penn World Table (PWT
+	  5.6).  (See <ulink
 	    url="http://gretl.sourceforge.net/gretl_data.html">the
 	    data page</ulink> at the gretl website for information on
 	  these collections.)  If the additional files are found, they

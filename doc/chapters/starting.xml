@@ -454,11 +454,13 @@
 	  <listitem><para><guimenuitem>Restore full
 		range</guimenuitem>:
 	      self-explanatory.</para></listitem>
-	  <listitem><para><guimenuitem>Set frequency,
-		startobs</guimenuitem>: Impose a particular
-	      interpretation of the data in terms of frequency and
-	      starting point.  This may be useful with
-	      panel data; see <xref
+	  <listitem><para><guimenuitem>Dataset
+		structure</guimenuitem>: invokes a series of dialog
+	      boxes which allow you to change the structural
+	      interpretation of the current dataset.  For example, if
+	      data were read in as a cross section you can get the
+	      program to interpret them as time series or as a panel.
+	      See also <xref
 		linkend="chap-panel"/>.</para>
 	  </listitem> 
 	  <listitem><para><guimenuitem>Compact data</guimenuitem>: For
@@ -507,21 +509,12 @@
 	      to the data set. See
 	      <xref linkend="datafiles"/>.</para>
 	  </listitem>
-	  <listitem><para><guimenuitem>Interpret as time 
-		series</guimenuitem>: Opens a dialog box which
-	      enables you to set a time-series interpretation for data
-	      that were read in as undated.</para></listitem>
-	  <listitem><para><guimenuitem>Interpret as 
-		panel</guimenuitem>: Opens a dialog box which
-	      enables you to fix the interpretation of a panel data
-	      set as either stacked time series or stacked cross
-	      sections (see <xref
-		linkend="chap-panel"/>).</para></listitem>
-	  <listitem><para><guimenuitem>Restructure 
+	  <listitem><para><guimenuitem>Restructure
 		panel</guimenuitem>: Allows the conversion of a panel
-		data set in stacked cross-section form into stacked
-		time series.  (Unlike the previous item, this one
-		actually changes the organization of the data.)
+	      data set in stacked cross-section form into stacked time
+	      series or vice versa.  (Unlike the <guimenuitem>Dataset
+		structure</guimenuitem> menu item above, this one
+	      actually changes the organization of the data.)
 	    </para></listitem>
 	</itemizedlist>
       </listitem>

@@ -142,11 +142,12 @@
     <para>Many users of <application>gretl</application> have
       submitted useful suggestions and bug reports.  In this
       connection particular thanks are due to Ignacio
-      D&iacute;az-Emparanza, Tadeusz Kufel, Alan Isaac, Riccardo
-      <quote>Jack</quote> Lucchetti, who has contributed some very
-      helpful patches, and Dirk Eddelbuettel, who maintains the
-      <application>gretl</application> package for Debian
-      GNU/Linux.</para>
+      D&iacute;az-Emparanza, Tadeusz Kufel, Pawel Kufel, Alan Isaac,
+      Cri Rigamonti and Dirk Eddelbuettel, who maintains the
+      <application>gretl</application> package for Debian GNU/Linux.
+      Besides making good suggestions, Riccardo <quote>Jack</quote>
+      Lucchetti has contributed substantial code and econometric
+      expertise.</para>
 
   </sect1>
 

@@ -556,8 +556,11 @@
 	given lag order.  The cointegrating regression is estimated,
 	and an ADF test is run on the residuals from this regression.
 	The Durbin&ndash;Watson statistic for the cointegrating
-	regression is also given.  Note that none of these test
-	statistics can be referred to the usual statistical tables.
+	regression is also given.
+      </para>
+      <para><emphasis>P-</emphasis>values for this test are based on
+	MacKinnon (1996).  The relevant code is included by kind
+	permission of the author.
       </para>
       <para context="cli">
 	By default, the cointegrating regression contains a constant.
@@ -805,13 +808,13 @@
 
     <description>
       <para>
-	Computes the model selection statistics (see Ramanathan,
-	Section 4.3), given <repl>ess</repl> (error sum of squares),
-	the number of observations (<mathvar>T</mathvar>), and the
-	number of coefficients (<mathvar>k</mathvar>).
-	<mathvar>T</mathvar>, <mathvar>k</mathvar>, and
-	<repl>ess</repl> may be numerical values or names of
-	previously defined variables.
+	Computes the Akaike Information Criterion (AIC) and Schwarz's
+	Bayesian Information Criterion (BIC), given <repl>ess</repl>
+	(error sum of squares), the number of observations
+	(<mathvar>T</mathvar>), and the number of coefficients
+	(<mathvar>k</mathvar>). <mathvar>T</mathvar>,
+	<mathvar>k</mathvar>, and <repl>ess</repl> may be numerical
+	values or names of previously defined variables.
       </para>
     </description>
 
@@ -965,6 +968,56 @@
 
   </command>
 
+  <command name="density" section="Statistics" context="gui"
+    label="Kernel density estimation">
+
+    <description>
+
+      <para>Kernel density estimation proceeds by defining a set of
+	evenly spaced reference points, over a suitable range in
+	relation to the range of the data, and attributing a density
+	to each reference point based on the actual observations in
+	the vicinity.</para>
+      
+      <para>The formula used to compute the estimated density at each
+	reference point, x, is
+      </para>
+
+      <code>
+	f(x) = (1/nh) sum(t=1 to n) k((x - x(t)) / h)
+      </code>
+
+      <para>where n denotes the number of data points, h is a
+	"bandwidth" parameter, and k() is the kernel function.  The
+	larger the value of the bandwidth parameter, the smoother the
+	estimated density.</para>
+
+      <para>You are given the choice of using a Gaussian kernel (the
+	standard normal density) or the Epanechnikov kernel.  By
+	default, the bandwidth is that suggested as a rule of thumb by
+	Silverman (1986), namely
+      </para>
+
+      <code>
+	h = 0.9 min(s, IQR/1.349) n^{1/5}
+      </code>
+
+      <para>where s denotes the standard deviation of the data and IQR
+	denotes the inter-quartile range.  You can widen or shrink the
+	bandwidth via the <quote>bandwidth adjustment factor</quote>:
+	the actual bandwidth used is obtained by multiplying the
+	Silverman value by the adjustment factor.
+      </para>
+
+      <para>For a good introductory discussion of kernel density
+	estimation see Chapter 15 of Davidson and MacKinnon's
+	Econometric Theory and Methods.
+      </para>
+
+    </description>
+
+  </command>  
+
   <command name="dialog" section="Estimation" context="gui"
     label="Model dialog box">
 
@@ -974,9 +1027,9 @@
 	button pointing to the Dependent variable slot.  If you check
 	the <quote>Set as default</quote> box, the selected variable
 	will be pre-selected as dependent when the model dialog is
-	next opened.  Short cut: double-click on a variable on the
-	left to select it as the dependent variable and set it as the
-	default.</para>
+	next opened.  Short-cut: double-click on a variable on the
+	left to select it as the dependent variable and also set it as
+	the default.</para>
 
       <para>To select independent variables, highlight them on the
 	left and press the <quote>Add</quote> button (or click the
@@ -1108,6 +1161,33 @@
 	specification and provide a common list of instruments using the
 	<cmd>instr</cmd> keyword (again, see <cmdref targ="system"/>),
 	or (b) use the same equation syntax as for <cmdref targ="tsls"/>.
+      </para>
+    </description>
+
+  </command>
+
+  <command name="estimate" section="Estimation" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>systemname</argument>
+        <argument>estimator</argument>
+      </arguments>
+      <examples>
+        <example>estimate "Klein Model 1" method=fiml</example>
+	<example>estimate Sys1 method=sur</example>
+      </examples>
+    </usage>
+
+    <description>
+      <para>
+	Calls for estimation of a system of equations, which must have
+	been previously defined using the <cmdref targ="system"/>
+	command.  The name of the system should be given first,
+	surrounded by double quotes if the name contains spaces.  The
+	estimator, which must be one of <cmd>sur</cmd>,
+	<cmd>3sls</cmd>, <cmd>fiml</cmd> or <cmd>liml</cmd>, is
+	preceded by the string <lit>method=</lit>.
       </para>
     </description>
 
@@ -1337,7 +1417,7 @@
 	<repl>q</repl> represent the lag orders in the conditional
 	variance equation.
 	<equation status="display"
-	  tex="\alpha_0 + \[h_t = \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
+	  tex="\[h_t = \alpha_0 + \sum_{i=1}^q \alpha_i \varepsilon^2_{t-i} +
 	  \sum_{j=1}^p \beta_i h_{t-j}\]"
 	  ascii="h(t) = a(0) + sum(i=1 to q) a(i)*u(t-i) + sum(j=1 to p) b(j)*h(t-j)"
 	  graphic="garch_h"/>
@@ -2400,7 +2480,17 @@
     </usage>
 
     <description>
-      <para>
+
+      <para context="gui">
+	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and
+	Shin, 1992) for stationarity of a variable.  The null
+	hypothesis is that the variable in question is stationary,
+	either around a level or, if the <quote>include a
+	  trend</quote> box is checked, around a deterministic linear
+	trend.  
+      </para>
+
+      <para context="cli">
 	Computes the KPSS test (Kwiatkowski, Phillips, Schmidt and
 	Shin, 1992) for stationarity of a variable.  The null
 	hypothesis is that the variable in question is stationary,
@@ -2408,7 +2498,15 @@
 	given, around a deterministic linear trend.  
       </para>
 
-      <para>
+      <para context="gui">
+	The selected lag order determines the size of the window used
+	for Bartlett smoothing.  If the <quote>show regression
+	  results</quote> box is checked the results of the auxiliary
+	regression are printed, along with the estimated variance of
+	the random walk component of the variable.
+      </para>
+
+      <para context="cli">
 	The order argument determines the size of the window used for
 	Bartlett smoothing.  If the <lit>--verbose</lit> option is
 	chosen the results of the auxiliary regression are printed,
@@ -3351,12 +3449,16 @@
       <para>Besides coefficient estimates and standard errors, the
 	program also prints p-values for <mathvar>t</mathvar>
 	(two-tailed) and <mathvar>F</mathvar>-statistics.  A p-value
-	below 0.01 indicates significance at the 1 percent level and
-	is denoted by <lit>***</lit>. <lit>**</lit> indicates
-	significance between 1 and 5 percent and <lit>*</lit>
-	indicates significance between 5 and 10 percent levels. Model
-	selection statistics (described in Ramanathan, Section 4.3)
-	are also printed.</para>
+	below 0.01 indicates statistical significance at the 1 percent
+	level and is marked with <lit>***</lit>. <lit>**</lit>
+	indicates significance between 1 and 5 percent and
+	<lit>*</lit> indicates significance between the 5 and 10
+	percent levels. Model selection statistics (the Akaike
+	Information Criterion or AIC and Schwarz's Bayesian Information
+	Criterion) are also printed.  The formula used for the AIC is
+	that given by Akaike (1974), namely minus two times the
+	maximized log-likelihood plus two times the number of
+	parameters estimated.</para>
 
       <para context="cli">If the option <lit>--no-df-corr</lit> is
 	given, the usual degrees of freedom correction is not applied
@@ -4819,8 +4921,7 @@
 
   </command>
 
-  <command name="store" section="Dataset"
-    label="Saving data">
+  <command name="store" section="Dataset" label="Saving data">
 
     <usage>
       <arguments>
@@ -4914,14 +5015,18 @@
 
   </command>
 
-  <command name="system" section="Estimation" context="cli">
+  <command name="system" section="Estimation" label="Systems of equations">
 
     <usage>
+      <altforms>
+	<altform><lit>system type=</lit><repl>estimator</repl></altform>
+	<altform><lit>system name=</lit><repl>sysname</repl></altform>
+      </altforms>
       <arguments>
-        <argument>type</argument>
         <argument>savevars</argument>
       </arguments>
       <examples>
+	<example>system name="Klein Model 1"</example>
         <example>system type=sur</example>
 	<example>system type=sur save=resids</example>
 	<example>system type=3sls save=resids,fitted</example>
@@ -4929,23 +5034,81 @@
     </usage>
 
     <description>
-      <para>
-	Starts a system of equations.  At present two types of system
-	are supported: <cmd>sur</cmd> (Seemingly Unrelated
-	Regressions) and <cmd>3sls</cmd> (Three-Stage Least Squares).
-	In the optional <cmd>save=</cmd> field of the command you can
-	specify whether to save the residuals (<cmd>resids</cmd>)
-	and/or the fitted values (<cmd>fitted</cmd>).  The system must
-	contain at least two equations specified using the
-	<cmd>equation</cmd> command, and it must be terminated with
-	the line <cmd>end system</cmd>.
+
+      <para context="gui">Gretl offers a mechanism for estimating
+	systems of equations, but at present this is available only in
+	script mode.  Please see the online help for script command
+	syntax, or the gretl manual.
       </para>
 
-      <para>In the context of a Three-Stage Least Squares system, you
-	may provide a list of instruments (by name or number).  This
-	should be on a line by itself, within the <cmd>system</cmd>
-	block, prefaced with the keyword <cmd>instr</cmd>.
+      <para context="cli">
+	Starts a system of equations.  Either of two forms of the
+	command may be given, depending on whether you wish to save
+	the system for estimation in more than one way or just
+	estimate the system once.</para>
+
+      <para context="cli">
+	To save the system you should give it a name, as in the first
+	example (if the name contains spaces it must be surrounded by
+	double quotes).  In this case you estimate the system using
+	the <cmdref targ="estimate"/> command.</para>
+
+      <para context="cli">
+	Alternatively you can specify an estimator for the system
+	using <lit>type=</lit> followed by a string identifying one of
+	the four supported estimators: <cmd>sur</cmd> (Seemingly
+	Unrelated Regressions), <cmd>3sls</cmd> (Three-Stage Least
+	Squares), <cmd>fiml</cmd> (Full Information Maximum
+	Likelihood) or <cmd>liml</cmd> (Limited Information Maximum
+	Likelihood).  In this case the system is estimated once its
+	definition is complete.  
       </para>
+
+      <para context="cli">An equation system is terminated by the line
+	<cmd>end system</cmd>.  Within the system four sorts of
+	statement may be given, as follows.</para>
+
+      <ilist context="cli">
+	<li><para><cmdref targ="equation"/>: specify an equation
+	    within the system.  At least two such statements must be
+	    provided.</para>
+	</li>
+	<li><para><cmd>instr</cmd>: for a system to be estimated via
+	    Three-Stage Least Squares, a list of instruments (by
+	    variable name or number). Alternatively, you can put this
+	    information into the <cmd>equation</cmd> line using the
+	    same syntax as in the <cmdref targ="tsls"/>
+	    command.</para>
+	</li>
+	<li><para><cmd>endog</cmd>: for a system of simultaneous
+	    equations, a list of endogenous variables.  This is
+	    primarily intended for use with FIML estimation, but with
+	    Three-Stage Least Squares this approach may be used
+	    instead of giving an <cmd>instr</cmd> list; then all the
+	    variables not identified as endogenous will be used as
+	    instruments.</para>
+	</li>
+	<li><para><cmd>identity</cmd>: for use with FIML, an identity
+	    linking two or more of the variables in the system.  This
+	    sort of statement is ignored when an estimator other than
+	    FIML is used.
+	  </para>
+	</li>
+      </ilist>
+	
+      <para context="cli">
+	In the optional <cmd>save=</cmd> field of the command you can
+	specify whether to save the residuals (<cmd>resids</cmd>)
+	and/or the fitted values (<cmd>fitted</cmd>).
+      </para>
+
+      <para context="cli">For full examples of the specification and
+	estimation of systems of equations, please see the scripts
+	<filename>klein.inp</filename> and
+	<filename>greene14_2.inp</filename> (supplied with the gretl
+	distribution).
+      </para>
+
     </description>
 
   </command>

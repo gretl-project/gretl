@@ -17,12 +17,15 @@
       for a pop-up menu with the following options.</para>
 
     <itemizedlist>
-      <listitem><para><guimenuitem>Save as postscript</guimenuitem>:
-	  Save the graph in encapsulated postscript (EPS)
-	  format.</para>
+      <listitem><para><guimenuitem>Save as PNG</guimenuitem>: Save the
+	  graph in Portable Network Graphics format.</para>
       </listitem>
-      <listitem><para><guimenuitem>Save as PNG</guimenuitem>: Save in
-	  Portable Network Graphics format.</para>
+      <listitem><para><guimenuitem>Save as postscript</guimenuitem>:
+	  Save in encapsulated postscript (EPS) format.</para>
+      </listitem>
+      <listitem><para><guimenuitem>Save as Windows
+	    metafile</guimenuitem>: Save in Enhanced Metafile (EMF)
+	  format.</para>
       </listitem>
       <listitem><para><guimenuitem>Save to session as
 	    icon</guimenuitem>: The graph will appear in iconic form
@@ -38,10 +41,10 @@
       <listitem><para><guimenuitem>Copy to clipboard</guimenuitem>: MS
 	  Windows only, lets you paste the graph into Windows
 	  applications such as MS Word.<footnote><para>For best
-	  results when pasting graphs into MS Office applications,
-	  choose the application's <quote>Edit, Paste
-	  Special...</quote> menu item, and select the option
-	  <quote>Picture (Enhanced Metafile)</quote>.</para>
+	      results when pasting graphs into MS Office applications,
+	      choose the application's <quote>Edit, Paste
+		Special...</quote> menu item, and select the option
+	      <quote>Picture (Enhanced Metafile)</quote>.</para>
 	  </footnote></para>
       </listitem>
       <listitem><para><guimenuitem>Edit</guimenuitem>: Opens a
