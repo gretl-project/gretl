@@ -110,6 +110,7 @@
    title    CDATA #IMPLIED
    lhead    CDATA #IMPLIED
    rhead    CDATA #IMPLIED
+   context  (cli | gui | both) "both"
 >
 
 <!ELEMENT repl     (#PCDATA)>
@@ -124,6 +125,10 @@
 <!ELEMENT mathvar  (#PCDATA | sub | super)*>
 <!ELEMENT sub      (#PCDATA)>
 <!ELEMENT super    (#PCDATA)>
+
+<!ATTLIST repl
+   quote (true | false) "false"
+>
 
 
 

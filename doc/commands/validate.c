@@ -122,6 +122,12 @@ process_command (xmlDocPtr doc, xmlNodePtr node, cmdlist *clist)
 	return 1;
     }
 
+    tmp = xmlGetProp(node, (UTF) "context");
+    if (tmp != NULL && !strcmp(tmp, "gui")) {
+	free(tmp);
+	return 0;
+    }
+
     tmp = xmlGetProp(node, (UTF) "name");
     if (tmp == NULL) {
 	missing_attrib("command", "name");

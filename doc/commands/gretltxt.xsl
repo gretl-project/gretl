@@ -4,6 +4,8 @@
 
 <xsl:param name="hlp">cli</xsl:param>
 
+<xsl:output method="text" encoding="us-ascii"/>
+
 <xsl:template match="commandlist"> 
 <xsl:apply-templates/> 
 </xsl:template>
@@ -15,19 +17,19 @@
     <xsl:text>&#xa;@</xsl:text>
     <xsl:value-of select="@section"/>
     <xsl:apply-templates/>
-    <xsl:text>&#xa;&#xa;</xsl:text>    
+    <xsl:call-template name="dnl"/>
   </xsl:if>
   <xsl:if test="(not(@context) and $hlp='gui')">
     <xsl:text>Script command: </xsl:text>
     <xsl:value-of select="@name"></xsl:value-of>
-    <xsl:text>&#xa;</xsl:text>
+    <xsl:call-template name="nl"/>
   </xsl:if>
 </xsl:template>
 
 <xsl:template match="usage">
   <xsl:if test="$hlp='cli'">
     <xsl:apply-templates/>
-    <xsl:text>&#xa;&#xa;</xsl:text>    
+    <xsl:call-template name="dnl"/>
   </xsl:if>
 </xsl:template>
 
@@ -57,7 +59,7 @@
 </xsl:template>
 
 <xsl:template match="options">
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
   <xsl:choose>
     <xsl:when test="count(option) > 1">
       <xsl:text>Options:    </xsl:text>
@@ -74,11 +76,10 @@
     <xsl:text>&#xa;            </xsl:text>
   </xsl:if> 
   <xsl:apply-templates/>
-<!-- <xsl:text>&#xa;</xsl:text> -->
 </xsl:template>
 
 <xsl:template match="altforms">
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
   <xsl:text>Alternate forms:  </xsl:text>
   <xsl:apply-templates/>
 </xsl:template>
@@ -95,11 +96,10 @@
     <xsl:text>&#xa;            </xsl:text>
   </xsl:if> 
   <xsl:apply-templates/>
-<!-- <xsl:text>&#xa;</xsl:text> -->
 </xsl:template>
 
 <xsl:template match="examples">
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
   <xsl:choose>
     <xsl:when test="count(example) > 1">
       <xsl:text>Examples:   </xsl:text>
@@ -122,7 +122,13 @@
 </xsl:template>
 
 <xsl:template match="repl">
+  <xsl:if test="@quote='true'">
+    <xsl:text>"</xsl:text>
+  </xsl:if>
   <xsl:apply-templates/>
+  <xsl:if test="@quote='true'">
+    <xsl:text>"</xsl:text>
+  </xsl:if>
 </xsl:template>
 
 <xsl:template match="cmd">
@@ -171,25 +177,25 @@
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="para">
-  <xsl:if test="(not(@context) or @context=$hlp)">
-    <xsl:choose>
-      <xsl:when test="parent::li">
-        <xsl:text>&#xa;[LISTPARA]</xsl:text>
-        <xsl:apply-templates/>[/LISTPARA]
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:text>&#xa;[PARA]</xsl:text>
-        <xsl:apply-templates/>[/PARA]
-      </xsl:otherwise>
-    </xsl:choose>
-  </xsl:if>
+<xsl:template match="para[not(@context) or @context=$hlp]">
+  <xsl:choose>
+    <xsl:when test="parent::li">
+      <xsl:text>&#xa;[LISTPARA]</xsl:text>
+      <xsl:apply-templates/>[/LISTPARA]
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:text>&#xa;[PARA]</xsl:text>
+      <xsl:apply-templates/>[/PARA]
+    </xsl:otherwise>
+  </xsl:choose>  
 </xsl:template>
 
+<xsl:template match="para[@context and @context!=$hlp]"/>
+
 <xsl:template match="code">
-  <xsl:text>&#xa;&#xa;</xsl:text>
+  <xsl:call-template name="dnl"/>
   <xsl:apply-templates/>
-  <xsl:text>&#xa;&#xa;</xsl:text>
+  <xsl:call-template name="dnl"/>
 </xsl:template>
 
 <xsl:template match="ilist">
@@ -226,21 +232,23 @@ Other access: <xsl:apply-templates/>
   </xsl:if>
 </xsl:template>
 
-<xsl:template match="table">
-  <xsl:text>[TABLE]&#xa;</xsl:text>
-    <xsl:if test="@id">
-      <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
-      <xsl:value-of select="@lhead"/>
-      <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
-      <xsl:value-of select="@rhead"/>
-      <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
-      <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
-      <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
-      <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
-    </xsl:if>
-  <xsl:apply-templates/>
-  <xsl:text>[/TABLE]&#xa;</xsl:text>
+<xsl:template match="table[not(@context) or @context=$hlp]"> 
+<xsl:text>[TABLE]&#xa;</xsl:text>
+<xsl:if test="@id">
+  <xsl:text>[ROW]&#xa;[CELL]&#xa;</xsl:text>
+  <xsl:value-of select="@lhead"/>
+  <xsl:text>[/CELL]&#xa;[CELL]&#xa;</xsl:text>
+  <xsl:value-of select="@rhead"/>
+  <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+  <xsl:text>[ROW]&#xa;[CELL]&#xa;-------</xsl:text>
+  <xsl:text>[/CELL]&#xa;[CELL]&#xa;-------</xsl:text>
+  <xsl:text>[/CELL]&#xa;[/ROW]&#xa;</xsl:text>
+</xsl:if>
+<xsl:apply-templates/>
+<xsl:text>[/TABLE]&#xa;</xsl:text>
 </xsl:template>
+
+<xsl:template match="table[@context and @context=$hlp]"/>
 
 <xsl:template match="row">
   <xsl:text>[ROW]&#xa;</xsl:text>
@@ -254,15 +262,22 @@ Other access: <xsl:apply-templates/>
   <xsl:text>[/CELL]&#xa;</xsl:text>
 </xsl:template>
 
-<xsl:template match="footnote">
-</xsl:template>
+<xsl:template match="footnote"/>
 
 <xsl:template match="blurb">
   <xsl:if test="$hlp='gui'">
-    <xsl:text>&#xa;</xsl:text>
+    <xsl:call-template name="nl"/>
     <xsl:apply-templates/>
-    <xsl:text>&#xa;</xsl:text>
+    <xsl:call-template name="nl"/>
   </xsl:if>
+</xsl:template>
+
+<xsl:template name="nl">
+  <xsl:text>&#10;</xsl:text>  
+</xsl:template>
+
+<xsl:template name="dnl">
+  <xsl:text>&#10;&#10;</xsl:text>  
 </xsl:template>
 
 </xsl:stylesheet>

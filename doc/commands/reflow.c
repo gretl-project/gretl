@@ -27,15 +27,15 @@ struct utf_stuff {
 };
 
 struct utf_stuff replacers[] = {
-    { "&#x2013;", "-" },     /* &ndash; */
-    { "&#x2014;", " -- " },  /* &ndash; */
+    { "&#8211;", "-" },     /* &ndash; */
+    { "&#8212;", " -- " },  /* &ndash; */
     { "&gt;", ">" }, 
     { "&lt;", "<" }, 
     { "&amp;", "&" },
-    { "&#x3BB;", "lambda" }, /* &lgr; */
-    { "&#x3BC;", "mu" },     /* &mu; */
-    { "&#x3C3;", "sigma" },  /* &sigma; */    
-    { "&#x2026;", "..." },   /* &hellip; */
+    { "&#0955;", "lambda" }, /* &lgr; */
+    { "&#0956;", "mu" },     /* &mu; */
+    { "&#0963;", "sigma" },  /* &sigma; */    
+    { "&#8320;", "..." },    /* &hellip; */
     { NULL, NULL }
 };
 
@@ -129,8 +129,7 @@ static void trim_to_length (char *s)
     }
 }
 
-/* Reflow a paragraph buffer, with max line length MAXLEN.
-*/
+/* Reflow a paragraph buffer, with max line length MAXLEN */
 
 static int format_buf (char *buf, int inlist)
 {
@@ -140,6 +139,9 @@ static int format_buf (char *buf, int inlist)
     if (inlist) maxline -= INDENT;
 
     compress_spaces(buf);
+
+    if (blank_string(buf)) return 0;
+
     n = strlen(buf);
 
     p = buf;
@@ -376,10 +378,7 @@ int main (void)
 
     while (fgets(line, sizeof line, stdin)) {
 
-	/* strip out xml declaration */
-	if (!strncmp(line, "<?xml", 5)) continue;
-
-	else if (strstr(line, "[PARA]")) {
+	if (strstr(line, "[PARA]")) {
 	    process_para(line, buf, 0);
 	    blank++;
 	}

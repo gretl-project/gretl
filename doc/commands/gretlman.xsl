@@ -4,34 +4,36 @@
 
 <xsl:param name="hlp">cli</xsl:param>
 
+<xsl:output method="xml" omit-xml-declaration="yes" indent="yes"/>
+
 <xsl:template match="commandlist"> 
  <xsl:apply-templates/> 
 </xsl:template>
 
-<xsl:template match="command">
-  <xsl:if test="(not(@context) or @context=$hlp)">
-    <xsl:text>&#xa;</xsl:text>
-    <sect2 id="cmd-{@name}" xreflabel="{@name}">
-      <title><xsl:value-of select="@name"/></title>
-      <xsl:text>&#xa;</xsl:text>
-      <xsl:apply-templates/>
-      <xsl:text>&#xa;</xsl:text>
-    </sect2>
-    <xsl:text>&#xa;</xsl:text>
-  </xsl:if>
+<xsl:template match="command[not(@context) or @context=$hlp]">
+  <xsl:text>&#xa;</xsl:text>
+  <sect2 id="cmd-{@name}" xreflabel="{@name}">
+    <title><xsl:value-of select="@name"/></title>
+    <xsl:call-template name="nl"/>
+    <xsl:apply-templates/>
+    <xsl:call-template name="nl"/>
+  </sect2>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
+<xsl:template match="command[@context and @context!=$hlp]"/>
+
 <xsl:template match="usage">
- <xsl:text>&#xa;</xsl:text>
- <informaltable role="cmd" frame="none">
- <tgroup cols="2"><colspec colnum="1" colwidth="82pt"/>
- <tbody>
   <xsl:text>&#xa;</xsl:text>
-    <xsl:apply-templates/>
+  <informaltable role="cmd" frame="none">
+    <tgroup cols="2"><colspec colnum="1" colwidth="82pt"/>
+    <tbody>
+      <xsl:call-template name="nl"/>
+      <xsl:apply-templates/>
     </tbody>
-   </tgroup>
-  </informaltable> 
- <xsl:text>&#xa;</xsl:text>
+  </tgroup>
+</informaltable> 
+<xsl:call-template name="nl"/>
 </xsl:template>
 
 <xsl:template match="arguments">
@@ -95,7 +97,7 @@
     </xsl:choose>
     <entry><xsl:apply-templates/></entry>
   </row>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
 <xsl:template match="example">
@@ -117,7 +119,7 @@
     </xsl:choose>
     <entry><literal><xsl:apply-templates/></literal></entry>
   </row>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
 <xsl:template match="flag">
@@ -203,21 +205,23 @@
 
 <xsl:template match="ilist">
   <itemizedlist><xsl:apply-templates/></itemizedlist>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
 <xsl:template match="li">
   <listitem><xsl:apply-templates/></listitem>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
 
-<xsl:template match="para">
-  <xsl:text>&#xa;</xsl:text>
+<xsl:template match="para[not(@context) or @context=$hlp]">
+  <xsl:call-template name="nl"/>
   <para>
     <xsl:apply-templates/>
   </para>
-  <xsl:text>&#xa;</xsl:text>
+  <xsl:call-template name="nl"/>
 </xsl:template>
+
+<xsl:template match="para[@context and @context!=$hlp]"/>
 
 <xsl:template match="code">
 <programlisting>
@@ -244,7 +248,7 @@
   <para>Other access: <xsl:apply-templates/></para>
 </xsl:template>
 
-<xsl:template match="table">
+<xsl:template match="table[not(@context) or @context=$hlp]">
   <xsl:choose>
     <xsl:when test="@id">
       <table id="{@id}" frame="none">
@@ -278,6 +282,8 @@
   </xsl:choose>
 </xsl:template>
 
+<xsl:template match="table[@context and @context='gui']"/>
+
 <xsl:template match="row">
   <row><xsl:apply-templates/></row>
 </xsl:template>
@@ -286,7 +292,10 @@
   <entry><xsl:apply-templates/></entry>
 </xsl:template>
 
-<xsl:template match="blurb">
+<xsl:template match="blurb"/>
+
+<xsl:template name="nl">
+  <xsl:text>&#10;</xsl:text>  
 </xsl:template>
 
 </xsl:stylesheet>

@@ -36,7 +36,7 @@ test: skeleton.xml xsltrans gretlman.xsl gretltxt.xsl
 # full manual, cmdlist.xml
 docbook: xsltrans gretl_commands.xml gretlman.xsl gretltxt.xsl
 	./xsltrans gretl_commands.xml && \
-	cat cmdlist.xml | fgrep -v '<?x' > ../chapters/cmdlist.xml
+	cp cmdlist.xml ../chapters/cmdlist.xml
 
 # Generate script commands help file, gretlcli.hlp
 hlp: xsltrans reflow gretl_commands.xml gretlman.xsl gretltxt.xsl

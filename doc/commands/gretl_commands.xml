@@ -26,12 +26,12 @@
 
     <description>
       <para>
-	Must be invoked after an estimation command.  The variables in
-	<repl>varlist</repl> are added to the previous model and the
-	new model estimated.  If more than one variable is added, the
+	Must be invoked after an estimation command.  The selected
+	variables are added to the previous model and the new model
+	estimated.  If more than one variable is added, the
 	<mathvar>F</mathvar> statistic for the added variables will be
-	printed (for the OLS procedure only) along with its p-value.
-	A p-value below 0.05 means that the coefficients are jointly
+	printed (for the OLS procedure only) along with its p-value. A
+	p-value below 0.05 means that the coefficients are jointly
 	significant at the 5 percent level. 
       </para>
     </description>
@@ -126,7 +126,8 @@
     <usage>
       <arguments>
         <argument>lags</argument>
-        <argument separated="true">indepvars</argument>
+	<argument separated="true">depvar</argument>
+        <argument>indepvars</argument>
       </arguments>
       <options>
 	<option>
@@ -145,17 +146,30 @@
 	Cochrane&ndash;Orcutt iterative procedure (see Section 9.5 of
 	Ramanathan). Iteration is terminated when successive error
 	sums of squares do not differ by more than 0.005 percent or
-	after 20 iterations. <repl>lags</repl> is a list of lags in
-	the residuals, terminated by a semicolon. In the above
-	example, the error term is specified as 
+	after 20 iterations.</para>
+
+      <para context="gui">
+	The <quote>list of AR lags</quote> specifies the structure of
+	the error process.  For example, the entry <quote>1 3
+	  4</quote> corresponds to the process: 
+	<equation status="display" 
+	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
+	    \rho_4 u_{t-4} + e_t\]"
+	  ascii="u(t) = rho1*u(t-1) + rho3+u(t-3) + rho4*u(t-4)"
+	  graphic="arlags"/>
+      </para>
+
+      <para context="cli">
+	<repl quote="true">lags</repl> is a list of lags in the
+	residuals, terminated by a semicolon. In the above example,
+	the error term is specified as 
 	<equation status="display" 
 	  tex="\[u_t = \rho_1u_{t-1} + \rho_3 u_{t-3} +
 	    \rho_4 u_{t-4} + e_t\]"
 	  ascii="u(t) = rho(1)*u(t-1) + rho(3)+u(t-3) + rho(4)*u(t-4)"
-	  graphic="corc"/> where <repl>depvar</repl> is the dependent
-	variable and <repl>indepvars</repl> is the list of independent
-	variables.  
+	  graphic="arlags"/>
       </para>
+
     </description>
 
     <gui-access>
@@ -180,15 +194,19 @@
     </usage>
 
     <description>
+      <para context="gui">
+	This command needs an integer lag order.
+      </para>
+
       <para>
 	Tests the model for ARCH (Autoregressive Conditional
-	Heteroskedasticity) of the (integer) lag order specified in
-	<repl>order</repl>. If the LM test statistic has p-value below
-	0.10, then ARCH estimation is also carried out.  If the
-	predicted variance of any observation in the auxiliary
-	regression is not positive, then the corresponding squared
-	residual is used instead. Weighted least square estimation is
-	then performed on the original model.
+	Heteroskedasticity) of the specified lag order. If the LM test
+	statistic has a p-value below 0.10, then ARCH estimation is
+	also carried out.  If the predicted variance of any
+	observation in the auxiliary regression is not positive, then
+	the corresponding squared residual is used instead. Weighted
+	least squares estimation is then performed on the original
+	model.
       </para>
     </description>
 
@@ -240,15 +258,14 @@
       </para>
 
       <para>The default is to use the <quote>native</quote> gretl ARMA
-	function; the <lit>--x-12-arima</lit> flag calls for use of
-	the <program>X-12-ARIMA</program> program instead (this will
-	work only if the <program>X-12-ARIMA</program> package for
-	gretl is installed).  
+	function; <program>X-12-ARIMA</program> may be used instead
+	(if the <program>X-12-ARIMA</program> package for gretl is
+	installed).  
       </para>
 
-      <para>The options given above may be combined, except that the
-	covariance matrix is not available when estimation is by
-	<program>X-12-ARIMA</program>.</para>
+      <para context="cli">The options given above may be combined,
+	except that the covariance matrix is not available when
+	estimation is by <program>X-12-ARIMA</program>.</para>
 
       <para>The native gretl ARMA algorithm is largely due to Riccardo
 	<quote>Jack</quote> Lucchetti.  It uses a conditional maximum
@@ -291,22 +308,57 @@
 
     <usage>
       <arguments>
-        <argument>varname</argument>
+        <argument>varlist</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--notches</flag>
+	  <effect>show 90 percent interval for median</effect>
+	</option>
+      </options>
     </usage>
 
-    <description><para>
-	This command is available in the gretl console, but not in the
-	command-line program.</para>
+    <description>
 
-      <para>Boxplots (after Tukey and Chambers) display the
+      <para>These plots (after Tukey and Chambers) display the
 	distribution of a variable. The central box encloses the
 	middle 50 percent of the data, i.e. it is bounded by the first
-	and third quartiles. The <quote>whiskers</quote> extend to the
-	minimum and maximum values.  A line is drawn across the box at
-	the median.</para>
+	and third quartiles.  The <quote>whiskers</quote> extend to
+	the minimum and maximum values.  A line is drawn across the
+	box at the median.</para> 
 
-      <para>See <manref targ="sect-boxplots"/> for further details.</para>
+      <para>In the case of notched boxes, the notch shows the limits
+	of an approximate 90 percent confidence interval for the
+	median.  This is obtained by the bootstrap method.</para>
+
+      <para context="gui">After each variable specified in the boxplot
+	command, a parenthesized boolean expression may be added, to
+	limit the sample for the variable in question.  A space must
+	be inserted between the variable name or number and the
+	expression. Suppose you have salary figures for men and women,
+	and you have a dummy variable <lit>GENDER</lit> with value 1
+	for men and 0 for women.  In that case you could draw
+	comparative boxplots with the following line in the boxplots
+	dialog:</para>
+
+      <para context="cli">After each variable specified in the boxplot
+	command, a parenthesized boolean expression may be added, to
+	limit the sample for the variable in question.  A space must
+	be inserted between the variable name or number and the
+	expression. Suppose you have salary figures for men and women,
+	and you have a dummy variable <lit>GENDER</lit> with value 1
+	for men and 0 for women.  In that case you could draw
+	comparative boxplots with the following <repl
+	  quote="true">varlist</repl>:</para>
+
+      <code>
+	salary (GENDER=1) salary (GENDER=0)
+      </code>
+
+      <para>Some details of gretl's boxplots can be controlled via a
+	(plain text) file named <filename>.boxplotrc</filename>.  For
+	details on this see <manref targ="sect-boxplots"/>.</para>
+
     </description>
 
     <gui-access>
@@ -359,7 +411,7 @@
 
     <usage>
       <arguments>
-        <argument>indepvars</argument>
+        <argument>varlist</argument>
       </arguments>
       <examples>
         <example>coeffsum xt xt_1 xr_2</example>
@@ -369,12 +421,13 @@
     <description>
       <para>
 	Must follow a regression.  Calculates the sum of the
-	coefficients on the variables in the <repl>indepvars</repl>
-	list.  Prints this sum along with its standard error and the
-	p-value for the null hypothesis that the sum is zero.  Note the
-	difference between this and <cmdref targ="omit"/>, which tests
-	the null hypothesis that the coefficients on a specified
-	subset of independent variables are all equal to zero.
+	coefficients on the variables in the specified list.  Prints
+	this sum along with its standard error and the p-value for the
+	null hypothesis that the sum is zero.  Note the difference
+	between this and <cmdref targ="omit"/>, which tests the null
+	hypothesis that the coefficients on a specified subset of
+	independent variables are <emphasis>all</emphasis> equal to
+	zero.
       </para>
     </description>
 
@@ -551,12 +604,10 @@
     <description>
       <para>
 	Computes parameter estimates using the Cochrane&ndash;Orcutt
-	iterative procedure (see Section 9.4 of Ramanathan) with
-	<repl>depvar</repl> as the dependent variable and
-	<repl>indepvars</repl> as the list of independent variables.
-	Iteration is terminated when successive estimates of the
-	autocorrelation coefficient do not differ by more than 0.001
-	or after 20 iterations.
+	iterative procedure (see Section 9.4 of Ramanathan). Iteration
+	is terminated when successive estimates of the autocorrelation
+	coefficient do not differ by more than 0.001 or after 20
+	iterations.
       </para>
     </description>
 
@@ -821,7 +872,32 @@
 
   </command>
 
-  <command name="diff" section="Transformations">
+  <command name="dialog" section="Estimation" context="gui">
+
+    <blurb>Dialog box for model specification</blurb>
+
+    <description>
+      <para>To select the dependent variable, highlight a variable in
+	the list on the left and press the <quote>Choose</quote>
+	button pointing to the Dependent variable slot.  If you check
+	the <quote>Set as default</quote> box, the selected variable
+	will be pre-selected as dependent when the model dialog is
+	next opened.  Short cut: double-click on a variable on the
+	left to select it as the dependent variable and set it as the
+	default.</para>
+
+      <para>To select independent variables, highlight them on the
+	left and press the <quote>Add</quote> button (or click the
+	right mouse button).  You can highlight several contiguous
+	variables by dragging with the mouse.  You can highlight a
+	group of non-contiguous variables by clicking on them with the
+	<lit>Ctrl</lit> key pressed.</para>
+
+    </description>
+
+  </command>
+
+  <command name="diff" section="Transformations" context="cli">
 
     <blurb>First differences</blurb>
 
@@ -943,6 +1019,22 @@
 
   </command>
 
+  <command name="export" section="Dataset" context="gui">
+    <blurb>Export data from gretl to other formats</blurb>
+
+    <description>
+      <para>You may export data in Comma-Separated Values (CSV)
+	format: such data may be opened in spreadsheets and many other
+	application programs.</para>
+
+      <para>You may also export data in the native formats of GNU R or
+	GNU octave.  For further information on these programs (both
+	of which support advanced statistical analysis) please see
+	their respective websites, http://www.r-project.org/ and
+	http://www.octave.org/</para>
+    </description>
+  </command>
+
   <command name="factorized" section="Graphs" context="gui">
 
     <blurb>Plot with a dummy variable</blurb>
@@ -1021,15 +1113,19 @@
 
     <description>
       <para>
-	After estimating an OLS model which includes a constant and at
-	least one independent variable (these restrictions may be
-	relaxed at some point) you can use this command to print out
-	fitted values over the specified observation range, along with
-	the estimated standard errors of those predictions and 95
-	percent confidence intervals.  The augmented regression method
-	of Salkever (1976) is used to generate the forecast standard
-	errors.
-      </para>
+	After estimating a model via OLS you can use this command to
+	print out fitted values over the specified observation range,
+	along with the estimated standard errors of those predictions
+	and 95 percent confidence intervals.</para>  
+
+      <para>The standard errors are calculated in the manner described
+	by Wooldridge in chapter 6 of his <book>Introductory
+	  Econometrics</book>. They incorporate two sources of
+	variation: the variance associated with the expected value of
+	the dependent variable, conditional on the given values of the
+	independent variables, and the variance of the regression
+	residuals.</para>
+
     </description>
 
     <gui-access>
@@ -1090,8 +1186,10 @@
     <description>
       <para>
 	Creates new variables, usually through transformations of
-	existing variables. See also <cmdref targ="diff"/>, <cmdref targ="logs"/>,
-	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref targ="multiply"/> and
+	existing variables. See also <cmdref targ="diff"/>, <cmdref
+	  targ="logs"/>,
+	<cmdref targ="lags"/>, <cmdref targ="ldiff"/>, <cmdref
+	  targ="multiply"/> and
 	<cmdref targ="square"/> for shortcuts.
       </para>
 
@@ -1576,30 +1674,30 @@
 	for a pop-up menu with the following options:</para>
 
       <ilist>
-	<li><para>Save as postscript (save the graph in encapsulated
-	    postscript [EPS] format)</para>
+	<li><para>Save as postscript: save the graph in encapsulated
+	    postscript (EPS) format</para>
 	</li>
-	<li><para>Save as PNG (save in Portable Network Graphics
-	    format)</para>
+	<li><para>Save as PNG: save in Portable Network Graphics
+	    format</para>
 	</li>
-	<li><para>Save to session as icon (the graph will appear in
+	<li><para>Save to session as icon: the graph will appear in
 	    iconic form when you select <quote>Icon view</quote> from
-	    the Session menu)</para>
+	    the Session menu</para>
 	</li>
-	<li><para>Zoom (lets you select an area within the graph for
-	    closer inspection)</para>
+	<li><para>Zoom: lets you select an area within the graph for
+	    closer inspection</para>
 	</li>
-	<li><para>Print (on the Gnome desktop and MS Windows only:
-	    lets you print the graph directly)</para>
+	<li><para>Print: (on the Gnome desktop and MS Windows only)
+	    lets you print the graph directly</para>
 	</li>
-	<li><para>Copy to clipboard (MS Windows only: lets you paste
+	<li><para>Copy to clipboard: (MS Windows only) lets you paste
 	    the graph into Windows applications such as MS
-	    Word)</para>
+	    Word</para>
 	</li>
-	<li><para>Edit (opens a controller for the plot which lets you
-	    adjust various aspects of its appearance)</para>
+	<li><para>Edit: opens a controller for the plot which lets you
+	    adjust various aspects of its appearance</para>
 	</li>
-	<li><para>Close (closes the graph window)</para>
+	<li><para>Close: closes the graph window</para>
 	</li>
       </ilist>
 
@@ -1668,6 +1766,29 @@
 
   </command>
 
+  <command name="3-D" section="Graphs" context="gui">
+
+    <blurb>3-dimensional plots</blurb>
+
+    <description>
+      <para>This feature works best if you have gnuplot 3.8 or higher
+	installed.  In that case you can manipulate the 3-D plot with
+	the mouse (rotate it, and expand or shrink the axes).</para>
+
+      <para>In composing a 3-D plot, note that the Z-axis will be
+	shown as the vertical axis.  Thus if you have some dependent
+	variable that you think may be influenced by two independent
+	variables, you should put the dependent variable on the
+	Z-axis, and the independent variables on the X and Y
+	axes.</para>  
+
+      <para>Unlike most other gretl graphs, 3-D plots are controlled
+	by gnuplot rather than gretl itself.  The gretl graph-editing
+	menu is not available.</para>
+
+    </description>
+  </command>
+    
   <command name="hausman" section="Tests">
 
     <blurb>Hausman test (panel diagnostics)</blurb>
@@ -1735,11 +1856,11 @@
 
     <description>
       <para>
-	Presents OLS estimates with the heteroskedasticity consistent
-	covariance matrix estimates for the standard errors of
-	regression coefficients using MacKinnon and White (1985)
-	<quote>jackknife</quote> estimates (see Ramanathan, Section
-	8.3).
+	This command runs a regression where the coefficients are
+	estimated via the standard OLS procedure, but the standard
+	errors of the coefficient estimates are computed in a manner
+	that is robust in the face of heteroskedasticity, namely using
+	the MacKinnon-White <quote>jackknife</quote> procedure.
       </para>
     </description>
 
@@ -1784,13 +1905,11 @@
     </usage>
 
     <description>
-      <para>Computes parameter estimates using the Hildreth&ndash;Lu
-	search procedure (fine-tuned by the CORC procedure) with
-	<repl>depvar</repl> as the dependent variable and
-	<repl>indepvars</repl> as the list of independent variables.
-	This procedure is designed to correct for serial correlation
-	of the error term.  The error sum of squares of the
-	transformed model is graphed against the value of rho from
+      <para>Computes parameter estimates for the specified model using
+	the Hildreth&ndash;Lu search procedure (fine-tuned by the CORC
+	procedure). This procedure is designed to correct for serial
+	correlation of the error term.  The error sum of squares of
+	the transformed model is graphed against the value of rho from
 	&minus;0.99 to 0.99.
       </para>
     </description>
@@ -1820,12 +1939,22 @@
 
     <description>
       <para>
-	Prints heteroskedasticity-corrected estimates (see Ramanathan,
-	ch. 8) and associated statistics.  The auxiliary regression
-	predicts the log of the square of residuals (using squares of
-	independent variables but not their cross products) from which
-	weighted least squares estimates are obtained.  
-      </para>
+	An OLS regression is run and the residuals are saved.  The
+	logs of the squares of these residuals then become the
+	dependent variable in an auxiliary regression, on the
+	right-hand side of which are the original independent
+	variables plus their squares.  The fitted values from the
+	auxiliary regression are then used to construct a weight
+	series, and the original model is re-estimated using weighted
+	least squares.  This final result is reported.</para>
+
+      <para>The weight series is formed as
+	<equation status="inline"
+	  tex="$1/\sqrt{e^{y^*}}$"
+	  ascii="1/sqrt(exp(y*))"
+	  graphic="hsk"/>, where <mathvar>y<super>*</super></mathvar>
+	denotes the fitted values from the auxiliary
+	regression.</para>
     </description>
 
     <gui-access>
@@ -1929,12 +2058,37 @@
     </usage>
 
     <description>
-      <para>Sets the descriptive label for the given variable (if the
-	<lit>-d</lit> flag is given, followed by a string in double
-	quotes) and/or the <quote>display name</quote> for the
-	variable (if the <lit>-n</lit> flag is given, followed by a
-	quoted string).  If a variable has a display name, this is
-	used when generating graphs.</para>
+
+      <para context="cli">Sets the descriptive label for the given
+	variable (if the <lit>-d</lit> flag is given, followed by a
+	string in double quotes) and/or the <quote>display
+	  name</quote> for the variable (if the <lit>-n</lit> flag is
+	given, followed by a quoted string).  If a variable has a
+	display name, this is used when generating graphs.</para>
+
+      <para context="gui">
+	In this dialog box you can:</para>
+
+      <para context="gui">* Rename a variable.</para>
+
+      <para context="gui">* Add or edit a description of the variable:
+	this appears next to the variable name in the gretl main
+	window.</para>
+
+      <para context="gui">* Add or edit the "display name" for the
+	variable.  This string (maximum 19 characters) is shown in
+	place of the variable name when the variable is displayed in a
+	graph.  This for instance you can associate a more
+	comprehensible string such as "T-bill rate" with a cryptically
+	named variable such as "tb3".</para>
+
+      <para context="gui">* (In case of a time-series dataset) set the
+	compaction method for the variable.  This method will be used
+	if you decide to reduce the frequency of the dataset, or if
+	you update the variable by importing from a database where the
+	variable is at a higher frequency than in the working dataset.
+      </para>
+
     </description>
 
     <gui-access>
@@ -1984,7 +2138,7 @@
 
   </command>
 
-  <command name="lags" section="Transformations">
+  <command name="lags" section="Transformations" context="cli">
 
     <blurb>Lags of variables</blurb>
 
@@ -2014,7 +2168,7 @@
 
   </command>
 
-  <command name="ldiff" section="Transformations">
+  <command name="ldiff" section="Transformations" context="cli">
 
     <blurb>Log differences</blurb>
 
@@ -2100,9 +2254,15 @@
 	alone has been added); the studentized residual is obtained by
 	dividing the predicted residual by its standard error.</para>
 
-      <para>If the <lit>--save</lit> flag is given with this command,
-	then the leverage, influence and DFFITS values are added to
-	the current data set.</para>
+      <para context="cli">If the <lit>--save</lit> flag is given with
+	this command, then the leverage, influence and DFFITS values
+	are added to the current data set.</para>
+
+      <para context="gui">
+	The "+" icon at the top of the leverage test window brings up
+	a dialog box that allows you to save one or more of the test
+	variables to the current data set.</para>
+
     </description>
 
     <gui-access>
@@ -2194,16 +2354,26 @@
 	  graphic="logistic1"/>
       </para>
 
-      <para>The dependent variable must be strictly positive.  If it
-	is a decimal fraction, between 0 and 1, the default is to use
-	a <mathvar>y<super>*</super></mathvar> value (the asymptotic
-	maximum of the dependent variable) of 1. If the dependent
-	variable is a percentage, between 0 and 100, the default
-	<mathvar>y<super>*</super></mathvar> is 100.  If you wish to
-	set a different maximum, use the optional
+      <para context="cli">The dependent variable must be strictly
+	positive.  If it is a decimal fraction, between 0 and 1, the
+	default is to use a <mathvar>y<super>*</super></mathvar> value
+	(the asymptotic maximum of the dependent variable) of 1. If
+	the dependent variable is a percentage, between 0 and 100, the
+	default <mathvar>y<super>*</super></mathvar> is 100.  If you
+	wish to set a different maximum, use the optional
 	<lit>ymax=</lit><repl>value</repl> syntax following the list
 	of regressors.  The supplied value must be greater than all of
 	the observed values of the dependent variable.</para>
+
+      <para context="gui">The dependent variable must be strictly
+	positive.  If it is a decimal fraction, between 0 and 1, the
+	default is to use a ymax value (the asymptotic maximum of the
+	dependent variable) of 1.  If the dependent variable is a
+	percentage, between 0 and 100, the default ymax value is 100.
+	You are presented with a dialog box that allows you to specify
+	a different maximum if you wish.  The supplied ymax value must
+	be greater than all of the observed values of the dependent
+	variable.</para>
 
       <para>The fitted values and residuals from the regression are
 	automatically transformed using 	  
@@ -2275,7 +2445,7 @@
 
   </command>
 
-  <command name="logs" section="Transformations">
+  <command name="logs" section="Transformations" context="cli">
 
     <blurb>Natural logs</blurb>
 
@@ -2341,6 +2511,25 @@
 
   </command>
 
+  <command name="markers" section="Dataset" context="gui">
+
+    <blurb>Add case markers to data set</blurb>
+
+    <description>
+      <para>
+	This command needs the name of a file containing "case
+	markers", that is, short identifying strings for the
+	individual observations in the data set (for example, country
+	or city names or codes).  These marker strings should be no
+	more than 8 characters long.  The file should contain one
+	marker per line, and there should be just as many markers as
+	observations in the current dataset. If these conditions are
+	met and the specified file is found, the case markers will be
+	added; they will be visible when you choose "Display values"
+	under gretl's Data menu.</para>
+    </description>
+  </command>
+
   <command name="meantest" section="Tests">
 
     <blurb>Difference of means</blurb>
@@ -2363,12 +2552,11 @@
 	Calculates the <mathvar>t</mathvar> statistic for the null
 	hypothesis that the population means are equal for the
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
-	its p-value. By default the statistic is computed on the
-	assumption that the variances are equal for the two variables;
-	with the <lit>--unequal-vars</lit> flag the variances are
-	assumed to be unequal. (The flag will make a difference only
-	if there are different numbers of non-missing observations for
-	the two variables.)
+	its p-value. The command may be called with the assumption
+	that the variances are equal for the two variables (the
+	default) or that they are unequal.  This will make a
+	difference to the test statistic only if there are different
+	numbers of non-missing observations for the two variables.
       </para>
     </description>
 
@@ -2416,16 +2604,13 @@
 
     <description>
       <para>
-	Computes OLS estimates with <repl>depvar</repl> as the
-	dependent variable and <repl>indepvars</repl> as the list of
-	independent variables, using multiple precision floating-point
-	arithmetic. The variables may be specified by name or number;
-	use the number zero for a constant term. This command is
+	Computes OLS estimates for the specified model using multiple
+	precision floating-point arithmetic.  This command is
 	available only if <program>gretl</program> is compiled with
 	support for the Gnu Multiple Precision library (GMP).
       </para>
 
-      <para>
+      <para context="cli">
 	To estimate a polynomial fit, using multiple precision
 	arithmetic to generate the required powers of the independent
 	variable, use the form, e.g. <cmd>mpols y 0 x ; 2 3 4</cmd>
@@ -2647,18 +2832,20 @@
         Computes ordinary least squares (OLS) estimates with
 	<repl>depvar</repl> as the dependent variable and
 	<repl>indepvars</repl> as the list of independent variables.
+	Variables may be specified by name or number; use the number
+	zero for a constant term. 
       </para>
 
-      <para>Variables may be specified by name or number; use the
-	number zero for a constant term. The program also prints the
-	p-values for <mathvar>t</mathvar> (two-tailed) and
-	<mathvar>F</mathvar>-statistics.  A p-value below 0.01
-	indicates significance at the 1 percent level and is denoted
-	by <lit>***</lit>. <lit>**</lit> indicates significance
-	between 1 and 5 percent and <lit>*</lit> indicates
-	significance between 5 and 10 percent levels. Model selection
-	statistics (described in Ramanathan, Section 4.3) are also
-	printed. Various internal variables may be retrieved using the
+      <para>Besides coefficient estimates and standard errors, the
+	program also prints p-values for <mathvar>t</mathvar>
+	(two-tailed) and <mathvar>F</mathvar>-statistics.  A p-value
+	below 0.01 indicates significance at the 1 percent level and
+	is denoted by <lit>***</lit>. <lit>**</lit> indicates
+	significance between 1 and 5 percent and <lit>*</lit>
+	indicates significance between 5 and 10 percent levels. Model
+	selection statistics (described in Ramanathan, Section 4.3)
+	are also printed.  Various internal variables may be retrieved
+	using the
 	<cmdref targ="genr"/> command, provided <cmd>genr</cmd> is
 	invoked immediately after this command.
       </para>
@@ -2696,13 +2883,13 @@
 
     <description>
       <para>
-	This command must follow an estimation command. The variables
-	in <repl>varlist</repl> are omitted from the previous model
-	and the new model estimated. If more than one variable is
-	omitted, the Wald <mathvar>F</mathvar>-statistic for the
-	omitted variables will be printed along with its p-value (for
-	the OLS procedure only).  A p-value below 0.05 means that the
-	coefficients are jointly significant at the 5 percent level.
+	This command must follow an estimation command. The selected
+	variables are omitted from the previous model and the new
+	model estimated. If more than one variable is omitted, the
+	Wald <mathvar>F</mathvar>-statistic for the omitted variables
+	will be printed along with its p-value (for the OLS procedure
+	only).  A p-value below 0.05 means that the coefficients are
+	jointly significant at the 5 percent level.
       </para>
     </description>
 
@@ -3487,13 +3674,13 @@
       </arguments>
       <examples>
         <example>setobs 4 1990:1</example>
-        <example>ssetobs 12 1978:03</example>
+        <example>setobs 12 1978:03</example>
         <example>setobs 20 1:01</example>
       </examples>
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Force the program to interpret the current data set as time
 	series or panel, when the data have been read in as simple
 	undated series.  <repl>periodicity</repl> must be an integer;
@@ -3501,6 +3688,40 @@
 	panel ID of the first observation. See also <cmdref
 	  targ="panel"/>.
       </para>
+      <para context="gui">
+	Use this command to force the program to interpret the current
+	data set as time series or panel, when the data have been read
+	in as simple undated series.  Two parameters are needed: an
+	integer frequency and a starting observation string (usually a
+	date).  Here are some examples of valid input:</para>
+
+      <table context="gui">
+	<row>
+	  <cell>4 1990:1</cell>
+	  <cell>Interpret the data as quarterly, starting in 1990,
+	    Q1</cell>
+	</row>
+	<row>
+	  <cell>12 1978:03</cell>
+	  <cell>Interpret as monthly, starting in March 1978</cell>
+	</row>
+	<row>
+	  <cell>20 1:01</cell>
+	  <cell>Frequency 20, starting with obs 1.01 (panel
+	    data)</cell>
+	</row>
+	<row>
+	  <cell>5 1972/01/20</cell>
+	  <cell>Daily data (5-day week), starting January 20,
+	    1972</cell>
+	</row>
+	<row>
+	  <cell>7 2002/01/20</cell>
+	  <cell>Daily data (7-day week), starting January 20,
+	    2002</cell>
+	</row>
+      </table>
+
     </description>
 
     <gui-access>
@@ -3525,7 +3746,7 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Get the program to interpret some specific numerical data
 	value (the first parameter to the command) as a code for
 	<quote>missing</quote>, in the case of imported data.  If this
@@ -3538,6 +3759,22 @@
 	<quote>missing</quote>, but only for the variable
 	<lit>x2</lit>.
       </para>
+      
+      <para context="gui">
+	Set a numerical value that will be interpreted as "missing" or
+	"not applicable", either for a particular data series (under
+	the Variable menu) or globally for the entire data set (under
+	the Sample menu).</para> 
+      
+      <para context="gui">
+	Gretl has its own internal coding for missing values, but
+	sometimes imported data may employ a different code.  For
+	example, if a particular series is coded such that a value of
+	-1 indicates "not applicable", you can select "Set missing
+	value code" under the Variable menu and type in the value "-1"
+	(without the quotes).  Gretl will then read the -1s as missing
+	observations.</para>
+
     </description>
 
     <gui-access>
@@ -4142,7 +4379,7 @@
     </usage>
 
     <description>
-      <para>
+      <para context="cli">
 	Computes weighted least squares estimates using
 	<repl>wtvar</repl> as the weight, <repl>depvar</repl> as the
 	dependent variable, and <repl>indepvars</repl> as the list of
@@ -4153,6 +4390,13 @@
 	eliminating all observations with value zero for
 	<repl>wtvar</repl>.
       </para>
+      <para context="gui">
+	Let "wtvar" denote the variable selected in the "Weight
+	variable" box.  An OLS regression is run, where the dependent
+	variable is the product of wtvar and the selected dependent
+	variable, and the independent variables are also multiplied by
+	wtvar.  If wtvar is a dummy variable, this is equivalent to
+	eliminating all observations with value zero for wtvar.</para>
     </description>
 
     <gui-access>
