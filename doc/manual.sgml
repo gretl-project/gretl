@@ -2578,7 +2578,6 @@
     </sect2>
 
     <sect2 id="arch"><title>arch</title>
-
       <informaltable frame="none">
 	<tgroup cols="2"><colspec colnum="1" colwidth="&cmdcol;"/>
 	  <tbody>
