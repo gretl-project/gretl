@@ -44,7 +44,8 @@ enum {
     P_TRAMO_X12A,
     P_NISTCHECK,
     P_ARMA,
-    P_ARMA_X12
+    P_ARMA_X12,
+    P_LOGISTIC
 } plugin_codes;
 
 struct plugin_info {
@@ -77,7 +78,8 @@ struct plugin_info plugins[] = {
     { P_TRAMO_X12A,      "tramo-x12a" },
     { P_NISTCHECK,       "nistcheck" },
     { P_ARMA,            "arma" },
-    { P_ARMA_X12,        "arma_x12" }
+    { P_ARMA_X12,        "arma_x12" },
+    { P_LOGISTIC,        "logistic" }
 };  
 
 struct plugin_function plugin_functions[] = { 
@@ -140,6 +142,9 @@ struct plugin_function plugin_functions[] = {
 
     /* ARMA X12A */
     { "arma_x12_model", P_ARMA_X12 },
+
+    /* logistic */
+    { "logistic_model", P_LOGISTIC },
 
     /* sentinel */
     { NULL, 0 },

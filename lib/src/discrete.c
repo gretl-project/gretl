@@ -100,6 +100,28 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
     return lnL;
 }
 
+/* .......................................................... */
+
+static MODEL get_logistic_model (int *list, double ***pZ, DATAINFO *pdinfo)
+{
+    MODEL lmod;
+    void *handle;
+    MODEL (*logistic_model) (int *, double ***, DATAINFO *);
+
+    logistic_model = get_plugin_function("logistic_model", &handle);
+    if (logistic_model == NULL) {
+	_init_model(&lmod, pdinfo);
+	lmod.errcode = E_FOPEN;
+	return lmod;
+    }
+
+    lmod = (*logistic_model) (list, pZ, pdinfo);
+
+    close_plugin(handle);
+
+    return lmod;
+}
+
 /**
  * logit_probit:
  * @list: dependent variable plus list of regressors.
@@ -114,32 +136,38 @@ static double _logit_probit_llhood (double *y, MODEL *pmod, int opt)
  * Returns: a #MODEL struct, containing the estimates.
  */
 
-
-MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
+MODEL logit_probit (int *list, double ***pZ, DATAINFO *pdinfo, int opt)
      /* EM algorithm, see Ruud */
 {
     int i, t, v, depvar = list[1];
     int n = pdinfo->n, itermax = 200;
     int *dmodlist = NULL;
+    int dummy;
     double xx, zz, fx, Fx, fbx, Lbak;
     double *xbar, *diag, *xpx = NULL;
     MODEL dmod;
 
     _init_model(&dmod, pdinfo);
+    
+    /* check whether depvar is binary */
+    dummy = isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2);
+    if (!dummy) {
+	if (opt == LOGIT) {
+	    dmod = get_logistic_model(list, pZ, pdinfo);
+	    return dmod;
+	} else {
+	    dmod.errcode = E_UNSPEC;
+	    sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
+				    "variable.\n"), pdinfo->varname[depvar]);
+	    return dmod;
+	}
+    }
 
     dmodlist = malloc((list[0] + 1) * sizeof *dmodlist);
     if (dmodlist == NULL) {
 	dmod.errcode = E_ALLOC;
 	return dmod;
     } 
-
-    /* check that depvar really is binary */
-    if (isdummy((*pZ)[depvar], pdinfo->t1, pdinfo->t2) == 0) {
-	dmod.errcode = E_UNSPEC;
-	sprintf(gretl_errmsg, _("The dependent variable '%s' is not a 0/1 "
-		"variable.\n"), pdinfo->varname[depvar]);
-	return dmod;
-    }
 
     /* allocate space for means of indep vars */
     xbar = malloc(list[0] * sizeof *xbar);
@@ -162,7 +190,7 @@ MODEL logit_probit (const LIST list, double ***pZ, DATAINFO *pdinfo, int opt)
     dmod = lsq(list, pZ, pdinfo, OLS, 0, 0);
     if (dmod.ifc == 0) dmod.errcode = E_NOCONST;
     if (dmod.errcode) {
-	(void) dataset_drop_vars(1, pZ, pdinfo);
+	dataset_drop_vars(1, pZ, pdinfo);
 	free(xbar);
 	free(dmodlist);
 	return dmod;
