@@ -757,7 +757,7 @@ static int cb_copy_image (gpointer data)
 	pData = GlobalLock (hDIB);
 
 	if (pData) {
-	    int x, y, bits[8];
+	    int x, y;
 	    unsigned char ch;
 	    
 	    /* calculate real offset */
@@ -769,9 +769,7 @@ static int cb_copy_image (gpointer data)
 		i = 0; ch = 0;
 		for (x=0; x<grp->width; x++) {
 		    pixel = gdk_image_get_pixel(image, x, y);
-		    if (pixel == white_pixel) bits[i] = 0;
-		    else bits[i] = 1;
-		    ch |= (bits[i] << i);
+		    if (pixel != white_pixel) ch |= (1 << i);
 		    if ((x + 1) % 8 == 0) {
 			pData[j++] = ch;
 			i = 0;
