@@ -175,6 +175,30 @@
 
   </command>
 
+  <command name="append" section="Dataset" context="cli">
+
+    <usage>
+      <arguments>
+        <argument>datafile</argument>
+      </arguments>
+    </usage>
+
+    <description>
+      <para>
+	Opens a data file and appends the content to the current
+	dataset, if the new data are compatible.  The program will try
+	to detect the format of the data file (native, plain text, CSV
+	or BOX1).
+      </para>
+
+    </description>
+
+    <gui-access>
+      <menu-path>/File/Append data</menu-path>
+    </gui-access>
+
+  </command>
+
   <command name="ar" section="Estimation" label="Autoregressive estimation">
 
     <usage>
