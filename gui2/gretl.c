@@ -100,7 +100,7 @@ DATAINFO *datainfo;
 char *errtext;
 char cmdfile[MAXLEN], scriptfile[MAXLEN];
 char trydatfile[MAXLEN], tryscript[MAXLEN];
-char line[1024];
+char line[MAXLINE];
 PATHS paths;                /* useful paths */
 double **Z;                 /* data set */
 MODEL **models;             /* gretl models structs */
