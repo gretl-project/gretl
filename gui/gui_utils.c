@@ -90,7 +90,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      model_test_callback, FCAST, NULL },
+      model_test_callback, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
@@ -879,6 +879,8 @@ void free_windata (GtkWidget *w, gpointer data)
 	    free_summary(vwin->data); 
 	if (vwin->role == CORR)
 	    free_corrmat(vwin->data);
+	else if (vwin->role == FCASTERR || vwin->role == FCAST)
+	    free_fit_resid(vwin->data);
 	else if (vwin->role == VIEW_SERIES)
 	    free_series_view(vwin->data);
 	if (vwin->dialog)
@@ -1684,7 +1686,8 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
     gtk_accel_group_attach(accel, GTK_OBJECT (window));
 
     if (vwin->role == SUMMARY || vwin->role == VAR_SUMMARY
-	|| vwin->role == CORR) {
+	|| vwin->role == CORR || vwin->role == FCASTERR ||
+	vwin->role == FCAST) {
 	augment_copy_menu(vwin);
 	return;
     }
@@ -2065,6 +2068,44 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	return;
     }
 
+    /* display for fitted, actual, resid */
+    if (vwin->role == FCAST && SPECIAL_COPY(how)) {
+	FITRESID *fr = (FITRESID *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_fit_resid(fr, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    /* rtfprint_fit_resid(fr, datainfo, prn); */
+	    ;
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+	return;
+    }   
+
+    /* forecasts with standard errors */
+    if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
+	FITRESID *fr = (FITRESID *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_fcast_with_errs(fr, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    /* rtfprint_fcast_with_errs(fr, datainfo, prn); */
+	    ;
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+	return;
+    } 
+  
     /* or it's a model window we're copying from? */
     if (vwin->role == VIEW_MODEL &&
 	(how == COPY_RTF || how == COPY_LATEX ||

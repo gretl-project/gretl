@@ -928,6 +928,40 @@ texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
 
 /* .................................................................. */
 
+void texprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    int t;
+    double *maxerr;
+
+    maxerr = mymalloc(fr->nobs * sizeof *maxerr);
+    if (maxerr == NULL) return;
+
+    pprintf(prn, I_(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+	    fr->pmax, fr->tval);
+    pprintf(prn, "\n     Obs ");
+    pprintf(prn, "%12s", fr->depvar);
+    pprintf(prn, "%*s", UTF_WIDTH(I_("prediction"), 14), _("prediction"));
+    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+    pprintf(prn, _("   95%% confidence interval\n"));
+    pprintf(prn, "\n");
+
+    for (t=0; t<fr->nobs; t++) {
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	_printxs(fr->actual[t], 15, PRINT, prn);
+	_printxs(fr->fitted[t], 15, PRINT, prn);
+	_printxs(fr->sderr[t], 15, PRINT, prn);
+	maxerr[t] = fr->tval * fr->sderr[t];
+	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
+	pprintf(prn, " -");
+	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
+	pprintf(prn, "\n");
+    }
+}
+
+/* .................................................................. */
+
 void augment_copy_menu (windata_t *vwin)
 {
     GtkItemFactoryEntry item;

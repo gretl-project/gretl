@@ -94,7 +94,7 @@ GtkItemFactoryEntry model_items[] = {
     { N_("/Model data/Display actual, fitted, residual"), NULL, 
       display_fit_resid, 0, NULL },
     { N_("/Model data/Forecasts with standard errors"), NULL, 
-      model_test_callback, FCAST, NULL },
+      model_test_callback, FCASTERR, NULL },
     { N_("/Model data/Confidence intervals for coefficients"), NULL, 
       do_coeff_intervals, 0, NULL },
     { N_("/Model data/Add to data set"), NULL, NULL, 0, "<Branch>" },
@@ -2168,7 +2168,26 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 	prn_to_clipboard(prn, how);
 	gretl_print_destroy(prn);
 	return;
-    }    
+    }   
+
+    /* forecasts with standard errors */
+    if (vwin->role == FCASTERR && SPECIAL_COPY(how)) {
+	FITRESID *fr = (FITRESID *) vwin->data;
+
+	if (bufopen(&prn)) return;
+
+	if (how == COPY_LATEX) { 
+	    texprint_fcast_with_errs(fr, datainfo, prn);
+	} 
+	else if (how == COPY_RTF) { 
+	    /* rtfprint_fcast_with_errs(fr, datainfo, prn); */
+	    ;
+	}
+
+	prn_to_clipboard(prn, how);
+	gretl_print_destroy(prn);
+	return;
+    }  
 
     /* multiple-precision OLS */
     if (vwin->role == MPOLS && SPECIAL_COPY(how)) {

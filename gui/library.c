@@ -1272,7 +1272,9 @@ void do_add_markers (GtkWidget *widget, dialog_t *ddata)
 void do_forecast (GtkWidget *widget, dialog_t *ddata) 
 {
     windata_t *mydata = ddata->data;
+    windata_t *vwin;
     MODEL *pmod = mydata->data;
+    FITRESID *fr;
     char *edttext;
     PRN *prn;
     int err;
@@ -1284,17 +1286,23 @@ void do_forecast (GtkWidget *widget, dialog_t *ddata)
     sprintf(line, "fcasterr %s", edttext);
     if (check_cmd(line) || cmd_init(line) || bufopen(&prn)) return;
 
-    err = fcast_with_errs(line, pmod, &Z, datainfo, prn,
-			  &paths, 1); 
-    if (err) {
-	gui_errmsg(err);
+    fr = get_fcast_with_errs(line, pmod, &Z, datainfo, prn);
+
+    if (fr == NULL) {
+	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
 	return;
-    }
-
-    register_graph();
-
-    view_buffer(prn, 78, 350, _("gretl: forecasts"), FCAST, NULL);    
+    } else {
+	err = text_print_fcast_with_errs (fr, 
+					  &Z, datainfo, prn,
+					  &paths, 1);
+	if (!err) {
+	    register_graph();
+	}
+	vwin = view_buffer(prn, 78, 350, _("gretl: forecasts"), FCASTERR, 
+			   view_items);  
+	vwin->data = fr;
+    }  
 }
 
 /* ........................................................... */
@@ -3026,15 +3034,19 @@ void display_fit_resid (gpointer data, guint code, GtkWidget *widget)
     int err;
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
+    FITRESID *fr;
 
     if (bufopen(&prn)) return;
-    err = print_fit_resid(pmod, &Z, datainfo, prn);
 
-    if (err) {
+    fr = get_fit_resid(pmod, &Z, datainfo);
+    if (fr == NULL) {
 	errbox(_("Failed to generate fitted values"));
 	gretl_print_destroy(prn);
-    } else 
-	view_buffer(prn, 77, 350, _("gretl: display data"), PRINT, NULL);    
+    } else {
+	vwin = view_buffer(prn, 78, 350, _("gretl: display data"), FCAST, 
+			   view_items);
+	vwin->data = fr;
+    }   
 }
 
 /* ........................................................... */

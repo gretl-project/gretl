@@ -313,7 +313,7 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
 		"(between %s and %s):"), startdate, enddate);
 	okfunc = do_chow;
 	break;
-    case FCAST: 
+    case FCASTERR: 
 	strcpy(title, _("gretl: forecast"));
 	sprintf(query, _("Starting obs (min = %s)\n"
 		"and ending obs (max = %s)?"), 

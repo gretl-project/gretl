@@ -578,6 +578,112 @@ void texprint_corrmat (CORRMAT *corr,
     pprintf(prn, "\\end{tabular}\n\\end{center}\n");
 }
 
+/* ........................................................... */
+
+static 
+void tex_fit_resid_head (const FITRESID *fr, const DATAINFO *pdinfo, 
+			 PRN *prn)
+{
+    char date1[9], date2[9]; 
+
+    ntodate(date1, fr->t1, pdinfo);
+    ntodate(date2, fr->t2, pdinfo);
+
+    pprintf(prn, "\\begin{raggedright}\n");
+    pprintf(prn, I_("Full data range: %s--%s ($n$ = %d)\\\\\n"),
+	    pdinfo->stobs, pdinfo->endobs, pdinfo->n);
+    pprintf(prn, I_("Model estimation range: %s--%s"), date1, date2);
+
+    if (fr->nobs == pdinfo->n) pprintf(prn, "\\\\\n");
+    else pprintf(prn, " ($n$ = %d)\\\\\n", fr->nobs); 
+
+    pprintf(prn, I_("Standard error of residuals = %f\n"), fr->sigma);
+    pprintf(prn, "\\end{raggedright}\n");
+}
+
+/* ........................................................... */
+
+void 
+texprint_fit_resid (const FITRESID *fr, const DATAINFO *pdinfo, PRN *prn)
+{
+    int t, anyast = 0;
+    int n = pdinfo->n;
+    double xx;
+
+    tex_fit_resid_head(fr, pdinfo, prn); 
+
+    pprintf(prn, "\n\\begin{center}\n"
+	    "\\begin{tabular}{rrrrl}\n"
+	    "\\multicolumn{1}{c}{%s} & \n"
+	    " \\multicolumn{1}{c}{%s} & \n"
+	    "  \\multicolumn{1}{c}{%s} & \n"
+	    "   \\multicolumn{1}{c}{%s}\\\\\n",
+	    I_("Obs"), fr->depvar,
+	    I_("fitted"), I_("residuals"));
+
+    for (t=0; t<n; t++) {
+	if (t == fr->t1 && t) pprintf(prn, "\\\\\n");
+	if (t == fr->t2 + 1) pprintf(prn, "\\\\\n");
+
+	print_obs_marker(t, pdinfo, prn);
+	pprintf(prn, " & ");
+	
+	if (na(fr->actual[t]) || na(fr->fitted[t])) { 
+	    pprintf(prn, "\\\\\n");
+	} else {
+	    int ast;
+
+	    xx = fr->actual[t] - fr->fitted[t];
+	    ast = (fabs(xx) > 2.5 * fr->sigma);
+	    if (ast) anyast = 1;
+	    pprintf(prn, "%13.*f & %13.*f & %13.*f & %s \\\\\n", 
+		    fr->pmax, fr->actual[t],
+		    fr->pmax, fr->fitted[t], fr->pmax, xx,
+		    (ast)? " *" : "");
+	}
+    }
+
+    pprintf(prn, "\\end{tabular}\n"
+	    "\\end{center}\n\n");
+
+    if (anyast) pprintf(prn, I_("\\textit{Note}: * denotes a residual "
+				"in excess of 2.5 standard errors\n\n"));
+}
+
+/* .................................................................. */
+
+void texprint_fcast_with_errs (const FITRESID *fr, 
+			       const DATAINFO *pdinfo, 
+			       PRN *prn)
+{
+    int t;
+    double *maxerr;
+
+    maxerr = mymalloc(fr->nobs * sizeof *maxerr);
+    if (maxerr == NULL) return;
+
+    pprintf(prn, I_(" For 95%% confidence intervals, t(%d, .025) = %.3f\n"), 
+	    fr->pmax, fr->tval);
+    pprintf(prn, "\n     Obs ");
+    pprintf(prn, "%12s", fr->depvar);
+    pprintf(prn, "%*s", UTF_WIDTH(I_("prediction"), 14), _("prediction"));
+    pprintf(prn, "%*s", UTF_WIDTH(_(" std. error"), 14), _(" std. error"));
+    pprintf(prn, _("   95%% confidence interval\n"));
+    pprintf(prn, "\n");
+
+    for (t=0; t<fr->nobs; t++) {
+	print_obs_marker(t + fr->t1, pdinfo, prn);
+	_printxs(fr->actual[t], 15, PRINT, prn);
+	_printxs(fr->fitted[t], 15, PRINT, prn);
+	_printxs(fr->sderr[t], 15, PRINT, prn);
+	maxerr[t] = fr->tval * fr->sderr[t];
+	_printxs(fr->fitted[t] - maxerr[t], 15, PRINT, prn);
+	pprintf(prn, " -");
+	_printxs(fr->fitted[t] + maxerr[t], 10, PRINT, prn);
+	pprintf(prn, "\n");
+    }
+}
+
 /* .................................................................. */
 
 void augment_copy_menu (windata_t *vwin)
