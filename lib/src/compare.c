@@ -709,6 +709,31 @@ int autocorr_test (MODEL *pmod, int order,
     double trsq, LMF, bp, lb;
     int err = 0;
 
+    if (dataset_is_panel(pdinfo)) {
+	void *handle;
+	int (*panel_autocorr_test)(MODEL *, int, 
+				   double **, DATAINFO *, 
+				   PRN *, GRETLTEST *);
+
+	if (open_plugin("panel_data", &handle)) {
+	    pprintf(prn, _("Couldn't access panel plugin\n"));
+	    return 1;
+	}
+
+	panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
+						  handle);
+	if (panel_autocorr_test == NULL) {
+	    pprintf(prn, _("Couldn't load plugin function\n"));
+	    close_plugin(handle);
+	    return 1;
+	}
+
+	err = panel_autocorr_test(pmod, order, *pZ, pdinfo,
+				  prn, NULL);
+	close_plugin(handle);
+	return err;
+    }
+
     exchange_smpl(pmod, pdinfo);
     _init_model(&aux, pdinfo);
 

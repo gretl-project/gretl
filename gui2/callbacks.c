@@ -368,7 +368,11 @@ void model_test_callback (gpointer data, guint action, GtkWidget *widget)
     case LMTEST: 
 	strcpy(title, _("gretl: autocorrelation"));
 	strcpy(query, _("Lag order for test:"));
-	sprintf(defstr, "%d", datainfo->pd);
+	if (dataset_is_panel(datainfo)) {
+	    strcpy(defstr, "1");
+	} else {
+	    sprintf(defstr, "%d", datainfo->pd);
+	}
 	okfunc = do_autocorr;
 	break;
     case CHOW:

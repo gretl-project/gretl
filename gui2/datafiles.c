@@ -736,6 +736,40 @@ void panel_structure_dialog (DATAINFO *pdinfo, GtkWidget *w)
 
 /* .................................................................. */
 
+void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w)
+{
+    int resp;
+    gchar *msg;
+
+    msg = g_strdup_printf(_("Do you want to restructure the current panel data set\n"
+			    "as stacked time series?"));
+
+    resp = yes_no_dialog(_("gretl: panel structure"), msg, 0);
+
+    if (resp == YES_BUTTON) {
+	void *handle;
+	int (*switch_panel_orientation)(double **, DATAINFO *);
+
+	if (gui_open_plugin("panel_data", &handle) == 0) {
+	    switch_panel_orientation = 
+		get_plugin_function("switch_panel_orientation", handle);
+	    if (switch_panel_orientation != NULL) {
+		if (switch_panel_orientation(Z, datainfo)) {
+		    errbox(_("Failed to change panel structure"));
+		} else {
+		    infobox(_("Panel structure changed to stacked time series"));
+		    data_status |= MODIFIED_DATA;
+		    set_sample_label(datainfo);
+		}
+	    }
+	}
+    }
+
+    g_free(msg);
+}
+
+/* .................................................................. */
+
 struct ts_pd {
     int pd;
     const char *label;

@@ -7,12 +7,14 @@ version 1.0.2
   commands and sending the commands to gnuplot
 - fix bug in test for balanced panel and reading of panel
   structure
-- make autocorrelation and ARCH tests unavailable for models
-  estimated with panel data
+- panel models: implement a valid autocorrelation test, and 
+  make the ARCH test unavailable
 - fix bug in generating lagged variables with panel data
 - put a limit of 1024 on the number of forecasts that can be 
   called for, in the "forecast with standard errors" routine
   (could exhaust virtual memory)
+- add menu item to restructure a panel data set from stacked
+  cross-section to stacked time series
 
 11/27/02 version 1.0.1
 - fix to configure script in re. glib-2.0

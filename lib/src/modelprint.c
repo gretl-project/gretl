@@ -714,12 +714,18 @@ static void print_model_heading (const MODEL *pmod,
 		I_("%s estimates using the %d observations %s%s%s"),
 		_("SUR"), 
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
-    } else {
+    } else if (!dataset_is_panel(pdinfo)) {
 	pprintf(prn, (utf)?
 		_("%s estimates using the %d observations %s%s%s") :
 		I_("%s estimates using the %d observations %s%s%s"),
 		_(estimator_string(pmod->ci, prn->format)), 
 		pmod->nobs, startdate, (tex)? "--" : "-", enddate);
+    } else {
+	pprintf(prn, (utf)?
+		_("%s estimates using %d observations") :
+		I_("%s estimates using %d observations"),
+		_(estimator_string(pmod->ci, prn->format)), 
+		pmod->nobs);
     }
 
     if (tex) pprintf(prn, "\\\\\n");

@@ -169,7 +169,8 @@ int model_test_start (const int id, PRN *prn, int ols_only)
 	pprintf(prn, _("Can't do this: there is no model %d\n"), id);
 	return 1;
     }    
-    else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3)) {
+    else if (ols_only && strncmp(modelspec[m].cmd, "ols", 3) &&
+	     strncmp(modelspec[m].cmd, "pooled", 6)) {
 	pprintf(prn, _("This command only available for OLS models "
 		"at present\n"));
 	return 1;

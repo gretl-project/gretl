@@ -58,6 +58,7 @@ extern void open_named_db_list (char *dbname);
 extern void open_named_remote_db_list (char *dbname);
 extern void gui_set_panel_structure (gpointer data, guint u, GtkWidget *w);
 extern void time_series_dialog (gpointer data, guint u, GtkWidget *w);
+extern void panel_restructure_dialog (gpointer data, guint u, GtkWidget *w);
 
 /* functions private to gretl.c */
 
@@ -465,6 +466,7 @@ GtkItemFactoryEntry data_items[] = {
     { N_("/Sample/sep5"), NULL, NULL, 0, "<Separator>" },
     { N_("/Sample/_Interpret as time series..."), NULL, time_series_dialog, 0, NULL },
     { N_("/Sample/Interpret as _panel..."), NULL, gui_set_panel_structure, 0, NULL },
+    { N_("/Sample/Restructure panel..."), NULL, panel_restructure_dialog, 0, NULL },
 
     /* Variable menu */
     { N_("/_Variable"), NULL, NULL, 0, "<Branch>" },
@@ -1103,6 +1105,9 @@ void set_sample_label (DATAINFO *pdinfo)
 
     flip(mdata->ifac, "/Sample/Interpret as panel...", 
 	 !(pdinfo->pd == 1));
+
+    flip(mdata->ifac, "/Sample/Restructure panel...", 
+	 pdinfo->time_series == STACKED_CROSS_SECTION);
 
     sprintf(labeltxt, _("%s: Full range %s - %s; current sample"
 			" %s - %s"), pdstr, pdinfo->stobs, pdinfo->endobs,

@@ -1673,7 +1673,31 @@ void do_autocorr (GtkWidget *widget, dialog_t *ddata)
     clear(line, MAXLEN);
     sprintf(line, "lmtest -m %d", order);
 
-    err = autocorr_test(pmod, order, &Z, datainfo, prn, &test);
+    if (dataset_is_panel(datainfo)) {
+	void *handle;
+	int (*panel_autocorr_test)(MODEL *, int, 
+				   double **, DATAINFO *, 
+				   PRN *, GRETLTEST *);
+
+	err = gui_open_plugin("panel_data", &handle);
+	if (!err) {
+	    panel_autocorr_test = get_plugin_function("panel_autocorr_test", 
+						      handle);
+	    if (panel_autocorr_test == NULL) {
+		errbox(_("Couldn't load plugin function"));
+		close_plugin(handle);
+		gretl_print_destroy(prn);
+		return;
+	    } else {
+		err = panel_autocorr_test(pmod, order, Z, datainfo,
+					  prn, &test);
+		close_plugin(handle);
+	    }
+	}
+    } else {
+	err = autocorr_test(pmod, order, &Z, datainfo, prn, &test);
+    }
+
     if (err) {
 	gui_errmsg(err);
 	gretl_print_destroy(prn);

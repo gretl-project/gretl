@@ -148,7 +148,7 @@ static double get_date_x (int pd, const char *obs)
 
 	if (ed >= 0) x = ed;
     } else 
-	x = atof(obs); 
+	x = obs_str_to_double(obs); 
 
     return x;
 }

@@ -620,32 +620,49 @@ int panel_diagnostics (MODEL *pmod, double ***pZ, DATAINFO *pdinfo,
 
 /* .................................................................. */
 
-#ifdef notyet
-
-static void copy_variable (double **targZ, DATAINFO *targinfo, int targv,
-                           double **srcZ, DATAINFO *srcinfo, int srcv)
+static void panel_copy_var (double **targZ, DATAINFO *targinfo, int targv,
+			    double *src, DATAINFO *srcinfo, int srcv,
+			    int order)
 {
-    int t;
+    int t, j = 0;
 
-    /* use mask to mask out missing vals */
-
-    for (t=0; t<targinfo->n; t++) {
-        targZ[targv][t] = srcZ[srcv][t];
+    for (t=srcinfo->t1; t<=srcinfo->t2; t++) {
+	if (t % srcinfo->pd >= order) {
+	    targZ[targv][j++] = src[t];
+	} 
     }
 
-    strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
-    strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+    if (srcv == -1) {
+	strcpy(targinfo->varname[targv], "uhat");
+	strcpy(targinfo->label[targv], _("residual"));
+    } else {
+	strcpy(targinfo->varname[targv], srcinfo->varname[srcv]);
+	strcpy(targinfo->label[targv], srcinfo->label[srcv]);
+    }
 }
 
 static void make_reduced_data_info (DATAINFO *targ, DATAINFO *src, int order)
 {
-    /* FIXME!!! */
-    targ->sd0 = src->sd0;
-    strcpy(targ->stobs, src->stobs); 
-    targ->t1 = src->t1;
-    targ->t2 = src->t2;
-    targ->pd = src->pd - order; 
+    targ->pd = src->pd - order;
+    ntodate(targ->stobs, src->t1 + order, src);
+    targ->sd0 = obs_str_to_double(targ->stobs); 
     targ->time_series = src->time_series;
+}
+
+static void panel_lag (double **tmpZ, DATAINFO *tmpinfo, 
+		       double *src, DATAINFO *srcinfo, 
+		       int v, int order, int lag)
+{
+    int t, j = 0;
+
+    for (t=srcinfo->t1; t<=srcinfo->t2; t++) {
+	if (t % srcinfo->pd >= order) {
+	    tmpZ[v][j++] = src[t - lag];
+	}
+    }
+
+    sprintf(tmpinfo->varname[v], "uhat_%d", lag);
+    tmpinfo->label[v][0] = 0;
 }
 
 /* - do some sanity checks
@@ -664,9 +681,8 @@ int panel_autocorr_test (MODEL *pmod, int order,
     double **tmpZ;
     DATAINFO *tmpinfo;
     MODEL aux;
-    int i, t; 
     double trsq, LMF;
-    int nv, nunits, nobs, err = 0;
+    int i, nv, nunits, nobs, err = 0;
     int sn = pdinfo->t2 - pdinfo->t1 + 1;
 
     /* basic checks */
@@ -674,11 +690,9 @@ int panel_autocorr_test (MODEL *pmod, int order,
     if (order > pdinfo->pd - 1) return E_DF;
     if (pmod->ncoeff + order >= sn) return E_DF;
 
-    if (!balanced_panel(pdinfo)) {
-        pprintf(prn, _("Sorry, can't do this test on an unbalanced panel.\n"
-                "You need to have the same number of observations\n"
-                "for each cross-sectional unit"));
-        return 1;
+    if (pdinfo->time_series != STACKED_TIME_SERIES ||
+	!balanced_panel(pdinfo)) { 
+        return E_DATA;
     }
 
     /* get number of cross-sectional units */
@@ -690,53 +704,54 @@ int panel_autocorr_test (MODEL *pmod, int order,
     /* the required number of variables */
     nv = pmod->list[0] + order;
 
-    /* create little temporary dataset */
+    /* create temporary reduced dataset */
     tmpinfo = create_new_dataset(&tmpZ, nv, nobs, 0);
     if (tmpinfo == NULL) return E_ALLOC;
-    make_reduced_data_info(tmpinfo, pdinfo);
+    make_reduced_data_info(tmpinfo, pdinfo, order);
+
+    fprintf(stderr, "Created data set, n=%d, pd=%d, vars=%d, stobs='%s'\n", 
+	    tmpinfo->n, tmpinfo->pd, tmpinfo->v, tmpinfo->stobs);
 
     /* allocate the auxiliary regression list */
     aclist = malloc((nv + 1) * sizeof *aclist);
     if (aclist == NULL) {
 	err = E_ALLOC;
-    } else {
-	/* copy across the original indep vars, and make
+    } 
+
+    if (!err) {
+	aclist[0] = pmod->list[0] + order;
+	/* copy model uhat to position 1 in temp data set */
+	aclist[1] = 1;
+	panel_copy_var(tmpZ, tmpinfo, 1,
+		       &pmod->uhat[0], pdinfo, -1,
+		       order);
+	/* copy across the original indep vars, making
 	   the new regression list while we're at it */
 	for (i=2; i<=pmod->list[0]; i++) {
 	    if (pmod->list[i] == 0) { /* the constant */
 		aclist[i] = 0;
 	    } else {
-		aclist[i] = i - 1;
-		/* copy variable here */
+		aclist[i] = i;
+		panel_copy_var(tmpZ, tmpinfo, i, 
+			       &Z[pmod->list[i]][0], pdinfo, pmod->list[i], 
+			       order);
 	    }
 	}
     }
 	
     if (!err) {
-	/* add uhat to data set */
-	for (t=0; t<n; t++) {
-	    tmpZ[v][t] = NADBL;
-	}
-	for (t=pmod->t1; t<=pmod->t2; t++) {
-	    tmpZ[v][t] = pmod->uhat[t];
-	}
-	strcpy(tmpinfo->varname[v], "uhat");
-	strcpy(tmpinfo->label[v], _("residual"));
-	/* then lags of same */
+	int v = pmod->list[0] - 1;
+
+	/* add lags of uhat to temp data set */
 	for (i=1; i<=order; i++) {
-	    if (_laggenr(v, i, 1, &tmpZ, tmpinfo)) {
-		/* FIXME */
-		sprintf(gretl_errmsg, _("lagging uhat failed"));
-		err = E_LAGS;
-	    } else {
-		aclist[pmod->list[0] + i] = v+i;
-	    }
+	    panel_lag(tmpZ, tmpinfo, &pmod->uhat[0], 
+		      pdinfo, v + i, order, i);
+	    aclist[v + i + 1] = v + i;
 	}
     }
 
     if (!err) {
-	aclist[1] = v;
-	aux = lsq(aclist, tmpZ, tmpinfo, OLS, 1, 0.0);
+	aux = lsq(aclist, &tmpZ, tmpinfo, OLS, 1, 0.0);
 	err = aux.errcode;
 	if (err) {
 	    errmsg(aux.errcode, prn);
@@ -762,7 +777,6 @@ int panel_autocorr_test (MODEL *pmod, int order,
 		_("Chi-square"), order, trsq, chisq(trsq, order));
 
 	if (test != NULL) {
-	    gretl_test_init(test);
 	    strcpy(test->type, N_("LM test for autocorrelation up to order %s"));
 	    strcpy(test->h_0, N_("no autocorrelation"));
 	    sprintf(test->param, "%d", order);
@@ -784,7 +798,101 @@ int panel_autocorr_test (MODEL *pmod, int order,
     return err;
 }
 
-#endif
+int switch_panel_orientation (double **Z, DATAINFO *pdinfo)
+{
+    double **tmpZ;
+    int i, j, k, t, nvec;
+    int nunits = pdinfo->pd;
+    int nperiods = pdinfo->n / nunits;
+    char **markers = NULL;
+
+    tmpZ = malloc((pdinfo->v - 1) * sizeof *tmpZ);
+    if (tmpZ == NULL) return E_ALLOC;
+
+    /* allocate temporary data matrix */
+    j = 0;
+    for (i=1; i<pdinfo->v; i++) {
+	if (pdinfo->vector[i]) {
+	    tmpZ[j] = malloc(pdinfo->n * sizeof **tmpZ);
+	    if (tmpZ[j] == NULL) {
+		for (i=0; i<j; i++) free(tmpZ[i]);
+		free(tmpZ);
+		return E_ALLOC;
+	    }
+	    j++;
+	} 
+    }
+    nvec = j;
+
+    /* allocate marker space if relevant */
+    if (pdinfo->S != NULL) {
+	markers = malloc(pdinfo->n * sizeof *markers);
+	if (markers != NULL) {
+	    for (t=0; t<pdinfo->n; t++) {
+		markers[t] = malloc(9);
+		if (markers[t] == NULL) {
+		    free(markers);
+		    markers = NULL;
+		    break;
+		} else {
+		    strcpy(markers[t], pdinfo->S[t]);
+		}
+	    }
+	}
+    }
+
+    /* copy the data (vectors) across */
+    j = 0;
+    for (i=1; i<pdinfo->v; i++) {
+	if (pdinfo->vector[i]) {
+	    for (t=0; t<pdinfo->n; t++) {
+		tmpZ[j][t] = Z[i][t];
+	    }
+	    j++;
+	} 
+    }
+
+    /* copy the data back in transformed order: construct a set of
+       time series for each unit in turn -- and do markers if present */
+    for (k=0; k<nunits; k++) {
+	j = 0;
+	for (i=1; i<pdinfo->v; i++) {
+	    if (!pdinfo->vector[i]) continue;
+	    for (t=0; t<nperiods; t++) {
+		Z[i][k * nperiods + t] = tmpZ[j][k + nunits * t];
+	    }
+	    j++;
+	}
+	if (markers != NULL) {
+	    for (t=0; t<nperiods; t++) {
+		strcpy(pdinfo->S[k * nperiods + t], markers[k + nunits * t]);
+	    }
+	}
+    }
+
+    /* change the datainfo setup */
+    pdinfo->time_series = STACKED_TIME_SERIES;
+    pdinfo->pd = nperiods;
+    if (nperiods < 9) {
+	strcpy(pdinfo->stobs, "1:1");
+    } else {
+	strcpy(pdinfo->stobs, "1:01");
+    }
+    pdinfo->sd0 = obs_str_to_double(pdinfo->stobs);
+    ntodate(pdinfo->endobs, pdinfo->n - 1, pdinfo);
+
+    /* clean up */
+    for (i=0; i<nvec; i++) free(tmpZ[i]);
+    free(tmpZ);
+    if (markers != NULL) {
+	for (t=0; t<pdinfo->n; t++) {
+	    free(markers[t]);
+	}
+	free(markers);
+    }
+
+    return 0;
+}
 
 
 
