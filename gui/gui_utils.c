@@ -1104,6 +1104,10 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
+	if (vwin->role != PCA && viewbar_items[i].flag == ADD_ITEM) {
+	    continue;
+	}
+
 	if (viewbar_items[i].flag == COPY_ITEM && 
 	    MULTI_COPY_ENABLED(vwin->role)) {
 	    toolfunc = choose_copy_format_callback;
