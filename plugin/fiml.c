@@ -473,29 +473,6 @@ static void fiml_uhat_init (fiml_system *fsys)
     gretl_matrix_print(fsys->uhat, "uhat from 3SLS", NULL);
 }
 
-/* test for loglikelihood and gradient calculations: initialize
-   coefficients from "known" MLE: see
-   http://www.stanford.edu/~clint/bench/kleinfm2.tsp
-*/
-
-static void klein_MLE_init (fiml_system *fsys)
-{
-    MODEL *pmod;
-    int i, j, k = 0;
-    const double klein_params[] = {
-	18.34327218344233, -.2323887662328997,  .3856730901020590, .8018443391624640,
-	27.26386576310186, -.8010060259538374, 1.051852141335067, -.1480990630401963,
-	5.794287580524262,  .2341176397831136,  .2846766802287325, .2348346571073103
-    };
-
-    for (i=0; i<fsys->g; i++) {
-	pmod = system_get_model(fsys->sys, i);
-	for (j=0; j<pmod->ncoeff; j++) {
-	    pmod->coeff[j] = klein_params[k++];
-	}
-    }
-}
-
 #endif
 
 static int 
@@ -679,6 +656,8 @@ static void fiml_B_update (fiml_system *fsys)
 
 /* calculate log-likelihood for FIML system */
 
+/* FIXME: case where restrictions are imposed? */
+
 static int fiml_ll (fiml_system *fsys, const double **Z, int t1)
 {
     double tr;
@@ -844,27 +823,35 @@ fiml_adjust_estimates (fiml_system *fsys, const double **Z, int t1,
    matrix of the artificial OLS regression
 */
 
-static int fiml_get_std_errs (fiml_system *fsys)
+static int fiml_get_std_errs (fiml_system *fsys, const gretl_matrix *R)
 {
     gretl_matrix *vcv;
-    double s2;
+    int ldv = fsys->totk;
     int err;
 
-    vcv = gretl_matrix_alloc(fsys->totk, fsys->totk);
+    if (R != NULL) {
+	ldv += R->rows;
+    }
+
+    vcv = gretl_matrix_alloc(ldv, ldv);
     if (vcv == NULL) {
 	return E_ALLOC;
     }
 
-    /* These are "R-hat" standard errors: see Calzolari
+    /* These are "GLS-type" standard errors: see Calzolari
        and Panattoni */
+    
+    if (R != NULL) {
+	err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
+					  fsys->artb, vcv, NULL);
+    } else {
+	err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
+				   vcv, NULL, NULL);
+    }
 
-    err = gretl_matrix_svd_ols(fsys->arty, fsys->artx, fsys->artb, 
-			       vcv, NULL, &s2);
     if (!err) {
 	MODEL *pmod;
 	int i, j, k = 0;
-
-	gretl_matrix_divide_by_scalar(vcv, s2);
 
 	for (i=0; i<fsys->g; i++) {
 	    pmod = system_get_model(fsys->sys, i);
@@ -904,14 +891,16 @@ static void fiml_print_gradients (const gretl_matrix *b, PRN *prn)
 
 int fiml_driver (gretl_equation_system *sys, double ***pZ, 
 		 gretl_matrix *sigma, DATAINFO *pdinfo, 
-		 PRN *prn)
+		 gretlopt opt, PRN *prn)
 {
+    const gretl_matrix *R = system_get_R_matrix(sys);
     fiml_system *fsys;
     int t1 = pdinfo->t1;
     double llbak;
     double crit = 1.0;
     double tol = 1.0e-12; /* over-ambitious? */
     double bigtol = 1.0e-9;
+    int verbose = ((opt & OPT_Q) == 0);
     int iters = 0;
     int err = 0;
 
@@ -920,17 +909,13 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	return E_ALLOC;
     }
 
-    pputs(prn, "\n*** FIML: experimental, work in progress ***\n\n");
+    if (verbose) {
+	pputs(prn, "\n*** FIML: experimental, work in progress ***\n\n");
+    }
 
 #if FDEBUG
-# ifdef KLEIN_INIT
-    /* check ll calc. and gradients: 
-       try starting from "known" MLE values for Klein model 1 */
-    klein_MLE_init(fsys);
-# else
     /* check uhat calculation: set intial uhat based from 3SLS */
     fiml_uhat_init(fsys);
-# endif
 #endif
 
     /* intialize Gamma coefficient matrix */
@@ -946,7 +931,9 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	goto bailout;
     } else {
 	llbak = fsys->ll;
-	pprintf(prn, "*** initial ll = %.8g\n", fsys->ll);
+	if (verbose) {
+	    pprintf(prn, "*** initial ll = %.8g\n", fsys->ll);
+	}
     }    
 
     while (crit > tol && iters < FIML_ITER_MAX) {
@@ -966,8 +953,14 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	fiml_form_indepvars(fsys, (const double **) *pZ, t1);
 
 	/* run artificial regression (ETM, equation 12.86) */
-	err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
-			       NULL, NULL, NULL);
+	if (R != NULL) {
+	    err = gretl_matrix_restricted_ols(fsys->arty, fsys->artx, R, NULL,
+					      fsys->artb, NULL, NULL);
+	} else {
+	    err = gretl_matrix_ols(fsys->arty, fsys->artx, fsys->artb, 
+				   NULL, NULL, NULL);
+	}
+
 	if (err) {
 	    fputs("gretl_matrix_ols: failed\n", stderr);
 	    break;
@@ -979,8 +972,10 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	    break;
 	}
 
-	pprintf(prn, "*** iteration %3d: step = %g, ll = %.8g\n", iters + 1, 
-		step, fsys->ll);
+	if (verbose) {
+	    pprintf(prn, "*** iteration %3d: step = %g, ll = %.8g\n", iters + 1, 
+		    step, fsys->ll);
+	}
 
 	crit = fsys->ll - llbak;
 	llbak = fsys->ll;
@@ -988,22 +983,28 @@ int fiml_driver (gretl_equation_system *sys, double ***pZ,
 	iters++;
     }
 
-    if (crit < tol) {
-	pprintf(prn, "\nTolerance %g, criterion %g\n", tol, crit);
-    } else if (crit < bigtol) {
-	pprintf(prn, "\nTolerance %g, criterion %g\n", bigtol, crit);
-    } else {
-	pputc(prn, '\n');
-	pprintf(prn, "Tolerance of %g was not met\n", bigtol);
-	err = 1;
+    if (verbose) {
+	if (crit < tol) {
+	    pprintf(prn, "\nTolerance %g, criterion %g\n", tol, crit);
+	} else if (crit < bigtol) {
+	    pprintf(prn, "\nTolerance %g, criterion %g\n", bigtol, crit);
+	} else {
+	    pputc(prn, '\n');
+	    pprintf(prn, "Tolerance of %g was not met\n", bigtol);
+	    err = 1;
+	}
     }
 
     if (!err) {
-	fiml_print_gradients(fsys->artb, prn);
-	err = fiml_get_std_errs(fsys);
+	if (verbose) {
+	    fiml_print_gradients(fsys->artb, prn);
+	}
+	err = fiml_get_std_errs(fsys, R);
     }
 
-    over_identification_test(fsys, pZ, pdinfo);
+    if (R != NULL && verbose) {
+	over_identification_test(fsys, pZ, pdinfo);
+    }
 
     /* write the results into the parent system */
     fiml_transcribe_results(fsys, (const double **) *pZ, t1, sigma, iters);

@@ -27,7 +27,7 @@
 /* fiml.c */
 extern int fiml_driver (gretl_equation_system *sys, double ***pZ, 
 			gretl_matrix *sigma, DATAINFO *pdinfo, 
-			PRN *prn);
+			gretlopt opt, PRN *prn);
 
 /* liml.c */
 extern int liml_driver (gretl_equation_system *sys, double ***pZ, 
@@ -224,7 +224,6 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 			    gretl_matrix *y, int m, int mk)
 {
     int method = system_get_method(sys);
-    int nr = system_n_restrictions(sys);
     gretl_matrix *vcv;
     int i, j, k, j0;
     int err = 0;
@@ -274,7 +273,7 @@ calculate_sys_coefficients (gretl_equation_system *sys,
 	}
     }
 
-    if (nr == 0) {
+    if (system_save_vcv(sys)) {
 	gretl_matrix *b = gretl_matrix_copy(y);
 
 	system_attach_coeffs(sys, b);
@@ -392,7 +391,6 @@ print_system_overidentification_test (const gretl_equation_system *sys,
 	double llu = system_get_llu(sys);
 	double X2;
 
-	/* let's not print rubbish */
 	if (na(ll) || na(llu) || ll == 0.0 || llu == 0.0) {
 	    return;
 	}
@@ -533,8 +531,8 @@ static int hansen_sargan_test (gretl_equation_system *sys,
     return err;
 }
 
-static int basic_system_allocate (int method, 
-				  int m, int T, int mk, int nr,
+static int basic_system_allocate (int method, int m, int T, 
+				  int mk, int nr, int save_vcv,
 				  MODEL ***models,
 				  gretl_matrix **uhat, 
 				  gretl_matrix **sigma,
@@ -574,10 +572,12 @@ static int basic_system_allocate (int method,
     }
 
     /* single-equation estimators don't need the stacked X and y
-       matrices, unless we're testing a set of restrictions
+       matrices, unless we're testing a set of restrictions or
+       planning to save the system covariance matrix
     */
 
-    if (nr == 0 && (method == SYS_OLS || method == SYS_TSLS)) {
+    if ((method == SYS_OLS || method == SYS_TSLS) &&
+	nr == 0 && !save_vcv) {
 	return 0;
     }
 
@@ -604,6 +604,7 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
     int method = system_get_method(sys);
     int iters = system_iters(sys);
     int m = system_n_equations(sys);
+    int nr = system_n_restrictions(sys);
     int i, j = 0;
     int err = 0;
 
@@ -651,7 +652,10 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
     }
 
     print_system_vcv(sigma, prn);
-    if (method == SYS_FIML || method == SYS_3SLS || method == SYS_SUR) {
+
+    if (nr == 0 && (method == SYS_FIML || 
+		    method == SYS_3SLS || 
+		    method == SYS_SUR)) {
 	print_system_overidentification_test(sys, method, prn);
     }
 
@@ -764,6 +768,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     double llbak = -1.0e9;
     int single_equation = 0;
     int do_iteration = 0;
+    int save_vcv = 0;
     int r3sls = 0;
     int iters = 0;
     int err = 0;
@@ -781,6 +786,11 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     if (nr > 0 && method == SYS_3SLS) {
 	/* doing 3SLS with restrictions */
 	r3sls = 1;
+    }
+
+    if (system_save_vcv(sys)) {
+	/* saving covariance matrix for testing restrictions */
+	save_vcv = 1;
     }
 
     /* get uniform sample starting and ending points */
@@ -804,8 +814,8 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     system_set_n_obs(sys, T);
 
     /* allocate models etc */
-    err = basic_system_allocate(method, m, T, mk, nr, &models,
-				&uhat, &sigma, &X, &y);
+    err = basic_system_allocate(method, m, T, mk, nr, save_vcv,
+				&models, &uhat, &sigma, &X, &y);
     if (err) goto cleanup;
 	    
     if (method == SYS_FIML || method == SYS_LIML) {
@@ -871,8 +881,9 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     gls_sigma_from_uhat(sys, sigma, uhat, m, T);
 
-    /* single equation method, no restrictions to test */
-    if (nr == 0 && single_equation) {
+    /* single equation method, no restrictions to test and 
+       system vcv not required: skip ahead */
+    if (single_equation && nr == 0 && !system_save_vcv(sys)) {
 	goto print_save;
     }
 
@@ -1056,7 +1067,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	system_attach_uhat(sys, uhat);
 	system_attach_models(sys, models);
 
-	err = fiml_driver(sys, pZ, sigma, pdinfo, prn);
+	err = fiml_driver(sys, pZ, sigma, pdinfo, opt, prn);
 
 	/* detach convenience pointers */
 	system_unattach_uhat(sys);

@@ -63,6 +63,8 @@ const char *system_get_full_string (const gretl_equation_system *sys,
 int system_save_uhat (const gretl_equation_system *sys);
 int system_save_yhat (const gretl_equation_system *sys);
 
+int system_save_vcv (const gretl_equation_system *sys);
+
 int system_want_df_corr (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);

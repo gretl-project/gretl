@@ -46,7 +46,9 @@ enum {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
     GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
     GRETL_SYSTEM_DFCORR    = 1 << 2,
-    GRETL_SYS_VCV_GEOMEAN  = 1 << 3
+    GRETL_SYS_VCV_GEOMEAN  = 1 << 3,
+    GRETL_SYS_SAVE_VCV     = 1 << 4,
+    GRETL_SYS_RESTRICT     = 1 << 5
 } equation_system_flags;
 
 struct id_atom_ {
@@ -65,7 +67,6 @@ struct _gretl_equation_system {
     int method;                 /* estimation method */
     int n_equations;            /* number of stochastic equations */
     int n_identities;           /* number of identities */
-    int n_restrictions;         /* number of linear restrictions */
     int n_obs;                  /* number of observations per equation */
     int iters;                  /* number of iterations taken */
     char flags;                 /* to record options (e.g. save residuals) */
@@ -286,7 +287,6 @@ gretl_equation_system_new (int method, const char *name)
 
     sys->n_equations = 0;
     sys->n_identities = 0;
-    sys->n_restrictions = 0;
 
     sys->R = NULL;
     sys->q = NULL;
@@ -314,8 +314,6 @@ gretl_equation_system_new (int method, const char *name)
 
 static void system_clear_restrictions (gretl_equation_system *sys)
 {
-    sys->n_restrictions = 0;
-
     if (sys->R != NULL) {
 	free(sys->R);
 	sys->R = NULL;
@@ -325,6 +323,8 @@ static void system_clear_restrictions (gretl_equation_system *sys)
 	free(sys->q);
 	sys->q = NULL;
     }
+
+    sys->flags &= ~GRETL_SYS_RESTRICT;
 }
 
 static void system_clear_results (gretl_equation_system *sys)
@@ -354,6 +354,11 @@ static void gretl_equation_system_clear (gretl_equation_system *sys)
     sys->flags = 0;
     sys->method = -1;
 
+    /* if restrictions in place, reset the restricted flag */
+    if (sys->R != NULL && sys->q != NULL) {
+	sys->flags |= GRETL_SYS_RESTRICT;
+    }
+
     system_clear_results(sys);
 }
 
@@ -379,8 +384,11 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 
     free(sys->name);
 
-    if (sys->n_restrictions > 0) {
+    if (sys->R != NULL) {
 	gretl_matrix_free(sys->R);
+    }
+
+    if (sys->q != NULL) {
 	gretl_matrix_free(sys->q);
     }
 
@@ -619,7 +627,7 @@ system_print_F_test (const gretl_equation_system *sys,
     int Rrows = gretl_matrix_rows(R);
     int vcols = gretl_matrix_cols(vcv);
     int dfu = system_get_dfu(sys);
-    int dfn = sys->n_restrictions;
+    int dfn = gretl_matrix_rows(R);
 
     gretl_matrix *Rbq = NULL;
     gretl_matrix *Rv = NULL;
@@ -703,18 +711,86 @@ static int sys_test_type (gretl_equation_system *sys, gretlopt opt)
 {
     int ret = SYS_NO_TEST;
 
-    if (sys->method == SYS_SUR && sys->n_restrictions > 0) {
-	if (opt & OPT_T) {
-	    ret = SYS_LR_TEST;
-	} else {
+    if (system_n_restrictions(sys) > 0) {
+	if (sys->method == SYS_SUR) {
+	    if (opt & OPT_T) {
+		ret = SYS_LR_TEST;
+	    } else {
+		ret = SYS_F_TEST;
+	    }
+	} else if (sys->method == SYS_OLS ||
+		   sys->method == TSLS ||
+		   sys->method == SYS_3SLS) {
 	    ret = SYS_F_TEST;
-	}
-    } else if (0 && sys->method == SYS_OLS && sys->n_restrictions > 0) {
-	/* not ready yet */
-	ret = SYS_F_TEST;
+	} else if (sys->method == SYS_FIML) {
+	    ret = SYS_LR_TEST;
+	} 
     }
 
     return ret;
+}
+
+static int estimate_with_test (gretl_equation_system *sys, 
+			       double ***pZ, DATAINFO *pdinfo, 
+			       gretlopt opt, int stest, 
+			       int (*system_est)(), PRN *prn)
+{
+    gretl_matrix *vcv = NULL;
+    gretl_matrix *b = NULL;
+    double llu = 0.0;
+    int err = 0;
+
+    /* estimate the unrestricted system first */
+
+    sys->flags &= ~GRETL_SYS_RESTRICT;
+
+    if (stest == SYS_F_TEST) {
+	/* save unrestricted coeffs and vcv */
+	sys->flags |= GRETL_SYS_SAVE_VCV;
+    }
+
+    err = (* system_est) (sys, pZ, pdinfo, opt | OPT_Q, prn);
+
+    if (stest == SYS_F_TEST) {
+	sys->flags ^= GRETL_SYS_SAVE_VCV;
+    }
+
+    sys->flags ^= GRETL_SYS_RESTRICT;
+
+    if (err) {
+	goto bailout;
+    }
+
+    /* grab the data from unrestricted estimation */
+
+    if (stest == SYS_LR_TEST) {
+	llu = sys->ll;
+    } else if (stest == SYS_F_TEST) {
+	b = sys->b;
+	sys->b = NULL;
+	vcv = sys->vcv;
+	sys->vcv = NULL;
+    }
+
+    /* now estimate the restricted system */
+
+    system_clear_results(sys);
+    err = (* system_est) (sys, pZ, pdinfo, opt, prn);
+
+    if (!err) {
+	if (stest == SYS_LR_TEST) {
+	    system_print_LR_test(sys, llu, prn);
+	} else if (stest == SYS_F_TEST) {
+	    system_print_F_test(sys, b, vcv, prn);
+	}
+    }
+
+ bailout:
+
+    if (b != NULL) gretl_matrix_free(b);
+    if (vcv != NULL) gretl_matrix_free(vcv);
+
+    return err;
 }
 
 /* driver function for the routines in the "sysest" plugin */
@@ -749,41 +825,8 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     stest = sys_test_type(sys, opt);
 
     if (stest != SYS_NO_TEST) {
-	gretl_matrix *vcv = NULL;
-	gretl_matrix *b = NULL;
-	double llu = 0.0;
-
-	/* estimate the unrestricted system first */
-	sys->n_restrictions = 0;
-	err = (* system_est) (sys, pZ, pdinfo, opt | OPT_Q, prn);
-	sys->n_restrictions = gretl_matrix_rows(sys->R);
-
-	if (err) {
-	    goto system_bailout;
-	}
-
-	if (stest == SYS_LR_TEST) {
-	    llu = sys->ll;
-	} else if (stest == SYS_F_TEST) {
-	    /* steal the unrestricted ceoffs and vcv */
-	    b = sys->b;
-	    sys->b = NULL;
-	    vcv = sys->vcv;
-	    sys->vcv = NULL;
-	}
-
-	system_clear_results(sys);
-	err = (* system_est) (sys, pZ, pdinfo, opt, prn);
-
-	if (!err) {
-	    if (stest == SYS_LR_TEST) {
-		system_print_LR_test(sys, llu, prn);
-	    } else if (stest == SYS_F_TEST) {
-		system_print_F_test(sys, b, vcv, prn);
-		gretl_matrix_free(b);
-		gretl_matrix_free(vcv);
-	    }
-	}
+	err = estimate_with_test(sys, pZ, pdinfo, opt, stest, 
+				 system_est, prn);
     } else {
 	err = (* system_est) (sys, pZ, pdinfo, opt, prn);
     }
@@ -1028,7 +1071,11 @@ const char *system_get_full_string (const gretl_equation_system *sys,
 
 const gretl_matrix *system_get_R_matrix (const gretl_equation_system *sys)
 {
-    return sys->R;
+    if (sys->flags & GRETL_SYS_RESTRICT) {
+	return sys->R;
+    } else {
+	return NULL;
+    }
 }
 
 const gretl_matrix *system_get_q_matrix (const gretl_equation_system *sys)
@@ -1044,6 +1091,11 @@ int system_save_uhat (const gretl_equation_system *sys)
 int system_save_yhat (const gretl_equation_system *sys)
 {
     return sys->flags & GRETL_SYSTEM_SAVE_YHAT;
+}
+
+int system_save_vcv (const gretl_equation_system *sys)
+{
+    return sys->flags & GRETL_SYS_SAVE_VCV;
 }
 
 int system_want_df_corr (const gretl_equation_system *sys)
@@ -1063,7 +1115,13 @@ int system_n_indentities (const gretl_equation_system *sys)
 
 int system_n_restrictions (const gretl_equation_system *sys)
 {
-    return sys->n_restrictions;
+    int nr = 0;
+
+    if (sys->R != NULL && (sys->flags & GRETL_SYS_RESTRICT)) {
+	nr = gretl_matrix_rows(sys->R);
+    }
+
+    return nr;
 }
 
 int system_n_obs (const gretl_equation_system *sys)
@@ -1635,8 +1693,8 @@ system_set_restriction_matrices (gretl_equation_system *sys,
 
     sys->R = R;
     sys->q = q;
-    
-    sys->n_restrictions = gretl_matrix_rows(R);
+
+    sys->flags |= GRETL_SYS_RESTRICT;
 }
 
 

@@ -1609,17 +1609,9 @@ static int
 get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 		 const double *s, gretl_matrix *vcv, double *s2)
 {
-    double sigma2;
     double aik, ajk, vij;
     int m = A->cols;
-    int T = A->rows;
     int i, j, k;
-
-    sigma2 = 0.0;
-    for (i=m; i<T; i++) {
-	sigma2 += B->val[i] * B->val[i];
-    }
-    sigma2 /= T - m;
 
     /* Get X'X{-1}, based on the work done by the SV decomp:
        reciprocals of the squares of the (positive) singular values,
@@ -1641,11 +1633,17 @@ get_svd_ols_vcv (const gretl_matrix *A, const gretl_matrix *B,
 		vcv->val[mdx(vcv, j, i)] = vij;
 	    }
 	}
-    }	    
-
-    gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+    }
 
     if (s2 != NULL) {
+	double sigma2 = 0.0;
+	int T = A->rows;
+
+	for (i=m; i<T; i++) {
+	    sigma2 += B->val[i] * B->val[i];
+	}
+	sigma2 /= T - m;
+	gretl_matrix_multiply_by_scalar(vcv, sigma2);  
 	*s2 = sigma2;
     }
 
@@ -1657,26 +1655,29 @@ get_ols_vcv (const gretl_vector *y, const gretl_matrix *X,
 	     const gretl_vector *b, gretl_matrix *vcv,
 	     double *s2)
 {
-    double u, sigma2 = 0.0;
-    int k = X->cols;
-    int n = X->rows;
-    int i, j;
-
-    if (gretl_invert_symmetric_matrix(vcv)) return 1;
-
-    for (i=0; i<n; i++) {
-	u = y->val[i];
-	for (j=0; j<k; j++) {
-	    u -= X->val[mdx(X, i, j)] * b->val[j];
-	}
-	sigma2 += u * u;
+    if (gretl_invert_general_matrix(vcv)) {
+	gretl_matrix_print(vcv, "vcv: inversion failed", NULL);
+	return 1;
     }
 
-    sigma2 /= (n - k);
-
-    gretl_matrix_multiply_by_scalar(vcv, sigma2);  
-
     if (s2 != NULL) {
+	double u, sigma2 = 0.0;
+	int k = X->cols;
+	int n = X->rows;
+	int i, j;
+
+	for (i=0; i<n; i++) {
+	    u = y->val[i];
+	    for (j=0; j<k; j++) {
+		u -= X->val[mdx(X, i, j)] * b->val[j];
+	    }
+	    sigma2 += u * u;
+	}
+
+	sigma2 /= (n - k);
+
+	gretl_matrix_multiply_by_scalar(vcv, sigma2);  
+
 	*s2 = sigma2;
     }
 
@@ -1702,7 +1703,10 @@ get_ols_uhat (const gretl_vector *y, const gretl_matrix *X,
 }
 
 /* OLS for data represented as gretl matrices, using Singular
-   Value decomposition */
+   Value decomposition: if vcv is non-NULL compute covariance
+   matrix -- but if s2 is NULL, make this just (X'X)^{-1}.
+   if uhat is non-NULL, compute residuals in uhat
+*/
 
 int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
 			  gretl_vector *b, gretl_matrix *vcv,
@@ -1826,7 +1830,8 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
  * or %NULL if this is not needed.
  * @uhat: vector to hold the regression residuals, or %NULL if 
  * these are not needed.
- * @s2: pointer to receive residual variance, or %NULL.
+ * @s2: pointer to receive residual variance, or %NULL.  Note:
+ * if s2 is NULL, the vcv estimate will be plain (X'X)^{-1}.
  *
  * Computes OLS estimates using LU factorization, and puts the
  * coefficient estimates in @b.  Optionally, calculates the
@@ -1895,6 +1900,129 @@ int gretl_matrix_ols (const gretl_vector *y, const gretl_matrix *X,
 
     if (XTy != NULL) gretl_vector_free(XTy);
     if (XTX != NULL) gretl_matrix_free(XTX);
+
+    return err;
+}
+
+/**
+ * gretl_matrix_restricted_ols:
+ * @y: dependent variable vector.
+ * @X: matrix of independent variables.
+ * @R: left-hand restriction matrix, as in Rb = q.
+ * @q: right-hand restriction vector.
+ * @b: vector to hold coefficient estimates.
+ * @vcv: matrix to hold the covariance matrix of the coefficients,
+ * or %NULL if this is not needed.
+ * @s2: pointer ro receive residual variance, or NULL.  If vcv is non-NULL
+ * and s2 is NULL, the vcv estimate is just W^{-1}.
+ *
+ * Computes OLS estimates restricted by R and q, using LU factorization, 
+ * and puts the coefficient estimates in @b.  Optionally, calculates the
+ * covariance matrix in @vcv.
+ * 
+ * Returns: 0 on success, non-zero error code on failure.
+ * 
+ */
+
+int 
+gretl_matrix_restricted_ols (const gretl_vector *y, const gretl_matrix *X,
+			     const gretl_matrix *R, const gretl_vector *q,
+			     gretl_vector *b, gretl_matrix *vcv,
+			     double *s2)
+{
+    gretl_matrix *XTX = NULL;
+    gretl_vector *V = NULL;
+    gretl_matrix *W = NULL;
+    int k = X->cols;
+    int nr = R->rows;
+    int ldW = k + nr;
+    int err = GRETL_MATRIX_OK;
+    int i, j;
+
+    if (gretl_vector_get_length(b) != k) {
+	err = GRETL_MATRIX_NON_CONFORM;
+    }
+
+    if (!err) {
+	XTX = gretl_matrix_alloc(k, k);
+	V = gretl_column_vector_alloc(ldW);
+	W = gretl_matrix_alloc(ldW, ldW);
+	if (XTX == NULL || V == NULL || W == NULL) {
+	    err = GRETL_MATRIX_NOMEM;
+	}
+    }
+
+    /* construct V matrix: X'y augmented by q (or by a 0
+       matrix if q is NULL)
+    */
+
+    if (!err) {
+	V->rows = k;
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					y, GRETL_MOD_NONE,
+					V);
+	V->rows = ldW;
+    }
+
+    if (!err) {
+	for (i=k; i<ldW; i++) {
+	    if (q != NULL) {
+		V->val[i] = q->val[i-k];
+	    } else {
+		V->val[i] = 0.0;
+	    }
+	}
+    }
+
+    /* construct W matrix: X'X augmented by R and R' */
+
+    if (!err) {
+	gretl_matrix_zero(W);
+	err = gretl_matrix_multiply_mod(X, GRETL_MOD_TRANSPOSE,
+					X, GRETL_MOD_NONE,
+					XTX);
+    }
+
+    if (!err) {
+	for (i=0; i<XTX->rows; i++) {
+	    for (j=0; j<XTX->cols; j++) {
+		W->val[mdx(W,i,j)] = XTX->val[mdx(XTX,i,j)];
+	    }
+	}
+	for (i=0; i<R->rows; i++) {
+	    for (j=0; j<R->cols; j++) {
+		W->val[mdx(W,i+k,j)] = R->val[mdx(R,i,j)];
+	    }
+	}
+	for (i=0; i<R->cols; i++) {
+	    for (j=0; j<R->rows; j++) {
+		W->val[mdx(W,i,j+k)] = R->val[mdx(R,j,i)];
+	    }
+	}
+    }
+
+    if (!err && vcv != NULL) {
+	err = gretl_matrix_copy_values(vcv, W);
+    }
+
+    if (!err) {
+	err = gretl_LU_solve(W, V);
+    }
+
+    if (!err) {
+	int i;
+	
+	for (i=0; i<k; i++) {
+	    b->val[i] = V->val[i];
+	}
+	if (vcv != NULL) {
+	    err = get_ols_vcv(y, X, b, vcv, s2);
+	}
+    }
+
+    if (XTX != NULL) gretl_matrix_free(XTX);
+    if (V != NULL) gretl_vector_free(V);
+    if (W != NULL) gretl_matrix_free(W);
 
     return err;
 }
