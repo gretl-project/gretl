@@ -55,8 +55,7 @@ static int match_object_command (const char *s)
     return OBJ_CMD_NONE;
 }
 
-static int add_model_to_stack (MODEL *pmod, DATAINFO *pdinfo,
-			       const char *s)
+static int add_model_to_stack (MODEL *pmod, const char *s)
 {
     int nm = n_stacked_models;
     char *mname = NULL;
@@ -205,7 +204,12 @@ int maybe_save_model (const CMD *cmd, MODEL **ppmod,
     if ((*ppmod)->errcode) return 1;
     if (*cmd->savename == 0) return 0;
 
-    err = add_model_to_stack(*ppmod, pdinfo, cmd->savename);
+#if 0
+    err = add_model_to_stack(*ppmod, cmd->savename);
+#else
+    (*ppmod)->name = g_strdup(cmd->savename);
+    err = try_add_model_to_session(*ppmod);
+#endif
 
     if (!err) {
 	MODEL *mnew = gretl_model_new(pdinfo);

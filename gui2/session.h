@@ -48,6 +48,8 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w);
 
 void remember_model (gpointer data, guint close, GtkWidget *widget);
 
+int try_add_model_to_session (MODEL *pmod);
+
 int session_changed (int set);
 
 void session_init (void);

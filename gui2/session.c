@@ -287,14 +287,14 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
     /* write graph into session struct */
     if (session.ngraphs) {
 	session.graphs = myrealloc(session.graphs, 
-				   (i + 1) * sizeof(GRAPHT *));
+				   (i + 1) * sizeof *session.graphs);
     } else {
-	session.graphs = mymalloc(sizeof(GRAPHT *));
+	session.graphs = mymalloc(sizeof *session.graphs);
     }
 
     if (session.graphs == NULL) return;
 
-    session.graphs[i] = mymalloc(sizeof(GRAPHT));
+    session.graphs[i] = mymalloc(sizeof **session.graphs);
     if (session.graphs[i] == NULL) return;
 
     (session.graphs[i])->sort = code;
@@ -319,39 +319,71 @@ void add_graph_to_session (gpointer data, guint code, GtkWidget *w)
 
 /* ........................................................... */
 
+static int model_already_saved (MODEL *pmod)
+{
+    int i;
+
+    for (i=0; i<session.nmodels; i++) {
+	if (session.models[i] == pmod) {
+	    infobox(_("Model is already saved"));
+	    return 1;
+	}
+    }
+    return 0;
+}
+
+/* ........................................................... */
+
+static int real_add_model_to_session (MODEL *pmod)
+{
+    int n = session.nmodels; 
+
+    if (session.nmodels) {
+	session.models = myrealloc(session.models, 
+				   (n + 1) * sizeof *session.models);
+    } else {
+	session.models = mymalloc(sizeof *session.models);
+    }
+
+    if (session.models == NULL) return E_ALLOC;
+
+    session.models[n] = pmod;
+    session.nmodels += 1;
+
+    /* add model icon to session display */
+    if (icon_list != NULL) {
+	session_add_icon(session.models[n], 'm', ICON_ADD_SINGLE);
+    }    
+
+    return 0;
+}
+
+/* ........................................................... */
+
+int try_add_model_to_session (MODEL *pmod)
+{
+    if (model_already_saved(pmod)) return 1;
+    if (real_add_model_to_session(pmod)) return 1;
+    return 0;
+}
+
+/* ........................................................... */
+
 void remember_model (gpointer data, guint close, GtkWidget *widget)
      /* called directly from model window */
 {
     windata_t *mydata = (windata_t *) data;
     MODEL *pmod = (MODEL *) mydata->data;
-    int i = session.nmodels;
     gchar *buf;
 
-    for (i=0; i<session.nmodels; i++) {
-	if (session.models[i] == pmod) {
-	    infobox(_("Model is already saved"));
-	    return;
-	}
+    if (model_already_saved(pmod)) {
+	infobox(_("Model is already saved"));
+	return;
     }
 
     pmod->name = g_strdup_printf("%s %d", _("Model"), pmod->ID);
 
-    if (session.nmodels) {
-	session.models = myrealloc(session.models, 
-				   (i + 1) * sizeof(MODEL *));
-    } else {
-	session.models = mymalloc(sizeof(MODEL *));
-    }
-
-    if (session.models == NULL) return;
-
-    session.nmodels += 1;
-    session.models[i] = pmod;
-
-    /* add model icon to session display */
-    if (icon_list != NULL) {
-	session_add_icon(session.models[i], 'm', ICON_ADD_SINGLE);
-    }
+    if (real_add_model_to_session(pmod)) return;
 
     buf = g_strdup_printf(_("%s saved"), pmod->name);
     infobox(buf);
