@@ -205,17 +205,14 @@ static void rsqline (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */ 
 
+static const char *aic_str = N_("Akaike information criterion");
+static const char *bic_str = N_("Schwarz Bayesian criterion");
+static const char *aic_abbrev = N_("AIC");
+static const char *bic_abbrev = N_("BIC");
+
 static void info_stats_lines (const MODEL *pmod, PRN *prn)
 {
     const double *crit = pmod->criterion;
-    const char *info_str[] = {
-	N_("Akaike information criterion"),
-	N_("Schwarz Bayesian criterion")
-    };
-    const char *info_abbrev[] = {
-	N_("AIC"),
-	N_("BIC")
-    };    
 
     if (pmod->aux == AUX_SQ || pmod->aux == AUX_LOG ||
 	pmod->aux == AUX_COINT || pmod->aux == AUX_WHITE ||
@@ -228,24 +225,24 @@ static void info_stats_lines (const MODEL *pmod, PRN *prn)
     }
 
     if (PLAIN_FORMAT(prn->format)) { 
-	pprintf(prn, "  %s (%s) = %.*g\n", _(info_str[0]), _(info_abbrev[0]),
+	pprintf(prn, "  %s (%s) = %.*g\n", _(aic_str), _(aic_abbrev),
 		GRETL_DIGITS, crit[C_AIC]);
-	pprintf(prn, "  %s (%s) = %.*g\n", _(info_str[1]), _(info_abbrev[1]),
+	pprintf(prn, "  %s (%s) = %.*g\n", _(bic_str), _(bic_abbrev),
 		GRETL_DIGITS, crit[C_BIC]);
     }
 
     else if (RTF_FORMAT(prn->format)) {
-	pprintf(prn, RTFTAB "%s = %g\n", I_(info_str[0]), crit[C_AIC]);
-	pprintf(prn, RTFTAB "%s = %g\n", I_(info_str[1]), crit[C_BIC]);
+	pprintf(prn, RTFTAB "%s = %g\n", I_(aic_str), crit[C_AIC]);
+	pprintf(prn, RTFTAB "%s = %g\n", I_(bic_str), crit[C_BIC]);
     }
 
     else if (TEX_FORMAT(prn->format)) {  
 	char cval[32];
 
 	tex_dcolumn_double(crit[C_AIC], cval);
-	pprintf(prn, "%s & %s \\\\\n", I_(info_str[0]), cval);
+	pprintf(prn, "%s & %s \\\\\n", I_(aic_str), cval);
 	tex_dcolumn_double(crit[C_BIC], cval);
-	pprintf(prn, "%s & %s \\\\\n", I_(info_str[1]), cval);
+	pprintf(prn, "%s & %s \\\\\n", I_(bic_str), cval);
     }
 }
 
@@ -1485,7 +1482,6 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 
     if (is_discrete) {
 	print_discrete_statistics(pmod, pdinfo, prn);
-	/* AIC, BIC? */
 	goto close_format;
     }
 
@@ -2197,6 +2193,7 @@ static void print_discrete_statistics (const MODEL *pmod,
     int correct = gretl_model_get_int(pmod, "correct");
     double pc_correct = 100 * (double) correct / pmod->nobs;
     double model_chisq = gretl_model_get_double(pmod, "chisq");
+    const double *crit = pmod->criterion;
 
     if (PLAIN_FORMAT(prn->format)) {
 	pprintf(prn, "  %s %s = %.3f\n", _("Mean of"), 
@@ -2205,13 +2202,17 @@ static void print_discrete_statistics (const MODEL *pmod,
 		correct, pc_correct);
 	pprintf(prn, "  f(beta'x) %s = %.3f\n", _("at mean of independent vars"), 
 		pmod->sdy);
-	pprintf(prn, "  %s = %.3f\n", _("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "  %s = %g\n", _("Log-likelihood"), pmod->lnL);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "  %s: %s(%d) = %.3f (%s %f)\n",
+	    pprintf(prn, "  %s: %s(%d) = %g (%s %f)\n",
 		    _("Likelihood ratio test"), _("Chi-square"), 
 		    i, model_chisq, _("p-value"), chisq(model_chisq, i));
 	}
+	pprintf(prn, "  %s (%s) = %g\n", _(aic_str), _(aic_abbrev),
+		crit[C_AIC]);
+	pprintf(prn, "  %s (%s) = %g\n", _(bic_str), _(bic_abbrev),
+		crit[C_BIC]);
 	pputc(prn, '\n');
     }
 
@@ -2224,13 +2225,17 @@ static void print_discrete_statistics (const MODEL *pmod,
 		correct, pc_correct);
 	pprintf(prn, "\\par f(beta'x) %s = %.3f\n", I_("at mean of independent vars"), 
 		pmod->sdy);
-	pprintf(prn, "\\par %s = %.3f\n", I_("Log-likelihood"), pmod->lnL);
+	pprintf(prn, "\\par %s = %g\n", I_("Log-likelihood"), pmod->lnL);
 	if (pmod->aux != AUX_OMIT && pmod->aux != AUX_ADD) {
 	    i = pmod->ncoeff - 1;
-	    pprintf(prn, "\\par %s: %s(%d) = %.3f (%s %f)\\par\n",
+	    pprintf(prn, "\\par %s: %s(%d) = %g (%s %f)\n",
 		    I_("Likelihood ratio test"), I_("Chi-square"), 
 		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
 	}
+	pprintf(prn, "\\par %s (%s) = %g\n", I_(aic_str), I_(aic_abbrev),
+		crit[C_AIC]);
+	pprintf(prn, "\\par %s (%s) = %g\\par\n", I_(bic_str), I_(bic_abbrev),
+		crit[C_BIC]);
 	pputc(prn, '\n');
     }
 
@@ -2256,6 +2261,10 @@ static void print_discrete_statistics (const MODEL *pmod,
 		    I_("Likelihood ratio test"), 
 		    i, model_chisq, I_("p-value"), chisq(model_chisq, i));
 	}
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(aic_str), I_(aic_abbrev),
+		crit[C_AIC]);
+	pprintf(prn, "%s (%s) = %g\\\\\n", I_(bic_str), I_(bic_abbrev),
+		crit[C_BIC]);
 	pputs(prn, "\\end{raggedright}\n");
     }
 }

@@ -56,6 +56,7 @@ PLUGINSRC = \
 	excel_import.c \
 	gnumeric_import.c \
 	johansen.c \
+	kernel.c \
 	lad.c \
 	vif.c \
 	leverage.c \
@@ -89,6 +90,7 @@ PLUGINS = plugins/stats_tables.dll \
 	plugins/mp_ols.dll \
 	plugins/sysest.dll \
 	plugins/johansen.dll \
+	plugind/kernel.dll \
 	plugins/arma.dll \
 	plugins/arma_x12.dll \
 	plugins/range-mean.dll \
@@ -296,6 +298,10 @@ plugins/stats_tables.dll: stats_tables.o dllinit.o
 plugins/range-mean.dll: range-mean.o dllinit.o 
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
 	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB)
+
+plugins/kernel.dll: kernel.o dllinit.o
+	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \
+	--implib plugins/$(<:.o=.a) $^ $(GRETLLIB) 
 
 plugins/lad.dll: lad.o dllinit.o
 	$(DLLWRAP) $(DLLWRAP_FLAGS) --output-def $(<:.o=.def) -o $@ \

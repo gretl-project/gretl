@@ -81,18 +81,12 @@ static void get_xmin_xmax (const double *x, double s, int n,
     double xp4 = xbar + 4.0 * s;
 
     if (xp4 > x[n-1]) {
-#ifdef KDEBUG
-	fprintf(stderr, "raising xmax from %g to %g\n", x[n-1], xp4);
-#endif
 	*xmax = xp4;
     } else {
 	*xmax = x[n-1];
     }
     
     if (xm4 < x[0]) {
-#ifdef KDEBUG
-	fprintf(stderr, "lowering xmin from %g to %g\n", x[0], xm4);
-#endif
 	*xmin = xm4;
     } else {
 	*xmin = x[0];
@@ -101,10 +95,6 @@ static void get_xmin_xmax (const double *x, double s, int n,
     if (*xmin < 0.0 && x[0] >= 0.0) {
 	/* if data are non-negative, don't set a negative min */
 	*xmin = x[0];
-#ifdef KDEBUG
-	fprintf(stderr, "respecting non-negative data: xmin  = %g\n", *xmin);
-#endif
-
     }
 }
 
@@ -135,7 +125,7 @@ static int density_plot (const double *x, double s, double h,
     setlocale(LC_NUMERIC, "C");
 #endif
 
-    fputs("# kernel density plot\n", fp);
+    fputs("# kernel density plot (no auto-parse)\n", fp);
     fputs("set nokey\n", fp); 
     fprintf(fp, "set xrange [%g:%g]\n", xmin, xmax);
 
@@ -247,6 +237,7 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
     double *x;
     int err = 0;
 
+    /* count the non-missing observations */
     nobs = count_obs(Z[varnum] + pdinfo->t1, len);
     if (nobs < MINOBS) {
 	gretl_errmsg_set(_("Insufficient observations for density estimation"));
@@ -257,15 +248,16 @@ kernel_density (int varnum, const double **Z, const DATAINFO *pdinfo,
     if (x == NULL) {
 	return E_ALLOC;
     }
-
+    
+    /* grab and sort the specified series */
     ztox(varnum, x, Z, pdinfo);
-
     qsort(x, nobs, sizeof *x, gretl_compare_doubles);
 
+    /* get standard deviation and bandwidth */
     s = gretl_stddev(0, nobs - 1, x);
-
     h = bwscale * silverman_bandwidth(x, s, nobs);
 
+    /* number of evenly spaced points to use */
     kn = get_kn(nobs);
 
 #ifdef KDEBUG
