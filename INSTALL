@@ -21,4 +21,9 @@ writing the latest gnuplot can be obtained from:
 
 ftp://ftp.gnuplot.vt.edu/pub/gnuplot/gnuplot-3.7.1.tar.gz
 
-Allin Cottrell, June 2000.
+* The gretl configure script looks for the gnome desktop, and arranges for
+gretl to be built with gnome support if gnome is found on your system.
+If you want to disable thus, add the option "--without-gnome" when
+running ./configure.
+
+Allin Cottrell, December 2001.
