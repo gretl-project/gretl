@@ -1,3 +1,5 @@
+tooldir = ../tools
+
 CC = @CC@
 CFLAGS = @CFLAGS@
 have_gtk = @have_gtk@
@@ -37,4 +39,23 @@ check: $(PROG)
 	./$(PROG)
 
 clean:
-	rm -f $(PROG) $(OBJ)
+	rm -f $(PROG) $(OBJ) test.out
+	rm -rf .libs
+
+depend:
+	makedepend -Y../lib/src *.c 
+
+distdepend: depend
+	$(tooldir)/dist_depend.pl
+
+# DO NOT DELETE
+
+nistcheck.o: ../lib/src/libgretl.h ../lib/src/commands.h ../lib/src/errors.h
+nistcheck.o: ../lib/src/estimate.h ../lib/src/generate.h
+nistcheck.o: ../lib/src/gretl_utils.h ../lib/src/compare.h
+nistcheck.o: ../lib/src/pvalues.h ../lib/src/dataio.h ../lib/src/strutils.h
+nistcheck.o: ../lib/src/describe.h ../lib/src/printout.h
+nistcheck.o: ../lib/src/texprint.h ../lib/src/var.h ../lib/src/interact.h
+nistcheck.o: ../lib/src/graphing.h ../lib/src/monte_carlo.h
+nistcheck.o: ../lib/src/nonparam.h ../lib/src/discrete.h
+nistcheck.o: ../lib/src/subsample.h ../lib/src/calendar.h

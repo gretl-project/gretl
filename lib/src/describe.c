@@ -805,8 +805,8 @@ void print_summary (GRETLSUMMARY *summ,
 	pprintf(prn, "\n%s  ", _("Variable"));
     }
 
-    pprintf(prn, _("             MEAN         MEDIAN            MIN"
-            "            MAX\n"));
+    pprintf(prn, _("      MEAN            MEDIAN            MIN"
+            "              MAX\n\n"));
 
 
     for (v=1; v<=lo; v++) {
@@ -829,8 +829,8 @@ void print_summary (GRETLSUMMARY *summ,
     pprintf(prn, "\n");
 
     if (lo > 1) pprintf(prn, "\n%s  ", _("Variable"));
-    pprintf(prn, _("             S.D.           C.V.           "
-	 "SKEW       EXCSKURT\n"));
+    pprintf(prn, _("      S.D.              C.V.           "
+	 " SKEW           EXCSKURT\n\n"));
 
     for (v=1; v<=lo; v++) {
 	if (pause) page_break(1, &lineno, 0);

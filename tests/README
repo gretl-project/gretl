@@ -3,7 +3,13 @@ datasets for linear regression, for details on which see
 
 http://www.nist.gov/itl/div898/strd/general/main.html
 
-If all is well there should be exactly one failure, namely libgretl
+The checker validates libgretl and (if available) the gretl multiple
+precision plugin.
+
+Results with libgretl
+=====================
+
+If all is well there should be exactly one failure, namely gretl
 will not be able to obtain estimates on the Filip model (a 10th degree
 polynomial which exhibits very high collinearity).  Any other failures
 should be cause for concern.
@@ -20,22 +26,30 @@ You can get more details on gretl's performance on the tests by
 running the 'nistcheck' program in verbose mode (-v flag) or very
 verbose mode (-vv).  
 
-If the Gnu Multiple Precision library (GMP) was detected when gretl
-was configured, and gretl's GMP plugin was built, then the NIST tests
-will be repeated using the multiple precision plugin.  In this case
-the Filip model should be estimated without difficulty.  All tests
-should produce results that agree with the NIST certified values to at
-least 12 significant figures, apart from the "Wampler2" data set.  
+Results with multiple precision plugin
+======================================
 
-In Wampler2 the dependent variable is expressible as an exact 5th
-degree polynomial in the independent variable.  Gretl with the GMP
-plugin does not reproduce the exact fit (the coefficients should be
-right to at least 12 figures, but the error sum of squares is not
-exactly zero).  The problem here lies not in the calculations but in
-the precision with which the data are read in the first place.  To get
-the exact results one would need a statistical program entirely
-implemented in multiple precision, as opposed to gretl's GMP plugin
-which just does the regression calculations in multiple precision.
+If the Gnu Multiple Precision library (GMP) was detected when gretl
+was configured, and gretl's GMP plugin was built, then each NIST test
+will be repeated using the plugin.  In this case the Filip model
+should be estimated without difficulty.  All tests should give results
+that agree with the NIST certified values to at least 12 significant
+figures.
+
+Note that the test data sets Wampler1 and Wampler2 give, by
+construction, an exact polynomial fit.  This is difficult to
+reproduce.  If you run the checker program in verbose mode you will
+see that instead of standard errors of precisely zero, values around
+10^{-39} are reported.  You can, however, drive these to zero by
+raising the precision used in the calculations.  The default for
+gretl's multiple precision plugin is to assign 256 bits for the
+representation of each floating point number, which is enough for most
+purposes.  You can increase this value by setting the environment
+variable GRETL_MP_BITS.  On my IBM Thinkpad A21m (pentium 3), I find I
+can get zero standard errors on Wampler1 and Wampler2 by running the
+checker thus:
+
+GRETL_MP_BITS=4096 ./nistcheck -v
 
 Allin Cottrell
 August 2002

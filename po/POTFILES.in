@@ -7,6 +7,7 @@ lib/src/errors.c
 lib/src/estimate.c
 lib/src/generate.c
 lib/src/graphing.c
+lib/src/gretl_utils.c
 lib/src/interact.c
 lib/src/monte_carlo.c
 lib/src/nonparam.c
@@ -15,7 +16,6 @@ lib/src/pvalues.c
 lib/src/strutils.c
 lib/src/subsample.c
 lib/src/texprint.c
-lib/src/utils.c
 lib/src/var.c
 lib/src/win32.c
 cli/common.c

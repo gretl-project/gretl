@@ -48,12 +48,33 @@ Wampler1 - Wampler5: create powers of x, 2 to 5
   
 */
 
+#define ALT_DATA_READ 1
+
+#ifdef ALT_DATA_READ
+unsigned char get_data_digits (const char *numstr)
+{
+    unsigned char digits = 0;
+
+    while (*numstr == '-' || *numstr == '.' || *numstr == ',' ||
+	   isdigit((unsigned char) *numstr)) {
+	if (isdigit((unsigned char) *numstr)) digits++;
+	numstr++;
+    }
+    
+    return digits;
+}
+#endif /* ALT_DATA_READ */
+
 int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		    int polyterms)
 {
     double xx;
     int i, t;
     int realvars = dinfo->v - polyterms;
+#ifdef ALT_DATA_READ
+    unsigned char d, **digits = (unsigned char **) dinfo->data;
+    char numstr[64];
+#endif
 
     if (verbose > 1) {
 	printf("\nGetting data...\n\n");
@@ -72,10 +93,24 @@ int grab_nist_data (FILE *fp, double **Z, DATAINFO *dinfo,
 		    }
 		}
 	    }
+#ifdef ALT_DATA_READ
+	    if (fscanf(fp, "%s", numstr) != 1) {
+		fprintf(stderr, "Data ended prematurely\n");
+		return 1;
+	    } else {
+		d = get_data_digits(numstr);
+		if (digits != NULL && digits[i] != NULL) {
+		    digits[i][t] = d;
+		}
+		xx = atof(numstr);
+		/* printf("read '%s', got %d digits\n", numstr, d); */
+	    }
+#else
 	    if (fscanf(fp, "%lf", &xx) != 1) {
 		fprintf(stderr, "Data ended prematurely\n");
 		return 1;
 	    }
+#endif /* ALT_DATA_READ */
 	    Z[i][t] = xx;
 	} /* got data for obs t */
     } /* got data for all obs */
@@ -142,7 +177,7 @@ int grab_mp_results (FILE *fp, mp_results *certvals,
     return 0;
 }
 
-void get_level (const char *line, char *s)
+void get_difficulty_level (const char *line, char *s)
 {
     size_t i, len;
 
@@ -155,6 +190,48 @@ void get_level (const char *line, char *s)
 	if (isspace((unsigned char) s[i])) s[i] = 0;
 	else break;
     }
+}
+
+void free_data_digits (DATAINFO *dinfo)
+{
+    unsigned char **digits = (unsigned char **) dinfo->data;
+
+    if (digits != NULL) {
+	int i;
+
+	for (i=1; i<dinfo->v; i++) {
+	    free(digits[i]);
+	}
+	free(digits);
+	dinfo->data = NULL;
+    }
+}
+
+int allocate_data_digits (DATAINFO *dinfo)
+{
+    unsigned char **digits;
+    int i;
+
+    digits = malloc(dinfo->v * sizeof *digits);
+    if (digits == NULL) return 1;
+
+    digits[0] = NULL;
+
+    for (i=1; i<dinfo->v; i++) {
+	digits[i] = malloc(dinfo->n * sizeof **digits);
+	if (digits[i] == NULL) {
+	    int j;
+
+	    for (j=1; j<i; j++) free(digits[j]);
+	    free(digits);
+	    return 1;
+	}
+	memset(digits[i], '0', dinfo->n);
+    }
+
+    dinfo->data = digits;
+
+    return 0;
 }
 
 int read_nist_file (const char *fname, 
@@ -197,7 +274,7 @@ int read_nist_file (const char *fname,
 
 	/* level of difficulty? */
 	if (*difficulty == 0 && strstr(line, "Level of Difficulty")) {
-	    get_level(line, difficulty);
+	    get_difficulty_level(line, difficulty);
 	    if (*difficulty) {
 		printf("(\"%s\")\n", difficulty);
 	    }	
@@ -254,6 +331,12 @@ int read_nist_file (const char *fname,
 		fclose(fp);
 		return 1;
 	    }
+	    if (allocate_data_digits(dinfo)) {
+		free_gretl_mp_results(certvals);
+		free_datainfo(dinfo);
+		fclose(fp);
+		return 1;
+	    }		
 	}
 
 	/* read the certified results */
@@ -754,10 +837,6 @@ int main (int argc, char *argv[])
 	"Wampler5.dat"
     };
 
-    const char *one_nist_files[] = { 
-	"Wampler2.dat"
-    };	
-
     ntests = sizeof nist_files / sizeof *nist_files;
 
     prog = argv[0];
@@ -787,6 +866,7 @@ int main (int argc, char *argv[])
 	    certvals = NULL;
 	    free_Z(Z, datainfo);
 	    Z = NULL;
+	    free_data_digits(datainfo);
 	    free_datainfo(datainfo);
 	    datainfo = NULL;
 	    

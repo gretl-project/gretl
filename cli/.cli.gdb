@@ -1,2 +1,2 @@
-set args data4-1 
+set args -r ./testrig.inp
 run

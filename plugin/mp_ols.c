@@ -22,9 +22,7 @@
 #include "libgretl.h"
 #include <gmp.h>
 
-#ifdef TRY_NUMBERS_FROM_STRING
-# include <float.h>
-#endif
+/* #define MP_DEBUG 1 */
 
 #define GRETL_MP_DIGITS 12          /* significant digits to use in output */
 #define DEFAULT_GRETL_MP_BITS 256   /* min. bits of precision for GMP */
@@ -122,14 +120,36 @@ static int data_problems (const int *list, double **Z, DATAINFO *pdinfo,
     return 0;
 }
 
+/* Given a data set containing doubles, build a data set using
+   GMP's mpf_t floating point type.  
+
+   For "ordinary" data we either (a) simply initialize the mpf_t
+   straight from the corresponding double, or (b) attempt a clever
+   trick, namely print the double to a string using a precision that
+   was recorded at the time the original data were read, then set the
+   mpf_t from that string.  This is designed to avoid the transmission
+   to the mpf_t of garbage lying beyond DBL_DIGITS into the double.
+   The trick is applicable only for data read from some original
+   source, e.g. the NIST data files; also, it works only if the
+   original data had a precision of not more than DBL_DIGITS.  
+
+   Besides converting ordinary data, this function is also used to
+   generate powers of x in the case of a polynomial regression of y on
+   x, as found in several of the NIST examples.  Accuracy of the
+   regression results may suffer if the generation of successive
+   powers of x is done in regular double precision, so we do it here.
+*/
+
 static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
 {
-    int i, j, t, n = pmod->t2 - pmod->t1 + 1;
+    int i, s, t, n = pmod->t2 - pmod->t1 + 1;
     int l0 = pmod->list[0];
     int npoly = (pmod->polylist == NULL)? 0 : pmod->polylist[0];
+    int mp_poly_pos = 0;
     int dropc = 0, nvars = 0, listpt;
     mpf_t **mpZ = NULL;
-    mpf_t tmp;
+    unsigned char **digits = (unsigned char **) pdinfo->data;
+    char numstr[64];
 
     if (n <= 0) return NULL;
 
@@ -140,64 +160,92 @@ static mpf_t **make_mpZ (MPMODEL *pmod, double **Z, DATAINFO *pdinfo)
     mpZ = malloc(l0 * sizeof *mpZ);
     if (mpZ == NULL) return NULL;
 
-    if (pmod->ifc) {
+    if (pmod->ifc) { /* create the constant vector */
 	mpZ[0] = malloc(n * sizeof **mpZ);
-	j = 0;
-	for (t=pmod->t1; t<=pmod->t2; t++) mpf_init_set_d (mpZ[0][j++], 1.0);
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    mpf_init_set_d (mpZ[0][s++], 1.0);
+	}
 	nvars++;
     }
 
     /* constant will have been moved to the end of the list by now */
     if (npoly && pmod->ifc) dropc = 1;
 
-    /* ordinary data */
+    /* process the ordinary data */
     for (i=0; i<l0-npoly-dropc; i++) {
 	if (pmod->list[i+1] == 0) {
-	    pmod->varlist[i+1] = 0;
+	    continue;
 	} else {
 	    mpZ[nvars] = malloc(n * sizeof **mpZ);
-	    if (mpZ[nvars] != NULL) {
-		j = 0;
-		for (t=pmod->t1; t<=pmod->t2; t++) {
-#ifdef TRY_NUMBERS_FROM_STRING
-		    char numstr[16];
+	    if (mpZ[nvars] == NULL) {
+		return NULL;
+	    }
 
-		    sprintf(numstr, "%.*g", DBL_DIG, Z[pmod->list[i+1]][t]);
-		    mpf_init_set_str(mpZ[nvars][j++], numstr, 10);
-#else
-		    mpf_init_set_d (mpZ[nvars][j++], 
-				    Z[pmod->list[i+1]][t]);
+	    /* record position in mpZ of the var to be raised 
+	       to various powers, if applicable */
+	    if (pmod->list[i+1] == pmod->polyvar) {
+#ifdef MP_DEBUG
+		printf("var to be raised to powers: it's "
+		       "at position %d in the regression list,\n"
+		       "and at slot %d in mpZ\n", i + 1, nvars);
 #endif
+		mp_poly_pos = nvars;
+	    }
+
+	    s = 0; /* obs. index for mpZ */
+	    for (t=pmod->t1; t<=pmod->t2; t++) {
+		/* do trick with strings? */
+		if (digits != NULL && digits[i+1] != NULL) {
+		    sprintf(numstr, "%.*g", digits[i+1][t], 
+			    Z[pmod->list[i+1]][t]);
+#ifdef MP_DEBUG
+		    printf("setting mpZ[%d][%d] from '%s'\n", 
+			   nvars, s, numstr);
+#endif
+		    mpf_init_set_str (mpZ[nvars][s], numstr, 10);
+		} else { /* or do straight conversion */
+		    mpf_init_set_d (mpZ[nvars][s], 
+				    Z[pmod->list[i+1]][t]);
 		}
-		pmod->varlist[i+1] = pmod->list[i+1];
-		pmod->list[i+1] = nvars++;
-	    } else return NULL;
+		s++;
+	    }
+	    pmod->varlist[i+1] = pmod->list[i+1];
+	    pmod->list[i+1] = nvars++;
 	}
-    }
+    } /* end processing ordinary data */
 
     listpt = i + 1;
 
-    if (npoly) mpf_init (tmp);
-
-    /* generated polynomial data (if any) */
+    /* generate polynomial data (if applicable) */
     for (i=0; i<npoly; i++) {  
 	mpZ[nvars] = malloc(n * sizeof **mpZ);
-	if (mpZ[nvars] != NULL) {
-	    j = 0;
-	    for (t=pmod->t1; t<=pmod->t2; t++) {
-		mpf_set_d (tmp, Z[pmod->list[2]][t]);
-		mpf_init(mpZ[nvars][j]);
-		mpf_pow_ui(mpZ[nvars][j++],          /* target */
-			   tmp,                      /* source */ 
-			   (unsigned long) 
-			   pmod->polylist[i+1]);     /* power */
-	    }
-	    pmod->varlist[i+listpt] = pmod->list[i+listpt];
-	    pmod->list[i+listpt] = nvars++;
-	} else return NULL;	
+	if (mpZ[nvars] == NULL) {
+	    return NULL;
+	}
+	s = 0;
+	for (t=pmod->t1; t<=pmod->t2; t++) {
+	    unsigned long pwr = pmod->polylist[i+1];
+
+#ifdef MP_DEBUG
+	    printf("generating mpZ[%d][%d] from mpZ[%d][%d],\n"
+		   "using power %lu taken from polylist[%d]\n", 
+		   nvars, s, mp_poly_pos, s, pwr, i+1);
+#endif
+	    mpf_init(mpZ[nvars][s]);
+	    mpf_pow_ui(mpZ[nvars][s],          /* target */
+		       mpZ[mp_poly_pos][s],    /* source */ 
+		       pwr);                   /* power */
+	    s++;
+	}
+	pmod->varlist[i+listpt] = pmod->polyvar;
+	pmod->list[i+listpt] = nvars++;
     }
 
-    if (npoly) mpf_clear(tmp);
+    /* ensure that the constant is properly registered in varlist */
+    for (i=0; i<=pmod->list[0]; i++) {
+	if (pmod->list[i] == 0) pmod->varlist[i] = 0;
+    }
 
     return mpZ;
 }
@@ -274,16 +322,19 @@ static void print_mp_coeff (const MPMODEL *pmod, const DATAINFO *pdinfo,
     char vname[12];
     double xx = mpf_get_d (pmod->coeff[c-1]);
     double yy = mpf_get_d (pmod->sderr[c-1]);
+    int realv = (pmod->polyvar)? 
+	pmod->list[0] - pmod->polylist[0] : 0;
 
-    /* FIXME: handle case of no intercept */
+    /* a bit of a fiddle getting the variable names to come
+       out right */
 
-    if (pmod->polyvar != 0 && 
-	c >= pmod->list[0] - pmod->polylist[0] &&
-	!(c == pmod->list[0] && pmod->ifc)) {
-	int pwr = c - (pmod->list[0] - pmod->polylist[0]) + 1;
+    if (pmod->polyvar && c >= realv 
+	&& !(pmod->ifc && c == pmod->list[0])
+	&& !(pmod->ifc == 0 && c == realv)) {
+	int pwrpos = c - realv + pmod->ifc;
 
 	sprintf(vname, "%s^%d", pdinfo->varname[pmod->polyvar],
-		pmod->polylist[pwr]);
+		pmod->polylist[pwrpos]);
     } else {
 	strcpy(vname, pdinfo->varname[pmod->varlist[c]]);
     } 

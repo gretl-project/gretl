@@ -293,6 +293,7 @@ DATAINFO *datainfo_new (void)
     dinfo->S = NULL;
     dinfo->descrip = NULL;
     dinfo->vector = NULL;
+    dinfo->data = NULL;
 
     return dinfo;
 }
@@ -374,6 +375,7 @@ int start_new_Z (double ***pZ, DATAINFO *pdinfo, int resample)
     pdinfo->markers = 0;
     pdinfo->delim = ',';
     pdinfo->descrip = NULL;
+    pdinfo->data = NULL;
     
     return 0;
 }

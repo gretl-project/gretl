@@ -490,7 +490,7 @@ void about_dialog (gpointer data)
 			  _("An econometrics program for the gnome desktop "
 			  "issued under the GNU General Public License.  "
 			  "http://gretl.sourceforge.net/"),
-			  gnome_pixmap_file("gretl-gnome-logo.xpm") 
+			  gnome_pixmap_file("gretl-logo.xpm") 
 			  );
 
     gnome_dialog_set_parent(GNOME_DIALOG(dlg), GTK_WINDOW(mdata->w));

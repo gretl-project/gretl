@@ -321,21 +321,24 @@ Statistical functions: mean (arithmetic mean), median, var (variance), sd
 Time-series functions: lag, lead, diff (first difference), ldiff
 (log-difference, or first difference of natural logs).  Miscellaneous: cum
 (cumulate), sort, uniform, normal, misszero (replace the missing
-observation code with zero), zeromiss (inverse operation of misszero), and
+observation code with zero), zeromiss (inverse operation of misszero), 
 pvalue (probability value for a given statistic against a specified
-distribution).  
+distribution) and mpow (raise a series to an integer power using multiple
+precision arithmetic).    
 
 All of the above functions with the exception of cov, corr, uniform, normal
-and pvalue take as their single argument either the name of a variable (note
-that you can't refer to variable by their ID numbers in a genr command) or a
-composite expression that evaluates to a variable (e.g.  ln((x1+x2)/2)).  cov
-and corr both require two arguments, and return respectively the covariance
-and the correlation coefficient between two named variables.  uniform() and
-normal(), which do not take arguments, return pseudo-random series drawn from
-the uniform (0-100) and standard normal distributions respectively (see also
-the seed command).  The pvalue() function takes the same arguments as the
-pvalue command (see below), but in this context commas should be placed
-between the arguments.
+pvalue and mpow take as their single argument either the name of a variable
+(note that you can't refer to variable by their ID numbers in a genr command)
+or a composite expression that evaluates to a variable (e.g. ln((x1+x2)/2)).
+cov and corr both require two arguments, and return respectively the
+covariance and the correlation coefficient between two named variables.
+uniform() and normal(), which do not take arguments, return pseudo-random
+series drawn from the uniform (0-100) and standard normal distributions
+respectively (see also the seed command).  The pvalue() function takes the
+same arguments as the pvalue command (see below), but in this context commas
+should be placed between the arguments.  The mpow function takes as its
+arguments the name of a data series and a positive integer power to which the
+series should be raised.
 
 Besides the operators and functions just noted there are some special
 uses of genr:
@@ -713,6 +716,17 @@ multiple-precision arithmetic.  The variables can be specified either by names
 or by their number; use the number zero for a constant term.  This command is
 available only if gretl is configured with support for GMP, the GNU Multiple
 Precision library.
+
+To estimate a polynomial fit, using multiple precision arithmetic to generate
+the required powers of the independent variable, use the form, e.g.
+
+mpols y 0 x ; 2 3 4
+
+This does a regression of y on x, x squared, x cubed and x to the fourth
+power.  That is, the numbers (which must be positive integers) to the right of
+the semicolon specify the powers of x to be used.  If more than one
+independent variable is specified, the last variable before the semicolon is
+taken to be the one that should be raised to various powers.
    
 #
 multiply

@@ -434,7 +434,7 @@ void about_dialog (gpointer data)
 
     pixfile = gnome_program_locate_file(NULL,
 					GNOME_FILE_DOMAIN_PIXMAP,
-					"gretl-gnome-logo.xpm",
+					"gretl-logo.xpm",
 					TRUE,
 					NULL);
 

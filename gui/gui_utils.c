@@ -1689,7 +1689,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 
 static void add_vars_to_plot_menu (windata_t *vwin)
 {
-    int i, j;
+    int i, j, varstart;
     GtkItemFactoryEntry varitem;
     const gchar *mpath[] = {
 	N_("/Graphs/residual plot"), 
@@ -1714,8 +1714,10 @@ static void add_vars_to_plot_menu (windata_t *vwin)
 	    varitem.callback = fit_actual_plot;
 	gtk_item_factory_create_item(vwin->ifac, &varitem, vwin, 1);
 
+	varstart = (i == 0)? 1 : 2;
+
 	/* put the indep vars on the menu list */
-	for (j=2; j<pmod->list[0]; j++) {
+	for (j=varstart; j<pmod->list[0]; j++) {
 	    if (pmod->list[j] == 0) continue;
 	    if (varitem.path == NULL)
 		varitem.path = mymalloc(64);

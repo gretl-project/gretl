@@ -107,7 +107,7 @@ drag_data_received  (GtkWidget          *widget,
 
 #ifdef USE_GNOME
 char *optrun = NULL, *optdb = NULL;
-GnomeProgram *gretl2;
+static GnomeProgram *gretl2;
 
 static const struct poptOption options[] = {
     {"run", 'r', POPT_ARG_STRING, &optrun, 0, 
@@ -173,10 +173,19 @@ static void spreadsheet_edit (gpointer p, guint u, GtkWidget *w)
 }
 
 #if defined(USE_GNOME)
+
 static void gnome_help (void)
 {
-    gnome_help_display("manual.xml", NULL, NULL);
+    GError *error = NULL;
+
+    gnome_help_display ("gretl2.xml", NULL, &error);
+        
+    if (error != NULL) {
+	g_warning (error->message);
+	g_error_free (error);
+    }
 }
+
 #elif defined(G_OS_WIN32)
 static void win_help (void)
 {
@@ -631,6 +640,7 @@ void nls_init (void)
 }
 #endif /* ENABLE_NLS */
 
+
 int main (int argc, char *argv[])
 {
     int err = 0, gui_get_data = 0;
@@ -654,6 +664,7 @@ int main (int argc, char *argv[])
 				 GNOME_PARAM_POPT_TABLE, options,
 				 GNOME_PARAM_HUMAN_READABLE_NAME,
 				 _("The GNOME 2.0 econometrics package"),
+				 GNOME_PARAM_APP_DATADIR, DATADIR,
 				 GNOME_PARAM_NONE);
 #else
     gtk_init(&argc, &argv);
