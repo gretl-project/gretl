@@ -2826,26 +2826,35 @@ void do_run_script (gpointer data, guint code, GtkWidget *w)
     char *runfile = NULL, fname[MAXLEN];
     int err;
 
+#ifdef notdef
+    fprintf(stderr, "do_run_script(): data=%p, code=%d, w=%p\n",
+	    (void *) data, code, (void *) w);
+#endif
+
     if (!user_fopen("gretl_output_tmp", fname, &prn)) return;
 
-    /* FIXME: make SCRIPT_EXEC use the buffer? */
     if (code == SCRIPT_EXEC) runfile = scriptfile;
     else if (code == SESSION_EXEC) runfile = cmdfile;
 
-    if (data != NULL) { /* get commands from script edit buffer */
+    if (data != NULL) { /* get commands from file view buffer */
 	GdkCursor *cursor;
 	windata_t *mydata = (windata_t *) data;
 	gchar *buf = gtk_editable_get_chars(GTK_EDITABLE(mydata->w), 0, -1);
 
+	if (buf == NULL || !strlen(buf)) {
+	    errbox("No commands to execute");
+	    gretl_print_destroy(prn);
+	    if (buf) g_free(buf);
+	    return;
+	}
+
 	cursor = gdk_cursor_new(GDK_WATCH);
-	fprintf(stderr, "changing cursor\n");
 	gdk_window_set_cursor(mydata->dialog->window, cursor);
 	gdk_flush();
 	gdk_cursor_destroy(cursor);	
 
 	err = execute_script(NULL, buf, NULL, NULL, prn, code);
 	g_free(buf);
-	fprintf(stderr, "resetting cursor\n");
 	gdk_window_set_cursor(mydata->dialog->window, NULL);
     } else
 	err = execute_script(runfile, NULL, NULL, NULL, prn, code);
@@ -3197,7 +3206,7 @@ int execute_script (const char *runfile, const char *buf,
     loop.nmod = 0;
 
     /* Put the action of running this script into the command log? */
-    if (exec_code == SCRIPT_EXEC) {
+    if (exec_code == SCRIPT_EXEC && runfile != NULL) {
 	char runcmd[MAXLEN];
 
 	sprintf(runcmd, "run %s", runfile);

@@ -592,7 +592,14 @@ void file_save_callback (GtkWidget *w, gpointer data)
 
     switch (mydata->role) {
     case EDIT_SCRIPT:
+    case VIEW_SCRIPT:
 	u = SAVE_SCRIPT;
+	break;
+    case SCRIPT_OUT:
+	u = SAVE_OUTPUT;
+	break;
+    case VIEW_LOG:
+	u = SAVE_CMDS;
 	break;
     default:
 	errbox(_("Sorry, not yet implemented"));

@@ -76,6 +76,7 @@ static struct help_head_t **cli_heads, **gui_heads;
 static int look_for_string (char *haystack, char *needle, int nStart);
 static void close_find_dialog (GtkWidget *widget, gpointer data);
 static void find_in_help (GtkWidget *widget, gpointer data);
+static void find_in_text (GtkWidget *widget, gpointer data);
 static void find_in_clist (GtkWidget *widget, gpointer data);
 static void cancel_find (GtkWidget *widget, gpointer data);
 static void find_string_dialog (void (*YesFunc)(), void (*NoFunc)(),
@@ -353,6 +354,15 @@ void set_rcfile (void)
 #endif
 
 /* ........................................................... */
+
+/* Below: Keep a record of (most) windows that are open, so they 
+   can be destroyed en masse when a new data file is opened, to
+   prevent weirdness that could arise if (e.g.) a model window
+   that pertains to a previously opened data file remains open
+   after the data set has been changed.  Script windows are
+   exempt, otherwise they are likely to disappear when their
+   "run" control is activated, which we don't want.
+*/
 
 enum winstack_codes {
     STACK_INIT,
@@ -1376,29 +1386,49 @@ void free_windata (GtkWidget *w, gpointer data)
 
 /* ........................................................... */
 
+static void window_print_callback (GtkWidget *w, windata_t *mydata)
+{
+    window_print(mydata, 0, w);
+}
+
+/* ........................................................... */
+
+static void text_find_callback (GtkWidget *w, gpointer data)
+{
+    find_string_dialog(find_in_text, cancel_find, data);
+}
+
+/* ........................................................... */
+
 #include "pixmaps/save.xpm"
 #include "pixmaps/saveas.xpm"
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+# include "pixmaps/print.xpm"
+#endif
 #include "pixmaps/exec_small.xpm"
 #include "pixmaps/copy.xpm"
 #include "pixmaps/paste.xpm"
+#include "pixmaps/search.xpm"
 #include "pixmaps/replace.xpm"
 #include "pixmaps/undo.xpm"
 #include "pixmaps/question.xpm"
 #include "pixmaps/close.xpm"
 
-static void make_editbar (windata_t *vwin)
+static void make_viewbar (windata_t *vwin)
 {
-    GtkWidget *iconw, *button, *editbar;
+    GtkWidget *iconw, *button, *viewbar;
     GdkPixmap *icon;
     GdkBitmap *mask;
     GdkColormap *colormap;
     gpointer ptr = vwin;
     int i;
-    static char *editstrings[] = {_("Save"),
+    static char *viewstrings[] = {_("Save"),
 				  _("Save as..."),
+				  _("Print..."),
 				  _("Run"),
 				  _("Copy selection"), 
-				  _("Paste"), 
+				  _("Paste"),
+				  _("Find..."),
 				  _("Replace..."),
 				  _("Undo"),
 				  _("Help on command"),
@@ -1407,60 +1437,102 @@ static void make_editbar (windata_t *vwin)
     gchar **toolxpm = NULL;
     void (*toolfunc)() = NULL;
 
+    int run_ok = (vwin->role == EDIT_SCRIPT ||
+		  vwin->role == VIEW_SCRIPT ||
+		  vwin->role == VIEW_LOG);
+
+    int edit_ok = (vwin->role == EDIT_SCRIPT ||
+		   vwin->role == EDIT_HEADER ||
+		   vwin->role == EDIT_NOTES);
+
+    int save_as_ok = (vwin->role != EDIT_HEADER && 
+		      vwin->role != EDIT_NOTES);
+
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+    int print_ok = 1;
+#else
+    int print_ok = 0;
+#endif
+
     colormap = gdk_colormap_get_system();
-    editbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
+    viewbar = gtk_toolbar_new(GTK_ORIENTATION_HORIZONTAL, GTK_TOOLBAR_ICONS);
     gtk_container_add(GTK_CONTAINER(GTK_DIALOG(vwin->dialog)->action_area), 
-		      editbar);
+		      viewbar);
 
-    colorize_tooltips(GTK_TOOLBAR(editbar)->tooltips);
+    colorize_tooltips(GTK_TOOLBAR(viewbar)->tooltips);
 
-    for (i=0; editstrings[i] != NULL; i++) {
+    for (i=0; viewstrings[i] != NULL; i++) {
 	switch (i) {
 	case 0:
-	    toolxpm = save_xpm;	    
-	    if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
-		toolfunc = buf_edit_save;
-	    else
-		toolfunc = file_viewer_save;
+	    if (edit_ok) {
+		toolxpm = save_xpm;	    
+		if (vwin->role == EDIT_HEADER || vwin->role == EDIT_NOTES) 
+		    toolfunc = buf_edit_save;
+		else
+		    toolfunc = file_viewer_save;
+	    } else
+		toolfunc = NULL;
 	    break;
 	case 1:
-	    if (vwin->role != EDIT_HEADER && vwin->role != EDIT_NOTES) {
+	    if (save_as_ok) {
 		toolxpm = save_as_xpm;
 		toolfunc = file_save_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
 	case 2:
-	    if (vwin->role == EDIT_SCRIPT) {
+	    if (print_ok) {
+#if defined(G_OS_WIN32) || defined(USE_GNOME)
+		toolxpm = print_xpm;
+#endif
+		toolfunc = window_print_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 3:
+	    if (run_ok) {
 		toolxpm = exec_xpm;
 		toolfunc = run_script_callback;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 3:
+	case 4:
 	    toolxpm = copy_xpm;
 	    toolfunc = text_copy_callback;
 	    break;
-	case 4:
-	    toolxpm = paste_xpm;
-	    toolfunc = text_paste_callback;
-	    break;
 	case 5:
-	    toolxpm = replace_xpm;
-	    toolfunc = text_replace_callback;
+	    if (edit_ok) {
+		toolxpm = paste_xpm;
+		toolfunc = text_paste_callback;
+	    } else
+		toolfunc = NULL;
 	    break;
 	case 6:
-	    toolxpm = undo_xpm;
-	    toolfunc = text_undo_callback;
+	    toolxpm = search_xpm;
+	    toolfunc = text_find_callback;
 	    break;
 	case 7:
-	    if (vwin->role == EDIT_SCRIPT) {
+	    if (edit_ok) {
+		toolxpm = replace_xpm;
+		toolfunc = text_replace_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 8:
+	    if (edit_ok) {
+		toolxpm = undo_xpm;
+		toolfunc = text_undo_callback;
+	    } else
+		toolfunc = NULL;
+	    break;
+	case 9:
+	    if (run_ok) {
 		toolxpm = question_xpm;
 		toolfunc = edit_script_help;
 	    } else
 		toolfunc = NULL;
 	    break;
-	case 8:
+	case 10:
 	    toolxpm = close_xpm;
 	    toolfunc = delete_file_viewer;
 	    break;
@@ -1473,12 +1545,12 @@ static void make_editbar (windata_t *vwin)
 	icon = gdk_pixmap_colormap_create_from_xpm_d(NULL, colormap, &mask, NULL, 
 						     toolxpm);
 	iconw = gtk_pixmap_new(icon, mask);
-	button = gtk_toolbar_append_item(GTK_TOOLBAR(editbar),
-					 NULL, editstrings[i], NULL,
+	button = gtk_toolbar_append_item(GTK_TOOLBAR(viewbar),
+					 NULL, viewstrings[i], NULL,
 					 iconw,
 					 toolfunc, ptr);
     }
-    gtk_widget_show(editbar);
+    gtk_widget_show(viewbar);
 }
 
 /* ........................................................... */
@@ -1669,8 +1741,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
     FILE *fd = NULL;
     windata_t *vwin;
     gchar *title;
-    int show_editbar = 0;
     static GtkStyle *style;
+    int show_viewbar = (role != CONSOLE &&
+			role != HELP &&
+			role != CLI_HELP);
+    int doing_script = (role == EDIT_SCRIPT ||
+			role == VIEW_SCRIPT ||
+			role == VIEW_LOG);
 
     fd = fopen(filename, "r");
     if (fd == NULL) {
@@ -1690,7 +1767,7 @@ windata_t *view_file (char *filename, int editable, int del_file,
 
     dialog = gtk_dialog_new();
     vwin->dialog = dialog;
-    if (role != EDIT_SCRIPT) winstack_add(dialog);
+    if (!doing_script) winstack_add(dialog);
     gtk_widget_set_usize (dialog, hsize, vsize);
 
     title = make_viewer_title(role, filename);
@@ -1729,20 +1806,13 @@ windata_t *view_file (char *filename, int editable, int del_file,
     }
     gtk_widget_set_style(GTK_WIDGET(vwin->w), style);
 
-    if (editable)  
-	gtk_text_set_editable(GTK_TEXT(vwin->w), TRUE);
-    else 
-	gtk_text_set_editable(GTK_TEXT(vwin->w), FALSE);
+    gtk_text_set_editable(GTK_TEXT(vwin->w), editable);
 
     /* special case: the gretl console */
     if (role == CONSOLE) {
 	gtk_signal_connect(GTK_OBJECT(vwin->w), "key_press_event",
 			   (GtkSignalFunc) console_handler, NULL);
-    } else {
-	/* editable windows other than the console get edit toolbar */
-	if (editable)
-	    show_editbar = 1;
-    }
+    } 
 
     gtk_text_set_word_wrap(GTK_TEXT(vwin->w), TRUE);
     gtk_table_attach(GTK_TABLE(table), vwin->w, 0, 1, 0, 1,
@@ -1765,12 +1835,10 @@ windata_t *view_file (char *filename, int editable, int del_file,
 	strcpy(fle, filename);
     }
 
-    /* should we show an editing toolbar? */
-    if (show_editbar) 
-	make_editbar(vwin);
-
-    /* close button for non-editable windows and console */
-    if (role == CONSOLE || !editable) {
+    /* should we show a toolbar? */
+    if (show_viewbar) { 
+	make_viewbar(vwin);
+    } else { /* make a simple Close button instead */
 	GtkWidget *close = 
 	    gtk_button_new_with_label(_("Close"));
 
@@ -1901,7 +1969,7 @@ windata_t *edit_buffer (char **pbuf, int hsize, int vsize,
     gtk_widget_show(table);
 
     /* add an editing bar */
-    make_editbar(vwin);    
+    make_viewbar(vwin);    
 
     /* insert the buffer text */
     if (*pbuf)
@@ -2045,6 +2113,7 @@ static void set_up_viewer_menu (GtkWidget *window, windata_t *vwin,
 					    pmod->ci == HILU));
 
 	lmmenu_state(vwin->ifac, pmod->ci == OLS || pmod->ci == POOLED);
+
 	if (pmod->ci == LOGIT || pmod->ci == PROBIT) {
 	    model_menu_state(vwin->ifac, FALSE);
 	    model_ml_menu_state(vwin->ifac, TRUE);
@@ -2997,40 +3066,70 @@ static void close_find_dialog (GtkWidget *widget, gpointer data)
 
 /* .................................................................. */
 
-static void find_in_help (GtkWidget *widget, gpointer data)
+static void find_in_text (GtkWidget *widget, gpointer data)
 {
-    int nIndex = 0, i, linecount = 0;
-    int help_length;
+    int found = 0;
     char *haystack;
-    windata_t *hwin = 
+    windata_t *vwin = 
 	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
 
-    haystack = gtk_editable_get_chars(GTK_EDITABLE(hwin->w), 0,
-	gtk_text_get_length(GTK_TEXT(hwin->w)));
+    haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
+	gtk_text_get_length(GTK_TEXT(vwin->w)));
 
-    if (hwin->role == CLI_HELP) help_length = script_help_length;
+    if (needle) g_free(needle);
+
+    needle = gtk_editable_get_chars(GTK_EDITABLE(find_entry), 0, -1);
+    found = GTK_EDITABLE(vwin->w)->selection_end_pos;
+
+    found = look_for_string(haystack, needle, found);
+
+    if (found >= 0) {
+	gtk_text_set_point(GTK_TEXT(vwin->w), found);
+	gtk_editable_set_position(GTK_EDITABLE(vwin->w), found);
+        gtk_editable_select_region(GTK_EDITABLE(vwin->w), 
+				   found, found + strlen(needle));
+	find_window = NULL;
+    } else infobox(_("String was not found."));
+
+    g_free(haystack);
+}
+
+/* .................................................................. */
+
+static void find_in_help (GtkWidget *widget, gpointer data)
+{
+    int found = 0, i, linecount = 0;
+    int help_length;
+    char *haystack;
+    windata_t *vwin = 
+	(windata_t *) gtk_object_get_data(GTK_OBJECT(data), "windat");
+
+    haystack = gtk_editable_get_chars(GTK_EDITABLE(vwin->w), 0,
+	gtk_text_get_length(GTK_TEXT(vwin->w)));
+
+    if (vwin->role == CLI_HELP) help_length = script_help_length;
     else help_length = gui_help_length;
 
     if (needle) g_free(needle);
 
     needle = gtk_editable_get_chars(GTK_EDITABLE (find_entry), 0, -1);
-    nIndex = GTK_EDITABLE(hwin->w)->selection_end_pos;
+    found = GTK_EDITABLE(vwin->w)->selection_end_pos;
 
-    nIndex = look_for_string(haystack, needle, nIndex);
+    found = look_for_string(haystack, needle, found);
 
-    if (nIndex >= 0) {
-	gtk_text_freeze(GTK_TEXT(hwin->w));
-        gtk_text_set_point (GTK_TEXT(hwin->w), nIndex);
-        gtk_text_insert (GTK_TEXT(hwin->w), NULL, NULL, NULL, " ", 1);
-        gtk_text_backward_delete (GTK_TEXT(hwin->w), 1);
-	gtk_text_thaw(GTK_TEXT(hwin->w));
-        gtk_editable_select_region (GTK_EDITABLE(hwin->w), 
-				    nIndex, nIndex + strlen(needle));
-	for (i=0; i<nIndex; i++) 
+    if (found >= 0) {
+	gtk_text_freeze(GTK_TEXT(vwin->w));
+        gtk_text_set_point (GTK_TEXT(vwin->w), found);
+        gtk_text_insert (GTK_TEXT(vwin->w), NULL, NULL, NULL, " ", 1);
+        gtk_text_backward_delete (GTK_TEXT(vwin->w), 1);
+	gtk_text_thaw(GTK_TEXT(vwin->w));
+        gtk_editable_select_region (GTK_EDITABLE(vwin->w), 
+				    found, found + strlen(needle));
+	for (i=0; i<found; i++) 
 	    if (haystack[i] == '\n') linecount++;
-	gtk_adjustment_set_value(GTK_TEXT(hwin->w)->vadj, 
+	gtk_adjustment_set_value(GTK_TEXT(vwin->w)->vadj, 
 				 (gfloat) (linecount - 2) *
-				 GTK_TEXT(hwin->w)->vadj->upper / help_length);
+				 GTK_TEXT(vwin->w)->vadj->upper / help_length);
 	find_window = NULL;
     } else infobox(_("String was not found."));
 
@@ -3056,11 +3155,18 @@ static void find_in_clist (GtkWidget *w, gpointer data)
     n = GTK_CLIST(dbdat->listbox)->rows;
 
     for (i=start; i<n; i++) {  
+	/* try looking in column 1 first */
 	gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 1, &tmp);
 	strcpy(haystack, tmp);
 	lower(haystack);
 	found = look_for_string(haystack, needle, 0);
 	if (found >= 0) break;
+	else { /* try column 0? */
+	    gtk_clist_get_text(GTK_CLIST(dbdat->listbox), i, 0, &tmp);
+	    strcpy(haystack, tmp);
+	    lower(haystack);
+	    found = look_for_string(haystack, needle, 0);
+	}
     }
     if (found >= 0) {
 	gtk_clist_moveto(GTK_CLIST(dbdat->listbox), i, 0, 0, .1);
@@ -3285,9 +3391,8 @@ void text_copy (gpointer data, guint how, GtkWidget *widget)
 
 #if defined(G_OS_WIN32) || defined (USE_GNOME)
 
-void window_print (gpointer data, guint u, GtkWidget *widget) 
+void window_print (windata_t *mydata, guint u, GtkWidget *widget) 
 {
-    windata_t *mydata = (windata_t *) data;
     char *buf, *selbuf = NULL;
     GtkEditable *gedit = GTK_EDITABLE(mydata->w);
 

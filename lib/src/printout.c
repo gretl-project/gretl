@@ -391,7 +391,7 @@ static void print_model_tests (const MODEL *pmod, PRN *prn)
 
 /* ......................................................... */
 
-void modelprint_setup_obs (MODEL *pmod, int *t1, int *t2)
+void modelprint_setup_obs (const MODEL *pmod, int *t1, int *t2)
 {
     if (pmod->ci == CORC || pmod->ci == HILU) *t1 += 1;
     if (pmod->data != NULL) *t2 += get_misscount(pmod);
