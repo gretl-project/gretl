@@ -595,7 +595,7 @@ static int basic_system_allocate (int systype, int m, int T, int mk,
 
 static int 
 save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
-			MODEL **models, double ***pZ, DATAINFO *pdinfo,
+			MODEL **models, int iters, double ***pZ, DATAINFO *pdinfo,
 			PRN *prn)
 {
     int systype = system_get_type(sys);
@@ -612,6 +612,16 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
 	    j = pdinfo->v;
 	}
 	err = dataset_add_vars(m, pZ, pdinfo);
+    }
+
+    pputc(prn, '\n');
+    pprintf(prn, _("Equation system, %s\n\n"), system_get_full_string(sys));
+
+    if (iters > 0) {
+	pprintf(prn, _("Convergence achieved after %d iterations\n"), iters);
+	if (systype == SUR) {
+	    pprintf(prn, "%s = %g\n", _("Log-likelihood"), system_get_ll(sys));
+	}
     }
 
     for (i=0; i<m; i++) {
@@ -632,9 +642,35 @@ save_and_print_results (gretl_equation_system *sys, const gretl_matrix *sigma,
     return err;
 }
 
+/* compute log-likelihood for iterated SUR estimator */
+
+double sur_ll (gretl_equation_system *sys, const gretl_matrix *uhat, 
+	       int m, int T)
+{
+    gretl_matrix *sigma;
+    double ll = 0.0;
+
+    sigma = gretl_matrix_alloc(m, m);
+    if (sigma == NULL) return NADBL;
+
+    gls_sigma_from_uhat(sigma, uhat, m, T);
+
+    ll -= (m * T / 2.0) * (LN_2_PI + 1.0);
+    ll -= (T / 2.0) * gretl_vcv_log_determinant(sigma);
+
+    system_set_ll(sys, ll);
+
+    gretl_matrix_free(sigma);
+
+    return ll;
+}
+
 /* general function that forms the basis for SUR, 3SLS, FIML and LIML
    estimates
 */
+
+#define SYS_MAX_ITER 100
+#define SYS_LL_TOL 1.0e-12
 
 int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo, 
 		     PRN *prn)
@@ -650,7 +686,13 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     gretl_matrix *Xi = NULL, *Xj = NULL, *M = NULL;
     MODEL **models = NULL;
     int systype = system_get_type(sys);
+    double llbak = -1.0e9;
+    int do_iteration = 0, iters = 0;
     int err = 0;
+
+    if (system_doing_iteration(sys)) {
+	do_iteration = 1;
+    }
 
     /* get uniform sample starting and ending points */
     if (system_adjust_t1t2(sys, &t1, &t2, (const double **) *pZ)) {
@@ -730,11 +772,13 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	err = liml_driver(sys, pZ, sigma, pdinfo, prn);
 	system_unattach_models(sys);
 	if (!err) {
-	    err = save_and_print_results(sys, sigma, models,
+	    err = save_and_print_results(sys, sigma, models, 0,
 					 pZ, pdinfo, prn);
 	}
 	goto cleanup;
     }
+
+ iteration_start:
 
     gls_sigma_from_uhat(sigma, uhat, m, T);
     err = gretl_invert_symmetric_matrix(sigma);    
@@ -742,9 +786,15 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 	goto cleanup;
     }
 
-    Xi = gretl_matrix_alloc(T, k);
-    Xj = gretl_matrix_alloc(T, k);
-    M = gretl_matrix_alloc(k, k);
+    if (Xi == NULL) {
+	Xi = gretl_matrix_alloc(T, k);
+    }
+    if (Xj == NULL) {
+	Xj = gretl_matrix_alloc(T, k);
+    } 
+    if (M == NULL) {
+	M = gretl_matrix_alloc(k, k);
+    }
     if (Xi == NULL || Xj == NULL || M == NULL) {
 	err = E_ALLOC;
 	goto cleanup;
@@ -784,10 +834,12 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
 
     if (err) goto cleanup;
 
-    gretl_matrix_free(Xj);
-    Xj = NULL;
-    gretl_matrix_free(M);
-    M = NULL;
+    if (!do_iteration) {
+	gretl_matrix_free(Xj);
+	Xj = NULL;
+	gretl_matrix_free(M);
+	M = NULL;
+    }
 
     /* form Y column vector (m x k) */
     v = 0;
@@ -822,6 +874,23 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     calculate_sys_coefficients(models, (const double **) *pZ, X, uhat, 
 			       y, m, mk);
 
+    if (do_iteration) {
+	double ll = sur_ll(sys, uhat, m, T);
+
+	if (ll - llbak > SYS_LL_TOL) {
+	    if (iters < SYS_MAX_ITER) {
+		llbak = ll;
+		iters++;
+		goto iteration_start;
+	    } else {
+		pprintf(prn, "reached %d iterations without meeting "
+			"tolerance of %g\n", iters, SYS_LL_TOL);
+		err = E_NOCONV;
+		goto cleanup;
+	    }
+	} 
+    }
+
     if (systype == THREESLS || systype == SUR) {
 	/* do this while we have sigma-inverse available */
 	hansen_sargan_test(sys, sigma, uhat, (const double **) *pZ, t1);
@@ -849,7 +918,7 @@ int system_estimate (gretl_equation_system *sys, double ***pZ, DATAINFO *pdinfo,
     } 
 
     if (!err) {
-	err = save_and_print_results(sys, sigma, models, 
+	err = save_and_print_results(sys, sigma, models, iters,
 				     pZ, pdinfo, prn);
     }
 

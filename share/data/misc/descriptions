@@ -8,6 +8,7 @@
 "hamilton","Prices and exchange rate, U.S. and Italy"
 "jgm-data","Interest rates and inflation, Canada"
 "klein","US macro data for Klein's Model 1"
+"kmenta","US macro data plus artificial data"
 "longley","Annual U.S. labor-market data"
 "leverage","Illustrates detection of incorrect data"
 "mrw","Mankiw, Romer and Weil cross-country data"

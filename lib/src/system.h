@@ -30,9 +30,10 @@ enum gretl_system_types {
     SYSMAX
 };
 
-enum system_save_flags {
+enum equation_system_flags {
     GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
-    GRETL_SYSTEM_SAVE_YHAT = 1 << 1
+    GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
+    GRETL_SYSTEM_ITERATE   = 1 << 2
 };
 
 gretl_equation_system *system_start (const char *line);
@@ -55,8 +56,11 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 
 void gretl_equation_system_destroy (gretl_equation_system *sys);
 
+const char *system_get_full_string (const gretl_equation_system *sys);
+
 int system_save_uhat (const gretl_equation_system *sys);
 int system_save_yhat (const gretl_equation_system *sys);
+int system_doing_iteration (const gretl_equation_system *sys);
 
 int system_n_equations (const gretl_equation_system *sys);
 int system_n_identities (const gretl_equation_system *sys);

@@ -1,0 +1,15 @@
+open kmenta.gdt
+ols Q 0 P D
+ols Q 0 P F A
+tsls Q 0 P D ; 0 D F A
+tsls Q 0 P F A ; 0 D F A
+system name=Kmenta
+equation Q 0 P D
+equation Q 0 P F A
+endog Q P
+end system
+estimate Kmenta method=liml
+estimate Kmenta method=3sls
+estimate Kmenta method=3sls --iterate
+estimate Kmenta method=fiml
+

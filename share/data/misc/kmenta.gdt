@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gretldata SYSTEM "gretldata.dtd">
+
+<gretldata name="kmenta" frequency="1" startobs="1922" endobs="1941" type="time-series">
+<description>Dataset used in Kmenta, Elements of Econometrics, 2e, 1986
+to illustrate estimation of a system of equations.  
+
+The two endogenous variables -- per capita food consumption, Q,
+and the relative price of food, P -- were artificially generated
+by Kmenta.  The other variables are taken from a study by Girschik 
+and Haavelmo (Econometrica, 1947)
+</description>
+<variables count="5">
+<variable name="Q"
+ label="food consumption per capita (generated)"
+/>
+<variable name="P"
+ label="ratio of food price to cost-of-living index (generated)"
+/>
+<variable name="D"
+ label="disposable income in constant dollars"
+/>
+<variable name="F"
+ label="deflated prices paid to farmers, previous year"
+/>
+<variable name="A"
+ label="time trend"
+/>
+</variables>
+<observations count="20" labels="false">
+<obs>98.485 100.323 87.4 98.0 1 </obs>
+<obs>99.187 104.264 97.6 99.1 2 </obs>
+<obs>102.163 103.435 96.7 99.1 3 </obs>
+<obs>101.504 104.506 98.2 98.1 4 </obs>
+<obs>104.240 98.001 99.8 110.8 5 </obs>
+<obs>103.243 99.456 100.5 108.2 6 </obs>
+<obs>103.993 101.066 103.2 105.6 7 </obs>
+<obs>99.900 104.763 107.8 109.8 8 </obs>
+<obs>100.350 96.446 96.6 108.7 9 </obs>
+<obs>102.820 91.228 88.9 100.6 10 </obs>
+<obs>95.435 93.085 75.1 81.0 11 </obs>
+<obs>92.424 98.801 76.9 68.6 12 </obs>
+<obs>94.535 102.908 84.6 70.9 13 </obs>
+<obs>98.757 98.756 90.6 81.4 14 </obs>
+<obs>105.797 95.119 103.1 102.3 15 </obs>
+<obs>100.225 98.451 105.1 105.0 16 </obs>
+<obs>103.522 86.498 96.4 110.5 17 </obs>
+<obs>99.929 104.016 104.4 92.5 18 </obs>
+<obs>105.223 105.769 110.7 89.3 19 </obs>
+<obs>106.232 113.490 127.1 93.0 20 </obs>
+</observations>
+</gretldata>

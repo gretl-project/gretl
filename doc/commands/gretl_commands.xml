@@ -1173,9 +1173,16 @@
         <argument>systemname</argument>
         <argument>estimator</argument>
       </arguments>
+      <options>
+	<option>
+	  <flag>--iterate</flag>
+	  <effect>iterate to convergence</effect>
+	</option>
+      </options>
       <examples>
         <example>estimate "Klein Model 1" method=fiml</example>
 	<example>estimate Sys1 method=sur</example>
+	<example>estimate Sys1 method=sur --iterate</example>
       </examples>
     </usage>
 
@@ -1188,6 +1195,14 @@
 	estimator, which must be one of <cmd>sur</cmd>,
 	<cmd>3sls</cmd>, <cmd>fiml</cmd> or <cmd>liml</cmd>, is
 	preceded by the string <lit>method=</lit>.
+      </para>
+      <para>
+	If the estimation method is <cmd>sur</cmd> or <cmd>3sls</cmd>
+	and the <lit>--iterate</lit> flag is given, the estimator will
+	be iterated.  In the case of SUR, if the procedure converges
+	the results are maximum likelihood estimates.  Iteration of
+	three-stage least squares, however, does not in general
+	converge on the full-information maximum likelihood results.
       </para>
     </description>
 

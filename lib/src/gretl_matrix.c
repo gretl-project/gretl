@@ -1773,7 +1773,9 @@ int gretl_matrix_svd_ols (const gretl_vector *y, const gretl_matrix *X,
     }
 
     if (rank < k) {
-	fprintf(stderr, "dgelss: rank of X = %d\n", (int) rank);
+	fprintf(stderr, "gretl_matrix_svd_ols:\n"
+		" dgelss: rank of data matrix X = %d (rows = %d, cols = %d)\n", 
+		(int) rank, X->rows, X->cols);
     }
 
     if (!err) {

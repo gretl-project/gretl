@@ -431,6 +431,10 @@ fiml_form_indepvars (fiml_system *fsys, const double **Z, int t1)
 		for (k=0; k<fsys->g; k++) { /* loop across vertical blocks */
 		    bigrow = k * fsys->n + t;
 		    p = gretl_matrix_get(fsys->psi, k, i);
+#if 0
+		    fprintf(stderr, "referencing psi(%d, %d) = %g\n",
+			    k, i, p);
+#endif
 		    if (p != 0.0) {
 			if (xj != NULL) {
 			    xjt = xj[t];
@@ -496,15 +500,15 @@ static void klein_MLE_init (fiml_system *fsys)
 #endif
 
 static int 
-rhs_var_in_eqn (const gretl_equation_system *sys, int eq, int v)
+rhs_var_in_eqn (const int *list, int v)
 {
-    const int *list = system_get_list(sys, eq);
-
     if (list != NULL) {
 	int i;
 
 	for (i=2; i<=list[0]; i++) {
-	    if (list[i] == v) return i;
+	    if (list[i] == v) {
+		return i;
+	    }
 	}
     }
 
@@ -516,20 +520,32 @@ rhs_var_in_eqn (const gretl_equation_system *sys, int eq, int v)
 static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
+    const int *slist; 
     const MODEL *pmod;
     int lv, rv;
     int i, j, vi;
 
     for (j=0; j<fsys->nendo; j++) {
+
 	/* outer loop across columns (equations) */
+
+	if (j < fsys->g) {
+	    /* column pertains to stochastic equation */
+	    slist = system_get_list(fsys->sys, j);
+	} else {
+	    slist = NULL;
+	}
+	    
 	lv = enlist[j + 1];
+
+	/* inner loop across variables in equation */
+
 	for (i=0; i<fsys->nendo; i++) {
 	    rv = enlist[i + 1];
-	    if (j == i) {
+	    if (slist != NULL && rv == slist[1]) {
 		gretl_matrix_set(fsys->G, i, j, 1.0);
-	    } else if (j < fsys->g) {
-		/* column pertains to stochastic equation */
-		vi = rhs_var_in_eqn(fsys->sys, j, rv);
+	    } else if (slist != NULL) {
+		vi = rhs_var_in_eqn(slist, rv);
 		if (vi > 0) {
 		    pmod = system_get_model(fsys->sys, j);
 		    gretl_matrix_set(fsys->G, i, j, -pmod->coeff[vi-2]);
@@ -558,14 +574,17 @@ static void fiml_G_init (fiml_system *fsys, const DATAINFO *pdinfo)
 
 static void fiml_G_update (fiml_system *fsys)
 {
-    const int *enlist = system_get_endog_vars(fsys->sys);    
+    const int *enlist = system_get_endog_vars(fsys->sys);   
+    const int *slist;
     const MODEL *pmod;
-    int i, j, vi;
+    int i, j, rv, vi;
 
     for (j=0; j<fsys->g; j++) {
+	slist = system_get_list(fsys->sys, j);
 	for (i=0; i<fsys->nendo; i++) {
-	    if (j != i) {
-		vi = rhs_var_in_eqn(fsys->sys, j, enlist[i + 1]);
+	    rv = enlist[i + 1];
+	    if (rv != slist[1]) {
+		vi = rhs_var_in_eqn(slist, rv);
 		if (vi > 0) {
 		    pmod = system_get_model(fsys->sys, j);
 		    gretl_matrix_set(fsys->G, i, j, -pmod->coeff[vi-2]);
@@ -585,18 +604,20 @@ static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
 {
     const int *enlist = system_get_endog_vars(fsys->sys);
     const int *exlist = system_get_instr_vars(fsys->sys);
+    const int *slist;
     const MODEL *pmod;
     int lv, rv;
     int i, j, vi;
 
     for (j=0; j<fsys->nendo; j++) {
+	slist = system_get_list(fsys->sys, j);
 	lv = enlist[j + 1];
 	/* outer loop across columns (equations) */
 	for (i=0; i<fsys->nexo; i++) {
 	    rv = exlist[i + 1];
 	    if (j < fsys->g) {
 		/* column pertains to stochastic equation */
-		vi = rhs_var_in_eqn(fsys->sys, j, rv);
+		vi = rhs_var_in_eqn(slist, rv);
 		if (vi > 0) {
 		    pmod = system_get_model(fsys->sys, j);
 		    gretl_matrix_set(fsys->B, i, j, pmod->coeff[vi-2]);
@@ -630,12 +651,14 @@ static void fiml_B_init (fiml_system *fsys, const DATAINFO *pdinfo)
 static void fiml_B_update (fiml_system *fsys)
 {
     const int *exlist = system_get_instr_vars(fsys->sys);
+    const int *slist;
     const MODEL *pmod;
     int i, j, vi;
 
     for (j=0; j<fsys->g; j++) {
+	slist = system_get_list(fsys->sys, j);
 	for (i=0; i<fsys->nexo; i++) {
-	    vi = rhs_var_in_eqn(fsys->sys, j, exlist[i + 1]);
+	    vi = rhs_var_in_eqn(slist, exlist[i + 1]);
 	    if (vi > 0) {
 		pmod = system_get_model(fsys->sys, j);
 		gretl_matrix_set(fsys->B, i, j, pmod->coeff[vi-2]);

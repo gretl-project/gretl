@@ -525,10 +525,6 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
         goto system_bailout;
     }
 
-    pputc(prn, '\n');
-    pprintf(prn, _("Equation system, %s\n\n"),
-	    gretl_system_long_strings[sys->type]);
-
     err = (* system_est) (sys, pZ, pdinfo, prn);
     
  system_bailout:
@@ -628,6 +624,10 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     }
 
     sys->type = method;
+
+    if (opt & OPT_T) {
+	sys->flags |= GRETL_SYSTEM_ITERATE;
+    }
 
     return gretl_equation_system_estimate(sys, pZ, pdinfo, prn);
 }
@@ -732,6 +732,18 @@ void system_set_n_obs (gretl_equation_system *sys, int n)
 
 /* simple accessor functions */
 
+const char *system_get_full_string (const gretl_equation_system *sys)
+{
+    if (system_doing_iteration(sys)) {
+	static char sysstr[64];
+
+	sprintf(sysstr, _("iterated %s"), gretl_system_long_strings[sys->type]);
+	return sysstr;
+    } else {
+	return gretl_system_long_strings[sys->type];
+    }
+}
+
 int system_save_uhat (const gretl_equation_system *sys)
 {
     return sys->flags & GRETL_SYSTEM_SAVE_UHAT;
@@ -741,6 +753,15 @@ int system_save_yhat (const gretl_equation_system *sys)
 {
     return sys->flags & GRETL_SYSTEM_SAVE_YHAT;
 }
+
+int system_doing_iteration (const gretl_equation_system *sys)
+{
+    if (sys->type == SUR || sys->type == THREESLS) {
+	return sys->flags & GRETL_SYSTEM_ITERATE;
+    } else {
+	return 0;
+    }
+}   
 
 int system_n_equations (const gretl_equation_system *sys)
 {
