@@ -1445,7 +1445,8 @@ static void check_for_extra_data (void)
     extern char pwtpath[MAXLEN]; /* datafiles.c */
     extern char jwpath[MAXLEN];  /* datafiles.c */
     extern char dgpath[MAXLEN];  /* datafiles.c */
-    int gotpwt = 0, gotwool = 0, gotguj = 0;
+    extern char etmpath[MAXLEN]; /* datafiles.c */    
+    int gotpwt = 0, gotwool = 0, gotguj = 0, gotetm = 0;
 
     /* first check for Penn World Table */
     build_path(paths.datadir, "pwt56", pwtpath, NULL); 
@@ -1461,7 +1462,6 @@ static void check_for_extra_data (void)
 	    gotpwt = 1; 
 	}
     }
-
     if (!gotpwt) *pwtpath = 0;
 
     /* then check for Wooldridge data */
@@ -1478,7 +1478,6 @@ static void check_for_extra_data (void)
 	    gotwool = 1;
 	}
     }
-
     if (!gotwool) *jwpath = 0;
 
     /* and Gujarati data */
@@ -1495,8 +1494,23 @@ static void check_for_extra_data (void)
 	    gotguj = 1;
 	}
     }
-
     if (!gotguj) *dgpath = 0;
+
+    /* Davidson-MacKinnon data data */
+    build_path(paths.datadir, "ETM", etmpath, NULL); 
+    /* try at system level */
+    if ((dir = opendir(etmpath)) != NULL) {
+        closedir(dir);
+        gotetm = 1;
+    } else {
+        build_path(paths.userdir, "ETM", etmpath, NULL); 
+	/* and at user level */
+        if ((dir = opendir(etmpath)) != NULL) {
+            closedir(dir);
+            gotetm = 1;
+        }
+    }
+    if (!gotetm) *etmpath = 0;
 }
 
 /* ........................................................... */

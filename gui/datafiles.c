@@ -41,6 +41,7 @@ extern GdkColor gray;
 char pwtpath[MAXLEN];
 char jwpath[MAXLEN];
 char dgpath[MAXLEN];
+char etmpath[MAXLEN];
 
 static GtkWidget *browsers[N_BROWSER_TYPES];
 
@@ -62,6 +63,7 @@ enum {
     GREENE_DATA,
     JW_DATA,
     DG_DATA,
+    ETM_DATA,
     PWT_DATA,
     MAX_DATA,
     RAMU_PS,
@@ -134,6 +136,8 @@ static int read_data_descriptions (windata_t *fdata)
 	build_path(jwpath, "jw_descriptions", fname, NULL);
     else if (fdata->role == DG_DATA) 
 	build_path(dgpath, "dg_descriptions", fname, NULL);
+    else if (fdata->role == ETM_DATA) 
+	build_path(etmpath, "etm_descriptions", fname, NULL);
     else if (fdata->role == GREENE_DATA) {
 	strcpy(fname, paths.datadir);
 	append_dir(fname, "greene");
@@ -196,6 +200,8 @@ static void browse_header (GtkWidget *w, gpointer data)
 	build_path(jwpath, fname, hdrname, ".gdt");
     else if (file_code == DG_DATA)
 	build_path(dgpath, fname, hdrname, ".gdt");
+    else if (file_code == ETM_DATA)
+	build_path(etmpath, fname, hdrname, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(hdrname, paths.datadir);
 	append_dir(hdrname, "greene");
@@ -237,6 +243,8 @@ void browser_open_data (GtkWidget *w, gpointer data)
 	build_path(jwpath, datname, trydatfile, ".gdt");
     else if (file_code == DG_DATA)
 	build_path(dgpath, datname, trydatfile, ".gdt");
+    else if (file_code == ETM_DATA)
+	build_path(etmpath, datname, trydatfile, ".gdt");
     else if (file_code == GREENE_DATA) {
 	strcpy(trydatfile, paths.datadir);
 	append_dir(trydatfile, "greene");
@@ -695,6 +703,7 @@ static GtkWidget *files_window (windata_t *fdata)
     case PWT_DATA:
     case JW_DATA:
     case DG_DATA:
+    case ETM_DATA:
 	break;
     case RAMU_DATA:
 	col_width[0] = 64;
@@ -965,6 +974,7 @@ static int page_missing (int i)
 {
     if (i == JW_DATA && *jwpath == '\0') return 1;
     if (i == DG_DATA && *dgpath == '\0') return 1;
+    if (i == ETM_DATA && *etmpath == '\0') return 1;
     if (i == PWT_DATA && *pwtpath == '\0') return 1;
     if (i == PWT_PS && *pwtpath == '\0') return 1;
     return 0;
@@ -989,6 +999,7 @@ static GtkWidget *files_notebook (windata_t *fdata,
 	"Greene",
 	"Wooldridge",
 	"Gujarati",
+	"ETM",
 	"Penn World Table"
     };
     const gchar *ps_tab_labels[] = {
