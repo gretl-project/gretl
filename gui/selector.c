@@ -697,7 +697,7 @@ static void build_mid_section (selector *sr, GtkWidget *right_vbox)
 
 static int screen_scalar (int i, int c)
 {
-    if ((MODEL_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
+    if ((MODEL_CODE(c) || GRAPH_CODE(c) || c == LAGS || c == DIFF || c == LDIFF)
 	&& datainfo->vector[i] == 0)
 	return 1;
     return 0;

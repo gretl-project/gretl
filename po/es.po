@@ -1,15 +1,15 @@
-# po template for gretl
-# Copyright (C) 2002 Allin Cottrell
-# This file is distributed under the same license as the gretl package.
-# Allin Cottrell <cottrell@wfu.edu>, 2002.
-# Traducción:
+# Mensajes en español para GNU gretl.
+# Copyright (C) 2002 Free Software Foundation, Inc.
 # Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>, 2002.
-# $Header$
+#
+# This file is distributed under the same license as the gretl package.
+#
+#
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.996\n"
-"POT-Creation-Date: 2002-05-25 11:20-0400\n"
-"PO-Revision-Date: 2002-05-25 11:24-0400\n"
+"POT-Creation-Date: 2002-05-27 09:56-0400\n"
+"PO-Revision-Date: 2002-05-27 10:34-0400\n"
 "Last-Translator: Ignacio Díaz-Emparanza <etpdihei@bs.ehu.es>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -62,7 +62,7 @@ msgstr ""
 #: lib/src/compare.c:671
 #, c-format
 msgid "with p-value = prob(F(%d,%d) > %g) = %.3g\n"
-msgstr "con valor-p = prob(F(%d,%d) > %g) = %.3g\n"
+msgstr "con valor p = prob(F(%d,%d) > %g) = %.3g\n"
 
 #: lib/src/compare.c:675
 #, c-format
@@ -79,7 +79,7 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %g) = %.3g\n"
 "\n"
 msgstr ""
-"con valor-p = prob(Chi-cuadrado(%d) > %g) = %.3g\n"
+"con valor p = prob(Chi-cuadrado(%d) > %g) = %.3g\n"
 "\n"
 
 #: lib/src/compare.c:690
@@ -110,7 +110,7 @@ msgid ""
 msgstr ""
 "\n"
 "Contraste de Chow de cambio estructural en la observación %s:\n"
-"  F(%d, %d) = %f con valor-p %f\n"
+"  F(%d, %d) = %f con valor p %f\n"
 "\n"
 
 #: lib/src/compare.c:805
@@ -165,7 +165,7 @@ msgid ""
 "\n"
 msgstr ""
 "\n"
-"Harvey-Collier t(%d) = %g con valor-p %.4g\n"
+"Harvey-Collier t(%d) = %g con valor p %.4g\n"
 "\n"
 
 #: lib/src/compare.c:961
@@ -1024,7 +1024,7 @@ msgstr ""
 "\n"
 "Contraste de integración fraccional\n"
 "  Grado de integración estimado = %f\n"
-"  estadístico de contraste: t(%d) = %f, con valor-p %.4f\n"
+"  estadístico de contraste: t(%d) = %f, con valor p %.4f\n"
 
 #: lib/src/describe.c:564
 msgid ""
@@ -1160,7 +1160,7 @@ msgid ""
 "   p-value (two-tailed) = %g\n"
 "\n"
 msgstr ""
-"   valor-p (a dos colas) = %g\n"
+"   valor p (a dos colas) = %g\n"
 "\n"
 
 #: lib/src/describe.c:1101 lib/src/describe.c:1168
@@ -1936,7 +1936,7 @@ msgstr ""
 msgid ""
 "set label 'Chi-squared(2) = %.3f, pvalue %.5f' at graph .05, graph .85\n"
 msgstr ""
-"set label 'Chi-cuadrado(2) = %.3f, valor-p %.5f' en gráfico .05, "
+"set label 'Chi-cuadrado(2) = %.3f, valor p %.5f' en gráfico .05, "
 "gráfico .85\n"
 
 #: lib/src/interact.c:286
@@ -2205,13 +2205,13 @@ msgstr ""
 #: lib/src/nonparam.c:157
 #, c-format
 msgid "z-score = %f, with one-tailed p-value %f\n"
-msgstr "valor z = %f, con valor-p %f a una cola\n"
+msgstr "valor z = %f, con valor p %f a una cola\n"
 
 #: lib/src/nonparam.c:160
 msgid ""
 "Sample is too small to calculate a p-value based on the normal distribution\n"
 msgstr ""
-"La muestra es demasiado pequeña para calcular un valor-p basado en la "
+"La muestra es demasiado pequeña para calcular un valor p basado en la "
 "distribución normal\n"
 
 #: lib/src/nonparam.c:239
@@ -2240,7 +2240,7 @@ msgstr ""
 #: lib/src/nonparam.c:254
 #, c-format
 msgid "z-score = %f, with two-tailed p-value %f\n"
-msgstr "valor z = %f, con valor-p %f a dos colas\n"
+msgstr "valor z = %f, con valor p %f a dos colas\n"
 
 #: lib/src/printout.c:54
 msgid ""
@@ -2307,7 +2307,7 @@ msgstr "Estadístico-F(%d, %d)"
 
 #: lib/src/printout.c:196
 msgid "p-value"
-msgstr "valor-p"
+msgstr "valor p"
 
 #: lib/src/printout.c:203 lib/src/printout.c:204 lib/src/printout.c:225
 #: lib/src/printout.c:935 lib/src/printout.c:939 lib/src/printout.c:963
@@ -2345,7 +2345,7 @@ msgid ""
 "Excluding the constant, p-value was highest for variable %d (%s)\n"
 "\n"
 msgstr ""
-"Excluyendo la constante, el valor-p fue el más alto para la variable %d (%"
+"Excluyendo la constante, el valor p fue el más alto para la variable %d (%"
 "s)\n"
 "\n"
 
@@ -2481,7 +2481,7 @@ msgstr ""
 "%s -\n"
 "  Hipótesis nula: %s\n"
 "  Estadístico de contraste: %s\n"
-"  con valor-p = %s\n"
+"  con valor p = %s\n"
 "\n"
 
 #: lib/src/printout.c:469
@@ -2572,7 +2572,7 @@ msgid ""
 "with p-value = prob(Chi-square(%d) > %f) = %f\n"
 "\n"
 msgstr ""
-"con valor-p = prob(Chi-cuadrado(%d) > %f) = %f\n"
+"con valor p = prob(Chi-cuadrado(%d) > %f) = %f\n"
 "\n"
 
 #: lib/src/printout.c:558
@@ -2682,7 +2682,7 @@ msgstr ""
 #: lib/src/printout.c:634 lib/src/printout.c:678
 #, c-format
 msgid "with p-value = %f\n"
-msgstr "con valor-p = %f\n"
+msgstr "con valor p = %f\n"
 
 #: lib/src/printout.c:642 lib/src/printout.c:687
 #, c-format
@@ -2699,7 +2699,7 @@ msgid ""
 "with p-value = %f\n"
 "\n"
 msgstr ""
-"con valor-p = %f\n"
+"con valor p = %f\n"
 "\n"
 
 #: lib/src/printout.c:655
@@ -2821,7 +2821,7 @@ msgstr ""
 #: lib/src/printout.c:827
 #, c-format
 msgid "Chi-squared(2) = %.3f with pvalue %.5f\n"
-msgstr "Chi-cuadrado(2)= %.3f con valor-p %.5f\n"
+msgstr "Chi-cuadrado(2)= %.3f con valor p %.5f\n"
 
 #: lib/src/printout.c:846
 #, c-format
@@ -2959,7 +2959,7 @@ msgid ""
 "Likelihood ratio test: Chi-square(%d) = %.3f (p-value %f)\n"
 "\n"
 msgstr ""
-"Contraste de razón de verosimilitudes: Chi-cuadrado(%d) = %.3f (valor-p %f)\n"
+"Contraste de razón de verosimilitudes: Chi-cuadrado(%d) = %.3f (valor p %f)\n"
 "\n"
 
 #: lib/src/printout.c:1929
@@ -2998,7 +2998,7 @@ msgid ""
 "p-value calculation failed\n"
 msgstr ""
 "\n"
-"falló el cálculo del valor-p\n"
+"falló el cálculo del valor p\n"
 
 #: lib/src/pvalues.c:362
 #, c-format
@@ -3028,7 +3028,7 @@ msgid ""
 "pvalue for t: missing parameter\n"
 msgstr ""
 "\n"
-"valor-p para t: parámetro perdido\n"
+"valor p para t: parámetro perdido\n"
 
 #: lib/src/pvalues.c:380
 #, c-format
@@ -3045,7 +3045,7 @@ msgid ""
 "pvalue for chi-square: missing parameter\n"
 msgstr ""
 "\n"
-"valor-p para la chi-cuadrado: parámetro perdido\n"
+"valor p para la chi-cuadrado: parámetro perdido\n"
 
 #: lib/src/pvalues.c:399
 #, c-format
@@ -3067,7 +3067,7 @@ msgid ""
 "pvalue for F: missing parameter\n"
 msgstr ""
 "\n"
-"valor-p para F: parámetro perdido\n"
+"valor p para F: parámetro perdido\n"
 
 #: lib/src/pvalues.c:416
 #, c-format
@@ -3103,7 +3103,7 @@ msgid ""
 "unrecognized pvalue code\n"
 msgstr ""
 "\n"
-"código de valor-p desconocido\n"
+"código de valor p desconocido\n"
 
 #: lib/src/pvalues.c:453
 msgid ""
@@ -3519,7 +3519,7 @@ msgstr "Todos los retardos de %-8s "
 #: lib/src/var.c:367 lib/src/var.c:389
 #, c-format
 msgid "p-value %f\n"
-msgstr "valor-p %f\n"
+msgstr "valor p %f\n"
 
 #: lib/src/var.c:370
 #, c-format
@@ -3595,27 +3595,27 @@ msgstr ""
 
 #: lib/src/var.c:619
 msgid "unknown pvalue"
-msgstr "valor-p desconocido"
+msgstr "valor p desconocido"
 
 #: lib/src/var.c:621
 msgid "pvalue < .01"
-msgstr "valor-p < .01"
+msgstr "valor p < .01"
 
 #: lib/src/var.c:622
 msgid ".025 > pvalue > .01"
-msgstr ".025 > valor-p > .01"
+msgstr ".025 > valor p > .01"
 
 #: lib/src/var.c:623
 msgid ".05 > pvalue > .025"
-msgstr ".05 > valor-p > .025"
+msgstr ".05 > valor p > .025"
 
 #: lib/src/var.c:624
 msgid ".10 > pvalue > .05"
-msgstr ".10 > valor-p > .05"
+msgstr ".10 > valor p > .05"
 
 #: lib/src/var.c:625
 msgid "pvalue > .10"
-msgstr "valor-p > .10"
+msgstr "valor p > .10"
 
 #: lib/src/var.c:628
 #, c-format
@@ -4058,7 +4058,7 @@ msgstr "Desviación típica no válida"
 
 #: gui/calculator.c:306
 msgid "gretl: p-value"
-msgstr "gretl: valor-p"
+msgstr "gretl: valor p"
 
 #: gui/calculator.c:313
 #, c-format
@@ -4066,7 +4066,7 @@ msgid ""
 "Two-tailed p-value = %.4g\n"
 "(one-tailed = %.4g)\n"
 msgstr ""
-"valor-p a dos colas = %.4g\n"
+"valor p a dos colas = %.4g\n"
 "(a una cola = %.4g)\n"
 
 #: gui/calculator.c:360
@@ -4261,7 +4261,7 @@ msgstr "Mostrar el gráfico de la distribución muestral"
 
 #: gui/calculator.c:961
 msgid "gretl: p-value finder"
-msgstr "gretl: buscador de valor-p"
+msgstr "gretl: buscador de valor p"
 
 #: gui/calculator.c:963
 msgid "gretl: statistical tables"
@@ -5235,7 +5235,7 @@ msgstr "ficheros xfig (*.fig)"
 
 #: gui/fileselect.c:255
 msgid "LaTeX files (*.tex)"
-msgstr "ficheros TeX (*.tex)"
+msgstr "ficheros LaTeX (*.tex)"
 
 #: gui/fileselect.c:256
 msgid "PNG files (*.png)"
@@ -6824,14 +6824,12 @@ msgid "Out of memory!"
 msgstr "¡Falta de memoria!"
 
 #: gui/gui_utils.c:640
-#, fuzzy
 msgid "Unrecognized data type"
-msgstr "XXX desconocido"
+msgstr "tipo de datos desconocido"
 
 #: gui/gui_utils.c:658
-#, fuzzy
 msgid "Failed to import spreadsheet data"
-msgstr "Fallo al importar XXX"
+msgstr "Fallo al importar datos de la hoja de cŽálculo"
 
 #: gui/gui_utils.c:760
 msgid "gretl: open data"
@@ -7731,9 +7729,7 @@ msgstr "Estadísticos basados en los datos ponderados:\\par\n"
 msgid ""
 "\n"
 "Statistics based on the original data:\\par\n"
-msgstr ""
-"\n"
-"Estadísticos basados en los datos originales:\\par\n"
+msgstr "\nEstadísticos basados en los datos originales:\\par\n"
 
 #: gui/guiprint.c:1240 gui/guiprint.c:1241
 msgid "/Edit/Copy all"
@@ -8523,7 +8519,7 @@ msgid ""
 " F(%d, %d) = %g with p-value %g\n"
 msgstr ""
 "Significatividad conjunta de las variables ficticias unitarias:\n"
-" F(%d, %d) = %g con valor-p %g\n"
+" F(%d, %d) = %g con valor p %g\n"
 
 #: plugin/panel_data.c:388
 msgid ""
@@ -8531,7 +8527,7 @@ msgid ""
 "is adequate, in favor of the fixed effects alternative.)\n"
 "\n"
 msgstr ""
-"(Un valor-p bajo es una indicación en contra de la hipótesis nula de que el\n"
+"(Un valor p bajo es una indicación en contra de la hipótesis nula de que el\n"
 " modelo de MCO combinados es el adecuado, en favor de la alternativa de\n"
 " efectos fijos.)\n"
 
@@ -8576,7 +8572,7 @@ msgid ""
 msgstr ""
 "\n"
 "Estadístico de contraste de Breusch-Pagan:\n"
-" LM = %g con valor-p = prob(chi-cuadrado(1) > %g) = %g\n"
+" LM = %g con valor p = prob(chi-cuadrado(1) > %g) = %g\n"
 
 #: plugin/panel_data.c:523
 msgid ""
@@ -8584,7 +8580,7 @@ msgid ""
 "is adequate, in favor of the random effects alternative.)\n"
 "\n"
 msgstr ""
-"(Un valor-p bajo es una indicación en contra de la hipótesis nula de que el\n"
+"(Un valor p bajo es una indicación en contra de la hipótesis nula de que el\n"
 " modelo de MCO combinados es el adecuado, en favor de la alternativa de\n"
 " efectos aleatorios.)\n"
 
@@ -8612,7 +8608,7 @@ msgid ""
 msgstr ""
 "\n"
 "Estadístico de contraste de Hausman:\n"
-" H = %g con valor-p = prob(Chi-cuadrado(%d) > %g) = %g\n"
+" H = %g con valor p = prob(Chi-cuadrado(%d) > %g) = %g\n"
 "\n"
 
 #: plugin/panel_data.c:557
@@ -8620,7 +8616,7 @@ msgid ""
 "(A low p-value counts against the null hypothesis that the random effects\n"
 "model is consistent, in favor of the fixed effects model.)\n"
 msgstr ""
-"(Un valor-p bajo es una indicación en contra de la hipótesis nula de que el "
+"(Un valor p bajo es una indicación en contra de la hipótesis nula de que el "
 "modelo de\n"
 "efectos aleatorios es consistente, en favor del modelo de efectos fijos.)\n"
 
@@ -8841,29 +8837,29 @@ msgstr ""
 "\n"
 "Por favor, cambie de nombre a esta variable e inténtelo de nuevo"
 
-#: plugin/workbook.c:379
+#: plugin/workbook.c:383
 msgid "No book or workbook streams found."
 msgstr "No se encontraron flujos de libro o de libro de trabajo."
 
-#: plugin/workbook.c:384
+#: plugin/workbook.c:388
 msgid "Reading file...\n"
 msgstr "Leyendo fichero...\n"
 
-#: plugin/workbook.c:487
+#: plugin/workbook.c:491
 msgid "Password protected workbooks are not supported yet."
 msgstr "No se soportan aún libros de trabajo protegidos por palabra clave."
 
-#: plugin/workbook.c:585 plugin/workbook.c:637
+#: plugin/workbook.c:589 plugin/workbook.c:641
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
 msgstr ""
 "Este fichero no es un fichero 'OLE' -- puede ser demasiado antiguo para que "
 "gretl lo lea\n"
 
-#: plugin/workbook.c:587
+#: plugin/workbook.c:591
 msgid "Unexpected error reading the file\n"
 msgstr "Error inesperado al leer el fichero\n"
 
-#: plugin/workbook.c:639
+#: plugin/workbook.c:643
 msgid "Unexpected error reading the file"
 msgstr "Error inesperado al leer el fichero"
 
@@ -8891,318 +8887,3 @@ msgstr "      VARIABLE         COEFICIENTE           DESV.TÍP.\n"
 #: plugin/mp_ols.c:504
 msgid "Error sum of squares is not > 0"
 msgstr "La suma de cuadrados de los residuos no es > 0"
-
-#~ msgid "postscript files"
-#~ msgstr "ficheros PostScript"
-
-#~ msgid "LaTeX files"
-#~ msgstr "ficheros LaTeX"
-
-#~ msgid "PNG files"
-#~ msgstr "ficheros PNG"
-
-#~ msgid "gnuplot files"
-#~ msgstr "ficheros gnuplot"
-
-#~ msgid "Data file"
-#~ msgstr "Fichero de datos"
-
-#~ msgid "csv file seems to be malformed\n"
-#~ msgstr "el fichero CSV parece estar mal formado\n"
-
-#~ msgid "  Std Err of Resid. (sgmahat) "
-#~ msgstr "  Desv. Típ. de los resid (sgmahat) "
-
-#~ msgid "Unadjusted R-squared %14.3f  Adjusted R-squared "
-#~ msgstr "R-cuadrado no corregido %14.3f  R-cuadrado corregido "
-
-#~ msgid "%11s  p-value for F() %23s\n"
-#~ msgstr "%11s  valor-p para F() %23s\n"
-
-#~ msgid "%11g  p-value for F() %23f\n"
-#~ msgstr "%11g  valor-p para F() %23f\n"
-
-#~ msgid "Durbin-Watson stat. %15s  First-order autocorr. coeff %11s\n"
-#~ msgstr ""
-#~ "Estad. de Durbin-Watson %15s Coef. de autocorr. de primer orden %11s\n"
-
-#~ msgid "Durbin-Watson stat. %15.3f  First-order autocorr. coeff %11.3f\n"
-#~ msgstr ""
-#~ "Estad. de Durbin-Watson %15.3f Coef. de autocorr. de primer orden %11.3f\n"
-
-#~ msgid "Failed to add sub-sampling dummy variable"
-#~ msgstr "Fallo al añadir variable ficticia de sub-muestreo"
-
-#~ msgid "Failed to add new variable.\n"
-#~ msgstr "Fallo al añadir la nueva variable.\n"
-
-#~ msgid "Failed to add new variable\n"
-#~ msgstr "Fallo al añadir nueva variable\n"
-
-#~ msgid "Failed to add new variable"
-#~ msgstr "Fallo al añadir nueva variable"
-
-#~ msgid "/Edit/Copy _all/as plain _text"
-#~ msgstr "/Editar/Copiar _todo/como texto plano"
-
-#~ msgid "/Edit/Copy _all/as _LaTeX"
-#~ msgstr "/Editar/Copiar _todo/como _LaTeX"
-
-#~ msgid "/Edit/Copy _all/as _RTF"
-#~ msgstr "/Editar/Copiar _todo/como _RTF"
-
-#~ msgid "/_Model data/Display actual, fitted, residual"
-#~ msgstr "Datos del _Modelo/Mostrar ajustada, observada, residuos"
-
-#~ msgid "/_Model data/Forecasts with standard errors"
-#~ msgstr "/Datos del _Modelo/Predicciones con desviaciones típicas"
-
-#~ msgid "/_Model data/Confidence intervals for coefficients"
-#~ msgstr "/Datos del _modelo/Intervalos de confianza para los coeficientes"
-
-#~ msgid "/_Model data/Add to data set/fitted values"
-#~ msgstr "/Datos del _modelo/Añadir al conjunto de datos/valores ajustados"
-
-#~ msgid "/_Model data/Add to data set/residuals"
-#~ msgstr "/Datos del _modelo/Añadir al conjunto de datos/residuos"
-
-#~ msgid "/_Model data/Add to data set/squared residuals"
-#~ msgstr ""
-#~ "/Datos del _modelo/Añadir al conjunto de datos/cuadrados de los residuos"
-
-#~ msgid "/_Model data/Add to data set/error sum of squares"
-#~ msgstr ""
-#~ "/Datos del _modelo/Añadir al conjunto de datos/suma de cuadrados residual"
-
-#~ msgid "/_Model data/Add to data set/standard error of residuals"
-#~ msgstr ""
-#~ "/Datos del _modelo/Añadir al conjunto de datos/desviación típica de los "
-#~ "residuos"
-
-#~ msgid "/_Model data/Add to data set/R-squared"
-#~ msgstr "/Datos del _modelo/Añadir al conjunto de datos/R-cuadrado"
-
-#~ msgid "/_Model data/Add to data set/T*R-squared"
-#~ msgstr "/Datos del _modelo/Añadir al conjunto de datos/T*R-cuadrado"
-
-#~ msgid "/_Model data/Add to data set/log likelihood"
-#~ msgstr "/Datos del _modelo/Añadir al conjunto de datos/log. verosimilitud"
-
-#~ msgid "/_Model data/Define new variable..."
-#~ msgstr "/Datos del _modelo/Definir nueva variable..."
-
-#~ msgid "/File/_Open data/sample file/Penn World Table..."
-#~ msgstr "/Archivo/_Abrir datos/archivo de muestra/Tabla mundial de Penn..."
-
-#~ msgid "/File/Clear data set"
-#~ msgstr "/Archivo/Cerrar conjunto de datos"
-
-#~ msgid "/File/Save data"
-#~ msgstr "/Archivo/Guardar datos"
-
-#~ msgid "/Data"
-#~ msgstr "/Datos"
-
-#~ msgid "/Sample"
-#~ msgstr "/Muestra"
-
-#~ msgid "/Variable"
-#~ msgstr "/Variable"
-
-#~ msgid "/Model"
-#~ msgstr "/Modelo"
-
-#~ msgid "/Data/Edit info"
-#~ msgstr "/Datos/Editar información"
-
-#~ msgid "/Model/Pooled OLS (panel)..."
-#~ msgstr "/Modelo/MCO combinados (panel)..."
-
-#~ msgid "/Session/Icon view"
-#~ msgstr "/Sesión/Vista de iconos"
-
-#~ msgid "/Session/Save"
-#~ msgstr "/Sesión/Guardar"
-
-#~ msgid "/Session/Save as..."
-#~ msgstr "/sesión/Guardar como..."
-
-#~ msgid "/Sample/Restore full range"
-#~ msgstr "/Muestra/Recuperar rango completo"
-
-#~ msgid "/Sample/Interpret as time series..."
-#~ msgstr "/Muestra/Interpretar como series temporales..."
-
-#~ msgid "/Sample/Interpret as panel..."
-#~ msgstr "/Muestra/Interpretar como panel..."
-
-#~ msgid "/LaTeX"
-#~ msgstr "/LaTeX"
-
-#~ msgid "/File/Save to sesssion as icon"
-#~ msgstr "/Archivo/Guardar a sesión como icono"
-
-#~ msgid "/Model data"
-#~ msgstr "/Datos del modelo"
-
-#~ msgid "to square"
-#~ msgstr "a elevar al cuadrado"
-
-#~ msgid "to difference"
-#~ msgstr "a diferenciar"
-
-#~ msgid "to display"
-#~ msgstr "a mostrar"
-
-#~ msgid "Checking for conformability with present data set...\n"
-#~ msgstr "Comprobando la adecuación con el conjunto de datos actual...\n"
-
-#~ msgid "   Number of observations does not match.\n"
-#~ msgstr "   El número de observaciones no casa.\n"
-
-#~ msgid "Attempting data merge...\n"
-#~ msgstr "Intentando unir los datos...\n"
-
-#~ msgid "   Out of memory.\n"
-#~ msgstr "   Falta de memoria.\n"
-
-#~ msgid "   OK, I think.\n"
-#~ msgstr "   De acuerdo, creo.\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "Test for autocorrelation up to the periodicity\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Contraste de autocorrelación hasta la periodicidad\n"
-
-#~ msgid ""
-#~ "\n"
-#~ "White's test for heteroskedasticity\n"
-#~ msgstr ""
-#~ "\n"
-#~ "Contraste de heterocedasticidad de White\n"
-
-#~ msgid "Data frequency: %d\n"
-#~ msgstr "Frecuencia de los datos: %d\n"
-
-#~ msgid "Couldn't parse 'critical' line"
-#~ msgstr "No se pudo pasar línea 'crítica'"
-
-#~ msgid ""
-#~ "Enter specification for %s model:\n"
-#~ "(depvar indepvars)"
-#~ msgstr ""
-#~ "Introduzca la especificación para el modelo %s:\n"
-#~ "(vardep varindeps)"
-
-#~ msgid ""
-#~ "Enter specification for WLS model:\n"
-#~ "(wtvar depvar indepvars)"
-#~ msgstr ""
-#~ "Introduzca la especificación para el modelo MCP:\n"
-#~ "(varpond vardep varindeps)"
-
-#~ msgid ""
-#~ "Enter specification for TSLS model:\n"
-#~ "<varlist1> ; <varlist2>\n"
-#~ "You will probably want to consult the help on tsls first"
-#~ msgstr ""
-#~ "Introduzca la especificación para el modelo MC2E:\n"
-#~ "<listvar1> ; <listvar2>\n"
-#~ "Probablemente, Vd. querrá antes consultar la ayuda sobre MC2E"
-
-#~ msgid ""
-#~ "Enter specification for AR model:\n"
-#~ "<laglist> ; <varlist>\n"
-#~ "You will probably want to consult the help on ar first"
-#~ msgstr ""
-#~ "Introduzca la especificación para el modelo AR:\n"
-#~ "<listret> ; <listvar>\n"
-#~ "Probablemente, Vd. antes deseará consultar la ayuda sobre AR"
-
-#~ msgid ""
-#~ "Enter specification for VAR:\n"
-#~ "(lag_order depvar indepvars)"
-#~ msgstr ""
-#~ "Introduzca la especificación para el modelo VAR:\n"
-#~ "(orden_retardo vardep varindeps)"
-
-#~ msgid "gretl: omit vars"
-#~ msgstr "gretl: omitir variables"
-
-#~ msgid "gretl: add vars"
-#~ msgstr "gretl: añadir variables"
-
-#~ msgid "Names (or numbers) of variables to add:"
-#~ msgstr "Nombres (o números) de variables a añadir:"
-
-#~ msgid ""
-#~ "Enter spec. for cointegration test:\n"
-#~ "(lag_order depvar indepvars)"
-#~ msgstr ""
-#~ "Introduzca opciones escpecíficas para el contraste de cointegración:\n"
-#~ "(orden_retardo vardep varindeps)"
-
-#~ msgid "Enter variable names or numbers:"
-#~ msgstr "Introduzca nombres o números de las variables"
-
-#~ msgid "gretl: generate logs"
-#~ msgstr "gretl: generar logaritmos"
-
-#~ msgid "gretl: generate lags"
-#~ msgstr "gretl: generar retardos"
-
-#~ msgid "gretl: generate squares"
-#~ msgstr "gretl: generar cuadrados"
-
-#~ msgid "Enter ID numbers of vars to difference"
-#~ msgstr "Introduzca número de ID de las variables a diferenciar"
-
-#~ msgid "gretl: generate differences"
-#~ msgstr "gretl: generar diferencias"
-
-#~ msgid "Enter ID numbers of vars to log-difference"
-#~ msgstr "Introduzca número de ID de las variables a log-diferenciar"
-
-#~ msgid "Enter var names or numbers:"
-#~ msgstr "Introduzca los nombres o números de las variables:"
-
-#~ msgid "gretl: define plot"
-#~ msgstr "gretl: definir gráfico (plot)"
-
-#~ msgid "Enter 3 var names or nos. (Y, X, factor):"
-#~ msgstr "Introduzca 3 nombres o núm. de var. (Y, X, factor):"
-
-#~ msgid "gretl: define impulse plot"
-#~ msgstr "gretl: definir gráfico de impulsos"
-
-#~ msgid "Enter two var names or numbers (Y then X):"
-#~ msgstr "Introduzca dos nombres o núm. de variables (Y, X):"
-
-#~ msgid "Enter var names or numbers (X comes last):"
-#~ msgstr "Introduzca los nombres o números de las variables (X al final):"
-
-#~ msgid "gretl: multiple plots"
-#~ msgstr "gretl: gráficos múltiples"
-
-#~ msgid "yvar ; xvarlist  or  yvarlist ; xvar"
-#~ msgstr "yvar ; xvarlist o yvarlist ; xvar"
-
-#~ msgid " Graph "
-#~ msgstr " Gráfico"
-
-#~ msgid "Couldn't open plot file"
-#~ msgstr "No se pudo abrir fichero de gráfico"
-
-#~ msgid "/File/_Create data set/time-series/undated"
-#~ msgstr "/Archivo/C_rear conjunto de datos/series temporales/sin fecha"
-
-#~ msgid "US-Letter"
-#~ msgstr "US-Letter"
-
-#~ msgid "(autocorrelation)"
-#~ msgstr "(autocorrelación)"
-
-#~ msgid "P"
-#~ msgstr "p"

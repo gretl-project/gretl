@@ -113,45 +113,45 @@
 
       <orderedlist>
 	<listitem><para>If the <literal>BYOBS</literal> keyword is
-	    replaced by <literal>BYVAR</literal>, and followed by the
-	    keyword <literal>BINARY</literal>, this indicates that the
-	    corresponding data file is in binary format.  Such data
-	    files can be written from
-	    <application>gretlcli</application> using the
-	    <command>store</command> command with the
-	    <command>-s</command> flag (single precision) or the
-	    <command>-o</command> flag (double
-	    precision).</para></listitem>
+	  replaced by <literal>BYVAR</literal>, and followed by the
+	  keyword <literal>BINARY</literal>, this indicates that the
+	  corresponding data file is in binary format.  Such data
+	  files can be written from
+	  <application>gretlcli</application> using the
+	  <command>store</command> command with the
+	  <command>-s</command> flag (single precision) or the
+	  <command>-o</command> flag (double
+	  precision).</para></listitem>
 	
 	<listitem><para>If <literal>BYOBS</literal> is followed by the
-	    keyword <literal>MARKERS</literal>,
-	    <application>gretl</application> expects a data file in
-	    which the <emphasis>first column</emphasis> contains strings (8
-	    characters maximum) used to identify the observations.
-	    This may be handy in the case of cross-sectional data
-	    where the units of observation are identifiable:
-	    countries, states, cities or whatever.  It can also be
-	    useful for irregular time series data, such as daily stock
-	    price data where some days are not trading days &mdash; in
-	    this case the observations can be marked with a date
-	    string such as <command>10/01/98</command>.  (Remember the
-	    8-character maximum.)  Note that <command>BINARY</command> and
-	    <command>MARKERS</command> are mutually exclusive flags. Also note
-	    that the <quote>markers</quote> are not considered to be a
-	    variable: this column does not have a corresponding entry
-	    in the list of variable names in the header
-	    file.</para></listitem>
+	  keyword <literal>MARKERS</literal>,
+	  <application>gretl</application> expects a data file in
+	  which the <emphasis>first column</emphasis> contains strings
+	  (8 characters maximum) used to identify the observations.
+	  This may be handy in the case of cross-sectional data where
+	  the units of observation are identifiable: countries,
+	  states, cities or whatever.  It can also be useful for
+	  irregular time series data, such as daily stock price data
+	  where some days are not trading days &mdash; in this case
+	  the observations can be marked with a date string such as
+	  <command>10/01/98</command>.  (Remember the 8-character
+	  maximum.)  Note that <command>BINARY</command> and
+	  <command>MARKERS</command> are mutually exclusive flags.
+	  Also note that the <quote>markers</quote> are not considered
+	  to be a variable: this column does not have a corresponding
+	  entry in the list of variable names in the header
+	  file.</para></listitem>
 
 	<listitem><para>If a file with the same base name as the data
-	    file and header files, but with the suffix
-	    <filename>.lbl</filename>, is found, it is read to fill
-	    out the descriptive labels for the data series. The format
-	    of the label file is simple: each line contains the name
-	    of one variable (as found in the header file), followed by
-	    one or more spaces, followed by the descriptive
-	    label. Here is an example:
+	  file and header files, but with the suffix
+	  <filename>.lbl</filename>, is found, it is read to fill out
+	  the descriptive labels for the data series. The format of
+	  the label file is simple: each line contains the name of one
+	  variable (as found in the header file), followed by one or
+	  more spaces, followed by the descriptive label. Here is an
+	  example: 
 
-	    <literal>price  New car price index, 1982 base year</literal>
+	  <literal>price  New car price index, 1982 base year</literal>
 
 	  </para>
 	</listitem>
@@ -183,13 +183,16 @@
       description of the series (maximum 128 characters).  On the
       second line the first field is a frequency code:
       <literal>M</literal> for monthly, <literal>Q</literal> for
-      quarterly and <literal>A</literal> for annual.  No other
-      frequencies are accepted at present.  Then comes the starting
-      date (N.B. with two digits following the point for monthly data,
-      one for quarterly data, none for annual), a space, a hyphen,
-      another space, the ending date, the string <quote><literal>n
-	  = </literal></quote> and the integer number of observations.
-      This format must be respected exactly.</para>
+      quarterly, <literal>A</literal> for annual and
+      <literal>D</literal> for daily.  No other frequencies are
+      accepted at present.  Then comes the starting date (N.B. with
+      two digits following the point for monthly data, one for
+      quarterly data, none for annual), a space, a hyphen, another
+      space, the ending date, the string <quote><literal>n =
+	</literal></quote> and the integer number of observations. In
+      the case of daily data the starting and ending dates should be
+      given in the form <literal>YYYY/MM/DD</literal>. This format
+      must be respected exactly.</para>
 
     <para>Optionally, the first line of the index file may contain a
       short comment (up to 64 characters) on the source and nature of the

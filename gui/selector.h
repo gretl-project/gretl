@@ -32,6 +32,8 @@
 #define ADDVAR_CODE(c) (c == LOGS || c == LAGS || c == SQUARE || \
                         c == DIFF || c == LDIFF)
 
+#define GRAPH_CODE(c) (c == GR_PLOT || c == GR_XY || c == GR_IMP || GR_DUMMY)
+
 typedef struct {
     GtkWidget *dlg;
     GtkWidget *varlist;

@@ -123,6 +123,22 @@ static void dataset_dates_defaults (DATAINFO *pdinfo)
 
 /* ......................................................... */
 
+static double get_date_x (int pd, const char *obs)
+{
+    double x = 1.0;
+
+    if (pd == 5 || pd == 7) { /* daily data */
+	long ed = get_epoch_day(obs);
+
+	if (ed >= 0) x = ed;
+    } else 
+	x = atof(obs); 
+
+    return x;
+}
+
+/* ......................................................... */
+
 static int skipcomments (FILE *fp, const char *str)
 /* Skips past comments in .hdr file.  Returns 
    0 if comments found, otherwise 1.
@@ -606,7 +622,7 @@ static int readhdr (const char *hdrfile, DATAINFO *pdinfo)
     fscanf(fp, "%d", &pdinfo->pd);
     fscanf(fp, "%s", pdinfo->stobs);
     fscanf(fp, "%s", pdinfo->endobs);
-    pdinfo->sd0 = atof(pdinfo->stobs);
+    pdinfo->sd0 = get_date_x(pdinfo->pd, pdinfo->stobs);
     pdinfo->n = -1;
     pdinfo->n = dateton(pdinfo->endobs, pdinfo) + 1;
     pdinfo->extra = 0;    

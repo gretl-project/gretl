@@ -133,6 +133,29 @@ GtkItemFactoryEntry db_items[] = {
     { NULL, NULL, NULL, 0, NULL }
 };
 
+/* ........................................................... */
+
+static double get_date_x (int pd, const char *obs)
+{
+    double x = 1.0;
+
+    if (pd == 5 || pd == 7) { /* daily data */
+	long ed = get_epoch_day(obs);
+
+	if (ed >= 0) x = ed;
+    } else 
+	x = atof(obs); 
+
+    return x;
+}
+
+/* ........................................................... */
+
+static void set_time_series (DATAINFO *pdinfo)
+{
+    if (pdinfo->pd != 1 || strcmp(pdinfo->stobs, "1")) 
+	pdinfo->time_series = TIME_SERIES;
+}
 
 /* ........................................................... */
 
@@ -258,6 +281,7 @@ static void graph_dbdata (double ***dbZ, DATAINFO *dbdinfo)
 
     if (dbdinfo->pd == 12) strcpy(pd, "months");
     else if (dbdinfo->pd == 4) strcpy(pd, "qtrs");
+    else if (dbdinfo->pd == 5) strcpy(pd, "days");
     else strcpy(pd, "time");
     plotvar(dbZ, dbdinfo, pd);
 
@@ -344,12 +368,11 @@ static void add_dbdata (windata_t *dbdat, double ***dbZ, SERIESINFO *sinfo)
 	datainfo->pd = sinfo->pd;
 	strcpy(datainfo->stobs, sinfo->stobs);
 	strcpy(datainfo->endobs, sinfo->endobs);
-	datainfo->sd0 = atof(datainfo->stobs);
+	datainfo->sd0 = get_date_x(datainfo->pd, datainfo->stobs);
 	datainfo->n = sinfo->nobs;
 	datainfo->v = 2;
 	/* time series data? */
-	if (datainfo->pd != 1 || strcmp(datainfo->stobs, "1")) 
-	    datainfo->time_series = TIME_SERIES;
+	set_time_series(datainfo);
 	start_new_Z(&Z, datainfo, 0);
 	if (dbdat->role == NATIVE_SERIES) 
 	    err = get_db_data(dbdat->fname, sinfo, &Z);
@@ -411,7 +434,9 @@ void gui_get_series (gpointer data, guint action, GtkWidget *widget)
     dbdinfo->pd = sinfo->pd;
     strcpy(dbdinfo->stobs, sinfo->stobs);
     strcpy(dbdinfo->endobs, sinfo->endobs);
-    dbdinfo->sd0 = atof(dbdinfo->stobs);
+
+    dbdinfo->sd0 = get_date_x(dbdinfo->pd, dbdinfo->stobs);
+    set_time_series(dbdinfo);
 
     if (dbcode == NATIVE_SERIES) 
 	err = get_db_data(dbdat->fname, sinfo, &dbZ);
@@ -568,16 +593,17 @@ void display_db_series_list (int action, char *fname, char *buf)
 static int check_serinfo (char *str, char *sername)
 {
     char pdc;
-    char stobs[9], endobs[9], n[6];
+    char stobs[11], endobs[11], n[6];
     char msg[64];
 
     if (!isalpha((unsigned char) sername[0]) || 
-	sscanf(str, "%c %8s %*s %8s %*s %*s %5s", 
+	sscanf(str, "%c %10s %*s %10s %*s %*s %5s", 
 	       &pdc, stobs, endobs, n) != 4 || 
 	!isdigit((unsigned char) stobs[0]) || 
 	!isdigit((unsigned char) endobs[0]) ||
 	!isdigit((unsigned char) n[0]) || 
-	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U')) {
+	(pdc != 'M' && pdc != 'A' && pdc != 'Q' && pdc != 'U' &&
+	 pdc != 'D')) {
 	sprintf(msg, _("Database parse error at variable '%s'"), sername);
 	errbox(msg);
 	return 1;
@@ -693,10 +719,14 @@ static gint db_popup_handler (GtkWidget *widget, GdkEvent *event)
 
 static GtkWidget *database_window (windata_t *ddata) 
 {
-    char *titles[] = {_("Name"), _("Description"), _("Frequency and dates")};
+    char *titles[] = {
+	_("Name"), 
+	_("Description"), 
+	_("Frequency and dates")
+    };
     GtkWidget *box, *scroller, *parent;
     int i, cols = 3;
-    int col_width[] = {72, 450, 200};
+    int col_width[] = {72, 450, 240};
     int full_width = 540, listbox_height = 320;
 
     ddata->active_var = 1; 
@@ -751,9 +781,9 @@ static int check_import (SERIESINFO *sinfo, DATAINFO *pdinfo)
 	       "frequency working data set."));
 	return 1;
     }
-    sd0 = atof(sinfo->stobs);
-    sdn_new = atof(sinfo->endobs);
-    sdn_old = atof(pdinfo->endobs);
+    sd0 = get_date_x(sinfo->pd, sinfo->stobs);
+    sdn_new = get_date_x(sinfo->pd, sinfo->endobs);
+    sdn_old = get_date_x(pdinfo->pd, pdinfo->endobs);
     if (sd0 > sdn_old || sdn_new < pdinfo->sd0) {
 	errbox(_("Observation range does not overlap\nwith the working "
 	       "data set"));
@@ -1095,6 +1125,7 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
     gchar *temp;
     SERIESINFO *sinfo;
     int sernum = dbdat->active_var;
+    char stobs[11], endobs[11];
 
     if ((sinfo = mymalloc(sizeof *sinfo)) == NULL)
 	return NULL;
@@ -1114,17 +1145,37 @@ static SERIESINFO *get_series_info (windata_t *dbdat, int action)
 
     gtk_clist_get_text 
 	(GTK_CLIST(dbdat->listbox), sernum, 0, &temp);
-    strcpy(sinfo->varname, temp);
+    sinfo->varname[0] = 0;
+    strncat(sinfo->varname, temp, 8);
+
     gtk_clist_get_text 
 	(GTK_CLIST(dbdat->listbox), sernum, 1, &temp);
-    strcpy(sinfo->descrip, temp);
+    sinfo->descrip[0] = 0;
+    strncat(sinfo->descrip, temp, MAXLABEL-1);
+
     gtk_clist_get_text 
 	(GTK_CLIST(dbdat->listbox), sernum, 2, &temp);
-    sscanf(temp, "%c %s %*s %s %*s %*s %d", 
-	   &pdc, sinfo->stobs, sinfo->endobs, &(sinfo->nobs));
+    sscanf(temp, "%c %10s %*s %10s %*s %*s %d", 
+	   &pdc, stobs, endobs, &(sinfo->nobs));
     if (pdc == 'M') sinfo->pd = 12;
     else if (pdc == 'Q') sinfo->pd = 4;
     else if (pdc == 'A') sinfo->pd = 1;
+    else if (pdc == 'D') sinfo->pd = 5;
+
+    if (strchr(stobs, '/')) { /* daily data */
+	char *q = stobs;
+	char *p = strchr(stobs, '/');
+
+	if (p - q == 4) strcpy(sinfo->stobs, q+2);
+	q = endobs;
+	p = strchr(endobs, '/');
+	if (p && p - q == 4) strcpy(sinfo->endobs, q+2);
+    } else {
+	sinfo->stobs[0] = 0;
+	sinfo->endobs[0] = 0;
+	strncat(sinfo->stobs, stobs, 8);
+	strncat(sinfo->endobs, endobs, 8);
+    }
 
     return sinfo;
 }

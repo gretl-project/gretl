@@ -1,3 +1,10 @@
+version 0.997
+- increment library version to 14.0.1
+- improvements to formatting of output under NLS
+- screen scalars out of variable list in graph selection dialogs
+- ensure wide char headers are included in workbook.c
+- enable daily data in gretl databases
+
 05/24/2002 version 0.996
 - Raise library version to 14.0.0
 - closing a session clears the selector dialog presets
