@@ -470,7 +470,8 @@ static void get_runfile (char *str)
 {
     int i;
 
-    strncpy(tryscript, str, MAXLEN-1);
+    tryscript[0] = '\0';
+    strncat(tryscript, str, MAXLEN-1);
     if (addpath(tryscript, &paths, 1) == NULL) {
 	fprintf(stderr, "Couldn't find script \"%s\"\n", tryscript);
 	exit(EXIT_FAILURE);
@@ -997,7 +998,7 @@ static GtkWidget *make_main_window (int gui_get_data)
     int listbox_file_height = 300;
 #ifdef G_OS_WIN32
     GtkStyle *style;
-    char winfont[80];
+    char winfont[128];
 #endif
 
     mdata->data = NULL;  
