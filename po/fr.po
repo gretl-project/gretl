@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: GNU gretl 0.996\n"
-"POT-Creation-Date: 2002-09-08 14:21-0400\n"
-"PO-Revision-Date: 2002-09-06 18:13-0400\n"
+"POT-Creation-Date: 2002-09-09 13:27-0400\n"
+"PO-Revision-Date: 2002-09-09 08:00-0500\n"
 "Last-Translator: Michel Robitaille <robitail@IRO.UMontreal.CA>\n"
 "Language-Team: French <traduc@traduc.org>\n"
 "MIME-Version: 1.0\n"
@@ -60,7 +60,7 @@ msgstr ""
 #: lib/src/modelprint.c:940 lib/src/modelprint.c:949 lib/src/printout.c:344
 #: gui/library.c:1416 gui2/library.c:1266
 msgid "with p-value"
-msgstr "avec valeur p"
+msgstr ""
 
 #: lib/src/compare.c:677
 #, fuzzy
@@ -168,16 +168,16 @@ msgstr ""
 
 #: lib/src/compare.c:1040
 msgid "Couldn't access panel plugin\n"
-msgstr ""
+msgstr "Ne peut acc/der au panneau du plugin\n"
 
 #: lib/src/compare.c:1045 lib/src/compare.c:1112 lib/src/generate.c:2530
 #: lib/src/pvalues.c:598
 msgid "Couldn't load plugin function\n"
-msgstr ""
+msgstr "Ne peut charger la fonction du plugin\n"
 
 #: lib/src/compare.c:1106 lib/src/generate.c:2522
 msgid "Couldn't access GMP plugin\n"
-msgstr ""
+msgstr "Ne peut accéder le plugin GMP\n"
 
 #: lib/src/compare.c:1119
 #, fuzzy
@@ -186,7 +186,7 @@ msgstr "Échec de stockage des commentaires des données\n"
 
 #: lib/src/dataio.c:247
 msgid "auto-generated constant"
-msgstr ""
+msgstr "constante auto-générée"
 
 #: lib/src/dataio.c:432 lib/src/dataio.c:444 lib/src/dataio.c:493
 #: lib/src/dataio.c:505
@@ -217,6 +217,8 @@ msgid ""
 "First char of varname ('%c') is bad\n"
 "(first must be alphabetical)"
 msgstr ""
+"Premier caractère du nom de la variable ('%c') est erroné\n"
+"(doit être alphabétique)"
 
 #: lib/src/dataio.c:595
 #, c-format
@@ -224,6 +226,8 @@ msgid ""
 "Varname contains illegal character '%c'\n"
 "Use only letters, digits and underscore"
 msgstr ""
+"Nom de variable contient un caractère illégale '%c'\n"
+"Utiliser seulement des lettres, des chiffres ou des soulignés"
 
 #: lib/src/dataio.c:599
 #, c-format
@@ -231,6 +235,8 @@ msgid ""
 "Varname contains illegal character 0x%x\n"
 "Use only letters, digits and underscore"
 msgstr ""
+"Nom de variable contient un caractère illégale 0x%x\n"
+"Utiliser seulement des lettres, des chiffres ou des soulignés"
 
 #: lib/src/dataio.c:620
 #, c-format
@@ -1286,48 +1292,51 @@ msgstr ""
 
 #: lib/src/errors.c:50
 msgid "This command won't work with the current periodicity"
-msgstr ""
+msgstr "Cette commande ne fonctionnera avec la périodicité courante"
 
 #: lib/src/errors.c:51
 msgid "The \"-o\" flag is not implemented for this command"
-msgstr ""
+msgstr "L'option \"-o\" n'est pas implantée pour cette commande"
 
 #: lib/src/errors.c:52
 msgid "Error attempting to open file"
-msgstr ""
+msgstr "Error lors de la tentative d'ouverture du fichier"
 
 #: lib/src/errors.c:53
 msgid "Out of memory error"
-msgstr ""
+msgstr "Erreur mémoire épuisée"
 
 #: lib/src/errors.c:54
 msgid "Missing equals sign in genr"
-msgstr ""
+msgstr "Signe d'égalité manquant dans genr"
 
 #: lib/src/errors.c:55
 msgid "No formula supplied in genr"
-msgstr ""
+msgstr "Pas de formule fournie dans genr"
 
 #: lib/src/errors.c:56
 msgid "Unknown variable name in command"
-msgstr ""
+msgstr "Nom de variable inconnue dans la commande"
 
 #: lib/src/errors.c:57
 msgid ""
 "The observations specified for the regression exceed those in the data set"
 msgstr ""
+"Les observations spécifiés pour la régression dépasse celles du jeu de "
+"données"
 
 #: lib/src/errors.c:59
 msgid "Command has insufficient arguments"
-msgstr ""
+msgstr "La commande n'a pas d'arguments en nombre suffisant"
 
 #: lib/src/errors.c:60
 msgid "This command is implemented only for OLS models"
-msgstr ""
+msgstr "Cette commande est implantée seulement pour les modèles OLS"
 
 #: lib/src/errors.c:61
+#, fuzzy
 msgid "Invalid argument for coeff, corr, stderr, rho, pvalue or mpow"
-msgstr ""
+msgstr "Arguement invalide pour coeff, corr, stderr, rho ou valeur-p"
 
 #: lib/src/errors.c:63
 msgid "Invalid lag order for adf command"
@@ -1339,35 +1348,37 @@ msgstr ""
 
 #: lib/src/errors.c:65
 msgid "Syntax error in command line"
-msgstr ""
+msgstr "Erreur de syntaxe dans la ligne de commande"
 
 #: lib/src/errors.c:66
 msgid "No independent variables left after omissions"
-msgstr ""
+msgstr "Pas de variable indépendante laissée après les omissions"
 
 #: lib/src/errors.c:67
 msgid "No independent variables were omitted"
-msgstr ""
+msgstr "Aucune variable indépendante n'a été omise"
 
 #: lib/src/errors.c:68
 msgid "Can't do this: some vars in original model have been redefined"
 msgstr ""
+"Vous ne pouvez faire cela: quelques variables dans le modèle original ont "
+"été redéfinies"
 
 #: lib/src/errors.c:70
 msgid "No new independent variables were added"
-msgstr ""
+msgstr "Aucune nouvelle variable indépendante n'a été ajoutée"
 
 #: lib/src/errors.c:71
 msgid "One or more \"added\" vars were already present"
-msgstr ""
+msgstr "Une ou plusieurs variables \"ajoutées\" sont déjà présentes"
 
 #: lib/src/errors.c:72
 msgid "Error generating logarithms"
-msgstr ""
+msgstr "Erreur lors de la génération des logarithmes"
 
 #: lib/src/errors.c:73
 msgid "Error generating squares"
-msgstr ""
+msgstr "Erreur lors de la génération des carrés."
 
 #: lib/src/errors.c:74
 msgid "Error generating lagged variables"
@@ -1383,11 +1394,11 @@ msgstr ""
 
 #: lib/src/errors.c:77
 msgid "Excessive exponent in genr formula"
-msgstr ""
+msgstr "Exposant exxcessif dans la formule genr"
 
 #: lib/src/errors.c:78
 msgid "Weight variable is all zeros, aborting regression"
-msgstr ""
+msgstr "Poids de variable tous à zéro, abandon de la régression"
 
 #: lib/src/errors.c:79
 msgid "Need valid starting and ending observations"
@@ -2198,8 +2209,9 @@ msgid "Standard deviation of dep. var."
 msgstr ""
 
 #: lib/src/modelprint.c:83
+#, fuzzy
 msgid "S.D. of dependent variable"
-msgstr ""
+msgstr "Aucune variable indépendante n'a été omise"
 
 #: lib/src/modelprint.c:108 lib/src/modelprint.c:125 lib/src/modelprint.c:138
 msgid "Sum of squared residuals"
@@ -2209,13 +2221,11 @@ msgstr ""
 msgid "Standard error of residuals"
 msgstr ""
 
-#: lib/src/modelprint.c:151 lib/src/modelprint.c:1538 lib/src/printmpols.c:16
-#: plugin/mp_ols.c:375
+#: lib/src/modelprint.c:151 lib/src/modelprint.c:1538 plugin/mp_ols.c:375
 msgid "Unadjusted R-squared"
 msgstr ""
 
-#: lib/src/modelprint.c:153 lib/src/modelprint.c:1542 lib/src/printmpols.c:20
-#: plugin/mp_ols.c:380
+#: lib/src/modelprint.c:153 lib/src/modelprint.c:1542 plugin/mp_ols.c:380
 msgid "Adjusted R-squared"
 msgstr ""
 
@@ -2393,8 +2403,8 @@ msgid "%s estimates using the %d observations %s%s%s"
 msgstr ""
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:651 lib/src/modelprint.c:656
-#: lib/src/modelprint.c:662 lib/src/modelprint.c:1592 lib/src/printmpols.c:58
-#: gui/selector.c:517 gui2/selector.c:720 plugin/mp_ols.c:404
+#: lib/src/modelprint.c:662 lib/src/modelprint.c:1592 gui/selector.c:517
+#: gui2/selector.c:720 plugin/mp_ols.c:404
 msgid "Dependent variable"
 msgstr ""
 
@@ -2514,20 +2524,20 @@ msgstr ""
 msgid "Model Selection Statistics"
 msgstr ""
 
-#: lib/src/modelprint.c:1530 lib/src/printmpols.c:8 plugin/mp_ols.c:365
+#: lib/src/modelprint.c:1530 plugin/mp_ols.c:365
 msgid "Standard error"
 msgstr ""
 
-#: lib/src/modelprint.c:1534 lib/src/printmpols.c:12 plugin/mp_ols.c:370
+#: lib/src/modelprint.c:1534 plugin/mp_ols.c:370
 msgid "Error Sum of Squares"
 msgstr ""
 
-#: lib/src/modelprint.c:1589 lib/src/printmpols.c:55 plugin/mp_ols.c:401
+#: lib/src/modelprint.c:1589 plugin/mp_ols.c:401
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 
-#: lib/src/modelprint.c:1595 lib/src/printmpols.c:61 plugin/mp_ols.c:407
+#: lib/src/modelprint.c:1595 plugin/mp_ols.c:407
 #, fuzzy
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
 msgstr "      VARIABLE         COEFFICIENT          ERREUR STD\n"
@@ -3093,7 +3103,7 @@ msgstr ""
 #: gui2/gui_utils.c:60 gui2/library.c:64 gui2/library.c:77 gui2/library.c:93
 #: gui2/library.c:106 gui2/library.c:119 gui2/session.c:102 gui2/session.c:113
 msgid "/_File"
-msgstr "/_Fichier"
+msgstr ""
 
 #: lib/src/subsample.c:42
 msgid "mystery failure in attach_subsample_to_model\n"
@@ -5538,7 +5548,7 @@ msgstr ""
 
 #: gui/gretl.c:202 gui2/gretl.c:208
 msgid "/File/_Open data"
-msgstr "/Fichier/_Ouvrir données"
+msgstr ""
 
 #: gui/gretl.c:203 gui2/gretl.c:209
 msgid "/File/Open data/user file..."
@@ -7186,11 +7196,13 @@ msgid ""
 msgstr ""
 
 #: gui/gui_utils.c:1970 gui2/gui_utils.c:1921
-#, c-format
+#, fuzzy, c-format
 msgid ""
 "Name contains an illegal char (in place %d)\n"
 "Use only unaccented letters, digits and underscore"
 msgstr ""
+"Nom de variable contient un caractère illégale '%c'\n"
+"Utiliser seulement des lettres, des chiffres ou des soulignés"
 
 #: gui/gui_utils.c:2120 gui2/gui_utils.c:2097
 msgid "No undo information available"
@@ -8700,7 +8712,7 @@ msgstr ""
 
 #: plugin/excel_import.c:715 plugin/gnumeric_import.c:502
 msgid "Failed to get workbook info"
-msgstr ""
+msgstr "Échec d'obtention des infos du carnet de travail"
 
 #: plugin/excel_import.c:719 plugin/gnumeric_import.c:508
 msgid "No worksheets found"
@@ -8716,11 +8728,11 @@ msgstr "Pas de données repérées.\n"
 
 #: plugin/excel_import.c:778
 msgid "One or more variable names are missing.\n"
-msgstr ""
+msgstr "Un ou plus d'un noms de variable sont manquants.\n"
 
 #: plugin/excel_import.c:787
 msgid "Expected numeric data, found string.\n"
-msgstr ""
+msgstr "Donnée numérique attendue, chaîne obtenue.\n"
 
 #: plugin/gnumeric_import.c:204
 #, c-format
@@ -8728,6 +8740,8 @@ msgid ""
 "Couldn't get value for col %d, row %d.\n"
 "Maybe there's a formula in the sheet?"
 msgstr ""
+"Ne peut obtenir la valeur pour la colonne %d, rangée %d.\n"
+"Peut-être qu'il y a une formule dans la feuille?"
 
 #: plugin/gnumeric_import.c:212 plugin/gnumeric_import.c:219
 msgid "Expected to find a variable name"
@@ -8744,6 +8758,8 @@ msgstr "Colonne de texte superflue trouvée"
 #: plugin/gnumeric_import.c:295 plugin/gnumeric_import.c:397
 msgid "File of the wrong type, root node not Workbook"
 msgstr ""
+"Fichier du mauvais type, noeud de la racine n'est pas de type carnet de "
+"travail"
 
 #: plugin/gnumeric_import.c:526
 msgid "error in wsheet_setup()"
@@ -8789,7 +8805,7 @@ msgstr "Variable '%s' est pleine de zéros"
 
 #: plugin/mp_ols.c:818
 msgid "Error sum of squares is not > 0"
-msgstr "Erreur sur la somme des carrées qui n'est pas > que 0"
+msgstr "Erreur sur la somme des carrés qui n'est pas > que 0"
 
 #: plugin/panel_data.c:42
 #, c-format
@@ -9009,7 +9025,7 @@ msgstr ""
 
 #: plugin/workbook.c:403
 msgid "No book or workbook streams found."
-msgstr ""
+msgstr "Pas de flot pour livre ou carnet de travail trouvé"
 
 #: plugin/workbook.c:408
 msgid "Reading file...\n"
@@ -9018,6 +9034,8 @@ msgstr "Lecture du fichier...\n"
 #: plugin/workbook.c:511
 msgid "Password protected workbooks are not supported yet."
 msgstr ""
+"La protection des carnets de travail protégés par mot de passe n'est pas "
+"supportée"
 
 #: plugin/workbook.c:609 plugin/workbook.c:661
 msgid "This file is not an 'OLE' file -- it may be too old for gretl to read\n"
@@ -9034,7 +9052,12 @@ msgid "Unexpected error reading the file"
 msgstr "Erreur inattendue durant la lecture du fichier"
 
 #~ msgid "with p-value = prob(F(%d,%d) > %g) = %.3g\n"
-#~ msgstr "with valeur de p = prob(F(%d,%d) > %g) = %.3g\n"
+#~ msgstr "avec une valeur de p = prob(F(%d,%d) > %g) = %.3g\n"
+
+#~ msgid ""
+#~ "with p-value = prob(Chi-square(%d) > %g) = %.3g\n"
+#~ "\n"
+#~ msgstr "avec une valeur de p = prob(Chi carré(%d > %g) = %.3g\n"
 
 #~ msgid "prob(F(%d,%d) > %g) = %.3g"
 #~ msgstr "prob(F(%d,%d) > %g) = %.3g"

@@ -70,7 +70,7 @@ COMPILE = $(LIBTOOL) --mode=compile $(CC) -c $(CFLAGS)
 .c.o:        
 	$(COMPILE) $<
 
-$(LIBGRETL): $(OBJS) $(LOBJS) 
+$(LIBGRETL): $(OBJS) $(LOBJS) $(CEPHES_OBJ)
 	$(LIBTOOL) --mode=link $(CC) -o $@ $(LOBJS) $(CEPHES_OBJ) \
 	-rpath $(prefix)/lib $(LIBS) -version-info 17:0:0
 

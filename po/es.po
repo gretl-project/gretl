@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gretl 0.999\n"
-"POT-Creation-Date: 2002-09-08 14:21-0400\n"
+"POT-Creation-Date: 2002-09-09 13:27-0400\n"
 "PO-Revision-Date: 2002-09-08 14:18-0400\n"
 "Last-Translator: \n"
 "Language-Team:  <es@li.org>\n"
@@ -2312,13 +2312,11 @@ msgstr "Suma de cuadrados residual"
 msgid "Standard error of residuals"
 msgstr "Desviación típica de los residuos"
 
-#: lib/src/modelprint.c:151 lib/src/modelprint.c:1538 lib/src/printmpols.c:16
-#: plugin/mp_ols.c:375
+#: lib/src/modelprint.c:151 lib/src/modelprint.c:1538 plugin/mp_ols.c:375
 msgid "Unadjusted R-squared"
 msgstr "R-cuadrado no corregido"
 
-#: lib/src/modelprint.c:153 lib/src/modelprint.c:1542 lib/src/printmpols.c:20
-#: plugin/mp_ols.c:380
+#: lib/src/modelprint.c:153 lib/src/modelprint.c:1542 plugin/mp_ols.c:380
 msgid "Adjusted R-squared"
 msgstr "R-cuadrado corregido"
 
@@ -2496,8 +2494,8 @@ msgid "%s estimates using the %d observations %s%s%s"
 msgstr "estimaciones %s utilizando las %d observaciones %s%s%s"
 
 #: lib/src/modelprint.c:646 lib/src/modelprint.c:651 lib/src/modelprint.c:656
-#: lib/src/modelprint.c:662 lib/src/modelprint.c:1592 lib/src/printmpols.c:58
-#: gui/selector.c:517 gui2/selector.c:720 plugin/mp_ols.c:404
+#: lib/src/modelprint.c:662 lib/src/modelprint.c:1592 gui/selector.c:517
+#: gui2/selector.c:720 plugin/mp_ols.c:404
 msgid "Dependent variable"
 msgstr "Variable dependiente"
 
@@ -2624,22 +2622,22 @@ msgstr "Estadísticos de selección de modelos"
 msgid "Model Selection Statistics"
 msgstr "Estadísticos de selección de modelos"
 
-#: lib/src/modelprint.c:1530 lib/src/printmpols.c:8 plugin/mp_ols.c:365
+#: lib/src/modelprint.c:1530 plugin/mp_ols.c:365
 msgid "Standard error"
 msgstr "Desviación típica"
 
-#: lib/src/modelprint.c:1534 lib/src/printmpols.c:12 plugin/mp_ols.c:370
+#: lib/src/modelprint.c:1534 plugin/mp_ols.c:370
 msgid "Error Sum of Squares"
 msgstr "Suma de cuadrados de los residuos"
 
-#: lib/src/modelprint.c:1589 lib/src/printmpols.c:55 plugin/mp_ols.c:401
+#: lib/src/modelprint.c:1589 plugin/mp_ols.c:401
 #, c-format
 msgid "Multiple-precision OLS estimates using the %d observations %s-%s\n"
 msgstr ""
 "Estimaciones MCO de precisión múltiple utilizando las %d observaciones %s-%"
 "s\n"
 
-#: lib/src/modelprint.c:1595 lib/src/printmpols.c:61 plugin/mp_ols.c:407
+#: lib/src/modelprint.c:1595 plugin/mp_ols.c:407
 msgid "      VARIABLE         COEFFICIENT                  STD. ERROR\n"
 msgstr "      VARIABLE         COEFICIENTE                  DESV.TÍP.\n"
 
