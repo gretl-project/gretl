@@ -60,9 +60,7 @@ int gretl_hasconst (const int *list);
 
 int gretl_compare_doubles (const void *a, const void *b);
 
-void gretl_aic_etc (MODEL *pmod);
-
-void gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
+int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn);
 
 int adjust_t1t2 (MODEL *pmod, const int *list, int *t1, int *t2, 
 		 const double **Z, int *misst);

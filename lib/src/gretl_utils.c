@@ -563,20 +563,26 @@ int print_list_to_buffer (const int *list, char *buf, size_t len)
 
 /* ....................................................... */
 
-static int calculate_criteria (double *x, double ess, 
+static int calculate_criteria (double *x, double ll, double ess, 
 			       int nobs, int ncoeff)
 {
-    if (ess < 0.0 || ncoeff < 1 || nobs <= ncoeff) {
+    if ((na(ll) && na(ess)) ||
+	(na(ll) && ess < 0.0) ||
+	ncoeff < 1 || nobs <= ncoeff) {
 	x[C_AIC] = NADBL;
 	x[C_BIC] = NADBL;
+
 	return 1;
     } else {
-	const double ln2pi1 = 2.837877066409345;
-	double ll1 = -.5 * nobs * log(ess);
-	double ll2 = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
+	if (na(ll)) {
+	    const double ln2pi1 = 2.837877066409345;
+	    double ll1 = -.5 * nobs * log(ess);
 
-	x[C_AIC] = -2.0 * ll2 + 2 * ncoeff;
-	x[C_BIC] = -2.0 * ll2 + ncoeff * log(nobs);
+	    ll = (-.5 * nobs) * (ln2pi1 - log((double) nobs)) + ll1;
+	}
+
+	x[C_AIC] = -2.0 * ll + 2 * ncoeff;
+	x[C_BIC] = -2.0 * ll + ncoeff * log(nobs);
 
 	return 0;
     }
@@ -584,19 +590,19 @@ static int calculate_criteria (double *x, double ess,
 
 /* Compute model selection criteria */
 
-void gretl_aic_etc (MODEL *pmod)
+int gretl_aic_bic (MODEL *pmod)
 {
-    calculate_criteria(pmod->criterion, pmod->ess, pmod->nobs,
-		       pmod->ncoeff);
+    return calculate_criteria(pmod->criterion, pmod->lnL, 
+			      pmod->ess, pmod->nobs,
+			      pmod->ncoeff);
 }
 
-void gretl_criteria (const double ess, int nobs, int ncoeff, 
-		     PRN *prn)
+int gretl_criteria (double ess, int nobs, int ncoeff, PRN *prn)
 {
     double x[2];
     int err;
 
-    err = calculate_criteria(x, ess, nobs, ncoeff);
+    err = calculate_criteria(x, NADBL, ess, nobs, ncoeff);
 
     if (err) {
 	pputs(prn, _("Error calculating model selection criteria\n"));
@@ -605,6 +611,8 @@ void gretl_criteria (const double ess, int nobs, int ncoeff,
 		ess, nobs, ncoeff);
 	pprintf(prn, "\nAIC = %g\nBIC = %g\n\n", x[C_AIC], x[C_BIC]);
     }
+
+    return err;
 }
 
 char *real_format_obs (char *obs, int maj, int min, int pd, char sep)

@@ -292,6 +292,7 @@ static int write_tobit_stats (MODEL *pmod, double *theta, int ncoeff,
     }
 
     pmod->fstt = pmod->rsq = pmod->adjrsq = NADBL;
+    gretl_aic_bic(pmod);
 
     make_vcv(pmod, VCV, scale);
 

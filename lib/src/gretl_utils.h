@@ -195,6 +195,8 @@ CONFINT *get_model_confints (const MODEL *pmod);
 
 void free_confint (CONFINT *cf);
 
+int gretl_aic_bic (MODEL *pmod);
+
 double gretl_stddev (int t1, int t2, const double *x);
 
 double gretl_variance (int t1, int t2, const double *x);
