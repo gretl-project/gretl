@@ -6,14 +6,14 @@ version 0.97
 - revert behavior in case of taking logs of series with non-
   positive values (i.e. fail gracefully)
 - add initial gnome support
-- add display of models in html, using gtkhtml (depends on
-  gnome)
 - convert manual to SGML (DocBook) and update
-- attempt to support directory names with spaces (yuck!) under
-  win32 
+- support directory names with spaces (yuck) under win32 
 - under win32, use registry instead of system-wide config file
   libgretl.cfg and per-user gretl.rc
 - add check for GRETL_HOME environment variable
+- make gnuplot command configurable under Preferences (meant
+  for win32)
+- add a menu bar to the spreadsheet window
 
 07/26/2001 version 0.96
 - update to gtkextra version 0.99.16
