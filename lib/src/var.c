@@ -1856,6 +1856,8 @@ johansen_complete (const double **X, const double **Y, const double **Z,
     return err;
 }
 
+#undef JOHANSEN_DEBUG
+
 int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 		   gretlopt opt, PRN *prn)
 {
@@ -1969,12 +1971,13 @@ int johansen_test (int order, const LIST list, double ***pZ, DATAINFO *pdinfo,
 
 #ifdef JOHANSEN_DEBUG
 	for (i=0; i<resids.m; i++) {
+	    char datestr[OBSLEN];
 	    int t;
 
 	    pprintf(prn, "Residuals from VAR model %d\n", i);
 	    for (t=resids.t1; t<=resids.t2; t++) {
-		ntodate(date, t, pdinfo);
-		pprintf(prn, "%8s %#.*g\n", ntodate(stobs, t, pdinfo), 
+		ntodate(datestr, t, pdinfo);
+		pprintf(prn, "%8s %#.*g\n", datestr, 
 			GRETL_DIGITS, resids.uhat[i][t]);
 	    }
 	}

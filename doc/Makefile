@@ -90,11 +90,11 @@ $(CMDLIST): $(CMDREF) $(MANXSL)
 $(CMDLIST_IT): $(CMDREF) $(MANXSL) 
 	make -C commands -f cmdref.mk docbook_it
 
-html: manual.xml db2html $(DSL) $(HMATHSS) 
+html: manual.xml db2html $(DSL) $(HMATHSS) $(CMDLIST)
 	./db2html manual.xml
 	./texmath2png.pl manual.html/equation-list.sgml
 
-html_it: manual_it.xml db2html $(DSL) $(HMATHSS) 
+html_it: manual_it.xml db2html $(DSL) $(HMATHSS) $(CMDLIST_IT)
 	./db2html manual_it.xml
 	./texmath2png.pl manual_it.html/equation-list.sgml
 
@@ -102,7 +102,7 @@ html_it: manual_it.xml db2html $(DSL) $(HMATHSS)
 
 topdoc = .
 
-chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml 
+chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml $(CMDLIST)
 	mkdir -p manual.chm/figures
 	cp $(topdoc)/figures/*.png manual.chm/figures
 	for f in manual.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
@@ -110,7 +110,7 @@ chm: $(topdoc)/manual.xml $(topdoc)/chapters/*.xml
 	$(SAXON) ../$(topdoc)/manual.xml ../$(topdoc)/gretlhlp.xsl \
 	"tex.math.in.alt=latex" && $(HHC) gretl.hhp
 
-chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml 
+chm_it: $(topdoc)/manual_it.xml $(topdoc)/chapters_it/*.xml $(CMDLIST_IT)
 	mkdir -p manual_it.chm/figures
 	cp $(topdoc)/figures/*.png manual_it.chm/figures
 	for f in manual_it.chm/figures/*.png ; do $(CONVERT) $$f $${f%.png}.gif ; done
