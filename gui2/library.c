@@ -816,10 +816,6 @@ void unit_root_test (gpointer data, guint action, GtkWidget *widget)
 
 /* ........................................................... */
 
-
-
-/* ........................................................... */
-
 void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 {
     const gchar *buf;
@@ -845,11 +841,11 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	vsize = 400;
 	break;
     case MEANTEST:
-	sprintf(line, "meantest -o %s", buf);
+	sprintf(line, "meantest %s", buf);
 	strcat(title, _("means test"));
 	break;
     case MEANTEST2:
-	sprintf(line, "meantest %s", buf);
+	sprintf(line, "meantest %s --unequal-vars", buf);
 	strcat(title, _("means test"));
 	break;
     case VARTEST:
@@ -881,10 +877,10 @@ void do_dialog_cmd (GtkWidget *widget, dialog_t *ddata)
 	err = spearman(cmd.list, (const double **) Z, datainfo, 1, prn);
 	break;
     case MEANTEST:
-	err = means_test(cmd.list, (const double **) Z, datainfo, 1, prn);
+	err = means_test(cmd.list, (const double **) Z, datainfo, OPT_NONE, prn);
 	break;
     case MEANTEST2:
-	err = means_test(cmd.list, (const double **) Z, datainfo, 0, prn);
+	err = means_test(cmd.list, (const double **) Z, datainfo, OPT_O, prn);
 	break;
     case VARTEST:
 	err = vars_test(cmd.list, (const double **) Z, datainfo, prn);

@@ -89,7 +89,7 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
 
 int means_test (const int *list, const double **Z, 
 		const DATAINFO *pdinfo, 
-		gretlopt vardiff, PRN *prn);
+		gretlopt opt, PRN *prn);
 
 int vars_test (const int *list, const double **Z, 
 	       const DATAINFO *pdinfo, PRN *prn);

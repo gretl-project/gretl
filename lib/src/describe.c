@@ -1610,16 +1610,26 @@ int gretl_corrmx (int *list, const double **Z, const DATAINFO *pdinfo,
  */
 
 int means_test (const int *list, const double **Z, const DATAINFO *pdinfo, 
-		gretlopt vardiff, PRN *prn)
+		gretlopt opt, PRN *prn)
 {
     double m1, m2, s1, s2, skew, kurt, se, mdiff, t, pval;
+    double v1, v2;
     double *x = NULL, *y = NULL;
+    int vardiff = (opt & OPT_O);
     int df, n1, n2, n = pdinfo->n;
 
     if (list[0] < 2) return E_ARGS;
 
-    if ((x = malloc(n * sizeof *x)) == NULL) return E_ALLOC;
-    if ((y = malloc(n * sizeof *y)) == NULL) return E_ALLOC;
+    x = malloc(n * sizeof *x);
+    if (x == NULL) {
+	return E_ALLOC;
+    }
+
+    y = malloc(n * sizeof *y);
+    if (y == NULL) {
+	free(x);
+	return E_ALLOC;
+    }    
 
     n1 = ztox(list[1], x, Z, pdinfo);
     n2 = ztox(list[2], y, Z, pdinfo);
@@ -1629,23 +1639,29 @@ int means_test (const int *list, const double **Z, const DATAINFO *pdinfo,
 	free(x); free(y);
 	return 1;
     }
+
     if (n1 == 1 || n2 == 1) {
 	pputs(prn, _("Sample range has only one observation."));
 	free(x); free(y);
 	return 1;
     }
+
     df = n1 + n2 - 2;
 
     moments(0, n1-1, x, &m1, &s1, &skew, &kurt, 1);
     moments(0, n2-1, y, &m2, &s2, &skew, &kurt, 1);
     mdiff = m1 - m2;
 
+    v1 = s1 * s1;
+    v2 = s2 * s2;
+
     if (vardiff) {
-	se = sqrt((s1 * s1 / n1) + (s2 * s2 / n2));
+	se = sqrt((v1 / n1) + (v2 / n2));
     } else {
+	/* form pooled estimate of variance */
 	double sp2;
 
-	sp2 = ((n1-1) * s1 * s1 + (n2-1) * s2 * s2) / df;
+	sp2 = ((n1-1) * v1 + (n2-1) * v2) / df;
 	se = sqrt(sp2 / n1 + sp2 / n2);
     }
 

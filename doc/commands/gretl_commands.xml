@@ -3119,7 +3119,7 @@
 	variables <repl>var1</repl> and <repl>var2</repl>, and shows
 	its p-value. By default the test statistic is calculated on
 	the assumption that the variances are equal for the two
-	variables; with the <lit>--unequal-vars</lit>option the
+	variables; with the <lit>--unequal-vars</lit> option the
 	variances are assumed to be different.  This will make a
 	difference to the test statistic only if there are different
 	numbers of non-missing observations for the two variables.

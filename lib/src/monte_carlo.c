@@ -252,7 +252,8 @@ int ok_in_loop (int ci, const LOOPSET *loop)
     }
 
     if (ci == LAD || ci == HSK || ci == HCCM || ci == WLS ||
-	ci == GARCH || ci == ARMA) {
+	ci == GARCH || ci == ARMA || ci == CORC || 
+	ci == HILU || ci == PWE) {
 	return 1;
     }
 
@@ -2452,6 +2453,9 @@ int loop_exec (LOOPSET *loop, char *line,
 	    case WLS:
 	    case LAD:
 	    case HSK:
+	    case CORC:
+	    case HILU:
+	    case PWE:
 	    case HCCM:
 	    case GARCH:
 	    case ARMA:
@@ -2479,6 +2483,13 @@ int loop_exec (LOOPSET *loop, char *line,
 		    *models[0] = hsk_func(cmd.list, pZ, *ppdinfo);
 		} else if (cmd.ci == GARCH) {
 		    *models[0] = garch(cmd.list, pZ, *ppdinfo, cmd.opt, prn);
+		} else if (cmd.ci == CORC || cmd.ci == HILU || cmd.ci == PWE) {
+		    double rho = estimate_rho(cmd.list, pZ, *ppdinfo, 1, cmd.ci,
+					      &err, prn);
+		    if (err) {
+			break;
+		    }
+		    *models[0] = lsq(cmd.list, pZ, *ppdinfo, cmd.ci, cmd.opt, rho);
 		}
 
 		if ((err = (models[0])->errcode)) {
