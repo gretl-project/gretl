@@ -23,21 +23,13 @@
 typedef struct _gretl_equation_system gretl_equation_system;
 
 enum gretl_system_types {
-    SUR = 0,
-    THREESLS,
-    FIML,
-    LIML,
+    SYS_SUR = 0,
+    SYS_3SLS,
+    SYS_FIML,
+    SYS_LIML,
     SYS_OLS,
     SYS_TSLS,
-    SYSMAX
-};
-
-enum equation_system_flags {
-    GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
-    GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
-    GRETL_SYSTEM_ITERATE   = 1 << 2,
-    GRETL_SYSTEM_RESTRICT  = 1 << 3,
-    GRETL_SYSTEM_DFCORR    = 1 << 4
+    SYS_MAX
 };
 
 gretl_equation_system *system_start (const char *line);
@@ -69,6 +61,7 @@ const char *system_get_full_string (const gretl_equation_system *sys);
 
 int system_save_uhat (const gretl_equation_system *sys);
 int system_save_yhat (const gretl_equation_system *sys);
+
 int system_doing_iteration (const gretl_equation_system *sys);
 int system_want_df_corr (const gretl_equation_system *sys);
 
@@ -118,7 +111,11 @@ void system_set_ll (gretl_equation_system *sys, double ll);
 void system_set_llu (gretl_equation_system *sys, double llu);
 void system_set_X2 (gretl_equation_system *sys, double X2);
 
-int system_get_df (const gretl_equation_system *sys);
+int system_get_overid_df (const gretl_equation_system *sys);
+
+int system_vcv_geomean (const gretl_equation_system *sys);
+double system_vcv_denom (const gretl_equation_system *sys, 
+			 int i, int j);
 
 int rhs_var_in_identity (const gretl_equation_system *sys, int lhsvar,
 			 int rhsvar);

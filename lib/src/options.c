@@ -60,6 +60,7 @@ struct gretl_option gretl_opts[] = {
     { COINT2,   OPT_O, "verbose" },
     { EQNPRINT, OPT_O, "complete" },
     { TABPRINT, OPT_O, "complete" },
+    { ESTIMATE, OPT_M, "geomean" },
     { ESTIMATE, OPT_N, "no-df-corr" },
     { ESTIMATE, OPT_T, "iterate" },
     { FCASTERR, OPT_O, "plot" },

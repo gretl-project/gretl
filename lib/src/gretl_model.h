@@ -49,11 +49,16 @@ void clear_model (MODEL *pmod);
 
 int gretl_model_set_data (MODEL *pmod, const char *key, void *ptr, size_t size);
 
+int gretl_model_destroy_data_item (MODEL *pmod, const char *key);
+
 int gretl_model_set_int (MODEL *pmod, const char *key, int val);
 
 int gretl_model_set_double (MODEL *pmod, const char *key, double val);
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key);
+
+void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
+				     size_t *sz);
 
 int gretl_model_get_int (const MODEL *pmod, const char *key);
 

@@ -170,7 +170,7 @@ over_identification_test (fiml_system *fsys, double ***pZ, DATAINFO *pdinfo)
     int i, t;
     int err = 0;
 
-    if (system_get_df(fsys->sys) <= 0) {
+    if (system_get_overid_df(fsys->sys) <= 0) {
 	return 1;
     }
 

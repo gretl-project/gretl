@@ -36,6 +36,15 @@ enum {
     INSTR_LIST
 } aux_list_types;
 
+enum {
+    GRETL_SYSTEM_SAVE_UHAT = 1 << 0,
+    GRETL_SYSTEM_SAVE_YHAT = 1 << 1,
+    GRETL_SYSTEM_ITERATE   = 1 << 2,
+    GRETL_SYSTEM_RESTRICT  = 1 << 3,
+    GRETL_SYSTEM_DFCORR    = 1 << 4,
+    GRETL_SYS_VCV_GEOMEAN  = 1 << 5
+} equation_system_flags;
+
 struct id_atom_ {
     int op;         /* operator (plus or miinus) */
     int varnum;     /* ID number of variable to right of operator */
@@ -334,7 +343,7 @@ void gretl_equation_system_destroy (gretl_equation_system *sys)
 
 static void sur_rearrange_lists (gretl_equation_system *sys)
 {
-    if (sys->type == SUR) {
+    if (sys->type == SYS_SUR) {
 	int i;
 
 	for (i=0; i<sys->n_equations; i++) {
@@ -484,7 +493,7 @@ gretl_equation_system *system_start (const char *line)
 
     systype = system_start_get_type(line);
 
-    if (systype == SYSMAX) {
+    if (systype == SYS_MAX) {
 	/* invalid type was given */
 	strcpy(gretl_errmsg, _(badsystem));
 	return NULL;
@@ -537,7 +546,7 @@ gretl_equation_system_estimate (gretl_equation_system *sys,
     err = make_instrument_list(sys);
     if (err) goto system_bailout;
     
-    if (sys->type == SUR) {
+    if (sys->type == SYS_SUR) {
 	sur_rearrange_lists(sys);
     }
 
@@ -595,7 +604,7 @@ int gretl_equation_system_finalize (gretl_equation_system *sys,
 	return stack_system(sys, prn);
     }
 
-    if (sys->type < 0 || sys->type >= SYSMAX) {
+    if (sys->type < 0 || sys->type >= SYS_MAX) {
 	strcpy(gretl_errmsg, _(badsystem));
 	gretl_equation_system_destroy(sys);
 	return 1;
@@ -638,7 +647,7 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
     free(sysname);
 
     method = named_system_get_method(line);
-    if (method < 0 || method >= SYSMAX) {
+    if (method < 0 || method >= SYS_MAX) {
 	strcpy(gretl_errmsg, "estimate: no valid method was specified");
 	return 1;
     }
@@ -653,6 +662,10 @@ int estimate_named_system (const char *line, double ***pZ, DATAINFO *pdinfo,
 	if (!(opt & OPT_N)) {
 	    sys->flags |= GRETL_SYSTEM_DFCORR;
 	}
+    } 
+
+    if (opt & OPT_M) {
+	sys->flags |= GRETL_SYS_VCV_GEOMEAN;
     }    
 
     return gretl_equation_system_estimate(sys, pZ, pdinfo, prn);
@@ -792,7 +805,7 @@ int system_save_yhat (const gretl_equation_system *sys)
 
 int system_doing_iteration (const gretl_equation_system *sys)
 {
-    if (sys->type == SUR || sys->type == THREESLS) {
+    if (sys->type == SYS_SUR || sys->type == SYS_3SLS) {
 	return sys->flags & GRETL_SYSTEM_ITERATE;
     } else {
 	return 0;
@@ -917,9 +930,80 @@ void system_set_X2 (gretl_equation_system *sys, double X2)
     sys->X2 = X2;
 }
 
+/* for case of applying df correction to cross-equation 
+   residual covariance matrix */
+
+int system_vcv_geomean (const gretl_equation_system *sys)
+{
+    return sys->flags & GRETL_SYS_VCV_GEOMEAN;
+}
+
+static int sys_eqn_indep_coeffs (const gretl_equation_system *sys, int eq)
+{
+    int nc;
+
+    if (eq >= sys->n_equations) {
+	nc = 0;
+    } else if (sys->R == NULL) {
+	nc = sys->lists[eq][0] - 1;
+    } else {
+	int nr = gretl_matrix_rows(sys->R);
+	int cols = gretl_matrix_cols(sys->R);
+	int cmax, cmin = 0;
+	int single, i, j;
+
+	nc = sys->lists[eq][0] - 1;
+
+	for (i=0; i<eq; i++) {
+	    cmin += sys->lists[i][0] - 1;
+	}
+
+	cmax = cmin + nc;
+
+	for (i=0; i<nr; i++) {
+	    single = 1;
+	    for (j=0; j<cols; j++) {
+		if (j >= cmin && j < cmax) {
+		    if (gretl_matrix_get(sys->R, i, j) != 0.0) {
+			single = 0;
+			break;
+		    }
+		}
+	    }
+	    if (single) {
+		nc--;
+	    }
+	}
+    }
+
+    return nc;
+}
+
+double 
+system_vcv_denom (const gretl_equation_system *sys, int i, int j)
+{
+    double den = sys->n_obs;
+
+    if ((sys->flags & GRETL_SYS_VCV_GEOMEAN) &&
+	i < sys->n_equations && j < sys->n_equations) {
+	int ki = sys_eqn_indep_coeffs(sys, i);
+
+	if (j == i) {
+	    den = sys->n_obs - ki;
+	} else {
+	    int kj = sys_eqn_indep_coeffs(sys, j);
+
+	    den = (sys->n_obs - ki) * (sys->n_obs - kj);
+	    den = sqrt(den);
+	}
+    }
+
+    return den;
+}
+
 /* for system over-identification test */
 
-int system_get_df (const gretl_equation_system *sys)
+int system_get_overid_df (const gretl_equation_system *sys)
 {
     int gl, i, k = 0;
 
@@ -1093,7 +1177,7 @@ add_aux_list_to_sys (gretl_equation_system *sys, const char *line,
 	    strcpy(gretl_errmsg, "Only one list of instruments may be given");
 	    return 1;
 	}
-	if (sys->type != THREESLS) {
+	if (sys->type != SYS_3SLS) {
 	    strcpy(gretl_errmsg, "Instruments may only be specified for 3SLS");
 	    return 1;
 	}
@@ -1195,7 +1279,7 @@ static int make_instrument_list (gretl_equation_system *sys)
 	return 0;
     }
 
-    if (sys->type != SUR && sys->type != SYS_OLS && elist == NULL) {
+    if (sys->type != SYS_SUR && sys->type != SYS_OLS && elist == NULL) {
 	/* no list of endog vars: can't proceed */
 	return 1;
     }
@@ -1290,4 +1374,6 @@ system_set_restriction_matrices (gretl_equation_system *sys,
     
     sys->n_restrictions = gretl_matrix_rows(R);
 }
+
+
 

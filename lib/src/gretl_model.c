@@ -161,6 +161,32 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 }
 
 /**
+ * gretl_model_get_data_and_size:
+ * @pmod: pointer to #MODEL.
+ * @key: key string.
+ * @sz: pointer to receive the size of the data
+ *
+ * Returns the data pointer identified by @key, or %NULL on failure.
+ */
+
+void *gretl_model_get_data_and_size (const MODEL *pmod, const char *key,
+				     size_t *sz)
+{
+    int i;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    if (sz != NULL) {
+		*sz = pmod->data_items[i]->size;
+	    }
+	    return pmod->data_items[i]->ptr;
+	}
+    }
+
+    return NULL;
+}
+
+/**
  * gretl_model_get_data:
  * @pmod: pointer to #MODEL.
  * @key: key string.
@@ -170,15 +196,7 @@ int gretl_model_set_double (MODEL *pmod, const char *key, double val)
 
 void *gretl_model_get_data (const MODEL *pmod, const char *key)
 {
-    int i;
-
-    for (i=0; i<pmod->n_data_items; i++) {
-	if (!strcmp(key, (pmod->data_items[i])->key)) {
-	    return (pmod->data_items[i])->ptr;
-	}
-    }
-
-    return NULL;
+    return gretl_model_get_data_and_size(pmod, key, NULL);
 }
 
 /**
@@ -260,6 +278,44 @@ static void destroy_all_data_items (MODEL *pmod)
 
     free(pmod->data_items);
     pmod->data_items = NULL;
+}
+
+int gretl_model_destroy_data_item (MODEL *pmod, const char *key)
+{
+    model_data_item *junk = NULL;
+    int i, targ;
+    int err = 0;
+
+    for (i=0; i<pmod->n_data_items; i++) {
+	if (!strcmp(key, pmod->data_items[i]->key)) {
+	    junk = pmod->data_items[i];
+	    targ = i;
+	    break;
+	}
+    }
+
+    if (junk == NULL) {
+	err = 1;
+    } else {
+	model_data_item **items;
+	int n_items = pmod->n_data_items - 1;
+
+	for (i=targ; i<n_items; i++) {
+	    pmod->data_items[i] = pmod->data_items[i+1];
+	}
+
+	items = realloc(pmod->data_items, n_items * sizeof *items);
+	if (items != NULL) {
+	    pmod->data_items = items;
+	}
+
+	pmod->n_data_items -= 1;
+
+	free(junk->key);
+	free(junk);
+    }
+
+    return err;
 }
 
 /* .......................................................... */

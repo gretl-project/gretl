@@ -1781,6 +1781,22 @@ static int get_pos (const int *list)
 
 /* .......................................................... */
 
+void tsls_free_data (const MODEL *pmod)
+{
+    const char *endog = gretl_model_get_data(pmod, "endog");
+    double **X = gretl_model_get_data(pmod, "tslsX");
+    int i, m = 0;
+
+    if (endog != NULL && X != NULL) {
+	for (i=0; i<pmod->ncoeff; i++) {
+	    if (endog[i]) m++;
+	}
+	for (i=0; i<m; i++) {
+	    free(X[i]);
+	}
+    }
+}
+
 static int tsls_save_data (MODEL *pmod, const int *list, 
 			   double **Z, DATAINFO *pdinfo)
 {
@@ -1789,13 +1805,38 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     int addvars = list[0];
     int i, j, k, pos, m, err = 0;
     size_t esize, Xsize = list[0] * sizeof *X;
+    size_t es_old, xs_old;
+    int recycle_X = 0;
+    int recycle_e = 0;
 
     pos = get_pos(pmod->list);
     m = pos - 2;
     esize = m * sizeof *endog;
 
-    X = malloc(Xsize);
-    endog = malloc(esize);
+    /* re-use old pointers if applicable */
+
+    X = gretl_model_get_data_and_size(pmod, "tslsX", &xs_old);
+    if (X == NULL) {
+	X = malloc(Xsize);
+    } else if (Xsize != xs_old) {
+	tsls_free_data(pmod);
+	gretl_model_destroy_data_item(pmod, "tslsX");
+	free(X);
+	X = malloc(Xsize);
+    } else {
+	recycle_X = 1;
+    }
+
+    endog = gretl_model_get_data_and_size(pmod, "endog", &es_old);
+    if (endog == NULL) {
+	endog = malloc(esize);
+    } else if (esize != es_old) {
+	gretl_model_destroy_data_item(pmod, "endog");
+	free(endog);
+	endog = malloc(esize);
+    } else {
+	recycle_e = 1;
+    }
 
     if (X == NULL || endog == NULL) {
 	free(X);
@@ -1821,8 +1862,12 @@ static int tsls_save_data (MODEL *pmod, const int *list,
     }
 
     /* now attach X and endog to the model */
-    gretl_model_set_data(pmod, "tslsX", X, Xsize);
-    gretl_model_set_data(pmod, "endog", endog, esize);
+    if (!recycle_X) {
+	gretl_model_set_data(pmod, "tslsX", X, Xsize);
+    }
+    if (!recycle_e) {
+	gretl_model_set_data(pmod, "endog", endog, esize);
+    }
 
     return err;
 }
@@ -1850,22 +1895,6 @@ const double *tsls_get_Xi (const MODEL *pmod, const double **Z, int i)
     }
 
     return ret;
-}
-
-void tsls_free_data (const MODEL *pmod)
-{
-    const char *endog = gretl_model_get_data(pmod, "endog");
-    double **X = gretl_model_get_data(pmod, "tslsX");
-    int i, m = 0;
-
-    if (endog != NULL && X != NULL) {
-	for (i=0; i<pmod->ncoeff; i++) {
-	    if (endog[i]) m++;
-	}
-	for (i=0; i<m; i++) {
-	    free(X[i]);
-	}
-    }
 }
 
 /*

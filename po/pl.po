@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: gretl 1.3.0.1\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2004-10-26 13:22-0400\n"
-"PO-Revision-Date: 2004-12-28 23:00+0100\n"
+"PO-Revision-Date: 2004-12-30 03:00+0100\n"
 "Last-Translator: Pawel Kufel <qfel@mat.uni.torun.pl>\n"
 "Language-Team: Polish <translation-team-pl@lists.sourceforge.net>\n"
 "MIME-Version: 1.0\n"
@@ -2553,7 +2553,7 @@ msgstr "Plik danych zapisany: OK\n"
 
 #: lib/src/interact.c:2134
 msgid "Warning: case markers not saved in binary datafile\n"
-msgstr ""
+msgstr "Uwaga: opisy przypadków nie mo¿na zapisaæ jako binarny plik danych\n"
 
 #: lib/src/libset.c:204
 #, c-format
@@ -4767,15 +4767,15 @@ msgstr "/File/sep3"
 
 #: gui/gretl.c:271 gui2/gretl.c:322
 msgid "/File/_Preferences"
-msgstr ""
+msgstr "/File/_Ustawienia"
 
 #: gui/gretl.c:272 gui2/gretl.c:323
 msgid "/File/_Preferences/_General..."
-msgstr ""
+msgstr "/File/_Ustawienia/_Ogólne..."
 
 #: gui/gretl.c:273 gui2/gretl.c:325
 msgid "/File/Preferences/_Fixed font..."
-msgstr ""
+msgstr "/File/_Ustawienia/_Czcionka tekstu..."
 
 #: gui/gretl.c:274 gui2/gretl.c:331
 msgid "/File/sep5"
@@ -4783,7 +4783,7 @@ msgstr ""
 
 #: gui/gretl.c:275 gui2/gretl.c:332
 msgid "/File/E_xit"
-msgstr ""
+msgstr "/File/_Zakoñcz"
 
 #: gui/gretl.c:278 gui2/gretl.c:335
 msgid "/_Utilities"
@@ -5071,7 +5071,7 @@ msgstr ""
 
 #: gui/gretl.c:375 gui2/gretl.c:450
 msgid "/Sample/sep1"
-msgstr ""
+msgstr "/Sample/sep1"
 
 #: gui/gretl.c:376 gui2/gretl.c:451
 msgid "/Sample/Set _frequency, startobs..."
@@ -5079,11 +5079,11 @@ msgstr ""
 
 #: gui/gretl.c:378 gui2/gretl.c:453
 msgid "/Sample/Compact data..."
-msgstr ""
+msgstr "/Sample/Agregowanie danych..."
 
 #: gui/gretl.c:379 gui2/gretl.c:454
 msgid "/Sample/sep2"
-msgstr ""
+msgstr "/Sample/sep2"
 
 #: gui/gretl.c:380 gui2/gretl.c:455
 msgid "/Sample/_Define, based on dummy..."
@@ -5099,7 +5099,7 @@ msgstr ""
 
 #: gui/gretl.c:385 gui2/gretl.c:460
 msgid "/Sample/sep3"
-msgstr ""
+msgstr "/Sample/sep3"
 
 #: gui/gretl.c:386 gui2/gretl.c:461
 msgid "/Sample/Drop all obs with _missing values"
@@ -5115,19 +5115,19 @@ msgstr ""
 
 #: gui/gretl.c:391 gui2/gretl.c:466
 msgid "/Sample/sep4"
-msgstr ""
+msgstr "/Sample/sep4"
 
 #: gui/gretl.c:392 gui2/gretl.c:467
 msgid "/Sample/_Add case markers..."
-msgstr ""
+msgstr "/Sample/_Dodanie opisów przypadków (obserwacji)..."
 
 #: gui/gretl.c:393 gui2/gretl.c:468
 msgid "/Sample/Remove case _markers"
-msgstr ""
+msgstr "/Sample/_Usuniêcie opisów przypadków (obserwacji)"
 
 #: gui/gretl.c:394 gui2/gretl.c:469
 msgid "/Sample/sep5"
-msgstr ""
+msgstr "/Sample/sep5"
 
 #: gui/gretl.c:395 gui2/gretl.c:470
 msgid "/Sample/_Interpret as time series..."
@@ -5183,7 +5183,7 @@ msgstr ""
 
 #: gui/gretl.c:414 gui2/gretl.c:489
 msgid "/Variable/sep1"
-msgstr ""
+msgstr "/Variable/sep1"
 
 #: gui/gretl.c:415 gui2/gretl.c:490
 msgid "/Variable/_Time series plot"
@@ -5227,7 +5227,7 @@ msgstr ""
 
 #: gui/gretl.c:429 gui2/gretl.c:504
 msgid "/Variable/sep2"
-msgstr ""
+msgstr "/Variable/sep2"
 
 #: gui/gretl.c:430 gui2/gretl.c:506
 msgid "/Variable/Set missing value code..."
@@ -5239,7 +5239,7 @@ msgstr ""
 
 #: gui/gretl.c:433 gui2/gretl.c:508
 msgid "/Variable/sep3"
-msgstr ""
+msgstr "/Variable/sep3"
 
 #: gui/gretl.c:434 gui2/gretl.c:509
 msgid "/Variable/Simulate..."
@@ -5263,7 +5263,7 @@ msgstr ""
 
 #: gui/gretl.c:439 gui2/gretl.c:516
 msgid "/Model/sep1"
-msgstr ""
+msgstr "/Model/sep1"
 
 #: gui/gretl.c:440 gui2/gretl.c:517
 msgid "/Model/HCC_M..."
@@ -5275,7 +5275,7 @@ msgstr ""
 
 #: gui/gretl.c:443 gui2/gretl.c:520
 msgid "/Model/sep2"
-msgstr ""
+msgstr "/Model/sep2"
 
 #: gui/gretl.c:444 gui2/gretl.c:521
 msgid "/Model/Time series"
@@ -5283,7 +5283,7 @@ msgstr ""
 
 #: gui/gretl.c:445 gui2/gretl.c:522
 msgid "/Model/sep3"
-msgstr ""
+msgstr "/Model/sep3"
 
 #: gui/gretl.c:446 gui2/gretl.c:523
 msgid "/Model/_Two-Stage Least Squares..."
@@ -5327,39 +5327,40 @@ msgstr ""
 
 #: gui/gretl.c:460 gui2/gretl.c:539
 msgid "/_Help"
-msgstr ""
+msgstr "Pomo_c"
 
 #: gui/gretl.c:461 gui2/gretl.c:540
 msgid "/Help/_GUI commands"
-msgstr ""
+msgstr "/Pomoc/Polecenia _GUI"
 
 #: gui/gretl.c:462 gui2/gretl.c:541
+#, fuzzy
 msgid "/Help/_Script commands syntax"
-msgstr ""
+msgstr "gretl: pomoc - sk³adnia poleceñ"
 
 #: gui/gretl.c:463 gui2/gretl.c:542
 msgid "/Help/sep1"
-msgstr ""
+msgstr "/Pomoc/sep1"
 
 #: gui/gretl.c:465 gui2/gretl.c:544 gui2/gretl.c:547
 msgid "/Help/Manual in HTML"
-msgstr ""
+msgstr "/Pomoc/Manual in HTML"
 
 #: gui/gretl.c:466 gui2/gretl.c:545 gui2/gretl.c:548 gui2/gretl.c:551
 msgid "/Help/sep2"
-msgstr ""
+msgstr "/Pomoc/sep2"
 
 #: gui/gretl.c:468 gui2/gretl.c:553
 msgid "/Help/_Check for updates"
-msgstr ""
+msgstr "/Pomoc/_Uzupe³nienie danych w bazach"
 
 #: gui/gretl.c:469 gui2/gretl.c:554
 msgid "/Help/sep3"
-msgstr ""
+msgstr "/Pomoc/sep3"
 
 #: gui/gretl.c:470 gui2/gretl.c:555
 msgid "/Help/_About gretl"
-msgstr ""
+msgstr "/Pomoc/_About gretl"
 
 #: gui/gretl.c:476 gui2/gretl.c:561
 msgid "You may supply the name of a data file on the command line.\n"
@@ -6918,11 +6919,11 @@ msgstr ""
 
 #: gui2/callbacks.c:586
 msgid "gretl: add markers"
-msgstr ""
+msgstr "gretl: dodawanie opisów przypadków"
 
 #: gui2/callbacks.c:587
 msgid "Supply full path to file with markers:"
-msgstr ""
+msgstr "Wska¿ ¶cie¿kê dostêpu i nazwê pliku z opisami przypadków:"
 
 #: gui2/callbacks.c:592
 msgid "gretl: correlogram"
@@ -8079,7 +8080,7 @@ msgstr ""
 
 #: gui2/gretl.c:328
 msgid "/File/Preferences/_Menu font..."
-msgstr ""
+msgstr "/File/Ustawienia/_Czcionka menu..."
 
 #: gui2/gretl.c:397
 msgid "/Data/_Summary statistics/_all variables"
@@ -9041,19 +9042,19 @@ msgstr "W bazie nie ma brakuj±cych danych"
 
 #: gui2/library.c:1042
 msgid "Failed to add case markers"
-msgstr ""
+msgstr "B³±d w dodaniu opisów przypadków (obserwacji)"
 
 #: gui2/library.c:1045
 msgid "Case markers added"
-msgstr ""
+msgstr "Dodano opisy przypadków (obserwacji)"
 
 #: gui2/library.c:1054
 msgid "Case markers removed"
-msgstr ""
+msgstr "Usuniêto opisy przypadków (obserwacji)"
 
 #: gui2/library.c:1081 gui2/library.c:3529
 msgid "Failed to generate fitted values"
-msgstr ""
+msgstr "B³±d w generowaniu warto¶ci wyrównanych"
 
 #: gui2/library.c:1093
 msgid "gretl: forecasts"
@@ -9862,75 +9863,75 @@ msgstr ""
 
 #: gui2/settings.c:158
 msgid "Main gretl directory"
-msgstr ""
+msgstr "G³ówny katalog gretla"
 
 #: gui2/settings.c:160
 msgid "User's gretl directory"
-msgstr ""
+msgstr "Katalog u¿ytkownika"
 
 #: gui2/settings.c:162
 msgid "Expert mode (no warnings)"
-msgstr ""
+msgstr "tryb ekspercki (bez ostrze¿eñ)"
 
 #: gui2/settings.c:164
 msgid "Tell me about gretl updates"
-msgstr ""
+msgstr "Powiadamiaj o aktualizacjach baz danych"
 
 #: gui2/settings.c:166
 msgid "Show gretl toolbar"
-msgstr ""
+msgstr "Poka¿ ikony gretla"
 
 #: gui2/settings.c:169
 msgid "Use locale setting for decimal point"
-msgstr ""
+msgstr "U¿yj lokalnych ustawieñ symbolu dziesiêtnego"
 
 #: gui2/settings.c:173
 msgid "Emulate Windows look"
-msgstr ""
+msgstr "U¿yj klasycznego wygl±du Windows"
 
 #: gui2/settings.c:176
 msgid "Command to launch gnuplot"
-msgstr ""
+msgstr "Program gnuplot"
 
 #: gui2/settings.c:178
 msgid "Command to launch GNU R"
-msgstr ""
+msgstr "Program GNU R"
 
 #: gui2/settings.c:180
 msgid "Command to view DVI files"
-msgstr ""
+msgstr "Program przegl±darki DVI"
 
 #: gui2/settings.c:183
 msgid "Command to view postscript files"
-msgstr ""
+msgstr "Program przegl±darki postscript"
 
 #: gui2/settings.c:187
 msgid "Program to play MIDI files"
-msgstr ""
+msgstr "Program odtwarzacza MIDI"
 
 #: gui2/settings.c:190
 msgid "Calculator"
-msgstr ""
+msgstr "Kalkulator"
 
 #: gui2/settings.c:193
 msgid "Editor"
-msgstr ""
+msgstr "Edytor"
 
 #: gui2/settings.c:197
 msgid "path to x12arima"
-msgstr ""
+msgstr "Program x12arima"
 
 #: gui2/settings.c:201
 msgid "path to tramo"
-msgstr ""
+msgstr "Program tramo"
 
 #: gui2/settings.c:204
 msgid "X-12-ARIMA working directory"
-msgstr ""
+msgstr "Folder roboczy X-12-ARIMA"
 
 #: gui2/settings.c:208
 msgid "TRAMO working directory"
-msgstr ""
+msgstr "Folder roboczy TRAMO"
 
 #: gui2/settings.c:211
 msgid "gretl database directory"
@@ -9978,19 +9979,19 @@ msgstr "Wykonaj dekompozycje Cholesky"
 
 #: gui2/settings.c:229
 msgid "Fixed font"
-msgstr ""
+msgstr "Czcionka tekstu"
 
 #: gui2/settings.c:232
 msgid "Menu font"
-msgstr ""
+msgstr "Czcionka menu"
 
 #: gui2/settings.c:239
 msgid "PNG graph font"
-msgstr ""
+msgstr "Czcionka wykresu PNG"
 
 #: gui2/settings.c:241
 msgid "Gnuplot colors"
-msgstr ""
+msgstr "Kolory Gnuplot"
 
 #: gui2/settings.c:550
 msgid "gretl: options"
@@ -10002,27 +10003,27 @@ msgstr "Przegl±daj..."
 
 #: gui2/settings.c:662
 msgid "This change will take effect when you restart gretl"
-msgstr ""
+msgstr "Zmiany bêd± widoczne po restarcie programu gretla"
 
 #: gui2/settings.c:680 plugin/tramo_options.c:360
 msgid "General"
-msgstr ""
+msgstr "Ogólne"
 
 #: gui2/settings.c:682
 msgid "Databases"
-msgstr ""
+msgstr "Bazy danych"
 
 #: gui2/settings.c:684
 msgid "Programs"
-msgstr ""
+msgstr "Programy"
 
 #: gui2/settings.c:686
 msgid "Open/Save path"
-msgstr ""
+msgstr "Folder Otwórz/Zapisz"
 
 #: gui2/settings.c:688
 msgid "Data files"
-msgstr ""
+msgstr "Pliki danych"
 
 #: gui2/settings.c:1354 gui2/settings.c:2101 gui2/settings.c:2107
 msgid "Couldn't open config file for writing"
@@ -10030,28 +10031,28 @@ msgstr ""
 
 #: gui2/settings.c:1540 gui2/settings.c:1616
 msgid "Font for gretl output windows"
-msgstr ""
+msgstr "Czcionaka dla okien wyników"
 
 #: gui2/settings.c:1546
 msgid "Font for menus and labels"
-msgstr ""
+msgstr "Czcionaka dla menu i etykiet"
 
 #: gui2/settings.c:1896
 msgid "Select color"
-msgstr ""
+msgstr "Wybór koloru"
 
 #: gui2/settings.c:2036
 #, c-format
 msgid "Couldn't create directory '%s'"
-msgstr ""
+msgstr "Niemo¿liwe utworzenie katalogu '%s'"
 
 #: gui2/settings.c:2039
 msgid "Working directory created OK"
-msgstr ""
+msgstr "Katalog roboczy utworzony"
 
 #: gui2/settings.c:2077
 msgid "gretl: working directory"
-msgstr ""
+msgstr "gretl: katalog roboczy"
 
 #: gui2/settings.c:2078
 msgid ""
@@ -10106,7 +10107,7 @@ msgstr "Nieznany b³±d"
 
 #: gui2/webget.c:990
 msgid "No data received"
-msgstr ""
+msgstr "Nie odebrano danych"
 
 #: gui2/webget.c:992
 msgid "Malformed status line"
@@ -10400,7 +10401,7 @@ msgstr ""
 
 #: plugin/panel_data.c:277
 msgid "Error estimating fixed effects model\n"
-msgstr ""
+msgstr "B³±d estymacji sta³ych efektów modelu\n"
 
 #: plugin/panel_data.c:283
 msgid ""

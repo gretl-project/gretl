@@ -1093,7 +1093,7 @@ static void print_model_heading (const MODEL *pmod,
     if (pmod->ci == TSLS) {
 	int systype = gretl_model_get_int(pmod, "systype");
 
-	if (systype != FIML && systype != LIML) {
+	if (systype != SYS_FIML && systype != SYS_LIML) {
 	    print_tsls_instruments (pmod->list, pdinfo, prn);
 	}
     }
@@ -1554,7 +1554,7 @@ int printmodel (MODEL *pmod, const DATAINFO *pdinfo, gretlopt opt,
 	print_middle_table_start(prn);
 	depvarstats(pmod, prn);
 	essline(pmod, prn, 0);
-	if (gretl_model_get_int(pmod, "systype") == LIML) {
+	if (gretl_model_get_int(pmod, "systype") == SYS_LIML) {
 	    print_liml_equation_data(pmod, prn);
 	}
 	print_middle_table_end(prn);

@@ -742,7 +742,7 @@ double gretl_vcv_log_determinant (gretl_matrix *a)
 
     if (info != 0) {
 	if (info > 0) {
-	    fputs("gretl_vcv_log_determinant: matrix not positive definite", 
+	    fputs("gretl_vcv_log_determinant: matrix not positive definite\n", 
 		  stderr);
 	} else {
 	    fputs("gretl_vcv_log_determinant: illegal argument to dpotrf\n", 
