@@ -1333,6 +1333,7 @@ int retrieve_boxplot (const char *fname)
     for (i=0; i<grp->nplots; i++) {
 	plt = &grp->plots[i];
 	plt->outliers = NULL;
+        plt->bool = NULL;
 	nout = 0;
 	for (j=0; j<7 && fgets(line, 79, fp); j++) {
 	    if (j == 0 && 
