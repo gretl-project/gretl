@@ -27,13 +27,15 @@
 # include <windows.h>
 #endif
 
-#ifdef G_OS_WIN32
-
-static char *dosify_buffer (const char *buf, int format)
+char *dosify_buffer (const char *buf, int format)
 {
     int extra = 0, nlines = 0;
     char *targ, *q;
     const char *p;
+    const char *rtf_preamble = "{\\rtf1\n"
+	"{\\fonttbl{\\f0\\fnil\\fprq1\\fcharset1 Courier New;}}\n"
+	"\\f0\\fs18\n";
+    int rtf_add_bytes = strlen(rtf_preamble) + 4;
 
     if (buf == NULL) return NULL;
 
@@ -44,14 +46,15 @@ static char *dosify_buffer (const char *buf, int format)
     extra = nlines + 1;
 
     if (format == COPY_TEXT_AS_RTF) {
-	extra += 32;
+	extra *= 5;
+	extra += rtf_add_bytes;
     }
 
     targ = malloc(strlen(buf) + extra);
     if (targ == NULL) return NULL;
 
     if (format == COPY_TEXT_AS_RTF) {
-	strcpy(targ, "{\\rtf1\\fmodern\\fs18 ");
+	strcpy(targ, rtf_preamble);
 	q = targ + strlen(targ);
     } else {
 	q = targ;
@@ -60,6 +63,12 @@ static char *dosify_buffer (const char *buf, int format)
     p = buf;
     while (*p) {
 	if (*p == '\n') {
+	    if (format == COPY_TEXT_AS_RTF) {
+		*q++ = '\\';
+		*q++ = 'p';
+		*q++ = 'a';
+		*q++ = 'r';
+	    }
 	    *q++ = '\r';
 	    *q++ = '\n';
 	} else {
@@ -75,6 +84,8 @@ static char *dosify_buffer (const char *buf, int format)
 
     return targ;
 }
+
+#ifdef G_OS_WIN32
 
 /* win32 only: copy buffer to clipboard */
 int win_copy_buf (char *buf, int format, size_t buflen)
@@ -124,7 +135,7 @@ int win_copy_buf (char *buf, int format, size_t buflen)
     memcpy(ptr, winbuf, len);
     GlobalUnlock(winclip); 
 
-    if (format == COPY_RTF) { 
+    if (format == COPY_RTF || format == COPY_TEXT_AS_RTF) { 
 	clip_format = RegisterClipboardFormat("Rich Text Format");
     } else if (format == COPY_CSV) {
 	clip_format = RegisterClipboardFormat("CSV");

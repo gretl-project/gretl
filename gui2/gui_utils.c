@@ -1429,7 +1429,7 @@ static void make_viewbar (windata_t *vwin, int text_out)
 	    continue;
 	}
 
-#if 0  /* broken as of now */
+#ifndef OLD_GTK
 	if (viewbar_items[i].flag == COPY_ITEM) {
 	    toolfunc = choose_copy_format_callback;
 	}
@@ -3019,12 +3019,11 @@ int prn_to_clipboard (PRN *prn, int copycode)
 	/* need to convert from utf8 */
 	gchar *trbuf;
 	gsize bytes;
-	char *p;
 	
 	trbuf = g_locale_from_utf8(prn->buf, -1, NULL, &bytes, NULL);
 	if (bytes > 0) {
 	    if (copycode == COPY_TEXT_AS_RTF) {
-		clipboard_buf = mymalloc(bytes + 1 + 32);
+		clipboard_buf = dosify_buffer(trbuf, copycode);
 	    } else {
 		clipboard_buf = mymalloc(bytes + 1);
 	    }
@@ -3032,16 +3031,10 @@ int prn_to_clipboard (PRN *prn, int copycode)
 		g_free(trbuf);
 		return 1;
 	    }
-	    p = clipboard_buf;
-	    if (copycode == COPY_TEXT_AS_RTF) {
-		strcpy(clipboard_buf, "{\\rtf1\\fmodern\\fs18 ");
-		p += strlen(p);
+	    if (copycode != COPY_TEXT_AS_RTF) {
+		memcpy(clipboard_buf, trbuf, bytes + 1);
 	    }
-	    memcpy(p, trbuf, bytes + 1);
 	    g_free(trbuf);
-	    if (copycode == COPY_TEXT_AS_RTF) {
-		strcat(clipboard_buf, "}\n");
-	    }
 	}
     } else { /* copying TeX, RTF or CSV */
 	size_t len;

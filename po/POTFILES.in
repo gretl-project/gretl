@@ -14,6 +14,7 @@ lib/src/gretl_errors.c
 lib/src/gretl_matrix.c
 lib/src/gretl_model.c
 lib/src/gretl_paths.c
+lib/src/gretl_string_table.c
 lib/src/gretl_utils.c
 lib/src/gretl_win32.c
 lib/src/interact.c

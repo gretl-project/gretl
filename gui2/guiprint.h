@@ -31,6 +31,10 @@ int winprint_graph (char *emfname);
 void winprint (char *fullbuf, char *selbuf);
 #endif
 
+#ifndef OLD_GTK
+char *dosify_buffer (const char *buf, int format);
+#endif
+
 void texprint_summary (GRETLSUMMARY *summ,
 		       const DATAINFO *pdinfo,
 		       PRN *prn);
