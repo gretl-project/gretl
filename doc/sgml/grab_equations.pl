@@ -2,10 +2,9 @@
 
 use strict;
 
-my ($line, $texline, $foo, $figfile);
+my ($line, $eqn, $foo, $figfile);
 my $manual = "./manual.sgml";
 my $textmp = "./eqntmp";
-# my $i = 0;
 
 open (MAN, "<$manual") || die "Can't open $manual";
 
@@ -15,35 +14,30 @@ sub printtex {
     print TEX "\\usepackage{mathtime}\n";
     print TEX "\\pagestyle{empty}\n";
     print TEX "\\begin{document}\n";
-    print TEX "$texline";
+    print TEX "$eqn";
     print TEX "\\end{document}\n";
     close (TEX);
-    # print "printed tex file $i\n"; $i++;
     system ("latex $textmp");
     system ("dvips -o $textmp.eps $textmp -E");
     system ("convert -density 100x100 $textmp.eps $figfile");
-    # system ("cp $textmp.tex $textmp$i.tex"); $i++;
     system ("rm -f $textmp.*");
 }
 
 while ($line = <MAN>) {
-    if ($line =~ /\<informalequation\>/ ||
-        $line =~ /\<inlineequation\>/) {
-        $texline = '';
-        $line = <MAN>;
-	($foo, $figfile) = split(/\"/, $line);
-        print "Got figfile: $figfile\n";
-	$line = <MAN>; # skip opening <texmath>
-	$line = <MAN>;
-	while ($line !~ m+\</texmath\>+) {
-	    print "Got tex line: $line";
-	    $texline = $texline . $line;
+    if ($line =~ /\<(informal|inline|)equation\>/) { 
+	$eqn = $line;
+	while ($line !~ /\<\/(informal|inline|)equation\>/) {
 	    $line = <MAN>;
+	    $eqn = $eqn . $line;
 	}
-	print "creating $figfile\n";
-	$texline =~ s/^\S+//g;
-	print "Here's texline:\n";
-	print "$texline";
+	if ($eqn =~ /fileref="([a-zA-Z0-9_\/\.]+)"/) { 
+	    print "got fileref $1\n";
+	    $figfile = $1;
+	}
+	if ($eqn =~ /\<texmath\>((?:.|\s)*)\<\/texmath\>/) {
+	    print "got texmath $1\n";
+	    $eqn = $1;
+	}
 	printtex();
     }
 }
