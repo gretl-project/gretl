@@ -634,8 +634,9 @@ void nls_init (void)
 # ifdef G_OS_WIN32
     char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
 
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
 	return;
+    }
     build_path(gretldir, "locale", LOCALEDIR, NULL);
 #endif /* G_OS_WIN32 */
 

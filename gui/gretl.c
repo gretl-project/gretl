@@ -20,18 +20,12 @@
 /* gretl.c : main for gretl */
 
 #include "gretl.h"
-#include <dirent.h>
 
-#ifndef G_OS_WIN32
-# include <unistd.h>
-# include <signal.h>
-# include "../pixmaps/gretl.xpm"  /* program icon for X */
-#else
-# include <windows.h>
-# ifdef USE_HHCTRL
-#  include "htmlhelp.h"
-# endif
-#endif
+#include <dirent.h>
+#include <unistd.h>
+#include <signal.h>
+
+#include "../pixmaps/gretl.xpm"  /* program icon for X */
 
 /* pixmaps for gretl toolbar */
 #include "../pixmaps/mini.calc.xpm"
@@ -139,15 +133,10 @@ int updater = FALSE;
 int want_toolbar = TRUE;
 char dbproxy[21];
 
-#ifdef G_OS_WIN32
-char Rcommand[MAXSTR] = "RGui.exe";
-char editor[MAXSTR] = "winword.exe";
-char calculator[MAXSTR] = "calc.exe";
-char viewdvi[MAXSTR] = "windvi.exe";
-#else
 char editor[MAXSTR] = "emacs";
 char calculator[MAXSTR] = "xcalc";
 char viewdvi[MAXSTR] = "xdvi";
+
 # ifdef USE_GNOME
 char Rcommand[MAXSTR] = "R --gui=gnome";
 extern const char *version_string;
@@ -175,27 +164,6 @@ static void gnome_help (void)
     gnome_help_display(NULL, &help_entry);
 }
 #endif /* USE_GNOME */
-
-#ifdef G_OS_WIN32
-static void win_help (void)
-{
-    char hlpfile[MAXLEN];
-
-# ifdef USE_HHCTRL
-    sprintf(hlpfile, "%s\\gretl.chm", paths.gretldir);
-    if (!HtmlHelp(GetDesktopWindow(), hlpfile, HH_DISPLAY_TOPIC, 0))
-	errbox(_("Couldn't access help file"));
-# else
-    /* hh.exe myfile.chm::/mytopic.htm */
-    sprintf(hlpfile, "hh.exe \"%s\\gretl.chm\"", paths.gretldir);
-    if (WinExec(hlpfile, SW_SHOWNORMAL) < 32)
-        errbox(_("Couldn't access help file"));
-# endif /* USE_HHCTRL */
-}
-
-static int unmangle (const char *dosname, char *longname);
-
-#endif /* G_OS_WIN32 */
 
 extern void find_var (gpointer p, guint u, GtkWidget *w); /* gui_utils.c */
 
@@ -490,14 +458,10 @@ GtkItemFactoryEntry data_items[] = {
 #if defined(USE_GNOME)
     { N_("/Help/Manual in HTML"), NULL, gnome_help, 0, NULL },
     { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
-#elif defined(G_OS_WIN32)
-    { N_("/Help/Manual in HTML"), NULL, win_help, 0, NULL },
-    { N_("/Help/sep2"), NULL, NULL, 0, "<Separator>" },
 #endif
     { N_("/Help/_About gretl"), NULL, about_dialog, 0, NULL }
 };
 
-#ifndef G_OS_WIN32
 static void make_userdir (PATHS *ppaths) 
 {
     DIR *test;
@@ -513,7 +477,6 @@ static void make_userdir (PATHS *ppaths)
     } else 
 	closedir(test);
 }
-#endif
 
 static void gui_usage (void)
 {
@@ -535,11 +498,8 @@ static void get_runfile (char *fname)
     int i;
 
     tryscript[0] = '\0';
-#ifdef G_OS_WIN32
-    if (unmangle(fname, tryscript)) return;
-#else
     strncat(tryscript, fname, MAXLEN-1);
-#endif
+
     if (addpath(tryscript, &paths, 1) == NULL) {
 	fprintf(stderr, _("Couldn't find script '%s'\n"), tryscript);
 	exit(EXIT_FAILURE);
@@ -575,35 +535,12 @@ static void destroy (GtkWidget *widget, gpointer data)
     gtk_main_quit();
 }
 
-#ifdef G_OS_WIN32
-extern int ws_startup (void);
-
-void dummy_output_handler (const gchar *log_domain,
-                           GLogLevelFlags log_level,
-                           const gchar *message,
-                           gpointer user_data)
-{
-    return;
-}
-#endif /* G_OS_WIN32 */
-
 #ifdef ENABLE_NLS
 void nls_init (void)
 {
-# ifdef G_OS_WIN32
-    char gretldir[MAXSTR], LOCALEDIR[MAXSTR];
-
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
-	return;
-    build_path(gretldir, "locale", LOCALEDIR, NULL);
-#endif /* G_OS_WIN32 */
-
     setlocale (LC_ALL, "");
     bindtextdomain (PACKAGE, LOCALEDIR);
     textdomain (PACKAGE);
-#ifdef USE_GTK2 /* gtk 1.2 doesn't use utf-8 */
-    bind_textdomain_codeset (PACKAGE, "UTF-8");
-#endif
     nls_on = doing_nls();
 }
 #endif /* ENABLE_NLS */
@@ -633,22 +570,8 @@ int main (int argc, char *argv[])
 #endif
 
     set_paths(&paths, 1, 1); /* 1 = defaults, 1 = gui */
-#ifdef G_OS_WIN32
-    read_rc(); /* get config info from registry */
-    g_log_set_handler ("Gtk",
-		       G_LOG_LEVEL_CRITICAL | G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    g_log_set_handler ("Gdk",
-		       G_LOG_LEVEL_WARNING,
-		       (GLogFunc) dummy_output_handler,
-		       NULL);
-    ws_startup(); 
-    atexit(write_rc);
-#else 
     set_rcfile();
     make_userdir(&paths);
-#endif/* G_OS_WIN32 */
 
     if (argc > 1) {
 	int opt = parseopt(argv[1]);
@@ -731,12 +654,7 @@ int main (int argc, char *argv[])
 	if (prn == NULL) 
 	    exit(EXIT_FAILURE);
 	paths.datfile[0] = '\0';
-#ifdef G_OS_WIN32
-	if (unmangle(argv[1], paths.datfile)) 
-	    exit(EXIT_FAILURE);
-#else
 	strncat(paths.datfile, argv[1], MAXLEN-1);
-#endif
 	ftype = detect_filetype(paths.datfile, &paths, prn);
 
 	switch (ftype) {
@@ -1175,11 +1093,9 @@ static GtkWidget *make_main_window (int gui_get_data)
 
     gtk_window_set_title(GTK_WINDOW (mdata->w), "gretl");
     gtk_window_set_policy(GTK_WINDOW (mdata->w), TRUE, TRUE, FALSE);
-#ifndef G_OS_WIN32
     gtk_signal_connect_after(GTK_OBJECT(mdata->w), "realize", 
                              GTK_SIGNAL_FUNC(set_wm_icon), 
                              NULL);
-#endif
 
     main_vbox = gtk_vbox_new(FALSE, 5);
     gtk_container_set_border_width(GTK_CONTAINER (main_vbox), 10);
@@ -1426,34 +1342,6 @@ void restore_sample (gpointer data, int verbose, GtkWidget *w)
     }
 }
 
-/* ........................................................... */
-
-#ifdef G_OS_WIN32
-
-BOOL CreateChildProcess (char *prog) 
-{ 
-   PROCESS_INFORMATION piProcInfo; 
-   STARTUPINFO siStartInfo; 
- 
-   ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
-   ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
-   siStartInfo.cb = sizeof(STARTUPINFO); 
- 
-   return CreateProcess(
-      NULL, 
-      prog,          /* command line */
-      NULL,          /* process security attributes  */
-      NULL,          /* primary thread security attributes */ 
-      TRUE,          /* handles are inherited  */
-      0,             /* creation flags  */
-      NULL,          /* use parent's environment  */
-      NULL,          /* use parent's current directory  */
-      &siStartInfo,  /* STARTUPINFO pointer */ 
-      &piProcInfo);  /* receives PROCESS_INFORMATION  */
-}
-
-#else
-
 void gretl_fork (const char *prog, const char *arg)
 {
     pid_t pid;
@@ -1475,19 +1363,15 @@ void gretl_fork (const char *prog, const char *arg)
     }
 }
 
-#endif	
-
 /* ........................................................... */
 
 static void startR (gpointer p, guint opt, GtkWidget *w)
 {
     char Rdata[MAXLEN], line[MAXLEN];
     FILE *fp;
-#ifndef G_OS_WIN32
     int i;
     char *s0, *s1, *s2;
     pid_t pid;
-#endif
 
     if (!data_status) {
 	errbox(_("Please open a data file first"));
@@ -1525,9 +1409,6 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     }
     fclose(fp);
 
-#ifdef G_OS_WIN32
-    CreateChildProcess(Rcommand);
-#else
     s0 = mymalloc(64);
     s1 = mymalloc(32);
     s2 = mymalloc(32);
@@ -1561,7 +1442,6 @@ static void startR (gpointer p, guint opt, GtkWidget *w)
     free(s0); 
     free(s1); 
     free(s2);
-#endif 
 }
 
 /* ........................................................... */
@@ -1589,22 +1469,14 @@ static void Rcleanup (void)
 
 static void show_calc (void)
 {
-#ifdef G_OS_WIN32
-    CreateChildProcess(calculator);
-#else
     gretl_fork(calculator, NULL);
-#endif 
 }
 
 /* ........................................................... */
 
 static void show_edit (void)
 {
-#ifdef G_OS_WIN32
-    CreateChildProcess(editor);
-#else
     gretl_fork(editor, NULL);
-#endif 
 }
 
 /* ........................................................... */
@@ -1640,9 +1512,6 @@ void show_toolbar (void)
 
 /* ........................................................... */
 
-#ifdef G_OS_WIN32
-extern int goto_url (const char *url);
-#else
 static void netscape_open (const char *url)
 {
 #ifdef USE_GNOME
@@ -1656,26 +1525,15 @@ static void netscape_open (const char *url)
     if (err) gretl_fork("netscape", url);
 #endif /* USE_GNOME */
 }
-#endif /* G_OS_WIN32 */
 
 static void gretl_website (void)
 {
-#ifdef G_OS_WIN32
-    if (goto_url("http://gretl.sourceforge.net/"))
-	errbox("Failed to open URL");
-#else
     netscape_open("http://gretl.sourceforge.net/");
-#endif
 }
 
 static void gretl_pdf (void)
 {
-#ifdef G_OS_WIN32
-    if (goto_url("http://gretl.sourceforge.net/manual.pdf"))
-	errbox(_("Failed to open URL"));
-#else
     netscape_open("http://gretl.sourceforge.net/manual.pdf");
-#endif
 }
 
 static void xy_graph (void)
@@ -1798,7 +1656,6 @@ static void make_toolbar (GtkWidget *w, GtkWidget *box)
 }
 
 /* Icon handling for X */
-#ifndef G_OS_WIN32
 void set_wm_icon (GtkWidget *w, gpointer data)
 {
     GdkPixmap *icon;
@@ -1806,7 +1663,6 @@ void set_wm_icon (GtkWidget *w, gpointer data)
     icon = gdk_pixmap_create_from_xpm_d(w->window, NULL, NULL, gretl_xpm);
     gdk_window_set_icon(w->window, NULL, icon, NULL);
 }
-#endif
 
 /* Drag 'n' drop */
 static void  
@@ -1837,12 +1693,6 @@ drag_data_received  (GtkWidget *widget,
 	strncat(tmp, dfname + skip, pos - skip);
     } else
 	strcat(tmp, dfname + skip);
-
-#ifdef G_OS_WIN32
-    if (unmangle(tmp, tryscript)) return;
-    strcpy(tmp, tryscript);
-    tryscript[0] = '\0';
-#endif
 
     suff = strrchr(tmp, '.');
     if (suff && (!strncmp(suff, ".gretl", 6) || 
@@ -1940,54 +1790,5 @@ static void auto_store (void)
 	file_selector(_("Save data file"), SAVE_DATA, NULL);	
 }
 
-/* ........................................................... */
 
-#ifdef G_OS_WIN32
-
-static int old_windows (void) {
-    OSVERSIONINFO *winver;
-    static int old = 1;
-
-    if (!old) return 0; /* do only one look up */
-
-    winver = mymalloc(sizeof *winver);
-    if (winver == NULL) return old;
-    winver->dwOSVersionInfoSize = sizeof *winver;
-    GetVersionEx(winver);
-    switch (winver->dwPlatformId) {
-    case VER_PLATFORM_WIN32_WINDOWS:
-        if (winver->dwMinorVersion >= 10) /* win98 or higher */
-	    old = 0;
-        break;
-    case VER_PLATFORM_WIN32_NT:
-        if (winver->dwMajorVersion > 4) /* win2000 or higher */
-	    old = 0;
-        break;
-    }
-    free(winver);
-    return old;
-}
-
-static int unmangle (const char *dosname, char *longname)
-{
-    if (old_windows()) {
-	/* sorry but I really can't be bothered */
-	strcpy(longname, dosname);
-	return 0;
-    } else {
-	int err;
-	void *handle;
-	void (*real_unmangle)(const char *, char *, int, int *); 
-	
-	if (gui_open_plugin("longname", &handle)) return 1;
-
-	real_unmangle = get_plugin_function("real_unmangle", handle);
-	if (real_unmangle == NULL) return 1;
-	(*real_unmangle)(dosname, longname, MAXLEN, &err);
-	close_plugin(handle);
-	return err;
-    }
-}
-
-#endif
 

@@ -20,12 +20,8 @@
 /* dialogs.c for gretl */
 
 #include "gretl.h"
-#ifdef G_OS_WIN32 
-# include "../lib/src/version.h"
-# include "build.h"
-#else 
+
 extern const char *version_string;
-#endif
 
 #include "selector.h"
 
@@ -483,15 +479,25 @@ void about_dialog (gpointer data)
 	"Allin Cottrell",
 	NULL
     };
+    const gchar *blurb = N_("An econometrics program for the gnome desktop "
+			    "issued under the GNU General Public License.  "
+			    "http://gretl.sourceforge.net/");
+    gchar *comment = NULL;
+
+#ifdef ENABLE_NLS
+    if (strcmp(_("translator_credits"), "translator_credits")) {
+	comment = g_strconcat(_(blurb), " ", _("translator_credits"),
+			      NULL);
+    }
+#endif 
 
     dlg = gnome_about_new("gretl", version_string,
 			  "(c) 2000-2002 Allin Cottrell", 
-			  authors, 
-			  _("An econometrics program for the gnome desktop "
-			  "issued under the GNU General Public License.  "
-			  "http://gretl.sourceforge.net/"),
+			  authors, (comment != NULL)? comment : _(blurb),
 			  gnome_pixmap_file("gretl-logo.xpm") 
 			  );
+
+    if (comment != NULL) g_free(comment);
 
     gnome_dialog_set_parent(GNOME_DIALOG(dlg), GTK_WINDOW(mdata->w));
     gtk_widget_show(dlg);
@@ -526,6 +532,7 @@ void about_dialog (gpointer data)
     GdkPixmap *logo_pixmap;
     GdkBitmap *logo_mask;
     char *tempstr, *no_gpl, buf[MAXSTR];
+    const gchar *tr_credit = "";
     GtkWidget *dialog;
     FILE *fd;
 
@@ -561,14 +568,18 @@ void about_dialog (gpointer data)
 	gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
 	gtk_widget_show (tempwid);
     }
+
+#ifdef ENABLE_NLS
+    if (strcmp(_("translator_credits"), "translator_credits")) {
+	tr_credit = _("translator_credits");
+    }
+#endif  
+
     tempstr = g_strdup_printf ("gretl, version %s\n"
-#ifdef G_OS_WIN32
-			       BUILD_DATE
-#endif
 			       "Copyright (C) 2000-2001 Allin Cottrell "
 			       "<cottrell@wfu.edu>\nHomepage: "
-			       "http://gretl.sourceforge.net/",
-			       version_string);
+			       "http://gretl.sourceforge.net/\n",
+			       version_string, tr_credit);
     tempwid = gtk_label_new (tempstr);
     g_free (tempstr);
     gtk_box_pack_start (GTK_BOX (box), tempwid, FALSE, FALSE, 0);
@@ -721,42 +732,7 @@ int yes_no_dialog (char *title, char *message, int cancel)
     return button;
 }
 
-#else /* USE_GNOME */
-#ifdef G_OS_WIN32
-
-int yes_no_dialog (char *title, char *message, int cancel)
-{
-    int button;
-    gchar *trtitle = NULL, *trmsg = NULL;
-
-    if (nls_on) {
-	gint wrote;
-
-	trtitle = g_locale_from_utf8 (title, -1, NULL, &wrote, NULL);
-	trmsg = g_locale_from_utf8 (message, -1, NULL, &wrote, NULL);
-    } else {
-	trtitle = title;
-	trmsg = message;
-    }
-
-    if (cancel)
-	button = MessageBox (NULL, trmsg, trtitle, 
-			     MB_YESNOCANCEL | MB_ICONQUESTION);
-    else
-	button = MessageBox (NULL, trmsg, trtitle, 
-			     MB_YESNO | MB_ICONQUESTION);
-
-    if (nls_on) {
-	g_free(trtitle);
-	g_free(trmsg);
-    }
-
-    if (button == IDYES) return YES_BUTTON;
-    else if (button == IDNO) return NO_BUTTON;
-    else return -1;
-}
-
-#else /* G_OS_WIN32 */
+#else /* not USE_GNOME */
 
 struct yes_no_data {
     GtkWidget *dialog;
@@ -840,7 +816,6 @@ gint yes_no_dialog (char *title, char *msg, int cancel)
    return ret;
 }
 
-#endif
 #endif /* plain GTK */
 
 /* ........................................................... */

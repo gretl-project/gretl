@@ -197,14 +197,17 @@ void file_get_line (void)
 {
     clear(line, MAXLINE);
     fgets(line, MAXLINE - 1, fb);
-    if (!strlen(line)) 
+
+    if (!strlen(line)) {
 	strcpy(line, "quit");
-    else {
+    } else {
 	*linebak = 0;
 	strncat(linebak, line, MAXLEN-1);
     }
-    if (!strncmp(line, "noecho", 6)) 
+
+    if (!strncmp(line, "noecho", 6)) {
 	echo_off = 1;
+    }
     if (!echo_off && command.ci == RUN && batch && line[0] == '(') {
 	printf("%s", line);
 	*linebak = 0;
@@ -217,8 +220,9 @@ void nls_init (void)
 # ifdef OS_WIN32
     char gretldir[MAXLEN], localedir[MAXLEN];
 
-    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir))
+    if (read_reg_val(HKEY_CLASSES_ROOT, "gretldir", gretldir)) {
         return;
+    }
     sprintf(localedir, "%s\\locale", gretldir);
 # endif /* OS_WIN32 */
 
@@ -228,7 +232,9 @@ void nls_init (void)
 # else
     bindtextdomain (PACKAGE, LOCALEDIR);
 # endif
-    textdomain (PACKAGE);    
+    textdomain (PACKAGE); 
+    /* arrange that translations will not come out in utf8 */
+    iso_gettext("@CLI_INIT");
 }
 #endif /* ENABLE_NLS */
 

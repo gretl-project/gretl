@@ -619,6 +619,18 @@ char *colonize_obs (char *obs)
 char *iso_gettext (const char *msgid)
 {
    char *ret;
+   static int cli;
+
+   /* when running command-line client, ensure that translated
+      messages will not appear in utf8 */
+   if (!strcmp(msgid, "@CLI_INIT")) {
+       cli = 1;
+       return NULL;
+   }
+
+   if (cli) { /* command line program */
+       return gettext(msgid);
+   }
 
    bind_textdomain_codeset(PACKAGE, "ISO-8859-1");
    ret = gettext(msgid);
